@@ -25,45 +25,45 @@ enum {W_amp_adj,W_srate_adj,W_contrast_adj,W_expand_adj,W_revscl_adj,W_revlen_ad
 #define NUM_SND_WIDGETS 62
 #define NUM_SND_ADJS 7
 
-GtkWidget *w_snd_ctrls(snd_info *sp) {if ((sp) && (sp->sgx)) return(((snd_context *)(sp->sgx))->snd_widgets[W_ctrls]); else return(NULL);}
-GtkWidget *w_snd_pane(snd_info *sp) {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_pane]); else return(NULL);}
-GtkWidget *w_snd_pane_box(snd_info *sp) {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_pane_box]); else return(NULL);}
-GtkWidget *w_snd_name(snd_info *sp) {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_name]); else return(NULL);}
-GtkWidget *w_snd_combine(snd_info *sp) {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_combine]); else return(NULL);}
-GtkWidget *w_snd_play(snd_info *sp) {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_play]); else return(NULL);}
-GtkWidget *w_snd_filter_env(snd_info *sp) {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_filter_env]); else return(NULL);}
+GtkWidget *w_snd_ctrls(snd_info *sp)                   {if ((sp) && (sp->sgx)) return(((snd_context *)(sp->sgx))->snd_widgets[W_ctrls]); else return(NULL);}
+GtkWidget *w_snd_pane(snd_info *sp)                    {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_pane]);                   else return(NULL);}
+GtkWidget *w_snd_pane_box(snd_info *sp)                {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_pane_box]);               else return(NULL);}
+GtkWidget *w_snd_name(snd_info *sp)                    {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_name]);                   else return(NULL);}
+GtkWidget *w_snd_combine(snd_info *sp)                 {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_combine]);                else return(NULL);}
+GtkWidget *w_snd_play(snd_info *sp)                    {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_play]);                   else return(NULL);}
+GtkWidget *w_snd_filter_env(snd_info *sp)              {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_filter_env]);             else return(NULL);}
 
-static GtkWidget *w_snd_expand(snd_info *sp) {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_expand]); else return(NULL);}
-static GtkWidget *w_snd_contrast(snd_info *sp) {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_contrast]); else return(NULL);}
-static GtkWidget *w_snd_revscl(snd_info *sp) {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_revscl]); else return(NULL);}
-static GtkWidget *w_snd_revlen(snd_info *sp) {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_revlen]); else return(NULL);}
-static GtkWidget *w_snd_minibuffer(snd_info *sp) {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_info]); else return(NULL);}
-static GtkWidget *w_snd_minibuffer_label(snd_info *sp) {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_info_label]); else return(NULL);}
-static GtkWidget *w_snd_amp_number(snd_info *sp) {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_amp_number]); else return(NULL);}
-static GtkWidget *w_snd_srate_number(snd_info *sp) {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_srate_number]); else return(NULL);}
-static GtkWidget *w_snd_srate_pix(snd_info *sp) {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_srate_pix]); else return(NULL);}
-static GtkWidget *w_snd_expand_number(snd_info *sp) {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_expand_number]); else return(NULL);}
-static GtkWidget *w_snd_expand_button(snd_info *sp) {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_expand_button]); else return(NULL);}
-static GtkWidget *w_snd_contrast_number(snd_info *sp) {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_contrast_number]); else return(NULL);}
-static GtkWidget *w_snd_contrast_button(snd_info *sp) {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_contrast_button]); else return(NULL);}
-static GtkWidget *w_snd_revscl_number(snd_info *sp) {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_revscl_number]); else return(NULL);}
-static GtkWidget *w_snd_revlen_number(snd_info *sp) {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_revlen_number]); else return(NULL);}
-static GtkWidget *w_snd_reverb_button(snd_info *sp) {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_reverb_button]); else return(NULL);}
-static GtkWidget *w_snd_apply(snd_info *sp) {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_apply]); else return(NULL);}
-static GtkWidget *w_snd_filter_order(snd_info *sp) {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_filter_order]); else return(NULL);}
-static GtkWidget *w_snd_filter(snd_info *sp) {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_filter]); else return(NULL);}
-static GtkWidget *w_snd_filter_button(snd_info *sp) {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_filter_button]); else return(NULL);}
-static GtkWidget *w_snd_filter_dB(snd_info *sp) {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_filter_dB]); else return(NULL);}
-static GtkWidget *w_snd_name_pix(snd_info *sp) {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_name_pix]); else return(NULL);}
-static GtkWidget *w_snd_minibuffer_sep(snd_info *sp) {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_info_sep]); else return(NULL);}
-static GtkWidget *w_snd_sync(snd_info *sp) {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_sync]); else return(NULL);}
+static GtkWidget *w_snd_expand(snd_info *sp)           {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_expand]);                 else return(NULL);}
+static GtkWidget *w_snd_contrast(snd_info *sp)         {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_contrast]);               else return(NULL);}
+static GtkWidget *w_snd_revscl(snd_info *sp)           {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_revscl]);                 else return(NULL);}
+static GtkWidget *w_snd_revlen(snd_info *sp)           {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_revlen]);                 else return(NULL);}
+static GtkWidget *w_snd_minibuffer(snd_info *sp)       {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_info]);                   else return(NULL);}
+static GtkWidget *w_snd_minibuffer_label(snd_info *sp) {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_info_label]);             else return(NULL);}
+static GtkWidget *w_snd_amp_number(snd_info *sp)       {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_amp_number]);             else return(NULL);}
+static GtkWidget *w_snd_srate_number(snd_info *sp)     {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_srate_number]);           else return(NULL);}
+static GtkWidget *w_snd_srate_pix(snd_info *sp)        {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_srate_pix]);              else return(NULL);}
+static GtkWidget *w_snd_expand_number(snd_info *sp)    {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_expand_number]);          else return(NULL);}
+static GtkWidget *w_snd_expand_button(snd_info *sp)    {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_expand_button]);          else return(NULL);}
+static GtkWidget *w_snd_contrast_number(snd_info *sp)  {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_contrast_number]);        else return(NULL);}
+static GtkWidget *w_snd_contrast_button(snd_info *sp)  {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_contrast_button]);        else return(NULL);}
+static GtkWidget *w_snd_revscl_number(snd_info *sp)    {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_revscl_number]);          else return(NULL);}
+static GtkWidget *w_snd_revlen_number(snd_info *sp)    {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_revlen_number]);          else return(NULL);}
+static GtkWidget *w_snd_reverb_button(snd_info *sp)    {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_reverb_button]);          else return(NULL);}
+static GtkWidget *w_snd_apply(snd_info *sp)            {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_apply]);                  else return(NULL);}
+static GtkWidget *w_snd_filter_order(snd_info *sp)     {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_filter_order]);           else return(NULL);}
+static GtkWidget *w_snd_filter(snd_info *sp)           {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_filter]);                 else return(NULL);}
+static GtkWidget *w_snd_filter_button(snd_info *sp)    {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_filter_button]);          else return(NULL);}
+static GtkWidget *w_snd_filter_dB(snd_info *sp)        {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_filter_dB]);              else return(NULL);}
+static GtkWidget *w_snd_name_pix(snd_info *sp)         {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_name_pix]);               else return(NULL);}
+static GtkWidget *w_snd_minibuffer_sep(snd_info *sp)   {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_info_sep]);               else return(NULL);}
+static GtkWidget *w_snd_sync(snd_info *sp)             {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_sync]);                   else return(NULL);}
 
-static GtkObject *w_amp_adj(snd_info *sp) {return(((snd_context *)(sp->sgx))->snd_adjs[W_amp_adj]);}
-static GtkObject *w_srate_adj(snd_info *sp) {return(((snd_context *)(sp->sgx))->snd_adjs[W_srate_adj]);}
-static GtkObject *w_expand_adj(snd_info *sp) {return(((snd_context *)(sp->sgx))->snd_adjs[W_expand_adj]);}
-static GtkObject *w_contrast_adj(snd_info *sp) {return(((snd_context *)(sp->sgx))->snd_adjs[W_contrast_adj]);}
-static GtkObject *w_revscl_adj(snd_info *sp) {return(((snd_context *)(sp->sgx))->snd_adjs[W_revscl_adj]);}
-static GtkObject *w_revlen_adj(snd_info *sp) {return(((snd_context *)(sp->sgx))->snd_adjs[W_revlen_adj]);}
+static GtkObject *w_amp_adj(snd_info *sp)       {return(((snd_context *)(sp->sgx))->snd_adjs[W_amp_adj]);}
+static GtkObject *w_srate_adj(snd_info *sp)     {return(((snd_context *)(sp->sgx))->snd_adjs[W_srate_adj]);}
+static GtkObject *w_expand_adj(snd_info *sp)    {return(((snd_context *)(sp->sgx))->snd_adjs[W_expand_adj]);}
+static GtkObject *w_contrast_adj(snd_info *sp)  {return(((snd_context *)(sp->sgx))->snd_adjs[W_contrast_adj]);}
+static GtkObject *w_revscl_adj(snd_info *sp)    {return(((snd_context *)(sp->sgx))->snd_adjs[W_revscl_adj]);}
+static GtkObject *w_revlen_adj(snd_info *sp)    {return(((snd_context *)(sp->sgx))->snd_adjs[W_revlen_adj]);}
 
 
 /* -------- PIXMAPS -------- */
@@ -1274,29 +1274,8 @@ snd_info *add_sound_window(char *filename, snd_state *ss)
   /* these dimensions are used to try to get a reasonable channel graph size without falling off the screen bottom */
   int samples_per_channel;
   snd_context *sx;
-#if FILE_PER_CHAN
-  dir *file_chans = NULL;
-  int *chan_locs;
-  multifile_info *minfo;
-#endif
   errno = 0;
-#if FILE_PER_CHAN
-  if (is_directory(filename))
-    {
-      minfo = sort_multifile_channels(ss,filename);
-      file_chans = minfo->file_chans;
-      chan_locs = minfo->chan_locs;
-      hdr = minfo->hdr;
-      FREE(minfo);
-    }
-  else
-    {
-      hdr = make_file_info(filename,ss);
-      if (hdr) hdr->chan_type = FILE_PER_SOUND; else return(NULL);
-    }
-#else
   hdr = make_file_info(filename,ss);
-#endif
   if (!hdr) return(NULL);
   if (ss->pending_change) 
     {
@@ -1325,22 +1304,6 @@ snd_info *add_sound_window(char *filename, snd_state *ss)
   ss->sounds[snd_slot] = make_snd_info(ss->sounds[snd_slot],ss,filename,hdr,snd_slot);
   sp = ss->sounds[snd_slot];
   sp->inuse = 1;
-#if FILE_PER_CHAN
-  sp->chan_type = hdr->chan_type;
-  if (sp->chan_type == FILE_PER_CHANNEL)
-    {
-      sp->channel_filenames = (char **)CALLOC(hdr->chans,sizeof(char *));
-      for (i=0;i<hdr->chans;i++)
-	{
-	  sp->channel_filenames[i] = (char *)CALLOC(MUS_MAX_FILE_NAME,sizeof(char));
-	  sprintf(sp->channel_filenames[i],"%s/%s",filename,file_chans->files[chan_locs[i]]);
-	}
-      FREE(chan_locs);
-      chan_locs = NULL;
-      free_dir(file_chans);
-      file_chans = NULL;
-    }
-#endif
   sx = sp->sgx;
   sx->controls_fixed = 0;
   sx->file_pix = blank;

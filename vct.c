@@ -19,7 +19,7 @@
  *   (vct-set! v index val)                v[index] = val
  *   (vct-copy v)                          return a copy of v
  *   (vct-length v)                        return length of v
- *   (vct-add! v1 v2)                      v1[i] = v1[i] + v2[i] -> v1
+ *   (vct-add! v1 v2 &opt (offset 0))      v1[i+offset] = v1[i+offset] + v2[i] -> v1
  *   (vct-subtract! v1 v2)                 v1[i] = v1[i] - v2[i] -> v1
  *   (vct-offset! v1 scl)                  v1[i] += scl -> v1
  *   (vct-multiply! v1 v2)                 v1[i] *= v2[i] -> v1
@@ -301,10 +301,10 @@ static SCM vct_multiply(SCM obj1, SCM obj2)
   return(scm_return_first(obj1,obj2)); /* I wonder if this is necessary */
 }
 
-static SCM vct_add(SCM obj1, SCM obj2)
+static SCM vct_add(SCM obj1, SCM obj2, SCM offs)
 {
-  #define H_vct_addB "(" S_vct_addB " v1 v2) -> v1 with element-wise add of vcts v1 and v2:\n   v1[i] += v2[i]"
-  int i,lim;
+  #define H_vct_addB "(" S_vct_addB " v1 v2 &optional (offset 0)) -> v1 with element-wise add of vcts v1 and v2:\n   v1[i+offset] += v2[i]"
+  int i,lim,j;
   vct *v1,*v2;
   SCM_ASSERT(vct_p(obj1),obj1,SCM_ARG1,S_vct_addB);
   SCM_ASSERT(vct_p(obj2),obj2,SCM_ARG2,S_vct_addB);
@@ -313,7 +313,12 @@ static SCM vct_add(SCM obj1, SCM obj2)
   if ((v1) && (v2))
     {
       lim = MIN(v1->length,v2->length);
-      for (i=0;i<lim;i++) v1->data[i] += v2->data[i];
+      if (SCM_INUMP(offs))
+	for (i=0,j=SCM_INUM(offs);i<lim;i++,j++) 
+	  v1->data[j] += v2->data[i];
+      else
+	for (i=0;i<lim;i++) 
+	  v1->data[i] += v2->data[i];
     }
   return(scm_return_first(obj1,obj2));
 }
@@ -323,8 +328,8 @@ static SCM vct_subtract(SCM obj1, SCM obj2)
   #define H_vct_subtractB "(" S_vct_subtractB " v1 v2) -> v1 with element-wise subtract of vcts v1 and v2:\n   v1[i] -= v2[i]"
   int i,lim;
   vct *v1,*v2;
-  SCM_ASSERT(vct_p(obj1),obj1,SCM_ARG1,S_vct_addB);
-  SCM_ASSERT(vct_p(obj2),obj2,SCM_ARG2,S_vct_addB);
+  SCM_ASSERT(vct_p(obj1),obj1,SCM_ARG1,S_vct_subtractB);
+  SCM_ASSERT(vct_p(obj2),obj2,SCM_ARG2,S_vct_subtractB);
   v1 = get_vct(obj1);
   v2 = get_vct(obj2);
   if ((v1) && (v2))
@@ -609,7 +614,7 @@ void init_vct(void)
   DEFINE_PROC(gh_new_procedure2_0(S_vct_multiplyB, vct_multiply),  H_vct_multiplyB);
   DEFINE_PROC(gh_new_procedure2_0(S_vct_scaleB,    vct_scale),     H_vct_scaleB);
   DEFINE_PROC(gh_new_procedure2_0(S_vct_fillB,     vct_fill),      H_vct_fillB);
-  DEFINE_PROC(gh_new_procedure2_0(S_vct_addB,      vct_add),       H_vct_addB);
+  DEFINE_PROC(gh_new_procedure2_1(S_vct_addB,      vct_add),       H_vct_addB);
   DEFINE_PROC(gh_new_procedure2_0(S_vct_subtractB, vct_subtract),  H_vct_subtractB);
   DEFINE_PROC(gh_new_procedure2_0(S_vct_offsetB,   vct_offset),    H_vct_offsetB);
   DEFINE_PROC(gh_new_procedure2_0(S_vct_mapB,      vct_map),       H_vct_mapB);

@@ -1,5 +1,16 @@
 snd change log
 
+  23-Oct:    interface to mixes changed:
+               mix consoles are now in a separate dialog, each mix displayed with a tag and its waveform.
+               removed mix-console-state, mix-console-state-changed-hook, show-mix-consoles.
+               removed mix-console-amp-scaler, mix-console-speed-scaler, mix-waveform-color.
+               changed mix-console-y to mix-tag-y, Show Consoles menu item to Mix Panel.
+               changed with-mix-consoles to with-mix-tags, mix-focus-color to selected-mix-color.
+               show-mix-waveforms default is #t.
+               removed snd-gtkfixed.*.
+               added mix-tag-width and height, mix-panel.
+             removed .sndrc and other related stuff.
+             removed Show Marks menu item.
   16-Oct:    snd 4.7.  
              added optional environ arg to loop-samples and clm example to grfsnd.html.
   11-Oct:    added delete button in envelope editor.

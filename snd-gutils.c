@@ -447,14 +447,6 @@ void color_data(snd_state *ss, GdkColor *color)
   gdk_gc_set_background(sx->erase_gc,color);
 }
 
-void color_mix_waveform(snd_state *ss, GdkColor *color)
-{
-  state_context *sx;
-  sx = ss->sgx;
-  sx->mix_waveform_color = color;
-  gdk_gc_set_foreground(sx->mix_gc,color);
-}
-
 void color_selected_data(snd_state *ss, GdkColor *color)
 {
   state_context *sx;
@@ -462,6 +454,23 @@ void color_selected_data(snd_state *ss, GdkColor *color)
   sx->selected_data_color = color;
   gdk_gc_set_foreground(sx->selected_basic_gc,color);
   gdk_gc_set_background(sx->selected_erase_gc,color);
+}
+
+void set_mix_color(snd_state *ss, GdkColor *color)
+{
+  state_context *sx;
+  sx = ss->sgx;
+  sx->mix_color = color;
+  gdk_gc_set_foreground(sx->mix_gc,color);
+}
+
+
+void set_selected_mix_color(snd_state *ss, GdkColor *color)
+{
+  state_context *sx;
+  sx = ss->sgx;
+  sx->selected_mix_color = color;
+  gdk_gc_set_foreground(sx->selected_mix_gc,color);
 }
 
 void recolor_graph(chan_info *cp, int selected)

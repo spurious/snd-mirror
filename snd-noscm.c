@@ -275,7 +275,7 @@ static env *scan_envelope(char *str)
 }
 
 env *string2env(char *str) {return(scan_envelope(str));}
-/* Float string2Float(char *str) {return(fstr(str));} */
+Float string2Float(char *str) {return(fstr(str));}
 int string2int(char *str) {return(istr(str));}
 /* char *string2string(char *str) {return(copy_string(str));} */
 
@@ -436,7 +436,6 @@ static int handle_set(snd_state *ss, char *tok, char **str)
   if (strcmp(tok,"set-" S_reverbing) == 0) {sp = get_sp(ss,str[2]); if (sp) toggle_reverb_button(sp,istr(str[1])); isym(ss,0); return(0);}
   if (strcmp(tok,"set-" S_show_fft_peaks) == 0) {set_show_fft_peaks(ss,istr(str[1])); isym(ss,0); return(0);}
   if (strcmp(tok,"set-" S_show_marks) == 0) {set_show_marks(ss,istr(str[1])); isym(ss,0); return(0);}
-  if (strcmp(tok,"set-" S_show_mix_consoles) == 0) {set_show_mix_consoles(ss,istr(str[1])); isym(ss,0); return(0);}
   if (strcmp(tok,"set-" S_show_selection_transform) == 0) {set_show_selection_transform(ss,istr(str[1])); isym(ss,0); return(0);}
   if (strcmp(tok,"set-" S_show_usage_stats) == 0) {set_show_usage_stats(ss,istr(str[1])); isym(ss,0); return(0);}
   if (strcmp(tok,"set-" S_show_y_zero) == 0) {set_show_y_zero(ss,istr(str[1])); isym(ss,0); return(0);}
@@ -505,7 +504,7 @@ static int handle_set(snd_state *ss, char *tok, char **str)
       isym(ss,0); 
       return(0);
     }
-  if (strcmp(tok,"set-" S_with_mix_consoles) == 0) {set_with_mix_consoles(ss,istr(str[1])); isym(ss,0); return(0);}
+  if (strcmp(tok,"set-" S_with_mix_tags) == 0) {set_with_mix_tags(ss,istr(str[1])); isym(ss,0); return(0);}
   if (strcmp(tok,"set-" S_x_axis_style) == 0) {in_set_x_axis_style(ss,istr(str[1])); isym(ss,0); return(0);}
   if (strcmp(tok,"set-" S_zoom_focus_style) == 0) {activate_focus_menu(ss,istr(str[1])); isym(ss,0); return(0);}
   if (strcmp(tok,"set-" S_amp) == 0) 
@@ -1043,12 +1042,6 @@ static int symit(snd_state *ss,char **str)
 	  isym(ss,0); 
 	  return(0);
 	}
-      if (strcmp(tok,S_select_mix) == 0)
-	{
-	  if (ss->selected_mix != NO_SELECTION) select_mix(ss,md_from_int(istr(str[1])));
-	  isym(ss,0); 
-	  return(0);
-	}
       if (strcmp(tok,S_select_region) == 0) 
 	{
 	  ival = istr(str[1]);
@@ -1076,7 +1069,6 @@ static int symit(snd_state *ss,char **str)
       if (strcmp(tok,S_show_fft_peaks) == 0) {isym(ss,show_fft_peaks(ss)); return(0);}
       if (strcmp(tok,S_show_listener) == 0) {if (ss->listening != LISTENER_OPEN) handle_listener(ss,LISTENER_OPEN); isym(ss,0); return(0);}
       if (strcmp(tok,S_show_marks) == 0) {isym(ss,show_marks(ss)); return(0);}
-      if (strcmp(tok,S_show_mix_consoles) == 0) {isym(ss,show_mix_consoles(ss)); return(0);}
       if (strcmp(tok,S_show_mix_waveforms) == 0) {isym(ss,show_mix_waveforms(ss)); return(0);}
       if (strcmp(tok,S_show_selection_transform) == 0) {isym(ss,show_selection_transform(ss)); return(0);}
       if (strcmp(tok,S_show_usage_stats) == 0) {isym(ss,show_usage_stats(ss)); return(0);}
@@ -1182,7 +1174,7 @@ static int symit(snd_state *ss,char **str)
       if (strcmp(tok,S_window_width) == 0) {isym(ss,widget_width(MAIN_SHELL(ss))); return(0);}
       if (strcmp(tok,S_window_x) == 0) {isym(ss,widget_x(MAIN_SHELL(ss))); return(0);}
       if (strcmp(tok,S_window_y) == 0) {isym(ss,widget_y(MAIN_SHELL(ss))); return(0);}
-      if (strcmp(tok,S_with_mix_consoles) == 0) {isym(ss,with_mix_consoles(ss)); return(0);}
+      if (strcmp(tok,S_with_mix_tags) == 0) {isym(ss,with_mix_tags(ss)); return(0);}
       break;
     case 'x':
       if (strcmp(tok,S_x_axis_style) == 0) {isym(ss,x_axis_style(ss)); return(0);}
@@ -1259,10 +1251,6 @@ void snd_load_file(char *filename)
 
 int dont_exit(snd_state *ss) {return(0);}
 int dont_start(snd_state *ss, char *filename) {return(0);}
-void call_mix_console_state_changed_hook(mixdata *md) {}
-int call_mix_speed_changed_hook(mixdata *md) {return(0);}
-int call_mix_amp_changed_hook(mixdata *md) {return(0);}
-int call_mix_position_changed_hook(mixdata *md, int samps) {return(0);}
 void during_open(int fd, char *file, int reason) {}
 void after_open(int index) {}
 

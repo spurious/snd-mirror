@@ -26,7 +26,8 @@
 ;;;       also mix-selection (from menu) is untested currently
 ;;;       set! of enved-active-env
 ;;;       formant-bank
-;;;       cscm test (i.e. dynamically loaded code)
+;;;       cscm + eff test (i.e. dynamically loaded code)
+;;;       mix-tag-width|height+mixes (also mix-amp or whatever with '() as mix indicator)
 
 
 (use-modules (ice-9 format) (ice-9 debug))
@@ -270,8 +271,7 @@
 	'show-fft-peaks (show-fft-peaks) #f 
 	'show-indices (show-indices) #f
 	'show-marks (show-marks) #t 
-	'show-mix-consoles (show-mix-consoles) #t
-	'show-mix-waveforms (show-mix-waveforms) #f 
+	'show-mix-waveforms (show-mix-waveforms) #t
 	'show-selection-transform (show-selection-transform) #f 
 	'show-usage-stats (show-usage-stats) #f
 	'show-y-zero (show-y-zero) #f 
@@ -308,9 +308,9 @@
 	'x-axis-style (x-axis-style) 0 
 	'zero-pad (zero-pad) 0
 	'zoom-focus-style (zoom-focus-style) 2 
-	'mix-console-amp-scaler (mix-console-amp-scaler) 1.0 
-	'mix-console-speed-scaler (mix-console-speed-scaler) 1.0
 	'mix-waveform-height (mix-waveform-height) 20 
+	'mix-tag-width (mix-tag-width) 6
+	'mix-tag-height (mix-tag-height) 14
 	'audio-output-device (audio-output-device) 0 
 	'selected-mix (selected-mix) -1
 	'prefix-arg (prefix-arg) 0
@@ -683,9 +683,9 @@
 	  (list 'max-fft-peaks max-fft-peaks 100 set-max-fft-peaks 10)
 	  (list 'max-regions max-regions 16 set-max-regions 6)
 	  (list 'min-dB min-dB -60.0 set-min-dB -90.0)
-	  (list 'mix-console-amp-scaler mix-console-amp-scaler 1.0 set-mix-console-amp-scaler 3.0)
-	  (list 'mix-console-speed-scaler mix-console-speed-scaler 1.0 set-mix-console-speed-scaler 3.0)
 	  (list 'mix-waveform-height mix-waveform-height 20 set-mix-waveform-height 40)
+	  (list 'mix-tag-height mix-tag-height 14 set-mix-tag-height 20)
+	  (list 'mix-tag-width mix-tag-width 6 set-mix-tag-width 20)
 	  (list 'movies movies #t set-movies #f)
 	  (list 'normalize-fft normalize-fft normalize-by-channel set-normalize-fft dont-normalize)
 	  (list 'normalize-on-open normalize-on-open #t set-normalize-on-open #f)
@@ -710,8 +710,7 @@
 	  (list 'show-fft-peaks show-fft-peaks #f set-show-fft-peaks #t)
 	  (list 'show-indices show-indices #f set-show-indices #t)
 	  (list 'show-marks show-marks #t set-show-marks #f)
-	  (list 'show-mix-consoles show-mix-consoles #t set-show-mix-consoles #f)
-	  (list 'show-mix-waveforms show-mix-waveforms #f set-show-mix-waveforms #t)
+	  (list 'show-mix-waveforms show-mix-waveforms #t set-show-mix-waveforms #f)
 	  (list 'show-selection-transform show-selection-transform #f set-show-selection-transform #t)
 	  (list 'show-y-zero show-y-zero #f set-show-y-zero #t)
 	  (list 'sinc-width sinc-width 10 set-sinc-width 40)
@@ -1457,9 +1456,8 @@
 	(list 'highlight-color highlight-color set-highlight-color ivory1)
 	(list 'listener-color listener-color set-listener-color alice-blue)
 	(list 'mark-color mark-color set-mark-color red)
-	(list 'mix-color mix-color set-mix-color light-green)
-	(list 'mix-focus-color mix-focus-color set-mix-focus-color green2)
-	(list 'mix-waveform-color mix-waveform-color set-mix-waveform-color dark-gray)
+	(list 'mix-color mix-color set-mix-color dark-gray)
+	(list 'selected-mix-color selected-mix-color set-selected-mix-color light-green)
 	(list 'position-color position-color set-position-color ivory3)
 	(list 'pushed-button-color pushed-button-color set-pushed-button-color lightsteelblue1)
 	(list 'selected-data-color selected-data-color set-selected-data-color black)
@@ -2601,15 +2599,6 @@
       ))
 
 
-;;; mixes
-(define mix-console-state->string 
-  (lambda (n) 
-    (if (= n 0) "MD_CS" 
-	(if (= n 1) "MD_TITLE" 
-	    (if (= n 2) "MD_M"
-		"MD_X")))))
-
-
 ;;; ---------------- test 9: mix ----------------
 (if (or full-test (= snd-test 9))
     (begin
@@ -2629,7 +2618,6 @@
 		(snd (mix-sound-index mix-id))
 		(chn (mix-sound-channel mix-id))
 		(chns (mix-chans mix-id))
-		(state (mix-console-state mix-id))
 		(amp (mix-amp mix-id 0))
 		(mr (make-mix-sample-reader mix-id)))
 	    (if (not (mix-sample-reader? mr)) (snd-print (format #f ";~A not mix-sample-reader?" mr)))
@@ -2647,7 +2635,6 @@
 	    (if (not (= snd new-index)) (snd-print (format #f ";mix-sound-index: ~A?" snd)))		
 	    (if (not (= chn 0)) (snd-print (format #f ";mix-sound-channel: ~A?" chn)))
 	    (if (not (= chns 1)) (snd-print (format #f ";mix-chans: ~A?" chn)))
-	    (if (and (not (= state 2)) (not (= state 1))) (snd-print (format #f ";mix-console-state: ~A?" (mix-console-state->string state))))
 	    (if (fneq amp 1.0) (snd-print (format #f ";mix-amp: ~A?" amp)))
 	    (if (fneq spd 1.0) (snd-print (format #f ";mix-speed: ~A?" spd)))
 	    (play-mix mix-id) 
@@ -2656,25 +2643,22 @@
 	    (set! (mix-amp mix-id 0) 0.5) 
 	    (set! (mix-speed mix-id) 2.0) 
 	    (set! (mix-track mix-id) 3) 
-	    (set! (mix-console-state mix-id) 2) 
 	    (set! (mix-anchor mix-id) 30) 
 	    (set! (mix-amp-env mix-id 0) '(0.0 0.0 1.0 1.0)) 
-	    (set! (mix-console-y mix-id) 20) 
+	    (set! (mix-tag-y mix-id) 20) 
 	    (let ((pos (mix-position mix-id))
 		  (spd (mix-speed mix-id))
 		  (trk (mix-track mix-id))
 		  (amp (mix-amp mix-id 0))
 		  (nam (mix-name mix-id))
-		  (state (mix-console-state mix-id))
-		  (my (mix-console-y mix-id))
+		  (my (mix-tag-y mix-id))
 		  (anc (mix-anchor mix-id)))
 	      (if (not (= pos 200)) (snd-print (format #f ";set-mix-position: ~A?" pos)))
-	      (if (not (= my 20)) (snd-print (format #f ";set-mix-console-y: ~A?" my)))
+	      (if (not (= my 20)) (snd-print (format #f ";set-mix-tag-y: ~A?" my)))
 	      (if (not (= trk 3)) (snd-print (format #f ";set-mix-track: ~A?" trk)))
 	      (if (fneq amp 0.5) (snd-print (format #f ";set-mix-amp: ~A?" amp)))
 	      (if (fneq spd 2.0) (snd-print (format #f ";set-mix-speed: ~A?" spd)))
 	      (if (not (= anc 30)) (snd-print (format #f ";set-mix-anchor: ~A?" anc)))
-	      (if (not (= state 2)) (snd-print (format #f ";set-mix-console-state: ~A?" (mix-console-state->string state))))
 	      (if (not (equal? (mix-amp-env mix-id 0) '(0.0 0.0 1.0 1.0))) (snd-print (format #f ";set-mix-amp-env: ~A?" (mix-amp-env mix-id 0))))
 	      (if (not (string=? nam "asdf")) (snd-print (format #f ";set-mix-name: ~A?" nam)))
 	      (if (= mix-id (selected-mix)) (snd-print (format #f ";selected-mix: ~A?" mix-id)))
@@ -3990,8 +3974,7 @@
 		    (list 'show-fft-peaks #f #f set-show-fft-peaks #t)
 		    (list 'show-indices #f #f set-show-indices #t)
 		    (list 'show-marks #f #f set-show-marks #t)
-		    (list 'show-mix-consoles #f #f set-show-mix-consoles #t)
-		    (list 'show-mix-waveforms #f #f set-show-mix-waveforms #t)
+		    (list 'show-mix-waveforms #t #f set-show-mix-waveforms #t)
 		    (list 'show-selection-transform #f #f set-show-selection-transform #t)
 		    (list 'show-y-zero #f #f set-show-y-zero #t)
 		    (list 'sinc-width #f 4 set-sinc-width 100)
@@ -4046,25 +4029,25 @@
 
 (define funcs (list wavo wavo-hop wavo-trace line-size max-fft-peaks show-fft-peaks zero-pad fft-style fft-window 
 		    verbose-cursor fft-log-frequency fft-log-magnitude min-dB wavelet-type fft-size fft-beta transform-type 
-		    normalize-fft show-mix-consoles show-mix-waveforms graph-style dot-size show-axes 
+		    normalize-fft show-mix-waveforms graph-style dot-size show-axes 
 		    spectro-x-angle spectro-x-scale spectro-y-angle spectro-y-scale spectro-z-angle spectro-z-scale
 		    spectro-hop spectro-cutoff spectro-start graphs-horizontal
 		    ))
 (define set-funcs (list set-wavo set-wavo-hop set-wavo-trace set-line-size set-max-fft-peaks set-show-fft-peaks set-zero-pad set-fft-style set-fft-window 
 		    set-verbose-cursor set-fft-log-frequency set-fft-log-magnitude set-min-dB set-wavelet-type set-fft-size set-fft-beta set-transform-type 
-		    set-normalize-fft set-show-mix-consoles set-show-mix-waveforms set-graph-style set-dot-size set-show-axes 
+		    set-normalize-fft set-show-mix-waveforms set-graph-style set-dot-size set-show-axes 
 		    set-spectro-x-angle set-spectro-x-scale set-spectro-y-angle set-spectro-y-scale set-spectro-z-angle set-spectro-z-scale
 		    set-spectro-hop set-spectro-cutoff set-spectro-start set-graphs-horizontal
 		    ))
 (define func-names (list 'wavo 'wavo-hop 'wavo-trace 'line-size 'max-fft-peaks 'show-fft-peaks 'zero-pad 'fft-style 'fft-window
 			 'verbose-cursor 'fft-log-frequency 'fft-log-magnitude 'min-dB 'wavelet-type 'fft-size 'fft-beta 'transform-type
-			 'normalize-fft 'show-mix-consoles 'show-mix-waveforms 'graph-style 'dot-size 'show-axes 
+			 'normalize-fft 'show-mix-waveforms 'graph-style 'dot-size 'show-axes 
 			 'spectro-x-angle 'spectro-x-scale 'spectro-y-angle 'spectro-y-scale 'spectro-z-angle 'spectro-z-scale
 			 'spectro-hop 'spectro-cutoff 'spectro-start 'graphs-horizontal
 			 ))
 (define new-values (list #t 12 512 1024 3 #t 32 sonogram cauchy-window
 			 #t #t #t -120.0 3 32 .5 autocorrelation
-			 0 #f #t graph-lollipops 8 show-no-axes
+			 0 #t graph-lollipops 8 show-no-axes
 			 32.0 .5 32.0 .5 32.0 .5
 			 14 .3 .1 #f
 			 ))

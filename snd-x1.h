@@ -128,7 +128,7 @@ Widget edit_find_menu(void);
 Widget edit_select_all_menu(void);
 Widget edit_header_menu(void);
 Widget view_normalize_menu(void);
-Widget view_consoles_menu(void);
+Widget view_mix_panel_menu(void);
 Widget view_region_menu(void);
 Widget view_combine_separate_menu(void);
 Widget view_combine_combined_menu(void);
@@ -138,7 +138,6 @@ Widget view_dots_menu(void);
 Widget view_dots_and_lines_menu(void);
 Widget view_filled_menu(void);
 Widget view_lollipops_menu(void);
-Widget view_marks_menu(void);
 Widget view_zero_menu(void);
 Widget view_ctrls_menu(void);
 Widget view_listener_menu(void);
@@ -303,7 +302,8 @@ void color_data(snd_state *ss, Pixel color);
 void color_selected_data(snd_state *ss, Pixel color);
 void color_graph(snd_state *ss, Pixel color);
 void color_selected_graph(snd_state *ss, Pixel color);
-void color_mix_waveform(snd_state *ss, Pixel color);
+void set_mix_color(snd_state *ss, Pixel color);
+void set_selected_mix_color(snd_state *ss, Pixel color);
 void recolor_graph(chan_info *cp, int selected);
 void reflect_resize(snd_state *ss);
 void set_sensitive(Widget wid, int val);
@@ -321,6 +321,8 @@ void set_widget_size(Widget w, int width, int height);
 void set_widget_position(Widget w, int x, int y);
 void set_pixmap(Widget w, Pixmap pix, void *ignore);
 void fixup_axis_context(axis_context *ax, Widget w, GC gc);
+Pixmap make_pixmap(snd_state *ss, unsigned char *bits, int width, int height, int depth, GC gc);
+
 
 
 /* -------- snd-xchn.c -------- */
@@ -419,6 +421,7 @@ void hide_controls(snd_state *ss);
 void start_progress_report(snd_info *sp, int from_enved);
 void finish_progress_report(snd_info *sp, int from_enved);
 void progress_report(snd_info *sp, char *funcname, int curchan, int chans, Float pct, int from_enved);
+XmString initial_speed_label(snd_state *ss);
 
 
 /* -------- snd-xfile.c -------- */
@@ -451,7 +454,7 @@ file_info *get_reasonable_file_info(char *filename, snd_state *ss, file_info *hd
 void File_Mix_Callback(Widget w,XtPointer clientData,XtPointer callData);
 void edit_header(snd_info *sp);
 #if HAVE_GUILE
-  void g_initialize_xgfile(snd_state *ss, SCM local_doc);
+  void g_initialize_xgfile(SCM local_doc);
 #endif
 
 
@@ -491,37 +494,11 @@ void reflect_mix_in_enved(void);
 
 /* -------- snd-xmix.c -------- */
 
-Pixmap make_pixmap(snd_state *ss, unsigned char *bits, int width, int height, int depth, GC gc);
-void release_mixmark_widgets(mixmark *m);
-void select_mix(snd_state *ss, mixdata *md);
-void color_selected_mix(snd_state *ss);
-void color_unselected_mixes(snd_state *ss);
-void color_one_mix(mixdata *md, Pixel color);
-int color_mix(mixdata *md, void *ptr);
-void reflect_mix_stop_playing(snd_state *ss, mixmark *m);
-void set_mix_console_amp_scaler(Float amp);
-Float get_mix_console_amp_scaler(void);
-void set_mix_console_speed_scaler(Float amp);
-Float get_mix_console_speed_scaler(void);
-void mix_set_title_beg(mixdata *md, mixmark *m);
-void reamp(mixdata *md, int chan, Float amp);
-void respeed(mixdata *md, Float spd);
-void fixup_mixmark(mixdata *md);
-int mix_dragging(void);
-void set_mix_track_button_color(mixdata *md, int track);
-void move_mixmark(mixmark *m, int x, int y);
-void move_mix_x(mixmark *m, int xspot);
-void move_mix_y(mixmark *m, int yspot);
-void use_mixmark(mixdata *md, int x, int y);
-void mix_set_minimal_title(mixdata *md, mixmark *m);
-void mix_set_title_name(mixdata *md, mixmark *m);
-void mix_set_console(mixdata *md, mixmark *m);
-void mix_open_console(mixmark *m);
-void mix_close_console(mixmark *m);
-void mix_open_title(mixmark *m);
-void mix_close_title(mixmark *m);
-int move_mix_console(mixmark *m, int *nx);
-void mix_raise_console(mixmark *m);
+void reflect_mix_in_mix_panel(int mix_id);
+void make_mix_panel(snd_state *ss);
+int mix_play_stopped(void);
+void reflect_mix_play_stop(void);
+
 
 
 /* -------- snd-xrec.c -------- */

@@ -2,6 +2,7 @@
 
 /* TODO  make this editor viewable as the "lisp" graph section of each channel
  * TODO  or make it overlayable on the channel wave/fft/lisp data => edit
+ * TODO  add self-test sequence (need this for most dialogs)
  */
 
 /* envelope editor and viewer */
@@ -127,9 +128,8 @@ static void Help_Enved_Callback(Widget w,XtPointer clientData,XtPointer callData
 
 static void apply_enved(snd_state *ss)
 {
-  int mix_id=0,i,j;
+  int mix_id=0,i,j,chan;
   env *max_env = NULL;
-  mixdata *md;
   snd_info *sp;
   if (active_env)
     {
@@ -138,12 +138,10 @@ static void apply_enved(snd_state *ss)
 	  if (ss->selected_mix != NO_SELECTION)
 	    mix_id = ss->selected_mix;
 	  else mix_id = any_mix_id();
-	  md = md_from_int(mix_id);
-	  if (md) 
-	    {
-	      sp = make_mix_readable(md);
-	      active_channel = sp->chans[((md->selected_chan != NO_SELECTION) ? (md->selected_chan) : 0)];
-	    }
+	  chan = mix_selected_channel(mix_id);
+	  sp = make_mix_readable_from_id(mix_id);
+	  if (sp)
+	    active_channel = sp->chans[(chan != NO_SELECTION) ? chan : 0];
 	}
       else active_channel = current_channel(ss);
       if (active_channel)
@@ -591,7 +589,7 @@ static void mix_button_pressed(Widget w, XtPointer clientData,XtPointer callData
   XmPushButtonCallbackStruct *cb = (XmPushButtonCallbackStruct *)callData;
   XButtonEvent *ev;
   int chan = 0;
-  mixdata *md = NULL;
+  int mxchan,mix_id=NO_SELECTION;
   ev = (XButtonEvent *)(cb->event);
   apply_to_mix = (!apply_to_mix);
   if (apply_to_mix) 
@@ -601,19 +599,20 @@ static void mix_button_pressed(Widget w, XtPointer clientData,XtPointer callData
       if (ev->state & snd_ControlMask) 
 	{
 	  if (ss->selected_mix != NO_SELECTION) 
-	    md = md_from_int(ss->selected_mix); 
+	    mix_id = ss->selected_mix; 
 	  else
 	    {
-	      md = md_from_int(any_mix_id());
-	      if (md) select_mix(ss,md);
+	      mix_id = any_mix_id();
+	      if (mix_id != NO_SELECTION) select_mix_from_id(mix_id);
 	    }
-	  if (md)
+	  if (mix_id != NO_SELECTION)
 	    {
-	      if (md->selected_chan != NO_SELECTION) chan = md->selected_chan;
-	      if (mix_amp_env(md->id,chan))
+	      mxchan = mix_selected_channel(mix_id);
+	      if (mxchan != NO_SELECTION) chan = mxchan;
+	      if (mix_amp_env_from_id(mix_id,chan))
 		{
 		  if (active_env) active_env = free_env(active_env);
-		  active_env = copy_env(mix_amp_env(md->id,chan));
+		  active_env = copy_env(mix_amp_env_from_id(mix_id,chan));
 		  set_enved_env_list_top(0);
 		  do_env_edit(active_env,TRUE);
 		  set_sensitive(undoB,FALSE);

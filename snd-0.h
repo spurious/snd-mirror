@@ -100,6 +100,8 @@ enum {AMPLITUDE_ENV,SPECTRUM_ENV,SRATE_ENV};
 #define NO_COMPLETER -1
 #define NO_SELECTION -1
 #define NO_END_SPECIFIED -1
+#define NO_MIX_TAG -1
+#define INVALID_MIX_ID -1
 
 #define NOT_IN_BACKGROUND 0
 #define IN_BACKGROUND 1
@@ -149,8 +151,6 @@ enum {DONT_NORMALIZE,NORMALIZE_BY_CHANNEL,NORMALIZE_BY_SOUND,NORMALIZE_GLOBALLY}
 enum {X_IN_SECONDS,X_IN_SAMPLES,X_TO_ONE,X_IN_LENGTH};
 enum {SPEED_AS_FLOAT,SPEED_AS_RATIO,SPEED_AS_SEMITONE};
 
-enum {MD_CS,MD_TITLE,MD_M};
-
 enum {CURSOR_IN_VIEW,CURSOR_ON_LEFT,CURSOR_ON_RIGHT,CURSOR_IN_MIDDLE,
       CURSOR_UPDATE_DISPLAY,CURSOR_NO_ACTION,CURSOR_CLAIM_SELECTION,KEYBOARD_NO_ACTION,NO_ACTION};
 
@@ -170,7 +170,6 @@ enum {NOT_FILING,INPUT_FILING,REGION_FILING,CHANNEL_FILING,TEMP_FILING,CHANGE_FI
 enum {APPLY_TO_SOUND,APPLY_TO_CHANNEL,APPLY_TO_SELECTION};
 enum {LISTENER_CLOSED,LISTENER_OPEN,LISTENER_LISTENING};
 enum {ALPHABET,VALS_GREATER,VALS_LESS};
-enum {FILE_PER_SOUND,FILE_PER_CHANNEL};
 enum {FCP_X_ANGLE,FCP_X_SCALE,FCP_Y_ANGLE,FCP_Y_SCALE,FCP_Z_ANGLE,FCP_Z_SCALE,FCP_CUTOFF,FCP_START,FCP_BETA};
 enum {SCAN_CURRENT_CHAN,SCAN_SOUND_CHANS,SCAN_SYNCD_CHANS,SCAN_ALL_CHANS};
 
@@ -468,9 +467,9 @@ enum {SCAN_CURRENT_CHAN,SCAN_SOUND_CHANS,SCAN_SYNCD_CHANS,SCAN_ALL_CHANS};
 #define in_set_show_selection_transform(ss,a) ss->Show_Selection_Transform = a
 #define DEFAULT_SHOW_SELECTION_TRANSFORM 0
 
-#define with_mix_consoles(ss) ss->With_Mix_Consoles
-#define set_with_mix_consoles(ss,a) ss->With_Mix_Consoles = a
-#define DEFAULT_WITH_MIX_CONSOLES 1
+#define with_mix_tags(ss) ss->With_Mix_Tags
+#define set_with_mix_tags(ss,a) ss->With_Mix_Tags = a
+#define DEFAULT_WITH_MIX_TAGS 1
 
 #define wavo_hop(ss) ss->Wavo_Hop
 #define in_set_wavo_hop(ss,a) ss->Wavo_Hop = a
@@ -512,13 +511,9 @@ enum {SCAN_CURRENT_CHAN,SCAN_SOUND_CHANS,SCAN_SYNCD_CHANS,SCAN_ALL_CHANS};
 #define in_set_show_usage_stats(ss,a) ss->Show_Usage_Stats = a
 #define DEFAULT_SHOW_USAGE_STATS 0
 
-#define show_mix_consoles(ss) ss->Show_Mix_Consoles
-#define in_set_show_mix_consoles(ss,a) ss->Show_Mix_Consoles = a
-#define DEFAULT_SHOW_MIX_CONSOLES 1
-
 #define show_mix_waveforms(ss) ss->Show_Mix_Waveforms
 #define in_set_show_mix_waveforms(ss,a) ss->Show_Mix_Waveforms = a
-#define DEFAULT_SHOW_MIX_WAVEFORMS 0
+#define DEFAULT_SHOW_MIX_WAVEFORMS 1
 
 #define mix_waveform_height(ss) ss->Mix_Waveform_Height
 #define in_set_mix_waveform_height(ss,a) ss->Mix_Waveform_Height = a
@@ -638,9 +633,13 @@ enum {SCAN_CURRENT_CHAN,SCAN_SOUND_CHANS,SCAN_SYNCD_CHANS,SCAN_ALL_CHANS};
 #define in_set_graphs_horizontal(ss,a) ss->Graphs_Horizontal = a
 #define DEFAULT_GRAPHS_HORIZONTAL 1
 
-#if NONINTERLEAVED_AUDIO
-  #define DEFAULT_AUDIO_HW_CHANNELS 2
-#endif
+#define mix_tag_width(ss) ss->Mix_Tag_Width
+#define set_mix_tag_width(ss,a) ss->Mix_Tag_Width = a
+#define DEFAULT_MIX_TAG_WIDTH 6
+
+#define mix_tag_height(ss) ss->Mix_Tag_Height
+#define set_mix_tag_height(ss,a) ss->Mix_Tag_Height = a
+#define DEFAULT_MIX_TAG_HEIGHT 14
 
 #endif
 

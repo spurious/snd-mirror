@@ -32,10 +32,9 @@
 #define ZOOM_COLOR           "ivory4"
 #define CURSOR_COLOR         "red"
 #define SELECTION_COLOR      "lightsteelblue1"
-#define MIX_COLOR            "lightgreen"
-#define MIX_FOCUS_COLOR      "yellow2"
+#define SELECTED_MIX_COLOR   "lightgreen"
 #define ENVED_WAVEFORM_COLOR "blue"
-#define MIX_WAVEFORM_COLOR   "darkgray"
+#define MIX_COLOR            "darkgray"
 #define GRAPH_COLOR          "white"
 #define SELECTED_GRAPH_COLOR "white"
 #define DATA_COLOR           "black"
@@ -129,7 +128,7 @@ typedef struct {
   char *cursor_color;
   char *selection_color;
   char *mix_color;
-  char *mix_focus_color;
+  char *selected_mix_color;
   char *text_focus_color;
   char *graph_color;
   char *selected_graph_color;
@@ -139,7 +138,6 @@ typedef struct {
   char *mark_color;
   char *pushed_button_color;
   char *enved_waveform_color;
-  char *mix_waveform_color;
   char *filter_waveform_color;
   char *sash_color;
   char *white_color;
@@ -189,7 +187,7 @@ static XtResource resources[] = {
   {"cursorcol" STR_OR,"Cursorcolor",XmRString,sizeof(char *),XtOffset(sndres *,cursor_color),XmRString,CURSOR_COLOR},
   {"selectioncol" STR_OR,"Selectioncolor",XmRString,sizeof(char *),XtOffset(sndres *,selection_color),XmRString,SELECTION_COLOR},
   {"mixcol" STR_OR,"Mixcolor",XmRString,sizeof(char *),XtOffset(sndres *,mix_color),XmRString,MIX_COLOR},
-  {"mixfocuscol" STR_OR,"Mixfocuscolor",XmRString,sizeof(char *),XtOffset(sndres *,mix_focus_color),XmRString,MIX_FOCUS_COLOR},
+  {"selectedmixcol" STR_OR,"Selectedmixcolor",XmRString,sizeof(char *),XtOffset(sndres *,selected_mix_color),XmRString,SELECTED_MIX_COLOR},
   {"textfocuscol" STR_OR,"Textfocuscolor",XmRString,sizeof(char *),XtOffset(sndres *,text_focus_color),XmRString,TEXT_FOCUS_COLOR},
   {"redcol" STR_OR,"Redcolor",XmRString,sizeof(char *),XtOffset(sndres *,red_color),XmRString,RED_COLOR},
   {"greencol" STR_OR,"Greencolor",XmRString,sizeof(char *),XtOffset(sndres *,green_color),XmRString,GREEN_COLOR},
@@ -199,7 +197,6 @@ static XtResource resources[] = {
   {"lighterbluecol" STR_OR,"Ligterbluecolor",XmRString,sizeof(char *),XtOffset(sndres *,lighter_blue_color),XmRString,LIGHTER_BLUE_COLOR},
   {"yellowcol" STR_OR,"Yellowcolor",XmRString,sizeof(char *),XtOffset(sndres *,yellow_color),XmRString,YELLOW_COLOR},
   {"envedwaveformcol" STR_OR,"Envedwaveformcolor",XmRString,sizeof(char *),XtOffset(sndres *,enved_waveform_color),XmRString,ENVED_WAVEFORM_COLOR},
-  {"mixwaveformcol" STR_OR,"Mixwaveformcolor",XmRString,sizeof(char *),XtOffset(sndres *,mix_waveform_color),XmRString,MIX_WAVEFORM_COLOR},
   {"filterwaveformcol" STR_OR,"Filterwaveformcolor",XmRString,sizeof(char *),XtOffset(sndres *,filter_waveform_color),XmRString,FILTER_WAVEFORM_COLOR},
   {"graphcol" STR_OR,"Graphcolor",XmRString,sizeof(char *),XtOffset(sndres *,graph_color),XmRString,GRAPH_COLOR},
   {"selectedgraphcol" STR_OR,"Selectedgraphcolor",XmRString,sizeof(char *),XtOffset(sndres *,selected_graph_color),XmRString,SELECTED_GRAPH_COLOR},
@@ -751,8 +748,7 @@ void snd_doit(snd_state *ss,int argc, char **argv)
   sx->cursor_color = get_color(shell,snd_rs.cursor_color,CURSOR_COLOR,NULL,NULL,FALSE);
   sx->selection_color = get_color(shell,snd_rs.selection_color,SELECTION_COLOR,"gray80",NULL,FALSE);
   sx->mix_color = get_color(shell,snd_rs.mix_color,MIX_COLOR,NULL,NULL,FALSE);
-  sx->mix_focus_color = get_color(shell,snd_rs.mix_focus_color,MIX_FOCUS_COLOR,NULL,NULL,FALSE);
-  sx->mix_waveform_color = get_color(shell,snd_rs.mix_waveform_color,MIX_WAVEFORM_COLOR,NULL,NULL,FALSE);
+  sx->selected_mix_color = get_color(shell,snd_rs.selected_mix_color,SELECTED_MIX_COLOR,NULL,NULL,FALSE);
   sx->enved_waveform_color = get_color(shell,snd_rs.enved_waveform_color,ENVED_WAVEFORM_COLOR,NULL,NULL,FALSE);
   sx->filter_waveform_color = get_color(shell,snd_rs.filter_waveform_color,FILTER_WAVEFORM_COLOR,NULL,NULL,FALSE);
   sx->listener_color = get_color(shell,snd_rs.listener_color,LISTENER_COLOR,NULL,NULL,TRUE);
@@ -891,8 +887,12 @@ void snd_doit(snd_state *ss,int argc, char **argv)
   sx->combined_basic_gc = XCreateGC(dpy,wn, GCForeground | GCBackground, &gv);
 
   gv.background = sx->graph_color;
-  gv.foreground = sx->mix_waveform_color;
+  gv.foreground = sx->mix_color;
   sx->mix_gc = XCreateGC(dpy,wn, GCForeground | GCBackground, &gv);
+
+  gv.background = sx->graph_color;
+  gv.foreground = sx->selected_mix_color;
+  sx->selected_mix_gc = XCreateGC(dpy,wn, GCForeground | GCBackground, &gv);
 
   gv.function = GXxor;
   gv.background = sx->graph_color;

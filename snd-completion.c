@@ -18,8 +18,7 @@
   #endif
 #endif
       
-
-#define NUM_COMMANDS 550
+#define NUM_COMMANDS 543
 
 static char *snd_commands[NUM_COMMANDS]={
   S_abort,S_abortQ,S_activate_listener,S_add_mark,S_add_player,S_add_sound_file_extension,S_add_to_main_menu,S_add_to_menu,S_add_transform,
@@ -54,7 +53,7 @@ static char *snd_commands[NUM_COMMANDS]={
   S_expand_length,S_expand_ramp,S_expanding,
 
   S_fft,S_fft_beta,S_fft_hook,S_fft_log_frequency,S_fft_log_magnitude,
-  S_fft_size,S_fft_style,S_fft_window,S_ffting,S_file_dialog,S_file_name,S_file_names,
+  S_fft_size,S_fft_style,S_fft_window,S_ffting,S_file_dialog,S_file_name,
   S_filter_dBing,S_filter_env,S_filter_env_order,
   S_filter_order,S_filter_selection,S_filter_sound,S_filter_waveform_color,S_filtering,
   S_find,S_find_mark,S_find_sound,S_finish_progress_report,
@@ -84,16 +83,16 @@ static char *snd_commands[NUM_COMMANDS]={
   S_mark_color,S_mark_name,S_mark_sample,S_mark_sync,S_mark_sync_max,S_markQ,S_marks,
   S_max_fft_peaks,S_max_regions,S_max_sounds,S_maxamp,S_memo_sound,S_min_dB,S_mix,
   S_mix_amp,S_mix_amp_changed_hook,S_mix_amp_env,S_mix_anchor,S_mix_chans,S_mix_color,
-  S_mix_console_amp_scaler,S_mix_console_speed_scaler,S_mix_console_state,S_mix_console_state_changed_hook,S_mix_console_y,
-  S_mix_focus_color,S_mix_length,S_mix_locked,S_mix_name,S_mix_position,S_mix_position_changed_hook,
-  S_mix_region,S_mix_sample_readerQ,S_mix_sound,S_mix_sound_channel,S_mix_sound_index,S_mix_speed,S_mix_speed_changed_hook,S_mix_track,
-  S_mix_vct,S_mix_waveform_color,S_mix_waveform_height,S_mixQ,S_mixes,
+  S_mix_length,S_mix_locked,S_mix_name,S_mix_panel,S_mix_position,S_mix_position_changed_hook,
+  S_mix_region,S_mix_sample_readerQ,S_mix_sound,S_mix_sound_channel,S_mix_sound_index,S_mix_speed,S_mix_speed_changed_hook,
+  S_mix_tag_height,S_mix_tag_width,S_mix_tag_y,S_mix_track,
+  S_mix_vct,S_mix_waveform_height,S_mixQ,S_mixes,
   S_mouse_drag_hook,S_mouse_press_hook,S_mouse_release_hook,S_movies,S_multichannel_mix_hook,S_mus_error_hook,
 
   S_name_click_hook,S_new_sound,S_next_mix_sample,S_next_sample,S_next_track_sample,S_normal_fft,
   S_normalize_by_channel,S_normalize_by_sound,S_normalize_fft,S_normalize_globally,S_normalize_on_open,S_normalize_view,
 
-  S_open_alternate_sound,S_open_hook,S_open_multifile_sound_hook,S_open_raw_sound,S_open_sound,S_open_sound_file,S_orientation_dialog,
+  S_open_alternate_sound,S_open_hook,S_open_raw_sound,S_open_sound,S_open_sound_file,S_orientation_dialog,
   S_output_comment_hook,S_output_name_hook,
 
   S_peaks,S_play,S_play_and_wait,S_play_mix,S_play_region,S_play_selection,S_play_track,
@@ -113,16 +112,16 @@ static char *snd_commands[NUM_COMMANDS]={
 
   S_sample,S_sample_reader_at_endQ,S_sample_readerQ,S_samples,S_samples2sound_data,S_samples_vct,S_sash_color,
   S_save_control_panel,S_save_dir,S_save_edit_history,S_save_envelopes,S_save_hook,
-  S_save_macros,S_save_marks,S_save_multifile_sound_hook,S_save_options,
+  S_save_macros,S_save_marks,S_save_options,
   S_save_region,S_save_selection,S_save_sound,S_save_sound_as,S_save_state,S_save_state_file,
   S_save_state_on_exit,S_scale_by,S_scale_selection_by, S_scale_selection_to,S_scale_to,
   S_scan_across_all_chans,S_scan_across_chans,S_scan_across_sound_chans,S_scan_all_chans,S_scan_chan,S_scan_chans,S_scan_sound_chans,
   S_select_all,S_select_region,
-  S_selected_channel,S_selected_data_color,S_selected_graph_color,S_selected_mix,S_selected_sound,
+  S_selected_channel,S_selected_data_color,S_selected_graph_color,S_selected_mix,S_selected_mix_color,S_selected_sound,
   S_selection_color,S_selection_length,S_selection_member,S_selection_position,S_selection_to_temp,S_selection_to_temps,S_selectionQ,
 
-  S_short_file_name,S_short_file_names,S_show_all_axes,S_show_axes,S_show_controls,S_show_fft_peaks,S_show_indices,S_show_listener,S_show_marks,
-  S_show_mix_consoles,S_show_mix_waveforms,S_show_no_axes,S_show_selection_transform,S_show_usage_stats,S_show_x_axis,S_show_y_zero,
+  S_short_file_name,S_show_all_axes,S_show_axes,S_show_controls,S_show_fft_peaks,S_show_indices,S_show_listener,S_show_marks,
+  S_show_mix_waveforms,S_show_no_axes,S_show_selection_transform,S_show_usage_stats,S_show_x_axis,S_show_y_zero,
   S_sinc_width,S_smooth,S_smooth_selection,
   S_snd_apropos,S_snd_error,S_snd_error_hook,S_snd_help,S_snd_spectrum,S_snd_tempnam,S_snd_version,S_snd_warning,S_snd_warning_hook,
   S_sonogram,S_sound_files_in_directory,
@@ -145,7 +144,7 @@ static char *snd_commands[NUM_COMMANDS]={
   S_verbose_cursor,S_view_sound,S_vu_font,S_vu_font_size,S_vu_size,
 
   S_walsh_transform,S_wavelet_transform,S_wavelet_type,S_waving,S_wavo,S_wavo_hop,S_wavo_trace,
-  S_window_height,S_window_width,S_window_x,S_window_y,S_with_mix_consoles,
+  S_window_height,S_window_width,S_window_x,S_window_y,S_with_mix_tags,
 
   S_x_axis_style,S_x_bounds,S_x_in_samples,S_x_in_seconds,S_x_position_slider,S_x_to_one,S_x_zoom_slider,
 

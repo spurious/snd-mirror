@@ -180,15 +180,15 @@ typedef struct {
 
   Pixel white,black,red,yellow,green,light_blue,lighter_blue;
   Pixel data_color,selected_data_color,mark_color,graph_color,selected_graph_color,listener_color,cursor_color;
-  Pixel basic_color,selection_color,zoom_color,position_color,highlight_color,enved_waveform_color,mix_waveform_color;
-  Pixel mix_focus_color,text_focus_color,filter_waveform_color,mix_color,pushed_button_color,sash_color;
+  Pixel basic_color,selection_color,zoom_color,position_color,highlight_color,enved_waveform_color;
+  Pixel selected_mix_color,text_focus_color,filter_waveform_color,mix_color,pushed_button_color,sash_color;
 
   GC basic_gc,selected_basic_gc,combined_basic_gc;        
   GC cursor_gc,selected_cursor_gc;      
   GC selection_gc,selected_selection_gc;
   GC erase_gc,selected_erase_gc;        
   GC mark_gc,selected_mark_gc;          
-  GC mix_gc;           
+  GC mix_gc,selected_mix_gc;         
   GC fltenv_basic_gc,fltenv_data_gc,speed_gc;
 
   XEvent *text_activate_event;
@@ -205,12 +205,6 @@ typedef struct {
   int lastpj;
   Pixel color;
 } mix_context;
-
-typedef struct {
-  int inuse,chans_allocated,x,y,moving,active,state,playing;
-  void *owner;           /* pointer to current mixdata struct that is using this set of widgets */
-  Widget *w;
-} mixmark;
 
 typedef struct {
   Pixmap off_label;
@@ -264,6 +258,7 @@ typedef struct {
 #define TINY_NUMBERS_FONT(a) (a->sgx)->tiny_fontstruct
 #define HELP_TEXT_FONT(a) (a->sgx)->help_text_fontlist
 #define COLOR_TYPE Pixel
+#define NO_COLOR 0
 /* this was unsigned long = Pixel (/usr/X11R6/include/X11/Intrinsic.h) */
 #define KEY_TO_NAME(key) XKeysymToString(key)
 /* on the Sun, if key is 0, XKeysymToString segfaults! */

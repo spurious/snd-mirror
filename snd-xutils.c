@@ -440,16 +440,6 @@ void color_data(snd_state *ss, Pixel color)
   XSetBackground(dpy,sx->erase_gc,color);
 }
 
-void color_mix_waveform(snd_state *ss, Pixel color)
-{
-  Display *dpy;
-  state_context *sx;
-  dpy = MAIN_DISPLAY(ss);
-  sx = ss->sgx;
-  sx->mix_waveform_color = color;
-  XSetForeground(dpy,sx->mix_gc,color);
-}
-
 void color_selected_data(snd_state *ss, Pixel color)
 {
   Display *dpy;
@@ -468,6 +458,26 @@ void recolor_graph(chan_info *cp, int selected)
   ss = cp->state;
   sx = ss->sgx;
   XtVaSetValues(channel_graph(cp),XmNbackground,(selected) ? sx->selected_graph_color : sx->graph_color,NULL);
+}
+
+void set_mix_color(snd_state *ss, Pixel color)
+{
+  Display *dpy;
+  state_context *sx;
+  dpy = MAIN_DISPLAY(ss);
+  sx = ss->sgx;
+  sx->mix_color = color;
+  XSetForeground(dpy,sx->mix_gc,color);
+}
+
+void set_selected_mix_color(snd_state *ss, Pixel color)
+{
+  Display *dpy;
+  state_context *sx;
+  dpy = MAIN_DISPLAY(ss);
+  sx = ss->sgx;
+  sx->selected_mix_color = color;
+  XSetForeground(dpy,sx->selected_mix_gc,color);
 }
 
 #if NEED_XPM_GET_ERROR_STRING
@@ -553,3 +563,15 @@ void fixup_axis_context(axis_context *ax, Widget w, GC gc)
   ax->wn = XtWindow(w);
   if (gc) ax->gc = gc;
 }
+
+Pixmap make_pixmap(snd_state *ss, unsigned char *bits, int width, int height, int depth, GC gc)
+{
+  Pixmap rb,nr;
+  rb = XCreateBitmapFromData(MAIN_DISPLAY(ss),RootWindowOfScreen(XtScreen(MAIN_PANE(ss))),(const char *)bits,width,height);
+  nr = XCreatePixmap(MAIN_DISPLAY(ss),RootWindowOfScreen(XtScreen(MAIN_PANE(ss))),width,height,depth);
+  XCopyPlane(MAIN_DISPLAY(ss),rb,nr,gc,0,0,width,height,0,0,1);
+  XFreePixmap(MAIN_DISPLAY(ss),rb);
+  return(nr);
+}
+
+

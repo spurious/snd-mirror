@@ -1299,19 +1299,14 @@ static void edit_dragged_mark(chan_info *cp, mark *m, int initial_sample)
   /* edit -- initial_sample is where we were when the drag started, ended at m->samp */
   int num,mark_final_sample,id;
   mark *new_m;
-  MUS_SAMPLE_TYPE *zeros;
   mark_final_sample = m->samp;
   num = mark_final_sample - initial_sample;
   m->samp = initial_sample;
   id = mark_id(m);
   if (num > 0)
-    {
-      zeros = (MUS_SAMPLE_TYPE *)CALLOC(num,sizeof(MUS_SAMPLE_TYPE));
-      insert_samples(initial_sample,num,zeros,cp,"mark dragged");
-      FREE(zeros);
+    extend_with_zeros(cp,initial_sample,num,"mark dragged");
       /* at this point, old mark pointer is irrelevant (it lives in the previous edit history list) */
       /*   but since the ripple didn't touch it, we need to move it forward to reflect the insertion */
-    }
   else 
     if (num < 0)
       {

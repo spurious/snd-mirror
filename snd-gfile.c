@@ -8,7 +8,7 @@
   #include <gtkextra/gtkextra.h>
 #endif
 
-/* most the dialogs present a view of the various file header possibilities */
+/* most of these dialogs present a view of the various file header possibilities */
 
 #define NUM_VISIBLE_HEADERS 4
 
@@ -17,10 +17,25 @@ char *read_file_data_choices(file_data *fdat, int *srate, int *chans, int *type,
   char *str;
   int res;
   char *comment = NULL;
-  if (fdat->srate_text) {str = gtk_entry_get_text(GTK_ENTRY(fdat->srate_text)); if (str) (*srate) = string2int(str);}
-  if (fdat->chans_text) {str = gtk_entry_get_text(GTK_ENTRY(fdat->chans_text)); if (str) (*chans) = string2int(str);}
-  if (fdat->location_text) {str = gtk_entry_get_text(GTK_ENTRY(fdat->location_text)); if (str) (*location) = string2int(str);}
-  if (fdat->comment_text) {comment = gtk_editable_get_chars(GTK_EDITABLE(fdat->comment_text),0,-1);}
+  if (fdat->srate_text) 
+    {
+      str = gtk_entry_get_text(GTK_ENTRY(fdat->srate_text)); 
+      if (str) (*srate) = string2int(str);
+    }
+  if (fdat->chans_text) 
+    {
+      str = gtk_entry_get_text(GTK_ENTRY(fdat->chans_text)); 
+      if (str) (*chans) = string2int(str);
+    }
+  if (fdat->location_text) 
+    {
+      str = gtk_entry_get_text(GTK_ENTRY(fdat->location_text)); 
+      if (str) (*location) = string2int(str);
+    }
+  if (fdat->comment_text) 
+    {
+      comment = gtk_editable_get_chars(GTK_EDITABLE(fdat->comment_text),0,-1);
+    }
   if (fdat->header_list)
     {
       res = fdat->header_pos;
@@ -164,7 +179,7 @@ static SCM g_set_just_sounds(SCM on)
   return(SCM_UNSPECIFIED);
 }
 
-void g_initialize_xgfile(snd_state *ss, SCM local_doc)
+void g_initialize_xgfile(SCM local_doc)
 {
   define_procedure_with_setter(S_just_sounds,SCM_FNC g_just_sounds,H_just_sounds,
 			       "set-" S_just_sounds,SCM_FNC g_set_just_sounds,local_doc,0,0,0,1);
@@ -1327,7 +1342,7 @@ static void file_mix_ok_callback(GtkWidget *w,gpointer clientData)
   gtk_widget_hide(file_mix_dialog);
   mix_complete_file(any_selected_sound(ss),
 		    snd_gtk_get_filename(file_mix_dialog),
-		    "File: mix",with_mix_consoles(ss));
+		    "File: mix",with_mix_tags(ss));
 }
 
 void File_Mix_Callback(GtkWidget *w,gpointer clientData)

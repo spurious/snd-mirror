@@ -27,14 +27,14 @@ Widget channel_main_pane(chan_info *cp)
 }
 
 Widget channel_graph(chan_info *cp)      {if ((cp) && (cp->cgx)) return((cp->cgx)->chan_widgets[W_graph]); else return(NULL);}
-Widget channel_sx(chan_info *cp)         {if ((cp) && (cp->cgx)) return((cp->cgx)->chan_widgets[W_sx]); else return(NULL);}
-Widget channel_sy(chan_info *cp)         {if ((cp) && (cp->cgx)) return((cp->cgx)->chan_widgets[W_sy]); else return(NULL);}
-Widget channel_zx(chan_info *cp)         {if ((cp) && (cp->cgx)) return((cp->cgx)->chan_widgets[W_zx]); else return(NULL);}
-Widget channel_zy(chan_info *cp)         {if ((cp) && (cp->cgx)) return((cp->cgx)->chan_widgets[W_zy]); else return(NULL);}
-static Widget channel_gsy(chan_info *cp) {if ((cp) && (cp->cgx)) return((cp->cgx)->chan_widgets[W_gsy]); else return(NULL);}
-static Widget channel_gzy(chan_info *cp) {if ((cp) && (cp->cgx)) return((cp->cgx)->chan_widgets[W_gzy]); else return(NULL);}
-Widget channel_w(chan_info *cp)          {if ((cp) && (cp->cgx)) return((cp->cgx)->chan_widgets[W_w]); else return(NULL);}
-Widget channel_f(chan_info *cp)          {if ((cp) && (cp->cgx)) return((cp->cgx)->chan_widgets[W_f]); else return(NULL);}
+Widget channel_sx(chan_info *cp)         {if ((cp) && (cp->cgx)) return((cp->cgx)->chan_widgets[W_sx]);    else return(NULL);}
+Widget channel_sy(chan_info *cp)         {if ((cp) && (cp->cgx)) return((cp->cgx)->chan_widgets[W_sy]);    else return(NULL);}
+Widget channel_zx(chan_info *cp)         {if ((cp) && (cp->cgx)) return((cp->cgx)->chan_widgets[W_zx]);    else return(NULL);}
+Widget channel_zy(chan_info *cp)         {if ((cp) && (cp->cgx)) return((cp->cgx)->chan_widgets[W_zy]);    else return(NULL);}
+static Widget channel_gsy(chan_info *cp) {if ((cp) && (cp->cgx)) return((cp->cgx)->chan_widgets[W_gsy]);   else return(NULL);}
+static Widget channel_gzy(chan_info *cp) {if ((cp) && (cp->cgx)) return((cp->cgx)->chan_widgets[W_gzy]);   else return(NULL);}
+Widget channel_w(chan_info *cp)          {if ((cp) && (cp->cgx)) return((cp->cgx)->chan_widgets[W_w]);     else return(NULL);}
+Widget channel_f(chan_info *cp)          {if ((cp) && (cp->cgx)) return((cp->cgx)->chan_widgets[W_f]);     else return(NULL);}
 
 static Float get_scrollbar(Widget w,int val, int scrollbar_max)
 {
@@ -457,32 +457,21 @@ static void W_button_Callback(Widget w,XtPointer clientData,XtPointer callData)
   w_button_callback((chan_info *)clientData,cb->set,(ev->state & snd_ControlMask));
 }
 
-#define MIN_REGRAPH_X 12
-#define MIN_REGRAPH_Y 7
-#define MIN_MIX_REGRAPH_X 25
-#define MIN_MIX_REGRAPH_Y 12
+#define GUI_CURRENT_TIME(ss) XtLastTimestampProcessed(MAIN_DISPLAY(ss))
 
 static void Channel_Expose_Callback(Widget w,XtPointer clientData,XtPointer callData)
 {
+  TIME_TYPE last_expose_event_time=0;
   snd_info *sp;
   chan_info *cp = (chan_info *)clientData;
   XmDrawingAreaCallbackStruct *cb = (XmDrawingAreaCallbackStruct *)callData;
   XExposeEvent *ev;
-
+  TIME_TYPE curtime;
   ev = (XExposeEvent *)(cb->event);
+  curtime = GUI_CURRENT_TIME(cp->state);
+  if ((ev->width < 15) && (last_expose_event_time == curtime)) return; /* bogus events but count = 0? */
+  last_expose_event_time = curtime;
   if ((ev->count > 0) || (mix_dragging())) return;
-
-  /* try to flush tiny expose events caused (I think) by the mix consoles on top of the drawingarea */
-  if ((ev->height < MIN_REGRAPH_Y) || (ev->width < MIN_REGRAPH_X)) return;
-  if ((cp->mixes) && ((ev->height < MIN_MIX_REGRAPH_Y) || (ev->width < MIN_MIX_REGRAPH_X))) return;
-  /* 
-   *   mix consoles are normally aligned by 10 in the y direction and (if minimized) are
-   *   rectangles around 25 x 30, so as new consoles are drawn over the main graph, we
-   *   get a sequence of expose callbacks for a rectangle at a y multiple of 10 and
-   *   about 26-28 x 30 - 34.  But cancelling these events didn't seem to speed up
-   *   redisplay.  As a mix console is dragged, its md->beg field is reset, but the
-   *   associated redisplay seems to be off-by-one.
-   */
   sp = cp->sound;
   if (sp->combining != CHANNELS_SEPARATE)
     map_over_sound_chans(sp,update_graph,NULL);

@@ -606,8 +606,7 @@ by any arguments. (Information about about parameters can be acquired using anal
 
   /* Create initial header for output file, stealing info from input
      file. */
-  hdr = make_temp_header(cp->state,
-			 ofile,
+  hdr = make_temp_header(ofile,
 			 SND_SRATE(sp),
 			 1,
 			 num);

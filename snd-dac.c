@@ -2,7 +2,7 @@
  * TODO    set up line_size in mus_make_comb to 5.0*srate/25641, then
  * TODO    then as running, at each block reset to initial - new scaled
  * TODO    (negative pm = longer delay)
- * TODO  play with expand is cutoff too soon
+ * TODO  play with expand is cutoff too soon (and reverb?)
  * TODO  can play idle (waiting for queued up sound starting in future)?
  */
 
@@ -488,11 +488,7 @@ static dac_info *make_dac_info(chan_info *cp, snd_info *sp, snd_fd *fd)
   dp->region = -1;
   dp->a = NULL;
   dp->no_scalers = no_ed_scalers(cp);
-#if NONINTERLEAVED_AUDIO
-  if (sp) dp->audio_chan = sp->index; else dp->audio_chan = cp->chan;
-#else  
   dp->audio_chan = cp->chan;
-#endif
   if (sp)
     {
       dp->expanding = sp->expanding;
@@ -1325,19 +1321,9 @@ static int fill_dac_buffers(dac_state *dacp, int write_ok)
 #else
   if (write_ok == WRITE_TO_DAC) 
     {
-#if NONINTERLEAVED_AUDIO
-      for (i=0;i<nbufs;i++)
-	{
-	  mus_file_write_buffer(dacp->out_format,0,frames-1,1,&dac_buffers[i],(char *)(audio_bytes[i]),data_clipped(ss));
-	  bytes = frames * mus_data_format_to_bytes_per_sample(dacp->out_format);
-	  mus_audio_write_channel(dev_fd[0],(char *)(audio_bytes[i]),bytes, i);
-	}
-      mus_audio_flush (dev_fd[0]);
-#else
       mus_file_write_buffer(dacp->out_format,0,frames-1,dacp->channels,dac_buffers,(char *)(audio_bytes[0]),data_clipped(ss));
       bytes = dacp->channels * frames * mus_data_format_to_bytes_per_sample(dacp->out_format);
       mus_audio_write(dev_fd[0],(char *)(audio_bytes[0]),bytes);
-#endif
     }
 #endif
   if (cursor_change) cursor_time = 0;
@@ -1454,11 +1440,7 @@ int mus_audio_compatible_format(int dev)
  * in place designed to select whatever the user _really_ wants. Till 
  * then set this to "1" to always send to the first device. */
 
-#if NONINTERLEAVED_AUDIO
-  int feed_first_device = 1;
-#else
-  int feed_first_device = 0;
-#endif
+int feed_first_device = 0;
 
 #define ALSA_MAX_DEVICES 64
 static int alsa_devices[ALSA_MAX_DEVICES];
@@ -1682,10 +1664,7 @@ static int start_audio_output_1 (dac_state *dacp)
       /* for now assume all are same number of chans */
       dacp->chans_per_device = (int *)CALLOC(dacp->devices,sizeof(int));
       for (i=0;i<dacp->devices;i++) dacp->chans_per_device[i] = dacp->channels / dacp->devices;
-
-#if (!NONINTERLEAVED_AUDIO)
       make_dac_buffers(dacp);
-#endif
     } 
   else 
     {
@@ -1948,11 +1927,7 @@ int run_apply(int ofd)
 {
   int len;
   len = fill_dac_buffers(apply_dacp,WRITE_TO_FILE);
-#if NONINTERLEAVED_AUDIO
-  fprintf (stderr, "apply not yet supported for non-interleaved operation\n"); abort();
-#else
    mus_file_write(ofd,0,len-1,apply_dacp->channels,dac_buffers);
-#endif
   return(len);
 }
 

@@ -565,29 +565,8 @@ void add_channel_data(char *filename, chan_info *cp, file_info *hdr, snd_state *
   sp = cp->sound;
   add_channel_data_1(cp,sp,ss,1);
   set_initial_ed_list(cp,(hdr->samples/hdr->chans) - 1);
-#if FILE_PER_CHAN
-  /* if FILE_PER_CHAN
-     check for special case here (can be in hdr or sp),
-     set up individual header (sp->hdr[cp->chan] = chdr for filename = sp->filenames[cp->chan])
-     open that as cp->sounds[0]
-  */
-  if (sp->chan_type == FILE_PER_SOUND)
-    {
-      chdr = copy_header(filename,sp->hdr);
-      chn = cp->chan;
-    }
-  else
-    {
-      filename = sp->channel_filenames[cp->chan];
-      chdr = make_file_info(filename,ss);
-      cp->filename = copy_string(filename);
-      cp->hdr = copy_header(filename,chdr);
-      chn = 0;
-    }
-#else     
   chdr = copy_header(filename,sp->hdr); /* need one separate from snd_info case */
   chn = cp->chan;
-#endif
   if (chdr)
     {
       fd = snd_open_read(ss,filename);
@@ -854,7 +833,7 @@ void focus_x_axis_change(axis_info *ap, chan_info *cp, snd_info *sp, int focus_s
 		  if (selection_is_visible_in_channel(ncp)) 
 		    newf = selection_beg(ncp);
 		  else
-		    if (active_mix(ncp))
+		    if (active_mix_p(ncp))
 		      newf = mix_beg(ncp);
 		    else
 		      if (active_mark(ncp))
@@ -2245,6 +2224,8 @@ static void display_channel_data_with_size (chan_info *cp, snd_info *sp, snd_sta
   if ((!just_fft) && (!just_lisp))
     {
       marks_off(cp);
+      clear_mix_tags(cp);
+
       if (cp->waving)
 	{
 	  if (cp->wavo)
@@ -2262,8 +2243,7 @@ static void display_channel_data_with_size (chan_info *cp, snd_info *sp, snd_sta
 	  cp->selection_visible = 0;
 	  points = make_graph(cp,sp,ss);
 	  if (points == 0) return;
-	  if ((cp->show_mix_consoles) && 
-	      (cp->mixes) &&
+	  if ((cp->mixes) &&
 	      (cp->mix_dragging)) 
 	    mix_save_graph(ss,cp_to_mix_context(cp),points);
 	  if (cp->cursor_on) draw_graph_cursor(cp);
@@ -2327,11 +2307,7 @@ static void display_channel_data_with_size (chan_info *cp, snd_info *sp, snd_sta
 	      display_selection(cp);
 	      if ((cp->marks) && (cp->show_marks)) display_channel_marks(cp);
 	      if (cp->show_y_zero) display_zero(cp);
-	      if ((cp->show_mix_consoles) && (cp->mixes)) display_channel_mixes(cp);
-	    }
-	  else 
-	    {
-	      if (cp->mixes) release_mixes(cp);
+	      if ((cp->mixes)) display_channel_mixes(cp);
 	    }
 	  if ((sp->combining != CHANNELS_SUPERIMPOSED) && (height > 10))
 	    display_channel_id(cp,height+offset,sp->nchans);
@@ -2387,7 +2363,6 @@ static void display_channel_data_1 (chan_info *cp, snd_info *sp, snd_state *ss, 
 	    {
 	      ap = cp->axis;
 	      ap->y_offset = offset; /* needed for mouse click channel determination */
-	      if (cp->mixes) release_mixes(cp);
 	    }
 	}
     }
@@ -3097,7 +3072,7 @@ static void output_sample(snd_state *ss, output_state *os, int srate, MUS_SAMPLE
 	{
 	  os->filename = snd_tempnam(ss);
 	  os->filing = 1;
-	  os->hdr = make_temp_header(ss,os->filename,srate,1,0);
+	  os->hdr = make_temp_header(os->filename,srate,1,0);
 	  os->fd = open_temp_file(os->filename,1,os->hdr,ss);
 	  os->datumb = mus_data_format_to_bytes_per_sample((os->hdr)->format);
 	  os->mus_data = (MUS_SAMPLE_TYPE **)CALLOC(1,sizeof(MUS_SAMPLE_TYPE *));
@@ -3550,7 +3525,7 @@ static void scale_with(snd_state *ss, sync_state *sc, Float *scalers, char *orig
 	{
 	  temp_file = 1; 
 	  ofile = snd_tempnam(ss);
-	  hdr = make_temp_header(ss,ofile,SND_SRATE(sp),1,dur);
+	  hdr = make_temp_header(ofile,SND_SRATE(sp),1,dur);
 	  ofd = open_temp_file(ofile,1,hdr,ss);
 	  datumb = mus_data_format_to_bytes_per_sample(hdr->format);
 	}
@@ -3712,7 +3687,7 @@ void scale_to(snd_state *ss, snd_info *sp, chan_info *cp, Float *ur_scalers, int
   /* here it matters if more than one arg is given -- if one, get overall maxamp */
   /*   if more than one, get successive maxamps */
   int i,chans,nlen;
-  sync_state *sc;
+  sync_state *sc = NULL;
   sync_info *si = NULL;
   chan_info *ncp;
   Float *scalers;
@@ -3805,11 +3780,11 @@ static void swap_channels(snd_state *ss, int beg, int dur, snd_fd *c0, snd_fd *c
     {
       temp_file = 1; 
       ofile0 = snd_tempnam(ss);
-      hdr0 = make_temp_header(ss,ofile0,SND_SRATE(sp0),1,dur);
+      hdr0 = make_temp_header(ofile0,SND_SRATE(sp0),1,dur);
       ofd0 = open_temp_file(ofile0,1,hdr0,ss);
       datumb = mus_data_format_to_bytes_per_sample(hdr0->format);
       ofile1 = snd_tempnam(ss);
-      hdr1 = make_temp_header(ss,ofile1,SND_SRATE(sp0),1,dur);
+      hdr1 = make_temp_header(ofile1,SND_SRATE(sp0),1,dur);
       ofd1 = open_temp_file(ofile1,1,hdr1,ss);
     }
   else temp_file = 0;
@@ -4173,7 +4148,7 @@ void src_env_or_num(snd_state *ss, chan_info *cp, env *e, Float ratio, int just_
 	  reporting = ((sp) && (dur > (MAX_BUFFER_SIZE * 4)));
 	  if (reporting) start_progress_report(sp,from_enved);
 	  ofile = snd_tempnam(ss);
-	  hdr = make_temp_header(ss,ofile,SND_SRATE(sp),1,dur);
+	  hdr = make_temp_header(ofile,SND_SRATE(sp),1,dur);
 	  ofd = open_temp_file(ofile,1,hdr,ss);
 	  datumb = mus_data_format_to_bytes_per_sample(hdr->format);
 	  sf = sfs[i];
@@ -4492,7 +4467,7 @@ void apply_filter(chan_info *ncp, int order, env *e, int from_enved, char *origi
 	    {
 	      temp_file = 1; 
 	      ofile = snd_tempnam(ss);
-	      hdr = make_temp_header(ss,ofile,SND_SRATE(sp),1,dur);
+	      hdr = make_temp_header(ofile,SND_SRATE(sp),1,dur);
 	      ofd = open_temp_file(ofile,1,hdr,ss);
 	      datumb = mus_data_format_to_bytes_per_sample(hdr->format);
 	    }
@@ -4621,7 +4596,7 @@ static void reverse_sound(chan_info *ncp, int over_selection)
 	    {
 	      temp_file = 1; 
 	      ofile = snd_tempnam(ss);
-	      hdr = make_temp_header(ss,ofile,SND_SRATE(sp),1,dur);
+	      hdr = make_temp_header(ofile,SND_SRATE(sp),1,dur);
 	      ofd = open_temp_file(ofile,1,hdr,ss);
 	      datumb = mus_data_format_to_bytes_per_sample(hdr->format);
 	    }
@@ -5777,7 +5752,7 @@ void snd_minibuffer_activate(snd_info *sp, int keysym)
 	      break;
 #endif
 	    case CHANGE_FILING:
-	      mix_complete_file(sp,str,"C-x C-q",with_mix_consoles(ss));
+	      mix_complete_file(sp,str,"C-x C-q",with_mix_tags(ss));
 	      break;
 	    case INSERT_FILING:
 	      str1 = mus_file_full_name(str);
@@ -6930,12 +6905,6 @@ int key_press_callback(chan_info *ncp, int x, int y, int key_state, int keysym)
   return(FALSE);
 }
 
-static int dragged = 0;
-static TIME_TYPE mouse_down_time;
-static mark *mouse_mark = NULL;
-static mark *play_mark = NULL;
-static int click_within_graph = NOGRAPH;
-
 static chan_info *which_channel(snd_info *sp, int y)
 {
   int i;
@@ -6950,35 +6919,6 @@ static chan_info *which_channel(snd_info *sp, int y)
       ncp = cp;
     }
   return(ncp);
-}
-
-static int fft_axis_start = 0;
-
-void graph_button_press_callback(chan_info *cp, int x, int y, int key_state, int button, TIME_TYPE time)
-{
-  snd_info *sp;
-  sp = cp->sound;
-  /* if combining, figure out which virtual channel the mouse is in */
-  if (sp->combining == CHANNELS_COMBINED) cp = which_channel(sp,y);
-  mouse_down_time = time;
-  select_channel(sp,cp->chan);
-  dragged = 0;
-  finish_selection_creation();
-  mouse_mark = hit_mark(cp,x,y,key_state);
-  if (mouse_mark == NULL) play_mark = hit_triangle(cp,x,y);
-  click_within_graph = within_graph(cp,x,y);
-  if (click_within_graph == FFT) 
-    {
-      if (cp->fft_style != SONOGRAM)
-	fft_axis_start = x;
-      else fft_axis_start = y;
-    }
-  else
-    if (click_within_graph == LISP)
-      handle_mouse_press(sp,cp,
-			 ungrf_x((cp->lisp_info)->axis,x),
-			 ungrf_y((cp->lisp_info)->axis,y),
-			 button,key_state);
 }
 
 static Float fft_axis_extent(chan_info *cp)
@@ -7012,6 +6952,48 @@ static int calculate_syncd_fft(chan_info *cp, void *ptr)
       if (sp->syncing == sync) calculate_fft(cp,NULL);
     }
   return(0);
+}
+
+static int dragged = 0;
+static TIME_TYPE mouse_down_time;
+static mark *mouse_mark = NULL;
+static mark *play_mark = NULL;
+static int click_within_graph = NOGRAPH;
+static int fft_axis_start = 0;
+static int mix_tag = NO_MIX_TAG;
+
+void graph_button_press_callback(chan_info *cp, int x, int y, int key_state, int button, TIME_TYPE time)
+{
+  snd_info *sp;
+  sp = cp->sound;
+  /* if combining, figure out which virtual channel the mouse is in */
+  if (sp->combining == CHANNELS_COMBINED) cp = which_channel(sp,y);
+  mouse_down_time = time;
+  select_channel(sp,cp->chan);
+  dragged = 0;
+  finish_selection_creation();
+  mouse_mark = hit_mark(cp,x,y,key_state);
+  if (mouse_mark == NULL) play_mark = hit_triangle(cp,x,y);
+  click_within_graph = within_graph(cp,x,y);
+  if (click_within_graph == FFT) 
+    {
+      if (cp->fft_style != SONOGRAM)
+	fft_axis_start = x;
+      else fft_axis_start = y;
+    }
+  else
+    {
+      if (click_within_graph == LISP)
+	handle_mouse_press(sp,cp,
+			   ungrf_x((cp->lisp_info)->axis,x),
+			   ungrf_y((cp->lisp_info)->axis,y),
+			   button,key_state);
+      else
+	{
+	  if ((mouse_mark == NULL) && (play_mark == NULL))
+	    mix_tag = hit_mix(cp,x,y);
+	}
+    }
 }
 
 void graph_button_release_callback(chan_info *cp, int x, int y, int key_state, int button)
@@ -7084,6 +7066,11 @@ void graph_button_release_callback(chan_info *cp, int x, int y, int key_state, i
 			  if (handle_mark_click(mark_id(mouse_mark)) == FALSE)
 			    report_in_minibuffer(sp,"mark %d at sample %d",mark_id(mouse_mark),mouse_mark->samp);
 			}
+		      else
+			{
+			  if (mix_tag != NO_MIX_TAG)
+			    report_in_minibuffer(sp,"mix %d ",mix_tag);
+			}
 		    }
 		}
 	    }
@@ -7120,16 +7107,25 @@ void graph_button_release_callback(chan_info *cp, int x, int y, int key_state, i
 	    }
 	  else
 	    {
-	      if (click_within_graph == WAVE)
+	      if (mix_tag != NO_MIX_TAG)
 		{
-		  cancel_selection_watch();
-		  finish_selection_creation();
+		  finish_moving_mix_tag(mix_tag,x);
 		  dragged = 0;
-		  if (show_selection_transform(ss)) 
+		  mix_tag = NO_MIX_TAG;
+		}
+	      else
+		{
+		  if (click_within_graph == WAVE)
 		    {
-		      if (sp->syncing)
-			map_over_chans(ss,calculate_syncd_fft,(void *)(sp->syncing));
-		      else calculate_fft(cp,NULL);
+		      cancel_selection_watch();
+		      finish_selection_creation();
+		      dragged = 0;
+		      if (show_selection_transform(ss)) 
+			{
+			  if (sp->syncing)
+			    map_over_chans(ss,calculate_syncd_fft,(void *)(sp->syncing));
+			  else calculate_fft(cp,NULL);
+			}
 		    }
 		}
 	    }
@@ -7185,6 +7181,12 @@ void graph_button_motion_callback(chan_info *cp,int x, int y, TIME_TYPE time, TI
 	{
 	  if (click_within_graph == WAVE)
 	    {
+	      if (mix_tag != NO_MIX_TAG)
+		{
+		  move_mix_tag(mix_tag,x);
+		  dragged = 1;
+		  return;
+		}
 	      if (!dragged) 
 		start_selection_creation(cp,(int)round(ungrf_x(cp->axis,x) * SND_SRATE(sp)));
 	      else 
@@ -7281,6 +7283,7 @@ void display_frequency_response(snd_state *ss, env *e, axis_info *ap, axis_conte
 #define CHAN_MGC 4
 #define CHAN_MXGC 5
 #define CHAN_TMPGC 6
+#define CHAN_SELMXGC 7
 
 static axis_context *set_context (chan_info *cp, int gc)
 {
@@ -7303,6 +7306,7 @@ static axis_context *set_context (chan_info *cp, int gc)
 	case CHAN_CGC: ax->gc = sx->selected_cursor_gc;      break;
 	case CHAN_MGC: ax->gc = sx->selected_mark_gc;        break;
 	case CHAN_MXGC: ax->gc = sx->mix_gc;                 break;
+	case CHAN_SELMXGC: ax->gc = sx->selected_mix_gc;     break;
 	case CHAN_TMPGC: ax->gc = sx->selected_basic_gc;     break;
 	}
     }
@@ -7310,12 +7314,13 @@ static axis_context *set_context (chan_info *cp, int gc)
     {
       switch (gc)
 	{
-	case CHAN_GC: ax->gc = sx->basic_gc;        break;
-	case CHAN_IGC: ax->gc = sx->erase_gc;       break;
-	case CHAN_SELGC: ax->gc = sx->selection_gc; break;
-	case CHAN_CGC: ax->gc = sx->cursor_gc;      break;
-	case CHAN_MGC: ax->gc = sx->mark_gc;        break;
-	case CHAN_MXGC: ax->gc = sx->mix_gc;        break;
+	case CHAN_GC: ax->gc = sx->basic_gc;             break;
+	case CHAN_IGC: ax->gc = sx->erase_gc;            break;
+	case CHAN_SELGC: ax->gc = sx->selection_gc;      break;
+	case CHAN_CGC: ax->gc = sx->cursor_gc;           break;
+	case CHAN_MGC: ax->gc = sx->mark_gc;             break;
+	case CHAN_MXGC: ax->gc = sx->mix_gc;             break;
+	case CHAN_SELMXGC: ax->gc = sx->selected_mix_gc; break;
 	case CHAN_TMPGC: 
 	  ax->gc = sx->combined_basic_gc;
 	  /* if this changes, see snd-xprint.c ps_rgb */
@@ -7332,13 +7337,14 @@ static axis_context *set_context (chan_info *cp, int gc)
   return(ax);
 }
 
-axis_context *copy_context (chan_info *cp)            {return(set_context(cp,CHAN_GC));}
-axis_context *erase_context (chan_info *cp)           {return(set_context(cp,CHAN_IGC));}
-axis_context *selection_context (chan_info *cp)       {return(set_context(cp,CHAN_SELGC));}
-static axis_context *cursor_context (chan_info *cp)   {return(set_context(cp,CHAN_CGC));}
-axis_context *mark_context (chan_info *cp)            {return(set_context(cp,CHAN_MGC));}
-axis_context *mix_waveform_context (chan_info *cp)    {return(set_context(cp,CHAN_MXGC));}
-static axis_context *combined_context (chan_info *cp) {return(set_context(cp,CHAN_TMPGC));}
+axis_context *copy_context (chan_info *cp)                  {return(set_context(cp,CHAN_GC));}
+axis_context *erase_context (chan_info *cp)                 {return(set_context(cp,CHAN_IGC));}
+axis_context *selection_context (chan_info *cp)             {return(set_context(cp,CHAN_SELGC));}
+static axis_context *cursor_context (chan_info *cp)         {return(set_context(cp,CHAN_CGC));}
+axis_context *mark_context (chan_info *cp)                  {return(set_context(cp,CHAN_MGC));}
+axis_context *mix_waveform_context (chan_info *cp)          {return(set_context(cp,CHAN_MXGC));}
+axis_context *selected_mix_waveform_context (chan_info *cp) {return(set_context(cp,CHAN_SELMXGC));}
+static axis_context *combined_context (chan_info *cp)       {return(set_context(cp,CHAN_TMPGC));}
 
 #if HAVE_GUILE
 
@@ -7807,7 +7813,7 @@ enum {FFTF,WAVEF,LENGTHF,CURSORF,MAXAMPF,GRAPHINGF,LOSAMPF,HISAMPF,SQUELCH_UPDAT
       SHOW_Y_ZERO,SHOW_MARKS,CP_WAVO,CP_WAVO_HOP,CP_WAVO_TRACE,CP_MAX_FFT_PEAKS,CP_LINE_SIZE,
       CP_SHOW_FFT_PEAKS,CP_ZERO_PAD,CP_VERBOSE_CURSOR,CP_FFT_LOG_FREQUENCY,CP_FFT_LOG_MAGNITUDE,
       CP_WAVELET_TYPE,CP_SPECTRO_HOP,CP_FFT_SIZE,CP_FFT_STYLE,CP_FFT_WINDOW,CP_TRANSFORM_TYPE,
-      CP_NORMALIZE_FFT,CP_SHOW_MIX_CONSOLES,CP_SHOW_MIX_WAVEFORMS,CP_GRAPH_STYLE,CP_DOT_SIZE,
+      CP_NORMALIZE_FFT,CP_SHOW_MIX_WAVEFORMS,CP_GRAPH_STYLE,CP_DOT_SIZE,
       CP_SHOW_AXES,CP_GRAPHS_HORIZONTAL
 };
 
@@ -7880,7 +7886,6 @@ static SCM cp_iread(SCM snd_n, SCM chn_n, int fld, char *caller)
 	    case CP_FFT_WINDOW:         RTNINT(cp->fft_window);                   break;
 	    case CP_TRANSFORM_TYPE:     RTNINT(cp->transform_type);               break;
 	    case CP_NORMALIZE_FFT:      RTNINT(cp->normalize_fft);                break;
-	    case CP_SHOW_MIX_CONSOLES:  RTNBOOL(cp->show_mix_consoles);           break;
 	    case CP_SHOW_MIX_WAVEFORMS: RTNBOOL(cp->show_mix_waveforms);          break;
 	    case CP_GRAPH_STYLE:        RTNINT(cp->graph_style);                  break;
 	    case CP_DOT_SIZE:           RTNINT(cp->dot_size);                     break;
@@ -7976,7 +7981,6 @@ static SCM cp_iwrite(SCM snd_n, SCM chn_n, SCM on, int fld, char *caller)
     case CP_FFT_WINDOW:         cp->fft_window = g_scm2intdef(on,DEFAULT_FFT_WINDOW); calculate_fft(cp,NULL); RTNINT(cp->fft_window);                    break;
     case CP_TRANSFORM_TYPE:     cp->transform_type = g_scm2intdef(on,DEFAULT_TRANSFORM_TYPE); calculate_fft(cp,NULL); RTNINT(cp->transform_type);        break;
     case CP_NORMALIZE_FFT:      cp->normalize_fft = g_scm2boolintdef(on,DEFAULT_NORMALIZE_FFT); calculate_fft(cp,NULL); RTNINT(cp->normalize_fft);       break;
-    case CP_SHOW_MIX_CONSOLES:  cp->show_mix_consoles = bool_int_or_one(on); update_graph(cp,NULL); RTNBOOL(cp->show_mix_consoles);                      break;
     case CP_SHOW_MIX_WAVEFORMS: cp->show_mix_waveforms = bool_int_or_one(on); update_graph(cp,NULL); RTNBOOL(cp->show_mix_waveforms);                    break;
     case CP_GRAPH_STYLE:        cp->graph_style = g_scm2intdef(on,DEFAULT_GRAPH_STYLE); update_graph(cp,NULL); RTNINT(cp->graph_style);                  break;
     case CP_DOT_SIZE:           cp->dot_size = g_scm2intdef(on,DEFAULT_DOT_SIZE); update_graph(cp,NULL); RTNINT(cp->dot_size);                           break;
@@ -8735,32 +8739,6 @@ static SCM g_set_fft_log_magnitude(SCM on, SCM snd, SCM chn)
 
 WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_fft_log_magnitude_reversed,g_set_fft_log_magnitude)
 
-static SCM g_show_mix_consoles(SCM snd, SCM chn)
-{
-  #define H_show_mix_consoles "(" S_show_mix_consoles " (snd #t) (chn #t)) -> #t if Snd shoul display mix consoles"
-  if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
-    return(cp_iread(snd,chn,CP_SHOW_MIX_CONSOLES,S_show_mix_consoles));
-  SCM_ASSERT((SCM_EQ_P(snd,SCM_UNDEFINED)),snd,SCM_ARG1,S_show_mix_consoles);
-  RTNBOOL(show_mix_consoles(get_global_state()));
-}
-
-static SCM g_set_show_mix_consoles(SCM on, SCM snd, SCM chn)
-{
-  snd_state *ss;
-  ERRB1(on,"set-" S_show_mix_consoles); 
-  if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
-    return(cp_iwrite(snd,chn,on,CP_SHOW_MIX_CONSOLES,"set-" S_show_mix_consoles));
-  else
-    {
-      SCM_ASSERT((SCM_EQ_P(snd,SCM_UNDEFINED)),snd,SCM_ARG2,"set-" S_show_mix_consoles);
-      ss = get_global_state();
-      set_show_mix_consoles(ss,bool_int_or_one(on));
-      RTNBOOL(show_mix_consoles(ss));
-    }
-}
-
-WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_show_mix_consoles_reversed,g_set_show_mix_consoles)
-
 static SCM g_show_mix_waveforms(SCM snd, SCM chn)
 {
   #define H_show_mix_waveforms "(" S_show_mix_waveforms " (snd #t) (chn #t)) -> #t if Snd should display mix waveforms"
@@ -9419,7 +9397,7 @@ static SCM g_swap_channels(SCM snd0, SCM chn0, SCM snd1, SCM chn1, SCM beg, SCM 
   #define H_swap_channels "(" S_swap_channels " snd0 chn0 snd1 chn1) swaps the indicated channels"
   chan_info *cp0 = NULL,*cp1 = NULL;
   snd_fd *c0,*c1;
-  int dur0,dur1,beg0=0,num,old_squelch0,old_squelch1;
+  int dur0=0,dur1=0,beg0=0,num,old_squelch0,old_squelch1;
   snd_info *sp = NULL;
   env_info *e0,*e1;
   ERRCP(S_swap_channels,snd0,chn0,1);
@@ -9803,10 +9781,6 @@ void g_init_chn(SCM local_doc)
 
   define_procedure_with_reversed_setter(S_normalize_fft,SCM_FNC g_normalize_fft,H_normalize_fft,
 					"set-" S_normalize_fft,SCM_FNC g_set_normalize_fft, SCM_FNC g_set_normalize_fft_reversed,
-					local_doc,0,2,0,3);
-
-  define_procedure_with_reversed_setter(S_show_mix_consoles,SCM_FNC g_show_mix_consoles,H_show_mix_consoles,
-					"set-" S_show_mix_consoles,SCM_FNC g_set_show_mix_consoles, SCM_FNC g_set_show_mix_consoles_reversed,
 					local_doc,0,2,0,3);
 
   define_procedure_with_reversed_setter(S_show_mix_waveforms,SCM_FNC g_show_mix_waveforms,H_show_mix_waveforms,

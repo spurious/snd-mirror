@@ -1,5 +1,5 @@
-#ifndef SND_GTK1_H_LOADED
-#define SND_GTK1_H_LOADED
+#ifndef SND_G1_H_LOADED
+#define SND_G1_H_LOADED
 
 typedef struct {
   GtkWidget *rw,*nm,*pl,*sv;
@@ -133,7 +133,7 @@ GtkWidget *edit_find_menu(void);
 GtkWidget *edit_select_all_menu(void);
 GtkWidget *edit_header_menu(void);
 GtkWidget *view_normalize_menu(void);
-GtkWidget *view_consoles_menu(void);
+GtkWidget *view_mix_panel_menu(void);
 GtkWidget *view_region_menu(void);
 GtkWidget *view_combine_separate_menu(void);
 GtkWidget *view_combine_combined_menu(void);
@@ -143,7 +143,6 @@ GtkWidget *view_dots_menu(void);
 GtkWidget *view_dots_and_lines_menu(void);
 GtkWidget *view_filled_menu(void);
 GtkWidget *view_lollipops_menu(void);
-GtkWidget *view_marks_menu(void);
 GtkWidget *view_zero_menu(void);
 GtkWidget *view_ctrls_menu(void);
 GtkWidget *view_listener_menu(void);
@@ -274,7 +273,6 @@ GtkWidget *channel_zy(chan_info *cp);
 GtkWidget *channel_w(chan_info *cp);
 GtkWidget *channel_f(chan_info *cp);
 GtkWidget *channel_graph(chan_info *cp);
-GtkWidget *channel_graph_parent(chan_info *cp);
 GtkWidget *channel_up_arrow(chan_info *cp);
 GtkWidget *channel_down_arrow(chan_info *cp);
 int channel_open_pane(chan_info *cp, void *ptr);
@@ -361,7 +359,8 @@ void color_data(snd_state *ss, GdkColor *color);
 void color_selected_data(snd_state *ss, GdkColor *color);
 void color_graph(snd_state *ss, GdkColor *color);
 void color_selected_graph(snd_state *ss, GdkColor *color);
-void color_mix_waveform(snd_state *ss, GdkColor *color);
+void set_mix_color(snd_state *ss, GdkColor *color);
+void set_selected_mix_color(snd_state *ss, GdkColor *color);
 void recolor_graph(chan_info *cp, int selected);
 void reflect_resize(snd_state *ss);
 void set_sensitive(GtkWidget *wid, int val);
@@ -449,36 +448,10 @@ void set_apply_button(snd_info *sp, int val);
 
 /* -------- snd-gmix.c -------- */
 
-void release_mixmark_widgets(mixmark *m);
-void select_mix(snd_state *ss, mixdata *md);
-void color_selected_mix(snd_state *ss);
-void color_unselected_mixes(snd_state *ss);
-void color_one_mix(mixdata *md, GdkColor *color);
-int color_mix(mixdata *md, void *ptr);
-void reflect_mix_stop_playing(snd_state *ss, mixmark *m);
-void set_mix_console_amp_scaler(Float amp);
-Float get_mix_console_amp_scaler(void);
-void set_mix_console_speed_scaler(Float amp);
-Float get_mix_console_speed_scaler(void);
-void mix_set_title_beg(mixdata *md, mixmark *m);
-void reamp(mixdata *md, int chan, Float amp);
-void respeed(mixdata *md, Float spd);
-void fixup_mixmark(mixdata *md);
-int mix_dragging(void);
-void set_mix_track_button_color(mixdata *md, int track);
-void move_mixmark(mixmark *m, int x, int y);
-void use_mixmark(mixdata *md, int x, int y);
-void move_mix_x(mixmark *m, int xspot);
-void move_mix_y(mixmark *m, int yspot);
-void mix_set_minimal_title(mixdata *md, mixmark *m);
-void mix_set_title_name(mixdata *md, mixmark *m);
-void mix_set_console(mixdata *md, mixmark *m);
-void mix_open_console(mixmark *m);
-void mix_close_console(mixmark *m);
-void mix_open_title(mixmark *m);
-void mix_close_title(mixmark *m);
-int move_mix_console(mixmark *m, int *nx);
-void mix_raise_console(mixmark *m);
+void reflect_mix_in_mix_panel(int mix_id);
+void make_mix_panel(snd_state *ss);
+int mix_play_stopped(void);
+void reflect_mix_play_stop(void);
 
 
 
@@ -582,7 +555,7 @@ void edit_header(snd_info *sp);
   void init_file_widgets(SCM local_doc);
 #endif
 #if HAVE_GUILE
-  void g_initialize_xgfile(snd_state *ss, SCM local_doc);
+  void g_initialize_xgfile(SCM local_doc);
 #endif
 
 

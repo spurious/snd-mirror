@@ -9,37 +9,36 @@ enum {
     W_zy,W_sy,
     W_bottom_scrollers,
       W_sx,W_zx,
-    W_graph,W_graph_fixed,
+    W_graph,
     W_gzy,W_gsy,
     W_up_ev,W_down_ev
 };
 
 enum {W_zy_adj,W_zx_adj,W_sy_adj,W_sx_adj,W_gzy_adj,W_gsy_adj};
 
-#define NUM_CHAN_WIDGETS 18
+#define NUM_CHAN_WIDGETS 17
 #define NUM_CHAN_ADJS 6
 #define DEFAULT_EDIT_HISTORY_WIDTH 1
 
-GtkWidget *channel_graph(chan_info *cp) {if ((cp) && (cp->cgx)) return((cp->cgx)->chan_widgets[W_graph]); else return(NULL);}
-GtkWidget *channel_graph_parent(chan_info *cp) {if ((cp) && (cp->cgx)) return((cp->cgx)->chan_widgets[W_graph_fixed]); else return(NULL);}
-GtkWidget *channel_sx(chan_info *cp) {if ((cp) && (cp->cgx)) return((cp->cgx)->chan_widgets[W_sx]); else return(NULL);}
-GtkWidget *channel_sy(chan_info *cp) {if ((cp) && (cp->cgx)) return((cp->cgx)->chan_widgets[W_sy]); else return(NULL);}
-GtkWidget *channel_zx(chan_info *cp) {if ((cp) && (cp->cgx)) return((cp->cgx)->chan_widgets[W_zx]); else return(NULL);}
-GtkWidget *channel_zy(chan_info *cp) {if ((cp) && (cp->cgx)) return((cp->cgx)->chan_widgets[W_zy]); else return(NULL);}
-static GtkWidget *channel_gsy(chan_info *cp) {if ((cp) && (cp->cgx)) return((cp->cgx)->chan_widgets[W_gsy]); else return(NULL);}
-static GtkWidget *channel_gzy(chan_info *cp) {if ((cp) && (cp->cgx)) return((cp->cgx)->chan_widgets[W_gzy]); else return(NULL);}
-GtkWidget *channel_w(chan_info *cp) {if ((cp) && (cp->cgx)) return((cp->cgx)->chan_widgets[W_w]); else return(NULL);}
-GtkWidget *channel_f(chan_info *cp) {if ((cp) && (cp->cgx)) return((cp->cgx)->chan_widgets[W_f]); else return(NULL);}
-GtkWidget *channel_up_arrow(chan_info *cp) {if ((cp) && (cp->cgx)) return((cp->cgx)->chan_widgets[W_up_ev]); else return(NULL);}
+GtkWidget *channel_graph(chan_info *cp)      {if ((cp) && (cp->cgx)) return((cp->cgx)->chan_widgets[W_graph]);   else return(NULL);}
+GtkWidget *channel_sx(chan_info *cp)         {if ((cp) && (cp->cgx)) return((cp->cgx)->chan_widgets[W_sx]);      else return(NULL);}
+GtkWidget *channel_sy(chan_info *cp)         {if ((cp) && (cp->cgx)) return((cp->cgx)->chan_widgets[W_sy]);      else return(NULL);}
+GtkWidget *channel_zx(chan_info *cp)         {if ((cp) && (cp->cgx)) return((cp->cgx)->chan_widgets[W_zx]);      else return(NULL);}
+GtkWidget *channel_zy(chan_info *cp)         {if ((cp) && (cp->cgx)) return((cp->cgx)->chan_widgets[W_zy]);      else return(NULL);}
+static GtkWidget *channel_gsy(chan_info *cp) {if ((cp) && (cp->cgx)) return((cp->cgx)->chan_widgets[W_gsy]);     else return(NULL);}
+static GtkWidget *channel_gzy(chan_info *cp) {if ((cp) && (cp->cgx)) return((cp->cgx)->chan_widgets[W_gzy]);     else return(NULL);}
+GtkWidget *channel_w(chan_info *cp)          {if ((cp) && (cp->cgx)) return((cp->cgx)->chan_widgets[W_w]);       else return(NULL);}
+GtkWidget *channel_f(chan_info *cp)          {if ((cp) && (cp->cgx)) return((cp->cgx)->chan_widgets[W_f]);       else return(NULL);}
+GtkWidget *channel_up_arrow(chan_info *cp)   {if ((cp) && (cp->cgx)) return((cp->cgx)->chan_widgets[W_up_ev]);   else return(NULL);}
 GtkWidget *channel_down_arrow(chan_info *cp) {if ((cp) && (cp->cgx)) return((cp->cgx)->chan_widgets[W_down_ev]); else return(NULL);}
 
-static GtkWidget *channel_main_pane(chan_info *cp) {if ((cp) && (cp->cgx)) return((cp->cgx)->chan_widgets[W_main_window]); return(NULL);}
-static GtkObject *gsy_adj(chan_info *cp) {if ((cp) && (cp->cgx)) return((cp->cgx)->chan_adjs[W_gsy_adj]); else return(NULL);}
-static GtkObject *gzy_adj(chan_info *cp) {if ((cp) && (cp->cgx)) return((cp->cgx)->chan_adjs[W_gzy_adj]); else return(NULL);}
-static GtkObject *sy_adj(chan_info *cp) {if ((cp) && (cp->cgx)) return((cp->cgx)->chan_adjs[W_sy_adj]); else return(NULL);}
-static GtkObject *sx_adj(chan_info *cp) {if ((cp) && (cp->cgx)) return((cp->cgx)->chan_adjs[W_sx_adj]); else return(NULL);}
-static GtkObject *zy_adj(chan_info *cp) {if ((cp) && (cp->cgx)) return((cp->cgx)->chan_adjs[W_zy_adj]); else return(NULL);}
-static GtkObject *zx_adj(chan_info *cp) {if ((cp) && (cp->cgx)) return((cp->cgx)->chan_adjs[W_zx_adj]); else return(NULL);}
+static GtkWidget *channel_main_pane(chan_info *cp) {if ((cp) && (cp->cgx)) return((cp->cgx)->chan_widgets[W_main_window]); else return(NULL);}
+static GtkObject *gsy_adj(chan_info *cp)           {if ((cp) && (cp->cgx)) return((cp->cgx)->chan_adjs[W_gsy_adj]);        else return(NULL);}
+static GtkObject *gzy_adj(chan_info *cp)           {if ((cp) && (cp->cgx)) return((cp->cgx)->chan_adjs[W_gzy_adj]);        else return(NULL);}
+static GtkObject *sy_adj(chan_info *cp)            {if ((cp) && (cp->cgx)) return((cp->cgx)->chan_adjs[W_sy_adj]);         else return(NULL);}
+static GtkObject *sx_adj(chan_info *cp)            {if ((cp) && (cp->cgx)) return((cp->cgx)->chan_adjs[W_sx_adj]);         else return(NULL);}
+static GtkObject *zy_adj(chan_info *cp)            {if ((cp) && (cp->cgx)) return((cp->cgx)->chan_adjs[W_zy_adj]);         else return(NULL);}
+static GtkObject *zx_adj(chan_info *cp)            {if ((cp) && (cp->cgx)) return((cp->cgx)->chan_adjs[W_zx_adj]);         else return(NULL);}
 
 int channel_open_pane(chan_info *cp, void *ptr)
 {
@@ -571,16 +570,8 @@ void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, in
       gtk_paned_add2(GTK_PANED(cw[W_main_window]),cw[W_graph_window]);
 
       cw[W_graph] = gtk_drawing_area_new();
-
-      cw[W_graph_fixed] = gtk_snd_fixed_new(cw[W_graph]);
-      gtk_widget_set_parent(cw[W_graph],cw[W_graph_fixed]);
-
-      gtk_table_attach(GTK_TABLE(cw[W_graph_window]), cw[W_graph_fixed], 2, 3, 0, 2, GTK_FILL | GTK_EXPAND, GTK_FILL | GTK_EXPAND | GTK_SHRINK, 0, 0);
-      gtk_widget_show(cw[W_graph_fixed]);
-
       gtk_widget_set_events(cw[W_graph], GDK_ALL_EVENTS_MASK);
-      /* gtk_table_attach(GTK_TABLE(cw[W_graph_window]), cw[W_graph], 2, 3, 0, 2, GTK_FILL | GTK_EXPAND, GTK_FILL | GTK_EXPAND | GTK_SHRINK, 0, 0); */
-      /* gtk_fixed_put(GTK_FIXED(cw[W_graph_fixed]),cw[W_graph],0,0); */
+      gtk_table_attach(GTK_TABLE(cw[W_graph_window]), cw[W_graph], 2, 3, 0, 2, GTK_FILL | GTK_EXPAND, GTK_FILL | GTK_EXPAND | GTK_SHRINK, 0, 0);
       set_background(cw[W_graph],(ss->sgx)->graph_color);
       set_foreground(cw[W_graph],(ss->sgx)->data_color);
       gtk_widget_show(cw[W_graph]);
@@ -700,6 +691,7 @@ void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, in
 
       gtk_paned_set_position(GTK_PANED(cw[W_main_window]),1);
       gtk_widget_show(cw[W_graph_window]);
+
     }
   else recolor_graph(cp,FALSE); /* in case selection color left over from previous use */
   if ((sp->combining != CHANNELS_COMBINED) || (channel == 0))

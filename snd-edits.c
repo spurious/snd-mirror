@@ -2,6 +2,7 @@
 
 /* TODO   undo-hook is not very useful until we can make channel-specific GUI indications
  * TODO   add more general SCM func mechanism? or add a way to extend the pre-parsed cases
+ * TODO   extend (or insert) zeros: fragment type or special sound file? (amp env here?)
  */
 /* the latter is under the WITH_PARSE_TREES switch.  ed_list has 2 extra fields:
  *      MUS_SAMPLE_TYPE (*func)(struct chan__info *cp, int pos, struct snd__fd *sf,void *env);
@@ -880,6 +881,23 @@ static void ripple_out(int *list,int beg,int num, int len)
   for (i=beg,k=beg*ED_SIZE;i<len;i++,k+=ED_SIZE) list[k+ED_OUT] += num;
 }
 
+static void prune_edits(chan_info *cp, int edpt)
+{
+  int i;
+  if (cp->edits[edpt]) 
+    {
+      for (i=edpt;i<cp->edit_size;i++) 
+	{
+	  cp->edits[i] = free_ed_list(cp->edits[i]);
+	  cp->amp_envs[i] = free_amp_env(cp,i);
+	}
+      release_pending_marks(cp,edpt);
+      release_pending_mixes(cp,edpt);
+      release_pending_sounds(cp,edpt);
+      reflect_no_more_redo_in_menu();
+    }
+}
+
 static void prepare_edit_list(chan_info *cp, int len)
 {
   int i;
@@ -899,18 +917,7 @@ static void prepare_edit_list(chan_info *cp, int len)
       else cp->amp_envs = (env_info **)REALLOC(cp->amp_envs,cp->edit_size*sizeof(env_info *));
       for (i=cp->edit_ctr;i<cp->edit_size;i++) {cp->edits[i] = NULL; cp->amp_envs[i] = NULL; cp->samples[i] = 0;}
     }
-  if (cp->edits[cp->edit_ctr]) 
-    {
-      for (i=cp->edit_ctr;i<cp->edit_size;i++) 
-	{
-	  cp->edits[i] = free_ed_list(cp->edits[i]);
-	  cp->amp_envs[i] = free_amp_env(cp,i);
-	}
-      release_pending_marks(cp,cp->edit_ctr);
-      release_pending_mixes(cp,cp->edit_ctr);
-      release_pending_sounds(cp,cp->edit_ctr);
-      reflect_no_more_redo_in_menu();
-    }
+  prune_edits(cp,cp->edit_ctr);
   reflect_undo_ok_in_menu();
   cp->samples[cp->edit_ctr] = len;
 }
@@ -1074,23 +1081,27 @@ static ed_list *insert_samples_1 (int samp, int num, MUS_SAMPLE_TYPE* vals, ed_l
   return(new_state);
 }
 
-static void extend_insertion(int beg, int num, MUS_SAMPLE_TYPE *vals, chan_info *cp, char *origin)
+void extend_with_zeros(chan_info *cp, int beg, int num, char *origin)
 {
+  /* two cases also in snd-chn (cursor_zeros, cursor_insert) */
+  MUS_SAMPLE_TYPE *zeros;
   int k,len;
   int *cb;
   if (num <= 0) return;
+  zeros = (MUS_SAMPLE_TYPE *)CALLOC(num,sizeof(MUS_SAMPLE_TYPE));
   len = current_ed_samples(cp);
-  k=cp->edit_ctr;
+  k = cp->edit_ctr;
   prepare_edit_list(cp,len+num);
-  cp->edits[cp->edit_ctr] = insert_samples_1(beg,num,vals,cp->edits[k],cp,&cb,origin);
+  cp->edits[cp->edit_ctr] = insert_samples_1(beg,num,zeros,cp->edits[k],cp,&cb,origin);
   reflect_edit_history_change(cp);
+  check_for_first_edit(cp); /* needed to activate revert menu option */
+  FREE(zeros);
 }
 
 void file_insert_samples(int beg, int num, char *inserted_file, chan_info *cp, int chan, int auto_delete, char *origin)
 {
   int k,len;
   int *cb;
-  MUS_SAMPLE_TYPE *zeros;
   int fd;
   int *datai;
   ed_list *ed;
@@ -1105,10 +1116,7 @@ void file_insert_samples(int beg, int num, char *inserted_file, chan_info *cp, i
   len = current_ed_samples(cp);
   if (beg >= len)
     {
-      zeros = (MUS_SAMPLE_TYPE *)CALLOC(beg-len+1,sizeof(MUS_SAMPLE_TYPE));
-      extend_insertion(len,beg-len+1,zeros,cp,"(insert-extend)");
-      check_for_first_edit(cp); /* needed to activate revert menu option */
-      FREE(zeros);
+      extend_with_zeros(cp,len,beg-len+1,"(insert-extend)");
       len = current_ed_samples(cp);
     }
   k=cp->edit_ctr;
@@ -1142,16 +1150,12 @@ void insert_samples(int beg, int num, MUS_SAMPLE_TYPE *vals, chan_info *cp, char
 {
   int k,len;
   int *cb;
-  MUS_SAMPLE_TYPE *zeros;
   if (num <= 0) return;
   if (dont_edit(cp)) return;
   len = current_ed_samples(cp);
   if (beg >= len)
     {
-      zeros = (MUS_SAMPLE_TYPE *)CALLOC(beg-len+1,sizeof(MUS_SAMPLE_TYPE));
-      extend_insertion(len,beg-len+1,zeros,cp,"(insert-extend)");
-      check_for_first_edit(cp); /* needed to activate revert menu option */
-      FREE(zeros);
+      extend_with_zeros(cp,len,beg-len+1,"(insert-extend)");
       len = current_ed_samples(cp);
     }
   k=cp->edit_ctr;
@@ -1364,7 +1368,6 @@ void file_change_samples(int beg, int num, char *tempfile, chan_info *cp, int ch
 {
   int k,prev_len,new_len;
   int *cb;
-  MUS_SAMPLE_TYPE *zeros;
   int fd;
   int *datai;
   ed_list *ed;
@@ -1380,10 +1383,7 @@ void file_change_samples(int beg, int num, char *tempfile, chan_info *cp, int ch
 
   if (beg >= prev_len)
     {
-      zeros = (MUS_SAMPLE_TYPE *)CALLOC(beg-prev_len+1,sizeof(MUS_SAMPLE_TYPE));
-      extend_insertion(prev_len,beg-prev_len+1,zeros,cp,"(change-extend)");
-      check_for_first_edit(cp); /* needed to activate revert menu option */
-      FREE(zeros);
+      extend_with_zeros(cp,prev_len,beg-prev_len+1,"(change-extend)");
       prev_len = current_ed_samples(cp);
     }
 
@@ -1466,16 +1466,12 @@ void file_override_samples(int num, char *tempfile, chan_info *cp, int chan, int
 void change_samples(int beg, int num, MUS_SAMPLE_TYPE *vals, chan_info *cp, int lock, char *origin)
 {
   int k,prev_len,new_len;
-  MUS_SAMPLE_TYPE *zeros;
   if (num <= 0) return;
   if (dont_edit(cp)) return;
   prev_len = current_ed_samples(cp);
   if (beg >= prev_len)
     {
-      zeros = (MUS_SAMPLE_TYPE *)CALLOC(beg-prev_len+1,sizeof(MUS_SAMPLE_TYPE));
-      extend_insertion(prev_len,beg-prev_len+1,zeros,cp,"(change-extend)");
-      check_for_first_edit(cp); /* needed to activate revert menu option */
-      FREE(zeros);
+      extend_with_zeros(cp,prev_len,beg-prev_len+1,"(change-extend)");
       prev_len = current_ed_samples(cp);
     }
   new_len = beg+num;
@@ -1988,46 +1984,6 @@ int snd_make_file(char *ofile, int chans, file_info *hdr, snd_fd **sfs, int leng
   return(err);
 }
 
-#if FILE_PER_CHAN
-static int multifile_save_edits(char *ofile, snd_info *sp, snd_fd **sfs, snd_state *ss, int save_as)
-{
-  /* write each channel as a separate file */
-  int i,err=0,needs_free=1;
-  chan_info *cp;
-  snd_fd *cpfs[1];
-  char *nfile,*file;
-  for (i=0;i<sp->nchans;i++)
-    {
-      cp = sp->chans[i];
-      cpfs[0] = sfs[i];
-      if (save_as)
-	{
-	  nfile = snd_tempnam(ss);
-	  snd_make_file(nfile,1,cp->hdr,cpfs,current_ed_samples(cp),ss);
-#if HAVE_GUILE
-	  file = multifile_save(sp->index,cp->chan);
-	  if (file == NULL)
-	    {
-#endif
-	  file = (char *)CALLOC(MUS_MAX_FILE_NAME,sizeof(char));
-	  sprintf(file,"%s/%d.1",ofile,cp->chan);
-#if HAVE_GUILE
-	    }
-	  else needs_free=0;
-#endif
-	  err = move_file(nfile,file);
-	  if (needs_free) FREE(file);
-	}
-      else
-	{
-	  snd_make_file(ofile,1,cp->hdr,cpfs,current_ed_samples(cp),ss);
-	  err = move_file(ofile,cp->filename);
-	}
-    }
-  return(err);
-}
-#endif
-
 static int only_save_edits(snd_info *sp, file_info *nhdr, char *ofile)
 {
   snd_state *ss;
@@ -2036,11 +1992,6 @@ static int only_save_edits(snd_info *sp, file_info *nhdr, char *ofile)
   ss = sp->state;
   sf = (snd_fd **)CALLOC(sp->nchans,sizeof(snd_fd *));
   for (i=0;i<sp->nchans;i++) sf[i] = init_sample_read(0,sp->chans[i],READ_FORWARD);
-#if FILE_PER_CHAN
-  if (sp->chan_type == FILE_PER_CHANNEL)
-    err = multifile_save_edits(ofile,sp,sf,ss,TRUE);
-  else
-#endif
   err = snd_make_file(ofile,sp->nchans,nhdr,sf,current_ed_samples(sp->chans[0]),ss);
   for (i=0;i<sp->nchans;i++) free_snd_fd(sf[i]);
   FREE(sf);
@@ -2091,11 +2042,6 @@ static int save_edits_1(snd_info *sp)
   for (i=0;i<sp->nchans;i++) sf[i] = init_sample_read(0,sp->chans[i],READ_FORWARD);
   report_in_minibuffer(sp,"saving %s",sp->shortname);
   sphdr = sp->hdr;
-#if FILE_PER_CHAN
-  if (sp->chan_type == FILE_PER_CHANNEL)
-    err = multifile_save_edits(ofile,sp,sf,ss,FALSE);
-  else
-#endif
   err = snd_make_file(ofile,sp->nchans,sp->hdr,sf,samples,ss);
   if (err != MUS_NO_ERROR) 
     {
@@ -2117,12 +2063,6 @@ static int save_edits_1(snd_info *sp)
       if (cp->sounds) free_sound_list(cp);
     }
   FREE(sf);
-#if FILE_PER_CHAN
-  if (sp->chan_type == FILE_PER_SOUND)
-    {
-      err = 0;
-      saved_errno = 0;
-#endif
 
 #if (!HAVE_ACCESS)
   err = 0;
@@ -2136,9 +2076,6 @@ static int save_edits_1(snd_info *sp)
       if (err) saved_errno = errno;
     }
   else saved_errno = errno;
-#if FILE_PER_CHAN
-    }
-#endif
   sp->write_date = file_write_date(sp->fullname);
 
   add_sound_data(sp->fullname,sp,ss);
@@ -2665,7 +2602,7 @@ static SCM g_loop_samples(SCM reader, SCM proc, SCM calls, SCM origin, SCM envir
     }
   ofile = snd_tempnam(ss);
   sp = (cp->sound);
-  hdr = make_temp_header(ss,ofile,SND_SRATE(sp),1,num);
+  hdr = make_temp_header(ofile,SND_SRATE(sp),1,num);
   ofd = open_temp_file(ofile,1,hdr,ss);
   datumb = mus_data_format_to_bytes_per_sample(hdr->format);
   data = (MUS_SAMPLE_TYPE **)CALLOC(1,sizeof(MUS_SAMPLE_TYPE *));
@@ -2820,6 +2757,7 @@ static int finish_as_one_edit(chan_info *cp, void *ptr)
 	      reflect_edit_history_change(cp);
 	    }
 	}
+      prune_edits(cp,cp->edit_ctr+1);
       update_graph(cp,NULL); 
     }
   chan_ctr++; 
@@ -2843,7 +2781,7 @@ static SCM g_as_one_edit(SCM proc, SCM origin)
       else as_one_edit_origin = NULL;
       cur_edits = (int *)CALLOC(chans,sizeof(int));
       chan_ctr = 0;
-      map_over_chans(ss,init_as_one_edit,(void *)cur_edits);
+      map_over_chans(ss,init_as_one_edit,(void *)cur_edits); /* redo here can't make sense, can it? */
       result = g_call0(proc);
       chan_ctr = 0;
       map_over_chans(ss,finish_as_one_edit,(void *)cur_edits);

@@ -22,7 +22,6 @@
  *    HPUX ("- H")
  *    W95/98 ("- WI")
  *    AIX, NEC EWS, SONY NEWS, OS2, AF, NetBSD etc -- untested and incomplete
- *    ARDOUR audio (find "- Ardour") (i/o routed via the ardour API)
  *    Mac OS-X ("- OSX")
  *    audio describers
  */
@@ -9622,96 +9621,6 @@ char *mus_audio_moniker(void) {return("OS2 audio");}
 
 #endif
 
-
-/* ------------------------------- Ardour Audio----------------------------------- */
-
-#ifdef ARDOUR_AUDIO
-#define AUDIO_OK
-
-extern int ardour_write_to_channel (int channel, char *buf, size_t bytes);
-
-void describe_audio_state_1(void)
-{
-}
-
-int mus_audio_initialize ()
-{
-	return 0;
-}
-
-int mus_audio_open_output(int dev, int srate, int chans, int format, int size)
-{
-	return 0;
-}
-
-int mus_audio_open_input(int dev, int srate, int chans, int format, int size)
-{
-	return 0;
-}
-
-int mus_audio_write(int line, char *buf, int bytes)
-{
-	return bytes;
-}
-
-int mus_audio_write_channel(int line, char *buf, int bytes, int channel)
-{
-	ardour_write_to_channel (channel, buf, bytes);
-	return bytes;
-}
-
-int mus_audio_flush(int line) 
-{
-	return 0;
-}
-
-int mus_audio_close(int line)
-{
-	return 0;
-}
-
-int mus_audio_read(int line, char *buf, int bytes)
-{
-	memset (buf, 0, bytes);
-	return bytes;
-}
-
-int mus_audio_mixer_read(int dev, int field, int chan, float *val)
-{
-	*val = 0;
-	return 0;
-}
-
-int mus_audio_mixer_write(int dev, int field, int chan, float *val)
-{
-	return 0;
-}
-
-void mus_audio_save(void)
-{
-}
-
-void mus_audio_restore(void)
-{
-}
-
-int mus_audio_systems(void) 
-{
-	return 1;
-}
-
-char *mus_audio_system_name(int system) 
-{
-	return "ardour audio";
-}
-
-char *mus_audio_moniker(void) 
-{
-	return "ardour audio";
-}
-
-#endif /*ARDOUR_AUDIO*/
- 
 
 /* and DEC using MMSYSTEM?? #include <mme/mmsystem.h> -- see xanim */
 

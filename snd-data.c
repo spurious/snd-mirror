@@ -45,7 +45,7 @@ chan_info *make_chan_info(chan_info *cip, int chan, snd_info *sound, snd_state *
       cp = (chan_info *)CALLOC(1,sizeof(chan_info)); 
       cp->cgx = (chan_context *)CALLOC(1,sizeof(chan_context));
       (cp->cgx)->ax = (axis_context *)CALLOC(1,sizeof(axis_context));
-      cp->mixes = NULL;
+      cp->mixes = 0;
       cp->last_sonogram = NULL;
 #if HAVE_HOOKS
       cp->edit_hook = scm_make_hook(SCM_MAKINUM(0));
@@ -98,7 +98,6 @@ chan_info *make_chan_info(chan_info *cip, int chan, snd_info *sound, snd_state *
   cp->fft_window = fft_window(ss);
   cp->transform_type = transform_type(ss);
   cp->normalize_fft = normalize_fft(ss);
-  cp->show_mix_consoles = show_mix_consoles(ss);
   cp->show_mix_waveforms = show_mix_waveforms(ss);
   cp->graph_style = graph_style(ss);
   cp->graphs_horizontal = graphs_horizontal(ss);
@@ -119,10 +118,6 @@ chan_info *make_chan_info(chan_info *cip, int chan, snd_info *sound, snd_state *
   cp->gsy = 1.0;
   cp->selection_transform_size = 0;
   if (cp->last_sonogram) {FREE(cp->last_sonogram); cp->last_sonogram = NULL;}
-#if FILE_PER_CHAN
-  cp->hdr = NULL;
-  cp->filename = NULL;
-#endif
   return(cp);
 }
 
@@ -167,11 +162,6 @@ static chan_info *free_chan_info(chan_info *cp)
     }
   cp->lisp_graphing = 0;
   cp->selection_transform_size = 0;
-#if FILE_PER_CHAN
-  /* assuming here that the sound_list cleanup will close the file pointer */
-  if (cp->hdr) cp->hdr = free_file_info(cp->hdr);
-  if (cp->filename) {FREE(cp->filename); cp->filename = NULL;}
-#endif
 #if HAVE_HOOKS
   scm_reset_hook_x(cp->edit_hook);
   scm_reset_hook_x(cp->undo_hook);
@@ -289,10 +279,6 @@ snd_info *make_snd_info(snd_info *sip, snd_state *state, char *filename, file_in
       /* can't use snd-chn.c get_maxamp here because the file edit tree is not yet set up */
       /* can't use mus_sound_chans etc here because this might be a raw header file */
     }
-#if FILE_PER_CHAN
-  sp->chan_type = FILE_PER_SOUND;
-  sp->channel_filenames = NULL;
-#endif
   return(sp);
 }
 
@@ -362,21 +348,6 @@ void free_snd_info(snd_info *sp)
     }
   if (sp->hdr) sp->hdr = free_file_info(sp->hdr);
   if (sp->edited_region) clear_region_backpointer(sp);
-
-#if FILE_PER_CHAN
-  if (sp->chan_type == FILE_PER_CHANNEL)
-    {
-      sp->chan_type = FILE_PER_SOUND;
-      if (sp->channel_filenames)
-	{
-	  for (i=0;i<sp->nchans;i++)
-	    if (sp->channel_filenames[i]) 
-	      FREE(sp->channel_filenames[i]);
-	  FREE(sp->channel_filenames);
-	}
-      sp->channel_filenames = NULL;
-    }
-#endif
 }
 
 snd_info *completely_free_snd_info(snd_info *sp)

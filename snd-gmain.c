@@ -16,7 +16,6 @@
 #else
   #define INIT_FILE_NAME "snd-init"
 #endif
-#define RC_FILE_NAME "~/.sndrc"
 #define EPS_FILE_NAME "snd.eps"
 #define FALLBACK_FONT "fixed"
 #define HIGHLIGHT_COLOR      "ivory1"
@@ -25,10 +24,9 @@
 #define ZOOM_COLOR           "ivory4"
 #define CURSOR_COLOR         "red"
 #define SELECTION_COLOR      "lightsteelblue1"
-#define MIX_COLOR            "lightgreen"
-#define MIX_FOCUS_COLOR      "yellow2"
+#define MIX_COLOR            "darkgray"
+#define SELECTED_MIX_COLOR   "lightgreen"
 #define ENVED_WAVEFORM_COLOR "blue"
-#define MIX_WAVEFORM_COLOR   "darkgray"
 #define GRAPH_COLOR          "white"
 #define SELECTED_GRAPH_COLOR "white"
 #define DATA_COLOR           "black"
@@ -248,7 +246,13 @@ static void setup_gcs (snd_state *ss)
 
   sx->mix_gc = gdk_gc_new(wn);
   gdk_gc_set_background(sx->mix_gc,sx->graph_color);
-  gdk_gc_set_foreground(sx->mix_gc,sx->mix_waveform_color);
+  gdk_gc_set_foreground(sx->mix_gc,sx->mix_color);
+  gdk_gc_set_function(sx->mix_gc,GDK_COPY);
+
+  sx->selected_mix_gc = gdk_gc_new(wn);
+  gdk_gc_set_background(sx->selected_mix_gc,sx->selected_graph_color);
+  gdk_gc_set_foreground(sx->selected_mix_gc,sx->selected_mix_color);
+  gdk_gc_set_function(sx->selected_mix_gc,GDK_COPY);
 
   sx->cursor_gc = gdk_gc_new(wn);
   gdk_gc_set_background(sx->cursor_gc,sx->graph_color);
@@ -352,7 +356,7 @@ static BACKGROUND_TYPE startup_funcs(gpointer clientData)
 
       break;
     case 1: 
-      /* gtk_rc_parse(RC_FILE_NAME); */ /* whatever ... */
+
       snd_load_init_file(ss,noglob,noinit);
 #if HAVE_SIGNAL
       signal(SIGTTIN,SIG_IGN);
@@ -448,36 +452,6 @@ static GdkColor *get_color(char *defined_color, char *fallback_color, char *seco
   #include <pwd.h>
 #endif
 
-static void load_gtk_rc_file ()
-{
-  char fullpath[PATH_MAX+1];
-  char *path;
-
-  if ((path = getenv ("SND_GTKRC")) == NULL) 
-    {
-#if HAVE_PWD_H
-      struct passwd *pw;
-      pw = getpwuid (getuid());
-      sprintf (fullpath, "%s/.sndrc", pw->pw_dir);
-#else 
-      char *home = getenv ("HOME");
-      sprintf (fullpath, "%s/.sndrc", home ? home : "");
-#endif
-      path = fullpath;
-    }
-
-  if (access (path, R_OK)) 
-    {
-#if DEBUGGING
-      fprintf(stderr,"No GTK rc file for snd at %s\n", path);
-      /* I take it this is a purely aesthetic "error"? */
-      /* (can't use add_to_error_history here since state context is not setup yet) */
-#endif
-      return;
-    }
-  gtk_rc_parse(path);
-}
-
 #ifdef SND_AS_WIDGET
 GtkWidget *snd_as_widget(int argc, char **argv, GtkWidget *parent, void (*error_func)(const char *))
 {
@@ -500,8 +474,6 @@ void snd_doit(snd_state *ss,int argc, char **argv)
   gtk_init(&argc,&argv);
   gdk_set_locale();
 #endif
-
-  load_gtk_rc_file ();
 
   ss->ctrls_height = CLOSED_CTRLS_HEIGHT;
   ss->channel_min_height = CHANNEL_MIN_HEIGHT;
@@ -570,8 +542,7 @@ void snd_doit(snd_state *ss,int argc, char **argv)
   sx->cursor_color = get_color(CURSOR_COLOR,NULL,NULL,FALSE);
   sx->selection_color = get_color(SELECTION_COLOR,"gray80",NULL,FALSE);
   sx->mix_color = get_color(MIX_COLOR,NULL,NULL,FALSE);
-  sx->mix_focus_color = get_color(MIX_FOCUS_COLOR,NULL,NULL,FALSE);
-  sx->mix_waveform_color = get_color(MIX_WAVEFORM_COLOR,NULL,NULL,FALSE);
+  sx->selected_mix_color = get_color(SELECTED_MIX_COLOR,NULL,NULL,FALSE);
   sx->enved_waveform_color = get_color(ENVED_WAVEFORM_COLOR,NULL,NULL,FALSE);
   sx->filter_waveform_color = get_color(FILTER_WAVEFORM_COLOR,NULL,NULL,FALSE);
   sx->listener_color = get_color(LISTENER_COLOR,NULL,NULL,TRUE);

@@ -64,7 +64,7 @@ void reflect_file_lack_in_menu (void)
 
 void reflect_mix_active_in_menu(void)
 {
-  set_sensitive(view_consoles_menu(),TRUE);
+  set_sensitive(view_mix_panel_menu(),TRUE);
 }
 
 void reflect_normalize_in_menu(int on)
@@ -363,11 +363,7 @@ static int map_chans_marks(chan_info *cp, void *ptr)
 void set_show_marks(snd_state *ss, int val)
 {
   in_set_show_marks(ss,val);
-  if (view_marks_menu())
-    {
-      set_menu_label(view_marks_menu(),(val) ? STR_Hide_marks : STR_Show_marks);
-      map_over_chans(ss,map_chans_marks,(void *)val);
-    }
+  map_over_chans(ss,map_chans_marks,(void *)val);
 }
 
 static int map_chans_zero(chan_info *cp, void *ptr)
@@ -407,16 +403,6 @@ void set_view_ctrls_label(char *lab)
 void set_view_listener_label(char *lab)
 {
   set_menu_label(view_listener_menu(),lab);
-}
-
-static int map_chans_show_mix_consoles(chan_info *cp, void *ptr) {cp->show_mix_consoles = (int)ptr; return(0);}
-
-void set_show_mix_consoles(snd_state *ss, int on)
-{
-  in_set_show_mix_consoles(ss,on);
-  map_over_chans(ss,map_chans_show_mix_consoles,(void *)on);
-  set_menu_label(view_consoles_menu(),(on) ? STR_Hide_consoles : STR_Show_consoles);
-  update_all_consoles(ss);
 }
 
 void activate_focus_menu(snd_state *ss, int new_focus)

@@ -142,7 +142,7 @@ static void mus_print2snd(char *msg)
   ss->Wavelet_Type = DEFAULT_WAVELET_TYPE;
   ss->Transform_Type = DEFAULT_TRANSFORM_TYPE;
   ss->Show_Selection_Transform = DEFAULT_SHOW_SELECTION_TRANSFORM;
-  ss->With_Mix_Consoles = DEFAULT_WITH_MIX_CONSOLES;
+  ss->With_Mix_Tags = DEFAULT_WITH_MIX_TAGS;
   ss->Dot_Size = DEFAULT_DOT_SIZE;
   ss->Vu_Size = DEFAULT_VU_SIZE;
   ss->Vu_Font_Size = DEFAULT_VU_FONT_SIZE;
@@ -185,9 +185,10 @@ static void mus_print2snd(char *msg)
   ss->Use_Raw_Defaults = DEFAULT_USE_RAW_DEFAULTS;
   ss->Print_Length = DEFAULT_PRINT_LENGTH;
   ss->Previous_Files_Sort = DEFAULT_PREVIOUS_FILES_SORT;
-  ss->Show_Mix_Consoles = DEFAULT_SHOW_MIX_CONSOLES;
   ss->Show_Mix_Waveforms = DEFAULT_SHOW_MIX_WAVEFORMS;
   ss->Mix_Waveform_Height = DEFAULT_MIX_WAVEFORM_HEIGHT;
+  ss->Mix_Tag_Width = DEFAULT_MIX_TAG_WIDTH;
+  ss->Mix_Tag_Height = DEFAULT_MIX_TAG_HEIGHT;
   ss->Show_Usage_Stats = DEFAULT_SHOW_USAGE_STATS;
   ss->Save_State_File = DEFAULT_SAVE_STATE_FILE;
   ss->Enved_Base = DEFAULT_ENVED_BASE;
@@ -233,9 +234,6 @@ static void mus_print2snd(char *msg)
   ss->exit_hook_active = 0;
   ss->start_hook_active = 0;
   ss->search_in_progress = 0;
-#if NONINTERLEAVED_AUDIO
-  ss->audio_hw_channels = DEFAULT_AUDIO_HW_CHANNELS;
-#endif
   ss->just_time = 0;
 
   init_recorder();

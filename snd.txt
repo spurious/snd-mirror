@@ -10,8 +10,7 @@ each with any number of channels, and can be customized and extended using
 guile and guile-gtk. Snd is free (LGPL); the code is available via anonymous
 ftp as snd-4.tar.gz. Snd has a home page and a CVS repository.
 
-                extsnd.html grfsnd.html clm.html sndlib.html
-  ------------------------------------------------------------------------
+  related documentationextsnd.html   grfsnd.html   clm.html   sndlib.html
 
 Contents
 
@@ -90,8 +89,6 @@ Contents
         o Customization Index
    * Topical Index
 
-  ------------------------------------------------------------------------
-
 Getting Started
 
 Once compiled and loaded (see README.Snd for instructions), fire Snd up with
@@ -105,8 +102,7 @@ Click the "f" button, and an fft window appears alongside the waveform. Drag
 the upper scale at the bottom of the graph and both graphs are updated as
 you move through the file. Drag the lower scale to zoom in or out. Drag the
 outer scale (the wider one) on the left to zoom the y axis in or out. The
-inner scale moves the y axis up and down; its main use is to move the
-waveform out of the way of a mix console. Click the "w" button (to unset the
+inner scale moves the y axis up and down. Click the "w" button (to unset the
 button) and the time domain waveform goes away. Click "play" to play the
 file. "sync" is more complicated -- it is used to group sounds together for
 simultaneous editing.
@@ -151,27 +147,27 @@ integer. Finally, there is a full-blown listener available under the
 View:Open Listener menu option.
 
   ------------------------------------------------------------------------
+
 File Menu      Edit Menu      View Menu       Options Menu   Help Menu
 
 Open           Undo           Show controls   Transform      Click for help
                                               Options
-Close          Redo           Normalize       Speed style    Overview
-Save           Find           Open listener   Focus style    FFT
-Save as        Cut            Channel style   Save options   Find
-Revert         Paste          Graph style     Save State     Undo and Redo
-Mix            Mix Selection  Verbose cursor  Show stats     Sync
-Update         Play Selection Regions                        Speed
-New            Save Selection Files                          Expand
-Record         Select all     Color                          Reverb
-View           Edit Envelope  Orientation                    Contrast
-Print          Edit Header    Show marks                     Envelope
+Close          Redo           Open listener   Speed style    Overview
+Save           Find           Mix Panel       Focus style    FFT
+Save as        Cut            Regions         Save options   Find
+Revert         Paste          Files           Save State     Undo and Redo
+Mix            Mix Selection  Color           Show stats     Sync
+Update         Play Selection Orientation                    Speed
+New            Save Selection Graph style                    Expand
+Record         Select all     Verbose cursor                 Reverb
+View           Edit Envelope  Channel style                  Contrast
+Print          Edit Header    Normalize                      Envelope
 Exit                          Show y=0                       Marks
-                              Hide consoles                  Mixing
-                              X axis units                   Formats
-                              Error History                  Customization
+                              X axis units                   Mixing
+                              Error History                  Formats
+                                                             Customization
                                                              Recording
                                                              News
-  ------------------------------------------------------------------------
 
 File Operations
 
@@ -334,23 +330,21 @@ Finally, to exit Snd cleanly (that is, removing any temporary files, and
 cleaning up some system stuff), use the Exit option. Unsaved edits are
 silently flushed (but see the function unsaved-edits? in examp.scm).
 
-  ------------------------------------------------------------------------
-
 The Display
 
   View Menu
 
     Show controls:    show/hide the control panel    (C-x C-o, C-x C-c)
-    Normalize:        cleanup current Snd display
     Open listener:    show/hide lisp listener
-    Channel style:    separate, combined or superimposed channels
-    Graph style:      use dots, lines, filled polygons etc in the data displays
-    Verbose cursor:   describe the current sample every time the cursor moves
+    Mix Panel:        mix controller
     Regions:          a browser to examine the region stack
     Files:            a browser of currently and previously loaded files
     Color:            a browser that chooses color maps
     Orientation:      a browser that sets spectrogram and wavogram orientation
-    Show marks:       show or hide current marks
+    Channel style:    separate, combined or superimposed channels
+    Graph style:      use dots, lines, filled polygons etc in the data displays
+    Verbose cursor:   describe the current sample every time the cursor moves
+    Normalize:        cleanup current Snd display
     Show y=0:         show or hide the y=0 line
     X axis units:     x axis labelled in seconds, samples, percent of total
     Error History:    saved error messages
@@ -396,9 +390,7 @@ The Error History option displays whatever errors have been posted during
 the current run of Snd. If some error gets erased too quickly from the
 'minibuffer', you can recover it in this dialog.
 
-The Regions option is described below.
-
-  ------------------------------------------------------------------------
+The Regions and Mix Panel options are described below.
 
 Other Options
 
@@ -504,8 +496,6 @@ in the display during an x-axis zoom. The default is to zoom onto the cursor
 or the beginning of the current selection if either is visible. You can also
 have zoom focus on the left edge, right edge, or midpoint of the current
 window.
-
-  ------------------------------------------------------------------------
 
 Edit Operations
 
@@ -619,8 +609,6 @@ argument is not an integer, it is multiplied by the sampling rate before
 being applied to the command. So, C-u .1 C-x C-p makes the window display .1
 seconds of data.
 
-  ------------------------------------------------------------------------
-
 Marks
 
 A mark marks a particular sample in a sound file (not a position in that
@@ -657,8 +645,6 @@ number of marks to jump forward before getting the distance.
 
 The current marks assoicated with a sound can be saved in a file that Snd
 will load automatically later via (save-marks).
-
-  ------------------------------------------------------------------------
 
 Regions
 
@@ -741,8 +727,6 @@ Also if the 'selection' button is set in the transform options dialog, (or
 equivalently, show-selection-transform is #t), the fft display, if any,
 displays the transform of the selected portion.
 
-  ------------------------------------------------------------------------
-
 The Edit List
 
 The current state of the undo/redo list can be viewed as a scrolled list of
@@ -758,8 +742,6 @@ The function save-edit-history saves the current edit list as a loadable
 program (assuming the base sounds haven't changed in the meantime). The file
 can be edited (it's just a text file with comments). See Edit Lists for more
 details.
-
-  ------------------------------------------------------------------------
 
 How to...
 
@@ -1004,70 +986,23 @@ file, use the File Mix menu option, the command C-x C-q, or one of the
 various mixing functions. Currently the only difference between the first
 two is that the Mix menu option tries to take the current sync state into
 account, whereas the C-x C-q command does not. To mix a selection, use C-x
-q. The mix starts at the current cursor location.
+q. The mix starts at the current cursor location. It is displayed as a
+separate waveform above the main waveform with a red tag at the beginning.
+You can drag the tag to reposition the mix. The underlying sound begin mixed
+can be edited by the same functions used throughout Snd; the mix number is
+used as the first (only) member of a list where the functions take the sound
+index argument. It is usually handier, however, to adjust the mix via the
+Mix Panel.
 
-Each individual mix portion has a "mix console", a small box displayed above
-the waveform containing various controls. These consoles follow the sync
-buttons where relevant.
+[mix tags]
+The Mix Panel Dialog
 
-The Mix Console
-
-When a section or file is mixed into the current file a mix console is
-associated with it, each output channel getting its own console. The console
-is displayed at first as a row of widgets giving the input file name, the
-begin and end times of the mixed-in portion (click to change from seconds to
-samples), then three icons:
-
-  a speaker: click to play the mixed-in portion
-  an 'x':    click to remove the console
-  a box:     click to open (or close) the console
-
-You can drag the widgets to change the position of the mix. Once opened,
-each console presents a pane with an amplitude slider for each input
-channel, and a speed control (srate change on the input). The initial state
-of the console sets the speed to 1.0, and all the input amplitudes 0.0
-except the channel that matches the current output channel, which is set to
-1.0 (a straight mix). To return to this state at any time, click the 'amp:'
-label. To turn the mix off ('mute' it, set all amps to 0.0), double click
-the label; to return to the last settings you made, click it with control or
-meta down. Similarly, click the 'speed:' label to reset it to 1.0, and click
-it with control or meta to return to your last settings. Each time you
-release the mouse button (or click the amp label) counts as another 'edit'
-of the file, so it is usually better to use 'undo' and 'redo' in this
-context, rather than repeated clicks and shift-clicks. The srate scale is
-interpreted in the same way as the sound pane speed control -- as a float
-normally, but also, if you like, quantized to semitones or integer ratios.
-
-To change the scale interpretation, set the variables mix-console-amp-scaler
-and mix-console-speed-scaler. All default to 1.0 which gives a scaling range
-from 0 to around 12. These numbers actually scale an exponent, so (for
-example) if mix-console-amp-scaler is set to 0.5, the scale goes from 0.0 to
-around 3.5; similarly
-
-To reduce the mix console to a single letter, double click the file name.
-Double click the label to return to the original row of icons. Since screen
-space is at a premium, this minimal form of the console can reduce clutter.
-You can still drag the label to reposition the mix. To remove the console
-altogether, click the 'x'. When any edit is performed that changes the file
-within the mixed portion, the affected consoles are removed from the
-display, and the only way to return to them is to undo the offending edit.
-That is, if you mix a portion, then cut some part of that portion, the mix
-will be locked in place from then on, as if you had clicked the 'x' button
-on the mix console.
-
-To turn off the constant graphics updates (which can slow down old machines
-like mine, and which can also be annoying when you know what you're doing),
-set the variable movies to #f.
-
-Normally the console is lined up with its left edge at the beginning of the
-mixed segment. You can move the console anywhere within the segment by
-setting its "anchor" to the position (sample) within the mix that should
-correspond to the console's left edge. See mix-anchor.
-
-To see the waveform of the sound being mixed, set the variable
-show-mix-waveforms to #t. The height of these graphs is set by
-mix-waveform-height. The mix waveform color is set by the resource
-mixWaveColor.
+The Mix Panel is a dialog (under the View Menu) that provides various
+commonly-used controls on the currently selected mix. At the top are the mix
+id, name, begin and end times, track number, and a play button. Beneath that
+are various sliders controlling the speed (sampling rate) of the mix,
+amplitude of each input channel, and the amplitude envelope. This part of
+Snd is in flux currently.
 
 To move the cursor from one mix to the next, in the same manner as C-j moves
 through marks, use C-x C-j.
@@ -1266,7 +1201,7 @@ name) where name is a file name. You can start in this state by calling Snd
 with this file name and the "-l" switch: snd -l name. This file is in
 exactly the same format as the initialization file, and can be edited,
 renamed, or whatever. To load such a file after startup, (load name) (C-x
-C-l). Currently, mix consoles are not saved, but the associated edits are.
+C-l).
 
 Center a tiny signal with DC
 
@@ -1310,8 +1245,6 @@ probably should be. If it finds no matches, the text flashes red; if it
 finds multiple matches and can't extend the current text, it flashes green,
 and (eventually) a list of possible completions appears in the help window.
 If there is no completion routine active, Tab is a no-op.
-
-  ------------------------------------------------------------------------
 
 Keyboard Commands
 
@@ -1413,7 +1346,7 @@ The extended commands (preceded by C-x) are:
   C-f:  open file
   C-g:  abort command
   C-i:  insert file
-  C-j:  go to mix console
+  C-j:  go to mix
   C-l:  load scm file
   C-m:  add named mark
   C-n:  re-evaluate expression
@@ -1428,8 +1361,6 @@ The extended commands (preceded by C-x) are:
   C-x:  evaluate expression
   C-z:  smooth using cosine
 
-  ------------------------------------------------------------------------
-
 The Control Panel
 
 The control panel is the portion of each sound's display beneath the channel
@@ -1437,8 +1368,9 @@ graphs. It is normally hidden, except for the upper portion that shows the
 file name, the sync and play buttons, and the minibuffer (the portion in
 between that opens into a text window when activated).
 
-                                   The controls are: amp, speed, expand,
-                                   contrast, reverb, and filter.
+                       [picture of Snd control panel]
+
+The controls are: amp, speed, expand, contrast, reverb, and filter.
 
 'Speed' here refers to the rate at which the sound data is consumed during
 playback. Another term might be 'srate'. Snd normally uses sinc
@@ -1506,17 +1438,11 @@ The keyboard commands associated with the control panel are:
 
 See also call-apply.
 
-  ------------------------------------------------------------------------
-
 Customization and Extension
 
 See extsnd.html.
 
-  ------------------------------------------------------------------------
-
 Index
-
-                                           Index
 
         Action           Menu       Keyboard          Lisp                  Other
  abort command                    Cg          abort?               mouse click
@@ -1689,9 +1615,6 @@ Index
                      Save State
  select sound                     Cx o        select-sound         File dialog: click file
  show freq domain                             ffting               'f' button
-
- show marks          View: Show               show-marks
-                     marks
  show time domain                             waving               'w' button
  smooth samples                   Cx Cz       smooth
  smooth selection                 Cx z        smooth-selection
@@ -1731,4 +1654,4 @@ Index
                      Zoom style
  zoom window                      [Up],[Down] x-bounds             control keys intensify
 
-                extsnd.html grfsnd.html clm.html sndlib.html
+  related documentationextsnd.html   grfsnd.html   clm.html   sndlib.html

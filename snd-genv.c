@@ -126,9 +126,8 @@ static void Help_Enved_Callback(GtkWidget *w, gpointer clientData)
 
 static void apply_enved(snd_state *ss)
 {
-  int mix_id=0,i,j;
+  int mix_id=0,i,j,chan;
   env *max_env = NULL;
-  mixdata *md;
   snd_info *sp;
   if (active_env)
     {
@@ -137,12 +136,11 @@ static void apply_enved(snd_state *ss)
 	  if (ss->selected_mix != NO_SELECTION)
 	    mix_id = ss->selected_mix;
 	  else mix_id = any_mix_id();
-	  md = md_from_int(mix_id);
-	  if (md) 
-	    {
-	      sp = make_mix_readable(md);
-	      active_channel = sp->chans[((md->selected_chan != NO_SELECTION) ? (md->selected_chan) : 0)];
-	    }
+	  chan = mix_selected_channel(mix_id);
+	  sp = make_mix_readable_from_id(mix_id);
+	  if (sp)
+	    active_channel = sp->chans[(chan != NO_SELECTION) ? chan : 0];
+	  /* TODO else error no such whatever? */
 	}
       else active_channel = current_channel(ss);
       if (active_channel)
@@ -480,26 +478,27 @@ static void mix_button_pressed(GtkWidget *w, gpointer data)
 {
   snd_state *ss = (snd_state *)data;
   int chan = 0;
-  mixdata *md = NULL;
+  int mxchan,mix_id=NO_SELECTION;
   apply_to_mix = (!apply_to_mix);
   if (apply_to_mix) 
     {
       if (apply_to_selection) set_backgrounds(selectionB,(ss->sgx)->highlight_color);
       apply_to_selection = 0;
       if (ss->selected_mix != NO_SELECTION) 
-	md = md_from_int(ss->selected_mix); 
+	mix_id = ss->selected_mix; 
       else
 	{
-	  md = md_from_int(any_mix_id());
-	  if (md) select_mix(ss,md);
+	  mix_id = any_mix_id();
+	  if (mix_id != NO_SELECTION) select_mix_from_id(mix_id);
 	}
-      if (md)
+      if (mix_id != NO_SELECTION)
 	{
-	  if (md->selected_chan != NO_SELECTION) chan = md->selected_chan;
-	  if (mix_amp_env(md->id,chan))
+	  mxchan = mix_selected_channel(mix_id);
+	  if (mxchan != NO_SELECTION) chan = mxchan;
+	  if (mix_amp_env_from_id(mix_id,chan))
 	    {
 	      if (active_env) active_env = free_env(active_env);
-	      active_env = copy_env(mix_amp_env(md->id,chan));
+	      active_env = copy_env(mix_amp_env_from_id(mix_id,chan));
 	      set_enved_env_list_top(0);
 	      do_env_edit(active_env,TRUE);
 	      set_sensitive(undoB,FALSE);

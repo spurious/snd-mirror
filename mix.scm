@@ -15,16 +15,16 @@
 ;;;
 ;;; (set-track-speed track new-speed) sets the speed (srate) of each mix in track to new-speed
 ;;;   (transpose-track track semitones) transposes each mix in track  by semitones
-;;; the mix-speed-changed-hook can be set to respeed-track to have the entire track follow a mix console's speed slider
+;;; the mix-speed-changed-hook can be set to respeed-track to have the entire track follow the mix panel's speed slider
 ;;;
 ;;; (track-position track) returns the begin time of track (the minimum mix begin sample associated with track)
 ;;;   (set-track-position track new-beg) moves all mixes in track so that the track starts at new-beg
 ;;;   (track-end track) returns endpoint (maximum frame in mixes) of track
 ;;;   (track-length track) returns number of samples between track start and end
-;;; the mix-position-changed-hook can be set to reposition-track to have the entire track follow as we drag a mix console
+;;; the mix-position-changed-hook can be set to reposition-track to have the entire track follow as we drag a mix
 ;;; 
 ;;; (set-track-tempo track tempo) changes the inter-mix begin times of mixes in track by tempo (> 1.0 is faster)
-;;; (set-track-color track color) changes the associated mix console colors to color
+;;; (set-track-color track color) changes the associated mix colors to color
 ;;; (track-color track) returns track color
 ;;; (track->vct track) place track data in vct
 ;;; (save-track track filename) save track data in file
@@ -257,7 +257,7 @@
 
 (define set-track-color 
   (lambda (track new-color)
-    "(set-track-color track color) changes the associated mix console colors to color"
+    "(set-track-color track color) changes the associated mix colors to color"
     (map (lambda (a) 
 	   (if (mix? a)
 	       (set! (mix-color a) new-color)))

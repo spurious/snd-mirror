@@ -615,14 +615,6 @@ static SCM g_snd_print(SCM msg)
   return(msg);
 }
 
-static SCM g_start_emacs_buffer(void)
-{
-  snd_state *ss;
-  ss = get_global_state();
-  string_to_stdout(ss,"");
-  return(SCM_BOOL_T);
-}
-
 /* global variables */
 
 static SCM g_ask_before_overwrite(void) {RTNBOOL(ask_before_overwrite(state));}
@@ -936,24 +928,6 @@ static SCM g_set_initial_y1(SCM val)
   RTNFLT(initial_y1(state));
 }
 
-static SCM g_mix_console_amp_scaler(void) {RTNFLT(get_mix_console_amp_scaler());}
-static SCM g_set_mix_console_amp_scaler(SCM val) 
-{
-  #define H_mix_console_amp_scaler "(" S_mix_console_amp_scaler ") -> multiplier on amp scales in mix consoles (1.0)"
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(val)),val,SCM_ARG1,"set-" S_mix_console_amp_scaler); 
-  set_mix_console_amp_scaler(gh_scm2double(val));
-  RTNFLT(get_mix_console_amp_scaler());
-}
-
-static SCM g_mix_console_speed_scaler(void) {RTNFLT(get_mix_console_speed_scaler());}
-static SCM g_set_mix_console_speed_scaler(SCM val) 
-{
-  #define H_mix_console_speed_scaler "(" S_mix_console_speed_scaler ") -> Multiplier on speed scales in mix consoles (1.0)"
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(val)),val,SCM_ARG1,"set-" S_mix_console_speed_scaler); 
-  set_mix_console_speed_scaler(gh_scm2double(val));
-  RTNFLT(get_mix_console_speed_scaler());
-}
-
 static SCM g_movies(void) {RTNBOOL(movies(state));}
 static SCM g_set_movies(SCM val) 
 {
@@ -1133,13 +1107,13 @@ static SCM g_set_show_selection_transform(SCM val)
   RTNBOOL(show_selection_transform(state));
 }
 
-static SCM g_with_mix_consoles(void) {RTNBOOL(with_mix_consoles(state));}
-static SCM g_set_with_mix_consoles(SCM val) 
+static SCM g_with_mix_tags(void) {RTNBOOL(with_mix_tags(state));}
+static SCM g_set_with_mix_tags(SCM val) 
 {
-  #define H_with_mix_consoles "(" S_with_mix_consoles ") -> #t if Snd should create consoles alongside mixing operations"
-  ERRB1(val,"set-" S_with_mix_consoles); 
-  set_with_mix_consoles(state,bool_int_or_one(val));
-  RTNBOOL(with_mix_consoles(state));
+  #define H_with_mix_tags "(" S_with_mix_tags ") -> #t if Snd should editable mixes"
+  ERRB1(val,"set-" S_with_mix_tags); 
+  set_with_mix_tags(state,bool_int_or_one(val));
+  RTNBOOL(with_mix_tags(state));
 }
 
 static SCM g_use_raw_defaults(void) {RTNBOOL(use_raw_defaults(state));}
@@ -1456,7 +1430,6 @@ static SCM g_abortq(void)
 snd_info *get_sp(SCM scm_snd_n)
 {
   int snd_n;
-  mixdata *md;
   /* if scm_snd_n is a number, it is sp->index
      if it's a (non-empty) list, car is mix id (perhaps someday treat list as track if more than one member)
   */
@@ -1479,11 +1452,7 @@ snd_info *get_sp(SCM scm_snd_n)
 	  /* a mix input sound */
 	  /* make sure it's not the null list */
 	  if (gh_length(scm_snd_n) > 0)
-	    {
-	      snd_n = g_scm2int(SCM_CAR(scm_snd_n));
-	      md = md_from_int(snd_n);
-	      if (md) return(make_mix_readable(md));
-	    }
+	    return(make_mix_readable_from_id(g_scm2int(SCM_CAR(scm_snd_n))));
 	  return(NULL);
 	}
     }
@@ -1784,14 +1753,15 @@ static SCM vct2soundfile(SCM g_fd, SCM obj, SCM g_nums)
 }
 
 
-static SCM mix_vct(SCM obj, SCM beg, SCM snd, SCM chn, SCM with_consoles)
+static SCM mix_vct(SCM obj, SCM beg, SCM snd, SCM chn, SCM with_consoles, SCM origin)
 {
-  #define H_mix_vct "(" S_mix_vct " data &optional (beg 0) snd chn (with-consoles #t)) mixes data\n\
+  #define H_mix_vct "(" S_mix_vct " data &optional (beg 0) snd chn (with-consoles #t) origin) mixes data\n\
    (a vct object) into snd's channel chn starting at beg; returns the new mix id"
 
   vct *v;
   int bg;
   chan_info *cp[1];
+  char *edname = NULL;
   MUS_SAMPLE_TYPE **data;
   int i,len,mix_id=-1,with_mixers=1;
   SCM_ASSERT(vct_p(obj),obj,SCM_ARG1,S_mix_vct);
@@ -1809,13 +1779,16 @@ static SCM mix_vct(SCM obj, SCM beg, SCM snd, SCM chn, SCM with_consoles)
       else
 	{
 	  if (SCM_UNBNDP(with_consoles))
-	    with_mixers = with_mix_consoles(state);
+	    with_mixers = with_mix_tags(state);
 	  else with_mixers = bool_int_or_one(with_consoles);
 	  data = (MUS_SAMPLE_TYPE **)CALLOC(1,sizeof(MUS_SAMPLE_TYPE *));
 	  data[0] = (MUS_SAMPLE_TYPE *)CALLOC(len,sizeof(MUS_SAMPLE_TYPE));
 	  for (i=0;i<len;i++)
 	    data[0][i] = MUS_FLOAT_TO_SAMPLE(v->data[i]);
-	  mix_id = mix_array(bg,len,data,cp,1,1,SND_SRATE(cp[0]->sound),S_mix_vct,with_mixers);
+	  if (gh_string_p(origin))
+	    edname = gh_scm2newstr(origin,NULL);
+	  mix_id = mix_array(bg,len,data,cp,1,1,SND_SRATE(cp[0]->sound),(edname == NULL) ? S_mix_vct : edname,with_mixers);
+	  if (edname) free(edname);
 	  FREE(data[0]);
 	  FREE(data);
 	}
@@ -2198,7 +2171,6 @@ static SCM g_insert_sound(SCM file, SCM file_chn, SCM snd_n, SCM chn_n)
   return(SCM_BOOL_F);
 }
 
-#if 0
 Float string2Float(char *str) 
 {
   SCM res;
@@ -2208,7 +2180,6 @@ Float string2Float(char *str)
   else snd_error("%s is not a number",str);
   return(0.0);
 }
-#endif
 
 int string2int(char *str) 
 {
@@ -2458,6 +2429,13 @@ static SCM g_help_dialog(SCM subject, SCM msg)
   snd_help(state,nsubj,nmsg);
   free(nsubj);
   free(nmsg);
+  return(SCM_BOOL_F);
+}
+
+static SCM g_mix_panel(void)
+{
+  #define H_mix_panel "(" S_mix_panel ") starts the mix panel"
+  make_mix_panel(get_global_state());
   return(SCM_BOOL_F);
 }
 
@@ -3051,7 +3029,6 @@ void init_mus2scm_module(void);
 
 static SCM during_open_hook,exit_hook,start_hook,after_open_hook;
 static SCM output_comment_hook;
-static SCM mix_console_state_changed_hook,mix_speed_changed_hook,mix_amp_changed_hook,mix_position_changed_hook;
 
 
 void define_procedure_with_setter(char *get_name, SCM (*get_func)(), char *get_help,
@@ -3097,10 +3074,6 @@ void define_procedure_with_reversed_setter(char *get_name, SCM (*get_func)(), ch
 #endif
   gh_new_procedure(set_name,SCM_FNC set_func,set_req,set_opt,0);
 }
-
-#if FILE_PER_CHAN
-  static SCM open_multifile_sound_hook,save_multifile_sound_hook;
-#endif
 
 #if HAVE_LADSPA
   void g_ladspa_to_snd(SCM local_doc);
@@ -3273,12 +3246,6 @@ void g_initialize_gh(snd_state *ss)
   define_procedure_with_setter(S_initial_y1,SCM_FNC g_initial_y1,H_initial_y1,
 			       "set-" S_initial_y1,SCM_FNC g_set_initial_y1,local_doc,0,0,0,1);
 
-  define_procedure_with_setter(S_mix_console_amp_scaler,SCM_FNC g_mix_console_amp_scaler,H_mix_console_amp_scaler,
-			       "set-" S_mix_console_amp_scaler,SCM_FNC g_set_mix_console_amp_scaler,local_doc,0,0,0,1);
-
-  define_procedure_with_setter(S_mix_console_speed_scaler,SCM_FNC g_mix_console_speed_scaler,H_mix_console_speed_scaler,
-			       "set-" S_mix_console_speed_scaler,SCM_FNC g_set_mix_console_speed_scaler,local_doc,0,0,0,1);
-
   define_procedure_with_setter(S_movies,SCM_FNC g_movies,H_movies,
 			       "set-" S_movies,SCM_FNC g_set_movies,local_doc,0,0,0,1);
 
@@ -3330,8 +3297,8 @@ void g_initialize_gh(snd_state *ss)
   define_procedure_with_setter(S_show_selection_transform,SCM_FNC g_show_selection_transform,H_show_selection_transform,
 			       "set-" S_show_selection_transform,SCM_FNC g_set_show_selection_transform,local_doc,0,0,0,1);
 
-  define_procedure_with_setter(S_with_mix_consoles,SCM_FNC g_with_mix_consoles,H_with_mix_consoles,
-			       "set-" S_with_mix_consoles,SCM_FNC g_set_with_mix_consoles,local_doc,0,0,0,1);
+  define_procedure_with_setter(S_with_mix_tags,SCM_FNC g_with_mix_tags,H_with_mix_tags,
+			       "set-" S_with_mix_tags,SCM_FNC g_set_with_mix_tags,local_doc,0,0,0,1);
 
   define_procedure_with_setter(S_use_raw_defaults,SCM_FNC g_use_raw_defaults,H_use_raw_defaults,
 			       "set-" S_use_raw_defaults,SCM_FNC g_set_use_raw_defaults,local_doc,0,0,0,1);
@@ -3407,6 +3374,7 @@ void g_initialize_gh(snd_state *ss)
   DEFINE_PROC(gh_new_procedure(S_file_dialog,SCM_FNC g_file_dialog,0,0,0),H_file_dialog);
   DEFINE_PROC(gh_new_procedure(S_edit_header_dialog,SCM_FNC g_edit_header_dialog,0,1,0),H_edit_header_dialog);
   DEFINE_PROC(gh_new_procedure(S_help_dialog,SCM_FNC g_help_dialog,2,0,0),H_help_dialog);
+  DEFINE_PROC(gh_new_procedure(S_mix_panel,SCM_FNC g_mix_panel,0,0,0),H_mix_panel);
 
   define_procedure_with_reversed_setter(S_sample,SCM_FNC g_sample,H_sample,
 					"set-" S_sample,SCM_FNC g_set_sample, SCM_FNC g_set_sample_reversed,
@@ -3445,7 +3413,7 @@ void g_initialize_gh(snd_state *ss)
   DEFINE_PROC(gh_new_procedure(S_open_sound_file,SCM_FNC g_open_sound_file,0,4,0),H_open_sound_file);
   DEFINE_PROC(gh_new_procedure(S_close_sound_file,SCM_FNC g_close_sound_file,2,0,0),H_close_sound_file);
   DEFINE_PROC(gh_new_procedure(S_vct_sound_file,SCM_FNC vct2soundfile,3,0,0),H_vct_sound_file);
-  DEFINE_PROC(gh_new_procedure(S_mix_vct,SCM_FNC mix_vct,1,4,0),H_mix_vct);
+  DEFINE_PROC(gh_new_procedure(S_mix_vct,SCM_FNC mix_vct,1,5,0),H_mix_vct);
   DEFINE_PROC(gh_new_procedure(S_transform_size,SCM_FNC g_transform_size,0,2,0),H_transform_size);
   DEFINE_PROC(gh_new_procedure(S_transform_samples,SCM_FNC g_transform_samples,0,2,0),H_transform_samples);
   DEFINE_PROC(gh_new_procedure(S_transform_sample,SCM_FNC g_transform_sample,0,4,0),H_transform_sample);
@@ -3479,8 +3447,6 @@ void g_initialize_gh(snd_state *ss)
   gh_new_procedure(S_delete_samples_with_origin,SCM_FNC g_delete_samples_with_origin,3,2,0);
   gh_new_procedure(S_insert_samples_with_origin,SCM_FNC g_insert_samples_with_origin,4,2,0);
 
-  gh_new_procedure("start-emacs-buffer",SCM_FNC g_start_emacs_buffer,0,0,0);
-
   /* ---------------- HOOKS ---------------- */
 #if HAVE_HOOKS
   /* I think this is the actual hook object, not the "vcell" so it might make sense to set its documentation property */
@@ -3490,28 +3456,12 @@ void g_initialize_gh(snd_state *ss)
   exit_hook = scm_create_hook(S_exit_hook,0);
   start_hook = scm_create_hook(S_start_hook,1);                   /* arg = argv filename if any */
   output_comment_hook = scm_create_hook(S_output_comment_hook,1); /* arg = current mus_sound_comment(hdr) if any */
-  mix_console_state_changed_hook = scm_create_hook(S_mix_console_state_changed_hook,1);
-  mix_speed_changed_hook = scm_create_hook(S_mix_speed_changed_hook,1);
-  mix_amp_changed_hook = scm_create_hook(S_mix_amp_changed_hook,1);
-  mix_position_changed_hook = scm_create_hook(S_mix_position_changed_hook,2);
-  #if FILE_PER_CHAN
-    open_multifile_sound_hook = scm_create_hook(S_open_multifile_sound_hook,1);       /* arg = filename */
-    save_multifile_sound_hook = scm_create_hook(S_save_multifile_sound_hook,2);       /* args = snd chn */
-  #endif
 #else
   during_open_hook = gh_define(S_during_open_hook,SCM_BOOL_F);
   after_open_hook = gh_define(S_after_open_hook,SCM_BOOL_F);
   exit_hook = gh_define(S_exit_hook,SCM_BOOL_F);
   start_hook = gh_define(S_start_hook,SCM_BOOL_F);
   output_comment_hook = gh_define(S_output_comment_hook,SCM_BOOL_F);
-  mix_console_state_changed_hook = gh_define(S_mix_console_state_changed_hook,SCM_BOOL_F);
-  mix_speed_changed_hook = gh_define(S_mix_speed_changed_hook,SCM_BOOL_F);
-  mix_amp_changed_hook = gh_define(S_mix_amp_changed_hook,SCM_BOOL_F);
-  mix_position_changed_hook = gh_define(S_mix_position_changed_hook,SCM_BOOL_F);
-  #if FILE_PER_CHAN
-    open_multifile_sound_hook = gh_define(S_open_multifile_sound_hook,SCM_BOOL_F);
-    save_multifile_sound_hook = gh_define(S_save_multifile_sound_hook,SCM_BOOL_F);
-  #endif
 #endif
 
   g_init_marks(local_doc);
@@ -3521,7 +3471,7 @@ void g_initialize_gh(snd_state *ss)
   init_vct();
   init_mus2scm_module();
   g_initialize_xgh(state,local_doc);
-  g_initialize_xgfile(state,local_doc);
+  g_initialize_xgfile(local_doc);
   g_init_gxutils();
   g_init_mix(local_doc);
   g_init_chn(local_doc);
@@ -3671,73 +3621,11 @@ int dont_start(snd_state *ss, char *filename)
   return(SCM_TRUE_P(res));
 }
 
-void call_mix_console_state_changed_hook(mixdata *md) 
-{
-  if ((md) && (HOOKED(mix_console_state_changed_hook)))
-    g_c_run_progn_hook(mix_console_state_changed_hook,SCM_LIST1(gh_int2scm(md->id)));
-}
-
-int call_mix_speed_changed_hook(mixdata *md)
-{  
-  SCM res = SCM_BOOL_F;
-  if ((md) && (HOOKED(mix_speed_changed_hook)))
-    res = g_c_run_progn_hook(mix_speed_changed_hook,SCM_LIST1(gh_int2scm(md->id)));
-  return(SCM_TRUE_P(res));
-}
-
-int call_mix_amp_changed_hook(mixdata *md)
-{  
-  SCM res = SCM_BOOL_F;
-  if ((md) && (HOOKED(mix_amp_changed_hook)))
-    res = g_c_run_progn_hook(mix_amp_changed_hook,SCM_LIST1(gh_int2scm(md->id)));
-  return(SCM_TRUE_P(res));
-}
-
-int call_mix_position_changed_hook(mixdata *md, int samps)
-{  
-  SCM res = SCM_BOOL_F;
-  if ((md) && (HOOKED(mix_position_changed_hook)))
-    res = g_c_run_progn_hook(mix_position_changed_hook,SCM_LIST2(gh_int2scm(md->id),gh_int2scm(samps)));
-  return(SCM_TRUE_P(res));
-}
-
-  #if FILE_PER_CHAN
-    int multifile_channel(char *filename)
-    {
-      int res = -1;
-      SCM hookres = SCM_BOOL_F;
-      if (HOOKED(open_multifile_sound_hook))
-	{
-	  hookres = g_c_run_progn_hook(open_multifile_sound_hook,SCM_LIST1(gh_str02scm(filename)));
-	  res = g_scm2intdef(hookres,-2);
-	}
-      return(res);
-    }
-    char *multifile_save(int snd, int chn)
-    {
-      SCM hookres = SCM_BOOL_F;
-      if (HOOKED(save_multifile_sound_hook))
-	hookres = g_c_run_progn_hook(save_multifile_sound_hook,SCM_LIST2(gh_int2scm(snd),gh_int2scm(chn)));
-      if (gh_string_p(hookres))
-	return(gh_scm2newstr(hookres,NULL));
-      return(NULL);
-    }
-  #endif
-
-
 #else
 int dont_exit(snd_state *ss) {return(0);}
 int dont_start(snd_state *ss, char *filename) {return(0);}
-void call_mix_console_state_changed_hook(mixdata *md) {}
-int call_mix_speed_changed_hook(mixdata *md) {return(0);}
-int call_mix_amp_changed_hook(mixdata *md) {return(0);}
-int call_mix_position_changed_hook(mixdata *md, int samps) {return(0);}
 void during_open(int fd, char *file, int reason) {}
 void after_open(int index) {}
-  #if FILE_PER_CHAN
-    int multifile_channel(char *filename) {return(-1);}
-    char *multifile_save(int snd, int chn) {return(NULL);}
-  #endif
 #endif
 
 #endif

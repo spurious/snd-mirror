@@ -183,8 +183,7 @@ bottom of the graph and both graphs are updated as you move
 through the file.  Drag the lower scale to zoom in or out.
 Drag the outer scale (the wider one) on the left to zoom
 the y axis in or out.  The inner scale 
-moves the y axis up and down; its main use is to
-move the waveform out of the way of a mix console.  
+moves the y axis up and down.
 Click the "w" button (to unset the button) and
 the time domain waveform goes away.  Click "play" to
 play the file.  "sync" is more complicated -- it is used
@@ -246,6 +245,7 @@ listener available under the View:Open Listener menu option.
         <!-- I(show freq domain):O('f' button)(fw) --><!-- I(show time domain):O('w' button)(fw) -->
 <hr>
 
+<br>
 <a name="menus"></a>
 <table cols=5 rows=18 cellspacing=0 border=0>
 <tr>
@@ -254,6 +254,13 @@ listener available under the View:Open Listener menu option.
 <td><small><a href="#viewing">View</a> Menu</small></td>
 <td><small><a href="#options">Options</a> Menu</small></td>
 <td><small>Help Menu</small></td>
+</tr>
+<tr>
+<td><br></td>
+<td><br></td>
+<td><br></td>
+<td><br></td>
+<td><br></td>
 </tr>
 <tr>
 <td><small><a href="#openfile">Open</a></small></td>
@@ -265,70 +272,70 @@ listener available under the View:Open Listener menu option.
 <tr>
 <td><small><a href="#closefile">Close</a></small></td>
 <td><small><a href="#undoredo">Redo</a></small></td>
-<td><small><a href="#viewnormalize">Normalize</a></small></td>
+<td><small><a href="extsnd.html#lisplistener">Open listener</a></small></td>
 <td><small><a href="extsnd.html#lspeedstyle">Speed style</a></small></td>
 <td><small><a href="#overview">Overview</a></small></td>
 </tr>
 <tr>
 <td><small><a href="#savefile">Save</a></small></td>
 <td><small><a href="#find">Find</a></small></td>
-<td><small><a href="extsnd.html#lisplistener">Open listener</a></small></td>
+<td><small><a href="#mixpanel">Mix Panel</a></small></td>
 <td><small><a href="#zoomoption">Focus style</a></small></td>
 <td><small><a href="#viewfft">FFT</a></small></td>
 </tr>
 <tr>
 <td><small><a href="#savefile">Save as</a></small></td>
 <td><small><a href="#editcut">Cut</a></small></td>
-<td><small><a href="#unitebutton">Channel style</a></small></td>
+<td><small><a href="#regionbrowser">Regions</a></small></td>
 <td><small><a href="#saveoptions">Save options</a></small></td>
 <td><small><a href="#find">Find</a></small></td>
 </tr>
 <tr>
 <td><small><a href="#revertfile">Revert</a></small></td>
 <td><small><a href="#editcut">Paste</a></small></td>
-<td><small><a href="#viewdots">Graph style</a></small></td>
+<td><small><a href="#prevfiles">Files</a></small></td>
 <td><small><a href="#savedstate">Save State</a></small></td>
 <td><small><a href="#undoredo">Undo and Redo</a></small></td>
 </tr>
 <tr>
 <td><small><a href="#mixingfiles">Mix</a></small></td>
 <td><small><a href="#editcut">Mix Selection</a></small></td>
-<td><small><a href="extsnd.html#verbosecursor">Verbose cursor</a></small></td>
+<td><small><a href="#colorbrowser">Color</a></small></td>
 <td><small><a href="extsnd.html#showusagestats">Show stats</a></small></td>
 <td><small><a href="#syncbutton">Sync</a></small></td>
 </tr>
 <tr>
 <td><small><a href="#updatefile">Update</a></small></td>
 <td><small><a href="#cxp">Play Selection</a></small></td>
-<td><small><a href="#regionbrowser">Regions</a></small></td>
+<td><small><a href="#orientationbrowser">Orientation</a></small></td>
 <td></td>
 <td><small><a href="#speed">Speed</a></small></td>
 </tr>
 <tr>
 <td><small><a href="#newfile">New</a></small></td>
 <td><small><a href="#cxw">Save Selection</a></small></td>
-<td><small><a href="#prevfiles">Files</a></small></td>
+<td><small><a href="#viewdots">Graph style</a></small></td>
 <td></td>
 <td><small><a href="#expand">Expand</a></small></td>
 </tr>
 <tr>
 <td><small><a href="#recordfile">Record</a></small></td>
 <td><small><a href="#selectall">Select all</a></small></td>
-<td><small><a href="#colorbrowser">Color</a></small></td>
+<td><small><a href="extsnd.html#verbosecursor">Verbose cursor</a></small></td>
 <td></td>
 <td><small><a href="#reverb">Reverb</a></small></td>
 </tr>
 <tr>
 <td><small><a href="#openfile">View</a></small></td>
 <td><small><a href="#editenvelope">Edit Envelope</a></small></td>
-<td><small><a href="#orientationbrowser">Orientation</a></small></td>
+<td><small><a href="#unitebutton">Channel style</a></small></td>
 <td></td>
 <td><small><a href="#contrast">Contrast</a></small></td>
 </tr>
 <tr>
 <td><small><a href="#printfile">Print</a></small></td>
 <td><small><a href="#editheader">Edit Header</a></small></td>
-<td><small><a href="#marks">Show marks</a></small></td>
+<td><small><a href="#viewnormalize">Normalize</a></small></td>
 <td></td>
 <td><small><a href="#ampenvs">Envelope</a></small></td>
 </tr>
@@ -342,21 +349,21 @@ listener available under the View:Open Listener menu option.
 <tr>
 <td></td>
 <td></td>
-<td><small><a href="#consoles">Hide consoles</a></small></td>
+<td><small><a href="extsnd.html#xaxisstyle">X axis units</a></small></td>
 <td></td>
 <td><small><a href="#mixingfiles">Mixing</a></small></td>
 </tr>
 <tr>
 <td></td>
 <td></td>
-<td><small><a href="extsnd.html#xaxisstyle">X axis units</a></small></td>
+<td><small><a href="#errorhistory">Error History</a></small></td>
 <td></td>
 <td><small><a href="#formats">Formats</a></small></td>
 </tr>
 <tr>
 <td></td>
 <td></td>
-<td><small><a href="#errorhistory">Error History</a></small></td>
+<td></td>
 <td></td>
 <td><small><a href="extsnd.html#appearance">Customization</a></small></td>
 </tr>
@@ -627,16 +634,16 @@ flushed (but see the function unsaved-edits? in examp.scm).</p>
   View Menu
 
     <a href="#controls">Show controls</a>:    show/hide the control panel    (C-x C-o, C-x C-c)
-    <a href="#viewnormalize">Normalize</a>:        cleanup current Snd display
     <a href="extsnd.html#lisplistener">Open listener</a>:    show/hide lisp listener
-    <a href="#unitebutton">Channel style</a>:    separate, combined or superimposed channels
-    <a href="#viewdots">Graph style</a>:      use dots, lines, filled polygons etc in the data displays
-    <a href="extsnd.html#verbosecursor">Verbose cursor</a>:   describe the current sample every time the cursor moves
+    <a href="#mixpanel">Mix Panel</a>:        mix controller
     <a href="#regionbrowser">Regions</a>:          a browser to examine the region stack
     <a href="#prevfiles">Files</a>:            a browser of currently and previously loaded files
     <a href="#colorbrowser">Color</a>:            a browser that chooses color maps
     <a href="#orientationbrowser">Orientation</a>:      a browser that sets spectrogram and wavogram orientation
-    <a href="#marks">Show marks</a>:       show or hide current marks
+    <a href="#unitebutton">Channel style</a>:    separate, combined or superimposed channels
+    <a href="#viewdots">Graph style</a>:      use dots, lines, filled polygons etc in the data displays
+    <a href="extsnd.html#verbosecursor">Verbose cursor</a>:   describe the current sample every time the cursor moves
+    <a href="#viewnormalize">Normalize</a>:        cleanup current Snd display
     <a href="#viewy0">Show y=0</a>:         show or hide the y=0 line
     <a href="extsnd.html#xaxisstyle">X axis units</a>:     x axis labelled in seconds, samples, percent of total
     <a href="#errorhistory">Error History</a>:    saved error messages
@@ -647,7 +654,6 @@ flushed (but see the function unsaved-edits? in examp.scm).</p>
         <!-- I(combine channels):A(unitebutton) --><!-- I(describe file):M(Popup: Info)(viewinfo) -->
         <!-- I(describe file):A(viewinfo) --><!-- I(describe file):O(Edit: Edit Header)(viewinfo) -->
         <!-- I(dots or lines):M(View: Dots)(viewdots) --><!-- I(dots or lines):O(dot-size: numberpad '.', '0')(dotsize) -->
-        <!-- I(show marks):M(View: Show marks)(marks) --><!-- I(show marks):A(marks) -->
         <!-- I(y=0 line):M(View: Show y=0)(viewy0) --><!-- I(describe sample):M(View: Verbose cursor)(verbosecursor) -->
         <!-- I(describe sample):L(verbose-cursor)(verbosecursor) --><!-- I(describe sample):A(verbosecursor) -->
         <!-- I(examine regions):M(View: Regions)(regionbrowser) --><!-- I(color):M(View: Color)(colorbrowser) -->
@@ -716,7 +722,7 @@ posted during the current run of Snd.  If some error gets erased too quickly fro
         <!-- I(play file):O(File or main window: 'play') --><!-- I(select sound):O(File dialog: click file) -->
         <!-- I(select sound):A(prevfiles) --><!-- I(open file):O(Files dialog: click file) -->
 
-<p>The <a href="#regionbrowser">Regions</a> option is described below.</p>
+<p>The <a href="#regionbrowser">Regions</a> and <a href="#mixpanel">Mix Panel</a> options are described below.</p>
 
 <br>
 
@@ -1518,96 +1524,25 @@ to take the current sync state into account, whereas
 the C-x C-q command does not. To mix a selection, use
 C-x q.
 The mix
-starts at the current cursor location.</p>
+starts at the current cursor location.
+It is displayed as a separate waveform above the main waveform with
+a red tag at the beginning.  You can drag the tag to reposition the
+mix.  The underlying sound begin mixed can be edited by the same
+functions used throughout Snd; the mix number is used as the first
+(only) member of a list where the functions take the sound index
+argument.  It is usually handier, however, to adjust the mix
+via the Mix Panel.</p>
 
-<p>Each individual mix
-portion has a "<a name="consoles">mix console</a>", a small box displayed
-above the waveform containing various controls.  These
-consoles follow the sync buttons where relevant.
-</p>
+<img src="mixer.png" alt="mix tags">
+<br>
+<a name="mixpanel">The Mix Panel Dialog</a>
 
-<h5>The Mix Console</h5>
-
-<p>When a section or file is mixed into the current file
-a mix console is associated with it, each output channel
-getting its own console.  The console is displayed at first
-as a row of widgets giving the input file name, the begin and
-end times of the mixed-in portion (click to change from
-seconds to samples), then three icons:</p>
-
-<img src="mixer.png" alt="picture of mix console" align=right hspace=20 vspace=10>
-<pre>
-<small>
-  a speaker: click to play the mixed-in portion
-  an 'x':    click to remove the console
-  a box:     click to open (or close) the console
-</small>
-</pre>
-
-<a name="movemixedfile"></a>
-<!-- I(move mixed file):O(see mix doc)(movemixedfile) --><!-- I(move mixed file):A(movemixedfile) -->
-<p>You can drag the widgets to change the position of the mix.
-Once opened, each console presents a pane with an amplitude
-slider for each input channel, and a speed control (srate
-change on the input).  The initial state of the console
-sets the speed to 1.0, and all the input amplitudes 0.0
-except the channel that matches the current output channel,
-which is set to 1.0 (a straight mix).  To return to this
-state at any time, click the 'amp:' label.  To turn the
-mix off ('mute' it, set all amps to 0.0), double click
-the label; to return to the last settings you made, click
-it with control or meta down.  Similarly, click the 'speed:'
-label to reset it to 1.0, and click it with control or meta
-to return to your last settings.  Each time you release the
-mouse button (or click the amp label) counts as another 'edit'
-of the file, so it is usually better to use 'undo' and 'redo'
-in this context, rather than repeated clicks and shift-clicks.
-The srate scale is interpreted in the same way as the sound
-pane speed control -- as a float normally, but also, if
-you like, quantized to semitones or integer ratios.
-</p>
-
-<p>To change the scale interpretation, set the variables
-<a name="mix-console-amp-scaler">mix-console-amp-scaler</a> and
-<a name="mix-console-speed-scaler">mix-console-speed-scaler</a>.
-All default to 1.0
-which gives a scaling range from 0 to around 12.
-These numbers actually
-scale an exponent, so (for example) if mix-console-amp-scaler is
-set to 0.5, the scale goes from 0.0 to around 3.5; similarly
-</p>
-
-<p>To reduce the mix console to a single letter, double
-click the file name.  Double click the label to return to the
-original row of icons.  Since screen space is at a premium,
-this minimal form of the console can reduce clutter.  You can
-still drag the label to reposition the mix.  To remove the 
-console altogether, click the 'x'.
-When any edit is performed that changes the file within the
-mixed portion, the affected consoles are removed from
-the display, and the only way to return to them is to undo
-the offending edit.  That is, if you mix a portion, then
-cut some part of that portion, the mix will be locked in
-place from then on, as if you had clicked the 'x' button on
-the mix console.</p>
-
-<p>To turn off the constant graphics updates (which can slow down
-old machines like mine, and which can also be annoying when you
-know what you're doing), set the variable
-movies to #f.</p>
-
-<p>Normally the console is lined up with its left edge at the
-beginning of the mixed segment.  You can move the console
-anywhere within the segment by setting its "<a name="consoleleft">anchor</a>" to 
-the position (sample) within the mix that should correspond
-to the console's left edge.  See 
-<a href="extsnd.html#sndmixanchor">mix-anchor</a>.
-</p>
-
-<p>To see the waveform of the sound being mixed,
-set the variable <a href="extsnd.html#showmixwaveforms">show-mix-waveforms</a> to #t.
-The height of these graphs is set by <a href="extsnd.html#mixwaveformheight">mix-waveform-height</a>.
-The mix waveform color is set by the resource mixWaveColor.
+<p>The Mix Panel is a dialog (under the View Menu) that provides various
+commonly-used controls on the currently selected mix.  At the top are
+the mix id, name, begin and end times, track number, and a play button.
+Beneath that are various sliders controlling the speed (sampling rate)
+of the mix, amplitude of each input channel, and the amplitude envelope.
+This part of Snd is in flux currently.
 </p>
 
 <a name="gotomix"></a>
@@ -1873,8 +1808,6 @@ with this file name and the "-l" switch: snd -l name.
 This file is in exactly the same format as the <a href="grfsnd.html#sndinitfile">initialization
 file</a>, and can be edited, renamed, or
 whatever. To load such a file after startup, <code>(load name)</code> (C-x C-l). 
-Currently, mix consoles are not saved,
-but the associated edits are. 
 </p> 
         <!-- I(continue session):A(savedstate) -->
         <!-- I(save state):A(savedstate) -->
@@ -2060,7 +1993,7 @@ all the samples between the cursor and the next mark.</p>
   C-f:  open file
   C-g:  abort command
   C-i:  insert file
-  C-j:  go to mix console
+  C-j:  go to mix 
   <a name="cxcl">C-l</a>:  load scm file
   C-m:  add named mark
   C-n:  re-evaluate expression
@@ -2215,7 +2148,7 @@ panel are:</p>
 <span class=box><h2><a name="index">Index</a></h2></span>
 <br>
 <center>
-<table border rows=117>
+<table border rows=116>
   <!-- created whenever -->
   <tr><th>Action<th>Menu<th>Keyboard<th>Lisp<th>Other</tr>
   <tr><td><a href="#kgc">abort command</a></td><td><br></td><td><a href="#kgc"><small>Cg</small></a></td><td><a href="extsnd.html#sndabort"><small>abort?</small></a></td><td><small>mouse click</small></td></tr>
@@ -2316,7 +2249,6 @@ panel are:</p>
   <tr><td><a href="#savedstate">save state</a></td><td><small>Options: <a href="#savedstate">Save State</a></small></td><td><br></td><td><a href="extsnd.html#sndsavestate"><small>save-state</small></a></td><td><a href="extsnd.html#savestateonexit"><small>save-state-on-exit</small></a></td></tr>
   <tr><td><a href="#prevfiles">select sound</a></td><td><br></td><td><a href="#cxo"><small>Cx o</small></a></td><td><a href="extsnd.html#sndselectsound"><small>select-sound</small></a></td><td><small>File dialog: click file</small></td></tr>
   <tr><td><a href="#fw">show freq domain</a></td><td><br></td><td><br></td><td><a href="extsnd.html#sndffting"><small>ffting</small></a></td><td><a href="#fw"><small>'f' button</small></a></td></tr>
-  <tr><td><a href="#marks">show marks</a></td><td><small>View: <a href="#marks">Show marks</a></small></td><td><br></td><td><a href="extsnd.html#showmarks"><small>show-marks</small></a></td><td><br></td></tr>
   <tr><td><a href="#fw">show time domain</a></td><td><br></td><td><br></td><td><a href="extsnd.html#sndwaving"><small>waving</small></a></td><td><a href="#fw"><small>'w' button</small></a></td></tr>
   <tr><td><a href="#cxcz">smooth samples</a></td><td><br></td><td><a href="#cxcz"><small>Cx Cz</small></a></td><td><a href="extsnd.html#sndsmooth"><small>smooth</small></a></td><td><br></td></tr>
   <tr><td><a href="#cxz">smooth selection</a></td><td><br></td><td><a href="#cxz"><small>Cx z</small></a></td><td><a href="extsnd.html#sndsmoothselection"><small>smooth-selection</small></a></td><td><br></td></tr>

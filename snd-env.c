@@ -1065,9 +1065,7 @@ void alert_envelope_editor(snd_state *ss, char *name, env *val)
 
 void enved_show_background_waveform(snd_state *ss, chan_info *axis_cp, axis_info *gray_ap, int apply_to_mix, int apply_to_selection)
 {
-  mixdata *md;
-  console_state *cs;
-  int samps,srate,pts=0,id,old_beg;
+  int samps,srate,pts=0,id;
   axis_info *ap,*active_ap;
   chan_info *active_channel,*ncp;
 
@@ -1082,22 +1080,15 @@ void enved_show_background_waveform(snd_state *ss, chan_info *axis_cp, axis_info
     {
       if (mixes() == 0) return;
       if (ss->selected_mix != NO_SELECTION) 
-	{
-	  id = ss->selected_mix; 
-	  md = md_from_int(id);
-	}
-      else 
+	id = ss->selected_mix; 
+      else
 	{
 	  id = any_mix_id();
-	  md = md_from_int(id);
-	  select_mix(ss,md);
+	  if (id != NO_SELECTION) select_mix_from_id(id);
 	}
-      cs = md->current_cs;
       samps = mix_length(id);
-      ncp = md->cp;
+      ncp = mix_channel_from_id(id);
       srate = SND_SRATE(ncp->sound);
-      old_beg = cs->beg;
-      cs->beg = 0;
       gray_ap->losamp = 0;
       gray_ap->hisamp = samps - 1;
       gray_ap->y0 = -1.0;
@@ -1108,10 +1099,9 @@ void enved_show_background_waveform(snd_state *ss, chan_info *axis_cp, axis_info
       gray_ap->y_scale = (gray_ap->y_axis_y1 - gray_ap->y_axis_y0)/(gray_ap->y1 - gray_ap->y0);
       axis_cp->axis = gray_ap;
       
-      pts = display_mix_waveform(axis_cp,md,cs,
-				 (gray_ap->y_axis_y0 + gray_ap->y_axis_y1)/2,
-				 (gray_ap->y_axis_y1 - gray_ap->y_axis_y0)/2,TRUE);
-      cs->beg = old_beg;
+      /* md->height = (gray_ap->y_axis_y0 + gray_ap->y_axis_y1)/2; */
+      /* md->y = (gray_ap->y_axis_y1 - gray_ap->y_axis_y0)/2; */
+      pts = display_mix_waveform_at_zero(axis_cp,id);
       axis_cp->axis = ap;
     }
   else

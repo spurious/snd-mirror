@@ -91,7 +91,7 @@ int edit_find_menu(void);
 int edit_select_all_menu(void);
 int edit_header_menu(void);
 int view_normalize_menu(void);
-int view_consoles_menu(void);
+int view_mix_panel_menu(void);
 int view_region_menu(void);
 int view_combine_separate_menu(void);
 int view_combine_combined_menu(void);
@@ -324,7 +324,7 @@ file_info *get_raw_file_info(char *filename, snd_state *ss);
 file_info *get_reasonable_file_info(char *filename, snd_state *ss, file_info *hdr);
 void edit_header(snd_info *sp);
 #if HAVE_GUILE
-  void g_initialize_xgfile(snd_state *ss, SCM local_doc);
+  void g_initialize_xgfile(SCM local_doc);
 #endif
 
 
@@ -360,32 +360,10 @@ void reflect_mix_in_enved(void);
 
 /* -------- snd-xmix.c -------- */
 
-void release_mixmark_widgets(mixmark *m);
-void select_mix(snd_state *ss, mixdata *md);
-int color_mix(mixdata *md, void *ptr);
-void reflect_mix_stop_playing(snd_state *ss, mixmark *m);
-void set_mix_console_amp_scaler(Float amp);
-Float get_mix_console_amp_scaler(void);
-void set_mix_console_speed_scaler(Float amp);
-Float get_mix_console_speed_scaler(void);
-void mix_set_title_beg(mixdata *md, mixmark *m);
-void reamp(mixdata *md, int chan, Float amp);
-void respeed(mixdata *md, Float spd);
-void fixup_mixmark(mixdata *md);
-void set_mix_track_button_color(mixdata *md, int track);
-void move_mixmark(mixmark *m, int x, int y);
-void move_mix_x(mixmark *m, int xspot);
-void move_mix_y(mixmark *m, int yspot);
-void use_mixmark(mixdata *md, int x, int y);
-void mix_set_minimal_title(mixdata *md, mixmark *m);
-void mix_set_title_name(mixdata *md, mixmark *m);
-void mix_set_console(mixdata *md, mixmark *m);
-void mix_open_console(mixmark *m);
-void mix_close_console(mixmark *m);
-void mix_open_title(mixmark *m);
-void mix_close_title(mixmark *m);
-int move_mix_console(mixmark *m, int *nx);
-void mix_raise_console(mixmark *m);
+void reflect_mix_in_mix_panel(int mix_id);
+void make_mix_panel(snd_state *ss);
+int mix_play_stopped(void);
+void reflect_mix_play_stop(void);
 
 
 /* -------- snd-xrec.c -------- */

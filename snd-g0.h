@@ -1,5 +1,5 @@
-#ifndef SND_GTK0_H_LOADED
-#define SND_GTK0_H_LOADED
+#ifndef SND_G0_H_LOADED
+#define SND_G0_H_LOADED
 
 #if defined(HAVE_CONFIG_H)
   #include "config.h"
@@ -7,8 +7,6 @@
 
 #include <gtk/gtk.h>
 #include <gdk/gdkkeysyms.h>
-
-#include "snd-gtkfixed.h"
 
 #define HAVE_XPM 1
 #define HAVE_CLICK_FOR_HELP 0
@@ -96,15 +94,15 @@ typedef struct {
 
   GdkColor *white,*black,*red,*yellow,*green,*light_blue,*lighter_blue;
   GdkColor *data_color,*selected_data_color,*mark_color,*graph_color,*selected_graph_color,*listener_color,*cursor_color;
-  GdkColor *basic_color,*selection_color,*zoom_color,*position_color,*highlight_color,*enved_waveform_color,*mix_waveform_color;
-  GdkColor *mix_focus_color,*text_focus_color,*filter_waveform_color,*mix_color,*pushed_button_color,*sash_color;
+  GdkColor *basic_color,*selection_color,*zoom_color,*position_color,*highlight_color,*enved_waveform_color;
+  GdkColor *selected_mix_color,*text_focus_color,*filter_waveform_color,*mix_color,*pushed_button_color,*sash_color;
 
   GdkGC *basic_gc,*selected_basic_gc,*combined_basic_gc;        
   GdkGC *cursor_gc,*selected_cursor_gc;      
   GdkGC *selection_gc,*selected_selection_gc;
   GdkGC *erase_gc,*selected_erase_gc;        
   GdkGC *mark_gc,*selected_mark_gc;          
-  GdkGC *mix_gc;           
+  GdkGC *mix_gc,*selected_mix_gc;    
   GdkGC *fltenv_basic_gc,*fltenv_data_gc,*speed_gc;
 
   GtkWidget **dialogs;
@@ -119,13 +117,6 @@ typedef struct {
   int lastpj;
   GdkColor *color;
 } mix_context;
-
-typedef struct {
-  int inuse,chans_allocated,x,y,moving,active,state,playing,size;
-  void *owner;           /* pointer to current mixdata struct that is using this set of widgets */
-  GtkWidget **w;
-  GtkObject **a;
-} mixmark;
 
 typedef struct {
   GdkPixmap *off_label;
@@ -180,6 +171,7 @@ typedef struct {
 #define AXIS_NUMBERS_FONT(a) ((state_context *)((snd_state *)a)->sgx)->axis_numbers_fnt
 #define AXIS_LABEL_FONT(a) ((state_context *)((snd_state *)a)->sgx)->axis_label_fnt
 #define COLOR_TYPE GdkColor *
+#define NO_COLOR NULL
 #define KEY_TO_NAME(key) gdk_keyval_name(key)
 
 /* #define GUI_CURRENT_TIME(ss) GDK_CURRENT_TIME */

@@ -256,7 +256,7 @@ void add_selection_or_region(snd_state *ss, int reg, chan_info *cp, char *origin
 	  if (err == MUS_NO_ERROR)
 	    {
 	      si_out = sync_to_chan(cp);
-	      mix_file_and_delete(cp->cursor,selection_len(),tempfile,si_out->cps,si_out->chans,origin,with_mix_consoles(ss));
+	      mix_file_and_delete(cp->cursor,selection_len(),tempfile,si_out->cps,si_out->chans,origin,with_mix_tags(ss));
 	      free_sync_info(si_out);	      
 	    }
 	}

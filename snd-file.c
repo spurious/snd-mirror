@@ -204,7 +204,7 @@ file_info *make_file_info(char *fullname, snd_state *ss)
   return(hdr);
 }
 
-file_info *make_temp_header(snd_state *ss, char *fullname, int srate, int chans, int samples)
+file_info *make_temp_header(char *fullname, int srate, int chans, int samples)
 {
   /* make a header for Sun/NeXT, no comment, copy other old_hdr fields */
   file_info *hdr;
@@ -214,8 +214,8 @@ file_info *make_temp_header(snd_state *ss, char *fullname, int srate, int chans,
   hdr->data_location = 28;
   hdr->srate = srate;
   hdr->chans = chans;
-  hdr->format = MUS_OUT_FORMAT; /* default_output_format(ss); */
-  hdr->type = MUS_NEXT; /* default_output_type(ss); */
+  hdr->format = MUS_OUT_FORMAT;
+  hdr->type = MUS_NEXT;
   /* want direct read/writes for temp files */
   hdr->comment = NULL;
   return(hdr);
@@ -354,35 +354,6 @@ dir *find_sound_files_in_dir (char *name)
   return(dp);
 #endif
 }
-
-#if FILE_PER_CHAN
-dir *all_files_in_dir (char *name)
-{
-#if (!HAVE_OPENDIR)
-  return(NULL);
-#else
-  struct dirent *dirp;
-  DIR *dpos;
-  dir *dp = NULL;
-  if ((dpos=opendir(name)) != NULL)
-    {
-      dp = make_dir(name);
-      while ((dirp=readdir(dpos)) != NULL)
-	{
-	  if (dirp->d_name[0] != '.')
-	    add_snd_file_to_dir_list(dp,dirp->d_name);
-	}
-#if defined(CLOSEDIR_VOID)
-      closedir(dpos);
-#else
-      if (closedir(dpos) != 0) snd_error("%s[%d] %s: closedir %s failed!",__FILE__,__LINE__,__FUNCTION__,name);
-#endif
-    }
-  return(dp);
-#endif
-}
-#endif
-
 
 #if DEBUGGING
 int temp_files_in_tmpdir(snd_state *ss)

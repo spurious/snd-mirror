@@ -71,7 +71,7 @@ int edit_find_menu(void) {return(0);}
 int edit_select_all_menu(void) {return(0);}
 int edit_header_menu(void) {return(0);}
 int view_normalize_menu(void) {return(0);}
-int view_consoles_menu(void) {return(0);}
+int view_mix_panel_menu(void) {return(0);}
 int view_region_menu(void) {return(0);}
 int view_combine_separate_menu(void) {return(0);}
 int view_combine_combined_menu(void) {return(0);}
@@ -230,7 +230,7 @@ void progress_report(snd_info *sp, char *funcname, int curchan, int chans, Float
 char *clm2snd_help(void) {return(NULL);}
 char *read_file_data_choices(file_data *fdat, int *srate, int *chans, int *type, int *format, int *location) {return(NULL);}
 void alert_new_file(void) {}
-void g_initialize_xgfile(snd_state *ss, SCM local_doc) {}
+void g_initialize_xgfile(SCM local_doc) {}
 snd_info *make_new_file_dialog(snd_state *ss, char *newname, int header_type, int data_format, int srate, int chans, char *comment) {return(NULL);}
 void make_cur_name_row(int old_size, int new_size) {}
 void make_prev_name_row(int old_size, int new_size) {}
@@ -269,32 +269,6 @@ void set_filter_env_order(snd_state *ss, int order) {}
 void enved_reflect_selection(int on) {}
 void reflect_mix_in_enved(void) {}
 void g_init_gxenv(SCM local_doc) {}
-void release_mixmark_widgets(mixmark *m) {}
-void select_mix(snd_state *ss, mixdata *md) {}
-int color_mix(mixdata *md, void *ptr) {return(0);}
-void reflect_mix_stop_playing(snd_state *ss, mixmark *m) {}
-void set_mix_console_amp_scaler(Float amp) {}
-Float get_mix_console_amp_scaler(void) {return(0.0);}
-void set_mix_console_speed_scaler(Float amp) {}
-Float get_mix_console_speed_scaler(void) {return(0.0);}
-void mix_set_title_beg(mixdata *md, mixmark *m) {}
-void reamp(mixdata *md, int chan, Float amp) {}
-void respeed(mixdata *md, Float spd) {}
-void fixup_mixmark(mixdata *md) {}
-void set_mix_track_button_color(mixdata *md, int track) {}
-void move_mixmark(mixmark *m, int x, int y) {}
-void move_mix_x(mixmark *m, int xspot) {}
-void move_mix_y(mixmark *m, int yspot) {}
-void use_mixmark(mixdata *md, int x, int y) {}
-void mix_set_minimal_title(mixdata *md, mixmark *m) {}
-void mix_set_title_name(mixdata *md, mixmark *m) {}
-void mix_set_console(mixdata *md, mixmark *m) {}
-void mix_open_console(mixmark *m) {}
-void mix_close_console(mixmark *m) {}
-void mix_open_title(mixmark *m) {}
-void mix_close_title(mixmark *m) {}
-int move_mix_console(mixmark *m, int *nx) {}
-void mix_raise_console(mixmark *m) {}
 void lock_recording_audio(void) {}
 void unlock_recording_audio(void) {}
 void snd_record_file(snd_state *ss) {}
@@ -316,6 +290,11 @@ char *transform_type_name(int choice) {return(NULL);}
 int add_transform_to_list(char *name) {return(0);}
 void set_filter_text(snd_info *sp, char *str) {}
 int max_transform_type(void) {return(19);}
+
+void reflect_mix_in_mix_panel(int mix_id) {}
+void make_mix_panel(snd_state *ss) {}
+int mix_play_stopped(void) {return(0);}
+void reflect_mix_play_stop(void) {}
 
 void set_fft_beta(snd_state *ss, Float val) {in_set_fft_beta(ss,val);}
 void set_fft_size(snd_state *ss, int val) {in_set_fft_size(ss,val);}

@@ -475,8 +475,8 @@ static int paste_region_1(int n, chan_info *cp, int add, int beg, char *origin)
   if (add)
     {
       if (r->use_temp_file == REGION_ARRAY)
-	idtmp = mix_array(beg,r->frames,r->data,si->cps,r->chans,si->chans,SND_SRATE(sp),origin,with_mix_consoles(ss));
-      else idtmp = copy_file_and_mix(beg,r->frames,r->filename,si->cps,si->chans,origin,with_mix_consoles(ss));
+	idtmp = mix_array(beg,r->frames,r->data,si->cps,r->chans,si->chans,SND_SRATE(sp),origin,with_mix_tags(ss));
+      else idtmp = copy_file_and_mix(beg,r->frames,r->filename,si->cps,si->chans,origin,with_mix_tags(ss));
       if (id == -1) id = idtmp;
     }
   else
@@ -579,7 +579,7 @@ void define_region(sync_info *si, int *ends)
     {
       r->use_temp_file = REGION_FILE;
       r->filename = copy_string(snd_tempnam(ss));
-      hdr = make_temp_header(ss,r->filename,r->srate,r->chans,0);
+      hdr = make_temp_header(r->filename,r->srate,r->chans,0);
       ofd = open_temp_file(r->filename,r->chans,hdr,ss);
       datumb = mus_data_format_to_bytes_per_sample(hdr->format);
     }

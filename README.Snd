@@ -31,10 +31,7 @@ The configure program has several Snd-related arguments:
                          slightly faster than ints in most cases on the Pentium
    --with-gsl            use gsl for ffts and whatnot
    --with-ladspa         include LADSPA plugin support (Linux)
-   --with-ardour         compile snd as a widget for use in ardour
-   --with-gtkrc-colors   initial colors set in a GTK rc file
    --with-sample-width=N use N bits of samples (default = 24)
-
 
 If the configure/make process fails, please send me
 (bil@ccrma.stanford.edu) the files config.h, config.log, and makefile,
@@ -438,7 +435,6 @@ Snd:
 
   http://www.cosy.sbg.ac.at/~gwesp/mma-sound.html (Mathematica)
   http://www.linuxpower.com/display_item.phtml?id=139 (Movies)
-  http://www.op.net/~pbd/ardour-snd.png (ardour+snd)
 
 Motif:
   http://www.opengroup.org/openmotif/

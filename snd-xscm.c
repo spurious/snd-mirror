@@ -500,25 +500,6 @@ static SCM g_enved_waveform_color(void)
   return(pixel2color((state->sgx)->enved_waveform_color));
 }
 
-static SCM g_set_mix_waveform_color (SCM color) 
-{
-  snd_color *v; 
-  SCM_ASSERT(snd_color_p(color),color,SCM_ARG1,"set-" S_mix_waveform_color);
-  v = get_snd_color(color);
-  if (v) 
-    {
-      color_mix_waveform(state,v->color);
-      map_over_chans(state,update_graph,NULL);
-    }
-  return(color);
-}
-
-static SCM g_mix_waveform_color(void) 
-{
-  #define H_mix_waveform_color "(" S_mix_waveform_color ") -> color of the mix waveform"
-  return(pixel2color((state->sgx)->mix_waveform_color));
-}
-
 static SCM g_set_filter_waveform_color (SCM color) 
 {
   snd_color *v; 
@@ -537,7 +518,6 @@ static SCM g_filter_waveform_color(void)
 static SCM g_set_mix_color (SCM arg1, SCM arg2) 
 {
   snd_color *v; 
-  mixdata *md = NULL;
   SCM color,mix_id=SCM_UNDEFINED;
   if (SCM_UNBNDP(arg2))
     color = arg1;
@@ -551,15 +531,9 @@ static SCM g_set_mix_color (SCM arg1, SCM arg2)
   if (v) 
     {
       if (gh_number_p(mix_id))
-	{
-	  md = md_from_int(gh_scm2int(mix_id));
-	  if (md) color_one_mix(md,v->color);
-	}
-      else
-	{
-	  (state->sgx)->mix_color = v->color;
-	  color_unselected_mixes(state);
-	}
+	color_one_mix_from_id(gh_scm2int(mix_id),v->color);
+      else set_mix_color(state,v->color);
+      map_over_chans(state,update_graph,NULL);
     }
   return(color);
 }
@@ -567,34 +541,29 @@ static SCM g_set_mix_color (SCM arg1, SCM arg2)
 static SCM g_mix_color(SCM mix_id) 
 {
   #define H_mix_color "(" S_mix_color ") -> color of mix consoles"
-  mixdata *md = NULL;
   if (gh_number_p(mix_id))
-    {
-      md = md_from_int(gh_scm2int(mix_id));
-      if ((md) && (md->wg->color)) return(pixel2color(md->wg->color));
-    }
+    return(pixel2color(mix_to_color_from_id(gh_scm2int(mix_id))));
   return(pixel2color((state->sgx)->mix_color));
 }
 
-static SCM g_set_mix_focus_color (SCM color) 
+static SCM g_set_selected_mix_color (SCM color) 
 {
   snd_color *v; 
-  SCM_ASSERT(snd_color_p(color),color,SCM_ARG1,"set-" S_mix_focus_color); 
+  SCM_ASSERT(snd_color_p(color),color,SCM_ARG1,"set-" S_selected_mix_color); 
   v = get_snd_color(color); 
   if (v) 
     {
-      (state->sgx)->mix_focus_color = v->color;
-      color_selected_mix(state);
+      set_selected_mix_color(state,v->color);
+      map_over_chans(state,update_graph,NULL);
     }
   return(color);
 }
 
-static SCM g_mix_focus_color(void) 
+static SCM g_selected_mix_color(void) 
 {
-  #define H_mix_focus_color "(" S_mix_focus_color ") -> color of the currently selected mix"
-  return(pixel2color((state->sgx)->mix_focus_color));
+  #define H_selected_mix_color "(" S_selected_mix_color ") -> color of the currently selected mix"
+  return(pixel2color((state->sgx)->selected_mix_color));
 }
-
 
 static void recolor_button(Widget w, void *ptr)
 {
@@ -757,11 +726,8 @@ void g_initialize_xgh(snd_state *ss, SCM local_doc)
   define_procedure_with_setter(S_listener_color,SCM_FNC g_listener_color,H_listener_color,
 			       "set-" S_listener_color,SCM_FNC g_set_listener_color,local_doc,0,0,1,0);
 
-  define_procedure_with_setter(S_mix_focus_color,SCM_FNC g_mix_focus_color,H_mix_focus_color,
-			       "set-" S_mix_focus_color,SCM_FNC g_set_mix_focus_color,local_doc,0,0,1,0);
-
-  define_procedure_with_setter(S_mix_waveform_color,SCM_FNC g_mix_waveform_color,H_mix_waveform_color,
-			       "set-" S_mix_waveform_color,SCM_FNC g_set_mix_waveform_color,local_doc,0,0,1,0);
+  define_procedure_with_setter(S_selected_mix_color,SCM_FNC g_selected_mix_color,H_selected_mix_color,
+			       "set-" S_selected_mix_color,SCM_FNC g_set_selected_mix_color,local_doc,0,0,1,0);
 
   define_procedure_with_setter(S_enved_waveform_color,SCM_FNC g_enved_waveform_color,H_enved_waveform_color,
 			       "set-" S_enved_waveform_color,SCM_FNC g_set_enved_waveform_color,local_doc,0,0,1,0);
@@ -804,6 +770,9 @@ void g_initialize_xgh(snd_state *ss, SCM local_doc)
 
   define_procedure_with_setter(S_mix_color,SCM_FNC g_mix_color,H_mix_color,
 			       "set-" S_mix_color,SCM_FNC g_set_mix_color,local_doc,0,1,1,1);
+
+  define_procedure_with_setter(S_selected_mix_color,SCM_FNC g_selected_mix_color,H_selected_mix_color,
+			       "set-" S_selected_mix_color,SCM_FNC g_set_selected_mix_color,local_doc,0,1,1,1);
 
   /* an experiment */
   DEFINE_PROC(gh_new_procedure0_0("snd-main-shell",g_main_shell),"snd-main-shell tries to return Snd's topmost widget");

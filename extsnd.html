@@ -207,9 +207,8 @@ are:</p>
   <b><a name="highlightcolor">highlight-color</a></b>       ivory1          highlighting color.
   <b>listener-color</b>        aliceblue       background color of lisp listener.
   <b>mark-color</b>            red             color of mark indicator.
-  <b>mix-color</b>             lightgreen      color of mixer consoles
-  <b>mix-focus-color</b>       yellow2         color of selected mix.
-  <b>mix-waveform-color</b>    darkgray        color of mix waveform.
+  <b>mix-color</b>             dark gray       color of mix waveforms.
+  <b>selected-mix-color</b>    light green     color of selected mix waveform.
   <b><a name="positioncolor">position-color</a></b>        ivory3          position slider color
   <b><a name="pushedbuttoncolor">pushed-button-color</a></b>   lightsteelblue1 color of pushed button.
   <b>sash-color</b>            lightgreen      color of paned window sashes.
@@ -372,7 +371,7 @@ when you save a sound via the "save" dialog.</p>
   <b><a name="initialy1">initial-y1</a></b>            1.0     Same, but maximum.
 
   <b><a name="movies">movies</a></b>                #t      If #t, the mix graphs are updated constantly as the 
-                                mouse drags the mix console.
+                                mouse drags the mix tag.
 
   <b><a name="normalizeonopen">normalize-on-open</a></b>     #t      When a new sound is added to the Snd window, the resultant
                                 set of graphs can start to dangle off the bottom or end of the screen.
@@ -536,16 +535,14 @@ the hook.
                                            (help-dialog "Mark Help" (number-&gt;string (mark-sample n))) 
                                            #t))
 </small>
-  <b><a name="mixampchangedhook">mix-amp-changed-hook</a></b> (id)           called when mix console amp changes via mouse (id = mix id).
+  <b><a name="mixampchangedhook">mix-amp-changed-hook</a></b> (id)           called when mix amp changes via mouse (id = mix id).
                                       If #t, the actual remix is the hook's responsibility.
 
-  <b><a name="mixconsolestatechangedhook">mix-console-state-changed-hook</a></b> (id) called when mix console state changes via mouse (id = mix id).
-
-  <b><a name="mixpositionchangedhook">mix-position-changed-hook</a></b> (id samps)called when mix console moves via mouse (id = mix id, 
+  <b><a name="mixpositionchangedhook">mix-position-changed-hook</a></b> (id samps)called when mix moves via mouse (id = mix id, 
                                       samps = samps moved). (<b>progn</b>) If #t, the actual remix is the 
                                       hook's responsibility.
 
-  <b><a name="mixspeedchangedhook">mix-speed-changed-hook</a></b> (id)         called when mix console speed changes via mouse (id = mix id).
+  <b><a name="mixspeedchangedhook">mix-speed-changed-hook</a></b> (id)         called when mix speed changes via mouse (id = mix id).
                                       If #t, the actual remix is the hook's responsibility.
 
   <b><a name="mousedraghook">mouse-drag-hook</a></b>    (snd chn button state x y) 
@@ -687,8 +684,8 @@ in the sound whose current index is 1; (frames (list 1)) returns the frames in
 the sound that underlies the mix whose id is 1.  Similarly (scale-by .5) scales
 the currently selected sound by .5; (scale-by .5 (list 0) 2) scales the 3rd channel
 of mix 0's input sound by .5.  I keep saying "underlying" because normally a
-mix is viewed after it has gone through its console (the set of widgets displayed
-in the time domain view -- these can affect the
+mix is viewed after it has gone through its panel of controls (the set of widgets displayed
+in the Mix Panel dialog -- these can affect the
 amplitude, amplitude envelope, and sampling rate) -- next-mix-sample, for
 example, refers to the processed form of the mix data, whereas next-sample
 would refer to the original form.  I may extend this to accept a list of (more than one) mixes.
@@ -738,7 +735,7 @@ functions:</p>
   <b><a name="makevct">make-vct</a></b>          (len)             create vct struct of size <i>len</i>.
   <b>sound-data-&gt;vct</b>   (sdobj chan vobj) place sound-data channel data in vct 
   <b><a name="vctp">vct?</a></b>              (vobj)            #t if <i>vobj</i> is a <a href="#Vcts">vct</a> struct.
-  <b><a name="vctadd">vct-add!</a></b>          (vobj1 vobj2)     vobj1[i] += vobj2[i], returns vobj1.
+  <b><a name="vctadd">vct-add!</a></b>          (vobj1 vobj2 <i>off</i>)  vobj1[i+off] += vobj2[i], returns vobj1.
   <b><a name="vctcopy">vct-copy</a></b>          (obj)             return a copy of <i>obj</i>.
   <b><a name="vctdo">vct-do!</a></b>           (vobj proc)       vobj[i] = (funcall proc i).
   <b><a name="vctfill">vct-fill!</a></b>         (vobj val)        vobj[i] = val, returns vobj.
@@ -948,7 +945,7 @@ the output), and <i>free-mix-sample-reader</i> releases a reader.
 Mixes can be collected into tracks, so there are also <i>make-track-sample-reader</i>, <i>track-sample-reader?</i>,
 <i>next-track-sample</i>, and <i>free-track-sample-reader</i>.
 As mentioned above, the mix-sample-reader refers to the mix data after
-it has been processed through its console.  The original (possibly
+it has been processed through its control panel.  The original (possibly
 edited) sound can be accessed by a normal sample-reader.
 </p>
 <pre>
@@ -1132,37 +1129,31 @@ more examples.</p>
 <span class=cbox><h3><a name="sndmixes">Mixes</a></h3></span>
 
 <p>A mix is an object that controls one channel of a sound mix; it normally includes
-a "console" of widgets that can be pushed and poked to change various aspects of the
+a control panel that affects various aspects of the
 mix. In addition, all the signal-processing functions can be applied to the mix data.
 These variables affect all mixes:</p>
 <pre>
-  <b><a name="mixcolor">mix-color</a></b>              lightgreen  color of mixer consoles.  
+  <b><a name="mixcolor">mix-color</a></b>             dark gray    color of mix waveforms.
 <small>
                        The set form (set! (mix-color) ...) has an optional second argument; if you
                        want to set just a particular mix's color, give the id of the mix
-                       here. That is, (set! (mix-color) red) sets all unselected mix consoles to
+                       here. That is, (set! (mix-color) red) sets all unselected mixes to
                        red; but (set! (mix-color 3) red) sets only mix #3 to be red. Similarly,
                        mix-color has an optional argument that can specify which mix's color
                        we want.
 </small>
-  <b><a name="mixconsoleampscaler">mix-console-amp-scaler</a></b>   1.0       Multiplier on amp scales in mix consoles (see <a href="snd.html#mix-console-amp-scaler">mix consoles</a>). 
-
-  <b><a name="mixconsolespeedscaler">mix-console-speed-scaler</a></b> 1.0       Multiplier on speed scales in mix consoles (<a href="snd.html#mix-console-speed-scaler">mix consoles</a>).
-
-  <b><a name="mixfocuscolor">mix-focus-color</a></b>       yellow2      color of selected mix.
-
-  <b><a name="mixwaveformcolor">mix-waveform-color</a></b>    darkgray     color of mix waveform.
+  <b><a name="selectedmixcolor">selected-mix-color</a></b>    light green  color of selected mix waveform.
 
   <b><a name="mixwaveformheight">mix-waveform-height</a></b>   20           Max height (pixels) of mix waveforms (see <a href="#showmixwaveforms">show-mix-waveforms</a>).
 
-  <b><a name="withmixconsoles">with-mix-consoles</a></b>     #t           If #f, forego creation of mix consoles during mix operations.
+  <b><a name="withmixtags">with-mix-tags</a></b>         #t           If #f, don't make mixes editable.
 </pre>
 <p>Each mix object has a unique identifier used in the next set of functions to access
 a particular mix object:</p>
 <pre>
-  <b><a name="sndbackwardmix">backward-mix</a></b>      (<i>count snd chn</i>) move back <i>count</i> mix consoles (C-x C-j).
+  <b><a name="sndbackwardmix">backward-mix</a></b>      (<i>count snd chn</i>) move back <i>count</i> mix tags (C-x C-j).
 
-  <b><a name="sndforwardmix">forward-mix</a></b>       (<i>count snd chn</i>) move forward <i>count</i> mix consoles (C-x C-j).
+  <b><a name="sndforwardmix">forward-mix</a></b>       (<i>count snd chn</i>) move forward <i>count</i> mix tags (C-x C-j).
 
   <b><a name="mixes">mixes</a></b>             (<i>snd chn pos</i>) list of currently active mixes in <i>snd</i>'s channel <i>chn</i> at history <i>pos</i>.
 
@@ -1173,10 +1164,6 @@ a particular mix object:</p>
   <b><a name="sndmixanchor">mix-anchor</a></b>        (<i>mix</i>)         anchor position (within the mix) of <i>mix</i>.
 
   <b><a name="sndmixchans">mix-chans</a></b>         (<i>mix</i>)         chans in <i>mix</i>.
-
-  <b><a name="sndmixconsolestate">mix-console-state</a></b> (<i>mix</i>)         console state of <i>mix</i> (0=open, 1=title bar, 2=name[0]).
-
-  <b><a name="sndmixconsoley">mix-console-y</a></b>     (<i>mix</i>)         console y offset in graph of <i>mix</i>
 
   <b><a name="sndmixlength">mix-length</a></b>        (<i>mix</i>)         length in samples of <i>mix</i>.
 
@@ -1192,6 +1179,12 @@ a particular mix object:</p>
 
   <b><a name="sndmixspeed">mix-speed</a></b>         (<i>mix</i>)         speed of <i>mix</i>.
 
+  <b><a name="sndmixtagwidth">mix-tag-width</a></b>     (<i>mix</i>)         tag width in graph of <i>mix</i> (default 6)
+
+  <b><a name="sndmixtagheighth">mix-tag-height</a></b>    (<i>mix</i>)         tag height in graph of <i>mix</i> (default 14)
+
+  <b><a name="sndmixtagy">mix-tag-y</a></b>         (<i>mix</i>)         tag y offset in graph of <i>mix</i> (default 0)
+
   <b><a name="sndmixtrack">mix-track</a></b>         (<i>mix</i>)         mix track (0 = none).
 
   <b><a name="sndmixok">mix?</a></b>              (<i>mix</i>)         #t if <i>mix</i> is active.
@@ -1201,8 +1194,6 @@ a particular mix object:</p>
   <b><a name="sndplaytrack">play-track</a></b>        (<i>track snd chn</i>) play track <i>track</i>. If snd is #t, play all associated chans.
 
   <b><a name="sndselectedmix">selected-mix</a></b>      ()            selected mix (-1 = none) -- set to select mix.
-
-  <a href="#showmixconsoles">show-mix-consoles</a>
 
   <a href="#showmixwaveforms">show-mix-waveforms</a>
 </pre>
@@ -1217,14 +1208,14 @@ a particular mix object:</p>
 sets mix 123's channel 0 amplitude scaler to .5.
 To mix data in such a way as to create an associated mix object:</p>
 <pre>
-  <b><a name="sndmix">mix</a></b> (file <i>samp in_chan snd chn with-mix-consoles</i>)
+  <b><a name="sndmix">mix</a></b> (file <i>samp in_chan snd chn with-mix-tags</i>)
                       mix <i>file</i>'s channel <i>in_chan</i> starting at <i>samp</i> in <i>snd</i>'s channel <i>chn</i>.
                       if only the <i>file</i> argument is given, this is equivalent to the File menu's 
                       Mix option; the mix start sample in this case depends on the cursor location.
                       mix returns the id of the first channel's mix (subsequent channels simply 
                       increment this number). id of -1 means some error occurred.
-                      If <i>with-mix-consoles</i> is #f (default is #t), the data is simply
-                      mixed without creating any mix consoles [<em class=error>no-such-file</em>].
+                      If <i>with-mix-tags</i> is #f (default is #t), the data is simply
+                      mixed without creating any mix tags [<em class=error>no-such-file</em>].
 
   <b><a name="sndmixregion">mix-region</a></b> (<i>samp reg snd chn</i>)
                       Mix in region <i>reg</i> at sample <i>samp</i> (defaulting to the cursor sample), 
@@ -1234,11 +1225,11 @@ To mix data in such a way as to create an associated mix object:</p>
 
   <b><a name="sndmixsound">mix-sound</a></b> (file start)  mix <i>file</i> into selected sound at <i>start</i> [<em class=error>no-such-file</em>].
 
-  <b><a name="sndmixvct">mix-vct</a></b> (vct <i>beg snd chn with-mix-consoles</i>)
+  <b><a name="sndmixvct">mix-vct</a></b> (vct <i>beg snd chn with-mix-tags</i> origin)
                       mix the contents of <i>vct</i> into <i>snd</i>'s channel <i>chn</i> starting at frame <i>beg</i>.
                       Returns the id of the new mix, or -1 if some error occurred.
-                      If <i>with-mix-consoles</i> is #f (default is #t), the data is simply
-                      mixed without creating any mix consoles.
+                      If <i>with-mix-tags</i> is #f (default is #t), the data is simply
+                      mixed without creating any mix tags.
 </pre>
 
 <br>
@@ -1455,7 +1446,7 @@ sets its value to val.
                                      (define conrev
                                        (lambda (impulse amp)
                                          (<em class=red>convolve-with</em> impulse amp)
-                                         (save-sound-as "reverb.snd") ;let mix console scalers set reverb amount
+                                         (save-sound-as "reverb.snd") ;let mix scalers set reverb amount
                                          (revert-sound)
                                          (<em class=red>mix</em> "reverb.snd")))
 </small>
@@ -1924,10 +1915,7 @@ sets its value to val.
 
   <b><a name="showmarks">show-marks</a></b>        (<em class=narg>snd chn</em>)     If #t, marks are displayed.  This is the '<a href="snd.html#marks">Show marks</a>' View menu option.
 
-  <b><a name="showmixconsoles">show-mix-consoles</a></b> (<em class=narg>snd chn</em>)     If #t (the default), mix consoles are displayed.  This is 
-                                  the '<a href="snd.html#consoles">Show consoles</a>' View menu option.
-
-  <b><a name="showmixwaveforms">show-mix-waveforms</a></b>(<em class=narg>snd chn</em>)     If #t (default = #f), mixer console displays the waveform of the sound
+  <b><a name="showmixwaveforms">show-mix-waveforms</a></b>(<em class=narg>snd chn</em>)     If #t (default = #t), mix displays the waveform of the sound
                                   being mixed.
 
   <b><a name="showyzero">show-y-zero</a></b>       (<em class=narg>snd chn</em>)     If #t, the y=0 axis is displayed.  This is the '<a href="snd.html#viewy0">Show Y=0</a>' View menu option.
@@ -2224,7 +2212,7 @@ put in it something like:</p>
 	;; this is equivalent to the New file menu option
   (<a href="#sndmix">mix</a> "oboe.snd" 0 0 myfile 0)
   ;; this mixes in the mono file oboe.snd at sample 0 in channel 0
-  ;; use (mix "oboe.snd" 0 0 myfile 0 #f) to forego the mix console
+  ;; use (mix "oboe.snd" 0 0 myfile 0 #f) to forego the editable mix
   (mix "pistol.snd" 0 0 myfile 1)
   ;; now pistol.snd is at sample 0 in channel 1
   (mix "fyow.snd" 10000 0 myfile 0)
@@ -2574,6 +2562,9 @@ View:Listener:
   <b><a name="listenerprompt">listener-prompt</a></b>       "&gt;"     lisp listener prompt
   <b><a name="printlength">print-length</a></b>          12      number of elements of lists and vectors that are printed.
   <b><a name="sndshowlistener">show-listener</a></b>         ()      open the lisp listener pane.
+
+View:Mix Panel:
+  <b><a name="sndmixpanel">mix-panel</a></b>             ()      start the Mix Panel.
 
 View:Orientation:
   <b><a name="sndorientationdialog">orientation-dialog</a></b>    ()      fire up the <a href="snd.html#orientationbrowser">Orientation</a> dialog.

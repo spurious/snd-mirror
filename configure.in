@@ -43,38 +43,8 @@ MAKE_TARGET="snd"
 #   --with-gsl            use gsl for ffts and whatnot
 #   --enable-snd-debug    include Snd internal debugging stuff
 #   --with-ladspa         include LADSPA plugin support (Linux)
-#   --with-ardour         compile snd as a widget for use in ardour
-#   --with-gtkrc-colors   initial colors set in a GTK rc file
 #   --with-sample-width=N use N bits of samples (default = 24)
 #--------------------------------------------------------------------------------
-
-AC_ARG_WITH(ardour,
-	[  --with-ardour           compile snd as a widget for use in ardour],
-  	if test "$with_ardour" = y || test "$with_ardour" = yes; then
-	    AC_DEFINE(NONINTERLEAVED_AUDIO)
-	    AC_DEFINE(ARDOUR_AUDIO)
-	    AC_DEFINE(SND_IN_ARDOUR)
-	    AC_DEFINE(SND_AS_WIDGET)
-	    MAKE_TARGET=widget
-	    AC_DEFINE(MUS_SAMPLE_BITS,32)
-	    AC_DEFINE(SNDLIB_USE_FLOATS)
-dnl	    AC_DEFINE(GTKRC_COLORS)
-            AC_DEFINE(FILE_PER_CHAN)
-	    with_gtk="yes"
-	    audio_system="ardour"
-	fi)
-
-AC_ARG_WITH(multifile,
-	[  --with-multifile	  experimental file-per-channel support],
-  	if test "$with_multifile" = y || test "$with_multifile" = yes; then
-	    AC_DEFINE(FILE_PER_CHAN)
-	fi)
-
-AC_ARG_WITH(gtkrc-colors,
-	[  --with-gtkrc-colors	  initial colors set in a GTK rc file],
-  	if test "$with_gtkrc_colors" = y || test "$with_gtkrc_colors" = yes; then
-	    AC_DEFINE(GTKRC_COLORS)
-	fi)
 
 if test $audio_system = unknown && test x$use_alsa = x ; then
    AC_ARG_WITH(alsa,
@@ -243,7 +213,7 @@ AC_CHECK_SIZEOF(char)
 AC_CHECK_SIZEOF(short)
 AC_CHECK_SIZEOF(long)
 AC_CHECK_SIZEOF(int *)
-dnl need some kind or error here if these are all 0 -- this happened to AV!
+dnl need some kind of error message here if these are all 0 -- this happened to AV!
 
 AC_TYPE_SIGNAL
 AC_FUNC_STRFTIME

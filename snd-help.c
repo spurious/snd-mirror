@@ -256,6 +256,16 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
+23-Oct:  interface to mixes changed:\n\
+           mix consoles are now in a separate dialog, each mix displayed with a tag and its waveform.\n\
+           removed mix-console-state, mix-console-state-changed-hook, show-mix-consoles, mix-waveform-color.\n\
+           changed mix-console-y to mix-tag-y, Show Consoles menu item to Mix Panel.\n\
+           changed with-mix-consoles to with-mix-tags, mix-focus-color to selected-mix-color.\n\
+           show-mix-waveforms default now #t.\n\
+           removed snd-gtkfixed.*.\n\
+           added mix-tag-width and height, mix-panel.\n\
+         removed .sndrc and other related stuff.\n\
+         removed Show Marks menu item.\n\
 16-Oct:  snd 4.7.\n\
          added optional environ arg to loop-samples and clm example to grfsnd.html.\n\
 11-Oct:  added delete button in envelope editor.\n\
@@ -964,10 +974,9 @@ new value via (set! (" S_auto_resize ") #t). \n\
   " S_max_fft_peaks "         100 (snd #t) (chn #t)\n\
   " S_min_dB "               -60.0 (snd #t) (chn #t)\n\
   " S_mix_color "             lightgreen\n\
-  " S_mix_console_amp_scaler " 1.0\n\
-  " S_mix_console_speed_scaler " 1.0\n\
-  " S_mix_focus_color "       green2\n\
-  " S_mix_waveform_color "    darkgray\n\
+  " S_mix_tag_width "         6\n\
+  " S_mix_tag_height "        14\n\
+  " S_mix_tag_y "             0\n\
   " S_mix_waveform_height "   20\n\
   " S_movies "                #t\n\
   " S_normalize_fft "         normalize-by-channel (snd #t) (chn #t)\n\
@@ -995,12 +1004,12 @@ new value via (set! (" S_auto_resize ") #t). \n\
   " S_save_state_file "       nil\n\
   " S_selected_data_color "   black\n\
   " S_selected_graph_color "  white\n\
+  " S_selected_mix_color "    green2\n\
   " S_selection_color "       lightsteelblue1\n\
   " S_show_axes "             show-all-axes (snd #t) (chn #t)\n\
   " S_show_fft_peaks "        #f (snd #t) (chn #t)\n\
   " S_show_indices "          #f\n\
   " S_show_marks "            #t (snd #t) (chn #t)\n\
-  " S_show_mix_consoles "     #t (snd #t) (chn #t)\n\
   " S_show_mix_waveforms "    #f (snd #t) (chn #t)\n\
   " S_show_selection_transform " #f\n\
   " S_show_usage_stats "      #f\n\
@@ -1035,7 +1044,7 @@ new value via (set! (" S_auto_resize ") #t). \n\
   " S_window_width "          0\n\
   " S_window_x "             -1\n\
   " S_window_y "             -1\n\
-  " S_with_mix_consoles "     #t\n\
+  " S_with_mix_tags "        #t\n\
   " S_x_axis_style "          " S_x_in_seconds "\n\
   " S_zero_pad "              0 (snd #t) (chn #t)\n\
   " S_zoom_color "            ivory4\n\
@@ -1066,7 +1075,6 @@ user-interface manipulations.\n\
   " S_mix_amp_changed_hook "\n\
   " S_mix_speed_changed_hook "\n\
   " S_mix_position_changed_hook "\n\
-  " S_mix_console_state_changed_hook "\n\
   " S_multichannel_mix_hook "\n\
   " S_mus_error_hook "\n\
   " S_snd_error_hook "\n\
@@ -1198,13 +1206,13 @@ all refer to the same thing.\n\
   " S_max_sounds "        ()\n\
   " S_maxamp "            (snd chn)\n\
   " S_mix "               (file samp in_chan snd chn)\n\
+  " S_mix_panel "         ()\n\
   " S_mix_sound "         (file samp scaler)\n\
   " S_mixes "             ()\n\
   " S_mix_amp "           (mix chan)\n\
   " S_mix_amp_env "       (mix chan)\n\
   " S_mix_anchor "        (mix)\n\
   " S_mix_chans "         (mix)\n\
-  " S_mix_console_state " (mix)\n\
   " S_mix_length "        (mix)\n\
   " S_mix_locked "        (mix)\n\
   " S_mix_name "          (mix)\n\
@@ -1433,93 +1441,7 @@ sashIndent          -6\n\
 \n";
 
 #ifndef _MSC_VER
-static char mix_help_string[] =
-"Since mixing is the most common and most useful\n\
-editing operation performed on sounds, there is\n\
-relatively elaborate support for it in Snd. Each\n\
-individual mix portion has a mix console, a\n\
-small box displayed in above the waveform\n\
-containing various controls.\n\
-\n\
-To mix in a file, use either the File Mix menu\n\
-option or the command C-x C-q. Currently the only\n\
-difference between these two is that the Mix menu\n\
-option tries to take the current sync state into\n\
-account, whereas the C-x C-q command does not. To\n\
-mix a selection, use C-x q. The mix starts at the\n\
-current cursor location.\n\
-\n\
-When a section or file is mixed into the current\n\
-file a mix console is associated with it, each\n\
-output channel getting its own console. The\n\
-console is displayed at first as a row of widgets\n\
-giving the input file name, the begin and end\n\
-times of the mixed-in portion (click to change\n\
-from seconds to samples), then three icons:\n\
-\n\
-  a speaker:   while pushed, the input is played\n\
-  an 'x':      click to remove the console\n\
-  a box:       click to open (or close) the console\n\
-\n\
-You can drag the widgets to change the position\n\
-of the mix. Once opened, each console presents a\n\
-pane with an amplitude slider for each input\n\
-channel, and a speed control (srate change on the\n\
-input). The initial state of the console sets the\n\
-speed to 1.0, and all the input amplitudes 0.0\n\
-except the channel that matches the current\n\
-output channel, which is set to 1.0 (a straight\n\
-mix). To return to this state at any time, click\n\
-the 'amp:' label. To turn the mix off ('mute' it,\n\
-set all amps to 0.0), double click the label; to\n\
-return to the last settings you made, click it\n\
-with control or meta down. Similarly, click the\n\
-'speed:' label to reset it to 1.0, and click it\n\
-with control or meta to return to your last\n\
-settings. Each time you release the mouse button\n\
-(or click the amp label) counts as another 'edit'\n\
-of the file, so it is usually better to use\n\
-'undo' and 'redo' in this context, rather than\n\
-repeated clicks and shift-clicks. The srate scale\n\
-is interpreted in the same way as the sound pane\n\
-speed control -- as a float normally, but also,\n\
-if you like, quantized to semitones or integer\n\
-ratios.\n\
-\n\
-To change the scale interpretation, set the\n\
-variables " S_mix_console_amp_scaler " and " S_mix_console_speed_scaler ".\n\
-These default to 1.0 which gives a scaling from 0 to around\n\
-12. These numbers actually scale an exponent, so\n\
-(for example) if " S_mix_console_amp_scaler " is set to 0.5,\n\
-the scale goes from 0.0 to around 3.5.\n\
-\n\
-To reduce the mix console title to a single letter,\n\
-double click the file name. Double click the\n\
-label to return to the original row of icons. Since\n\
-screen space is at a premium, this minimal form\n\
-of the console can reduce clutter. You can still\n\
-drag the little label to reposition the mix.\n\
-\n\
-To reduce the mix console to a single letter, double\n\
-click the file name.  Double click the label to return\n\
-to the original row of icons.  Since screen space is at\n\
-a premium, this minimal form of the console can reduce\n\
-clutter.  You can still drag the label to reposition\n\
-the mix.  To remove the console altogether, click the 'x'.\n\
-When any edit is performed that changes the file\n\
-within the mixed portion, the affected mix\n\
-consoles are removed from the display, and the\n\
-only way to return to them is to undo the\n\
-offending edit. That is, if you mix a portion,\n\
-then cut some part of that portion, the mix will\n\
-be locked in place from then on, as if you had\n\
-clicked the 'x' button on the mix console.\n\
-\n\
-To turn off the constant graphics updates (which\n\
-can slow down old machines like mine, and which\n\
-can also be annoying when you know what you're\n\
-doing), set the variable movies to #f.\n\
-\n";
+static char mix_help_string[] = "";
 #else
 static char mix_help_string[] = "";
 #endif
@@ -2100,15 +2022,6 @@ sp_filter_order_help_string,
 \n",
 sp_filter_envelope_help_string,
 NULL);
-}
-
-void click_for_mix_console_help(mixmark *m)
-{
-  snd_state *ss;
-  mixdata *md;
-  md = (mixdata *)(m->owner);
-  ss = md->ss;
-  snd_help_with_url(ss,"Mix","#mixingfiles",mix_help_string);
 }
 
 void click_for_save_as_help(snd_state *ss)

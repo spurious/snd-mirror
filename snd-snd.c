@@ -816,7 +816,7 @@ BACKGROUND_TYPE apply_controls(GUI_POINTER ptr)
 	  ap->ofile = NULL;
 	  lock_apply(ss,sp);
 	  ap->ofile = snd_tempnam(ss);
-	  ap->hdr = make_temp_header(ss,ap->ofile,SND_SRATE(sp),sp->nchans,0);
+	  ap->hdr = make_temp_header(ap->ofile,SND_SRATE(sp),sp->nchans,0);
 	  switch (ss->apply_choice)
 	    {
 	    case APPLY_TO_CHANNEL:   
@@ -997,100 +997,6 @@ static void run_apply_to_completion(snd_info *sp)
       while (apply_controls((GUI_POINTER)ap) == BACKGROUND_CONTINUE);
     }
 }
-
-#if FILE_PER_CHAN
-multifile_info *sort_multifile_channels(snd_state *ss, char *filename)
-{
-  int i,k,len,total_chans=0,ok,chan_num;
-  char *chan_name;
-  file_info *hdr = NULL;
-  dir *file_chans;
-  int *chan_locs;
-  multifile_info *res;
-  /* read files in dir, assuming chan.take notation (take currently ignored)
-   * set chan_type FILE_PER_CHANNEL (hdr and sp), make dummy header for sound
-   * hook: (func name) -> channel if to be included else #f (or -1 to pass)
-   */
-  file_chans = all_files_in_dir(filename);
-  /* file_chans->len is how many files we found, now we need to decide how many channels they represent and make a header */
-  /* assume as default that files are named chan.<whatever> -- if a number look for 0? */
-  /* assume 1-based channel numbering */
-  total_chans = 0;
-  chan_locs = (int *)CALLOC(file_chans->len,sizeof(int));
-  for (i=0;i<file_chans->len;i++)
-    {
-      chan_name = just_filename(file_chans->files[i]);
-      len = snd_strlen(chan_name);
-      if (len > 0)
-	{
-	  ok = 1;
-#if HAVE_GUILE
-	  chan_num = multifile_channel(chan_name);
-	  if (chan_num != -2) /* -2 => not a member of this sound (hook procedure returned #f) */
-	    {
-	      if (chan_num != -1) /* -1 => no hook procedures, or hook can't decide */
-		{
-		  chan_locs[chan_num] = i;
-		  if (total_chans < (chan_num+1)) total_chans = chan_num+1;
-		}
-	      else
-		{
-#endif
-		  for (k=0;k<len;k++)
-		    if (!(isdigit(chan_name[k]))) 
-		      {
-			ok = 0; 
-			break;
-		      }
-		  if (ok)
-		    {
-		      sscanf(chan_name,"%d",&chan_num);
-		      if ((chan_num > 0) && (chan_num <= file_chans->len))
-			{
-			  chan_locs[chan_num-1] = i;
-			  if (total_chans < chan_num) total_chans = chan_num;
-			}
-		    }
-#if HAVE_GUILE
-		}
-	    }
-#endif
-	  FREE(chan_name);
-	}
-    }
-  if (total_chans > 0)
-    {
-      /* make sp level header */
-      hdr = (file_info *)CALLOC(1,sizeof(file_info));
-      hdr->name = just_filename(filename); 
-      chan_name = (char *)CALLOC(MUS_MAX_FILE_NAME,sizeof(char));
-      sprintf(chan_name,"%s/%s",filename,file_chans->files[chan_locs[0]]);
-      hdr->type = mus_sound_header_type(chan_name);
-      if ((hdr->type == MUS_RAW) && (use_raw_defaults(ss)))
-	{
-	  hdr->srate = raw_srate(ss);
-	  hdr->format = raw_format(ss);
-	  mus_header_set_raw_defaults(raw_srate(ss),raw_chans(ss),raw_format(ss));
-	}
-      else
-	{
-	  hdr->srate = mus_sound_srate(chan_name);
-	  hdr->format = mus_sound_data_format(chan_name);
-	}
-      hdr->samples = mus_sound_samples(chan_name) * total_chans; /* assume same length for starters */
-      hdr->data_location = mus_sound_data_location(chan_name);
-      hdr->comment = NULL;
-      hdr->chan_type = FILE_PER_CHANNEL;
-      hdr->chans = total_chans;
-      FREE(chan_name);
-    }
-  res = (multifile_info *)CALLOC(1,sizeof(multifile_info));
-  res->hdr = hdr;
-  res->file_chans = file_chans;
-  res->chan_locs = chan_locs;
-  return(res);
-}
-#endif
 
 static void set_reverb_decay(snd_state *ss, Float val) 
 {
@@ -1596,48 +1502,6 @@ static SCM g_short_file_name(SCM snd_n)
   ERRSPT(S_short_file_name,snd_n,1);
   return(sp_iread(snd_n,SHORTFILENAMEF,S_short_file_name));
 }
-
-#if FILE_PER_CHAN
-static SCM string_array_to_list(char **arr, int i, int len)
-{
-  if (i < (len-1))
-    return(gh_cons(gh_str02scm(arr[i]),string_array_to_list(arr,i+1,len)));
-  else return(gh_cons(gh_str02scm(arr[i]),SCM_EOL));
-}
-
-static SCM g_file_names(SCM snd_n) 
-{
-  #define H_file_names "(" S_file_names " &optional snd) -> channel file names associated with snd"
-  snd_info *sp;
-  ERRSPT(S_file_names,snd_n,1);
-  sp = get_sp(snd_n);
-  if (sp == NULL) return(scm_throw(NO_SUCH_SOUND,SCM_LIST2(gh_str02scm(S_file_names),snd_n)));
-  if (sp->chan_type == FILE_PER_SOUND) return(sp_iread(snd_n,FILENAMEF,S_file_names));
-  return(string_array_to_list(sp->channel_filenames,0,sp->nchans));
-}
-
-static SCM g_short_file_names(SCM snd_n) 
-{
-  #define H_short_file_names "(" S_short_file_names " &optional snd) -> channel file names (no directory) associated with snd"
-  snd_info *sp;
-  SCM result = SCM_EOL;
-  int i;
-  char **strs;
-  ERRSPT(S_short_file_names,snd_n,1);
-  sp = get_sp(snd_n);
-  if (sp == NULL)
-    return(scm_throw(NO_SUCH_SOUND,SCM_LIST2(gh_str02scm(S_short_file_names),snd_n)));
-  if (sp->chan_type == FILE_PER_SOUND) 
-    return(sp_iread(snd_n,SHORTFILENAMEF,S_short_file_names));
-  strs = (char **)CALLOC(sp->nchans,sizeof(char *));
-  for (i=0;i<sp->nchans;i++) 
-    strs[i] = filename_without_home_directory(sp->channel_filenames[i]);
-  result = string_array_to_list(strs,0,sp->nchans);
-  FREE(strs);
-  return(result);
-}
-#endif
-
 
 static SCM g_close_sound(SCM snd_n) 
 {
@@ -2373,10 +2237,6 @@ void g_init_snd(SCM local_doc)
 
   DEFINE_PROC(gh_new_procedure0_1(S_file_name,SCM_FNC g_file_name),H_file_name);
   DEFINE_PROC(gh_new_procedure0_1(S_short_file_name,SCM_FNC g_short_file_name),H_short_file_name);
-#if FILE_PER_CHAN
-  DEFINE_PROC(gh_new_procedure0_1(S_file_names,SCM_FNC g_file_names),H_file_names);
-  DEFINE_PROC(gh_new_procedure0_1(S_short_file_names,SCM_FNC g_short_file_names),H_short_file_names);
-#endif
   DEFINE_PROC(gh_new_procedure0_1(S_save_control_panel,SCM_FNC g_save_control_panel),H_save_control_panel);
   DEFINE_PROC(gh_new_procedure0_1(S_restore_control_panel,SCM_FNC g_restore_control_panel),H_restore_control_panel);
   DEFINE_PROC(gh_new_procedure0_1(S_reset_control_panel,SCM_FNC g_reset_control_panel),H_reset_control_panel);

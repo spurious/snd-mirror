@@ -30,55 +30,55 @@ enum {W_pane,
 #define NUM_SND_WIDGETS 48
 
 Widget w_snd_ctrls(snd_info *sp)                   {if ((sp) && (sp->sgx)) return(((snd_context *)(sp->sgx))->snd_widgets[W_ctrls]); else return(NULL);}
-Widget w_snd_pane(snd_info *sp)                    {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_pane]); else return(NULL);}
-Widget w_snd_name(snd_info *sp)                    {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_name]); else return(NULL);}
-Widget w_snd_combine(snd_info *sp)                 {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_combine]); else return(NULL);}
-Widget w_snd_play(snd_info *sp)                    {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_play]); else return(NULL);}
-Widget w_snd_filter_env(snd_info *sp)              {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_filter_env]); else return(NULL);}
+Widget w_snd_pane(snd_info *sp)                    {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_pane]);                   else return(NULL);}
+Widget w_snd_name(snd_info *sp)                    {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_name]);                   else return(NULL);}
+Widget w_snd_combine(snd_info *sp)                 {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_combine]);                else return(NULL);}
+Widget w_snd_play(snd_info *sp)                    {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_play]);                   else return(NULL);}
+Widget w_snd_filter_env(snd_info *sp)              {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_filter_env]);             else return(NULL);}
 
-static Widget w_snd_amp(snd_info *sp)              {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_amp]); else return(NULL);}
-static Widget w_snd_srate(snd_info *sp)            {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_srate]); else return(NULL);}
-static Widget w_snd_srate_arrow(snd_info *sp)      {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_srate_arrow]); else return(NULL);}
-static Widget w_snd_expand(snd_info *sp)           {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_expand]); else return(NULL);}
-static Widget w_snd_contrast(snd_info *sp)         {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_contrast]); else return(NULL);}
-static Widget w_snd_revscl(snd_info *sp)           {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_revscl]); else return(NULL);}
-static Widget w_snd_revlen(snd_info *sp)           {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_revlen]); else return(NULL);}
-static Widget w_snd_minibuffer(snd_info *sp)       {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_info]); else return(NULL);}
-static Widget w_snd_minibuffer_label(snd_info *sp) {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_info_label]); else return(NULL);}
-static Widget w_snd_amp_number(snd_info *sp)       {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_amp_number]); else return(NULL);}
-static Widget w_snd_srate_number(snd_info *sp)     {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_srate_number]); else return(NULL);}
-static Widget w_snd_expand_number(snd_info *sp)    {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_expand_number]); else return(NULL);}
-static Widget w_snd_expand_button(snd_info *sp)    {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_expand_button]); else return(NULL);}
-static Widget w_snd_contrast_number(snd_info *sp)  {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_contrast_number]); else return(NULL);}
-static Widget w_snd_contrast_button(snd_info *sp)  {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_contrast_button]); else return(NULL);}
-static Widget w_snd_revscl_number(snd_info *sp)    {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_revscl_number]); else return(NULL);}
-static Widget w_snd_revlen_number(snd_info *sp)    {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_revlen_number]); else return(NULL);}
-static Widget w_snd_reverb_button(snd_info *sp)    {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_reverb_button]); else return(NULL);}
-static Widget w_snd_apply(snd_info *sp)            {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_apply]); else return(NULL);}
-static Widget w_snd_filter_order(snd_info *sp)     {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_filter_order]); else return(NULL);}
-static Widget w_snd_filter(snd_info *sp)           {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_filter]); else return(NULL);}
-static Widget w_snd_filter_button(snd_info *sp)    {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_filter_button]); else return(NULL);}
-static Widget w_snd_filter_dB(snd_info *sp)        {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_filter_dB]); else return(NULL);}
-static Widget w_snd_name_icon(snd_info *sp)        {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_name_icon]); else return(NULL);}
-static Widget w_snd_minibuffer_sep(snd_info *sp)   {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_info_sep]); else return(NULL);}
-static Widget w_snd_sync(snd_info *sp)             {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_sync]); else return(NULL);}
+static Widget w_snd_amp(snd_info *sp)              {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_amp]);                    else return(NULL);}
+static Widget w_snd_srate(snd_info *sp)            {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_srate]);                  else return(NULL);}
+static Widget w_snd_srate_arrow(snd_info *sp)      {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_srate_arrow]);            else return(NULL);}
+static Widget w_snd_expand(snd_info *sp)           {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_expand]);                 else return(NULL);}
+static Widget w_snd_contrast(snd_info *sp)         {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_contrast]);               else return(NULL);}
+static Widget w_snd_revscl(snd_info *sp)           {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_revscl]);                 else return(NULL);}
+static Widget w_snd_revlen(snd_info *sp)           {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_revlen]);                 else return(NULL);}
+static Widget w_snd_minibuffer(snd_info *sp)       {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_info]);                   else return(NULL);}
+static Widget w_snd_minibuffer_label(snd_info *sp) {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_info_label]);             else return(NULL);}
+static Widget w_snd_amp_number(snd_info *sp)       {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_amp_number]);             else return(NULL);}
+static Widget w_snd_srate_number(snd_info *sp)     {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_srate_number]);           else return(NULL);}
+static Widget w_snd_expand_number(snd_info *sp)    {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_expand_number]);          else return(NULL);}
+static Widget w_snd_expand_button(snd_info *sp)    {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_expand_button]);          else return(NULL);}
+static Widget w_snd_contrast_number(snd_info *sp)  {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_contrast_number]);        else return(NULL);}
+static Widget w_snd_contrast_button(snd_info *sp)  {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_contrast_button]);        else return(NULL);}
+static Widget w_snd_revscl_number(snd_info *sp)    {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_revscl_number]);          else return(NULL);}
+static Widget w_snd_revlen_number(snd_info *sp)    {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_revlen_number]);          else return(NULL);}
+static Widget w_snd_reverb_button(snd_info *sp)    {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_reverb_button]);          else return(NULL);}
+static Widget w_snd_apply(snd_info *sp)            {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_apply]);                  else return(NULL);}
+static Widget w_snd_filter_order(snd_info *sp)     {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_filter_order]);           else return(NULL);}
+static Widget w_snd_filter(snd_info *sp)           {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_filter]);                 else return(NULL);}
+static Widget w_snd_filter_button(snd_info *sp)    {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_filter_button]);          else return(NULL);}
+static Widget w_snd_filter_dB(snd_info *sp)        {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_filter_dB]);              else return(NULL);}
+static Widget w_snd_name_icon(snd_info *sp)        {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_name_icon]);              else return(NULL);}
+static Widget w_snd_minibuffer_sep(snd_info *sp)   {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_info_sep]);               else return(NULL);}
+static Widget w_snd_sync(snd_info *sp)             {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_sync]);                   else return(NULL);}
 
 #define MAX_NOTEBOOK_TAB_LENGTH 5
 
-static void W_info_Help_Callback(Widget w,XtPointer clientData,XtPointer callData) {click_for_minibuffer_help((snd_state *)clientData);}
-static void W_play_Help_Callback(Widget w,XtPointer clientData,XtPointer callData) {click_for_play_help((snd_state *)clientData);}
-static void W_info_sep_Help_Callback(Widget w,XtPointer clientData,XtPointer callData) {click_for_name_separator_help((snd_state *)clientData);}
-static void W_amp_Help_Callback(Widget w,XtPointer clientData,XtPointer callData) {click_for_amp_help((snd_state *)clientData);}
-static void W_srate_Help_Callback(Widget w,XtPointer clientData,XtPointer callData) {click_for_speed_help((snd_state *)clientData);}
-static void W_srate_arrow_Help_Callback(Widget w,XtPointer clientData,XtPointer callData) {click_for_srate_arrow_help((snd_state *)clientData);}
-static void W_expand_Help_Callback(Widget w,XtPointer clientData,XtPointer callData) {click_for_expand_help((snd_state *)clientData);}
-static void W_contrast_Help_Callback(Widget w,XtPointer clientData,XtPointer callData) {click_for_contrast_help((snd_state *)clientData);}
-static void W_revscl_Help_Callback(Widget w,XtPointer clientData,XtPointer callData) {click_for_reverb_scale_help((snd_state *)clientData);}
-static void W_revlen_Help_Callback(Widget w,XtPointer clientData,XtPointer callData) {click_for_reverb_length_help((snd_state *)clientData);}
-static void W_filter_Help_Callback(Widget w,XtPointer clientData,XtPointer callData) {click_for_filter_help((snd_state *)clientData);} 
-static void W_filter_order_Help_Callback(Widget w,XtPointer clientData,XtPointer callData) {click_for_filter_order_help((snd_state *)clientData);}
+static void W_info_Help_Callback(Widget w,XtPointer clientData,XtPointer callData)            {click_for_minibuffer_help((snd_state *)clientData);}
+static void W_play_Help_Callback(Widget w,XtPointer clientData,XtPointer callData)            {click_for_play_help((snd_state *)clientData);}
+static void W_info_sep_Help_Callback(Widget w,XtPointer clientData,XtPointer callData)        {click_for_name_separator_help((snd_state *)clientData);}
+static void W_amp_Help_Callback(Widget w,XtPointer clientData,XtPointer callData)             {click_for_amp_help((snd_state *)clientData);}
+static void W_srate_Help_Callback(Widget w,XtPointer clientData,XtPointer callData)           {click_for_speed_help((snd_state *)clientData);}
+static void W_srate_arrow_Help_Callback(Widget w,XtPointer clientData,XtPointer callData)     {click_for_srate_arrow_help((snd_state *)clientData);}
+static void W_expand_Help_Callback(Widget w,XtPointer clientData,XtPointer callData)          {click_for_expand_help((snd_state *)clientData);}
+static void W_contrast_Help_Callback(Widget w,XtPointer clientData,XtPointer callData)        {click_for_contrast_help((snd_state *)clientData);}
+static void W_revscl_Help_Callback(Widget w,XtPointer clientData,XtPointer callData)          {click_for_reverb_scale_help((snd_state *)clientData);}
+static void W_revlen_Help_Callback(Widget w,XtPointer clientData,XtPointer callData)          {click_for_reverb_length_help((snd_state *)clientData);}
+static void W_filter_Help_Callback(Widget w,XtPointer clientData,XtPointer callData)          {click_for_filter_help((snd_state *)clientData);} 
+static void W_filter_order_Help_Callback(Widget w,XtPointer clientData,XtPointer callData)    {click_for_filter_order_help((snd_state *)clientData);}
 static void W_filter_envelope_Help_Callback(Widget w,XtPointer clientData,XtPointer callData) {click_for_filter_envelope_help((snd_state *)clientData);}
-static void W_name_Help_Callback(Widget w,XtPointer clientData,XtPointer callData) {click_for_sound_help((snd_state *)clientData);}
+static void W_name_Help_Callback(Widget w,XtPointer clientData,XtPointer callData)            {click_for_sound_help((snd_state *)clientData);}
 
 static void W_expand_button_Help_Callback(Widget w,XtPointer clientData,XtPointer callData) 
 {
@@ -308,6 +308,16 @@ static void W_amp_ValueChanged_Callback(Widget w,XtPointer clientData,XtPointer 
 
 static char srate_number_buffer[5]={'1',STR_decimal,'0','0','\0'};
 
+XmString initial_speed_label(snd_state *ss)
+{
+  switch (speed_style(ss))
+    {
+    case SPEED_AS_RATIO: return(XmStringCreate(ratio_one,XmFONTLIST_DEFAULT_TAG)); break;
+    case SPEED_AS_SEMITONE: return(XmStringCreate(semitone_one,XmFONTLIST_DEFAULT_TAG)); break;
+    default: return(XmStringCreate(number_one,XmFONTLIST_DEFAULT_TAG)); break;
+    }
+}
+
 static int snd_srate_to_int(Float val)
 {
   int ival;
@@ -321,14 +331,12 @@ static int snd_srate_to_int(Float val)
   else return(0);
 }
 
-static Float xsrate_changed(int ival, char *srcbuf, int style, int tones)
-{
-  return(srate_changed(exp((Float)(ival-450)/150.0),srcbuf,style,tones));
-}
-
 static int snd_srate_changed(snd_info *sp, int ival)
 {
-  sp->srate = xsrate_changed(ival,srate_number_buffer,sp->speed_style,sp->speed_tones);
+  sp->srate = srate_changed(exp((Float)(ival-450)/150.0),
+			    srate_number_buffer,
+			    sp->speed_style,
+			    sp->speed_tones);
   set_label(w_snd_srate_number(sp),srate_number_buffer);
   return(ival);
 }
@@ -1312,30 +1320,9 @@ snd_info *add_sound_window (char *filename, snd_state *ss)
   Widget form;
   snd_context *sx;
   Atom sound_delete;
-#if FILE_PER_CHAN
-  dir *file_chans = NULL;
-  int *chan_locs;
-  multifile_info *minfo;
-#endif
   static int first_window = 1;
   errno = 0;
-#if FILE_PER_CHAN
-  if (is_directory(filename))
-    {
-      minfo = sort_multifile_channels(ss,filename);
-      file_chans = minfo->file_chans;
-      chan_locs = minfo->chan_locs;
-      hdr = minfo->hdr;
-      FREE(minfo);
-    }
-  else
-    {
-      hdr = make_file_info(filename,ss);
-      if (hdr) hdr->chan_type = FILE_PER_SOUND; else return(NULL);
-    }
-#else
   hdr = make_file_info(filename,ss);
-#endif
   if (!hdr) return(NULL);
   if (ss->pending_change) 
     {
@@ -1361,22 +1348,6 @@ snd_info *add_sound_window (char *filename, snd_state *ss)
   ss->sounds[snd_slot] = make_snd_info(ss->sounds[snd_slot],ss,filename,hdr,snd_slot);
   sp = ss->sounds[snd_slot];
   sp->inuse = 1;
-#if FILE_PER_CHAN
-  sp->chan_type = hdr->chan_type;
-  if (sp->chan_type == FILE_PER_CHANNEL)
-    {
-      sp->channel_filenames = (char **)CALLOC(hdr->chans,sizeof(char *));
-      for (i=0;i<hdr->chans;i++)
-	{
-	  sp->channel_filenames[i] = (char *)CALLOC(MUS_MAX_FILE_NAME,sizeof(char));
-	  sprintf(sp->channel_filenames[i],"%s/%s",filename,file_chans->files[chan_locs[i]]);
-	}
-      FREE(chan_locs);
-      chan_locs = NULL;
-      free_dir(file_chans);
-      file_chans = NULL;
-    }
-#endif
   sx = sp->sgx;
 #if HAVE_XPM
   sx->file_pix = blank_pixmap;
@@ -1761,12 +1732,7 @@ snd_info *add_sound_window (char *filename, snd_state *ss)
       XmStringFree(s1);
 
       n=0;
-      switch (speed_style(ss))
-	{
-	case SPEED_AS_RATIO: s1=XmStringCreate(ratio_one,XmFONTLIST_DEFAULT_TAG); break;
-	case SPEED_AS_SEMITONE: s1=XmStringCreate(semitone_one,XmFONTLIST_DEFAULT_TAG); break;
-	default: s1=XmStringCreate(number_one,XmFONTLIST_DEFAULT_TAG); break;
-	}
+      s1 = initial_speed_label(ss);
       if (need_colors) {XtSetArg(args[n],XmNbackground,(ss->sgx)->basic_color); n++;}
       XtSetArg(args[n],XmNalignment,XmALIGNMENT_BEGINNING); n++;	
       XtSetArg(args[n],XmNtopAttachment,XmATTACH_OPPOSITE_WIDGET); n++;
@@ -2361,7 +2327,7 @@ snd_info *add_sound_window (char *filename, snd_state *ss)
       XtSetArg(args[n],XmNrightAttachment,XmATTACH_POSITION); n++;
       XtSetArg(args[n],XmNrightPosition,98); n++;
       XtSetArg(args[n],XmNallowResize,TRUE); n++;
-      if (!(ss->using_schemes)) {XtSetArg(args[n],XmNbackground,(ss->sgx)->basic_color); n++;}
+      /* if (!(ss->using_schemes)) {XtSetArg(args[n],XmNbackground,(ss->sgx)->basic_color); n++;} */
       XtSetArg(args[n],XmNshadowType,XmSHADOW_ETCHED_IN); n++;
       XtSetArg(args[n],XmNshadowThickness,4); n++;
       sw[W_filter_frame] = sndCreateFrameWidget("filter-frame",sw[W_amp_form],args,n);

@@ -316,7 +316,7 @@ static SCM g_set_just_sounds(SCM on)
   RTNBOOL(n);
 }
 
-void g_initialize_xgfile(snd_state *ss, SCM local_doc)
+void g_initialize_xgfile(SCM local_doc)
 {
   define_procedure_with_setter(S_just_sounds,SCM_FNC g_just_sounds,H_just_sounds,
 			       "set-" S_just_sounds,SCM_FNC g_set_just_sounds,local_doc,0,0,0,1);
@@ -1987,7 +1987,7 @@ static void file_mix_ok_callback(Widget w,XtPointer clientData,XtPointer callDat
   char *str = NULL;
   snd_state *ss = (snd_state *)clientData;
   XtUnmanageChild(w);
-  mix_complete_file(any_selected_sound(ss),str=XmTextGetString(file_mix_name),"File: mix",with_mix_consoles(ss));
+  mix_complete_file(any_selected_sound(ss),str=XmTextGetString(file_mix_name),"File: mix",with_mix_tags(ss));
   if (str) XtFree(str);
 }
 

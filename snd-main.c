@@ -239,7 +239,7 @@ static void save_snd_state_options (snd_state *ss, FILE *fd)
 #endif
   if (trap_segfault(ss) != DEFAULT_TRAP_SEGFAULT) pss_ss(fd,S_trap_segfault,b2s(trap_segfault(ss)));
   if (show_selection_transform(ss) != DEFAULT_SHOW_SELECTION_TRANSFORM) pss_ss(fd,S_show_selection_transform,b2s(show_selection_transform(ss)));
-  if (with_mix_consoles(ss) != DEFAULT_WITH_MIX_CONSOLES) pss_ss(fd,S_with_mix_consoles,b2s(with_mix_consoles(ss)));
+  if (with_mix_tags(ss) != DEFAULT_WITH_MIX_TAGS) pss_ss(fd,S_with_mix_tags,b2s(with_mix_tags(ss)));
   if (sinc_width(ss) != DEFAULT_SINC_WIDTH) pss_sd(fd,S_sinc_width,sinc_width(ss));
   if (speed_tones(ss) != DEFAULT_SPEED_TONES) pss_sd(fd,S_speed_tones,speed_tones(ss));
   if (ss->init_window_width != -1) pss_sd(fd,S_window_width,widget_width(MAIN_SHELL(ss)));
@@ -291,9 +291,10 @@ static void save_snd_state_options (snd_state *ss, FILE *fd)
   if (use_raw_defaults(ss) != DEFAULT_USE_RAW_DEFAULTS) pss_ss(fd,S_use_raw_defaults,b2s(use_raw_defaults(ss)));
   if (print_length(ss) != DEFAULT_PRINT_LENGTH) pss_sd(fd,S_print_length,print_length(ss));
   if (show_usage_stats(ss) != DEFAULT_SHOW_USAGE_STATS) pss_ss(fd,S_show_usage_stats,b2s(show_usage_stats(ss)));
-  if (show_mix_consoles(ss) != DEFAULT_SHOW_MIX_CONSOLES) pss_ss(fd,S_show_mix_consoles,b2s(show_mix_consoles(ss)));
   if (show_mix_waveforms(ss) != DEFAULT_SHOW_MIX_WAVEFORMS) pss_ss(fd,S_show_mix_waveforms,b2s(show_mix_waveforms(ss)));
   if (mix_waveform_height(ss) != DEFAULT_MIX_WAVEFORM_HEIGHT) pss_sd(fd,S_mix_waveform_height,mix_waveform_height(ss));
+  if (mix_tag_height(ss) != DEFAULT_MIX_TAG_HEIGHT) pss_sd(fd,S_mix_tag_height,mix_tag_height(ss));
+  if (mix_tag_width(ss) != DEFAULT_MIX_TAG_WIDTH) pss_sd(fd,S_mix_tag_width,mix_tag_width(ss));
   if (enved_waving(ss) != DEFAULT_ENVED_WAVING) pss_ss(fd,S_enved_waving,b2s(enved_waving(ss)));
   if (enved_dBing(ss) != DEFAULT_ENVED_DBING) pss_ss(fd,S_enved_dBing,b2s(enved_dBing(ss)));
   if (enved_clipping(ss) != DEFAULT_ENVED_CLIPPING) pss_ss(fd,S_enved_clipping,b2s(enved_clipping(ss)));
@@ -331,8 +332,6 @@ static void save_snd_state_options (snd_state *ss, FILE *fd)
   if (fneq(vu_font_size(ss),DEFAULT_VU_FONT_SIZE)) pss_sf(fd,S_vu_font_size,vu_font_size(ss));
   if (fneq(enved_base(ss),DEFAULT_ENVED_BASE)) pss_sf(fd,S_enved_base,enved_base(ss));
   if (fneq(enved_power(ss),DEFAULT_ENVED_POWER)) pss_sf(fd,S_enved_power,enved_power(ss));
-  if (fneq(get_mix_console_amp_scaler(),1.0)) pss_sf(fd,S_mix_console_amp_scaler,get_mix_console_amp_scaler());
-  if (fneq(get_mix_console_speed_scaler(),1.0)) pss_sf(fd,S_mix_console_speed_scaler,get_mix_console_speed_scaler());
   save_recorder_state(fd);
 
   fprintf(fd,";;; end of snd options\n");
@@ -477,7 +476,6 @@ static int save_sound_state (snd_info *sp, void *ptr)
       if (cp->normalize_fft != DEFAULT_NORMALIZE_FFT) pcp_sd(fd,S_normalize_fft,cp->normalize_fft,chan);
       if (cp->graph_style != DEFAULT_GRAPH_STYLE) pcp_sd(fd,S_graph_style,cp->graph_style,chan);
 #endif
-      if (cp->show_mix_consoles != DEFAULT_SHOW_MIX_CONSOLES) pcp_ss(fd,S_show_mix_consoles,b2s(cp->show_mix_consoles),chan);
       if (cp->show_mix_waveforms != DEFAULT_SHOW_MIX_WAVEFORMS) pcp_ss(fd,S_show_mix_waveforms,b2s(cp->show_mix_waveforms),chan);
       if (cp->dot_size != DEFAULT_DOT_SIZE) pcp_sd(fd,S_dot_size,cp->dot_size,chan);
       if (cp->show_axes != DEFAULT_SHOW_AXES) pcp_sd(fd,S_show_axes,cp->show_axes,chan);
@@ -517,8 +515,7 @@ int save_state (snd_state *ss, char *save_state_name)
       if (region_dialog_is_active()) fprintf(save_fd,"(%s)\n",S_region_dialog);
       if (record_dialog_is_active()) fprintf(save_fd,"(%s)\n",S_recorder_dialog);
       fclose(save_fd);
-      /* each mixdata struct has states -> arrays of console_state structs */
-      /* each console_state has beg end etc */
+      /* TODO save mix? */
       if (locale)
 	{
 #if HAVE_SETLOCALE
