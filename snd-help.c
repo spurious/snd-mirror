@@ -295,6 +295,7 @@ void news_help(snd_state *ss)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+14-May:  optional begin-time arg to make-mix-sample-reader.\n\
 12-May:  removed --with-html and associated variables. added html-program.\n\
 7-May:   or-hooks run all functions on the hook list now.\n\
          mix-drag-hook.\n\
@@ -358,16 +359,16 @@ void ssnd_help(snd_state *ss, char *subject, ...)
 
 static char file_menu_help_string[] =
 "  Open: open a file.\n\
-  Close: close the currently selected file.\n\
-  Save: save any edits in the current file.\n\
+  Close: close the current file.\n\
+  Save: save edits in the current file.\n\
   Save as: save edits in the current file in some new file.\n\
-  Revert: undo any edits in the current file.\n\
+  Revert: undo all edits in the current file.\n\
   Mix: mix in a file.\n\
-  Update: reload current sound from disk.\n\
+  Update: re-read current sound from disk.\n\
   New: create a new empty sound file.\n\
   Record: start the recorder\n\
   View: open a file in read-only mode.\n\
-  Print: produce graph as Postscript file.\n\
+  Print: produce a Postscript file of the current graph.\n\
   Exit: leave Snd, without saving any edits.\n\
 ";
 
@@ -387,23 +388,23 @@ static char edit_menu_help_string[] =
 
 static char view_menu_help_string[] =
 "  Show Controls: display the control panel.\n\
-  Show Listener: open the lisp listener panel.\n\
-  Mix Panel: open the mix controller.\n\
+  Show Listener: open the lisp listener.\n\
+  Mix Panel: open the mix dialog.\n\
   Regions: start the region browser.\n\
-  Files: start the file browser.\n\
+  Files: start the previous file browser.\n\
   Color: start the color browser.\n\
   Orientation: start the graph orientation dialog.\n\
   Graph style: display data as dots, lines or, filled polygons.\n\
-  Verbose cursor: show cursor loc and sample value.\n\
+  Verbose cursor: show cursor location and sample value.\n\
   Channel style: combine all channels into one graph.\n\
   Equalize panes: give panes equal sizes.\n\
   Show Y = 0: display the y = 0 line.\n\
-  X axis units: x axis labels in seconds, samples, ect.\n\
+  X axis units: x axis labels in seconds, samples, etc.\n\
   Error history: show errors encountered so far.\n\
 ";
 
 static char options_menu_help_string[] = 
-"   Transform Options: various fft-related settings\n\
+"   Transform Options: start dialog to set various fft-related variables\n\
    Speed style: control panel speed scrollbar interpretation.\n\
    Zoom focus: where to focus during zooms.\n\
    Save Options: save the current Options and View menu settings.\n\
@@ -453,50 +454,50 @@ static char graph_help_string[] =
   [Right] move window right\n\
   <:   move cursor to sample 0\n\
   >:   move cursor to last sample\n\
-  c-<: move cursor to sample 0\n\
-  c->: move cursor to last sample\n\
-  c-a: move cursor to window start\n\
-  c-b: move cursor back one sample\n\
-  c-d: delete sample at cursor\n\
-  c-e: move cursor to window end\n\
-  c-f: move cursor ahead one sample\n\
-  c-g: abort current command\n\
-  c-h: delete previous sample\n\
-  c-i: display cursor info\n\
-  c-j: goto mark\n\
-  c-k: delete one line's worth of samples\n\
-  c-l: position window so cursor is in the middle\n\
-  c-m: place (or remove) mark at cursor location\n\
-  c-n: move cursor ahead one 'line'\n\
-  c-o: insert one zero sample at cursor\n\
-  c-p: move cursor back one 'line'\n\
-  c-q: play current channel starting at cursor\n\
-  c-r: repeat last search backwards\n\
-  c-s: search until a function returns true\n\
+  C-<: move cursor to sample 0\n\
+  C->: move cursor to last sample\n\
+  C-a: move cursor to window start\n\
+  C-b: move cursor back one sample\n\
+  C-d: delete sample at cursor\n\
+  C-e: move cursor to window end\n\
+  C-f: move cursor ahead one sample\n\
+  C-g: abort current command\n\
+  C-h: delete previous sample\n\
+  C-i: display cursor info\n\
+  C-j: goto mark\n\
+  C-k: delete one line's worth of samples\n\
+  C-l: position window so cursor is in the middle\n\
+  C-m: place (or remove) mark at cursor location\n\
+  C-n: move cursor ahead one 'line'\n\
+  C-o: insert one zero sample at cursor\n\
+  C-p: move cursor back one 'line'\n\
+  C-q: play current channel starting at cursor\n\
+  C-r: repeat last search backwards\n\
+  C-s: search until a function returns true\n\
        The function should take one argument.\n\
        the current sample value.  For example.\n\
        to search for a sample greater than .1,\n\
        (lambda (val) (> val .1))\n\
-  c-t: stop playing\n\
-  c-u: start count definition.  If followed by a\n\
+  C-t: stop playing\n\
+  C-u: start count definition.  If followed by a\n\
        float, the actual count is that number multiplied\n\
        by the current sampling rate.  If the optional\n\
-       number is followed by c-m, the count returned\n\
+       number is followed by C-m, the count returned\n\
        is the distance from the cursor to the n-th\n\
-       successive mark.  That is, c-u c-m c-f is the\n\
-       same as c-j.\n\
-  c-v: move cursor to mid-window\n\
-  c-w: delete current region\n\
-  c-x: start extended command (see below)\n\
-  c-y: paste in last deleted region. Use c-u\n\
+       successive mark.  That is, C-u C-m C-f is the\n\
+       same as C-j.\n\
+  C-v: move cursor to mid-window\n\
+  C-w: delete current region\n\
+  C-x: start extended command (see below)\n\
+  C-y: paste in last deleted region. Use C-u\n\
        to paste in earlier regions.\n\
-  c-z: set sample at cursor to 0.0\n\
-  c-_: undo\n\
-  c-[Space]: start selection definition\n\
-       - c-[Space] to deactivate selection\n\
-  c-m-g: clear listener\n\
+  C-z: set sample at cursor to 0.0\n\
+  C-_: undo\n\
+  C-[Space]: start selection definition\n\
+       - C-[Space] to deactivate selection\n\
+  C-m-g: clear listener\n\
 \n\
-The extended commands (preceded by c-x) are:\n\
+The extended commands (preceded by C-x) are:\n\
   a: apply envelope to selection\n\
   b: position window so cursor is on left margin\n\
   c: define selection from cursor to nth mark\n\
@@ -519,42 +520,39 @@ The extended commands (preceded by c-x) are:\n\
   (: begin keyboard macro definition\n\
   ): end keyboard macro definition\n\
 \n\
-  c-a: apply envelope.  If a count is specified,\n\
+  C-a: apply envelope.  If a count is specified,\n\
      the envelope is applied from the cursor for\n\
      that number of samples.  Otherwise, the\n\
      envelope is applied to the entire file, and\n\
      if syncing is on, all sync'd channels.\n\
-  c-b: set x window bounds (preceded by 1 arg)\n\
-  c-c: hide controls\n\
-  c-d: print\n\
-  c-e: give last keyboard macro a name\n\
-  c-f: open file\n\
-  c-g: abort command\n\
-  c-i: insert file\n\
-  c-m: add named mark\n\
-  c-o: show controls\n\
-  c-p: set window size (preceded by 1 arg)\n\
-  c-q: mix in file\n\
-  c-r: redo last undone edit\n\
-  c-s: save file\n\
-  c-u: undo last edit\n\
+  C-b: set x window bounds (preceded by 1 arg)\n\
+  C-c: hide controls\n\
+  C-d: print\n\
+  C-e: give last keyboard macro a name\n\
+  C-f: open file\n\
+  C-g: abort command\n\
+  C-i: insert file\n\
+  C-m: add named mark\n\
+  C-o: show controls\n\
+  C-p: set window size (preceded by 1 arg)\n\
+  C-q: mix in file\n\
+  C-r: redo last undone edit\n\
+  C-s: save file\n\
+  C-u: undo last edit\n\
        Snd supports 'unlimited undo/redo'\n\
-  c-v: set window size as percentage of total\n\
-  c-w: save current channel in file\n\
-  c-z: smooth using cosine\n\
+  C-v: set window size as percentage of total\n\
+  C-w: save current channel in file\n\
+  C-z: smooth using cosine\n\
 \n\
 Unless otherwise noted, case is not significant; \n\
-c-a is the same as c-A.\n\
+C-a is the same as C-A.\n\
 \n\
 Most commands can be prefaced by an integer or\n\
 a float; the integer causes the command to be repeated\n\
 that many times; the float is multiplied by the\n\
 sound's sampling rate, then applied that many times.\n\
-So, for example, c-u 1.0 c-f causes the cursor to move\n\
+So, for example, C-u 1.0 C-f causes the cursor to move\n\
 ahead one second in the sound.\n\
-\n\
-The y-axis limit (default = 1.0) can be set\n\
-in the minibuffer via the variable 'ymax'.\n\
 \n\
 To change a key binding, use " S_bind_key ".\n\
 \n\
@@ -589,11 +587,7 @@ You can rotate the spectrogram around the various axes\n\
 by holding down the keypad and control keys.  You can get\n\
 arbitrarily small or large ffts with the Multiply and\n\
 Divide keys.  The x and y axis scalers are named\n\
-" S_spectro_x_scale " and " S_spectro_y_scale "; they can be set via\n\
-M-X and setf.  The keypad Enter key resets all the\n\
-spectrogram variables to their default values.\n\
-(In Linux, use the corresponding numbered keys --\n\
-add shift to the key sequences given above).\n\
+" S_spectro_x_scale " and " S_spectro_y_scale ".\n\
 See also the Color and Orientation menu options\n\
 in the View menu.\n\
 \n\
@@ -660,10 +654,10 @@ void find_help(snd_state *ss)
 {
   snd_help(ss, "Find", 
 "Searches in Snd refer to the sound data, and are in general patterned after Emacs.  When you type \
-c-s or c-r, the minibuffer below the graph is activated and you are asked for the search function. \
-The expression is a Scheme function of one argument, the current sample value.  It should return #t when the \
+C-s or C-r, the minibuffer below the graph is activated and you are asked for the search function. \
+The expression is a function of one argument, the current sample value.  It should return #t when the \
 search is satisified.  For example, (lambda (n) (> n .1) looks for the next sample that is greater than .1. \
-Successive c-s or c-r repeat the search.  c-x c-s can redefine the search pattern, which is also cleared in other \
+Successive C-s or C-r repeat the search.  C-x C-s can redefine the search pattern, which is also cleared in other \
 events, much like Emacs. \
 \n\n\
 Normally, the search applies only to the current channel. To search all current files at once, use the Edit:Find dialog.",
@@ -673,12 +667,12 @@ Normally, the search applies only to the current channel. To search all current 
 void undo_help(snd_state *ss) 
 {
   snd_help(ss, "Undo", 
-"Snd supports unlimited undo in the sense that you can backup through all \
+"Snd supports unlimited undo in the sense that you can back up through all \
 the edits since the last save, and at any point redo those edits.  Certain \
 operations require that temporary files be written, so disk space may eventually \
 become a problem.  Revert is the same as backing up to the last save. \
 \n\n\
-In addition, eight or so of the previous selections are saved on a stack accessible via c-y.",
+In addition, eight or so of the previous selections are saved on a 'region' stack accessible via C-y.",
 	   TRUE);
 }
 
@@ -695,8 +689,8 @@ the mouse) in one channel, and the parallel portions of the other channels will 
 
 static char speed_help_string[] = 
 "'Speed' refers to the rate at which the sound data is consumed during playback. \
-Another term might be 'srate'.  Snd uses linear interpolation to perform the speed \
-change.  The arrow button on the right determines the direction we move through the data. \
+Another term might be 'srate'.  Snd uses sinc interpolation to perform the speed \
+change.  The arrow button on the right determines the direction it moves through the data. \
 The scroll bar position is normally interpreted as a float between .05 and 20.  The Options \
 Speed Style menu (or the " S_speed_control_style " variable) can change this to use semitones (actually microtones) \
 or just-intonation ratios.  The number of equal divisions to the octave in the semitone case is \
@@ -713,8 +707,7 @@ or is too buzzy -- but it certainly is more robust than the phase vocoder approa
 same problem.  \
 \n\n\
 There are a variety of variables that control hop sizes, segment lengths, and overall segment \
-envelopes.  These can be set in the minibuffer via m-x and setf, or in your Snd init file. \
-The variables are:\n\
+envelopes: \
 \n\
   " S_expand_control_ramp ": the length of the ramp up (.4, 0 to .5)\n\
   " S_expand_control_length ": the length of each slice (.15)\n\
@@ -806,7 +799,7 @@ automatically translated to Sun 16-bit, then read/write:\n\
 'Linear' here means 2's complement integer.\n\
 The files can have any number of channels.\n\
 Data can be either big or little endian.\n\
-For mpeg translation, see the code in examp.scm.\n\
+For MPEG and OGG translation, see the code in examp.scm.\n\
 \n\
 When edits are saved, files in the first\n\
 group are changed in place; those in the second\n\
@@ -1034,7 +1027,7 @@ void marks_help(snd_state *ss) {snd_help(ss, "Marks", mark_help_string, FALSE);}
 void mix_help(snd_state *ss) {snd_help(ss, "Mixing", mix_help_string, TRUE);}
 void sound_files_help(snd_state *ss) {snd_help(ss, "Format", sound_files_help_string, FALSE);}
 void recording_help(snd_state *ss) {snd_help(ss, "Recording", recording_help_string, TRUE);}
-void init_file_help(snd_state *ss) {ssnd_help(ss, "Customization", init_file_help_string, NULL);}
+void init_file_help(snd_state *ss) {snd_help(ss, "Customization", init_file_help_string, TRUE);}
 
 
 /* -------- dialog help button -------- */
@@ -1184,8 +1177,15 @@ char* word_wrap(char *text, int widget_len)
 {
   char *new_text;
   int new_len, old_len, i, j, line_len = 0, desired_len;
+#if HAVE_RUBY
+  int move_paren = FALSE;
+#endif
   old_len = snd_strlen(text);
+#if HAVE_RUBY
+  new_len = old_len + 64;
+#else
   new_len = old_len + 32;
+#endif
   desired_len = (int)(widget_len / GLYPH_WIDTH);
   if (desired_len <= 8)
     return(copy_string(text));
@@ -1199,7 +1199,73 @@ char* word_wrap(char *text, int widget_len)
       }
     else
       {
+#if HAVE_RUBY
+	/* try to change the reported names to Ruby names */
+	/* TODO: capitalize the constants' names, prepend $ to hook names, add commas in arg lists, show key/opt args in Ruby syntax */
+	if (text[i] == '-')
+	  {
+	    if ((i > 0) && (isalnum((int)(text[i - 1]))) && (i < old_len))
+	      {
+		if (isalnum((int)(text[i + 1])))
+		  new_text[j++] = '_';
+		else
+		  {
+		    if (text[i + 1] == '>')
+		      {
+			new_text[j++] = '2';
+			i++;
+		      }
+		    else new_text[j++] = text[i];
+		  }
+	      }
+	    else new_text[j++] = text[i];
+	  }
+	else
+	  {
+	    if ((text[i] == '#') && (i < old_len))
+	      {
+		if (text[i + 1] == 'f')
+		  {
+		    new_text[j++] = 'f';
+		    new_text[j++] = 'a';
+		    new_text[j++] = 'l';
+		    new_text[j++] = 's';
+		    new_text[j++] = 'e';
+		    i++;
+		  }
+		else
+		  {
+		    if (text[i + 1] == 't')
+		      {
+			new_text[j++] = 't';
+			new_text[j++] = 'r';
+			new_text[j++] = 'u';
+			new_text[j++] = 'e';
+			i++;
+		      }
+		    else new_text[j++] = text[i];
+		  }
+	      }
+	    else
+	      {
+		if ((i == 0) && (text[i] == '('))
+		  {
+		    move_paren = TRUE;
+		  }
+		else 
+		  {
+		    if ((move_paren) && (text[i] == ' '))
+		      {
+			new_text[j++] = '(';
+			move_paren = FALSE;
+		      }
+		    else new_text[j++] = text[i];
+		  }
+	      }
+	  }
+#else
 	new_text[j++] = text[i];
+#endif
 	if (text[i] == '\n')
 	  line_len = 0;
 	line_len++;

@@ -623,7 +623,10 @@ static off_t amp_env_len(mix_info *md, int chan)
   return(CURRENT_SAMPLES((md->add_snd)->chans[chan]));
 }
 
-static mix_fd *init_mix_read_any(mix_info *md, int old, int type)
+#define PREVIOUS_MIX TRUE
+#define CURRENT_MIX FALSE
+
+static mix_fd *init_mix_read_any(mix_info *md, int old, int type, off_t beg)
 {
   mix_fd *mf;
   env *e;
@@ -631,7 +634,7 @@ static mix_fd *init_mix_read_any(mix_info *md, int old, int type)
   chan_info *cp;
   console_state *cs;
   int i, chans;
-  if (old) 
+  if (old == PREVIOUS_MIX) 
     cs = md->states[md->curcons];
   else cs = md->current_cs;
   if (cs->scalers == NULL) return(NULL);
@@ -669,9 +672,13 @@ static mix_fd *init_mix_read_any(mix_info *md, int old, int type)
 	{
 	  e = cs->amp_envs[i];
 	  if ((e) && (cs->scalers[i] != 0.0))
-	    mf->segs[i] = mus_make_env(e->data, e->pts, cs->scalers[i], 0.0, 1.0, 0.0, 0,
-				       (type == MIX_INPUT_SOUND) ? (cs->len - 1) : amp_env_len(md, i),
-				       NULL);
+	    {
+	      mf->segs[i] = mus_make_env(e->data, e->pts, cs->scalers[i], 0.0, 1.0, 0.0, 0,
+					 (type == MIX_INPUT_SOUND) ? (cs->len - 1) : amp_env_len(md, i),
+					 NULL);
+	      if (beg > 0)
+		mus_set_location(mf->segs[i], beg);
+	    }
 	  else mf->segs[i] = NULL;
 	}
     }
@@ -701,11 +708,11 @@ static mix_fd *init_mix_read_any(mix_info *md, int old, int type)
     {
       if (mf->calc == C_STRAIGHT)
 	/* to include edpos here we'd need to use it also during the mix_input_amp_env_read business below, so it's non-trivial to add */
-	mf->sfs[mf->base] = init_sample_read_any(0, add_sp->chans[mf->base], READ_FORWARD, cs->mix_edit_ctr[mf->base]); 
+	mf->sfs[mf->base] = init_sample_read_any(beg, add_sp->chans[mf->base], READ_FORWARD, cs->mix_edit_ctr[mf->base]); 
       else
 	{
 	  for (i = 0; i < chans; i++)
-	    mf->sfs[i] = init_sample_read_any(0, add_sp->chans[i], READ_FORWARD, cs->mix_edit_ctr[i]);
+	    mf->sfs[i] = init_sample_read_any(beg, add_sp->chans[i], READ_FORWARD, cs->mix_edit_ctr[i]);
 	}
     }
   if (mf->calc == C_SPEED)
@@ -743,10 +750,13 @@ static mix_fd *init_mix_read_any(mix_info *md, int old, int type)
   return(mf);
 }
 
-static mix_fd *init_mix_read(mix_info *md, int old)
+static mix_fd *init_mix_read(mix_info *md, int old, off_t beg)
 {
-  return(init_mix_read_any(md, old, MIX_INPUT_SOUND));
+  return(init_mix_read_any(md, old, MIX_INPUT_SOUND, beg));
 }
+
+#define HI_PEAKS TRUE
+#define LO_PEAKS FALSE
 
 static mix_fd *init_mix_input_amp_env_read(mix_info *md, int old, int hi)
 {
@@ -755,7 +765,7 @@ static mix_fd *init_mix_input_amp_env_read(mix_info *md, int old, int hi)
   snd_info *sp;
   chan_info *cp;
   env_info *ep;
-  mf = init_mix_read_any(md, old, MIX_INPUT_AMP_ENV);
+  mf = init_mix_read_any(md, old, MIX_INPUT_AMP_ENV, 0);
   if (!mf) return(NULL);
   sp = md->add_snd;
   mf->ctr = (int *)CALLOC(sp->nchans, sizeof(int));
@@ -768,7 +778,7 @@ static mix_fd *init_mix_input_amp_env_read(mix_info *md, int old, int hi)
       mf->samples[i] = CURRENT_SAMPLES(cp);
       ep = cp->amp_envs[cp->edit_ctr];
       mf->samps_per_bin = ep->samps_per_bin;
-      if (hi)
+      if (hi == HI_PEAKS)
 	mf->idata[i] = ep->data_max;
       else mf->idata[i] = ep->data_min;
     }
@@ -1229,9 +1239,9 @@ static void remix_file(mix_info *md, const char *origin)
 	  return;
 	}
     }
-  add = init_mix_read(md, 0);
+  add = init_mix_read(md, CURRENT_MIX, 0);
   if (!add) return;
-  sub = init_mix_read(md, 1);
+  sub = init_mix_read(md, PREVIOUS_MIX, 0);
   if (!sub) return;
   cur = init_sample_read(beg, cp, READ_FORWARD);
   if (cur == NULL) return;
@@ -1425,9 +1435,9 @@ static int make_temporary_amp_env_mixed_graph(chan_info *cp, axis_info *ap, mix_
   lo = ap->losamp;
   hi = ap->hisamp;
 
-  new_fd = init_mix_read(md, 0);
+  new_fd = init_mix_read(md, CURRENT_MIX, 0);
   if (!new_fd) return(0);
-  old_fd = init_mix_read(md, 1);
+  old_fd = init_mix_read(md, PREVIOUS_MIX, 0);
   if (!old_fd) return(0);
 
   ep = cp->amp_envs[cp->edit_ctr];
@@ -1533,10 +1543,10 @@ static int make_temporary_amp_env_graph(chan_info *cp, axis_info *ap, mix_info *
   lo = ap->losamp;
   hi = ap->hisamp;
 
-  new_min_fd = init_mix_input_amp_env_read(md, 0, 0); /* not old, not hi */
-  new_max_fd = init_mix_input_amp_env_read(md, 0, 1); /* not old, hi */
-  old_min_fd = init_mix_input_amp_env_read(md, 1, 0); /* old, not hi */
-  old_max_fd = init_mix_input_amp_env_read(md, 1, 1); /* old, hi */
+  new_min_fd = init_mix_input_amp_env_read(md, CURRENT_MIX, LO_PEAKS); 
+  new_max_fd = init_mix_input_amp_env_read(md, CURRENT_MIX, HI_PEAKS); 
+  old_min_fd = init_mix_input_amp_env_read(md, PREVIOUS_MIX, LO_PEAKS);
+  old_max_fd = init_mix_input_amp_env_read(md, PREVIOUS_MIX, HI_PEAKS); 
 
   ep = cp->amp_envs[cp->edit_ctr];
   main_loc = (int)((double)(ap->losamp) / (double)(ep->samps_per_bin));
@@ -1695,9 +1705,9 @@ static void make_temporary_graph(chan_info *cp, mix_info *md, console_state *cs)
     {
       sf = init_sample_read(ap->losamp, cp, READ_FORWARD);
       if (sf == NULL) return;
-      add = init_mix_read(md, 0);
+      add = init_mix_read(md, CURRENT_MIX, 0);
       if (!add) return;
-      sub = init_mix_read(md, 1);
+      sub = init_mix_read(md, PREVIOUS_MIX, 0);
       if (!sub) return;
       if ((oldbeg < lo) && (lo < oldend)) 
 	for (i = oldbeg; i < lo; i++) 
@@ -1737,9 +1747,9 @@ static void make_temporary_graph(chan_info *cp, mix_info *md, console_state *cs)
 	{
 	  sf = init_sample_read(ap->losamp, cp, READ_FORWARD);
 	  if (sf == NULL) return;
-	  add = init_mix_read(md, 0);
+	  add = init_mix_read(md, CURRENT_MIX, 0);
 	  if (!add) return;
-	  sub = init_mix_read(md, 1);
+	  sub = init_mix_read(md, PREVIOUS_MIX, 0);
 	  if (!sub) return;
 	  if ((oldbeg < lo) && (lo < oldend)) 
 	    for (i = oldbeg; i < lo; i++) 
@@ -1848,8 +1858,8 @@ static int display_mix_amp_env(mix_info *md, Float scl, int yoff, off_t newbeg, 
   Locus lastx, newx;
   Float ymin, ymax, high = 0.0, low = 0.0;
   double xend, xstart, xstep;
-  min_fd = init_mix_input_amp_env_read(md, 0, 0); /* not old, not hi */
-  max_fd = init_mix_input_amp_env_read(md, 0, 1); /* not old, hi */
+  min_fd = init_mix_input_amp_env_read(md, CURRENT_MIX, LO_PEAKS);
+  max_fd = init_mix_input_amp_env_read(md, CURRENT_MIX, HI_PEAKS);
   lo = ap->losamp;
   hi = ap->hisamp;
   ss = md->ss;
@@ -1997,7 +2007,7 @@ static int display_mix_waveform(chan_info *cp, mix_info *md, console_state *cs, 
     }
   if ((samples_per_pixel < 5.0) && (samps < POINT_BUFFER_SIZE))
     {
-      add = init_mix_read(md, 0);
+      add = init_mix_read(md, CURRENT_MIX, 0);
       if (!add) return(0);
       if (lo > newbeg) 
 	{
@@ -2045,7 +2055,7 @@ static int display_mix_waveform(chan_info *cp, mix_info *md, console_state *cs, 
 	j = display_mix_amp_env(md, scl, yoff, newbeg, newend, cp, (Float)cur_srate, ap, draw);
       else
 	{
-	  add = init_mix_read(md, 0);
+	  add = init_mix_read(md, CURRENT_MIX, 0);
 	  if (!add) return(0);
 	  if (lo > newbeg) 
 	    {
@@ -2792,7 +2802,7 @@ static track_fd *init_track_reader(chan_info *cp, int track_num, int global) /* 
 	    if ((md->track == track_num) && 
 		(md->cp == cp))
 	      {
-		fd->fds[mix] = init_mix_read(md, FALSE);
+		fd->fds[mix] = init_mix_read(md, CURRENT_MIX, 0);
 		cs = md->current_cs;
 		fd->state[mix] = cs->orig - track_beg;
 		fd->len[mix] = cs->len;
@@ -3038,7 +3048,7 @@ static void play_mix(snd_state *ss, mix_info *md)
 				  dac_size(ss));
   if (play_fd != -1)
     {
-      mf = init_mix_read(md, FALSE);
+      mf = init_mix_read(md, CURRENT_MIX, 0);
       if (mf)
 	{
 	  ss->stopped_explicitly = FALSE;
@@ -3317,15 +3327,8 @@ env *mix_amp_env_from_id(int n, int chan)
 {
   console_state *cs; 
   cs = cs_from_id(n); 
-  if (cs) 
-    {
-      if (chan < cs->chans)
-	{
-	  if (cs->amp_envs)
-	    return(cs->amp_envs[chan]);
-	  else return(NULL);
-	}
-    }
+  if ((cs) && (chan < cs->chans) && (cs->amp_envs))
+    return(cs->amp_envs[chan]);
   return(NULL);
 }
 
@@ -4183,16 +4186,19 @@ static void check_dangling_mix_readers(mix_fd *md)
 }
 #endif
 
-static XEN g_make_mix_sample_reader(XEN mix_id)
+static XEN g_make_mix_sample_reader(XEN mix_id, XEN ubeg)
 {
-  #define H_make_mix_sample_reader "(" S_make_mix_sample_reader " id): return a reader ready to access mix id"
+  #define H_make_mix_sample_reader "(" S_make_mix_sample_reader " id (beg 0)): return a reader ready to access mix id"
   mix_info *md = NULL;
   mix_fd *mf = NULL;
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(mix_id), mix_id, XEN_ONLY_ARG, S_make_mix_sample_reader, "an integer");
+  off_t beg;
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(mix_id), mix_id, XEN_ARG_1, S_make_mix_sample_reader, "an integer");
+  ASSERT_SAMPLE_TYPE(S_make_mix_sample_reader, ubeg, XEN_ARG_2);
   md = md_from_id(XEN_TO_C_INT(mix_id));
   if (md == NULL)
     return(snd_no_such_mix_error(S_make_mix_sample_reader, mix_id));
-  mf = init_mix_read(md, FALSE); 
+  beg = beg_to_sample(ubeg, S_make_mix_sample_reader);
+  mf = init_mix_read(md, CURRENT_MIX, beg); 
   if (mf)
     {
       list_mix_reader(mf);
@@ -4301,6 +4307,8 @@ static void tf_free(track_fd *fd)
 }
 
 XEN_MAKE_OBJECT_FREE_PROCEDURE(track_fd, free_tf, tf_free)
+
+/* SOMEDAY: make-track-sample-reader could take a begin time (needs to be passed down to each init_mix_read, etc */
 
 static XEN g_make_track_sample_reader(XEN track_id, XEN snd, XEN chn)
 {
@@ -4574,7 +4582,7 @@ static XEN g_set_with_mix_tags(XEN val)
 
 
 #ifdef XEN_ARGIFY_1
-XEN_NARGIFY_1(g_make_mix_sample_reader_w, g_make_mix_sample_reader)
+XEN_ARGIFY_2(g_make_mix_sample_reader_w, g_make_mix_sample_reader)
 XEN_NARGIFY_1(g_read_mix_sample_w, g_read_mix_sample)
 XEN_NARGIFY_1(g_next_mix_sample_w, g_next_mix_sample)
 XEN_NARGIFY_1(g_free_mix_sample_reader_w, g_free_mix_sample_reader)
@@ -4708,7 +4716,7 @@ void g_init_mix(void)
   rb_define_method(tf_tag, "to_s", XEN_PROCEDURE_CAST print_tf, 0);
 #endif
 
-  XEN_DEFINE_PROCEDURE(S_make_mix_sample_reader, g_make_mix_sample_reader_w, 1, 0, 0, H_make_mix_sample_reader);
+  XEN_DEFINE_PROCEDURE(S_make_mix_sample_reader, g_make_mix_sample_reader_w, 1, 1, 0, H_make_mix_sample_reader);
   XEN_DEFINE_PROCEDURE(S_next_mix_sample,        g_next_mix_sample_w, 1, 0, 0,        H_next_mix_sample);
   XEN_DEFINE_PROCEDURE(S_read_mix_sample,        g_read_mix_sample_w, 1, 0, 0,        H_read_mix_sample);
   XEN_DEFINE_PROCEDURE(S_free_mix_sample_reader, g_free_mix_sample_reader_w, 1, 0, 0, H_free_mix_sample_reader);

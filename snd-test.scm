@@ -36,7 +36,6 @@
 ;;; TODO: doc ex of key-press-hook (cx cs=save as in xe-enved?), mix-amp-changed-hook, select-*-hook [click=>post info in box]
 ;;; TODO: xemacs style top list of sounds, current takes whole screen [make-top-row tmp18.scm, files-popup-buffer in examp.scm]
 ;;; TOOD: extend the mix-as-list syntax to list-of-ids (tracks) (are these all rationalized now?)
-;;;       do we need make-track|mix-sample-reader? should they accept all the standard args?
 
 ;;; how to send ourselves a drop?  (button2 on menu is only the first half -- how to force 2nd?)
 
@@ -56,7 +55,7 @@
 (define tests 1)
 (define snd-test -1)
 (if (defined? 'disable-play) (disable-play))
-(define keep-going #t)
+(define keep-going #f)
 (define full-test (< snd-test 0))
 (define total-tests 28)
 (define with-exit (< snd-test 0))
@@ -13481,6 +13480,52 @@ EDITS: 5
 	(if (or (mix? md) (mix? (1+ md)))
 	    (snd-display ";undo mix stereo sel: ~A ~A" (mix? md) (mix? (1+ md))))
 	(close-sound ind)))
+
+    (let ((ind (new-sound "test.snd"))
+	  (v (make-vct 20)))
+      (do ((i 0 (1+ i))) ((= i 20)) (vct-set! v i (* i .01)))
+      (vct->channel v)
+      (do ((i 0 (1+ i))) ((= i 20)) (vct-set! v i (* i -.01)))
+      (let ((mx (mix-vct v 10)))
+	(let ((hi (make-mix-sample-reader mx))
+	      (ho (make-mix-sample-reader mx 5)))
+	  (call-with-current-continuation
+	   (lambda (break)
+	     (do ((i 0 (1+ i)))
+		 ((= i 10))
+	       (let ((ho-val (ho))
+		     (hi-val (hi)))
+		 (if (fneq hi-val (* i -.01))
+		     (begin
+		       (snd-display "mix-reader at ~A from 0: ~A" i hi-val)
+		       (break)))
+		 (if (fneq ho-val (* (+ i 5) -.01))
+		     (begin
+		       (snd-display "mix-reader at ~A from 5: ~A" i ho-val)
+		       (break)))))))))
+      (revert-sound ind)
+      (set! v (make-vct 21))
+      (vct-fill! v 0.5)
+      (vct->channel v)
+      (let ((mx (mix-vct v 10)))
+	(set! (mix-amp-env mx 0) '(0 0 1 1))
+	(let ((hi (make-mix-sample-reader mx 0))
+	      (ho (make-mix-sample-reader mx 10)))
+	  (call-with-current-continuation
+	   (lambda (break)
+	     (do ((i 0 (1+ i)))
+		 ((= i 10))
+	       (let ((ho-val (ho))
+		     (hi-val (hi)))
+		 (if (fneq hi-val (* i .025))
+		     (begin
+		       (snd-display "mix-reader env'd at ~A from 0: ~A" i hi-val)
+		       (break)))
+		 (if (fneq ho-val (* (+ i 10) .025))
+		     (begin
+		       (snd-display "mix-reader env'd at ~A from 10: ~A" i ho-val)
+		       (break)))))))))
+      (close-sound ind))
     ))
 
 (clear-sincs)
@@ -15108,6 +15153,20 @@ EDITS: 5
 	  (revert-sound ind)
 	  (if (not (= calls 3)) (snd-display ";undo-hook called ~A times" calls)))
 	(reset-hook! (undo-hook ind 0))
+
+	(let ((opt (optimization)))
+	  (set! (optimization) 0)
+	  (set! (search-procedure ind) (lambda (n4) (> n4 .1)))
+	  (key (char->integer #\a) 4 ind 0)
+	  (key (char->integer #\s) 4 ind 0)
+	  (key (char->integer #\s) 4 ind 0)
+	  (if (not (= (cursor ind 0) 4423))
+	      (snd-display ";unopt search-procedure C-s C-s cursor: ~D?" (cursor ind 0)))
+	  (set! (search-procedure ind) (lambda (n) (> n .2)))
+	  (set! (cursor ind 0) (1- (frames)))
+	  (key (char->integer #\r) 4 ind 0)
+	  (key (char->integer #\r) 4 ind 0)
+	  (set! (optimization) opt))
 
 	(set! (search-procedure ind) #f)
 	(close-sound ind)
@@ -35796,6 +35855,7 @@ EDITS: 2
 	       (list #f 1234))
 	      (gc)))
 
+	(mus-audio-reinitialize)
 	))
 
 (set! (window-y) 10)

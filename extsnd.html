@@ -2659,9 +2659,9 @@ edited) sound can be accessed by a normal sample-reader.
 <tr><td></td><td>This is mainly a debugging aid; it returns a string with much internal info about the sample-reader <i>obj</i>.</td></tr>
 
 <!-- make-mix-sample-reader -->
-<tr><td colspan=2><span class=defbox><code><em class=def><a name="makemixsamplereader">make-mix-sample-reader</a></em> (mix)</code></span></td></tr>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="makemixsamplereader">make-mix-sample-reader</a></em> (mix <i>beg</i>)</code></span></td></tr>
 <tr><td></td>
-<td>create a mix-sample-reader reading <i>mix</i>.
+<td>create a mix-sample-reader reading <i>mix</i> starting (in the mix input) at <i>beg</i> which defaults to 0.
 See <i>mix-&gt;vct</i> in mix.scm.
 </td></tr>
 
@@ -2956,7 +2956,7 @@ the list of ids reflects the mark list at that time in the edit history.  See de
 </table>
 
 <br>
-<!-- INDEX: markexamples:Marks -->
+<!-- INDEX: markexamples:Marking -->
 <A NAME="markexamples"></a>
 <p>
 See <a href="sndscm.html#marksdoc">marks.scm</a> for

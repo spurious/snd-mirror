@@ -1,5 +1,6 @@
 Snd change log
 
+  14-May:    optional begin-time arg to make-mix-sample-reader.
   12-May:    removed --with-html and associated variables. added html-program.
   7-May:     or-hooks now run all functions on the hook list.
              mix-drag-hook.

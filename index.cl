@@ -17,12 +17,14 @@
 
 (defvar names nil)
 (defvar files nil)
+(defvar gfiles nil)
 (defvar generals nil)
 (defvar topics nil)
 
 (setf names (make-array 2048 :initial-element nil))
 (setf files (make-array 2048 :initial-element nil))
 (setf generals (make-array 1024))
+(setf gfiles (make-array 1024 :initial-element nil))
 (setf topics (make-array 2048 :initial-element nil))
 
 (defstruct ind name sortby topic file)
@@ -123,6 +125,7 @@
       (setf (aref files i) nil)
       (setf (aref topics i) nil))
     (dotimes (i 1024)
+      (setf (aref gfiles i) nil)
       (setf (aref generals i) nil))
     (loop for file in file-names and file-ctr from 0 do
       (with-open-file (f file :if-does-not-exist nil)
@@ -148,6 +151,7 @@
 				      (and with-scm
 					   (not (string= "clm.html" file))))
 			      (setf (aref generals g) (subseq dline (+ compos 11) epos))
+			      (setf (aref gfiles g) file)
 			      (incf g))))
 		      (loop while pos do
 			(setf dline (subseq dline pos))
@@ -180,7 +184,7 @@
 	(if (< (length tnames) (+ g n)) (adjust-array tnames (+ g n)))
 	(dotimes (i g)
 	  (setf (aref tnames (+ i n))
-		(create-general (aref generals i) (aref files i))))
+		(create-general (aref generals i) (aref gfiles i))))
 	(incf n g))
       (setf tnames (sort tnames #'string-lessp-but-no-star :key #'ind-sortby))
 
