@@ -297,7 +297,7 @@ static XEN snd_catch_scm_error(void *data, XEN tag, XEN throw_args) /* error han
   char *possible_code;
   XEN port;
   int port_gc_loc;
-  XEN stack;
+  XEN stack = XEN_FALSE;
   char *name_buf = NULL;
   bool need_comma = false;
   if ((XEN_SYMBOL_P(tag)) &&
@@ -361,17 +361,43 @@ static XEN snd_catch_scm_error(void *data, XEN tag, XEN throw_args) /* error han
       XEN_PUTS(": ", port);
       XEN_DISPLAY(throw_args, port);
     }
-  if (show_backtrace(ss))
-    {
 #if HAVE_SCM_C_DEFINE
-      stack = scm_fluid_ref(XEN_VARIABLE_REF(scm_the_last_stack_fluid_var));
+  stack = scm_fluid_ref(XEN_VARIABLE_REF(scm_the_last_stack_fluid_var));
 #else
-      stack = scm_fluid_ref(XEN_CDR(scm_the_last_stack_fluid));
+  stack = scm_fluid_ref(XEN_CDR(scm_the_last_stack_fluid));
 #endif
-      if (XEN_NOT_FALSE_P(stack)) 
+  if (XEN_NOT_FALSE_P(stack)) 
+    {
+      if (show_backtrace(ss))
 	{
 	  XEN_PUTS("\n", port);
 	  scm_display_backtrace(stack, port, XEN_UNDEFINED, XEN_UNDEFINED);
+	}
+      else
+	{
+	  XEN current_frame, source;
+	  current_frame = scm_stack_ref(stack, SCM_INUM0);
+	  if (XEN_NOT_FALSE_P(current_frame))
+	    {
+	      source = scm_frame_source(current_frame);
+	      if (XEN_NOT_FALSE_P(source))
+		{
+		  XEN_PUTS("\n", port);
+		  XEN_PUTS(XEN_AS_STRING(scm_source_property(source, scm_sym_filename)), port);
+		  XEN_PUTS(": line ", port);
+		  XEN_PUTS(XEN_AS_STRING(scm_source_property(source, scm_sym_line)), port);
+		}
+	    }
+	}
+    }
+  else
+    {
+      if (last_file_loaded)
+	{
+	  XEN_PUTS("\n(while loading \"", port);
+	  XEN_PUTS(last_file_loaded, port);
+	  XEN_PUTS("\")", port);
+	  last_file_loaded = NULL;
 	}
     }
   possible_code = (char *)data;
@@ -381,37 +407,6 @@ static XEN snd_catch_scm_error(void *data, XEN tag, XEN throw_args) /* error han
       /* not actually sure if this is always safe */
       XEN_PUTS("\n; ", port);
       XEN_PUTS(possible_code, port);
-    }
-  /* TODO: check out source-properties for line etc */
-#if HAVE_SCM_PORT_P
-  if ((XEN_TRUE_P(scm_port_p(scm_current_load_port()))) &&
-      (XEN_INTEGER_P(scm_port_line(scm_current_load_port()))))
-    {
-      /* this actually isn't very useful since it points to the end of the enclosing form */
-      char *info;
-      int gc_loc;
-      XEN portline, portname;
-      portline = scm_port_line(scm_current_load_port());
-      portname = scm_port_filename(scm_current_load_port());
-      gc_loc = snd_protect(portname);
-      info = (char *)CALLOC(1024, sizeof(char));
-      sprintf(info, " (%s: line %d)", 
-	      filename_without_home_directory(XEN_TO_C_STRING(portname)),
-	      XEN_TO_C_INT(portline));
-      snd_unprotect_at(gc_loc);
-      XEN_PUTS(info, port);
-      FREE(info);
-    }
-  else
-#endif
-    {
-      if (last_file_loaded)
-	{
-	  XEN_PUTS("\n(while loading \"", port);
-	  XEN_PUTS(last_file_loaded, port);
-	  XEN_PUTS("\")", port);
-	  last_file_loaded = NULL;
-	}
     }
   XEN_FLUSH_PORT(port); /* needed to get rid of trailing garbage chars?? -- might be pointless now */
   name_buf = XEN_TO_C_STRING(XEN_PORT_TO_STRING(port));

@@ -2651,7 +2651,7 @@ at run-time.  See extsnd.html for the gory details."
   chan_info *cp;
   off_t beg = 0, dur = 0;
   int pos;
-#if HAVE_GUILE
+#if (!HAVE_RUBY)
   bool ptrees_present = false;
   void *pt = NULL;
 #endif
@@ -3429,7 +3429,7 @@ static XEN g_env_1(XEN edata, off_t beg, off_t dur, XEN base, chan_info *cp, XEN
 		  free_env(e);
 		  XEN_OUT_OF_RANGE_ERROR(caller, 4, ebase, "base ~A < 0.0?");
 		}
-	      if ((e->base != 0.0) && (e->base != 1.0)) e->type = ENVELOPE_EXPONENTIAL;
+	      if ((e->type == ENVELOPE_LINEAR) && (e->base != 0.0) && (e->base != 1.0)) e->type = ENVELOPE_EXPONENTIAL;
 	    }
 	  apply_env(cp, e, beg, dur, selection, NOT_FROM_ENVED, caller, NULL, edpos, 7);
 	  free_env(e);
@@ -4019,8 +4019,6 @@ sampling-rate convert snd's channel chn by ratio, or following an envelope gener
   return(ratio_or_env_gen);
 }
 
-/* TODO: here and in g_env_1 base==1.0 is not relevant if env_proc */
-
 static XEN g_src_1(XEN ratio_or_env, XEN base, XEN snd_n, XEN chn_n, XEN edpos, const char *caller, bool selection)
 {
   chan_info *cp;
@@ -4046,7 +4044,7 @@ static XEN g_src_1(XEN ratio_or_env, XEN base, XEN snd_n, XEN chn_n, XEN edpos, 
 	  if (XEN_NUMBER_P(ebase))
 	    {
 	      e->base = XEN_TO_C_DOUBLE_OR_ELSE(ebase, 1.0);
-	      if ((e->base != 0.0) && (e->base != 1.0)) e->type = ENVELOPE_EXPONENTIAL;
+	      if ((e->type == ENVELOPE_LINEAR) && (e->base != 0.0) && (e->base != 1.0)) e->type = ENVELOPE_EXPONENTIAL;
 	    }
 	  e_ratio = check_src_envelope(e->pts, e->data, caller);
 	  src_env_or_num(cp, e, e_ratio, false, NOT_FROM_ENVED, caller, selection, NULL, edpos, 5);

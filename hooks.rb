@@ -2,7 +2,7 @@
 
 # Author: Michael Scholz <scholz-micha@gmx.de>
 # Created: Sun Dec 21 13:48:01 CET 2003
-# Last: Tue Jan 06 14:17:42 CET 2004
+# Last: Thu Jan 08 07:16:29 CET 2004
 
 # Commentary:
 #
@@ -30,13 +30,15 @@ end
 # Contents:
 #
 # Snd_hooks             an array containing all global hook variables
+# 
+# $var_hook.member?("name of hook")
 # $var_hook.show or
 # describe_hook(hook)   prints code of hook procedures if file exists
 # reset_all_hooks()     clears all hook procedures
 
 # Code:
 
-SND_HOOKS_VERSION = "06-Jan-2004"
+SND_HOOKS_VERSION = "08-Jan-2004"
 
 unless defined?(Hook)
   class Hook
@@ -213,11 +215,19 @@ end
 require "examp"
 
 class Hook
+  def member?(name)
+    @procs.map do |ary| ary.first end.member?(name)
+  end
+  alias included? member?
+
   # This works only with newer ruby versions (I assume >= 1.8.x).
   # Proc#to_s must return #<Proc:0x80c96a0@xxx:x> not only
   # #<Proc:0x80c96a0>!
   def to_str
-    self.each do |prc| rbm_message(prc.to_str) end
+    self.each do |prc|
+      # cover printf's %x
+      rbm_message(prc.to_str.gsub(/%/, "%%"))
+    end
     nil
   end
   alias show to_str

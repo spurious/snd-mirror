@@ -1271,7 +1271,6 @@ void color_enved_waveform(GdkColor *pix)
     }
 }
 
-
 static XEN g_enved_active_env(void)
 {
   #define H_enved_active_env "(" S_enved_active_env "): current envelope editor displayed (active) envelope"
@@ -1285,6 +1284,10 @@ static XEN g_set_enved_active_env(XEN e)
   if ((XEN_STRING_P(e)) || (XEN_SYMBOL_P(e)))
     active_env = copy_env(name_to_env((XEN_STRING_P(e)) ? XEN_TO_C_STRING(e) : XEN_SYMBOL_TO_C_STRING(e)));
   else active_env = xen_to_env(e);
+  if ((!active_env) && (!(XEN_LIST_P(e))))
+    XEN_ERROR(NO_SUCH_ENVELOPE,
+	      XEN_LIST_2(C_TO_XEN_STRING(S_setB S_enved_active_env),
+			 e));
   if (enved_dialog) 
     env_redisplay();
   return(e);

@@ -2140,8 +2140,10 @@ static void define_procedures(void)
   XM_DEFINE_PROCEDURE(XmClipboardInquireLength, gxm_XmClipboardInquireLength_w, 3, 0, 0, H_XmClipboardInquireLength);
   XM_DEFINE_PROCEDURE(XmClipboardInquirePendingItems, gxm_XmClipboardInquirePendingItems_w, 3, 0, 0, H_XmClipboardInquirePendingItems);
   XM_DEFINE_PROCEDURE(XmClipboardRegisterFormat, gxm_XmClipboardRegisterFormat_w, 3, 0, 0, H_XmClipboardRegisterFormat);
+#if MOTIF_2
 #ifndef LESSTIF_VERSION
   XM_DEFINE_PROCEDURE(XmGetXmScreen, gxm_XmGetXmScreen_w, 1, 0, 0, H_XmGetXmScreen);
+#endif
 #endif
   XM_DEFINE_PROCEDURE(XmCreateScrollBar, gxm_XmCreateScrollBar_w, 3, 1, 0, H_XmCreateScrollBar);
   XM_DEFINE_PROCEDURE(XmScrollBarGetValues, gxm_XmScrollBarGetValues_w, 1, 0, 0, H_XmScrollBarGetValues);

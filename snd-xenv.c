@@ -395,7 +395,9 @@ static void select_or_edit_env(int pos)
       set_button_label(showB, _("view envs"));
     }
   if (active_env) active_env = free_env(active_env);
-  selected_env = enved_all_envs(pos);
+  /* selected_env = enved_all_envs(pos); */
+  selected_env = position_to_env(pos);
+  if (!selected_env) return;
   active_env = copy_env(selected_env);
   XmTextSetString(textL, enved_all_names(pos));
   set_enved_env_list_top(0);
@@ -1577,20 +1579,6 @@ void color_enved_waveform(Pixel pix)
     }
 }
 
-static int find_named_env(XEN name)
-{
-  int pos;
-  char *env_name;
-  if (XEN_STRING_P(name))
-    env_name = XEN_TO_C_STRING(name);
-  else env_name = XEN_SYMBOL_TO_C_STRING(name);
-  pos = find_env(env_name);
-  if (pos == -1)
-    XEN_ERROR(NO_SUCH_ENVELOPE, 
-	      XEN_LIST_1(name));
-  return(pos);
-}
-
 static XEN g_enved_active_env(void)
 {
   #define H_enved_active_env "(" S_enved_active_env "): current envelope editor displayed (active) envelope"
@@ -1602,8 +1590,12 @@ static XEN g_set_enved_active_env(XEN e)
   XEN_ASSERT_TYPE(XEN_LIST_P(e) || XEN_STRING_P(e) || XEN_SYMBOL_P(e), e, XEN_ONLY_ARG, S_setB S_enved_active_env, "a list, symbol, or string");
   if (active_env) active_env = free_env(active_env);
   if ((XEN_STRING_P(e)) || (XEN_SYMBOL_P(e)))
-    active_env = copy_env(enved_all_envs(find_named_env(e)));
+    active_env = copy_env(name_to_env((XEN_STRING_P(e)) ? XEN_TO_C_STRING(e) : XEN_SYMBOL_TO_C_STRING(e)));
   else active_env = xen_to_env(e);
+  if ((!active_env) && (!(XEN_LIST_P(e))))
+    XEN_ERROR(NO_SUCH_ENVELOPE,
+	      XEN_LIST_2(C_TO_XEN_STRING(S_setB S_enved_active_env),
+			 e));
   if (enved_dialog) 
     env_redisplay();
   return(e);
@@ -1617,14 +1609,13 @@ static XEN g_enved_selected_env(void)
 
 static XEN g_set_enved_selected_env(XEN name)
 {
-  int pos;
+  char *cname;
   XEN_ASSERT_TYPE(XEN_STRING_P(name) || XEN_SYMBOL_P(name), name, XEN_ONLY_ARG, S_setB S_enved_selected_env, "a string or symbol");
-  pos = find_named_env(name);
-  if (pos >= 0)
+  cname = (XEN_STRING_P(name)) ? XEN_TO_C_STRING(name) : XEN_SYMBOL_TO_C_STRING(name);
+  selected_env = copy_env(name_to_env(cname));
+  if (selected_env)
     {
-      selected_env = enved_all_envs(pos);
-      if (enved_dialog)
-	XmListSelectPos(screnvlst, pos + 1, false);
+      if (enved_dialog) XmListSelectPos(screnvlst, find_env(cname) + 1, false);
     }
   else XEN_ERROR(NO_SUCH_ENVELOPE,
 		 XEN_LIST_2(C_TO_XEN_STRING(S_setB S_enved_selected_env),

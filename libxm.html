@@ -22,8 +22,8 @@
 or alternatively Gtk, gdk, gdk-pixbuf, pango, and some of glib;
 and much of OpenGL.
 You can build it with just X, and so on -- see README.libxm for details.
-There are several example files In the libxm package -- anything with
-the extension "scm".  libxm can be used directly with Guile (or Ruby),
+There are several example files in the libxm package -- anything with
+the extension "scm" or "rb".  libxm can be used directly with Guile or Ruby,
 providing a graphical user-interface for scripts.
 </p>
 <p>
@@ -39,8 +39,8 @@ there's no hesitation or uncertainty about what the corresponding libxm name is;
 XmScaleSetValue becomes XmScaleSetValue.
 There are several differences between the C versions and the libxm
 versions; these are listed in detail at the start of xm.c and xg.c.  Briefly,
-an Arg list is lisp list of name/value pairs and the "len" arg associated with it is optional;
-ref args are usually returned by proc, and not passed in unless an initial value is needed;
+an Arg list is a lisp list of name/value pairs and the "len" arg associated with it is optional;
+ref args are usually returned by the procedure in a list, and not passed in unless an initial value is needed;
 array args are passed as lists, and returned as lists;
 pointers to structs are '(type val) where val is opaque except via accessors  
 (that is, all non-simple types are lists in xm where the first element is a symbol describing the type
@@ -49,7 +49,7 @@ and the second is usually the C value stored directly as an unsigned long);
 XtCallback procedure args are passed by value;
 the various "client data" args are optional;
 XtCallbackLists are passed as lists of procedure/data pairs;
-where an explicit NULL is needed as arg, use #f (or '() for list args);
+where an explicit NULL is needed as an arg, use #f (or '() for list args);
 structs are accessed by the field name and the lisp variable (which contains the struct type) --
 (.pixel color) for example, or (.foreground gcvalue);
 blank structs, where needed, can be created via (Name) -- (XColor) or (XGCValues) for example.

@@ -945,6 +945,7 @@ static void update_mix_dialog(int mix_id)
 		       (float)((double)(beg + len) / (float)SND_SRATE(cp->sound)));
 	  XmTextSetString(w_beg, lab);
 	  chans = mix_dialog_mix_input_chans(mix_dialog_id);
+	  if (chans == 0) return;
 	  if (chans > 8) chans = 8; 
 	  set_sensitive(XmMessageBoxGetChild(mix_dialog, XmDIALOG_CANCEL_BUTTON), true);
 	  if (!(ss->using_schemes))

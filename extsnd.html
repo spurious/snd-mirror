@@ -8265,7 +8265,25 @@ Add an envelope to the envelope editor's list, under the name 'name', using the 
 <tr><td></td><td>envelope editor choice for connecting breakpoints.  Can be <i>envelope-linear</i> (the default),
 <i>envelope-exponential</i>, or 
 a list of the two procedures suitable for ptree-channel usage.
-<!-- TODO: enved-style example -->
+The following uses sine-ramp in extensions.scm to connect the breakpoints with a
+sinusoid:
+</td></tr>
+
+<tr><td></td><td><table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+(set! (<em class=red>enved-style</em>)
+   (lambda (y data forward)
+     (declare (y real) (data vct) (forward boolean))
+     (let* ((angle (vct-ref data 0))
+	    (incr (vct-ref data 1))
+	    (val (* y (+ (vct-ref data 2) (* (vct-ref data 3) (+ 0.5 (* 0.5 (cos angle))))))))
+       (if forward
+	   (vct-set! data 0 (+ angle incr))
+	   (vct-set! data 0 (- angle incr)))
+       val))
+   (lambda (frag-beg frag-dur)
+     (let ((incr (/ pi frag-dur)))
+       (vct (+ (* -1.0 pi) (* frag-beg incr)) incr rmp0 (- rmp1 rmp0)))))
+</pre></td></tr></table></td></tr>
 </td></tr>
 
 <!-- enved-filter -->
