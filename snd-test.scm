@@ -126,7 +126,7 @@
        (mus-audio-mixer-write mus-audio-default mus-audio-amp 1 vals)
        val))))
 
-(define playback-amp 0.0)
+(define playback-amp 0.50)
 (set! (mus-audio-playback-amp) playback-amp)
 
 (define sample-reader-tests 300)
@@ -501,7 +501,7 @@
 	'mus-interp-hermite mus-interp-hermite 6
 
 	'mus-chebyshev-first-kind mus-chebyshev-first-kind 1
-	'mus-chebyshev-second-kind mus-chebyshev-second-kind 1
+	'mus-chebyshev-second-kind mus-chebyshev-second-kind 2
 
 	'mus-unknown mus-unknown 0
 	'mus-bshort mus-bshort 1
@@ -42371,16 +42371,18 @@ EDITS: 2
 		    (key-event lst snd-tab-key 0) (force-event)
 		    (widget-string lst "\"))" #f)
 		    (key-event lst snd-return-key 0) (force-event)
-		    (if (not (= frs 41623)) (snd-display ";filename completer in listener: ~A" frs))
-		    
-		    (widget-string lst "(set! frs (+ 1 ;" #f)
-		    (key-event lst snd-tab-key 0) (force-event)
-		    (widget-string lst "comment" #f)
-		    (key-event lst snd-return-key 0) (force-event)
-		    (widget-string lst "2))" #f)
-		    (key-event lst snd-return-key 0) (force-event)
-		    (if (not (= frs 3)) (snd-display ";comment completer in listener: ~A" frs))
-		    )
+		    (if (not (defined? 'frs)) 
+			(snd-display ";frs not defined")
+			(begin
+			  (if (not (= frs 41623)) (snd-display ";filename completer in listener: ~A" frs))
+			  (widget-string lst "(set! frs (+ 1 ;" #f)
+			  (key-event lst snd-tab-key 0) (force-event)
+			  (widget-string lst "comment" #f)
+			  (key-event lst snd-return-key 0) (force-event)
+			  (widget-string lst "2))" #f)
+			  (key-event lst snd-return-key 0) (force-event)
+			  (if (not (= frs 3)) (snd-display ";comment completer in listener: ~A" frs))
+			  )))
 		  
 		  (take-keyboard-focus cwid)
 		  (key-event cwid (char->integer #\x) 4) (force-event)

@@ -362,7 +362,7 @@ make xm
 echo ' '
 echo ' '
 ./snd --version
-./snd -noinit -l snd_test.rb
+./snd -noinit -l snd-test.rb
 make allclean
 echo ' CC=g++ CFLAGS="-Wall" --with-ruby '
 ./configure --quiet CC=g++ CFLAGS="-Wall" --with-ruby
@@ -405,7 +405,7 @@ make allclean
 echo ' CFLAGS="-Wall -DGTK_DISABLE_DEPRECATED -DG_DISABLE_DEPRECATED -DGDK_DISABLE_DEPRECATED" --with-ruby --with-static-xm --with-gtk --with-x11 --with-gl '
 ./configure --quiet disable-deprecated CFLAGS="-Wall" --with-ruby --with-static-xm --with-gtk --with-x11 --with-gl
 make
-./snd -noinit -l snd_test.rb
+./snd -noinit -l snd-test.rb
 echo ' '
 echo ' '
 date

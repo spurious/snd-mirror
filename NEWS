@@ -1,40 +1,58 @@
-Snd 7.10:
+Snd 7.11
 
-grani.ins translated to Scheme and Ruby by Mike Scholz!
+  Mike Scholz greatly expanded and improved the Ruby stuff in Snd (not to mention
+    many other general improvements): snd_test.rb replaced by snd-test.rb, 
+    new files mix.rb, dsp.rb, pvoc.rb -- an amazing addition to Snd!
 
-gfm and sndins improvements (see gfm/README) and many other updates thanks to Mike Scholz
+  Kjetil Matheussen implemented real-time support!  The new files are
+    oo.scm, rt-compiler.scm, and rt-engine.scm -- another amazing addition!
 
-CLM: scanned.ins and circular-scanned.ins updates thanks to Juan Reyes
-     added one-cut.ins thanks to Fernando
+  delay and move-locsig bugfixes thanks to Fernando.
 
-eval-c.scm improvements thanks to Kjetil S. Matheussen
+  changed libxm to libxg in gtk case, also xm-version to xg-version
+    added --with-static-xg configure option (same as --with-static-xm)
 
+  added the -export-dynamic loader switch if using Gnu's ld and dlfcn
 
-added: colormap?
-       variable-graph?
-       transform?, delete-transform (these refer to add-transform)
-       free-player
-       scentroid (B Battey/CLM) in dsp.scm, and sndwarp (sndwarp.scm)
-       new CLM generator method: mus-reset
+  band limited sawtooth in dsp.scm (Stilson/Smith/Kritov)
 
-changed: transform-hook to after-transform-hook
-         send-netscape to send-mozilla
+  bes-j0|1|n, bes-y0|1|n, bes-i0, erf|c, lgamma (etc from libm)
 
-	 memo-sound to *snd-opened-sound* (CLM also)
-         snd-load-files to *snd-loaded-files*
-         snd-remember-paths to *snd-remember-paths* (default value is now #t)
-           (These changes [try to] make it more obvious that these are variables, not functions)
+  mus-interpolate
 
-removed: useless edpos arg to controls->channel
-         support for Motif 1.n and Lesstif
+  env-channel-with-base
 
-moved: sndsine.c to documentation
-       makesnd.* into makefile.in
+  Ruby side of edit-list->function
 
+  zoom-focus-style can be a function
 
-with much help from: Fernando Lopez-Lezcano, Matt Wright, Mike Scholz, G Vincent Castellano,
-  Michael Uplawski, Juan Reyes, Bill Sack, Kjetil S. Matheussen, Michael Edwards, Ralf Mattes, 
-  N J Cross, Jeff Root
+  polyshape generator (polynomial + oscil)
+
+  mus-chebyshev-first|second-kind (as "kind" arg to partials->polynomial)
+
+  partials->waveshape no longer normalizes the partials (to parallel partials->polynomial)
+
+  gc-off and gc-on are no-ops now in Guile -- the underlying support was 
+    removed in the CVS Guile
 
 
-checked: gtk 2.6.1|2, gsl 1.6, sbcl 0.8.19
+in CMN: Anders Vinjar fixed a bug in display-crescendo
+
+        removed obsolete make-cmn.cl
+
+
+in CLM: Rick fixed a bug in play
+
+        run* cleaned-up finally
+
+        ffi cleaned-up (removed various obsolete linkages)
+
+        removed ACL 4.n support
+
+        sbcl can now handle multi-instrument files and no longer uses the *.sbcl kludge
+
+
+with much help from: Fernando Lopez-Lezcano, Mike Scholz, Kjetil Matheussen,
+  Rick Taube, Anders Vinjar, Kyle Markley, Steve Bankowitz
+
+checked: Intel C 8.1, gtk 2.6.3|4, Sun Workshop C (via S Bankowitz)

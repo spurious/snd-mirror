@@ -382,6 +382,9 @@ void about_snd_help(void)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+18-Mar:  snd 7.11\n\
+17-Mar:  gc-on|off are no-ops now in Guile.\n\
+         pvoc.rb thanks to Mike Scholz.\n\
 10-Mar:  dsp.rb thanks to Mike Scholz.\n\
 1-Mar:   rt-engine.scm thanks to Kjetil Matheussen!\n\
          zoom-focus-style can be a function\n\
@@ -391,14 +394,6 @@ void about_snd_help(void)
            added --with-static-xg configure option\n\
 21-Feb:  removed snd_test.rb, replaced by snd-test.rb thanks to Mike Scholz!\n\
 	 added oo.scm and rt-compiler.scm thanks to Kjetil Matheussen!\n\
-11-Feb:  snd 7.10.\n\
-8-Feb:   grani.scm and grani in clm-ins.rb thanks to Mike Scholz.\n\
-         CLM sndwarp (B Battey) translated to Scheme: sndwarp.scm.\n\
-31-Jan:  removed support for Motif 1 and Lesstif.\n\
-         changed memo-sound to *snd-opened-sound*.\n\
-         snd-load-files to *snd-loaded-files*.\n\
-         snd-remember-paths to *snd-remember-paths* (default value is now #t).\n\
-26-Jan:  removed useless edpos arg to controls->channel.\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*: \n'", features, "\n\n",

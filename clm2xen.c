@@ -240,70 +240,70 @@ static XEN kw_frequency, kw_initial_phase, kw_wave, kw_cosines, kw_amplitude,
 static void init_keywords(void)
 {
   /* keywords are GC-protected by Guile; in Ruby there's rb_intern of the symbol -- is it safe? */
-  kw_frequency = XEN_MAKE_KEYWORD("frequency");
-  kw_initial_phase = XEN_MAKE_KEYWORD("initial-phase");
-  kw_wave = XEN_MAKE_KEYWORD("wave");
-  kw_cosines = XEN_MAKE_KEYWORD("cosines");
-  kw_amplitude = XEN_MAKE_KEYWORD("amplitude");
-  kw_r = XEN_MAKE_KEYWORD("r");
-  kw_ratio = XEN_MAKE_KEYWORD("ratio");
-  kw_size = XEN_MAKE_KEYWORD("size");
-  kw_a0 = XEN_MAKE_KEYWORD("a0");
-  kw_a1 = XEN_MAKE_KEYWORD("a1");
-  kw_a2 = XEN_MAKE_KEYWORD("a2");
-  kw_b1 = XEN_MAKE_KEYWORD("b1");
-  kw_b2 = XEN_MAKE_KEYWORD("b2");
-  kw_max_size = XEN_MAKE_KEYWORD("max-size");
-  kw_input = XEN_MAKE_KEYWORD("input");
-  kw_srate = XEN_MAKE_KEYWORD("srate");
-  kw_file = XEN_MAKE_KEYWORD("file");
-  kw_channel = XEN_MAKE_KEYWORD("channel");
-  kw_start = XEN_MAKE_KEYWORD("start");
+  kw_frequency =        XEN_MAKE_KEYWORD("frequency");
+  kw_initial_phase =    XEN_MAKE_KEYWORD("initial-phase");
+  kw_wave =             XEN_MAKE_KEYWORD("wave");
+  kw_cosines =          XEN_MAKE_KEYWORD("cosines");
+  kw_amplitude =        XEN_MAKE_KEYWORD("amplitude");
+  kw_r =                XEN_MAKE_KEYWORD("r");
+  kw_ratio =            XEN_MAKE_KEYWORD("ratio");
+  kw_size =             XEN_MAKE_KEYWORD("size");
+  kw_a0 =               XEN_MAKE_KEYWORD("a0");
+  kw_a1 =               XEN_MAKE_KEYWORD("a1");
+  kw_a2 =               XEN_MAKE_KEYWORD("a2");
+  kw_b1 =               XEN_MAKE_KEYWORD("b1");
+  kw_b2 =               XEN_MAKE_KEYWORD("b2");
+  kw_max_size =         XEN_MAKE_KEYWORD("max-size");
+  kw_input =            XEN_MAKE_KEYWORD("input");
+  kw_srate =            XEN_MAKE_KEYWORD("srate");
+  kw_file =             XEN_MAKE_KEYWORD("file");
+  kw_channel =          XEN_MAKE_KEYWORD("channel");
+  kw_start =            XEN_MAKE_KEYWORD("start");
   kw_initial_contents = XEN_MAKE_KEYWORD("initial-contents");
-  kw_initial_element = XEN_MAKE_KEYWORD("initial-element");
-  kw_scaler = XEN_MAKE_KEYWORD("scaler");
-  kw_feedforward = XEN_MAKE_KEYWORD("feedforward");
-  kw_feedback = XEN_MAKE_KEYWORD("feedback");
-  kw_radius = XEN_MAKE_KEYWORD("radius");
-  kw_gain = XEN_MAKE_KEYWORD("gain");
-  kw_partials = XEN_MAKE_KEYWORD("partials");
-  kw_a = XEN_MAKE_KEYWORD("a");
-  kw_n = XEN_MAKE_KEYWORD("n");
-  kw_order = XEN_MAKE_KEYWORD("order");
-  kw_x_coeffs = XEN_MAKE_KEYWORD("xcoeffs");
-  kw_y_coeffs = XEN_MAKE_KEYWORD("ycoeffs");
-  kw_envelope = XEN_MAKE_KEYWORD("envelope");
-  kw_base = XEN_MAKE_KEYWORD("base");
-  kw_duration = XEN_MAKE_KEYWORD("duration");
-  kw_offset = XEN_MAKE_KEYWORD("offset");
-  kw_end = XEN_MAKE_KEYWORD("end");
-  kw_direction = XEN_MAKE_KEYWORD("direction");
-  kw_degree = XEN_MAKE_KEYWORD("degree");
-  kw_distance = XEN_MAKE_KEYWORD("distance");
-  kw_reverb = XEN_MAKE_KEYWORD("reverb");
-  kw_output = XEN_MAKE_KEYWORD("output");
-  kw_fft_size = XEN_MAKE_KEYWORD("fft-size");
-  kw_expansion = XEN_MAKE_KEYWORD("expansion");
-  kw_length = XEN_MAKE_KEYWORD("length");
-  kw_hop = XEN_MAKE_KEYWORD("hop");
-  kw_ramp = XEN_MAKE_KEYWORD("ramp");
-  kw_jitter = XEN_MAKE_KEYWORD("jitter");
-  kw_type = XEN_MAKE_KEYWORD("type");
-  kw_channels = XEN_MAKE_KEYWORD("channels");
-  kw_filter = XEN_MAKE_KEYWORD("filter");
-  kw_revout = XEN_MAKE_KEYWORD("revout");
-  kw_width = XEN_MAKE_KEYWORD("width");
-  kw_edit = XEN_MAKE_KEYWORD("edit");
-  kw_synthesize = XEN_MAKE_KEYWORD("synthesize");
-  kw_analyze = XEN_MAKE_KEYWORD("analyze");
-  kw_interp = XEN_MAKE_KEYWORD("interp");
-  kw_overlap = XEN_MAKE_KEYWORD("overlap");
-  kw_pitch = XEN_MAKE_KEYWORD("pitch");
-  kw_dur = XEN_MAKE_KEYWORD("dur");
-  kw_sines = XEN_MAKE_KEYWORD("sines");
-  kw_distribution = XEN_MAKE_KEYWORD("distribution");
-  kw_coeffs = XEN_MAKE_KEYWORD("coeffs");
-  kw_kind = XEN_MAKE_KEYWORD("kind");
+  kw_initial_element =  XEN_MAKE_KEYWORD("initial-element");
+  kw_scaler =           XEN_MAKE_KEYWORD("scaler");
+  kw_feedforward =      XEN_MAKE_KEYWORD("feedforward");
+  kw_feedback =         XEN_MAKE_KEYWORD("feedback");
+  kw_radius =           XEN_MAKE_KEYWORD("radius");
+  kw_gain =             XEN_MAKE_KEYWORD("gain");
+  kw_partials =         XEN_MAKE_KEYWORD("partials");
+  kw_a =                XEN_MAKE_KEYWORD("a");
+  kw_n =                XEN_MAKE_KEYWORD("n");
+  kw_order =            XEN_MAKE_KEYWORD("order");
+  kw_x_coeffs =         XEN_MAKE_KEYWORD("xcoeffs");
+  kw_y_coeffs =         XEN_MAKE_KEYWORD("ycoeffs");
+  kw_envelope =         XEN_MAKE_KEYWORD("envelope");
+  kw_base =             XEN_MAKE_KEYWORD("base");
+  kw_duration =         XEN_MAKE_KEYWORD("duration");
+  kw_offset =           XEN_MAKE_KEYWORD("offset");
+  kw_end =              XEN_MAKE_KEYWORD("end");
+  kw_direction =        XEN_MAKE_KEYWORD("direction");
+  kw_degree =           XEN_MAKE_KEYWORD("degree");
+  kw_distance =         XEN_MAKE_KEYWORD("distance");
+  kw_reverb =           XEN_MAKE_KEYWORD("reverb");
+  kw_output =           XEN_MAKE_KEYWORD("output");
+  kw_fft_size =         XEN_MAKE_KEYWORD("fft-size");
+  kw_expansion =        XEN_MAKE_KEYWORD("expansion");
+  kw_length =           XEN_MAKE_KEYWORD("length");
+  kw_hop =              XEN_MAKE_KEYWORD("hop");
+  kw_ramp =             XEN_MAKE_KEYWORD("ramp");
+  kw_jitter =           XEN_MAKE_KEYWORD("jitter");
+  kw_type =             XEN_MAKE_KEYWORD("type");
+  kw_channels =         XEN_MAKE_KEYWORD("channels");
+  kw_filter =           XEN_MAKE_KEYWORD("filter");
+  kw_revout =           XEN_MAKE_KEYWORD("revout");
+  kw_width =            XEN_MAKE_KEYWORD("width");
+  kw_edit =             XEN_MAKE_KEYWORD("edit");
+  kw_synthesize =       XEN_MAKE_KEYWORD("synthesize");
+  kw_analyze =          XEN_MAKE_KEYWORD("analyze");
+  kw_interp =           XEN_MAKE_KEYWORD("interp");
+  kw_overlap =          XEN_MAKE_KEYWORD("overlap");
+  kw_pitch =            XEN_MAKE_KEYWORD("pitch");
+  kw_dur =              XEN_MAKE_KEYWORD("dur");
+  kw_sines =            XEN_MAKE_KEYWORD("sines");
+  kw_distribution =     XEN_MAKE_KEYWORD("distribution");
+  kw_coeffs =           XEN_MAKE_KEYWORD("coeffs");
+  kw_kind =             XEN_MAKE_KEYWORD("kind");
 }
 
 
@@ -6296,6 +6296,8 @@ the closer the radius is to 1.0, the narrower the resonance."
 	       S_mus_array_print_length,
 	       S_mus_channel,
 	       S_mus_channels,
+	       S_mus_chebyshev_first_kind,
+	       S_mus_chebyshev_second_kind,
 	       S_mus_close,
 	       S_mus_cosines,
 	       S_mus_data,

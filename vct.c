@@ -716,6 +716,27 @@ static XEN vct_compare(XEN vr1, XEN vr2)
   return(C_TO_XEN_INT(-1));
 }
 
+static XEN g_rb_make_vct(int argc, XEN *argv, XEN self)
+{
+  int size;
+  XEN len, filler;
+  rb_scan_args(argc, argv, "11", &len, &filler);
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(len), len, XEN_ONLY_ARG, "Vct.new", "an integer");
+  size = XEN_TO_C_INT(len);
+  if (size <= 0) 
+    XEN_OUT_OF_RANGE_ERROR("Vct.new", 1, len, "len <= 0?");
+  if (XEN_NUMBER_P(filler))
+    return(vct_fill(make_vct(size, (Float *)CALLOC(size, sizeof(Float))), filler));
+  if (rb_block_given_p()) {
+    long i;
+    Float *buffer = (Float *)CALLOC(size, sizeof(Float));
+    for(i = 0; i < size; i++) {
+      buffer[i] = XEN_TO_C_DOUBLE(rb_yield(C_TO_XEN_INT(i)));
+    }
+    return make_vct(size, buffer);
+  }
+  return(make_vct(size, (Float *)CALLOC(size, sizeof(Float))));
+}
 #endif
 
 #if WITH_MODULES
@@ -743,6 +764,8 @@ void vct_init(void)
   rb_define_method(vct_tag, "length", XEN_PROCEDURE_CAST vct_length, 0);
   rb_define_method(vct_tag, "each", XEN_PROCEDURE_CAST vct_each, 0);
   rb_define_method(vct_tag, "<=>", XEN_PROCEDURE_CAST vct_compare, 1);
+  rb_define_singleton_method(vct_tag, "new", XEN_PROCEDURE_CAST g_rb_make_vct, -1);
+
   /* many more could be added */
 #endif
 

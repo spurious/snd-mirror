@@ -2,7 +2,7 @@
 #define CLM_H
 
 #define MUS_VERSION 3
-#define MUS_REVISION 12
+#define MUS_REVISION 13
 #define MUS_DATE "16-Mar-05"
 
 /*
@@ -494,14 +494,12 @@ mus_any *mus_frame_add(mus_any *f1, mus_any *f2, mus_any *res);
 mus_any *mus_frame_multiply(mus_any *f1, mus_any *f2, mus_any *res);
 Float mus_frame_ref(mus_any *f, int chan);
 Float mus_frame_set(mus_any *f, int chan, Float val);
-Float *mus_frame_data(mus_any *f);
 
 bool mus_mixer_p(mus_any *ptr);
 mus_any *mus_make_empty_mixer(int chans);
 mus_any *mus_make_identity_mixer(int chans);
 mus_any *mus_make_mixer(int chans, ...);
 mus_any *mus_make_mixer_with_data(int chans, Float *data);
-Float **mus_mixer_data(mus_any *f);
 Float mus_mixer_ref(mus_any *f, int in, int out);
 Float mus_mixer_set(mus_any *f, int in, int out, Float val);
 mus_any *mus_frame_to_frame(mus_any *f, mus_any *in, mus_any *out);

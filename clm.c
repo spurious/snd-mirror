@@ -4647,11 +4647,6 @@ mus_any *mus_frame_multiply(mus_any *uf1, mus_any *uf2, mus_any *ures)
   return((mus_any *)res);
 }
 
-Float *mus_frame_data(mus_any *f) 
-{
-  return(((mus_frame *)f)->vals);
-}
-
 Float mus_frame_ref(mus_any *uf, int chan) 
 {
   mus_frame *f = (mus_frame *)uf;
@@ -4858,11 +4853,6 @@ mus_any *mus_make_mixer(int chans, ...)
 	}
     }
   return((mus_any *)mx);
-}
-
-Float **mus_mixer_data(mus_any *f) 
-{
-  return(((mus_mixer *)f)->vals);
 }
 
 Float mus_mixer_ref(mus_any *uf, int in, int out) 
@@ -5823,11 +5813,6 @@ mus_any *mus_continue_frame_to_file(const char *filename)
 
 
 /* ---------------- locsig ---------------- */
-
-/* always returns a frame 
- * TODO: somehow locsig should not make a new frame on every pass if user neglects to offer one
- *       perhaps clm2xen can create one for it in that case?
- */
 
 typedef struct {
   mus_any_class *core;

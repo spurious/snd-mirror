@@ -1495,6 +1495,11 @@ static XEN sound_data_dup(XEN obj)
   return(result);
 }
 
+static XEN g_rb_make_sound_data(XEN self, XEN chans, XEN frames)
+{
+  return(g_make_sound_data(chans, frames));
+}
+
 #endif
 
 #if HAVE_RUBY
@@ -1585,6 +1590,7 @@ void mus_sndlib_xen_initialize(void)
   rb_define_method(sound_data_tag, "fill",   XEN_PROCEDURE_CAST sound_data_fill,    1);
   rb_define_method(sound_data_tag, "dup",    XEN_PROCEDURE_CAST sound_data_dup,     0);
   rb_define_method(sound_data_tag, "chans",  XEN_PROCEDURE_CAST sound_data_chans,   0);
+  rb_define_singleton_method(sound_data_tag, "new", XEN_PROCEDURE_CAST g_rb_make_sound_data, 2);
 #endif
 
   XEN_DEFINE_CONSTANT(S_mus_out_format,  MUS_OUT_FORMAT,  "sample format for fastest IO");
