@@ -7529,9 +7529,9 @@
 		    (list 'cursor-follows-play #f #f set-cursor-follows-play #t)
 		    (list 'data-clipped #f #f set-data-clipped #t)
 		    (list 'default-output-chans #f 1 set-default-output-chans 8)
-		    (list 'default-output-format #f 1 set-default-output-format 12)
+		    ;(list 'default-output-format #f 1 set-default-output-format 12)
 		    (list 'default-output-srate #f 22050 set-default-output-srate 44100)
-		    (list 'default-output-type #f 0 set-default-output-type 2)
+		    ;(list 'default-output-type #f 0 set-default-output-type 2)
 		    (list 'dot-size #f 1 set-dot-size 10)
 		    (list 'enved-base #f 0.01  set-enved-base 100.0)
 		    (list 'enved-clip? #f #f set-enved-clip? #t)
@@ -8484,7 +8484,7 @@
 		    (inexact->exact (* .8 size))
 		    snd chn)))  
 
-(if (not (provided? 'snd-no-gui))
+(if (not (provided? 'snd-nogui))
     (begin
       (if (procedure? test-hook) (test-hook 17))
       (load "musglyphs.scm")
@@ -10185,6 +10185,7 @@ EDITS: 3
 
 	  (if (provided? 'snd-motif)
 	      (begin
+		(load "popup.scm")
 		(load "snd-motif.scm")
 		(install-searcher (lambda (file) (= (mus-sound-srate file) 44100)))
 		(zync)
@@ -10221,6 +10222,8 @@ EDITS: 3
 
 
 ;;; ---------------- test 23: errors ----------------
+
+(if (provided? 'snd-nogui) (exit))
 
 (define (check-error-tag expected-tag thunk)
   (let ((tag

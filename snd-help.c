@@ -179,12 +179,6 @@ char *version_info(void)
                          itoa[13] = snd_itoa(GLIB_MINOR_VERSION), ".", 
                          itoa[14] = snd_itoa(GLIB_MICRO_VERSION),
 #endif
-#if HAVE_GUILE_GTK
-	  ", Guile-gtk",
-  #ifdef GUILE_GTK_VERSION
-          ": ", GUILE_GTK_VERSION,
-  #endif
-#endif
 #if HAVE_GTKEXTRA
 	  "\n    gtkextra",
   #ifdef GTKEXTRA_VERSION
@@ -252,7 +246,7 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
-20-Aug:  add-listener-popup in snd-motif.\n\
+20-Aug:  add-listener-popup, fft-popup in popup.scm.\n\
 17-Aug:  GSL 0.9. Gtk+extra 0.99.16.\n\
 16-Aug:  removed load-colormap.\n\
 14-Aug:  added recorder-in-device for OSS.\n\

@@ -380,7 +380,7 @@ static RETSIGTYPE segv(int ignored)
 }
 #endif
 
-#define FALLBACK_FONT "9x14"
+#define FALLBACK_FONT "9x15"
 
 void snd_doit(snd_state *ss, int argc, char **argv)
 {
@@ -439,6 +439,7 @@ void snd_doit(snd_state *ss, int argc, char **argv)
                (define " S_mouse_enter_text_hook " (make-hook 1))\
                (define " S_mouse_leave_text_hook " (make-hook 1))\
                (define " S_drop_hook " (make-hook 1))\
+               (define " S_menu_hook " (make-hook 2))\
                (define " S_property_changed_hook " (make-hook 1))");
 
   XEN_EVAL_C_STRING("(define " S_enved_active_env " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
@@ -454,7 +455,7 @@ void snd_doit(snd_state *ss, int argc, char **argv)
                (define (" S_axis_info " . args) #f)\
                (define (" S_change_property " . args) #f)\
                (define (" S_dialog_widgets ") #f)\
-               (define (" S_channel_widgets ") #f)\
+               (define (" S_channel_widgets " . args) #f)\
                (define (" S_current_font ") #f)\
                (define (" S_reset_listener_cursor ") #f)\
                (define " S_basic_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\

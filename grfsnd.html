@@ -1608,7 +1608,7 @@ match-sound-files from extensions.scm):
 ;(install-searcher (lambda (file) (= (mus-sound-chans file) 4)))
 </pre>
 <p>Now click the 'Filter' button to see only those files that fit the procedure in
-the dialog's files list.  See snd-motif.scm for more examples.
+the dialog's files list.  See snd-motif.scm and popup.scm for more examples.
 There are a few special Snd functions to support this module:
 </p>
 <pre>
@@ -1623,14 +1623,18 @@ There are a few special Snd functions to support this module:
 
 <span class=bbox><h3><A NAME="sndwithgtk">Snd and Gtk+</a></h3></span>
 
-<p>This part of Snd is currently broken.</p>
+<p>This part of Snd is currently broken.  I plan to make a
+module parallel to xm.c that will tie glib/gdk/gtk into Snd, but I'm
+putting this off for now to follow up snd-motif further, and to
+await Gtk 1.4. 
+</p>
 <br>
 
 <span class=bbox><h3><A NAME="sndwithnogui">Snd with no GUI and scripting</a></h3></span>
 
 <p>If Snd is built without a graphical user interface (either by specifying
 --with-no-gui to configure, or by setting the USE_NO_GUI compile-time flag),
-it runs Guile's "repl" (read-eval-print loop) with input from stdin.  All
+it runs Guile's "repl" (read-eval-print loop) (or Ruby's equivalent) with input from stdin.  All
 the non-interface related functions are available, so you can do things
 like:
 </p>
