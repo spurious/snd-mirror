@@ -57,18 +57,18 @@ static added_transform *new_added_transform(void)
   if (added_transforms == NULL)
     {
       added_transforms_size = 4;
-      added_transforms = (added_transform **)CALLOC(added_transforms_size,sizeof(added_transform *));
+      added_transforms = (added_transform **)CALLOC(added_transforms_size, sizeof(added_transform *));
     }
   else
     {
       if (added_transforms_top == added_transforms_size)
 	{
 	  added_transforms_size += 4;
-	  added_transforms = (added_transform **)REALLOC(added_transforms,added_transforms_size * sizeof(added_transform *));
+	  added_transforms = (added_transform **)REALLOC(added_transforms, added_transforms_size * sizeof(added_transform *));
 	  for (i=added_transforms_top;i<added_transforms_size;i++) added_transforms[i] = NULL;
 	}
     }
-  added_transforms[added_transforms_top] = (added_transform *)CALLOC(1,sizeof(added_transform));
+  added_transforms[added_transforms_top] = (added_transform *)CALLOC(1, sizeof(added_transform));
   return(added_transforms[added_transforms_top++]);
 }
 
@@ -156,13 +156,13 @@ static void hankel_transform(int size, Float *input, Float *output)
   int i;
   t = gsl_dht_transform_new(size/2, 0.0, (double)(size/2));
   if (sizeof(Float) == sizeof(double))
-    gsl_dht_transform_apply(t,(double *)input,(double *)output); /* the casts exist only to squelch dumb compiler complaints */
+    gsl_dht_transform_apply(t, (double *)input, (double *)output); /* the casts exist only to squelch dumb compiler complaints */
   else
     {
-      in1 = (double *)CALLOC(size,sizeof(double));
-      out1 = (double *)CALLOC(size,sizeof(double));
+      in1 = (double *)CALLOC(size, sizeof(double));
+      out1 = (double *)CALLOC(size, sizeof(double));
       for (i=0;i<size;i++) in1[i] = (double)input[i];
-      gsl_dht_transform_apply(t,in1,out1);
+      gsl_dht_transform_apply(t, in1, out1);
       for (i=0;i<size;i++) output[i] = (Float)out1[i];
       FREE(in1);
       FREE(out1);
@@ -210,15 +210,15 @@ static void make_abel_transformer(int n)
 	  FREE(atdat->b0);
 	  FREE(atdat->b1);
 	}
-      else atdat = (abelt *)CALLOC(1,sizeof(abelt));
-      a = (Float **)CALLOC(n,sizeof(Float *));
-      b0 = (Float **)CALLOC(n,sizeof(Float *));
-      b1 = (Float **)CALLOC(n,sizeof(Float *));
+      else atdat = (abelt *)CALLOC(1, sizeof(abelt));
+      a = (Float **)CALLOC(n, sizeof(Float *));
+      b0 = (Float **)CALLOC(n, sizeof(Float *));
+      b1 = (Float **)CALLOC(n, sizeof(Float *));
       for (i=0;i<n;i++) 
 	{
-	  a[i] = (Float *)CALLOC(nse,sizeof(Float));
-	  b0[i] = (Float *)CALLOC(nse,sizeof(Float));
-	  b1[i] = (Float *)CALLOC(nse,sizeof(Float));
+	  a[i] = (Float *)CALLOC(nse, sizeof(Float));
+	  b0[i] = (Float *)CALLOC(nse, sizeof(Float));
+	  b1[i] = (Float *)CALLOC(nse, sizeof(Float));
 	}
       for (i=1; i<n; ++i) 
 	{
@@ -227,7 +227,7 @@ static void make_abel_transformer(int n)
 	    {
 	      hj = h[j];
 	      lambdaj = lambda[j];
-	      a[i][j] = temp = pow(fi/(fi-1.0),lambdaj);
+	      a[i][j] = temp = pow(fi/(fi-1.0), lambdaj);
 	      temp *= fi/(fi-1.0);
 	      scale = 2.0*hj*(fi-1.0) / ((lambdaj+1.0)*(lambdaj+2.0));				
 	      b0[i][j] = scale * (fi-1.0+(lambdaj+2.0-fi)*temp);
@@ -251,7 +251,7 @@ static void abel (Float *f, Float *g)
   b1 = atdat->b1;
   fi = f[n-1];
   g[0] = 0.5*f[0]+fi;
-  for (j=0,sum=0.0; j<nse; ++j)
+  for (j=0, sum=0.0; j<nse; ++j)
     {
       xi[j] = b1[n-1][j]*fi;
       sum += xi[j];
@@ -262,7 +262,7 @@ static void abel (Float *f, Float *g)
       fip1 = fi;
       fi = f[i];
       g[0] += fi;
-      for (j=0,sum=0.0; j<nse; ++j) 
+      for (j=0, sum=0.0; j<nse; ++j) 
 	{
 	  xi[j] = a[i][j]*xi[j] + b0[i][j]*fip1 + b1[i][j]*fi;
 	  sum += xi[j];
@@ -312,12 +312,12 @@ static void wavelet_transform(Float *data, int num, Float *cc, int cc_size)
       if (n > data1_size)
 	{
 	  if (data1) FREE(data1);
-	  data1 = (Float *)CALLOC(n,sizeof(Float));
+	  data1 = (Float *)CALLOC(n, sizeof(Float));
 	  data1_size = n;
 	}
       else for (i=0;i<n;i++) data1[i]=0.0;
       jf = (int)(cc_size*(n-0.5));
-      for (i1=0,i=1,i2=(n>>1);i<=n;i+=2,i1++,i2++)
+      for (i1=0, i=1, i2=(n>>1);i<=n;i+=2,i1++,i2++)
 	{
 	  sig=-1;
 	  for (k=0;k<cc_size;k++)
@@ -425,15 +425,15 @@ static void build_Pn(int n)
 	  if (saved_Pn) FREE(saved_Pn);
 	  if (saved_wx) FREE(saved_wx);
 	}
-      saved_Pn = (double **)CALLOC(n,sizeof(double *));
-      saved_wx = (double *)CALLOC(n,sizeof(double));
-      for (k=0;k<n;k++) saved_Pn[k] = (double *)CALLOC(n,sizeof(double));
+      saved_Pn = (double **)CALLOC(n, sizeof(double *));
+      saved_wx = (double *)CALLOC(n, sizeof(double));
+      for (k=0;k<n;k++) saved_Pn[k] = (double *)CALLOC(n, sizeof(double));
       saved_Pn_size = n;
       ln2 = log(n)/log(2);
       rate = 2.0/(Float)n;
-      for (k=0,x=-1.0;k<n;k++,x+=rate) 
+      for (k=0, x=-1.0;k<n;k++,x+=rate) 
 	{
-	  chebyshev_polynomials(x,saved_Pn[k],n-1);
+	  chebyshev_polynomials(x, saved_Pn[k], n-1);
 	  if ((x == 1.0) || (x == -1.0))
 	    saved_wx[k] = ln2;
 	  else saved_wx[k] = 1.0/sqrt(1.0 - x*x);
@@ -448,9 +448,9 @@ static void chebyshev_transform(Float *data, int n)
   double x,rate,wx,wfx,ln2;
   rate = 2.0/(Float)n;
   ln2 = log(n)/log(2);
-  An = (double *)CALLOC(n,sizeof(double));
+  An = (double *)CALLOC(n, sizeof(double));
   if (n > MAX_PN_SIZE) 
-    Pn = (double *)CALLOC(n,sizeof(double));
+    Pn = (double *)CALLOC(n, sizeof(double));
   else build_Pn(n);
   x = -1.0;
   for (k=0;k<n;k++)
@@ -461,7 +461,7 @@ static void chebyshev_transform(Float *data, int n)
 	    wx = ln2;
 	  else wx = 1.0/sqrt(1.0 - x*x);
 	  wfx = wx * data[k];
-	  chebyshev_polynomials(x,Pn,n-1);
+	  chebyshev_polynomials(x, Pn, n-1);
 	  x += rate;
 	}
       else 
@@ -498,7 +498,7 @@ static void walsh_transform(Float *data, int n)
   Float f1,f2;
   n2 = n>>1;
   ipow = (int)(log(n)/log(2));
-  for (i=1,j=0;i<n-1;i++)
+  for (i=1, j=0;i<n-1;i++)
     {
       for (k=n2;(!((j^=k)&k)); k>>=1);
       if (j>i) {f1=data[i]; data[i]=data[j]; data[j]=f1;}
@@ -541,16 +541,16 @@ static void autocorrelation(Float *data, int n)
   Float fscl;
   int i;
   fscl = 2.0/(Float)n;
-  rl = (Float *)CALLOC(n,sizeof(Float));
-  im = (Float *)CALLOC(n,sizeof(Float));
+  rl = (Float *)CALLOC(n, sizeof(Float));
+  im = (Float *)CALLOC(n, sizeof(Float));
   for (i=0;i<n;i++) rl[i] = data[i];
-  mus_fft(rl,im,n,1);
+  mus_fft(rl, im, n, 1);
   for (i=0;i<n;i++)
     {
       rl[i] = rl[i]*rl[i] + im[i]*im[i];
       im[i] = 0.0;
     }
-  mus_fft(rl,im,n,-1);
+  mus_fft(rl, im, n, -1);
   for (i=0;i<n/2;i++) data[i] = fscl*rl[i];
   FREE(rl);
   FREE(im);
@@ -568,10 +568,10 @@ static void cepstrum(Float *data, int n)
   int i;
   lowest=0.00000001;
   fscl = 2.0/(Float)n;
-  rl = (Float *)CALLOC(n,sizeof(Float));
-  im = (Float *)CALLOC(n,sizeof(Float));
+  rl = (Float *)CALLOC(n, sizeof(Float));
+  im = (Float *)CALLOC(n, sizeof(Float));
   for (i=0;i<n;i++) rl[i] = data[i];
-  mus_fft(rl,im,n,1);
+  mus_fft(rl, im, n, 1);
   for (i=0;i<n;i++)
     {
       rl[i] = rl[i]*rl[i] + im[i]*im[i];
@@ -580,7 +580,7 @@ static void cepstrum(Float *data, int n)
       else rl[i] = log(sqrt(rl[i]));
       im[i] = 0.0;
     }
-  mus_fft(rl,im,n,-1);
+  mus_fft(rl, im, n, -1);
   for (i=0;i<n;i++) if (fabs(rl[i]) > fscl) fscl = fabs(rl[i]);
   if (fscl > 0.0)
     for (i=0;i<n;i++) data[i] = rl[i]/fscl;
@@ -664,7 +664,7 @@ static void fast_hwt (Float *out, Float *in, int n)
 
 int make_fft_window_1(Float *window, int size, int type, Float pre_beta)
 {
-  mus_make_fft_window_with_window(type,size,pre_beta * beta_maxes[type],window);
+  mus_make_fft_window_with_window(type, size, pre_beta * beta_maxes[type], window);
   return(1);
 }
 
@@ -682,8 +682,8 @@ int find_and_sort_peaks(Float *buf, fft_peak *found, int num_peaks, int size)
   Float *peaks;
   int *inds;
   if (num_peaks <= 0) return(0);
-  peaks = (Float *)CALLOC(num_peaks,sizeof(Float));
-  inds = (int *)CALLOC(num_peaks,sizeof(int));
+  peaks = (Float *)CALLOC(num_peaks, sizeof(Float));
+  inds = (int *)CALLOC(num_peaks, sizeof(int));
   pks = 0;
   la = 0.0;
   ca = 0.0;
@@ -728,7 +728,7 @@ int find_and_sort_peaks(Float *buf, fft_peak *found, int num_peaks, int size)
       found[i].amp = buf[j];
       found[i].freq = j;
     }
-  if (pks > 0) qsort((void *)found,pks,sizeof(fft_peak),compare_peaks);
+  if (pks > 0) qsort((void *)found, pks, sizeof(fft_peak), compare_peaks);
   FREE(peaks);
   FREE(inds);
   return(pks);
@@ -743,8 +743,8 @@ int find_and_sort_fft_peaks(Float *buf, fft_peak *found, int num_peaks, int ffts
   Float minval,la,ra,ca,logca,logra,logla,offset,fscl,ascl,bscl;
   Float *peaks;
   int *inds;
-  peaks = (Float *)CALLOC(num_peaks,sizeof(Float));
-  inds = (int *)CALLOC(num_peaks,sizeof(int));
+  peaks = (Float *)CALLOC(num_peaks, sizeof(Float));
+  inds = (int *)CALLOC(num_peaks, sizeof(int));
   fscl = (Float)srate/(Float)fftsize2;
   hop = (int)(samps_per_pixel+0.5);
   if (hop < 1) hop=1;
@@ -799,7 +799,7 @@ int find_and_sort_fft_peaks(Float *buf, fft_peak *found, int num_peaks, int ffts
   /* now we have the peaks; turn these into interpolated peaks/amps, and sort */
   if (ascl > 0.0) ascl = 1.0/ascl; else ascl = 1.0;
   if (fft_scale > 0.0) bscl = fft_scale / ascl; else bscl = 1.0;
-  for (i=0,k=0;i<pks;i++)
+  for (i=0, k=0;i<pks;i++)
     {
       j = inds[i];
       ca = buf[j]*ascl;
@@ -816,7 +816,7 @@ int find_and_sort_fft_peaks(Float *buf, fft_peak *found, int num_peaks, int ffts
 	  logca = log10(ca);
 	  logra = log10(ra);
 	  offset = (0.5*(logla-logra))/(logla+logra-2*logca); /* this assumes amps<1.0 (from XJS sms code) */
-	  found[k].amp = bscl * pow(10.0,logca-0.25*offset*(logla-logra));
+	  found[k].amp = bscl * pow(10.0, logca-0.25*offset*(logla-logra));
 	  if ((found[k].amp > 1.0) && (fft_scale > 0.0)) found[k].amp = 1.0;
 	  found[k].freq = fscl*(j+offset);
 	}
@@ -824,7 +824,7 @@ int find_and_sort_fft_peaks(Float *buf, fft_peak *found, int num_peaks, int ffts
       if (found[k].amp > 0.0) k++;
     }
   for (i=k;i<num_peaks;i++) found[i].freq = 1.0; /* move blank case to end of sorted list */
-  qsort((void *)found,pks,sizeof(fft_peak),compare_peaks);
+  qsort((void *)found, pks, sizeof(fft_peak), compare_peaks);
   FREE(peaks);
   FREE(inds);
   return(k);
@@ -971,7 +971,7 @@ static int snd_fft_to_spectrum (fft_state *fs)
 	    if ((-fft_data[j] ) > val)
 	      val = (-fft_data[j]);
 	}
-      for (i=0,j=0;i<fs->size;j++,i+=2)
+      for (i=0, j=0;i<fs->size;j++,i+=2)
 	{
 	  fft_data[j] = fft_data[i] * val;
 	}
@@ -980,11 +980,11 @@ static int snd_fft_to_spectrum (fft_state *fs)
     {
       if (fft_data[1] < 0.0001) fft_data[0] = 0.0; else fft_data[0] = fft_data[1];
       if (fft_data[2] < 0.0001) fft_data[fs->size-1] = 0.0; else fft_data[fs->size-1] = fft_data[2];
-      for (i=3,j=1;i<fs->size-3;i+=2,j++)
+      for (i=3, j=1;i<fs->size-3;i+=2,j++)
 	{
-	  fft_data[j] = hypot(fft_data[i],fft_data[i+1]);
+	  fft_data[j] = hypot(fft_data[i], fft_data[i+1]);
 	}
-      /* if fft_data[i]==0 pi/2 else atan2(fft_data[i],fft_data[i+1]) */
+      /* if fft_data[i]==0 pi/2 else atan2(fft_data[i], fft_data[i+1]) */
     }
   return(1);
 }
@@ -1000,15 +1000,15 @@ static int make_fft_window(fft_state *fs)
       wp = (fft_window_state *)(fs->wp);
       if (fs->pad_zero == 0)
 	toploc = fs->size;
-      else toploc = (int)(pow(2.0,floor(log(fs->size / (1 + fs->pad_zero)) / log(2.0))));
-      return(make_fft_window_1(wp->window,toploc,wp->type,wp->beta));
+      else toploc = (int)(pow(2.0, floor(log(fs->size / (1 + fs->pad_zero)) / log(2.0))));
+      return(make_fft_window_1(wp->window, toploc, wp->type, wp->beta));
       break;
     case HANKEL: 
       if (fs->size != fs->hwin_size)
 	{
 	  fs->hwin_size = fs->size;
 	  if (fs->hwin) FREE(fs->hwin);
-	  fs->hwin = (Float *)CALLOC(fs->size,sizeof(Float));
+	  fs->hwin = (Float *)CALLOC(fs->size, sizeof(Float));
 	}
       break;
     }
@@ -1080,7 +1080,7 @@ static int set_up_fft_window(fft_state *fs)
   if (empty == -1) empty = unused;
   if (empty == -1) 
     {
-      wp = (fft_window_state *)CALLOC(1,sizeof(fft_window_state));
+      wp = (fft_window_state *)CALLOC(1, sizeof(fft_window_state));
       fs->fw_slot = -1;
     }
   else
@@ -1088,7 +1088,7 @@ static int set_up_fft_window(fft_state *fs)
       if (empty == unused) free_fft_window(empty);
       if (!fft_windows[empty])
 	{
-	  fft_windows[empty] = (fft_window_state *)CALLOC(1,sizeof(fft_window_state));
+	  fft_windows[empty] = (fft_window_state *)CALLOC(1, sizeof(fft_window_state));
 	}
       wp = fft_windows[empty];
       fs->fw_slot = empty;
@@ -1099,7 +1099,7 @@ static int set_up_fft_window(fft_state *fs)
   wp->type = fs->wintype;
   wp->beta = fs->beta;
   wp->inuse++;
-  if (!wp->window) wp->window = (Float *)CALLOC(fs->size,sizeof(Float));
+  if (!wp->window) wp->window = (Float *)CALLOC(fs->size, sizeof(Float));
   return(1);
 }
 
@@ -1109,12 +1109,12 @@ static int set_up_fft_window(fft_state *fs)
 static fft_info *make_fft_info(int size, int window, Float beta)
 {
   fft_info *fp;
-  fp = (fft_info *)CALLOC(1,sizeof(fft_info));
+  fp = (fft_info *)CALLOC(1, sizeof(fft_info));
   fp->size = size;
   fp->window = window;
   fp->beta = beta;
   fp->ok = 1;
-  fp->data = (Float *)CALLOC(size+1,sizeof(Float)); /* +1 for complex storage or starts at 1 or something */
+  fp->data = (Float *)CALLOC(size+1, sizeof(Float)); /* +1 for complex storage or starts at 1 or something */
   return(fp);
 }
 
@@ -1168,7 +1168,7 @@ static int snd_fft_set_up(fft_state *fs)
   fp = cp->fft;
   if (!fp)                              /* associated channel hasn't done any ffts yet, so there's no struct */
     {
-      cp->fft = make_fft_info(fs->size,fs->wintype,0.0);
+      cp->fft = make_fft_info(fs->size, fs->wintype, 0.0);
       fp = cp->fft;
     }
   else
@@ -1177,7 +1177,7 @@ static int snd_fft_set_up(fft_state *fs)
 	{
 	  fp->size = fs->size;
 	  if (fp->data) FREE(fp->data);
-	  fp->data = (Float *)CALLOC(fp->size+1,sizeof(Float));
+	  fp->data = (Float *)CALLOC(fp->size+1, sizeof(Float));
 	  fp->ok = 1;
 	}
     }
@@ -1222,7 +1222,7 @@ static void make_sonogram_axes(chan_info *cp)
 	      min_freq = fp->current_size * cp->spectro_start;
 	    }
 	}
-      yang = fmod(cp->spectro_y_angle,360.0);
+      yang = fmod(cp->spectro_y_angle, 360.0);
       if (yang < 0.0) yang += 360.0;
       if (cp->fft_style == SPECTROGRAM)
 	{
@@ -1236,22 +1236,22 @@ static void make_sonogram_axes(chan_info *cp)
 	    }
 	  else xlabel = spectro_xlabel(cp);
 	  fp->axis = make_axis_info(cp,
-				    min_freq,max_freq,
-				    ap->x0,ap->x1,
+				    min_freq, max_freq,
+				    ap->x0, ap->x1,
 				    xlabel,
-				    min_freq,max_freq,
-				    ap->x0,ap->x1,
+				    min_freq, max_freq,
+				    ap->x0, ap->x1,
 				    fp->axis);
 	}
       else 
 	{
 	  xlabel = STR_time;
 	  fp->axis = make_axis_info(cp,
-				    ap->x0,ap->x1,
-				    min_freq,max_freq,
+				    ap->x0, ap->x1,
+				    min_freq, max_freq,
 				    xlabel,
-				    ap->x0,ap->x1,
-				    min_freq,max_freq,
+				    ap->x0, ap->x1,
+				    min_freq, max_freq,
 				    fp->axis);
 	}
     }
@@ -1273,7 +1273,7 @@ static int apply_fft_window(fft_state *fs)
   if (cp->transform_type == FOURIER) pad = fs->pad_zero;
   if (pad == 0)
     data_len = fs->size;
-  else data_len = (int)(pow(2.0,floor(log(fs->size / (1+pad)) / log(2.0))));
+  else data_len = (int)(pow(2.0, floor(log(fs->size / (1+pad)) / log(2.0))));
   if ((show_selection_transform(ss)) && (selection_is_active_in_channel(cp)) && (fs->datalen > 0))
     {
       ind0 = fs->databeg;
@@ -1285,16 +1285,16 @@ static int apply_fft_window(fft_state *fs)
       SCM res;
       if (HOOKED(before_fft_hook))
 	{
-	  res = g_c_run_progn_hook(before_fft_hook,SCM_LIST2(TO_SMALL_SCM_INT(cp->sound->index),TO_SMALL_SCM_INT(cp->chan)));
+	  res = g_c_run_progn_hook(before_fft_hook, SCM_LIST2(TO_SMALL_SCM_INT(cp->sound->index), TO_SMALL_SCM_INT(cp->chan)));
 	  if (gh_number_p(res))
-	    ind0 = TO_C_INT_OR_ELSE(res,0) + fs->beg;
+	    ind0 = TO_C_INT_OR_ELSE(res, 0) + fs->beg;
 	  else ind0 = (cp->axis)->losamp + fs->beg;
 	}
       else
 #endif
       ind0 = (cp->axis)->losamp + fs->beg;
     }
-  sf = init_sample_read(ind0,cp,READ_FORWARD);
+  sf = init_sample_read(ind0, cp, READ_FORWARD);
   switch (cp->transform_type)
     {
     case FOURIER:
@@ -1310,46 +1310,46 @@ static int apply_fft_window(fft_state *fs)
       for (i=0;i<data_len;i++) fs->hwin[i] = next_sample_to_float(sf);
       if (data_len < fs->size) for (i=data_len;i<fs->size;i++) fs->hwin[i] = 0.0;
 #if HAVE_GSL
-      hankel_transform(data_len,fs->hwin,fft_data);
+      hankel_transform(data_len, fs->hwin, fft_data);
       result = 5;
 #else
       make_abel_transformer(data_len);
-      abel(fs->hwin,fft_data);
+      abel(fs->hwin, fft_data);
       result = 1;
 #endif
       break;
     case WAVELET:
       for (i=0;i<data_len;i++) fft_data[i] = next_sample_to_float(sf);
       if (data_len < fs->size) for (i=data_len;i<fs->size;i++) fft_data[i] = 0.0;
-      wavelet_transform(fft_data,fs->size,wavelet_data[cp->wavelet_type],wavelet_sizes[cp->wavelet_type]);
+      wavelet_transform(fft_data, fs->size, wavelet_data[cp->wavelet_type], wavelet_sizes[cp->wavelet_type]);
       break;
     case CHEBYSHEV:
       for (i=0;i<data_len;i++) fft_data[i] = next_sample_to_float(sf);
       if (data_len < fs->size) for (i=data_len;i<fs->size;i++) fft_data[i] = 0.0;
-      chebyshev_transform(fft_data,fs->size);
+      chebyshev_transform(fft_data, fs->size);
       break;
     case CEPSTRUM:
       for (i=0;i<data_len;i++) fft_data[i] = next_sample_to_float(sf);
       if (data_len < fs->size) for (i=data_len;i<fs->size;i++) fft_data[i] = 0.0;
-      cepstrum(fft_data,fs->size);
+      cepstrum(fft_data, fs->size);
       break;
     case HADAMARD:
-      window = (Float *)CALLOC(fs->size,sizeof(Float));
+      window = (Float *)CALLOC(fs->size, sizeof(Float));
       for (i=0;i<data_len;i++) fft_data[i] = next_sample_to_float(sf);
       if (data_len < fs->size) for (i=data_len;i<fs->size;i++) fft_data[i] = 0.0;
-      fast_hwt(window,fft_data,(int)(log((Float)(fs->size+1))/log(2.0)));
+      fast_hwt(window, fft_data, (int)(log((Float)(fs->size+1))/log(2.0)));
       for (i=0;i<fs->size;i++) fft_data[i] = window[i];
       FREE(window);
       break;
     case WALSH:
       for (i=0;i<data_len;i++) fft_data[i] = next_sample_to_float(sf);
       if (data_len < fs->size) for (i=data_len;i<fs->size;i++) fft_data[i] = 0.0;
-      walsh_transform(fft_data,fs->size);
+      walsh_transform(fft_data, fs->size);
       break;
     case AUTOCORRELATION:
       for (i=0;i<data_len;i++) fft_data[i] = next_sample_to_float(sf);
       if (data_len < fs->size) for (i=data_len;i<fs->size;i++) fft_data[i] = 0.0;
-      autocorrelation(fft_data,fs->size);
+      autocorrelation(fft_data, fs->size);
       break;
 #if HAVE_GUILE
     default:
@@ -1359,7 +1359,7 @@ static int apply_fft_window(fft_state *fs)
 	int len,i;
 	sfd = g_c_make_sample_reader(sf);
 	snd_protect(sfd);
-	res = g_call2(added_transform_proc(cp->transform_type),TO_SCM_INT(data_len),sfd);
+	res = g_call2(added_transform_proc(cp->transform_type), TO_SCM_INT(data_len), sfd);
 	snd_protect(res);
 	if (vct_p(res))
 	  {
@@ -1367,7 +1367,7 @@ static int apply_fft_window(fft_state *fs)
 	    len = v->length;
 	    for (i=0;i<len;i++) fft_data[i] = v->data[i];
 	  }
-	SND_SET_VALUE_OF(sfd,(SCM)NULL); /* don't let guile's gc mess with it */
+	SND_SET_VALUE_OF(sfd, (SCM)NULL); /* don't let guile's gc mess with it */
 	snd_unprotect(res);
 	snd_unprotect(sfd);
       }
@@ -1534,11 +1534,11 @@ static int display_snd_fft(fft_state *fs)
 	}
       fp->scale = scale;
       fp->axis = make_axis_info(cp,
-				min_freq,max_freq,
-				min_val,max_val,
+				min_freq, max_freq,
+				min_val, max_val,
 				xlabel,
-				min_freq,max_freq,
-				min_val,max_val,
+				min_freq, max_freq,
+				min_val, max_val,
 				fp->axis);
     }
   return(-1);
@@ -1565,13 +1565,13 @@ void *make_fft_state(chan_info *cp, int simple)
       dlen = selection_len();
       /* these need to be handled at the same time, and not re-examined until the next call */
       /* if we're sweeping the mouse defining the selection, by the time we get to apply_fft_window, selection_len() can change */
-      fftsize = (int)pow(2.0,(int)(ceil(log((Float)(dlen*(1+cp->zero_pad)))/log(2.0))));
+      fftsize = (int)pow(2.0, (int)(ceil(log((Float)(dlen*(1+cp->zero_pad)))/log(2.0))));
       if (fftsize < 2) fftsize = 2;
       cp->selection_transform_size = fftsize;
     }
   else 
     {
-      fftsize = (int)pow(2.0,(int)(ceil(log((Float)(cp->fft_size * (1+cp->zero_pad)))/log(2.0))));
+      fftsize = (int)pow(2.0, (int)(ceil(log((Float)(cp->fft_size * (1+cp->zero_pad)))/log(2.0))));
       cp->selection_transform_size = 0;
     }
 
@@ -1600,7 +1600,7 @@ void *make_fft_state(chan_info *cp, int simple)
   else
     {
       if (cp->fft_data) cp->fft_data = free_fft_state((fft_state *)(cp->fft_data));
-      fs = (fft_state *)CALLOC(1,sizeof(fft_state));
+      fs = (fft_state *)CALLOC(1, sizeof(fft_state));
       fs->slice = 0;
       fs->chan = cp;
       fs->cutoff = cp->spectro_cutoff;
@@ -1657,7 +1657,7 @@ static BACKGROUND_TYPE fft_in_slices(void *fftData)
     case 6: res = snd_fft_cleanup(fs);           break;
     case 7: res = snd_fft_to_spectrum(fs);       break;
     case 8: res = display_snd_fft(fs);           break;
-    default: snd_error("impossible fft slice! %d",fs->slice); break;
+    default: snd_error("impossible fft slice! %d", fs->slice); break;
     }
   if (res == -1) 
     {
@@ -1682,9 +1682,9 @@ BACKGROUND_TYPE safe_fft_in_slices(void *fftData)
     {
       ss = cp->state;
       sp = cp->sound;
-      set_chan_fft_in_progress(cp,0);
-      if (cp->fft_size >= 65536) finish_progress_report(sp,NOT_FROM_ENVED);
-      display_channel_fft_data(cp,sp,ss);
+      set_chan_fft_in_progress(cp, 0);
+      if (cp->fft_size >= 65536) finish_progress_report(sp, NOT_FROM_ENVED);
+      display_channel_fft_data(cp, sp, ss);
     }
   return(res);
 }
@@ -1727,10 +1727,10 @@ void *make_sonogram_state(chan_info *cp)
 {
   sonogram_state *sg,*temp_sg;
   fft_state *fs;
-  sg = (sonogram_state *)CALLOC(1,sizeof(sonogram_state));
+  sg = (sonogram_state *)CALLOC(1, sizeof(sonogram_state));
   sg->cp = cp;
   sg->done = 0;
-  fs = (fft_state *)make_fft_state(cp,0); /* 0=>not a simple one-shot fft */
+  fs = (fft_state *)make_fft_state(cp, 0); /* 0=>not a simple one-shot fft */
   sg->fs = fs;
   sg->msg_ctr = 8;
   sg->transform_type = cp->transform_type;
@@ -1810,35 +1810,35 @@ static int set_up_sonogram(sonogram_state *sg)
   si = (sono_info *)(cp->sonogram_data);
   if (!si)
     {
-      si = (sono_info *)CALLOC(1,sizeof(sono_info));
+      si = (sono_info *)CALLOC(1, sizeof(sono_info));
       cp->sonogram_data = si;
       si->total_bins = sg->spectrum_size;
-      si->total_slices = (int)(pow(2.0,ceil(log(sg->outlim)/log(2.0))));
-      si->begs = (int *)CALLOC(si->total_slices,sizeof(int));
-      si->data = (Float **)CALLOC(si->total_slices,sizeof(Float *));
-      for (i=0;i<si->total_slices;i++) si->data[i]=(Float *)CALLOC(si->total_bins,sizeof(Float));
+      si->total_slices = (int)(pow(2.0, ceil(log(sg->outlim)/log(2.0))));
+      si->begs = (int *)CALLOC(si->total_slices, sizeof(int));
+      si->data = (Float **)CALLOC(si->total_slices, sizeof(Float *));
+      for (i=0;i<si->total_slices;i++) si->data[i]=(Float *)CALLOC(si->total_bins, sizeof(Float));
     }
   else
     if ((si->total_slices < sg->outlim) || (si->total_bins < sg->spectrum_size))
       {
 	for (i=0;i<si->total_slices;i++) if (si->data[i]) {FREE(si->data[i]); si->data[i] = NULL;}
-	tempsize = (int)(pow(2.0,ceil(log(sg->outlim)/log(2.0))));
+	tempsize = (int)(pow(2.0, ceil(log(sg->outlim)/log(2.0))));
 	if (si->total_slices < tempsize) 
 	  {
 	    FREE(si->data);
 	    si->total_slices = tempsize;
-	    si->begs = (int *)REALLOC(si->begs,si->total_slices*sizeof(int));
-	    si->data = (Float **)CALLOC(si->total_slices,sizeof(Float *));
+	    si->begs = (int *)REALLOC(si->begs, si->total_slices*sizeof(int));
+	    si->data = (Float **)CALLOC(si->total_slices, sizeof(Float *));
 	  }
 	if (si->total_bins < sg->spectrum_size) si->total_bins = sg->spectrum_size;
-	for (i=0;i<si->total_slices;i++) si->data[i]=(Float *)CALLOC(si->total_bins,sizeof(Float));
+	for (i=0;i<si->total_slices;i++) si->data[i]=(Float *)CALLOC(si->total_bins, sizeof(Float));
       }
   sg->scp = si;
   si->target_bins = sg->spectrum_size;
   si->active_slices = 0;
   si->target_slices = sg->outlim;
   si->scale = 0.0;
-  allocate_sono_rects(ss,si->total_bins);
+  allocate_sono_rects(ss, si->total_bins);
   if (cp->last_sonogram)                               /* there was a previous run */
     {
       lsg = (sonogram_state *)(cp->last_sonogram);
@@ -1864,7 +1864,7 @@ static int set_up_sonogram(sonogram_state *sg)
 	  return(2);                                   /* so skip the ffts! */
 	}
     }
-  start_progress_report(cp->sound,NOT_FROM_ENVED);
+  start_progress_report(cp->sound, NOT_FROM_ENVED);
   return(1);
 }
 
@@ -1890,8 +1890,8 @@ static int run_all_ffts(sonogram_state *sg)
       sg->msg_ctr--;
       if (sg->msg_ctr == 0)
 	{
-	  progress_report(cp->sound,(cp->fft_style == SONOGRAM) ? S_sonogram : S_spectrogram,0,0,
-			  ((Float)(si->active_slices)/(Float)(si->target_slices)),NOT_FROM_ENVED);
+	  progress_report(cp->sound, (cp->fft_style == SONOGRAM) ? S_sonogram : S_spectrogram, 0, 0,
+			  ((Float)(si->active_slices)/(Float)(si->target_slices)), NOT_FROM_ENVED);
 	  sg->minibuffer_needs_to_be_cleared = 1;
 	  sg->msg_ctr = 8;
 	  if (cp->ffting == 0) return(1);
@@ -1946,8 +1946,8 @@ static int cleanup_sonogram(sonogram_state *sg)
       make_sonogram_axes(cp);
       if (sg->fs) sg->fs = free_fft_state(sg->fs);
       cp->fft_data = NULL;
-      set_chan_fft_in_progress(cp,0);
-      display_channel_fft_data(cp,cp->sound,cp->state);
+      set_chan_fft_in_progress(cp, 0);
+      display_channel_fft_data(cp, cp->sound, cp->state);
       if (cp->last_sonogram) FREE(cp->last_sonogram);
       if (sg->outer == sg->outlim) sg->done = 1;
       sg->old_scale = (sg->scp)->scale;
@@ -1955,7 +1955,7 @@ static int cleanup_sonogram(sonogram_state *sg)
       cp->temp_sonogram = NULL;
       if (sg->minibuffer_needs_to_be_cleared)
 	{
-	  finish_progress_report(cp->sound,NOT_FROM_ENVED);
+	  finish_progress_report(cp->sound, NOT_FROM_ENVED);
 	  sg->minibuffer_needs_to_be_cleared = 0;
 	}
     }
@@ -1979,7 +1979,7 @@ BACKGROUND_TYPE sonogram_in_slices(void *sono)
     case 1: res = run_all_ffts(sg);    break; /* return 0 until done with all ffts, then 1 -- 1 causes cleanup whether done or not */
     case 2: res = cleanup_sonogram(sg); return(BACKGROUND_QUIT); break;
     default: 
-      snd_error("runaway sonogram? (%d) ",sg->slice); 
+      snd_error("runaway sonogram? (%d) ", sg->slice); 
       cleanup_sonogram(sg); 
       return(BACKGROUND_QUIT); 
       break;
@@ -1991,14 +1991,14 @@ BACKGROUND_TYPE sonogram_in_slices(void *sono)
 int sono_update(chan_info *cp, void *ignore)
 {
   if (cp->fft_style != NORMAL_FFT) make_sonogram_axes(cp);
-  update_graph(cp,NULL);
+  update_graph(cp, NULL);
   return(0);
 }
 
-void set_spectro_cutoff_and_redisplay(snd_state *ss,Float val)
+void set_spectro_cutoff_and_redisplay(snd_state *ss, Float val)
 {
-  in_set_spectro_cutoff(ss,val); 
-  map_over_chans(ss,sono_update,NULL);
+  in_set_spectro_cutoff(ss, val); 
+  map_over_chans(ss, sono_update, NULL);
 }
 
 static void spectral_multiply (Float* rl1, Float* rl2, int n)
@@ -2038,22 +2038,22 @@ void c_convolve (char *fname, Float amp, int filec, int filehdr, int filterc, in
   if (tempfile != -1)
     {
       /* get to start point in the two sound files */
-      mus_file_seek(filec,filehdr,SEEK_SET);
-      mus_file_seek(filterc,filterhdr,SEEK_SET);
+      mus_file_seek(filec, filehdr, SEEK_SET);
+      mus_file_seek(filterc, filterhdr, SEEK_SET);
 
-      rl0 = (Float *)CALLOC(fftsize,sizeof(Float));
-      if (rl0) rl1 = (Float *)CALLOC(fftsize,sizeof(Float));
-      if (rl1) pbuffer = (MUS_SAMPLE_TYPE **)CALLOC(1,sizeof(MUS_SAMPLE_TYPE *));
-      if (pbuffer) pbuffer[0] = (MUS_SAMPLE_TYPE *)CALLOC(data_size,sizeof(MUS_SAMPLE_TYPE));
-      if (pbuffer[0]) cm = (MUS_SAMPLE_TYPE *)CALLOC(1,sizeof(MUS_SAMPLE_TYPE));
-      fbuffer = (MUS_SAMPLE_TYPE **)CALLOC(filter_chans,sizeof(MUS_SAMPLE_TYPE *));
-      if (fbuffer) fbuffer[filter_chan] = (MUS_SAMPLE_TYPE *)CALLOC(filtersize,sizeof(MUS_SAMPLE_TYPE));
-      if (fbuffer[filter_chan]) fcm = (MUS_SAMPLE_TYPE *)CALLOC(filter_chans,sizeof(MUS_SAMPLE_TYPE));
+      rl0 = (Float *)CALLOC(fftsize, sizeof(Float));
+      if (rl0) rl1 = (Float *)CALLOC(fftsize, sizeof(Float));
+      if (rl1) pbuffer = (MUS_SAMPLE_TYPE **)CALLOC(1, sizeof(MUS_SAMPLE_TYPE *));
+      if (pbuffer) pbuffer[0] = (MUS_SAMPLE_TYPE *)CALLOC(data_size, sizeof(MUS_SAMPLE_TYPE));
+      if (pbuffer[0]) cm = (MUS_SAMPLE_TYPE *)CALLOC(1, sizeof(MUS_SAMPLE_TYPE));
+      fbuffer = (MUS_SAMPLE_TYPE **)CALLOC(filter_chans, sizeof(MUS_SAMPLE_TYPE *));
+      if (fbuffer) fbuffer[filter_chan] = (MUS_SAMPLE_TYPE *)CALLOC(filtersize, sizeof(MUS_SAMPLE_TYPE));
+      if (fbuffer[filter_chan]) fcm = (MUS_SAMPLE_TYPE *)CALLOC(filter_chans, sizeof(MUS_SAMPLE_TYPE));
       if ((rl0 == NULL) || (rl1 == NULL) || 
 	  (pbuffer == NULL) || (pbuffer[0] == NULL) || (cm == NULL) ||
 	  (fbuffer == NULL) || (fbuffer[filter_chan] == NULL) || (fcm == NULL))
 	{
-	  snd_error("not enough memory for convolve of %s (filter size: %d, fft size: %d",fname,filtersize,fftsize);
+	  snd_error("not enough memory for convolve of %s (filter size: %d, fft size: %d", fname, filtersize, fftsize);
 	}
       else
 	{
@@ -2062,23 +2062,23 @@ void c_convolve (char *fname, Float amp, int filec, int filehdr, int filterc, in
 	  pbuf = pbuffer[0];
 
 	  /* read in the "impulse response" */
-	  mus_file_read_any(filterc,0,filter_chans,filtersize-1,fbuffer,fcm);
+	  mus_file_read_any(filterc, 0, filter_chans, filtersize-1, fbuffer, fcm);
 	  for (i=0;i<filtersize;i++) 
 	    rl1[i] = MUS_SAMPLE_TO_FLOAT(fbuffer[filter_chan][i]);
-	  progress_report(gsp,"convolve",ip+1,total_chans,.1,from_enved);
-	  mus_header_write_next_header(tempfile,22050,1,28,data_size*4,MUS_BINT,NULL,0);
-	  mus_file_set_descriptors(tempfile,fname,MUS_BINT,4,28,1,MUS_NEXT);
+	  progress_report(gsp, "convolve", ip+1, total_chans, .1, from_enved);
+	  mus_header_write_next_header(tempfile, 22050, 1, 28, data_size*4, MUS_BINT, NULL, 0);
+	  mus_file_set_descriptors(tempfile, fname, MUS_BINT, 4, 28, 1, MUS_NEXT);
 	  /* get the convolution data */
-	  mus_file_read_any(filec,0,1,data_size-1,pbuffer,cm);
+	  mus_file_read_any(filec, 0, 1, data_size-1, pbuffer, cm);
 	  for (i=0;i<data_size;i++) rl0[i] = MUS_SAMPLE_TO_FLOAT(pbuf[i]);
 
-	  progress_report(gsp,"convolve",ip+1,total_chans,.3,from_enved);
-	  mus_fft(rl0,rl1,fftsize,1);
-	  progress_report(gsp,"convolve",ip+1,total_chans,.5,from_enved);
-	  spectral_multiply(rl0,rl1,fftsize);
-	  progress_report(gsp,"convolve",ip+1,total_chans,.6,from_enved);
-	  mus_fft(rl0,rl1,fftsize,-1);
-	  progress_report(gsp,"convolve",ip+1,total_chans,.8,from_enved);
+	  progress_report(gsp, "convolve", ip+1, total_chans, .3, from_enved);
+	  mus_fft(rl0, rl1, fftsize, 1);
+	  progress_report(gsp, "convolve", ip+1, total_chans, .5, from_enved);
+	  spectral_multiply(rl0, rl1, fftsize);
+	  progress_report(gsp, "convolve", ip+1, total_chans, .6, from_enved);
+	  mus_fft(rl0, rl1, fftsize, -1);
+	  progress_report(gsp, "convolve", ip+1, total_chans, .8, from_enved);
 
 	  if (amp != 0.0)
 	    {
@@ -2092,11 +2092,11 @@ void c_convolve (char *fname, Float amp, int filec, int filehdr, int filterc, in
 	      if (scl != 0.0) scl = amp / scl;
 	      for (i=0;i<data_size;i++) pbuf[i] = MUS_FLOAT_TO_SAMPLE(scl * rl0[i]);
 	    }
-	  progress_report(gsp,"convolve",ip+1,total_chans,.9,from_enved);
+	  progress_report(gsp, "convolve", ip+1, total_chans, .9, from_enved);
 	  /* and save as temp file */
-	  mus_file_write(tempfile,0,data_size-1,1,&(pbuf));
+	  mus_file_write(tempfile, 0, data_size-1, 1, &(pbuf));
 	  if (mus_file_close(tempfile) != 0)
-	    snd_error("can't close %d (%s)! [%s[%d] %s]",tempfile,fname,__FILE__,__LINE__,__FUNCTION__);
+	    snd_error("can't close %d (%s)! [%s[%d] %s]", tempfile, fname, __FILE__, __LINE__, __FUNCTION__);
 	}
       if (rl0) FREE(rl0);
       if (rl1) FREE(rl1);
@@ -2126,7 +2126,7 @@ static SCM g_autocorrelate(SCM reals)
   int n,i;
   SCM *vdata;
   Float *rl;
-  SCM_ASSERT(((vct_p(reals)) || (gh_vector_p(reals))),reals,SCM_ARG1,S_autocorrelate);
+  SCM_ASSERT(((vct_p(reals)) || (gh_vector_p(reals))), reals, SCM_ARG1, S_autocorrelate);
   if (vct_p(reals))
     {
       v1 = (vct *)SND_VALUE_OF(reals);
@@ -2136,11 +2136,11 @@ static SCM g_autocorrelate(SCM reals)
   else
     {
       n = gh_vector_length(reals);
-      rl = (Float *)CALLOC(n,sizeof(Float));
+      rl = (Float *)CALLOC(n, sizeof(Float));
       vdata = SCM_VELTS(reals);
       for (i=0;i<n;i++) rl[i] = TO_C_DOUBLE(vdata[i]);
     }
-  autocorrelation(rl,n);
+  autocorrelation(rl, n);
   if (v1 == NULL) 
     {
       vdata = SCM_VELTS(reals);
@@ -2159,12 +2159,12 @@ static SCM g_add_transform(SCM name, SCM xlabel, SCM lo, SCM hi, SCM proc)
    to be displayed goes from low to high (normally 0.0 to 1.0)"
 
   SCM res = SCM_BOOL_F;
-  SCM_ASSERT(gh_string_p(name),name,SCM_ARG1,S_add_transform);
-  SCM_ASSERT(gh_string_p(xlabel),xlabel,SCM_ARG2,S_add_transform);
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(lo)),lo,SCM_ARG3,S_add_transform);
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(hi)),hi,SCM_ARG4,S_add_transform);
-  SCM_ASSERT(gh_procedure_p(proc),proc,SCM_ARG5,S_add_transform);
-  if (procedure_ok(proc,2,0,S_add_transform,"func",5))
+  SCM_ASSERT(gh_string_p(name), name, SCM_ARG1, S_add_transform);
+  SCM_ASSERT(gh_string_p(xlabel), xlabel, SCM_ARG2, S_add_transform);
+  SCM_ASSERT(SCM_NFALSEP(scm_real_p(lo)), lo, SCM_ARG3, S_add_transform);
+  SCM_ASSERT(SCM_NFALSEP(scm_real_p(hi)), hi, SCM_ARG4, S_add_transform);
+  SCM_ASSERT(gh_procedure_p(proc), proc, SCM_ARG5, S_add_transform);
+  if (procedure_ok(proc, 2, 0, S_add_transform, "func", 5))
     res = TO_SMALL_SCM_INT(add_transform(SCM_STRING_CHARS(name),
 				   SCM_STRING_CHARS(xlabel),
 				   TO_C_DOUBLE(lo),
@@ -2177,19 +2177,19 @@ static SCM g_add_transform(SCM name, SCM xlabel, SCM lo, SCM hi, SCM proc)
 void g_init_fft(SCM local_doc)
 {
 #if HAVE_HOOKS
-  before_fft_hook = scm_create_hook(S_before_fft_hook,2);       /* args = snd chn */
+  before_fft_hook = MAKE_HOOK(S_before_fft_hook, 2);       /* args = snd chn */
 #endif
-  gh_define(S_fourier_transform,TO_SMALL_SCM_INT(FOURIER));
-  gh_define(S_wavelet_transform,TO_SMALL_SCM_INT(WAVELET));
-  gh_define(S_hankel_transform,TO_SMALL_SCM_INT(HANKEL));
-  gh_define(S_chebyshev_transform,TO_SMALL_SCM_INT(CHEBYSHEV));
-  gh_define(S_cepstrum,TO_SMALL_SCM_INT(CEPSTRUM));
-  gh_define(S_hadamard_transform,TO_SMALL_SCM_INT(HADAMARD));
-  gh_define(S_walsh_transform,TO_SMALL_SCM_INT(WALSH));
-  gh_define(S_autocorrelation,TO_SMALL_SCM_INT(AUTOCORRELATION));
+  gh_define(S_fourier_transform, TO_SMALL_SCM_INT(FOURIER));
+  gh_define(S_wavelet_transform, TO_SMALL_SCM_INT(WAVELET));
+  gh_define(S_hankel_transform, TO_SMALL_SCM_INT(HANKEL));
+  gh_define(S_chebyshev_transform, TO_SMALL_SCM_INT(CHEBYSHEV));
+  gh_define(S_cepstrum, TO_SMALL_SCM_INT(CEPSTRUM));
+  gh_define(S_hadamard_transform, TO_SMALL_SCM_INT(HADAMARD));
+  gh_define(S_walsh_transform, TO_SMALL_SCM_INT(WALSH));
+  gh_define(S_autocorrelation, TO_SMALL_SCM_INT(AUTOCORRELATION));
 
-  DEFINE_PROC(gh_new_procedure1_0(S_autocorrelate,g_autocorrelate),H_autocorrelate);
-  DEFINE_PROC(gh_new_procedure5_0(S_add_transform,g_add_transform),H_add_transform);
+  DEFINE_PROC(gh_new_procedure1_0(S_autocorrelate, g_autocorrelate), H_autocorrelate);
+  DEFINE_PROC(gh_new_procedure5_0(S_add_transform, g_add_transform), H_add_transform);
 }
 
 #endif

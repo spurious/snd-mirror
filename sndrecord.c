@@ -58,10 +58,10 @@
 #endif
 
 #ifdef DEBUG_MEMORY
-void *mem_calloc(size_t len, size_t size, const char *func, const char *file, int line) {return(calloc(len,size));}
+void *mem_calloc(size_t len, size_t size, const char *func, const char *file, int line) {return(calloc(len, size));}
 void *mem_malloc(size_t len, const char *func, const char *file, int line) {return(malloc(len));}
 void mem_free(void *ptr, const char *func, const char *file, int line) {free(ptr);}
-void *mem_realloc(void *ptr, size_t size, const char *func, const char *file, int line) {return(realloc(ptr,size));}
+void *mem_realloc(void *ptr, size_t size, const char *func, const char *file, int line) {return(realloc(ptr, size));}
 #endif
 
 int main(int argc, char *argv[])
@@ -77,27 +77,27 @@ int main(int argc, char *argv[])
   mus_sound_initialize();
   /* make sure the microphone is on */
   mic_gain[0] = 1.0;
-  mus_audio_mixer_write(MUS_AUDIO_MICROPHONE,MUS_AUDIO_AMP,0,mic_gain);
-  if (CHANNELS == 2) mus_audio_mixer_write(MUS_AUDIO_MICROPHONE,MUS_AUDIO_AMP,1,mic_gain);
+  mus_audio_mixer_write(MUS_AUDIO_MICROPHONE, MUS_AUDIO_AMP, 0, mic_gain);
+  if (CHANNELS == 2) mus_audio_mixer_write(MUS_AUDIO_MICROPHONE, MUS_AUDIO_AMP, 1, mic_gain);
   /* open the output sound file */
   bytes_per_sample = mus_data_format_to_bytes_per_sample(DATA_TYPE);
   bytes_per_read = BUFFER_SIZE * bytes_per_sample;
-  fd = mus_sound_open_output(argv[1],SAMPLING_RATE,CHANNELS,DATA_TYPE,FILE_TYPE,"created by sndrecord");
+  fd = mus_sound_open_output(argv[1], SAMPLING_RATE, CHANNELS, DATA_TYPE, FILE_TYPE, "created by sndrecord");
   if (fd != -1)
     {
       /* prepare and open the microphone input line */
-      ibuf = (indata *)CALLOC(BUFFER_SIZE,sizeof(indata));
-      afd = mus_audio_open_input(MUS_AUDIO_MICROPHONE,SAMPLING_RATE,CHANNELS,DATA_TYPE,bytes_per_read);
+      ibuf = (indata *)CALLOC(BUFFER_SIZE, sizeof(indata));
+      afd = mus_audio_open_input(MUS_AUDIO_MICROPHONE, SAMPLING_RATE, CHANNELS, DATA_TYPE, bytes_per_read);
       if (afd != -1)
 	{
 	  for (i=0;i<READS;i++)
 	    {
-	      err = mus_audio_read(afd,(char *)ibuf,bytes_per_read);
-	      if (err == MUS_NO_ERROR) write(fd,(char *)ibuf,bytes_per_read);
+	      err = mus_audio_read(afd, (char *)ibuf, bytes_per_read);
+	      if (err == MUS_NO_ERROR) write(fd, (char *)ibuf, bytes_per_read);
 	    }
 	  mus_audio_close(afd);
 	}
-      mus_sound_close_output(fd,bytes_per_read * READS);
+      mus_sound_close_output(fd, bytes_per_read * READS);
       FREE(ibuf);
     }
   return(0);

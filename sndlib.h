@@ -317,20 +317,20 @@ enum {MUS_NO_ERROR,MUS_NO_FREQUENCY,MUS_NO_PHASE,MUS_NO_GEN,MUS_NO_LENGTH,
   /* C's calloc/free are incompatible with Mac's SndDisposeChannel (which we can't avoid using) */
   /* realloc is enough of a mess that I'll handle each case individually */
   /*   FREE is used only when we call either CALLOC or MALLOC ourselves -- other cases use free */
-  #define CALLOC(a,b)  NewPtrClear((a) * (b))
+  #define CALLOC(a, b)  NewPtrClear((a) * (b))
   #define MALLOC(a)    NewPtr((a))
   #define FREE(a)      DisposePtr((Ptr)(a))
 #else
   #ifdef DEBUG_MEMORY
-    #define CALLOC(a,b)  mem_calloc(a,b,__FUNCTION__,__FILE__,__LINE__)
-    #define MALLOC(a)    mem_malloc(a,__FUNCTION__,__FILE__,__LINE__)
-    #define FREE(a)      mem_free(a,__FUNCTION__,__FILE__,__LINE__)
-    #define REALLOC(a,b) mem_realloc(a,b,__FUNCTION__,__FILE__,__LINE__)
+    #define CALLOC(a, b)  mem_calloc(a, b, __FUNCTION__, __FILE__, __LINE__)
+    #define MALLOC(a)    mem_malloc(a, __FUNCTION__, __FILE__, __LINE__)
+    #define FREE(a)      mem_free(a, __FUNCTION__, __FILE__, __LINE__)
+    #define REALLOC(a, b) mem_realloc(a, b, __FUNCTION__, __FILE__, __LINE__)
   #else
-    #define CALLOC(a,b)  calloc(a,b)
+    #define CALLOC(a, b)  calloc(a, b)
     #define MALLOC(a)    malloc(a)
     #define FREE(a)      free(a)
-    #define REALLOC(a,b) realloc(a,b)
+    #define REALLOC(a, b) realloc(a, b)
   #endif
 #endif 
 
@@ -432,7 +432,7 @@ char *mus_audio_moniker       PROTO((void));
   void mus_audio_clear_soundcard_inputs PROTO((void));
 #endif
 #if (HAVE_OSS || HAVE_ALSA)
-  void mus_audio_set_oss_buffers    PROTO((int num,int size));
+  void mus_audio_set_oss_buffers    PROTO((int num, int size));
   int mus_audio_api                 PROTO((void));
 #endif
 
@@ -508,11 +508,11 @@ unsigned int mus_char_to_ulint      PROTO((const unsigned char *inp));
   int mus_ptr2table                 PROTO((MUS_SAMPLE_TYPE *arr));
   void mus_untableptr               PROTO((int ip_1));
   #define MUS_SAMPLE_ARRAY(n) mus_table2ptr((int)(n))
-  #define MUS_MAKE_SAMPLE_ARRAY(size) mus_ptr2table((MUS_SAMPLE_TYPE *)CALLOC((size),sizeof(MUS_SAMPLE_TYPE)))
+  #define MUS_MAKE_SAMPLE_ARRAY(size) mus_ptr2table((MUS_SAMPLE_TYPE *)CALLOC((size), sizeof(MUS_SAMPLE_TYPE)))
   #define MUS_FREE_SAMPLE_ARRAY(p) mus_untableptr((int)(p))
 #else
   #define MUS_SAMPLE_ARRAY(n) ((MUS_SAMPLE_TYPE *)(n))
-  #define MUS_MAKE_SAMPLE_ARRAY(size) ((MUS_SAMPLE_TYPE *)CALLOC((size),sizeof(MUS_SAMPLE_TYPE)))
+  #define MUS_MAKE_SAMPLE_ARRAY(size) ((MUS_SAMPLE_TYPE *)CALLOC((size), sizeof(MUS_SAMPLE_TYPE)))
   #define MUS_FREE_SAMPLE_ARRAY(p) FREE((void *)(p))
 #endif
 

@@ -25,10 +25,10 @@
 #endif
 
 #ifdef DEBUG_MEMORY
-void *mem_calloc(size_t len, size_t size, const char *func, const char *file, int line) {return(calloc(len,size));}
+void *mem_calloc(size_t len, size_t size, const char *func, const char *file, int line) {return(calloc(len, size));}
 void *mem_malloc(size_t len, const char *func, const char *file, int line) {return(malloc(len));}
 void mem_free(void *ptr, const char *func, const char *file, int line) {free(ptr);}
-void *mem_realloc(void *ptr, size_t size, const char *func, const char *file, int line) {return(realloc(ptr,size));}
+void *mem_realloc(void *ptr, size_t size, const char *func, const char *file, int line) {return(realloc(ptr, size));}
 #endif
 
 int main(int argc, char *argv[])
@@ -55,7 +55,7 @@ int main(int argc, char *argv[])
       srate = mus_sound_srate(argv[1]);
       if (srate == MUS_ERROR)
 	{
-	  fprintf(stdout,"%s: not a sound file?\n",argv[1]);
+	  fprintf(stdout, "%s: not a sound file?\n", argv[1]);
 	  return(0);
 	}
       chans = mus_sound_chans(argv[1]);
@@ -70,36 +70,36 @@ int main(int argc, char *argv[])
 	format_info = mus_data_format_name(format);
       else
 	{
-	  format_info = (char *)calloc(64,sizeof(char));
+	  format_info = (char *)calloc(64, sizeof(char));
 	  format = mus_sound_original_format(argv[1]);
-	  format_name = mus_header_original_format_name(format,type);
+	  format_name = mus_header_original_format_name(format, type);
 	  if (format_name)
-	    sprintf(format_info,"%d (%s)",format,format_name);
-	  else sprintf(format_info,"%d",format);
+	    sprintf(format_info, "%d (%s)", format, format_name);
+	  else sprintf(format_info, "%d", format);
 	}
 #if (!defined(HAVE_CONFIG_H)) || defined(HAVE_STRFTIME)
-      strftime(timestr,64,"%a %d-%b-%Y %H:%M %Z",localtime(&date));
+      strftime(timestr, 64, "%a %d-%b-%Y %H:%M %Z", localtime(&date));
 #else
-      sprintf(timestr,"who knows?");
+      sprintf(timestr, "who knows?");
 #endif
-      fprintf(stdout,"%s:\n  srate: %d\n  chans: %d\n  length: %f\n",
-	      argv[1],srate,chans,length);
-      fprintf(stdout,"  type: %s\n  format: %s\n  written: %s\n",
+      fprintf(stdout, "%s:\n  srate: %d\n  chans: %d\n  length: %f\n",
+	      argv[1], srate, chans, length);
+      fprintf(stdout, "  type: %s\n  format: %s\n  written: %s\n",
 	      header_name,
 	      format_info,
 	      timestr);
-      if (comment) fprintf(stdout,"  comment: %s\n",comment);
+      if (comment) fprintf(stdout, "  comment: %s\n", comment);
       if (loops)
 	{
 	  if (loops[0] != 0)
-	    fprintf(stdout,"  loop: %d to %d\n",loops[1],loops[2]);
+	    fprintf(stdout, "  loop: %d to %d\n", loops[1], loops[2]);
 	  if (loops[3] != 0)
-	    fprintf(stdout,"  loop: %d to %d\n",loops[4],loops[5]);
+	    fprintf(stdout, "  loop: %d to %d\n", loops[4], loops[5]);
 	  if (loops[0] != 0)
-	    fprintf(stdout,"    base: %d, detune: %d\n",loops[7],loops[6]);
+	    fprintf(stdout, "    base: %d, detune: %d\n", loops[7], loops[6]);
 	}
     }
   else
-    fprintf(stderr,"%s: %s\n",argv[1],strerror(errno));
+    fprintf(stderr, "%s: %s\n", argv[1], strerror(errno));
   return(0);
 }

@@ -37,21 +37,21 @@ static void set_buffers(char *bufs)
 {
   char *arg;
   int a,b;
-  arg = strtok(bufs,x_string);
+  arg = strtok(bufs, x_string);
   a = atoi(arg);
-  arg = strtok(NULL,x_string);
+  arg = strtok(NULL, x_string);
   b = atoi(arg);
-  mus_audio_set_oss_buffers(a,b);
+  mus_audio_set_oss_buffers(a, b);
 }
 #endif
 
 /* special case multicard quad code split out for clarity (it could be folded into the main branches) */
 
 #ifdef DEBUG_MEMORY
-void *mem_calloc(size_t len, size_t size, const char *func, const char *file, int line) {return(calloc(len,size));}
+void *mem_calloc(size_t len, size_t size, const char *func, const char *file, int line) {return(calloc(len, size));}
 void *mem_malloc(size_t len, const char *func, const char *file, int line) {return(malloc(len));}
 void mem_free(void *ptr, const char *func, const char *file, int line) {free(ptr);}
-void *mem_realloc(void *ptr, size_t size, const char *func, const char *file, int line) {return(realloc(ptr,size));}
+void *mem_realloc(void *ptr, size_t size, const char *func, const char *file, int line) {return(realloc(ptr, size));}
 #endif
 
 /* 22-Nov-00: moved alsa support to separate block */
@@ -80,8 +80,8 @@ int main(int argc, char *argv[])
    */
   for (i=1;i<argc;)
     {
-      if (strcmp(argv[i],"-describe") == 0) {mus_audio_describe(); exit(0);}
-      else if (strcmp(argv[i],"-buffers") == 0) {set_buffers(argv[i+1]); i++;}
+      if (strcmp(argv[i], "-describe") == 0) {mus_audio_describe(); exit(0);}
+      else if (strcmp(argv[i], "-buffers") == 0) {set_buffers(argv[i+1]); i++;}
       else name = argv[i];
       i++;
     }
@@ -94,17 +94,17 @@ int main(int argc, char *argv[])
   afd1 = -1;
   if (!(MUS_HEADER_TYPE_OK(mus_sound_header_type(name))))
     {
-      fprintf(stderr,"can't play %s (header type: %s?)\n",
+      fprintf(stderr, "can't play %s (header type: %s?)\n",
 	      name,
 	      mus_header_type_name(mus_header_type()));
       exit(0);
     }
   if (!(MUS_DATA_FORMAT_OK(mus_sound_data_format(name))))
     {
-      fprintf(stderr,"can't play %s (data format: %s (%s)?)\n",
+      fprintf(stderr, "can't play %s (data format: %s (%s)?)\n",
 	      name,
 	      mus_data_format_name(mus_sound_data_format(name)),
-	      mus_header_original_format_name(mus_sound_original_format(name),mus_sound_header_type(name)));
+	      mus_header_original_format_name(mus_sound_original_format(name), mus_sound_header_type(name)));
       exit(0);
     }
   fd = mus_sound_open_input(name);
@@ -113,7 +113,7 @@ int main(int argc, char *argv[])
       chans = mus_sound_chans(name);
       if (chans > 2)
 	{
-	  mus_audio_mixer_read(MUS_AUDIO_DEFAULT,MUS_AUDIO_CHANNEL,0,val);
+	  mus_audio_mixer_read(MUS_AUDIO_DEFAULT, MUS_AUDIO_CHANNEL, 0, val);
 	  if (val[0] < chans)
 	    {
 	      if (mus_audio_systems() > 1)
@@ -121,7 +121,7 @@ int main(int argc, char *argv[])
 	      /* I suppose we could count up all the channels here */
 	      else
 		{
-		  fprintf(stderr,"%s has %d channels, but we can only handle %d\n",name,chans,(int)(val[0]));
+		  fprintf(stderr, "%s has %d channels, but we can only handle %d\n", name, chans, (int)(val[0]));
 		  exit(1);
 		}
 	    }
@@ -131,16 +131,16 @@ int main(int argc, char *argv[])
       if (!use_multi_card_code)
 	{
 	  outbytes = BUFFER_SIZE * chans * 2;
-	  bufs = (MUS_SAMPLE_TYPE **)CALLOC(chans,sizeof(MUS_SAMPLE_TYPE *));
-	  for (i=0;i<chans;i++) bufs[i] = (MUS_SAMPLE_TYPE *)CALLOC(BUFFER_SIZE,sizeof(MUS_SAMPLE_TYPE));
-	  obuf = (short *)CALLOC(BUFFER_SIZE * chans,sizeof(short));
+	  bufs = (MUS_SAMPLE_TYPE **)CALLOC(chans, sizeof(MUS_SAMPLE_TYPE *));
+	  for (i=0;i<chans;i++) bufs[i] = (MUS_SAMPLE_TYPE *)CALLOC(BUFFER_SIZE, sizeof(MUS_SAMPLE_TYPE));
+	  obuf = (short *)CALLOC(BUFFER_SIZE * chans, sizeof(short));
 	  /* assume for lafs that our DAC wants 16-bit integers */
 	  for (i=0;i<frames;i+=BUFFER_SIZE)
 	    {
 	      if ((i+BUFFER_SIZE) <= frames)
 		curframes = BUFFER_SIZE;
 	      else curframes = frames-i;
-	      mus_sound_read(fd,0,curframes-1,chans,bufs); 
+	      mus_sound_read(fd, 0, curframes-1, chans, bufs); 
 	      /* some systems are happier if we read the file before opening the dac */
 	      /* at this point the data is in separate arrays of ints */
 	      if (chans == 1)
@@ -151,7 +151,7 @@ int main(int argc, char *argv[])
 		{
 		  if (chans == 2)
 		    {
-		      for (k=0,n=0;k<curframes;k++,n+=2) 
+		      for (k=0, n=0;k<curframes;k++,n+=2) 
 			{
 			  obuf[n] = MUS_SAMPLE_TO_SHORT(bufs[0][k]); 
 			  obuf[n+1] = MUS_SAMPLE_TO_SHORT(bufs[1][k]);
@@ -159,7 +159,7 @@ int main(int argc, char *argv[])
 		    }
 		  else
 		    {
-		      for (k=0,j=0;k<curframes;k++,j+=chans)
+		      for (k=0, j=0;k<curframes;k++,j+=chans)
 			{
 			  for (n=0;n<chans;n++) obuf[j+n] = MUS_SAMPLE_TO_SHORT(bufs[n][k]);
 			}
@@ -168,14 +168,14 @@ int main(int argc, char *argv[])
 	      if (afd == -1)
 		{
 #if defined(LINUX) && defined(PPC)
-		  afd = mus_audio_open_output(MUS_AUDIO_DEFAULT,srate,chans,MUS_COMPATIBLE_FORMAT,0);
+		  afd = mus_audio_open_output(MUS_AUDIO_DEFAULT, srate, chans, MUS_COMPATIBLE_FORMAT, 0);
 #else
-		  afd = mus_audio_open_output(MUS_AUDIO_DEFAULT,srate,chans,MUS_COMPATIBLE_FORMAT,outbytes);
+		  afd = mus_audio_open_output(MUS_AUDIO_DEFAULT, srate, chans, MUS_COMPATIBLE_FORMAT, outbytes);
 #endif
 		  if (afd == -1) break;
 		}
 	      outbytes = curframes * chans * 2;
-	      mus_audio_write(afd,(char *)obuf,outbytes);
+	      mus_audio_write(afd, (char *)obuf, outbytes);
 	    }
 	  if (afd != -1) mus_audio_close(afd);
 	  mus_sound_close_input(fd);
@@ -201,18 +201,18 @@ int main(int argc, char *argv[])
 	   */
 	  buffer_size = 256;   /* 128 probably better */
 	  outbytes = buffer_size * 2 * 2; 
-	  qbufs = (MUS_SAMPLE_TYPE **)CALLOC(chans,sizeof(MUS_SAMPLE_TYPE *));
-	  for (i=0;i<chans;i++) qbufs[i] = (MUS_SAMPLE_TYPE *)CALLOC(buffer_size,sizeof(MUS_SAMPLE_TYPE));
-	  obuf0 = (short *)CALLOC(buffer_size * 2,sizeof(short));
-	  obuf1 = (short *)CALLOC(buffer_size * 2,sizeof(short));
+	  qbufs = (MUS_SAMPLE_TYPE **)CALLOC(chans, sizeof(MUS_SAMPLE_TYPE *));
+	  for (i=0;i<chans;i++) qbufs[i] = (MUS_SAMPLE_TYPE *)CALLOC(buffer_size, sizeof(MUS_SAMPLE_TYPE));
+	  obuf0 = (short *)CALLOC(buffer_size * 2, sizeof(short));
+	  obuf1 = (short *)CALLOC(buffer_size * 2, sizeof(short));
 	  for (i=0;i<frames;i+=buffer_size)
 	    {
 	      if ((i+buffer_size) <= frames)
 		curframes = buffer_size;
 	      else curframes = frames-i;
-	      mus_sound_read(fd,0,curframes-1,chans,qbufs); 
+	      mus_sound_read(fd, 0, curframes-1, chans, qbufs); 
 	      val[0] = 1.0;
-	      for (k=0,n=0;k<buffer_size;k++,n+=2) 
+	      for (k=0, n=0;k<buffer_size;k++,n+=2) 
 		{
 		  obuf0[n] = MUS_SAMPLE_TO_SHORT(qbufs[0][k]); 
 		  obuf0[n+1] = MUS_SAMPLE_TO_SHORT(qbufs[1][k]);
@@ -221,12 +221,12 @@ int main(int argc, char *argv[])
 		}
 	      if (afd0 == -1)
 		{
-		  afd0 = mus_audio_open_output(MUS_AUDIO_PACK_SYSTEM(0) | MUS_AUDIO_DEFAULT,srate,2,MUS_COMPATIBLE_FORMAT,outbytes);
-		  afd1 = mus_audio_open_output(MUS_AUDIO_PACK_SYSTEM(1) | MUS_AUDIO_DEFAULT,srate,2,MUS_COMPATIBLE_FORMAT,outbytes);
+		  afd0 = mus_audio_open_output(MUS_AUDIO_PACK_SYSTEM(0) | MUS_AUDIO_DEFAULT, srate, 2, MUS_COMPATIBLE_FORMAT, outbytes);
+		  afd1 = mus_audio_open_output(MUS_AUDIO_PACK_SYSTEM(1) | MUS_AUDIO_DEFAULT, srate, 2, MUS_COMPATIBLE_FORMAT, outbytes);
 		  if ((afd0 == -1) || (afd1 == -1)) break;
 		}
-	      mus_audio_write(afd0,(char *)obuf0,outbytes);
-	      mus_audio_write(afd1,(char *)obuf1,outbytes);
+	      mus_audio_write(afd0, (char *)obuf0, outbytes);
+	      mus_audio_write(afd1, (char *)obuf1, outbytes);
 	    }
 	  mus_audio_close(afd0);
 	  mus_audio_close(afd1);
@@ -256,7 +256,7 @@ static int mus_audio_compatible_format(int dev)
   int err, i;
   float val[32];
   int ival[32];
-  err = mus_audio_mixer_read(dev,MUS_AUDIO_FORMAT,32,val);
+  err = mus_audio_mixer_read(dev, MUS_AUDIO_FORMAT, 32, val);
   if (err != MUS_ERROR)
     {
       for (i=0;i<=(int)(val[0]);i++) ival[i] = (int)(val[i]);
@@ -311,8 +311,8 @@ int main(int argc, char *argv[])
    */
   for (i=1;i<argc;)
     {
-      if (strcmp(argv[i],"-describe") == 0) {mus_audio_describe(); exit(0);}
-      else if (strcmp(argv[i],"-buffers") == 0) {set_buffers(argv[i+1]); i++;}
+      if (strcmp(argv[i], "-describe") == 0) {mus_audio_describe(); exit(0);}
+      else if (strcmp(argv[i], "-buffers") == 0) {set_buffers(argv[i+1]); i++;}
       else name = argv[i];
       i++;
     }
@@ -321,17 +321,17 @@ int main(int argc, char *argv[])
   afd1 = -1;
   if (!(MUS_HEADER_TYPE_OK(mus_sound_header_type(name))))
     {
-      fprintf(stderr,"can't play %s (header type: %s?)\n",
+      fprintf(stderr, "can't play %s (header type: %s?)\n",
 	      name,
 	      mus_header_type_name(mus_header_type()));
       exit(0);
     }
   if (!(MUS_DATA_FORMAT_OK(mus_sound_data_format(name))))
     {
-      fprintf(stderr,"can't play %s (data format: %s (%s)?)\n",
+      fprintf(stderr, "can't play %s (data format: %s (%s)?)\n",
 	      name,
 	      mus_data_format_name(mus_sound_data_format(name)),
-	      mus_header_original_format_name(mus_sound_original_format(name),mus_sound_header_type(name)));
+	      mus_header_original_format_name(mus_sound_original_format(name), mus_sound_header_type(name)));
       exit(0);
     }
   fd = mus_sound_open_input(name);
@@ -452,15 +452,15 @@ int main(int argc, char *argv[])
       /* allocate the list of read buffers, each buffer will hold one channel
 	 of the input soundfile, each sample is going to be MUS_SAMPLE_TYPE
       */
-      read_bufs = (MUS_SAMPLE_TYPE **)CALLOC(alloc_chans,sizeof(MUS_SAMPLE_TYPE *));
+      read_bufs = (MUS_SAMPLE_TYPE **)CALLOC(alloc_chans, sizeof(MUS_SAMPLE_TYPE *));
       for (d=0;d<allocated;d++)
 	{
 	  int dev = out_devs[d];
 	  for (i=0;i<out_chans[d];i++) 
-	    read_bufs[base+i] = (MUS_SAMPLE_TYPE *)CALLOC(samples_per_chan,sizeof(MUS_SAMPLE_TYPE));
+	    read_bufs[base+i] = (MUS_SAMPLE_TYPE *)CALLOC(samples_per_chan, sizeof(MUS_SAMPLE_TYPE));
 	  base+=out_chans[d];
 	  out_bytes[dev] = samples_per_chan * out_chans[d] * mus_data_format_to_bytes_per_sample(out_format[dev]);
-	  out_buf[dev] = (short *)CALLOC(out_bytes[dev],1);
+	  out_buf[dev] = (short *)CALLOC(out_bytes[dev], 1);
 	}
       for (i=0;i<frames;i+=samples_per_chan)
 	{
@@ -468,14 +468,14 @@ int main(int argc, char *argv[])
 	  if ((i+samples_per_chan) <= frames)
 	    curframes = samples_per_chan;
 	  else curframes = frames-i;
-	  mus_sound_read(fd,0,curframes-1,chans,read_bufs); 
+	  mus_sound_read(fd, 0, curframes-1, chans, read_bufs); 
 	  /* some systems are happier if we read the file before opening the dac */
 	  /* at this point the data is in separate arrays of MUS_SAMPLE_TYPE */
 	  for (d=0;d<allocated;d++)
 	    {
 	      int dev = out_devs[d];
 	      mus_file_write_buffer(out_format[dev],
-				    0,samples_per_chan-1,
+				    0, samples_per_chan-1,
 				    out_chans[d],
 				    dev_bufs,
 				    (char *)(out_buf[dev]),
@@ -483,13 +483,13 @@ int main(int argc, char *argv[])
 	      if (afd[dev] == -1)
 		{
 #if defined(PPC)
-		  afd[dev] = mus_audio_open_output(devices[dev],srate,out_chans[d],out_format[dev],0);
+		  afd[dev] = mus_audio_open_output(devices[dev], srate, out_chans[d], out_format[dev], 0);
 #else
-		  afd[dev] = mus_audio_open_output(devices[dev],srate,out_chans[d],out_format[dev],out_bytes[dev]);
+		  afd[dev] = mus_audio_open_output(devices[dev], srate, out_chans[d], out_format[dev], out_bytes[dev]);
 #endif
 		  if (afd[dev] == -1) break; 
 		}
-	      mus_audio_write(afd[dev],(char *)out_buf[dev],out_bytes[dev]);
+	      mus_audio_write(afd[dev], (char *)out_buf[dev], out_bytes[dev]);
 	      dev_bufs+=out_chans[d];
 	    }
 	}

@@ -114,7 +114,7 @@ typedef struct mus__any_class {
   int   (*release)(void *ptr);
   char  *(*describe)(void *ptr);
   char  *(*inspect)(void *ptr);
-  int   (*equalp)(void *gen1,void *gen2);
+  int   (*equalp)(void *gen1, void *gen2);
   Float *(*data)(void *ptr);
   Float *(*set_data)(void *ptr, Float *new_data);
   int   (*length)(void *ptr);
@@ -181,7 +181,7 @@ enum {MUS_RECTANGULAR_WINDOW,MUS_HANNING_WINDOW,MUS_WELCH_WINDOW,MUS_PARZEN_WIND
       MUS_EXPONENTIAL_WINDOW,MUS_RIEMANN_WINDOW,MUS_KAISER_WINDOW,MUS_CAUCHY_WINDOW,MUS_POISSON_WINDOW,
       MUS_GAUSSIAN_WINDOW,MUS_TUKEY_WINDOW,MUS_DOLPH_CHEBYSHEV_WINDOW};
 
-#define MUS_RUN(GEN,ARG1,ARG2) 	((*((GEN->core)->run))(GEN,ARG1,ARG2))
+#define MUS_RUN(GEN, ARG1, ARG2) 	((*((GEN->core)->run))(GEN, ARG1, ARG2))
 #define MUS_RUN_P(GEN) 	        ((GEN->core)->run)
 
 
@@ -203,8 +203,8 @@ int mus_set_array_print_length  PROTO((int val));
 Float mus_sin                   PROTO((Float phase));
 Float mus_sum_of_sines          PROTO((Float *amps, Float *phases, int size));
 
-Float mus_ring_modulate         PROTO((Float s1,Float s2));
-Float mus_amplitude_modulate    PROTO((Float s1,Float s2, Float s3));
+Float mus_ring_modulate         PROTO((Float s1, Float s2));
+Float mus_amplitude_modulate    PROTO((Float s1, Float s2, Float s3));
 Float mus_contrast_enhancement  PROTO((Float sig, Float index));
 Float mus_dot_product           PROTO((Float *data1, Float *data2, int size));
 void mus_clear_array            PROTO((Float *arr, int size));
@@ -385,7 +385,7 @@ Float mus_env_interp            PROTO((Float x, mus_any *env));
 
 int mus_frame_p                 PROTO((mus_any *ptr));
 mus_frame *mus_make_empty_frame PROTO((int chans));
-mus_frame *mus_make_frame       PROTO((int chans,...));
+mus_frame *mus_make_frame       PROTO((int chans, ...));
 mus_frame *mus_frame_add        PROTO((mus_frame *f1, mus_frame *f2, mus_frame *res));
 mus_frame *mus_frame_multiply   PROTO((mus_frame *f1, mus_frame *f2, mus_frame *res));
 Float mus_frame_ref             PROTO((mus_frame *f, int chan));
@@ -395,7 +395,7 @@ Float *mus_frame_data           PROTO((mus_frame *f));
 int mus_mixer_p                 PROTO((mus_any *ptr));
 mus_mixer *mus_make_empty_mixer PROTO((int chans));
 mus_mixer *mus_make_identity_mixer PROTO((int chans));
-mus_mixer *mus_make_mixer       PROTO((int chans,...));
+mus_mixer *mus_make_mixer       PROTO((int chans, ...));
 Float **mus_mixer_data          PROTO((mus_mixer *f));
 Float mus_mixer_ref             PROTO((mus_mixer *f, int in, int out));
 Float mus_mixer_set             PROTO((mus_mixer *f, int in, int out, Float val));
@@ -467,7 +467,7 @@ void mus_convolve_files         PROTO((const char *file1, const char *file2, Flo
 
 int mus_granulate_p             PROTO((mus_any *ptr));
 Float mus_granulate             PROTO((mus_any *ptr, Float (*input)(void *arg, int direction)));
-mus_any *mus_make_granulate     PROTO((Float (*input)(void *arg,int direction), 
+mus_any *mus_make_granulate     PROTO((Float (*input)(void *arg, int direction), 
 				       Float expansion, Float length, Float scaler, 
 				       Float hop, Float ramp, Float jitter, int max_size, void *environ));
 int mus_ramp                    PROTO((mus_any *ptr));
@@ -485,14 +485,14 @@ Float mus_apply                 PROTO((mus_any *gen, ...));
 Float mus_bank                  PROTO((mus_any **gens, Float *scalers, Float *arg1, Float *arg2, int size));
 
 int mus_phase_vocoder_p         PROTO((mus_any *ptr));
-mus_any *mus_make_phase_vocoder PROTO((Float (*input)(void *arg,int direction), 
+mus_any *mus_make_phase_vocoder PROTO((Float (*input)(void *arg, int direction), 
 				       int fftsize, int overlap, int interp,
 				       Float pitch,
 				       int (*analyze)(void *arg, Float (*input)(void *arg1, int direction)),
 				       int (*edit)(void *arg), 
 				       Float (*synthesize)(void *arg), 
 				       void *environ));
-Float mus_phase_vocoder         PROTO((mus_any *ptr, Float (*input)(void *arg,int direction)));
+Float mus_phase_vocoder         PROTO((mus_any *ptr, Float (*input)(void *arg, int direction)));
 
 /* temporary names -- can't immediately think of better ones */
 Float *mus_phase_vocoder_ampinc PROTO((void *ptr));

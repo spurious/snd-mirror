@@ -17,7 +17,7 @@
 
 static void c_io_bufclr (int *io, int *datai, int beg)
 {
-  int i,k,end;
+  int i, k, end;
   MUS_SAMPLE_TYPE *j;
   if (io[SND_IO_DATS+SND_AREF_BLOCK] == 0)
     snd_error("attempt to clear deallocated IO buffer");
@@ -53,7 +53,7 @@ static void reposition_file_buffers_1(int loc, int *io, int *datai)
   if (bytes < 0)                   /* tried to access beyond current end of file */
     {
       io[SND_IO_BEG] = loc; 
-      c_io_bufclr(io,datai,0);
+      c_io_bufclr(io, datai, 0);
     }
   else /* bytes is positive or 0 */
     {
@@ -64,24 +64,24 @@ static void reposition_file_buffers_1(int loc, int *io, int *datai)
       if (bytes > 0) 
 	{
 #if LONG_INT_P
-	  bufs = (MUS_SAMPLE_TYPE **)CALLOC(io[SND_IO_CHANS],sizeof(MUS_SAMPLE_TYPE *));
+	  bufs = (MUS_SAMPLE_TYPE **)CALLOC(io[SND_IO_CHANS], sizeof(MUS_SAMPLE_TYPE *));
 	  for (i=0;i<io[SND_IO_CHANS];i++) 
 	    bufs[i] = MUS_SAMPLE_ARRAY(datai[io[SND_IO_DATS + SND_AREF_BLOCK]+i]);
 	  mus_file_read_chans(io[SND_IO_FD],
-			      0,bytes-1,
+			      0, bytes-1,
 			      io[SND_IO_CHANS],
 			      bufs,
 			      (MUS_SAMPLE_TYPE *)bufs);
 	  FREE(bufs);
 #else
 	  mus_file_read_chans(io[SND_IO_FD],
-			      0,bytes-1,
+			      0, bytes-1,
 			      io[SND_IO_CHANS],
 			      (MUS_SAMPLE_TYPE **)(datai+io[SND_IO_DATS + SND_AREF_BLOCK]),
 			      (MUS_SAMPLE_TYPE *)(datai+io[SND_IO_DATS + SND_AREF_BLOCK]));
 #endif
 	}
-      if (bytes < io[SND_IO_BUFSIZ]) c_io_bufclr(io,datai,bytes);
+      if (bytes < io[SND_IO_BUFSIZ]) c_io_bufclr(io, datai, bytes);
       bufend = io[SND_IO_BUFSIZ]-1;
       filbytes = file_end-io[SND_IO_BEG]-1;
       if (filbytes < bufend) bufend = filbytes;
@@ -108,7 +108,7 @@ static void reposition_file_buffers(snd_data *sd, int index)
       if (fd == -1) 
 	{
 	  /* our file has disappeared?!? */
-	  snd_error("%s is unreadable? open: %s",sd->filename,strerror(errno));
+	  snd_error("%s is unreadable? open: %s", sd->filename, strerror(errno));
 	  return;
 	}
       hdr = sd->hdr;
@@ -120,14 +120,14 @@ static void reposition_file_buffers(snd_data *sd, int index)
 			       hdr->data_location,
 			       hdr->chans,
 			       hdr->type);
-      during_open(fd,sd->filename,SND_REOPEN_CLOSED_FILE);
+      during_open(fd, sd->filename, SND_REOPEN_CLOSED_FILE);
       /* fix up io[SND_IO_FD] and whatever else is clobbered by mus_file_close */
       sd->io[SND_IO_FD] = fd;
       sd->open = FD_OPEN;
       reclose = 1;
     }
 
-  reposition_file_buffers_1(index,sd->io,sd->io);
+  reposition_file_buffers_1(index, sd->io, sd->io);
 
   if (reclose)
     {
@@ -145,10 +145,10 @@ int *make_file_state(int fd, file_info *hdr, int chan, int suggested_bufsize)
   chansize = (hdr->samples/hdr->chans); /* this can be bogus if the header is messed up */
 #if DEBUGGING
   if (chansize < 0)
-    fprintf(stderr,"%s: chansize: %d = %d / %d (samps/chans)",hdr->name,chansize,hdr->samples,hdr->chans);
+    fprintf(stderr, "%s: chansize: %d = %d / %d (samps/chans)", hdr->name, chansize, hdr->samples, hdr->chans);
 #endif
   if ((chansize > 0) && (bufsize > chansize)) bufsize = chansize+1;
-  datai = (int *)CALLOC(SND_IO_DATS + SND_AREF_HEADER_SIZE + hdr->chans + 2,sizeof(int)); /* why the +2?? */
+  datai = (int *)CALLOC(SND_IO_DATS + SND_AREF_HEADER_SIZE + hdr->chans + 2, sizeof(int)); /* why the +2?? */
   datai[SND_IO_FD] = fd;
   datai[SND_IO_CHANS] = hdr->chans;
   datai[SND_IO_SIZE] = chansize;
@@ -159,7 +159,7 @@ int *make_file_state(int fd, file_info *hdr, int chan, int suggested_bufsize)
   datai[SND_IO_DATS+SND_AREF_BLOCK] = SND_IO_DATS + SND_AREF_HEADER_SIZE;
   datai[SND_IO_DATS+SND_AREF_SIZE] = hdr->chans;
   datai[SND_IO_DATS + SND_AREF_HEADER_SIZE + chan] = (int)(MUS_MAKE_SAMPLE_ARRAY(bufsize));
-  reposition_file_buffers_1(0,datai,datai); /* get ready to read -- we're assuming mus_file_read_chans here */
+  reposition_file_buffers_1(0, datai, datai); /* get ready to read -- we're assuming mus_file_read_chans here */
   return(datai);
 }
 
@@ -167,7 +167,7 @@ int *make_file_state(int fd, file_info *hdr, int chan, int suggested_bufsize)
 int *make_zero_file_state(int size)
 {
   int *datai;
-  datai = (int *)CALLOC(SND_IO_DATS + SND_AREF_HEADER_SIZE + 1 + 2,sizeof(int));
+  datai = (int *)CALLOC(SND_IO_DATS + SND_AREF_HEADER_SIZE + 1 + 2, sizeof(int));
   datai[SND_IO_FD] = -1;
   datai[SND_IO_CHANS] = 1;
   datai[SND_IO_SIZE] = size;
@@ -207,7 +207,7 @@ void file_buffers_forward(int ind0, int ind1, int indx, snd_fd *sf, snd_data *cu
 {
   /* need to track in-core buffer and file-relative index */
   if ((indx < cur_snd->io[SND_IO_BEG]) || (indx > cur_snd->io[SND_IO_END])) 
-    reposition_file_buffers(cur_snd,indx);
+    reposition_file_buffers(cur_snd, indx);
   sf->view_buffered_data = (MUS_SAMPLE_TYPE *)(cur_snd->buffered_data + indx - cur_snd->io[SND_IO_BEG]);
   /* only indx is guaranteed to be within the current in-core buffer */
 
@@ -232,7 +232,7 @@ void file_buffers_forward(int ind0, int ind1, int indx, snd_fd *sf, snd_data *cu
 void file_buffers_back(int ind0, int ind1, int indx, snd_fd *sf, snd_data *cur_snd)
 {
   if ((indx > cur_snd->io[SND_IO_END]) || (indx < cur_snd->io[SND_IO_BEG])) 
-    reposition_file_buffers(cur_snd,indx - cur_snd->io[SND_IO_BUFSIZ] + 1);
+    reposition_file_buffers(cur_snd, indx - cur_snd->io[SND_IO_BUFSIZ] + 1);
   sf->view_buffered_data = (MUS_SAMPLE_TYPE *)(cur_snd->buffered_data + indx - cur_snd->io[SND_IO_BEG]);
 
   if (ind1 <= cur_snd->io[SND_IO_END])
@@ -265,13 +265,13 @@ MUS_SAMPLE_TYPE snd_file_read_sample(snd_data *ur_sd, int index, chan_info *cp)
   /* not in current buffer, so create a new reader and go looking for it */
   if (ur_sd->inuse) 
     {
-      sd = copy_snd_data(ur_sd,cp,4); 
+      sd = copy_snd_data(ur_sd, cp, 4); 
       copied = 1;
     } 
   else sd = ur_sd;
   sd->inuse = TRUE;
   if ((index < sd->io[SND_IO_BEG]) || (index > sd->io[SND_IO_END])) 
-    reposition_file_buffers(sd,index);
+    reposition_file_buffers(sd, index);
   val = sd->buffered_data[index - sd->io[SND_IO_BEG]];
   if (copied) 
     {
@@ -323,9 +323,9 @@ static int too_many_files_cleanup(snd_state *ss)
   int *closed;
   int rtn;
   rtn = -1;
-  closed = (int *)CALLOC(1,sizeof(int));
+  closed = (int *)CALLOC(1, sizeof(int));
   (*closed) = 0;
-  map_over_chans(ss,close_temp_files,(void *)closed);
+  map_over_chans(ss, close_temp_files, (void *)closed);
   if ((*closed) == 0) rtn = -1; else rtn = (*closed);
   FREE(closed);
   return(rtn);
@@ -334,12 +334,12 @@ static int too_many_files_cleanup(snd_state *ss)
 int snd_open_read(snd_state *ss, char *arg) 
 {
   int fd;
-  fd = open(arg,O_RDONLY,0);
+  fd = open(arg, O_RDONLY, 0);
   if ((fd == -1) && (errno == EMFILE))
     {
       fd = too_many_files_cleanup(ss);
-      if (fd != -1) fd = open(arg,O_RDONLY,0);
-      if (fd == -1) snd_error("%s: %s",arg,strerror(errno));
+      if (fd != -1) fd = open(arg, O_RDONLY, 0);
+      if (fd == -1) snd_error("%s: %s", arg, strerror(errno));
     }
   return(fd);
 }
@@ -350,14 +350,14 @@ int snd_overwrite_ok(snd_state *ss, char *ofile)
   if (ask_before_overwrite(ss))
     {
 #ifndef _MSC_VER
-      fil = open(ofile,O_RDONLY,O_NONBLOCK);
+      fil = open(ofile, O_RDONLY, O_NONBLOCK);
 #else
-      fil = open(ofile,O_RDONLY);
+      fil = open(ofile, O_RDONLY);
 #endif
       if (fil != -1) 
 	{
 	  close(fil);
-	  rtn = snd_yes_or_no_p(ss,"%s exists. Overwrite?",ofile);
+	  rtn = snd_yes_or_no_p(ss, "%s exists. Overwrite?", ofile);
 	}
     }
   return(rtn);
@@ -366,12 +366,12 @@ int snd_overwrite_ok(snd_state *ss, char *ofile)
 int snd_reopen_write(snd_state *ss, char *arg)
 {
   int fd;
-  fd = open(arg,O_RDWR,0);
+  fd = open(arg, O_RDWR, 0);
   if ((fd == -1) && (errno == EMFILE))
     {
       fd = too_many_files_cleanup(ss);
-      if (fd != -1) fd = open(arg,O_RDWR,0);
-      if (fd == -1) snd_error("%s: %s",arg,strerror(errno));
+      if (fd != -1) fd = open(arg, O_RDWR, 0);
+      if (fd == -1) snd_error("%s: %s", arg, strerror(errno));
     }
   return(fd);
 }
@@ -381,12 +381,12 @@ int snd_write_header(snd_state *ss, char *name, int type, int srate, int chans, 
   int fd;
   mus_sound_forget(name);
   mus_header_set_aiff_loop_info(loops);
-  fd = mus_header_write(name,type,srate,chans,loc,size,format,comment,len);
+  fd = mus_header_write(name, type, srate, chans, loc, size, format, comment, len);
   if ((fd == -1) && (errno == EMFILE)) /* 0 => no error (fd not actually returned unless it's -1) */
     {
       fd = too_many_files_cleanup(ss);
-      if (fd != -1) fd = mus_header_write(name,type,srate,chans,loc,size,format,comment,len);
-      if (fd == -1) snd_error("%s: %s",name,strerror(errno));
+      if (fd != -1) fd = mus_header_write(name, type, srate, chans, loc, size, format, comment, len);
+      if (fd == -1) snd_error("%s: %s", name, strerror(errno));
     }
   mus_header_set_aiff_loop_info(NULL);
   return(fd);

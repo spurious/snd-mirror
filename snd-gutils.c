@@ -14,7 +14,7 @@ int set_help_text_font(snd_state *ss, char *font)
   fs = gdk_font_load(font);
   if (fs)
     {
-      in_set_help_text_font(ss,font);
+      in_set_help_text_font(ss, font);
       sgx->help_text_fnt = fs;
       return(TRUE);
     }
@@ -29,7 +29,7 @@ int set_tiny_font(snd_state *ss, char *font)
   fs = gdk_font_load(font);
   if (fs)
     {
-      in_set_tiny_font(ss,font);
+      in_set_tiny_font(ss, font);
       sgx->tiny_fnt = fs;
       return(TRUE);
     }
@@ -42,7 +42,7 @@ int set_listener_font(snd_state *ss, char *font)
   fs = gdk_font_load(font);
   if (fs)
     {
-      in_set_listener_font(ss,font);
+      in_set_listener_font(ss, font);
       (ss->sgx)->listener_fnt = fs;
       return(TRUE);
     }
@@ -55,7 +55,7 @@ int set_button_font(snd_state *ss, char *font)
   fs = gdk_font_load(font);
   if (fs)
     {
-      in_set_button_font(ss,font);
+      in_set_button_font(ss, font);
       (ss->sgx)->button_fnt = fs;
       return(TRUE);
     }
@@ -68,7 +68,7 @@ int set_bold_button_font(snd_state *ss, char *font)
   fs = gdk_font_load(font);
   if (fs)
     {
-      in_set_bold_button_font(ss,font);
+      in_set_bold_button_font(ss, font);
       (ss->sgx)->bold_button_fnt = fs;
       return(TRUE);
     }
@@ -81,7 +81,7 @@ int set_axis_label_font(snd_state *ss, char *font)
   fs = gdk_font_load(font);
   if (fs)
     {
-      in_set_axis_label_font(ss,font);
+      in_set_axis_label_font(ss, font);
       (ss->sgx)->axis_label_fnt = fs;
       return(TRUE);
     }
@@ -94,7 +94,7 @@ int set_axis_numbers_font(snd_state *ss, char *font)
   fs = gdk_font_load(font);
   if (fs)
     {
-      in_set_axis_numbers_font(ss,font);
+      in_set_axis_numbers_font(ss, font);
       (ss->sgx)->axis_numbers_fnt = fs;
       return(TRUE);
     }
@@ -104,33 +104,33 @@ int set_axis_numbers_font(snd_state *ss, char *font)
 
 void activate_numbers_font(axis_context *ax)
 {
-  gdk_gc_set_font(ax->gc,AXIS_NUMBERS_FONT(ax->ss));
+  gdk_gc_set_font(ax->gc, AXIS_NUMBERS_FONT(ax->ss));
   ax->current_font = AXIS_NUMBERS_FONT(ax->ss);
 }
    
 void activate_button_font(axis_context *ax, snd_state *ss)
 {
-  gdk_gc_set_font(ax->gc,(ss->sgx)->button_fnt);
+  gdk_gc_set_font(ax->gc, (ss->sgx)->button_fnt);
   ax->current_font = (ss->sgx)->button_fnt;
 }
 
 void activate_label_font(axis_context *ax)
 {
-  gdk_gc_set_font(ax->gc,AXIS_LABEL_FONT(ax->ss));
+  gdk_gc_set_font(ax->gc, AXIS_LABEL_FONT(ax->ss));
   ax->current_font = AXIS_LABEL_FONT(ax->ss);
 }
 
 int label_width(axis_context *ax, char *txt)
 {
   if (txt)
-    return(gdk_text_width(AXIS_LABEL_FONT(ax->ss),(gchar *)txt,(gint)strlen(txt)));
+    return(gdk_text_width(AXIS_LABEL_FONT(ax->ss), (gchar *)txt, (gint)strlen(txt)));
   else return(0);
 }
 
 int mark_name_width(snd_state *ss, char *txt)
 {
   if (txt)
-    return(gdk_text_width((ss->sgx)->button_fnt,(gchar *)txt,(gint)strlen(txt)));
+    return(gdk_text_width((ss->sgx)->button_fnt, (gchar *)txt, (gint)strlen(txt)));
   return(0);
 }
 
@@ -138,21 +138,21 @@ int mark_name_width(snd_state *ss, char *txt)
 int number_width(axis_context *ax, char *num)
 {
   if (num)
-    return(gdk_text_width(AXIS_NUMBERS_FONT(ax->ss),(gchar *)num,(gint)strlen(num)));
+    return(gdk_text_width(AXIS_NUMBERS_FONT(ax->ss), (gchar *)num, (gint)strlen(num)));
   return(0);
 }
 
 int number_height(axis_context *ax)
 {
   gint lb,rb,asc,des,wid;
-  gdk_text_extents(AXIS_NUMBERS_FONT(ax->ss),"1",1,&lb,&rb,&wid,&asc,&des);
+  gdk_text_extents(AXIS_NUMBERS_FONT(ax->ss), "1", 1, &lb, &rb, &wid, &asc, &des);
   return(asc+des);
 }
 
 int label_height(axis_context *ax)
 {
   gint lb,rb,asc,des,wid;
-  gdk_text_extents(AXIS_LABEL_FONT(ax->ss),"1",1,&lb,&rb,&wid,&asc,&des);
+  gdk_text_extents(AXIS_LABEL_FONT(ax->ss), "1", 1, &lb, &rb, &wid, &asc, &des);
   return(asc+des);
 }
 
@@ -169,10 +169,10 @@ void map_over_children (GtkWidget *w, void (*func)(GtkWidget *w, gpointer ptr), 
 
   if (w)
     {
-      (*func)(w,userptr);
+      (*func)(w, userptr);
       if (GTK_IS_CONTAINER(w))
 	{
-	  gtk_container_foreach(GTK_CONTAINER(w),func,(gpointer)userptr);
+	  gtk_container_foreach(GTK_CONTAINER(w), func, (gpointer)userptr);
 	}
     }
 }
@@ -180,18 +180,18 @@ void map_over_children (GtkWidget *w, void (*func)(GtkWidget *w, gpointer ptr), 
 #if 0
 static int unset_key_focus_1(GtkWidget *w, void *ptr)
 {
-  GTK_WIDGET_UNSET_FLAGS(w,GTK_CAN_FOCUS);
+  GTK_WIDGET_UNSET_FLAGS(w, GTK_CAN_FOCUS);
   return(0);
 }
 
 void unset_key_focus(GtkWidget *w)
 {
-  unset_key_focus_1(w,NULL);
-  map_over_children(w,unset_key_focus_1,NULL);
+  unset_key_focus_1(w, NULL);
+  map_over_children(w, unset_key_focus_1, NULL);
 }
 #endif
 
-void set_background(GtkWidget *w,GdkColor *col)
+void set_background(GtkWidget *w, GdkColor *col)
 { 
   GtkStyle *style;
   style = gtk_style_copy(gtk_widget_get_style(w));
@@ -199,10 +199,10 @@ void set_background(GtkWidget *w,GdkColor *col)
   style->bg[GTK_STATE_NORMAL].red = col->red;
   style->bg[GTK_STATE_NORMAL].green = col->green;
   style->bg[GTK_STATE_NORMAL].blue = col->blue;
-  gtk_widget_set_style(w,style);
+  gtk_widget_set_style(w, style);
 }
 
-void set_backgrounds(GtkWidget *w,GdkColor *col)
+void set_backgrounds(GtkWidget *w, GdkColor *col)
 { 
   GtkStyle *style;
   int i;
@@ -214,11 +214,11 @@ void set_backgrounds(GtkWidget *w,GdkColor *col)
       style->bg[i].green = col->green;
       style->bg[i].blue = col->blue;
     }
-  gtk_widget_set_style(w,style);
+  gtk_widget_set_style(w, style);
 }
 
 
-void set_active_color(GtkWidget *w,GdkColor *col)
+void set_active_color(GtkWidget *w, GdkColor *col)
 { 
   GtkStyle *style;
   style = gtk_style_copy(gtk_widget_get_style(w));
@@ -226,16 +226,16 @@ void set_active_color(GtkWidget *w,GdkColor *col)
   style->bg[GTK_STATE_ACTIVE].red = col->red;
   style->bg[GTK_STATE_ACTIVE].green = col->green;
   style->bg[GTK_STATE_ACTIVE].blue = col->blue;
-  gtk_widget_set_style(w,style);
+  gtk_widget_set_style(w, style);
 }
 
-void set_background_and_redraw(GtkWidget *w,GdkColor *col) 
+void set_background_and_redraw(GtkWidget *w, GdkColor *col) 
 {
-  set_background(w,col);
+  set_background(w, col);
   gtk_widget_queue_draw(w);
 }
 
-void set_foreground(GtkWidget *w,GdkColor *col)
+void set_foreground(GtkWidget *w, GdkColor *col)
 { 
   GtkStyle *style;
   style = gtk_style_copy(gtk_widget_get_style(w));
@@ -243,13 +243,13 @@ void set_foreground(GtkWidget *w,GdkColor *col)
   style->fg[GTK_STATE_NORMAL].red = col->red;
   style->fg[GTK_STATE_NORMAL].green = col->green;
   style->fg[GTK_STATE_NORMAL].blue = col->blue;
-  gtk_widget_set_style(w,style);
+  gtk_widget_set_style(w, style);
 }
 
 #if 0
-void set_foreground_and_redraw(GtkWidget *w,GdkColor *col) 
+void set_foreground_and_redraw(GtkWidget *w, GdkColor *col) 
 {
-  set_foreground(w,col);
+  set_foreground(w, col);
   gtk_widget_queue_draw(w);
 }
 #endif
@@ -262,7 +262,7 @@ void set_text_background(GtkWidget *w, GdkColor *col)
   style->base[GTK_STATE_NORMAL].red = col->red;
   style->base[GTK_STATE_NORMAL].green = col->green;
   style->base[GTK_STATE_NORMAL].blue = col->blue;
-  gtk_widget_set_style(w,style);
+  gtk_widget_set_style(w, style);
 }
 
 #if 0
@@ -272,8 +272,8 @@ static void set_main_color_of_widget (GtkWidget *w, gpointer userptr)
   if (GTK_IS_WIDGET(w))
     {
       if ((GTK_IS_HSCROLLBAR(w)) || (GTK_IS_VSCROLLBAR(w)))
-	set_background(w,(ss->sgx)->position_color);
-      else set_background(w,(ss->sgx)->basic_color);
+	set_background(w, (ss->sgx)->position_color);
+      else set_background(w, (ss->sgx)->basic_color);
       gtk_widget_queue_draw(w);
     }
 }
@@ -285,17 +285,17 @@ void set_pushed_button_colors(GtkWidget *w, snd_state *ss)
   style = gtk_style_copy(gtk_widget_get_style(w));
   style->bg[GTK_STATE_ACTIVE] = (*((ss->sgx)->pushed_button_color));
   style->bg[GTK_STATE_NORMAL] = (*((ss->sgx)->basic_color));
-  gtk_widget_set_style(w,style);
+  gtk_widget_set_style(w, style);
 }
 
 void highlight_color(snd_state *ss, GtkWidget *w)
 {
-  set_background(w,(ss->sgx)->highlight_color);
+  set_background(w, (ss->sgx)->highlight_color);
 }
 
 void white_color(snd_state *ss, GtkWidget *w)
 {
-  set_background(w,(ss->sgx)->white);
+  set_background(w, (ss->sgx)->white);
 }
 
 void raise_dialog(GtkWidget *w)
@@ -314,38 +314,38 @@ void raise_widget(GtkWidget *w)
   gdk_window_raise(w->window);
 }
 
-void set_button_label_normal(GtkWidget *button,const char *str)
+void set_button_label_normal(GtkWidget *button, const char *str)
 {
   GtkStyle *style;
   snd_state *ss;
   ss = get_global_state();
   style = gtk_style_copy(gtk_widget_get_style(button));
   style->font = (ss->sgx)->button_fnt;
-  gtk_widget_set_style(button,style);
-  gtk_label_set_text(GTK_LABEL(GTK_BIN(button)->child),str);
+  gtk_widget_set_style(button, style);
+  gtk_label_set_text(GTK_LABEL(GTK_BIN(button)->child), str);
   /* gtk_widget_queue_draw(button); */
 }
 #endif
 
-void set_button_label_bold(GtkWidget *button,const char *str)
+void set_button_label_bold(GtkWidget *button, const char *str)
 {
   GtkStyle *style;
   snd_state *ss;
   ss = get_global_state();
   style = gtk_style_copy(gtk_widget_get_style(button));
   style->font = (ss->sgx)->bold_button_fnt;
-  gtk_widget_set_style(button,style);
-  gtk_label_set_text(GTK_LABEL(GTK_BIN(button)->child),str);
+  gtk_widget_set_style(button, style);
+  gtk_label_set_text(GTK_LABEL(GTK_BIN(button)->child), str);
 }
 
-void set_button_label(GtkWidget *label,const char *str)
+void set_button_label(GtkWidget *label, const char *str)
 {
-  gtk_label_set_text(GTK_LABEL(GTK_BIN(label)->child),str);
+  gtk_label_set_text(GTK_LABEL(GTK_BIN(label)->child), str);
 }
 
-void set_label(GtkWidget *label,const char *str)
+void set_label(GtkWidget *label, const char *str)
 {
-  gtk_label_set_text(GTK_LABEL(label),str);
+  gtk_label_set_text(GTK_LABEL(label), str);
 }
 
 
@@ -365,7 +365,7 @@ int event_pending(snd_state *ss)
 void set_title(snd_state *ss, const char *title)
 {
 #ifndef SND_AS_WIDGET
-  gtk_window_set_title(GTK_WINDOW(MAIN_SHELL(ss)),title);
+  gtk_window_set_title(GTK_WINDOW(MAIN_SHELL(ss)), title);
 #endif
 }
 
@@ -374,14 +374,14 @@ void goto_window(GtkWidget *text)
   gtk_widget_grab_focus(text);
 }
 
-void gc_set_foreground_xor(GdkGC *gc,GdkColor *col1, GdkColor *col2)
+void gc_set_foreground_xor(GdkGC *gc, GdkColor *col1, GdkColor *col2)
 { 
   GdkColor newcol;
-  newcol.pixel = XOR(col1->pixel,col2->pixel);
-  newcol.red = XOR(col1->red,col2->red);
-  newcol.green = XOR(col1->green,col2->green);
-  newcol.blue = XOR(col1->blue,col2->blue);
-  gdk_gc_set_foreground(gc,gdk_color_copy(&newcol));
+  newcol.pixel = XOR(col1->pixel, col2->pixel);
+  newcol.red = XOR(col1->red, col2->red);
+  newcol.green = XOR(col1->green, col2->green);
+  newcol.blue = XOR(col1->blue, col2->blue);
+  gdk_gc_set_foreground(gc, gdk_color_copy(&newcol));
 }
 
 
@@ -390,8 +390,8 @@ void color_cursor(snd_state *ss, GdkColor *color)
   state_context *sx;
   sx = ss->sgx;
   sx->cursor_color = color;
-  gc_set_foreground_xor(sx->cursor_gc,color,sx->graph_color);
-  gc_set_foreground_xor(sx->selected_cursor_gc,color,sx->selected_graph_color);
+  gc_set_foreground_xor(sx->cursor_gc, color, sx->graph_color);
+  gc_set_foreground_xor(sx->selected_cursor_gc, color, sx->selected_graph_color);
 }
 
 void color_marks(snd_state *ss, GdkColor *color)
@@ -399,8 +399,8 @@ void color_marks(snd_state *ss, GdkColor *color)
   state_context *sx;
   sx = ss->sgx;
   sx->mark_color = color;
-  gc_set_foreground_xor(sx->mark_gc,color,sx->graph_color);
-  gc_set_foreground_xor(sx->selected_mark_gc,color,sx->selected_graph_color);
+  gc_set_foreground_xor(sx->mark_gc, color, sx->graph_color);
+  gc_set_foreground_xor(sx->selected_mark_gc, color, sx->selected_graph_color);
 }
 
 void color_selection(snd_state *ss, GdkColor *color)
@@ -408,8 +408,8 @@ void color_selection(snd_state *ss, GdkColor *color)
   state_context *sx;
   sx = ss->sgx;
   sx->selection_color = color;
-  gc_set_foreground_xor(sx->selection_gc,color,sx->graph_color);
-  gc_set_foreground_xor(sx->selected_selection_gc,color,sx->selected_graph_color);
+  gc_set_foreground_xor(sx->selection_gc, color, sx->graph_color);
+  gc_set_foreground_xor(sx->selected_selection_gc, color, sx->selected_graph_color);
 }
 
 void color_graph(snd_state *ss, GdkColor *color)
@@ -417,11 +417,11 @@ void color_graph(snd_state *ss, GdkColor *color)
   state_context *sx;
   sx = ss->sgx;
   sx->graph_color = color;
-  gdk_gc_set_background(sx->basic_gc,color);
-  gdk_gc_set_foreground(sx->erase_gc,color);
-  gc_set_foreground_xor(sx->selection_gc,sx->selection_color,color);
-  gc_set_foreground_xor(sx->cursor_gc,sx->cursor_color,color);
-  gc_set_foreground_xor(sx->mark_gc,sx->mark_color,color);
+  gdk_gc_set_background(sx->basic_gc, color);
+  gdk_gc_set_foreground(sx->erase_gc, color);
+  gc_set_foreground_xor(sx->selection_gc, sx->selection_color, color);
+  gc_set_foreground_xor(sx->cursor_gc, sx->cursor_color, color);
+  gc_set_foreground_xor(sx->mark_gc, sx->mark_color, color);
 }
 
 void color_selected_graph(snd_state *ss, GdkColor *color)
@@ -429,11 +429,11 @@ void color_selected_graph(snd_state *ss, GdkColor *color)
   state_context *sx;
   sx = ss->sgx;
   sx->selected_graph_color = color;
-  gdk_gc_set_background(sx->selected_basic_gc,color);
-  gdk_gc_set_foreground(sx->selected_erase_gc,color);
-  gc_set_foreground_xor(sx->selected_selection_gc,sx->selection_color,color);
-  gc_set_foreground_xor(sx->selected_cursor_gc,sx->cursor_color,color);
-  gc_set_foreground_xor(sx->selected_mark_gc,sx->mark_color,color);
+  gdk_gc_set_background(sx->selected_basic_gc, color);
+  gdk_gc_set_foreground(sx->selected_erase_gc, color);
+  gc_set_foreground_xor(sx->selected_selection_gc, sx->selection_color, color);
+  gc_set_foreground_xor(sx->selected_cursor_gc, sx->cursor_color, color);
+  gc_set_foreground_xor(sx->selected_mark_gc, sx->mark_color, color);
 }
 
 void color_data(snd_state *ss, GdkColor *color)
@@ -441,8 +441,8 @@ void color_data(snd_state *ss, GdkColor *color)
   state_context *sx;
   sx = ss->sgx;
   sx->data_color = color;
-  gdk_gc_set_foreground(sx->basic_gc,color);
-  gdk_gc_set_background(sx->erase_gc,color);
+  gdk_gc_set_foreground(sx->basic_gc, color);
+  gdk_gc_set_background(sx->erase_gc, color);
 }
 
 void color_selected_data(snd_state *ss, GdkColor *color)
@@ -450,8 +450,8 @@ void color_selected_data(snd_state *ss, GdkColor *color)
   state_context *sx;
   sx = ss->sgx;
   sx->selected_data_color = color;
-  gdk_gc_set_foreground(sx->selected_basic_gc,color);
-  gdk_gc_set_background(sx->selected_erase_gc,color);
+  gdk_gc_set_foreground(sx->selected_basic_gc, color);
+  gdk_gc_set_background(sx->selected_erase_gc, color);
 }
 
 void set_mix_color(snd_state *ss, GdkColor *color)
@@ -459,7 +459,7 @@ void set_mix_color(snd_state *ss, GdkColor *color)
   state_context *sx;
   sx = ss->sgx;
   sx->mix_color = color;
-  gdk_gc_set_foreground(sx->mix_gc,color);
+  gdk_gc_set_foreground(sx->mix_gc, color);
 }
 
 
@@ -468,7 +468,7 @@ void set_selected_mix_color(snd_state *ss, GdkColor *color)
   state_context *sx;
   sx = ss->sgx;
   sx->selected_mix_color = color;
-  gdk_gc_set_foreground(sx->selected_mix_gc,color);
+  gdk_gc_set_foreground(sx->selected_mix_gc, color);
 }
 
 void recolor_graph(chan_info *cp, int selected)
@@ -477,28 +477,28 @@ void recolor_graph(chan_info *cp, int selected)
   state_context *sx;
   ss = cp->state;
   sx = ss->sgx;
-  set_background(channel_graph(cp),(selected) ? sx->selected_graph_color : sx->graph_color);
+  set_background(channel_graph(cp), (selected) ? sx->selected_graph_color : sx->graph_color);
 }
 
 
 void reflect_resize(snd_state *ss)
 {
-  gtk_window_set_policy(GTK_WINDOW(MAIN_SHELL(ss)),TRUE,TRUE,auto_resize(ss));
+  gtk_window_set_policy(GTK_WINDOW(MAIN_SHELL(ss)), TRUE, TRUE, auto_resize(ss));
 }
 
-void set_sensitive(GtkWidget *wid, int val) {if (wid) gtk_widget_set_sensitive(wid,val);}
+void set_sensitive(GtkWidget *wid, int val) {if (wid) gtk_widget_set_sensitive(wid, val);}
 int is_sensitive(GtkWidget *wid) {if (wid) return(GTK_WIDGET_IS_SENSITIVE(wid)); return(0);}
 
 void set_toggle_button(GtkWidget *wid, int val, int passed, void *data) 
 {
-  if (!passed) gtk_signal_handler_block_by_data(GTK_OBJECT(wid),(gpointer)data);
+  if (!passed) gtk_signal_handler_block_by_data(GTK_OBJECT(wid), (gpointer)data);
   /* something is wrong here -- in multi-channel files, control-click of "w" gets 
    *   Gtk-WARNING **: gtk_signal_handler_block_by_data(): could not find handler containing data (0x83974A0)
    * where the data is correctly pointing to the original chan_info record passed
    * in snd-gchn; mono files are ok.
    */
-  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(wid),val);
-  if (!passed) gtk_signal_handler_unblock_by_data(GTK_OBJECT(wid),(gpointer)data);
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(wid), val);
+  if (!passed) gtk_signal_handler_unblock_by_data(GTK_OBJECT(wid), (gpointer)data);
 }
 
 int widget_height(GtkWidget *w)
@@ -517,14 +517,14 @@ int widget_width(GtkWidget *w)
 
 void set_widget_height(GtkWidget *w, int height)
 {
-  /* fprintf(stderr,"uheight: %d ",height); */
-  gtk_widget_set_usize(w,w->allocation.width,height);
+  /* fprintf(stderr, "uheight: %d ", height); */
+  gtk_widget_set_usize(w, w->allocation.width, height);
 }
 
 void set_widget_width(GtkWidget *w, int width)
 {
-  /* fprintf(stderr,"uwidth: %d ",width); */
-  gtk_widget_set_usize(w,width,w->allocation.height);
+  /* fprintf(stderr, "uwidth: %d ", width); */
+  gtk_widget_set_usize(w, width, w->allocation.height);
 }
 
 int widget_x(GtkWidget *w)
@@ -539,23 +539,23 @@ int widget_y(GtkWidget *w)
 
 void set_widget_x(GtkWidget *w, int x)
 {
-  gtk_widget_set_uposition(w,x,w->allocation.y);
+  gtk_widget_set_uposition(w, x, w->allocation.y);
 }
 
 void set_widget_y(GtkWidget *w, int y)
 {
-  gtk_widget_set_uposition(w,w->allocation.x,y);
+  gtk_widget_set_uposition(w, w->allocation.x, y);
 }
 
 void set_widget_size(GtkWidget *w, int width, int height)
 {
-  /* fprintf(stderr,"usize: %d %d ",width,height); */
-  gtk_widget_set_usize(w,width,height);
+  /* fprintf(stderr, "usize: %d %d ", width, height); */
+  gtk_widget_set_usize(w, width, height);
 }
 
 void set_widget_position(GtkWidget *w, int x, int y)
 {
-  gtk_widget_set_uposition(w,x,y);
+  gtk_widget_set_uposition(w, x, y);
 }
 
 void fixup_axis_context(axis_context *ax, GtkWidget *w, GdkGC *gc)

@@ -39,15 +39,15 @@ static int snd_checked_write(int fd, unsigned char *buf, int bytes)
     { 
       sprintf(write_error_buffer,
 	      "only %d bytes left on device (we need %d bytes)",
-	      kfree<<10,bytes);
+	      kfree<<10, bytes);
       return(MUS_ERROR);
     }
-  bytes_written = write(fd,buf,bytes);
+  bytes_written = write(fd, buf, bytes);
   if (bytes_written != bytes)
     {
       sprintf(write_error_buffer,
 	      "write error (wrote %d of requested %d bytes): %s",
-	      bytes_written,bytes,strerror(errno));
+	      bytes_written, bytes, strerror(errno));
       return(MUS_ERROR);
     }
   return(bytes_written);
@@ -66,33 +66,33 @@ static int be_snd_checked_write(int fd, unsigned char *buf, int bytes)
       buf[i+1] = tmp;
     }
 #endif
-  return(snd_checked_write(fd,buf,bytes));
+  return(snd_checked_write(fd, buf, bytes));
 }
 
-#define RETURN_MUS_IO_ERROR(IO_Func,IO_Name) \
+#define RETURN_MUS_IO_ERROR(IO_Func, IO_Name) \
   do { \
-      mus_error(MUS_CANT_OPEN_FILE,"translator: %s(%s): %s\n  [%s[%d] %s]", \
-                IO_Func,IO_Name,strerror(errno), \
-                __FILE__,__LINE__,__FUNCTION__); \
+      mus_error(MUS_CANT_OPEN_FILE, "translator: %s(%s): %s\n  [%s[%d] %s]", \
+                IO_Func, IO_Name, strerror(errno), \
+                __FILE__, __LINE__, __FUNCTION__); \
       return(MUS_ERROR); \
       } \
   while (0)
 
-#define RETURN_MUS_WRITE_ERROR(OldName,NewName) \
+#define RETURN_MUS_WRITE_ERROR(OldName, NewName) \
   do { \
-      mus_error(MUS_WRITE_ERROR,"can't translate %s to %s:\n  %s\n [snd-trans.c[%d] %s]", \
-		OldName,NewName,write_error_buffer, \
-		__LINE__,__FUNCTION__); \
+      mus_error(MUS_WRITE_ERROR, "can't translate %s to %s:\n  %s\n [snd-trans.c[%d] %s]", \
+		OldName, NewName, write_error_buffer, \
+		__LINE__, __FUNCTION__); \
       write_error_buffer[0] = '\0'; \
       return(MUS_ERROR); \
     } \
   while (0)
 
-#define RETURN_MUS_ALLOC_ERROR(OldName,Bytes,VariableName) \
+#define RETURN_MUS_ALLOC_ERROR(OldName, Bytes, VariableName) \
   do { \
-      mus_error(MUS_MEMORY_ALLOCATION_FAILED,"translate %s: can't allocate %d bytes for %s:\n  [snd-trans.c[%d] %s]", \
-		OldName,Bytes,VariableName, \
-		__LINE__,__FUNCTION__); \
+      mus_error(MUS_MEMORY_ALLOCATION_FAILED, "translate %s: can't allocate %d bytes for %s:\n  [snd-trans.c[%d] %s]", \
+		OldName, Bytes, VariableName, \
+		__LINE__, __FUNCTION__); \
       return(MUS_ERROR); \
     } \
   while (0)
@@ -107,21 +107,21 @@ static int be_snd_checked_write(int fd, unsigned char *buf, int bytes)
      } \
   while (0)
 
-#define STARTUP(OldName,NewName,BufSize,BufType) \
+#define STARTUP(OldName, NewName, BufSize, BufType) \
   do { \
-    fs = creat(NewName,0666); \
-    if (fs == -1) RETURN_MUS_IO_ERROR("create",NewName); \
-    fd = open(OldName,O_RDONLY,0); \
+    fs = creat(NewName, 0666); \
+    if (fs == -1) RETURN_MUS_IO_ERROR("create", NewName); \
+    fd = open(OldName, O_RDONLY, 0); \
     if (fd == -1) \
       { \
         CLEANUP(); \
-        RETURN_MUS_IO_ERROR("open",OldName); \
+        RETURN_MUS_IO_ERROR("open", OldName); \
       } \
-    buf = (BufType *)CALLOC(BufSize,sizeof(BufType)); \
+    buf = (BufType *)CALLOC(BufSize, sizeof(BufType)); \
     if (buf == NULL) \
       { \
         CLEANUP(); \
-        RETURN_MUS_ALLOC_ERROR(OldName,BufSize,"buf"); \
+        RETURN_MUS_ALLOC_ERROR(OldName, BufSize, "buf"); \
       } \
     } \
   while (0)
@@ -142,20 +142,20 @@ static int read_midi_sample_dump(char *oldname, char *newname, char *hdr)
   int osp;
   unsigned char *buf = NULL;
   chans = 1;
-  STARTUP(oldname,newname,TRANS_BUF_SIZE,unsigned char);
-  totalin = read(fd,buf,TRANS_BUF_SIZE);
+  STARTUP(oldname, newname, TRANS_BUF_SIZE, unsigned char);
+  totalin = read(fd, buf, TRANS_BUF_SIZE);
   bits = buf[6];
   srate = (int)(1.0e9 / (float)((buf[7] + (buf[8]<<7) + (buf[9]<<14))));
   samples = (buf[10] + (buf[11]<<7) + (buf[12]<<14));
-  mus_bint_to_char((unsigned char *)(hdr+16),srate);
-  mus_bint_to_char((unsigned char *)(hdr+20),chans);
+  mus_bint_to_char((unsigned char *)(hdr+16), srate);
+  mus_bint_to_char((unsigned char *)(hdr+20), chans);
   if (bits == 16) 
-    mus_bint_to_char((unsigned char *)(hdr+8),samples*2); 
-  else mus_bint_to_char((unsigned char *)(hdr+8),samples);
-  if (snd_checked_write(fs,(unsigned char *)hdr,28) == MUS_ERROR)
+    mus_bint_to_char((unsigned char *)(hdr+8), samples*2); 
+  else mus_bint_to_char((unsigned char *)(hdr+8), samples);
+  if (snd_checked_write(fs, (unsigned char *)hdr, 28) == MUS_ERROR)
     {
       CLEANUP();
-      RETURN_MUS_WRITE_ERROR(oldname,newname);
+      RETURN_MUS_WRITE_ERROR(oldname, newname);
     }
   happy = 1;
   inp = 21;
@@ -185,16 +185,16 @@ static int read_midi_sample_dump(char *oldname, char *newname, char *hdr)
 	    happy = 0;
 	  else 
 	    {
-	      totalin = read(fd,buf,TRANS_BUF_SIZE); 
+	      totalin = read(fd, buf, TRANS_BUF_SIZE); 
 	      inp = 0;
 	    }
 	}
       if (outp >= TRANS_BUF_SIZE) 
 	{
-	  if (snd_checked_write(fs,(unsigned char *)hdr,TRANS_BUF_SIZE) == MUS_ERROR) 
+	  if (snd_checked_write(fs, (unsigned char *)hdr, TRANS_BUF_SIZE) == MUS_ERROR) 
 	    {
 	      CLEANUP();
-	      RETURN_MUS_WRITE_ERROR(oldname,newname);
+	      RETURN_MUS_WRITE_ERROR(oldname, newname);
 	    }
 	  osp = 0;
 	  outp = 0;
@@ -238,7 +238,7 @@ static int read_midi_sample_dump(char *oldname, char *newname, char *hdr)
 	      /* val |= (buf[inp] << shift1);  */
 	      val |= (buf[inp] >> shift2);
 	      state = 0; 
-	      mus_bshort_to_char((unsigned char *)(hdr+osp),val-offset);
+	      mus_bshort_to_char((unsigned char *)(hdr+osp), val-offset);
 	      osp+=2;
 	      outp+=2; 
 	      break;
@@ -246,9 +246,9 @@ static int read_midi_sample_dump(char *oldname, char *newname, char *hdr)
 	  inp++;
 	}
     }
-  if (outp > 0) err = snd_checked_write(fs,(unsigned char *)hdr,outp);
+  if (outp > 0) err = snd_checked_write(fs, (unsigned char *)hdr, outp);
   CLEANUP();
-  if (err == MUS_ERROR) RETURN_MUS_WRITE_ERROR(oldname,newname);
+  if (err == MUS_ERROR) RETURN_MUS_WRITE_ERROR(oldname, newname);
   return(MUS_NO_ERROR);
 }
 
@@ -266,8 +266,8 @@ static int read_ieee_text(char *oldname, char *newname, char *hdr)
   int commenting,inp,outp,op,happy,i,j,s0,srate,err=MUS_NO_ERROR;
   float fsrate;
   int osp;
-  STARTUP(oldname,newname,TRANS_BUF_SIZE,char);
-  totalin = read(fd,buf,TRANS_BUF_SIZE);      
+  STARTUP(oldname, newname, TRANS_BUF_SIZE, char);
+  totalin = read(fd, buf, TRANS_BUF_SIZE);      
   commenting = 1;
   inp = 0;
   outp = 24;
@@ -278,7 +278,7 @@ static int read_ieee_text(char *oldname, char *newname, char *hdr)
       CLEANUP();
       mus_error(MUS_UNSUPPORTED_DATA_FORMAT,
 		"can't translate IEEE text file %s:\n  Expected initial \"%%\" but found \"%c\"\n  [snd-trans.c[%d] %s]",
-		oldname,buf[0],__LINE__,__FUNCTION__);
+		oldname, buf[0], __LINE__, __FUNCTION__);
       return(MUS_ERROR);
     }
   while (commenting)
@@ -290,22 +290,22 @@ static int read_ieee_text(char *oldname, char *newname, char *hdr)
 	    {
 	      if (srate == 0)
 		{
-		  for (i=op+1,j=0;(i<inp) && (j < 13);i++,j++) str[j] = buf[i];
+		  for (i=op+1, j=0;(i<inp) && (j < 13);i++,j++) str[j] = buf[i];
 		  str[13] = '\0';
-		  if (strcmp(str,"sampling rate") == 0) 
+		  if (strcmp(str, "sampling rate") == 0) 
 		    {
-		      for (i=op+15,j=0;j<6;i++,j++) str[j] = buf[i];
+		      for (i=op+15, j=0;j<6;i++,j++) str[j] = buf[i];
 		      str[6] = '\0';
-		      sscanf(str,"%f",&fsrate);
+		      sscanf(str, "%f", &fsrate);
 		      srate = (int)(fsrate*1000);
 		    }
 		  else
 		    {
-		      if (strcmp(str,"Sampling Rate") == 0)
+		      if (strcmp(str, "Sampling Rate") == 0)
 			{
-			  for (i=op+15,j=0;j<6;i++,j++) str[j] = buf[i];
+			  for (i=op+15, j=0;j<6;i++,j++) str[j] = buf[i];
 			  str[6] = '\0';
-			  sscanf(str,"%d",&srate);
+			  sscanf(str, "%d", &srate);
 			}
 		    }
 		}
@@ -327,12 +327,12 @@ static int read_ieee_text(char *oldname, char *newname, char *hdr)
     }
   i=(outp%4);
   outp += i;
-  mus_bint_to_char((unsigned char *)(hdr+4),outp);
-  if (srate != 0) mus_bint_to_char((unsigned char *)(hdr+16),srate);
-  if (snd_checked_write(fs,(unsigned char *)hdr,outp) == MUS_ERROR) 
+  mus_bint_to_char((unsigned char *)(hdr+4), outp);
+  if (srate != 0) mus_bint_to_char((unsigned char *)(hdr+16), srate);
+  if (snd_checked_write(fs, (unsigned char *)hdr, outp) == MUS_ERROR) 
     {
       CLEANUP();
-      RETURN_MUS_WRITE_ERROR(oldname,newname);
+      RETURN_MUS_WRITE_ERROR(oldname, newname);
     }
   happy = 1;
   s0 = 0;
@@ -346,16 +346,16 @@ static int read_ieee_text(char *oldname, char *newname, char *hdr)
 	    happy = 0;
 	  else 
 	    {
-	      totalin = read(fd,buf,TRANS_BUF_SIZE); 
+	      totalin = read(fd, buf, TRANS_BUF_SIZE); 
 	      inp = 0;
 	    }
 	}
       if (outp >= TRANS_BUF_SIZE) 
 	{
-	  if (snd_checked_write(fs,(unsigned char *)hdr,TRANS_BUF_SIZE) == MUS_ERROR) 
+	  if (snd_checked_write(fs, (unsigned char *)hdr, TRANS_BUF_SIZE) == MUS_ERROR) 
 	    {
 	      CLEANUP();
-	      RETURN_MUS_WRITE_ERROR(oldname,newname);
+	      RETURN_MUS_WRITE_ERROR(oldname, newname);
 	    }
 	  osp = 0;
 	  outp = 0;
@@ -365,8 +365,8 @@ static int read_ieee_text(char *oldname, char *newname, char *hdr)
 	  if (buf[inp] == '\n')
 	    {
 	      str[s0] = '\0';
-	      sscanf(str,"%d",&j);
-	      mus_bshort_to_char((unsigned char *)(hdr+osp),j);
+	      sscanf(str, "%d", &j);
+	      mus_bshort_to_char((unsigned char *)(hdr+osp), j);
 	      osp += 2;
 	      outp += 2;
 	      inp++;
@@ -380,10 +380,10 @@ static int read_ieee_text(char *oldname, char *newname, char *hdr)
 	    }
 	}
     }
-  err = snd_checked_write(fs,(unsigned char *)hdr,outp);
+  err = snd_checked_write(fs, (unsigned char *)hdr, outp);
   /* update size field? */
   CLEANUP();
-  if (err == MUS_ERROR) RETURN_MUS_WRITE_ERROR(oldname,newname);
+  if (err == MUS_ERROR) RETURN_MUS_WRITE_ERROR(oldname, newname);
   return(MUS_NO_ERROR);
 }
 
@@ -402,8 +402,8 @@ static int read_mus10(char *oldname, char *newname, char *hdr)
   int osp;
   float fsrate,fraction;
   int srateH,srateL,sign,exponent,chans,mode;
-  STARTUP(oldname,newname,PDP_BUF_SIZE,unsigned char);
-  totalin = read(fd,buf,PDP_BUF_SIZE);      
+  STARTUP(oldname, newname, PDP_BUF_SIZE, unsigned char);
+  totalin = read(fd, buf, PDP_BUF_SIZE);      
   /* read the PDP-10 float srate, nchans, mode, etc */
   /* old header started with 36 bits of 0xaaaaaaaaa */
   srateH = (((buf[4] & 0xF) << 14) | (buf[5]<<6) | (buf[6]>>2));
@@ -411,34 +411,34 @@ static int read_mus10(char *oldname, char *newname, char *hdr)
   /* PDP-10 floating point format was sign in bit 0 , excess 128 exponent in 1-8, fraction in 9-35 */
   if (srateH & 0400000) sign = -1; else sign = 1;
   exponent = ((srateH & 0377000)>>9) - 128;
-  fraction = (float)(((srateH & 0777)<<18) | srateL) / pow(2.0,27);
-  fsrate = sign * pow(2.0,exponent) * fraction;
+  fraction = (float)(((srateH & 0777)<<18) | srateL) / pow(2.0, 27);
+  fsrate = sign * pow(2.0, exponent) * fraction;
   if (fsrate > 6400.0) 
-    mus_bint_to_char((unsigned char *)(hdr+16),(int)fsrate);  
+    mus_bint_to_char((unsigned char *)(hdr+16), (int)fsrate);  
   else
     {
       /* perhaps old style header? */
-      if (srateH != 0) mus_bint_to_char((unsigned char *)(hdr+16),srateH);
+      if (srateH != 0) mus_bint_to_char((unsigned char *)(hdr+16), srateH);
     }
   mode = ((buf[11] & 0x3F)<<12) | (buf[12]<<4) | (buf[13]>>4);
   chans = ((buf[15] & 0x3)<<12) | (buf[16]<<8) | buf[17];
   if (chans == 0) chans = 1;
-  mus_bint_to_char((unsigned char *)(hdr+20),chans);
+  mus_bint_to_char((unsigned char *)(hdr+20), chans);
   if ((mode != 4) && (mode != 0)) 
     {
       CLEANUP();
       mus_error(MUS_UNSUPPORTED_DATA_FORMAT,
 		"can't translate Mus10 file %s:\n  mode = %d\n  [snd-trans.c[%d] %s]",
-		oldname,mode,__LINE__,__FUNCTION__);
+		oldname, mode, __LINE__, __FUNCTION__);
       return(MUS_ERROR);
     }
   /* 4 = SAM 16-bit packing mode, 0 = 12 bit 3 to a word */
   /* now jump to data start */
   inp = 576;
-  if (snd_checked_write(fs,(unsigned char *)hdr,28) == MUS_ERROR) 
+  if (snd_checked_write(fs, (unsigned char *)hdr, 28) == MUS_ERROR) 
     {
       CLEANUP();
-      RETURN_MUS_WRITE_ERROR(oldname,newname);
+      RETURN_MUS_WRITE_ERROR(oldname, newname);
     }
   happy = 1;
   outp = 0;
@@ -451,16 +451,16 @@ static int read_mus10(char *oldname, char *newname, char *hdr)
 	    happy = 0;
 	  else 
 	    {
-	      totalin = read(fd,buf,PDP_BUF_SIZE); 
+	      totalin = read(fd, buf, PDP_BUF_SIZE); 
 	      inp = 0;
 	    }
 	}
       if (outp >= TRANS_BUF_SIZE) 
 	{
-	  if (snd_checked_write(fs,(unsigned char *)hdr,TRANS_BUF_SIZE) == MUS_ERROR) 
+	  if (snd_checked_write(fs, (unsigned char *)hdr, TRANS_BUF_SIZE) == MUS_ERROR) 
 	    {
 	      CLEANUP();
-	      RETURN_MUS_WRITE_ERROR(oldname,newname);
+	      RETURN_MUS_WRITE_ERROR(oldname, newname);
 	    }
 	  osp = 0;
 	  outp = 0;
@@ -473,28 +473,28 @@ static int read_mus10(char *oldname, char *newname, char *hdr)
 	      /* so we grab four at a time here to keep the pointers aligned */
 	      /* we've chosen an input buffer size that is a multiple of 9 so that this code need not constantly check bounds */
 	      val = ((buf[inp] & 0xF) << 12) | (buf[inp+1] << 4) | (buf[inp+2] >> 4);
-	      mus_bshort_to_char((unsigned char *)(hdr+osp),val); osp+=2;
+	      mus_bshort_to_char((unsigned char *)(hdr+osp), val); osp+=2;
 	      val = ((buf[inp+2] & 0xF) << 12) | (buf[inp+3] << 4) | (buf[inp+4] >> 4);
-	      mus_bshort_to_char((unsigned char *)(hdr+osp),val); osp+=2;
-	      mus_bshort_to_char((unsigned char *)(hdr+osp),((buf[inp+5]<<8) | buf[inp+6])); osp+=2;
-	      mus_bshort_to_char((unsigned char *)(hdr+osp),((buf[inp+7]<<8) | buf[inp+8])); osp+=2;
+	      mus_bshort_to_char((unsigned char *)(hdr+osp), val); osp+=2;
+	      mus_bshort_to_char((unsigned char *)(hdr+osp), ((buf[inp+5]<<8) | buf[inp+6])); osp+=2;
+	      mus_bshort_to_char((unsigned char *)(hdr+osp), ((buf[inp+7]<<8) | buf[inp+8])); osp+=2;
 	      outp += 8;
 	      inp += 9;
 	    }
 	  else
 	    {
 	      val = (buf[inp] << 8) | (buf[inp+1] & 0xF0);
-	      mus_bshort_to_char((unsigned char *)(hdr+osp),val); osp+=2;
+	      mus_bshort_to_char((unsigned char *)(hdr+osp), val); osp+=2;
 	      val = ((buf[inp+1] & 0xF) << 12) | (buf[inp+2] << 4);
-	      mus_bshort_to_char((unsigned char *)(hdr+osp),val); osp+=2;
+	      mus_bshort_to_char((unsigned char *)(hdr+osp), val); osp+=2;
 	      outp += 4;
 	      inp += 3;
 	    }
 	}
     }
-  err = snd_checked_write(fs,(unsigned char *)hdr,outp);
+  err = snd_checked_write(fs, (unsigned char *)hdr, outp);
   CLEANUP();
-  if (err == MUS_ERROR) RETURN_MUS_WRITE_ERROR(oldname,newname);
+  if (err == MUS_ERROR) RETURN_MUS_WRITE_ERROR(oldname, newname);
   return(MUS_NO_ERROR);
 }
 
@@ -517,20 +517,20 @@ static int read_ibm_cvsd(char *oldname, char *newname, char *hdr)
   int *curvals;
   int osp;
   unsigned char *buf=NULL;
-  STARTUP(oldname,newname,TRANS_BUF_SIZE,unsigned char);
+  STARTUP(oldname, newname, TRANS_BUF_SIZE, unsigned char);
   loc = mus_sound_data_location(oldname);
   chans = mus_sound_chans(oldname);
-  curvals = (int *)CALLOC(chans,sizeof(int));
+  curvals = (int *)CALLOC(chans, sizeof(int));
   srate = mus_sound_srate(oldname);
-  mus_bint_to_char((unsigned char *)(hdr+16),srate);
-  mus_bint_to_char((unsigned char *)(hdr+20),chans);
-  if (snd_checked_write(fs,(unsigned char *)hdr,28) == MUS_ERROR)
+  mus_bint_to_char((unsigned char *)(hdr+16), srate);
+  mus_bint_to_char((unsigned char *)(hdr+20), chans);
+  if (snd_checked_write(fs, (unsigned char *)hdr, 28) == MUS_ERROR)
     {
       CLEANUP();
-      RETURN_MUS_WRITE_ERROR(oldname,newname);
+      RETURN_MUS_WRITE_ERROR(oldname, newname);
     }
-  lseek(fd,loc,SEEK_SET);
-  totalin = read(fd,buf,TRANS_BUF_SIZE);
+  lseek(fd, loc, SEEK_SET);
+  totalin = read(fd, buf, TRANS_BUF_SIZE);
   happy = 1;
   inp = 0;
   outp = 0;
@@ -543,16 +543,16 @@ static int read_ibm_cvsd(char *oldname, char *newname, char *hdr)
 	    happy = 0;
 	  else 
 	    {
-	      totalin = read(fd,buf,TRANS_BUF_SIZE); 
+	      totalin = read(fd, buf, TRANS_BUF_SIZE); 
 	      inp = 0;
 	    }
 	}
       if (outp >= TRANS_BUF_SIZE) 
 	{
-	  if (snd_checked_write(fs,(unsigned char *)hdr,TRANS_BUF_SIZE) == MUS_ERROR) 
+	  if (snd_checked_write(fs, (unsigned char *)hdr, TRANS_BUF_SIZE) == MUS_ERROR) 
 	    {
 	      CLEANUP();
-	      RETURN_MUS_WRITE_ERROR(oldname,newname);
+	      RETURN_MUS_WRITE_ERROR(oldname, newname);
 	    }
 	  osp = 0;
 	  outp = 0;
@@ -566,16 +566,16 @@ static int read_ibm_cvsd(char *oldname, char *newname, char *hdr)
 	    {
 	      /* are the bits consumed low to high or high to low? assume low to high for now (count i down from 7 to 0 if high to low) */
 	      if (byte & (1<<i)) curvals[chn]++; else curvals[chn]--;
-	      mus_bshort_to_char((unsigned char *)(hdr+osp),curvals[chn]); osp+=2; chn++;
+	      mus_bshort_to_char((unsigned char *)(hdr+osp), curvals[chn]); osp+=2; chn++;
 	      if (chn == chans) chn = 0;
 	    }
 	  outp+=16;
 	}
     }
-  err = snd_checked_write(fs,(unsigned char *)hdr,outp);
+  err = snd_checked_write(fs, (unsigned char *)hdr, outp);
   FREE(curvals);
   CLEANUP();
-  if (err == MUS_ERROR) RETURN_MUS_WRITE_ERROR(oldname,newname);
+  if (err == MUS_ERROR) RETURN_MUS_WRITE_ERROR(oldname, newname);
   return(MUS_NO_ERROR);
 }
 
@@ -591,34 +591,34 @@ static int read_hcom(char *oldname, char *newname, char *hdr)
   int i,sample,size,datum,count,err=MUS_NO_ERROR;
   unsigned char *buf=NULL;
   int fd=-1,fs=-1;
-  STARTUP(oldname,newname,TRANS_BUF_SIZE,unsigned char);
-  if (snd_checked_write(fs,(unsigned char *)hdr,28) == MUS_ERROR)
+  STARTUP(oldname, newname, TRANS_BUF_SIZE, unsigned char);
+  if (snd_checked_write(fs, (unsigned char *)hdr, 28) == MUS_ERROR)
     {
       CLEANUP();
-      RETURN_MUS_WRITE_ERROR(oldname,newname);
+      RETURN_MUS_WRITE_ERROR(oldname, newname);
     }
-  lseek(fd,132,SEEK_SET);
-  read(fd,buf,18);  /* count sum type div size */
+  lseek(fd, 132, SEEK_SET);
+  read(fd, buf, 18);  /* count sum type div size */
   count = mus_char_to_bint((unsigned char *)buf) - 1;
   dc = mus_char_to_bint((unsigned char *)(buf+8));
   size = mus_char_to_bshort((unsigned char *)(buf+16));
-  d = (short **)CALLOC(size,sizeof(short *));
-  read(fd,buf,size*4+2); /* 2 for pad byte + first sample */
+  d = (short **)CALLOC(size, sizeof(short *));
+  read(fd, buf, size*4+2); /* 2 for pad byte + first sample */
   osp = 0;
   for (i=0;i<size;i++) 
     {
-      d[i] = (short *)CALLOC(2,sizeof(short));
+      d[i] = (short *)CALLOC(2, sizeof(short));
       d[i][0] = mus_char_to_bshort((unsigned char *)(buf+osp)); osp+=2;
       d[i][1] = mus_char_to_bshort((unsigned char *)(buf+osp)); osp+=2;
     }
   sample = mus_char_to_bshort((unsigned char *)(buf+osp)) & 0xff;
   di = 0;
-  totalin=read(fd,buf,TRANS_BUF_SIZE);
+  totalin=read(fd, buf, TRANS_BUF_SIZE);
   osp = 0;
   isp = 0;
   happy = 1;
   outp = 2;
-  mus_bshort_to_char((unsigned char *)(hdr+osp),(sample - 128) * 0x100); osp+=2;
+  mus_bshort_to_char((unsigned char *)(hdr+osp), (sample - 128) * 0x100); osp+=2;
   bits = 0;
   while ((happy) && (count>0))
     {
@@ -628,18 +628,18 @@ static int read_hcom(char *oldname, char *newname, char *hdr)
 	    happy = 0;
 	  else 
 	    {
-	      totalin = read(fd,buf,TRANS_BUF_SIZE); 
+	      totalin = read(fd, buf, TRANS_BUF_SIZE); 
 	      isp = 0;
 	    }
 	}
       if (outp >= TRANS_BUF_SIZE) 
 	{
-	  if (snd_checked_write(fs,(unsigned char *)hdr,TRANS_BUF_SIZE) == MUS_ERROR) 
+	  if (snd_checked_write(fs, (unsigned char *)hdr, TRANS_BUF_SIZE) == MUS_ERROR) 
 	    {
 	      for (i=0;i<size;i++) FREE(d[i]);
 	      FREE(d);
 	      CLEANUP();
-	      RETURN_MUS_WRITE_ERROR(oldname,newname);
+	      RETURN_MUS_WRITE_ERROR(oldname, newname);
 	    }
 	  osp = 0;
 	  outp = 0;
@@ -661,19 +661,19 @@ static int read_hcom(char *oldname, char *newname, char *hdr)
 	      if (!dc) sample = 0;
 	      sample = (sample + datum) & 0xff;
 	      count--;
-	      if (sample == 0) mus_bshort_to_char((unsigned char *)(hdr+osp),(-127 * 0x100));
-	      else mus_bshort_to_char((unsigned char *)(hdr+osp),((sample - 128) * 0x100));
+	      if (sample == 0) mus_bshort_to_char((unsigned char *)(hdr+osp), (-127 * 0x100));
+	      else mus_bshort_to_char((unsigned char *)(hdr+osp), ((sample - 128) * 0x100));
 	      osp+=2;
 	      outp+=2;
 	      di = 0;
 	    }
 	}
     }
-  err = snd_checked_write(fs,(unsigned char *)hdr,outp);
+  err = snd_checked_write(fs, (unsigned char *)hdr, outp);
   for (i=0;i<size;i++) FREE(d[i]);
   FREE(d);
   CLEANUP();
-  if (err == MUS_ERROR) RETURN_MUS_WRITE_ERROR(oldname,newname);
+  if (err == MUS_ERROR) RETURN_MUS_WRITE_ERROR(oldname, newname);
   return(MUS_NO_ERROR);
 }
 
@@ -693,16 +693,16 @@ static int read_nist_shortpack(char *oldname, char *newname, char *hdr)
   unsigned char *buf=NULL;
   chans = mus_sound_chans(oldname);
   srate = mus_sound_srate(oldname);
-  mus_bint_to_char((unsigned char *)(hdr+16),srate);
-  mus_bint_to_char((unsigned char *)(hdr+20),chans);
-  STARTUP(oldname,newname,TRANS_BUF_SIZE,unsigned char);
-  if (snd_checked_write(fs,(unsigned char *)hdr,28) == MUS_ERROR)
+  mus_bint_to_char((unsigned char *)(hdr+16), srate);
+  mus_bint_to_char((unsigned char *)(hdr+20), chans);
+  STARTUP(oldname, newname, TRANS_BUF_SIZE, unsigned char);
+  if (snd_checked_write(fs, (unsigned char *)hdr, 28) == MUS_ERROR)
     {
       CLEANUP();
-      RETURN_MUS_WRITE_ERROR(oldname,newname);
+      RETURN_MUS_WRITE_ERROR(oldname, newname);
     }
-  lseek(fd,1024,SEEK_SET);                       /* NIST header always 1024 bytes */
-  totalin = read(fd,buf,TRANS_BUF_SIZE);
+  lseek(fd, 1024, SEEK_SET);                       /* NIST header always 1024 bytes */
+  totalin = read(fd, buf, TRANS_BUF_SIZE);
   happy = 1;
   outp = 0;
   num = 0;
@@ -720,14 +720,14 @@ static int read_nist_shortpack(char *oldname, char *newname, char *hdr)
 	  isp+=2; 
 	  if (isp>=totalin) 
 	    {
-	      totalin = read(fd,buf,TRANS_BUF_SIZE); 
+	      totalin = read(fd, buf, TRANS_BUF_SIZE); 
 	      isp = 0;
 	    }
 	  temp = mus_char_to_bshort((unsigned char *)(buf+isp)); 
 	  isp+=2;
 	  if (isp>=totalin) 
 	    {
-	      totalin = read(fd,buf,TRANS_BUF_SIZE); 
+	      totalin = read(fd, buf, TRANS_BUF_SIZE); 
 	      isp = 0;
 	    }
 	  ptr = start;
@@ -750,7 +750,7 @@ static int read_nist_shortpack(char *oldname, char *newname, char *hdr)
 		  isp+=2;
 		  if (isp>=totalin) 
 		    {
-		      totalin = read(fd,buf,TRANS_BUF_SIZE); 
+		      totalin = read(fd, buf, TRANS_BUF_SIZE); 
 		      isp = 0;
 		    }
 		  els--;
@@ -770,7 +770,7 @@ static int read_nist_shortpack(char *oldname, char *newname, char *hdr)
 		      isp+=2;
 		      if (isp>=totalin) 
 			{
-			  totalin = read(fd,buf,TRANS_BUF_SIZE); 
+			  totalin = read(fd, buf, TRANS_BUF_SIZE); 
 			  isp = 0;
 			}
 		      els--;
@@ -780,10 +780,10 @@ static int read_nist_shortpack(char *oldname, char *newname, char *hdr)
 	  if (negative)
 	    {
 	      if (out != 0) 
-		mus_bshort_to_char((unsigned char *)(hdr+osp),-out);
-	      else mus_bshort_to_char((unsigned char *)(hdr+osp),32767);
+		mus_bshort_to_char((unsigned char *)(hdr+osp), -out);
+	      else mus_bshort_to_char((unsigned char *)(hdr+osp), 32767);
 	    }
-	  else mus_bshort_to_char((unsigned char *)(hdr+osp),out);
+	  else mus_bshort_to_char((unsigned char *)(hdr+osp), out);
 	  osp+=2; 
 	  outp+=2;
 	  i++;
@@ -795,24 +795,24 @@ static int read_nist_shortpack(char *oldname, char *newname, char *hdr)
 	    happy = 0;
 	  else 
 	    {
-	      totalin = read(fd,buf,TRANS_BUF_SIZE); 
+	      totalin = read(fd, buf, TRANS_BUF_SIZE); 
 	      isp = 0;
 	    }
 	}
       if (outp >= TRANS_BUF_SIZE) 
 	{
-	  if (snd_checked_write(fs,(unsigned char *)hdr,TRANS_BUF_SIZE) == MUS_ERROR)
+	  if (snd_checked_write(fs, (unsigned char *)hdr, TRANS_BUF_SIZE) == MUS_ERROR)
 	    {
 	      CLEANUP();
-	      RETURN_MUS_WRITE_ERROR(oldname,newname);
+	      RETURN_MUS_WRITE_ERROR(oldname, newname);
 	    }
 	  osp = 0;
 	  outp = 0;
 	}
     }
-  err = snd_checked_write(fs,(unsigned char *)hdr,outp);
+  err = snd_checked_write(fs, (unsigned char *)hdr, outp);
   CLEANUP();
-  if (err == MUS_ERROR) RETURN_MUS_WRITE_ERROR(oldname,newname);
+  if (err == MUS_ERROR) RETURN_MUS_WRITE_ERROR(oldname, newname);
   return(MUS_NO_ERROR);
 }
 
@@ -893,30 +893,30 @@ static int read_dvi_adpcm(char *oldname, char *newname, char *hdr, int type)
     {
       mus_error(MUS_UNSUPPORTED_DATA_FORMAT,
 		"can't translate DVI ADPCM file %s: chans: %d and bits: %d\n  [snd-trans.c[%d] %s]",
-		oldname,chans,mus_sound_bits_per_sample(oldname),
-		__LINE__,__FUNCTION__);
+		oldname, chans, mus_sound_bits_per_sample(oldname),
+		__LINE__, __FUNCTION__);
       return(MUS_ERROR);
     }
   srate = mus_sound_srate(oldname);
-  mus_bint_to_char((unsigned char *)(hdr+16),srate);
-  mus_bint_to_char((unsigned char *)(hdr+20),chans);
-  STARTUP(oldname,newname,blksiz,unsigned char);
-  if (snd_checked_write(fs,(unsigned char *)hdr,28) == MUS_ERROR)
+  mus_bint_to_char((unsigned char *)(hdr+16), srate);
+  mus_bint_to_char((unsigned char *)(hdr+20), chans);
+  STARTUP(oldname, newname, blksiz, unsigned char);
+  if (snd_checked_write(fs, (unsigned char *)hdr, 28) == MUS_ERROR)
     {
       CLEANUP();
-      RETURN_MUS_WRITE_ERROR(oldname,newname);
+      RETURN_MUS_WRITE_ERROR(oldname, newname);
     }
-  lseek(fd,loc,SEEK_SET);
+  lseek(fd, loc, SEEK_SET);
   samps_read = 0;
   while (samps > 0)
     {
-      totalin = read(fd,buf,blksiz);
+      totalin = read(fd, buf, blksiz);
       if (totalin < blksiz) break;
-      samps_read = adpcm_decoder(buf,(short *)hdr,totalin,type);
-      if (be_snd_checked_write(fs,(unsigned char *)hdr,samps_read*2) == MUS_ERROR) 
+      samps_read = adpcm_decoder(buf, (short *)hdr, totalin, type);
+      if (be_snd_checked_write(fs, (unsigned char *)hdr, samps_read*2) == MUS_ERROR) 
 	{
 	  CLEANUP();
-	  RETURN_MUS_WRITE_ERROR(oldname,newname);
+	  RETURN_MUS_WRITE_ERROR(oldname, newname);
 	}
       samps -= samps_read;
     }
@@ -972,46 +972,46 @@ static int read_oki_adpcm(char *oldname, char *newname, char *hdr)
     {
       mus_error(MUS_UNSUPPORTED_DATA_FORMAT,
 		"can't translate Oki ADPCM file %s: chans: %d\n  [snd-trans.c[%d] %s]",
-		oldname,chans,
-		__LINE__,__FUNCTION__);
+		oldname, chans,
+		__LINE__, __FUNCTION__);
       return(MUS_ERROR);
     }
   loc = mus_sound_data_location(oldname);
   blksiz = mus_sound_align(oldname);
   if (blksiz == 0) blksiz=256;
-  STARTUP(oldname,newname,blksiz,unsigned char);
-  buf1 = (short *)CALLOC(blksiz*2,sizeof(short));
+  STARTUP(oldname, newname, blksiz, unsigned char);
+  buf1 = (short *)CALLOC(blksiz*2, sizeof(short));
   samps = mus_sound_fact_samples(oldname);
   srate = mus_sound_srate(oldname);
-  mus_bint_to_char((unsigned char *)(hdr+16),srate);
-  mus_bint_to_char((unsigned char *)(hdr+20),chans);
-  fd = open(oldname,O_RDONLY,0);
-  if (snd_checked_write(fs,(unsigned char *)hdr,28) == MUS_ERROR) 
+  mus_bint_to_char((unsigned char *)(hdr+16), srate);
+  mus_bint_to_char((unsigned char *)(hdr+20), chans);
+  fd = open(oldname, O_RDONLY, 0);
+  if (snd_checked_write(fs, (unsigned char *)hdr, 28) == MUS_ERROR) 
     {
       FREE(buf1);
       CLEANUP();
-      RETURN_MUS_WRITE_ERROR(oldname,newname);
+      RETURN_MUS_WRITE_ERROR(oldname, newname);
     }
-  lseek(fd,loc,SEEK_SET);
+  lseek(fd, loc, SEEK_SET);
   samps_read = 0;
   stat.last = 0;
   stat.step_index = 0;
   while (samps > 0)
     {
-      totalin = read(fd,buf,blksiz);
+      totalin = read(fd, buf, blksiz);
       if (totalin <= 0) break;
-      for (i=0,j=0;i<totalin;i++)
+      for (i=0, j=0;i<totalin;i++)
 	{
 	  /* samps_read will be twice totalin because these are 4-bit quantities */
-	  buf1[j++] = oki_adpcm_decode((char)((buf[i]>>4) & 0x0f),&stat);
-	  buf1[j++] = oki_adpcm_decode((char)(buf[i]&0x0f),&stat);
+	  buf1[j++] = oki_adpcm_decode((char)((buf[i]>>4) & 0x0f), &stat);
+	  buf1[j++] = oki_adpcm_decode((char)(buf[i]&0x0f), &stat);
 	}
       samps_read = totalin*2;
-      if (be_snd_checked_write(fs,(unsigned char *)buf1,samps_read*2) == MUS_ERROR) 
+      if (be_snd_checked_write(fs, (unsigned char *)buf1, samps_read*2) == MUS_ERROR) 
 	{
 	  FREE(buf1);
 	  CLEANUP();
-	  RETURN_MUS_WRITE_ERROR(oldname,newname);
+	  RETURN_MUS_WRITE_ERROR(oldname, newname);
 	}
       samps -= samps_read;
     }
@@ -1031,30 +1031,30 @@ static int read_12bit(char *oldname, char *newname, char *hdr)
   loc = mus_sound_data_location(oldname);
   chans = mus_sound_chans(oldname);
   samps = mus_sound_samples(oldname);
-  mus_bint_to_char((unsigned char *)(hdr+16),mus_sound_srate(oldname));
-  mus_bint_to_char((unsigned char *)(hdr+20),chans);
-  STARTUP(oldname,newname,((int)(TRANS_BUF_SIZE*1.5)),unsigned char);
-  if (snd_checked_write(fs,(unsigned char *)hdr,28) == MUS_ERROR)
+  mus_bint_to_char((unsigned char *)(hdr+16), mus_sound_srate(oldname));
+  mus_bint_to_char((unsigned char *)(hdr+20), chans);
+  STARTUP(oldname, newname, ((int)(TRANS_BUF_SIZE*1.5)), unsigned char);
+  if (snd_checked_write(fs, (unsigned char *)hdr, 28) == MUS_ERROR)
     {
       CLEANUP();
-      RETURN_MUS_WRITE_ERROR(oldname,newname);
+      RETURN_MUS_WRITE_ERROR(oldname, newname);
     }
-  lseek(fd,loc,SEEK_SET);
-  buf1 = (short *)CALLOC(TRANS_BUF_SIZE,sizeof(short));
+  lseek(fd, loc, SEEK_SET);
+  buf1 = (short *)CALLOC(TRANS_BUF_SIZE, sizeof(short));
   while (samps > 0)
     {
-      totalin = read(fd,buf,(int)(TRANS_BUF_SIZE*1.5));
+      totalin = read(fd, buf, (int)(TRANS_BUF_SIZE*1.5));
       if (totalin <= 0) break;
-      for (i=0,j=0;i<totalin;i+=3,j+=2)
+      for (i=0, j=0;i<totalin;i+=3,j+=2)
 	{
 	  buf1[j] = (signed short)((buf[i]<<8) + (buf[i+1]&0xf0));
 	  buf1[j+1] = (signed short)((buf[i+2]<<8) + ((buf[i+1]&0xf)<<4));
 	}
-      if (be_snd_checked_write(fs,(unsigned char *)buf1,j*2) == MUS_ERROR) 
+      if (be_snd_checked_write(fs, (unsigned char *)buf1, j*2) == MUS_ERROR) 
 	{
 	  FREE(buf1);
 	  CLEANUP();
-	  RETURN_MUS_WRITE_ERROR(oldname,newname);
+	  RETURN_MUS_WRITE_ERROR(oldname, newname);
 	}
       samps -= j;
     }
@@ -1077,21 +1077,21 @@ static int read_iff(char *oldname, char *newname, int orig, char *hdr)
   loc = mus_sound_data_location(oldname);
   chans = mus_sound_chans(oldname);
   samps = mus_sound_samples(oldname);
-  mus_bint_to_char((unsigned char *)(hdr+16),mus_sound_srate(oldname));
-  mus_bint_to_char((unsigned char *)(hdr+20),chans);
-  STARTUP(oldname,newname,TRANS_BUF_SIZE*2,short);
-  if (snd_checked_write(fs,(unsigned char *)hdr,28) == MUS_ERROR)
+  mus_bint_to_char((unsigned char *)(hdr+16), mus_sound_srate(oldname));
+  mus_bint_to_char((unsigned char *)(hdr+20), chans);
+  STARTUP(oldname, newname, TRANS_BUF_SIZE*2, short);
+  if (snd_checked_write(fs, (unsigned char *)hdr, 28) == MUS_ERROR)
     {
       CLEANUP();
-      RETURN_MUS_WRITE_ERROR(oldname,newname);
+      RETURN_MUS_WRITE_ERROR(oldname, newname);
     }
-  lseek(fd,loc,SEEK_SET);
+  lseek(fd, loc, SEEK_SET);
   val = 0;
   while (samps > 0)
     {
-      totalin = read(fd,hdr,TRANS_BUF_SIZE);
+      totalin = read(fd, hdr, TRANS_BUF_SIZE);
       if (totalin <= 0) break;
-      for (i=0,j=0;i<totalin;i++,j+=2)
+      for (i=0, j=0;i<totalin;i++,j+=2)
 	{
 	  f1 = ((unsigned char)hdr[i])&0xf;
 	  f2 = (((unsigned char)hdr[i])>>4)&0xf;
@@ -1110,10 +1110,10 @@ static int read_iff(char *oldname, char *newname, int orig, char *hdr)
 	      buf[j+1] = val;
 	    }
 	}
-      if (be_snd_checked_write(fs,(unsigned char *)buf,j*2) == MUS_ERROR)
+      if (be_snd_checked_write(fs, (unsigned char *)buf, j*2) == MUS_ERROR)
 	{
 	  CLEANUP();
-	  RETURN_MUS_WRITE_ERROR(oldname,newname);
+	  RETURN_MUS_WRITE_ERROR(oldname, newname);
 	}
       samps -= j;
     }
@@ -1139,20 +1139,20 @@ static int read_avi(char *oldname, char *newname, char *hdr)
 #endif
   short *buf=NULL;
   unsigned char *hdrbuf;
-  mus_bint_to_char((unsigned char *)(hdr+16),mus_sound_srate(oldname));
-  mus_bint_to_char((unsigned char *)(hdr+20),mus_sound_chans(oldname));
-  STARTUP(oldname,newname,TRANS_BUF_SIZE,short);
-  if (snd_checked_write(fs,(unsigned char *)hdr,28) == MUS_ERROR)
+  mus_bint_to_char((unsigned char *)(hdr+16), mus_sound_srate(oldname));
+  mus_bint_to_char((unsigned char *)(hdr+20), mus_sound_chans(oldname));
+  STARTUP(oldname, newname, TRANS_BUF_SIZE, short);
+  if (snd_checked_write(fs, (unsigned char *)hdr, 28) == MUS_ERROR)
     {
       CLEANUP();
-      RETURN_MUS_WRITE_ERROR(oldname,newname);
+      RETURN_MUS_WRITE_ERROR(oldname, newname);
     }
-  hdrbuf = (unsigned char *)CALLOC(8,sizeof(unsigned char));
-  lseek(fd,mus_sound_data_location(oldname),SEEK_SET);
+  hdrbuf = (unsigned char *)CALLOC(8, sizeof(unsigned char));
+  lseek(fd, mus_sound_data_location(oldname), SEEK_SET);
   happy = 1;
   while (happy)
     {
-      totalin = read(fd,hdrbuf,8);
+      totalin = read(fd, hdrbuf, 8);
       if (totalin < 0) break;
       cksize = mus_char_to_lint((unsigned char *)(hdrbuf+4));
       if ((hdrbuf[2] == 'w') && (hdrbuf[3] == 'b'))
@@ -1162,7 +1162,7 @@ static int read_avi(char *oldname, char *newname, char *hdr)
 	      if (TRANS_BUF_SIZE*2 > cksize)
 		num = cksize;
 	      else num = TRANS_BUF_SIZE*2;
-	      totalin = read(fd,(unsigned char *)buf,num);
+	      totalin = read(fd, (unsigned char *)buf, num);
 	      if (totalin < 0) 
 		{
 		  happy = 0; 
@@ -1174,11 +1174,11 @@ static int read_avi(char *oldname, char *newname, char *hdr)
 		  bb = (unsigned char *)buf;
 		  for (i=0;i<totalin/2;i++,bb+=2) buf[i] = mus_char_to_lshort(bb);
 #endif		  
-		  if (be_snd_checked_write(fs,(unsigned char *)buf,totalin) == MUS_ERROR) 
+		  if (be_snd_checked_write(fs, (unsigned char *)buf, totalin) == MUS_ERROR) 
 		    {
 		      FREE(hdrbuf);
 		      CLEANUP();
-		      RETURN_MUS_WRITE_ERROR(oldname,newname);
+		      RETURN_MUS_WRITE_ERROR(oldname, newname);
 		    }
 		}
 	      cksize -= num;
@@ -1199,14 +1199,14 @@ static int read_avi(char *oldname, char *newname, char *hdr)
 struct g72x_state {long yl; short yu; short dms; short dml; short ap; short a[2]; short b[6]; short pk[2]; short dq[6]; short sr[2]; char td;};
 static short power2[15] = {1, 2, 4, 8, 0x10, 0x20, 0x40, 0x80, 0x100, 0x200, 0x400, 0x800, 0x1000, 0x2000, 0x4000};
 
-static int quan(int val,short *table,int size)
+static int quan(int val, short *table, int size)
 {
   int i;
   for (i=0;i<size;i++)if (val < *table++) break;
   return (i);
 }
 
-static int fmult(int an,int srn)
+static int fmult(int an, int srn)
 {
   short	anmag,anexp,anmant;
   short	wanexp,wanmant;
@@ -1270,7 +1270,7 @@ static int step_size(struct g72x_state *state_ptr)
     }
 }
 
-static int reconstruct(int sign,int dqln,int y)
+static int reconstruct(int sign, int dqln, int y)
 {
   short	dql,dex,dqt,dq;
   dql = dqln + (y >> 2);
@@ -1283,7 +1283,7 @@ static int reconstruct(int sign,int dqln,int y)
   }
 }
 
-static void update(int	code_size,int y,int wi,int fi,int dq,int sr,int dqsez,struct g72x_state *state_ptr)
+static void update(int	code_size, int y, int wi, int fi, int dq, int sr, int dqsez, struct g72x_state *state_ptr)
 {
   int cnt;
   short	mag,exp,a2p=0,a1ul,pks1,fa1,ylint,thr2,dqthr,ylfrac,thr1,pk0;
@@ -1383,7 +1383,7 @@ static void update(int	code_size,int y,int wi,int fi,int dq,int sr,int dqsez,str
     state_ptr->ap += (-state_ptr->ap) >> 4;
 }
 
-static int g721_decoder(int i,struct g72x_state *state_ptr)
+static int g721_decoder(int i, struct g72x_state *state_ptr)
 {
   static short dqlntab[16] = {-2048, 4, 135, 213, 273, 323, 373, 425, 425, 373, 323, 273, 213, 135, 4, -2048};
   static short witab[16] = {-12, 18, 41, 64, 112, 198, 355, 1122, 1122, 355, 198, 112, 64, 41, 18, -12};
@@ -1402,7 +1402,7 @@ static int g721_decoder(int i,struct g72x_state *state_ptr)
   return (sr << 2);
 }
 
-static int g723_24_decoder(int	i,struct g72x_state *state_ptr)
+static int g723_24_decoder(int	i, struct g72x_state *state_ptr)
 {
   static short dqlntab[8] = {-2048, 135, 273, 373, 373, 273, 135, -2048};
   static short witab[8] = {-128, 960, 4384, 18624, 18624, 4384, 960, -128};
@@ -1421,7 +1421,7 @@ static int g723_24_decoder(int	i,struct g72x_state *state_ptr)
   return (sr << 2);
 }
 
-static int g723_40_decoder(int i,struct g72x_state *state_ptr)
+static int g723_40_decoder(int i, struct g72x_state *state_ptr)
 {
   static short dqlntab[32] = {-2048, -66, 28, 104, 169, 224, 274, 318, 358, 395, 429, 459, 488, 514, 539, 566,
 				566, 539, 514, 488, 459, 429, 395, 358, 318, 274, 224, 169, 104, 28, -66, -2048};
@@ -1443,14 +1443,14 @@ static int g723_40_decoder(int i,struct g72x_state *state_ptr)
   return (sr << 2);
 }
 
-static int unpack_input(FILE *fin, unsigned char *code,int bits)
+static int unpack_input(FILE *fin, unsigned char *code, int bits)
 {
   static unsigned int in_buffer = 0;
   static int in_bits = 0;
   unsigned char	in_byte;
   if (in_bits < bits) 
     {
-      if (fread(&in_byte,sizeof(char),1,fin) != 1) 
+      if (fread(&in_byte, sizeof(char), 1, fin) != 1) 
 	{
 	  *code = 0;
 	  return (-1);
@@ -1477,36 +1477,36 @@ static int read_g72x_adpcm(char *oldname, char *newname, char *hdr, int which_g)
     {
       mus_error(MUS_UNSUPPORTED_DATA_FORMAT,
 		"can't translate G72x file %s: chans: %d\n  [snd-trans.c[%d] %s]",
-		oldname,chans,
-		__LINE__,__FUNCTION__);
+		oldname, chans,
+		__LINE__, __FUNCTION__);
       return(MUS_ERROR);
     }
-  fs = creat(newname,0666);
-  if (fs == -1) RETURN_MUS_IO_ERROR("create",newname);
+  fs = creat(newname, 0666);
+  if (fs == -1) RETURN_MUS_IO_ERROR("create", newname);
   loc = mus_sound_data_location(oldname);
   srate = mus_sound_srate(oldname);
-  mus_bint_to_char((unsigned char *)(hdr+16),srate);
-  mus_bint_to_char((unsigned char *)(hdr+20),chans);
-  fd = fopen(oldname,"rb");
+  mus_bint_to_char((unsigned char *)(hdr+16), srate);
+  mus_bint_to_char((unsigned char *)(hdr+20), chans);
+  fd = fopen(oldname, "rb");
   if (fd == NULL) 
     {
       close(fs); 
-      RETURN_MUS_IO_ERROR("fopen",oldname);
+      RETURN_MUS_IO_ERROR("fopen", oldname);
     }
-  if (snd_checked_write(fs,(unsigned char *)hdr,28) == MUS_ERROR) 
+  if (snd_checked_write(fs, (unsigned char *)hdr, 28) == MUS_ERROR) 
     {
       close(fs); 
       fclose(fd);
-      RETURN_MUS_WRITE_ERROR(oldname,newname);
+      RETURN_MUS_WRITE_ERROR(oldname, newname);
     }
-  buf = (short *)CALLOC(TRANS_BUF_SIZE,sizeof(short));
+  buf = (short *)CALLOC(TRANS_BUF_SIZE, sizeof(short));
   if (buf == NULL) 
     {
       close(fs); 
       fclose(fd); 
-      RETURN_MUS_ALLOC_ERROR(oldname,TRANS_BUF_SIZE,"buf");
+      RETURN_MUS_ALLOC_ERROR(oldname, TRANS_BUF_SIZE, "buf");
     }
-  fread(buf,1,loc,fd);
+  fread(buf, 1, loc, fd);
   switch (which_g)
     {
     case 0: /* G721 */ dec_bits = 4; break;
@@ -1514,31 +1514,31 @@ static int read_g72x_adpcm(char *oldname, char *newname, char *hdr, int which_g)
     case 2: /* G723_40 */ dec_bits = 5; break;
     }
   j = 0;
-  while (unpack_input(fd,&code,dec_bits) >= 0)
+  while (unpack_input(fd, &code, dec_bits) >= 0)
     {
       switch (which_g)
 	{
-	case 0: buf[j++] = g721_decoder(code,&state); break;
-	case 1: buf[j++] = g723_24_decoder(code,&state); break;
-	case 2: buf[j++] = g723_40_decoder(code,&state); break;
+	case 0: buf[j++] = g721_decoder(code, &state); break;
+	case 1: buf[j++] = g723_24_decoder(code, &state); break;
+	case 2: buf[j++] = g723_40_decoder(code, &state); break;
 	}
       if (j >= TRANS_BUF_SIZE)
 	{
-	  if (be_snd_checked_write(fs,(unsigned char *)buf,j*2) == MUS_ERROR) 
+	  if (be_snd_checked_write(fs, (unsigned char *)buf, j*2) == MUS_ERROR) 
 	    {
 	      close(fs); 
 	      fclose(fd); 
 	      FREE(buf); 
-	      RETURN_MUS_WRITE_ERROR(oldname,newname);
+	      RETURN_MUS_WRITE_ERROR(oldname, newname);
 	    }
 	  j = 0;
 	}
     }
-  if (j>0) err = be_snd_checked_write(fs,(unsigned char *)buf,j*2);
+  if (j>0) err = be_snd_checked_write(fs, (unsigned char *)buf, j*2);
   close(fs);
   fclose(fd);
   FREE(buf);
-  if (err == MUS_ERROR) RETURN_MUS_WRITE_ERROR(oldname,newname);
+  if (err == MUS_ERROR) RETURN_MUS_WRITE_ERROR(oldname, newname);
   return(MUS_NO_ERROR);
 }
 
@@ -1583,58 +1583,58 @@ int snd_translate(char *oldname, char *newname, int type)
   char *hdr = NULL;
   if (MUS_CANT_TRANSLATE == 0) MUS_CANT_TRANSLATE = mus_make_error("mus_cant_translate");
   err = MUS_CANT_TRANSLATE;
-  hdr = (char *)CALLOC(TRANS_BUF_SIZE,sizeof(char));
+  hdr = (char *)CALLOC(TRANS_BUF_SIZE, sizeof(char));
   /* set up default output header */
-  mus_bint_to_char((unsigned char *)hdr,0x2e736e64); /* .snd */
-  mus_bint_to_char((unsigned char *)(hdr+4),28);     /* data location */
-  mus_bint_to_char((unsigned char *)(hdr+8),0);      /* bytes in data portion */
-  mus_bint_to_char((unsigned char *)(hdr+12),3);     /* 16-bit linear */
-  mus_bint_to_char((unsigned char *)(hdr+16),22050);
-  mus_bint_to_char((unsigned char *)(hdr+20),1);     /* chans */
+  mus_bint_to_char((unsigned char *)hdr, 0x2e736e64); /* .snd */
+  mus_bint_to_char((unsigned char *)(hdr+4), 28);     /* data location */
+  mus_bint_to_char((unsigned char *)(hdr+8), 0);      /* bytes in data portion */
+  mus_bint_to_char((unsigned char *)(hdr+12), 3);     /* 16-bit linear */
+  mus_bint_to_char((unsigned char *)(hdr+16), 22050);
+  mus_bint_to_char((unsigned char *)(hdr+20), 1);     /* chans */
   switch (type)
     {
-    case MUS_MIDI_SAMPLE_DUMP: err = read_midi_sample_dump(oldname,newname,hdr); break;
-    case MUS_IEEE: err = read_ieee_text(oldname,newname,hdr); break;
-    case MUS_MUS10: err = read_mus10(oldname,newname,hdr); break;
-    case MUS_HCOM: err = read_hcom(oldname,newname,hdr); break;
-    case MUS_YAMAHA_TX16: err = read_12bit(oldname,newname,hdr); break;
-    case MUS_AVI: err = read_avi(oldname,newname,hdr); break;
+    case MUS_MIDI_SAMPLE_DUMP: err = read_midi_sample_dump(oldname, newname, hdr); break;
+    case MUS_IEEE: err = read_ieee_text(oldname, newname, hdr); break;
+    case MUS_MUS10: err = read_mus10(oldname, newname, hdr); break;
+    case MUS_HCOM: err = read_hcom(oldname, newname, hdr); break;
+    case MUS_YAMAHA_TX16: err = read_12bit(oldname, newname, hdr); break;
+    case MUS_AVI: err = read_avi(oldname, newname, hdr); break;
     case MUS_RIFF:
       switch (mus_sound_original_format(oldname))
 	{
-	case RIFF_IBM_CVSD: err = read_ibm_cvsd(oldname,newname,hdr); break;
-	case RIFF_MS_ADPCM: case RIFF_Intel_ADPCM: err = read_dvi_adpcm(oldname,newname,hdr,0); break;
-	case RIFF_Oki_ADPCM: err = read_oki_adpcm(oldname,newname,hdr); break;
-	case RIFF_G721: err = read_g72x_adpcm(oldname,newname,hdr,0); break; /* untested */
+	case RIFF_IBM_CVSD: err = read_ibm_cvsd(oldname, newname, hdr); break;
+	case RIFF_MS_ADPCM: case RIFF_Intel_ADPCM: err = read_dvi_adpcm(oldname, newname, hdr, 0); break;
+	case RIFF_Oki_ADPCM: err = read_oki_adpcm(oldname, newname, hdr); break;
+	case RIFF_G721: err = read_g72x_adpcm(oldname, newname, hdr, 0); break; /* untested */
 	case RIFF_G723: case RIFF_MS_G723: case RIFF_Lucent_G723: case RIFF_Vivo_G723: /* untested */
 	  if (mus_sound_bits_per_sample(oldname) == 3)
-	    err = read_g72x_adpcm(oldname,newname,hdr,1);
+	    err = read_g72x_adpcm(oldname, newname, hdr, 1);
 	  else
 	    if (mus_sound_bits_per_sample(oldname) == 5)
-	      err = read_g72x_adpcm(oldname,newname,hdr,2);
+	      err = read_g72x_adpcm(oldname, newname, hdr, 2);
 	  break;
 	}
       break;
     case MUS_NIST:
       if (mus_sound_original_format(oldname) == MUS_NIST_SHORTPACK) 
-	err = read_nist_shortpack(oldname,newname,hdr); 
+	err = read_nist_shortpack(oldname, newname, hdr); 
       break;
     case MUS_SVX:
       orig = mus_sound_original_format(oldname);
       if ((orig == 1) || (orig == 2)) 
-	err = read_iff(oldname,newname,orig,hdr);
+	err = read_iff(oldname, newname, orig, hdr);
       break;
     case MUS_NEXT:
       switch (mus_sound_original_format(oldname))
 	{
-	case NeXT_G721: err = read_g72x_adpcm(oldname,newname,hdr,0); break;
-	case NeXT_G723: err = read_g72x_adpcm(oldname,newname,hdr,1); break;
-	case NeXT_G723_5: err = read_g72x_adpcm(oldname,newname,hdr,2); break;
+	case NeXT_G721: err = read_g72x_adpcm(oldname, newname, hdr, 0); break;
+	case NeXT_G723: err = read_g72x_adpcm(oldname, newname, hdr, 1); break;
+	case NeXT_G723_5: err = read_g72x_adpcm(oldname, newname, hdr, 2); break;
 	}
       break;
     case MUS_AIFC:
       if (mus_sound_original_format(oldname) == MUS_AIFF_IMA_ADPCM) 
-	err = read_dvi_adpcm(oldname,newname,hdr,1); 
+	err = read_dvi_adpcm(oldname, newname, hdr, 1); 
       break;
     case MUS_MATLAB:
       /* assume all vectors are channels */
@@ -1648,7 +1648,7 @@ int snd_translate(char *oldname, char *newname, int type)
 	      mus_header_type_name(type),
 	      any_format_name(oldname),
 	      mus_sound_original_format(oldname),
-	      __LINE__,__FUNCTION__);
+	      __LINE__, __FUNCTION__);
   return(err);
 }
 

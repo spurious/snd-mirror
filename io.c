@@ -369,17 +369,17 @@ void mus_ldouble_to_char(unsigned char *j, double x)
   #define m_little_endian_double(n)               (*((double *)n))
   #define m_little_endian_unsigned_short(n)       (*((unsigned short *)n))
 
-  #define m_set_big_endian_short(n,x)             mus_bshort_to_char(n,x)
-  #define m_set_big_endian_int(n,x)               mus_bint_to_char(n,x)
-  #define m_set_big_endian_float(n,x)             mus_bfloat_to_char(n,x)
-  #define m_set_big_endian_double(n,x)            mus_bdouble_to_char(n,x)
-  #define m_set_big_endian_unsigned_short(n,x)    mus_ubshort_to_char(n,x)
+  #define m_set_big_endian_short(n, x)             mus_bshort_to_char(n, x)
+  #define m_set_big_endian_int(n, x)               mus_bint_to_char(n, x)
+  #define m_set_big_endian_float(n, x)             mus_bfloat_to_char(n, x)
+  #define m_set_big_endian_double(n, x)            mus_bdouble_to_char(n, x)
+  #define m_set_big_endian_unsigned_short(n, x)    mus_ubshort_to_char(n, x)
 
-  #define m_set_little_endian_short(n,x)          (*((short *)n)) = x
-  #define m_set_little_endian_int(n,x)            (*((int *)n)) = x
-  #define m_set_little_endian_float(n,x)          (*((float *)n)) = x
-  #define m_set_little_endian_double(n,x)         (*((double *)n)) = x
-  #define m_set_little_endian_unsigned_short(n,x) (*((unsigned short *)n)) = x
+  #define m_set_little_endian_short(n, x)          (*((short *)n)) = x
+  #define m_set_little_endian_int(n, x)            (*((int *)n)) = x
+  #define m_set_little_endian_float(n, x)          (*((float *)n)) = x
+  #define m_set_little_endian_double(n, x)         (*((double *)n)) = x
+  #define m_set_little_endian_unsigned_short(n, x) (*((unsigned short *)n)) = x
 
 #else
 
@@ -390,11 +390,11 @@ void mus_ldouble_to_char(unsigned char *j, double x)
     #define m_big_endian_double(n)                  (*((double *)n))
     #define m_big_endian_unsigned_short(n)          (*((unsigned short *)n))
 
-    #define m_set_big_endian_short(n,x)             (*((short *)n)) = x
-    #define m_set_big_endian_int(n,x)               (*((int *)n)) = x
-    #define m_set_big_endian_float(n,x)             (*((float *)n)) = x
-    #define m_set_big_endian_double(n,x)            (*((double *)n)) = x
-    #define m_set_big_endian_unsigned_short(n,x)    (*((unsigned short *)n)) = x
+    #define m_set_big_endian_short(n, x)             (*((short *)n)) = x
+    #define m_set_big_endian_int(n, x)               (*((int *)n)) = x
+    #define m_set_big_endian_float(n, x)             (*((float *)n)) = x
+    #define m_set_big_endian_double(n, x)            (*((double *)n)) = x
+    #define m_set_big_endian_unsigned_short(n, x)    (*((unsigned short *)n)) = x
   #else
     #define m_big_endian_short(n)                   (mus_char_to_bshort(n))
     #define m_big_endian_int(n)                     (mus_char_to_bint(n))
@@ -402,11 +402,11 @@ void mus_ldouble_to_char(unsigned char *j, double x)
     #define m_big_endian_double(n)                  (mus_char_to_bdouble(n))
     #define m_big_endian_unsigned_short(n)          (mus_char_to_ubshort(n))
 
-    #define m_set_big_endian_short(n,x)             mus_bshort_to_char(n,x)
-    #define m_set_big_endian_int(n,x)               mus_bint_to_char(n,x)
-    #define m_set_big_endian_float(n,x)             mus_bfloat_to_char(n,x)
-    #define m_set_big_endian_double(n,x)            mus_bdouble_to_char(n,x)
-    #define m_set_big_endian_unsigned_short(n,x)    mus_ubshort_to_char(n,x)
+    #define m_set_big_endian_short(n, x)             mus_bshort_to_char(n, x)
+    #define m_set_big_endian_int(n, x)               mus_bint_to_char(n, x)
+    #define m_set_big_endian_float(n, x)             mus_bfloat_to_char(n, x)
+    #define m_set_big_endian_double(n, x)            mus_bdouble_to_char(n, x)
+    #define m_set_big_endian_unsigned_short(n, x)    mus_ubshort_to_char(n, x)
   #endif
 
 #if USE_BYTESWAP
@@ -420,11 +420,11 @@ void mus_ldouble_to_char(unsigned char *j, double x)
   #define m_little_endian_double(n)                 (mus_char_to_ldouble(n))
   #define m_little_endian_unsigned_short(n)         (mus_char_to_ulshort(n))
 
-  #define m_set_little_endian_short(n,x)            mus_lshort_to_char(n,x)
-  #define m_set_little_endian_int(n,x)              mus_lint_to_char(n,x)
-  #define m_set_little_endian_float(n,x)            mus_lfloat_to_char(n,x)
-  #define m_set_little_endian_double(n,x)           mus_ldouble_to_char(n,x)
-  #define m_set_little_endian_unsigned_short(n,x)   mus_ulshort_to_char(n,x)
+  #define m_set_little_endian_short(n, x)            mus_lshort_to_char(n, x)
+  #define m_set_little_endian_int(n, x)              mus_lint_to_char(n, x)
+  #define m_set_little_endian_float(n, x)            mus_lfloat_to_char(n, x)
+  #define m_set_little_endian_double(n, x)           mus_ldouble_to_char(n, x)
+  #define m_set_little_endian_unsigned_short(n, x)   mus_ulshort_to_char(n, x)
 
 #endif
 
@@ -459,19 +459,19 @@ static void alloc_io_fd(int tfd)
 #else
       io_fd_size = tfd + 8;
 #endif
-      io_fds = (io_fd **)CALLOC(io_fd_size,sizeof(io_fd *));
+      io_fds = (io_fd **)CALLOC(io_fd_size, sizeof(io_fd *));
     }
 #ifndef MACOS
   if (io_fd_size <= tfd)
     {
       lim = io_fd_size;
       io_fd_size = tfd + 8;
-      io_fds = (io_fd **)REALLOC(io_fds,io_fd_size * sizeof(io_fd *));
+      io_fds = (io_fd **)REALLOC(io_fds, io_fd_size * sizeof(io_fd *));
       for (i=lim;i<io_fd_size;i++) io_fds[i] = NULL;
     }
 #endif
   if (io_fds[tfd] == NULL)
-    io_fds[tfd] = (io_fd *)CALLOC(1,sizeof(io_fd));
+    io_fds[tfd] = (io_fd *)CALLOC(1, sizeof(io_fd));
 }
 
 int mus_file_set_descriptors (int tfd, const char *name, int format, int size, int location, int chans, int type)
@@ -489,8 +489,8 @@ int mus_file_set_descriptors (int tfd, const char *name, int format, int size, i
   fd->chans = chans;
   if (name)
     {
-      fd->name = (char *)CALLOC(strlen(name)+1,sizeof(char));
-      strcpy(fd->name,name);
+      fd->name = (char *)CALLOC(strlen(name)+1, sizeof(char));
+      strcpy(fd->name, name);
     }
   return(MUS_NO_ERROR);
 }
@@ -594,9 +594,9 @@ int mus_file_probe(const char *arg)
     fd = open (arg, O_RDONLY | O_BINARY);
   #else
     #ifdef O_NONBLOCK
-      fd = open(arg,O_RDONLY,O_NONBLOCK);
+      fd = open(arg, O_RDONLY, O_NONBLOCK);
     #else
-      fd = open(arg,O_RDONLY,0);
+      fd = open(arg, O_RDONLY, 0);
     #endif
   #endif
 #endif
@@ -609,25 +609,25 @@ int mus_file_open_write(const char *arg)
 {
   int fd;
 #ifdef MACOS
-  if ((fd = open(arg,O_RDWR)) == -1)
+  if ((fd = open(arg, O_RDWR)) == -1)
   #ifdef MPW_C
     fd = creat(arg);
   #else
     fd = creat(arg, 0);
   #endif
   else
-    lseek(fd,0L,SEEK_END);
+    lseek(fd, 0L, SEEK_END);
 #else
   #ifdef WINDOZE
-    if ((fd = open(arg,O_RDWR | O_BINARY)) == -1)
+    if ((fd = open(arg, O_RDWR | O_BINARY)) == -1)
   #else
-    if ((fd = open(arg,O_RDWR,0)) == -1)
+    if ((fd = open(arg, O_RDWR, 0)) == -1)
   #endif
       {
-        fd = creat(arg,0666);  /* equivalent to the new open(arg,O_RDWR | O_CREAT | O_TRUNC, 0666) */
+        fd = creat(arg, 0666);  /* equivalent to the new open(arg, O_RDWR | O_CREAT | O_TRUNC, 0666) */
       }
     else
-      lseek(fd,0L,SEEK_END);
+      lseek(fd, 0L, SEEK_END);
 #endif
   return(fd);
 }
@@ -638,11 +638,11 @@ int mus_file_create(const char *arg)
   #ifdef MPW_C
     return(creat(arg));
   #else
-    return(creat(arg,0));
+    return(creat(arg, 0));
   #endif
 #else
   int fd;
-  fd = creat(arg,0666);
+  fd = creat(arg, 0666);
   return(fd);
 #endif
 }
@@ -650,13 +650,13 @@ int mus_file_create(const char *arg)
 int mus_file_reopen_write(const char *arg)
 {
 #ifdef MACOS
-  return(open(arg,O_RDWR));
+  return(open(arg, O_RDWR));
 #else
   int fd;
   #ifdef WINDOZE
-    fd = open(arg,O_RDWR | O_BINARY);
+    fd = open(arg, O_RDWR | O_BINARY);
   #else
-    fd = open(arg,O_RDWR,0);
+    fd = open(arg, O_RDWR, 0);
   #endif
   return(fd);
 #endif
@@ -677,13 +677,18 @@ long mus_file_seek(int tfd, long offset, int origin)
   io_fd *fd;
   int siz;
   long loc,true_loc,header_end;
-  if ((tfd == MUS_DAC_CHANNEL) || (tfd == MUS_DAC_REVERB)) return(0);
-  if ((io_fds == NULL) || (tfd >= io_fd_size) || (tfd < 0) || (io_fds[tfd] == NULL))
+  if ((tfd == MUS_DAC_CHANNEL) || 
+      (tfd == MUS_DAC_REVERB)) 
+    return(0);
+  if ((io_fds == NULL) || 
+      (tfd >= io_fd_size) || 
+      (tfd < 0) || 
+      (io_fds[tfd] == NULL))
     {
       mus_error(MUS_FILE_DESCRIPTORS_NOT_INITIALIZED,
 		"no file descriptor %d %d %d\n  [%s[%d] %s]",
-		tfd,(int)offset,origin,
-		__FILE__,__LINE__,__FUNCTION__);
+		tfd, (int)offset, origin,
+		__FILE__, __LINE__, __FUNCTION__);
       return(MUS_ERROR);
     }
   fd = io_fds[tfd];
@@ -691,13 +696,14 @@ long mus_file_seek(int tfd, long offset, int origin)
     {
       mus_error(MUS_NOT_A_SOUND_FILE,
 		"invalid stream: %s %d, %d, %d\n  [%s[%d] %s]",
-		fd->name,tfd,(int)offset,origin,
-		__FILE__,__LINE__,__FUNCTION__);
+		fd->name, tfd, (int)offset, origin,
+		__FILE__, __LINE__, __FUNCTION__);
       return(MUS_ERROR);
     }
   siz = fd->bytes_per_sample;
-  if ((siz == 2) || (origin != 0))
-    return(lseek(tfd,offset,origin));
+  if ((siz == 2) || 
+      (origin != 0))
+    return(lseek(tfd, offset, origin));
   else
     {
       header_end = fd->data_location;
@@ -705,21 +711,21 @@ long mus_file_seek(int tfd, long offset, int origin)
       switch (siz)
 	{
 	case 1: 
-	  true_loc = lseek(tfd,header_end+(loc>>1),origin);
+	  true_loc = lseek(tfd, header_end+(loc>>1), origin);
 	  /* now pretend we're still in 16-bit land and return where we "actually" are in that region */
 	  /* that is, loc (in bytes) = how many (2-byte) samples into the file we want to go, return what we got */
 	  return(header_end + ((true_loc - header_end)<<1));
 	  break;
 	case 3:
-	  true_loc = lseek(tfd,header_end+loc+(loc>>1),origin);
+	  true_loc = lseek(tfd, header_end+loc+(loc>>1), origin);
 	  return(true_loc + ((true_loc - header_end)>>1));
 	  break;
 	case 4:
-	  true_loc = lseek(tfd,header_end+(loc<<1),origin);
+	  true_loc = lseek(tfd, header_end+(loc<<1), origin);
 	  return(header_end + ((true_loc - header_end)>>1));
 	  break;
 	case 8:
-	  true_loc = lseek(tfd,header_end+(loc<<2),origin);
+	  true_loc = lseek(tfd, header_end+(loc<<2), origin);
 	  return(header_end + ((true_loc - header_end)>>2));
 	  break;
 	}
@@ -735,23 +741,24 @@ int mus_file_seek_frame(int tfd, int frame)
     {
       mus_error(MUS_FILE_DESCRIPTORS_NOT_INITIALIZED,
 		"no file descriptors!\n  [%s[%d] %s]",
-		__FILE__,__LINE__,__FUNCTION__); 
+		__FILE__, __LINE__, __FUNCTION__); 
       return(MUS_ERROR);
     }
   if (tfd < 0)
     {
       mus_error(MUS_FILE_DESCRIPTORS_NOT_INITIALIZED,
 		"file descriptor = %d?\n  [%s[%d] %s]",
-		tfd,__FILE__,__LINE__,__FUNCTION__); 
+		tfd, __FILE__, __LINE__, __FUNCTION__); 
       return(MUS_ERROR);
     }
-  if ((tfd >= io_fd_size) || (io_fds[tfd] == NULL))
+  if ((tfd >= io_fd_size) || 
+      (io_fds[tfd] == NULL))
     {
       mus_error(MUS_FILE_DESCRIPTORS_NOT_INITIALIZED,
 		"file descriptors not realloc'd? (tfd: %d, io_fd_size: %d, io_fd: %d)\n  [%s[%d] %s]",
-		tfd,io_fd_size,
+		tfd, io_fd_size,
 		(tfd < io_fd_size) ? ((int)(io_fds[tfd])) : 0,
-		__FILE__,__LINE__,__FUNCTION__);
+		__FILE__, __LINE__, __FUNCTION__);
       return(MUS_ERROR);
     }
   fd = io_fds[tfd];
@@ -759,10 +766,10 @@ int mus_file_seek_frame(int tfd, int frame)
     {
       mus_error(MUS_NOT_A_SOUND_FILE,
 		"invalid stream: %s %d, %d\n  [%s[%d] %s]",
-		fd->name,tfd,frame,__FILE__,__LINE__,__FUNCTION__);
+		fd->name, tfd, frame, __FILE__, __LINE__, __FUNCTION__);
       return(MUS_ERROR);
     }
-  return(lseek(tfd,fd->data_location + (fd->chans * frame * fd->bytes_per_sample),SEEK_SET));
+  return(lseek(tfd, fd->data_location + (fd->chans * frame * fd->bytes_per_sample), SEEK_SET));
 }
 
 
@@ -917,11 +924,11 @@ int mus_ptr2table(MUS_SAMPLE_TYPE *arr)
       long_int_p_table_size+=16;
       if (long_int_p_table)
 	{
-	  long_int_p_table = (MUS_SAMPLE_TYPE **)REALLOC(long_int_p_table,long_int_p_table_size * sizeof(MUS_SAMPLE_TYPE *));
+	  long_int_p_table = (MUS_SAMPLE_TYPE **)REALLOC(long_int_p_table, long_int_p_table_size * sizeof(MUS_SAMPLE_TYPE *));
 	  for (i=loc;i<long_int_p_table_size;i++) long_int_p_table[i] = NULL;
 	}
       else
-	long_int_p_table = (MUS_SAMPLE_TYPE **)CALLOC(long_int_p_table_size,sizeof(MUS_SAMPLE_TYPE *));
+	long_int_p_table = (MUS_SAMPLE_TYPE **)CALLOC(long_int_p_table_size, sizeof(MUS_SAMPLE_TYPE *));
     }
   long_int_p_table[loc] = arr;
   return(loc);
@@ -944,18 +951,18 @@ static int checked_write(int tfd, char *buf, int chars)
   io_fd *fd;
   if (tfd == MUS_DAC_CHANNEL)
     {
-      mus_audio_write(rt_ap_out,buf,chars);
+      mus_audio_write(rt_ap_out, buf, chars);
     }
   else
     {
-      bytes = write(tfd,buf,chars);
+      bytes = write(tfd, buf, chars);
       if (bytes != chars) 
 	{
 	  if ((io_fds == NULL) || (tfd >= io_fd_size) || (tfd < 0) || (io_fds[tfd] == NULL))
 	    {
 	      mus_error(MUS_FILE_DESCRIPTORS_NOT_INITIALIZED,
 			"no file descriptors!\n  [%s[%d] %s]",
-			__FILE__,__LINE__,__FUNCTION__); 
+			__FILE__, __LINE__, __FUNCTION__); 
 	      return(MUS_ERROR);
 	    }
 	  fd = io_fds[tfd];
@@ -967,23 +974,23 @@ static int checked_write(int tfd, char *buf, int chars)
 	  else
 	    mus_error(MUS_WRITE_ERROR,
 		      "IO write error (%s %s): %d of %d bytes written for %d (%d %d %d)\n\n  [%s[%d] %s]",
-		      fd->name,strerror(errno),
-		      bytes,chars,tfd,fd->bytes_per_sample,fd->data_format,fd->data_location,
-		      __FILE__,__LINE__,__FUNCTION__);
+		      fd->name, strerror(errno),
+		      bytes, chars, tfd, fd->bytes_per_sample, fd->data_format, fd->data_location,
+		      __FILE__, __LINE__, __FUNCTION__);
 #else
   #ifndef MACOS
 	  else
 	    mus_error(MUS_WRITE_ERROR,
 		      "IO write error (%s %s): %d of %d bytes written for %d (%d %d %d %d)\n\n  [%s[%d] %s]",
-		      fd->name,strerror(errno),
-		      bytes,chars,tfd,(int)buf,fd->bytes_per_sample,fd->data_format,fd->data_location,
-		      __FILE__,__LINE__,__FUNCTION__);
+		      fd->name, strerror(errno),
+		      bytes, chars, tfd, (int)buf, fd->bytes_per_sample, fd->data_format, fd->data_location,
+		      __FILE__, __LINE__, __FUNCTION__);
   #else
 	  else
 	    mus_error(MUS_WRITE_ERROR,
 		      "IO write error (%s): %d of %d bytes written for %d (%d %d %d %d)\n\n  [%s[%d] %s]",
-		      fd->name,bytes,chars,tfd,(int)buf,fd->bytes_per_sample,fd->data_format,fd->data_location,
-		      __FILE__,__LINE__,__FUNCTION__);
+		      fd->name, bytes, chars, tfd, (int)buf, fd->bytes_per_sample, fd->data_format, fd->data_location,
+		      __FILE__, __LINE__, __FUNCTION__);
   #endif
 #endif
 	  return(MUS_ERROR);
@@ -1013,7 +1020,7 @@ static int mus_read_any_1(int tfd, int beg, int chans, int nints, MUS_SAMPLE_TYP
 	{
 	  mus_error(MUS_FILE_DESCRIPTORS_NOT_INITIALIZED,
 		    "no file descriptors!\n  [%s[%d] %s]",
-		    __FILE__,__LINE__,__FUNCTION__); 
+		    __FILE__, __LINE__, __FUNCTION__); 
 	  return(MUS_ERROR);
 	}
       fd = io_fds[tfd];
@@ -1021,15 +1028,15 @@ static int mus_read_any_1(int tfd, int beg, int chans, int nints, MUS_SAMPLE_TYP
 	{
 	  mus_error(MUS_FILE_CLOSED,
 		    "attempt to read closed file %s\n  [%s[%d] %s]",
-		    fd->name,__FILE__,__LINE__,__FUNCTION__); 
+		    fd->name, __FILE__, __LINE__, __FUNCTION__); 
 	  return(MUS_ERROR);
 	}
-      charbuf = (char *)CALLOC(BUFLIM,sizeof(char)); 
+      charbuf = (char *)CALLOC(BUFLIM, sizeof(char)); 
       if (charbuf == NULL) 
 	{
 	  mus_error(MUS_MEMORY_ALLOCATION_FAILED,
 		    "IO buffer allocation trouble\n  [%s[%d] %s]",
-		    __FILE__,__LINE__,__FUNCTION__); 
+		    __FILE__, __LINE__, __FUNCTION__); 
 	  return(MUS_ERROR);
 	}
       siz = fd->bytes_per_sample;
@@ -1058,7 +1065,7 @@ static int mus_read_any_1(int tfd, int beg, int chans, int nints, MUS_SAMPLE_TYP
       if (bytes > buflim) {leftover = (bytes-buflim); bytes = buflim;} else leftover = 0;
       if (!from_buffer)
 	{
-	  total = read(tfd,charbuf,bytes); 
+	  total = read(tfd, charbuf, bytes); 
 	  if (total <= 0) 
 	    {
 	      /* zero out trailing section (some callers don't check the returned value) -- this added 9-May-99 */
@@ -1164,17 +1171,17 @@ static int mus_read_any_1(int tfd, int beg, int chans, int nints, MUS_SAMPLE_TYP
 
 int mus_file_read_any(int tfd, int beg, int chans, int nints, MUS_SAMPLE_TYPE **bufs, MUS_SAMPLE_TYPE *cm)
 {
-  return(mus_read_any_1(tfd,beg,chans,nints,bufs,cm,NULL));
+  return(mus_read_any_1(tfd, beg, chans, nints, bufs, cm, NULL));
 }
 
 int mus_file_read_file(int tfd, int beg, int chans, int nints, MUS_SAMPLE_TYPE **bufs)
 {
-  return(mus_read_any_1(tfd,beg,chans,nints,bufs,NULL,NULL));
+  return(mus_read_any_1(tfd, beg, chans, nints, bufs, NULL, NULL));
 }
 
 int mus_file_read_buffer(int charbuf_data_format, int beg, int chans, int nints, MUS_SAMPLE_TYPE **bufs, char *charbuf)
 {
-  return(mus_read_any_1(charbuf_data_format,beg,chans,nints,bufs,NULL,charbuf)); 
+  return(mus_read_any_1(charbuf_data_format, beg, chans, nints, bufs, NULL, charbuf)); 
 }
 
 int mus_file_read(int tfd, int beg, int end, int chans, MUS_SAMPLE_TYPE **bufs)
@@ -1182,7 +1189,7 @@ int mus_file_read(int tfd, int beg, int end, int chans, MUS_SAMPLE_TYPE **bufs)
   int num,rtn,i,k;
   MUS_SAMPLE_TYPE *buffer;
   num=(end-beg+1);
-  rtn=mus_read_any_1(tfd,beg,chans,num,bufs,NULL,NULL);
+  rtn=mus_read_any_1(tfd, beg, chans, num, bufs, NULL, NULL);
   if (rtn == MUS_ERROR) return(MUS_ERROR);
   if (rtn<num) 
     {
@@ -1205,7 +1212,7 @@ int mus_file_read_chans(int tfd, int beg, int end, int chans, MUS_SAMPLE_TYPE **
   int num,rtn,i,k;
   MUS_SAMPLE_TYPE *buffer;
   num=(end-beg+1);
-  rtn=mus_read_any_1(tfd,beg,chans,num,bufs,cm,NULL);
+  rtn=mus_read_any_1(tfd, beg, chans, num, bufs, cm, NULL);
   if (rtn == MUS_ERROR) return(MUS_ERROR);
   if (rtn<num) 
     {
@@ -1231,7 +1238,7 @@ int mus_file_read_chans(int tfd, int beg, int end, int chans, MUS_SAMPLE_TYPE **
   #undef min
 #endif
 
-#define min(x,y)  ((x) < (y) ? (x) : (y))
+#define min(x, y)  ((x) < (y) ? (x) : (y))
 
 int mus_file_write_zeros(int tfd, int num)
 {
@@ -1243,7 +1250,7 @@ int mus_file_write_zeros(int tfd, int num)
     {
       mus_error(MUS_FILE_DESCRIPTORS_NOT_INITIALIZED,
 		"no file descriptors!\n  [%s[%d] %s]",
-		__FILE__,__LINE__,__FUNCTION__); 
+		__FILE__, __LINE__, __FUNCTION__); 
       return(MUS_ERROR);
     }
   fd = io_fds[tfd];
@@ -1251,26 +1258,26 @@ int mus_file_write_zeros(int tfd, int num)
     {
       mus_error(MUS_FILE_CLOSED,
 		"attempt to write closed file %s\n  [%s[%d] %s]",
-		fd->name,__FILE__,__LINE__,__FUNCTION__); 
+		fd->name, __FILE__, __LINE__, __FUNCTION__); 
       return(MUS_ERROR);
     }
-  charbuf = (char *)CALLOC(BUFLIM,sizeof(char)); 
+  charbuf = (char *)CALLOC(BUFLIM, sizeof(char)); 
   if (charbuf == NULL) 
     {
       mus_error(MUS_MEMORY_ALLOCATION_FAILED,
 		"IO buffer allocation trouble\n  [%s[%d] %s]",
-		__FILE__,__LINE__,__FUNCTION__); 
+		__FILE__, __LINE__, __FUNCTION__); 
       return(MUS_ERROR);
     }
   lim = num*(fd->bytes_per_sample);
-  curnum=min(lim,BUFLIM);
+  curnum=min(lim, BUFLIM);
   for (i=0;i<curnum;i++) charbuf[i]=0;
   while (curnum>0)
     {
-      err = checked_write(tfd,charbuf,curnum);
+      err = checked_write(tfd, charbuf, curnum);
       if (err == MUS_ERROR) return(MUS_ERROR);
       lim -= (BUFLIM);
-      curnum=min(lim,BUFLIM);
+      curnum=min(lim, BUFLIM);
     }
   FREE(charbuf);
   return(num);
@@ -1293,7 +1300,7 @@ static int mus_write_1(int tfd, int beg, int end, int chans, MUS_SAMPLE_TYPE **b
 	{
 	  mus_error(MUS_FILE_DESCRIPTORS_NOT_INITIALIZED,
 		    "no file descriptors!\n  [%s[%d] %s]",
-		    __FILE__,__LINE__,__FUNCTION__);
+		    __FILE__, __LINE__, __FUNCTION__);
 	  return(MUS_ERROR);
 	}
       fd = io_fds[tfd];
@@ -1301,15 +1308,15 @@ static int mus_write_1(int tfd, int beg, int end, int chans, MUS_SAMPLE_TYPE **b
 	{
 	  mus_error(MUS_FILE_CLOSED,
 		    "attempt to write closed file %s\n  [%s[%d] %s]",
-		    fd->name,__FILE__,__LINE__,__FUNCTION__); 
+		    fd->name, __FILE__, __LINE__, __FUNCTION__); 
 	  return(MUS_ERROR);
 	}
-      charbuf = (char *)CALLOC(BUFLIM,sizeof(char)); 
+      charbuf = (char *)CALLOC(BUFLIM, sizeof(char)); 
       if (charbuf == NULL) 
 	{
 	  mus_error(MUS_MEMORY_ALLOCATION_FAILED,
 		    "IO buffer allocation trouble\n  [%s[%d] %s]",
-		    __FILE__,__LINE__,__FUNCTION__);
+		    __FILE__, __LINE__, __FUNCTION__);
 	  return(MUS_ERROR);
 	}
       siz = fd->bytes_per_sample;
@@ -1359,22 +1366,22 @@ static int mus_write_1(int tfd, int beg, int end, int chans, MUS_SAMPLE_TYPE **b
 	  switch (data_format)
 	    {
 	    case MUS_BSHORT: 
-	      for (j=0;j<lim;j++,loc++,jchar+=siz_chans) m_set_big_endian_short(jchar,MUS_SAMPLE_TO_SHORT(buffer[loc]));
+	      for (j=0;j<lim;j++,loc++,jchar+=siz_chans) m_set_big_endian_short(jchar, MUS_SAMPLE_TO_SHORT(buffer[loc]));
 	      break;
 	    case MUS_LSHORT:   
-	      for (j=0;j<lim;j++,loc++,jchar+=siz_chans) m_set_little_endian_short(jchar,MUS_SAMPLE_TO_SHORT(buffer[loc]));
+	      for (j=0;j<lim;j++,loc++,jchar+=siz_chans) m_set_little_endian_short(jchar, MUS_SAMPLE_TO_SHORT(buffer[loc]));
 	      break;
 	    case MUS_BINT:   
-	      for (j=0;j<lim;j++,loc++,jchar+=siz_chans) m_set_big_endian_int(jchar,MUS_SAMPLE_TO_INT(buffer[loc]));
+	      for (j=0;j<lim;j++,loc++,jchar+=siz_chans) m_set_big_endian_int(jchar, MUS_SAMPLE_TO_INT(buffer[loc]));
 	      break;
 	    case MUS_LINT:   
-	      for (j=0;j<lim;j++,loc++,jchar+=siz_chans) m_set_little_endian_int(jchar,MUS_SAMPLE_TO_INT(buffer[loc]));
+	      for (j=0;j<lim;j++,loc++,jchar+=siz_chans) m_set_little_endian_int(jchar, MUS_SAMPLE_TO_INT(buffer[loc]));
 	      break;
 	    case MUS_BINTN:   
-	      for (j=0;j<lim;j++,loc++,jchar+=siz_chans) m_set_big_endian_int(jchar,MUS_SAMPLE_TO_INT(buffer[loc])<<(32-MUS_SAMPLE_BITS));
+	      for (j=0;j<lim;j++,loc++,jchar+=siz_chans) m_set_big_endian_int(jchar, MUS_SAMPLE_TO_INT(buffer[loc])<<(32-MUS_SAMPLE_BITS));
 	      break;
 	    case MUS_LINTN:   
-	      for (j=0;j<lim;j++,loc++,jchar+=siz_chans) m_set_little_endian_int(jchar,MUS_SAMPLE_TO_INT(buffer[loc])<<(32-MUS_SAMPLE_BITS));
+	      for (j=0;j<lim;j++,loc++,jchar+=siz_chans) m_set_little_endian_int(jchar, MUS_SAMPLE_TO_INT(buffer[loc])<<(32-MUS_SAMPLE_BITS));
 	      break;
 	    case MUS_MULAW:     
 	      for (j=0;j<lim;j++,loc++,jchar+=siz_chans) (*jchar) = to_mulaw(MUS_SAMPLE_TO_SHORT(buffer[loc]));
@@ -1389,22 +1396,22 @@ static int mus_write_1(int tfd, int beg, int end, int chans, MUS_SAMPLE_TYPE **b
 	      for (j=0;j<lim;j++,loc++,jchar+=siz_chans) (*jchar) = MUS_SAMPLE_TO_BYTE(buffer[loc]) + 128;
 	      break;
 	    case MUS_BFLOAT:    
-	      for (j=0;j<lim;j++,loc++,jchar+=siz_chans) m_set_big_endian_float(jchar,MUS_SAMPLE_TO_FLOAT(buffer[loc]));
+	      for (j=0;j<lim;j++,loc++,jchar+=siz_chans) m_set_big_endian_float(jchar, MUS_SAMPLE_TO_FLOAT(buffer[loc]));
 	      break;
 	    case MUS_LFLOAT:    
-	      for (j=0;j<lim;j++,loc++,jchar+=siz_chans) m_set_little_endian_float(jchar,MUS_SAMPLE_TO_FLOAT(buffer[loc]));
+	      for (j=0;j<lim;j++,loc++,jchar+=siz_chans) m_set_little_endian_float(jchar, MUS_SAMPLE_TO_FLOAT(buffer[loc]));
 	      break;
 	    case MUS_BDOUBLE:
-	      for (j=0;j<lim;j++,loc++,jchar+=siz_chans) m_set_big_endian_double(jchar,MUS_SAMPLE_TO_DOUBLE(buffer[loc]));
+	      for (j=0;j<lim;j++,loc++,jchar+=siz_chans) m_set_big_endian_double(jchar, MUS_SAMPLE_TO_DOUBLE(buffer[loc]));
 	      break;
 	    case MUS_LDOUBLE:   
-	      for (j=0;j<lim;j++,loc++,jchar+=siz_chans) m_set_little_endian_double(jchar,MUS_SAMPLE_TO_DOUBLE(buffer[loc]));
+	      for (j=0;j<lim;j++,loc++,jchar+=siz_chans) m_set_little_endian_double(jchar, MUS_SAMPLE_TO_DOUBLE(buffer[loc]));
 	      break;
 	    case MUS_UBSHORT: 
-	      for (j=0;j<lim;j++,loc++,jchar+=siz_chans) m_set_big_endian_unsigned_short(jchar,(short)(MUS_SAMPLE_TO_SHORT(buffer[loc]) + 32768));
+	      for (j=0;j<lim;j++,loc++,jchar+=siz_chans) m_set_big_endian_unsigned_short(jchar, (short)(MUS_SAMPLE_TO_SHORT(buffer[loc]) + 32768));
 	      break;
 	    case MUS_ULSHORT: 
-	      for (j=0;j<lim;j++,loc++,jchar+=siz_chans) m_set_little_endian_unsigned_short(jchar,(short)(MUS_SAMPLE_TO_SHORT(buffer[loc]) + 32768));
+	      for (j=0;j<lim;j++,loc++,jchar+=siz_chans) m_set_little_endian_unsigned_short(jchar, (short)(MUS_SAMPLE_TO_SHORT(buffer[loc]) + 32768));
 	      break;
 	    case MUS_B24INT:   
 	      bk=(k*3);
@@ -1430,7 +1437,7 @@ static int mus_write_1(int tfd, int beg, int end, int chans, MUS_SAMPLE_TYPE **b
 	}
       if (!to_buffer)
 	{
-	  err = checked_write(tfd,charbuf,bytes);
+	  err = checked_write(tfd, charbuf, bytes);
 	  if (err == MUS_ERROR) 
 	    {
 	      FREE(charbuf); 
@@ -1444,17 +1451,17 @@ static int mus_write_1(int tfd, int beg, int end, int chans, MUS_SAMPLE_TYPE **b
 
 int mus_file_write(int tfd, int beg, int end, int chans, MUS_SAMPLE_TYPE **bufs)
 {
-  return(mus_write_1(tfd,beg,end,chans,bufs,NULL,0));
+  return(mus_write_1(tfd, beg, end, chans, bufs, NULL, 0));
 }
 
 int mus_file_write_file(int tfd, int beg, int end, int chans, MUS_SAMPLE_TYPE **bufs)
 {
-  return(mus_write_1(tfd,beg,end,chans,bufs,NULL,0));
+  return(mus_write_1(tfd, beg, end, chans, bufs, NULL, 0));
 }
 
 int mus_file_write_buffer(int charbuf_data_format, int beg, int end, int chans, MUS_SAMPLE_TYPE **bufs, char *charbuf, int clipped)
 {
-  return(mus_write_1(charbuf_data_format,beg,end,chans,bufs,charbuf,clipped));
+  return(mus_write_1(charbuf_data_format, beg, end, chans, bufs, charbuf, clipped));
 }
 
 
@@ -1480,7 +1487,7 @@ char *mus_file_full_name(char *utok)
   if ((tok) && (*tok)) 
     len = strlen(tok); 
   else return(NULL);
-  file_name_buf = (char *)CALLOC(MUS_MAX_FILE_NAME,sizeof(char));
+  file_name_buf = (char *)CALLOC(MUS_MAX_FILE_NAME, sizeof(char));
   j = 0;
   for (i=0;i<len-1;i++)
     {
@@ -1492,28 +1499,28 @@ char *mus_file_full_name(char *utok)
       tok[i]='\0';
     }
 #ifdef MACOS
-  strcpy(file_name_buf,tok);
+  strcpy(file_name_buf, tok);
 #else
   if (tok[0] != '/')
     {
       file_name_buf[0] = '\0';
       if (tok[0] == '~')
 	{
-	  strcpy(file_name_buf,getenv("HOME"));
-	  strcat(file_name_buf,++tok);
+	  strcpy(file_name_buf, getenv("HOME"));
+	  strcat(file_name_buf, ++tok);
 	}
       else
 	{
 #if (!defined(NEXT)) || defined(HAVE_GETCWD)
-	  getcwd(file_name_buf,MUS_MAX_FILE_NAME);
+	  getcwd(file_name_buf, MUS_MAX_FILE_NAME);
 #else
 	  getwd(file_name_buf);
 #endif
-	  strcat(file_name_buf,"/");
-	  strcat(file_name_buf,tok);
+	  strcat(file_name_buf, "/");
+	  strcat(file_name_buf, tok);
 	}
     }
-  else strcpy(file_name_buf,tok);
+  else strcpy(file_name_buf, tok);
 #endif
   return(file_name_buf);
 }
@@ -1527,13 +1534,13 @@ char *mus_format(const char *format, ...)
   char *buf;
 #if HAVE_VPRINTF
   va_list ap;
-  buf = (char *)CALLOC(MUS_FORMAT_STRING_MAX,sizeof(char));
-  va_start(ap,format);
-  vsprintf(buf,format,ap);
+  buf = (char *)CALLOC(MUS_FORMAT_STRING_MAX, sizeof(char));
+  va_start(ap, format);
+  vsprintf(buf, format, ap);
   va_end(ap);
 #else
-  buf = (char *)CALLOC(MUS_FORMAT_STRING_MAX,sizeof(char));
-  sprintf(buf,"%s...[you need vprintf]",format);
+  buf = (char *)CALLOC(MUS_FORMAT_STRING_MAX, sizeof(char));
+  sprintf(buf, "%s...[you need vprintf]", format);
 #endif
   return(buf);
 }

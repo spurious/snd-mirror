@@ -61,7 +61,7 @@ static char *make_desc_buf_1(void *ptr, int descr, int size)
 {
   char *desc = NULL;
   mus_any *gen = (mus_any *)ptr;
-  desc = (char *)CALLOC(size,sizeof(char));
+  desc = (char *)CALLOC(size, sizeof(char));
   if (desc == NULL) 
     mus_error(MUS_MEMORY_ALLOCATION_FAILED,
 	      "can't allocate %d bytes for %s_%s!",
@@ -71,8 +71,8 @@ static char *make_desc_buf_1(void *ptr, int descr, int size)
   return(desc);
 }
 
-static char *make_desc_buf(void *ptr, int descr) {return(make_desc_buf_1(ptr,descr,describe_buffer_size));}
-static char *make_big_desc_buf(void *ptr, int descr) {return(make_desc_buf_1(ptr,descr,describe_buffer_size * 4));}
+static char *make_desc_buf(void *ptr, int descr) {return(make_desc_buf_1(ptr, descr, describe_buffer_size));}
+static char *make_big_desc_buf(void *ptr, int descr) {return(make_desc_buf_1(ptr, descr, describe_buffer_size * 4));}
 
 #ifndef WITH_SINE_TABLE
   #define WITH_SINE_TABLE 1
@@ -97,13 +97,13 @@ static void init_sine (void)
   Float phase,incr;
   if (sine_table == NULL)
     {
-      sine_table = (Float *)CALLOC(SINE_SIZE+1,sizeof(Float));
+      sine_table = (Float *)CALLOC(SINE_SIZE+1, sizeof(Float));
       if (sine_table == NULL) 
-	mus_error(MUS_MEMORY_ALLOCATION_FAILED,"can't allocate sine_table");
+	mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate sine_table");
       else
 	{
 	  incr = TWO_PI/(Float)SINE_SIZE;
-	  for (i=0,phase=0.0;i<SINE_SIZE+1;i++,phase+=incr)
+	  for (i=0, phase=0.0;i<SINE_SIZE+1;i++,phase+=incr)
 	    sine_table[i]=(Float)sin(phase);
 	}
     }
@@ -148,12 +148,12 @@ char *mus_name(mus_any *ptr) {return((ptr->core)->name);}
 static void describe_bad_gen(void *ptr, char *desc, char *gen_name, char *an)
 {
   if (!ptr)
-    sprintf(desc,"arg to describe_%s is null",gen_name);
+    sprintf(desc, "arg to describe_%s is null", gen_name);
   else
     {
       if ((((mus_any *)ptr)->core)->type < mus_class_tag)
-	sprintf(desc,"arg to describe_%s appears to be %s %s",gen_name,an,mus_name((mus_any *)ptr));
-      else sprintf(desc,"arg to describe_%s (%d) is not %s %s",gen_name,(int)ptr,an,gen_name);
+	sprintf(desc, "arg to describe_%s appears to be %s %s", gen_name, an, mus_name((mus_any *)ptr));
+      else sprintf(desc, "arg to describe_%s (%d) is not %s %s", gen_name, (int)ptr, an, gen_name);
     }
 }
 
@@ -161,7 +161,7 @@ Float mus_radians2hz(Float rads) {return(rads * sampling_rate / TWO_PI);}
 Float mus_hz2radians(Float hz) {return(hz * TWO_PI / sampling_rate);}
 Float mus_degrees2radians(Float degree) {return(degree * TWO_PI / 360.0);}
 Float mus_radians2degrees(Float rads) {return(rads * 360.0 / TWO_PI);}
-Float mus_db2linear(Float x) {return(pow(10.0,x/20.0));}
+Float mus_db2linear(Float x) {return(pow(10.0, x/20.0));}
 Float mus_linear2db(Float x) {return(20.0 * log10(x));}
 
 Float mus_srate(void) {return(sampling_rate);}
@@ -181,26 +181,26 @@ static char *print_array(Float *arr, int len, int loc)
   int i,lim,k,size = 128;
   if (arr == NULL) 
     {
-      str = (char *)CALLOC(4,sizeof(char));
-      sprintf(str,"nil");
+      str = (char *)CALLOC(4, sizeof(char));
+      sprintf(str, "nil");
       return(str);
     }
   if ((array_print_length*12) > size) size = array_print_length*12;
-  base = (char *)CALLOC(size,sizeof(char));
-  str = (char *)CALLOC(32,sizeof(char));
-  sprintf(base,"[");
+  base = (char *)CALLOC(size, sizeof(char));
+  str = (char *)CALLOC(32, sizeof(char));
+  sprintf(base, "[");
   lim = len;
   if (lim > array_print_length) lim = array_print_length;
   k = loc;
   for (i=0;i<lim-1;i++)
     {
-      sprintf(str,"%.3f ",arr[k]);
-      strcat(base,str);
+      sprintf(str, "%.3f ", arr[k]);
+      strcat(base, str);
       k++;
       if (k >= len) k=0;
     }
-  sprintf(str,"%.3f%s]",arr[k],(len > lim) ? "..." : "");
-  strcat(base,str);
+  sprintf(str, "%.3f%s]", arr[k], (len > lim) ? "..." : "");
+  strcat(base, str);
   FREE(str);
   return(base);
 }
@@ -211,26 +211,26 @@ static char *print_double_array(double *arr, int len, int loc)
   int i,lim,k,size=128;
   if (arr == NULL) 
     {
-      str = (char *)CALLOC(4,sizeof(char));
-      sprintf(str,"nil");
+      str = (char *)CALLOC(4, sizeof(char));
+      sprintf(str, "nil");
       return(str);
     }
   if ((array_print_length*16) > size) size = array_print_length*16;
-  base = (char *)CALLOC(size,sizeof(char));
-  str = (char *)CALLOC(32,sizeof(char));
-  sprintf(base,"[");
+  base = (char *)CALLOC(size, sizeof(char));
+  str = (char *)CALLOC(32, sizeof(char));
+  sprintf(base, "[");
   lim = len;
   if (lim > array_print_length) lim = array_print_length;
   k = loc;
   for (i=0;i<lim-1;i++)
     {
-      sprintf(str,"%.3f ",arr[k]);
-      strcat(base,str);
+      sprintf(str, "%.3f ", arr[k]);
+      strcat(base, str);
       k++;
       if (k >= len) k=0;
     }
-  sprintf(str,"%.3f%s]",arr[k],(len > lim) ? "..." : "");
-  strcat(base,str);
+  sprintf(str, "%.3f%s]", arr[k], (len > lim) ? "..." : "");
+  strcat(base, str);
   FREE(str);
   return(base);
 }
@@ -241,26 +241,26 @@ static char *print_int_array(int *arr, int len, int loc)
   int i,lim,k,size=128;
   if (arr == NULL) 
     {
-      str = (char *)CALLOC(4,sizeof(char));
-      sprintf(str,"nil");
+      str = (char *)CALLOC(4, sizeof(char));
+      sprintf(str, "nil");
       return(str);
     }
   if ((array_print_length*8) > size) size = array_print_length*8;
-  base = (char *)CALLOC(size,sizeof(char));
-  str = (char *)CALLOC(32,sizeof(char));
-  sprintf(base,"[");
+  base = (char *)CALLOC(size, sizeof(char));
+  str = (char *)CALLOC(32, sizeof(char));
+  sprintf(base, "[");
   lim = len;
   if (lim > array_print_length) lim = array_print_length;
   k = loc;
   for (i=0;i<lim-1;i++)
     {
-      sprintf(str,"%d ",arr[k]);
-      strcat(base,str);
+      sprintf(str, "%d ", arr[k]);
+      strcat(base, str);
       k++;
       if (k >= len) k=0;
     }
-  sprintf(str,"%d%s]",arr[k],(len > lim) ? "..." : "");
-  strcat(base,str);
+  sprintf(str, "%d%s]", arr[k], (len > lim) ? "..." : "");
+  strcat(base, str);
   FREE(str);
   return(base);
 }
@@ -274,9 +274,9 @@ int mus_free(mus_any *gen)
     {
       if ((gen->core)->release)
 	return((*((gen->core)->release))(gen));
-      mus_error(MUS_NO_FREE,"can't free %s",mus_name(gen));
+      mus_error(MUS_NO_FREE, "can't free %s", mus_name(gen));
     }
-  else mus_error(MUS_NO_GEN,"null gen passed to mus_free");
+  else mus_error(MUS_NO_GEN, "null gen passed to mus_free");
   return(0);
   
 }
@@ -287,9 +287,9 @@ char *mus_describe(mus_any *gen)
     {
       if ((gen->core)->describe)
 	return((*((gen->core)->describe))(gen));
-      else mus_error(MUS_NO_DESCRIBE,"can't describe %s",mus_name(gen));
+      else mus_error(MUS_NO_DESCRIBE, "can't describe %s", mus_name(gen));
     }
-  else mus_error(MUS_NO_GEN,"null gen passed to mus_describe");
+  else mus_error(MUS_NO_GEN, "null gen passed to mus_describe");
   return(NULL);
 }
 
@@ -299,9 +299,9 @@ char *mus_inspect(mus_any *gen)
     {
       if ((gen->core)->inspect)
 	return((*((gen->core)->inspect))(gen));
-      else mus_error(MUS_NO_DESCRIBE,"can't inspect %s",mus_name(gen));
+      else mus_error(MUS_NO_DESCRIBE, "can't inspect %s", mus_name(gen));
     }
-  else mus_error(MUS_NO_GEN,"null gen passed to inspect");
+  else mus_error(MUS_NO_GEN, "null gen passed to inspect");
   return(NULL);
 }
 
@@ -310,7 +310,7 @@ int mus_equalp(mus_any *p1, mus_any *p2)
   if ((p1) && (p2))
     {
       if ((p1->core)->equalp)
-	return((*((p1->core)->equalp))(p1,p2));
+	return((*((p1->core)->equalp))(p1, p2));
       else return(p1 == p2);
     }
   return(TRUE); /* (eq nil nil) */
@@ -322,21 +322,21 @@ Float mus_frequency(mus_any *gen)
     {
       if ((gen->core)->frequency)
 	return((*((gen->core)->frequency))(gen));
-      mus_error(MUS_NO_FREQUENCY,"can't get %s's frequency",mus_name(gen));
+      mus_error(MUS_NO_FREQUENCY, "can't get %s's frequency", mus_name(gen));
     }
-  else mus_error(MUS_NO_GEN,"null gen passed to mus_frequency");
+  else mus_error(MUS_NO_GEN, "null gen passed to mus_frequency");
   return(0.0);
 }
 
-Float mus_set_frequency(mus_any *gen,Float val)
+Float mus_set_frequency(mus_any *gen, Float val)
 {
   if (gen)
     {
       if ((gen->core)->frequency)
-	return((*((gen->core)->set_frequency))(gen,val));
-      mus_error(MUS_NO_FREQUENCY,"can't set %s's frequency",mus_name(gen));
+	return((*((gen->core)->set_frequency))(gen, val));
+      mus_error(MUS_NO_FREQUENCY, "can't set %s's frequency", mus_name(gen));
     }
-  else mus_error(MUS_NO_GEN,"null gen passed to mus_set_frequency");
+  else mus_error(MUS_NO_GEN, "null gen passed to mus_set_frequency");
   return(0.0);
 }
 
@@ -346,7 +346,7 @@ Float mus_phase(mus_any *gen)
     {
       if ((gen->core)->phase)
 	return((*((gen->core)->phase))(gen));
-      mus_error(MUS_NO_PHASE,"can't get %s's phase",mus_name(gen));
+      mus_error(MUS_NO_PHASE, "can't get %s's phase", mus_name(gen));
     }
   return(0.0);
 }
@@ -356,8 +356,8 @@ Float mus_set_phase(mus_any *gen, Float val)
   if (gen)
     {
       if ((gen->core)->phase)
-	return((*((gen->core)->set_phase))(gen,val));
-      mus_error(MUS_NO_PHASE,"can't set %s's phase",mus_name(gen));
+	return((*((gen->core)->set_phase))(gen, val));
+      mus_error(MUS_NO_PHASE, "can't set %s's phase", mus_name(gen));
     }
   return(0.0);
 }
@@ -368,7 +368,7 @@ Float mus_scaler(mus_any *gen)
     {
       if ((gen->core)->scaler)
 	return((*((gen->core)->scaler))(gen));
-      mus_error(MUS_NO_SCALER,"can't get %s's scaler",mus_name(gen));
+      mus_error(MUS_NO_SCALER, "can't get %s's scaler", mus_name(gen));
     }
   return(0.0);
 }
@@ -378,8 +378,8 @@ Float mus_set_scaler(mus_any *gen, Float val)
   if (gen)
     {
       if ((gen->core)->scaler)
-	return((*((gen->core)->set_scaler))(gen,val));
-      mus_error(MUS_NO_SCALER,"can't set %s's scaler",mus_name(gen));
+	return((*((gen->core)->set_scaler))(gen, val));
+      mus_error(MUS_NO_SCALER, "can't set %s's scaler", mus_name(gen));
     }
   return(0.0);
 }
@@ -389,8 +389,8 @@ Float mus_run(mus_any *gen, Float arg1, Float arg2)
   if (gen)
     {
       if ((gen->core)->run)
-	return((*((gen->core)->run))(gen,arg1,arg2));
-      mus_error(MUS_NO_SAMPLE_OUTPUT,"can't run %s",mus_name(gen)); /* need MUS_NO_RUN or something */
+	return((*((gen->core)->run))(gen, arg1, arg2));
+      mus_error(MUS_NO_SAMPLE_OUTPUT, "can't run %s", mus_name(gen)); /* need MUS_NO_RUN or something */
     }
   return(0.0);
 }
@@ -401,9 +401,9 @@ int mus_length(mus_any *gen)
     {
       if ((gen->core)->length)
 	return((*((((mus_any *)gen)->core)->length))(gen));
-      else mus_error(MUS_NO_LENGTH,"can't get %s's length",mus_name(gen));
+      else mus_error(MUS_NO_LENGTH, "can't get %s's length", mus_name(gen));
     }
-  else mus_error(MUS_NO_GEN,"null gen passed to mus_length");
+  else mus_error(MUS_NO_GEN, "null gen passed to mus_length");
   return(0);
 }
 
@@ -413,12 +413,12 @@ int mus_set_length(mus_any *gen, int len)
     {
       if ((gen->core)->length)
 	{
-	  (*((gen->core)->set_length))(gen,len);
+	  (*((gen->core)->set_length))(gen, len);
 	  return(len);
 	}
-      else mus_error(MUS_NO_LENGTH,"can't set %s's length",mus_name(gen));
+      else mus_error(MUS_NO_LENGTH, "can't set %s's length", mus_name(gen));
     }
-  else mus_error(MUS_NO_GEN,"null gen passed to mus_set_length");
+  else mus_error(MUS_NO_GEN, "null gen passed to mus_set_length");
   return(0);
 }
 
@@ -428,9 +428,9 @@ Float *mus_data(mus_any *gen)
     {
       if ((gen->core)->data)
 	return((*((gen->core)->data))(gen));
-      else mus_error(MUS_NO_DATA,"can't get %s's data",mus_name(gen));
+      else mus_error(MUS_NO_DATA, "can't get %s's data", mus_name(gen));
     }
-  else mus_error(MUS_NO_GEN,"null gen passed to mus_data");
+  else mus_error(MUS_NO_GEN, "null gen passed to mus_data");
   return(NULL);
 }
 
@@ -446,12 +446,12 @@ Float *mus_set_data(mus_any *gen, Float *new_data)
     {
       if ((gen->core)->set_data)
 	{
-	  (*((gen->core)->set_data))(gen,new_data);
+	  (*((gen->core)->set_data))(gen, new_data);
 	  return(new_data);
 	}
-      else mus_error(MUS_NO_DATA,"can't set %s's data",mus_name(gen));
+      else mus_error(MUS_NO_DATA, "can't set %s's data", mus_name(gen));
     }
-  else mus_error(MUS_NO_GEN,"null gen passed to mus_set_data");
+  else mus_error(MUS_NO_GEN, "null gen passed to mus_set_data");
   return(new_data);
 }
 
@@ -494,7 +494,7 @@ void mus_rectangular2polar(Float *rl, Float *im, int size)
   for (i=0;i<size;i++)
     {
       temp = rl[i]*rl[i]+im[i]*im[i];
-      im[i] = -atan2(im[i],rl[i]);
+      im[i] = -atan2(im[i], rl[i]);
       if (temp < .0000001) 
 	rl[i] = 0.0;
       else rl[i] = sqrt(temp);
@@ -545,7 +545,7 @@ Float mus_oscil(mus_any *ptr, Float fm, Float pm)
   osc *gen = (osc *)ptr;
   result = mus_sin(gen->phase + pm);
   gen->phase += (gen->freq + fm);
-  if ((gen->phase > 100.0) || (gen->phase < -100.0)) gen->phase = fmod(gen->phase,TWO_PI);
+  if ((gen->phase > 100.0) || (gen->phase < -100.0)) gen->phase = fmod(gen->phase, TWO_PI);
   return(result);
 }
 
@@ -554,7 +554,7 @@ Float mus_oscil_bank(Float *amps, mus_any **oscils, Float *inputs, int size)
   int i;
   Float sum = 0.0;
   for (i=0;i<size;i++) 
-    sum += (amps[i] * mus_oscil(oscils[i],inputs[i],0.0));
+    sum += (amps[i] * mus_oscil(oscils[i], inputs[i], 0.0));
   return(sum);
 }
 
@@ -562,7 +562,7 @@ int mus_oscil_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_OSCIL))
 static int free_oscil(void *ptr) {if (ptr) FREE(ptr); return(0);}
 static Float oscil_freq(void *ptr) {return(mus_radians2hz(((osc *)ptr)->freq));}
 static Float set_oscil_freq(void *ptr, Float val) {((osc *)ptr)->freq = mus_hz2radians(val); return(val);}
-static Float oscil_phase(void *ptr) {return(fmod(((osc *)ptr)->phase,TWO_PI));}
+static Float oscil_phase(void *ptr) {return(fmod(((osc *)ptr)->phase, TWO_PI));}
 static Float set_oscil_phase(void *ptr, Float val) {((osc *)ptr)->phase = val; return(val);}
 
 static int oscil_equalp(void *p1, void *p2)
@@ -577,12 +577,12 @@ static int oscil_equalp(void *p1, void *p2)
 static char *describe_oscil(void *ptr)
 {
   char *desc;
-  desc = make_desc_buf(ptr,TRUE);
+  desc = make_desc_buf(ptr, TRUE);
   if (desc)
     {
       if (mus_oscil_p((mus_any *)ptr))
-	sprintf(desc,"oscil freq: %.3fHz, phase: %.3f",mus_radians2hz(((osc *)ptr)->freq),((osc *)ptr)->phase);
-      else describe_bad_gen(ptr,desc,"oscil","an");
+	sprintf(desc, "oscil freq: %.3fHz, phase: %.3f", mus_radians2hz(((osc *)ptr)->freq), ((osc *)ptr)->phase);
+      else describe_bad_gen(ptr, desc, "oscil", "an");
     }
   return(desc);
 }
@@ -591,8 +591,8 @@ static char *inspect_oscil(void *ptr)
 {
   osc *gen = (osc *)ptr;
   char *desc;
-  desc = make_desc_buf(ptr,FALSE);
-  if (desc) sprintf(desc,"osc freq: %f, phase: %f",gen->freq,gen->phase);
+  desc = make_desc_buf(ptr, FALSE);
+  if (desc) sprintf(desc, "osc freq: %f, phase: %f", gen->freq, gen->phase);
   return(desc);
 }
 
@@ -615,9 +615,9 @@ static mus_any_class OSCIL_CLASS = {
 mus_any *mus_make_oscil(Float freq, Float phase)
 {
   osc *gen;
-  gen = (osc *)CALLOC(1,sizeof(osc));
+  gen = (osc *)CALLOC(1, sizeof(osc));
   if (gen == NULL) 
-    mus_error(MUS_MEMORY_ALLOCATION_FAILED,"can't allocate struct for mus_make_oscil!");
+    mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate struct for mus_make_oscil!");
   else
     {
       gen->core = &OSCIL_CLASS;
@@ -660,12 +660,12 @@ int mus_sum_of_cosines_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MU
 static int free_sum_of_cosines(void *ptr) {if (ptr) FREE(ptr); return(0);}
 static Float sum_of_cosines_freq(void *ptr) {return(mus_radians2hz(((cosp *)ptr)->freq));}
 static Float set_sum_of_cosines_freq(void *ptr, Float val) {((cosp *)ptr)->freq = mus_hz2radians(val); return(val);}
-static Float sum_of_cosines_phase(void *ptr) {return(fmod(((cosp *)ptr)->phase,TWO_PI));}
+static Float sum_of_cosines_phase(void *ptr) {return(fmod(((cosp *)ptr)->phase, TWO_PI));}
 static Float set_sum_of_cosines_phase(void *ptr, Float val) {((cosp *)ptr)->phase = val; return(val);}
 static Float sum_of_cosines_scaler(void *ptr) {return(((cosp *)ptr)->scaler);}
 static Float set_sum_of_cosines_scaler(void *ptr, Float val) {((cosp *)ptr)->scaler = val; return(val);}
 static int sum_of_cosines_cosines(void *ptr) {return(((cosp *)ptr)->cosines);}
-static Float run_sum_of_cosines(mus_any *ptr, Float fm, Float unused) {return(mus_sum_of_cosines(ptr,fm));}
+static Float run_sum_of_cosines(mus_any *ptr, Float fm, Float unused) {return(mus_sum_of_cosines(ptr, fm));}
 
 int mus_cosines(mus_any *ptr) 
 {
@@ -692,13 +692,13 @@ static int sum_of_cosines_equalp(void *p1, void *p2)
 static char *describe_sum_of_cosines(void *ptr)
 {
   char *desc;
-  desc = make_desc_buf(ptr,TRUE);
+  desc = make_desc_buf(ptr, TRUE);
   if (desc)
     {
       if (mus_sum_of_cosines_p((mus_any *)ptr))
-	sprintf(desc,"sum_of_cosines freq: %.3fHz, phase: %.3f, cosines: %d",
-		mus_radians2hz(((cosp *)ptr)->freq),((cosp *)ptr)->phase,((cosp *)ptr)->cosines);
-      else describe_bad_gen(ptr,desc,"sum_of_cosines","a");
+	sprintf(desc, "sum_of_cosines freq: %.3fHz, phase: %.3f, cosines: %d",
+		mus_radians2hz(((cosp *)ptr)->freq), ((cosp *)ptr)->phase, ((cosp *)ptr)->cosines);
+      else describe_bad_gen(ptr, desc, "sum_of_cosines", "a");
     }
   return(desc);
 }
@@ -707,8 +707,8 @@ static char *inspect_sum_of_cosines(void *ptr)
 {
   cosp *gen = (cosp *)ptr;
   char *desc;
-  desc = make_desc_buf(ptr,FALSE);
-  if (desc) sprintf(desc,"cosp freq: %f, phase: %f, cosines: %d, scaler: %f",gen->freq,gen->phase,gen->cosines,gen->scaler);
+  desc = make_desc_buf(ptr, FALSE);
+  if (desc) sprintf(desc, "cosp freq: %f, phase: %f, cosines: %d, scaler: %f", gen->freq, gen->phase, gen->cosines, gen->scaler);
   return(desc);
 }
 
@@ -734,9 +734,9 @@ static mus_any_class SUM_OF_COSINES_CLASS = {
 mus_any *mus_make_sum_of_cosines(int cosines, Float freq, Float phase)
 {
   cosp *gen;
-  gen = (cosp *)CALLOC(1,sizeof(cosp));
+  gen = (cosp *)CALLOC(1, sizeof(cosp));
   if (gen == NULL) 
-    mus_error(MUS_MEMORY_ALLOCATION_FAILED,"can't allocate struct for mus_make_sum_of_cosines!");
+    mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate struct for mus_make_sum_of_cosines!");
   else
     {
       gen->core = &SUM_OF_COSINES_CLASS;
@@ -767,7 +767,7 @@ Float mus_delay(mus_any *ptr, Float input, Float pm)
   /* changed 26-Sep-00 to match mus.lisp */
   dly *gen = (dly *)ptr;
   Float result;
-  result = mus_tap(ptr,pm);
+  result = mus_tap(ptr, pm);
   gen->line[gen->loc] = input;
   gen->loc++;
   if (gen->zdly)
@@ -791,7 +791,7 @@ Float mus_tap(mus_any *ptr, Float loc)
     {
       if (loc == 0.0) 
 	return(gen->line[gen->zloc]);
-      else return(mus_array_interp(gen->line,gen->zloc - loc,gen->zsize));
+      else return(mus_array_interp(gen->line, gen->zloc - loc, gen->zsize));
     }
   else
     {
@@ -821,15 +821,15 @@ static char *inspect_delay(void *ptr)
 {
   dly *gen = (dly *)ptr;
   char *desc,*arr = NULL;
-  desc = make_big_desc_buf(ptr,FALSE);
+  desc = make_big_desc_buf(ptr, FALSE);
   if (desc) 
-    sprintf(desc,"dly line[%d,%d at %d,%d (%s)]: %s, xscl: %f, yscl: %f",
+    sprintf(desc, "dly line[%d,%d at %d,%d (%s)]: %s, xscl: %f, yscl: %f",
 	  gen->size,
 	  gen->zsize,
 	  gen->loc,
 	  gen->zloc,
 	  (gen->line_allocated) ? "local" : "external",
-	  arr = print_array(gen->line,gen->size,(gen->zdly) ? gen->zloc : gen->loc),
+	  arr = print_array(gen->line, gen->size, (gen->zdly) ? gen->zloc : gen->loc),
 	  gen->xscl,
 	  gen->yscl);
   if (arr) FREE(arr);
@@ -840,17 +840,17 @@ static char *describe_delay(void *ptr)
 {
   char *desc,*str = NULL;
   dly *gen = (dly *)ptr;
-  desc = make_desc_buf(ptr,TRUE);
+  desc = make_desc_buf(ptr, TRUE);
   if (desc)
     {
       if (mus_delay_p((mus_any *)ptr))
 	{
 	  if (gen->zdly)
-	    sprintf(desc,"delay: line[%d,%d]: %s",gen->size,gen->zsize,str = print_array(gen->line,gen->size,gen->zloc));
-	  else sprintf(desc,"delay: line[%d]: %s",gen->size,str = print_array(gen->line,gen->size,gen->loc));
+	    sprintf(desc, "delay: line[%d,%d]: %s", gen->size, gen->zsize, str = print_array(gen->line, gen->size, gen->zloc));
+	  else sprintf(desc, "delay: line[%d]: %s", gen->size, str = print_array(gen->line, gen->size, gen->loc));
 	  if (str) FREE(str);
 	}
-      else describe_bad_gen(ptr,desc,"delay","a");
+      else describe_bad_gen(ptr, desc, "delay", "a");
     }
   return(desc);
 }
@@ -859,17 +859,17 @@ static char *describe_comb(void *ptr)
 {
   char *desc,*str = NULL;
   dly *gen = (dly *)ptr;
-  desc = make_desc_buf(ptr,TRUE);
+  desc = make_desc_buf(ptr, TRUE);
   if (desc)
     {
       if (mus_comb_p((mus_any *)ptr))
 	{
 	  if (gen->zdly)
-	    sprintf(desc,"comb: scaler: %.3f, line[%d,%d]: %s",gen->xscl,gen->size,gen->zsize,str = print_array(gen->line,gen->size,gen->zloc));
-	  else sprintf(desc,"comb: scaler: %.3f, line[%d]: %s",gen->xscl,gen->size,str = print_array(gen->line,gen->size,gen->loc));
+	    sprintf(desc, "comb: scaler: %.3f, line[%d,%d]: %s", gen->xscl, gen->size, gen->zsize, str = print_array(gen->line, gen->size, gen->zloc));
+	  else sprintf(desc, "comb: scaler: %.3f, line[%d]: %s", gen->xscl, gen->size, str = print_array(gen->line, gen->size, gen->loc));
 	  if (str) FREE(str);
 	}
-      else describe_bad_gen(ptr,desc,"comb","a");
+      else describe_bad_gen(ptr, desc, "comb", "a");
     }
   return(desc);
 }
@@ -878,17 +878,17 @@ static char *describe_notch(void *ptr)
 {
   char *desc,*str = NULL;
   dly *gen = (dly *)ptr;
-  desc = make_desc_buf(ptr,TRUE);
+  desc = make_desc_buf(ptr, TRUE);
   if (desc)
     {
       if (mus_notch_p((mus_any *)ptr))
 	{
 	  if (gen->zdly)
-	    sprintf(desc,"notch: scaler: %.3f, line[%d,%d]: %s",gen->xscl,gen->size,gen->zsize,str = print_array(gen->line,gen->size,gen->zloc));
-	  else sprintf(desc,"notch: scaler: %.3f, line[%d]: %s",gen->xscl,gen->size,str = print_array(gen->line,gen->size,gen->loc));
+	    sprintf(desc, "notch: scaler: %.3f, line[%d,%d]: %s", gen->xscl, gen->size, gen->zsize, str = print_array(gen->line, gen->size, gen->zloc));
+	  else sprintf(desc, "notch: scaler: %.3f, line[%d]: %s", gen->xscl, gen->size, str = print_array(gen->line, gen->size, gen->loc));
 	  if (str) FREE(str);
 	}
-      else describe_bad_gen(ptr,desc,"notch","a");
+      else describe_bad_gen(ptr, desc, "notch", "a");
     }
   return(desc);
 }
@@ -897,19 +897,19 @@ static char *describe_all_pass(void *ptr)
 {
   char *desc,*str = NULL;
   dly *gen = (dly *)ptr;
-  desc = make_desc_buf(ptr,TRUE);
+  desc = make_desc_buf(ptr, TRUE);
   if (desc)
     {
       if (mus_all_pass_p((mus_any *)ptr))
 	{
 	  if (gen->zdly)
-	    sprintf(desc,"all_pass: feedback: %.3f, feedforward: %.3f, line[%d,%d]:%s",
-		    gen->xscl,gen->yscl,gen->size,gen->zsize,str = print_array(gen->line,gen->size,gen->zloc));
-	  else sprintf(desc,"all_pass: feedback: %.3f, feedforward: %.3f, line[%d]:%s",
-		       gen->xscl,gen->yscl,gen->size,str = print_array(gen->line,gen->size,gen->loc));
+	    sprintf(desc, "all_pass: feedback: %.3f, feedforward: %.3f, line[%d,%d]:%s",
+		    gen->xscl, gen->yscl, gen->size, gen->zsize, str = print_array(gen->line, gen->size, gen->zloc));
+	  else sprintf(desc, "all_pass: feedback: %.3f, feedforward: %.3f, line[%d]:%s",
+		       gen->xscl, gen->yscl, gen->size, str = print_array(gen->line, gen->size, gen->loc));
 	  if (str) FREE(str);
 	}
-      else describe_bad_gen(ptr,desc,"all_pass","an");
+      else describe_bad_gen(ptr, desc, "all_pass", "an");
     }
   return(desc);
 }
@@ -944,9 +944,9 @@ mus_any *mus_make_delay(int size, Float *preloaded_line, int line_size)
   /* if preloaded_line null, allocated locally */
   /* if size == line_size, normal (non-interpolating) delay */
   dly *gen;
-  gen = (dly *)CALLOC(1,sizeof(dly));
+  gen = (dly *)CALLOC(1, sizeof(dly));
   if (gen == NULL) 
-    mus_error(MUS_MEMORY_ALLOCATION_FAILED,"can't allocate struct for mus_make_delay!");
+    mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate struct for mus_make_delay!");
   else
     {
       gen->core = &DELAY_CLASS;
@@ -961,7 +961,7 @@ mus_any *mus_make_delay(int size, Float *preloaded_line, int line_size)
 	}
       else 
 	{
-	  gen->line = (Float *)CALLOC(line_size,sizeof(Float));
+	  gen->line = (Float *)CALLOC(line_size, sizeof(Float));
 	  if (gen->line == NULL) 
 	    mus_error(MUS_MEMORY_ALLOCATION_FAILED,
 		      "can't allocate %d bytes for delay line in mus_make_delay!",
@@ -980,8 +980,8 @@ Float mus_comb (mus_any *ptr, Float input, Float pm)
 {
   dly *gen = (dly *)ptr;
   if (gen->zdly)
-    return(mus_delay(ptr,input + (gen->xscl * mus_tap(ptr,pm)),pm));
-  else return(mus_delay(ptr,input + (gen->line[gen->loc] * gen->xscl),0.0));
+    return(mus_delay(ptr, input + (gen->xscl * mus_tap(ptr, pm)), pm));
+  else return(mus_delay(ptr, input + (gen->line[gen->loc] * gen->xscl), 0.0));
 }
 
 static mus_any_class COMB_CLASS = {
@@ -1004,7 +1004,7 @@ static mus_any_class COMB_CLASS = {
 mus_any *mus_make_comb (Float scaler, int size, Float *line, int line_size)
 {
   dly *gen;
-  gen = (dly *)mus_make_delay(size,line,line_size);
+  gen = (dly *)mus_make_delay(size, line, line_size);
   if (gen)
     {
       gen->core = &COMB_CLASS;
@@ -1036,7 +1036,7 @@ static mus_any_class NOTCH_CLASS = {
 Float mus_notch (mus_any *ptr, Float input, Float pm) 
 {
   dly *gen = (dly *)ptr;
-  return((input * gen->xscl) + mus_delay(ptr,input,pm));
+  return((input * gen->xscl) + mus_delay(ptr, input, pm));
 }
 
 int mus_notch_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_NOTCH));}
@@ -1044,7 +1044,7 @@ int mus_notch_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_NOTCH))
 mus_any *mus_make_notch (Float scaler, int size, Float *line, int line_size)
 {
   dly *gen;
-  gen = (dly *)mus_make_delay(size,line,line_size);
+  gen = (dly *)mus_make_delay(size, line, line_size);
   if (gen)
     {
       gen->core = &NOTCH_CLASS;
@@ -1059,9 +1059,9 @@ Float mus_all_pass(mus_any *ptr, Float input, Float pm)
   Float din;
   dly *gen = (dly *)ptr;
   if (gen->zdly)
-    din = mus_delay(ptr,input + (gen->yscl * mus_tap(ptr,pm)),pm);
+    din = mus_delay(ptr, input + (gen->yscl * mus_tap(ptr, pm)), pm);
   else din = input + (gen->yscl * gen->line[gen->loc]);
-  return(mus_delay(ptr,din,pm) + (gen->xscl * din));
+  return(mus_delay(ptr, din, pm) + (gen->xscl * din));
 }
 
 int mus_all_pass_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_ALL_PASS));}
@@ -1086,7 +1086,7 @@ static mus_any_class ALL_PASS_CLASS = {
 mus_any *mus_make_all_pass (Float backward, Float forward, int size, Float *line, int line_size)
 {
   dly *gen;
-  gen = (dly *)mus_make_delay(size,line,line_size);
+  gen = (dly *)mus_make_delay(size, line, line_size);
   if (gen)
     {
       gen->core = &ALL_PASS_CLASS;
@@ -1153,17 +1153,17 @@ Float *mus_partials2wave(Float *partial_data, int partials, Float *table, int ta
   int partial,i,k;
   Float amp,freq,angle;
   for (i=0;i<table_size;i++) table[i] = 0.0;
-  for (partial=0,k=1;partial<partials;partial++,k+=2)
+  for (partial=0, k=1;partial<partials;partial++,k+=2)
     {
       amp = partial_data[k];
       if (amp != 0.0)
 	{
 	  freq = (partial_data[partial*2] * TWO_PI) / (Float)table_size;
-	  for (i=0,angle=0.0;i<table_size;i++,angle+=freq) table[i] += amp * mus_sin(angle);
+	  for (i=0, angle=0.0;i<table_size;i++,angle+=freq) table[i] += amp * mus_sin(angle);
 	}
     }
   if (normalize) 
-    return(array_normalize(table,table_size));
+    return(array_normalize(table, table_size));
   return(table);
 }
 
@@ -1172,17 +1172,17 @@ Float *mus_phasepartials2wave(Float *partial_data, int partials, Float *table, i
   int partial,i,k,n;
   Float amp,freq,angle;
   for (i=0;i<table_size;i++) table[i] = 0.0;
-  for (partial=0,k=1,n=2;partial<partials;partial++,k+=3,n+=3)
+  for (partial=0, k=1, n=2;partial<partials;partial++,k+=3,n+=3)
     {
       amp = partial_data[k];
       if (amp != 0.0)
 	{
 	  freq = (partial_data[partial*3] * TWO_PI) / (Float)table_size;
-	  for (i=0,angle=partial_data[n];i<table_size;i++,angle+=freq) table[i] += amp * mus_sin(angle);
+	  for (i=0, angle=partial_data[n];i<table_size;i++,angle+=freq) table[i] += amp * mus_sin(angle);
 	}
     }
   if (normalize) 
-    return(array_normalize(table,table_size));
+    return(array_normalize(table, table_size));
   return(table);
 }
 
@@ -1190,33 +1190,33 @@ Float mus_table_lookup(mus_any *ptr, Float fm)
 {
   tbl *gen = (tbl *)ptr;
   Float result;
-  result = mus_array_interp(gen->table,gen->phase,gen->table_size);
+  result = mus_array_interp(gen->table, gen->phase, gen->table_size);
   gen->phase += (gen->freq + (fm * gen->internal_mag));
   while (gen->phase >= gen->table_size) gen->phase -= gen->table_size;
   while (gen->phase < 0.0) gen->phase += gen->table_size;
   return(result);
 }
 
-static Float run_table_lookup(mus_any *ptr, Float fm, Float unused) {return(mus_table_lookup(ptr,fm));}
+static Float run_table_lookup(mus_any *ptr, Float fm, Float unused) {return(mus_table_lookup(ptr, fm));}
 int mus_table_lookup_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_TABLE_LOOKUP));}
 static int table_lookup_length(void *ptr) {return(((tbl *)ptr)->table_size);}
 static Float *table_lookup_data(void *ptr) {return(((tbl *)ptr)->table);}
 static Float table_lookup_freq(void *ptr) {return((((tbl *)ptr)->freq * sampling_rate) / (Float)(((tbl *)ptr)->table_size));}
 static Float set_table_lookup_freq(void *ptr, Float val) {((tbl *)ptr)->freq = (val * ((tbl *)ptr)->table_size) / sampling_rate; return(val);}
-static Float table_lookup_phase(void *ptr) {return(fmod(((TWO_PI * ((tbl *)ptr)->phase)/((tbl *)ptr)->table_size),TWO_PI));}
+static Float table_lookup_phase(void *ptr) {return(fmod(((TWO_PI * ((tbl *)ptr)->phase)/((tbl *)ptr)->table_size), TWO_PI));}
 static Float set_table_lookup_phase(void *ptr, Float val) {((tbl *)ptr)->phase = (val * ((tbl *)ptr)->table_size) / TWO_PI; return(val);}
 
 static char *describe_table_lookup(void *ptr)
 {
   char *desc;
   tbl *gen = (tbl *)ptr;
-  desc = make_desc_buf(ptr,TRUE);
+  desc = make_desc_buf(ptr, TRUE);
   if (desc)
     {
       if (mus_table_lookup_p((mus_any *)ptr))
-	sprintf(desc,"table_lookup: freq: %.3fHz, phase: %.3f, length: %d",
-		gen->freq * sampling_rate / gen->table_size,gen->phase,gen->table_size);
-      else describe_bad_gen(ptr,desc,"table_lookup","a");
+	sprintf(desc, "table_lookup: freq: %.3fHz, phase: %.3f, length: %d",
+		gen->freq * sampling_rate / gen->table_size, gen->phase, gen->table_size);
+      else describe_bad_gen(ptr, desc, "table_lookup", "a");
     }
   return(desc);
 }
@@ -1225,9 +1225,9 @@ static char *inspect_table_lookup(void *ptr)
 {
   tbl *gen = (tbl *)ptr;
   char *desc;
-  desc = make_desc_buf(ptr,FALSE);
-  if (desc) sprintf(desc,"tbl freq: %f, phase: %f, length: %d, mag: %f, table: %d (%s)",
-		    gen->freq,gen->phase,gen->table_size,gen->internal_mag,(int)(gen->table),
+  desc = make_desc_buf(ptr, FALSE);
+  if (desc) sprintf(desc, "tbl freq: %f, phase: %f, length: %d, mag: %f, table: %d (%s)",
+		    gen->freq, gen->phase, gen->table_size, gen->internal_mag, (int)(gen->table),
 		    (gen->table_allocated) ? "local" : "external");
   return(desc);
 }
@@ -1270,9 +1270,9 @@ static mus_any_class TABLE_LOOKUP_CLASS = {
 mus_any *mus_make_table_lookup (Float freq, Float phase, Float *table, int table_size)
 {
   tbl *gen;
-  gen = (tbl *)CALLOC(1,sizeof(tbl));
+  gen = (tbl *)CALLOC(1, sizeof(tbl));
   if (gen == NULL) 
-    mus_error(MUS_MEMORY_ALLOCATION_FAILED,"can't allocate struct for mus_make_table_lookup!");
+    mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate struct for mus_make_table_lookup!");
   else
     {
       gen->core = &TABLE_LOOKUP_CLASS;
@@ -1287,7 +1287,7 @@ mus_any *mus_make_table_lookup (Float freq, Float phase, Float *table, int table
 	}
       else
 	{
-	  gen->table = (Float *)CALLOC(table_size,sizeof(Float));
+	  gen->table = (Float *)CALLOC(table_size, sizeof(Float));
 	  if (gen->table == NULL)
 	    mus_error(MUS_MEMORY_ALLOCATION_FAILED,
 		      "can't allocate %d bytes for table in mus_make_table_lookup!",
@@ -1315,8 +1315,8 @@ static char *inspect_sw(void *ptr)
 {
   sw *gen = (sw *)ptr;
   char *desc;
-  desc = make_desc_buf(ptr,FALSE);
-  if (desc) sprintf(desc,"sw current_value: %f, freq: %f, phase: %f, base: %f",gen->current_value,gen->freq,gen->phase,gen->base);
+  desc = make_desc_buf(ptr, FALSE);
+  if (desc) sprintf(desc, "sw current_value: %f, freq: %f, phase: %f, base: %f", gen->current_value, gen->freq, gen->phase, gen->base);
   return(desc);
 }
 
@@ -1339,10 +1339,10 @@ Float mus_sawtooth_wave(mus_any *ptr, Float fm)
   return(result);
 }
 
-static Float run_sawtooth_wave(mus_any *ptr, Float fm, Float unused) {return(mus_sawtooth_wave(ptr,fm));}
+static Float run_sawtooth_wave(mus_any *ptr, Float fm, Float unused) {return(mus_sawtooth_wave(ptr, fm));}
 int mus_sawtooth_wave_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_SAWTOOTH_WAVE));}
 static Float sw_freq(void *ptr) {return(mus_radians2hz(((sw *)ptr)->freq));}
-static Float sw_phase(void *ptr) {return(fmod(((sw *)ptr)->phase,TWO_PI));}
+static Float sw_phase(void *ptr) {return(fmod(((sw *)ptr)->phase, TWO_PI));}
 static Float set_sw_freq(void *ptr, Float val) {((sw *)ptr)->freq = mus_hz2radians(val); return(val);}
 static Float set_sw_phase(void *ptr, Float val) {((sw *)ptr)->phase = val; return(val);}
 
@@ -1362,13 +1362,13 @@ static int sw_equalp(void *p1, void *p2)
 static char *describe_sawtooth(void *ptr)
 {
   char *desc;
-  desc = make_desc_buf(ptr,TRUE);
+  desc = make_desc_buf(ptr, TRUE);
   if (desc)
     {
       if (mus_sawtooth_wave_p((mus_any *)ptr))
-	sprintf(desc,"sawtooth freq: %.3fHz, phase: %.3f, amp: %.3f",
-		mus_radians2hz(((sw *)ptr)->freq),((sw *)ptr)->phase,((sw *)ptr)->base * M_PI);
-      else describe_bad_gen(ptr,desc,"sawtooth_wave","a");
+	sprintf(desc, "sawtooth freq: %.3fHz, phase: %.3f, amp: %.3f",
+		mus_radians2hz(((sw *)ptr)->freq), ((sw *)ptr)->phase, ((sw *)ptr)->base * M_PI);
+      else describe_bad_gen(ptr, desc, "sawtooth_wave", "a");
     }
   return(desc);
 }
@@ -1393,9 +1393,9 @@ static mus_any_class SAWTOOTH_WAVE_CLASS = {
 mus_any *mus_make_sawtooth_wave(Float freq, Float amp, Float phase) /* M_PI as initial phase, normally */
 {
   sw *gen;
-  gen = (sw *)CALLOC(1,sizeof(sw));
+  gen = (sw *)CALLOC(1, sizeof(sw));
   if (gen == NULL) 
-    mus_error(MUS_MEMORY_ALLOCATION_FAILED,"can't allocate struct for mus_make_sawtooth_wave!");
+    mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate struct for mus_make_sawtooth_wave!");
   else
     {
       gen->core = &SAWTOOTH_WAVE_CLASS;
@@ -1425,18 +1425,18 @@ int mus_square_wave_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_S
 static char *describe_square_wave(void *ptr)
 {
   char *desc;
-  desc = make_desc_buf(ptr,TRUE);
+  desc = make_desc_buf(ptr, TRUE);
   if (desc)
     {
       if (mus_square_wave_p((mus_any *)ptr))
-	sprintf(desc,"square_wave freq: %.3fHz, phase: %.3f, amp: %.3f",
-		mus_radians2hz(((sw *)ptr)->freq),((sw *)ptr)->phase,((sw *)ptr)->base);
-      else describe_bad_gen(ptr,desc,"square_wave","a");
+	sprintf(desc, "square_wave freq: %.3fHz, phase: %.3f, amp: %.3f",
+		mus_radians2hz(((sw *)ptr)->freq), ((sw *)ptr)->phase, ((sw *)ptr)->base);
+      else describe_bad_gen(ptr, desc, "square_wave", "a");
     }
   return(desc);
 }
 
-static Float run_square_wave(mus_any *ptr, Float fm, Float unused) {return(mus_square_wave(ptr,fm));}
+static Float run_square_wave(mus_any *ptr, Float fm, Float unused) {return(mus_square_wave(ptr, fm));}
 static Float square_wave_scaler(void *ptr) {return(((sw *)ptr)->base);}
 static Float set_square_wave_scaler(void *ptr, Float val) {((sw *)ptr)->base = val; return(val);}
 
@@ -1460,9 +1460,9 @@ static mus_any_class SQUARE_WAVE_CLASS = {
 mus_any *mus_make_square_wave(Float freq, Float amp, Float phase)
 {
   sw *gen;
-  gen = (sw *)CALLOC(1,sizeof(sw));
+  gen = (sw *)CALLOC(1, sizeof(sw));
   if (gen == NULL) 
-    mus_error(MUS_MEMORY_ALLOCATION_FAILED,"can't allocate struct for mus_make_square_wave!");
+    mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate struct for mus_make_square_wave!");
   else
     {
       gen->core = &SQUARE_WAVE_CLASS;
@@ -1494,20 +1494,20 @@ Float mus_triangle_wave(mus_any *ptr, Float fm)
 
 int mus_triangle_wave_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_TRIANGLE_WAVE));}
 
-static Float run_triangle_wave(mus_any *ptr, Float fm, Float unused) {return(mus_triangle_wave(ptr,fm));}
+static Float run_triangle_wave(mus_any *ptr, Float fm, Float unused) {return(mus_triangle_wave(ptr, fm));}
 static Float triangle_wave_scaler(void *ptr) {return(((sw *)ptr)->base * M_PI_2);}
 static Float set_triangle_wave_scaler(void *ptr, Float val) {((sw *)ptr)->base = (val * 2.0/M_PI); return(val);}
 
 static char *describe_triangle_wave(void *ptr)
 {
   char *desc;
-  desc = make_desc_buf(ptr,TRUE);
+  desc = make_desc_buf(ptr, TRUE);
   if (desc)
     {
       if (mus_triangle_wave_p((mus_any *)ptr))
-	sprintf(desc,"triangle_wave freq: %.3fHz, phase: %.3f, amp: %.3f",
-		mus_radians2hz(((sw *)ptr)->freq),((sw *)ptr)->phase,((sw *)ptr)->base * M_PI_2);
-      else describe_bad_gen(ptr,desc,"triangle_wave","a");
+	sprintf(desc, "triangle_wave freq: %.3fHz, phase: %.3f, amp: %.3f",
+		mus_radians2hz(((sw *)ptr)->freq), ((sw *)ptr)->phase, ((sw *)ptr)->base * M_PI_2);
+      else describe_bad_gen(ptr, desc, "triangle_wave", "a");
     }
   return(desc);
 }
@@ -1532,9 +1532,9 @@ static mus_any_class TRIANGLE_WAVE_CLASS = {
 mus_any *mus_make_triangle_wave(Float freq, Float amp, Float phase)
 {
   sw *gen;
-  gen = (sw *)CALLOC(1,sizeof(sw));
+  gen = (sw *)CALLOC(1, sizeof(sw));
   if (gen == NULL) 
-    mus_error(MUS_MEMORY_ALLOCATION_FAILED,"can't allocate struct for mus_make_triangle_wave!");
+    mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate struct for mus_make_triangle_wave!");
   else
     {
       gen->core = &TRIANGLE_WAVE_CLASS;
@@ -1568,20 +1568,20 @@ Float mus_pulse_train(mus_any *ptr, Float fm)
 
 int mus_pulse_train_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_PULSE_TRAIN));}
 
-static Float run_pulse_train(mus_any *ptr, Float fm, Float unused) {return(mus_pulse_train(ptr,fm));}
+static Float run_pulse_train(mus_any *ptr, Float fm, Float unused) {return(mus_pulse_train(ptr, fm));}
 static Float pulse_train_scaler(void *ptr) {return(((sw *)ptr)->base);}
 static Float set_pulse_train_scaler(void *ptr, Float val) {((sw *)ptr)->base = val; return(val);}
 
 static char *describe_pulse_train(void *ptr)
 {
   char *desc;
-  desc = make_desc_buf(ptr,TRUE);
+  desc = make_desc_buf(ptr, TRUE);
   if (desc)
     {
       if (mus_pulse_train_p((mus_any *)ptr))
-	sprintf(desc,"pulse_train freq: %.3fHz, phase: %.3f, amp: %.3f",
-		mus_radians2hz(((sw *)ptr)->freq),((sw *)ptr)->phase,((sw *)ptr)->base);
-      else describe_bad_gen(ptr,desc,"pulse_train","a");
+	sprintf(desc, "pulse_train freq: %.3fHz, phase: %.3f, amp: %.3f",
+		mus_radians2hz(((sw *)ptr)->freq), ((sw *)ptr)->phase, ((sw *)ptr)->base);
+      else describe_bad_gen(ptr, desc, "pulse_train", "a");
     }
   return(desc);
 }
@@ -1606,9 +1606,9 @@ static mus_any_class PULSE_TRAIN_CLASS = {
 mus_any *mus_make_pulse_train(Float freq, Float amp, Float phase) /* TWO_PI initial phase, normally */
 {
   sw *gen;
-  gen = (sw *)CALLOC(1,sizeof(sw));
+  gen = (sw *)CALLOC(1, sizeof(sw));
   if (gen == NULL) 
-    mus_error(MUS_MEMORY_ALLOCATION_FAILED,"can't allocate struct for mus_make_pulse_train!");
+    mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate struct for mus_make_pulse_train!");
   else
     {
       gen->core = &PULSE_TRAIN_CLASS;
@@ -1638,9 +1638,9 @@ static char *inspect_noi(void *ptr)
 {
   noi *gen = (noi *)ptr;
   char *desc;
-  desc = make_desc_buf(ptr,FALSE);
-  if (desc) sprintf(desc,"noi freq: %f, phase: %f, base: %f, output: %f, incr: %f",
-		    gen->freq,gen->phase,gen->base,gen->output,gen->incr);
+  desc = make_desc_buf(ptr, FALSE);
+  if (desc) sprintf(desc, "noi freq: %f, phase: %f, base: %f, output: %f, incr: %f",
+		    gen->freq, gen->phase, gen->base, gen->output, gen->incr);
   return(desc);
 }
 
@@ -1686,8 +1686,8 @@ Float mus_rand_interp(mus_any *ptr, Float fm)
   return(gen->output);
 }
 
-static Float run_rand(mus_any *ptr, Float fm, Float unused) {return(mus_rand(ptr,fm));}
-static Float run_rand_interp(mus_any *ptr, Float fm, Float unused) {return(mus_rand_interp(ptr,fm));}
+static Float run_rand(mus_any *ptr, Float fm, Float unused) {return(mus_rand(ptr, fm));}
+static Float run_rand_interp(mus_any *ptr, Float fm, Float unused) {return(mus_rand_interp(ptr, fm));}
 int mus_rand_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_RAND));}
 int mus_rand_interp_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_RAND_INTERP));}
 
@@ -1695,7 +1695,7 @@ int mus_rand_interp_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_R
 static int free_noi(void *ptr) {if (ptr) FREE(ptr); return(0);}
 static Float noi_freq(void *ptr) {return(mus_radians2hz(((noi *)ptr)->freq));}
 static Float set_noi_freq(void *ptr, Float val) {((noi *)ptr)->freq = mus_hz2radians(val); return(val);}
-static Float noi_phase(void *ptr) {return(fmod(((noi *)ptr)->phase,TWO_PI));}
+static Float noi_phase(void *ptr) {return(fmod(((noi *)ptr)->phase, TWO_PI));}
 static Float set_noi_phase(void *ptr, Float val) {((noi *)ptr)->phase = val; return(val);}
 static Float noi_scaler(void *ptr) {return(((noi *)ptr)->base);}
 static Float set_noi_scaler(void *ptr, Float val) {((noi *)ptr)->base = val; return(val);}
@@ -1716,18 +1716,18 @@ static int noi_equalp(void *p1, void *p2)
 static char *describe_noi(void *ptr)
 {
   char *desc;
-  desc = make_desc_buf(ptr,TRUE);
+  desc = make_desc_buf(ptr, TRUE);
   if (desc)
     {
       if (mus_rand_p((mus_any *)ptr))
-	sprintf(desc,"rand freq: %.3fHz, phase: %.3f, amp: %.3f",
-		mus_radians2hz(((noi *)ptr)->freq),((noi *)ptr)->phase,((noi *)ptr)->base);
+	sprintf(desc, "rand freq: %.3fHz, phase: %.3f, amp: %.3f",
+		mus_radians2hz(((noi *)ptr)->freq), ((noi *)ptr)->phase, ((noi *)ptr)->base);
       else
 	{
 	  if (mus_rand_interp_p((mus_any *)ptr))
-	    sprintf(desc,"rand_interp freq: %.3fHz, phase: %.3f, base: %.3f, incr: %.3f",
-		mus_radians2hz(((noi *)ptr)->freq),((noi *)ptr)->phase,((noi *)ptr)->base,((noi *)ptr)->incr);
-	  else describe_bad_gen(ptr,desc,"rand","a");
+	    sprintf(desc, "rand_interp freq: %.3fHz, phase: %.3f, base: %.3f, incr: %.3f",
+		mus_radians2hz(((noi *)ptr)->freq), ((noi *)ptr)->phase, ((noi *)ptr)->base, ((noi *)ptr)->incr);
+	  else describe_bad_gen(ptr, desc, "rand", "a");
 	}
     }
   return(desc);
@@ -1753,9 +1753,9 @@ static mus_any_class RAND_INTERP_CLASS = {
 mus_any *mus_make_rand_interp(Float freq, Float base)
 {
   noi *gen;
-  gen = (noi *)CALLOC(1,sizeof(noi));
+  gen = (noi *)CALLOC(1, sizeof(noi));
   if (gen == NULL) 
-    mus_error(MUS_MEMORY_ALLOCATION_FAILED,"can't allocate struct for mus_make_rand_interp!");
+    mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate struct for mus_make_rand_interp!");
   else
     {
       gen->core = &RAND_INTERP_CLASS;
@@ -1788,9 +1788,9 @@ static mus_any_class RAND_CLASS = {
 mus_any *mus_make_rand(Float freq, Float base)
 {
   noi *gen;
-  gen = (noi *)CALLOC(1,sizeof(noi));
+  gen = (noi *)CALLOC(1, sizeof(noi));
   if (gen == NULL) 
-    mus_error(MUS_MEMORY_ALLOCATION_FAILED,"can't allocate struct for mus_make_rand!");
+    mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate struct for mus_make_rand!");
   else
     {
       gen->core = &RAND_CLASS;
@@ -1820,16 +1820,16 @@ static char *inspect_asyfm (void *ptr)
 {
   asyfm *gen = (asyfm *)ptr;
   char *desc;
-  desc = make_desc_buf(ptr,FALSE);
-  if (desc) sprintf(desc,"asyfm r: %f, freq: %f, phase: %f, ratio: %f, cosr: %f, sinr: %f",
-		    gen->r,gen->freq,gen->phase,gen->ratio,gen->cosr,gen->sinr);
+  desc = make_desc_buf(ptr, FALSE);
+  if (desc) sprintf(desc, "asyfm r: %f, freq: %f, phase: %f, ratio: %f, cosr: %f, sinr: %f",
+		    gen->r, gen->freq, gen->phase, gen->ratio, gen->cosr, gen->sinr);
   return(desc);
 }
 
 static int free_asymmetric_fm(void *ptr) {if (ptr) FREE(ptr); return(0);}
 static Float asyfm_freq(void *ptr) {return(mus_radians2hz(((asyfm *)ptr)->freq));}
 static Float set_asyfm_freq(void *ptr, Float val) {((asyfm *)ptr)->freq = mus_hz2radians(val); return(val);}
-static Float asyfm_phase(void *ptr) {return(fmod(((asyfm *)ptr)->phase,TWO_PI));}
+static Float asyfm_phase(void *ptr) {return(fmod(((asyfm *)ptr)->phase, TWO_PI));}
 static Float set_asyfm_phase(void *ptr, Float val) {((asyfm *)ptr)->phase = val; return(val);}
 
 static int asyfm_equalp(void *p1, void *p2)
@@ -1845,13 +1845,13 @@ static int asyfm_equalp(void *p1, void *p2)
 static char *describe_asyfm(void *ptr)
 {
   char *desc;
-  desc = make_desc_buf(ptr,TRUE);
+  desc = make_desc_buf(ptr, TRUE);
   if (desc)
     {
       if (mus_asymmetric_fm_p((mus_any *)ptr))
-	sprintf(desc,"asymmetric-fm freq: %.3fHz, phase: %.3f, ratio: %.3f, r: %.3f",
-		mus_radians2hz(((asyfm *)ptr)->freq),((asyfm *)ptr)->phase,((asyfm *)ptr)->ratio,((asyfm *)ptr)->r);
-      else describe_bad_gen(ptr,desc,"asymmetric_fm","an");
+	sprintf(desc, "asymmetric-fm freq: %.3fHz, phase: %.3f, ratio: %.3f, r: %.3f",
+		mus_radians2hz(((asyfm *)ptr)->freq), ((asyfm *)ptr)->phase, ((asyfm *)ptr)->ratio, ((asyfm *)ptr)->r);
+      else describe_bad_gen(ptr, desc, "asymmetric_fm", "an");
     }
   return(desc);
 }
@@ -1865,7 +1865,7 @@ Float mus_asymmetric_fm(mus_any *ptr, Float index, Float fm)
   mth = gen->ratio * gen->phase;
   result = exp(index * gen->cosr * cos(mth)) * mus_sin(gen->phase + gen->sinr * mus_sin(mth));
   gen->phase += (gen->freq + fm);
-  if ((gen->phase > 100.0) || (gen->phase < -100.0)) gen->phase = fmod(gen->phase,TWO_PI);
+  if ((gen->phase > 100.0) || (gen->phase < -100.0)) gen->phase = fmod(gen->phase, TWO_PI);
   return(result);
 }
 
@@ -1888,9 +1888,9 @@ static mus_any_class ASYMMETRIC_FM_CLASS = {
 mus_any *mus_make_asymmetric_fm(Float freq, Float phase, Float r, Float ratio) /* r default 1.0, ratio 1.0 */
 {
  asyfm *gen;
- gen = (asyfm *)CALLOC(1,sizeof(asyfm));
+ gen = (asyfm *)CALLOC(1, sizeof(asyfm));
   if (gen == NULL) 
-    mus_error(MUS_MEMORY_ALLOCATION_FAILED,"can't allocate struct for mus_make_asymmetric_fm!");
+    mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate struct for mus_make_asymmetric_fm!");
   else
     {
       gen->core = &ASYMMETRIC_FM_CLASS;
@@ -1926,9 +1926,9 @@ static char *inspect_smpflt(void *ptr)
 {
   smpflt *gen = (smpflt *)ptr;
   char *desc;
-  desc = make_desc_buf(ptr,FALSE);
-  if (desc) sprintf(desc,"smpflt a0: %f, a1: %f, a2: %f, b1: %f, b2: %f, x1: %f, x2: %f, y1: %f, y2: %f",
-		    gen->a0,gen->a1,gen->a2,gen->b1,gen->b2,gen->x1,gen->x2,gen->y1,gen->y2);
+  desc = make_desc_buf(ptr, FALSE);
+  if (desc) sprintf(desc, "smpflt a0: %f, a1: %f, a2: %f, b1: %f, b2: %f, x1: %f, x2: %f, y1: %f, y2: %f",
+		    gen->a0, gen->a1, gen->a2, gen->b1, gen->b2, gen->x1, gen->x2, gen->y1, gen->y2);
   return(desc);
 }
 
@@ -1955,22 +1955,22 @@ static char *describe_smpflt(void *ptr)
 {
   char *desc;
   smpflt *gen = (smpflt *)ptr;
-  desc = make_desc_buf(ptr,TRUE);
+  desc = make_desc_buf(ptr, TRUE);
   if (desc)
     {
       switch ((gen->core)->type)
 	{
-	case MUS_ONE_ZERO: sprintf(desc,"one_zero: a0: %.3f, a1: %.3f, x1: %.3f",gen->a0,gen->a1,gen->x1); break;
-	case MUS_ONE_POLE: sprintf(desc,"one_pole: a0: %.3f, b1: %.3f, y1: %.3f",gen->a0,gen->b1,gen->y1); break;
+	case MUS_ONE_ZERO: sprintf(desc, "one_zero: a0: %.3f, a1: %.3f, x1: %.3f", gen->a0, gen->a1, gen->x1); break;
+	case MUS_ONE_POLE: sprintf(desc, "one_pole: a0: %.3f, b1: %.3f, y1: %.3f", gen->a0, gen->b1, gen->y1); break;
 	case MUS_TWO_ZERO: 
-	  sprintf(desc,"two_zero: a0: %.3f, a1: %.3f, a2: %.3f, x1: %.3f, x2: %.3f",
-		  gen->a0,gen->a1,gen->a2,gen->x1,gen->x2); 
+	  sprintf(desc, "two_zero: a0: %.3f, a1: %.3f, a2: %.3f, x1: %.3f, x2: %.3f",
+		  gen->a0, gen->a1, gen->a2, gen->x1, gen->x2); 
 	  break;
 	case MUS_TWO_POLE: 
-	  sprintf(desc,"two_pole: a0: %.3f, b1: %.3f, b2: %.3f, y1: %.3f, y2: %.3f",
-		  gen->a0,gen->b1,gen->b2,gen->y1,gen->y2); 
+	  sprintf(desc, "two_pole: a0: %.3f, b1: %.3f, b2: %.3f, y1: %.3f, y2: %.3f",
+		  gen->a0, gen->b1, gen->b2, gen->y1, gen->y2); 
 	  break;
-	default: describe_bad_gen(ptr,desc,"simple filter","a");
+	default: describe_bad_gen(ptr, desc, "simple filter", "a");
 	}
     }
   return(desc);
@@ -1985,7 +1985,7 @@ Float mus_one_zero(mus_any *ptr, Float input)
   return(result);
 }
 
-static Float run_one_zero(mus_any *ptr, Float input, Float unused) {return(mus_one_zero(ptr,input));}
+static Float run_one_zero(mus_any *ptr, Float input, Float unused) {return(mus_one_zero(ptr, input));}
 static int one_length(void *ptr) {return(1);}
 static int two_length(void *ptr) {return(2);}
 
@@ -2006,9 +2006,9 @@ static mus_any_class ONE_ZERO_CLASS = {
 mus_any *mus_make_one_zero(Float a0, Float a1)
 {
   smpflt *gen;
-  gen = (smpflt *)CALLOC(1,sizeof(smpflt));
+  gen = (smpflt *)CALLOC(1, sizeof(smpflt));
   if (gen == NULL) 
-    mus_error(MUS_MEMORY_ALLOCATION_FAILED,"can't allocate struct for mus_make_one_zero!");
+    mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate struct for mus_make_one_zero!");
   else
     {
       gen->core = &ONE_ZERO_CLASS;
@@ -2028,7 +2028,7 @@ Float mus_one_pole(mus_any *ptr, Float input)
   return(gen->y1);
 }
 
-static Float run_one_pole(mus_any *ptr, Float input, Float unused) {return(mus_one_pole(ptr,input));}
+static Float run_one_pole(mus_any *ptr, Float input, Float unused) {return(mus_one_pole(ptr, input));}
 
 static mus_any_class ONE_POLE_CLASS = {
   MUS_ONE_POLE,
@@ -2047,9 +2047,9 @@ static mus_any_class ONE_POLE_CLASS = {
 mus_any *mus_make_one_pole(Float a0, Float b1)
 {
   smpflt *gen;
-  gen = (smpflt *)CALLOC(1,sizeof(smpflt));
+  gen = (smpflt *)CALLOC(1, sizeof(smpflt));
   if (gen == NULL) 
-    mus_error(MUS_MEMORY_ALLOCATION_FAILED,"can't allocate struct for mus_make_one_pole!");
+    mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate struct for mus_make_one_pole!");
   else
     {
       gen->core = &ONE_POLE_CLASS;
@@ -2072,7 +2072,7 @@ Float mus_two_zero(mus_any *ptr, Float input)
   return(result);
 }
 
-static Float run_two_zero(mus_any *ptr, Float input, Float unused) {return(mus_two_zero(ptr,input));}
+static Float run_two_zero(mus_any *ptr, Float input, Float unused) {return(mus_two_zero(ptr, input));}
 
 static mus_any_class TWO_ZERO_CLASS = {
   MUS_TWO_ZERO,
@@ -2091,9 +2091,9 @@ static mus_any_class TWO_ZERO_CLASS = {
 mus_any *mus_make_two_zero(Float a0, Float a1, Float a2)
 {
  smpflt *gen;
- gen = (smpflt *)CALLOC(1,sizeof(smpflt));
+ gen = (smpflt *)CALLOC(1, sizeof(smpflt));
   if (gen == NULL) 
-    mus_error(MUS_MEMORY_ALLOCATION_FAILED,"can't allocate struct for mus_make_two_zero!");
+    mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate struct for mus_make_two_zero!");
   else
     {
       gen->core = &TWO_ZERO_CLASS;
@@ -2109,7 +2109,7 @@ int mus_two_zero_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_TWO_
 
 mus_any *mus_make_zpolar(Float radius, Float frequency)
 {
-  return(mus_make_two_zero(1.0,-2.0 * radius * cos(mus_hz2radians(frequency)),radius * radius));
+  return(mus_make_two_zero(1.0, -2.0 * radius * cos(mus_hz2radians(frequency)), radius * radius));
 }
 
 Float mus_two_pole(mus_any *ptr, Float input)
@@ -2122,7 +2122,7 @@ Float mus_two_pole(mus_any *ptr, Float input)
   return(result);
 }
 
-static Float run_two_pole(mus_any *ptr, Float input, Float unused) {return(mus_two_pole(ptr,input));}
+static Float run_two_pole(mus_any *ptr, Float input, Float unused) {return(mus_two_pole(ptr, input));}
 
 static mus_any_class TWO_POLE_CLASS = {
   MUS_TWO_POLE,
@@ -2141,21 +2141,21 @@ static mus_any_class TWO_POLE_CLASS = {
 mus_any *mus_make_two_pole(Float a0, Float b1, Float b2)
 {
  smpflt *gen;
- gen = (smpflt *)CALLOC(1,sizeof(smpflt));
+ gen = (smpflt *)CALLOC(1, sizeof(smpflt));
   if (gen == NULL) 
-    mus_error(MUS_MEMORY_ALLOCATION_FAILED,"can't allocate struct for mus_make_two_pole!");
+    mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate struct for mus_make_two_pole!");
   else
     {
       gen->core = &TWO_POLE_CLASS;
       gen->a0 = a0;
       gen->b1 = b1;
       gen->b2 = b2;
-      if (fabs(b1) >= 2.0) mus_error(MUS_UNSTABLE_TWO_POLE_ERROR,"make_two_pole: b1 = %.3f",b1);
-      if (fabs(b2) >= 1.0) mus_error(MUS_UNSTABLE_TWO_POLE_ERROR,"make_two_pole: b2 = %.3f",b2);
+      if (fabs(b1) >= 2.0) mus_error(MUS_UNSTABLE_TWO_POLE_ERROR, "make_two_pole: b1 = %.3f", b1);
+      if (fabs(b2) >= 1.0) mus_error(MUS_UNSTABLE_TWO_POLE_ERROR, "make_two_pole: b2 = %.3f", b2);
       if ( ((b1*b1)-(b2*4.0) >= 0.0) &&
 	   ( ((b1+b2) >= 1.0) || 
 	     ((b2-b1) >= 1.0)))
-	mus_error(MUS_UNSTABLE_TWO_POLE_ERROR,"make_two_pole: b1 = %.3f, b2 = %.3f",b1,b2);
+	mus_error(MUS_UNSTABLE_TWO_POLE_ERROR, "make_two_pole: b1 = %.3f, b2 = %.3f", b1, b2);
       return((mus_any *)gen);
     }
   return(NULL);
@@ -2165,7 +2165,7 @@ int mus_two_pole_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_TWO_
 
 mus_any *mus_make_ppolar(Float radius, Float frequency)
 {
-  return(mus_make_two_pole(1.0,-2.0 * radius * cos(mus_hz2radians(frequency)),radius * radius));
+  return(mus_make_two_pole(1.0, -2.0 * radius * cos(mus_hz2radians(frequency)), radius * radius));
 }
 
 Float mus_a0(mus_any *ptr)
@@ -2264,13 +2264,13 @@ static char *describe_formant(void *ptr)
 {
   char *desc;
   smpflt *gen = (smpflt *)ptr;
-  desc = make_desc_buf(ptr,TRUE);
+  desc = make_desc_buf(ptr, TRUE);
   if (desc)
     {
       if (mus_formant_p((mus_any *)ptr))
-	sprintf(desc,"formant: radius: %.3f, frequency: %.3f, (gain: %.3f)",
-		gen->radius,gen->frequency,gen->gain);
-      else describe_bad_gen(ptr,desc,"formant","a");
+	sprintf(desc, "formant: radius: %.3f, frequency: %.3f, (gain: %.3f)",
+		gen->radius, gen->frequency, gen->gain);
+      else describe_bad_gen(ptr, desc, "formant", "a");
     }
   return(desc);
 }
@@ -2289,14 +2289,14 @@ Float mus_formant(mus_any *ptr, Float input)
   return(output);
 }
 
-static Float run_formant(mus_any *ptr, Float input, Float unused) {return(mus_formant(ptr,input));}
+static Float run_formant(mus_any *ptr, Float input, Float unused) {return(mus_formant(ptr, input));}
 
 Float mus_formant_bank(Float *amps, mus_any **formants, Float inval, int size)
 {
   int i;
   Float sum = 0.0;
   for (i=0;i<size;i++) 
-    sum += (amps[i] * mus_formant(formants[i],inval));
+    sum += (amps[i] * mus_formant(formants[i], inval));
   return(sum);
 }
 
@@ -2322,7 +2322,7 @@ static Float formant_frequency(void *ptr)
 static Float set_formant_frequency(void *ptr, Float val)
 {
   smpflt *gen = (smpflt *)ptr;
-  mus_set_formant_radius_and_frequency((mus_any *)ptr,gen->radius,val);
+  mus_set_formant_radius_and_frequency((mus_any *)ptr, gen->radius, val);
   return(val);
 }
 
@@ -2336,7 +2336,7 @@ Float mus_formant_radius(mus_any *ptr)
 Float mus_set_formant_radius(mus_any *ptr, Float val)
 {
   smpflt *gen = (smpflt *)ptr;
-  mus_set_formant_radius_and_frequency(ptr,val,gen->frequency);
+  mus_set_formant_radius_and_frequency(ptr, val, gen->frequency);
   return(val);
 }
 
@@ -2358,15 +2358,15 @@ static mus_any_class FORMANT_CLASS = {
 mus_any *mus_make_formant(Float radius, Float frequency, Float gain)
 {
   smpflt *gen;
-  gen = (smpflt *)CALLOC(1,sizeof(smpflt));
+  gen = (smpflt *)CALLOC(1, sizeof(smpflt));
   if (gen == NULL) 
-    mus_error(MUS_MEMORY_ALLOCATION_FAILED,"can't allocate struct for mus_make_formant!");
+    mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate struct for mus_make_formant!");
   else
     {
       gen->core = &FORMANT_CLASS;
       gen->gain = gain;
       gen->a1 = gain; /* for backwards compatibility */
-      mus_set_formant_radius_and_frequency((mus_any *)gen,radius,frequency);
+      mus_set_formant_radius_and_frequency((mus_any *)gen, radius, frequency);
       return((mus_any *)gen);
     }
   return(NULL);
@@ -2388,16 +2388,16 @@ static char *inspect_sss(void *ptr)
 {
   sss *gen = (sss *)ptr;
   char *desc;
-  desc = make_desc_buf(ptr,FALSE);
-  if (desc) sprintf(desc,"sss freq: %f, phase: %f, a: %f, b: %f, an: %f, a2: %f, n: %d",
-		    gen->freq,gen->phase,gen->a,gen->b,gen->an,gen->a2,gen->n);
+  desc = make_desc_buf(ptr, FALSE);
+  if (desc) sprintf(desc, "sss freq: %f, phase: %f, a: %f, b: %f, an: %f, a2: %f, n: %d",
+		    gen->freq, gen->phase, gen->a, gen->b, gen->an, gen->a2, gen->n);
   return(desc);
 }
 
 static int free_sss(void *ptr) {if (ptr) FREE(ptr); return(0);}
 static Float sss_freq(void *ptr) {return(mus_radians2hz(((sss *)ptr)->freq));}
 static Float set_sss_freq(void *ptr, Float val) {((sss *)ptr)->freq = mus_hz2radians(val); return(val);}
-static Float sss_phase(void *ptr) {return(fmod(((sss *)ptr)->phase,TWO_PI));}
+static Float sss_phase(void *ptr) {return(fmod(((sss *)ptr)->phase, TWO_PI));}
 static Float set_sss_phase(void *ptr, Float val) {((sss *)ptr)->phase = val; return(val);}
 
 static int sss_equalp(void *p1, void *p2)
@@ -2419,13 +2419,13 @@ static char *describe_sss(void *ptr)
 {
   char *desc;
   sss *gen = (sss *)ptr;
-  desc = make_desc_buf(ptr,TRUE);
+  desc = make_desc_buf(ptr, TRUE);
   if (desc) 
     {
       if (mus_sine_summation_p((mus_any *)ptr))
-	sprintf(desc,"sine_summation: frequency: %.3f, phase: %.3f, n: %d, a: %.3f, ratio: %.3f",
-		mus_radians2hz(gen->freq),gen->phase,gen->n,gen->a,gen->b);
-      else describe_bad_gen(ptr,desc,"sine_summation","a");
+	sprintf(desc, "sine_summation: frequency: %.3f, phase: %.3f, n: %d, a: %.3f, ratio: %.3f",
+		mus_radians2hz(gen->freq), gen->phase, gen->n, gen->a, gen->b);
+      else describe_bad_gen(ptr, desc, "sine_summation", "a");
     }
   return(desc);
 }
@@ -2444,11 +2444,11 @@ Float mus_sine_summation(mus_any *ptr, Float fm)
                              (gen->a * mus_sin(gen->phase + (B * gen->n)))))) / 
              (gen->a2 - (2 * gen->a * cos(B)));
   gen->phase += (gen->freq + fm);
-  gen->phase = fmod(gen->phase,TWO_PI);
+  gen->phase = fmod(gen->phase, TWO_PI);
   return(result);
 }
 
-static Float run_sine_summation(mus_any *ptr, Float fm, Float unused) {return(mus_sine_summation(ptr,fm));}
+static Float run_sine_summation(mus_any *ptr, Float fm, Float unused) {return(mus_sine_summation(ptr, fm));}
 
 static mus_any_class SINE_SUMMATION_CLASS = {
   MUS_SINE_SUMMATION,
@@ -2469,15 +2469,15 @@ static mus_any_class SINE_SUMMATION_CLASS = {
 mus_any *mus_make_sine_summation(Float frequency, Float phase, int n, Float a, Float b_ratio)
 {
   sss *gen;
-  gen = (sss *)CALLOC(1,sizeof(sss));
+  gen = (sss *)CALLOC(1, sizeof(sss));
   if (gen == NULL) 
-    mus_error(MUS_MEMORY_ALLOCATION_FAILED,"can't allocate struct for mus_make_sine_summation!");
+    mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate struct for mus_make_sine_summation!");
   else
     {
       gen->core = &SINE_SUMMATION_CLASS;
       gen->freq = mus_hz2radians(frequency);
       gen->phase = phase;
-      if (n) gen->an = pow(a,n+1); else gen->an = 0.0;
+      if (n) gen->an = pow(a, n+1); else gen->an = 0.0;
       gen->a2 = 1.0 + a*a;
       gen->a = a;
       gen->n = n;
@@ -2501,13 +2501,13 @@ static char *inspect_flt(void *ptr)
 {
   flt *gen = (flt *)ptr;
   char *desc,*arr1 = NULL,*arr2 = NULL,*arr3 = NULL;
-  desc = make_big_desc_buf(ptr,FALSE);
-  if (desc) sprintf(desc,"flt order: %d, state (%s): %s, x: %s, y: %s",
+  desc = make_big_desc_buf(ptr, FALSE);
+  if (desc) sprintf(desc, "flt order: %d, state (%s): %s, x: %s, y: %s",
 		    gen->order,
 		    (gen->state_allocated) ? "local" : "external",
-		    arr1 = print_array(gen->state,gen->order,0),
-		    arr2 = print_array(gen->x,gen->order,0),
-		    arr3 = print_array(gen->y,gen->order,0));
+		    arr1 = print_array(gen->state, gen->order, 0),
+		    arr2 = print_array(gen->x, gen->order, 0),
+		    arr3 = print_array(gen->y, gen->order, 0));
   if (arr1) FREE(arr1);
   if (arr2) FREE(arr2);
   if (arr3) FREE(arr3);
@@ -2558,9 +2558,9 @@ Float mus_iir_filter (mus_any *ptr, Float input)
   return(gen->state[0]);
 }
 
-static Float run_filter(mus_any *ptr, Float input, Float unused) {return(mus_filter(ptr,input));}
-static Float run_fir_filter(mus_any *ptr, Float input, Float unused) {return(mus_fir_filter(ptr,input));}
-static Float run_iir_filter(mus_any *ptr, Float input, Float unused) {return(mus_iir_filter(ptr,input));}
+static Float run_filter(mus_any *ptr, Float input, Float unused) {return(mus_filter(ptr, input));}
+static Float run_fir_filter(mus_any *ptr, Float input, Float unused) {return(mus_fir_filter(ptr, input));}
+static Float run_iir_filter(mus_any *ptr, Float input, Float unused) {return(mus_iir_filter(ptr, input));}
 
 int mus_filter_p (mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_FILTER));}
 int mus_fir_filter_p (mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_FIR_FILTER));}
@@ -2585,8 +2585,8 @@ static char *describe_filter(void *ptr)
 {
   char *desc;
   flt *gen = (flt *)ptr;
-  desc = make_big_desc_buf(ptr,TRUE);
-  if (desc) sprintf(desc,"%s: order: %d",(gen->core)->name,gen->order);
+  desc = make_big_desc_buf(ptr, TRUE);
+  if (desc) sprintf(desc, "%s: order: %d", (gen->core)->name, gen->order);
   return(desc);
 }
 
@@ -2638,16 +2638,16 @@ static mus_any_class IIR_FILTER_CLASS = {
 static mus_any *make_filter(mus_any_class *cls, const char *name, int order, Float *xcoeffs, Float *ycoeffs, Float *state) /* if state null, allocated locally */
 {
   flt *gen;
-  gen = (flt *)CALLOC(1,sizeof(dly));
+  gen = (flt *)CALLOC(1, sizeof(dly));
   if (gen == NULL) 
-    mus_error(MUS_MEMORY_ALLOCATION_FAILED,"can't allocate struct for mus_make_%s!",name);
+    mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate struct for mus_make_%s!", name);
   else
     {
       if (state)
 	gen->state = state;
       else 
 	{
-	  gen->state = (Float *)CALLOC(order,sizeof(Float));
+	  gen->state = (Float *)CALLOC(order, sizeof(Float));
 	  if (gen->state == NULL) 
 	    mus_error(MUS_MEMORY_ALLOCATION_FAILED,
 		      "can't allocate %d bytes for state in mus_make_%s!",
@@ -2666,17 +2666,17 @@ static mus_any *make_filter(mus_any_class *cls, const char *name, int order, Flo
 
 mus_any *mus_make_filter(int order, Float *xcoeffs, Float *ycoeffs, Float *state)
 {
-  return(make_filter(&FILTER_CLASS,"filter",order,xcoeffs,ycoeffs,state));
+  return(make_filter(&FILTER_CLASS, "filter", order, xcoeffs, ycoeffs, state));
 }
 
 mus_any *mus_make_fir_filter(int order, Float *xcoeffs, Float *state)
 {
-  return(make_filter(&FIR_FILTER_CLASS,"fir_filter",order,xcoeffs,NULL,state));
+  return(make_filter(&FIR_FILTER_CLASS, "fir_filter", order, xcoeffs, NULL, state));
 }
 
 mus_any *mus_make_iir_filter(int order, Float *ycoeffs, Float *state)
 {
-  return(make_filter(&IIR_FILTER_CLASS,"iir_filter",order,NULL,ycoeffs,state));
+  return(make_filter(&IIR_FILTER_CLASS, "iir_filter", order, NULL, ycoeffs, state));
 }
 
 Float *mus_xcoeffs(mus_any *ptr)
@@ -2705,11 +2705,11 @@ Float *mus_make_fir_coeffs(int order, Float *env, Float *aa)
   if (n<=0) return(aa);
   if (aa) 
     a = aa;
-  else a = (Float *)CALLOC(order,sizeof(Float));
+  else a = (Float *)CALLOC(order, sizeof(Float));
   m=(n+1)/2;
   am=0.5*(n+1);
   q=TWO_PI/(Float)n;
-  for (j=0,jj=n-1;j<m;j++,jj--)
+  for (j=0, jj=n-1;j<m;j++,jj--)
     {
       xt=env[0]*0.5;
       for (i=1;i<m;i++)	xt += (env[i]*cos(q*(am-j-1)*i));
@@ -2769,11 +2769,11 @@ static char *inspect_ws(void *ptr)
 {
   ws *gen = (ws *)ptr;
   char *desc,*arr = NULL;
-  desc = make_big_desc_buf(ptr,FALSE);
-  if (desc) sprintf(desc,"ws freq: %f, phase: %f, offset: %f, table[%d (%s)]: %s",
-		    gen->freq,gen->phase,gen->offset,gen->table_size,
+  desc = make_big_desc_buf(ptr, FALSE);
+  if (desc) sprintf(desc, "ws freq: %f, phase: %f, offset: %f, table[%d (%s)]: %s",
+		    gen->freq, gen->phase, gen->offset, gen->table_size,
 		    (gen->table_allocated) ? "local" : "external",
-		    arr = print_array(gen->table,gen->table_size,0));
+		    arr = print_array(gen->table, gen->table_size, 0));
   if (arr) FREE(arr);
   return(desc);
 }
@@ -2791,7 +2791,7 @@ static int free_ws(void *pt)
 
 static Float ws_freq(void *ptr) {return(mus_radians2hz(((ws *)ptr)->freq));}
 static Float set_ws_freq(void *ptr, Float val) {((ws *)ptr)->freq = mus_hz2radians(val); return(val);}
-static Float ws_phase(void *ptr) {return(fmod(((ws *)ptr)->phase,TWO_PI));}
+static Float ws_phase(void *ptr) {return(fmod(((ws *)ptr)->phase, TWO_PI));}
 static Float set_ws_phase(void *ptr, Float val) {((ws *)ptr)->phase = val; return(val);}
 static int ws_size(void *ptr) {return(((ws *)ptr)->table_size);}
 static int set_ws_size(void *ptr, int val) {((ws *)ptr)->table_size = val; return(val);}
@@ -2809,13 +2809,13 @@ static Float *set_ws_data(void *ptr, Float *val)
 static char *describe_waveshape(void *ptr)
 {
   char *desc;
-  desc = make_big_desc_buf(ptr,TRUE);
+  desc = make_big_desc_buf(ptr, TRUE);
   if (desc)
     {
       if (mus_waveshape_p((mus_any *)ptr))
-	sprintf(desc,"waveshape freq: %.3fHz, phase: %.3f, size: %d",
-		mus_radians2hz(((ws *)ptr)->freq),((ws *)ptr)->phase,((ws *)ptr)->table_size);
-      else describe_bad_gen(ptr,desc,"waveshape","a");
+	sprintf(desc, "waveshape freq: %.3fHz, phase: %.3f, size: %d",
+		mus_radians2hz(((ws *)ptr)->freq), ((ws *)ptr)->phase, ((ws *)ptr)->table_size);
+      else describe_bad_gen(ptr, desc, "waveshape", "a");
     }
   return(desc);
 }
@@ -2844,9 +2844,9 @@ int mus_waveshape_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_WAV
 mus_any *mus_make_waveshape(Float frequency, Float phase, Float *table, int size)
 {
   ws *gen;
-  gen = (ws *)CALLOC(1,sizeof(ws));
+  gen = (ws *)CALLOC(1, sizeof(ws));
   if (gen == NULL) 
-    mus_error(MUS_MEMORY_ALLOCATION_FAILED,"can't allocate struct for mus_make_waveshape!");
+    mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate struct for mus_make_waveshape!");
   else
     {
       gen->core = &WAVESHAPE_CLASS;
@@ -2859,7 +2859,7 @@ mus_any *mus_make_waveshape(Float frequency, Float phase, Float *table, int size
 	}
       else
 	{
-	  gen->table = (Float *)CALLOC(size,sizeof(Float));
+	  gen->table = (Float *)CALLOC(size, sizeof(Float));
 	  if (gen->table == NULL) 
 	    mus_error(MUS_MEMORY_ALLOCATION_FAILED,
 		      "can't allocate %d bytes for table in mus_make_waveshape!",
@@ -2879,8 +2879,8 @@ Float mus_waveshape(mus_any *ptr, Float index, Float fm)
   Float oscval;
   oscval = mus_sin(gen->phase);
   gen->phase += (gen->freq + fm);
-  if ((gen->phase > 100.0) || (gen->phase < -100.0)) gen->phase = fmod(gen->phase,TWO_PI);
-  return(mus_array_interp(gen->table,gen->offset * (1.0 + (oscval * index)),gen->table_size));
+  if ((gen->phase > 100.0) || (gen->phase < -100.0)) gen->phase = fmod(gen->phase, TWO_PI);
+  return(mus_array_interp(gen->table, gen->offset * (1.0 + (oscval * index)), gen->table_size));
 }
 
 Float *mus_partials2waveshape(int npartials, Float *partials, int size, Float *table)
@@ -2899,7 +2899,7 @@ Float *mus_partials2waveshape(int npartials, Float *partials, int size, Float *t
     }
   if (table == NULL)
     {
-      data = (Float *)CALLOC(size,sizeof(Float));
+      data = (Float *)CALLOC(size, sizeof(Float));
       if (data == NULL)
 	{
 	  mus_error(MUS_MEMORY_ALLOCATION_FAILED,
@@ -2910,7 +2910,7 @@ Float *mus_partials2waveshape(int npartials, Float *partials, int size, Float *t
     }
   else data = table;
   maxI2 = 2.0 / (Float)size;
-  for (i=0,x=-1.0;i<size;i++,x+=maxI2)
+  for (i=0, x=-1.0;i<size;i++,x+=maxI2)
     {
       sum = 0.0;
       temp = 0.0;
@@ -2925,7 +2925,7 @@ Float *mus_partials2waveshape(int npartials, Float *partials, int size, Float *t
 	}
       data[i] = sum;
     }
-  return(array_normalize(data,size));
+  return(array_normalize(data, size));
 }
 
 Float *mus_partials2polynomial(int npartials, Float *partials, int kind)
@@ -2936,7 +2936,7 @@ Float *mus_partials2polynomial(int npartials, Float *partials, int kind)
   int *T0,*T1,*Tn;
   Float *Cc1;
   bytes = (npartials + 1) * sizeof(int);
-  T0 = (int *)CALLOC(npartials+1,sizeof(int));
+  T0 = (int *)CALLOC(npartials+1, sizeof(int));
   if (T0 == NULL) 
     {
       mus_error(MUS_MEMORY_ALLOCATION_FAILED,
@@ -2944,7 +2944,7 @@ Float *mus_partials2polynomial(int npartials, Float *partials, int kind)
 		bytes); 
       return(NULL);
     }
-  T1 = (int *)CALLOC(npartials+1,sizeof(int));
+  T1 = (int *)CALLOC(npartials+1, sizeof(int));
   if (T1 == NULL) 
     {
       FREE(T0); 
@@ -2953,7 +2953,7 @@ Float *mus_partials2polynomial(int npartials, Float *partials, int kind)
 		bytes); 
       return(NULL);
     }
-  Tn = (int *)CALLOC(npartials+1,sizeof(int));
+  Tn = (int *)CALLOC(npartials+1, sizeof(int));
   if (Tn == NULL) 
     {
       FREE(T0); 
@@ -2963,7 +2963,7 @@ Float *mus_partials2polynomial(int npartials, Float *partials, int kind)
 		bytes); 
       return(NULL);
     }
-  Cc1 = (Float *)CALLOC(npartials+1,sizeof(Float));
+  Cc1 = (Float *)CALLOC(npartials+1, sizeof(Float));
   if (Cc1 == NULL) 
     {
       FREE(T0); 
@@ -3030,16 +3030,16 @@ static char *inspect_seg(void *ptr)
 {
   seg *gen = (seg *)ptr;
   char *desc,*arr = NULL,*str1 = NULL,*str2 = NULL;
-  desc = make_big_desc_buf(ptr,FALSE);
-  if (desc) sprintf(desc,"seg rate: %f, current_value: %f, base: %f, offset: %f, scaler: %f, power: %f, init_y: %f, init_power: %f, b1: %f, pass: %d, end: %d, style: %d, index: %d, size: %d, original_data[%d]: %s, rates[%d]: %s, passes[%d]: %s",
-		    gen->rate,gen->current_value,gen->base,gen->offset,gen->scaler,gen->power,gen->init_y,gen->init_power,gen->b1,
-		    gen->pass,gen->end,gen->style,gen->index,gen->size,
+  desc = make_big_desc_buf(ptr, FALSE);
+  if (desc) sprintf(desc, "seg rate: %f, current_value: %f, base: %f, offset: %f, scaler: %f, power: %f, init_y: %f, init_power: %f, b1: %f, pass: %d, end: %d, style: %d, index: %d, size: %d, original_data[%d]: %s, rates[%d]: %s, passes[%d]: %s",
+		    gen->rate, gen->current_value, gen->base, gen->offset, gen->scaler, gen->power, gen->init_y, gen->init_power, gen->b1,
+		    gen->pass, gen->end, gen->style, gen->index, gen->size,
 		    gen->size * 2,
-		    arr = print_array(gen->original_data,gen->size*2,0),
+		    arr = print_array(gen->original_data, gen->size*2, 0),
 		    gen->size,
-		    str1 = print_double_array(gen->rates,gen->size,0),
+		    str1 = print_double_array(gen->rates, gen->size, 0),
 		    gen->size,
-		    str2 = print_int_array(gen->passes,gen->size,0));
+		    str2 = print_int_array(gen->passes, gen->size, 0));
   if (arr) FREE(arr);
   if (str1) FREE(str1);
   if (str2) FREE(str2);
@@ -3087,9 +3087,9 @@ static void dmagify_env(seg *e, Float *data, int pts, int dur, Float scaler)
   x1 = data[0];
   xmag = (double)dur/(double)(data[pts*2 - 2] - x1);
   y1 = data[1];
-  e->rates = (double *)CALLOC(pts,sizeof(double));
-  e->passes = (int *)CALLOC(pts,sizeof(int));
-  for (j=0,i=2;i<pts*2;i+=2,j++)
+  e->rates = (double *)CALLOC(pts, sizeof(double));
+  e->passes = (int *)CALLOC(pts, sizeof(int));
+  for (j=0, i=2;i<pts*2;i+=2,j++)
     {
       x0 = x1;
       x1 = data[i];
@@ -3123,7 +3123,7 @@ static Float *fixup_exp_env(seg *e, Float *data, int pts, Float offset, Float sc
   b = 1.0 / log(base);
   e->b1 = base-1.0;
   len = pts*2;
-  result = (Float *)CALLOC(len,sizeof(Float));
+  result = (Float *)CALLOC(len, sizeof(Float));
   result[0] = data[0];
   result[1] = min_y;
   for (i=2;i<len;i+=2)
@@ -3154,15 +3154,15 @@ static char *describe_env(void *ptr)
 {
   char *desc,*str = NULL;
   seg *e = (seg *)ptr;
-  desc = make_big_desc_buf(ptr,TRUE);
+  desc = make_big_desc_buf(ptr, TRUE);
   if (desc)
     {
       if (mus_env_p((mus_any *)ptr))
-	sprintf(desc,"env: %s, pass: %d (dur: %d), index: %d, data: %s",
+	sprintf(desc, "env: %s, pass: %d (dur: %d), index: %d, data: %s",
 		((e->style == ENV_SEG) ? "linear" : ((e->style == ENV_EXP) ? "exponential" : "step")),
-		e->pass,e->end+1,e->index,
-		str = print_array(e->original_data,e->size*2,0));
-      else describe_bad_gen(ptr,desc,"env","an");
+		e->pass, e->end+1, e->index,
+		str = print_array(e->original_data, e->size*2, 0));
+      else describe_bad_gen(ptr, desc, "env", "an");
       if (str) FREE(str);
     }
   return(desc);
@@ -3207,9 +3207,9 @@ mus_any *mus_make_env(Float *brkpts, int npts, Float scaler, Float offset, Float
   int i,dur_in_samples;
   Float *edata;
   seg *e = NULL;
-  e = (seg *)CALLOC(1,sizeof(seg));
+  e = (seg *)CALLOC(1, sizeof(seg));
   if (e == NULL) 
-    mus_error(MUS_MEMORY_ALLOCATION_FAILED,"can't allocate env struct!");
+    mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate env struct!");
   else
     {
       e->core = &ENV_CLASS;
@@ -3229,29 +3229,29 @@ mus_any *mus_make_env(Float *brkpts, int npts, Float scaler, Float offset, Float
 	e->original_data = odata;
       else
 	{
-	  e->original_data = (Float *)CALLOC(npts*2,sizeof(Float));
+	  e->original_data = (Float *)CALLOC(npts*2, sizeof(Float));
 	  if (e->original_data == NULL) 
-	    mus_error(MUS_MEMORY_ALLOCATION_FAILED,"can't allocate env original_data array!");
+	    mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate env original_data array!");
 	  e->data_allocated = 1;
 	}
       for (i=0;i<npts*2;i++) e->original_data[i] = brkpts[i];
       if (base == 0.0)
 	{
 	  e->style = ENV_STEP;
-	  dmagify_env(e,brkpts,npts,dur_in_samples,scaler);
+	  dmagify_env(e, brkpts, npts, dur_in_samples, scaler);
 	}
       else
 	{
 	  if (base == 1.0)
 	    {
 	      e->style = ENV_SEG;
-	      dmagify_env(e,brkpts,npts,dur_in_samples,scaler);
+	      dmagify_env(e, brkpts, npts, dur_in_samples, scaler);
 	    }
 	  else
 	    {
 	      e->style = ENV_EXP;
-	      edata = fixup_exp_env(e,brkpts,npts,offset,scaler,base);
-	      dmagify_env(e,edata,npts,dur_in_samples,1.0);
+	      edata = fixup_exp_env(e, brkpts, npts, offset, scaler, base);
+	      dmagify_env(e, edata, npts, dur_in_samples, 1.0);
 	      e->power = edata[1];
 	      e->init_power = e->power;
 	      if (edata) FREE(edata);
@@ -3343,7 +3343,7 @@ static Float mus_env_interp_1(Float x, mus_any *ptr)
 Float mus_env_interp(Float x, mus_any *ptr)
 {
   seg *gen = (seg *)ptr;
-  return(gen->offset + (gen->scaler * mus_env_interp_1(x,ptr)));
+  return(gen->offset + (gen->scaler * mus_env_interp_1(x, ptr)));
 }
 
 
@@ -3365,16 +3365,16 @@ static char *describe_frame(void *ptr)
 {
   mus_frame *gen;
   char *desc,*str = NULL;
-  desc = make_desc_buf(ptr,TRUE);
+  desc = make_desc_buf(ptr, TRUE);
   if (desc)
     {
       if (mus_frame_p((mus_any *)ptr))
 	{
 	  gen = (mus_frame *)ptr;
-	  sprintf(desc,"frame[%d]: %s",gen->chans,str = print_array(gen->vals,gen->chans,0));
+	  sprintf(desc, "frame[%d]: %s", gen->chans, str = print_array(gen->vals, gen->chans, 0));
 	  if (str) FREE(str);
 	}
-      else describe_bad_gen(ptr,desc,"frame","a");
+      else describe_bad_gen(ptr, desc, "frame", "a");
     }
   return(desc);
 }
@@ -3423,16 +3423,16 @@ static mus_any_class FRAME_CLASS = {
 mus_frame *mus_make_empty_frame(int chans)
 {
   mus_frame *nf;
-  nf = (mus_frame *)CALLOC(1,sizeof(mus_frame));
+  nf = (mus_frame *)CALLOC(1, sizeof(mus_frame));
   if (nf == NULL) 
-    mus_error(MUS_MEMORY_ALLOCATION_FAILED,"can't allocate mus_frame struct!");
+    mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate mus_frame struct!");
   else
     {
       nf->core = &FRAME_CLASS;
       nf->chans = chans;
-      nf->vals = (Float *)CALLOC(chans,sizeof(Float));
+      nf->vals = (Float *)CALLOC(chans, sizeof(Float));
       if (nf->vals == NULL) 
-	mus_error(MUS_MEMORY_ALLOCATION_FAILED,"can't allocate frame in mus_make_empty_frame");
+	mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate frame in mus_make_empty_frame");
       return(nf);
     }
   return(NULL);
@@ -3446,9 +3446,9 @@ mus_frame *mus_make_frame(int chans, ...)
   nf = mus_make_empty_frame(chans);
   if (nf)
     {
-      va_start(ap,chans);
+      va_start(ap, chans);
       for (i=0;i<chans;i++)
-	nf->vals[i] = (Float)(va_arg(ap,double)); /* float not safe here apparently */
+	nf->vals[i] = (Float)(va_arg(ap, double)); /* float not safe here apparently */
       va_end(ap);
       return(nf);
     }
@@ -3512,29 +3512,29 @@ static char *describe_mixer(void *ptr)
   mus_mixer *gen;
   char *desc,*str;
   int i,j;
-  desc = make_desc_buf(ptr,TRUE);
+  desc = make_desc_buf(ptr, TRUE);
   if (desc)
     {
       if (mus_mixer_p((mus_any *)ptr))
 	{
 	  gen = (mus_mixer *)ptr;
-	  sprintf(desc,"mixer: chans: %d, vals: [",gen->chans);
-	  str = (char *)CALLOC(16,sizeof(char));
+	  sprintf(desc, "mixer: chans: %d, vals: [", gen->chans);
+	  str = (char *)CALLOC(16, sizeof(char));
 	  for (i=0;i<gen->chans;i++)
 	    {
 	      for (j=0;j<gen->chans;j++)
 		{
-		  sprintf(str,"%s%.3f%s%s",
+		  sprintf(str, "%s%.3f%s%s",
 			  (j == 0) ? "(" : "",
 			  gen->vals[i][j],
 			  (j == (gen->chans - 1)) ? ")" : "",
 			  ((i == (gen->chans - 1)) && (j == (gen->chans - 1))) ? "]" : " ");
-		  strcat(desc,str);
+		  strcat(desc, str);
 		}
 	    }
 	  FREE(str);
 	}
-      else describe_bad_gen(ptr,desc,"mixer","a");
+      else describe_bad_gen(ptr, desc, "mixer", "a");
     }
   return(desc);
 }
@@ -3582,21 +3582,21 @@ mus_mixer *mus_make_empty_mixer(int chans)
 {
   mus_mixer *nf;
   int i;
-  nf = (mus_mixer *)CALLOC(1,sizeof(mus_mixer));
+  nf = (mus_mixer *)CALLOC(1, sizeof(mus_mixer));
   if (nf == NULL) 
-    mus_error(MUS_MEMORY_ALLOCATION_FAILED,"can't allocate mus_mixer struct!");
+    mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate mus_mixer struct!");
   else
     {
       nf->core = &MIXER_CLASS;
       nf->chans = chans;
-      nf->vals = (Float **)CALLOC(chans,sizeof(Float));
+      nf->vals = (Float **)CALLOC(chans, sizeof(Float));
       if (nf->vals == NULL) 
-	mus_error(MUS_MEMORY_ALLOCATION_FAILED,"can't allocate mixer in mus_make_empty_mixer");
+	mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate mixer in mus_make_empty_mixer");
       for (i=0;i<chans;i++)
 	{
-	  nf->vals[i] = (Float *)CALLOC(chans,sizeof(Float));
+	  nf->vals[i] = (Float *)CALLOC(chans, sizeof(Float));
 	  if (nf->vals[i] == NULL) 
-	    mus_error(MUS_MEMORY_ALLOCATION_FAILED,"can't allocate mixer column in mus_make_empty_mixer");
+	    mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate mixer column in mus_make_empty_mixer");
 	}
       return(nf);
     }
@@ -3621,10 +3621,10 @@ mus_mixer *mus_make_mixer(int chans, ...)
   mx = mus_make_empty_mixer(chans);
   if (mx) 
     {
-      va_start(ap,chans);
+      va_start(ap, chans);
       for (i=0;i<chans;i++)
 	for (j=0;j<chans;j++)
-	  mx->vals[i][j] = (Float)(va_arg(ap,double));
+	  mx->vals[i][j] = (Float)(va_arg(ap, double));
       va_end(ap);
     }
   return(mx);
@@ -3751,11 +3751,11 @@ static char *inspect_rblk(void *ptr)
 {
   rblk *gen = (rblk *)ptr;
   char *desc,*arr = NULL;
-  desc = make_big_desc_buf(ptr,FALSE);
-  if (desc) sprintf(desc,"rblk buf[%d (%s)]: %s, loc: %d, fill_time: %f, empty: %d",
-		    gen->size,(gen->buf_allocated) ? "local" : "external",
-		    arr = print_array(gen->buf,gen->size,0),
-		    gen->loc,gen->fill_time,gen->empty);
+  desc = make_big_desc_buf(ptr, FALSE);
+  if (desc) sprintf(desc, "rblk buf[%d (%s)]: %s, loc: %d, fill_time: %f, empty: %d",
+		    gen->size, (gen->buf_allocated) ? "local" : "external",
+		    arr = print_array(gen->buf, gen->size, 0),
+		    gen->loc, gen->fill_time, gen->empty);
   if (arr) FREE(arr);
   return(desc);
 }
@@ -3788,13 +3788,13 @@ static char *describe_buffer(void *ptr)
 {
   char *desc;
   rblk *gen = (rblk *)ptr;
-  desc = make_big_desc_buf(ptr,TRUE);
+  desc = make_big_desc_buf(ptr, TRUE);
   if (desc)
     {
       if (mus_buffer_p((mus_any *)gen))
-	sprintf(desc,"buffer: length: %d, loc: %d, fill: %.3f",
-		gen->size,gen->loc,gen->fill_time);
-      else describe_bad_gen(ptr,desc,"buffer","a");
+	sprintf(desc, "buffer: length: %d, loc: %d, fill: %.3f",
+		gen->size, gen->loc, gen->fill_time);
+      else describe_bad_gen(ptr, desc, "buffer", "a");
     }
   return(desc);
 }
@@ -3838,12 +3838,12 @@ Float mus_sample2buffer(mus_any *ptr, Float val)
 	  gen->size += 256;
 #ifdef MACOS
 	  /* gotta do realloc by hand */
-	  tmp = (Float *)CALLOC(gen->size,sizeof(Float));
+	  tmp = (Float *)CALLOC(gen->size, sizeof(Float));
 	  for (i=0;i<gen->size-256;i++) tmp[i] = gen->buf[i];
 	  FREE(gen->buf);
 	  gen->buf = tmp;
 #else
-	  gen->buf = (Float *)REALLOC(gen->buf,gen->size * sizeof(Float));
+	  gen->buf = (Float *)REALLOC(gen->buf, gen->size * sizeof(Float));
 #endif
 	}
       else
@@ -3880,9 +3880,9 @@ static mus_any_class BUFFER_CLASS = {
 mus_any *mus_make_buffer(Float *preloaded_buffer, int size, Float current_fill_time)
 {
   rblk *gen;
-  gen = (rblk *)CALLOC(1,sizeof(rblk));
+  gen = (rblk *)CALLOC(1, sizeof(rblk));
   if (gen == NULL) 
-    mus_error(MUS_MEMORY_ALLOCATION_FAILED,"can't allocate struct for mus_open_buffer2sample!");
+    mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate struct for mus_open_buffer2sample!");
   else
     {
       gen->core = &BUFFER_CLASS;
@@ -3897,7 +3897,7 @@ mus_any *mus_make_buffer(Float *preloaded_buffer, int size, Float current_fill_t
 	}
       else
 	{
-	  gen->buf = (Float *)CALLOC(size,sizeof(Float));
+	  gen->buf = (Float *)CALLOC(size, sizeof(Float));
 	  if (gen->buf == NULL) 
 	    mus_error(MUS_MEMORY_ALLOCATION_FAILED,
 		      "can't allocate %d bytes for buffer2sample buffer",
@@ -3925,7 +3925,7 @@ mus_any *mus_frame2buffer(mus_any *rb, mus_any *fr)
 {
   mus_frame *frm = (mus_frame *)fr;
   int i;
-  for (i=0;i<frm->chans;i++) mus_sample2buffer(rb,frm->vals[i]);
+  for (i=0;i<frm->chans;i++) mus_sample2buffer(rb, frm->vals[i]);
   return(fr);
 }
 
@@ -3955,14 +3955,14 @@ static char *inspect_wt(void *ptr)
 {
   wt *gen = (wt *)ptr;
   char *desc,*rdesc,*arr;
-  desc = make_big_desc_buf(ptr,FALSE);
+  desc = make_big_desc_buf(ptr, FALSE);
   if (desc) 
     {
-      sprintf(desc,"wt freq: %f, phase: %f, wave[%d (%s)]: %s, b:",
-	      gen->freq,gen->phase,gen->wsize,(gen->wave_allocated) ? "local" : "external",
-	      arr = print_array(gen->wave,gen->wsize,0));
+      sprintf(desc, "wt freq: %f, phase: %f, wave[%d (%s)]: %s, b:",
+	      gen->freq, gen->phase, gen->wsize, (gen->wave_allocated) ? "local" : "external",
+	      arr = print_array(gen->wave, gen->wsize, 0));
       rdesc = inspect_rblk((void *)(gen->b));
-      strcat(desc,rdesc);
+      strcat(desc, rdesc);
       FREE(rdesc);
       if (arr) FREE(arr);
     }
@@ -3971,7 +3971,7 @@ static char *inspect_wt(void *ptr)
 
 static Float wt_freq(void *ptr) {return(((wt *)ptr)->freq);}
 static Float set_wt_freq(void *ptr, Float val) {((wt *)ptr)->freq = val; return(val);}
-static Float wt_phase(void *ptr) {return(fmod(((TWO_PI * ((wt *)ptr)->phase) / ((Float)((wt *)ptr)->wsize)),TWO_PI));}
+static Float wt_phase(void *ptr) {return(fmod(((TWO_PI * ((wt *)ptr)->phase) / ((Float)((wt *)ptr)->wsize)), TWO_PI));}
 static Float set_wt_phase(void *ptr, Float val) {((wt *)ptr)->phase = (val * ((wt *)ptr)->phase) / TWO_PI; return(val);}
 static int wt_length(void *ptr) {return(((wt *)ptr)->wsize);}
 static int wt_set_length(void *ptr, int val) {((wt *)ptr)->wsize = val; return(val);}
@@ -3989,13 +3989,13 @@ static Float *wt_set_data(void *ptr, Float *data)
 static char *describe_wt(void *ptr)
 {
   char *desc;
-  desc = make_desc_buf(ptr,TRUE);
+  desc = make_desc_buf(ptr, TRUE);
   if (desc)
     {
       if (mus_wave_train_p((mus_any *)ptr))
-	sprintf(desc,"wave_train freq: %.3fHz, phase: %.3f, size: %d",
-		wt_freq(ptr),wt_phase(ptr),wt_length(ptr));
-      else describe_bad_gen(ptr,desc,"wave_train","a");
+	sprintf(desc, "wave_train freq: %.3fHz, phase: %.3f, size: %d",
+		wt_freq(ptr), wt_phase(ptr), wt_length(ptr));
+      else describe_bad_gen(ptr, desc, "wave_train", "a");
     }
   return(desc);
 }
@@ -4008,14 +4008,14 @@ Float mus_wave_train(mus_any *ptr, Float fm)
   b = gen->b;
   if (b->empty)
     {
-      for (i=0;i<b->size;i++) b->buf[i] += mus_array_interp(gen->wave,gen->phase + i,gen->wsize);
+      for (i=0;i<b->size;i++) b->buf[i] += mus_array_interp(gen->wave, gen->phase + i, gen->wsize);
       b->fill_time += ((Float)sampling_rate/(gen->freq + (fm * sampling_rate / TWO_PI)));
       b->empty = FALSE;
     }
   return(mus_buffer2sample((mus_any *)(gen->b)));
 }
 
-static Float run_wave_train(mus_any *ptr, Float fm, Float unused) {return(mus_wave_train(ptr,fm));}
+static Float run_wave_train(mus_any *ptr, Float fm, Float unused) {return(mus_wave_train(ptr, fm));}
 
 static int free_wt(void *p) 
 {
@@ -4051,9 +4051,9 @@ static mus_any_class WAVE_TRAIN_CLASS = {
 mus_any *mus_make_wave_train(Float freq, Float phase, Float *wave, int wsize)
 {
  wt *gen;
- gen = (wt *)CALLOC(1,sizeof(wt));
+ gen = (wt *)CALLOC(1, sizeof(wt));
   if (gen == NULL) 
-    mus_error(MUS_MEMORY_ALLOCATION_FAILED,"can't allocate struct for mus_make_wave_train!");
+    mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate struct for mus_make_wave_train!");
   else
     {
       gen->core = &WAVE_TRAIN_CLASS;
@@ -4061,7 +4061,7 @@ mus_any *mus_make_wave_train(Float freq, Float phase, Float *wave, int wsize)
       gen->phase = (wsize * phase) / TWO_PI;
       gen->wave = wave;
       gen->wsize = wsize;
-      gen->b = (rblk *)mus_make_buffer(NULL,wsize,0.0);
+      gen->b = (rblk *)mus_make_buffer(NULL, wsize, 0.0);
       return((mus_any *)gen);
     }
   return(NULL);
@@ -4078,10 +4078,10 @@ static Float mus_read_sample(mus_input *fd, int frame, int chan)
   if (fd)
     {
       if ((fd->base)->sample)
-	return(((*(fd->base)->sample))((void *)fd,frame,chan));
-      mus_error(MUS_NO_SAMPLE_INPUT,"can't find %s's sample input function",mus_name((mus_any *)fd));
+	return(((*(fd->base)->sample))((void *)fd, frame, chan));
+      mus_error(MUS_NO_SAMPLE_INPUT, "can't find %s's sample input function", mus_name((mus_any *)fd));
     }
-  else mus_error(MUS_NO_GEN,"null ptr passed to mus_read_sample");
+  else mus_error(MUS_NO_GEN, "null ptr passed to mus_read_sample");
   return(0.0);
 }
 
@@ -4090,10 +4090,10 @@ static Float mus_write_sample(mus_output *fd, int frame, int chan, Float samp)
   if (fd)
     {
       if ((fd->base)->sample)
-	return(((*(fd->base)->sample))((void *)fd,frame,chan,samp));
-      mus_error(MUS_NO_SAMPLE_OUTPUT,"can't find %s's sample output function",mus_name((mus_any *)fd));
+	return(((*(fd->base)->sample))((void *)fd, frame, chan, samp));
+      mus_error(MUS_NO_SAMPLE_OUTPUT, "can't find %s's sample output function", mus_name((mus_any *)fd));
     }
-  else mus_error(MUS_NO_GEN,"null ptr passed to mus_write_sample");
+  else mus_error(MUS_NO_GEN, "null ptr passed to mus_write_sample");
   return(0.0);
 }
 
@@ -4120,9 +4120,9 @@ static char *inspect_rdin(void *ptr)
 {
   rdin *gen = (rdin *)ptr;
   char *desc;
-  desc = make_big_desc_buf(ptr,FALSE);
-  if (desc) sprintf(desc,"rdin chan: %d, dir: %d, loc: %d, chans: %d, data_start: %d, data_end: %d, file_end: %d, file_name: %s",
-		    gen->chan, gen->dir,gen->loc,gen->chans,gen->data_start,gen->data_end,gen->file_end,gen->file_name);
+  desc = make_big_desc_buf(ptr, FALSE);
+  if (desc) sprintf(desc, "rdin chan: %d, dir: %d, loc: %d, chans: %d, data_start: %d, data_end: %d, file_end: %d, file_name: %s",
+		    gen->chan, gen->dir, gen->loc, gen->chans, gen->data_start, gen->data_end, gen->file_end, gen->file_name);
   return(desc);
 }
 
@@ -4130,12 +4130,12 @@ static char *describe_file2sample(void *ptr)
 {
   char *desc;
   rdin *gen = (rdin *)ptr;
-  desc = make_desc_buf(ptr,TRUE);
+  desc = make_desc_buf(ptr, TRUE);
   if (desc)
     {
       if (mus_file2sample_p((mus_any *)ptr))
-	sprintf(desc,"file2sample: %s",gen->file_name);
-      else describe_bad_gen(ptr,desc,"file2sample","a");
+	sprintf(desc, "file2sample: %s", gen->file_name);
+      else describe_bad_gen(ptr, desc, "file2sample", "a");
     }
   return(desc);
 }
@@ -4189,17 +4189,17 @@ static Float file_sample(void *ptr, int samp, int chan)
       gen->data_end = newloc + mus_file_buffer_size - 1;
       fd = mus_sound_open_input(gen->file_name);
       if (fd == -1)
-	mus_error(MUS_CANT_OPEN_FILE,"open(%s) -> %s",gen->file_name,strerror(errno));
+	mus_error(MUS_CANT_OPEN_FILE, "open(%s) -> %s", gen->file_name, strerror(errno));
       else
 	{ 
 	  if (gen->ibufs == NULL) 
 	    {
-	      gen->ibufs = (MUS_SAMPLE_TYPE **)CALLOC(gen->chans,sizeof(MUS_SAMPLE_TYPE *));
+	      gen->ibufs = (MUS_SAMPLE_TYPE **)CALLOC(gen->chans, sizeof(MUS_SAMPLE_TYPE *));
 	      for (i=0;i<gen->chans;i++)
-		gen->ibufs[i] = (MUS_SAMPLE_TYPE *)CALLOC(mus_file_buffer_size,sizeof(MUS_SAMPLE_TYPE));
+		gen->ibufs[i] = (MUS_SAMPLE_TYPE *)CALLOC(mus_file_buffer_size, sizeof(MUS_SAMPLE_TYPE));
 	    }
-	  mus_sound_seek_frame(fd,gen->data_start);
-	  mus_file_read_chans(fd,0,mus_file_buffer_size-1,gen->chans,gen->ibufs,(MUS_SAMPLE_TYPE *)(gen->ibufs));
+	  mus_sound_seek_frame(fd, gen->data_start);
+	  mus_file_read_chans(fd, 0, mus_file_buffer_size-1, gen->chans, gen->ibufs, (MUS_SAMPLE_TYPE *)(gen->ibufs));
 	  mus_sound_close_input(fd);
 	  if (gen->data_end > gen->file_end) gen->data_end = gen->file_end;
 	}
@@ -4238,22 +4238,22 @@ int mus_file2sample_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_F
 mus_any *mus_make_file2sample(const char *filename)
 {
   rdin *gen;
-  gen = (rdin *)CALLOC(1,sizeof(rdin));
+  gen = (rdin *)CALLOC(1, sizeof(rdin));
   if (gen == NULL) 
-    mus_error(MUS_MEMORY_ALLOCATION_FAILED,"can't allocate struct for mus_make_file2sample!");
+    mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate struct for mus_make_file2sample!");
   else
     {
       if (filename == NULL)
-	mus_error(MUS_NO_FILE_NAME_PROVIDED,"mus_make_file2sample requires a file name");
+	mus_error(MUS_NO_FILE_NAME_PROVIDED, "mus_make_file2sample requires a file name");
       else
 	{
 	  gen->core = &FILE2SAMPLE_CLASS;
 	  gen->base = &FILE2SAMPLE_INPUT_CLASS;
-	  gen->file_name = (char *)CALLOC(strlen(filename)+1,sizeof(char));
+	  gen->file_name = (char *)CALLOC(strlen(filename)+1, sizeof(char));
 	  if (gen->file_name == NULL) 
-	    mus_error(MUS_MEMORY_ALLOCATION_FAILED,"can't allocate file name space in mus_make_file2sample!");
+	    mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate file name space in mus_make_file2sample!");
 	  else
-	    strcpy(gen->file_name,filename);
+	    strcpy(gen->file_name, filename);
 	  (gen->base)->sample = &file_sample;
 	  (gen->base)->end = &file2sample_end;
 	  gen->data_end = -1; /* force initial read */
@@ -4267,7 +4267,7 @@ mus_any *mus_make_file2sample(const char *filename)
 
 Float mus_file2sample(mus_any *ptr, int samp, int chan)
 {
-  return(mus_read_sample((mus_input *)ptr,samp,chan));
+  return(mus_read_sample((mus_input *)ptr, samp, chan));
 }
 
 
@@ -4282,12 +4282,12 @@ static char *describe_readin(void *ptr)
 {
   char *desc;
   rdin *gen = (rdin *)ptr;
-  desc = make_desc_buf(ptr,TRUE);
+  desc = make_desc_buf(ptr, TRUE);
   if (desc)
     {
       if (mus_readin_p((mus_any *)ptr))
-	sprintf(desc,"readin: %s[chan %d], loc: %d, dir: %d",gen->file_name,gen->chan,gen->loc,gen->dir);
-      else describe_bad_gen(ptr,desc,"readin","a");
+	sprintf(desc, "readin: %s[chan %d], loc: %d, dir: %d", gen->file_name, gen->chan, gen->loc, gen->dir);
+      else describe_bad_gen(ptr, desc, "readin", "a");
     }
   return(desc);
 }
@@ -4342,7 +4342,7 @@ mus_any *mus_make_readin(const char *filename, int chan, int start, int directio
   rdin *gen;
   gen = (rdin *)mus_make_file2sample(filename);
   if (gen == NULL) 
-    mus_error(MUS_MEMORY_ALLOCATION_FAILED,"can't allocate struct for mus_make_readin!");
+    mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate struct for mus_make_readin!");
   else
     {
       gen->core = &READIN_CLASS;
@@ -4350,8 +4350,8 @@ mus_any *mus_make_readin(const char *filename, int chan, int start, int directio
       gen->loc = start;
       gen->dir = direction;
       gen->chan = chan;
-      gen->ibufs = (MUS_SAMPLE_TYPE **)CALLOC(gen->chans,sizeof(MUS_SAMPLE_TYPE *));
-      gen->ibufs[chan] = (MUS_SAMPLE_TYPE *)CALLOC(mus_file_buffer_size,sizeof(MUS_SAMPLE_TYPE));
+      gen->ibufs = (MUS_SAMPLE_TYPE **)CALLOC(gen->chans, sizeof(MUS_SAMPLE_TYPE *));
+      gen->ibufs[chan] = (MUS_SAMPLE_TYPE *)CALLOC(mus_file_buffer_size, sizeof(MUS_SAMPLE_TYPE));
       /* i.e. read only the specified channel */
       (gen->base)->sample = &file_sample;
       (gen->base)->end = &file2sample_end;
@@ -4364,7 +4364,7 @@ Float mus_readin(mus_any *ptr)
 {
   Float res;
   rdin *rd = (rdin *)ptr;
-  res = mus_file2sample((mus_any *)rd,rd->loc,rd->chan);
+  res = mus_file2sample((mus_any *)rd, rd->loc, rd->chan);
   rd->loc += rd->dir;
   return(res);
 }
@@ -4387,12 +4387,12 @@ int mus_location(mus_any *gen)
 	      ingen = (mus_input *)gen;
 	      if ((ingen->base)->location)
 		return(((*(ingen->base)->location))((void *)gen));
-	      else mus_error(MUS_NO_LOCATION,"can't get %s's location",mus_name(gen));
+	      else mus_error(MUS_NO_LOCATION, "can't get %s's location", mus_name(gen));
 	    }
-	  else mus_error(MUS_NO_LOCATION,"can't get %s's location",mus_name(gen));
+	  else mus_error(MUS_NO_LOCATION, "can't get %s's location", mus_name(gen));
 	}
     }
-  else mus_error(MUS_NO_GEN,"null gen passed to mus_location");
+  else mus_error(MUS_NO_GEN, "null gen passed to mus_location");
   return(0);
 }
 
@@ -4403,7 +4403,7 @@ int mus_set_location(mus_any *gen, int loc)
     {
       if (mus_env_p(gen))
 	{
-	  set_env_location(gen,loc);
+	  set_env_location(gen, loc);
 	  return(loc);
 	}
       else
@@ -4413,14 +4413,14 @@ int mus_set_location(mus_any *gen, int loc)
 	      ingen = (mus_input *)gen;
 	      if ((ingen->base)->set_location)
 		{
-		  (*((ingen->base)->set_location))((void *)gen,loc);
+		  (*((ingen->base)->set_location))((void *)gen, loc);
 		  return(loc);
 		}
 	    }
 	}
-      mus_error(MUS_NO_LOCATION,"can't set %s's location",mus_name(gen));
+      mus_error(MUS_NO_LOCATION, "can't set %s's location", mus_name(gen));
     }
-  else mus_error(MUS_NO_GEN,"null gen passed to mus_set_location");
+  else mus_error(MUS_NO_GEN, "null gen passed to mus_set_location");
   return(0);
 }
 
@@ -4430,9 +4430,9 @@ int mus_channel(mus_input *gen)
     {
       if ((gen->base)->channel)
 	return(((*(gen->base)->channel))((void *)gen));
-      else mus_error(MUS_NO_CHANNEL,"can't get %s's channel",mus_name((mus_any *)gen));
+      else mus_error(MUS_NO_CHANNEL, "can't get %s's channel", mus_name((mus_any *)gen));
     }
-  else mus_error(MUS_NO_GEN,"null gen passed to mus_channel");
+  else mus_error(MUS_NO_GEN, "null gen passed to mus_channel");
   return(0);
 }
 
@@ -4443,12 +4443,12 @@ int mus_channel(mus_input *gen)
 
 Float mus_in_any(int frame, int chan, mus_input *IO)
 {
-  if (IO) return(mus_file2sample((mus_any *)IO,frame,chan));
+  if (IO) return(mus_file2sample((mus_any *)IO, frame, chan));
   return(0.0);
 }
 
-Float mus_ina(int frame, mus_input *inp) {return(mus_in_any(frame,0,inp));}
-Float mus_inb(int frame, mus_input *inp) {return(mus_in_any(frame,1,inp));}
+Float mus_ina(int frame, mus_input *inp) {return(mus_in_any(frame, 0, inp));}
+Float mus_inb(int frame, mus_input *inp) {return(mus_in_any(frame, 1, inp));}
 
 
 
@@ -4460,12 +4460,12 @@ static char *describe_file2frame(void *ptr)
 {
   char *desc;
   rdin *gen = (rdin *)ptr;
-  desc = make_desc_buf(ptr,TRUE);
+  desc = make_desc_buf(ptr, TRUE);
   if (desc)
     {
       if (mus_file2frame_p((mus_any *)ptr))
-	sprintf(desc,"file2frame: %s",gen->file_name);
-      else describe_bad_gen(ptr,desc,"file2frame","a");
+	sprintf(desc, "file2frame: %s", gen->file_name);
+      else describe_bad_gen(ptr, desc, "file2frame", "a");
     }
   return(desc);
 }
@@ -4488,7 +4488,7 @@ mus_any *mus_make_file2frame(const char *filename)
   rdin *gen;
   gen = (rdin *)mus_make_file2sample(filename);
   if (gen == NULL) 
-    mus_error(MUS_MEMORY_ALLOCATION_FAILED,"can't allocate struct for mus_make_file2frame!");
+    mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate struct for mus_make_file2frame!");
   else
     {
       gen->core = &FILE2FRAME_CLASS;
@@ -4505,7 +4505,7 @@ mus_frame *mus_file2frame(mus_any *ptr, int samp, mus_frame *uf)
   rdin *gen = (rdin *)ptr;
   int i;
   if (uf == NULL) f = mus_make_empty_frame(gen->chans); else f = uf;
-  for (i=0;i<gen->chans;i++) f->vals[i] = mus_file2sample((mus_any *)gen,samp,i);
+  for (i=0;i<gen->chans;i++) f->vals[i] = mus_file2sample((mus_any *)gen, samp, i);
   return(f);
 }
 
@@ -4533,9 +4533,9 @@ static char *inspect_rdout(void *ptr)
 {
   rdout *gen = (rdout *)ptr;
   char *desc;
-  desc = make_big_desc_buf(ptr,FALSE);
-  if (desc) sprintf(desc,"rdout chan: %d, loc: %d, file_name: %s, chans: %d, data_start: %d, data_end: %d, out_end: %d",
-		    gen->chan,gen->loc,gen->file_name,gen->chans,gen->data_start,gen->data_end,gen->out_end);
+  desc = make_big_desc_buf(ptr, FALSE);
+  if (desc) sprintf(desc, "rdout chan: %d, loc: %d, file_name: %s, chans: %d, data_start: %d, data_end: %d, out_end: %d",
+		    gen->chan, gen->loc, gen->file_name, gen->chans, gen->data_start, gen->data_end, gen->out_end);
   return(desc);
 }
 
@@ -4543,12 +4543,12 @@ static char *describe_sample2file(void *ptr)
 {
   char *desc;
   rdout *gen = (rdout *)ptr;
-  desc = make_desc_buf(ptr,TRUE);
+  desc = make_desc_buf(ptr, TRUE);
   if (desc)
     {
       if (mus_sample2file_p((mus_any *)ptr))
-	sprintf(desc,"sample2file: %s",gen->file_name);
-      else describe_bad_gen(ptr,desc,"sample2file","a");
+	sprintf(desc, "sample2file: %s", gen->file_name);
+      else describe_bad_gen(ptr, desc, "sample2file", "a");
     }
   return(desc);
 }
@@ -4590,13 +4590,13 @@ static void flush_buffers(rdout *gen)
   fd = mus_sound_open_input(gen->file_name);
   if (fd == -1)
     {
-      fd = mus_sound_open_output(gen->file_name,(int)sampling_rate,gen->chans,gen->output_data_format,gen->output_header_type,NULL);
+      fd = mus_sound_open_output(gen->file_name, (int)sampling_rate, gen->chans, gen->output_data_format, gen->output_header_type, NULL);
       if (fd == -1)
-	mus_error(MUS_CANT_OPEN_FILE,"open(%s) -> %s",gen->file_name,strerror(errno));
+	mus_error(MUS_CANT_OPEN_FILE, "open(%s) -> %s", gen->file_name, strerror(errno));
       else
 	{
-	  mus_sound_write(fd,0,gen->out_end,gen->chans,gen->obufs);
-	  mus_sound_close_output(fd,(gen->out_end+1) * gen->chans * mus_data_format_to_bytes_per_sample(mus_sound_data_format(gen->file_name)));	  
+	  mus_sound_write(fd, 0, gen->out_end, gen->chans, gen->obufs);
+	  mus_sound_close_output(fd, (gen->out_end+1) * gen->chans * mus_data_format_to_bytes_per_sample(mus_sound_data_format(gen->file_name)));	  
 	}
     }
   else
@@ -4605,20 +4605,20 @@ static void flush_buffers(rdout *gen)
       hdrfrm = mus_sound_data_format(gen->file_name);
       hdrtyp = mus_sound_header_type(gen->file_name);
       size = mus_sound_frames(gen->file_name);
-      addbufs = (MUS_SAMPLE_TYPE **)CALLOC(gen->chans,sizeof(MUS_SAMPLE_TYPE *));
+      addbufs = (MUS_SAMPLE_TYPE **)CALLOC(gen->chans, sizeof(MUS_SAMPLE_TYPE *));
       for (i=0;i<gen->chans;i++) addbufs[i] = (MUS_SAMPLE_TYPE *)CALLOC(mus_file_buffer_size, sizeof(MUS_SAMPLE_TYPE));
-      mus_sound_seek_frame(fd,gen->data_start);
-      mus_sound_read(fd,0,gen->out_end - gen->data_start + 1,gen->chans,addbufs);
+      mus_sound_seek_frame(fd, gen->data_start);
+      mus_sound_read(fd, 0, gen->out_end - gen->data_start + 1, gen->chans, addbufs);
       mus_sound_close_input(fd);
-      fd = mus_sound_reopen_output(gen->file_name,gen->chans,hdrfrm,hdrtyp,hdrend);
+      fd = mus_sound_reopen_output(gen->file_name, gen->chans, hdrfrm, hdrtyp, hdrend);
       last = gen->out_end - gen->data_start;
       for (j=0;j<gen->chans;j++)
 	for (i=0;i<=last;i++)
 	  addbufs[j][i] += gen->obufs[j][i];
-      mus_sound_seek_frame(fd,gen->data_start);
-      mus_sound_write(fd,0,last,gen->chans,addbufs);
+      mus_sound_seek_frame(fd, gen->data_start);
+      mus_sound_write(fd, 0, last, gen->chans, addbufs);
       if (size <= gen->out_end) size = gen->out_end+1;
-      mus_sound_close_output(fd,size * gen->chans * mus_data_format_to_bytes_per_sample(hdrfrm));
+      mus_sound_close_output(fd, size * gen->chans * mus_data_format_to_bytes_per_sample(hdrfrm));
       for (i=0;i<gen->chans;i++) FREE(addbufs[i]);
       FREE(addbufs);
     }
@@ -4676,22 +4676,22 @@ mus_any *mus_make_sample2file(const char *filename, int out_chans, int out_forma
 {
   rdout *gen;
   int i,fd;
-  gen = (rdout *)CALLOC(1,sizeof(rdout));
+  gen = (rdout *)CALLOC(1, sizeof(rdout));
   if (gen == NULL) 
-    mus_error(MUS_MEMORY_ALLOCATION_FAILED,"can't allocate struct for mus_make_sample2file!");
+    mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate struct for mus_make_sample2file!");
   else
     {
       if (filename == NULL)
-	mus_error(MUS_NO_FILE_NAME_PROVIDED,"mus_make_sample2file requires a file name");
+	mus_error(MUS_NO_FILE_NAME_PROVIDED, "mus_make_sample2file requires a file name");
       else
 	{
 	  gen->core = &SAMPLE2FILE_CLASS;
 	  gen->base = &SAMPLE2FILE_OUTPUT_CLASS;
-	  gen->file_name = (char *)CALLOC(strlen(filename)+1,sizeof(char));
+	  gen->file_name = (char *)CALLOC(strlen(filename)+1, sizeof(char));
 	  if (gen->file_name == NULL) 
-	    mus_error(MUS_MEMORY_ALLOCATION_FAILED,"can't allocate file name space in mus_make_sample2file!");
+	    mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate file name space in mus_make_sample2file!");
 	  else
-	    strcpy(gen->file_name,filename);
+	    strcpy(gen->file_name, filename);
 	  (gen->base)->sample = &sample_file;
 	  (gen->base)->end = &sample2file_end;
 	  (gen->core)->length = &bufferlen;
@@ -4702,16 +4702,16 @@ mus_any *mus_make_sample2file(const char *filename, int out_chans, int out_forma
 	  gen->chans = out_chans;
 	  gen->output_data_format = out_format;
 	  gen->output_header_type = out_type;
-	  gen->obufs = (MUS_SAMPLE_TYPE **)CALLOC(gen->chans,sizeof(MUS_SAMPLE_TYPE *));
-	  for (i=0;i<gen->chans;i++) gen->obufs[i] = (MUS_SAMPLE_TYPE *)CALLOC(mus_file_buffer_size,sizeof(MUS_SAMPLE_TYPE));
-	  fd = mus_sound_open_output(gen->file_name,(int)sampling_rate,gen->chans,gen->output_data_format,gen->output_header_type,NULL);
+	  gen->obufs = (MUS_SAMPLE_TYPE **)CALLOC(gen->chans, sizeof(MUS_SAMPLE_TYPE *));
+	  for (i=0;i<gen->chans;i++) gen->obufs[i] = (MUS_SAMPLE_TYPE *)CALLOC(mus_file_buffer_size, sizeof(MUS_SAMPLE_TYPE));
+	  fd = mus_sound_open_output(gen->file_name, (int)sampling_rate, gen->chans, gen->output_data_format, gen->output_header_type, NULL);
 	  /* clear previous, if any */
 	  if (fd == -1)
-	    mus_error(MUS_CANT_OPEN_FILE,"open(%s) -> %s",gen->file_name,strerror(errno));
+	    mus_error(MUS_CANT_OPEN_FILE, "open(%s) -> %s", gen->file_name, strerror(errno));
 	  else 
 	    {
 	      if (mus_file_close(fd) != 0)
-		mus_error(MUS_CANT_CLOSE_FILE,"close(%d, %s) -> %s",fd,gen->file_name,strerror(errno));
+		mus_error(MUS_CANT_CLOSE_FILE, "close(%d, %s) -> %s", fd, gen->file_name, strerror(errno));
 	    }
 	  return((mus_any *)gen);
 	}
@@ -4721,7 +4721,7 @@ mus_any *mus_make_sample2file(const char *filename, int out_chans, int out_forma
 
 Float mus_sample2file(mus_any *ptr, int samp, int chan, Float val)
 {
-  return(mus_write_sample((mus_output *)ptr,samp,chan,val));
+  return(mus_write_sample((mus_output *)ptr, samp, chan, val));
 }
 
 int mus_close_file(mus_any *ptr)
@@ -4736,14 +4736,14 @@ int mus_close_file(mus_any *ptr)
 
 Float mus_out_any(int frame, Float val, int chan, mus_output *IO)
 {
-  if (IO) return(mus_sample2file((mus_any *)IO,frame,chan,val));
+  if (IO) return(mus_sample2file((mus_any *)IO, frame, chan, val));
   return(0.0);
 }
 
-Float mus_outa(int frame, Float val, mus_output *IO) {return(mus_out_any(frame,val,0,IO));}
-Float mus_outb(int frame, Float val, mus_output *IO) {return(mus_out_any(frame,val,1,IO));}
-Float mus_outc(int frame, Float val, mus_output *IO) {return(mus_out_any(frame,val,2,IO));}
-Float mus_outd(int frame, Float val, mus_output *IO) {return(mus_out_any(frame,val,3,IO));}
+Float mus_outa(int frame, Float val, mus_output *IO) {return(mus_out_any(frame, val, 0, IO));}
+Float mus_outb(int frame, Float val, mus_output *IO) {return(mus_out_any(frame, val, 1, IO));}
+Float mus_outc(int frame, Float val, mus_output *IO) {return(mus_out_any(frame, val, 2, IO));}
+Float mus_outd(int frame, Float val, mus_output *IO) {return(mus_out_any(frame, val, 3, IO));}
 
 
 
@@ -4753,12 +4753,12 @@ static char *describe_frame2file(void *ptr)
 {
   char *desc;
   rdout *gen = (rdout *)ptr;
-  desc = make_desc_buf(ptr,TRUE);
+  desc = make_desc_buf(ptr, TRUE);
   if (desc)
     {
       if (mus_frame2file_p((mus_any *)ptr))
-	sprintf(desc,"frame2file: %s",gen->file_name);
-      else describe_bad_gen(ptr,desc,"frame2file","a");
+	sprintf(desc, "frame2file: %s", gen->file_name);
+      else describe_bad_gen(ptr, desc, "frame2file", "a");
     }
   return(desc);
 }
@@ -4781,7 +4781,7 @@ mus_any *mus_make_frame2file(const char *filename, int chans, int out_format, in
   rdout *gen;
   gen = (rdout *)mus_make_sample2file(filename, chans, out_format, out_type);
   if (gen == NULL) 
-    mus_error(MUS_MEMORY_ALLOCATION_FAILED,"can't allocate struct for mus_make_frame2file!");
+    mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate struct for mus_make_frame2file!");
   else
     {
       gen->core = &FRAME2FILE_CLASS;
@@ -4798,7 +4798,7 @@ mus_frame *mus_frame2file(mus_any *ptr, int samp, mus_frame *data)
   int i,chans;
   chans = data->chans;
   if (gen->chans < chans) chans = gen->chans;
-  for (i=0;i<chans;i++) mus_sample2file(ptr,samp,i,data->vals[i]);
+  for (i=0;i<chans;i++) mus_sample2file(ptr, samp, i, data->vals[i]);
   return(data);
 }
 
@@ -4822,12 +4822,12 @@ static char *inspect_locs(void *ptr)
 {
   locs *gen = (locs *)ptr;
   char *desc,*arr1 = NULL,*arr2 = NULL;
-  desc = make_desc_buf(ptr,FALSE);
-  if (desc) sprintf(desc,"locs outn[%d]: %s, revn[%d]: %s",
+  desc = make_desc_buf(ptr, FALSE);
+  if (desc) sprintf(desc, "locs outn[%d]: %s, revn[%d]: %s",
 		    gen->chans,
-		    arr1 = print_array(gen->outn,gen->chans,0),
+		    arr1 = print_array(gen->outn, gen->chans, 0),
 		    gen->rev_chans,
-		    arr2 = print_array(gen->revn,gen->rev_chans,0));
+		    arr2 = print_array(gen->revn, gen->rev_chans, 0));
   if (arr1) FREE(arr1);
   if (arr2) FREE(arr2);
   return(desc);
@@ -4857,23 +4857,23 @@ static char *describe_locsig(void *ptr)
   char *desc,*str;
   int i;
   locs *gen = (locs *)ptr;
-  desc = make_desc_buf(ptr,TRUE);
+  desc = make_desc_buf(ptr, TRUE);
   if (desc)
     {
       if (mus_locsig_p((mus_any *)ptr))
 	{
-	  sprintf(desc,"locsig: chans %d, outn: [",gen->chans);
-	  str = (char *)CALLOC(32,sizeof(char));
+	  sprintf(desc, "locsig: chans %d, outn: [", gen->chans);
+	  str = (char *)CALLOC(32, sizeof(char));
 	  for (i=0;i<gen->chans-1;i++)
 	    {
-	      sprintf(str,"%.3f ",gen->outn[i]);
-	      strcat(desc,str);
+	      sprintf(str, "%.3f ", gen->outn[i]);
+	      strcat(desc, str);
 	    }
-	  sprintf(str,"%.3f]",gen->outn[gen->chans-1]);
-	  strcat(desc,str);
+	  sprintf(str, "%.3f]", gen->outn[gen->chans-1]);
+	  strcat(desc, str);
 	  FREE(str);
 	}
-      else describe_bad_gen(ptr,desc,"locsig","a");
+      else describe_bad_gen(ptr, desc, "locsig", "a");
     }
   return(desc);
 }
@@ -4901,7 +4901,7 @@ Float mus_locsig_ref (mus_any *ptr, int chan)
     {
       if ((chan >= 0) && (chan < gen->chans))
 	return(gen->outn[chan]);
-      else mus_error(MUS_NO_SUCH_CHANNEL,"locsig_ref chan %d >= %d",chan,gen->chans);
+      else mus_error(MUS_NO_SUCH_CHANNEL, "locsig_ref chan %d >= %d", chan, gen->chans);
     }
   return(0.0);
 }
@@ -4913,7 +4913,7 @@ Float mus_locsig_set (mus_any *ptr, int chan, Float val)
     {
       if ((chan >= 0) && (chan < gen->chans))
 	gen->outn[chan] = val;
-      else mus_error(MUS_NO_SUCH_CHANNEL,"locsig_set chan %d >= %d",chan,gen->chans);
+      else mus_error(MUS_NO_SUCH_CHANNEL, "locsig_set chan %d >= %d", chan, gen->chans);
     }
   return(val);
 }
@@ -4925,7 +4925,7 @@ Float mus_locsig_reverb_ref (mus_any *ptr, int chan)
     {
       if ((chan >= 0) && (chan < gen->rev_chans))
 	return(gen->revn[chan]);
-      else mus_error(MUS_NO_SUCH_CHANNEL,"locsig_reverb_ref chan %d >= %d",chan,gen->rev_chans);
+      else mus_error(MUS_NO_SUCH_CHANNEL, "locsig_reverb_ref chan %d >= %d", chan, gen->rev_chans);
     }
   return(0.0);
 }
@@ -4937,7 +4937,7 @@ Float mus_locsig_reverb_set (mus_any *ptr, int chan, Float val)
     {
       if ((chan >= 0) && (chan < gen->rev_chans))
 	gen->revn[chan] = val;
-      else mus_error(MUS_NO_SUCH_CHANNEL,"locsig_reverb_set chan %d >= %d",chan,gen->rev_chans);
+      else mus_error(MUS_NO_SUCH_CHANNEL, "locsig_reverb_set chan %d >= %d", chan, gen->rev_chans);
     }
   return(val);
 }
@@ -4964,9 +4964,9 @@ mus_any *mus_make_locsig(Float degree, Float distance, Float reverb, int chans, 
   locs *gen;
   Float dist,frac;
   int i;
-  gen = (locs *)CALLOC(1,sizeof(locs));
+  gen = (locs *)CALLOC(1, sizeof(locs));
   if (gen == NULL) 
-    mus_error(MUS_MEMORY_ALLOCATION_FAILED,"can't allocate struct for mus_make_locsig!");
+    mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate struct for mus_make_locsig!");
   else
     {
       gen->core = &LOCSIG_CLASS;
@@ -4982,15 +4982,15 @@ mus_any *mus_make_locsig(Float degree, Float distance, Float reverb, int chans, 
 	  gen->rev_chans = mus_channels((mus_any *)revput);
 	  if (gen->rev_chans > 0)
 	    {
-	      gen->revn = (Float *)CALLOC(gen->rev_chans,sizeof(Float));
+	      gen->revn = (Float *)CALLOC(gen->rev_chans, sizeof(Float));
 	      for (i=0;i<gen->rev_chans;i++) gen->revn[i] = reverb / sqrt(dist);
 	      gen->revf = mus_make_empty_frame(gen->rev_chans);
 	    }
 	}
       else gen->rev_chans = 0;
-      gen->outn = (Float *)CALLOC(chans,sizeof(Float));
+      gen->outn = (Float *)CALLOC(chans, sizeof(Float));
       if (gen->outn == NULL) 
-	mus_error(MUS_MEMORY_ALLOCATION_FAILED,"can't allocate outn array for mus_make_locsig!");
+	mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate outn array for mus_make_locsig!");
       if (chans == 1)
 	gen->outn[0] = dist;
       else
@@ -5050,9 +5050,9 @@ mus_frame *mus_locsig(mus_any *ptr, int loc, Float val)
       (gen->revf)->vals[i] = val * gen->revn[i];
     }
   if (gen->revn_writer)
-    mus_frame2file((mus_any *)(gen->revn_writer),loc,gen->revf);
+    mus_frame2file((mus_any *)(gen->revn_writer), loc, gen->revf);
   if (gen->outn_writer)
-    return(mus_frame2file((mus_any *)(gen->outn_writer),loc,gen->outf));
+    return(mus_frame2file((mus_any *)(gen->outn_writer), loc, gen->outf));
   else return((mus_frame *)(gen->outf));
 }
 
@@ -5104,10 +5104,10 @@ static char *inspect_sr(void *ptr)
 {
   sr *gen = (sr *)ptr;
   char *desc,*arr = NULL;
-  desc = make_big_desc_buf(ptr,FALSE);
-  if (desc) sprintf(desc,"sr x: %f, incr: %f, width: %d, len: %d, data[%d]: %s",
-		    gen->x,gen->incr,gen->width,gen->len,gen->width * 2 + 1,
-		    arr = print_array(gen->data,gen->width * 2 + 1,0));
+  desc = make_big_desc_buf(ptr, FALSE);
+  if (desc) sprintf(desc, "sr x: %f, incr: %f, width: %d, len: %d, data[%d]: %s",
+		    gen->x, gen->incr, gen->width, gen->len, gen->width * 2 + 1,
+		    arr = print_array(gen->data, gen->width * 2 + 1, 0));
   if (arr) FREE(arr);
   return(desc);
 }
@@ -5147,8 +5147,8 @@ static Float *init_sinc_table(int width)
       return(sinc_tables[i]);
   if (sincs == 0)
     {
-      sinc_tables = (Float **)CALLOC(8,sizeof(Float *));
-      sinc_widths = (int *)CALLOC(8,sizeof(int));
+      sinc_tables = (Float **)CALLOC(8, sizeof(Float *));
+      sinc_widths = (int *)CALLOC(8, sizeof(int));
       sincs = 8;
       loc = 0;
     }
@@ -5166,8 +5166,8 @@ static Float *init_sinc_table(int width)
 #ifdef MACOS
 	  ftmp = sinc_tables;
 	  itmp = sinc_widths;
-	  sinc_tables = (Float **)CALLOC((sincs+8),sizeof(Float *));
-	  sinc_widths = (int *)CALLOC((sincs+8),sizeof(int));
+	  sinc_tables = (Float **)CALLOC((sincs+8), sizeof(Float *));
+	  sinc_widths = (int *)CALLOC((sincs+8), sizeof(int));
 	  for (i=0;i<sincs;i++)
 	    {
 	      sinc_tables[i] = ftmp[i];
@@ -5176,21 +5176,21 @@ static Float *init_sinc_table(int width)
 	  FREE(ftmp);
 	  FREE(itmp);
 #else
-	  sinc_tables = (Float **)REALLOC(sinc_tables,(sincs+8) * sizeof(Float *));
-	  sinc_widths = (int *)REALLOC(sinc_widths,(sincs+8) * sizeof(int));
+	  sinc_tables = (Float **)REALLOC(sinc_tables, (sincs+8) * sizeof(Float *));
+	  sinc_widths = (int *)REALLOC(sinc_widths, (sincs+8) * sizeof(int));
 #endif
 	  for (i=sincs;i<(sincs+8);i++) {sinc_widths[i]=0; sinc_tables[i]=NULL;}
 	  loc = sincs;
 	  sincs+=8;
 	}
     }
-  sinc_tables[loc] = (Float *)CALLOC(width * SRC_SINC_DENSITY + 2,sizeof(Float));
+  sinc_tables[loc] = (Float *)CALLOC(width * SRC_SINC_DENSITY + 2, sizeof(Float));
   sinc_widths[loc] = width;
   size = width * SRC_SINC_DENSITY;
   sinc_freq = M_PI / (Float)SRC_SINC_DENSITY;
   win_freq = M_PI / (Float)size;
   sinc_tables[loc][0] = 1.0;
-  for (i=1,sinc_phase=sinc_freq,win_phase=win_freq;i<size;i++,sinc_phase+=sinc_freq,win_phase+=win_freq)
+  for (i=1, sinc_phase=sinc_freq, win_phase=win_freq;i<size;i++,sinc_phase+=sinc_freq,win_phase+=win_freq)
     sinc_tables[loc][i] = sin(sinc_phase) * (0.5+0.5*cos(win_phase)) / sinc_phase;
   return(sinc_tables[loc]);
 }
@@ -5214,21 +5214,21 @@ static char *describe_src(void *ptr)
 {
   char *desc;
   sr *gen = (sr *)ptr;
-  desc = make_big_desc_buf(ptr,TRUE);
+  desc = make_big_desc_buf(ptr, TRUE);
   if (desc)
     {
       if (mus_src_p((mus_any *)ptr))
 	{
-	  sprintf(desc,"src: width: %d, x: %.3f, incr: %.3f, len: %d",
-		  gen->width,gen->x,gen->incr,gen->len);
+	  sprintf(desc, "src: width: %d, x: %.3f, incr: %.3f, len: %d",
+		  gen->width, gen->x, gen->incr, gen->len);
 	}
-      else describe_bad_gen(ptr,desc,"src","an");
+      else describe_bad_gen(ptr, desc, "src", "an");
     }
   return(desc);
 }
 
 static int src_length(void *ptr) {return(((sr *)ptr)->width);}
-static Float run_src(mus_any *srptr, Float sr_change, Float unused) {return(mus_src(srptr,sr_change,NULL));}
+static Float run_src(mus_any *srptr, Float sr_change, Float unused) {return(mus_src(srptr, sr_change, NULL));}
 
 static mus_any_class SRC_CLASS = {
   MUS_SRC,
@@ -5249,9 +5249,9 @@ mus_any *mus_make_src(Float (*input)(void *arg, int direction), Float srate, int
 {
   sr *srp;
   int i,lim,wid;
-  srp = (sr *)CALLOC(1,sizeof(sr));
+  srp = (sr *)CALLOC(1, sizeof(sr));
   if (srp == NULL) 
-    mus_error(MUS_MEMORY_ALLOCATION_FAILED,"can't allocate struct for mus_make_src!");
+    mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate struct for mus_make_src!");
   else
     {
       if (width == 0) width = SRC_SINC_WIDTH;
@@ -5264,12 +5264,12 @@ mus_any *mus_make_src(Float (*input)(void *arg, int direction), Float srate, int
       srp->width = wid;
       lim = 2*wid;
       srp->len = wid * SRC_SINC_DENSITY;
-      srp->data = (Float *)CALLOC(lim+1,sizeof(Float));
+      srp->data = (Float *)CALLOC(lim+1, sizeof(Float));
       srp->sinc_table = init_sinc_table(wid);
       if (srp->data == NULL) 
-	mus_error(MUS_MEMORY_ALLOCATION_FAILED,"can't allocate src data array in mus_make_src!");
+	mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate src data array in mus_make_src!");
       else
-	for (i=wid-1;i<lim;i++) srp->data[i] = (*input)(environ,(srate >= 0.0) ? 1 : -1);
+	for (i=wid-1;i<lim;i++) srp->data[i] = (*input)(environ, (srate >= 0.0) ? 1 : -1);
       /* was i=0 here but we want the incoming data centered */
       return((mus_any *)srp);
     }
@@ -5291,12 +5291,12 @@ Float mus_src(mus_any *srptr, Float sr_change, Float (*input)(void *arg, int dir
   if (fsx > 0)
     {
       /* realign data, reset srp->x */
-      for (i=fsx,loc=0;i<lim;i++,loc++) srp->data[loc] = srp->data[i];
+      for (i=fsx, loc=0;i<lim;i++,loc++) srp->data[loc] = srp->data[i];
       for (i=loc;i<lim;i++) 
 	{
 	  if (input)
-	    srp->data[i] = (*input)(srp->environ,(srx >= 0.0) ? 1 : -1);
-	  else srp->data[i] = (*(srp->feeder))(srp->environ,(srx >= 0.0) ? 1 : -1);
+	    srp->data[i] = (*input)(srp->environ, (srx >= 0.0) ? 1 : -1);
+	  else srp->data[i] = (*(srp->feeder))(srp->environ, (srx >= 0.0) ? 1 : -1);
 	}
       srp->x -= fsx;
     }
@@ -5304,7 +5304,7 @@ Float mus_src(mus_any *srptr, Float sr_change, Float (*input)(void *arg, int dir
   if (srx < 0.0) srx = -srx;
   if (srx>1.0) factor=1.0/srx; else factor=1.0;
   zf = factor * (Float)SRC_SINC_DENSITY;
-  for (i=0,x=zf*(1.0 - srp->x - srp->width);i<lim;i++,x+=zf)
+  for (i=0, x=zf*(1.0 - srp->x - srp->width);i<lim;i++,x+=zf)
     {
       /* we're moving backwards in the data array, so the sr->x field has to mimic that (hence the '1.0 - srp->x') */
       if (x<0) k = (int)(-x); else k = (int)x;
@@ -5352,14 +5352,14 @@ static char *inspect_spd_info(void *ptr)
 {
   spd_info *gen = (spd_info *)ptr;
   char *desc,*arr1 = NULL,*arr2 = NULL;
-  desc = make_big_desc_buf(ptr,FALSE);
-  if (desc) sprintf(desc,"spd_info s20: %d, s50: %d, rmp: %d, amp: %f, len: %d, cur_out: %d, cur_in: %d, input_hop: %d, ctr: %d, output_hop: %d, in_data_start: %d, in_data[%d]: %s, data[%d]: %s",
-		    gen->s20,gen->s50,gen->rmp,gen->amp,gen->len,gen->cur_out,gen->cur_in,gen->input_hop,
-		    gen->ctr,gen->output_hop,gen->in_data_start,
+  desc = make_big_desc_buf(ptr, FALSE);
+  if (desc) sprintf(desc, "spd_info s20: %d, s50: %d, rmp: %d, amp: %f, len: %d, cur_out: %d, cur_in: %d, input_hop: %d, ctr: %d, output_hop: %d, in_data_start: %d, in_data[%d]: %s, data[%d]: %s",
+		    gen->s20, gen->s50, gen->rmp, gen->amp, gen->len, gen->cur_out, gen->cur_in, gen->input_hop,
+		    gen->ctr, gen->output_hop, gen->in_data_start,
 		    gen->in_data_len,
-		    arr1 = print_array(gen->in_data,gen->in_data_len,0),
+		    arr1 = print_array(gen->in_data, gen->in_data_len, 0),
 		    gen->block_len,
-		    arr2 = print_array(gen->data,gen->block_len,0));
+		    arr2 = print_array(gen->data, gen->block_len, 0));
   if (arr1) FREE(arr1);
   if (arr2) FREE(arr2);
   return(desc);
@@ -5373,19 +5373,19 @@ static char *describe_granulate(void *ptr)
 {
   char *desc;
   spd_info *gen = (spd_info *)ptr;
-  desc = make_big_desc_buf(ptr,TRUE);
+  desc = make_big_desc_buf(ptr, TRUE);
   if (desc)
     {
       if (mus_granulate_p((mus_any *)ptr))
 	{
-	  sprintf(desc,"granulate: expansion: %.3f (%d/%d), scaler: %.3f, length: %.3f secs (%d samps), ramp: %.3f",
+	  sprintf(desc, "granulate: expansion: %.3f (%d/%d), scaler: %.3f, length: %.3f secs (%d samps), ramp: %.3f",
 		  (Float)(gen->output_hop) / (Float)(gen->input_hop),
-		  gen->input_hop,gen->output_hop,
+		  gen->input_hop, gen->output_hop,
 		  gen->amp,
-		  (Float)(gen->len) / (Float)sampling_rate,gen->len,
+		  (Float)(gen->len) / (Float)sampling_rate, gen->len,
 		  (Float)(gen->rmp) / (Float)sampling_rate);
 	}
-      else describe_bad_gen(ptr,desc,"granulate","a");
+      else describe_bad_gen(ptr, desc, "granulate", "a");
     }
   return(desc);
 }
@@ -5430,7 +5430,7 @@ int mus_set_ramp(mus_any *ptr, int val)
   return(val);
 }
 
-static Float run_granulate(mus_any *ptr, Float unused1, Float unused2) {return(mus_granulate(ptr,NULL));}
+static Float run_granulate(mus_any *ptr, Float unused1, Float unused2) {return(mus_granulate(ptr, NULL));}
 
 static mus_any_class GRANULATE_CLASS = {
   MUS_GRANULATE,
@@ -5450,15 +5450,15 @@ static mus_any_class GRANULATE_CLASS = {
   &run_granulate
 };
 
-mus_any *mus_make_granulate(Float (*input)(void *arg,int direction), 
+mus_any *mus_make_granulate(Float (*input)(void *arg, int direction), 
 			    Float expansion, Float length, Float scaler, 
 			    Float hop, Float ramp, Float jitter, int max_size, void *environ)
 {
   spd_info *spd;
   int outlen;
-  spd = (spd_info *)CALLOC(1,sizeof(spd_info));
+  spd = (spd_info *)CALLOC(1, sizeof(spd_info));
   if (spd == NULL) 
-    mus_error(MUS_MEMORY_ALLOCATION_FAILED,"can't allocate struct for mus_make_granulate!");
+    mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate struct for mus_make_granulate!");
   else
     {
       spd->core = &GRANULATE_CLASS;
@@ -5475,9 +5475,9 @@ mus_any *mus_make_granulate(Float (*input)(void *arg,int direction),
       outlen = (int)(sampling_rate * (hop + length));
       if (max_size > outlen) outlen = max_size;
       spd->block_len = outlen;
-      spd->data = (Float *)CALLOC(outlen,sizeof(Float));
+      spd->data = (Float *)CALLOC(outlen, sizeof(Float));
       spd->in_data_len = outlen + spd->s20 + 1;
-      spd->in_data = (Float *)CALLOC(spd->in_data_len,sizeof(Float));
+      spd->in_data = (Float *)CALLOC(spd->in_data_len, sizeof(Float));
       spd->in_data_start = spd->in_data_len;
       spd->rd = input;
       spd->environ = environ;
@@ -5506,7 +5506,7 @@ Float mus_granulate(mus_any *ptr, Float (*input)(void *arg, int direction))
       start = spd->cur_out;
       end = spd->len - start;
       if (end < 0) end = 0;
-      if (end > 0) for (i=0,j=start;i<end;i++,j++) spd->data[i] = spd->data[j];
+      if (end > 0) for (i=0, j=start;i<end;i++,j++) spd->data[i] = spd->data[j];
       for (i=end;i<spd->block_len;i++) spd->data[i] = 0.0;
 
       start = spd->in_data_start;
@@ -5515,25 +5515,25 @@ Float mus_granulate(mus_any *ptr, Float (*input)(void *arg, int direction))
 	{
 	  extra = start - len;
 	  if (input)
-	    for (i=0;i<extra;i++) (*input)(spd->environ,1);
-	  else for (i=0;i<extra;i++) (*(spd->rd))(spd->environ,1);
+	    for (i=0;i<extra;i++) (*input)(spd->environ, 1);
+	  else for (i=0;i<extra;i++) (*(spd->rd))(spd->environ, 1);
 	  start = len;
 	}
       if (start < len)
 	{
-	  for (i=0,k=start;k<len;i++,k++)
+	  for (i=0, k=start;k<len;i++,k++)
 	    spd->in_data[i] = spd->in_data[k];
 	}
       if (input)
-	for (i=(len-start);i<len;i++) spd->in_data[i] = (*input)(spd->environ,1);
-      else for (i=(len-start);i<len;i++) spd->in_data[i] = (*(spd->rd))(spd->environ,1);
+	for (i=(len-start);i<len;i++) spd->in_data[i] = (*input)(spd->environ, 1);
+      else for (i=(len-start);i<len;i++) spd->in_data[i] = (*(spd->rd))(spd->environ, 1);
       spd->in_data_start = spd->input_hop;
 
       amp = 0.0;
       incr = (Float)(spd->amp) / (Float)(spd->rmp);
       steady_end = (spd->len - spd->rmp);
       curstart = irandom(spd->s20);
-      for (i=0,j=curstart;i<spd->len;i++,j++)
+      for (i=0, j=curstart;i<spd->len;i++,j++)
 	{
 	  spd->data[i] += (amp * spd->in_data[j]);
 	  if (i < spd->rmp) amp += incr; else if (i > steady_end) amp -= incr;
@@ -5590,7 +5590,7 @@ void mus_fft (Float *rl, Float *im, int n, int is)
   int m,j,mh,ldm,lg,i,i2,j2,imh;
   double ur,ui,u,vr,vi,angle,c,s;
   imh = (int)(ceil(log(n)/log(2.0)));
-  mus_scramble(rl,im,n);
+  mus_scramble(rl, im, n);
   m = 2;
   ldm = 1;
   mh = n>>1;
@@ -5635,7 +5635,7 @@ void mus_fft (Float *rl, Float *im, int n, int is)
 static Float mus_bessi0(Float x)
 {
   gsl_sf_result res;
-  gsl_sf_bessel_I0_e(x,&res);
+  gsl_sf_bessel_I0_e(x, &res);
   return(res.val);
 }
 #else
@@ -5663,7 +5663,7 @@ static Float mus_bessi0(Float x)
 }
 #endif
 
-static Float sqr(Float x) {return(x*x);}
+static inline Float sqr(Float x) {return(x*x);}
 
 Float *mus_make_fft_window_with_window(int type, int size, Float beta, Float *window)
 {
@@ -5696,57 +5696,57 @@ Float *mus_make_fft_window_with_window(int type, int size, Float beta, Float *wi
       for (i=0;i<size;i++) {window[i]=1.0;}
       break; 
     case MUS_HANNING_WINDOW: /* Hann would be more accurate */
-      for (i=0,j=size-1,angle=0.0;i<=midn;i++,j--,angle+=freq) {window[j]=(window[i]=0.5-0.5*cos(angle));}
+      for (i=0, j=size-1, angle=0.0;i<=midn;i++,j--,angle+=freq) {window[j]=(window[i]=0.5-0.5*cos(angle));}
       break; 
     case MUS_WELCH_WINDOW:
-      for (i=0,j=size-1;i<=midn;i++,j--) {window[j]=(window[i]=1.0-sqr((Float)(i-midn)/(Float)midp1));}
+      for (i=0, j=size-1;i<=midn;i++,j--) {window[j]=(window[i]=1.0-sqr((Float)(i-midn)/(Float)midp1));}
       break; 
     case MUS_PARZEN_WINDOW:
-      for (i=0,j=size-1;i<=midn;i++,j--) {window[j]=(window[i]=1.0-fabs((Float)(i-midn)/(Float)midp1));}
+      for (i=0, j=size-1;i<=midn;i++,j--) {window[j]=(window[i]=1.0-fabs((Float)(i-midn)/(Float)midp1));}
       break; 
     case MUS_BARTLETT_WINDOW:
-      for (i=0,j=size-1,angle=0.0;i<=midn;i++,j--,angle+=rate) {window[j]=(window[i]=angle);}
+      for (i=0, j=size-1, angle=0.0;i<=midn;i++,j--,angle+=rate) {window[j]=(window[i]=angle);}
       break; 
     case MUS_HAMMING_WINDOW:
-      for (i=0,j=size-1,angle=0.0;i<=midn;i++,j--,angle+=freq) {window[j]=(window[i]=0.54-0.46*cos(angle));} 
+      for (i=0, j=size-1, angle=0.0;i<=midn;i++,j--,angle+=freq) {window[j]=(window[i]=0.54-0.46*cos(angle));} 
       break; 
     case MUS_BLACKMAN2_WINDOW: /* using Chebyshev polynomial equivalents here */
-      for (i=0,j=size-1,angle=0.0;i<=midn;i++,j--,angle+=freq) 
+      for (i=0, j=size-1, angle=0.0;i<=midn;i++,j--,angle+=freq) 
 	{              /* (+ 0.42323 (* -0.49755 (cos a)) (* 0.07922 (cos (* a 2)))) */
 	  cx = cos(angle);
 	  window[j]=(window[i]=(.34401+(cx*(-.49755+(cx*.15844)))));
 	}
       break; 
     case MUS_BLACKMAN3_WINDOW:
-      for (i=0,j=size-1,angle=0.0;i<=midn;i++,j--,angle+=freq) 
+      for (i=0, j=size-1, angle=0.0;i<=midn;i++,j--,angle+=freq) 
 	{              /* (+ 0.35875 (* -0.48829 (cos a)) (* 0.14128 (cos (* a 2))) (* -0.01168 (cos (* a 3)))) */
 	  cx = cos(angle);
 	  window[j]=(window[i]=(.21747+(cx*(-.45325+(cx*(.28256-(cx*.04672)))))));
 	}
       break; 
     case MUS_BLACKMAN4_WINDOW:
-      for (i=0,j=size-1,angle=0.0;i<=midn;i++,j--,angle+=freq) 
+      for (i=0, j=size-1, angle=0.0;i<=midn;i++,j--,angle+=freq) 
 	{             /* (+ 0.287333 (* -0.44716 (cos a)) (* 0.20844 (cos (* a 2))) (* -0.05190 (cos (* a 3))) (* 0.005149 (cos (* a 4)))) */
 	  cx = cos(angle);
 	  window[j]=(window[i]=(.084037+(cx*(-.29145+(cx*(.375696+(cx*(-.20762+(cx*.041194)))))))));
 	}
       break; 
     case MUS_EXPONENTIAL_WINDOW:
-      for (i=0,j=size-1;i<=midn;i++,j--) {window[j]=(window[i]=expsum-1.0); expsum *= expn;}
+      for (i=0, j=size-1;i<=midn;i++,j--) {window[j]=(window[i]=expsum-1.0); expsum *= expn;}
       break;
     case MUS_KAISER_WINDOW:
       I0beta = mus_bessi0(beta); /* Harris multiplies beta by pi */
-      for (i=0,j=size-1,angle=1.0;i<=midn;i++,j--,angle-=rate) {window[j]=(window[i]=mus_bessi0(beta*sqrt(1.0-sqr(angle)))/I0beta);}
+      for (i=0, j=size-1, angle=1.0;i<=midn;i++,j--,angle-=rate) {window[j]=(window[i]=mus_bessi0(beta*sqrt(1.0-sqr(angle)))/I0beta);}
       break;
     case MUS_CAUCHY_WINDOW:
-      for (i=0,j=size-1,angle=1.0;i<=midn;i++,j--,angle-=rate) {window[j]=(window[i]=1.0/(1.0+sqr(beta*angle)));}
+      for (i=0, j=size-1, angle=1.0;i<=midn;i++,j--,angle-=rate) {window[j]=(window[i]=1.0/(1.0+sqr(beta*angle)));}
       break;
     case MUS_POISSON_WINDOW:
-      for (i=0,j=size-1,angle=1.0;i<=midn;i++,j--,angle-=rate) {window[j]=(window[i]=exp((-beta)*angle));}
+      for (i=0, j=size-1, angle=1.0;i<=midn;i++,j--,angle-=rate) {window[j]=(window[i]=exp((-beta)*angle));}
       break;
     case MUS_RIEMANN_WINDOW:
       sr1 = TWO_PI/(Float)size;
-      for (i=0,j=size-1;i<=midn;i++,j--) 
+      for (i=0, j=size-1;i<=midn;i++,j--) 
 	{
 	  if (i == midn) window[j]=(window[i]=1.0);
 	  else 
@@ -5758,11 +5758,11 @@ Float *mus_make_fft_window_with_window(int type, int size, Float beta, Float *wi
 	}
       break;
     case MUS_GAUSSIAN_WINDOW:
-      for (i=0,j=size-1,angle=1.0;i<=midn;i++,j--,angle-=rate) {window[j]=(window[i]=exp(-.5*sqr(beta*angle)));}
+      for (i=0, j=size-1, angle=1.0;i<=midn;i++,j--,angle-=rate) {window[j]=(window[i]=exp(-.5*sqr(beta*angle)));}
       break;
     case MUS_TUKEY_WINDOW:
       cx = midn*(1.0-beta);
-      for (i=0,j=size-1;i<=midn;i++,j--) 
+      for (i=0, j=size-1;i<=midn;i++,j--) 
 	{
 	  if (i >= cx) window[j]=(window[i]=1.0);
 	  else window[j]=(window[i]=.5*(1.0-cos(M_PI*i/cx)));
@@ -5777,16 +5777,16 @@ Float *mus_make_fft_window_with_window(int type, int size, Float beta, Float *wi
 	if (beta < 0.2) beta = 0.2;
 	alpha = GSL_REAL(gsl_complex_cosh(
 			   gsl_complex_mul_real(
-			     gsl_complex_arccosh_real(pow(10.0,beta)),
+			     gsl_complex_arccosh_real(pow(10.0, beta)),
 			     (double)(1.0/(Float)size))));
 	den = 1.0 / GSL_REAL(gsl_complex_cosh(
 			       gsl_complex_mul_real(
                                  gsl_complex_arccosh_real(alpha),
 				 (double)size)));
 	/* den(ominator) not really needed -- we're normalizing to 1.0 */
-	rl = (Float *)CALLOC(size,sizeof(Float));
-	im = (Float *)CALLOC(size,sizeof(Float));
-	for (i=0,angle=0.0;i<size;i++,angle+=freq)
+	rl = (Float *)CALLOC(size, sizeof(Float));
+	im = (Float *)CALLOC(size, sizeof(Float));
+	for (i=0, angle=0.0;i<size;i++,angle+=freq)
 	  {
 	    val = gsl_complex_mul_real(
 		    gsl_complex_cos(
@@ -5797,11 +5797,11 @@ Float *mus_make_fft_window_with_window(int type, int size, Float beta, Float *wi
 	    rl[i] = GSL_REAL(val);
 	    im[i] = GSL_IMAG(val); /* always essentially 0.0 */
 	  }
-	mus_fft(rl,im,size,-1);    /* can be 1 here */
+	mus_fft(rl, im, size, -1);    /* can be 1 here */
 	rl[size/2]=0.0;
 	pk=0.0;
 	for (i=0;i<size;i++) if (pk < rl[i]) pk=rl[i];
-	for (i=0,j=size/2;i<size;i++) 
+	for (i=0, j=size/2;i<size;i++) 
 	  {
 	    window[i] = rl[j++]/pk;
 	    if (j == size) j = 0;
@@ -5810,11 +5810,11 @@ Float *mus_make_fft_window_with_window(int type, int size, Float beta, Float *wi
 	FREE(im);
       }
 #else
-      mus_error(MUS_NO_SUCH_FFT_WINDOW,"Dolph-Chebyshev window needs the complex trig support from GSL");
+      mus_error(MUS_NO_SUCH_FFT_WINDOW, "Dolph-Chebyshev window needs the complex trig support from GSL");
 #endif
       break;
     default: 
-      mus_error(MUS_NO_SUCH_FFT_WINDOW,"unknown fft data window: %d",type); 
+      mus_error(MUS_NO_SUCH_FFT_WINDOW, "unknown fft data window: %d", type); 
       break;
     }
   return(window);
@@ -5823,10 +5823,10 @@ Float *mus_make_fft_window_with_window(int type, int size, Float beta, Float *wi
 Float *mus_make_fft_window(int type, int size, Float beta)
 {
   Float *window = NULL;
-  window = (Float *)CALLOC(size,sizeof(Float));
+  window = (Float *)CALLOC(size, sizeof(Float));
   if (window == NULL)
-    mus_error(MUS_MEMORY_ALLOCATION_FAILED,"can't allocate fft window!");
-  else mus_make_fft_window_with_window(type,size,beta,window);
+    mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate fft window!");
+  else mus_make_fft_window_with_window(type, size, beta, window);
   return(window);
 }
 
@@ -5834,9 +5834,9 @@ void mus_spectrum(Float *rdat, Float *idat, Float *window, int n, int type)
 {
   int i;
   Float maxa,todb,lowest,val;
-  if (window) mus_multiply_arrays(rdat,window,n);
-  mus_clear_array(idat,n);
-  mus_fft(rdat,idat,n,1);
+  if (window) mus_multiply_arrays(rdat, window, n);
+  mus_clear_array(idat, n);
+  mus_fft(rdat, idat, n, 1);
   lowest=0.00000001;
   maxa=0.0;
   n = (int)(n*0.5);
@@ -5886,7 +5886,7 @@ void mus_convolution (Float* rl1, Float* rl2, int n)
   int j,n2,nn2;
   Float rem,rep,aim,aip,invn;
 
-  mus_fft(rl1,rl2,n,1);
+  mus_fft(rl1, rl2, n, 1);
   
   n2=(int)(n*0.5);
   invn = 0.25/n;
@@ -5907,7 +5907,7 @@ void mus_convolution (Float* rl1, Float* rl2, int n)
       rl2[nn2] = -rl2[j];
     }
   
-  mus_fft(rl1,rl2,n,-1);
+  mus_fft(rl1, rl2, n, -1);
 }
 
 
@@ -5923,13 +5923,13 @@ static char *inspect_conv(void *ptr)
 {
   conv *gen = (conv *)ptr;
   char *desc,*arr1 = NULL,*arr2 = NULL,*arr3 = NULL,*arr4 = NULL;
-  desc = make_big_desc_buf(ptr,FALSE);
-  if (desc) sprintf(desc,"conv fftsize: %d, fftsize2: %d, filtersize: %d, ctr: %d, rl1: %s, rl2: %s, buf: %s, filter: %s",
-		    gen->fftsize,gen->fftsize2,gen->filtersize,gen->ctr,
-		    arr1 = print_array(gen->rl1,gen->fftsize,0),
-		    arr2 = print_array(gen->rl2,gen->fftsize,0),
-		    arr3 = print_array(gen->buf,gen->fftsize,0),
-		    arr4 = print_array(gen->filter,gen->filtersize,0));
+  desc = make_big_desc_buf(ptr, FALSE);
+  if (desc) sprintf(desc, "conv fftsize: %d, fftsize2: %d, filtersize: %d, ctr: %d, rl1: %s, rl2: %s, buf: %s, filter: %s",
+		    gen->fftsize, gen->fftsize2, gen->filtersize, gen->ctr,
+		    arr1 = print_array(gen->rl1, gen->fftsize, 0),
+		    arr2 = print_array(gen->rl2, gen->fftsize, 0),
+		    arr3 = print_array(gen->buf, gen->fftsize, 0),
+		    arr4 = print_array(gen->filter, gen->filtersize, 0));
   if (arr1) FREE(arr1);
   if (arr2) FREE(arr2);
   if (arr3) FREE(arr3);
@@ -5943,14 +5943,14 @@ static char *describe_convolve(void *ptr)
 {
   char *desc;
   conv *gen = (conv *)ptr;
-  desc = make_desc_buf(ptr,TRUE);
+  desc = make_desc_buf(ptr, TRUE);
   if (desc)
     {
       if (mus_convolve_p((mus_any *)ptr))
 	{
-	  sprintf(desc,"convolve: size: %d",gen->fftsize);
+	  sprintf(desc, "convolve: size: %d", gen->fftsize);
 	}
-      else describe_bad_gen(ptr,desc,"convolve","a");
+      else describe_bad_gen(ptr, desc, "convolve", "a");
     }
   return(desc);
 }
@@ -5969,7 +5969,7 @@ static int free_convolve(void *ptr)
 }
 
 static int conv_length(void *ptr) {return(((conv *)ptr)->fftsize);}
-static Float run_convolve(mus_any *ptr, Float unused1, Float unused2) {return(mus_convolve(ptr,NULL));}
+static Float run_convolve(mus_any *ptr, Float unused1, Float unused2) {return(mus_convolve(ptr, NULL));}
 
 static mus_any_class CONVOLVE_CLASS = {
   MUS_CONVOLVE,
@@ -5993,20 +5993,20 @@ Float mus_convolve(mus_any *ptr, Float (*input)(void *arg, int direction))
   int i,j;
   if (gen->ctr >= gen->fftsize2)
     {
-      for (i=0,j=gen->fftsize2;i<gen->fftsize2;i++,j++) 
+      for (i=0, j=gen->fftsize2;i<gen->fftsize2;i++,j++) 
 	{
 	  gen->buf[i] = gen->buf[j]; 
 	  gen->buf[j] = 0.0;
 	  if (input)
-	    gen->rl1[i] = (*input)(gen->environ,1);
-	  else gen->rl1[i] = (*(gen->feeder))(gen->environ,1);
+	    gen->rl1[i] = (*input)(gen->environ, 1);
+	  else gen->rl1[i] = (*(gen->feeder))(gen->environ, 1);
 	  gen->rl1[j] = 0.0;
 	  gen->rl2[i] = 0.0;
 	  gen->rl2[j] = 0.0;
 	}
       for (i=0;i<gen->filtersize;i++) gen->rl2[i] = gen->filter[i];
-      mus_convolution(gen->rl1,gen->rl2,gen->fftsize);
-      for (i=0,j=gen->fftsize2;i<gen->fftsize2;i++,j++) 
+      mus_convolution(gen->rl1, gen->rl2, gen->fftsize);
+      for (i=0, j=gen->fftsize2;i<gen->fftsize2;i++,j++) 
 	{
 	  gen->buf[i] += gen->rl1[i];
 	  gen->buf[j] = gen->rl1[j];
@@ -6023,9 +6023,9 @@ int mus_convolve_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_CONV
 mus_any *mus_make_convolve(Float (*input)(void *arg, int direction), Float *filter, int fftsize, int filtersize, void *environ)
 {
   conv *gen = NULL;
-  gen = (conv *)CALLOC(1,sizeof(conv));
+  gen = (conv *)CALLOC(1, sizeof(conv));
   if (gen == NULL) 
-    mus_error(MUS_MEMORY_ALLOCATION_FAILED,"can't allocate struct for mus_make_convolve!");
+    mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate struct for mus_make_convolve!");
   else
     {
       gen->core = &CONVOLVE_CLASS;
@@ -6036,19 +6036,19 @@ mus_any *mus_make_convolve(Float (*input)(void *arg, int direction), Float *filt
       gen->fftsize = fftsize;
       gen->fftsize2 = gen->fftsize/2;
       gen->ctr = gen->fftsize2;
-      gen->rl1 = (Float *)CALLOC(fftsize,sizeof(Float));
+      gen->rl1 = (Float *)CALLOC(fftsize, sizeof(Float));
       if (gen->rl1 == NULL) 
-	mus_error(MUS_MEMORY_ALLOCATION_FAILED,"can't allocate rl1 array for mus_make_convolve!");
+	mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate rl1 array for mus_make_convolve!");
       else
 	{
-	  gen->rl2 = (Float *)CALLOC(fftsize,sizeof(Float));
+	  gen->rl2 = (Float *)CALLOC(fftsize, sizeof(Float));
 	  if (gen->rl2 == NULL) 
-	    mus_error(MUS_MEMORY_ALLOCATION_FAILED,"can't allocate rl2 array for mus_make_convolve!");
+	    mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate rl2 array for mus_make_convolve!");
 	  else
 	    {
-	      gen->buf = (Float *)CALLOC(fftsize,sizeof(Float));
+	      gen->buf = (Float *)CALLOC(fftsize, sizeof(Float));
 	      if (gen->buf == NULL) 
-		mus_error(MUS_MEMORY_ALLOCATION_FAILED,"can't allocate buf array for mus_make_convolve!");
+		mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate buf array for mus_make_convolve!");
 	      else
 		return((mus_any *)gen);
 	    }
@@ -6075,19 +6075,19 @@ void mus_convolve_files(const char *file1, const char *file2, Float maxamp, cons
   file1_chans = mus_sound_chans(file1);
   file2_chans = mus_sound_chans(file2);
   output_chans = file1_chans; if (file2_chans > output_chans) output_chans = file2_chans;
-  fftlen = (int)(pow(2.0,(int)ceil(log(file1_len+file2_len+1)/log(2.0))));
+  fftlen = (int)(pow(2.0, (int)ceil(log(file1_len+file2_len+1)/log(2.0))));
   outlen = file1_len+file2_len+1;
   totallen = outlen * output_chans;
-  data1 = (Float *)CALLOC(fftlen,sizeof(Float));
-  data2 = (Float *)CALLOC(fftlen,sizeof(Float));
+  data1 = (Float *)CALLOC(fftlen, sizeof(Float));
+  data2 = (Float *)CALLOC(fftlen, sizeof(Float));
   if (output_chans == 1)
     {
-      samps = (MUS_SAMPLE_TYPE *)CALLOC(fftlen,sizeof(MUS_SAMPLE_TYPE));
-      mus_file_to_array(file1,0,0,file1_len,samps); 
+      samps = (MUS_SAMPLE_TYPE *)CALLOC(fftlen, sizeof(MUS_SAMPLE_TYPE));
+      mus_file_to_array(file1, 0, 0, file1_len, samps); 
       for (i=0;i<file1_len;i++) data1[i] = MUS_SAMPLE_TO_DOUBLE(samps[i]);
-      mus_file_to_array(file2,0,0,file2_len,samps);
+      mus_file_to_array(file2, 0, 0, file2_len, samps);
       for (i=0;i<file2_len;i++) data2[i] = MUS_SAMPLE_TO_DOUBLE(samps[i]);
-      mus_convolution(data1,data2,fftlen);
+      mus_convolution(data1, data2, fftlen);
       for (i=0;i<outlen;i++) if (maxval < fabs(data1[i])) maxval = fabs(data1[i]);
       if (maxval > 0.0)
 	{
@@ -6095,22 +6095,22 @@ void mus_convolve_files(const char *file1, const char *file2, Float maxamp, cons
 	  for (i=0;i<outlen;i++) data1[i] *= maxval;
 	}
       for (i=0;i<outlen;i++) samps[i] = MUS_DOUBLE_TO_SAMPLE(data1[i]);
-      mus_array_to_file(output_file,samps,outlen,mus_sound_srate(file1),1);
+      mus_array_to_file(output_file, samps, outlen, mus_sound_srate(file1), 1);
       FREE(samps);
     }
   else
     {
-      samps = (MUS_SAMPLE_TYPE *)CALLOC(totallen,sizeof(MUS_SAMPLE_TYPE));
-      outdat = (Float *)CALLOC(totallen,sizeof(Float));
+      samps = (MUS_SAMPLE_TYPE *)CALLOC(totallen, sizeof(MUS_SAMPLE_TYPE));
+      outdat = (Float *)CALLOC(totallen, sizeof(Float));
       c1 = 0; c2 = 0;
       for (i=0;i<output_chans;i++)
 	{
-	  mus_file_to_array(file1,c1,0,file1_len,samps);
+	  mus_file_to_array(file1, c1, 0, file1_len, samps);
 	  for (i=0;i<file1_len;i++) data1[i] = MUS_SAMPLE_TO_DOUBLE(samps[i]);
-	  mus_file_to_array(file2,c2,0,file2_len,samps);
+	  mus_file_to_array(file2, c2, 0, file2_len, samps);
 	  for (i=0;i<file2_len;i++) data2[i] = MUS_SAMPLE_TO_DOUBLE(samps[i]);
-	  mus_convolution(data1,data2,fftlen);
-	  for (j=i,k=0;j<totallen;j+=output_chans,k++) outdat[j] = data1[k];
+	  mus_convolution(data1, data2, fftlen);
+	  for (j=i, k=0;j<totallen;j+=output_chans,k++) outdat[j] = data1[k];
 	  c1++; if (c1 >= file1_chans) c1 = 0;
 	  c2++; if (c2 >= file2_chans) c2 = 0;
 	  for (i=0;i<fftlen;i++) {data1[i] = 0.0; data2[i] = 0.0;}
@@ -6122,7 +6122,7 @@ void mus_convolve_files(const char *file1, const char *file2, Float maxamp, cons
 	  for (i=0;i<totallen;i++) outdat[i] *= maxval;
 	}
       for (i=0;i<totallen;i++) samps[i] = MUS_DOUBLE_TO_SAMPLE(outdat[i]);
-      mus_array_to_file(output_file,samps,totallen,mus_sound_srate(file1),output_chans);
+      mus_array_to_file(output_file, samps, totallen, mus_sound_srate(file1), output_chans);
       FREE(samps);
       FREE(outdat);
     }
@@ -6163,11 +6163,11 @@ void mus_mix(const char *outfile, const char *infile, int out_start, int out_fra
   if ((mx) && (envs) && ((in_chans > 1) || (out_chans > 1)))
     {
       /* the general case -- possible envs/scalers on every mixer cell */
-      outf = mus_make_frame2file(outfile,out_chans,mus_sound_data_format(outfile),mus_sound_header_type(outfile));
+      outf = mus_make_frame2file(outfile, out_chans, mus_sound_data_format(outfile), mus_sound_header_type(outfile));
       inf = mus_make_file2frame(infile);
       frin = mus_make_empty_frame(mix_chans);
       frthru = mus_make_empty_frame(mix_chans);
-      for (i=0,inc=in_start,outc=out_start;i<out_frames;i++,inc++,outc++)
+      for (i=0, inc=in_start, outc=out_start;i<out_frames;i++,inc++,outc++)
 	{
 	  for (j=0;j<in_chans;j++)
 	    {
@@ -6177,7 +6177,7 @@ void mus_mix(const char *outfile, const char *infile, int out_start, int out_fra
 		    mx->vals[j][k] = mus_env(envs[j][k]);
 		}
 	    }
-	  mus_frame2file(outf,outc,mus_frame2frame(mx,mus_file2frame(inf,inc,frin),frthru));
+	  mus_frame2file(outf, outc, mus_frame2frame(mx, mus_file2frame(inf, inc, frin), frthru));
 	}
       mus_free((mus_any *)inf);
       mus_free((mus_any *)outf);
@@ -6223,46 +6223,46 @@ void mus_mix(const char *outfile, const char *infile, int out_start, int out_fra
 	      else mixtype = IDENTITY_MIX;
 	    }
 	}
-      obufs = (MUS_SAMPLE_TYPE **)CALLOC(out_chans,sizeof(MUS_SAMPLE_TYPE *));
-      for (i=0;i<out_chans;i++) obufs[i] = (MUS_SAMPLE_TYPE *)CALLOC(mus_file_buffer_size,sizeof(MUS_SAMPLE_TYPE));
-      ibufs = (MUS_SAMPLE_TYPE **)CALLOC(in_chans,sizeof(MUS_SAMPLE_TYPE *));
-      for (i=0;i<in_chans;i++) ibufs[i] = (MUS_SAMPLE_TYPE *)CALLOC(mus_file_buffer_size,sizeof(MUS_SAMPLE_TYPE));
+      obufs = (MUS_SAMPLE_TYPE **)CALLOC(out_chans, sizeof(MUS_SAMPLE_TYPE *));
+      for (i=0;i<out_chans;i++) obufs[i] = (MUS_SAMPLE_TYPE *)CALLOC(mus_file_buffer_size, sizeof(MUS_SAMPLE_TYPE));
+      ibufs = (MUS_SAMPLE_TYPE **)CALLOC(in_chans, sizeof(MUS_SAMPLE_TYPE *));
+      for (i=0;i<in_chans;i++) ibufs[i] = (MUS_SAMPLE_TYPE *)CALLOC(mus_file_buffer_size, sizeof(MUS_SAMPLE_TYPE));
       ifd = mus_sound_open_input(infile);
-      mus_sound_seek_frame(ifd,in_start);
-      mus_sound_read(ifd,0,mus_file_buffer_size-1,in_chans,ibufs);
-      ofd = mus_sound_reopen_output(outfile,out_chans,mus_sound_data_format(outfile),mus_sound_header_type(outfile),mus_sound_data_location(outfile));
+      mus_sound_seek_frame(ifd, in_start);
+      mus_sound_read(ifd, 0, mus_file_buffer_size-1, in_chans, ibufs);
+      ofd = mus_sound_reopen_output(outfile, out_chans, mus_sound_data_format(outfile), mus_sound_header_type(outfile), mus_sound_data_location(outfile));
       curoutframes = mus_sound_frames(outfile);
-      mus_sound_seek_frame(ofd,out_start);
-      mus_sound_read(ofd,0,mus_file_buffer_size-1,out_chans,obufs);
-      mus_sound_seek_frame(ofd,out_start);
+      mus_sound_seek_frame(ofd, out_start);
+      mus_sound_read(ofd, 0, mus_file_buffer_size-1, out_chans, obufs);
+      mus_sound_seek_frame(ofd, out_start);
       switch (mixtype)
 	{
 	case IDENTITY_MONO_MIX:
-	  for (k=0,j=0;k<out_frames;k++,j++)
+	  for (k=0, j=0;k<out_frames;k++,j++)
 	    {
 	      if (j == mus_file_buffer_size)
 		{
-		  mus_sound_write(ofd,0,j-1,out_chans,obufs);
+		  mus_sound_write(ofd, 0, j-1, out_chans, obufs);
 		  j = 0;
-		  mus_sound_seek_frame(ofd,out_start+k);
-		  mus_sound_read(ofd,0,mus_file_buffer_size-1,out_chans,obufs);
-		  mus_sound_seek_frame(ofd,out_start+k);
-		  mus_sound_read(ifd,0,mus_file_buffer_size-1,in_chans,ibufs);
+		  mus_sound_seek_frame(ofd, out_start+k);
+		  mus_sound_read(ofd, 0, mus_file_buffer_size-1, out_chans, obufs);
+		  mus_sound_seek_frame(ofd, out_start+k);
+		  mus_sound_read(ifd, 0, mus_file_buffer_size-1, in_chans, ibufs);
 		}
 	      obufs[0][j] += ibufs[0][j];
 	    }
 	  break;
 	case IDENTITY_MIX:
-	  for (k=0,j=0;k<out_frames;k++,j++)
+	  for (k=0, j=0;k<out_frames;k++,j++)
 	    {
 	      if (j == mus_file_buffer_size)
 		{
-		  mus_sound_write(ofd,0,j-1,out_chans,obufs);
+		  mus_sound_write(ofd, 0, j-1, out_chans, obufs);
 		  j = 0;
-		  mus_sound_seek_frame(ofd,out_start+k);
-		  mus_sound_read(ofd,0,mus_file_buffer_size-1,out_chans,obufs);
-		  mus_sound_seek_frame(ofd,out_start+k);
-		  mus_sound_read(ifd,0,mus_file_buffer_size-1,in_chans,ibufs);
+		  mus_sound_seek_frame(ofd, out_start+k);
+		  mus_sound_read(ofd, 0, mus_file_buffer_size-1, out_chans, obufs);
+		  mus_sound_seek_frame(ofd, out_start+k);
+		  mus_sound_read(ifd, 0, mus_file_buffer_size-1, in_chans, ibufs);
 		}
 	      for (i=0;i<min_chans;i++)
 		obufs[i][j] += ibufs[i][j];
@@ -6270,31 +6270,31 @@ void mus_mix(const char *outfile, const char *infile, int out_start, int out_fra
 	  break;
 	case SCALED_MONO_MIX:
 	  scaler = mx->vals[0][0];
-	  for (k=0,j=0;k<out_frames;k++,j++)
+	  for (k=0, j=0;k<out_frames;k++,j++)
 	    {
 	      if (j == mus_file_buffer_size)
 		{
-		  mus_sound_write(ofd,0,j-1,out_chans,obufs);
+		  mus_sound_write(ofd, 0, j-1, out_chans, obufs);
 		  j = 0;
-		  mus_sound_seek_frame(ofd,out_start+k);
-		  mus_sound_read(ofd,0,mus_file_buffer_size-1,out_chans,obufs);
-		  mus_sound_seek_frame(ofd,out_start+k);
-		  mus_sound_read(ifd,0,mus_file_buffer_size-1,in_chans,ibufs);
+		  mus_sound_seek_frame(ofd, out_start+k);
+		  mus_sound_read(ofd, 0, mus_file_buffer_size-1, out_chans, obufs);
+		  mus_sound_seek_frame(ofd, out_start+k);
+		  mus_sound_read(ifd, 0, mus_file_buffer_size-1, in_chans, ibufs);
 		}
 	      obufs[0][j] += (MUS_SAMPLE_TYPE)(scaler * ibufs[0][j]);
 	    }
 	  break;
 	case SCALED_MIX:
-	  for (k=0,j=0;k<out_frames;k++,j++)
+	  for (k=0, j=0;k<out_frames;k++,j++)
 	    {
 	      if (j == mus_file_buffer_size)
 		{
-		  mus_sound_write(ofd,0,j-1,out_chans,obufs);
+		  mus_sound_write(ofd, 0, j-1, out_chans, obufs);
 		  j = 0;
-		  mus_sound_seek_frame(ofd,out_start+k);
-		  mus_sound_read(ofd,0,mus_file_buffer_size-1,out_chans,obufs);
-		  mus_sound_seek_frame(ofd,out_start+k);
-		  mus_sound_read(ifd,0,mus_file_buffer_size-1,in_chans,ibufs);
+		  mus_sound_seek_frame(ofd, out_start+k);
+		  mus_sound_read(ofd, 0, mus_file_buffer_size-1, out_chans, obufs);
+		  mus_sound_seek_frame(ofd, out_start+k);
+		  mus_sound_read(ifd, 0, mus_file_buffer_size-1, in_chans, ibufs);
 		}
 	      for (i=0;i<min_chans;i++)
 		for (m=0;m<in_chans;m++)
@@ -6303,32 +6303,32 @@ void mus_mix(const char *outfile, const char *infile, int out_start, int out_fra
 	  break;
 	case ENVELOPED_MONO_MIX:
 	  e = envs[0][0];
-	  for (k=0,j=0;k<out_frames;k++,j++)
+	  for (k=0, j=0;k<out_frames;k++,j++)
 	    {
 	      if (j == mus_file_buffer_size)
 		{
-		  mus_sound_write(ofd,0,j-1,out_chans,obufs);
+		  mus_sound_write(ofd, 0, j-1, out_chans, obufs);
 		  j = 0;
-		  mus_sound_seek_frame(ofd,out_start+k);
-		  mus_sound_read(ofd,0,mus_file_buffer_size-1,out_chans,obufs);
-		  mus_sound_seek_frame(ofd,out_start+k);
-		  mus_sound_read(ifd,0,mus_file_buffer_size-1,in_chans,ibufs);
+		  mus_sound_seek_frame(ofd, out_start+k);
+		  mus_sound_read(ofd, 0, mus_file_buffer_size-1, out_chans, obufs);
+		  mus_sound_seek_frame(ofd, out_start+k);
+		  mus_sound_read(ifd, 0, mus_file_buffer_size-1, in_chans, ibufs);
 		}
 	      obufs[0][j] += (MUS_SAMPLE_TYPE)(mus_env(e) * ibufs[0][j]);
 	    }
 	  break;
 	case ENVELOPED_MIX:
 	  e = envs[0][0];
-	  for (k=0,j=0;k<out_frames;k++,j++)
+	  for (k=0, j=0;k<out_frames;k++,j++)
 	    {
 	      if (j == mus_file_buffer_size)
 		{
-		  mus_sound_write(ofd,0,j-1,out_chans,obufs);
+		  mus_sound_write(ofd, 0, j-1, out_chans, obufs);
 		  j = 0;
-		  mus_sound_seek_frame(ofd,out_start+k);
-		  mus_sound_read(ofd,0,mus_file_buffer_size-1,out_chans,obufs);
-		  mus_sound_seek_frame(ofd,out_start+k);
-		  mus_sound_read(ifd,0,mus_file_buffer_size-1,in_chans,ibufs);
+		  mus_sound_seek_frame(ofd, out_start+k);
+		  mus_sound_read(ofd, 0, mus_file_buffer_size-1, out_chans, obufs);
+		  mus_sound_seek_frame(ofd, out_start+k);
+		  mus_sound_read(ifd, 0, mus_file_buffer_size-1, in_chans, ibufs);
 		}
 	      scaler = mus_env(e);
 	      for (i=0;i<min_chans;i++)
@@ -6337,9 +6337,9 @@ void mus_mix(const char *outfile, const char *infile, int out_start, int out_fra
 	  break;
 
 	}
-      if (j > 0) mus_sound_write(ofd,0,j-1,out_chans,obufs);
+      if (j > 0) mus_sound_write(ofd, 0, j-1, out_chans, obufs);
       if (curoutframes < (out_frames+out_start)) curoutframes = out_frames + out_start;
-      mus_sound_close_output(ofd,curoutframes * out_chans * mus_data_format_to_bytes_per_sample(mus_sound_data_format(outfile)));
+      mus_sound_close_output(ofd, curoutframes * out_chans * mus_data_format_to_bytes_per_sample(mus_sound_data_format(outfile)));
       mus_sound_close_input(ifd);
       for (i=0;i<in_chans;i++) FREE(ibufs[i]);
       FREE(ibufs);
@@ -6352,8 +6352,8 @@ int mus_file2fltarray(const char *filename, int chan, int start, int samples, Fl
 {
   MUS_SAMPLE_TYPE *idata;
   int i,len;
-  idata = (MUS_SAMPLE_TYPE *)CALLOC(samples,sizeof(MUS_SAMPLE_TYPE));
-  len = mus_file_to_array(filename,chan,start,samples,idata);
+  idata = (MUS_SAMPLE_TYPE *)CALLOC(samples, sizeof(MUS_SAMPLE_TYPE));
+  len = mus_file_to_array(filename, chan, start, samples, idata);
   if (len != -1) for (i=0;i<samples;i++) array[i] = MUS_SAMPLE_TO_FLOAT(idata[i]);
   FREE(idata);
   return(len);
@@ -6363,9 +6363,9 @@ int mus_fltarray2file(const char *filename, Float *ddata, int len, int srate, in
 {
   MUS_SAMPLE_TYPE *idata;
   int i,err;
-  idata = (MUS_SAMPLE_TYPE *)CALLOC(len,sizeof(MUS_SAMPLE_TYPE));
+  idata = (MUS_SAMPLE_TYPE *)CALLOC(len, sizeof(MUS_SAMPLE_TYPE));
   for (i=0;i<len;i++) idata[i] = MUS_FLOAT_TO_SAMPLE(ddata[i]);
-  err = mus_array_to_file(filename,idata,len,srate,channels);
+  err = mus_array_to_file(filename, idata, len, srate, channels);
   FREE(idata);
   return(err);
 }
@@ -6373,12 +6373,12 @@ int mus_fltarray2file(const char *filename, Float *ddata, int len, int srate, in
 Float mus_apply(mus_any *gen, ...)
 {
   /* what about non-gen funcs such as polynomial, ring_modulate etc? */
-  #define NEXT_ARG (Float)(va_arg(ap,double))
+  #define NEXT_ARG (Float)(va_arg(ap, double))
   va_list ap;
   Float f1 = 0.0, f2 = 0.0; /* force order of evaluation */
   if ((gen) && (MUS_RUN_P(gen)))
     {
-      va_start(ap,gen);
+      va_start(ap, gen);
       /* might want a run_args field */
       switch ((gen->core)->type)
 	{
@@ -6399,7 +6399,7 @@ Float mus_apply(mus_any *gen, ...)
 	  break;
 	}
       va_end(ap);
-      return(MUS_RUN(gen,f1,f2));
+      return(MUS_RUN(gen, f1, f2));
     }
   return(0.0);
 }
@@ -6412,16 +6412,16 @@ Float mus_bank(mus_any **gens, Float *scalers, Float *arg1, Float *arg2, int siz
     {
       if (arg2)
 	{
-	  for (i=0;i<size;i++) if (gens[i]) sum += (scalers[i] * (MUS_RUN(gens[i],arg1[i],arg2[i])));
+	  for (i=0;i<size;i++) if (gens[i]) sum += (scalers[i] * (MUS_RUN(gens[i], arg1[i], arg2[i])));
 	}
       else 
 	{
-	  for (i=0;i<size;i++) if (gens[i]) sum += (scalers[i] * (MUS_RUN(gens[i],arg1[i],0.0)));
+	  for (i=0;i<size;i++) if (gens[i]) sum += (scalers[i] * (MUS_RUN(gens[i], arg1[i], 0.0)));
 	}
     }
   else 
     {
-      for (i=0;i<size;i++) if (gens[i]) sum += (scalers[i] * (MUS_RUN(gens[i],0.0,0.0)));
+      for (i=0;i<size;i++) if (gens[i]) sum += (scalers[i] * (MUS_RUN(gens[i], 0.0, 0.0)));
     }
   return(sum);
 }
@@ -6446,12 +6446,12 @@ static char *inspect_pv_info(void *ptr)
 {
   pv_info *gen = (pv_info *)ptr;
   char *desc,*arr1 = NULL,*arr2 = NULL,*arr3 = NULL;
-  desc = make_big_desc_buf(ptr,FALSE);
-  if (desc) sprintf(desc,"pv_info outctr: %d, interp: %d, filptr: %d, N: %d, D: %d, in_data: %s, amps: %s, freqs: %s",
-		    gen->outctr,gen->interp,gen->filptr,gen->N,gen->D,
-		    arr1 = print_array(gen->in_data,gen->N,0),
-		    arr2 = print_array(gen->amps,gen->N/2,0),
-		    arr3 = print_array(gen->freqs,gen->N,0));
+  desc = make_big_desc_buf(ptr, FALSE);
+  if (desc) sprintf(desc, "pv_info outctr: %d, interp: %d, filptr: %d, N: %d, D: %d, in_data: %s, amps: %s, freqs: %s",
+		    gen->outctr, gen->interp, gen->filptr, gen->N, gen->D,
+		    arr1 = print_array(gen->in_data, gen->N, 0),
+		    arr2 = print_array(gen->amps, gen->N/2, 0),
+		    arr3 = print_array(gen->freqs, gen->N, 0));
   if (arr1) FREE(arr1);
   if (arr2) FREE(arr2);
   if (arr3) FREE(arr3);
@@ -6466,17 +6466,17 @@ static char *describe_phase_vocoder(void *ptr)
 {
   char *desc,*arr = NULL;
   pv_info *gen = (pv_info *)ptr;
-  desc = make_big_desc_buf(ptr,TRUE);
+  desc = make_big_desc_buf(ptr, TRUE);
   if (desc)
     {
       if (mus_phase_vocoder_p((mus_any *)ptr))
 	{
-	  sprintf(desc,"phase_vocoder: outctr: %d, interp: %d, filptr: %d, N: %d, D: %d, in_data: %s",
-		    gen->outctr,gen->interp,gen->filptr,gen->N,gen->D,
-		    arr = print_array(gen->in_data,gen->N,0));
+	  sprintf(desc, "phase_vocoder: outctr: %d, interp: %d, filptr: %d, N: %d, D: %d, in_data: %s",
+		    gen->outctr, gen->interp, gen->filptr, gen->N, gen->D,
+		    arr = print_array(gen->in_data, gen->N, 0));
 	  if (arr) FREE(arr);
 	}
-      else describe_bad_gen(ptr,desc,"phase_vocoder","a");
+      else describe_bad_gen(ptr, desc, "phase_vocoder", "a");
     }
   return(desc);
 }
@@ -6556,7 +6556,7 @@ Float mus_set_increment(mus_any *rd, Float dir)
 }
 
 static Float *phase_vocoder_data(void *ptr) {return(((pv_info *)ptr)->in_data);}
-static Float run_phase_vocoder(mus_any *ptr, Float unused1, Float unused2) {return(mus_phase_vocoder(ptr,NULL));}
+static Float run_phase_vocoder(mus_any *ptr, Float unused1, Float unused2) {return(mus_phase_vocoder(ptr, NULL));}
 
 static mus_any_class PHASE_VOCODER_CLASS = {
   MUS_PHASE_VOCODER,
@@ -6575,7 +6575,7 @@ static mus_any_class PHASE_VOCODER_CLASS = {
   &run_phase_vocoder
 };
 
-mus_any *mus_make_phase_vocoder(Float (*input)(void *arg,int direction), 
+mus_any *mus_make_phase_vocoder(Float (*input)(void *arg, int direction), 
 				int fftsize, int overlap, int interp,
 				Float pitch,
 				int (*analyze)(void *arg, Float (*input)(void *arg1, int direction)),
@@ -6589,9 +6589,9 @@ mus_any *mus_make_phase_vocoder(Float (*input)(void *arg,int direction),
   pv_info *pv;
   int N2,D,i;
   Float scl;
-  pv = (pv_info *)CALLOC(1,sizeof(pv_info));
+  pv = (pv_info *)CALLOC(1, sizeof(pv_info));
   if (pv == NULL) 
-    mus_error(MUS_MEMORY_ALLOCATION_FAILED,"can't allocate struct for mus_make_phase_vocoder!");
+    mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate struct for mus_make_phase_vocoder!");
   else
     {
       pv->core = &PHASE_VOCODER_CLASS;
@@ -6603,19 +6603,19 @@ mus_any *mus_make_phase_vocoder(Float (*input)(void *arg,int direction),
       pv->outctr = interp;
       pv->filptr = 0;
       pv->pitch = pitch;
-      pv->ampinc = (Float *)CALLOC(fftsize,sizeof(Float));
-      pv->freqs = (Float *)CALLOC(fftsize,sizeof(Float));
-      pv->amps = (Float *)CALLOC(N2,sizeof(Float));
-      pv->phases = (Float *)CALLOC(N2,sizeof(Float));
-      pv->lastphase = (Float *)CALLOC(N2,sizeof(Float));
-      pv->phaseinc = (Float *)CALLOC(N2,sizeof(Float));
+      pv->ampinc = (Float *)CALLOC(fftsize, sizeof(Float));
+      pv->freqs = (Float *)CALLOC(fftsize, sizeof(Float));
+      pv->amps = (Float *)CALLOC(N2, sizeof(Float));
+      pv->phases = (Float *)CALLOC(N2, sizeof(Float));
+      pv->lastphase = (Float *)CALLOC(N2, sizeof(Float));
+      pv->phaseinc = (Float *)CALLOC(N2, sizeof(Float));
       pv->in_data = NULL;
       pv->input = input;
       pv->environ = environ;
       pv->analyze = analyze;
       pv->edit = edit;
       pv->synthesize = synthesize;
-      pv->win = mus_make_fft_window(MUS_HAMMING_WINDOW,fftsize,0.0);
+      pv->win = mus_make_fft_window(MUS_HAMMING_WINDOW, fftsize, 0.0);
       scl = 2.0 / (0.54 * (Float)fftsize);
       for (i=0;i<fftsize;i++) pv->win[i] *= scl;
       return((mus_any *)pv);
@@ -6623,7 +6623,7 @@ mus_any *mus_make_phase_vocoder(Float (*input)(void *arg,int direction),
   return(NULL);
 }
 
-Float mus_phase_vocoder(mus_any *ptr, Float (*input)(void *arg,int direction))
+Float mus_phase_vocoder(mus_any *ptr, Float (*input)(void *arg, int direction))
 {
   pv_info *pv = (pv_info *)ptr;
   int N2,i,j,buf;
@@ -6631,23 +6631,23 @@ Float mus_phase_vocoder(mus_any *ptr, Float (*input)(void *arg,int direction))
   N2 = pv->N / 2;
   if (pv->outctr >= pv->interp)
     {
-      if ((pv->analyze == NULL) || ((*(pv->analyze))(pv->environ,input) != 0))
+      if ((pv->analyze == NULL) || ((*(pv->analyze))(pv->environ, input) != 0))
 	{
-	  mus_clear_array(pv->freqs,pv->N);
+	  mus_clear_array(pv->freqs, pv->N);
 	  pv->outctr = 0;
 	  if (pv->in_data == NULL)
 	    {
-	      pv->in_data = (Float *)CALLOC(pv->N,sizeof(Float));
+	      pv->in_data = (Float *)CALLOC(pv->N, sizeof(Float));
 	      if (input)
-		for (i=0;i<pv->N;i++) pv->in_data[i] = (*input)(pv->environ,1);
-	      else for (i=0;i<pv->N;i++) pv->in_data[i] = (*(pv->input))(pv->environ,1);
+		for (i=0;i<pv->N;i++) pv->in_data[i] = (*input)(pv->environ, 1);
+	      else for (i=0;i<pv->N;i++) pv->in_data[i] = (*(pv->input))(pv->environ, 1);
 	    }
 	  else
 	    {
-	      for (i=0,j=pv->D;j<pv->N;i++,j++) pv->in_data[i] = pv->in_data[j];
+	      for (i=0, j=pv->D;j<pv->N;i++,j++) pv->in_data[i] = pv->in_data[j];
 	      if (input)
-		for (i=pv->N - pv->D;i<pv->N;i++) pv->in_data[i] = (*input)(pv->environ,1);
-	      else for (i=pv->N - pv->D;i<pv->N;i++) pv->in_data[i] = (*(pv->input))(pv->environ,1);
+		for (i=pv->N - pv->D;i<pv->N;i++) pv->in_data[i] = (*input)(pv->environ, 1);
+	      else for (i=pv->N - pv->D;i<pv->N;i++) pv->in_data[i] = (*(pv->input))(pv->environ, 1);
 	    }
 	  buf = pv->filptr % pv->N;
 	  for (i=0;i<pv->N;i++)
@@ -6656,15 +6656,15 @@ Float mus_phase_vocoder(mus_any *ptr, Float (*input)(void *arg,int direction))
 	      if (buf >= pv->N) buf = 0;
 	    }
 	  pv->filptr += pv->D;
-	  mus_fft(pv->ampinc,pv->freqs,pv->N,1);
-	  mus_rectangular2polar(pv->ampinc,pv->freqs,N2);
+	  mus_fft(pv->ampinc, pv->freqs, pv->N, 1);
+	  mus_rectangular2polar(pv->ampinc, pv->freqs, N2);
 	}
       
       if ((pv->edit == NULL) || ((*(pv->edit))(pv->environ) != 0))
 	{
 	  pscl = 1.0 / (Float)(pv->D);
 	  kscl = TWO_PI / (Float)(pv->N);
-	  for (i=0,ks=0.0;i<N2;i++,ks+=kscl)
+	  for (i=0, ks=0.0;i<N2;i++,ks+=kscl)
 	    {
 	      diff = pv->freqs[i] - pv->lastphase[i];
 	      pv->lastphase[i] = pv->freqs[i];
@@ -6693,7 +6693,7 @@ Float mus_phase_vocoder(mus_any *ptr, Float (*input)(void *arg,int direction))
 	  pv->phaseinc[i] += pv->freqs[i];
 	  pv->phases[i] += pv->phaseinc[i];
 	}
-      return(mus_sum_of_sines(pv->amps,pv->phases,N2));
+      return(mus_sum_of_sines(pv->amps, pv->phases, N2));
     }
 }
 

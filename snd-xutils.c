@@ -15,19 +15,19 @@ static XmRenderTable get_xm_font(snd_state *ss, XFontStruct *fs, char *font, cha
   int n;
   Arg args[12];
   n=0;
-  XtSetArg(args[n],XmNfontName,font); n++;
-  XtSetArg(args[n],XmNfontType,XmFONT_IS_FONT); n++; 
-  XtSetArg(args[n],XmNloadModel,XmLOAD_DEFERRED); n++;
-  tmp = XmRenditionCreate(MAIN_SHELL(ss),tag,args,n);
-  return(XmRenderTableAddRenditions(NULL,&tmp,1,XmMERGE_NEW));
+  XtSetArg(args[n], XmNfontName, font); n++;
+  XtSetArg(args[n], XmNfontType, XmFONT_IS_FONT); n++; 
+  XtSetArg(args[n], XmNloadModel, XmLOAD_DEFERRED); n++;
+  tmp = XmRenditionCreate(MAIN_SHELL(ss), tag, args, n);
+  return(XmRenderTableAddRenditions(NULL, &tmp, 1, XmMERGE_NEW));
 }
 #else
 static XmFontList get_xm_font(snd_state *ss, XFontStruct *fs, char *font, char *tag)
 {
   XmFontList fl = NULL;
   XmFontListEntry e1;
-  e1 = XmFontListEntryCreate(tag,XmFONT_IS_FONT,(XtPointer)fs);
-  fl = XmFontListAppendEntry(NULL,e1);
+  e1 = XmFontListEntryCreate(tag, XmFONT_IS_FONT, (XtPointer)fs);
+  fl = XmFontListAppendEntry(NULL, e1);
   XmFontListEntryFree(&e1);
   return(fl);
 }
@@ -38,13 +38,13 @@ int set_help_text_font(snd_state *ss, char *font)
   XFontStruct *fs = NULL;
   state_context *sgx;
   sgx = ss->sgx;
-  fs = XLoadQueryFont(MAIN_DISPLAY(ss),font);
+  fs = XLoadQueryFont(MAIN_DISPLAY(ss), font);
   if (fs)
     {
-      in_set_help_text_font(ss,font);
+      in_set_help_text_font(ss, font);
       sgx->help_text_fontstruct = fs;
       if (sgx->help_text_fontlist) XM_FONT_FREE(sgx->help_text_fontlist);
-      sgx->help_text_fontlist = get_xm_font(ss,sgx->help_text_fontstruct,font,"help_text_font");
+      sgx->help_text_fontlist = get_xm_font(ss, sgx->help_text_fontstruct, font, "help_text_font");
       return(TRUE);
     }
   return(FALSE);
@@ -55,13 +55,13 @@ int set_tiny_font(snd_state *ss, char *font)
   XFontStruct *fs = NULL;
   state_context *sgx;
   sgx = ss->sgx;
-  fs = XLoadQueryFont(MAIN_DISPLAY(ss),font);
+  fs = XLoadQueryFont(MAIN_DISPLAY(ss), font);
   if (fs)
     {
-      in_set_tiny_font(ss,font);
+      in_set_tiny_font(ss, font);
       sgx->tiny_fontstruct = fs;
       if (sgx->tiny_fontlist) XM_FONT_FREE(sgx->tiny_fontlist);
-      sgx->tiny_fontlist = get_xm_font(ss,sgx->tiny_fontstruct,font,"tiny_font");
+      sgx->tiny_fontlist = get_xm_font(ss, sgx->tiny_fontstruct, font, "tiny_font");
       return(TRUE);
     }
   return(FALSE);
@@ -70,13 +70,13 @@ int set_tiny_font(snd_state *ss, char *font)
 int set_listener_font(snd_state *ss, char *font)
 {
   XFontStruct *fs = NULL;
-  fs = XLoadQueryFont(MAIN_DISPLAY(ss),font);
+  fs = XLoadQueryFont(MAIN_DISPLAY(ss), font);
   if (fs)
     {
-      in_set_listener_font(ss,font);
+      in_set_listener_font(ss, font);
       (ss->sgx)->listener_fontstruct = fs;
       if ((ss->sgx)->listener_fontlist) XM_FONT_FREE((ss->sgx)->listener_fontlist);
-      (ss->sgx)->listener_fontlist = get_xm_font(ss,(ss->sgx)->listener_fontstruct,font,"listener_font");
+      (ss->sgx)->listener_fontlist = get_xm_font(ss, (ss->sgx)->listener_fontstruct, font, "listener_font");
       return(TRUE);
     }
   return(FALSE);
@@ -85,13 +85,13 @@ int set_listener_font(snd_state *ss, char *font)
 int set_button_font(snd_state *ss, char *font)
 {
   XFontStruct *fs = NULL;
-  fs = XLoadQueryFont(MAIN_DISPLAY(ss),font);
+  fs = XLoadQueryFont(MAIN_DISPLAY(ss), font);
   if (fs)
     {
-      in_set_button_font(ss,font);
+      in_set_button_font(ss, font);
       (ss->sgx)->button_fontstruct = fs;
       if ((ss->sgx)->button_fontlist) XM_FONT_FREE((ss->sgx)->button_fontlist);
-      (ss->sgx)->button_fontlist = get_xm_font(ss,(ss->sgx)->button_fontstruct,font,"button_font");
+      (ss->sgx)->button_fontlist = get_xm_font(ss, (ss->sgx)->button_fontstruct, font, "button_font");
       return(TRUE);
     }
   return(FALSE);
@@ -100,13 +100,13 @@ int set_button_font(snd_state *ss, char *font)
 int set_bold_button_font(snd_state *ss, char *font)
 {
   XFontStruct *fs = NULL;
-  fs = XLoadQueryFont(MAIN_DISPLAY(ss),font);
+  fs = XLoadQueryFont(MAIN_DISPLAY(ss), font);
   if (fs)
     {
-      in_set_bold_button_font(ss,font);
+      in_set_bold_button_font(ss, font);
       (ss->sgx)->bold_button_fontstruct = fs;
       if ((ss->sgx)->bold_button_fontlist) XM_FONT_FREE((ss->sgx)->bold_button_fontlist);
-      (ss->sgx)->bold_button_fontlist = get_xm_font(ss,(ss->sgx)->bold_button_fontstruct,font,"bold_button_font");
+      (ss->sgx)->bold_button_fontlist = get_xm_font(ss, (ss->sgx)->bold_button_fontstruct, font, "bold_button_font");
       return(TRUE);
     }
   return(FALSE);
@@ -115,10 +115,10 @@ int set_bold_button_font(snd_state *ss, char *font)
 int set_axis_label_font(snd_state *ss, char *font)
 {
   XFontStruct *fs = NULL;
-  fs = XLoadQueryFont(MAIN_DISPLAY(ss),font);
+  fs = XLoadQueryFont(MAIN_DISPLAY(ss), font);
   if (fs)
     {
-      in_set_axis_label_font(ss,font);
+      in_set_axis_label_font(ss, font);
       (ss->sgx)->axis_label_fontstruct = fs;
       return(TRUE);
     }
@@ -128,10 +128,10 @@ int set_axis_label_font(snd_state *ss, char *font)
 int set_axis_numbers_font(snd_state *ss, char *font)
 {
   XFontStruct *fs = NULL;
-  fs = XLoadQueryFont(MAIN_DISPLAY(ss),font);
+  fs = XLoadQueryFont(MAIN_DISPLAY(ss), font);
   if (fs)
     {
-      in_set_axis_numbers_font(ss,font);
+      in_set_axis_numbers_font(ss, font);
       (ss->sgx)->axis_numbers_fontstruct = fs;
       return(TRUE);
     }
@@ -141,25 +141,25 @@ int set_axis_numbers_font(snd_state *ss, char *font)
 
 void activate_numbers_font(axis_context *ax)
 {
-  XSetFont(ax->dp,ax->gc,((XFontStruct *)(AXIS_NUMBERS_FONT(ax->ss)))->fid);
+  XSetFont(ax->dp, ax->gc, ((XFontStruct *)(AXIS_NUMBERS_FONT(ax->ss)))->fid);
 }
    
 void activate_button_font(axis_context *ax, snd_state *ss)
 {
   state_context *sgx;
   sgx = ss->sgx;
-  XSetFont(ax->dp,ax->gc,(sgx->button_fontstruct)->fid);
+  XSetFont(ax->dp, ax->gc, (sgx->button_fontstruct)->fid);
 }
 
 void activate_label_font(axis_context *ax)
 {
-  XSetFont(ax->dp,ax->gc,((XFontStruct *)(AXIS_LABEL_FONT(ax->ss)))->fid);
+  XSetFont(ax->dp, ax->gc, ((XFontStruct *)(AXIS_LABEL_FONT(ax->ss)))->fid);
 }
 
 int label_width(axis_context *ax, char *txt)
 {
   if (txt)
-    return(XTextWidth(AXIS_LABEL_FONT(ax->ss),txt,strlen(txt)));
+    return(XTextWidth(AXIS_LABEL_FONT(ax->ss), txt, strlen(txt)));
   else return(0);
 }
 
@@ -169,7 +169,7 @@ int mark_name_width(snd_state *ss, char *txt)
   if (txt)
     {
       sgx = ss->sgx;
-      return(XTextWidth(sgx->button_fontstruct,txt,strlen(txt)));
+      return(XTextWidth(sgx->button_fontstruct, txt, strlen(txt)));
     }
   return(0);
 }
@@ -177,7 +177,7 @@ int mark_name_width(snd_state *ss, char *txt)
 int number_width(axis_context *ax, char *num)
 {
   if (num)
-    return(XTextWidth(AXIS_NUMBERS_FONT(ax->ss),num,strlen(num)));
+    return(XTextWidth(AXIS_NUMBERS_FONT(ax->ss), num, strlen(num)));
   return(0);
 }
 
@@ -197,10 +197,10 @@ int label_height(axis_context *ax)
 
 void clear_window(axis_context *ax)
 {
-  if (ax) XClearWindow(ax->dp,ax->wn);
+  if (ax) XClearWindow(ax->dp, ax->wn);
 }
 
-void map_over_children (Widget w, void (*func)(Widget,void *), void *userptr)
+void map_over_children (Widget w, void (*func)(Widget, void *), void *userptr)
 {
   /* apply func to each child in entire tree beneath top widget */
   /* taken from Douglas Young, "Motif Debugging and Performance Tuning" Prentice-Hall 1995 */
@@ -208,19 +208,19 @@ void map_over_children (Widget w, void (*func)(Widget,void *), void *userptr)
   unsigned int i;
   if (w)
     {
-      (*func)(w,userptr);
+      (*func)(w, userptr);
       if (XtIsComposite(w))
 	{
 	  CompositeWidget cw = (CompositeWidget)w;
 	  for (i=0;i<cw->composite.num_children;i++)
-	    map_over_children(cw->composite.children[i],func,userptr);
+	    map_over_children(cw->composite.children[i], func, userptr);
 	}
       if (XtIsWidget(w))
 	{
 	  for (i=0;i<w->core.num_popups;i++)
 	    {
 	      Widget child = w->core.popup_list[i];
-	      map_over_children(child,func,userptr);
+	      map_over_children(child, func, userptr);
 	    }
 	}
     }
@@ -235,8 +235,8 @@ void raise_dialog(Widget w)
   if ((w) && (XtIsManaged(w)))
     {
       parent = XtParent(w);
-      if ((parent) && (XtIsSubclass(parent,xmDialogShellWidgetClass)))
-	XtPopup(parent,XtGrabNone);
+      if ((parent) && (XtIsSubclass(parent, xmDialogShellWidgetClass)))
+	XtPopup(parent, XtGrabNone);
       /* XtGrabNone means don't lock out events to rest of App (i.e. modeless dialog) */
     }
 }
@@ -246,34 +246,34 @@ void raise_widget(Widget w)
 {
   /* try to change stacking order (form widgets in drawingarea; overlap covers desired console) */
   XtWidgetGeometry *request;
-  request = (XtWidgetGeometry *)CALLOC(1,sizeof(XtWidgetGeometry));
+  request = (XtWidgetGeometry *)CALLOC(1, sizeof(XtWidgetGeometry));
   request->request_mode = CWStackMode; /* (1<<6) */
   request->stack_mode = 0; /* Above */
-  XtMakeGeometryRequest(w,request,NULL);
+  XtMakeGeometryRequest(w, request, NULL);
 }
 #endif
 
-void set_main_color_of_widget (Widget w,void *userptr)
+void set_main_color_of_widget (Widget w, void *userptr)
 {
   if (XtIsWidget(w))
     {
       if (XmIsScrollBar(w)) 
-	XmChangeColor(w,(Pixel)(((snd_state *)userptr)->sgx)->position_color);
-      else XmChangeColor(w,(Pixel)(((snd_state *)userptr)->sgx)->basic_color);
+	XmChangeColor(w, (Pixel)(((snd_state *)userptr)->sgx)->position_color);
+      else XmChangeColor(w, (Pixel)(((snd_state *)userptr)->sgx)->basic_color);
     }
 }
 
-void highlight_color(snd_state *ss, Widget w) {XmChangeColor(w,(ss->sgx)->highlight_color);}
-void white_color(snd_state *ss, Widget w) {XmChangeColor(w,(ss->sgx)->white);}
+void highlight_color(snd_state *ss, Widget w) {XmChangeColor(w, (ss->sgx)->highlight_color);}
+void white_color(snd_state *ss, Widget w) {XmChangeColor(w, (ss->sgx)->white);}
 
 void set_button_label_normal(Widget button, const char *str) 
 {
   XmString s1;
-  s1=XmStringCreate((char *)str,"button_font");
+  s1=XmStringCreate((char *)str, "button_font");
 #if (USE_RENDITIONS)
-  XtVaSetValues(button,XmNlabelString,s1,XmNrenderTable,BUTTON_FONT(get_global_state()),NULL);
+  XtVaSetValues(button, XmNlabelString, s1, XmNrenderTable, BUTTON_FONT(get_global_state()), NULL);
 #else
-  XtVaSetValues(button,XmNlabelString,s1,NULL);
+  XtVaSetValues(button, XmNlabelString, s1, NULL);
 #endif
   XmStringFree(s1);
 }
@@ -281,11 +281,11 @@ void set_button_label_normal(Widget button, const char *str)
 void set_button_label_bold(Widget button, const char *str)
 {
   XmString s1;
-  s1=XmStringCreate((char *)str,"bold_button_font");
+  s1=XmStringCreate((char *)str, "bold_button_font");
 #if (USE_RENDITIONS)
-  XtVaSetValues(button,XmNlabelString,s1,XmNrenderTable,BOLD_BUTTON_FONT(get_global_state()),NULL);
+  XtVaSetValues(button, XmNlabelString, s1, XmNrenderTable, BOLD_BUTTON_FONT(get_global_state()), NULL);
 #else
-  XtVaSetValues(button,XmNlabelString,s1,NULL);
+  XtVaSetValues(button, XmNlabelString, s1, NULL);
 #endif
   XmStringFree(s1);
 }
@@ -293,17 +293,17 @@ void set_button_label_bold(Widget button, const char *str)
 void set_label(Widget label, const char *str)
 {
   XmString s1;
-  s1=XmStringCreate((char *)str,XmFONTLIST_DEFAULT_TAG);
-  XtVaSetValues(label,XmNlabelString,s1,NULL);
+  s1=XmStringCreate((char *)str, XmFONTLIST_DEFAULT_TAG);
+  XtVaSetValues(label, XmNlabelString, s1, NULL);
   XmStringFree(s1);
 }
 
-void set_button_label (Widget label, const char *str) {set_label(label,str);}
+void set_button_label (Widget label, const char *str) {set_label(label, str);}
 
 
 void set_title(snd_state *ss, const char *title)
 {
-  XtVaSetValues(MAIN_SHELL(ss),XmNtitle,(char*)title,NULL);
+  XtVaSetValues(MAIN_SHELL(ss), XmNtitle, (char*)title, NULL);
 }
 
 static int complain_about_focus_policy = 1;
@@ -313,16 +313,16 @@ void goto_window(Widget text)
   int err;
   if ((XmIsTraversable(text)) && (XmGetVisibility(text) != XmVISIBILITY_FULLY_OBSCURED))
     {
-      if (!(XmProcessTraversal(text,XmTRAVERSE_CURRENT)))
+      if (!(XmProcessTraversal(text, XmTRAVERSE_CURRENT)))
 	{
 	  if (complain_about_focus_policy)
 	    {
-	      XtVaGetValues(text,XmNkeyboardFocusPolicy,&err,NULL);
+	      XtVaGetValues(text, XmNkeyboardFocusPolicy, &err, NULL);
 	      if (err == XmEXPLICIT)
-		snd_error("%s[%d] %s: traverse to %s failed!",__FILE__,__LINE__,__FUNCTION__,XtName(text));
+		snd_error("%s[%d] %s: traverse to %s failed!", __FILE__, __LINE__, __FUNCTION__, XtName(text));
 	      else 
 		{
-		  snd_error("%s[%d] %s: keyboard focus policy is not explicit!",__FILE__,__LINE__,__FUNCTION__);
+		  snd_error("%s[%d] %s: keyboard focus policy is not explicit!", __FILE__, __LINE__, __FUNCTION__);
 		  complain_about_focus_policy = 0;
 		}
 	    }
@@ -333,7 +333,7 @@ void goto_window(Widget text)
 XtCallbackList make_callback_list(XtCallbackProc callback, XtPointer closure)
 {
   XtCallbackList nlist;
-  nlist = (XtCallbackList)CALLOC(2,sizeof(XtCallbackRec));
+  nlist = (XtCallbackList)CALLOC(2, sizeof(XtCallbackRec));
   nlist[0].callback = callback;
   nlist[0].closure = closure;
   nlist[1].callback = NULL;
@@ -344,8 +344,8 @@ XtCallbackList make_callback_list(XtCallbackProc callback, XtPointer closure)
 #include <Xm/SashP.h>
 void color_sashes(Widget w, void *ptr)
 {
-  if ((XtIsWidget(w)) && (XtIsManaged(w)) && (XtIsSubclass(w,xmSashWidgetClass)))
-    XmChangeColor(w,(Pixel)(((snd_state *)ptr)->sgx)->sash_color);
+  if ((XtIsWidget(w)) && (XtIsManaged(w)) && (XtIsSubclass(w, xmSashWidgetClass)))
+    XmChangeColor(w, (Pixel)(((snd_state *)ptr)->sgx)->sash_color);
 }
 
 void check_for_event(snd_state *ss)
@@ -361,7 +361,7 @@ void check_for_event(snd_state *ss)
       msk = XtAppPending(app);
       if (msk & (XtIMXEvent | XtIMAlternateInput))
 	{
-	  XtAppNextEvent(app,&event);
+	  XtAppNextEvent(app, &event);
 	  XtDispatchEvent(&event);
 	}
       else break;
@@ -383,8 +383,8 @@ void color_cursor(snd_state *ss, Pixel color)
   state_context *sx;
   sx = ss->sgx;
   sx->cursor_color = color;
-  XSetForeground(MAIN_DISPLAY(ss),sx->cursor_gc,(Pixel)(XOR(color,sx->graph_color)));
-  XSetForeground(MAIN_DISPLAY(ss),sx->selected_cursor_gc,(Pixel)(XOR(color,sx->selected_graph_color)));
+  XSetForeground(MAIN_DISPLAY(ss), sx->cursor_gc, (Pixel)(XOR(color, sx->graph_color)));
+  XSetForeground(MAIN_DISPLAY(ss), sx->selected_cursor_gc, (Pixel)(XOR(color, sx->selected_graph_color)));
 }
 
 void color_marks(snd_state *ss, Pixel color)
@@ -392,8 +392,8 @@ void color_marks(snd_state *ss, Pixel color)
   state_context *sx;
   sx = ss->sgx;
   sx->mark_color = color;
-  XSetForeground(MAIN_DISPLAY(ss),sx->mark_gc,(Pixel)(XOR(color,sx->graph_color)));
-  XSetForeground(MAIN_DISPLAY(ss),sx->selected_mark_gc,(Pixel)(XOR(color,sx->selected_graph_color)));
+  XSetForeground(MAIN_DISPLAY(ss), sx->mark_gc, (Pixel)(XOR(color, sx->graph_color)));
+  XSetForeground(MAIN_DISPLAY(ss), sx->selected_mark_gc, (Pixel)(XOR(color, sx->selected_graph_color)));
 }
 
 void color_selection(snd_state *ss, Pixel color)
@@ -401,8 +401,8 @@ void color_selection(snd_state *ss, Pixel color)
   state_context *sx;
   sx = ss->sgx;
   sx->selection_color = color;
-  XSetForeground(MAIN_DISPLAY(ss),sx->selection_gc,(Pixel)(XOR(color,sx->graph_color)));
-  XSetForeground(MAIN_DISPLAY(ss),sx->selected_selection_gc,(Pixel)(XOR(color,sx->selected_graph_color)));
+  XSetForeground(MAIN_DISPLAY(ss), sx->selection_gc, (Pixel)(XOR(color, sx->graph_color)));
+  XSetForeground(MAIN_DISPLAY(ss), sx->selected_selection_gc, (Pixel)(XOR(color, sx->selected_graph_color)));
 }
 
 void color_graph(snd_state *ss, Pixel color)
@@ -412,11 +412,11 @@ void color_graph(snd_state *ss, Pixel color)
   dpy = MAIN_DISPLAY(ss);
   sx = ss->sgx;
   sx->graph_color = color;
-  XSetBackground(dpy,sx->basic_gc,color);
-  XSetForeground(dpy,sx->erase_gc,color);
-  XSetForeground(dpy,sx->selection_gc,(Pixel)(XOR(sx->selection_color,color)));
-  XSetForeground(dpy,sx->cursor_gc,(Pixel)(XOR(sx->cursor_color,color)));
-  XSetForeground(dpy,sx->mark_gc,(Pixel)(XOR(sx->mark_color,color)));
+  XSetBackground(dpy, sx->basic_gc, color);
+  XSetForeground(dpy, sx->erase_gc, color);
+  XSetForeground(dpy, sx->selection_gc, (Pixel)(XOR(sx->selection_color, color)));
+  XSetForeground(dpy, sx->cursor_gc, (Pixel)(XOR(sx->cursor_color, color)));
+  XSetForeground(dpy, sx->mark_gc, (Pixel)(XOR(sx->mark_color, color)));
 }
 
 void color_selected_graph(snd_state *ss, Pixel color)
@@ -426,11 +426,11 @@ void color_selected_graph(snd_state *ss, Pixel color)
   dpy = MAIN_DISPLAY(ss);
   sx = ss->sgx;
   sx->selected_graph_color = color;
-  XSetBackground(dpy,sx->selected_basic_gc,color);
-  XSetForeground(dpy,sx->selected_erase_gc,color);
-  XSetForeground(dpy,sx->selected_selection_gc,(Pixel)(XOR(sx->selection_color,color)));
-  XSetForeground(dpy,sx->selected_cursor_gc,(Pixel)(XOR(sx->cursor_color,color)));
-  XSetForeground(dpy,sx->selected_mark_gc,(Pixel)(XOR(sx->mark_color,color)));
+  XSetBackground(dpy, sx->selected_basic_gc, color);
+  XSetForeground(dpy, sx->selected_erase_gc, color);
+  XSetForeground(dpy, sx->selected_selection_gc, (Pixel)(XOR(sx->selection_color, color)));
+  XSetForeground(dpy, sx->selected_cursor_gc, (Pixel)(XOR(sx->cursor_color, color)));
+  XSetForeground(dpy, sx->selected_mark_gc, (Pixel)(XOR(sx->mark_color, color)));
 }
 
 void color_data(snd_state *ss, Pixel color)
@@ -440,8 +440,8 @@ void color_data(snd_state *ss, Pixel color)
   dpy = MAIN_DISPLAY(ss);
   sx = ss->sgx;
   sx->data_color = color;
-  XSetForeground(dpy,sx->basic_gc,color);
-  XSetBackground(dpy,sx->erase_gc,color);
+  XSetForeground(dpy, sx->basic_gc, color);
+  XSetBackground(dpy, sx->erase_gc, color);
 }
 
 void color_selected_data(snd_state *ss, Pixel color)
@@ -451,8 +451,8 @@ void color_selected_data(snd_state *ss, Pixel color)
   dpy = MAIN_DISPLAY(ss);
   sx = ss->sgx;
   sx->selected_data_color = color;
-  XSetForeground(dpy,sx->selected_basic_gc,color);
-  XSetBackground(dpy,sx->selected_erase_gc,color);
+  XSetForeground(dpy, sx->selected_basic_gc, color);
+  XSetBackground(dpy, sx->selected_erase_gc, color);
 }
 
 void recolor_graph(chan_info *cp, int selected)
@@ -461,7 +461,7 @@ void recolor_graph(chan_info *cp, int selected)
   state_context *sx;
   ss = cp->state;
   sx = ss->sgx;
-  XtVaSetValues(channel_graph(cp),XmNbackground,(selected) ? sx->selected_graph_color : sx->graph_color,NULL);
+  XtVaSetValues(channel_graph(cp), XmNbackground, (selected) ? sx->selected_graph_color : sx->graph_color, NULL);
 }
 
 void set_mix_color(snd_state *ss, Pixel color)
@@ -471,7 +471,7 @@ void set_mix_color(snd_state *ss, Pixel color)
   dpy = MAIN_DISPLAY(ss);
   sx = ss->sgx;
   sx->mix_color = color;
-  XSetForeground(dpy,sx->mix_gc,color);
+  XSetForeground(dpy, sx->mix_gc, color);
 }
 
 void set_selected_mix_color(snd_state *ss, Pixel color)
@@ -481,7 +481,7 @@ void set_selected_mix_color(snd_state *ss, Pixel color)
   dpy = MAIN_DISPLAY(ss);
   sx = ss->sgx;
   sx->selected_mix_color = color;
-  XSetForeground(dpy,sx->selected_mix_gc,color);
+  XSetForeground(dpy, sx->selected_mix_gc, color);
 }
 
 #if NEED_XPM_GET_ERROR_STRING
@@ -490,70 +490,70 @@ char *XpmGetErrorString(off_err) {return("");}
 
 void reflect_resize(snd_state *ss)
 {
-  XtVaSetValues(MAIN_SHELL(ss),XmNallowShellResize,auto_resize(ss),NULL);
+  XtVaSetValues(MAIN_SHELL(ss), XmNallowShellResize, auto_resize(ss), NULL);
 }
 
-void set_sensitive(Widget wid, int val) {if (wid) XtSetSensitive(wid,val);}
+void set_sensitive(Widget wid, int val) {if (wid) XtSetSensitive(wid, val);}
 int is_sensitive(Widget wid) {if (wid) return(XtIsSensitive(wid)); return(0);}
-void set_toggle_button(Widget wid, int val, int passed, void *data) {XmToggleButtonSetState(wid,val,passed);}
+void set_toggle_button(Widget wid, int val, int passed, void *data) {XmToggleButtonSetState(wid, val, passed);}
 
 
 int widget_height(Widget w)
 {
   Dimension height;
-  XtVaGetValues(w,XmNheight,&height,NULL);
+  XtVaGetValues(w, XmNheight, &height, NULL);
   return(height);
 }
 
 int widget_width(Widget w)
 {
   Dimension width;
-  XtVaGetValues(w,XmNwidth,&width,NULL);
+  XtVaGetValues(w, XmNwidth, &width, NULL);
   return(width);
 }
 
 void set_widget_height(Widget w, int height)
 {
-  XtVaSetValues(w,XmNheight,(Dimension)height,NULL);
+  XtVaSetValues(w, XmNheight, (Dimension)height, NULL);
 }
 
 void set_widget_width(Widget w, int width)
 {
-  XtVaSetValues(w,XmNwidth,(Dimension)width,NULL);
+  XtVaSetValues(w, XmNwidth, (Dimension)width, NULL);
 }
 
 void set_widget_size(Widget w, int width, int height)
 {
-  XtVaSetValues(w,XmNwidth,(Dimension)width,XmNheight,(Dimension)height,NULL);
+  XtVaSetValues(w, XmNwidth, (Dimension)width, XmNheight, (Dimension)height, NULL);
 }
 
 int widget_x(Widget w)
 {
   Dimension x;
-  XtVaGetValues(w,XmNx,&x,NULL);
+  XtVaGetValues(w, XmNx, &x, NULL);
   return(x);
 }
 
 int widget_y(Widget w)
 {
   Dimension y;
-  XtVaGetValues(w,XmNy,&y,NULL);
+  XtVaGetValues(w, XmNy, &y, NULL);
   return(y);
 }
 
 void set_widget_x(Widget w, int x)
 {
-  XtVaSetValues(w,XmNx,(Dimension)x,NULL);
+  XtVaSetValues(w, XmNx, (Dimension)x, NULL);
 }
 
 void set_widget_y(Widget w, int y)
 {
-  XtVaSetValues(w,XmNy,(Dimension)y,NULL);
+  XtVaSetValues(w, XmNy, (Dimension)y, NULL);
 }
 
 void set_widget_position(Widget w, int x, int y)
 {
-  XtVaSetValues(w,XmNx,(Dimension)x,XmNy,(Dimension)y,NULL);
+  XtVaSetValues(w, XmNx, (Dimension)x, XmNy, (Dimension)y, NULL);
 }
 
 void fixup_axis_context(axis_context *ax, Widget w, GC gc)
@@ -566,10 +566,10 @@ void fixup_axis_context(axis_context *ax, Widget w, GC gc)
 Pixmap make_pixmap(snd_state *ss, unsigned char *bits, int width, int height, int depth, GC gc)
 {
   Pixmap rb,nr;
-  rb = XCreateBitmapFromData(MAIN_DISPLAY(ss),RootWindowOfScreen(XtScreen(MAIN_PANE(ss))),(const char *)bits,width,height);
-  nr = XCreatePixmap(MAIN_DISPLAY(ss),RootWindowOfScreen(XtScreen(MAIN_PANE(ss))),width,height,depth);
-  XCopyPlane(MAIN_DISPLAY(ss),rb,nr,gc,0,0,width,height,0,0,1);
-  XFreePixmap(MAIN_DISPLAY(ss),rb);
+  rb = XCreateBitmapFromData(MAIN_DISPLAY(ss), RootWindowOfScreen(XtScreen(MAIN_PANE(ss))), (const char *)bits, width, height);
+  nr = XCreatePixmap(MAIN_DISPLAY(ss), RootWindowOfScreen(XtScreen(MAIN_PANE(ss))), width, height, depth);
+  XCopyPlane(MAIN_DISPLAY(ss), rb, nr, gc, 0, 0, width, height, 0, 0, 1);
+  XFreePixmap(MAIN_DISPLAY(ss), rb);
   return(nr);
 }
 
@@ -583,9 +583,9 @@ static void repixmap(Widget w, void *usx)
   state_context *sx = (state_context *)usx;
   if (XtIsWidget(w))
     {
-      XtVaGetValues(w,XmNbackground,&curcol,NULL);
+      XtVaGetValues(w, XmNbackground, &curcol, NULL);
       if (curcol == sx->basic_color)
-	XtVaSetValues(w,XmNbackgroundPixmap,sx->backmap,NULL);
+	XtVaSetValues(w, XmNbackgroundPixmap, sx->backmap, NULL);
     }
 }
 
@@ -610,46 +610,46 @@ void make_bg(snd_state *ss, unsigned int width, unsigned int height)
   dp = MAIN_DISPLAY(ss);
   wn = XtWindow(w);
   scr = DefaultScreen(dp);
-  XtVaGetValues(w,XmNdepth,&depth,NULL);
-  if (sx->backmap) XFreePixmap(dp,sx->backmap);
-  cmap=DefaultColormap(dp,scr);
+  XtVaGetValues(w, XmNdepth, &depth, NULL);
+  if (sx->backmap) XFreePixmap(dp, sx->backmap);
+  cmap=DefaultColormap(dp, scr);
   if (bgs) 
     {
-      XFreeColors(dp,cmap,bgs,bgs_size,0);
+      XFreeColors(dp, cmap, bgs, bgs_size, 0);
       free(bgs);
     }
   bgs_size = width/2;
   if (bgs_size > 200) bgs_size = 200;
   wid_incr = width / bgs_size;
-  bgs = (Pixel *)calloc(bgs_size,sizeof(Pixel));
+  bgs = (Pixel *)calloc(bgs_size, sizeof(Pixel));
   tmp_color.flags = DoRed | DoGreen | DoBlue;
-  sx->backmap = XCreatePixmap(dp,wn,width,height,depth);
-  v.background = WhitePixel(dp,scr);
-  v.foreground = WhitePixel(dp,scr);
-  draw_gc = XCreateGC(dp,wn,GCForeground | GCBackground,&v);
+  sx->backmap = XCreatePixmap(dp, wn, width, height, depth);
+  v.background = WhitePixel(dp, scr);
+  v.foreground = WhitePixel(dp, scr);
+  draw_gc = XCreateGC(dp, wn, GCForeground | GCBackground, &v);
   tmp_color.pixel = sx->highlight_color;
-  XQueryColor(dp,cmap,&tmp_color);
+  XQueryColor(dp, cmap, &tmp_color);
   red_init = tmp_color.red;
   green_init = tmp_color.green;
   blue_init = tmp_color.blue;
   tmp_color.pixel = sx->basic_color;
-  XQueryColor(dp,cmap,&tmp_color);
+  XQueryColor(dp, cmap, &tmp_color);
   red_incr = (tmp_color.red - red_init) / bgs_size;
   green_incr = (tmp_color.green - green_init) / bgs_size;
   blue_incr = (tmp_color.blue - blue_init) / bgs_size;
   /* this should probably be light at left top and shade toward lower right */
-  for (i=0,j=0;i<width;i+=wid_incr,j++)
+  for (i=0, j=0;i<width;i+=wid_incr,j++)
     {
       tmp_color.flags = DoRed | DoGreen | DoBlue;
       tmp_color.red = red_init; red_init += red_incr;
       tmp_color.green = green_init; green_init += green_incr;
       tmp_color.blue = blue_init; blue_init += blue_incr;
-      err = XAllocColor(dp,cmap,&tmp_color); if (err == 0) fprintf(stderr,".");
+      err = XAllocColor(dp, cmap, &tmp_color); if (err == 0) fprintf(stderr, ".");
       bgs[j] = tmp_color.pixel;
-      XSetForeground(dp,draw_gc,tmp_color.pixel);
-      XFillRectangle(dp,sx->backmap,draw_gc,i,0,wid_incr,height);
+      XSetForeground(dp, draw_gc, tmp_color.pixel);
+      XFillRectangle(dp, sx->backmap, draw_gc, i, 0, wid_incr, height);
     }
-  map_over_children(w,repixmap,(void *)sx);
+  map_over_children(w, repixmap, (void *)sx);
 }
 #endif
 

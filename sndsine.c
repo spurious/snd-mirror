@@ -28,10 +28,10 @@
 #define BUFFER_SIZE 4096
 
 #ifdef DEBUG_MEMORY
-void *mem_calloc(size_t len, size_t size, const char *func, const char *file, int line) {return(calloc(len,size));}
+void *mem_calloc(size_t len, size_t size, const char *func, const char *file, int line) {return(calloc(len, size));}
 void *mem_malloc(size_t len, const char *func, const char *file, int line) {return(malloc(len));}
 void mem_free(void *ptr, const char *func, const char *file, int line) {free(ptr);}
-void *mem_realloc(void *ptr, size_t size, const char *func, const char *file, int line) {return(realloc(ptr,size));}
+void *mem_realloc(void *ptr, size_t size, const char *func, const char *file, int line) {return(realloc(ptr, size));}
 #endif
 
 int main(int argc, char *argv[])
@@ -44,13 +44,13 @@ int main(int argc, char *argv[])
 #endif
   if (argc == 1) {printf("usage: sndsine outfile\n"); exit(0);}
   mus_sound_initialize();
-  fd = mus_sound_open_output(argv[1],22050,1,MUS_BSHORT,MUS_NEXT,"created by sndsine");
+  fd = mus_sound_open_output(argv[1], 22050, 1, MUS_BSHORT, MUS_NEXT, "created by sndsine");
   if (fd != -1)
     {
       frames = 22050;
       phase = 0.0;
       incr = TWO_PI*440.0/22050.0;
-      obuf[0] = (MUS_SAMPLE_TYPE *)CALLOC(BUFFER_SIZE,sizeof(MUS_SAMPLE_TYPE));
+      obuf[0] = (MUS_SAMPLE_TYPE *)CALLOC(BUFFER_SIZE, sizeof(MUS_SAMPLE_TYPE));
       k=0;
       for (i=0;i<frames;i++)
 	{
@@ -59,12 +59,12 @@ int main(int argc, char *argv[])
 	  k++;
 	  if (k == BUFFER_SIZE)
 	    {
-	      mus_sound_write(fd,0,BUFFER_SIZE-1,1,obuf);
+	      mus_sound_write(fd, 0, BUFFER_SIZE-1, 1, obuf);
 	      k=0;
 	    }
 	}
-      if (k>0) mus_sound_write(fd,0,k-1,1,obuf);
-      mus_sound_close_output(fd,22050*mus_data_format_to_bytes_per_sample(MUS_BSHORT));
+      if (k>0) mus_sound_write(fd, 0, k-1, 1, obuf);
+      mus_sound_close_output(fd, 22050*mus_data_format_to_bytes_per_sample(MUS_BSHORT));
       FREE(obuf[0]);
     }
   return(0);

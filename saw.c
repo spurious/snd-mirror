@@ -12,41 +12,41 @@ XtAppContext app;
 int n;
 Arg args[20];
 
-static void Snd_Callback(Widget w,XtPointer clientData,XtPointer callData) 
+static void Snd_Callback(Widget w, XtPointer clientData, XtPointer callData) 
 {
   if (!snd_running)
     {
       n = 0;
-      XtSetArg(args[n],XmNtopAttachment,XmATTACH_WIDGET); n++;
-      XtSetArg(args[n],XmNtopWidget,label); n++;
-      XtSetArg(args[n],XmNbottomAttachment,XmATTACH_FORM); n++;
-      XtSetArg(args[n],XmNleftAttachment,XmATTACH_FORM); n++;
-      XtSetArg(args[n],XmNrightAttachment,XmATTACH_FORM); n++;
-      XtSetArg(args[n],XmNallowResize,TRUE); n++;
+      XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
+      XtSetArg(args[n], XmNtopWidget, label); n++;
+      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
+      XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
+      XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
+      XtSetArg(args[n], XmNallowResize, TRUE); n++;
       
-      snd_as_widget(0,NULL,app,form,args,n);
-      snd_open_file("~/cl/oboe.snd",get_global_state());
+      snd_as_widget(0, NULL, app, form, args, n);
+      snd_open_file("~/cl/oboe.snd", get_global_state());
 
       snd_running = 1;
     }
 }
 
-int main (int argc,char **argv )
+int main (int argc, char **argv )
 {
-  shell = XtVaAppInitialize (&app,"Snd-as-widget",NULL,0,&argc,argv,NULL,
-			     XmNminWidth,200,
-			     XmNminHeight,40,
-			     XmNallowResize,TRUE,
+  shell = XtVaAppInitialize (&app, "Snd-as-widget", NULL, 0, &argc, argv, NULL,
+			     XmNminWidth, 200,
+			     XmNminHeight, 40,
+			     XmNallowResize, TRUE,
 			     NULL);
-  form = XtCreateManagedWidget("form",xmFormWidgetClass,shell,NULL,0);
+  form = XtCreateManagedWidget("form", xmFormWidgetClass, shell, NULL, 0);
 
   n = 0;
-  XtSetArg(args[n],XmNtopAttachment,XmATTACH_FORM); n++;
-  XtSetArg(args[n],XmNbottomAttachment,XmATTACH_NONE); n++;
-  XtSetArg(args[n],XmNleftAttachment,XmATTACH_FORM); n++;
-  XtSetArg(args[n],XmNrightAttachment,XmATTACH_FORM); n++;
-  label =  XtCreateManagedWidget("push for Snd",xmPushButtonWidgetClass,form,args,n);
-  XtAddCallback(label,XmNactivateCallback,Snd_Callback,NULL);
+  XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
+  XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
+  XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
+  XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
+  label =  XtCreateManagedWidget("push for Snd", xmPushButtonWidgetClass, form, args, n);
+  XtAddCallback(label, XmNactivateCallback, Snd_Callback, NULL);
   
   XtRealizeWidget(shell);
   XtAppMainLoop(app);
@@ -74,14 +74,14 @@ include makesnd.back
    if you're including Guile, remember that it needs to be the top-level,
    so we'd use something like:
 
-     void saw_main(int argc,char **argv )
+     void saw_main(int argc, char **argv )
      ...
   
    in place of the current "main", and then
 
-     int main (int argc,char **argv )
+     int main (int argc, char **argv )
      {
-       gh_enter(argc,argv,saw_main);
+       gh_enter(argc, argv, saw_main);
        return(0);
      }
 
@@ -98,20 +98,20 @@ include makesnd.back
 static int snd_running = 0;
 GtkWidget *form,*shell,*label,*snd;
 
-static void Snd_Callback(GtkWidget *w,gpointer data) 
+static void Snd_Callback(GtkWidget *w, gpointer data) 
 {
   if (!snd_running)
     {
-      snd = snd_as_widget(0,NULL,w,NULL);
-      gtk_box_pack_start(GTK_BOX(form),snd,TRUE,TRUE,0);
+      snd = snd_as_widget(0, NULL, w, NULL);
+      gtk_box_pack_start(GTK_BOX(form), snd, TRUE, TRUE, 0);
       gtk_widget_show(snd);
-      snd_open_file("~/cl/oboe.snd",get_global_state()); 
+      snd_open_file("~/cl/oboe.snd", get_global_state()); 
       snd_running = 1;
-      gtk_label_set_text(GTK_LABEL(GTK_BIN(label)->child),"Push to quit Snd");
+      gtk_label_set_text(GTK_LABEL(GTK_BIN(label)->child), "Push to quit Snd");
     }
   else
     {
-      gtk_label_set_text(GTK_LABEL(GTK_BIN(label)->child),"Push for Snd");
+      gtk_label_set_text(GTK_LABEL(GTK_BIN(label)->child), "Push for Snd");
       gtk_widget_hide(snd);
       snd_running = 0;
     }
@@ -123,29 +123,29 @@ static gint Window_Close(GtkWidget *w, GdkEvent *event, gpointer clientData)
   return(FALSE);
 }
 
-static void gsnd_main (int argc,char **argv )
+static void gsnd_main (int argc, char **argv )
 {
-  gtk_init(&argc,&argv);
+  gtk_init(&argc, &argv);
   shell = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-  gtk_window_set_policy(GTK_WINDOW(shell),TRUE,TRUE,FALSE);
-  gtk_widget_set_usize(shell,200,40);
-  form = gtk_vbox_new(FALSE,0);
-  gtk_container_add(GTK_CONTAINER(shell),form);
+  gtk_window_set_policy(GTK_WINDOW(shell), TRUE, TRUE, FALSE);
+  gtk_widget_set_usize(shell, 200, 40);
+  form = gtk_vbox_new(FALSE, 0);
+  gtk_container_add(GTK_CONTAINER(shell), form);
   gtk_widget_show(form);
 
   label = gtk_button_new_with_label("push for Snd");
-  gtk_box_pack_start(GTK_BOX(form),label,FALSE,FALSE,0);
+  gtk_box_pack_start(GTK_BOX(form), label, FALSE, FALSE, 0);
   gtk_widget_show(label);
   gtk_widget_show(shell);
 
-  gtk_signal_connect(GTK_OBJECT(label),"clicked",GTK_SIGNAL_FUNC(Snd_Callback),(gpointer)form);
-  gtk_signal_connect(GTK_OBJECT(shell),"delete_event",GTK_SIGNAL_FUNC(Window_Close),NULL);
+  gtk_signal_connect(GTK_OBJECT(label), "clicked", GTK_SIGNAL_FUNC(Snd_Callback), (gpointer)form);
+  gtk_signal_connect(GTK_OBJECT(shell), "delete_event", GTK_SIGNAL_FUNC(Window_Close), NULL);
   gtk_main();
 }
 
 int main(int argc, char *argv[])
 {
-  gh_enter(argc,argv,gsnd_main);
+  gh_enter(argc, argv, gsnd_main);
   return(0);
 }
 

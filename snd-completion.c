@@ -18,7 +18,7 @@
   #endif
 #endif
       
-#define NUM_COMMANDS 564
+#define NUM_COMMANDS 563
 
 static char *snd_commands[NUM_COMMANDS]={
   S_abort,S_activate_listener,S_add_mark,S_add_player,S_add_sound_file_extension,S_add_to_main_menu,S_add_to_menu,S_add_transform,
@@ -130,7 +130,7 @@ static char *snd_commands[NUM_COMMANDS]={
   S_spectro_z_angle,S_spectro_z_scale,S_spectrogram,S_spectrum_env,S_speed,S_speed_as_float,S_speed_as_ratio,S_speed_as_semitone,
   S_speed_style,S_speed_tones,S_squelch_update,S_srate,S_srate_env,
   S_src_selection,S_src_sound,S_start_hook,S_start_playing,S_start_playing_hook,S_start_progress_report,
-  S_stop_player,S_stop_playing,S_stop_playing_channel_hook,S_stop_playing_hook,S_stop_playing_region_hook,S_string_length,
+  S_stop_player,S_stop_playing,S_stop_playing_channel_hook,S_stop_playing_hook,S_stop_playing_region_hook,
   S_swap_channels,S_sync,S_syncd_marks,
 
   S_temp_dir,S_temp_filenames,S_temp_to_selection,S_temp_to_sound,S_temps_to_selection,S_temps_to_sound,S_text_focus_color,
@@ -164,7 +164,7 @@ static int complete_one_set(char *text, int num_commands, char **commands)
       if (text[0] < commands[i][0]) break;
       if (text[0] == commands[i][0])
 	{
-	  if (strncmp(text,commands[i],len) == 0)
+	  if (strncmp(text, commands[i], len) == 0)
 	    {
 	      matches++;
 	      add_possible_completion(commands[i]);
@@ -200,22 +200,22 @@ void check_snd_commands(void)
 {
   int i,len;
   char **names;
-  if (strcmp(snd_commands[NUM_COMMANDS-1],S_zoom_focus_style) != 0)
-    fprintf(stderr,"last command (%d) is %s?",NUM_COMMANDS,snd_commands[NUM_COMMANDS - 1]);
+  if (strcmp(snd_commands[NUM_COMMANDS-1], S_zoom_focus_style) != 0)
+    fprintf(stderr, "last command (%d) is %s?", NUM_COMMANDS, snd_commands[NUM_COMMANDS - 1]);
   for (i=1;i<NUM_COMMANDS;i++)
-    if (strcmp(snd_commands[i-1],snd_commands[i]) >= 0)
-      fprintf(stderr,"%s >= %s\n",snd_commands[i-1],snd_commands[i]);
+    if (strcmp(snd_commands[i-1], snd_commands[i]) >= 0)
+      fprintf(stderr, "%s >= %s\n", snd_commands[i-1], snd_commands[i]);
   names = (char **)sndlib_commands();
   len = sndlib_num_commands();
   for (i=1;i<len;i++)
-    if (strcmp(names[i-1],names[i]) >= 0)
-      fprintf(stderr,"%s >= %s\n",names[i-1],names[i]);
+    if (strcmp(names[i-1], names[i]) >= 0)
+      fprintf(stderr, "%s >= %s\n", names[i-1], names[i]);
 #if HAVE_GUILE
   names = mus_commands();
   len = mus_num_commands();
   for (i=1;i<len;i++)
-    if (strcmp(names[i-1],names[i]) >= 0)
-      fprintf(stderr,"%s >= %s\n",names[i-1],names[i]);
+    if (strcmp(names[i-1], names[i]) >= 0)
+      fprintf(stderr, "%s >= %s\n", names[i-1], names[i]);
 #endif
 }
 #endif
@@ -241,10 +241,10 @@ char *command_completer(char *original_text)
       if (beg > 0) 
 	text = (char *)(original_text+beg);
       else text = original_text;
-      matches = complete_one_set(text,NUM_COMMANDS,snd_commands);
-      matches += complete_one_set(text,sndlib_num_commands(),(char **)sndlib_commands());
+      matches = complete_one_set(text, NUM_COMMANDS, snd_commands);
+      matches += complete_one_set(text, sndlib_num_commands(), (char **)sndlib_commands());
 #if HAVE_GUILE
-      matches += complete_one_set(text,mus_num_commands(),mus_commands());
+      matches += complete_one_set(text, mus_num_commands(), mus_commands());
 #endif
     }
   else return(copy_string(original_text));
@@ -256,9 +256,9 @@ char *command_completer(char *original_text)
       else
 	{
 	  len = snd_strlen(current_match) + beg + 2;
-	  text = (char *)CALLOC(len,sizeof(char));
-	  strncpy(text,original_text,beg);
-	  strcat(text,current_match);
+	  text = (char *)CALLOC(len, sizeof(char));
+	  strncpy(text, original_text, beg);
+	  strcat(text, current_match);
 	  FREE(current_match);
 	  return(text);
 	}
@@ -279,8 +279,8 @@ int add_completer_func(char *(*func)(char *))
     {
       completer_funcs_size += 8;
       if (completer_funcs == NULL)
-	completer_funcs = (completer_func *)CALLOC(completer_funcs_size,sizeof(completer_func));
-      else completer_funcs = (completer_func *)REALLOC(completer_funcs,completer_funcs_size * sizeof(completer_func));
+	completer_funcs = (completer_func *)CALLOC(completer_funcs_size, sizeof(completer_func));
+      else completer_funcs = (completer_func *)REALLOC(completer_funcs, completer_funcs_size * sizeof(completer_func));
     }
   completer_funcs[completer_funcs_end] = func;
   completer_funcs_end++;
@@ -306,10 +306,10 @@ void add_possible_completion(char *text)
 	{
 	  possible_completions_size += 16;
 	  if (possible_completions == NULL)
-	    possible_completions = (char **)CALLOC(possible_completions_size,sizeof(char *));
+	    possible_completions = (char **)CALLOC(possible_completions_size, sizeof(char *));
 	  else
 	    {
-	      possible_completions = (char **)REALLOC(possible_completions,possible_completions_size * sizeof(char *));
+	      possible_completions = (char **)REALLOC(possible_completions, possible_completions_size * sizeof(char *));
 	      for (i=possible_completions_ctr;i<possible_completions_size;i++) possible_completions[i] = NULL;
 	    }
 	}
@@ -322,7 +322,7 @@ void add_possible_completion(char *text)
 void display_completions(snd_state *ss)
 {
   if (possible_completions_ctr > 0)
-    snd_completion_help(ss,possible_completions_ctr,possible_completions);
+    snd_completion_help(ss, possible_completions_ctr, possible_completions);
 }
 
 char *complete_text(char *text, int func)
@@ -355,10 +355,10 @@ char *filename_completer(char *text)
     if (full_name[i] == '/')
       break;
 
-  dir_name = (char *)CALLOC(i+1,sizeof(char));
-  strncpy(dir_name,full_name,i);
-  file_name = (char *)CALLOC(len-i+2,sizeof(char));
-  for (j=0,k=i+1;k<len;j++,k++) file_name[j] = full_name[k];
+  dir_name = (char *)CALLOC(i+1, sizeof(char));
+  strncpy(dir_name, full_name, i);
+  file_name = (char *)CALLOC(len-i+2, sizeof(char));
+  for (j=0, k=i+1;k<len;j++,k++) file_name[j] = full_name[k];
   if (full_name) {FREE(full_name); full_name = NULL;}
   len = snd_strlen(file_name);
   if ((dpos=opendir(dir_name)) != NULL)
@@ -368,7 +368,7 @@ char *filename_completer(char *text)
 	  if (dirp->d_name[0] != '.')
 	    {
 	      /* match dirp->d_name against rest of text */
-	      if (strncmp(dirp->d_name,file_name,len) == 0)
+	      if (strncmp(dirp->d_name, file_name, len) == 0)
 		{
 		  matches++;
 		  add_possible_completion(dirp->d_name);
@@ -391,7 +391,7 @@ char *filename_completer(char *text)
       closedir(dpos);
 #else
       if (closedir(dpos) != 0) 
-	snd_error("closedir %s failed! [%s[%d] %s]",dir_name,__FILE__,__LINE__,__FUNCTION__);
+	snd_error("closedir %s failed! [%s[%d] %s]", dir_name, __FILE__, __LINE__, __FUNCTION__);
 #endif
     }
   if (dir_name) FREE(dir_name);
@@ -406,10 +406,10 @@ char *filename_completer(char *text)
 	  break;
       if (i < 0) return(current_match);
       curlen = strlen(current_match) + len + 3;
-      file_name = (char *)CALLOC(curlen,sizeof(char));
-      strncpy(file_name,text,i+1);
-      strcat(file_name,current_match);
-      if (is_directory(file_name)) strcat(file_name,"/");
+      file_name = (char *)CALLOC(curlen, sizeof(char));
+      strncpy(file_name, text, i+1);
+      strcat(file_name, current_match);
+      if (is_directory(file_name)) strcat(file_name, "/");
       FREE(current_match);
       return(file_name);
     }
@@ -421,19 +421,19 @@ char *srate_completer(char *text)
 {
   set_completion_matches(1);
   while ((text) && (*text == ' ')) text++;
-  if (strcmp(text,"4410") == 0) return(copy_string("44100"));
-  if (strcmp(text,"441") == 0) return(copy_string("44100"));
-  if (strcmp(text,"44") == 0) return(copy_string("44100"));
-  if (strcmp(text,"2205") == 0) return(copy_string("22050"));
-  if (strcmp(text,"220") == 0) return(copy_string("22050"));
-  if (strcmp(text,"22") == 0) return(copy_string("22050"));
-  if (strcmp(text,"2") == 0) return(copy_string("22050"));
-  if (strcmp(text,"4800") == 0) return(copy_string("48000"));
-  if (strcmp(text,"480") == 0) return(copy_string("48000"));
-  if (strcmp(text,"48") == 0) return(copy_string("48000"));
-  if (strcmp(text,"800") == 0) return(copy_string("8000"));
-  if (strcmp(text,"80") == 0) return(copy_string("8000"));
-  if (strcmp(text,"8") == 0) return(copy_string("8000"));
+  if (strcmp(text, "4410") == 0) return(copy_string("44100"));
+  if (strcmp(text, "441") == 0) return(copy_string("44100"));
+  if (strcmp(text, "44") == 0) return(copy_string("44100"));
+  if (strcmp(text, "2205") == 0) return(copy_string("22050"));
+  if (strcmp(text, "220") == 0) return(copy_string("22050"));
+  if (strcmp(text, "22") == 0) return(copy_string("22050"));
+  if (strcmp(text, "2") == 0) return(copy_string("22050"));
+  if (strcmp(text, "4800") == 0) return(copy_string("48000"));
+  if (strcmp(text, "480") == 0) return(copy_string("48000"));
+  if (strcmp(text, "48") == 0) return(copy_string("48000"));
+  if (strcmp(text, "800") == 0) return(copy_string("8000"));
+  if (strcmp(text, "80") == 0) return(copy_string("8000"));
+  if (strcmp(text, "8") == 0) return(copy_string("8000"));
   set_completion_matches(0);
   return(copy_string(text));
 }
@@ -474,9 +474,9 @@ char *info_completer(char *text)
 		  if (new_text) FREE(new_text);
 		  new_file = filename_completer((char *)(text+beg));
 		  len = beg + 2 + snd_strlen(new_file);
-		  new_text = (char *)CALLOC(len,sizeof(char));
-		  strncpy(new_text,text,beg);
-		  strcat(new_text,new_file);
+		  new_text = (char *)CALLOC(len, sizeof(char));
+		  strncpy(new_text, text, beg);
+		  strcat(new_text, new_file);
 		  return(new_text);
 		}
 	      else return(new_text);
@@ -488,7 +488,7 @@ char *info_completer(char *text)
   else return(command_completer(text));
 }
 
-static int find_indentation(char *str,int loc)
+static int find_indentation(char *str, int loc)
 {
   int line_beg = 0,open_paren = -1,parens,i;
   parens = 0;
@@ -519,13 +519,13 @@ char *complete_listener_text(char *old_text, int end, int *try_completion, char 
 	{
 	  /* tab as indentation */
 	  /* look at previous line to decide */
-	  spaces = find_indentation(old_text,i);
+	  spaces = find_indentation(old_text, i);
 	  if (spaces > 0)
 	    {
-	      file_text = (char *)CALLOC(spaces+1,sizeof(char));
+	      file_text = (char *)CALLOC(spaces+1, sizeof(char));
 	      for (k=0;k<spaces;k++) file_text[k] = ' ';
 	      file_text[spaces] = 0;
-	      append_listener_text(end,file_text);
+	      append_listener_text(end, file_text);
 	      FREE(file_text);
 	      file_text = NULL;
 	    }
@@ -547,11 +547,11 @@ char *complete_listener_text(char *old_text, int end, int *try_completion, char 
 	  if (cr_pos == 0) spaces--; 
 	  if (text_pos < spaces)
 	    {
-	      file_text = (char *)CALLOC(spaces+2,sizeof(char));
+	      file_text = (char *)CALLOC(spaces+2, sizeof(char));
 	      for (k=text_pos+1;k<spaces;k++) file_text[k-text_pos-1] = ' ';
 	      file_text[spaces] = ';';
 	      file_text[spaces+1] = 0;
-	      append_listener_text(end-1,file_text);
+	      append_listener_text(end-1, file_text);
 	      FREE(file_text);
 	    }
 	  (*try_completion) = 0;
@@ -562,9 +562,9 @@ char *complete_listener_text(char *old_text, int end, int *try_completion, char 
 	  file_text = copy_string((char *)(old_text+i+1));
 	  new_file = filename_completer(file_text);
 	  len = i + 2 + snd_strlen(new_file);
-	  new_text = (char *)CALLOC(len,sizeof(char));
-	  strncpy(new_text,old_text,i+1);
-	  strcat(new_text,new_file);
+	  new_text = (char *)CALLOC(len, sizeof(char));
+	  strncpy(new_text, old_text, i+1);
+	  strcat(new_text, new_file);
 	  if (new_file) FREE(new_file);
 	  break;
 	}
@@ -592,11 +592,11 @@ static char *snd_apropos(char *old_text)
   if ((matches > 0) && (possible_completions_ctr > 0))
     {
       for (i=0;i<possible_completions_ctr;i++) len += (snd_strlen(possible_completions[i]) + 3);
-      buffer = (char *)CALLOC(len,sizeof(char));
+      buffer = (char *)CALLOC(len, sizeof(char));
       for (i=0;i<possible_completions_ctr;i++)
 	{
-	  strcat(buffer,possible_completions[i]);
-	  strcat(buffer," ");
+	  strcat(buffer, possible_completions[i]);
+	  strcat(buffer, " ");
 	}
     }
   set_save_completions(FALSE);
@@ -608,10 +608,10 @@ static SCM g_apropos(SCM text)
   #define H_apropos "(" S_snd_apropos " name) returns possible continuations of name"
   char *res=NULL,*str=NULL;
   SCM val = SCM_BOOL_F;
-  SCM_ASSERT((gh_string_p(text) || gh_symbol_p(text)),text,SCM_ARG1,S_snd_apropos);
+  SCM_ASSERT((gh_string_p(text) || gh_symbol_p(text)), text, SCM_ARG1, S_snd_apropos);
   if (gh_string_p(text))
     str = TO_NEW_C_STRING(text);
-  else str = gh_symbol2newstr(text,NULL);
+  else str = gh_symbol2newstr(text, NULL);
   res = snd_apropos(str);
   if (str) {free(str); str=NULL;}
   if (res) 
@@ -627,14 +627,14 @@ static SCM g_save_listener(SCM filename)
   #define H_save_listener "(" S_save_listener " filename) saves the current listener text in filename"
   char *urn = NULL;
   FILE *fp = NULL;
-  SCM_ASSERT(gh_string_p(filename),filename,SCM_ARG1,S_save_listener);
+  SCM_ASSERT(gh_string_p(filename), filename, SCM_ARG1, S_save_listener);
   urn = TO_NEW_C_STRING(filename);
-  fp = fopen(urn,"w");
+  fp = fopen(urn, "w");
   if (fp)
     {
       save_listener_text(fp);
       if (fclose(fp) != 0)
-	snd_error("save-listener: close file %s: %s\n",urn,strerror(errno));
+	snd_error("save-listener: close file %s: %s\n", urn, strerror(errno));
     }
   else scm_throw(CANNOT_SAVE,
 		 SCM_LIST3(TO_SCM_STRING(S_save_listener),
@@ -646,7 +646,7 @@ static SCM g_save_listener(SCM filename)
 
 void g_init_completions(SCM local_doc)
 {
-  DEFINE_PROC(gh_new_procedure(S_snd_apropos,SCM_FNC g_apropos,1,0,0),H_apropos);
-  DEFINE_PROC(gh_new_procedure(S_save_listener,SCM_FNC g_save_listener,1,0,0),H_save_listener);
+  DEFINE_PROC(gh_new_procedure(S_snd_apropos, SCM_FNC g_apropos, 1, 0, 0), H_apropos);
+  DEFINE_PROC(gh_new_procedure(S_save_listener, SCM_FNC g_save_listener, 1, 0, 0), H_save_listener);
 }
 #endif

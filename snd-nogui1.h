@@ -4,7 +4,7 @@
 /* -------- snd-xhelp.c -------- */
 
 void snd_help(snd_state *ss, char *subject, char *help);
-void snd_completion_help(snd_state *ss,int matches,char **buffer);
+void snd_completion_help(snd_state *ss, int matches, char **buffer);
 
 
 /* -------- snd-xerror.c -------- */
@@ -16,11 +16,11 @@ int snd_yes_or_no_p(snd_state *ss, char *format, ...);
 
 /* -------- snd-xdraw.c -------- */
 
-void draw_line (axis_context *ax,int x0,int y0,int x1,int y1);
-void fill_rectangle (axis_context *ax,int x0, int y0, int width, int height);
-void erase_rectangle (chan_info *cp, axis_context *ax,int x0, int y0, int width, int height);
-void fill_polygon(axis_context *ax,int points, ...);
-void draw_polygon(axis_context *ax,int points, ...);
+void draw_line (axis_context *ax, int x0, int y0, int x1, int y1);
+void fill_rectangle (axis_context *ax, int x0, int y0, int width, int height);
+void erase_rectangle (chan_info *cp, axis_context *ax, int x0, int y0, int width, int height);
+void fill_polygon(axis_context *ax, int points, ...);
+void draw_polygon(axis_context *ax, int points, ...);
 void draw_string (axis_context *ax, int x0, int y0, char *str, int len);
 void draw_arc(axis_context *ax, int x, int y, int size);
 void set_grf_points(int xi, int j, int ymin, int ymax);
@@ -29,9 +29,9 @@ void allocate_grf_points(void);
 void draw_grf_points(chan_info *cp, axis_context *ax, int j, axis_info *ap, Float y0, int graph_style);
 void draw_both_grf_points(chan_info *cp, axis_context *ax, int j, int graph_style);
 void draw_both_grfs(axis_context *ax, int j);
-void mix_save_graph(snd_state *ss, mix_context *ms,int j);
-void erase_and_draw_grf_points(mix_context *ms,chan_info *cp, int j);
-void erase_and_draw_both_grf_points(mix_context *ms,chan_info *cp, int j);
+void mix_save_graph(snd_state *ss, mix_context *ms, int j);
+void erase_and_draw_grf_points(mix_context *ms, chan_info *cp, int j);
+void erase_and_draw_both_grf_points(mix_context *ms, chan_info *cp, int j);
 void setup_axis_context(chan_info *cp, axis_context *ax);
 void draw_spectro_line(axis_context *ax, int color, int x0, int y0, int x1, int y1);
 void allocate_color_map(snd_state *ss, int colormap);
@@ -129,9 +129,9 @@ int popup_info_menu(void);
 int popup_menu_exists(void);
 void set_menu_label(int w, const char *label);
 
-int gh_change_menu_label(int which_menu,char *old_label, char *new_label);
-int gh_set_menu_sensitive(int which_menu,char *old_label, int on);
-int gh_menu_is_sensitive(int which_menu,char *old_label);
+int gh_change_menu_label(int which_menu, char *old_label, char *new_label);
+int gh_set_menu_sensitive(int which_menu, char *old_label, int on);
+int gh_menu_is_sensitive(int which_menu, char *old_label);
 int gh_add_to_main_menu(snd_state *ss, char *label, int slot);
 int gh_add_to_menu(snd_state *ss, int which_menu, char *label, int callb);
 int gh_remove_from_menu(int which_menu, char *label);
@@ -146,7 +146,7 @@ void g_init_gxmenu(void);
 /* -------- snd-xmain.c -------- */
 
 void dismiss_all_dialogs(snd_state *ss);
-void snd_doit(snd_state *state,int argc, char **argv);
+void snd_doit(snd_state *state, int argc, char **argv);
 #ifdef SND_AS_WIDGET
   void snd_as_widget(int argc, char **argv, int app, int parent, int *caller_args, int caller_argn);
 #endif
@@ -266,7 +266,7 @@ void change_channel_style(snd_info *sp, int new_style);
 int w_snd_name(snd_info *sp);
 int w_snd_play(snd_info *sp);
 int w_snd_filter_env(snd_info *sp);
-void make_minibuffer_label(snd_info *sp,char *str);
+void make_minibuffer_label(snd_info *sp, char *str);
 void goto_minibuffer(snd_info *sp);
 void set_minibuffer_string(snd_info *sp, char *str);
 void set_minibuffer_cursor_position(snd_info *sp, int pos);
@@ -294,7 +294,7 @@ void play_button_pause(snd_state *ss, int pausing);
 void syncb(snd_info *sp, int on);
 void combineb(snd_info *sp, int val);
 void lock_apply(snd_state *ss, snd_info *sp);
-void unlock_apply(snd_state *ss,snd_info *sp);
+void unlock_apply(snd_state *ss, snd_info *sp);
 void set_apply_button(snd_info *sp, int val);
 void snd_file_lock_icon(snd_info *sp, int on);
 void snd_file_bomb_icon(snd_info *sp, int on);
@@ -355,7 +355,7 @@ void set_enved_click_to_delete(int n);
 void create_envelope_editor (snd_state *ss);
 void set_enved_clipping(snd_state *ss, int val);
 void set_enved_exping(snd_state *ss, int val);
-void set_enved_base(snd_state *ss,Float val);
+void set_enved_base(snd_state *ss, Float val);
 void set_enved_target(snd_state *ss, int val);
 void set_enved_waving(snd_state *ss, int val);
 void set_enved_dBing(snd_state *ss, int val);
@@ -393,7 +393,7 @@ char *ps_rgb(snd_state *ss, int pchan);
 /* -------- snd-xscm.c -------- */
 
 #if HAVE_GUILE
-void g_initialize_xgh(snd_state *ss,SCM local_doc);
+void g_initialize_xgh(snd_state *ss, SCM local_doc);
 #endif
 
 

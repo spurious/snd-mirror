@@ -7,59 +7,59 @@ void ssnd_help(snd_state *ss, char *subject, ...)
   va_list ap;
   char *helpstr,*newstr;
   int len,size;
-  va_start(ap,subject);
+  va_start(ap, subject);
   size = 1024;
-  newstr = (char *)CALLOC(size,sizeof(char));
+  newstr = (char *)CALLOC(size, sizeof(char));
   len = 0;
-  while ((helpstr = va_arg(ap,char *)))
+  while ((helpstr = va_arg(ap, char *)))
     {
       len += strlen(helpstr);
       if (len >= size)
 	{
 	  size = len+1024;
-	  newstr = (char *)REALLOC(newstr,size * sizeof(char));
+	  newstr = (char *)REALLOC(newstr, size * sizeof(char));
 	}
-      strcat(newstr,helpstr);
+      strcat(newstr, helpstr);
     }
   va_end(ap);
-  snd_help(ss,subject,newstr);
+  snd_help(ss, subject, newstr);
   FREE(newstr);
 }  
 
 static void snd_help_with_url(snd_state *ss, char *subject, char *url, char *helpstr)
 {
 #if HAVE_HTML
-  snd_help(ss,subject,url);
+  snd_help(ss, subject, url);
 #else
-  snd_help(ss,subject,helpstr);
+  snd_help(ss, subject, helpstr);
 #endif
 }
 
 static void ssnd_help_with_url(snd_state *ss, char *subject, char *url, ...)
 {
 #if HAVE_HTML
-  snd_help(ss,subject,url);
+  snd_help(ss, subject, url);
 #else
   /* groan! */
   va_list ap;
   char *helpstr,*newstr;
   int len,size;
-  va_start(ap,url);
+  va_start(ap, url);
   size = 1024;
-  newstr = (char *)CALLOC(size,sizeof(char));
+  newstr = (char *)CALLOC(size, sizeof(char));
   len = 0;
-  while ((helpstr = va_arg(ap,char *)))
+  while ((helpstr = va_arg(ap, char *)))
     {
       len += strlen(helpstr);
       if (len >= size)
 	{
 	  size = len+1024;
-	  newstr = (char *)REALLOC(newstr,size * sizeof(char));
+	  newstr = (char *)REALLOC(newstr, size * sizeof(char));
 	}
-      strcat(newstr,helpstr);
+      strcat(newstr, helpstr);
     }
   va_end(ap);
-  snd_help_with_url(ss,subject,url,newstr);
+  snd_help_with_url(ss, subject, url, newstr);
   FREE(newstr);
 #endif
 }
@@ -69,8 +69,8 @@ static void ssnd_help_with_url(snd_state *ss, char *subject, char *url, ...)
 static char *snd_itoa(int n)
 {
   char *str;
-  str = (char *)CALLOC(8,sizeof(char));
-  sprintf(str,"%d",n);
+  str = (char *)CALLOC(8, sizeof(char));
+  sprintf(str, "%d", n);
   return(str);
 }
 
@@ -103,8 +103,8 @@ static char *sndlib_consistency_check(void)
   else
     if (mus_sample_bits() != MUS_SAMPLE_BITS)
       {
-	buf = (char *)CALLOC(32,sizeof(char)); /* memory leak here is the least of our worries... */
-	sprintf(buf," Snd expects %d bit int samples, but sndlib uses %d bits!",
+	buf = (char *)CALLOC(32, sizeof(char)); /* memory leak here is the least of our worries... */
+	sprintf(buf, " Snd expects %d bit int samples, but sndlib uses %d bits!",
 		MUS_SAMPLE_BITS,
 		mus_sample_bits());
 	return(buf);
@@ -121,14 +121,14 @@ static char *sndlib_consistency_check(void)
   #include <gnu/libc-version.h>
 #endif
 
-static char* vstrcat(char *buf,...)
+static char* vstrcat(char *buf, ...)
 {
   va_list ap;
   char *str;
-  va_start(ap,buf);
-  while ((str = va_arg(ap,char *)))
+  va_start(ap, buf);
+  while ((str = va_arg(ap, char *)))
     {
-      strcat(buf,str);
+      strcat(buf, str);
     }
   va_end(ap);
   return(buf);
@@ -140,8 +140,8 @@ char *version_info(void)
   char *buf;
   char **itoa;
   int i;
-  buf = (char *)CALLOC(1024,sizeof(char));
-  itoa = (char **)CALLOC(NUM_ITOAS,sizeof(char *));
+  buf = (char *)CALLOC(1024, sizeof(char));
+  itoa = (char **)CALLOC(NUM_ITOAS, sizeof(char *));
   vstrcat(buf,
 	  "This is Snd version ",
 	  SND_RPM_VERSION,
@@ -152,44 +152,44 @@ char *version_info(void)
 	  "\n    (compiled as a widget)",
 #endif
 #if HAVE_GUILE
-	  "\n    Guile ",guile_version(),
+	  "\n    Guile ", guile_version(),
 #ifdef LIBGUILE_VERSION
-	  " libguile.so.",itoa[18]=snd_itoa(LIBGUILE_VERSION),
+	  " libguile.so.", itoa[18]=snd_itoa(LIBGUILE_VERSION),
 #endif
 #endif
-	  "\n    CLM ",itoa[0]=snd_itoa(MUS_VERSION),".",itoa[1]=snd_itoa(MUS_REVISION)," (",MUS_DATE,")",
+	  "\n    CLM ", itoa[0]=snd_itoa(MUS_VERSION), ".", itoa[1]=snd_itoa(MUS_REVISION), " (", MUS_DATE, ")",
 #if ((HAVE_XPM) && (defined(USE_MOTIF)))
-	  "\n    Xpm ",itoa[2]=snd_itoa(XpmFormat),".",itoa[3]=snd_itoa(XpmVersion),".",itoa[4]=snd_itoa(XpmRevision),
+	  "\n    Xpm ", itoa[2]=snd_itoa(XpmFormat), ".", itoa[3]=snd_itoa(XpmVersion), ".", itoa[4]=snd_itoa(XpmRevision),
 #endif
 #ifdef SND_CONF
-	  "\n    conf: ",SND_CONF,
+	  "\n    conf: ", SND_CONF,
 #endif
 #if HAVE_HTML
 #if USE_MOTIF
-	  "\n    XmHTML ",itoa[5]=snd_itoa(XmHTMLVERSION),".",itoa[6]=snd_itoa(XmHTMLREVISION),".",itoa[7]=snd_itoa(XmHTMLUPDATE_LEVEL),
+	  "\n    XmHTML ", itoa[5]=snd_itoa(XmHTMLVERSION), ".", itoa[6]=snd_itoa(XmHTMLREVISION), ".", itoa[7]=snd_itoa(XmHTMLUPDATE_LEVEL),
 #endif
 #endif
 #if USE_MOTIF
 #ifdef LESSTIF_VERSION
-	  "\n    Lesstif ",itoa[8]=snd_itoa(LESSTIF_VERSION),".",itoa[9]=snd_itoa(LESSTIF_REVISION)," ",
+	  "\n    Lesstif ", itoa[8]=snd_itoa(LESSTIF_VERSION), ".", itoa[9]=snd_itoa(LESSTIF_REVISION), " ",
 #endif
-	  "\n    Motif ",itoa[10]=snd_itoa(XmVERSION),".",itoa[11]=snd_itoa(XmREVISION),".",itoa[12]=snd_itoa(XmUPDATE_LEVEL),
-	  " X",itoa[13]=snd_itoa(X_PROTOCOL),"R",itoa[14]=snd_itoa(XT_REVISION),
+	  "\n    Motif ", itoa[10]=snd_itoa(XmVERSION), ".", itoa[11]=snd_itoa(XmREVISION), ".", itoa[12]=snd_itoa(XmUPDATE_LEVEL),
+	  " X", itoa[13]=snd_itoa(X_PROTOCOL), "R", itoa[14]=snd_itoa(XT_REVISION),
 #endif
 #if USE_GTK
-	  "\n    Gtk+ ",itoa[9]=snd_itoa(GTK_MAJOR_VERSION),".",itoa[10]=snd_itoa(GTK_MINOR_VERSION),".",itoa[11]=snd_itoa(GTK_MICRO_VERSION),
-	  ", Glib ",itoa[12]=snd_itoa(GLIB_MAJOR_VERSION),".",itoa[13]=snd_itoa(GLIB_MINOR_VERSION),".",itoa[14]=snd_itoa(GLIB_MICRO_VERSION),
+	  "\n    Gtk+ ", itoa[9]=snd_itoa(GTK_MAJOR_VERSION), ".", itoa[10]=snd_itoa(GTK_MINOR_VERSION), ".", itoa[11]=snd_itoa(GTK_MICRO_VERSION),
+	  ", Glib ", itoa[12]=snd_itoa(GLIB_MAJOR_VERSION), ".", itoa[13]=snd_itoa(GLIB_MINOR_VERSION), ".", itoa[14]=snd_itoa(GLIB_MICRO_VERSION),
 #endif
 #if HAVE_GUILE_GTK
 	  ", Guile-gtk",
   #ifdef GUILE_GTK_VERSION
-          ": ",GUILE_GTK_VERSION,
+          ": ", GUILE_GTK_VERSION,
   #endif
 #endif
 #if HAVE_GTKEXTRA
 	  "\n    gtkextra",
   #ifdef GTKEXTRA_VERSION
-          ": ",GTKEXTRA_VERSION,
+          ": ", GTKEXTRA_VERSION,
   #endif
 #endif
 #if (!(defined(USE_MOTIF))) && (!(defined(USE_GTK)))
@@ -201,28 +201,28 @@ char *version_info(void)
 #ifdef CCRMA
 	  "\n    (uses ccrma-specific /zap dirs)",
 #endif
-	  "\n    ",mus_audio_moniker(),
-	  "\n    Sndlib ",itoa[15]=snd_itoa(SNDLIB_VERSION),".",itoa[16]=snd_itoa(SNDLIB_REVISION)," (",SNDLIB_DATE,
+	  "\n    ", mus_audio_moniker(),
+	  "\n    Sndlib ", itoa[15]=snd_itoa(SNDLIB_VERSION), ".", itoa[16]=snd_itoa(SNDLIB_REVISION), " (", SNDLIB_DATE,
 #if SNDLIB_USE_FLOATS
 	  ", float samples",
 #else
-	  ", int",itoa[17]=snd_itoa(MUS_SAMPLE_BITS)," samples",
+	  ", int", itoa[17]=snd_itoa(MUS_SAMPLE_BITS), " samples",
 #endif
-	  ")",sndlib_consistency_check(),
+	  ")", sndlib_consistency_check(),
 #if HAVE_GDBM
-	  "\n    gdbm: ",gdbm_version,
+	  "\n    gdbm: ", gdbm_version,
 #endif
 #if HAVE_GSL
 	  "\n    gsl",
   #ifdef GSL_VERSION
-          ": ",GSL_VERSION,
+          ": ", GSL_VERSION,
   #endif
 #endif
 #if HAVE_LADSPA
 	  "\n    with LADSPA",
 #endif
 #ifdef __DATE__
-	  "\n    Compiled ",__DATE__," ",__TIME__,
+	  "\n    Compiled ", __DATE__, " ", __TIME__,
 #endif
 #ifdef __VERSION__
   #ifndef __cplusplus
@@ -233,9 +233,9 @@ char *version_info(void)
 	  __VERSION__,
 #endif
 #if HAVE_GNU_LIBC_VERSION_H
-	  "\n    Libc: ",gnu_get_libc_version(),".",gnu_get_libc_release(),
+	  "\n    Libc: ", gnu_get_libc_version(), ".", gnu_get_libc_release(),
 #endif
-	  "\n",NULL);
+	  "\n", NULL);
   for (i=0;i<NUM_ITOAS;i++) if (itoa[i]) FREE(itoa[i]);
   FREE(itoa);
   return(buf);
@@ -245,7 +245,7 @@ void news_help(snd_state *ss)
 {
   char *info;
   info = version_info();
-  ssnd_help(ss,STR_News,
+  ssnd_help(ss, STR_News,
 	    info,
 	    "\n",
 	    "Recent changes include:\n\
@@ -1506,7 +1506,7 @@ before it is mixed into the output. The vertical\n\
 sliders on the right scale the line-in and\n\
 microphone signals before the meter, and the\n\
 output signal before it gets to the speaker\n\
-(these are needed to avoid clipping on input,\n\
+(these are needed to avoid clipping on input, \n\
 and to set the 'monitor' volume of the output\n\
 independent of the output file volume).\n\
 \n\
@@ -1683,19 +1683,19 @@ fft_keypad_help_string,
 NULL);
 }
 
-void find_help(snd_state *ss) {snd_help_with_url(ss,STR_Find,"#find",find_help_string);}
-void undo_help(snd_state *ss) {snd_help_with_url(ss,STR_Undo,"#undoredo",undo_help_string);}
-void sync_help(snd_state *ss) {snd_help_with_url(ss,STR_Sync,"#multichannel",sync_help_string);}
-void speed_help(snd_state *ss) {snd_help_with_url(ss,STR_Speed,"#speed",speed_help_string);}
-void expand_help(snd_state *ss) {snd_help_with_url(ss,STR_Expand,"#expand",expand_help_string);}
-void reverb_help(snd_state *ss) {snd_help_with_url(ss,STR_Reverb,"#reverb",reverb_help_string);}
-void contrast_help(snd_state *ss) {snd_help_with_url(ss,STR_Contrast,"#contrast",contrast_help_string);}
-void env_help(snd_state *ss) {snd_help_with_url(ss,STR_Envelope,"#editenvelope",env_help_string);}
-void marks_help(snd_state *ss) {snd_help_with_url(ss,STR_Marks,"#marks",mark_help_string);}
-void mix_help(snd_state *ss) {snd_help_with_url(ss,STR_Mixing,"#mixingfiles",mix_help_string);}
-void sound_files_help(snd_state *ss) {snd_help_with_url(ss,STR_Format,"#formats",sound_files_help_string);}
-void recording_help(snd_state *ss) {snd_help_with_url(ss,STR_Recording,"#recordfile",recording_help_string);}
-void init_file_help(snd_state *ss) {ssnd_help_with_url(ss,STR_Customization,"extsnd.html",init_file_help_string,"\n",resource_help_string,NULL);}
+void find_help(snd_state *ss) {snd_help_with_url(ss, STR_Find, "#find", find_help_string);}
+void undo_help(snd_state *ss) {snd_help_with_url(ss, STR_Undo, "#undoredo", undo_help_string);}
+void sync_help(snd_state *ss) {snd_help_with_url(ss, STR_Sync, "#multichannel", sync_help_string);}
+void speed_help(snd_state *ss) {snd_help_with_url(ss, STR_Speed, "#speed", speed_help_string);}
+void expand_help(snd_state *ss) {snd_help_with_url(ss, STR_Expand, "#expand", expand_help_string);}
+void reverb_help(snd_state *ss) {snd_help_with_url(ss, STR_Reverb, "#reverb", reverb_help_string);}
+void contrast_help(snd_state *ss) {snd_help_with_url(ss, STR_Contrast, "#contrast", contrast_help_string);}
+void env_help(snd_state *ss) {snd_help_with_url(ss, STR_Envelope, "#editenvelope", env_help_string);}
+void marks_help(snd_state *ss) {snd_help_with_url(ss, STR_Marks, "#marks", mark_help_string);}
+void mix_help(snd_state *ss) {snd_help_with_url(ss, STR_Mixing, "#mixingfiles", mix_help_string);}
+void sound_files_help(snd_state *ss) {snd_help_with_url(ss, STR_Format, "#formats", sound_files_help_string);}
+void recording_help(snd_state *ss) {snd_help_with_url(ss, STR_Recording, "#recordfile", recording_help_string);}
+void init_file_help(snd_state *ss) {ssnd_help_with_url(ss, STR_Customization, "extsnd.html", init_file_help_string, "\n", resource_help_string, NULL);}
 
 #if HAVE_GUILE
 char *CLM_help(void);
@@ -1703,7 +1703,7 @@ char *CLM_help(void);
 static char *CLM_help(void) {return("");}
 #endif
 
-void clm_help(snd_state *ss) {snd_help_with_url(ss,STR_CLM,"grfsnd.html#sndwithclm",CLM_help());}
+void clm_help(snd_state *ss) {snd_help_with_url(ss, STR_CLM, "grfsnd.html#sndwithclm", CLM_help());}
 
 #if HAVE_CLICK_FOR_HELP
 
@@ -1714,7 +1714,7 @@ void click_for_file_menu_help(snd_state *ss)
   ssnd_help_with_url(ss,
 		     "File Menu",
 		     "#fileoperations",
-"The File menu provides one way to open,\n\
+"The File menu provides one way to open, \n\
 close, and save files. Its options are:\n\
 \n",
 file_menu_help_string,
@@ -1848,7 +1848,7 @@ graphics update process may be slow.\n\
 
 void click_for_name_separator_help(snd_state *ss)
 {
-  snd_help(ss,"Name Separator",sp_name_separator_help_string);
+  snd_help(ss, "Name Separator", sp_name_separator_help_string);
 }
 
 static char sp_amp_help_string[] = 
@@ -1860,7 +1860,7 @@ returns to the previous value.\n\
 
 void click_for_amp_help(snd_state *ss)
 {
-  snd_help(ss,"Amp",sp_amp_help_string);
+  snd_help(ss, "Amp", sp_amp_help_string);
 }
 
 static char sp_srate_arrow_help_string[] = 
@@ -1872,7 +1872,7 @@ to the left, backwards.\n\
 
 void click_for_srate_arrow_help(snd_state *ss)
 {
-  snd_help(ss,"Srate Arrow",sp_srate_arrow_help_string);
+  snd_help(ss, "Srate Arrow", sp_srate_arrow_help_string);
 }
 
 static char sp_srate_help_string[] =
@@ -1884,14 +1884,14 @@ of playback.  Label clicks behave as with amp.\n\
 
 void click_for_speed_help(snd_state *ss)
 {
-  ssnd_help_with_url(ss,"Srate","#speed",sp_srate_help_string,"\n",speed_help_string,NULL);
+  ssnd_help_with_url(ss, "Srate", "#speed", sp_srate_help_string, "\n", speed_help_string, NULL);
 }
 
 void click_for_minibuffer_help(snd_state *ss)
 {
-  snd_help_with_url(ss,"Minibuffer","#panelayout",
+  snd_help_with_url(ss, "Minibuffer", "#panelayout",
 "This is the 'minibuffer', to use Emacs\n\
-jargon.  Although it looks inert and wasted,\n\
+jargon.  Although it looks inert and wasted, \n\
 there is in fact a text window lurking beneath\n\
 that has access to the Lisp evaluator, not\n\
 to mention much of the innards of the Snd program.\n\
@@ -1900,7 +1900,7 @@ to mention much of the innards of the Snd program.\n\
 
 void click_for_play_help(snd_state *ss)
 {
-  snd_help_with_url(ss,"Play","#play",
+  snd_help_with_url(ss, "Play", "#play",
 "Snd can play any number of sounds at once\n\
 or should be able to anyway.  A sort of\n\
 clumsy realtime mixer, although it was not\n\
@@ -1918,7 +1918,7 @@ to get any expansion. Label clicks as in amp.\n\
 
 void click_for_expand_help(snd_state *ss)
 {
-  ssnd_help_with_url(ss,STR_Expand,"#expand",sp_expand_help_string,"\n",expand_help_string,NULL);
+  ssnd_help_with_url(ss, STR_Expand, "#expand", sp_expand_help_string, "\n", expand_help_string, NULL);
 }
 
 static char sp_contrast_help_string[] =
@@ -1930,7 +1930,7 @@ down to get any effect.  Label clicks as in amp.\n\
 
 void click_for_contrast_help(snd_state *ss)
 {
-  ssnd_help_with_url(ss,STR_Contrast,"#contrast",sp_contrast_help_string,"\n",contrast_help_string,NULL);
+  ssnd_help_with_url(ss, STR_Contrast, "#contrast", sp_contrast_help_string, "\n", contrast_help_string, NULL);
 }
 
 static char sp_revscl_help_string[] =
@@ -1942,7 +1942,7 @@ reverb during playback.  Label clicks as in amp.\n\
 
 void click_for_reverb_scale_help(snd_state *ss)
 {
-  ssnd_help_with_url(ss,"Reverb amount","#reverb",sp_revscl_help_string,"\n",reverb_help_string,NULL);
+  ssnd_help_with_url(ss, "Reverb amount", "#reverb", sp_revscl_help_string, "\n", reverb_help_string, NULL);
 }
 
 static char sp_revlen_help_string[] =
@@ -1956,7 +1956,7 @@ as in amp.\n\
 
 void click_for_reverb_length_help(snd_state *ss)
 {
-  ssnd_help_with_url(ss,"Reverb length","#reverb",sp_revlen_help_string,"\n",reverb_help_string,NULL);
+  ssnd_help_with_url(ss, "Reverb length", "#reverb", sp_revlen_help_string, "\n", reverb_help_string, NULL);
 }
 
 static char sp_filter_help_string[] =
@@ -1977,7 +1977,7 @@ filter envelope text window.\n\
 
 void click_for_filter_help(snd_state *ss)
 {
-  snd_help(ss,"Filter",sp_filter_help_string);
+  snd_help(ss, "Filter", sp_filter_help_string);
 }
 
 static char sp_filter_order_help_string[] =
@@ -1988,7 +1988,7 @@ curve you drew in the 'env' window.\n\
 
 void click_for_filter_order_help(snd_state *ss)
 {
-  snd_help(ss,"Filter Order",sp_filter_order_help_string);
+  snd_help(ss, "Filter Order", sp_filter_order_help_string);
 }
 
 static char sp_filter_envelope_help_string[] =
@@ -2003,7 +2003,7 @@ a low-pass filter envelope could be:\n\
 
 void click_for_filter_envelope_help(snd_state *ss)
 {
-  snd_help(ss,"Filter Envelope",sp_filter_envelope_help_string);
+  snd_help(ss, "Filter Envelope", sp_filter_envelope_help_string);
 }
 
 void click_for_sound_help(snd_state *ss)
@@ -2075,16 +2075,16 @@ void click_for_save_as_help(snd_state *ss)
 	   "Save As",
 "You can save the current state of a file or region\n\
 under a different file name using the Save\n\
-As option.  The output header type, data format,\n\
+As option.  The output header type, data format, \n\
 and sampling rate can also be set.  The data formats\n\
 are big-endian where relevant except for 'wave'\n\
 output.  If a file by the chosen name already exists\n\
 it is silently overwritten, unless that file is\n\
-already open in Snd and has edits.  In that case,\n\
+already open in Snd and has edits.  In that case, \n\
 you'll be asked what to do.  If you want to be warned\n\
 whenever a file is about to be overwritten by this\n\
 option, set the resource overwriteCheck to 1.\n\
-If you give the current file name to Save As,\n\
+If you give the current file name to Save As, \n\
 any current edits will be saved and the current\n\
 version in Snd will be updated (that is, in this\n\
 case, the current edit tree is not preserved).\n\
@@ -2170,7 +2170,7 @@ void color_dialog_help(snd_state *ss)
   snd_help(ss,
        "View Color",
 "This dialog sets the colormap and associated\n\
-variables used during sonogram, spectrogram,\n\
+variables used during sonogram, spectrogram, \n\
 and perhaps wavogram display. The cutoff scale refers\n\
 to the minimum data value to be displayed.\n\
 ");	   
@@ -2181,7 +2181,7 @@ void orientation_dialog_help(snd_state *ss)
   snd_help(ss,
        "View Orientation",
 "This dialog sets the rotation and scaling\n\
-variables used during sonogram, spectrogram,\n\
+variables used during sonogram, spectrogram, \n\
 and wavogram display.\n\
 ");	   
 }
@@ -2205,12 +2205,12 @@ NULL);
 
 void envelope_editor_dialog_help(snd_state *ss)
 {
-  snd_help_with_url(ss,"Envelope Editor","editenvelope",envelope_editor_help_string);
+  snd_help_with_url(ss, "Envelope Editor", "editenvelope", envelope_editor_help_string);
 }
 
 void region_dialog_help(snd_state *ss)
 {
-  snd_help_with_url(ss,STR_Region_Browser,"#regionbrowser",
+  snd_help_with_url(ss, STR_Region_Browser, "#regionbrowser",
 "This is the 'region browser'.  The scrolled\n\
 window contains the list of current regions\n\
 with a brief title to indicate the provenance\n\
@@ -2254,7 +2254,7 @@ void new_file_dialog_help(snd_state *ss)
 {
   snd_help(ss,
 	   "New File",
-"This dialog sets the new file's output header type,\n\
+"This dialog sets the new file's output header type, \n\
 data format, srate, chans, and comment if any.\n\
 ");
 }
@@ -2331,7 +2331,7 @@ when starting Snd:\n\
 \n\
   snd -p . oboe.snd\n\
 \n\
-To preload a specific file,\n\
+To preload a specific file, \n\
 \n\
   (" S_preload_file " <name>)\n\
 \n\

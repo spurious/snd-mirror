@@ -40,7 +40,7 @@
 #define BACKGROUND_CONTINUE TRUE
 #define BACKGROUND_FUNCTION_TYPE gint
 #define BACKGROUND_REMOVE(func) gtk_idle_remove(func)
-#define BACKGROUND_ADD(ss,func,data) gtk_idle_add(func,(gpointer)data)
+#define BACKGROUND_ADD(ss, func, data) gtk_idle_add(func, (gpointer)data)
 
 #define GUI_POINTER gpointer
 #define GUI_WIDGET GtkWidget*

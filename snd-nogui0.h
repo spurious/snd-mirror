@@ -14,7 +14,7 @@
 #define BACKGROUND_CONTINUE FALSE
 #define BACKGROUND_FUNCTION_TYPE int
 #define BACKGROUND_REMOVE(func)
-#define BACKGROUND_ADD(ss,func,data) func(data)
+#define BACKGROUND_ADD(ss, func, data) func(data)
 
 #define GUI_POINTER void *
 #define GUI_WIDGET int

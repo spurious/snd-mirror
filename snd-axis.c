@@ -35,7 +35,7 @@ static tick_descriptor *describe_ticks(tick_descriptor *gd_td, Float lo, Float h
   int mticks,mdiv;
 
   if (!gd_td)
-    td = (tick_descriptor *)CALLOC(1,sizeof(tick_descriptor));
+    td = (tick_descriptor *)CALLOC(1, sizeof(tick_descriptor));
   else 
     {
       td = gd_td;
@@ -49,7 +49,7 @@ static tick_descriptor *describe_ticks(tick_descriptor *gd_td, Float lo, Float h
   ten=(int)floor(flt_ten);
   frac=flt_ten-ten;
   if (frac>.9999) ten++;
-  eten=pow(10,ten);
+  eten=pow(10, ten);
   hib=(int)floor(hi/eten);
   lob=(int)ceil(lo/eten);
   if (lob != hib) 
@@ -79,7 +79,7 @@ static tick_descriptor *describe_ticks(tick_descriptor *gd_td, Float lo, Float h
   else mdiv = (int)(10*floor(mticks/10));
   mfdiv = (td->mhi-td->mlo)/mdiv;
   flog10 = floor(log10(mfdiv));
-  plog10 = pow(10,flog10);
+  plog10 = pow(10, flog10);
   td->tens = (int)fabs(flog10);
   mten = (double)(floor(4.0*(.00001+(mfdiv/plog10))))/4.0;
   if (mten < 1.0) mten = 1.0;
@@ -114,28 +114,29 @@ axis_info *free_axis_info(axis_info *ap)
   return(NULL);
 }
 
-static short shorten(int n)
+static inline short shorten(int n)
 {
-  if (n>=-32768) 
+  if (n >= -32768) 
     {
-      if (n<32768) return(n);
+      if (n < 32768) 
+	return(n);
       else return(32767);
     }
   else return(-32768);
 }
 
-short grf_x(double val, axis_info *ap)
+inline short grf_x(double val, axis_info *ap)
 {
   if (val >= ap->x1) return(ap->x_axis_x1);
   if (val <= ap->x0) return(ap->x_axis_x0);
-  return((short)(ap->x_axis_x0 + (val - ap->x0) * ap->x_scale));
+  return((short)(ap->x_base + val * ap->x_scale));
 }
 
-short grf_y(Float val, axis_info *ap)
+inline short grf_y(Float val, axis_info *ap)
 {
   if (val >= ap->y1) return(ap->y_axis_y1);
   if (val <= ap->y0) return(ap->y_axis_y0);
-  return((short)(ap->y_axis_y0 + (val - ap->y0) * ap->y_scale));
+  return((short)(ap->y_base + val * ap->y_scale));
 }
 
 double ungrf_x(axis_info *ap, int x)
@@ -211,9 +212,13 @@ void make_axes_1(chan_info *cp, axis_info *ap, int x_style, int srate)
       if ((ap->x_axis_x0 == ap->x_axis_x1) || (ap->x0 == ap->x1))
 	ap->x_scale = 0.0;
       else ap->x_scale = ((double)(ap->x_axis_x1 - ap->x_axis_x0))/((double)(ap->x1 - ap->x0));
+      ap->x_base = (double)(ap->x_axis_x0 - ap->x0*ap->x_scale);
+
       if ((ap->y_axis_y0 == ap->y_axis_y1) || (ap->y0 == ap->y1))
 	ap->y_scale = 0.0;
       else ap->y_scale = (ap->y_axis_y1 - ap->y_axis_y0)/(ap->y1 - ap->y0);
+      ap->y_base = (Float)(ap->y_axis_y0 - ap->y0*ap->y_scale);
+
       return;
     }
 
@@ -268,7 +273,7 @@ void make_axes_1(chan_info *cp, axis_info *ap, int x_style, int srate)
 
   if (include_x_label)
     {
-      x_label_width = label_width(ax,ap->xlabel);
+      x_label_width = label_width(ax, ap->xlabel);
       if ((x_label_width+curx+right_border_width) > width)
 	{
 	  include_x_label = 0;
@@ -308,16 +313,16 @@ void make_axes_1(chan_info *cp, axis_info *ap, int x_style, int srate)
 	    }
 	}
 
-      tdy=describe_ticks((tick_descriptor *)(ap->y_ticks),ap->y0,ap->y1,num_ticks);
+      tdy=describe_ticks((tick_descriptor *)(ap->y_ticks), ap->y0, ap->y1, num_ticks);
       ap->y_ticks = tdy;
       if (include_y_tick_labels)
 	{
 	  if (tdy->min_label) {FREE(tdy->min_label); tdy->min_label = NULL;}
-	  tdy->min_label = prettyf(tdy->mlo,tdy->tens);
-	  tdy->min_label_width=number_width(ax,tdy->min_label);
+	  tdy->min_label = prettyf(tdy->mlo, tdy->tens);
+	  tdy->min_label_width=number_width(ax, tdy->min_label);
 	  if (tdy->max_label) {FREE(tdy->max_label); tdy->max_label = NULL;}
-	  tdy->max_label = prettyf(tdy->mhi,tdy->tens);
-	  tdy->max_label_width=number_width(ax,tdy->max_label);
+	  tdy->max_label = prettyf(tdy->mhi, tdy->tens);
+	  tdy->max_label_width=number_width(ax, tdy->max_label);
 	  tick_label_width = tdy->min_label_width;
 	  if (tick_label_width < tdy->max_label_width) tick_label_width = tdy->max_label_width;
 	  if (((curx+tick_label_width) > (int)(.61*width)) || ((4*x_number_height) > height))
@@ -357,20 +362,20 @@ void make_axes_1(chan_info *cp, axis_info *ap, int x_style, int srate)
 
       switch (x_style)
 	{
-	case X_IN_SECONDS: tdx=describe_ticks((tick_descriptor *)(ap->x_ticks),ap->x0,ap->x1,num_ticks); break;
-	case X_IN_SAMPLES: tdx=describe_ticks((tick_descriptor *)(ap->x_ticks),ap->x0*srate,ap->x1*srate,num_ticks); break;
-	case X_TO_ONE: tdx=describe_ticks((tick_descriptor *)(ap->x_ticks),ap->x0/ap->xmax,ap->x1/ap->xmax,num_ticks); break;
-	default: tdx=describe_ticks((tick_descriptor *)(ap->x_ticks),ap->x0,ap->x1,num_ticks); break;
+	case X_IN_SECONDS: tdx=describe_ticks((tick_descriptor *)(ap->x_ticks), ap->x0, ap->x1, num_ticks); break;
+	case X_IN_SAMPLES: tdx=describe_ticks((tick_descriptor *)(ap->x_ticks), ap->x0*srate, ap->x1*srate, num_ticks); break;
+	case X_TO_ONE: tdx=describe_ticks((tick_descriptor *)(ap->x_ticks), ap->x0/ap->xmax, ap->x1/ap->xmax, num_ticks); break;
+	default: tdx=describe_ticks((tick_descriptor *)(ap->x_ticks), ap->x0, ap->x1, num_ticks); break;
 	}
       ap->x_ticks = tdx;
       if (include_x_tick_labels)
 	{
 	  if (tdx->min_label) {FREE(tdx->min_label); tdx->min_label = NULL;}
-	  tdx->min_label = prettyf(tdx->mlo,tdx->tens);
-	  tdx->min_label_width=number_width(ax,tdx->min_label);
+	  tdx->min_label = prettyf(tdx->mlo, tdx->tens);
+	  tdx->min_label_width=number_width(ax, tdx->min_label);
 	  if (tdx->max_label) {FREE(tdx->max_label); tdx->max_label = NULL;}
-	  tdx->max_label = prettyf(tdx->mhi,tdx->tens);
-	  tdx->max_label_width=number_width(ax,tdx->max_label);
+	  tdx->max_label = prettyf(tdx->mhi, tdx->tens);
+	  tdx->max_label_width=number_width(ax, tdx->max_label);
 	  tick_label_width = tdx->min_label_width;
 	  if (tick_label_width < tdx->max_label_width) tick_label_width = tdx->max_label_width;
 	  if ((curx+2*tick_label_width) > (int)(.61*width)) 
@@ -406,7 +411,7 @@ void make_axes_1(chan_info *cp, axis_info *ap, int x_style, int srate)
 	{
 	  ap->x_axis_y0 = (cury+ap->y_axis_y1)/2; /* in this case, we should be zero centered! */
 	}
-      else snd_error("impossible x axis style: %d\n",axis_style);
+      else snd_error("impossible x axis style: %d\n", axis_style);
     }
 
   ap->x_scale = ((double)(ap->x_axis_x1 - ap->x_axis_x0))/((double)(ap->x1 - ap->x0));
@@ -418,28 +423,31 @@ void make_axes_1(chan_info *cp, axis_info *ap, int x_style, int srate)
   ap->y_axis_y1 += ap->y_offset;
   ap->x_label_y += ap->y_offset;
 
+  ap->x_base = (double)(ap->x_axis_x0 - ap->x0*ap->x_scale);
+  ap->y_base = (Float)(ap->y_axis_y0 - ap->y0*ap->y_scale);
+
   if (include_x_label)
     {
       activate_label_font(ax);
-      draw_string(ax,ap->x_label_x,ap->x_label_y+7,ap->xlabel,snd_strlen(ap->xlabel));
+      draw_string(ax, ap->x_label_x, ap->x_label_y+7, ap->xlabel, snd_strlen(ap->xlabel));
       if (cp->printing) 
 	{
 	  ps_set_label_font(cp);
-	  ps_draw_string(cp,ap->x_label_x,ap->x_label_y+7,ap->xlabel);
+	  ps_draw_string(cp, ap->x_label_x, ap->x_label_y+7, ap->xlabel);
 	}
     }
 
   if (show_x_axis)
-    fill_rectangle(ax,ap->x_axis_x0,ap->x_axis_y0,(unsigned int)(ap->x_axis_x1-ap->x_axis_x0),axis_thickness);
+    fill_rectangle(ax, ap->x_axis_x0, ap->x_axis_y0, (unsigned int)(ap->x_axis_x1-ap->x_axis_x0), axis_thickness);
   if ((sp == NULL) || (cp->show_axes != SHOW_X_AXIS))
-    fill_rectangle(ax,ap->y_axis_x0,ap->y_axis_y1,axis_thickness,(unsigned int)(ap->y_axis_y0-ap->y_axis_y1));
+    fill_rectangle(ax, ap->y_axis_x0, ap->y_axis_y1, axis_thickness, (unsigned int)(ap->y_axis_y0-ap->y_axis_y1));
   if ((include_y_tick_labels) || (include_x_tick_labels)) activate_numbers_font(ax);
   if (cp->printing) 
     {
       if (show_x_axis)
-	ps_fill_rectangle(cp,ap->x_axis_x0,ap->x_axis_y0,(unsigned int)(ap->x_axis_x1-ap->x_axis_x0),axis_thickness);
+	ps_fill_rectangle(cp, ap->x_axis_x0, ap->x_axis_y0, (unsigned int)(ap->x_axis_x1-ap->x_axis_x0), axis_thickness);
       if ((sp == NULL) || (cp->show_axes != SHOW_X_AXIS))
-	ps_fill_rectangle(cp,ap->y_axis_x0,ap->y_axis_y1,axis_thickness,(unsigned int)(ap->y_axis_y0-ap->y_axis_y1));
+	ps_fill_rectangle(cp, ap->y_axis_x0, ap->y_axis_y1, axis_thickness, (unsigned int)(ap->y_axis_y0-ap->y_axis_y1));
       if ((include_y_tick_labels) || (include_x_tick_labels)) ps_set_number_font(cp);
     }
 
@@ -447,23 +455,23 @@ void make_axes_1(chan_info *cp, axis_info *ap, int x_style, int srate)
     {
       draw_string(ax,
 		  ap->y_axis_x0-tdy->maj_tick_len-tdy->min_label_width-inner_border_width,
-		  (int)(grf_y(tdy->mlo,ap)+.25*x_number_height),
+		  (int)(grf_y(tdy->mlo, ap)+.25*x_number_height),
 		  tdy->min_label,
 		  strlen(tdy->min_label));
       draw_string(ax,
 		  ap->y_axis_x0-tdy->maj_tick_len-tdy->max_label_width-inner_border_width,
-		  (int)(grf_y(tdy->mhi,ap)+.5*x_number_height),
+		  (int)(grf_y(tdy->mhi, ap)+.5*x_number_height),
 		  tdy->max_label,
 		  strlen(tdy->max_label));
       if (cp->printing) 
 	{
 	  ps_draw_string(cp,
 		      ap->y_axis_x0-tdy->maj_tick_len-tdy->min_label_width-inner_border_width,
-		      (int)(grf_y(tdy->mlo,ap)+.25*x_number_height),
+		      (int)(grf_y(tdy->mlo, ap)+.25*x_number_height),
 		      tdy->min_label);
 	  ps_draw_string(cp,
 		      ap->y_axis_x0-tdy->maj_tick_len-tdy->max_label_width-inner_border_width,
-		      (int)(grf_y(tdy->mhi,ap)+.5*x_number_height),
+		      (int)(grf_y(tdy->mhi, ap)+.5*x_number_height),
 		      tdy->max_label);
 	}
     }
@@ -474,7 +482,7 @@ void make_axes_1(chan_info *cp, axis_info *ap, int x_style, int srate)
       /* the number label widths are tdx->max|min_label_width */
       lx0 = ap->x_label_x;
       lx1 = lx0 + x_label_width;
-      tx0 = (int)(tick_grf_x(tdx->mlo,ap,x_style,srate)-.45*tdx->min_label_width);
+      tx0 = (int)(tick_grf_x(tdx->mlo, ap, x_style, srate)-.45*tdx->min_label_width);
       tx1 = tx0+tdx->min_label_width;
       if ((lx0 > tx1) || (lx1 < tx0))
 	{
@@ -489,9 +497,9 @@ void make_axes_1(chan_info *cp, axis_info *ap, int x_style, int srate)
 			   ap->x_label_y+2,
 			   tdx->min_label);
 	}
-      tx0 = (int)(tick_grf_x(tdx->mhi,ap,x_style,srate)-(.45 * tdx->max_label_width)); /* try centered label first */
+      tx0 = (int)(tick_grf_x(tdx->mhi, ap, x_style, srate)-(.45 * tdx->max_label_width)); /* try centered label first */
       if ((tx0+tdx->max_label_width) > ap->x_axis_x1)
-	tx0 = (int)(tick_grf_x(tdx->mhi,ap,x_style,srate)-tdx->max_label_width+.75*right_border_width);
+	tx0 = (int)(tick_grf_x(tdx->mhi, ap, x_style, srate)-tdx->max_label_width+.75*right_border_width);
       tx1 = tx0+tdx->max_label_width;
       if ((lx0 > tx1) || (lx1 < tx0))
 	{
@@ -516,9 +524,9 @@ void make_axes_1(chan_info *cp, axis_info *ap, int x_style, int srate)
       minx = x0-tdy->min_tick_len;
 
       fy = tdy->mlo;
-      ty = grf_y(fy,ap);
-      draw_line(ax,majx,ty,x0,ty);
-      if (cp->printing) ps_draw_line(cp,majx,ty,x0,ty);
+      ty = grf_y(fy, ap);
+      draw_line(ax, majx, ty, x0, ty);
+      if (cp->printing) ps_draw_line(cp, majx, ty, x0, ty);
 
       tens = 0.0;
       fy -= tdy->step;
@@ -531,9 +539,9 @@ void make_axes_1(chan_info *cp, axis_info *ap, int x_style, int srate)
 	      x = majx;
 	    }
 	  else x = minx;
-	  ty = grf_y(fy,ap);
-	  draw_line(ax,x,ty,x0,ty);
-	  if (cp->printing) ps_draw_line(cp,x,ty,x0,ty);
+	  ty = grf_y(fy, ap);
+	  draw_line(ax, x, ty, x0, ty);
+	  if (cp->printing) ps_draw_line(cp, x, ty, x0, ty);
 	  fy -= tdy->step;
 	}
       
@@ -549,9 +557,9 @@ void make_axes_1(chan_info *cp, axis_info *ap, int x_style, int srate)
 	      x = majx;
 	    }
 	  else x = minx;
-	  ty = grf_y(fy,ap);
-	  draw_line(ax,x,ty,x0,ty);
-	  if (cp->printing) ps_draw_line(cp,x,ty,x0,ty);
+	  ty = grf_y(fy, ap);
+	  draw_line(ax, x, ty, x0, ty);
+	  if (cp->printing) ps_draw_line(cp, x, ty, x0, ty);
 	  fy += tdy->step;
 	}
     }
@@ -564,9 +572,9 @@ void make_axes_1(chan_info *cp, axis_info *ap, int x_style, int srate)
       miny = y0+tdx->min_tick_len;
 
       fx = tdx->mlo;
-      tx = tick_grf_x(fx,ap,x_style,srate);
-      draw_line(ax,tx,majy,tx,y0);
-      if (cp->printing) ps_draw_line(cp,tx,majy,tx,y0);
+      tx = tick_grf_x(fx, ap, x_style, srate);
+      draw_line(ax, tx, majy, tx, y0);
+      if (cp->printing) ps_draw_line(cp, tx, majy, tx, y0);
 
       tens = 0.0;
       fx -= tdx->step;
@@ -579,9 +587,9 @@ void make_axes_1(chan_info *cp, axis_info *ap, int x_style, int srate)
 	      y = majy;
 	    }
 	  else y = miny;
-	  tx = tick_grf_x(fx,ap,x_style,srate);
-	  draw_line(ax,tx,y,tx,y0);
-	  if (cp->printing) ps_draw_line(cp,tx,y,tx,y0);
+	  tx = tick_grf_x(fx, ap, x_style, srate);
+	  draw_line(ax, tx, y, tx, y0);
+	  if (cp->printing) ps_draw_line(cp, tx, y, tx, y0);
 	  fx -= tdx->step;
 	}
       
@@ -597,9 +605,9 @@ void make_axes_1(chan_info *cp, axis_info *ap, int x_style, int srate)
 	      y = majy;
 	    }
 	  else y = miny;
-	  tx = tick_grf_x(fx,ap,x_style,srate);
-	  draw_line(ax,tx,y,tx,y0);
-	  if (cp->printing) ps_draw_line(cp,tx,y,tx,y0);
+	  tx = tick_grf_x(fx, ap, x_style, srate);
+	  draw_line(ax, tx, y, tx, y0);
+	  if (cp->printing) ps_draw_line(cp, tx, y, tx, y0);
 	  fx += tdx->step;
 	}
     }
@@ -618,7 +626,7 @@ axis_info *make_axis_info (chan_info *cp, Float xmin, Float xmax, Float ymin, Fl
     }
   else
     {
-      ap = (axis_info *)CALLOC(1,sizeof(axis_info));
+      ap = (axis_info *)CALLOC(1, sizeof(axis_info));
       ap->ss = cp->state;
       ap->cp = cp;
     }

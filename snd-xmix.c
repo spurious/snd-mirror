@@ -27,14 +27,14 @@ static void change_mix_speed(int mix_id, Float val)
 				      cp->sound->speed_style,
 				      cp->sound->speed_tones),
 			dragging);
-  set_label(w_speed_number,speed_number_buffer);
+  set_label(w_speed_number, speed_number_buffer);
 }
 
-static void Speed_Click_Callback(Widget w,XtPointer clientData,XtPointer callData) 
+static void Speed_Click_Callback(Widget w, XtPointer clientData, XtPointer callData) 
 {
   snd_state *ss = (snd_state *)clientData;
-  change_mix_speed(current_mix_id(ss),1.0);
-  XtVaSetValues(w_speed,XmNvalue,450,NULL);
+  change_mix_speed(current_mix_id(ss), 1.0);
+  XtVaSetValues(w_speed, XmNvalue, 450, NULL);
 }
 
 static int mix_speed_to_int(Float uval, snd_info *sp)
@@ -45,7 +45,7 @@ static int mix_speed_to_int(Float uval, snd_info *sp)
 		      speed_number_buffer,
 		      sp->speed_style,
 		      sp->speed_tones);
-  set_label(w_speed_number,speed_number_buffer);
+  set_label(w_speed_number, speed_number_buffer);
   if (val > 0.0)
     {
       ival = round(450.0 + 150.0 * log(val));
@@ -56,22 +56,22 @@ static int mix_speed_to_int(Float uval, snd_info *sp)
   else return(0);
 }
 
-static void Speed_Drag_Callback(Widget w,XtPointer clientData,XtPointer callData) 
+static void Speed_Drag_Callback(Widget w, XtPointer clientData, XtPointer callData) 
 {
   int ival;
   snd_state *ss = (snd_state *)clientData;
   ival = ((XmScrollBarCallbackStruct *)callData)->value;
   if (dragging == 0) start_mix_drag(current_mix_id(ss));
   dragging = 1;
-  change_mix_speed(current_mix_id(ss),exp((Float)(ival-450.0) / 150.0));
+  change_mix_speed(current_mix_id(ss), exp((Float)(ival-450.0) / 150.0));
 }
 
-static void Speed_ValueChanged_Callback(Widget w,XtPointer clientData,XtPointer callData) 
+static void Speed_ValueChanged_Callback(Widget w, XtPointer clientData, XtPointer callData) 
 {
   XmScrollBarCallbackStruct *cb = (XmScrollBarCallbackStruct *)callData;
   snd_state *ss = (snd_state *)clientData;
   dragging = 0;
-  change_mix_speed(current_mix_id(ss),exp((Float)(cb->value - 450.0) / 150.0));
+  change_mix_speed(current_mix_id(ss), exp((Float)(cb->value - 450.0) / 150.0));
 }
 
 
@@ -92,17 +92,17 @@ static int allocate_amps(int chans)
 	  if (chans < 4)
 	    chans_allocated = 4;
 	  else chans_allocated = chans;
-	  w_amp_numbers = (Widget *)CALLOC(chans_allocated,sizeof(Widget));
-	  w_amp_labels = (Widget *)CALLOC(chans_allocated,sizeof(Widget));
-	  w_amps = (Widget *)CALLOC(chans_allocated,sizeof(Widget));
-	  current_amps = (Float *)CALLOC(chans_allocated,sizeof(Float));
+	  w_amp_numbers = (Widget *)CALLOC(chans_allocated, sizeof(Widget));
+	  w_amp_labels = (Widget *)CALLOC(chans_allocated, sizeof(Widget));
+	  w_amps = (Widget *)CALLOC(chans_allocated, sizeof(Widget));
+	  current_amps = (Float *)CALLOC(chans_allocated, sizeof(Float));
 	}
       else
 	{
-	  w_amp_numbers = (Widget *)REALLOC(w_amp_numbers,chans * sizeof(Widget));
-	  w_amp_labels = (Widget *)REALLOC(w_amp_labels,chans * sizeof(Widget));
-	  w_amps = (Widget *)REALLOC(w_amps,chans * sizeof(Widget));
-	  current_amps = (Float *)REALLOC(current_amps,chans * sizeof(Float));
+	  w_amp_numbers = (Widget *)REALLOC(w_amp_numbers, chans * sizeof(Widget));
+	  w_amp_labels = (Widget *)REALLOC(w_amp_labels, chans * sizeof(Widget));
+	  w_amps = (Widget *)REALLOC(w_amps, chans * sizeof(Widget));
+	  current_amps = (Float *)REALLOC(current_amps, chans * sizeof(Float));
 	  for (i=chans_allocated;i<chans;i++)
 	    {
 	      w_amp_numbers[i] = NULL;
@@ -119,20 +119,20 @@ static int allocate_amps(int chans)
 static void change_mix_amp(int mix_id, int chan, Float val)
 {
   char *sfs;
-  set_mix_amp_from_id(mix_id,chan,val,dragging);
-  sfs = prettyf(val,2);
-  fill_number(sfs,amp_number_buffer);
-  set_label(w_amp_numbers[chan],amp_number_buffer);
+  set_mix_amp_from_id(mix_id, chan, val, dragging);
+  sfs = prettyf(val, 2);
+  fill_number(sfs, amp_number_buffer);
+  set_label(w_amp_numbers[chan], amp_number_buffer);
   FREE(sfs);
 }
 
-static void Amp_Click_Callback(Widget w,XtPointer clientData,XtPointer callData) 
+static void Amp_Click_Callback(Widget w, XtPointer clientData, XtPointer callData) 
 {
   snd_state *ss = (snd_state *)clientData;
   int chan;
-  XtVaGetValues(w,XmNuserData,&chan,NULL);
-  change_mix_amp(current_mix_id(ss),chan,1.0);
-  XtVaSetValues(w_amps[chan],XmNvalue,SCROLLBAR_MID,NULL);
+  XtVaGetValues(w, XmNuserData, &chan, NULL);
+  change_mix_amp(current_mix_id(ss), chan, 1.0);
+  XtVaSetValues(w_amps[chan], XmNvalue, SCROLLBAR_MID, NULL);
 }
 
 static Float int_amp_to_Float(int amp)
@@ -147,34 +147,34 @@ static Float int_amp_to_Float(int amp)
     }
 }
 
-static void Amp_Drag_Callback(Widget w,XtPointer clientData,XtPointer callData) 
+static void Amp_Drag_Callback(Widget w, XtPointer clientData, XtPointer callData) 
 {
   int ival,chan;
   snd_state *ss = (snd_state *)clientData;
-  XtVaGetValues(w,XmNuserData,&chan,NULL);
+  XtVaGetValues(w, XmNuserData, &chan, NULL);
   ival = ((XmScrollBarCallbackStruct *)callData)->value;
   if (dragging == 0) start_mix_drag(current_mix_id(ss));
   dragging = 1;
-  change_mix_amp(current_mix_id(ss),chan,int_amp_to_Float(ival));
+  change_mix_amp(current_mix_id(ss), chan, int_amp_to_Float(ival));
 }
 
-static void Amp_ValueChanged_Callback(Widget w,XtPointer clientData,XtPointer callData) 
+static void Amp_ValueChanged_Callback(Widget w, XtPointer clientData, XtPointer callData) 
 {
   int ival,chan;
   snd_state *ss = (snd_state *)clientData;
-  XtVaGetValues(w,XmNuserData,&chan,NULL);
+  XtVaGetValues(w, XmNuserData, &chan, NULL);
   ival = ((XmScrollBarCallbackStruct *)callData)->value;
   dragging = 0;
-  change_mix_amp(current_mix_id(ss),chan,int_amp_to_Float(ival));
+  change_mix_amp(current_mix_id(ss), chan, int_amp_to_Float(ival));
 }
 
 static int mix_amp_to_int(Float amp, int chan)
 {
   char *sfs;
   int val;
-  sfs = prettyf(amp,2);
-  fill_number(sfs,amp_number_buffer);
-  set_label(w_amp_numbers[chan],amp_number_buffer);
+  sfs = prettyf(amp, 2);
+  fill_number(sfs, amp_number_buffer);
+  set_label(w_amp_numbers[chan], amp_number_buffer);
   FREE(sfs);
   if (amp <= 0.0)
     return(0);
@@ -198,7 +198,7 @@ static chan_info *axis_cp = NULL;
 static axis_context *ax = NULL;
 static GC cur_gc;
 
-static void Mix_Amp_Env_Resize(Widget w,XtPointer clientData,XtPointer callData) 
+static void Mix_Amp_Env_Resize(Widget w, XtPointer clientData, XtPointer callData) 
 {
   snd_state *ss = (snd_state *)clientData;
   XGCValues gv;
@@ -206,10 +206,10 @@ static void Mix_Amp_Env_Resize(Widget w,XtPointer clientData,XtPointer callData)
   if (ax == NULL)
     {
       gv.function = GXcopy;
-      XtVaGetValues(w_env,XmNbackground, &gv.background,XmNforeground, &gv.foreground,NULL);
+      XtVaGetValues(w_env, XmNbackground, &gv.background, XmNforeground, &gv.foreground, NULL);
       cur_gc = XtGetGC(w_env, GCForeground | GCFunction, &gv);
 
-      ax = (axis_context *)CALLOC(1,sizeof(axis_context));
+      ax = (axis_context *)CALLOC(1, sizeof(axis_context));
       ax->wn = XtWindow(w_env);
       ax->dp = XtDisplay(w_env);
       ax->gc = cur_gc;
@@ -218,9 +218,9 @@ static void Mix_Amp_Env_Resize(Widget w,XtPointer clientData,XtPointer callData)
   if (axis_cp == NULL) 
     {
       axis_cp = new_env_axis(ss); /* just creates the axis struct and sets basic fields */
-      fixup_axis_context(axis_cp->axis->ax,w_env,ax->gc);
+      fixup_axis_context(axis_cp->axis->ax, w_env, ax->gc);
     }
-  display_mix_amp_envs(ss,axis_cp,ax,widget_width(w),widget_height(w));
+  display_mix_amp_envs(ss, axis_cp, ax, widget_width(w), widget_height(w));
 }
 
 
@@ -235,7 +235,7 @@ static void track_activated(snd_state *ss)
   val = XmTextGetString(w_track);
   if (val)
     {
-      set_mix_track_from_id(current_mix_id(ss),string2int(val));
+      set_mix_track_from_id(current_mix_id(ss), string2int(val));
       XtFree(val);
     }
 }
@@ -267,7 +267,7 @@ static void beg_activated(snd_state *ss)
     {
       mix_id = current_mix_id(ss);
       cp = mix_channel_from_id(mix_id);
-      set_mix_position_from_id(mix_id,(int)(string2Float(val) * SND_SRATE(cp->sound)));
+      set_mix_position_from_id(mix_id, (int)(string2Float(val) * SND_SRATE(cp->sound)));
       update_mix_panel(mix_id);
       XtFree(val);
     }
@@ -280,12 +280,12 @@ static void name_activated(snd_state *ss)
   if (val)
     {
       /* look for mix by this name?? */
-      set_mix_name_from_id(current_mix_id(ss),val);
+      set_mix_name_from_id(current_mix_id(ss), val);
       XtFree(val);
     }
 }
 
-static void Dismiss_Mix_Panel_Callback(Widget w,XtPointer clientData,XtPointer callData) 
+static void Dismiss_Mix_Panel_Callback(Widget w, XtPointer clientData, XtPointer callData) 
 {
   snd_state *ss = (snd_state *)clientData;
   state_context *sgx;
@@ -315,7 +315,7 @@ static void Dismiss_Mix_Panel_Callback(Widget w,XtPointer clientData,XtPointer c
     }
 }
 
-static void Help_Mix_Panel_Callback(Widget w,XtPointer clientData,XtPointer callData) 
+static void Help_Mix_Panel_Callback(Widget w, XtPointer clientData, XtPointer callData) 
 {
   snd_help((snd_state *)clientData,
        "Mix Panel",
@@ -332,12 +332,12 @@ void reflect_mix_play_stop(void)
   if (w_play) 
     {
       ss = get_global_state();
-      XmChangeColor(w_play,(ss->sgx)->basic_color);
+      XmChangeColor(w_play, (ss->sgx)->basic_color);
     }
   mix_playing = 0;
 }
 
-static void mix_panel_play_callback(Widget w,XtPointer clientData,XtPointer callData) 
+static void mix_panel_play_callback(Widget w, XtPointer clientData, XtPointer callData) 
 {
   snd_state *ss;
   if (mix_playing)
@@ -348,7 +348,7 @@ static void mix_panel_play_callback(Widget w,XtPointer clientData,XtPointer call
     {
       ss = get_global_state();
       mix_playing = 1;
-      if (w_play) XmChangeColor(w_play,(ss->sgx)->pushed_button_color);
+      if (w_play) XmChangeColor(w_play, (ss->sgx)->pushed_button_color);
       mix_play_from_id(current_mix_id(ss));
     }
 }
@@ -373,29 +373,29 @@ void make_mix_panel(snd_state *ss)
   char amplab[16];
   if (mix_panel == NULL)
     {
-      xdismiss = XmStringCreate(STR_Dismiss,XmFONTLIST_DEFAULT_TAG);
-      xhelp = XmStringCreate(STR_Help,XmFONTLIST_DEFAULT_TAG);
-      xtitle = XmStringCreate(STR_Mix_Panel,XmFONTLIST_DEFAULT_TAG);
+      xdismiss = XmStringCreate(STR_Dismiss, XmFONTLIST_DEFAULT_TAG);
+      xhelp = XmStringCreate(STR_Help, XmFONTLIST_DEFAULT_TAG);
+      xtitle = XmStringCreate(STR_Mix_Panel, XmFONTLIST_DEFAULT_TAG);
 
       n=0;
-      if (!(ss->using_schemes)) {XtSetArg(args[n],XmNbackground,(ss->sgx)->basic_color); n++;}
-      XtSetArg(args[n],XmNokLabelString,xdismiss); n++;
-      XtSetArg(args[n],XmNhelpLabelString,xhelp); n++;
-      XtSetArg(args[n],XmNautoUnmanage,FALSE); n++;
-      XtSetArg(args[n],XmNdialogTitle,xtitle); n++;
+      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
+      XtSetArg(args[n], XmNokLabelString, xdismiss); n++;
+      XtSetArg(args[n], XmNhelpLabelString, xhelp); n++;
+      XtSetArg(args[n], XmNautoUnmanage, FALSE); n++;
+      XtSetArg(args[n], XmNdialogTitle, xtitle); n++;
 #if RESIZE_DIALOG
-      XtSetArg(args[n],XmNresizePolicy,XmRESIZE_GROW); n++;
-      XtSetArg(args[n],XmNnoResize,FALSE); n++;
+      XtSetArg(args[n], XmNresizePolicy, XmRESIZE_GROW); n++;
+      XtSetArg(args[n], XmNnoResize, FALSE); n++;
 #endif
-      XtSetArg(args[n],XmNtransient,FALSE); n++;
-      mix_panel = XmCreateTemplateDialog(MAIN_SHELL(ss),STR_Mix_Panel,args,n);
-      add_dialog(ss,mix_panel);
+      XtSetArg(args[n], XmNtransient, FALSE); n++;
+      mix_panel = XmCreateTemplateDialog(MAIN_SHELL(ss), STR_Mix_Panel, args, n);
+      add_dialog(ss, mix_panel);
 #if OVERRIDE_TOGGLE
       override_form_translation(mix_panel);
 #endif
 
-      XtAddCallback(mix_panel,XmNokCallback,Dismiss_Mix_Panel_Callback,ss);
-      XtAddCallback(mix_panel,XmNhelpCallback,Help_Mix_Panel_Callback,ss);
+      XtAddCallback(mix_panel, XmNokCallback, Dismiss_Mix_Panel_Callback, ss);
+      XtAddCallback(mix_panel, XmNhelpCallback, Help_Mix_Panel_Callback, ss);
 
       XmStringFree(xhelp);
       XmStringFree(xdismiss);
@@ -403,124 +403,124 @@ void make_mix_panel(snd_state *ss)
 
       if (!(ss->using_schemes))
 	{
-	  XtVaSetValues(XmMessageBoxGetChild(mix_panel,XmDIALOG_OK_BUTTON),XmNarmColor,(ss->sgx)->pushed_button_color,NULL);
-	  XtVaSetValues(XmMessageBoxGetChild(mix_panel,XmDIALOG_HELP_BUTTON),XmNarmColor,(ss->sgx)->pushed_button_color,NULL);
+	  XtVaSetValues(XmMessageBoxGetChild(mix_panel, XmDIALOG_OK_BUTTON), XmNarmColor, (ss->sgx)->pushed_button_color, NULL);
+	  XtVaSetValues(XmMessageBoxGetChild(mix_panel, XmDIALOG_HELP_BUTTON), XmNarmColor, (ss->sgx)->pushed_button_color, NULL);
 	}
 
       n=0;
-      if (!(ss->using_schemes)) {XtSetArg(args[n],XmNbackground,(ss->sgx)->basic_color); n++;}
-      XtSetArg(args[n],XmNleftAttachment,XmATTACH_FORM); n++;
-      XtSetArg(args[n],XmNrightAttachment,XmATTACH_FORM); n++;
-      XtSetArg(args[n],XmNtopAttachment,XmATTACH_FORM); n++;
-      XtSetArg(args[n],XmNbottomAttachment,XmATTACH_WIDGET); n++;
-      XtSetArg(args[n],XmNbottomWidget,XmMessageBoxGetChild(mix_panel,XmDIALOG_SEPARATOR)); n++;
-      mainform = sndCreateFormWidget("formd",mix_panel,args,n);
+      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
+      XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
+      XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
+      XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
+      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_WIDGET); n++;
+      XtSetArg(args[n], XmNbottomWidget, XmMessageBoxGetChild(mix_panel, XmDIALOG_SEPARATOR)); n++;
+      mainform = sndCreateFormWidget("formd", mix_panel, args, n);
 
       n=0;
-      if (!(ss->using_schemes)) {XtSetArg(args[n],XmNbackground,(ss->sgx)->basic_color); n++;}
-      XtSetArg(args[n],XmNtopAttachment,XmATTACH_FORM); n++;
-      XtSetArg(args[n],XmNbottomAttachment,XmATTACH_NONE); n++;
-      XtSetArg(args[n],XmNleftAttachment,XmATTACH_FORM); n++;
-      XtSetArg(args[n],XmNrightAttachment,XmATTACH_FORM); n++;
-      XtSetArg(args[n],XmNorientation,XmHORIZONTAL); n++;
-      w_row = sndCreateRowColumnWidget("mix-panel-row",mainform,args,n);
+      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
+      XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
+      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
+      XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
+      XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
+      XtSetArg(args[n], XmNorientation, XmHORIZONTAL); n++;
+      w_row = sndCreateRowColumnWidget("mix-panel-row", mainform, args, n);
 
       n=0;
-      if (!(ss->using_schemes)) {XtSetArg(args[n],XmNbackground,(ss->sgx)->basic_color); n++;}
-      w_id_label = XtCreateManagedWidget("mix id:",xmLabelWidgetClass,w_row,args,n);
+      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
+      w_id_label = XtCreateManagedWidget("mix id:", xmLabelWidgetClass, w_row, args, n);
 
       n=0;
-      if (!(ss->using_schemes)) {XtSetArg(args[n],XmNbackground,(ss->sgx)->basic_color); n++;}
-      XtSetArg(args[n],XmNresizeWidth,FALSE); n++;
-      XtSetArg(args[n],XmNcolumns,3); n++;
-      XtSetArg(args[n],XmNrecomputeSize,FALSE); n++;
-      w_id = sndCreateTextFieldWidget(ss,"mix-id",w_row,args,n,ACTIVATABLE,NO_COMPLETER);
-      XmTextSetString(w_id,"0");
+      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
+      XtSetArg(args[n], XmNresizeWidth, FALSE); n++;
+      XtSetArg(args[n], XmNcolumns, 3); n++;
+      XtSetArg(args[n], XmNrecomputeSize, FALSE); n++;
+      w_id = sndCreateTextFieldWidget(ss, "mix-id", w_row, args, n, ACTIVATABLE, NO_COMPLETER);
+      XmTextSetString(w_id, "0");
 
       n=0;
-      if (!(ss->using_schemes)) {XtSetArg(args[n],XmNbackground,(ss->sgx)->basic_color); n++;}
-      w_name = sndCreateTextFieldWidget(ss,"mix-name",w_row,args,n,ACTIVATABLE,NO_COMPLETER);
-      XmTextSetString(w_name,"mix");
+      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
+      w_name = sndCreateTextFieldWidget(ss, "mix-name", w_row, args, n, ACTIVATABLE, NO_COMPLETER);
+      XmTextSetString(w_name, "mix");
 
       n=0;
-      if (!(ss->using_schemes)) {XtSetArg(args[n],XmNbackground,(ss->sgx)->basic_color); n++;}
-      w_beg = sndCreateTextFieldWidget(ss,"mix-times",w_row,args,n,ACTIVATABLE,NO_COMPLETER);
-      XmTextSetString(w_beg,"0.000 : 1.000");
+      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
+      w_beg = sndCreateTextFieldWidget(ss, "mix-times", w_row, args, n, ACTIVATABLE, NO_COMPLETER);
+      XmTextSetString(w_beg, "0.000 : 1.000");
 
       n=0;
-      if (!(ss->using_schemes)) {XtSetArg(args[n],XmNbackground,(ss->sgx)->basic_color); n++;}
-      w_track_label = XtCreateManagedWidget("track:",xmLabelWidgetClass,w_row,args,n);
+      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
+      w_track_label = XtCreateManagedWidget("track:", xmLabelWidgetClass, w_row, args, n);
 
       n=0;
-      if (!(ss->using_schemes)) {XtSetArg(args[n],XmNbackground,(ss->sgx)->basic_color); n++;}
-      XtSetArg(args[n],XmNresizeWidth,FALSE); n++;
-      XtSetArg(args[n],XmNcolumns,3); n++;
-      XtSetArg(args[n],XmNrecomputeSize,FALSE); n++;
-      w_track = sndCreateTextFieldWidget(ss,"mix-track",w_row,args,n,ACTIVATABLE,NO_COMPLETER);
-      XmTextSetString(w_track,"0");
+      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
+      XtSetArg(args[n], XmNresizeWidth, FALSE); n++;
+      XtSetArg(args[n], XmNcolumns, 3); n++;
+      XtSetArg(args[n], XmNrecomputeSize, FALSE); n++;
+      w_track = sndCreateTextFieldWidget(ss, "mix-track", w_row, args, n, ACTIVATABLE, NO_COMPLETER);
+      XmTextSetString(w_track, "0");
 
 
-      XtVaGetValues(w_row,XmNforeground,&v.foreground,XmNbackground,&v.background,XmNdepth,&depth,NULL);
-      gc = XtGetGC(w_row,GCForeground | GCBackground,&v);
-      speaker_r = make_pixmap(ss,p_speaker_bits,p_speaker_width,p_speaker_height,depth,gc);
+      XtVaGetValues(w_row, XmNforeground, &v.foreground, XmNbackground, &v.background, XmNdepth, &depth, NULL);
+      gc = XtGetGC(w_row, GCForeground | GCBackground, &v);
+      speaker_r = make_pixmap(ss, p_speaker_bits, p_speaker_width, p_speaker_height, depth, gc);
 
       n=0;
-      if (!(ss->using_schemes)) {XtSetArg(args[n],XmNbackground,(ss->sgx)->basic_color); n++;}
-      XtSetArg(args[n],XmNlabelType,XmPIXMAP); n++;
-      XtSetArg(args[n],XmNlabelPixmap,speaker_r); n++;
-      if (!(ss->using_schemes)) {XtSetArg(args[n],XmNarmColor,(ss->sgx)->pushed_button_color); n++;}
-      w_play = XtCreateManagedWidget("play",xmPushButtonWidgetClass,w_row,args,n);
-      XtAddCallback(w_play,XmNactivateCallback,mix_panel_play_callback,ss);
+      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
+      XtSetArg(args[n], XmNlabelType, XmPIXMAP); n++;
+      XtSetArg(args[n], XmNlabelPixmap, speaker_r); n++;
+      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNarmColor, (ss->sgx)->pushed_button_color); n++;}
+      w_play = XtCreateManagedWidget("play", xmPushButtonWidgetClass, w_row, args, n);
+      XtAddCallback(w_play, XmNactivateCallback, mix_panel_play_callback, ss);
 
       /* SRATE */
       n = 0;
-      s1=XmStringCreate(STR_speed,XmFONTLIST_DEFAULT_TAG);
-      if (!(ss->using_schemes)) {XtSetArg(args[n],XmNbackground,(ss->sgx)->basic_color); n++;}
-      XtSetArg(args[n],XmNalignment,XmALIGNMENT_BEGINNING); n++;	
-      XtSetArg(args[n],XmNtopAttachment,XmATTACH_WIDGET); n++;
-      XtSetArg(args[n],XmNtopWidget,w_row); n++;
-      XtSetArg(args[n],XmNbottomAttachment,XmATTACH_NONE); n++;
-      XtSetArg(args[n],XmNleftAttachment,XmATTACH_FORM); n++;
-      XtSetArg(args[n],XmNrightAttachment,XmATTACH_NONE); n++;
-      XtSetArg(args[n],XmNlabelString,s1); n++;
-      XtSetArg(args[n],XmNrecomputeSize,FALSE); n++;
-      XtSetArg(args[n],XmNshadowThickness,0); n++;
-      XtSetArg(args[n],XmNhighlightThickness,0); n++;
-      XtSetArg(args[n],XmNfillOnArm,FALSE); n++;
-      w_speed_label = sndCreatePushButtonWidget("speed-label",mainform,args,n);
-      XtAddCallback(w_speed_label,XmNactivateCallback,Speed_Click_Callback,ss);
+      s1=XmStringCreate(STR_speed, XmFONTLIST_DEFAULT_TAG);
+      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
+      XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;	
+      XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
+      XtSetArg(args[n], XmNtopWidget, w_row); n++;
+      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
+      XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
+      XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
+      XtSetArg(args[n], XmNlabelString, s1); n++;
+      XtSetArg(args[n], XmNrecomputeSize, FALSE); n++;
+      XtSetArg(args[n], XmNshadowThickness, 0); n++;
+      XtSetArg(args[n], XmNhighlightThickness, 0); n++;
+      XtSetArg(args[n], XmNfillOnArm, FALSE); n++;
+      w_speed_label = sndCreatePushButtonWidget("speed-label", mainform, args, n);
+      XtAddCallback(w_speed_label, XmNactivateCallback, Speed_Click_Callback, ss);
       XmStringFree(s1);
 
       n=0;
       s1 = initial_speed_label(ss);
-      if (!(ss->using_schemes)) {XtSetArg(args[n],XmNbackground,(ss->sgx)->basic_color); n++;}
-      XtSetArg(args[n],XmNalignment,XmALIGNMENT_BEGINNING); n++;	
-      XtSetArg(args[n],XmNtopAttachment,XmATTACH_OPPOSITE_WIDGET); n++;
-      XtSetArg(args[n],XmNtopWidget,w_speed_label); n++;
-      XtSetArg(args[n],XmNbottomAttachment,XmATTACH_NONE); n++;
-      XtSetArg(args[n],XmNleftAttachment,XmATTACH_WIDGET); n++;
-      XtSetArg(args[n],XmNleftWidget,w_speed_label); n++;
-      XtSetArg(args[n],XmNrightAttachment,XmATTACH_NONE); n++;
-      XtSetArg(args[n],XmNlabelString,s1); n++;
-      XtSetArg(args[n],XmNrecomputeSize,FALSE); n++;
-      w_speed_number = XtCreateManagedWidget("srate-number",xmLabelWidgetClass,mainform,args,n);
+      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
+      XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;	
+      XtSetArg(args[n], XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET); n++;
+      XtSetArg(args[n], XmNtopWidget, w_speed_label); n++;
+      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
+      XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
+      XtSetArg(args[n], XmNleftWidget, w_speed_label); n++;
+      XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
+      XtSetArg(args[n], XmNlabelString, s1); n++;
+      XtSetArg(args[n], XmNrecomputeSize, FALSE); n++;
+      w_speed_number = XtCreateManagedWidget("srate-number", xmLabelWidgetClass, mainform, args, n);
       XmStringFree(s1);
 
       n=0;
-      if (!(ss->using_schemes)) {XtSetArg(args[n],XmNbackground,(ss->sgx)->position_color); n++;}
-      XtSetArg(args[n],XmNtopAttachment,XmATTACH_OPPOSITE_WIDGET); n++;
-      XtSetArg(args[n],XmNtopWidget,w_speed_number); n++;
-      XtSetArg(args[n],XmNbottomAttachment,XmATTACH_NONE); n++;
-      XtSetArg(args[n],XmNleftAttachment,XmATTACH_WIDGET); n++;
-      XtSetArg(args[n],XmNleftWidget,w_speed_number); n++;
-      XtSetArg(args[n],XmNrightAttachment,XmATTACH_FORM); n++;
-      XtSetArg(args[n],XmNorientation,XmHORIZONTAL); n++;
-      XtSetArg(args[n],XmNmaximum,SPEED_SCROLLBAR_MAX); n++;
-      XtSetArg(args[n],XmNvalue,450); n++;
-      XtSetArg(args[n],XmNheight,16); n++;
-      XtSetArg(args[n],XmNdragCallback,n1 = make_callback_list(Speed_Drag_Callback,ss)); n++;
-      XtSetArg(args[n],XmNvalueChangedCallback,n2 = make_callback_list(Speed_ValueChanged_Callback,ss)); n++;
-      w_speed = XtCreateManagedWidget("speed",xmScrollBarWidgetClass,mainform,args,n);
+      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->position_color); n++;}
+      XtSetArg(args[n], XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET); n++;
+      XtSetArg(args[n], XmNtopWidget, w_speed_number); n++;
+      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
+      XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
+      XtSetArg(args[n], XmNleftWidget, w_speed_number); n++;
+      XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
+      XtSetArg(args[n], XmNorientation, XmHORIZONTAL); n++;
+      XtSetArg(args[n], XmNmaximum, SPEED_SCROLLBAR_MAX); n++;
+      XtSetArg(args[n], XmNvalue, 450); n++;
+      XtSetArg(args[n], XmNheight, 16); n++;
+      XtSetArg(args[n], XmNdragCallback, n1 = make_callback_list(Speed_Drag_Callback, ss)); n++;
+      XtSetArg(args[n], XmNvalueChangedCallback, n2 = make_callback_list(Speed_ValueChanged_Callback, ss)); n++;
+      w_speed = XtCreateManagedWidget("speed", xmScrollBarWidgetClass, mainform, args, n);
   
       FREE(n1);
       FREE(n2);
@@ -533,55 +533,55 @@ void make_mix_panel(snd_state *ss)
       for (i=0;i<chans;i++)
 	{
 	  n=0;
-	  sprintf(amplab,"amp %d:",i);
-	  s1=XmStringCreate(amplab,XmFONTLIST_DEFAULT_TAG);
-	  if (!(ss->using_schemes)) {XtSetArg(args[n],XmNbackground,(ss->sgx)->basic_color); n++;}
-	  XtSetArg(args[n],XmNalignment,XmALIGNMENT_BEGINNING); n++;	
-	  XtSetArg(args[n],XmNtopAttachment,XmATTACH_WIDGET); n++;
-	  XtSetArg(args[n],XmNtopWidget,last_label); n++;
-	  XtSetArg(args[n],XmNbottomAttachment,XmATTACH_NONE); n++;
-	  XtSetArg(args[n],XmNleftAttachment,XmATTACH_FORM); n++;
-	  XtSetArg(args[n],XmNrightAttachment,XmATTACH_NONE); n++;
-	  XtSetArg(args[n],XmNlabelString,s1); n++;
-	  XtSetArg(args[n],XmNrecomputeSize,FALSE); n++;
-	  XtSetArg(args[n],XmNshadowThickness,0); n++;
-	  XtSetArg(args[n],XmNhighlightThickness,0); n++;
-	  XtSetArg(args[n],XmNfillOnArm,FALSE); n++;
-	  XtSetArg(args[n],XmNuserData,i); n++;
-	  w_amp_labels[i] = sndCreatePushButtonWidget("amp-label",mainform,args,n);
-	  XtAddCallback(w_amp_labels[i],XmNactivateCallback,Amp_Click_Callback,ss);
+	  sprintf(amplab, "amp %d:", i);
+	  s1=XmStringCreate(amplab, XmFONTLIST_DEFAULT_TAG);
+	  if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
+	  XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;	
+	  XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
+	  XtSetArg(args[n], XmNtopWidget, last_label); n++;
+	  XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
+	  XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
+	  XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
+	  XtSetArg(args[n], XmNlabelString, s1); n++;
+	  XtSetArg(args[n], XmNrecomputeSize, FALSE); n++;
+	  XtSetArg(args[n], XmNshadowThickness, 0); n++;
+	  XtSetArg(args[n], XmNhighlightThickness, 0); n++;
+	  XtSetArg(args[n], XmNfillOnArm, FALSE); n++;
+	  XtSetArg(args[n], XmNuserData, i); n++;
+	  w_amp_labels[i] = sndCreatePushButtonWidget("amp-label", mainform, args, n);
+	  XtAddCallback(w_amp_labels[i], XmNactivateCallback, Amp_Click_Callback, ss);
 	  XmStringFree(s1);
 
 	  n=0;
-	  s1=XmStringCreate(amp_number_buffer,XmFONTLIST_DEFAULT_TAG);
-	  if (!(ss->using_schemes)) {XtSetArg(args[n],XmNbackground,(ss->sgx)->basic_color); n++;}
-	  XtSetArg(args[n],XmNalignment,XmALIGNMENT_BEGINNING); n++;	
-	  XtSetArg(args[n],XmNtopAttachment,XmATTACH_WIDGET); n++;
-	  XtSetArg(args[n],XmNtopWidget,last_number); n++;
-	  XtSetArg(args[n],XmNbottomAttachment,XmATTACH_NONE); n++;
-	  XtSetArg(args[n],XmNleftAttachment,XmATTACH_WIDGET); n++;
-	  XtSetArg(args[n],XmNleftWidget,w_amp_labels[i]); n++;
-	  XtSetArg(args[n],XmNrightAttachment,XmATTACH_NONE); n++;
-	  XtSetArg(args[n],XmNlabelString,s1); n++;
-	  XtSetArg(args[n],XmNrecomputeSize,FALSE); n++;
-	  w_amp_numbers[i] = XtCreateManagedWidget("amp-number",xmLabelWidgetClass,mainform,args,n);
+	  s1=XmStringCreate(amp_number_buffer, XmFONTLIST_DEFAULT_TAG);
+	  if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
+	  XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;	
+	  XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
+	  XtSetArg(args[n], XmNtopWidget, last_number); n++;
+	  XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
+	  XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
+	  XtSetArg(args[n], XmNleftWidget, w_amp_labels[i]); n++;
+	  XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
+	  XtSetArg(args[n], XmNlabelString, s1); n++;
+	  XtSetArg(args[n], XmNrecomputeSize, FALSE); n++;
+	  w_amp_numbers[i] = XtCreateManagedWidget("amp-number", xmLabelWidgetClass, mainform, args, n);
 	  XmStringFree(s1);
 
 	  n=0;      
-	  if (!(ss->using_schemes)) {XtSetArg(args[n],XmNbackground,(ss->sgx)->position_color); n++;}
-	  XtSetArg(args[n],XmNtopAttachment,XmATTACH_OPPOSITE_WIDGET); n++;
-	  XtSetArg(args[n],XmNtopWidget,w_amp_numbers[i]); n++;
-	  XtSetArg(args[n],XmNbottomAttachment,XmATTACH_NONE); n++;
-	  XtSetArg(args[n],XmNleftAttachment,XmATTACH_WIDGET); n++;
-	  XtSetArg(args[n],XmNleftWidget,w_amp_numbers[i]); n++;
-	  XtSetArg(args[n],XmNrightAttachment,XmATTACH_FORM); n++;
-	  XtSetArg(args[n],XmNorientation,XmHORIZONTAL); n++;
-	  XtSetArg(args[n],XmNmaximum,SCROLLBAR_MAX); n++;
-	  XtSetArg(args[n],XmNuserData,i); n++;
-	  XtSetArg(args[n],XmNvalue,SCROLLBAR_MID); n++;
-	  XtSetArg(args[n],XmNdragCallback,n1 = make_callback_list(Amp_Drag_Callback,ss)); n++;
-	  XtSetArg(args[n],XmNvalueChangedCallback,n2 = make_callback_list(Amp_ValueChanged_Callback,ss)); n++;
-	  w_amps[i] = XtCreateManagedWidget("amp",xmScrollBarWidgetClass,mainform,args,n);
+	  if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->position_color); n++;}
+	  XtSetArg(args[n], XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET); n++;
+	  XtSetArg(args[n], XmNtopWidget, w_amp_numbers[i]); n++;
+	  XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
+	  XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
+	  XtSetArg(args[n], XmNleftWidget, w_amp_numbers[i]); n++;
+	  XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
+	  XtSetArg(args[n], XmNorientation, XmHORIZONTAL); n++;
+	  XtSetArg(args[n], XmNmaximum, SCROLLBAR_MAX); n++;
+	  XtSetArg(args[n], XmNuserData, i); n++;
+	  XtSetArg(args[n], XmNvalue, SCROLLBAR_MID); n++;
+	  XtSetArg(args[n], XmNdragCallback, n1 = make_callback_list(Amp_Drag_Callback, ss)); n++;
+	  XtSetArg(args[n], XmNvalueChangedCallback, n2 = make_callback_list(Amp_ValueChanged_Callback, ss)); n++;
+	  w_amps[i] = XtCreateManagedWidget("amp", xmScrollBarWidgetClass, mainform, args, n);
 	  FREE(n1);
 	  FREE(n2);
 	  last_label = w_amp_labels[i];
@@ -590,32 +590,32 @@ void make_mix_panel(snd_state *ss)
 
       /* amp env */
       n=0;
-      if (!(ss->using_schemes)) {XtSetArg(args[n],XmNbackground,(ss->sgx)->basic_color); n++;}
-      XtSetArg(args[n],XmNtopAttachment,XmATTACH_WIDGET); n++;
-      XtSetArg(args[n],XmNtopWidget,last_label); n++;
-      XtSetArg(args[n],XmNbottomAttachment,XmATTACH_FORM); n++;
-      XtSetArg(args[n],XmNleftAttachment,XmATTACH_POSITION); n++;
-      XtSetArg(args[n],XmNleftPosition,4); n++;
-      XtSetArg(args[n],XmNrightAttachment,XmATTACH_POSITION); n++;
-      XtSetArg(args[n],XmNrightPosition,98); n++;
-      XtSetArg(args[n],XmNallowResize,TRUE); n++;
-      XtSetArg(args[n],XmNshadowType,XmSHADOW_ETCHED_IN); n++;
-      XtSetArg(args[n],XmNshadowThickness,4); n++;
-      w_env_frame = sndCreateFrameWidget("amp-env-frame",mainform,args,n);
+      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
+      XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
+      XtSetArg(args[n], XmNtopWidget, last_label); n++;
+      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
+      XtSetArg(args[n], XmNleftAttachment, XmATTACH_POSITION); n++;
+      XtSetArg(args[n], XmNleftPosition, 4); n++;
+      XtSetArg(args[n], XmNrightAttachment, XmATTACH_POSITION); n++;
+      XtSetArg(args[n], XmNrightPosition, 98); n++;
+      XtSetArg(args[n], XmNallowResize, TRUE); n++;
+      XtSetArg(args[n], XmNshadowType, XmSHADOW_ETCHED_IN); n++;
+      XtSetArg(args[n], XmNshadowThickness, 4); n++;
+      w_env_frame = sndCreateFrameWidget("amp-env-frame", mainform, args, n);
 
       n=0;
-      if (!(ss->using_schemes)) {XtSetArg(args[n],XmNbackground,(ss->sgx)->basic_color); n++;}
-      XtSetArg(args[n],XmNtopAttachment,XmATTACH_FORM); n++;
-      XtSetArg(args[n],XmNbottomAttachment,XmATTACH_FORM); n++;
-      XtSetArg(args[n],XmNleftAttachment,XmATTACH_FORM); n++;
-      XtSetArg(args[n],XmNrightAttachment,XmATTACH_FORM); n++;
-      XtSetArg(args[n],XmNallowResize,TRUE); n++;
-      w_env = sndCreateDrawingAreaWidget("amp-env-window",w_env_frame,args,n);
+      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
+      XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
+      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
+      XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
+      XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
+      XtSetArg(args[n], XmNallowResize, TRUE); n++;
+      w_env = sndCreateDrawingAreaWidget("amp-env-window", w_env_frame, args, n);
 
       XtManageChild(mix_panel);
 
-      XtAddCallback(w_env,XmNresizeCallback,Mix_Amp_Env_Resize,ss);
-      XtAddCallback(w_env,XmNexposeCallback,Mix_Amp_Env_Resize,ss);
+      XtAddCallback(w_env, XmNresizeCallback, Mix_Amp_Env_Resize, ss);
+      XtAddCallback(w_env, XmNexposeCallback, Mix_Amp_Env_Resize, ss);
 
     }
   /* TODO: what if need more/less amp chans? */
@@ -645,24 +645,24 @@ static void update_mix_panel(int mix_id)
       val = mix_speed_from_id(mix_id);
       if (val != current_speed)
 	{
-	  XtVaSetValues(w_speed,XmNvalue,mix_speed_to_int(val,cp->sound),NULL);
+	  XtVaSetValues(w_speed, XmNvalue, mix_speed_to_int(val, cp->sound), NULL);
 	  current_speed = val;
 	}
 
-      sprintf(lab,"%d",mix_track_from_id(mix_id));
-      XmTextSetString(w_track,lab);
+      sprintf(lab, "%d", mix_track_from_id(mix_id));
+      XmTextSetString(w_track, lab);
 
-      sprintf(lab,"%d",mix_id);
-      XmTextSetString(w_id,lab);
+      sprintf(lab, "%d", mix_id);
+      XmTextSetString(w_id, lab);
 
-      XmTextSetString(w_name,mix_name_from_id(mix_id));
+      XmTextSetString(w_name, mix_name_from_id(mix_id));
 
       beg = mix_position_from_id(mix_id);
       len = mix_length(mix_id);
-      sprintf(lab,"%.3f : %.3f",
+      sprintf(lab, "%.3f : %.3f",
 	      (float)beg / (float)SND_SRATE(cp->sound),
 	      (float)(beg + len) / (float)SND_SRATE(cp->sound));
-      XmTextSetString(w_beg,lab);
+      XmTextSetString(w_beg, lab);
 
       chans = mix_input_chans_from_id(mix_id);
       if (chans > 8) chans = 8; /* TODO: fix this! */
@@ -672,10 +672,10 @@ static void update_mix_panel(int mix_id)
 	  if (!(XtIsManaged(w_amp_labels[i]))) XtManageChild(w_amp_labels[i]);
 	  if (!(XtIsManaged(w_amp_numbers[i]))) XtManageChild(w_amp_numbers[i]);
 	  if (!(XtIsManaged(w_amps[i]))) XtManageChild(w_amps[i]);
-	  val = mix_amp_from_id(mix_id,i);
+	  val = mix_amp_from_id(mix_id, i);
 	  if (val != current_amps[i])
 	    {
-	      XtVaSetValues(w_amps[i],XmNvalue,mix_amp_to_int(val,i),NULL);
+	      XtVaSetValues(w_amps[i], XmNvalue, mix_amp_to_int(val, i), NULL);
 	      current_amps[i] = val;
 	    }
 	}
@@ -688,9 +688,9 @@ static void update_mix_panel(int mix_id)
 	      XtUnmanageChild(w_amps[i]);
 	    }
 	}
-      XtVaSetValues(w_env_frame,XmNtopWidget,w_amp_labels[chans-1],NULL);
+      XtVaSetValues(w_env_frame, XmNtopWidget, w_amp_labels[chans-1], NULL);
 
-      Mix_Amp_Env_Resize(w_env,(XtPointer)ss,NULL);
+      Mix_Amp_Env_Resize(w_env, (XtPointer)ss, NULL);
 
     }
 }

@@ -14,9 +14,9 @@ static int file_probe(const char *arg)
 {
   int fd;
   #ifdef O_NONBLOCK
-    fd = open(arg,O_RDONLY,O_NONBLOCK);
+    fd = open(arg, O_RDONLY, O_NONBLOCK);
   #else
-    fd = open(arg,O_RDONLY,0);
+    fd = open(arg, O_RDONLY, 0);
   #endif
   if (fd == -1) return(0);
   close(fd);
@@ -35,19 +35,19 @@ static void read_file(Widget mesa)
   float cutoff,scaler,x,y,z;
   if (file_probe("glfft.lock"))
     {
-      fd = open("glfft.data",O_RDONLY,0);
-      read(fd,(char *)desc,5*sizeof(float));
+      fd = open("glfft.data", O_RDONLY, 0);
+      read(fd, (char *)desc, 5*sizeof(float));
       srate = (int)desc[0];
       scaler = desc[1];
       cutoff = desc[2];
       slices = (int)desc[3];
       bins = (int)desc[4];
-      fprintf(stderr,"srate: %d, scaler: %f, cutoff: %f, slices: %d, bins: %d\n",srate,scaler,cutoff,slices,bins);
+      fprintf(stderr, "srate: %d, scaler: %f, cutoff: %f, slices: %d, bins: %d\n", srate, scaler, cutoff, slices, bins);
       data = (float **)malloc(slices * sizeof(float *));
       for (i=0;i<slices;i++) 
 	{
 	  data[i] = (float *)malloc(bins * sizeof(float));
-	  read(fd,(char *)(data[i]),bins*sizeof(float));
+	  read(fd, (char *)(data[i]), bins*sizeof(float));
 	}
       close(fd);
       remove("glfft.data");
@@ -65,7 +65,7 @@ static void read_file(Widget mesa)
 	  x = -1.0;
 	  for (j=0;j<bins;j++)
 	    {
-	      glVertex3f(x,y + data[i][j],0.0);
+	      glVertex3f(x, y + data[i][j], 0.0);
 	      x += (2.0/bins);
 	    }
 	  y += (2.0/slices);
@@ -83,7 +83,7 @@ static void check_files(XtPointer clientData, XtIntervalId *id)
 {
   /* get current if any and display, loop until none, then addapptimeout */
   read_file(mesa);
-  XtAppAddTimeOut(app_context,100,(XtTimerCallbackProc)check_files,NULL);
+  XtAppAddTimeOut(app_context, 100, (XtTimerCallbackProc)check_files, NULL);
 }
 
 static void quit_function (Widget w, XtPointer closure, XtPointer call_data) {exit (0);}
@@ -146,8 +146,8 @@ int main (int argc, char **argv)
 				  XmNrightAttachment, XmATTACH_NONE,
 				  XmNbottomAttachment,  XmATTACH_FORM,
 				  XmNbottomOffset, 10,
-				  XmNwidth,300,
-				  XmNheight,300,
+				  XmNwidth, 300,
+				  XmNheight, 300,
 				  NULL);
   quit = XtVaCreateManagedWidget ("quit", xmPushButtonWidgetClass,
 				  frame,
@@ -171,19 +171,19 @@ int main (int argc, char **argv)
 		 NULL);
 
   /* create a visual context */
-  glx_context = glXCreateContext (XtDisplay(mesa), vi,NULL, GL_FALSE);
+  glx_context = glXCreateContext (XtDisplay(mesa), vi, NULL, GL_FALSE);
 
-  GLwDrawingAreaMakeCurrent (mesa,glx_context);
+  GLwDrawingAreaMakeCurrent (mesa, glx_context);
 			     
   translate_pixels (mesa, quit, XtNbackground, XtNforeground, XtNborder, NULL);
   translate_pixels (mesa, frame, XtNbackground, XtNborder, NULL);
-  XWarpPointer (XtDisplay (mesa), None, XtWindow (mesa),0, 0, 0, 0, 0, 0);
+  XWarpPointer (XtDisplay (mesa), None, XtWindow (mesa), 0, 0, 0, 0, 0, 0);
 
   glEnable(GL_DEPTH_TEST);
   glClearColor (1.0, 1.0, 1.0, 0.0);
-  glOrtho(-1.0,1.0, -1.0,1.0, 0.0,1.0);
+  glOrtho(-1.0, 1.0, -1.0, 1.0, 0.0, 1.0);
 
-  XtAppAddTimeOut(app_context,100,(XtTimerCallbackProc)check_files,NULL);
+  XtAppAddTimeOut(app_context, 100, (XtTimerCallbackProc)check_files, NULL);
 
   XtAppMainLoop (app_context);
   return (0);

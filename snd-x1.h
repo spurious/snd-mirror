@@ -28,11 +28,11 @@ void show_snd_errors(snd_state *ss);
 
 /* -------- snd-xdraw.c -------- */
 
-void draw_line (axis_context *ax,int x0,int y0,int x1,int y1);
-void fill_rectangle (axis_context *ax,int x0, int y0, int width, int height);
-void erase_rectangle (chan_info *cp, axis_context *ax,int x0, int y0, int width, int height);
-void fill_polygon(axis_context *ax,int points, ...);
-void draw_polygon(axis_context *ax,int points, ...);
+void draw_line (axis_context *ax, int x0, int y0, int x1, int y1);
+void fill_rectangle (axis_context *ax, int x0, int y0, int width, int height);
+void erase_rectangle (chan_info *cp, axis_context *ax, int x0, int y0, int width, int height);
+void fill_polygon(axis_context *ax, int points, ...);
+void draw_polygon(axis_context *ax, int points, ...);
 void draw_string (axis_context *ax, int x0, int y0, char *str, int len);
 void draw_arc(axis_context *ax, int x, int y, int size);
 void set_grf_points(int xi, int j, int ymin, int ymax);
@@ -41,9 +41,9 @@ void allocate_grf_points(void);
 void draw_grf_points(chan_info *cp, axis_context *ax, int j, axis_info *ap, Float y0, int graph_style);
 void draw_both_grf_points(chan_info *cp, axis_context *ax, int j, int graph_style);
 void draw_both_grfs(axis_context *ax, int j);
-void mix_save_graph(snd_state *ss, mix_context *ms,int j);
-void erase_and_draw_grf_points(mix_context *ms,chan_info *cp, int j);
-void erase_and_draw_both_grf_points(mix_context *ms,chan_info *cp, int j);
+void mix_save_graph(snd_state *ss, mix_context *ms, int j);
+void erase_and_draw_grf_points(mix_context *ms, chan_info *cp, int j);
+void erase_and_draw_both_grf_points(mix_context *ms, chan_info *cp, int j);
 void setup_axis_context(chan_info *cp, axis_context *ax);
 void draw_spectro_line(axis_context *ax, int color, int x0, int y0, int x1, int y1);
 void allocate_color_map(snd_state *ss, int colormap);
@@ -68,8 +68,8 @@ void set_spectro_x_scale(snd_state *ss, Float val);
 void set_spectro_y_scale(snd_state *ss, Float val);
 void set_spectro_z_scale(snd_state *ss, Float val);
 void set_spectro_cutoff(snd_state *ss, Float val);
-void View_Orientation_Callback(Widget w,XtPointer clientData,XtPointer callData);
-void View_Color_Callback(Widget w,XtPointer clientData,XtPointer callData);
+void View_Orientation_Callback(Widget w, XtPointer clientData, XtPointer callData);
+void View_Color_Callback(Widget w, XtPointer clientData, XtPointer callData);
 int color_dialog_is_active(void);
 int orientation_dialog_is_active(void);
 void reflect_spectro(snd_state *ss);
@@ -78,10 +78,10 @@ void reflect_spectro(snd_state *ss);
 
 /* -------- snd-xlistener.c -------- */
 
-void textfield_focus_Callback(Widget w,XtPointer clientData,XtPointer callData);
-void textfield_unfocus_Callback(Widget w,XtPointer clientData,XtPointer callData);
+void textfield_focus_Callback(Widget w, XtPointer clientData, XtPointer callData);
+void textfield_unfocus_Callback(Widget w, XtPointer clientData, XtPointer callData);
 void add_completer_to_textfield(snd_state *ss, Widget w, int completer);
-void snd_completion_help(snd_state *ss,int matches,char **buffer);
+void snd_completion_help(snd_state *ss, int matches, char **buffer);
 void snd_append_command(snd_state *ss, char *msg);
 void save_listener_text(FILE *fp);
 void append_listener_text(int end, char *msg);
@@ -167,12 +167,12 @@ Widget add_menu(snd_state *state);
 void create_popup_menu(snd_state *ss);
 void add_popup_handler(Widget w);
 
-int gh_change_menu_label(int which_menu,char *old_label, char *new_label);
-int gh_set_menu_sensitive(int which_menu,char *old_label, int on);
+int gh_change_menu_label(int which_menu, char *old_label, char *new_label);
+int gh_set_menu_sensitive(int which_menu, char *old_label, int on);
 int gh_add_to_main_menu(snd_state *ss, char *label, int slot);
 int gh_add_to_menu(snd_state *ss, int which_menu, char *label, int callb);
 int gh_remove_from_menu(int which_menu, char *label);
-int gh_menu_is_sensitive(int which_menu,char *old_label);
+int gh_menu_is_sensitive(int which_menu, char *old_label);
 
 #if HAVE_GUILE
   void g_init_gxmenu(void);
@@ -183,7 +183,7 @@ int gh_menu_is_sensitive(int which_menu,char *old_label);
 
 void add_dialog(snd_state *ss, Widget dialog);
 void dismiss_all_dialogs(snd_state *ss);
-void snd_doit(snd_state *state,int argc, char **argv);
+void snd_doit(snd_state *state, int argc, char **argv);
 #ifdef SND_AS_WIDGET
   void snd_as_widget(int argc, char **argv, XtAppContext app, Widget parent, Arg *caller_args, int caller_argn);
 #endif
@@ -224,7 +224,7 @@ void delete_region_and_update_browser(snd_state *ss, int n);
 void select_region_and_update_browser(snd_state *ss, int n);
 void reflect_play_region_stop(int n);
 void set_region_protect(int reg, int protect);
-void View_Region_Callback(Widget w,XtPointer clientData,XtPointer callData);
+void View_Region_Callback(Widget w, XtPointer clientData, XtPointer callData);
 int region_dialog_is_active(void);
 void allocate_region_rows(snd_state *ss, int n);
 
@@ -261,7 +261,7 @@ void get_current_color(int colormap, int j, int *r, int *g, int *b);
 
 /* -------- snd-xfind.c -------- */
 
-void Edit_Find_Callback(Widget w,XtPointer clientData,XtPointer callData);
+void Edit_Find_Callback(Widget w, XtPointer clientData, XtPointer callData);
 
 
 /* -------- snd-xutils.c -------- */
@@ -282,16 +282,16 @@ int number_width(axis_context *ax, char *num);
 int number_height(axis_context *ax);
 int label_height(axis_context *ax);
 int mark_name_width(snd_state *ss, char *txt);
-void map_over_children (Widget w, void (*func)(Widget w,void *ptr), void *userptr);
+void map_over_children (Widget w, void (*func)(Widget w, void *ptr), void *userptr);
 void clear_window(axis_context *ax);
 void raise_dialog(Widget w);
-void set_main_color_of_widget (Widget w,void *userptr);
+void set_main_color_of_widget (Widget w, void *userptr);
 void highlight_color(snd_state *ss, Widget w);
 void white_color(snd_state *ss, Widget w);
-void set_button_label_normal(Widget button,const char *str);
-void set_button_label_bold(Widget button,const char *str);
-void set_button_label(Widget label,const char *str);
-void set_label(Widget label,const char *str);
+void set_button_label_normal(Widget button, const char *str);
+void set_button_label_bold(Widget button, const char *str);
+void set_button_label(Widget label, const char *str);
+void set_label(Widget label, const char *str);
 void set_title(snd_state *ss, const char *title);
 void goto_window(Widget text);
 XtCallbackList make_callback_list(XtCallbackProc callback, XtPointer closure);
@@ -360,7 +360,7 @@ COLOR_TYPE get_foreground_color(chan_info *cp, axis_context *ax);
 void set_foreground_color(chan_info *cp, axis_context *ax, Pixel color);
 GC copy_GC(chan_info *cp);
 GC erase_GC(chan_info *cp);
-void graph_key_press(Widget w,XtPointer clientData,XEvent *event,Boolean *cont);
+void graph_key_press(Widget w, XtPointer clientData, XEvent *event, Boolean *cont);
 void cleanup_cw(chan_info *cp);
 int fixup_cp_cgx_ax_wn(chan_info *cp);
 void change_channel_style(snd_info *sp, int new_style);
@@ -374,7 +374,7 @@ Widget w_snd_name(snd_info *sp);
 Widget w_snd_combine(snd_info *sp);
 Widget w_snd_play(snd_info *sp);
 Widget w_snd_filter_env(snd_info *sp);
-void make_minibuffer_label(snd_info *sp,char *str);
+void make_minibuffer_label(snd_info *sp, char *str);
 void goto_minibuffer(snd_info *sp);
 void set_minibuffer_string(snd_info *sp, char *str);
 void set_minibuffer_cursor_position(snd_info *sp, int pos);
@@ -403,7 +403,7 @@ void set_play_button(snd_info *sp, int val);
 void play_button_pause(snd_state *ss, int pausing);
 void syncb(snd_info *sp, int on);
 void lock_apply(snd_state *ss, snd_info *sp);
-void unlock_apply(snd_state *ss,snd_info *sp);
+void unlock_apply(snd_state *ss, snd_info *sp);
 void set_apply_button(snd_info *sp, int val);
 void snd_file_lock_icon(snd_info *sp, int on);
 void snd_file_bomb_icon(snd_info *sp, int on);
@@ -432,7 +432,7 @@ XmString initial_speed_label(snd_state *ss);
 char *read_file_data_choices(file_data *fdat, int *srate, int *chans, int *type, int *format, int *location);
 file_data *sndCreateFileDataForm(snd_state *ss, Widget parent, char *name, Arg *args, int n, int with_chan, int header_type, int data_format, int with_loc);
 void alert_new_file(void);
-void CreateOpenDialog(Widget w,XtPointer clientData);
+void CreateOpenDialog(Widget w, XtPointer clientData);
 void make_open_file_dialog(snd_state *ss);
 void make_file_save_as_dialog(snd_state *ss);
 void make_edit_save_as_dialog(snd_state *ss);
@@ -449,12 +449,12 @@ void make_prev_name_row(int old_size, int new_size);
 void make_a_big_star_outa_me(char *shortname, int big_star);
 void set_file_browser_play_button(char *name, int state);
 void highlight_selected_sound(snd_state *ss);
-void View_Files_Callback(Widget w,XtPointer clientData,XtPointer callData);
+void View_Files_Callback(Widget w, XtPointer clientData, XtPointer callData);
 void start_file_dialog(snd_state *ss, int width, int height);
 int file_dialog_is_active(void);
 file_info *get_raw_file_info(char *filename, snd_state *ss);
 file_info *get_reasonable_file_info(char *filename, snd_state *ss, file_info *hdr);
-void File_Mix_Callback(Widget w,XtPointer clientData,XtPointer callData);
+void File_Mix_Callback(Widget w, XtPointer clientData, XtPointer callData);
 void edit_header(snd_info *sp);
 #if HAVE_GUILE
   void g_initialize_xgfile(SCM local_doc);
@@ -481,7 +481,7 @@ void enved_print(char *name);
 void create_envelope_editor (snd_state *ss);
 void set_enved_clipping(snd_state *ss, int val);
 void set_enved_exping(snd_state *ss, int val);
-void set_enved_base(snd_state *ss,Float val);
+void set_enved_base(snd_state *ss, Float val);
 void set_enved_target(snd_state *ss, int val);
 void set_enved_waving(snd_state *ss, int val);
 void set_enved_dBing(snd_state *ss, int val);
@@ -515,7 +515,7 @@ int record_dialog_is_active(void);
 
 /* -------- snd-xprint.c -------- */
 
-void File_Print_Callback(Widget w,XtPointer clientData,XtPointer callData);
+void File_Print_Callback(Widget w, XtPointer clientData, XtPointer callData);
 char *ps_rgb(snd_state *ss, int pchan);
 
 

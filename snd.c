@@ -23,7 +23,7 @@ static snd_state *ss;                      /* global state info, carried around 
 static void mus_error2snd(int type, char *msg)
 {
 #if HAVE_GUILE
-  if (!(ignore_mus_error(type,msg)))
+  if (!(ignore_mus_error(type, msg)))
     {
 #endif
       snd_error(msg);
@@ -42,9 +42,10 @@ static void mus_error2snd(int type, char *msg)
 
 static void mus_print2snd(char *msg)
 {
-  add_to_error_history(get_global_state(),msg,FALSE);
+  add_to_error_history(get_global_state(), msg, FALSE);
+  /* should this go to the listener window? */
 #if DEBUGGING
-  fprintf(stderr,msg);
+  fprintf(stderr, msg);
 #endif
 }
 
@@ -91,21 +92,21 @@ static void mus_print2snd(char *msg)
 
   for (i=1;i<argc;i++)
     {
-      if (strcmp(argv[i],"--version") == 0)
+      if (strcmp(argv[i], "--version") == 0)
 	{
-	  fprintf(stdout,version_info());
+	  fprintf(stdout, version_info());
 	  snd_exit(0);
 	}
       else
-	if (strcmp(argv[i],"--help") == 0)
+	if (strcmp(argv[i], "--help") == 0)
 	  {
-	    fprintf(stdout,"Snd is a sound editor.  Execute it and peruse the 'help' menu for details.\n");
-	    fprintf(stdout,version_info());
+	    fprintf(stdout, "Snd is a sound editor.  Execute it and peruse the 'help' menu for details.\n");
+	    fprintf(stdout, version_info());
 	    snd_exit(0);
 	  }
     }
 
-  ss=(snd_state *)CALLOC(1,sizeof(snd_state));
+  ss=(snd_state *)CALLOC(1, sizeof(snd_state));
 
   ss->Fft_Size = DEFAULT_FFT_SIZE;
   ss->Minibuffer_History_Length = DEFAULT_MINIBUFFER_HISTORY_LENGTH;
@@ -216,10 +217,10 @@ static void mus_print2snd(char *msg)
   ss->Max_Regions = DEFAULT_MAX_REGIONS;
   ss->Max_Fft_Peaks = DEFAULT_MAX_FFT_PEAKS;
   ss->Reverb_Decay = DEFAULT_REVERB_DECAY;
-  allocate_regions(ss,max_regions(ss));
+  allocate_regions(ss, max_regions(ss));
 
   ss->min_dB = DEFAULT_MIN_DB;
-  ss->lin_dB = pow(10.0,DEFAULT_MIN_DB*0.05);
+  ss->lin_dB = pow(10.0, DEFAULT_MIN_DB*0.05);
   ss->init_window_x = DEFAULT_INIT_WINDOW_X; 
   ss->init_window_y = DEFAULT_INIT_WINDOW_Y; 
   ss->init_window_width = DEFAULT_INIT_WINDOW_WIDTH; 
@@ -234,7 +235,7 @@ static void mus_print2snd(char *msg)
   ss->selected_mix = NO_SELECTION;
   ss->mx_sp = NULL;
   ss->open_ctrls_height = 180;        /* just a first guess */
-  ss->sounds = (snd_info **)CALLOC(ss->max_sounds,sizeof(snd_info *));
+  ss->sounds = (snd_info **)CALLOC(ss->max_sounds, sizeof(snd_info *));
   ss->print_choice = PRINT_SND;
   ss->listening = 0;
   ss->open_hook_active = 0;
@@ -248,11 +249,11 @@ static void mus_print2snd(char *msg)
   ss->just_time = 0;
 
 #if HAVE_LONG_LONGS
-  md = fopen("/proc/meminfo","r");
+  md = fopen("/proc/meminfo", "r");
   if (md)
     {
       long long mem;
-      fscanf(md,"        total:    used:    free:  shared: buffers:  cached:\nMem:  %Ld",&mem); /* %lld on SGI? */
+      fscanf(md, "        total:    used:    free:  shared: buffers:  cached:\nMem:  %Ld", &mem); /* %lld on SGI? */
       fclose(md);
       ss->memory_available = mem / 1024;
     }
@@ -278,7 +279,7 @@ static void mus_print2snd(char *msg)
 #ifdef SND_AS_WIDGET
   return(ss);
 #else
-  snd_doit(ss,argc,argv);
+  snd_doit(ss, argc, argv);
 
   #if (!HAVE_GUILE)
     return(0);
@@ -290,7 +291,7 @@ static void mus_print2snd(char *msg)
   #if HAVE_GUILE     
   int main(int argc, char *argv[])
    {
-     gh_enter(argc,argv,snd_main);
+     gh_enter(argc, argv, snd_main);
      return(0);
    }
   #endif

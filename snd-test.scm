@@ -5679,9 +5679,10 @@
 	    (time (filter-sound '(0 0 .1 0 .11 1 .12 0 1 0) 2048)) ; convolution
 	    (time (map-chan (map-silence .01 #f)))
 	    (close-sound ind)
-	    (set! ind (open-sound "oboe.snd"))
-	    (time (rubber-sound 1.25))
-	    (close-sound ind)))
+	    (if (file-exists? "1a.snd")
+		(let ((ind1 (open-sound "1a.snd")))
+		  (time (rubber-sound 1.25))
+		  (close-sound ind1)))))
 
       (let* ((oboe (open-sound "oboe.snd"))
 	     (a4 (open-sound "4.aiff"))
