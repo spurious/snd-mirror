@@ -5,7 +5,6 @@
 
 /* TODO: finish selection-oriented Xt callbacks
  * TODO: XmVaCreateSimple* (need special arglist handlers)
- * TODO: XtAppAddActions currently only handles 8 actions (globally)
  */
 
 /* HISTORY: 
@@ -1409,6 +1408,10 @@ static Arg *XEN_TO_C_Args(XEN inarg)
   XtCallbackRec *cl = NULL;
   XEN descr, value, xname;
   char *name;
+  /* if XtVaNestedList supported, scan for it here, and increase length as needed,
+   *   then make recursive call to XEN_TO_C_Args in that branch, unloading afterwards
+   *   this is not actually needed in xm -- just use append!
+   */
   len = XEN_LIST_LENGTH(inarg) / 2;
   if (len == 0) return(NULL);
   args = (Arg *)CALLOC(len, sizeof(Arg));
@@ -15680,7 +15683,19 @@ a list maintained in the application context."
 
 
 /* (72) this is part of an actionrec */
-/* we actually need an array of XtActionProcs here -- this code is a horrible kludge */
+/* this code is a horrible kludge, but what can I do? -- to vector to the procedure corresponding to
+ *   the action that triggered the action proc, I need to have some way to find that procedure,
+ *   and there's none I can see -- the args incoming (widget event args argn) give me no way to
+ *   trace back to the caller, or even to save that data at declaration time via clientData or
+ *   its equivalent -- I don't even get to see the affected widget.  By the time install|augment|override
+ *   translations is called, my procedure info has been buried (or at least compiled into some unknown form).
+ *
+ *   XtAppContext->action_table is a list of ActionLists
+ *   Widget struct has: XtTMRec tm:
+ *     XtTranslations  translations;
+ *     XtBoundActions  proc_table;  -- list of XtActionProcs		
+ *     struct _XtStateRec *current_state;  
+ */
 
 static XEN xtactionprocs[8];
 static void gxm_XtActionProc0(Widget w, XEvent *e, char **args, Cardinal *argn) 
@@ -15717,61 +15732,11 @@ static void gxm_XtActionProc7(Widget w, XEvent *e, char **args, Cardinal *argn)
 }
 static int xm_action_ctr = 0;
 
-static XEN gxm_XtAddActions(XEN arg1)
+static XtActionsRec *make_action_rec(int len, XEN arg2)
 {
-  #define H_XtAddActions "void XtAddActions(actions, num_actions) has been replaced by XtAppAddActions."
-  /* DIFF: XtAddActions takes list of lists for arg1 (name proc) pairs, not XtActionList, omits arg2 (pointless)
-   *        and action proc itself takes 3 args (no need for trailing count)
-   */
+  int i;
   XtActionsRec *act;
   XEN pair;
-  int i, len;
-  XEN_ASSERT_TYPE(XEN_LIST_P(arg1), arg1, 1, "XtAddActions", "list of XtActions");
-  len = XEN_LIST_LENGTH(arg1);
-  if (len <= 0) XEN_ASSERT_TYPE(0, arg1, 1, "XtAddActions", "positive integer");
-  act = (XtActionsRec *)CALLOC(len, sizeof(XtActionsRec));
-  for (i = 0; i < len; i++, arg1 = XEN_CDR(arg1))
-    {
-      pair = XEN_CAR(arg1);
-      act[i].string = (String)XEN_TO_C_STRING(XEN_CAR(pair));
-      if (xm_action_ctr >= 8)
-	fprintf(stderr,"too many actions...");
-      else
-	{
-	  switch (xm_action_ctr)
-	    {
-	    case 0: act[i].proc = (XtActionProc)gxm_XtActionProc0; break;
-	    case 1: act[i].proc = (XtActionProc)gxm_XtActionProc1; break;
-	    case 2: act[i].proc = (XtActionProc)gxm_XtActionProc2; break;
-	    case 3: act[i].proc = (XtActionProc)gxm_XtActionProc3; break;
-	    case 4: act[i].proc = (XtActionProc)gxm_XtActionProc4; break;
-	    case 5: act[i].proc = (XtActionProc)gxm_XtActionProc5; break;
-	    case 6: act[i].proc = (XtActionProc)gxm_XtActionProc6; break;
-	    case 7: act[i].proc = (XtActionProc)gxm_XtActionProc7; break;
-	    }
-	  xm_protect(XEN_CADR(pair));
-	  xtactionprocs[xm_action_ctr++] = XEN_CADR(pair);
-	}
-    }
-  XtAddActions(act, len);
-  FREE(act);
-  return(arg1);
-}
-
-static XEN gxm_XtAppAddActions(XEN arg1, XEN arg2)
-{
-  #define H_XtAppAddActions "void XtAppAddActions(app_context, actions, num_actions) adds the specified action table and registers it \
-with the translation manager."
-  /* DIFF: XtAddAppActions takes list of lists for arg2 (name proc) pairs, not XtActionList, omits arg3 (pointless)
-   *        and action proc itself takes 3 args (no need for trailing count)
-   */
-  XtActionsRec *act;
-  XEN pair;
-  int i, len;
-  XEN_ASSERT_TYPE(XEN_XtAppContext_P(arg1), arg1, 1, "XtAppAddActions", "XtAppContext");
-  XEN_ASSERT_TYPE(XEN_LIST_P(arg2), arg2, 2, "XtAppAddActions", "list of XtActions");
-  len = XEN_LIST_LENGTH(arg2);
-  if (len <= 0) XEN_ASSERT_TYPE(0, arg2, 2, "XtAppAddActions", "positive integer");
   act = (XtActionsRec *)CALLOC(len, sizeof(XtActionsRec));
   for (i = 0; i < len; i++, arg2 = XEN_CDR(arg2))
     {
@@ -15796,6 +15761,40 @@ with the translation manager."
 	  xtactionprocs[xm_action_ctr++] = XEN_CADR(pair);
 	}
     }
+  return(act);
+}
+
+static XEN gxm_XtAddActions(XEN arg1)
+{
+  #define H_XtAddActions "void XtAddActions(actions, num_actions) has been replaced by XtAppAddActions."
+  /* DIFF: XtAddActions takes list of lists for arg1 (name proc) pairs, not XtActionList, omits arg2 (pointless)
+   *        and action proc itself takes 3 args (no need for trailing count)
+   */
+  XtActionsRec *act;
+  int len;
+  XEN_ASSERT_TYPE(XEN_LIST_P(arg1), arg1, 1, "XtAddActions", "list of XtActions");
+  len = XEN_LIST_LENGTH(arg1);
+  if (len <= 0) XEN_ASSERT_TYPE(0, arg1, 1, "XtAddActions", "positive integer");
+  act = make_action_rec(len, arg1);
+  XtAddActions(act, len);
+  FREE(act);
+  return(arg1);
+}
+
+static XEN gxm_XtAppAddActions(XEN arg1, XEN arg2)
+{
+  #define H_XtAppAddActions "void XtAppAddActions(app_context, actions, num_actions) adds the specified action table and registers it \
+with the translation manager."
+  /* DIFF: XtAddAppActions takes list of lists for arg2 (name proc) pairs, not XtActionList, omits arg3 (pointless)
+   *        and action proc itself takes 3 args (no need for trailing count)
+   */
+  XtActionsRec *act;
+  int len;
+  XEN_ASSERT_TYPE(XEN_XtAppContext_P(arg1), arg1, 1, "XtAppAddActions", "XtAppContext");
+  XEN_ASSERT_TYPE(XEN_LIST_P(arg2), arg2, 2, "XtAppAddActions", "list of XtActions");
+  len = XEN_LIST_LENGTH(arg2);
+  if (len <= 0) XEN_ASSERT_TYPE(0, arg2, 2, "XtAppAddActions", "positive integer");
+  act = make_action_rec(len, arg2);
   XtAppAddActions(XEN_TO_C_XtAppContext(arg1), act, len);
   FREE(act);
   return(arg1);

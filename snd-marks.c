@@ -12,6 +12,10 @@
 
 /* if mark is handled as an smob, rather than a bare integer, we get better
  *   type-checking, but (for example) searching for a given mark becomes messy
+ *
+ * perhaps keep C-view as is, but in user-context use (list 'Mark index)
+ *   (and 'Mix 'Region 'Sound -- but this becomes messy with channel number)
+ *   or leave as is, but change to use lower(upper?) n (2? 3?) bits as type?
  */
 
 typedef mark *mark_map_func(chan_info *cp, mark *mp, void *m);
@@ -1247,7 +1251,27 @@ mark *hit_mark(chan_info *cp, int x, int y, int key_state)
 		{
 		  mark_initial_sample = mp->samp;
 		  if (mark_sd) 
-		    initialize_md_context(mark_sd->mark_ctr, mark_sd->chans);
+		    {
+		      if ((mark_sd->mark_ctr > 1) &&
+			  (mark_sd->marks[0] != mp))
+			{
+			  mark *tm;
+			  int ts, loc;
+			  chan_info *tc;
+			  loc = mark_sd->mark_ctr - 1;
+			  tm = mark_sd->marks[0];
+			  ts = mark_sd->initial_samples[0];
+			  tc = mark_sd->chans[0];
+			  mark_sd->marks[0] = mark_sd->marks[loc];
+			  mark_sd->initial_samples[0] = mark_sd->initial_samples[loc];
+			  mark_sd->chans[0] = mark_sd->chans[loc];
+			  mark_sd->marks[loc] = tm;
+			  mark_sd->initial_samples[loc] = ts;
+			  mark_sd->chans[loc] = tc;
+			}
+
+		      initialize_md_context(mark_sd->mark_ctr, mark_sd->chans);
+		    }
 		  else initialize_md_context(1, &cp);
 		}
 	    }
@@ -1416,8 +1440,7 @@ static void make_mark_graph(chan_info *cp, snd_info *sp, int initial_sample, int
   int i, j = 0, samps, k;
   Locus xi;
   axis_info *ap;
-  Float samples_per_pixel, xf, samp;
-  double x, incr;  
+  double samples_per_pixel, xf, samp, x, incr;  
   Float ymin, ymax;
   int pixels;
   snd_fd *sf = NULL;
@@ -1441,7 +1464,7 @@ static void make_mark_graph(chan_info *cp, snd_info *sp, int initial_sample, int
     samples_per_pixel = 0.01; /* any non-zero value < 1.0 should be ok here */
   else samples_per_pixel = (Float)(samps - 1) / (Float)pixels;
 
- /* this is assuming one such mark per channel */
+  /* this is assuming one dragged mark per channel */
   if ((samples_per_pixel < 5.0) && (samps < POINT_BUFFER_SIZE))
     {
       sf = init_sample_read(ap->losamp, cp, READ_FORWARD);
@@ -1472,73 +1495,132 @@ static void make_mark_graph(chan_info *cp, snd_info *sp, int initial_sample, int
     }
   else
     {
-#if 0
-      /* TODO  drag via mark could still use amp-env opts */
       if (amp_env_usable(cp, samples_per_pixel, ap->hisamp, FALSE, cp->edit_ctr)) 
-	j = amp_env_graph(cp, ap, samples_per_pixel, (sp) ? ((int)SND_SRATE(sp)) : 1);
-      /* pad with 0 at end if needed, or at insertion pt */
-      /* mark is at current_sample, was originally at initial_sample */
-      /* mark_movers[which] is the mix_context with the points arrays */
-      /* in amp env, go to losamp, copy to (min current-sample initial-sample)
-       *   if (> init cur) jump to cur in amp env
-       *   if (< init cur) add 0's to cur, leaving amp env loc unchanged
-       *   copy to hisamp moving in amp env (hisamp is cur-relative)
-       *   if (> init cur) pad with 0's at end
-       * i.e. treat amp env read just like sample-read above (jumping by ep->samps_per_bin)
-       */
-#endif
-      sf = init_sample_read(ap->losamp, cp, READ_FORWARD);
-      if (sf == NULL) return;
-      j = 0;      /* graph point counter */
-      x = ap->x0;
-      xi = grf_x(x, ap);
-      xf = 0.0;     /* samples per pixel counter */
-      ymin = 100.0;
-      ymax = -100.0;
-      if (current_sample < initial_sample) 
 	{
-	  for (i = ap->losamp, xf = 0.0; i <= ap->hisamp; i++)
+	  /* needs two sets of pointers and a frame within the amp env:
+	   *   sample given mark edit: i and xk
+	   *   sample within (original, unedited) amp env: ii and xki (xf)
+	   *   frame bounds within amp env if relevant: k and kk
+	   * this is confusing code!
+	   */
+	  double step, xk, xki;
+	  MUS_SAMPLE_TYPE ymin, ymax;
+	  int ii, kk, xi;
+	  env_info *ep;
+	  ep = cp->amp_envs[cp->edit_ctr];
+	  step = samples_per_pixel / (Float)(ep->samps_per_bin);
+	  xf = (Float)(ap->losamp) / (Float)(ep->samps_per_bin);
+	  j = 0;
+	  x = ap->x0;
+	  xi = grf_x(x, ap);
+	  i = ap->losamp;
+	  ii = ap->losamp;
+	  xk = i;
+	  xki = (Float)(ap->losamp);
+	  while (i <= ap->hisamp)
 	    {
-	      if (i == current_sample) 
-		for (k = current_sample; k < initial_sample; k++) 
-		  move_to_next_sample(sf);
-	      samp = next_sample_to_float(sf);
-	      if (samp > ymax) ymax = samp;
-	      if (samp < ymin) ymin = samp;
-	      xf += 1.0;
-	      if (xf > samples_per_pixel)
+	      k = (int)xf;
+	      kk = (int)(xf + step);
+	      if (((current_sample >= initial_sample) && 
+		   (i >= initial_sample) && 
+		   (i < current_sample)) ||
+		  (kk >= ep->amp_env_size))
 		{
-		  set_grf_points(xi, j, grf_y(ymin, ap), grf_y(ymax, ap));
-		  xi++;
-		  j++;
-		  xf -= samples_per_pixel;
-		  ymin = 100.0;
-		  ymax = -100.0;
+		  ymin = MUS_SAMPLE_0;
+		  ymax = MUS_SAMPLE_0;
+		}
+	      else
+		{
+		  ymin = ep->fmax;
+		  ymax = ep->fmin;
+		  for (; k <= kk; k++)
+		    {
+		      if (ep->data_min[k] < ymin) ymin = ep->data_min[k];
+		      if (ep->data_max[k] > ymax) ymax = ep->data_max[k];
+		    }
+		}
+	      set_grf_points(xi++, j++,
+			     grf_y(MUS_SAMPLE_TO_FLOAT(ymin), ap),
+			     grf_y(MUS_SAMPLE_TO_FLOAT(ymax), ap));
+	      xk += samples_per_pixel;
+	      i = (int)xk;
+	      if ((current_sample < initial_sample) && 
+		  (ii >= current_sample) && 
+		  (ii < initial_sample))
+		{
+		  xf = (Float)initial_sample / (Float)ep->samps_per_bin;
+		  ii = initial_sample;
+		  xki = (Float)initial_sample;
+		}
+	      else 
+		{
+		  if ((current_sample < initial_sample) ||
+		      (i >= current_sample) ||
+		      (i < initial_sample))
+		    {
+		      xf += step;
+		      xki += samples_per_pixel;
+		      ii = (int)xki;
+		    }
 		}
 	    }
+	  erase_and_draw_both_grf_points(mark_movers[which], cp, j);
 	}
       else
 	{
-	  for (i = ap->losamp, xf = 0.0; i <= ap->hisamp; i++)
+	  sf = init_sample_read(ap->losamp, cp, READ_FORWARD);
+	  if (sf == NULL) return;
+	  j = 0;      /* graph point counter */
+	  x = ap->x0;
+	  xi = grf_x(x, ap);
+	  xf = 0.0;     /* samples per pixel counter */
+	  ymin = 100.0;
+	  ymax = -100.0;
+	  if (current_sample < initial_sample) 
 	    {
-	      if ((i < initial_sample) || (i >= current_sample))
-		samp = next_sample_to_float(sf);
-	      else samp = 0.0;
-	      if (samp > ymax) ymax = samp;
-	      if (samp < ymin) ymin = samp;
-	      xf += 1.0;
-	      if (xf > samples_per_pixel)
+	      for (i = ap->losamp, xf = 0.0; i <= ap->hisamp; i++)
 		{
-		  set_grf_points(xi, j, grf_y(ymin, ap), grf_y(ymax, ap));
-		  xi++;
-		  j++;
-		  xf -= samples_per_pixel;
-		  ymin = 100.0;
-		  ymax = -100.0;
+		  if (i == current_sample) 
+		    for (k = current_sample; k < initial_sample; k++) 
+		      move_to_next_sample(sf);
+		  samp = next_sample_to_float(sf);
+		  if (samp > ymax) ymax = samp;
+		  if (samp < ymin) ymin = samp;
+		  xf += 1.0;
+		  if (xf > samples_per_pixel)
+		    {
+		      set_grf_points(xi, j, grf_y(ymin, ap), grf_y(ymax, ap));
+		      xi++;
+		      j++;
+		      xf -= samples_per_pixel;
+		      ymin = 100.0;
+		      ymax = -100.0;
+		    }
 		}
 	    }
+	  else
+	    {
+	      for (i = ap->losamp, xf = 0.0; i <= ap->hisamp; i++)
+		{
+		  if ((i < initial_sample) || (i >= current_sample))
+		    samp = next_sample_to_float(sf);
+		  else samp = 0.0;
+		  if (samp > ymax) ymax = samp;
+		  if (samp < ymin) ymin = samp;
+		  xf += 1.0;
+		  if (xf > samples_per_pixel)
+		    {
+		      set_grf_points(xi, j, grf_y(ymin, ap), grf_y(ymax, ap));
+		      xi++;
+		      j++;
+		      xf -= samples_per_pixel;
+		      ymin = 100.0;
+		      ymax = -100.0;
+		    }
+		}
+	    }
+	  erase_and_draw_both_grf_points(mark_movers[which], cp, j);
 	}
-      erase_and_draw_both_grf_points(mark_movers[which], cp, j);
     }
   if (sf) {free_snd_fd(sf); sf = NULL;}
 }

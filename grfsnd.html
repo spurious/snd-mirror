@@ -615,7 +615,7 @@ tricky; first you need to build sndlib as a shared library (named
 the loader normally searches, you need to use -rpath in the loader
 arguments to force the loader to look in the right place. 
 Here's an example that
-implements <a href="sndscm.html#effectsdoc">effects.scm</a>'s flanger in a file named eff.c:
+implements <a href="sndscm.html#effectsdoc">new-effects.scm</a>'s flanger in a file named eff.c:
 </p>
 <pre>
 #include &lt;guile/gh.h&gt;
@@ -717,7 +717,7 @@ invoked:</p>
 <pre>
 (loop-samples (make-sample-reader 0) (get-flange) (frames) "flange" (make-flange 2.0 5.0 0.001))
 </pre>
-<p>which is about 30 times faster than the interpreted version in <a href="sndscm.html#effectsdoc">effects.scm</a>.  There is (yet another)
+<p>which is about 30 times faster than the interpreted version in <a href="sndscm.html#effectsdoc">new-effects.scm</a>.  There is (yet another)
 gotcha in this business: if Snd is built in the normal way incorporating the sndlib code directly,
 the call (mus-srate) in the listener does not refer to the same thing that mus_srate refers to
 in eff.c; the latter is using the shared library's variable whereas Snd is using the variable

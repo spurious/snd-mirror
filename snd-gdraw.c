@@ -1,6 +1,3 @@
-/* TODO: use gdk rgb rather than colormaps? -- are they smart about rectangles?
- */
-
 #include "snd.h"
 
 void draw_line (axis_context *ax, int x0, int y0, int x1, int y1) 

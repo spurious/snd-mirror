@@ -132,7 +132,7 @@ various examples of and extensions to Snd can be found in the contrib directory,
 <tr><td><a href="sndscm.html#drawdoc">draw.scm</a></td>      <td>graphics additions</td></tr>
 <tr><td><a href="sndscm.html#dspdoc">dsp.scm</a></td>        <td>various DSP-related procedures</td></tr>
 <tr><td><a href="sndscm.html#editmenudoc">edit-menu.scm</a></td><td>Edit menu additions</td></tr>
-<tr><td><a href="sndscm.html#effectsdoc">effects.scm</a></td><td>an Effects menu based on examp.scm</td></tr>
+<tr><td><a href="sndscm.html#effectsdoc">new-effects.scm</a></td><td>an Effects menu</td></tr>
 <tr><td><a href="sndscm.html#envdoc">env.scm</a></td>        <td>various envelope functions from CLM</td></tr>
 <tr><td><a href="sndscm.html#enveddoc">enved.scm</a></td>    <td>envelope editor in lisp graph section</td></tr>
 <tr><td><a href="sndscm.html#extensionsdoc">extensions.scm</a></td><td>extensions of Snd</td></tr>
@@ -4915,7 +4915,7 @@ The following substitutions can be made:
 <!-- -->
 <!-- --><table border=1 cellpadding=5><tr><td bgcolor="#FCFCF0"><pre>
 (define map-silence
-  ;; see squelch in <a href="sndscm.html#effectsdoc">effects.scm</a> for a better version
+  ;; see squelch in <a href="sndscm.html#effectsdoc">new-effects.scm</a> for a better version
   (lambda (silence replacement)
     (let ((sum-of-squares 0.0)
 	  (buffer (make-vector 128 0.0))
@@ -7555,7 +7555,7 @@ And an example that lets us see the result of filtering the waveform:
 <!-- --><tr><td width=150></td><td>
 <!-- -->add new top-level menu named <i>menu-label</i>, return menu index.
 <!-- --><i>update-callback</i> can be a procedure of no arguments that will be 
-<!-- -->called each time the menu is displayed. (See <a href="sndscm.html#effectsdoc">effects.scm</a> for an example).
+<!-- -->called each time the menu is displayed. (See <a href="sndscm.html#effectsdoc">new-effects.scm</a> for an example).
 <!-- --><br><br><pre>
 <!-- -->  &gt;<em class=typing>(add-to-main-menu "Tools")</em>
 <!-- -->  <em class=listener>5</em>
@@ -7568,7 +7568,7 @@ And an example that lets us see the result of filtering the waveform:
 <!-- -->add menu <i>menu-label</i> to top-level menu whose index is 
 <!-- --><i>top-menu</i> with the callback function <i>callback</i>.  The built-in
 <!-- -->Snd menus are numbered from 0 ('File') to 5 ('Popup') ('Help' is 4).  If label and callback are #f, a separator is added to the menu.
-<!-- --><i>position</i> sets the position of the new menu option; it defaults to the end of the menu.  See effects.scm for many examples.
+<!-- --><i>position</i> sets the position of the new menu option; it defaults to the end of the menu.  See new-effects.scm for many examples.
 <!-- -->[<em class=error>no-such-menu</em>]
 <!-- --><br><br><pre>
 <!-- -->  (<em class=red>add-to-menu</em> 1 "Stop Playing" 

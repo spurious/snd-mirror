@@ -2203,6 +2203,6 @@ Reverb-feedback sets the scaler on the feedback.\n\
 ;;; TODO: radar scope style region cue list
 ;;; (create-sound-window (list-ref (main-widgets) 3) "pistol.snd")
 ;;;   will probably want to disable close here, or use replace?
-;;; TODO: mix-panning via enved
+;;; TODO: mix-panning via enved (or as part of mix file dialog?)
 ;;; TODO: spatial envelope dialog
 ;;; TODO: spectral edit dialog

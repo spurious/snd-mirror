@@ -37,7 +37,7 @@
   <li><a href="#drawdoc">draw.scm: graphics additions</a>
   <li><a href="#dspdoc">dsp.scm: various DSP-related procedures</a>
   <li><a href="#editmenudoc">edit-menu.scm: Edit menu additions</a>
-  <li><a href="#effectsdoc">effects.scm: an Effects menu</a>
+  <li><a href="#effectsdoc">new-effects.scm: an Effects menu</a>
   <li><a href="#envdoc">env.scm: envelope functions</a>
   <li><a href="#enveddoc">enved.scm: envelope editor</a>
   <li><a href="#exampdoc">examp.scm: many examples</a>
@@ -288,7 +288,7 @@ The built-in function <a href="extsnd.html#sndfht">fht</a> is the fast form of t
 The Hartley transform is a kind of Fourier transform.
 The Butterworth filters are taken from Sam Heisz's CLM version
 of Paris Smaragdis's Csound version of Charles Dodge's code from "Computer Music: synthesis, composition, and performance".
-See also the notch filter in effects.scm.
+See also the notch filter in new-effects.scm.
 <i>spectrum-&gt;coeffs</i> is a Scheme
 version of Snd's very simple spectrum-&gt;coefficients procedure ("frequency sampling").
 It returns the FIR filter coefficients given the filter order and desired spectral envelope.
@@ -353,9 +353,9 @@ the phazor package of Scott McNab.
 
 
 
-<A NAME="effectsdoc"></a><span class=box><h2>effects.scm</h2></span>
+<A NAME="effectsdoc"></a><span class=box><h2>new-effects.scm</h2></span>
 
-<p>effects.scm implements an "Effects" menu.  If you have Motif,
+<p>new-effects.scm implements an "Effects" menu.  If you have Motif,
 you can load xm.so (or build Snd with it preloaded), and get sliders
 to control most of the effects.
 The actual list of effects changes relatively frequently, but
@@ -392,11 +392,11 @@ probably has:
 or use functions in the other scm files.  The actual operations follow the sync chain of the
 currently active channel.  
 </p>
-<p>One possibly interesting part of effects.scm is the implementation of the
+<p>One possibly interesting part of new-effects.scm is the implementation of the
 Effects menu.  If you change one of the variables, you'll notice that the
 menu updates its notion of that variable as well.  This is handled through
 <i>update-callback</i> argument to <a href="extsnd.html#sndaddtomainmenu">add-to-main-menu</a>
-function.  Each effect is added (when effects.scm is loaded) to the <i>effects-list</i>.
+function.  Each effect is added (when new-effects.scm is loaded) to the <i>effects-list</i>.
 Then each time you click the Effects menu, causing its options to be dispayed,
 the update-callback function itself calls each effect's update function to
 get its current option label.  That is,
@@ -435,9 +435,7 @@ adds its update function to the effects-list when it is loaded:
 effects in more detail.  The code is mostly straight-forward, and
 it's not hard to try them out.
 </p>		   
-<p>effects.scm has been replaced by contrib/dlp/new-effects.scm, but this
-documentation more or less applies anyway.
-</p>
+<br>
 
 <A NAME="envdoc"></a><span class=box><h2>env.scm</h2></span>
 
@@ -711,7 +709,7 @@ I'm slowly dividing out related groups of procedures to separate files.
 </pre>
 <p>The two versions of <i>comb-filter</i> implement a comb filter both
 "by hand" and using CLM. <i>comb-chord</i> uses comb filters at harmonically
-related sizes to create a chord (see also chordalize in effects.scm).  <i>amp</i>
+related sizes to create a chord (see also chordalize in new-effects.scm).  <i>amp</i>
 here is an overall amplitude scaler.  <i>zcomb</i> is a time-varying comb
 filter using the envelope <i>pm</i>.  <i>notch-filter</i> parallels comb-filter.
 <i>formant-filter</i> applies a formant to its input.

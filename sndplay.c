@@ -1,7 +1,5 @@
 /* sndplay plays sounds */
 
-/* TODO: make it possible to set the output device (and tie into CLM) */
-
 #if defined(HAVE_CONFIG_H)
   #include "config.h"
 #endif

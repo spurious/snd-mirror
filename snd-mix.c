@@ -1831,7 +1831,7 @@ static int display_mix_amp_env(mix_info *md, Float scl, int yoff, int newbeg, in
   int hi, lo, j;
   Locus lastx, newx;
   Float ymin, ymax, high = 0.0, low = 0.0;
-  Float sum, xend, xstart, xstep;
+  double sum, xend, xstart, xstep;
   min_fd = init_mix_input_amp_env_read(md, 0, 0); /* not old, not hi */
   max_fd = init_mix_input_amp_env_read(md, 0, 1); /* not old, hi */
   lo = ap->losamp;
