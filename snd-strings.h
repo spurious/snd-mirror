@@ -486,6 +486,7 @@
 #define S_enved_waveform_color          "enved-waveform-col" STR_OR
 #define S_enved_waving                  "enved-waving"
 #define S_eps_file                      "eps-file"
+#define S_erase_zeros                   "erase-zeros"
 #define S_exit                          "exit"
 #define S_exit_hook                     "exit-hook"
 #define S_expand                        "expand"
@@ -816,6 +817,7 @@
 #define S_set_enved_waveform_color      "set-enved-waveform-col" STR_OR
 #define S_set_enved_waving              "set-enved-waving"
 #define S_set_eps_file                  "set-eps-file"
+#define S_set_erase_zeros               "set-erase-zeros"
 #define S_set_expand                    "set-expand"
 #define S_set_expand_funcs              "set-expand-funcs"
 #define S_set_expand_hop                "set-expand-hop"

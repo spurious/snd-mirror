@@ -300,6 +300,7 @@ enum {MUS_NO_ERROR,MUS_NO_FREQUENCY,MUS_NO_PHASE,MUS_NO_GEN,MUS_NO_LENGTH,
 #ifdef MACOS
   /* C's calloc/free are incompatible with Mac's SndDisposeChannel (which we can't avoid using) */
   /* realloc is enough of a mess that I'll handle each case individually */
+  /*   FREE is used only when we call either CALLOC or MALLOC ourselves -- other cases use free */
   #define CALLOC(a,b)  NewPtrClear((a) * (b))
   #define MALLOC(a)    NewPtr((a))
   #define FREE(a)      DisposePtr((Ptr)(a))

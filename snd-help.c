@@ -189,6 +189,7 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
+5-Jul:   experimental erase-zeros flag.\n\
 3-Jul:   save-hook and auto-save (examp.scm) improvements.\n\
          ok? renamed sound?, mix-ok? -> mix?, added mark?, region?, selection?\n\
          setf.scm for (setf (<var>) <val>) in place of (set-<var> <val>).\n\

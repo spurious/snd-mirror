@@ -507,6 +507,10 @@ enum {SCAN_CURRENT_CHAN,SCAN_SOUND_CHANS,SCAN_SYNCD_CHANS,SCAN_ALL_CHANS};
 #define in_set_show_y_zero(ss,a) ss->Show_Y_Zero = a
 #define DEFAULT_SHOW_Y_ZERO 0
 
+#define erase_zeros(ss) ss->Erase_Zeros
+#define set_erase_zeros(ss,a) ss->Erase_Zeros = a
+#define DEFAULT_ERASE_ZEROS 0
+
 #define show_axes(ss) ss->Show_Axes
 #define set_show_axes(ss,a) ss->Show_Axes = a
 #define DEFAULT_SHOW_AXES SHOW_ALL_AXES

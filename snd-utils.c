@@ -157,7 +157,7 @@ int disk_space_p(snd_info *sp, int fd, int bytes, int other_bytes)
 
 int snd_checked_write(snd_state *ss, int fd, unsigned char *buf, int bytes)
 {
-  /* clm checked_write assumes clm descriptors are around and writes errors to stderr */
+  /* io.c checked_write assumes its file descriptors are around */
   int bytes_written,kfree;
   kfree = disk_kspace(fd);
   if (kfree < 0) {snd_error(strerror(errno)); return(-1);}

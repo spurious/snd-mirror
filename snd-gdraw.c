@@ -162,7 +162,7 @@ void set_grf_point(int xi, int j, int yi)
   points[j].y = yi;
 }
 
-void draw_both_grf_points(snd_state *ss, axis_context *ax, int j)
+void draw_both_grf_points(snd_state *ss, axis_context *ax, int j, axis_info *ap)
 {
   int i,size8,size4;
   switch (graph_style(ss))
@@ -170,6 +170,11 @@ void draw_both_grf_points(snd_state *ss, axis_context *ax, int j)
     case GRAPH_LINES:
       gdk_draw_lines(ax->wn,ax->gc,points,j);
       gdk_draw_lines(ax->wn,ax->gc,points1,j);
+      if ((erase_zeros(ss)) && (!(show_y_zero(ss))))
+	{
+	  erase_context(ap->cp);
+	  draw_line(ax,ap->x_axis_x0,grf_y(0.0,ap),ap->x_axis_x1,grf_y(0.0,ap));
+	}
       break;
     case GRAPH_DOTS:
       draw_points(ax,points,j,dot_size(ss));

@@ -155,6 +155,7 @@ static void mus_error2snd(int type, char *msg)
   ss->Audio_State_File = AUDIO_STATE_FILE;
   ss->Show_Fft_Peaks = DEFAULT_SHOW_FFT_PEAKS;
   ss->Show_Y_Zero = DEFAULT_SHOW_Y_ZERO;
+  ss->Erase_Zeros = DEFAULT_ERASE_ZEROS;
   ss->Show_Axes = DEFAULT_SHOW_AXES;
   ss->Show_Marks = DEFAULT_SHOW_MARKS;
   ss->Data_Clipped = DEFAULT_DATA_CLIPPED;

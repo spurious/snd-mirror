@@ -519,6 +519,7 @@ static int save_region_1(snd_state *ss, char *ofile,int type, int format, int sr
 	      mus_file_read(ifd,0,cursamples-1,chans,bufs);
 	      err = mus_file_write(ofd,0,cursamples-1,chans,bufs);
 	      if (err == -1) break;
+	      check_for_event(ss); /* added 3-Jul-00 -- is this safe? */
 	    }
 	  snd_close(ifd);
 	  for (i=0;i<chans;i++) FREE(bufs[i]);

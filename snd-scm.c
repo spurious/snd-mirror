@@ -1324,6 +1324,16 @@ static SCM g_set_show_y_zero(SCM on)
   RTNBOOL(show_y_zero(state));
 }
 
+static SCM g_erase_zeros(void) {RTNBOOL(erase_zeros(state));}
+static SCM g_set_erase_zeros(SCM on) 
+{
+  #define H_erase_zeros "(" S_erase_zeros ") -> #t if Snd should (try to) erase silences"
+  #define H_set_erase_zeros "(" S_set_erase_zeros " &optional (val #t)) sets " S_erase_zeros
+  ERRB1(on,S_set_erase_zeros); 
+  set_erase_zeros(state,bool_int_or_one(on));
+  RTNBOOL(erase_zeros(state));
+}
+
 static SCM g_show_axes(void) {RTNINT(show_axes(state));}
 static SCM g_set_show_axes(SCM on) 
 {
@@ -4374,6 +4384,8 @@ void g_initialize_gh(snd_state *ss)
   DEFINE_PROC(gh_new_procedure0_1(S_set_show_mix_waveforms,g_set_show_mix_waveforms),H_set_show_mix_waveforms);
   DEFINE_PROC(gh_new_procedure0_0(S_show_y_zero,g_show_y_zero),H_show_y_zero);
   DEFINE_PROC(gh_new_procedure0_1(S_set_show_y_zero,g_set_show_y_zero),H_set_show_y_zero);
+  DEFINE_PROC(gh_new_procedure0_0(S_erase_zeros,g_erase_zeros),H_erase_zeros);
+  DEFINE_PROC(gh_new_procedure0_1(S_set_erase_zeros,g_set_erase_zeros),H_set_erase_zeros);
   DEFINE_PROC(gh_new_procedure0_0(S_show_axes,g_show_axes),H_show_axes);
   DEFINE_PROC(gh_new_procedure0_1(S_set_show_axes,g_set_show_axes),H_set_show_axes);
   DEFINE_PROC(gh_new_procedure0_0(S_sinc_width,g_sinc_width),H_sinc_width);
