@@ -821,7 +821,7 @@ read-only (in selected data formats):\n\
      SPPACK, ADC (OGI), AVR, VOC, PVF,\n\
      Sound Tools, Turtle Beach SMP, SoundFont 2.0,\n\
      Sound Designer I and II, PSION, MAUD, Kurzweil 2000,\n\
-     Tandy DeskMate, Gravis Ultrasound, ASF, PAF, CSL,\n\
+     Gravis Ultrasound, ASF, PAF, CSL,\n\
      Comdisco SPW, Goldwave sample, omf, quicktime\n\
      Sonic Foundry, SBStudio II, Delusion digital,\n\
      Digiplayer ST3, Farandole Composer WaveSample,\n\

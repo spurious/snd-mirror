@@ -40,7 +40,7 @@
  * Currently supported read-only (in selected data formats):
  *      8SVX (IFF), EBICSF, INRS, ESPS, SPPACK, ADC (OGI), AVR, VOC, CSL, snack "SMP", PVF,
  *      Sound Tools, Turtle Beach SMP, SoundFont 2.0, Sound Designer I and II, PSION alaw, MAUD, 
- *      Tandy DeskMate new and old style, Gravis Ultrasound, Comdisco SPW, Goldwave sample, OMF,
+ *      Gravis Ultrasound, Comdisco SPW, Goldwave sample, OMF,
  *      Sonic Foundry, SBStudio II, Delusion digital, Digiplayer ST3, Farandole Composer WaveSample,
  *      Ultratracker WaveSample, Sample Dump exchange, Yamaha SY85 and SY99 (buggy), Yamaha TX16W, 
  *      Covox v8, SPL, AVI, Kurzweil 2000, Paris Ensoniq
@@ -410,8 +410,6 @@ const char *mus_header_type_name(int type)
     case MUS_PSION:            return("PSION");                   break;
     case MUS_MAUD:             return("MAUD");                    break;
     case MUS_IEEE:             return("IEEE text");               break;
-    case MUS_DESKMATE:         return("DeskMate");                break;
-    case MUS_DESKMATE_2500:    return("DeskMate_2500");           break;
     case MUS_MATLAB:           return("Matlab");                  break;
     case MUS_ADC:              return("ADC/OGI");                 break;
     case MUS_SOUND_EDIT:       return("SoundEdit");               break;
@@ -3384,73 +3382,6 @@ static int read_psion_header (int chan)
 
 
 
-/* ------------------------------------ Tandy DeskMate -------------------------------------
- * 
- * 0:  short 1A (c-Z = .snd ID byte)
- * 1:  data type (0 = no compression, 1 = music compression, 2 = speech compression)
- * 2:  number of notes (= 1 if sound)
- * 3:  instrument number (= 0 if sound, otherwise this is an "instrument" file)
- * 4:  sound/instrument name (ASCIZ -- 10 bytes)
- * 14: sampling rate (apparently one of 5500, 11000, 22000 -- is this unsigned?)
- * 16: begin variable 28-byte records, after which is sound data as unsigned 8-bit linear ("PCM")
- *   in sound files:
- *   16: 0xFF 0 0xFF 0xFF
- *   20: data location if compressed
- *   24: 8 bytes of non-sound related things
- *   32: sound size
- *   36: 8 more useless bytes
- * 
- * always 8-bit unsigned linear mono
- * This info from oak.oakland.edu:/SimTel/msdos/sound/tspak17.zip (now at ftp.coast.net:/pub/SimTel/msdos/sound)
- */
-static int read_deskmate_header (int chan)
-{
-  /* if we reach here, we're at 0 with HDRBUFSIZ read in */
-  chans = 1;
-  data_location = 44;
-  srate = mus_char_to_lshort((unsigned char *)(hdrbuf + 14)); /* unsigned? */
-  data_format = MUS_UBYTE;
-  data_size = mus_char_to_lint((unsigned char *)(hdrbuf + 32));
-  true_file_length = SEEK_FILE_LENGTH(chan);
-  data_size = mus_bytes_to_samples(data_format, data_size);
-  return(MUS_NO_ERROR);
-}
-
-
-/* ------------------------------------ Tandy DeskMate 2500 -------------------------------------
- * the "new .snd file format"
- *
- * 0:   name of sound, 10 byte ASCIZ
- * 10:  nada (probably to be backwards compatible...)
- * 44:  snd ID -- 0x1A80
- * 46:  number of samples
- * 48:  sound number
- * 50:  nada
- * 66:  compression code (see above)
- * 68:  nada
- * 88:  sampling rate
- * 90:  nada
- * 114: sample descriptors:
- *      0:  link to next (0 if last)
- *      4:  nada
- *      10: data location
- *      12: number of bytes in sample
- *      46: end of descriptor (presumably start of data)
- */
-static int read_deskmate_2500_header (int chan)
-{
-  /* if we reach here, we're at 0 with HDRBUFSIZ read in */
-  chans = 1;
-  data_location = 114 + 46;
-  srate = mus_char_to_lshort((unsigned char *)(hdrbuf + 88));
-  data_format = MUS_UBYTE;
-  data_size = mus_char_to_lint((unsigned char *)(hdrbuf + 46));
-  true_file_length = SEEK_FILE_LENGTH(chan);
-  data_size = mus_bytes_to_samples(data_format, data_size);
-  return(MUS_NO_ERROR);
-}
-
-
 /* ------------------------------------ Gravis Ultrasound Patch -------------------------------------
  *
  * http://www.gravis.com/Public/sdk/PATCHKIT.ZIP
@@ -4727,16 +4658,6 @@ static int mus_header_read_with_fd_and_name(int chan, const char *filename)
     {
       header_type = MUS_SPL;
       return(read_spl_header(chan));
-    }
-  if (mus_char_to_bshort((unsigned char *)hdrbuf) == 0x1A00)
-    {
-      header_type = MUS_DESKMATE;
-      return(read_deskmate_header(chan));
-    }
-  if (mus_char_to_bshort((unsigned char *)(hdrbuf + 44)) == 0x1A80)
-    {
-      header_type = MUS_DESKMATE_2500;
-      return(read_deskmate_2500_header(chan));
     }
 #if MUS_LITTLE_ENDIAN
   if (mus_char_to_uninterpreted_int((unsigned char *)hdrbuf) == 0x01000800)

@@ -2719,7 +2719,7 @@ creates a new sound file with the indicated attributes; if any are omitted, the 
 
 static XEN g_speed_control_style(XEN snd)
 {
-  #define H_speed_control_style "(" S_speed_control_style " (snd #t)) -> speed control panel interpretation choice (speed-as-float)"
+  #define H_speed_control_style "(" S_speed_control_style " (snd #t)) -> speed control panel interpretation choice (" S_speed_control_as_float ")"
   if (XEN_BOUND_P(snd))
     return(sound_get(snd, SP_SPEED_STYLE, S_speed_control_style));
   return(C_TO_XEN_INT(speed_control_style(get_global_state())));

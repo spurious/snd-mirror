@@ -3160,7 +3160,7 @@ static Float *load_Floats(XEN scalers, int *result_len, const char *caller)
 
 static XEN g_scale_to(XEN scalers, XEN snd_n, XEN chn_n)
 {
-  #define H_scale_to "(" S_scale_to " norms &optional snd chn)\n\
+  #define H_scale_to "(" S_scale_to " &optional norms snd chn)\n\
 normalizes snd to norms (following sync) norms can be a float or a vector of floats"
 
   /* chn_n irrelevant if sync */
@@ -3939,9 +3939,9 @@ void g_init_sig(void)
   XEN_DEFINE_PROCEDURE(S_insert_silence,          g_insert_silence_w, 2, 2, 0,          H_insert_silence);
 
   XEN_DEFINE_PROCEDURE(S_scale_selection_to,      g_scale_selection_to_w, 0, 1, 0,      H_scale_selection_to);
-  XEN_DEFINE_PROCEDURE(S_scale_selection_by,      g_scale_selection_by_w, 0, 1, 0,      H_scale_selection_by);
+  XEN_DEFINE_PROCEDURE(S_scale_selection_by,      g_scale_selection_by_w, 1, 0, 0,      H_scale_selection_by);
   XEN_DEFINE_PROCEDURE(S_scale_to,                g_scale_to_w, 0, 3, 0,                H_scale_to);
-  XEN_DEFINE_PROCEDURE(S_scale_by,                g_scale_by_w, 0, 3, 0,                H_scale_by);
+  XEN_DEFINE_PROCEDURE(S_scale_by,                g_scale_by_w, 1, 2, 0,                H_scale_by);
   XEN_DEFINE_PROCEDURE(S_env_selection,           g_env_selection_w, 1, 1, 0,           H_env_selection);
   XEN_DEFINE_PROCEDURE(S_env_sound,               g_env_sound_w, 1, 6, 0,               H_env_sound);
   XEN_DEFINE_PROCEDURE(S_fft,                     g_fft_w, 2, 1, 0,                     H_fft);

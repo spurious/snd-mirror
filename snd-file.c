@@ -698,6 +698,7 @@ void snd_close_file(snd_info *sp, snd_state *ss)
   if (sp->sgx) clear_minibuffer(sp);
   if (sp == selected_sound(ss)) 
     ss->selected_sound = NO_SELECTION;
+  if (selection_creation_in_progress()) finish_selection_creation();
   free_snd_info(sp);
   ss->active_sounds--;
   files = ss->active_sounds;
@@ -2527,8 +2528,8 @@ static XEN g_set_previous_files_sort(XEN val)
   XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, "set! " S_previous_files_sort, "an integer"); 
   update_prevlist();
   set_previous_files_sort(ss, mus_iclamp(0,
-					    XEN_TO_C_INT(val),
-					    5));
+					 XEN_TO_C_INT(val),
+					 5));
   if (file_dialog_is_active()) 
     make_prevfiles_list(ss);
   return(C_TO_XEN_INT(previous_files_sort(ss)));

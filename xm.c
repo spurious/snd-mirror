@@ -2134,21 +2134,6 @@ static XEN xm_protected_element(int loc)
   return(velts[loc]);
 }
 
-static XEN xm_gc_elements(void)
-{
-  return(xm_protected);
-}
-
-/* 
-   (define (gc-summary)
-     (map (lambda (n) 
-            (car n))
-          (remove-if (lambda (n) 
-                       (not (list? n))) 
-                     (vector->list (xm-gc-elements)))))
-*/
-
-
 
 /* ----------------------------------------------------------------------------------------------------
  *
@@ -14784,37 +14769,6 @@ static XEN gxm_XtRemoveAllCallbacks(XEN arg1, XEN arg2)
   return(XEN_FALSE);
 }
 
-static XEN gxm_XtRemoveCallbacks(XEN arg1, XEN arg2, XEN arg3)
-{
-  #define H_XtRemoveCallbacks "void XtRemoveCallbacks(w, callback_name, callbacks) removes the specified callback procedures from the \
-specified widget's callback list."
-  /* DIFF: XtRemoveCallbacks takes list of (func data) pairs as arg3
-   */
-  XtCallbackRec *calls;
-  XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XtRemoveCallbacks", "Widget");
-  XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XtRemoveCallbacks", "char*");
-  XEN_ASSERT_TYPE(XEN_LIST_P(arg3), arg3, 3, "XtRemoveCallbacks", "list of XtCallbacks");
-  calls = XEN_TO_C_XtCallbackList(arg3);
-  XtRemoveCallbacks(XEN_TO_C_Widget(arg1), XEN_TO_C_STRING(arg2), calls);
-  FREE(calls);
-  return(XEN_FALSE);
-}
-
-static XEN gxm_XtAddCallbacks(XEN arg1, XEN arg2, XEN arg3)
-{
-  #define H_XtAddCallbacks "void XtAddCallbacks(w, callback_name, callbacks) add the specified list of callbacks to the specified widget's callback list."
-  /* DIFF: XtAddCallbacks takes list of (func data) pairs as arg3
-   */
-  XtCallbackRec *calls;
-  XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XtAddCallbacks", "Widget");
-  XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XtAddCallbacks", "char*");
-  XEN_ASSERT_TYPE(XEN_LIST_P(arg3), arg3, 3, "XtAddCallbacks", "list of XtCallbacks");
-  calls = XEN_TO_C_XtCallbackList(arg3);
-  XtAddCallbacks(XEN_TO_C_Widget(arg1), XEN_TO_C_STRING(arg2), calls);
-  FREE(calls);
-  return(XEN_FALSE);
-}
-
 static XEN gxm_XtRemoveCallback(XEN arg1, XEN arg2, XEN arg4)
 {
   #define H_XtRemoveCallback "void XtRemoveCallback(w, callback_name, client_data) removes a callback"
@@ -14824,6 +14778,24 @@ static XEN gxm_XtRemoveCallback(XEN arg1, XEN arg2, XEN arg4)
   XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XtRemoveCallback", "char*"); 
   xm_unprotect_at(XEN_TO_C_INT(XEN_LIST_REF(arg4, CALLBACK_GC_LOC)));
   XtRemoveCallback(XEN_TO_C_Widget(arg1), XEN_TO_C_STRING(arg2), gxm_XtCallbackProc, (XtPointer)arg4);
+  return(XEN_FALSE);
+}
+
+static XEN gxm_XtRemoveCallbacks(XEN arg1, XEN arg2, XEN arg3)
+{
+  #define H_XtRemoveCallbacks "void XtRemoveCallbacks(w, callback_name, callbacks) removes the specified callback procedures from the \
+specified widget's callback list. (The 3rd arg is a list of descriptors returned by XtAddCallback)."
+  /* DIFF: XtRemoveCallbacks takes list of descriptors as arg3
+   */
+  XEN lst;
+  int i, len;
+  XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XtRemoveCallbacks", "Widget");
+  XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XtRemoveCallbacks", "char*");
+  XEN_ASSERT_TYPE(XEN_LIST_P(arg3), arg3, 3, "XtRemoveCallbacks", "list of XtCallbacks");
+  lst = XEN_COPY_ARG(arg3);
+  len = XEN_LIST_LENGTH(lst);
+  for (i = 0; i < len; i++, lst = XEN_CDR(lst))
+    gxm_XtRemoveCallback(arg1, arg2, XEN_CAR(lst));
   return(XEN_FALSE);
 }
 
@@ -14957,7 +14929,7 @@ static XEN gxm_XtAddCallback(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   #define H_XtAddCallback "void XtAddCallback(w, callback_name, callback, client_data) adds the specified callback procedure to \
 the specified widget's callback list.  In xm, the client-data is optional, defaulting to #f. The callback procedure takes \
-3 args: widget client-data callback-info"
+3 args: widget client-data callback-info. Returns a description of the callback suitable for use with XtRemoveCallback."
   /* DIFF: XtAddCallback returns the C-side "client-data" (for subsequent XtRemoveCallback)
    */
   char *name;
@@ -14975,6 +14947,25 @@ the specified widget's callback list.  In xm, the client-data is optional, defau
   XEN_LIST_SET(call_descr, CALLBACK_STRUCT_TYPE, C_TO_XEN_INT(callback_struct_type(w, name)));
   XtAddCallback(w, name, gxm_XtCallbackProc, (XtPointer)call_descr);
   return(call_descr);
+}
+
+static XEN gxm_XtAddCallbacks(XEN arg1, XEN arg2, XEN arg3)
+{
+  #define H_XtAddCallbacks "void XtAddCallbacks(w, callback_name, callbacks) add the specified list of callbacks to the specified widget's callback list. \
+It returns a list of callback descriptors for use with XtRemoveCallback(s)."
+  /* DIFF: XtAddCallbacks takes list of (func data) pairs as arg3
+   */
+  XEN res = XEN_EMPTY_LIST, lst;
+  int i, len;
+  XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XtAddCallbacks", "Widget");
+  XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XtAddCallbacks", "char*");
+  XEN_ASSERT_TYPE(XEN_LIST_P(arg3), arg3, 3, "XtAddCallbacks", "list of XtCallbacks");
+  len = XEN_LIST_LENGTH(arg3);
+  lst = XEN_COPY_ARG(arg3);
+  for (i = len - 1; i >= 0; i--, lst = XEN_CDR(lst))
+    res = XEN_CONS(gxm_XtAddCallback(arg1, arg2, XEN_CAR(XEN_CAR(lst)), XEN_CADR(XEN_CAR(lst))),
+		   res);
+  return(res);
 }
 
 static XEN gxm_XtParent(XEN arg1)
@@ -18573,8 +18564,6 @@ static void define_procedures(void)
   XM_DEFINE_PROCEDURE(XUnmapEvent?, XEN_XUnmapEvent_p, 1, 0, 0, NULL);
   XM_DEFINE_PROCEDURE(XVisibilityEvent?, XEN_XVisibilityEvent_p, 1, 0, 0, NULL);
   XM_DEFINE_PROCEDURE(XIconSize?, XEN_XIconSize_p, 1, 0, 0, NULL);
-
-  XEN_DEFINE_PROCEDURE("xm-gc-elements", xm_gc_elements, 0, 0, 0, NULL);
 
   XEN_DEFINE_PROCEDURE("->string", c_to_xen_string, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE("->strings", c_to_xen_strings, 2, 0, 0, NULL);

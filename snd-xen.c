@@ -2382,7 +2382,7 @@ XEN run_progn_hook(XEN hook, XEN args, const char *caller)
     {
       if (!(XEN_EQ_P(args, XEN_EMPTY_LIST)))
 	result = XEN_APPLY(XEN_CAR(procs), args, caller);
-      else result = XEN_CALL_0(XEN_CAR(procs), caller);
+      else result = XEN_CALL_0(XEN_CAR(procs), caller); /* currently unused */
       procs = XEN_CDR (procs);
     }
   return(xen_return_first(result, args));

@@ -5706,7 +5706,7 @@ WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_dot_size_reversed, g_set_dot_size)
 
 static XEN g_x_axis_style(XEN snd, XEN chn)
 {
-  #define H_x_axis_style "(" S_x_axis_style " (snd #t) (chn #t)) -> labelling of time domain x axis (x-in-seconds)"
+  #define H_x_axis_style "(" S_x_axis_style " (snd #t) (chn #t)) -> labelling of time domain x axis (" S_x_axis_in_seconds ")"
   if (XEN_BOUND_P(snd))
     return(channel_get(snd, chn, CP_X_AXIS_STYLE, S_x_axis_style));
   return(C_TO_XEN_INT(x_axis_style(get_global_state())));

@@ -2189,7 +2189,14 @@ Reverb-feedback sets the scaler on the feedback.\n\
 	      option-holder
 	      (lambda (menu)
 		(if (string=? name (XtName menu))
-		    (return menu))))))))
+		    (return menu)
+		    (if (XmIsCascadeButton menu)
+			(let ((options (cadr (XtGetValues menu (list XmNsubMenuId 0)))))
+			  (for-each-child
+			   options
+			   (lambda (inner-menu)
+			     (if (string=? name (XtName inner-menu))
+				 (return inner-menu)))))))))))))
       (cdr (menu-widgets)))
      (throw 'no-such-menu (list "menu-option" name)))))
 
