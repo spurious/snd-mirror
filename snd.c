@@ -242,6 +242,7 @@ static void mus_print2snd(char *msg)
   ss->search_in_progress = 0;
   ss->just_time = 0;
 
+#if HAVE_LONG_LONGS
   md = fopen("/proc/meminfo","r");
   if (md)
     {
@@ -250,7 +251,9 @@ static void mus_print2snd(char *msg)
       fclose(md);
       ss->memory_available = mem / 1024;
     }
-  else ss->memory_available = 0;
+  else 
+#endif
+    ss->memory_available = 0;
 
   init_recorder();
 

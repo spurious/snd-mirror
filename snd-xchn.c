@@ -1,5 +1,8 @@
 #include "snd.h"
 
+/* TODO: in superimposed mode, the fft background (and lisp?) is not the selected color
+ */
+
 enum {
     W_top,W_form,
     W_main_window,

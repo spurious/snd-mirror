@@ -1334,7 +1334,11 @@ static int apply_fft_window(fft_state *fs)
 	SCM res,sfd;
 	vct *v;
 	int len,i;
+#if DEBUGGING
+	sf->origin = copy_string("fft");
+#endif
 	sfd = g_c_make_sample_reader(sf);
+	snd_protect(sfd);
 	res = g_call2(added_transform_proc(cp->transform_type),gh_int2scm(data_len),sfd);
 	snd_protect(res);
 	if (vct_p(res))
@@ -1345,6 +1349,7 @@ static int apply_fft_window(fft_state *fs)
 	  }
 	GH_SET_VALUE_OF(sfd,(SCM)NULL); /* don't let guile's gc mess with it */
 	snd_unprotect(res);
+	snd_unprotect(sfd);
       }
       break;
 #endif      

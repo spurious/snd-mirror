@@ -12,6 +12,7 @@
 #undef size_t
 
 #undef WORDS_BIGENDIAN
+#undef HAVE_LONG_LONGS
 
 #undef HAVE_GETCWD
 #undef HAVE_STRFTIME

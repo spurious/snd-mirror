@@ -25,13 +25,14 @@
 ;;; TODO  all dialogs need more extensive tests
 ;;; TODO  menu-hook (see g_activate in snd-xscm -- tie this into local menu-hook tests)
 ;;; TODO  need more careful insert-sound tests
+;;; TODO  tests of various transforms and normalizations
 
 
 (use-modules (ice-9 format) (ice-9 debug))
 
 (if (file-exists? "sndlib.gdbm") (delete-file "sndlib.gdbm"))
 
-(define tests 6)
+(define tests 20)
 (define snd-test -1)
 (define full-test #t)
 

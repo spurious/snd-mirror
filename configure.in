@@ -230,6 +230,16 @@ AC_CHECK_SIZEOF(long)
 AC_CHECK_SIZEOF(int *)
 dnl need some kind of error message here if these are all 0 -- this happened to AV!
 
+dnl this taken from Guile's configure.in
+AC_CACHE_CHECK([for long longs], snd_cv_long_longs,
+	       AC_TRY_COMPILE(,
+			      [long long a],
+			      snd_cv_long_longs=yes,
+			      snd_cv_long_longs=no))
+if test "$snd_cv_long_longs" = yes; then
+  AC_DEFINE(HAVE_LONG_LONGS)
+fi
+
 AC_TYPE_SIGNAL
 AC_FUNC_STRFTIME
 AC_CHECK_FUNCS(getcwd strerror tempnam strtok mallinfo readlink setlocale access opendir sleep signal memset finite)

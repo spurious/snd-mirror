@@ -316,7 +316,13 @@ static void goto_previous_graph (chan_info *cp, int count)
   vcp = virtual_selected_channel(cp);
   chan = vcp->chan;
   ncp = NULL;
-  if (count < 0) k = -count; else {goto_next_graph(cp,count); return;}
+  if (count < 0) 
+    k = -count; 
+  else 
+    {
+      goto_next_graph(cp,count); 
+      return;
+    }
   if (chan > 0)
     {
       /* goto previous channel in current sound */
@@ -375,7 +381,11 @@ static void goto_next_graph (chan_info *cp, int count)
   vcp = virtual_selected_channel(cp);
   chan = vcp->chan;
   ncp = NULL;
-  if (count < 0) {goto_previous_graph(cp,count); return;}
+  if (count < 0) 
+    {
+      goto_previous_graph(cp,count); 
+      return;
+    }
   k = count;
   if (chan < (sp->nchans-1))
     {
@@ -436,9 +446,15 @@ int calculate_fft(chan_info *cp, void *ptr)
 	  if (cp->fft_style == NORMAL_FFT)
 	    {
 	      if (cp->fft_size >= 65536) start_progress_report(cp->sound,NOT_FROM_ENVED);
-	      set_chan_fft_in_progress(cp,BACKGROUND_ADD(ss,safe_fft_in_slices,make_fft_state(cp,1)));
+	      set_chan_fft_in_progress(cp,
+				       BACKGROUND_ADD(ss,
+						      safe_fft_in_slices,
+						      make_fft_state(cp,1)));
 	    }
-	  else set_chan_fft_in_progress(cp,BACKGROUND_ADD(ss,sonogram_in_slices,make_sonogram_state(cp)));
+	  else set_chan_fft_in_progress(cp,
+					BACKGROUND_ADD(ss,
+						       sonogram_in_slices,
+						       make_sonogram_state(cp)));
 	}
     }
   return(0);
@@ -1230,7 +1246,15 @@ static void display_peaks(chan_info *cp,axis_info *fap,Float *data,int scaler,in
   char *fstr;
   fft_peak *peak_freqs = NULL;
   fft_peak *peak_amps = NULL;
-  if (samps > (scaler*10)) tens = 2; else if (samps > scaler) tens = 1; else if (samps > (scaler/10)) tens = 0; else tens = -1;
+  if (samps > (scaler*10)) 
+    tens = 2; 
+  else 
+    if (samps > scaler) 
+      tens = 1; 
+    else 
+      if (samps > (scaler/10)) 
+	tens = 0; 
+      else tens = -1;
   num_peaks = (fap->y_axis_y0-fap->y_axis_y1) / 20;
   if (num_peaks <= 0) return;
   peak_freqs = (fft_peak *)CALLOC(cp->max_fft_peaks,sizeof(fft_peak));
@@ -1239,7 +1263,12 @@ static void display_peaks(chan_info *cp,axis_info *fap,Float *data,int scaler,in
   if (fft_data)
     num_peaks = find_and_sort_fft_peaks(data,peak_freqs,num_peaks,samps,1,samps_per_pixel,fft_scale); /* srate 1.0=>freqs between 0 and 1.0 */
   else num_peaks = find_and_sort_peaks(data,peak_freqs,num_peaks,samps);
-  if ((num_peaks == 1) && (peak_freqs[0].freq == 0.0)) {FREE(peak_freqs); FREE(peak_amps); return;}
+  if ((num_peaks == 1) && (peak_freqs[0].freq == 0.0)) 
+    {
+      FREE(peak_freqs); 
+      FREE(peak_amps); 
+      return;
+    }
   with_amps = (fap->width > ((30+5*tens+AMP_ROOM)*AMP_ROOM_CUTOFF));
   acols = 3;
   col = fap->x_axis_x1 - 30 - tens*5; 
@@ -2876,8 +2905,8 @@ static SCM series_scan(snd_state *ss, chan_info *cp, SCM proc, int chan_choice, 
 		}
 	    }
 	  if (reporting) finish_progress_report(sp,NOT_FROM_ENVED);
-	  sfs[ip] = free_snd_fd(sfs[ip]);
 	}
+      sfs[ip] = free_snd_fd(sfs[ip]);
     }
   free_sync_state(sc);
   return(SCM_BOOL_F);
@@ -3166,9 +3195,9 @@ static SCM series_map(snd_state *ss, chan_info *cp, SCM proc, int chan_choice, i
 		}
 	    }
 	  if (reporting) finish_progress_report(sp,NOT_FROM_ENVED);
-	  sfs[ip] = free_snd_fd(sfs[ip]);
 	  os = end_output(os,beg,cp,origin);
 	}
+      sfs[ip] = free_snd_fd(sfs[ip]);
     }
   free_sync_state(sc);
   return(SCM_BOOL_F);
@@ -4014,7 +4043,11 @@ void src_env_or_num(snd_state *ss, chan_info *cp, env *e, Float ratio, int just_
 	  cur_marks = 0;
 	  new_marks = NULL;
 	  if (scdur == 0) dur = current_ed_samples(cp); else dur = scdur;
-	  if (dur == 0) continue;
+	  if (dur == 0) 
+	    {
+	      if (sfs[i]) {free_snd_fd(sfs[i]); sfs[i] = NULL;}
+	      continue;
+	    }
 	  reporting = ((sp) && (dur > (MAX_BUFFER_SIZE * 4)));
 	  if (reporting) start_progress_report(sp,from_enved);
 	  ofile = snd_tempnam(ss);
@@ -4324,16 +4357,22 @@ void apply_filter(chan_info *ncp, int order, env *e, int from_enved, char *origi
   si = sc->si;
   sfs = sc->sfs;
   scdur = sc->dur;
-
-  if ((0) && (!ur_a) && (!over_selection) && (order > 128) && (((dur+order)/128) < ss->memory_available))
+  
+  if ((!ur_a) && (!over_selection) && (order > 512) && ((int)((current_ed_samples(ncp)+order)/128) < ss->memory_available))
     {
       /* use convolution if order is large and there's memory available (and not over_selection) */
+      /*   probably faster here would be overlap-add */
+      /*   but user is almost certainly making a mistake elsewhere... */
       for (i=0;i<si->chans;i++)
 	{
 	  cp = si->cps[i];
 	  sp = cp->sound;
 	  if (scdur == 0) dur = current_ed_samples(cp); else dur = scdur;
-	  if (dur == 0) continue;
+	  if (dur == 0) 
+	    {
+	      if (sfs[i]) {free_snd_fd(sfs[i]); sfs[i] = NULL;}
+	      continue;
+	    }
 
 	  fsize = (int)(pow(2.0,(int)ceil(log(order + dur)/log(2.0))));
 	  sndrdat = (Float *)CALLOC(fsize,sizeof(Float));
@@ -4341,16 +4380,23 @@ void apply_filter(chan_info *ncp, int order, env *e, int from_enved, char *origi
 	  fltdat = env2array(fsize,e);
 
 	  sf = sfs[i]; /* init_sample_read(0,cp,READ_FORWARD); */
-	  for (i=0;i<dur;i++) sndrdat[i] = (Float)(next_sample_to_float(sf));
+	  for (k=0;k<dur;k++) sndrdat[k] = (Float)(next_sample_to_float(sf));
 	  sfs[i] = free_snd_fd(sf);
 
 	  mus_fft(sndrdat,sndidat,fsize,1);
-	  scale = 2.0 / (Float)fsize;
-	  for (i=0;i<fsize;i++)
+	  check_for_event(ss);
+	  if (ss->stopped_explicitly)
 	    {
-	      spectr = scale * fltdat[i];
-	      sndrdat[i] *= spectr;
-	      sndidat[i] *= spectr;
+	      ss->stopped_explicitly = 0;
+	      report_in_minibuffer(sp,"stopped");
+	      break;
+	    }
+	  scale = 2.0 / (Float)fsize;
+	  for (k=0;k<fsize;k++)
+	    {
+	      spectr = scale * fltdat[k];
+	      sndrdat[k] *= spectr;
+	      sndidat[k] *= spectr;
 	    }
 	  mus_fft(sndrdat,sndidat,fsize,-1);
 	  ofile = snd_tempnam(ss);
@@ -4374,6 +4420,13 @@ void apply_filter(chan_info *ncp, int order, env *e, int from_enved, char *origi
 	  FREE(sndrdat);
 	  FREE(sndidat);
 	  FREE(fltdat);
+	  check_for_event(ss);
+	  if (ss->stopped_explicitly)
+	    {
+	      ss->stopped_explicitly = 0;
+	      report_in_minibuffer(sp,"stopped");
+	      break;
+	    }
 	}
     }
   else
@@ -4397,7 +4450,11 @@ void apply_filter(chan_info *ncp, int order, env *e, int from_enved, char *origi
 	      cp = si->cps[i];
 	      sp = cp->sound;
 	      if (scdur == 0) dur = current_ed_samples(cp); else dur = scdur;
-	      if (dur == 0) continue;
+	      if (dur == 0) 
+		{
+		  if (sfs[i]) {free_snd_fd(sfs[i]); sfs[i] = NULL;}
+		  continue;
+		}
 	      reporting = ((sp) && (dur > (MAX_BUFFER_SIZE * 4)));
 	      if (reporting) start_progress_report(sp,from_enved);
 	      if (dur > MAX_BUFFER_SIZE)
@@ -4527,7 +4584,11 @@ static void reverse_sound(chan_info *ncp, int over_selection)
 	      dur = current_ed_samples(cp);
 	      ep = amp_env_copy(cp,TRUE);
 	    }
-	  if (dur == 0) continue;
+	  if (dur == 0) 
+	    {
+	      if (sfs[i]) {free_snd_fd(sfs[i]); sfs[i] = NULL;}
+	      continue;
+	    }
 	  if (dur > MAX_BUFFER_SIZE)
 	    {
 	      temp_file = 1; 
@@ -4934,7 +4995,7 @@ void apply_env(chan_info *cp, env *e, int beg, int dur, Float scaler, int regexp
 	  if (temp_file)
 	    file_change_samples(si->begs[i],dur,ofile,si->cps[i],i,(si->chans > 1) ? MULTICHANNEL_DELETION : DELETE_ME,LOCK_MIXES,origin);
 	  else change_samples(si->begs[i],dur,data[i],si->cps[i],LOCK_MIXES,origin);
-	  update_graph(si->cps[i],NULL); /* is this needed? */
+	  update_graph(si->cps[i],NULL);
 	}
     }
   for (i=0;i<si->chans;i++)
@@ -5248,6 +5309,11 @@ static void eval_expression(chan_info *cp, snd_info *sp, int count, int regexpr)
 	      report_in_minibuffer(sp,"%s = %s",sp->eval_expr,s1 = prettyf(val,2));
 	      FREE(s1);
 	    }
+	}
+      else
+	{
+	  for (chan=0;chan<si->chans;chan++)
+	    if (sfs[chan]) sfs[chan] = free_snd_fd(sfs[chan]);
 	}
       free_sync_state(sc);
     }

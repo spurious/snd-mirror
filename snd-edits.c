@@ -805,7 +805,7 @@ snd_data *copy_snd_data(snd_data *sd, chan_info *cp, int bufsize)
 				   datai,
 				   MUS_SAMPLE_ARRAY(datai[file_state_channel_offset(0)]),
 				   sd->edit_ctr);
-      sf->copy = TRUE;
+      sf->copy = 1;
       return(sf);
     }
   hdr = sd->hdr;
@@ -830,7 +830,7 @@ snd_data *copy_snd_data(snd_data *sd, chan_info *cp, int bufsize)
   sf->edit_ctr = sd->edit_ctr;
   sf->open = FD_OPEN;
   sf->inuse = FALSE;
-  sf->copy = TRUE;
+  sf->copy = 1;
   sf->just_zeros = 0;
   return(sf);
 }
@@ -881,6 +881,7 @@ snd_data *free_snd_data(snd_data *sf)
 	  sf->filename = NULL;
 	}
       sf->temporary = ALREADY_DELETED;
+      sf->copy = FALSE;
       FREE(sf);
     }
   return(NULL);
@@ -1786,7 +1787,7 @@ snd_fd *free_snd_fd(snd_fd *sf)
       if (sd)
 	{
 	  sd->inuse = FALSE;
-	  if (sd->copy) free_snd_data(sd);
+	  if (sd->copy == 1) free_snd_data(sd); 
 	}
       sf->current_state = NULL;
       sf->current_sound = NULL;
@@ -1911,6 +1912,7 @@ static MUS_SAMPLE_TYPE previous_sound (snd_fd *sf)
 	  prev_snd->inuse = FALSE; 
 	  sf->current_sound = NULL;
 	  if (prev_snd->copy) free_snd_data(prev_snd);
+	  prev_snd->copy = FALSE;
 	}
       if (sf->cbi == 0) return(MUS_SAMPLE_0); /* can't back up any further */
       sf->cbi--;
@@ -1960,6 +1962,7 @@ static MUS_SAMPLE_TYPE next_sound (snd_fd *sf)
 	  nxt_snd->inuse = FALSE; 
 	  sf->current_sound = NULL;
 	  if (nxt_snd->copy) free_snd_data(nxt_snd);
+	  nxt_snd->copy = FALSE;
 	}
       if (sf->last == (MUS_SAMPLE_TYPE *)0) return(MUS_SAMPLE_0);
       sf->cbi++;
@@ -2705,6 +2708,14 @@ static scm_sizet free_sf(SCM obj)
   snd_info *sp = NULL;
   if (fd) 
     {
+#if DEBUGGING
+      if (fd->origin) 
+	{
+	  FREE(fd->origin);
+	  fd->origin = NULL;
+	}
+      else fprintf(stderr,"free snd_fd %d %p?",(int)obj,fd);
+#endif
       /* changed to reflect g_free_sample_reader 29-Oct-00 */
       sp = fd->local_sp; 
       fd->local_sp = NULL;
@@ -2772,6 +2783,9 @@ static SCM g_make_sample_reader(SCM samp_n, SCM snd, SCM chn, SCM dir1, SCM pos)
     }
   edpos = g_scm2intdef(pos,cp->edit_ctr);
   fd = init_sample_read_any(g_scm2intdef(samp_n,0),cp,g_scm2intdef(dir1,1),edpos);
+#if DEBUGGING
+  fd->origin = copy_string(cp->sound->shortname);
+#endif
   if (fd)
     {
       fd->local_sp = loc_sp;
@@ -2791,6 +2805,9 @@ static SCM g_make_region_sample_reader(SCM samp_n, SCM reg, SCM chn, SCM dir1)
   ERRB3(chn,S_make_sample_reader);
   ERRB4(dir1,S_make_sample_reader);
   fd = init_region_read(get_global_state(),g_scm2intdef(samp_n,0),g_scm2intdef(reg,0),g_scm2intdef(chn,0),g_scm2intdef(dir1,1));
+#if DEBUGGING
+  fd->origin = copy_string("region");
+#endif
   if (fd)
     {
       SND_RETURN_NEWSMOB(sf_tag,(SCM)fd);

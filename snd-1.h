@@ -66,6 +66,9 @@ typedef struct snd_fd {
   struct chan__info *cp;
   struct snd__info *local_sp;          /* for local reads via make-sample-reader from Scheme */
   Float scaler;
+#if (DEBUGGING) && (HAVE_GUILE)
+  char *origin;
+#endif
 } snd_fd;
 
 typedef struct {Float freq; Float amp;} fft_peak;
