@@ -713,7 +713,15 @@ examples in snd-motif.scm.
 </td></tr>
 <tr><td></td><td colspan=2>
 called after Snd has saved its state (<a href="#sndsavestate">save-state</a>).  'filename' is the (otherwise complete) saved state
-program.  See ws-save-state in ws.scm or remember-sound-state in extensions.scm.
+program.  See ws-save-state in ws.scm or remember-sound-state in extensions.scm.  Both use this sequence:
+<br>
+<pre>
+(lambda (filename)
+  (let ((fd (open filename (logior O_RDWR O_APPEND)))) ; open to write at the end
+    (format fd "~%~%;;; save-state stuff here ~%")
+    ...
+    (close fd)))
+</pre>
 </td></tr>
 <tr><td colspan=3></td></tr>
 
@@ -1129,13 +1137,28 @@ See click-for-listener-help in draw.scm.
 <span class=defbox><code><em class=def><a name="markclickhook">mark-click-hook</a></em> (id)</code></span></td><td align=right><b>progn</b>
 </td></tr>
 <tr><td></td><td colspan=2>
-called when a mark is clicked; return #t to squelch message.
+called when a mark is clicked; return #t to squelch default minibuffer mark identification.
 </td></tr>
 <tr><td></td><td colspan=2>
 <table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
 (add-hook! <em class=red>mark-click-hook</em>
   (lambda (n) 
-    (help-dialog "Mark Help" (number-&gt;string (mark-sample n))) 
+    (if (not (defined? 'mark-properties)) (load "marks.scm"))
+    (help-dialog "Mark Help"
+                 (format #f "Mark ~D~A:~%  sample: ~D = ~,3F secs~%  sync: ~A~%~A"
+			 n 
+			 (let ((name (mark-name n)))
+			   (if (&gt; (string-length name) 0)
+			       (format " (~S)" name)
+			       ""))
+			 (mark-sample n)
+			 (/ (mark-sample n) (srate (car (mark-home n))))
+			 (mark-sync n)
+			 (let ((props (mark-properties n)))
+			   (if (and (list? props)
+				    (not (null? props)))
+			       (format #f "  properties: '~A" props)
+			       ""))))
     #t))
 </pre></td></tr></table></td></tr>
 <tr><td colspan=3></td></tr>
@@ -4450,7 +4473,7 @@ form of CLM's filter generator:
 </pre>
 <p>If you have coefficients for the cascade form, but have no scruples about using 
 some other form, see <b>cascade-&gt;canonical</b> in dsp.scm, and the examples that follow.
-<p>
+</p>
 <blockquote><small>
 <spacer type=horizontal size=40><A NAME="filtersinsnd">Filters</a> in Snd:<br>
 CLM filter generators: <a href="clm.html#filters">filter, one-pole, formant, comb, notch, all-pass, etc</a>, many examples in examp.scm, new-effects.scm<br>
@@ -4463,7 +4486,7 @@ IIR filters of various orders/kinds: dsp.scm<br>
 Hilbert transform: make-hilbert-transform in dsp.scm<br>
 differentiator: make-differentiator in dsp.scm<br>
 block DC: see dc-block in prc95.scm, also flute.scm.<br>
-hum elimination: see eliminate-hum in dsp.scm
+hum elimination: see eliminate-hum in dsp.scm<br>
 arbitrary spectrum via FIR filter: spectrum-&gt;coeffs in dsp.scm<br>
 filtered echo sound effect: flecho in examp.scm<br>
 time varying filter: fltit in examp.scm<br>

@@ -686,11 +686,6 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 (define (hilbert-transform f in)
   (fir-filter f in))
 
-;;; it's much faster to use fir-filter directly in map-channel --
-;;;   fir-filter can be highly optimized via run, whereas currently
-;;;   a function like hilbert-transform which calls fir-filter
-;;;   is not optimized (this is do-able...)
-
 #!
   (let ((h (make-hilbert-transform 15)))
     (map-channel (lambda (y)
@@ -839,7 +834,7 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 
 ;;; -------- IIR filters
 
-;;; from "DSP Filter Cookbook" by Lane et all, Prompt Pubs, 2001
+;;; from "DSP Filter Cookbook" by Lane et al, Prompt Pubs, 2001
 ;;; 
 ;;; use with the filter generator
 ;;;   (define gen (make-iir-high-pass-2 1000))
@@ -926,7 +921,7 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
   (let ((val x0))
     (do ((i 0 (1+ i)))
 	((= i (vector-length gen)))
-      (set! val (filter (vector-ref gen i) val)))
+      (set! val (filter (vector-ref gen i) val))) ; "cascade" n filters
     val))
 
 ;;; (let ((hummer (make-eliminate-hum))) (map-channel (lambda (x) (eliminate-hum hummer x))))

@@ -5486,7 +5486,7 @@ the closer the radius is to 1.0, the narrower the resonance."
   XEN_DEFINE_PROCEDURE(S_locsig_reverb_ref, g_locsig_reverb_ref_w, 2, 0, 0, H_locsig_reverb_ref);
 #endif
   XEN_DEFINE_PROCEDURE(S_locsig_reverb_set, g_locsig_reverb_set_w, 3, 0, 0, H_locsig_reverb_set);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_locsig_type, g_locsig_type_w, H_locsig_type, S_set_locsig_type, g_set_locsig_type_w,  0, 0, 1, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_locsig_type, g_locsig_type_w, H_locsig_type, S_setB S_locsig_type, g_set_locsig_type_w,  0, 0, 1, 0);
 
   XEN_DEFINE_PROCEDURE(S_file2sample_p,    g_file2sample_p_w, 1, 0, 0,    H_file2sample_p);
   XEN_DEFINE_PROCEDURE(S_make_file2sample, g_make_file2sample_w, 1, 0, 0, H_make_file2sample);

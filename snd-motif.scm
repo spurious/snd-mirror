@@ -370,6 +370,36 @@ Box: (install-searcher (lambda (file) (= (mus-sound-srate file) 44100)))"
 (define (remove-menu-bar-menu which)
   (XtUnmanageChild (list-ref (menu-widgets) which)))
 
+#!
+(define (add-second-row)
+  ;; adds a row-column widget just under the menu bar
+  (let ((menu-bar (car (menu-widgets)))
+	(main-pane (caddr (main-widgets)))
+	(sound-pane (cadddr (main-widgets))))
+    (XtUnmanageChild sound-pane)
+    (let* ((second-row (XtCreateManagedWidget "second-row" xmRowColumnWidgetClass main-pane
+					      (list XmNleftAttachment    XmATTACH_FORM
+						    XmNrightAttachment  XmATTACH_FORM
+						    XmNbottomAttachment XmATTACH_NONE
+						    XmNtopAttachment    XmATTACH_WIDGET
+						    XmNtopWidget        menu-bar
+						    XmNbackground       (highlight-color))))
+	   (sep (XtCreateManagedWidget "sep" xmSeparatorWidgetClass main-pane
+				              (list XmNleftAttachment    XmATTACH_FORM
+						    XmNrightAttachment  XmATTACH_FORM
+						    XmNbottomAttachment XmATTACH_NONE
+						    XmNtopAttachment    XmATTACH_WIDGET
+						    XmNtopWidget        second-row
+						    XmNbackground       (highlight-color)
+						    XmNorientation      XmHORIZONTAL
+						    XmNseparatorType    XmSHADOW_ETCHED_OUT))))
+      (XtVaSetValues sound-pane (list XmNtopAttachment XmATTACH_WIDGET
+				      XmNtopWidget sep
+				      XmNbackground       (highlight-color)))
+      (XtManageChild sound-pane)
+      (XtCreateManagedWidget "a name" xmPushButtonWidgetClass second-row
+			     (list XmNbackground       (highlight-color))))))
+!#
 
 ;;; -------- disable control panel --------
 

@@ -271,7 +271,7 @@ two sounds open (indices 0 and 1 for example), and the second has two channels, 
 
 ;;; -------- Buffers Menu --------
 ;;; patterned after the XEmacs Buffers menu
-;;; see effects.scm for a much fancier example
+;;; see new-effects.scm for a much fancier example
 
 ;(define buffer-menu (add-to-main-menu "Buffers"))
 

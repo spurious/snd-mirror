@@ -37,9 +37,8 @@
 ;;; TODO: pan env field in mix dialog if stereo in/out
 ;;; TODO: doc ex of key-press-hook (cx cs=save as in xe-enved?), mix-amp-changed-hook, select-*-hook [click=>post info in box]
 ;;; TODO: does multi-chan mix try to delete temp file twice?
-;;; TODO: xemacs style top list of sounds, current takes whole screen
+;;; TODO: xemacs style top list of sounds, current takes whole screen [make-top-row tmp18.scm, files-popup-buffer in examp.scm]
 ;;; TODO: mix-drag ex showing current max amp, or setting amp to some norm or global env (quieter as later etc -- or as property (not hook))
-;;; TODO: mark-prop ex: comment displayed in minibuf, or all properties (similarly for mix)
 ;;; TODO: test ruby case of sound property save-state
 ;;; TOOD: extend the mix-as-list syntax to list-of-ids (tracks) (are these all rationalized now?)
 ;;;       do we need make-track|mix-sample-reader? should they accept all the standard args?
@@ -403,10 +402,10 @@
 	'mus-ldouble mus-ldouble 13
 	'mus-ubshort mus-ubshort 14
 	'mus-ulshort mus-ulshort 15
-	'mus-bfloat-unscaled mus-bfloat-unscaled 20
-	'mus-lfloat-unscaled mus-lfloat-unscaled 21
-	'mus-bdouble-unscaled mus-bdouble-unscaled 22
-	'mus-ldouble-unscaled mus-ldouble-unscaled 23
+	'mus-bfloat-unscaled mus-bfloat-unscaled 19
+	'mus-lfloat-unscaled mus-lfloat-unscaled 20
+	'mus-bdouble-unscaled mus-bdouble-unscaled 21
+	'mus-ldouble-unscaled mus-ldouble-unscaled 22
 	'mus-audio-default mus-audio-default 0
 	'mus-audio-duplex-default mus-audio-duplex-default 1
 	'mus-audio-line-out mus-audio-line-out 4
@@ -35280,6 +35279,7 @@ EDITS: 2
 	  (check-error-tag 'wrong-type-arg (lambda () (left-sample (list 0))))
 	  (check-error-tag 'wrong-type-arg (lambda () (amp-control (list 0))))
 	  (check-error-tag 'wrong-type-arg (lambda () (sound-loop-info (list 0))))
+	  (check-error-tag 'wrong-type-arg (lambda () (add-mark 123 (list 0))))
 	  (close-sound ind))
 	(check-error-tag 'bad-arity (lambda () (add-transform "hiho" "time" 0 1 (lambda () 1.0))))
 	(check-error-tag 'cannot-save (lambda () (save-options "/bad/baddy")))

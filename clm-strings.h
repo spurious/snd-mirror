@@ -241,7 +241,6 @@
 #define S_sample2frame               "sample->frame"
 #define S_sawtooth_wave              "sawtooth-wave"
 #define S_sawtooth_wave_p            "sawtooth-wave?"
-#define S_set_locsig_type            "set-locsig-type"
 #define S_sine_summation             "sine-summation"
 #define S_sine_summation_p           "sine-summation?"
 #define S_spectrum                   "spectrum"

@@ -473,7 +473,6 @@ const char *mus_data_format_name(int format)
     case MUS_LDOUBLE_UNSCALED: return("little endian double (64 bits, unscaled)"); break;
     case MUS_UBSHORT:          return("unsigned big endian short (16 bits)");      break;
     case MUS_ULSHORT:          return("unsigned little endian short (16 bits)");   break;
-    case MUS_L12INT:           return("little endian int (12 bits)");              break;
     case MUS_L24INT:           return("little endian int (24 bits)");              break;
     case MUS_BINTN:            return("normalized big endian int (32 bits)");      break;
     case MUS_LINTN:            return("normalized little endian int (32 bits)");   break;
@@ -3734,7 +3733,7 @@ static int read_tx16w_header(int chan)
       else if ((hdrbuf[26] & 0xFE) == 0x10) srate = 50000;
       else if ((hdrbuf[26] & 0xFE) == 0xf6) srate = 16000;
     }
-  original_data_format = MUS_L12INT; /* can't read this format yet */
+  original_data_format = MUS_UNSUPPORTED;
   data_format = MUS_UNSUPPORTED;
   data_size = (off_t)((double)data_size / 1.5);
   if (hdrbuf[22] == 0x49)
@@ -5237,11 +5236,7 @@ int mus_header_writable(int type, int format) /* -2 to ignore format for this ca
   switch (type)
     {
     case MUS_NEXT:
-      if (format == -2) return(TRUE);
-      switch (format)
-	{
-	case MUS_L12INT: return(FALSE); break;
-	}
+      if ((format == MUS_UNKNOWN) || (format == MUS_UNSUPPORTED)) return(FALSE);
       return(TRUE);
       break;
     case MUS_NIST:

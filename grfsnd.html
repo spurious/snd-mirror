@@ -41,11 +41,6 @@
   <li><a href="#emacssnd">Snd as an Emacs subjob</a>
   <li><a href="#dynamic">Dynamically loaded modules</a>
   <li><a href="#programs">External Programs</a>
-  <ul>
-    <li><a href="#sox">Sox</a>
-    <li><a href="#clm">CLM</a>
-    <li><a href="#cm">CM</a>
-    </ul>
   <li><a href="#sndaswidget">Snd as a Widget</a>
   <li><a href="#sndwithclm">Snd and the CLM module</a>
     <ul>
@@ -329,7 +324,7 @@ Here's a more extended example:
       (set! (axis-label-font) "-adobe-times-medium-r-normal-*-18-*-*-*-*-*-*-*")
       (set! (axis-numbers-font) "9x15")))
 
-(set! (listener-prompt) ":")        ;default prompt is "&gt;"
+(set! (listener-prompt) ":")        ;change listener prompt from the default "&gt;" to ":"
 (show-listener)                     ;include the listener window initially
 (set! (show-indices) #t)            ;include sound index values with the sound name
 
@@ -627,7 +622,7 @@ is a sketch using the Snd internal "srate" function:</p>
 <span class=bbox><h3><A NAME="programs">External Programs</a></h3></span>
 
 <p>Any external program that knows about sound files can be used to perform editing operations
-from Snd.  You thereby get Snd's display, analysis, header and format conversion, and edit-tree support,
+from Snd.  You get Snd's display, analysis, header and format conversion, and edit-tree support,
 and can concentrate on the actual sound effect you're developing.
 The original impetus for Snd came from CLM, a large lisp-listener based program
 which normally runs without a graphical
@@ -636,243 +631,19 @@ in what Snd calls the edit history.  Since interprocess
 communication proved problematic in this case,
 the communication path was simplified to
 consist of little more than shared files, with CLM treated
-as a batch program. A nice side-effect of this is that any other program can fit
-the same mold.</p>
+as a batch program.
+</p>
 
 <p>
-Say we have a sound processing CLM instrument we like; it takes
+To give a specific example of this way of using Snd,
+say we have a sound processing CLM instrument we like; it takes
 two sound file names as its arguments, reading the first and writing the second.
-In Snd we write the current edited state to a temporary file, start CLM, call the instrument 
-passing it the input and output filenames, then pass its output back
-to Snd.  Snd then replaces the current data with the data our instrument wrote, as if it had incorporated that
+In Snd we write the current edited state to a temporary file (<a href="extsnd.html#sndsaveas">save-sound-as</a>),
+start CLM, call the instrument 
+passing it the input filename (just written by Snd), then pass CLM's output back
+to Snd.  Snd replaces (via set-samples) the current data with the data our instrument wrote, as if it had incorporated that
 instrument as an editing operation from the beginning.
-</p>
-<p>To write out the current data, we use either <a href="extsnd.html#sndsaveas">save-sound-as</a> 
-or <a href="extsnd.html#sndsaveselection">save-selection</a>.  Our
-program then writes its changes, and Snd reads these back in as edits using
-set! samples.  We can delete the Snd output at that point, though the
-input (changed) files should be left for Snd to handle.  Here are some examples,
-based on the Snd-4 sound-to-temp functions and its friends; these are implemented
-in snd4.scm.  The basic idea is that you can write out any portion of the current
-data, and (independent of any prior write) use any external sound file as an edit of any portion.
-</p>
-<br>
-
-
-<span class=cbox><h4><A NAME="sox">Sox</a></h4></span>
-
-<p>Sox is a widely available and well-known program for sound format conversions
-and various sound effects.  In this case, we'll read and write NeXT files, and
-use Sox's copy "effect".</p>
-
-<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
-(define sox
-  (lambda ()
-    (let ((data (<em class=red>selection-to-temp</em>))) ; in snd4.scm -- this example is old!
-      (if data
-	  (let* ((str "")
-                 (input-names (<em class=red>temp-filenames</em> data)) ; in snd4.scm
-                 (output-name (string-append (<em class=red>tmpnam</em>) ".snd"))
-		 (cmd (string-append
-		        "sox -t .au \""
-                        (<em class=red>vector-ref</em> input-names 0)
-			"\" -t .au \""
-			output-name
-			"\" copy"))
-		 (fil (open-pipe cmd "r")))
-	    (do ((val (read-char fil) (read-char fil))) 
-		((eof-object? val))
-	      (set! str (string-append str (string val))))
-	    (close-pipe fil)
-	    (<em class=red>temp-to-selection</em> data output-name "(sox copy)") ; in snd4.scm
-	    str)
-	  (report-in-minibuffer "no current selection")))))
-</pre></td></tr></table>
-
-<p>We use the Guile built-in function <i>tmpnam</i> to get an output
-file name that doesn't collide with any existing file; 
-We then read the incoming filename that Snd wrote (<i>temp-filenames</i>),
-and pass that to Sox.  This is a very complicated no-op,
-since Sox in this case merely copies its input to its output.
-We're assuming NeXT/Sun files (the
-"-t .au" business), and
-we're blithely ignored the possibility that we might be
-editing any number of sounds, each with any number of channels.  To deal with
-the latter, we need to notice how many mono files have been passed to us (in the
-case of <i>sound-to-temps</i>), or our external program needs to be able
-to handle a file with arbitrarily many channels (<i>sound-to-temp</i>).
-In the next example, we'll loop through the mono files, processing each
-in turn.  We'll also start packaging up the boilerplate a bit.</p>
-
-<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
-(define execute-and-wait
-  (lambda (cmd)
-    (let ((str "")
-	  (fil (open-pipe cmd "r")))
-      (do ((val (read-char fil) (read-char fil))) 
-	  ((eof-object? val))
-	(set! str (string-append str (string val))))
-      (close-pipe fil)
-      str)))
-
-(define loop-through-files
-  (lambda (description make-cmd)
-    (let* ((data (<em class=red>sound-to-temps</em>))
-	   (input-names (temp-filenames data))
-	   (files (vector-length input-names))
-	   (output-names (make-vector files "")))
-      (do ((i 0 (1+ i)))
-	  ((= i files))
-	(vector-set! output-names i (string-append (tmpnam) ".snd"))
-	(execute-and-wait (make-cmd (vector-ref input-names i) (vector-ref output-names i))))
-      (<em class=red>temps-to-sound</em> data output-names description))))
-
-(define sox-1
-  (lambda ()
-    (loop-through-files
-     "(sox copy)"
-     (lambda (in out)
-       (string-append "sox -t .au \""	in "\" -t .au \"" out "\" copy")))))
-</pre></td></tr></table>
-
-<p>Now our <i>sox</i> function can handle any number of files or
-channels that might be sync'd together in Snd.  In case it's not
-obvious, the function <i>loop-through-files</i> takes as its second argument
-a function of two arguments, and calls it on each file as we march
-through the input file list, passing it the input and output file
-names as arguments.  It (<i>make-cmd</i>) puts together the actual
-call on sox that we were making earlier.  An equivalent using cp is:</p>
-
-<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
-(define copyfile
-  (lambda ()
-    (loop-through-files
-      "(cp)"
-      (lambda (in out)
-        (string-append "cp " in " " out)))))
-</pre></td></tr></table>
-
-<p>But we're still assuming NeXT/Sun format files, and we're throwing away the string
-we so laboriously created.  A more friendly function would display its progress.
-</p>
-<br>
-<span class=cbox><h4><A NAME="clm">CLM</a></h4></span>
-
-<p>Reading, mixing, and writing sound files are no problem in CLM, but
-it's unusual to run it as a batch program.
-Assume for the moment we have loaded the CLM instruments we want (v.ins and jcrev.ins),
-and have saved the image using ACL 5.0 in Linux.  The CLM image is
-invoked in this case with <code>lisp -I clm.dxl</code>.  ACL provides
-a way (<i>-e</i>) to evaluate lisp code from the command line, so
-we'll use that along with the <i>exit</i> function to turn CLM
-into a batch program.  We can reverberate the current data:</p>
-
-<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
-(define reverb
-  (lambda (reverb-amount)
-    (loop-through-files
-     (string-append "(reverb " (number-&gt;string reverb-amount) ")")
-     (lambda (in out)
-       (string-append
-	"lisp -I clm.dxl "
-	"-e '(progn (restart-clm) "
-	"      (with-sound (:play nil :output \"" out "\" :reverb jc-reverb) "
-	"        (mix \"" in "\") "
-	"        (mix \"" in "\" :output *reverb* :amplitude " (number-&gt;string reverb-amount) "))"
-	"      (exit))'")))))
-</pre></td></tr></table>
-
-<p>This is a call on CLM's <i>with-sound</i> with a reverberator
-and two calls on <i>mix</i>, one for the direct signal, the
-other for the reverb input.  The with-sound form is wrapped up
-in a progn that calls <i>restart-clm</i> (to make sure all dynamically
-allocated entities are setup properly), the with-sound itself,
-then <i>exit</i> to leave lisp (the latter is needed since we're
-waiting for EOF in the <i>execute-and-wait</i> function).
-The <i>reverb</i> function's argument sets the amount of
-reverb, and we save that value in the edit-history descriptor.
-Now, in Snd, <code>M-x (reverb .1)</code> reverbs the current
-data and extends the edit-history list with the string "(reverb .1)".
-This example also shows how to mix something into the current 
-data.  To add an fm-violin note starting at the
-current cursor:
-</p>
-
-<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
-(define fm-violin
-  (lambda (dur frq amp)
-    (let* ((beg (/ (<em class=red>cursor</em>) (srate)))
-	   (fmv-call (string-append "(fm-violin "
-				    (number-&gt;string beg) " "
-				    (number-&gt;string dur) " "
-				    (number-&gt;string frq) " "
-				    (number-&gt;string amp) ")")))
-      (loop-through-files
-       fmv-call
-       (lambda (in out)
-       (string-append
-	"lisp -I clm.dxl "
-	"-e '(progn (restart-clm) "
-	"      (with-sound (:play nil :output \"" out "\") "
-	"        (mix \"" in "\") "
-	         fmv-call
-	"        ) (exit))'"))))))
-</pre></td></tr></table>
-
-<p>But if anything goes wrong, the whole process gets hung, since Lisp
-drops into its error handler, and Snd is waiting for the Lisp job to
-exit -- we have to go to a shell and kill the Lisp subjob!
-So let's check for C-g in Snd, and send the subjob output to
-Guile's "current-output-port" (whatever that is):</p>
-
-<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
-(define read-or-run
-  (lambda (fil)
-    (let ((val (<em class=red>peek-char</em> fil)))
-      (or (and val (read-char fil))
-	  (<em class=red>c-g?</em>)
-	  (read-or-run fil)))))
-
-(define execute-and-wait
-  (lambda (cmd)
-    (let ((fil (open-pipe cmd "r")))
-      (do ((val (read-or-run fil) (read-or-run fil))) 
-	  ((or (eq? val #t) (eof-object? val))
-	   (eq? val #t))
-        (<em class=red>write-char</em> val (<em class=red>current-output-port</em>)))
-      (close-pipe fil))))
-      
-(define loop-through-files
-  (lambda (description make-cmd)
-    (let* ((data (sound-to-temps))
-	   (input-names (temp-filenames data))
-	   (files (vector-length input-names))
-	   (output-names (make-vector files ""))
-	   (stopped #f))
-      (do ((i 0 (1+ i)))
-	  ((or stopped (= i files)))
-	(vector-set! output-names i (string-append (tmpnam) ".snd"))
-	(set! stopped (execute-and-wait (make-cmd (vector-ref input-names i) (vector-ref output-names i)))))
-      (temps-to-sound data output-names description))))
-
-</pre></td></tr></table>
-
-<p>If this is too ugly, we could probably use append-to-minibuffer instead
-of write-char.  In Clisp, use the -x switch without the exit function call.
-Also, place the expression to be evaluated in double quotes, rather than 
-ACL's single quotes.
-</p>
-
-<br>
-
-
-<span class=cbox><h4><A NAME="cm">CM</a></h4></span>
-<p>
-You can load Rick Taube's CM into Snd as Scheme code:
-</p>
-<pre>snd -l /home/bil/test/cm-2.4.0/src/cm.scm
-</pre>
-<p>and all of CM is at your disposal! 
+We then delete the Snd output (the input to CLM).
 </p>
 
 <br>
@@ -1387,6 +1158,14 @@ variable for a brief discussion.  Currently, I can speed up most CLM-related Sch
 by factors between 8 and 20.  This is still slightly slower than CLM, but it's certainly
 an improvement!
 </p>
+<p>
+You can load Rick Taube's CM into Snd as Scheme code:
+</p>
+<pre>snd -l /home/bil/test/cm-2.4.0/src/cm.scm
+</pre>
+<p>and all of CM is at your disposal! 
+</p>
+
 <br>
 
 <span class=bbox><h3><A NAME="sndwithmotif">Snd and Motif</a></h3></span>

@@ -2,8 +2,8 @@
 #define SNDLIB_H
 
 #define SNDLIB_VERSION 18
-#define SNDLIB_REVISION 4
-#define SNDLIB_DATE "30-Apr-03"
+#define SNDLIB_REVISION 5
+#define SNDLIB_DATE "6-May-03"
 
 /* try to figure out what type of machine (and in worst case, what OS) we're running on */
 
@@ -203,7 +203,7 @@ enum {MUS_NEXT, MUS_AIFC, MUS_RIFF, MUS_BICSF, MUS_NIST, MUS_INRS, MUS_ESPS, MUS
 
 enum {MUS_UNKNOWN, MUS_BSHORT, MUS_MULAW, MUS_BYTE, MUS_BFLOAT, MUS_BINT, MUS_ALAW, MUS_UBYTE, MUS_B24INT,
       MUS_BDOUBLE, MUS_LSHORT, MUS_LINT, MUS_LFLOAT, MUS_LDOUBLE, MUS_UBSHORT, MUS_ULSHORT, MUS_L24INT,
-      MUS_BINTN, MUS_LINTN, MUS_L12INT, MUS_BFLOAT_UNSCALED, MUS_LFLOAT_UNSCALED, MUS_BDOUBLE_UNSCALED, MUS_LDOUBLE_UNSCALED};
+      MUS_BINTN, MUS_LINTN, MUS_BFLOAT_UNSCALED, MUS_LFLOAT_UNSCALED, MUS_BDOUBLE_UNSCALED, MUS_LDOUBLE_UNSCALED};
 
 /* MUS_LINTN and MUS_BINTN refer to 32 bit ints with 31 bits of "fraction" -- the data is "left justified" */
 /* "unscaled" means the float value is used directly (i.e. not as -1.0 to 1.0, but (probably) -32768.0 to 32768.0) */
@@ -287,7 +287,6 @@ enum {MUS_NO_ERROR, MUS_NO_FREQUENCY, MUS_NO_PHASE, MUS_NO_GEN, MUS_NO_LENGTH,
 
 #ifdef MACOS
   /* C's calloc/free are incompatible with Mac's SndDisposeChannel (which we can't avoid using) */
-  /* realloc is enough of a mess that I'll handle each case individually */
   /*   FREE is used only when we call either CALLOC or MALLOC ourselves -- other cases use free, g_free, XtFree, etc */
   #define CALLOC(a, b)  NewPtrClear((a) * (b))
   #define MALLOC(a)     NewPtr((a))
