@@ -4108,7 +4108,7 @@ void apply_filter(chan_info *ncp, int order, env *e, int from_enved, char *origi
   /* now filter all currently sync'd chans (one by one) */
   ss = ncp->state;
   sp = ncp->sound;
-  sc = get_sync_state_1(ss,sp,ncp,0,over_selection,READ_FORWARD,(over_selection) ? order : 0);
+  sc = get_sync_state_1(ss,sp,ncp,0,over_selection,READ_FORWARD,(over_selection) ? (order-1) : 0);
   if (sc == NULL) {if (!ur_a) FREE(a); FREE(d); return;}
   si = sc->si;
   sfs = sc->sfs;
@@ -4145,12 +4145,12 @@ void apply_filter(chan_info *ncp, int order, env *e, int from_enved, char *origi
 	  if (over_selection)
 	    {
 	      /* see if there's data to pre-load the filter */
-	      if (si->begs[i] > order)
-		prebeg = order;
+	      if (si->begs[i] >= order)
+		prebeg = order-1;
 	      else prebeg = si->begs[i];
 	      if (prebeg > 0)
 		{
-		  for (m=order-prebeg;m<order;m++)
+		  for (m=prebeg;m>0;m--)
 		    {
 		      NEXT_SAMPLE(val,sf);
 		      d[m] = (Float)val;

@@ -1136,6 +1136,10 @@ char *kmg (int num);
 #ifdef DEBUG_MEMORY
   void set_encloser(char *name);
 #endif
+#if DEBUGGING
+  void start_timing(void);
+  void stop_timing(void);
+#endif
 
 
 /* -------- snd-mix.c -------- */

@@ -1,5 +1,6 @@
 snd change log
 
+  27-Jun:    update configure for gsl 0.6.
   26-Jun:    as-one-edit now handles mark changes correctly.
              make-sample-reader snd arg can be filename (to read external files without opening them).
              Guile 1.4 is now the default -- if you are using 1.3.4, include -DHAVE_GUILE_1_3.

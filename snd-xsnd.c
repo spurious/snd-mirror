@@ -2585,6 +2585,9 @@ void reflect_amp_env_completion(snd_info *sp)
     }
   info_sep = w_snd_minibuffer_sep(sp);
   if (info_sep) XtVaSetValues(info_sep,XmNseparatorType,XmSHADOW_ETCHED_IN,NULL);
+#if DEBUGGING
+  /* stop_timing(); */
+#endif
   alert_enved_amp_env(sp);
 }
 
@@ -2593,6 +2596,9 @@ void reflect_amp_env_in_progress(snd_info *sp)
   Widget info_sep;
   info_sep = w_snd_minibuffer_sep(sp);
   if (info_sep) XtVaSetValues(info_sep,XmNseparatorType,XmNO_LINE,NULL);
+#if DEBUGGING
+  /* start_timing(); */
+#endif
 }
 
 /* ---------------- normalize sounds ---------------- */

@@ -16,6 +16,16 @@ static char *snd_itoa(int n)
   return(str);
 }
 
+#if HAVE_GSL
+static char *snd_ftoa(float n)
+{
+  char *str;
+  str = (char *)CALLOC(8,sizeof(char));
+  sprintf(str,"%.1f",n);
+  return(str);
+}
+#endif
+
 #ifdef USE_MOTIF
   #include <X11/IntrinsicP.h>
   #if HAVE_XPM
@@ -30,15 +40,6 @@ static char *snd_itoa(int n)
 static char *guile_version(void) 
 { 
   return(gh_scm2newstr(scm_version(),NULL));
-}
-
-static char *guile_consistency_check(char *version)
-{
-#if (!HAVE_GUILE_1_3_0)
-  if (strcmp(version,"1.3") == 0) return(" (but Snd was compiled for 1.3.4!)"); else return("");
-#else
-  if (strcmp(version,"1.3") != 0) return(" (but Snd was compiled for 1.3!)"); else return("");
-#endif
 }
 #endif
 
@@ -103,7 +104,7 @@ char *version_info(void)
 	  "\n    (compiled as a widget)",
 #endif
 #if HAVE_GUILE
-	  "\n    Guile ",guile_version(),guile_consistency_check(guile_version()),
+	  "\n    Guile ",guile_version(),
 #ifdef LIBGUILE_VERSION
 	  " libguile.so.",itoa[18]=snd_itoa(LIBGUILE_VERSION),
 #endif
@@ -151,7 +152,10 @@ char *version_info(void)
 	  "\n    gdbm: ",gdbm_version,
 #endif
 #if HAVE_GSL
-	  "\n    with gsl",
+	  "\n    gsl",
+  #ifdef GSL_VERSION
+          ": ",snd_ftoa(GSL_VERSION),
+  #endif
 #endif
 #if HAVE_LADSPA
 	  "\n    with LADSPA",
@@ -185,6 +189,7 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
+27-Jun:  update configure for gsl 0.6.\n\
 26-Jun:  as-one-edit now handles mark changes correctly.\n\
          make-sample-reader snd arg can be filename (to read external files without opening them).\n\
          Guile 1.4 is now the default -- if you are using 1.3.4, include -DHAVE_GUILE_1_3.\n\
@@ -205,8 +210,6 @@ void news_help(snd_state *ss)
 5-Jun:   snd 4.3.\n\
 30-May:  transform-size for glfft, glfft.scm, glfft.c.\n\
 29-May:  mix-sound to help with CLM/Snd explode support.\n\
-25-May:  removed snd-clm.c, snd-xclm.c, snd-gclm.c.\n\
-24-May:  sndctrl.c and related X properties in Snd.\n\
 ",
 NULL);
   FREE(info);

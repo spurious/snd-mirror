@@ -348,11 +348,11 @@ static int to_al_interface_or_device(int dev,int which)
 {
   switch (dev)
     {
-    case MUS_AUDIO_MICROPHONE: return(alGetResourceByName(AL_SYSTEM,"Microphone",which)); break;
     case MUS_AUDIO_DEFAULT:
-    case MUS_AUDIO_DUPLEX_DEFAULT:
+    case MUS_AUDIO_DUPLEX_DEFAULT: return(AL_DEFAULT_OUTPUT); break;
     case MUS_AUDIO_DAC_OUT:
     case MUS_AUDIO_SPEAKERS: return(alGetResourceByName(AL_SYSTEM,"Analog Out",which)); break;
+    case MUS_AUDIO_MICROPHONE: return(alGetResourceByName(AL_SYSTEM,"Microphone",which)); break;
     case MUS_AUDIO_ADAT_IN: return(alGetResourceByName(AL_SYSTEM,"ADAT In",which)); break;
     case MUS_AUDIO_AES_IN: return(alGetResourceByName(AL_SYSTEM,"AES In",which)); break;
     case MUS_AUDIO_ADAT_OUT: return(alGetResourceByName(AL_SYSTEM,"ADAT Out",which)); break;
@@ -683,7 +683,7 @@ int mus_audio_mixer_read(int ur_dev, int field, int chan, float *val)
     case MUS_AUDIO_FORMAT:  val[0] = 1; if (chan>1) val[1] = MUS_BSHORT; break;
     case MUS_AUDIO_CHANNEL:
       x[0].param = AL_CHANNELS;
-      al_err = alGetParams(rv,x,1);                if (al_err == -1) return(error_exit(MUS_AUDIO_READ_ERROR,-1)); 
+      al_err = alGetParams(rv,x,1);                if (al_err == -1) return(error_exit(MUS_AUDIO_READ_ERROR,-1));
       val[0] = (float)(x[0].value.i);
       break;
     case MUS_AUDIO_SRATE:

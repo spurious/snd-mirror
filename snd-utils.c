@@ -623,3 +623,64 @@ void mem_report(void)
 
 #endif
 
+#if DEBUGGING
+
+#if defined(SGI) || defined(LINUX) || defined(BEOS) || defined(SUN)
+  #include <sys/time.h>
+#endif
+
+#if defined(NEXT) || defined(LINUX) || defined(BEOS) || defined(SGI) || defined(SUN)
+  struct timeval t0,t1;
+  struct timezone z0,z1;
+#else
+  static clock_t c1,c2;
+#endif
+
+static void start_time (void)
+{
+#if defined(NEXT) || defined(LINUX) || defined(BEOS) || defined(SUN)
+  gettimeofday(&t0,&z0);
+#else
+  #ifdef SGI
+    gettimeofday(&t0);
+  #else
+    c1=clock();
+  #endif
+#endif
+}
+
+static int run_time (void)
+{
+  int secs,millisecs;
+#if defined(NEXT) || defined(LINUX) || defined(BEOS) || defined(SUN)
+  gettimeofday(&t1,&z1);
+#else
+  #ifdef SGI
+    gettimeofday(&t1);
+  #else
+      c2=clock();
+      return((int)(1000.0*((float)(c2-c1))/(float)CLOCKS_PER_SEC));
+  #endif
+#endif
+  secs = (t1.tv_sec - t0.tv_sec);
+  millisecs = ((t1.tv_usec - t0.tv_usec) / 1000);
+  return(secs*1000+millisecs);
+}
+
+static int timing_in_progress = 0;
+
+void start_timing(void)
+{
+  if (timing_in_progress == 0)
+    {
+      timing_in_progress = 1;
+      start_time();
+    }
+}
+
+void stop_timing(void)
+{
+  timing_in_progress = 0;
+  fprintf(stderr,"time: %d ",run_time());
+}
+#endif

@@ -444,7 +444,11 @@ Guile-gtk:
 gmeteor:
   ftp://ftp.prosa.it/pub/gmeteor/gmeteor-0.9.tar.gz
 
+Linux audio:
+  http://sound.condorow.net/ (Linux Audio)
 
+GSL:
+  ftp://sourceware.cygnus.com/pub/gsl/
 
 ----------------------------------------------------------------
 CVS: (I haven't tested this).

@@ -85,14 +85,22 @@ AC_ARG_WITH(gdbm,
 	fi)
 AC_SUBST(GDBM_LIB)
 
-GSL_LIB=""
+GSL_LIBS=""
+GSL_FLAGS=""
 AC_ARG_WITH(gsl,
 	[  --with-gsl		  use gsl for ffts and whatnot],
   	if test "$with_gsl" = y || test "$with_gsl" = yes; then
 	    AC_DEFINE(HAVE_GSL)
-            GSL_LIB="-lgsl"
+            GSL_LIBS="`gsl-config --libs`"
+            GSL_FLAGS="`gsl-config --cflags`"
+            if test "`gsl-config --version`" = "0.6"; then
+              GSL_LIBS="$GSL_LIBS -lgslblasnative"
+            fi
+            gsl_version="`gsl-config --version`"
+            AC_DEFINE_UNQUOTED(GSL_VERSION,$gsl_version)
 	fi)
-AC_SUBST(GSL_LIB)
+AC_SUBST(GSL_LIBS)
+AC_SUBST(GSL_FLAGS)
 
 AC_ARG_WITH(snd-as-widget,
 	[  --with-snd-as-widget	  make Snd a loadable widget, not a standalone program],

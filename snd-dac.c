@@ -1698,7 +1698,9 @@ static int really_start_audio_output (dac_manager *tm)
   if (tm->channels > 2)
     {
       err = mus_audio_mixer_read(audio_output_device(ss),MUS_AUDIO_CHANNEL,0,val);
-      if (err != -1) available_chans = (int)(val[0]);
+      if (err != -1) 
+	available_chans = (int)(val[0]);
+      else snd_error("can't get audio output chans? (%d, %s) ",audio_output_device(ss),mus_audio_error_name(mus_audio_error()));
     }
   for (i=0;i<MAX_DEV_FD;i++) dev_fd[i] = -1;
   compatible_format = MUS_COMPATIBLE_FORMAT;

@@ -1182,6 +1182,10 @@ void reflect_amp_env_completion(snd_info *sp)
   info_sep = w_snd_minibuffer_sep(sp);
   if (info_sep) gtk_widget_show(info_sep);
   alert_enved_amp_env(sp);
+#if DEBUGGING
+  /* this finishes timing the amp env creation process, started below by start_timing -- it will print millisecs to stderr */
+  /* stop_timing(); */
+#endif
 }
 
 void reflect_amp_env_in_progress(snd_info *sp)
@@ -1189,6 +1193,9 @@ void reflect_amp_env_in_progress(snd_info *sp)
   GtkWidget *info_sep;
   info_sep = w_snd_minibuffer_sep(sp);
   if (info_sep) gtk_widget_hide(info_sep);
+#if DEBUGGING
+  /* start_timing(); */
+#endif
 }
 
 

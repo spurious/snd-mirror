@@ -75,15 +75,15 @@
  *   STR_OR        British spelling enthusiasts can -DSTR_OR=\"our\" (this changes
  *                 every "color" to "colour" even in the resource names).
  *
+ *   HAVE_GSL      use GSL (Gnu Scientific Library) where possible.
+ *                 The intention is to use GSL for most of the standard math stuff that
+ *                 isn't in the math library.  Currently this means the Bessel I0 function
+ *                 (for the Kaiser window) and the Hankel transform.
+ *
  *  Many others are set by configure -- see config.h.in.  The main useful set
  *  chooses which audio system to load (OSS, SGI, etc).  The most problematic
  *  is FSTATFS_ARGS -- if your system supports fstatfs, this macro sets
  *  the number of arguments it takes.
- *
- *  HAVE_GSL exists, but isn't tied into all the makefiles and whatnot yet.
- *    The intention is to use it for most of the standard math stuff that
- *    isn't in the math library.  Currently this means the Bessel I0 function
- *    (for the Kaiser window) and the Hankel transform.
  */
 
 #if defined(HAVE_CONFIG_H)
@@ -169,7 +169,7 @@
 #endif
 #include "snd-strings.h"
 
-#define SND_VERSION "26-Jun-00"
+#define SND_VERSION "27-Jun-00"
 #define SND_RPM_VERSION "4.3"
 #define SND_MAJOR_VERSION 4
 #define SND_MINOR_VERSION 3

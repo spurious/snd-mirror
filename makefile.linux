@@ -10,14 +10,14 @@ LIBS = -L/usr/X11R6/lib -lMrm -lXm -lXp -lXpm -lXt -lXext -lX11 -lm `guile-confi
 # LIBS = -L/usr/X11R6/lib -lMrm -lXm -lXpm -lXt -lXext -lX11 -lm
 
 # if you don't have the Guile library:
-# CFLAGS = -O3 -DLINUX
+# CFLAGS = -O3 -DLINUX -DHAVE_GUILE=0
 # LIBS = -L/usr/X11R6/lib -lMrm -lXp -lXm -lXpm -lXt -lXext -lX11 -lm
 
 # if you have the XmHTML widget:
 # CFLAGS = -O2 -DLINUX -DHAVE_XmHTML=1 -I/home/bil/test/XmHTML-1.1.4/include
 # LIBS = /home/bil/test/XmHTML-1.1.4/src/libXmHTML.a -L/usr/X11R6/lib -lMrm -lXp -lXm -lXpm -lXt -lXext -lX11 -lm
 
-# in older versions of Guile, you may need to include -lreadline in the LIBS statement
+# in older versions of Guile, you may need to include -lreadline (and maybe -ltermcap) in the LIBS statement
 # --------------------------------
 
 

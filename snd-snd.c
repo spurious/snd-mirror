@@ -141,6 +141,12 @@ env_state *make_env_state(chan_info *cp, int samples)
   return(es);
 }
 
+#ifndef AMP_ENV_SUBSAMPLE
+  #define AMP_ENV_SUBSAMPLE 50
+  /* sets how may samples we actually check per bin in huge sound files -- 10 looked ok too */
+  /* the lower this number, the faster the amp-envs are calculated, but the higher chance of missing something */
+#endif
+
 int tick_amp_env(chan_info *cp, env_state *es)
 {
   env_info *ep;
@@ -150,34 +156,84 @@ int tick_amp_env(chan_info *cp, env_state *es)
   ep = es->ep;
   if (es->slice == 0)
     {
-      if (es->sf == NULL) es->sf = init_sample_read(ep->bin * ep->samps_per_bin,cp,READ_FORWARD);
       if (ep->top_bin != 0)
 	lm = (ep->top_bin - ep->bin);
       else lm = (ep->amp_env_size - ep->bin);
       if (lm > MULTIPLIER) lm = MULTIPLIER;
       sb = ep->bin;
-      sfd = es->sf;
-      for (n=0;n<lm;n++,sb++)
+      if (ep->samps_per_bin < (2*AMP_ENV_SUBSAMPLE))
 	{
-	  NEXT_SAMPLE(val,sfd);
-	  ymin = val;
-	  ymax = val;
-	  for (i=1;i<ep->samps_per_bin;i++)
+	  if (es->sf == NULL) es->sf = init_sample_read(ep->bin * ep->samps_per_bin,cp,READ_FORWARD);
+	  sfd = es->sf;
+	  for (n=0;n<lm;n++,sb++)
 	    {
 	      NEXT_SAMPLE(val,sfd);
-	      if (ymin > val) ymin = val; else if (ymax < val) ymax = val;
+	      ymin = val;
+	      ymax = val;
+	      for (i=1;i<ep->samps_per_bin;i++)
+		{
+		  NEXT_SAMPLE(val,sfd);
+		  if (ymin > val) ymin = val; else if (ymax < val) ymax = val;
+		}
+	      ep->data_max[sb] = ymax;
+	      ep->data_min[sb] = ymin;
+	      if (ymin < ep->fmin) ep->fmin = ymin;
+	      if (ymax > ep->fmax) ep->fmax = ymax;
 	    }
-	  ep->data_max[sb] = ymax;
-	  ep->data_min[sb] = ymin;
-	  if (ymin < ep->fmin) ep->fmin = ymin;
-	  if (ymax > ep->fmax) ep->fmax = ymax;
 	}
+      else
+	{
+	  /* an experiment... */
+	  /* sub sample reads even at the lowest level (io.c -- using dummy chans to subsample) */
+
+	  int fd,subsamp,bin_size,nc,m;
+	  snd_info *sp;
+	  MUS_SAMPLE_TYPE **bufs;
+	  sp = cp->sound;
+	  subsamp = ep->samps_per_bin / AMP_ENV_SUBSAMPLE;
+	  bin_size = ep->samps_per_bin / subsamp;
+	  nc = cp->chan * subsamp;
+	  bufs = (MUS_SAMPLE_TYPE **)CALLOC(sp->nchans * subsamp,sizeof(MUS_SAMPLE_TYPE *));
+	  /* we're claiming the file has sp->nchans * subsamp channels to get mus_file_read to subsample by subsamp */
+	  bufs[nc] = (MUS_SAMPLE_TYPE *)CALLOC(lm * (bin_size+2),sizeof(MUS_SAMPLE_TYPE));
+	  /* and we only read the current channel (bufs[nc]).
+	   * (bin_size+1) should be ok (it can't be bin_size due to annoying round-off problems that
+	   *   accumulate over 100 bins, and I'm paranoid)
+	   */
+	  fd = mus_file_open_read(sp->fullname);
+	  mus_file_open_descriptors(fd,
+				    mus_sound_data_format(sp->fullname),
+				    mus_sound_datum_size(sp->fullname),
+				    mus_sound_data_location(sp->fullname));
+	  mus_file_seek_frame(fd,ep->bin*ep->samps_per_bin);
+	  mus_file_read_any(fd,0,sp->nchans * subsamp,lm * (bin_size+2),bufs,(MUS_SAMPLE_TYPE *)bufs);
+
+	  for (m=0,n=0;n<lm;n++,sb++)
+	    {
+	      val = bufs[nc][m++];
+	      ymin = val;
+	      ymax = val;
+	      for (i=1;i<ep->samps_per_bin;i+=subsamp,m++)
+		{
+		  val = bufs[nc][m];
+		  if (ymin > val) ymin = val; else if (ymax < val) ymax = val;
+		}
+	      ep->data_max[sb] = ymax;
+	      ep->data_min[sb] = ymin;
+	      if (ymin < ep->fmin) ep->fmin = ymin;
+	      if (ymax > ep->fmax) ep->fmax = ymax;
+	    }
+	  FREE(bufs[nc]);
+	  FREE(bufs);   
+	  mus_file_close(fd);
+	}
+
       es->m += es->amp_buffer_size;
       ep->bin += lm;
       if (es->m >= es->samples) 
 	{
 	  es->slice++;
-	  es->sf = free_snd_fd(es->sf);
+	  if (es->sf) es->sf = free_snd_fd(es->sf);
 	}
       return(FALSE);
     }

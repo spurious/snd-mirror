@@ -980,16 +980,19 @@ void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, in
       /* this collides with W_gzy below, but a consistent version came up with half a window blank */
       XtSetArg(args[n],XmNnavigationType,XmNONE); n++;
       cw[W_graph] = sndCreateDrawingAreaWidget("chn-graph",cw[W_main_window],args,n);
-      XtAddCallback(cw[W_graph],XmNhelpCallback,W_graph_Help_Callback,ss);
-      XtAddCallback(cw[W_graph],XmNresizeCallback,Channel_Resize_Callback,(XtPointer)cp);
-      XtAddCallback(cw[W_graph],XmNexposeCallback,Channel_Expose_Callback,(XtPointer)cp);
-      XtAddEventHandler(cw[W_graph],EnterWindowMask,FALSE,graph_mouse_enter,(XtPointer)(cp->state));
-      XtAddEventHandler(cw[W_graph],LeaveWindowMask,FALSE,graph_mouse_leave,(XtPointer)cp);
-      XtAddEventHandler(cw[W_graph],ButtonPressMask,FALSE,graph_button_press,(XtPointer)cp);
-      XtAddEventHandler(cw[W_graph],ButtonMotionMask,FALSE,graph_button_motion,(XtPointer)cp);
-      XtAddEventHandler(cw[W_graph],ButtonReleaseMask,FALSE,graph_button_release,(XtPointer)cp);
-      XtAddEventHandler(cw[W_graph],KeyPressMask,FALSE,graph_key_press,(XtPointer)cp);
 
+      if (!main)
+	{
+	  XtAddCallback(cw[W_graph],XmNhelpCallback,W_graph_Help_Callback,ss);
+	  XtAddCallback(cw[W_graph],XmNresizeCallback,Channel_Resize_Callback,(XtPointer)cp);
+	  XtAddCallback(cw[W_graph],XmNexposeCallback,Channel_Expose_Callback,(XtPointer)cp);
+	  XtAddEventHandler(cw[W_graph],EnterWindowMask,FALSE,graph_mouse_enter,(XtPointer)(cp->state));
+	  XtAddEventHandler(cw[W_graph],LeaveWindowMask,FALSE,graph_mouse_leave,(XtPointer)cp);
+	  XtAddEventHandler(cw[W_graph],ButtonPressMask,FALSE,graph_button_press,(XtPointer)cp);
+	  XtAddEventHandler(cw[W_graph],ButtonMotionMask,FALSE,graph_button_motion,(XtPointer)cp);
+	  XtAddEventHandler(cw[W_graph],ButtonReleaseMask,FALSE,graph_button_release,(XtPointer)cp);
+	  XtAddEventHandler(cw[W_graph],KeyPressMask,FALSE,graph_key_press,(XtPointer)cp);
+	}
       if (need_extra_scrollbars)
 	{
 	  /* that is: not region browser chan, might need combined graph, channel 0 is the controller in that case */

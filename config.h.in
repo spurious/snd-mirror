@@ -104,5 +104,6 @@
 #undef ARDOUR_AUDIO
 #undef SND_IN_ARDOUR
 #undef FILE_PER_CHAN
+#undef GSL_VERSION
 
 #endif

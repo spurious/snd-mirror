@@ -851,85 +851,6 @@ void snd_update(snd_state *ss, snd_info *sp)
   restore_window_size(ss);
 }
 
-/* sort prevfiles list by name (aphabetical), or some number (date written, size, entry order, srate? type?) */
-
-static void snd_heapsort(unsigned int n, int choice, int *vals, char **a1, char **a2, int *times)
-{
-  /* sort a1 or vals, parallel sort in a2 */
-  unsigned int i,j,ir,k,pt;
-  char *s1,*s2;
-  int s3,val;
-  if (n<2) return;
-  k=(n>>1)+1;
-  ir=n;
-  for (;;)
-    {
-      if (k>1)
-	{
-	  k--;
-	  s1 = a1[k-1];
-	  s2 = a2[k-1];
-	  s3 = vals[k-1];
-	  pt = times[k-1];
-	}
-      else
-	{
-	  s1 = a1[ir-1];
-	  s2 = a2[ir-1];
-	  s3 = vals[ir-1];
-	  pt = times[ir-1];
-	  a1[ir-1] = a1[0];
-	  a2[ir-1] = a2[0];
-	  vals[ir-1] = vals[0];
-	  times[ir-1] = times[0];
-	  ir--;
-	  if (ir == 1)
-	    {
-	      a1[0] = s1;
-	      a2[0] = s2;
-	      vals[0] = s3;
-	      times[0] = pt;
-	      break;
-	    }
-	}
-      i=k;
-      j=k+1;
-      while (j<=ir)
-	{
-	  if (j<ir) 
-	    {
-	      switch (choice)
-		{
-		case ALPHABET: if (strcmp(a1[j-1],a1[j]) < 0) j++; break;
-		case VALS_GREATER: if (vals[j-1] < vals[j]) j++; break;
-		case VALS_LESS: if (vals[j-1] > vals[j]) j++; break;
-		}
-	    }
-	  val = 0;
-	  switch (choice)
-	    {
-	    case ALPHABET: val = (strcmp(s1,a1[j-1]) < 0); break;
-	    case VALS_GREATER: val = (s3 < vals[j-1]); break;
-	    case VALS_LESS: val = (s3 > vals[j-1]); break;
-	    }
-	  if (val)
-	    {
-	      a1[i-1] = a1[j-1];
-	      a2[i-1] = a2[j-1];
-	      vals[i-1] = vals[j-1];
-	      times[i-1] = times[j-1];
-	      i=j;
-	      j<<=1;
-	    }
-	  else j=ir+1;
-	}
-      a1[i-1]=s1;
-      a2[i-1]=s2;
-      vals[i-1] = s3;
-      times[i-1] = pt;
-    }
-}
-
 char *update_chan_stats(chan_info *cp)
 {
   char *desc;
@@ -1200,36 +1121,151 @@ void add_directory_to_prevlist_1(snd_state *ss, char *dirname)
     }
 }
 
+/* sort prevfiles list by name (aphabetical), or some number (date written, size, entry order, srate? type?) */
+
+typedef struct {
+  int vals,times;
+  char *a1,*a2;
+} heapdata;
+
+#if (!HAVE_GSL)
+static void snd_heapsort(unsigned int n, int choice, heapdata **data)
+{
+  /* sort a1 or vals, parallel sort in a2 */
+  unsigned int i,j,ir,k;
+  int val;
+  heapdata *curval;
+  if (n<2) return;
+  k=(n>>1)+1;
+  ir=n;
+  for (;;)
+    {
+      if (k>1)
+	{
+	  k--;
+	  curval = data[k-1];
+	}
+      else
+	{
+	  curval = data[ir-1];
+	  data[ir-1] = data[0];
+	  ir--;
+	  if (ir == 1)
+	    {
+	      data[0] = curval;
+	      break;
+	    }
+	}
+      i=k;
+      j=k+1;
+      while (j<=ir)
+	{
+	  if (j<ir) 
+	    {
+	      switch (choice)
+		{
+		case ALPHABET: if (strcmp(data[j-1]->a1,data[j]->a1) < 0) j++; break;
+		case VALS_GREATER: if (data[j-1]->vals < data[j]->vals) j++; break;
+		case VALS_LESS: if (data[j-1]->vals > data[j]->vals) j++; break;
+		}
+	    }
+	  val = 0;
+	  switch (choice)
+	    {
+	    case ALPHABET: val = (strcmp(curval->a1,data[j-1]->a1) < 0); break;
+	    case VALS_GREATER: val = (curval->vals < data[j-1]->vals); break;
+	    case VALS_LESS: val = (curval->vals > data[j-1]->vals); break;
+	    }
+	  if (val)
+	    {
+	      data[i-1] = data[j-1];
+	      i=j;
+	      j<<=1;
+	    }
+	  else j=ir+1;
+	}
+      data[i-1] = curval;
+    }
+}
+#else
+
+#include <gsl/gsl_heapsort.h>
+
+static int alphabet_compare(const void *a, const void *b)
+{
+  heapdata *d1 = *(heapdata **)a;
+  heapdata *d2 = *(heapdata **)b;
+  return(strcmp(d1->a1,d2->a1));
+}
+
+static int greater_compare(const void *a, const void *b)
+{
+  heapdata *d1 = *(heapdata **)a;
+  heapdata *d2 = *(heapdata **)b;
+  if (d1->vals > d2->vals) return(1); else if (d1->vals == d2->vals) return(0); else return(-1);
+}
+
+static int less_compare(const void *a, const void *b)
+{
+  heapdata *d1 = *(heapdata **)a;
+  heapdata *d2 = *(heapdata **)b;
+  if (d1->vals < d2->vals) return(1); else if (d1->vals == d2->vals) return(0); else return(-1);
+}
+
+static void snd_heapsort(unsigned int n, int choice, heapdata **data)
+{
+  switch (choice)
+    {
+    case ALPHABET:     gsl_heapsort((void *)data,n,sizeof(heapdata *),(gsl_comparison_fn_t) & alphabet_compare); break;
+    case VALS_GREATER: gsl_heapsort((void *)data,n,sizeof(heapdata *),(gsl_comparison_fn_t) & greater_compare); break;
+    case VALS_LESS:    gsl_heapsort((void *)data,n,sizeof(heapdata *),(gsl_comparison_fn_t) & less_compare); break;
+    }
+}
+#endif
+
 void make_prevfiles_list_1(snd_state *ss)
 {
-  int *vals;
-  int i;
+  heapdata **data;
+  int i,len;
   if (prevfile_end >= 0)
     {
-      vals = (int *)CALLOC(prevfile_end+1,sizeof(int));
+      len = prevfile_end+1;
+      data = (heapdata **)CALLOC(len,sizeof(heapdata *));
+      for (i=0;i<len;i++)
+	{
+	  data[i] = (heapdata *)CALLOC(1,sizeof(heapdata));
+	  data[i]->a1 = prevnames[i];
+	  data[i]->a2 = prevfullnames[i];
+	  data[i]->times = prevtimes[i];
+	}
       switch (previous_files_sort(ss))
 	{
 	case 0: 
 	  break;
 	case 1: 
-	  snd_heapsort(prevfile_end+1,ALPHABET,vals,prevnames,prevfullnames,prevtimes); 
+	  snd_heapsort(prevfile_end+1,ALPHABET,data);
 	  break;
 	case 2:
-	  for (i=0;i<=prevfile_end;i++)
-	    vals[i] = file_write_date(get_prevfullnames(i));
-	  snd_heapsort(prevfile_end+1,VALS_LESS,vals,prevnames,prevfullnames,prevtimes);
+	  for (i=0;i<=prevfile_end;i++) data[i]->vals = file_write_date(get_prevfullnames(i));
+	  snd_heapsort(prevfile_end+1,VALS_LESS,data);
 	  break;
 	case 3:
-	  for (i=0;i<=prevfile_end;i++)
-	    vals[i] = mus_sound_samples(get_prevfullnames(i));
-	  snd_heapsort(prevfile_end+1,VALS_GREATER,vals,prevnames,prevfullnames,prevtimes);
+	  for (i=0;i<=prevfile_end;i++) data[i]->vals = mus_sound_samples(get_prevfullnames(i));
+	  snd_heapsort(prevfile_end+1,VALS_GREATER,data);
 	  break;
 	case 4:
-	  for (i=0;i<=prevfile_end;i++) vals[i] = prevtimes[i];
-	  snd_heapsort(prevfile_end+1,VALS_LESS,vals,prevnames,prevfullnames,prevtimes);
+	  for (i=0;i<=prevfile_end;i++) data[i]->vals = prevtimes[i];
+	  snd_heapsort(prevfile_end+1,VALS_LESS,data);
 	  break;
 	}
-      FREE(vals);
+      for (i=0;i<len;i++)
+	{
+	  prevnames[i] = data[i]->a1;
+	  prevfullnames[i] = data[i]->a2;
+	  prevtimes[i] = data[i]->times;
+	  FREE(data[i]);
+	}
+      FREE(data);
     }
 }
 

@@ -1,7 +1,4 @@
 # Snd make file for DEC Alpha
-#
-# if you have the XPM library, include -DXPM in CFLAGS and -LXpm in the LIBS statement
-# if you have the Guile library, include -DHAVE_GUILE in CFLAGS and -lguile in LIBS
 
 CC = gcc
 CFLAGS = -O2 -DALPHA -DHAVE_GUILE=0
