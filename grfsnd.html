@@ -1986,8 +1986,8 @@ cmt.so is in /usr/local/lib/ladspa, (and you're using tcsh), then
 <pre>
   (set! (ladspa-dir) "/usr/local/lib/ladspa")
 </pre>
-<p>Snd plugins must have the same number of inputs and outputs; if more
-than one, the first argument to apply-ladspa should be a list of readers:
+<p>Snd plugins may have any number of inputs and outputs; if more
+than one input is required, the first argument to apply-ladspa should be a list of readers:
 </p>
 <pre>
   (apply-ladspa (list (make-sample-reader 0 0 0)  ;chan 0

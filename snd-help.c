@@ -267,6 +267,7 @@ void news_help(snd_state *ss)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+3-Dec:   snd-5.5.\n\
 28-Nov:  add-tooltip in snd-motif.scm.\n\
 23-Nov:  draw-mark-hook.\n\
 20-Nov:  xm-enved.scm.\n\
@@ -276,7 +277,6 @@ void news_help(snd_state *ss)
 10-Nov:  new-widget-hook.\n\
 5-Nov:   snd 5.4.\n\
 29-Oct:  added contrib/dlp directory with Dave Phillips' ladspa plugin stuff.\n\
-16-Oct:  multichannel ladspa plugins, ladspa-dir.\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*: \n'",

@@ -8303,6 +8303,16 @@ variable %load-verbosely to #t.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
+<!-- snd-remember-paths -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="sndrememberpaths">snd-remember-paths</a></em></code></span></td></tr>
+<!-- --><tr><td></td><td>
+<!-- -->A Scheme variable (not a function); if #t (default is #f), Snd adds code to the Guile %load-hook that makes sure the
+<!-- -->current file's path is included in %load-path when load or load-from-file is called.  This makes it possible to
+<!-- -->use load-from-path inside a scheme file when you don't know in advance where that file will reside at load time.
+<!-- --></td></tr>
+<!-- --><tr><td colspan=2></td></tr>
+<!-- -->
 <!-- snd-spectrum -->
 <!-- --><tr><td colspan=2>
 <!-- --><span class=defbox><code><em class=def><a name="sndspectrum">snd-spectrum</a></em> (data window length <i>linear</i>)</code></span></td></tr>

@@ -379,6 +379,7 @@ gpointer get_user_data(GtkObject *obj);
 #if HAVE_GTK2
   char *sg_get_text(GtkWidget *w, int start, int end);
   void sg_set_cursor(GtkWidget *w, int position);
+  void sg_text_insert(GtkWidget *w, char *text);
 #else
   char *sg_label_text(GtkLabel *w);
 #endif

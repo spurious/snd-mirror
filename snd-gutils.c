@@ -558,6 +558,17 @@ char *sg_get_text(GtkWidget *w, int start, int end)
   return(gtk_text_buffer_get_text(buf, &s, &e, TRUE));
 }
 
+void sg_text_insert(GtkWidget *w, char *text)
+{
+  GtkTextIter pos;
+  if (text)
+    {
+      gtk_text_buffer_get_end_iter(gtk_text_view_get_buffer(GTK_TEXT_VIEW(w)), &pos);
+      gtk_text_buffer_insert(gtk_text_view_get_buffer(GTK_TEXT_VIEW(w)), &pos, text, strlen(text));
+    }
+  else SG_TEXT_CLEAR(w);
+}
+
 void sg_set_cursor(GtkWidget *w, int position)
 {
   GtkTextIter pos;
@@ -634,7 +645,7 @@ GtkWidget *make_scrolled_text(snd_state *ss, GtkWidget *parent, int editable, Gt
 GtkWidget *sg_make_list(gpointer gp, int num_items, char **items, GtkSignalFunc callback)
 {
   GtkWidget *list;
-#if HAVE_GTK2
+#if HAVE_GTK2 && 0
 #else
   char *str;
   int i;

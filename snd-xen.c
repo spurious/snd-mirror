@@ -3826,10 +3826,21 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
 
   /* from ice-9/r4rs.scm but with output to snd listener */
   XEN_EVAL_C_STRING("(define snd-last-file-loaded #f)");
+  XEN_EVAL_C_STRING("(define snd-remember-paths #f)");
   XEN_EVAL_C_STRING("(set! %load-hook (lambda (filename)\
                                         (set! snd-last-file-loaded filename)\
                                         (if %load-verbosely\
-                                          (snd-print (format #f \";;; loading ~S\" filename)))))");
+                                          (snd-print (format #f \";;; loading ~S\" filename)))\
+                                        (if snd-remember-paths\
+                                            (let ((curfile (mus-expand-filename filename))\
+                                                  (last-slash 0))\
+                                              (do ((i 0 (1+ i)))\
+                                                  ((= i (string-length curfile)))\
+                                                (if (char=? (string-ref curfile i) #\\/)\
+	                                            (set! last-slash i)))\
+                                              (let ((new-path (substring curfile 0 last-slash)))\
+                                                (if (not (member new-path %load-path))\
+	                                            (set! %load-path (cons new-path %load-path))))))))");
 #endif
 
 #if HAVE_STATIC_XM
