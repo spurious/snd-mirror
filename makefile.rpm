@@ -2,7 +2,7 @@
 
 CC = gcc
 CFLAGS = -O3 -DLINUX -I/usr/X11R6/include
-LIBS = /usr/X11R6/lib/libMrm.a /usr/X11R6/lib/libXm.a /usr/X11R6/lib/libXp.a /usr/X11R6/lib/libXpm.a /usr/X11R6/lib/libXext.a /usr/X11R6/lib/libXt.a /usr/X11R6/lib/libSM.a /usr/X11R6/lib/libICE.a /usr/X11R6/lib/libFS.a /usr/X11R6/lib/libX11.a /usr/local/lib/libguile.a -lm -ldl
+LIBS = /usr/X11R6/lib/libXm.a /usr/X11R6/lib/libXp.a /usr/X11R6/lib/libXpm.a /usr/X11R6/lib/libXext.a /usr/X11R6/lib/libXt.a /usr/X11R6/lib/libSM.a /usr/X11R6/lib/libICE.a /usr/X11R6/lib/libX11.a /usr/local/lib/libguile.a -lm -ldl
 
 include makesnd.files
 

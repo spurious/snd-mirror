@@ -28,6 +28,7 @@
   #endif
   #define HAVE_VPRINTF 1
   #define HAVE_SETLOCALE 1
+  #define HAVE_FINITE 1
   #if defined(LINUX) && (!(defined(HAVE_FPU_CONTROL_H)))
     #define HAVE_FPU_CONTROL_H 1
   #endif

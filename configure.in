@@ -1,15 +1,22 @@
 dnl Configuration script for Snd
 dnl Process this file with autoconf to produce a configure script.
 
-dnl this configure/make process tested so far in 
-dnl       linux (rh 5.2, 6.0, 6.1, 6.2), Mandrake 7.0, Suse Linux 6.4
-dnl       sgi (irix 5.3, 6.2, 6.3, 6.5), 
-dnl       mklinux (dr3), linuxppc (r4, r5, 2000)
-dnl       sun (solaris 7)
-dnl       w95/98 with cygwin
-dnl       beos release 5 (intel)
-dnl       next m68k and next i386
-dnl       Mac OS-X (Darwin 1.1)
+#--------------------------------------------------------------------------------
+# this configure/make process tested so far in 
+#       linux (rh 5.2, 6.0, 6.1, 6.2), Mandrake 7.0, Suse Linux 6.4
+#       sgi (irix 5.3, 6.2, 6.3, 6.5), 
+#       mklinux (dr3), linuxppc (r4, r5, 2000)
+#       sun (solaris 7)
+#       w95/98 with cygwin
+#       beos release 5 (intel)
+#       next m68k and next i386
+#       Mac OS-X (Darwin 1.1)
+#
+# config.guess:
+#   m68k-next-nextstep3 mips-sgi-irix6.2 i386-next-nextstep3 i586-pc-beos
+#   i686-pc-linux-gnu powerpc-unknown-linux-gnu sparc-sun-solaris2.7
+#   powerpc-apple-darwin1.1 i386-pc-cygwin32
+#--------------------------------------------------------------------------------
 
 AC_INIT(snd.c)
 AC_CANONICAL_HOST
@@ -22,6 +29,7 @@ MAKE_TARGET="snd"
 #--------------------------------------------------------------------------------
 # configuration options
 #   --with-motif          use Motif (the default)
+#   --with-static-motif   use Motif statically loaded (for RPM generation)
 #   --with-gtk            use Gtk+	
 #   --with-gdbm           use gdbm for sndlib's sound header data base
 #   --with-alsa           use ALSA if possible
@@ -93,6 +101,13 @@ AC_ARG_WITH(motif,
 	[  --with-motif		  use libXm to build Snd],
   	if test "$with_motif" = y || test "$with_motif" = yes; then
 	    AC_DEFINE(USE_MOTIF)
+	fi)
+
+AC_ARG_WITH(static-motif,
+	[  --with-static-motif		  use libXm.a to build Snd],
+  	if test "$with_static_motif" = y || test "$with_static_motif" = yes; then
+	    AC_DEFINE(USE_MOTIF)
+            with_motif=yes
 	fi)
 
 AC_ARG_WITH(gtk,
@@ -229,7 +244,7 @@ dnl need some kind or error here if these are all 0 -- this happened to AV!
 
 AC_TYPE_SIGNAL
 AC_FUNC_STRFTIME
-AC_CHECK_FUNCS(getcwd strerror tempnam strtok mallinfo readlink setlocale access opendir sleep signal memset)
+AC_CHECK_FUNCS(getcwd strerror tempnam strtok mallinfo readlink setlocale access opendir sleep signal memset finite)
 AC_FUNC_CLOSEDIR_VOID
 AC_FUNC_VPRINTF
 
@@ -254,7 +269,19 @@ if test "$no_x" = yes || test "$use_gui" = no; then
 else
 
   AC_DEFINE(HAVE_X)
-  XLIBS="$X_LIBS $X_PRE_LIBS -lXm -lXt -lX11 $X_EXTRA_LIBS"
+
+  if test "$with_static_motif" = "yes"; then
+    AC_CHECK_FILE($x_libraries/libXm.a,[
+      XLIBS="$x_libraries/libXm.a $X_LIBS $X_PRE_LIBS -lXt -lX11 $X_EXTRA_LIBS"
+	],
+	[
+      echo "can't find $x_libraries/libXm.a!";
+      XLIBS="$X_LIBS $X_PRE_LIBS -lXm -lXt -lX11 $X_EXTRA_LIBS"
+	])
+  else
+    XLIBS="$X_LIBS $X_PRE_LIBS -lXm -lXt -lX11 $X_EXTRA_LIBS"
+  fi
+
   TEST_LIBS="$X_LIBS $X_PRE_LIBS -lXt -lX11 $X_EXTRA_LIBS"
   XFLAGS="$X_CFLAGS"
 
@@ -579,12 +606,6 @@ if test $trap_segfault = yes; then
   AC_DEFINE(TRAP_SEGFAULT,1)
 fi
 AC_MSG_RESULT($trap_segfault)
-
-
-dnl config.guess:
-dnl   m68k-next-nextstep3  mips-sgi-irix6.2  i386-next-nextstep3  mips-sgi-irix6.3  i586-pc-beos
-dnl   i686-pc-linux-gnu  powerpc-unknown-linux-gnu   sparc-sun-solaris2.7 i386-pc-cygwin32
-dnl   powerpc-apple-darwin1.1
 
 
 AC_SUBST(MAKE_TARGET)

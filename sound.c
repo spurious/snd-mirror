@@ -569,12 +569,14 @@ float mus_sound_duration(const char *arg)
   sf = getsf(arg); 
   if (sf) 
     {
-      val = (float)(sf->samples) / ((float)(sf->chans) * (float)(sf->srate)); 
+      val = (float)(sf->samples) / ((float)(sf->chans) * (float)(sf->srate));
+#if HAVE_FINITE 
       if (!(finite(val)))
 	{
 	  val = (float)(((double)(sf->samples) / (double)(sf->chans)) / (double)(sf->srate)); 
 	  if (!(finite(val))) val = 0.0;
 	}
+#endif
       FSF(sf);
     }
   return(val);

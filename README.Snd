@@ -15,6 +15,7 @@ commercial Motif.  To build Snd, get the sources from
 The configure program has several Snd-related arguments:
 
    --with-motif          use Motif (the default)
+    --with-static-motif  same, but load Motif statically (for RPM)
    --with-gtk            use Gtk+	
    --with-gdbm           use gdbm for sndlib's sound header data base
    --with-alsa           use ALSA if possible

@@ -1178,7 +1178,7 @@ static void bomb_check(XtPointer clientData, XtIntervalId *id)
   incs[0] = 0;
   map_over_sounds(ss,inc_bomb,(void *)incs);
   if (incs[0] > 0)
-    XtAppAddTimeOut((ss->sgx)->mainapp,(unsigned long)BOMB_TIME,(XtTimerCallbackProc)bomb_check,clientData);
+    XtAppAddTimeOut(MAIN_APP(ss),(unsigned long)BOMB_TIME,(XtTimerCallbackProc)bomb_check,clientData);
   else bomb_in_progress = 0;
 }
 
@@ -1189,7 +1189,7 @@ void snd_file_bomb_icon(snd_info *sp, int on)
     {
       ss = sp->state;
       bomb_in_progress = 1;
-      XtAppAddTimeOut((ss->sgx)->mainapp,(unsigned long)BOMB_TIME,(XtTimerCallbackProc)bomb_check,(void *)sp);
+      XtAppAddTimeOut(MAIN_APP(ss),(unsigned long)BOMB_TIME,(XtTimerCallbackProc)bomb_check,(void *)sp);
     }
 }
 
@@ -2736,6 +2736,8 @@ void finish_progress_report(snd_info *sp, int from_enved)
   else snd_file_glasses_icon(sp,FALSE,0);
 #else
   char *expr_str;
+  snd_state *ss;
+  ss = get_global_state();
   expr_str = (char *)CALLOC(128,sizeof(char));
   if (ss->stopped_explicitly) sprintf(expr_str,"stopped"); else expr_str[0]='\0';
   if (from_enved)

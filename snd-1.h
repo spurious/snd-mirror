@@ -1011,10 +1011,8 @@ void display_frequency_response(env *e, axis_info *ap, axis_context *gax, int or
 axis_context *copy_context (chan_info *cp);
 axis_context *erase_context (chan_info *cp);
 axis_context *selection_context (chan_info *cp);
-axis_context *cursor_context (chan_info *cp);
 axis_context *mark_context (chan_info *cp);
 axis_context *mix_waveform_context (chan_info *cp);
-axis_context *combined_context (chan_info *cp);
 int calculate_fft(chan_info *cp, void *ptr);
 
 

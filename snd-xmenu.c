@@ -911,7 +911,7 @@ static void Popup_Info_Callback(Widget w,XtPointer clientData,XtPointer callData
 
 static void Post_Popup_Menu(Widget w,XtPointer clientData,XEvent *event,Boolean *flag)
 {
-  if (event->xbutton.button == Button3)
+  if (event->xbutton.button == BUTTON_3)
     {
       XmMenuPosition(popup_menu,(XButtonPressedEvent *)event);
       XtManageChild(popup_menu);

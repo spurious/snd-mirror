@@ -1006,6 +1006,8 @@ static void display_selection_fft_size (chan_info *cp, axis_info *fap)
 }
 
 static void make_wavogram(chan_info *cp, snd_info *sp, snd_state *ss);
+static axis_context *cursor_context(chan_info *cp);
+static axis_context *combined_context(chan_info *cp);
 
 int make_graph(chan_info *cp, snd_info *sp, snd_state *ss)
 {
@@ -7114,16 +7116,13 @@ static axis_context *set_context (chan_info *cp, int gc)
   return(ax);
 }
 
-axis_context *copy_context (chan_info *cp)         {return(set_context(cp,CHAN_GC));}
-axis_context *erase_context (chan_info *cp)        {return(set_context(cp,CHAN_IGC));}
-axis_context *selection_context (chan_info *cp)    {return(set_context(cp,CHAN_SELGC));}
-axis_context *cursor_context (chan_info *cp)       {return(set_context(cp,CHAN_CGC));}
-axis_context *mark_context (chan_info *cp)         {return(set_context(cp,CHAN_MGC));}
-axis_context *mix_waveform_context (chan_info *cp) {return(set_context(cp,CHAN_MXGC));}
-axis_context *combined_context (chan_info *cp)     {return(set_context(cp,CHAN_TMPGC));}
-
-
-
+axis_context *copy_context (chan_info *cp)            {return(set_context(cp,CHAN_GC));}
+axis_context *erase_context (chan_info *cp)           {return(set_context(cp,CHAN_IGC));}
+axis_context *selection_context (chan_info *cp)       {return(set_context(cp,CHAN_SELGC));}
+static axis_context *cursor_context (chan_info *cp)   {return(set_context(cp,CHAN_CGC));}
+axis_context *mark_context (chan_info *cp)            {return(set_context(cp,CHAN_MGC));}
+axis_context *mix_waveform_context (chan_info *cp)    {return(set_context(cp,CHAN_MXGC));}
+static axis_context *combined_context (chan_info *cp) {return(set_context(cp,CHAN_TMPGC));}
 
 #if HAVE_GUILE
 #include "sg.h"

@@ -5,8 +5,67 @@
 #include "sndlib-strings.h"
 #include "vct.h"
 
-static void snd_help_with_url(snd_state *ss, char *subject, char *url, char *helpstr);
-static void ssnd_help_with_url(snd_state *ss, char *subject, char *url, ...);
+void ssnd_help(snd_state *ss, char *subject, ...)
+{
+  va_list ap;
+  char *helpstr,*newstr;
+  int len,size;
+  va_start(ap,subject);
+  size = 1024;
+  newstr = (char *)CALLOC(size,sizeof(char));
+  len = 0;
+  while ((helpstr = va_arg(ap,char *)))
+    {
+      len += strlen(helpstr);
+      if (len >= size)
+	{
+	  size = len+1024;
+	  newstr = (char *)REALLOC(newstr,size * sizeof(char));
+	}
+      strcat(newstr,helpstr);
+    }
+  va_end(ap);
+  snd_help(ss,subject,newstr);
+  FREE(newstr);
+}  
+
+static void snd_help_with_url(snd_state *ss, char *subject, char *url, char *helpstr)
+{
+#if HAVE_HTML
+  snd_help(ss,subject,url);
+#else
+  snd_help(ss,subject,helpstr);
+#endif
+}
+
+static void ssnd_help_with_url(snd_state *ss, char *subject, char *url, ...)
+{
+#if HAVE_HTML
+  snd_help(ss,subject,url);
+#else
+  /* groan! */
+  va_list ap;
+  char *helpstr,*newstr;
+  int len,size;
+  va_start(ap,url);
+  size = 1024;
+  newstr = (char *)CALLOC(size,sizeof(char));
+  len = 0;
+  while ((helpstr = va_arg(ap,char *)))
+    {
+      len += strlen(helpstr);
+      if (len >= size)
+	{
+	  size = len+1024;
+	  newstr = (char *)REALLOC(newstr,size * sizeof(char));
+	}
+      strcat(newstr,helpstr);
+    }
+  va_end(ap);
+  snd_help_with_url(ss,subject,url,newstr);
+  FREE(newstr);
+#endif
+}
 
 /* ---------------- help 'news' menu item ---------------- */
 
@@ -213,19 +272,6 @@ void news_help(snd_state *ss)
 3-Aug:   C-q with moving cursor bug, extended normalize-fft choices (Daniel Aronovitch).\n\
          show-y-zero, show-marks can be local to a given sound or channel.\n\
 2-Aug:   compute-uniform-circular-string in examp.scm.\n\
-1-Aug:   removed xmin,xmax,ymin,ymax (redundant and pointless).\n\
-31-Jul:  amp env subsampling, C-x v, and superimposed fft bugs (thanks to Daniel Aronovitch).\n\
-         control panel funcs (set-amp etc) can take snd arg = #t -> all sounds.\n\
-         snd-gtk.scm make-control-dialog to expose hidden control-panel variables.\n\
-28-Jul:  use throw for error handling.\n\
-27-Jul:  (read-set! keywords 'prefix) is now built-in.\n\
-26-Jul:  Snd now uses clm for all control-panel functions (play/apply).\n\
-         added name-click-hook, show-indices.\n\
-         ladspa-related bugfix thanks to Jorn Nettingsmeier.\n\
-24-Jul:  snd-tempnam, sound-interp gen in examp.scm and env-sound-interp.\n\
-20-Jul:  added sum-of-sines, phase-vocoder.\n\
-18-Jul:  play-selection and added end arg to play etc.\n\
-         C-u 0 C-x p -> play region 0, C-x p -> play selection.\n\
 ",
 NULL);
   FREE(info);
@@ -2418,65 +2464,4 @@ somehow gets out of sync with the actual data.\n\
 ");
 }
 
-void ssnd_help(snd_state *ss, char *subject, ...)
-{
-  va_list ap;
-  char *helpstr,*newstr;
-  int len,size;
-  va_start(ap,subject);
-  size = 1024;
-  newstr = (char *)CALLOC(size,sizeof(char));
-  len = 0;
-  while ((helpstr = va_arg(ap,char *)))
-    {
-      len += strlen(helpstr);
-      if (len >= size)
-	{
-	  size = len+1024;
-	  newstr = (char *)REALLOC(newstr,size * sizeof(char));
-	}
-      strcat(newstr,helpstr);
-    }
-  va_end(ap);
-  snd_help(ss,subject,newstr);
-  FREE(newstr);
-}  
-
-static void snd_help_with_url(snd_state *ss, char *subject, char *url, char *helpstr)
-{
-#if HAVE_HTML
-  snd_help(ss,subject,url);
-#else
-  snd_help(ss,subject,helpstr);
-#endif
-}
-
-static void ssnd_help_with_url(snd_state *ss, char *subject, char *url, ...)
-{
-#if HAVE_HTML
-  snd_help(ss,subject,url);
-#else
-  /* groan! */
-  va_list ap;
-  char *helpstr,*newstr;
-  int len,size;
-  va_start(ap,url);
-  size = 1024;
-  newstr = (char *)CALLOC(size,sizeof(char));
-  len = 0;
-  while ((helpstr = va_arg(ap,char *)))
-    {
-      len += strlen(helpstr);
-      if (len >= size)
-	{
-	  size = len+1024;
-	  newstr = (char *)REALLOC(newstr,size * sizeof(char));
-	}
-      strcat(newstr,helpstr);
-    }
-  va_end(ap);
-  snd_help_with_url(ss,subject,url,newstr);
-  FREE(newstr);
-#endif
-}
 

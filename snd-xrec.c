@@ -3271,7 +3271,6 @@ void snd_record_file(snd_state *ss)
   XFontStruct *small_fontstruct;
   Atom wm_delete;
   XGCValues v;
-  Display *dpy;
   Drawable wn;
   state_context *sx;
   PANE *p;
@@ -3281,14 +3280,13 @@ void snd_record_file(snd_state *ss)
   if (!recorder)
     {
       sx = ss->sgx;
-      dpy = sx->mdpy;
-      wn = XtWindow(sx->mainpane);
+      wn = XtWindow(MAIN_PANE(ss));
       v.background = sx->basic_color;
       v.foreground = sx->black;
-      draw_gc = XCreateGC(dpy,wn,GCForeground | GCBackground,&v);
+      draw_gc = XCreateGC(MAIN_DISPLAY(ss),wn,GCForeground | GCBackground,&v);
       v.background = sx->white;
       v.foreground = sx->black;
-      vu_gc = XCreateGC(dpy,wn,GCForeground | GCBackground,&v);
+      vu_gc = XCreateGC(MAIN_DISPLAY(ss),wn,GCForeground | GCBackground,&v);
 
       input_devices = recorder_get_devices(rp,&output_devices);
       if (input_devices == -1) return;

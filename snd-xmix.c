@@ -52,12 +52,10 @@ static int icons_created = 0;
 Pixmap make_pixmap(snd_state *ss, unsigned char *bits, int width, int height, int depth, GC gc)
 {
   Pixmap rb,nr;
-  state_context *sx;
-  sx = ss->sgx;
-  rb = XCreateBitmapFromData(sx->mdpy,RootWindowOfScreen(XtScreen(sx->mainpane)),(const char *)bits,width,height);
-  nr = XCreatePixmap(sx->mdpy,RootWindowOfScreen(XtScreen(sx->mainpane)),width,height,depth);
-  XCopyPlane(sx->mdpy,rb,nr,gc,0,0,width,height,0,0,1);
-  XFreePixmap(sx->mdpy,rb);
+  rb = XCreateBitmapFromData(MAIN_DISPLAY(ss),RootWindowOfScreen(XtScreen(MAIN_PANE(ss))),(const char *)bits,width,height);
+  nr = XCreatePixmap(MAIN_DISPLAY(ss),RootWindowOfScreen(XtScreen(MAIN_PANE(ss))),width,height,depth);
+  XCopyPlane(MAIN_DISPLAY(ss),rb,nr,gc,0,0,width,height,0,0,1);
+  XFreePixmap(MAIN_DISPLAY(ss),rb);
   return(nr);
 }
 

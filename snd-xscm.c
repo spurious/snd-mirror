@@ -40,7 +40,7 @@ static void timed_eval(XtPointer in_code, XtIntervalId *id)
 static SCM g_in(SCM ms, SCM code)
 {
   #define H_in "(" S_in " msecs func) invokes func in msecs milliseconds"
-  XtAppAddTimeOut((state->sgx)->mainapp,gh_scm2ulong(ms),(XtTimerCallbackProc)timed_eval,(XtPointer)code);
+  XtAppAddTimeOut(MAIN_APP(state),gh_scm2ulong(ms),(XtTimerCallbackProc)timed_eval,(XtPointer)code);
   return(ms);
 }
 

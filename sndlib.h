@@ -27,8 +27,8 @@
 
 
 #define SNDLIB_VERSION 10
-#define SNDLIB_REVISION 28
-#define SNDLIB_DATE "23-Aug-00"
+#define SNDLIB_REVISION 29
+#define SNDLIB_DATE "25-Aug-00"
 
 #ifndef HAVE_SNDLIB
   #define HAVE_SNDLIB 1
@@ -84,6 +84,12 @@
 
 #if (!(defined(MACOS))) && (defined(MPW_C) || defined(macintosh) || defined(__MRC__))
   #define MACOS 1
+#endif
+
+#if MACOS
+  #ifndef HAVE_FINITE
+    #define HAVE_FINITE 0
+  #endif
 #endif
 
 #if defined(__APPLE__)

@@ -264,7 +264,7 @@ static void corruption_check(XtPointer clientData, XtIntervalId *id)
 	{
 	  map_over_sounds(ss,snd_not_current,NULL);
 	}
-      XtAppAddTimeOut((ss->sgx)->mainapp,(unsigned long)(corruption_time(ss)*1000),(XtTimerCallbackProc)corruption_check,clientData);
+      XtAppAddTimeOut(MAIN_APP(ss),(unsigned long)(corruption_time(ss)*1000),(XtTimerCallbackProc)corruption_check,clientData);
     }
 }
 
@@ -436,7 +436,7 @@ static BACKGROUND_TYPE startup_funcs(XtPointer clientData)
        * but try to read stdin (needed to support the emacs subjob connection).  If
        * we don't do this, the background job is suspended when the shell sends SIGTTIN.
        */
-      stdin_id = XtAppAddInput((ss->sgx)->mainapp,fileno(stdin),(XtPointer)XtInputReadMask,GetStdinString,(XtPointer)ss);
+      stdin_id = XtAppAddInput(MAIN_APP(ss),fileno(stdin),(XtPointer)XtInputReadMask,GetStdinString,(XtPointer)ss);
 #endif
       snd_load_init_file(ss,noglob,noinit);
       break;
@@ -464,7 +464,7 @@ static BACKGROUND_TYPE startup_funcs(XtPointer clientData)
       if (ss->init_window_height > 0) set_widget_height(MAIN_SHELL(ss),ss->init_window_height);
       if (ss->init_window_x != -1) set_widget_x(MAIN_SHELL(ss),ss->init_window_x);
       if (ss->init_window_y != -1) set_widget_y(MAIN_SHELL(ss),ss->init_window_y);
-      XtAppAddTimeOut((ss->sgx)->mainapp,(unsigned long)(corruption_time(ss)*1000),corruption_check,(XtPointer)ss);
+      XtAppAddTimeOut(MAIN_APP(ss),(unsigned long)(corruption_time(ss)*1000),corruption_check,(XtPointer)ss);
 #if TRAP_SEGFAULT
       if (trap_segfault(ss)) signal(SIGSEGV,segv);
 #endif

@@ -27,6 +27,7 @@
 #undef HAVE_OPENDIR
 #undef HAVE_SIGNAL
 #undef HAVE_MEMSET
+#undef HAVE_FINITE
 
 #undef STDC_HEADERS
 #undef TM_IN_SYS_TIME
