@@ -10,7 +10,7 @@ dnl Process this file with autoconf 2.50 to produce a configure script.
 #       w95/98 with cygwin
 #       beos release 5 (intel)
 #       next m68k and next i386
-#       Mac OS-X (Darwin 1.1)
+#       Mac OS-X (Darwin 1.1, 1.3)
 #       Alpha Linux
 #       FreeBSD 4.2
 #
@@ -21,7 +21,7 @@ dnl Process this file with autoconf 2.50 to produce a configure script.
 #   alphaev67-unknown-linux-gnu i386-unknown-freebsd4.2
 #--------------------------------------------------------------------------------
 
-AC_INIT(snd, 5.0, bil@ccrma.stanford.edu)
+AC_INIT(snd, 5.1, bil@ccrma.stanford.edu)
 AC_CONFIG_SRCDIR(snd.c)
 AC_CANONICAL_HOST
 AC_CONFIG_HEADER(config.h)
@@ -48,25 +48,34 @@ MAKE_TARGET="snd"
 #   --enable-snd-debug    include Snd internal debugging stuff
 #   --with-ladspa         include LADSPA plugin support (Linux)
 #   --with-sample-width=N use N bits of samples (default = 24)
-#   --with-sndlib         try to use libsndlib.so
 #   --with-esd            use Enlightened Sound Daemon
 #   --with-no-gui         make Snd without any graphics support
 #   --with-motif-prefix   set location of Motif (untested as yet)
-#   --with-no-guile       build without Guile (for autotesting sequence)
+#   --with-static-gsl     try to statically load GSL
+#   --with-ccrma          /zap as temp dir and snd-conf
+#   --with-ruby           try to use Ruby as the extension language
+#   --with-ruby-prefix    set location of Ruby
+#   --with-static-xm      include xm module
 #--------------------------------------------------------------------------------
 
-AC_ARG_WITH(esd,[  --with-esd		  use ESD])
-AC_ARG_WITH(alsa,[  --with-alsa		  use ALSA])
+AC_ARG_WITH(esd,        [  --with-esd		  use ESD])
+AC_ARG_WITH(alsa,       [  --with-alsa		  use ALSA])
 AC_ARG_WITH(static-alsa,[  --with-static-alsa	  use ALSA statically loaded])
-AC_ARG_WITH(gtk,[  --with-gtk		  use Gtk+ to build Snd])
-AC_ARG_WITH(no-gui,[  --with-no-gui  	  make Snd without any graphics support])
-AC_ARG_WITH(no-guile,[  --with-no-guile	  make Snd without any extension language])
-AC_ARG_WITH(doubles,[  --with-doubles	  use doubles throughout])
+AC_ARG_WITH(gtk,        [  --with-gtk		  use Gtk+ to build Snd])
+AC_ARG_WITH(no-gui,     [  --with-no-gui  	  make Snd without any graphics support])
+AC_ARG_WITH(doubles,    [  --with-doubles	  use doubles throughout])
+AC_ARG_WITH(ccrma,      [  --with-ccrma	  	  ccrma-specific setup])
+AC_ARG_WITH(static-gsl, [  --with-static-gsl	  use libgsl.a to build Snd])
+AC_ARG_WITH(xm,         [  --with-static-xm	  include the xm module])
 
 if test "$with_doubles" = yes; then
   AC_DEFINE(Float,double)
 else
   AC_DEFINE(Float,float)
+fi
+
+if test "$with_ccrma" = yes; then
+  AC_DEFINE(CCRMA)
 fi
 
 XMHTML_LIB=""
@@ -84,7 +93,7 @@ dnl which we actually use is decided later
 
 AC_ARG_WITH(big-colormap, [  --with-big-colormap	  assume at least 512 colors are available (default=yes)])
 if test "$with_big_colormap" = no ; then
-  AC_DEFINE_UNQUOTED(WITH_BIG_COLORMAP, 0)
+  AC_DEFINE_UNQUOTED(WITH_BIG_COLORMAP,0)
 else
   AC_DEFINE(WITH_BIG_COLORMAP)
 fi
@@ -111,6 +120,67 @@ AC_ARG_WITH(snd-conf,
 	    AC_DEFINE(SND_CONF,"/etc/snd.conf")
 	fi)
 
+AC_ARG_WITH(ruby-prefix,[  --with-ruby-prefix=PFX  where Ruby is installed],
+            ruby_prefix="$withval", ruby_prefix="")
+
+AC_ARG_WITH(ruby,
+	[  --with-ruby	  	  try to use Ruby as the extension language],
+  	if test "$with_ruby" = yes ; then
+            AC_MSG_CHECKING([for Ruby])
+	    RUBY_VERSION=`ruby -e 'puts RUBY_VERSION'`
+            if test "$RUBY_VERSION" > "0" ; then
+	      AC_DEFINE(HAVE_RUBY)
+	      AC_DEFINE(HAVE_EXTENSION_LANGUAGE)
+              AC_MSG_RESULT($RUBY_VERSION)
+              if test x$ruby_prefix != x ; then
+      		GUILE_CFLAGS=" -I$ruby_prefix"
+                GUILE_LIBS="-L$ruby_prefix"
+              else
+                RUBY_LOC=`ruby -e [['puts \$:[0]']]`  # good grief... 
+                GUILE_CFLAGS="-I$RUBY_LOC"
+	        GUILE_LIBS="-L$RUBY_LOC"
+                RUBY_LOC=`ruby -e [['puts \$:[1]']]`
+	        if test "$RUBY_LOC" != nil && test "$RUBY_LOC" != "."; then
+                  GUILE_CFLAGS="$GUILE_CFLAGS -I$RUBY_LOC"
+	          GUILE_LIBS="$GUILE_LIBS -L$RUBY_LOC"
+                  RUBY_LOC=`ruby -e [['puts \$:[2]']]`
+	          if test "$RUBY_LOC" != nil && test "$RUBY_LOC" != "."; then
+                    GUILE_CFLAGS="$GUILE_CFLAGS -I$RUBY_LOC"
+	            GUILE_LIBS="$GUILE_LIBS -L$RUBY_LOC"
+                    RUBY_LOC=`ruby -e [['puts \$:[3]']]`
+	            if test "$RUBY_LOC" != nil && test "$RUBY_LOC" != "."; then
+                      GUILE_CFLAGS="$GUILE_CFLAGS -I$RUBY_LOC"
+	              GUILE_LIBS="$GUILE_LIBS -L$RUBY_LOC"
+                      RUBY_LOC=`ruby -e [['puts \$:[4]']]`
+	              if test "$RUBY_LOC" != nil && test "$RUBY_LOC" != "."; then
+                        GUILE_CFLAGS="$GUILE_CFLAGS -I$RUBY_LOC"
+	                GUILE_LIBS="$GUILE_LIBS -L$RUBY_LOC"
+                        RUBY_LOC=`ruby -e [['puts \$:[5]']]`
+	                if test "$RUBY_LOC" != nil && test "$RUBY_LOC" != "."; then
+                          GUILE_CFLAGS="$GUILE_CFLAGS -I$RUBY_LOC"
+	                  GUILE_LIBS="$GUILE_LIBS -L$RUBY_LOC"
+                          RUBY_LOC=`ruby -e [['puts \$:[6]']]`
+	                  if test "$RUBY_LOC" != nil && test "$RUBY_LOC" != "."; then
+                            GUILE_CFLAGS="$GUILE_CFLAGS -I$RUBY_LOC"
+	                    GUILE_LIBS="$GUILE_LIBS -L$RUBY_LOC"
+  		          fi
+	 	        fi
+	              fi
+	  	    fi
+		  fi
+	        fi
+	      fi
+              GUILE_LIBS="$GUILE_LIBS -lruby -ldl -lcrypt"
+	      AC_CHECK_LIB(readline, readline, 
+			   [AC_DEFINE(HAVE_READLINE)
+			    GUILE_LIBS="$GUILE_LIBS -lreadline -lncurses"], ,"-lncurses")
+              AC_SUBST(GUILE_LIBS)
+              AC_SUBST(GUILE_CFLAGS)
+            else 
+              AC_MSG_WARN([can't find Ruby!])
+            fi
+	fi)
+
 
 # -------- GSL --------
 GSL_LIBS=""
@@ -121,37 +191,46 @@ if test "$GSL_CONFIG" = "no" ; then
   AC_MSG_RESULT(no)
 else
   GSL_CFLAGS=`$GSL_CONFIG --cflags`
-  GSL_LIBS=`$GSL_CONFIG --libs`
-  AC_DEFINE(HAVE_GSL)
+  GSL_PREFIX=`$GSL_CONFIG --prefix`
+  if test "$with_static_gsl" = yes ; then
+    AC_CHECK_FILE($GSL_PREFIX/lib/libgsl.a,
+	[GSL_LIBS="$GSL_PREFIX/lib/libgsl.a"],
+	[GSL_LIBS=`$GSL_CONFIG --libs`
+	 with_static_gsl=no
+	 AC_MSG_WARN([can't find libgsl.a])])
+  else
+    GSL_LIBS=`$GSL_CONFIG --libs`
+  fi
   gsl_version="`$GSL_CONFIG --version`"
   AC_MSG_RESULT($gsl_version)
   AC_DEFINE_UNQUOTED(GSL_VERSION,"${gsl_version}")
-  if test "`$GSL_CONFIG --version`" = "0.6"; then
-    GSL_LIBS="$GSL_LIBS -lgslblasnative"
+  if test "`$GSL_CONFIG --version`" = "0.6" || test "`$GSL_CONFIG --version`" = "0.7"; then
+    AC_MSG_WARN([Snd needs GSL 0.8 or later])
+  else
+    if test "`$GSL_CONFIG --version`" = "0.8" && test "$with_static_gsl" = yes ; then
+      GSL_LIBS="$GSL_LIBS $GSL_PREFIX/lib/libgslcblas.a"
+    fi
+    AC_DEFINE(HAVE_GSL)
   fi
-  if test "`gsl-config --version`" = "0.7"; then
-    GSL_LIBS="$GSL_LIBS -lgslblas"
-  fi
-  AC_CHECK_LIB(gsl, gsl_dht_new, [AC_DEFINE(HAVE_GSL_DHT_NEW)], , $GSL_LIBS)
 fi
 AC_SUBST(GSL_LIBS)
 AC_SUBST(GSL_CFLAGS)
 
 
 # -------- SNDLIB (not ready yet...) --------
-SNDLIB_LIB=""
-SNDLIB_FILES="headers.o audio.o io.o sound.o clm.o vct.o sndlib2scm.o clm2scm.o"
-AC_ARG_WITH(sndlib,
-	[  --with-sndlib		  use libsndlib.so if possible],
-  	if test "$with_sndlib" = yes ; then
+# SNDLIB_LIB=""
+# SNDLIB_FILES="headers.o audio.o io.o sound.o clm.o vct.o sndlib2xen.o clm2xen.o"
+# AC_ARG_WITH(sndlib,
+# 	[  --with-sndlib		  use libsndlib.so if possible],
+#   	if test "$with_sndlib" = yes ; then
 # find sndlib.so, check for scm files
 #   if not found, make it (or have makefile do it)
-# sndlib really ought to provide sndlib-config and so on
-            SNDLIB_LIB="-lsndlib"
-	    SNDLIB_FILES=""
-	fi)
-AC_SUBST(SNDLIB_LIB)
-AC_SUBST(SNDLIB_FILES)
+# # sndlib really ought to provide sndlib-config and so on
+#             SNDLIB_LIB="-lsndlib"
+# 	    SNDLIB_FILES=""
+# 	fi)
+# AC_SUBST(SNDLIB_LIB)
+# AC_SUBST(SNDLIB_FILES)
 
 
 # -------- GTKEXTRA --------
@@ -175,6 +254,7 @@ AC_ARG_WITH(gtk-extra,
             GTKEXTRA_FLAGS="`$GTKEXTRA_CONFIG --cflags`"
             gtkextra_version="`$GTKEXTRA_CONFIG --version`"
             AC_DEFINE_UNQUOTED(GTKEXTRA_VERSION,"${gtkextra_version}")
+            AC_CHECK_LIB(gtkextra, gtk_icon_file_selection_show_tree, [AC_DEFINE(HAVE_GTK_ICON_FILE_SELECTION_SHOW_TREE)], , $GTKEXTRA_LIBS)
           else
 	    AC_MSG_WARN([can't find libgtkextra!])
 	  fi
@@ -199,7 +279,7 @@ AC_ARG_WITH(float-samples,
 AC_ARG_WITH(sample-width,
 	[  --with-sample-width=N   use N bits of samples],
 	AC_MSG_RESULT(Using $with_sample_width bit samples)
-	AC_DEFINE_UNQUOTED(MUS_SAMPLE_BITS, $with_sample_width)
+	AC_DEFINE_UNQUOTED(MUS_SAMPLE_BITS,$with_sample_width)
 	)
 
 AC_ARG_ENABLE(snd-debug,
@@ -242,6 +322,9 @@ AC_CHECK_HEADER(sys/sam9407.h,[AC_DEFINE(HAVE_SAM_9407)])
 AC_CHECK_HEADER(gnu/libc-version.h,[AC_DEFINE(HAVE_GNU_LIBC_VERSION_H)])
 AC_HEADER_TIME
 
+AC_CHECK_HEADER(execinfo.h, [AC_DEFINE(HAVE_EXECINFO_H)
+                             LDFLAGS="$LDFLAGS -rdynamic"])
+
 AC_C_CONST
 AC_TYPE_MODE_T
 AC_TYPE_SIZE_T
@@ -256,10 +339,6 @@ AC_CHECK_SIZEOF(long)
 AC_CHECK_SIZEOF(int *)
 AC_CHECK_SIZEOF(float)
 
-if test "$SIZEOF_INT" = "0" ; then
-  AC_MSG_ERROR(big trouble: configure thinks ints have 0 bytes)
-fi
-
 dnl this taken from Guile's configure.in
 AC_CACHE_CHECK([for long longs], snd_cv_long_longs,
 	       AC_TRY_COMPILE(,
@@ -273,11 +352,11 @@ fi
 # this test taken from Guile's configure.in -- we have the same problem (we're wrapping function pointers)
 AC_CHECK_SIZEOF(void *)
 if test "$ac_cv_sizeof_long" -eq "$ac_cv_sizeof_void_p"; then
-  AC_DEFINE(SND_VOID_T, unsigned long)
+  AC_DEFINE(SND_VOID_T,unsigned long)
 elif test \( "$snd_cv_long_longs" = yes \) -a \( "$ac_cv_sizeof_long_long" -eq "$ac_cv_sizeof_void_p" \); then
-  AC_DEFINE(SND_VOID_T, unsigned long long)
+  AC_DEFINE(SND_VOID_T,unsigned long long)
 elif test "$ac_cv_sizeof_int" -eq "$ac_cv_sizeof_void_p"; then
-  AC_DEFINE(SND_VOID_T, unsigned int)
+  AC_DEFINE(SND_VOID_T,unsigned int)
 else
   AC_MSG_ERROR(cannot find an integral type capable of storing a pointer: "$ac_cv_sizeof_void_p" bytes)
 fi
@@ -294,7 +373,7 @@ AC_MSG_RESULT(${ok})
 
 AC_TYPE_SIGNAL
 AC_FUNC_STRFTIME
-AC_CHECK_FUNCS(getcwd strerror mallinfo readlink setlocale access opendir sleep signal finite strdup fstatfs clock vsnprintf snprintf)
+AC_CHECK_FUNCS(getcwd strerror mallinfo readlink setlocale access opendir sleep signal strdup statfs clock vsnprintf snprintf)
 AC_FUNC_CLOSEDIR_VOID
 AC_FUNC_VPRINTF
 
@@ -364,8 +443,8 @@ else
      TEST_LIBS="$TEST_LIBS -lXext"
     ], , $TEST_LIBS)
 
-  dnl Xp needed only to make loader happy in Linux (isn't this what X_EXTRA_LIBS is for?)
   AC_CHECK_LIB(Xp, XpGetDocumentData, [
+    AC_DEFINE(HAVE_XP)
     XLIBS="$XLIBS -lXp"
     TEST_LIBS="$TEST_LIBS -lXp"
     ], , $TEST_LIBS)
@@ -373,38 +452,48 @@ else
   GX_FILES="X_O_FILES"
   GX_HEADERS="SND_X_HEADERS"
 
-  if test "$with_gtk" != yes ; then
+  if test "$with_gtk" != yes && test "$with_motif" != no ; then
 
     SAVELIBS=$LIBS
     SAVEFLAGS=$CFLAGS
     LIBS=$XLIBS
     CFLAGS=$XFLAGS
     AC_CHECK_LIB(Xm, XmCreateForm, 
-	[],
-	[AC_MSG_WARN([can't find the motif library!])])
+	[
+	  with_motif=yes
+ 	  AC_DEFINE(USE_MOTIF)
+	  AC_DEFINE(HAVE_MOTIF)
+	  AC_SUBST(XLIBS)
+	  AC_SUBST(XFLAGS)
+ 	  AC_SUBST(XMHTML_LIB)
+ 	  GTKHTML_LIB=""
+ 	  GTKHTML_FLAGS=""
+	
+ 	  AC_CHECK_LIB(Xpm, XpmReadFileToPixmap,
+            [
+  	     XLIBS="$XLIBS -lXpm"
+   	     AC_DEFINE(HAVE_XPM)
+   	    ], , $TEST_LIBS)
+
+   	  AC_CHECK_LIB(Xpm, XpmGetErrorString, , [AC_DEFINE(NEED_XPM_GET_ERROR_STRING)], $TEST_LIBS)
+	  if test "$with_static_xm" = yes ; then
+  	    GX_FILES="XM_O_FILES"
+          fi
+        ],
+	[
+         AC_MSG_RESULT(no)
+	 AC_MSG_WARN([can't find the Motif library! -- will look for Gtk])
+         with_gtk=yes
+        ])
     LIBS=$SAVELIBS
     CFLAGS=$SAVEFLAGS
 
-    AC_DEFINE(USE_MOTIF)
-    AC_SUBST(XLIBS)
-    AC_SUBST(XFLAGS)
-    AC_SUBST(XMHTML_LIB)
-    GTKHTML_LIB=""
-    GTKHTML_FLAGS=""
-
-    AC_CHECK_LIB(Xpm, XpmReadFileToPixmap, [
-      XLIBS="$XLIBS -lXpm"
-      AC_DEFINE(HAVE_XPM)
-      ], , $TEST_LIBS)
-
-    AC_CHECK_LIB(Xpm, XpmGetErrorString, ,[
-      AC_DEFINE(NEED_XPM_GET_ERROR_STRING)
-      ],
-      $TEST_LIBS)
-
   else
+    with_gtk=yes
+  fi
 
-    dnl 1.2.6 and 7 will work, but there's a serious bug in vpaned widgets that was fixed in 1.2.8
+  if test "$with_gtk" = yes ; then
+
     AM_PATH_GTK(1.2.6,
       [
       case `gtk-config --version` in
@@ -430,15 +519,27 @@ else
       AC_SUBST(XFLAGS)
       ],
       [
-      AC_MSG_WARN(trouble with gtk -- trying to use motif)
-      AC_DEFINE(USE_MOTIF)
-      XLIBS="$XLIBS -lXpm"
-      AC_SUBST(XLIBS)
-      AC_SUBST(XFLAGS)
-      AC_DEFINE(HAVE_XPM)
+      AC_MSG_WARN([trouble with gtk -- will try to make Snd without any GUI])
       ])
-
   fi
+
+  if test "$with_gtk" != yes && test "$with_motif" != yes ; then
+
+  AC_DEFINE(USE_NO_GUI)
+  XLIBS=""
+  XFLAGS=""
+  GTKHTML_LIB=""
+  GTKHTML_FLAGS=""
+  XMHTML_LIB=""
+  AC_SUBST(XLIBS)
+  AC_SUBST(XFLAGS)
+  AC_SUBST(GTKHTML_LIB)
+  AC_SUBST(GTKHTML_FLAGS)
+  AC_SUBST(XMHTML_LIB)
+  GX_FILES="NO_GUI_O_FILES"
+  GX_HEADERS="NO_GUI_HEADERS"
+  fi
+
 fi
 
 AC_SUBST(GX_FILES)
@@ -446,33 +547,33 @@ AC_SUBST(GX_HEADERS)
 
 
 #--------------------------------------------------------------------------------
-# Guile, Guile-gtk
+# Guile
 #--------------------------------------------------------------------------------
+
+if test "$with_ruby" != yes ; then
 
 GUILE_LIBS=""
 GUILE_CFLAGS=""
 GUILE_CONFIG_path=""
 GUILE_LIB_path=""
 
-if test "$with_no_guile" = yes ; then
-  AC_DEFINE(HAVE_GUILE, 0)
-  AC_DEFINE(HAVE_EXTENSION_LANGUAGE, 0)
+if test "$with_guile" = no ; then
+  AC_DEFINE(HAVE_GUILE,0)
+  AC_DEFINE(HAVE_EXTENSION_LANGUAGE,0)
 else
 
-  AC_DEFINE(HAVE_EXTENSION_LANGUAGE)
-
-AC_CHECK_FILE(/usr/lib/snd/bin/guile-config,[
-  GUILE_CONFIG_path=/usr/lib/snd/bin/
-  GUILE_LIB_path=/usr/lib/snd/lib
+  AC_CHECK_FILE(/usr/lib/snd/bin/guile-config,[
+    GUILE_CONFIG_path=/usr/lib/snd/bin/
+    GUILE_LIB_path=/usr/lib/snd/lib
 	])
 
-AC_MSG_CHECKING(for Guile)
-if (${GUILE_CONFIG_path}guile-config link > /dev/null) 2>&1; then
-  GUILE_CONFIG_works=yes
-else
-  GUILE_CONFIG_works=no
-  AC_MSG_RESULT(no)
-fi
+  AC_MSG_CHECKING(for Guile)
+  if (${GUILE_CONFIG_path}guile-config link > /dev/null) 2>&1; then
+    GUILE_CONFIG_works=yes
+  else
+    GUILE_CONFIG_works=no
+    AC_MSG_RESULT(no)
+  fi
 
 if test $GUILE_CONFIG_works = yes; then
   GUILE_CFLAGS="`${GUILE_CONFIG_path}guile-config compile`"
@@ -482,73 +583,49 @@ if test $GUILE_CONFIG_works = yes; then
     GUILE_LIBS="`${GUILE_CONFIG_path}guile-config link`"
   fi
 
-  guile_version="`guile -c '(display (version))'`"
+  guile_version="`${GUILE_CONFIG_path}guile -c '(display (version))'`"
   AC_MSG_RESULT($guile_version)
 
-  if test "`guile -c '(display (string>=? (version) "1.3.4"))'`" != "#t"; then
+  if test "`${GUILE_CONFIG_path}guile -c '(display (string>=? (version) "1.3.4"))'`" != "#t"; then
     AC_MSG_WARN(Snd needs Guile 1.3.4 or later)
     AC_DEFINE(HAVE_GUILE,0)
-    AC_DEFINE(HAVE_EXTENSION_LANGUAGE, 0)
+    AC_DEFINE(HAVE_EXTENSION_LANGUAGE,0)
   else
     AC_SUBST(GUILE_CFLAGS)
     AC_SUBST(GUILE_LIBS)
     AC_DEFINE(HAVE_GUILE)
+    AC_DEFINE(HAVE_EXTENSION_LANGUAGE)
 
     OLD_LIBS="$LIBS"
     LIBS="$GUILE_LIBS"
-    AC_CHECK_LIB(guile, scm_create_hook,             [AC_DEFINE(HAVE_SCM_CREATE_HOOK)])
-    AC_CHECK_LIB(guile, scm_set_smob_apply,          [AC_DEFINE(HAVE_APPLICABLE_SMOB)])
-    AC_CHECK_LIB(guile, scm_remember_upto_here,      [AC_DEFINE(HAVE_SCM_REMEMBER_UPTO_HERE)])
-    AC_CHECK_LIB(guile, scm_make_real,               [AC_DEFINE(HAVE_SCM_MAKE_REAL)])
-    AC_CHECK_LIB(guile, scm_strport_to_string,       [AC_DEFINE(HAVE_SCM_STRPORT_TO_STRING)])
-    AC_CHECK_LIB(guile, scm_object_to_string,        [AC_DEFINE(HAVE_SCM_OBJECT_TO_STRING)])
-    AC_CHECK_LIB(guile, scm_num2long_long,           [AC_DEFINE(HAVE_SCM_NUM2LONG_LONG)])
-    AC_CHECK_LIB(guile, scm_c_make_vector,           [AC_DEFINE(HAVE_SCM_C_MAKE_VECTOR)])
-    AC_CHECK_LIB(guile, scm_c_define,                [AC_DEFINE(HAVE_SCM_C_DEFINE)])
+    OLD_CFLAGS="$CFLAGS"
+    CFLAGS="$GUILE_CFLAGS"
+    AC_CHECK_LIB(guile, scm_create_hook,        [AC_DEFINE(HAVE_SCM_CREATE_HOOK)])
+    AC_CHECK_LIB(guile, scm_set_smob_apply,     [AC_DEFINE(HAVE_APPLICABLE_SMOB)])
+    AC_CHECK_LIB(guile, scm_remember_upto_here, [AC_DEFINE(HAVE_SCM_REMEMBER_UPTO_HERE)])
+    AC_CHECK_LIB(guile, scm_make_real,          [AC_DEFINE(HAVE_SCM_MAKE_REAL)])
+    AC_CHECK_LIB(guile, scm_strport_to_string,  [AC_DEFINE(HAVE_SCM_STRPORT_TO_STRING)])
+    AC_CHECK_LIB(guile, scm_object_to_string,   [AC_DEFINE(HAVE_SCM_OBJECT_TO_STRING)])
+    AC_CHECK_LIB(guile, scm_num2long_long,      [AC_DEFINE(HAVE_SCM_NUM2LONG_LONG)])
+    AC_CHECK_LIB(guile, scm_num2int,            [AC_DEFINE(HAVE_SCM_NUMINT)])
+    AC_CHECK_LIB(guile, scm_c_make_vector,      [AC_DEFINE(HAVE_SCM_C_MAKE_VECTOR)])
+    AC_CHECK_LIB(guile, scm_c_define,           [AC_DEFINE(HAVE_SCM_C_DEFINE)])
+    AC_CHECK_LIB(guile, scm_c_define_gsubr,     [AC_DEFINE(HAVE_SCM_C_DEFINE_GSUBR)])
+    AC_CHECK_LIB(guile, scm_c_eval_string,      [AC_DEFINE(HAVE_SCM_C_EVAL_STRING)])
+    AC_CHECK_LIB(guile, scm_list_n,             [AC_DEFINE(HAVE_SCM_LIST_N)])
+    AC_CHECK_LIB(guile, scm_str2symbol,         [AC_DEFINE(HAVE_SCM_STR2SYMBOL)])
+    AC_CHECK_TYPE(scm_t_catch_body,             [AC_DEFINE(HAVE_SCM_T_CATCH_BODY)], , [#include <guile/gh.h>])
     LIBS="$OLD_LIBS"
+    CFLAGS="$OLD_CFLAGS"
 
-    if test "`guile -c '(display (string<=? (version) "1.3.4"))'`" = "#t"; then
+    if test "`${GUILE_CONFIG_path}guile -c '(display (string<=? (version) "1.3.4"))'`" = "#t"; then
       echo found old out-of-date Guile library
-    fi
-
-    if test "$with_gtk" = yes; then
-    dnl find guile-gtk: taken from guileGL
-      AC_PATH_PROGS(GUILE_GTK_PROG,
-	            guile-gtk guile-gtk-1.3 guile-gtk-1.2 guile-gtk-1.1 guile-gtk-1.0,
-	            no-guile-gtk)
-    
-      if test "$GUILE_GTK_PROG" = no-guile-gtk; then
-        AC_PATH_PROGS(LOCATE_PROG,
-	              locate,
-	              no-locate)
-	if test "$LOCATE_PROG" != no-locate; then
-	  GUILE_GTK_PROG="`locate bin/guile-gtk -n 1`"
-	  if test "$GUILE_GTK_PROG"; then
-            echo "found $GUILE_GTK_PROG";
-          else GUILE_GTK_PROG="no-guile-gtk"
-          fi
-        fi
-      fi
-      if test "$GUILE_GTK_PROG" != no-guile-gtk; then
-        AC_MSG_CHECKING(for guile-gtk libraries)
-        GUILE_GTK_LIBS=`$GUILE_GTK_PROG -c "(use-modules (gtk config)) (display gtkconf-guilegtk-lib)"`
-        AC_MSG_RESULT($GUILE_GTK_LIBS)
-        AC_DEFINE(HAVE_GUILE_GTK)
-        AC_SUBST(GUILE_GTK_LIBS)
-        guile_gtk_version="`$GUILE_GTK_PROG -c '(use-modules (gtk config)) (display gtkconf-guile-gtk-version)'`"
-        AC_DEFINE_UNQUOTED(GUILE_GTK_VERSION, "${guile_gtk_version}")
-
-        if test "`guile -c '(display (string>? (version) "1.3.4"))'`" = "#t"; then
-          if test "`$GUILE_GTK_PROG -c '(use-modules (gtk config)) (display (string<? gtkconf-guile-gtk-version "0.19"))'`" = "#t"; then
-            AC_MSG_WARN(Guile 1.4 or later needs Guile-gtk 0.19 or later)
-	  fi
-	fi
-      fi
     fi
   fi
 else
   AC_DEFINE(HAVE_GUILE,0)
-  AC_DEFINE(HAVE_EXTENSION_LANGUAGE, 0)
+  AC_DEFINE(HAVE_EXTENSION_LANGUAGE,0)
+fi
 fi
 fi
 
@@ -557,6 +634,11 @@ fi
 #--------------------------------------------------------------------------------
 
 AUDIO_LIB=""
+LDSO_FLAGS=""
+SO_LD="ld"
+SO_INSTALL="install"
+A_LD="ld"
+A_LD_FLAGS=""
 
 dnl we need the sndlib.h equivalents to try to find the native sound support (see config.guess)
 dnl this only matters for those cases where we've implemented the audio code in audio.c
@@ -573,6 +655,7 @@ else
 case "$host" in
     *-*-linux*) 
 	AC_DEFINE(LINUX)
+        LDSO_FLAGS="-shared"
         LIBS="-lm"
 dnl     This ^ used to be "" but in redhat 7 the -lm needs to be explicit for make sndsine etc
 dnl     it was "" to cancel -lXpm without the needed -L<dir> for the same case
@@ -608,9 +691,9 @@ dnl     it was "" to cancel -lXpm without the needed -L<dir> for the same case
 	    ESD)
 		AC_DEFINE(ESD)
 	        esd_version="`esd-config --version`"
-                AC_DEFINE_UNQUOTED(ESD_VERSION, "${esd_version}")
+                AC_DEFINE_UNQUOTED(ESD_VERSION,"${esd_version}")
                 audiofile_version="`audiofile-config --version`"
-                AC_DEFINE_UNQUOTED(AUDIOFILE_VERSION, "${audiofile_version}")
+                AC_DEFINE_UNQUOTED(AUDIOFILE_VERSION,"${audiofile_version}")
                 AUDIO_LIB="`esd-config --libs`"
 #               ESD_CFLAGS="`esd-config --cflags`"
 		AC_SUBST(AUDIO_LIB)
@@ -631,22 +714,32 @@ dnl     it was "" to cancel -lXpm without the needed -L<dir> for the same case
 	AC_DEFINE(SUN)
 	LIBS="-lm -ldl"
 	audio_system=Sun
+	LDSO_FLAGS="-G"
         ;;
     *-*-hpux*) 
         AC_DEFINE(HPUX)
 	audio_system=Hpux
+	LDSO_FLAGS="+z -Ae +DA1.1"
         ;;
     *-next*) 
         AC_DEFINE(NEXT)
 	audio_system=NeXT
         LIBS=""
+	SO_INSTALL=":"
+	SO_LD=":"
         ;;
     *-sgi*) 
         AC_DEFINE(SGI)
 	audio_system=SGI
 	AUDIO_LIB="-laudio"
 	AC_SUBST(AUDIO_LIB)
-        LIBS="-lc -lm"
+        if test $GUILE_CONFIG_works = no; then
+ 	  LIBS="-lc -lm"
+        LDSO_FLAGS="-shared -all"
+	SO_INSTALL=":"
+	SO_LD=":"
+	A_LD_FLAGS="-non_shared"
+        fi
 dnl should we include -lSgm if motif?
         ;;
     alpha*) 
@@ -670,10 +763,12 @@ dnl should we include -lSgm if motif?
     *-*-sco*) 
         AC_DEFINE(SCO5)
 	audio_system=OSS
+	LDSO_FLAGS="-belf -dy -Bdynamic -G"
         ;;
     *-*-cygwin*)
 	AC_DEFINE(WINDOZE)
 	audio_system=Windoze
+	LDSO_FLAGS="-D_MT -MD -nologo -LD -Zi -W3"
 	;;
     *-aix*) 
         AC_DEFINE(AIX)
@@ -688,32 +783,40 @@ AC_MSG_CHECKING([for audio system])
 AC_MSG_RESULT($audio_system)
 fi
 
+AC_SUBST(LDSO_FLAGS)
+AC_SUBST(SO_INSTALL)
+AC_SUBST(SO_LD)
+AC_SUBST(A_LD)
+AC_SUBST(A_LD_FLAGS)
+
 
 #--------------------------------------------------------------------------------
-# fstatfs special case
+# statfs special case
+#   it is also possible for statfs to take 3 args
+#   the libit configure.in and fsusage.c might be useful here.
 #--------------------------------------------------------------------------------
 
-dnl fstatfs is a mess
-fstatfs_args=0
+dnl statfs is a mess
+statfs_args=0
 AC_MSG_CHECKING([fstafs args])
 AC_TRY_COMPILE(
   [#include <sys/statfs.h>],
   [struct statfs buf; 
    int err,fd; 
-   err=fstatfs(fd,&buf,sizeof(buf),0)
+   err=statfs(fd,&buf,sizeof(buf),0)
   ],
-  fstatfs_args=4)
+  statfs_args=4)
 
-if test $fstatfs_args = 0; then
+if test $statfs_args = 0; then
   AC_TRY_COMPILE(
     [#include <sys/vfs.h>],
     [struct statfs buf; 
      int err,fd; 
-     err=fstatfs(fd,&buf,sizeof(buf),0)
+     err=statfs(fd,&buf,sizeof(buf),0)
     ],
-    fstatfs_args=4)
+    statfs_args=4)
 fi
-if test $fstatfs_args = 0; then
+if test $statfs_args = 0; then
   AC_TRY_COMPILE(
     [#include <dirent.h>
      #include <sys/vfs.h>
@@ -721,38 +824,38 @@ if test $fstatfs_args = 0; then
     ],
     [struct statfs buf;
      int err,fd; 
-     err=fstatfs(fd,&buf,sizeof(buf),0)
+     err=statfs(fd,&buf,sizeof(buf),0)
     ],
-    fstatfs_args=4)
+    statfs_args=4)
 fi
-if test $fstatfs_args = 0; then
+if test $statfs_args = 0; then
   AC_TRY_COMPILE(
     [#include <sys/statfs.h>],
     [struct statfs buf; 
      int err,fd; 
-     err=fstatfs(fd,&buf)
+     err=statfs(fd,&buf)
     ],
-    fstatfs_args=2)
+    statfs_args=2)
 fi
-if test $fstatfs_args = 0; then
+if test $statfs_args = 0; then
   AC_TRY_COMPILE(
     [#include <sys/vfs.h>],
     [struct statfs buf; 
      int err,fd; 
-     err=fstatfs(fd,&buf)
+     err=statfs(fd,&buf)
     ],
-    fstatfs_args=2)
+    statfs_args=2)
 fi
-if test $fstatfs_args = 0; then
+if test $statfs_args = 0; then
   AC_TRY_COMPILE(
     [#include <sys/mount.h>],
     [struct statfs buf; 
      int err,fd;
-     err=fstatfs(fd,&buf)
+     err=statfs(fd,&buf)
     ],
-    fstatfs_args=2)
+    statfs_args=2)
 fi
-if test $fstatfs_args = 0; then
+if test $statfs_args = 0; then
   AC_TRY_COMPILE(
     [#include <dirent.h>
      #include <sys/vfs.h>
@@ -760,15 +863,15 @@ if test $fstatfs_args = 0; then
     ],
     [struct statfs buf; 
      int err,fd; 
-     err=fstatfs(fd,&buf)
+     err=statfs(fd,&buf)
     ],
-    fstatfs_args=2)
+    statfs_args=2)
 fi
-if test $fstatfs_args = 0; then
-  fstatfs_args=2
+if test $statfs_args = 0; then
+  statfs_args=2
 fi
-AC_MSG_RESULT($fstatfs_args)
-AC_DEFINE_UNQUOTED(FSTATFS_ARGS, $fstatfs_args)
+AC_MSG_RESULT($statfs_args)
+AC_DEFINE_UNQUOTED(STATFS_ARGS,$statfs_args)
 dnl on NeXT, this is apparently in libc.h?
 
 
@@ -791,10 +894,4 @@ AC_MSG_RESULT($trap_segfault)
 AC_SUBST(MAKE_TARGET)
 AC_OUTPUT
 
-
-dnl if no motif, search for gtk (could use locate)
-dnl if neither, pass no-gui
-dnl librep/ruby/mzscheme?
-dnl need to be able to set both HAVE_ALSA and HAVE_OSS?
-dnl support for sndlib.so needs to decide whether clm2scm/clm are available
-dnl perhaps also make with-ladspa the default
+dnl perhaps make with-ladspa the default in Linux
