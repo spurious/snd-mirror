@@ -20,6 +20,7 @@
  *      this is dangerous -- the tree may not recognize trouble until evaluation time.
  *   4: make more assumptions about non-local variables -- lots of errors will be unnoticed until eval time.
  *   5: try to set variable value in outer environment
+ *   6: try to splice in function source
  *
  *
  * exported:
@@ -92,6 +93,13 @@
 #include "clm2xen.h"
 
 static XEN optimization_hook = XEN_FALSE;
+
+#define DONT_OPTIMIZE 0
+#define OMIT_COMPLEX 1
+#define COMPLEX_OK 2
+#define GLOBAL_OK 3
+#define GLOBAL_SET_OK 5
+#define SOURCE_OK 6
 
 /* this code assumes a void* is the same size as int */
 #if HAVE_GUILE && WITH_RUN && HAVE_STRINGIZE
@@ -261,7 +269,7 @@ enum {R_VARIABLE, R_CONSTANT};
 #define NEED_ANY_RESULT 1
 #define NEED_INT_RESULT 2
 
-static int current_optimization = 0;
+static int current_optimization = DONT_OPTIMIZE;
 static int run_warned = FALSE;
 
 typedef struct {
@@ -926,7 +934,7 @@ static xen_var *free_xen_var(ptree *prog, xen_var *var)
       if ((var->global) &&
 	  (var->unclean))
 	{
-	  if (current_optimization < 5)
+	  if (current_optimization < GLOBAL_SET_OK)
 	    switch (var->v->type)
 	      {
 	      case R_FLOAT:  xen_symbol_name_set_value(var->name, C_TO_XEN_DOUBLE(prog->dbls[var->v->addr]));           break;
@@ -1372,7 +1380,7 @@ static int xen_to_run_type(XEN val)
   return(R_UNSPECIFIED);
 }
 
-static xen_value *add_global_var_to_ptree(ptree *prog, XEN form)
+static xen_value *add_global_var_to_ptree(ptree *prog, XEN form, XEN *rtn)
 {
   XEN val = XEN_UNDEFINED;
   xen_var *var;
@@ -1383,7 +1391,9 @@ static xen_value *add_global_var_to_ptree(ptree *prog, XEN form)
   varname = XEN_SYMBOL_TO_C_STRING(form);
   var = find_var_in_ptree(prog, varname);
   if (var) return(copy_xen_value(var->v));
+  if (current_optimization < GLOBAL_OK) return(NULL);
   val = symbol_to_value(prog->code, form, &local_var);
+  (*rtn) = val;
   if (XEN_NOT_BOUND_P(val))
     {
       upper = prog;
@@ -1453,7 +1463,7 @@ static xen_value *add_global_var_to_ptree(ptree *prog, XEN form)
 	prog->global_vars[var_loc]->unsettable = TRUE;
       else
 	{
-	  if (current_optimization < 5)
+	  if (current_optimization < GLOBAL_SET_OK)
 	    prog->global_vars[var_loc]->unsettable = local_var;
 	}
     }
@@ -1943,8 +1953,8 @@ static char *declare_args(ptree *prog, XEN form, int default_arg_type, int separ
 	    }
 	  else
 	    {
-	      if ((cur_args) && (cur_args[i]))
-		arg_type = cur_args[i]->type;
+	      if ((cur_args) && (cur_args[i + 1]))
+		arg_type = cur_args[i + 1]->type;
 	    }
 	  add_var_to_ptree(prog, 
 			   XEN_SYMBOL_TO_C_STRING(arg), 
@@ -2734,19 +2744,19 @@ static xen_value *generalized_set_form(ptree *prog, XEN form, int need_result)
 
 static xen_value *set_form(ptree *prog, XEN form, int need_result)
 {
-  char varname[256];
+  char *varname;
   xen_var *var;
   xen_value *v;
-  XEN settee, setval;
+  XEN settee, setval, rtnval;
   settee = XEN_CADR(form);
   setval = XEN_CADDR(form);
   if (!(XEN_SYMBOL_P(settee)))
     return(generalized_set_form(prog, form, need_result));
-  mus_snprintf(varname, 256, "%s", XEN_SYMBOL_TO_C_STRING(settee));
+  varname = XEN_SYMBOL_TO_C_STRING(settee);
   var = find_var_in_ptree(prog, varname);
   if (var == NULL)
     {
-      v = add_global_var_to_ptree(prog, settee);
+      v = add_global_var_to_ptree(prog, settee, &rtnval);
       if (v) 
 	{
 	  var = find_var_in_ptree(prog, varname);
@@ -2765,11 +2775,6 @@ static xen_value *set_form(ptree *prog, XEN form, int need_result)
 	return(v); /* a no-op: (set! a a) */
       val_type = v->type;
       var_type = var->v->type;
-
-      /* 
-      if ((v->type == R_GOTO) && (var->global))
-	fprintf(stderr,"global goto set: %s %s\n", XEN_AS_STRING(settee), XEN_AS_STRING(setval));
-      */
 
       /* two problematic cases: types differ and aren't compatible, or pointer aliasing */
       if (POINTER_P(val_type))
@@ -3861,15 +3866,6 @@ static xen_value * CName ## _1(ptree *prog, xen_value **args, int num_args) \
   return(package(prog, R_FLOAT, CName ## _f, descr_ ##CName ## _f, args, 1)); \
 }
 
-FL_OP(sin)
-FL_OP(cos)
-FL_OP(tan)
-FL_OP(asin)
-FL_OP(acos)
-FL_OP(sqrt)
-FL_OP(log)
-FL_OP(exp)
-
 FL_OP(mus_radians2hz)
 FL_OP(mus_hz2radians)
 FL_OP(mus_degrees2radians)
@@ -3878,10 +3874,40 @@ FL_OP(mus_db2linear)
 FL_OP(mus_linear2db)
 FL_OP(mus_random)
 
+FL_OP(sin)
+FL_OP(cos)
+FL_OP(tan)
+
+#define FL_OP_C(CName) \
+static void CName ## _f(int *args, int *ints, Float *dbls) {FLOAT_RESULT = CName(FLOAT_ARG_1);} \
+static char *descr_ ## CName ## _f(int *args, int *ints, Float *dbls)  \
+{ \
+  return(mus_format( FLT_PT " = " #CName "(" FLT_PT ")", args[0], FLOAT_RESULT, args[1], FLOAT_ARG_1)); \
+} \
+static xen_value * CName ## _1(ptree *prog, xen_value **args, int num_args) \
+{ \
+  if (current_optimization < COMPLEX_OK) return(NULL); \
+  if (prog->constants == 1) \
+    { \
+      if (args[1]->type == R_INT) \
+	return(make_xen_value(R_FLOAT, add_dbl_to_ptree(prog, CName((Float)(prog->ints[args[1]->addr]))), R_CONSTANT)); \
+      else return(make_xen_value(R_FLOAT, add_dbl_to_ptree(prog, CName(prog->dbls[args[1]->addr])), R_CONSTANT)); \
+    } \
+  if (args[1]->type == R_INT) single_to_float(prog, args, 1); \
+  return(package(prog, R_FLOAT, CName ## _f, descr_ ##CName ## _f, args, 1)); \
+}
+
+FL_OP_C(asin)
+FL_OP_C(acos)
+FL_OP_C(sqrt)
+FL_OP_C(log)
+FL_OP_C(exp)
+
 static void atan1_f(int *args, int *ints, Float *dbls) {FLOAT_RESULT = atan(FLOAT_ARG_1);}
 static char *descr_atan1_f(int *args, int *ints, Float *dbls) {return(mus_format( FLT_PT " = atan(" FLT_PT ")", args[0], FLOAT_RESULT, args[1], FLOAT_ARG_1));}
 static xen_value *atan1_1(ptree *prog, xen_value **args, int num_args)
 {
+  if (current_optimization < COMPLEX_OK) return(NULL);
   if (prog->constants == 1)
     {
       if (args[1]->type == R_INT)
@@ -3900,6 +3926,7 @@ static char *descr_atan2_f(int *args, int *ints, Float *dbls)
 static xen_value *atan2_1(ptree *prog, xen_value **args, int num_args)
 {
   xen_value *temp;
+  if (current_optimization < COMPLEX_OK) return(NULL);
   if (args[1]->type == R_INT)
     {
       temp = args[1];
@@ -4376,6 +4403,7 @@ static char *descr_expt_f(int *args, int *ints, Float *dbls)
 static xen_value *expt_1(ptree *prog, xen_value **args, int num_args)
 {
   Float f1, f2;
+  if (current_optimization < COMPLEX_OK) return(NULL);
   if (prog->constants == 2)
     {
       if (args[1]->type == R_INT) f1 = (Float)(prog->ints[args[1]->addr]); else f1 = prog->dbls[args[1]->addr];
@@ -7317,7 +7345,8 @@ static xen_value *walk(ptree *prog, XEN form, int need_result)
   /* walk form, storing vars, making program entries for operators etc */
   /* fprintf(stderr,"walk %s (needed: %d)\n", XEN_AS_STRING(form), need_result); */
   /* need_result = TRUE; */
-  if (current_optimization == 0) return(NULL);
+  XEN rtnval = XEN_FALSE;
+  if (current_optimization == DONT_OPTIMIZE) return(NULL);
 
   if (XEN_LIST_P(form))
     {
@@ -7371,34 +7400,17 @@ static xen_value *walk(ptree *prog, XEN form, int need_result)
 	  if (var == NULL)
 	    {
 	      /* add_global_var will find things like *, but ignores functions and returns null */
-	      
-#if 0
-	      {
-		XEN val;
-		int local_var;
-		val = symbol_to_value(prog->code, function, &local_var);
-		fprintf(stderr,"lookup: %s %d %d\n", funcname, XEN_SYMBOL_P(function), XEN_PROCEDURE_P(val));
-	      }
-#endif
 
 	      if (XEN_SYMBOL_P(function))
-		v = add_global_var_to_ptree(prog, function);
+		{
+		  v = add_global_var_to_ptree(prog, function, &rtnval);
+		  /* if all else fails, we'll check rtnval later for externally defined functions */
+		}
 	      /* (let ((gen (make-oscil 440))) (vct-map! v (lambda () (gen 0.0)))) */
 	      else 
 		if (XEN_LIST_P(function))
 		  v = walk(prog, function, NEED_ANY_RESULT);
 	      /* trying to support stuff like ((vector-ref gens 0) 0.0) here */
-
-	      /* if we had a way to handle arbitrary lambda args, this might pick up user func:
-	       *	   if (XEN_PROCEDURE_P(val))
-	       *         fprintf(stderr,"%s: %s\n", funcname, XEN_PROCEDURE_SOURCE_TO_C_STRING(val));
-	       * string_to_form(XEN_PROCEDURE_SOURCE_TO_C_STRING(function)) or is that redundant --
-	       *   can we walk scm_procedure_source(function)? Then if we know the in-going types,
-	       *   auto-declare them (use args[i]->type)
-	       * then v's type is R_FUNCTION and we fall into funcall_n below
-	       *   and the result of the walk is func->result->type
-	       */
-	      
 	    }
 	  else v = var->v;
 	  if (v) 
@@ -7526,6 +7538,32 @@ static xen_value *walk(ptree *prog, XEN form, int need_result)
 					 R_CONSTANT), 
 			  args, num_args));
 
+      /* check for function defined elsewhere, get source, splice in if possible */
+      if ((v == NULL) && 
+	  (current_optimization >= SOURCE_OK) &&
+	  (XEN_PROCEDURE_P(rtnval)) &&
+	  (XEN_FALSE_P(scm_procedure_with_setter_p(rtnval))))
+	{
+	  XEN func_form;
+	  func_form = scm_procedure_source(rtnval);
+	  if ((XEN_LIST_P(func_form)) &&
+	      (XEN_SYMBOL_P(XEN_CAR(func_form))) &&
+	      (strcmp("lambda", XEN_SYMBOL_TO_C_STRING(XEN_CAR(func_form))) == 0))
+	    {
+	      /* look for procedure source, use current arg types as auto-declaration */
+	      int old_got_lambda;
+	      old_got_lambda = got_lambda;
+	      got_lambda = TRUE;
+	      v = lambda_form(prog, func_form, TRUE, args, num_args);
+	      got_lambda = old_got_lambda;
+	      if (v) 
+		{
+		  add_var_to_ptree(prog, funcname, v);
+		  return(clean_up(funcall_n(prog, args, num_args, v), args, num_args));
+		}
+	    }
+	}
+
       if ((need_result) || (XEN_LIST_P(form)))
 	/* need the list check as well because the called function might have side-effects */
 	return(clean_up(NULL, args, num_args));
@@ -7542,7 +7580,7 @@ static xen_value *walk(ptree *prog, XEN form, int need_result)
     case R_PAIR:   return(make_xen_value(R_PAIR, add_int_to_ptree(prog, (int)form), R_CONSTANT)); break;
     }
   if (XEN_SYMBOL_P(form))
-    return(add_global_var_to_ptree(prog, form));
+    return(add_global_var_to_ptree(prog, form, &rtnval));
   if (!run_warned)
     return(run_warn("can't handle: %s", XEN_AS_STRING(form)));
   return(NULL);
@@ -7644,7 +7682,7 @@ static void *form_to_ptree(XEN code)
 #endif
   run_warned = FALSE;
   current_optimization = optimization(get_global_state());
-  if (current_optimization == 0) return(NULL);
+  if (current_optimization == DONT_OPTIMIZE) return(NULL);
   form = XEN_CAR(code);
   prog = make_ptree(8);
   if ((XEN_PROCEDURE_P(XEN_CADR(code))) && 
@@ -7798,7 +7836,7 @@ static XEN g_run_eval(XEN code, XEN arg)
 {
   ptree *pt;
   XEN result = XEN_FALSE;
-  current_optimization = 4;
+  current_optimization = SOURCE_OK;
   pt = make_ptree(8);
   pt->result = walk(pt, code, TRUE);
   if (pt->result)
@@ -7938,7 +7976,7 @@ in multi-channel situations where you want the optimization that vct-map! provid
 	}
     }
 
-  if (optimization(get_global_state()) > 0)
+  if (optimization(get_global_state()) != DONT_OPTIMIZE)
     {
 #if WITH_RUN
       ptree *pt = NULL;

@@ -48,7 +48,7 @@ to get:
   aifc using "sowt" (little endian) data
   aifc using "fl64" (big endian double) data
   riff using unsigned byte data
-  rifx (rifx) using big endian data of any kind
+  riff (rifx) using big endian data of any kind
   bicsf with header extensions like "COMM"
   voc using mulaw or alaw data
   voc "extended" header

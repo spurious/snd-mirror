@@ -71,7 +71,7 @@
 
 (define pi 3.141592653589793)
 (define mus-position mus-channels)
-(define max-optimization 5)
+(define max-optimization 6)
 
 (define home-dir "/home/bil")
 (if (file-exists? "/export/home/bil/cl/oboe.snd")
@@ -25746,6 +25746,61 @@ EDITS: 2
 	(if (not (string? (describe-walk-info '*)))
 	    (snd-display ";walk-info *: ~A" (describe-walk-info '*)))
 	(close-sound ind))
+      
+      (let ((val (run-eval '(lambda () (fneq .1 .1)))))
+	(if val (snd-display ";embedded func 0: ~A" val)))
+      (let ((val (run-eval '(lambda () (fneq .1 .2)))))
+	(if (not val) (snd-display ";embedded func 1: ~A" val)))
+      (let ((val (run-eval '(lambda () (fneq .1 .1001)))))
+	(if val (snd-display ";embedded func 2: ~A" val)))
+      
+      (let ((val (run-eval '(fneq .1 .1))))
+	(if val (snd-display ";embedded func 3: ~A" val)))
+      (let ((val (run-eval '(fneq .1 .2))))
+	(if (not val) (snd-display ";embedded func 4: ~A" val)))
+      (let ((val (run-eval '(fneq .1 .1001))))
+	(if val (snd-display ";embedded func 5: ~A" val)))
+      
+      (define (efunc-1 arg) (+ arg 1))
+      (let ((val (run-eval '(efunc-1 1.5))))
+	(if (fneq val 2.5) (snd-display ";embedded func 6: ~A" val)))
+      (let ((val (run-eval '(+ 1.0 (efunc-1 1.5)))))
+	(if (fneq val 3.5) (snd-display ";embedded func 7: ~A" val)))
+      (let ((val (run-eval '(efunc-1 1))))
+	(if (not (= val 2)) (snd-display ";embedded func 8: ~A" val)))
+      (let ((val (run-eval '(* 2 (efunc-1 1)))))
+	(if (not (= val 4)) (snd-display ";embedded func 9: ~A" val)))
+      
+      (let ((val (run-eval '(if (fneq .1 .2) (* 2 (efunc-1 1)) -1))))
+	(if (not (= val 4)) (snd-display ";embedded func 10: ~A" val)))
+      
+      (define (efunc-2 arg) (not arg))
+      (let ((val (run-eval '(efunc-2 #f))))
+	(if (not val) (snd-display ";embedded func 11: ~A" val)))
+      (let ((val (run-eval '(if (efunc-2 (fneq .1 .1)) 0 1))))
+	(if (not (= val 0)) (snd-display ";embedded func 12: ~A" val)))
+      (let ((val (run-eval '(if (efunc-2 (fneq .1 (efunc-1 .2))) 0 1))))
+	(if (not (= val 1)) (snd-display ";embedded func 13: ~A" val)))
+      
+      (define (efunc-3 arg1 arg2 arg3) (if arg1 (+ arg2 arg3) 0))
+      (let ((val (run-eval '(efunc-3 (fneq .1 .2) 32 12))))
+	(if (not (= val 44)) (snd-display ";embedded func 14: ~A" val)))
+      
+      (define (efunc-4 arg) (string-append arg "!"))
+      (let ((val (run-eval '(efunc-4 "hi"))))
+	(if (not (string=? val "hi!")) (snd-display ";embedded func 15: ~A" val)))
+      (define (efunc-5 arg) (+ 1 (string-length arg)))
+      (let ((val (run-eval '(efunc-5 "hi"))))
+	(if (not (= val 3)) (snd-display ";embedded func 16: ~A" val)))
+      
+      (define (efunc-6 arg) (oscil arg))
+      (define efunc-gen (make-oscil 440.0))
+      (oscil efunc-gen)
+      (let ((val (run-eval '(efunc-6 efunc-gen))))
+	(if (fneq val .125) (snd-display ";embedded func 17: ~A" val)))
+      (define (efunc-7 arg) arg)
+      (let ((val (run-eval '(oscil (efunc-7 efunc-gen)))))
+	(if (fneq val .248) (snd-display ";embedded func 18: ~A" val)))
       
       ))))
 
