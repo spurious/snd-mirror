@@ -1804,7 +1804,7 @@ static int display_mix_amp_env(mixdata *md, Float scl, int yoff, int newbeg, int
 	  if (low < ymin) ymin = low;
 	}
     }
-  draw_both_grf_points(md->ss,(draw) ? mix_waveform_context(cp) : erase_context(cp),j);
+  draw_both_grf_points(md->ss,(draw) ? mix_waveform_context(cp) : erase_context(cp),j,ap);
   free_mix_fd(min_fd);
   free_mix_fd(max_fd);
   return(j);
@@ -1921,7 +1921,7 @@ int display_mix_waveform(chan_info *cp, mixdata *md, console_state *cs, int yoff
 		}
 	    }
 	  if (sp) 
-	    draw_both_grf_points(ss,(draw) ? mix_waveform_context(cp) : erase_context(cp),j);
+	    draw_both_grf_points(ss,(draw) ? mix_waveform_context(cp) : erase_context(cp),j,ap);
 	}
     }
   if (sp) copy_context(cp);
