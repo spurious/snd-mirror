@@ -66,7 +66,7 @@ AC_DEFINE_UNQUOTED(CONFIGURE_ARGS, "$INVOKED_ARGS")
 #   SNDLIB_CONFIG_path    where to look for sndlib-config
 #
 # SOMEDAY: --with-static-libraries --with-static-guile
-
+# TODO: update sndlib(jack) and libxm(gtkglext) configures
 
 #--------------------------------------------------------------------------------
 
@@ -600,6 +600,8 @@ else
 	# gtk 2.3.1
 	AC_CHECK_LIB(m, gtk_menu_shell_cancel, [AC_DEFINE(HAVE_GTK_MENU_SHELL_CANCEL)], ,$GTK_LIBS)
 	# gtk 2.3.2
+	AC_CHECK_LIB(m, gtk_combo_box_popup, [AC_DEFINE(HAVE_GTK_COMBO_BOX_POPUP)], ,$GTK_LIBS)
+	# gtk 2.3.4
 
         if test "$with_x11" = yes ; then
 	  AC_DEFINE(WITH_GTK_AND_X11)

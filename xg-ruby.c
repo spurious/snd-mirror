@@ -2670,6 +2670,19 @@ XEN_NARGIFY_2(gxg_gtk_window_set_accept_focus_w, gxg_gtk_window_set_accept_focus
 XEN_NARGIFY_1(gxg_gtk_window_get_accept_focus_w, gxg_gtk_window_get_accept_focus)
 #endif
 
+#if HAVE_GTK_COMBO_BOX_POPUP
+XEN_NARGIFY_0(gxg_gtk_accel_map_get_type_w, gxg_gtk_accel_map_get_type)
+XEN_NARGIFY_0(gxg_gtk_accel_map_get_w, gxg_gtk_accel_map_get)
+XEN_NARGIFY_1(gxg_gtk_combo_box_popup_w, gxg_gtk_combo_box_popup)
+XEN_NARGIFY_1(gxg_gtk_combo_box_popdown_w, gxg_gtk_combo_box_popdown)
+XEN_NARGIFY_1(gxg_gtk_radio_menu_item_new_from_widget_w, gxg_gtk_radio_menu_item_new_from_widget)
+XEN_NARGIFY_2(gxg_gtk_radio_menu_item_new_with_mnemonic_from_widget_w, gxg_gtk_radio_menu_item_new_with_mnemonic_from_widget)
+XEN_NARGIFY_2(gxg_gtk_radio_menu_item_new_with_label_from_widget_w, gxg_gtk_radio_menu_item_new_with_label_from_widget)
+XEN_NARGIFY_1(gxg_gtk_scale_get_layout_w, gxg_gtk_scale_get_layout)
+XEN_ARGIFY_3(gxg_gtk_scale_get_layout_offsets_w, gxg_gtk_scale_get_layout_offsets)
+XEN_ARGIFY_3(gxg_gtk_tooltips_get_info_from_tip_window_w, gxg_gtk_tooltips_get_info_from_tip_window)
+#endif
+
 XEN_NARGIFY_1(gxg_GDK_COLORMAP_w, gxg_GDK_COLORMAP)
 XEN_NARGIFY_1(gxg_GDK_DRAG_CONTEXT_w, gxg_GDK_DRAG_CONTEXT)
 XEN_NARGIFY_1(gxg_GDK_DRAWABLE_w, gxg_GDK_DRAWABLE)
@@ -2856,6 +2869,10 @@ XEN_NARGIFY_1(gxg_GTK_TOOL_BUTTON_w, gxg_GTK_TOOL_BUTTON)
 XEN_NARGIFY_1(gxg_GTK_TOOL_ITEM_w, gxg_GTK_TOOL_ITEM)
 #endif
 
+#if HAVE_GTK_COMBO_BOX_POPUP
+XEN_NARGIFY_1(gxg_GTK_ACCEL_MAP_w, gxg_GTK_ACCEL_MAP)
+#endif
+
 XEN_NARGIFY_1(gxg_GDK_IS_COLORMAP_w, gxg_GDK_IS_COLORMAP)
 XEN_NARGIFY_1(gxg_GDK_IS_DRAG_CONTEXT_w, gxg_GDK_IS_DRAG_CONTEXT)
 XEN_NARGIFY_1(gxg_GDK_IS_DRAWABLE_w, gxg_GDK_IS_DRAWABLE)
@@ -3022,6 +3039,10 @@ XEN_NARGIFY_1(gxg_GTK_IS_FILE_CHOOSER_w, gxg_GTK_IS_FILE_CHOOSER)
 XEN_NARGIFY_1(gxg_GTK_IS_ICON_THEME_w, gxg_GTK_IS_ICON_THEME)
 XEN_NARGIFY_1(gxg_GTK_IS_TOOL_BUTTON_w, gxg_GTK_IS_TOOL_BUTTON)
 XEN_NARGIFY_1(gxg_GTK_IS_TOOL_ITEM_w, gxg_GTK_IS_TOOL_ITEM)
+#endif
+
+#if HAVE_GTK_COMBO_BOX_POPUP
+XEN_NARGIFY_1(gxg_GTK_IS_ACCEL_MAP_w, gxg_GTK_IS_ACCEL_MAP)
 #endif
 
 XEN_NARGIFY_2(c_array_to_xen_list_w, c_array_to_xen_list)
@@ -6390,6 +6411,19 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_window_get_accept_focus, gxg_gtk_window_get_accept_focus_w, 1, 0, 0, H_gtk_window_get_accept_focus);
 #endif
 
+#if HAVE_GTK_COMBO_BOX_POPUP
+  XG_DEFINE_PROCEDURE(gtk_accel_map_get_type, gxg_gtk_accel_map_get_type_w, 0, 0, 0, H_gtk_accel_map_get_type);
+  XG_DEFINE_PROCEDURE(gtk_accel_map_get, gxg_gtk_accel_map_get_w, 0, 0, 0, H_gtk_accel_map_get);
+  XG_DEFINE_PROCEDURE(gtk_combo_box_popup, gxg_gtk_combo_box_popup_w, 1, 0, 0, H_gtk_combo_box_popup);
+  XG_DEFINE_PROCEDURE(gtk_combo_box_popdown, gxg_gtk_combo_box_popdown_w, 1, 0, 0, H_gtk_combo_box_popdown);
+  XG_DEFINE_PROCEDURE(gtk_radio_menu_item_new_from_widget, gxg_gtk_radio_menu_item_new_from_widget_w, 1, 0, 0, H_gtk_radio_menu_item_new_from_widget);
+  XG_DEFINE_PROCEDURE(gtk_radio_menu_item_new_with_mnemonic_from_widget, gxg_gtk_radio_menu_item_new_with_mnemonic_from_widget_w, 2, 0, 0, H_gtk_radio_menu_item_new_with_mnemonic_from_widget);
+  XG_DEFINE_PROCEDURE(gtk_radio_menu_item_new_with_label_from_widget, gxg_gtk_radio_menu_item_new_with_label_from_widget_w, 2, 0, 0, H_gtk_radio_menu_item_new_with_label_from_widget);
+  XG_DEFINE_PROCEDURE(gtk_scale_get_layout, gxg_gtk_scale_get_layout_w, 1, 0, 0, H_gtk_scale_get_layout);
+  XG_DEFINE_PROCEDURE(gtk_scale_get_layout_offsets, gxg_gtk_scale_get_layout_offsets_w, 1, 2, 0, H_gtk_scale_get_layout_offsets);
+  XG_DEFINE_PROCEDURE(gtk_tooltips_get_info_from_tip_window, gxg_gtk_tooltips_get_info_from_tip_window_w, 1, 2, 0, H_gtk_tooltips_get_info_from_tip_window);
+#endif
+
   XG_DEFINE_PROCEDURE(GDK_COLORMAP, gxg_GDK_COLORMAP_w, 1, 0, 0, NULL);
   XG_DEFINE_PROCEDURE(GDK_DRAG_CONTEXT, gxg_GDK_DRAG_CONTEXT_w, 1, 0, 0, NULL);
   XG_DEFINE_PROCEDURE(GDK_DRAWABLE, gxg_GDK_DRAWABLE_w, 1, 0, 0, NULL);
@@ -6576,6 +6610,10 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(GTK_TOOL_ITEM, gxg_GTK_TOOL_ITEM_w, 1, 0, 0, NULL);
 #endif
 
+#if HAVE_GTK_COMBO_BOX_POPUP
+  XG_DEFINE_PROCEDURE(GTK_ACCEL_MAP, gxg_GTK_ACCEL_MAP_w, 1, 0, 0, NULL);
+#endif
+
   XG_DEFINE_PROCEDURE(c-array->list, c_array_to_xen_list_w, 2, 0, 0, NULL);
   XG_DEFINE_PROCEDURE(list->c-array, xen_list_to_c_array_w, 2, 0, 0, NULL);
   XG_DEFINE_PROCEDURE(freeGdkPoints, gxg_freeGdkPoints_w, 1, 0, 0, H_freeGdkPoints);
@@ -6746,6 +6784,10 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(GTK_IS_ICON_THEME, gxg_GTK_IS_ICON_THEME_w, 1, 0, 0, NULL);
   XG_DEFINE_PROCEDURE(GTK_IS_TOOL_BUTTON, gxg_GTK_IS_TOOL_BUTTON_w, 1, 0, 0, NULL);
   XG_DEFINE_PROCEDURE(GTK_IS_TOOL_ITEM, gxg_GTK_IS_TOOL_ITEM_w, 1, 0, 0, NULL);
+#endif
+
+#if HAVE_GTK_COMBO_BOX_POPUP
+  XG_DEFINE_PROCEDURE(GTK_IS_ACCEL_MAP, gxg_GTK_IS_ACCEL_MAP_w, 1, 0, 0, NULL);
 #endif
 
 }

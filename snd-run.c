@@ -7209,6 +7209,16 @@ static xen_value *make_vct_1(ptree *prog, xen_value **args, int num_args)
   return(args[0]);
 }
 
+static xen_value *make_vector_1(ptree *prog, xen_value **args, int num_args)
+{
+  args[0] = make_xen_value(R_FLOAT_VECTOR, add_vct_to_ptree(prog, NULL), R_VARIABLE);
+  add_obj_to_gcs(prog, R_FLOAT_VECTOR, args[0]->addr);
+  if (num_args == 1)
+    add_triple_to_ptree(prog, va_make_triple(make_vct_v, descr_make_vct_v, 2, args[0], args[1]));
+  else add_triple_to_ptree(prog, va_make_triple(make_vct_v2, descr_make_vct_v2, 3, args[0], args[1], args[2]));
+  return(args[0]);
+}
+
 static void vct_v(int *args, ptree *pt) 
 {
   int i;
@@ -10680,7 +10690,7 @@ static void init_walkers(void)
   INIT_WALKER("vector-length", make_walker(vector_length_1, NULL, NULL, 1, 1, R_INT, false, 1, R_VECTOR));
   INIT_WALKER("vector-fill!", make_walker(vector_fill_1, NULL, NULL, 2, 2, R_INT, false, 1, R_VECTOR));
   INIT_WALKER("vector-set!", make_walker(vector_set_1, NULL, NULL, 3, 3, R_ANY, false, 2, R_VECTOR, R_INT));
-  INIT_WALKER("make-vector", make_walker(make_vct_1, NULL, NULL, 1, 2, R_VCT, false, 2, R_INT, R_FLOAT));
+  INIT_WALKER("make-vector", make_walker(make_vector_1, NULL, NULL, 1, 2, R_FLOAT_VECTOR, false, 2, R_INT, R_FLOAT));
 
   /* -------- list funcs */
   INIT_WALKER("car", make_walker(car_1, NULL, NULL, 1, 1, R_ANY, false, 1, R_CONS));

@@ -345,7 +345,14 @@ starting at 'start' (in samples) using 'envelope' to pan (0: all chan 0, 1: all 
   "(track->vct track (chan 0)) places track data in vct"
   (if (track? trk)
       (if (< chan (track-chans trk))
-	  (vct-map! (make-vct (track-frames trk chan)) (make-track-sample-reader trk chan))
+	  (let* ((len (track-frames trk chan))
+		 (v (make-vct len))
+		 (rd (make-track-sample-reader trk chan)))
+	    (run
+	     (lambda ()
+	       (do ((i 0 (1+ i)))
+		   ((= i len) v)
+		 (vct-set! v i (read-track-sample rd))))))
 	  (throw 'no-such-channel (list "track->vct" chan)))
       (throw 'no-such-track (list "track->vct" trk))))
 

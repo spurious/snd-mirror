@@ -3143,7 +3143,7 @@ apply func to samples in current channel; edname is the edit history name for th
 static XEN g_find(XEN expr, XEN sample, XEN snd_n, XEN chn_n, XEN edpos)
 {
   #define H_find "(" S_find " func (start-samp 0) (snd #f) (chn #f) (edpos #f)): apply func, a function of one argument, \
-the current sample, to each sample in snd's channel chn, starting at 'start-samp' until func returns #t"
+the current sample, to each sample in snd's channel chn, starting at 'start-samp' until func returns something other than #f"
 
   /* no free here -- it's handled as ss->search_expr in snd-find.c */
   ASSERT_CHANNEL(S_find, snd_n, chn_n, 3);

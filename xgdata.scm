@@ -2848,6 +2848,7 @@
 (CSTR "GTK_STOCK_ITALIC")
 (CSTR-232 "GTK_STOCK_INDENT")
 (CSTR-232 "GTK_STOCK_UNINDENT")
+(CSTR-234 "GTK_STOCK_NETWORK")
 (CSTR "GTK_STOCK_JUMP_TO")
 (CSTR "GTK_STOCK_JUSTIFY_CENTER")
 (CSTR "GTK_STOCK_JUSTIFY_FILL")
@@ -4945,7 +4946,7 @@
 (CINT-23 "GTK_UI_MANAGER_MENUITEM" "GtkUIManagerItemType")
 (CINT-23 "GTK_UI_MANAGER_TOOLITEM" "GtkUIManagerItemType")
 (CINT-23 "GTK_UI_MANAGER_SEPARATOR" "GtkUIManagerItemType")
-(CINT-23 "GTK_UI_MANAGER_ACCELERATO" "GtkUIManagerItemType")
+(CINT-23 "GTK_UI_MANAGER_ACCELERATOR" "GtkUIManagerItemType")
 
 (CINT-23 "GTK_FILE_FILTER_FILENAME" "GtkFileFilterFlags")
 (CINT-23 "GTK_FILE_FILTER_URI" "GtkFileFilterFlags")
@@ -5292,4 +5293,30 @@
 (CFNC-232 "gboolean gtk_window_get_accept_focus GtkWindow* window")
 
 (CFNC "gpointer g_list_nth_data GList* list guint n")
+
+
+;(CINT-234 "GTK_FILE_CHOOSER_ACTION" "GtkFileChooserProp")
+;(CINT-234 "GTK_FILE_CHOOSER_PROP_FILE_SYSTEM_BACKEND" "GtkFileChooserProp")
+;(CINT-234 "GTK_FILE_CHOOSER_PROP_FILTER" "GtkFileChooserProp")
+;(CINT-234 "GTK_FILE_CHOOSER_PROP_FOLDER_MODE" "GtkFileChooserProp")
+;(CINT-234 "GTK_FILE_CHOOSER_PROP_LOCAL_ONLY" "GtkFileChooserProp")
+;(CINT-234 "GTK_FILE_CHOOSER_PROP_PREVIEW_WIDGET" "GtkFileChooserProp")
+;(CINT-234 "GTK_FILE_CHOOSER_PROP_PREVIEW_WIDGET_ACTIVE" "GtkFileChooserProp")
+;(CINT-234 "GTK_FILE_CHOOSER_PROP_EXTRA_WIDGET" "GtkFileChooserProp")
+;(CINT-234 "GTK_FILE_CHOOSER_PROP_SELECT_MULTIPLE" "GtkFileChooserProp")
+;(CINT-234 "GTK_FILE_CHOOSER_PROP_SHOW_HIDDEN" "GtkFileChooserProp")
+
+(CCAST-234 "GTK_ACCEL_MAP(obj)" "GtkAccelMap")
+(CCHK-234 "GTK_IS_ACCEL_MAP(obj)" "GtkAccelMap")
+
+(CFNC-234 "GType gtk_accel_map_get_type void")
+(CFNC-234 "GtkAccelMap* gtk_accel_map_get void")
+(CFNC-234 "void gtk_combo_box_popup GtkComboBox* combo_box")
+(CFNC-234 "void gtk_combo_box_popdown GtkComboBox* combo_box")
+(CFNC-234 "GtkWidget* gtk_radio_menu_item_new_from_widget GtkRadioMenuItem* group")
+(CFNC-234 "GtkWidget* gtk_radio_menu_item_new_with_mnemonic_from_widget GtkRadioMenuItem* group gchar* label")
+(CFNC-234 "GtkWidget* gtk_radio_menu_item_new_with_label_from_widget GtkRadioMenuItem* group gchar* label")
+(CFNC-234 "PangoLayout* gtk_scale_get_layout GtkScale* scale")
+(CFNC-234 "void gtk_scale_get_layout_offsets GtkScale* scale gint* [x] gint* [y]")
+(CFNC-234 "gboolean gtk_tooltips_get_info_from_tip_window GtkWindow* tip_window GtkTooltips** [tooltips] GtkWidget** [current_widget]")
 

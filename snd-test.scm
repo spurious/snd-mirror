@@ -3179,7 +3179,7 @@
     (begin
       (run-hook before-test-hook 5)
       
-      (set! (optimization) 5) ; these trees assume optimization is on
+      (set! (optimization) max-optimization) ; these trees assume optimization is on
       
       (if (dac-is-running) (snd-display ";dac is running??"))
       (do ((clmtest 0 (1+ clmtest))) ((= clmtest tests)) 
@@ -30887,10 +30887,10 @@ EDITS: 2
 	    (ftsta '(lambda (y) (if (> y 1.0) 3.1 2.1)) 0.0 2.1)
 	    (btst '(if #f #f #t) #t)
 	    (btst '(let ((v (make-vct 3))) (vct? (if #t v))) #t)
-	    (btst '(let ((v (make-vector 3 1.0))) (vct? (if #t v))) #t)
-	    (etst '(let ((v (make-vector 3 1))) (vct? (if #t v))))
-	    (btst '(let ((v (make-vector 3))) (vct? (if #t v))) #t)
-	    (etst '(let ((v (make-vector 3 (make-vct 3)))) (vct? (if #t v))))
+	    (btst '(let ((v (make-vector 3 1.0))) (vector? (if #t v))) #t)
+	    (etst '(let ((v (make-vector 3 1))) (vector? (if #t v))))
+	    (btst '(let ((v (make-vector 3))) (vector? (if #t v))) #t)
+	    (etst '(let ((v (make-vector 3 (make-vct 3)))) (vector? (if #t v))))
 	    (btsta '(lambda (y) (let ((v (make-vct 3))) (vct? (if (> y 1.0) v)))) 2.0 #t)
 	    
 	    (itst '(string-length "abc") 3)
@@ -31104,7 +31104,7 @@ EDITS: 2
 	    (btst '(track-sample-reader? #t) #f)
 	    
 	    (ftst '(let ((v (make-vct 3))) (vct-set! v 1 32.1) (vct-ref v 1)) 32.1)
-	    (ftst '(let ((v (make-vector 3 0.0))) (vct-set! v 1 32.1) (vct-ref v 1)) 32.1)
+	    (ftst '(let ((v (make-vector 3 0.0))) (vector-set! v 1 32.1) (vector-ref v 1)) 32.1)
 	    (ftst '(let ((v (make-vct 3))) (vct-set! v 1 3.0) (vct-scale! v 2.0) (vct-ref v 1)) 6.0)
 	    (btst '(let ((v (make-vct 3))) (vct? (vct-scale! v 2.0))) #t)
 	    (ftst '(let ((v (make-vct 3))) (set! int-var 2) (vct-set! v 1 3.0) (vct-scale! v int-var) (vct-ref v 1)) 6.0)
@@ -33413,7 +33413,7 @@ EDITS: 2
 			  (set! i (1+ i))
 			  (if (fneq y (sin (* 2 3.14159 i (/ 1000.0 44100.0))))
 			      (begin
-				(snd-display ";with-sound sine: ~D ~A ~A" i y (sin (* 2 3.14159 i (/ 1000.0 44100.0))))
+				(display (format #f ";with-sound sine: ~D ~A ~A~%" i y (sin (* 2 3.14159 i (/ 1000.0 44100.0)))))
 				#t)
 			      #f))))
 	(close-sound ind))
