@@ -7523,7 +7523,6 @@ input data. <i>sgn</i> is 1 for an FFT, -1 for an inverse FFT; (default 1).
 
 <p>Other related variables and functions:</p>
 <table cellpadding=0 celspacing=10 border=0>
-
 <tr><td width=200><a href="#sndffting">transform-graph?</a></td><td><a href="#showfftpeaks">show-transform-peaks</a></td><td><a href="#sndtransformsample">transform-sample</a></td></tr>
 <tr><td><a href="#fftbeta">fft-window-beta</a></td><td><a href="#lshowselectiontransform">show-selection-transform</a></td><td><a href="#sndtransformsamples">transform-samples</a></td></tr>
 <tr><td><a href="#ffthook">transform-hook</a></td><td><a href="#spectrocutoff">spectro-cutoff</a></td><td><a href="#transformsamples2vct">transform-samples-&gt;vct</a></td></tr>
@@ -7536,7 +7535,48 @@ input data. <i>sgn</i> is 1 for an FFT, -1 for an inverse FFT; (default 1).
 <tr><td><a href="#mindb">min-dB</a></td><td><a href="#spectrozangle">spectro-z-angle</a></td><td><a href="#spectrozscale">spectro-z-scale</a></td></tr>
 </table>
 
-<!-- this is endless and changes daily...
+<!-- TODO: fft table
+<p>And fft-based effects/editing:
+</p>
+<pre>
+    (list "fft-edit" "sndscm.html#exfftedit" "examp.scm" 715 "fft-edit")
+    (list "fft-env-edit" "sndscm.html#exfftenvedit" "examp.scm" 851 "fft-env-edit")
+    (list "fft-squelch" "sndscm.html#exfftsquelch" "examp.scm" 744 "fft-squelch")
+    (list "superimpose-ffts" "sndscm.html#exsuperimposeffts" "examp.scm" 384 "superimpose-ffts")
+  <li><a href="#rubberdoc">rubber.scm: rubber-sound</a>
+
+    (list "phase-vocoder" "clm.html#phase-vocoder" "clm2xen.c" 4413 "g_phase_vocoder")
+<A NAME="pvocdoc"></a><span class=box><h2>pvoc.scm</h2></span>
+
+  <em class=def><A NAME="exdolph">dolph</a></em> n gamma
+  <em class=def><A NAME="exdht">dht</a></em> data
+  <em class=def><A NAME="exdownoct">down-oct</a></em>
+  <em class=def><A NAME="zerophase">zero-phase, rotate-phase</a></em>
+
+  <em class=def><A NAME="excorrelate">correlate</a></em> snd chn y0 y1
+  <em class=def><a name="exsuperimposeffts">superimpose-ffts</a></em> snd chn y0 y1
+  <em class=def><a name="exfftedit">fft-edit</a></em> low-freq high-freq
+  <em class=def><a name="exfftenvedit">fft-env-edit</a></em> env
+  <em class=def><A NAME="exfftenvinterp">fft-env-interp</a></em> env1 env2 interp
+  <em class=def><a name="exfftsquelch">fft-squelch</a></em> squelch
+  <em class=def><a name="exsquelchvowels">squelch-vowels</a></em>
+  <em class=def><A NAME="exfftsmoother">fft-smoother</a></em> cutoff start samps snd chn
+
+  <em class=def><A NAME="exshowinputfft">show-input-fft</a></em> &amp;optional (in-sys 0)
+  <em class=def><A NAME="exshowdraggableinputfft">show-draggable-input-fft</a></em> &amp;optional (in-sys 0)
+
+  <em class=def><a name="startwaterfall">start-waterfall</a></em> &amp;optional (scl 1.0) (pc-spectrum 0.2) (fft-size 512)
+  <em class=def><a name="excrosssynthesis">cross-synthesis</a></em> cross-snd amp fftsize radius
+  <em class=def><a name="exvoiced2unvoiced">voiced-&gt;unvoiced</a></em> amp fftsize r tempo
+
+clm.html:  <a name="fft"><em class=def>fft</em></a> <i>rdat idat fftsize</i> &am
+grfsnd.html:<tr><td><a href="clm.html#fft">mus-fft</a></td><td>(rl im <i>n sign</i>)</td><td>fft of rl and im (sign = -1 for ifft), result in rl</td></tr>
+<tr><td><a href="clm.html#make-fft-window">make-fft-window</a></td colspan=2><td>(type size beta)</td></tr>
+</pre>
+-->
+
+<!-- TODO: effects table
+this is endless and changes daily...
 <br>
 <span class=bbox><h3><A NAME="sndeffects">Effects</a></h3></span>
 

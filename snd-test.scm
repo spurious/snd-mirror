@@ -18423,8 +18423,17 @@ EDITS: 5
 	(ramp-channel 1.0 0.0)
 	(cosine-channel-via-ptree 0 (frames) ind 0 #f)
 	(zigzag-check "ptree+ramp2" ind 0)
-
 	(undo 3)
+	(cosine-channel-via-ptree 0 (frames) ind 0 #f)
+	(ptree-channel (lambda (y) (* y 0.5)))
+	(zigzag-check "ptree+ptreec" ind 0)
+	(undo 2)
+	(scale-channel 0.0 3 4)
+	(cosine-channel-via-ptree 0 (frames) ind 0 #f)
+	(ptree-channel (lambda (y) (* y 0.5)))
+	(zigzag-check "ptree+ptreec+zero" ind 0)
+	(undo 3)
+
 	(ramp-channel 0.0 1.0)
 	(xen-channel (lambda (y data forward)
 		       (+ y (list-ref data 0)))

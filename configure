@@ -12396,7 +12396,9 @@ rm -f conftest.$ac_objext conftest.$ac_ext
       if test "$with_gtk" = yes; then
 # there's no gtkglext config program, as far as I can tell, so...
         OLD_CFLAGS="$CFLAGS"
+	OLD_CPPFLAGS="$CPPFLAGS"
         CFLAGS="-I/usr/local/include/gtkglext-1.0 -I/usr/local/lib/gtkglext-1.0/include $GTK_CFLAGS $CFLAGS"
+        CPPFLAGS="-I/usr/local/include/gtkglext-1.0 -I/usr/local/lib/gtkglext-1.0/include $GTK_CFLAGS $CFLAGS"
 	if test "${ac_cv_header_gtk_gtkgl_h+set}" = set; then
   echo "$as_me:$LINENO: checking for gtk/gtkgl.h" >&5
 echo $ECHO_N "checking for gtk/gtkgl.h... $ECHO_C" >&6
@@ -12540,6 +12542,7 @@ fi
 
 
 	CFLAGS="$OLD_CFLAGS"
+	CPPFLAGS="$OLD_CPPFLAGS"
         echo "$as_me:$LINENO: checking for gdk_window_get_gl_config in -lm" >&5
 echo $ECHO_N "checking for gdk_window_get_gl_config in -lm... $ECHO_C" >&6
 if test "${ac_cv_lib_m_gdk_window_get_gl_config+set}" = set; then

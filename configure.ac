@@ -596,7 +596,9 @@ if test "$with_gl" = yes || test "$with_just_gl" = yes ; then
       if test "$with_gtk" = yes; then
 # there's no gtkglext config program, as far as I can tell, so...
         OLD_CFLAGS="$CFLAGS"
+	OLD_CPPFLAGS="$CPPFLAGS"
         CFLAGS="-I/usr/local/include/gtkglext-1.0 -I/usr/local/lib/gtkglext-1.0/include $GTK_CFLAGS $CFLAGS"
+        CPPFLAGS="-I/usr/local/include/gtkglext-1.0 -I/usr/local/lib/gtkglext-1.0/include $GTK_CFLAGS $CFLAGS"
 	AC_CHECK_HEADER(gtk/gtkgl.h,
 	  [
             GL_LIBS="$GL_LIBS -lgdkglext-x11-1.0 -lgtkglext-x11-1.0"
@@ -607,6 +609,7 @@ if test "$with_gl" = yes || test "$with_just_gl" = yes ; then
             GL_FLAGS="$GL_FLAGS -I/usr/local/include/gtkglext-0.x"
 	  ])
 	CFLAGS="$OLD_CFLAGS"
+	CPPFLAGS="$OLD_CPPFLAGS"
         AC_CHECK_LIB(m, gdk_window_get_gl_config, [AC_DEFINE(HAVE_GTK_GL_EXT_0_1)], , $GL_LIBS)
 	AC_CHECK_LIB(m, gdk_gl_font_use_gdk_font, [AC_DEFINE(HAVE_GDK_GL_FONT_USE_GDK_FONT)], , $GL_LIBS)
 	AC_CHECK_LIB(m, gtk_widget_gl_make_current, [AC_DEFINE(HAVE_GTK_WIDGET_GL_MAKE_CURRENT)], , $GL_LIBS)

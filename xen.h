@@ -441,6 +441,14 @@
  *    snd-xen.o(.text+0x1456): In function `g_call1_1':
  *    snd-xen.c:482: variable '_scm_sys_protects' can't be auto-imported.
  * this definition taken from eval.c, listofnull is in root.h, set to SCM_BOOL_F in gc.c
+ *
+ * William Morgan says:
+ *    scm_sys_protects need to be declared "__declspec (dllexport) extern" in
+ *    the Guile root.h header file. [Or:]
+ *    
+ *    #if (defined(_WIN32) || defined(__CYGWIN__))
+ *    __declspec (dllexport) extern scm_sys_protects;
+ *    #endif
  */
   #define XEN_APPLY_ARG_LIST_END            scm_cons(SCM_EOL, SCM_EOL)
 #else
