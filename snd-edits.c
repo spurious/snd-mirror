@@ -666,9 +666,6 @@ void remember_temp(char *filename, int chans)
 {
   int i;
   tempfile_ctr *tmp;
-#if DEBUGGING_TEMPS
-  fprintf(stderr,"remember %s with %d chans\n",filename,chans);
-#endif
   if (tempfiles_size == 0)
     {
       tempfiles_size = 8;
@@ -706,9 +703,6 @@ static void remember_redundant_temp(char *filename, int cur_chan)
 	{
 	  if (cur_chan >= tmp->chans)
 	    {
-#if DEBUGGING_TEMPS
-	      fprintf(stderr,"redundant temp %s grows to %d chans\n", filename, cur_chan + 1);
-#endif
 	      tmp->ticks = (int *)REALLOC(tmp->ticks, (cur_chan + 1) * sizeof(int));
 	      for (j = tmp->chans; j < cur_chan + 1; j++) tmp->ticks[j] = 0;
 	      tmp->chans = cur_chan + 1;
@@ -723,32 +717,20 @@ static void forget_temp(char *filename, int chan)
 {
   int i, j, happy = 0;
   tempfile_ctr *tmp;
-#if DEBUGGING_TEMPS
-  fprintf(stderr,"  forget %s chan %d (%d)\n", filename, chan, tempfiles_size);
-#endif
   for (i = 0; i < tempfiles_size; i++)
     {
       tmp = tempfiles[i];
       if ((tmp) && (strcmp(filename, tmp->name) == 0))
 	{
 	  tmp->ticks[chan]--;
-#if DEBUGGING_TEMPS
-	  fprintf(stderr,"tick: %d (%d chans)\n",tmp->ticks[chan], tmp->chans);
-#endif
 	  for (j = 0; j < tmp->chans; j++)
 	    if (tmp->ticks[j] > 0) 
 	      {
-#if DEBUGGING_TEMPS
-		fprintf(stderr,"   don't delete: chan %d = %d\n",j,tmp->ticks[j]);
-#endif
 		happy = 1;
 		return;
 	      }
 	  if (happy == 0)
 	    {
-#if DEBUGGING_TEMPS
-	      fprintf(stderr,"    remove %s\n",tmp->name);
-#endif
 	      snd_remove(tmp->name);
 	      FREE(tmp->name);
 	      FREE(tmp->ticks);
@@ -770,9 +752,6 @@ static void tick_temp(char *filename, int chan)
       if ((tmp) && (strcmp(filename, tmp->name) == 0))
 	{
 	  tmp->ticks[chan]++;
-#if DEBUGGING_TEMPS
-	  fprintf(stderr,"tick %s chan %d to %d\n",filename,chan,tmp->ticks[chan]);
-#endif
 	  return;
 	}
     }
@@ -782,19 +761,11 @@ void forget_temps(void)
 {
   int i;
   tempfile_ctr *tmp;
-#if DEBUGGING_TEMPS
-  fprintf(stderr,"trying to forget...\n");
-#endif
   for (i = 0; i < tempfiles_size; i++)
     {
       tmp = tempfiles[i];
       if (tmp) 
-	{
-#if DEBUGGING_TEMPS
-	  fprintf(stderr,"   forgetting %s\n",tmp->name);
-#endif
 	snd_remove(tmp->name);
-	}
     }
 }
 

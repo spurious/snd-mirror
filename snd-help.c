@@ -268,7 +268,7 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
-13-Jun:  file-sort-procedure (for View:Files dialog).\n\
+13-Jun:  previous-files-sort-procedure (for View:Files dialog).\n\
 12-Jun:  x-axis-style can be channel-local.\n\
 7-June:  added Reset button to envelope editor (to return to initial state).\n\
          yes-or-no-p -> yes-or-no?\n\

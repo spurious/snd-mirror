@@ -364,26 +364,14 @@ static sound_file *check_write_date(const char *name, sound_file *sf)
   return(NULL);
 }
 
-#if DEBUGGING
-static int sf_seeks = 0, sf_table_scans = 0;
-void report_sound_stats(int *vals);
-void report_sound_stats(int *vals) {vals[0] = sf_seeks; vals[1] = sf_table_scans;}
-#endif
-
 static sound_file *find_sound_file(const char *name)
 {
   int i;
-#if DEBUGGING
-  sf_seeks++;
-#endif
   /* perhaps we already have the needed data... */
   if ((previous_sf) &&
       (strcmp(previous_sf->file_name, name) == 0) &&
       (previous_sf->write_date == local_file_write_date(name)))
     return(previous_sf);
-#if DEBUGGING
-  sf_table_scans++;
-#endif
   if (name)
     for (i = 0; i < sound_table_size; i++)
       if ((sound_table[i]) &&

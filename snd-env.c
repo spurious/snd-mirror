@@ -108,7 +108,7 @@ static void add_point (env *e, int pos, Float x, Float y)
   e->data[pos * 2] = x;
   e->data[pos * 2 + 1] = y;
 #if DEBUGGING
-      if ((pos * 2 + 1) >= e->data_size) abort();
+  if ((pos * 2 + 1) >= e->data_size) abort();
 #endif
 
   e->pts++;
@@ -119,7 +119,7 @@ void move_point (env *e, int pos, Float x, Float y)
   e->data[pos * 2] = x;
   e->data[pos * 2 + 1] = y;
 #if DEBUGGING
-      if ((pos * 2 + 1) >= e->data_size) abort();
+  if ((pos * 2 + 1) >= e->data_size) abort();
 #endif
 
 }

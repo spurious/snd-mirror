@@ -64,14 +64,19 @@
 (define file-info
   (lambda (file)
     "(file-info file) -> description (as a string) of file"
-    (format #f "~A:  ~%  chans: ~D, srate: ~D, ~A, ~A, len: ~1,3F~%  written: ~A~A~A"
+    (format #f "~A:  ~%  chans: ~D, srate: ~D, len: ~A~%  ~A ~A~A~%  written: ~A~A~A"
 	    file
 	    (mus-sound-chans file)
 	    (mus-sound-srate file)
+	    (let ((den (* (mus-sound-chans file) (mus-sound-srate file))))
+	      (if (> den 0)
+		  (format #f "~1,3F" (/ (mus-sound-samples file) den))
+		  "unknown"))
 	    (mus-header-type-name (mus-sound-header-type file))
 	    (mus-data-format-name (mus-sound-data-format file))
-	    (/ (mus-sound-samples file)
-	       (* (mus-sound-chans file) (mus-sound-srate file)))
+	    (if (mus-sound-max-amp-exists? file)
+		(format #f "~%  maxamp: ~A" (mus-sound-max-amp file))
+		"")
 	    (strftime "%d-%b %H:%M %Z" (localtime (mus-sound-write-date file)))
 	    (let ((comment (mus-sound-comment file)))
 	      (if (and (string? comment)

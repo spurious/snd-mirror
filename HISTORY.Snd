@@ -1,6 +1,6 @@
 snd change log
 
-  13-Jun:    file-sort-procedure (for View:Files dialog).
+  13-Jun:    previous-files-sort-procedure (for View:Files dialog).
   12-Jun:    x-axis-style can be channel-local.
   7-June:    added Reset button to envelope editor (to return to initial state).
 	     yes-or-no-p -> yes-or-no?
@@ -83,6 +83,7 @@ snd change log
 	     call-apply renamed apply-controls.
 	     prompt-in-minibuffer callback func now takes only the response arg (no longer the snd index).
   23-May:    OSS fragment defaults changed -- see extsnd.html or HISTORY.sndlib.
+   	         old default was (set-oss-buffers 4 12) but 2 12 is usable in most cases.
              fft-smoother added to examp.scm.
              smooth renamed smooth-sound.
   22-May:    widget-text (mainly for auto-testing).

@@ -1865,7 +1865,7 @@ and (start-gl).
 
 <span class=bbox><h3><A NAME="sndandgdb">Snd and gdb</a></h3></span>
 
-<p>Here are a couple gdb functions (for your ~/.gbdinit file) that might
+<p>Here are some gdb functions (for your ~/.gbdinit file) that might
 come in handy:
 </p>
 <pre>
@@ -1885,6 +1885,15 @@ print gdb_output
 end
 document ge
 Executes (print (eval (read arg))): ge "(+ 1 2)" =&gt; 3
+end
+
+define gh
+call g_help(scm_str2symbol($arg0), 20)
+call gdb_print($1)
+print gdb_output
+end
+document gh
+Prints help string for arg: gh "enved-target"
 end
 </pre>
 <p>SCM values are displayed as integers in gdb, so, for example, say
@@ -1907,7 +1916,15 @@ If you have a pointer to a CLM generator, you can use:
 p mus_describe(arg)  --  show the user-view of arg
 p mus_inspect(arg)  --  show every internal field of arg
 </pre>
-<!-- TODO: help text given name, value given name -->
+<p>The ge function can show current Snd state:</p>
+<pre>
+(gdb) ge "(eps-file)"
+$5 = 0
+$6 = 0
+$7 = 0
+$8 = 0x8296cf0 "\"snd.eps\""
+</pre>
+
 <br>
 
 <center>

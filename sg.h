@@ -61,9 +61,15 @@
 #define NOT_BOUND_P(Arg) SCM_UNBNDP(Arg)
 #define INTEGER_ZERO     SCM_INUM0
 
-#define TO_C_DOUBLE(a) scm_num2dbl(a, __FUNCTION__)
+#define TO_C_DOUBLE(a) scm_num2dbl(a,  __FUNCTION__)
 #define TO_C_DOUBLE_WITH_ORIGIN(a, b) scm_num2dbl(a, b)
-#define TO_C_INT(a) ((int)gh_scm2int(a))
+
+#if HAVE_SCM_NUM2INT
+  #define TO_C_INT(a) ((int)scm_num2int(a, 0, __FUNCTION__))
+#else
+  #define TO_C_INT(a) ((int)gh_scm2int(a))
+#endif
+
 #define TO_C_INT_OR_ELSE(a, b) to_c_int_or_else(a, b, __FUNCTION__)
 #define TO_C_INT_OR_ELSE_WITH_ORIGIN(a, b, c) to_c_int_or_else(a, b, c)
 
@@ -102,9 +108,9 @@
 #endif
 
 /* (need a way to pass an uninterpreted pointer from C to SCM then back to C) */
-#define SND_WRAP(a) ((SCM)(gh_ulong2scm((unsigned long)a)))
-#define SND_UNWRAP(a) gh_scm2ulong(a)
-#define SND_WRAPPED(a) gh_number_p(a)
+#define SND_WRAP(a) ((SCM)(TO_SCM_UNSIGNED_LONG((unsigned long)a)))
+#define SND_UNWRAP(a) TO_C_UNSIGNED_LONG(a)
+#define SND_WRAPPED(a) NOT_FALSE_P(scm_number_p(a))
 
 #define HOOKED(a) (NOT_NULL_P(SCM_HOOK_PROCEDURES(a)))
 
@@ -119,26 +125,26 @@
   { \
     int tag; \
     tag = new_time(Name); \
-    gh_eval_str(mus_format("(define " Name " \
-                              (lambda args \
-                                (begin \
-                                  (start-time %d) \
-                                  (let ((res (apply " Name "-t args))) \
-                                    (stop-time %d) \
-                                    res))))", \
-                            tag, tag)); \
+    scm_eval_0str(mus_format("(define " Name " \
+                                (lambda args \
+                                  (begin \
+                                    (start-time %d) \
+                                    (let ((res (apply " Name "-t args))) \
+                                      (stop-time %d) \
+                                      res))))", \
+                              tag, tag)); \
   }
 #else
 /* pound on gc-related bugs! */
 #define DEFINE_PROC(Name, Func, ReqArg, OptArg, RstArg, Doc) \
   gh_new_procedure(Name "-t", SCM_FNC Func, ReqArg, OptArg, RstArg); \
-  gh_eval_str("(define " Name " \
-                 (lambda args \
-                   (let ((res #f)) \
-                     (set-last-proc \"" Name "\" args) \
-                     (set! res (apply " Name "-t args)) \
-                     (gc-1) \
-                     res)))");
+  scm_eval_0str("(define " Name " \
+                   (lambda args \
+                     (let ((res #f)) \
+                       (set-last-proc \"" Name "\" args) \
+                       (set! res (apply " Name "-t args)) \
+                       (gc-1) \
+                       res)))");
 #endif
 #endif
 
@@ -227,14 +233,18 @@ static SCM name_reversed(SCM arg1, SCM arg2, SCM arg3) \
 #else
   #define CHAR_P(Arg)             gh_char_p(Arg)
 #endif
-#define TO_C_CHAR(Arg)            gh_scm2char(Arg)
+#ifdef SCM_CHAR
+  #define TO_C_CHAR(Arg)          SCM_CHAR(Arg)
+#else
+  #define TO_C_CHAR(Arg)          gh_scm2char(Arg)
+#endif
 #define ARITY(Func)               scm_i_procedure_arity(Func)
 #define KEYWORD_P(Obj)            (SCM_KEYWORDP(Obj))
 #define MAKE_KEYWORD(Arg)         scm_c_make_keyword(Arg)
 #define YES_WE_HAVE(Feature)      scm_add_feature(Feature)
 #define DOCUMENTATION             scm_string_to_symbol(TO_SCM_STRING("documentation"))
 #define MAKE_PERMANENT(Obj)       scm_permanent_object(Obj)
-#define LOAD_SCM_FILE(File)       gh_eval_file(File)
+#define LOAD_SCM_FILE(File)       scm_primitive_load(TO_SCM_STRING(File))
 #define MAKE_HOOK(Name, Args, Help) snd_create_hook(Name, Args, Help, local_doc)
 #define MAKE_HELPLESS_HOOK(Args)  scm_make_hook(TO_SMALL_SCM_INT(Args))
 #define CLEAR_HOOK(Arg)           scm_reset_hook_x(Arg)

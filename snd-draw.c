@@ -662,12 +662,30 @@ static SCM g_set_widget_size(SCM wid, SCM wh)
 static SCM g_widget_text(SCM wid)
 {
 #if USE_MOTIF
-  char *text;
+  char *text = NULL;
+  Widget w;
   SCM res = SCM_BOOL_F;
   ASSERT_TYPE(SND_WRAPPED(wid), wid, SCM_ARG1, S_widget_text, "a wrapped object");
-  text = XmTextGetString((GUI_WIDGET)(SND_UNWRAP(wid)));
-  res = TO_SCM_STRING(text);
-  XtFree(text);
+  w = (GUI_WIDGET)(SND_UNWRAP(wid));
+  if ((XmIsText(w)) || (XmIsTextField(w)))
+    {
+      text = XmTextGetString(w);
+      res = TO_SCM_STRING(text);
+      XtFree(text);
+    }
+  else
+    {
+      XmString s1;
+      XtVaGetValues(w, XmNlabelString, &s1, NULL);
+      XmStringGetLtoR(s1, XmFONTLIST_DEFAULT_TAG, &text);
+      if (text == NULL)
+	{
+	  XmStringGetLtoR(s1, "button_font", &text);
+	  if (text == NULL)
+	    XmStringGetLtoR(s1, "bold_button_font", &text);
+	}
+      res = TO_SCM_STRING(text);
+    }
   return(res);
 #else
   ASSERT_TYPE(SND_WRAPPED(wid), wid, SCM_ARG1, S_widget_text, "a wrapped object");
@@ -754,10 +772,6 @@ void g_init_draw(SCM local_doc)
   dialog_widgets = SCM_UNDEFINED;
 
   /* ---------------- stable? ---------------- */
-
-  DEFINE_VAR(S_time_graph,           TIME_AXIS_INFO,      "time domain graph");
-  DEFINE_VAR(S_transform_graph,      TRANSFORM_AXIS_INFO, "frequency domain graph");
-  DEFINE_VAR(S_lisp_graph,           LISP_AXIS_INFO,      "lisp graph");
 
   DEFINE_VAR(S_copy_context,         CHAN_GC,        "graphics context to draw a line");
   DEFINE_VAR(S_cursor_context,       CHAN_CGC,       "graphics context for the cursor");

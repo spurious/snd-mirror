@@ -977,17 +977,6 @@ static int checked_write(int tfd, char *buf, int chars)
 
 /* ---------------- read ---------------- */
 
-#if DEBUGGING
-static int direct_reads = 0, total_reads = 0, direct_writes = 0, total_writes = 0;
-static int beg_indirect = 0, chan_indirect = 0, format_indirect = 0, clipping_indirect = 0, prescaler_indirect = 0;
-void report_io_stats(int *vals);
-void report_io_stats(int *vals) 
-{
-  vals[0] = direct_reads; vals[1] = direct_writes; vals[2] = total_reads; vals[3] = total_writes;
-  vals[5] = beg_indirect; vals[6] = chan_indirect; vals[7] = format_indirect; vals[8] = clipping_indirect; vals[9] = prescaler_indirect; 
-}
-#endif
-
 static int mus_read_any_1(int tfd, int beg, int chans, int nints, MUS_SAMPLE_TYPE **bufs, MUS_SAMPLE_TYPE *cm, char *inbuf)
 {
   int loclim;
@@ -1002,9 +991,6 @@ static int mus_read_any_1(int tfd, int beg, int chans, int nints, MUS_SAMPLE_TYP
   if (inbuf) from_buffer = 1;
   if (!from_buffer)
     {
-#if DEBUGGING
-      total_reads++;
-#endif
       if ((io_fds == NULL) || (tfd >= io_fd_size) || (tfd < 0) || (io_fds[tfd] == NULL))
 	{
 	  mus_error(MUS_FILE_DESCRIPTORS_NOT_INITIALIZED,
@@ -1028,9 +1014,6 @@ static int mus_read_any_1(int tfd, int beg, int chans, int nints, MUS_SAMPLE_TYP
 #endif
 	  )
 	{
-#if DEBUGGING
-	  direct_reads++;
-#endif
 	  bytes = nints * siz;
 	  total = read(tfd, (char *)(bufs[0]), bytes);
 	  if (total != bytes)
@@ -1047,15 +1030,6 @@ static int mus_read_any_1(int tfd, int beg, int chans, int nints, MUS_SAMPLE_TYP
 	    }
 	  return(total / siz);
 	}
-#if DEBUGGING
-      else
-	{
-	  if (beg != 0) beg_indirect++;
-	  if (chans != 1) chan_indirect++;
-	  if (format != MUS_OUT_FORMAT) format_indirect++;
-	  if (fd->prescaler != 1.0) prescaler_indirect++;
-	}
-#endif
 
       prescaling = (float)(fd->prescaler * MUS_FLOAT_TO_SAMPLE(1.0));
       /* not MUS_FLOAT_TO_SAMPLE(fd->prescaler) here because there's a possible cast to int which can overflow */
@@ -1356,9 +1330,6 @@ static int mus_write_1(int tfd, int beg, int end, int chans, MUS_SAMPLE_TYPE **b
   if (inbuf) to_buffer = 1;
   if (!to_buffer)
     {
-#if DEBUGGING
-      total_writes++;
-#endif
       if (tfd == MUS_DAC_REVERB) return(0);
       if ((io_fds == NULL) || (tfd >= io_fd_size) || (tfd < 0) || (io_fds[tfd] == NULL))
 	{
@@ -1382,21 +1353,9 @@ static int mus_write_1(int tfd, int beg, int end, int chans, MUS_SAMPLE_TYPE **b
 
       if ((data_format == MUS_OUT_FORMAT) && (chans == 1) && (clipping == 0) && (beg == 0))
 	{
-#if DEBUGGING
-	  direct_writes++;
-#endif
 	  bytes = (end + 1) * siz;
 	  return(checked_write(tfd, (char *)(bufs[0]), bytes));
 	}
-#if DEBUGGING
-      else
-	{
-	  if (beg != 0) beg_indirect++;
-	  if (chans != 1) chan_indirect++;
-	  if (data_format != MUS_OUT_FORMAT) format_indirect++;
-	  if (clipping) clipping_indirect++;
-	}
-#endif
       charbuf = (char *)CALLOC(BUFLIM, sizeof(char)); 
       if (charbuf == NULL) 
 	{
@@ -1582,19 +1541,12 @@ void reset_io_c(void)
 }
 #endif
 
-#if DEBUGGING
-char *mus_expand_filename_1(char *utok, const char *caller)
-#else
 char *mus_expand_filename(char *utok)
-#endif
 {
   /* fill out under-specified library pathnames etc */
   /* what about "../" and "./" ? these work, but perhaps we should handle them explicitly) */
   char *file_name_buf, *tok;
   int i, j, len;
-#if DEBUGGING
-  set_encloser(caller);
-#endif
   tok = utok;
   if ((tok) && (*tok)) 
     len = strlen(tok); 
@@ -1637,9 +1589,6 @@ char *mus_expand_filename(char *utok)
     }
   else strcpy(file_name_buf, tok);
 #endif
-#if DEBUGGING
-  set_encloser(NULL);
-#endif 
  return(file_name_buf);
 }
 

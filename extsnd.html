@@ -1044,7 +1044,7 @@ when you save a sound via the "save" dialog.</p>
 <!-- -->
 <!-- hankel-jn -->
 <!-- --><tr><td><code><em class=def><a name="hankeljn">hankel-jn</a></em></code></td>
-<!-- --><td>16</td><td>Bessel function to use in Hankel Transform (default 0.0).</td></tr>
+<!-- --><td>0</td><td>Bessel function to use in Hankel Transform.</td></tr>
 <!-- --><tr><td colspan=3></td></tr>
 <!-- -->
 <!-- max-regions -->
@@ -6487,12 +6487,29 @@ And an example that lets us see the result of filtering the waveform:
 <!-- --><tr><td><span class=defbox><code><em class=def><a name="previousfilessort">previous-files-sort</a></em> ()</code></span></td>
 <!-- --><td>Sort choice in files dialog (0=unsorted, 1=name, 2=date, 3=size, 4=entry, 5=user procedure).</td></tr>
 <!-- -->
-<!-- file-sort-procedure -->
+<!-- previous-files-sort-procedure -->
 <!-- -->
-<!-- --><tr><td><span class=defbox><code><em class=def><a name="filessortproc">file-sort-procedure</a></em> ()</code></span></td>
+<!-- --><tr><td valign=top><span class=defbox><code><em class=def><a name="filessortproc">previous-files-sort-procedure</a></em> ()</code></span></td>
 <!-- --><td>Procedure used to sort files in the files dialog.  It takes one argument, the list of files, and
-<!-- -->should return that list, sorted as it pleases.
+<!-- -->should return that list, sorted as it pleases.  For example, the following sorts the list by decreasing max amp:
 <!-- --></td></tr>
+<!-- -->
+<!-- --><tr><td colspan=2 align=center><table border=1 cellpadding=5><tr><td bgcolor="#FCFCF0"><pre>
+(set! (<em class=red>previous-files-sort-procedure</em>)
+  (lambda (lst)
+    (sort lst 
+	  (lambda (a b)
+	    (define (mxall mxcur mxlst)
+	      (if (null? mxlst)
+		  mxcur
+		  (mxall (max mxcur (cadr mxlst)) (cddr mxlst))))
+	    (let ((mxa (<em class=red>mus-sound-max-amp</em> a))
+		  (mxb (<em class=red>mus-sound-max-amp</em> b)))
+	      (or (not mxb)
+		  (and mxa
+		       (&gt; (mxall 0.0 (vector-&gt;list mxa))
+			  (mxall 0.0 (vector-&gt;list mxb))))))))))
+<!-- --></pre></td></tr></table></td></tr>
 <!-- -->
 <!-- edit-header-dialog -->
 <!-- -->

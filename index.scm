@@ -664,6 +664,7 @@
     (list "preload-directory" "extsnd.html#sndpreloaddirectory")
     (list "preload-file" "extsnd.html#sndpreloadfile")
     (list "previous-files-sort" "extsnd.html#previousfilessort")
+    (list "previous-files-sort-procedure" "extsnd.html#filessortproc")
     (list "previous-sample" "extsnd.html#previoussample")
     (list "print-hook" "extsnd.html#printhook")
     (list "print-length" "extsnd.html#printlength")

@@ -2834,7 +2834,7 @@ void g_initialize_gh(snd_state *ss)
   gh_new_procedure("g-gc-hook", SCM_FNC g_gc_hook, 0, 0, 0);
   DEFINE_VAR("g-gc-step", 10, "");
   DEFINE_VAR("g-gc-ctr", 0, "");
-  gh_eval_str("(define (gc-1) (g-gc-hook) (if (> g-gc-step 0) (begin (if (> g-gc-ctr g-gc-step) (begin (set! g-gc-ctr 0) (gc)) (set! g-gc-ctr (1+ g-gc-ctr))))))");
+  scm_eval_0str("(define (gc-1) (g-gc-hook) (if (> g-gc-step 0) (begin (if (> g-gc-ctr g-gc-step) (begin (set! g-gc-ctr 0) (gc)) (set! g-gc-ctr (1+ g-gc-ctr))))))");
   YES_WE_HAVE("gcing");
 #endif
 
@@ -2870,6 +2870,10 @@ void g_initialize_gh(snd_state *ss)
   DEFINE_VAR(S_cursor_update_display, CURSOR_UPDATE_DISPLAY, H_cursor_update_display);
   DEFINE_VAR(S_cursor_no_action,      CURSOR_NO_ACTION,      H_cursor_no_action);
   DEFINE_VAR(S_keyboard_no_action,    KEYBOARD_NO_ACTION,    H_keyboard_no_action);
+
+  DEFINE_VAR(S_time_graph,           TIME_AXIS_INFO,      "time domain graph");
+  DEFINE_VAR(S_transform_graph,      TRANSFORM_AXIS_INFO, "frequency domain graph");
+  DEFINE_VAR(S_lisp_graph,           LISP_AXIS_INFO,      "lisp graph");
 
 
   /* ---------------- VARIABLES ---------------- */

@@ -164,6 +164,7 @@ static void region_resize_Callback(Widget w, XtPointer context, XtPointer info)
 void delete_region_and_update_browser(snd_state *ss, int pos)
 {
   int act;
+  unhighlight_region(ss);
   act = remove_region_from_stack(pos);
   if (act == INVALID_REGION) return;
   if (region_dialog)
@@ -175,10 +176,7 @@ void delete_region_and_update_browser(snd_state *ss, int pos)
 	  goto_window(region_rows[0]->nm);
 	}
       else 
-	{
-	  unhighlight_region(ss);
-	  current_region = -1;
-	}
+	current_region = -1;
       update_region_browser(ss, 1);
     }
 }

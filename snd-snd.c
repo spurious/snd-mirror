@@ -2708,7 +2708,8 @@ static SCM g_sound_widgets(SCM snd)
 	     CONS(SND_WRAP(w_snd_play(sp)),
 	      CONS(SND_WRAP(w_snd_filter_env(sp)), /* this is the drawingarea widget */
 	       CONS(SND_WRAP(w_snd_combine(sp)),
-	        SCM_EOL))))))));
+		 CONS(SND_WRAP(w_snd_minibuffer_label(sp)),
+	           SCM_EOL)))))))));
 }
 #endif
 

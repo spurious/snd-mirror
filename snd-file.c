@@ -1431,7 +1431,7 @@ void make_prevfiles_list_1(snd_state *ss)
 	  if (PROCEDURE_P(ss->file_sort_proc))
 	    {
 	      SCM file_list;
-	      int j, pos;
+	      int j;
 	      char *name;
 	      file_list = SCM_EOL;
 	      for (i = prevfile_end; i >= 0; i--) 
@@ -1468,15 +1468,15 @@ void make_prevfiles_list_1(snd_state *ss)
     }
 }
 
-static SCM g_file_sort_procedure(void)
+static SCM g_previous_files_sort_procedure(void)
 {
-  #define H_file_sort_procedure "(" S_file_sort_procedure ") -> file sort procedure for the current files viewer"
+  #define H_previous_files_sort_procedure "(" S_previous_files_sort_procedure ") -> file sort procedure for the current files viewer"
   snd_state *ss;
   ss = get_global_state();
   return(ss->file_sort_proc);
 }
 
-static SCM g_set_file_sort_procedure(SCM proc)
+static SCM g_set_previous_files_sort_procedure(SCM proc)
 {
   snd_state *ss;
   char *error = NULL;
@@ -1497,7 +1497,7 @@ static SCM g_set_file_sort_procedure(SCM proc)
       set_file_sort_sensitive(FALSE);
       errstr = TO_SCM_STRING(error);
       FREE(error);
-      return(snd_bad_arity_error("set-" S_file_sort_procedure, errstr, proc));
+      return(snd_bad_arity_error("set-" S_previous_files_sort_procedure, errstr, proc));
     }
   return(proc);
 }
@@ -2271,6 +2271,6 @@ be omitted (location defaults to 0, and length defaults to the file length in by
 
   open_raw_sound_hook = MAKE_HOOK(S_open_raw_sound_hook, 2, H_open_raw_sound_hook);    /* args = filename current-result */
 
-  define_procedure_with_setter(S_file_sort_procedure, SCM_FNC g_file_sort_procedure, H_file_sort_procedure,
-			       "set-" S_file_sort_procedure, SCM_FNC g_set_file_sort_procedure, local_doc, 0, 0, 1, 0);
+  define_procedure_with_setter(S_previous_files_sort_procedure, SCM_FNC g_previous_files_sort_procedure, H_previous_files_sort_procedure,
+			       "set-" S_previous_files_sort_procedure, SCM_FNC g_set_previous_files_sort_procedure, local_doc, 0, 0, 1, 0);
 }

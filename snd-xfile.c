@@ -1,7 +1,6 @@
 #include "snd.h"
 
-/* TODO: bottom-lit spectrogram 
- */
+/* TODO: user-defined sort proc for file dialog(s)? */
 
 /* most the dialogs present a view of the various file header possibilities */
 

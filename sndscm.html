@@ -478,6 +478,7 @@ between these examples, other .scm files, and discussions in other documents.
     <li>lisp graph with draggable x axis
     <li>pointer-focus
     <li>files-popup-buffer
+    <li>Emacs-like C-x b handling
   </ul>
 </small>
 <li><a href="#ssmarks">marks</a>
@@ -885,7 +886,10 @@ echo '\e[41m This is red! \e[0m'
 </pre>
 <p>This is a mouse-enter-label-hook function for the View:Files dialog;
 it hides all sounds but the one the mouse is pointing to in the current files list.
-The "pointer-focus" style of interaction uses similar hooks.
+The "pointer-focus" style of interaction uses similar hooks.  There is also
+a first stab at Emacs-like C-x b support here; the file name in the prompt
+should be a string (i.e. in quotes), unlike Emacs.  This still needs work
+especially for multichannel sounds.
 </p>
 
 

@@ -778,17 +778,24 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, int with_meta)
 	  if (str) free(str);
 	  return;
 	}
-      if (sp->prompting)
-	{
-	  proc = snd_catch_any(eval_str_wrapper, str, str);
-	  snd_protect(proc);
-	  if (PROCEDURE_P(sp->prompt_callback))
-	    CALL1(sp->prompt_callback, proc, "prompt callback func");
-	  snd_unprotect(proc);
-	  if (str) free(str);
-	  sp->prompting = 0;
-	  return;
-	}
+    }
+  /* strlen can be 0 here if <cr> response to prompt */
+  if (sp->prompting)
+    {
+      if (snd_strlen(str) > 0)
+	proc = snd_catch_any(eval_str_wrapper, str, str);
+      else proc = TO_SCM_STRING("");
+      snd_protect(proc);
+      if (PROCEDURE_P(sp->prompt_callback))
+	CALL1(sp->prompt_callback, proc, "prompt callback func");
+      snd_unprotect(proc);
+      if (str) free(str);
+      sp->prompting = 0;
+      clear_minibuffer(sp);
+      return;
+    }
+  if (snd_strlen(str) > 0)
+    {
       snd_eval_str(ss, str);
       sp->reging = 0;
     }
@@ -947,12 +954,14 @@ static char *key_to_name(int keysym) {if (keysym) return(KEY_TO_NAME(keysym)); e
 static int number_ctr = 0;
 static int dot_seen = 0;
 static int counting = 0;
+static int extended_mode = 0;
 
 static void c_g(snd_state *ss, snd_info *sp)
 {
   number_ctr = 0; 
   counting = 0; 
   dot_seen = 0; 
+  extended_mode = 0;
   deactivate_selection();
   defining_macro = 0;
   if ((ss->checking_explicitly) || (play_in_progress())) ss->stopped_explicitly = 1; 
@@ -971,7 +980,6 @@ int keyboard_command (chan_info *cp, int keysym, int state)
   /* keysym has Shift taken into account already (see snd-xchn.c XKeycodeToKeysym, and same snd-xsnd.c) */
   static int u_count = 0;
   static char number_buffer[NUMBER_BUFFER_SIZE];
-  static int extended_mode = 0;
   static int count = 1, got_count = 0;
   static int m = 0;
   int redisplay, searching, cursor_searching, hashloc, loc, sync_num, i;
@@ -1033,7 +1041,10 @@ int keyboard_command (chan_info *cp, int keysym, int state)
     }
   hashloc = in_user_keymap(keysym, state, extended_mode);
   if (hashloc != -1)                       /* found user-defined key */
-    return(call_user_keymap(hashloc, count));
+    {
+      extended_mode = 0;
+      return(call_user_keymap(hashloc, count));
+    }
   if (sp->minibuffer_temp) clear_minibuffer(sp);
 
   if (state & snd_ControlMask)
@@ -1676,6 +1687,7 @@ int keyboard_command (chan_info *cp, int keysym, int state)
 	      searching = 1; 
 	      break;
 	    case snd_K_K: case snd_K_k: 
+	      /* TODO: shouldn't C-x k prompt for confirmation of kill? */
 	      snd_close_file(sp, ss); 
 	      redisplay = CURSOR_NO_ACTION; 
 	      break;

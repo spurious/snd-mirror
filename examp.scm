@@ -3098,8 +3098,100 @@
 
 ;(add-hook! mouse-enter-label-hook files-popup-buffer)
 
-;;; TODO: add C-x b support here using select-sound-hook
 
+;; -------- C-x b support along the same lines 
+
+(define last-buffer #f)
+(define current-buffer #f)
+(define last-width 0)
+(define last-height 0)
+
+(define (open-current-buffer width height)
+  (set! last-width width)
+  (set! last-height height)
+  (show-widget (car (sound-widgets (car current-buffer))))
+  (set! (widget-size (car (sound-widgets (car current-buffer))))
+	(list width height))
+  (select-sound (car current-buffer))
+  (select-channel (cadr current-buffer)))
+
+(define (close-all-buffers)
+  (for-each 
+   (lambda (n)
+     (hide-widget (car (sound-widgets n))))
+   (sounds)))
+
+(define (switch-to-buf)
+  (prompt-in-minibuffer 
+   (if last-buffer
+       (if (> (cadr last-buffer) 0)
+	   (format #f "switch to buf: (default \"~A\" chan ~A) " 
+		   (short-file-name (car last-buffer))
+		   (cadr last-buffer))
+	   (format #f "switch to buf: (default \"~A\") " 
+		   (short-file-name (car last-buffer))))
+       "switch to buf: (default: make new sound)")
+   (lambda (response)
+     (let* ((width (car (widget-size (car (sound-widgets (car current-buffer))))))
+	    (height (cadr (widget-size (car (sound-widgets (car current-buffer)))))))
+       (call-with-current-continuation
+	(lambda (give-up)
+	  (if (or (not (string? response))
+		  (= (string-length response) 0))
+	      (let ((temp current-buffer))
+		(if last-buffer
+		    (set! current-buffer last-buffer)
+		    (let ((index (new-sound)))
+		      (set! current-buffer (list index 0))))
+		(set! last-buffer temp))
+	      (let ((index (find-sound response)))
+		(if index
+		    (begin
+		      (set! last-buffer current-buffer)
+		      (set! current-buffer (list index 0)))
+		    (give-up (report-in-minibuffer (format #f "can't find ~A" response))))))
+	  (close-all-buffers)
+	  (report-in-minibuffer "")
+	  (open-current-buffer width height)))))))
+
+(add-hook! close-hook 
+  (lambda (snd) 
+    (if (and current-buffer
+	     (= snd (car current-buffer)))
+	(let ((closer (car current-buffer)))
+	  (close-all-buffers)
+	  (if last-buffer
+	      (set! current-buffer last-buffer)
+	      (if (sounds)
+		  (set! current-buffer (list (car (sounds)) 0))
+		  (set! current-buffer #f)))
+	  (set! last-buffer
+		(call-with-current-continuation
+		 (lambda (return)
+		   (for-each
+		    (lambda (n)
+		      (if (and (not (= n closer))
+			       (or (not current-buffer)
+				   (not (= n (car current-buffer)))))
+			  (return (list n 0))))
+		    (sounds))
+		   #f)))
+	  (if current-buffer
+	      (open-current-buffer last-width last-height))))
+    #f))
+
+(add-hook! after-open-hook
+  (lambda (snd)
+    (close-all-buffers)
+    (set! last-buffer current-buffer)
+    (set! current-buffer (list snd 0))
+    (open-current-buffer (if (= last-width 0) (window-width) last-width)
+			 (if (= last-height 0) (- (window-height) 10) last-height))
+    #f))
+
+(bind-key (char->integer #\b) 0 switch-to-buf #t)
+
+	    
 
 ;;; -------- "vector synthesis"
 ;;;

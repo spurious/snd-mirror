@@ -496,25 +496,7 @@ static const char *any_data_format_name(int sndlib_format)
 					      mus_header_type()));
 }
 
-#if DEBUGGING
-/* some counters for my own amusement */
-static int header_writes = 0, header_reads = 0, header_updates = 0, header_seeks = 0, zero_chunks = 0, header_size_seeks = 0;
-static long SEEK_FILE_LENGTH(int File) {header_size_seeks++; return(lseek(File, 0L, SEEK_END));}
-void report_header_stats(int *vals);
-void report_header_stats(int *vals)
-{
-  vals[0] = header_writes;
-  vals[1] = header_reads;
-  vals[2] = header_updates;
-  vals[3] = header_seeks;
-  vals[4] = header_size_seeks;
-  vals[5] = zero_chunks;
-}
-
-#else
 #define SEEK_FILE_LENGTH(File) lseek(File, 0L, SEEK_END)
-#endif
-
 static int read_bicsf_header (int chan);
 
 
@@ -821,9 +803,6 @@ static int update_form_size, update_frames_location, update_ssnd_location;
 
 static int seek_and_read(int chan, unsigned char *buf, int offset, int nbytes)
 {
-#if DEBUGGING
-  header_seeks++;
-#endif
   if (offset < 0) return(-1);
   lseek(chan, offset, SEEK_SET);
 #ifndef MACOS
@@ -875,9 +854,6 @@ static int read_aiff_header (int chan, int overall_offset)
 	  return(MUS_ERROR);
 	}
       chunksize = mus_char_to_bint((unsigned char *)(hdrbuf + 4));
-#if DEBUGGING
-      if (chunksize == 0) zero_chunks++;
-#endif
       if (match_four_chars((unsigned char *)hdrbuf, I_COMM))
 	{
 	  chans = mus_char_to_bshort((unsigned char *)(hdrbuf + 8));
@@ -1511,9 +1487,6 @@ static int read_riff_header (int chan)
       if (offset >= true_file_length) break;
       if (seek_and_read(chan, (unsigned char *)hdrbuf, offset, 32) <= 0) break;
       chunksize = big_or_little_endian_int((unsigned char *)(hdrbuf + 4), little);
-#if DEBUGGING
-      if (chunksize == 0) zero_chunks++;
-#endif
       if (match_four_chars((unsigned char *)hdrbuf, I_fmt_))
 	{
 	  /*
@@ -1824,9 +1797,6 @@ static int read_avi_header (int chan)
 	  return(MUS_ERROR);
 	}
       chunksize = mus_char_to_lint((unsigned char *)(hdrbuf + 4));
-#if DEBUGGING
-      if (chunksize == 0) zero_chunks++;
-#endif
       if (match_four_chars((unsigned char *)hdrbuf, I_LIST))
 	{
 	  ckoff = offset + 12;
@@ -1991,9 +1961,6 @@ static int read_soundfont_header (int chan)
 	  return(MUS_ERROR);
 	}
       chunksize = mus_char_to_lint((unsigned char *)(hdrbuf + 4));
-#if DEBUGGING
-      if (chunksize == 0) zero_chunks++;
-#endif
       if (match_four_chars((unsigned char *)hdrbuf, I_LIST))
 	{
 	  /* everything is squirreled away in LIST chunks in this format */
@@ -2324,9 +2291,6 @@ static int read_bicsf_header (int chan)
 	    }
 	  chunkname = mus_char_to_uninterpreted_int((unsigned char *)hdrbuf);
 	  chunksize = mus_char_to_bint((unsigned char *)(hdrbuf + 4));
-#if DEBUGGING
-      if (chunksize == 0) zero_chunks++;
-#endif
 	  if (match_four_chars((unsigned char *)hdrbuf, I_COMM))
 	    {
 	      comment_start = 8 + offset;
@@ -2540,9 +2504,6 @@ static int read_8svx_header (int chan)
 	  return(MUS_ERROR);
 	}
       chunksize = mus_char_to_bint((unsigned char *)(hdrbuf + 4));
-#if DEBUGGING
-      if (chunksize == 0) zero_chunks++;
-#endif
       if (match_four_chars((unsigned char *)hdrbuf, I_CHAN))
 	{
 	  chans = mus_char_to_bint((unsigned char *)(hdrbuf + 8));
@@ -3178,9 +3139,6 @@ static int read_maud_header (int chan)
 	  return(MUS_ERROR);
 	}
       chunksize = mus_char_to_bint((unsigned char *)(hdrbuf + 4));
-#if DEBUGGING
-      if (chunksize == 0) zero_chunks++;
-#endif
       if (match_four_chars((unsigned char *)hdrbuf, I_MHDR))
 	{
 	  data_size = mus_char_to_bint((unsigned char *)(hdrbuf + 8));
@@ -3270,9 +3228,6 @@ static int read_csl_header (int chan)
 	  return(MUS_ERROR);
 	}
       chunksize = mus_char_to_lint((unsigned char *)(hdrbuf + 4));
-#if DEBUGGING
-      if (chunksize == 0) zero_chunks++;
-#endif
       if ((match_four_chars((unsigned char *)hdrbuf, I_HEDR)) || 
 	  (match_four_chars((unsigned char *)hdrbuf, I_HDR8)))
 	{
@@ -4460,7 +4415,6 @@ static int mus_header_read_with_fd_and_name(int chan, const char *filename)
   /* returns 0 on success (at least to the extent that we can report the header type), -1 for error */
   int i, happy, loc = 0, bytes;
 #if DEBUGGING
-  header_reads++;
   data_size = -1234;
   data_location = -1234;
   srate = -1234;
@@ -4981,9 +4935,6 @@ static int mus_header_write_with_fd_and_name(int chan, int type, int in_srate, i
 					     int len, const char *filename)
 {
   off_t siz;
-#if DEBUGGING
-  header_writes++;
-#endif
   siz = mus_long_samples_to_bytes(format, size);
   switch (type)
     {
@@ -5047,9 +4998,6 @@ int mus_header_write (const char *name, int type, int in_srate, int in_chans, in
 int mus_header_update_with_fd(int chan, int type, int size)
 {
   /* size here is in bytes! */
-#if DEBUGGING
-  header_updates++;
-#endif
   lseek(chan, 0L, SEEK_SET);
   switch (type)
     {

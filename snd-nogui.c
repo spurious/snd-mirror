@@ -200,6 +200,7 @@ int w_snd_name(snd_info *sp) {return(0);}
 int w_snd_play(snd_info *sp) {return(0);}
 int w_snd_filter_env(snd_info *sp) {return(0);}
 int w_snd_minibuffer(snd_info *sp) {return(0);}
+int w_snd_minibuffer_label(snd_info *sp) {return(0);}
 void make_minibuffer_label(snd_info *sp, char *str) {}
 void goto_minibuffer(snd_info *sp) {}
 void set_minibuffer_string(snd_info *sp, char *str) {fprintf(stderr, "%s", str);}
@@ -505,7 +506,8 @@ void snd_doit(snd_state *ss, int argc, char **argv)
 #endif
 
 #if HAVE_GUILE
-  gh_repl(1, argv); /* not argc because scm_shell tries to interpret all args! */
+  /* gh_repl(1, argv); */ 
+  scm_shell(1, argv);  /* not argc because scm_shell tries to interpret all args! */
 #endif
 #if HAVE_LIBREP
   rep_top_level_recursive_edit();
