@@ -139,18 +139,17 @@ static void cp_set_selection_len(chan_info *cp, off_t len)
   ed->selection_maxamp = -1.0;
 }
 
-static int selection_chans_1(chan_info *cp, void *count)
+static void selection_chans_1(chan_info *cp, void *count)
 {
   int *counter = (int *)count;
   if (cp_has_selection(cp, NULL)) counter[0]++;
-  return(0);
 }
 
 int selection_chans(void)
 {
   int count[1];
   count[0] = 0;
-  map_over_chans(get_global_state(), selection_chans_1, (void *)count);
+  for_each_chan_1(get_global_state(), selection_chans_1, (void *)count);
   return(count[0]);
 }
 
@@ -184,7 +183,7 @@ Float selection_maxamp(chan_info *cp)
   return(val);
 }
 
-static int cp_delete_selection(chan_info *cp, void *origin)
+static void cp_delete_selection(chan_info *cp, void *origin)
 {
   ed_list *ed;
   ed = cp->edits[cp->edit_ctr];
@@ -194,7 +193,6 @@ static int cp_delete_selection(chan_info *cp, void *origin)
       ed = cp->edits[cp->edit_ctr];
       ed->selection_beg = NO_SELECTION;
     }
-  return(0);
 }
 
 int delete_selection(const char *origin, int regraph)
@@ -203,7 +201,7 @@ int delete_selection(const char *origin, int regraph)
   if (selection_is_active())
     {
       ss = get_global_state();
-      map_over_chans(ss, cp_delete_selection, (void *)origin);
+      for_each_chan_1(ss, cp_delete_selection, (void *)origin);
       if (regraph == UPDATE_DISPLAY) for_each_chan(ss, update_graph);
       reflect_edit_without_selection_in_menu();
       return(1);
@@ -297,7 +295,7 @@ void ripple_selection(ed_list *ed, off_t beg, off_t num)
     }
 }
 
-static int next_selection_chan(chan_info *cp, void *sidata)
+static void next_selection_chan(chan_info *cp, void *sidata)
 {
   sync_info *si = (sync_info *)sidata;
   int chan;
@@ -308,7 +306,6 @@ static int next_selection_chan(chan_info *cp, void *sidata)
       si->begs[chan] = selection_beg(cp);
       si->cps[chan] = cp;
     }
-  return(0);
 }
 
 sync_info *selection_sync(void)
@@ -320,7 +317,7 @@ sync_info *selection_sync(void)
   si->cps = (chan_info **)CALLOC(si->chans, sizeof(chan_info *));
   si->begs = (off_t *)CALLOC(si->chans, sizeof(off_t));
   si->chans = 0;
-  map_over_chans(get_global_state(), next_selection_chan, (void *)si);
+  for_each_chan_1(get_global_state(), next_selection_chan, (void *)si);
   return(si);
 }
 
@@ -442,7 +439,7 @@ void finish_selection_creation(void)
     }
 }
 
-static int cp_redraw_selection(chan_info *cp, void *with_fft)
+static void cp_redraw_selection(chan_info *cp, void *with_fft)
 {
   Locus x0, x1;
   off_t beg, end;
@@ -482,13 +479,12 @@ static int cp_redraw_selection(chan_info *cp, void *with_fft)
       if (show_selection_transform(ss)) 
 	calculate_fft(cp);
     }
-  return(0);
 }
 
 static void redraw_selection(void)
 {
   /* selection transform while synced redraw */
-  map_over_chans(get_global_state(), cp_redraw_selection, (void *)1);
+  for_each_chan_1(get_global_state(), cp_redraw_selection, (void *)1);
 }
 
 void display_selection(chan_info *cp)

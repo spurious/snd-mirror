@@ -3975,7 +3975,7 @@ the direction argument between the channel and edit-position:
 <!-- --><i>snd</i>'s data format (e.g. mus-bshort).  <br><br>If you encounter a file
 <!-- -->with an unknown format, or a header that has the wrong format, 
 <!-- -->you can set this field forcing Snd to interpret the data in any 
-<!-- -->form you like.  Similar remarks apply to the srate, data-location,
+<!-- -->way you like.  Similar remarks apply to the srate, data-location,
 <!-- -->header-type, and channels fields.  There are ambiguities in some header
 <!-- -->specifications, usually involving big/little endian or signed/unsigned data confusion.
 <!-- -->If you encounter a sound that is clipping crazily, try changing these settings.
@@ -4401,7 +4401,7 @@ the direction argument between the channel and edit-position:
 <!-- -->and can handle any data format that Snd can write (whereas each of the others is restricted in this regard).
 <!-- -->The writable header types are mus-next (also named mus-sun), mus-nist (NIST Sphere), mus-aiff (rarely needed), mus-aifc, mus-riff (MS wave),
 <!-- -->mus-ircam, and mus-raw (no header -- it's up to you to remember what's in the file).  For descriptions of the headers,
-<!-- -->see headers.c; for examples, see sf.tar.gz and ccrma-ftp.
+<!-- -->see headers.c; for examples, see sf.tar.gz at ccrma-ftp.
 <!-- --><br><br>
 <!-- -->To read or write your own headers (or some header that isn't built-in),
 <!-- -->I'd recommend using either <a href="#openhook">open-hook</a> or <a href="#openrawsoundhook">open-raw-sound-hook</a>:
@@ -4419,7 +4419,9 @@ the direction argument between the channel and edit-position:
 <!-- --><span class=defbox><code><em class=def><a name="sndinsertsilence">insert-silence</a></em> (beg num <i>snd chn</i>)</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
-<!-- -->insert num zeros at beg in <i>snd</i>'s channel <i>chn</i>. <a href="#padchannel">pad-channel</a> is the regularized version. 
+<!-- -->insert num zeros at beg in <i>snd</i>'s channel <i>chn</i>. <a href="#padchannel">pad-channel</a> is the regularized version,
+<!-- -->with one small change: insert-silence forces <i>beg</i> to be within the current sound, but pad-channel pads out to <i>beg</i> if
+<!-- --><i>beg</i> is past the end of the sound.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -5678,7 +5680,9 @@ the direction argument between the channel and edit-position:
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
 <!-- -->list of currently active sounds (id numbers).
-<!-- -->A common Snd trope is (map func (sounds)): <code>(map maxamp (sounds))</code>.  This can be
+<!-- -->A common Snd trope is (map func (sounds)): <code>(map maxamp (<em class=red>sounds</em>))</code>.  Or, if
+the return value is not needed: <code>(for-each (lambda (snd) (display (short-file-name snd))) (<em class=red>sounds</em>))</code>.
+This can be
 <!-- -->extended to provide a complete list of sounds and channels (since many Snd functions
 <!-- -->take the "snd chn" arguments:
 <!-- --></td></tr>
@@ -6611,12 +6615,14 @@ The control panel procedures are:
 <br>
 <span class=cbox><h3><A NAME="editlists">Edit Lists</a></h3></span>
 
-<p>An edit list describes the edit history of a channel.  When, for example, you type C-d, nothing actually
+<p>An edit list (in other editors this is called an "edit decision list", I guess because it sounds decisive)
+describes the edit history of a channel. When, for example, you type C-d, nothing actually
 happens to any data, despite the fact that the graph no longer shows that sample, it's omitted when you play the
 channel, and so on.  What actually happens is that a descriptor is appended to the edit history of that
 channel saying "sample n was deleted".  Undo and redo move around in this list (they simply move the
 pointer to the current edit history position); all the positions are accessible just like the current
-one, and are exposed in many functions described above as the <i>pos</i> argument. The edit list functions are:</p>
+one, and are exposed in many functions described above as the <i>pos</i> argument.
+The edit list functions are:</p>
 
 <!-- -------------------------------- EDIT-LIST TABLE -------------------------------- -->
 <!-- -->
@@ -6751,7 +6757,7 @@ one, and are exposed in many functions described above as the <i>pos</i> argumen
 <!-- -->Returns #t if successful (file opened ok); if something went wrong 
 <!-- -->[<em class=error>cannot-save</em>].  The following function makes an
 <!-- -->exact copy of the state (edit lists and all) of the given sound,
-<!-- -->providing a way to "fork" an edit path (geez, what jargon!  The idea here
+<!-- -->providing a way to "fork" an edit path (geez, what jargon!).  The idea here
 <!-- -->is to copy the complete edit state into a new sound so that two or more
 <!-- -->edit sequences can be compared).
 <!-- --></td></tr>
@@ -6842,7 +6848,7 @@ the edit list.  This means that ideally such operations are instantaneous
 and take no disk space no matter how large the sound being edited
 (in other cases we have to save at least the changed portion of the
 sound).  <a href="#ptreechannel">ptree-channel</a> (still in the experimental stages) extends this part of Snd to 
-(almost) arbitrary functions.
+(almost) arbitrary functions. 
 </p>
 
 

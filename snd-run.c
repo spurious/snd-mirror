@@ -7254,38 +7254,11 @@ static xen_value *walk(ptree *prog, XEN form, int need_result)
 	}
       /* no string args from here on (except 0-arg (string)) */
 
-      if (strcmp(funcname, "polynomial") == 0) return(clean_up(polynomial_1(prog, args, num_args), args, num_args));
-      if (strcmp(funcname, "mus-fft") == 0) return(clean_up(mus_fft_1(prog, args, num_args), args, num_args));
-      if (strcmp(funcname, "array-interp") == 0) return(clean_up(array_interp_1(prog, args, num_args), args, num_args));
-      if (strcmp(funcname, "clear-array") == 0) return(clean_up(clear_array_1(prog, args, num_args), args, num_args));
-      if (strcmp(funcname, "contrast-enhancement") == 0) return(clean_up(contrast_enhancement_1(prog, args, num_args), args, num_args));
-      if (strcmp(funcname, "ring-modulate") == 0) return(clean_up(ring_modulate_1(prog, args, num_args), args, num_args));
-      if (strcmp(funcname, "amplitude-modulate") == 0) return(clean_up(amplitude_modulate_1(prog, args, num_args), args, num_args));
-      if (strcmp(funcname, "convolution") == 0) return(clean_up(convolution_1(prog, args, num_args), args, num_args));
-      if (strcmp(funcname, "multiply-arrays") == 0) return(clean_up(multiply_arrays_1(prog, args, num_args), args, num_args));
-      if (strcmp(funcname, "rectangular->polar") == 0) return(clean_up(rectangular2polar_1(prog, args, num_args), args, num_args));
-      if (strcmp(funcname, "polar->rectangular") == 0) return(clean_up(polar2rectangular_1(prog, args, num_args), args, num_args));
-      if (strcmp(funcname, "sum-of-sines") == 0) return(clean_up(sum_of_sines_1(prog, args, num_args), args, num_args));
-      if (strcmp(funcname, "dot-product") == 0) return(clean_up(dot_product_1(prog, args, num_args), args, num_args));
-      if (strcmp(funcname, "formant-bank") == 0) return(clean_up(formant_bank_1(prog, args, num_args), args, num_args));
-      if (strcmp(funcname, "frame+") == 0) return(clean_up(mus_frame_add_1(prog, args, num_args), args, num_args));
-      if (strcmp(funcname, "frame*") == 0) return(clean_up(mus_frame_multiply_1(prog, args, num_args), args, num_args));
-      if (strcmp(funcname, "frame->frame") == 0) return(clean_up(mus_frame2frame_1(prog, args, num_args), args, num_args));
-      if (strcmp(funcname, "frame->sample") == 0) return(clean_up(frame2sample_1(prog, args, num_args), args, num_args));
-      if (strcmp(funcname, "frame->buffer") == 0) return(clean_up(frame2buffer_1(prog, args, num_args), args, num_args));
-      if (strcmp(funcname, "buffer->frame") == 0) return(clean_up(buffer2frame_1(prog, args, num_args), args, num_args));
-      if (strcmp(funcname, "mixer*") == 0) return(clean_up(mus_mixer_multiply_1(prog, args, num_args), args, num_args));
-      if (strcmp(funcname, "mus-srate") == 0) return(clean_up(mus_srate_1(prog, args, num_args), args, num_args));
-      if (strcmp(funcname, "sample->frame") == 0) return(clean_up(sample2frame_1(prog, args, num_args), args, num_args));
-      if (strcmp(funcname, "frame->file") == 0) return(clean_up(frame2file_1(prog, args, num_args), args, num_args));
-      if (strcmp(funcname, "file->frame") == 0) return(clean_up(file2frame_1(prog, args, num_args), args, num_args));
-      if (strcmp(funcname, "locsig") == 0) return(clean_up(locsig_1(prog, args, num_args), args, num_args));
-      if (strcmp(funcname, "spectrum") == 0) return(clean_up(mus_spectrum_1(prog, args, num_args), args, num_args));
-
       if ((clms == 1) || (booleans == 1))
 	/* boolean for gen that is null in the current context */
 	{
 	  if (strcmp(funcname, "oscil") == 0) return(clean_up(oscil_1(prog, args, num_args), args, num_args));
+	  if (strcmp(funcname, "env") == 0) return(clean_up(env_1(prog, args, num_args), args, num_args));
 	  if (strcmp(funcname, "notch") == 0) return(clean_up(notch_1(prog, args, num_args), args, num_args));
 	  if (strcmp(funcname, "comb") == 0) return(clean_up(comb_1(prog, args, num_args), args, num_args));
 	  if (strcmp(funcname, "delay") == 0) return(clean_up(delay_1(prog, args, num_args), args, num_args));
@@ -7338,7 +7311,6 @@ static xen_value *walk(ptree *prog, XEN form, int need_result)
 	    {
 	      if (strcmp(funcname, "buffer->sample") == 0) return(clean_up(mus_buffer2sample_0(prog, args), args, num_args));
 	      /* should these accept any arg? */
-	      if (strcmp(funcname, "env") == 0) return(clean_up(env_1(prog, args, num_args), args, num_args));
 	      if (strcmp(funcname, "oscil?") == 0) return(clean_up(oscil_p(prog, args), args, num_args));
 	      if (strcmp(funcname, "env?") == 0) return(clean_up(env_p(prog, args), args, num_args));
 	      if (strcmp(funcname, "notch?") == 0) return(clean_up(notch_p(prog, args), args, num_args));
@@ -7424,6 +7396,39 @@ static xen_value *walk(ptree *prog, XEN form, int need_result)
 	  if (strcmp(funcname, "mixer-set!") == 0) return(clean_up(mixer_set_1(prog, args, num_args), args, num_args));
 	  if (strcmp(funcname, "mixer-ref") == 0) return(clean_up(mixer_ref_1(prog, args, num_args), args, num_args));
 	}
+
+      if (strcmp(funcname, "polynomial") == 0) return(clean_up(polynomial_1(prog, args, num_args), args, num_args));
+      if (strcmp(funcname, "mus-fft") == 0) return(clean_up(mus_fft_1(prog, args, num_args), args, num_args));
+      if (strcmp(funcname, "array-interp") == 0) return(clean_up(array_interp_1(prog, args, num_args), args, num_args));
+      if (strcmp(funcname, "clear-array") == 0) return(clean_up(clear_array_1(prog, args, num_args), args, num_args));
+      if (strcmp(funcname, "contrast-enhancement") == 0) return(clean_up(contrast_enhancement_1(prog, args, num_args), args, num_args));
+      if (strcmp(funcname, "ring-modulate") == 0) return(clean_up(ring_modulate_1(prog, args, num_args), args, num_args));
+      if (strcmp(funcname, "amplitude-modulate") == 0) return(clean_up(amplitude_modulate_1(prog, args, num_args), args, num_args));
+      if (strcmp(funcname, "convolution") == 0) return(clean_up(convolution_1(prog, args, num_args), args, num_args));
+      if (strcmp(funcname, "multiply-arrays") == 0) return(clean_up(multiply_arrays_1(prog, args, num_args), args, num_args));
+      if (strcmp(funcname, "rectangular->polar") == 0) return(clean_up(rectangular2polar_1(prog, args, num_args), args, num_args));
+      if (strcmp(funcname, "polar->rectangular") == 0) return(clean_up(polar2rectangular_1(prog, args, num_args), args, num_args));
+      if (strcmp(funcname, "sum-of-sines") == 0) return(clean_up(sum_of_sines_1(prog, args, num_args), args, num_args));
+      if (strcmp(funcname, "dot-product") == 0) return(clean_up(dot_product_1(prog, args, num_args), args, num_args));
+      if (strcmp(funcname, "formant-bank") == 0) return(clean_up(formant_bank_1(prog, args, num_args), args, num_args));
+      if (strcmp(funcname, "mus-srate") == 0) return(clean_up(mus_srate_1(prog, args, num_args), args, num_args));
+      if (strcmp(funcname, "spectrum") == 0) return(clean_up(mus_spectrum_1(prog, args, num_args), args, num_args));
+
+      if ((clms > 0) || (booleans > 0))
+	{
+	  if (strcmp(funcname, "frame+") == 0) return(clean_up(mus_frame_add_1(prog, args, num_args), args, num_args));
+	  if (strcmp(funcname, "frame*") == 0) return(clean_up(mus_frame_multiply_1(prog, args, num_args), args, num_args));
+	  if (strcmp(funcname, "frame->frame") == 0) return(clean_up(mus_frame2frame_1(prog, args, num_args), args, num_args));
+	  if (strcmp(funcname, "frame->sample") == 0) return(clean_up(frame2sample_1(prog, args, num_args), args, num_args));
+	  if (strcmp(funcname, "frame->buffer") == 0) return(clean_up(frame2buffer_1(prog, args, num_args), args, num_args));
+	  if (strcmp(funcname, "buffer->frame") == 0) return(clean_up(buffer2frame_1(prog, args, num_args), args, num_args));
+	  if (strcmp(funcname, "mixer*") == 0) return(clean_up(mus_mixer_multiply_1(prog, args, num_args), args, num_args));
+	  if (strcmp(funcname, "sample->frame") == 0) return(clean_up(sample2frame_1(prog, args, num_args), args, num_args));
+	  if (strcmp(funcname, "frame->file") == 0) return(clean_up(frame2file_1(prog, args, num_args), args, num_args));
+	  if (strcmp(funcname, "file->frame") == 0) return(clean_up(file2frame_1(prog, args, num_args), args, num_args));
+	  if (strcmp(funcname, "locsig") == 0) return(clean_up(locsig_1(prog, args, num_args), args, num_args));
+	}
+
       if (num_args == 3)
 	{
 	  if (strcmp(funcname, "vct-set!") == 0) return(clean_up(vct_set_1(prog, args, need_result), args, num_args));
@@ -7621,6 +7626,7 @@ static xen_value *lookup_generalized_set(ptree *prog, char *accessor, xen_value 
 		    return(clean_up(unwrap_xen_object(prog, XEN_LIST_SET(lst, clm_struct_offsets[k], in_v, v), accessor), args, num_args));
 		}
    */
+  /* TODO: (set! (vct-ref...)) and frame-ref, locsig-ref etc in run */
   if (v == NULL) run_warn("can't set! %s", accessor);
   if (in_v) FREE(in_v);
   if (accessor) FREE(accessor);

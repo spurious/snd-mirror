@@ -449,6 +449,20 @@ int map_over_chans (snd_state *ss, int (*func)(chan_info *, void *), void *userp
   return(val);
 }
 
+void for_each_chan_1(snd_state *ss, void (*func)(chan_info *, void *), void *userptr)
+{
+  int i, j;
+  snd_info *sp;
+  chan_info *cp;
+  if (ss)
+    for (i = 0; i < ss->max_sounds; i++)
+      if ((sp = ((snd_info *)(ss->sounds[i]))) && 
+	  (sp->inuse))
+	for (j = 0; j < sp->nchans; j++)
+	  if ((cp = ((chan_info *)(sp->chans[j]))))
+	    (*func)(cp, userptr);
+}
+
 void for_each_chan(snd_state *ss, void (*func)(chan_info *))
 {
   int i, j;
@@ -502,6 +516,17 @@ int map_over_sounds(snd_state *ss, int (*func)(snd_info *, void *), void *userpt
 	  if (val) return(val);
 	}
   return(val);
+}
+
+void for_each_sound(snd_state *ss, void (*func)(snd_info *, void *), void *userptr)
+{
+  int i;
+  snd_info *sp;
+  if (ss)
+    for (i = 0; i < ss->max_sounds; i++)
+      if ((sp = ((snd_info *)(ss->sounds[i]))) &&
+	  (sp->inuse))
+	(*func)(sp, userptr);
 }
 
 int map_over_separate_chans(snd_state *ss, int (*func)(chan_info *, void *), void *userptr)

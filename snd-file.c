@@ -589,13 +589,12 @@ typedef struct {
   int *sounds;
 } active_sound_list;
 
-static int add_sound_to_active_list (snd_info *sp, void *sptr1)
+static void add_sound_to_active_list (snd_info *sp, void *sptr1)
 {
   active_sound_list *sptr = (active_sound_list *)sptr1;
   sptr->names[sptr->active_sounds] = sp->filename;
   sptr->sounds[sptr->active_sounds] = sp->index;
   (sptr->active_sounds)++;
-  return(0);                        /*assume no problem -- nothing can go wrong! */
 }
 
 static char title_buffer[4 * (MUS_MAX_FILE_NAME)];
@@ -607,7 +606,7 @@ static void reflect_file_change_in_title(snd_state *ss)
   alist = (active_sound_list *)CALLOC(1, sizeof(active_sound_list));
   alist->sounds = (int *)CALLOC(ss->max_sounds, sizeof(int));
   alist->names = (char **)CALLOC(ss->max_sounds, sizeof(char *));
-  map_over_sounds(ss, add_sound_to_active_list, alist);
+  for_each_sound(ss, add_sound_to_active_list, alist);
   mus_snprintf(title_buffer, 4 * (MUS_MAX_FILE_NAME),
 	       "%s%s", 
 	       ss->startup_title, 

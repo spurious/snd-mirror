@@ -164,7 +164,7 @@ void file_buffers_back(off_t ind0, off_t ind1, off_t indx, snd_fd *sf, snd_data 
  * on the SGI, FOPEN_MAX is 100, but we can open many more files than that without hitting the EMFILE error.
  */
 
-static int close_temp_files(chan_info *cp, void *closed)
+static void close_temp_files(chan_info *cp, void *closed)
 {
   int i, rtn;
   snd_data *sd;
@@ -190,7 +190,6 @@ static int close_temp_files(chan_info *cp, void *closed)
 	  (*((int *)closed)) = rtn;
 	}
     }
-  return(0);
 }
 
 static int too_many_files_cleanup(snd_state *ss)
@@ -200,9 +199,9 @@ static int too_many_files_cleanup(snd_state *ss)
   rtn = -1;
   closed = (int *)MALLOC(sizeof(int));
   (*closed) = 0;
-  map_over_chans(ss, close_temp_files, (void *)closed);
+  for_each_chan_1(ss, close_temp_files, (void *)closed);
   if ((*closed) == 0) 
-    map_over_region_chans(close_temp_files, (void *)closed);
+    for_each_region_chan(close_temp_files, (void *)closed);
   if ((*closed) == 0)
     rtn = -1;
   else rtn = (*closed);

@@ -896,7 +896,7 @@ static void ax_orientation_callback(Widget w, XtPointer context, XtPointer info)
   ASSERT_WIDGET_TYPE(XmIsScale(w), w);
   ss = od->state;
   in_set_spectro_x_angle(ss, (Float)(cbs->value));
-  map_chans_field(ss, FCP_X_ANGLE, (Float)(cbs->value));
+  chans_field(ss, FCP_X_ANGLE, (Float)(cbs->value));
   for_each_chan(ss, update_graph);
 }
 
@@ -904,7 +904,7 @@ void set_spectro_x_angle(snd_state *ss, Float val)
 {
   in_set_spectro_x_angle(ss, val);
   if (oid) XmScaleSetValue(oid->ax, (int)val);
-  map_chans_field(ss, FCP_X_ANGLE, val);
+  chans_field(ss, FCP_X_ANGLE, val);
   if (!(ss->graph_hook_active)) 
     for_each_chan(ss, update_graph);
 }
@@ -924,7 +924,7 @@ static void ay_orientation_callback(Widget w, XtPointer context, XtPointer info)
   ASSERT_WIDGET_TYPE(XmIsScale(w), w);
   ss = od->state;
   in_set_spectro_y_angle(ss, (Float)(cbs->value));
-  map_chans_field(ss, FCP_Y_ANGLE, (Float)(cbs->value));
+  chans_field(ss, FCP_Y_ANGLE, (Float)(cbs->value));
   for_each_chan(ss, update_graph);
 }
 
@@ -932,7 +932,7 @@ void set_spectro_y_angle(snd_state *ss, Float val)
 {
   in_set_spectro_y_angle(ss, val);
   if (oid) XmScaleSetValue(oid->ay, (int)val);
-  map_chans_field(ss, FCP_Y_ANGLE, val);
+  chans_field(ss, FCP_Y_ANGLE, val);
   if (!(ss->graph_hook_active)) 
     for_each_chan(ss, update_graph);
 }
@@ -952,7 +952,7 @@ static void az_orientation_callback(Widget w, XtPointer context, XtPointer info)
   ASSERT_WIDGET_TYPE(XmIsScale(w), w);
   ss = od->state;
   in_set_spectro_z_angle(ss, (Float)(cbs->value));
-  map_chans_field(ss, FCP_Z_ANGLE, (Float)(cbs->value));
+  chans_field(ss, FCP_Z_ANGLE, (Float)(cbs->value));
   for_each_chan(ss, update_graph);
 }
 
@@ -961,7 +961,7 @@ void set_spectro_z_angle(snd_state *ss, Float val)
   if (val < 0) val += 360;
   in_set_spectro_z_angle(ss, val);
   if (oid) XmScaleSetValue(oid->az, (int)val);
-  map_chans_field(ss, FCP_Z_ANGLE, val);
+  chans_field(ss, FCP_Z_ANGLE, val);
   if (!(ss->graph_hook_active)) 
     for_each_chan(ss, update_graph);
 }
@@ -981,7 +981,7 @@ static void sx_orientation_callback(Widget w, XtPointer context, XtPointer info)
   ASSERT_WIDGET_TYPE(XmIsScale(w), w);
   ss = od->state;
   in_set_spectro_x_scale(ss, (Float)(cbs->value) * 0.01);
-  map_chans_field(ss, FCP_X_SCALE, (Float)(cbs->value) * 0.01);
+  chans_field(ss, FCP_X_SCALE, (Float)(cbs->value) * 0.01);
   for_each_chan(ss, update_graph);
 }
 
@@ -989,7 +989,7 @@ void set_spectro_x_scale(snd_state *ss, Float val)
 {
   in_set_spectro_x_scale(ss, val);
   if (oid) XmScaleSetValue(oid->sx, (int)(val * 100));
-  map_chans_field(ss, FCP_X_SCALE, val);
+  chans_field(ss, FCP_X_SCALE, val);
   if (!(ss->graph_hook_active)) 
     for_each_chan(ss, update_graph);
 }
@@ -1009,7 +1009,7 @@ static void sy_orientation_callback(Widget w, XtPointer context, XtPointer info)
   ASSERT_WIDGET_TYPE(XmIsScale(w), w);
   ss = od->state;
   in_set_spectro_y_scale(ss, (Float)(cbs->value) * 0.01);
-  map_chans_field(ss, FCP_Y_SCALE, (Float)(cbs->value) * 0.01);
+  chans_field(ss, FCP_Y_SCALE, (Float)(cbs->value) * 0.01);
   for_each_chan(ss, update_graph);
 }
 
@@ -1017,7 +1017,7 @@ void set_spectro_y_scale(snd_state *ss, Float val)
 {
   in_set_spectro_y_scale(ss, val);
   if (oid) XmScaleSetValue(oid->sy, (int)(val * 100));
-  map_chans_field(ss, FCP_Y_SCALE, val);
+  chans_field(ss, FCP_Y_SCALE, val);
   if (!(ss->graph_hook_active)) 
     for_each_chan(ss, update_graph);
 }
@@ -1037,7 +1037,7 @@ static void sz_orientation_callback(Widget w, XtPointer context, XtPointer info)
   ASSERT_WIDGET_TYPE(XmIsScale(w), w);
   ss = od->state;
   in_set_spectro_z_scale(ss, (Float)(cbs->value) * 0.01);
-  map_chans_field(ss, FCP_Z_SCALE, (Float)(cbs->value) * 0.01);
+  chans_field(ss, FCP_Z_SCALE, (Float)(cbs->value) * 0.01);
   for_each_chan(ss, update_graph);
 }
 
@@ -1045,7 +1045,7 @@ void set_spectro_z_scale(snd_state *ss, Float val)
 {
   in_set_spectro_z_scale(ss, val);
   if (oid) XmScaleSetValue(oid->sz, (int)(val * 100));
-  map_chans_field(ss, FCP_Z_SCALE, val);
+  chans_field(ss, FCP_Z_SCALE, val);
   if (!(ss->graph_hook_active)) 
     for_each_chan(ss, update_graph);
 }
@@ -1057,7 +1057,7 @@ static void sz_help_callback(Widget w, XtPointer context, XtPointer info)
 "This slider causes the graph to expand or contract along the z axis.");
 }
 
-static int map_chans_spectro_hop(chan_info *cp, void *ptr) {cp->spectro_hop = (*((int *)ptr)); return(0);}
+static void chans_spectro_hop(chan_info *cp, void *ptr) {cp->spectro_hop = (*((int *)ptr));}
 
 static void hop_orientation_callback(Widget w, XtPointer context, XtPointer info) 
 {
@@ -1069,7 +1069,7 @@ static void hop_orientation_callback(Widget w, XtPointer context, XtPointer info
   ss = od->state;
   val = mus_iclamp(1, cbs->value, 20);
   in_set_spectro_hop(ss, val);
-  map_over_chans(ss, map_chans_spectro_hop, (void *)(&val));
+  for_each_chan_1(ss, chans_spectro_hop, (void *)(&val));
   for_each_chan(ss, update_graph);
 }
 
@@ -1079,7 +1079,7 @@ void set_spectro_hop(snd_state *ss, int val)
     {
       in_set_spectro_hop(ss, val);
       if (oid) XmScaleSetValue(oid->hop, val);
-      map_over_chans(ss, map_chans_spectro_hop, (void *)(&val));
+      for_each_chan_1(ss, chans_spectro_hop, (void *)(&val));
       if (!(ss->graph_hook_active)) 
 	for_each_chan(ss, update_graph);
     }
@@ -1092,7 +1092,7 @@ static void hop_help_callback(Widget w, XtPointer context, XtPointer info)
 "This slider changes the hop size.");
 }
 
-static void map_chans_spectro_cut(chan_info *cp) {cp->fft_changed = FFT_CHANGE_LOCKED;}
+static void chans_spectro_cut(chan_info *cp) {cp->fft_changed = FFT_CHANGE_LOCKED;}
 
 static void cut_orientation_callback(Widget w, XtPointer context, XtPointer info) 
 {
@@ -1102,8 +1102,8 @@ static void cut_orientation_callback(Widget w, XtPointer context, XtPointer info
   orientation_info *od = (orientation_info *)context;
   ASSERT_WIDGET_TYPE(XmIsScale(w), w);
   ss = od->state;
-  map_chans_field(ss, FCP_CUTOFF, (Float)(cbs->value) * 0.01);
-  for_each_chan(ss, map_chans_spectro_cut);
+  chans_field(ss, FCP_CUTOFF, (Float)(cbs->value) * 0.01);
+  for_each_chan(ss, chans_spectro_cut);
   set_spectro_cutoff_and_redisplay(ss, (Float)(cbs->value) * 0.01); /* calls in_set... */
 } 
 
@@ -1111,7 +1111,7 @@ void set_spectro_cutoff(snd_state *ss, Float val)
 {
   in_set_spectro_cutoff(ss, val);
   if (oid) XmScaleSetValue(oid->cut, (int)(val * 100));
-  map_chans_field(ss, FCP_CUTOFF, val);
+  chans_field(ss, FCP_CUTOFF, val);
   if (!(ss->graph_hook_active)) 
     for_each_chan(ss, update_graph_setting_fft_changed);
 }

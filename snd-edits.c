@@ -810,7 +810,10 @@ static int find_split_loc(off_t samp, ed_list *current_state)
   for (i = 0; i < current_state->size; i++)
     if (FRAGMENT_GLOBAL_POSITION(current_state, i) >= samp) 
       return(i);
-  return(0); /* make sgi compiler happy */
+#if DEBUGGING
+  fprintf(stderr,"return 0 from split\n");
+#endif
+  return(0);
 }
 
 static ed_list *selected_ed_list(off_t beg, off_t end, ed_list *current_state)
@@ -953,6 +956,14 @@ static ed_list *insert_samples_1 (off_t samp, off_t num, ed_list *current_state,
       else
 	{
 	  off_t new_beg_1;
+#if DEBUGGING
+	  if (k == 0) 
+	    {
+	      fprintf(stderr,"bad insert %p:\n",current_state);
+	      display_ed_list(cp, stderr, cp->edit_ctr-1, current_state);
+	      abort();
+	    }
+#endif
 	  cb_old_0 = ed[k - 1];
 	  new_beg_1 = cb_old_0->beg + samp - cb_old_0->out;
 	  new_state = append_ed_list(cp, len + 2);
@@ -996,11 +1007,18 @@ static ed_list *insert_samples_1 (off_t samp, off_t num, ed_list *current_state,
 
 void extend_with_zeros(chan_info *cp, off_t beg, off_t num, const char *origin, int edpos)
 {
-  off_t len;
+  off_t len, new_len;
   ed_fragment *cb;
   if (num <= 0) return;
   len = cp->samples[edpos];
-  prepare_edit_list(cp, len + num);
+  if (beg > len) 
+    {
+      new_len = beg + num; 
+      beg = len;
+      num = new_len - beg;
+    }
+  else new_len = len + num;
+  prepare_edit_list(cp, new_len);
   cp->edits[cp->edit_ctr] = insert_samples_1(beg, num, cp->edits[edpos], cp, &cb, origin, 0.0);
   cb->snd = -1;
   cp->edits[cp->edit_ctr]->edit_type = ZERO_EDIT;
@@ -1492,8 +1510,13 @@ void ramp_channel(chan_info *cp, Float rmp0, Float rmp1, off_t beg, off_t num, i
   double incr;
   if ((beg < 0) || 
       (num <= 0) ||
-      (beg > cp->samples[pos]))
+      (beg >= cp->samples[pos]))
     return; 
+  if (rmp0 == rmp1)
+    {
+      scale_channel(cp, rmp0, beg, num, pos);
+      return;
+    }
   len = cp->samples[pos];
   old_ed = cp->edits[pos];
   prepare_edit_list(cp, len);
@@ -2569,7 +2592,7 @@ static int save_edits_and_update_display(snd_info *sp)
       ofile = NULL;
     }
   if (auto_update(ss)) 
-    map_over_sounds(ss, snd_not_current, NULL);
+    for_each_sound(ss, snd_not_current, NULL);
   return(MUS_NO_ERROR); /* don't erase our error message for the special write-permission problem */
 }
 
@@ -3392,18 +3415,16 @@ void as_one_edit(chan_info *cp, int one_edit, char *one_edit_origin) /* origin c
 static int chan_ctr = 0;
 static char *as_one_edit_origin;
 
-static int init_as_one_edit(chan_info *cp, void *ptr) 
+static void init_as_one_edit(chan_info *cp, void *ptr) 
 {
   ((int *)ptr)[chan_ctr] = cp->edit_ctr; 
   chan_ctr++; 
-  return(0);
 }
 
-static int finish_as_one_edit(chan_info *cp, void *ptr) 
+static void finish_as_one_edit(chan_info *cp, void *ptr) 
 {
   as_one_edit(cp, (((int *)ptr)[chan_ctr] + 1), as_one_edit_origin);
   chan_ctr++; 
-  return(0);
 }
 
 static XEN g_as_one_edit(XEN proc, XEN origin)
@@ -3432,10 +3453,10 @@ static XEN g_as_one_edit(XEN proc, XEN origin)
       else as_one_edit_origin = NULL;
       cur_edits = (int *)CALLOC(chans, sizeof(int));
       chan_ctr = 0;
-      map_over_chans(ss, init_as_one_edit, (void *)cur_edits); /* redo here can't make sense, can it? */
+      for_each_chan_1(ss, init_as_one_edit, (void *)cur_edits); /* redo here can't make sense, can it? */
       result = XEN_CALL_0_NO_CATCH(proc, S_as_one_edit);
       chan_ctr = 0;
-      map_over_chans(ss, finish_as_one_edit, (void *)cur_edits);
+      for_each_chan_1(ss, finish_as_one_edit, (void *)cur_edits);
       FREE(cur_edits);
     }
   return(xen_return_first(result, proc, origin));

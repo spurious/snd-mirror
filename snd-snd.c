@@ -1316,12 +1316,11 @@ static void *make_apply_state(void *xp)
 
 #define APPLY_TICKS 4
 
-static int max_sync(snd_info *sp, void *val)
+static void max_sync(snd_info *sp, void *val)
 {
   int *maxsync = (int *)val;
   if (sp->sync > maxsync[0])
     maxsync[0] = sp->sync;
-  return(0);
 }
 
 static int apply_tick = 0, apply_reporting = 0;
@@ -1364,7 +1363,7 @@ BACKGROUND_TYPE apply_controls(GUI_POINTER ptr)
       if (ss->apply_choice == APPLY_TO_SOUND)
 	{
 	  maxsync[0] = 0;
-	  map_over_sounds(ss, max_sync, (void *)maxsync);
+	  for_each_sound(ss, max_sync, (void *)maxsync);
 	  sp->sync = maxsync[0] + 1;
 	}
       else sp->sync = 0;
@@ -1621,28 +1620,26 @@ static void set_reverb_decay(snd_state *ss, Float val)
     }
 }
 
-static int map_sounds_speed_tones(snd_info *sp, void *val) 
+static void map_sounds_speed_tones(snd_info *sp, void *val) 
 {
   sp->speed_control_tones = (*((int *)val)); 
-  return(0);
 }
 
 static void set_speed_tones(snd_state *ss, int val) 
 {
   in_set_speed_control_tones(ss, val); 
-  map_over_sounds(ss, map_sounds_speed_tones, (void *)(&val));
+  for_each_sound(ss, map_sounds_speed_tones, (void *)(&val));
 }      
 
-static int map_sounds_speed_style(snd_info *sp, void *val) 
+static void map_sounds_speed_style(snd_info *sp, void *val) 
 {
   sp->speed_control_style = (*((int *)val)); 
-  return(0);
 }
 
 void set_speed_style(snd_state *ss, int val) 
 {
   in_set_speed_control_style(ss, val); 
-  map_over_sounds(ss, map_sounds_speed_style, (void *)(&val));
+  for_each_sound(ss, map_sounds_speed_style, (void *)(&val));
 }      
 
 XEN snd_no_such_sound_error(const char *caller, XEN n)

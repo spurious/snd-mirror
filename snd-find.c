@@ -3,7 +3,7 @@
 static int search_in_progress = 0;
 typedef struct {int n; int direction; int chans; off_t inc; chan_info **cps; snd_fd **fds;} gfd;
 
-static int prepare_global_search (chan_info *cp, void *g0)
+static void prepare_global_search (chan_info *cp, void *g0)
 {
   gfd *g = (gfd *)g0;
   int direction;
@@ -11,7 +11,6 @@ static int prepare_global_search (chan_info *cp, void *g0)
   g->cps[g->n] = cp;
   g->fds[g->n] = init_sample_read((direction == READ_FORWARD) ? (cp->cursor + 1) : (cp->cursor - 1), cp, direction);
   if (g->fds[g->n] != NULL) g->n++;
-  return(0);
 }
 
 static int run_global_search (snd_state *ss, gfd *g)
@@ -145,7 +144,7 @@ char *global_search(snd_state *ss, int direction)
       fd->chans = chans;
       fd->fds = (snd_fd **)CALLOC(chans, sizeof(snd_fd *));
       fd->cps = (chan_info **)CALLOC(chans, sizeof(chan_info *));
-      map_over_chans(ss, prepare_global_search, (void *)fd);
+      for_each_chan_1(ss, prepare_global_search, (void *)fd);
       fd->n = -1;
       while (!(run_global_search(ss, fd)))
 	{

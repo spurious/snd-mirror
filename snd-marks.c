@@ -1219,17 +1219,16 @@ static mark *gather_local_syncd_marks(chan_info *cp, mark *mp, void *usd)
   return(NULL);
 }
 
-static int gather_chan_syncd_marks(chan_info *cp, void *sd)
+static void gather_chan_syncd_marks(chan_info *cp, void *sd)
 {
   map_over_marks(cp, gather_local_syncd_marks, sd, READ_FORWARD);
-  return(0);
 }
 
 static syncdata *gather_syncd_marks(snd_state *ss, int sync)
 {
   syncdata *sd;
   sd = make_syncdata(sync);
-  map_over_chans(ss, gather_chan_syncd_marks, (void *)sd);
+  for_each_chan_1(ss, gather_chan_syncd_marks, (void *)sd);
   return(sd);
 }
 
@@ -1985,7 +1984,7 @@ static int *syncd_marks(snd_state *ss, int sync)
   int *ids;
   int i;
   sd = make_syncdata(sync);
-  map_over_chans(ss, gather_chan_syncd_marks, (void *)sd);
+  for_each_chan_1(ss, gather_chan_syncd_marks, (void *)sd);
   ids = (int *)CALLOC(1 + sd->mark_ctr, sizeof(int));
   ids[0] = sd->mark_ctr;
   for (i = 0; i < sd->mark_ctr; i++) ids[i + 1] = mark_id(sd->marks[i]);

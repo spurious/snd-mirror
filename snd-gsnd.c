@@ -130,17 +130,16 @@ void x_bomb(snd_info *sp, int on)
   if (on) sp->bomb_ctr++; else sp->bomb_ctr = 0;
 }
 
-static int inc_bomb(snd_info *sp, void *ptr)
+static void inc_bomb(snd_info *sp, void *ptr)
 {
   int *buf;
-  if ((sp) && (sp->need_update))
+  if (sp->need_update)
     {
       buf = (int *)ptr;
       buf[0]++;
       show_bomb_icon(sp, sp->bomb_ctr);
       sp->bomb_ctr++;
     }
-  return(0);
 }
 
 static int bomb_in_progress = 0;
@@ -152,7 +151,7 @@ static gint bomb_check(gpointer data)
   int incs[1];
   ss = sp->state;
   incs[0] = 0;
-  map_over_sounds(ss, inc_bomb, (void *)incs);
+  for_each_sound(ss, inc_bomb, (void *)incs);
   if (incs[0] > 0)
     gtk_timeout_add((guint32)BOMB_TIME, bomb_check, data);
   else bomb_in_progress = 0;
@@ -384,7 +383,7 @@ static void play_button_click_callback(GtkWidget *w, gpointer data)
 
 typedef struct {int pausing; snd_state *ss;} pause_data;
 
-static int set_play_button_pause(snd_info *sp, void *ptr)
+static void set_play_button_pause(snd_info *sp, void *ptr)
 {
   pause_data *pd = (pause_data *)ptr;
   snd_state *ss;
@@ -400,7 +399,6 @@ static int set_play_button_pause(snd_info *sp, void *ptr)
 	  set_active_color(w, (ss->sgx)->green); 
 	else set_active_color(w, (ss->sgx)->pushed_button_color);
     }
-  return(0);
 }
 
 void play_button_pause(snd_state *ss, int pausing)
@@ -409,7 +407,7 @@ void play_button_pause(snd_state *ss, int pausing)
   pd = (pause_data *)CALLOC(1, sizeof(pause_data));
   pd->pausing = pausing;
   pd->ss = ss;
-  map_over_sounds(ss, set_play_button_pause, (void *)pd);
+  for_each_sound(ss, set_play_button_pause, (void *)pd);
   FREE(pd);
 }
 
@@ -1250,28 +1248,26 @@ static void apply_button_callback(GtkWidget *w, gpointer context)
  * if all other apply buttons are locked out (and play).
  */
 
-static int lockapply(snd_info *sp, void *up) 
+static void lockapply(snd_info *sp, void *up) 
 {
   if (sp != up) 
     set_sensitive(APPLY_BUTTON(sp), FALSE);
-  return(0);
 }
 
 void lock_apply(snd_state *ss, snd_info *sp)
 {
   /* if playing or applying, set other applys to insensitive */
-  map_over_sounds(ss, lockapply, (void *)sp);
+  for_each_sound(ss, lockapply, (void *)sp);
 }
 
-static int unlockapply(snd_info *sp, void *up) 
+static void unlockapply(snd_info *sp, void *up) 
 {
   set_sensitive(APPLY_BUTTON(sp), TRUE);
-  return(0);
 }
 
 void unlock_apply(snd_state *ss, snd_info *sp)
 {
-  map_over_sounds(ss, unlockapply, (void *)sp);
+  for_each_sound(ss, unlockapply, (void *)sp);
   if (sp) 
     set_background(APPLY_BUTTON(sp), (ss->sgx)->basic_color);
 }
@@ -1878,15 +1874,13 @@ void set_sound_pane_file_label(snd_info *sp, char *str)
   set_label(w_snd_name(sp), str);
 }
 
-int sound_unlock_control_panel(snd_info *sp, void *ptr)
+void sound_unlock_control_panel(snd_info *sp, void *ptr)
 {
-  return(0);
 }
 
-int sound_lock_control_panel(snd_info *sp, void *ptr)
+void sound_lock_control_panel(snd_info *sp, void *ptr)
 {
   /* might use gtk_paned_set_position here */
-  return(0);
 }
 
 void snd_info_cleanup(snd_info *sp)

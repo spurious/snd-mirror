@@ -80,7 +80,7 @@ static gint auto_update_check(gpointer context)
     {
       if ((!(play_in_progress())) && 
 	  (!(record_in_progress())))
-	map_over_sounds(ss, snd_not_current, NULL);
+	for_each_sound(ss, snd_not_current, NULL);
       gtk_timeout_add((guint32)(auto_update_interval(ss) * 1000), auto_update_check, context);
     }
   return(0);

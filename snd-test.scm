@@ -1635,7 +1635,7 @@
 	  (snd-display ";oboe: mus-sound-maxamp-exists after maxamp: ~A" (mus-sound-maxamp-exists? "oboe.snd")))
 
       (let ((str (strftime "%d-%b %H:%M %Z" (localtime (mus-sound-write-date "oboe.snd")))))
-	(IF (not (string=? str "03-Feb 13:25 PST"))
+	(IF (not (string=? str "02-Aug 13:46 PDT"))
 	    (snd-display ";mus-sound-write-date oboe.snd: ~A?" str)))
       (let ((str (strftime "%d-%b %H:%M %Z" (localtime (mus-sound-write-date "pistol.snd")))))
 	(IF (not (string=? str "30-Dec 12:04 PST"))
@@ -1785,7 +1785,7 @@
       (IF (and (not (= (mus-sound-type-specifier "oboe.snd") #x646e732e))  ;little endian reader
 	       (not (= (mus-sound-type-specifier "oboe.snd") #x2e736e64))) ;big endian reader
 	  (snd-display ";oboe: mus-sound-type-specifier: ~X?" (mus-sound-type-specifier "oboe.snd")))
-      (IF (not (string=? (strftime "%d-%b-%Y %H:%M" (localtime (file-write-date "oboe.snd"))) "03-Feb-2002 13:25"))
+      (IF (not (string=? (strftime "%d-%b-%Y %H:%M" (localtime (file-write-date "oboe.snd"))) "02-Aug-2002 13:46"))
 	  (snd-display ";oboe: file-write-date: ~A?" (strftime "%d-%b-%Y %H:%M" (localtime (file-write-date "oboe.snd")))))
       (play-sound "oboe.snd")
 
@@ -12929,6 +12929,12 @@
 	  (funcs-equal? "scale-sound-by" 
 			(lambda args (apply scale-sound-by (cons 2.0 args)))
 			(lambda args (apply scale-channel (cons 2.0 args))))
+	  (funcs-equal? "scale-and-ramp" 
+			(lambda args (apply scale-sound-by (cons 0.0 args)))
+			(lambda args (apply ramp-channel (cons 0.0 (cons 0.0 args)))))
+	  (funcs-equal? "scale-and-ramp" 
+			(lambda args (apply scale-sound-by (cons 2.0 args)))
+			(lambda args (apply ramp-channel (cons 2.0 (cons 2.0 args)))))
 	  (funcs-equal? "smooth-sound"
 			(lambda args (apply smooth-sound args))
 			(lambda args (apply smooth-channel args)))
@@ -14334,6 +14340,77 @@ EDITS: 6
 	  (close-sound ind)
 	  (set! (optimization) old-opt))
 
+	(let ((ind (open-sound "oboe.snd")))
+	  (for-each
+	   (lambda (func beg dur len)
+	     (let ((old-len (frames ind)))
+	       (func beg dur)
+	       (if (not (= (frames ind) len)) 
+		   (snd-display ";(~A ~A ~A) with ~A -> ~A (~A)?" func beg dur old-len (frames ind) len))))
+	   (list (lambda (beg dur) (env-channel '(0 0 1 1) beg dur))
+		 (lambda (beg dur) (map-channel (lambda (y) (* y .5)) beg dur))
+		 (lambda (beg dur) (reverse-channel beg dur))
+		 (lambda (beg dur) (scale-channel 2.0 beg dur))
+		 (lambda (beg dur) (vct->channel (make-vct dur) beg dur))
+		 (lambda (beg dur) (smooth-channel beg dur))
+		 (lambda (beg dur) (pad-channel beg dur))
+		 (lambda (beg dur) (src-channel 0.5 beg dur))
+		 (lambda (beg dur) (insert-silence beg dur)))
+	   (list 0 0 0 0 0 0 0 0 0)
+	   (list 1000 1000 1000 1000 1000 1000 1000 1000 1000)
+	   (list 50828 50828 50828 50828 50828 50828 51828 52829 53829))
+	  
+	  (revert-sound ind)
+	  
+	  (for-each
+	   (lambda (beg dur len)
+	     (let ((old-len (frames ind)))
+	       (pad-channel beg dur)
+	       (if (not (= (frames ind) len))
+		   (snd-display ";(pad-channel ~A ~A) with ~A -> ~A (~A)?" beg dur old-len (frames ind) len))))
+	   (list 1000 60000 0 62000 62000 62004)
+	   (list 1000 1000 1000 1 2 1)
+	   (list 51828 61000 62000 62001 62003 62005))
+	  
+	  (revert-sound ind)
+	  
+	  (for-each
+	   (lambda (func dur len)
+	     (let ((old-len (frames ind)))
+	       (func (+ old-len 100) dur)
+	       (if (not (= (frames ind) len)) 
+		   (snd-display ";(~A ~A) with ~A -> ~A (~A)?" func dur old-len (frames ind) len))))
+	   (list (lambda (beg dur) (env-channel '(0 0 1 1) beg dur))
+		 (lambda (beg dur) (reverse-channel beg dur))
+		 (lambda (beg dur) (scale-channel 2.0 beg dur))
+		 (lambda (beg dur) (scale-sound-by 2.0 beg dur))
+		 (lambda (beg dur) (vct->channel (make-vct dur) beg dur))
+		 (lambda (beg dur) (smooth-channel beg dur))
+		 (lambda (beg dur) (pad-channel beg dur))
+		 (lambda (beg dur) (src-channel 0.5 beg dur))
+		 (lambda (beg dur) (insert-silence beg dur)) ; diff from pad-channel
+		 (lambda (beg dur) (env-sound '(0 0 1 1) beg dur)) ; diff from env-channel
+		 )
+	   (list 1000 1000 1000 1000 1000 1000 1000 1000 1000 1000)
+	   (list 50828 50828 50828 50828 51928 51928 53028 53028 54028 55128))
+
+	  (revert-sound ind)
+
+	  (do ((i 0 (1+ i)))
+	      ((= i 100))
+	    (case (inexact->exact (random 10))
+	      ((0) (pad-channel (random (* 1.25 (frames))) (random 1000)))
+	      ((1) (env-channel '(0 0 1 1 2 0) (random (* 1.25 (frames))) (random 1000)))
+	      ((2) (env-sound '(0 0 1 1 2 0) (random (* 1.25 (frames))) (random 1000)))
+	      ((3) (scale-channel (random 1.0) (random (* 1.25 (frames))) (random 1000)))
+	      ((4) (scale-sound-by (random 1.0) (random (* 1.25 (frames))) (random 1000)))
+	      ((5) (src-channel (+ .9 (random .2)) (random (* 1.25 (frames))) (random 1000)))
+	      ((6) (ramp-channel (random 1.0) (random 1.0) (random (* 1.25 (frames))) (random 1000)))
+	      ((7) (reverse-channel (random (* 1.25 (frames))) (random 1000)))
+	      ((8) (let ((dur (inexact->exact (random 100)))) (vct->channel (make-vct dur) (random (* 1.25 (frames))) dur)))
+	      ((9) (map-channel (lambda (y) (* y 2)) (random (* .5 (frames))) (random 1000)))))
+
+	  (close-sound ind))
 
 	)))
 
@@ -24511,7 +24588,9 @@ EDITS: 5
 	       audio-state-file auto-resize auto-update autocorrelate axis-info axis-label-font axis-numbers-font
 	       backward-graph backward-mark backward-mix basic-color bind-key bold-button-font bomb
 	       button-font c-g?  apply-controls change-menu-label change-samples-with-origin channel-style
-	       channel-widgets channels chans clear-audio-inputs close-sound close-sound-file color-cutoff color-dialog
+	       channel-widgets channels chans clear-audio-inputs 
+	       close-sound ;close-sound-file 
+	       color-cutoff color-dialog
 	       color-inverted color-scale color->list colormap color?  comment contrast-control contrast-control-amp
 	       contrast-control?  convolve-arrays convolve-selection-with convolve-with channel-properties
 	       auto-update-interval count-matches current-font cursor cursor-color cursor-follows-play cursor-size
@@ -24539,7 +24618,9 @@ EDITS: 5
 	       maxamp menu-sensitive menu-widgets minibuffer-history-length min-dB mix mixes mix-amp mix-amp-env
 	       mix-anchor mix-chans mix-color mix-track mix-frames mix-locked mix-name mix? mix-panel mix-position
 	       mix-region mix-sample-reader?  mix-selection mix-sound mix-home mix-speed mix-tag-height mix-tag-width
-	       mix-tag-y mix-vct mix-waveform-height new-sound next-mix-sample read-mix-sample read-track-sample next-sample next-track-sample
+	       mix-tag-y mix-vct mix-waveform-height 
+	       ;new-sound 
+	       next-mix-sample read-mix-sample read-track-sample next-sample next-track-sample
 	       transform-normalization equalize-panes open-raw-sound open-sound orientation-dialog
 	       peak-env-info peaks play play-and-wait play-mix play-region play-selection play-track player?
 	       position-color position->x position->y preload-directory preload-file previous-files-sort previous-sample
@@ -25411,6 +25492,7 @@ EDITS: 5
 	  (check-error-tag 'mus-error (lambda () (src-sound (make-env '(0 1 1 -1) :end 10))))
 	  (check-error-tag 'mus-error (lambda () (src-sound (make-env '(0 -1 1 1) :end 10))))
 	  (check-error-tag 'mus-error (lambda () (make-readin 0.0 0.0 0.0 0.0 0.0 0.0 0.0)))
+	  (check-error-tag 'mus-error (lambda () (filter-sound (make-vct 3) 32)))
 	  (check-error-tag 'no-such-sound (lambda () (swap-channels ind 0 12345 0)))
 	  (check-error-tag 'no-such-sample (lambda () (scan-channel (lambda (n) #f) (* (frames) 2))))
 	  (check-error-tag 'no-such-sample (lambda () (map-channel (lambda (n) #f) (* (frames) 2))))
@@ -25491,7 +25573,7 @@ EDITS: 5
 	(check-error-tag 'bad-arity (lambda () (add-to-main-menu "hi" (lambda (a b) #f))))
 	(check-error-tag 'bad-arity (lambda () (add-to-menu 1 "hi" (lambda (a b) #f))))
 	(check-error-tag 'no-such-file (lambda () (open-sound-file "/bad/baddy.snd")))
-	(check-error-tag 'no-such-file (lambda () (close-sound-file 1234 0)))
+	(check-error-tag 'mus-error (lambda () (close-sound-file 0 0)))
 	(check-error-tag 'wrong-type-arg (lambda () (help-dialog (list 0 1) "hiho")))
 	(check-error-tag 'no-such-sound (lambda () (edit-header-dialog 1234)))
 	(check-error-tag 'no-such-sound (lambda () (make-track-sample-reader 0)))
@@ -25574,7 +25656,7 @@ EDITS: 5
 	(for-each 
 	 (lambda (n)
 	   (catch #t
-		  (lambda () 
+		  (lambda ()
 		    (n))
 		  (lambda args (car args))))
 	 procs0)

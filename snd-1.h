@@ -517,7 +517,7 @@ void activate_focus_menu(snd_state *ss, int new_focus);
 void activate_speed_in_menu(snd_state *ss, int newval);
 void set_x_axis_style(snd_state *ss, int val);
 void set_channel_style(snd_state *ss, int val);
-int map_chans_x_axis_style(chan_info *cp, void *ptr);
+void chans_x_axis_style(chan_info *cp, void *ptr);
 
 void g_init_menu(void);
 
@@ -525,7 +525,7 @@ void g_init_menu(void);
 /* -------- snd-main.c -------- */
 
 int snd_exit_cleanly(snd_state *ss, int force_exit);
-int snd_not_current(snd_info *sp, void *dat);
+void snd_not_current(snd_info *sp, void *dat);
 int save_options (snd_state *ss);
 FILE *open_snd_init_file (snd_state *ss);
 int save_state (snd_state *ss, char *save_state_name);
@@ -647,8 +647,10 @@ snd_info *completely_free_snd_info(snd_info *sp);
 int map_over_sounds (snd_state *ss, int (*func)(snd_info *, void *), void *userptr);
 int map_over_chans (snd_state *ss, int (*func)(chan_info *, void *), void *userptr);
 void for_each_chan(snd_state *ss, void (*func)(chan_info *));
+void for_each_chan_1(snd_state *ss, void (*func)(chan_info *, void *), void *userptr);
 int map_over_sound_chans (snd_info *sp, int (*func)(chan_info *, void *), void *userptr);
 void for_each_sound_chan(snd_info *sp, void (*func)(chan_info *));
+void for_each_sound(snd_state *ss, void (*func)(snd_info *, void *), void *userptr);
 int map_over_separate_chans(snd_state *ss, int (*func)(chan_info *, void *), void *userptr);
 int snd_ok (snd_info *sp);
 int active_channels (snd_state *ss, int count_virtual_channels);
@@ -868,7 +870,7 @@ void clear_region_backpointer(snd_info *sp);
 void save_region_backpointer(snd_info *sp);
 void sequester_deferred_regions(chan_info *cp, int edit_top);
 void g_init_regions(void);
-int map_over_region_chans(int (*func)(chan_info *, void *), void *userptr);
+void for_each_region_chan(void (*func)(chan_info *, void *), void *userptr);
 
 
 /* -------- snd-env.c -------- */
@@ -970,7 +972,7 @@ void set_wavo_trace(snd_state *ss, int uval);
 void set_dot_size(snd_state *ss, int val);
 chan_info *virtual_selected_channel(chan_info *cp);
 void handle_cursor(chan_info *cp, int redisplay);
-void map_chans_field(snd_state *ss, int field, Float val);
+void chans_field(snd_state *ss, int field, Float val);
 void in_set_transform_graph_type(snd_state *ss, int val);
 void in_set_fft_window(snd_state *ss, int val);
 void combine_sound(snd_info *sp);

@@ -451,10 +451,10 @@ file_info *fixup_region_data(chan_info *cp, int chan, int pos)
   return(NULL);
 }
 
-int map_over_region_chans(int (*func)(chan_info *, void *), void *userptr)
+void for_each_region_chan(void (*func)(chan_info *, void *), void *userptr)
 {
   /* used only in snd-io.c to remove dangling temp files */
-  int i, chn, val = 0;
+  int i, chn;
   region *r;
   chan_info *cp;
   for (i = 0; i < regions_size; i++)
@@ -464,11 +464,9 @@ int map_over_region_chans(int (*func)(chan_info *, void *), void *userptr)
 	for (chn = 0; chn < r->chans; chn++)
 	  {
 	    cp = r->rsp->chans[chn];
-	    val = (*func)(cp, userptr);
-	    if (val) return(val);
+	    (*func)(cp, userptr);
 	  }
     }
-  return(val);
 }
 
 region_state *region_report(void)

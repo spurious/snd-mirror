@@ -232,7 +232,7 @@ void save_file_from_menu(snd_state *ss)
   if (sp) save_edits(sp, NULL);
 }
 
-static int file_update(snd_info *sp, void *ptr)
+static void file_update(snd_info *sp, void *ptr)
 {
   snd_state *ss = (snd_state *)ptr;
   /* here we should only update files that have changed on disk */
@@ -240,12 +240,11 @@ static int file_update(snd_info *sp, void *ptr)
       ((sp->need_update) || 
        (file_write_date(sp->filename) != sp->write_date)))
     snd_update(ss, sp);
-  return(0);
 }
 
 void update_file_from_menu(snd_state *ss)
 {
-  map_over_sounds(ss, file_update, (void *)ss);
+  for_each_sound(ss, file_update, (void *)ss);
 }
 
 static char *output_name(void);
@@ -315,7 +314,7 @@ void save_state_from_menu(snd_state *ss)
     report_in_minibuffer(any_selected_sound(ss), "saved state in %s", save_state_file(ss));
 }
 
-static int map_chans_graph_style(chan_info *cp, void *ptr) {cp->graph_style = (*((int *)ptr)); update_graph(cp); return(0);}
+static void chans_graph_style(chan_info *cp, void *ptr) {cp->graph_style = (*((int *)ptr)); update_graph(cp);}
 
 void set_graph_style(snd_state *ss, int val)
 {
@@ -328,7 +327,7 @@ void set_graph_style(snd_state *ss, int val)
     case GRAPH_LOLLIPOPS:      set_sensitive(view_lollipops_menu(), TRUE);      break;
     }
   in_set_graph_style(ss, val);
-  map_over_chans(ss, map_chans_graph_style, (void *)(&val));
+  for_each_chan_1(ss, chans_graph_style, (void *)(&val));
   switch (val)
     {
     case GRAPH_LINES:          set_sensitive(view_lines_menu(), FALSE);          break;
@@ -339,24 +338,22 @@ void set_graph_style(snd_state *ss, int val)
     }
 }
 
-static int map_chans_marks(chan_info *cp, void *ptr)
+static void chans_marks(chan_info *cp, void *ptr)
 {
   cp->show_marks = (*((int *)ptr));
   update_graph(cp);
-  return(0);
 }
 
 void set_show_marks(snd_state *ss, int val)
 {
   in_set_show_marks(ss, val);
-  map_over_chans(ss, map_chans_marks, (void *)(&val));
+  for_each_chan_1(ss, chans_marks, (void *)(&val));
 }
 
-static int map_chans_zero(chan_info *cp, void *ptr)
+static void chans_zero(chan_info *cp, void *ptr)
 {
   cp->show_y_zero = (*((int *)ptr));
   update_graph(cp);
-  return(0);
 }
 
 void set_show_y_zero(snd_state *ss, int val)
@@ -366,18 +363,18 @@ void set_show_y_zero(snd_state *ss, int val)
     {
       set_menu_label(view_zero_menu(), 
 		     (val) ? STR_Hide_Y0 : STR_Show_Y0);
-      map_over_chans(ss, map_chans_zero, (void *)(&val));
+      for_each_chan_1(ss, chans_zero, (void *)(&val));
     }
 }
 
-static int clrmini(snd_info *sp, void *ignore) {clear_minibuffer(sp); return(0);}
-static int map_chans_verbose_cursor(chan_info *cp, void *ptr) {cp->verbose_cursor = (*((int *)ptr)); return(0);}
+static void clrmini(snd_info *sp, void *ignore) {clear_minibuffer(sp);}
+static void chans_verbose_cursor(chan_info *cp, void *ptr) {cp->verbose_cursor = (*((int *)ptr));}
 
 void set_verbose_cursor(snd_state *ss, int val)
 {
   in_set_verbose_cursor(ss, val);
-  if (val == 0) map_over_sounds(ss, clrmini, NULL);
-  map_over_chans(ss, map_chans_verbose_cursor, (void *)(&val));
+  if (val == 0) for_each_sound(ss, clrmini, NULL);
+  for_each_chan_1(ss, chans_verbose_cursor, (void *)(&val));
   if (view_cursor_menu())
     set_menu_label(view_cursor_menu(), 
 		   (val) ? STR_Silent_cursor : STR_Verbose_cursor);
@@ -441,7 +438,7 @@ void activate_speed_in_menu(snd_state *ss, int newval)
     }
 }
 
-int map_chans_x_axis_style(chan_info *cp, void *ptr)
+void chans_x_axis_style(chan_info *cp, void *ptr)
 {
   axis_info *ap;
   int new_style = (*((int *)ptr));
@@ -459,7 +456,6 @@ int map_chans_x_axis_style(chan_info *cp, void *ptr)
 	}
       update_graph(cp);
     }
-  return(0);
 } 
 
 static void reflect_x_axis_unit_change_in_menu(int oldval, int newval)
@@ -486,10 +482,10 @@ void set_x_axis_style(snd_state *ss, int val)
 {
   reflect_x_axis_unit_change_in_menu(x_axis_style(ss), val);
   in_set_x_axis_style(ss, val);
-  map_over_chans(ss, map_chans_x_axis_style, (void *)(&val));
+  for_each_chan_1(ss, chans_x_axis_style, (void *)(&val));
 }
 
-static int update_sound(snd_info *sp, void *ptr)
+static void update_sound(snd_info *sp, void *ptr)
 {
   snd_state *ss = (snd_state *)ptr;
   if (sp)
@@ -501,7 +497,6 @@ static int update_sound(snd_info *sp, void *ptr)
 	case CHANNELS_SUPERIMPOSED: superimpose_sound(sp); break;
 	}
     }
-  return(0);
 }
 
 void set_channel_style(snd_state *ss, int val)
@@ -519,7 +514,7 @@ void set_channel_style(snd_state *ss, int val)
     case CHANNELS_COMBINED:     set_sensitive(view_combine_combined_menu(), FALSE);     break;
     case CHANNELS_SUPERIMPOSED: set_sensitive(view_combine_superimposed_menu(), FALSE); break;
     }
-  map_over_sounds(ss, update_sound, (void *)ss);
+  for_each_sound(ss, update_sound, (void *)ss);
   for_each_chan(ss, update_graph);
 }
 

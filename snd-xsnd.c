@@ -295,20 +295,18 @@ void make_minibuffer_label(snd_info *sp , char *str)
 }
 
 
-int sound_unlock_control_panel(snd_info *sp, void *ptr)
+void sound_unlock_control_panel(snd_info *sp, void *ptr)
 {
   XtManageChild(CONTROL_PANEL(sp));
   XtVaSetValues(CONTROL_PANEL(sp), XmNpaneMinimum, 1, NULL);
-  return(0);
 }
 
-int sound_lock_control_panel(snd_info *sp, void *ptr)
+void sound_lock_control_panel(snd_info *sp, void *ptr)
 {
   snd_state *ss;
   ss = (snd_state *)(sp->state);
   XtUnmanageChild(CONTROL_PANEL(sp));
   XtVaSetValues(CONTROL_PANEL(sp), XmNpaneMinimum, ss->ctrls_height, NULL);
-  return(0);
 }
 
 static void name_click_callback(Widget w, XtPointer context, XtPointer info) 
@@ -1132,7 +1130,7 @@ static void play_button_callback(Widget w, XtPointer context, XtPointer info)
 
 typedef struct {int pausing; snd_state *ss;} pause_data;
 
-static int set_play_button_pause(snd_info *sp, void *ptr)
+static void set_play_button_pause(snd_info *sp, void *ptr)
 {
   pause_data *pd = (pause_data *)ptr;
   snd_state *ss;
@@ -1145,7 +1143,6 @@ static int set_play_button_pause(snd_info *sp, void *ptr)
 	XtVaSetValues(w, XmNselectColor, (ss->sgx)->red, NULL);
       else XtVaSetValues(w, XmNselectColor, ((sp->cursor_follows_play != DONT_FOLLOW) ? ((ss->sgx)->green) : ((ss->sgx)->pushed_button_color)), NULL);
     }
-  return(0);
 }
 
 void play_button_pause(snd_state *ss, int pausing)
@@ -1154,7 +1151,7 @@ void play_button_pause(snd_state *ss, int pausing)
   pd = (pause_data *)CALLOC(1, sizeof(pause_data));
   pd->pausing = pausing;
   pd->ss = ss;
-  map_over_sounds(ss, set_play_button_pause, (void *)pd);
+  for_each_sound(ss, set_play_button_pause, (void *)pd);
   FREE(pd);
 }
 
@@ -1305,27 +1302,25 @@ static void apply_callback(Widget w, XtPointer context, XtPointer info)
  * if all other apply buttons are locked out (and play).
  */
 
-static int lockapply(snd_info *sp, void *up) 
+static void lockapply(snd_info *sp, void *up) 
 {
   if (sp != (snd_info *)up) set_sensitive(APPLY_BUTTON(sp), FALSE);
-  return(0);
 }
 
 void lock_apply(snd_state *ss, snd_info *sp)
 {
   /* if playing or applying, set other applys to insensitive */
-  map_over_sounds(ss, lockapply, (void *)sp);
+  for_each_sound(ss, lockapply, (void *)sp);
 }
 
-static int unlockapply(snd_info *sp, void *up) 
+static void unlockapply(snd_info *sp, void *up) 
 {
   if (sp != (snd_info *)up) set_sensitive(APPLY_BUTTON(sp), TRUE);
-  return(0);
 }
 
 void unlock_apply(snd_state *ss, snd_info *sp)
 {
-  map_over_sounds(ss, unlockapply, (void *)sp);
+  for_each_sound(ss, unlockapply, (void *)sp);
   if ((sp) && (!(ss->using_schemes))) 
     XmChangeColor(APPLY_BUTTON(sp), (Pixel)((ss->sgx)->basic_color));
 }
@@ -1577,7 +1572,7 @@ void x_bomb(snd_info *sp, int on)
   else sp->bomb_ctr = 0;
 }
 
-static int inc_bomb(snd_info *sp, void *ptr)
+static void inc_bomb(snd_info *sp, void *ptr)
 {
   int *buf;
   if (sp)
@@ -1590,7 +1585,6 @@ static int inc_bomb(snd_info *sp, void *ptr)
 	  sp->bomb_ctr++;
 	}
     }
-  return(0);
 }
 
 static int bomb_in_progress = 0;
@@ -1602,7 +1596,7 @@ static void bomb_check(XtPointer context, XtIntervalId *id)
   int incs[1];
   ss = sp->state;
   incs[0] = 0;
-  map_over_sounds(ss, inc_bomb, (void *)incs);
+  for_each_sound(ss, inc_bomb, (void *)incs);
   if (incs[0] > 0)
     XtAppAddTimeOut(MAIN_APP(ss),
 		    (unsigned long)BOMB_TIME,
@@ -2892,7 +2886,7 @@ void set_apply_button(snd_info *sp, int val)
 
 /* ---------------- normalize sounds ---------------- */
 
-static int even_channels(snd_info *sp, void *ptr)
+static void even_channels(snd_info *sp, void *ptr)
 {
   int val, height, chans, i;
   chan_info *cp;
@@ -2912,10 +2906,9 @@ static int even_channels(snd_info *sp, void *ptr)
 			NULL);
 	}
     }
-  return(0);
 }
 
-static int even_sounds(snd_info *sp, void *ptr)
+static void even_sounds(snd_info *sp, void *ptr)
 {
   int width;
   width = (*((int *)ptr));
@@ -2924,22 +2917,19 @@ static int even_sounds(snd_info *sp, void *ptr)
 		XmNpaneMinimum, width - 5,
 		XmNpaneMaximum, width + 5,
 		NULL);
-  return(0);
 }
 
-static int sound_open_pane(snd_info *sp, void *ptr)
+static void sound_open_pane(snd_info *sp, void *ptr)
 {
   XtManageChild(w_snd_pane(sp));
-  return(0);
 }
 
-static int sound_unlock_pane(snd_info *sp, void *ptr)
+static void sound_unlock_pane(snd_info *sp, void *ptr)
 {
   XtVaSetValues(w_snd_pane(sp),
 		XmNpaneMinimum, 5,
 		XmNpaneMaximum, LOTSA_PIXELS,
 		NULL);
-  return(0);
 }
 
 void unlock_control_panel(snd_info *sp) 
@@ -3107,11 +3097,11 @@ void equalize_all_panes(snd_state *ss)
 	  chan_y = (height-(sounds * ss->ctrls_height))/chans - 16;
 	  /* probably can be 14 or 12 -- seems to be margin related or something */
 	  wid[0] = chan_y;
-	  map_over_sounds(ss, sound_lock_control_panel, NULL);
+	  for_each_sound(ss, sound_lock_control_panel, NULL);
 	  map_over_separate_chans(ss, channel_lock_pane, (void *)wid);
 	  map_over_separate_chans(ss, channel_open_pane, NULL);
 	  map_over_separate_chans(ss, channel_unlock_pane, NULL);
-	  map_over_sounds(ss, sound_unlock_control_panel, NULL);
+	  for_each_sound(ss, sound_unlock_control_panel, NULL);
 	}
       if (!(auto_resize(ss))) XtVaSetValues(MAIN_SHELL(ss), XmNallowShellResize, FALSE, NULL);
     }
@@ -3124,15 +3114,15 @@ void equalize_all_panes(snd_state *ss)
 	    {
 	      width = widget_width(MAIN_PANE(ss));
 	      width /= sounds;
-	      map_over_sounds(ss, even_sounds, (void *)(&width));
-	      map_over_sounds(ss, sound_open_pane, NULL);
-	      map_over_sounds(ss, sound_unlock_pane, NULL);
+	      for_each_sound(ss, even_sounds, (void *)(&width));
+	      for_each_sound(ss, sound_open_pane, NULL);
+	      for_each_sound(ss, sound_unlock_pane, NULL);
 	    }
-	  map_over_sounds(ss, sound_lock_control_panel, NULL);
-	  map_over_sounds(ss, even_channels, (void *)(&height));
+	  for_each_sound(ss, sound_lock_control_panel, NULL);
+	  for_each_sound(ss, even_channels, (void *)(&height));
 	  map_over_separate_chans(ss, channel_open_pane, NULL);   /* manage the channel widgets */
 	  map_over_separate_chans(ss, channel_unlock_pane, NULL); /* allow pane to be resized */
-	  map_over_sounds(ss, sound_unlock_control_panel, NULL);
+	  for_each_sound(ss, sound_unlock_control_panel, NULL);
 	}
     }
 }
