@@ -164,12 +164,15 @@ various examples of and extensions to Snd can be found in:
 </p>
 
 <table border=8 bordercolor="lightsteelblue">
-<tr><td width=140><a href="sndscm.html#belldoc">bell.scm</a></td><td>the fm-bell from CLM</td></tr>
+<tr><td width=140><a href="sndscm.html#autosavedoc">autosave.scm</a></td><td>auto-save (edit backup) support</td></tr>
+<tr><td><a href="sndscm.html#belldoc">bell.scm</a></td>       <td>the fm-bell from CLM</td></tr>
 <tr><td><a href="sndscm.html#birddoc">bird.scm</a></td>      <td>various North-American birds (from bird.clm)</td></tr>
 <tr><td><a href="sndscm.html#drawdoc">draw.scm</a></td>      <td>graphics additions</td></tr>
+<tr><td><a href="sndscm.html#dspdoc">dsp.scm</a></td>        <td>various DSP-related procedures</td></tr>
 <tr><td><a href="sndscm.html#effectsdoc">effects.scm</a></td><td>an Effects menu based on examp.scm</td></tr>
 <tr><td><a href="sndscm.html#envdoc">env.scm</a></td>        <td>various envelope functions from CLM</td></tr>
 <tr><td><a href="sndscm.html#enveddoc">enved.scm</a></td>    <td>envelope editor in lisp graph section</td></tr>
+<tr><td><a href="sndscm.html#extensionsdoc">extensions.scm</a></td><td>extensions of Snd</td></tr>
 <tr><td><a href="sndscm.html#fmvdoc">fmv.scm</a></td>        <td>the fm-violin tied to real-time gtk graphics</td></tr>
 <tr><td><a href="sndscm.html#glfftdoc">glfft.scm</a></td>    <td>OpenGL for spectra (needs work)</td></tr>
 <tr><td><a href="sndscm.html#goopsnddoc">goopsnd.scm</a></td><td>first look at Goops (Guile Object System) for Snd</td></tr>
@@ -1988,7 +1991,7 @@ the hook.
     (reset-hook! read-hook)
     res))
 <!-- --></pre></td></tr></table></td></tr>
-<!-- --><tr><td colspan=2>See also snd-debug in examp.scm.</td></tr>
+<!-- --><tr><td colspan=2>See also snd-debug in extensions.scm.</td></tr>
 <!-- -->
 <!-- save-hook -->
 <!-- --><tr><td colspan=2>
@@ -1997,7 +2000,7 @@ the hook.
 <!-- --><tr><td></td><td>
 <!-- -->called each time a file is about to be saved. (<b>or hook</b>)
 <!-- -->If it returns #t, the file is not saved.  <i>name</i> is #f unless 
-<!-- -->the file is being saved under a new name (as in sound-save-as).  (See the auto-save code in examp.scm).
+<!-- -->the file is being saved under a new name (as in sound-save-as).  (See the auto-save code in autosave.scm).
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -2284,7 +2287,7 @@ we were.  Do we panic and dial 911? No!  We simply type:
 <p>These hooks are extremely easy to add; if there's some user-interface action
 you'd like to specialize in some way, send me a note.  I'm slowly replacing
 many of the global variables with hooks, since the latter are much more
-flexible.  examp.scm has snd-hooks and reset-all-hooks.
+flexible.  hooks.scm has snd-hooks and reset-all-hooks.
 </p>
 
 <br>
@@ -3263,13 +3266,19 @@ a particular mix object:</p>
 <!-- backward-mix -->
 <!-- -->
 <!-- --><tr><td><span class=defbox><code><em class=def><a name="sndbackwardmix">backward-mix</a></em> (<i>count snd chn</i>)</code></span></td>
-<!-- --><td>move back <i>count</i> mix tags (C-x C-j).
+<!-- --><td>move back <i>count</i> mix tags (C-x C-j), returning the mix id.
+<!-- --></td></tr>
+<!-- -->
+<!-- find-mix -->
+<!-- -->
+<!-- --><tr><td valign=top><span class=defbox><code><em class=def><a name="sndfindmix">find-mix</a></em> (<i>samp snd chn</i>)</code></span></td>
+<!-- --><td>return identifier of mix at sample <i>samp</i> (or anywhere in the given channel if <i>samp</i> is not specified) or #f if no mix is found.
 <!-- --></td></tr>
 <!-- -->
 <!-- forward-mix -->
 <!-- -->
 <!-- --><tr><td><span class=defbox><code><em class=def><a name="sndforwardmix">forward-mix</a></em> (<i>count snd chn</i>)</code></span></td>
-<!-- --><td> move forward <i>count</i> mix tags (C-x C-j).
+<!-- --><td> move forward <i>count</i> mix tags (C-x C-j), returning the mix id.
 <!-- --></td></tr>
 <!-- -->
 <!-- mixes -->
@@ -3707,21 +3716,21 @@ Most of the region number arguments default to the current region (the first in 
 <!-- -->
 <!-- --><tr><td><span class=defbox><code><em class=def><a name="selectionlength">selection-length</a></em> (<i>snd chn</i>)</code></span></td>
 <!-- --><td>
-<!-- -->selection frames. See make-selection in examp.scm.
+<!-- -->selection frames. See make-selection in extensions.scm.
 <!-- --></td></tr>
 <!-- -->
 <!-- selection-member? -->
 <!-- -->
 <!-- --><tr><td><span class=defbox><code><em class=def><a name="selectionmember">selection-member?</a></em> (<i>snd chn</i>)</code></span></td>
 <!-- --><td>
-<!-- -->#t if snd's chn is member of active selection. (This is settable).  See make-selection in examp.scm.
+<!-- -->#t if snd's chn is member of active selection. (This is settable).  See make-selection in extensions.scm.
 <!-- --></td></tr>
 <!-- -->
 <!-- selection-position -->
 <!-- -->
 <!-- --><tr><td valign=top><span class=defbox><code><em class=def><a name="selectionposition">selection-position</a></em> (<i>snd chn</i>)</code></span></td>
 <!-- --><td>
-<!-- -->selection begin sample number (used to be called selection-beg). See make-selection in examp.scm.
+<!-- -->selection begin sample number (used to be called selection-beg). See make-selection in extensions.scm.
 <!-- --></td></tr>
 <!-- -->
 <!-- selection-srate -->
@@ -3755,6 +3764,7 @@ Most of the region number arguments default to the current region (the first in 
 <!-- --></table>
 
 <p>The selected portion can be set, independent of any region, by setting selection-position and selection-length.
+See make-selection in extensions.scm.
 </p>
 
 
@@ -3857,6 +3867,20 @@ desired edit history position.
 <!-- -->display bomb icon in <i>snd's</i> minibuffer.  Set <i>on</i> to #f to erase bomb.  Each time <i>bomb</i>
 <!-- -->is called, the bomb icon moves to the next image in its sequence (showing the bomb's fuse burning down),
 <!-- -->restarting the sequence whenever it reaches the end. [<em class=error>no-such-sound</em>].
+<!-- --></td></tr>
+<!-- -->
+<!-- --><tr><td colspan=2 align=center>
+<!-- --><table border=1 cellpadding=5><tr><td bgcolor="#FCFCF0"><pre>
+(define show-bomb 
+  (lambda (n speed) 
+    (if (> n 0) 
+	(begin 
+	  (bomb) 
+	  (in speed (lambda () (show-bomb (- n 1) speed))))
+	(bomb 0 #f))))
+
+(show-bomb 20 200)
+<!-- --></pre></td></tr></table>
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -4336,7 +4360,7 @@ desired edit history position.
 <!-- --><tr><td></td><td>
 <!-- -->causes the main (time domain) graph to be displayed using dots, 
 <!-- -->the fft graph to use lines, and the lisp graph lollipops.  There 
-<!-- -->are some functions in <a href="sndscm.html#exampdoc">examp.scm</a> (time-graph-style et al) that 
+<!-- -->are some functions in <a href="sndscm.html#extensionsdoc">extensions.scm</a> (time-graph-style et al) that 
 <!-- -->might make these fields easier to access and change.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
@@ -4612,7 +4636,7 @@ desired edit history position.
 <!-- -->will fit in memory (as in using vct-&gt;samples for example).
 <!-- -->Use snd-tempnam to get a temporary filename that reflects the current
 <!-- -->temp-dir setting (if any).  The env-sound-interp function in <a href="sndscm.html#exenvsoundinterp">examp.scm</a>
-<!-- -->is an example of this.  examp.scm also has Snd-4 style mapping functions such as
+<!-- -->is an example of this.  snd4.scm has Snd-4 style mapping functions such as
 <!-- -->map-sound-chans, map-all-chans, etc.  For example:
 <!-- --><br><br>
 <!-- --><center><table border=1 cellpadding=5><tr><td bgcolor="#FCFCF0"><pre>
@@ -4855,7 +4879,7 @@ desired edit history position.
 <!-- --></pre></td></tr></table></td></tr>
 <!-- -->
 <!-- --><tr><td></td><td>
-<!-- -->See eval-over-selection in <a href="sndscm.html#exampdoc">examp.scm</a> for a more useful example.
+<!-- -->See eval-over-selection in <a href="sndscm.html#extensionsdoc">extensions.scm</a> for a more useful example.
 <!-- -->We could also use a continuation here:
 <!-- --></td></tr>
 <!-- -->
@@ -5094,7 +5118,7 @@ desired edit history position.
 	   val))
       (set! result (func (next-sample reader))))))
 <!-- --></pre></td></tr></table>
-<!-- --><br>examp.scm has Snd-4 style scanning functions.  For example:<br><br>
+<!-- --><br>snd4.scm has Snd-4 style scanning functions.  For example:<br><br>
 <!-- --><table border=1 cellpadding=5><tr><td bgcolor="#FCFCF0"><pre>
 (define* (scan-all-chans proc #:optional (beg 0) end edpos)
   (catch 'done
@@ -6631,7 +6655,7 @@ And an example that lets us see the result of filtering the waveform:
 <!-- --></pre></td></tr></table></td></tr>
 <!-- -->
 <!-- --><tr><td></td><td>
-<!-- -->The explicit (slow) form of this transform is dht in <a href="sndscm.html#exampdoc">examp.scm</a>.
+<!-- -->The explicit (slow) form of this transform is dht in <a href="sndscm.html#dspdoc">dsp.scm</a>.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -7742,7 +7766,7 @@ variable %load-verbosely to #t.
 <!-- --></pre></td></tr></table></td></tr>
 <!-- -->
 <!-- --><tr><td></td><td>
-<!-- -->See also map-sound-files in <a href="sndscm.html#exampdoc">examp.scm</a>.
+<!-- -->See also map-sound-files in <a href="sndscm.html#snd4doc">snd4.scm</a>.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -7961,7 +7985,7 @@ an arrow pixmap and displays it next to the sound file name:
 	<!-- I(abort command):L(c-g?)(sndabort) -->
 	<!-- I(count matches):L(count-matches)(lcountmatches) --><!-- I(count matches):A(lcountmatches) -->
 	<!-- I(convolution):L(convolve)(sndconvolve) --><!-- I(convolution):A(sndconvolve) --><!-- I(convolution):O(convolve-with)(sndconvolvewith) -->
-	<!-- I(auto save):O(examp.scm) -->
+	<!-- I(auto save):O(autosave.scm) -->
         <!-- I(reverberate file):L(convolve-with)(sndconvolvewith) -->
         <!-- I(record sound):L(recorder-dialog)(sndrecorderdialog) -->
         <!-- I(describe file):L(info)(sndinfo) -->

@@ -565,11 +565,11 @@ static void swap_channels(snd_state *ss, int beg, int dur, snd_fd *c0, snd_fd *c
     {
       temp_file = 1; 
       ofile0 = snd_tempnam(ss);
-      hdr0 = make_temp_header(ofile0, SND_SRATE(sp0), 1, dur);
+      hdr0 = make_temp_header(ofile0, SND_SRATE(sp0), 1, dur, (char *)S_swap_channels);
       ofd0 = open_temp_file(ofile0, 1, hdr0, ss);
       datumb = mus_data_format_to_bytes_per_sample(hdr0->format);
       ofile1 = snd_tempnam(ss);
-      hdr1 = make_temp_header(ofile1, SND_SRATE(sp0), 1, dur);
+      hdr1 = make_temp_header(ofile1, SND_SRATE(sp0), 1, dur, (char *)S_swap_channels);
       ofd1 = open_temp_file(ofile1, 1, hdr1, ss);
     }
   else temp_file = 0;
@@ -730,7 +730,7 @@ void src_env_or_num(snd_state *ss, chan_info *cp, env *e, Float ratio, int just_
 	  reporting = ((sp) && (dur > (MAX_BUFFER_SIZE * 4)));
 	  if (reporting) start_progress_report(sp, from_enved);
 	  ofile = snd_tempnam(ss);
-	  hdr = make_temp_header(ofile, SND_SRATE(sp), 1, dur);
+	  hdr = make_temp_header(ofile, SND_SRATE(sp), 1, dur, (char *)origin);
 	  ofd = open_temp_file(ofile, 1, hdr, ss);
 	  datumb = mus_data_format_to_bytes_per_sample(hdr->format);
 	  sf = sfs[i];
@@ -1248,7 +1248,7 @@ static char *apply_filter_or_error(chan_info *ncp, int order, env *e, int from_e
 	  fht(pow4, sndrdat);
 
 	  ofile = snd_tempnam(ss);
-	  hdr = make_temp_header(ofile, SND_SRATE(sp), 1, dur);
+	  hdr = make_temp_header(ofile, SND_SRATE(sp), 1, dur, (char *)origin);
 #if MUS_LITTLE_ENDIAN
 	  if (sizeof(Float) == 4)
 	    hdr->format = MUS_LFLOAT;
@@ -1318,7 +1318,7 @@ static char *apply_filter_or_error(chan_info *ncp, int order, env *e, int from_e
 		{
 		  temp_file = 1; 
 		  ofile = snd_tempnam(ss);
-		  hdr = make_temp_header(ofile, SND_SRATE(sp), 1, dur);
+		  hdr = make_temp_header(ofile, SND_SRATE(sp), 1, dur, (char *)origin);
 		  ofd = open_temp_file(ofile, 1, hdr, ss);
 		  datumb = mus_data_format_to_bytes_per_sample(hdr->format);
 		}
@@ -1481,7 +1481,7 @@ static void reverse_sound(chan_info *ncp, int over_selection, SCM edpos, int arg
 	    {
 	      temp_file = 1; 
 	      ofile = snd_tempnam(ss);
-	      hdr = make_temp_header(ofile, SND_SRATE(sp), 1, dur);
+	      hdr = make_temp_header(ofile, SND_SRATE(sp), 1, dur, (char *)S_reverse_sound);
 	      ofd = open_temp_file(ofile, 1, hdr, ss);
 	      datumb = mus_data_format_to_bytes_per_sample(hdr->format);
 	    }
@@ -1624,7 +1624,7 @@ void apply_env(chan_info *cp, env *e, int beg, int dur, Float scaler, int regexp
     {
       temp_file = 1; 
       ofile = snd_tempnam(ss); 
-      hdr = make_temp_header(ofile, SND_SRATE(sp), si->chans, dur);
+      hdr = make_temp_header(ofile, SND_SRATE(sp), si->chans, dur, (char *)origin);
       ofd = open_temp_file(ofile, si->chans, hdr, ss);
       if (ofd == -1)
 	{

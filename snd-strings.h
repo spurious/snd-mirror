@@ -436,6 +436,7 @@
 #define S_filter_waveform_color         "filter-waveform-col" STR_OR
 #define S_find                          "find"
 #define S_find_mark                     "find-mark"
+#define S_find_mix                      "find-mix"
 #define S_find_sound                    "find-sound"
 #define S_finish_progress_report        "finish-progress-report"
 #define S_focus_widget                  "focus-widget"

@@ -268,6 +268,8 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
+21-Jun:  dsp.scm, autosave.scm, extensions.scm.\n\
+         find-mix.\n\
 20-Jun:  read-hook. hooks.scm\n\
 19-Jun:  removed snd-main-shell -- use (cadr (main-widgets)) instead.\n\
          make-pixmap and set-pixmap.\n\

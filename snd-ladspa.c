@@ -607,7 +607,8 @@ by any arguments. (Information about about parameters can be acquired using anal
   hdr = make_temp_header(ofile,
 			 SND_SRATE(sp),
 			 1,
-			 num);
+			 num,
+			 TO_C_STRING(origin));
 
   /* Open the output file, using the header we've been working on. */
   ofd = open_temp_file(ofile, 1, hdr, state);

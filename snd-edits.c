@@ -3050,7 +3050,7 @@ replacing current data with the function results; origin is the edit-history nam
     }
   ofile = snd_tempnam(ss);
   sp = (cp->sound);
-  hdr = make_temp_header(ofile, SND_SRATE(sp), 1, num);
+  hdr = make_temp_header(ofile, SND_SRATE(sp), 1, num, TO_C_STRING(origin));
   ofd = open_temp_file(ofile, 1, hdr, ss);
   datumb = mus_data_format_to_bytes_per_sample(hdr->format);
   data = (MUS_SAMPLE_TYPE **)MALLOC(sizeof(MUS_SAMPLE_TYPE *));

@@ -18,14 +18,9 @@
 ;;; make a system call
 ;;; translate mpeg input to 16-bit linear and read into Snd
 ;;; make dot size dependent on number of samples being displayed
-;;; auto-save
 ;;; move window left edge to mark upon 'm' key
 ;;; flash selected data red and green
-;;; show bomb icon
 ;;; use loop info (if any) to set marks at loop points
-;;; delete selected portion and smooth the splice
-;;; eval over selection or between marks replacing current samples, mapped to "x" or "m" key using prompt-in-minibuffer
-;;; mix with result at original peak amp
 ;;; mapping extensions (map arbitrary single-channel function over various channel collections)
 ;;;     do-chans, do-all-chans, do-sound-chans
 ;;;     every-sample?
@@ -47,50 +42,36 @@
 ;;; fm-violin (FM and various other generators, #:key args)
 ;;; FOF voice synthesis (wave-train, #:optional args)
 ;;; phase vocoder
-;;; mix with envelope
-;;; time varying FIR filter, notch filter, frequency-response -> FIR coeffs
-;;; map-sound-files, match-sound-files
-;;; move sound down 8ve using fft
+;;; time varying FIR filter, notch filter
 ;;; swap selection chans
 ;;; sound-interp, env-sound-interp
-;;; compute-uniform-circular-string (and scanned-synthesis)
 ;;; add date and time to title bar
-;;; selection-members
 ;;; with-sound for Snd
 ;;; how to get 'display' to write to Snd's listener
 ;;; hold DAC open and play sounds via keyboard
-;;; "frequency division"
-;;; "adaptive saturation"
-;;; Dolph-Chebyshev fft data window
-;;; spike effect
 ;;; pluck instrument (physical modelling)
 ;;; voice instrument (formants via FM)
 ;;; filtered-env (low-pass and amplitude follow envelope)
 ;;; multi-colored rxvt printout
-;;; dht -- slow Hartley transform 
-;;; accessors for graph-style fields
-;;; Butterworth filters
 ;;; locsig using fancier placement choice (Michael Edwards)
 ;;; lisp graph with draggable x axis
-;;; easily-fooled autocorrelation-based pitch tracker 
 ;;; pointer focus within Snd
 ;;; View: Files dialog chooses which sound is displayed
 ;;; "vector synthesis"
-;;; make-selection
 ;;; remove-clicks
-;;; snd-debug
 
-;;; TODO: split this file into 10 or 20 pieces!
+;;; TODO: decide how to handle the CLM examples
 ;;; TODO: robust pitch tracker
 ;;; TODO: adaptive notch filter
 ;;; TODO: ins: singer piano flute fade
 ;;; TODO: data-file rw case for pvoc.scm
 ;;; TODO: C-s to next same-sense zero-crossing or next peak or click
 ;;;       would need to make C-s/r accept proc of 2 args: start dir, returning loc
+;;;       or accept list return = loc found (i.e. bypassing current sample-readers)
 ;;; TODO: C-s wrap-around (as in Emacs)
-;;; TODO: input from pipe
-;;; TODO: timed record
+;;; TODO: triggered record
 ;;; TODO: notation following location (as in display-current-window-location)
+;;;       but this requires some way to converse with cmn that does not require sleep
 
 (use-modules (ice-9 debug))
 (use-modules (ice-9 format))
@@ -98,16 +79,17 @@
 (debug-enable 'debug 'backtrace)
 (read-enable 'positions)
 
-(define (all-chans)
-  (let ((sndlist '())
-	(chnlist '()))
-    (for-each (lambda (snd)
-		(do ((i (1- (channels snd)) (1- i)))
-		    ((< i 0))
-		  (set! sndlist (cons snd sndlist))
-		  (set! chnlist (cons i chnlist))))
-	      (sounds))
-    (list sndlist chnlist)))
+(if (not (defined? 'all-chans))
+    (define (all-chans)
+      (let ((sndlist '())
+	    (chnlist '()))
+	(for-each (lambda (snd)
+		    (do ((i (1- (channels snd)) (1- i)))
+			((< i 0))
+		      (set! sndlist (cons snd sndlist))
+		      (set! chnlist (cons i chnlist))))
+		  (sounds))
+	(list sndlist chnlist))))
 
 
 ;;; -------- (ext)snd.html examples made harder to break --------
@@ -649,93 +631,6 @@
 ;(add-hook! graph-hook auto-dot)
 
 
-;;; -------- auto-save 
-
-(define auto-save-interval 60.0) ;seconds between auto-save checks
-
-(define auto-saving #f)
-
-(define cancel-auto-save
-  (lambda ()
-    (set! auto-saving #f)))
-
-(define auto-save-histories '())
-
-(define unsaved-edits
-  (lambda (snd)
-    (let ((data (assoc snd auto-save-histories)))
-      (if data 
-	  (cdr data) 
-	  0))))
-
-(define clear-unsaved-edits
-  (lambda (snd)
-    (let ((old-data (assoc snd auto-save-histories)))
-      (if old-data
-	  (set-cdr! old-data 0)
-	  (set! auto-save-histories (cons (cons snd 0) auto-save-histories))))))
-
-(define increment-unsaved-edits
-  (lambda (snd)
-    (let ((old-data (assoc snd auto-save-histories)))
-      (if old-data
-	  (set-cdr! old-data (+ (cdr old-data) 1))
-	  (set! auto-save-histories (cons (cons snd 1) auto-save-histories))))))
-
-(define upon-edit
-  (lambda (snd)
-    (lambda ()
-      (increment-unsaved-edits snd))))
-
-(define auto-save-open-func
-  (lambda (snd)
-    (let ((temp-file (string-append "/tmp/#" (short-file-name snd) "#")))
-      (if (and (file-exists? temp-file)
-	       (< (file-write-date (file-name snd)) (file-write-date temp-file)))
-	  (snd-warning (format #f "auto-saved version of ~S (~S) is newer"
-			       (short-file-name snd)
-			       temp-file)))
-      (do ((i 0 (1+ i)))
-	  ((= i (channels snd)))
-	(if (hook-empty? (edit-hook snd i))
-	    (add-hook! (edit-hook snd i) (upon-edit snd))))
-      (clear-unsaved-edits snd))))
-
-;(add-hook! after-open-hook auto-save-open-func)
-
-(define auto-save-done
-  (lambda (snd)
-    (let ((temp-file (string-append "/tmp/#" (short-file-name snd) "#")))
-      (if (file-exists? temp-file)
-	  (delete-file temp-file))
-      (clear-unsaved-edits snd)
-      #f)))
-
-;(add-hook! close-hook auto-save-done)
-;(add-hook! save-hook (lambda (snd name) (auto-save-done snd)))
-;(add-hook! exit-hook (lambda () (map auto-save-done (sounds))))
-
-(define auto-save-func
-  (lambda ()
-    (if auto-saving
-	(begin
-	  (map (lambda (snd)
-		 (if (> (unsaved-edits snd) 0)
-		     (begin
-		       (report-in-minibuffer "auto-saving..." snd)
-		       (in (* 1000 3) (lambda () (report-in-minibuffer "" snd)))
-		       (save-sound-as (string-append "/tmp/#" (short-file-name snd) "#") snd)
-		       (clear-unsaved-edits snd))))
-	     (sounds))
-	  (in (* 1000 auto-save-interval) auto-save-func)))))
-
-(define auto-save
-  (lambda ()
-    "(auto-save) starts watching files, automatically saving backup copies as edits accumulate"
-    (set! auto-saving #t)
-    (in (* 1000 auto-save-interval) auto-save-func)))
-
-
 
 ;;; -------- move window left edge to mark upon 'm'
 ;;;
@@ -775,7 +670,7 @@
 (define red (make-color 1 0 0))
 (define green (make-color 0 1 0))
 (define data-red? #t)
-(set! (selected-data-color) red)
+;(set! (selected-data-color) red)
 
 (define flash-selected-data
   (lambda (interval)
@@ -785,19 +680,6 @@
 	  (set! (selected-data-color) (if data-red? green red))
 	  (set! data-red? (not data-red?))
 	  (in interval (lambda () (flash-selected-data interval)))))))
-
-
-;;; -------- show bomb icon
-
-(define show-bomb 
-  (lambda (n speed) 
-    (if (> n 0) 
-	(begin 
-	  (bomb) 
-	  (in speed (lambda () (show-bomb (- n 1) speed))))
-	(bomb 0 #f))))
-
-; (show-bomb 20 200)
 
 
 ;;; --------  use loop info (if any) to set marks at loop points
@@ -819,72 +701,6 @@
 	  (snd-print "no loop info")))))
 		
 	    
-
-;;; -------- delete selected portion and smooth the splice
-
-(define delete-selection-and-smooth
-  (lambda ()
-    "(delete-selection-and-smooth) deletes the current selection and smooths the splice"
-    (if (selection?)
-	(let ((beg (selection-position))
-	      (len (selection-length)))
-	  (apply map (lambda (snd chn)
-		       (if (selection-member? snd chn)
-			   (let ((smooth-beg (max 0 (- beg 16))))
-			     (delete-samples beg len snd chn)
-			     (smooth-sound smooth-beg 32 snd chn))))
-		 (all-chans))))))
-
-
-;;; -------- eval over selection, replacing current samples, mapped to "x" key using prompt-in-minibuffer
-;;;
-;;; when the user types x (without modifiers) and there is a current selection,
-;;;   the minibuffer prompts "selection eval:".  Eventually the user responds,
-;;;   hopefully with a function of one argument, the current selection sample
-;;;   the value returned by the function becomes the new selection value.
-
-(bind-key (char->integer #\x) 0 
-	  (lambda ()
-	    (if (selection?)
-		(prompt-in-minibuffer "selection eval:" eval-over-selection)
-		(report-in-minibuffer "no selection"))))
-
-(define eval-over-selection 
-  (lambda (func)
-    "(eval-over-selection func) evaluates func on each sample in the current selection"
-    (if (and (procedure? func) 
-	     (selection?))
-	(let* ((beg (selection-position))
-	       (len (selection-length)))
-	  (apply map (lambda (snd chn)
-		       (if (selection-member? snd chn)
-			   (let ((new-data (make-vct len))
-				 (old-data (samples->vct beg len snd chn)))
-			     (do ((k 0 (1+ k))) ;here we're applying our function to each sample in the currently selected portion
-				 ((= k len) (set-samples beg len new-data snd chn))
-			       (vct-set! new-data k (func (vct-ref old-data k)))))))
-		 (all-chans))))))
-
-;;; the same idea can be used to apply a function between two marks (see eval-between-marks in marks.scm)
-
-
-;;; -------- mix with result at original peak amp
-
-(define normalized-mix 
-  (lambda (filename beg in-chan snd chn)
-    "(normalized-mix filename beg in-chan snd chn) is like mix but mix result has same peak amp as unmixed snd/chn (returns scaler)"
-    (let ((original-max-amp (maxamp snd chn)))
-      (mix filename beg in-chan snd chn)
-      (let ((new-max-amp (maxamp snd chn)))
-	(if (not (= original-max-amp new-max-amp))
-	    (let ((scaler (/ original-max-amp new-max-amp))
-		  (old-sync (sync snd)))
-	      (set! (sync snd) 0)
-	      (scale-by scaler snd chn)
-	      (set! (sync snd) old-sync)
-	      scaler)
-	    1.0)))))
-
 
 ;;; -------- mapping extensions (map arbitrary single-channel function over various channel collections)
 ;;;
@@ -1887,39 +1703,6 @@
 	 (vct->samples 0 (max len outlen) out-data))))))
 
 
-;;;-------- mix with envelope on mixed-in file
-;;;
-;;; there are lots of ways to do this; this version uses functions from Snd, CLM, and Sndlib.
-
-(define enveloped-mix
-  (lambda (filename beg env)
-    "(enveloped-mix filename beg env) mixes filename starting at beg with amplitude envelope env"
-    (let ((len (mus-sound-frames filename))
-	  (tmpfil (mus-sound-open-output "/tmp/tmp.snd" 22050 1 mus-bshort mus-next ""))
-	  (mx (make-mixer 1 1.0))
-	  (envs (make-vector 1))
-	  (inenvs (make-vector 1)))
-      (mus-sound-close-output tmpfil 0)
-      (vector-set! inenvs 0 (make-env env :end len))
-      (vector-set! envs 0 inenvs)
-      (mus-mix "/tmp/tmp.snd" filename 0 len 0 mx envs)
-      (mix "/tmp/tmp.snd" beg)
-      (delete-file "/tmp/tmp.snd"))))
-
-;(enveloped-mix "pistol.snd" 0 '(0 0 1 1 2 0))
-
-;;; another way:
-
-(define enveloped-mix-1
-  (lambda (filename beg env)
-    (as-one-edit
-     (lambda ()
-       (let* ((mix-id (mix filename beg))
-	      (inchans (mix-chans mix-id)))
-	 (do ((i 0 (1+ i)))
-	     ((= i inchans))
-	   (set! (mix-amp-env mix-id i) env)))))))
-
 
 
 ;;; -------- time varying FIR filter
@@ -1943,43 +1726,6 @@
 
 ;(map-chan (fltit))
 
-
-;;; Snd's (very simple) spectrum->coefficients procedure is:
-
-(define spectrum->coeffs 
-  (lambda (order spectr)
-    "(spectrum->coeffs order spectr) returns FIR filter coefficients given the filter order and desired spectral envelope"
-    (let* ((coeffs (make-vct order))
-	   (n order)
-	   (m (inexact->exact (floor (/ (+ n 1) 2))))
-	   (am (* 0.5 (+ n 1)))
-	   (q (/ (* 3.14159 2.0) n)))
-      (do ((j 0 (1+ j))
-	   (jj (- n 1) (1- jj)))
-	  ((= j m) coeffs)
-	(let ((xt (* 0.5 (vct-ref spectr 0))))
-	  (do ((i 1 (1+ i)))
-	      ((= i m))
-	    (set! xt (+ xt (* (vct-ref spectr i) (cos (* q i (- am j 1)))))))
-	  (let ((coeff (* 2.0 (/ xt n))))
-	    (vct-set! coeffs j coeff)
-	    (vct-set! coeffs jj coeff)))))))
-
-(define fltit-1
-  (lambda (order spectr) 
-    "(fltit order spectrum) creates an FIR filter from spectrum and order and returns a closure that calls it"
-    (let* ((coeffs (spectrum->coeffs order spectr))
-	   (flt (make-fir-filter order coeffs)))
-      (lambda (x)
-	(fir-filter flt x)))))
-
-;(map-chan (fltit-1 10 (list->vct '(0 1.0 0 0 0 0 0 0 1.0 0))))
-;
-;(let ((notched-spectr (make-vct 40)))
-;  (vct-set! notched-spectr 2 1.0)  
-;  (vct-set! notched-spectr 37 1.0)
-;  (map-chan (fltit-1 40 notched-spectr)))
-;
 ;;; for something this simple (like a notch filter), we can use a two-zero filter:
 ;
 ;(define flt (make-zpolar .99 550.0))
@@ -1993,94 +1739,6 @@
 
 
 
-
-;;; -------- map-sound-files, match-sound-files
-;;;
-;;; apply a function to each sound in dir
-;;;
-;;;   (map-sound-files (lambda (n) (if (> (mus-sound-duration n) 10.0) (snd-print n))))
-
-(define map-sound-files
-  (lambda args
-    "(map-sound-files func &optional dir) applies func to each sound file in dir"
-    (map (car args) 
-	 (vector->list (sound-files-in-directory (if (null? (cdr args)) "." (cadr args)))))))
-
-; (map-sound-files 
-;  (lambda (n) 
-;    (catch #t
-;           (lambda ()
-; 	      (if (not (null? (mus-sound-loop-info (string-append "/home/bil/sf/" n)))) 
-; 		  (snd-print n)))
-;             (lambda args #f)))
-;  "/home/bil/sf")
-
-(define match-sound-files
-  (lambda args
-    "(match-sound-files func &optional dir) applies func to each sound file in dir and returns a list of files for which func does not return #f"
-    (let* ((func (car args))
-	   (files (sound-files-in-directory (if (null? (cdr args)) "." (cadr args))))
-	   (matches '()))
-      (do ((i 0 (1+ i)))
-	  ((= i (vector-length files)))
-	(let ((filename (vector-ref files i)))
-	  (if (func filename)
-	      (set! matches (cons filename matches)))))
-      matches)))
-  
-;;; we can use Guile's regexp support here to search for all .snd and .wav files:
-;
-;(let ((reg (make-regexp ".wav|.snd$")))
-;  (match-sound-files (lambda (file) (regexp-exec reg file))))
-;
-;;; this argument to make-regexp is looking for *.wav and *.snd
-;;; in fact, we could use regexp's in place of Snd's sound-files-in-directory.
-
-;;; a prettier version might use a function written by Dirk Herrmann:
-
-(define (filter-list pred? objects)
-  (let loop ((objs objects)
-	     (result '()))
-    (cond ((null? objs) (reverse! result))
-	  ((pred? (car objs)) (loop (cdr objs) (cons (car objs) result)))
-	  (else (loop (cdr objs) result)))))
-
-(define match-sound-files-1
-  (lambda args
-    (filter-list 
-     (car args) 
-     (vector->list 
-      (sound-files-in-directory 
-       (if (null? (cdr args)) 
-	   "." 
-	   (cadr args)))))))
-
-    
-;;; -------- move sound down 8ve using fft
-
-(define (down-oct)
-  "(down-oct) tries to move a sound down an octave"
-  (let* ((len (frames))
-	 (pow2 (ceiling (/ (log len) (log 2))))
-	 (fftlen (inexact->exact (expt 2 pow2)))
-	 (fftscale (/ 1.0 fftlen))
-	 (rl1 (samples->vct 0 fftlen))
-	 (im1 (make-vct fftlen)))
-    (fft rl1 im1 1)
-    (vct-scale! rl1 fftscale)
-    (vct-scale! im1 fftscale)
-    (let ((rl2 (make-vct (* 2 fftlen)))
-	  (im2 (make-vct (* 2 fftlen))))
-      (do ((i 0 (+ i 1))
-	   (k (/ fftlen 2) (+ k 1))
-	   (j (+ fftlen (/ fftlen 2)) (+ j 1)))
-	  ((= i (/ fftlen 2)))
-	(vct-set! rl2 i (vct-ref rl1 i))
-	(vct-set! rl2 j (vct-ref rl1 k))
-	(vct-set! im2 i (vct-ref im1 i))
-	(vct-set! im2 j (vct-ref im1 k)))
-      (fft rl2 im2 -1)
-      (vct->samples 0 (* 2 fftlen) rl2))))
 
 
 ;;; -------- swap selection chans
@@ -2201,116 +1859,6 @@
       (set-samples 0 newlen tempfilename snd chn #t))))
 
 
-;;; -------- compute-uniform-circular-string
-;;;
-;;; this is a simplification of the underlying table-filling routine for "scanned synthesis".
-;;; To watch the wave, open some sound (so Snd has some place to put the graph), turn off
-;;; the time domain display (to give our graph all the window -- I may make this available
-;;; in a simpler form), then (testunif 1.0 0.1 0.0) or whatever.
-
-;;; TODO: make it straight-forward to define/use an unattached lisp graph
-
-(define compute-uniform-circular-string
-  (lambda (size x0 x1 x2 mass xspring damp)
-    (define circle-vct-ref 
-      (lambda (v i)
-	(if (< i 0)
-	    (vct-ref v (+ size i))
-	    (if (>= i size)
-		(vct-ref v (- i size))
-		(vct-ref v i)))))
-    (let* ((dm (/ damp mass))
-	   (km (/ xspring mass))
-	   (denom (+ 1.0 dm))
-	   (p1 (/ (+ 2.0 (- dm (* 2.0 km))) denom))
-	   (p2 (/ km denom))
-	   (p3 (/ -1.0 denom)))
-      (do ((i 0 (1+ i)))
-	  ((= i size))
-	(vct-set! x0 i (+ (* p1 (vct-ref x1 i))
-			  (* p2 (+ (circle-vct-ref x1 (- i 1)) (circle-vct-ref x1 (+ i 1))))
-			  (* p3 (vct-ref x2 i)))))
-      (vct-fill! x2 0.0)
-      (vct-add! x2 x1)
-      (vct-fill! x1 0.0)
-      (vct-add! x1 x0))))
-
-(define testunif
-  (lambda (mass xspring damp)
-    (let* ((size 128)
-	   (x0 (make-vct size))	   
-	   (x1 (make-vct size))	   
-	   (x2 (make-vct size)))
-      (do ((i 0 (1+ i)))
-	  ((= i 12))
-	(let ((val (sin (/ (* 2 pi i) 12.0))))
-	  (vct-set! x1 (+ i (- (/ size 4) 6)) val)))
-      (do ((i 0 (1+ i)))
-	  ((or (c-g?) (= i 1024)))
-	(compute-uniform-circular-string size x0 x1 x2 mass xspring damp)
-	(graph x0 "string" 0 1.0 -10.0 10.0)))))
-
-(define test-scanned-synthesis
-  ;; check out scanned-synthesis
-  (lambda (amp dur mass xspring damp)
-    (let* ((size 256)
-	   (x0 (make-vct size))	   
-	   (x1 (make-vct size))	   
-	   (x2 (make-vct size)))
-      (do ((i 0 (1+ i)))
-	  ((= i 12))
-	(let ((val (sin (/ (* 2 pi i) 12.0))))
-	  (vct-set! x1 (+ i (- (/ size 4) 6)) val)))
-      (let ((gen1 (make-table-lookup 440.0 :wave x1))
-	    (gen2 (make-table-lookup 440.0 :wave x2))
-	    (recompute-samps 30) ;just a quick guess
-	    (data (make-vct dur)))
-	(do ((i 0 (1+ i))
-	     (k 0.0)
-	     (kincr (/ 1.0 recompute-samps)))
-	    ((or (c-g?) (= i dur)))
-	  (if (>= k 1.0)
-	      (begin
-		(set! k 0.0)
-		(compute-uniform-circular-string size x0 x1 x2 mass xspring damp))
-	      (set! k (+ k kincr)))
-	  (let ((g1 (table-lookup gen1))
-		(g2 (table-lookup gen2)))
-	    (vct-set! data i (+ g2 (* k (- g1 g2))))))
-	(let ((curamp (vct-peak data)))
-	  (vct-scale! data (/ amp curamp)))
-	(vct->samples 0 dur data)))))
-
-(define compute-string
-  ;; this is the more general form
-  (lambda (size x0 x1 x2 masses xsprings esprings damps haptics)
-    (define circle-vct-ref 
-      (lambda (v i)
-	(if (< i 0)
-	    (vct-ref v (+ size i))
-	    (if (>= i size)
-		(vct-ref v (- i size))
-		(vct-ref v i)))))
-    (do ((i 0 (1+ i)))
-	((= i size))
-      (let* ((dm (/ (vct-ref damps i) (vct-ref masses i)))
-	     (km (/ (vct-ref xsprings i) (vct-ref masses i)))
-	     (cm (/ (vct-ref esprings i) (vct-ref masses i)))
-	     (denom (+ 1.0 dm cm))
-	     (p1 (/ (+ 2.0 (- dm (* 2.0 km))) denom))
-	     (p2 (/ km denom))
-	     (p3 (/ -1.0 denom))
-	     (p4 (/ (vct-ref haptics i) (* (vct-ref masses i) denom))))
-	(vct-set! x0 i (+ (* p1 (vct-ref x1 i))
-			  (* p2 (+ (circle-vct-ref x1 (- i 1)) (circle-vct-ref x1 (+ i 1))))
-			  (* p3 (vct-ref x2 i))
-			  p4))))
-    (do ((i 0 (1+ i)))
-	((= i size))
-      (vct-set! x2 i (vct-ref x1 i))
-      (vct-set! x1 i (vct-ref x0 i)))))
-
-
 
 ;;; -------- add date and time to title bar
 ;;;
@@ -2335,23 +1883,6 @@
 
 ;(title-with-date)
 ;  -- this line starts the new window title handler which runs until Snd is exited or retitle-time is set to 0
-
-
-;;; -------- selection-members
-;;;
-;;; returns a list of lists of (snd chn): channels in current selection
-
-(define selection-members
-  (lambda ()
-    (let ((sndlist '()))
-      (if (selection?)
-	  (map (lambda (snd)
-		 (do ((i (1- (channels snd)) (1- i)))
-		     ((< i 0))
-		   (if (selection-member? snd i)
-		       (set! sndlist (cons (list snd i) sndlist)))))
-	       (sounds)))
-      sndlist)))
 
 
 ;;; -------- with-sound for Snd!
@@ -2452,105 +1983,6 @@
 
 ;;; in this particular case, there's no need to hold the DAC open
 ;;;   but maybe this will come in handy someday
-
-
-;;; -------- "frequency division" -- an effect from sed_sed@my-dejanews.com
-;;;
-;;; (freqdiv n) repeats each nth sample n times (clobbering the intermediate samples)
-
-(define freqdiv
-  (lambda (n)
-    (let ((div 0)
-	  (curval 0.0))
-      (map-chan (lambda (val)
-		  (if (= div 0)
-		      (set! curval val))
-		  (set! div (1+ div))
-		  (if (= div n) (set! div 0))
-		  curval)))))
-
-;(freqdiv 8)
-
-
-;;; -------- "adaptive saturation" -- an effect from sed_sed@my-dejanews.com
-;;;
-;;; a more extreme effect is "saturation":
-;;;   (map-chan (lambda (val) (if (< (abs val) .1) val (if (>= val 0.0) 0.25 -0.25))))
-
-(define adsat
-  (lambda (size)
-    (let ((mn 0.0)
-	  (mx 0.0)
-	  (n 0)
-	  (vals (make-vct size)))
-      (map-chan (lambda (val)
-		  (if (= n size)
-		      (begin
-			(do ((i 0 (1+ i)))
-			    ((= i size))
-			  (if (>= (vct-ref vals i) 0.0)
-			      (vct-set! vals i mx)
-			      (vct-set! vals i mn)))
-			(set! n 0)
-			(set! mx 0.0)
-			(set! mn 0.0)
-			vals)
-		      (begin
-			(vct-set! vals n val)
-			(if (> val mx) (set! mx val))
-			(if (< val mn) (set! mn val))
-			(set! n (1+ n))
-			#f)))))))
-
-
-;;; -------- Dolph-Chebyshev window
-;;; 
-;;; formula taken from Richard Lyons, "Understanding DSP"
-;;; see clm.c for C version (using GSL's complex trig functions)
-
-(define (dolph N gamma)
-  (let* ((alpha (cosh (/ (acosh (expt 10.0 gamma)) N)))
-	 (den (/ 1.0 (cosh (* N (acosh alpha)))))
-	 (freq (/ pi N))
-	 (rl (make-vct N))
-	 (im (make-vct N)))
-    (do ((i 0 (1+ i))
-	 (phase 0.0 (+ phase freq)))
-	((= i N))
-      (let ((val (* den (cos (* N (acos (* alpha (cos phase))))))))
-	(vct-set! rl i (real-part val))
-	(vct-set! im i (imag-part val)))) ;this is actually always essentially 0.0
-    (fft rl im -1)            ;direction could also be 1
-    (vct-set! rl (/ N 2) 0.0) ;hmm... why is this needed?
-    (let ((pk (vct-peak rl)))
-      (vct-scale! rl (/ 1.0 pk)))
-    (do ((i 0 (1+ i))
-	 (j (/ N 2)))
-	((= i N))
-      (vct-set! im i (vct-ref rl j))
-      (set! j (+ j 1))
-      (if (= j N) (set! j 0)))
-    im))
-
-
-;;; -------- spike
-;;;
-;;; makes sound more spikey -- sometimes a nice effect
-
-(define (spike)
-  (map-chan (let ((x1 0.0) 
-		  (x2 0.0) 
-		  (amp (maxamp))) ; keep resultant peak at maxamp
-	      (lambda (x0) 
-		(let ((res (* (/ x0 (* amp amp)) 
-			      (abs x2) 
-			      (abs x1)))) 
-		  (set! x2 x1) 
-		  (set! x1 x0) 
-		  res)))))
-
-;;; the more successive samples we include in the product, the more we
-;;;   limit the output to pulses placed at (just after) wave peaks
 
 
 ;;; -------- pluck
@@ -2801,127 +2233,6 @@
 ;(display (format #f "~A~Ahiho~Ahiho" yellow-bg red-fg normal-text))
 
 
-;;; -------- slow Hartley transform 
-
-(define (dht data) 
-  ;; taken from Perry Cook's SignalProcessor.m (the slow version of the Hartley transform)
-  ;; the built-in function fht is the fast form of this transform
-  (let* ((len (vct-length data)) 
-	 (arr (make-vct len))
-	 (w (/ (* 2.0 pi) len)))
-    (do ((i 0 (1+ i)))
-	((= i len))
-      (do ((j 0 (1+ j)))
-	  ((= j len))
-	(vct-set! arr i (+ (vct-ref arr i) 
-			   (* (vct-ref data j) 
-			      (+ (cos (* i j w)) 
-				 (sin (* i j w))))))))
-    arr))
-
-
-;;; -------- accessors for graph-style fields
-
-(define time-graph-style
-  (make-procedure-with-setter
-   (lambda (snd chn)
-     (logand (graph-style snd chn) #xff))
-   (lambda (snd chn val)
-     (set! (graph-style snd chn)
-	   (logior (logand (graph-style snd chn) #xffff00)
-		   val)))))
-
-(define transform-graph-style
-  (make-procedure-with-setter
-   (lambda (snd chn)
-     (let ((style (logand (ash (graph-style snd chn) -8) #xff)))
-       (if (= style 0)
-	   (time-graph-style snd chn)
-	   (- style 1))))
-   (lambda (snd chn val)
-     ;; -1 will unset
-     (set! (graph-style snd chn)
-	   (logior (logand (graph-style snd chn) #xff00ff)
-		   (ash (+ val 1) 8))))))
-
-(define lisp-graph-style
-  (make-procedure-with-setter
-   (lambda (snd chn)
-     (let ((style (logand (ash (graph-style snd chn) -16) #xff)))
-       (if (= style 0)
-	   (time-graph-style snd chn)
-	   (- style 1))))
-   (lambda (snd chn val)
-     ;; -1 will unset
-     (set! (graph-style snd chn)
-	   (logior (logand (graph-style snd chn) #xffff)
-		   (ash (+ val 1) 16))))))
-
-
-;;; -------- Butterworth filters
-;;;
-;; translated from CLM butterworth.cl:
-;;
-;;   Sam Heisz, January 1998
-;;   inspired by some unit generators written for Csound by Paris Smaragdis
-;;   who based his work on formulas from 
-;;   Charles Doge, Computer music: synthesis, composition, and performance.
-
-(define root-2 (sqrt 2.0))
-
-(define (butter b sig) (filter b sig))
-
-(define (make-butter-high-pass fq)
-  (let* ((r (tan (/ (* pi fq) (srate))))
-	 (r2 (* r r))
-	 (c1 (/ 1.0 (+ 1.0 (* r root-2) r2)))
-	 (c2  (* -2.0 c1))
-	 (c3 c1)
-	 (c4 (* 2.0 (- r2 1.0) c1))
-	 (c5 (* (+ (- 1.0 (* r root-2)) r2) c1)))
-    (make-filter 3
-		 (list->vct (list c1 c2 c3))
-		 (list->vct (list 0.0 c4 c5)))))
-
-(define (make-butter-low-pass fq)
-  (let* ((r (/ 1.0 (tan (/ (* pi fq) (srate)))))
-	 (r2 (* r r))
-	 (c1 (/ 1.0 (+ 1.0 (* r root-2) r2)))
-	 (c2 (* 2.0 c1))
-	 (c3 c1)
-	 (c4 (* 2.0 (- 1.0 r2) c1))
-	 (c5  (* (+ (- 1.0 (* r root-2)) r2) c1)))
-    (make-filter 3
-		 (list->vct (list c1 c2 c3))
-		 (list->vct (list 0.0 c4 c5)))))
-
-(define (make-butter-band-pass fq bw)
-  (let* ((d (* 2.0 (cos (/ (* 2.0 pi fq) (srate)))))
-	 (c (/ 1.0 (tan (/ (* pi bw) (srate)))))
-	 (c1 (/ 1.0 (+ 1.0 c)))
-	 (c2 0.0)
-	 (c3 (- c1))
-	 (c4 (* (- c) d c1))
-	 (c5 (* (- c 1.0) c1)))
-    (make-filter 3
-		 (list->vct (list c1 c2 c3))
-		 (list->vct (list 0.0 c4 c5)))))
-
-(define (make-butter-band-reject fq bw)
-  (let* ((d  (* 2.0 (cos (/ (* 2.0 pi fq) (srate)))))
-	 (c (tan (/ (* pi bw) (srate))))
-	 (c1 (/ 1.0 (+ 1.0 c)))
-	 (c2 (* (- d) c1))
-	 (c3 c1)
-	 (c4 c2)
-	 (c5 (* (- 1.0 c) c1)))
-    (make-filter 3
-		 (list->vct (list c1 c2 c3))
-		 (list->vct (list 0.0 c4 c5)))))
-
-;;; simplest use is (filter-sound (make-butter-low-pass 500.0))
-;;; see also effects.scm
-
 
 ;;; -------- locsig using fancier placement choice
 ;;;
@@ -2978,37 +2289,6 @@
 
 ;(add-hook! mouse-drag-hook mouse-drag)
 ;(add-hook! mouse-press-hook mouse-press)
-
-
-;;; -------- easily-fooled autocorrelation-based pitch tracker 
-
-(define spot-freq
-  (lambda args
-    (let* ((s0 (car args))
-	   (snd (if (> (length args) 1) (list-ref args 1) #f))
-	   (chn (if (> (length args) 2) (list-ref args 2) #f))
-	   (pow2 (ceiling (/ (log (/ (srate snd) 20.0)) (log 2))))
-	   (fftlen (inexact->exact (expt 2 pow2)))
-	   (data (autocorrelate (samples->vct s0 fftlen snd chn)))
-	   (cor-peak (vct-peak data)))
-      (call-with-current-continuation
-       (lambda (return)
-	 (do ((i 1 (1+ i)))
-	     ((= i (- fftlen 2)) 0)
-	   (if (and (< (vct-ref data i) (vct-ref data (+ i 1)))
-		    (> (vct-ref data (+ i 1)) (vct-ref data (+ i 2))))
-	       (begin
-		 (let* ((logla (log10 (/ (+ cor-peak (vct-ref data i)) (* 2 cor-peak))))
-			(logca (log10 (/ (+ cor-peak (vct-ref data (+ i 1))) (* 2 cor-peak))))
-			(logra (log10 (/ (+ cor-peak (vct-ref data (+ i 2))) (* 2 cor-peak))))
-			(offset (/ (* 0.5 (- logla logra))
-				   (+ logla logra (* -2.0 logca)))))
-		   (return (/ (srate snd)
-			      (* 2 (+ i 1 offset)))))))))))))
-
-;(add-hook! graph-hook 
-;	   (lambda (snd chn y0 y1) 
-;	     (report-in-minibuffer (format #f "~A" (spot-freq (left-sample))))))
 
 
 ;;; -------- pointer focus within Snd
@@ -3250,40 +2530,6 @@ read, even if not playing.  'files' is a list of files to be played."
 !#
 
 
-;;; -------- make-selection
-
-(define* (make-selection #:optional beg end snd chn)
-  (let ((current-sound (or (and (number? snd) snd) (selected-sound))))
-    (define (add-chan-to-selection s0 s1 s c)
-      (set! (selection-member? s c) #t)
-      (set! (selection-position s c) (or s0 0))
-      (set! (selection-length s c) (- (or (and (number? s1) (1+ s1)) (frames s c)) (or s0 0))))
-    (if (not (sound? current-sound))
-	(throw 'no-such-sound (list "make-selection" beg end snd chn)))
-    (let ((current-sync (sync current-sound)))
-      (if (selection?) ; clear selection
-	  (for-each
-	   (lambda (s)
-	     (do ((i 0 (1+ i)))
-		 ((= i (chans s)))
-	       (let ((need-update (selection-member? s i)))
-		 (set! (selection-member? s i) #f)
-		 (if need-update (update-time-graph s i)))))
-	   (sounds)))
-      (if chn
-	  (add-chan-to-selection beg end snd chn)
-	  (for-each
-	   (lambda (s)
-	     (if (or (eq? snd #t)
-		     (= s current-sound)
-		     (and (not (= current-sync 0))
-			  (= current-sync (sync s))))
-		 (do ((i 0 (1+ i)))
-		     ((= i (chans s)))
-		   (add-chan-to-selection beg end s i))))
-	   (sounds))))))
-
-
 ;;; -------- remove-clicks 
 
 (define (find-click loc)
@@ -3323,67 +2569,3 @@ read, even if not playing.  'files' is a list of files to be played."
   (remove-click 0))
 
 
-;;; --------- snd-debug
-;;;
-;;; this redirects the Guile debugger input/output to the Snd listener.
-;;; If you hit an error, type (snd-debug) rather than (debug).
-
-(use-modules (ice-9 debugger))
-
-(define in-debugger #f)
-(define debugger-input "")
-(define debugger-char 0)
-(define debugger-strlen 0)
-
-(add-hook! read-hook
-  (lambda (str)
-    (if in-debugger
-	(begin
-	  (snd-print "\n")
-	  (set! debugger-input (string-append str "\n"))
-	  (set! debugger-char 0)
-	  (set! debugger-strlen (string-length debugger-input))
-	  #t)
-	#f)))
-
-(define (snd-debug)
-  (let ((stdout (current-output-port))
-	(stdin (current-input-port))
-	(snd-out (make-soft-port
-		  (vector
-		   (lambda (c) (snd-print c))
-		   (lambda (s) (snd-print s))
-		   (lambda () #f)
-		   
-		   (lambda ()
-		     (do () ((or (and (>= debugger-char 0)
-				      (< debugger-char debugger-strlen))
-				 (c-g?))))
-		     (let ((ch (string-ref debugger-input debugger-char)))
-		       (set! debugger-char (+ debugger-char 1))
-		       ch))
-	      
-		   (lambda () #f))
-		  "rw")))
-
-    (snd-print "\n")
-    ;; might want to use dynamic-wind here to make sure the ports are reset
-    (set-current-output-port snd-out)
-    (set-current-input-port snd-out)
-    (set! in-debugger #t)
-    (debug)
-    (set-current-output-port stdout)
-    (set-current-input-port stdin)
-    (set! in-debugger #f)))
-
-		 
-
-;;; -------- read-listener-line
-
-(define (read-listener-line prompt)
-  (let ((res #f))
-    (add-hook! read-hook (lambda (str) (set! res str) #t))
-    (snd-print prompt)
-    (do () ((or (c-g?) res)))
-    (reset-hook! read-hook)
-    res))

@@ -82,7 +82,6 @@
 #include <stdio.h>
 #include <errno.h>
 #include <stdlib.h>
-#include <sys/types.h>
 #if (!defined(HAVE_CONFIG_H)) || (defined(HAVE_STRING_H))
   #include <string.h>
 #endif
@@ -95,6 +94,12 @@
 #endif
 
 #include "sndlib.h"
+
+#if MACOS
+  #define off_t long
+#else
+  #include <sys/types.h>
+#endif
 
 static int hdrbuf_is_inited = 0;
 

@@ -33,10 +33,13 @@
 #include "sndlib.h"
 
 #if MACOS
-  #if (!defined(MPW_C))
+  #ifdef MPW_C
+    #define time_t long
+  #else
     #include <time.h>
     #include <stat.h>
   #endif
+  #define off_t long
 #else
   #include <sys/types.h>
   #include <sys/stat.h>
@@ -386,9 +389,7 @@ static sound_file *find_sound_file(const char *name)
 static void display_sound_file_entry(FILE *fp, const char *name, sound_file *sf)
 {
   int i, lim;
-#ifndef MPW_C
   time_t date;
-#endif
   char timestr[64];
 #ifndef MPW_C
   date = sf->write_date;

@@ -1104,7 +1104,7 @@ BACKGROUND_TYPE apply_controls(GUI_POINTER ptr)
 	  ap->ofile = NULL;
 	  lock_apply(ss, sp);
 	  ap->ofile = snd_tempnam(ss);
-	  ap->hdr = make_temp_header(ap->ofile, SND_SRATE(sp), sp->nchans, 0);
+	  ap->hdr = make_temp_header(ap->ofile, SND_SRATE(sp), sp->nchans, 0, (char *)__FUNCTION__);
 	  switch (ss->apply_choice)
 	    {
 	    case APPLY_TO_CHANNEL:   

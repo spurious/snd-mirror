@@ -1,5 +1,7 @@
 snd change log
 
+  21-Jun:    dsp.scm, autosave.scm, extensions.scm.
+             find-mix.
   20-Jun:    read-hook. hooks.scm. snd-debug in examp.scm.
   19-Jun:    removed snd-main-shell -- use (cadr (main-widgets)) instead.
              make-pixmap and set-pixmap.

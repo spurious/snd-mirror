@@ -31,13 +31,16 @@
 
 <center><A NAME="introduction"></a>
 <ul>
+  <li><a href="#autosavedoc">autosave.scm: auto-save support</a>
   <li><a href="#belldoc">bell.scm: the fm-bell from CLM</a>
   <li><a href="#birddoc">bird.scm: North-American birds</a>
   <li><a href="#drawdoc">draw.scm: graphics additions</a>
+  <li><a href="#dspdoc">dsp.scm: various DSP-related procedures</a>
   <li><a href="#effectsdoc">effects.scm: an Effects menu</a>
   <li><a href="#envdoc">env.scm: envelope functions</a>
   <li><a href="#enveddoc">enved.scm: envelope editor</a>
   <li><a href="#exampdoc">examp.scm: many examples</a>
+  <li><a href="#extensionsdoc">extensions.scm: various generally useful Snd extensions</a>
   <li><a href="#fmvdoc">fmv.scm: the fm-violin in Guile-gtk</a>
   <li><a href="#glfftdoc">glfft.scm: OpenGL for spectra</a>
   <li><a href="#gmdoc">gm.scm: gmeteor support</a>
@@ -73,6 +76,23 @@
 <p>This file contains notes upon the various *.scm files included with Snd.
 To use any of these files, (load &lt;file&gt;); for example (load "bell.scm").  To start Snd with
 the file already loaded, snd -l bell.scm.
+</p>
+
+<A NAME="autosavedoc"></a><span class=box><h2>autosave.scm</h2></span>
+
+<pre>
+  <em class=def><a name="exautosave">auto-save</a></em>
+  <em class=def><a name="excancelautosave">cancel-auto-save</a></em>
+</pre>
+<!-- I(auto save):L(auto-save)(exautosave) -->
+<!-- I(auto save):A(exautosave) -->
+
+<p>The auto-save code sets up a background process that checks periodically for
+unsaved edits, and if any are found it saves them in a temporary file.
+The time between checks
+is set by the variable <i>auto-save-interval</i> which defaults to 60.0 seconds.
+To start auto-saving, (load "autosave.scm").  Thereafter <code>(cancel-auto-save)</code>
+stops autosaving, and <code>(auto-save)</code> restarts it.
 </p>
 
 <A NAME="belldoc"></a><span class=box><h2>bell.scm</h2></span>
@@ -214,6 +234,95 @@ This info is implicit in the x sliders, but a redundant graph doesn't hurt.
 <center><img src="uppergrf.png" alt="display-current-window-location"></center>
 <br>
 <br>
+
+<A NAME="dspdoc"></a><span class=box><h2>dsp.scm</h2></span>
+
+  <ul>
+    <li>Dolph-Chebyshev fft data window
+    <li>dht -- slow Hartley transform 
+    <li>Butterworth filters
+    <li>frequency-response -> FIR coeffs
+    <li>move sound down 8ve using fft
+    <li>compute-uniform-circular-string (and scanned-synthesis)
+    <li>"frequency division"
+    <li>"adaptive saturation"
+    <li>spike effect
+    <li>easily-fooled autocorrelation-based pitch tracker 
+  </ul>
+
+<p>These are DSP-related procedures that aren't closely tied to CLM.
+</p>
+<pre>
+  <em class=def><A NAME="exdolph">dolph</a></em> n gamma
+  <em class=def><A NAME="exdht">dht</a></em> data
+  <em class=def><A NAME="exbutter">butter</a></em> gen
+  <em class=def><A NAME="exmakebutterhighpass">make-butter-high-pass</a></em> freq
+  <em class=def><A NAME="exmakebutterlowpass">make-butter-low-pass</a></em> freq
+  <em class=def><A NAME="exmakebutterbandpass">make-butter-band-pass</a></em> freq bandwidth
+  <em class=def><A NAME="exmakebutterbandreject">make-butter-band-reject</a></em> freq bandwidth
+  <em class=def><A NAME="exfltit1">fltit-1</a></em>
+  <em class=def><A NAME="exspectrum2coeffs">spectrum-&gt;coeffs</a></em> order spectrum-envelope
+  <em class=def><A NAME="exdownoct">down-oct</a></em>
+  <em class=def><A NAME="exfreqdiv">freqdiv</a></em> n
+  <em class=def><A NAME="exadsat">adsat</a></em> size
+  <em class=def><A NAME="exspike">spike</a></em>
+  <em class=def><a name="excomputeuniformcircularstring">compute-uniform-circular-string</a></em> size x0 x1 x2 mass xspring damp
+  <em class=def><A NAME="excomputestring">compute-string</a></em>size x0 x1 x2 masses xsprings esprings damps haptics
+  <em class=def><A NAME="exppitcher">spot-freq</a></em>
+</pre>
+
+<p><i>dolph</i> is the Dolph-Chebychev fft data window, taken
+from Richard Lyons, "Understanding DSP".
+<i>dht</i> is the slow form of the Hartley transform, 
+taken from Perry Cook's SignalProcessor.m.
+The built-in function <a href="extsnd.html#sndfht">fht</a> is the fast form of this transform.
+The Hartley transform is a kind of Fourier transform.
+The Butterworth filters are taken from Sam Heisz's CLM version
+of Paris Smaragdis's Csound version of Charles Dodge's code from "Computer Music: synthesis, composition, and performance".
+See also the notch filter in effects.scm.
+<i>spectrum-&gt;coeffs</i> is a Scheme
+version of Snd's very simple spectrum->coefficients procedure ("frequency sampling").
+It returns the FIR filter coefficients given the filter order and desired spectral envelope.
+</p>
+<pre>
+(map-chan (fltit-1 10 (list->vct '(0 1.0 0 0 0 0 0 0 1.0 0))))
+</pre>
+<p>
+<i>down-oct</i> tries to move a sound down an octave by goofing with the fft data,
+then inverse ffting.  
+<i>freqdiv</i> implements
+"frequency division", taken from an effects package of sed_sed@my-dejanews.com.
+</p>
+<pre>
+(freqdiv 8)
+</pre>
+<p>
+Also from that package is <i>adsat</i>, "adaptive saturation".  <i>spike</i> performs 
+a product of samples (as opposed to the more common sum); that is, it multiplies
+together several successive samples, causing a more spikey output.
+<i>compute-uniform-circular-string</i> and <i>compute-string</i> implement
+scanned synthesis of Bill Verplank and Max Mathews.
+To watch the wave, open some sound (so Snd has some place to put the graph), turn off
+the time domain display (to give our graph all the window)
+then <code>(testunif 1.0 0.1 0.0)</code> or whatever.
+The <i>spot-freq</i> function is a simple first-pass at using autocorrelation for
+pitch tracking; it's easily fooled, but could probably be made relatively robust.
+The code:
+</p>
+<pre>
+ (let* ((logla (log10 (/ (+ cor-peak (vct-ref data i)) (* 2 cor-peak))))
+	(logca (log10 (/ (+ cor-peak (vct-ref data (+ i 1))) (* 2 cor-peak))))
+	(logra (log10 (/ (+ cor-peak (vct-ref data (+ i 2))) (* 2 cor-peak))))
+	(offset (/ (* 0.5 (- logla logra))
+		   (+ logla logra (* -2.0 logca)))))
+   (return (/ (srate snd)
+	      (* 2 (+ i 1 offset)))))
+</pre>
+<p>is using Xavier Serra's interpolation technique to find the "true" location
+of the autocorrelation peak.  The <i>cor-peak</i> business is making sure the
+log10 arguments fall between 0.0 and 1.0.
+</p>
+
 
 <A NAME="effectsdoc"></a><span class=box><h2>effects.scm</h2></span>
 
@@ -447,6 +556,7 @@ appended new stuff as it came to mind.  The following documentation is mostly
 a quick overview of the code; most of the examples are very simple, so (as
 the saying goes) "the code is the documentation".  Also, there's some overlap
 between these examples, other .scm files, and discussions in other documents.
+I'm slowly dividing out related groups of procedures to separate files.
 <p>
 
 <ul>
@@ -464,9 +574,8 @@ between these examples, other .scm files, and discussions in other documents.
 <small>
   <ul>
     <li>comb-filter, notch-filter, formant-filter
-    <li>time varying FIR filter, notch filter, frequency-response -> FIR coeffs
+    <li>time varying FIR filter, notch filter
     <li>filtered-env (low-pass and amplitude follow envelope)
-    <li>Butterworth filters
     <li>remove-clicks
   </ul>
 </small>
@@ -478,11 +587,7 @@ between these examples, other .scm files, and discussions in other documents.
     <li>superimpose spectra of sycn'd sounds
     <li>fft-edit -- FFT based editing
     <li>fft-smoother -- fft-based smoothing
-    <li>move sound down 8ve using fft
-    <li>Dolph-Chebyshev fft data window
-    <li>dht -- slow Hartley transform 
     <li>phase vocoder
-    <li>easily-fooled autocorrelation-based pitch tracker 
   </ul>
 </small>
 <li><a href="#ssuserinterface">user-interface</a>
@@ -491,18 +596,14 @@ between these examples, other .scm files, and discussions in other documents.
     <li>XEmacs-like "Buffers" menu
     <li>make dot size dependent on number of samples being displayed
     <li>flash selected data red and green
-    <li>show bomb icon
     <li>add date and time to title bar
     <li>how to get 'display' to write to Snd's listener
     <li>multi-colored rxvt printout
-    <li>accessors for graph-style fields
-    <li>auto-save
     <li>lisp graph with draggable x axis
     <li>pointer-focus
     <li>files-popup-buffer
     <li>Emacs-like C-x b handling
     <li>redirect stdin/stdout: snd-debug
-    <li>read-listener-line
   </ul>
 </small>
 <li><a href="#ssmarks">marks</a>
@@ -515,19 +616,13 @@ between these examples, other .scm files, and discussions in other documents.
 <li><a href="#ssselections">selections</a>
 <small>
   <ul>
-    <li>delete selected portion and smooth the splice
-    <li>eval over selection or between marks replacing current samples, mapped to "x" or "m" key using prompt-in-minibuffer
     <li>swap selection chans
-    <li>selection-members
-    <li>make-selection
   </ul>
 </small>
 <li><a href="#ssmixes">mixes</a>
 <small>
   <ul>
-    <li>mix with result at original peak amp
     <li>mix mono sound into stereo sound panning according to env, also simple sound placement
-    <li>mix with envelope
   </ul>
 </small>
 <li><a href="#sssoundeffects">sound effects</a>
@@ -543,9 +638,6 @@ between these examples, other .scm files, and discussions in other documents.
     <li>voiced->unvoiced (formants)
     <li>convolution (convolve)
     <li>reverb (all-pass etc)
-    <li>"frequency division"
-    <li>"adaptive saturation"
-    <li>spike effect
     <li>fancier locsig
     <li>"vector synthesis"
   </ul>
@@ -558,7 +650,6 @@ between these examples, other .scm files, and discussions in other documents.
     <li>FOF voice synthesis (wave-train, #&amp;optional args)
     <li>pluck instrument (physical modelling)
     <li>voice instrument (formants via FM)
-    <li>compute-uniform-circular-string (and scanned-synthesis)
   </ul>
 </small>
 <li><a href="#ssmiscellaneousextensions">miscellaneous extensions</a>
@@ -570,7 +661,6 @@ between these examples, other .scm files, and discussions in other documents.
     <li>example of c-g?
     <li>translate mpeg input to 16-bit linear and read into Snd
     <li>mapping extensions (map arbitrary single-channel function over various channel collections)
-    <li>map-sound-files, match-sound-files
     <li>sound-interp, env-sound-interp
   </ul>
 </small>
@@ -674,29 +764,11 @@ gets lower, a sort of poor-man's distance effect.  When <i>envelope</i>
 is at 1.0, no filtering takes place.
 </p>
 <pre>
-  <em class=def><A NAME="exbutter">butter</a></em> gen
-  <em class=def><A NAME="exmakebutterhighpass">make-butter-high-pass</a></em> freq
-  <em class=def><A NAME="exmakebutterlowpass">make-butter-low-pass</a></em> freq
-  <em class=def><A NAME="exmakebutterbandpass">make-butter-band-pass</a></em> freq bandwidth
-  <em class=def><A NAME="exmakebutterbandreject">make-butter-band-reject</a></em> freq bandwidth
-</pre>
-<p>These are simple Butterworth filters taken from Sam Heisz's CLM version
-of Paris Smaragdis's Csound version of Charles Dodge's code from "Computer Music: synthesis, composition, and performance".
-See also the notch filter in effects.scm.
-</p>
-<pre>
   <em class=def><A NAME="exfltit">fltit</a></em>
-  <em class=def><A NAME="exfltit1">fltit-1</a></em>
-  <em class=def><A NAME="exspectrum2coeffs">spectrum-&gt;coeffs</a></em> order spectrum-envelope
+  <em class=def><A NAME="exremoveclicks">remove-clicks</a></em>
 </pre>
-<p><i>fltit</i> is a simple FIR filter call; <i>spectrum-&gt;coeffs</i> is a Scheme
-version of Snd's very simple spectrum->coefficients procedure ("frequency sampling").
-It returns the FIR filter coefficients given the filter order and desired spectral envelope.
-</p>
-<pre>
-(map-chan (fltit-1 10 (list->vct '(0 1.0 0 0 0 0 0 0 1.0 0))))
-</pre>
-<p><i>remove-clicks</i> looks for obvious clicks and uses smooth-sound to remove them.
+<p><i>fltit</i> is a simple FIR filter call.
+<i>remove-clicks</i> looks for obvious clicks and uses smooth-sound to remove them.
 </p>
 
 <!-- -------------------------------- FFTS -------------------------------- -->
@@ -704,27 +776,16 @@ It returns the FIR filter coefficients given the filter order and desired spectr
 <pre>
   <em class=def><A NAME="excorrelate">correlate</a></em> snd chn y0 y1
   <em class=def><a name="exsuperimposeffts">superimpose-ffts</a></em> snd chn y0 y1
-  <em class=def><A NAME="exdht">dht</a></em> data
-  <em class=def><A NAME="exdolph">dolph</a></em> n gamma
-  <em class=def><A NAME="exdownoct">down-oct</a></em>
   <em class=def><a name="exfftedit">fft-edit</a></em> low-freq high-freq
   <em class=def><A NAME="exfftsmoother">fft-smoother</a></em> cutoff start samps snd chn
   <em class=def><A NAME="expvoc">pvoc</a></em> #:key (fftsize 512) (overlap 4) (time 1.0) (pitch 1.0) (gate 0.0) (hoffset 0.0) (snd 0) (chn 0)
-  <em class=def><A NAME="exppitcher">spot-freq</a></em>
 </pre>
 <p><i>correlate</i> graphs the correlation of <i>snd</i>'s 2 channels.
 To make this happen automatically as you move the time domain position
 slider, <code>(add-hook! graph-hook correlate)</code>.
 <i>superimpose-ffts</i> is a similar graph-hook function that
 superimposes the ffts of multiple (syncd) sounds.
-<i>dht</i> is the slow form of the Hartley transform, 
-taken from Perry Cook's SignalProcessor.m.
-The built-in function <a href="extsnd.html#sndfht">fht</a> is the fast form of this transform.
-The Hartley transform is a kind of Fourier transform.
-<i>dolph</i> is the Dolph-Chebychev fft data window, taken
-from Richard Lyons, "Understanding DSP".
-<i>down-oct</i> tries to move a sound down an octave by goofing with the fft data,
-then inverse ffting.  <i>fft-edit</i> is a simple example of fft-based editing.
+<i>fft-edit</i> is a simple example of fft-based editing.
 It takes an fft of the entire sound, removes all energy below <i>low-freq</i> and above <i>high-freq</i>,
 then inverse fft's. A similar function is <i>fft-smoother</i> that uses fft-filtering to
 smooth a portion of a sound.
@@ -753,78 +814,19 @@ size.  The simpler one is:
 </pre>
 <p>The <i>expt...</i> code is rounding the current window size (right-sample - left-sample)
 up to the nearest power of 2. 
-The <i>spot-freq</i> function is a simple first-pass at using autocorrelation for
-pitch tracking; it's easily fooled, but could probably be made relatively robust.
-The code:
-</p>
-<pre>
- (let* ((logla (log10 (/ (+ cor-peak (vct-ref data i)) (* 2 cor-peak))))
-	(logca (log10 (/ (+ cor-peak (vct-ref data (+ i 1))) (* 2 cor-peak))))
-	(logra (log10 (/ (+ cor-peak (vct-ref data (+ i 2))) (* 2 cor-peak))))
-	(offset (/ (* 0.5 (- logla logra))
-		   (+ logla logra (* -2.0 logca)))))
-   (return (/ (srate snd)
-	      (* 2 (+ i 1 offset)))))
-</pre>
-<p>is using Xavier Serra's interpolation technique to find the "true" location
-of the autocorrelation peak.  The <i>cor-peak</i> business is making sure the
-log10 arguments fall between 0.0 and 1.0.
 </p>
 
 <!-- -------------------------------- USER-INTERFACE -------------------------------- -->
 <span class=bbox><h3><A NAME="ssuserinterface">user-interface</a></h3></span>
 
-<pre>
-  <em class=def><a name="exmaingraphstyle">time-graph-style</a></em> snd chn
-  <em class=def><a name="exfftgraphstyle">transform-graph-style</a></em> snd chn
-  <em class=def><a name="exlispgraphstyle">lisp-graph-style</a></em> snd chn
-</pre>
-<p>These three functions provide accessors for the channel-specific
-graph styles. Each is of the form:
-</p>
-<pre>
-(define time-graph-style
-  (make-procedure-with-setter
-   (lambda (snd chn)
-     (logand (graph-style snd chn) #xff))
-   (lambda (snd chn val)
-     (set! (graph-style snd chn)
-	   (logior (logand (graph-style snd chn) #xffff00)
-		   val)))))
-</pre>
-<p>This uses the generalized set! support in Guile; <i>make-procedure-with-setter</i>
-takes two arguments, the reader and the writer of the field.  The reader picks off the
-bits that are of interest (in this case <code>(logand (graph-style snd chn) #xff)</code>);
-the writer sets those bits without affecting the other two fields.  Normally all three
-fields are accessed at the same time (by <a href="extsnd.html#graphstyle">graph-style</a>).
-To return to this mode after setting a specific field, set that field to -1.
-</p>
-<pre>
-:<em class=typing>graph-dots</em>
-<em class=listener>1</em>
-:<em class=typing>(set! (transform-graph-style 0 0) graph-dots) ;now the time-domain uses lines, the fft dots</em>
-<em class=listener>512</em>
-:<em class=typing>(transform-graph-style 0 0)</em>
-<em class=listener>1</em>
-:<em class=typing>(time-graph-style 0 0)</em>
-<em class=listener>0</em>
-:<em class=typing>(set! (transform-graph-style 0 0) -1)</em>
-<em class=listener>0</em>
-:<em class=typing>(transform-graph-style 0 0)</em>
-<em class=listener>0</em>
-</pre>
 <p><i>show-draggable-graph</i>, in imitation of Snd's FFT display, implements a
 draggable X axis in the "lisp" graph window.  (This is slightly messier than
 it ought to be).
-Two of the examples are imitations of Xemacs: a "Buffers" menu and an auto-save hook.</p>
+Two of the examples are imitations of Xemacs: a "Buffers" menu and an auto-save hook (now in <a href="autosavedoc">autosave.scm</a>).</p>
 <pre>
   <em class=def><A NAME="exopenbuffer">open-buffer</a></em> filename
   <em class=def><A NAME="exclosebuffer">close-buffer</a></em> snd
-  <em class=def><a name="exautosave">auto-save</a></em>
-  <em class=def><a name="excancelautosave">cancel-auto-save</a></em>
 </pre>
-<!-- I(auto save):L(auto-save)(exautosave) -->
-<!-- I(auto save):A(exautosave) -->
 
 <p>The Buffers menu provides a list of currently open sounds; selecting one
 in the menu causes it to become the selected sound; <i>open-buffer</i>
@@ -836,16 +838,9 @@ to:
 (add-hook! open-hook open-buffer)
 (add-hook! close-hook close-buffer)
 </pre>
-<p>The auto-save code sets up a background process that checks periodically for
-unsaved edits, and if any are found it saves them in a temporary file.
-The time between checks
-is set by the variable <i>auto-save-interval</i> which defaults to 60.0 seconds.
-To start auto-saving, <code>(auto-save)</code>, and to stop, <code>(cancel-auto-save)</code>.
-</p>
+
 <pre>
   <em class=def><A NAME="exsndout">snd-out</a></em>
-  <em class=def><a name="exsnddebug">snd-debug</a></em>
-  <em class=def><A NAME="readlistenerline">read-listener-line</a></em> prompt
 </pre>
 <p>A minor irritation in the current Guile system is that Scheme's "display" function
 writes to <i>current-output-port</i>, but there's no simple way to redirect that
@@ -869,11 +864,7 @@ that actually calls <a href="extsnd.html#sndprint">snd-print</a> instead:
 </pre>
 <p>You could also <code>(set! display snd-print)</code>, if you're willing to
 live dangerously; this replaces Guile's built-in <i>display</i> procedure with
-Snd's <i>snd-print</i>.  Another example of this is snd-debug.  Here we're 
-redirecting the Guile debugger's stdin and stdout IO via a read-write soft-port
-and Snd's read-hook.  If you hit an error, call (snd-debug) rather than (debug).
-<i>read-listener-line</i> is somewhat like read-line
-but gets its input from the listener.
+Snd's <i>snd-print</i>.  Another example of this is snd-debug. 
 </p>
 
 <p>There are also a few brief examples showing simple display customizations.
@@ -890,13 +881,11 @@ Finally there are several somewhat frivolous examples:
 </p>
 <pre>
   <em class=def><a name="extitlewithdate">title-with-date</a></em>
-  <em class=def><a name="exshowbomb">show-bomb</a></em> n speed
   <em class=def><A NAME="exflashselecteddata">flash-selected-data</a></em> time-interval
 </pre>
 <p><code>(title-with-date)</code> adds a clock to the Snd window's title bar.
 Set the variable <i>retitle-time</i> to 0 to turn this off.
-<i>show-bomb</i> displays the animated bomb icon; <code>(show-bomb 20 200)</code>
-for example. <i>flash-selected-data</i> cause the selected channel's graph to
+<i>flash-selected-data</i> cause the selected channel's graph to
 flash red and green.  And the there are functions to display colored text
 in rxvt:
 </p>
@@ -948,20 +937,14 @@ a sound as a key is held down).
 <span class=bbox><h3><A NAME="ssselections">selections</a></h3></span>
 
 <pre>
-  <em class=def><a name="exselectionmembers">selection-members</a></em>
   <em class=def><a name="exallchans">all-chans</a></em>
-  <em class=def><a name="exdeleteselectionandsmooth">delete-selection-and-smooth</a></em>
-  <em class=def><a name="exevaloverselection">eval-over-selection</a></em> func snd
   <em class=def><a name="exswapselectionchannels">swap-selection-channels</a></em>
   <em class=def><A NAME="exselectionrms1">selection-rms-1</a></em>
   <em class=def><a name="exselectionrms">selection-rms</a></em>
   <em class=def><A NAME="exregionrms1">region-rms-1</a></em> region
   <em class=def><a name="exregionrms">region-rms</a></em> region
-  <em class=def><a name="exmakeselection">make-selection</a></em> &amp;optional beg end snd chn
 </pre>
-<p><i>selection-members</i> returns a list of lists of (snd chn) indicating the channels participating in the current selection.
-It is very similar to <i>all-chans</i> which returns a list of lists of all (snd chn)'s.
-<i>delete-selection-and-smooth</i> deletes the current selection and smooths the splice.
+<p>
 <i>swap-selection-channels</i> swaps the currently selected data's channels.
 The various rms functions return the rms value of the desired data in a variety
 of ways. The fastest and simplest uses CLM's dot-product function:
@@ -974,22 +957,7 @@ of ways. The fastest and simplest uses CLM's dot-product function:
 	(sqrt (/ (dot-product data data) (vct-length data))))
       (throw 'no-such-region (list "region-rms" n))))
 </pre>
-<p><i>eval-over-selection</i> evaluates <i>func</i> on each sample in the current selection. The code:
-</p>
-<pre>
-(bind-key (char-&gt;integer #\x) 0 
-	  (lambda ()
-	    (if (selection?)
-		(prompt-in-minibuffer "selection eval:" eval-over-selection)
-		(report-in-minibuffer "no selection"))))
-</pre>
-<p>binds the character 'x' to a function that checks for an active selection,
-then prompts (in the minibuffer) for the function to apply, and when
-the user eventually replies with a function, applies that function
-to each sample in the selection.
-make-selection makes a selection (like make-region but without creating
-a region).
-</p>
+
 
 <!-- -------------------------------- MIXES -------------------------------- -->
 <span class=bbox><h3><A NAME="ssmixes">mixes</a></h3></span>
@@ -997,18 +965,8 @@ a region).
 <p><a href="#mixdoc">mix.scm</a> has mix and track related functions.
 </p>
 <pre>
-  <em class=def><a name="exnormalizedmix">normalized-mix</a></em> filename beg in-chan snd chn
   <em class=def><A NAME="explace">place</a></em> mono-snd stereo-snd panning-envelope
   <em class=def><A NAME="explace1">place1</a></em> mono-snd stereo-snd degree
-  <em class=def><a name="exenvelopedmix">enveloped-mix</a></em> filename beg env
-  <em class=def><A NAME="exenvelopedmix1">enveloped-mix-1</a></em> filename beg env
-</pre>
-<p><i>normalized-mix</i> is like <a href="extsnd.html#sndmix">mix</a> but the mixed result has same peak amplitude as the 
-original data. <i>enveloped-mix</i> is like <a href="extsnd.html#sndmixsound">mix-sound</a>, but includes an
-amplitude envelope over the mixed-in data.
-</p>
-<pre>
-(enveloped-mix "pistol.snd" 0 '(0 0 1 1 2 0))
 </pre>
 <p>The <i>place1</i> function has the same effect as using
 CLM's locate generator; it mixes a mono sound into a stereo sound, splitting 
@@ -1038,9 +996,6 @@ a panning envelope.
   <em class=def><a name="exvoiced2unvoiced">voiced-&gt;unvoiced</a></em> amp fftsize r tempo
   <em class=def><A NAME="excnvtest">cnvtest</a></em> snd0 snd1 amp
   <em class=def><A NAME="exjcreverb">jc-reverb</a></em> decay-dur low-pass volume amp-env
-  <em class=def><A NAME="exfreqdiv">freqdiv</a></em> n
-  <em class=def><A NAME="exadsat">adsat</a></em> size
-  <em class=def><A NAME="exspike">spike</a></em>
   <em class=def><A NAME="excpplocsig">fancier locsig</a></em>
   <em class=def><A NAME="excvectorsynthesis">"vector synthesis"</a></em>	
 </pre>
@@ -1051,11 +1006,7 @@ change follows an envelope.  In <i>cross-synthesis</i>, <i>cross-snd</i> is the 
 of the sound that controls the spectra, not the affected sound.  <i>voiced-&gt;unvoiced</i>
 is essentially the same idea, but drives the synthesis with white noise.
 <i>cnvtest</i> demonstrates convolution.  <i>jc-reverb</i> is an old Mus10 reverberator
-written originally by John Chowning; see jcrev.ins in CLM.  <i>freqdiv</i> implements
-"frequency division", taken from an effects package of sed_sed@my-dejanews.com.
-Also from that package is <i>adsat</i>, "adaptive saturation".  <i>spike</i> performs 
-a product of samples (as opposed to the more common sum); that is, it multiplies
-together several successive samples, causing a more spikey output.
+written originally by John Chowning; see jcrev.ins in CLM. 
 Here are some sample calls:
 </p>
 <pre>
@@ -1074,7 +1025,6 @@ Here are some sample calls:
 (voiced->unvoiced 1.0 256 2.0 2.0)
 (cnvtest 0 1 .1)
 (jc-reverb 2.0 #f .1 #f)
-(freqdiv 8)
 </pre>
 <p>There are lots more sound effects scattered around the Snd distribution.
 The "fancier locsig", to quote Michael Edwards "avoids the 'hole in the middle' problem that occurs when
@@ -1093,8 +1043,6 @@ happens to be on the chosen one, with fade-ins and fade-outs to avoid clicks.
   <em class=def><A NAME="exfofins">fofins</a></em> ...many args...
   <em class=def><A NAME="expluck">pluck</a></em> start dur freq amp weighting lossfact
   <em class=def><A NAME="exvox">vox</a></em>beg dur freq amp ampfun freqfun freqscl voxfun index vibscl
-  <em class=def><a name="excomputeuniformcircularstring">compute-uniform-circular-string</a></em> size x0 x1 x2 mass xspring damp
-  <em class=def><A NAME="excomputestring">compute-string</a></em>size x0 x1 x2 masses xsprings esprings damps haptics
 </pre>
 <p><i>scissor</i> synthesizes the squawk of the scissor-tailed flycatcher (state bird of Oklahoma);
 see <a href="#birddoc">bird.scm</a> for more birds.  The fm-violin is discussed in <a href="#vdoc">v.scm</a>.
@@ -1108,11 +1056,6 @@ Jaffe and Smith, "Extensions of the Karplus-Strong Plucked-String Algorithm"
 CMJ vol 7 no 2 Summer 1983, reprinted in "The Music Machine".
 <i>vox</i> is a translations of Marc LeBrun's MUS10 waveshaping voice instrument
 using FM in this case.  The waveshaping version can be found in <a href="#pqwvoxdoc">pqwvox.scm</a>.
-<i>compute-uniform-circular-string</i> and <i>compute-string</i> implement
-scanned synthesis of Bill Verplank and Max Mathews.
-To watch the wave, open some sound (so Snd has some place to put the graph), turn off
-the time domain display (to give our graph all the window)
-then <code>(testunif 1.0 0.1 0.0)</code> or whatever.
 </p>
 
 <!-- -------------------------------- MISCELLANEOUS EXTENSIONS -------------------------------- -->
@@ -1175,27 +1118,10 @@ if a file is specified on Snd's invocation line, but that file doesn't exist.
 </p>
 <pre>
   <em class=def><A NAME="exlocatezero">locate-zero</a></em> limit
-  <em class=def><a name="exmapsoundfiles">map-sound-files</a></em> func &amp;optional dir
-  <em class=def><a name="exmatchsoundfiles">match-sound-files</a></em> func &amp;optional dir
 </pre>
 <p>
 <i>locate-zero</i> looks for the next sample where adjacent samples together are less than <i>limit</i>
 and moves the cursor to that sample. It can be interrupted by C-g.
-<i>map-sound-files</i> applies <i>func</i> to each sound file in <i>dir</i>.
-<i>match-sound-files</i> applies <i>func</i> to each sound file in <i>dir</i> and returns a list of files for which func does not return #f.
-</p>
-<pre>
-(map-sound-files 
-  (lambda (n) 
-    (if (&gt; (mus-sound-duration n) 10.0) 
-      (snd-print n))))
-
-(let ((reg (make-regexp ".wav|.snd$")))
-  (match-sound-files 
-    (lambda (file) 
-       (regexp-exec reg file))))
-</pre>
-<p>The argument to make-regexp is looking for *.wav and *.snd.
 </p>
 <pre>
   <em class=def><a name="exmakesoundinterp">make-sound-interp</a></em> start &amp;optional snd chn
@@ -1220,6 +1146,123 @@ envelope could be used for this effect, but it is much more direct to apply the
 envelope to sound sample positions.
 </p>
 <br>
+
+<A NAME="extensionsdoc"></a><span class=box><h2>extensions.scm</h2></span>
+
+<p>These were originally scattered around examp.scm; I thought it would be more
+convenient if they were in one file.
+</p>
+
+<pre>
+  <em class=def><a name="exmaingraphstyle">time-graph-style</a></em> snd chn
+  <em class=def><a name="exfftgraphstyle">transform-graph-style</a></em> snd chn
+  <em class=def><a name="exlispgraphstyle">lisp-graph-style</a></em> snd chn
+
+  <em class=def><a name="exsnddebug">snd-debug</a></em>
+  <em class=def><a name="readlistenerline">read-listener-line</a></em> prompt
+
+  <em class=def><a name="exmakeselection">make-selection</a></em> &amp;optional beg end snd chn
+  <em class=def><a name="exdeleteselectionandsmooth">delete-selection-and-smooth</a></em>
+  <em class=def><a name="exevaloverselection">eval-over-selection</a></em> func snd
+  <em class=def><a name="exselectionmembers">selection-members</a></em>
+
+  <em class=def><a name="exmapsoundfiles">map-sound-files</a></em> func &amp;optional dir
+  <em class=def><a name="exmatchsoundfiles">match-sound-files</a></em> func &amp;optional dir
+
+  <em class=def><a name="exnormalizedmix">normalized-mix</a></em> filename beg in-chan snd chn
+  <em class=def><a name="exenvelopedmix">enveloped-mix</a></em> filename beg env
+  <em class=def><A NAME="exenvelopedmix1">enveloped-mix-1</a></em> filename beg env
+</pre>
+
+<p>The graph-style functions provide accessors for the channel-specific
+graph styles. Each is of the form:
+</p>
+<pre>
+(define time-graph-style
+  (make-procedure-with-setter
+   (lambda (snd chn)
+     (logand (graph-style snd chn) #xff))
+   (lambda (snd chn val)
+     (set! (graph-style snd chn)
+	   (logior (logand (graph-style snd chn) #xffff00)
+		   val)))))
+</pre>
+<p>This uses the generalized set! support in Guile; <i>make-procedure-with-setter</i>
+takes two arguments, the reader and the writer of the field.  The reader picks off the
+bits that are of interest (in this case <code>(logand (graph-style snd chn) #xff)</code>);
+the writer sets those bits without affecting the other two fields.  Normally all three
+fields are accessed at the same time (by <a href="extsnd.html#graphstyle">graph-style</a>).
+To return to this mode after setting a specific field, set that field to -1.
+</p>
+<pre>
+:<em class=typing>graph-dots</em>
+<em class=listener>1</em>
+:<em class=typing>(set! (transform-graph-style 0 0) graph-dots) ;now the time-domain uses lines, the fft dots</em>
+<em class=listener>512</em>
+:<em class=typing>(transform-graph-style 0 0)</em>
+<em class=listener>1</em>
+:<em class=typing>(time-graph-style 0 0)</em>
+<em class=listener>0</em>
+:<em class=typing>(set! (transform-graph-style 0 0) -1)</em>
+<em class=listener>0</em>
+:<em class=typing>(transform-graph-style 0 0)</em>
+<em class=listener>0</em>
+</pre>
+
+<p>In <i>snd-debug</i> we're 
+redirecting the Guile debugger's stdin and stdout IO via a read-write soft-port
+and Snd's read-hook.  If you hit an error, call (snd-debug) rather than (debug).
+<i>read-listener-line</i> is somewhat like read-line
+but gets its input from the listener.
+</p>
+
+<p><i>selection-members</i> returns a list of lists of (snd chn) indicating the channels participating in the current selection.
+It is very similar to <i>all-chans</i> which returns a list of lists of all (snd chn)'s.
+<i>delete-selection-and-smooth</i> deletes the current selection and smooths the splice.
+
+<p><i>eval-over-selection</i> evaluates <i>func</i> on each sample in the current selection. The code:
+</p>
+<pre>
+(bind-key (char-&gt;integer #\x) 4
+	  (lambda ()
+	    (if (selection?)
+		(prompt-in-minibuffer "selection eval:" eval-over-selection)
+		(report-in-minibuffer "no selection")))
+	  #t)
+</pre>
+<p>binds the key sequence C-x x to a function that checks for an active selection,
+then prompts (in the minibuffer) for the function to apply, and when
+the user eventually replies with a function, applies that function
+to each sample in the selection.
+make-selection makes a selection (like make-region but without creating
+a region).
+</p>
+
+<i>map-sound-files</i> applies <i>func</i> to each sound file in <i>dir</i>.
+<i>match-sound-files</i> applies <i>func</i> to each sound file in <i>dir</i> and returns a list of files for which func does not return #f.
+</p>
+<pre>
+(map-sound-files 
+  (lambda (n) 
+    (if (&gt; (mus-sound-duration n) 10.0) 
+      (snd-print n))))
+
+(let ((reg (make-regexp ".wav|.snd$")))
+  (match-sound-files 
+    (lambda (file) 
+       (regexp-exec reg file))))
+</pre>
+<p>The argument to make-regexp is looking for *.wav and *.snd.
+</p>
+
+<p><i>normalized-mix</i> is like <a href="extsnd.html#sndmix">mix</a> but the mixed result has same peak amplitude as the 
+original data. <i>enveloped-mix</i> is like <a href="extsnd.html#sndmixsound">mix-sound</a>, but includes an
+amplitude envelope over the mixed-in data.
+</p>
+<pre>
+(enveloped-mix "pistol.snd" 0 '(0 0 1 1 2 0))
+</pre>
+
 
 <A NAME="fmvdoc"></a><span class=box><h2>fmv.scm</h2></span>
 

@@ -686,7 +686,7 @@ int define_region(sync_info *si, int *ends)
     {
       r->use_temp_file = REGION_FILE;
       r->filename = snd_tempnam(ss);
-      hdr = make_temp_header(r->filename, r->srate, r->chans, 0);
+      hdr = make_temp_header(r->filename, r->srate, r->chans, 0, (char *)__FUNCTION__);
       ofd = open_temp_file(r->filename, r->chans, hdr, ss);
       datumb = mus_data_format_to_bytes_per_sample(hdr->format);
     }

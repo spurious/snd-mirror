@@ -949,7 +949,7 @@ static mix_info *file_mix_samples(int beg, int num, char *tempfile, chan_info *c
       scaler = 1.0;
     }
   ofile = snd_tempnam(ss);
-  ohdr = make_temp_header(ofile, SND_SRATE(sp), 1, 0);
+  ohdr = make_temp_header(ofile, SND_SRATE(sp), 1, 0, (char *)origin);
   ofd = open_temp_file(ofile, 1, ohdr, ss);
   if (ofd == -1) 
     {
@@ -1236,7 +1236,7 @@ static void remix_file(mix_info *md, const char *origin)
   if (use_temp_file)
     {
       ofile = snd_tempnam(ss);
-      ohdr = make_temp_header(ofile, SND_SRATE(cursp), 1, 0);
+      ohdr = make_temp_header(ofile, SND_SRATE(cursp), 1, 0, (char *)origin);
       ofd = open_temp_file(ofile, 1, ohdr, ss);
       no_space = disk_space_p(cursp, ofd, num * 4, num * 2);
       switch (no_space)
@@ -2949,6 +2949,28 @@ static console_state *cs_from_id(int n)
   return(NULL);
 }
 
+static int mix_id_from_channel_position(chan_info *cp, int pos)
+{
+  int n;
+  mix_info *md;
+  console_state *cs; 
+  if (cp->mixes)
+    {
+      for (n = 0; n < mix_infos_size; n++)
+	{
+	  md = mix_infos[n];
+	  if ((md) && (md->cp == cp))
+	    {
+	      cs = md->current_cs;
+	      if ((cs) && 
+		  ((cs->orig == pos) || (pos == -1)))
+		return(md->id);
+	    }
+	}
+    }
+  return(INVALID_MIX_ID);
+}
+
 int mix_length(int n) 
 {
   console_state *cs; 
@@ -3715,7 +3737,7 @@ static SCM g_selected_mix(void)
 
 static SCM g_forward_mix(SCM count, SCM snd, SCM chn) 
 {
-  #define H_forward_mix "(" S_forward_mix " &optional (count 1) snd chn) moves the cursor forward count mix consoles"
+  #define H_forward_mix "(" S_forward_mix " &optional (count 1) snd chn) moves the cursor forward count mixes, returns mix id if any"
   int val;
   chan_info *cp;
   ASSERT_TYPE(INTEGER_IF_BOUND_P(count), count, SCM_ARG1, S_forward_mix, "an integer");
@@ -3723,12 +3745,12 @@ static SCM g_forward_mix(SCM count, SCM snd, SCM chn)
   cp = get_cp(snd, chn, S_forward_mix);
   val = TO_C_INT_OR_ELSE(count, 1); 
   handle_cursor(cp, goto_mix(cp, val));
-  return(TO_SCM_INT(val));
+  return(TO_SCM_INT(mix_id_from_channel_position(cp, cp->cursor)));
 }
 
 static SCM g_backward_mix(SCM count, SCM snd, SCM chn) 
 {
-  #define H_backward_mix "(" S_backward_mix " &optional (count 1) snd chn) moves the cursor back count mix consoles"
+  #define H_backward_mix "(" S_backward_mix " &optional (count 1) snd chn) moves the cursor back count mixes, returns mix id if any"
   int val; 
   chan_info *cp;
   ASSERT_TYPE(INTEGER_IF_BOUND_P(count), count, SCM_ARG1, S_backward_mix, "an integer");
@@ -3736,7 +3758,7 @@ static SCM g_backward_mix(SCM count, SCM snd, SCM chn)
   cp = get_cp(snd, chn, S_backward_mix);
   val = -(TO_C_INT_OR_ELSE(count, 1)); 
   handle_cursor(cp, goto_mix(cp, val));
-  return(TO_SCM_INT(val));
+  return(TO_SCM_INT(mix_id_from_channel_position(cp, cp->cursor)));
 }
 
 
@@ -4112,9 +4134,9 @@ static int call_mix_position_changed_hook(mix_info *md, int samps)
 
 #include "vct.h"
 
-static SCM mix_vct(SCM obj, SCM beg, SCM snd, SCM chn, SCM with_consoles, SCM origin)
+static SCM mix_vct(SCM obj, SCM beg, SCM snd, SCM chn, SCM with_tag, SCM origin)
 {
-  #define H_mix_vct "(" S_mix_vct " data &optional (beg 0) snd chn (with-consoles #t) origin)\n\
+  #define H_mix_vct "(" S_mix_vct " data &optional (beg 0) snd chn (with-tag #t) origin)\n\
 mixes data (a vct object) into snd's channel chn starting at beg; returns the new mix id"
 
   vct *v;
@@ -4126,7 +4148,7 @@ mixes data (a vct object) into snd's channel chn starting at beg; returns the ne
   ASSERT_TYPE(VCT_P(obj), obj, SCM_ARG1, S_mix_vct, "a vct");
   SND_ASSERT_CHAN(S_mix_vct, snd, chn, 3);
   ASSERT_TYPE(INTEGER_IF_BOUND_P(beg), beg, SCM_ARG2, S_mix_vct, "an integer");
-  ASSERT_TYPE(BOOLEAN_IF_BOUND_P(with_consoles), with_consoles, SCM_ARG5, S_mix_vct, "a boolean");
+  ASSERT_TYPE(BOOLEAN_IF_BOUND_P(with_tag), with_tag, SCM_ARG5, S_mix_vct, "a boolean");
   v = TO_VCT(obj);
   if (v)
     {
@@ -4137,9 +4159,9 @@ mixes data (a vct object) into snd's channel chn starting at beg; returns the ne
 	mus_misc_error(S_mix_vct, "beg < 0?", beg);
       else
 	{
-	  if (NOT_BOUND_P(with_consoles))
+	  if (NOT_BOUND_P(with_tag))
 	    with_mixers = with_mix_tags(cp[0]->state);
-	  else with_mixers = TO_C_BOOLEAN_OR_T(with_consoles);
+	  else with_mixers = TO_C_BOOLEAN_OR_T(with_tag);
 	  data = (MUS_SAMPLE_TYPE **)CALLOC(1, sizeof(MUS_SAMPLE_TYPE *));
 	  data[0] = (MUS_SAMPLE_TYPE *)CALLOC(len, sizeof(MUS_SAMPLE_TYPE));
 	  for (i = 0; i < len; i++)
@@ -4157,6 +4179,21 @@ mixes data (a vct object) into snd's channel chn starting at beg; returns the ne
   return(scm_return_first(TO_SMALL_SCM_INT(mix_id), obj));
 }
 
+static SCM g_find_mix(SCM samp_n, SCM snd_n, SCM chn_n) 
+{
+  #define H_find_mix "(" S_find_mix " samp &optional snd chn)\n\
+finds the mix in snd's channel chn at samp, returning the mix id; returns #f if no mix found."
+
+  int id;
+  chan_info *cp = NULL;
+  ASSERT_TYPE(NUMBER_IF_BOUND_P(samp_n), samp_n, SCM_ARG1, S_find_mix, "a number");
+  SND_ASSERT_CHAN(S_find_mix, snd_n, chn_n, 2); 
+  cp = get_cp(snd_n, chn_n, S_find_mix);
+  id = mix_id_from_channel_position(cp, TO_C_INT_OR_ELSE_WITH_ORIGIN(samp_n, -1, S_find_mix));
+  if (id == INVALID_MIX_ID)
+    return(SCM_BOOL_F);
+  return(TO_SCM_INT(id));
+}
 
 
 void g_init_mix(SCM local_doc)
@@ -4173,7 +4210,7 @@ void g_init_mix(SCM local_doc)
   DEFINE_PROC(S_make_mix_sample_reader, g_make_mix_sample_reader, 1, 0, 0, H_make_mix_sample_reader);
   DEFINE_PROC(S_next_mix_sample,        g_next_mix_sample, 1, 0, 0,        H_next_mix_sample);
   DEFINE_PROC(S_free_mix_sample_reader, g_free_mix_sample_reader, 1, 0, 0, H_free_mix_sample_reader);
-  DEFINE_PROC(S_mix_sample_reader_p,     g_mf_p, 1, 0, 0,                   H_mf_p);
+  DEFINE_PROC(S_mix_sample_reader_p,    g_mf_p, 1, 0, 0,                   H_mf_p);
 
 #if HAVE_GUILE
   tf_tag = scm_make_smob_type("tf", sizeof(track_fd));
@@ -4254,6 +4291,7 @@ void g_init_mix(SCM local_doc)
   DEFINE_PROC(S_mixes,        g_mixes, 0, 2, 0,        H_mixes);
   DEFINE_PROC(S_mix_sound,    g_mix_sound, 2, 0, 0,    H_mix_sound);
   DEFINE_PROC(S_select_mix,   g_select_mix, 1, 0, 0,   H_select_mix);
+  DEFINE_PROC(S_find_mix,     g_find_mix, 0, 3, 0,     H_find_mix);
 
   define_procedure_with_setter(S_selected_mix, SCM_FNC g_selected_mix, H_selected_mix,
 			       "set-" S_selected_mix, SCM_FNC g_select_mix,

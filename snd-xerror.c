@@ -111,6 +111,8 @@ void show_snd_errors(snd_state *ss)
   else post_error_dialog(ss, "no errors yet");
 }
 
+/* TODO: this hangs if you go to the listener while it is posted and type <cr>. */
+
 static int yes_or_no = 0;
 
 static void YesCallback(Widget w, XtPointer context, XtPointer info) {yes_or_no = 1;}

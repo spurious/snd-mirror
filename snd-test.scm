@@ -1835,9 +1835,11 @@
 
 ;;; ---------------- test 5: simple overall checks ----------------
 
+(load "extensions.scm")
 (load "examp.scm")
 (load "snd4.scm")
 (load "hooks.scm")
+(load "dsp.scm")
 
 (define (our-x->position ind x) 
   (let ((ax (axis-info ind)))
@@ -2398,6 +2400,11 @@
 
       (let* ((obind (open-sound "4.aiff"))
 	     (amps (maxamp obind #t)))
+	(if (< (window-width) 600) 
+	    (set! (window-width) 600))
+	(if (< (window-height) 600)
+	    (set! (window-height) 600))
+	(set! (x-bounds obind 0) (list 0.0 0.1))
 	(set! (amp-control obind) 0.1)
 	(select-channel 2)
 	(if (eq? (without-errors (apply-controls obind 1)) 'no-such-sound) (snd-display "apply-controls can't find 4.aiff?"))
@@ -2427,6 +2434,12 @@
 		     (y1 (list-ref axinfo 5))
 		     (xpos (+ x0 (* .5 (- x1 x0))))
 		     (ypos (+ y0 (* .75 (- y1 y0)))))
+		(define (cp-x x) (inexact->exact (+ (list-ref axinfo 10) 
+						    (* (- x x0) (/ (- (list-ref axinfo 12) (list-ref axinfo 10)) 
+								   (- x1 x0))))))
+		(define (cp-y y) (inexact->exact (+ (list-ref axinfo 13) 
+						    (* (- y1 y) (/ (- (list-ref axinfo 11) (list-ref axinfo 13)) 
+								   (- y1 y0))))))
 		(set! (cursor obind) 100)
 		(let ((xy (cursor-position obind)))
 		  (if (fneq (position->x (car xy)) (/ (cursor obind) (srate obind)))
@@ -2451,7 +2464,22 @@
 		    (snd-display (format #f ";x1->position: ~A ~A?" (our-x->position obind x1))))
 		(if (> (abs (apply - (our-x->position obind (* 0.5 (+ x0 x1))))) 1)
 		    (snd-display (format #f ";xmid->position: ~A ~A?" (our-x->position obind (* 0.5 (+ x0 x1))))) 1)
-
+		(if (> (abs (- (x->position xpos) (cp-x xpos))) 1)
+		    (snd-display (format #f ";cp-x .5: ~A ~A?" (x->position xpos) (cp-x xpos))))
+		(if (> (abs (- (y->position ypos) (cp-y ypos))) 1)
+		    (snd-display (format #f ";cp-y .75: ~A ~A?" (y->position ypos) (cp-y ypos))))
+		(do ((i 0 (1+ i)))
+		    ((= i 10))
+		  (let ((xpos (+ x0 (my-random (- x1 x0))))
+			(ypos (+ y0 (my-random (- y1 y0)))))
+		    (if (> (abs (- (x->position xpos) (cp-x xpos))) 1)
+			(snd-display (format #f ";cp-x[~A] ~A: ~A ~A?" i xpos (x->position xpos) (cp-x xpos))))
+		    (if (> (abs (- (y->position ypos) (cp-y ypos))) 1)
+			(snd-display (format #f ";cp-y[~A] ~A: ~A ~A?" i ypos (y->position ypos) (cp-y ypos))))
+		    (if (fneq (position->x (cp-x xpos)) xpos)
+			(snd-display (format #f ";x->position cp-x ~A ~A" xpos (position->x (cp-x xpos)))))
+		    (if (fffneq (position->y (cp-y ypos)) ypos)
+			(snd-display (format #f ";y->position cp-y ~A ~A" ypos (position->y (cp-y ypos)))))))
 		(set! (left-sample obind 0) 1234)
 		(if (not (= 1234 (car (axis-info obind 0))))
 		    (snd-display (format #f ";axis-info[0 losamp at 1234]: ~A ~A?" (car (axis-info obind 0)) (left-sample obind 0))))
@@ -5108,6 +5136,20 @@
 	      (mix-region 100 id) 
 	      (mix-region 200 id))
 	    (if (not (= (mix-name->id "asdf") mix-id)) (snd-display (format #f ";mix-name->id: ~A?" (mix-name->id "asdf"))))))
+	(set! (cursor) 0)
+	(let ((nid (forward-mix)))
+	  (if (or (not (mix? nid))
+		  (not (= (cursor) (mix-position nid))))
+	      (snd-display (format #f ";forward-mix ~A ~A ~A?" nid (cursor) (mix-position nid))))
+	  (let ((nid1 (forward-mix 2)))
+	    (if (or (not (mix? nid1))
+		    (= nid nid1)
+		    (not (= (cursor) (mix-position nid1))))
+		(snd-display (format #f ";forward-mix(2) ~A ~A ~A ~A?" nid nid1 (cursor) (mix-position nid1))))
+	    (set! nid1 (backward-mix))
+	    (if (or (not (mix? nid1))
+		    (not (= (cursor) (mix-position nid1))))
+		(snd-display (format #f ";backward-mix(2) ~A ~A ~A?" nid1 (cursor) (mix-position nid1))))))
 	(let ((mix-id (mix "oboe.snd" 100)))
 	  (if (not (sound? (list mix-id))) (snd-display (format #f ";mix oboe: ~D not ok?" mix-id)))
 	  (if (not (= (chans (list mix-id)) 1)) (snd-display (format #f ";mix oboe: chans ~D?" (chans (list mix-id)))))
@@ -7547,7 +7589,9 @@
 	  (safe-make-region 1000 2000 obi)
 	  (eval-over-selection (lambda (val) (* 2.0 val)))
 	  (let ((nsamp100 (sample 1100 obi 0)))
-	    (if (fneq (* 2.0 samp100) nsamp100) (snd-display (format #f ";eval-over-selection: ~A ~A?" samp100 nsamp100)))
+	    (if (fneq (* 2.0 samp100) nsamp100) 
+		(snd-display (format #f ";eval-over-selection: ~A ~A [~A ~A]?" 
+				     samp100 nsamp100 (selection-position) (selection-length))))
 	    (let ((m2 (add-mark 1000 obi 0))
 		  (m3 (add-mark 2000 obi 0)))
 	      (if (not (equal? (marks obi 0) (list m2 m3))) (snd-display (format #f ";add-mark: ~A ~A?" (marks obi 0) (list m2 m3))))
@@ -9429,7 +9473,8 @@ EDITS: 3
 		      (snd-display (format #f ";drag(1) but no selection?"))
 		      (let* ((pos (selection-position))
 			     (samp (sample (1+ pos))))
-			(key-event cwin (char->integer #\x) 0) (force-event) ;examp.scm eval-selection
+			(key-event cwin (char->integer #\x) 4) (force-event)
+			(key-event cwin (char->integer #\x) 0) (force-event)
 			(widget-string minibuffer "(lambda (n) (* n 5))")
 			(key-event (widget-window minibuffer) snd-return-key 0) (force-event)
 			(if (fneq (sample (1+ pos)) (* 5 samp))
@@ -10872,14 +10917,13 @@ EDITS: 3
 (if with-exit (exit))
 
 ;;; these need further testing
-;;; TODO:  forward-mix save-state mus-sound-reopen-output close-sound-file vct->sound-file
+;;; TODO:  save-state mus-sound-reopen-output close-sound-file vct->sound-file peaks
 ;;; TODO:  save-marks save-region vcts-map! update-sound make-track-sample-reader free-track-sample-reader 
-;;; TODO:  backward-mix peaks cursor-position y->position position->y
 ;;; TODO:  play-track? equalize-panes
 ;;; TODO:  edpos in sound->temp graph-data
 ;;; TODO:  apply from mark etc
 ;;; TODO:  run overall (14 etc) with various hooks set (current-window-location etc)
-;;; TODO:  track down temps that popped up
+;;; TODO:  find-mix
 
 ;; we have mus-sound-srate in sndlib, mus-srate in clm.c, sound-srate and *clm-srate* in clm, mus-sound-srate and srate in snd
 ;;    perhaps a mus module, giving mus:sound-srate in scm, mus:sound-srate in clm, mus_sound_srate in C?

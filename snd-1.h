@@ -1092,7 +1092,7 @@ int is_directory(char *filename);
 file_info *make_file_info(char *fullname, snd_state *ss);
 file_info *free_file_info(file_info *hdr);
 file_info *copy_header(char *fullname, file_info *ohdr);
-file_info *make_temp_header(char *fullname, int srate, int chans, int samples);
+file_info *make_temp_header(char *fullname, int srate, int chans, int samples, char *caller);
 dir *free_dir (dir *dp);
 void init_sound_file_extensions(void);
 dir *find_sound_files_in_dir (char *name);
