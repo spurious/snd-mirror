@@ -1250,4 +1250,3 @@
 ;;; the examp.scm with-sound macro could be used here:
 ;;;   (with-sound () (orchard-oriole 0) ... )
 ;;; on a fast enough machine this could run directly to the dac even interpreted.
-;;; another option would be "no temp files" -- i.e. do the entire mix without saving any temps

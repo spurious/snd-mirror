@@ -449,13 +449,7 @@ char *info_completer(char *text)
       if ((sp->marking) || (sp->finding_mark)) return(copy_string(text)); /* C-x C-m etc */
       if (sp->printing) return(copy_string(text));  /* C-x C-d so anything is possible */
       if (sp->amping) return(env_name_completer(text));
-      if (sp->filing)
-	{
-	  if ((sp->filing == INPUT_FILING) ||  /* C-x C-f */
-	      (sp->filing == CHANGE_FILING) || /* C-x C-q */
-	      (sp->filing == INSERT_FILING))   /* C-x C-i */
-	    return(filename_completer(text));
-	}
+      if (use_filename_completer(sp->filing)) return(filename_completer(text));
       if (sp->loading) return(filename_completer(text)); /* C-x C-l */
       if (sp->macroing) 
 	{

@@ -25,6 +25,10 @@
   #include <sys/mount.h>
 #endif
 
+#ifdef NEXT
+  #define S_ISDIR(mode) (((mode) & S_IFMT) == S_IFDIR)
+  #define S_ISLNK(mode) (((mode) & S_IFMT) == S_IFLNK)
+#endif
 
 #if defined(WINDOZE) || (!(defined(FSTATFS_ARGS))) || (FSTATFS_ARGS == 0) || defined(BEOS)
   int disk_kspace (int fd) {return(1234567);}
@@ -641,6 +645,8 @@ int move_file(char *oldfile, char *newfile)
   return(err);
 }
 
+#define TEMP_SOUND_INDEX 123456
+/* just a marker for debugging */
 
 snd_info *make_sound_readable(snd_state *ss, char *filename, int post_close)
 {

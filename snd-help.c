@@ -256,6 +256,7 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
+7-Dec:   zero-pad bugfixes.\n\
 29-Nov:  before-fft-hook, string completion from help list.\n\
 28-Nov:  BSD support thanks to Steven Schultz.\n\
          Dolph-Chebyshev window if HAVE_GSL.\n\
@@ -266,12 +267,6 @@ void news_help(snd_state *ss)
 13-Nov:  mark-drag-hook.\n\
 11-Nov:  insert-silence.\n\
 10-Nov:  snd 4.8.\n\
-8-Nov:   filter text field also has history (M-p) now.\n\
-7-Nov:   shell (readline) style M-p and M-n in minibuffer with variable minibuffer-history-length (8).\n\
-6-Nov:   various cosmetic changes for the new g++ (Redhat 7.0).\n\
-         insert-sound arguments changed.\n\
-2-Nov:   insert-selection, mix-selection, delete-selection.\n\
-1-Nov:   filter-env-in-hz switch.\n\
 ",
 NULL);
   FREE(info);

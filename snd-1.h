@@ -938,6 +938,7 @@ void stop_amp_env(chan_info *cp);
 int chan_fft_in_progress(chan_info *cp);
 int force_fft_clear(chan_info *cp, void *ptr);
 void chan_info_cleanup(chan_info *cp);
+int use_filename_completer(int filing);
 #ifdef __GNUC__
   void report_in_minibuffer(snd_info *sp, char *format, ...)  __attribute__ ((format (printf, 2, 3)));
   void report_in_minibuffer_and_save(snd_info *sp, char *format, ...)  __attribute__ ((format (printf, 2, 3)));

@@ -2071,8 +2071,13 @@ value to val.
 
   y-zoom-slider     (snd chn)     value of y axis zoom slider.
 
-  zero-pad          (snd chn)     fft zero pad size as a multiple of the fft size;
-                                  (set! (zero-pad) 1) gives you half data, half zeros (default: 0).
+  zero-pad          (snd chn)     fft zero pad size as a multiple of the fft size; (set! (zero-pad) 1)
+                                  gives you half data, half zeros (default: 0) (the data length is
+                                  determined by the nominal fft-size).  Zero padding causes sinc-interpolation
+                                  of the fft points, making the display smoother.
+
+                                  (bind-key (char->integer #\p) 0 (lambda () (set! (zero-pad) (+ (zero-pad) 1)) (update-fft)))
+                                  (bind-key (char->integer #\m) 0 (lambda () (set! (zero-pad) (- (zero-pad) 1)) (update-fft)))
 
 the control panel
 
@@ -2809,9 +2814,9 @@ These functions don't seem to fit anywhere else:
                                   This is a fast version of the FFT (it's about 4 to 6 times faster than the fft,
                                   but can be applied only to real data; it is its own inverse).  The following
                                   function reads data from the left window edge, calls the Hartley transform
-                                  (using a "rectangular window"), turns that into a power spectrum, and graphs
-                                  the result (which is the same as an fft-generated power spectrum before any
-                                  normalization etc).
+                                  (using a "rectangular window"), turns that into a magnitude spectrum, and graphs
+                                  the result (which is the same as the fft-generated magnitude spectrum before
+                                  any normalization etc).  Leave out the sqrt below to get a power spectrum.
 
                                      (define (hgrf snd chn y0 y1)
                                        (let* ((size (fft-size snd chn))

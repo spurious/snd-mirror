@@ -27,7 +27,7 @@
 (define snd-test -1)
 (define full-test #t)
 
-(define include-clm #f)
+(define include-clm #t)
 (define original-prompt (listener-prompt))
 (show-listener)
 (set! (window-x) 600)
@@ -790,6 +790,9 @@
 	  (list 'expand-ramp expand-ramp 0.4 set-expand-ramp '(-1.0 1.0 123.123))
 	  (list 'fft-beta fft-beta 0.0  set-fft-beta '(-1.0 123.123))
 	  (list 'fft-size fft-size 256 set-fft-size '(-1 0))
+	  (list 'zero-pad zero-pad 0 set-zero-pad '(-1 -123))
+	  (list 'cursor-style cursor-style cursor-cross set-cursor-style '(-1))
+	  (list 'cursor-style cursor-style cursor-line set-cursor-style '(2 123))
 	  (list 'fft-style fft-style 0 set-fft-style '(-1 123))
 	  (list 'fft-window fft-window 6 set-fft-window '(-1 123))
 	  (list 'filter-env-order filter-env-order 40 set-filter-env-order '(-1 0))
@@ -808,6 +811,8 @@
 	  (list 'speed-style speed-style 0 set-speed-style '(-1 10))
 	  (list 'transform-type transform-type 0 set-transform-type '(-1 123))
 	  (list 'wavelet-type wavelet-type 0 set-wavelet-type '(-1 123))
+	  (list 'wavo-hop wavo-hop 1 set-wavo-hop '(0 -123))
+	  (list 'wavo-trace wavo-trace 1 set-wavo-trace '(0 -123))
 	  (list 'x-axis-style x-axis-style 0 set-x-axis-style '(-1 123))
 	  (list 'zoom-focus-style zoom-focus-style 2 set-zoom-focus-style '(-1 123)))))
 

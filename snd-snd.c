@@ -1393,13 +1393,13 @@ static SCM sp_iwrite(SCM snd_n, SCM val, int fld, char *caller)
     case SP_FILTER_ORDER:   set_snd_filter_order(sp,ival);                             break;
     case SP_CURSOR_FOLLOWS_PLAY: sp->cursor_follows_play = ival;                       break;
     case SP_SHOW_CONTROLS:  if (ival) sound_show_ctrls(sp); else sound_hide_ctrls(sp); break;
-    case SP_SPEED_TONES:    sp->speed_tones = ival;                                    break;
-    case SP_SPEED_STYLE:    sp->speed_style = ival;                                    break;
-    case SP_SRATE:         mus_sound_override_header(sp->fullname,ival,-1,-1,-1,-1,-1); snd_update(ss,sp); break;
-    case SP_NCHANS:        mus_sound_override_header(sp->fullname,-1,ival,-1,-1,-1,-1); snd_update(ss,sp); break;
-    case SP_DATA_FORMAT:   mus_sound_override_header(sp->fullname,-1,-1,ival,-1,-1,-1); snd_update(ss,sp); break;
-    case SP_HEADER_TYPE:   mus_sound_override_header(sp->fullname,-1,-1,-1,ival,-1,-1); snd_update(ss,sp); break;
-    case SP_DATA_LOCATION: mus_sound_override_header(sp->fullname,-1,-1,-1,-1,ival,-1); snd_update(ss,sp); break;
+    case SP_SPEED_TONES:    if (ival > 0) sp->speed_tones = ival;                      break;
+    case SP_SPEED_STYLE:    sp->speed_style = iclamp(0,ival,MAX_SPEED_STYLE);          break;
+    case SP_SRATE:          mus_sound_override_header(sp->fullname,ival,-1,-1,-1,-1,-1); snd_update(ss,sp); break;
+    case SP_NCHANS:         mus_sound_override_header(sp->fullname,-1,ival,-1,-1,-1,-1); snd_update(ss,sp); break;
+    case SP_DATA_FORMAT:    mus_sound_override_header(sp->fullname,-1,-1,ival,-1,-1,-1); snd_update(ss,sp); break;
+    case SP_HEADER_TYPE:    mus_sound_override_header(sp->fullname,-1,-1,-1,ival,-1,-1); snd_update(ss,sp); break;
+    case SP_DATA_LOCATION:  mus_sound_override_header(sp->fullname,-1,-1,-1,-1,ival,-1); snd_update(ss,sp); break;
       /* last arg is size */
     case SP_COMMENT:      
       /* this is safe only with aifc and riff headers */

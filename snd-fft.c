@@ -3,11 +3,6 @@
 /* handling of "beta" changed drastically 28-June-98 
  * it is now a number between 0 and 1 from ss point of view,
  * and is scaled by the window max before being applied 
- *
- * convolution from fft.c merged into this file 12-Nov-99.
- * clm fft window stuff replaces local funcs 6-May-00.
- * started replacing local transforms with those in gsl 6-May-00.
- * all vars made channel-local 14-Aug-00
  */
 
 #define NUM_CACHED_FFT_WINDOWS 8
@@ -1003,7 +998,9 @@ static int make_fft_window(fft_state *fs)
     {
     case FOURIER:
       wp = (fft_window_state *)(fs->wp);
-      toploc = (int)(fs->size / (Float)(1 + fs->pad_zero));
+      if (fs->pad_zero == 0)
+	toploc = fs->size;
+      else toploc = (int)(pow(2.0,floor(log(fs->size / (1 + fs->pad_zero)) / log(2.0))));
       return(make_fft_window_1(wp->window,toploc,wp->type,wp->beta));
       break;
     case HANKEL: 
@@ -1149,12 +1146,12 @@ static char *spectro_xlabel(chan_info *cp)
       else return(STR_frequency);
       break;
     case WAVELET:         return(wavelet_names[cp->wavelet_type]); break;
-    case HANKEL:          return("Hankel spectrum"); break;
-    case CHEBYSHEV:       return("Chebyshev spectrum"); break;
-    case CEPSTRUM:        return("cepstrum"); break;
-    case WALSH:           return("Sequency"); break;
-    case HADAMARD:        return("Sequency"); break;
-    case AUTOCORRELATION: return("Lag time"); break;
+    case HANKEL:          return("Hankel spectrum");               break;
+    case CHEBYSHEV:       return("Chebyshev spectrum");            break;
+    case CEPSTRUM:        return("cepstrum");                      break;
+    case WALSH:           return("Sequency");                      break;
+    case HADAMARD:        return("Sequency");                      break;
+    case AUTOCORRELATION: return("Lag time");                      break;
 #if HAVE_GUILE
     default:             return(added_transform_xlabel(cp->transform_type)); break;
 #endif
@@ -1274,7 +1271,9 @@ static int apply_fft_window(fft_state *fs)
   fft_data = fs->data;
   
   if (cp->transform_type == FOURIER) pad = fs->pad_zero;
-  data_len = (int)(fs->size / (1+pad));
+  if (pad == 0)
+    data_len = fs->size;
+  else data_len = (int)(pow(2.0,floor(log(fs->size / (1+pad)) / log(2.0))));
   if ((show_selection_transform(ss)) && (selection_is_active_in_channel(cp)) && (fs->datalen > 0))
     {
       ind0 = fs->databeg;
@@ -1572,7 +1571,7 @@ void *make_fft_state(chan_info *cp, int simple)
     }
   else 
     {
-      fftsize = cp->fft_size;
+      fftsize = (int)pow(2.0,(int)(ceil(log((Float)(cp->fft_size * (1+cp->zero_pad)))/log(2.0))));
       cp->selection_transform_size = 0;
     }
 

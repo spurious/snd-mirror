@@ -1007,7 +1007,10 @@ static void add_option(Widget w,int which_menu,char *label, int callb)
 static int remove_option(int which_menu,char *label)
 {
   int i;
-  /* TODO if label NULL, remove which_menu itself and all its children */
+  /* TODO if label NULL, remove which_menu itself and all its children
+   *         (this requires that the cascade widget also be saved, at least -- 
+   *          simply unmanaging added_menus[which_menu] doesn't work).
+   */
   for (i=0;i<added_options_pos;i++)
     {
       if ((added_options_menus[i] == which_menu) && (strcmp(label,added_options_names[i]) == 0) && (added_options[i]))

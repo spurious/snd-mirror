@@ -241,7 +241,7 @@ variables and functions control this:</p>
 
                (load "rgb.scm")
                (define hi (make-vector 512)) ;use 64 if not using big colormaps
-               (do ((i 0 (+ i 4))) ((>= i 512)) 
+               (do ((i 0 (+ i 4))) ((&gt;= i 512)) 
                  (vector-set! hi i red) (vector-set! hi (+ i 1) blue) 
                  (vector-set! hi (+ i 2) green) (vector-set! hi (+ i 3) black))
                (<em class=red>load-colormap</em> hi)
@@ -511,7 +511,7 @@ the hook.
 
                                        (add-hook! after-open-hook 
                                          (lambda (snd)
-                                           (if (> (channels snd) 1)
+                                           (if (&gt; (channels snd) 1)
                                                (begin
                                                  (set! (sync) (1+ snd) snd) ; 0 = #f
                                                  (set! (uniting) channels-combined snd)))
@@ -576,7 +576,7 @@ the hook.
                                       (define (report-mark-location id)
                                         ;; print current mark location in minibuffer
                                         (let ((samp (mark-sample id))
-                                              (sndchn (mark->sound id)))
+                                              (sndchn (mark-&gt;sound id)))
                                           (report-in-minibuffer (format #f "~D (~,3F) ~A[~D]"
                                             samp (/ samp (srate (car sndchn))) 
                                             (short-file-name (car sndchn)) (cadr sndchn)))))
@@ -1951,7 +1951,7 @@ sets its value to val.
                                        (vector-set! outputs 0 (delay delay-line (+ (* .75 (tap delay-line)) inval)))
                                        outputs)
                                      (lambda (revlen srate chans)
-                                       (set! delay-line (make-delay (inexact->exact (* srate delay-time))))
+                                       (set! delay-line (make-delay (inexact-&gt;exact (* srate delay-time))))
                                        delay-line)
                                      (lambda (ptr)
                                        ptr)
@@ -2196,8 +2196,14 @@ sets its value to val.
 
   <b><a name="yzoomslider">y-zoom-slider</a></b>     (<em class=targ>snd chn</em>)     value of y axis zoom slider.
 
-  <b><a name="zeropad">zero-pad</a></b>          (<em class=narg>snd chn</em>)     fft zero pad size as a multiple of the fft size; 
-                                  (set! (zero-pad) 1) gives you half data, half zeros (default: 0).
+  <b><a name="zeropad">zero-pad</a></b>          (<em class=narg>snd chn</em>)     fft zero pad size as a multiple of the fft size; (set! (zero-pad) 1) 
+                                  gives you half data, half zeros (default: 0) (the data length is 
+                                  determined by the nominal fft-size).  Zero padding causes sinc-interpolation 
+                                  of the fft points, making the display smoother.
+<small>
+                                  (bind-key (char-&gt;integer #\p) 0 (lambda () (set! (zero-pad) (+ (zero-pad) 1)) (update-fft)))
+                                  (bind-key (char-&gt;integer #\m) 0 (lambda () (set! (zero-pad) (- (zero-pad) 1)) (update-fft)))
+</small>
 </pre>
 
 <span class=cbox><h4><a name="customcontrols">the control panel</a></h4></span>
@@ -2277,12 +2283,12 @@ one, and are exposed in many functions described above as the <i>pos</i> argumen
                                          (if (and (= dat 0)               ; original sound
                                                   (= scl 1.0))            ; unscaled
                                            (let ((nxtpos (car (cadr tree))))
-                                             (if (and (<= pos rs)
-                                                      (>= nxtpos ls))     ; fragment is at least partially visible
+                                             (if (and (&lt;= pos rs)
+                                                      (&gt;= nxtpos ls))     ; fragment is at least partially visible
                                                (let* ((win (gtk-widget-window (sg-channel-graph-widget snd chn)))
                                                       (gc (gdk-gc-new win))
-                                                      (x0pos (sg-sample->x (max ls pos)))
-                                                      (x1pos (sg-sample->x (min rs nxtpos))))
+                                                      (x0pos (sg-sample-&gt;x (max ls pos)))
+                                                      (x1pos (sg-sample-&gt;x (min rs nxtpos))))
                                                  (gdk-draw-rectangle win gc #t x0pos 2 (- x1pos x0pos) 5)))))
                                          (if (and (cdr tree)              ; go to next fragment
                                                   (not (= (cadr (car tree)) -2)))
@@ -2547,7 +2553,7 @@ At the end, we flush out all the remaining samples awaiting output in <i>buffer<
   (lambda (return)
     (map-chan (lambda (val)
                 (set! ctr (1+ ctr)) 
-                (if (> ctr 100) 
+                (if (&gt; ctr 100) 
                   (return "quitting!") 
                   val)))))
 </pre>
@@ -2586,7 +2592,7 @@ a list of them with cross-references.</p>
                                                 (step (/ 1.0 len)))
                                             (do ((i 0 (1+ i))) ((= i len) v)
                                               (let* ((val (next-sample fd))
-                                                     (bin (inexact->exact (* (abs val) 16.0))))
+                                                     (bin (inexact-&gt;exact (* (abs val) 16.0))))
                                                 (do ((j 0 (1+ j))) ((= j steps))
                                                   (vct-set! v (+ j bin) (+ step (vct-ref v (+ j bin))))))))))
 </small>
@@ -2939,13 +2945,13 @@ Axis choice:
 </small>
                                   We can use bind-key to turn the keyboard into a sort of extended piano:
 <small>
-                                    (bind-key (char->integer #\o) 0 (lambda () (play "oboe.snd") keyboard-no-action))
-                                    (bind-key (char->integer #\p) 0 (lambda () (play "pistol.snd") keyboard-no-action))
+                                    (bind-key (char-&gt;integer #\o) 0 (lambda () (play "oboe.snd") keyboard-no-action))
+                                    (bind-key (char-&gt;integer #\p) 0 (lambda () (play "pistol.snd") keyboard-no-action))
 </small>
                                   Now each time we hit "o", "oboe.snd" plays,  etc.  Or say we want to move
                                   forward two samples in the graph each time we type "l":
 <small>                                  
-                                    (bind-key (char->integer #\l) 0 (lambda () 
+                                    (bind-key (char-&gt;integer #\l) 0 (lambda () 
                                                                       (set! (left-sample 0 0) (+ 2 (left-sample 0 0))) 
                                                                       cursor-update-display))
 </small>
@@ -2973,13 +2979,13 @@ Axis choice:
                                   This is a fast version of the FFT (it's about 4 to 6 times faster than the fft, 
                                   but can be applied only to real data; it is its own inverse).  The following 
                                   function reads data from the left window edge, calls the Hartley transform 
-                                  (using a "rectangular window"), turns that into a power spectrum, and graphs 
-                                  the result (which is the same as an fft-generated power spectrum before any
-                                  normalization etc).
+                                  (using a "rectangular window"), turns that into a magnitude spectrum, and graphs 
+                                  the result (which is the same as the fft-generated magnitude spectrum before 
+                                  any normalization etc).  Leave out the sqrt below to get a power spectrum.
 <small>
                                      (define (hgrf snd chn y0 y1)
                                        (let* ((size (fft-size snd chn))
-                                              (hv0 (samples->vct (left-sample snd chn) size))
+                                              (hv0 (samples-&gt;vct (left-sample snd chn) size))
                                               (hv1 (make-vct (/ size 2))))
                                          (fht hv0)
                                          (do ((i 1 (1+ i)))
