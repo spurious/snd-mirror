@@ -177,11 +177,11 @@ static int prime (int num)
 {
   int lim, i;
   if (num == 2) return(1);
-  if ((num%2) == 1)
+  if ((num % 2) == 1)
     {
       lim = (int)(sqrt(num));
       for (i = 3; i < lim; i += 2)
-	if ((num%i) == 0) 
+	if ((num % i) == 0) 
 	  return(0);
       return(1);
     }
