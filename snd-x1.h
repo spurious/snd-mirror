@@ -502,7 +502,7 @@ void g_init_gxenv(void);
 
 /* -------- snd-xmix.c -------- */
 
-void reflect_mix_or_track_change(int mix_id, int track_id);
+void reflect_mix_or_track_change(int mix_id, int track_id, bool forced);
 Widget make_mix_dialog(void);
 Widget make_track_dialog(void);
 bool mix_play_stopped(void);

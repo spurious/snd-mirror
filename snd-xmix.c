@@ -74,6 +74,7 @@ static void change_mix_speed(int mix_id, Float val)
 
 static void speed_click_callback(Widget w, XtPointer context, XtPointer info) 
 {
+  if (!(mix_ok(mix_dialog_id))) return;
   change_mix_speed(mix_dialog_id, 1.0);
   XtVaSetValues(w_speed, XmNvalue, (int)SPEED_SCROLLBAR_MID, NULL);
 }
@@ -86,8 +87,9 @@ static int mix_speed_to_int(Float uval, snd_info *sp)
 static void speed_drag_callback(Widget w, XtPointer context, XtPointer info) 
 {
   int ival;
-  ival = ((XmScrollBarCallbackStruct *)info)->value;
   ASSERT_WIDGET_TYPE(XmIsScrollBar(w), w);
+  if (!(mix_ok(mix_dialog_id))) return;
+  ival = ((XmScrollBarCallbackStruct *)info)->value;
   if (!mix_dialog_slider_dragging) mix_dialog_start_drag(mix_dialog_id);
   mix_dialog_slider_dragging = true;
   change_mix_speed(mix_dialog_id, exp((Float)(ival - SPEED_SCROLLBAR_MID) / SPEED_SCROLLBAR_BREAK));
@@ -97,6 +99,7 @@ static void speed_valuechanged_callback(Widget w, XtPointer context, XtPointer i
 {
   XmScrollBarCallbackStruct *cb = (XmScrollBarCallbackStruct *)info;
   ASSERT_WIDGET_TYPE(XmIsScrollBar(w), w);
+  if (!(mix_ok(mix_dialog_id))) return;
   mix_dialog_slider_dragging = false;
   change_mix_speed(mix_dialog_id, exp((Float)(cb->value - SPEED_SCROLLBAR_MID) / SPEED_SCROLLBAR_BREAK));
 }
@@ -118,6 +121,7 @@ static void change_mix_amp(int mix_id, int chan, Float val)
 static void amp_click_callback(Widget w, XtPointer context, XtPointer info) 
 {
   int chan;
+  if (!(mix_ok(mix_dialog_id))) return;
   XtVaGetValues(w, XmNuserData, &chan, NULL);
   change_mix_amp(mix_dialog_id, chan, 1.0);
   XtVaSetValues(w_amps[chan], XmNvalue, SCROLLBAR_MID, NULL);
@@ -138,9 +142,10 @@ static Float int_amp_to_Float(int amp)
 static void amp_drag_callback(Widget w, XtPointer context, XtPointer info) 
 {
   int ival, chan;
+  ASSERT_WIDGET_TYPE(XmIsScrollBar(w), w);
+  if (!(mix_ok(mix_dialog_id))) return;
   XtVaGetValues(w, XmNuserData, &chan, NULL);
   ival = ((XmScrollBarCallbackStruct *)info)->value;
-  ASSERT_WIDGET_TYPE(XmIsScrollBar(w), w);
   if (!mix_dialog_slider_dragging) mix_dialog_start_drag(mix_dialog_id);
   mix_dialog_slider_dragging = true;
   change_mix_amp(mix_dialog_id, chan, int_amp_to_Float(ival));
@@ -149,6 +154,7 @@ static void amp_drag_callback(Widget w, XtPointer context, XtPointer info)
 static void amp_valuechanged_callback(Widget w, XtPointer context, XtPointer info) 
 {
   int ival, chan;
+  if (!(mix_ok(mix_dialog_id))) return;
   ival = ((XmScrollBarCallbackStruct *)info)->value;
   XtVaGetValues(w, XmNuserData, &chan, NULL);
   ASSERT_WIDGET_TYPE(XmIsScrollBar(w), w);
@@ -170,9 +176,10 @@ static int last_clicked_env_chan = 0;
 static void mix_amp_env_resize(Widget w, XtPointer context, XtPointer info) 
 {
   XGCValues gv;
-  int chans, chan, mix_id;
+  int chans, chan;
   env **e;
   env *cur_env;
+  if (!(mix_ok(mix_dialog_id))) return;
   if (ax == NULL)
     {
       gv.function = GXcopy;
@@ -184,16 +191,15 @@ static void mix_amp_env_resize(Widget w, XtPointer context, XtPointer info)
       ax->gc = cur_gc;
     }
   else clear_window(ax);
-  mix_id = mix_dialog_id;
-  chans = mix_dialog_mix_input_chans(mix_id);
-  e = mix_dialog_envs(mix_id);
+  chans = mix_dialog_mix_input_chans(mix_dialog_id);
+  e = mix_dialog_envs(mix_dialog_id);
   for (chan = 0; chan < chans; chan++)
     {
       edp_display_graph(spfs[chan], _("mix env"), ax, 
 			(int)(chan * widget_width(w) / chans), 0,
 			widget_width(w) / chans, widget_height(w), 
 			e[chan], false, true);
-      cur_env = mix_dialog_mix_amp_env(mix_id, chan);
+      cur_env = mix_dialog_mix_amp_env(mix_dialog_id, chan);
       if (cur_env)
 	{
 	  XSetForeground(MAIN_DISPLAY(ss), ax->gc, (ss->sgx)->enved_waveform_color);
@@ -213,18 +219,18 @@ static int press_x, press_y;
 static void mix_drawer_button_motion(Widget w, XtPointer context, XEvent *event, Boolean *cont) 
 {
   XMotionEvent *ev = (XMotionEvent *)event;
-  int mix_id, chans, chan;
+  int chans, chan;
   env *e;
   Float pos;
+  if (!(mix_ok(mix_dialog_id))) return;
 #ifdef MAC_OSX
   if ((press_x == ev->x) && (press_y == ev->y)) return;
 #endif
-  mix_id = mix_dialog_id;
-  chans = mix_dialog_mix_input_chans(mix_id);
+  chans = mix_dialog_mix_input_chans(mix_dialog_id);
   pos = (Float)(ev->x) / (Float)widget_width(w);
   chan = (int)(pos * chans);
   last_clicked_env_chan = chan;
-  e = mix_dialog_env(mix_id, chan);
+  e = mix_dialog_env(mix_dialog_id, chan);
   edp_handle_point(spfs[chan], ev->x, ev->y, ev->time, e, false, 1.0);
   mix_amp_env_resize(w, NULL, NULL);
 }
@@ -232,19 +238,19 @@ static void mix_drawer_button_motion(Widget w, XtPointer context, XEvent *event,
 static void mix_drawer_button_press(Widget w, XtPointer context, XEvent *event, Boolean *cont) 
 {
   XButtonEvent *ev = (XButtonEvent *)event;
-  int mix_id, chans, chan;
+  int chans, chan;
   env *e;
   Float pos;
+  if (!(mix_ok(mix_dialog_id))) return;
 #ifdef MAC_OSX
   press_x = ev->x;
   press_y = ev->y;
 #endif
-  mix_id = mix_dialog_id;
-  chans = mix_dialog_mix_input_chans(mix_id);
+  chans = mix_dialog_mix_input_chans(mix_dialog_id);
   pos = (Float)(ev->x) / (Float)widget_width(w);
   chan = (int)(pos * chans);
   last_clicked_env_chan = chan;
-  e = mix_dialog_env(mix_id, chan);
+  e = mix_dialog_env(mix_dialog_id, chan);
   if (edp_handle_press(spfs[chan], ev->x, ev->y, ev->time, e, false, 1.0))
     mix_amp_env_resize(w, NULL, NULL);
 }
@@ -252,15 +258,15 @@ static void mix_drawer_button_press(Widget w, XtPointer context, XEvent *event, 
 static void mix_drawer_button_release(Widget w, XtPointer context, XEvent *event, Boolean *cont) 
 {
   XButtonEvent *ev = (XButtonEvent *)event;
-  int mix_id, chans, chan;
+  int chans, chan;
   env *e;
   Float pos;
-  mix_id = mix_dialog_id;
-  chans = mix_dialog_mix_input_chans(mix_id);
+  if (!(mix_ok(mix_dialog_id))) return;
+  chans = mix_dialog_mix_input_chans(mix_dialog_id);
   pos = (Float)(ev->x) / (Float)widget_width(w);
   chan = (int)(pos * chans);
   last_clicked_env_chan = chan;
-  e = mix_dialog_env(mix_id, chan);
+  e = mix_dialog_env(mix_dialog_id, chan);
   edp_handle_release(spfs[chan], e);
   mix_amp_env_resize(w, NULL, NULL);
 }
@@ -270,6 +276,7 @@ static Widget w_id = NULL, w_beg = NULL, w_track = NULL, mix_play = NULL, mix_tr
 static void track_activated(void)
 {
   char *val;
+  if (!(mix_ok(mix_dialog_id))) return;
   val = XmTextGetString(w_track);
   if (val)
     {
@@ -299,14 +306,13 @@ static void beg_activated(void)
 {
   char *val;
   chan_info *cp;
-  int mix_id;
+  if (!(mix_ok(mix_dialog_id))) return;
   val = XmTextGetString(w_beg);
   if (val)
     {
-      mix_id = mix_dialog_id;
-      cp = mix_dialog_mix_channel(mix_id);
-      set_mix_position(mix_id, (off_t)(string2Float(val) * SND_SRATE(cp->sound)));
-      update_mix_dialog(mix_id);
+      cp = mix_dialog_mix_channel(mix_dialog_id);
+      set_mix_position(mix_dialog_id, (off_t)(string2Float(val) * SND_SRATE(cp->sound)));
+      update_mix_dialog(mix_dialog_id);
       XtFree(val);
     }
 }
@@ -314,15 +320,15 @@ static void beg_activated(void)
 static void apply_mix_dialog_callback(Widget w, XtPointer context, XtPointer info) 
 {
   /* set all mix amp envs, last one should remix */
-  int i, chans, mix_id;
+  int i, chans;
   env **envs;
-  mix_id = mix_dialog_id;
-  chans = mix_dialog_mix_input_chans(mix_id);
-  envs = mix_dialog_envs(mix_id);
+  if (!(mix_ok(mix_dialog_id))) return;
+  chans = mix_dialog_mix_input_chans(mix_dialog_id);
+  envs = mix_dialog_envs(mix_dialog_id);
   for (i = 0; i < chans; i++)
     if (i != last_clicked_env_chan)
-      set_mix_amp_env_without_edit(mix_id, i, envs[i]);
-  set_mix_amp_env(mix_id, last_clicked_env_chan, envs[last_clicked_env_chan]);
+      set_mix_amp_env_without_edit(mix_dialog_id, i, envs[i]);
+  set_mix_amp_env(mix_dialog_id, last_clicked_env_chan, envs[last_clicked_env_chan]);
   mix_amp_env_resize(w_env, NULL, NULL);
 }
 
@@ -374,6 +380,7 @@ static void mix_dialog_play_callback(Widget w, XtPointer context, XtPointer info
     reflect_mix_play_stop();
   else
     {
+      if (!(mix_ok(mix_dialog_id))) return;
       mix_playing = true;
       if ((mix_play) && (!(ss->using_schemes))) XmChangeColor(mix_play, (ss->sgx)->pushed_button_color);
       mix_dialog_mix_play(mix_dialog_id);
@@ -386,6 +393,7 @@ static void mix_track_dialog_play_callback(Widget w, XtPointer context, XtPointe
     reflect_mix_play_stop();
   else
     {
+      if (!(mix_ok(mix_dialog_id))) return;
       mix_playing = true;
       if ((mix_track_play) && (!(ss->using_schemes))) XmChangeColor(mix_track_play, (ss->sgx)->pushed_button_color);
       mix_dialog_track_play(mix_dialog_id);
@@ -442,8 +450,6 @@ void make_mixer_icons_transparent_again(Pixel old_color, Pixel new_color)
 }
 
 static Widget w_sep1;
-
-/* TODO: if no mix display "no active mix" as id, and put up minimal controls */
 
 Widget make_mix_dialog(void) 
 {
@@ -796,67 +802,79 @@ Widget make_mix_dialog(void)
       XtAddEventHandler(w_env, ButtonMotionMask, false, mix_drawer_button_motion, NULL);
       XtAddEventHandler(w_env, ButtonReleaseMask, false, mix_drawer_button_release, NULL);
 
-      set_dialog_widget(MIX_DIALOG, mix_dialog);  /* or TRACK_DIALOG_DIALOG */
+      set_dialog_widget(MIX_DIALOG, mix_dialog);
       speed_number_buffer[1] = local_decimal_point();
       amp_number_buffer[1] = local_decimal_point();
     }
   else 
     {
       raise_dialog(mix_dialog);
-      reflect_edit_in_mix_dialog_envs(mix_dialog_id);
+      if (mix_dialog_id != INVALID_MIX_ID) reflect_edit_in_mix_dialog_envs(mix_dialog_id);
     }
   if (!(XtIsManaged(mix_dialog))) XtManageChild(mix_dialog);
   update_mix_dialog(mix_dialog_id);
   return(mix_dialog);
 }
 
-/* TODO: protect against no mix case */
-
+/* TODO: gmix side of no-mix stuff (callbacks, local) */
 static void update_mix_dialog(int mix_id) 
 {
-  chan_info *cp;
+  chan_info *cp = NULL;
   int i, chans;
   off_t beg, len;
   Float val;
   char lab[LABEL_BUFFER_SIZE];
-  if (mix_id == INVALID_MIX_ID) return;
-  if (!(mix_ok(mix_dialog_id))) mix_dialog_id = mix_id; /* close-sound kills current mix, for example */
-  if (!(mix_ok(mix_dialog_id))) {mix_dialog_id = any_mix_id(); mix_id = mix_dialog_id;}
-  if (mix_id == mix_dialog_id)
+  if (!(mix_ok(mix_dialog_id)))
+    {
+      mix_dialog_id = mix_id; /* close-sound kills current mix, for example */
+      if (!(mix_ok(mix_dialog_id))) 
+	{
+	  mix_dialog_id = any_mix_id(); 
+	  mix_id = mix_dialog_id;
+	}
+    }
+  if ((mix_id == mix_dialog_id) || (mix_id == ANY_MIX_ID))
     {
       if (mix_dialog == NULL) 
 	make_mix_dialog();
       else
 	{
-	  set_sensitive(nextb, (next_mix_id(mix_id) != INVALID_MIX_ID));
-	  set_sensitive(previousb, (previous_mix_id(mix_id) != INVALID_MIX_ID));
+	  set_sensitive(nextb, (next_mix_id(mix_dialog_id) != INVALID_MIX_ID));
+	  set_sensitive(previousb, (previous_mix_id(mix_dialog_id) != INVALID_MIX_ID));
 	}
       /* now reflect current mix state in mix dialog controls */
-      cp = mix_dialog_mix_channel(mix_id);
-
-      val = mix_dialog_mix_speed(mix_id);
-      if (val != current_speed)
+      if (mix_ok(mix_dialog_id))
 	{
-	  XtVaSetValues(w_speed, XmNvalue, mix_speed_to_int(val, cp->sound), NULL);
-	  current_speed = val;
+	  cp = mix_dialog_mix_channel(mix_dialog_id);
+	  val = mix_dialog_mix_speed(mix_dialog_id);
+	  if (val != current_speed)
+	    {
+	      XtVaSetValues(w_speed, XmNvalue, mix_speed_to_int(val, cp->sound), NULL);
+	      current_speed = val;
+	    }
+	  mus_snprintf(lab, LABEL_BUFFER_SIZE, "%d", mix_dialog_mix_track(mix_dialog_id));
+	  XmTextSetString(w_track, lab);
+	  mus_snprintf(lab, LABEL_BUFFER_SIZE, "%d", mix_dialog_id);
+	  XmTextSetString(w_id, lab);
+	  beg = mix_dialog_mix_position(mix_dialog_id);
+	  len = mix_frames(mix_dialog_id);
+	  mus_snprintf(lab, LABEL_BUFFER_SIZE, "%.3f : %.3f",
+		       (float)((double)beg / (float)SND_SRATE(cp->sound)),
+		       (float)((double)(beg + len) / (float)SND_SRATE(cp->sound)));
+	  XmTextSetString(w_beg, lab);
+	  chans = mix_dialog_mix_input_chans(mix_dialog_id);
+	  if (chans > 8) chans = 8; 
+	  set_sensitive(XmMessageBoxGetChild(mix_dialog, XmDIALOG_CANCEL_BUTTON), true);
 	}
-
-      mus_snprintf(lab, LABEL_BUFFER_SIZE, "%d", mix_dialog_mix_track(mix_id));
-      XmTextSetString(w_track, lab);
-
-      mus_snprintf(lab, LABEL_BUFFER_SIZE, "%d", mix_id);
-      XmTextSetString(w_id, lab);
-
-      beg = mix_dialog_mix_position(mix_id);
-      len = mix_frames(mix_id);
-      mus_snprintf(lab, LABEL_BUFFER_SIZE, "%.3f : %.3f",
-		   (float)((double)beg / (float)SND_SRATE(cp->sound)),
-		   (float)((double)(beg + len) / (float)SND_SRATE(cp->sound)));
-      XmTextSetString(w_beg, lab);
-
-      chans = mix_dialog_mix_input_chans(mix_id);
-      if (chans > 8) chans = 8; 
-
+      else
+	{
+	  /* TODO: some way for user to set the mix dialog id and force an update */
+	  chans = 1;
+	  XmTextSetString(w_track, "0");
+	  XmTextSetString(w_id, "-1");
+	  XmTextSetString(w_beg, "no active mixes?");
+	  set_sensitive(XmMessageBoxGetChild(mix_dialog, XmDIALOG_CANCEL_BUTTON), false);
+	}
       for (i = 0; i < chans; i++)
 	{
 	  XmString s1;
@@ -869,7 +887,9 @@ static void update_mix_dialog(int mix_id)
 	  XmStringFree(s1);
 	  if (!(XtIsManaged(w_amp_labels[i]))) XtManageChild(w_amp_labels[i]);
 	  if (!(XtIsManaged(w_amp_numbers[i]))) XtManageChild(w_amp_numbers[i]);
-	  val = mix_dialog_mix_amp(mix_id, i);
+	  if (mix_ok(mix_dialog_id))
+	    val = mix_dialog_mix_amp(mix_dialog_id, i);
+	  else val = 1.0;
 	  XtVaSetValues(w_amps[i], XmNvalue, mix_amp_to_int(val, i), NULL);
 	  current_amps[i] = val;
 	  if (!(XtIsManaged(w_amps[i]))) XtManageChild(w_amps[i]);
@@ -890,15 +910,9 @@ static void update_mix_dialog(int mix_id)
 
 
 
-
-/* TODO: if current mix dialog mix goes away (close-sound), does mix dialog do something reasonable? */
-/* just one reflection mix/track */
-
-
 /* -------------------------------- track dialog -------------------------------- */
 
 /* TODO: mix list of track (and color?)
-   TODO: tie in various auto-updates
    TODO: speed change->amp env, pos change->amp env? (drag), amp-env itself
    TODO: multimix drag of any kind doesn't erase initial state correctly
  */
@@ -1636,7 +1650,7 @@ static void update_track_dialog(int track_id)
 
 /* ---------------- reflection ---------------- */
 
-void reflect_mix_or_track_change(int mix_id, int track_id)
+void reflect_mix_or_track_change(int mix_id, int track_id, bool forced)
 {
   /* TODO: if squelch updates? */
   /* TODO: if edit then this is already updated -- how to check */
@@ -1644,13 +1658,8 @@ void reflect_mix_or_track_change(int mix_id, int track_id)
   if ((mix_dialog) && 
       (XtIsManaged(mix_dialog)))
     {
-      if (mix_dialog_id == mix_id)
-	{
-	  /* TODO: from undo: reflect_edit_in_mix_dialog_envs(mix_dialog_id); -- should be in update */
-
-	  /* TODO: look for some change that warrants redisplay */
-	  update_mix_dialog(mix_id);
-	}
+      if ((forced) && (mix_ok(mix_id))) mix_dialog_id = mix_id;
+      update_mix_dialog(mix_id);
       if (mix_id != INVALID_MIX_ID)
 	{
 	  set_sensitive(nextb, (next_mix_id(mix_dialog_id) != INVALID_MIX_ID));
@@ -1660,13 +1669,8 @@ void reflect_mix_or_track_change(int mix_id, int track_id)
   if ((track_dialog) && 
       (XtIsManaged(track_dialog)))
     {
-      if (track_dialog_id == track_id)
-	{
-	  /* TODO: undo:       reflect_edit_in_track_dialog_env(track_dialog_id); */
-
-	  /* TODO: all track change ops need reflection if no edit */
-	  update_track_dialog(track_id);
-	}
+      if ((forced) && (track_p(track_id))) track_dialog_id = track_id;
+      update_track_dialog(track_id);
       if (track_id != INVALID_TRACK_ID)
 	{
 	  set_sensitive(track_nextb, (next_track_id(track_dialog_id) != INVALID_TRACK_ID));

@@ -123,7 +123,11 @@ static chan_info *free_chan_info(chan_info *cp)
 {
   /* this does not free the associated widgets -- they are merely unmanaged */
 #if DEBUGGING
-  if (cp->edit_hook_checked) fprintf(stderr, "%s[%d] edit hook set", (cp->sound) ? (cp->sound->short_filename) : "some sound", cp->chan);
+  if (cp->edit_hook_checked) 
+    {
+      fprintf(stderr, "%s[%d] edit hook set", (cp->sound) ? (cp->sound->short_filename) : "some sound", cp->chan);
+      /* XEN_ERROR(NO_SUCH_EDIT, XEN_LIST_1(C_TO_XEN_STRING("yow"))); */
+    }
 #endif
   cp->active = false;
   /* need an indication right away that this channel is being deleted -- during free_snd_info (close-sound),
@@ -376,7 +380,7 @@ void free_snd_info(snd_info *sp)
   clear_mini_strings(sp);
   clear_filter_strings(sp);
   clear_players();
-  reflect_mix_or_track_change(ANY_MIX_ID, ANY_TRACK_ID);
+  reflect_mix_or_track_change(ANY_MIX_ID, ANY_TRACK_ID, false);
 }
 
 snd_info *completely_free_snd_info(snd_info *sp)

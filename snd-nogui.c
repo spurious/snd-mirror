@@ -288,7 +288,7 @@ int add_transform_to_list(char *name) {return(0);}
 void set_filter_text(snd_info *sp, char *str) {}
 int max_transform_type(void) {return(19);}
 
-void reflect_mix_or_track_change(int mix_id, int track_id) {}
+void reflect_mix_or_track_change(int mix_id, int track_id, bool forced) {}
 int make_mix_dialog(void) {return(0);}
 int make_track_dialog(void) {return(0);}
 bool mix_play_stopped(void) {return(false);}

@@ -1942,7 +1942,7 @@ up protected portions of the edit history:
 
 <p><a href="sndscm.html#enveddoc">enved.scm</a> uses several of these hooks to implement an envelope editor in lisp.
 <i>add-mark-pane</i> in snd-motif.scm uses them to make sure the mark list reflects the current edit history location.
-See also autosave.scm.
+See also autosave.scm.  <small>It is possible for after-edit-hook to be called more often that edit-hook.</small>
 </p>
 <p>
 You can find out what's on a given hook with the following (which is mostly adding carriage returns to the

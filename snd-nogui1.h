@@ -360,7 +360,7 @@ void enved_fft_update(void);
 
 /* -------- snd-xmix.c -------- */
 
-void reflect_mix_or_track_change(int mix_id, int track_id);
+void reflect_mix_or_track_change(int mix_id, int track_id, bool forced);
 int make_mix_dialog(void);
 int make_track_dialog(void);
 bool mix_play_stopped(void);

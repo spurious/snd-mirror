@@ -9,11 +9,6 @@
 
 static ed_list *free_ed_list(ed_list *ed, chan_info *cp);
 
-
-/* TODO: undo/edit/after-edit hook tests for all edit types + edit lock out tests and undo lockout (and non-doubled call) */
-/* TODO: all edits involving temp files need to check for !prepare and remove file (snd-select case in particular) */
-
-
 static XEN save_hook;
 static bool dont_save(snd_info *sp, const char *newname)
 {
@@ -189,7 +184,8 @@ static void prune_edits(chan_info *cp, int edpt)
 
 bool editable_p(chan_info *cp)
 {
-  if (XEN_HOOKED(cp->edit_hook))
+  if ((!(cp->edit_hook_checked)) &&
+      (XEN_HOOKED(cp->edit_hook)))
     {
       XEN res;
       res = run_or_hook(cp->edit_hook, XEN_EMPTY_LIST, S_edit_hook);
@@ -209,13 +205,16 @@ static bool prepare_edit_list(chan_info *cp, off_t len, int pos, const char *cal
   int i;
   snd_info *sp;
   if (pos > cp->edit_ctr)
-    XEN_ERROR(NO_SUCH_EDIT,
-	      XEN_LIST_3(C_TO_XEN_STRING(caller),
-			 C_TO_XEN_STRING("edpos: ~A, ~A chan ~A has ~A edits"),
-			 XEN_LIST_4(C_TO_XEN_INT(pos),
-				    C_TO_XEN_STRING(cp->sound->short_filename),
-				    C_TO_XEN_INT(cp->chan),
-				    C_TO_XEN_INT(cp->edit_ctr))));
+    {
+      cp->edit_hook_checked = false;
+      XEN_ERROR(NO_SUCH_EDIT,
+		XEN_LIST_3(C_TO_XEN_STRING(caller),
+			   C_TO_XEN_STRING("edpos: ~A, ~A chan ~A has ~A edits"),
+			   XEN_LIST_4(C_TO_XEN_INT(pos),
+				      C_TO_XEN_STRING(cp->sound->short_filename),
+				      C_TO_XEN_INT(cp->chan),
+				      C_TO_XEN_INT(cp->edit_ctr))));
+    }
   if ((!(cp->edit_hook_checked)) &&
       (XEN_HOOKED(cp->edit_hook)))
     {
@@ -1598,7 +1597,7 @@ bool file_insert_samples(off_t beg, off_t num, char *inserted_file, chan_info *c
 	ed->sound_location = ED_SOUND(cb);
       }
       lock_affected_mixes(cp, beg, beg + num);
-      reflect_mix_or_track_change(ANY_MIX_ID, ANY_TRACK_ID);
+      reflect_mix_or_track_change(ANY_MIX_ID, ANY_TRACK_ID, false);
       after_edit(cp);
     }
   else
@@ -1633,7 +1632,7 @@ static bool insert_samples(off_t beg, off_t num, mus_sample_t *vals, chan_info *
   }
   reflect_edit_history_change(cp);
   lock_affected_mixes(cp, beg, beg + num);
-  reflect_mix_or_track_change(ANY_MIX_ID, ANY_TRACK_ID);
+  reflect_mix_or_track_change(ANY_MIX_ID, ANY_TRACK_ID, false);
   after_edit(cp);
   return(true);
 }
@@ -1746,7 +1745,7 @@ bool delete_samples(off_t beg, off_t num, chan_info *cp, const char *origin, int
       cp->edits[cp->edit_ctr] = delete_samples_from_list(beg, num, edpos, cp, origin);
       reflect_edit_history_change(cp);
       lock_affected_mixes(cp, beg, beg + num);
-      reflect_mix_or_track_change(ANY_MIX_ID, ANY_TRACK_ID);
+      reflect_mix_or_track_change(ANY_MIX_ID, ANY_TRACK_ID, false);
       after_edit(cp);
     }
   else
@@ -1846,7 +1845,7 @@ bool file_change_samples(off_t beg, off_t num, char *tempfile, chan_info *cp, in
 	ed->edit_type = CHANGE_EDIT;
 	ed->sound_location = ED_SOUND(cb);
       }
-      reflect_mix_or_track_change(ANY_MIX_ID, ANY_TRACK_ID);
+      reflect_mix_or_track_change(ANY_MIX_ID, ANY_TRACK_ID, false);
       after_edit(cp);
     }
   else
@@ -1895,7 +1894,7 @@ bool file_override_samples(off_t num, char *tempfile, chan_info *cp, int chan, f
       reflect_edit_history_change(cp);
       reflect_sample_change_in_axis(cp);
       ripple_all(cp, 0, 0);
-      reflect_mix_or_track_change(ANY_MIX_ID, ANY_TRACK_ID);
+      reflect_mix_or_track_change(ANY_MIX_ID, ANY_TRACK_ID, false);
       after_edit(cp);
     }
   else
@@ -1931,7 +1930,7 @@ bool change_samples(off_t beg, off_t num, mus_sample_t *vals, chan_info *cp, loc
   ed->sound_location = ED_SOUND(cb);
   reflect_edit_history_change(cp);
   if (lock == LOCK_MIXES) lock_affected_mixes(cp, beg, beg + num);
-  reflect_mix_or_track_change(ANY_MIX_ID, ANY_TRACK_ID);
+  reflect_mix_or_track_change(ANY_MIX_ID, ANY_TRACK_ID, false);
   after_edit(cp);
   return(true);
 }
@@ -8017,7 +8016,7 @@ void revert_edits(chan_info *cp, void *ptr)
   else reflect_edit_without_selection_in_menu();
   update_track_lists(cp, old_ctr - 1);
   update_graph(cp);
-  reflect_mix_or_track_change(ANY_MIX_ID, ANY_TRACK_ID);
+  reflect_mix_or_track_change(ANY_MIX_ID, ANY_TRACK_ID, false);
   if (XEN_HOOKED(cp->undo_hook))
     run_hook(cp->undo_hook, XEN_EMPTY_LIST, S_undo_hook);
 }
@@ -8044,7 +8043,7 @@ void undo_edit(chan_info *cp, int count)
       else reflect_edit_without_selection_in_menu();
       update_track_lists(cp, 0);
       update_graph(cp);
-      reflect_mix_or_track_change(ANY_MIX_ID, ANY_TRACK_ID);
+      reflect_mix_or_track_change(ANY_MIX_ID, ANY_TRACK_ID, false);
       if (XEN_HOOKED(cp->undo_hook))
 	run_hook(cp->undo_hook, XEN_EMPTY_LIST, S_undo_hook);
     }
@@ -8102,7 +8101,7 @@ void redo_edit(chan_info *cp, int count)
 	  else reflect_edit_without_selection_in_menu();
 	  update_track_lists(cp, 0);
 	  update_graph(cp);
-	  reflect_mix_or_track_change(ANY_MIX_ID, ANY_TRACK_ID);
+	  reflect_mix_or_track_change(ANY_MIX_ID, ANY_TRACK_ID, false);
 	}
       if (XEN_HOOKED(cp->undo_hook))
 	run_hook(cp->undo_hook, XEN_EMPTY_LIST, S_undo_hook);
@@ -9106,8 +9105,8 @@ static XEN g_set_sample(XEN samp_n, XEN val, XEN snd_n, XEN chn_n, XEN edpos)
     beg = beg_to_sample(samp_n, S_setB S_sample);
   else beg = CURSOR(cp);
   ival[0] = MUS_FLOAT_TO_SAMPLE(XEN_TO_C_DOUBLE(val));
-  change_samples(beg, 1, ival, cp, LOCK_MIXES, S_setB S_sample, pos);
-  update_graph(cp);
+  if (change_samples(beg, 1, ival, cp, LOCK_MIXES, S_setB S_sample, pos))
+    update_graph(cp);
   return(val);
 }
 

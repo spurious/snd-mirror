@@ -1075,7 +1075,7 @@ static mix_info *add_mix(chan_info *cp, int chan, off_t beg, off_t num, char *fu
   gather_as_built(md, cs);
   make_current_mix_state(md);
   md->in_filename = copy_string(full_original_file);
-  reflect_mix_or_track_change(md->id, ANY_TRACK_ID);
+  reflect_mix_or_track_change(md->id, ANY_TRACK_ID, false);
   return(md);
 }
 
@@ -1096,6 +1096,7 @@ static mix_info *file_mix_samples(off_t beg, off_t num, char *mixfile, chan_info
   off_t i, j, len, size;
   file_info *ihdr, *ohdr;
   if (num <= 0) return(NULL); /* a no-op -- mixing in an empty file */
+  if (!(editable_p(cp))) return(NULL);
   len = CURRENT_SAMPLES(cp);
   if ((beg >= len) &&
       (!(extend_with_zeros(cp, len, beg - len + 1, "(mix-extend)", cp->edit_ctr))))
@@ -1103,11 +1104,16 @@ static mix_info *file_mix_samples(off_t beg, off_t num, char *mixfile, chan_info
   if (beg < 0) beg = 0;
   sp = cp->sound;
   ihdr = make_file_info(mixfile);
-  if (!ihdr) return(NULL);
+  if (!ihdr) 
+    {
+      cp->edit_hook_checked = false;
+      return(NULL);
+    }
   in_chans = ihdr->chans;
   if (chan >= in_chans) 
     {
       free_file_info(ihdr);
+      cp->edit_hook_checked = false;
       return(NULL); /* we're reading input[chan] so if chan >= in_chans (no such channel exists) give up */
     }
   ofile = snd_tempnam();
@@ -1126,6 +1132,7 @@ static mix_info *file_mix_samples(off_t beg, off_t num, char *mixfile, chan_info
   if (ofd == -1) 
     {
       free_file_info(ihdr);
+      cp->edit_hook_checked = false;
       snd_error(_("open mix temp file %s hit error: %s"), ofile, strerror(errno)); 
       return(NULL);
     }
@@ -1137,6 +1144,7 @@ static mix_info *file_mix_samples(off_t beg, off_t num, char *mixfile, chan_info
       mus_file_close(ofd);
       snd_remove(ofile, REMOVE_FROM_CACHE);
       FREE(ofile);
+      cp->edit_hook_checked = false;
       return(NULL);
     }
   ifd = snd_open_read(mixfile);
@@ -1174,8 +1182,7 @@ static mix_info *file_mix_samples(off_t beg, off_t num, char *mixfile, chan_info
   FREE(data);
   free_file_info(ihdr);
   free_file_info(ohdr);
-  if (!(file_change_samples(beg, num, ofile, cp, 0, DELETE_ME, DONT_LOCK_MIXES, origin, cp->edit_ctr)))
-    with_tag = false;
+  file_change_samples(beg, num, ofile, cp, 0, DELETE_ME, DONT_LOCK_MIXES, origin, cp->edit_ctr); /* editable checked already */
   if (ofile) FREE(ofile);
   if (with_tag)
     {
@@ -1197,6 +1204,7 @@ static mix_info *file_mix_samples(off_t beg, off_t num, char *mixfile, chan_info
 	snd_remove(mixfile, REMOVE_FROM_CACHE);
     }
   if (redisplay) update_graph(cp);
+  cp->edit_hook_checked = false;
   return(md);
 }
 
@@ -2456,7 +2464,7 @@ void finish_moving_mix_tag(int mix_tag, int x)
       ms = md->wg;
       ms->lastpj = 0;
       if (cs->beg == cs->orig) return;
-      reflect_mix_or_track_change(md->id, ANY_TRACK_ID);
+      reflect_mix_or_track_change(md->id, ANY_TRACK_ID, false);
       if (!(XEN_TRUE_P(res)))
 	remix_file(md, "Mix: drag", true);
     }
@@ -2580,7 +2588,7 @@ static void move_mix(mix_info *md)
 	  cs->beg = 0; 
 	  cs->tag_position = samp;
 	}
-      reflect_mix_or_track_change(md->id, ANY_TRACK_ID);
+      reflect_mix_or_track_change(md->id, ANY_TRACK_ID, false);
       if (show_mix_waveforms(ss)) draw_mix_waveform(md);
       /* can't easily use work proc here because the erasure gets complicated */
       make_temporary_graph(cp, md, cs);
@@ -3192,7 +3200,7 @@ static int set_mix_amp(int mix_id, int chan, Float val, bool from_gui, bool remi
 		      (md->cp->sound->sync == 0))
 		    return(mix_id);
 		  cs->scalers[chan] = val;
-		  reflect_mix_or_track_change(mix_id, ANY_TRACK_ID);
+		  reflect_mix_or_track_change(mix_id, ANY_TRACK_ID, false);
 		  remix_file(md, S_setB S_mix_amp, true);
 		}
 	      else
@@ -3321,7 +3329,7 @@ static int set_mix_speed(int mix_id, Float val, bool from_gui, bool remix)
 		}
 	    }
 	  if (!from_gui)
-	    reflect_mix_or_track_change(mix_id, ANY_TRACK_ID);
+	    reflect_mix_or_track_change(mix_id, ANY_TRACK_ID, false);
 	}
       return(mix_id);
     }
@@ -3426,7 +3434,7 @@ int set_mix_position(int mix_id, off_t val)
 	      cs->beg = val; 
 	      remix_file(md, S_setB S_mix_position, true); 
 	    }
-	  reflect_mix_or_track_change(mix_id, ANY_TRACK_ID);
+	  reflect_mix_or_track_change(mix_id, ANY_TRACK_ID, false);
 	}
       return(mix_id);
     }
@@ -3822,7 +3830,7 @@ static bool delete_mix_1(int mix_id, bool redisplay, char *origin)
       for (i = 0; i < md->in_chans; i++)
 	cs->scalers[i] = 0.0;
       set_mix_locked(md, true, redisplay, origin);
-      reflect_mix_or_track_change(mix_id, ANY_TRACK_ID);
+      reflect_mix_or_track_change(mix_id, ANY_TRACK_ID, false);
       return(true);
     }
   return(false);
@@ -3872,7 +3880,7 @@ static XEN g_set_mix_track(XEN n, XEN val)
   if (mix_ok_and_unlocked(md->id))
     {
       set_mix_track(md, XEN_TO_C_INT(val), true);
-      reflect_mix_or_track_change(md->id, ANY_TRACK_ID);
+      reflect_mix_or_track_change(md->id, ANY_TRACK_ID, false);
     }
   return(val);
 }
@@ -4351,6 +4359,7 @@ mix data (a vct) into snd's channel chn starting at beg; return the new mix id"
   v = TO_VCT(obj);
   len = v->length;
   cp = get_cp(snd, chn, S_mix_vct);
+  if (!(editable_p(cp))) return(XEN_FALSE);
   bg = beg_to_sample(beg, S_mix_vct);
   if (XEN_NOT_BOUND_P(with_tag))
     with_mixer = with_mix_tags(ss);
@@ -4376,6 +4385,7 @@ mix data (a vct) into snd's channel chn starting at beg; return the new mix id"
 	  if ((track_num > 0) && (!(track_p(track_num))))
 	    {
 	      FREE(data);
+	      cp->edit_hook_checked = false;
 	      XEN_ERROR(NO_SUCH_TRACK,
 			XEN_LIST_2(C_TO_XEN_STRING(S_mix_vct),
 				   C_TO_XEN_INT(track_id)));
@@ -4387,6 +4397,7 @@ mix data (a vct) into snd's channel chn starting at beg; return the new mix id"
     }
   update_graph(cp);
   FREE(data);
+  cp->edit_hook_checked = false;
   return(xen_return_first(C_TO_XEN_INT(mix_id), obj));
 }
 
@@ -5298,6 +5309,7 @@ void set_track_position(int id, off_t pos)
 	{
 	  remix_track(id, set_track_position_1, (void *)(&change));
 	}
+      reflect_mix_or_track_change(ANY_MIX_ID, id, false);
     }
 }
 
@@ -5383,6 +5395,7 @@ static void set_track_channel_position(int id, int chan, off_t pos)
 	{
 	  remix_track_channel(id, chan, set_track_position_1, (void *)(&change));
 	}
+      reflect_mix_or_track_change(ANY_MIX_ID, id, false);
     }
 }
 
@@ -5426,6 +5439,7 @@ static void set_mix_track(mix_info *md, int trk, bool redisplay)
 	  ((track_position(trk, -1) != new_beg) || (track_frames(trk, -1) != new_len)))
 	remix_track(trk, set_mix_track_1, NULL);
       else remix_file(md, S_setB S_mix_track, redisplay); 
+      reflect_mix_or_track_change(md->id, trk, false);
     }
 }
 
@@ -5451,6 +5465,7 @@ bool set_track_track(int id, int trk)
 	}
       set_active_track_track(id, trk);
       remix_track(id, set_track_track_1, NULL);
+      reflect_mix_or_track_change(ANY_MIX_ID, id, false);
     }
   return(true);
 }
@@ -5466,6 +5481,7 @@ static void set_track_amp(int id, Float amp)
     {
       set_active_track_amp(id, amp);
       remix_track(id, set_track_amp_1, NULL);
+      reflect_mix_or_track_change(ANY_MIX_ID, id, false);
     }
 }
 
@@ -5521,6 +5537,7 @@ static void set_track_speed(int id, Float speed)
 	  set_active_track_speed(id, speed);
 	  remix_track(id, set_track_speed_1, (void *)(&speed));
 	}
+      reflect_mix_or_track_change(ANY_MIX_ID, id, false);
     }
 }
 
@@ -5535,6 +5552,7 @@ static void set_track_amp_env(int id, env *e)
     {
       set_active_track_amp_env(id, e);
       remix_track(id, set_track_amp_env_1, NULL);
+      reflect_mix_or_track_change(ANY_MIX_ID, id, false);
     }
 }
 
@@ -5758,6 +5776,7 @@ static void finish_dragging_track(int track_id, track_graph_t *data, bool remix)
     }
   free_track_mix_list(trk);
   remix_track(track_id, set_track_position_1, (void *)(&change));
+  reflect_mix_or_track_change(ANY_MIX_ID, track_id, false);
 }
 
 static track_graph_t *free_track_graph(track_graph_t *ptr)
@@ -6200,6 +6219,7 @@ int make_track(int *mixes, int len)
       if (edpos) FREE(edpos);
       if (cps) FREE(cps);
     }
+  reflect_mix_or_track_change(ANY_MIX_ID, track_id, false);
   return(track_id);
 }
 
@@ -6493,6 +6513,7 @@ static XEN g_delete_track(XEN id)
   set_active_track_amp(track_id, 0.0);
   remix_track(track_id, delete_track_1, NULL);
   redisplay_track(track_id);
+  reflect_mix_or_track_change(ANY_MIX_ID, track_id, false);
   return(id);
 }
 
@@ -6547,7 +6568,7 @@ static int copy_mix(int id, off_t beg)
 	    }
 	  else cs->amp_envs = NULL;
 	  cs->len = old_cs->len;
-	  reflect_mix_or_track_change(new_id, ANY_TRACK_ID);
+	  reflect_mix_or_track_change(new_id, ANY_TRACK_ID, false);
 	  remix_file(new_md, S_copy_mix, true);
 	  while (cp->edit_ctr > edpos) backup_edit_list(cp);
 	  backup_mix_list(cp, edpos); /* needed if track exists and imposes changes on mixed-in data */
@@ -6698,6 +6719,7 @@ static int copy_track(int id, off_t beg)
   if (new_mixes) FREE(new_mixes);
   if (old_tracks) FREE(old_tracks);
   if (new_tracks) FREE(new_tracks);
+  reflect_mix_or_track_change(ANY_MIX_ID, new_id, false);
   return(new_id);
 }
 
@@ -7242,7 +7264,6 @@ void g_init_track(void)
    TODO: if mix-waveform-height 50 top of mix waveform can be pushed off top of graph
    TODO: first and last samples of mix-peak-amp-waveform don't cancel
    PERHAPS: change mix process to use amp=0 as "previous", then just one reader elsewhere (can this work?)
-   TODO: for mix-dialog display, we could follow selected chan
    TODO: finish drag still broken if drag past end and start drag doesn't erase original (need 0 edit)
    TODO: mix|track-change(edit)-hook?
    TODO: prune unreachable track states

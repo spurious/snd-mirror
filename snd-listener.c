@@ -132,6 +132,10 @@ int check_balance(char *expr, int start, int end, bool in_listener)
 		}
 	    }
 	  break;
+	case '\\': 
+	  /* this is an error of some sort */
+	  i += 2; 
+	  break;
 	case '#' :
 	  if ((non_whitespace_p) && (paren_count == 0) && (!quote_wait))
 	    return(i);
@@ -209,7 +213,6 @@ static XEN provide_listener_help_1(char *source, int start, int end)
   char *name;
   name = (char *)CALLOC(end - start + 1, sizeof(char));
   strncpy(name, (char *)(source + start), end - start);
-  /* fprintf(stderr,"%s[%d:%d] -> %s\n", source, start, end, name); */
   result = g_snd_help(C_TO_XEN_STRING(name), listener_width());
   FREE(name);
   if (XEN_STRING_P(result))
@@ -424,7 +427,6 @@ void command_return(widget_t w, int last_prompt)
 		    str[end_of_text + 1] = 0;
 		  else str[end_of_text] = 0;
 		  if (str[end_of_text] == '\n') str[end_of_text] = 0;
-		  /* fprintf(stderr, "now str: %s ", str); */
 		}
 	      else
 		{

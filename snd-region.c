@@ -581,6 +581,8 @@ int save_region(int n, char *ofile, int data_format)
   return(INVALID_REGION);
 }
 
+#define NOT_EDITABLE -2
+
 static int paste_region_1(int n, chan_info *cp, bool add, off_t beg, const char *origin, int trk)
 {
   region *r;
@@ -591,6 +593,7 @@ static int paste_region_1(int n, chan_info *cp, bool add, off_t beg, const char 
   si = NULL;
   r = id_to_region(n);
   if ((r == NULL) || (r->frames == 0)) return(INVALID_REGION);
+  if (!(editable_p(cp))) return(NOT_EDITABLE);
   if (r->use_temp_file == REGION_DEFERRED)
     deferred_region_to_temp_file(r);
   si = sync_to_chan(cp);
@@ -600,7 +603,10 @@ static int paste_region_1(int n, chan_info *cp, bool add, off_t beg, const char 
       newname = shorter_tempnam(temp_dir(ss), "snd_");
       err = copy_file(r->filename, newname);
       if (err != MUS_NO_ERROR)
-	snd_error(_("can't save mix temp file (%s: %s)"), newname, strerror(errno));
+	{
+	  cp->edit_hook_checked = false;
+	  snd_error(_("can't save mix temp file (%s: %s)"), newname, strerror(errno));
+	}
       else id = mix_file(beg, r->frames, si->chans, si->cps, newname, DELETE_ME, origin, with_mix_tags(ss), trk);
       if (newname) FREE(newname);
     }
@@ -612,8 +618,9 @@ static int paste_region_1(int n, chan_info *cp, bool add, off_t beg, const char 
 	  err = copy_file(r->filename, tempfile);
 	  if (err != MUS_NO_ERROR)
 	    {
-	      snd_error(_("can't make region %d temp file (%s: %s)"), n, tempfile, strerror(errno));
 	      if (si) si = free_sync_info(si);
+	      cp->edit_hook_checked = false;
+	      snd_error(_("can't make region %d temp file (%s: %s)"), n, tempfile, strerror(errno));
 	      return(INVALID_REGION);
 	    }
 	  else
@@ -631,6 +638,7 @@ static int paste_region_1(int n, chan_info *cp, bool add, off_t beg, const char 
       if ((r->use_temp_file == REGION_FILE) && (tempfile)) FREE(tempfile);
     }
   if (si) si = free_sync_info(si);
+  cp->edit_hook_checked = false;
   return(id);
 }
 

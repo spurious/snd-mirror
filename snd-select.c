@@ -306,6 +306,7 @@ static int mix_selection(chan_info *cp, off_t beg, const char *origin, int trk)
   char *tempfile = NULL;
   sync_info *si_out;
   int err, id = INVALID_MIX_ID;
+  if (!(editable_p(cp))) return(id);
   tempfile = snd_tempnam();
   err = save_selection(tempfile, MUS_NEXT, MUS_OUT_FORMAT, SND_SRATE(cp->sound), NULL, SAVE_ALL_CHANS);
   if (err == MUS_NO_ERROR)
@@ -317,6 +318,7 @@ static int mix_selection(chan_info *cp, off_t beg, const char *origin, int trk)
       free_sync_info(si_out);	      
     }
   if (tempfile) FREE(tempfile);
+  cp->edit_hook_checked = false;
   return(id);
 }
 
@@ -337,6 +339,7 @@ static int insert_selection(chan_info *cp, off_t beg, const char *origin)
   chan_info *cp_in, *cp_out;
   int i, err = MUS_NO_ERROR, out_format = MUS_OUT_FORMAT;
   off_t len;
+  if (!(editable_p(cp))) return(MUS_NO_ERROR);
   if (mus_header_writable(MUS_NEXT, cp->sound->hdr->format))
     out_format = cp->sound->hdr->format;
   tempfile = snd_tempnam();
@@ -362,6 +365,7 @@ static int insert_selection(chan_info *cp, off_t beg, const char *origin)
       free_sync_info(si_out);
     }
   if (tempfile) FREE(tempfile);
+  cp->edit_hook_checked = false;
   return(err);
 }
 

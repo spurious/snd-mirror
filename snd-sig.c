@@ -255,11 +255,7 @@ static char *convolve_with_or_error(char *filename, Float amp, chan_info *cp, XE
   dataformat = mus_sound_data_format(filename);
 
   sc = get_sync_state_without_snd_fds(sp, ncp, 0, (cp == NULL));
-  if (sc == NULL) 
-    {
-      cp->edit_hook_checked = false;
-      return(NULL);
-    }
+  if (sc == NULL) return(NULL);
   si = sc->si;
 
   origin = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));

@@ -3981,7 +3981,12 @@ void graph_button_release_callback(chan_info *cp, int x, int y, int key_state, i
 						     XEN_LIST_1(C_TO_XEN_INT(mix_tag)),
 						     S_mix_click_hook);
 			      if (!(XEN_TRUE_P(res)))
-				report_in_minibuffer(sp, _("mix %d "), mix_tag);
+				{
+				  if (mix_dialog_mix_track(mix_tag) == 0)
+				    reflect_mix_or_track_change(mix_tag, ANY_TRACK_ID, true);
+				  else reflect_mix_or_track_change(mix_tag, mix_dialog_mix_track(mix_tag), true);
+				  report_in_minibuffer(sp, _("mix %d "), mix_tag);
+				}
 			    }
 			}
 		    }
@@ -5188,8 +5193,6 @@ the edit is aborted. \n\
 
   return(channel_get(snd_n, chn_n, CP_EDIT_HOOK, S_edit_hook));
 }
-
-/* TODO: listener trouble: :(snd-print \"hi\") no error */
 
 static XEN g_after_edit_hook(XEN snd_n, XEN chn_n) 
 {
@@ -6615,6 +6618,16 @@ to a standard Snd channel graph placed in the widget 'container'."
   return(C_TO_XEN_INT(sp->index));
 }
 
+#if DEBUGGING && HAVE_GUILE
+static XEN g_edit_hook_checked(XEN snd, XEN chn) 
+{
+  chan_info *cp;
+  cp = get_cp(snd, chn, "edit-hook-checked");
+  if (cp) return(C_TO_XEN_BOOLEAN(cp->edit_hook_checked));
+  return(XEN_FALSE);
+}
+#endif
+
 
 #ifdef XEN_ARGIFY_1
 XEN_ARGIFY_4(g_make_variable_graph_w, g_make_variable_graph)
@@ -7167,6 +7180,10 @@ and #t thereafter."
   XEN_DEFINE_HOOK(mix_click_hook,     S_mix_click_hook, 1,     H_mix_click_hook);     /* arg = id */
   XEN_DEFINE_HOOK(initial_graph_hook, S_initial_graph_hook, 3, H_initial_graph_hook); /* args = sound channel duration */
   XEN_DEFINE_HOOK(mark_drag_triangle_hook, S_mark_drag_triangle_hook, 4, H_mark_drag_triangle_hook); /* args = id x time dragged-before */
+
+#if DEBUGGING && HAVE_GUILE
+  XEN_DEFINE_PROCEDURE("edit-hook-checked", g_edit_hook_checked, 2, 0, 0, "internal debugging func");
+#endif
 }
 
 

@@ -735,7 +735,6 @@ bool file_override_samples(off_t num, char *tempfile, chan_info *cp, int chan,
 			   file_delete_t auto_delete, lock_mix_t lock, const char *origin);
 Float chn_sample(off_t samp, chan_info *cp, int pos);
 bool editable_p(chan_info *cp);
-/* void extend_edit_list(chan_info *cp, const char *origin, int edpos); */
 snd_fd *free_snd_fd(snd_fd *sf);
 char *sf_to_string(snd_fd *fd);
 void release_region_readers(int reg);

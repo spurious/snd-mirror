@@ -1521,12 +1521,13 @@ static void update_track_dialog(int track_id)
 
 /* ---------------- reflection ---------------- */
 
-void reflect_mix_or_track_change(int mix_id, int track_id)
+void reflect_mix_or_track_change(int mix_id, int track_id, bool forced)
 {
   if ((mix_dialog) &&
       (GTK_WIDGET_VISIBLE(mix_dialog)))
     {
-      if (mix_dialog_id == mix_id)
+      if ((forced) && (mix_ok(mix_id))) mix_dialog_id = mix_id;
+      if ((mix_dialog_id == mix_id) || (!(mix_ok(mix_dialog_id))))
 	{
 	  /* reflect_edit_in_mix_dialog_envs(mix_dialog_id); */
 	  update_mix_dialog(mix_id);
@@ -1540,7 +1541,8 @@ void reflect_mix_or_track_change(int mix_id, int track_id)
   if ((track_dialog) &&
       (GTK_WIDGET_VISIBLE(track_dialog)))
     {
-      if (track_dialog_id == track_id)
+      if ((forced) && (track_p(track_id))) track_dialog_id = track_id;
+      if ((track_dialog_id == track_id) || (!(track_p(track_dialog_id))))
 	{
 	  /* reflect_edit_in_track_dialog_env(track_dialog_id); */
 	  update_track_dialog(track_id);
