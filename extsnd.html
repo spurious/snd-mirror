@@ -1570,7 +1570,7 @@ If there is more than one hook function, each function's result is passed as inp
 <code><a class=def name="outputnamehook">output-name-hook</a> ()</code></td><td align=right><b>progn</b>
 </td></tr>
 <tr><td></td><td colspan=2>
-called in the New File dialog, setting the file name in the associated text widget.
+called in the New File dialog. If it returns a filename, that name is the default that appears in the New File dialog.
 </td></tr>
 <tr><td></td><td colspan=2>
 <table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
@@ -4436,7 +4436,8 @@ or (an alternative that sets the underlying database entry, rather than the curr
 </td></tr>
 <tr><td></td><td>
 If you set any of these fields, the sound's index may change (there can be an embedded <a class=quiet href="#updatesound">update-sound</a>).
-To deal with MPEG or OGG files, see examp.scm (<a class=quiet href="sndscm.html#exmpg">mpg</a>) or dlp/misc.scm (mpg123 and ogg123).
+To deal with MPEG, OGG, Flac, or Speex files, see examp.scm (<a class=quiet href="sndscm.html#exmpg">mpg</a>) or dlp/misc.scm (mpg123 and ogg123).
+Octave/WaveLab ASCII files can be translated by read-ascii (examp.scm).
 <br><br>
 To turn a data-format number into a string, use <a href="#soundformatname">mus-data-format-name</a>. To get
 the data format of some sound file, use <a href="#sounddataformat">mus-sound-data-format</a>.
@@ -6965,7 +6966,11 @@ states aren't of great interest, you can save time by turning off redisplays.
 <code><a class=def name="srate">srate</a> (<em class=narg>snd</em>)</code>
 </td></tr>
 <tr><td></td><td>
-<i>snd</i>'s sampling rate.  There are several srates floating around in Snd.  <code>(srate snd)</code> returns the
+<i>snd</i>'s sampling rate.  If you set this to a new value, update-sound is called to
+reflect the new srate, but any current edits are simply flushed.  This is consistent
+with the other header fields (data-format, etc), but can be annoying.
+<br><br>
+There are several srates floating around in Snd.  <code>(srate snd)</code> returns the
 sampling rate of a particular (currently open) sound. <code>(<a class=quiet href="#soundsrate">mus-sound-srate</a> filename)</code> returns a sound file's sampling
 rate.  <code>mus-srate</code> is associated with the CLM package (setting the implicit srate for oscil etc).  
 <code>default-output-srate</code> is the default sampling rate used when opening new files.  <code>enved-srate</code>
@@ -9325,7 +9330,63 @@ in the following manner (this assumes you're using Motif and have the xm module 
 <table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (XtAppAddActions (car (<a class=quiet href="#mainwidgets">main-widgets</a>)) (list (list "hiho" (lambda args (<a class=quiet href="#sndprint">snd-print</a> "hiho")))))
 (XtOverrideTranslations (list-ref (<a class=quiet href="#mainwidgets">main-widgets</a>) 4) (XtParseTranslationTable "Ctrl &lt;Key&gt;i: hiho()\n"))
-</pre></td></tr></table><br></td></tr>
+</pre></td></tr></table><br>
+Since neither Motif nor Gtk explicitly support an Emacs-like extended mode, we have to go to
+a bit of trouble to add an extended command to the listener.  The following implements C-x C-f
+in either Motif or Gtk:
+</td></tr><tr><td></td><td>
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
+
+;;; Motif version:
+
+(define extended #f)     ; our extended mode flag
+
+(XtAddEventHandler (list-ref (main-widgets) 4) KeyPressMask #f 
+  (lambda (w context event go)
+    (let* ((bits (.state event))
+	   (keysym (XKeycodeToKeysym (XtDisplay w)
+				    (.keycode event)
+				    (if (not (= (logand bits ShiftMask) 0)) 1 0))))
+      (if (= (logand bits ControlMask) 0)
+	  (set! extended #f)
+	  ;; got C-&lt;something&gt;
+	  (if (= (cadr keysym) 120) ; C-x
+	      (set! extended #t)
+	      (begin
+		(if (and extended
+			 (= (cadr keysym) 102)) ; C-x C-f
+		    (open-file-dialog))
+		(set! extended #f)))))))
+
+
+;;; Gtk version:
+
+(define extended #f)     ; our extended mode flag
+
+(let ((listener (list-ref (main-widgets) 4)))
+  (g_signal_connect_closure_by_id 
+   (GPOINTER listener)
+   (g_signal_lookup "key_press_event" (G_OBJECT_TYPE (GTK_OBJECT listener)))
+   0
+   (g_cclosure_new (lambda (w event data)
+		     (let ((bits (.state (GDK_EVENT_KEY event)))
+			   (key (.keyval (GDK_EVENT_KEY event))))
+		       (if (= (logand bits GDK_CONTROL_MASK) 0)
+			   (set! extended #f)
+			   ;; got C-&lt;something&gt;
+			   (if (= key 120) ; C-x
+			       (set! extended #t)
+			       (begin
+				 (if (and extended
+					  (= key 102))
+				     (open-file-dialog))
+				 (set! extended #f))))
+		       #f))
+		   #f #f)
+   #f))
+</pre></td></tr></table><br>
+See edit123.scm and snd_conffile.scm for many more examples of bind-key.
+</td></tr>
 
 <!-- clear-listener -->
 <tr><td colspan=2>

@@ -35,7 +35,8 @@ int help_text_width(const char *txt, int start, int end)
   strncpy(buf, txt, end - start);
   len = sg_text_width(buf, ss->sgx->listener_fnt);
   FREE(buf);
-  return(len);
+  if (len > 0) return(len);
+  return((end - start) * 8);
 }
 
 static int old_help_text_width = 0;

@@ -481,7 +481,11 @@ int help_text_width(const char *txt, int start, int end)
     {
       font = help_font();
       if (font)
-	return(XTextWidth(font, (char *)(txt + start), end - start));
+	{
+	  int width = 0;
+	  width = XTextWidth(font, (char *)(txt + start), end - start);
+	  if (width > 0) return(width);
+	}
     }
   return((end - start) * 8);
 }

@@ -13982,7 +13982,7 @@ EDITS: 5
 	    (snd-display ";tukey window: ~A" gen)))
       (without-errors
        (let ((gen (make-fft-window dolph-chebyshev-window 16 1.0)))
-	 (if (not (vequal gen (vct 0.000 0.494 0.604 0.710 0.806 0.887 0.949 0.987 1.000 0.987 0.949 0.887 0.806 0.710 0.604 0.494)))
+	 (if (not (vequal gen (vct 1.000 0.274 0.334 0.393 0.446 0.491 0.525 0.546 0.553 0.546 0.525 0.491 0.446 0.393 0.334 0.274)))
 	     (snd-display ";dolph-chebyshev window: ~A" gen))))
       
       (let ((v0 (make-vct 10))
@@ -28609,7 +28609,7 @@ EDITS: 1
 		    (inexact->exact (floor (* .8 size)))
 		    snd chn)))  
 
-(if (and #f (or full-test (= snd-test 17) (and keep-going (<= snd-test 17)))
+(if (and (or full-test (= snd-test 17) (and keep-going (<= snd-test 17)))
 	 with-gui)
     (begin
       (run-hook before-test-hook 17)
@@ -29280,86 +29280,6 @@ EDITS: 2
 
 ;;; ---------------- test 20: transforms ----------------
 
-(define (bes-j0 x)				;returns J0(x) for any real x
-  (if (< (abs x) 8.0)			;direct rational function fit
-      (let* ((y (* x x))
-	     (ans1 (+ 57568490574.0
-		      (* y (+ -13362590354.0 
-			      (* y  (+ 651619640.7
-				       (* y (+ -11214424.18 
-					       (* y (+ 77392.33017
-						       (* y -184.9052456)))))))))))
-	     (ans2 (+ 57568490411.0 
-		      (* y (+ 1029532985.0 
-			      (* y (+ 9494680.718
-				      (* y (+ 59272.64853
-					      (* y (+ 267.8532712 y)))))))))))
-	(/ ans1 ans2))
-      (let* ((ax (abs x))
-	     (z (/ 8.0 ax))
-	     (y (* z z))
-	     (xx (- ax 0.785398164))
-	     (ans1 (+ 1.0 
-		      (* y (+ -0.1098628627e-2 
-			      (* y (+ 0.2734510407e-4
-				      (* y (+ -0.2073370639e-5
-					      (* y 0.2093887211e-6)))))))))
-	     (ans2 (+ -0.1562499995e-1
-		      (* y (+ 0.1430488765e-3
-			      (* y (+ -0.6911147651e-5
-				      (* y (+ 0.7621095161e-6
-					      (* y -0.934945152e-7))))))))))
-	(* (sqrt (/ 0.636619772 ax))
-	   (- (* (cos xx) ans1)
-	      (* z (sin xx) ans2))))))
-
-(define (bes-j1 x)				;returns J1(x) for any real x
-  (define (signum x) (if (= x 0.0) 0 (if (< x 0.0) -1 1)))
-  (if (< (abs x) 8.0)
-      (let* ((y (* x x))
-	     (ans1 (* x 
-		      (+ 72362614232.0
-			 (* y (+ -7895059235.0
-				 (* y (+ 242396853.1
-					 (* y (+ -2972611.439
-						 (* y (+ 15704.48260
-							 (* y -30.16036606))))))))))))
-	     (ans2 (+ 144725228442.0 
-		      (* y (+ 2300535178.0 
-			      (* y (+ 18583304.74
-				      (* y (+ 99447.43394
-					      (* y (+ 376.9991397 y)))))))))))
-	(/ ans1 ans2))
-      (let* ((ax (abs x))
-	     (z (/ 8.0 ax))
-	     (y (* z z))
-	     (xx (- ax 2.356194491))
-	     (ans1 (+ 1.0
-		      (* y (+ 0.183105e-2
-			      (* y (+ -0.3516396496e-4
-				      (* y (+ 0.2457520174e-5
-					      (* y -0.240337019e-6)))))))))
-	     (ans2 (+ 0.04687499995
-		      (* y (+ -0.2002690873e-3
-			      (* y (+ 0.8449199096e-5
-				      (* y (+ -0.88228987e-6
-					      (* y 0.105787412e-6))))))))))
-	(* (signum x)
-	   (sqrt (/ 0.636619772 ax))
-	   (- (* (cos xx) ans1)
-	      (* z (sin xx) ans2))))))
-
-(define (peak-at data)
-  (let ((len (vct-length data))
-	(peak (vct-ref data 0))
-	(loc 0))
-    (do ((i 1 (1+ i)))
-	((= i len) (list loc peak))
-      (if (> (vct-ref data i) peak)
-	  (begin
-	    (set! peak (vct-ref data i))
-	    (set! loc i))))))
-
 (define (inverse-haar f)
   (let* ((n (vct-length f))
 	 (g (make-vct n))
@@ -29443,6 +29363,17 @@ EDITS: 2
 	((= i n))
       (vct-set! data i (vct-ref data1 i)))
     data))
+
+(define (corr x y N M)
+  ;; correlation from Orfanidis
+  (let ((R (make-vct (1+ M))))
+    (do ((k 0 (1+ k)))
+	((> k M))
+      (vct-set! R k 0.0)
+      (do ((n 0 (1+ n)))
+	  ((= n (- N k)))
+	(vct-set! R k (+ (vct-ref R k) (* (vct-ref x (+ n k)) (vct-ref y n))))))
+    R))
 
 (if (or full-test (= snd-test 20) (and keep-going (<= snd-test 20)))
     (let* ((daub4 (vct 0.4829629131445341 0.8365163037378079 0.2241438680420134 -0.1294095225512604))
@@ -29778,6 +29709,48 @@ EDITS: 2
 	    
       ;;; -------- autocorrelation
 	    
+	    (let ((rl (make-vct 16 0.0)))
+	      (vct-set! rl 0 1.0)
+	      (autocorrelate rl)
+	      (if (not (vequal rl (vct 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0)))
+		  (snd-display ";autocorrelate 1: ~A" rl)))
+	    
+	    (let ((rl (make-vct 16 0.0)))
+	      (vct-set! rl 0 1.0)
+	      (vct-set! rl 1 -1.0)
+	      (autocorrelate rl)
+	      (if (not (vequal rl (vct 2 -1 0 0 0 0 0 0 0 0 0 0 0 0 0)))
+		  (snd-display ";autocorrelate 1 -1: ~A" rl)))
+
+	    (let ((rl (make-vct 16 0.0)))
+	      (vct-set! rl 0 1.0)
+	      (vct-set! rl 4 -1.0)
+	      (autocorrelate rl)
+	      (if (not (vequal rl (vct 2 0 0 0 -1 0 0 0 0 0 0 0 0 0 0)))
+		  (snd-display ";autocorrelate 1 0 0 0 -1: ~A" rl)))
+
+	    (let ((rl (make-vct 16))
+		  (rl1 (make-vct 16)))
+	      (do ((i 0 (1+ i)))
+		  ((= i 8))
+		(vct-set! rl i (- 8.0 i))
+		(vct-set! rl1 i (vct-ref rl i)))
+	      (let ((nr (corr rl rl 16 16)))
+		(autocorrelate rl1)
+		(if (not (vequal rl1 nr))
+		    (snd-display ";autocorrelate/corr (ramp): ~A ~A" rl1 nr))))
+
+	    (let ((rl (make-vct 16))
+		  (rl1 (make-vct 16)))
+	      (do ((i 0 (1+ i)))
+		  ((= i 8))
+		(vct-set! rl i (- 1.0 (random 2.0)))
+		(vct-set! rl1 i (vct-ref rl i)))
+	      (let ((nr (corr rl rl 16 16)))
+		(autocorrelate rl1)
+		(if (not (vequal rl1 nr))
+		    (snd-display ";autocorrelate/corr: ~A ~A" rl1 nr))))
+	    
 	    (for-each
 	     (lambda (len)
 	       (let ((rl (make-vct len))
@@ -29800,13 +29773,9 @@ EDITS: 2
 		 (vct-set! xrl 0 1.0)
 		 (vct-set! xrl 4 1.0)
 		 (mus-fft xrl xim len 1)
-		 (vct-set! xrl 0 (* (vct-ref xrl 0) (vct-ref xrl 0)))
-		 (vct-set! xrl len2 (* (vct-ref xrl len2) (vct-ref xrl len2)))
-		 (do ((i 1 (1+ i))
-		      (j (1- len) (1- j)))
-		     ((= i len2))
-		   (vct-set! xrl i (+ (* (vct-ref xrl i) (vct-ref xrl i)) (* (vct-ref xim j) (vct-ref xim j))))
-		   (vct-set! xrl j (vct-ref xrl i)))
+		 (do ((i 0 (1+ i)))
+		     ((= i len))
+		   (vct-set! xrl i (+ (* (vct-ref xrl i) (vct-ref xrl i)) (* (vct-ref xim i) (vct-ref xim i)))))
 		 (vct-scale! xim 0.0)
 		 (mus-fft xrl xim len -1)
 		 (vct-scale! xrl (/ 1.0 len))
@@ -29860,29 +29829,41 @@ EDITS: 2
 	     (list 16 64 256 512))
 	    
 	    ;; -------- cepstrum
+
+	    ;; these values from Octave real(ifft(log(abs(fft(x)))))
+	    (let ((rl (make-vct 16))
+		  (lst '( 0.423618  0.259318 -0.048365  1.140571  -0.811856  -0.994098  -0.998613 -2.453642
+				    -0.438549  -1.520463  -0.312065  -0.724707    1.154010    1.466936   0.110463  -1.520854)))
+	      (do ((i 0 (1+ i))) ((= i 16)) (vct-set! rl i (list-ref lst i)))
+	      (let ((nrl (vct-scale! (snd-transform cepstrum rl 0) 1.399)))
+		(if (not (vequal nrl (vct  1.3994950   0.1416877   0.0952407   0.0052814  -0.0613192   0.0082986  -0.0233993
+					   -0.0476585   0.0259498  -0.0476585  -0.0233993   0.0082986  -0.0613192   0.0052814
+					   0.0952407   0.1416877)))
+		    (snd-display ";cepstrum 16: ~A" nrl))))
+
+	    (let ((rl (make-vct 16)))
+	      (do ((i 0 (1+ i))) ((= i 16)) (vct-set! rl i i))
+	      (let ((nrl (vct-scale! (snd-transform cepstrum rl 0) 2.72)))
+		(if (not (vequal nrl (vct 2.720 0.452 0.203 0.122 0.082 0.061 0.048 0.041 0.039 0.041 0.048 0.061 0.082 0.122 0.203 0.452)))
+		    (snd-display ";cepstrum 16 by ones: ~A" nrl))))
 	    
 	    (for-each
 	     (lambda (len)
 	       (let ((rl (make-vct len))
 		     (xim (make-vct len))
-		     (xrl (make-vct len))
-		     (len2 (/ len 2)))
+		     (xrl (make-vct len)))
 		 (vct-set! rl 0 1.0)
 		 (vct-set! rl 4 1.0)
 		 (snd-transform cepstrum rl 0)
 		 (vct-set! xrl 0 1.0)
 		 (vct-set! xrl 4 1.0)
 		 (mus-fft xrl xim len 1)
-		 (vct-set! xrl 0 (* (vct-ref xrl 0) (vct-ref xrl 0)))
-		 (vct-set! xrl len2 (* (vct-ref xrl len2) (vct-ref xrl len2)))
-		 (do ((i 1 (1+ i))
-		      (j (1- len) (1- j)))
-		     ((= i len2))
-		   (let ((val (+ (* (vct-ref xrl i) (vct-ref xrl i)) (* (vct-ref xim j) (vct-ref xim j)))))
+		 (do ((i 0 (1+ i)))
+		     ((= i len))
+		   (let ((val (+ (* (vct-ref xrl i) (vct-ref xrl i)) (* (vct-ref xim i) (vct-ref xim i)))))
 		     (if (> val .0000001)
 			 (set! val (log (sqrt val)))
 			 (set! val -10.0))
-		     (vct-set! xrl j val)
 		     (vct-set! xrl i val)))
 		 (vct-scale! xim 0.0)
 		 (mus-fft xrl xim len -1)
@@ -29894,7 +29875,7 @@ EDITS: 2
 		 (call-with-current-continuation
 		  (lambda (break)
 		    (do ((i 0 (1+ i)))
-			((= i len2))
+			((= i len))
 		      (if (fneq (vct-ref rl i) (vct-ref xrl i))
 			  (begin
 			    (snd-display ";~A at ~A: ~A ~A" len i (vct-ref rl i) (vct-ref xrl i))
@@ -30184,9 +30165,10 @@ EDITS: 2
 	      (set! (show-listener) #t)
 	      (close-sound ind))
 	    
-	    (let ((v (dolph 16 .5)))
-	      (if (not (vequal v (vct 0.000 0.747 0.809 0.865 0.912 0.950 0.977 0.994 1.000 0.994 0.977 0.950 0.912 0.865 0.809 0.747)))
-		  (snd-display ";dolph 16 .5 (dsp.scm): ~A" v)))
+	    (let ((v (dolph 16 2.5)))
+	      (if (not (vequal v (vct 0.097 0.113 0.221 0.366 0.536 0.709 0.860 0.963 1.000 0.963 0.860 0.709 0.536 0.366 0.221 0.113)))
+		  (snd-display ";dolph 16 2.5 (dsp.scm): ~A" v)))
+
 	    (let ((v (make-vct 8))
 		  (v0 (make-vct 8)))
 	      (do ((i 0 (1+ i)))

@@ -24,7 +24,6 @@
 	(vct-set! rl i (real-part val))
 	(vct-set! im i (imag-part val)))) ;this is actually always essentially 0.0
     (fft rl im -1)            ;direction could also be 1
-    (vct-set! rl (/ N 2) 0.0) ;hmm... why is this needed?
     (let ((pk (vct-peak rl)))
       (vct-scale! rl (/ 1.0 pk)))
     (do ((i 0 (1+ i))
@@ -65,9 +64,6 @@
     (do ((i 0 (1+ i)))
 	((= i N))
       (vector-set! w i (/ (vector-ref w i) pk)))
-    (if (and (even? N) ; w(0) is "extra" in that it is not reflected in the w(last)
-	     (> (vector-ref w 0) (vector-ref w 1)))
-	(vector-set! w 0 (vector-ref w 1)))
     w))
 
 

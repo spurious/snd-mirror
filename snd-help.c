@@ -378,6 +378,7 @@ void about_snd_help(void)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+1-Jun:   read-ascii in examp.scm.\n\
 27-May:  cursor-update-interval.\n\
 25-May:  removed stop-playing-region-hook, stop-playing-channel-hook, before-apply-hook\n\
          added stop-function arg to play, play-and-wait, play-selection, play-region, add-player\n\

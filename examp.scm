@@ -572,6 +572,37 @@ this can be confusing if fft normalization is on (the default)"
       (system (format #f "flac ~A" (file-name snd)))))
 
 
+;;; -------- read ASCII files
+;;;
+;;; these are used by Octave (WaveLab) -- each line has one integer, apparently a signed short.
+
+(define* (read-ascii in-filename #:optional (out-filename "test.snd") (out-type mus-next) (out-format mus-bshort) (out-srate 44100))
+  (let* ((in-fd (open-input-file in-filename))
+	 (out-fd (new-sound out-filename out-type out-format out-srate 1 (format #f "created by read-asc: ~A" in-filename)))
+	 (bufsize 512)
+	 (data (make-vct bufsize))
+	 (loc 0)
+	 (frame 0)
+	 (short->float (/ 1.0 32768.0)))
+    (as-one-edit
+     (lambda ()
+       (let loop ((val (read in-fd)))
+	 (or (eof-object? val)
+	     (begin
+	       (vct-set! data loc (* (exact->inexact val) short->float))
+	       (set! loc (1+ loc))
+	       (if (= loc bufsize)
+		   (begin
+		     (vct->channel data frame bufsize out-fd 0)
+		     (set! frame (+ frame bufsize))
+		     (set! loc 0)))
+	       (loop (read in-fd)))))
+       (if (> loc 0)
+	   (vct->channel data frame loc out-fd 0))))
+    (close-input-port in-fd)))
+
+
+
 ;;; -------- make dot size dependent on number of samples being displayed
 ;;; 
 ;;; this could be extended to set time-graph-style to graph-lines if many samples are displayed, etc

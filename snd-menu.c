@@ -559,7 +559,7 @@ static int make_callback_slot(void)
 {
   int old_callb, i;
   for (i = 0; i < callb; i++)
-    if (!(XEN_BOUND_P(menu_functions[i])))
+    if (XEN_FALSE_P(menu_functions[i]))
       return(i);
   if (callbacks_size == callb)
     {
@@ -591,11 +591,12 @@ static void add_callback(int slot, XEN callback)
 
 void unprotect_callback(int slot)
 {
+  /* called only if menu is being removed */
   if ((slot >= 0) && (slot < callbacks_size))
     {
       if (XEN_PROCEDURE_P(menu_functions[slot]))
 	snd_unprotect(menu_functions[slot]);
-      menu_functions[slot] = XEN_UNDEFINED;
+      menu_functions[slot] = XEN_FALSE;  /* not XEN_UNDEFINED -- need a way to distinguish "no callback" from "recyclable slot" */
     }
 }
 
@@ -619,6 +620,7 @@ static XEN gl_add_to_main_menu(XEN label, XEN callback)
 	  return(snd_bad_arity_error(S_add_to_main_menu, errm, callback));
 	}
     }
+  else menu_functions[slot] = XEN_UNDEFINED;
   return(C_TO_XEN_INT(g_add_to_main_menu(XEN_TO_C_STRING(label), slot)));
 }
 
@@ -718,7 +720,8 @@ XEN_NARGIFY_1(g_main_menu_w, g_main_menu)
 
 void g_init_menu(void)
 {
-  #define H_output_name_hook S_output_name_hook " (): called from the File:New dialog"
+  #define H_output_name_hook S_output_name_hook " (): called from the File:New dialog.  If it returns a filename, \
+that name is the default that appears in the New File dialog."
   XEN_DEFINE_HOOK(output_name_hook, S_output_name_hook, 0, H_output_name_hook);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_save_state_file, g_save_state_file_w, H_save_state_file,

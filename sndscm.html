@@ -1467,6 +1467,7 @@ happens to be on the chosen one, with fade-ins and fade-outs to avoid clicks.
   <em class=emdef>write-speex</em> snd
   <em class=emdef>read-flac</em> file
   <em class=emdef>write-flac</em> snd
+  <em class=emdef>read-ascii</em> file <i>out-file out-type out-format out-srate</i>
 </pre>
 <p><b>finfo</b> returns a description of the file <i>filename</i>. <b>shell</b> is similar
 to Guile's <i>system</i> function, but output is sent to Snd's listener, rather than stdout.
@@ -1483,7 +1484,7 @@ Presumably a similar function could be written to call TiMidity to translate
 MIDI files to something Snd can read, but I'm not having any luck getting it
 to work. OGG Vorbis files can be handled in a similar manner: see read-ogg and
 write-ogg.  For Speeex files: read-speex and write-speex. For FLAC files:
-read-flac and write-flac.
+read-flac and write-flac.  For ASCII files (as in Octave/WaveLab), read-ascii.
 </p>
 <p>
 Several of the functions in this section are slight robustifications of the

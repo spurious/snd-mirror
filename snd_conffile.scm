@@ -5,7 +5,7 @@
 ;; Should work for both gtk and motif.
 
 
-
+(use-modules (ice-9 rdelim))
 
 (provide 'snd-snd_conffile.scm)
 

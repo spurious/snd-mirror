@@ -23005,7 +23005,7 @@ static XEN gxm_text(XEN ptr)
   if (XEN_XmTextVerifyCallbackStruct_P(ptr)) 
     {
       tb = (XmTextBlock)(XEN_TO_C_XmTextVerifyCallbackStruct(ptr))->text;
-      if (tb)
+      if ((tb) && (tb->length > 0))
 	return(XEN_LIST_2(C_TO_XEN_STRING(tb->ptr),
 			  C_TO_XEN_ULONG(tb->format)));
       return(XEN_FALSE);

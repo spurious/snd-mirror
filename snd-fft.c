@@ -267,42 +267,21 @@ static void walsh_transform(Float *data, int n)
 
 void autocorrelation(Float *data, int n)
 {
-#if HAVE_FFTW || HAVE_FFTW3
-  Float *rl;
-#else
   Float *rl, *im;
-#endif
   Float fscl;
-  int i, j, n2;
+  int i, n2;
   n2 = n / 2;
   rl = (Float *)MALLOC(n * sizeof(Float));
   memcpy((void *)rl, (void *)data, n * sizeof(Float));
   /* for (i = 0; i < n; i++) rl[i] = data[i]; */
   fscl = 1.0 / (Float)n;
-#if HAVE_FFTW || HAVE_FFTW3
-  mus_fftw(rl, n, 1);
-  rl[0] *= rl[0];
-  rl[n2] *= rl[n2];
-  for (i = 1, j = n - 1; i < n2; i++, j--) 
-    {
-      rl[i] = rl[i] * rl[i] + rl[j] * rl[j];
-      rl[j] = 0.0;
-    }
-  mus_fftw(rl, n, -1);
-#else
   im = (Float *)CALLOC(n, sizeof(Float));
   mus_fft(rl, im, n, 1);
-  rl[0] *= rl[0];
-  rl[n2] *= rl[n2];
-  for (i = 1, j = n - 1; i < n2; i++, j--)
-    {
-      rl[i] = rl[i] * rl[i] + im[i] * im[i];
-      rl[j] = rl[i];
-    }
+  for (i = 0; i < n; i++)
+    rl[i] = rl[i] * rl[i] + im[i] * im[i];
   memset((void *)im, 0, n * sizeof(Float));
   mus_fft(rl, im, n, -1);
   FREE(im);
-#endif
   for (i = 0; i <= n2; i++) data[i] = fscl * rl[i];
   FREE(rl);
 }
@@ -310,30 +289,24 @@ void autocorrelation(Float *data, int n)
 
 
 /* -------------------------------- CEPSTRUM -------------------------------- */
-/* is this useful? correct? */
 
 static void cepstrum(Float *data, int n)
 {
   Float *rl, *im;
   Float fscl = 0.0, lowest;
-  int i, j, n2;
+  int i;
   lowest = 0.00000001;
   fscl = 2.0 / (Float)n;
   rl = (Float *)MALLOC(n * sizeof(Float));
   im = (Float *)CALLOC(n, sizeof(Float));
   memcpy((void *)rl, (void *)data, n * sizeof(Float));
-  /* for (i = 0; i < n; i++) rl[i] = data[i]; */
   mus_fft(rl, im, n, 1);
-  rl[0] *= rl[0];
-  n2 = n / 2;
-  rl[n2] *= rl[n2];
-  for (i = 1, j = n - 1; i < n2; i++, j--)
+  for (i = 0; i < n; i++)
     {
       rl[i] = rl[i] * rl[i] + im[i] * im[i];
       if (rl[i] < lowest)
 	rl[i] = -10.0;
       else rl[i] = log(sqrt(rl[i]));
-      rl[j] = rl[i];
     }
   memset((void *)im, 0, n * sizeof(Float));
   mus_fft(rl, im, n, -1);

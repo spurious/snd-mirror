@@ -6742,8 +6742,9 @@ void save_edits(snd_info *sp, void *ptr)
 	  current_write_date = file_write_date(sp->filename);
 	  if ((current_write_date - sp->write_date) > 1) /* weird!! In Redhat 7.1 these can differ by 1?? Surely this is a bug! */
 	    {
-	      err = snd_yes_or_no_p(_("%s changed on disk! Save anyway?"), sp->short_filename);
-	      if (err == 0) return;
+	      bool yes;
+	      yes = snd_yes_or_no_p(_("%s changed on disk! Save anyway?"), sp->short_filename);
+	      if (!yes) return;
 	    }
 	  err = save_edits_and_update_display(sp);
 	  if (err)
