@@ -4171,6 +4171,13 @@ int mus_header_read_with_fd (int chan)
   if (match_four_chars((unsigned char *)hdrbuf,I_FORM))
     {
       /* next 4 bytes are apparently the file size or something equally useless */
+      if (bytes < 12) 
+	{
+	  mus_error(MUS_HEADER_READ_FAILED,
+		    "AIFF header truncated? read only %d bytes\n  [%s[%d] %s]",
+		bytes,__FILE__,__LINE__,__FUNCTION__);
+	  return(MUS_ERROR);
+	}
       if (match_four_chars((unsigned char *)(hdrbuf+8),I_AIFF))
 	{ 
 	  header_type = MUS_AIFF;
@@ -4204,6 +4211,13 @@ int mus_header_read_with_fd (int chan)
     }
   if ((match_four_chars((unsigned char *)hdrbuf,I_RIFF)) || match_four_chars((unsigned char *)hdrbuf,I_RIFX))
     {
+      if (bytes < 12) 
+	{
+	  mus_error(MUS_HEADER_READ_FAILED,
+		    "RIFF header truncated? read only %d bytes\n  [%s[%d] %s]",
+		bytes,__FILE__,__LINE__,__FUNCTION__);
+	  return(MUS_ERROR);
+	}
       if (match_four_chars((unsigned char *)(hdrbuf+8),I_WAVE))
 	{
 	  header_type = MUS_RIFF;
@@ -4227,6 +4241,13 @@ int mus_header_read_with_fd (int chan)
       (equal_big_or_little_endian((unsigned char *)hdrbuf,I_IRCAM_MIPS)) || 
       (equal_big_or_little_endian((unsigned char *)hdrbuf,I_IRCAM_NEXT)))
     {
+      if (bytes < 24) 
+	{
+	  mus_error(MUS_HEADER_READ_FAILED,
+		    "IRCAM header truncated? read only %d bytes\n  [%s[%d] %s]",
+		bytes,__FILE__,__LINE__,__FUNCTION__);
+	  return(MUS_ERROR);
+	}
       header_type = MUS_IRCAM;
       return(read_ircam_header(chan));
     }

@@ -4,6 +4,8 @@
 <style type="text/css">
 <!-- 
 	EM.red {color:red; font-style:normal}
+        EM.typing {color:maroon; font-style: normal}
+        EM.listener {color:darkblue; font-style: normal}
 	H1 {text-align: center}
 	UL {list-style-type: none}
 	SPAN.box {background: beige; width: 100%; font-style: normal; text-align: center; border-width: thin; border-style: ridge}
@@ -34,6 +36,10 @@
   <ul>
   <li><a href="#emacssnd">Snd as an Emacs subjob</a>
   <li><a href="#dynamic">Dynamically loaded modules</a>
+  <ul>
+     <li><a href="#sndgsl">GSL</a>
+     <li><a href="#sndsndlib">Sndlib</a>
+     </ul>
   <li><a href="#programs">External Programs</a>
   <ul>
     <li><a href="#stk">STK</a>
@@ -345,7 +351,6 @@ your LD_LIBRARY_PATH; for example, if
 it's on /usr/local/lib, <code>setenv LD_LIBRARY_PATH /usr/local/lib</code>.  
 Next add Guile wrappers to your C code:</p>
 <pre>
-<small>
   /* cscm.c */
   #include &lt;math.h&gt;
   #include &lt;stdio.h&gt;
@@ -366,7 +371,7 @@ Next add Guile wrappers to your C code:</p>
   { /* this declares hiho within Guile calling the wrapper which calls the C function hiho */
     gh_new_procedure1_0("hiho",hiho_wrapper);
   }
-</small></pre>
+</pre>
 <p>
 Next compile
 your code into a shared object (this example is for Linux):
@@ -392,6 +397,59 @@ print "#&lt;unspecified&gt;" or something equally obscure to indicate
 in its own peculiar way that all went well.  M-x (hiho 4) will
 print 5 in the minibuffer.
 </p>
+
+<p><a name="sndgsl"></a>
+As a slightly more useful example, let's import the bessel J0 function
+from GSL (Gnu Scientific Library); in this case, we need to build Snd
+with GSL (the easiest way is to include the --with-gsl option to configure).
+Then make a file (say "gsl-ex.c"):</p>
+<pre>
+#include &lt;guile/gh.h&gt;
+#include &lt;gsl/gsl_sf_bessel.h&gt;
+
+static SCM scm_j0(SCM x)
+{ /* calls GSL function gsl_sf_bessel_J0_e */
+  gsl_sf_result res;
+  gsl_sf_bessel_J0_e(gh_scm2double(x),&res);
+  return(gh_double2scm(res.val));
+}
+
+void init_gsl_j0(void)
+{ /* links scm_j0 into Snd under the name j0 */
+  gh_new_procedure("j0",scm_j0,1,0,0);
+}
+</pre>
+<p>Now the usual compile, load, link into Snd sequence:</p>
+<pre>
+/home/bil/snd-4/ cc gsl-ex.c -c -Wall
+/home/bil/snd-4/ ld -shared gsl-ex.o -o gsl-ex.so -lguile
+/home/bil/snd-4/ ./snd
+
+&gt;(define lib (dynamic-link "/home/bil/snd-4/gsl-ex.so"))
+#&lt;unspecified&gt;
+&gt;(dynamic-call "init_gsl_j0" lib)
+#&lt;unspecified&gt;
+&gt;(<em class=red>j0</em> 0.0)
+1.0
+&gt;(<em class=red>j0</em> 2.0)
+0.223890779141236
+&gt;(define (bes-fm dur freq amp ratio index)
+ ;; bessel-FM from CLM
+   (let* ((car-ph 0.0)
+	  (mod-ph 0.0)
+ 	  (car-incr (hz-&gt;radians freq))
+	  (mod-incr (* ratio car-incr))
+	  (ampenv (make-env :envelope '(0 0 25 1 75 1 100 0) :scaler amp :end dur))
+	  (output (make-vct dur)))
+     (do ((i 0 (1+ i)))
+	 ((= i dur))
+       (vct-set! output i (* (env ampenv) (<em class=red>j0</em> car-ph)))
+       (set! car-ph (+ car-ph car-incr (* index (<em class=red>j0</em> mod-ph))))
+       (set! mod-ph (+ mod-ph mod-incr)))
+     (vct->samples 0 dur output)))
+#&lt;unspecified&gt;
+&gt;(bes-fm 22050 440 10.0 1.0 8.0)
+</pre>
 
 <p>To acess and edit sound data from such a module, use the
 Snd functions make-sample-reader and loop-samples.  loop-samples
@@ -424,7 +482,7 @@ variable, in the init function set the variable to the
 value of scm_symbol_value0("function-name"), and in the
 rest of the code call it via scm_apply. The following
 is a sketch using the Snd internal "srate" function:</p>
-<pre><small>
+<pre>
   #include &lt;guile/gh.h&gt;
   static SCM g_srate;
   static SCM srate_wrapper(SCM a) {return(gh_call1(g_srate,a));}
@@ -433,7 +491,7 @@ is a sketch using the Snd internal "srate" function:</p>
     gh_new_procedure1_0("my-srate",srate_wrapper);
     g_srate = scm_symbol_value0("srate");
   }
-</small></pre>
+</pre>
 <p>Alternatively, you can simply use gh_eval_str:</p>
 <pre><small>
   gh_eval_str("(recorder-dialog)");
@@ -453,7 +511,7 @@ clutter of functions aimed at fast data access.  I think all
 that's really needed from Snd are the sample-reader functions.
 </p>
 
-<p>
+<p><a name="sndsndlib"></a>
 To use sndlib (clm) functions from a shared object file can be a bit
 tricky; first you need to build sndlib as a shared library (named
 "libsndlib.so" for loader convenience).  If it's not in a directory

@@ -762,6 +762,7 @@ int snd_eval_str(snd_state *ss, char *buf, int count);
 void snd_eval_listener_str(snd_state *ss, char *buf);
 void snd_eval_stdin_str(snd_state *ss, char *buf);
 void g_snd_callback(int callb);
+void clear_listener(void);
 
 
 /* -------- snd-select.c -------- */

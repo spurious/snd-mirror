@@ -9,6 +9,8 @@ Snd Customization and Extension Part 2
    * Runtime modules and external programs
         o Snd as an Emacs subjob
         o Dynamically loaded modules
+             + GSL
+             + Sndlib
         o External Programs
              + STK
              + Sox
@@ -330,6 +332,57 @@ defined in Guile/Snd to begin with. After both the dynamic-link and
 dynamic-lib calls, the listener will print "#<unspecified>" or something
 equally obscure to indicate in its own peculiar way that all went well. M-x
 (hiho 4) will print 5 in the minibuffer.
+
+As a slightly more useful example, let's import the bessel J0 function from
+GSL (Gnu Scientific Library); in this case, we need to build Snd with GSL
+(the easiest way is to include the --with-gsl option to configure). Then
+make a file (say "gsl-ex.c"):
+
+#include <guile/gh.h>
+#include <gsl/gsl_sf_bessel.h>
+
+static SCM scm_j0(SCM x)
+{ /* calls GSL function gsl_sf_bessel_J0_e */
+  gsl_sf_result res;
+  gsl_sf_bessel_J0_e(gh_scm2double(x),&res);
+  return(gh_double2scm(res.val));
+}
+
+void init_gsl_j0(void)
+{ /* links scm_j0 into Snd under the name j0 */
+  gh_new_procedure("j0",scm_j0,1,0,0);
+}
+
+Now the usual compile, load, link into Snd sequence:
+
+/home/bil/snd-4/ cc gsl-ex.c -c -Wall
+/home/bil/snd-4/ ld -shared gsl-ex.o -o gsl-ex.so -lguile
+/home/bil/snd-4/ ./snd
+
+>(define lib (dynamic-link "/home/bil/snd-4/gsl-ex.so"))
+#<unspecified>
+>(dynamic-call "init_gsl_j0" lib)
+#<unspecified>
+>(j0 0.0)
+1.0
+>(j0 2.0)
+0.223890779141236
+>(define (bes-fm dur freq amp ratio index)
+ ;; bessel-FM from CLM
+   (let* ((car-ph 0.0)
+          (mod-ph 0.0)
+          (car-incr (hz->radians freq))
+          (mod-incr (* ratio car-incr))
+          (ampenv (make-env :envelope '(0 0 25 1 75 1 100 0) :scaler amp :end dur))
+          (output (make-vct dur)))
+     (do ((i 0 (1+ i)))
+         ((= i dur))
+       (vct-set! output i (* (env ampenv) (j0 car-ph)))
+       (set! car-ph (+ car-ph car-incr (* index (j0 mod-ph))))
+       (set! mod-ph (+ mod-ph mod-incr)))
+     (vct->samples 0 dur output)))
+#<unspecified>
+>(bes-fm 22050 440 10.0 1.0 8.0)
 
 To acess and edit sound data from such a module, use the Snd functions
 make-sample-reader and loop-samples. loop-samples takes a sample reader, a

@@ -330,22 +330,37 @@ void edit_history_to_file(FILE *fd, chan_info *cp)
 	    {
 	    case INSERTION_EDIT: 
 	      /* samp data snd chn */
-	      fprintf(fd,"      (%s %d %d \"%s\" ",S_insert_samples_with_origin,ed->beg,ed->len,(ed->origin) ? ed->origin : "");
+	      fprintf(fd,"      (%s %d %d \"%s\" ",
+		      S_insert_samples_with_origin,
+		      ed->beg,
+		      ed->len,
+		      (ed->origin) ? ed->origin : "");
 	      edit_data_to_file(fd,ed,cp);
 	      fprintf(fd," sfile %d)\n",cp->chan);
 	      break;
 	    case DELETION_EDIT:
 	      /* samp samps snd chn */
-	      fprintf(fd,"      (%s %d %d \"%s\" sfile %d)\n",S_delete_samples_with_origin,ed->beg,ed->len,(ed->origin) ? ed->origin : "",cp->chan);
+	      fprintf(fd,"      (%s %d %d \"%s\" sfile %d)\n",
+		      S_delete_samples_with_origin,
+		      ed->beg,
+		      ed->len,
+		      (ed->origin) ? ed->origin : "",
+		      cp->chan);
 	      break;
 	    case CHANGE_EDIT:
-	      fprintf(fd,"      (%s %d %d \"%s\" ",S_change_samples_with_origin,ed->beg,ed->len,(ed->origin) ? ed->origin : "");
+	      fprintf(fd,"      (%s %d %d \"%s\" ",
+		      S_change_samples_with_origin,
+		      ed->beg,
+		      ed->len,
+		      (ed->origin) ? ed->origin : "");
 	      edit_data_to_file(fd,ed,cp);
 	      fprintf(fd," sfile %d)\n",cp->chan);
 	      break;
 	    case PARSED_EDIT: 
 	      /* a parsed edit has to be able to recreate itself completely */
-	      fprintf(fd,"      (%s sfile %d)\n",ed->origin,cp->chan);
+	      fprintf(fd,"      (%s sfile %d)\n",
+		      ed->origin,
+		      cp->chan);
 	      break;
 	    }
 	}
@@ -515,7 +530,8 @@ static int find_split_loc (chan_info *cp, int samp, ed_list *current_state)
 {
   int i,k;
   for (i=0,k=0;i<current_state->size;i++,k+=ED_SIZE)
-    if (current_state->fragments[k+ED_OUT] >= samp) return(i);
+    if (current_state->fragments[k+ED_OUT] >= samp) 
+      return(i);
   return(0); /* make sgi compiler happy */
 }
 
@@ -640,6 +656,7 @@ snd_data *make_snd_data_file(char *name, int *io, MUS_SAMPLE_TYPE *data, file_in
   sf->chan = temp_chan;
   sf->len = (hdr->samples)*(mus_data_format_to_bytes_per_sample(hdr->format)) + hdr->data_location;
   sf->owner = NULL; 
+  /* this owner field is obsolete */
   sf->just_zeros = 0;
   return(sf);
 }
@@ -1137,7 +1154,7 @@ static ed_list *insert_samples_1 (int samp, int num, MUS_SAMPLE_TYPE* vals, ed_l
 
 void extend_with_zeros(chan_info *cp, int beg, int num, char *origin)
 {
-  /* two cases also in snd-chn (cursor_zeros, cursor_insert) */
+  /* TODO: one case in snd-chn (cursor_zeros) */
   MUS_SAMPLE_TYPE *zeros;
   int k,len;
   int *cb;
@@ -1618,6 +1635,9 @@ snd_fd *free_snd_fd(snd_fd *sf)
       if (sd)
 	{
 	  sd->inuse = FALSE;
+#if DEBUGGING
+	  if ((sd->copy) && (sd->owner != (void *)sf)) fprintf(stderr,"weird case ");
+#endif
 	  if ((sd->copy) && (sd->owner == (void *)sf)) free_snd_data(sd);
 	}
       FREE(sf);
@@ -1737,6 +1757,9 @@ static MUS_SAMPLE_TYPE previous_sound (snd_fd *sf)
 	  prev_snd = sf->current_sound; 
 	  prev_snd->inuse = FALSE; 
 	  sf->current_sound = NULL;
+#if DEBUGGING
+	  if ((prev_snd->owner != (void *)sf) && (prev_snd->copy)) fprintf(stderr,"weird prev case");
+#endif
 	  if ((prev_snd->owner == (void *)sf) && (prev_snd->copy)) free_snd_data(prev_snd);
 	}
       if (sf->cbi == 0) return(MUS_SAMPLE_0); /* can't back up any further */
@@ -1789,6 +1812,9 @@ static MUS_SAMPLE_TYPE next_sound (snd_fd *sf)
 	  nxt_snd = sf->current_sound; 
 	  nxt_snd->inuse = FALSE; 
 	  sf->current_sound = NULL;
+#if DEBUGGING
+	  if ((nxt_snd->owner != (void *)sf) && (nxt_snd->copy)) fprintf(stderr,"weird next case");
+#endif
 	  if ((nxt_snd->owner == (void *)sf) && (nxt_snd->copy)) free_snd_data(nxt_snd);
 	}
       if (sf->last == (MUS_SAMPLE_TYPE *)0) return(MUS_SAMPLE_0);

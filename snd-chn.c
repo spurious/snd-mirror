@@ -5057,32 +5057,26 @@ static int cursor_delete_previous(chan_info *cp, int count, char *origin)
 
 static int cursor_insert(chan_info *cp, int count)
 {
-  MUS_SAMPLE_TYPE *zeros;
   int i,beg;
   snd_info *sp;
   sync_info *si;
   chan_info **cps;
   si = NULL;
-  if (count < 0) count = -count;
   sp = cp->sound;
   beg = cp->cursor;
-  zeros = (MUS_SAMPLE_TYPE *)CALLOC(count,sizeof(MUS_SAMPLE_TYPE));
+  if (count < 0) count = -count;
   if (sp->syncing != 0)
     {
       si = snd_sync(cp->state,sp->syncing);
       cps = si->cps;
       for (i=0;i<si->chans;i++)
 	{
-	  insert_samples(beg,count,zeros,cps[i],"C-o");
-	  update_graph(si->cps[i],NULL);
+	  extend_with_zeros(cps[i],beg,count,"C-o"); /* should this be si->begs[i]? */
+	  update_graph(cps[i],NULL);
 	}
       si = free_sync_info(si);
     }
-  else
-    {
-      insert_samples(beg,count,zeros,cp,"C-o");
-    }
-  FREE(zeros);
+  else extend_with_zeros(cp,beg,count,"C-o");
   return(CURSOR_UPDATE_DISPLAY);
 }
 
@@ -5124,6 +5118,7 @@ static int cursor_zeros(chan_info *cp, int count, int regexpr)
 	}
       else
 	{
+	  /* TODO: this might be faster/smaller if we used as_one_edit(delete_samples+extend_with_zeros) */
 	  if (zeros == NULL) zeros = (MUS_SAMPLE_TYPE *)CALLOC(num,sizeof(MUS_SAMPLE_TYPE));
 	  if (count < 0) 
 	    change_samples(si->begs[i]+count,num,zeros,si->cps[i],LOCK_MIXES,"C-z"); 
@@ -6051,6 +6046,7 @@ int keyboard_command (chan_info *cp, int keysym, int state)
 	      if (sp->applying) stop_applying(sp);
 	      map_over_sound_chans(sp,stop_fft_in_progress,NULL);
 	      clear_minibuffer(sp);
+	      clear_listener();
 	      break;
 	    case snd_K_H: case snd_K_h: 
 	      cp->cursor_on = 1; 
@@ -6281,6 +6277,7 @@ int keyboard_command (chan_info *cp, int keysym, int state)
 	      dot_seen = 0; 
 	      defining_macro = 0;
 	      if (ss->checking_explicitly) ss->stopped_explicitly = 1; 
+	      clear_listener();
 	      break;
 	    case snd_K_H: case snd_K_h: break;
 	    case snd_K_I: case snd_K_i: redisplay = prompt(sp,"insert file:",NULL); sp->filing = INSERT_FILING; searching = 1; break;

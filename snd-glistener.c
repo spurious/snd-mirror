@@ -19,6 +19,7 @@ static void Activate_channel (snd_state *ss)
 {
   /* make the current channel active and abort if anything in progress */
   chan_info *cp;
+  clear_listener();
   if (ss->checking_explicitly) ss->stopped_explicitly = 1; 
   cp = current_channel(ss);
   if (cp) goto_graph(cp);

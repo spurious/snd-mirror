@@ -52,6 +52,7 @@ static void Activate_channel (Widget w, XEvent *ev, char **str, Cardinal *num)
   chan_info *cp;
   snd_state *ss;
   ss = get_global_state();
+  clear_listener();
   if (ss->checking_explicitly) ss->stopped_explicitly = 1; 
   cp = current_channel(ss);
   if (cp) goto_graph(cp);
@@ -668,6 +669,9 @@ static void Command_Return_Callback(Widget w,XtPointer clientData,XtPointer call
 	  }
     }
   str = NULL;
+#if 0
+  fprintf(stderr,"eot: %d, sot: %d, curpos: %d, lastpos: %d\n",end_of_text,start_of_text,current_position,last_position);
+#endif
   if (end_of_text > start_of_text)
     {
       parens = 0;
@@ -679,6 +683,9 @@ static void Command_Return_Callback(Widget w,XtPointer clientData,XtPointer call
       if (parens)
 	{
 	  end_of_text = check_balance(str,0,end_of_text);
+#if 0
+	  fprintf(stderr,"eot: %d [%d], str: %s\n",end_of_text,slen,str);
+#endif
 	  if ((end_of_text > 0) && (end_of_text < (slen-1)))
 	    {
 	      str[end_of_text+1] = 0;
@@ -701,6 +708,9 @@ static void Command_Return_Callback(Widget w,XtPointer clientData,XtPointer call
 	    }
 	  XDefineCursor(XtDisplay(listener_text),XtWindow(listener_text),(ss->sgx)->wait_cursor);
 	  XmUpdateDisplay(listener_text); /* not sure about this... */
+#if 0
+	  fprintf(stderr,"eval: %s\n",str);
+#endif
 	  snd_eval_listener_str(ss,str);
 	  XUndefineCursor(XtDisplay(listener_text),XtWindow(listener_text));
 	  FREE(str);

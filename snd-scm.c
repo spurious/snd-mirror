@@ -530,6 +530,16 @@ void snd_eval_listener_str(snd_state *ss, char *buf)
 
 static char *stdin_str = NULL;
 
+void clear_listener(void)
+{
+  snd_state *ss;
+  ss = get_global_state();
+  if (stdin_str) FREE(stdin_str);
+  stdin_str = NULL;
+  ss->result_printout = MESSAGE_WITH_CARET;
+  snd_append_command(ss,"");
+}
+
 static char *stdin_check_for_full_expression(char *newstr)
 {
   char *str;
