@@ -1,5 +1,13 @@
 #include "snd.h"
 
+#if (!SNDLIB_USE_FLOATS)
+  #define MUS_MIX_MAX (1 << 30)
+  #define MUS_MIX_MIN (-(MUS_MIX_MAX))
+#else
+  #define MUS_MIX_MAX 100.0
+  #define MUS_MIX_MIN (-100.0)
+#endif
+
 #if 0
 static void display_md(mixdata *md)
 {
@@ -338,7 +346,7 @@ typedef struct {
   int chans;                           /* chans of input */
   int calc,base;
   Float x,sr;
-  MUS_SAMPLE_TYPE *lst,*nxt;
+  Float *lst,*nxt;
   src_state **srcs;
   mus_any **segs;
   int *ctr,*samples;
@@ -439,15 +447,14 @@ static MUS_SAMPLE_TYPE next_mix_input_amp_env_sample(mix_fd *mf, int chan)
 static MUS_SAMPLE_TYPE next_mix_sample(mix_fd *mf)
 {
   int i,j,move;
-  MUS_SAMPLE_TYPE val,sum = MUS_SAMPLE_0;
-  Float spd;
+  Float spd,samp,sum = 0.0;
   console_state *cs;
   switch (mf->calc)
     {
     case C_STRAIGHT:
       if (mf->type == MIX_INPUT_SOUND)
-	sum = next_sample(mf->sfs[mf->base]);
-      else sum = next_mix_input_amp_env_sample(mf,mf->base);
+	return(next_sample(mf->sfs[mf->base]));
+      else return(next_mix_input_amp_env_sample(mf,mf->base));
       break;
     case C_ZERO: 
       return(MUS_SAMPLE_0);
@@ -460,11 +467,11 @@ static MUS_SAMPLE_TYPE next_mix_sample(mix_fd *mf)
 	  for (i=0;i<mf->chans;i++)
 	    {
 	      if (mf->type == MIX_INPUT_SOUND)
-		val = next_sample(mf->sfs[i]);
-	      else val = next_mix_input_amp_env_sample(mf,i);
+		samp = next_sample_to_float(mf->sfs[i]);
+	      else samp = MUS_SAMPLE_TO_FLOAT(next_mix_input_amp_env_sample(mf,i));
 	      if (mf->segs[i])
-		sum += ((MUS_SAMPLE_TYPE)(val * mus_env(mf->segs[i])));
-	      else sum += ((MUS_SAMPLE_TYPE)(val * cs->scalers[i]));
+		sum += (samp * mus_env(mf->segs[i]));
+	      else sum += (samp * cs->scalers[i]);
 	    }
 	}
       else
@@ -472,12 +479,12 @@ static MUS_SAMPLE_TYPE next_mix_sample(mix_fd *mf)
 	  if (mf->type == MIX_INPUT_SOUND)
 	    {
 	      for (i=0;i<mf->chans;i++)
-		sum += ((MUS_SAMPLE_TYPE)(next_sample(mf->sfs[i]) * cs->scalers[i]));
+		sum += (next_sample_to_float(mf->sfs[i]) * cs->scalers[i]);
 	    }
 	  else
 	    {
 	      for (i=0;i<mf->chans;i++)
-		sum += (MUS_SAMPLE_TYPE)(cs->scalers[i] * next_mix_input_amp_env_sample(mf,i));
+		sum += (cs->scalers[i] * MUS_SAMPLE_TO_FLOAT(next_mix_input_amp_env_sample(mf,i)));
 	    }
 	}
       break;
@@ -493,8 +500,8 @@ static MUS_SAMPLE_TYPE next_mix_sample(mix_fd *mf)
 		  if (cs->scalers[i] > 0.0)
 		    {
 		      if (mf->segs[i])
-			sum += (MUS_FLOAT_TO_SAMPLE(mus_env(mf->segs[i]) * run_src(mf->srcs[i],mf->sr)));
-		      else sum += (MUS_FLOAT_TO_SAMPLE(cs->scalers[i] * run_src(mf->srcs[i],mf->sr)));
+			sum += (mus_env(mf->segs[i]) * run_src(mf->srcs[i],mf->sr));
+		      else sum += (cs->scalers[i] * run_src(mf->srcs[i],mf->sr));
 		    }
 		}
 	    }
@@ -502,7 +509,7 @@ static MUS_SAMPLE_TYPE next_mix_sample(mix_fd *mf)
 	    {
 	      for (i=0;i<mf->chans;i++)
 		if (cs->scalers[i] > 0.0)
-		  sum += (MUS_FLOAT_TO_SAMPLE(cs->scalers[i] * run_src(mf->srcs[i],mf->sr)));
+		  sum += (cs->scalers[i] * run_src(mf->srcs[i],mf->sr));
 	    }
 	}
       else
@@ -515,8 +522,8 @@ static MUS_SAMPLE_TYPE next_mix_sample(mix_fd *mf)
 		  if (cs->scalers[i] > 0.0)
 		    {
 		      if (mf->segs[i])
-			sum += (MUS_SAMPLE_TYPE)(mus_env(mf->segs[i]) * (mf->lst[i] + mf->x * (mf->nxt[i] - mf->lst[i])));
-		      else sum += (MUS_SAMPLE_TYPE)(cs->scalers[i] * (mf->lst[i] + mf->x * (mf->nxt[i] - mf->lst[i])));
+			sum += (mus_env(mf->segs[i]) * (mf->lst[i] + mf->x * (mf->nxt[i] - mf->lst[i])));
+		      else sum += (cs->scalers[i] * (mf->lst[i] + mf->x * (mf->nxt[i] - mf->lst[i])));
 		    }
 		}
 	    }
@@ -524,7 +531,7 @@ static MUS_SAMPLE_TYPE next_mix_sample(mix_fd *mf)
 	    {
 	      for (i=0;i<mf->chans;i++)
 		if (cs->scalers[i] > 0.0)
-		  sum += (MUS_SAMPLE_TYPE)(cs->scalers[i] * (mf->lst[i] + mf->x * (mf->nxt[i] - mf->lst[i])));
+		  sum += (cs->scalers[i] * (mf->lst[i] + mf->x * (mf->nxt[i] - mf->lst[i])));
 	    }
 	  mf->x += spd;
 	  move = (int)(mf->x);
@@ -537,15 +544,15 @@ static MUS_SAMPLE_TYPE next_mix_sample(mix_fd *mf)
 		    {
 		      mf->lst[i] = mf->nxt[i];
 		      if (mf->type == MIX_INPUT_SOUND)
-			mf->nxt[i] = next_sample(mf->sfs[i]);
-		      else mf->nxt[i] = next_mix_input_amp_env_sample(mf,i);
+			mf->nxt[i] = next_sample_to_float(mf->sfs[i]);
+		      else mf->nxt[i] = MUS_SAMPLE_TO_FLOAT(next_mix_input_amp_env_sample(mf,i));
 		    }
 		}
 	    }
 	}
       break;
     }
-  return(sum);
+  return(MUS_FLOAT_TO_SAMPLE(sum));
 }
 
 static int amp_env_len(mixdata *md, int chan)
@@ -646,14 +653,14 @@ static mix_fd *init_mix_read_1(mixdata *md, int old, int type)
 	{
 	  /* initialize interpolator */
 	  mf->srcs = NULL;
-	  mf->lst = (MUS_SAMPLE_TYPE *)CALLOC(chans,sizeof(MUS_SAMPLE_TYPE));
-	  mf->nxt = (MUS_SAMPLE_TYPE *)CALLOC(chans,sizeof(MUS_SAMPLE_TYPE));
+	  mf->lst = (Float *)CALLOC(chans,sizeof(Float));
+	  mf->nxt = (Float *)CALLOC(chans,sizeof(Float));
 	  if (type == MIX_INPUT_SOUND)
 	    {
 	      for (i=0;i<chans;i++)
 		{
-		  mf->lst[i] = next_sample(mf->sfs[i]);
-		  mf->nxt[i] = next_sample(mf->sfs[i]);
+		  mf->lst[i] = next_sample_to_float(mf->sfs[i]);
+		  mf->nxt[i] = next_sample_to_float(mf->sfs[i]);
 		}
 	    }
 	}
@@ -1160,7 +1167,7 @@ int mix_array(int beg, int num, MUS_SAMPLE_TYPE **data, chan_info **out_cps, int
   return(id);
 }
 
-int mix_file(int beg, int num, char *file, chan_info **cps, int out_chans, char *origin, int with_console)
+int copy_file_and_mix(int beg, int num, char *file, chan_info **cps, int out_chans, char *origin, int with_console)
 {
   /* always write to tempfile (protect section/lisp temps from possible overwrites) */
   char *newname;
@@ -1175,6 +1182,11 @@ int mix_file(int beg, int num, char *file, chan_info **cps, int out_chans, char 
     id = mix(beg,num,out_chans,cps,newname,DELETE_ME,origin,with_console);
   if (newname) FREE(newname);
   return(id);
+}
+
+int mix_file_and_delete(int beg, int num, char *file, chan_info **cps, int out_chans, char *origin, int with_console)
+{
+  return(mix(beg,num,out_chans,cps,file,DELETE_ME,origin,with_console));
 }
 
 int mix_complete_file(snd_info *sp, char *str, char *origin, int with_console)

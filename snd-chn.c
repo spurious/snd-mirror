@@ -1048,8 +1048,7 @@ int make_graph(chan_info *cp, snd_info *sp, snd_state *ss)
    * be tiny, so we're pushing the arithmetic into dangerous realms.  This stuff has been tested
    * on some extreme cases (hour-long 44KHz stereo), but there's always another special case...
    */
-  MUS_SAMPLE_TYPE ina,ymin,ymax;
-  Float samp;
+  Float samp,ymin,ymax;
   int pixels;
   snd_fd *sf = NULL;
   int x_start,x_end;
@@ -1166,24 +1165,24 @@ int make_graph(chan_info *cp, snd_info *sp, snd_state *ss)
 	      x=ap->x0;
 	      xi=grf_x(x,ap);
 	      xf=0.0;     /* samples per pixel counter */
-	      ymin = MUS_MIX_MAX;
-	      ymax = MUS_MIX_MIN;
+	      ymin = 100.0;
+	      ymax = -100.0;
 	      if (cp->printing) pinc = samples_per_pixel/cur_srate;
 	      for (i=ap->losamp,xf=0.0;i<=ap->hisamp;i++)
 		{
-		  ina = next_sample(sf);
-		  if (ina > ymax) ymax = ina;
-		  if (ina < ymin) ymin = ina;
+		  samp = next_sample_to_float(sf);
+		  if (samp > ymax) ymax = samp;
+		  if (samp < ymin) ymin = samp;
 		  xf+=1.0;
 		  if (xf>samples_per_pixel)
 		    {
-		      set_grf_points(xi,j,grf_y(MUS_SAMPLE_TO_FLOAT(ymin),ap),grf_y(MUS_SAMPLE_TO_FLOAT(ymax),ap));
-		      if (cp->printing) {x+=pinc; ps_set_grf_points(x,j,MUS_SAMPLE_TO_FLOAT(ymin),MUS_SAMPLE_TO_FLOAT(ymax));}
+		      set_grf_points(xi,j,grf_y(ymin,ap),grf_y(ymax,ap));
+		      if (cp->printing) {x+=pinc; ps_set_grf_points(x,j,ymin,ymax);}
 		      xi++;
 		      j++;
 		      xf -= samples_per_pixel;
-		      ymin = MUS_MIX_MAX;
-		      ymax = MUS_MIX_MIN;
+		      ymin = 100.0;
+		      ymax = -100.0;
 		    }
 		}
 	    }
@@ -3573,7 +3572,7 @@ static void scale_with(snd_state *ss, sync_state *sc, Float *scalers, char *orig
 	    {
 	      for (k=0;k<dur;k++)
 		{
-		  idata[j] = (MUS_SAMPLE_TYPE)(next_sample(sf)*env_val);
+		  idata[j] = MUS_FLOAT_TO_SAMPLE(next_sample_to_float(sf)*env_val);
 		  j++;
 		  if (temp_file)
 		    {
@@ -3606,6 +3605,11 @@ static void scale_with(snd_state *ss, sync_state *sc, Float *scalers, char *orig
   FREE(data);
 }
 
+#if WITH_PARSE_TREES
+  void parse_tree_scale_by(chan_info *cp, Float scl);
+  void amp_env_scale_by(chan_info *cp, Float scl);
+#endif
+
 void scale_by(snd_state *ss, snd_info *sp, chan_info *cp, Float *ur_scalers, int len, int selection)
 {
   /* if selection, sync to current selection, else sync to current sound */
@@ -3613,6 +3617,24 @@ void scale_by(snd_state *ss, snd_info *sp, chan_info *cp, Float *ur_scalers, int
   sync_info *si;
   int i,chans,nlen;
   Float *scalers = NULL;
+#if WITH_PARSE_TREES
+  if (!selection)
+    {
+      int j;
+      si = sync_to_chan(cp);
+      if (si->chans < len) chans = len; else chans = si->chans;
+      for (i=0,j=0;i<si->chans;i++)
+	{
+	  parse_tree_scale_by(si->cps[i],ur_scalers[j]);
+	  amp_env_scale_by(si->cps[i],ur_scalers[j]);
+	  j++;
+	  if (j >= len) j = 0;
+	  update_graph(si->cps[i],NULL);
+	}
+      free_sync_info(si);
+      return;
+    }
+#endif
   sc = get_sync_state(ss,sp,cp,0,selection,READ_FORWARD);
   if (sc == NULL) return;
   si = sc->si;
@@ -3630,21 +3652,21 @@ void scale_by(snd_state *ss, snd_info *sp, chan_info *cp, Float *ur_scalers, int
 Float get_maxamp(snd_info *sp, chan_info *cp)
 {
   snd_fd *sf;
-  MUS_SAMPLE_TYPE ymax,val;
+  Float ymax,val;
   int i;
   if (!sp) return(0.0);
   if (!cp) cp = sp->chans[0];
   if (amp_env_maxamp_ok(cp)) return(amp_env_maxamp(cp));
   sf = init_sample_read(0,cp,READ_FORWARD);
-  ymax = 0;
+  ymax = 0.0;
   for (i=0;i<current_ed_samples(cp);i++)
     {
-      val = next_sample(sf);
-      if (val < 0) val = -val;
+      val = next_sample_to_float(sf);
+      if (val < 0.0) val = -val;
       if (val > ymax) ymax = val;
     }
   free_snd_fd(sf);
-  return(MUS_SAMPLE_TO_FLOAT(ymax));
+  return(ymax);
 }
 
 void scale_to(snd_state *ss, snd_info *sp, chan_info *cp, Float *ur_scalers, int len, int selection)
@@ -3654,14 +3676,20 @@ void scale_to(snd_state *ss, snd_info *sp, chan_info *cp, Float *ur_scalers, int
   /*   if more than one, get successive maxamps */
   int i,chans,nlen;
   sync_state *sc;
-  sync_info *si;
+  sync_info *si = NULL;
   chan_info *ncp;
   Float *scalers;
   Float maxamp,val;
   if ((!selection) && (cp == NULL)) return;
-  sc = get_sync_state(ss,sp,cp,0,selection,READ_FORWARD);
-  if (sc == NULL) return;
-  si = sc->si;
+#if WITH_PARSE_TREES
+  if (!selection) si = sync_to_chan(cp);
+#endif
+  if (si == NULL)
+    {
+      sc = get_sync_state(ss,sp,cp,0,selection,READ_FORWARD);
+      if (sc == NULL) return;
+      si = sc->si;
+    }
   chans = si->chans;
   scalers = (Float *)CALLOC(chans,sizeof(Float));
   if (chans<len) nlen=chans; else nlen=len;
@@ -3693,6 +3721,20 @@ void scale_to(snd_state *ss, snd_info *sp, chan_info *cp, Float *ur_scalers, int
 	  scalers[i] /= val;
 	}
     }
+#if WITH_PARSE_TREES
+  if (!selection)
+    {
+      for (i=0;i<si->chans;i++)
+	{
+	  parse_tree_scale_by(si->cps[i],scalers[i]);
+	  amp_env_scale_by(si->cps[i],scalers[i]);
+	  update_graph(si->cps[i],NULL);
+	}
+      free_sync_info(si);
+      FREE(scalers);
+      return;
+    }
+#endif
   scale_with(ss,sc,scalers,S_scale_to);
   FREE(scalers);
   free_sync_state(sc);
@@ -4688,7 +4730,7 @@ void apply_env(chan_info *cp, env *e, int beg, int dur, Float scaler, int regexp
 		  for (i=0;i<dur;i++)
 		    {
 		      for (k=0;k<si->chans;k++)
-			data[k][j] = (MUS_SAMPLE_TYPE)(next_sample(sfs[k])*env_vald);
+			data[k][j] = MUS_FLOAT_TO_SAMPLE(next_sample_to_float(sfs[k])*env_vald);
 		      env_vald += env_incrd;
 		      pass--;
 		      if (pass <= 0) 
@@ -4717,7 +4759,7 @@ void apply_env(chan_info *cp, env *e, int beg, int dur, Float scaler, int regexp
 		  idata = data[0];
 		  for (i=0;i<dur;i++)
 		    {
-		      idata[j] = (MUS_SAMPLE_TYPE)(next_sample(sf)*env_vald);
+		      idata[j] = MUS_FLOAT_TO_SAMPLE(next_sample_to_float(sf)*env_vald);
 		      env_vald += env_incrd;
 		      pass--;
 		      if (pass <= 0) 
@@ -4751,7 +4793,7 @@ void apply_env(chan_info *cp, env *e, int beg, int dur, Float scaler, int regexp
 		  for (i=0;i<dur;i++)
 		    {
 		      for (k=0;k<si->chans;k++)
-			data[k][j] = (MUS_SAMPLE_TYPE)(next_sample(sfs[k])*env_val);
+			data[k][j] = MUS_FLOAT_TO_SAMPLE(next_sample_to_float(sfs[k])*env_val);
 		      env_val += env_incr;
 		      pass--;
 		      if (pass <= 0) 
@@ -4780,7 +4822,7 @@ void apply_env(chan_info *cp, env *e, int beg, int dur, Float scaler, int regexp
 		  idata = data[0];
 		  for (i=0;i<dur;i++)
 		    {
-		      idata[j] = (MUS_SAMPLE_TYPE)(next_sample(sf)*env_val);
+		      idata[j] = MUS_FLOAT_TO_SAMPLE(next_sample_to_float(sf)*env_val);
 		      env_val += env_incr;
 		      pass--;
 		      if (pass <= 0) 
@@ -4815,7 +4857,7 @@ void apply_env(chan_info *cp, env *e, int beg, int dur, Float scaler, int regexp
 	  for (i=0;i<dur;i++)
 	    {
 	      for (k=0;k<si->chans;k++)
-		data[k][j] = (MUS_SAMPLE_TYPE)(next_sample(sfs[k])*step_val);
+		data[k][j] = MUS_FLOAT_TO_SAMPLE(next_sample_to_float(sfs[k])*step_val);
 	      env_val += env_incr;
 	      pass--;
 	      if (pass <= 0) 
@@ -4854,7 +4896,7 @@ void apply_env(chan_info *cp, env *e, int beg, int dur, Float scaler, int regexp
 	      env_powd += env_incrd;
 	    }
 	  for (k=0;k<si->chans;k++)
-	    data[k][j] = (MUS_SAMPLE_TYPE)(next_sample(sfs[k])*env_vald);
+	    data[k][j] = MUS_FLOAT_TO_SAMPLE(next_sample_to_float(sfs[k])*env_vald);
 	  pass--;
 	  if (pass <= 0) 
 	    {

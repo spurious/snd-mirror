@@ -2561,7 +2561,7 @@
 ;;; so that a call looks like 
 ;;;    (with-sound (:srate 44100) (fm-violin 0 1 440 .1))
 
-(defmacro with-sound (args . body) 
+(defmacro with-sound-1 (args . body) 
   `((lambda* (#:key (srate 22050)
 		    (explode #f))
       (let ((old-srate (mus-srate)))
@@ -2579,3 +2579,15 @@
 ;;; if explode, each call makes a new mix
 ;;; should old-srate be *clm-srate* (i.e. nested calls carry down the outer setting?)
 
+;;; here's a better version courtesy of K Olle
+;;; but it doesn't seem to work in Guile 1.4 (it needs 1.4.1)
+;;;
+;;;(define* (with-sound-helper thunk #:key (srate 22050) (explode #f))
+;;;  (let ((old-srate (mus-srate)))
+;;;    (dynamic-wind (lambda () (set! (mus-srate) srate))
+;;;                  thunk
+;;;                  (lambda () (set! (mus-srate) old-srate)))))
+;;;
+;;;(defmacro with-sound (args . body)
+;;;  `(with-sound-helper (lambda () ,@body)
+;;;                      ,@args))

@@ -1,6 +1,7 @@
 #include "snd.h"
 
 /* TODO: (unrequested) resize by window manager causes truncation etc
+ *       some window managers (BlackBox apparently) expose without sending an expose event?
  */
 
 #if defined(NEXT) || defined(HAVE_SYS_DIR_H)
@@ -529,9 +530,7 @@ static void muffle_warning(char *name, char *type, char *klass, char *defaultp, 
 #endif
 {
   /* these warnings are occurring when they should not, and they are of no interest to anyone, so shove a sock in Xt */
-#ifdef DEBUGGING
-  fprintf(stderr,"ignoring: %s: %s\n",name,defaultp);
-#endif
+  /* fprintf(stderr,"ignoring: %s: %s\n",name,defaultp); */
 }
 
 static void ss_graph_key_press(Widget w,XtPointer clientData,XEvent *event,Boolean *cont) 

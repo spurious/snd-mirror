@@ -1194,7 +1194,7 @@ static int fill_dac_buffers(dac_state *dacp, int write_ok)
 		  amp = dp->cur_amp;
 		  incr = (sp->amp - amp) / (Float)(frames);
 		  for (j=0;j<frames;j++,amp+=incr) 
-		    buf[j] += (MUS_SAMPLE_TYPE)(next_sample(dp->chn_fd) * amp);
+		    buf[j] += MUS_FLOAT_TO_SAMPLE(next_sample_to_float(dp->chn_fd) * amp);
 		  dp->cur_amp = amp;
 		  break;
 

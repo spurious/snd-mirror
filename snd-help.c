@@ -154,6 +154,9 @@ char *version_info(void)
 #if SND_AS_WIDGET
 	  "\n    (compiled as a widget)",
 #endif
+#if WITH_PARSE_TREES
+	  "\n    (with embedded parse trees)",
+#endif
 #if HAVE_GUILE
 	  "\n    Guile ",guile_version(),
 #ifdef LIBGUILE_VERSION
@@ -253,6 +256,7 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
+3-Oct:   WITH_PARSE_TREES experiment (see snd.h).\n\
 2-Oct:   added audio-input-device.\n\
 27-Sep:  showing-controls -> show-controls. \n\
          data-format and header-type now return just the sndlib int.\n\

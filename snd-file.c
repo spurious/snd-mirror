@@ -693,7 +693,7 @@ int copy_file(char *oldname, char *newname)
   return(MUS_NO_ERROR);
 }
 
-int snd_copy_file(char *oldfile, char *newfile)
+int move_file(char *oldfile, char *newfile)
 {
   int err;
   err = 0;
@@ -1587,7 +1587,7 @@ int check_for_filename_collisions_and_save(snd_state *ss, snd_info *sp, char *st
       else result = save_selection(ss,ofile,type,format,srate,comment);
       if (result != MUS_NO_ERROR)
 	report_in_minibuffer(sp,"save as temp: %s: %s",ofile,strerror(errno));
-      else err = snd_copy_file(ofile,sp->fullname);
+      else err = move_file(ofile,sp->fullname);
       snd_update(ss,sp);
       free(ofile);
       FREE(fullname);
@@ -1911,7 +1911,7 @@ static SCM g_set_sound_loop_info(SCM start0, SCM end0, SCM start1, SCM end1, SCM
     }
   tmp_file = snd_tempnam(sp->state);
   save_edits_2(sp,tmp_file,type,(sp->hdr)->format,(sp->hdr)->srate,(sp->hdr)->comment);
-  snd_copy_file(tmp_file,sp->fullname);
+  move_file(tmp_file,sp->fullname);
   remove(tmp_file);
   free(tmp_file);
   snd_update(sp->state,sp);

@@ -1,6 +1,7 @@
 #include "snd.h"
 
-/* extracted from CLM's cmus.c and changed slightly for Snd */
+
+/* file buffers (i.e. a sliding window on a given file's data */
 
 #define SND_AREF_BLOCK 0
 #define SND_AREF_SIZE 1
@@ -14,7 +15,6 @@
 #define SND_IO_BUFSIZ 6
 #define SND_IO_HDR_END 7
 #define SND_IO_DATS 8
-
 
 static void c_io_bufclr (int *io, int *datai, int beg)
 {
@@ -89,16 +89,6 @@ static void reposition_file_buffers_1(int loc, int *io, int *datai)
     }
   io[SND_IO_END] = io[SND_IO_BEG]+io[SND_IO_BUFSIZ]-1;
 }
-
-/* now wrappers for low level sndlib open/close/access functions -- we can't use
- * the sndlib versions directly because in some cases, Snd has more than FOPEN_MAX
- * files nominally open and accessible (mix temps in with-sound explode for example).
- * these wrappers provide checks for EMFILE as errno from open and try to close
- * temps to make room. 
- *
- * there is a hidden limit that might come into play if FOPEN_MAX > MUS_FILE_DESCRIPTORS (see io.c)
- * on the SGI, FOPEN_MAX is 100, but we can open many more files than that without hitting the EMFILE error.
- */
 
 static void reposition_file_buffers(snd_data *sd, int index)
 {
@@ -263,6 +253,16 @@ MUS_SAMPLE_TYPE snd_file_read_sample(snd_data *ur_sd, int index, chan_info *cp)
   return(val); 
 }
 
+
+/* wrappers for low level sndlib open/close/access functions -- we can't use
+ * the sndlib versions directly because in some cases, Snd has more than FOPEN_MAX
+ * files nominally open and accessible (mix temps in with-sound explode for example).
+ * these wrappers provide checks for EMFILE as errno from open and try to close
+ * temps to make room. 
+ *
+ * there is a hidden limit that might come into play if FOPEN_MAX > MUS_FILE_DESCRIPTORS (see io.c)
+ * on the SGI, FOPEN_MAX is 100, but we can open many more files than that without hitting the EMFILE error.
+ */
 
 static int close_temp_files(chan_info *cp, void *closed)
 {

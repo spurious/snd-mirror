@@ -260,7 +260,7 @@ void mix_selection_from_menu(snd_state *ss)
 	  if (err == MUS_NO_ERROR)
 	    {
 	      si_out = sync_to_chan(cp);
-	      mix_file(cp->cursor,selection_len(),tempfile,si_out->cps,si_out->chans,"Edit: mix",with_mix_consoles(ss));
+	      mix_file_and_delete(cp->cursor,selection_len(),tempfile,si_out->cps,si_out->chans,"Edit: mix",with_mix_consoles(ss));
 	      free_sync_info(si_out);	      
 	    }
 	}

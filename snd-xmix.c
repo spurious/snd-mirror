@@ -1,6 +1,8 @@
 #include "snd.h"
 #include <X11/cursorfont.h>
 
+/* TODO: change this to be just a tag and mix waveform with a separate dialog for the controls
+ */
 
 /* ---------------- MIX CURSOR ---------------- */
 

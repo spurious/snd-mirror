@@ -862,7 +862,7 @@ char *mus_sound_comment(const char *name)
 		      lseek(fd,start,SEEK_SET);
 		      read(fd,auxcom,len);
 		      full_len += len;
-		      sc = REALLOC(sc,full_len * sizeof(char));
+		      sc = (char *)REALLOC(sc,full_len * sizeof(char));
 		      strcat(sc,"\n");
 		      strcat(sc,auxcom);
 		      FREE(auxcom);

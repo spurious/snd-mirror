@@ -132,7 +132,7 @@ static Float region_sample(int reg, int chn, int samp)
 {
   region *r;
   snd_fd *sf;
-  MUS_SAMPLE_TYPE val;
+  Float val;
   if (region_ok(reg))
     {
       r = regions[reg];
@@ -143,9 +143,9 @@ static Float region_sample(int reg, int chn, int samp)
 	  else 
 	    {
 	      sf = init_region_read(get_global_state(),samp,reg,chn,READ_FORWARD);
-	      val = next_sample(sf);
+	      val = next_sample_to_float(sf);
 	      free_snd_fd(sf);
-	      return(MUS_SAMPLE_TO_FLOAT(val));
+	      return(val);
 	    }
 	}
     }
@@ -476,7 +476,7 @@ static int paste_region_1(int n, chan_info *cp, int add, int beg, Float scaler, 
     {
       if (r->use_temp_file == REGION_ARRAY)
 	idtmp = mix_array(beg,r->frames,r->data,si->cps,r->chans,si->chans,SND_SRATE(sp),origin,with_mix_consoles(ss));
-      else idtmp = mix_file(beg,r->frames,r->filename,si->cps,si->chans,origin,with_mix_consoles(ss));
+      else idtmp = copy_file_and_mix(beg,r->frames,r->filename,si->cps,si->chans,origin,with_mix_consoles(ss));
       if (id == -1) id = idtmp;
     }
   else
@@ -717,7 +717,7 @@ void save_regions(snd_state *ss, FILE *fd)
 	      if (save_dir(ss))
 		{
 		  newname = shorter_tempnam(save_dir(ss),"snd_");
-		  snd_copy_file(r->filename,newname);
+		  copy_file(r->filename,newname);
 		  fprintf(fd," \"%s\"",newname);
 		  FREE(newname);
 		}

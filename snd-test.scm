@@ -23,6 +23,7 @@
 ;;; TODO: test of set! selected-mix
 ;;;       add to test-spectral-difference set (reading o2 etc)
 ;;;       test active selection mix/insert as opposed to region mix/paste
+;;;       also mix-selection (from menu) is untested currently
 
 
 (use-modules (ice-9 format) (ice-9 debug))
