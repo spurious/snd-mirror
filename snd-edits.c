@@ -1632,11 +1632,13 @@ void ptree_channel(chan_info *cp, void *ptree, off_t beg, off_t num, int pos, vo
   update_graph(cp);
 }
 
+static mus_sample_t reader_out_of_data(snd_fd *sf);
 snd_fd *free_snd_fd_almost(snd_fd *sf)
 {
   snd_data *sd;
   if (sf) 
     {
+      reader_out_of_data(sf);
       sd = sf->current_sound;
       if ((sd) && 
 	  ((sd->type == SND_DATA_BUFFER) || (sd->type == SND_DATA_FILE)))

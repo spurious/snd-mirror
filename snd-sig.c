@@ -2630,8 +2630,6 @@ about where it is in the sound."
   return(XEN_FALSE);
 }
 
-
-static snd_fd *stop_leak = NULL;
 static XEN g_sp_scan(XEN proc_and_list, XEN s_beg, XEN s_end, XEN snd, XEN chn, 
 		     const char *caller, int counting, XEN edpos, int arg_pos, XEN s_dur)
 {
@@ -2647,7 +2645,6 @@ static XEN g_sp_scan(XEN proc_and_list, XEN s_beg, XEN s_end, XEN snd, XEN chn,
   char *errmsg;
   XEN proc = XEN_FALSE;
   void *pt = NULL;
-  if (stop_leak) stop_leak = free_snd_fd(stop_leak);
   if (XEN_LIST_P(proc_and_list))
     proc = XEN_CADR(proc_and_list);
   else proc = proc_and_list;
@@ -2678,7 +2675,6 @@ static XEN g_sp_scan(XEN proc_and_list, XEN s_beg, XEN s_end, XEN snd, XEN chn,
   sp = cp->sound;
   sf = init_sample_read_any(beg, cp, READ_FORWARD, pos);
   if (sf == NULL) return(XEN_TRUE);
-  stop_leak = sf;
   rpt4 = MAX_BUFFER_SIZE / 4;
   if (end == 0) 
     {
@@ -2704,7 +2700,6 @@ static XEN g_sp_scan(XEN proc_and_list, XEN s_beg, XEN s_end, XEN snd, XEN chn,
 		  else
 		    {
 		      sf = free_snd_fd(sf);
-		      stop_leak = NULL;
 		      free_ptree(pt);
 		      if (reporting) 
 			finish_progress_report(sp, NOT_FROM_ENVED);
@@ -2718,7 +2713,7 @@ static XEN g_sp_scan(XEN proc_and_list, XEN s_beg, XEN s_end, XEN snd, XEN chn,
 	      res = XEN_CALL_1_NO_CATCH(proc,
 					C_TO_XEN_DOUBLE((double)read_sample_to_float(sf)),
 					caller);
-	      /* leak here -- if reader active and error occurs, we jump out without cleanup -- hence "stop_leak" above */
+	      /* leak here -- if reader active and error occurs, we jump out without cleanup */
 	      if (XEN_NOT_FALSE_P(res))
 		{
 		  if ((counting) &&
@@ -2727,7 +2722,6 @@ static XEN g_sp_scan(XEN proc_and_list, XEN s_beg, XEN s_end, XEN snd, XEN chn,
 		  else
 		    {
 		      sf = free_snd_fd(sf);
-		      stop_leak = NULL;
 		      if (reporting) 
 			finish_progress_report(sp, NOT_FROM_ENVED);
 		      return(XEN_LIST_2(res,
@@ -2751,7 +2745,6 @@ static XEN g_sp_scan(XEN proc_and_list, XEN s_beg, XEN s_end, XEN snd, XEN chn,
 	      report_in_minibuffer(sp, "C-G stopped %s at sample " OFF_TD, 
 				   caller, kp + beg);
 	      sf = free_snd_fd(sf);
-	      stop_leak = NULL;
 	      if (counting)
 		return(C_TO_XEN_INT(counts));
 	      return(XEN_FALSE);
@@ -2760,7 +2753,6 @@ static XEN g_sp_scan(XEN proc_and_list, XEN s_beg, XEN s_end, XEN snd, XEN chn,
       if (reporting) finish_progress_report(sp, NOT_FROM_ENVED);
     }
   if (sf) sf = free_snd_fd(sf);
-  stop_leak = NULL;
   if (pt) free_ptree(pt);
   if (counting)
     return(C_TO_XEN_INT(counts));
@@ -2770,9 +2762,9 @@ static XEN g_sp_scan(XEN proc_and_list, XEN s_beg, XEN s_end, XEN snd, XEN chn,
 static XEN g_scan_chan(XEN proc, XEN beg, XEN end, XEN snd, XEN chn, XEN edpos) 
 { 
   #define H_scan_chan "(" S_scan_chan " func &optional (start 0) end snd chn edpos)\n\
-apply func to samples in current channel (or the specified channel) \
-func is a function of one argument, the current sample. \
-if func returns non-#f, the scan stops, and the value is returned to the caller with the sample number. \n\
+apply 'func' to samples in current channel (or the specified channel). \
+'func' is a function of one argument, the current sample. \
+if 'func' returns non-#f, the scan stops, and the value is returned to the caller with the sample number. \n\
   (scan-chan (lambda (x) (> x .1)))"
 
   ASSERT_CHANNEL(S_scan_chan, snd, chn, 4); 

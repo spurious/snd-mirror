@@ -6427,10 +6427,18 @@ static xen_value *clean_up(xen_value *result, xen_value **args, int args_size)
   return(result);
 }
 
+static xen_value *clean_up_if_needed(xen_value *result, xen_value **args, int args_size, int need_result)
+{
+  if (need_result)
+    return(clean_up(result, args, args_size));
+  /* ok to skip return because we walked the args, so any side effects there are handled */
+  return(make_xen_value(R_UNSPECIFIED, -1, R_CONSTANT));
+}
+
 static xen_value *walk(ptree *prog, XEN form, int need_result)
 {
   /* walk form, storing vars, making program entries for operators etc */
-  /* fprintf(stderr,"walk %s\n", XEN_AS_STRING(form)); */
+  /* fprintf(stderr,"walk %s (needed: %d)\n", XEN_AS_STRING(form), need_result); */
   /* need_result = TRUE; */
   if (current_optimization == 0) return(NULL);
 
@@ -6914,100 +6922,103 @@ static xen_value *walk(ptree *prog, XEN form, int need_result)
 	  (args[2]->type == R_FLOAT))
 	return(clean_up(make_vct_1(prog, args, num_args), args, num_args));
 
-      if (need_result)
+      if (num_args == 0)
 	{
-	  if (num_args == 0)
+	  if (strcmp(funcname, "string") == 0)
+	    return(clean_up_if_needed(make_xen_value(R_STRING, 
+						     add_string_to_ptree(prog, (char *)CALLOC(1, sizeof(char))), 
+						     R_CONSTANT), 
+				      args, num_args, need_result));
+	}
+      if (booleans == 0)
+	{
+	  if (strcmp(funcname, "*") == 0) return(clean_up(multiply(prog, float_result, args, num_args, constants), args, num_args));
+	  if (strcmp(funcname, "+") == 0) return(clean_up(add(prog, float_result, args, num_args, constants), args, num_args));
+	  if (strcmp(funcname, ">") == 0) return(clean_up(greater_than(prog, float_result, args, num_args, constants), args, num_args));
+	  if (strcmp(funcname, ">=") == 0) return(clean_up(greater_than_or_equal(prog, float_result, args, num_args, constants), args, num_args));
+	  if (strcmp(funcname, "<") == 0) return(clean_up(less_than(prog, float_result, args, num_args, constants), args, num_args));
+	  if (strcmp(funcname, "<=") == 0) return(clean_up(less_than_or_equal(prog, float_result, args, num_args, constants), args, num_args));
+	  if (strcmp(funcname, "=") == 0) return(clean_up(numbers_equal(prog, float_result, args, num_args, constants), args, num_args));
+	  if (strcmp(funcname, "gcd") == 0) return(clean_up(gcd_1(prog, args, constants, num_args), args, num_args));
+	  if (strcmp(funcname, "lcm") == 0) return(clean_up(lcm_1(prog, args, constants, num_args), args, num_args));
+	  if (num_args > 0)
 	    {
-	      if (strcmp(funcname, "string") == 0)
-		return(clean_up(make_xen_value(R_STRING, add_string_to_ptree(prog, (char *)CALLOC(1, sizeof(char))), R_CONSTANT), args, num_args));
+	      if (strcmp(funcname, "-") == 0) return(clean_up(subtract(prog, float_result, args, num_args, constants), args, num_args));
+	      if (strcmp(funcname, "/") == 0) return(clean_up(divide(prog, args, num_args, constants), args, num_args));
+	      if (strcmp(funcname, "max") == 0) return(clean_up(max_1(prog, float_result, args, num_args, constants), args, num_args));
+	      if (strcmp(funcname, "min") == 0) return(clean_up(min_1(prog, float_result, args, num_args, constants), args, num_args));
 	    }
-	  if (booleans == 0)
+	  if (num_args == 2)
 	    {
-	      if (strcmp(funcname, "*") == 0) return(clean_up(multiply(prog, float_result, args, num_args, constants), args, num_args));
-	      if (strcmp(funcname, "+") == 0) return(clean_up(add(prog, float_result, args, num_args, constants), args, num_args));
-	      if (strcmp(funcname, ">") == 0) return(clean_up(greater_than(prog, float_result, args, num_args, constants), args, num_args));
-	      if (strcmp(funcname, ">=") == 0) return(clean_up(greater_than_or_equal(prog, float_result, args, num_args, constants), args, num_args));
-	      if (strcmp(funcname, "<") == 0) return(clean_up(less_than(prog, float_result, args, num_args, constants), args, num_args));
-	      if (strcmp(funcname, "<=") == 0) return(clean_up(less_than_or_equal(prog, float_result, args, num_args, constants), args, num_args));
-	      if (strcmp(funcname, "=") == 0) return(clean_up(numbers_equal(prog, float_result, args, num_args, constants), args, num_args));
-	      if (strcmp(funcname, "gcd") == 0) return(clean_up(gcd_1(prog, args, constants, num_args), args, num_args));
-	      if (strcmp(funcname, "lcm") == 0) return(clean_up(lcm_1(prog, args, constants, num_args), args, num_args));
-	      if (num_args > 0)
+	      if (strcmp(funcname, "modulo") == 0) return(clean_up(modulo_1(prog, args, constants), args, num_args));
+	      if (strcmp(funcname, "remainder") == 0) return(clean_up(remainder_1(prog, args, constants), args, num_args));
+	      if (strcmp(funcname, "quotient") == 0) return(clean_up(quotient_1(prog, args, constants), args, num_args));
+	      if (strcmp(funcname, "logand") == 0) return(clean_up(logand_1(prog, args, constants), args, num_args));
+	      if (strcmp(funcname, "logxor") == 0) return(clean_up(logxor_1(prog, args, constants), args, num_args));
+	      if (strcmp(funcname, "logior") == 0) return(clean_up(logior_1(prog, args, constants), args, num_args));
+	      if (strcmp(funcname, "ash") == 0) return(clean_up(ash_1(prog, args, constants), args, num_args));
+	      if (current_optimization > 1) 
 		{
-		  if (strcmp(funcname, "-") == 0) return(clean_up(subtract(prog, float_result, args, num_args, constants), args, num_args));
-		  if (strcmp(funcname, "/") == 0) return(clean_up(divide(prog, args, num_args, constants), args, num_args));
-		  if (strcmp(funcname, "max") == 0) return(clean_up(max_1(prog, float_result, args, num_args, constants), args, num_args));
-		  if (strcmp(funcname, "min") == 0) return(clean_up(min_1(prog, float_result, args, num_args, constants), args, num_args));
-		}
-	      if (num_args == 2)
-		{
-		  if (strcmp(funcname, "modulo") == 0) return(clean_up(modulo_1(prog, args, constants), args, num_args));
-		  if (strcmp(funcname, "remainder") == 0) return(clean_up(remainder_1(prog, args, constants), args, num_args));
-		  if (strcmp(funcname, "quotient") == 0) return(clean_up(quotient_1(prog, args, constants), args, num_args));
-		  if (strcmp(funcname, "logand") == 0) return(clean_up(logand_1(prog, args, constants), args, num_args));
-		  if (strcmp(funcname, "logxor") == 0) return(clean_up(logxor_1(prog, args, constants), args, num_args));
-		  if (strcmp(funcname, "logior") == 0) return(clean_up(logior_1(prog, args, constants), args, num_args));
-		  if (strcmp(funcname, "ash") == 0) return(clean_up(ash_1(prog, args, constants), args, num_args));
-		  if (current_optimization > 1) 
-		    {
-		      if (strcmp(funcname, "expt") == 0) return(clean_up(expt_1(prog, args, constants), args, num_args));
-		      if (strcmp(funcname, "atan") == 0) return(clean_up(atan2_1(prog, args, constants), args, num_args));
-		    }
-		}
-	      if (num_args == 1)
-		{
-		  if (strcmp(funcname, "1+") == 0) return(clean_up(one_plus(prog, args, constants), args, num_args));
-		  if (strcmp(funcname, "1-") == 0) return(clean_up(one_minus(prog, args, constants), args, num_args));
-		  if (strcmp(funcname, "integer->char") == 0) return(clean_up(integer_to_char(args[1]), args, num_args));
+		  if (strcmp(funcname, "expt") == 0) return(clean_up(expt_1(prog, args, constants), args, num_args));
+		  if (strcmp(funcname, "atan") == 0) return(clean_up(atan2_1(prog, args, constants), args, num_args));
 		}
 	    }
 	  if (num_args == 1)
 	    {
-	      if (strcmp(funcname, "not") == 0) return(clean_up(not_p(prog, args, constants), args, num_args));
-	      if (booleans == 0)
-		{
-		  if (strcmp(funcname, "lognot") == 0) return(clean_up(lognot_1(prog, args, constants), args, num_args));
-		  if (strcmp(funcname, "abs") == 0) return(clean_up(abs_1(prog, args, constants), args, num_args));
-		  if (strcmp(funcname, "sin") == 0) return(clean_up(sin_1(prog, args, constants), args, num_args));
-		  if (strcmp(funcname, "cos") == 0) return(clean_up(cos_1(prog, args, constants), args, num_args));
-		  if (strcmp(funcname, "tan") == 0) return(clean_up(tan_1(prog, args, constants), args, num_args));
-		  if (strcmp(funcname, "random") == 0) return(clean_up(random_1(prog, args), args, num_args));
-
-		  if (strcmp(funcname, "radians->hz") == 0) return(clean_up(mus_radians2hz_1(prog, args, constants), args, num_args));
-		  if (strcmp(funcname, "hz->radians") == 0) return(clean_up(mus_hz2radians_1(prog, args, constants), args, num_args));
-		  if (strcmp(funcname, "degrees->radians") == 0) return(clean_up(mus_degrees2radians_1(prog, args, constants), args, num_args));
-		  if (strcmp(funcname, "radians->degrees") == 0) return(clean_up(mus_radians2degrees_1(prog, args, constants), args, num_args));
-		  if (strcmp(funcname, "db->linear") == 0) return(clean_up(mus_db2linear_1(prog, args, constants), args, num_args));
-		  if (strcmp(funcname, "linear->db") == 0) return(clean_up(mus_linear2db_1(prog, args, constants), args, num_args));
-		  if (strcmp(funcname, "mus-random") == 0) return(clean_up(mus_random_1(prog, args, constants), args, num_args));
-
-		  if (current_optimization > 1)
-		    {
-		      if (strcmp(funcname, "atan") == 0) return(clean_up(atan1_1(prog, args, constants), args, num_args));
-		      if (strcmp(funcname, "log") == 0) return(clean_up(log_1(prog, args, constants), args, num_args));
-		      if (strcmp(funcname, "exp") == 0) return(clean_up(exp_1(prog, args, constants), args, num_args));
-		      if (strcmp(funcname, "asin") == 0) return(clean_up(asin_1(prog, args, constants), args, num_args));
-		      if (strcmp(funcname, "acos") == 0) return(clean_up(acos_1(prog, args, constants), args, num_args));
-		      if (strcmp(funcname, "sqrt") == 0) return(clean_up(sqrt_1(prog, args, constants), args, num_args));
-		    }
-		  if (strcmp(funcname, "inexact->exact") == 0) return(clean_up(inexact2exact_1(prog, args, constants), args, num_args));
-		  if (strcmp(funcname, "exact->inexact") == 0) return(clean_up(exact2inexact_1(prog, args, constants), args, num_args));
-		  if (strcmp(funcname, "round") == 0) return(clean_up(round_1(prog, args, constants, need_result), args, num_args));
-		  if (strcmp(funcname, "truncate") == 0) return(clean_up(truncate_1(prog, args, constants, need_result), args, num_args));
-		  if (strcmp(funcname, "floor") == 0) return(clean_up(floor_1(prog, args, constants, need_result), args, num_args));
-		  if (strcmp(funcname, "ceiling") == 0) return(clean_up(ceiling_1(prog, args, constants, need_result), args, num_args));
-		  if (strcmp(funcname, "odd?") == 0) return(clean_up(odd_p(prog, args, constants), args, num_args));
-		  if (strcmp(funcname, "even?") == 0) return(clean_up(even_p(prog, args, constants), args, num_args));
-		  if (strcmp(funcname, "zero?") == 0) return(clean_up(zero_p(prog, args, constants), args, num_args));
-		  if (strcmp(funcname, "positive?") == 0) return(clean_up(positive_p(prog, args, constants), args, num_args));
-		  if (strcmp(funcname, "negative?") == 0) return(clean_up(negative_p(prog, args, constants), args, num_args));
-		}
-	      if (strcmp(funcname, "mus-header-type-name") == 0) return(clean_up(mus_header_type_name_1(prog, args), args, num_args));
-	      if (strcmp(funcname, "mus-data-format-name") == 0) return(clean_up(mus_data_format_name_1(prog, args), args, num_args));
+	      if (strcmp(funcname, "1+") == 0) return(clean_up(one_plus(prog, args, constants), args, num_args));
+	      if (strcmp(funcname, "1-") == 0) return(clean_up(one_minus(prog, args, constants), args, num_args));
+	      if (strcmp(funcname, "integer->char") == 0) return(clean_up(integer_to_char(args[1]), args, num_args));
 	    }
-	  if (strcmp(funcname, "make-vct") == 0) return(clean_up(make_vct_1(prog, args, num_args), args, num_args));
-	} /* end need_result */
-      if (need_result)
+	}
+      if (num_args == 1)
+	{
+	  if (strcmp(funcname, "not") == 0) return(clean_up_if_needed(not_p(prog, args, constants), args, num_args, need_result));
+	  if (booleans == 0)
+	    {
+	      if (strcmp(funcname, "lognot") == 0) return(clean_up_if_needed(lognot_1(prog, args, constants), args, num_args, need_result));
+	      if (strcmp(funcname, "abs") == 0) return(clean_up_if_needed(abs_1(prog, args, constants), args, num_args, need_result));
+	      if (strcmp(funcname, "sin") == 0) return(clean_up_if_needed(sin_1(prog, args, constants), args, num_args, need_result));
+	      if (strcmp(funcname, "cos") == 0) return(clean_up_if_needed(cos_1(prog, args, constants), args, num_args, need_result));
+	      if (strcmp(funcname, "tan") == 0) return(clean_up_if_needed(tan_1(prog, args, constants), args, num_args, need_result));
+	      if (strcmp(funcname, "random") == 0) return(clean_up_if_needed(random_1(prog, args), args, num_args, need_result));
+	      
+	      if (strcmp(funcname, "radians->hz") == 0) return(clean_up_if_needed(mus_radians2hz_1(prog, args, constants), args, num_args, need_result));
+	      if (strcmp(funcname, "hz->radians") == 0) return(clean_up_if_needed(mus_hz2radians_1(prog, args, constants), args, num_args, need_result));
+	      if (strcmp(funcname, "degrees->radians") == 0) 
+		return(clean_up_if_needed(mus_degrees2radians_1(prog, args, constants), args, num_args, need_result));
+	      if (strcmp(funcname, "radians->degrees") == 0) 
+		return(clean_up_if_needed(mus_radians2degrees_1(prog, args, constants), args, num_args, need_result));
+	      if (strcmp(funcname, "db->linear") == 0) return(clean_up_if_needed(mus_db2linear_1(prog, args, constants), args, num_args, need_result));
+	      if (strcmp(funcname, "linear->db") == 0) return(clean_up_if_needed(mus_linear2db_1(prog, args, constants), args, num_args, need_result));
+	      if (strcmp(funcname, "mus-random") == 0) return(clean_up_if_needed(mus_random_1(prog, args, constants), args, num_args, need_result));
+	      
+	      if (current_optimization > 1)
+		{
+		  if (strcmp(funcname, "atan") == 0) return(clean_up_if_needed(atan1_1(prog, args, constants), args, num_args, need_result));
+		  if (strcmp(funcname, "log") == 0) return(clean_up_if_needed(log_1(prog, args, constants), args, num_args, need_result));
+		  if (strcmp(funcname, "exp") == 0) return(clean_up_if_needed(exp_1(prog, args, constants), args, num_args, need_result));
+		  if (strcmp(funcname, "asin") == 0) return(clean_up_if_needed(asin_1(prog, args, constants), args, num_args, need_result));
+		  if (strcmp(funcname, "acos") == 0) return(clean_up_if_needed(acos_1(prog, args, constants), args, num_args, need_result));
+		  if (strcmp(funcname, "sqrt") == 0) return(clean_up_if_needed(sqrt_1(prog, args, constants), args, num_args, need_result));
+		}
+	      if (strcmp(funcname, "inexact->exact") == 0) return(clean_up_if_needed(inexact2exact_1(prog, args, constants), args, num_args, need_result));
+	      if (strcmp(funcname, "exact->inexact") == 0) return(clean_up_if_needed(exact2inexact_1(prog, args, constants), args, num_args, need_result));
+	      if (strcmp(funcname, "round") == 0) return(clean_up_if_needed(round_1(prog, args, constants, need_result), args, num_args, need_result));
+	      if (strcmp(funcname, "truncate") == 0) return(clean_up_if_needed(truncate_1(prog, args, constants, need_result), args, num_args, need_result));
+	      if (strcmp(funcname, "floor") == 0) return(clean_up_if_needed(floor_1(prog, args, constants, need_result), args, num_args, need_result));
+	      if (strcmp(funcname, "ceiling") == 0) return(clean_up_if_needed(ceiling_1(prog, args, constants, need_result), args, num_args, need_result));
+	      if (strcmp(funcname, "odd?") == 0) return(clean_up_if_needed(odd_p(prog, args, constants), args, num_args, need_result));
+	      if (strcmp(funcname, "even?") == 0) return(clean_up_if_needed(even_p(prog, args, constants), args, num_args, need_result));
+	      if (strcmp(funcname, "zero?") == 0) return(clean_up_if_needed(zero_p(prog, args, constants), args, num_args, need_result));
+	      if (strcmp(funcname, "positive?") == 0) return(clean_up_if_needed(positive_p(prog, args, constants), args, num_args, need_result));
+	      if (strcmp(funcname, "negative?") == 0) return(clean_up_if_needed(negative_p(prog, args, constants), args, num_args, need_result));
+	    }
+	  if (strcmp(funcname, "mus-header-type-name") == 0) return(clean_up_if_needed(mus_header_type_name_1(prog, args), args, num_args, need_result));
+	  if (strcmp(funcname, "mus-data-format-name") == 0) return(clean_up_if_needed(mus_data_format_name_1(prog, args), args, num_args, need_result));
+	}
+      if (strcmp(funcname, "make-vct") == 0) return(clean_up_if_needed(make_vct_1(prog, args, num_args), args, num_args, need_result));
+      if ((need_result) || (XEN_LIST_P(form)))
+	/* need the list check as well because the called function might have side-effects */
 	return(clean_up(NULL, args, num_args));
       return(make_xen_value(R_UNSPECIFIED, -1, R_CONSTANT));
     }
