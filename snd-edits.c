@@ -4691,15 +4691,12 @@ static ed_list *make_ed_list(int size)
   ed = (ed_list *)CALLOC(1, sizeof(ed_list));
   ed->size = size;
   ed->allocated_size = size;
-#if defined(SGI) && (!(defined(__GNUC__)))
-  /* this form required by the SGI C compiler: */
+#if (!(defined(__GNUC__))) || (!(defined(__cplusplus)))
+  /* this form required by the several compilers */
   ed->fragments = (void *)CALLOC(size, sizeof(ed_fragment *));
 #else
-#if defined(__SUNPRO_C)
-  ed->fragments = (void *)CALLOC(size, sizeof(ed_fragment *));
-#else
+  /* this form apparently required by g++ */
   FRAGMENTS(ed) = (ed_fragment **)CALLOC(size, sizeof(ed_fragment *));
-#endif
 #endif
   for (i = 0; i < size; i++)
     FRAGMENT(ed, i) = (ed_fragment *)CALLOC(1, sizeof(ed_fragment));
@@ -8019,9 +8016,9 @@ static XEN g_override_samples_with_origin(XEN filename, XEN samps, XEN snd_n, XE
 }
 
 
-static XEN g_vct2samples(XEN samp_0, XEN samps, XEN vect, XEN snd_n, XEN chn_n, XEN truncate, XEN edname, XEN infile_chan)
+static XEN g_vct_to_samples(XEN samp_0, XEN samps, XEN vect, XEN snd_n, XEN chn_n, XEN truncate, XEN edname, XEN infile_chan)
 {
-  #define H_vct2samples "(" S_vct2samples " start-samp samps data (snd #f) (chn #f) (truncate #f) (edname #f) (infile-chan 0)): \
+  #define H_vct_to_samples "(" S_vct_to_samples " start-samp samps data (snd #f) (chn #f) (truncate #f) (edname #f) (infile-chan 0)): \
 set snd's channel chn's samples starting at start-samp for samps from data (a vct); \
 start-samp can be beyond current data end; if truncate is #t and start-samp is 0, the end of the file is set to match \
 the new data's end.  start-samp can also be a vct, as can samps."
@@ -8048,22 +8045,22 @@ the new data's end.  start-samp can also be a vct, as can samps."
   return(g_set_samples(samp_0, samps, vect, snd_n, chn_n, truncate, edname, infile_chan, XEN_UNDEFINED, XEN_UNDEFINED));
 }
 
-static XEN g_vct2channel(XEN v, XEN beg, XEN dur, XEN snd_n, XEN chn_n, XEN edpos)
+static XEN g_vct_to_channel(XEN v, XEN beg, XEN dur, XEN snd_n, XEN chn_n, XEN edpos)
 {
-  #define H_vct2channel "(" S_vct2channel " vct (beg 0) (dur len) (snd #f) (chn #f) (edpos #f)): \
+  #define H_vct_to_channel "(" S_vct_to_channel " vct (beg 0) (dur len) (snd #f) (chn #f) (edpos #f)): \
 set snd's channel chn's samples starting at beg for dur samps from vct data"
   vct *v1;
-  XEN_ASSERT_TYPE(VCT_P(v), v, XEN_ARG_1, S_vct2channel, "a vct");
+  XEN_ASSERT_TYPE(VCT_P(v), v, XEN_ARG_1, S_vct_to_channel, "a vct");
   if (XEN_NOT_BOUND_P(beg)) beg = XEN_ZERO;
   if (XEN_NOT_BOUND_P(dur)) 
     {
       v1 = TO_VCT(v);
       dur = C_TO_XEN_INT(v1->length);
     }
-  return(g_set_samples(beg, dur, v, snd_n, chn_n, XEN_FALSE, C_TO_XEN_STRING(S_vct2channel), XEN_FALSE, edpos, XEN_UNDEFINED));
+  return(g_set_samples(beg, dur, v, snd_n, chn_n, XEN_FALSE, C_TO_XEN_STRING(S_vct_to_channel), XEN_FALSE, edpos, XEN_UNDEFINED));
 }
 
-static XEN samples2vct_1(XEN samp_0, XEN samps, XEN snd_n, XEN chn_n, XEN v, XEN edpos, const char *caller)
+static XEN samples_to_vct_1(XEN samp_0, XEN samps, XEN snd_n, XEN chn_n, XEN v, XEN edpos, const char *caller)
 {
   chan_info *cp;
   snd_fd *sf;
@@ -8099,21 +8096,21 @@ static XEN samples2vct_1(XEN samp_0, XEN samps, XEN snd_n, XEN chn_n, XEN v, XEN
   else return(make_vct(len, fvals));
 }
 
-static XEN g_samples2vct(XEN samp_0, XEN samps, XEN snd_n, XEN chn_n, XEN v, XEN edpos)
+static XEN g_samples_to_vct(XEN samp_0, XEN samps, XEN snd_n, XEN chn_n, XEN v, XEN edpos)
 {
-  #define H_samples2vct "(" S_samples2vct " (start-samp 0) (samps len) (snd #f) (chn #f) (vct-obj #f) (edpos #f)): \
+  #define H_samples_to_vct "(" S_samples_to_vct " (start-samp 0) (samps len) (snd #f) (chn #f) (vct-obj #f) (edpos #f)): \
 return a vct (vct-obj if given) containing snd channel chn's data starting at start-samp for samps, \
 reading edit version edpos (defaulting to the current version)"
 
-  return(samples2vct_1(samp_0, samps, snd_n, chn_n, v, edpos, S_samples2vct));
+  return(samples_to_vct_1(samp_0, samps, snd_n, chn_n, v, edpos, S_samples_to_vct));
 }
 
-static XEN g_channel2vct(XEN samp_0, XEN samps, XEN snd_n, XEN chn_n, XEN edpos)
+static XEN g_channel_to_vct(XEN samp_0, XEN samps, XEN snd_n, XEN chn_n, XEN edpos)
 {
-  #define H_channel2vct "(" S_channel2vct " (beg 0) (dur len) (snd #f) (chn #f) (edpos #f)): \
+  #define H_channel_to_vct "(" S_channel_to_vct " (beg 0) (dur len) (snd #f) (chn #f) (edpos #f)): \
 return a vct containing snd channel chn's data starting at beg for dur samps"
 
-  return(samples2vct_1(samp_0, samps, snd_n, chn_n, XEN_FALSE, edpos, S_channel2vct));
+  return(samples_to_vct_1(samp_0, samps, snd_n, chn_n, XEN_FALSE, edpos, S_channel_to_vct));
 }
 
 static XEN g_samples(XEN samp_0, XEN samps, XEN snd_n, XEN chn_n, XEN edpos)
@@ -8122,7 +8119,7 @@ static XEN g_samples(XEN samp_0, XEN samps, XEN snd_n, XEN chn_n, XEN edpos)
 return a vct containing snd channel chn's samples starting a start-samp for samps samples; edpos is the edit \
 history position to read (defaults to current position)."
 
-  return(samples2vct_1(samp_0, samps, snd_n, chn_n, XEN_FALSE, edpos, S_samples));
+  return(samples_to_vct_1(samp_0, samps, snd_n, chn_n, XEN_FALSE, edpos, S_samples));
 }
 
 #if HAVE_GUILE
@@ -8451,28 +8448,28 @@ typedef struct {
   snd_fd **sfs;
   int chans, edpos;
   off_t *samps;
-} snd2sample;
+} snd_to_sample;
 
 typedef struct {
   mus_any_class *core;
   XEN reader;
   int gc_loc;
-} xen2sample;
+} xen_to_sample;
 
-bool snd2sample_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == SND2SAMPLE));}
-bool xen2sample_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == XEN2SAMPLE));}
+bool snd_to_sample_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == SND2SAMPLE));}
+bool xen_to_sample_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == XEN2SAMPLE));}
 
-static bool snd2sample_equalp(mus_any *p1, mus_any *p2) {return(p1 == p2);}
-static bool xen2sample_equalp(mus_any *p1, mus_any *p2) {return(p1 == p2);}
+static bool snd_to_sample_equalp(mus_any *p1, mus_any *p2) {return(p1 == p2);}
+static bool xen_to_sample_equalp(mus_any *p1, mus_any *p2) {return(p1 == p2);}
 
-static int snd2sample_channels(mus_any *ptr) {return(((snd2sample *)ptr)->chans);}
-static off_t snd2sample_location(mus_any *ptr) {return(((snd2sample *)ptr)->samps[0]);}
-static char *snd2sample_file_name(mus_any *ptr) {return(((snd2sample *)ptr)->sp->filename);}
-static off_t snd2sample_length(mus_any *ptr) {return(CURRENT_SAMPLES(((snd2sample *)ptr)->sp->chans[0]));}
+static int snd_to_sample_channels(mus_any *ptr) {return(((snd_to_sample *)ptr)->chans);}
+static off_t snd_to_sample_location(mus_any *ptr) {return(((snd_to_sample *)ptr)->samps[0]);}
+static char *snd_to_sample_file_name(mus_any *ptr) {return(((snd_to_sample *)ptr)->sp->filename);}
+static off_t snd_to_sample_length(mus_any *ptr) {return(CURRENT_SAMPLES(((snd_to_sample *)ptr)->sp->chans[0]));}
 
-static int snd2sample_free(mus_any *ptr)
+static int snd_to_sample_free(mus_any *ptr)
 {
-  snd2sample *spl = (snd2sample *)ptr;
+  snd_to_sample *spl = (snd_to_sample *)ptr;
   int i;
   if (spl)
     {
@@ -8494,9 +8491,9 @@ static int snd2sample_free(mus_any *ptr)
   return(0);
 }
 
-static int xen2sample_free(mus_any *ptr)
+static int xen_to_sample_free(mus_any *ptr)
 {
-  xen2sample *xpl = (xen2sample *)ptr;
+  xen_to_sample *xpl = (xen_to_sample *)ptr;
   if (xpl)
     {
       if ((xpl->gc_loc >= 0) && (XEN_PROCEDURE_P(xpl->reader)))
@@ -8510,16 +8507,16 @@ static int xen2sample_free(mus_any *ptr)
   return(0);
 }
 
-static char *snd2sample_buf = NULL;
-static char *snd2sample_describe(mus_any *ptr)
+static char *snd_to_sample_buf = NULL;
+static char *snd_to_sample_describe(mus_any *ptr)
 {
   int i, len = PRINT_BUFFER_SIZE;
-  snd2sample *spl = (snd2sample *)ptr;
+  snd_to_sample *spl = (snd_to_sample *)ptr;
   char *temp;
-  if (snd2sample_buf)
+  if (snd_to_sample_buf)
     {
-      FREE(snd2sample_buf);
-      snd2sample_buf = NULL;
+      FREE(snd_to_sample_buf);
+      snd_to_sample_buf = NULL;
     }
   if (spl->sfs)
     {
@@ -8535,9 +8532,9 @@ static char *snd2sample_describe(mus_any *ptr)
 	      }
 	  }
     }
-  snd2sample_buf = (char *)CALLOC(len, sizeof(char));
-  mus_snprintf(snd2sample_buf, len, "%s: reading %s (%d chan%s) at " OFF_TD ":[", 
-	       S_snd2sample, 
+  snd_to_sample_buf = (char *)CALLOC(len, sizeof(char));
+  mus_snprintf(snd_to_sample_buf, len, "%s: reading %s (%d chan%s) at " OFF_TD ":[", 
+	       S_snd_to_sample, 
 	       spl->sp->short_filename, 
 	       spl->chans, 
 	       (spl->chans > 1) ? "s" : "",
@@ -8550,37 +8547,37 @@ static char *snd2sample_describe(mus_any *ptr)
 	    temp = sf_to_string(spl->sfs[i]);
 	    if (temp)
 	      {
-		strcat(snd2sample_buf, temp);
+		strcat(snd_to_sample_buf, temp);
 		FREE(temp);
 	      }
 	    if (i < spl->chans - 1) 
-	      strcat(snd2sample_buf, ", ");
-	    else strcat(snd2sample_buf, "]");
+	      strcat(snd_to_sample_buf, ", ");
+	    else strcat(snd_to_sample_buf, "]");
 	  }
-	else strcat(snd2sample_buf, "nil, ");
+	else strcat(snd_to_sample_buf, "nil, ");
     }
-  else strcat(snd2sample_buf, "no readers]");
-  return(snd2sample_buf);
+  else strcat(snd_to_sample_buf, "no readers]");
+  return(snd_to_sample_buf);
 }
 
-static char *xen2sample_describe(mus_any *ptr)
+static char *xen_to_sample_describe(mus_any *ptr)
 {
-  xen2sample *xpl = (xen2sample *)ptr;
+  xen_to_sample *xpl = (xen_to_sample *)ptr;
   char *desc;
-  if (snd2sample_buf)
+  if (snd_to_sample_buf)
     {
-      FREE(snd2sample_buf);
-      snd2sample_buf = NULL;
+      FREE(snd_to_sample_buf);
+      snd_to_sample_buf = NULL;
     }
   desc = XEN_AS_STRING(xpl->reader);
-  snd2sample_buf = (char *)CALLOC(snd_strlen(desc) + PRINT_BUFFER_SIZE, sizeof(char));
-  sprintf(snd2sample_buf, S_xen2sample ": %s", desc);
-  return(snd2sample_buf);
+  snd_to_sample_buf = (char *)CALLOC(snd_strlen(desc) + PRINT_BUFFER_SIZE, sizeof(char));
+  sprintf(snd_to_sample_buf, S_xen_to_sample ": %s", desc);
+  return(snd_to_sample_buf);
 }
 
-Float snd2sample_read(mus_any *ptr, off_t frame, int chan) 
+Float snd_to_sample_read(mus_any *ptr, off_t frame, int chan) 
 {
-  snd2sample *spl = (snd2sample *)ptr;
+  snd_to_sample *spl = (snd_to_sample *)ptr;
   off_t diff, i;
   if (!(spl->sfs)) 
     spl->sfs = (snd_fd **)CALLOC(spl->chans, sizeof(snd_fd *));
@@ -8608,50 +8605,50 @@ Float snd2sample_read(mus_any *ptr, off_t frame, int chan)
   return(next_sample_to_float(spl->sfs[chan])); /* always end up going forward (for simpler code) */
 }
 
-Float xen2sample_read(mus_any *ptr, off_t frame, int chan)
+Float xen_to_sample_read(mus_any *ptr, off_t frame, int chan)
 {
-  xen2sample *xpl = (xen2sample *)ptr;
+  xen_to_sample *xpl = (xen_to_sample *)ptr;
   XEN result;
   result = XEN_CALL_2(xpl->reader,
 		      C_TO_XEN_OFF_T(frame),
 		      C_TO_XEN_INT(chan),
-		      S_xen2sample);
+		      S_xen_to_sample);
   return(XEN_TO_C_DOUBLE(result));
 }
 
 static mus_any_class SND2SAMPLE_CLASS = {
   -1,
-  S_snd2sample,
-  &snd2sample_free,
-  &snd2sample_describe,
-  &snd2sample_describe,
-  &snd2sample_equalp,
+  S_snd_to_sample,
+  &snd_to_sample_free,
+  &snd_to_sample_describe,
+  &snd_to_sample_describe,
+  &snd_to_sample_equalp,
   0, 0,
-  &snd2sample_length, 0,
+  &snd_to_sample_length, 0,
   0, 0, 0, 0,
   0, 0,
   0, 0,
   0,
   MUS_INPUT,
   NULL,               /* environ */
-  &snd2sample_channels,
+  &snd_to_sample_channels,
   0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-  &snd2sample_read,
+  &snd_to_sample_read,
   0,
-  &snd2sample_file_name,
+  &snd_to_sample_file_name,
   0,
-  &snd2sample_location,
+  &snd_to_sample_location,
   0,  /* set location (ptr, off_t loc) */
   0
 };
 
 static mus_any_class XEN2SAMPLE_CLASS = {
   -1,
-  S_xen2sample,
-  &xen2sample_free,
-  &xen2sample_describe,
-  &xen2sample_describe,
-  &xen2sample_equalp,
+  S_xen_to_sample,
+  &xen_to_sample_free,
+  &xen_to_sample_describe,
+  &xen_to_sample_describe,
+  &xen_to_sample_equalp,
   0, 0,
   0, 0, 
   0, 0, 0, 0,
@@ -8662,14 +8659,14 @@ static mus_any_class XEN2SAMPLE_CLASS = {
   NULL,
   0,
   0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-  &xen2sample_read, /* read sample (ptr, samp, chan) */
+  &xen_to_sample_read, /* read sample (ptr, samp, chan) */
   0, 0, 0, 0, 0, 0
 };
 
-static mus_any *make_snd2sample(snd_info *sp, int edpos)
+static mus_any *make_snd_to_sample(snd_info *sp, int edpos)
 {
-  snd2sample *gen;
-  gen = (snd2sample *)CALLOC(1, sizeof(snd2sample));
+  snd_to_sample *gen;
+  gen = (snd_to_sample *)CALLOC(1, sizeof(snd_to_sample));
   gen->core = &SND2SAMPLE_CLASS;
   gen->core->type = SND2SAMPLE;
   gen->chans = sp->nchans;
@@ -8680,10 +8677,10 @@ static mus_any *make_snd2sample(snd_info *sp, int edpos)
   return((mus_any *)gen);
 }
 
-static mus_any *make_xen2sample(XEN reader)
+static mus_any *make_xen_to_sample(XEN reader)
 {
-  xen2sample *gen;
-  gen = (xen2sample *)CALLOC(1, sizeof(xen2sample));
+  xen_to_sample *gen;
+  gen = (xen_to_sample *)CALLOC(1, sizeof(xen_to_sample));
   gen->core = &XEN2SAMPLE_CLASS;
   gen->core->type = XEN2SAMPLE;
   gen->gc_loc = snd_protect(reader);
@@ -8693,49 +8690,49 @@ static mus_any *make_xen2sample(XEN reader)
 
 
 
-static XEN g_snd2sample_p(XEN os) 
+static XEN g_snd_to_sample_p(XEN os) 
 {
-  #define H_snd2sample_p "(" S_snd2sample_p " gen): #t if gen is an " S_snd2sample " generator"
-  return(C_TO_XEN_BOOLEAN((mus_xen_p(os)) && (snd2sample_p(XEN_TO_MUS_ANY(os)))));
+  #define H_snd_to_sample_p "(" S_snd_to_sample_p " gen): #t if gen is an " S_snd_to_sample " generator"
+  return(C_TO_XEN_BOOLEAN((mus_xen_p(os)) && (snd_to_sample_p(XEN_TO_MUS_ANY(os)))));
 }
 
-static XEN g_xen2sample_p(XEN os) 
+static XEN g_xen_to_sample_p(XEN os) 
 {
-  #define H_xen2sample_p "(" S_xen2sample_p " gen): #t if gen is an " S_xen2sample " generator"
-  return(C_TO_XEN_BOOLEAN((mus_xen_p(os)) && (xen2sample_p(XEN_TO_MUS_ANY(os)))));
+  #define H_xen_to_sample_p "(" S_xen_to_sample_p " gen): #t if gen is an " S_xen_to_sample " generator"
+  return(C_TO_XEN_BOOLEAN((mus_xen_p(os)) && (xen_to_sample_p(XEN_TO_MUS_ANY(os)))));
 }
 
-static XEN g_snd2sample(XEN os, XEN frame, XEN chan)
+static XEN g_snd_to_sample(XEN os, XEN frame, XEN chan)
 {
-  #define H_snd2sample "(" S_snd2sample " gen frame chan): input sample (via snd->sample gen) at frame in channel chan"
-  XEN_ASSERT_TYPE((mus_xen_p(os)) && (snd2sample_p(XEN_TO_MUS_ANY(os))), os, XEN_ARG_1, S_snd2sample, "a " S_snd2sample " gen");
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(frame), frame, XEN_ARG_2, S_snd2sample, "a number");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(chan), chan, XEN_ARG_3, S_snd2sample, "an integer");
-  return(C_TO_XEN_DOUBLE(snd2sample_read((mus_any *)XEN_TO_MUS_ANY(os), XEN_TO_C_OFF_T(frame), XEN_TO_C_INT_OR_ELSE(chan, 0))));
+  #define H_snd_to_sample "(" S_snd_to_sample " gen frame chan): input sample (via snd->sample gen) at frame in channel chan"
+  XEN_ASSERT_TYPE((mus_xen_p(os)) && (snd_to_sample_p(XEN_TO_MUS_ANY(os))), os, XEN_ARG_1, S_snd_to_sample, "a " S_snd_to_sample " gen");
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(frame), frame, XEN_ARG_2, S_snd_to_sample, "a number");
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(chan), chan, XEN_ARG_3, S_snd_to_sample, "an integer");
+  return(C_TO_XEN_DOUBLE(snd_to_sample_read((mus_any *)XEN_TO_MUS_ANY(os), XEN_TO_C_OFF_T(frame), XEN_TO_C_INT_OR_ELSE(chan, 0))));
 }
 
-static XEN g_xen2sample(XEN os, XEN frame, XEN chan)
+static XEN g_xen_to_sample(XEN os, XEN frame, XEN chan)
 {
-  #define H_xen2sample "(" S_xen2sample " gen frame chan): input sample (via xen->sample gen) at frame in channel chan"
-  XEN_ASSERT_TYPE((mus_xen_p(os)) && (xen2sample_p(XEN_TO_MUS_ANY(os))), os, XEN_ARG_1, S_xen2sample, "a " S_xen2sample " gen");
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(frame), frame, XEN_ARG_2, S_snd2sample, "a number");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(chan), chan, XEN_ARG_3, S_snd2sample, "an integer");
-  return(C_TO_XEN_DOUBLE(xen2sample_read((mus_any *)XEN_TO_MUS_ANY(os), XEN_TO_C_OFF_T(frame), XEN_TO_C_INT_OR_ELSE(chan, 0))));
+  #define H_xen_to_sample "(" S_xen_to_sample " gen frame chan): input sample (via xen->sample gen) at frame in channel chan"
+  XEN_ASSERT_TYPE((mus_xen_p(os)) && (xen_to_sample_p(XEN_TO_MUS_ANY(os))), os, XEN_ARG_1, S_xen_to_sample, "a " S_xen_to_sample " gen");
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(frame), frame, XEN_ARG_2, S_snd_to_sample, "a number");
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(chan), chan, XEN_ARG_3, S_snd_to_sample, "an integer");
+  return(C_TO_XEN_DOUBLE(xen_to_sample_read((mus_any *)XEN_TO_MUS_ANY(os), XEN_TO_C_OFF_T(frame), XEN_TO_C_INT_OR_ELSE(chan, 0))));
 }
 
-static XEN g_make_snd2sample(XEN snd, XEN edp)
+static XEN g_make_snd_to_sample(XEN snd, XEN edp)
 {
-  #define H_make_snd2sample "(" S_make_snd2sample " (snd #f) (edpos -1)): return a new " S_snd2sample " (input) generator"
+  #define H_make_snd_to_sample "(" S_make_snd_to_sample " (snd #f) (edpos -1)): return a new " S_snd_to_sample " (input) generator"
   mus_xen *gn;
   mus_any *ge;
   snd_info *sp;
   int edpos;
-  ASSERT_SOUND(S_make_snd2sample, snd, 1);
+  ASSERT_SOUND(S_make_snd_to_sample, snd, 1);
   sp = get_sp(snd, NO_PLAYERS);
   if (sp == NULL)
-    return(snd_no_such_sound_error(S_make_snd2sample, snd));
-  edpos = to_c_edit_position(sp->chans[0], edp, S_make_snd2sample, 2);
-  ge = make_snd2sample(sp, edpos);
+    return(snd_no_such_sound_error(S_make_snd_to_sample, snd));
+  edpos = to_c_edit_position(sp->chans[0], edp, S_make_snd_to_sample, 2);
+  ge = make_snd_to_sample(sp, edpos);
   if (ge)
     {
       gn = (mus_xen *)CALLOC(1, sizeof(mus_xen));
@@ -8746,22 +8743,22 @@ static XEN g_make_snd2sample(XEN snd, XEN edp)
   return(XEN_FALSE);
 }
 
-static XEN g_make_xen2sample(XEN reader)
+static XEN g_make_xen_to_sample(XEN reader)
 {
-  #define H_make_xen2sample "(" S_make_xen2sample " reader): return a new " S_xen2sample " (input) generator.  'reader' should \
+  #define H_make_xen_to_sample "(" S_make_xen_to_sample " reader): return a new " S_xen_to_sample " (input) generator.  'reader' should \
 be a function of 2 args: the sample to read (a long int), and the channel."
   mus_xen *gn;
   mus_any *ge;
   char *errmsg;
   XEN errstr;
-  errmsg = procedure_ok(reader, 2, S_make_xen2sample, "reader", 1);
+  errmsg = procedure_ok(reader, 2, S_make_xen_to_sample, "reader", 1);
   if (errmsg)
     {
       errstr = C_TO_XEN_STRING(errmsg);
       FREE(errmsg);
-      return(snd_bad_arity_error(S_make_xen2sample, errstr, reader));
+      return(snd_bad_arity_error(S_make_xen_to_sample, errstr, reader));
     }
-  ge = make_xen2sample(reader);
+  ge = make_xen_to_sample(reader);
   if (ge)
     {
       gn = (mus_xen *)CALLOC(1, sizeof(mus_xen));
@@ -8798,10 +8795,10 @@ XEN_ARGIFY_4(g_delete_sample_w, g_delete_sample)
 XEN_ARGIFY_5(g_delete_samples_w, g_delete_samples)
 XEN_ARGIFY_5(g_insert_sample_w, g_insert_sample)
 XEN_ARGIFY_7(g_insert_samples_w, g_insert_samples)
-XEN_ARGIFY_8(g_vct2samples_w, g_vct2samples)
-XEN_ARGIFY_6(g_vct2channel_w, g_vct2channel)
-XEN_ARGIFY_6(g_samples2vct_w, g_samples2vct)
-XEN_ARGIFY_5(g_channel2vct_w, g_channel2vct)
+XEN_ARGIFY_8(g_vct_to_samples_w, g_vct_to_samples)
+XEN_ARGIFY_6(g_vct_to_channel_w, g_vct_to_channel)
+XEN_ARGIFY_6(g_samples_to_vct_w, g_samples_to_vct)
+XEN_ARGIFY_5(g_channel_to_vct_w, g_channel_to_vct)
 XEN_ARGIFY_7(g_insert_sound_w, g_insert_sound)
 XEN_ARGIFY_6(g_scale_sound_by_w, g_scale_sound_by)
 XEN_ARGIFY_6(g_scale_channel_w, g_scale_channel)
@@ -8814,12 +8811,12 @@ XEN_ARGIFY_4(g_sample_w, g_sample)
 XEN_ARGIFY_5(g_set_sample_w, g_set_sample)
 XEN_ARGIFY_5(g_samples_w, g_samples)
 XEN_ARGIFY_10(g_set_samples_w, g_set_samples)
-XEN_NARGIFY_1(g_snd2sample_p_w, g_snd2sample_p)
-XEN_NARGIFY_1(g_xen2sample_p_w, g_xen2sample_p)
-XEN_ARGIFY_3(g_snd2sample_w, g_snd2sample)
-XEN_ARGIFY_3(g_xen2sample_w, g_xen2sample)
-XEN_ARGIFY_2(g_make_snd2sample_w, g_make_snd2sample)
-XEN_NARGIFY_1(g_make_xen2sample_w, g_make_xen2sample)
+XEN_NARGIFY_1(g_snd_to_sample_p_w, g_snd_to_sample_p)
+XEN_NARGIFY_1(g_xen_to_sample_p_w, g_xen_to_sample_p)
+XEN_ARGIFY_3(g_snd_to_sample_w, g_snd_to_sample)
+XEN_ARGIFY_3(g_xen_to_sample_w, g_xen_to_sample)
+XEN_ARGIFY_2(g_make_snd_to_sample_w, g_make_snd_to_sample)
+XEN_NARGIFY_1(g_make_xen_to_sample_w, g_make_xen_to_sample)
 #else
 #define g_make_sample_reader_w g_make_sample_reader
 #define g_make_region_sample_reader_w g_make_region_sample_reader
@@ -8844,10 +8841,10 @@ XEN_NARGIFY_1(g_make_xen2sample_w, g_make_xen2sample)
 #define g_delete_samples_w g_delete_samples
 #define g_insert_sample_w g_insert_sample
 #define g_insert_samples_w g_insert_samples
-#define g_vct2samples_w g_vct2samples
-#define g_vct2channel_w g_vct2channel
-#define g_samples2vct_w g_samples2vct
-#define g_channel2vct_w g_channel2vct
+#define g_vct_to_samples_w g_vct_to_samples
+#define g_vct_to_channel_w g_vct_to_channel
+#define g_samples_to_vct_w g_samples_to_vct
+#define g_channel_to_vct_w g_channel_to_vct
 #define g_insert_sound_w g_insert_sound
 #define g_scale_sound_by_w g_scale_sound_by
 #define g_scale_channel_w g_scale_channel
@@ -8860,12 +8857,12 @@ XEN_NARGIFY_1(g_make_xen2sample_w, g_make_xen2sample)
 #define g_set_sample_w g_set_sample
 #define g_samples_w g_samples
 #define g_set_samples_w g_set_samples
-#define g_snd2sample_p_w g_snd2sample_p
-#define g_xen2sample_p_w g_xen2sample_p
-#define g_make_snd2sample_w g_make_snd2sample
-#define g_make_xen2sample_w g_make_xen2sample
-#define g_snd2sample_w g_snd2sample
-#define g_xen2sample_w g_xen2sample
+#define g_snd_to_sample_p_w g_snd_to_sample_p
+#define g_xen_to_sample_p_w g_xen_to_sample_p
+#define g_make_snd_to_sample_w g_make_snd_to_sample
+#define g_make_xen_to_sample_w g_make_xen_to_sample
+#define g_snd_to_sample_w g_snd_to_sample
+#define g_xen_to_sample_w g_xen_to_sample
 #endif
 
 
@@ -8919,10 +8916,10 @@ void g_init_edits(void)
   XEN_DEFINE_PROCEDURE(S_delete_samples,            g_delete_samples_w,            2, 3, 0, H_delete_samples);
   XEN_DEFINE_PROCEDURE(S_insert_sample,             g_insert_sample_w,             2, 3, 0, H_insert_sample);
   XEN_DEFINE_PROCEDURE(S_insert_samples,            g_insert_samples_w,            3, 4, 0, H_insert_samples);
-  XEN_DEFINE_PROCEDURE(S_vct2samples,               g_vct2samples_w,               1, 7, 0, H_vct2samples);
-  XEN_DEFINE_PROCEDURE(S_vct2channel,               g_vct2channel_w,               1, 5, 0, H_vct2channel);
-  XEN_DEFINE_PROCEDURE(S_samples2vct,               g_samples2vct_w,               0, 6, 0, H_samples2vct);
-  XEN_DEFINE_PROCEDURE(S_channel2vct,               g_channel2vct_w,               0, 5, 0, H_channel2vct);
+  XEN_DEFINE_PROCEDURE(S_vct_to_samples,               g_vct_to_samples_w,               1, 7, 0, H_vct_to_samples);
+  XEN_DEFINE_PROCEDURE(S_vct_to_channel,               g_vct_to_channel_w,               1, 5, 0, H_vct_to_channel);
+  XEN_DEFINE_PROCEDURE(S_samples_to_vct,               g_samples_to_vct_w,               0, 6, 0, H_samples_to_vct);
+  XEN_DEFINE_PROCEDURE(S_channel_to_vct,               g_channel_to_vct_w,               0, 5, 0, H_channel_to_vct);
   XEN_DEFINE_PROCEDURE(S_insert_sound,              g_insert_sound_w,              1, 6, 0, H_insert_sound);
   XEN_DEFINE_PROCEDURE(S_scale_sound_by,            g_scale_sound_by_w,            1, 5, 0, H_scale_sound_by);
   XEN_DEFINE_PROCEDURE(S_scale_channel,             g_scale_channel_w,             1, 5, 0, H_scale_channel);
@@ -8944,12 +8941,12 @@ void g_init_edits(void)
   XEN_DEFINE_PROCEDURE("set-samples", g_set_samples_w, 3, 7, 0, H_samples);
 #endif
 
-  XEN_DEFINE_PROCEDURE(S_snd2sample_p,    g_snd2sample_p_w,    1, 0, 0, H_snd2sample_p);
-  XEN_DEFINE_PROCEDURE(S_xen2sample_p,    g_xen2sample_p_w,    1, 0, 0, H_xen2sample_p);
-  XEN_DEFINE_PROCEDURE(S_make_snd2sample, g_make_snd2sample_w, 0, 2, 0, H_make_snd2sample);
-  XEN_DEFINE_PROCEDURE(S_make_xen2sample, g_make_xen2sample_w, 1, 0, 0, H_make_xen2sample);
-  XEN_DEFINE_PROCEDURE(S_snd2sample,      g_snd2sample_w,      2, 1, 0, H_snd2sample);
-  XEN_DEFINE_PROCEDURE(S_xen2sample,      g_xen2sample_w,      2, 1, 0, H_xen2sample);
+  XEN_DEFINE_PROCEDURE(S_snd_to_sample_p,    g_snd_to_sample_p_w,    1, 0, 0, H_snd_to_sample_p);
+  XEN_DEFINE_PROCEDURE(S_xen_to_sample_p,    g_xen_to_sample_p_w,    1, 0, 0, H_xen_to_sample_p);
+  XEN_DEFINE_PROCEDURE(S_make_snd_to_sample, g_make_snd_to_sample_w, 0, 2, 0, H_make_snd_to_sample);
+  XEN_DEFINE_PROCEDURE(S_make_xen_to_sample, g_make_xen_to_sample_w, 1, 0, 0, H_make_xen_to_sample);
+  XEN_DEFINE_PROCEDURE(S_snd_to_sample,      g_snd_to_sample_w,      2, 1, 0, H_snd_to_sample);
+  XEN_DEFINE_PROCEDURE(S_xen_to_sample,      g_xen_to_sample_w,      2, 1, 0, H_xen_to_sample);
 
 
   #define H_save_hook S_save_hook " (snd name): called each time a file is about to be saved. \

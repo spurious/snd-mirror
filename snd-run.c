@@ -6598,7 +6598,7 @@ static xen_value *frames_1(ptree *pt, xen_value **args, int num_args)
 /* ---------------- samples->vct ---------------- */
 /* samples->vct samp samps snd chn v edpos */
 
-static void samples2vct_v(int *args, ptree *pt) 
+static void samples_to_vct_v(int *args, ptree *pt) 
 {
   chan_info *cp; 
   int pos, i, len;
@@ -6628,7 +6628,7 @@ static void samples2vct_v(int *args, ptree *pt)
   VCT_RESULT = v;
 }
 
-static char *descr_samples2vct_v(int *args, ptree *pt) 
+static char *descr_samples_to_vct_v(int *args, ptree *pt) 
 {
   return(mus_format( VCT_PT " = samples->vct(" INT_PT ", " INT_PT ", " INT_PT ", " INT_PT ", " VCT_PT ", " INT_PT ")",
 		     args[0], DESC_VCT_RESULT, args[1], INT_ARG_1, args[2], INT_ARG_2, 
@@ -6636,7 +6636,7 @@ static char *descr_samples2vct_v(int *args, ptree *pt)
 		     args[6], INT_ARG_6));
 }
 
-static xen_value *samples2vct_1(ptree *pt, xen_value **args, int num_args)
+static xen_value *samples_to_vct_1(ptree *pt, xen_value **args, int num_args)
 {
   xen_value *true_args[7];
   xen_value *rtn;
@@ -6650,7 +6650,7 @@ static xen_value *samples2vct_1(ptree *pt, xen_value **args, int num_args)
   if (num_args < 6)
     true_args[6] = make_xen_value(R_INT, add_int_to_ptree(pt, AT_CURRENT_EDIT_POSITION), R_CONSTANT);
   else true_args[6] = args[6];
-  rtn = package(pt, R_VCT, samples2vct_v, descr_samples2vct_v, true_args, 6);
+  rtn = package(pt, R_VCT, samples_to_vct_v, descr_samples_to_vct_v, true_args, 6);
   for (k = num_args + 1; k <= 6; k++) FREE(true_args[k]);
   return(rtn);
 }
@@ -7896,35 +7896,35 @@ static xen_value *file_to_sample_1(ptree *prog, xen_value **args, int num_args)
 }
 
 /* ---------------- snd->sample ---------------- */
-static char *descr_snd2sample_1f(int *args, ptree *pt) 
+static char *descr_snd_to_sample_1f(int *args, ptree *pt) 
 {
   return(mus_format( FLT_PT " = snd->sample(" CLM_PT ", " INT_PT ")", args[0], FLOAT_RESULT, args[1], DESC_CLM_ARG_1, args[2], INT_ARG_2));
 }
-static char *descr_snd2sample_2f(int *args, ptree *pt) 
+static char *descr_snd_to_sample_2f(int *args, ptree *pt) 
 {
   return(mus_format( FLT_PT " = snd->sample(" CLM_PT ", " INT_PT ", " INT_PT ")", 
 		    args[0], FLOAT_RESULT, args[1], DESC_CLM_ARG_1, args[2], INT_ARG_2, args[3], INT_ARG_3));
 }
-static void snd2sample_1f(int *args, ptree *pt) {FLOAT_RESULT = snd2sample_read(CLM_ARG_1, INT_ARG_2, 0);}
-static void snd2sample_2f(int *args, ptree *pt) {FLOAT_RESULT = snd2sample_read(CLM_ARG_1, INT_ARG_2, INT_ARG_3);}
-static xen_value *snd2sample_1(ptree *prog, xen_value **args, int num_args) 
+static void snd_to_sample_1f(int *args, ptree *pt) {FLOAT_RESULT = snd_to_sample_read(CLM_ARG_1, INT_ARG_2, 0);}
+static void snd_to_sample_2f(int *args, ptree *pt) {FLOAT_RESULT = snd_to_sample_read(CLM_ARG_1, INT_ARG_2, INT_ARG_3);}
+static xen_value *snd_to_sample_1(ptree *prog, xen_value **args, int num_args) 
 {
-  if (num_args == 2) return(package(prog, R_FLOAT, snd2sample_1f, descr_snd2sample_1f, args, 2));
-  return(package(prog, R_FLOAT, snd2sample_2f, descr_snd2sample_2f, args, 3));
+  if (num_args == 2) return(package(prog, R_FLOAT, snd_to_sample_1f, descr_snd_to_sample_1f, args, 2));
+  return(package(prog, R_FLOAT, snd_to_sample_2f, descr_snd_to_sample_2f, args, 3));
 }
 
-static char *descr_snd2sample_0p(int *args, ptree *pt)
+static char *descr_snd_to_sample_0p(int *args, ptree *pt)
 {
   char *buf;
   buf = (char *)CALLOC(256, sizeof(char));
-  sprintf(buf, BOOL_PT " = snd2sample?(" CLM_PT ")", args[0], B2S(BOOL_RESULT), args[1], DESC_CLM_ARG_1);
+  sprintf(buf, BOOL_PT " = snd_to_sample?(" CLM_PT ")", args[0], B2S(BOOL_RESULT), args[1], DESC_CLM_ARG_1);
   return(buf);
 }
  
-static void snd2sample_0p(int *args, ptree *pt) {BOOL_RESULT = (Int)snd2sample_p(CLM_ARG_1);}
-static xen_value *snd2sample_1p(ptree *prog, xen_value **args, int num_args)
+static void snd_to_sample_0p(int *args, ptree *pt) {BOOL_RESULT = (Int)snd_to_sample_p(CLM_ARG_1);}
+static xen_value *snd_to_sample_1p(ptree *prog, xen_value **args, int num_args)
 {
-  return(package(prog, R_BOOL, snd2sample_0p, descr_snd2sample_0p, args, 1));
+  return(package(prog, R_BOOL, snd_to_sample_0p, descr_snd_to_sample_0p, args, 1));
 }
 
 
@@ -10745,7 +10745,7 @@ static void init_walkers(void)
   INIT_WALKER(S_locsig_p, make_walker(locsig_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_CLM));
   INIT_WALKER(S_mus_input_p, make_walker(input_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_CLM));
   INIT_WALKER(S_mus_output_p, make_walker(output_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_CLM));
-  INIT_WALKER(S_snd2sample_p, make_walker(snd2sample_1p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_CLM));
+  INIT_WALKER(S_snd_to_sample_p, make_walker(snd_to_sample_1p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_CLM));
 
   INIT_WALKER(S_restart_env, make_walker(restart_env_1, NULL, NULL, 1, 1, R_CLM, false, 1, R_CLM));
   INIT_WALKER(S_mus_increment, make_walker(mus_increment_0, NULL, mus_set_increment_1, 1, 1, R_FLOAT, false, 1, R_CLM));
@@ -10820,7 +10820,7 @@ static void init_walkers(void)
   INIT_WALKER(S_filter, make_walker(filter_1, NULL, NULL, 1, 2, R_FLOAT, false, 2, R_CLM, R_NUMBER));
   INIT_WALKER(S_fir_filter, make_walker(fir_filter_1, NULL, NULL, 1, 2, R_FLOAT, false, 2, R_CLM, R_NUMBER));
   INIT_WALKER(S_file_to_sample, make_walker(file_to_sample_1, NULL, NULL, 2, 3, R_FLOAT, false, 3, R_CLM, R_NUMBER, R_INT));
-  INIT_WALKER(S_snd2sample, make_walker(snd2sample_1, NULL, NULL, 2, 3, R_FLOAT, false, 3, R_CLM, R_NUMBER, R_INT));
+  INIT_WALKER(S_snd_to_sample, make_walker(snd_to_sample_1, NULL, NULL, 2, 3, R_FLOAT, false, 3, R_CLM, R_NUMBER, R_INT));
   INIT_WALKER(S_frame_ref, make_walker(frame_ref_0, NULL, frame_set_1, 2, 2, R_FLOAT, false, 2, R_CLM, R_INT));
   INIT_WALKER(S_frame_set, make_walker(frame_set_2, NULL, NULL, 3, 3, R_FLOAT, false, 3, R_CLM, R_INT, R_NUMBER));
   INIT_WALKER(S_wave_train, make_walker(wave_train_1, NULL, NULL, 1, 2, R_FLOAT, false, 2, R_CLM, R_NUMBER));
@@ -10988,7 +10988,7 @@ static void init_walkers(void)
   INIT_WALKER(S_channels, make_walker(channels_1, NULL, NULL, 0, 1, R_INT, false, 0));
   INIT_WALKER(S_c_g, make_walker(c_g_p_1, NULL, NULL, 0, 0, R_BOOL, false, 0));
   INIT_WALKER(S_autocorrelate, make_walker(autocorrelate_1, NULL, NULL, 1, 1, R_VCT, false, 1, R_VCT));
-  INIT_WALKER(S_samples2vct, make_walker(samples2vct_1, NULL, NULL, 5, 6, R_VCT, false, 5, R_INT, R_INT, R_ANY, R_ANY, R_VCT));
+  INIT_WALKER(S_samples_to_vct, make_walker(samples_to_vct_1, NULL, NULL, 5, 6, R_VCT, false, 5, R_INT, R_INT, R_ANY, R_ANY, R_VCT));
 
   INIT_WALKER(S_snd_print, make_walker(snd_print_1, NULL, NULL, 1, 1, R_BOOL, false, 1, R_STRING));
   INIT_WALKER(S_snd_warning, make_walker(snd_warning_1, NULL, NULL, 1, 1, R_BOOL, false, 1, R_STRING));

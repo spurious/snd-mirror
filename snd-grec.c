@@ -781,7 +781,7 @@ static void srate_changed_callback(GtkWidget *w, gpointer context)
   str = (char *)gtk_entry_get_text(GTK_ENTRY(recdat->srate_text)); /* w here gets segfault!! */
   if (str) 
     {
-      n = string2int(str);
+      n = string_to_int(str);
       if ((n > 0) && (n != rp->srate))
 	{
 	  rp->srate = n;
@@ -799,7 +799,7 @@ static void rec_size_changed_callback(GtkWidget *w, gpointer context)
   str = (char *)gtk_entry_get_text(GTK_ENTRY(rec_size_text));  /* w here gets segfault!! */
   if (str) 
     {
-      n = string2int(str);
+      n = string_to_int(str);
       if ((n > 0) && (n != rp->buffer_size)) set_record_size(n);
     }
 }
@@ -1031,7 +1031,7 @@ static void meter_button_callback(GtkWidget *w, gpointer context)
       rp->chan_out_active[wd->chan] = on;
       str = (char *)gtk_entry_get_text(GTK_ENTRY(recdat->chans_text)); 
       if (str) 
-	n = string2int(str);
+	n = string_to_int(str);
       else n = 0;
       for (i = 0; i < p->active_size; i++) 
 	if (p->active[i]) 

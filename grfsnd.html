@@ -798,7 +798,7 @@ In Guile <b>frame?</b> is part of the debugger; it is renamed <b>%frame?</b> her
 <tr><td><a href="clm.html#make-sample-&gt;file">make-sample-&gt;file</a></td><td colspan=2>(name chans format type <i>comment</i>)</td></tr>
 <tr><td><a href="clm.html#make-sawtooth-wave">make-sawtooth-wave</a></td><td colspan=2>(frequency amplitude initial-phase)</td></tr>
 <tr><td><a href="clm.html#make-sine-summation">make-sine-summation</a></td><td colspan=2>(frequency initial-phase n a ratio)</td></tr>
-<tr><td><a href="extsnd.html#makesnd2sample">make-snd-&gt;sample</a></td><td colspan=2>((index #f))</td></tr>
+<tr><td><a href="extsnd.html#makesnd_to_sample">make-snd-&gt;sample</a></td><td colspan=2>((index #f))</td></tr>
 <tr><td><a href="clm.html#make-square-wave">make-square-wave</a></td><td colspan=2>(frequency amplitude initial-phase)</td></tr>
 <tr><td><a href="clm.html#make-src">make-src</a></td><td colspan=2>(input srate width)</td></tr>
 <tr><td><a href="clm.html#make-sum-of-cosines">make-sum-of-cosines</a></td><td colspan=2>(frequency initial-phase cosines)</td></tr>
@@ -808,7 +808,7 @@ In Guile <b>frame?</b> is part of the debugger; it is renamed <b>%frame?</b> her
 <tr><td><a href="clm.html#make-two-zero">make-two-zero</a></td><td colspan=2>(a0 a1 a2)</td></tr>
 <tr><td><a href="clm.html#make-wave-train">make-wave-train</a></td><td colspan=2>(frequency initial-phase wave size)</td></tr>
 <tr><td><a href="clm.html#make-waveshape">make-waveshape</a></td><td colspan=2>(frequency partials wave size)</td></tr>
-<tr><td><a href="extsnd.html#makexen2sample">make-xen-&gt;sample</a></td><td colspan=2>(reader)</td></tr>
+<tr><td><a href="extsnd.html#makexen_to_sample">make-xen-&gt;sample</a></td><td colspan=2>(reader)</td></tr>
 <tr><td><a href="clm.html#make-zpolar">make-zpolar</a></td><td colspan=2>(radius frequency)</td></tr>
 <tr><td><a href="clm.html#mixer*">mixer*</a></td><td>(mix1 mix2 <i>outmx</i>)</td><td>matrix multiply of mix1 and mix2</td></tr>
 <tr><td><a href="clm.html#mixer-ref">mixer-ref</a></td><td>(mixer in out)</td><td>mix-scaler[in,out]</td></tr>
@@ -905,8 +905,8 @@ In Ruby <b>rand</b> is a built-in method; it is aliased to <b>kernel_rand</b> he
 <tr><td><a href="clm.html#sawtooth-wave?">sawtooth-wave?</a></td><td>(gen)</td><td>#t if gen is sawtooth-wave generator</td></tr>
 <tr><td><a href="clm.html#sine-summation">sine-summation</a></td><td>(gen <i>fm</i>)</td><td>sine-summation generator</td></tr>
 <tr><td><a href="clm.html#sine-summation?">sine-summation?</a></td><td>(gen)</td><td>#t if gen is sine-summation generator</td></tr>
-<tr><td><a href="extsnd.html#snd2sample">snd-&gt;sample</a></td><td>(loc (chan 0))</td><td>return sample from sound (index=snd) at loc</td></tr>
-<tr><td><a href="extsnd.html#snd2samplep">snd-&gt;sample?</a></td><td>(gen)</td><td>#t if gen is snd-&gt;sample generator</td></tr>
+<tr><td><a href="extsnd.html#snd_to_sample">snd-&gt;sample</a></td><td>(loc (chan 0))</td><td>return sample from sound (index=snd) at loc</td></tr>
+<tr><td><a href="extsnd.html#snd_to_samplep">snd-&gt;sample?</a></td><td>(gen)</td><td>#t if gen is snd-&gt;sample generator</td></tr>
 <tr><td><a href="clm.html#spectrum">spectrum</a></td><td>(rl im win type)</td><td>produce spectrum of data in rl (return rl)</td></tr>
 <tr><td><a href="clm.html#square-wave">square-wave</a></td><td>(gen <i>fm</i>)</td><td>square-wave generator</td></tr>
 <tr><td><a href="clm.html#square-wave?">square-wave?</a></td><td>(gen)</td><td>#t if gen is square-wave generator</td></tr>
@@ -928,8 +928,8 @@ In Ruby <b>rand</b> is a built-in method; it is aliased to <b>kernel_rand</b> he
 <tr><td><a href="clm.html#wave-train?">wave-train?</a></td><td>(gen)</td><td>#t if gen is wave-train generator</td></tr>
 <tr><td><a href="clm.html#waveshape">waveshape</a></td><td>(gen <i>index fm</i>)</td><td>waveshaping generator</td></tr>
 <tr><td><a href="clm.html#waveshape?">waveshape?</a></td><td>(gen)</td><td>#t if gen is waveshape generator</td></tr>
-<tr><td><a href="extsnd.html#xen2sample">xen-&gt;sample</a></td><td>(loc (chan 0))</td><td>return sample from xen func at loc in chan</td></tr>
-<tr><td><a href="extsnd.html#xen2samplep">xen-&gt;sample?</a></td><td>(gen)</td><td>#t if gen is xen-&gt;sample generator</td></tr>
+<tr><td><a href="extsnd.html#xen_to_sample">xen-&gt;sample</a></td><td>(loc (chan 0))</td><td>return sample from xen func at loc in chan</td></tr>
+<tr><td><a href="extsnd.html#xen_to_samplep">xen-&gt;sample?</a></td><td>(gen)</td><td>#t if gen is xen-&gt;sample generator</td></tr>
 </table>
 <br>
 
@@ -1039,7 +1039,7 @@ Here are a few more examples, taken from <a href="sndscm.html#exampdoc">examp.sc
 			       (<a class=quiet href="extsnd.html#nextsample">next-sample</a> sf)
 			       (<a class=quiet href="extsnd.html#previoussample">previous-sample</a> sf))))))
       (<a class=quiet href="extsnd.html#freesamplereader">free-sample-reader</a> sf)
-      (<a class=quiet href="extsnd.html#vct2samples">vct-&gt;samples</a> 0 len out-data))))
+      (<a class=quiet href="extsnd.html#vct_to_samples">vct-&gt;samples</a> 0 len out-data))))
 
 ; (fp 1.0 .3 20)
 
@@ -1055,7 +1055,7 @@ Here are a few more examples, taken from <a href="sndscm.html#exampdoc">examp.sc
 	   (sr (<a class=quiet href="clm.html#make-src">make-src</a> :srate rate))
 	   (vsize 1024)
 	   (vbeg 0)
-	   (v (<a class=quiet href="extsnd.html#samples2vct">samples-&gt;vct</a> 0 vsize))
+	   (v (<a class=quiet href="extsnd.html#samples_to_vct">samples-&gt;vct</a> 0 vsize))
 	   (inctr 0))
       (lambda (inval)
         (<a class=quiet href="clm.html#src">src</a> sr 0.0
@@ -1068,7 +1068,7 @@ Here are a few more examples, taken from <a href="sndscm.html#exampdoc">examp.sc
 		      (begin
 			(set! vbeg (+ vbeg inctr))
 			(set! inctr 0)
-			(<a class=quiet href="extsnd.html#samples2vct">samples-&gt;vct</a> vbeg vsize 0 0 v)))
+			(<a class=quiet href="extsnd.html#samples_to_vct">samples-&gt;vct</a> vbeg vsize 0 0 v)))
 		  val)))))))))
 
 </pre>
@@ -1921,7 +1921,7 @@ data directly to the DAC:
      (ladspa-activate descriptor handle)
      (do ((i 0 (+ i block-size)))
 	 ((&gt;= i len))
-       (<a class=quiet href="extsnd.html#samples2vct">samples-&gt;vct</a> i block-size #f #f in-block)
+       (<a class=quiet href="extsnd.html#samples_to_vct">samples-&gt;vct</a> i block-size #f #f in-block)
        (ladspa-run descriptor handle block-size)
        (<a class=quiet href="extsnd.html#vct2sounddata">vct-&gt;sound-data</a> out-block data 0)
        (<a class=quiet href="extsnd.html#musaudiowrite">mus-audio-write</a> audio-port data block-size)))

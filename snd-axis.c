@@ -1004,41 +1004,41 @@ axis_info *make_axis_info (chan_info *cp, double xmin, double xmax, Float ymin, 
 
 static XEN g_grf_x(XEN val, XEN snd, XEN chn, XEN ap)
 {
-  #define H_x2position "(" S_x2position " val (snd #f) (chn #f) (ax #f)): x pixel loc of val"
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_1, S_x2position, "a number");
-  ASSERT_CHANNEL(S_x2position, snd, chn, 2);
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ap), ap, XEN_ARG_4, S_x2position, "an integer");
+  #define H_x_to_position "(" S_x_to_position " val (snd #f) (chn #f) (ax #f)): x pixel loc of val"
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_1, S_x_to_position, "a number");
+  ASSERT_CHANNEL(S_x_to_position, snd, chn, 2);
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ap), ap, XEN_ARG_4, S_x_to_position, "an integer");
   return(C_TO_XEN_INT(grf_x(XEN_TO_C_DOUBLE(val),
-			    TO_C_AXIS_INFO(snd, chn, ap, S_x2position))));
+			    TO_C_AXIS_INFO(snd, chn, ap, S_x_to_position))));
 }
 
 static XEN g_grf_y(XEN val, XEN snd, XEN chn, XEN ap)
 {
-#define H_y2position "(" S_y2position " val (snd #f) (chn #f) (ax #f)): y pixel loc of val"
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_1, S_y2position, "a number");
-  ASSERT_CHANNEL(S_y2position, snd, chn, 2);
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ap), ap, XEN_ARG_4, S_y2position, "an integer");
+#define H_y_to_position "(" S_y_to_position " val (snd #f) (chn #f) (ax #f)): y pixel loc of val"
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_1, S_y_to_position, "a number");
+  ASSERT_CHANNEL(S_y_to_position, snd, chn, 2);
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ap), ap, XEN_ARG_4, S_y_to_position, "an integer");
   return(C_TO_XEN_INT(grf_y(XEN_TO_C_DOUBLE(val),
-			    TO_C_AXIS_INFO(snd, chn, ap, S_y2position))));
+			    TO_C_AXIS_INFO(snd, chn, ap, S_y_to_position))));
 }
 
 static XEN g_ungrf_x(XEN val, XEN snd, XEN chn, XEN ap)
 {
-  #define H_position2x "(" S_position2x " val (snd #f) (chn #f) (ax #f)): x axis value corresponding to pixel val"
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ARG_1, S_position2x, "an integer");
-  ASSERT_CHANNEL(S_position2x, snd, chn, 2);
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ap), ap, XEN_ARG_4, S_position2x, "an integer");
-  return(C_TO_XEN_DOUBLE(ungrf_x(TO_C_AXIS_INFO(snd, chn, ap, S_position2x),
+  #define H_position_to_x "(" S_position_to_x " val (snd #f) (chn #f) (ax #f)): x axis value corresponding to pixel val"
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ARG_1, S_position_to_x, "an integer");
+  ASSERT_CHANNEL(S_position_to_x, snd, chn, 2);
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ap), ap, XEN_ARG_4, S_position_to_x, "an integer");
+  return(C_TO_XEN_DOUBLE(ungrf_x(TO_C_AXIS_INFO(snd, chn, ap, S_position_to_x),
 				 XEN_TO_C_INT(val))));
 }
 
 static XEN g_ungrf_y(XEN val, XEN snd, XEN chn, XEN ap)
 {
-  #define H_position2y "(" S_position2y " val (snd #f) (chn #f) (ax #f)): y axis value corresponding to pixel val"
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ARG_1, S_position2y, "an integer");
-  ASSERT_CHANNEL(S_position2y, snd, chn, 2);
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ap), ap, XEN_ARG_4, S_position2y, "an integer");
-  return(C_TO_XEN_DOUBLE(ungrf_y(TO_C_AXIS_INFO(snd, chn, ap, S_position2y),
+  #define H_position_to_y "(" S_position_to_y " val (snd #f) (chn #f) (ax #f)): y axis value corresponding to pixel val"
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ARG_1, S_position_to_y, "an integer");
+  ASSERT_CHANNEL(S_position_to_y, snd, chn, 2);
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ap), ap, XEN_ARG_4, S_position_to_y, "an integer");
+  return(C_TO_XEN_DOUBLE(ungrf_y(TO_C_AXIS_INFO(snd, chn, ap, S_position_to_y),
 				 XEN_TO_C_INT(val))));
 }
 
@@ -1273,10 +1273,10 @@ XEN_ARGIFY_4(g_set_x_axis_label_w, g_set_x_axis_label)
 
 void g_init_axis(void)
 {
-  XEN_DEFINE_PROCEDURE(S_x2position, g_grf_x_w,   1, 3, 0, H_x2position);
-  XEN_DEFINE_PROCEDURE(S_y2position, g_grf_y_w,   1, 3, 0, H_y2position);
-  XEN_DEFINE_PROCEDURE(S_position2x, g_ungrf_x_w, 1, 3, 0, H_position2x);
-  XEN_DEFINE_PROCEDURE(S_position2y, g_ungrf_y_w, 1, 3, 0, H_position2y);
+  XEN_DEFINE_PROCEDURE(S_x_to_position, g_grf_x_w,   1, 3, 0, H_x_to_position);
+  XEN_DEFINE_PROCEDURE(S_y_to_position, g_grf_y_w,   1, 3, 0, H_y_to_position);
+  XEN_DEFINE_PROCEDURE(S_position_to_x, g_ungrf_x_w, 1, 3, 0, H_position_to_x);
+  XEN_DEFINE_PROCEDURE(S_position_to_y, g_ungrf_y_w, 1, 3, 0, H_position_to_y);
 
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_x_axis_label, g_x_axis_label_w, H_x_axis_label,
 					    S_setB S_x_axis_label, g_set_x_axis_label_w, g_set_x_axis_label_reversed, 0, 3, 1, 3);

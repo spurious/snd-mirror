@@ -329,7 +329,8 @@
 					     (not (member type types-21))
 					     (not (member type types-22)))
 					(set! types-22 (cons type types-22)))
-				    (if (eq? extra '23)
+				    (if (or (eq? extra '23)
+					    (eq? extra 'callback-23))
 					(if (and (not (member type types))
 						 (not (member type types-21))
 						 (not (member type types-22))
@@ -504,12 +505,12 @@
 			(list 'GtkFileFilterFunc
 			      "gboolean"
 			      "file_filter"
-			      (parse-args "GtkFileFilterInfo* info lambda_data func_data" 'callback)
+			      (parse-args "GtkFileFilterInfo* info lambda_data func_data" 'callback-23)
 			      'permanent)
 			(list 'GtkEntryCompletionMatchFunc
 			      "gboolean"
 			      "entry_completion_match"
-			      (parse-args "GtkEntryCompletion* completion gchar* key GtkTreeIter* iter lambda_data func_data" 'callback)
+			      (parse-args "GtkEntryCompletion* completion gchar* key GtkTreeIter* iter lambda_data func_data" 'callback-23)
 			      'permanent)
 			))
 
@@ -2875,4 +2876,3 @@
 ;   (if (not (member (car v) declared-types))
 ;       (display (format #f "~A " (car v)))))
 ; direct-types)
-

@@ -913,7 +913,7 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, bool with_meta)
       if (sp->amping)
 	{
 	  if (!active_chan) active_chan = sp->chans[0];
-	  e = string2env(str);
+	  e = string_to_env(str);
 	  if (e)
 	    {
 	      if (sp->amping != 1)

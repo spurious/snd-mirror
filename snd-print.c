@@ -550,9 +550,9 @@ void print_enved(char *output, int y0)
   else snd_error(_("print envelope: eps file name needed"));
 }
 
-static XEN g_graph2ps(XEN filename)
+static XEN g_graph_to_ps(XEN filename)
 {
-  #define H_graph2ps "(" S_graph2ps " (filename eps-file)): write the current Snd displays to an EPS file"
+  #define H_graph_to_ps "(" S_graph_to_ps " (filename eps-file)): write the current Snd displays to an EPS file"
 
   char *error,*file;
   XEN result;
@@ -565,7 +565,7 @@ static XEN g_graph2ps(XEN filename)
       result = C_TO_XEN_STRING(error);
       FREE(error);
       XEN_ERROR(CANNOT_PRINT,
-		XEN_LIST_3(C_TO_XEN_STRING(S_graph2ps),
+		XEN_LIST_3(C_TO_XEN_STRING(S_graph_to_ps),
 			   C_TO_XEN_STRING(file),
 			   result));
     }
@@ -575,7 +575,7 @@ static XEN g_graph2ps(XEN filename)
 static XEN g_eps_file(void) {return(C_TO_XEN_STRING(eps_file(ss)));}
 static XEN g_set_eps_file(XEN val) 
 {
-  #define H_eps_file "(" S_eps_file "): File:Print and " S_graph2ps " file name (snd.eps)"
+  #define H_eps_file "(" S_eps_file "): File:Print and " S_graph_to_ps " file name (snd.eps)"
   XEN_ASSERT_TYPE(XEN_STRING_P(val), val, XEN_ONLY_ARG, S_setB S_eps_file, "a string"); 
   if (eps_file(ss)) FREE(eps_file(ss));
   set_eps_file(copy_string(XEN_TO_C_STRING(val))); 
@@ -585,7 +585,7 @@ static XEN g_set_eps_file(XEN val)
 static XEN g_eps_left_margin(void) {return(C_TO_XEN_DOUBLE(eps_left_margin(ss)));}
 static XEN g_set_eps_left_margin(XEN val) 
 {
-  #define H_eps_left_margin "(" S_eps_left_margin "): File:Print and " S_graph2ps " left margin"
+  #define H_eps_left_margin "(" S_eps_left_margin "): File:Print and " S_graph_to_ps " left margin"
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, S_setB S_eps_left_margin, "a number"); 
   set_eps_left_margin(XEN_TO_C_DOUBLE(val));
   return(C_TO_XEN_DOUBLE(eps_left_margin(ss)));
@@ -594,7 +594,7 @@ static XEN g_set_eps_left_margin(XEN val)
 static XEN g_eps_bottom_margin(void) {return(C_TO_XEN_DOUBLE(eps_bottom_margin(ss)));}
 static XEN g_set_eps_bottom_margin(XEN val) 
 {
-  #define H_eps_bottom_margin "(" S_eps_bottom_margin "): File:Print and " S_graph2ps " bottom margin"
+  #define H_eps_bottom_margin "(" S_eps_bottom_margin "): File:Print and " S_graph_to_ps " bottom margin"
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, S_setB S_eps_bottom_margin, "a number"); 
   set_eps_bottom_margin(XEN_TO_C_DOUBLE(val));
   return(C_TO_XEN_DOUBLE(eps_bottom_margin(ss)));
@@ -603,14 +603,14 @@ static XEN g_set_eps_bottom_margin(XEN val)
 static XEN g_eps_size(void) {return(C_TO_XEN_DOUBLE(eps_size(ss)));}
 static XEN g_set_eps_size(XEN val) 
 {
-  #define H_eps_size "(" S_eps_size "): File:Print and " S_graph2ps " output size scaler (1.0)"
+  #define H_eps_size "(" S_eps_size "): File:Print and " S_graph_to_ps " output size scaler (1.0)"
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, S_setB S_eps_size, "a number"); 
   set_eps_size(XEN_TO_C_DOUBLE(val));
   return(C_TO_XEN_DOUBLE(eps_size(ss)));
 }
 
 #ifdef XEN_ARGIFY_1
-XEN_ARGIFY_1(g_graph2ps_w, g_graph2ps)
+XEN_ARGIFY_1(g_graph_to_ps_w, g_graph_to_ps)
 XEN_NARGIFY_0(g_eps_file_w, g_eps_file)
 XEN_NARGIFY_1(g_set_eps_file_w, g_set_eps_file)
 XEN_NARGIFY_0(g_eps_left_margin_w, g_eps_left_margin)
@@ -620,7 +620,7 @@ XEN_NARGIFY_1(g_set_eps_size_w, g_set_eps_size)
 XEN_NARGIFY_0(g_eps_bottom_margin_w, g_eps_bottom_margin)
 XEN_NARGIFY_1(g_set_eps_bottom_margin_w, g_set_eps_bottom_margin)
 #else
-#define g_graph2ps_w g_graph2ps
+#define g_graph_to_ps_w g_graph_to_ps
 #define g_eps_file_w g_eps_file
 #define g_set_eps_file_w g_set_eps_file
 #define g_eps_left_margin_w g_eps_left_margin
@@ -633,7 +633,7 @@ XEN_NARGIFY_1(g_set_eps_bottom_margin_w, g_set_eps_bottom_margin)
 
 void g_init_print(void)
 {
-  XEN_DEFINE_PROCEDURE(S_graph2ps, g_graph2ps_w, 0, 1, 0, H_graph2ps);
+  XEN_DEFINE_PROCEDURE(S_graph_to_ps, g_graph_to_ps_w, 0, 1, 0, H_graph_to_ps);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_eps_file, g_eps_file_w, H_eps_file,
 				   S_setB S_eps_file, g_set_eps_file_w,  0, 0, 1, 0);

@@ -3682,11 +3682,11 @@ srate and channels.  'len' samples are written."
     XEN_OUT_OF_RANGE_ERROR(S_array_to_file, 3, len, "samples ~A <= 0?");
   if (samps > v->length)
     samps = v->length;
-  olen = mus_fltarray_to_file(XEN_TO_C_STRING(filename),
-			      v->data,
-			      samps,
-			      XEN_TO_C_INT_OR_ELSE(srate, 0),
-			      XEN_TO_C_INT(channels));
+  olen = mus_float_array_to_file(XEN_TO_C_STRING(filename),
+				 v->data,
+				 samps,
+				 XEN_TO_C_INT_OR_ELSE(srate, 0),
+				 XEN_TO_C_INT(channels));
   return(xen_return_first(C_TO_XEN_INT(olen), filename));
 }
 
@@ -3729,7 +3729,7 @@ at frame 'start' and reading 'samples' samples altogether."
 			 C_TO_XEN_STRING("chans <= 0")));
   if (samps > v->length)
     samps = v->length;
-  mus_file2fltarray(name,
+  mus_file_to_float_array(name,
 		    chn,
 		    XEN_TO_C_OFF_T_OR_ELSE(start, 0),
 		    samps,
@@ -5759,7 +5759,7 @@ the closer the radius is to 1.0, the narrower the resonance."
 	       S_granulate_p,
 	       S_hamming_window,
 	       S_hann_window,
-	       S_hz_radians,
+	       S_hz_to_radians,
 	       S_iir_filter,
 	       S_iir_filter_p,
 	       S_in_any,
@@ -5767,7 +5767,7 @@ the closer the radius is to 1.0, the narrower the resonance."
 	       S_ina,
 	       S_inb,
 	       S_kaiser_window,
-	       S_linear_db,
+	       S_linear_to_db,
 	       S_locsig,
 	       S_locsig_p,
 	       S_locsig_ref,
@@ -5968,7 +5968,7 @@ void Init_sndlib(void)
 void init_sndlib(void)
 #endif
 {
-  mus_sndlib2xen_initialize();
+  mus_sndlib_xen_initialize();
   init_vct();
   mus_xen_init();
 }

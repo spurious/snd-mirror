@@ -1121,7 +1121,7 @@ static void filter_activate_callback(GtkWidget *w, gpointer context)
   char *str = NULL;
   str = (char *)gtk_entry_get_text(GTK_ENTRY(w));
   if (sp->filter_control_envelope) sp->filter_control_envelope = free_env(sp->filter_control_envelope);
-  sp->filter_control_envelope = string2env(str);
+  sp->filter_control_envelope = string_to_env(str);
   if (!(sp->filter_control_envelope)) /* maybe user cleared text field? */
     sp->filter_control_envelope = default_env(sp->filter_control_xmax, 1.0);
   (SOUND_ENV_EDITOR(sp))->edited = true;

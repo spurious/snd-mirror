@@ -1318,7 +1318,7 @@ of ways. The fastest and simplest uses CLM's dot-product function:
 (define (region-rms n)
   "(region-rms n) -&gt; rms of region n's data (chan 0)"
   (if (<a class=quiet href="extsnd.html#regionok">region?</a> n)
-      (let* ((data (<a class=quiet href="extsnd.html#regionsamples2vct">region-samples-&gt;vct</a> 0 0 n)))
+      (let* ((data (<a class=quiet href="extsnd.html#regionsamples_to_vct">region-samples-&gt;vct</a> 0 0 n)))
 	(sqrt (/ (<a class=quiet href="clm.html#dot-product">dot-product</a> data data) (<a class=quiet href="extsnd.html#vctlength">vct-length</a> data))))
       (throw 'no-such-region (list "region-rms" n))))
 </pre>
@@ -1787,7 +1787,7 @@ in fmv.scm, the simpler one being:
 					  :scaler amp 
 					  :end dur)))
 			 (lambda () (<a class=quiet href="clm.html#env">env</a> e)))))
-	  (data (<a class=quiet href="extsnd.html#samples2vct">samples-&gt;vct</a> beg dur)))
+	  (data (<a class=quiet href="extsnd.html#samples_to_vct">samples-&gt;vct</a> beg dur)))
       (do ((i 0 (1+ i)))
 	  ((= i dur))
 	(<a class=quiet href="extsnd.html#vctset">vct-set!</a> data i (+ (<a class=quiet href="extsnd.html#vctref">vct-ref</a> data i)
@@ -1895,7 +1895,7 @@ an ordinary editing function:
 
 ;;; (clm-reverb-sound .1 (lambda (dur) (jc-reverb #f 1.0 #f dur)))
 </pre>
-<p>Another approach to this problem would be to use <a href="extsnd.html#snd2sample">snd-&gt;sample</a> to
+<p>Another approach to this problem would be to use <a href="extsnd.html#snd_to_sample">snd-&gt;sample</a> to
 redirect the *reverb* input (without any change to the reverberator),
 getting its data from the current sound (probably after scaling it
 by the reverb amount). 
@@ -2654,7 +2654,6 @@ waterfall spectrum display of the incoming audio data.  <b>stop-waterfall</b> tu
   <A class=def NAME="keepfiledialogopenuponok">keep-file-dialog-open-upon-ok</a>
   <A class=def NAME="usepanmixinmixmenu">use-pan-mix-in-mix-menu</a>
   <a class=def name="addampcontrols">add-amp-controls</a>
-  <em class=emdef>add-very-useful-icons</em>
   <A class=def NAME="adddeleteoption">add-delete-option, add-rename-option</a>
   <em class=emdef>mark-sync-color</em> new-color
   <em class=emdef>add-tooltip</em> widget tip
@@ -3769,11 +3768,11 @@ an upward ramp and a downward ramp, then zips them together:
     (<a class=quiet href="extsnd.html#newsound">new-sound</a> "new-0.snd")
     (do ((i 0 (1+ i))) ((= i 10000)) 
       (<a class=quiet href="extsnd.html#vctset">vct-set!</a> data i (* i .0001)))
-    (<a class=quiet href="extsnd.html#vct2samples">vct-&gt;samples</a> 0 10000 data 0)
+    (<a class=quiet href="extsnd.html#vct_to_samples">vct-&gt;samples</a> 0 10000 data 0)
     (<a class=quiet href="extsnd.html#newsound">new-sound</a> "new-1.snd")
     (do ((i 0 (1+ i))) ((= i 10000)) 
       (<a class=quiet href="extsnd.html#vctset">vct-set!</a> data i (- 1.0 (* i .0001))))
-    (<a class=quiet href="extsnd.html#vct2samples">vct-&gt;samples</a> 0 10000 data 1)
+    (<a class=quiet href="extsnd.html#vct_to_samples">vct-&gt;samples</a> 0 10000 data 1)
     (let* ((dur (<a class=quiet href="extsnd.html#frames">frames</a>))
 	   (zp (<em class=red>make-zipper</em> (let ((e (<a class=quiet href="clm.html#make-env">make-env</a> '(0 0 1 1) :end dur)))
 			      (lambda () (<a class=quiet href="clm.html#env">env</a> e)))))
@@ -4535,7 +4534,7 @@ end points.  (This is also "just-good-enough" software).
 (define (fix-clip clip-beg-1 clip-end-1)
   (if (&gt; clip-end-1 clip-beg-1)
       (let* ((dur (1+ (- clip-end-1 clip-beg-1)))
-	     (samps (<a class=quiet href="extsnd.html#channel2vct">channel-&gt;vct</a> (- clip-beg-1 4) (+ dur 9)))
+	     (samps (<a class=quiet href="extsnd.html#channel_to_vct">channel-&gt;vct</a> (- clip-beg-1 4) (+ dur 9)))
 	     (clip-beg 3)
 	     (clip-end (+ dur 4)))
 	(let ((samp0 (<a class=quiet href="extsnd.html#vctref">vct-ref</a> samps clip-beg))
@@ -4576,7 +4575,7 @@ end points.  (This is also "just-good-enough" software).
 		     (angle incr (+ angle incr)))
 		    ((= i clip-end))
 		  (<a class=quiet href="extsnd.html#vctset">vct-set!</a> samps i (- -1.0 (* amp (sin angle))))))
-	    (<a class=quiet href="extsnd.html#vct2channel">vct-&gt;channel</a> samps (- clip-beg-1 4))))
+	    (<a class=quiet href="extsnd.html#vct_to_channel">vct-&gt;channel</a> samps (- clip-beg-1 4))))
 	#t) ; return values so I can tell when I hit a 1-sample section during testing
       #f))
 

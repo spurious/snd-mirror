@@ -6,7 +6,7 @@
  *   or add-to-existing would need access to current
  */
 
-/* impulse_train? readin_interp?
+/* readin_interp?
  */
 
 #if defined(HAVE_CONFIG_H)
@@ -7205,7 +7205,7 @@ void mus_mix(const char *outfile, const char *infile, off_t out_start, off_t out
     }
 }
 
-int mus_file_to_fltarray(const char *filename, int chan, off_t start, int samples, Float *array)
+int mus_file_to_float_array(const char *filename, int chan, off_t start, int samples, Float *array)
 {
   mus_sample_t *idata;
   int i, len;
@@ -7218,7 +7218,7 @@ int mus_file_to_fltarray(const char *filename, int chan, off_t start, int sample
   return(len);
 }
 
-int mus_fltarray_to_file(const char *filename, Float *ddata, int len, int srate, int channels)
+int mus_float_array_to_file(const char *filename, Float *ddata, int len, int srate, int channels)
 {
   mus_sample_t *idata;
   int i;

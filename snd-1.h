@@ -812,10 +812,10 @@ bool copy_then_swap_channels(chan_info *cp0, chan_info *cp1, int pos0, int pos1)
 void reflect_file_change_in_label(chan_info *cp);
 void update_track_lists(chan_info *cp, int top_ctr);
 
-bool snd2sample_p(mus_any *ptr);
-bool xen2sample_p(mus_any *ptr);
-Float xen2sample_read(mus_any *ptr, off_t frame, int chan);
-Float snd2sample_read(mus_any *ptr, off_t frame, int chan);
+bool snd_to_sample_p(mus_any *ptr);
+bool xen_to_sample_p(mus_any *ptr);
+Float xen_to_sample_read(mus_any *ptr, off_t frame, int chan);
+Float snd_to_sample_read(mus_any *ptr, off_t frame, int chan);
 
 
 /* -------- snd-fft.c -------- */
@@ -881,9 +881,9 @@ bool listener_print_p(char *msg);
 #if (!USE_NO_GUI)
   Float check_color_range(const char *caller, XEN val);
 #endif
-int string2int(char *str);
-Float string2Float(char *str);
-off_t string2off_t(char *str);
+int string_to_int(char *str);
+Float string_to_Float(char *str);
+off_t string_to_off_t(char *str);
 char *output_comment(file_info *hdr);
 void snd_load_init_file(bool nog, bool noi);
 void snd_load_file(char *filename);
@@ -1001,7 +1001,7 @@ void enved_show_background_waveform(axis_info *ap, axis_info *gray_ap, bool appl
 void save_envelope_editor_state(FILE *fd);
 char *env_name_completer(char *text);
 env *enved_next_env(void);
-env *string2env(char *str);
+env *string_to_env(char *str);
 void add_or_edit_symbol(char *name, env *val);
 env* name_to_env(const char *str);
 env *position_to_env(int pos);

@@ -817,14 +817,14 @@ static void filter_activate_callback(Widget w, XtPointer context, XtPointer info
   if ((str) && (*str)) remember_filter_string(sp, str);
 
   if (sp->filter_control_envelope) sp->filter_control_envelope = free_env(sp->filter_control_envelope);
-  sp->filter_control_envelope = string2env(str);
+  sp->filter_control_envelope = string_to_env(str);
   if (str) XtFree(str);
   if (!(sp->filter_control_envelope)) /* maybe user cleared text field? */
     sp->filter_control_envelope = default_env(sp->filter_control_xmax, 1.0);
   str = XmTextGetString(FILTER_ORDER_TEXT(sp));
   if ((str) && (*str))
     {
-      order = string2int(str);
+      order = string_to_int(str);
       if (order & 1) order++;
       if (order <= 0) order = 2;
       sp->filter_control_order = order;
@@ -844,7 +844,7 @@ static void filter_order_activate_callback(Widget w, XtPointer context, XtPointe
   str = XmTextGetString(w);
   if ((str) && (*str))
     {
-      order = string2int(str);
+      order = string_to_int(str);
       if (order & 1) order++;
       if (order <= 0) order = 2;
       sp->filter_control_order = order;

@@ -1468,30 +1468,30 @@ static XEN g_region_sample(XEN samp_n, XEN reg_n, XEN chn_n)
   else return(snd_no_such_channel_error(S_region_sample, XEN_LIST_1(reg_n), chn_n));
 }
 
-static XEN g_region_samples2vct(XEN beg_n, XEN num, XEN reg_n, XEN chn_n, XEN v)
+static XEN g_region_samples_to_vct(XEN beg_n, XEN num, XEN reg_n, XEN chn_n, XEN v)
 {
-  #define H_region_samples2vct "(" S_region_samples2vct " (beg 0) (samps reglen) (region 0) (chan 0) (v #f)): \
+  #define H_region_samples_to_vct "(" S_region_samples_to_vct " (beg 0) (samps reglen) (region 0) (chan 0) (v #f)): \
 write region's samples starting at beg for samps in channel chan to vct v; return v (or create a new one)"
 
   Float *data;
   int reg, chn;
   off_t len, beg;
   vct *v1 = get_vct(v);
-  XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(beg_n), beg_n, XEN_ARG_1, S_region_samples2vct, "a number");
-  XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(num), num, XEN_ARG_2, S_region_samples2vct, "a number");
-  XEN_ASSERT_TYPE(XEN_REGION_IF_BOUND_P(reg_n), reg_n, XEN_ARG_3, S_region_samples2vct, "a region id");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(chn_n), chn_n, XEN_ARG_4, S_region_samples2vct, "an integer");
+  XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(beg_n), beg_n, XEN_ARG_1, S_region_samples_to_vct, "a number");
+  XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(num), num, XEN_ARG_2, S_region_samples_to_vct, "a number");
+  XEN_ASSERT_TYPE(XEN_REGION_IF_BOUND_P(reg_n), reg_n, XEN_ARG_3, S_region_samples_to_vct, "a region id");
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(chn_n), chn_n, XEN_ARG_4, S_region_samples_to_vct, "an integer");
   reg = XEN_REGION_TO_C_INT(reg_n);
   if (!(region_ok(reg)))
-    return(snd_no_such_region_error(S_region_samples2vct, reg_n));
+    return(snd_no_such_region_error(S_region_samples_to_vct, reg_n));
   chn = XEN_TO_C_INT_OR_ELSE(chn_n, 0);
   if ((chn < 0) || (chn >= region_chans(reg)))
-    return(snd_no_such_channel_error(S_region_samples2vct, XEN_LIST_1(reg_n), chn_n));
+    return(snd_no_such_channel_error(S_region_samples_to_vct, XEN_LIST_1(reg_n), chn_n));
   len = XEN_TO_C_OFF_T_OR_ELSE(num, 0);
   if (len == 0) len = region_len(reg);
   if (len > 0)
     {
-      beg = beg_to_sample(beg_n, S_region_samples2vct);
+      beg = beg_to_sample(beg_n, S_region_samples_to_vct);
       if (beg >= region_len(reg)) 
 	return(XEN_FALSE);
       if (v1)
@@ -1520,7 +1520,7 @@ XEN_ARGIFY_2(g_play_region_w, g_play_region)
 XEN_ARGIFY_4(g_make_region_w, g_make_region)
 XEN_ARGIFY_5(g_mix_region_w, g_mix_region)
 XEN_ARGIFY_3(g_region_sample_w, g_region_sample)
-XEN_ARGIFY_5(g_region_samples2vct_w, g_region_samples2vct)
+XEN_ARGIFY_5(g_region_samples_to_vct_w, g_region_samples_to_vct)
 XEN_NARGIFY_1(g_region_p_w, g_region_p)
 XEN_NARGIFY_0(g_max_regions_w, g_max_regions)
 XEN_NARGIFY_1(g_set_max_regions_w, g_set_max_regions)
@@ -1539,7 +1539,7 @@ XEN_NARGIFY_1(g_set_max_regions_w, g_set_max_regions)
 #define g_make_region_w g_make_region
 #define g_mix_region_w g_mix_region
 #define g_region_sample_w g_region_sample
-#define g_region_samples2vct_w g_region_samples2vct
+#define g_region_samples_to_vct_w g_region_samples_to_vct
 #define g_region_p_w g_region_p
 #define g_max_regions_w g_max_regions
 #define g_set_max_regions_w g_set_max_regions
@@ -1563,7 +1563,7 @@ void g_init_regions(void)
   XEN_DEFINE_PROCEDURE(S_make_region,        g_make_region_w,        0, 4, 0, H_make_region);
   XEN_DEFINE_PROCEDURE(S_mix_region,         g_mix_region_w,         0, 5, 0, H_mix_region);
   XEN_DEFINE_PROCEDURE(S_region_sample,      g_region_sample_w,      0, 3, 0, H_region_sample);
-  XEN_DEFINE_PROCEDURE(S_region_samples2vct, g_region_samples2vct_w, 0, 5, 0, H_region_samples2vct);
+  XEN_DEFINE_PROCEDURE(S_region_samples_to_vct, g_region_samples_to_vct_w, 0, 5, 0, H_region_samples_to_vct);
   XEN_DEFINE_PROCEDURE(S_region_p,           g_region_p_w,           1, 0, 0, H_region_p);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_max_regions, g_max_regions_w, H_max_regions, S_setB S_max_regions, g_set_max_regions_w, 0, 0, 1, 0);

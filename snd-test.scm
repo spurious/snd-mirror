@@ -31,26 +31,27 @@
 ;;; test 28: errors
 
 ;;; how to send ourselves a drop?  (button2 on menu is only the first half -- how to force 2nd?)
-;;; check: add-comment channel-data check-for-unsaved-edits color-samples cross-synthesis dlocsig envelope-base
-;;;        explode-sf2 extract-channel(s) fft-edit fft-squelch fractional-fourier-transform make-biquad
+;;; check: check-for-unsaved-edits cross-synthesis dlocsig
+;;;        explode-sf2 extract-channel(s) fft-edit fft-squelch make-biquad
 ;;;        make-identity-mixer map-sound-files mark-context mark-explode mark-loops menu-hook
 ;;;        mouse-enter|leave-text-hook mpg mus-audio-error mus-audio-error-name mus-audio-set-oss-buffers
-;;;        notch-out-rumble-and-hiss play-syncd-marks power-env remember-sound-state
-;;;        seconds->samples [samples->seconds?] snap-mark-to-beat snap-mix-to-beat snd-apropos snd-break snd-debug
+;;;        notch-out-rumble-and-hiss play-syncd-marks remember-sound-state
+;;;        snap-mark-to-beat snap-mix-to-beat snd-apropos snd-break snd-debug
 ;;;        snd-remember-paths snd-trace sound-interp undo-channel undo-edit window-samples
-;;;        z-transform zip-sound zipper attract bird one-bird make-birds anoi expfil jl-reverb
-;;;        touch-tone map-envelopes power-env-channel comb-filter osc-formants filtered-env
+;;;        zip-sound zipper attract bird one-bird make-birds anoi expfil jl-reverb
+;;;        touch-tone map-envelopes comb-filter osc-formants filtered-env
 ;;;        zcomb notch-filter formant-filter remove-clicks squelch-vowels snd-out flash-selected-data
 ;;;        files-popup-buffer open-next-file-in-directory flecho ring-mod chained-dsps read-ogg
 ;;;        write-ogg read-speex write-speex read-flac write-flac window-rms fft-peak
 ;;;        make-sound-interp next-peak find-pitch sound-data->list redo-channel make-fm-violin
 ;;;        descibe-hook remove-local-hook! *html-reader* html ? prune-db stop-dac delete-all-tracks
-;;;        make-pvocoder pvocoder show-input in-out snd-clock-icon show-sounds-in-directory make-level-meter
-;;;        show-disk-space add-very-useful-icons add-tooltip show-all-atoms set-channel-drop
+;;;        make-pvocoder pvocoder show-input in-out snd-clock-icon
+;;;        add-tooltip show-all-atoms set-channel-drop
 ;;;        show-font-name show-widget-font add-text-to-status-area with-minmax-button set-root-window-color
 ;;;        notebook-with-top-tabs *clm-file-name* *clm-channels* *clm-data-format* *clm-delete-reverb*
 ;;;        *clm-verbose* *clm-play* *clm-statistics* *clm-reverb* *clm-reverb-data* *clm-reverb-channels*
 ;;;        xe-create-enved xe-envelope make-zipper
+;;; need all html example code in autotests
 
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 optargs) (ice-9 popen))
 
@@ -11306,6 +11307,10 @@ EDITS: 5
       (run-hook before-test-hook 8)
       (log-mem clmtest)
       (set! (mus-srate) 22050)
+      (let ((samps (seconds->samples 1.0))
+	    (secs (samples->seconds 22050)))
+	(if (not (= samps 22050)) (snd-display ";seconds->samples: ~A" samps))
+	(if (fneq secs 1.0) (snd-display ";samples->seconds: ~A" secs)))
       (if (not (= (mus-file-buffer-size) 8192)) (snd-display ";mus-file-buffer-size: ~D?" (mus-file-buffer-size)))
       (let ((var (catch #t (lambda () (set! (mus-file-buffer-size) #f)) (lambda args args))))
 	(if (not (eq? (car var) 'wrong-type-arg))
@@ -29376,7 +29381,27 @@ EDITS: 2
 	      (if (fneq valf2 valg2) (snd-display ";goertzel 2: ~A ~A" valf2 valg2))
 	      (if (fneq valf3 valg3) (snd-display ";goertzel 3: ~A ~A" valf3 valg3))
 	      (close-sound ind))
+
 	    
+	    (let* ((d0 (make-vct 8))
+		   (d1 (make-vct 8)))
+	      (vct-set! d0 2 1.0)
+	      (let ((vals (fractional-fourier-transform d0 d1 8 1.0)))
+		(if (or (not (vequal (car vals) (vct 1.000 0.000 -1.000 -0.000 1.000 0.000 -1.000 -0.000)))
+			(not (vequal (cadr vals) (vct 0.000 1.000 0.000 -1.000 0.000 1.000 0.000 -1.000))))
+		  (snd-display ";fractional-fft: ~A?" vals))))
+
+	    (let* ((d0 (make-vct 8))
+		   (d1 (make-vct 8)))
+	      (vct-set! d0 2 1.0)
+	      (let ((val (z-transform d0 8 (exp (make-rectangular 0.0 (* .25 3.14159265))))))
+		(do ((i 0 (1+ i)))
+		    ((= i 8))
+		  (vct-set! d0 i (real-part (vector-ref val i)))
+		  (vct-set! d1 i (imag-part (vector-ref val i))))
+		(if (or (not (vequal d0 (vct 1.000 0.000 -1.000 -0.000 1.000 0.000 -1.000 -0.000)))
+			(not (vequal d1 (vct 0.000 1.000 0.000 -1.000 0.000 1.000 0.000 -1.000))))
+		    (snd-display ";z-transform: ~A ~A?" d0 d1))))
 	    ))
       (run-hook after-test-hook 20)
       ))
@@ -29384,6 +29409,103 @@ EDITS: 2
 
 
 ;;; ---------------- test 21: ----------------
+
+(define* (add-comment sample comment #:optional snd1 chn1)
+  (let* ((snd (or snd1 (selected-sound)))
+	 (chn (or chn1 (selected-channel)))
+	 (old-comments (or (channel-property 'comments snd chn) '())))
+    (set! (channel-property 'comments snd chn)
+	  (cons (list sample comment)
+		old-comments))))
+	  
+(define (show-comments snd chn)
+  (let ((comments (or (channel-property 'comments snd chn) '())))
+    (for-each
+     (lambda (comment)
+       (let* ((samp (car comment))
+	      (text (cadr comment))
+	      (text-width (* 6 (string-length text)))
+	      (ls (left-sample snd chn))
+	      (rs (right-sample snd chn)))
+	 (if (and (< ls samp)
+		  (> rs samp))
+	     (let ((xpos (x->position (/ samp (srate))))
+		   (ypos (y->position (sample samp))))
+	       (draw-line xpos 20 xpos (- ypos 4))
+	       (draw-string text (- xpos (/ text-width 2)) 18)))))
+     comments)))
+
+(define display-db
+  (lambda (snd chn)
+    "(display-db snd chn) is a lisp-graph-hook function to display the time domain data in dB"
+    (let* ((datal (make-graph-data snd chn))
+	   (data (if (vct? datal) datal (cadr datal)))
+	   (len (vct-length data))
+           (sr (srate snd)))
+      (define (dB val)
+	(if (< val .001)
+	    -60.0
+	    (* 20.0 (log10 val))))
+      (do ((i 0 (1+ i)))
+	  ((= i len))
+	(vct-set! data i (+ 60.0 (dB (abs (vct-ref data i))))))
+      (graph data "dB" 
+	     (/ (left-sample snd chn) sr) (/ (right-sample snd chn) sr)  
+	     0.0 60.0
+	     snd chn))))
+
+(define (display-samps-in-red snd chn)
+  "display samples 1000 to 2000 in red whenever they're in the current view"
+  (let ((left (left-sample snd chn))
+	(right (right-sample snd chn))
+	(old-color (foreground-color snd chn))
+	(red (make-color 1 0 0)))
+    (if (and (< left 2000)
+	     (> right 1000))
+	(let* ((data (make-graph-data snd chn)))
+	  (if (vct? data)                      ;the simple, one-sided graph case
+	      (let* ((samps (- (min right 2000)
+			       (max left 1000)))
+		     (offset (max 0 (- 1000 left)))
+		     (new-data (vct-subseq data offset (+ offset samps))))
+		(set! (foreground-color snd chn) red)
+		(graph-data new-data snd chn copy-context (max 1000 left) (min 2000 right))
+		(set! (foreground-color snd chn) old-color))
+	      (let* ((low-data (car data))     ;the two-sided envelope graph case
+		     (high-data (cadr data))
+                     ;; we need to place the red portion correctly in the current graph
+                     ;; so the following is getting the "bin" numbers associated with 
+                     ;; samples 1000 and 2000
+		     (size (vct-length low-data))
+		     (samps (- right left))
+		     (left-offset (max 0 (- 1000 left)))
+		     (left-bin (inexact->exact (/ (* size left-offset) samps)))
+		     (right-offset (- (min 2000 right) left))
+		     (right-bin (inexact->exact (/ (* size right-offset) samps)))
+		     (new-low-data (vct-subseq low-data left-bin right-bin))
+		     (new-high-data (vct-subseq high-data left-bin right-bin)))
+		(set! (foreground-color snd chn) red)
+		(graph-data 
+                  (list new-low-data new-high-data) snd chn copy-context left-bin right-bin)
+		(set! (foreground-color snd chn) old-color)))))))
+
+(define new-font (load-font "-*-helvetica-bold-r-*-*-14-*-*-*-*-*-*-*"))
+
+(define show-hiho
+  ;; show a red "hiho" in the helvetica bold font on a gray background
+  (lambda (snd chn)
+    (let ((ls (left-sample snd chn))
+          (rs (right-sample snd chn)))
+      (if (and (< ls 1000)
+               (> rs 1000))
+	  (let ((pos (x->position (/ 1000.0 (srate))))
+		(old-color (foreground-color)))
+	    (set! (foreground-color) (make-color .75 .75 .75))
+            (fill-rectangle pos 10 50 20)
+	    (set! (foreground-color) (make-color 1 0 0))
+	    (if new-font (set! (current-font) new-font))
+            (draw-string "hiho" (+ pos 5) 24)
+	    (set! (foreground-color) old-color))))))
 
 (if (or full-test (= snd-test 21) (and keep-going (<= snd-test 21)))
     (begin
@@ -29408,6 +29530,21 @@ EDITS: 2
 	      (snd-display ";channels=? of pad+set 0 err"))
 	  (if (not (channels=? ind1 0 ind2 0 .2))
 	      (snd-display ";channels=? of pad+set .2 err"))
+	  (add-comment 1234 "sample 1234" ind1 0)
+	  (let ((comments (show-comments ind1 0)))
+	    (update-time-graph)
+	    (if (null? comments) (snd-display ";add-comment failed?")))
+	  (display-db ind1 0)
+	  (display-samps-in-red ind1 0)
+	  (update-time-graph)
+	  (show-hiho ind1 0)
+	  (update-time-graph)
+	  (color-samples (highlight-color) 0 100 ind1 0)
+	  (update-time-graph)
+	  (power-env-channel (make-power-env '(0 0 .325  1 1 32.0 2 0 32.0) :duration 2.0))
+	  (update-time-graph)
+	  (show-disk-space ind1)
+	  (update-time-graph)
 	  (close-sound ind1)
 	  (close-sound ind2)))
 
@@ -42249,8 +42386,8 @@ EDITS: 2
 		 (list dpy win '(Atom 0) '(Colormap 0) 1.5 "/hiho" 1234 #f #\c '(Time 0) '(Font 0) (make-vector 0) '(Cursor 1))))
 	      (gc))
 	    ))
-
 	  )
+      (show-sounds-in-directory)
       (run-hook after-test-hook 25)
       ))
 

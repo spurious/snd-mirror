@@ -1879,9 +1879,9 @@ return the current transform sample at bin and slice in snd channel chn (assumin
   return(XEN_FALSE);
 }  
 
-static XEN g_transform_samples2vct(XEN snd_n, XEN chn_n, XEN v)
+static XEN g_transform_samples_to_vct(XEN snd_n, XEN chn_n, XEN v)
 {
-  #define H_transform_samples2vct "(" S_transform_samples2vct " (snd #f) (chn #f) (obj #f)): \
+  #define H_transform_samples_to_vct "(" S_transform_samples_to_vct " (snd #f) (chn #f) (obj #f)): \
 return a vct (obj if it's passed), with the current transform data from snd's channel chn"
 
   chan_info *cp;
@@ -1890,8 +1890,8 @@ return a vct (obj if it's passed), with the current transform data from snd's ch
   int i, j, k, len, bins, slices;
   Float *fvals;
   vct *v1 = get_vct(v);
-  ASSERT_CHANNEL(S_transform_samples2vct, snd_n, chn_n, 1);
-  cp = get_cp(snd_n, chn_n, S_transform_samples2vct);
+  ASSERT_CHANNEL(S_transform_samples_to_vct, snd_n, chn_n, 1);
+  cp = get_cp(snd_n, chn_n, S_transform_samples_to_vct);
   if ((cp->graph_transform_p) && (cp->fft))
     {
       if (cp->transform_graph_type == GRAPH_ONCE)
@@ -2000,14 +2000,14 @@ static XEN g_snd_transform(XEN type, XEN data, XEN hint)
 #ifdef XEN_ARGIFY_1
 XEN_ARGIFY_2(g_transform_samples_size_w, g_transform_samples_size)
 XEN_ARGIFY_4(g_transform_sample_w, g_transform_sample)
-XEN_ARGIFY_3(g_transform_samples2vct_w, g_transform_samples2vct)
+XEN_ARGIFY_3(g_transform_samples_to_vct_w, g_transform_samples_to_vct)
 XEN_NARGIFY_1(g_autocorrelate_w, g_autocorrelate)
 XEN_NARGIFY_5(g_add_transform_w, g_add_transform)
 XEN_ARGIFY_3(g_snd_transform_w, g_snd_transform)
 #else
 #define g_transform_samples_size_w g_transform_samples_size
 #define g_transform_sample_w g_transform_sample
-#define g_transform_samples2vct_w g_transform_samples2vct
+#define g_transform_samples_to_vct_w g_transform_samples_to_vct
 #define g_autocorrelate_w g_autocorrelate
 #define g_add_transform_w g_add_transform
 #define g_snd_transform_w g_snd_transform
@@ -2062,7 +2062,7 @@ an integer, it is used as the starting point of the transform."
 
   XEN_DEFINE_PROCEDURE(S_transform_samples_size, g_transform_samples_size_w, 0, 2, 0, H_transform_samples_size);
   XEN_DEFINE_PROCEDURE(S_transform_sample,       g_transform_sample_w,       0, 4, 0, H_transform_sample);
-  XEN_DEFINE_PROCEDURE(S_transform_samples2vct,  g_transform_samples2vct_w,  0, 3, 0, H_transform_samples2vct);
+  XEN_DEFINE_PROCEDURE(S_transform_samples_to_vct,  g_transform_samples_to_vct_w,  0, 3, 0, H_transform_samples_to_vct);
   XEN_DEFINE_PROCEDURE(S_autocorrelate,          g_autocorrelate_w,          1, 0, 0, H_autocorrelate);
   XEN_DEFINE_PROCEDURE(S_add_transform,          g_add_transform_w,          5, 0, 0, H_add_transform);
 

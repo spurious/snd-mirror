@@ -1208,7 +1208,7 @@ constants and functions described above into Scheme.
 </p>
 <pre>
 guile&gt; (define lib (<em class=red>dynamic-link</em> "/home/bil/sndlib/sndlib.so"))
-guile&gt; (<em class=red>dynamic-call</em> "mus_sndlib2xen_initialize" lib)
+guile&gt; (<em class=red>dynamic-call</em> "mus_sndlib_xen_initialize" lib)
 guile&gt; (<a class=quiet href="extsnd.html#soundsrate">mus-sound-srate</a> "/home/bil/cl/oboe.snd")
 22050
 guile&gt; (<em class=red>dynamic-call</em> "mus_xen_init" lib)
@@ -1216,7 +1216,7 @@ guile&gt; (define osc (<a class=quiet href="clm.html#make-oscil">make-oscil</a> 
 guile&gt; (<a class=quiet href="clm.html#oscil">oscil</a> osc)
 0.0
 </pre>
-<p>The first dynamic-call (mus_sndlib2xen_initialize) ties sndlib2xen.c into
+<p>The first dynamic-call (mus_sndlib_xen_initialize) ties sndlib2xen.c into
 Guile, and the second (mus_xen_init) ties clm2xen.c into Guile.  See bess.scm
 and bess.rb in the Snd tarball.
 </p>

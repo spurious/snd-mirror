@@ -399,7 +399,7 @@ void snd_doit(int argc, char **argv)
                (define (" S_make_color " . args) #f)\
                (define (" S_color_p " . args) #f)\
                (define (goto-listener-end) #f)\
-               (define (" S_color2list " .args) #f)");
+               (define (" S_color_to_list " .args) #f)");
 
   XEN_EVAL_C_STRING("(define " S_mouse_enter_graph_hook " (make-hook 2))\
                (define " S_mouse_leave_graph_hook " (make-hook 2))\
@@ -463,7 +463,7 @@ void snd_doit(int argc, char **argv)
   XEN_EVAL_C_STRING("def view_regions_dialog () false end");
   XEN_EVAL_C_STRING("def make_color (r g b) false end");
   XEN_EVAL_C_STRING("def color_p (a) false end");
-  XEN_EVAL_C_STRING("def color2list (a) false end");
+  XEN_EVAL_C_STRING("def color_to_list (a) false end");
   XEN_EVAL_C_STRING("def axis_info (s c a) false end");
   XEN_EVAL_C_STRING("def dialog_widgets () false end");
   XEN_EVAL_C_STRING("def channel_widgets (s c) false end");

@@ -244,7 +244,7 @@ static void text_field_activated(GtkWidget *w, gpointer context)
 	      set_sensitive(saveB, false);
 	      env_redisplay(); /* updates label */
 	    }
-	  else e = string2env(str);
+	  else e = string_to_env(str);
 	}
       if (e) 
 	{
@@ -559,9 +559,9 @@ static void enved_reset(void)
   set_enved_filter_order(DEFAULT_ENVED_FILTER_ORDER);
   if (active_env) active_env = free_env(active_env);
 #if HAVE_GUILE
-  active_env = string2env("'(0 0 1 0)");
+  active_env = string_to_env("'(0 0 1 0)");
 #else
-  active_env = string2env("[0, 0, 1, 0]");
+  active_env = string_to_env("[0, 0, 1, 0]");
 #endif
   set_enved_env_list_top(0);
   prepare_env_edit(active_env);

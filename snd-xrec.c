@@ -1225,7 +1225,7 @@ static void srate_changed_callback(Widget w, XtPointer context, XtPointer info)
   str = XmTextGetString(w); 
   if (str) 
     {
-      n = string2int(str);
+      n = string_to_int(str);
       if ((n > 0) && (n != rp->srate))
 	{
 	  rp->srate = n;
@@ -1244,7 +1244,7 @@ static void rec_size_changed_callback(Widget w, XtPointer context, XtPointer inf
   str = XmTextGetString(w); 
   if (str) 
     {
-      n = string2int(str);
+      n = string_to_int(str);
       if ((n > 0) && (n != rp->buffer_size)) set_record_size(n);
       XtFree(str);
     }
@@ -1593,7 +1593,7 @@ static void meter_button_callback(Widget w, XtPointer context, XtPointer info)
       str = XmTextGetString(recdat->chans_text); 
       if (str) 
 	{
-	  n = string2int(str);
+	  n = string_to_int(str);
 	  XtFree(str);
 	}
       else n = 0;

@@ -17,7 +17,7 @@ char *read_file_data_choices(file_data *fdat, int *srate, int *chans, int *type,
       str = (char *)gtk_entry_get_text(GTK_ENTRY(fdat->srate_text)); 
       if (str) 
 	{
-	  val = string2int(str);
+	  val = string_to_int(str);
 	  if (val > 0) (*srate) = val;
 	}
     }
@@ -26,7 +26,7 @@ char *read_file_data_choices(file_data *fdat, int *srate, int *chans, int *type,
       str = (char *)gtk_entry_get_text(GTK_ENTRY(fdat->chans_text)); 
       if (str) 
 	{
-	  val = string2int(str);
+	  val = string_to_int(str);
 	  if (val > 0) (*chans) = val;
 	}
     }
@@ -35,7 +35,7 @@ char *read_file_data_choices(file_data *fdat, int *srate, int *chans, int *type,
       str = (char *)gtk_entry_get_text(GTK_ENTRY(fdat->location_text)); 
       if (str)
 	{
-	  oval = string2off_t(str);
+	  oval = string_to_off_t(str);
 	  if (oval >= 0) (*location) = oval;
 	}
     }
@@ -44,7 +44,7 @@ char *read_file_data_choices(file_data *fdat, int *srate, int *chans, int *type,
       str = (char *)gtk_entry_get_text(GTK_ENTRY(fdat->samples_text)); 
       if (str)
 	{
-	  oval = string2off_t(str);
+	  oval = string_to_off_t(str);
 	  if (oval >= 0) (*samples) = oval;
 	}
     }
@@ -1667,19 +1667,19 @@ file_info *raw_data_dialog_to_file_info(const char *filename, const char *title)
   str = (char *)gtk_entry_get_text(GTK_ENTRY(raw_srate_text));
   if ((str) && (*str)) 
     {
-      sr = string2int(str);
+      sr = string_to_int(str);
       if (sr <= 0) sr = 1;
     }
   str = (char *)gtk_entry_get_text(GTK_ENTRY(raw_chans_text));
   if ((str) && (*str)) 
     {
-      oc = string2int(str);
+      oc = string_to_int(str);
       if (oc <= 0) oc = 1;
     }
   str = (char *)gtk_entry_get_text(GTK_ENTRY(raw_location_text));
   if ((str) && (*str)) 
     {
-      raw_data_location = string2int(str);
+      raw_data_location = string_to_int(str);
       if (raw_data_location < 0) raw_data_location = 0;
     }
   mus_header_set_raw_defaults(sr, oc, fr);

@@ -127,13 +127,13 @@
 #define S_mus_unsupported               "mus-unsupported"
 #define S_mus_voc                       "mus-voc"
 #define S_new_sound_hook                "new-sound-hook"
-#define S_sound_data2vct                "sound-data->vct"
+#define S_sound_data_to_vct             "sound-data->vct"
 #define S_sound_data_chans              "sound-data-chans"
 #define S_sound_data_length             "sound-data-length"
 #define S_sound_data_maxamp             "sound-data-maxamp"
 #define S_sound_data_p                  "sound-data?"
 #define S_sound_data_ref                "sound-data-ref"
 #define S_sound_data_setB               "sound-data-set!"
-#define S_vct2sound_data                "vct->sound-data"
+#define S_vct_to_sound_data             "vct->sound-data"
 
 #endif

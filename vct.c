@@ -494,26 +494,26 @@ static XEN vct_subseq(XEN vobj, XEN start, XEN end, XEN newv)
   return(xen_return_first(res, vobj, vnew));
 }
 
-static XEN list2vct(XEN lst)
+static XEN list_to_vct(XEN lst)
 {
-  #define H_list2vct "(" S_list2vct " lst): returns a new vct filled with elements of list lst"
+  #define H_list_to_vct "(" S_list_to_vct " lst): returns a new vct filled with elements of list lst"
   int len = 0, i;
   vct *v;
   XEN scv, lst1;
-  XEN_ASSERT_TYPE(XEN_LIST_P_WITH_LENGTH(lst, len), lst, XEN_ONLY_ARG, S_list2vct, "a list");
+  XEN_ASSERT_TYPE(XEN_LIST_P_WITH_LENGTH(lst, len), lst, XEN_ONLY_ARG, S_list_to_vct, "a list");
   if (len == 0) 
     return(XEN_FALSE);
   scv = make_vct(len, (Float *)CALLOC(len, sizeof(Float)));
   v = TO_VCT(scv);
   for (i = 0, lst1 = XEN_COPY_ARG(lst); i < len; i++, lst1 = XEN_CDR(lst1)) 
-    v->data[i] = (Float)XEN_TO_C_DOUBLE_WITH_CALLER(XEN_CAR(lst1), S_list2vct);
+    v->data[i] = (Float)XEN_TO_C_DOUBLE_WITH_CALLER(XEN_CAR(lst1), S_list_to_vct);
   return(xen_return_first(scv, lst));
 }
 
 static XEN g_vct(XEN args) 
 {
-  #define H_vct "(" S_vct " args...) returns a new vct with args as contents; same as " S_list2vct ": (vct 1 2 3)"
-  return(list2vct(args));
+  #define H_vct "(" S_vct " args...) returns a new vct with args as contents; same as " S_list_to_vct ": (vct 1 2 3)"
+  return(list_to_vct(args));
 }
 
 XEN mus_array_to_list(Float *arr, int i, int len)
@@ -525,23 +525,23 @@ XEN mus_array_to_list(Float *arr, int i, int len)
 		       XEN_EMPTY_LIST));
 }
 
-static XEN vct2list(XEN vobj)
+static XEN vct_to_list(XEN vobj)
 {
-  #define H_vct2list "(" S_vct2list " v): returns a new list with elements of vct v"
+  #define H_vct_to_list "(" S_vct_to_list " v): returns a new list with elements of vct v"
   vct *v;
-  XEN_ASSERT_TYPE(VCT_P(vobj), vobj, XEN_ONLY_ARG, S_vct2list, "a vct");
+  XEN_ASSERT_TYPE(VCT_P(vobj), vobj, XEN_ONLY_ARG, S_vct_to_list, "a vct");
   v = TO_VCT(vobj);
   return(xen_return_first(mus_array_to_list(v->data, 0, v->length), vobj));
 }
 
-static XEN vector2vct(XEN vect)
+static XEN vector_to_vct(XEN vect)
 {
-  #define H_vector2vct "(" S_vector2vct " vect): returns a new vct with the elements of vector vect"
+  #define H_vector_to_vct "(" S_vector_to_vct " vect): returns a new vct with the elements of vector vect"
   int len, i;
   vct *v;
   XEN *vdata;
   XEN scv;
-  XEN_ASSERT_TYPE(XEN_VECTOR_P(vect), vect, XEN_ONLY_ARG, S_vector2vct, "a vector");
+  XEN_ASSERT_TYPE(XEN_VECTOR_P(vect), vect, XEN_ONLY_ARG, S_vector_to_vct, "a vector");
   len = XEN_VECTOR_LENGTH(vect);
   if (len == 0) return(XEN_FALSE);
   scv = make_vct(len, (Float *)CALLOC(len, sizeof(Float)));
@@ -552,14 +552,14 @@ static XEN vector2vct(XEN vect)
   return(xen_return_first(scv, vect));
 }
 
-static XEN vct2vector(XEN vobj)
+static XEN vct_to_vector(XEN vobj)
 {
-  #define H_vct2vector "(" S_vct2vector " vct): returns a new vector with the elements of vct"
+  #define H_vct_to_vector "(" S_vct_to_vector " vct): returns a new vector with the elements of vct"
   vct *v;
   int i, len;
   XEN new_vect;
   XEN *vdata;
-  XEN_ASSERT_TYPE(VCT_P(vobj), vobj, XEN_ONLY_ARG, S_vct2vector, "a vct");
+  XEN_ASSERT_TYPE(VCT_P(vobj), vobj, XEN_ONLY_ARG, S_vct_to_vector, "a vct");
   v = TO_VCT(vobj);
   len = v->length;
   new_vect = XEN_MAKE_VECTOR(len, C_TO_XEN_DOUBLE(0.0));
@@ -585,10 +585,10 @@ static XEN vct2vector(XEN vobj)
 XEN_ARGIFY_2(g_make_vct_w, g_make_vct)
 XEN_NARGIFY_1(copy_vct_w, copy_vct)
 XEN_NARGIFY_1(g_vct_p_w, g_vct_p)
-XEN_NARGIFY_1(list2vct_w, list2vct)
-XEN_NARGIFY_1(vct2list_w, vct2list)
-XEN_NARGIFY_1(vector2vct_w, vector2vct)
-XEN_NARGIFY_1(vct2vector_w, vct2vector)
+XEN_NARGIFY_1(list_to_vct_w, list_to_vct)
+XEN_NARGIFY_1(vct_to_list_w, vct_to_list)
+XEN_NARGIFY_1(vector_to_vct_w, vector_to_vct)
+XEN_NARGIFY_1(vct_to_vector_w, vct_to_vector)
 XEN_NARGIFY_1(vct_length_w, vct_length)
 XEN_NARGIFY_2(vct_ref_w, vct_ref)
 XEN_NARGIFY_3(vct_set_w, vct_set)
@@ -607,10 +607,10 @@ XEN_VARGIFY(g_vct_w, g_vct)
 #define g_make_vct_w g_make_vct
 #define copy_vct_w copy_vct
 #define g_vct_p_w g_vct_p
-#define list2vct_w list2vct
-#define vct2list_w vct2list
-#define vector2vct_w vector2vct
-#define vct2vector_w vct2vector
+#define list_to_vct_w list_to_vct
+#define vct_to_list_w vct_to_list
+#define vector_to_vct_w vector_to_vct
+#define vct_to_vector_w vct_to_vector
 #define vct_length_w vct_length
 #define vct_ref_w vct_ref
 #define vct_set_w vct_set
@@ -695,10 +695,10 @@ void init_vct(void)
   XEN_DEFINE_PROCEDURE(S_make_vct,      g_make_vct_w,   1, 1, 0, H_make_vct);
   XEN_DEFINE_PROCEDURE(S_vct_copy,      copy_vct_w,     1, 0, 0, H_vct_copy);
   XEN_DEFINE_PROCEDURE(S_vct_p,         g_vct_p_w,      1, 0, 0, H_vct_p);
-  XEN_DEFINE_PROCEDURE(S_list2vct,      list2vct_w,     1, 0, 0, H_list2vct);
-  XEN_DEFINE_PROCEDURE(S_vct2list,      vct2list_w,     1, 0, 0, H_vct2list);
-  XEN_DEFINE_PROCEDURE(S_vector2vct,    vector2vct_w,   1, 0, 0, H_vector2vct);
-  XEN_DEFINE_PROCEDURE(S_vct2vector,    vct2vector_w,   1, 0, 0, H_vct2vector);
+  XEN_DEFINE_PROCEDURE(S_list_to_vct,      list_to_vct_w,     1, 0, 0, H_list_to_vct);
+  XEN_DEFINE_PROCEDURE(S_vct_to_list,      vct_to_list_w,     1, 0, 0, H_vct_to_list);
+  XEN_DEFINE_PROCEDURE(S_vector_to_vct,    vector_to_vct_w,   1, 0, 0, H_vector_to_vct);
+  XEN_DEFINE_PROCEDURE(S_vct_to_vector,    vct_to_vector_w,   1, 0, 0, H_vct_to_vector);
   XEN_DEFINE_PROCEDURE(S_vct_length,    vct_length_w,   1, 0, 0, H_vct_length);
   XEN_DEFINE_PROCEDURE(S_vct_multiplyB, vct_multiply_w, 2, 0, 0, H_vct_multiplyB);
   XEN_DEFINE_PROCEDURE(S_vct_scaleB,    vct_scale_w,    2, 0, 0, H_vct_scaleB);
@@ -729,10 +729,10 @@ void init_vct(void)
   scm_c_export(S_make_vct,
 	       S_vct_copy,
 	       S_vct_p,
-	       S_list2vct,
-	       S_vct2list,
-	       S_vector2vct,
-	       S_vct2vector,
+	       S_list_to_vct,
+	       S_vct_to_list,
+	       S_vector_to_vct,
+	       S_vct_to_vector,
 	       S_vct_length,
 	       S_vct_multiplyB,
 	       S_vct_scaleB,

@@ -25,7 +25,7 @@ bool sound_data_equalp(sound_data *v1, sound_data *v2);
 sound_data *c_make_sound_data(int chans, int frames);
 XEN make_sound_data(int chans, int frames);
 void mus_misc_error(const char *caller, char *msg, XEN val);
-void mus_sndlib2xen_initialize (void);
+void mus_sndlib_xen_initialize (void);
 XEN wrap_sound_data(int chans, int frames, mus_sample_t **data);
 char *mus_header_type_to_constant_name(int type);
 char *mus_data_format_to_constant_name(int format);

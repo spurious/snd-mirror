@@ -1742,9 +1742,9 @@ chan_info *get_cp(XEN x_snd_n, XEN x_chn_n, const char *caller)
 
 /* -------- random stuff that hasn't been moved to a more logical place -------- */
 
-static XEN g_samples2sound_data(XEN samp_0, XEN samps, XEN snd_n, XEN chn_n, XEN sdobj, XEN edpos, XEN sdchan)
+static XEN g_samples_to_sound_data(XEN samp_0, XEN samps, XEN snd_n, XEN chn_n, XEN sdobj, XEN edpos, XEN sdchan)
 {
-  #define H_samples2sound_data "(" S_samples2sound_data " (start-samp 0) (samps len) (snd #f) (chn #f) (sdobj #f) (edpos #f) (sdobj-chan 0)): \
+  #define H_samples_to_sound_data "(" S_samples_to_sound_data " (start-samp 0) (samps len) (snd #f) (chn #f) (sdobj #f) (edpos #f) (sdobj-chan 0)): \
 return a sound-data object (sdobj if given) containing snd channel chn's data starting at start-samp for samps, \
 reading edit version edpos"
 
@@ -1754,13 +1754,13 @@ reading edit version edpos"
   XEN newsd = XEN_FALSE;
   int i, len, chn = 0, pos, maxlen = 0;
   off_t beg;
-  XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(samp_0), samp_0, XEN_ARG_1, S_samples2sound_data, "a number");
-  XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(samps), samps, XEN_ARG_2, S_samples2sound_data, "a number");
-  ASSERT_CHANNEL(S_samples2sound_data, snd_n, chn_n, 3);
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(sdchan), sdchan, XEN_ARG_7, S_samples2sound_data, "an integer");
-  cp = get_cp(snd_n, chn_n, S_samples2sound_data);
-  pos = to_c_edit_position(cp, edpos, S_samples2sound_data, 6);
-  beg = beg_to_sample(samp_0, S_samples2sound_data);
+  XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(samp_0), samp_0, XEN_ARG_1, S_samples_to_sound_data, "a number");
+  XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(samps), samps, XEN_ARG_2, S_samples_to_sound_data, "a number");
+  ASSERT_CHANNEL(S_samples_to_sound_data, snd_n, chn_n, 3);
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(sdchan), sdchan, XEN_ARG_7, S_samples_to_sound_data, "an integer");
+  cp = get_cp(snd_n, chn_n, S_samples_to_sound_data);
+  pos = to_c_edit_position(cp, edpos, S_samples_to_sound_data, 6);
+  beg = beg_to_sample(samp_0, S_samples_to_sound_data);
   maxlen = (int)(cp->samples[pos] - beg);
   len = XEN_TO_C_INT_OR_ELSE(samps, maxlen);
   if (len > maxlen) len = maxlen;
@@ -1768,7 +1768,7 @@ reading edit version edpos"
     {
       chn = XEN_TO_C_INT_OR_ELSE(sdchan, 0);
       if (chn < 0)
-	XEN_OUT_OF_RANGE_ERROR(S_samples2sound_data, 7, sdchan, "sound-data channel ~A < 0?");
+	XEN_OUT_OF_RANGE_ERROR(S_samples_to_sound_data, 7, sdchan, "sound-data channel ~A < 0?");
       if (sound_data_p(sdobj))
 	sd = (sound_data *)XEN_OBJECT_REF(sdobj);
       else
@@ -1776,7 +1776,7 @@ reading edit version edpos"
 	  newsd = make_sound_data(chn + 1, len);
 	  sd = (sound_data *)XEN_OBJECT_REF(newsd);
 	  if ((sd->data == NULL) || (sd->data[chn] == NULL))
-	    mus_misc_error(S_samples2sound_data, "sound_data memory allocation trouble", newsd);
+	    mus_misc_error(S_samples_to_sound_data, "sound_data memory allocation trouble", newsd);
 	}
       if (chn < sd->chans)
 	{
@@ -1789,14 +1789,14 @@ reading edit version edpos"
 	      free_snd_fd(sf);
 	    }
 	}
-      else XEN_OUT_OF_RANGE_ERROR(S_samples2sound_data, 7, sdchan, "sound-data channel ~A > available chans");
+      else XEN_OUT_OF_RANGE_ERROR(S_samples_to_sound_data, 7, sdchan, "sound-data channel ~A > available chans");
     }
   if (XEN_NOT_FALSE_P(newsd))
     return(newsd);
   return(sdobj);
 }
 
-Float string2Float(char *str) 
+Float string_to_Float(char *str) 
 {
 #if HAVE_EXTENSION_LANGUAGE
   XEN res;
@@ -1812,7 +1812,7 @@ Float string2Float(char *str)
 #endif
 }
 
-int string2int(char *str) 
+int string_to_int(char *str) 
 {
 #if HAVE_EXTENSION_LANGUAGE
   XEN res;
@@ -1828,7 +1828,7 @@ int string2int(char *str)
 #endif
 }
 
-off_t string2off_t(char *str) 
+off_t string_to_off_t(char *str) 
 {
 #if HAVE_EXTENSION_LANGUAGE
   XEN res;
@@ -2669,7 +2669,7 @@ XEN_NARGIFY_1(g_yes_or_no_p_w, g_yes_or_no_p)
 XEN_NARGIFY_0(g_abort_w, g_abort)
 XEN_NARGIFY_0(g_abortq_w, g_abortq)
 XEN_NARGIFY_0(g_snd_version_w, g_snd_version)
-XEN_ARGIFY_7(g_samples2sound_data_w, g_samples2sound_data)
+XEN_ARGIFY_7(g_samples_to_sound_data_w, g_samples_to_sound_data)
 XEN_NARGIFY_1(g_snd_print_w, g_snd_print)
 XEN_NARGIFY_0(g_little_endian_w, g_little_endian)
 XEN_NARGIFY_1(g_snd_completion_w, g_snd_completion)
@@ -2835,7 +2835,7 @@ XEN_NARGIFY_2(g_fmod_w, g_fmod)
 #define g_abort_w g_abort
 #define g_abortq_w g_abortq
 #define g_snd_version_w g_snd_version
-#define g_samples2sound_data_w g_samples2sound_data
+#define g_samples_to_sound_data_w g_samples_to_sound_data
 #define g_snd_print_w g_snd_print
 #define g_little_endian_w g_little_endian
 #define g_snd_completion_w g_snd_completion
@@ -3120,7 +3120,7 @@ void g_initialize_gh(void)
   XEN_DEFINE_PROCEDURE(S_abort,                 g_abort_w,                 0, 0, 0, H_abort);
   XEN_DEFINE_PROCEDURE(S_c_g,                   g_abortq_w,                0, 0, 0, H_abortQ);
   XEN_DEFINE_PROCEDURE(S_snd_version,           g_snd_version_w,           0, 0, 0, H_snd_version);
-  XEN_DEFINE_PROCEDURE(S_samples2sound_data,    g_samples2sound_data_w,    0, 7, 0, H_samples2sound_data);
+  XEN_DEFINE_PROCEDURE(S_samples_to_sound_data,    g_samples_to_sound_data_w,    0, 7, 0, H_samples_to_sound_data);
   XEN_DEFINE_PROCEDURE(S_snd_print,             g_snd_print_w,             1, 0, 0, H_snd_print);
   XEN_DEFINE_PROCEDURE("little-endian?",        g_little_endian_w,         0, 0, 0, "return #t if host is little endian");
   XEN_DEFINE_PROCEDURE("fmod",                  g_fmod_w,                  2, 0, 0, "C's fmod");

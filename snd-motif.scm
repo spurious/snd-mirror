@@ -16,7 +16,7 @@
 ;;; (make-channel-drop-site snd chn) -- add a drop site
 ;;; (set-channel-drop drop snd chn) -- change given graph drop callback to drop
 ;;; (select-file func #:optional title dir filter help) starts a Snd-like File Selection Dialog running func if a file is selected
-;;; (show-disk-space) adds a label to the minibuffer area showing the current free space 
+;;; (show-disk-space snd) adds a label to the minibuffer area showing the current free space 
 ;;; (keep-file-dialog-open-upon-ok) changes File:Open so that clicking "ok" does not "unmanage" the dialog
 ;;;   also keep-mix-file-dialog-open-upon-ok
 ;;; (use-pan-mix-in-mix-menu) changes the File:Mix menu Ok callback to use pan-mix rather than mix

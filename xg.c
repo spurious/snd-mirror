@@ -324,8 +324,6 @@ XM_TYPE_PTR(GtkTreeView_, GtkTreeView*)
 XM_TYPE_PTR(GtkTreeViewColumn_, GtkTreeViewColumn*)
 XM_TYPE_PTR(GtkCellRenderer_, GtkCellRenderer*)
 XM_TYPE_PTR(GtkTreeSelection_, GtkTreeSelection*)
-XM_TYPE_PTR(GtkFileFilterInfo_, GtkFileFilterInfo*)
-XM_TYPE_PTR(GtkEntryCompletion_, GtkEntryCompletion*)
 #define C_TO_XEN_GType(Arg) C_TO_XEN_ULONG(Arg)
 #define XEN_TO_C_GType(Arg) (GType)(XEN_TO_C_ULONG(Arg))
 #define XEN_GType_P(Arg) XEN_ULONG_P(Arg)
@@ -880,6 +878,8 @@ XM_TYPE_PTR(GdkScreen_, GdkScreen*)
 #endif
 
 #if HAVE_GTK_FILE_CHOOSER_DIALOG_NEW
+XM_TYPE_PTR(GtkFileFilterInfo_, GtkFileFilterInfo*)
+XM_TYPE_PTR(GtkEntryCompletion_, GtkEntryCompletion*)
 #define C_TO_XEN_GtkCalendarDisplayOptions(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GtkCalendarDisplayOptions(Arg) (GtkCalendarDisplayOptions)(XEN_TO_C_INT(Arg))
 #define XEN_GtkCalendarDisplayOptions_P(Arg) XEN_INTEGER_P(Arg)
@@ -29696,10 +29696,10 @@ static bool xg_already_inited = false;
       define_strings();
       XEN_YES_WE_HAVE("xg");
 #if HAVE_GUILE
-      XEN_EVAL_C_STRING("(define xm-version \"13-Apr-04\")");
+      XEN_EVAL_C_STRING("(define xm-version \"14-Apr-04\")");
 #endif
 #if HAVE_RUBY
-      rb_define_global_const("Xm_Version", C_TO_XEN_STRING("13-Apr-04"));
+      rb_define_global_const("Xm_Version", C_TO_XEN_STRING("14-Apr-04"));
 #endif
       xg_already_inited = true;
 #if WITH_GTK_AND_X11

@@ -328,7 +328,7 @@ static void id_activated(GtkWidget *w, gpointer context)
   val = (char *)gtk_entry_get_text(GTK_ENTRY(w_id));
   if (val)
     {
-      id = string2int(val);
+      id = string_to_int(val);
       if (mix_ok_and_unlocked(id)) 
 	{
 	  mix_dialog_id = id;
@@ -360,7 +360,7 @@ static void beg_activated(GtkWidget *w, gpointer context)
       char *up_to_colon;
       up_to_colon = string_to_colon(val);
       cp = mix_dialog_mix_channel(mix_dialog_id);
-      set_mix_position(mix_dialog_id, (off_t)(string2Float(up_to_colon) * SND_SRATE(cp->sound)));
+      set_mix_position(mix_dialog_id, (off_t)(string_to_Float(up_to_colon) * SND_SRATE(cp->sound)));
       FREE(up_to_colon);
       update_mix_dialog(mix_dialog_id);
     }
@@ -376,7 +376,7 @@ static void mix_track_activated(GtkWidget *w, gpointer context)
   if (val)
     {
       int trk;
-      trk = string2int(val);
+      trk = string_to_int(val);
       if (trk >= 0)
 	mix_dialog_set_mix_track(mix_dialog_id, trk);
       else
@@ -1380,7 +1380,7 @@ static void track_id_activated(GtkWidget *w, gpointer context)
   val = (char *)gtk_entry_get_text(GTK_ENTRY(w_track_id));
   if (val)
     {
-      id = string2int(val);
+      id = string_to_int(val);
       if (track_p(id)) 
 	{
 	  track_dialog_id = id;
@@ -1436,7 +1436,7 @@ static void track_beg_activated(GtkWidget *w, gpointer context)
 	  Float beg;
 	  char *up_to_colon;
 	  up_to_colon = string_to_colon(val);
-	  beg = string2Float(up_to_colon);
+	  beg = string_to_Float(up_to_colon);
 	  FREE(up_to_colon);
 	  if (beg >= 0.0)
 	    {
@@ -1467,7 +1467,7 @@ static void track_track_activated(GtkWidget *w, gpointer context)
   if (val)
     {
       int id;
-      id = string2int(val);
+      id = string_to_int(val);
       if (id >= 0)
 	{
 	  if ((id == track_dialog_id) ||

@@ -1084,8 +1084,8 @@ If it returns a function (of no arguments), that function is called rather than 
 	   (lambda (snd chn)
 	     (lambda ()
 	       (<a class=quiet href="#drawstring">draw-string</a> "hi" 
-			    (<a class=quiet href="#x2position">x-&gt;position</a> 0.5 snd chn <a class=quiet href="#y2position">lisp-graph</a>) 
-			    (<a class=quiet href="#y2position">y-&gt;position</a> 0.0 snd chn <a class=quiet href="#y2position">lisp-graph</a>)
+			    (<a class=quiet href="#x_to_position">x-&gt;position</a> 0.5 snd chn <a class=quiet href="#y_to_position">lisp-graph</a>) 
+			    (<a class=quiet href="#y_to_position">y-&gt;position</a> 0.0 snd chn <a class=quiet href="#y_to_position">lisp-graph</a>)
 			    snd chn))))
 </pre></td></tr></table></td></tr>
 <tr><td colspan=3></td></tr>
@@ -1275,8 +1275,8 @@ See the <i>current-window-location</i> procedures in draw.scm.  Here's a simpler
 <table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (define (click-to-center snd chn button state x y axis)
   ;; if mouse click in time domain graph, set cursor as normally, but also center the window
-  (if (= axis <a class=quiet href="#y2position">time-graph</a>)
-      (let ((samp (inexact-&gt;exact (* (<a class=quiet href="#srate">srate</a> snd) (<a class=quiet href="#position2x">position-&gt;x</a> x snd chn)))))
+  (if (= axis <a class=quiet href="#y_to_position">time-graph</a>)
+      (let ((samp (inexact-&gt;exact (* (<a class=quiet href="#srate">srate</a> snd) (<a class=quiet href="#position_to_x">position-&gt;x</a> x snd chn)))))
 	(set! (<a class=quiet href="#cursor">cursor</a> snd chn) samp)
 	(set! (<a class=quiet href="#rightsample">right-sample</a> snd chn) 
           (- samp (inexact-&gt;exact (* .5 (- (<a class=quiet href="#leftsample">left-sample</a> snd chn) (<a class=quiet href="#rightsample">right-sample</a> snd chn))))))
@@ -1289,7 +1289,7 @@ See the <i>current-window-location</i> procedures in draw.scm.  Here's a simpler
 ;;; this example disables button 2 -&gt; insert selection
 (add-hook! mouse-click-hook
   (lambda (snd chn button state x y axis)
-    (and (= axis <a class=quiet href="#y2position">time-graph</a>) (= button 2))))
+    (and (= axis <a class=quiet href="#y_to_position">time-graph</a>) (= button 2))))
 </pre></td></tr></table></td></tr>
 <tr><td colspan=3></td></tr>
 
@@ -1421,7 +1421,7 @@ called when the mouse leaves a text widget.
 <tr><td></td><td colspan=2>
 called upon a mouse button press within the lisp graph (see enved.scm).  The x and y values are 
 relative to the lisp graph axis (as if the raw mouse pixel position was passed through
-<a href="#position2x">position-&gt;x</a> and <a href="#position2y">position-&gt;y</a>).
+<a href="#position_to_x">position-&gt;x</a> and <a href="#position_to_y">position-&gt;y</a>).
 </td></tr>
 <tr><td colspan=3></td></tr>
 
@@ -1887,7 +1887,7 @@ called just after an FFT (or spectrum) is calculated.
   (if (and (<a class=quiet href="#transformgraphp">transform-graph?</a>) 
            (= (<a class=quiet href="#transformgraphtype">transform-graph-type</a>) <a class=quiet href="#transformgraphtype">graph-once</a>))
       (<a class=quiet href="#reportinminibuffer">report-in-minibuffer</a> 
-        (number-&gt;string (/ (* 2 (<a class=quiet href="#vctpeak">vct-peak</a> (<a class=quiet href="#transformsamples2vct">transform-samples-&gt;vct</a> snd chn))) 
+        (number-&gt;string (/ (* 2 (<a class=quiet href="#vctpeak">vct-peak</a> (<a class=quiet href="#transformsamples_to_vct">transform-samples-&gt;vct</a> snd chn))) 
                            (<a class=quiet href="#lfftsize">transform-size</a> snd chn))))))
 (add-hook! <em class=red>transform-hook</em> fft-peak)
 </pre></td></tr></table>
@@ -2113,7 +2113,7 @@ functions:</p>
 <table border=0 cellspacing=5>
 
 <!-- list->vct -->
-<tr><td colspan=2><code><a class=def name="list2vct">list-&gt;vct</a> (lst)</code></td></tr>
+<tr><td colspan=2><code><a class=def name="list_to_vct">list-&gt;vct</a> (lst)</code></td></tr>
 <tr><td width=50></td><td>return vct with elements of list <i>lst</i>. Equivalent to <code>(apply vct lst)</code>.</td></tr>
 
 <!-- make-vct -->
@@ -2126,7 +2126,7 @@ functions:</p>
 
 <!-- vct -->
 <tr><td colspan=2><code><a class=def name="vct">vct</a> args...</code></td></tr>
-<tr><td></td><td>list-&gt;vct with args as the list: <code>(vct 1 2 3)</code> = <code>(<a class=quiet href="#list2vct">list-&gt;vct</a> '(1 2 3))</code></td></tr>
+<tr><td></td><td>list-&gt;vct with args as the list: <code>(vct 1 2 3)</code> = <code>(<a class=quiet href="#list_to_vct">list-&gt;vct</a> '(1 2 3))</code></td></tr>
 
 <!-- vct? -->
 <tr><td colspan=2><code><a class=def name="vctp">vct?</a> (v)</code></td></tr>
@@ -2196,22 +2196,22 @@ is the same as <code>(<a class=quiet href="#vctfill">vct-fill!</a> v 3.0)</code>
 to the end of <i>v</i>.</td></tr>
 
 <!-- vct->channel -->
-<tr><td colspan=2><code><a class=def name="vct2channel">vct-&gt;channel</a> (v (beg 0) (dur len) (snd #f) (chn #f) (edpos #f))</code></td></tr>
+<tr><td colspan=2><code><a class=def name="vct_to_channel">vct-&gt;channel</a> (v (beg 0) (dur len) (snd #f) (chn #f) (edpos #f))</code></td></tr>
 <tr><td></td><td>
 set the samples from <i>beg</i> to <i>beg+dur</i> from the values in <i>v</i>.
-This is the <a class=quiet href="#regularizedargs">regularized</a> version of <a href="#vct2samples">vct-&gt;samples</a>.
+This is the <a class=quiet href="#regularizedargs">regularized</a> version of <a href="#vct_to_samples">vct-&gt;samples</a>.
 </td></tr>
 
 <!-- vct->list -->
-<tr><td colspan=2><code><a class=def name="vct2list">vct-&gt;list</a> (v)</code></td></tr>
+<tr><td colspan=2><code><a class=def name="vct_to_list">vct-&gt;list</a> (v)</code></td></tr>
 <tr><td></td><td>return list with elements of <i>v</i></td></tr>
 
 <!-- vct->samples -->
-<tr><td colspan=2><code><a class=def name="vct2samples">vct-&gt;samples</a> (samp samps data (snd #f) (chn #f))</code></td></tr>
+<tr><td colspan=2><code><a class=def name="vct_to_samples">vct-&gt;samples</a> (samp samps data (snd #f) (chn #f))</code></td></tr>
 <tr><td></td><td>A synonym for <a href="#setsamples">set-samples</a>, but you can also pass just a vct as the first argument, or a start
-sample and a vct as the second argument.  This is too confusing!  Use <a href="#vct2channel">vct-&gt;channel</a> instead.
+sample and a vct as the second argument.  This is too confusing!  Use <a href="#vct_to_channel">vct-&gt;channel</a> instead.
 <code>
-(vct-&gt;samples (<a class=quiet href="#vctscale">vct-scale!</a> (<a class=quiet href="#samples2vct">samples-&gt;vct</a>) 2.0))
+(vct-&gt;samples (<a class=quiet href="#vctscale">vct-scale!</a> (<a class=quiet href="#samples_to_vct">samples-&gt;vct</a>) 2.0))
 </code></td></tr>
 
 <!-- vct->sound-data -->
@@ -2224,11 +2224,11 @@ sample and a vct as the second argument.  This is too confusing!  Use <a href="#
 <td>write <i>vals</i> floats from <i>v</i> to <i>fd</i>.  This is intended for use with <a href="#opensoundfile">open-sound-file</a></td></tr>
 
 <!-- vct-&gt;vector -->
-<tr><td colspan=2><code><a class=def name="vct2vector">vct-&gt;vector</a> (v)</code></td></tr>
+<tr><td colspan=2><code><a class=def name="vct_to_vector">vct-&gt;vector</a> (v)</code></td></tr>
 <tr><td></td><td>return vector with elements of <i>v</i></td></tr>
 
 <!-- vector-&gt;vct -->
-<tr><td colspan=2><code><a class=def name="vector2vct">vector-&gt;vct</a> (vect)</code></td></tr>
+<tr><td colspan=2><code><a class=def name="vector_to_vct">vector-&gt;vct</a> (vect)</code></td></tr>
 <tr><td></td><td>return vct with elements of vector <i>vect</i></td></tr>
 
 </table>
@@ -2236,14 +2236,14 @@ sample and a vct as the second argument.  This is too confusing!  Use <a href="#
 <p>Many of the functions described below can take a vct as an argument; 
 there are also several functions that create and fill vcts with data:</p>
 <pre>
-  <a href="#regionsamples2vct">region-samples-&gt;vct</a>
-  <a href="#samples2vct">samples-&gt;vct</a>
-  <a href="#transformsamples2vct">transform-samples-&gt;vct</a>
-  <a href="#channel2vct">channel-&gt;vct</a>
+  <a href="#regionsamples_to_vct">region-samples-&gt;vct</a>
+  <a href="#samples_to_vct">samples-&gt;vct</a>
+  <a href="#transformsamples_to_vct">transform-samples-&gt;vct</a>
+  <a href="#channel_to_vct">channel-&gt;vct</a>
   <a href="sndscm.html#mix2vct">mix-&gt;vct</a>
   <a href="#sounddata2vct">sound-data-&gt;vct</a>
   <a href="sndscm.html#track2vct">track-&gt;vct</a>
-  <a href="#vector2vct">vector-&gt;vct</a>
+  <a href="#vector_to_vct">vector-&gt;vct</a>
   <a href="#selection2vct">selection-&gt;vct</a>
 </pre>
 <p>There is one slightly
@@ -2670,7 +2670,7 @@ data is:</p>
    ...
    (<a class=quiet href="#vctmap">vct-map!</a> out-data (lambda () (+ (<a class=quiet href="#readsample">read-sample</a> sf) &lt;new stuff&gt;)))
    (<a class=quiet href="#freesamplereader">free-sample-reader</a> sf)
-   (<a class=quiet href="#vct2samples">vct-&gt;samples</a> start len out-data)
+   (<a class=quiet href="#vct_to_samples">vct-&gt;samples</a> start len out-data)
 </pre>
 <p>This is equivalent to the clm call</p>
 <pre>
@@ -2709,10 +2709,10 @@ copy mix: <a href="#copymix">copy-mix</a><br>
 copy track: <a href="#copytrack">copy-track</a><br>
 copy sample reader: <a href="#copysamplereader">copy-sample-reader</a><br>
 copy (clone) current sound edit state: <a href="#clonesoundas">clone-sound-as</a><br>
-copy channel data: <a href="#channel2vct">channel-&gt;vct</a> or <a href="#savesoundas">save-sound-as</a><br>
+copy channel data: <a href="#channel_to_vct">channel-&gt;vct</a> or <a href="#savesoundas">save-sound-as</a><br>
 copy selection data: <a href="#selection2vct">selection-&gt;vct</a> or <a href="#saveselection">save-selection</a><br>
-copy region data: <a href="#region2vct">region-&gt;vct</a>, <a href="#regionsamples2vct">region-samples-&gt;vct</a>, or <a href="#saveregion">save-region</a><br>
-copy transform data: <a href="#transformsamples2vct">transform-samples-&gt;vct</a><br>
+copy region data: <a href="#region2vct">region-&gt;vct</a>, <a href="#regionsamples_to_vct">region-samples-&gt;vct</a>, or <a href="#saveregion">save-region</a><br>
+copy transform data: <a href="#transformsamples_to_vct">transform-samples-&gt;vct</a><br>
 copy sound-data: <a href="#sounddata2vct">sound-data-&gt;vct</a><br>
 <br>
 </small></blockquote>
@@ -2873,41 +2873,41 @@ files; I'm not sure these have any real use after all.
 
 <table border=0 cellspacing=10>
 
-<!-- makesnd2sample -->
-<tr><td colspan=2><code><a class=def name="makesnd2sample">make-snd-&gt;sample</a> (<i>snd edpos</i>)</code></td></tr>
+<!-- makesnd_to_sample -->
+<tr><td colspan=2><code><a class=def name="makesnd_to_sample">make-snd-&gt;sample</a> (<i>snd edpos</i>)</code></td></tr>
 <tr><td width=50><br></td>
 <td>create a Snd data reader for CLM's in-any, file-&gt;sample, etc.
 </td></tr>
 
-<!-- makexen2sample -->
-<tr><td colspan=2><code><a class=def name="makexen2sample">make-xen-&gt;sample</a> (reader)</code></td></tr>
+<!-- makexen_to_sample -->
+<tr><td colspan=2><code><a class=def name="makexen_to_sample">make-xen-&gt;sample</a> (reader)</code></td></tr>
 <tr><td><br></td>
 <td>create a function-based input method for CLM's input generators. <i>reader</i> is a function
 of two arguments, the sample and the channel (much as in <a href="clm.html#ina">ina</a>).
 </td></tr>
 
-<!-- snd2sample -->
-<tr><td colspan=2><code><a class=def name="snd2sample">snd-&gt;sample</a> (gen frame <i>chan</i>)</code></td></tr>
+<!-- snd_to_sample -->
+<tr><td colspan=2><code><a class=def name="snd_to_sample">snd-&gt;sample</a> (gen frame <i>chan</i>)</code></td></tr>
 <tr><td><br></td>
 <td>Return the next sample from the data accessed by <i>gen</i>, similar to file-&gt;sample.
 If *reverb* is a snd-&gt;sample generator, for example,
 <a class=quiet href="clm.html#ina">ina</a> and <a class=quiet href="clm.html#file-&gt;sample">file-&gt;sample</a> actually call snd-&gt;sample.
 </td></tr>
 
-<!-- snd2samplep -->
-<tr><td colspan=2><code><a class=def name="snd2samplep">snd-&gt;sample?</a> (obj)</code></td></tr>
+<!-- snd_to_samplep -->
+<tr><td colspan=2><code><a class=def name="snd_to_samplep">snd-&gt;sample?</a> (obj)</code></td></tr>
 <tr><td><br></td>
 <td>#t if <i>obj</i> is a snd-&gt;sample generator.
 </td></tr>
 
-<!-- xen2sample -->
-<tr><td colspan=2><code><a class=def name="xen2sample">xen-&gt;sample</a> (gen frame <i>chan</i>)</code></td></tr>
+<!-- xen_to_sample -->
+<tr><td colspan=2><code><a class=def name="xen_to_sample">xen-&gt;sample</a> (gen frame <i>chan</i>)</code></td></tr>
 <tr><td><br></td>
 <td>Similar to snd-&gt;sample, but the accessor is a xen-&gt;sample generator.
 </td></tr>
 
-<!-- xen2samplep -->
-<tr><td colspan=2><code><a class=def name="xen2samplep">xen-&gt;sample?</a> (obj)</code></td></tr>
+<!-- xen_to_samplep -->
+<tr><td colspan=2><code><a class=def name="xen_to_samplep">xen-&gt;sample?</a> (obj)</code></td></tr>
 <tr><td><br></td>
 <td>#t if <i>obj</i> is a xen-&gt;sample generator.
 </td></tr>
@@ -3621,7 +3621,7 @@ value of sample <i>samp</i> in region <i>reg</i> in channel <i>chn</i>.
 </td></tr>
 
 <!-- region-samples->vct -->
-<tr><td colspan=2><code><a class=def name="regionsamples2vct">region-samples-&gt;vct</a> (<i>samp samps reg chn v</i>)</code></td></tr>
+<tr><td colspan=2><code><a class=def name="regionsamples_to_vct">region-samples-&gt;vct</a> (<i>samp samps reg chn v</i>)</code></td></tr>
 <tr><td></td><td>
 return a vct containing <i>samps</i> samples starting at <i>samp</i> in region <i>reg</i>'s 
 channel <i>chn</i>. If v (a vct) is provided, it is filled, 
@@ -3980,10 +3980,10 @@ The following substitutions can be made:
 <a href="#play">play</a> beg s c sync end e                         <a href="#playchannel">play-channel</a> beg dur s c e
 <a href="#reversesound">reverse-sound</a> s c e                             <a href="#reversechannel">reverse-channel</a> beg dur s c e
 <a href="#scalesoundby">scale-sound-by</a> scl beg dur s c e                <a href="#scalechannel">scale-channel</a> scl beg dur s c e
-<a href="#setsamples">set-samples</a> beg dur data s c trunc origin fchan <a href="#vct2channel">vct-&gt;channel</a> vct beg dur s c e
+<a href="#setsamples">set-samples</a> beg dur data s c trunc origin fchan <a href="#vct_to_channel">vct-&gt;channel</a> vct beg dur s c e
 <a href="#smoothsound">smooth-sound</a> beg dur s c                        <a href="#smoothchannel">smooth-channel</a> beg dur s c e
-<a href="#samples2vct">samples-&gt;vct</a> beg dur snd chn v e                <a href="#channel2vct">channel-&gt;vct</a> beg dur s c e
-<a href="#vct2samples">vct-&gt;samples</a> beg dur vct s c trunc origin fchan <a href="#vct2channel">vct-&gt;channel</a> vct beg dur s c e
+<a href="#samples_to_vct">samples-&gt;vct</a> beg dur snd chn v e                <a href="#channel_to_vct">channel-&gt;vct</a> beg dur s c e
+<a href="#vct_to_samples">vct-&gt;samples</a> beg dur vct s c trunc origin fchan <a href="#vct_to_channel">vct-&gt;channel</a> vct beg dur s c e
 <a href="#insertsilence">insert-silence</a> beg dur s c                      <a href="#padchannel">pad-channel</a> beg dur s c e
 <a href="#srcsound">src-sound</a> num base s c e                        <a href="#srcchannel">src-channel</a> ratio-or-env-gen beg dur s c e
 <a href="#convolvewith">convolve-with</a> file amp s c e                    <a href="#clmchannel">clm-channel</a> convolve-gen beg dur s c e
@@ -4143,10 +4143,10 @@ The following code sets the 'unite' button if the current sound has more than 4 
 
 <!-- channel->vct -->
 <tr><td colspan=2>
-<code><a class=def name="channel2vct">channel-&gt;vct</a> (<i>beg dur snd chn edpos</i>)</code>
+<code><a class=def name="channel_to_vct">channel-&gt;vct</a> (<i>beg dur snd chn edpos</i>)</code>
 </td></tr>
 <tr><td></td><td>
-<b>channel-&gt;vct</b> is the <a class=quiet href="#regularizedargs">regularized</a> version of <a href="#samples2vct">samples-&gt;vct</a>.
+<b>channel-&gt;vct</b> is the <a class=quiet href="#regularizedargs">regularized</a> version of <a href="#samples_to_vct">samples-&gt;vct</a>.
 </td></tr>
 
 <tr><td></td><td>
@@ -4349,9 +4349,9 @@ leave the cursor at the final position after tracking play: if-cursor-follows-pl
 <tr><td></td><td>
 current cursor position as a list (x y).
 These graph-relative values can be turned into axis-relative values with
-<a href="#position2x">position-&gt;x</a> and <a href="#position2y">position-&gt;y</a>:
+<a href="#position_to_x">position-&gt;x</a> and <a href="#position_to_y">position-&gt;y</a>:
 <br><br>
-<code>(<a class=quiet href="#position2x">position-&gt;x</a> (car (cursor-position)))</code> equals <code>(/ (<a class=quiet href="#cursor">cursor</a>) (<a class=quiet href="#srate">srate</a>))</code>
+<code>(<a class=quiet href="#position_to_x">position-&gt;x</a> (car (cursor-position)))</code> equals <code>(/ (<a class=quiet href="#cursor">cursor</a>) (<a class=quiet href="#srate">srate</a>))</code>
 <br>
 </td></tr>
 <tr><td colspan=2></td></tr>
@@ -5637,7 +5637,7 @@ return a list of the sound index and channel number associated with <a href="#ma
 
 <!-- position->x -->
 <tr><td colspan=2>
-<code><a class=def name="position2x">position-&gt;x</a> (xpos snd chn axis)</code>
+<code><a class=def name="position_to_x">position-&gt;x</a> (xpos snd chn axis)</code>
 </td></tr>
 <tr><td></td><td>
 return the X axis value that corresponds to the graph position <i>xpos</i>.
@@ -5647,7 +5647,7 @@ return the X axis value that corresponds to the graph position <i>xpos</i>.
 
 <!-- position->y -->
 <tr><td colspan=2>
-<code><a class=def name="position2y">position-&gt;y</a> (ypos snd chn axis)</code>
+<code><a class=def name="position_to_y">position-&gt;y</a> (ypos snd chn axis)</code>
 </td></tr>
 <tr><td></td><td>
 return the Y axis value that corresponds to the graph position <i>ypos</i>.
@@ -6176,12 +6176,12 @@ reversed reverb.  As a hack, you can reverse a sound by doing two ffts:
 (define* (<A NAME="sillyreverse">silly-reverse</a> #:optional snd)
   (let* ((len (<a class=quiet href="#frames">frames</a> snd 0))
 	 (fsize (expt 2 (ceiling (/ (log len) (log 2)))))
-	 (rl (<a class=quiet href="#channel2vct">channel-&gt;vct</a> 0 fsize snd 0))
+	 (rl (<a class=quiet href="#channel_to_vct">channel-&gt;vct</a> 0 fsize snd 0))
 	 (im (<a class=quiet href="#makevct">make-vct</a> fsize)))
     (<a class=quiet href="clm.html#fft">mus-fft</a> rl im fsize)
     (<a class=quiet href="clm.html#fft">mus-fft</a> rl im fsize)
     (<a class=quiet href="#vctscale">vct-scale!</a> rl (/ 1.0 fsize))
-    (<a class=quiet href="#vct2channel">vct-&gt;channel</a> (<a class=quiet href="#vctsubseq">vct-subseq</a> rl (- fsize len) fsize) 0 len snd 0)))
+    (<a class=quiet href="#vct_to_channel">vct-&gt;channel</a> (<a class=quiet href="#vctsubseq">vct-subseq</a> rl (- fsize len) fsize) 0 len snd 0)))
 </pre>
 </td></tr>
 <tr><td colspan=2></td></tr>
@@ -6261,7 +6261,7 @@ value of sample <i>samp</i> in <i>snd</i>'s channel <i>chn</i>.
 If the desired sample happens to fall outside the current buffer 
 for the indicated channel, this function grinds to a halt -- if you're 
 running a loop through a bunch of samples, use the <a href="#samplereaders">sample-readers</a> 
-or <a href="#samples2vct">samples-&gt;vct</a> instead.  <i>samp</i> defaults to the current cursor location.
+or <a href="#samples_to_vct">samples-&gt;vct</a> instead.  <i>samp</i> defaults to the current cursor location.
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -6293,13 +6293,13 @@ for real-time audio applications; see play.scm.
 
 <!-- samples->vct -->
 <tr><td colspan=2>
-<code><a class=def name="samples2vct">samples-&gt;vct</a> (<i>samp samps snd chn v edpos</i>)</code>
+<code><a class=def name="samples_to_vct">samples-&gt;vct</a> (<i>samp samps snd chn v edpos</i>)</code>
 </td></tr>
 <tr><td></td><td>
 return vct struct with same data as in <i>samples</i> call above.  
 If v (a vct) is provided, it is filled, rather than creating 
 a new vct. <i>pos</i> is the edit history position to read.
-The regularized version of this function is <a href="#channel2vct">channel-&gt;vct</a>.
+The regularized version of this function is <a href="#channel_to_vct">channel-&gt;vct</a>.
 There are many examples in examp.scm and dsp.scm.
 </td></tr>
 <tr><td colspan=2></td></tr>
@@ -6398,7 +6398,7 @@ There are approximately a bazillion ways to scale samples in Snd; here's a potpo
 (<a class=quiet href="#envsound">env-sound</a> '(0 2 1 2))
 (<a class=quiet href="#envchannel">env-channel</a> (<a class=quiet href="clm.html#make-env">make-env</a> '(0 1 1 1) :scaler 2.0) :end (1- (<a class=quiet href="#frames">frames</a>)))
 (<a class=quiet href="#clmchannel">clm-channel</a> (<a class=quiet href="clm.html#make-one-zero">make-one-zero</a> :a0 2.0 :a1 0.0))
-(<a class=quiet href="#vct2samples">vct-&gt;samples</a> 0 (<a class=quiet href="#frames">frames</a>) (<a class=quiet href="#vctscale">vct-scale!</a> (<a class=quiet href="#samples2vct">samples-&gt;vct</a>) 2.0))
+(<a class=quiet href="#vct_to_samples">vct-&gt;samples</a> 0 (<a class=quiet href="#frames">frames</a>) (<a class=quiet href="#vctscale">vct-scale!</a> (<a class=quiet href="#samples_to_vct">samples-&gt;vct</a>) 2.0))
 (begin (<a class=quiet href="#selectall">select-all</a>) (<a class=quiet href="#mixselection">mix-selection</a> 0))
 (begin (<a class=quiet href="#selectall">select-all</a>) (<a class=quiet href="#scaleselectionby">scale-selection-by</a> 2.0))
 (begin (<a class=quiet href="#savesoundas">save-sound-as</a> "temp.snd") (<a class=quiet href="#mix">mix</a> "temp.snd" 0) (delete-file "temp.snd"))
@@ -6646,7 +6646,7 @@ See also <a href="#selectsoundhook">select-sound-hook</a>.
 set <i>snd</i>'s channel <i>chn</i>'s samples starting from
 sample <i>samp</i> for <i>samps</i> samples to the values in <i>data</i>.
 If <i>samp</i> is beyond the end of the file, the file is first zero-padded to reach it.
-<i>data</i> can be a filename.  If <i>data</i> is a vct, this is identical to <a href="#vct2channel">vct-&gt;channel</a>.
+<i>data</i> can be a filename.  If <i>data</i> is a vct, this is identical to <a href="#vct_to_channel">vct-&gt;channel</a>.
 If <i>trunc</i> is #t and <i>samp</i> is 0, the
 sound is truncated (if necessary) to reflect the end of <i>data</i>.
 If the in-coming data file has more than one channel, <i>infile-chan</i>
@@ -7263,7 +7263,7 @@ sonogram or spectrogram) <i>slice</i> in <i>snd</i>'s channel <i>chn</i>.
 
 <!-- transform-samples->vct -->
 <tr><td colspan=2>
-<code><a class=def name="transformsamples2vct">transform-samples-&gt;vct</a> (<i>snd chn v</i>)</code>
+<code><a class=def name="transformsamples_to_vct">transform-samples-&gt;vct</a> (<i>snd chn v</i>)</code>
 </td></tr>
 <tr><td></td><td>
 return vct struct with the transform data currently in <i>snd</i>'s channel <i>chn</i>.
@@ -7482,7 +7482,7 @@ return (list x0 x1) -- current x axis time domain bounds in seconds.
 
 <!-- x->position -->
 <tr><td colspan=2>
-<code><a class=def name="x2position">x-&gt;position</a> (x snd chn axis)</code>
+<code><a class=def name="x_to_position">x-&gt;position</a> (x snd chn axis)</code>
 </td></tr>
 <tr><td></td><td>
 return the graph position that corresponds to the X axis value <i>x</i>. <i>axis</i> is one of time-graph, lisp-graph, or transform-graph.
@@ -7557,7 +7557,7 @@ Or to set each channel to its own maxamp:
 
 <!-- y->position -->
 <tr><td colspan=2>
-<code><a class=def name="y2position">y-&gt;position</a> (y snd chn axis)</code>
+<code><a class=def name="y_to_position">y-&gt;position</a> (y snd chn axis)</code>
 </td></tr>
 <tr><td></td><td>
 return the graph position that corresponds to the Y axis value <i>y</i>. <i>axis</i> is one of time-graph, lisp-graph, or transform-graph.
@@ -8201,8 +8201,8 @@ this information to highlight the changed portions of a given sound.
           (let ((nxtpos (car (cadr tree))))
             (if (and (&lt;= pos rs)
                      (&gt;= nxtpos ls))   ; fragment is at least partially visible
-                (let ((x0pos (<a class=quiet href="#x2position">x-&gt;position</a> (/ (max ls pos) (<a class=quiet href="#srate">srate</a>))))
-                      (x1pos (<a class=quiet href="#x2position">x-&gt;position</a> (/ (min rs nxtpos) (<a class=quiet href="#srate">srate</a>)))))
+                (let ((x0pos (<a class=quiet href="#x_to_position">x-&gt;position</a> (/ (max ls pos) (<a class=quiet href="#srate">srate</a>))))
+                      (x1pos (<a class=quiet href="#x_to_position">x-&gt;position</a> (/ (min rs nxtpos) (<a class=quiet href="#srate">srate</a>)))))
                   (<a class=quiet href="#fillrectangle">fill-rectangle</a> x0pos 2 (- x1pos x0pos) 5)))))
       (if (and (cdr tree)              ; go to next fragment
                (not (= (cadr (car tree)) -2)))
@@ -8399,7 +8399,7 @@ This function is the same as <a href="clm.html#convolution">convolution</a>.
 <p>Other related variables and functions:</p>
 <table cellpadding=0 celspacing=10 border=0>
 <tr><td width=200><a href="#transformgraphp"><small>transform-graph?</small></a></td><td width=200><a href="#showfftpeaks"><small>show-transform-peaks</small></a></td><td><a href="#transformsample"><small>transform-sample</small></a></td></tr>
-<tr><td><a href="#fftbeta"><small>fft-window-beta</small></a></td><td><a href="#lshowselectiontransform"><small>show-selection-transform</small></a></td><td><a href="#transformsamples2vct"><small>transform-samples-&gt;vct</small></a></td></tr>
+<tr><td><a href="#fftbeta"><small>fft-window-beta</small></a></td><td><a href="#lshowselectiontransform"><small>show-selection-transform</small></a></td><td><a href="#transformsamples_to_vct"><small>transform-samples-&gt;vct</small></a></td></tr>
 <tr><td><a href="#ffthook"><small>transform-hook</small></a></td><td><a href="#spectrocutoff"><small>spectro-cutoff</small></a></td><td><a href="#transformgraphsize"><small>transform-samples-size</small></a></td></tr>
 <tr><td><a href="#fftlogfrequency"><small>fft-log-frequency</small></a></td><td><a href="#spectrohop"><small>spectro-hop</small></a></td><td><a href="#ltransformtype"><small>transform-type</small></a></td></tr>
 <tr><td><a href="#fftlogmagnitude"><small>fft-log-magnitude</small></a></td><td><a href="#spectrostart"><small>spectro-start</small></a></td><td><a href="#updatetransformgraph"><small>update-transform-graph</small></a></td></tr>
@@ -9417,7 +9417,7 @@ exit Snd.
 
 <!-- graph->ps -->
 <tr><td colspan=2>
-<code><a class=def name="graph2ps">graph-&gt;ps</a> (<i>file</i>)</code></td></tr>
+<code><a class=def name="graph_to_ps">graph-&gt;ps</a> (<i>file</i>)</code></td></tr>
 <tr><td></td><td>
 create Postscript picture of current display.
 <i>file</i> defaults to <a href="#epsfile">eps-file</a>.
@@ -9853,7 +9853,7 @@ to put the date and time in the Snd title bar.
   show-all-axes  show-no-axes  show-x-axis  show-all-axes-unlabelled  show-x-axis-unlabelled
 </pre><br>
 
-<p><b>Graph</b> id (for <a href="#y2position">y-&gt;position</a> etc):</p>
+<p><b>Graph</b> id (for <a href="#y_to_position">y-&gt;position</a> etc):</p>
 <pre>
   time-graph     transform-graph     lisp-graph
 </pre>
@@ -10285,13 +10285,13 @@ return a list describing the specified axis:
 <code>'(<a class=quiet href="#leftsample">left-sample</a> right-sample x0 y0 x1 y1 x-min y-min x-max y-max 
 x0-position y0-position x1-position y1-position y-offset xlabel)</code>.  This might be
 useful if you're drawing arbitrary figures in a graph.  <i>grf</i> defaults to
-time-graph; the other choices are transform-graph and lisp-graph.  The procedure <a href="#x2position">x-&gt;position</a>
+time-graph; the other choices are transform-graph and lisp-graph.  The procedure <a href="#x_to_position">x-&gt;position</a>
 could be defined as:
 </td></tr>
 <tr><td></td><td>
 <table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (define (x-&gt;position-1 x snd chn)
-  (let* ((axinfo (<em class=red>axis-info</em> snd chn <a class=quiet href="#y2position">time-graph</a>))
+  (let* ((axinfo (<em class=red>axis-info</em> snd chn <a class=quiet href="#y_to_position">time-graph</a>))
 	 (x0 (list-ref axinfo 2))
 	 (x1 (list-ref axinfo 4))
 	 (axis-left (list-ref axinfo 10))
@@ -10424,8 +10424,8 @@ currently in the time-domain graph:
 	      (rs (<a class=quiet href="#rightsample">right-sample</a> snd chn)))
 	 (if (and (&lt; ls samp)
 		  (&gt; rs samp))
-	     (let ((xpos (<a class=quiet href="#x2position">x-&gt;position</a> (/ samp (<a class=quiet href="#srate">srate</a>))))
-		   (ypos (<a class=quiet href="#y2position">y-&gt;position</a> (<a class=quiet href="#sample">sample</a> samp))))
+	     (let ((xpos (<a class=quiet href="#x_to_position">x-&gt;position</a> (/ samp (<a class=quiet href="#srate">srate</a>))))
+		   (ypos (<a class=quiet href="#y_to_position">y-&gt;position</a> (<a class=quiet href="#sample">sample</a> samp))))
 	       (<a class=quiet href="#drawline">draw-line</a> xpos 20 xpos (- ypos 4))
 	       (<em class=red>draw-string</em> text (- xpos (/ text-width 2)) 18)))))
      comments)))
@@ -10499,7 +10499,7 @@ We can goof around with colors and fonts:
           (rs (<a class=quiet href="#rightsample">right-sample</a> snd chn)))
       (if (and (&lt; ls 1000)
                (&gt; rs 1000))
-	  (let ((pos (<a class=quiet href="#x2position">x-&gt;position</a> (/ 1000.0 (<a class=quiet href="#srate">srate</a>))))
+	  (let ((pos (<a class=quiet href="#x_to_position">x-&gt;position</a> (/ 1000.0 (<a class=quiet href="#srate">srate</a>))))
 		(old-color (<a class=quiet href="#foregroundcolor">foreground-color</a>)))
 	    (set! (<em class=red>foreground-color</em>) (<a class=quiet href="#makecolor">make-color</a> .75 .75 .75))
             (<a class=quiet href="#fillrectangle">fill-rectangle</a> pos 10 50 20)
@@ -10615,13 +10615,15 @@ The result can be used in the lisp graph:
     "(display-db snd chn) is a lisp-graph-hook function to display the time domain data in dB"
     (let* ((datal (<em class=red>make-graph-data</em> snd chn))
 	   (data (if (<a class=quiet href="#vctp">vct?</a> datal) datal (cadr datal)))
+           (len (<a class=quiet href="#vctlength">vct-length</a> data))
            (sr (<a class=quiet href="#srate">srate</a> snd)))
       (define (dB val)
 	(if (&lt; val .001)
 	    -60.0
 	    (* 20.0 (log10 val))))
-      (<a class=quiet href="#vctmap">vct-map!</a> data (lambda ()
-		       (+ 60.0 (dB (abs (<a class=quiet href="#vctref">vct-ref</a> data i))))))
+      (do ((i 0 (1+ i)))
+	  ((= i len))
+	(<a class=quiet href="#vctset">vct-set!</a> data i (+ 60.0 (dB (abs (<a class=quiet href="#vctref">vct-ref</a> data i))))))
       (<a class=quiet href="#graph">graph</a> data "dB" 
 	     (/ (<a class=quiet href="#leftsample">left-sample</a> snd chn) sr) (/ (<a class=quiet href="#rightsample">right-sample</a> snd chn) sr)  
 	     0.0 60.0
@@ -10701,7 +10703,7 @@ return the current x axis label (also settable).
 	<!-- I(revert file):L(revert-sound)(revertsound) -->
         <!-- I(open file read-only):L(view-sound)(viewsound) -->
         <!-- I(create new file):L(new-sound)(newsound) -->
-	<!-- I(print file):L(graph-&gt;ps)(graph2ps) -->
+	<!-- I(print file):L(graph-&gt;ps)(graph_to_ps) -->
 	<!-- I(exit Snd):L(exit)(exit) -->
         <!-- I(undo edit):L(undo)(undo) -->
 	<!-- I(redo edit):L(redo)(redo) -->
@@ -10816,7 +10818,7 @@ return the current x axis label (also settable).
 	<!-- I(file lists):O(mouse-enter-label-hook)(mouseenterlabelhook) -->
 	<!-- I(swap channels):A(swapchannels) -->
 	<!-- I(extend file):L(pad-channel)(padchannel) -->
-	<!-- I(extract channel):O(channel-&gt;vct)(channel2vct) -->
+	<!-- I(extract channel):O(channel-&gt;vct)(channel_to_vct) -->
 	<!-- I(fft normalization):L(transform-normalization)(normalizefft) -->
 	<!-- I(fft normalization):A(normalizefft) -->
 	<!-- I(file formats):L(data-format)(dataformat) -->

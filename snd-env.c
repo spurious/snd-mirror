@@ -1388,7 +1388,7 @@ static bool x_increases(XEN res)
   static char env_white_space[5] = {' ', '(', ')', '\t', '\''};
 #endif
 
-env *string2env(char *str) 
+env *string_to_env(char *str) 
 {
 #if HAVE_EXTENSION_LANGUAGE
   XEN res;

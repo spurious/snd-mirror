@@ -1152,7 +1152,8 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 
 (define (z-transform f n z)
   ;; using vector to allow complex sums (z=e^2*pi*i/n -> fourier transform)
-  "(z-transform data n z) performs a Z transform on data; if z=e^2*pi*i/n you get a Fourier transform"
+  ;;   (z-transform data n (exp (make-rectangular 0.0 (* (/ 2.0 n) 3.14159265))))
+  "(z-transform data n z) performs a Z transform on data; if z=e^2*pi*j/n you get a Fourier transform; complex results in returned vector"
   (let ((res (make-vector n)))
     (do ((w 0 (1+ w)))
 	((= w n))

@@ -6828,8 +6828,8 @@ static XEN g_make_track(XEN ids)
 
 static int unset_track(mix_info *md, void *ptr)
 {
-  int id = (int)ptr;
-  if (md->active_mix_state->track == id)
+  int *id0 = (int *)ptr;
+  if (md->active_mix_state->track == id0[0])
     set_mix_track(md, 0, true); /* redisplay here? mix dialog? */
   return(0);
 }
@@ -6837,11 +6837,13 @@ static int unset_track(mix_info *md, void *ptr)
 static void free_track_list(int id)
 {
   int i;
+  int id0[1];
   track_list *tl;
   tl = tracks[id];
   if (tl)
     {
-      map_over_mixes(unset_track, (void *)id);
+      id0[0] = id;
+      map_over_mixes(unset_track, (void *)id0);
       if (tl->states)
 	{
 	  for (i = 0; i < tl->size; i++)
@@ -6880,7 +6882,7 @@ static XEN g_set_track_amp(XEN id, XEN val)
   int track_id;
   track_id = xen_to_c_track(id, S_setB S_track_amp);
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_2, S_setB S_track_amp, "a number");
-  set_track_amp(track_id, XEN_TO_C_DOUBLE(val));
+  set_track_amp(track_id, (Float)XEN_TO_C_DOUBLE(val));
   return(val);
 }
 
