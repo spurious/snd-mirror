@@ -1630,7 +1630,7 @@ static bool check_enved_hook(env *e, int pos, Float x, Float y, enved_point_t re
 		  e->data_size = len;
 		}
 	      e->pts = len / 2;
-	      for (i = 0, lst = result; i < len; i++, lst = XEN_CDR(lst))
+	      for (i = 0, lst = XEN_COPY_ARG(result); i < len; i++, lst = XEN_CDR(lst))
 		e->data[i] = XEN_TO_C_DOUBLE(XEN_CAR(lst));
 	      if (XEN_NOT_NULL_P(procs))
 		env_list = env_to_xen(e);

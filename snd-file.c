@@ -1798,7 +1798,7 @@ void make_prevfiles_list_1(void)
 	      for (i = prevfile_end; i >= 0; i--) 
 		file_list = XEN_CONS(C_TO_XEN_STRING(prevfullnames[i]), file_list);
 	      gc_loc = snd_protect(file_list);
-	      file_list = XEN_CALL_1(ss->file_sort_proc, file_list, "previous files sort");
+	      file_list = XEN_COPY_ARG(XEN_CALL_1(ss->file_sort_proc, file_list, "previous files sort"));
 	      snd_unprotect_at(gc_loc); /* unprotect old version */
 	      gc_loc = snd_protect(file_list); /* protect new */
 	      if (XEN_LIST_P(file_list))

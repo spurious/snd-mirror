@@ -45,7 +45,10 @@
 		  (set! pframes (inexact->exact (vector-ref vals 0))))
 	      (let* ((bps (mus-bytes-per-sample fmt)))
 		(set! outbytes (* bps pframes outchans))
-		(set! audio-fd (mus-audio-open-output mus-audio-default cur-srate outchans fmt outbytes)))))))
+		(set! audio-fd (catch #t
+				      (lambda ()
+					(mus-audio-open-output mus-audio-default cur-srate outchans fmt outbytes))
+				      (lambda args -1))))))))
     (if (not (= audio-fd -1))
 	(set! (dac-size) outbytes))
     (list audio-fd outchans pframes)))

@@ -2596,9 +2596,11 @@ static XEN g_map_chan_1(XEN proc_and_list, XEN s_beg, XEN s_end, XEN org, XEN sn
 			    {
 			      if (XEN_LIST_P(res))
 				{
-				  len = XEN_LIST_LENGTH(res);
-				  for (i = 0; i < len; i++, res = XEN_CDR(res)) 
-				    MUS_OUTA_1(j++, XEN_TO_C_DOUBLE(XEN_CAR(res)), outgen);
+				  XEN res1;
+				  res1 = XEN_COPY_ARG(res);
+				  len = XEN_LIST_LENGTH(res1);
+				  for (i = 0; i < len; i++, res1 = XEN_CDR(res1)) 
+				    MUS_OUTA_1(j++, XEN_TO_C_DOUBLE(XEN_CAR(res1)), outgen);
 				}
 			      else 
 				{

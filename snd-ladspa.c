@@ -627,7 +627,7 @@ Information about about parameters can be acquired using " S_analyse_ladspa "."
   pfControls = (LADSPA_Data *)MALLOC(psDescriptor->PortCount * sizeof(LADSPA_Data));
 
   /* Get parameters. */
-  xenParameters = XEN_CDR(XEN_CDR(ladspa_plugin_configuration));
+  xenParameters = XEN_COPY_ARG(XEN_CDR(XEN_CDR(ladspa_plugin_configuration)));
   for (lPortIndex = 0; lPortIndex < psDescriptor->PortCount; lPortIndex++) 
     {
     iPortDescriptor = psDescriptor->PortDescriptors[lPortIndex];

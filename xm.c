@@ -903,10 +903,12 @@ static XEN C_TO_XEN_XmStringTable(XmStringTable array, int len)
   return(lst);
 }
 
-static Widget *XEN_TO_C_Widgets(XEN lst, int n)
+static Widget *XEN_TO_C_Widgets(XEN lst_1, int n)
 {
   Widget *ws;
   int i;
+  XEN lst;
+  lst = XEN_COPY_ARG(lst_1);
   ws = (Widget *)CALLOC(n, sizeof(Widget));
   for (i = 0; (i < n) && (XEN_NOT_NULL_P(lst)); i++, lst = XEN_CDR(lst))
     if (XEN_Widget_P(XEN_CAR(lst)))
@@ -921,10 +923,12 @@ static Widget *XEN_TO_C_Widgets(XEN lst, int n)
   return(ws);
 }
 
-static XmString *XEN_TO_C_XmStrings(XEN v, int len)
+static XmString *XEN_TO_C_XmStrings(XEN v_1, int len)
 {
   XmString *str;
   int i;
+  XEN v;
+  v = XEN_COPY_ARG(v_1);
   str = (XmString *)CALLOC(len, sizeof(XmString));
   for (i = 0; (i < len) && (XEN_NOT_NULL_P(v)); i++, v = XEN_CDR(v))
     if (XEN_XmString_P(XEN_CAR(v)))
@@ -939,10 +943,12 @@ static XmString *XEN_TO_C_XmStrings(XEN v, int len)
   return(str);
 }
 
-static XmDropTransferEntryRec *XEN_TO_C_XmDropTransferEntryRecs(XEN v, int len)
+static XmDropTransferEntryRec *XEN_TO_C_XmDropTransferEntryRecs(XEN v_1, int len)
 {
   XmDropTransferEntryRec *ps;
   int i;
+  XEN v;
+  v = XEN_COPY_ARG(v_1);
   ps = (XmDropTransferEntryRec *)CALLOC(len, sizeof(XmDropTransferEntryRec));
   for (i = 0; (i < len) && (XEN_NOT_NULL_P(v)); i++, v = XEN_CDR(v))
     {
@@ -962,10 +968,12 @@ static XmDropTransferEntryRec *XEN_TO_C_XmDropTransferEntryRecs(XEN v, int len)
   return(ps);
 }
 
-static XmStringTable XEN_TO_C_XmStringTable(XEN v, int len)
+static XmStringTable XEN_TO_C_XmStringTable(XEN v_1, int len)
 {
+  XEN v;
   XmStringTable str;
   int i;
+  v = XEN_COPY_ARG(v_1);
   str = (XmStringTable)CALLOC(len + 1, sizeof(XmString));
   for (i = 0; (i < len) && (XEN_NOT_NULL_P(v)); i++, v = XEN_CDR(v))
     if (XEN_XmString_P(XEN_CAR(v)))
@@ -1096,11 +1104,13 @@ static XEN C_TO_XEN_KeySyms(KeySym *array, int len)
   return(lst);
 }
 
-static Window *XEN_TO_C_Windows(XEN lst, int n)
+static Window *XEN_TO_C_Windows(XEN lst_1, int n)
 {
   Window *ws;
   int i;
+  XEN lst;
   if (n == 0) return(NULL);
+  lst = XEN_COPY_ARG(lst_1);
   ws = (Window *)CALLOC(n, sizeof(Window));
   for (i = 0; (i < n) && (XEN_NOT_NULL_P(lst)); i++, lst = XEN_CDR(lst))
     if (XEN_Window_P(XEN_CAR(lst)))
@@ -1116,11 +1126,13 @@ static Window *XEN_TO_C_Windows(XEN lst, int n)
 }
 
 #if MOTIF_2
-static XmRendition *XEN_TO_C_XmRenditions(XEN lst, int n)
+static XmRendition *XEN_TO_C_XmRenditions(XEN lst_1, int n)
 {
+  XEN lst;
   XmRendition *ws;
   int i;
   if (n == 0) return(NULL);
+  lst = XEN_COPY_ARG(lst_1);
   ws = (XmRendition *)CALLOC(n, sizeof(XmRendition));
   for (i = 0; (i < n) && (XEN_NOT_NULL_P(lst)); i++, lst = XEN_CDR(lst))
     if (XEN_XmRendition_P(XEN_CAR(lst)))
@@ -1135,11 +1147,13 @@ static XmRendition *XEN_TO_C_XmRenditions(XEN lst, int n)
   return(ws);
 }
 
-static XmTab *XEN_TO_C_XmTabs(XEN v, int len)
+static XmTab *XEN_TO_C_XmTabs(XEN v_1, int len)
 {
+  XEN v;
   XmTab *str;
   int i;
   if (len == 0) return(NULL);
+  v = XEN_COPY_ARG(v_1);
   str = (XmTab *)CALLOC(len, sizeof(XmTab));
   for (i = 0; (i < len) && (XEN_NOT_NULL_P(v)); i++, v = XEN_CDR(v))
     if (XEN_XmTab_P(XEN_CAR(v)))
@@ -1155,11 +1169,13 @@ static XmTab *XEN_TO_C_XmTabs(XEN v, int len)
 }
 #endif
 
-static Atom *XEN_TO_C_Atoms(XEN v, int len)
+static Atom *XEN_TO_C_Atoms(XEN v_1, int len)
 {
+  XEN v;
   Atom *str;
   int i;
   if (len == 0) return(NULL);
+  v = XEN_COPY_ARG(v_1);
   str = (Atom *)CALLOC(len, sizeof(Atom));
   for (i = 0; (i < len) && (XEN_NOT_NULL_P(v)); i++, v = XEN_CDR(v))
     if (XEN_Atom_P(XEN_CAR(v)))
@@ -1174,11 +1190,13 @@ static Atom *XEN_TO_C_Atoms(XEN v, int len)
   return(str);
 }
 
-static Pixel *XEN_TO_C_Pixels(XEN v, int len)
+static Pixel *XEN_TO_C_Pixels(XEN v_1, int len)
 {
+  XEN v;
   Pixel *str;
   int i;
   if (len == 0) return(NULL);
+  v = XEN_COPY_ARG(v_1);
   str = (Pixel *)CALLOC(len, sizeof(Pixel));
   for (i = 0; (i < len) && (XEN_NOT_NULL_P(v)); i++, v = XEN_CDR(v))
     if (XEN_Pixel_P(XEN_CAR(v)))
@@ -1193,11 +1211,13 @@ static Pixel *XEN_TO_C_Pixels(XEN v, int len)
   return(str);
 }
 
-static KeySym *XEN_TO_C_KeySyms(XEN v, int len)
+static KeySym *XEN_TO_C_KeySyms(XEN v_1, int len)
 {
+  XEN v;
   KeySym *str;
   int i;
   if (len == 0) return(NULL);
+  v = XEN_COPY_ARG(v_1);
   str = (KeySym *)CALLOC(len, sizeof(KeySym));
   for (i = 0; (i < len) && (XEN_NOT_NULL_P(v)); i++, v = XEN_CDR(v))
     if (XEN_KeySym_P(XEN_CAR(v)))
@@ -1212,11 +1232,13 @@ static KeySym *XEN_TO_C_KeySyms(XEN v, int len)
   return(str);
 }
 
-static char **XEN_TO_C_Strings(XEN v, int len)
+static char **XEN_TO_C_Strings(XEN v_1, int len)
 {
+  XEN v;
   char **str;
   int i;
   if (len == 0) return(NULL);
+  v = XEN_COPY_ARG(v_1);
   str = (char **)CALLOC(len, sizeof(char *));
   for (i = 0; (i < len) && (XEN_NOT_NULL_P(v)); i++, v = XEN_CDR(v))
     if (XEN_STRING_P(XEN_CAR(v)))
@@ -1231,11 +1253,13 @@ static char **XEN_TO_C_Strings(XEN v, int len)
   return(str);
 }
 
-static int *XEN_TO_C_Ints(XEN v, int len)
+static int *XEN_TO_C_Ints(XEN v_1, int len)
 {
+  XEN v;
   int *ps;
   int i;
   if (len == 0) return(NULL);
+  v = XEN_COPY_ARG(v_1);
   ps = (int *)CALLOC(len, sizeof(int));
   for (i = 0; (i < len) && (XEN_NOT_NULL_P(v)); i++, v = XEN_CDR(v))
     if (XEN_INTEGER_P(XEN_CAR(v)))
@@ -1250,11 +1274,13 @@ static int *XEN_TO_C_Ints(XEN v, int len)
   return(ps);
 }
 
-static Cardinal *XEN_TO_C_Cardinals(XEN v, int len)
+static Cardinal *XEN_TO_C_Cardinals(XEN v_1, int len)
 {
+  XEN v;
   Cardinal *ps;
   int i;
   if (len == 0) return(NULL);
+  v = XEN_COPY_ARG(v_1);
   ps = (Cardinal *)CALLOC(len, sizeof(int));
   for (i = 0; (i < len) && (XEN_NOT_NULL_P(v)); i++, v = XEN_CDR(v))
     if (XEN_INTEGER_P(XEN_CAR(v)))
@@ -1269,11 +1295,13 @@ static Cardinal *XEN_TO_C_Cardinals(XEN v, int len)
   return(ps);
 }
 
-static XRectangle *XEN_TO_C_XRectangles(XEN v, int len)
+static XRectangle *XEN_TO_C_XRectangles(XEN v_1, int len)
 {
+  XEN v;
   XRectangle *str, *dat;
   int i;
   if (len == 0) return(NULL);
+  v = XEN_COPY_ARG(v_1);
   str = (XRectangle *)CALLOC(len, sizeof(XRectangle));
   for (i = 0; (i < len) && (XEN_NOT_NULL_P(v)); i++, v = XEN_CDR(v))
     {
@@ -12101,16 +12129,18 @@ symbols for the specified number of KeyCodes starting with first_keycode."
   return(C_TO_XEN_INT(val));
 }
 
-static XEN gxm_XChangeKeyboardControl(XEN arg1, XEN arg2, XEN arg3)
+static XEN gxm_XChangeKeyboardControl(XEN arg1, XEN arg2, XEN larg3)
 {
   #define H_XChangeKeyboardControl "XChangeKeyboardControl(display, value_mask, values) controls the keyboard characteristics defined by \
 the XKeyboardControl structure."
   /* DIFF: XChangeKeyboardControl arg3 is list of XKeyboardControl fields
    */
+  XEN arg3;
   XKeyboardControl kc;
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XChangeKeyboardControl", "Display*");
   XEN_ASSERT_TYPE(XEN_ULONG_P(arg2), arg2, 2, "XChangeKeyboardControl", "ulong");
-  XEN_ASSERT_TYPE(XEN_LIST_P(arg3), arg3, 3, "XChangeKeyboardControl", "XKeyboardControl*");
+  XEN_ASSERT_TYPE(XEN_LIST_P(larg3), larg3, 3, "XChangeKeyboardControl", "XKeyboardControl*");
+  arg3 = XEN_COPY_ARG(larg3);
   kc.key_click_percent = XEN_TO_C_INT(XEN_CAR(arg3)); arg3 = XEN_CDR(arg3);
   if (!(XEN_NULL_P(arg3))) 
     {
@@ -13033,7 +13063,7 @@ server to generate a CreateNotify event."
 					     XEN_TO_C_Pixel(arg9))));
 }
 
-static XEN gxm_XCreatePixmapFromBitmapData(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6, XEN arg7, XEN arg8)
+static XEN gxm_XCreatePixmapFromBitmapData(XEN arg1, XEN arg2, XEN larg3, XEN arg4, XEN arg5, XEN arg6, XEN arg7, XEN arg8)
 {
   #define H_XCreatePixmapFromBitmapData "Pixmap XCreatePixmapFromBitmapData(display, d, data, width, height, fg, bg, depth) creates a \
 pixmap of the given depth and then does a bitmap-format XPutImage of the data into it."
@@ -13042,16 +13072,18 @@ pixmap of the given depth and then does a bitmap-format XPutImage of the data in
   char *bits;
   int i, len;
   Pixmap p;
+  XEN arg3;
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XCreatePixmapFromBitmapData", "Display*");
   XEN_ASSERT_TYPE(XEN_Window_P(arg2), arg2, 2, "XCreatePixmapFromBitmapData", "Drawable");
-  XEN_ASSERT_TYPE(XEN_LIST_P(arg3), arg3, 3, "XCreatePixmapFromBitmapData", "list of char");
+  XEN_ASSERT_TYPE(XEN_LIST_P(larg3), larg3, 3, "XCreatePixmapFromBitmapData", "list of char");
   XEN_ASSERT_TYPE(XEN_ULONG_P(arg4), arg4, 4, "XCreatePixmapFromBitmapData", "unsigned int");
   XEN_ASSERT_TYPE(XEN_ULONG_P(arg5), arg5, 5, "XCreatePixmapFromBitmapData", "unsigned int");
   XEN_ASSERT_TYPE(XEN_Pixel_P(arg6), arg6, 6, "XCreatePixmapFromBitmapData", "pixel");
   XEN_ASSERT_TYPE(XEN_Pixel_P(arg7), arg7, 7, "XCreatePixmapFromBitmapData", "pixel");
   XEN_ASSERT_TYPE(XEN_ULONG_P(arg8), arg8, 8, "XCreatePixmapFromBitmapData", "unsigned int");
-  len = XEN_LIST_LENGTH(arg3);
-  if (len <= 0) XEN_ASSERT_TYPE(0, arg3, 3, "XCreatePixmapFromBitmapData", "positive integer");
+  len = XEN_LIST_LENGTH(larg3);
+  if (len <= 0) XEN_ASSERT_TYPE(0, larg3, 3, "XCreatePixmapFromBitmapData", "positive integer");
+  arg3 = XEN_COPY_ARG(larg3);
   bits = (char *)CALLOC(len, sizeof(char));
   for (i = 0; i < len; i++, arg3 = XEN_CDR(arg3))
     bits[i] = (char)XEN_TO_C_INT(XEN_CAR(arg3));
@@ -13065,7 +13097,7 @@ pixmap of the given depth and then does a bitmap-format XPutImage of the data in
   return(C_TO_XEN_Pixmap(p));
 }
 
-static XEN gxm_XCreateBitmapFromData(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5)
+static XEN gxm_XCreateBitmapFromData(XEN arg1, XEN arg2, XEN larg3, XEN arg4, XEN arg5)
 {
   #define H_XCreateBitmapFromData "Pixmap XCreateBitmapFromData(display, d, data, width, height) allows you to include in your C \
 program a bitmap file that was written out by XWriteBitmapFile"
@@ -13074,13 +13106,15 @@ program a bitmap file that was written out by XWriteBitmapFile"
   char *bits;
   int i, len;
   Pixmap p;
+  XEN arg3;
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XCreateBitmapFromData", "Display*");
   XEN_ASSERT_TYPE(XEN_Window_P(arg2), arg2, 2, "XCreateBitmapFromData", "Drawable");
-  XEN_ASSERT_TYPE(XEN_LIST_P(arg3), arg3, 3, "XCreateBitmapFromData", "list of char");
+  XEN_ASSERT_TYPE(XEN_LIST_P(larg3), larg3, 3, "XCreateBitmapFromData", "list of char");
   XEN_ASSERT_TYPE(XEN_ULONG_P(arg4), arg4, 4, "XCreateBitmapFromData", "unsigned int");
   XEN_ASSERT_TYPE(XEN_ULONG_P(arg5), arg5, 5, "XCreateBitmapFromData", "unsigned int");
-  len = XEN_LIST_LENGTH(arg3);
-  if (len <= 0) XEN_ASSERT_TYPE(0, arg3, 3, "XCreateBitmapFromData", "positive integer");
+  len = XEN_LIST_LENGTH(larg3);
+  if (len <= 0) XEN_ASSERT_TYPE(0, larg3, 3, "XCreateBitmapFromData", "positive integer");
+  arg3 = XEN_COPY_ARG(larg3);
   bits = (char *)CALLOC(len, sizeof(char));
   for (i = 0; i < len; i++, arg3 = XEN_CDR(arg3))
     bits[i] = (char)XEN_TO_C_INT(XEN_CAR(arg3));
@@ -14559,13 +14593,15 @@ static Boolean gxm_XtFilePredicate(String filename)
 				     c__FUNCTION__)));
 }
 
-static SubstitutionRec *gxm_make_subs(XEN lst)
+static SubstitutionRec *gxm_make_subs(XEN lst_1)
 {
   int i, len;
+  XEN lst;
   SubstitutionRec *subs = NULL;
-  len = XEN_LIST_LENGTH(lst);
+  len = XEN_LIST_LENGTH(lst_1);
   if (len > 0)
     {
+      lst = XEN_COPY_ARG(lst_1);
       subs = (SubstitutionRec *)CALLOC(len, sizeof(SubstitutionRec));
       for (i = 0; i < len; i++, lst = XEN_CDR(lst))
 	{
@@ -26908,10 +26944,6 @@ static bool xm_already_inited = false;
 #if (!WITH_GTK_AND_X11)
 #if HAVE_GUILE
       XEN_EVAL_C_STRING("(define xm-version \"" XM_DATE "\")");
-#if HAVE_SCM_MAKE_RATIO
-      XEN_PROTECT_FROM_GC(C_STRING_TO_XEN_SYMBOL("KeyCode"));
-      XEN_PROTECT_FROM_GC(C_STRING_TO_XEN_SYMBOL("XmString"));
-#endif
 #endif
 #if HAVE_RUBY
       rb_define_global_const("Xm_Version", C_TO_XEN_STRING(XM_DATE));

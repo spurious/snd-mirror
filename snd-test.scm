@@ -14495,6 +14495,8 @@ EDITS: 5
       
       (let* ((fgen (make-file->sample "oboe.snd"))
 	     (gen (make-xen->sample (lambda (samp chan) (* 2.0 (file->sample fgen samp chan)))))
+	     (gen1 (make-xen->sample (lambda (s c) 1.0)))
+	     (gen2 gen)
 	     (v0 (make-vct 10)))
 	(print-and-check gen 
 			 "xen->sample"
@@ -14502,6 +14504,8 @@ EDITS: 5
 			 "xen->sample: #<procedure #f ((samp chan) (* 2.0 (file->sample fgen samp chan)))>")
 	(if (not (mus-input? gen)) (snd-display ";xen->sample ~A not input?" gen))
 	(if (not (equal? gen gen)) (snd-display ";xen->sample not eq? itself?"))
+	(if (equal? gen gen1) (snd-display ";xen->sample eq? ~A ~A" gen gen1))
+	(if (not (equal? gen gen2)) (snd-display ";xen->sample not eq? ~A ~A" gen gen2))
 	(do ((i 0 (1+ i)))
 	    ((= i 10))
 	  (vct-set! v0 i (xen->sample gen (+ 1490 i) 0)))
@@ -20564,6 +20568,8 @@ EDITS: 5
 	    (oldsize (vu-size)))
 	(add-hook! window-property-changed-hook (lambda (hi) (set! gotit #t) #f))
 	(set! (window-property "SND_VERSION" "SND_COMMAND") "(set! (vu-size) .5)")
+	(if (not (string=? (window-property "SND_VERSION" "SND_COMMAND") "(set! (vu-size) .5)"))
+	    (snd-display ";window-property: ~A" (window-property "SND_VERSION" "SND_COMMAND")))
 	(reset-hook! window-property-changed-hook)
 	(set! (window-property "SND_VERSION" "SND_COMMAND") "(make-vector 10 3.14)")
 	(if (or (not gotit)
@@ -30504,11 +30510,11 @@ EDITS: 2
 	     (lambda ()
 	       (let ((help (snd-apropos "close-sound"))
 		     (help1 (snd-apropos 'close-sound)))
-		 (if (or (not (string=? help help1))
-			 (not (string=? help1 apropos-cs)))
-		     (snd-display ";snd-apropos: ~A ~A" help help1))))
+		 (if (or (not (string? help))
+			 (not (string? help1)))
+		     (snd-display ";snd-apropos: ~%~A~% ~A~%" help help1))))
 	     (lambda args 
-	       (snd-display ";snd-apropos: ~A" args)))
+	       (snd-display ";snd-apropos trouble: ~A" args)))
 
       (map-sound-files (lambda (n) (if (> (mus-sound-duration n) 1000.0) (snd-display ";~A is pretty long! ~A" n (mus-sound-duration n)))))
       (if (string? sf-dir)
@@ -47186,7 +47192,7 @@ EDITS: 2
 	      (check-error-tag 'no-such-axis (lambda () (x->position 100 ind 0 1234)))
 	      (check-error-tag 'no-such-axis (lambda () (y->position 100 ind 0 1234)))
 	      (check-error-tag 'no-such-axis (lambda () (axis-info ind 0 1234)))
-	      (check-error-tag 'out-of-range (lambda () (draw-axes (car (channel-widgets)) (car (snd-gcs)) 0.0 1.0 -1.0 1.0 x-axis-in-seconds 1234)))
+	      (check-error-tag 'out-of-range (lambda () (draw-axes (car (channel-widgets)) (car (snd-gcs)) "hiho" 0.0 1.0 -1.0 1.0 x-axis-in-seconds 1234)))
 	      (check-error-tag 'no-such-channel (lambda () (axis-info ind 1234)))
 	      (check-error-tag 'no-such-sound (lambda () (axis-info 1234)))
 	      (check-error-tag 'out-of-range (lambda () (set! (x-bounds) (list 0 0))))
@@ -47294,6 +47300,9 @@ EDITS: 2
 	    (check-error-tag 'wrong-type-arg (lambda () (send-netscape -1)))
 	    (check-error-tag 'bad-header (lambda () (file->array "/home/bil/sf1/bad_chans.snd" 0 0 123 (make-vct 123))))
 	    (check-error-tag 'bad-header (lambda () (make-readin "/home/bil/sf1/bad_chans.snd")))
+	    (check-error-tag 'out-of-range (lambda () (make-wave-train :size (expt 2 30))))
+	    (check-error-tag 'out-of-range (lambda () (make-waveshape :size (expt 2 30))))
+	    (check-error-tag 'out-of-range (lambda () (make-granulate :max-size (expt 2 30))))
 	    
 	    (if (provided? 'snd-motif)
 		(for-each

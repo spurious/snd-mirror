@@ -2455,14 +2455,16 @@
   (hey "    }~%"))
 
 (hey "/* conversions */~%")
-(hey "static XEN c_array_to_xen_list(XEN val, XEN clen)~%")
+(hey "static XEN c_array_to_xen_list(XEN val_1, XEN clen)~%")
 (hey "{~%")
 (hey "  XEN result = XEN_EMPTY_LIST;~%")
+(hey "  XEN val;~%")
 (hey "  int i, len = -1;~%")
 (hey "  char *ctype;~%")
 (hey "  if (XEN_INTEGER_P(clen))~%")
 (hey "    len = XEN_TO_C_INT(clen);~%")
-(hey "  if (!(XEN_LIST_P(val))) return(XEN_FALSE); /* type:location cons */~%")
+(hey "  if (!(XEN_LIST_P(val_1))) return(XEN_FALSE); /* type:location cons */~%")
+(hey "  val = XEN_COPY_ARG(val_1); /* protect Ruby arg */~%")
 (hey "  ctype = XEN_SYMBOL_TO_C_STRING(XEN_CAR(val));~%")
 (for-each array->list listable-types)
 (for-each

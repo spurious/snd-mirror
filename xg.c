@@ -26348,14 +26348,16 @@ static void define_functions(void)
   #endif
 
 /* conversions */
-static XEN c_array_to_xen_list(XEN val, XEN clen)
+static XEN c_array_to_xen_list(XEN val_1, XEN clen)
 {
   XEN result = XEN_EMPTY_LIST;
+  XEN val;
   int i, len = -1;
   char *ctype;
   if (XEN_INTEGER_P(clen))
     len = XEN_TO_C_INT(clen);
-  if (!(XEN_LIST_P(val))) return(XEN_FALSE); /* type:location cons */
+  if (!(XEN_LIST_P(val_1))) return(XEN_FALSE); /* type:location cons */
+  val = XEN_COPY_ARG(val_1); /* protect Ruby arg */
   ctype = XEN_SYMBOL_TO_C_STRING(XEN_CAR(val));
   if (strcmp(ctype, "gint_") == 0)
     {
@@ -29696,10 +29698,10 @@ static bool xg_already_inited = false;
       define_strings();
       XEN_YES_WE_HAVE("xg");
 #if HAVE_GUILE
-      XEN_EVAL_C_STRING("(define xm-version \"14-Apr-04\")");
+      XEN_EVAL_C_STRING("(define xm-version \"28-Apr-04\")");
 #endif
 #if HAVE_RUBY
-      rb_define_global_const("Xm_Version", C_TO_XEN_STRING("14-Apr-04"));
+      rb_define_global_const("Xm_Version", C_TO_XEN_STRING("28-Apr-04"));
 #endif
       xg_already_inited = true;
 #if WITH_GTK_AND_X11

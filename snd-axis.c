@@ -1102,6 +1102,7 @@ Returns actual (pixel) axis bounds -- a list (x0 y0 x1 y1)."
   GtkWidget *w; 
   GdkGC *gc;
 #endif
+  XEN ref;
   char *xlabel; 
   double x0 = 0.0, x1 = 1.0; 
   Float y0 = -1.0, y1 = 1.0; 
@@ -1124,32 +1125,34 @@ Returns actual (pixel) axis bounds -- a list (x0 y0 x1 y1)."
   w = (GtkWidget *)(XEN_UNWRAP_WIDGET(xwid));
   gc = (GdkGC *)(XEN_UNWRAP_GC(xgc));
 #endif
+  ref = XEN_LIST_REF(args, 2);
+  XEN_ASSERT_TYPE(XEN_STRING_P(ref), ref, XEN_ARG_3, S_draw_axes, "a string");
   xlabel = XEN_TO_C_STRING(XEN_LIST_REF(args, 2));
   if (len > 3) 
     {
       xx0 = XEN_LIST_REF(args, 3);
-      XEN_ASSERT_TYPE(XEN_NUMBER_P(xx0), xx0, XEN_ARG_3, S_draw_axes, "a number");
+      XEN_ASSERT_TYPE(XEN_NUMBER_P(xx0), xx0, XEN_ARG_4, S_draw_axes, "a number");
       x0 = XEN_TO_C_DOUBLE(xx0);
       if (len > 4) 
 	{
 	  xx1 = XEN_LIST_REF(args, 4);
-	  XEN_ASSERT_TYPE(XEN_NUMBER_P(xx1), xx1, XEN_ARG_4, S_draw_axes, "a number");
+	  XEN_ASSERT_TYPE(XEN_NUMBER_P(xx1), xx1, XEN_ARG_5, S_draw_axes, "a number");
 	  x1 = XEN_TO_C_DOUBLE(xx1);
 	  if (len > 5) 
 	    {
 	      xy0 = XEN_LIST_REF(args, 5);
-	      XEN_ASSERT_TYPE(XEN_NUMBER_P(xy0), xy0, XEN_ARG_5, S_draw_axes, "a number");
+	      XEN_ASSERT_TYPE(XEN_NUMBER_P(xy0), xy0, XEN_ARG_6, S_draw_axes, "a number");
 	      y0 = XEN_TO_C_DOUBLE(xy0);
 	      if (len > 6) 
 		{
 		  xy1 = XEN_LIST_REF(args, 6);
-		  XEN_ASSERT_TYPE(XEN_NUMBER_P(xy1), xy1, XEN_ARG_6, S_draw_axes, "a number");
+		  XEN_ASSERT_TYPE(XEN_NUMBER_P(xy1), xy1, XEN_ARG_7, S_draw_axes, "a number");
 		  y1 = XEN_TO_C_DOUBLE(xy1);
 		  if (len > 7) 
 		    {
 		      int tmp;
 		      xstyle = XEN_LIST_REF(args, 7);
-		      XEN_ASSERT_TYPE(XEN_INTEGER_P(xstyle), xstyle, XEN_ARG_7, S_draw_axes, "axis style");
+		      XEN_ASSERT_TYPE(XEN_INTEGER_P(xstyle), xstyle, XEN_ARG_8, S_draw_axes, "axis style");
 		      tmp = XEN_TO_C_INT(xstyle);
 		      if (!(AXIS_STYLE_OK(tmp)))
 			XEN_OUT_OF_RANGE_ERROR(S_draw_axes, 7, xstyle, "axis style");
@@ -1157,7 +1160,7 @@ Returns actual (pixel) axis bounds -- a list (x0 y0 x1 y1)."
 		      if (len > 8) 
 			{
 			  xaxes = XEN_LIST_REF(args, 8);
-			  XEN_ASSERT_TYPE(XEN_INTEGER_P(xaxes), xaxes, XEN_ARG_8, S_draw_axes, S_show_axes " choice");
+			  XEN_ASSERT_TYPE(XEN_INTEGER_P(xaxes), xaxes, XEN_ARG_9, S_draw_axes, S_show_axes " choice");
 			  tmp = XEN_TO_C_INT(xaxes);
 			  if (!(SHOW_AXES_OK(tmp)))
 			    XEN_OUT_OF_RANGE_ERROR(S_draw_axes, 8, xaxes, S_show_axes " choice");
