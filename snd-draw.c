@@ -767,12 +767,12 @@ void sgl_set_currents(snd_state *ss)
   in_set_spectro_y_scale(ss, vals[4]);
   in_set_spectro_z_scale(ss, vals[5]);
   reflect_spectro(ss);
-  map_chans_field(ss, FCP_X_ANGLE, vals[0]);
-  map_chans_field(ss, FCP_Y_ANGLE, vals[1]);
-  map_chans_field(ss, FCP_Z_ANGLE, vals[2]);
-  map_chans_field(ss, FCP_X_SCALE, vals[3]);
-  map_chans_field(ss, FCP_Y_SCALE, vals[4]);
-  map_chans_field(ss, FCP_Z_SCALE, vals[5]);
+  chans_field(ss, FCP_X_ANGLE, vals[0]);
+  chans_field(ss, FCP_Y_ANGLE, vals[1]);
+  chans_field(ss, FCP_Z_ANGLE, vals[2]);
+  chans_field(ss, FCP_X_SCALE, vals[3]);
+  chans_field(ss, FCP_Y_SCALE, vals[4]);
+  chans_field(ss, FCP_Z_SCALE, vals[5]);
 }
 #endif
 

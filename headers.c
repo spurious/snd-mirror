@@ -282,7 +282,7 @@ static const unsigned int I_INRS[NINRS] ={0xcb460020, 0xd0465555, 0xfa460000, 0x
 
 static off_t data_location = 0;
 static int srate = 0, chans = 0, header_type = 0, data_format = 0, original_data_format = 0;
-static int comment_start = 0, comment_end = 0, header_distributed = 0, type_specifier = 0, bits_per_sample = 0, fact_samples = 0, block_align = 0;
+static int comment_start = 0, comment_end = 0, type_specifier = 0, bits_per_sample = 0, fact_samples = 0, block_align = 0;
 static off_t true_file_length = 0, data_size = 0;
 static int base_detune = 0, base_note = 0, little_endian = 0;
 
@@ -292,7 +292,14 @@ int mus_header_chans (void) {return(chans);}
 int mus_header_srate (void) {return(srate);}
 int mus_header_type (void) {return(header_type);}
 int mus_header_format (void) {return(data_format);}
-int mus_header_distributed (void) {return(header_distributed);}
+int mus_header_distributed (void) {return((header_type == MUS_AIFF) ||
+					  (header_type == MUS_AIFC) ||
+					  (header_type == MUS_RIFF) ||
+					  (header_type == MUS_MAUD) ||
+					  (header_type == MUS_SVX) ||
+					  (header_type == MUS_CSL) ||
+					  (header_type == MUS_AVI) ||
+					  (header_type == MUS_SOUNDFONT));}
 int mus_header_comment_start (void) {return(comment_start);}
 int mus_header_comment_end (void) {return(comment_end);}
 int mus_header_aux_comment_start (int n) {if (aux_comment_start) return(aux_comment_start[n]); else return(-1);}
@@ -593,7 +600,7 @@ static int read_next_header (int chan)
     case 18: data_format = MUS_BSHORT;      break; 
       /* "emphasized": Xavier Serra's de-emphasis filter: y(n) = x(n) + .9 y(n-1) */
     case 27: data_format = MUS_ALAW;        break;
-    case 30: data_format = MUS_LINT;        break; /* from here on, for Snd's internal benefit -- it is not used elsewhere */
+    case 30: data_format = MUS_LINT;        break; /* from here on, for Snd's internal benefit -- these are probably not used elsewhere */
     case 31: data_format = MUS_LFLOAT;      break; 
     case 32: data_format = MUS_BINTN;       break; 
     case 33: data_format = MUS_LINTN;       break; 
@@ -626,9 +633,6 @@ static int read_next_header (int chan)
 	  }
       }
   if (comment_end < comment_start) comment_end = comment_start;
-  if (match_four_chars((unsigned char *)(hdrbuf + 24), I_AFsp)) 
-    header_distributed = 1; 
-  else header_distributed = 0;
   maybe_bicsf = mus_char_to_bint((unsigned char *)(hdrbuf + 28));
   if (maybe_bicsf == 107364) err = read_bicsf_header(chan);
   data_size = mus_bytes_to_samples(data_format, data_size);
@@ -866,7 +870,6 @@ static int read_aiff_header (int chan, int overall_offset)
   offset = 0;
   for (i = 0; i < AUX_COMMENTS; i++) aux_comment_start[i] = 0;
   data_format = MUS_BSHORT;
-  header_distributed = 1;
   srate = 0;
   chans = 0;
   happy = 1;
@@ -1457,7 +1460,6 @@ static int read_riff_header (int chan)
   type_specifier = mus_char_to_uninterpreted_int((unsigned char *)(hdrbuf + 8));
   chunkloc = 12;
   offset = 0;
-  header_distributed = 1;
   data_format = MUS_UNSUPPORTED;
   srate = 0;
   chans = 0;
@@ -1737,7 +1739,6 @@ static int read_soundforge_header (int chan, int loc)
   off_t offset;
   chunkloc = 12 * 2 + 16;
   offset = 0;
-  header_distributed = 1;
   data_format = MUS_UNSUPPORTED;
   srate = 0;
   chans = 0;
@@ -1838,7 +1839,6 @@ static int read_avi_header (int chan)
   type_specifier = mus_char_to_uninterpreted_int((unsigned char *)(hdrbuf + 8));
   chunkloc = 12;
   offset = 0;
-  header_distributed = 1;
   data_format = MUS_UNSUPPORTED;
   srate = 0;
   chans = 1;
@@ -2000,7 +2000,6 @@ static int read_soundfont_header (int chan)
   type_specifier = mus_char_to_uninterpreted_int((unsigned char *)(hdrbuf + 8));
   chunkloc = 12;
   offset = 0;
-  header_distributed = 1;
   soundfont_entries = 0;
   data_format = MUS_LSHORT;
   srate = 0;
@@ -2258,7 +2257,6 @@ static int read_nist_header (int chan)
 	}
     }
   data_size = mus_bytes_to_samples(data_format, data_size);
-  header_distributed = 1;
   true_file_length = SEEK_FILE_LENGTH(chan);
   return(MUS_NO_ERROR);
 }
@@ -2333,7 +2331,6 @@ static int read_bicsf_header (int chan)
   /* now check for a COMM chunk, setting the comment pointers */
   chunkloc = 4; /* next header + magic number, srate, chans, packing, then chunks, I think */
   offset = 40;
-  header_distributed = 1;
   happy = 1;
   while (happy)
     {
@@ -2464,7 +2461,6 @@ static int read_ircam_header (int chan)
       bloc = bsize;
       if ((bsize <= 0) || (bcode <= 0) || ((offset + bloc) > 1023)) happy = 0;
     }
-  header_distributed = 0;
   data_size = mus_bytes_to_samples(data_format, data_size);
   return(MUS_NO_ERROR);
 }
@@ -2552,7 +2548,6 @@ static int read_8svx_header (int chan)
   chunkloc = 12;
   offset = 0;
   data_format = MUS_BYTE;
-  header_distributed = 1;
   srate = 0;
   chans = 1;
   happy = 1;
@@ -2638,7 +2633,6 @@ static int read_voc_header(int chan)
   voc_extended = 0;
   true_file_length = SEEK_FILE_LENGTH(chan);
   curbase = mus_char_to_lshort((unsigned char *)(hdrbuf + 20));
-  header_distributed = 1;
   lseek(chan, curbase, SEEK_SET);
   read(chan, hdrbuf, HDRBUFSIZ);
   type = (int)(hdrbuf[0]);
@@ -2771,7 +2765,6 @@ static int read_adc_header(int chan)
   data_size = 2 * big_or_little_endian_int((unsigned char *)(hdrbuf + 8), little);
   comment_start = 0;
   comment_end = 0;
-  header_distributed = 0;
   true_file_length = SEEK_FILE_LENGTH(chan);
   data_size = mus_bytes_to_samples(data_format, data_size);
   return(MUS_NO_ERROR);
@@ -2811,7 +2804,6 @@ static int read_avr_header(int chan)
   if (chans == 0) chans = 1; else chans = 2;
   data_location = 128;
   data_size = mus_char_to_bint((unsigned char *)(hdrbuf + 26));
-  header_distributed = 0;
   srate = mus_char_to_ubshort((unsigned char *)(hdrbuf + 24));
   dsize = mus_char_to_bshort((unsigned char *)(hdrbuf + 14));
   dsigned = mus_char_to_bshort((unsigned char *)(hdrbuf + 16));
@@ -2879,7 +2871,6 @@ static int read_sndt_header(int chan)
   data_size = mus_char_to_lint((unsigned char *)(hdrbuf + 8));
   if (data_size < 0) data_size = mus_char_to_lint((unsigned char *)(hdrbuf + 10));
   if (srate <= 1) srate = mus_char_to_ulshort((unsigned char *)(hdrbuf + 22));
-  header_distributed = 0;
   true_file_length = SEEK_FILE_LENGTH(chan);
   return(MUS_NO_ERROR);
 }
@@ -2895,7 +2886,6 @@ static int read_covox_header(int chan)
 {
   data_format = MUS_UBYTE;
   chans = 1;
-  header_distributed = 0;
   data_location = 16;
   srate = 8000;
   true_file_length = SEEK_FILE_LENGTH(chan);
@@ -2921,7 +2911,6 @@ static int read_covox_header(int chan)
 static int read_spl_header(int chan)
 {
   chans = 1;
-  header_distributed = 0;
   data_location = 61;
   srate = 8000; /* I need an example to decode this */
   true_file_length = SEEK_FILE_LENGTH(chan);
@@ -2953,7 +2942,6 @@ static int read_smp_header(int chan)
   chans = 1;
   comment_start = 22;
   comment_end = 81;
-  header_distributed = 1;
   data_location = 116;
   lseek(chan, 112, SEEK_SET);
   read(chan, hdrbuf, 4);
@@ -2993,7 +2981,6 @@ static int read_sppack_header(int chan)
   read(chan, hdrbuf, 22);
   typ = mus_char_to_bshort((unsigned char *)hdrbuf);
   data_format = MUS_UNSUPPORTED;
-  header_distributed = 0;
   if (typ == 1) 
     {
       if (((hdrbuf[254]) == 252) && ((hdrbuf[255]) == 14)) /* #xfc and #x0e */
@@ -3050,7 +3037,6 @@ static int read_esps_header (int chan)
   little = (hdrbuf[18] == 0);
   true_file_length = SEEK_FILE_LENGTH(chan);
   data_size = true_file_length - data_location;
-  header_distributed = 0;
   srate = 8000;
   chans = 1;
   lseek(chan, 132, SEEK_SET);
@@ -3167,7 +3153,6 @@ static int read_inrs_header (int chan, int loc)
   true_file_length = SEEK_FILE_LENGTH(chan);
   comment_start = 6;
   comment_end = 25;
-  header_distributed = 0;
   data_format = MUS_LSHORT;
   srate = loc;
   chans = 1;
@@ -3202,7 +3187,6 @@ static int read_maud_header (int chan)
   chunkloc = 12;
   offset = 0;
   data_format = MUS_BYTE;
-  header_distributed = 1;
   srate = 0;
   chans = 1;
   happy = 1;
@@ -3287,7 +3271,6 @@ static int read_csl_header (int chan)
   chunkloc = 12;
   offset = 0;
   data_format = MUS_LSHORT;
-  header_distributed = 1;
   srate = 0;
   chans = 1;
   happy = 1;
@@ -3357,7 +3340,6 @@ static int read_file_samp_header (int chan)
 {
   int i = 0;
   char *locbuf;
-  header_distributed = 0;
   data_location = 1024;
   chans = 1;
   srate = 8000;
@@ -3404,7 +3386,6 @@ static int read_sd1_header (int chan)
 {
   int n;
   chans = 1;
-  header_distributed = 0;
   data_location = 1336;
   lseek(chan, 1020, SEEK_SET);
   read(chan, hdrbuf, 64);
@@ -3442,7 +3423,6 @@ static int read_sd1_header (int chan)
 static int read_psion_header (int chan)
 {
   chans = 1;
-  header_distributed = 0;
   data_location = 32;
   srate = 8000;
   data_format = MUS_ALAW;
@@ -3478,7 +3458,6 @@ static int read_deskmate_header (int chan)
 {
   /* if we reach here, we're at 0 with HDRBUFSIZ read in */
   chans = 1;
-  header_distributed = 0;
   data_location = 44;
   srate = mus_char_to_lshort((unsigned char *)(hdrbuf + 14)); /* unsigned? */
   data_format = MUS_UBYTE;
@@ -3513,7 +3492,6 @@ static int read_deskmate_2500_header (int chan)
 {
   /* if we reach here, we're at 0 with HDRBUFSIZ read in */
   chans = 1;
-  header_distributed = 0;
   data_location = 114 + 46;
   srate = mus_char_to_lshort((unsigned char *)(hdrbuf + 88));
   data_format = MUS_UBYTE;
@@ -3606,7 +3584,6 @@ static int read_gravis_header(int chan)
     }
 
   data_location = 337;
-  header_distributed = 0;
   true_file_length = SEEK_FILE_LENGTH(chan);
   data_size = mus_bytes_to_samples(data_format, data_size);
   return(MUS_NO_ERROR);
@@ -3622,7 +3599,6 @@ static int read_gravis_header(int chan)
 static int read_goldwave_header(int chan)
 {
   chans = 1;
-  header_distributed = 0;
   data_location = 28;
   data_size = mus_char_to_lint((unsigned char *)(hdrbuf + 22));
   true_file_length = SEEK_FILE_LENGTH(chan);
@@ -3644,7 +3620,6 @@ static int read_goldwave_header(int chan)
 static int read_srfs_header(int chan)
 {
   chans = 1; /* might be short at header[4] */
-  header_distributed = 0;
   data_location = 32;
   true_file_length = SEEK_FILE_LENGTH(chan);
   data_size = (true_file_length - data_location) / 2;
@@ -3663,7 +3638,6 @@ static int read_srfs_header(int chan)
 static int read_qt_header(int chan)
 {
   chans = 1;
-  header_distributed = 0;
   data_location = 12;
   true_file_length = SEEK_FILE_LENGTH(chan);
   data_size = (true_file_length - data_location);
@@ -3696,7 +3670,6 @@ static int read_sbstudio_header(int chan)
   lseek(chan, 0, SEEK_SET);
   read(chan, hdrbuf, HDRBUFSIZ);
   chans = 1; 
-  header_distributed = 0;
   srate = 8000; /* no sampling rate field in this header */
   data_format = MUS_LSHORT; /* might change later */
   true_file_length = SEEK_FILE_LENGTH(chan);
@@ -3756,7 +3729,6 @@ static int read_sbstudio_header(int chan)
 static int read_delusion_header(int chan)
 {
   chans = 1; 
-  header_distributed = 0;
   data_location = 55;
   true_file_length = SEEK_FILE_LENGTH(chan);
   data_size = (true_file_length - data_location);
@@ -3785,7 +3757,6 @@ static int read_delusion_header(int chan)
 static int read_farandole_header(int chan)
 {
   chans = 1; 
-  header_distributed = 0;
   data_location = 51;
   true_file_length = SEEK_FILE_LENGTH(chan);
   data_size = (true_file_length-data_location);
@@ -3819,7 +3790,6 @@ static int read_farandole_header(int chan)
 static int read_tx16w_header(int chan)
 {
   chans = 1; 
-  header_distributed = 0;
   data_location = 32;
   true_file_length = SEEK_FILE_LENGTH(chan);
   data_size = (true_file_length-data_location);
@@ -3859,7 +3829,6 @@ static int read_tx16w_header(int chan)
 static int read_sy85_header(int chan)
 {
   chans = 1; 
-  header_distributed = 0;
   data_location = 1024;
   true_file_length = SEEK_FILE_LENGTH(chan);
   data_size = (true_file_length-data_location);
@@ -3878,7 +3847,6 @@ static int read_sy85_header(int chan)
 static int read_kurzweil_2000_header(int chan)
 {
   chans = 1; 
-  header_distributed = 0;
   data_location = mus_char_to_bint((unsigned char *)(hdrbuf + 4));
   true_file_length = SEEK_FILE_LENGTH(chan);
   data_size = (true_file_length-data_location);
@@ -3911,7 +3879,6 @@ static int read_pvf_header(int chan, int loc)
   if (chans < 1) chans = 1;
   if (srate < 0) srate = 8000;
   if (bits < 8) bits = 8;
-  header_distributed = 0;
   data_location = 0;
   for (i = 6; i < INITIAL_READ_SIZE; i++)
     if (hdrbuf[i] == '\n')
@@ -3954,7 +3921,6 @@ static int read_pvf_header(int chan, int loc)
 static int read_ultratracker_header(int chan)
 {
   chans = 1; 
-  header_distributed = 0;
   data_location = 64;
   true_file_length = SEEK_FILE_LENGTH(chan);
   data_size = (true_file_length-data_location);
@@ -4007,7 +3973,6 @@ static int read_sample_dump_header(int chan)
   /* data_size = mus_char_to_lint((unsigned char *)(hdrbuf + 9)); */
   if ((srate < 100) || (srate > 100000)) srate = 8000;
   chans = 1; 
-  header_distributed = 0;
   data_location = i + 3 + len + 23;
   true_file_length = SEEK_FILE_LENGTH(chan);
   data_size = (true_file_length-data_location);
@@ -4047,7 +4012,6 @@ static int read_sample_dump_header(int chan)
 static int read_digiplayer_header(int chan)
 {
   chans = 1; 
-  header_distributed = 0;
   data_location = 80;
   true_file_length = SEEK_FILE_LENGTH(chan);
   data_size = (true_file_length-data_location);
@@ -4298,7 +4262,6 @@ static int read_comdisco_header (int chan)
   /* now clean up this mess */
   chans = 1;
   if (d_size != 0) data_size = (off_t)d_size;
-  header_distributed = 0;
   switch (type)
     {
     case 0: if (little) data_format = MUS_LSHORT; else data_format = MUS_BSHORT; break;
@@ -4437,7 +4400,6 @@ static int read_no_header (int chan)
   srate = header_raw_srate;
   chans = header_raw_chans;
   data_format = header_raw_format;
-  header_distributed = 0;
   data_location = 0;
   data_size = SEEK_FILE_LENGTH(chan);
   true_file_length = data_size;
