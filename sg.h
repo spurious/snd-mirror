@@ -33,8 +33,11 @@
 #define ERRN2(a,b) SCM_ASSERT(SCM_NFALSEP(scm_real_p(a)),a,SCM_ARG2,b)
 #define ERRN3(a,b) SCM_ASSERT(SCM_NFALSEP(scm_real_p(a)),a,SCM_ARG3,b)
 #define ERRS1(a,b) SCM_ASSERT((gh_string_p(a)),a,SCM_ARG1,b)
+#define ERRS2(a,b) SCM_ASSERT((gh_string_p(a)),a,SCM_ARG2,b)
 #define ERRVCT1(a,b) SCM_ASSERT((vct_p(a)),a,SCM_ARG1,b)
 #define ERRVCT2(a,b) SCM_ASSERT((vct_p(a)),a,SCM_ARG2,b)
+#define ERRB1(a,b) SCM_ASSERT((gh_number_p(a)) || (gh_boolean_p(a)) || (SCM_UNBNDP(a)),a,SCM_ARG1,b)
+#define ERRB2(a,b) SCM_ASSERT((gh_number_p(a)) || (gh_boolean_p(a)) || (SCM_UNBNDP(a)),a,SCM_ARG2,b)
 
 #define RTNBOOL(a) return((a) ? SCM_BOOL_T : SCM_BOOL_F)
 #define RTNINT(a) return(gh_int2scm(a))
@@ -54,5 +57,21 @@
  * I'm not sure which is "the right thing":  (help vct?) or (help 'vct?)
  * the problem with setting the symbol's property is that there apparently isn't a Scheme version of defconstant
  */
+
+/* error indications (probably temporary) */
+
+#define NO_SUCH_CHANNEL gh_symbol2scm("no-such-channel")
+#define NO_SUCH_SOUND gh_symbol2scm("no-such-sound")
+#define NO_SUCH_MARK gh_symbol2scm("no-such-mark")
+#define NO_SUCH_MIX gh_symbol2scm("no-such-mix")
+#define NO_SUCH_MENU gh_symbol2scm("no-such-menu")
+#define NO_SUCH_FILE gh_symbol2scm("no-such-file")
+#define NO_SUCH_REGION gh_symbol2scm("no-such-region")
+#define NO_SUCH_SAMPLE gh_symbol2scm("no-such-sample")
+#define NO_SUCH_EDIT gh_symbol2scm("no-such-edit")
+#define CANNOT_SAVE gh_symbol2scm("cannot-save")
+#define IMPOSSIBLE_BOUNDS gh_symbol2scm("impossible-bounds")
+#define NO_ACTIVE_SELECTION gh_symbol2scm("no-active-selection")
+
 
 #endif

@@ -1,8 +1,5 @@
 /* TODO: 
- *       drag via mark could still sue amp-env opts
- *         drag doubled-up isn't right yet
- *       shift-click to sync (via makr-click-hook and syncd, unsyncd mark-related scm funcs)
- *       doc topic marks for drag
+ *       drag via mark could still use amp-env opts
  *       sync colors? could use 6-7 bits of id+table (or local mark context)
  *       play-syncd-marks (scm -- pause arg here?)
  *       mark-moved-hook?
@@ -62,7 +59,7 @@ static mark *map_over_marks(chan_info *cp, mark_map_func *func, void *m, int dir
   return(NULL);
 }
 
-int *channel_marks(chan_info *cp, int pos)
+static int *channel_marks(chan_info *cp, int pos)
 {
   int *ids = NULL;
   int i,marks;
@@ -97,7 +94,7 @@ static int mark_id_counter = 0;
 static mark *make_mark(int samp, char *name) {return(make_mark_1(samp,name,mark_id_counter++,0));}
 static mark *copy_mark(mark *m) {return(make_mark_1(m->samp,m->name,mark_id(m),m->sync));}
 int mark_id(mark *m) {return(m->id & MARK_ID_MASK);}
-int mark_sync(mark *m) {return(m->sync);}
+static int mark_sync(mark *m) {return(m->sync);}
 static int sync_max = 0;
 int mark_sync_max(void) {return(sync_max);}
 int set_mark_sync(mark *m, int val) {m->sync = (unsigned int)val; if (val > sync_max) sync_max = val; return(val);}
@@ -146,7 +143,7 @@ static mark *find_mark_from_id(snd_state *ss, int id, chan_info **cps, int pos)
   return(NULL);
 }
 
-mark *find_mark_id(chan_info **cps, int id, int pos) 
+static mark *find_mark_id(chan_info **cps, int id, int pos) 
 {
   return(find_mark_from_id(get_global_state(),id,cps,pos));
 }
@@ -375,7 +372,7 @@ static int compare_mark_samps(const void *mp1, const void *mp2)
   return(1);
 }
 
-void sort_marks(chan_info *cp)
+static void sort_marks(chan_info *cp)
 {
   mark **mps;
   int ed;
@@ -516,7 +513,7 @@ void delete_mark_samp(int samp, chan_info *cp)
   FREE(buf);
 }
 
-void delete_mark_id(int id, chan_info *cp)
+static void delete_mark_id(int id, chan_info *cp)
 {
   int i,j,ed,edm;
   mark *mp;
@@ -556,7 +553,7 @@ void delete_mark_id(int id, chan_info *cp)
   FREE(buf);
 }
 
-void delete_marks (chan_info *cp)
+static void delete_marks (chan_info *cp)
 {
   int i,ed;
   mark *mp;
@@ -1129,7 +1126,7 @@ static syncdata *free_syncdata(syncdata *sd)
   return(NULL);
 }
 
-int *syncd_marks(snd_state *ss, int sync)
+static int *syncd_marks(snd_state *ss, int sync)
 {
   syncdata *sd;
   int *ids;
@@ -1289,7 +1286,11 @@ static void edit_dragged_mark(chan_info *cp, mark *m, int initial_sample)
     }
   else 
     if (num < 0)
-      delete_samples(mark_final_sample,-num,cp,"mark dragged");
+      {
+	new_m = map_over_marks(cp,find_mark_id_1,(void *)id,READ_FORWARD);
+	new_m->samp = initial_sample;
+	delete_samples(mark_final_sample,-num,cp,"mark dragged");
+      }
   if (num != 0) 
     {
       new_m = map_over_marks(cp,find_mark_id_1,(void *)id,READ_FORWARD);
@@ -1471,6 +1472,9 @@ static int make_mark_graph(chan_info *cp, snd_info *sp, snd_state *ss, int initi
 
 
 #if HAVE_GUILE
+
+#include "sg.h"
+
 static SCM g_restore_marks(SCM size, SCM snd, SCM chn, SCM marklist)
 {
   SCM lst,el,nm,sm,mlst;
@@ -1529,9 +1533,270 @@ static SCM g_restore_marks(SCM size, SCM snd, SCM chn, SCM marklist)
   return(SCM_BOOL_F);
 }
 
-void gh_init_marks(void)
+enum {MARK_SAMPLE,MARK_NAME,MARK_SYNC,MARK_HOME};
+
+static SCM iread_mark(SCM n, int fld, int pos_n)
+{
+  int pos;
+  chan_info *ncp[1];
+  mark *m;
+  pos = g_scm2intdef(pos_n,-1);
+  m = find_mark_id(ncp,g_scm2intdef(n,0),pos);
+  if (m == NULL) return(NO_SUCH_MARK);
+  switch (fld)
+    {
+    case MARK_SAMPLE: RTNINT(m->samp); break;
+    case MARK_SYNC:   RTNINT(mark_sync(m)); break;
+    case MARK_NAME:   if (m->name) RTNSTR(m->name); else RTNSTR(""); break;
+    case MARK_HOME:   return(SCM_LIST2(gh_int2scm((ncp[0]->sound)->index),gh_int2scm(ncp[0]->chan))); break;
+    }
+  return(SCM_BOOL_F);
+}
+
+static SCM iwrite_mark(SCM mark_n, SCM val, int fld)
+{
+  chan_info *cp[1];
+  mark *m;
+  char *str;
+  m = find_mark_id(cp,g_scm2intdef(mark_n,0),-1);
+  if (m == NULL) return(NO_SUCH_MARK);
+  switch (fld)
+    {
+    case MARK_SAMPLE: 
+      m->samp = g_scm2int(val);
+      sort_marks(cp[0]); /* update and re-sort current mark list */
+      update_graph(cp[0],NULL);
+      break;
+    case MARK_SYNC: 
+      set_mark_sync(m,g_scm2int(val));
+      break;
+    case MARK_NAME:
+      if (m->name) FREE(m->name);
+      str = gh_scm2newstr(val,NULL);
+      m->name = copy_string(str);
+      free(str);
+      update_graph(cp[0],NULL);
+      break;
+    }
+  return(val);
+}
+
+static SCM g_mark_sample(SCM mark_n, SCM pos_n) 
+{
+  #define H_mark_sample "(" S_mark_sample " &optional id pos) returns the mark's location (sample number) at edit history pos"
+  ERRB1(mark_n,S_mark_sample);
+  ERRB2(pos_n,S_mark_sample);
+  return(iread_mark(mark_n,MARK_SAMPLE,pos_n));
+}
+
+static SCM g_set_mark_sample(SCM mark_n, SCM samp_n) 
+{
+  #define H_set_mark_sample "(" S_set_mark_sample " id samp) sets the mark's location"
+  ERRB1(mark_n,S_set_mark_sample); 
+  ERRB2(samp_n,S_set_mark_sample); 
+  return(iwrite_mark(mark_n,samp_n,MARK_SAMPLE));
+}
+
+static SCM g_mark_sync(SCM mark_n) 
+{
+  #define H_mark_sync "(" S_mark_sync " id) returns the mark's sync value"
+  ERRB1(mark_n,S_mark_sync);
+  return(iread_mark(mark_n,MARK_SYNC,SCM_UNSPECIFIED));
+}
+
+static SCM g_set_mark_sync(SCM mark_n, SCM sync_n) 
+{
+  #define H_set_mark_sync "(" S_set_mark_sync " id sync) sets the mark's sync value"
+  ERRB1(mark_n,S_set_mark_sync); 
+  ERRB2(sync_n,S_set_mark_sync); 
+  return(iwrite_mark(mark_n,sync_n,MARK_SYNC));
+}
+
+static SCM g_mark_name(SCM mark_n) 
+{
+  #define H_mark_name "(" S_mark_name " id &optional snd chn) returns the mark's name"
+  ERRB1(mark_n,S_mark_name); 
+  return(iread_mark(mark_n,MARK_NAME,SCM_UNSPECIFIED));
+}
+
+static SCM g_set_mark_name(SCM mark_n, SCM name) 
+{
+  #define H_set_mark_name "("   S_set_mark_name " id name) sets the mark's name"
+  ERRB1(mark_n,S_set_mark_name); 
+  ERRS2(name,S_set_mark_name);
+  return(iwrite_mark(mark_n,name,MARK_NAME));
+}
+
+static SCM g_mark_sync_max(void) 
+{
+  #define H_mark_sync_max "(" S_mark_sync_max ") -> max mark sync value seen so far"
+  return(gh_int2scm(mark_sync_max()));
+}
+
+static SCM g_mark_to_sound(SCM mark_n)
+{
+  #define H_mark_to_sound "(" S_mark_to_sound " id) returns the sound (index) and channel that hold mark id"
+  ERRB1(mark_n,S_mark_to_sound);
+  return(iread_mark(mark_n,MARK_HOME,SCM_UNSPECIFIED));
+}
+
+static SCM g_find_mark(SCM samp_n, SCM snd_n, SCM chn_n) 
+{
+  #define H_find_mark "(" S_find_mark " samp-or-name &optional snd chn) finds the mark in snd's channel chn\n\
+   at samp (if a number) or with the given name (if a string), returning the mark id"
+
+  mark **mps;
+  int i,samp;
+  char *name = NULL;
+  chan_info *cp = NULL;
+  SCM_ASSERT((gh_number_p(samp_n) || gh_string_p(samp_n) || (SCM_UNBNDP(samp_n)) || (SCM_FALSEP(samp_n))),samp_n,SCM_ARG1,S_find_mark);
+  ERRCP(S_find_mark,snd_n,chn_n,2); 
+  cp = get_cp(snd_n,chn_n);
+  if (cp == NULL) return(NO_SUCH_CHANNEL);
+  mps = cp->marks[cp->edit_ctr];
+  if (mps)
+    {
+      if (gh_string_p(samp_n))
+	name = gh_scm2newstr(samp_n,NULL);
+      else samp = g_scm2intdef(samp_n,0);
+      if (name)
+	{
+	  for (i=0;i<=cp->mark_ctr[cp->edit_ctr];i++) 
+	    if ((mps[i]) && (mps[i]->name) && (strcmp(name,mps[i]->name) == 0))
+	      {
+		free(name);
+		RTNINT(mark_id(mps[i]));
+	      }
+	}
+      else
+	{
+	  for (i=0;i<=cp->mark_ctr[cp->edit_ctr];i++)
+	    if ((mps[i]) && (mps[i]->samp == samp)) 
+	      RTNINT(mark_id(mps[i]));
+	}
+    }
+  return(NO_SUCH_MARK);
+}
+
+static SCM g_add_mark(SCM samp_n, SCM snd_n, SCM chn_n) 
+{
+  #define H_add_mark "(" S_add_mark ") samp &optional snd chn) adds a mark at sample samp returning the mark id"
+  mark *m;
+  chan_info *cp;
+  ERRB1(samp_n,S_add_mark); 
+  ERRCP(S_add_mark,snd_n,chn_n,2);
+  cp = get_cp(snd_n,chn_n);
+  if (cp == NULL) return(NO_SUCH_CHANNEL);
+  m = add_mark(g_scm2intdef(samp_n,0),NULL,cp);
+  if (m)
+    {
+      /* if it's a redundant mark, and we're ignoring them, return -1 */
+      update_graph(cp,NULL);
+      RTNINT(mark_id(m));
+    }
+  else RTNINT(-1);
+}
+
+static SCM g_delete_mark(SCM id_n) 
+{
+  #define H_delete_mark "(" S_delete_mark " id) delete mark id (- C-m)"
+  chan_info *cp[1];
+  mark *m;
+  int id;
+  ERRB1(id_n,S_delete_mark);
+  m = find_mark_id(cp,id = g_scm2intdef(id_n,0),-1);
+  if (m == NULL) return(NO_SUCH_MARK);
+  delete_mark_id(id,cp[0]);
+  update_graph(cp[0],NULL);
+  return(id_n);
+}
+
+static SCM g_delete_marks(SCM snd_n, SCM chn_n) 
+{
+  #define H_delete_marks "(" S_delete_marks " &optional snd chn) delete all marks in snd's channel chn"
+  chan_info *cp;
+  ERRCP(S_delete_marks,snd_n,chn_n,1);
+  cp = get_cp(snd_n,chn_n);
+  if (cp) delete_marks(cp); else return(NO_SUCH_CHANNEL);
+  return(SCM_BOOL_F);
+}
+
+static SCM int_array_to_list(int *arr, int i, int len)
+{
+  if (i < len)
+    return(gh_cons(gh_int2scm(arr[i]),int_array_to_list(arr,i+1,len)));
+  else return(gh_cons(gh_int2scm(arr[i]),SCM_EOL));
+}
+
+static SCM g_syncd_marks(SCM sync)
+{
+  #define H_syncd_marks "(" S_syncd_marks " sync) -> list of mark ids that share sync"
+  int *ids;
+  SCM res;
+  ERRN1(sync,S_syncd_marks);
+  ids = syncd_marks(get_global_state(),gh_scm2int(sync));
+  if ((ids == NULL) || (ids[0] == 0)) return(SCM_EOL);
+  res = int_array_to_list(ids,1,ids[0]);
+  FREE(ids);
+  return(res);
+}
+
+static SCM g_marks(SCM snd_n, SCM chn_n, SCM pos_n) 
+{
+  #define H_marks "(" S_marks " &optional snd chn pos) -> list of marks (ids) in snd/chn at edit history position pos"
+  /* mark list is: channel: (id id id), snd: ((id id) (id id...)) */
+  chan_info *cp;
+  snd_info *sp;
+  SCM res,res1 = SCM_EOL;
+  int *ids;
+  int i,pos;
+  if ((SCM_INUMP(snd_n)) && (SCM_INUMP(chn_n)))
+    {
+      cp = get_cp(snd_n,chn_n);
+      if (cp == NULL) return(NO_SUCH_CHANNEL);
+      if (SCM_INUMP(pos_n)) pos = SCM_INUM(pos_n); else pos = cp->edit_ctr;
+      ids = channel_marks(cp,pos);
+      if ((ids == NULL) || (ids[0] == 0)) return(SCM_EOL);
+      res = int_array_to_list(ids,1,ids[0]);
+      FREE(ids);
+      return(res);
+    }
+  else
+    {
+      sp = get_sp(snd_n);
+      if (sp == NULL) return(NO_SUCH_SOUND);
+      for (i=sp->nchans-1;i>=0;i--)
+	{
+	  cp = sp->chans[i];
+	  ids = channel_marks(cp,cp->edit_ctr);
+	  if ((ids == NULL) || (ids[0] == 0))
+	    res1 = gh_cons(SCM_EOL,res1);
+	  else res1 = gh_cons(int_array_to_list(ids,1,ids[0]),res1);
+	  if (ids) FREE(ids);
+	}
+    }
+  return(res1);
+}
+
+
+
+void g_init_marks(SCM local_doc)
 {
   gh_new_procedure4_0(S_restore_marks,g_restore_marks);
+  DEFINE_PROC(gh_new_procedure0_2(S_mark_sample,g_mark_sample),H_mark_sample);
+  DEFINE_PROC(gh_new_procedure1_1(S_set_mark_sample,g_set_mark_sample),H_set_mark_sample);
+  DEFINE_PROC(gh_new_procedure0_0(S_mark_sync_max,g_mark_sync_max),H_mark_sync_max);
+  DEFINE_PROC(gh_new_procedure0_1(S_mark_sync,g_mark_sync),H_mark_sync);
+  DEFINE_PROC(gh_new_procedure1_1(S_set_mark_sync,g_set_mark_sync),H_set_mark_sync);
+  DEFINE_PROC(gh_new_procedure0_1(S_mark_name,g_mark_name),H_mark_name);
+  DEFINE_PROC(gh_new_procedure1_1(S_set_mark_name,g_set_mark_name),H_set_mark_name);
+  DEFINE_PROC(gh_new_procedure0_1(S_mark_to_sound,g_mark_to_sound),H_mark_to_sound);
+  DEFINE_PROC(gh_new_procedure(S_marks,SCM_FNC g_marks,0,3,0),H_marks);
+  DEFINE_PROC(gh_new_procedure(S_add_mark,SCM_FNC g_add_mark,0,3,0),H_add_mark);
+  DEFINE_PROC(gh_new_procedure0_1(S_delete_mark,g_delete_mark),H_delete_mark);
+  DEFINE_PROC(gh_new_procedure0_2(S_delete_marks,g_delete_marks),H_delete_marks);
+  DEFINE_PROC(gh_new_procedure1_0(S_syncd_marks,g_syncd_marks),H_syncd_marks);
+  DEFINE_PROC(gh_new_procedure1_2(S_find_mark,g_find_mark),H_find_mark);
 }
 
 #endif

@@ -5499,14 +5499,14 @@ void mus_fft (Float *rl, Float *im, int n, int is)
 
 #if HAVE_GSL
 #include <gsl/gsl_sf_bessel.h>
-Float mus_bessi0(Float x)
+static Float mus_bessi0(Float x)
 {
   gsl_sf_result res;
   gsl_sf_bessel_I0_e(x,&res);
   return(res.val);
 }
 #else
-Float mus_bessi0(Float x)
+static Float mus_bessi0(Float x)
 { 
   Float z,denominator,numerator;
   if (x == 0.0) return(1.0);

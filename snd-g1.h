@@ -367,8 +367,6 @@ void work_wait(snd_state *ss);
 void save_window_size(snd_state *ss);
 void restore_window_size(snd_state *ss);
 void set_title(snd_state *ss, char *title);
-int get_window_height(GtkWidget *w);
-int get_window_width(GtkWidget *w);
 void goto_window(GtkWidget *text);
 void goto_graph(chan_info *cp);
 char *key_to_name(int keysym);

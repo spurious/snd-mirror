@@ -180,6 +180,7 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
+21-Jun:  marks.scm.\n\
 19-Jun:  changes to GC handling for new guile.\n\
          added sync field to marks, and changed much of the Guile interface to marks.\n\
          edits function now returns a list, not a vector.\n\

@@ -1823,6 +1823,22 @@ being the mark sample at that time or #f if the mark was not active:
           (cons header descr))
         'cant-find-mark)))
 
+Marks that are syncd together can be used for insertions, and deletions, and
+can set arbitrary groups of play points. But it's a bit tedious to type
+set-mark-sync for each of the marks you want in the group. The following
+uses the mark-clicked-hook instead; you type (start-sync), then click the
+set of marks to sync, then (stop-sync).
+
+(define mark-sync-number 0)
+(define (start-sync) (set! mark-sync-number (+ (mark-sync-max) 1)))
+(define (stop-sync) (set! mark-sync-number 0))
+(define (click-to-sync id) (set-mark-sync id mark-sync-number) #f)
+(add-hook! mark-click-hook click-to-sync)
+
+Now control-click and drag one of them, and all move together deleting data,
+or inserting zeros; or click the "play" triangle, and all play together
+starting from the respective marks (which need not be in separate channels).
+
   ------------------------------------------------------------------------
 
 Writing Sound Files

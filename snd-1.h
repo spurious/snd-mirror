@@ -432,9 +432,6 @@ void snd_close(int fd);
 int snd_write_header(snd_state *ss, char *name, int type, int srate, int chans, int loc, int size, int format, char *comment, int len, int *loops);
 int snd_overwrite_ok(snd_state *ss, char *ofile);
 int file_maxamps(snd_state *ss, char *ifile, Float *vals, int ichans, int format);
-#if defined(NEXT) || (defined(HAVE_CONFIG_H) && (!defined(HAVE_TEMPNAM)))
-  char *tempnam(const char *ignored, const char *tmp);
-#endif
 
 
 /* -------- snd-help.c -------- */
@@ -623,12 +620,8 @@ void print_enved(char *output, chan_info *cp, int y0);
 /* -------- snd-marks.c -------- */
 
 int mark_id(mark *m);
-int mark_sync(mark *m);
-int *channel_marks(chan_info *cp, int pos);
-void sort_marks(chan_info *cp);
 int mark_sync_max(void);
 int set_mark_sync(mark *m, int val);
-mark *find_mark_id(chan_info **cp, int id, int pos);
 void marks_off(chan_info *cp);
 void draw_mark(chan_info *cp, axis_info *ap, mark *mp);
 mark *hit_mark(chan_info *cp, int x, int y, int key_state);
@@ -636,14 +629,11 @@ mark *hit_triangle(chan_info *cp, int x, int y);
 void move_axis_to_track_mark(chan_info *cp);
 void move_mark(chan_info *cp, mark *mp, int x, int y);
 void play_syncd_mark(chan_info *cp, mark *mp);
-int *syncd_marks(snd_state *ss, int sync);
 int move_play_mark(chan_info *cp, int *mc, int cx);
 void finish_moving_play_mark(chan_info *cp);
 void finish_moving_mark(chan_info *cp, mark *m);
 mark *add_mark(int samp, char *name, chan_info *cp);
 void delete_mark_samp(int samp, chan_info *cp);
-void delete_mark_id(int id, chan_info *cp);
-void delete_marks (chan_info *cp);
 void free_mark_list(chan_info *cp, int ignore);
 void collapse_marks (snd_info *sp);
 int goto_mark(chan_info *cp,int count);
@@ -661,7 +651,7 @@ void src_marks(chan_info *cp,Float ratio,int old_samps,int new_samps, int beg, i
 void reset_marks(chan_info *cp, int num, int *samps, int end, int extension, int over_selection);
 void ripple_trailing_marks(chan_info *cp, int beg, int old_len, int new_len);
 #if HAVE_GUILE
-  void gh_init_marks(void);
+  void g_init_marks(SCM local_doc);
 #endif
 
 
@@ -795,6 +785,7 @@ char *added_transform_name(int type);
   void set_memo_sound(snd_info *sp);
   void ERRCP(char *origin, SCM snd, SCM chn, int off);
   chan_info *get_cp(SCM scm_snd_n, SCM scm_chn_n);
+  snd_info *get_sp(SCM scm_snd_n);
   SCM g_c_make_sample_reader(snd_fd *fd);
   SCM g_call0(SCM proc);
   SCM g_call1(SCM proc,SCM arg);
@@ -808,6 +799,11 @@ char *added_transform_name(int type);
   #endif
   void snd_protect(SCM obj);
   void snd_unprotect(SCM obj);
+  int g_scm2int(SCM obj);
+  int g_scm2intdef(SCM obj,int fallback);
+  env *get_env(SCM e, SCM base, char *origin);
+  int bool_int_or_one(SCM n);
+  SCM env2scm (env *e);
 #endif
 env *string2env(char *str);
 /* Float string2Float(char *str); */
@@ -1238,37 +1234,13 @@ void display_channel_mixes(chan_info *cp);
 void lock_affected_mixes(chan_info *cp, int beg, int end);
 void release_pending_mixes(chan_info *cp, int edit_ctr);
 void reset_mix_list(chan_info *cp);
-int mix_sound(snd_state *ss, snd_info *sp, char *file, int beg, Float scaler);
 void ripple_mixes(chan_info *cp, int beg, int change);
 int goto_mix(chan_info *cp,int count);
 mixdata *md_from_int(int n);
-int mix_position(snd_state *ss, int n);
-int mix_length(snd_state *ss, int n);
-int mix_anchor(snd_state *ss, int n);
-char *mix_name(snd_state *ss, int n);
-int mix_chans(snd_state *ss, int n);
-int mix_track(snd_state *ss, int n);
-int mix_console_state(snd_state *ss, int n);
-int set_mix_console_state(snd_state *ss, int n, int val);
-int mix_console_y(snd_state *ss, int n);
-int set_mix_console_y(snd_state *ss, int n, int val);
-Float mix_speed(snd_state *ss, int n);
-Float mix_amp(snd_state *ss, int n, int chan);
-int mix_sound_channel(snd_state *ss, int n);
-int mix_sound_index(snd_state *ss, int n);
-env *mix_amp_env(snd_state *ss, int n, int chan);
-int set_mix_position(snd_state *ss, int n, int val);
-int set_mix_length(snd_state *ss, int n, int val);
-int set_mix_anchor(snd_state *ss, int n, int val);
-int set_mix_track(snd_state *ss, int n, int val);
-Float set_mix_speed(snd_state *ss, int n, Float val);
-Float set_mix_amp(snd_state *ss, int n, int chan, Float val);
-env *set_mix_amp_env(snd_state *ss, int n, int chan, env *val);
-int mix_ok(snd_state *ss, int n);
-int any_mix_id(snd_state *ss);
-char *set_mix_name(snd_state *ss, int n, char *new_name);
-int mix_locked(snd_state *ss, int n);
-int set_mix_locked(snd_state *ss, int n, int on);
+int mix_length(int n);
+int any_mix_id(void);
+env *set_mix_amp_env(int n, int chan, env *val);
+env *mix_amp_env(int n, int chan);
 track_fd *free_track_fd(track_fd *fd);
 MUS_SAMPLE_TYPE next_track_sample(track_fd *fd);
 track_fd *init_track_reader(chan_info *cp, int track_num, int samp);
@@ -1276,9 +1248,10 @@ void play_track(snd_state *ss, chan_info **cps, int chans, int track_num);
 void play_mix(snd_state *ss, mixdata *md);
 void draw_mix_waveform(mixdata *md, int xspot, int yspot);
 void erase_mix_waveform(mixdata *md, int xspot, int yspot);
-void set_mix_waveform_height(snd_state *ss, int val);
 void reflect_mix_edit(chan_info *input_cp, char *origin);
-
+#if HAVE_GUILE
+  void g_init_mix(SCM local_doc);
+#endif
 
 
 /* -------- snd-find.c -------- */

@@ -1046,12 +1046,12 @@ void enved_show_background_waveform(snd_state *ss, chan_info *axis_cp, axis_info
 	}
       else 
 	{
-	  id = any_mix_id(ss);
+	  id = any_mix_id();
 	  md = md_from_int(id);
 	  select_mix(ss,md);
 	}
       cs = md->current_cs;
-      samps = mix_length(ss,id);
+      samps = mix_length(id);
       ncp = md->cp;
       srate = SND_SRATE(ncp->sound);
       old_beg = cs->beg;

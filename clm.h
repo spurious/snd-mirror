@@ -2,10 +2,11 @@
 #define MUS_H
 
 #define MUS_VERSION 1
-#define MUS_REVISION 21
-#define MUS_DATE "12-Jun-00"
+#define MUS_REVISION 22
+#define MUS_DATE "22-Jun-00"
 
 /* 
+ * 22-June:    made mus_bessi0 local again.
  * 1-June:     bugfixes for linuxppc 2000.
  * 19-May:     added mus_apply.
  * 8-May:      added "const" and SCM_FNC (for c++), made mus_bessi0 global.
@@ -497,7 +498,6 @@ void mus_mix                    PROTO((const char *outfile, const char *infile, 
 int mus_file2fltarray           PROTO((const char *filename, int chan, int start, int samples, Float *array));
 int mus_fltarray2file           PROTO((const char *filename, Float *ddata, int len, int srate, int channels));
 
-Float mus_bessi0                PROTO((Float x));
 Float mus_apply                 PROTO((mus_any *gen, ...));
 
 __END_DECLS

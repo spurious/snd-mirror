@@ -162,7 +162,11 @@ mix_context *make_mix_context(chan_info *cp)
 {
   mix_context *g;
   g = (mix_context *)CALLOC(1,sizeof(mix_context));
+#if USE_MOTIF
   g->graph = channel_graph(cp);
+#else
+  g->graph = channel_graph_parent(cp);
+#endif
   return(g);
 }
 
@@ -2219,7 +2223,7 @@ void reset_mix_list(chan_info *cp)
   map_over_channel_mixes(cp,update_mix,NULL);
 }
 
-int mix_sound(snd_state *ss, snd_info *sp, char *file, int beg, Float scaler)
+static int mix_sound(snd_state *ss, snd_info *sp, char *file, int beg, Float scaler)
 {
   /* returns mix id, or -1 if failure */
   char *buf;
@@ -2372,7 +2376,7 @@ int goto_mix(chan_info *cp,int count)
 
 mixdata *md_from_int(int n) {if ((n>=0) && (n<mixdatas_size)) return(mixdatas[n]); else return(NULL);}
 
-static console_state *cs_from_int(snd_state *ss, int n)
+static console_state *cs_from_int(int n)
 {
   mixdata *md;
   md = md_from_int(n);
@@ -2380,19 +2384,19 @@ static console_state *cs_from_int(snd_state *ss, int n)
   return(NULL);
 }
 
-int mix_position(snd_state *ss, int n) {console_state *cs; cs = cs_from_int(ss,n); if (cs) return(cs->orig); return(-1);}
-int mix_length(snd_state *ss, int n) {console_state *cs; cs = cs_from_int(ss,n); if (cs) return(cs->len); return(-1);}
-int mix_chans(snd_state *ss, int n) {console_state *cs; cs = cs_from_int(ss,n); if (cs) return(cs->chans); return(0);}
-int mix_anchor(snd_state *ss, int n) {mixdata *md; md = md_from_int(n); if (md) return(md->anchor); return(-1);}
-char *mix_name(snd_state *ss, int n) {mixdata *md; md = md_from_int(n); if (md) return(md->name); return(NULL);}
-int mix_track(snd_state *ss, int n) {mixdata *md; md = md_from_int(n); if (md) return(md->track); return(-1);}
-int mix_console_state(snd_state *ss, int n) {mixdata *md; md = md_from_int(n); if (md) return(md->state); return(-1);}
-Float mix_speed(snd_state *ss, int n) {console_state *cs; cs = cs_from_int(ss,n); if (cs) return(cs->speed); return(0.0);}
-int mix_sound_channel(snd_state *ss, int n) {mixdata *md; md = md_from_int(n); if (md) return((md->cp)->chan); return(-1);}
-int mix_sound_index(snd_state *ss, int n) {mixdata *md; md = md_from_int(n); if (md) return(((md->cp)->sound)->index); return(-1);}
-int mix_console_y(snd_state *ss, int n) {mixdata *md; md = md_from_int(n); if (md) return(md->y); return(-1);}
+static int mix_position(int n) {console_state *cs; cs = cs_from_int(n); if (cs) return(cs->orig); return(-1);}
+int mix_length(int n) {console_state *cs; cs = cs_from_int(n); if (cs) return(cs->len); return(-1);}
+static int mix_chans(int n) {console_state *cs; cs = cs_from_int(n); if (cs) return(cs->chans); return(0);}
+static int mix_anchor(int n) {mixdata *md; md = md_from_int(n); if (md) return(md->anchor); return(-1);}
+static char *mix_name(int n) {mixdata *md; md = md_from_int(n); if (md) return(md->name); return(NULL);}
+static int mix_track(int n) {mixdata *md; md = md_from_int(n); if (md) return(md->track); return(-1);}
+static int mix_console_state(int n) {mixdata *md; md = md_from_int(n); if (md) return(md->state); return(-1);}
+static Float mix_speed(int n) {console_state *cs; cs = cs_from_int(n); if (cs) return(cs->speed); return(0.0);}
+static int mix_sound_channel(int n) {mixdata *md; md = md_from_int(n); if (md) return((md->cp)->chan); return(-1);}
+static int mix_sound_index(int n) {mixdata *md; md = md_from_int(n); if (md) return(((md->cp)->sound)->index); return(-1);}
+static int mix_console_y(int n) {mixdata *md; md = md_from_int(n); if (md) return(md->y); return(-1);}
 
-int mix_ok(snd_state *ss, int n) 
+static int mix_ok(int n) 
 {
   mixdata *md; 
   md = md_from_int(n); 
@@ -2403,17 +2407,17 @@ int mix_ok(snd_state *ss, int n)
 	 (((md->states[0])->edit_ctr) <= ((md->cp)->edit_ctr)));
 }
 
-int any_mix_id(snd_state *ss)
+int any_mix_id(void)
 {
   int i;
-  for (i=0;i<mixdatas_ctr;i++) if (mix_ok(ss,i)) return(i);
+  for (i=0;i<mixdatas_ctr;i++) if (mix_ok(i)) return(i);
   return(-1);
 }
 
-Float mix_amp(snd_state *ss, int n, int chan) 
+static Float mix_amp(int n, int chan) 
 {
   console_state *cs; 
-  cs = cs_from_int(ss,n); 
+  cs = cs_from_int(n); 
   if (cs) 
     {
       if (chan < cs->chans)
@@ -2422,10 +2426,10 @@ Float mix_amp(snd_state *ss, int n, int chan)
   return(0.0);
 }
 
-env *mix_amp_env(snd_state *ss, int n, int chan) 
+env *mix_amp_env(int n, int chan) 
 {
   console_state *cs; 
-  cs = cs_from_int(ss,n); 
+  cs = cs_from_int(n); 
   if (cs) 
     {
       if (chan < cs->chans)
@@ -2440,7 +2444,7 @@ env *mix_amp_env(snd_state *ss, int n, int chan)
 
 /* should a locked mix be settable? Currently it is. */
 
-int set_mix_position(snd_state *ss, int n, int val)
+static int set_mix_position(int n, int val)
 {
   mixdata *md;
   console_state *cs = NULL;
@@ -2455,7 +2459,7 @@ int set_mix_position(snd_state *ss, int n, int val)
   return(val);
 }
 
-int set_mix_length(snd_state *ss, int n, int val)
+static int set_mix_length(int n, int val)
 {
   mixdata *md;
   console_state *cs = NULL;
@@ -2470,7 +2474,7 @@ int set_mix_length(snd_state *ss, int n, int val)
   return(val);
 }
 
-int set_mix_anchor(snd_state *ss, int n, int val)
+static int set_mix_anchor(int n, int val)
 {
   mixdata *md;
   console_state *cs = NULL;
@@ -2484,7 +2488,7 @@ int set_mix_anchor(snd_state *ss, int n, int val)
   return(val);
 }
 
-char *set_mix_name(snd_state *ss, int n, char *new_name)
+static char *set_mix_name(int n, char *new_name)
 {
   mixdata *md;
   md = md_from_int(n);
@@ -2497,7 +2501,7 @@ char *set_mix_name(snd_state *ss, int n, char *new_name)
   return(new_name);
 }
 
-int set_mix_console_state(snd_state *ss, int n, int val)
+static int set_mix_console_state(int n, int val)
 {
   mixdata *md;
   console_state *cs = NULL;
@@ -2511,7 +2515,7 @@ int set_mix_console_state(snd_state *ss, int n, int val)
   return(val);
 }
 
-int set_mix_console_y(snd_state *ss, int n, int val)
+static int set_mix_console_y(int n, int val)
 {
   mixdata *md;
   md = md_from_int(n);
@@ -2523,7 +2527,7 @@ int set_mix_console_y(snd_state *ss, int n, int val)
   return(val);
 }
 
-int set_mix_track(snd_state *ss, int n, int val)
+static int set_mix_track(int n, int val)
 {
   mixdata *md;
   md = md_from_int(n);
@@ -2535,7 +2539,7 @@ int set_mix_track(snd_state *ss, int n, int val)
   return(val);
 }
 
-Float set_mix_speed(snd_state *ss, int n, Float val)
+static Float set_mix_speed(int n, Float val)
 {
   mixdata *md;
   md = md_from_int(n);
@@ -2547,7 +2551,7 @@ Float set_mix_speed(snd_state *ss, int n, Float val)
   return(val);
 }
 
-Float set_mix_amp(snd_state *ss, int n, int chan, Float val)
+static Float set_mix_amp(int n, int chan, Float val)
 {
   mixdata *md;
   md = md_from_int(n);
@@ -2562,7 +2566,7 @@ Float set_mix_amp(snd_state *ss, int n, int chan, Float val)
   return(val);
 }
 
-env *set_mix_amp_env(snd_state *ss, int n, int chan, env *val)
+env *set_mix_amp_env(int n, int chan, env *val)
 {
   mixdata *md;
   console_state *cs;
@@ -2582,7 +2586,7 @@ env *set_mix_amp_env(snd_state *ss, int n, int chan, env *val)
   return(val);
 }
 
-int mix_locked(snd_state *ss, int n) 
+static int mix_locked(int n) 
 {
   mixdata *md;
   console_state *cs;
@@ -2595,7 +2599,7 @@ int mix_locked(snd_state *ss, int n)
   return(0);
 }
 
-int set_mix_locked(snd_state *ss, int n, int on)
+static int set_mix_locked(int n, int on)
 {
   console_state *cs;
   mixdata *md;
@@ -2626,7 +2630,7 @@ track_fd *init_track_reader(chan_info *cp, int track_num, int global) /* edit-po
   track_beg = current_ed_samples(cp);
   for (i=0;i<mixdatas_ctr;i++) 
     {
-      if (mix_ok(ss,i))
+      if (mix_ok(i))
 	{
 	  md = mixdatas[i];
 	  if (md->track == track_num)
@@ -2648,7 +2652,7 @@ track_fd *init_track_reader(chan_info *cp, int track_num, int global) /* edit-po
       mix=0;
       for (i=0;i<mixdatas_ctr;i++)
 	{
-	  if (mix_ok(ss,i))
+	  if (mix_ok(i))
 	    {
 	      md = mixdatas[i];
 	      if ((md->track == track_num) && (md->cp == cp))
@@ -2722,7 +2726,7 @@ void play_track(snd_state *ss, chan_info **ucps, int chans, int track_num)
       need_free = 1;
       chan = 0;
       for (i=0;i<mixdatas_ctr;i++) 
-	if ((mix_ok(ss,i)) && (mixdatas[i]->track == track_num))
+	if ((mix_ok(i)) && (mixdatas[i]->track == track_num))
 	  {
 	    locp = mixdatas[i]->cp;
 	    happy = 0;
@@ -2846,8 +2850,323 @@ static int update_mix_waveforms(chan_info *cp, void *ptr)
   return(0);
 }
 
-void set_mix_waveform_height(snd_state *ss, int val)
+static void set_mix_waveform_height(snd_state *ss, int val)
 {
   in_set_mix_waveform_height(ss,val);
   map_over_chans(ss,update_mix_waveforms,NULL);
 }
+
+
+#if HAVE_GUILE
+#include "sg.h"
+
+static SCM g_mix_position(SCM n) 
+{
+  #define H_mix_position "(" S_mix_position " id) -> sample number of start of mix"
+  int pos;
+  ERRB1(n,S_mix_position); 
+  pos = mix_position(g_scm2intdef(n,0));
+  if (pos == -1) return(NO_SUCH_MIX);
+  RTNINT(pos);
+}
+
+static SCM g_mix_chans(SCM n) 
+{
+  #define H_mix_chans "(" S_mix_chans " id) -> (input) channels in mix"
+  int chans;
+  ERRB1(n,S_mix_chans); 
+  chans = mix_chans(g_scm2intdef(n,0));
+  if (chans == 0) return(NO_SUCH_MIX);
+  RTNINT(chans);
+}
+
+static SCM g_mix_ok(SCM n) 
+{
+  #define H_mix_okQ "(" S_mix_okQ " id) -> #t if mix is active and accessible"
+  ERRB1(n,S_mix_okQ); 
+  RTNBOOL(mix_ok(g_scm2intdef(n,0)));
+}
+
+static SCM g_mix_length(SCM n) 
+{
+  #define H_mix_length "(" S_mix_length " id) -> length (frames) of mix"
+  int len;
+  ERRB1(n,S_mix_length); 
+  len = mix_length(g_scm2intdef(n,0));
+  if (len == -1) return(NO_SUCH_MIX);
+  RTNINT(len);
+}
+
+static SCM g_mix_locked(SCM n) 
+{
+  #define H_mix_locked "(" S_mix_locked " id) -> #t if mix cannot be moved (due to subsequent edits overlapping it)"
+  ERRB1(n,S_mix_locked); 
+  RTNBOOL(mix_locked(g_scm2intdef(n,0)));
+}
+
+static SCM g_mix_anchor(SCM n) 
+{
+  #define H_mix_anchor "(" S_mix_anchor " id) -> location of mix 'anchor' (determines console position within mix)"
+  int anchor;
+  ERRB1(n,S_mix_anchor); 
+  anchor = mix_anchor(g_scm2intdef(n,0));
+  if (anchor == -1) return(NO_SUCH_MIX);
+  RTNINT(anchor);
+}
+
+static SCM g_mix_name(SCM n) 
+{
+  #define H_mix_name "(" S_mix_name " id) -> name associated with mix"
+  ERRB1(n,S_mix_name); 
+  RTNSTR(mix_name(g_scm2intdef(n,0)));
+}
+
+static SCM g_mix_track(SCM n) 
+{
+  #define H_mix_track "(" S_mix_track " id) -> track that mix is a member of"
+  int track;
+  ERRB1(n,S_mix_track); 
+  track = mix_track(g_scm2intdef(n,0));
+  if (track == -1) return(NO_SUCH_MIX);
+  RTNINT(track);
+}
+
+static SCM g_mix_console_state(SCM n) 
+{
+  #define H_mix_console_state "(" S_mix_console_state " id) -> display state of mix's console (0=open, 1=title, 2=named)"
+  int cstate;
+  ERRB1(n,S_mix_console_state); 
+  cstate = mix_console_state(g_scm2intdef(n,0));
+  if (cstate == -1) return(NO_SUCH_MIX);
+  RTNINT(cstate);
+}
+
+static SCM g_mix_console_y(SCM n) 
+{
+  #define H_mix_console_y "(" S_mix_console_y " id) -> height of mix's console"
+  int y;
+  ERRB1(n,S_mix_console_y); 
+  y = mix_console_y(g_scm2intdef(n,0));
+  if (y == -1) return(NO_SUCH_MIX);
+  RTNINT(y);
+}
+
+static SCM g_mix_speed(SCM n) 
+{
+  #define H_mix_speed "(" S_mix_speed " id) -> srate (speed slider setting) of mix"
+  Float spd;
+  ERRB1(n,S_mix_speed); 
+  spd = mix_speed(g_scm2intdef(n,0));
+  if (spd == 0.0) return(NO_SUCH_MIX);
+  RTNFLT(spd);
+}
+
+static SCM g_mixes(void) 
+{
+  #define H_mixes "(" S_mixes ") -> number of mixes created so far (for looping through mix id's)"
+  RTNINT(mixes());
+}
+
+static SCM g_mix_sound_index(SCM n) 
+{
+  #define H_mix_sound_index "(" S_mix_sound_index " id) -> index of sound affected by mix"
+  int ind;
+  ERRB1(n,S_mix_sound_index); 
+  ind = mix_sound_index(g_scm2intdef(n,0));
+  if (ind == -1) return(NO_SUCH_MIX);
+  RTNINT(ind);
+}
+
+static SCM g_mix_sound_channel(SCM n) 
+{
+  #define H_mix_sound_channel "(" S_mix_sound_channel " id) -> channel affected by mix"
+  int chan;
+  ERRB1(n,S_mix_sound_channel); 
+  chan = mix_sound_channel(g_scm2intdef(n,0));
+  if (chan == -1) return(NO_SUCH_MIX);
+  RTNINT(chan);
+}
+
+/* these last two refer to the mix output location, not the underlying mix (input) data */
+
+static SCM g_mix_amp(SCM n, SCM chan) 
+{
+  #define H_mix_amp "(" S_mix_amp " id &optional (chan 0)) -> amp (console slider setting) of mix's channel chan"
+  ERRB1(n,S_mix_amp);
+  ERRB2(chan,S_mix_amp);
+  RTNFLT(mix_amp(g_scm2intdef(n,0),g_scm2intdef(chan,0)));
+}
+
+static SCM g_mix_amp_env(SCM n, SCM chan) 
+{
+  #define H_mix_amp_env "(" S_mix_amp_env " id &optional (chan 0)) -> amplitude envelope applied to mix's channel chan"
+  env *e;
+  ERRB1(n,S_mix_amp_env);
+  ERRB2(chan,S_mix_amp_env);
+  e = mix_amp_env(g_scm2intdef(n,0),g_scm2intdef(chan,0));
+  if (e) return(env2scm(e));
+  return(SCM_EOL);
+}
+
+static SCM g_set_mix_position(SCM n, SCM val) 
+{
+  #define H_set_mix_position "(" S_set_mix_position " id val) sets mix's begin time (sample number) to val (moves the mix)"
+  ERRN1(n,S_set_mix_position);
+  ERRN2(val,S_set_mix_position);
+  RTNINT(set_mix_position(g_scm2int(n),g_scm2int(val)));
+}
+
+static SCM g_set_mix_length(SCM n, SCM val) 
+{
+  #define H_set_mix_length "(" S_set_mix_length " id val) sets the mix's length (truncating -- dangerous!)"
+  ERRN1(n,S_set_mix_length);
+  ERRN2(val,S_set_mix_length);
+  RTNINT(set_mix_length(g_scm2int(n),g_scm2int(val)));
+}
+
+static SCM g_set_mix_locked(SCM n, SCM val) 
+{
+  #define H_set_mix_locked "(" S_set_mix_locked " id &optional (val #t)) sets whether the mix can be changed"
+  ERRN1(n,S_set_mix_locked);
+  ERRB2(val,S_set_mix_locked);
+  RTNBOOL(set_mix_locked(g_scm2int(n),bool_int_or_one(val)));
+}
+
+static SCM g_set_mix_anchor(SCM n, SCM val) 
+{
+  #define H_set_mix_anchor "(" S_set_mix_anchor " id val) sets the mix console position (sample) within the mix"
+  ERRN1(n,S_set_mix_anchor);
+  ERRN2(val,S_set_mix_anchor);
+  RTNINT(set_mix_anchor(g_scm2int(n),g_scm2int(val)));
+}
+
+static SCM g_set_mix_name(SCM n, SCM val) 
+{
+  #define H_set_mix_name "(" S_set_mix_name " id name) sets the mix's name"
+  char *name;
+  ERRN1(n,S_set_mix_name);
+  ERRS2(val,S_set_mix_name);
+  name = gh_scm2newstr(val,NULL);
+  set_mix_name(g_scm2int(n),name);
+  free(name);
+  return(val);
+}
+
+static SCM g_set_mix_track(SCM n, SCM val) 
+{
+  #define H_set_mix_track "(" S_set_mix_track " id track) sets the track that mix is a member of"
+  ERRN1(n,S_set_mix_track);
+  ERRN2(val,S_set_mix_track);
+  RTNINT(set_mix_track(g_scm2int(n),g_scm2int(val)));
+}
+
+static SCM g_set_mix_console_state(SCM n, SCM val) 
+{
+  #define H_set_mix_console_state "(" S_set_mix_console_state " id state) sets the mix's console display state"
+  ERRN1(n,S_set_mix_console_state);
+  ERRN2(val,S_set_mix_console_state);
+  RTNINT(set_mix_console_state(g_scm2int(n),g_scm2int(val)));
+}
+
+static SCM g_set_mix_console_y(SCM n, SCM val) 
+{
+  #define H_set_mix_console_y "(" S_set_mix_console_y " id y) sets the mix console's height"
+  ERRN1(n,S_set_mix_console_y);
+  ERRN2(val,S_set_mix_console_y);
+  RTNINT(set_mix_console_y(g_scm2int(n),g_scm2int(val)));
+}
+
+static SCM g_set_mix_speed(SCM n, SCM val) 
+{
+  #define H_set_mix_speed "(" S_set_mix_speed " id speed) sets the mix's speed (console slider setting)"
+  ERRN1(n,S_set_mix_speed);
+  ERRN2(val,S_set_mix_speed);
+  RTNFLT(set_mix_speed(g_scm2int(n),gh_scm2double(val)));
+}
+
+static SCM g_set_mix_amp(SCM n, SCM chan, SCM val) 
+{
+  #define H_set_mix_amp "(" S_set_mix_amp " id chan val) sets mix channel chan's amp (console slider setting)"
+  ERRN1(n,S_set_mix_amp);
+  ERRN2(chan,S_set_mix_amp);
+  ERRN3(val,S_set_mix_amp);
+  RTNFLT(set_mix_amp(g_scm2int(n),g_scm2int(chan),gh_scm2double(val)));
+}
+
+static SCM g_set_mix_amp_env(SCM n, SCM chan, SCM val) 
+{
+  #define H_set_mix_amp_env "(" S_set_mix_amp_env " id chan env) sets the amplitude envelope applied to mix channel chan"
+  ERRN1(n,S_set_mix_amp_env);
+  ERRN2(chan,S_set_mix_amp_env);
+  set_mix_amp_env(g_scm2int(n),g_scm2int(chan),get_env(val,SCM_BOOL_F,S_set_mix_amp_env));
+  return(val);
+}
+
+static SCM g_mix_sound(SCM file, SCM start_samp, SCM scaler)
+{
+  #define H_mix_sound "(" S_mix_sound " file start_samp &optional (scaler 1.0)) mixes file (all channels)\n\
+   into the currently selected sound at start_samp, scaled by scaler."
+
+  char *urn,*filename;
+  Float scl = 1.0;
+  int beg,err=0;
+  ERRS1(file,S_mix_sound);
+  ERRN1(start_samp,S_mix_sound);
+  urn = gh_scm2newstr(file,NULL);
+  filename = mus_file_full_name(urn);
+  free(urn);
+  beg = g_scm2int(start_samp);
+  if (gh_number_p(scaler)) scl = gh_scm2double(scaler);
+  err = mix_sound(get_global_state(),any_selected_sound(get_global_state()),filename,beg,scl);
+  if (filename) free(filename);
+  if (err == -1) return(NO_SUCH_FILE);
+  RTNINT(err);
+}
+
+static SCM g_mix_waveform_height(void) {RTNINT(mix_waveform_height(get_global_state()));}
+static SCM g_set_mix_waveform_height(SCM val) 
+{
+  #define H_mix_waveform_height "(" S_mix_waveform_height ") -> max height (pixels) of mix waveforms (20)"
+  #define H_set_mix_waveform_height "(" S_set_mix_waveform_height " val) sets " S_mix_waveform_height
+  ERRN1(val,S_set_mix_waveform_height); 
+  set_mix_waveform_height(get_global_state(),g_scm2int(val));
+  RTNINT(mix_waveform_height(get_global_state()));
+}
+
+
+void g_init_mix(SCM local_doc)
+{
+  DEFINE_PROC(gh_new_procedure0_1(S_mix_position,g_mix_position),H_mix_position);
+  DEFINE_PROC(gh_new_procedure0_1(S_mix_length,g_mix_length),H_mix_length);
+  DEFINE_PROC(gh_new_procedure0_1(S_mix_locked,g_mix_locked),H_mix_locked);
+  DEFINE_PROC(gh_new_procedure0_1(S_mix_anchor,g_mix_anchor),H_mix_anchor);
+  DEFINE_PROC(gh_new_procedure0_1(S_mix_track,g_mix_track),H_mix_track);
+  DEFINE_PROC(gh_new_procedure0_1(S_mix_console_state,g_mix_console_state),H_mix_console_state);
+  DEFINE_PROC(gh_new_procedure0_1(S_mix_console_y,g_mix_console_y),H_mix_console_y);
+  DEFINE_PROC(gh_new_procedure0_1(S_mix_speed,g_mix_speed),H_mix_speed);
+  DEFINE_PROC(gh_new_procedure0_2(S_mix_amp,g_mix_amp),H_mix_amp);
+  DEFINE_PROC(gh_new_procedure0_2(S_mix_amp_env,g_mix_amp_env),H_mix_amp_env);
+  DEFINE_PROC(gh_new_procedure0_1(S_mix_name,g_mix_name),H_mix_name);
+  DEFINE_PROC(gh_new_procedure0_1(S_mix_chans,g_mix_chans),H_mix_chans);
+  DEFINE_PROC(gh_new_procedure0_1(S_mix_okQ,g_mix_ok),H_mix_okQ);
+  DEFINE_PROC(gh_new_procedure0_1(S_mix_sound_channel,g_mix_sound_channel),H_mix_sound_channel);
+  DEFINE_PROC(gh_new_procedure0_1(S_mix_sound_index,g_mix_sound_index),H_mix_sound_index);
+  DEFINE_PROC(gh_new_procedure0_0(S_mixes,g_mixes),H_mixes);
+  DEFINE_PROC(gh_new_procedure2_0(S_set_mix_position,g_set_mix_position),H_set_mix_position);
+  DEFINE_PROC(gh_new_procedure2_0(S_set_mix_length,g_set_mix_length),H_set_mix_length);
+  DEFINE_PROC(gh_new_procedure1_1(S_set_mix_locked,g_set_mix_locked),H_set_mix_locked);
+  DEFINE_PROC(gh_new_procedure2_0(S_set_mix_anchor,g_set_mix_anchor),H_set_mix_anchor);
+  DEFINE_PROC(gh_new_procedure2_0(S_set_mix_track,g_set_mix_track),H_set_mix_track);
+  DEFINE_PROC(gh_new_procedure2_0(S_set_mix_console_state,g_set_mix_console_state),H_set_mix_console_state);
+  DEFINE_PROC(gh_new_procedure2_0(S_set_mix_console_y,g_set_mix_console_y),H_set_mix_console_y);
+  DEFINE_PROC(gh_new_procedure2_0(S_set_mix_speed,g_set_mix_speed),H_set_mix_speed);
+  DEFINE_PROC(gh_new_procedure3_0(S_set_mix_amp,g_set_mix_amp),H_set_mix_amp);
+  DEFINE_PROC(gh_new_procedure3_0(S_set_mix_amp_env,g_set_mix_amp_env),H_set_mix_amp_env);
+  DEFINE_PROC(gh_new_procedure2_0(S_set_mix_name,g_set_mix_name),H_set_mix_name);
+  DEFINE_PROC(gh_new_procedure2_1(S_mix_sound,g_mix_sound),H_mix_sound);
+  DEFINE_PROC(gh_new_procedure1_0(S_set_mix_waveform_height,g_set_mix_waveform_height),H_set_mix_waveform_height);
+  DEFINE_PROC(gh_new_procedure0_0(S_mix_waveform_height,g_mix_waveform_height),H_mix_waveform_height);
+}
+
+#endif
+

@@ -1,5 +1,6 @@
 snd change log
 
+  21-Jun:    marks.scm.
   19-Jun:    changes to GC handling for new guile.
              added sync field to marks and changed much of the Guile interface to marks:
                marks -> list of mark ids

@@ -383,8 +383,10 @@ void set_title(snd_state *ss, char *title)
 #endif
 }
 
-int get_window_height(GtkWidget *w) {return(w->allocation.height);}
-int get_window_width(GtkWidget *w) {return(w->allocation.width);}
+#if 0
+static int get_window_height(GtkWidget *w) {return(w->allocation.height);}
+static int get_window_width(GtkWidget *w) {return(w->allocation.width);}
+#endif
 
 void goto_window(GtkWidget *text)
 {

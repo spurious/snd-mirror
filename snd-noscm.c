@@ -435,19 +435,6 @@ static int handle_set(snd_state *ss, char *tok, char **str)
   if (strcmp(tok,S_set_min_dB) == 0) {set_min_dB(ss,fstr(str[1])); fsym(ss,ss->min_dB); return(0);}
   if (strcmp(tok,S_set_max_fft_peaks) == 0) {set_max_fft_peaks(ss,istr(str[1])); isym(ss,0); return(0);}
   if (strcmp(tok,S_set_max_regions) == 0) {set_max_regions(ss,istr(str[1])); isym(ss,0); return(0);}
-  if (strcmp(tok,S_set_mix_amp) == 0) {set_mix_amp(ss,istr(str[1]),istr(str[2]),fstr(str[3])); isym(ss,0); return(0);}
-  if (strcmp(tok,S_set_mix_anchor) == 0) {set_mix_anchor(ss,istr(str[1]),istr(str[2])); isym(ss,0); return(0);}
-  if (strcmp(tok,S_set_mix_track) == 0) {set_mix_track(ss,istr(str[1]),istr(str[2])); isym(ss,0); return(0);}
-  if (strcmp(tok,S_set_mix_length) == 0) {set_mix_length(ss,istr(str[1]),istr(str[2])); isym(ss,0); return(0);}
-  if (strcmp(tok,S_set_mix_locked) == 0) {set_mix_locked(ss,istr(str[1]),istr(str[2])); isym(ss,0); return(0);}
-  if (strcmp(tok,S_set_mix_name) == 0) {set_mix_name(ss,istr(str[1]),sstr(str[2])); ssym(ss,str[2]); return(0);}
-  if (strcmp(tok,S_set_mix_position) == 0) {set_mix_position(ss,istr(str[1]),istr(str[2])); isym(ss,0); return(0);}
-  if (strcmp(tok,S_set_mix_speed) == 0) {set_mix_speed(ss,istr(str[1]),fstr(str[2])); isym(ss,0); return(0);}
-  if (strcmp(tok,S_set_mix_console_amp_scaler) == 0) {set_mix_console_amp_scaler(fstr(str[1])); isym(ss,0); return(0);}
-  if (strcmp(tok,S_set_mix_console_speed_scaler) == 0) {set_mix_console_speed_scaler(fstr(str[1])); isym(ss,0); return(0);}
-  if (strcmp(tok,S_set_mix_console_state) == 0) {set_mix_console_state(ss,istr(str[1]),istr(str[2])); isym(ss,0); return(0);}
-  if (strcmp(tok,S_set_mix_console_y) == 0) {set_mix_console_y(ss,istr(str[1]),istr(str[2])); isym(ss,0); return(0);}
-  if (strcmp(tok,S_set_mix_waveform_height) == 0) {set_mix_waveform_height(ss,istr(str[1])); isym(ss,0); return(0);}
   if (strcmp(tok,S_set_movies) == 0) {set_movies(ss,istr(str[1])); isym(ss,0); return(0);}
   if (strcmp(tok,S_set_normalize_fft) == 0) {set_normalize_fft(ss,istr(str[1])); isym(ss,0); return(0);}
   if (strcmp(tok,S_set_normalize_on_open) == 0) {set_normalize_on_open(ss,istr(str[1])); isym(ss,0); return(0);}
@@ -824,7 +811,6 @@ static int symit(snd_state *ss,char **str)
       if (strcmp(tok,S_default_output_srate) == 0) {isym(ss,default_output_srate(ss)); return(0);}
       if (strcmp(tok,S_default_output_type) == 0) {isym(ss,default_output_type(ss)); return(0);}
       if (strcmp(tok,S_default_output_format) == 0) {isym(ss,default_output_format(ss)); return(0);}
-      if (strcmp(tok,S_delete_marks) == 0) {cp = get_cp(ss,str[1],str[2]); if (cp) delete_marks(cp); isym(ss,0); return(0);}
       if (strcmp(tok,S_delete_region) == 0) 
 	{
 	  ival = istr(str[1]);
@@ -1064,19 +1050,6 @@ static int symit(snd_state *ss,char **str)
 	}
       if (strcmp(tok,S_maxamp) == 0) {cp = get_cp(ss,str[1],str[2]); if (cp) fsym(ss,get_maxamp(ss,cp->sound,cp)); else isym(ss,0); return(0);}
       if (strcmp(tok,S_min_dB) == 0) {fsym(ss,ss->min_dB); return(0);}
-      if (strcmp(tok,S_mix_amp) == 0) {fsym(ss,mix_amp(ss,istr(str[1]),istr(str[2]))); return(0);}
-      if (strcmp(tok,S_mixes) == 0) {isym(ss,mixes()); return(0);}
-      if (strcmp(tok,S_mix_sound_index) == 0) {isym(ss,mix_sound_index(ss,istr(str[1]))); return(0);}
-      if (strcmp(tok,S_mix_sound_channel) == 0) {isym(ss,mix_sound_channel(ss,istr(str[1]))); return(0);}
-      if (strcmp(tok,S_mix_chans) == 0) {isym(ss,mix_chans(ss,istr(str[1]))); return(0);}
-      if (strcmp(tok,S_mix_okQ) == 0) {isym(ss,mix_ok(ss,istr(str[1]))); return(0);}
-      if (strcmp(tok,S_mix_console_amp_scaler) == 0) {fsym(ss,get_mix_console_amp_scaler()); return(0);}
-      if (strcmp(tok,S_mix_anchor) == 0) {isym(ss,mix_anchor(ss,istr(str[1]))); return(0);}
-      if (strcmp(tok,S_mix_track) == 0) {isym(ss,mix_track(ss,istr(str[1]))); return(0);}
-      if (strcmp(tok,S_mix_length) == 0) {isym(ss,mix_length(ss,istr(str[1]))); return(0);}
-      if (strcmp(tok,S_mix_locked) == 0) {isym(ss,mix_locked(ss,istr(str[1]))); return(0);}
-      if (strcmp(tok,S_mix_name) == 0) {ssym(ss,mix_name(ss,istr(str[1]))); return(0);}
-      if (strcmp(tok,S_mix_position) == 0) {isym(ss,mix_position(ss,istr(str[1]))); return(0);}
       if (strcmp(tok,S_mix_region) == 0) 
 	{
 	  id = -1;
@@ -1090,11 +1063,6 @@ static int symit(snd_state *ss,char **str)
 	  isym(ss,id); 
 	  return(0);
 	}
-      if (strcmp(tok,S_mix_speed) == 0) {fsym(ss,mix_speed(ss,istr(str[1]))); return(0);}
-      if (strcmp(tok,S_mix_console_speed_scaler) == 0) {fsym(ss,get_mix_console_speed_scaler()); return(0);}
-      if (strcmp(tok,S_mix_console_state) == 0) {isym(ss,mix_console_state(ss,istr(str[1]))); return(0);}
-      if (strcmp(tok,S_mix_console_y) == 0) {isym(ss,mix_console_y(ss,istr(str[1]))); return(0);}
-      if (strcmp(tok,S_mix_waveform_height) == 0) {isym(ss,mix_waveform_height(ss)); return(0);}
       if (strcmp(tok,S_movies) == 0) {isym(ss,movies(ss)); return(0);}
       break;
     case 'n':

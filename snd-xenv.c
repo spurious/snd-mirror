@@ -132,7 +132,7 @@ static void apply_enved(snd_state *ss)
 	{
 	  if (ss->selected_mix != NO_SELECTION)
 	    mix_id = ss->selected_mix;
-	  else mix_id = any_mix_id(ss);
+	  else mix_id = any_mix_id();
 	  md = md_from_int(mix_id);
 	  if (md) 
 	    {
@@ -151,7 +151,7 @@ static void apply_enved(snd_state *ss)
 	    {
 	    case AMPLITUDE_ENV:
 	      if (apply_to_mix)
-		set_mix_amp_env(ss,mix_id,NO_SELECTION,active_env); /* chan = NO_SELECTION: use selected chan if more than 1 */
+		set_mix_amp_env(mix_id,NO_SELECTION,active_env); /* chan = NO_SELECTION: use selected chan if more than 1 */
 	      else apply_env(active_channel,active_env,0,current_ed_samples(active_channel),1.0,apply_to_selection,TRUE,"Enved: amp"); 
 	      /* calls update_graph, I think, but in short files that doesn't update the amp-env */
 	      if (enved_waving(ss)) env_redisplay(ss);
@@ -586,16 +586,16 @@ static void mix_button_pressed(Widget s, XtPointer clientData,XtPointer callData
 	    md = md_from_int(ss->selected_mix); 
 	  else
 	    {
-	      md = md_from_int(any_mix_id(ss));
+	      md = md_from_int(any_mix_id());
 	      if (md) select_mix(ss,md);
 	    }
 	  if (md)
 	    {
 	      if (md->selected_chan != NO_SELECTION) chan = md->selected_chan;
-	      if (mix_amp_env(ss,md->id,chan))
+	      if (mix_amp_env(md->id,chan))
 		{
 		  if (active_env) active_env = free_env(active_env);
-		  active_env = copy_env(mix_amp_env(ss,md->id,chan));
+		  active_env = copy_env(mix_amp_env(md->id,chan));
 		  set_enved_env_list_top(0);
 		  do_env_edit(active_env,TRUE);
 		  set_sensitive(undoB,FALSE);

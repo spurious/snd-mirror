@@ -379,9 +379,3 @@ int file_maxamps(snd_state *ss, char *ifile, Float *vals, int ichans, int format
   return(1);
 }
 
-#if (!HAVE_TEMPNAM)
-char *tempnam(const char *ignored, const char *tmp)
-{
-  return(copy_string(tmpnam(NULL)));
-}
-#endif

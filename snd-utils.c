@@ -211,6 +211,13 @@ char *shorter_tempnam(char *udir,char *prefix)
   return(str);
 }
 
+#if (!HAVE_TEMPNAM)
+static char *tempnam(const char *ignored, const char *tmp)
+{
+  return(copy_string(tmpnam(NULL)));
+}
+#endif
+
 char *snd_tempnam(snd_state *ss)
 {
   /* problem here is that NULL passed back from Guile becomes "" which is not NULL from tempnam's point of view */
