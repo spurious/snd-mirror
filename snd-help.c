@@ -743,7 +743,7 @@ read-only (in selected data formats):\n\
      Sonic Foundry, SBStudio II, Delusion digital,\n\
      Digiplayer ST3, Farandole Composer WaveSample,\n\
      Ultratracker WaveSample, Sample Dump exchange,\n\
-     Yamaha SY85, SY99, and TX16, Covox v8, SPL, AVI,\n\
+     Yamaha SY85, SY99, and TX16w, Covox v8, SPL, AVI,\n\
      ----\n\
 automatically translated to Sun 16-bit, then read/write:\n\
      IEEE text, Mus10 SAM 16-bit (modes 1 and 4), IBM CVSD, AVI\n\

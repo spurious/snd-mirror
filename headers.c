@@ -43,7 +43,7 @@
  *      Sound Tools, Turtle Beach SMP, SoundFont 2.0, Sound Designer I and II, PSION alaw, MAUD, 
  *      Tandy DeskMate new and old style, Gravis Ultrasound, Comdisco SPW, Goldwave sample, OMF,
  *      Sonic Foundry, SBStudio II, Delusion digital, Digiplayer ST3, Farandole Composer WaveSample,
- *      Ultratracker WaveSample, Sample Dump exchange, Yamaha SY85 and SY99 (buggy), Yamaha TX16, 
+ *      Ultratracker WaveSample, Sample Dump exchange, Yamaha SY85 and SY99 (buggy), Yamaha TX16W, 
  *      Covox v8, SPL, AVI, Kurzweil 2000, Paris Ensoniq
  *
  * for a few of these I'm still trying to get documentation -- best sources of info
@@ -450,7 +450,7 @@ const char *mus_header_type_name(int type)
     case MUS_FARANDOLE:        return("Farandole");               break;
     case MUS_SAMPLE_DUMP:      return("Sample dump");             break;
     case MUS_ULTRATRACKER:     return("Ultratracker");            break;
-    case MUS_YAMAHA_TX16:      return("TX-16");                   break;
+    case MUS_YAMAHA_TX16W:     return("TX-16W");                  break;
     case MUS_YAMAHA_SY85:      return("Sy-85");                   break;
     case MUS_YAMAHA_SY99:      return("Sy-99");                   break;
     case MUS_KURZWEIL_2000:    return("Kurzweil 2000");           break;
@@ -3872,7 +3872,7 @@ static int read_farandole_header(int chan)
 
 
 
-/* ------------------------------------ Yamaha TX-16 -------------------------------------
+/* ------------------------------------ Yamaha TX-16W -------------------------------------
  *
  * ftp://ftp.t0.or.at/pub/sound/tx16w/samples.yamaha
  * ftp://ftp.t0.or.at/pub/sound/tx16w/faq/tx16w.tec
@@ -3889,7 +3889,7 @@ static int read_farandole_header(int chan)
  *  unused[2]
  */
 
-static int read_tx16_header(int chan)
+static int read_tx16w_header(int chan)
 {
   chans = 1; 
   header_distributed = 0;
@@ -4902,8 +4902,8 @@ static int mus_header_read_with_fd_and_name(int chan, const char *filename)
     }
   if (match_four_chars((unsigned char *)hdrbuf, I_LM89))
     {
-      header_type = MUS_YAMAHA_TX16;
-      return(read_tx16_header(chan));
+      header_type = MUS_YAMAHA_TX16W;
+      return(read_tx16w_header(chan));
     }
   if (match_four_chars((unsigned char *)hdrbuf, I_SY85))
     {

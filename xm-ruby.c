@@ -980,7 +980,6 @@
   XEN_NARGIFY_2(gxm_XmDestroyPixmap_w, gxm_XmDestroyPixmap)
   XEN_NARGIFY_1(gxm_XmUpdateDisplay_w, gxm_XmUpdateDisplay)
   XEN_NARGIFY_1(gxm_XmWidgetGetBaselines_w, gxm_XmWidgetGetBaselines)
-  XEN_NARGIFY_1(gxm_XmWidgetGetDisplayRect_w, gxm_XmWidgetGetDisplayRect)
   XEN_NARGIFY_2(gxm_XmRegisterSegmentEncoding_w, gxm_XmRegisterSegmentEncoding)
   XEN_NARGIFY_1(gxm_XmMapSegmentEncoding_w, gxm_XmMapSegmentEncoding)
   XEN_NARGIFY_1(gxm_XmCvtCTToXmString_w, gxm_XmCvtCTToXmString)
@@ -2270,7 +2269,6 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmDestroyPixmap" XM_POSTFIX, gxm_XmDestroyPixmap_w, 2, 0, 0, H_XmDestroyPixmap);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmUpdateDisplay" XM_POSTFIX, gxm_XmUpdateDisplay_w, 1, 0, 0, H_XmUpdateDisplay);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmWidgetGetBaselines" XM_POSTFIX, gxm_XmWidgetGetBaselines_w, 1, 0, 0, H_XmWidgetGetBaselines);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmWidgetGetDisplayRect" XM_POSTFIX, gxm_XmWidgetGetDisplayRect_w, 1, 0, 0, H_XmWidgetGetDisplayRect);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmRegisterSegmentEncoding" XM_POSTFIX, gxm_XmRegisterSegmentEncoding_w, 2, 0, 0, H_XmRegisterSegmentEncoding);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmMapSegmentEncoding" XM_POSTFIX, gxm_XmMapSegmentEncoding_w, 1, 0, 0, H_XmMapSegmentEncoding);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmCvtCTToXmString" XM_POSTFIX, gxm_XmCvtCTToXmString_w, 1, 0, 0, H_XmCvtCTToXmString);
@@ -2930,7 +2928,9 @@ static void define_procedures(void)
   XEN_NARGIFY_1(gxm_prev_page_widget_w, gxm_prev_page_widget)
   XEN_NARGIFY_1(gxm_rendition_w, gxm_rendition)
   XEN_NARGIFY_1(gxm_render_table_w, gxm_render_table)
+#if HAVE_XP
   XEN_NARGIFY_1(gxm_last_page_w, gxm_last_page)
+#endif
   XEN_NARGIFY_1(gxm_crossed_boundary_w, gxm_crossed_boundary)
   XEN_NARGIFY_1(gxm_client_data_w, gxm_client_data)
   XEN_NARGIFY_1(gxm_status_w, gxm_status)

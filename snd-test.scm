@@ -968,9 +968,9 @@
 	    (list "alaw.wav" 1 11025 8.70666694641113 "RIFF" "alaw (8 bits)")
 	    (list "astor_basia.mp2" 2 44100 1.02179133892059 "raw (no header)" "big endian short (16 bits)")
 	    (list "c.asf" 1 8000 0.0 "asf" "unsupported")
-	    (list "ce-c3.w02" 1 33000 3.88848495483398 "TX-16" "unsupported")
-	    (list "ce-c4.w03" 1 33000 2.91618180274963 "TX-16" "unsupported")
-	    (list "ce-d2.w01" 1 33000 3.46439385414124 "TX-16" "unsupported")
+	    (list "ce-c3.w02" 1 33000 3.88848495483398 "TX-16W" "unsupported")
+	    (list "ce-c4.w03" 1 33000 2.91618180274963 "TX-16W" "unsupported")
+	    (list "ce-d2.w01" 1 33000 3.46439385414124 "TX-16W" "unsupported")
 	    (list "clbonef.wav" 1 22050 2.57832193374634 "RIFF" "little endian float (32 bits)")
 	    (list "cranker.krz" 1 44100 3.48267579078674 "Kurzweil 2000" "big endian short (16 bits)")
 	    (list "d40130.aif" 1 10000 0.100000001490116 "AIFF" "big endian short (16 bits)")
@@ -987,7 +987,7 @@
 	    (list "d40130.st3" 1 8000 0.125 "Digiplayer ST3" "unsigned little endian short (16 bits)")
 	    (list "d40130.uwf" 1 8000 0.125249996781349 "Ultratracker" "little endian short (16 bits)")
 	    (list "d40130.voc" 1 10000 0.100100003182888 "VOC" "unsigned byte (8 bits)")
-	    (list "d40130.w00" 1 16000 0.0625 "TX-16" "unsupported")
+	    (list "d40130.w00" 1 16000 0.0625 "TX-16W" "unsupported")
 	    (list "d40130.wav" 1 10000 0.100000001490116 "RIFF" "little endian short (16 bits)")
 	    (list "d43.wav" 1 10000 0.100000001490116 "RIFF" "little endian short (16 bits)")
 	    (list "digit0v0.aiff" 1 8000 0.560000002384186 "AIFC" "big endian short (16 bits)")
@@ -1113,7 +1113,7 @@
 	    (list "wood.sndt" 1 44100 0.0367800444364548 "SNDT" "unsigned byte (8 bits)")
 	    (list "wood.st3" 1 8000 0.202749997377396 "Digiplayer ST3" "unsigned little endian short (16 bits)")
 	    (list "wood.uwf" 1 8000 0.202999994158745 "Ultratracker" "little endian short (16 bits)")
-	    (list "wood.w00" 1 16000 0.101374998688698 "TX-16" "unsupported")
+	    (list "wood.w00" 1 16000 0.101374998688698 "TX-16W" "unsupported")
 	    (list "wood12.aiff" 1 44100 0.0367800444364548 "AIFF" "big endian short (16 bits)")
 	    (list "wood16.dwd" 2 44100 0.0367800444364548 "DiamondWare" "little endian short (16 bits)")
 	    (list "wood16.wav" 2 44100 0.0367800444364548 "RIFF" "little endian short (16 bits)")
@@ -1127,7 +1127,7 @@
 	    (list "PCM_48_8bit_m.w64" 1 48000 0.375 "SoundForge" "unsigned byte (8 bits)")
 	    (list "addf8.24we" 1 8000 2.976000 "RIFF" "little endian int (24 bits)")
 	    (list "hybrid.snd" 1 44100 4.600000 "BICSF" "big endian float (32 bits)")
-	    (list "zulu_a4.w11" 1 33000 1.21987879276276 "TX-16" "unsupported" 23342 40042)))))
+	    (list "zulu_a4.w11" 1 33000 1.21987879276276 "TX-16W" "unsupported" 23342 40042)))))
     )
 
 
@@ -1546,7 +1546,7 @@
 	  (snd-display ";oboe: mus-sound-maxamp-exists after maxamp: ~A" (mus-sound-maxamp-exists? "oboe.snd")))
 
       (let ((str (strftime "%d-%b %H:%M %Z" (localtime (mus-sound-write-date "oboe.snd")))))
-	(if (not (string=? str "03-Dec 10:38 PST"))
+	(if (not (string=? str "03-Feb 13:25 PST"))
 	    (snd-display ";mus-sound-write-date oboe.snd: ~A?" str)))
       (let ((str (strftime "%d-%b %H:%M %Z" (localtime (mus-sound-write-date "pistol.snd")))))
 	(if (not (string=? str "30-Dec 12:04 PST"))
@@ -1694,7 +1694,7 @@
       (if (and (not (= (mus-sound-type-specifier "oboe.snd") #x646e732e))  ;little endian reader
 	       (not (= (mus-sound-type-specifier "oboe.snd") #x2e736e64))) ;big endian reader
 	  (snd-display ";oboe: mus-sound-type-specifier: ~X?" (mus-sound-type-specifier "oboe.snd")))
-      (if (not (string=? (strftime "%d-%b-%Y %H:%M" (localtime (file-write-date "oboe.snd"))) "03-Dec-2001 10:38"))
+      (if (not (string=? (strftime "%d-%b-%Y %H:%M" (localtime (file-write-date "oboe.snd"))) "03-Feb-2002 13:25"))
 	  (snd-display ";oboe: file-write-date: ~A?" (strftime "%d-%b-%Y %H:%M" (localtime (file-write-date "oboe.snd")))))
       (play-sound "oboe.snd")
 
@@ -12069,7 +12069,7 @@ EDITS: 4
       (load "snd-motif.scm")
       (load "event.scm")))
 
-(define (widget-string widget text)
+(define* (widget-string widget text #:optional (cleared #t))
   (define (shifted? ch)
     (if (or (and (char>=? ch #\A) (char<=? ch #\Z))
 	    (char=? ch #\!) (char=? ch #\@) (char=? ch #\#) (char=? ch #\$) (char=? ch #\%) 
@@ -12080,7 +12080,7 @@ EDITS: 4
 	1
 	0))
   (take-keyboard-focus widget)
-  (set! (widget-text widget) "")
+  (if cleared (set! (widget-text widget) ""))
   (do ((i 0 (1+ i)))
       ((= i (string-length text)))
     (let ((ch (string-ref text i)))
@@ -12650,6 +12650,17 @@ EDITS: 4
 		  (if (not (= mxa 3))
 		      (snd-display ";M-x (set! mxa 3) -> ~A" mxa))
 
+		  (let ((lst (list-ref (main-widgets) 4))
+			(snd-return-key #xFF0D))
+		    (take-keyboard-focus lst)
+		    (key-event lst snd-return-key 0) (force-event) ; possible pre-existing error msg etc
+		    (key-event lst snd-return-key 0) (force-event)
+		    (widget-string lst "(set! mxa (+ 1 4))" #f)
+		    (key-event lst snd-return-key 0) (force-event)
+		    (if (not (= mxa 5))
+			(snd-display ";set! mxa in listener: ~A" mxa)))
+
+		  (take-keyboard-focus cwid)
 		  (key-event cwid (char->integer #\x) 4) (force-event)
 		  (key-event cwid (char->integer #\a) 0) (force-event)
 		  (widget-string minibuffer "'(0 0 1 1)")
@@ -13929,7 +13940,8 @@ EDITS: 4
       (if (provided? 'snd-motif)
 	  (begin
 	    ;; ---------------- X tests ----------------
-	    (let ((scr (current-screen)))
+	    (let ((scr (current-screen))
+		  (dpy (|XtDisplay (cadr (main-widgets)))))
 	      (if (not (= (|height scr) 1200))
 		  (snd-display ";screen height: ~A" (|height scr)))
 	      (if (not (= (|width scr) 1600))
@@ -13997,6 +14009,10 @@ EDITS: 4
 
 	      (if (not (equal? (|XDisplayOfScreen scr) (|display scr))) 
 		  (snd-display ";XDisplayOfScreen: ~A ~A" (|XDisplayOfScreen scr) (|display scr)))
+	      (if (not (equal? (|XDisplayOfScreen (|XScreenOfDisplay dpy 0)) dpy))
+		  (snd-display ";XScreenOfDisplay ~A ~A" (|XDisplayOfScreen (|XScreenOfDisplay dpy 0)) dpy))
+	      (if (not (equal? (|XDefaultScreenOfDisplay dpy) scr))
+		  (snd-display ";XDefaultScreenOfDisplay ~A ~A" (|XDefaultScreenOfDisplay dpy) scr))
 	      (if (not (equal? (|XRootWindowOfScreen scr) (|root scr))) 
 		  (snd-display ";XRootWindowOfScreen: ~A ~A" (|XRootWindowOfScreen scr) (|root scr)))
 	      (if (not (equal? (|XBlackPixelOfScreen scr) (|black_pixel scr))) 
@@ -14036,7 +14052,8 @@ EDITS: 4
 	    (let* ((scr (current-screen))
 		   (scrn (|XScreenNumberOfScreen scr))
 		   (dpy (|XtDisplay (cadr (main-widgets))))
-		   (vis (|DefaultVisual dpy scrn)))
+		   (vis (|DefaultVisual dpy scrn))
+		   (win (|XtWindow (cadr (main-widgets)))))
 
 	      (if (not (equal? (|RootWindow dpy scrn) (|root scr)))
 		  (snd-display ";RootWindow: ~A ~A" (|RootWindow dpy scrn) (|root scr)))
@@ -14102,7 +14119,36 @@ EDITS: 4
 		  (snd-display ";XDisplayCells: ~A ~A" (|XDisplayCells dpy scrn) (|map_entries vis)))
 	      (if (not (equal? (|XCellsOfScreen scr) (|map_entries (|DefaultVisualOfScreen scr))))
 		  (snd-display ";XCellsOfScreen: ~A ~A" (|XCellsOfScreen scr) (|map_entries (|DefaultVisualOfScreen scr))))
-	      
+	      (if (< (|XNextRequest dpy) (|XLastKnownRequestProcessed dpy))
+		  (snd-display ";XRequests: ~A ~A" (|XNextRequest dpy) (|XLastKnownRequestProcessed dpy)))
+	      (if (< (|NextRequest dpy) (|LastKnownRequestProcessed dpy))
+		  (snd-display ";Requests: ~A ~A" (|NextRequest dpy) (|LastKnownRequestProcessed dpy)))
+	      (if (not (= (|XDisplayMotionBufferSize dpy) 256))
+		  (snd-display ";XDisplayMotionBufferSize: ~A" (|XDisplayMotionBufferSize dpy)))
+	      (let ((val (|XResourceManagerString dpy)))
+		(if (and val (not (string? val))) (snd-display ";XResourceManagerString ~A" (|XResourceManagerString dpy))))
+	      (if (not (= (|XExtendedMaxRequestSize dpy) 1048575))
+		  (snd-display ";XExtendedMaxRequestSize ~A" (|XExtendedMaxRequestSize dpy)))
+	      (if (not (= (|XMaxRequestSize dpy) 65535))
+		  (snd-display ";XMaxRequestSize ~A" (|XMaxRequestSize dpy)))
+	      (if (not (member (list 'Atom 40) (|XListProperties dpy win)))
+		  (snd-display ";XListProperties: ~A" (|XListProperties dpy win)))
+	      (if (not (member "SHAPE" (|XListExtensions dpy)))
+		  (snd-display ";XListExtensions: ~A" (|XListExtensions dpy)))
+	      (if (not (= (length (|XListFontsWithInfo dpy "-adobe-times-medium-r-*-*-*-*-*-*-*-*-iso8859-1" 4)) 4))
+		  (snd-display ";XListFontsWithInfo: ~A" (|XListFontsWithInfo dpy "-adobe-times-medium-r-*-*-*-*-*-*-*-*-iso8859-1" 4)))
+	      (if (not (= (length (|XListFonts dpy "-adobe-times-medium-r-*-*-*-*-*-*-*-*-iso8859-1" 4)) 4))
+		  (snd-display ";XListFonts: ~A" (|XListFonts dpy "-adobe-times-medium-r-*-*-*-*-*-*-*-*-iso8859-1" 4)))
+	      (let ((val (|XListInstalledColormaps dpy win)))
+		(if (or (not val)
+			(null? val)
+			(not (|Colormap? (car val))))
+		    (snd-display ";XListInstalledColormaps: ~A" (|XListInstalledColormaps dpy win))))
+	      (if (not (string=? (|XKeysymToString (list 'KeySym 80)) "P"))
+		  (snd-display ";XKeysymToString: ~A" (|XKeysymToString (list 'KeySym 80))))
+	      (if (not (string=? (|XGetAtomName dpy (list 'Atom 40)) "WM_NORMAL_HINTS"))
+		  (snd-display ";XGetAtomName: ~A" (|XGetAtomName dpy (list 'Atom 40))))
+
 	      (if (not (= (|bits_per_rgb vis) 8)) (snd-display ";bits_per_rgb: ~A" (|bits_per_rgb vis)))
 	      (if (not (= (|blue_mask vis) 255)) (snd-display ";blue_mask: ~X" (|blue_mask vis)))
 	      (if (not (= (|green_mask vis) 65280)) (snd-display ";green_mask: ~X" (|green_mask vis)))
@@ -14134,7 +14180,19 @@ EDITS: 4
 	      (if (not (= (|XBitmapBitOrder dpy) 0)) (snd-display ";XBitmapBitOrder: ~A" (|XBitmapBitOrder dpy)))
 	      (if (not (= (|XImageByteOrder dpy) 0)) (snd-display ";XImageByteOrder: ~A" (|XImageByteOrder dpy)))
 	      (if (not (= (|XDefaultScreen dpy) 0)) (snd-display ";XDefaultScreen: ~A" (|XDefaultScreen dpy)))
-	      )
+	      (if (|XGetIconSizes dpy win) (snd-display ";XGetIconSizes: ~A" (|XGetIconSizes dpy win)))
+	      (let ((hints (|XGetWMHints dpy win)))
+		(if (or (not hints) (not (|XWMHints? hints))) (snd-display ";XGetWMHints?"))
+		(if (not (= (|flags hints) 7)) (snd-display ";flags wmhints: ~A" (|flags hints)))
+		(if (not (= (|initial_state hints) 1)) (snd-display ";initial_state wmhints: ~A" (|initial_state hints)))
+		(if (not (|input hints)) (snd-display ";input wmhints: ~A" (|input hints)))
+		(if (not (|Pixmap? (|icon_pixmap hints))) (snd-display ";icon_pixmap wmhints: ~A" (|icon_pixmap hints)))
+		(if (not (equal? (|icon_window hints) (list 'Window 0))) (snd-display ";icon_window: ~A" (|icon_window hints)))
+		(if (not (= (|icon_x hints) -1)) (snd-display ";icon_x wmhints: ~A" (|icon_x hints)))
+		(if (not (= (|icon_y hints) -1)) (snd-display ";icon_y wmhints: ~A" (|icon_y hints)))
+		(if (not (equal? (|icon_mask hints) (list 'Pixmap 0))) (snd-display ";icon_mask: ~A" (|icon_mask hints)))
+		(if (not (number? (|window_group hints))) (snd-display ";window_group: ~A" (|window_group hints)))
+		(if (not (|XWMHints? (|XAllocWMHints))) (snd-display ";XAllocWMHints: ~A" (|XAllocWMHints)))))
 
 	    (if (not (|IsKeypadKey (list 'KeySym |XK_KP_Space))) (snd-display ";IsKeypadKey kp-space"))
 	    (if (|IsKeypadKey (list 'KeySym |XK_A)) (snd-display ";IsKeypadKey A"))
@@ -14271,6 +14329,17 @@ EDITS: 4
 		      (snd-display ";clip_y_origin: ~A ~A" (|clip_y_origin val1) 1))
 		  (if (not (equal? (|dash_offset val1) 1))
 		      (snd-display ";dash_offset: ~A ~A" (|dash_offset val1) 1))
+
+		  (set! (|plane_mask val) 0)
+		  (if (not (equal? (|plane_mask val) 0)) 
+		      (snd-display ";plane_mask: ~A ~A" (|plane_mask val) 0))
+		  (set! (|tile val) (list 'Pixmap 0))
+		  (if (not (equal? (|tile val) (list 'Pixmap 0)))
+		      (snd-display ";tile: ~A" (|tile val)))
+		  (set! (|stipple val) (list 'Pixmap 0))
+		  (if (not (equal? (|stipple val) (list 'Pixmap 0)))
+		      (snd-display ";stipple: ~A" (|stipple val)))
+
 		  )))
 	    
 	    (let ((atoms (list |XA_PRIMARY |XA_SECONDARY |XA_ARC |XA_ATOM |XA_BITMAP |XA_CARDINAL |XA_COLORMAP |XA_CURSOR |XA_CUT_BUFFER0
@@ -14414,6 +14483,24 @@ EDITS: 4
 	      (if (not (= (|delta obj) 4)) (snd-display ";set delta ~A" (|delta obj)))
 	      )
 
+	    (let ((reg (|XPolygonRegion (list (|XPoint 0 0) (|XPoint 10 0) (|XPoint 10 10) (|XPoint 0 10)) 4 |WindingRule)))
+	      (if (not (|XPointInRegion reg 4 4)) (snd-display ";XPointInRegion"))
+	      (|XShrinkRegion reg 1 2)
+	      (if (not (|XPointInRegion reg 4 7)) (snd-display ";t XShrinkRegion"))
+	      (if (|XPointInRegion reg 4 9) (snd-display ";f XShrinkRegion"))
+	      (|XOffsetRegion reg 1 2)
+	      (if (not (|XPointInRegion reg 4 9)) (snd-display ";t XOffsetRegion"))
+	      (if (|XPointInRegion reg 1 9) (snd-display ";f XOffsetRegion"))
+	      (let ((reg1 (|XPolygonRegion (list (|XPoint 0 0) (|XPoint 10 0) (|XPoint 10 10) (|XPoint 0 10)) 4 |WindingRule)))
+		(if (|XEqualRegion reg reg1) (snd-display ";f XEqualRegion"))
+		(set! reg (|XPolygonRegion (list (|XPoint 0 0) (|XPoint 10 0) (|XPoint 10 10) (|XPoint 0 10)) 4 |WindingRule))
+		(if (not (|XEqualRegion reg reg1)) (snd-display ";t XEqualRegion"))
+		(if (|XEmptyRegion reg) (snd-display ";f XEmptyRegion"))
+
+		(|XDestroyRegion reg1)
+		))
+
+
 	    ;; ---------------- Xt tests ----------------
 	    (let ((name (|XtGetApplicationNameAndClass (|XtDisplay (cadr (main-widgets))))))
 	      (if (not (equal? name (list "snd" "Snd")))
@@ -14467,7 +14554,32 @@ EDITS: 4
 	      (if (|XtIsWMShell wid) (snd-display ";XtIsWMShell"))
 	      (if (not (|XtIsWidget wid)) (snd-display ";XtIsWidget")))
 
-	    
+	    (let ((shell (cadr (main-widgets))))
+	      (if (not (equal? (|XtClass shell) |applicationShellWidgetClass))
+		  (snd-display ";XtClass shell: ~A" (|XtClass shell)))
+	      (if (not (equal? (|XtSuperclass shell) |topLevelShellWidgetClass))
+		  (snd-display ";XtSuperclass shell: ~A" (|XtClass shell)))
+	      (if (not (string=? (|XtName shell) "snd"))
+		  (snd-display ";XtName: ~A" (|XtName shell)))
+	      (if (not (equal? (|XtWindow shell) (|XtWindowOfObject shell)))
+		  (snd-display ";XtWindow: ~A ~A" (|XtWindow shell) (|XtWindowOfObject shell)))
+	      (if (not (equal? (|XtScreen shell) (|XtScreenOfObject shell)))
+		  (snd-display ";XtScreen: ~A ~A" (|XtScreen shell) (|XtScreenOfObject shell)))
+	      (if (not (equal? (|XtDisplay shell) (|XtDisplayOfObject shell)))
+		  (snd-display ";XtDisplay: ~A ~A" (|XtDisplay shell) (|XtDisplayOfObject shell)))
+	      )
+
+	    (|XtSetWarningHandler (lambda (n) 
+				    (if (not (string=? n "hiho"))
+					(snd-display "XtWarning: ~A" n))))
+	    (|XtWarning "hiho")
+	    (|XtAppSetWarningHandler (car (main-widgets))
+				     (lambda (n) 
+				       (if (not (string=? n "hiho"))
+					   (snd-display "XtWarning: ~A" n))))
+	    (|XtAppWarning (car (main-widgets)) "hiho")
+
+
 	    ;; ---------------- XM tests ----------------
 	    (let ((version (list-ref (|XGetWindowProperty (|XtDisplay (cadr (main-widgets)) )
 							  (|XtWindow (cadr (main-widgets)) )
@@ -14923,7 +15035,7 @@ EDITS: 4
 		  |XmListUpdateSelectedList |XmListPosSelected |XmCreateList |XmCreateScrolledList |XmTranslateKey
 		  |XmMainWindowSetAreas |XmMainWindowSep1 |XmMainWindowSep2 |XmMainWindowSep3 |XmCreateMainWindow
 		  |XmInstallImage |XmUninstallImage |XmGetPixmap |XmGetPixmapByDepth |XmDestroyPixmap |XmUpdateDisplay
-		  |XmWidgetGetBaselines |XmWidgetGetDisplayRect |XmRegisterSegmentEncoding |XmMapSegmentEncoding
+		  |XmWidgetGetBaselines |XmRegisterSegmentEncoding |XmMapSegmentEncoding
 		  |XmCvtCTToXmString |XmCvtXmStringToCT |XmConvertUnits |XmCvtToHorizontalPixels |XmCvtToVerticalPixels
 		  |XmCvtFromHorizontalPixels |XmCvtFromVerticalPixels |XmSetFontUnits |XmSetFontUnit |XmSetMenuCursor
 		  |XmGetMenuCursor |XmCreateSimpleMenuBar |XmCreateSimplePopupMenu |XmCreateSimplePulldownMenu

@@ -187,20 +187,23 @@
 (define semi-range 24) ; 2 octaves either way
 
 (define (semi-scale-label val)
-  (format #f "~D" (- val semi-range)))
+  (format #f "semitones: ~D" (- val semi-range)))
 
 (define (semitones->ratio val)
   (expt 2.0 (/ val 12.0)))
+
+(define (ratio->semitones ratio)
+  (inexact->exact (round (* 12 (/ (log ratio) (log 2.0))))))
 	  
-(define (create-semi-scale-widget parent title initial callback scale)
-  (let* ((label (|XtCreateManagedWidget (format #f "~D" initial) |xmLabelWidgetClass parent
+(define (create-semi-scale-widget parent title initial callback)
+  (let* ((label (|XtCreateManagedWidget (format #f "semitones: ~D" (ratio->semitones initial)) |xmLabelWidgetClass parent
 	   (list |XmNbackground          (snd-pixel (basic-color)))))
 	 (scale (|XtCreateManagedWidget "scale" |xmScaleWidgetClass parent
                   (list |XmNorientation   |XmHORIZONTAL
 			|XmNshowValue     #f
 			|XmNminimum       0
 			|XmNmaximum       (* 2 semi-range)
-			|XmNvalue         initial
+			|XmNvalue         (+ semi-range (ratio->semitones initial))
 			|XmNdecimalPoints 0
 			|XmNtitleString   title
 			|XmNbackground    (snd-pixel (basic-color))))))
@@ -237,7 +240,7 @@
 	      (new-slider (if (= (length slider-data) 7)
 			      (if (eq? (list-ref slider-data 6) 'log)
 				  (create-log-scale-widget mainform title low initial high func scale)
-				  (create-semi-scale-widget mainform title initial func scale))
+				  (create-semi-scale-widget mainform title initial func))
 			      (|XtCreateManagedWidget (car slider-data) |xmScaleWidgetClass mainform
 			        (list |XmNorientation   |XmHORIZONTAL
 				      |XmNshowValue     #t

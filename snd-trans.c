@@ -1603,7 +1603,7 @@ int snd_translate(char *oldname, char *newname, int type)
     case MUS_IEEE: err = read_ieee_text(oldname, newname, hdr); break;
     case MUS_MUS10: err = read_mus10(oldname, newname, hdr); break;
     case MUS_HCOM: err = read_hcom(oldname, newname, hdr); break;
-    case MUS_YAMAHA_TX16: err = read_12bit(oldname, newname, hdr); break;
+    case MUS_YAMAHA_TX16W: err = read_12bit(oldname, newname, hdr); break;
     case MUS_AVI: err = read_avi(oldname, newname, hdr); break;
     case MUS_RIFF:
       switch (mus_sound_original_format(oldname))
