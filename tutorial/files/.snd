@@ -1,0 +1,75 @@
+
+;(set! (just-sounds) #t)
+
+(add-hook! after-open-hook (lambda (snd) (set! (cursor-follows-play snd) #t)))
+(add-hook! initial-graph-hook (lambda (s c dur) (list 0.0 dur))  #t)
+
+(define set-sound-cursor
+  (lambda (snd shape)
+  (do ((j 0 (1+ j)))
+     ((= j (channels snd)) #f)
+     (set-cursor-style shape snd j))))
+
+     (add-hook! start-playing-hook 
+     (lambda (snd) (if (cursor-follows-play snd) (set-sound-cursor snd cursor-line))))
+     (add-hook! stop-playing-hook 
+     (lambda (snd) (set-sound-cursor snd cursor-line)))
+
+(set! (graph-style) graph-filled)
+(set! (show-y-zero) #t)
+
+;;; my colors
+
+(load "/home/dlphilp/snd/rgb.scm")
+
+(set! (basic-color) light-grey)
+(set! (cursor-color) red)
+(set! (data-color) dark-grey)
+(set! (enved-waveform-color) blue)
+(set! (filter-waveform-color) blue)
+(set! (graph-color) antique-white)
+(set! (highlight-color) ivory1)
+(set! (listener-color) lightsteelblue1)
+(set! (mark-color) red)
+(set! (mix-color) gray)
+(set! (selected-mix-color) light-green)
+(set! (position-color) ivory3)
+(set! (pushed-button-color) lightsteelblue1)
+(set! (sash-color) light-green)
+(set! (selected-data-color) dark-blue)
+(set! (selected-graph-color) light-cyan)
+(set! (selection-color) steelblue1)
+(set! (text-focus-color) antique-white)
+(set! (zoom-color) ivory4)
+
+;;; try to smooth playing response
+
+(set-oss-buffers 2 12)
+(set! (dac-size) 64)
+
+; Snd 5.2 (30-July-01) options saved Tue 31-Jul-2001 16:07 EDT
+(set! (transform-graph-type) graph-transform-as-spectrogram)
+(set! (graph-style) graph-filled)
+(set! (auto-resize) #f)
+(set! (ask-before-overwrite) #t)
+(set! (colormap) 4)
+(set! (dac-size) 65536)
+(set! (show-y-zero) #t)
+(set! (fft-log-magnitude) #t)
+(set! (save-state-file) "saved-snd.scm")
+; end of snd options
+
+; Snd 5.2 (1-Aug-01) options saved Wed 01-Aug-2001 22:35 EDT
+(set! (transform-size) 512)
+(set! (fft-window) hann-window)
+(set! (transform-graph-type) graph-transform-as-spectrogram)
+(set! (graph-style) graph-filled)
+(set! (auto-resize) #f)
+(set! (color-inverted) #f)
+(set! (ask-before-overwrite) #t)
+(set! (colormap) 10)
+(set! (wavelet-type) 8)
+(set! (dac-size) 65536)
+(set! (show-y-zero) #t)
+(set! (save-state-file) "saved-snd.scm")
+; end of snd options
