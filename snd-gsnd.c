@@ -1422,11 +1422,6 @@ snd_info *add_sound_window(char *filename, snd_state *ss, int read_only)
 				     0,
 				     g_cclosure_new(GTK_SIGNAL_FUNC(name_click_callback), (gpointer)sp, 0),
 				     0);
-      g_signal_connect_closure_by_id(GTK_OBJECT(sw[W_name_event]),
-				     g_signal_lookup("key_press_event", G_OBJECT_TYPE(GTK_OBJECT(sw[W_name_event]))),
-				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(graph_key_press), (gpointer)(any_selected_channel(sp)), 0),
-				     0);
       
       sw[W_name] = gtk_label_new(shortname_indexed(sp));
       gtk_container_add(GTK_CONTAINER(sw[W_name_event]), sw[W_name]);
@@ -1488,11 +1483,6 @@ snd_info *add_sound_window(char *filename, snd_state *ss, int read_only)
 				     g_cclosure_new(GTK_SIGNAL_FUNC(play_button_callback), (gpointer)sp, 0),
 				     0);
       g_signal_connect_closure_by_id(GTK_OBJECT(sw[W_play]),
-				     g_signal_lookup("key_press_event", G_OBJECT_TYPE(GTK_OBJECT(sw[W_play]))),
-				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(graph_key_press), (gpointer)(any_selected_channel(sp)), 0),
-				     0);
-      g_signal_connect_closure_by_id(GTK_OBJECT(sw[W_play]),
 				     g_signal_lookup("toggled", G_OBJECT_TYPE(GTK_OBJECT(sw[W_play]))),
 				     0,
 				     g_cclosure_new(GTK_SIGNAL_FUNC(play_button_click_callback), (gpointer)sp, 0),
@@ -1505,11 +1495,6 @@ snd_info *add_sound_window(char *filename, snd_state *ss, int read_only)
 				     g_signal_lookup("button_press_event", G_OBJECT_TYPE(GTK_OBJECT(sw[W_sync]))),
 				     0,
 				     g_cclosure_new(GTK_SIGNAL_FUNC(sync_button_callback), (gpointer)sp, 0),
-				     0);
-      g_signal_connect_closure_by_id(GTK_OBJECT(sw[W_sync]),
-				     g_signal_lookup("key_press_event", G_OBJECT_TYPE(GTK_OBJECT(sw[W_sync]))),
-				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(graph_key_press), (gpointer)(any_selected_channel(sp)), 0),
 				     0);
       g_signal_connect_closure_by_id(GTK_OBJECT(sw[W_sync]),
 				     g_signal_lookup("toggled", G_OBJECT_TYPE(GTK_OBJECT(sw[W_sync]))),
@@ -1529,11 +1514,6 @@ snd_info *add_sound_window(char *filename, snd_state *ss, int read_only)
 				     g_signal_lookup("toggled", G_OBJECT_TYPE(GTK_OBJECT(sw[W_unite]))),
 				     0,
 				     g_cclosure_new(GTK_SIGNAL_FUNC(unite_button_click), (gpointer)sp, 0),
-				     0);
-      g_signal_connect_closure_by_id(GTK_OBJECT(sw[W_unite]),
-				     g_signal_lookup("key_press_event", G_OBJECT_TYPE(GTK_OBJECT(sw[W_unite]))),
-				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(graph_key_press), (gpointer)(any_selected_channel(sp)), 0),
 				     0);
       gtk_widget_show(sw[W_unite]);
       
@@ -1558,11 +1538,6 @@ snd_info *add_sound_window(char *filename, snd_state *ss, int read_only)
 				     g_signal_lookup("button_press_event", G_OBJECT_TYPE(GTK_OBJECT(sw[W_amp_event]))),
 				     0,
 				     g_cclosure_new(GTK_SIGNAL_FUNC(amp_click_callback), (gpointer)sp, 0),
-				     0);
-      g_signal_connect_closure_by_id(GTK_OBJECT(sw[W_amp_event]),
-				     g_signal_lookup("key_press_event", G_OBJECT_TYPE(GTK_OBJECT(sw[W_amp_event]))),
-				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(graph_key_press), (gpointer)(any_selected_channel(sp)), 0),
 				     0);
       set_background(sw[W_amp_event], (ss->sgx)->basic_color);
       
@@ -1605,11 +1580,6 @@ snd_info *add_sound_window(char *filename, snd_state *ss, int read_only)
 				     g_signal_lookup("button_press_event", G_OBJECT_TYPE(GTK_OBJECT(sw[W_srate_event]))),
 				     0,
 				     g_cclosure_new(GTK_SIGNAL_FUNC(srate_click_callback), (gpointer)sp, 0),
-				     0);
-      g_signal_connect_closure_by_id(GTK_OBJECT(sw[W_srate_event]),
-				     g_signal_lookup("key_press_event", G_OBJECT_TYPE(GTK_OBJECT(sw[W_srate_event]))),
-				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(graph_key_press), (gpointer)(any_selected_channel(sp)), 0),
 				     0);
       set_background(sw[W_srate_event], (ss->sgx)->basic_color);
       
@@ -1675,11 +1645,6 @@ snd_info *add_sound_window(char *filename, snd_state *ss, int read_only)
 				     0,
 				     g_cclosure_new(GTK_SIGNAL_FUNC(expand_click_callback), (gpointer)sp, 0),
 				     0);
-      g_signal_connect_closure_by_id(GTK_OBJECT(sw[W_expand_event]),
-				     g_signal_lookup("key_press_event", G_OBJECT_TYPE(GTK_OBJECT(sw[W_expand_event]))),
-				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(graph_key_press), (gpointer)(any_selected_channel(sp)), 0),
-				     0);
       set_background(sw[W_expand_event], (ss->sgx)->basic_color);
       
       sw[W_expand_label] = gtk_label_new("expand:");
@@ -1712,11 +1677,6 @@ snd_info *add_sound_window(char *filename, snd_state *ss, int read_only)
 				     0,
 				     g_cclosure_new(GTK_SIGNAL_FUNC(expand_button_callback), (gpointer)sp, 0),
 				     0);
-      g_signal_connect_closure_by_id(GTK_OBJECT(sw[W_expand_button]),
-				     g_signal_lookup("key_press_event", G_OBJECT_TYPE(GTK_OBJECT(sw[W_expand_button]))),
-				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(graph_key_press), (gpointer)(any_selected_channel(sp)), 0),
-				     0);
       gtk_widget_show(sw[W_expand_button]);
       
       gtk_widget_show(sw[W_expand_form]);
@@ -1735,11 +1695,6 @@ snd_info *add_sound_window(char *filename, snd_state *ss, int read_only)
 				     g_signal_lookup("button_press_event", G_OBJECT_TYPE(GTK_OBJECT(sw[W_contrast_event]))),
 				     0,
 				     g_cclosure_new(GTK_SIGNAL_FUNC(contrast_click_callback), (gpointer)sp, 0),
-				     0);
-      g_signal_connect_closure_by_id(GTK_OBJECT(sw[W_contrast_event]),
-				     g_signal_lookup("key_press_event", G_OBJECT_TYPE(GTK_OBJECT(sw[W_contrast_event]))),
-				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(graph_key_press), (gpointer)(any_selected_channel(sp)), 0),
 				     0);
       set_background(sw[W_contrast_event], (ss->sgx)->basic_color);
       
@@ -1773,11 +1728,6 @@ snd_info *add_sound_window(char *filename, snd_state *ss, int read_only)
 				     0,
 				     g_cclosure_new(GTK_SIGNAL_FUNC(contrast_button_callback), (gpointer)sp, 0),
 				     0);
-      g_signal_connect_closure_by_id(GTK_OBJECT(sw[W_contrast_button]),
-				     g_signal_lookup("key_press_event", G_OBJECT_TYPE(GTK_OBJECT(sw[W_contrast_button]))),
-				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(graph_key_press), (gpointer)(any_selected_channel(sp)), 0),
-				     0);
       gtk_widget_show(sw[W_contrast_button]);
       
       gtk_widget_show(sw[W_contrast_form]);
@@ -1796,11 +1746,6 @@ snd_info *add_sound_window(char *filename, snd_state *ss, int read_only)
 				     g_signal_lookup("button_press_event", G_OBJECT_TYPE(GTK_OBJECT(sw[W_revscl_event]))),
 				     0,
 				     g_cclosure_new(GTK_SIGNAL_FUNC(revscl_click_callback), (gpointer)sp, 0),
-				     0);
-      g_signal_connect_closure_by_id(GTK_OBJECT(sw[W_revscl_event]),
-				     g_signal_lookup("key_press_event", G_OBJECT_TYPE(GTK_OBJECT(sw[W_revscl_event]))),
-				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(graph_key_press), (gpointer)(any_selected_channel(sp)), 0),
 				     0);
       set_background(sw[W_revscl_event], (ss->sgx)->basic_color);
       
@@ -1835,11 +1780,6 @@ snd_info *add_sound_window(char *filename, snd_state *ss, int read_only)
 				     0,
 				     g_cclosure_new(GTK_SIGNAL_FUNC(revlen_click_callback), (gpointer)sp, 0),
 				     0);
-      g_signal_connect_closure_by_id(GTK_OBJECT(sw[W_revlen_event]),
-				     g_signal_lookup("key_press_event", G_OBJECT_TYPE(GTK_OBJECT(sw[W_revlen_event]))),
-				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(graph_key_press), (gpointer)(any_selected_channel(sp)), 0),
-				     0);
       set_background(sw[W_revlen_event], (ss->sgx)->basic_color);
       
       sw[W_revlen_label] = gtk_label_new("len:");
@@ -1871,11 +1811,6 @@ snd_info *add_sound_window(char *filename, snd_state *ss, int read_only)
 				     g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(sw[W_reverb_button]))),
 				     0,
 				     g_cclosure_new(GTK_SIGNAL_FUNC(reverb_button_callback), (gpointer)sp, 0),
-				     0);
-      g_signal_connect_closure_by_id(GTK_OBJECT(sw[W_reverb_button]),
-				     g_signal_lookup("key_press_event", G_OBJECT_TYPE(GTK_OBJECT(sw[W_reverb_button]))),
-				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(graph_key_press), (gpointer)(any_selected_channel(sp)), 0),
 				     0);
       gtk_widget_show(sw[W_reverb_button]);
       
@@ -1926,11 +1861,6 @@ snd_info *add_sound_window(char *filename, snd_state *ss, int read_only)
 				     0,
 				     g_cclosure_new(GTK_SIGNAL_FUNC(filter_button_callback), (gpointer)sp, 0),
 				     0);
-      g_signal_connect_closure_by_id(GTK_OBJECT(sw[W_filter_button]),
-				     g_signal_lookup("key_press_event", G_OBJECT_TYPE(GTK_OBJECT(sw[W_filter_button]))),
-				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(graph_key_press), (gpointer)(any_selected_channel(sp)), 0),
-				     0);
       gtk_widget_show(sw[W_filter_button]);
       
       gtk_widget_show(sw[W_filter_form]);
@@ -1954,11 +1884,6 @@ snd_info *add_sound_window(char *filename, snd_state *ss, int read_only)
 				     0,
 				     g_cclosure_new(GTK_SIGNAL_FUNC(apply_button_press_callback), (gpointer)sp, 0),
 				     0);
-      g_signal_connect_closure_by_id(GTK_OBJECT(sw[W_apply]),
-				     g_signal_lookup("key_press_event", G_OBJECT_TYPE(GTK_OBJECT(sw[W_apply]))),
-				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(graph_key_press), (gpointer)(any_selected_channel(sp)), 0),
-				     0);
       gtk_widget_show(sw[W_apply]);
       
       sw[W_remember] = gtk_button_new_with_label("Remember");
@@ -1967,11 +1892,6 @@ snd_info *add_sound_window(char *filename, snd_state *ss, int read_only)
 				     g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(sw[W_remember]))),
 				     0,
 				     g_cclosure_new(GTK_SIGNAL_FUNC(remember_button_callback), (gpointer)sp, 0),
-				     0);
-      g_signal_connect_closure_by_id(GTK_OBJECT(sw[W_remember]),
-				     g_signal_lookup("key_press_event", G_OBJECT_TYPE(GTK_OBJECT(sw[W_remember]))),
-				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(graph_key_press), (gpointer)(any_selected_channel(sp)), 0),
 				     0);
       gtk_widget_show(sw[W_remember]);
       
@@ -1982,11 +1902,6 @@ snd_info *add_sound_window(char *filename, snd_state *ss, int read_only)
 				     0,
 				     g_cclosure_new(GTK_SIGNAL_FUNC(restore_button_callback), (gpointer)sp, 0),
 				     0);
-      g_signal_connect_closure_by_id(GTK_OBJECT(sw[W_restore]),
-				     g_signal_lookup("key_press_event", G_OBJECT_TYPE(GTK_OBJECT(sw[W_restore]))),
-				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(graph_key_press), (gpointer)(any_selected_channel(sp)), 0),
-				     0);
       gtk_widget_show(sw[W_restore]);
       
       sw[W_reset] = gtk_button_new_with_label("Reset");
@@ -1995,11 +1910,6 @@ snd_info *add_sound_window(char *filename, snd_state *ss, int read_only)
 				     g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(sw[W_reset]))),
 				     0,
 				     g_cclosure_new(GTK_SIGNAL_FUNC(reset_button_callback), (gpointer)sp, 0),
-				     0);
-      g_signal_connect_closure_by_id(GTK_OBJECT(sw[W_reset]),
-				     g_signal_lookup("key_press_event", G_OBJECT_TYPE(GTK_OBJECT(sw[W_reset]))),
-				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(graph_key_press), (gpointer)(any_selected_channel(sp)), 0),
 				     0);
       gtk_widget_show(sw[W_reset]);
       

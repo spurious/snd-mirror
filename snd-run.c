@@ -2648,35 +2648,53 @@ static xen_value *and_form(ptree *prog, XEN form)
   return(result);
 }
 
-static xen_value *lookup_generalized_set(ptree *prog, char *accessor, xen_value *accessor_arg, xen_value *new_value);
+static xen_value *lookup_generalized_set(ptree *prog, char *accessor, xen_value *arg0, xen_value *arg1, xen_value *arg2, xen_value *new_value);
 
 static xen_value *generalized_set_form(ptree *prog, XEN form, int need_result)
 {
   /* (set! (mus-phase gen) 0.0) */
   XEN settee, setval;
+  XEN in_settee;
+  xen_value *in_v0 = NULL, *in_v1 = NULL, *in_v2 = NULL, *v = NULL;
   settee = XEN_CADR(form);
   setval = XEN_CADDR(form);
-  if ((XEN_LIST_P(settee)) && (XEN_SYMBOL_P(XEN_CAR(settee))) && (XEN_LIST_LENGTH(settee) <= 2))
+  if ((XEN_LIST_P(settee)) && (XEN_SYMBOL_P(XEN_CAR(settee))) && (XEN_LIST_LENGTH(settee) <= 4))
     {
-      XEN in_settee;
-      xen_value *in_v = NULL, *v = NULL;
-      in_settee = XEN_CAR(settee);
       v = walk(prog, setval, TRUE);
       if (v == NULL)
 	return(run_warn("set!: can't handle: %s", XEN_AS_STRING(setval)));
+      in_settee = XEN_CAR(settee);
       if (XEN_NOT_NULL_P(XEN_CDR(settee)))
 	{
-	  in_v = walk(prog, XEN_CADR(settee), TRUE);
-	  if ((in_v == NULL) ||
-	      (in_v->type == R_UNSPECIFIED) ||
-	      (in_v->constant))
+	  in_v0 = walk(prog, XEN_CADR(settee), TRUE);
+	  if ((in_v0) &&
+	      (in_v0->type != R_UNSPECIFIED) &&
+	      (!(in_v0->constant)))
 	    {
-	      FREE(v);
-	      if (in_v) FREE(in_v);
-	      return(run_warn("set!: can't handle setter: %s", XEN_AS_STRING(settee)));
+	      if (XEN_NOT_NULL_P(XEN_CDDR(settee)))
+		{
+		  in_v1 = walk(prog, XEN_CADDR(settee), TRUE);
+		  if ((in_v1) &&
+		      (in_v1->type != R_UNSPECIFIED))
+		    {
+		      if (XEN_NOT_NULL_P(XEN_CDDDR(settee)))
+			{
+			  in_v2 = walk(prog, XEN_CADDDR(settee), TRUE);
+			  if ((in_v2) &&
+			      (in_v2->type != R_UNSPECIFIED))
+			    return(lookup_generalized_set(prog, copy_string(XEN_SYMBOL_TO_C_STRING(in_settee)), in_v0, in_v1, in_v2, v));
+			}
+		      else return(lookup_generalized_set(prog, copy_string(XEN_SYMBOL_TO_C_STRING(in_settee)), in_v0, in_v1, NULL, v));
+		    }
+		}
+	      else return(lookup_generalized_set(prog, copy_string(XEN_SYMBOL_TO_C_STRING(in_settee)), in_v0, NULL, NULL, v));
 	    }
 	}
-      return(lookup_generalized_set(prog, copy_string(XEN_SYMBOL_TO_C_STRING(in_settee)), in_v, v));
+      else return(lookup_generalized_set(prog, copy_string(XEN_SYMBOL_TO_C_STRING(in_settee)), NULL, NULL, NULL, v));
+      if (v) FREE(v);
+      if (in_v0) FREE(in_v0);
+      if (in_v1) FREE(in_v1);
+      if (in_v2) FREE(in_v2);
     }
   return(run_warn("generalized set! for %s not implemented yet", XEN_AS_STRING(settee)));
 }
@@ -6889,7 +6907,7 @@ static char *descr_set_srate_f(int *args, int *ints, Float *dbls) {return(mus_fo
 static void set_srate_f(int *args, int *ints, Float *dbls) {mus_set_srate(FLOAT_ARG_1); FLOAT_RESULT = mus_srate();}
 static char *descr_set_srate_i(int *args, int *ints, Float *dbls) {return(mus_format("mus-srate = " INT_PT , args[1], INT_ARG_1));}
 static void set_srate_i(int *args, int *ints, Float *dbls) {mus_set_srate((Float)INT_ARG_1); FLOAT_RESULT = mus_srate();}
-static xen_value *mus_set_srate_1(ptree *prog, xen_value *in_v, xen_value *v)
+static xen_value *mus_set_srate_1(ptree *prog, xen_value *v)
 {
   xen_value *nv;
   if (v->type == R_FLOAT)
@@ -7698,32 +7716,69 @@ static xen_value *walk(ptree *prog, XEN form, int need_result)
   return(NULL);
 }
 
-static xen_value *lookup_generalized_set(ptree *prog, char *accessor, xen_value *in_v, xen_value *v)
+static xen_value *lookup_generalized_set(ptree *prog, char *accessor, xen_value *in_v, xen_value *in_v1, xen_value *in_v2, xen_value *v)
 {
   xen_value *sv = NULL;
-  if (v->type == R_FLOAT)
+  if (in_v1 == NULL)
     {
-      if (strcmp(accessor, "mus-phase") == 0) sv = mus_set_phase_1(prog, in_v, v); else
-      if (strcmp(accessor, "mus-frequency") == 0) sv = mus_set_frequency_1(prog, in_v, v); else
-      if (strcmp(accessor, "mus-scaler") == 0) sv = mus_set_scaler_1(prog, in_v, v); else
-      if (strcmp(accessor, "mus-feedback") == 0) sv = mus_set_feedback_1(prog, in_v, v); else
-      if (strcmp(accessor, "mus-feedforward") == 0) sv = mus_set_feedforward_1(prog, in_v, v); else
-      if (strcmp(accessor, "mus-increment") == 0) sv = mus_set_increment_1(prog, in_v, v); else
-      if (strcmp(accessor, "mus-a0") == 0) sv = mus_set_a0_1(prog, in_v, v); else
-      if (strcmp(accessor, "mus-a1") == 0) sv = mus_set_a1_1(prog, in_v, v); else
-      if (strcmp(accessor, "mus-a2") == 0) sv = mus_set_a2_1(prog, in_v, v); else
-      if (strcmp(accessor, "mus-b1") == 0) sv = mus_set_b1_1(prog, in_v, v); else
-      if (strcmp(accessor, "mus-b2") == 0) sv = mus_set_b2_1(prog, in_v, v); else
-      if (strcmp(accessor, "mus-formant-radius") == 0) sv = mus_set_formant_radius_1(prog, in_v, v);
+      if (v->type == R_FLOAT)
+	{
+          if (strcmp(accessor, "mus-phase") == 0) sv = mus_set_phase_1(prog, in_v, v); else
+          if (strcmp(accessor, "mus-frequency") == 0) sv = mus_set_frequency_1(prog, in_v, v); else
+          if (strcmp(accessor, "mus-scaler") == 0) sv = mus_set_scaler_1(prog, in_v, v); else
+          if (strcmp(accessor, "mus-feedback") == 0) sv = mus_set_feedback_1(prog, in_v, v); else
+          if (strcmp(accessor, "mus-feedforward") == 0) sv = mus_set_feedforward_1(prog, in_v, v); else
+          if (strcmp(accessor, "mus-increment") == 0) sv = mus_set_increment_1(prog, in_v, v); else
+          if (strcmp(accessor, "mus-a0") == 0) sv = mus_set_a0_1(prog, in_v, v); else
+          if (strcmp(accessor, "mus-a1") == 0) sv = mus_set_a1_1(prog, in_v, v); else
+          if (strcmp(accessor, "mus-a2") == 0) sv = mus_set_a2_1(prog, in_v, v); else
+          if (strcmp(accessor, "mus-b1") == 0) sv = mus_set_b1_1(prog, in_v, v); else
+          if (strcmp(accessor, "mus-b2") == 0) sv = mus_set_b2_1(prog, in_v, v); else
+          if (strcmp(accessor, "mus-formant-radius") == 0) sv = mus_set_formant_radius_1(prog, in_v, v);
+	}
+      if (v->type == R_INT)
+	{
+          if (strcmp(accessor, "mus-ramp") == 0) sv = mus_set_ramp_1(prog, in_v, v); else
+          if (strcmp(accessor, "mus-hop") == 0) sv = mus_set_hop_1(prog, in_v, v); else
+          if (strcmp(accessor, "mus-location") == 0) sv = mus_set_location_1(prog, in_v, v); else
+          if (strcmp(accessor, "mus-length") == 0) sv = mus_set_length_1(prog, in_v, v);
+	}
+      if (in_v == NULL)
+	{
+	  if (strcmp(accessor, "mus-srate") == 0) sv = mus_set_srate_1(prog, v);
+	}
     }
-  if (v->type == R_INT)
+
+  if ((strcmp(accessor, "vct-ref") == 0) || 
+      (strcmp(accessor, "frame-ref") == 0) || 
+      (strcmp(accessor, "locsig-ref") == 0) || 
+      (strcmp(accessor, "locsig-reverb-ref") == 0))
     {
-      if (strcmp(accessor, "mus-ramp") == 0) sv = mus_set_ramp_1(prog, in_v, v); else
-      if (strcmp(accessor, "mus-hop") == 0) sv = mus_set_hop_1(prog, in_v, v); else
-      if (strcmp(accessor, "mus-location") == 0) sv = mus_set_location_1(prog, in_v, v); else
-      if (strcmp(accessor, "mus-length") == 0) sv = mus_set_length_1(prog, in_v, v);
+      /* (run-eval '(let ((v (make-vct 3))) (set! (vct-ref v 1) 1.0) 3) 3) */
+      xen_value **args;
+      args = (xen_value **)CALLOC(4, sizeof(xen_value *));
+      args[1] = in_v;
+      args[2] = in_v1;
+      args[3] = v;
+      if (strcmp(accessor, "vct-ref") == 0) sv = vct_set_1(prog, args, FALSE); else
+      if (strcmp(accessor, "frame-ref") == 0) sv = frame_set_0(prog, args, 3); else
+      if (strcmp(accessor, "locsig-ref") == 0) sv = locsig_set_0(prog, args, 3); else
+      if (strcmp(accessor, "locsig-reverb-ref") == 0) sv = locsig_reverb_set_0(prog, args, 3);
+      FREE(args);
     }
-  if (strcmp(accessor, "mus-srate") == 0) sv = mus_set_srate_1(prog, in_v, v);
+
+  if (strcmp(accessor, "mixer-ref") == 0)
+    {
+      xen_value **args;
+      args = (xen_value **)CALLOC(5, sizeof(xen_value *));
+      args[1] = in_v;
+      args[2] = in_v1;
+      args[3] = in_v2;
+      args[4] = v;
+      sv = mixer_set_1(prog, args, 4);
+      FREE(args);
+    }
+
   /* TODO: list-set! for def-clm-struct [needs to retain old type] -- in_v: accessor-arg, v:new val [also needs runtime list-ref]
      lst = (XEN)(prog->ints[in_v->addr]);
      (set! (fd-loc arg) 123) -- arg is a list, fd-loc gives the offset
@@ -7735,12 +7790,14 @@ static xen_value *lookup_generalized_set(ptree *prog, char *accessor, xen_value 
          return(clean_up(unwrap_xen_object(prog, XEN_LIST_SET(lst, clm_struct_offsets[k], c_to_xen(v)), accessor), args, num_args));
        }
    */
-  /* TODO: (set! (vct-ref...)) and frame-ref, locsig-ref etc in run */
-  /*       these would require that set_form pass us the 2nd (and 3rd) arg(s) to the accessor as well */
-  /*       then something like set_dbl_gen0 as the call */
-  /*       or set_form needs to notice and translate to vct-set! et al */
-  if (sv == NULL) run_warn("can't set! %s", accessor);
+  if (sv == NULL) 
+    {
+      if (v) 
+	run_warn("can't set! %s to %s", accessor, describe_xen_value(v, prog->ints, prog->dbls));
+      else run_warn("can't set! %s", accessor);
+    }
   if (in_v) FREE(in_v);
+  if (in_v1) FREE(in_v1);
   if (accessor) FREE(accessor);
   if ((sv == NULL) && (v)) {FREE(v); v = NULL;}
   return(v);

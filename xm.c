@@ -15909,19 +15909,28 @@ when multiple events are interpreted as a repeated event."
   return(XEN_FALSE);
 }
 
-/* SOMEDAY: XtActionProc */
-static void gxm_XtActionProc(Widget w, XEvent* e, String* s, Cardinal* c) {}
+static XEN register_proc = XEN_FALSE;
+static void gxm_XtRegisterGrabActionProc(Widget w, XEvent* e, String* s, Cardinal* c) 
+{
+  XEN_CALL_3(register_proc,
+	     C_TO_XEN_Widget(w),
+	     C_TO_XEN_XEvent(e),
+	     C_TO_XEN_Strings(s, *c),
+	     __FUNCTION__);
+}
 
 static XEN gxm_XtRegisterGrabAction(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5)
 {
   #define H_XtRegisterGrabAction "void XtRegisterGrabAction(action_proc, owner_events, event_mask, pointer_mode, keyboard_mode) adds the \
 specified action_proc to a list known to the translation manager."
-  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg1) && (XEN_REQUIRED_ARGS(arg1) == 4), arg1, 1, "XtRegisterGrabAction", "XtActionProc");
+  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg1) && (XEN_REQUIRED_ARGS(arg1) == 3), arg1, 1, "XtRegisterGrabAction", "XtActionProc");
   XEN_ASSERT_TYPE(XEN_BOOLEAN_P(arg2), arg2, 2, "XtRegisterGrabAction", "boolean");
   XEN_ASSERT_TYPE(XEN_ULONG_P(arg3), arg3, 3, "XtRegisterGrabAction", "unsigned int");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg4), arg4, 4, "XtRegisterGrabAction", "int");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg5), arg5, 5, "XtRegisterGrabAction", "int");
-  XtRegisterGrabAction(gxm_XtActionProc, XEN_TO_C_BOOLEAN(arg2), XEN_TO_C_ULONG(arg3), XEN_TO_C_INT(arg4), XEN_TO_C_INT(arg5));
+  xm_protect(arg1);
+  register_proc = arg1;
+  XtRegisterGrabAction(gxm_XtRegisterGrabActionProc, XEN_TO_C_BOOLEAN(arg2), XEN_TO_C_ULONG(arg3), XEN_TO_C_INT(arg4), XEN_TO_C_INT(arg5));
   return(XEN_FALSE);
 }
 

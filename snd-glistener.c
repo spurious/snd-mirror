@@ -1,5 +1,7 @@
 #include "snd.h"
 
+/* SOMEDAY: show matching paren in listener, but how to underline or highlight in gtk 2 text widgets? */
+
 static GtkWidget *completion_dialog = NULL;
 static int first_time = TRUE;
 static GtkWidget *listener_text = NULL, *completion_list = NULL;
@@ -372,8 +374,11 @@ static gboolean listener_key_press(GtkWidget *w, GdkEventKey *event, gpointer da
   snd_state *ss = (snd_state *)data;
   chan_info *cp;
   int end;
-
-  /* fprintf(stderr,"got %d %c\n", event->state & snd_ControlMask, event->keyval); */
+  /*
+  fprintf(stderr,"listener got %d %c, mapped: %d, realized: %d, visible: %d\n", 
+	  event->state & snd_ControlMask, event->keyval,
+	  GTK_WIDGET_MAPPED(w), GTK_WIDGET_REALIZED(w),GTK_WIDGET_VISIBLE(w));
+  */
   if ((ss->sgx)->graph_is_active) 
     {
       cp = current_channel(ss);
@@ -492,11 +497,6 @@ static gint clear_paren_check(gpointer nada)
 {
   /* major gtk bug here -- their own internal iterator gets fatally screwed up */
   return(0);
-}
-
-static gboolean check_parens(GtkWidget *w, GdkEventKey *event, gpointer data)
-{
-  return(FALSE);
 }
 
 static gboolean listener_button_press(GtkWidget *w, GdkEventButton *ev, gpointer data)
@@ -706,11 +706,6 @@ static void make_command_widget(snd_state *ss, int height)
 				     0,
 				     g_cclosure_new(GTK_SIGNAL_FUNC(listener_key_press), (gpointer)ss, 0),
 				     0);
-      g_signal_connect_closure_by_id(GTK_OBJECT(listener_text), 
-				     g_signal_lookup("key_press_event", G_OBJECT_TYPE(GTK_OBJECT(listener_text))), 
-				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(check_parens), (gpointer)ss, 0),
-				     1);
       g_signal_connect_closure_by_id(GTK_OBJECT(listener_text),
 				     g_signal_lookup("button_press_event", G_OBJECT_TYPE(GTK_OBJECT(listener_text))),
 				     0,

@@ -19131,6 +19131,7 @@ EDITS: 2
       (ftst '(let ((v (make-vct 3))) (vct-fill! v 3.14) (let ((v1 (vct-copy v))) (vct-ref v1 2))) 3.14)
       (ftst '(let ((v (make-vct 3))) (vct-fill! v 1.0) (vct-ref (vct-scale! v 2.0) 1)) 2.0)
       (ftst '(let ((v (make-vct 3))) (vct-fill! v 1.0) (vct-ref (vct-scale! (vct-add! v v) 2.0) 1)) 4.0)
+      (ftst '(let ((v (make-vct 3))) (set! (vct-ref v 1) 1.0) (vct-ref v 1)) 1.0)
 
       (itst '(case 1 ((1) 4) ((2 3) 5)) 4)
       (stst '(case 2 ((1) "hi") ((2 3) "ho")) "ho")
@@ -19512,19 +19513,24 @@ EDITS: 2
       (let ((v (make-vct 3))
 	    (f (make-frame 1)))
 	(vct-map (lambda () (frame-set! f 0 1.0) f) v)
-	(IF (not (vequal v (vct 1.0 1.0 1.0))) (snd-display ";vct-map 1.0: ~A" v)))
+	(IF (not (vequal v (vct 1.0 1.0 1.0))) (snd-display ";vct-map 1.0: ~A (ref)" v)))
+
+      (let ((v (make-vct 3))
+	    (f (make-frame 1)))
+	(vct-map (lambda () (set! (frame-ref f 0) 1.0) f) v)
+	(IF (not (vequal v (vct 1.0 1.0 1.0))) (snd-display ";vct-map 1.0 (set ref): ~A" v)))
 
       (let ((v (make-vct 3))
 	    (f (make-frame 1)))
 	(set! (optimization) 0)
 	(vct-map (lambda () (frame-set! f 0 1.0) f) v)
 	(set! (optimization) max-optimization)
-	(IF (not (vequal v (vct 1.0 1.0 1.0))) (snd-display ";unopt vct-map 1.0: ~A" v)))
+	(IF (not (vequal v (vct 1.0 1.0 1.0))) (snd-display ";unopt vct-map 1.0 (ref): ~A" v)))
 
       (let ((v (make-vct 3))
 	    (f (make-frame 1)))
 	(vct-map (lambda () (frame-set! f 0 (+ mus-next 1.0)) f) v) ; force fall-through to Guile
-	(IF (not (vequal v (vct 1.0 1.0 1.0))) (snd-display ";vct-map 1.0: ~A" v)))
+	(IF (not (vequal v (vct 1.0 1.0 1.0))) (snd-display ";vct-map 1.0 (set): ~A" v)))
 
       (let ((v0 (make-vct 3))
 	    (v1 (make-vct 3))
@@ -19714,8 +19720,9 @@ EDITS: 2
 		      (set! d11 (locsig-ref loc 1))
 		      (set! dr1 (locsig-reverb-ref loc 0))
 		      (locsig-set! loc 0 .123)
-		      (locsig-set! loc 1 .123)
+		      (set! (locsig-ref loc 1) .123)
 		      (locsig-reverb-set! loc 0 .123)
+		      (set! (locsig-reverb-ref loc 0) .123)
 		      0.0))
 	(IF (fneq d0 .667) (snd-display ";run locsig ref 0: ~A" d0))
 	(IF (fneq d1 .333) (snd-display ";run locsig ref 1: ~A" d1))
@@ -20000,6 +20007,15 @@ EDITS: 2
 		      (mixer* mx1 mx1 mx2)
 		      0.0))
 	(IF (fneq (mixer-ref mx2 0 0) .01) (snd-display ";run mixer* res: ~A" mx2)))
+
+      (let ((mx1 (make-mixer 2))
+	    (mx2 (make-mixer 2))
+	    (v (make-vct 1)))
+	(vct-map! v (lambda ()
+		      (set! (mixer-ref mx1 0 0) .1)
+		      (mixer* mx1 mx1 mx2)
+		      0.0))
+	(IF (fneq (mixer-ref mx2 0 0) .01) (snd-display ";run mixer* res (set): ~A" mx2)))
 
       (let ((gen (make-buffer 4))
 	    (fr0 (make-frame 2 .1 .2))

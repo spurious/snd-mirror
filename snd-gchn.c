@@ -527,9 +527,9 @@ static gboolean real_graph_key_press(GtkWidget *w, GdkEventKey *ev, gpointer dat
   key_state = (GdkModifierType)(ev->state);
   keysym = ev->keyval;
   ss = cp->state;
-#if DEBUGGING && MAC_OSX
-  fprintf(stderr, "grf: %s %d ", gdk_keyval_name(keysym), key_state);
-#endif
+  /*
+  fprintf(stderr, "real_graph_key_press: %p: grf: %s %d ", w, gdk_keyval_name(keysym), key_state);
+  */
   theirs = key_press_callback(cp, x, y, ev->state, keysym);
   if (theirs) (ss->sgx)->graph_is_active = FALSE;
   g_signal_stop_emission(GTK_OBJECT(w), g_signal_lookup("key_press_event", G_OBJECT_TYPE(GTK_OBJECT(w))), 0);
@@ -547,9 +547,9 @@ gboolean graph_key_press(GtkWidget *w, GdkEventKey *ev, gpointer data)
   key_state = (GdkModifierType)(ev->state);
   keysym = ev->keyval;
   ss = cp->state;
-#if DEBUGGING && MAC_OSX
-  fprintf(stderr, "key: %s %d ", gdk_keyval_name(keysym), key_state);
-#endif
+  /*
+  fprintf(stderr, "graph_key_press %p: key: %s %d ", w, gdk_keyval_name(keysym), key_state);
+  */
   theirs = key_press_callback(cp, x, y, ev->state, keysym);
   if (theirs) (ss->sgx)->graph_is_active = TRUE;
   return(TRUE);
@@ -559,7 +559,6 @@ static gboolean graph_button_press(GtkWidget *w, GdkEventButton *ev, gpointer da
 {
   chan_info *cp = (chan_info *)data;
   snd_state *ss;
-  /* fprintf(stderr, "graph press "); */
   if ((ev->type == GDK_BUTTON_PRESS) && (ev->button == POPUP_BUTTON))
     {
       int pdata;
@@ -652,11 +651,6 @@ void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, in
 	  cw[W_edhist] = sg_make_list("Edits", cw[W_main_window], PANED_ADD, (gpointer)cp, 0, NULL,
 				      GTK_SIGNAL_FUNC(history_select_callback), 0, 0, 0, 0);
 	  gtk_widget_show(cw[W_edhist]);
-	  g_signal_connect_closure_by_id(GTK_OBJECT(cw[W_edhist]),
-					 g_signal_lookup("key_press_event", G_OBJECT_TYPE(GTK_OBJECT(cw[W_edhist]))),
-					 0,
-					 g_cclosure_new(GTK_SIGNAL_FUNC(real_graph_key_press), (gpointer)cp, 0),
-					 0);
 	}
       else cw[W_main_window] = main;
 
@@ -677,6 +671,7 @@ void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, in
 #endif
       set_user_int_data(G_OBJECT(cw[W_graph]), PACK_SOUND_AND_CHANNEL(sp->index, cp->chan));
       gtk_widget_set_events(cw[W_graph], GDK_ALL_EVENTS_MASK);
+      GTK_WIDGET_SET_FLAGS(cw[W_graph], GTK_CAN_FOCUS);
       gtk_table_attach(GTK_TABLE(cw[W_graph_window]), cw[W_graph], 2, 3, 0, 2, 
 		       (GtkAttachOptions)(GTK_FILL | GTK_EXPAND), 
 		       (GtkAttachOptions)(GTK_FILL | GTK_EXPAND | GTK_SHRINK), 
@@ -795,17 +790,6 @@ void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, in
 					 g_cclosure_new(GTK_SIGNAL_FUNC(w_toggle_click_callback), (gpointer)cp, 0),
 					 0);
 
-	  /* these are needed to keep f/w buttons from flushing all keypress events after being pressed */
-	  g_signal_connect_closure_by_id(GTK_OBJECT(cw[W_f]),
-					 g_signal_lookup("key_press_event", G_OBJECT_TYPE(GTK_OBJECT(cw[W_f]))),
-					 0,
-					 g_cclosure_new(GTK_SIGNAL_FUNC(real_graph_key_press), (gpointer)cp, 0),
-					 0);
-	  g_signal_connect_closure_by_id(GTK_OBJECT(cw[W_w]),
-					 g_signal_lookup("key_press_event", G_OBJECT_TYPE(GTK_OBJECT(cw[W_w]))),
-					 0,
-					 g_cclosure_new(GTK_SIGNAL_FUNC(real_graph_key_press), (gpointer)cp, 0),
-					 0);
 	}
       else
 	{
