@@ -782,7 +782,8 @@ the hook.
 <!-- --><span class=defbox><code><em class=def><a name="drawmarkhook">draw-mark-hook</a></em> (id)</code></span><td align=right><b>progn</b></td>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td colspan=2>
-<!-- -->called before a mark is drawn (in XOR mode). If the hook returns #t, the mark is not drawn.
+<!-- -->called before a mark is drawn (in XOR mode). If the hook returns #t, the mark is not drawn.  <i>mark-sync-color</i>
+<!-- -->in snd-motif.scm uses this hook to draw sync'd marks in some other color than the current mark-color.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=3></td></tr>
 <!-- -->
@@ -793,8 +794,11 @@ the hook.
 <!-- -->
 <!-- --><tr><td></td><td colspan=2>
 <!-- -->called each time Snd receives a drag-and-drop event, passing the hook the filename.
-<!-- -->If it returns #t, the file is not opened.  (Drag-and-drop only sort-of works in Snd -- try dropping
-<!-- -->the file icon on the menu bar).
+<!-- -->If it returns #t, the file is not opened.  If you drag the file icon to the menubar, 
+<!-- -->Snd opens it as if you had called open-sound.  If you drag it to a particular channel,
+<!-- -->Snd mixes it at the cursor in that channel.  To get Snd to
+<!-- -->mix the dragged file even from the menubar:
+<!-- --></br><br><code>(add-hook! drop-hook (lambda (filename) (mix filename) #t))</code>
 <!-- --></td></tr><tr><td colspan=3></td></tr>
 <!-- -->
 <!-- during-open-hook -->

@@ -6,6 +6,17 @@
 #include "snd-rec.h"
 
 typedef struct {
+  SG_PIXMAP *off_label;
+  SG_PIXMAP *on_label;
+  SG_PIXMAP *clip_label;
+  SG_BITMAP *off_label_mask;
+  SG_BITMAP *on_label_mask;
+  SG_BITMAP *clip_label_mask;
+  SG_FONT *label_font;
+  Float size;
+} vu_label;
+
+typedef struct {
   GtkWidget *meter;
   GtkWidget *max_button;
   GdkDrawable *wn;

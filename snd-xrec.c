@@ -13,6 +13,14 @@
 #endif
 
 typedef struct {
+  Pixmap off_label;
+  Pixmap on_label;
+  Pixmap clip_label;
+  XFontStruct *label_font;
+  Float size;
+} vu_label;
+
+typedef struct {
   Widget meter;
   Widget max_button;
   Display *dp;

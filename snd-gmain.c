@@ -287,7 +287,7 @@ static BACKGROUND_TYPE startup_funcs(gpointer context)
     case 0:
 #ifndef SND_AS_WIDGET
 #ifndef __alpha__
-      initialize_drop(ss);
+      add_drop(ss, MAIN_SHELL(ss));
 #endif
 #endif
 
@@ -311,7 +311,6 @@ static BACKGROUND_TYPE startup_funcs(gpointer context)
 #endif
 
       (ss->sgx)->graph_cursor = gdk_cursor_new((GdkCursorType)in_graph_cursor(ss));
-      (ss->sgx)->mix_cursor = gdk_cursor_new(GDK_LEFT_PTR);
       (ss->sgx)->wait_cursor = gdk_cursor_new(GDK_WATCH);
       (ss->sgx)->arrow_cursor = gdk_cursor_new(GDK_LEFT_PTR);
 

@@ -790,24 +790,6 @@ void reflect_edit_counter_change(chan_info *cp)
     }
 }
 
-static void add_drop(snd_state *ss, Widget drawer)
-{
-  /* called via startup func */
-  int n;
-  Atom FILE_NAME;
-  Atom targets[2];
-  Arg args[12];
-  targets[0] = XA_STRING;
-  FILE_NAME = XInternAtom(MAIN_DISPLAY(ss), "FILE_NAME", FALSE);
-  targets[1] = FILE_NAME;
-  n = 0;
-  XtSetArg(args[n], XmNdropSiteOperations, XmDROP_COPY); n++;
-  XtSetArg(args[n], XmNimportTargets, targets); n++;
-  XtSetArg(args[n], XmNnumImportTargets, 2); n++;
-  XtSetArg(args[n], XmNdropProc, handle_drop); n++;
-  XmDropSiteRegister(drawer, args, n);
-}
-
 static void cp_graph_key_press(Widget w, XtPointer context, XEvent *event, Boolean *cont);
 
 void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, int insertion, Widget main, int button_style)

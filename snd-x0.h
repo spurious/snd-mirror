@@ -92,8 +92,6 @@
 #define BUTTON_2 Button2
 #define BUTTON_3 Button3
 
-#define NUM_GLASSES 15
-#define NUM_BOMBS 15
 #define NUM_COLORMAPS 16
 
 #if DEBUGGING
@@ -174,7 +172,7 @@ typedef struct {
   Widget text_widget, listener_pane;
   Widget *dialogs;
 
-  Cursor mix_cursor, graph_cursor, wait_cursor;
+  Cursor graph_cursor, wait_cursor;
   Widget completion_requestor;
 #if HAVE_GL
   GLXContext cx;
@@ -187,14 +185,6 @@ typedef struct {
   int lastpj;
   Pixel color;
 } mix_context;
-
-typedef struct {
-  Pixmap off_label;
-  Pixmap on_label;
-  Pixmap clip_label;
-  XFontStruct *label_font;
-  Float size;
-} vu_label;
 
 #define WITHOUT_PANED_WINDOW 0
 #define WITH_PANED_WINDOW 1

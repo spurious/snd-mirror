@@ -213,8 +213,7 @@ void set_transform_graph_type(snd_state *ss, int val);
 
 /* -------- snd-xdrop.c -------- */
 
-void initialize_drop(snd_state *ss);
-void handle_drop(Widget w, XtPointer context, XtPointer info);
+void add_drop(snd_state *ss, Widget w);
 void g_init_gxdrop(void);
 
 

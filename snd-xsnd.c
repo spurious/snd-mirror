@@ -1525,6 +1525,9 @@ static unsigned char speed_l_bits1[] = {
 
 #if HAVE_XPM
 
+#define NUM_GLASSES 15
+#define NUM_BOMBS 15
+
 static Pixmap mini_lock = 0;
 static Pixmap blank_pixmap = 0;
 static int mini_lock_allocated = 0;

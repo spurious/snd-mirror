@@ -29,11 +29,11 @@ static void drag_data_received (GtkWidget *widget, GdkDragContext *context, gint
   gtk_drag_finish(context, FALSE, FALSE, time);
 }
 
-void initialize_drop(snd_state *ss)
+void add_drop(snd_state *ss, GtkWidget *w)
 {
   /* called via startup func */
-  gtk_drag_dest_set(MAIN_SHELL(ss), GTK_DEST_DEFAULT_DROP, target_table, 3, GDK_ACTION_COPY);
-  SG_SIGNAL_CONNECT(GTK_OBJECT(MAIN_SHELL(ss)), "drag_data_received", GTK_SIGNAL_FUNC(drag_data_received), NULL);
+  gtk_drag_dest_set(w, GTK_DEST_DEFAULT_DROP, target_table, 3, GDK_ACTION_COPY);
+  SG_SIGNAL_CONNECT(GTK_OBJECT(w), "drag_data_received", GTK_SIGNAL_FUNC(drag_data_received), NULL);
 }
 
 

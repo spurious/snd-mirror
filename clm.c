@@ -3086,10 +3086,10 @@ Float *mus_partials2polynomial(int npartials, Float *partials, int kind)
 	      Cc1[k] += (amp * T1[k]);
 	  else
 	    for (k = 1; k <= i; k++) 
-	      Cc1[k-1] += (amp * T1[k]);
+	      Cc1[k - 1] += (amp * T1[k]);
 	}
       for (k = i + 1; k > 0; k--) 
-	Tn[k] = (2 * T1[k-1]) - T0[k];
+	Tn[k] = (2 * T1[k - 1]) - T0[k];
       Tn[0] = -T0[0];
       for (k = i + 1; k >= 0; k--)
 	{

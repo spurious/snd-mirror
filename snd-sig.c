@@ -880,7 +880,7 @@ static char *src_channel_with_error(chan_info *cp, snd_fd *sf, off_t beg, off_t 
   hdr = make_temp_header(ofile, SND_SRATE(sp), 1, dur, (char *)origin);
   ofd = open_temp_file(ofile, 1, hdr, ss);
   if (ofd == -1)
-    return(mus_format("can't open src-sound temp file %s: %s\n", ofile, strerror(errno)));
+    return(mus_format("can't open %s temp file %s: %s\n", origin, ofile, strerror(errno)));
   data = (mus_sample_t **)MALLOC(sizeof(mus_sample_t *));
   data[0] = (mus_sample_t *)CALLOC(MAX_BUFFER_SIZE, sizeof(mus_sample_t)); 
   datumb = mus_data_format_to_bytes_per_sample(hdr->format);
@@ -1419,7 +1419,7 @@ static char *apply_filter_or_error(chan_info *ncp, int order, env *e, int from_e
 	  ofd = open_temp_file(ofile, 1, hdr, ss);
 	  if (ofd == -1)
 	    {
-	      snd_error("can't open filter-sound temp file %s: %s\n", ofile, strerror(errno));
+	      snd_error("can't open %s temp file %s: %s\n", origin, ofile, strerror(errno));
 	      break;
 	    }
 	  write(ofd, sndrdat, fsize * sizeof(Float));
@@ -1487,7 +1487,7 @@ static char *apply_filter_or_error(chan_info *ncp, int order, env *e, int from_e
 		  ofd = open_temp_file(ofile, 1, hdr, ss);
 		  if (ofd == -1)
 		    {
-		      snd_error("can't open filter-sound temp file %s: %s\n", ofile, strerror(errno));
+		      snd_error("can't open %s temp file %s: %s\n", origin, ofile, strerror(errno));
 		      break;
 		    }
 		  datumb = mus_data_format_to_bytes_per_sample(hdr->format);
@@ -1946,7 +1946,7 @@ void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, Float scaler, int re
 		if (sfs[i]) 
 		  free_snd_fd(sfs[i]);
 	      free_sync_state(sc);
-	      snd_error("can't open env-sound temp file %s: %s\n", ofile, strerror(errno));
+	      snd_error("can't open %s temp file %s: %s\n", origin, ofile, strerror(errno));
 	      FREE(ofile);
 	      return;
 	    }

@@ -1505,20 +1505,8 @@ int mus_audio_oss_buffer_size(void)
   if (fragments_locked)
     return(FRAGMENTS * (1 << FRAGMENT_SIZE));
   else return(16 * 4096); 
-#if 0
-/* TODO: test the fragment readback code */
-#ifdef SNDCTL_DSP_GETOSPACE
-  /* 2048 * 64 -- these are bytes */
-  audio_buf_info abi;
-  fd = linux_audio_open(dsp_name, O_RDWR, 0, 0);
-  if (fd == -1) fd = linux_audio_open(DAC_NAME, O_WRONLY, 0, 0);
-  if (fd == -1) return(16 * 4096);
-  ioctl(fd, SNDCTL_DSP_GETOSPACE, &abi);
-  linux_audio_close(fd);
-  return(abi.fragments * abi.fragsize / 2); /* 2=assumed datum size */
-#endif
-#endif
 }
+
 /* SOMEDAY: these should be set per-card, not globally */
 
 #define MAX_SOUNDCARDS 8
@@ -1839,7 +1827,7 @@ static int oss_mus_audio_initialize(void)
 	   * try to catch this case via the mixer's name
 	   */
 
-	  /* TODO: apparently this is also the case for delta cards in OSS:
+	  /* SOMEDAY: apparently this is also the case for delta cards in OSS:
 	   * /dev/mixer0 (M Audio Delta 66) (no reported devices)/dev/dsp0:
 	   */
 
@@ -3096,7 +3084,10 @@ static void oss_describe_audio_state_1(void)
       pprint(": ");
       for (i = 0; i < sound_cards; i++)
 	{
-	  mus_snprintf(audio_strbuf, PRINT_BUFFER_SIZE, "/dev/dsp%d with /dev/mixer%d%s", audio_dsp[i], audio_mixer[i], (i<(sound_cards-1)) ? ", " : "");
+	  mus_snprintf(audio_strbuf, PRINT_BUFFER_SIZE, "/dev/dsp%d with /dev/mixer%d%s", 
+		       audio_dsp[i], 
+		       audio_mixer[i], 
+		       (i < (sound_cards - 1)) ? ", " : "");
 	  pprint(audio_strbuf);
 	}
     }
@@ -3114,7 +3105,7 @@ static void oss_describe_audio_state_1(void)
       status = ioctl(fd, SNDCTL_SEQ_NRSYNTHS, &numdevs);
       if (status == -1) 
 	{
-	  close(fd); fd=-1;
+	  close(fd); fd = -1;
 	  pprint("no sequencer?");
 	}
       else
@@ -3134,7 +3125,7 @@ static void oss_describe_audio_state_1(void)
 	  status = ioctl(fd, SNDCTL_SEQ_NRMIDIS, &numdevs);
 	  if (status == -1) 
 	    {
-	      close(fd); fd=-1;
+	      close(fd); fd = -1;
 	      pprint("no midi");
 	    }
 	  else
@@ -3275,7 +3266,7 @@ MIXER_INFO:
     }
 
 AUDIO_INFO:
-  if (fd != -1) {linux_audio_close(fd); fd=-1;}
+  if (fd != -1) {linux_audio_close(fd); fd = -1;}
   mus_snprintf(dsp_name, LABEL_BUFFER_SIZE, "%s%d", DAC_NAME, dsp_num);
   fd = linux_audio_open(dsp_name, O_RDWR, 0, 0);
   if ((fd == -1) && (dsp_num == 0)) fd = linux_audio_open(DAC_NAME, O_WRONLY, 0, 0);
@@ -5082,7 +5073,7 @@ int mus_audio_write(int line, char *buf, int bytes)
   for (i = 0; i < bytes; i += 2)
     {
       tmp = buf[i + 1];
-      buf[i+1] = buf[i];
+      buf[i + 1] = buf[i];
       buf[i] = tmp;
     }
 #endif
@@ -5647,7 +5638,7 @@ int mus_audio_read(int line, char *buf, int bytes)
 	  if ((total+bytes_available) > bytes) bytes_available = bytes-total;
 	  bytes_read = read(line, curbuf, bytes_available);
 	  total += bytes_read;
-	  curbuf = (char *)(buf+total);
+	  curbuf = (char *)(buf + total);
 	}
     }
   return(MUS_NO_ERROR);
@@ -7379,7 +7370,7 @@ int mus_audio_mixer_read(int ur_dev, int field, int chan, float *val)
 {
   struct audio_describe desc;
   struct audio_gain gain;
-  int audio_fd=-1, srate, g, maxa, mina, dev, err = MUS_NO_ERROR;
+  int audio_fd = -1, srate, g, maxa, mina, dev, err = MUS_NO_ERROR;
   dev = MUS_AUDIO_DEVICE(ur_dev);
   if (field == MUS_AUDIO_PORT)
     {
@@ -9211,15 +9202,15 @@ int mus_audio_open_output(int dev, int srate, int chans, int format, int size)
     {
       buf[i] = (char*)malloc(BUFSIZE);
       memset(buf[i], 0, BUFSIZE);
-      pl[i+1].operation = (ULONG)DATA_OPERATION;
-      pl[i+1].operand1 = (ULONG)buf[i];
-      pl[i+1].operand2 = BUFSIZE/2;
-      pl[i+1].operand3 = 0;
+      pl[i + 1].operation = (ULONG)DATA_OPERATION;
+      pl[i + 1].operand1 = (ULONG)buf[i];
+      pl[i + 1].operand2 = BUFSIZE / 2;
+      pl[i + 1].operand3 = 0;
     }
-  pl[BUFNUM+1].operation = (ULONG)BRANCH_OPERATION;
-  pl[BUFNUM+1].operand1 = 0;
-  pl[BUFNUM+1].operand2 = 1;
-  pl[BUFNUM+1].operand3 = 0;
+  pl[BUFNUM + 1].operation = (ULONG)BRANCH_OPERATION;
+  pl[BUFNUM + 1].operand1 = 0;
+  pl[BUFNUM + 1].operand2 = 1;
+  pl[BUFNUM + 1].operand3 = 0;
   mop.pszDeviceType = (PSZ)MCI_DEVTYPE_WAVEFORM_AUDIO_NAME;
   mop.pszElementName = (PSZ)&pl;
   rc = mciSendCommand(0, MCI_OPEN, MCI_WAIT | MCI_OPEN_PLAYLIST, (PVOID)&mop, 0);

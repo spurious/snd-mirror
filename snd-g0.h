@@ -32,8 +32,6 @@
 #define NOT_ACTIVATABLE 0
 #define CLOSED_CTRLS_HEIGHT 0
 
-#define NUM_GLASSES 15
-#define NUM_BOMBS 15
 #define NUM_COLORMAPS 16
 
 #define BACKGROUND_TYPE gint
@@ -137,7 +135,7 @@ typedef struct {
   GtkWidget **dialogs;
   int graph_is_active;
   
-  GdkCursor *arrow_cursor, *wait_cursor, *mix_cursor, *graph_cursor;
+  GdkCursor *arrow_cursor, *wait_cursor, *graph_cursor;
 } state_context;
 
 typedef struct {
@@ -146,17 +144,6 @@ typedef struct {
   int lastpj;
   GdkColor *color;
 } mix_context;
-
-typedef struct {
-  SG_PIXMAP *off_label;
-  SG_PIXMAP *on_label;
-  SG_PIXMAP *clip_label;
-  SG_BITMAP *off_label_mask;
-  SG_BITMAP *on_label_mask;
-  SG_BITMAP *clip_label_mask;
-  SG_FONT *label_font;
-  Float size;
-} vu_label;
 
 #define WITHOUT_PANED_WINDOW 0
 #define WITH_PANED_WINDOW 1

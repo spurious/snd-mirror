@@ -206,7 +206,7 @@ void set_transform_graph_type(snd_state *ss, int val);
 
 /* -------- snd-gdrop.c -------- */
 
-void initialize_drop(snd_state *ss);
+void add_drop(snd_state *ss, GtkWidget *w);
 
 void g_init_gxdrop(void);
 

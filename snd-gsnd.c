@@ -74,6 +74,9 @@ static GtkWidget *w_snd_name_pix(snd_info *sp) {if ((sp) && (sp->sgx)) return((s
 
 /* -------- PIXMAPS -------- */
 
+#define NUM_GLASSES 15
+#define NUM_BOMBS 15
+
 static SG_PIXMAP *mini_lock, *speed_r, *speed_l, *blank;
 static int mini_lock_allocated = 0;
 static SG_PIXMAP *mini_bombs[NUM_BOMBS];
@@ -1998,7 +2001,7 @@ void progress_report(snd_info *sp, const char *funcname, int curchan, int chans,
 {
   int which;
   which = (int)(pct * NUM_GLASSES);
-  if (which >= NUM_GLASSES) which = NUM_GLASSES-1;
+  if (which >= NUM_GLASSES) which = NUM_GLASSES - 1;
   if (which < 0) which = 0;
   if (from_enved)
     display_enved_progress(NULL, mini_glasses[which], glass_mask);

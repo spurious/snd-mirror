@@ -22551,6 +22551,15 @@ EDITS: 5
 		  (IF (not (XmTabList? tabl)) (snd-display ";XmStringTableProposeTabList: ~A" tabl))
 		  (XmTabListFree tabl)))
 
+	      (let ((hname (host-name))) ; from snd-motif.scm
+		(IF (and (not (string=? hname "vulch"))
+			 (not (string=? hname "goggle")))
+		    (snd-display ";host name appears to be ~A" hname)))
+	      (let ((blu (x->snd-color "blue")))
+		(IF (not (Pixel? blu)) (snd-display ";x->snd-color can't find blue! ~A" blu))
+		(IF (not (equal? (color->list blu) (list 0.0 0.0 1.0)))
+		    (snd-display ";x->snd-color blue: ~A" (list->color blu))))
+
 	      (let* ((tmp (XmStringCreateLocalized "h"))
 		     (pm (XmParseMappingCreate (list XmNincludeStatus XmINSERT
 						      XmNsubstitute    tmp

@@ -1,6 +1,7 @@
 #include "snd.h"
 
 /* SOMEDAY: transfer protocol for sound data
+ * TODO: perhaps drop-hook should take 3 args: filename snd chn (snd=#f if menubar)
  */
 
 static Atom FILE_NAME; /* Sun uses this, SGI uses STRING */
@@ -71,7 +72,7 @@ static void massage_selection(Widget w, XtPointer context, Atom *selection, Atom
     }
 }
 
-void handle_drop(Widget w, XtPointer context, XtPointer info) 
+static void handle_drop(Widget w, XtPointer context, XtPointer info) 
 {
   /* this is called (see initialize_drop) when a drop occurs */
   XmDropProcCallbackStruct *cb = (XmDropProcCallbackStruct *)info;
@@ -121,9 +122,8 @@ void handle_drop(Widget w, XtPointer context, XtPointer info)
   XmDropTransferStart(cb->dragContext, args, n);
 }
 
-void initialize_drop(snd_state *ss)
+void add_drop(snd_state *ss, Widget w)
 {
-  /* called via startup func */
   int n;
   Atom targets[2];
   Arg args[12];
@@ -135,13 +135,13 @@ void initialize_drop(snd_state *ss)
   XtSetArg(args[n], XmNimportTargets, targets); n++;
   XtSetArg(args[n], XmNnumImportTargets, 2); n++;
   XtSetArg(args[n], XmNdropProc, handle_drop); n++;
-  XmDropSiteRegister(get_menubar(), args, n); /* won't accept main-shell here, or main-pane! */
+  XmDropSiteRegister(w, args, n);
 }
 
 void g_init_gxdrop(void)
 {
   #define H_drop_hook S_drop_hook " (filename) is called whenever Snd receives a drag-and-drop \
-event. If the returns #t, the file is not opened by Snd."
+event. If the returns #t, the file is not opened or mixed by Snd."
 
   XEN_DEFINE_HOOK(drop_hook, S_drop_hook, 1, H_drop_hook); /* arg = filename */
 }

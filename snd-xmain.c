@@ -388,7 +388,7 @@ static BACKGROUND_TYPE startup_funcs(XtPointer context)
       create_popup_menu(ss);
 #ifndef SND_AS_WIDGET
 #ifndef __alpha__
-      initialize_drop(ss);
+      add_drop(ss, get_menubar());
 #endif
 #endif
 #ifndef SND_AS_WIDGET
@@ -406,7 +406,6 @@ static BACKGROUND_TYPE startup_funcs(XtPointer context)
       XtAddEventHandler(tm->shell, StructureNotifyMask, FALSE, minify_maxify_window, (XtPointer)ss);
 #endif
       (ss->sgx)->graph_cursor = XCreateFontCursor(XtDisplay(MAIN_SHELL(ss)), in_graph_cursor(ss));
-      (ss->sgx)->mix_cursor = XCreateFontCursor(XtDisplay(MAIN_SHELL(ss)), XC_left_ptr);
       (ss->sgx)->wait_cursor = XCreateFontCursor(XtDisplay(MAIN_SHELL(ss)), XC_watch);
       break;
     case 1:
