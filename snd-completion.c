@@ -107,7 +107,7 @@ S_vct2sound_data
 static int sndlib_num_commands(void) {return(NUM_SNDLIB_NAMES);}
 static const char **sndlib_commands(void) {return(sndlib_names);}
 
-#define NUM_COMMANDS 543
+#define NUM_COMMANDS 542
 
 static char *snd_commands[NUM_COMMANDS] ={
   S_abort, S_add_mark, S_add_player, S_add_sound_file_extension, 
@@ -133,7 +133,7 @@ static char *snd_commands[NUM_COMMANDS] ={
   S_cursor_follows_play, S_cursor_in_middle, S_cursor_in_view, S_cursor_line, S_cursor_no_action,
   S_cursor_on_left, S_cursor_on_right, S_cursor_style, S_cursor_update_display, 
 
-  S_dac_folding, S_dac_size, S_data_clipped, S_data_color, S_data_format, S_data_location,
+  S_dac_combines_channels, S_dac_size, S_data_clipped, S_data_color, S_data_format, S_data_location,
   S_default_output_chans, S_default_output_format, S_default_output_srate, S_default_output_type,
   S_define_envelope, S_delete_mark, S_delete_marks, S_delete_region, S_delete_sample, S_delete_samples, S_delete_selection,
   S_dismiss_all_dialogs, S_display_edits, S_dont_normalize, S_dot_size, S_during_open_hook,
@@ -237,7 +237,7 @@ static char *snd_commands[NUM_COMMANDS] ={
   S_transform_dialog, S_transform_sample, S_transform_samples, S_transform_samples2vct, 
   S_transform_size, S_transform_type, S_trap_segfault,
 
-  S_unbind_key, S_undo, S_undo_hook, S_uniting, S_update_fft, S_update_graph, S_update_lisp_graph, 
+  S_unbind_key, S_undo, S_undo_hook, S_update_fft, S_update_graph, S_update_lisp_graph, 
   S_update_sound, S_use_sinc_interp,
 
   S_vct2list, S_vct2samples, S_vct2sound_file, S_vct_addB, S_vct_copy, S_vct_doB, S_vct_fillB, S_vct_length, S_vct_mapB, S_vct_moveB,
@@ -547,7 +547,6 @@ char *info_completer(char *text)
   sp = selected_sound(get_global_state());
   if (sp)
     {
-      if (sp->evaling) return(copy_string(text));        /* C-x C-x so nothing useful for completion to work on */
       if (sp->searching) return(copy_string(text));      /* C-s or C-r so as above */
       if ((sp->marking) || (sp->finding_mark)) return(copy_string(text)); /* C-x C-m etc */
       if (sp->printing) return(copy_string(text));       /* C-x C-d so anything is possible */

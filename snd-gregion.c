@@ -423,7 +423,6 @@ static void make_region_dialog(snd_state *ss)
       reg_sp->sx_scroll_max = 100;
       reg_sp->hdr = (file_info *)CALLOC(1, sizeof(file_info));
       reg_sp->search_proc = SCM_UNDEFINED;
-      reg_sp->eval_proc = SCM_UNDEFINED;
       reg_sp->prompt_callback = SCM_UNDEFINED;
       hdr = reg_sp->hdr;
       hdr->samples = region_len(0);

@@ -87,7 +87,7 @@ static mix_context *set_mix_info_context(chan_info *cp)
 {
   snd_info *sp;
   sp = cp->sound;
-  if (sp->combining != CHANNELS_SEPARATE) cp = sp->chans[0];
+  if (sp->channel_style != CHANNELS_SEPARATE) cp = sp->chans[0];
   return(make_mix_context(cp));
 }
 
@@ -2363,7 +2363,7 @@ void display_channel_mixes(chan_info *cp)
   console_state *cs;
   axis_info *ap;
   int lo, hi, spot, i, xspot, turnover, y, combined, hgt;
-  combined = (((snd_info *)(cp->sound))->combining != CHANNELS_SEPARATE);
+  combined = (((snd_info *)(cp->sound))->channel_style != CHANNELS_SEPARATE);
   ap = cp->axis;
   ss = cp->state;
   lo = ap->losamp;

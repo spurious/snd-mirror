@@ -1295,7 +1295,7 @@ static void start_dac(snd_state *ss, int srate, int channels, int background)
   dac_info *dp;
   int i;
   /* look for channel folding cases etc */
-  /* channels = how many output audio chans we have; dac_folding sets whether to wrap or muffle chans outside this limit */
+  /* channels = how many output audio chans we have; dac_combines_channels sets whether to wrap or muffle chans outside this limit */
   for (i = 0; i <= max_active_slot; i++)
     {
       dp = play_list[i];
@@ -1308,7 +1308,7 @@ static void start_dac(snd_state *ss, int srate, int channels, int background)
 	    global_rev = (void *)make_reverb(dp->sp, channels);
           if (dp->audio_chan >= channels)                 /* if dac_running, the number of channels has already been set and won't change */
 	    {
-	      if (dac_folding(ss))
+	      if (dac_combines_channels(ss))
 		dp->audio_chan %= channels;
 	      else stop_playing(dp);
 	    }
@@ -2145,7 +2145,7 @@ static int start_audio_output_1 (dac_state *dacp)
       /* see if we have to fold channels */
       if (alloc_chans < dacp->channels) 
 	{
-	  if (dac_folding(ss)) 
+	  if (dac_combines_channels(ss)) 
 	    snd_warning("folding %d chans into %d ", 
 			dacp->channels, alloc_chans);
 	  dacp->channels = alloc_chans;
@@ -2264,7 +2264,7 @@ static int start_audio_output_1 (dac_state *dacp)
   #endif
       if (oss_available_chans < dacp->channels) 
 	{
-	  if (dac_folding(ss)) 
+	  if (dac_combines_channels(ss)) 
 	    snd_warning("folding %d chans into %d ", 
 			dacp->channels, oss_available_chans);
 	  dacp->channels = oss_available_chans;
@@ -2316,7 +2316,7 @@ static int start_audio_output_1 (dac_state *dacp)
   dacp->out_format = MUS_COMPATIBLE_FORMAT;
   if (available_chans < dacp->channels) 
     {
-      if (dac_folding(ss)) 
+      if (dac_combines_channels(ss)) 
 	snd_warning("folding %d chans into %d ", 
 		    dacp->channels, available_chans);
       dacp->channels = available_chans;
@@ -2365,7 +2365,7 @@ static int start_audio_output (dac_state *dacp)
 
 	      if (dp->audio_chan >= dacp->channels)
 		{
-		  if (dac_folding(dacp->ss))
+		  if (dac_combines_channels(dacp->ss))
 		    dp->audio_chan %= dacp->channels;
 		  else stop_playing(dp);
 		}
@@ -2745,11 +2745,22 @@ static SCM g_player_home(SCM snd_chn)
 {
   #define H_player_home "(" S_player_home " player) returns a list of the sound index and channel number associated with player"
   int index;
+  chan_info *cp;
   ASSERT_TYPE(INTEGER_P(snd_chn), snd_chn, SCM_ARG1, S_player_home, "an integer");
   index = -TO_SMALL_C_INT(snd_chn);
-  if ((index > 0) && (index < players_size) && (players[index]))
-    return(SCM_LIST2(TO_SMALL_SCM_INT(players[index]->index),
-		     TO_SMALL_SCM_INT(player_chans[index])));
+  if ((index > 0) && 
+      (index < players_size) && 
+      (players[index]) &&
+      (players[index]->chans) &&
+      (player_chans[index] < players[index]->nchans))
+    {
+      cp = players[index]->chans[player_chans[index]]; /* trying to get back to the original sound index (not the player index) */
+      if ((cp->sound) && (cp->sound->active))
+	return(SCM_LIST2(TO_SMALL_SCM_INT(cp->sound->index),
+			 TO_SMALL_SCM_INT(cp->chan)));
+      else return(SCM_LIST2(NO_SUCH_SOUND,
+			    TO_SMALL_SCM_INT(cp->chan)));
+    }
   return(snd_no_such_player_error(S_player_home, snd_chn));
 }
 

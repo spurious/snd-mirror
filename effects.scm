@@ -394,10 +394,11 @@
 (define selctr 0)
 
 (define (selection->new)
-  (let ((new-file-name (format #f "sel-~D.snd" selctr)))
-    (set! selctr (+ selctr 1))
-    (save-selection new-file-name)
-    (open-sound new-file-name)))
+  (if (selection?)
+      (let ((new-file-name (format #f "sel-~D.snd" selctr)))
+	(set! selctr (+ selctr 1))
+	(save-selection new-file-name)
+	(open-sound new-file-name))))
 
 (add-to-menu effects-menu "selection->new" selection->new)
 
@@ -405,11 +406,12 @@
 ;;; -------- cut selection -> new file
 
 (define (cut-selection->new)
-  (let ((new-file-name (format #f "sel-~D.snd" selctr)))
-    (set! selctr (+ selctr 1))
-    (save-selection new-file-name)
-    (delete-selection)
-    (open-sound new-file-name)))
+  (if (selection?)
+      (let ((new-file-name (format #f "sel-~D.snd" selctr)))
+	(set! selctr (+ selctr 1))
+	(save-selection new-file-name)
+	(delete-selection)
+	(open-sound new-file-name))))
 
 (add-to-menu effects-menu "cut selection->new" cut-selection->new)
 

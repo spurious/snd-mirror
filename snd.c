@@ -229,7 +229,7 @@ static repv snd_rep_main(repv arg)
   ss->Enved_Exp_p = DEFAULT_ENVED_EXP_P;
   ss->Enved_Target = DEFAULT_ENVED_TARGET;
   ss->Dac_Size = DEFAULT_DAC_SIZE;
-  ss->Dac_Folding = DEFAULT_DAC_FOLDING;
+  ss->Dac_Combines_Channels = DEFAULT_DAC_COMBINES_CHANNELS;
   ss->Corruption_Time = DEFAULT_CORRUPTION_TIME;
   ss->Max_Regions = DEFAULT_MAX_REGIONS;
   ss->Max_Fft_Peaks = DEFAULT_MAX_FFT_PEAKS;

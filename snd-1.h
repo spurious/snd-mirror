@@ -228,10 +228,9 @@ typedef struct snd__info {
   char *shortname;
   int nchans;
   SCM search_proc;
-  SCM eval_proc, prompt_callback;
+  SCM prompt_callback;
   char *search_expr;
-  int searching, marking, evaling, filing, finding_mark, amping, reging, printing, loading, lisp_graphing, macroing, prompting;
-  char *eval_expr;
+  int searching, marking, filing, finding_mark, amping, reging, printing, loading, lisp_graphing, macroing, prompting;
   int minibuffer_on, minibuffer_temp;
   int sx_scroll_max;
   int read_only;
@@ -242,7 +241,7 @@ typedef struct snd__info {
   int env_anew, bomb_ctr;
   time_t write_date;          /* check for change behind back while editing */
   int need_update;            /* current in-core data does not match actual file (someone wrote it behind our back) */
-  int combining;              /* 0:separate panes per chan, 1:all chans in one pane */
+  int channel_style;          /* 0:separate panes per chan, 1:all chans in one pane */
   int allocated_chans;        /* snd_info widget tree is never pruned -- can only grow */
   int cursor_follows_play;
   void *edited_region;
@@ -309,7 +308,7 @@ typedef struct snd__state {
   int Speed_Control_Tones, Sinc_Width, X_Axis_Style, Zoom_Focus_Style, Graph_Style;
   int Auto_Resize, Auto_Update, Max_Regions, Max_Fft_Peaks;
   int Audio_Output_Device, Audio_Input_Device, Show_Backtrace;
-  int Print_Length, Dac_Size, Dac_Folding, Previous_Files_Sort, Show_Selection_Transform, With_Mix_Tags, Selection_Creates_Region;
+  int Print_Length, Dac_Size, Dac_Combines_Channels, Previous_Files_Sort, Show_Selection_Transform, With_Mix_Tags, Selection_Creates_Region;
   char *Save_State_File, *Listener_Prompt;
   Float Enved_Base, Enved_Power, Corruption_Time;
   int Enved_Clip_p, Enved_Exp_p, Enved_Target, Enved_Wave_p, Enved_in_dB, Graphs_Horizontal;
@@ -372,6 +371,7 @@ void file_buffers_back(int ind0, int ind1, int indx, snd_fd *sf, snd_data *cur_s
 MUS_SAMPLE_TYPE snd_file_read_sample(snd_data *ur_sd, int index, chan_info *cp);
 int file_state_buffer_size(int *datai);
 int *make_zero_file_state(int size);
+char *snd_remove_with_error(const char *name);
 int snd_remove(const char *name);
 
 
@@ -955,7 +955,7 @@ void in_set_fft_window(snd_state *ss, int val);
 void combine_sound(snd_info *sp);
 void separate_sound(snd_info *sp);
 void superimpose_sound(snd_info *sp);
-void combineb(snd_info *sp, int val);
+void set_sound_channel_style(snd_info *sp, int val);
 void set_chan_fft_in_progress(chan_info *cp, BACKGROUND_FUNCTION_TYPE fp);
 void goto_graph(chan_info *cp);
 void start_amp_env(chan_info *cp);
@@ -1275,7 +1275,6 @@ snd_state *get_global_state(void);
 
 /* -------- snd-kbd.c -------- */
 
-void save_user_key_bindings(FILE *fd);
 void save_macro_state(FILE *fd);
 
 #ifdef __GNUC__
@@ -1297,7 +1296,6 @@ void g_init_kbd(SCM local_doc);
 
 /* -------- snd-sig.c -------- */
 
-void eval_expression(chan_info *cp, snd_info *sp, int count, int regexpr);
 void scale_by(chan_info *cp, Float *scalers, int len, int selection);
 void scale_to(snd_state *ss, snd_info *sp, chan_info *cp, Float *scalers, int len, int selection);
 Float get_maxamp(snd_info *sp, chan_info *cp, int edpos);

@@ -301,7 +301,7 @@ static void Channel_Expose_Callback(GtkWidget *w, GdkEventExpose *ev, gpointer d
     return;
     
   sp = cp->sound;
-  if (sp->combining != CHANNELS_SEPARATE)
+  if (sp->channel_style != CHANNELS_SEPARATE)
     map_over_sound_chans(sp, update_graph, NULL);
   else update_graph(cp, NULL);
 
@@ -316,7 +316,7 @@ static void Channel_Resize_Callback(GtkWidget *w, GdkEventConfigure *ev, gpointe
   if ((cp == NULL) || (cp->active != 1) || (cp->sound == NULL)) return;
   sp = cp->sound;
   if (sp == NULL) return;
-  if (sp->combining != CHANNELS_SEPARATE)
+  if (sp->channel_style != CHANNELS_SEPARATE)
     map_over_sound_chans(sp, update_graph, NULL);
   else update_graph(cp, NULL);
 }
@@ -760,10 +760,10 @@ void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, in
 
     }
   else recolor_graph(cp, FALSE); /* in case selection color left over from previous use */
-  if ((sp->combining != CHANNELS_COMBINED) || (channel == 0))
+  if ((sp->channel_style != CHANNELS_COMBINED) || (channel == 0))
     gtk_widget_show_all(cw[W_main_window]);
 
-  if ((need_extra_scrollbars) && (sp->combining == CHANNELS_SEPARATE)) 
+  if ((need_extra_scrollbars) && (sp->channel_style == CHANNELS_SEPARATE)) 
     hide_gz_scrollbars(sp); /* default is on in this case */  
 
   cax = cx->ax;
@@ -832,7 +832,7 @@ GdkGC *erase_GC(chan_info *cp)
   sp = cp->sound;
   sx = (cp->state)->sgx;
   if (((cp->cgx)->selected) ||
-      ((sp) && (sp->combining == CHANNELS_SUPERIMPOSED) && (sp->index == ss->selected_sound)))
+      ((sp) && (sp->channel_style == CHANNELS_SUPERIMPOSED) && (sp->index == ss->selected_sound)))
     return(sx->selected_erase_gc);
   return(sx->erase_gc);
 }
@@ -871,10 +871,10 @@ void change_channel_style(snd_info *sp, int new_style)
   if ((sp) && (sp->nchans > 1))
     {
       ss = sp->state;
-      old_style = sp->combining;
+      old_style = sp->channel_style;
       if (new_style != old_style)
 	{
-	  sp->combining = new_style;
+	  sp->channel_style = new_style;
 	  if (old_style == CHANNELS_COMBINED)
 	    hide_gz_scrollbars(sp);
 	  else 

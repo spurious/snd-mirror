@@ -427,11 +427,11 @@ static char *snd_print_or_error(snd_state *ss, char *output)
 	  {
 	    sp = (si->cps[i])->sound;
 	    if (sp == NULL) break;
-	    if (sp->combining == CHANNELS_COMBINED)
+	    if (sp->channel_style == CHANNELS_COMBINED)
 	      for (j = i + 1; (j < i + sp->nchans) && (j < si->chans); j++) 
 		offsets[j] = offsets[i];
 	    else
-	      if (sp->combining == CHANNELS_SUPERIMPOSED)
+	      if (sp->channel_style == CHANNELS_SUPERIMPOSED)
 		for (j = i; (j < i + sp->nchans - 1) && (j < si->chans); j++) 
 		  offsets[j] = offsets[i + sp->nchans - 1];
 	    i += sp->nchans;

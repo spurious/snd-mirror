@@ -228,7 +228,7 @@ static void save_snd_state_options (snd_state *ss, FILE *fd)
   if (color_inverted(ss) != DEFAULT_COLOR_INVERTED) pss_ss(fd, S_color_inverted, b2s(color_inverted(ss)));
   if (zero_pad(ss) != DEFAULT_ZERO_PAD) pss_sd(fd, S_zero_pad, zero_pad(ss));
   if (ask_before_overwrite(ss) != DEFAULT_ASK_BEFORE_OVERWRITE) pss_ss(fd, S_ask_before_overwrite, b2s(ask_before_overwrite(ss)));
-  if (dac_folding(ss) != DEFAULT_DAC_FOLDING) pss_ss(fd, S_dac_folding, b2s(dac_folding(ss)));
+  if (dac_combines_channels(ss) != DEFAULT_DAC_COMBINES_CHANNELS) pss_ss(fd, S_dac_combines_channels, b2s(dac_combines_channels(ss)));
   if (wavo(ss) != DEFAULT_WAVO) pss_ss(fd, S_wavo, b2s(wavo(ss)));
   if (wavo_hop(ss) != DEFAULT_WAVO_HOP) pss_sd(fd, S_wavo_hop, wavo_hop(ss));
   if (wavo_trace(ss) != DEFAULT_WAVO_TRACE) pss_sd(fd, S_wavo_trace, wavo_trace(ss));
@@ -499,7 +499,6 @@ static char *save_state_or_error (snd_state *ss, char *save_state_name)
        *   and hooks might be viewed as temporary to begin with. If the function source is long,
        *   some sort of pretty-printer is really needed, but I couldn't get slib's to work.
        */
-      save_user_key_bindings(save_fd);
 
       if (locale)
 	{

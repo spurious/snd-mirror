@@ -290,9 +290,9 @@ enum {COLOR_POSITION, COLOR_ZOOM};
   #define DEFAULT_DAC_SIZE 1024
 #endif
 
-#define dac_folding(ss) ss->Dac_Folding
-#define set_dac_folding(ss, a) ss->Dac_Folding = a
-#define DEFAULT_DAC_FOLDING TRUE
+#define dac_combines_channels(ss) ss->Dac_Combines_Channels
+#define set_dac_combines_channels(ss, a) ss->Dac_Combines_Channels = a
+#define DEFAULT_DAC_COMBINES_CHANNELS TRUE
 
 #define max_regions(ss) ss->Max_Regions
 #define in_set_max_regions(ss, a) ss->Max_Regions = a

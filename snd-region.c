@@ -211,7 +211,6 @@ static void make_region_readable(region *r, snd_state *ss)
   regsp->chans = (chan_info **)CALLOC(r->chans, sizeof(chan_info *));
   regsp->hdr = (file_info *)CALLOC(1, sizeof(file_info));
   regsp->search_proc = SCM_UNDEFINED;
-  regsp->eval_proc = SCM_UNDEFINED;
   regsp->prompt_callback = SCM_UNDEFINED;
   hdr = regsp->hdr;
   hdr->samples = r->frames * r->chans;

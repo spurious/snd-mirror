@@ -1530,7 +1530,9 @@ static int display_snd_fft(fft_state *fs)
 
       data_max = 0.0;
       if ((cp->normalize_fft == NORMALIZE_BY_SOUND) ||
-	  ((cp->normalize_fft == DONT_NORMALIZE) && (sp->nchans > 1) && (sp->combining == CHANNELS_SUPERIMPOSED)))
+	  ((cp->normalize_fft == DONT_NORMALIZE) && 
+	   (sp->nchans > 1) && 
+	   (sp->channel_style == CHANNELS_SUPERIMPOSED)))
 	{
 	  for (j = 0; j < sp->nchans; j++)
 	    {

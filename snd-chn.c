@@ -123,7 +123,7 @@ void combine_sound(snd_info *sp) {change_channel_style(sp, CHANNELS_COMBINED);}
 void superimpose_sound(snd_info *sp) {change_channel_style(sp, CHANNELS_SUPERIMPOSED);}
 void separate_sound(snd_info *sp) {change_channel_style(sp, CHANNELS_SEPARATE);}
 
-void combineb(snd_info *sp, int val)
+void set_sound_channel_style(snd_info *sp, int val)
 {
   switch (val)
     {
@@ -215,7 +215,7 @@ chan_info *virtual_selected_channel(chan_info *cp)
 {
   snd_info *sp;
   sp = cp->sound;
-  if ((sp->combining == CHANNELS_SEPARATE) || (sp->selected_channel == NO_SELECTION)) 
+  if ((sp->channel_style == CHANNELS_SEPARATE) || (sp->selected_channel == NO_SELECTION)) 
     return(cp);
   else return(sp->chans[sp->selected_channel]);
 }
@@ -488,7 +488,7 @@ void apply_y_axis_change (axis_info *ap, chan_info *cp)
   set_y_bounds(ap);
   update_graph(cp, NULL);
   sp = cp->sound;
-  if (sp->combining != CHANNELS_SEPARATE)
+  if (sp->channel_style != CHANNELS_SEPARATE)
     {
       sy = ap->sy;
       zy = ap->zy;
@@ -619,7 +619,7 @@ void apply_x_axis_change(axis_info *ap, chan_info *cp, snd_info *sp)
     }
   else 
     {
-      if (sp->combining != CHANNELS_SEPARATE)
+      if (sp->channel_style != CHANNELS_SEPARATE)
 	for (i = 1; i < sp->nchans; i++)
 	  update_xs(sp->chans[i], ap);
     }
@@ -954,7 +954,7 @@ int make_graph(chan_info *cp, snd_info *sp, snd_state *ss)
   if (cp->printing) ps_allocate_grf_points();
   if (sp)
     {
-      if (sp->combining == CHANNELS_SUPERIMPOSED) 
+      if (sp->channel_style == CHANNELS_SUPERIMPOSED) 
 	{
 	  ax = combined_context(cp); 
 	  if (cp->printing) ps_recolor(cp);
@@ -1048,7 +1048,7 @@ int make_graph(chan_info *cp, snd_info *sp, snd_state *ss)
 	}
     }
   if (sf) {free_snd_fd(sf); sf = NULL;}
-  if ((sp) && (sp->combining == CHANNELS_SUPERIMPOSED))
+  if ((sp) && (sp->channel_style == CHANNELS_SUPERIMPOSED))
     {
       copy_context(cp); /* reset for axes etc */
       if (cp->printing)
@@ -1400,7 +1400,7 @@ static void make_fft_graph(chan_info *cp, snd_info *sp, snd_state *ss)
   allocate_grf_points();
   if (cp->printing) ps_allocate_grf_points();
   samples_per_pixel = (Float)(hisamp - losamp) / (Float)(fap->x_axis_x1 - fap->x_axis_x0);
-  if (sp->combining == CHANNELS_SUPERIMPOSED) 
+  if (sp->channel_style == CHANNELS_SUPERIMPOSED) 
     {
       ax = combined_context(cp); 
       if (cp->printing) ps_recolor(cp);
@@ -1539,7 +1539,7 @@ static void make_fft_graph(chan_info *cp, snd_info *sp, snd_state *ss)
       if (cp->printing) 
 	ps_draw_grf_points(cp, fap, j, 0.0, FFT_GRAPH_STYLE(cp));
     }
-  if (sp->combining == CHANNELS_SUPERIMPOSED) 
+  if (sp->channel_style == CHANNELS_SUPERIMPOSED) 
     {
       copy_context(cp); /* reset for axes etc */
       if (cp->printing) ps_reset_color(cp);
@@ -2106,7 +2106,7 @@ static void make_lisp_graph(chan_info *cp, snd_info *sp, snd_state *ss)
   if ((!uap) || (!uap->graph_active) || (up->len == NULL) || (up->len[0] <= 0)) return;
   allocate_grf_points();
   if (cp->printing) ps_allocate_grf_points();
-  if (sp->combining == CHANNELS_SUPERIMPOSED) 
+  if (sp->channel_style == CHANNELS_SUPERIMPOSED) 
     {
       ax = combined_context(cp); 
       if (cp->printing) ps_recolor(cp);
@@ -2209,7 +2209,7 @@ static void make_lisp_graph(chan_info *cp, snd_info *sp, snd_state *ss)
 	    }
 	}
       if (up->graphs > 1) set_foreground_color(cp, ax, old_color);
-      if (sp->combining == CHANNELS_SUPERIMPOSED) 
+      if (sp->channel_style == CHANNELS_SUPERIMPOSED) 
 	{
 	  copy_context(cp); /* reset for axes etc */
 	  if (cp->printing) ps_reset_color(cp);
@@ -2378,7 +2378,7 @@ static void display_channel_data_with_size (chan_info *cp, snd_info *sp, snd_sta
 	    }
 	  make_axes(cp, ap,
 		    x_axis_style(ss),
-		    ((cp->chan == 0) || (sp->combining != CHANNELS_SUPERIMPOSED)));
+		    ((cp->chan == 0) || (sp->channel_style != CHANNELS_SUPERIMPOSED)));
   
 	  cp->cursor_visible = 0;
 	  cp->selection_visible = 0;
@@ -2398,7 +2398,7 @@ static void display_channel_data_with_size (chan_info *cp, snd_info *sp, snd_sta
 	  make_axes(cp, fap,
 		    (x_axis_style(ss) == X_IN_SAMPLES) ? X_IN_SECONDS : (x_axis_style(ss)),
 #if USE_MOTIF
-		    ((cp->chan == sp->nchans-1) || (sp->combining != CHANNELS_SUPERIMPOSED)));
+		    ((cp->chan == sp->nchans-1) || (sp->channel_style != CHANNELS_SUPERIMPOSED)));
 	            /* Xt documentation says the most recently added work proc runs first, but we're
 		     *   adding fft work procs in channel order, normally, so the channel background
 		     *   clear for the superimposed case needs to happen on the highest-numbered 
@@ -2406,7 +2406,7 @@ static void display_channel_data_with_size (chan_info *cp, snd_info *sp, snd_sta
 		     *   selected background, if any of the current sound's channels is selected.
 		     */
 #else
-		    ((cp->chan == 0) || (sp->combining != CHANNELS_SUPERIMPOSED)));
+		    ((cp->chan == 0) || (sp->channel_style != CHANNELS_SUPERIMPOSED)));
                     /* In Gtk+ (apparently) the first proc added is run, not the most recent */
 #endif
 
@@ -2447,7 +2447,7 @@ static void display_channel_data_with_size (chan_info *cp, snd_info *sp, snd_sta
 	  /* if these were changed in the hook function, the old fields should have been saved across the change (g_graph in snd-scm.c) */
 	  make_axes(cp, uap, /* this file l 2229 */
 		    X_IN_LENGTH,
-		    ((cp->chan == 0) || (sp->combining != CHANNELS_SUPERIMPOSED)));
+		    ((cp->chan == 0) || (sp->channel_style != CHANNELS_SUPERIMPOSED)));
 
 	  make_lisp_graph(cp, sp, ss);
 	}
@@ -2461,7 +2461,7 @@ static void display_channel_data_with_size (chan_info *cp, snd_info *sp, snd_sta
 	      if (cp->show_y_zero) display_zero(cp);
 	      if ((cp->mixes)) display_channel_mixes(cp);
 	    }
-	  if ((sp->combining != CHANNELS_SUPERIMPOSED) && (height > 10))
+	  if ((sp->channel_style != CHANNELS_SUPERIMPOSED) && (height > 10))
 	    display_channel_id(cp, height + offset, sp->nchans);
 	  if ((cp->hookable) &&
 	      (HOOKED(after_graph_hook)))
@@ -2479,7 +2479,7 @@ static void display_channel_data_1 (chan_info *cp, snd_info *sp, snd_state *ss, 
   int width, height, offset, full_height, chan_height, y0, y1, bottom, top;
   Float val, size;
   axis_info *ap;
-  if ((sp->combining == CHANNELS_SEPARATE) || (sp->nchans == 1))
+  if ((sp->channel_style == CHANNELS_SEPARATE) || (sp->nchans == 1))
     {
       width = widget_width(channel_graph(cp));
       height = widget_height(channel_graph(cp));
@@ -2494,7 +2494,7 @@ static void display_channel_data_1 (chan_info *cp, snd_info *sp, snd_state *ss, 
       width = widget_width(channel_graph(sp->chans[0])) - (2 * ss->position_slider_width);
       height = widget_height(channel_graph(sp->chans[0]));
       cp->height = height;
-      if (sp->combining == CHANNELS_SUPERIMPOSED)
+      if (sp->channel_style == CHANNELS_SUPERIMPOSED)
 	display_channel_data_with_size(cp, sp, ss, width, height, 0, just_fft, just_lisp);
       else
 	{
@@ -2787,7 +2787,7 @@ void goto_graph(chan_info *cp)
   if (cp)
     {
       sp = cp->sound;
-      if ((cp->chan == 0) || (sp->combining == CHANNELS_SEPARATE))
+      if ((cp->chan == 0) || (sp->channel_style == CHANNELS_SEPARATE))
 	goto_window(channel_graph(cp));
       else goto_window(channel_graph(sp->chans[0]));
     }
@@ -2914,7 +2914,7 @@ static void propogate_wf_state(snd_info *sp)
 {
   int i, w, f;
   chan_info *cp;
-  if (sp->combining != CHANNELS_SEPARATE)
+  if (sp->channel_style != CHANNELS_SEPARATE)
     {
       cp = sp->chans[0];
       w = cp->waving;
@@ -2938,7 +2938,7 @@ void f_button_callback(chan_info *cp, int on, int with_control)
   chan_info *ncp;
   cp->ffting = on;
   sp = cp->sound;
-  if (sp->combining != CHANNELS_SEPARATE)
+  if (sp->channel_style != CHANNELS_SEPARATE)
     propogate_wf_state(sp);
   else
     {
@@ -2967,7 +2967,7 @@ void w_button_callback(chan_info *cp, int on, int with_control)
   chan_info *ncp;
   cp->waving = on;
   sp = cp->sound;
-  if (sp->combining != CHANNELS_SEPARATE)
+  if (sp->channel_style != CHANNELS_SEPARATE)
     propogate_wf_state(sp);
   else
     {
@@ -3102,7 +3102,7 @@ void graph_button_press_callback(chan_info *cp, int x, int y, int key_state, int
   snd_info *sp;
   sp = cp->sound;
   /* if combining, figure out which virtual channel the mouse is in */
-  if (sp->combining == CHANNELS_COMBINED) cp = which_channel(sp, y);
+  if (sp->channel_style == CHANNELS_COMBINED) cp = which_channel(sp, y);
   mouse_down_time = time;
   select_channel(sp, cp->chan);
   dragged = 0;
@@ -3150,7 +3150,7 @@ void graph_button_release_callback(chan_info *cp, int x, int y, int key_state, i
   char *str;
   sp = cp->sound;
   ss = cp->state;
-  if (sp->combining == CHANNELS_COMBINED) cp = which_channel(sp, y);
+  if (sp->channel_style == CHANNELS_COMBINED) cp = which_channel(sp, y);
   if (!dragged)
     {
       if (play_mark)
@@ -3314,7 +3314,7 @@ void graph_button_motion_callback(chan_info *cp, int x, int y, TIME_TYPE time, T
   mouse_time = time;
   if ((mouse_time - mouse_down_time) < (click_time / 2)) return;
   sp = cp->sound;
-  if (sp->combining == CHANNELS_COMBINED) cp = which_channel(sp, y);
+  if (sp->channel_style == CHANNELS_COMBINED) cp = which_channel(sp, y);
   select_channel(sp, cp->chan);
   if (mouse_mark)
     {

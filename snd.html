@@ -1168,11 +1168,9 @@ return to this state later via the region browser.
   C-x a       apply amplitude envelope to selection
   <A NAME="cxc">C-x c</a>       define selection from cursor to nth mark
   <A NAME="cxi">C-x i</a>       insert selection
-  <A NAME="cxn">C-x n</a>       re-evaluate expression over selection
   C-x p       play selection or region (numeric arg selects region)
   <A NAME="cxq">C-x q</a>       mix in region
   <A NAME="cxw">C-x w</a>       save selection as file 
-  <A NAME="cxx">C-x x</a>       evaluate expression over selection
 
   C-x l       position selection in mid-view
   C-x v       position window over current selection
@@ -1952,7 +1950,7 @@ all the samples between the cursor and the next mark.</p>
     (max 0 (- (* 1.5 (left-sample)) (* 0.5 (right-sample))))))
 </pre></small></code></td></tr>
 <tr><td>[Right]</td><td>move window right</td><td><code><small>(lambda () (set! (left-sample) (* 0.5 (+ (left-sample) (right-sample)))))</small></code></td></tr>
-<tr><td>[Home]</td><td>update current file from disk</td><td><code><small>(lambda () (update-sound))</small></code></td></tr>
+<tr><td>[Home]</td><td>update current file from disk</td><td><code><small>update-sound</small></code></td></tr>
 <tr><td>[Space]</td><td colspan=2>cancel selection; if playing, pause or continue playback</td></tr>
 <tr><td>&lt;</td><td>move cursor to sample 0</td><td><code><small>(lambda () (set! (cursor) 0))</small></code></td></tr>
 <tr><td>&gt;</td><td>move cursor to last sample</td><td><code><small>(lambda () (set! (cursor) (1- (frames))))</small></code></td></tr>
@@ -1963,7 +1961,7 @@ all the samples between the cursor and the next mark.</p>
 <tr><td>C-d</td><td>delete sample at cursor</td><td><code><small>(lambda (arg) (delete-samples (cursor) arg))</small></code></td></tr>
 <tr><td>C-e</td><td>move cursor to window end</td><td><code><small>(lambda () (set! (cursor) (right-sample)))</small></code></td></tr>
 <tr><td>C-f</td><td>move cursor ahead one sample</td><td><code><small>(lambda (arg) (set! (cursor) (min (1- (frames)) (+ (cursor) arg))))</small></code></td></tr>
-<tr><td>C-g</td><td>abort current command</td><td></td></tr>
+<tr><td>C-g</td><td>abort current command</td><td><code><small>c-g!</small></code></td></tr>
 <tr><td>C-h</td><td>delete previous sample</td><td><code><small>(lambda (arg) (delete-samples (- (cursor) arg) arg))</small></code></td></tr>
 <tr><td>C-i</td><td>display cursor info</td><td><code><small>(lambda () (report-in-minibuffer (format #f "cursor at ~A" (sample (cursor)))))</small></code></td></tr>
 <tr><td>C-j</td><td>go to mark</td><td><code><small>(lambda (arg) (forward-mark arg))</small></code></td></tr>
@@ -1976,10 +1974,10 @@ all the samples between the cursor and the next mark.</p>
 <tr><td>C-q</td><td>play current channel(s) starting at cursor</td><td><code><small>(lambda () (play (cursor) (selected-sound) (selected-channel)))</small></code></td></tr>
 <tr><td>C-r</td><td>search backwards</td><td></td></tr>
 <tr><td>C-s</td><td>search forwards</td><td><code><small>(lambda () (prompt "find:" find))</small></code></td></tr>
-<tr><td>C-t</td><td>stop playing</td><td><code><small>(lambda () (stop-playing))</small></code></td></tr>
+<tr><td>C-t</td><td>stop playing</td><td><code><small>stop-playing</small></code></td></tr>
 <tr><td>C-u</td><td>start numerical argument</td><td></td></tr>
 <tr><td>C-v</td><td>move cursor to mid-window</td><td><code><small>(lambda () (set! (cursor) (* .5 (+ (left-sample) (right-sample)))))</small></code></td></tr>
-<tr><td>C-w</td><td>delete current selection</td><td><code><small>(lambda () (delete-selection))</small></code></td></tr>
+<tr><td>C-w</td><td>delete current selection</td><td><code><small>delete-selection</small></code></td></tr>
 <tr><td>C-x</td><td>start extended command</td><td></td></tr>
 <tr><td>C-y</td><td>paste in region</td><td><code><small>(lambda (arg) (insert-region (cursor) arg))</small></code></td></tr>
 <tr><td>C-z</td><td>set current sample to 0.0</td><td><code><small>(lambda (arg) (set! (samples (cursor) arg) (make-vct arg)))</small></code></td></tr>
@@ -2002,9 +2000,8 @@ all the samples between the cursor and the next mark.</p>
   (prompt "mark:" 
     (lambda (val) (set! (cursor) (mark-sample (find-mark val))))))
 </pre></small></code></td></tr>
-<tr><td>C-x k</td><td>close file</td><td><code><small>(lambda () (close-sound))</small></code></td></tr>
+<tr><td>C-x k</td><td>close file</td><td><code><small>close-sound</small></code></td></tr>
 <tr><td>C-x l</td><td>position selection in mid-view</td><td></td></tr>
-<tr><td>C-x n</td><td>re-evaluate expression over selection</td><td></td></tr>
 <tr><td>C-x o</td><td>move to next or previous graph</td><td><code><small>(lambda (arg) (forward-graph arg))</small></code></td></tr>
 <tr><td>C-x p</td><td>play selection or region n</td><td><code><small>(lambda (arg) (play-region arg)) ;play-selection if no arg</small></code></td></tr>
 <tr><td>C-x q</td><td>mix in region</td><td><code><small>(lambda (arg) (mix-region (cursor) arg)) ;mix-selection if no arg</small></code></td></tr>
@@ -2012,8 +2009,7 @@ all the samples between the cursor and the next mark.</p>
 <tr><td>C-x u</td><td>undo last edit</td><td><code><small>(lambda (arg) (undo arg))</small></code></td></tr>
 <tr><td>C-x v</td><td>position window over current selection</td><td></td></tr>
 <tr><td>C-x w</td><td>save selection as file</td><td><code><small>(lambda (arg) (prompt "file:" save-region)) ;save-selection if no arg</small></code></td></tr>
-<tr><td>C-x x</td><td>evaluate expression over selection</td><td></td></tr>
-<tr><td>C-x <A NAME="cxz">z</a></td><td>smooth selection</td><td><code><small>(lambda () (smooth-selection))</small></code></td></tr>
+<tr><td>C-x <A NAME="cxz">z</a></td><td>smooth selection</td><td><code><small>smooth-selection</small></code></td></tr>
 <tr><td valign=top>C-x /</td><td valign=top>place named mark</td>
 <td><code><small><pre>
 (lambda (arg) 
@@ -2032,7 +2028,7 @@ all the samples between the cursor and the next mark.</p>
 <tr><td>C-x C-c</td><td>hide ("close") controls</td><td><code><small>(lambda () (set! (show-controls) #f))</small></code></td></tr>
 <tr><td>C-x C-d</td><td>print</td><td><code><small>(lambda () (prompt "eps file:" graph-&gt;ps))</small></code></td></tr>
 <tr><td>C-x C-f</td><td>open file</td><td><code><small>(lambda () (prompt "file:" open-sound))</small></code></td></tr>
-<tr><td>C-x C-g</td><td>abort command</td><td></td></tr>
+<tr><td>C-x C-g</td><td>abort command</td><td><code><small>c-g!</small></code></td></tr>
 <tr><td>C-x C-i</td><td>insert file</td><td><code><small>(lambda () (prompt "insert file:" (lambda (val) (insert-sound val (cursor)))))</small></code></td></tr>
 <tr><td>C-x C-j</td><td>go to mix </td><td><code><small>(lambda (arg) (forward-mix arg))</small></code></td></tr>
 <tr><td>C-x <A NAME="cxcl">C-l</a></td><td>load scm file</td><td><code><small>(lambda () (prompt "load:" load))</small></code></td></tr>
@@ -2042,12 +2038,11 @@ all the samples between the cursor and the next mark.</p>
              (lambda (val) 
                (set! (mark-name (add-mark (cursor))) val))))
 </pre></small></code></td></tr>
-<tr><td>C-x C-n</td><td>re-evaluate expression</td><td></td></tr>
 <tr><td>C-x C-o</td><td>show ("open") controls</td><td><code><small>(lambda () (set! (show-controls) #t))</small></code></td></tr>
 <tr><td>C-x C-p</td><td>set window size (via C-u arg)</td><td></td></tr>
 <tr><td>C-x C-q</td><td>mix in file</td><td><code><small>(lambda (arg) (prompt "mix file:" (lambda (val) (mix-sound val (cursor)))))</small></code></td></tr>
 <tr><td>C-x C-r</td><td>redo last undone edit</td><td><code><small>(lambda (arg) (redo arg))</small></code></td></tr>
-<tr><td>C-x C-s</td><td>save file</td><td><code><small>(lambda () (save-sound))</small></code></td></tr>
+<tr><td>C-x C-s</td><td>save file</td><td><code><small>save-sound</small></code></td></tr>
 <tr><td>C-x C-u</td><td>undo last edit</td><td><code><small>(lambda (arg) (undo arg))</small></code></td></tr>
 <tr><td>C-x C-v</td><td>set window size as percentage of total</td><td></td></tr>
 <tr><td valign=top>C-x C-w</td><td valign=top>save current channel in file</td>
@@ -2056,7 +2051,6 @@ all the samples between the cursor and the next mark.</p>
                 (lambda (val)
                   (save-sound val (selected-sound) (selected-channel)))))
 </pre></small></code></td></tr>
-<tr><td>C-x <A NAME="cxcx">C-x</a></td><td>evaluate expression</td><td></td></tr>
 <tr><td>C-x C-z</td><td>smooth using cosine</td><td><code><small>(lambda (arg) (smooth-sound (cursor) arg))</small></code></td></tr>
 </table>
 <p>In addition, within the "minibuffer" and the filter text field the commands M-p and M-n
@@ -2209,9 +2203,8 @@ panel are:</p>
 <br>
 <center>
 <table border rows=120>
-<table border rows=120>
   <caption>Index</caption>
-  <!-- created 27-May-01 -->
+  <!-- created 28-May-01 -->
   <tr><th>Action<th>Menu<th>Keyboard<th>Lisp<th>Other</tr>
   <tr><td><a href="#kgc">abort command</a></td><td><br></td><td><a href="#kgc"><small>Cg</small></a></td><td><a href="extsnd.html#sndabort"><small>c-g?</small></a></td><td><small>mouse click</small></td></tr>
   <tr><td><a href="#ampenvs">amp env</a></td><td><small>Edit: <a href="#editenvelope">Edit Env</a></small></td><td><a href="#cxca"><small>Cx Ca, Cx a</small></a></td><td><a href="extsnd.html#sndenv"><small>env-sound</small></a></td><td><a href="extsnd.html#sndscaleto"><small>scale-to, scale-by</small></a></td></tr>

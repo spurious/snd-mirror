@@ -410,12 +410,25 @@ int snd_write_header(snd_state *ss, const char *name, int type, int srate, int c
   return(fd);
 }
 
-int snd_remove(const char *name)
+char *snd_remove_with_error(const char *name)
 {
   int err = 0;
   mus_sound_forget(name); /* no error here if not in sound tables */
   err = remove(name);
   if (err == -1)
-    snd_warning("can't remove %s: %s", name, strerror(errno));
-  return(err);
+    return(mus_format("can't remove %s: %s", name, strerror(errno)));
+  return(NULL);
+}
+
+int snd_remove(const char *name)
+{
+  char *errstr;
+  errstr = snd_remove_with_error(name);
+  if (errstr)
+    {
+      snd_warning(errstr);
+      FREE(errstr);
+      return(-1);
+    }
+  return(0);
 }

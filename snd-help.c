@@ -267,6 +267,11 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
+29-May:  combined channel-style and uniting under the name channel-style (uniting removed).\n\
+         dac-folding -> dac-combines-channels (not sure about this name change).\n\
+         C-x x|n|x_x|n key support (\"eval expression\") removed (was useless and broken).\n\
+           These four keys can be re-implemented using bind-key and as-one-edit.\n\
+         added c-g! (simulates typing C-g).\n\
 28-May:  renamed enved-exping -> enved-exp?, enved-waving -> enved-wave?, enved-clipping -> enved-clip?\n\
            amplitude-env -> enved-amplitude, srate-env -> enved-srate, spectrum-env -> enved-spectrum\n\
          removed save-state-on-exit (use exit-hook with save-state).\n\
@@ -489,7 +494,6 @@ The extended commands (preceded by c-x) are:\n\
   j: goto named mark\n\
   k: close file\n\
   l: position selection in mid-view\n\
-  n: re-evaluate expression over selection\n\
   o: move to next or previous graph\n\
   p: play selection or region n\n\
   q: mix in region\n\
@@ -497,7 +501,6 @@ The extended commands (preceded by c-x) are:\n\
   u: undo last edit\n\
   v: position window over current selection\n\
   w: save selection as file\n\
-  x: evaluate expression over selection\n\
   z: smooth selection\n\
   /: place named mark\n\
   (: begin keyboard macro definition\n\
@@ -516,7 +519,6 @@ The extended commands (preceded by c-x) are:\n\
   c-g: abort command\n\
   c-i: insert file\n\
   c-m: add named mark\n\
-  c-n: re-evaluate expression\n\
   c-o: show controls\n\
   c-p: set window size (preceded by 1 arg)\n\
   c-q: mix in file\n\
@@ -526,7 +528,6 @@ The extended commands (preceded by c-x) are:\n\
        Snd supports 'unlimited undo/redo'\n\
   c-v: set window size as percentage of total\n\
   c-w: save current channel in file\n\
-  c-x: evaluate expression\n\
   c-z: smooth using cosine\n\
 \n\
 Unless otherwise noted, case is not significant; \n\
@@ -965,14 +966,12 @@ new value via (set! (" S_auto_resize ") #t). \n\
   " S_basic_color "           ivory2\n\
   " S_bold_button_font "      varies\n\
   " S_button_font "           varies\n\
-  " S_channel_style "         " S_channels_separate "\n\
-  " S_channel_sync "          0 (snd #t) (chn #t)\n\
   " S_color_cutoff "          0.003\n\
   " S_color_inverted "        #t\n\
   " S_color_scale "           0.5\n\
   " S_colormap "             -1\n\
   " S_cursor_color "          red\n\
-  " S_dac_folding "           #t\n\
+  " S_dac_combines_channels " #t\n\
   " S_dac_size "              256\n\
   " S_data_color "            black\n\
   " S_dot_size "              1 (snd #t) (chn #t)\n\
@@ -1172,7 +1171,10 @@ all refer to the same thing.\n\
   " S_backward_sample "   (count)\n\
   " S_bind_key "          (key state code ignore-prefix)\n\
   " S_c_g "               ()\n\
+  " S_c_g_x "             ()\n\
   " S_change_menu_label " (top-menu old-label new-label)\n\
+  " S_channel_style "     (snd)\n\
+  " S_channel_sync "      (snd chn)\n\
   " S_channels "          (snd)\n\
   " S_chans "             (snd)\n\
   " S_clear_audio_inputs "()\n\
@@ -1410,7 +1412,6 @@ all refer to the same thing.\n\
   " S_transform_size "    (snd chn)\n\
   " S_unbind_key "        (key state)\n\
   " S_undo "              (edits snd chn)\n\
-  " S_uniting "           (snd)\n\
   " S_update_sound "      ()\n\
   " S_update_fft "        (snd chn)\n\
   " S_update_graph "      (snd chn)\n\

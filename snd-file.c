@@ -616,11 +616,11 @@ static snd_info *snd_open_file_1 (char *filename, snd_state *ss, int select, int
     {
       if (select) select_channel(sp, 0);
       read_memo_file(sp);
-      if ((sp->combining != CHANNELS_SEPARATE) && 
+      if ((sp->channel_style != CHANNELS_SEPARATE) && 
 	  (sp->nchans > 1)) 
 	{
-	  val = sp->combining;
-	  sp->combining = CHANNELS_SEPARATE; 
+	  val = sp->channel_style;
+	  sp->channel_style = CHANNELS_SEPARATE; 
 	  if (val == CHANNELS_COMBINED)
 	    combine_sound(sp);
 	  else superimpose_sound(sp);
@@ -761,7 +761,6 @@ snd_info *make_sound_readable(snd_state *ss, char *filename, int post_close)
   sp->reverb_control_scale = 0.0;
   sp->filter_control_p = 0;
   sp->search_proc = SCM_UNDEFINED;
-  sp->eval_proc = SCM_UNDEFINED;
   sp->prompt_callback = SCM_UNDEFINED;
   sp->index = TEMP_SOUND_INDEX;
   sp->sgx = NULL;
@@ -827,7 +826,7 @@ static snd_info *snd_update_1(snd_state *ss, snd_info *sp, char *ur_filename)
   filename = copy_string(ur_filename);
   old_chans = sp->nchans;
   old_sync = sp->sync;
-  old_combine = sp->combining;
+  old_combine = sp->channel_style;
   read_only = sp->read_only;
   axis_data = (Float *)CALLOC(4 * old_chans, sizeof(Float));
   ffts = (int *)CALLOC(old_chans, sizeof(int));
@@ -879,7 +878,7 @@ static snd_info *snd_update_1(snd_state *ss, snd_info *sp, char *ur_filename)
 	}
       if (j < (old_chans - 1)) j++;
     }
-  if (nsp->combining != old_combine) combineb(nsp, old_combine);
+  if (nsp->channel_style != old_combine) set_sound_channel_style(nsp, old_combine);
   if (nsp->sync != old_sync) syncb(nsp, old_sync);
   if (need_update) 
     for (i = 0; i < nsp->nchans; i++) 

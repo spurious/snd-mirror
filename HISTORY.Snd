@@ -1,5 +1,10 @@
 snd change log
 
+  29-May:    combined channel-style and uniting under the name channel-style (uniting removed).
+             dac-folding -> dac-combines-channels (not sure about this name change).
+             C-x x|n|x_x|n key support ("eval expression") removed (was useless and broken).
+               These four keys can be re-implemented using bind-key and as-one-edit.
+             added c-g! (simulates typing C-g).
   28-May:    renamed enved-exping -> enved-exp?, enved-waving -> enved-wave?, enved-clipping -> enved-clip?
                amplitude-env -> enved-amplitude, srate-env -> enved-srate, spectrum-env -> enved-spectrum
              removed save-state-on-exit (use exit-hook with save-state).

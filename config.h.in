@@ -136,7 +136,6 @@
 #undef HAVE_SCM_NUM2LONG_LONG
 #undef HAVE_SCM_C_MAKE_VECTOR
 #undef HAVE_SCM_C_DEFINE
-#undef HAVE_SCM_UBITS2NUM
 
 #define USE_SND 1
 #endif

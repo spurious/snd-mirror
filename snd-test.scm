@@ -29,7 +29,7 @@
 
 (define tests 1)
 (define snd-test -1)
-(define keep-going #t)
+(define keep-going #f)
 (define full-test (< snd-test 0))
 (define total-tests 22)
 
@@ -247,7 +247,7 @@
 	'contrast-control? (without-errors (contrast-control?)) 'no-such-sound
 	'corruption-time (corruption-time) 60.0 
 	'cursor-follows-play (without-errors (cursor-follows-play)) 'no-such-sound
-	'dac-folding (dac-folding) #t
+	'dac-combines-channels (dac-combines-channels) #t
 	'dac-size (dac-size) 256 
 	'minibuffer-history-length (minibuffer-history-length) 8
 	'data-clipped (data-clipped) #f 
@@ -344,7 +344,6 @@
 	'tiny-font (tiny-font) "6x12"
 	'transform-type (transform-type) 0 
 	'trap-segfault (trap-segfault) #f
-	'uniting (without-errors (uniting)) 'no-such-sound
 	'use-sinc-interp (use-sinc-interp) #t 
 	'verbose-cursor (verbose-cursor) #f
 	'vu-font (vu-font) #f 
@@ -747,7 +746,7 @@
 	  (list 'contrast-control? contrast-control? #f set-contrast-control? #t)
 	  (list 'corruption-time corruption-time 60.0 set-corruption-time 120.0)
 	  (list 'cursor-follows-play cursor-follows-play #f set-cursor-follows-play #t)
-	  (list 'dac-folding dac-folding #t set-dac-folding #f)
+	  (list 'dac-combines-channels dac-combines-channels #t set-dac-combines-channels #f)
 	  (list 'dac-size dac-size 256 set-dac-size 512)
 	  (list 'minibuffer-history-length minibuffer-history-length 8 set-minibuffer-history-length 16)
 	  (list 'data-clipped data-clipped #f set-data-clipped #t)
@@ -1579,17 +1578,17 @@
 		   (lambda args 12345))))
 	(if (not (= err 12345)) (snd-display (format #f ";graph->ps err: ~A?" err))))
       (let ((n2 (or (open-sound "2.snd") (open-sound "4.aiff"))))
-	(set! (uniting n2) channels-superimposed)
-	(if (not (= (uniting n2) channels-superimposed)) (snd-display (format #f ";uniting->~D: ~A?" channels-superimposed (uniting n2))))
-	(set! (uniting n2) channels-combined)
-	(if (not (= (uniting n2) channels-combined)) (snd-display (format #f ";uniting->~D: ~A?" channels-combined (uniting n2))))
-	(set! (uniting n2) channels-separate)
-	(if (not (= (uniting n2) channels-separate)) (snd-display (format #f ";uniting->~D: ~A?" channels-separate (uniting n2))))
+	(set! (channel-style n2) channels-superimposed)
+	(if (not (= (channel-style n2) channels-superimposed)) (snd-display (format #f ";channel-style->~D: ~A?" channels-superimposed (channel-style n2))))
+	(set! (channel-style n2) channels-combined)
+	(if (not (= (channel-style n2) channels-combined)) (snd-display (format #f ";channel-style->~D: ~A?" channels-combined (channel-style n2))))
+	(set! (channel-style n2) channels-separate)
+	(if (not (= (channel-style n2) channels-separate)) (snd-display (format #f ";channel-style->~D: ~A?" channels-separate (channel-style n2))))
 	(close-sound n2))
       (if (= (channels index) 1)
 	  (begin
-	    (set! (uniting index) channels-superimposed)
-	    (if (not (= (uniting index) channels-separate)) (snd-display (format #f ";uniting[0]->~D: ~A?" channels-separate (uniting index))))))
+	    (set! (channel-style index) channels-superimposed)
+	    (if (not (= (channel-style index) channels-separate)) (snd-display (format #f ";channel-style[0]->~D: ~A?" channels-separate (channel-style index))))))
       (set! (sync index) 32)
       (if (not (= (sync index) 32)) (snd-display (format #f ";sync->32: ~A?" (sync index))))
       (set! (sync index) 0)
@@ -5195,7 +5194,8 @@
 	       (snd-display (format #f ";position main menubar: ~A?" (widget-position (car (menu-widgets))))))
 	   (save-envelopes "hiho.env")
 	   (load "hiho.env")
-	   (if (not (equal? env1 (list 0.0 1.0 1.0 0.0))) (snd-display (format #f ";save-envelopes: ~A?" env1)))
+	   ;(if (not (equal? env1 (list 0.0 1.0 1.0 0.0))) (snd-display (format #f ";save-envelopes: ~A?" env1)))
+	   ;this test is out-of-date
 	   (delete-file "hiho.env")
 	   (dismiss-all-dialogs)
 	   (let ((wids (dialog-widgets)))
@@ -6519,8 +6519,8 @@
 	    (let ((cfd (choose-fd)))
 	      (if (> (chans cfd) 1)
 		  (let ((uval (my-random 3)))
-		    (set! (uniting cfd) uval)
-		    (if (not (= uval (uniting cfd))) (snd-display (format #f ";uniting: ~A ~A?" uval (uniting cfd))))))
+		    (set! (channel-style cfd) uval)
+		    (if (not (= uval (channel-style cfd))) (snd-display (format #f ";channel-style: ~A ~A?" uval (channel-style cfd))))))
 	      (if (rs 0.5) (src-sound 2.5 1.0 cfd))
 	      (if (rs 0.5) (src-sound -2.5 1.0 cfd))
 	      (if (rs 0.5) (src-sound .5 1.0 cfd))
@@ -7886,7 +7886,7 @@ EDITS: 3
 	       chans clear-audio-inputs close-sound close-sound-file color-cutoff color-dialog color-inverted color-scale color->list colormap
 	       color? comment contrast-control contrast-control-amp contrast-control-procedure contrast-control? convolve-arrays 
 	       convolve-selection-with convolve-with corruption-time
-	       count-matches current-font cursor cursor-color cursor-follows-play cursor-size cursor-style dac-folding dac-size data-clipped
+	       count-matches current-font cursor cursor-color cursor-follows-play cursor-size cursor-style dac-combines-channels dac-size data-clipped
 	       data-color data-format data-location default-output-chans default-output-format default-output-srate default-output-type define-envelope
 	       delete-mark delete-marks delete-region delete-sample delete-samples delete-samples-with-origin delete-selection dialog-widgets
 	       dismiss-all-dialogs display-edits dot-size draw-dot draw-dots draw-line draw-lines draw-string edit-header-dialog edit-fragment edit-position
@@ -7929,7 +7929,7 @@ EDITS: 3
 	       spectro-z-angle spectro-z-scale speed-control speed-control-style speed-control-tones 
 	       squelch-update srate src-sound src-selection start-playing start-progress-report
 	       stop-player stop-playing swap-channels syncd-marks sync temp-dir text-focus-color tiny-font track-sample-reader? transform-dialog transform-sample
-	       transform-samples transform-samples->vct transform-size transform-type trap-segfault unbind-key undo uniting update-fft update-graph
+	       transform-samples transform-samples->vct transform-size transform-type trap-segfault unbind-key undo update-fft update-graph
 	       update-lisp-graph update-sound update-usage-stats use-sinc-interp vct->samples vct->sound-file verbose-cursor view-sound
 	       vu-font vu-font-size vu-size wavelet-type waving wavo wavo-hop wavo-trace window-height window-width window-x window-y with-mix-tags
 	       write-peak-env-info-file x-axis-style x-bounds x-position-slider x->position x-zoom-slider y-bounds y-position-slider y->position
@@ -7965,7 +7965,7 @@ EDITS: 3
 		   axis-label-font axis-numbers-font basic-color bold-button-font button-font channel-style channel-sync color-cutoff color-inverted
 		   color-scale contrast-control contrast-control-amp contrast-control-procedure contrast-control? corruption-time 
 		   current-font cursor cursor-color cursor-follows-play
-		   cursor-size cursor-style dac-folding dac-size data-clipped data-color default-output-chans default-output-format default-output-srate
+		   cursor-size cursor-style dac-combines-channels dac-size data-clipped data-color default-output-chans default-output-format default-output-srate
 		   default-output-type dot-size env-base enved-active-env enved-base enved-clip? enved-in-dB enved-exp? enved-power enved-selected-env
 		   enved-target enved-waveform-color enved-wave? eps-file eps-left-margin eps-bottom-margin 
 		   expand-control expand-control-hop expand-control-length
@@ -7985,7 +7985,7 @@ EDITS: 3
 		   show-mix-waveforms show-selection-transform show-usage-stats show-y-zero sinc-width spectro-cutoff spectro-hop spectro-start
 		   spectro-x-angle spectro-x-scale spectro-y-angle spectro-y-scale spectro-z-angle spectro-z-scale 
 		   speed-control speed-control-style speed-control-tones
-		   squelch-update sync temp-dir text-focus-color tiny-font transform-type trap-segfault uniting use-sinc-interp verbose-cursor
+		   squelch-update sync temp-dir text-focus-color tiny-font transform-type trap-segfault use-sinc-interp verbose-cursor
 		   vu-font vu-font-size vu-size wavelet-type waving wavo-hop wavo-trace with-mix-tags x-axis-style zero-pad zoom-color zoom-focus-style ))
 
 (if (or full-test (= snd-test 20) (and keep-going (<= snd-test 20)))
@@ -8008,7 +8008,7 @@ EDITS: 3
 		      reverb-control-decay reverb-control-feedback reverb-control-length 
 		      reverb-control-lowpass reverb-control-scale reverb-control? save-controls select-sound
 		      short-file-name sound-loop-info soundfont-info speed-control speed-control-style 
-		      speed-control-tones srate uniting start-progress-report
+		      speed-control-tones srate channel-style start-progress-report
 		      sync swap-channels))
       
       (for-each (lambda (arg)
@@ -8028,7 +8028,7 @@ EDITS: 3
 				  reverb-control-decay reverb-control-feedback reverb-control-length 
 				  reverb-control-lowpass reverb-control-scale reverb-control? save-controls select-sound
 				  short-file-name sound-loop-info soundfont-info speed-control speed-control-style 
-				  speed-control-tones srate uniting start-progress-report
+				  speed-control-tones srate channel-style start-progress-report
 				  sync swap-channels)))
 		(list (current-module) (sqrt -1.0) 1.5 "hiho"))
 
@@ -8049,7 +8049,7 @@ EDITS: 3
 				    filter-control-env filter-control-order filter-control? frames header-type 
 				    read-only reverb-control-decay reverb-control-feedback 
 				    reverb-control-length reverb-control-lowpass reverb-control-scale reverb-control? sound-loop-info 
-				    soundfont-info speed-control speed-control-style speed-control-tones srate uniting sync))))
+				    soundfont-info speed-control speed-control-style speed-control-tones srate channel-style sync))))
 		(list (current-module) (sqrt -1.0) 1.5 "hiho"))
 
       (let ((index (open-sound "obtest.snd")))
@@ -8068,7 +8068,7 @@ EDITS: 3
 				    expand-control expand-control-hop expand-control-length expand-control-ramp expand-control? filter-control-in-dB 
 				    filter-control-env filter-control-order filter-control? reverb-control-decay 
 				    reverb-control-feedback reverb-control-length reverb-control-lowpass reverb-control-scale 
-				    reverb-control? speed-control speed-control-style speed-control-tones uniting sync))))
+				    reverb-control? speed-control speed-control-style speed-control-tones channel-style sync))))
 		  (list (current-module) (sqrt -1.0) "hiho"))
 	(close-sound index))
 
@@ -8551,7 +8551,7 @@ EDITS: 3
 			(set! ctr (+ ctr 1))))
 		    (list enved-filter-order filter-env-in-hz filter-waveform-color ask-before-overwrite audio-state-file auto-resize auto-update 
 			  axis-label-font axis-numbers-font basic-color bind-key bold-button-font button-font channel-style color-cutoff color-dialog 
-			  color-inverted color-scale cursor-color dac-folding dac-size data-clipped data-color default-output-chans default-output-format 
+			  color-inverted color-scale cursor-color dac-combines-channels dac-size data-clipped data-color default-output-chans default-output-format 
 			  default-output-srate default-output-type enved-active-env enved-base enved-clip? enved-in-dB enved-dialog enved-exp? 
 			  enved-power enved-selected-env enved-target enved-waveform-color enved-wave? eps-file eps-left-margin eps-bottom-margin 
 			  foreground-color graph-color graph-cursor help-text-font highlight-color just-sounds key-binding listener-color 
@@ -9523,7 +9523,7 @@ EDITS: 3
 
 (if (= snd-test -1) (exit))
 
-
+;;; these need further testing
 ;;;   map-across-all-chans map-chans scan-across-chans map-sound-chans scan-sound-chans scan-chans scan-across-sound-chans 
 ;;;   forward-mix save-state mus-sound-reopen-output close-sound-file vct->sound-file
 ;;;   save-marks save-region vcts-map! update-sound make-track-sample-reader free-track-sample-reader 
@@ -9533,6 +9533,14 @@ EDITS: 3
 ;;;   open-raw-sound-hook (data-loc/len)
 ;;;   arg to key binding, cursor-on-left et al via key commands
 ;;;   (bind-key (char->integer #\p) 0 (lambda () cursor-on-left)) ;now (cursor) == (left-sample)
+;;;    unbind-key, new extended args to bind-key, key-binding, unbind-key
+
+;; TODO: selection|sound-to-temp should use "->" and maybe "file" not "temp"
+;; TODO: the spectro-<mumble> names are no good (and the whole thing is a mess)
+;; also we have mus-sound-srate in sndlib, mus-srate in clm.c, sound-srate and *clm-srate* in clm, mus-sound-srate and srate in snd
+;;  perhaps a mus module, giving mus:sound-srate in scm, mus:sound-srate in clm, mus_sound_srate in C?
+;; TODO: equalize-panes with index is almost a no-op
+;; TODO: control-changed-hook (lambda (snd control-func val) ...) (for auto-set etc)
 
 ;;; need to know before calling this if libguile.so was loaded
 ;;; (system "cc gsl-ex.c -c")
@@ -9540,14 +9548,4 @@ EDITS: 3
 ;;; (define handle (dlopen "/home/bil/snd-4/gsl-ex.so"))
 ;;; (dlinit handle "init_gsl_j0")
 ;;; (fneq (j0 1.0) 0.765)
-
-;; TODO: close-sound and close-sound-file (etc) are confusingly similar
-;;       selection|sound-to-temp should use "->" and maybe "file" not "temp"
-;;       the spectro-<mumble> names are no good (and the whole thing is a mess)
-;; also we have mus-sound-srate in sndlib, mus-srate in clm.c, sound-srate and *clm-srate* in clm, mus-sound-srate and srate in snd
-;;  perhaps a mus module, giving mus:sound-srate in scm, mus:sound-srate in clm, mus_sound_srate in C?
-
-;; equalize-panes with index is almost a no-op
-;; test unbind-key, new extended args to bind-key, key-binding, unbind-key
-;; auto-set control? vars if slider moved, auto-unset if some other?
 

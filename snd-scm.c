@@ -783,13 +783,13 @@ static SCM g_set_dac_size(SCM val)
   return(TO_SCM_INT(dac_size(state)));
 }
 
-static SCM g_dac_folding(void) {return(TO_SCM_BOOLEAN(dac_folding(state)));}
-static SCM g_set_dac_folding(SCM val) 
+static SCM g_dac_combines_channels(void) {return(TO_SCM_BOOLEAN(dac_combines_channels(state)));}
+static SCM g_set_dac_combines_channels(SCM val) 
 {
-  #define H_dac_folding "(" S_dac_folding ") should be #t if extra channels are to be folded into available ones during playing (#t)"
-  ASSERT_TYPE(BOOLEAN_IF_BOUND_P(val), val, SCM_ARGn, "set-" S_dac_folding, "a boolean");
-  set_dac_folding(state, TO_C_BOOLEAN_OR_T(val)); 
-  return(TO_SCM_BOOLEAN(dac_folding(state)));
+  #define H_dac_combines_channels "(" S_dac_combines_channels ") should be #t if extra channels are to be mixed into available ones during playing (#t)"
+  ASSERT_TYPE(BOOLEAN_IF_BOUND_P(val), val, SCM_ARGn, "set-" S_dac_combines_channels, "a boolean");
+  set_dac_combines_channels(state, TO_C_BOOLEAN_OR_T(val)); 
+  return(TO_SCM_BOOLEAN(dac_combines_channels(state)));
 }
 
 static SCM g_auto_resize(void) {return(TO_SCM_BOOLEAN(auto_resize(state)));}
@@ -818,20 +818,6 @@ static SCM g_set_filter_env_in_hz(SCM val)
   ASSERT_TYPE(BOOLEAN_IF_BOUND_P(val), val, SCM_ARGn, "set-" S_filter_env_in_hz, "a boolean");
   set_filter_env_in_hz(state, TO_C_BOOLEAN_OR_T(val)); 
   return(TO_SCM_BOOLEAN(filter_env_in_hz(state)));
-}
-
-static SCM g_channel_style(void) {return(TO_SCM_INT(channel_style(state)));}
-static SCM g_set_channel_style(SCM style) 
-{
-  #define H_channel_style "(" S_channel_style ") -> how multichannel sounds layout the channels \
-default is channels-separate, other values are channels-combined and channels-superimposed. \
-this is the default setting for each sound's 'unite' button."
-
-  ASSERT_TYPE(INTEGER_P(style), style, SCM_ARGn, "set-" S_channel_style, "an integer"); 
-  set_channel_style(state, mus_iclamp(CHANNELS_SEPARATE,
-				 TO_C_INT(style),
-				 CHANNELS_SUPERIMPOSED)); 
-  return(TO_SCM_INT(channel_style(state)));
 }
 
 static SCM g_color_cutoff(void) {return(TO_SCM_DOUBLE(color_cutoff(state)));}
@@ -2968,14 +2954,6 @@ void g_initialize_gh(snd_state *ss)
   DEFINE_VAR(S_speed_control_as_ratio,        SPEED_CONTROL_AS_RATIO,    H_speed_control_as_ratio);
   DEFINE_VAR(S_speed_control_as_semitone,     SPEED_CONTROL_AS_SEMITONE, H_speed_control_as_semitone);
 
-  #define H_channels_separate "The value for " S_channel_style " that causes channel graphs to occupy separate panes"
-  #define H_channels_combined "The value for " S_channel_style " that causes channel graphs to occupy one panes (the 'unite' button)"
-  #define H_channels_superimposed "The value for " S_channel_style " that causes channel graphs to occupy one pane and one axis"
-
-  DEFINE_VAR(S_channels_separate,     CHANNELS_SEPARATE,     H_channels_separate);
-  DEFINE_VAR(S_channels_combined,     CHANNELS_COMBINED,     H_channels_combined);
-  DEFINE_VAR(S_channels_superimposed, CHANNELS_SUPERIMPOSED, H_channels_superimposed);
-
   #define H_cursor_in_view "The value for an " S_bind_key " function that causes it to shift the window so that the cursor is in the view"
   #define H_cursor_on_left "The value for an " S_bind_key " function that causes it to shift the window so that the cursor is at the left edge"
   #define H_cursor_on_right "The value for an " S_bind_key " function that causes it to shift the window so that the cursor is at the right edge"
@@ -3033,8 +3011,8 @@ void g_initialize_gh(snd_state *ss)
   define_procedure_with_setter(S_dac_size, SCM_FNC g_dac_size, H_dac_size,
 			       "set-" S_dac_size, SCM_FNC g_set_dac_size, local_doc, 0, 0, 0, 1);
 
-  define_procedure_with_setter(S_dac_folding, SCM_FNC g_dac_folding, H_dac_folding,
-			       "set-" S_dac_folding, SCM_FNC g_set_dac_folding, local_doc, 0, 0, 0, 1);
+  define_procedure_with_setter(S_dac_combines_channels, SCM_FNC g_dac_combines_channels, H_dac_combines_channels,
+			       "set-" S_dac_combines_channels, SCM_FNC g_set_dac_combines_channels, local_doc, 0, 0, 0, 1);
 
   define_procedure_with_setter(S_auto_resize, SCM_FNC g_auto_resize, H_auto_resize,
 			       "set-" S_auto_resize, SCM_FNC g_set_auto_resize, local_doc, 0, 0, 0, 1);
@@ -3044,9 +3022,6 @@ void g_initialize_gh(snd_state *ss)
 
   define_procedure_with_setter(S_filter_env_in_hz, SCM_FNC g_filter_env_in_hz, H_filter_env_in_hz,
 			       "set-" S_filter_env_in_hz, SCM_FNC g_set_filter_env_in_hz, local_doc, 0, 0, 0, 1);
-
-  define_procedure_with_setter(S_channel_style, SCM_FNC g_channel_style, H_channel_style,
-			       "set-" S_channel_style, SCM_FNC g_set_channel_style, local_doc, 0, 0, 0, 1);
 
   define_procedure_with_setter(S_color_cutoff, SCM_FNC g_color_cutoff, H_color_cutoff,
 			       "set-" S_color_cutoff, SCM_FNC g_set_color_cutoff, local_doc, 0, 0, 0, 1);
@@ -3411,54 +3386,63 @@ If more than one hook function, results are concatenated. If none, the current c
 #if (!DEBUGGING)
   /* backwards compatibility (22-May-01) */
   EVAL_STRING("(begin\
-               (define smooth smooth-sound)\
-               (define cut delete-selection)\
-               (define call-apply apply-controls)\
+               (define smooth            smooth-sound)\
+               (define cut               delete-selection)\
+               (define call-apply        apply-controls)\
                (define (open-alternate-sound file) (close-sound) (open-sound file))\
-               (define normalize-view equalize-panes)\
+               (define normalize-view    equalize-panes)\
                (define save-control-panel save-controls)\
                (define restore-control-panel restore-controls)\
                (define reset-control-panel reset-controls)\
-               (define mark->sound mark-home)\
+               (define mark->sound       mark-home)\
                (define (mix-sound-index m) (car (mix-home m)))\
                (define (mix-sound-channel m) (cadr (mix-home m)))\
-               (define amp amp-control)\
-               (define contrast contrast-control)\
-               (define contrast-amp contrast-control-amp)\
-               (define contrast-func contrast-control-procedure)\
-               (define contrasting contrast-control?)\
-               (define expand expand-control)\
-               (define expand-hop expand-control-hop)\
-               (define expand-length expand-control-length)\
-               (define expand-ramp expand-control-ramp)\
-               (define expanding expand-control?)\
-               (define filtering filter-control?)\
-               (define filter-order filter-control-order)\
-               (define filter-env filter-control-env)\
-               (define filter-dBing filter-control-in-dB)\
-               (define reverb-decay reverb-control-decay)\
-               (define reverb-feedback reverb-control-feedback)\
-               (define reverb-funcs reverb-control-procedures)\
-               (define reverb-length reverb-control-length)\
-               (define reverb-lowpass reverb-control-lowpass)\
-               (define reverb-scale reverb-control-scale)\
-               (define reverbing reverb-control?)\
-               (define speed speed-control)\
-               (define speed-as-float speed-control-as-float)\
-               (define speed-as-ratio speed-control-as-ratio)\
+               (define amp               amp-control)\
+               (define contrast          contrast-control)\
+               (define contrast-amp      contrast-control-amp)\
+               (define contrast-func     contrast-control-procedure)\
+               (define contrasting       contrast-control?)\
+               (define expand            expand-control)\
+               (define expand-hop        expand-control-hop)\
+               (define expand-length     expand-control-length)\
+               (define expand-ramp       expand-control-ramp)\
+               (define expanding         expand-control?)\
+               (define filtering         filter-control?)\
+               (define filter-order      filter-control-order)\
+               (define filter-env        filter-control-env)\
+               (define filter-dBing      filter-control-in-dB)\
+               (define reverb-decay      reverb-control-decay)\
+               (define reverb-feedback   reverb-control-feedback)\
+               (define reverb-funcs      reverb-control-procedures)\
+               (define reverb-length     reverb-control-length)\
+               (define reverb-lowpass    reverb-control-lowpass)\
+               (define reverb-scale      reverb-control-scale)\
+               (define reverbing         reverb-control?)\
+               (define speed             speed-control)\
+               (define speed-as-float    speed-control-as-float)\
+               (define speed-as-ratio    speed-control-as-ratio)\
                (define speed-as-semitone speed-control-as-semitone)\
-               (define speed-style speed-control-style)\
-               (define speed-tones speed-control-tones)\
-               (define filter-env-order enved-filter-order)\
-               (define enved-dBing enved-in-dB)\
-               (define enved-exping enved-exp?)\
-               (define enved-waving enved-wave?)\
-               (define enved-clipping enved-clip?)\
-               (define amplitude-env enved-amplitude)\
-               (define srate-env enved-srate)\
-               (define spectrum-env enved-spectrum)\
+               (define speed-style       speed-control-style)\
+               (define speed-tones       speed-control-tones)\
+               (define filter-env-order  enved-filter-order)\
+               (define enved-dBing       enved-in-dB)\
+               (define enved-exping      enved-exp?)\
+               (define enved-waving      enved-wave?)\
+               (define enved-clipping    enved-clip?)\
+               (define amplitude-env     enved-amplitude)\
+               (define srate-env         enved-srate)\
+               (define spectrum-env      enved-spectrum)\
                (define (hide-listener) (set! (show-listener) #f))\
                (define activate-listener show-listener)\
+               (define dac-folding       dac-combines-channels)\
+               (define uniting \
+                 (make-procedure-with-setter \
+                   (lambda arg \
+                     (apply channel-style arg)) \
+                   (lambda args \
+                     (if (= (length args) 1)\
+ 	                 (set! (channel-style) (car args))\
+     	                 (set! (channel-style (car args)) (cadr args))))))\
                )");
 #endif
 

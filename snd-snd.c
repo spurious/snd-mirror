@@ -1407,7 +1407,7 @@ static SCM g_bomb(SCM snd, SCM on)
   return(on);
 }
 
-enum {SP_SYNC, SP_UNITE, SP_READ_ONLY, SP_NCHANS, SP_CONTRASTING, SP_EXPANDING, SP_REVERBING, SP_FILTERING, SP_FILTER_ORDER,
+enum {SP_SYNC, SP_READ_ONLY, SP_NCHANS, SP_CONTRASTING, SP_EXPANDING, SP_REVERBING, SP_FILTERING, SP_FILTER_ORDER,
       SP_SRATE, SP_DATA_FORMAT, SP_DATA_LOCATION, SP_HEADER_TYPE, SP_SAVE_CONTROLS, SP_RESTORE_CONTROLS, SP_SELECTED_CHANNEL,
       SP_COMMENT, SP_FILE_NAME, SP_SHORT_FILE_NAME, SP_CLOSE, SP_UPDATE, SP_SAVE, SP_CURSOR_FOLLOWS_PLAY, SP_SHOW_CONTROLS,
       SP_FILTER_DBING, SP_SPEED_TONES, SP_SPEED_STYLE, SP_RESET_CONTROLS
@@ -1438,7 +1438,6 @@ static SCM sp_iread(SCM snd_n, int fld, char *caller)
   switch (fld)
     {
     case SP_SYNC:                return(TO_SCM_INT(sp->sync));                    break;
-    case SP_UNITE:               return(TO_SCM_INT(sp->combining));               break;
     case SP_READ_ONLY:           return(TO_SCM_BOOLEAN(sp->read_only));           break;
     case SP_NCHANS:              return(TO_SCM_INT(sp->nchans));                  break;
     case SP_EXPANDING:           return(TO_SCM_BOOLEAN(sp->expand_control_p));    break;
@@ -1502,11 +1501,6 @@ static SCM sp_iwrite(SCM snd_n, SCM val, int fld, char *caller)
       if (NUMBER_P(val))
 	syncb(sp, TO_C_INT_OR_ELSE_WITH_ORIGIN(val, 1, caller));
       else syncb(sp, TO_C_BOOLEAN(val));
-      break;
-    case SP_UNITE:      
-      if (NUMBER_P(val))    
-	combineb(sp, TO_C_INT_OR_ELSE_WITH_ORIGIN(val, 1, caller));
-      else combineb(sp, TO_C_BOOLEAN(val));
       break;
     case SP_READ_ONLY:
       sp->read_only = TO_C_BOOLEAN_OR_T(val); 
@@ -1706,19 +1700,48 @@ static SCM g_set_sync(SCM on, SCM snd_n)
 
 WITH_REVERSED_BOOLEAN_ARGS(g_set_sync_reversed, g_set_sync)
 
-static SCM g_uniting(SCM snd_n) 
+static SCM g_channel_style(SCM snd) 
 {
-  #define H_uniting "(" S_uniting " &optional snd) -> whether snd's channels are conbined into one graph"
-  return(sp_iread(snd_n, SP_UNITE, S_uniting));
+  snd_info *sp;
+  if (NOT_BOUND_P(snd))
+    return(TO_SCM_INT(channel_style(get_global_state())));
+  SND_ASSERT_SND(S_channel_style, snd, 1);
+  sp = get_sp(snd);
+  if (sp == NULL) 
+    return(snd_no_such_sound_error(S_channel_style, snd));
+  return(TO_SCM_INT(sp->channel_style));
 }
 
-static SCM g_set_uniting(SCM on, SCM snd_n) 
+static SCM g_set_channel_style(SCM style, SCM snd) 
 {
-  ASSERT_TYPE(INTEGER_OR_BOOLEAN_IF_BOUND_P(on), on, SCM_ARG1, "set-" S_uniting, "an integer");
-  return(sp_iwrite(snd_n, on, SP_UNITE, "set-" S_uniting));
+  snd_state *ss;
+  snd_info *sp;
+  int new_style = CHANNELS_SEPARATE;
+  #define H_channel_style "(" S_channel_style " &optional snd) -> how multichannel sounds layout the channels \
+default is channels-separate, other values are channels-combined and channels-superimposed. \
+As a global (if the 'snd' arg is omitted), it is the default setting for each sound's 'unite' button."
+
+  ASSERT_TYPE(INTEGER_OR_BOOLEAN_P(style), style, SCM_ARG1, "set-" S_channel_style, "an integer or boolean"); 
+  if (INTEGER_P(style))
+    new_style = mus_iclamp(CHANNELS_SEPARATE,
+			   TO_C_INT(style),
+			   CHANNELS_SUPERIMPOSED);
+  else new_style = ((TRUE_P(style)) ? CHANNELS_COMBINED : CHANNELS_SEPARATE);
+  if (NOT_BOUND_P(snd))
+    {
+      ss = get_global_state();
+      set_channel_style(ss, new_style);
+      return(TO_SCM_INT(channel_style(ss)));
+    }
+  SND_ASSERT_SND("set-" S_channel_style, snd, 2);
+  sp = get_sp(snd);
+  if (sp == NULL) 
+    return(snd_no_such_sound_error("set-" S_channel_style, snd));
+  set_sound_channel_style(sp, new_style);
+  return(TO_SCM_INT(sp->channel_style));
 }
 
-WITH_REVERSED_BOOLEAN_ARGS(g_set_uniting_reversed, g_set_uniting)
+WITH_REVERSED_BOOLEAN_ARGS(g_set_channel_style_reversed, g_set_channel_style)
 
 static SCM g_read_only(SCM snd_n) 
 {
@@ -2766,6 +2789,14 @@ If it returns #t, the usual informative minibuffer babbling is squelched."
 
   name_click_hook = MAKE_HOOK(S_name_click_hook, 1, H_name_click_hook);       /* args = snd-index */
 
+  #define H_channels_separate "The value for " S_channel_style " that causes channel graphs to occupy separate panes"
+  #define H_channels_combined "The value for " S_channel_style " that causes channel graphs to occupy one panes (the 'unite' button)"
+  #define H_channels_superimposed "The value for " S_channel_style " that causes channel graphs to occupy one pane and one axis"
+
+  DEFINE_VAR(S_channels_separate,     CHANNELS_SEPARATE,     H_channels_separate);
+  DEFINE_VAR(S_channels_combined,     CHANNELS_COMBINED,     H_channels_combined);
+  DEFINE_VAR(S_channels_superimposed, CHANNELS_SUPERIMPOSED, H_channels_superimposed);
+
 #if (!USE_NO_GUI)
   DEFINE_PROC(S_sound_widgets, g_sound_widgets, 0, 1, 0, "returns sound widgets");
 #endif
@@ -2838,9 +2869,9 @@ If it returns #t, the usual informative minibuffer babbling is squelched."
 					"set-" S_sync, SCM_FNC g_set_sync, SCM_FNC g_set_sync_reversed,
 					local_doc, 0, 1, 0, 2);
 
-  define_procedure_with_reversed_setter(S_uniting, SCM_FNC g_uniting, H_uniting,
-					"set-" S_uniting, SCM_FNC g_set_uniting, SCM_FNC g_set_uniting_reversed,
-					local_doc, 0, 1, 0, 2);
+  define_procedure_with_reversed_setter(S_channel_style, SCM_FNC g_channel_style, H_channel_style,
+					"set-" S_channel_style, SCM_FNC g_set_channel_style, SCM_FNC g_set_channel_style_reversed,
+					local_doc, 0, 1, 1, 1);
 
   define_procedure_with_reversed_setter(S_read_only, SCM_FNC g_read_only, H_read_only,
 					"set-" S_read_only, SCM_FNC g_set_read_only, SCM_FNC g_set_read_only_reversed,

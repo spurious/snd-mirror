@@ -258,10 +258,9 @@ snd_info *make_snd_info(snd_info *sip, snd_state *state, char *filename, file_in
   sp->filter_control_p = DEFAULT_FILTER_CONTROL_P;
   sp->searching = 0;
   if (chans > 1)
-    sp->combining = channel_style(ss);
-  else sp->combining = CHANNELS_SEPARATE;
+    sp->channel_style = channel_style(ss);
+  else sp->channel_style = CHANNELS_SEPARATE;
   sp->loading = 0;
-  sp->evaling = 0;
   sp->marking = 0;
   sp->filing = 0;
   sp->minibuffer_on = 0;
@@ -296,7 +295,6 @@ snd_info *make_snd_info(snd_info *sip, snd_state *state, char *filename, file_in
   sp->search_expr = NULL;
   sp->lacp = NULL;
   sp->search_proc = SCM_UNDEFINED;
-  sp->eval_proc = SCM_UNDEFINED;
   sp->prompt_callback = SCM_UNDEFINED;
   sp->filter_control_env = default_env(sp->filter_control_env_xmax, 1.0);
   sp->delete_me = 0;
@@ -334,11 +332,10 @@ void free_snd_info(snd_info *sp)
   sp->playing = 0;
   sp->searching = 0;
   sp->loading = 0;
-  sp->evaling = 0;
   sp->marking = 0;
   sp->filing = 0;
   sp->applying = 0;
-  sp->combining = CHANNELS_SEPARATE;
+  sp->channel_style = CHANNELS_SEPARATE;
   sp->read_only = 0;
   sp->lisp_graphing = 0;
   sp->minibuffer_on = 0;                     /* if it's on, should we clear it first ?? */
@@ -348,17 +345,9 @@ void free_snd_info(snd_info *sp)
       free(sp->search_expr); 
       sp->search_expr = NULL;
     }
-  if (sp->eval_expr) 
-    {
-      free(sp->eval_expr); 
-      sp->eval_expr = NULL;
-    }
   if (PROCEDURE_P(sp->search_proc))
     snd_unprotect(sp->search_proc);
   sp->search_proc = SCM_UNDEFINED;
-  if (PROCEDURE_P(sp->eval_proc))
-    snd_unprotect(sp->eval_proc);
-  sp->eval_proc = SCM_UNDEFINED;
   if (PROCEDURE_P(sp->prompt_callback))
     snd_unprotect(sp->prompt_callback);
   sp->prompt_callback = SCM_UNDEFINED;
@@ -466,7 +455,7 @@ int map_over_separate_chans(snd_state *ss, int (*func)(chan_info *, void *), voi
       if ((sp = ((snd_info *)(ss->sounds[i]))) && 
 	  (sp->inuse))
 	{
-	  if (sp->combining != CHANNELS_SEPARATE)
+	  if (sp->channel_style != CHANNELS_SEPARATE)
 	    val = (*func)(sp->chans[0], userptr);
 	  else val = map_over_sound_chans(sp, func, userptr);
 	  if (val) return(val);
@@ -485,7 +474,7 @@ int active_channels (snd_state *ss, int count_virtual_channels)
     if (snd_ok(sp = (ss->sounds[i])))
       {
 	if ((count_virtual_channels == WITH_VIRTUAL_CHANNELS) ||
-	    (sp->combining == CHANNELS_SEPARATE))
+	    (sp->channel_style == CHANNELS_SEPARATE))
 	  chans += sp->nchans;
 	else chans++;
       }

@@ -43,7 +43,8 @@ int to_c_edit_position(chan_info *cp, SCM edpos, const char *caller)
 	{
 	  errstr = TO_SCM_STRING(errmsg);
 	  FREE(errmsg);
-	  return(snd_bad_arity_error(caller, errstr, edpos));
+	  snd_bad_arity_error(caller, errstr, edpos);
+	  return(0); /* never called, presumably */
 	}
       pos = TO_C_INT_OR_ELSE_WITH_ORIGIN(CALL2(edpos, 
 					       TO_SMALL_SCM_INT(cp->sound->index), 
@@ -247,112 +248,6 @@ static sync_state *get_active_chans_sync_state(snd_state *ss, int beg, SCM edpos
   sc->sfs = sfs;
   sc->si = si;
   return(sc);
-}
-
-void eval_expression(chan_info *cp, snd_info *sp, int count, int regexpr)
-{
-  sync_state *sc; 
-  sync_info *si;
-  snd_fd *sf;
-  int dur, chan_dur = 0, chan, j, k;
-  int beg = 0;
-  SCM res;
-  snd_state *ss;
-  snd_fd **sfs = NULL;
-  Float val = 0.0;
-  char *s1;
-  if (PROCEDURE_P(sp->eval_proc))
-    {
-      ss = cp->state;
-      if (!regexpr)
-	{
-	  beg = cp->cursor;
-	  if (count < 0)
-	    {
-	      count = -count;
-	      if ((beg - count) >= 0) 
-		beg -= count;
-	      else
-		{
-		  count = beg;
-		  beg = 0;
-		}
-	    }
-	}
-      sc = get_sync_state(ss, sp, cp, beg, regexpr, 
-			  READ_FORWARD,               /* beg ignored if regexpr (starts at region 0 = si->begs[]) */
-			  TO_SCM_INT(AT_CURRENT_EDIT_POSITION),
-			  "eval expression"); 
-      if (sc == NULL) return;
-      si = sc->si;
-      sfs = sc->sfs;
-      if (regexpr)
-	dur = sc->dur;
-      else dur = count;
-      if (dur > 0)
-	{
-	  for (chan = 0; chan < si->chans; chan++)
-	    {
-	      sf = sfs[chan];	      
-	      if (regexpr) 
-		chan_dur = dur;
-	      else
-		{
-		  chan_dur = current_ed_samples(si->cps[chan]) - si->begs[chan];
-		  if (dur < chan_dur) chan_dur = dur;
-		  if (chan_dur == 0) chan_dur = 1;
-		  if (dur > MAX_BUFFER_SIZE) start_progress_report(sp, FALSE);
-		}
-	      j = 0;
-	      for (k = 0; k < chan_dur; k++)
-		{
-		  res = CALL1(sp->eval_proc,
-			      TO_SCM_DOUBLE((double)next_sample_to_float(sf)), 
-			      __FUNCTION__);
-		  if (NUMBER_P(res)) 
-		    val = TO_C_DOUBLE(res);
-		  else
-		    {
-		      if (SYMBOL_P(res))
-			{
-			  for (j = chan; j < si->chans; j++) 
-			    free_snd_fd(sfs[j]);
-			  free_sync_state(sc);
-			  ERROR(res,
-				SCM_LIST1(TO_SCM_STRING("eval expression")));
-			  return;
-			}
-		    }
-		  if ((ss->stopped_explicitly) || (!(sp->inuse)))
-		    {
-		      ss->stopped_explicitly = 0;
-		      report_in_minibuffer(sp, "stopped");
-		      break;
-		    }
-		  j++;
-		  if (j == MAX_BUFFER_SIZE)
-		    {
-		      progress_report(sp, "C-x C-x", chan, si->chans, (Float)k / ((Float)chan_dur), FALSE);
-		      j = 0;
-		    }
-		}
-	      free_snd_fd(sf);
-	      if (dur > MAX_BUFFER_SIZE) finish_progress_report(sp, NOT_FROM_ENVED);
-	    }
-	  if ((!regexpr) && (chan_dur == 1))
-	    {
-	      report_in_minibuffer(sp, "%s = %s", sp->eval_expr, s1 = prettyf(val, 2));
-	      FREE(s1);
-	    }
-	}
-      else
-	{
-	  for (chan = 0; chan < si->chans; chan++)
-	    if (sfs[chan]) 
-	      sfs[chan] = free_snd_fd(sfs[chan]);
-	}
-      free_sync_state(sc);
-    }
 }
 
 /* TODO: move all but the basics into scheme here (i.e. map-chan, and (map-any-chans...) with list of parallel chans
@@ -1487,7 +1382,9 @@ static int temp_to_snd(snd_exf *data, const char *origin)
 {
   sync_state *sc;
   sync_info *si;
-  int i, k, chans, err, new_len, old_len, new_chans, ok, orig_chans;
+  char *errstr;
+  SCM errmsg;
+  int i, k, chans, new_len, old_len, new_chans, ok, orig_chans;
   if (!data) return(-1);
   sc = (sync_state *)(data->sc);
   si = sc->si;
@@ -1499,8 +1396,17 @@ static int temp_to_snd(snd_exf *data, const char *origin)
 	/* if user didn't re-use the temp file for his output, delete it */
 	if ((data->new_filenames[i] == NULL) || 
 	    (strcmp(data->new_filenames[i], data->old_filenames[i]) != 0))
-	  err = snd_remove(data->old_filenames[i]);
-	/* TODO: if in scm (how else can we be here??), throw this error (snd_remove calls snd_warning) rather than using snd_warning (snd-io.c) */
+	  {
+	    errstr = snd_remove_with_error(data->old_filenames[i]);
+	    if (errstr)
+	      {
+		errmsg = TO_SCM_STRING(errstr);
+		FREE(errstr);
+		ERROR(MUS_MISC_ERROR,
+		      SCM_LIST2(TO_SCM_STRING(origin),
+				errmsg));
+	      }
+	  }
 	FREE(data->old_filenames[i]);
       }
   if (data->selection)
@@ -3612,6 +3518,9 @@ static SCM g_fft_1(SCM reals, SCM imag, SCM sign, int use_fft)
       ipow = (int)ceil(log((Float)n) / log(2.0));
       n2 = (int)pow(2.0, (Float)ipow);
     }
+#if DEBUGGING
+  if (n2 < n) abort();
+#endif
   if ((!v1) || (n != n2))
     {
       rl = (Float *)CALLOC(n2, sizeof(Float));

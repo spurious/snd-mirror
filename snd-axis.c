@@ -223,7 +223,7 @@ void make_axes_1(chan_info *cp, axis_info *ap, int x_style, int srate)
     }
 
   show_x_axis = ((sp == NULL) || 
-		 (sp->combining != CHANNELS_COMBINED) || 
+		 (sp->channel_style != CHANNELS_COMBINED) || 
 		 (cp->show_axes == SHOW_ALL_AXES) || 
 		 (cp->chan == (sp->nchans - 1)));
   /* sp is null in the control panel filter envelope display */

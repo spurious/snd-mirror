@@ -186,28 +186,6 @@ static int in_user_keymap(int key, int state, int extended)
   return(-1);
 }
 
-void save_user_key_bindings(FILE *fd)
-{
-#if 0
-  int i;
-  /* TODO: save key bindings currently is a no-op */
-  char binder[64];
-  SCM con;
-  for (i = 0; i < keymap_top; i++)
-    if (BOUND_P(user_keymap[i].func))
-      {
-	sprintf(binder,
-		"(bind-key (char->integer #\\%c) %d %s)",
-		(unsigned char)(user_keymap[i].key),
-		user_keymap[i].state);
-	con = TO_SCM_STRING(binder);
-	fprintf(fd, ";    %s\n",
-		g_print_1(user_keymap[i].func,
-			  __FUNCTION__));
-      }
-#endif
-}
-
 static SCM g_key_binding(SCM key, SCM state, SCM extended)
 {
   #define H_key_binding "(" S_key_binding " key state extended) -> function bound to this key"
@@ -357,7 +335,6 @@ void clear_minibuffer(snd_info *sp)
   clear_minibuffer_prompt(sp);
   set_minibuffer_string(sp, NULL);
   sp->searching = 0;
-  sp->evaling = 0;
   sp->marking = 0;
   sp->filing = NOT_FILING;
   sp->printing = 0;
@@ -395,13 +372,6 @@ static void get_amp_expression(snd_info *sp, int count, int regexpr)
 {
   prompt(sp, "env:", NULL); 
   sp->amping = count; 
-  sp->reging = regexpr;
-}
-
-static void get_eval_expression(snd_info *sp, int count, int regexpr) 
-{
-  prompt(sp, "eval:", NULL); 
-  sp->evaling = count; 
   sp->reging = regexpr;
 }
 
@@ -819,35 +789,7 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, int with_meta)
 	  sp->prompting = 0;
 	  return;
 	}
-      if (sp->evaling)
-	{
-	  /* check for procedure as arg, or lambda form:
-	   * (lambda (y) (+ y .1))
-	   * if returns non-number, original value is used
-	   * need handle in eval_expression and a flag in sp l4540
-	   */
-	  if (sp->eval_expr) free(sp->eval_expr);
-	  sp->eval_expr = str;
-	  if (sp->evaling)
-	    {
-	      if (PROCEDURE_P(sp->eval_proc))
-		snd_unprotect(sp->eval_proc);
-	      sp->eval_proc = SCM_UNDEFINED;
-	      proc = snd_catch_any(eval_str_wrapper, str, str);
-	      if (procedure_ok_with_error(proc, 1, "eval", "eval", 1))
-		{
-		  sp->eval_proc = proc;
-		  snd_protect(proc);
-		  eval_expression(active_chan, sp, sp->evaling, sp->reging);
-		  clear_minibuffer_prompt(sp);
-		  sp->evaling = 0;
-		  sp->reging = 0;
-		  return;
-		}
-	    }
-	}
-      else snd_eval_str(ss, str);
-      sp->evaling = 0;
+      snd_eval_str(ss, str);
       sp->reging = 0;
     }
   else clear_minibuffer(sp);
@@ -1002,14 +944,31 @@ static char *key_to_name(int keysym) {if (keysym) return(KEY_TO_NAME(keysym)); e
 
 #define NO_CX_ARG_SPECIFIED -1
 
+static int number_ctr = 0;
+static int dot_seen = 0;
+static int counting = 0;
+
+static void c_g(snd_state *ss, snd_info *sp)
+{
+  number_ctr = 0; 
+  counting = 0; 
+  dot_seen = 0; 
+  deactivate_selection();
+  defining_macro = 0;
+  if ((ss->checking_explicitly) || (play_in_progress())) ss->stopped_explicitly = 1; 
+  /* this tries to break out of long filter/src computations (and perhaps others) */
+  if (sp->playing) stop_playing_all_sounds();
+  if (sp->applying) stop_applying(sp);
+  map_over_sound_chans(sp, stop_fft_in_progress, NULL);
+  clear_minibuffer(sp);
+  clear_listener();
+}
+
 int keyboard_command (chan_info *cp, int keysym, int state)
 {
   /* we can't use the meta bit in some cases because this is trapped at a higher level for the Menu mnemonics */
   /* state here is the kbd bucky-bit state */
   /* keysym has Shift taken into account already (see snd-xchn.c XKeycodeToKeysym, and same snd-xsnd.c) */
-  static int number_ctr = 0;
-  static int dot_seen = 0;
-  static int counting = 0;
   static int u_count = 0;
   static char number_buffer[NUMBER_BUFFER_SIZE];
   static int extended_mode = 0;
@@ -1109,19 +1068,7 @@ int keyboard_command (chan_info *cp, int keysym, int state)
 	      redisplay = cursor_move(cp, count); 
 	      break;
 	    case snd_K_G: case snd_K_g: 
-	      /* TODO: shouldn't C-g be wrapped up in a command so user can remap it? */
-	      number_ctr = 0; 
-	      counting = 0; 
-	      dot_seen = 0; 
-	      deactivate_selection();
-	      defining_macro = 0;
-	      if ((ss->checking_explicitly) || (play_in_progress())) ss->stopped_explicitly = 1; 
-	      /* this tries to break out of long filter/src computations (and perhaps others) */
-	      if (sp->playing) stop_playing_all_sounds();
-	      if (sp->applying) stop_applying(sp);
-	      map_over_sound_chans(sp, stop_fft_in_progress, NULL);
-	      clear_minibuffer(sp);
-	      clear_listener();
+	      c_g(ss, sp);
 	      break;
 	    case snd_K_H: case snd_K_h: 
 	      cp->cursor_on = 1; 
@@ -1137,7 +1084,7 @@ int keyboard_command (chan_info *cp, int keysym, int state)
 	      break;
 	    case snd_K_K: case snd_K_k: 
 	      cp->cursor_on = 1; 
-	      redisplay = cursor_delete(cp, count * 128, "C-k");  /* TODO: delete this kbd command? */
+	      redisplay = cursor_delete(cp, count * 128, "C-k");
 	      break;
 	    case snd_K_L: case snd_K_l: 
 	      cp->cursor_on = 1; 
@@ -1379,12 +1326,7 @@ int keyboard_command (chan_info *cp, int keysym, int state)
 	      searching = 1; 
 	      break;
 	    case snd_K_G: case snd_K_g: 
-	      number_ctr = 0;
-	      counting = 0; 
-	      dot_seen = 0; 
-	      defining_macro = 0;
-	      if ((ss->checking_explicitly) || (play_in_progress())) ss->stopped_explicitly = 1; 
-	      clear_listener();
+	      c_g(ss, sp);
 	      break;
 	    case snd_K_I: case snd_K_i: 
 	      redisplay = prompt(sp, "insert file:", NULL); 
@@ -1405,12 +1347,6 @@ int keyboard_command (chan_info *cp, int keysym, int state)
 	      redisplay = prompt_named_mark(cp);
 	      set_show_marks(ss, 1); 
 	      searching = 1; 
-	      break;
-	    case snd_K_N: case snd_K_n: 
-	      /* TODO: this command C-x C-n seems unneeded (or C-x C-x seems pointless) */
-	      eval_expression(cp, sp, ext_count, 0); 
-	      searching = 1; 
-	      redisplay = CURSOR_IN_VIEW; 
 	      break;
 	    case snd_K_O: case snd_K_o: 
 	      sound_show_ctrls(sp); 
@@ -1446,11 +1382,6 @@ int keyboard_command (chan_info *cp, int keysym, int state)
 	      redisplay = prompt(sp, STR_file_p, NULL); 
 	      sp->filing = CHANNEL_FILING; 
 	      searching = 1; 
-	      break;
-	    case snd_K_X: case snd_K_x: 
-	      get_eval_expression(sp, ext_count, 0); 
-	      searching = 1; 
-	      redisplay = CURSOR_IN_VIEW; 
 	      break;
 	    case snd_K_Z: case snd_K_z: 
 	      cp->cursor_on = 1; 
@@ -1753,11 +1684,6 @@ int keyboard_command (chan_info *cp, int keysym, int state)
 	      else no_selection_error(sp); 
 	      redisplay = CURSOR_IN_MIDDLE;
 	      break;
-	    case snd_K_N: case snd_K_n: 
-	      if (selection_is_active_in_channel(cp))
-		eval_expression(cp, sp, (ext_count == NO_CX_ARG_SPECIFIED) ? 1 : ext_count, TRUE); 
-	      else no_selection_error(sp); 
-	      break;
 	    case snd_K_O: case snd_K_o: 
 	      if (ext_count > 0) 
 		goto_next_graph(cp, ext_count); 
@@ -1795,15 +1721,6 @@ int keyboard_command (chan_info *cp, int keysym, int state)
 	      redisplay = prompt(sp, STR_file_p, NULL); 
 	      sp->filing = REGION_FILING; 
 	      searching = 1;
-	      break;
-	    case snd_K_X: case snd_K_x: 
-	      if (selection_is_active_in_channel(cp))
-		{
-		  get_eval_expression(sp, (ext_count == NO_CX_ARG_SPECIFIED) ? 1 : ext_count, TRUE); 
-		  searching = 1; 
-		  redisplay = CURSOR_IN_VIEW;
-		}
-	      else no_selection_error(sp); 
 	      break;
 	    case snd_K_Z: case snd_K_z: 
 	      if (selection_is_active_in_channel(cp))
@@ -2050,6 +1967,14 @@ static SCM g_backward_graph(SCM count, SCM snd, SCM chn)
   return(TO_SCM_INT(val));
 }
 
+static SCM g_c_g_x(void)
+{
+  #define H_c_g_x "(" S_c_g_x ") simulates typing C-g"
+  snd_state *ss;
+  ss = get_global_state();
+  c_g(ss, any_selected_sound(ss));
+  return(SCM_BOOL_F);
+}
 
 void g_init_kbd(SCM local_doc)
 {
@@ -2061,6 +1986,7 @@ void g_init_kbd(SCM local_doc)
   DEFINE_PROC(S_unbind_key,              g_unbind_key, 2, 1, 0,              H_unbind_key);
   DEFINE_PROC(S_key,                     g_key, 2, 2, 0,                     H_key);
   DEFINE_PROC(S_save_macros,             g_save_macros, 0, 0, 0,             H_save_macros);
+  DEFINE_PROC(S_c_g_x,                   g_c_g_x, 0, 0, 0,                   H_c_g_x);  
 
   DEFINE_PROC(S_report_in_minibuffer,    g_report_in_minibuffer, 1, 1, 0,    H_report_in_minibuffer);
   DEFINE_PROC(S_prompt_in_minibuffer,    g_prompt_in_minibuffer, 1, 2, 0,    H_prompt_in_minibuffer);

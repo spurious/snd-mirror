@@ -154,8 +154,11 @@ void reflect_edit_with_selection_in_menu (void)
 void reflect_edit_without_selection_in_menu (void)
 {
   set_sensitive(edit_cut_menu(), FALSE);
+  set_sensitive(edit_paste_menu(), FALSE);
+  set_sensitive(edit_mix_menu(), FALSE);
   if ((!(selection_is_active())) && (!(region_ok(0)))) set_sensitive(edit_paste_menu(), FALSE);
   set_sensitive(edit_play_menu(), FALSE);
+  set_sensitive(edit_save_as_menu(), FALSE);
   enved_reflect_selection(FALSE);
 }
 
@@ -196,13 +199,11 @@ void reflect_undo_or_redo_in_menu(chan_info *cp)
 void reflect_regions_in_menu(void)
 {
   set_sensitive(view_region_menu(), TRUE);
-  set_sensitive(edit_save_as_menu(), TRUE);
 }
 
 void reflect_no_regions_in_menu(void)
 {
   set_sensitive(view_region_menu(), FALSE);
-  set_sensitive(edit_save_as_menu(), FALSE);
 }
 
 void reflect_raw_open_in_menu(void)

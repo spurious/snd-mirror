@@ -103,13 +103,8 @@
 
 /* (need a way to pass an uninterpreted pointer from C to SCM then back to C) */
 /* TODO: use SND_VOID_T */
-#if HAVE_SCM_UBITS2NUM
-  #define SND_WRAP(a) (scm_ubits2num((scm_ubits_t)(a)))
-  #define SND_UNWRAP(a) (scm_num2ubits((SCM)(a), 0, __FUNCTION__))
-#else
-  #define SND_WRAP(a) ((SCM)(gh_ulong2scm((unsigned long)a)))
-  #define SND_UNWRAP(a) gh_scm2ulong(a)
-#endif
+#define SND_WRAP(a) ((SCM)(gh_ulong2scm((unsigned long)a)))
+#define SND_UNWRAP(a) gh_scm2ulong(a)
 #define SND_WRAPPED(a) gh_number_p(a)
 
 #define HOOKED(a) (NOT_NULL_P(SCM_HOOK_PROCEDURES(a)))

@@ -15,7 +15,6 @@
 /* it's important to check for mus_scm_p before de-referencing a gen arg */
 
 /* TODO:   add vct-wrappers for other internal arrays?
- * TODO:   add checks for wrong size whatever_to_float cases
  */
 
 #if defined(HAVE_CONFIG_H)
@@ -944,10 +943,12 @@ static Float *whatever_to_floats(SCM inp, int size, const char *caller)
   Float *invals = NULL;
   int i;
   SCM *data;
+  vct *v;
   Float inval;
   if (size <= 0) return(NULL);
   if (VECTOR_P(inp))
     {
+      if (VECTOR_LENGTH(inp) < size) return(NULL);
       invals = (Float *)MALLOC(size * sizeof(Float));
       data = SCM_VELTS(inp);
       for (i = 0; i < size; i++) 
@@ -956,7 +957,11 @@ static Float *whatever_to_floats(SCM inp, int size, const char *caller)
   else
     {
       if (VCT_P(inp))
-	invals = copy_vct_data(TO_VCT(inp));
+	{
+	  v = TO_VCT(inp);
+	  if (v->length < size) return(NULL);
+	  invals = copy_vct_data(v);
+	}
       else
 	{
 	  if (NUMBER_P(inp)) 
@@ -994,7 +999,7 @@ static SCM g_mus_bank(SCM gens, SCM amps, SCM inp, SCM inp2)
   size = VECTOR_LENGTH(gens);
   scls = whatever_to_floats(amps, size, S_mus_bank);
   if (scls == NULL)
-    ASSERT_TYPE(VECTOR_P(amps) || VCT_P(amps), amps, SCM_ARG2, S_mus_bank, "a vct, vector, number, or procedure(!)");
+    ASSERT_TYPE(0, amps, SCM_ARG2, S_mus_bank, "a vct, vector, number, or procedure(!)");
   gs = (mus_any **)CALLOC(size, sizeof(mus_any *));
   data = SCM_VELTS(gens);
   for (i = 0; i < size; i++) 
@@ -1006,7 +1011,7 @@ static SCM g_mus_bank(SCM gens, SCM amps, SCM inp, SCM inp2)
 	if (gs) FREE(gs);
 	mus_misc_error(S_mus_bank, "not a generator!", data[i]);
       }
-  invals = whatever_to_floats(inp, size, S_mus_bank);
+  invals = whatever_to_floats(inp, size, S_mus_bank); /* these two can be null */
   invals2 = whatever_to_floats(inp2, size, S_mus_bank);
   outval = mus_bank(gs, scls, invals, invals2, size);
   if (scls) FREE(scls);

@@ -924,14 +924,6 @@ when you save a sound via the "save" dialog.</p>
 <!-- --></td></tr>
 <!-- --><tr><td colspan=3></td></tr>
 <!-- -->
-<!-- channel-style -->
-<!-- --><tr><td><code><em class=def><a name="channelstyle">channel-style</a></em></code></td>
-<!-- --><td colspan=2><code>channels-separate</code></td></tr>
-<!-- --><tr><td colspan=2></td><td>The default state of the '<a href="snd.html#unitebutton">unite</a>' button in multi-channel files.  
-<!-- -->Other values are <i>channels-combined</i> and <i>channels-superimposed</i>.  
-<!-- --></td></tr>
-<!-- --><tr><td colspan=3></td></tr>
-<!-- -->
 <!-- corruption-time -->
 <!-- --><tr><td valign=top><code><em class=def><a name="corruptiontime">corruption-time</a></em></code></td>
 <!-- --><td valign=top><code>60</code></td>
@@ -941,11 +933,10 @@ when you save a sound via the "save" dialog.</p>
 <!-- --></td></tr>
 <!-- --><tr><td colspan=3></td></tr>
 <!-- -->
-<!-- dac-folding -->
-<!-- --><tr><td><code><em class=def><a name="dacfolding">dac-folding</a></em></code></td>
+<!-- dac-combines-channels -->
+<!-- --><tr><td><code><em class=def><a name="dacfolding">dac-combines-channels</a></em></code></td>
 <!-- --><td><code>#t</code></td>
-<!-- --><td>channels folded upon dac output if not enough dac channels are 
-<!-- -->available.
+<!-- --><td>channels mixed into available channels upon dac output if necessary.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=3></td></tr>
 <!-- -->
@@ -1292,7 +1283,7 @@ the hook.
     (if (&gt; (channels snd) 1)
         (begin
           (set! (sync snd) (1+ snd)) ; 0 = #f
-          (set! (uniting snd) channels-combined)
+          (set! (channel-style snd) channels-combined)
           (set! (graph-style snd) graph-filled)))
 <!-- --></pre></td></tr></table></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
@@ -3736,6 +3727,15 @@ desired edit history position.
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
 <!-- -->
+<!-- channel-style -->
+<!-- --><tr><td><code><em class=def><a name="channelstyle">channel-style</a></em>(<i>snd</i>)</code></td>
+<!-- --><td colspan=2><code>channels-separate</code></td></tr>
+<!-- --><tr><td colspan=2></td><td>The state of the '<a href="snd.html#unitebutton">unite</a>' button in multi-channel files.  
+<!-- -->Other values are <i>channels-combined</i> and <i>channels-superimposed</i>.  
+<!-- --></td></tr>
+<!-- --><tr><td colspan=3></td></tr>
+<!-- -->
+<!-- -->
 <!-- channel-sync -->
 <!-- --><tr><td colspan=2>
 <!-- --><span class=defbox><code><em class=def><a name="sndchannelsync">channel-sync</a></em> (<em class=targ>snd chn</em>)</code></span>
@@ -5458,17 +5458,6 @@ desired edit history position.
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
 <!-- -->undo <i>edits</i> edits (default 1) in <i>snd</i>'s channel <i>chn</i>.
-<!-- --></td></tr>
-<!-- --><tr><td colspan=2></td></tr>
-<!-- -->
-<!-- -->
-<!-- uniting -->
-<!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="snduniting">uniting</a></em> (<em class=targ>snd</em>)</code></span>
-<!-- --></td></tr>
-<!-- --><tr><td></td><td>
-<!-- -->#f if channels are not superimposed or combined ('unite' button is off).
-<!-- -->The global name of this is channel-style.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -7375,6 +7364,14 @@ variable %load-verbosely to #t.
 <!-- --><tr><td></td><td>
 <!-- -->check for C-g to interrupt on-going computation (and let other UI 
 <!-- -->events through).
+<!-- --></td></tr>
+<!-- --><tr><td colspan=2></td></tr>
+<!-- -->
+<!-- c-g! -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="sndoops">c-g!</a></em> ()</code></span></td></tr>
+<!-- --><tr><td></td><td>
+<!-- -->simulate typing C-g (intended for use with bind-key to remap C-g).
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->

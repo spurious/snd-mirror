@@ -1130,7 +1130,7 @@ static void Combine_button_Callback(Widget w, XtPointer context, XtPointer info)
       else val = CHANNELS_COMBINED;
     }
   else val = CHANNELS_SEPARATE;
-  combineb(sp, val);
+  set_sound_channel_style(sp, val);
 }
 
 
@@ -2560,7 +2560,7 @@ void snd_info_cleanup(snd_info *sp)
 	  XtVaSetValues(w_snd_filter_button(sp), XmNset, FALSE, NULL);
 	  XtVaSetValues(w_snd_reverb_button(sp), XmNset, FALSE, NULL);
 	  XmToggleButtonSetState(w_snd_combine(sp), FALSE, FALSE);
-	  sp->combining = CHANNELS_SEPARATE;
+	  sp->channel_style = CHANNELS_SEPARATE;
 #if (XmVERSION > 1)
 	  if (sound_style(ss) == SOUNDS_IN_NOTEBOOK)
 	    {
@@ -2621,7 +2621,7 @@ void equalize_sound_panes(snd_state *ss, snd_info *sp, chan_info *ncp)
 	  XtManageChild(channel_main_pane(ncp));
 	}
     }
-  if (sp->combining == CHANNELS_COMBINED)
+  if (sp->channel_style == CHANNELS_COMBINED)
     {
       cp = any_selected_channel(sp);
       high = (Float)(sp->nchans - cp->chan) / (Float)sp->nchans;

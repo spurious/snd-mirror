@@ -493,7 +493,7 @@ static void combine_button_click(GtkWidget *w, gpointer data)
       else val = CHANNELS_COMBINED;
     }
   else val = CHANNELS_SEPARATE;
-  combineb(sp, val);
+  set_sound_channel_style(sp, val);
   last_combine_state = 0;
 }
 
@@ -1867,7 +1867,7 @@ void snd_info_cleanup(snd_info *sp)
       sx = sp->sgx;
       if (w_snd_sync(sp))
 	{
-	  sp->combining = CHANNELS_SEPARATE; 
+	  sp->channel_style = CHANNELS_SEPARATE; 
 	  if (sound_style(sp->state) == SOUNDS_IN_NOTEBOOK)
 	    {
 	      /* gtk_notebook_remove_page(GTK_NOTEBOOK(SOUND_PANE_BOX(ss)), sx->page); */
