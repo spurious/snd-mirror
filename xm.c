@@ -1862,9 +1862,9 @@ static int xmstringtable_length(Widget w, char *name)
 static XEN C_TO_XEN_ANY(Widget w, char *name, unsigned long *v)
 {
   /* XtGetValues -- a list of pairs: resource-name place-holder where we fill in the 2nd element */
-  unsigned long value, len;
+  unsigned long value;
   Arg a[1];
-  int j;
+  int j, ilen;
   value = v[0];
   switch (resource_type(name))
     {
@@ -1884,13 +1884,13 @@ static XEN C_TO_XEN_ANY(Widget w, char *name, unsigned long *v)
     case XM_WIDGET_LIST:      /* (XtGetValues c1 (list XmNchildren 0) 1) */
 #if MOTIF_2
       if (strcmp(name, XmNchildren) == 0)
-	XtSetArg(a[0], XmNnumChildren, &len);             /* Composite */
-      else XtSetArg(a[0], XmNselectedObjectCount, &len);  /* Container */
+	XtSetArg(a[0], XmNnumChildren, &ilen);             /* Composite */
+      else XtSetArg(a[0], XmNselectedObjectCount, &ilen);  /* Container */
 #else
-      XtSetArg(a[0], XmNnumChildren, &len);
+      XtSetArg(a[0], XmNnumChildren, &ilen);
 #endif
       XtGetValues(w, a, 1);
-      return(C_TO_XEN_Widgets((Widget *)value, (int)len));
+      return(C_TO_XEN_Widgets((Widget *)value, ilen));
       break;
     case XM_BOOLEAN:	      return(C_TO_XEN_BOOLEAN(value));
     case XM_SEARCH_CALLBACK:
@@ -1942,20 +1942,22 @@ static XEN C_TO_XEN_ANY(Widget w, char *name, unsigned long *v)
     case XM_TEXT_SOURCE:      return(C_TO_XEN_XmTextSource((XmTextSource)value));
     case XM_ATOM_LIST:	      
       if (strcmp(name, XmNexportTargets) == 0)            /* DragContext */
-	XtSetArg(a[0], XmNnumExportTargets, &len);        /* DropSite */
-      else XtSetArg(a[0], XmNnumImportTargets, &len);
+	XtSetArg(a[0], XmNnumExportTargets, &ilen);        /* DropSite */
+      else XtSetArg(a[0], XmNnumImportTargets, &ilen);
       XtGetValues(w, a, 1);
-      return(C_TO_XEN_Atoms((Atom *)value, (int)len));
+      if ((ilen > 0) && (ilen < 100))
+	return(C_TO_XEN_Atoms((Atom *)value, ilen));
+      else return(XEN_FALSE);
       break;
     case XM_STRING_LIST:                                  /* ApplicationShell */
-      XtSetArg(a[0], XmNargc, &len);
+      XtSetArg(a[0], XmNargc, &ilen);
       XtGetValues(w, a, 1);
-      return(C_TO_XEN_Strings((char **)value, (int)len));
+      return(C_TO_XEN_Strings((char **)value, ilen));
       break;
     case XM_CHARSET_TABLE:    
-      XtSetArg(a[0], XmNbuttonCount, &len); /* may not be long enough... */
+      XtSetArg(a[0], XmNbuttonCount, &ilen); /* may not be long enough... */
       XtGetValues(w, a, 1);
-      return(C_TO_XEN_Strings((char **)value, (int)len));
+      return(C_TO_XEN_Strings((char **)value, ilen));
       break;
 #if (!XM_DISABLE_DEPRECATED)
     case XM_FONTLIST:	      return(C_TO_XEN_XmFontList((XmFontList)value));
@@ -1963,9 +1965,9 @@ static XEN C_TO_XEN_ANY(Widget w, char *name, unsigned long *v)
     case XM_COLORMAP:	      return(C_TO_XEN_Colormap(value));
     case XM_KEYSYM:	      return(C_TO_XEN_KeySym(value));
     case XM_KEYSYM_TABLE:     
-      XtSetArg(a[0], XmNbuttonCount, &len);
+      XtSetArg(a[0], XmNbuttonCount, &ilen);
       XtGetValues(w, a, 1);
-      return(C_TO_XEN_KeySyms((KeySym *)value, (int)len));
+      return(C_TO_XEN_KeySyms((KeySym *)value, ilen));
       break;
     case XM_SCREEN:	      return(C_TO_XEN_Screen((Screen *)value));
     case XM_WINDOW:	      return(C_TO_XEN_Window((Window)value));
@@ -1973,21 +1975,21 @@ static XEN C_TO_XEN_ANY(Widget w, char *name, unsigned long *v)
     case XM_INT_TABLE:	      
 #if MOTIF_2
       if (strcmp(name, XmNdetailOrder) == 0) 
-	XtSetArg(a[0], XmNdetailOrderCount, &len); 
+	XtSetArg(a[0], XmNdetailOrderCount, &ilen); 
       else
 	{
 	  if (strcmp(name, XmNselectionArray) == 0) 
-	    XtSetArg(a[0], XmNselectionArrayCount, &len); 
-	  else XtSetArg(a[0], XmNselectedPositionCount, &len);
+	    XtSetArg(a[0], XmNselectionArrayCount, &ilen); 
+	  else XtSetArg(a[0], XmNselectedPositionCount, &ilen);
 	}
       XtGetValues(w, a, 1);
-      return(C_TO_XEN_Ints((int *)value, (int)len));
+      return(C_TO_XEN_Ints((int *)value, ilen));
 #endif
       break;
     case XM_RECTANGLE_LIST:                              /* XmNrectangles exists but is not documented */
-      XtSetArg(a[0], XmNnumDropRectangles, &len);
+      XtSetArg(a[0], XmNnumDropRectangles, &ilen);
       XtGetValues(w, a, 1);
-      return(C_TO_XEN_XRectangles((XRectangle *)value, (int)len));
+      return(C_TO_XEN_XRectangles((XRectangle *)value, ilen));
       break;
     case XM_WIDGET_CLASS:     return(C_TO_XEN_WidgetClass((WidgetClass)value));
     case XM_STRING_OR_INT:
@@ -5831,21 +5833,35 @@ static XEN gxm_XmDropSiteQueryStackingOrder(XEN arg1)
   return(XEN_CONS(C_TO_XEN_Widget(parent), lst));
 }
 
-static XEN gxm_XmDropSiteRetrieve(XEN arg1, XEN arg2, XEN arg3)
+static XEN gxm_XmDropSiteRetrieve(XEN arg1, XEN larg2, XEN arg3)
 {
   #define H_XmDropSiteRetrieve "void XmDropSiteRetrieve(Widget widget, ArgList arglist, Cardinal argcount) \
 retrieves resource values set on a drop site"
+
+  Arg *args;
+  unsigned long *locs;
+  XEN val = XEN_FALSE;
+  int i, len;
+  char *name;
+  XEN arg2;
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmDropSiteRetrieve", "Widget");
-  XEN_ASSERT_TYPE(XEN_LIST_P(arg2), arg2, 2, "XmDropSiteRetrieve", "ArgList");
+  XEN_ASSERT_TYPE(XEN_LIST_P(larg2), larg2, 2, "XmDropSiteRetrieve", "ArgList");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(arg3), arg3, 3, "XmDropSiteRetrieve", "int");
-  {  
-    Arg *args;
-    args = XEN_TO_C_Args(arg2);
-    XmDropSiteRetrieve(XEN_TO_C_Widget(arg1), 
-		       args, XEN_TO_C_INT_DEF(arg3, arg2));
-    if (args) FREE(args);
-  }
-  return(XEN_FALSE);
+  arg2 = XEN_COPY_ARG(larg2);
+  len = XEN_TO_C_INT_DEF(arg3, larg2);
+  if (len <= 0) XEN_ASSERT_TYPE(0, arg3, 3, "XmDropSiteRetrieve", "positive integer");
+  args = (Arg *)CALLOC(len, sizeof(Arg));
+  locs = (unsigned long *)CALLOC(len, sizeof(unsigned long));
+  for (i = 0; i < len; i++, arg2 = XEN_CDDR(arg2))
+    {
+      name = XEN_TO_C_STRING(XEN_CAR(arg2));
+      XtSetArg(args[i], name, &(locs[i]));
+    }
+  XmDropSiteRetrieve(XEN_TO_C_Widget(arg1), args, len);
+  val = C_TO_XEN_Args((Widget)(XEN_TO_C_Widget(arg1)), args, len);
+  FREE(args);
+  FREE(locs);
+  return(val);
 }
 
 static XEN gxm_XmDropSiteEndUpdate(XEN arg1)
@@ -24662,6 +24678,17 @@ static int xm_already_inited = 0;
                            (XmDeactivateProtocol s (XInternAtom (XtDisplay s) \"WM_PROTOCOLS\" #f) p))");
       XEN_EVAL_C_STRING("(define (XmSetWMProtocolHooks s p preh prec posth postc) \
                            (XmSetProtocolHooks s (XInternAtom (XtDisplay s) \"WM_PROTOCOLS\" #f) p preh prec posth postc))");
+
+      /*
+	(XmSetWMProtocolHooks shell
+		      (XmInternAtom dpy "WM_DELETE_WINDOW" #f)
+		      (lambda (w c i)
+			(snd-display "prehook: ~A ~A ~A" w c i))
+		      12345
+		      (lambda (w c i)
+			(snd-display "posthook: ~A ~A ~A" w c i))
+		      54321)
+      */
 #endif
       XEN_DEFINE_PROCEDURE(S_add_resource, g_add_resource_w, 2, 0, 0, H_add_resource);
       XEN_YES_WE_HAVE("xm");

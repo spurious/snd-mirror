@@ -527,6 +527,9 @@ static void muffle_warning(char *name, char *type, char *klass, char *defaultp, 
 
 static void ss_graph_key_press(Widget w, XtPointer context, XEvent *event, Boolean *cont) 
 {
+  /* this is needed if user starts bare (no listener) Snd, then uses the menu accelerators
+   *   to access the menus
+   */
   XKeyEvent *ev = (XKeyEvent *)event;
   KeySym keysym;
   int key_state;
@@ -988,6 +991,12 @@ void snd_doit(snd_state *ss, int argc, char **argv)
   initialize_colormap(ss);
 
   BACKGROUND_ADD(ss, startup_funcs, make_startup_state(ss, shell, dpy));
+  /* this complication seems necessary because we might be loading Scheme code files
+   *   from the startup args (via -l) and they might contain errors etc -- we want to
+   *   be sure the complete interface is running (via the XtAppMainLoop below) when
+   *   we drop into the error handler.  (Also we need the two longjmp sets, but they
+   *   must follow this startup loop).
+   */
 
 #if HAVE_SETJMP_H
 #if TRAP_SEGFAULT

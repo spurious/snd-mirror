@@ -2149,13 +2149,14 @@ static xen_value *cond_form(ptree *prog, XEN form, int need_result)
 	    {
 	      if (result->type != clause_value->type)
 		{
+		  run_warn("cond clause types differ: %s %s", type_name(clause_value->type), type_name(result->type));
 		  FREE(clause_value);
 		  FREE(result);
 		  if (jump_to_next_clause) FREE(jump_to_next_clause);
 		  for (i = 0; i < clause_ctr; i++) 
 		    if (fixups[i]) FREE(fixups[i]);
 		  FREE(fixups);
-		  return(run_warn("cond clause types differ: %s %s", type_name(clause_value->type), type_name(result->type)));
+		  return(NULL);
 		}
 	    }
 	  set_var(prog, result, clause_value);
@@ -5707,7 +5708,13 @@ static char *descr_gen(int *args, int *ints, Float *dbls, char *which, int num_a
 }
 
 #define GEN_P(Name) \
-  static char *descr_ ## Name ## _0p(int *args, int *ints, Float *dbls) {return(descr_gen(args, ints, dbls, #Name "?", 0));} \
+  static char *descr_ ## Name ## _0p(int *args, int *ints, Float *dbls) \
+{ \
+  char *buf; \
+  buf = (char *)CALLOC(256, sizeof(char)); \
+  sprintf(buf, INT_PT " = " #Name "?(" PTR_PT ")", args[0], BOOL_RESULT, args[1], (mus_any *)(INT_ARG_1)); \
+  return(buf); \
+} \
   static void Name ## _0p(int *args, int *ints, Float *dbls) {BOOL_RESULT = mus_ ##Name ## _p((mus_any *)(INT_ARG_1));} \
   static xen_value * Name ## _p(ptree *prog, xen_value **args) \
   { \

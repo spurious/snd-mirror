@@ -176,7 +176,7 @@ static void chans_transform_size(chan_info *cp, void *ptr)
   if (cp->fft) 
     {
       fp = cp->fft;
-      if (fp->size < size) fp->ok = 0; /* "dirty" flag for fft data array = needs REALLOCation */
+      if (fp->size < size) fp->ok = 0; /* "dirty" flag for fft data array = needs reallocation */
       fp->size = size;
     }
 }

@@ -68,6 +68,7 @@
 (define have-libguile-so #t) ; set to #f if loading libguile.a
 (define debugging-device-channels 8)
 (define pi 3.141592653589793)
+(define mus-position mus-channels)
 
 (define home-dir "/home")
 (if (file-exists? "/export/home/bil/cl/oboe.snd")
@@ -18707,7 +18708,6 @@ EDITS: 5
 	  (itst (list 'frames #f #f current-edit-position) 50828)
 	  (etst '(edit-position ind 0 0))
 	  (close-sound ind)))
-      (etst '(report-in-minibuffer "hiho" "oops"))
 
       (define max-optimization 5)
 
@@ -19699,21 +19699,33 @@ EDITS: 5
 		    (key-event lst snd-return-key 0) (force-event)
 		    (IF (not (= mxa 32))
 			(snd-display ";M-n mxa in listener: ~A" mxa))
-		    (widget-string lst "(set! mxa")
+		    (widget-string lst "(set! mxa" #f)
 		    (key-event lst snd-return-key 0) (force-event)
 		    (key-event lst snd-tab-key 0) (force-event)
-		    (widget-string lst "123)")
+		    (widget-string lst "123)" #f)
 		    (key-event lst snd-return-key 0) (force-event)
 		    (IF (not (= mxa 123))
 			(snd-display ";set! mxa with embedded cr in listener: ~A" mxa))
-		    (widget-string lst "abc")
+		    (widget-string lst "abc" #f)
 		    (key-event lst (char->integer #\a) 4)
 		    (key-event lst (char->integer #\U) 9) (force-event)
 		    (key-event lst (char->integer #\a) 4)
 		    (key-event lst (char->integer #\t) 4)
 		    (key-event lst (char->integer #\C) 9) (force-event)
 		    (key-event lst (char->integer #\a) 4)
-		    (key-event lst (char->integer #\k) 4))
+		    (key-event lst (char->integer #\k) 4)
+		    (widget-string lst "(mus-sound-s" #f)
+		    (key-event lst snd-tab-key 0) (force-event)
+		    (let ((helpd (list-ref (dialog-widgets) 15)))
+		      (if helpd
+			  (if (not (XtIsManaged helpd))
+			      (snd-display ";help completion dialog isn't active?")
+			      (XtUnmanageChild helpd))
+			  (snd-display ";no help dialog at all!")))
+		    (key-event lst (char->integer #\a) 4)
+		    (key-event lst (char->integer #\k) 4)
+		    (widget-string lst "(open-sound ")
+		    (key-event lst (char->integer #\?) 4))
 
 		  (take-keyboard-focus cwid)
 		  (key-event cwid (char->integer #\x) 4) (force-event)
@@ -21494,7 +21506,8 @@ EDITS: 5
 			   (trktxt (find-child mixd "mix-track"))
 			   (playb (find-child mixd "play"))
 			   (spdscr (find-child mixd "speed"))
-			   (ampscr (find-child mixd "amp")))
+			   (ampscr (find-child mixd "amp"))
+			   (ampenv (find-child mixd "amp-env-window")))
 		      (IF (fneq (sample 1001) (+ s1001 .1)) 
 			  (snd-display ";mix-panel at 1001: ~A (~A)?" (sample 1001) s1001))
 		      (IF (fneq (sample 2001) (+ s2001 .1)) 
@@ -21526,6 +21539,13 @@ EDITS: 5
 		       (map
 			(lambda (w) (find-child mixd w))
 			(list "speed-label" "amp-label")))
+		      (if (XmDrawingArea? ampenv)
+			  (let* ((xy (widget-size ampenv))
+				 (x0 (inexact->exact (/ (car xy) 2)))
+				 (y0 (inexact->exact (/ (cadr xy) 2))))
+			    (click-event ampenv 1 0 x0 y0)
+			    (drag-event ampenv 1 0 x0 y0 (+ x0 20) (+ y0 20)))
+			  (snd-display ";mix-dialog ampenv: ~A" ampenv))
 		      (widget-string begtxt "0.5") (force-event)
 		      (key-event begtxt snd-return-key 0) (force-event)
 		      (widget-string trktxt "2") (force-event)
@@ -23285,6 +23305,11 @@ EDITS: 5
 			    ;(XmFontListFree newlist)
 			    )
 			(XmFontListFreeFontContext context)))
+		      (let ((fnt (XmFontListEntryLoad (XtDisplay (cadr (main-widgets)))
+						      "-adobe-times-medium-r-normal-*-18-*-*-*-*-*-*-*"
+						      XmFONT_IS_FONTSET
+						      "a_new_font")))
+			(XmFontListEntryFree fnt))
 
 		      (set! (.foreground gv) (data-color))
 		      (set! (.background gv) (basic-color))
@@ -24485,7 +24510,19 @@ EDITS: 5
 	      (display-scanned-synthesis)
 	      (add-mark-pane)
 	      (let ((ind (open-sound "oboe.snd")))
-		(make-channel-drop-site ind 0))
+		(make-channel-drop-site ind 0)
+		(let ((drop-site (find-child (XtParent (XtParent (list-ref (channel-widgets ind 0) 7))) "drop here")))
+		  (if drop-site
+		      (begin
+			(XtVaGetValues drop-site (list XmNdropRectangles 0))
+			(let ((val (XmDropSiteRetrieve drop-site (list XmNnumImportTargets 0))))
+			  (if (not (= (cadr val) 1)) (snd-display ";XmDropSiteRetrieve num: ~A" val)))
+			(XmDropSiteRetrieve drop-site (list XmNimportTargets 0))
+			(if (not (XmDropSiteRegistered drop-site))
+			    (snd-display ";XmDropSiteRegistered?"))
+			(XmDropSiteUnregister drop-site))
+		      (snd-display "no drop site?"))))
+
 	      (add-mark 123)
 	      (add-selection-popup)
 	      (let ((container
@@ -24554,6 +24591,15 @@ EDITS: 5
 	      (IF (not (Atom? prop)) (snd-display ";XmInternAtom: ~A" prop))
 	      (IF (not (string=? (XmGetAtomName dpy prop) "TESTING")) (snd-display ";XmGetAtomName: ~A" (XmGetAtomName dpy prop)))
 	      (XmAddProtocols shell prop (list proto1 proto2))
+	      (XmSetProtocolHooks shell
+				  (XmInternAtom dpy "WM_PROTOCOLS" #f)
+				  prop
+				  (lambda (w c i)
+				    (snd-display "prehook: ~A ~A ~A" w c i))
+				  12345
+				  (lambda (w c i)
+				    (snd-display "posthook: ~A ~A ~A" w c i))
+				  54321)
 	      (XmDeactivateProtocol shell prop proto2)
 	      (XmRemoveProtocols shell prop (list proto2))
 	      (XmAddProtocolCallback shell prop proto1 (lambda (w c i) (set! val c)) 123)

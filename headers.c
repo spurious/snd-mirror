@@ -2702,22 +2702,37 @@ static int read_voc_header(int chan)
 /* ------------------------------------ TwinVQ ------------------------------------ 
  *
  * from Audio Tools Library (atl.zip) at http://jfaul.de/atl.
- * a chunked header
+ * a chunked header for propietary (and apparently obsolete?) compressed data
  *
  * 0: "TWIN"
  * 4: version id (string)
- * 12: header size ["cardinal" -- is this int or short in Pascal? -- looks like int]
- * common chunk header (4 of ID, "cardinal" size)
- * channels (cardinal: 0=mono 1=stereo)
- * bitrate (cardinal)
- * srate (cardinal khz?? 11, 22, 44! else *1000)
- * security (cardinal 0)
- * filesize (cardinal bytes)
- * tag array (6 Pascal(?) strings): 'NAME', 'COMT', 'AUTH', '(c) ', 'FILE', 'ALBM'
- * "DATA" chunk
+ * 12: header size ["cardinal" -> bint]
+ * common chunk header (4 of ID, bint size)
+ * 24: channels (bint: 0=mono 1=stereo)
+ * bitrate (bint)
+ * 32: srate (bint khz 11, 22, 44 else *1000)
+ * security (bint 0)
+ * filesize (bint bytes)
+ * possible chunks: NAME COMT AUTH (c) FILE ALBM DATA
  */ 
 
-/* Monkey files start with "MAC ", but this is some compression-oriented format, I think (APE?) */
+/* Monkey files start with "MAC ", but this is yet another compression-oriented format, I think (APE?) */
+
+static int read_twinvq_header(int chan)
+{
+  data_format = MUS_UNSUPPORTED;
+  data_location = mus_char_to_bint((unsigned char *)(hdrbuf + 12)) + 16 + 8;
+  chans = 1 + mus_char_to_bint((unsigned char *)(hdrbuf + 24));
+  srate = mus_char_to_bint((unsigned char *)(hdrbuf + 32));
+  if (srate == 11) srate = 11025; else
+    if (srate == 22) srate = 22050; else
+      if (srate == 44) srate = 44100; else
+	srate *= 1000;
+  true_file_length = SEEK_FILE_LENGTH(chan);
+  data_size = (true_file_length - data_location);
+  return(MUS_NO_ERROR);
+}
+
 
 
 /* ------------------------------------ ADC ------------------------------------ 
@@ -4681,6 +4696,11 @@ static int mus_header_read_with_fd_and_name(int chan, const char *filename)
     {
       header_type = MUS_SPL;
       return(read_spl_header(chan));
+    }
+  if (match_four_chars((unsigned char *)hdrbuf, I_TWIN))
+    {
+      header_type = MUS_TWINVQ;
+      return(read_twinvq_header(chan));
     }
 #if MUS_LITTLE_ENDIAN
   if (mus_char_to_uninterpreted_int((unsigned char *)hdrbuf) == 0x01000800)

@@ -311,6 +311,27 @@ static void Text_transpose(Widget w, XEvent *event, char **str, Cardinal *num)
     }
 }
 
+static void Complain(Widget w, XEvent *event, char **str, Cardinal *num) 
+{
+  /* if the minibuffer has focus (via pointer movement) and user types C-j (for example),
+   *   the textfield widget doesn't have any action associated with that, so it prints
+   *   C-j and leaves the cursor where it was; without this action, Motif posts a small
+   *   empty box where the character should be, which can be confusing; another option
+   *   would be to activate the keyboard instead (as in C-x), but I think that would only
+   *   add to the confusion.
+   */
+  char *old_text, *new_text;
+  XmTextPosition curpos;
+  curpos = XmTextGetCursorPosition(w);
+  old_text = XmTextGetString(w);
+  new_text = (char *)CALLOC(snd_strlen(old_text) + 5, sizeof(char));
+  sprintf(new_text, "%s C-%c", (old_text) ? old_text : "", str[0][0]);
+  XmTextSetString(w, new_text);
+  XmTextSetCursorPosition(w, curpos);
+  if (old_text) XtFree(old_text);
+  FREE(new_text);
+}
+
 static void Word_upper(Widget w, XEvent *event, char **str, Cardinal *num) 
 {
   int i, j, length, wstart, wend, up, cap;
@@ -565,14 +586,17 @@ static void Listener_completion(Widget w, XEvent *event, char **str, Cardinal *n
   ss->sgx->completion_requestor = listener_text;
   beg = printout_end + 1;
   end = XmTextGetLastPosition(w);
+  /* fprintf(stderr,"requested completion: %d %d\n", beg, end); */
   if (end <= beg) return;
   len = end - beg + 1;
   old_text = (char *)CALLOC(len + 1, sizeof(char));
   XmTextGetSubstring(w, beg, len, len + 1, old_text);
+  /* fprintf(stderr,"-> %s\n",old_text); */
   /* now old_text is the stuff typed since the last prompt */
   if (old_text)
     {
       new_text = complete_listener_text(old_text, end, &try_completion, &file_text);
+      /* fprintf(stderr,"  --> %s\n", new_text); */
       if (try_completion == 0)
 	{
 	  FREE(old_text);
@@ -628,7 +652,7 @@ static void Listener_g(Widget w, XEvent *event, char **str, Cardinal *num)
 }
 
 
-#define NUM_ACTS 18
+#define NUM_ACTS 19
 static XtActionsRec acts[] = {
   {"no-op", No_op},
   {"activate-keyboard", Activate_keyboard},
@@ -648,6 +672,7 @@ static XtActionsRec acts[] = {
   {"listener-help", Listener_help},
   {"listener-meta-p", Listener_Meta_P},
   {"listener-meta-n", Listener_Meta_N},
+  {"complain", Complain},
 };
 
 /* translation tables for emacs compatibility and better inter-widget communication */
@@ -658,6 +683,7 @@ static char TextTrans2[] =
 	Ctrl <Key>b:	    backward-character()\n\
 	Mod1 <Key>b:	    backward-word()\n\
 	Mod1 <Key>c:	    word-upper(c)\n\
+        Ctrl <Key>c:        complain(c)\n\
 	Ctrl <Key>d:	    delete-next-character()\n\
 	Mod1 <Key>d:	    delete-next-word()\n\
 	Ctrl <Key>e:	    end-of-line()\n\
@@ -665,14 +691,27 @@ static char TextTrans2[] =
 	Mod1 <Key>f:	    forward-word()\n\
 	Ctrl <Key>g:	    activate()\n\
 	Ctrl <Key>h:	    delete-previous-character()\n\
+        Ctrl <Key>i:        complain(i)\n\
+        Ctrl <Key>j:        complain(j)\n\
 	Ctrl <Key>k:	    delete-to-end-of-line()\n\
 	Mod1 <Key>l:	    word-upper(l)\n\
+        Ctrl <Key>m:        complain(m)\n\
+        Ctrl <Key>n:        complain(n)\n\
 	Mod1 <Key>n:	    activate()\n\
+        Ctrl <Key>o:        complain(o)\n\
 	Mod1 <Key>p:	    activate()\n\
+        Ctrl <Key>p:        complain(p)\n\
+        Ctrl <Key>q:        complain(q)\n\
         Ctrl <Key>r:        activate()\n\
         Ctrl <Key>s:        activate()\n\
 	Ctrl <Key>t:	    text-transpose()\n\
 	Mod1 <Key>u:	    word-upper(u)\n\
+        Ctrl <Key>u:        complain(u)\n\
+        Ctrl <Key>v:        complain(v)\n\
+        Ctrl <Key>w:        complain(w)\n\
+	Ctrl <Key>x:	    activate-keyboard(x)\n\
+        Ctrl <Key>y:        complain(y)\n\
+        Ctrl <Key>z:        complain(z)\n\
 	Mod1 <Key><:	    beginning-of-line()\n\
 	Mod1 <Key>>:	    end-of-line()\n\
 	<Key>Delete:	    delete-previous-character()\n\

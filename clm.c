@@ -192,7 +192,7 @@ static char *print_array(Float *arr, int len, int loc)
   k = loc;
   for (i = 0; i < lim - 1; i++)
     {
-      sprintf(str, "%.3f ", arr[k]);
+      mus_snprintf(str, 64, "%.3f ", arr[k]);
       strcat(base, str);
       if ((int)(strlen(base) + 32) > size)
 	{
@@ -203,7 +203,7 @@ static char *print_array(Float *arr, int len, int loc)
       k++;
       if (k >= len) k = 0;
     }
-  sprintf(str, "%.3f%s]", arr[k], (len > lim) ? "..." : "");
+  mus_snprintf(str, 64, "%.3f%s]", arr[k], (len > lim) ? "..." : "");
   strcat(base, str);
   FREE(str);
   return(base);
@@ -228,7 +228,7 @@ static char *print_double_array(double *arr, int len, int loc)
   k = loc;
   for (i = 0; i < lim - 1; i++)
     {
-      sprintf(str, "%.3f ", arr[k]);
+      mus_snprintf(str, 128, "%.3f ", arr[k]);
       strcat(base, str);
       if ((int)(strlen(base) + 32) > size)
 	{
@@ -239,7 +239,7 @@ static char *print_double_array(double *arr, int len, int loc)
       k++;
       if (k >= len) k = 0;
     }
-  sprintf(str, "%.3f%s]", arr[k], (len > lim) ? "..." : "");
+  mus_snprintf(str, 128, "%.3f%s]", arr[k], (len > lim) ? "..." : "");
   strcat(base, str);
   FREE(str);
   return(base);
@@ -264,7 +264,7 @@ static char *print_off_t_array(off_t *arr, int len, int loc)
   k = loc;
   for (i = 0; i < lim - 1; i++)
     {
-      sprintf(str, OFF_TD " ", arr[k]);
+      mus_snprintf(str, 32, OFF_TD " ", arr[k]);
       strcat(base, str);
       if ((int)(strlen(base) + 32) > size)
 	{
@@ -275,7 +275,7 @@ static char *print_off_t_array(off_t *arr, int len, int loc)
       k++;
       if (k >= len) k = 0;
     }
-  sprintf(str, OFF_TD "%s]", arr[k], (len > lim) ? "..." : "");
+  mus_snprintf(str, 32, OFF_TD "%s]", arr[k], (len > lim) ? "..." : "");
   strcat(base, str);
   FREE(str);
   return(base);
@@ -3698,16 +3698,16 @@ static char *describe_mixer(void *ptr)
       gen = (mus_mixer *)ptr;
       mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE,
 		   "mixer: chans: %d, vals: [", gen->chans);
-      str = (char *)CALLOC(16, sizeof(char));
+      str = (char *)CALLOC(64, sizeof(char));
       if (gen->chans < 8) lim = gen->chans;
       for (i = 0; i < lim; i++)
 	for (j = 0; j < lim; j++)
 	  {
-	    sprintf(str, "%s%.3f%s%s",
-		    (j == 0) ? "(" : "",
-		    gen->vals[i][j],
-		    (j == (gen->chans - 1)) ? ")" : "",
-		    ((i == (gen->chans - 1)) && (j == (gen->chans - 1))) ? "]" : " ");
+	    mus_snprintf(str, 64, "%s%.3f%s%s",
+			 (j == 0) ? "(" : "",
+			 gen->vals[i][j],
+			 (j == (gen->chans - 1)) ? ")" : "",
+			 ((i == (gen->chans - 1)) && (j == (gen->chans - 1))) ? "]" : " ");
 	    if ((strlen(describe_buffer) + strlen(str)) < (DESCRIBE_BUFFER_SIZE - 1))
 	      strcat(describe_buffer, str);
 	    else break;
@@ -5156,6 +5156,7 @@ static int locsig_equalp(void *p1, void *p2)
 
 static char *describe_locsig(void *ptr)
 {
+  #define STR_SIZE 32
   char *str;
   int i, lim = 16;
   locs *gen = (locs *)ptr;
@@ -5164,33 +5165,32 @@ static char *describe_locsig(void *ptr)
       mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE,
 		   "locsig: chans %d, outn: [", 
 		   gen->chans);
-      str = (char *)CALLOC(32, sizeof(char));
+      str = (char *)CALLOC(STR_SIZE, sizeof(char));
       if (gen->chans - 1 < lim) lim = gen->chans - 1;
       for (i = 0; i < lim; i++)
 	{
-	  sprintf(str, "%.3f ", gen->outn[i]);
+	  mus_snprintf(str, STR_SIZE, "%.3f ", gen->outn[i]);
 	  if ((strlen(describe_buffer) + strlen(str)) < (DESCRIBE_BUFFER_SIZE - 16))
 	    strcat(describe_buffer, str);
 	  else break;
 	}
       if (gen->chans - 1 > lim) strcat(describe_buffer, "...");
-      sprintf(str, "%.3f]", gen->outn[gen->chans - 1]);
+      mus_snprintf(str, STR_SIZE, "%.3f]", gen->outn[gen->chans - 1]);
       strcat(describe_buffer, str);
       if (gen->rev_chans > 0)
 	{
-	  sprintf(str, ", revn: [");
-	  strcat(describe_buffer, str);
+	  strcat(describe_buffer, ", revn: [");
 	  lim = 16;
 	  if (gen->rev_chans - 1 < lim) lim = gen->rev_chans - 1;
 	  for (i = 0; i < lim; i++)
 	    {
-	      sprintf(str, "%.3f ", gen->revn[i]);
+	      mus_snprintf(str, STR_SIZE, "%.3f ", gen->revn[i]);
 	      if ((strlen(describe_buffer) + strlen(str)) < (DESCRIBE_BUFFER_SIZE - 16))
 		strcat(describe_buffer, str);
 	      else break;
 	    }
 	  if (gen->rev_chans - 1 > lim) strcat(describe_buffer, "...");
-	  sprintf(str, "%.3f]", gen->revn[gen->chans - 1]);
+	  mus_snprintf(str, STR_SIZE, "%.3f]", gen->revn[gen->rev_chans - 1]);
 	  strcat(describe_buffer, str);
 	}
       FREE(str);
