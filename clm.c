@@ -4165,7 +4165,7 @@ static char *inspect_wt(void *ptr)
 static Float wt_freq(void *ptr) {return(((wt *)ptr)->freq);}
 static Float set_wt_freq(void *ptr, Float val) {((wt *)ptr)->freq = val; return(val);}
 static Float wt_phase(void *ptr) {return(fmod(((TWO_PI * ((wt *)ptr)->phase) / ((Float)((wt *)ptr)->wsize)), TWO_PI));}
-static Float set_wt_phase(void *ptr, Float val) {((wt *)ptr)->phase = (val * ((wt *)ptr)->phase) / TWO_PI; return(val);}
+static Float set_wt_phase(void *ptr, Float val) {((wt *)ptr)->phase = (fmod(val, TWO_PI) * ((wt *)ptr)->wsize) / TWO_PI; return(val);}
 static int wt_length(void *ptr) {return(((wt *)ptr)->wsize);}
 static int wt_set_length(void *ptr, int val) {((wt *)ptr)->wsize = val; return(val);}
 static Float *wt_data(void *ptr) {return(((wt *)ptr)->wave);}

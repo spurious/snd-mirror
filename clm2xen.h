@@ -36,9 +36,9 @@ XEN mus_xen_to_object_with_vct(mus_xen *gn, XEN v);
 #define S_dolph_chebyshev_window "dolph-chebyshev-window"
 
 #if HAVE_RUBY
-XEN Init_sndlib(void);
+void Init_sndlib(void);
 #else
-XEN init_sndlib(void);
+void init_sndlib(void);
 #endif
 
 #endif

@@ -24812,11 +24812,11 @@ static void define_Atoms(void)
 static int xm_already_inited = 0;
 
 #if HAVE_GUILE
- XEN init_xm(void);
- XEN init_xm(void)
+ void init_xm(void);
+ void init_xm(void)
 #else
- XEN Init_libxm(void);
- XEN Init_libxm(void)
+ void Init_libxm(void);
+ void Init_libxm(void)
 #endif
 {
   /* perhaps nicer here to check the features list for 'xm */
@@ -24867,7 +24867,6 @@ static int xm_already_inited = 0;
 #endif
       xm_already_inited = 1;
     }
-  return(XEN_FALSE);
 }
 
 #endif

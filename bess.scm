@@ -9,9 +9,7 @@
 (let ((sndlib (dynamic-link "sndlib.so")))
   (if (not (dynamic-object? sndlib))
       (error "can't find sndlib.so")
-      (begin
-	(dynamic-call (dynamic-func "mus_sndlib2xen_initialize" sndlib) #f)
-	(dynamic-call (dynamic-func "mus_xen_init" sndlib) #f))))
+      (dynamic-call (dynamic-func "init_sndlib" sndlib) #f)))
 
 (let ((libxm (dynamic-link "libxm.so")))
   (if (not (dynamic-object? libxm))

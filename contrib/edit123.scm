@@ -1,6 +1,6 @@
 ; easy edit
 ;
-;version 0.6
+;version 0.7a
 ;keybindings and functions to make sound editing as easy and convenient
 ;as pressing 1 2 3
 ;1 set mark
@@ -13,12 +13,18 @@
 ;c crop delete the part before and after the marks
 ;C-1 toggles start and end status 
 ; keys have multiple actions assigned depending on the status of the editing process
+; p is a customized playfunction
+; P (thats Shift P) plays the end of the track and sets the system for setting an end mark
+; after having set the start mark pressing P (Shift-P) and then M-2 and M-3 is a good approach to quickly get to the desired area.
 ; there are some more keybindings, that i commented out.
 ; you can suit them to your taste.
-; 
+; for a more in depth description have a look at 
+; http://www.users.startplus.de/rawdlite/sound/HOWTO_record_from_radio_to_mp3.html
+; enjoy
+
 ; tom@tomroth.de
 
-;channels have to be synced (how i wish there would be mode specific settings)
+;channels have to be synced. Uncomment this lines and _all_ your sounds will start synced and combined (i wish there would be mode specific settings)
 
 ;(add-hook! after-open-hook
 ;  (lambda (snd)
@@ -51,14 +57,20 @@
 (set! (cursor) (+ (selection-position) (selection-frames))))
 
 (define (mark-named name)
+(select-channel 0)
 (set! (mark-name (add-mark (cursor) )) name)
 )
 
 (define (goto-named-mark name)
+(select-channel 0)
+(if (find-mark name)
 (set! (cursor) (mark-sample (find-mark name))))
+)
 
 (define (delete-named-mark name)
-(delete-mark (find-mark name)))
+(select-channel 0)
+(if (find-mark name)
+(delete-mark (find-mark name))))
 
 (define (my-play-selection pos1 pos2)
 (stop-playing)
@@ -70,12 +82,14 @@
 
 (define (test-mark-forw name  length)
 (stop-playing)
+(select-channel 0)
 (goto-named-mark name)
 (make-selection (cursor)  (+ (cursor) length))
 (play-selection))
 
 (define (test-mark-backw name  length)
 (stop-playing)
+(select-channel 0)
 (goto-named-mark name)
 (make-selection (- (cursor) length) (cursor)  )
 (play-selection))
@@ -83,7 +97,8 @@
 
 
 (define (move-start dif length)
-(stop-playing) 
+(stop-playing)
+(select-channel 0)
 (goto-named-mark "start")
 (delete-named-mark "start")
 (set! (cursor) (+ (cursor) dif))
@@ -93,6 +108,7 @@
 
 (define (move-end dif length)
 (stop-playing) 
+(select-channel 0)
 (goto-named-mark "end")
 (delete-named-mark "end")
 (set! (cursor) (+ (cursor) dif))
@@ -104,6 +120,7 @@
 
 (define (my-play-selection-forw dif length)
 (stop-playing)
+(select-channel 0)
 (set! (cursor) (+ (cursor) dif))
 (make-selection (cursor)  (+ (cursor) length))
 ;(set! (x-bounds) 
@@ -115,6 +132,7 @@
 
 (define (my-play-selection-backw dif length)
 (stop-playing)
+(select-channel 0)
 (set! (cursor) (- (cursor) dif))
 (make-selection (cursor)  (+ (cursor) length))
 (play-selection))
@@ -156,6 +174,7 @@
 
 
 (define (mark-start  length)
+(select-channel 0)
 (if (find-mark "start")
     (delete-named-mark "start")
 )
@@ -169,6 +188,7 @@
 (play-selection))
 
 (define (mark-end  length)
+(select-channel 0)
 (if (find-mark "end")
     (delete-named-mark "end")
 )
@@ -237,6 +257,7 @@
 ; to lazy to code ;-)
 
 (define (my_crop)
+(select-channel 0)
 (if (find-mark "start")
 (begin
   (key (char->integer #\<) 4)
@@ -251,12 +272,17 @@
   (key (char->integer #\>) 5)
   (key (char->integer #\d) 0)
 ))
+  (key (char->integer #\<) 0)
+)
+
+(define (my_save)
+(save-sound )
+(close-sound)
 )
 
 (bind-key (char->integer #\d) 0 (lambda ()(delete-selection-and-smooth)))
-(bind-key (char->integer #\s) 0  (lambda () (
-(define-selection-via-marks (find-mark "start") (find-mark "end"))
-(prompt "file:" save-region))))
+(bind-key (char->integer #\s) 0  (lambda () ( my_save)))
+
 
 (bind-key (char->integer #\ ) 8  (lambda () (stop-song)))
 (bind-key (char->integer #\c) 0  (lambda () (my_crop)))
@@ -272,7 +298,7 @@
 (bind-key (char->integer #\p) 8 (lambda () (toggle-play)))
 (bind-key (char->integer #\3) 8 (lambda () (forward-selection)))
 (bind-key (char->integer #\2) 8 (lambda () (backward-selection)))
-
+(bind-key (char->integer #\c) 0  (lambda () (my_crop)))
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;; status 
 ;;;;             0 = new

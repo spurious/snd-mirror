@@ -531,19 +531,18 @@ colormap of the entire system is hijacked while Snd is running.
 
 ---- Mac OSX: ---- 
 
-Currently you need to install Guile 1.4 (at least, I haven't managed
-to compile 1.6), GSL 1.2 (using --disable-shared), and the prebuilt
-Glib/Gtk or Motif 2.2 tarballs that contain the headers (the package
-at osxgnu is just the libraries -- I think I got my version from
-motifzone).  The Snd configure process is confused by the lack of
+Currently you need to install Guile 1.4 (later versions can be built,
+but it's currently painful), GSL 1.2 (using --disable-shared), and the
+prebuilt Glib/Gtk or Motif 2.2 tarballs that contain the headers (the
+package at osxgnu is just the libraries -- I think I got my version
+from motifzone).  The Snd configure process is confused by the lack of
 gtk-config (in the Gtk case), and (in the Motif case) by a problem
 with dynamic loading, so you need to run configure, then compare
 config.h and makefile with the versions config.motif.osx (gtk) and
 makefile.motif.osx (gtk).  The main thing that needs to be fixed by
-hand is that libXt.a and libXp.a must be used, not the shared
-object versions of those libraries.  You may also need to add -ldl (if
-the loader complains about things like dlopen).  And see below for
-libXm.
+hand is that libXt.a and libXp.a must be used, not the shared object
+versions of those libraries.  You may also need to add -ldl (if the
+loader complains about things like dlopen).  And see below for libXm.
 
 If C-f (and others like it) doesn't work, either try toggling
 the "w" button, or add the focus-widget related hooks from grfsnd.html

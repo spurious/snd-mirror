@@ -9,7 +9,7 @@
  * TODO: glGet* returning more than one value
  *
  * HISTORY:
- *     1-Aug:     removed all 'EXT' junk
+ *     1-Aug:     removed all 'EXT' junk.
  *     24-July:   changed Guile prefix (R5RS reserves vertical-bar).
  *     18-June:   GL 1.1 stubs.
  *     4-June:    GtkGLext support.
@@ -4510,11 +4510,11 @@ static void define_integers(void)
 static int gl_already_inited = 0;
 
 #if HAVE_GUILE
- XEN init_gl(void);
- XEN init_gl(void)
+ void init_gl(void);
+ void init_gl(void)
 #else
- XEN Init_libgl(void);
- XEN Init_libgl(void)
+ void Init_libgl(void);
+ void Init_libgl(void)
 #endif
 {
   if (!gl_already_inited)
@@ -4523,9 +4523,8 @@ static int gl_already_inited = 0;
       define_functions();
       XEN_YES_WE_HAVE("gl");
 #if HAVE_GUILE
-      XEN_EVAL_C_STRING("(define gl-version \"31-Jul-02\")");
+      XEN_EVAL_C_STRING("(define gl-version \"20-Oct-02\")");
 #endif
       gl_already_inited = 1;
     }
-  return(XEN_FALSE);
 }

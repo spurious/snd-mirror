@@ -163,6 +163,17 @@ static void prepare_edit_list(chan_info *cp, off_t len)
   sp = cp->sound;
   stop_amp_env(cp);
   if ((sp) && (sp->playing)) stop_playing_sound(sp);
+#if DEBUGGING
+  if ((cp->marks != NULL) && 
+      ((cp->edit_ctr >= cp->marks_size) ||
+       ((cp->marks[cp->edit_ctr] == NULL) &&
+	(cp->mark_size[cp->edit_ctr] != 0))))
+    {
+      fprintf(stderr,"mark stack trouble: size: %d, edit: %d, ptr: %p (%d)\n", 
+	      cp->marks_size, cp->edit_ctr, cp->marks, cp->mark_size[cp->edit_ctr]);
+      abort();
+    }
+#endif
   cp->edit_ctr++;
   if (cp->edit_ctr >= cp->edit_size)
     {
@@ -931,6 +942,7 @@ static void new_trailing_fragment(ed_fragment *new_back, ed_fragment *old_back, 
   new_back->beg = new_beg;
   new_back->end = old_back->end;
   new_back->scl = old_back->scl;
+  new_back->typ = old_back->typ; /* yow... added 20-Oct-02 */
   if (old_back->typ == ED_RAMP)
     new_trailing_ramp(new_back, old_back, new_beg);
 }
@@ -942,6 +954,7 @@ static void new_leading_fragment(ed_fragment *new_front, ed_fragment *old_front,
   new_front->beg = old_front->beg;
   new_front->end = old_front->beg + beg - old_front->out - 1;
   new_front->scl = old_front->scl;
+  new_front->typ = old_front->typ; /* yow... added 20-Oct-02 */
   if (old_front->typ == ED_RAMP)
     new_leading_ramp(new_front, old_front, beg);
 }
@@ -990,6 +1003,7 @@ static ed_list *insert_samples_1 (off_t samp, off_t num, ed_list *current_state,
 	  cb_new_1->beg = new_beg_1;
 	  cb_new_1->end = cb_old_0->end;
 	  cb_new_1->scl = cb_old_0->scl;
+	  cb_new_1->typ = cb_old_0->typ; /* 20-Oct-02 */
 	  if (cb_old_0->typ == ED_RAMP)
 	    {
 	      new_leading_ramp(cb_new_0, cb_old_0, samp);

@@ -1885,13 +1885,13 @@ static XEN g_find_mark(XEN samp_n, XEN snd_n, XEN chn_n)
   #define H_find_mark "(" S_find_mark " samp-or-name &optional snd chn)\n\
 finds the mark in snd's channel chn at samp (if a number) or with the given name (if a string), returning the mark id; returns #f if no mark found."
 
+  /* TODO: add edit-pos arg to find-mark */
   mark **mps;
   int i;
   off_t samp = 0;
   char *name = NULL;
   chan_info *cp = NULL;
-  XEN_ASSERT_TYPE((XEN_NUMBER_P(samp_n) || XEN_STRING_P(samp_n) || (XEN_NOT_BOUND_P(samp_n)) || (XEN_FALSE_P(samp_n))), 
-		  samp_n, XEN_ARG_1, S_find_mark, "a number or string or #f");
+  XEN_ASSERT_TYPE((XEN_NUMBER_P(samp_n) || XEN_STRING_P(samp_n) || (XEN_FALSE_P(samp_n))), samp_n, XEN_ARG_1, S_find_mark, "a number or string or #f");
   ASSERT_CHANNEL(S_find_mark, snd_n, chn_n, 2); 
   cp = get_cp(snd_n, chn_n, S_find_mark);
   if (cp->marks == NULL) 

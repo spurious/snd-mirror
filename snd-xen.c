@@ -2852,18 +2852,18 @@ XEN_NARGIFY_1(g_snd_completion_w, g_snd_completion)
 
 #if HAVE_STATIC_XM
 #if HAVE_GUILE
- XEN init_xm(void);
+ void init_xm(void);
 #else
- XEN Init_libxm(void);
+ void Init_libxm(void);
 #endif
 #endif
 
 #ifndef JUST_GL
 #if HAVE_GL
 #if HAVE_GUILE
- XEN init_gl(void);
+ void init_gl(void);
 #else
- XEN Init_libgl(void);
+ void Init_libgl(void);
 #endif
 #endif
 #endif

@@ -1632,7 +1632,7 @@ is the same in effect as " S_make_oscil "."
       table = (Float *)CALLOC(table_size, sizeof(Float));
       need_free = TRUE;
     }
-  old_error_handler = mus_error_set_handler(local_mus_error);
+  old_error_handler = mus_error_set_handler(local_mus_error); /* currently not needed (no recoverable errors from mus_make_table_lookup) */
   ge = mus_make_table_lookup(freq, phase, table, table_size);
   mus_error_set_handler(old_error_handler);
   if (ge)
@@ -2576,7 +2576,7 @@ processing normally involving overlap-adds."
     }
   if (siz <= 0) return(XEN_FALSE);
   buf = (Float *)CALLOC(siz, sizeof(Float));
-  old_error_handler = mus_error_set_handler(local_mus_error);
+  old_error_handler = mus_error_set_handler(local_mus_error); /* currently not needed */
   ge = mus_make_buffer(buf, siz, filltime);
   mus_error_set_handler(old_error_handler);
   if (ge)
@@ -2691,7 +2691,7 @@ the repetition rate of the wave found in wave. Successive waves can overlap."
       wave = (Float *)CALLOC(wsize, sizeof(Float));
       need_free = TRUE;
     }
-  old_error_handler = mus_error_set_handler(local_mus_error);
+  old_error_handler = mus_error_set_handler(local_mus_error); /* currently not needed */
   ge = mus_make_wave_train(freq, phase, wave, wsize);
   mus_error_set_handler(old_error_handler);
   if (ge)
@@ -5880,9 +5880,9 @@ void mus_xen_init(void)
 
 
 #if HAVE_RUBY
-XEN Init_sndlib(void)
+void Init_sndlib(void)
 #else
-XEN init_sndlib(void)
+void init_sndlib(void)
 #endif
 {
   mus_sndlib2xen_initialize();

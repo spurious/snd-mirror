@@ -1,12 +1,8 @@
-# examp.rb -- Some examples converted from Guile to Ruby.
+## examp.rb -- Guile -> Ruby translation
 
-# Copyright (C) 2002 Michael Scholz
-
-# Translator/Author: Michael Scholz <scholz-micha@gmx.de>
-# Created: Wed Sep 04 18:34:00 CEST 2002
-# Last: Thu Oct 17 01:28:40 CEST 2002
-
-# Code:
+## Translator/Author: Michael Scholz <scholz-micha@gmx.de>
+## Last: Sat Oct 19 02:55:10 CEST 2002
+## Version: $Revision: 1.4 $
 
 ##
 ## Utilities
@@ -75,11 +71,11 @@ def help(func = false)
 ## fm_bell(start, dur, freq, amp, amp_env, index_env, index)
 ## n_rev(args) [*]
 ## hello_dentist(frq, amp) [*]
-## ring_mod(freq, gliss_env)
-## am(freq)
-## vibro(speed, depth)
-## fp(sr, osamp, osfreq)
-## compand(h)
+## ring_mod(freq, gliss_env) [*]
+## am(freq) [*]
+## vibro(speed, depth) [*]
+## fp(sr, osamp, osfreq) [*]
+## compand(h) [*]
 ##
 ## Global variables
 ##
@@ -134,6 +130,10 @@ def warn(str = "Warning")
   end
   false;
 end
+
+#
+# message([str="Message"])
+#
 
 def message(str = "Message")
   if($IN_SND)
@@ -270,11 +270,12 @@ end
 ##
 ## FM
 ##
-##
-## variables used by fm_violin, jc_reverb, with_sound
-##
 
-$rbm_snd = false;
+#
+# *clm-like variables used by fm_violin(), jc_reverb(), and
+# with_sound()
+#
+
 $rbm_output = false;
 $rbm_file_name = "test.snd";
 $rbm_srate = 22050;
@@ -411,9 +412,7 @@ Example: with_sound { fm_violin(0, 1, 440, .1, [[:fm_index, 2.0]]) }\n";
 	       make_rand_interp(amp_noise_freq, amp_noise_amount));
     vib = 0.0;
     modulation = 0.0;
-    # make_locsig(degree=0.0, distance=1.0, reverb=0.0, output, revout, chans=1, type=Mus_linear)
-    # Ruby's rand() is shadowed by CLM's rand(), that's why mus_random().abs.
-    loc = make_locsig((degree or degrees or mus_random(90.0).abs), 
+    loc = make_locsig((degree or degrees or kernel_rand(90.0)), 
 		      distance, reverb_amount, $rbm_output, $rbm_reverb, chans);
     fuzz = 0.0;
     ind_fuzz = 1.0;
@@ -475,10 +474,10 @@ Usage: jc_reverb([[:decay, 2.0], [:volume, .1]])
     low_pass = (args.assoc(:low_pass)[1] rescue false);
     vol = (args.assoc(:volume)[1] rescue 1.0);
     amp_env1 = (args.assoc(:amp_env1)[1] rescue false);
-    amp_env2 = (args.assoc(:amp_env1)[1] rescue false);
+    amp_env2 = (args.assoc(:amp_env2)[1] rescue false);
     delay1 = (args.assoc(:delay1)[1] rescue 0.013);
     delay2 = (args.assoc(:delay2)[1] rescue 0.011);
-  
+    
     allpass1 = make_all_pass(-0.700, 0.700, 1051);
     allpass2 = make_all_pass(-0.700, 0.700, 337);
     allpass3 = make_all_pass(-0.700, 0.700, 113);
@@ -490,33 +489,47 @@ Usage: jc_reverb([[:decay, 2.0], [:volume, .1]])
     chans = (mus_channels($rbm_output) rescue $rbm_channels);
     outdel1 = make_delay((delay1 * srate).round);
     outdel2 = make_delay((delay2 * srate).round) if chans == 2;
-    dur = decay + mus_sound_frames($rbm_file_name) / srate;
+    dur = decay + mus_sound_frames($rbm_file_name) / srate.to_f;
     len = (srate * dur).round;
     envA = (amp_env1 ? make_env(amp_env1, vol, dur) : false);
     envB = (amp_env2 ? make_env(amp_env2, vol, dur) : false);
     delA = (envA ? env(envA) : vol);
     delB = (envB ? env(envB) : vol);
-    allpass_sum = 0.0;
-    comb_sum = 0.0;
-    comb_sum_1 = 0.0;
-    comb_sum_2 = 0.0;
-    all_sums = 0.0;
+    allpass_sum, all_sums = 0.0, 0.0;
+    comb_sumA, comb_sum_1A, comb_sum_2A = 0.0, 0.0, 0.0;
+    comb_sumB, comb_sum_1B, comb_sum_2B = 0.0, 0.0, 0.0;
 
     0.upto(len) { |i|
       ho = ina(i, $rbm_reverb);
       allpass_sum = all_pass(allpass3, all_pass(allpass2, all_pass(allpass1, ho)));
-      comb_sum_2 = comb_sum_1;
-      comb_sum_1 = comb_sum;
-      comb_sum = comb(comb1, allpass_sum) + comb(comb2, allpass_sum) +
+      comb_sum_2A = comb_sum_1A;
+      comb_sum_1A = comb_sumA;
+      comb_sumA = comb(comb1, allpass_sum) + comb(comb2, allpass_sum) +
 	comb(comb3, allpass_sum) + comb(comb4, allpass_sum);
       
       if(low_pass)
-	all_sums = 0.25 * (comb_sum + comb_sum_2) + 0.5 * comb_sum_1;
+	all_sums = 0.25 * (comb_sumA + comb_sum_2A) + 0.5 * comb_sum_1A;
       else
-	all_sums = comb_sum;
+	all_sums = comb_sumA;
+      end
+
+      outa(i, delA * delay(outdel1, all_sums), $rbm_output);
+
+      if($rbm_reverb_channels == 2)
+	ho = inb(i, $rbm_reverb);
+	allpass_sum = all_pass(allpass3, all_pass(allpass2, all_pass(allpass1, ho)));
+	comb_sum_2B = comb_sum_1B;
+	comb_sum_1B = comb_sumB;
+	comb_sumB = comb(comb1, allpass_sum) + comb(comb2, allpass_sum) +
+	  comb(comb3, allpass_sum) + comb(comb4, allpass_sum);
+	
+	if(low_pass)
+	  all_sums = 0.25 * (comb_sumB + comb_sum_2B) + 0.5 * comb_sum_1B;
+	else
+	  all_sums = comb_sumB;
+	end
       end
       
-      outa(i, delA * delay(outdel1, all_sums), $rbm_output);
       outb(i, delB * delay(outdel2, all_sums), $rbm_output) if chans == 2;
     }
 
@@ -548,6 +561,7 @@ with_sound(:help)
 	[:data_format, $rbm_data_format]
 	[:comment, $rbm_comment]
 	[:reverb, false]
+	[:revfile, $rbm_reverb_file_name]
 	[:reverb_channels, $rbm_reverb_channels]
 	[:reverb_args, []]
 	[:help]
@@ -576,9 +590,11 @@ Usage: with_sound([:play, true], [:statistics, true]) { fm_violin }\n";
     $rbm_reverb_file_name = revfile;
     $rbm_reverb_channels = reverb_channels;
 
-    close_sound($rbm_snd) rescue false if $IN_SND
-    
+    (close_sound(find_sound(output)) rescue false) if $IN_SND;
+
     unless(continue_old_file)
+      old_srate = mus_srate();
+      mus_set_srate(srate);
       $rbm_output, $rbm_reverb = false, false;
       File::unlink(output) if File::exist?(output);
       $rbm_output = make_sample2file(output, channels, data_format, header_type,
@@ -587,7 +603,8 @@ Usage: with_sound([:play, true], [:statistics, true]) { fm_violin }\n";
       if(reverb)
 	File::unlink(revfile) if File::exist?(revfile);
 	$rbm_reverb = make_sample2file(revfile, reverb_channels, data_format, header_type,
-				       "rev") rescue die(usage + "make_sample2file(#{revfile})");
+				       "reverb") rescue die(usage +
+							    "make_sample2file(#{revfile})");
       end
     else
       $rbm_output = continue_sample2file(output) rescue die(usage + 
@@ -599,12 +616,11 @@ Usage: with_sound([:play, true], [:statistics, true]) { fm_violin }\n";
     end
 
     atime = Time.new if statistics;
-    # calls block of with_sound() { ... }
     yield() rescue die(usage + "yield()");
 
     if(reverb)
       mus_close($rbm_reverb);
-      $rbm_reverb = make_file2sample(revfile) rescue die("make_file2sample(#{revfile})");
+      $rbm_reverb = make_file2sample(revfile) rescue die(usage + "make_file2sample(#{revfile})");
       reverb.call(reverb_args) rescue die(usage + "reverb.call()");
     end
     
@@ -615,6 +631,7 @@ Usage: with_sound([:play, true], [:statistics, true]) { fm_violin }\n";
       end
       mus_close($rbm_output);
       $rbm_output = false;
+      mus_set_srate(old_srate);
     end
 
     if(statistics)
@@ -624,9 +641,9 @@ Usage: with_sound([:play, true], [:statistics, true]) { fm_violin }\n";
       srate = srate.to_f;
 
       message(format("    Sound File: %s", output));
-      message(format("      Duration: %.4f", samps / srate / channels));
+      message(format("      Duration: %.4f", (samps / srate / channels)));
       message(format("  Compute time: %.3f, Compute ratio: %.2f", rtime, 
-		     rtime * srate / samps));
+		     rtime * (srate / samps) * channels));
       message(format("  OutA max amp: %.3f (near %.3f secs)", 
 		     max_amp[1], max_amp[0] / srate));
       message(format("  OutB max amp: %.3f (near %.3f secs)",
@@ -641,15 +658,8 @@ Usage: with_sound([:play, true], [:statistics, true]) { fm_violin }\n";
       end
     end
 
-    if(play)
-      if($IN_SND)
-	$rbm_snd = open_sound(output);
-	play_and_wait($rbm_snd);
-      else
-	system("#{player} #{output}");
-      end
-    end
-
+    snd = open_sound(output);
+    ($IN_SND ? play_and_wait(snd) : system("#{player} #{output}")) if play;
     output;
   else
     message(usage);
@@ -963,4 +973,4 @@ rescue
   die(usage + func_name);
 end
 
-# examp.rb ends here
+## examp.rb ends here

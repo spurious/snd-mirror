@@ -29647,11 +29647,11 @@ static void define_strings(void)
 static int xg_already_inited = 0;
 
 #if HAVE_GUILE
- XEN init_xm(void);
- XEN init_xm(void)
+ void init_xm(void);
+ void init_xm(void)
 #else
- XEN Init_libxm(void);
- XEN Init_libxm(void)
+ void Init_libxm(void);
+ void Init_libxm(void)
 #endif
 {
   if (!xg_already_inited)
@@ -29666,9 +29666,8 @@ static int xg_already_inited = 0;
       define_strings();
       XEN_YES_WE_HAVE("xg");
 #if HAVE_GUILE
-      XEN_EVAL_C_STRING("(define xm-version \"01-Sep-02\")");
+      XEN_EVAL_C_STRING("(define xm-version \"20-Oct-02\")");
 #endif
       xg_already_inited = 1;
     }
-  return(XEN_FALSE);
 }
