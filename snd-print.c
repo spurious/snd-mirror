@@ -70,12 +70,10 @@ static int start_ps_graph(char *output, char *title)
 static void ps_graph(chan_info *cp, int x0, int y0)
 {
   cp->printing = 1;
-  cp->ps_fd = ps_fd;
   bx0 = x0;
   by0 = y0;
   display_channel_data(cp,cp->sound,cp->state);
   cp->printing = 0;
-  cp->ps_fd = 0;
 }
 
 static void end_ps_graph(void)
@@ -143,14 +141,14 @@ static void ps_draw_lines(chan_info *cp, axis_info *ap, int j, Float *xpts, Floa
 {
   int i;
   sprintf(pbuf," %.2f %.2f moveto\n",ps_grf_x(ap,xpts[0]),ps_grf_y(ap,ypts[0]));
-  ps_write(cp->ps_fd,pbuf);
+  ps_write(ps_fd,pbuf);
   for (i=1;i<j;i++)
     {
       sprintf(pbuf," %.2f %.2f lineto\n",ps_grf_x(ap,xpts[i]),ps_grf_y(ap,ypts[i]));
-      ps_write(cp->ps_fd,pbuf);
+      ps_write(ps_fd,pbuf);
     }
   sprintf(pbuf," stroke\n");
-  ps_write(cp->ps_fd,pbuf);
+  ps_write(ps_fd,pbuf);
 }
 
 static void ps_draw_dots(chan_info *cp, axis_info *ap, int j, Float *xpts, Float *ypts)
@@ -161,7 +159,7 @@ static void ps_draw_dots(chan_info *cp, axis_info *ap, int j, Float *xpts, Float
   for (i=0;i<j;i++)
     {
       sprintf(pbuf," %.2f %.2f %.2f 0 360 NAF\n",ps_grf_x(ap,xpts[i]),ps_grf_y(ap,ypts[i]),arc_size);
-      ps_write(cp->ps_fd,pbuf);
+      ps_write(ps_fd,pbuf);
     }
 }
 
@@ -171,15 +169,15 @@ static void ps_fill_polygons(chan_info *cp, axis_info *ap, int j, Float *xpts, F
   for (i=1;i<j;i++)
     {
       sprintf(pbuf," %.2f %.2f moveto\n",ps_grf_x(ap,xpts[i-1]),ps_grf_y(ap,ypts[i-1]));
-      ps_write(cp->ps_fd,pbuf);
+      ps_write(ps_fd,pbuf);
       sprintf(pbuf," %.2f %.2f lineto\n",ps_grf_x(ap,xpts[i]),ps_grf_y(ap,ypts[i]));
-      ps_write(cp->ps_fd,pbuf);
+      ps_write(ps_fd,pbuf);
       sprintf(pbuf," %.2f %.2f lineto\n",ps_grf_x(ap,xpts[i]),ps_grf_y(ap,y0));
-      ps_write(cp->ps_fd,pbuf);
+      ps_write(ps_fd,pbuf);
       sprintf(pbuf," %.2f %.2f lineto\n",ps_grf_x(ap,xpts[i-1]),ps_grf_y(ap,y0));
-      ps_write(cp->ps_fd,pbuf);
+      ps_write(ps_fd,pbuf);
       sprintf(pbuf," closepath fill\n");
-      ps_write(cp->ps_fd,pbuf);
+      ps_write(ps_fd,pbuf);
     }
 }
 
@@ -214,7 +212,7 @@ void ps_draw_grf_points(chan_info *cp, axis_info *ap, int j, Float y0, int graph
 		  (float)gy0,
 		  (float)size4,
 		  ps_grf_y(ap,ypts[i])-gy0);
-	  ps_write(cp->ps_fd,pbuf);
+	  ps_write(ps_fd,pbuf);
 	}
       break;
     }
@@ -237,15 +235,15 @@ void ps_draw_both_grf_points(chan_info *cp, axis_info *ap, int j, int graph_styl
       for (i=1;i<j;i++)
 	{
 	  sprintf(pbuf," %.2f %.2f moveto\n",ps_grf_x(ap,xpts[i-1]),ps_grf_y(ap,ypts[i-1]));
-	  ps_write(cp->ps_fd,pbuf);
+	  ps_write(ps_fd,pbuf);
 	  sprintf(pbuf," %.2f %.2f lineto\n",ps_grf_x(ap,xpts[i]),ps_grf_y(ap,ypts[i]));
-	  ps_write(cp->ps_fd,pbuf);
+	  ps_write(ps_fd,pbuf);
 	  sprintf(pbuf," %.2f %.2f lineto\n",ps_grf_x(ap,xpts[i]),ps_grf_y(ap,ypts1[i]));
-	  ps_write(cp->ps_fd,pbuf);
+	  ps_write(ps_fd,pbuf);
 	  sprintf(pbuf," %.2f %.2f lineto\n",ps_grf_x(ap,xpts[i-1]),ps_grf_y(ap,ypts1[i-1]));
-	  ps_write(cp->ps_fd,pbuf);
+	  ps_write(ps_fd,pbuf);
 	  sprintf(pbuf," closepath fill\n");
-	  ps_write(cp->ps_fd,pbuf);
+	  ps_write(ps_fd,pbuf);
 	}
       break;
     case GRAPH_DOTS_AND_LINES:
@@ -273,7 +271,7 @@ void ps_draw_both_grf_points(chan_info *cp, axis_info *ap, int j, int graph_styl
 		  ps_grf_y(ap,ypts[i]),
 		  (float)size4,
 		  ps_grf_y(ap,ypts1[i])-ps_grf_y(ap,ypts[i]));
-	  ps_write(cp->ps_fd,pbuf);
+	  ps_write(ps_fd,pbuf);
 	}
 
       break;
@@ -292,16 +290,16 @@ void ps_draw_sono_rectangle(chan_info *cp, axis_info *ap, int color, Float x, Fl
       get_current_color(color_map(ss),color,&r,&g,&b);
       last_color = color;
       sprintf(pbuf," %.2f %.2f %.2f RG\n",(float)r/65535.0,(float)g/65535.0,(float)b/65535.0);
-      ps_write(cp->ps_fd,pbuf);
+      ps_write(ps_fd,pbuf);
     }
   sprintf(pbuf," %.1f %.1f %.2f %.2f RF\n",ps_grf_x(ap,x),ps_grf_y(ap,y),width,height);
-  ps_write(cp->ps_fd,pbuf);
+  ps_write(ps_fd,pbuf);
 }
 
 void ps_reset_color(chan_info *cp)
 {
   sprintf(pbuf," 0 setgray\n");
-  ps_write(cp->ps_fd,pbuf);
+  ps_write(ps_fd,pbuf);
   last_color = -1;
 }
 
@@ -309,7 +307,7 @@ void ps_recolor(chan_info *cp)
 {
   char *rgb;
   rgb = ps_rgb(cp->state,cp->chan % 4);
-  ps_write(cp->ps_fd,rgb);
+  ps_write(ps_fd,rgb);
   FREE(rgb);
 }
 
@@ -326,7 +324,7 @@ void ps_draw_line (chan_info *cp, int x0,int y0,int x1,int y1)
   if (py0>bby) bby=py0;
   if (py1>bby) bby=py1;
   sprintf(pbuf," 0 setlinewidth %d %d moveto %d %d lineto stroke\n",px0,py0,px1,py1);
-  ps_write(cp->ps_fd,pbuf);
+  ps_write(ps_fd,pbuf);
 }
 
 void ps_draw_spectro_line(chan_info *cp, int color, Float x0, Float y0, Float x1, Float y1)
@@ -340,7 +338,7 @@ void ps_draw_spectro_line(chan_info *cp, int color, Float x0, Float y0, Float x1
       get_current_color(color_map(ss),color,&r,&g,&b);
       last_color = color;
       sprintf(pbuf," %.2f %.2f %.2f RG\n",(float)r/65535.0,(float)g/65535.0,(float)b/65535.0);
-      ps_write(cp->ps_fd,pbuf);
+      ps_write(ps_fd,pbuf);
     }
   ps_draw_line(cp,(int)x0,(int)y0,(int)x1,(int)y1);
 }
@@ -357,7 +355,7 @@ void ps_fill_rectangle (chan_info *cp, int x0, int y0, int width, int height)
   if (py0>bby) bby=py0;
   if (py1>bby) bby=py1;
   sprintf(pbuf," %d %d %d %d RF\n",px0,py0,width,-height);
-  ps_write(cp->ps_fd,pbuf);
+  ps_write(ps_fd,pbuf);
 }
 
 void ps_draw_string (chan_info *cp, int x0, int y0, char *str) 
@@ -368,37 +366,37 @@ void ps_draw_string (chan_info *cp, int x0, int y0, char *str)
   if (px0>bbx) bbx=px0;
   if (py0>bby) bby=py0;
   sprintf(pbuf," %d %d moveto (%s) show\n",px0,py0,str);
-  ps_write(cp->ps_fd,pbuf);
+  ps_write(ps_fd,pbuf);
 }
 
 void ps_set_number_font(chan_info *cp) 
 {
   sprintf(pbuf," /Courier findfont 15 scalefont setfont\n");
-  ps_write(cp->ps_fd,pbuf);
+  ps_write(ps_fd,pbuf);
 }
 
 void ps_set_label_font(chan_info *cp) 
 {
   sprintf(pbuf," /Times-Roman findfont 20 scalefont setfont\n");
-  ps_write(cp->ps_fd,pbuf);
+  ps_write(ps_fd,pbuf);
 }
 
 void ps_set_bold_peak_numbers_font(chan_info *cp) 
 {
   sprintf(pbuf," /Times-Bold findfont 14 scalefont setfont\n");
-  ps_write(cp->ps_fd,pbuf);
+  ps_write(ps_fd,pbuf);
 }
 
 void ps_set_peak_numbers_font(chan_info *cp) 
 {
   sprintf(pbuf," /Times-Roman findfont 14 scalefont setfont\n");
-  ps_write(cp->ps_fd,pbuf);
+  ps_write(ps_fd,pbuf);
 }
 
 void ps_set_tiny_numbers_font(chan_info *cp) 
 {
   sprintf(pbuf," /Times-Roman findfont 12 scalefont setfont\n");
-  ps_write(cp->ps_fd,pbuf);
+  ps_write(ps_fd,pbuf);
 }
 
 
@@ -484,12 +482,10 @@ void print_enved(char *output, chan_info *cp, int y0)
       if (err == 0)
 	{
 	  cp->printing = 1;
-	  cp->ps_fd = ps_fd;
 	  bx0 = 0;
 	  by0 = y0;
 	  env_redisplay(cp->state);
 	  cp->printing = 0;
-	  cp->ps_fd = 0;
 	  end_ps_graph();
 	}
       else snd_error("print env %s failed: %s",output,strerror(errno));
