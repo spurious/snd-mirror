@@ -5175,11 +5175,19 @@ static SCM g_new_sound(SCM name, SCM type, SCM format, SCM srate, SCM chans, SCM
 		  sp = snd_new_file(state,str,ht,df,sr,ch,com);
 		  if (com) free(com);
 		}
-	      else scm_misc_error(S_new_sound,"can't write this combination of data format and header type",SCM_LIST2(type,format));
+#if HAVE_GUILE_1_3_0
+	      else scm_misc_error(S_new_sound,"can't write this combination of data format (%S) and header type (%S)",SCM_LIST2(type,format));
 	    }
-	  else scm_misc_error(S_new_sound,"invalid data format",SCM_LIST1(format));
+	  else scm_misc_error(S_new_sound,"invalid data format: %S",SCM_LIST1(format));
 	}
-      else scm_misc_error(S_new_sound,"invalid header type",SCM_LIST1(type));
+      else scm_misc_error(S_new_sound,"invalid header type: %S",SCM_LIST1(type));
+#else
+	      else scm_misc_error(S_new_sound,"can't write this combination of data format (~S) and header type (~S)",SCM_LIST2(type,format));
+	    }
+	  else scm_misc_error(S_new_sound,"invalid data format: ~S",SCM_LIST1(format));
+	}
+      else scm_misc_error(S_new_sound,"invalid header type: ~S",SCM_LIST1(type));
+#endif
     }
   if (str) FREE(str);
   if (sp) RTNINT(sp->index);

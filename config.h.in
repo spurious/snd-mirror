@@ -22,6 +22,10 @@
 #undef HAVE_MALLINFO
 #undef HAVE_READLINK
 #undef HAVE_SETLOCALE
+#undef HAVE_SLEEP
+#undef HAVE_ACCESS
+#undef HAVE_OPENDIR
+#undef HAVE_SIGNAL
 
 #undef STDC_HEADERS
 #undef TM_IN_SYS_TIME

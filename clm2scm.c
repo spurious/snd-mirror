@@ -1291,7 +1291,7 @@ static SCM g_make_delay_1(int choice, SCM arglist)
     {
       errstr = (char *)CALLOC(64,sizeof(char));
       sprintf(errstr,"%s: delay line length is %d?",caller,max_size);
-      scm_misc_error(caller,errstr,arglist);
+      scm_misc_error(caller,errstr,SCM_EOL);
       FREE(errstr);
     }
   if (line == NULL) line = (Float *)CALLOC(max_size,sizeof(Float));

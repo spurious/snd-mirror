@@ -47,10 +47,12 @@ chan_info *make_chan_info(chan_info *cip, int chan, snd_info *sound, snd_state *
       cp->mixes = NULL;
       cp->last_sonogram = NULL;
 #if HAVE_GUILE
+#if (!HAVE_GUILE_1_3_0)
       cp->edit_hook = scm_make_hook(SCM_MAKINUM(2)); /* arg = snd chn */
       scm_protect_object(cp->edit_hook);
       cp->undo_hook = scm_make_hook(SCM_MAKINUM(3)); /* arg = snd chn undo/redo */
       scm_protect_object(cp->undo_hook);
+#endif
 #endif
     }
   else cp = cip;
@@ -136,8 +138,10 @@ static chan_info *free_chan_info(chan_info *cp)
   if (cp->filename) {FREE(cp->filename); cp->filename = NULL;}
 #endif
 #if HAVE_GUILE
+#if (!HAVE_GUILE_1_3_0)
   scm_reset_hook_x(cp->edit_hook);
   scm_reset_hook_x(cp->undo_hook);
+#endif
 #endif
   return(cp);  /* pointer is left for possible future re-use */
 }

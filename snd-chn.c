@@ -5216,7 +5216,7 @@ void snd_minibuffer_activate(snd_info *sp, int keysym)
   char *tok,*newdir,*str1;
   env *e;
   mark *m;
-#ifndef _MSC_VER
+#if HAVE_OPENDIR
   DIR *dp;
 #endif
 #if HAVE_GUILE
@@ -5338,7 +5338,7 @@ void snd_minibuffer_activate(snd_info *sp, int keysym)
 	      if (mcf) FREE(mcf);
 	      clear_minibuffer(sp);
 	      break;
-#ifndef _MSC_VER
+#if HAVE_OPENDIR
 	    case TEMP_FILING:
 	      newdir = copy_string(str);
 	      clear_minibuffer(sp);

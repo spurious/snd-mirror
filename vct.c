@@ -219,7 +219,7 @@ static SCM vct_ref(SCM obj, SCM pos)
       loc = gh_scm2int(pos);
       if ((loc >= 0) && (loc < v->length))
 	RTNFLT(v->data[loc]);
-      else scm_misc_error(S_vct_ref,"invalid index",SCM_LIST2(obj,pos));
+      else scm_misc_error(S_vct_ref,"invalid index: ~S[~S]",SCM_LIST2(obj,pos));
     }
   else scm_misc_error(S_vct_ref,"nil vct?",SCM_EOL);
   RTNFLT(0.0);
@@ -238,7 +238,7 @@ static SCM vct_set(SCM obj, SCM pos, SCM val)
       loc = gh_scm2int(pos);
       if ((loc >= 0) && (loc < v->length))
 	v->data[loc] = gh_scm2double(val);
-      else scm_misc_error(S_vct_setB,"invalid index",SCM_LIST3(obj,pos,val));
+      else scm_misc_error(S_vct_setB,"invalid index: ~S[~S] = ~S",SCM_LIST3(obj,pos,val));
     }
   else scm_misc_error(S_vct_setB,"nil vct?",SCM_EOL);
   return(val);
@@ -375,7 +375,7 @@ static SCM vcts_map(SCM args)
   vnum = argnum-1;
   if (vnum <= 0)
     {
-      scm_misc_error(S_vcts_mapB,"not enought args",SCM_EOL);
+      scm_misc_error(S_vcts_mapB,"not enough args",SCM_EOL);
       return(gh_int2scm(0));
     }
   v = (vct **)CALLOC(vnum,sizeof(vct *));

@@ -1150,7 +1150,7 @@ void unlock_apply(snd_state *ss,snd_info *sp)
 
 static int cant_write(char *name)
 {
-#ifndef _MSC_VER
+#if HAVE_ACCESS
   return((access(name,W_OK)) != 0);
 #else
   return(0);

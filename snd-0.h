@@ -34,14 +34,19 @@
   #if defined(LINUX) && (!(defined(HAVE_SCHED_H)))
     #define HAVE_SCHED_H 1
   #endif
-  #ifndef NEXT
-    #define TRAP_SEGFAULT 1
-  #endif
   #ifdef LINUX
     #define HAVE_MALLINFO 1
   #endif
   #ifndef _MSC_VER
+    #ifndef NEXT
+      #define TRAP_SEGFAULT 1
+      #define HAVE_TEMPNAM 1
+    #endif
     #define HAVE_READLINK 1
+    #define HAVE_ACCESS 1
+    #define HAVE_OPENDIR 1
+    #define HAVE_SLEEP 1
+    #define HAVE_SIGNAL 1
   #endif
   #ifndef BEOS
     #define HAVE_X 1

@@ -406,7 +406,7 @@ static BACKGROUND_TYPE startup_funcs(XtPointer clientData)
   float apsx,apzx,apsy,apzy;
   char *argname;
 #ifndef LESSTIF_VERSION
-#ifndef _MSC_VER
+#if HAVE_OPENDIR
   DIR *dp;
 #endif
 #endif
@@ -441,7 +441,7 @@ static BACKGROUND_TYPE startup_funcs(XtPointer clientData)
       (ss->sgx)->wait_cursor = XCreateFontCursor(XtDisplay(MAIN_SHELL(ss)),XC_watch);
       break;
     case 1:
-#ifndef _MSC_VER
+#if HAVE_SIGNAL
       signal(SIGTTIN,SIG_IGN);
       signal(SIGTTOU,SIG_IGN);
       /* these signals are sent by a shell if we start Snd as a background process,
@@ -530,7 +530,7 @@ static BACKGROUND_TYPE startup_funcs(XtPointer clientData)
     case 3: 
       /* this stupid thing (which I can't customize without major hassles) takes forever on large directories */
 #ifndef LESSTIF_VERSION
-#ifndef _MSC_VER
+#if HAVE_OPENDIR
       files = 0;
       if ((dp=opendir(".")) != NULL)
 	{

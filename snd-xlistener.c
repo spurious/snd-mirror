@@ -264,7 +264,7 @@ static void Name_completion(Widget w, XEvent *event, char **str, Cardinal *num)
 	    XtVaSetValues(w,XmNforeground,(action_ss->sgx)->green,NULL);
 	  else if (matches == 0) XtVaSetValues(w,XmNforeground,(action_ss->sgx)->red,NULL);
 	  XmUpdateDisplay(w);
-#ifndef _MSC_VER
+#if HAVE_SLEEP
 	  sleep(1);
 #endif
 	  XtVaSetValues(w,XmNforeground,old_color,NULL);

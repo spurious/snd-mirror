@@ -2128,7 +2128,7 @@ static int save_edits_1(snd_info *sp)
       saved_errno = 0;
 #endif
 
-#if defined(_MSC_VER)
+#if (!HAVE_ACCESS)
   err = 0;
 #else
   err = access(sp->fullname,W_OK);

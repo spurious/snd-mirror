@@ -12,6 +12,7 @@
  *    HPUX ("- H")
  *    W95/98 ("- WI")
  *    AIX, NEC EWS, SONY NEWS, OS2, AF, NetBSD etc -- untested and incomplete
+ *    ARDOUR audio (find "- Ardour") (i/o routed via the ardour API)
  *    audio describers
  */
 
@@ -3240,6 +3241,8 @@ typedef struct device_info {
     int device;
     /* alsa stream */
     int stream;
+    int format_width;  /* bytes */
+    int channels;  
     snd_pcm_stream_info_t info;
 } device_info_t;
 #endif
@@ -4150,6 +4153,7 @@ static int alsa_mus_audio_open_output(int ur_dev, int srate, int chans, int form
     struct snd_pcm_stream_setup setup;
     int id;
     int err;
+    int potential_format_width;
 
     if (trace_calls) mus_error(MUS_AUDIO_NO_ERROR, "%s: %x rate=%d, chans=%d, format=%d:%s, size=%d\n", 
 			       __FUNCTION__, ur_dev, srate, chans, format, decode_mus_format(format), size);
@@ -4162,6 +4166,7 @@ static int alsa_mus_audio_open_output(int ur_dev, int srate, int chans, int form
 	AUDIO_ERROR=MUS_AUDIO_FORMAT_NOT_AVAILABLE;
 	return(-1);
     }
+    potential_format_width = snd_pcm_format_physical_width (alsa_format) / 8;
     if ((id=alsa_audio_open(card, dev))<0) {
 	AUDIO_ERROR=MUS_AUDIO_CANT_OPEN;
 	return(-1);
@@ -4172,10 +4177,10 @@ static int alsa_mus_audio_open_output(int ur_dev, int srate, int chans, int form
     params.start_mode=SND_PCM_START_FULL;
 
     params.xrun_mode=stop_mode; 
-    params.frag_size = size;
+    params.frag_size = (size /chans / potential_format_width);
     params.buffer_size = params.frag_size * 3;
-    params.bytes_xrun_max = ~0U;
-    params.bytes_min=params.frag_size;
+    params.frames_xrun_max = ~0U;
+    params.frames_min=params.frag_size;
 
     /* FIXME: we are assuming interleaved samples */
     params.format.interleave=1;
@@ -4197,20 +4202,22 @@ static int alsa_mus_audio_open_output(int ur_dev, int srate, int chans, int form
      * that? Otherwise we'll need a second intermediate buffer
      * to accumulate samples on succesive calls to write (argh!)
      */
-    if (trace_calls) {
-	/* report real number of fragments allocated */
-        int frags;
-	memset(&setup, 0, sizeof(setup));
-	setup.mode=SND_PCM_MODE_FRAGMENT;
-	setup.stream=SND_PCM_STREAM_PLAYBACK;
-	if ((err=alsa_setup(handles[id].handle, &setup))<0) {
+
+    memset(&setup, 0, sizeof(setup));
+    setup.stream=SND_PCM_STREAM_PLAYBACK;
+    if ((err=alsa_setup(handles[id].handle, &setup))<0) {
 	    mus_error(MUS_AUDIO_CANT_OPEN,"%s: alsa_setup: %s", 
 		      __FUNCTION__,snd_strerror(err));
-	} else {
-	    frags=setup.frags;
-	    mus_error(MUS_AUDIO_NO_ERROR,"%s: frags=%d, total size=%d\n", 
-		      __FUNCTION__, frags, frags*size);
-	}
+    } else {
+	    handles[id].playback_device->
+		    format_width = snd_pcm_format_physical_width (setup.format.format) / 8;
+	    handles[id].playback_device->channels = setup.format.channels;
+	    if (trace_calls) {
+		    /* report real number of fragments allocated */
+		    mus_error(MUS_AUDIO_NO_ERROR,"%s: frags=%d, total size=%d bytes\n", 
+			      __FUNCTION__, setup.frags, 
+			      setup.frags*setup.frag_size*handles[id].playback_device->format_width);
+	    }
     }
     if ((err=alsa_flush(handles[id].handle, SND_PCM_STREAM_PLAYBACK))<0) {
 	mus_error(MUS_AUDIO_CANT_OPEN,"%s: alsa_flush: %s", 
@@ -4312,8 +4319,10 @@ static int alsa_mus_audio_open_input(int ur_dev, int srate, int chans, int forma
 {
     int alsa_format, card, dev;
     snd_pcm_stream_params_t params;
+    struct snd_pcm_stream_setup setup;
     int id;
     int err;
+    int potential_format_width;
 
     if (trace_calls) mus_error(MUS_AUDIO_NO_ERROR, "%s: %x rate=%d, chans=%d, format=%d:%s, size=%d\n", 
 			       __FUNCTION__, ur_dev, srate, chans, 
@@ -4327,6 +4336,7 @@ static int alsa_mus_audio_open_input(int ur_dev, int srate, int chans, int forma
 	AUDIO_ERROR=MUS_AUDIO_FORMAT_NOT_AVAILABLE;
 	return(-1);
     }
+    potential_format_width = snd_pcm_format_physical_width (alsa_format) / 8;
     if ((id=alsa_audio_open(card, dev))<0) {
 	AUDIO_ERROR=MUS_AUDIO_CANT_OPEN;
 	return(-1);
@@ -4337,10 +4347,10 @@ static int alsa_mus_audio_open_input(int ur_dev, int srate, int chans, int forma
     params.start_mode=SND_PCM_START_DATA;
 
     params.xrun_mode=stop_mode; 
-    params.frag_size = requested_size;
+    params.frag_size = (requested_size / chans / potential_format_width);
     params.buffer_size = params.frag_size * 3;
-    params.bytes_xrun_max = ~0U;
-    params.bytes_min=params.frag_size;
+    params.frames_xrun_max = ~0U;
+    params.frames_min=params.frag_size;
 
     params.format.interleave=1;
     params.format.format=alsa_format;
@@ -4359,20 +4369,20 @@ static int alsa_mus_audio_open_input(int ur_dev, int srate, int chans, int forma
 	AUDIO_ERROR=MUS_AUDIO_CONFIGURATION_NOT_AVAILABLE;
 	return(-1);
     }
-    if (trace_calls) {
-        int frags;
-	struct snd_pcm_stream_setup setup;
-	memset(&setup, 0, sizeof(setup));
-	setup.mode=SND_PCM_MODE_FRAGMENT;
-	setup.stream=SND_PCM_STREAM_CAPTURE;
-	if ((err=alsa_setup(handles[id].handle, &setup))<0) {
+    memset(&setup, 0, sizeof(setup));
+    setup.stream=SND_PCM_STREAM_CAPTURE;
+    if ((err=alsa_setup(handles[id].handle, &setup))<0) {
 	    mus_error(MUS_AUDIO_CANT_OPEN, "%s: setup: %s", 
 		      __FUNCTION__, snd_strerror(err));
-	} else {
-	    frags=setup.frags;
-	    mus_error(MUS_AUDIO_NO_ERROR, "%s: frags=%d, total size=%d\n", 
-		      __FUNCTION__, frags, frags*requested_size);
-	}
+    } else {
+	    handles[id].capture_device->
+		    format_width = snd_pcm_format_physical_width (setup.format.format) / 8;
+	    handles[id].capture_device->channels = setup.format.channels;
+	    if (trace_calls) {
+		    mus_error(MUS_AUDIO_NO_ERROR, "%s: frags=%d, total size=%d bytes\n", 
+			      __FUNCTION__, setup.frags, 
+			      setup.frags*requested_size*handles[id].capture_device->format_width);
+	    }
     }
     return (id);
 }
@@ -4420,9 +4430,12 @@ static int alsa_mus_audio_write(int id, char *buf, int bytes)
 {
     int done;
     snd_pcm_stream_status_t status;
+    int frames;
+    device_info_t *devinfo = handles[id].playback_device;
 
     AUDIO_ERROR=MUS_AUDIO_NO_ERROR;
-    if ((done=alsa_write(handles[id].handle, buf, bytes))!=bytes) {
+    frames = bytes / devinfo->channels / devinfo->format_width;
+    if ((done=alsa_write(handles[id].handle, buf, frames))!=frames) {
 	if (done<0) {
 	    mus_error(MUS_AUDIO_CANT_WRITE, "%s[%d bytes=%d]: %s <%d>", 
 		      __FUNCTION__, id, bytes, snd_strerror(done), done);
@@ -4512,9 +4525,12 @@ static int alsa_mus_audio_read(int id, char *buf, int bytes)
 static int alsa_mus_audio_read(int id, char *buf, int bytes)
 {
     int done;
+    int frames;
+    device_info_t *devinfo = handles[id].capture_device;
 
     AUDIO_ERROR=MUS_AUDIO_NO_ERROR;
-    if ((done=alsa_read(handles[id].handle, buf, bytes))<0) {
+    frames = bytes / devinfo->channels / devinfo->format_width;
+    if ((done=alsa_read(handles[id].handle, buf, frames))<0) {
 	if (done==-EPIPE) {
 	    int err;
 	    snd_pcm_stream_status_t status;
@@ -4537,7 +4553,7 @@ static int alsa_mus_audio_read(int id, char *buf, int bytes)
 		if (trace_calls) {
 		    mus_error(MUS_AUDIO_NO_ERROR, "%s: overrun at position %u", 
 			      __FUNCTION__, 
-			      status.byte_io);
+			      status.frame_io * handles[id].capture_device->format_width);
 		}
 		if ((err=alsa_prepare(handles[id].handle, SND_PCM_STREAM_CAPTURE))<0) {
 		    mus_error(MUS_AUDIO_CANT_READ,"%s: alsa_prepare: %s", 

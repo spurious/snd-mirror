@@ -368,7 +368,7 @@ void init_sound_file_extensions(void)
 
 dir *find_sound_files_in_dir (char *name)
 {
-#if defined(_MSC_VER)
+#if (!HAVE_OPENDIR)
   return(NULL);
 #else
   struct dirent *dirp;
@@ -411,7 +411,7 @@ dir *find_sound_files_in_dir (char *name)
 #if FILE_PER_CHAN
 dir *all_files_in_dir (char *name)
 {
-#if defined(_MSC_VER)
+#if (!HAVE_OPENDIR)
   return(NULL);
 #else
   struct dirent *dirp;
@@ -441,7 +441,7 @@ dir *all_files_in_dir (char *name)
 int temp_files_in_tmpdir(snd_state *ss)
 {
   /* at exit, after deleting temp files, look to see if any are left */
-#if defined(_MSC_VER)
+#if (!HAVE_OPENDIR)
   return(0);
 #else
   struct dirent *dirp;
@@ -1554,7 +1554,7 @@ int edit_header_callback(snd_state *ss, snd_info *sp, file_data *edit_header_dat
   int fd,err,chans,srate,loc,comlen,type,format,bytes0,bytes1,curloc,readloc,writeloc,curbytes,totalbytes;
   char *comment;
   file_info *hdr;
-#ifndef _MSC_VER
+#if HAVE_ACCESS
   err = access(sp->fullname,W_OK);
 #else
   err = 0;

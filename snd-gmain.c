@@ -287,7 +287,7 @@ static BACKGROUND_TYPE startup_funcs(gpointer clientData)
       (ss->sgx)->mix_cursor = gdk_cursor_new(GDK_LEFT_PTR);
       (ss->sgx)->wait_cursor = gdk_cursor_new(GDK_WATCH);
       (ss->sgx)->arrow_cursor = gdk_cursor_new(GDK_LEFT_PTR);
-#ifndef _MSC_VER
+#if HAVE_SIGNAL
       signal(SIGTTIN,SIG_IGN);
       signal(SIGTTOU,SIG_IGN);
       /* these signals are sent by a shell if we start Snd as a background process,

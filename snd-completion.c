@@ -420,7 +420,7 @@ char *snd_apropos(snd_state *ss, char *old_text)
 
 char *filename_completer(char *text)
 {
-#if (!(defined(_MSC_VER)))
+#if HAVE_OPENDIR
   /* assume text is a partial filename */
   /* get directory name, opendir, read files checking for match */
   /* return name of same form as original (i.e. don't change user's directory indication) */
