@@ -298,9 +298,12 @@ typedef struct snd_info {
   Float saved_speed_control, saved_amp_control, saved_expand_control, saved_contrast_control;
   Float saved_reverb_control_length, saved_reverb_control_scale;
   Float expand_control, expand_control_length, expand_control_ramp, expand_control_hop, expand_control_jitter;
-  Float contrast_control, contrast_control_amp, contrast_control_min, contrast_control_max;
+  Float contrast_control, contrast_control_amp;
   Float reverb_control_length, reverb_control_scale, reverb_control_feedback, reverb_control_lowpass;
   Float reverb_control_decay, filter_control_xmax;
+  Float contrast_control_min, contrast_control_max, expand_control_min, expand_control_max, speed_control_min, speed_control_max;
+  Float amp_control_min, amp_control_max, reverb_control_scale_min, reverb_control_scale_max;
+  Float reverb_control_length_min, reverb_control_length_max;
   int filter_control_order;
   bool filter_control_changed;
   env *filter_control_envelope;
@@ -605,7 +608,7 @@ void g_init_main(void);
 void g_init_errors(void);
 
 #ifdef SND_AS_WIDGET
-  void set_snd_error_display (void (*func)(const char *));
+  void set_error_display (void (*func)(const char *));
 #endif
 
 
@@ -1273,9 +1276,7 @@ char *just_filename(char *name);
 char *prettyf(Float num, int tens);
 char *shorter_tempnam(const char *dir, const char *prefix);
 char *snd_tempnam(void);
-void fill_number(char *fs, char *ps);
 void snd_exit(int val);
-char local_decimal_point(void);
 void g_init_utils(void);
 #ifdef DEBUG_MEMORY
   void set_encloser(char *name);

@@ -146,7 +146,7 @@ char *just_filename(char *name)
 #endif
 
 static char decimal_pt;
-char local_decimal_point(void)
+static char local_decimal_point(void)
 {
 #if HAVE_LANGINFO_DECIMAL_POINT
   return(nl_langinfo(DECIMAL_POINT)[0]);
@@ -244,27 +244,6 @@ char *prettyf(Float num, int tens)
   sn++;
   (*sn) = '\0';
   return(newval);
-}
-
-void fill_number(char *fs, char *ps)
-{
-  int i, j;
-  j = snd_strlen(fs);
-  if (j > 4) j = 4;
-  if (j < 4) 
-    {
-      ps[4] = '\0'; 
-      ps[3] = '0'; 
-      ps[2] = '0'; 
-      ps[1] = decimal_pt;
-    }
-  if ((*fs) == decimal_pt)
-    {
-      *ps++ = '0'; 
-      if (j == 4) j = 3;
-    }
-  for (i = 0; i < j; i++) 
-    (*ps++) = (*fs++);
 }
 
 static char *get_tmpdir(void)

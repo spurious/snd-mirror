@@ -1,5 +1,6 @@
 Snd change log
 
+  16-Feb:    *-control-bounds.
   12-Feb:    gui.scm and many other improvements thanks to Kjetil S. Matheussen.
   11-Feb:    added optional truncate arg to file-selection.
   9-Feb:     channels-equal? and channels=? in extensions.scm.

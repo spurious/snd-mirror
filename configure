@@ -857,9 +857,6 @@ Optional Features:
   --disable-rpath         do not hardcode runtime library paths
   --disable-nls           do not use Native Language Support
   --disable-deprecated      do not include any deprecated stuff from gtk or guile
-  if test "$enable_deprecated" = no ; then
-    CFLAGS="$CFLAGS -DGTK_DISABLE_DEPRECATED -DG_DISABLE_DEPRECATED -DGDK_DISABLE_DEPRECATED -DPANGO_DISABLE_DEPRECATED -DSCM_DEBUG_DEPRECATED=1 -DXM_DISABLE_DEPRECATED"
-  fi
 
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
@@ -1360,6 +1357,10 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 
 
+
+
+INVOKED_PROG="$0"
+INVOKED_ARGS="$@"
 
 
 ac_aux_dir=
@@ -2888,6 +2889,15 @@ _ACEOF
 
 
 
+cat >>confdefs.h <<_ACEOF
+#define CONFIGURE_PROG "$INVOKED_PROG"
+_ACEOF
+
+cat >>confdefs.h <<_ACEOF
+#define CONFIGURE_ARGS "$INVOKED_ARGS"
+_ACEOF
+
+
 #--------------------------------------------------------------------------------
 # configuration options
 #   --with-motif          use Motif (the default)
@@ -2928,7 +2938,6 @@ _ACEOF
 #   SNDLIB_CONFIG_path    where to look for sndlib-config
 #
 # SOMEDAY: --with-static-libraries --with-static-guile
-# TODO: pass static decisions up to snd-help
 
 
 #--------------------------------------------------------------------------------
@@ -20481,13 +20490,16 @@ fi
 # Check whether --enable-deprecated or --disable-deprecated was given.
 if test "${enable_deprecated+set}" = set; then
   enableval="$enable_deprecated"
-
+  if test "$enable_deprecated" = no ; then
+    CFLAGS="-DGTK_DISABLE_DEPRECATED -DG_DISABLE_DEPRECATED -DGDK_DISABLE_DEPRECATED -DPANGO_DISABLE_DEPRECATED -DSCM_DEBUG_DEPRECATED=1 -DXM_DISABLE_DEPRECATED $CFLAGS"
+  fi
 fi;
 
 CFLAGS="-I. $CFLAGS"
 if test "$with_profiling" = yes; then
   CFLAGS="$CFLAGS -fprofile-arcs -ftest-coverage -fbranch-probabilities"
 fi
+
 
 
 cat >confcache <<\_ACEOF

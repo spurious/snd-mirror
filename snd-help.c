@@ -357,7 +357,12 @@ char *version_info(void)
 	  "\n    Libc: ", gnu_get_libc_version(), ".", 
                           gnu_get_libc_release(),
 #endif
-	  "\n", NULL);
+	  "\n", 
+#ifdef CONFIGURE_PROG
+	  "\n    configured via: ", CONFIGURE_PROG, " ", CONFIGURE_ARGS,
+	  "\n",
+#endif
+	  NULL);
   free_snd_itoa();
   return(result);
 }
@@ -378,6 +383,7 @@ void about_snd_help(void)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+16-Feb:  *-control-bounds.\n\
 12-Feb:  gui.scm and many other improvements thanks to Kjetil S. Matheussen.\n\
 11-Feb:  added optional truncate arg to file-selection\n\
 9-Feb:   channels-equal? and channels=? in extensions.scm\n\
@@ -391,7 +397,6 @@ void about_snd_help(void)
 13-Jan:  Motif version of draw-string now adds in the font height to y0 (to mimic Gtk version).\n\
 12-Jan:  removed enved-selected-env, changed enved-active-env to enved-envelope.\n\
 9-Jan:   snd 7.1\n\
-8-Jan:   extensions.rb thanks to Michael Scholz.\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*: \n'", features, "\n\n",

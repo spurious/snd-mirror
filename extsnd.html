@@ -7628,6 +7628,17 @@ apply button (<a class=quiet href="#applycontrols">apply-controls</a>) and playb
 <tr><td colspan=2></td></tr>
 
 
+<!-- amp-control-bounds -->
+<tr><td colspan=2>
+<code><a class=def name="ampcontrolbounds">amp-control-bounds</a> (<em class=targ>snd</em>)</code>
+</td></tr>
+<tr><td></td><td>
+The amp-control min and max amounts as a list.  The default is
+(list 0.0 8.0).  The value 1.0 should be in the given range, since it is placed in the middle of the slider's range.
+</td></tr>
+<tr><td colspan=2></td></tr>
+
+
 <!-- apply-controls -->
 <tr><td colspan=2>
 <code><a class=def name="applycontrols">apply-controls</a> (<i>snd target beg dur</i>)</code>
@@ -7681,7 +7692,7 @@ full effect of the compander).
 <code><a class=def name="contrastcontrolbounds">contrast-control-bounds</a> (<em class=targ>snd</em>)</code>
 </td></tr>
 <tr><td></td><td>
-The <a class=quiet href="snd.html#contrast">contrast</a> min and max amounts as a list.  The default is
+The contrast-control min and max amounts as a list.  The default is
 (list 0.0 10.0).
 </td></tr>
 <tr><td colspan=2></td></tr>
@@ -7704,6 +7715,17 @@ The <a class=quiet href="snd.html#contrast">contrast</a> min and max amounts as 
 <tr><td></td><td>
 The <a class=quiet href="snd.html#expand">expansion</a> amount.  This sets the ratio between the
 output and input grain spacing.  If it is greater than 1.0, the result is longer.
+</td></tr>
+<tr><td colspan=2></td></tr>
+
+
+<!-- expand-control-bounds -->
+<tr><td colspan=2>
+<code><a class=def name="expandcontrolbounds">expand-control-bounds</a> (<em class=targ>snd</em>)</code>
+</td></tr>
+<tr><td></td><td>
+The expand-control min and max amounts as a list.  The default is
+(list 0.001 20.0).
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -7888,6 +7910,17 @@ extent, a bigger hall.
 <tr><td colspan=2></td></tr>
 
 
+<!-- reverb-control-length-bounds -->
+<tr><td colspan=2>
+<code><a class=def name="reverbcontrollengthbounds">reverb-control-length-bounds</a> (<em class=targ>snd</em>)</code>
+</td></tr>
+<tr><td></td><td>
+The reverb-control-length min and max amounts as a list.  The default is
+(list 0.0 5.0).
+</td></tr>
+<tr><td colspan=2></td></tr>
+
+
 <!-- reverb-control-lowpass -->
 <tr><td colspan=2>
 <code><a class=def name="sndreverblowpass">reverb-control-lowpass</a> (<em class=targ>snd</em>)</code>
@@ -7905,6 +7938,17 @@ The reverb low pass filter coefficient.  (This filter is in the feedback loop).
 <tr><td></td><td>
 The <a class=quiet href="snd.html#reverb">reverb</a> amount (the amount of the direct signal sent to the reverb).
 You can never have enough reverb.
+</td></tr>
+<tr><td colspan=2></td></tr>
+
+
+<!-- reverb-control-scale-bounds -->
+<tr><td colspan=2>
+<code><a class=def name="reverbcontrolscalebounds">reverb-control-scale-bounds</a> (<em class=targ>snd</em>)</code>
+</td></tr>
+<tr><td></td><td>
+The reverb-control-scale min and max amounts as a list.  The default is
+(list 0.0 4.0).
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -7954,6 +7998,17 @@ If set to #t, <i>snd</i>'s control panel is opened, else it is closed.
 </td></tr>
 <tr><td></td><td>
 current <a class=quiet href="snd.html#speed">speed</a>.  A speed of 2 plays the sound twice as fast.
+</td></tr>
+<tr><td colspan=2></td></tr>
+
+
+<!-- speed-control-bounds -->
+<tr><td colspan=2>
+<code><a class=def name="speedcontrolbounds">speed-control-bounds</a> (<em class=targ>snd</em>)</code>
+</td></tr>
+<tr><td></td><td>
+The speed-control min and max amounts as a list.  The default is
+(list 0.05 20.0).
 </td></tr>
 <tr><td colspan=2></td></tr>
 

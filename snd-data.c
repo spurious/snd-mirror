@@ -215,13 +215,19 @@ snd_info *make_basic_snd_info(int chans)
 void initialize_control_panel(snd_info *sp)
 {
   sp->expand_control = DEFAULT_EXPAND_CONTROL;
+  sp->expand_control_min = DEFAULT_EXPAND_CONTROL_MIN;
+  sp->expand_control_max = DEFAULT_EXPAND_CONTROL_MAX;
   sp->last_expand_control = 0.0;
   sp->saved_expand_control = 0.0;
   sp->expand_control_p = DEFAULT_EXPAND_CONTROL_P;
   sp->amp_control = DEFAULT_AMP_CONTROL;
+  sp->amp_control_min = DEFAULT_AMP_CONTROL_MIN;
+  sp->amp_control_max = DEFAULT_AMP_CONTROL_MAX;
   sp->last_amp_control = 1.0;
   sp->saved_amp_control = 1.0;
   sp->speed_control = fabs(DEFAULT_SPEED_CONTROL);
+  sp->speed_control_min = DEFAULT_SPEED_CONTROL_MIN;
+  sp->speed_control_max = DEFAULT_SPEED_CONTROL_MAX;
   sp->last_speed_control = 1.0;
   sp->saved_speed_control = 1.0;
   if (DEFAULT_SPEED_CONTROL > 0.0) sp->speed_control_direction = 1; else sp->speed_control_direction = -1;
@@ -241,6 +247,8 @@ void initialize_control_panel(snd_info *sp)
   sp->reverb_control_feedback = DEFAULT_REVERB_CONTROL_FEEDBACK;
   sp->reverb_control_lowpass = DEFAULT_REVERB_CONTROL_LOWPASS;
   sp->reverb_control_scale = DEFAULT_REVERB_CONTROL_SCALE;
+  sp->reverb_control_scale_min = DEFAULT_REVERB_CONTROL_SCALE_MIN;
+  sp->reverb_control_scale_max = DEFAULT_REVERB_CONTROL_SCALE_MAX;
   sp->reverb_control_decay = reverb_control_decay(ss);
   sp->speed_control_tones = speed_control_tones(ss);
   sp->speed_control_style = speed_control_style(ss);
@@ -249,6 +257,8 @@ void initialize_control_panel(snd_info *sp)
   sp->last_reverb_control_scale = 0.0;
   sp->saved_reverb_control_scale = 0.0;
   sp->reverb_control_length = DEFAULT_REVERB_CONTROL_LENGTH;
+  sp->reverb_control_length_min = DEFAULT_REVERB_CONTROL_LENGTH_MIN;
+  sp->reverb_control_length_max = DEFAULT_REVERB_CONTROL_LENGTH_MAX;
   sp->last_reverb_control_length = 0.0;
   sp->saved_reverb_control_length = 0.0;
   sp->filter_control_order = DEFAULT_FILTER_CONTROL_ORDER;

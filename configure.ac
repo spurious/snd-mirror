@@ -1,6 +1,10 @@
 dnl Configuration script for Snd
 
 AC_INIT(snd, 7.2, bil@ccrma.stanford.edu, ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-7.tar.gz)
+
+INVOKED_PROG="$[0]"
+INVOKED_ARGS="$[@]"
+
 AC_CONFIG_SRCDIR(snd.c)
 AC_CANONICAL_HOST
 AC_CONFIG_HEADER(config.h)
@@ -18,6 +22,9 @@ AC_DEFINE_UNQUOTED(PACKAGE, "$PACKAGE")
 AC_DEFINE_UNQUOTED(VERSION, "$VERSION")
 AC_SUBST(PACKAGE)
 AC_SUBST(VERSION)
+
+AC_DEFINE_UNQUOTED(CONFIGURE_PROG, "$INVOKED_PROG")
+AC_DEFINE_UNQUOTED(CONFIGURE_ARGS, "$INVOKED_ARGS")
 
 #--------------------------------------------------------------------------------
 # configuration options
@@ -59,7 +66,6 @@ AC_SUBST(VERSION)
 #   SNDLIB_CONFIG_path    where to look for sndlib-config
 #
 # SOMEDAY: --with-static-libraries --with-static-guile
-# TODO: pass static decisions up to snd-help
 
 
 #--------------------------------------------------------------------------------
@@ -1239,9 +1245,9 @@ AC_CHECK_HEADER(nl_types.h,
 
 
 AC_ARG_ENABLE(deprecated,
-  [  --disable-deprecated      do not include any deprecated stuff from gtk or guile]
+  [  --disable-deprecated      do not include any deprecated stuff from gtk or guile],
   if test "$enable_deprecated" = no ; then
-    CFLAGS="$CFLAGS -DGTK_DISABLE_DEPRECATED -DG_DISABLE_DEPRECATED -DGDK_DISABLE_DEPRECATED -DPANGO_DISABLE_DEPRECATED -DSCM_DEBUG_DEPRECATED=1 -DXM_DISABLE_DEPRECATED"
+    CFLAGS="-DGTK_DISABLE_DEPRECATED -DG_DISABLE_DEPRECATED -DGDK_DISABLE_DEPRECATED -DPANGO_DISABLE_DEPRECATED -DSCM_DEBUG_DEPRECATED=1 -DXM_DISABLE_DEPRECATED $CFLAGS"
   fi)
 
 CFLAGS="-I. $CFLAGS"
@@ -1249,5 +1255,6 @@ if test "$with_profiling" = yes; then
   CFLAGS="$CFLAGS -fprofile-arcs -ftest-coverage -fbranch-probabilities"
 fi
 
+AC_SUBST(CFLAGS)
 AC_SUBST(MAKE_TARGET)
 AC_OUTPUT

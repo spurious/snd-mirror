@@ -87,6 +87,8 @@
 #undef ENABLE_NLS
 #undef PACKAGE
 #undef VERSION
+#undef CONFIGURE_PROG
+#undef CONFIGURE_ARGS
 
 #undef LINUX
 #undef SGI

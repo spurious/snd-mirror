@@ -1857,38 +1857,27 @@ Reverb-feedback sets the scaler on the feedback.
   (define (number-name chan) (if (= chan 0) "amp-number" (format #f "amp-number-~D" chan)))
   (define (scroller-name chan) (if (= chan 0) "amp" (format #f "amp-~D" chan)))
 
-  (define scroll-max #f)
-  (define scroll-mid #f)
-  (define scroll-mult #f)
-  (define scroll-break #f)
-
-  (define (scrollbar-max)
-    (or scroll-max
-	(let* ((wids (sound-widgets))
-	       (ctrls (list-ref wids 2))
-	       (snd-amp (find-child ctrls "snd-amp"))
-	       (amp (find-child snd-amp (scroller-name 0)))
-	       (val (cadr (XtGetValues amp (list XmNmaximum 0)))))
-	  (set! scroll-max val)
-	  (set! scroll-mid (inexact->exact (floor (/ scroll-max 2))))
-	  (set! scroll-break (inexact->exact (floor (* .15 scroll-max))))
-	  (set! scroll-mult (/ (exp (/ (- scroll-break scroll-mid) (* .2 scroll-max))) scroll-break))
-	  val)))
-	    
-
-  (define (amp-scroller->amp val)
-    ;; same as Snd's built-in amp scroller callbacks
-    (if (= val 0)
-	0.0
-	(if (< val scroll-break)
-	    (* val scroll-mult) ; linear section
-	    (exp (/ (- val scroll-mid) (* .2 scroll-max))))))
+  (define (amp->scroll minval val maxval)
+    (if (<= val minval) 0
+	(if (>= val maxval) 900
+	    (if (>= val 1.0)
+		(inexact->exact (* 450 (+ 1.0 (/ (- val 1.0) (- maxval 1.0)))))
+		(inexact->exact (* 450 (/ (- val minval) (- 1.0 minval))))))))
   
+  (define (scroll->amp snd val)
+    (if (<= val 0)
+	(car (amp-control-bounds snd))
+	(if (>= val 900)
+	    (cadr (amp-control-bounds snd))
+	    (if (> val 450)
+		(+ (* (- (/ val 450.0) 1.0) (- (cadr (amp-control-bounds snd)) 1.0)) 1.0)
+		(+ (* val (/ (- 1.0 (car (amp-control-bounds snd))) 450.0)) (car (amp-control-bounds snd)))))))
+
   (define (amp-callback w c info)
     ;; c is (list number-widget snd chan)
-    (let* ((amp (amp-scroller->amp (.value info)))
+    (let* ((snd (cadr c))
+	   (amp (scroll->amp snd (.value info)))
 	   (ampstr (XmStringCreateLocalized (format #f "~,2F" amp)))
-	   (snd (cadr c))
 	   (top-chn (- (chans snd) 1))
 	   (chn (- top-chn (caddr c)))
 	   (ctrl (and (.event info) (not (= (logand (.state (.event info)) ControlMask) 0)))))
@@ -1908,14 +1897,13 @@ Reverb-feedback sets the scaler on the feedback.
 	  (set! (amp-control snd chn) amp))))
 
   (define (reset-to-one scroller number)
-    (XtSetValues scroller (list XmNvalue scroll-mid))
+    (XtSetValues scroller (list XmNvalue 450))
     (let ((ampstr (XmStringCreateLocalized "1.00")))
       (XtSetValues number (list XmNlabelString ampstr))
       (XmStringFree ampstr)))
   
   (define (make-amp-control snd chan parent)
     (let* ((s1 (XmStringCreateLocalized "amp:"))
-	   (smax (scrollbar-max))
 	   (label (XtCreateManagedWidget (label-name chan) xmPushButtonWidgetClass parent
 					  (list XmNbackground       (basic-color)
 						XmNalignment        XmALIGNMENT_BEGINNING
@@ -1952,8 +1940,8 @@ Reverb-feedback sets the scaler on the feedback.
 						 XmNleftWidget       number
 						 XmNrightAttachment  XmATTACH_FORM
 						 XmNorientation      XmHORIZONTAL
-						 XmNmaximum          smax
-						 XmNvalue            scroll-mid
+						 XmNmaximum          1000
+						 XmNvalue            450
 						 XmNdragCallback     (list amp-callback (list number snd chan))
 						 XmNvalueChangedCallback (list amp-callback (list number snd chan))))))
       (XtOverrideTranslations scroll
@@ -1977,7 +1965,6 @@ Reverb-feedback sets the scaler on the feedback.
 	  (let ((height (cadr (XtGetValues ctrls (list XmNheight 0))))
 		(panemin (cadr (XtGetValues ctrls (list XmNpaneMinimum 0))))
 		(panemax (cadr (XtGetValues ctrls (list XmNpaneMaximum 0)))))
-	    (scrollbar-max)
 	    (XtUnmanageChild ctrls)
 
 	    (if (not (sound-property 'amp-controls snd))
@@ -1988,7 +1975,7 @@ Reverb-feedback sets the scaler on the feedback.
 						                    c<Btn1Up>:   Release()"))
 		  (XtAddCallback orig-amp XmNdragCallback
 				 (lambda (w c info)
-				   (let ((amp (amp-scroller->amp (.value info))))
+				   (let ((amp (scroll->amp snd (.value info))))
 				     (if (and (.event info) (not (= (logand (.state (.event info)) ControlMask) 0)))
 					 (do ((i 1 (1+ i)))
 					     ((= i chns))

@@ -33,7 +33,6 @@
 ;;; TODO: recorder-file-hook
 ;;; how to send ourselves a drop?  (button2 on menu is only the first half -- how to force 2nd?)
 ;;; TODO: replace all the (buggy) keystroke junk with snd-simulate-keystroke 
-;;; TODO: filter-selection truncate arg (and filter-* in general)
 
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 optargs) (ice-9 popen) (ice-9 session))
 
@@ -114,7 +113,8 @@
 	     (display (format #f "copying ~A~%" file))
 	     (copy-file (string-append home-dir "/cl/" file) (string-append (getcwd) "/" file)))))
      (list "4.aiff" "2.snd" "obtest.snd" "oboe.snd" "pistol.snd" "1a.snd" "now.snd" "fyow.snd"
-	   "storm.snd" "z.snd" "1.snd" "cardinal.snd" "now.snd.scm" "2a.snd" "4a.snd" "zero.snd")))
+	   "storm.snd" "z.snd" "1.snd" "cardinal.snd" "now.snd.scm" "2a.snd" "4a.snd" "zero.snd"
+	   "loop.scm" "cmn-glyphs.lisp")))
 
 (define times '())
 (defmacro time (a) 
@@ -861,6 +861,7 @@
       (test-defaults
        (list
 	'amp-control (without-errors (amp-control)) 'no-such-sound
+	'amp-control-bounds (without-errors (amp-control-bounds)) 'no-such-sound
 	'ask-before-overwrite (ask-before-overwrite) #f 
 	'audio-output-device (audio-output-device) 0
 	'auto-resize (auto-resize) #t 
@@ -903,6 +904,7 @@
 	'eps-left-margin (eps-left-margin) 0.0
 	'eps-size (eps-size) 1.0
 	'expand-control (without-errors (expand-control)) 'no-such-sound
+	'expand-control-bounds (without-errors (expand-control-bounds)) 'no-such-sound
 	'expand-control-hop (without-errors (expand-control-hop)) 'no-such-sound
 	'expand-control-jitter (without-errors (expand-control-jitter)) 'no-such-sound
 	'expand-control-length (without-errors (expand-control-length)) 'no-such-sound
@@ -948,8 +950,10 @@
 	'reverb-control-decay (reverb-control-decay) 1.0 
 	'reverb-control-feedback (without-errors (reverb-control-feedback)) 'no-such-sound
 	'reverb-control-length (without-errors (reverb-control-length)) 'no-such-sound
+	'reverb-control-length-bounds (without-errors (reverb-control-length-bounds)) 'no-such-sound
 	'reverb-control-lowpass (without-errors (reverb-control-lowpass)) 'no-such-sound
 	'reverb-control-scale (without-errors (reverb-control-scale)) 'no-such-sound
+	'reverb-control-scale-bounds (without-errors (reverb-control-scale-bounds)) 'no-such-sound
 	'reverb-control? (without-errors (reverb-control?)) 'no-such-sound
 	'save-state-file (save-state-file) "saved-snd.scm" 
 	'show-axes (show-axes) 1
@@ -972,6 +976,7 @@
 	'spectro-z-angle (spectro-z-angle) (if (provided? 'gl) 0.0 358.0)
 	'spectro-z-scale (spectro-z-scale) (if (provided? 'gl) 1.0 0.1)
 	'speed-control (without-errors (speed-control)) 'no-such-sound
+	'speed-control-bounds (without-errors (speed-control-bounds)) 'no-such-sound
 	'speed-control-style (speed-control-style) 0 
 	'speed-control-tones (speed-control-tones) 12
 	'sync (without-errors (sync)) 'no-such-sound
@@ -1394,7 +1399,9 @@
 			
 			(setfnc newval)
 			(let ((nowval (getfnc)))
-			  (if (not (equal? newval nowval))
+			  (if (and (not (equal? newval nowval))
+				   (or (not (list? newval))
+				       (not (feql newval nowval))))
 			      (if (and (number? newval) (inexact? newval))
 				  (if (> (abs (- newval nowval)) .01)
 				      (snd-display ";~A /= ~A (~A)" name newval nowval))
@@ -1402,7 +1409,9 @@
 			  (setfnc initval)
 			  (set! (getfnc) newval)
 			  (let ((nowval (getfnc)))
-			    (if (not (equal? newval nowval))
+			    (if (and (not (equal? newval nowval))
+				     (or (not (list? newval))
+					 (not (feql newval nowval))))
 				(if (and (number? newval) (inexact? newval))
 				    (if (> (abs (- newval nowval)) .01)
 					(snd-display ";set! ~A /= ~A (~A)" name newval nowval))
@@ -1412,6 +1421,7 @@
 	(test-vars 
 	 (list
 	  (list 'amp-control amp-control 1.0 0.5)
+	  (list 'amp-control-bounds amp-control-bounds (list 0.0 8.0) (list 1.0 5.0))
 	  (list 'ask-before-overwrite ask-before-overwrite #f #t)
 	  (list 'audio-input-device audio-input-device 0 1)
 	  (list 'audio-output-device audio-output-device 0 1)
@@ -1451,6 +1461,7 @@
 	  (list 'eps-size eps-size 1.0 2.0)
 	  (list 'eps-bottom-margin eps-bottom-margin 0.0 36.0)
 	  (list 'expand-control expand-control 1.0 2.0)
+	  (list 'expand-control-bounds expand-control-bounds (list .001 20.0) (list 1.0 2.0))
 	  (list 'expand-control-hop expand-control-hop 0.05 0.1)
 	  (list 'expand-control-jitter expand-control-jitter 0.1 0.2)
 	  (list 'expand-control-length expand-control-length 0.15 0.2)
@@ -1493,8 +1504,10 @@
 	  (list 'reverb-control-decay reverb-control-decay 1.0 2.0)
 	  (list 'reverb-control-feedback reverb-control-feedback 1.09 1.6)
 	  (list 'reverb-control-length reverb-control-length 1.0 2.0)
+	  (list 'reverb-control-length-bounds reverb-control-length-bounds (list 0.0 5.0) (list 1.0 2.0))
 	  (list 'reverb-control-lowpass reverb-control-lowpass 0.7 0.9)
 	  (list 'reverb-control-scale reverb-control-scale 0.0 0.2)
+	  (list 'reverb-control-scale-bounds reverb-control-scale-bounds (list 0.0 4.0) (list 0.0 0.2))
 	  (list 'reverb-control? reverb-control? #f #t)
 	  (list 'show-axes show-axes 1 0)
 	  (list 'show-transform-peaks show-transform-peaks #f #t)
@@ -1515,6 +1528,7 @@
 	  (list 'spectro-z-angle spectro-z-angle (if (provided? 'gl) 0.0 358.0) 60.0)
 	  (list 'spectro-z-scale spectro-z-scale (if (provided? 'gl) 1.0 0.1) 0.2)
 	  (list 'speed-control speed-control 1.0 0.5)
+	  (list 'speed-control-bounds speed-control-bounds (list 0.05 20.0) (list 1.0 5.0))
 	  (list 'speed-control-style speed-control-style 0 1)
 	  (list 'speed-control-tones speed-control-tones 12 18)
 	  (list 'sync sync 0 1)
@@ -1558,6 +1572,7 @@
 	(test-bad-args
 	 (list
 	  (list 'amp-control amp-control 1.0 '(-1.0 123.123))
+	  (list 'amp-control-bounds amp-control-bounds (list 0.0 8.0) (list #f (list 0.0) (list 1.0 0.0) 2.0))
 	  (list 'channel-style channel-style 0 '(32 -1 1.0))
 	  (list 'colormap colormap 2 '(321 -123))
 	  (list 'color-cutoff color-cutoff 0.003 '(-1.0 123.123))
@@ -1569,6 +1584,7 @@
 	  (list 'dot-size dot-size 1 '(0 -1 -123))
 	  (list 'enved-target enved-target 0 '(123 -321))
 	  (list 'expand-control expand-control 1.0 '(-1.0 0.0))
+	  (list 'expand-control-bounds expand-control-bounds (list 0.001 20.0) (list #f (list 0.0) (list 1.0 0.0) 2.0))
 	  (list 'expand-control-hop expand-control-hop 0.05 '(-1.0))
 	  (list 'expand-control-length expand-control-length 0.15 '(-1.0 0.0))
 	  (list 'expand-control-ramp expand-control-ramp 0.4 '(-1.0 1.0 123.123))
@@ -1591,6 +1607,7 @@
 	  (list 'spectro-hop spectro-hop 4 '(-10 -1 0))
 	  (list 'spectro-start spectro-start 0.0 '(-1.0))
 	  (list 'speed-control speed-control 1.0 '(0.0))
+	  (list 'speed-control-bounds speed-control-bounds (list 0.05 20.0) (list #f (list 0.0) (list 1.0 0.0) 2.0))
 	  (list 'speed-control-style speed-control-style 0 '(-1 10))
 	  (list 'transform-type transform-type 0 '(-1 123))
 	  (list 'wavelet-type wavelet-type 0 '(-1 123))
@@ -7047,11 +7064,17 @@ EDITS: 5
 	  (if (fffneq (amp-control obind) 2.0) (snd-display ";set amp-control ~A" (amp-control obind)))
 	  (reset-controls obind)
 	  (if (ffneq (amp-control obind) 1.0) (snd-display ";reset amp-control ~A" (amp-control obind)))
+	  (set! (amp-control-bounds obind) (list 0.0 4.0))
+	  (if (not (equal? (amp-control-bounds obind) (list 0.0 4.0))) (snd-display ";amp-control-bounds: ~A" (amp-control-bounds)))
 	  (set! (amp-control obind) 2.0)
 	  (if (eq? (without-errors (apply-controls obind)) 'no-such-sound) (snd-display ";apply-controls can't find oboe.snd?"))
 	  (let ((newamp (maxamp obind)))
 	    (if (> (abs (- (* 2.0 vol) newamp)) .05) (snd-display ";apply amp: ~A -> ~A?" vol newamp))
+	    (set! (amp-control-bounds obind) (list 0.0 8.0))
+	    (set! (speed-control-bounds obind) (list 1.0 5.0))
+	    (if (not (equal? (speed-control-bounds obind) (list 1.0 5.0))) (snd-display ";speed-control-bounds: ~A" (speed-control-bounds)))
 	    (set! (speed-control obind) 0.5)
+	    (set! (speed-control-bounds obind) (list .05 20.0))
 	    (add-mark 1234)
 	    (apply-controls obind)
 	    (let ((newdur (frames obind)))
@@ -7060,30 +7083,41 @@ EDITS: 5
 	      ;; within 256 which is apply's buffer size (it always flushes full buffers) 
 	      (set! (contrast-control? obind) #t)
 	      (set! (contrast-control-bounds obind) (list 0.5 2.5))
+	      (if (not (equal? (contrast-control-bounds obind) (list 0.5 2.5))) (snd-display ";contrast-control-bounds: ~A" (contrast-control-bounds)))
 	      (set! (contrast-control obind) 1.0)
 	      (apply-controls obind)
 	      (set! (contrast-control-bounds obind) (list 0.0 10.0))
+	      (if (not (equal? (contrast-control-bounds obind) (list 0.0 10.0))) (snd-display ";contrast-control-bounds (2): ~A" (contrast-control-bounds)))
 	      (let ((secamp (maxamp obind))
 		    (secdur (frames obind)))
 		(if (fneq secamp .989) (snd-display ";apply contrast: ~A?" secamp))
 		(if (not (= secdur newdur)) (snd-display ";apply contrast length: ~A -> ~A?" newdur secdur))
 		(undo 3 obind)
 		(set! (reverb-control? obind) #t)
+		(set! (reverb-control-scale-bounds obind) (list 0.0 1.0))
+		(if (not (equal? (reverb-control-scale-bounds obind) (list 0.0 1.0))) 
+		    (snd-display ";reverb-control-scale-bounds: ~A" (reverb-control-scale-bounds)))
+		(set! (reverb-control-length-bounds obind) (list 0.0 2.0))
+		(if (not (equal? (reverb-control-length-bounds obind) (list 0.0 2.0))) 
+		    (snd-display ";reverb-control-length-bounds: ~A" (reverb-control-length-bounds)))
 		(set! (reverb-control-scale obind) .2)
 		(apply-controls obind)
 		(let ((revamp (maxamp obind))
 		      (revdur (frames obind)))
-		  (if (fneq revamp .213) (snd-display ";apply reverb scale: ~A?" revamp))
+		  (if (ffneq revamp .214) (snd-display ";apply reverb scale: ~A?" revamp))
 		  (if (not (< (- revdur (+ 50828 (inexact->exact (round (* (reverb-control-decay) 22050))))) 256)) 
 		      (snd-display ";apply reverb length: ~A?" revdur))
 		  (undo 1 obind)
 		  (set! (expand-control? obind) #t)
+		  (set! (expand-control-bounds obind) (list 1.0 3.0))
+		  (if (not (equal? (expand-control-bounds obind) (list 1.0 3.0))) (snd-display ";expand-control-bounds: ~A" (expand-control-bounds)))
 		  (set! (expand-control obind) 1.5)
 		  (apply-controls obind)
 		  (let ((expamp (maxamp obind))
 			(expdur (frames obind)))
 		    (if (> (abs (- expamp .152)) .01) (snd-display ";apply expand-control scale: ~A?" expamp))
 		    (if (not (> expdur (* 1.25 50828))) (snd-display ";apply expand-control length: ~A?" expdur))
+		    (set! (expand-control-bounds obind) (list 0.001 20.0))
 		    (undo 1 obind)
 		    (set! (filter-control? obind) #t)
 		    (set! (filter-control-order obind) 40)
@@ -27000,10 +27034,6 @@ EDITS: 1
 	 with-gui)
     (begin
       (run-hook before-test-hook 17)
-      (if (not (file-exists? "cmn-glyphs.lisp"))
-	  (copy-file (string-append cwd "cmn-glyphs.lisp") (string-append (getcwd) "/cmn-glyphs.lisp")))
-      (if (not (file-exists? "loop.scm"))
-	  (copy-file (string-append cwd "loop.scm") (string-append (getcwd) "/loop.scm")))
       (load "musglyphs.scm")
       (load "draw.scm")
       (add-hook! after-graph-hook display-previous-edits)
@@ -28596,6 +28626,54 @@ EDITS: 2
 	  (close-sound ind1)
 	  (close-sound ind2)))
 
+      (let ((ind (new-sound "tmp.snd" mus-next mus-bfloat 22050 1 #f 100)))
+	(set! (sample 10) 0.5)
+	(filter-sound (vct 1.0 0.0 1.0) 3)
+	(if (not (vequal (channel->vct 5 10) (vct 0.000 0.000 0.000 0.000 0.000 0.500 0.000 0.500 0.000 0.000)))
+	    (snd-display ";filter-sound 1 0 1: ~A" (channel->vct 5 10)))
+	(undo)
+	(filter-sound '(0 1 1 1) 100)
+	(let ((coeffs (make-fir-coeffs 100 (make-vct 100 0.5)))
+	      (data (channel->vct 10 100)))
+	  (call-with-current-continuation
+	   (lambda (break)
+	     (do ((i 0 (1+ i)))
+		 ((= i 100))
+	       (if (fneq (vct-ref data i) (vct-ref coeffs i))
+		   (begin
+		     (snd-display ";coeffs '(0 1 1 1): ~A ~A ~A" i (vct-ref coeffs i) (vct-ref data i))
+		     (break)))))))
+	(undo)
+	(filter-sound '(0 1 1 1) 1000)
+	(if (not (vequal (channel->vct 5 10) (vct 0.000 0.000 0.000 0.000 0.000 0.500 0.000 0.000 0.000 0.000)))
+	    (snd-display ";filter-sound 1 (1000): ~A" (channel->vct 5 10)))
+	(undo)
+	(make-selection 5 15)
+	(filter-selection '(0 1 1 1) 100)
+	(if (not (equal? (edit-fragment 2) (list "filter-selection" "set" 5 11)))
+	    (snd-display ";filter-selection truncated: ~A" (edit-fragment 2)))
+	(if (not (vequal (channel->vct 20 10) (make-vct 10 0.0)))
+	    (snd-display ";filter-selection trunc overwrote: ~A" (channel->vct 20 10)))
+	(undo)
+	(filter-selection '(0 1 1 1) 100 #f)  
+	(if (not (equal? (edit-fragment 2) (list "filter-selection" "set" 5 111)))
+	    (snd-display ";filter-selection not truncated: ~A" (edit-fragment 2)))
+	(if (not (vequal (channel->vct 50 10) (vct -0.016 0.018 -0.021 0.024 -0.029 0.035 -0.045 0.064 -0.106 0.318)))
+	    (snd-display ";filter-selection no trunc: ~A" (channel->vct 50 10)))
+	(undo)
+	(filter-selection '(0 1 1 1) 1000 #t)
+	(if (not (equal? (edit-fragment 2) (list "filter-selection" "set" 5 11)))
+	    (snd-display ";filter-selection truncated (1000): ~A" (edit-fragment 2)))
+	(if (fneq (maxamp) 0.0) (snd-display ";filter-selection 1000 untrunc? ~A" (maxamp)))
+	(undo)
+	(filter-selection '(0 1 1 1) 1000 #f)
+	(if (not (equal? (edit-fragment 2) (list "filter-selection" "set" 5 1011)))
+	    (snd-display ";filter-selection not truncated (1000): ~A" (edit-fragment 2)))
+	(if (fneq (maxamp) 0.318) (snd-display ";filter-selection 1000 no trunc? ~A" (maxamp)))
+	(if (not (vequal (channel->vct 505 10) (vct 0.035 -0.045 0.064 -0.106 0.318 0.318 -0.106 0.064 -0.045 0.035)))
+	    (snd-display ";filter-selection 1000 no trunc: ~A" (channel->vct 505 10)))
+	(close-sound))
+      
       (run-hook after-test-hook 21)
       ))
 
@@ -41049,7 +41127,9 @@ EDITS: 2
 		     close-sound ;close-sound-file 
 		     color-cutoff color-dialog
 		     color-inverted color-scale color->list colormap color?  comment contrast-control contrast-control-amp
-		     contrast-control? vct-convolve! convolve-selection-with convolve-with channel-properties contrast-control-bounds
+		     contrast-control? vct-convolve! convolve-selection-with convolve-with channel-properties 
+		     amp-control-bounds speed-control-bounds expand-control-bounds contrast-control-bounds
+		     reverb-control-length-bounds reverb-control-scale-bounds
 		     auto-update-interval count-matches current-font cursor cursor-color cursor-follows-play cursor-size
 		     cursor-style dac-combines-channels dac-size data-clipped data-color data-format data-location data-size
 		     default-output-chans default-output-format default-output-srate default-output-type define-envelope
@@ -41171,7 +41251,9 @@ EDITS: 2
 			 amp-control ask-before-overwrite audio-input-device audio-output-device auto-resize
 			 auto-update axis-label-font axis-numbers-font ;basic-color 
 			 channel-style peaks-font bold-peaks-font
-			 color-cutoff color-inverted color-scale contrast-control contrast-control-amp contrast-control-bounds
+			 color-cutoff color-inverted color-scale contrast-control contrast-control-amp 
+			 amp-control-bounds speed-control-bounds expand-control-bounds contrast-control-bounds
+			 reverb-control-length-bounds reverb-control-scale-bounds
 			 contrast-control? auto-update-interval current-font cursor cursor-color channel-properties
 			 cursor-follows-play cursor-size cursor-style dac-combines-channels dac-size data-clipped data-color
 			 default-output-chans default-output-format default-output-srate default-output-type dot-size
@@ -41268,7 +41350,9 @@ EDITS: 2
 				      (lambda args (car args)))))
 			  (if (not (eq? tag 'no-such-sound))
 			      (snd-display ";snd no-such-sound ~A: ~A" n tag))))
-		      (list amp-control bomb apply-controls channels chans close-sound comment contrast-control contrast-control-bounds
+		      (list amp-control bomb apply-controls channels chans close-sound comment contrast-control 
+			    amp-control-bounds speed-control-bounds expand-control-bounds contrast-control-bounds
+			    reverb-control-length-bounds reverb-control-scale-bounds
 			    contrast-control-amp contrast-control? data-format data-location data-size expand-control expand-control-hop expand-control-jitter
 			    expand-control-length expand-control-ramp expand-control? file-name filter-control-in-dB filter-control-in-hz
 			    filter-control-envelope filter-control-order filter-control?  finish-progress-report frames header-type
@@ -41286,7 +41370,9 @@ EDITS: 2
 						  (lambda args (car args)))))
 				      (if (not (eq? tag 'wrong-type-arg))
 					  (snd-display ";snd wrong-type-arg ~A: ~A ~A" n tag arg))))
-				  (list amp-control bomb apply-controls channels chans close-sound comment contrast-control contrast-control-bounds
+				  (list amp-control bomb apply-controls channels chans close-sound comment contrast-control 
+					amp-control-bounds speed-control-bounds expand-control-bounds contrast-control-bounds
+					reverb-control-length-bounds reverb-control-scale-bounds
 					contrast-control-amp contrast-control? data-format data-location data-size expand-control
 					expand-control-hop expand-control-jitter expand-control-length expand-control-ramp expand-control? file-name
 					filter-control-in-dB filter-control-in-hz filter-control-envelope filter-control-order filter-control?
@@ -41308,7 +41394,9 @@ EDITS: 2
 					(if (not (eq? tag 'wrong-type-arg))
 					    (snd-display ";snd set wrong-type-arg ~D: ~A: ~A ~A" ctr n tag arg))
 					(set! ctr (+ ctr 1))))
-				    (list amp-control channels chans comment contrast-control contrast-control-amp contrast-control-bounds
+				    (list amp-control channels chans comment contrast-control contrast-control-amp 
+					  amp-control-bounds speed-control-bounds expand-control-bounds contrast-control-bounds
+					  reverb-control-length-bounds reverb-control-scale-bounds
 					  contrast-control? data-format data-location data-size expand-control expand-control-hop expand-control-jitter
 					  expand-control-length expand-control-ramp expand-control? filter-control-in-dB filter-control-in-hz
 					  filter-control-envelope filter-control-order filter-control? frames header-type read-only
@@ -41329,7 +41417,9 @@ EDITS: 2
 					  (if (not (eq? tag 'wrong-type-arg))
 					      (snd-display ";snd safe set wrong-type-arg ~A: ~A ~A ~A" ctr n tag arg))
 					  (set! ctr (+ ctr 1))))
-				      (list amp-control contrast-control contrast-control-amp contrast-control? expand-control contrast-control-bounds
+				      (list amp-control contrast-control contrast-control-amp contrast-control? expand-control 
+					    amp-control-bounds speed-control-bounds expand-control-bounds contrast-control-bounds
+					    reverb-control-length-bounds reverb-control-scale-bounds
 					    expand-control-hop expand-control-jitter expand-control-length expand-control-ramp expand-control?
 					    filter-control-in-dB filter-control-in-hz filter-control-envelope filter-control-order filter-control?
 					    reverb-control-decay reverb-control-feedback reverb-control-length reverb-control-lowpass

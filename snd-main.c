@@ -520,6 +520,9 @@ static void save_sound_state (snd_info *sp, void *ptr)
     psp_sl(fd, S_contrast_control_bounds, sp->contrast_control_min, sp->contrast_control_max);
   if (sp->expand_control_p != DEFAULT_EXPAND_CONTROL_P) psp_ss(fd, S_expand_control_p, b2s(sp->expand_control_p));
   if (sp->expand_control != DEFAULT_EXPAND_CONTROL) psp_sf(fd, S_expand_control, sp->expand_control);
+  if ((sp->expand_control_min != DEFAULT_EXPAND_CONTROL_MIN) ||
+      (sp->expand_control_max != DEFAULT_EXPAND_CONTROL_MAX))
+    psp_sl(fd, S_expand_control_bounds, sp->expand_control_min, sp->expand_control_max);
   if (sp->expand_control_ramp != DEFAULT_EXPAND_CONTROL_RAMP) psp_sf(fd, S_expand_control_ramp, sp->expand_control_ramp);
   if (sp->expand_control_hop != DEFAULT_EXPAND_CONTROL_HOP) psp_sf(fd, S_expand_control_hop, sp->expand_control_hop);
   if (sp->expand_control_jitter != DEFAULT_EXPAND_CONTROL_JITTER) psp_sf(fd, S_expand_control_jitter, sp->expand_control_jitter);
@@ -538,13 +541,25 @@ static void save_sound_state (snd_info *sp, void *ptr)
 #endif
       psp_sf(fd, S_speed_control, sp->speed_control);
     }
+  if ((sp->speed_control_min != DEFAULT_SPEED_CONTROL_MIN) ||
+      (sp->speed_control_max != DEFAULT_SPEED_CONTROL_MAX))
+    psp_sl(fd, S_speed_control_bounds, sp->speed_control_min, sp->speed_control_max);
   if (sp->reverb_control_p != DEFAULT_REVERB_CONTROL_P) psp_ss(fd, S_reverb_control_p, b2s(sp->reverb_control_p));
   if (sp->reverb_control_scale != DEFAULT_REVERB_CONTROL_SCALE) psp_sf(fd, S_reverb_control_scale, sp->reverb_control_scale);
+  if ((sp->reverb_control_scale_min != DEFAULT_REVERB_CONTROL_SCALE_MIN) ||
+      (sp->reverb_control_scale_max != DEFAULT_REVERB_CONTROL_SCALE_MAX))
+    psp_sl(fd, S_reverb_control_scale_bounds, sp->reverb_control_scale_min, sp->reverb_control_scale_max);
   if (sp->reverb_control_length != DEFAULT_REVERB_CONTROL_LENGTH) psp_sf(fd, S_reverb_control_length, sp->reverb_control_length);
+  if ((sp->reverb_control_length_min != DEFAULT_REVERB_CONTROL_LENGTH_MIN) ||
+      (sp->reverb_control_length_max != DEFAULT_REVERB_CONTROL_LENGTH_MAX))
+    psp_sl(fd, S_reverb_control_length_bounds, sp->reverb_control_length_min, sp->reverb_control_length_max);
   if (sp->reverb_control_feedback != DEFAULT_REVERB_CONTROL_FEEDBACK) psp_sf(fd, S_reverb_control_feedback, sp->reverb_control_feedback);
   if (sp->reverb_control_lowpass != DEFAULT_REVERB_CONTROL_LOWPASS) psp_sf(fd, S_reverb_control_lowpass, sp->reverb_control_lowpass);
   if (sp->reverb_control_decay != DEFAULT_REVERB_CONTROL_DECAY) psp_sf(fd, S_reverb_control_decay, sp->reverb_control_decay);
   if (sp->amp_control != DEFAULT_AMP_CONTROL) psp_sf(fd, S_amp_control, sp->amp_control);
+  if ((sp->amp_control_min != DEFAULT_AMP_CONTROL_MIN) ||
+      (sp->amp_control_max != DEFAULT_AMP_CONTROL_MAX))
+    psp_sl(fd, S_amp_control_bounds, sp->amp_control_min, sp->amp_control_max);
   if (sp->filter_control_p != DEFAULT_FILTER_CONTROL_P) psp_ss(fd, S_filter_control_p, b2s(sp->filter_control_p));
   if (sp->filter_control_order != DEFAULT_FILTER_CONTROL_ORDER) psp_sd(fd, S_filter_control_order, sp->filter_control_order);
   if (sp->filter_control_in_dB != DEFAULT_FILTER_CONTROL_IN_DB) psp_ss(fd, S_filter_control_in_dB, b2s(sp->filter_control_in_dB));

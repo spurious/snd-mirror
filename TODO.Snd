@@ -20,8 +20,6 @@ dlocsig from CLM to Scheme + a path envelope editor dialog
 
 A "master volume" control in the recorder.
 
-noise reduction.
-
 In snd-test.scm, the gtk (xg) section needs to be completed.
   Similarly for OpenGL and Ruby (snd_test.rb).
 
@@ -33,9 +31,6 @@ Gtk versions of bess.scm and Dave Phillips' extensions
     dlp/marks-menu.scm
 Both versions could be rewritten to take advantage of the optimizer.
   See bess1.scm/rb by Michael Scholz.
-
-find and fix clipping (some kind of plausible smoothing operation over
-  the truncated portion, perhaps with global rescaling afterwards).
 
 It should be possible to build Snd in Windows with either
   gtk or Exceed Motif, but the current windows gtk is version 1.3

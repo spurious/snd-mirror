@@ -40,7 +40,6 @@
 (define (dht data) 
   "(dht data) returns the Hartley transform of 'data'."
   ;; taken from Perry Cook's SignalProcessor.m (the slow version of the Hartley transform)
-  ;; the function fht (see snd-sig.c) is the fast form of this transform
   (let* ((len (vct-length data)) 
 	 (arr (make-vct len))
 	 (w (/ (* 2.0 pi) len)))

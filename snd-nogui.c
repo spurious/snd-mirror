@@ -304,13 +304,13 @@ void set_fft_window(mus_fft_window_t val) {in_set_fft_window(val);}
 void set_transform_type(int val) {in_set_transform_type(val);}
 void set_wavelet_type(int val) {in_set_wavelet_type(val);}
 void set_transform_graph_type(graph_type_t val) {in_set_transform_graph_type(val);}
-void set_snd_amp(snd_info *sp, Float val) {sp->amp_control = val;}
-void set_snd_expand(snd_info *sp, Float val) {if (val > MINIMUM_EXPAND_CONTROL) sp->expand_control = val; else sp->expand_control = MINIMUM_EXPAND_CONTROL;}
-void set_snd_contrast(snd_info *sp, Float val) {sp->contrast_control = val;}
-void set_snd_speed(snd_info *sp, Float val) {sp->speed_control = val;}
-void set_snd_revlen(snd_info *sp, Float val) {sp->reverb_control_length = val;}
-void set_snd_revscl(snd_info *sp, Float val) {sp->reverb_control_scale = val;}
-void set_snd_filter_order(snd_info *sp, int val) {sp->filter_control_order = val;}
+void set_amp(snd_info *sp, Float val) {sp->amp_control = val;}
+void set_expand(snd_info *sp, Float val) {sp->expand_control = val;}
+void set_contrast(snd_info *sp, Float val) {sp->contrast_control = val;}
+void set_speed(snd_info *sp, Float val) {sp->speed_control = val;}
+void set_revlen(snd_info *sp, Float val) {sp->reverb_control_length = val;}
+void set_revscl(snd_info *sp, Float val) {sp->reverb_control_scale = val;}
+void set_filter_order(snd_info *sp, int val) {sp->filter_control_order = val;}
 void set_filter_in_dB(snd_info *sp, bool val) {sp->filter_control_in_dB = val;}
 void set_filter_in_hz(snd_info *sp, bool val) {sp->filter_control_in_hz = val;}
 

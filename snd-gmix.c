@@ -11,20 +11,19 @@ static int mix_dialog_id = INVALID_MIX_ID;
 /* -------- speed -------- */
 static GtkWidget *w_speed, *w_speed_label, *w_speed_number, *w_speed_form, *w_speed_event;
 static GtkObject *w_speed_adj;
-static char speed_number_buffer[5] = {'1', STR_decimal, '0', '0', '\0'};
-
 static bool speed_pressed = false, speed_dragged = false;
 /* can't use value_changed on adjustment and motion event happens even when the mouse merely moves across the slider without dragging */
 
 static Float set_mix_speed_label(snd_info *sp, Float uval)
 {
   Float val;
+  char sfs[6];
   val = speed_changed(uval,
-		      speed_number_buffer,
+		      sfs,
 		      sp->speed_control_style,
 		      sp->speed_control_tones,
-		      5);
-  gtk_label_set_text(GTK_LABEL(w_speed_number), speed_number_buffer);
+		      6);
+  gtk_label_set_text(GTK_LABEL(w_speed_number), sfs);
   return(val);
 }
 
@@ -90,7 +89,6 @@ static gboolean speed_press_callback(GtkWidget *w, GdkEventButton *ev, gpointer 
 static GtkWidget **w_amps, **w_amp_labels, **w_amp_numbers, **w_amp_events, **w_amp_forms;
 static GtkObject **w_amp_adjs;
 #define CHANS_ALLOCATED 8
-static char amp_number_buffer[5] = {'1', STR_decimal, '0', '0', '\0'};
 
 static Float amp_to_scroll(Float amp)
 {
@@ -115,13 +113,11 @@ static bool amp_pressed = false, amp_dragged = false;;
 
 static void reflect_mix_amp(Float val, int chan)
 {
-  char *sfs;
+  char sfs[6];
   GTK_ADJUSTMENT(w_amp_adjs[chan])->value = amp_to_scroll(val);
   gtk_adjustment_value_changed(GTK_ADJUSTMENT(w_amp_adjs[chan]));
-  sfs = prettyf(val, 2);
-  fill_number(sfs, amp_number_buffer);
-  gtk_label_set_text(GTK_LABEL(w_amp_numbers[chan]), amp_number_buffer);
-  FREE(sfs);
+  mus_snprintf(sfs, 6, "%.2f", val);
+  gtk_label_set_text(GTK_LABEL(w_amp_numbers[chan]), sfs);
 }
 
 static gboolean amp_click_callback(GtkWidget *w, GdkEventButton *ev, gpointer data)
@@ -801,7 +797,7 @@ GtkWidget *make_mix_dialog(void)
 	{
 	case SPEED_CONTROL_AS_RATIO: w_speed_number = gtk_label_new("1/1"); break;
 	case SPEED_CONTROL_AS_SEMITONE: w_speed_number = gtk_label_new("1"); break;
-	default:  w_speed_number = gtk_label_new(speed_number_buffer); break;
+	default:  w_speed_number = gtk_label_new("1.00"); break;
 	}
       gtk_box_pack_start(GTK_BOX(w_speed_form), w_speed_number, false, false, 0);
       gtk_widget_show(w_speed_number);
@@ -837,8 +833,6 @@ GtkWidget *make_mix_dialog(void)
       w_amp_adjs = (GtkObject **)CALLOC(CHANS_ALLOCATED, sizeof(GtkObject *));
 
       for (i = 0; i < CHANS_ALLOCATED; i++) spfs[i] = new_env_editor();
-      speed_number_buffer[1] = local_decimal_point();
-      amp_number_buffer[1] = local_decimal_point();
 
       for (i = 0; i < CHANS_ALLOCATED; i++)
 	{
@@ -860,7 +854,7 @@ GtkWidget *make_mix_dialog(void)
 	  set_user_int_data(G_OBJECT(w_amp_events[i]), i);
 	  gtk_widget_show(w_amp_labels[i]);
       
-	  w_amp_numbers[i] = gtk_label_new(amp_number_buffer);
+	  w_amp_numbers[i] = gtk_label_new("1.00");
 	  gtk_box_pack_start(GTK_BOX(w_amp_forms[i]), w_amp_numbers[i], false, false, 0);
 	  gtk_widget_show(w_amp_numbers[i]);
 	  
@@ -1076,22 +1070,21 @@ static int track_dialog_id = INVALID_TRACK_ID;
 /* -------- speed -------- */
 static GtkWidget *w_track_speed, *w_track_speed_label, *w_track_speed_number, *w_track_speed_form, *w_track_speed_event;
 static GtkObject *w_track_speed_adj;
-static char track_speed_number_buffer[5] = {'1', STR_decimal, '0', '0', '\0'};
-
 static bool track_speed_pressed = false, track_speed_dragged = false;
 
 static Float reflect_track_speed(Float uval)
 {
   Float val;
+  char sfs[6];
   chan_info *cp;
   if (!(track_p(track_dialog_id))) return(1.0);
   cp = track_channel(track_dialog_id, 0);
   val = speed_changed(uval,
-		      track_speed_number_buffer,
+		      sfs,
 		      (cp) ? cp->sound->speed_control_style : speed_control_style(ss),
 		      (cp) ? cp->sound->speed_control_tones : speed_control_tones(ss),
-		      5);
-  gtk_label_set_text(GTK_LABEL(w_track_speed_number), track_speed_number_buffer);
+		      6);
+  gtk_label_set_text(GTK_LABEL(w_track_speed_number), sfs);
   if (val > 0.0)
     GTK_ADJUSTMENT(w_track_speed_adj)->value = .45 + .15 * log(val);
   else GTK_ADJUSTMENT(w_track_speed_adj)->value = 0.0;
@@ -1147,8 +1140,6 @@ static gboolean track_speed_press_callback(GtkWidget *w, GdkEventButton *ev, gpo
 /* -------- tempo -------- */
 static GtkWidget *w_track_tempo, *w_track_tempo_label, *w_track_tempo_number, *w_track_tempo_event, *w_track_tempo_form;
 static GtkObject *w_track_tempo_adj;
-static char track_tempo_number_buffer[5] = {'1', STR_decimal, '0', '0', '\0'};
-
 static bool track_tempo_pressed = false, track_tempo_dragged = false;
 
 static Float tempo_to_scroll(Float tempo)
@@ -1172,11 +1163,9 @@ static Float scroll_to_tempo(Float scrollval)
 
 static void reflect_track_tempo(Float val)
 {
-  char *sfs;
-  sfs = prettyf(val, 2);
-  fill_number(sfs, track_tempo_number_buffer);
-  gtk_label_set_text(GTK_LABEL(w_track_tempo_number), track_tempo_number_buffer);
-  FREE(sfs);
+  char sfs[6];
+  mus_snprintf(sfs, 6, "%.2f", val);
+  gtk_label_set_text(GTK_LABEL(w_track_tempo_number), sfs);
   GTK_ADJUSTMENT(w_track_tempo_adj)->value = tempo_to_scroll(val);
   gtk_adjustment_value_changed(GTK_ADJUSTMENT(w_track_tempo_adj));
 }
@@ -1230,17 +1219,13 @@ static gboolean track_tempo_press_callback(GtkWidget *w, GdkEventButton *ev, gpo
 /* -------- amp -------- */
 static GtkWidget *w_track_amp, *w_track_amp_label, *w_track_amp_number, *w_track_amp_event, *w_track_amp_form;
 static GtkObject *w_track_amp_adj;
-static char track_amp_number_buffer[5] = {'1', STR_decimal, '0', '0', '\0'};
-
 static bool track_amp_pressed = false, track_amp_dragged = false;
 
 static void reflect_track_amp(Float val)
 {
-  char *sfs;
-  sfs = prettyf(val, 2);
-  fill_number(sfs, track_amp_number_buffer);
-  gtk_label_set_text(GTK_LABEL(w_track_amp_number), track_amp_number_buffer);
-  FREE(sfs);
+  char sfs[6];
+  mus_snprintf(sfs, 6, "%.2f", val);
+  gtk_label_set_text(GTK_LABEL(w_track_amp_number), sfs);
   GTK_ADJUSTMENT(w_track_amp_adj)->value = amp_to_scroll(val);
   gtk_adjustment_value_changed(GTK_ADJUSTMENT(w_track_amp_adj));
 }
@@ -1838,7 +1823,7 @@ GtkWidget *make_track_dialog(void)
 	{
 	case SPEED_CONTROL_AS_RATIO: w_track_speed_number = gtk_label_new("1/1"); break;
 	case SPEED_CONTROL_AS_SEMITONE: w_track_speed_number = gtk_label_new("1"); break;
-	default:  w_track_speed_number = gtk_label_new(track_speed_number_buffer); break;
+	default:  w_track_speed_number = gtk_label_new("1.00"); break;
 	}
       gtk_box_pack_start(GTK_BOX(w_track_speed_form), w_track_speed_number, false, false, 0);
       gtk_widget_show(w_track_speed_number);
@@ -1881,7 +1866,7 @@ GtkWidget *make_track_dialog(void)
       gtk_container_add(GTK_CONTAINER(w_track_tempo_event), w_track_tempo_label);
       gtk_widget_show(w_track_tempo_label);
       
-      w_track_tempo_number = gtk_label_new(track_tempo_number_buffer);
+      w_track_tempo_number = gtk_label_new("1.00");
       gtk_box_pack_start(GTK_BOX(w_track_tempo_form), w_track_tempo_number, false, false, 0);
       gtk_widget_show(w_track_tempo_number);
 	  
@@ -1924,7 +1909,7 @@ GtkWidget *make_track_dialog(void)
       gtk_container_add(GTK_CONTAINER(w_track_amp_event), w_track_amp_label);
       gtk_widget_show(w_track_amp_label);
       
-      w_track_amp_number = gtk_label_new(track_amp_number_buffer);
+      w_track_amp_number = gtk_label_new("1.00");
       gtk_box_pack_start(GTK_BOX(w_track_amp_form), w_track_amp_number, false, false, 0);
       gtk_widget_show(w_track_amp_number);
 	  
@@ -2028,11 +2013,6 @@ GtkWidget *make_track_dialog(void)
 
       gtk_widget_show(track_dialog);
       set_dialog_widget(TRACK_DIALOG, track_dialog);
-
-      track_speed_number_buffer[1] = local_decimal_point();
-      track_tempo_number_buffer[1] = local_decimal_point();
-      track_amp_number_buffer[1] = local_decimal_point();
-
       if ((widget_width(track_dialog) > 0) && (widget_height(track_dialog) < 300))
 	set_widget_size(track_dialog, widget_width(track_dialog), 300);
       gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(w_clip), true);

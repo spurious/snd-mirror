@@ -1152,7 +1152,6 @@ static Float rat_values[TOTAL_RATS] = {
 
 Float speed_changed(Float val, char *srcbuf, speed_style_t style, int tones, int srcbuf_size)
 {
-  char *sfs;
   char numbuf[16];
   int semi, i, j;
   switch (style)
@@ -1185,9 +1184,7 @@ Float speed_changed(Float val, char *srcbuf, speed_style_t style, int tones, int
       return(pow(2.0, ((Float)semi / (Float)tones)));
       break;
     default: 
-      sfs = prettyf(val, 2);
-      fill_number(sfs, srcbuf);
-      if (sfs) FREE(sfs);
+      mus_snprintf(srcbuf, srcbuf_size, "%.3f", val);
       return(val);
       break;
     }
@@ -1371,17 +1368,17 @@ void restore_controls(snd_info *sp)
   toggle_reverb_button(sp, cs->reverb_on);
   toggle_filter_button(sp, cs->filter_on);
   toggle_direction_arrow(sp, cs->direction);
-  set_snd_amp(sp, cs->amp);
-  set_snd_speed(sp, cs->speed);
-  set_snd_contrast(sp, cs->contrast);
-  set_snd_expand(sp, cs->expand);
-  set_snd_revscl(sp, cs->revscl);
-  set_snd_revlen(sp, cs->revlen);
+  set_amp(sp, cs->amp);
+  set_speed(sp, cs->speed);
+  set_contrast(sp, cs->contrast);
+  set_expand(sp, cs->expand);
+  set_revscl(sp, cs->revscl);
+  set_revlen(sp, cs->revlen);
   if (sp->filter_control_envelope) sp->filter_control_envelope = free_env(sp->filter_control_envelope); 
   if (cs->filter_env) 
     sp->filter_control_envelope = copy_env(cs->filter_env);
   else sp->filter_control_envelope = default_env(sp->filter_control_xmax, 1.0);
-  set_snd_filter_order(sp, cs->filter_order); /* causes redisplay */
+  set_filter_order(sp, cs->filter_order); /* causes redisplay */
   tmpstr = env_to_string(sp->filter_control_envelope);
   set_filter_text(sp, tmpstr);
   if (tmpstr) FREE(tmpstr);
@@ -1395,13 +1392,13 @@ void reset_controls(snd_info *sp)
   toggle_reverb_button(sp, DEFAULT_REVERB_CONTROL_P);
   toggle_filter_button(sp, DEFAULT_FILTER_CONTROL_P);
   toggle_direction_arrow(sp, false);
-  set_snd_amp(sp, DEFAULT_AMP_CONTROL);
-  set_snd_speed(sp, DEFAULT_SPEED_CONTROL);
-  set_snd_contrast(sp, DEFAULT_CONTRAST_CONTROL);
-  set_snd_expand(sp, DEFAULT_EXPAND_CONTROL);
-  set_snd_revscl(sp, DEFAULT_REVERB_CONTROL_SCALE);
-  set_snd_revlen(sp, DEFAULT_REVERB_CONTROL_LENGTH);
-  set_snd_filter_order(sp, DEFAULT_FILTER_CONTROL_ORDER);
+  set_amp(sp, DEFAULT_AMP_CONTROL);
+  set_speed(sp, DEFAULT_SPEED_CONTROL);
+  set_contrast(sp, DEFAULT_CONTRAST_CONTROL);
+  set_expand(sp, DEFAULT_EXPAND_CONTROL);
+  set_revscl(sp, DEFAULT_REVERB_CONTROL_SCALE);
+  set_revlen(sp, DEFAULT_REVERB_CONTROL_LENGTH);
+  set_filter_order(sp, DEFAULT_FILTER_CONTROL_ORDER);
   if (sp->filter_control_envelope) sp->filter_control_envelope = free_env(sp->filter_control_envelope);
   sp->filter_control_envelope = default_env(sp->filter_control_xmax, 1.0);
   tmpstr = env_to_string(sp->filter_control_envelope);
@@ -1418,8 +1415,8 @@ static void apply_unset_controls(snd_info *sp)
   toggle_reverb_button(sp, DEFAULT_REVERB_CONTROL_P);
   toggle_filter_button(sp, DEFAULT_FILTER_CONTROL_P);
   toggle_direction_arrow(sp, false);
-  set_snd_amp(sp, DEFAULT_AMP_CONTROL);
-  set_snd_speed(sp, DEFAULT_SPEED_CONTROL);
+  set_amp(sp, DEFAULT_AMP_CONTROL);
+  set_speed(sp, DEFAULT_SPEED_CONTROL);
 }
 
 
@@ -1906,7 +1903,7 @@ static void map_sounds_speed_style(snd_info *sp, void *val)
     snd_rationalize(sp->speed_control, &(sp->speed_control_numerator), &(sp->speed_control_denominator));
 #endif
   if (control_panel_open(sp))
-    set_snd_speed(sp, sp->speed_control);
+    set_speed(sp, sp->speed_control);
 }
 
 void set_speed_style(speed_style_t val) 
@@ -2022,7 +2019,7 @@ typedef enum {SP_SYNC, SP_READ_ONLY, SP_NCHANS, SP_CONTRASTING, SP_EXPANDING, SP
 	      SP_AMP, SP_CONTRAST, SP_CONTRAST_AMP, SP_EXPAND, SP_EXPAND_LENGTH, SP_EXPAND_RAMP, SP_EXPAND_HOP,
 	      SP_SPEED, SP_REVERB_LENGTH, SP_REVERB_FEEDBACK, SP_REVERB_SCALE, SP_REVERB_LOW_PASS,
 	      SP_REVERB_DECAY, SP_PROPERTIES, SP_FILTER_COEFFS, SP_DATA_SIZE, SP_FILTER_HZING, SP_EXPAND_JITTER,
-	      SP_CONTRAST_BOUNDS
+	      SP_CONTRAST_BOUNDS, SP_AMP_BOUNDS, SP_SPEED_BOUNDS, SP_EXPAND_BOUNDS, SP_REVERB_LENGTH_BOUNDS, SP_REVERB_SCALE_BOUNDS
 } sp_field_t;
 
 static XEN sound_get(XEN snd_n, sp_field_t fld, char *caller)
@@ -2088,10 +2085,12 @@ static XEN sound_get(XEN snd_n, sp_field_t fld, char *caller)
 	}
       break;
     case SP_AMP:                 return(C_TO_XEN_DOUBLE(sp->amp_control));             break;
+    case SP_AMP_BOUNDS:          return(XEN_LIST_2(C_TO_XEN_DOUBLE(sp->amp_control_min), C_TO_XEN_DOUBLE(sp->amp_control_max))); break;
     case SP_CONTRAST:            return(C_TO_XEN_DOUBLE(sp->contrast_control));        break;
     case SP_CONTRAST_BOUNDS:     return(XEN_LIST_2(C_TO_XEN_DOUBLE(sp->contrast_control_min), C_TO_XEN_DOUBLE(sp->contrast_control_max))); break;
     case SP_CONTRAST_AMP:        return(C_TO_XEN_DOUBLE(sp->contrast_control_amp));    break;
     case SP_EXPAND:              return(C_TO_XEN_DOUBLE(sp->expand_control));          break;
+    case SP_EXPAND_BOUNDS:       return(XEN_LIST_2(C_TO_XEN_DOUBLE(sp->expand_control_min), C_TO_XEN_DOUBLE(sp->expand_control_max))); break;
     case SP_EXPAND_LENGTH:       return(C_TO_XEN_DOUBLE(sp->expand_control_length));   break;
     case SP_EXPAND_RAMP:         return(C_TO_XEN_DOUBLE(sp->expand_control_ramp));     break;
     case SP_EXPAND_HOP:          return(C_TO_XEN_DOUBLE(sp->expand_control_hop));      break;
@@ -2109,9 +2108,12 @@ static XEN sound_get(XEN snd_n, sp_field_t fld, char *caller)
 	return(C_TO_XEN_DOUBLE((-(sp->speed_control)))); 
       else return(C_TO_XEN_DOUBLE(sp->speed_control)); 
       break;
+    case SP_SPEED_BOUNDS:        return(XEN_LIST_2(C_TO_XEN_DOUBLE(sp->speed_control_min), C_TO_XEN_DOUBLE(sp->speed_control_max))); break;
     case SP_REVERB_LENGTH:       return(C_TO_XEN_DOUBLE(sp->reverb_control_length));   break;
+    case SP_REVERB_LENGTH_BOUNDS: return(XEN_LIST_2(C_TO_XEN_DOUBLE(sp->reverb_control_length_min), C_TO_XEN_DOUBLE(sp->reverb_control_length_max))); break;
     case SP_REVERB_FEEDBACK:     return(C_TO_XEN_DOUBLE(sp->reverb_control_feedback)); break;
     case SP_REVERB_SCALE:        return(C_TO_XEN_DOUBLE(sp->reverb_control_scale));    break;
+    case SP_REVERB_SCALE_BOUNDS: return(XEN_LIST_2(C_TO_XEN_DOUBLE(sp->reverb_control_scale_min), C_TO_XEN_DOUBLE(sp->reverb_control_scale_max))); break;
     case SP_REVERB_LOW_PASS:     return(C_TO_XEN_DOUBLE(sp->reverb_control_lowpass));  break;
     case SP_REVERB_DECAY:        return(C_TO_XEN_DOUBLE(sp->reverb_control_decay));    break;
     case SP_FILTER_COEFFS: 
@@ -2185,7 +2187,7 @@ static XEN sound_set(XEN snd_n, XEN val, sp_field_t fld, char *caller)
       set_filter_in_hz(sp, XEN_TO_C_BOOLEAN(val));
       break;
     case SP_FILTER_ORDER:
-      set_snd_filter_order(sp, XEN_TO_C_INT(val));
+      set_filter_order(sp, XEN_TO_C_INT(val));
       break;
     case SP_CURSOR_FOLLOWS_PLAY:
       if (XEN_TO_C_BOOLEAN(val))
@@ -2321,17 +2323,23 @@ static XEN sound_set(XEN snd_n, XEN val, sp_field_t fld, char *caller)
       break;
     case SP_AMP:           
       fval = XEN_TO_C_DOUBLE_WITH_CALLER(val, caller);
-      if (fval >= 0.0) set_snd_amp(sp, fval); 
+      if (fval >= 0.0) set_amp(sp, fval); 
       return(C_TO_XEN_DOUBLE(sp->amp_control)); 
       break;
+    case SP_AMP_BOUNDS:
+      sp->amp_control_min = XEN_TO_C_DOUBLE(XEN_CAR(val));
+      sp->amp_control_max = XEN_TO_C_DOUBLE(XEN_CADR(val));
+      set_amp(sp, mus_fclamp(sp->amp_control_min, sp->amp_control, sp->amp_control_max));
+      return(val);
+      break;
     case SP_CONTRAST:      
-      set_snd_contrast(sp, XEN_TO_C_DOUBLE_WITH_CALLER(val, caller));
+      set_contrast(sp, XEN_TO_C_DOUBLE_WITH_CALLER(val, caller));
       return(C_TO_XEN_DOUBLE(sp->contrast_control)); 
       break;
     case SP_CONTRAST_BOUNDS:
       sp->contrast_control_min = XEN_TO_C_DOUBLE(XEN_CAR(val));
       sp->contrast_control_max = XEN_TO_C_DOUBLE(XEN_CADR(val));
-      set_snd_contrast(sp, mus_fclamp(sp->contrast_control_min, sp->contrast_control, sp->contrast_control_max));
+      set_contrast(sp, mus_fclamp(sp->contrast_control_min, sp->contrast_control, sp->contrast_control_max));
       return(val);
       break;
     case SP_CONTRAST_AMP:  
@@ -2340,8 +2348,14 @@ static XEN sound_set(XEN snd_n, XEN val, sp_field_t fld, char *caller)
       break;
     case SP_EXPAND:        
       fval = XEN_TO_C_DOUBLE_WITH_CALLER(val, caller);
-      if (fval > 0.0) set_snd_expand(sp, fval); 
+      if (fval > 0.0) set_expand(sp, fval); 
       return(C_TO_XEN_DOUBLE(sp->expand_control)); 
+      break;
+    case SP_EXPAND_BOUNDS:
+      sp->expand_control_min = XEN_TO_C_DOUBLE(XEN_CAR(val));
+      sp->expand_control_max = XEN_TO_C_DOUBLE(XEN_CADR(val));
+      set_expand(sp, mus_fclamp(sp->expand_control_min, sp->expand_control, sp->expand_control_max));
+      return(val);
       break;
     case SP_EXPAND_LENGTH: 
       fval = XEN_TO_C_DOUBLE_WITH_CALLER(val, caller);
@@ -2389,7 +2403,7 @@ static XEN sound_set(XEN snd_n, XEN val, sp_field_t fld, char *caller)
 	      sp->speed_control_numerator = -sp->speed_control_numerator;
 	    }
 	  else sp->speed_control_direction = 1;
-	  set_snd_speed(sp, fabs(fval));
+	  set_speed(sp, fabs(fval));
 	  sp->speed_control = fabs(fval); /* not redundant */
 	  toggle_direction_arrow(sp, (sp->speed_control_direction == -1));
 	  return(val);
@@ -2400,7 +2414,7 @@ static XEN sound_set(XEN snd_n, XEN val, sp_field_t fld, char *caller)
 	{
 	  int direction;
 	  if (fval > 0.0) direction = 1; else direction = -1;
-	  set_snd_speed(sp, fabs(fval)); 
+	  set_speed(sp, fabs(fval)); 
 #if HAVE_SCM_MAKE_RATIO
 	  if (sp->speed_control_style == SPEED_CONTROL_AS_RATIO)
 	    snd_rationalize(sp->speed_control, &(sp->speed_control_numerator), &(sp->speed_control_denominator));
@@ -2411,18 +2425,36 @@ static XEN sound_set(XEN snd_n, XEN val, sp_field_t fld, char *caller)
 	  else return(C_TO_XEN_DOUBLE(sp->speed_control));
 	}
       break;
+    case SP_SPEED_BOUNDS:
+      sp->speed_control_min = XEN_TO_C_DOUBLE(XEN_CAR(val));
+      sp->speed_control_max = XEN_TO_C_DOUBLE(XEN_CADR(val));
+      set_speed(sp, mus_fclamp(sp->speed_control_min, sp->speed_control, sp->speed_control_max));
+      return(val);
+      break;
     case SP_REVERB_LENGTH:    
       fval = XEN_TO_C_DOUBLE_WITH_CALLER(val, caller);
-      if (fval >= 0.0) set_snd_revlen(sp, fval); 
+      if (fval >= 0.0) set_revlen(sp, fval); 
       return(C_TO_XEN_DOUBLE(sp->reverb_control_length)); 
+      break;
+    case SP_REVERB_LENGTH_BOUNDS:
+      sp->reverb_control_length_min = XEN_TO_C_DOUBLE(XEN_CAR(val));
+      sp->reverb_control_length_max = XEN_TO_C_DOUBLE(XEN_CADR(val));
+      set_revlen(sp, mus_fclamp(sp->reverb_control_length_min, sp->reverb_control_length, sp->reverb_control_length_max));
+      return(val);
       break;
     case SP_REVERB_FEEDBACK:  
       sp->reverb_control_feedback = XEN_TO_C_DOUBLE_WITH_CALLER(val, caller);
       if (sp->playing) dac_set_reverb_feedback(sp, sp->reverb_control_feedback);
       break;
     case SP_REVERB_SCALE:     
-      set_snd_revscl(sp, XEN_TO_C_DOUBLE_WITH_CALLER(val, caller));
+      set_revscl(sp, XEN_TO_C_DOUBLE_WITH_CALLER(val, caller));
       return(C_TO_XEN_DOUBLE(sp->reverb_control_scale)); 
+      break;
+    case SP_REVERB_SCALE_BOUNDS:
+      sp->reverb_control_scale_min = XEN_TO_C_DOUBLE(XEN_CAR(val));
+      sp->reverb_control_scale_max = XEN_TO_C_DOUBLE(XEN_CADR(val));
+      set_revscl(sp, mus_fclamp(sp->reverb_control_scale_min, sp->reverb_control_scale, sp->reverb_control_scale_max));
+      return(val);
       break;
     case SP_REVERB_LOW_PASS:  
       sp->reverb_control_lowpass = XEN_TO_C_DOUBLE_WITH_CALLER(val, caller);
@@ -3221,6 +3253,27 @@ static XEN g_set_amp_control(XEN on, XEN snd_n, XEN chn_n)
 
 WITH_REVERSED_CHANNEL_ARGS(g_set_amp_control_reversed, g_set_amp_control)
 
+static XEN g_amp_control_bounds(XEN snd_n) 
+{
+  #define H_amp_control_bounds "(" S_amp_control_bounds " (snd #f)): current amp slider bounds (default: '(0.0 8.0))"
+  return(sound_get(snd_n, SP_AMP_BOUNDS, S_amp_control_bounds));
+}
+
+static XEN g_set_amp_control_bounds(XEN on, XEN snd_n) 
+{
+  XEN_ASSERT_TYPE(XEN_LIST_P(on), on, XEN_ARG_1, S_setB S_amp_control_bounds, "a list of the new min and max values"); 
+  if ((XEN_LIST_LENGTH(on) != 2) ||
+      (!(XEN_NUMBER_P(XEN_CAR(on)))) ||
+      (!(XEN_NUMBER_P(XEN_CADR(on)))))
+    XEN_WRONG_TYPE_ARG_ERROR(S_setB S_amp_control_bounds, XEN_ARG_1, on, "a list of 2 numbers");
+  if (XEN_TO_C_DOUBLE(XEN_CAR(on)) >= XEN_TO_C_DOUBLE(XEN_CADR(on)))
+    XEN_OUT_OF_RANGE_ERROR(S_setB S_amp_control_bounds, 1, on, "min >= max");
+  return(sound_set(snd_n, on, SP_AMP_BOUNDS, S_setB S_amp_control_bounds));
+}
+
+WITH_REVERSED_ARGS(g_set_amp_control_bounds_reversed, g_set_amp_control_bounds)
+
+
 static XEN g_contrast_control(XEN snd_n) 
 {
   #define H_contrast_control "(" S_contrast_control " (snd #f)): current contrast slider setting"
@@ -3284,6 +3337,27 @@ static XEN g_set_expand_control(XEN on, XEN snd_n)
 }
 
 WITH_REVERSED_ARGS(g_set_expand_control_reversed, g_set_expand_control)
+
+static XEN g_expand_control_bounds(XEN snd_n) 
+{
+  #define H_expand_control_bounds "(" S_expand_control_bounds " (snd #f)): current expand slider bounds (default: '(0.001 20.0))"
+  return(sound_get(snd_n, SP_EXPAND_BOUNDS, S_expand_control_bounds));
+}
+
+static XEN g_set_expand_control_bounds(XEN on, XEN snd_n) 
+{
+  XEN_ASSERT_TYPE(XEN_LIST_P(on), on, XEN_ARG_1, S_setB S_expand_control_bounds, "a list of the new min and max values"); 
+  if ((XEN_LIST_LENGTH(on) != 2) ||
+      (!(XEN_NUMBER_P(XEN_CAR(on)))) ||
+      (!(XEN_NUMBER_P(XEN_CADR(on)))))
+    XEN_WRONG_TYPE_ARG_ERROR(S_setB S_expand_control_bounds, XEN_ARG_1, on, "a list of 2 numbers");
+  if (XEN_TO_C_DOUBLE(XEN_CAR(on)) >= XEN_TO_C_DOUBLE(XEN_CADR(on)))
+    XEN_OUT_OF_RANGE_ERROR(S_setB S_expand_control_bounds, 1, on, "min >= max");
+  return(sound_set(snd_n, on, SP_EXPAND_BOUNDS, S_setB S_expand_control_bounds));
+}
+
+WITH_REVERSED_ARGS(g_set_expand_control_bounds_reversed, g_set_expand_control_bounds)
+
 
 static XEN g_expand_control_length(XEN snd_n) 
 {
@@ -3355,6 +3429,27 @@ static XEN g_set_speed_control(XEN on, XEN snd_n)
 
 WITH_REVERSED_ARGS(g_set_speed_control_reversed, g_set_speed_control)
 
+static XEN g_speed_control_bounds(XEN snd_n) 
+{
+  #define H_speed_control_bounds "(" S_speed_control_bounds " (snd #f)): current speed slider bounds (default: '(0.05 20.0))"
+  return(sound_get(snd_n, SP_SPEED_BOUNDS, S_speed_control_bounds));
+}
+
+static XEN g_set_speed_control_bounds(XEN on, XEN snd_n) 
+{
+  XEN_ASSERT_TYPE(XEN_LIST_P(on), on, XEN_ARG_1, S_setB S_speed_control_bounds, "a list of the new min and max values"); 
+  if ((XEN_LIST_LENGTH(on) != 2) ||
+      (!(XEN_NUMBER_P(XEN_CAR(on)))) ||
+      (!(XEN_NUMBER_P(XEN_CADR(on)))))
+    XEN_WRONG_TYPE_ARG_ERROR(S_setB S_speed_control_bounds, XEN_ARG_1, on, "a list of 2 numbers");
+  if (XEN_TO_C_DOUBLE(XEN_CAR(on)) >= XEN_TO_C_DOUBLE(XEN_CADR(on)))
+    XEN_OUT_OF_RANGE_ERROR(S_setB S_speed_control_bounds, 1, on, "min >= max");
+  return(sound_set(snd_n, on, SP_SPEED_BOUNDS, S_setB S_speed_control_bounds));
+}
+
+WITH_REVERSED_ARGS(g_set_speed_control_bounds_reversed, g_set_speed_control_bounds)
+
+
 static XEN g_reverb_control_length(XEN snd_n) 
 {
   #define H_reverb_control_length "(" S_reverb_control_length " (snd #f)): reverb decay length scaler"
@@ -3368,6 +3463,27 @@ static XEN g_set_reverb_control_length(XEN on, XEN snd_n)
 }
 
 WITH_REVERSED_ARGS(g_set_reverb_control_length_reversed, g_set_reverb_control_length)
+
+static XEN g_reverb_control_length_bounds(XEN snd_n) 
+{
+  #define H_reverb_control_length_bounds "(" S_reverb_control_length_bounds " (snd #f)): current reverb length slider bounds (default: '(0.0 5.0))"
+  return(sound_get(snd_n, SP_REVERB_LENGTH_BOUNDS, S_reverb_control_length_bounds));
+}
+
+static XEN g_set_reverb_control_length_bounds(XEN on, XEN snd_n) 
+{
+  XEN_ASSERT_TYPE(XEN_LIST_P(on), on, XEN_ARG_1, S_setB S_reverb_control_length_bounds, "a list of the new min and max values"); 
+  if ((XEN_LIST_LENGTH(on) != 2) ||
+      (!(XEN_NUMBER_P(XEN_CAR(on)))) ||
+      (!(XEN_NUMBER_P(XEN_CADR(on)))))
+    XEN_WRONG_TYPE_ARG_ERROR(S_setB S_reverb_control_length_bounds, XEN_ARG_1, on, "a list of 2 numbers");
+  if (XEN_TO_C_DOUBLE(XEN_CAR(on)) >= XEN_TO_C_DOUBLE(XEN_CADR(on)))
+    XEN_OUT_OF_RANGE_ERROR(S_setB S_reverb_control_length_bounds, 1, on, "min >= max");
+  return(sound_set(snd_n, on, SP_REVERB_LENGTH_BOUNDS, S_setB S_reverb_control_length_bounds));
+}
+
+WITH_REVERSED_ARGS(g_set_reverb_control_length_bounds_reversed, g_set_reverb_control_length_bounds)
+
 
 static XEN g_reverb_control_feedback(XEN snd_n) 
 {
@@ -3396,6 +3512,27 @@ static XEN g_set_reverb_control_scale(XEN on, XEN snd_n)
 }
 
 WITH_REVERSED_ARGS(g_set_reverb_control_scale_reversed, g_set_reverb_control_scale)
+
+static XEN g_reverb_control_scale_bounds(XEN snd_n) 
+{
+  #define H_reverb_control_scale_bounds "(" S_reverb_control_scale_bounds " (snd #f)): current reverb scale slider bounds (default: '(0.0 4.0))"
+  return(sound_get(snd_n, SP_REVERB_SCALE_BOUNDS, S_reverb_control_scale_bounds));
+}
+
+static XEN g_set_reverb_control_scale_bounds(XEN on, XEN snd_n) 
+{
+  XEN_ASSERT_TYPE(XEN_LIST_P(on), on, XEN_ARG_1, S_setB S_reverb_control_scale_bounds, "a list of the new min and max values"); 
+  if ((XEN_LIST_LENGTH(on) != 2) ||
+      (!(XEN_NUMBER_P(XEN_CAR(on)))) ||
+      (!(XEN_NUMBER_P(XEN_CADR(on)))))
+    XEN_WRONG_TYPE_ARG_ERROR(S_setB S_reverb_control_scale_bounds, XEN_ARG_1, on, "a list of 2 numbers");
+  if (XEN_TO_C_DOUBLE(XEN_CAR(on)) >= XEN_TO_C_DOUBLE(XEN_CADR(on)))
+    XEN_OUT_OF_RANGE_ERROR(S_setB S_reverb_control_scale_bounds, 1, on, "min >= max");
+  return(sound_set(snd_n, on, SP_REVERB_SCALE_BOUNDS, S_setB S_reverb_control_scale_bounds));
+}
+
+WITH_REVERSED_ARGS(g_set_reverb_control_scale_bounds_reversed, g_set_reverb_control_scale_bounds)
+
 
 static XEN g_reverb_control_lowpass(XEN snd_n) 
 {
@@ -4035,6 +4172,8 @@ XEN_ARGIFY_1(g_contrast_control_amp_w, g_contrast_control_amp)
 XEN_ARGIFY_2(g_set_contrast_control_amp_w, g_set_contrast_control_amp)
 XEN_ARGIFY_1(g_expand_control_w, g_expand_control)
 XEN_ARGIFY_2(g_set_expand_control_w, g_set_expand_control)
+XEN_ARGIFY_1(g_expand_control_bounds_w, g_expand_control_bounds)
+XEN_ARGIFY_2(g_set_expand_control_bounds_w, g_set_expand_control_bounds)
 XEN_ARGIFY_1(g_expand_control_length_w, g_expand_control_length)
 XEN_ARGIFY_2(g_set_expand_control_length_w, g_set_expand_control_length)
 XEN_ARGIFY_1(g_expand_control_ramp_w, g_expand_control_ramp)
@@ -4045,16 +4184,24 @@ XEN_ARGIFY_1(g_expand_control_jitter_w, g_expand_control_jitter)
 XEN_ARGIFY_2(g_set_expand_control_jitter_w, g_set_expand_control_jitter)
 XEN_ARGIFY_1(g_speed_control_w, g_speed_control)
 XEN_ARGIFY_2(g_set_speed_control_w, g_set_speed_control)
+XEN_ARGIFY_1(g_speed_control_bounds_w, g_speed_control_bounds)
+XEN_ARGIFY_2(g_set_speed_control_bounds_w, g_set_speed_control_bounds)
 XEN_ARGIFY_1(g_reverb_control_length_w, g_reverb_control_length)
 XEN_ARGIFY_2(g_set_reverb_control_length_w, g_set_reverb_control_length)
+XEN_ARGIFY_1(g_reverb_control_length_bounds_w, g_reverb_control_length_bounds)
+XEN_ARGIFY_2(g_set_reverb_control_length_bounds_w, g_set_reverb_control_length_bounds)
 XEN_ARGIFY_1(g_reverb_control_scale_w, g_reverb_control_scale)
 XEN_ARGIFY_2(g_set_reverb_control_scale_w, g_set_reverb_control_scale)
+XEN_ARGIFY_1(g_reverb_control_scale_bounds_w, g_reverb_control_scale_bounds)
+XEN_ARGIFY_2(g_set_reverb_control_scale_bounds_w, g_set_reverb_control_scale_bounds)
 XEN_ARGIFY_1(g_reverb_control_feedback_w, g_reverb_control_feedback)
 XEN_ARGIFY_2(g_set_reverb_control_feedback_w, g_set_reverb_control_feedback)
 XEN_ARGIFY_1(g_reverb_control_lowpass_w, g_reverb_control_lowpass)
 XEN_ARGIFY_2(g_set_reverb_control_lowpass_w, g_set_reverb_control_lowpass)
 XEN_ARGIFY_2(g_amp_control_w, g_amp_control)
 XEN_ARGIFY_3(g_set_amp_control_w, g_set_amp_control)
+XEN_ARGIFY_1(g_amp_control_bounds_w, g_amp_control_bounds)
+XEN_ARGIFY_2(g_set_amp_control_bounds_w, g_set_amp_control_bounds)
 XEN_ARGIFY_1(g_reverb_control_decay_w, g_reverb_control_decay)
 XEN_ARGIFY_2(g_set_reverb_control_decay_w, g_set_reverb_control_decay)
 XEN_ARGIFY_1(g_speed_control_style_w, g_speed_control_style)
@@ -4143,6 +4290,8 @@ XEN_ARGIFY_5(g_progress_report_w, g_progress_report)
 #define g_set_contrast_control_amp_w g_set_contrast_control_amp
 #define g_expand_control_w g_expand_control
 #define g_set_expand_control_w g_set_expand_control
+#define g_expand_control_bounds_w g_expand_control_bounds
+#define g_set_expand_control_bounds_w g_set_expand_control_bounds
 #define g_expand_control_length_w g_expand_control_length
 #define g_set_expand_control_length_w g_set_expand_control_length
 #define g_expand_control_ramp_w g_expand_control_ramp
@@ -4153,16 +4302,24 @@ XEN_ARGIFY_5(g_progress_report_w, g_progress_report)
 #define g_set_expand_control_jitter_w g_set_expand_control_jitter
 #define g_speed_control_w g_speed_control
 #define g_set_speed_control_w g_set_speed_control
+#define g_speed_control_bounds_w g_speed_control_bounds
+#define g_set_speed_control_bounds_w g_set_speed_control_bounds
 #define g_reverb_control_length_w g_reverb_control_length
 #define g_set_reverb_control_length_w g_set_reverb_control_length
+#define g_reverb_control_length_bounds_w g_reverb_control_length_bounds
+#define g_set_reverb_control_length_bounds_w g_set_reverb_control_length_bounds
 #define g_reverb_control_scale_w g_reverb_control_scale
 #define g_set_reverb_control_scale_w g_set_reverb_control_scale
+#define g_reverb_control_scale_bounds_w g_reverb_control_scale_bounds
+#define g_set_reverb_control_scale_bounds_w g_set_reverb_control_scale_bounds
 #define g_reverb_control_feedback_w g_reverb_control_feedback
 #define g_set_reverb_control_feedback_w g_set_reverb_control_feedback
 #define g_reverb_control_lowpass_w g_reverb_control_lowpass
 #define g_set_reverb_control_lowpass_w g_set_reverb_control_lowpass
 #define g_amp_control_w g_amp_control
 #define g_set_amp_control_w g_set_amp_control
+#define g_amp_control_bounds_w g_amp_control_bounds
+#define g_set_amp_control_bounds_w g_set_amp_control_bounds
 #define g_reverb_control_decay_w g_reverb_control_decay
 #define g_set_reverb_control_decay_w g_set_reverb_control_decay
 #define g_speed_control_style_w g_speed_control_style
@@ -4302,6 +4459,10 @@ If it returns #t, the apply is aborted."
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_expand_control, g_expand_control_w, H_expand_control,
 					    S_setB S_expand_control, g_set_expand_control_w, g_set_expand_control_reversed, 0, 1, 1, 1);
   
+  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_expand_control_bounds, g_expand_control_bounds_w, H_expand_control_bounds,
+					    S_setB S_expand_control_bounds, g_set_expand_control_bounds_w, g_set_expand_control_bounds_reversed, 
+					    0, 1, 1, 1);
+
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_expand_control_length, g_expand_control_length_w, H_expand_control_length,
 					    S_setB S_expand_control_length, g_set_expand_control_length_w, g_set_expand_control_length_reversed, 0, 1, 1, 1);
   
@@ -4317,12 +4478,24 @@ If it returns #t, the apply is aborted."
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_speed_control, g_speed_control_w, H_speed_control,
 					    S_setB S_speed_control, g_set_speed_control_w, g_set_speed_control_reversed, 0, 1, 1, 1);
   
+  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_speed_control_bounds, g_speed_control_bounds_w, H_speed_control_bounds,
+					    S_setB S_speed_control_bounds, g_set_speed_control_bounds_w, g_set_speed_control_bounds_reversed, 
+					    0, 1, 1, 1);
+
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_reverb_control_length, g_reverb_control_length_w, H_reverb_control_length,
 					    S_setB S_reverb_control_length, g_set_reverb_control_length_w, g_set_reverb_control_length_reversed, 0, 1, 1, 1);
   
+  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_reverb_control_length_bounds, g_reverb_control_length_bounds_w, H_reverb_control_length_bounds,
+					    S_setB S_reverb_control_length_bounds, g_set_reverb_control_length_bounds_w, 
+					    g_set_reverb_control_length_bounds_reversed, 0, 1, 1, 1);
+
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_reverb_control_scale, g_reverb_control_scale_w, H_reverb_control_scale,
 					    S_setB S_reverb_control_scale, g_set_reverb_control_scale_w, g_set_reverb_control_scale_reversed, 0, 1, 1, 1);
   
+  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_reverb_control_scale_bounds, g_reverb_control_scale_bounds_w, H_reverb_control_scale_bounds,
+					    S_setB S_reverb_control_scale_bounds, g_set_reverb_control_scale_bounds_w, 
+					    g_set_reverb_control_scale_bounds_reversed, 0, 1, 1, 1);
+
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_reverb_control_feedback, g_reverb_control_feedback_w, H_reverb_control_feedback,
 					    S_setB S_reverb_control_feedback, g_set_reverb_control_feedback_w, g_set_reverb_control_feedback_reversed, 0, 1, 1, 1);
   
@@ -4332,6 +4505,10 @@ If it returns #t, the apply is aborted."
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_amp_control, g_amp_control_w, H_amp_control,
 					    S_setB S_amp_control, g_set_amp_control_w, g_set_amp_control_reversed, 0, 2, 1, 2);
   
+  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_amp_control_bounds, g_amp_control_bounds_w, H_amp_control_bounds,
+					    S_setB S_amp_control_bounds, g_set_amp_control_bounds_w, g_set_amp_control_bounds_reversed, 
+					    0, 1, 1, 1);
+
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_reverb_control_decay, g_reverb_control_decay_w, H_reverb_control_decay,
 					    S_setB S_reverb_control_decay, g_set_reverb_control_decay_w, g_set_reverb_control_decay_reversed, 0, 1, 1, 1);
   
@@ -4358,8 +4535,6 @@ If it returns #t, the apply is aborted."
 /* noise reduction notes:
    TODO: pop fixer, auto click remover
    TODO: some indication of freq response in fft case?
-   TODO: settable bounds for expand control (and the rest?): 
-         amp-control-bounds contrast-control-bounds expand-control-bounds reverb-control-length-bounds reverb-control-scale-bounds speed-control-bounds
    TODO: env editor x axis in Hz and draggable
    TODO: explain notch (clm) weaknesses   
 */

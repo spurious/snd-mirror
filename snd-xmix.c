@@ -1,6 +1,10 @@
 #include "snd.h"
 
-static char speed_number_buffer[5] = {'1', STR_decimal, '0', '0', '\0'};
+/* TODO: should mix/rec sliders reflect *-control-bounds decisions? */
+
+#define SCROLLBAR_MID 450
+#define SCROLLBAR_LINEAR_MAX 150
+#define SCROLLBAR_LINEAR_MULT 0.0011584929
 
 #define SPEED_SCROLLBAR_MID (0.45 * SCROLLBAR_MAX)
 #define SPEED_SCROLLBAR_BREAK (0.15 * SCROLLBAR_MAX)
@@ -9,12 +13,13 @@ static int speed_to_int_1(Widget speed_number, Float uval, snd_info *sp)
 {
   int ival;
   Float val;
+  char sfs[6];
   val = speed_changed(uval,
-		      speed_number_buffer,
+		      sfs,
 		      sp->speed_control_style,
 		      sp->speed_control_tones,
-		      5);
-  set_label(speed_number, speed_number_buffer);
+		      6);
+  set_label(speed_number, sfs);
   if (val > 0.0)
     {
       ival = snd_round(SPEED_SCROLLBAR_MID + SPEED_SCROLLBAR_BREAK * log(val));
@@ -25,16 +30,12 @@ static int speed_to_int_1(Widget speed_number, Float uval, snd_info *sp)
   else return(0);
 }
 
-static char amp_number_buffer[5] = {'1', STR_decimal, '0', '0', '\0'};
-
 static int amp_to_int_1(Widget amp_number, Float amp)
 {
-  char *sfs;
+  char sfs[6];
   int val;
-  sfs = prettyf(amp, 2);
-  fill_number(sfs, amp_number_buffer);
-  set_label(amp_number, amp_number_buffer);
-  FREE(sfs);
+  mus_snprintf(sfs, 6, "%.2f", amp);
+  set_label(amp_number, sfs);
   if (amp <= 0.0)
     return(0);
   else
@@ -65,15 +66,16 @@ static Float current_speed = 1.0;
 static void change_mix_speed(int mix_id, Float val)
 {
   chan_info *cp;
+  char sfs[6];
   cp = mix_dialog_mix_channel(mix_id);
   mix_dialog_set_mix_speed(mix_id,
 			   speed_changed(val,
-					 speed_number_buffer,
+					 sfs,
 					 cp->sound->speed_control_style,
 					 cp->sound->speed_control_tones,
-					 5),
+					 6),
 			   mix_dialog_slider_dragging);
-  set_label(w_speed_number, speed_number_buffer);
+  set_label(w_speed_number, sfs);
 }
 
 static void speed_click_callback(Widget w, XtPointer context, XtPointer info) 
@@ -116,12 +118,10 @@ static Float *current_amps;
 
 static void change_mix_amp(int mix_id, int chan, Float val)
 {
-  char *sfs;
+  char sfs[6];
   mix_dialog_set_mix_amp(mix_id, chan, val, mix_dialog_slider_dragging);
-  sfs = prettyf(val, 2);
-  fill_number(sfs, amp_number_buffer);
-  set_label(w_amp_numbers[chan], amp_number_buffer);
-  FREE(sfs);
+  mus_snprintf(sfs, 6, "%.2f", val);
+  set_label(w_amp_numbers[chan], sfs);
 }
 
 static void amp_click_callback(Widget w, XtPointer context, XtPointer info) 
@@ -848,7 +848,7 @@ Widget make_mix_dialog(void)
 	  XmStringFree(s1);
 
 	  n = 0;
-	  s1 = XmStringCreate(amp_number_buffer, XmFONTLIST_DEFAULT_TAG);
+	  s1 = XmStringCreate("1.00", XmFONTLIST_DEFAULT_TAG);
 	  if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
 	  XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;	
 	  XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
@@ -977,8 +977,6 @@ Widget make_mix_dialog(void)
       XtAddEventHandler(w_env, ButtonReleaseMask, false, mix_drawer_button_release, NULL);
 
       set_dialog_widget(MIX_DIALOG, mix_dialog);
-      speed_number_buffer[1] = local_decimal_point();
-      amp_number_buffer[1] = local_decimal_point();
     }
   else 
     {
@@ -1110,15 +1108,16 @@ static Float current_track_speed = 1.0;
 static void change_track_speed(int track_id, Float val)
 {
   chan_info *cp;
+  char sfs[6];
   cp = track_channel(track_id, 0);
   track_dialog_set_speed(track_id,
 			 speed_changed(val,
-				       speed_number_buffer,
+				       sfs,
 				       (cp) ? cp->sound->speed_control_style : speed_control_style(ss),
 				       (cp) ? cp->sound->speed_control_tones : speed_control_tones(ss),
-				       5),
+				       6),
 			 track_dialog_slider_dragging);
-  set_label(w_track_speed_number, speed_number_buffer);
+  set_label(w_track_speed_number, sfs);
 }
 
 static void track_speed_click_callback(Widget w, XtPointer context, XtPointer info) 
@@ -1161,8 +1160,6 @@ static void track_speed_valuechanged_callback(Widget w, XtPointer context, XtPoi
 static Widget w_track_tempo_number, w_track_tempo_label, w_track_tempo;
 static Float current_track_tempo = 1.0;
 
-static char tempo_number_buffer[5] = {'1', STR_decimal, '0', '0', '\0'};
-
 static Float int_tempo_to_Float(int tempo)
 {
   if (tempo == 0)
@@ -1177,12 +1174,10 @@ static Float int_tempo_to_Float(int tempo)
 
 static int tempo_to_int_1(Widget tempo_number, Float tempo)
 {
-  char *sfs;
+  char sfs[6];
   int val;
-  sfs = prettyf(tempo, 2);
-  fill_number(sfs, tempo_number_buffer);
-  set_label(tempo_number, tempo_number_buffer);
-  FREE(sfs);
+  mus_snprintf(sfs, 6, "%.2f", tempo);
+  set_label(tempo_number, sfs);
   if (tempo <= 0.0)
     return(0);
   else
@@ -1199,12 +1194,10 @@ static int tempo_to_int_1(Widget tempo_number, Float tempo)
 
 static void change_track_tempo(int track_id, Float val)
 {
-  char *sfs;
+  char sfs[6];
   track_dialog_set_tempo(track_id, val, track_dialog_slider_dragging);
-  sfs = prettyf(val, 2);
-  fill_number(sfs, tempo_number_buffer);
-  set_label(w_track_tempo_number, tempo_number_buffer);
-  FREE(sfs);
+  mus_snprintf(sfs, 6, "%.2f", val);
+  set_label(w_track_tempo_number, sfs);
 }
 
 static void track_tempo_click_callback(Widget w, XtPointer context, XtPointer info) 
@@ -1250,12 +1243,10 @@ static Float current_track_amp = 1.0;
 
 static void change_track_amp(int track_id, Float val)
 {
-  char *sfs;
+  char sfs[6];
   track_dialog_set_amp(track_id, val, track_dialog_slider_dragging);
-  sfs = prettyf(val, 2);
-  fill_number(sfs, amp_number_buffer);
-  set_label(w_track_amp_number, amp_number_buffer);
-  FREE(sfs);
+  mus_snprintf(sfs, 6, "%.2f", val);
+  set_label(w_track_amp_number, sfs);
 }
 
 static void track_amp_click_callback(Widget w, XtPointer context, XtPointer info) 
@@ -1947,7 +1938,7 @@ Widget make_track_dialog(void)
       XmStringFree(s1);
       
       n = 0;
-      s1 = XmStringCreate(tempo_number_buffer, XmFONTLIST_DEFAULT_TAG);
+      s1 = XmStringCreate("1.00", XmFONTLIST_DEFAULT_TAG);
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;	
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
@@ -1999,7 +1990,7 @@ Widget make_track_dialog(void)
       XmStringFree(s1);
       
       n = 0;
-      s1 = XmStringCreate(amp_number_buffer, XmFONTLIST_DEFAULT_TAG);
+      s1 = XmStringCreate("1.00", XmFONTLIST_DEFAULT_TAG);
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;	
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
@@ -2123,9 +2114,6 @@ Widget make_track_dialog(void)
       XtAddEventHandler(w_track_env, ButtonReleaseMask, false, track_drawer_button_release, NULL);
 
       set_dialog_widget(TRACK_DIALOG, track_dialog);
-      speed_number_buffer[1] = local_decimal_point();
-      amp_number_buffer[1] = local_decimal_point();
-      tempo_number_buffer[1] = local_decimal_point();
     }
   else 
     {

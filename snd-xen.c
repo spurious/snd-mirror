@@ -24,20 +24,23 @@ void dump_protection(FILE *Fp)
 {
   XEN *gcdata;
   int i;
-  gcdata = XEN_VECTOR_ELEMENTS(gc_protection);
-  fprintf(Fp, "\n\nsnd_protect (%d table size, used: %d):\n", gc_protection_size, max_gc_index);
-  for (i = 0; i < gc_protection_size; i++)
-    if (!(XEN_EQ_P(gcdata[i], DEFAULT_GC_VALUE)))
-      {
+  if (XEN_VECTOR_P(gc_protection))
+    {
+      gcdata = XEN_VECTOR_ELEMENTS(gc_protection);
+      fprintf(Fp, "\n\nsnd_protect (%d table size, used: %d):\n", gc_protection_size, max_gc_index);
+      for (i = 0; i < gc_protection_size; i++)
+	if (!(XEN_EQ_P(gcdata[i], DEFAULT_GC_VALUE)))
+	  {
 #if HAVE_GUILE
-	fprintf(Fp,"  %d %s", i, XEN_AS_STRING(gcdata[i]));
-	if (XEN_HOOK_P(gcdata[i]))
-	  fprintf(Fp, " -> %s", XEN_AS_STRING(scm_hook_to_list(gcdata[i])));
+	    fprintf(Fp,"  %d %s", i, XEN_AS_STRING(gcdata[i]));
+	    if (XEN_HOOK_P(gcdata[i]))
+	      fprintf(Fp, " -> %s", XEN_AS_STRING(scm_hook_to_list(gcdata[i])));
 #else
-	fprintf(Fp,"  %d %d %s", i, (int)gcdata[i], XEN_AS_STRING(gcdata[i]));
+	    fprintf(Fp,"  %d %d %s", i, (int)gcdata[i], XEN_AS_STRING(gcdata[i]));
 #endif
-	fprintf(Fp, "\n");
-      }
+	    fprintf(Fp, "\n");
+	  }
+    }
 }
 #endif
 
@@ -3074,6 +3077,8 @@ void g_initialize_gh(void)
 #if HAVE_EXTENSION_LANGUAGE
   mus_midi_init();
 #endif
+
+  gc_protection = XEN_FALSE;
 
   #define H_zoom_focus_left "The value for " S_zoom_focus_style " that causes zooming to maintain the left edge steady"
   #define H_zoom_focus_right "The value for " S_zoom_focus_style " that causes zooming to maintain the right edge steady"

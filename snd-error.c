@@ -52,7 +52,7 @@ void snd_warning(char *format, ...)
 #ifdef SND_AS_WIDGET
 static void (*snd_error_display)(const char *);
 
-void set_snd_error_display (void (*func)(const char *))
+void set_error_display (void (*func)(const char *))
 {
   snd_error_display = func;
 }

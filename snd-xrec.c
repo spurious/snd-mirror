@@ -920,10 +920,6 @@ void recorder_set_vu_out_val(int chan, mus_sample_t val) {set_vu_val(rec_out_VU[
 #define INPUT_AMP 0
 #define OUTPUT_AMP 1
 
-static char record_one[5] = {'1', STR_decimal, '0', '0', '\0'};
-static char record_zero[5] = {'0', STR_decimal, '0', '0', '\0'};
-static char amp_number_buffer[5] = {'1', STR_decimal, '0', '0', '\0'};
-
 #define RECORD_SCROLLBAR_MAX 300
 #define RECORD_SCROLLBAR_MID 150
 #define RECORD_SCROLLBAR_LINEAR_MAX 50
@@ -933,7 +929,7 @@ static char amp_number_buffer[5] = {'1', STR_decimal, '0', '0', '\0'};
 
 static void record_amp_changed(AMP *ap, int val)
 {
-  char *sfs;
+  char sfs[6];
   Float amp;
   recorder_info *rp;
   rp = get_recorder_info();
@@ -945,10 +941,8 @@ static void record_amp_changed(AMP *ap, int val)
 	amp = (Float)val * RECORD_SCROLLBAR_LINEAR_MULT;
       else amp = exp((Float)(val - RECORD_SCROLLBAR_MID) / ((Float)RECORD_SCROLLBAR_MAX * .2));
     }
-  sfs = prettyf(amp, 2);
-  fill_number(sfs, amp_number_buffer);
-  set_button_label(ap->number, amp_number_buffer);
-  FREE(sfs);
+  mus_snprintf(sfs, 6, "%.2f", amp);
+  set_button_label(ap->number, sfs);
   if (ap->type == INPUT_AMP)
     rp->in_amps[ap->in][ap->out] = amp;
   else rp->out_amps[ap->out] = amp;
@@ -974,17 +968,6 @@ static Float global_amp(AMP *a)
   if (a->type == INPUT_AMP)
     return(rp->in_amps[a->in][a->out]);
   else return(rp->out_amps[a->out]);
-}
-
-static char *amp_to_string(Float val)
-{
-  char *sfs;
-  if (val == 0.0) return(record_zero);
-  else if (val == 1.0) return(record_one);
-  sfs = prettyf(val, 2);
-  fill_number(sfs, amp_number_buffer);
-  FREE(sfs);
-  return(amp_number_buffer);
 }
 
 static void record_amp_click_callback(Widget w, XtPointer context, XtPointer info) 
@@ -1669,6 +1652,7 @@ static Widget make_recorder_slider(PANE *p, AMP *a, Widget last_slider, bool inp
   Arg args[32];
   XmString s1;
   XtCallbackList n1, n2;
+  char numbuf[6];
 
   n = 0;      
   if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
@@ -1689,7 +1673,8 @@ static Widget make_recorder_slider(PANE *p, AMP *a, Widget last_slider, bool inp
   
   n = 0;
   if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
-  s1 = XmStringCreate(amp_to_string(global_amp(a)), XmFONTLIST_DEFAULT_TAG);
+  mus_snprintf(numbuf, 6, "%.2f", global_amp(a));
+  s1 = XmStringCreate(numbuf, XmFONTLIST_DEFAULT_TAG);
   XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;	
   XtSetArg(args[n], XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET); n++;
   XtSetArg(args[n], XmNtopWidget, a->label); n++;
@@ -3365,9 +3350,6 @@ static void initialize_recorder(recorder_info *rp)
 #endif
   if (rp->trigger != 0.0) set_recorder_trigger(rp, rp->trigger);
   if (rp->max_duration <= 0.0) rp->max_duration = 1000000.0;
-  record_one[1] = local_decimal_point();
-  record_zero[1] = local_decimal_point();
-  amp_number_buffer[1] = local_decimal_point();
 }
 
 

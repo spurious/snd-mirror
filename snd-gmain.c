@@ -418,7 +418,7 @@ void snd_doit(int argc, char **argv)
   int i;
   state_context *sx;
 #ifdef SND_AS_WIDGET
-  set_snd_error_display(error_func);
+  set_error_display(error_func);
   ss = snd_main(argc, argv);
 #else
   gtk_init(&argc, &argv);

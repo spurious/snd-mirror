@@ -574,23 +574,17 @@ void recorder_set_vu_out_val(int chan, mus_sample_t val) {set_vu_val(rec_out_VU[
 #define INPUT_AMP 0
 #define OUTPUT_AMP 1
 
-static char record_one[5] = {'1', STR_decimal, '0', '0', '\0'};
-static char record_zero[5] = {'0', STR_decimal, '0', '0', '\0'};
-static char amp_number_buffer[5] = {'1', STR_decimal, '0', '0', '\0'};
-
 static void record_amp_changed(AMP *ap, Float scrollval)
 {
-  char *sfs;
+  char sfs[6];
   Float amp;
   recorder_info *rp;
   rp = get_recorder_info();
   if (scrollval < .15)
     amp = (scrollval * 1.13);
   else amp = (exp((scrollval - 0.5) * 5.0));
-  sfs = prettyf(amp, 2);
-  fill_number(sfs, amp_number_buffer);
-  set_button_label(ap->number, amp_number_buffer);
-  FREE(sfs);
+  mus_snprintf(sfs, 6, "%.2f", amp);
+  set_button_label(ap->number, sfs);
   if (ap->type == INPUT_AMP)
     rp->in_amps[ap->in][ap->out] = amp;
   else rp->out_amps[ap->out] = amp;
@@ -616,17 +610,6 @@ static Float global_amp(AMP *a)
   if (a->type == INPUT_AMP)
     return(rp->in_amps[a->in][a->out]);
   else return(rp->out_amps[a->out]);
-}
-
-static char *amp_to_string(Float val)
-{
-  char *sfs;
-  if (val == 0.0) return(record_zero);
-  else if (val == 1.0) return(record_one);
-  sfs = prettyf(val, 2);
-  fill_number(sfs, amp_number_buffer);
-  FREE(sfs);
-  return(amp_number_buffer);
 }
 
 static gboolean record_amp_click_callback(GtkWidget *w, GdkEventButton *ev, gpointer data)
@@ -1079,6 +1062,7 @@ static void volume_callback(GtkAdjustment *adj, gpointer context)
 static void make_recorder_slider(PANE *p, AMP *a, bool input)
 {
   GtkWidget *hb;
+  char numbuf[6];
 
   hb = gtk_hbox_new(false, 0);
   gtk_box_pack_start(GTK_BOX(p->slider_box), hb, false, false, 0);
@@ -1099,7 +1083,8 @@ static void make_recorder_slider(PANE *p, AMP *a, bool input)
 				 g_cclosure_new(GTK_SIGNAL_FUNC(recorder_noop_mouse_enter), NULL, 0),
 				 0);
 
-  a->number = gtk_button_new_with_label(amp_to_string(global_amp(a)));
+  mus_snprintf(numbuf, 6, "%.2f", global_amp(a));
+  a->number = gtk_button_new_with_label(numbuf);
   gtk_button_set_relief(GTK_BUTTON(a->number), GTK_RELIEF_NONE);
   gtk_box_pack_start(GTK_BOX(hb), a->number, false, false, 0);
   gtk_widget_show(a->number);
@@ -2157,9 +2142,6 @@ static void initialize_recorder(recorder_info *rp)
 #endif
   if (rp->trigger != 0.0) set_recorder_trigger(rp, rp->trigger);
   if (rp->max_duration <= 0.0) rp->max_duration = 1000000.0;
-  record_one[1] = local_decimal_point();
-  record_zero[1] = local_decimal_point();
-  amp_number_buffer[1] = local_decimal_point();
 }
 
 void reflect_record_size(int size)
