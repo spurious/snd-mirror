@@ -714,15 +714,7 @@ void backup_edit_list(chan_info *cp)
 	if ((sd) && (sd->edit_ctr == cur)) sd->edit_ctr--;
       }
   /* marks backup added 23-Jun-00 */
-  if (cp->marks)
-    {
-      release_pending_marks(cp, cur - 1);
-      if (cp->marks[cur - 1]) FREE(cp->marks[cur - 1]); /* not freed by release_pending_marks */
-      cp->marks[cur - 1] = cp->marks[cur];
-      cp->marks[cur] = NULL;
-      cp->mark_ctr[cur - 1] = cp->mark_ctr[cur];
-      cp->mark_ctr[cur] = -1;
-    }
+  backup_mark_list(cp, cur);
   cp->edit_ctr--;
   reflect_edit_history_change(cp);
 }

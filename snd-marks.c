@@ -649,6 +649,19 @@ void free_mark_list(chan_info *cp, int ignore)
     }
 }
 
+void backup_mark_list(chan_info *cp, int cur)
+{
+  if (cp->marks)
+    {
+      release_pending_marks(cp, cur - 1);
+      if (cp->marks[cur - 1]) FREE(cp->marks[cur - 1]); /* not freed by release_pending_marks */
+      cp->marks[cur - 1] = cp->marks[cur];
+      cp->marks[cur] = NULL;
+      cp->mark_ctr[cur - 1] = cp->mark_ctr[cur];
+      cp->mark_ctr[cur] = -1;
+    }
+}
+
 void collapse_marks (snd_info *sp)
 {
   /* in all channels, move current edit_ctr mark list to 0, freeing all the rest */
@@ -805,8 +818,11 @@ static mark *display_channel_marks_1(chan_info *cp,  mark *mp, void *m)
 void display_channel_marks(chan_info *cp)
 {
   off_t last_samp;
-  last_samp = -1;
-  map_over_marks(cp, display_channel_marks_1, (void *)(&last_samp), READ_FORWARD);
+  if ((cp->marks) && (cp->show_marks))
+    {
+      last_samp = -1;
+      map_over_marks(cp, display_channel_marks_1, (void *)(&last_samp), READ_FORWARD);
+    }
 }
 
 void release_pending_marks(chan_info *cp, int edit_ctr)
@@ -1006,6 +1022,7 @@ void reverse_marks(chan_info *cp, off_t beg, off_t dur) /* beg -1 for full sound
   mark **mps;
   int ed, marks, i;
   off_t end;
+  if (cp->marks == NULL) return;
   ed = cp->edit_ctr;
   mps = cp->marks[ed];
   if (beg == -1)

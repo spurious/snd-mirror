@@ -345,8 +345,7 @@ static char *convolve_with_or_error(char *filename, Float amp, chan_info *cp, XE
 		      file_insert_samples(si->begs[ip], filtersize + filesize, ofile, ucp, 0, DELETE_ME, origin, ucp->edit_ctr);
 		      reactivate_selection(ucp, si->begs[ip], si->begs[ip] + filtersize + filesize);
 		      backup_edit_list(ucp); 
-		      if (ucp->marks) 
-			ripple_trailing_marks(ucp, si->begs[ip], sc->dur, filtersize + filesize);
+		      ripple_trailing_marks(ucp, si->begs[ip], sc->dur, filtersize + filesize);
 		    }
 		  else snd_remove(ofile);
 		  update_graph(ucp, NULL); 
@@ -828,8 +827,7 @@ static char *src_channel_with_error(chan_info *cp, snd_fd *sf, off_t beg, off_t 
 	  if (over_selection)
 	    reactivate_selection(cp, beg, beg + k); /* backwards compatibility */
 	  backup_edit_list(cp);
-	  if (cp->marks) 
-	    ripple_marks(cp, 0, 0);
+	  ripple_marks(cp, 0, 0);
 	}
       update_graph(cp, NULL);
     }
@@ -1670,8 +1668,7 @@ static char *reverse_channel(chan_info *cp, snd_fd *sf, off_t beg, off_t dur, XE
     }
   else change_samples(beg, dur, idata, cp, LOCK_MIXES, caller, cp->edit_ctr);
   if (ep) cp->amp_envs[cp->edit_ctr] = ep;
-  if (cp->marks)
-    reverse_marks(cp, (section) ? beg : -1, dur);
+  reverse_marks(cp, (section) ? beg : -1, dur);
   update_graph(cp, NULL); 
   FREE(data[0]);
   FREE(data);
@@ -2514,8 +2511,7 @@ static XEN g_map_chan_1(XEN proc, XEN s_beg, XEN s_end, XEN org, XEN snd, XEN ch
 		  backup_edit_list(cp);
 		  if (cp->edit_ctr > cured)
 		    backup_edit_list(cp);
-		  if (cp->marks) 
-		    ripple_trailing_marks(cp, beg, num, j);
+		  ripple_trailing_marks(cp, beg, num, j);
 		}
 	      else snd_remove(filename);
 	    }

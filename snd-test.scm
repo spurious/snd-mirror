@@ -9076,6 +9076,7 @@
 	 (set! str (widget-text (list-ref (sound-widgets ind) 3)))
 	 (IF (not (string=? str "hi thereaway!"))
 	     (snd-display ";report-in-minibuffer 1: ~A?" str)))
+       (IF (widget-text (cadr (main-widgets))) (snd-display ";widget text should be #f: ~A" (widget-text (cadr (main-widgets)))))
        (close-sound ind))
      ))
 
@@ -23799,6 +23800,8 @@ EDITS: 5
 	(check-error-tag 'no-such-file (lambda () (make-sample-reader 0 "/bad/baddy.snd")))
 	(check-error-tag 'no-such-region (lambda () (make-region-sample-reader 0 1234567)))
 	(check-error-tag 'no-such-mix (lambda () (mix-tag-position 12345)))
+	(check-error-tag 'no-such-widget (lambda () (widget-text (list 'Widget 0))))
+	(check-error-tag 'no-such-widget (lambda () (set! (widget-text (list 'Widget 0)) "hiho")))
 
 	(for-each
 	 (lambda (n name)

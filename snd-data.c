@@ -160,7 +160,7 @@ static chan_info *free_chan_info(chan_info *cp)
   if (cp->samples) {FREE(cp->samples); cp->samples = NULL;}
   if (cp->edits) free_edit_list(cp);
   if (cp->sounds) free_sound_list(cp);
-  if (cp->marks) free_mark_list(cp, -1);
+  free_mark_list(cp, -1);
   if (cp->sounds) {FREE(cp->sounds); cp->sounds = NULL;}
   free_mixes(cp);
   cp->sound = NULL;  /* a backpointer */

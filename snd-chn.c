@@ -2567,7 +2567,7 @@ static void display_channel_data_with_size (chan_info *cp, snd_info *sp, snd_sta
 	  if (cp->graph_time_p)
 	    {
 	      display_selection(cp);
-	      if ((cp->marks) && (cp->show_marks)) display_channel_marks(cp);
+	      display_channel_marks(cp);
 	      if (cp->show_y_zero) display_zero(cp);
 	      if ((cp->mixes)) display_channel_mixes(cp);
 	    }

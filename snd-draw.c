@@ -576,8 +576,9 @@ static XEN g_widget_text(XEN wid)
 	}
       else
 	{
-	  XmString s1;
+	  XmString s1 = NULL;
 	  XtVaGetValues(w, XmNlabelString, &s1, NULL);
+	  if (XmStringEmpty(s1)) return(XEN_FALSE);
 	  XmStringGetLtoR(s1, XmFONTLIST_DEFAULT_TAG, &text);
 	  if (text == NULL)
 	    {

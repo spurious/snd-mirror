@@ -164,7 +164,7 @@ typedef struct {
   int ctr;
   int size;
 } mark_info;
-/* TODO: use mark_info to handle cp->marks lists */
+/* SOMEDAY: use mark_info to handle cp->marks lists */
 
 typedef struct {
   Float *data;
@@ -629,6 +629,7 @@ void swap_marks(chan_info *cp0, chan_info *cp1);
 void g_init_marks(void);
 mark_info **sound_store_marks(snd_info *sp);
 void sound_restore_marks(snd_info *sp, mark_info **marks);
+void backup_mark_list(chan_info *cp, int cur);
 
 
 
