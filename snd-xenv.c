@@ -54,6 +54,7 @@ static void display_env(snd_state *ss, env *e, char *name, GC cur_gc,
   ax->dp = XtDisplay(drawer);
   ax->gc = cur_gc;
   display_enved_env(ss, e, ax, axis_cp, name, x0, y0, width, height, dots);
+  ax = free_axis_context(ax);
 }
 
 void display_enved_env_with_selection(snd_state *ss, env *e, char *name, 

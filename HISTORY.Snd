@@ -1,5 +1,6 @@
 snd change log
 
+  7-Mar:     mouse-enter|leave-label-hook, listener-text-color, nb.scm
   5-Mar:     Guile-level graphics changes (to unify Motif and Gtk in this regard):
              removed all the guile-gtk-specific procedures (except sg-options-menu-widget and sg-menu-bar-widget).
              added cursor-size, cursor-position, cursor-style can be a procedure.

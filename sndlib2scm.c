@@ -185,6 +185,17 @@ static SCM g_sound_comment(SCM filename)
   return(newstr);
 }
 
+static SCM g_sound_write_date(SCM filename) 
+{
+  #define H_mus_sound_write_date "(" S_mus_sound_write_date " filename) -> write_date of sound"
+  char *tmpstr = NULL;
+  int date;
+  SCM_ASSERT(gh_string_p(filename), filename, SCM_ARG1, S_mus_sound_write_date); 
+  date = mus_sound_write_date(tmpstr = full_filename(filename));
+  if (tmpstr) FREE(tmpstr);
+  return(TO_SCM_INT(date));
+}
+
 static SCM g_sound_type_name(SCM type) 
 {
   #define H_mus_header_type_name "(" S_mus_header_type_name " type) -> header type (e.g. mus-aiff) as a string"
@@ -974,6 +985,7 @@ void mus_sndlib2scm_initialize(void)
   DEFINE_PROC(gh_new_procedure1_0(S_mus_header_type_name,     g_sound_type_name),       H_mus_header_type_name);
   DEFINE_PROC(gh_new_procedure1_0(S_mus_data_format_name,     g_sound_format_name),     H_mus_data_format_name);
   DEFINE_PROC(gh_new_procedure1_0(S_mus_sound_comment,        g_sound_comment),         H_mus_sound_comment);
+  DEFINE_PROC(gh_new_procedure1_0(S_mus_sound_write_date,     g_sound_write_date),      H_mus_sound_write_date);
   DEFINE_PROC(gh_new_procedure1_0(S_mus_data_format_bytes_per_sample, g_sound_bytes_per_sample), H_mus_data_format_bytes_per_sample);
   DEFINE_PROC(gh_new_procedure1_0(S_mus_sound_loop_info,      g_sound_loop_info),       H_mus_sound_loop_info);
   DEFINE_PROC(gh_new_procedure1_0(S_mus_sound_max_amp,        g_sound_max_amp),         H_mus_sound_max_amp);

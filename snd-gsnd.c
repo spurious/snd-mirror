@@ -1005,7 +1005,7 @@ void sp_display_env(snd_info *sp)
   ax->wn = drawer->window;
   gdk_window_clear(ax->wn);
   display_filter_graph(ss, sp, ax, width, height);
-  FREE(ax);
+  ax = free_axis_context(ax);
 }
 
 static void filter_drawer_button_motion(GtkWidget *w, GdkEventMotion *ev, gpointer data)

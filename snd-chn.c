@@ -2452,7 +2452,12 @@ static void display_channel_data_with_size (chan_info *cp, snd_info *sp, snd_sta
 			       SCM_LIST2(TO_SMALL_SCM_INT((cp->sound)->index),
 					 TO_SMALL_SCM_INT(cp->chan)));
 #endif
-	  make_axes(cp, uap,
+	  if (up != (lisp_grf *)(cp->lisp_info))
+	    up = (lisp_grf *)(cp->lisp_info);
+	  if (uap != up->axis)
+	    uap = up->axis;
+	  /* if these were changed in the hook function, the old fields should have been saved across the change (g_graph in snd-scm.c) */
+	  make_axes(cp, uap, /* this file l 2229 */
 		    X_IN_LENGTH,
 		    ((cp->chan == 0) || (sp->combining != CHANNELS_SUPERIMPOSED)));
 

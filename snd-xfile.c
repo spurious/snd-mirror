@@ -2249,8 +2249,20 @@ void g_initialize_xgfile(SCM local_doc)
 			       "set-" S_just_sounds, SCM_FNC g_set_just_sounds, local_doc, 0, 0, 0, 1);
 
 #if HAVE_HOOKS
-  mouse_name_enter_hook = MAKE_HOOK("mouse-enter-label-hook", 3, "(lambda (type position label-string)");
-  mouse_name_leave_hook = MAKE_HOOK("mouse-leave-label-hook", 3, "(lambda (type position label-string)");
+  #define H_mouse_enter_label_hook S_mouse_enter_label_hook " (type position label) is called when a file viewer or region label \
+is entered by the mouse. The 'type' is 0 for the current files list, 1 for previous files, and 2 for regions. The 'position' \
+is the scrolled list position of the label. The label itself is 'label'. We could use the 'finfo' procedure in examp.scm \
+to popup file info as follows: \n\
+(add-hook! mouse-enter-label-hook\n\
+  (lambda (type position name)\n\
+    (if (not (= type 2))\n\
+        (help-dialog name (finfo name)))))\n\
+See also nb.scm."
+
+#define H_mouse_leave_label_hook S_mouse_leave_label_hook " (type position label) is called when a file viewer or region label is exited by the mouse"
+
+  mouse_name_enter_hook = MAKE_HOOK(S_mouse_enter_label_hook, 3, H_mouse_enter_label_hook);
+  mouse_name_leave_hook = MAKE_HOOK(S_mouse_leave_label_hook, 3, H_mouse_leave_label_hook);
 #endif
 }
 

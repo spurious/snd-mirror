@@ -1215,6 +1215,11 @@
       (graph '(0 0 1 1 2 0))
       (update-lisp-graph)
       (graph #(0 0 1 1 2 0))
+      (do ((i 0 (1+ i))) 
+	  ((= i 32)) 
+	(graph #(0 1 2)) 
+	(graph (list #(0 1 2) #(3 2 1) #(1 2 3)))
+	(graph (list #(0 1 2) #(3 2 1))))
       (if (= (transform-size) 0) (snd-display (format #f ";ffting transform-size ~A?" (transform-size))))
       (peaks "tmp.peaks")
       (if (file-exists? "tmp.peaks")
@@ -1835,6 +1840,7 @@
 	(list 'graph-color graph-color set-graph-color white)
 	(list 'highlight-color highlight-color set-highlight-color ivory1)
 	(list 'listener-color listener-color set-listener-color alice-blue)
+	(list 'listener-text-color listener-text-color set-listener-text-color black)
 	(list 'mark-color mark-color set-mark-color red)
 	(list 'mix-color mix-color set-mix-color dark-gray)
 	(list 'selected-mix-color selected-mix-color set-selected-mix-color light-green)
@@ -4859,6 +4865,11 @@
 	  (map-chan (echo .5 .75) 0 60000)
 	  (reset-hook! fft-hook)
 	  (reset-hook! lisp-graph-hook)
+	  (add-hook! lisp-graph-hook 
+		     (lambda (snd chn) 
+		       (if (> (random 1.0) .5) 
+			   (graph #(0 1 2)) 
+			   (graph (list #(0 1 2) #(3 2 0))))))
 
 	  (do ((i 0 (1+ i)))
 	      ((= i (max-sounds)))
@@ -4876,6 +4887,7 @@
 			(set! (x-bounds) (list start (min (+ start .1) dur))))
 		    ))))
 	  (reset-hook! graph-hook)
+	  (reset-hook! lisp-graph-hook)
 
 	  ;; new variable settings 
 	  (letrec ((reset-vars

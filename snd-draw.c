@@ -5,7 +5,6 @@
  *                and getting the label as a string is tedious -- see snd-xfile.c: 1101
  *    dont_graph can cancel main (but then axis isn't set up for us?)
  * TODO  exs: annotation boxes elaborated a la channel-envelope
- * TODO       popup info in file viewer -- see mouse-enter-label-hook in snd-xfile -- needs completion
  * TODO       own fft peaks info
  * TODO    in -separate mode (and elsewhere?) need to save description (sizes) of window/channels etc 
  * TODO: similar split for make_fft_graph [needs sonogram etc??]
@@ -15,8 +14,7 @@
  * TODO: retest all the snd-gtk functions
  * TODO: fft-info? sync_info + accessors?
  * TODO: mouse-enter|leave-graph-hook? enter|leave-listener? error-hook (in snd-scm)? iconify-hook?
- *
- * main-widgets should include listener pane (/text?)
+ * TODO:   surely mouse enter listener should activate it??
  */
 
 #if HAVE_GUILE && (!USE_NO_GUI)
@@ -191,7 +189,7 @@ static SCM g_set_foreground_color(SCM color, SCM snd, SCM chn, SCM ax)
   chan_info *cp;
   SCM_ASSERT(snd_color_p(color), color, SCM_ARG1, "set-" S_foreground_color);
   cp = get_cp(snd, chn, "set-" S_foreground_color);
-  set_foreground_color(cp,
+  set_foreground_color(cp,                                  /* snd-xchn.c */
 		       get_ax(cp, 
 			      TO_C_INT_OR_ELSE(ax, CHAN_GC),
 			      "set-" S_foreground_color),
@@ -480,13 +478,13 @@ static SCM g_main_widgets(void)
                      SCM_EOL)))));
 }
 
-#define NUM_DIALOGS 21
+#define NUM_DIALOGS 22
 static SCM dialog_widgets = SCM_UNDEFINED;
 
 static SCM g_dialog_widgets(void)
 {
   if (!(gh_vector_p(dialog_widgets)))
-    dialog_widgets = gh_make_vector(TO_SMALL_SCM_INT(NUM_DIALOGS), SCM_BOOL_F);
+    dialog_widgets = scm_permanent_object(gh_make_vector(TO_SMALL_SCM_INT(NUM_DIALOGS), SCM_BOOL_F));
 #if HAVE_GUILE_1_3_0
   /* guile-1.3/libguile/gh.h:#define gh_vector_to_list(v) scm_vector_to_list(ls) -- ls is undefined! */
   return(scm_vector_to_list(dialog_widgets));
@@ -498,11 +496,13 @@ static SCM g_dialog_widgets(void)
 void set_dialog_widget(int which, GUI_WIDGET wid)
 {
   if (!(gh_vector_p(dialog_widgets)))
-    dialog_widgets = gh_make_vector(TO_SMALL_SCM_INT(NUM_DIALOGS), SCM_BOOL_F);
+    dialog_widgets = scm_permanent_object(gh_make_vector(TO_SMALL_SCM_INT(NUM_DIALOGS), SCM_BOOL_F));
   gh_vector_set_x(dialog_widgets, 
 		  TO_SMALL_SCM_INT(which), 
 		  SCM_WRAP(wid));
 }
+
+/* TODO: these widget handlers need to check that their argument really is (nominally at least) a widget */
 
 static SCM g_widget_position(SCM wid)
 {
@@ -543,6 +543,14 @@ static SCM g_recolor_widget(SCM wid, SCM color)
   return(color);
 }
 
+static SCM g_set_widget_foreground(SCM wid, SCM color)
+{
+#if USE_MOTIF
+  XtVaSetValues((GUI_WIDGET)(SCM_UNWRAP(wid)), XmNforeground, color2pixel(color), NULL);
+#endif
+  return(color);
+}
+
 #if 0
 static SCM g_hide_widget(SCM wid)
 {
@@ -551,6 +559,7 @@ static SCM g_hide_widget(SCM wid)
 #else
   gtk_widget_hide((GUI_WIDGET)(SCM_UNWRAP(wid)));
 #endif
+  return(wid);
 }
 static SCM g_show_widget(SCM wid)
 {
@@ -559,6 +568,7 @@ static SCM g_show_widget(SCM wid)
 #else
   gtk_widget_show((GUI_WIDGET)(SCM_UNWRAP(wid)));
 #endif
+  return(wid);
 }
 #endif
 
@@ -636,7 +646,7 @@ void g_init_draw(SCM local_doc)
   DEFINE_PROC(gh_new_procedure("add-input",       SCM_FNC g_add_input, 2, 0, 0),       "(add-input file callback) -> id");
   DEFINE_PROC(gh_new_procedure("remove-input",    SCM_FNC g_remove_input, 1, 0, 0),    "(remove-input id)");
 
-
+  DEFINE_PROC(gh_new_procedure("set-widget-foreground", SCM_FNC g_set_widget_foreground, 2, 0, 0), "(set-widget-foreground widget color)");
 
 
   /* ---------------- backwards compatibility ---------------- */

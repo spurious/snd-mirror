@@ -781,7 +781,7 @@ void sp_display_env(snd_info *sp)
   ax->dp = XtDisplay(drawer);
   XClearWindow(ax->dp, ax->wn);
   display_filter_graph(ss, sp, ax, width, height);
-  FREE(ax);
+  ax = free_axis_context(ax);
 }
 
 void set_filter_text(snd_info *sp, char *str)

@@ -911,6 +911,7 @@ static void sndCreateCommandWidget(snd_state *ss, int height)
       if (!(ss->using_schemes)) 
 	{
 	  XtSetArg(args[n], XmNbackground, (ss->sgx)->listener_color); n++;
+	  XtSetArg(args[n], XmNforeground, (ss->sgx)->listener_text_color); n++;
 	}
       if ((ss->sgx)->listener_fontlist) {XtSetArg(args[n], XM_FONT_RESOURCE, (ss->sgx)->listener_fontlist); n++;}
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
@@ -925,6 +926,9 @@ static void sndCreateCommandWidget(snd_state *ss, int height)
       XtSetArg(args[n], XmNpositionIndex, XmLAST_POSITION); n++;
       XtSetArg(args[n], XmNpaneMinimum, height); n++;
       listener_text = XmCreateScrolledText(listener_pane, "lisp-listener", args, n);
+#if HAVE_GUILE
+      set_dialog_widget(LISTENER_PANE, listener_text);
+#endif
 
       XtManageChild(listener_text);
       XmTextSetCursorPosition(listener_text, 1);
@@ -965,6 +969,15 @@ void color_listener(Pixel pix)
   (ss->sgx)->listener_color = pix;
   if (listener_text)
     XmChangeColor(listener_text, pix);
+}
+
+void color_listener_text(Pixel pix)
+{
+  snd_state *ss;
+  ss = get_global_state();
+  (ss->sgx)->listener_text_color = pix;
+  if (listener_text)
+    XtVaSetValues(listener_text, XmNforeground, pix, NULL);
 }
 
 void handle_listener(snd_state *ss, int new_state)

@@ -31,6 +31,7 @@
 #define SELECTED_DATA_COLOR  "black"
 #define MARK_COLOR           "red"
 #define LISTENER_COLOR       "AliceBlue"
+#define LISTENER_TEXT_COLOR  "black"
 #define LIGHT_BLUE_COLOR     "lightsteelblue1"
 #define LIGHTER_BLUE_COLOR   "AliceBlue"
 #define WHITE_COLOR          "white"
@@ -549,6 +550,7 @@ void snd_doit(snd_state *ss, int argc, char **argv)
   sx->enved_waveform_color =  get_color(ENVED_WAVEFORM_COLOR,  NULL, NULL, FALSE);
   sx->filter_waveform_color = get_color(FILTER_WAVEFORM_COLOR, NULL, NULL, FALSE);
   sx->listener_color =        get_color(LISTENER_COLOR,        NULL, NULL, TRUE);
+  sx->listener_text_color =   get_color(LISTENER_TEXT_COLOR,   NULL, NULL, TRUE);
   sx->graph_color =           get_color(GRAPH_COLOR,           NULL, NULL, TRUE);
   sx->selected_graph_color =  get_color(SELECTED_GRAPH_COLOR,  NULL, NULL, TRUE);
   sx->data_color =            get_color(DATA_COLOR,            NULL, NULL, FALSE);

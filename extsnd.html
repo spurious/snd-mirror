@@ -143,6 +143,7 @@ various examples of and extensions to Snd can be found in:
 <tr><td><a href="sndscm.html#marksdoc">marks.scm</a></td><td>functions related to marks</td></tr>
 <tr><td><a href="sndscm.html#mixdoc">mix.scm</a></td><td>functions related to mixes and tracks</td></tr>
 <tr><td><a href="sndscm.html#moogdoc">moog.scm</a></td><td>Moog filter (from CLM)</td></tr>
+<tr><td><a href="sndscm.html#nbdoc">nb.scm</a></td><td>Popup File info etc</td></tr>
 <tr><td><a href="sndscm.html#pqwvoxdoc">pqwvox.scm</a></td><td>phase-quadrature waveshaping (from CLM)</td></tr>
 <tr><td><a href="sndscm.html#prc95doc">prc95.scm</a></td><td>Perry Cook's physical model examples (from CLM)</td></tr>
 <tr><td><a href="sndscm.html#pvocdoc">pvoc.scm</a></td><td>phase-vocoder examples</td></tr>
@@ -236,6 +237,8 @@ are:</p>
 <td>highlighting color.</td></tr>
 <tr><td><code><em class=def>listener-color</em></code></td><td><code>aliceblue</code></td>
 <td>background color of lisp listener.</td></tr>
+<tr><td><code><em class=def>listener-text-color</em></code></td><td><code>black</code></td>
+<td>text color in lisp listener.</td></tr>
 <tr><td><code><em class=def>mark-color</em></code></td><td><code>red</code></td>
 <td>color of mark indicator.</td></tr>
 <tr><td><code><em class=def>mix-color</em></code></td><td><code>darkgray</code></td>
@@ -366,10 +369,10 @@ The four "-widgets" procedure return lists of possibly useful widgets:
   menu-widgets:    '(top-level-menu-bar file-menu edit-menu view-menu options-menu help-menu)
   sound-widgets:   '(main-pane name-label control-panel)
   channel-widgets: '(graph)
-  dialog-widgets:  '(color_dialog, orientation_dialog, enved_dialog, error_dialog, yes_or_no_dialog, transform_dialog,
-                     file_open_dialog, file_save_as_dialog, view_files_dialog, raw_data_dialog, new_file_dialog,
-                     file_mix_dialog, edit_header_dialog, find_dialog, help_dialog, completion_dialog, mix_panel_dialog,
-                     print_dialog, recorder_dialog, region_dialog, stats_dialog)
+  dialog-widgets:  '(color_dialog orientation_dialog enved_dialog error_dialog yes_or_no_dialog transform_dialog
+                     file_open_dialog file_save_as_dialog view_files_dialog raw_data_dialog new_file_dialog
+                     file_mix_dialog edit_header_dialog find_dialog help_dialog completion_dialog mix_panel_dialog
+                     print_dialog recorder_dialog region_dialog stats_dialog listener-text)
 </pre>
 <p>I've only included the ones I needed immediately, but all Snd widgets are potentially (and easily)
 accessible; if you need access to one that
@@ -1334,10 +1337,29 @@ If #t, the actual remix is the hook's responsibility.
 </td></tr>
 <tr><td colspan=2></td></tr>
 
-<!-- TODO: mouse-enter|leave-label-hook -->
+<tr><td colspan=2>
+<span class=defbox><code><em class=def><a name="mouseenterlabelhook">mouse-enter-label-hook</a></em> (type position name) </code></span>
+</td></tr>
+
+<tr><td></td><td>
+called when a file viewer or region label 
+is entered by the mouse. The 'type' is 0 for the current files list, 1 for previous files, and 2 for regions. 
+The 'position' is the scrolled list position of the label. 
+The label itself is 'label'. We could use the 'finfo' procedure in examp.scm
+to popup file info as follows:
+</td></tr>
+
+<tr><td colspan=2 align=center>
+<table border=1 cellpadding=5><tr><td bgcolor="#FCFCF0"><pre>
+(add-hook! mouse-enter-label-hook
+  (lambda (type position name)
+    (if (not (= type 2))
+        (help-dialog name (finfo name)))))
+</pre></td></tr></table></td></tr>
+<tr><td colspan=2></td></tr>
 
 <tr><td colspan=2>
-<span class=defbox><code><em class=def><a name="mousedraghook">mouse-drag-hook</a></em>    (snd chn button state x y) </code></span>
+<span class=defbox><code><em class=def><a name="mousedraghook">mouse-drag-hook</a></em> (snd chn button state x y) </code></span>
 </td></tr>
 
 <tr><td></td><td>
@@ -1346,7 +1368,16 @@ called upon mouse motion (with button pressed) within lisp graph.
 <tr><td colspan=2></td></tr>
 
 <tr><td colspan=2>
-<span class=defbox><code><em class=def><a name="mousepresshook">mouse-press-hook</a></em>   (snd chn button state x y) </code></span>
+<span class=defbox><code><em class=def><a name="mouseleavelabelhook">mouse-leave-label-hook</a></em> (type position name) </code></span>
+</td></tr>
+
+<tr><td></td><td>
+called when the mouse exits one of the labels covered by mouse-enter-label-hook.
+</td></tr>
+<tr><td colspan=2></td></tr>
+
+<tr><td colspan=2>
+<span class=defbox><code><em class=def><a name="mousepresshook">mouse-press-hook</a></em> (snd chn button state x y) </code></span>
 </td></tr>
 
 <tr><td></td><td>
@@ -3036,12 +3067,12 @@ replaces the normal "+" cursor with an "x":
 <tr><td colspan=2 align=center>
 <table border=1 cellpadding=5><tr><td bgcolor="#FCFCF0"><pre>
 (define (<A NAME="xcursor">x-cursor</a> snd chn ax)
-  (let* ((point (cursor-position))
+  (let* ((point (<em class=red>cursor-position</em>))
          (x (car point))
          (y (cadr point))
-         (size (inexact->exact (/ (cursor-size) 2))))
-    (draw-line (- x size) (- y size) (+ x size) (+ y size) snd chn cursor-context)    
-    (draw-line (- x size) (+ y size) (+ x size) (- y size) snd chn cursor-context)))
+         (size (inexact->exact (/ (<em class=red>cursor-size</em>) 2))))
+    (<em class=red>draw-line</em> (- x size) (- y size) (+ x size) (+ y size) snd chn <em class=red>cursor-context</em>)    
+    (<em class=red>draw-line</em> (- x size) (+ y size) (+ x size) (- y size) snd chn <em class=red>cursor-context</em>)))
 </pre></td></tr></table>
 </td></tr>
 <tr><td colspan=2></td></tr>
@@ -5329,8 +5360,11 @@ The wave shown is the time domain display, even when filtering.
 <tr><td><span class=defbox><code><em class=def><a name="sndhidelistener">hide-listener</a></em> ()</code></span></td>
 <td>close the lisp listener pane.</td></tr>
 
-<tr><td><span class=defbox><code><em class=def><a name="listenercolor">listener-color</a></em> ()</code></span></td>
-<td>aliceblue background color of lisp listener.</td></tr>
+<tr><td valign=top><span class=defbox><code><em class=def><a name="listenercolor">listener-color</a></em> ()</code></span></td>
+<td>background color of lisp listener. <code>(set! (listener-color) (make-color 0 0 0))</code> is good too.</td></tr>
+
+<tr><td valign=top><span class=defbox><code><em class=def><a name="listenertextcolor">listener-text-color</a></em> ()</code></span></td>
+<td>text color in lisp listener.</td></tr>
 
 <tr><td><span class=defbox><code><em class=def><a name="listenerfont">listener-font</a></em> ()</code></span></td>
 <td>listener font.</td></tr>

@@ -404,6 +404,7 @@ void snd_doit(snd_state *ss, int argc, char **argv)
                (define (set-" S_position_color " obj) obj)\
                (define (set-" S_mark_color " obj) obj)\
                (define (set-" S_listener_color " obj) obj)\
+               (define (set-" S_listener_text_color " obj) obj)\
                (define (set-" S_selected_mix_color " obj) obj)\
                (define (set-" S_enved_waveform_color " obj) obj)\
                (define (set-" S_filter_waveform_color " obj) obj)\
@@ -431,6 +432,7 @@ void snd_doit(snd_state *ss, int argc, char **argv)
                (define " S_position_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
                (define " S_mark_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
                (define " S_listener_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
+               (define " S_listener_text_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
                (define " S_selected_mix_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
                (define " S_enved_waveform_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
                (define " S_filter_waveform_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
@@ -457,6 +459,7 @@ void snd_doit(snd_state *ss, int argc, char **argv)
                (define (" S_position_color ") #f)\
                (define (" S_mark_color ") #f)\
                (define (" S_listener_color ") #f)\
+               (define (" S_listener_text_color ") #f)\
                (define (" S_selected_mix_color ") #f)\
                (define (" S_enved_waveform_color ") #f)\
                (define (" S_filter_waveform_color ") #f)\

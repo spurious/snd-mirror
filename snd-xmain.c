@@ -35,6 +35,7 @@
 #define SELECTED_DATA_COLOR  "black"
 #define MARK_COLOR           "red"
 #define LISTENER_COLOR       "AliceBlue"
+#define LISTENER_TEXT_COLOR  "black"
 #define LIGHT_BLUE_COLOR     "lightsteelblue1"
 #define LIGHTER_BLUE_COLOR   "AliceBlue"
 #define WHITE_COLOR          "white"
@@ -130,6 +131,7 @@ typedef struct {
   char *data_color;
   char *selected_data_color;
   char *listener_color;
+  char *listener_text_color;
   char *mark_color;
   char *pushed_button_color;
   char *enved_waveform_color;
@@ -179,6 +181,7 @@ static XtResource resources[] = {
   {"positioncol" STR_OR, "Positioncolor", XmRString, sizeof(char *), XtOffset(sndres *, position_color), XmRString,(XtPointer)POSITION_COLOR},
   {"zoomcol" STR_OR, "Zoomcolor", XmRString, sizeof(char *), XtOffset(sndres *, zoom_color), XmRString,(XtPointer)ZOOM_COLOR},
   {"listenercol" STR_OR, "Listenercolor", XmRString, sizeof(char *), XtOffset(sndres *, listener_color), XmRString,(XtPointer)LISTENER_COLOR},
+  {"listenertextcol" STR_OR, "Listenertextcolor", XmRString, sizeof(char *), XtOffset(sndres *, listener_text_color), XmRString,(XtPointer)LISTENER_TEXT_COLOR},
   {"cursorcol" STR_OR, "Cursorcolor", XmRString, sizeof(char *), XtOffset(sndres *, cursor_color), XmRString,(XtPointer)CURSOR_COLOR},
   {"selectioncol" STR_OR, "Selectioncolor", XmRString, sizeof(char *), XtOffset(sndres *, selection_color), XmRString,(XtPointer)SELECTION_COLOR},
   {"mixcol" STR_OR, "Mixcolor", XmRString, sizeof(char *), XtOffset(sndres *, mix_color), XmRString,(XtPointer)MIX_COLOR},
@@ -765,6 +768,7 @@ void snd_doit(snd_state *ss, int argc, char **argv)
   sx->enved_waveform_color =  get_color(shell, snd_rs.enved_waveform_color,  ENVED_WAVEFORM_COLOR,  NULL, NULL, FALSE);
   sx->filter_waveform_color = get_color(shell, snd_rs.filter_waveform_color, FILTER_WAVEFORM_COLOR, NULL, NULL, FALSE);
   sx->listener_color =        get_color(shell, snd_rs.listener_color,        LISTENER_COLOR,        NULL, NULL, TRUE);
+  sx->listener_text_color =   get_color(shell, snd_rs.listener_text_color,   LISTENER_TEXT_COLOR,   NULL, NULL, TRUE);
   sx->graph_color =           get_color(shell, snd_rs.graph_color,           GRAPH_COLOR,           NULL, NULL, TRUE);
   sx->selected_graph_color =  get_color(shell, snd_rs.selected_graph_color,  SELECTED_GRAPH_COLOR,  NULL, NULL, TRUE);
   sx->data_color =            get_color(shell, snd_rs.data_color,            DATA_COLOR,            NULL, NULL, FALSE);

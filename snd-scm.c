@@ -780,7 +780,7 @@ this is the default setting for each sound's 'unite' button."
 static SCM g_color_cutoff(void) {return(TO_SCM_DOUBLE(color_cutoff(state)));}
 static SCM g_set_color_cutoff(SCM val) 
 {
-  #define H_color_cutoff "(" S_color_cutoff ") -> color map cutoff point (default .003)"
+  #define H_color_cutoff "(" S_color_cutoff ") -> col" STR_OR " map cutoff point (default .003)"
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(val)), val, SCM_ARG1, "set-" S_color_cutoff);
   set_color_cutoff(state, fclamp(0.0,
 				TO_C_DOUBLE(val),
@@ -791,7 +791,7 @@ static SCM g_set_color_cutoff(SCM val)
 static SCM g_color_inverted(void) {return(TO_SCM_BOOLEAN(color_inverted(state)));}
 static SCM g_set_color_inverted(SCM val) 
 {
-  #define H_color_inverted "(" S_color_inverted ") -> whether the colormap in operation should be inverted"
+  #define H_color_inverted "(" S_color_inverted ") -> whether the col" STR_OR "map in operation should be inverted"
   SCM_ASSERT(bool_or_arg_p(val), val, SCM_ARG1, "set-" S_color_inverted);
   set_color_inverted(state, bool_int_or_one(val)); 
   return(TO_SCM_BOOLEAN(color_inverted(state)));
@@ -800,7 +800,7 @@ static SCM g_set_color_inverted(SCM val)
 static SCM g_color_scale(void) {return(TO_SCM_DOUBLE(color_scale(state)));}
 static SCM g_set_color_scale(SCM val) 
 {
-  #define H_color_scale "(" S_color_scale ") -> essentially a darkness setting for colormaps (0.5)"
+  #define H_color_scale "(" S_color_scale ") -> essentially a darkness setting for col" STR_OR "maps (0.5)"
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(val)), val, SCM_ARG1, "set-" S_color_scale); 
   set_color_scale(state, fclamp(0.0,
 			       TO_C_DOUBLE(val),
@@ -1202,7 +1202,7 @@ frequency whistles leaking through."
 static SCM g_color_map(void) {return(TO_SCM_INT(color_map(state)));}
 static SCM g_set_color_map(SCM val) 
 {
-  #define H_colormap "(" S_colormap ") -> current colormap choice. \
+  #define H_colormap "(" S_colormap ") -> current col" STR_OR "map choice. \
 This should be an integer between -1 and 15.  The maps (from 0 to 15) are: \
 gray, hsv, hot, cool, bone, copper, pink, jet, prism, autumn, winter, \
 spring, summer, colorcube, flag, and lines.  -1 means black and white."
@@ -2095,6 +2095,9 @@ If 'data' is a list of numbers, it is treated as an envelope."
   SCM *vdata;
   int i, len, graph, graphs, need_update = 0;
   Float ymin, ymax, val, nominal_x0, nominal_x1;
+  lisp_grf *old_lp = NULL;
+  int h, w, o, gx0, ww;
+  axis_info *uap = NULL;
   /* ldata can be a vct object, a vector, or a list of either */
   SCM_ASSERT(((vct_p(ldata)) || (gh_vector_p(ldata)) || (gh_list_p(ldata))), ldata, SCM_ARG1, S_graph);
   SND_ASSERT_CHAN(S_graph, snd_n, chn_n, 7);
@@ -2117,7 +2120,16 @@ If 'data' is a list of numbers, it is treated as an envelope."
   else graphs = gh_length(ldata);
   lg = cp->lisp_info;
   if ((lg) && (graphs != lg->graphs)) 
-    cp->lisp_info = free_lisp_info(cp);
+    {
+      old_lp = (lisp_grf *)(cp->lisp_info);
+      uap = old_lp->axis;
+      h = uap->height;
+      w = uap->width;
+      ww = uap->window_width;
+      o = uap->y_offset;
+      gx0 = uap->graph_x0;
+      cp->lisp_info = free_lisp_info(cp);
+    }
   if (!(cp->lisp_info))
     {
       cp->lisp_info = (lisp_grf *)CALLOC(graphs, sizeof(lisp_grf));
@@ -2199,6 +2211,15 @@ If 'data' is a list of numbers, it is treated as an envelope."
 	}
     }
   lg->axis = make_axis_info(cp, nominal_x0, nominal_x1, ymin, ymax, label, nominal_x0, nominal_x1, ymin, ymax, lg->axis);
+  if (need_update)
+    {
+      uap = lg->axis;
+      uap->height = h;
+      uap->window_width = ww;
+      uap->y_offset = o;
+      uap->width = w;
+      uap->graph_x0 = gx0;
+    }
   if (label) free(label);
   cp->lisp_graphing = 1;
   if ((SCM_EQ_P(force_display, SCM_UNDEFINED)) || 

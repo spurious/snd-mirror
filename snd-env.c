@@ -607,7 +607,7 @@ void display_enved_env(snd_state *ss, env *e, axis_context *ax, chan_info *axis_
 
   if (enved_dBing(ss)) {ey0 = ss->min_dB; ey1 = 0.0;}
 
-  axis_cp = enved_make_axis_cp(ss, name, ax, x0, y0, width, height, ex0, ex1, ey0, ey1); 
+  axis_cp = enved_make_axis_cp(ss, name, ax, x0, y0, width, height, ex0, ex1, ey0, ey1); /* ax used only for GC here */
   /* grf_x and grf_y (x|y, ap) can be used directly with XDrawLine */
 
   if (e)
@@ -751,7 +751,6 @@ void display_enved_env(snd_state *ss, env *e, axis_context *ax, chan_info *axis_
 	    }
 	}
     }
-  if (ax) FREE(ax);
 }
 
 void view_envs(snd_state *ss, int env_window_width, int env_window_height)

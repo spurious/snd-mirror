@@ -96,7 +96,7 @@ typedef struct {
   GdkFont *tiny_fnt;
 
   GdkColor *white, *black, *red, *yellow, *green, *light_blue, *lighter_blue;
-  GdkColor *data_color, *selected_data_color, *mark_color, *graph_color, *selected_graph_color, *listener_color, *cursor_color;
+  GdkColor *data_color, *selected_data_color, *mark_color, *graph_color, *selected_graph_color, *listener_color, *listener_text_color, *cursor_color;
   GdkColor *basic_color, *selection_color, *zoom_color, *position_color, *highlight_color, *enved_waveform_color;
   GdkColor *selected_mix_color, *text_focus_color, *filter_waveform_color, *mix_color, *pushed_button_color, *sash_color;
 

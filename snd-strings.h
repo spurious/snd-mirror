@@ -501,6 +501,7 @@
 #define S_listener_color                "listener-col" STR_OR
 #define S_listener_font                 "listener-font"
 #define S_listener_prompt               "listener-prompt"
+#define S_listener_text_color           "listener-text-col" STR_OR
 #define S_load_colormap                 "load-col" STR_OR "map"
 #define S_load_font                     "load-font"
 #define S_loop_samples                  "loop-samples"
@@ -569,7 +570,9 @@
 #define S_mix_tag_y                     "mix-tag-y"
 #define S_mix_vct                       "mix-vct"
 #define S_mix_waveform_height           "mix-waveform-height"
+#define S_mouse_enter_label_hook        "mouse-enter-label-hook"
 #define S_mouse_drag_hook               "mouse-drag-hook"
+#define S_mouse_leave_label_hook        "mouse-leave-label-hook"
 #define S_mouse_press_hook              "mouse-press-hook"
 #define S_mouse_release_hook            "mouse-release-hook"
 #define S_movies                        "movies"

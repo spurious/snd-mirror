@@ -158,7 +158,7 @@ typedef struct {
   XFontStruct *tiny_fontstruct;
 
   Pixel white, black, red, yellow, green, light_blue, lighter_blue;
-  Pixel data_color, selected_data_color, mark_color, graph_color, selected_graph_color, listener_color, cursor_color;
+  Pixel data_color, selected_data_color, mark_color, graph_color, selected_graph_color, listener_color, listener_text_color, cursor_color;
   Pixel basic_color, selection_color, zoom_color, position_color, highlight_color, enved_waveform_color;
   Pixel selected_mix_color, text_focus_color, filter_waveform_color, mix_color, pushed_button_color, sash_color;
 

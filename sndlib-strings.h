@@ -90,6 +90,7 @@
 #define S_mus_header_type_name          "mus-header-type-name"
 #define S_mus_data_format_name          "mus-data-format-name"
 #define S_mus_sound_comment             "mus-sound-comment"
+#define S_mus_sound_write_date          "mus-sound-write-date"
 #define S_mus_data_format_bytes_per_sample "mus-data-format-bytes-per-sample"
 #define S_mus_sound_loop_info           "mus-sound-loop-info"
 #define S_mus_audio_report              "mus-audio-report"

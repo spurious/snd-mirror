@@ -29,7 +29,7 @@ void append_listener_text(int end, char *msg)
   if (chars > 0) gtk_text_set_point(GTK_TEXT(listener_text), chars);
   gtk_text_insert(GTK_TEXT(listener_text),
 		  (ss->sgx)->listener_fnt,
-		  (ss->sgx)->black,
+		  (ss->sgx)->listener_text_color,
 		  (ss->sgx)->listener_color,
 		  msg,
 		  -1);
@@ -185,7 +185,7 @@ static void insert_line(snd_state *ss)
   if (C_k_str)
     gtk_text_insert(GTK_TEXT(listener_text),
 		    (ss->sgx)->listener_fnt,
-		    (ss->sgx)->black,
+		    (ss->sgx)->listener_text_color,
 		    (ss->sgx)->listener_color,
 		    C_k_str,
 		    snd_strlen(C_k_str));
@@ -340,6 +340,9 @@ static void sndCreateCommandWidget(snd_state *ss, int height)
       gtk_container_add(GTK_CONTAINER(frame), listener_pane);
 
       listener_text = gtk_text_new(NULL, NULL);
+#if HAVE_GUILE
+      set_dialog_widget(LISTENER_PANE, listener_text);
+#endif
       gtk_table_attach (GTK_TABLE(listener_pane), listener_text, 0, 1, 0, 1, 
 			(GtkAttachOptions)(GTK_FILL | GTK_EXPAND), 
 			(GtkAttachOptions)(GTK_FILL | GTK_EXPAND | GTK_SHRINK),
@@ -353,7 +356,7 @@ static void sndCreateCommandWidget(snd_state *ss, int height)
       gtk_widget_show(listener_text);
       gtk_text_insert(GTK_TEXT(listener_text),
 		      (ss->sgx)->listener_fnt,
-		      (ss->sgx)->black,
+		      (ss->sgx)->listener_text_color,
 		      (ss->sgx)->listener_color,
 		      listener_prompt(ss),
 		      -1);
@@ -390,6 +393,13 @@ void color_listener(GdkColor *pix)
   (ss->sgx)->listener_color = pix;
   if (listener_text) 
     set_text_background(listener_text, (ss->sgx)->listener_color);
+}
+
+void color_listener_text(GdkColor *pix)
+{
+  snd_state *ss;
+  ss = get_global_state();
+  (ss->sgx)->listener_text_color = pix;
 }
 
 void handle_listener(snd_state *ss, int new_state)

@@ -63,7 +63,7 @@ int snd_color_p(SCM obj)
 
 static SCM g_color_p(SCM obj) 
 {
-  #define H_color_p "(" S_colorQ " obj) -> #t if obj is a color object"
+  #define H_color_p "(" S_colorQ " obj) -> #t if obj is a col" STR_OR " object"
   return(TO_SCM_BOOLEAN(snd_color_p(obj)));
 }
 
@@ -98,7 +98,7 @@ static int print_snd_color(SCM obj, SCM port, scm_print_state *pstate)
 
 static SCM g_color2list(SCM obj)
 {
-  #define H_color2list "(" S_color2list " obj) -> color rgb values as a list of floats"
+  #define H_color2list "(" S_color2list " obj) -> col" STR_OR " rgb values as a list of floats"
   snd_color *v;
   SCM_ASSERT(snd_color_p(obj), obj, SCM_ARG1, S_color2list); 
   v = (snd_color *)SND_VALUE_OF(obj);
@@ -118,7 +118,7 @@ static SCM equalp_snd_color(SCM obj1, SCM obj2)
 
 static SCM g_make_snd_color(SCM r, SCM g, SCM b)
 {
-  #define H_make_color "(" S_make_color " r g b) -> a color object with the indicated rgb values"
+  #define H_make_color "(" S_make_color " r g b) -> a col" STR_OR object with the indicated rgb values"
   snd_color *new_color;
   GdkColor gcolor;
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(r)), r, SCM_ARG1, S_make_color);
@@ -179,7 +179,7 @@ static SCM g_set_basic_color (SCM color)
 
 static SCM g_basic_color(void) 
 {
-  #define H_basic_color "(" S_basic_color ") -> Snd's basic color"
+  #define H_basic_color "(" S_basic_color ") -> Snd's basic col" STR_OR
   return(pixel2color((state->sgx)->basic_color));
 }
 
@@ -248,7 +248,7 @@ static SCM g_set_data_color (SCM color)
 
 static SCM g_data_color(void) 
 {
-  #define H_data_color "(" S_data_color ") -> color used to draw unselected data"
+  #define H_data_color "(" S_data_color ") -> col" STR_OR used to draw unselected data"
   return(pixel2color((state->sgx)->data_color));
 }
 
@@ -273,7 +273,7 @@ static SCM g_set_selected_data_color (SCM color)
 
 static SCM g_selected_data_color(void) 
 {
-  #define H_selected_data_color "(" S_selected_data_color ") -> color used for selected data"
+  #define H_selected_data_color "(" S_selected_data_color ") -> col" STR_OR " used for selected data"
   return(pixel2color((state->sgx)->selected_data_color));
 }
 
@@ -292,7 +292,7 @@ static SCM g_set_graph_color (SCM color)
 
 static SCM g_graph_color(void) 
 {
-  #define H_graph_color "(" S_graph_color ") -> background color used for unselected data"
+  #define H_graph_color "(" S_graph_color ") -> background col" STR_OR " used for unselected data"
   return(pixel2color((state->sgx)->graph_color));
 }
 
@@ -314,7 +314,7 @@ static SCM g_set_selected_graph_color (SCM color)
 
 static SCM g_selected_graph_color(void) 
 {
-  #define H_selected_graph_color "(" S_selected_graph_color ") -> background color of selected data"
+  #define H_selected_graph_color "(" S_selected_graph_color ") -> background col" STR_OR " of selected data"
   return(pixel2color((state->sgx)->selected_graph_color));
 }
 
@@ -333,7 +333,7 @@ static SCM g_set_cursor_color (SCM color)
 
 static SCM g_cursor_color(void) 
 {
-  #define H_cursor_color "(" S_cursor_color ") -> cursor color"
+  #define H_cursor_color "(" S_cursor_color ") -> cursor col" STR_OR
   return(pixel2color((state->sgx)->cursor_color));
 }
 
@@ -352,7 +352,7 @@ static SCM g_set_selection_color (SCM color)
 
 static SCM g_selection_color(void) 
 {
-  #define H_selection_color "(" S_selection_color ") -> selection color"
+  #define H_selection_color "(" S_selection_color ") -> selection col" STR_OR
   return(pixel2color((state->sgx)->selection_color));
 }
 
@@ -367,7 +367,7 @@ static SCM g_set_highlight_color (SCM color)
 
 static SCM g_highlight_color(void) 
 {
-  #define H_highlight_color "(" S_highlight_color ") -> color of highlighted text or buttons"
+  #define H_highlight_color "(" S_highlight_color ") -> col" STR_OR " of highlighted text or buttons"
   return(pixel2color((state->sgx)->highlight_color));
 }
 
@@ -386,7 +386,7 @@ static SCM g_set_mark_color (SCM color)
 
 static SCM g_mark_color(void) 
 {
-  #define H_mark_color "(" S_mark_color ") -> mark color"
+  #define H_mark_color "(" S_mark_color ") -> mark col" STR_OR
   return(pixel2color((state->sgx)->mark_color));
 }
 
@@ -405,7 +405,7 @@ static SCM g_set_zoom_color (SCM color)
 
 static SCM g_zoom_color(void) 
 {
-  #define H_zoom_color "(" S_zoom_color ") -> color of zoom sliders"
+  #define H_zoom_color "(" S_zoom_color ") -> col" STR_OR " of zoom sliders"
   return(pixel2color((state->sgx)->zoom_color));
 }
 
@@ -424,7 +424,7 @@ static SCM g_set_position_color (SCM color)
 
 static SCM g_position_color(void) 
 {
-  #define H_position_color "(" S_position_color ") -> color of position sliders"
+  #define H_position_color "(" S_position_color ") -> col" STR_OR " of position sliders"
   return(pixel2color((state->sgx)->position_color));
 }
 
@@ -439,8 +439,23 @@ static SCM g_set_listener_color (SCM color)
 
 static SCM g_listener_color(void) 
 {
-  #define H_listener_color "(" S_listener_color ") -> background color of the lisp listener"
+  #define H_listener_color "(" S_listener_color ") -> background col" STR_OR " of the lisp listener"
   return(pixel2color((state->sgx)->listener_color));
+}
+
+static SCM g_set_listener_text_color (SCM color) 
+{
+  snd_color *v; 
+  SCM_ASSERT(snd_color_p(color), color, SCM_ARG1, "set-" S_listener_text_color); 
+  v = get_snd_color(color);
+  if (v) color_listener_text(v->color);
+  return(color);
+}
+
+static SCM g_listener_text_color(void) 
+{
+  #define H_listener_text_color "(" S_listener_text_color ") -> text col" STR_OR " in the lisp listener"
+  return(pixel2color((state->sgx)->listener_text_color));
 }
 
 static SCM g_set_enved_waveform_color (SCM color) 
@@ -454,7 +469,7 @@ static SCM g_set_enved_waveform_color (SCM color)
 
 static SCM g_enved_waveform_color(void) 
 {
-  #define H_enved_waveform_color "(" S_enved_waveform_color ") -> color of the envelope editor wave display"
+  #define H_enved_waveform_color "(" S_enved_waveform_color ") -> col" STR_OR " of the envelope editor wave display"
   return(pixel2color((state->sgx)->enved_waveform_color));
 }
 
@@ -469,7 +484,7 @@ static SCM g_set_filter_waveform_color (SCM color)
 
 static SCM g_filter_waveform_color(void) 
 {
-  #define H_filter_waveform_color "(" S_filter_waveform_color ") -> color of the filter waveform"
+  #define H_filter_waveform_color "(" S_filter_waveform_color ") -> col" STR_OR " of the filter waveform"
   return(pixel2color((state->sgx)->filter_waveform_color));
 }
 
@@ -498,7 +513,7 @@ static SCM g_set_mix_color (SCM arg1, SCM arg2)
 
 static SCM g_mix_color(SCM mix_id) 
 {
-  #define H_mix_color "(" S_mix_color ") -> color of mix consoles"
+  #define H_mix_color "(" S_mix_color ") -> col" STR_OR " of mix consoles"
   if (gh_number_p(mix_id))
     return(pixel2color(mix_to_color_from_id(TO_SMALL_C_INT(mix_id))));
   return(pixel2color((state->sgx)->mix_color));
@@ -519,7 +534,7 @@ static SCM g_set_selected_mix_color (SCM color)
 
 static SCM g_selected_mix_color(void) 
 {
-  #define H_selected_mix_color "(" S_selected_mix_color ") -> color of the currently selected mix"
+  #define H_selected_mix_color "(" S_selected_mix_color ") -> col" STR_OR " of the currently selected mix"
   return(pixel2color((state->sgx)->selected_mix_color));
 }
 
@@ -545,7 +560,7 @@ static SCM g_set_pushed_button_color (SCM color)
 
 static SCM g_pushed_button_color(void) 
 {
-  #define H_pushed_button_color "(" S_pushed_button_color ") -> color of a pushed button"
+  #define H_pushed_button_color "(" S_pushed_button_color ") -> col" STR_OR " of a pushed button"
   return(pixel2color((state->sgx)->pushed_button_color));
 }
 
@@ -560,7 +575,7 @@ static SCM g_set_text_focus_color (SCM color)
 
 static SCM g_text_focus_color(void) 
 {
-  #define H_text_focus_color "(" S_text_focus_color ") -> color used to show a text field has focus"
+  #define H_text_focus_color "(" S_text_focus_color ") -> col" STR_OR " used to show a text field has focus"
   return(pixel2color((state->sgx)->text_focus_color));
 }
 
@@ -575,13 +590,13 @@ static SCM g_set_sash_color (SCM color)
 
 static SCM g_sash_color(void) 
 {
-  #define H_sash_color "(" S_sash_color ") -> color used to draw paned window sashes"
+  #define H_sash_color "(" S_sash_color ") -> col" STR_OR " used to draw paned window sashes"
   return(pixel2color((state->sgx)->sash_color));
 }
 
 static SCM g_load_colormap(SCM colors)
 {
-  #define H_load_colormap "(" S_load_colormap " colors) uses the vector colors to set the current colormap"
+  #define H_load_colormap "(" S_load_colormap " col" STR_OR "s) uses the vector col" STR_OR "s to set the current col" STR_OR "map"
   int i, len;
   GdkColor **xcs;
   snd_color *v;
@@ -616,7 +631,7 @@ void g_initialize_xgh(snd_state *ss, SCM local_doc)
 {
   state = ss;
 #if HAVE_NEW_SMOB
-  snd_color_tag = scm_make_smob_type("color", sizeof(snd_color));
+  snd_color_tag = scm_make_smob_type("col" STR_OR, sizeof(snd_color));
   scm_set_smob_mark(snd_color_tag, mark_snd_color);
   scm_set_smob_print(snd_color_tag, print_snd_color);
   scm_set_smob_free(snd_color_tag, free_snd_color);
@@ -653,6 +668,9 @@ void g_initialize_xgh(snd_state *ss, SCM local_doc)
 
   define_procedure_with_setter(S_listener_color, SCM_FNC g_listener_color, H_listener_color,
 			       "set-" S_listener_color, SCM_FNC g_set_listener_color, local_doc, 0, 0, 1, 0);
+
+  define_procedure_with_setter(S_listener_text_color, SCM_FNC g_listener_text_color, H_listener_text_color,
+			       "set-" S_listener_text_color, SCM_FNC g_set_listener_text_color, local_doc, 0, 0, 1, 0);
 
   define_procedure_with_setter(S_selected_mix_color, SCM_FNC g_selected_mix_color, H_selected_mix_color,
 			       "set-" S_selected_mix_color, SCM_FNC g_set_selected_mix_color, local_doc, 0, 0, 1, 0);

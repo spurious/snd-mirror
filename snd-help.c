@@ -272,6 +272,7 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
+7-Mar:   mouse-enter|leave-label-hook, listener-text-color, nb.scm\n\
 5-Mar:   removed all the guile-gtk-specific procedures (this is being rewritten)\n\
          added cursor-size, cursor-style can be a procedure, cursor-position.\n\
                time-graph, fft-graph, lisp-graph, cursor-context, copy-context.\n\
@@ -289,8 +290,6 @@ void news_help(snd_state *ss)
 14-Feb:  vct func now built-in (was in examp.scm).\n\
 13-Feb:  added search-procedure, key-binding.\n\
 12-Feb:  added Wakefield's freeverb, changed user-defined reverb handlers.\n\
-6-Feb:   removed expand-funcs: it could not have worked given the \"hidden controls\" exposure.\n\
-30-Jan:  rtio.scm.\n\
 ",
 NULL);
   FREE(info);
@@ -336,7 +335,7 @@ static char view_menu_help_string[] =
   Mix Panel: open the mix controller.\n\
   Regions: fire up the region browser.\n\
   Files: fire up the file browser.\n\
-  Color: color browser for sonogram.\n\
+  Color: col" STR_OR " browser for sonogram.\n\
   Orientation: sonogram orientation.\n\
   Normalize: During editing with multiple\n\
      files and channels, some data may be\n\
@@ -988,6 +987,7 @@ new value via (set! (" S_auto_resize ") #t). \n\
   " S_listener_color "        aliceblue\n\
   " S_listener_font "         varies\n\
   " S_listener_prompt "       \">\"\n\
+  " S_listener_text_color "   black\n\
   " S_mark_color "            red\n\
   " S_max_fft_peaks "         100 (snd #t) (chn #t)\n\
   " S_min_dB "               -60.0 (snd #t) (chn #t)\n\
@@ -1112,6 +1112,8 @@ user-interface manipulations.\n\
   " S_mouse_drag_hook "(snd chn button state x y)\n\
   " S_mouse_press_hook "(snd chn button state x y)\n\
   " S_mouse_release_hook "(snd chn button state x y)\n\
+  " S_mouse_enter_label_hook "(type position name)\n\
+  " S_mouse_leave_label_hook "(type position name)\n\
   " S_name_click_hook "(snd-index)\n\
   " S_menu_hook "(name option)\n\
   " S_enved_hook "(env pt new-x new-y)\n\

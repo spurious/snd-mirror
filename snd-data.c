@@ -21,7 +21,7 @@ lisp_grf *free_lisp_info(chan_info *cp)
       if (lg)
 	{
 	  if (lg->axis) 
-	    free_axis_info(lg->axis);
+	    lg->axis = free_axis_info(lg->axis);
 	  if (lg->data) 
 	    {
 	      for (i = 0; i < lg->graphs; i++) 

@@ -84,6 +84,7 @@ void initialize_colormap(snd_state *ss);
 /* -------- snd-glistener.c -------- */
 
 void color_listener(GdkColor *pix);
+void color_listener_text(GdkColor *pix);
 void handle_listener(snd_state *ss, int new_state);
 void snd_completion_help(snd_state *ss, int matches, char **buffer);
 int listener_height(void);

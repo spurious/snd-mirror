@@ -46,6 +46,7 @@
   <li><a href="#marksdoc">marks.scm: functions related to marks</a>
   <li><a href="#mixdoc">mix.scm: functions related to mixes and tracks</a>
   <li><a href="#moogdoc">moog.scm: Moog filter</a>
+  <li><a href="#nbdoc">nb.scm: Popup File info etc</a>
   <li><a href="#pqwvoxdoc">pqwvox.scm: phase-quadrature waveshaping</a>
   <li><a href="#prc95doc">prc95.scm: Perry Cook's physical model examples</a>
   <li><a href="#pvocdoc">pvoc.scm: phase-vocoder</a>
@@ -1491,6 +1492,16 @@ faster.
 
   (map-chan (moog 1200.0 .7))
 </pre>
+
+<A NAME="nbdoc"></a><span class=box><h2>nb.scm</h2></span>
+
+<p>nb.scm provides "popup" help for files in the View:Files dialog; as you move
+the mouse through the lists, the help dialog posts information about the file
+underneath the mouse.  This uses a slightly fancier file information procedure
+than 'finfo' in examp.scm.  Eventually, I'll add support for the guile-gdbm
+module as well.
+</p>
+
 
 <A NAME="pqwvoxdoc"></a><span class=box><h2>pqwvox.scm</h2></span>
 <pre>
