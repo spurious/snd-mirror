@@ -7,7 +7,7 @@
 /* TODO: if superimposed, how to see edit history pane of >1 chan (more panes? arrows?) */
 /* TODO: if superimposed, selected portion is wrong color (white) */
 /* TODO: if superimposed and 2chn cursor set, 1chan is xor'd, subsequent click sets both */
-/* TODO: if superimposed and selections differ, no way to see that */
+
 
 enum {NOGRAPH, WAVE, FFT_AXIS, LISP, FFT_MAIN};    /* for marks, regions, mouse click detection */
 
@@ -4137,6 +4137,13 @@ void graph_button_motion_callback(chan_info *cp, int x, int y, Tempus time, Temp
 					      C_TO_XEN_DOUBLE(ungrf_x(((lisp_grf *)(cp->lisp_info))->axis, x)),
 					      C_TO_XEN_DOUBLE(ungrf_y(((lisp_grf *)(cp->lisp_info))->axis, y))),
 				   S_mouse_drag_hook);
+		      /* I didn't extend this to the time/fft graphs (and add a parameter to tell which is active)
+		       *   because in the time graph, there are already many ways to interpret the drag ahead of
+		       *   the hook (mark-drag, mix-drag, mark-triangle-drag, etc), and in the fft there is the
+		       *   fft-axis drag complication.  Also it's not obvious that anything useful can be done.
+		       *   Spectral editing (treat fft-graph drag as spectrum portion selection) would need
+		       *   much other support (redisplay as if selected fft portion, etc).
+		       */
 		      return;
 		    }
 		  if ((cp->verbose_cursor) && (within_graph(cp, x, y) == FFT_MAIN))

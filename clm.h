@@ -2,10 +2,11 @@
 #define CLM_H
 
 #define MUS_VERSION 2
-#define MUS_REVISION 30
-#define MUS_DATE "9-June-03"
+#define MUS_REVISION 31
+#define MUS_DATE "27-June-03"
 
 /* 
+ * 27-June:    added mus_samples_to_seconds and mus_seconds_to_samples.
  * 9-June:     added mus_mix_with_reader_and_writer.
  * 27-May:     bugfix: interpolating all-pass ("zall-pass") had an extra delay.
  * 25-Apr:     mus_spectrum and mus_convolution now return Float*.
@@ -205,6 +206,8 @@ Float mus_db2linear(Float x);
 Float mus_linear2db(Float x);
 Float mus_srate(void);
 Float mus_set_srate(Float val);
+off_t mus_seconds_to_samples(Float secs);
+Float mus_samples_to_seconds(off_t samps);
 int mus_array_print_length(void);
 int mus_set_array_print_length(int val);
 Float mus_sin(Float phase);

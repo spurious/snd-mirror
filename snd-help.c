@@ -307,11 +307,6 @@ void news_help(snd_state *ss)
 10-Jun:  added initial-length arg to new-sound.\n\
 2-June:  debug.scm and with-sound debugger in ws.scm.\n\
 28-May:  snd 6.9.\n\
-26-May:  x-axis-label.\n\
-20-May:  make-variable-display in snd-motif.scm.\n\
-16-May:  definstrument changes, added clm-ins.scm.\n\
-14-May:  optional begin-time arg to make-mix-sample-reader.\n\
-12-May:  removed --with-html and associated variables. added html-program.\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*: \n'", features, "\n\n",

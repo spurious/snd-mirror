@@ -39,3 +39,7 @@ Both versions could be rewritten to take advantage of the optimizer.
 A nice user-interface to the track mechanism, perhaps as an
   extension of the current Mix Panel.
 
+find and fix clipping (some kind of plausible smoothing operation over
+the truncated portion, perhaps with global rescaling afterwards).
+
+

@@ -192,6 +192,8 @@ Float mus_linear2db(Float x) {return(20.0 * log10(x));}
 
 Float mus_srate(void) {return(sampling_rate);}
 Float mus_set_srate(Float val) {if (val > 0.0) sampling_rate = val; w_rate = (TWO_PI / sampling_rate); return(sampling_rate);}
+off_t mus_seconds_to_samples(Float secs) {return((off_t)(secs * sampling_rate));}
+Float mus_samples_to_seconds(off_t samps) {return((Float)((double)samps / (double)sampling_rate));}
 
 int mus_array_print_length(void) {return(array_print_length);}
 int mus_set_array_print_length(int val) {array_print_length = val; return(val);}

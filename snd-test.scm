@@ -30,10 +30,6 @@
 ;;; test 27: openGL
 ;;; test 28: errors
 
-;;; TODO: mouse-drag in time/fft graph hook?
-;;; TODO: find/"fix" clipping
-;;; TODO: xemacs style top list of sounds, current takes whole screen [make-top-row snd-motif.scm, files-popup-buffer in examp.scm]
-
 ;;; how to send ourselves a drop?  (button2 on menu is only the first half -- how to force 2nd?)
 
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 optargs) (ice-9 popen) (ice-9 syncase) (ice-9 session))

@@ -39,7 +39,6 @@
 <li><a href="#clmosc">clmosc</a>
 <li><a href="#otherexamples">Other Examples</a>
 </ul>
-<li><a href="#building">How to Make Sndlib and the examples</a>
 <li><a href="#currentstatus">Current Status</a>
 <li><a href="#lowerlevels">Lower Levels</a>
 <li><a href="#sndlibguile">Sndlib and Guile</a>
@@ -83,8 +82,8 @@ the word "to" as in "mus_samples_to_bytes".
   make
 </pre>
 <p>To install it, 'make install' -- I've tested this process in Linux,
-SGI, and Sun.  It could conceivably work elsewhere.  For more
-details see <a href="#building">How to Make Sndlib</a> below.</p>
+SGI, and Sun.  It could conceivably work elsewhere. 
+</p>
 
 <br>
 <span class=box><h2><A NAME="headers">Headers</a></h2></span>
@@ -499,6 +498,8 @@ it through a mixer (a matrix, the operation being a matrix multiply).
 <li>void mus_convolution(float* rl1, float* rl2, int n, int ipow)
 <li>float *mus_partials2wave(float *partial_data, int partials, float *table, int table_size, int normalize)
 <li>float *mus_phasepartials2wave(float *partial_data, int partials, float *table, int table_size, int normalize)
+<li>float mus_samples_to_seconds(off_t samps)
+<li>off_t mus_seconds_to_samples(float secs)
 </ul>
 <p>and various others -- see clm.h.</p>
 
@@ -862,7 +863,8 @@ int main(int argc, char *argv[])
   return(0);
 }
 </pre>
-<p>The CLM version is v.ins, the Scheme version can be found in <a href="sndscm.html#exampdoc">examp.scm</a>.
+<p>The CLM version is v.ins, the Scheme version can be found in <a href="sndscm.html#vdoc">v.scm</a>,
+and the Ruby version is in v.rb.
 This code can be run:</p>
 <pre>
 cc v.c -o vc -O3 -lm io.o headers.o audio.o sound.o clm.o -DLINUX
@@ -889,68 +891,6 @@ static SCM call_phase-vocoder(void)
 of Snd and CLM, both of which are freely available.</p>
 <br>
 
-
-<span class=bbox><h3><A NAME="building">How to Make Sndlib and the examples</a></h3></span>
-
-<p>The Sndlib files can be used as separate modules or made into a
-library.  The following sequence builds the sndplay
-program from scratch on an SGI:</p>
-<pre>
-cc -c io.c -O -DSGI
-cc -c headers.c -O -DSGI
-cc -c audio.c -O -DSGI
-cc -c sound.c -O -DSGI
-cc sndplay.c -o sndplay -O -DSGI audio.o io.o headers.o sound.o -laudio -lm
-</pre>
-<p>To make a library out of 
-the sndlib files, first compile them as above, then:</p>
-<pre>
-ld -r audio.o io.o headers.o sound.o -o sndlib.a
-cc sndplay.c -o sndplay -O -DSGI sndlib.a -laudio -lm
-</pre>
-<p>The full sequence in Linux:</p>
-<pre>
-cc -c io.c -O -DLINUX
-cc -c audio.c -O -DLINUX
-cc -c headers.c -O -DLINUX
-cc -c sound.c -O -DLINUX
-cc sndplay.c -o sndplay -O -DLINUX audio.o io.o headers.o sound.o -lm
-
-ld -r audio.o io.o headers.o sound.o -o sndlib.a
-cc sndplay.c -o sndplay -O -DLINUX sndlib.a -lm
-</pre>
-<p>Some similar sequence should work on a Sun (-DSOLARIS) or in HP-UX (-DHPUX).
-In Windoze, you can use the C IDE (a project builder),
-or run the compiler from a DOS shell.  In the latter case,
-(in Watcom C) cl io.c -c -DWINDOZE to create the object files (io.obj and so on), then</p>
-<pre>
-cl sndplay sndplay.obj -DWINDOZE audio.obj io.obj headers.obj sound.obj 
-</pre>
-<p>or in MS C</p>
-<pre>
-cl -c io.c -DWINDOZE
-(and so on)
-cl sndplay.c -DWINDOZE sndplay.obj audio.obj io.obj headers.obj sound.obj winmm.lib
-</pre>
-<p>or in gcc (available via the cygwin project)</p>
-<pre>
-gcc -c io.c -DWINDOZE -O2
-</pre>
-<p>
-You can run the program from the DOS shell (sndplay oboe.snd or ./sndplay.exe oboe.snd).
-Or</p>
-<pre>
-make sndplay
-</pre>
-<p>To make sndlib into a shared library,</p>
-<pre>
-ld -shared io.o headers.o audio.o sound.o -o sndlib.so
-</pre>
-<p>(in Linux), or (to include the CLM module),</p>
-<pre>
-ld -shared io.o headers.o audio.o sound.o clm.o -o sndlib.so
-</pre>
-<br>
 
 <span class=box><h2><A NAME="currentstatus">Current Status</a></h2></span>
 <br>

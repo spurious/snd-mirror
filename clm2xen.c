@@ -181,7 +181,7 @@ static void init_keywords(void)
     all_keys[i] = XEN_MAKE_KEYWORD((char *)(keywords[i]));
 }
 
-static int decode_keywords(char *caller, int nkeys, XEN *keys, int nargs, XEN *args, int *orig)
+int mus_decode_keywords(char *caller, int nkeys, XEN *keys, int nargs, XEN *args, int *orig)
 {
   /* implement the &optional-key notion in CLM */
   int arg_ctr = 0, key_start = 0, rtn_ctr = 0, i, keying = 0, key_found = 0;
@@ -981,7 +981,7 @@ static XEN g_make_oscil(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
   keys[0] = all_keys[C_frequency];
   keys[1] = all_keys[C_initial_phase];
   args[0] = arg1; args[1] = arg2; args[2] = arg3; args[3] = arg4; 
-  vals = decode_keywords(S_make_oscil, 2, keys, 4, args, orig_arg);
+  vals = mus_decode_keywords(S_make_oscil, 2, keys, 4, args, orig_arg);
   if (vals > 0)
     {
       freq = fkeyarg(keys[0], S_make_oscil, orig_arg[0] + 1, freq);
@@ -1075,7 +1075,7 @@ static XEN g_make_delay_1(int choice, XEN arglist)
   for (i = 0; i < 14; i++) args[i] = XEN_UNDEFINED;
   arglist_len = XEN_LIST_LENGTH(arglist);
   for (i = 0; i < arglist_len; i++) args[i] = XEN_LIST_REF(arglist, i);
-  vals = decode_keywords(caller, argn, keys, argn*2, args, orig_arg);
+  vals = mus_decode_keywords(caller, argn, keys, argn*2, args, orig_arg);
   if (vals > 0)
     {
       keyn = 0;
@@ -1340,7 +1340,7 @@ return a new " S_sum_of_cosines " generator, producing a band-limited pulse trai
   keys[1] = all_keys[C_frequency];
   keys[2] = all_keys[C_initial_phase];
   args[0] = arg1; args[1] = arg2; args[2] = arg3; args[3] = arg4; args[4] = arg5; args[5] = arg6; 
-  vals = decode_keywords(S_make_sum_of_cosines, 3, keys, 6, args, orig_arg);
+  vals = mus_decode_keywords(S_make_sum_of_cosines, 3, keys, 6, args, orig_arg);
   if (vals > 0)
     {
       cosines = ikeyarg(keys[0], S_make_sum_of_cosines, orig_arg[0] + 1, cosines);
@@ -1387,7 +1387,7 @@ static XEN g_make_noi(int rand_case, XEN arg1, XEN arg2, XEN arg3, XEN arg4)
   keys[0] = all_keys[C_frequency];
   keys[1] = all_keys[C_amplitude];
   args[0] = arg1; args[1] = arg2; args[2] = arg3; args[3] = arg4;
-  vals = decode_keywords(S_make_rand, 2, keys, 4, args, orig_arg);
+  vals = mus_decode_keywords(S_make_rand, 2, keys, 4, args, orig_arg);
   if (vals > 0)
     {
       freq = fkeyarg(keys[0], S_make_rand, orig_arg[0] + 1, freq);
@@ -1593,7 +1593,7 @@ is the same in effect as " S_make_oscil "."
   keys[2] = all_keys[C_wave];
   keys[3] = all_keys[C_size];
   args[0] = arg1; args[1] = arg2; args[2] = arg3; args[3] = arg4; args[4] = arg5; args[5] = arg6; args[6] = arg7; args[7] = arg8;
-  vals = decode_keywords(S_make_table_lookup, 4, keys, 8, args, orig_arg);
+  vals = mus_decode_keywords(S_make_table_lookup, 4, keys, 8, args, orig_arg);
   if (vals > 0)
     {
       freq = fkeyarg(keys[0], S_make_table_lookup, orig_arg[0] + 1, freq);
@@ -1672,7 +1672,7 @@ static XEN g_make_sw(int type, Float def_phase, XEN arg1, XEN arg2, XEN arg3, XE
   keys[1] = all_keys[C_amplitude];
   keys[2] = all_keys[C_initial_phase];
   args[0] = arg1; args[1] = arg2; args[2] = arg3; args[3] = arg4; args[4] = arg5; args[5] = arg6; 
-  vals = decode_keywords(caller, 3, keys, 6, args, orig_arg);
+  vals = mus_decode_keywords(caller, 3, keys, 6, args, orig_arg);
   if (vals > 0)
     {
       freq = fkeyarg(keys[0], caller, orig_arg[0] + 1, freq);
@@ -1810,7 +1810,7 @@ return a new " S_asymmetric_fm " generator."
   keys[2] = all_keys[C_r];
   keys[3] = all_keys[C_ratio];
   args[0] = arg1; args[1] = arg2; args[2] = arg3; args[3] = arg4; args[4] = arg5; args[5] = arg6; args[6] = arg7; args[7] = arg8; 
-  vals = decode_keywords(S_make_asymmetric_fm, 4, keys, 8, args, orig_arg);
+  vals = mus_decode_keywords(S_make_asymmetric_fm, 4, keys, 8, args, orig_arg);
   if (vals > 0)
     {
       freq = fkeyarg(keys[0], S_make_asymmetric_fm, orig_arg[0] + 1, freq);
@@ -1867,7 +1867,7 @@ static XEN g_make_smpflt_1(int choice, XEN arg1, XEN arg2, XEN arg3, XEN arg4)
     default: keys[0] = all_keys[C_radius]; keys[1] = all_keys[C_frequency]; break;
     }
   args[0] = arg1; args[1] = arg2; args[2] = arg3; args[3] = arg4;
-  vals = decode_keywords(smpflts[choice], 2, keys, 4, args, orig_arg);
+  vals = mus_decode_keywords(smpflts[choice], 2, keys, 4, args, orig_arg);
   if (vals > 0)
     {
       a0 = fkeyarg(keys[0], smpflts[choice], orig_arg[0] + 1, a0);
@@ -1942,7 +1942,7 @@ static XEN g_make_smpflt_2(int choice, XEN arg1, XEN arg2, XEN arg3, XEN arg4, X
       keys[2] = all_keys[C_b2];
     }
   args[0] = arg1; args[1] = arg2; args[2] = arg3; args[3] = arg4; args[4] = arg5; args[5] = arg6;
-  vals = decode_keywords(smpflts[choice], 3, keys, 6, args, orig_arg);
+  vals = mus_decode_keywords(smpflts[choice], 3, keys, 6, args, orig_arg);
   if (vals > 0)
     {
       a0 = fkeyarg(keys[0], smpflts[choice], orig_arg[0] + 1, a0);
@@ -2157,7 +2157,7 @@ control."
   keys[1] = all_keys[C_frequency];
   keys[2] = all_keys[C_gain];
   args[0] = arg1; args[1] = arg2; args[2] = arg3; args[3] = arg4; args[4] = arg5; args[5] = arg6;
-  vals = decode_keywords(S_make_formant, 3, keys, 6, args, orig_arg);
+  vals = mus_decode_keywords(S_make_formant, 3, keys, 6, args, orig_arg);
   if (vals > 0)
     {
       radius = fkeyarg(keys[0], S_make_formant, orig_arg[0] + 1, radius);
@@ -2537,7 +2537,7 @@ processing, normally involving overlap-adds."
   keys[0] = all_keys[C_size];
   keys[1] = all_keys[C_fill_time];
   args[0] = arg1; args[1] = arg2; args[2] = arg3; args[3] = arg4;
-  vals = decode_keywords(S_make_buffer, 2, keys, 4, args, orig_arg);
+  vals = mus_decode_keywords(S_make_buffer, 2, keys, 4, args, orig_arg);
   if (vals > 0)
     {
       siz = ikeyarg(keys[0], S_make_buffer, orig_arg[0] + 1, siz);
@@ -2640,7 +2640,7 @@ the repetition rate of the wave found in wave. Successive waves can overlap."
   keys[2] = all_keys[C_wave];
   keys[3] = all_keys[C_size];
   args[0] = arg1; args[1] = arg2; args[2] = arg3; args[3] = arg4; args[4] = arg5; args[5] = arg6; args[6] = arg7; args[7] = arg8;
-  vals = decode_keywords(S_make_wave_train, 4, keys, 8, args, orig_arg);
+  vals = mus_decode_keywords(S_make_wave_train, 4, keys, 8, args, orig_arg);
   if (vals > 0)
     {
       freq = fkeyarg(keys[0], S_make_wave_train, orig_arg[0] + 1, freq);
@@ -2747,7 +2747,7 @@ is the same in effect as make-oscil"
   keys[2] = all_keys[C_size];
   keys[3] = all_keys[C_wave];
   args[0] = arg1; args[1] = arg2; args[2] = arg3; args[3] = arg4; args[4] = arg5; args[5] = arg6; args[6] = arg7; args[7] = arg8;
-  vals = decode_keywords(S_make_waveshape, 4, keys, 8, args, orig_arg);
+  vals = mus_decode_keywords(S_make_waveshape, 4, keys, 8, args, orig_arg);
   if (vals > 0)
     {
       freq = fkeyarg(keys[0], S_make_waveshape, orig_arg[0] + 1, freq);
@@ -2926,7 +2926,7 @@ return a new sine summation synthesis generator."
   for (i = 0; i < 10; i++) args[i] = XEN_UNDEFINED;
   arglist_len = XEN_LIST_LENGTH(arglist);
   for (i = 0; i < arglist_len; i++) args[i] = XEN_LIST_REF(arglist, i);
-  vals = decode_keywords(S_make_sine_summation, 5, keys, 10, args, orig_arg);
+  vals = mus_decode_keywords(S_make_sine_summation, 5, keys, 10, args, orig_arg);
   if (vals > 0)
     {
       freq = fkeyarg(keys[0], S_make_sine_summation, orig_arg[0] + 1, freq);
@@ -3011,7 +3011,7 @@ static XEN g_make_filter_1(int choice, XEN arg1, XEN arg2, XEN arg3, XEN arg4, X
   keys[1] = all_keys[C_x_coeffs];
   keys[2] = all_keys[C_y_coeffs];
   args[0] = arg1; args[1] = arg2; args[2] = arg3; args[3] = arg4; args[4] = arg5; args[5] = arg6;
-  vals = decode_keywords(caller, 3, keys, 6, args, orig_arg);
+  vals = mus_decode_keywords(caller, 3, keys, 6, args, orig_arg);
   if (vals > 0)
     {
       order = ikeyarg(keys[0], caller, orig_arg[0] + 1, 0);
@@ -3190,7 +3190,7 @@ are linear, if 0.0 you get a step function, and anything else produces an expone
   for (i = 0; i < 14; i++) args[i] = XEN_UNDEFINED;
   arglist_len = XEN_LIST_LENGTH(arglist);
   for (i = 0; i < arglist_len; i++) args[i] = XEN_LIST_REF(arglist, i);
-  vals = decode_keywords(S_make_env, 7, keys, 14, args, orig_arg);
+  vals = mus_decode_keywords(S_make_env, 7, keys, 14, args, orig_arg);
   if (vals > 0)
     {
       scaler = fkeyarg(keys[1], S_make_env, orig_arg[1] + 1, 1.0);
@@ -3695,7 +3695,7 @@ return a new readin (file input) generator reading the sound file 'file' startin
   keys[2] = all_keys[C_start];
   keys[3] = all_keys[C_direction];
   args[0] = arg1; args[1] = arg2; args[2] = arg3; args[3] = arg4; args[4] = arg5; args[5] = arg6; args[6] = arg7; args[7] = arg8; 
-  vals = decode_keywords(S_make_readin, 4, keys, 8, args, orig_arg);
+  vals = mus_decode_keywords(S_make_readin, 4, keys, 8, args, orig_arg);
   if (vals > 0)
     {
       if (!(XEN_KEYWORD_P(keys[0])))
@@ -3868,7 +3868,7 @@ return a new generator for signal placement in n channels.  Channel 0 correspond
   for (i = 0; i < 14; i++) args[i] = XEN_UNDEFINED;
   arglist_len = XEN_LIST_LENGTH(arglist);
   for (i = 0; i < arglist_len; i++) args[i] = XEN_LIST_REF(arglist, i);
-  vals = decode_keywords(S_make_locsig, 7, keys, 14, args, orig_arg);
+  vals = mus_decode_keywords(S_make_locsig, 7, keys, 14, args, orig_arg);
   if (vals > 0)
     {
       degree = fkeyarg(keys[0], S_make_locsig, orig_arg[0] + 1, degree);
@@ -4023,7 +4023,7 @@ width (effectively the steepness of the low-pass filter), normally between 10 an
   keys[1] = all_keys[C_srate];
   keys[2] = all_keys[C_width];
   args[0] = arg1; args[1] = arg2; args[2] = arg3; args[3] = arg4; args[4] = arg5; args[5] = arg6;
-  vals = decode_keywords(S_make_src, 3, keys, 6, args, orig_arg);
+  vals = mus_decode_keywords(S_make_src, 3, keys, 6, args, orig_arg);
   if (vals > 0)
     {
       if (!(XEN_KEYWORD_P(keys[0]))) 
@@ -4122,7 +4122,7 @@ jitter controls the randomness in that spacing, input can be a file pointer."
   for (i = 0; i < 16; i++) args[i] = XEN_UNDEFINED;
   arglist_len = XEN_LIST_LENGTH(arglist);
   for (i = 0; i < arglist_len; i++) args[i] = XEN_LIST_REF(arglist, i);
-  vals = decode_keywords(S_make_granulate, 8, keys, 16, args, orig_arg);
+  vals = mus_decode_keywords(S_make_granulate, 8, keys, 16, args, orig_arg);
   if (vals > 0)
     {
       if (!(XEN_KEYWORD_P(keys[0]))) 
@@ -4208,7 +4208,7 @@ return a new convolution generator which convolves its input with the impulse re
   for (i = 0; i < 6; i++) args[i] = XEN_UNDEFINED;
   arglist_len = XEN_LIST_LENGTH(arglist);
   for (i = 0; i < arglist_len; i++) args[i] = XEN_LIST_REF(arglist, i);
-  vals = decode_keywords(S_make_convolve, 3, keys, 6, args, orig_arg);
+  vals = mus_decode_keywords(S_make_convolve, 3, keys, 6, args, orig_arg);
   if (vals > 0)
     {
       if (!(XEN_KEYWORD_P(keys[0]))) 
@@ -4373,7 +4373,7 @@ is run.  'synthesize' is a function of 1 arg, the generator; it is called to get
   for (i = 0; i < 16; i++) args[i] = XEN_UNDEFINED;
   arglist_len = XEN_LIST_LENGTH(arglist);
   for (i = 0; i < arglist_len; i++) args[i] = XEN_LIST_REF(arglist, i);
-  vals = decode_keywords(S_make_phase_vocoder, 8, keys, 16, args, orig_arg);
+  vals = mus_decode_keywords(S_make_phase_vocoder, 8, keys, 16, args, orig_arg);
   if (vals > 0)
     {
       if (XEN_PROCEDURE_P(keys[0]))
