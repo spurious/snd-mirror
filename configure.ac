@@ -223,7 +223,7 @@ AC_CHECK_LIB(dl,main)
 LIBS=""
 
 AC_HEADER_DIRENT
-AC_CHECK_HEADERS(fcntl.h limits.h unistd.h string.h sys/soundcard.h soundcard.h machine/soundcard.h gsl/gsl_version.h sys/mixer.h stdbool.h)
+AC_CHECK_HEADERS(fcntl.h limits.h unistd.h string.h sys/soundcard.h machine/soundcard.h gsl/gsl_version.h sys/mixer.h stdbool.h)
 AC_CHECK_HEADERS(libc.h sys/vfs.h sys/statfs.h sys/statvfs.h sys/mount.h setjmp.h pwd.h locale.h sys/fpu.h dlfcn.h sys/param.h byteswap.h stdint.h)
 AC_CHECK_HEADER(/usr/local/lib/oss/include/sys/soundcard.h,[AC_DEFINE(USR_LOCAL_LIB_OSS)])
 AC_CHECK_HEADER(/usr/lib/oss/include/sys/soundcard.h,[AC_DEFINE(USR_LIB_OSS)])
@@ -248,14 +248,6 @@ AC_SYS_LARGEFILE
 AC_TYPE_OFF_T
 AC_C_STRINGIZE
 AM_LANGINFO_DECIMAL_POINT
-
-AC_CHECK_SIZEOF(int)
-AC_CHECK_SIZEOF(char)
-AC_CHECK_SIZEOF(short)
-AC_CHECK_SIZEOF(long)
-AC_CHECK_SIZEOF(int *)
-AC_CHECK_SIZEOF(float)
-AC_CHECK_SIZEOF(void *)
 AC_CHECK_SIZEOF(off_t)
 
 AC_PATH_PROG(PKG_CONFIG, pkg-config, no)
@@ -291,7 +283,6 @@ AC_CHECK_FUNCS(getcwd getwd strerror readlink setlocale access opendir sleep sig
 AC_CHECK_FUNCS(vsnprintf snprintf memmove strdup lstat fileno strcasecmp)
 AC_FUNC_CLOSEDIR_VOID
 AC_FUNC_VPRINTF
-AC_FUNC_FSEEKO
 
 # having <complex.h> + a cacos declaration is not enough: C++ dies with a complaint about a "deprecated header"
 #
@@ -1242,7 +1233,6 @@ dnl do we need explicit -n32?
         AC_DEFINE(ALPHA)
         ;;
     *-*-bsdi*) 
-        AC_DEFINE(BSDI)
 	AC_DEFINE(HAVE_OSS)
 	LIBS="-lm"
 	audio_system=OSS

@@ -4458,7 +4458,9 @@ cursor-follows-play is #t:
 The <i>cursor-style</i> can also be a procedure of three arguments, the
 sound index, channel number, and graph (always time-graph).  The procedure
 should draw the cursor at the current cursor position using the
-<a href="#cursorcontext">cursor-context</a> whenever it is called.  The following 
+<a href="#cursorcontext">cursor-context</a> whenever it is called.  
+One example is <i>smart-line-cursor</i> in draw.scm.
+Here is a simpler one that
 replaces the normal "+" cursor with an "x":
 </td></tr>
 

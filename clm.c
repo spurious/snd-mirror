@@ -34,8 +34,8 @@
 #endif
 
 #if HAVE_GSL
-#include <gsl/gsl_complex.h>
-#include <gsl/gsl_complex_math.h>
+  #include <gsl/gsl_complex.h>
+  #include <gsl/gsl_complex_math.h>
 #endif
 
 #if HAVE_FFTW3
@@ -47,7 +47,7 @@
 #endif
 
 #if HAVE_COMPLEX_TRIG
-#include <complex.h>
+  #include <complex.h>
 #endif
 
 #ifndef TWO_PI
@@ -749,16 +749,6 @@ typedef struct {
   mus_any_class *core;
   double phase, freq;
 } osc;
-
-/* 6-May-04: try an experiment: if using double for freq and phase throughout,
-   the phase size checks and subsequent fmods can be omitted because we have
-   52 bits of significand, so when we run an oscil at 1000 Hz for 40 hours,
-   the phase is around 2^30 which still leaves 20 some bits for the add of
-   the phase increment ["freq" in local terminology] -- this would have failed
-   with float long before that point.  Since sin uses doubles anyway,
-   it shouldn't be a lot slower (initial timing tests show no obvious change).
-   Also tests with an initial-phase of 2^30 showed no signs of distress.
-*/
 
 Float mus_oscil(mus_any *ptr, Float fm, Float pm)
 {

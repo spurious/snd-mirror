@@ -206,6 +206,7 @@ TROUBLES:
 
 
 ---- Linux audio: ----
+
 In Linux, Snd sometimes can't seem to play or record when other
 applications are happy -- if this happens, please run the function
 mus-audio-describe (via M-x) and send me whatever it prints out.
@@ -221,11 +222,13 @@ that it can't play big-endian shorts.
 
 
 ---- Recording: ----
+
 The Record dialog only works in Linux (OSS, perhaps ALSA), Sun, some
 SGI systems, and perhaps Mac OSX.
 
 
 ---- Colors: ----
+
 If you're running KDE and the menu labels are invisible, check
 the 'theme' you're using.  You normally want black label foregrounds;
 you can get these by
@@ -234,6 +237,7 @@ you can get these by
 
 
 ---- Fonts: ----
+
 If you're getting empty boxes where characters should be, or Xt
 warnings about missing font characters, check your LANG and
 SUPPORTED environment variables.  If they're UTF-8, you should
@@ -248,6 +252,7 @@ the lang.csh file in /etc/profile.d).
 
 
 ---- Compiling: ----
+
 If you get the error:
 
  snd-x0.h:9 Xm/XmAll: No such file or directory
@@ -273,6 +278,7 @@ not trying to support this anymore.
 
 
 ---- ALSA: ----
+
 Only versions from 0.9 of ALSA are supported. If you get a compile-time
 complaint about snd_pcm_hw_params (ALSA 0.9beta4) you need to get
 a newer version of ALSA.
@@ -314,6 +320,7 @@ There's also a discussion of RME cards in the cmdist archives.
 
 
 ---- Gtk+: ----
+
 Only Gtk-2 or later is supported.  
 
 If you get an error like:
@@ -329,6 +336,7 @@ you can find where it occurs by:
 
 
 ---- GSL: ----
+
 If configure finds GSL, but Snd refuses to load with an error
 about missing gsl_complex_cos (or whatever), you need to get the
 GSL sources and build it again; apparently the version of libgsl.a
@@ -653,6 +661,7 @@ So, here's the detailed step-by-step method, thanks to Cris Ewing:
 
 
 ---- Motif: ----
+
 If you installed OpenMotif, then upgraded to RedHat 7.2, Redhat
 probably overwrote Motif with Lesstif.  You need, among other
 things, to re-install OpenMotif and make sure /usr/local/lib/libXm.so.2

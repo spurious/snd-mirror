@@ -38,10 +38,7 @@
 #undef HAVE_DECL_HYPOT
 #undef HAVE_DECL_ISNAN
 #undef HAVE_COMPLEX_TRIG
-#undef HAVE_FSEEKO
 
-#undef STDC_HEADERS
-#undef TM_IN_SYS_TIME
 #undef HAVE_SYS_MOUNT_H
 #undef HAVE_DIRENT_H
 #undef HAVE_NDIR_H
@@ -55,7 +52,6 @@
 #undef HAVE_SYS_TIME_H
 #undef HAVE_DLFCN_H
 #undef HAVE_GSL_GSL_VERSION_H
-#undef HAVE_SOUNDCARD_H
 #undef HAVE_SYS_SOUNDCARD_H
 #undef HAVE_MACHINE_SOUNDCARD_H
 #undef HAVE_SYS_MIXER_H
@@ -68,7 +64,6 @@
 #undef HAVE_SYS_STATFS_H
 #undef HAVE_SYS_STATVFS_H
 #undef HAVE_SETJMP_H
-#undef TIME_WITH_SYS_TIME
 #undef HAVE_GNU_LIBC_VERSION_H
 #undef HAVE_PWD_H
 #undef HAVE_LOCALE_H
@@ -78,13 +73,6 @@
 #undef HAVE_BYTESWAP_H
 #undef HAVE_STDINT_H
 
-#undef SIZEOF_INT
-#undef SIZEOF_CHAR
-#undef SIZEOF_LONG
-#undef SIZEOF_SHORT
-#undef SIZEOF_INT_P
-#undef SIZEOF_FLOAT
-#undef SIZEOF_VOID_P
 #undef SIZEOF_OFF_T
 #undef ENABLE_NLS
 #undef PACKAGE
@@ -104,7 +92,6 @@
 #undef HAVE_SAM_9407
 #undef MAC_OSX
 #undef ESD
-#undef BSDI
 #undef HPUX
 
 #undef HAVE___FUNC__
