@@ -13,7 +13,7 @@
  * Snd optimization flag determines how safe we try to be:
  *   0: no use of ptrees at all (fallback on Guile)
  *   1: allow simple ops (if complex result possible, give up)
- *   2: assume nothing will return a complex number (i.e. user says acos args are between -1 and 1 and so on)
+ *   2: [currently non-functional] assume nothing will return a complex number (i.e. user says acos args are between -1 and 1 and so on)
  *   3: if undefined global variable encountered, try to determine eventual type from context;
  *      this is dangerous -- the tree may not recognize trouble until evaluation time.
  *   4: make more assumptions about non-local variables -- lots of errors will be unnoticed until eval time.
@@ -84,6 +84,7 @@
 
 /* TODO: run safety complex checks (CL too?) -- will require extracted macro or something
  * TODO: run* equivalent in Snd/Scheme (need all reflections from run, I think)
+ * PERHAPS: complex number support for run
  */
 
 #include "snd.h"

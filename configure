@@ -8201,7 +8201,7 @@ LIBS=$SAVELIBS
 
 # having <complex.h> + a cacos declaration is not enough: C++ dies with a complaint about a "deprecated header"
 #
-#  I'm also using cexp and in xen __real__, __imag__, and the "i" suffix in 1.0i to (dis)assemble complex numbers
+#  I'm also using cexp and in xen creal, cimag, and _Complex_I
 #  I'm currently using the data type "complex double" though the header seems to prefer "double complex" and
 #  the gcc documentation mentions _Complex double.
 #
@@ -17129,13 +17129,79 @@ fi
 # statfs special case
 #   it is also possible for statfs to take 3 args
 #   the libit configure.in and fsusage.c might be useful here.
+# I think statvfs is the new way to do this...
 #--------------------------------------------------------------------------------
 
-# statfs is a mess
-statfs_args=0
-echo "$as_me:$LINENO: checking stafs args" >&5
+# look for statvfs, then the struct type name
+statvfs_ok=0
+if test "$ac_cv_func_statvfs" = yes ; then
+if test "$ac_cv_header_sys_statvfs_h" = yes ; then
+  echo "$as_me:$LINENO: checking for statvfs" >&5
+echo $ECHO_N "checking for statvfs... $ECHO_C" >&6
+  cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+#include <sys/statvfs.h>
+int
+main ()
+{
+struct statvfs buf; statvfs("test.snd", &buf)
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext
+if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
+  (eval $ac_compile) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest.$ac_objext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  cat >>confdefs.h <<\_ACEOF
+#define USE_STATVFS 1
+_ACEOF
+
+    statvfs_ok=1
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+fi
+rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
+  if test $statvfs_ok = 1; then
+    echo "$as_me:$LINENO: result: yes" >&5
+echo "${ECHO_T}yes" >&6
+  else
+    echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+  fi
+fi
+fi
+
+if test $statvfs_ok = 0; then
+  # statfs is a mess
+  statfs_args=0
+  echo "$as_me:$LINENO: checking stafs args" >&5
 echo $ECHO_N "checking stafs args... $ECHO_C" >&6
-cat >conftest.$ac_ext <<_ACEOF
+  cat >conftest.$ac_ext <<_ACEOF
 /* confdefs.h.  */
 _ACEOF
 cat confdefs.h >>conftest.$ac_ext
@@ -17179,8 +17245,8 @@ sed 's/^/| /' conftest.$ac_ext >&5
 
 fi
 rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
-if test $statfs_args = 0; then
-  cat >conftest.$ac_ext <<_ACEOF
+  if test $statfs_args = 0; then
+    cat >conftest.$ac_ext <<_ACEOF
 /* confdefs.h.  */
 _ACEOF
 cat confdefs.h >>conftest.$ac_ext
@@ -17224,17 +17290,17 @@ sed 's/^/| /' conftest.$ac_ext >&5
 
 fi
 rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
-fi
-if test $statfs_args = 0; then
-  cat >conftest.$ac_ext <<_ACEOF
+  fi
+  if test $statfs_args = 0; then
+    cat >conftest.$ac_ext <<_ACEOF
 /* confdefs.h.  */
 _ACEOF
 cat confdefs.h >>conftest.$ac_ext
 cat >>conftest.$ac_ext <<_ACEOF
 /* end confdefs.h.  */
 #include <dirent.h>
-                      #include <sys/vfs.h>
-                      #include <sys/statfs.h>
+                        #include <sys/vfs.h>
+                        #include <sys/statfs.h>
 
 int
 main ()
@@ -17273,9 +17339,9 @@ sed 's/^/| /' conftest.$ac_ext >&5
 
 fi
 rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
-fi
-if test $statfs_args = 0; then
-  cat >conftest.$ac_ext <<_ACEOF
+  fi
+  if test $statfs_args = 0; then
+    cat >conftest.$ac_ext <<_ACEOF
 /* confdefs.h.  */
 _ACEOF
 cat confdefs.h >>conftest.$ac_ext
@@ -17319,9 +17385,9 @@ sed 's/^/| /' conftest.$ac_ext >&5
 
 fi
 rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
-fi
-if test $statfs_args = 0; then
-  cat >conftest.$ac_ext <<_ACEOF
+  fi
+  if test $statfs_args = 0; then
+    cat >conftest.$ac_ext <<_ACEOF
 /* confdefs.h.  */
 _ACEOF
 cat confdefs.h >>conftest.$ac_ext
@@ -17365,9 +17431,9 @@ sed 's/^/| /' conftest.$ac_ext >&5
 
 fi
 rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
-fi
-if test $statfs_args = 0; then
-  cat >conftest.$ac_ext <<_ACEOF
+  fi
+  if test $statfs_args = 0; then
+    cat >conftest.$ac_ext <<_ACEOF
 /* confdefs.h.  */
 _ACEOF
 cat confdefs.h >>conftest.$ac_ext
@@ -17411,17 +17477,17 @@ sed 's/^/| /' conftest.$ac_ext >&5
 
 fi
 rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
-fi
-if test $statfs_args = 0; then
-  cat >conftest.$ac_ext <<_ACEOF
+  fi
+  if test $statfs_args = 0; then
+    cat >conftest.$ac_ext <<_ACEOF
 /* confdefs.h.  */
 _ACEOF
 cat confdefs.h >>conftest.$ac_ext
 cat >>conftest.$ac_ext <<_ACEOF
 /* end confdefs.h.  */
 #include <dirent.h>
-                      #include <sys/vfs.h>
-                      #include <sys/statfs.h>
+                        #include <sys/vfs.h>
+                        #include <sys/statfs.h>
 
 int
 main ()
@@ -17460,18 +17526,17 @@ sed 's/^/| /' conftest.$ac_ext >&5
 
 fi
 rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
-fi
-if test $statfs_args = 0; then
-  statfs_args=2
-fi
-echo "$as_me:$LINENO: result: $statfs_args" >&5
+  fi
+  if test $statfs_args = 0; then
+    statfs_args=2
+  fi
+  echo "$as_me:$LINENO: result: $statfs_args" >&5
 echo "${ECHO_T}$statfs_args" >&6
-cat >>confdefs.h <<_ACEOF
+  cat >>confdefs.h <<_ACEOF
 #define STATFS_ARGS $statfs_args
 _ACEOF
 
-# on NeXT, this is apparently in libc.h?
-
+fi
 
 # Check whether --enable-snd-debug or --disable-snd-debug was given.
 if test "${enable_snd_debug+set}" = set; then

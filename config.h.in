@@ -26,6 +26,7 @@
 #undef HAVE_SIGNAL
 #undef HAVE_STATFS
 #undef HAVE_STATVFS
+#undef USE_STATVFS
 #undef HAVE_CLOCK
 #undef HAVE_VSNPRINTF
 #undef HAVE_SNPRINTF

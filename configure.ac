@@ -1355,49 +1355,68 @@ AC_SUBST(A_LD_FLAGS)
 # statfs special case
 #   it is also possible for statfs to take 3 args
 #   the libit configure.in and fsusage.c might be useful here.
+# I think statvfs is the new way to do this...
 #--------------------------------------------------------------------------------
 
-# statfs is a mess
-statfs_args=0
-AC_MSG_CHECKING([stafs args])
-AC_COMPILE_IFELSE([AC_LANG_PROGRAM([#include <sys/statfs.h>],[struct statfs buf; statfs("test.snd",&buf,sizeof(buf),0)])],statfs_args=4)
-if test $statfs_args = 0; then
-  AC_COMPILE_IFELSE([AC_LANG_PROGRAM([#include <sys/vfs.h>],[struct statfs buf; statfs("test.snd",&buf,sizeof(buf),0)])],statfs_args=4)
-fi
-if test $statfs_args = 0; then
+# try to use statvfs
+statvfs_ok=0
+if test "$ac_cv_func_statvfs" = yes ; then
+if test "$ac_cv_header_sys_statvfs_h" = yes ; then
+  AC_MSG_CHECKING([for statvfs])
   AC_COMPILE_IFELSE(
-    [AC_LANG_PROGRAM([#include <dirent.h>
-                      #include <sys/vfs.h>
-                      #include <sys/statfs.h>
-                     ],
-                     [struct statfs buf; statfs("test.snd",&buf,sizeof(buf),0)])],
-    statfs_args=4)
+    [AC_LANG_PROGRAM([#include <sys/statvfs.h>],
+                     [struct statvfs buf; statvfs("test.snd", &buf)])], 
+    AC_DEFINE(USE_STATVFS)
+    statvfs_ok=1)
+  if test $statvfs_ok = 1; then
+    AC_MSG_RESULT(yes)
+  else
+    AC_MSG_RESULT(no)
+  fi
 fi
-if test $statfs_args = 0; then
-  AC_COMPILE_IFELSE([AC_LANG_PROGRAM([#include <sys/statfs.h>],[struct statfs buf; statfs("test.snd",&buf)])],statfs_args=2)
 fi
-if test $statfs_args = 0; then
-  AC_COMPILE_IFELSE([AC_LANG_PROGRAM([#include <sys/vfs.h>],[struct statfs buf; statfs("test.snd",&buf)])],statfs_args=2)
-fi
-if test $statfs_args = 0; then
-  AC_COMPILE_IFELSE([AC_LANG_PROGRAM([#include <sys/mount.h>],[struct statfs buf; statfs("test.snd",&buf)])],statfs_args=2)
-fi
-if test $statfs_args = 0; then
-  AC_COMPILE_IFELSE(
-    [AC_LANG_PROGRAM([#include <dirent.h>
-                      #include <sys/vfs.h>
-                      #include <sys/statfs.h>
-                     ],
-                     [struct statfs buf; statfs("test.snd",&buf)])],
-    statfs_args=2)
-fi
-if test $statfs_args = 0; then
-  statfs_args=2
-fi
-AC_MSG_RESULT($statfs_args)
-AC_DEFINE_UNQUOTED(STATFS_ARGS,$statfs_args)
-# on NeXT, this is apparently in libc.h?
 
+if test $statvfs_ok = 0; then
+  # statfs is a mess
+  statfs_args=0
+  AC_MSG_CHECKING([stafs args])
+  AC_COMPILE_IFELSE([AC_LANG_PROGRAM([#include <sys/statfs.h>],[struct statfs buf; statfs("test.snd",&buf,sizeof(buf),0)])],statfs_args=4)
+  if test $statfs_args = 0; then
+    AC_COMPILE_IFELSE([AC_LANG_PROGRAM([#include <sys/vfs.h>],[struct statfs buf; statfs("test.snd",&buf,sizeof(buf),0)])],statfs_args=4)
+  fi
+  if test $statfs_args = 0; then
+    AC_COMPILE_IFELSE(
+      [AC_LANG_PROGRAM([#include <dirent.h>
+                        #include <sys/vfs.h>
+                        #include <sys/statfs.h>
+                       ],
+                       [struct statfs buf; statfs("test.snd",&buf,sizeof(buf),0)])],
+      statfs_args=4)
+  fi
+  if test $statfs_args = 0; then
+    AC_COMPILE_IFELSE([AC_LANG_PROGRAM([#include <sys/statfs.h>],[struct statfs buf; statfs("test.snd",&buf)])],statfs_args=2)
+  fi
+  if test $statfs_args = 0; then
+    AC_COMPILE_IFELSE([AC_LANG_PROGRAM([#include <sys/vfs.h>],[struct statfs buf; statfs("test.snd",&buf)])],statfs_args=2)
+  fi
+  if test $statfs_args = 0; then
+    AC_COMPILE_IFELSE([AC_LANG_PROGRAM([#include <sys/mount.h>],[struct statfs buf; statfs("test.snd",&buf)])],statfs_args=2)
+  fi
+  if test $statfs_args = 0; then
+    AC_COMPILE_IFELSE(
+      [AC_LANG_PROGRAM([#include <dirent.h>
+                        #include <sys/vfs.h>
+                        #include <sys/statfs.h>
+                       ],
+                       [struct statfs buf; statfs("test.snd",&buf)])],
+      statfs_args=2)
+  fi
+  if test $statfs_args = 0; then
+    statfs_args=2
+  fi
+  AC_MSG_RESULT($statfs_args)
+  AC_DEFINE_UNQUOTED(STATFS_ARGS,$statfs_args)
+fi
 
 AC_ARG_ENABLE(snd-debug,
   [  --enable-snd-debug      include internal Snd debugging functions],

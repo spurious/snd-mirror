@@ -15,15 +15,16 @@
   #endif
 #endif
 
-#if HAVE_SYS_STATFS_H
-  #include <sys/statfs.h>
-#else
-  #if HAVE_SYS_VFS_H
-    #include <sys/vfs.h>
-  #endif
-#endif
-#if HAVE_SYS_STATVFS_H && SUN
+#if USE_STATVFS
   #include <sys/statvfs.h>
+#else
+  #if HAVE_SYS_STATFS_H
+    #include <sys/statfs.h>
+  #else
+    #if HAVE_SYS_VFS_H
+      #include <sys/vfs.h>
+    #endif
+  #endif
 #endif
 #if (__bsdi__ || HAVE_SYS_PARAM_H)
   #include <sys/param.h>
@@ -36,7 +37,7 @@
   #include <sys/mount.h>
 #endif
 
-#if (!HAVE_STATFS) && (!HAVE_STATVFS)
+#if (!HAVE_STATFS) && (!USE_STATVFS)
   off_t disk_kspace (const char *filename) {return(1234567);}
   bool link_p(const char *filename) {return(false);}
   bool directory_p(const char *filename) {return(false);}
@@ -44,10 +45,14 @@
   static off_t file_bytes(const char *filename) {return(0);}
 #else
 
-#if HAVE_STATVFS && SUN
+#if USE_STATVFS
 off_t disk_kspace (const char *filename)
 {
-  statvfs_t buf;
+#if SUN
+  statvfs_t buf; /* else dumb compiler complaint */
+#else
+  struct statvfs buf;
+#endif
   off_t err = -1;
   err = statvfs(filename, &buf);
   if (err == 0)

@@ -959,6 +959,10 @@ static VALUE xen_rb_hook_inspect(VALUE hook)
  *      $var_hook.add_hook!("1st proc") do |a| ... end
  */
 
+#if USE_SND
+void snd_rb_raise(XEN type, XEN info); /* XEN_ERROR */
+#endif
+
 static VALUE xen_rb_make_hook(int argc, VALUE *argv, VALUE klass)
 {
   VALUE hook, name;

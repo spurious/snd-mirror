@@ -2853,7 +2853,7 @@ static XEN g_map_chan_1(XEN proc_and_list, XEN s_beg, XEN s_end, XEN org, XEN sn
 				      cur_size *= 2;
 				      data = (mus_sample_t *)REALLOC(data, cur_size * sizeof(mus_sample_t));
 				    }
-				  data[data_pos++] = v->data[i];
+				  data[data_pos++] = MUS_DOUBLE_TO_SAMPLE(v->data[i]);
 				}
 			    }
 			  else
