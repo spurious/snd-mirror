@@ -1,5 +1,7 @@
 /* Audio hardware handlers (SGI, OSS, ALSA, Sun, Mac, Windows, HPUX, Mac OSX, ESD) */
 
+/* TODO: mus_audio_dac_open_p or dac_is_open */
+
 /*
  * layout of this file:
  *    error handlers

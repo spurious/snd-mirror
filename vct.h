@@ -44,6 +44,7 @@ char *vct_to_string(vct *v);
 vct *c_make_vct(int len);
 vct *c_free_vct(vct *v);
 vct *c_vct_copy(vct *vc);
+int vct_equalp(vct *v1, vct *v2);
 
 #define TO_VCT(arg) ((vct *)XEN_OBJECT_REF(arg))
 #define VCT_P(arg) vct_p(arg)

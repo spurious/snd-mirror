@@ -485,12 +485,18 @@ void add_channel_data_1(chan_info *cp, int srate, off_t frames, int graphed)
     }
   else
     {
-      ap->zx = (ap->x1 - ap->x0) / ap->x_ambit;
-      ap->sx = (ap->x0 - ap->xmin) / ap->x_ambit;
+      if (ap->x_ambit != 0.0)
+	{
+	  ap->zx = (ap->x1 - ap->x0) / ap->x_ambit;
+	  ap->sx = (ap->x0 - ap->xmin) / ap->x_ambit;
+	}
       ap->no_data = FALSE;
     }
-  ap->zy = (ap->y1 - ap->y0) / ap->y_ambit;
-  ap->sy = (ap->y0 - ap->ymin) / ap->y_ambit;
+  if (ap->y_ambit != 0.0)
+    {
+      ap->zy = (ap->y1 - ap->y0) / ap->y_ambit;
+      ap->sy = (ap->y0 - ap->ymin) / ap->y_ambit;
+    }
   cp->axis = ap;
   if (graphed == WITH_GRAPH) initialize_scrollbars(cp);
   /* our initial edit_list size will be relatively small */
@@ -625,8 +631,11 @@ void set_x_axis_x0x1 (chan_info *cp, double x0, double x1)
   if (x1 > ap->xmax) ap->xmax = x1;
   if (ap->xmax <= ap->xmin) ap->xmax = ap->xmin + .001;
   ap->x_ambit = ap->xmax - ap->xmin;
-  ap->zx = (x1 - x0) / ap->x_ambit;
-  ap->sx = (x0 - ap->xmin) / ap->x_ambit;
+  if (ap->x_ambit != 0.0)
+    {
+      ap->zx = (x1 - x0) / ap->x_ambit;
+      ap->sx = (x0 - ap->xmin) / ap->x_ambit;
+    }
   resize_sx(cp);
   resize_zx(cp);
   apply_x_axis_change(ap, cp, cp->sound); /* this checks sync */
@@ -816,7 +825,8 @@ void focus_x_axis_change(axis_info *ap, chan_info *cp, snd_info *sp, int focus_s
       if (isnan(ap->x0)) ap->x0 = 0.0;
 #endif
       if (ap->x0 < 0.0) ap->x0 = 0.0;
-      ap->sx = (double)(ap->x0 - ap->xmin) / (double)(ap->x_ambit);
+      if (ap->x_ambit != 0.0)
+	ap->sx = (double)(ap->x0 - ap->xmin) / (double)(ap->x_ambit);
     }
   apply_x_axis_change(ap, cp, sp);
 }
@@ -878,14 +888,20 @@ void set_axes(chan_info *cp, double x0, double x1, Float y0, Float y1)
   ap = cp->axis;
   ap->x0 = x0;
   ap->x1 = x1;
-  ap->zx = (x1 - x0) / ap->x_ambit;
-  ap->sx = (x0 - ap->xmin) / ap->x_ambit;
+  if (ap->x_ambit != 0.0)
+    {
+      ap->zx = (x1 - x0) / ap->x_ambit;
+      ap->sx = (x0 - ap->xmin) / ap->x_ambit;
+    }
   resize_sx(cp);
   resize_zx(cp);
   ap->y0 = y0;
   ap->y1 = y1;
-  ap->zy = (y1 - y0) / ap->y_ambit;
-  ap->sy = (y0 - ap->ymin) / ap->y_ambit;
+  if (ap->y_ambit != 0.0)
+    {
+      ap->zy = (y1 - y0) / ap->y_ambit;
+      ap->sy = (y0 - ap->ymin) / ap->y_ambit;
+    }
   resize_sy(cp);
   resize_zy(cp);
 }
@@ -3307,7 +3323,8 @@ void handle_cursor(chan_info *cp, int redisplay)
 	      break;
 	    }
 	  if (gx < 0.0) gx = 0.0;
-	  reset_x_display(cp, (gx - ap->xmin) / ap->x_ambit, ap->zx);
+	  if (ap->x_ambit != 0.0)
+	    reset_x_display(cp, (gx - ap->xmin) / ap->x_ambit, ap->zx);
 	}
       else {if (cp->cursor_on) draw_graph_cursor(cp);}
     }
@@ -3873,10 +3890,11 @@ void graph_button_release_callback(chan_info *cp, int x, int y, int key_state, i
 			  if (key_state & snd_ShiftMask) ap->zx *= .5;
 			  if (key_state & snd_ControlMask) ap->zx *= .5;
 			  if (key_state & snd_MetaMask) ap->zx *= .5;
-			  ap->sx = (((double)(CURSOR(cp)) / (double)SND_SRATE(sp) - 
-				     ap->zx * 0.5 * (ap->xmax - ap->xmin)) - 
-				    ap->xmin) / 
-			           ap->x_ambit;
+			  if (ap->x_ambit != 0.0)
+			    ap->sx = (((double)(CURSOR(cp)) / (double)SND_SRATE(sp) - 
+				       ap->zx * 0.5 * (ap->xmax - ap->xmin)) - 
+				      ap->xmin) / 
+			      ap->x_ambit;
 			  apply_x_axis_change(ap, cp, sp);
 			  resize_sx(cp);
 			  set_zx_scrollbar_value(cp, sqrt(ap->zx));

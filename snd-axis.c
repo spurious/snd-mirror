@@ -310,7 +310,7 @@ void make_axes_1(axis_info *ap, int x_style, int srate, int axes, int printing, 
   height = ap->height;
   ap->graph_active = ((width > 4) || (height > 10));
 
-  if ((axes == SHOW_NO_AXES) || (width < 40) || (height < 40))
+  if ((axes == SHOW_NO_AXES) || (width < 40) || (height < 40) || (ap->xmax == 0.0))
     {
       /* leave it set up for bare graph */
       if (height > 100)

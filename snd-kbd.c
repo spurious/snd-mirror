@@ -861,8 +861,11 @@ static void set_window_bounds(chan_info *cp, int count)
   axis_info *ap;
   double sx;
   ap = cp->axis;
-  sx = (((double)count / (double)SND_SRATE(cp->sound)) - ap->xmin) / ap->x_ambit;
-  reset_x_display(cp, sx, ap->zx);
+  if (ap->x_ambit != 0.0)
+    {
+      sx = (((double)count / (double)SND_SRATE(cp->sound)) - ap->xmin) / ap->x_ambit;
+      reset_x_display(cp, sx, ap->zx);
+    }
 }
 
 static void set_window_size(chan_info *cp, int count) 
@@ -871,8 +874,11 @@ static void set_window_size(chan_info *cp, int count)
   axis_info *ap;
   double zx;
   ap = cp->axis;
-  zx = ((double)count / (((double)SND_SRATE(cp->sound)) * ap->x_ambit));
-  reset_x_display(cp, ap->sx, zx);
+  if (ap->x_ambit != 0.0)
+    {
+      zx = ((double)count / (((double)SND_SRATE(cp->sound)) * ap->x_ambit));
+      reset_x_display(cp, ap->sx, zx);
+    }
 }
 
 static void set_window_percentage(chan_info *cp, int count) 

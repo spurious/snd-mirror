@@ -178,10 +178,13 @@ void resize_sy(chan_info *cp)
   axis_info *ap;
   Float size;
   ap = cp->axis;
-  size = (ap->y1 - ap->y0) / ap->y_ambit;
-  set_scrollbar(sy_adj(cp), 
-		1.0 - ((ap->y0 - ap->ymin) / ap->y_ambit + size), 
-		size);
+  if (ap->y_ambit != 0.0)
+    {
+      size = (ap->y1 - ap->y0) / ap->y_ambit;
+      set_scrollbar(sy_adj(cp), 
+		    1.0 - ((ap->y0 - ap->ymin) / ap->y_ambit + size), 
+		    size);
+    }
 }
 
 void resize_sx(chan_info *cp)
@@ -190,9 +193,10 @@ void resize_sx(chan_info *cp)
   snd_info *sp;
   ap = cp->axis;
   sp = cp->sound;
-  set_scrollbar(sx_adj(cp),
-		(ap->x0 - ap->xmin) / ap->x_ambit,
-		(ap->x1 - ap->x0) / ap->x_ambit);
+  if (ap->x_ambit != 0.0)
+    set_scrollbar(sx_adj(cp),
+		  (ap->x0 - ap->xmin) / ap->x_ambit,
+		  (ap->x1 - ap->x0) / ap->x_ambit);
 }
 
 void resize_zx(chan_info *cp)

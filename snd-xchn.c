@@ -221,20 +221,22 @@ void resize_sy(chan_info *cp)
   /* something changed the y axis view, so the scale scroller needs to reflect that change (in size and position) */
   axis_info *ap;
   ap = cp->axis;
-  set_scrollbar(channel_sy(cp),
-		(ap->y0 - ap->ymin) / ap->y_ambit,
-		(ap->y1 - ap->y0) / ap->y_ambit,
-		SCROLLBAR_MAX);
+  if (ap->y_ambit != 0.0)
+    set_scrollbar(channel_sy(cp),
+		  (ap->y0 - ap->ymin) / ap->y_ambit,
+		  (ap->y1 - ap->y0) / ap->y_ambit,
+		  SCROLLBAR_MAX);
 }
 
 void resize_sx(chan_info *cp)
 {
   axis_info *ap;
   ap = cp->axis;
-  set_scrollbar(channel_sx(cp),
-		(ap->x0 - ap->xmin) / ap->x_ambit,
-		(ap->x1 - ap->x0) / ap->x_ambit,
-		SCROLLBAR_SX_MAX);
+  if (ap->x_ambit != 0.0)
+    set_scrollbar(channel_sx(cp),
+		  (ap->x0 - ap->xmin) / ap->x_ambit,
+		  (ap->x1 - ap->x0) / ap->x_ambit,
+		  SCROLLBAR_SX_MAX);
 }
 
 void resize_zx(chan_info *cp)

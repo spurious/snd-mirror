@@ -139,20 +139,22 @@ char *vct_to_string(vct *v)
   return(buf);
 }
 
+int vct_equalp(vct *v1, vct *v2)
+{
+  int i;
+  if (v1->length != v2->length) 
+    return(FALSE);
+  for (i = 0; i < v1->length; i++)
+    if (v1->data[i] != v2->data[i])
+      return(FALSE);
+  return(TRUE);
+}
+
 XEN_MAKE_OBJECT_PRINT_PROCEDURE(vct, print_vct, vct_to_string)
 
 static XEN equalp_vct(XEN obj1, XEN obj2)
 {
-  vct *v1, *v2;
-  int i;
-  v1 = (vct *)XEN_OBJECT_REF(obj1);
-  v2 = (vct *)XEN_OBJECT_REF(obj2);
-  if (v1->length != v2->length) 
-    return(XEN_FALSE);
-  for (i = 0; i < v1->length; i++)
-    if (v1->data[i] != v2->data[i])
-      return(XEN_FALSE);
-  return(xen_return_first(XEN_TRUE, obj1, obj2));
+  return(xen_return_first(C_TO_XEN_BOOLEAN(vct_equalp((vct *)XEN_OBJECT_REF(obj1), (vct *)XEN_OBJECT_REF(obj2))), obj1, obj2));
 }
 
 vct *c_make_vct(int len)

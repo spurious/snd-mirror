@@ -1804,8 +1804,8 @@ any of the .rb files.
 <pre>
   <em class=def><a name="initladspa">init-ladspa</a></em>
   <em class=def><a name="listladspa">list-ladspa</a></em>
-  <em class=def><a name="analyseladspa">analyse-ladspa</a></em> library type
-  <em class=def><a name="ladspadescriptor">ladspa-descriptor</a></em> library type
+  <em class=def><a name="analyseladspa">analyse-ladspa</a></em> library plugin
+  <em class=def><a name="ladspadescriptor">ladspa-descriptor</a></em> library plugin
   <em class=def><a name="applyladspa">apply-ladspa</a></em> reader data duration origin
 
   <em class=def>ladspa-instantiate</em> descriptor srate
@@ -1956,6 +1956,48 @@ than one input is required, the first argument to apply-ladspa should be a list 
 	     (set! data (cons ldata data)))))
      descriptors hints names)
     (append (list name maker copy) data)))
+</pre></td></tr></table>
+<p>Here's a function that processes a channel of data through a plugin, sending the 
+data directly to the DAC:
+</p>
+<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+(define* (ladspa-it library label #:rest plugin-parameters)
+  ;; (ladspa-it "cmt" "delay_5s" .3 .5)
+  (init-ladspa)
+  (let* ((descriptor (ladspa-descriptor library label))
+	 (handle (ladspa-instantiate descriptor (srate)))
+	 (block-size 256)
+	 (in-block (make-vct block-size))
+	 (out-block (make-vct block-size))
+	 (len (frames))
+	 (data (make-sound-data 1 block-size))
+	 (audio-port (mus-audio-open-output mus-audio-default (srate) 1 mus-lshort (* block-size 2))))
+  (dynamic-wind
+   (lambda ()
+     (let ((count 0))
+       (for-each 
+	(lambda (port)
+	  (if (not (= (logand port LADSPA_PORT_CONTROL) 0))
+	      (let ((parameter (make-vct 1 (car plugin-parameters))))
+		(set! plugin-parameters (cdr plugin-parameters))
+		(ladspa-connect-port descriptor handle count parameter))
+	      (if (not (= (logand port LADSPA_PORT_INPUT) 0))
+		  (ladspa-connect-port descriptor handle count in-block)
+		  (ladspa-connect-port descriptor handle count out-block)))
+	  (set! count (1+ count)))
+	(.PortDescriptors descriptor))))
+   (lambda ()
+     (ladspa-activate descriptor handle)
+     (do ((i 0 (+ i block-size)))
+	 ((&gt;= i len))
+       (samples-&gt;vct i block-size #f #f in-block)
+       (ladspa-run descriptor handle block-size)
+       (vct-&gt;sound-data out-block data 0)
+       (mus-audio-write audio-port data block-size)))
+   (lambda ()
+     (ladspa-deactivate descriptor handle)
+     (mus-audio-close audio-port)
+     (ladspa-cleanup descriptor handle)))))
 </pre></td></tr></table>
 <br>
 

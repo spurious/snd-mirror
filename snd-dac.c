@@ -728,10 +728,10 @@ static int disable_play = FALSE;
 static XEN g_disable_play(void) {disable_play = TRUE; return(XEN_FALSE);}
 static XEN g_enable_play(void) {disable_play = FALSE; return(XEN_TRUE);}
 
-static int start_dac(snd_state *ss, int srate, int channels, int background)
+static void start_dac(snd_state *ss, int srate, int channels, int background)
 {
   dac_info *dp;
-  int i, freed = FALSE;
+  int i;
   /* look for channel folding cases etc */
   /* channels = how many output audio chans we have; dac_combines_channels sets whether to wrap or muffle chans outside this limit */
   for (i = 0; i <= max_active_slot; i++)
@@ -748,7 +748,7 @@ static int start_dac(snd_state *ss, int srate, int channels, int background)
 	    {
 	      if (dac_combines_channels(ss))
 		dp->audio_chan %= channels;
-	      else freed = stop_playing(dp);
+	      else stop_playing(dp);
 	    }
 	}
     }
@@ -773,7 +773,6 @@ static int start_dac(snd_state *ss, int srate, int channels, int background)
       if (disable_play) 
 	{
 	  stop_playing_all_sounds();
-	  freed = TRUE;
 	  play_list_members = 0; 
 	  max_active_slot = -1;
 	  free_dac_state();
@@ -790,7 +789,6 @@ static int start_dac(snd_state *ss, int srate, int channels, int background)
 	    }
 	}
     }
-  return(freed);
 }
 
 static dac_info *add_channel_to_play_list(chan_info *cp, snd_info *sp, off_t start, off_t end, XEN edpos, const char *caller, int arg_pos)
@@ -892,8 +890,8 @@ void play_channel(chan_info *cp, off_t start, off_t end, int background, XEN edp
   dp = add_channel_to_play_list(cp, sp, start, end, edpos, caller, arg_pos);
   if (dp) 
     {
-      if (!(start_dac(dp->ss, SND_SRATE(sp), 1, background)))
-	set_play_button(sp, TRUE);
+      set_play_button(sp, TRUE);
+      start_dac(dp->ss, SND_SRATE(sp), 1, background);
     }
 }
 
@@ -911,8 +909,8 @@ void play_sound(snd_info *sp, off_t start, off_t end, int background, XEN edpos,
     dp = add_channel_to_play_list(sp->chans[i], sp, start, end, edpos, caller, arg_pos);
   if (dp)
     {
-      if (!(start_dac(sp->state, SND_SRATE(sp), sp->nchans, background)))
-	set_play_button(sp, TRUE);
+      set_play_button(sp, TRUE);
+      start_dac(sp->state, SND_SRATE(sp), sp->nchans, background);
     }
 }
 
@@ -945,8 +943,8 @@ void play_channels(chan_info **cps, int chans, off_t *starts, off_t *ur_ends, in
   if (ur_ends == NULL) FREE(ends);
   if ((sp) && (dp)) 
     {
-      if (!(start_dac(sp->state, SND_SRATE(sp), chans, background)))
-	set_play_button(sp, TRUE);
+      set_play_button(sp, TRUE);
+      start_dac(sp->state, SND_SRATE(sp), chans, background);
     }
 }
 
@@ -2078,7 +2076,7 @@ static XEN g_play_1(XEN samp_n, XEN snd_n, XEN chn_n, int background, int syncd,
   return(XEN_TRUE);
 }
 
-#define TO_C_BOOLEAN_OR_F(a) ((XEN_TRUE_P(a) || ((XEN_INTEGER_P(a)) && (XEN_TO_C_INT(a) == 1))) ? 1 : 0)
+#define TO_C_BOOLEAN_OR_FALSE(a) ((XEN_TRUE_P(a) || ((XEN_INTEGER_P(a)) && (XEN_TO_C_INT(a) == 1))) ? 1 : 0)
 
 static XEN g_play(XEN samp_n, XEN snd_n, XEN chn_n, XEN syncd, XEN end_n, XEN edpos) 
 {
@@ -2087,7 +2085,7 @@ static XEN g_play(XEN samp_n, XEN snd_n, XEN chn_n, XEN syncd, XEN end_n, XEN ed
 If 'end' is not given, " S_play " plays to the end of the sound.  If 'pos' is -1 or not given, the current edit position is \
 played."
 
-  return(g_play_1(samp_n, snd_n, chn_n, TRUE, TO_C_BOOLEAN_OR_F(syncd), end_n, edpos, S_play, 6));
+  return(g_play_1(samp_n, snd_n, chn_n, TRUE, TO_C_BOOLEAN_OR_FALSE(syncd), end_n, edpos, S_play, 6));
 }
 
 static XEN g_play_channel(XEN beg, XEN dur, XEN snd_n, XEN chn_n, XEN edpos) 
@@ -2113,7 +2111,7 @@ before returning."
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(wait), wait, XEN_ARG_1, S_play_selection, "a boolean");
   if (selection_is_active())
     {
-      play_selection(!(TO_C_BOOLEAN_OR_F(wait)), edpos, S_play_selection, 2);
+      play_selection(!(TO_C_BOOLEAN_OR_FALSE(wait)), edpos, S_play_selection, 2);
       return(XEN_TRUE);
     }
   return(snd_no_active_selection_error(S_play_selection));
@@ -2125,7 +2123,7 @@ static XEN g_play_and_wait(XEN samp_n, XEN snd_n, XEN chn_n, XEN syncd, XEN end_
 play snd or snd's channel chn starting at start \
 and waiting for the play to complete before returning.  'start' can also be a filename: (" S_play_and_wait " \"oboe.snd\")"
 
-  return(g_play_1(samp_n, snd_n, chn_n, FALSE, TO_C_BOOLEAN_OR_F(syncd), end_n, edpos, S_play_and_wait, 6));
+  return(g_play_1(samp_n, snd_n, chn_n, FALSE, TO_C_BOOLEAN_OR_FALSE(syncd), end_n, edpos, S_play_and_wait, 6));
 }
 
 static XEN g_stop_playing(XEN snd_n)
