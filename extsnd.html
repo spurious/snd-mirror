@@ -5836,7 +5836,8 @@ You can fix the saved state file by hand (it is just Scheme or Ruby code, of cou
 but that's not a very elegant solution.
 <br><br>
 The real limitation in using ptree-channel, however, is that the read direction
-can not only be backwards, but it can also change at any time.  This makes it
+can not only be backwards, but it can also change at any time.  In conjunction with
+the fragmentation during editing, this makes it
 hard to use CLM generators, or anything that depends on previous samples.
 Since the run macro (on which ptree-channel depends) is currently limited in
 the kinds of vector or list elements it can decipher, you're pretty tightly
@@ -5971,6 +5972,7 @@ CLM-style contrast-enhancement: <a href="sndscm.html#contrastchannel">contrast-c
 add a constant to every sample: <a href="sndscm.html#offsetchannel">offset-channel</a> (extensions.scm)<br>
 reverse-channel: <a href="#virtualreverse">xen-channel</a> (extsnd.html)<br>
 ring modulation: ring-modulate-channel (examp.scm)<br>
+delay by n samples (an experiment!): delay-channel in extensions.scm<br>
 <br>
 </small></blockquote>
 </td></tr></table>
@@ -8575,7 +8577,7 @@ If it returns a string, that becomes the output filename.
 
 <!-- transform-dialog -->
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="sndtransformdialog">transform-dialog</a></em> (<i>managed</i>)</code></span></td></tr>
-<tr><td></td><td>create and activate the Options:Transform transform dialog).</td></tr>
+<tr><td></td><td>create and activate the Options:Transform dialog.</td></tr>
 
 <!-- yes-or-no? -->
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="sndyesornop">yes-or-no?</a></em> (ques)</code></span></td></tr>

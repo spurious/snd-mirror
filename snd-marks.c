@@ -1932,6 +1932,36 @@ bool r_mark_p(int n)
   chan_info *ncp[1];
   return((bool)(find_mark_from_id(n, ncp, -1)));
 }
+
+off_t r_mark_sample(int n);
+off_t r_mark_sample(int n)
+{
+  mark *m;
+  chan_info *ncp[1];
+  m = find_mark_from_id(n, ncp, -1);
+  if (m) return(m->samp);
+  return(-1);
+}
+
+off_t r_mark_sync(int n);
+off_t r_mark_sync(int n)
+{
+  mark *m;
+  chan_info *ncp[1];
+  m = find_mark_from_id(n, ncp, -1);
+  if (m) return(mark_sync(m));
+  return(-1);
+}
+
+char *r_mark_name(int n);
+char *r_mark_name(int n)
+{
+  mark *m;
+  chan_info *ncp[1];
+  m = find_mark_from_id(n, ncp, -1);
+  if (m) return(m->name);
+  return(NULL);
+}
 #endif
 
 static XEN g_mark_sample(XEN mark_n, XEN pos_n) 

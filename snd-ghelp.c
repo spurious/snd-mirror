@@ -3,21 +3,9 @@
 /* 
    SOMEDAY: highlight bracketed help text in red fg
 
-   pango_parse_markup("some text <span foreground=\"red\">url</span> more text", -1, 0, **PangoAttrList, NULL, NULL, NULL);
-   layout = pango_layout_new(pango_context_new());
-   pango_layout_set_attributes(layout, *PangoAttrList);
-   now how to use this in list?
-   presumably at end: g_object_unref(G_OBJECT(layout));
-
-   or:
-   GList = gtk_tree_view_column_get_cell_renderers
-   g_list_free when done
-   gtk_cell_renderer_text_set_property(cell, PROP_MARKUP, wrapped str, NULL); but this is internal
-
-   or: 
-   make the "list" an uneditable text widget, use gtk_text_tags for the red/normal text, and have a click event handler
-
    gtk_label_set_markup(dialog->label,"<b>Pango Markuped string</b>");
+
+   but that requires a list of labels rather than current list of strings
  */
 
 static GtkWidget *help_dialog = NULL;

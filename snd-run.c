@@ -2903,6 +2903,9 @@ static xen_value *if_form(ptree *prog, XEN form, walk_result_t need_result)
   has_false = (XEN_LIST_LENGTH(form) == 4);
   if_value = walk(prog, XEN_CADR(form), NEED_ANY_RESULT);                                      /* walk selector */
   if (if_value == NULL) return(run_warn("if: bad selector? %s", XEN_AS_STRING(XEN_CADR(form))));
+
+  /* SOMEDAY: if clm-gen ... */
+
   if (if_value->type != R_BOOL) 
     return(run_warn("if: selector type not boolean: %s %s", 
 		    XEN_AS_STRING(XEN_CADR(form)), 
@@ -6220,10 +6223,9 @@ static char *descr_ ## CName ## _i(int *args, ptree *pt) {return(mus_format( STR
 static xen_value * CName ## _1(ptree *prog, xen_value **args, int num_args) {return(package(prog, R_STRING, CName ## _i, descr_ ##CName ## _i, args, 0));}
 
 /* PERHAPS: simple snd ops
-  bool from 1: mix-inverted? mix-locked?
   bool from 0: selection?
   int from 0: [selection-position(2)] [selection-frames(2)] [selected-sound -> #f]
-  int from 1: mark-sample mark-sync mix-track mix-chans mix-frames mix-position region-chans region-frames region-srate track-track track-chans
+  int from 1: region-chans region-frames region-srate track-track track-chans
   int from 1/2: track-position track-frames 
   flt from 1: track-speed track-tempo region-maxamp track-amp
   flt from 1/2: selection-maxamp mix-amp
@@ -6251,6 +6253,28 @@ static char *r_temp_dir(void) {return(temp_dir(ss));}
 static char *r_save_dir(void) {return(save_dir(ss));}
 STR_VOID_OP(r_temp_dir);
 STR_VOID_OP(r_save_dir);
+off_t r_mark_sync(int n);
+off_t r_mark_sample(int n);
+INT_INT_OP(r_mark_sync);
+INT_INT_OP(r_mark_sample);
+off_t r_mix_position(int n);
+int r_mix_chans(int n);
+off_t r_mix_frames(int n);
+bool r_mix_locked(int n);
+bool r_mix_inverted(int n);
+int r_mix_track(int n);
+INT_INT_OP(r_mix_chans);
+INT_INT_OP(r_mix_position);
+INT_INT_OP(r_mix_frames);
+INT_INT_OP(r_mix_track);
+BOOL_INT_OP(r_mix_inverted);
+BOOL_INT_OP(r_mix_locked);
+
+Float r_mix_speed(int n);
+char *r_mark_name(int n);
+
+
+/* TODO: snd-test run mix-chans etc */
 
   /* others need export */
 
@@ -10891,15 +10915,6 @@ static void init_walkers(void)
   INIT_WALKER(S_mus_header_type_name, make_walker(mus_header_type_name_1, NULL, NULL, 1, 1, R_STRING, false, 1, R_INT));
   INIT_WALKER(S_mus_data_format_name, make_walker(mus_data_format_name_1, NULL, NULL, 1, 1, R_STRING, false, 1, R_INT));
   INIT_WALKER(S_mus_bytes_per_sample, make_walker(mus_bytes_per_sample_1, NULL, NULL, 1, 1, R_INT, false, 1, R_INT));
-  INIT_WALKER(S_sound_p, make_walker(r_sound_p_1, NULL, NULL, 1, 1, R_BOOL, false, 1, R_INT));
-  INIT_WALKER(S_mix_p, make_walker(mix_ok_1, NULL, NULL, 1, 1, R_BOOL, false, 1, R_INT));
-  INIT_WALKER(S_track_p, make_walker(track_p_1, NULL, NULL, 1, 1, R_BOOL, false, 1, R_INT));
-  INIT_WALKER(S_region_p, make_walker(region_ok_1, NULL, NULL, 1, 1, R_BOOL, false, 1, R_INT));
-  INIT_WALKER(S_mark_p, make_walker(r_mark_p_1, NULL, NULL, 1, 1, R_BOOL, false, 1, R_INT));
-  INIT_WALKER(S_mark_sync_max, make_walker(mark_sync_max_1, NULL, NULL, 0, 0, R_INT, false, 0));
-  INIT_WALKER(S_selection_chans, make_walker(selection_chans_1, NULL, NULL, 0, 0, R_INT, false, 0));
-  INIT_WALKER(S_temp_dir, make_walker(r_temp_dir_1, NULL, NULL, 0, 0, R_STRING, false, 0));
-  INIT_WALKER(S_save_dir, make_walker(r_save_dir_1, NULL, NULL, 0, 0, R_STRING, false, 0));
 
   INIT_WALKER(S_vct_ref, make_walker(vct_ref_1, NULL, vct_set_1, 2, 2, R_FLOAT, false, 2, R_VCT, R_INT));
   INIT_WALKER(S_vct_length, make_walker(vct_length_1, NULL, NULL, 1, 1, R_INT, false, 1, R_VCT));
@@ -10957,18 +10972,23 @@ static void init_walkers(void)
   INIT_WALKER(S_snd_warning, make_walker(snd_warning_1, NULL, NULL, 1, 1, R_BOOL, false, 1, R_STRING));
   INIT_WALKER(S_report_in_minibuffer, make_walker(report_in_minibuffer_1, NULL, NULL, 1, 2, R_BOOL, false, 1, R_STRING));
 
-  /* 
-     mus-data-format-bytes-per-sample
-     current-edit-position
-     mark-sample mark-name mark? mark-sync mark-sync-max
-     mix-chans mix-frames mix-inverted? mix-locked? mix? mix-amp(?) mix-position mix-track
-     region-chans region-frames region-maxamp(?) region? region-srate
-     selected-channel selected-sound select-channel select-sound
-     select-all(?) selection-chans selection-frames selection-maxamp(?) selection? selection-position selection?
-     short-file-name file-name
-     snd-tempnam sound? sync temp-dir save-dir
-     track? track-amp(?) track-chans track-position(?) track-frames(?) track-speed track-tempo track-track
-   */
+  INIT_WALKER(S_sound_p, make_walker(r_sound_p_1, NULL, NULL, 1, 1, R_BOOL, false, 1, R_INT));
+  INIT_WALKER(S_mix_p, make_walker(mix_ok_1, NULL, NULL, 1, 1, R_BOOL, false, 1, R_INT));
+  INIT_WALKER(S_track_p, make_walker(track_p_1, NULL, NULL, 1, 1, R_BOOL, false, 1, R_INT));
+  INIT_WALKER(S_region_p, make_walker(region_ok_1, NULL, NULL, 1, 1, R_BOOL, false, 1, R_INT));
+  INIT_WALKER(S_mark_p, make_walker(r_mark_p_1, NULL, NULL, 1, 1, R_BOOL, false, 1, R_INT));
+  INIT_WALKER(S_mark_sync, make_walker(r_mark_sync_1, NULL, NULL, 1, 1, R_INT, false, 1, R_INT));
+  INIT_WALKER(S_mark_sample, make_walker(r_mark_sample_1, NULL, NULL, 1, 1, R_INT, false, 1, R_INT));
+  INIT_WALKER(S_mark_sync_max, make_walker(mark_sync_max_1, NULL, NULL, 0, 0, R_INT, false, 0));
+  INIT_WALKER(S_selection_chans, make_walker(selection_chans_1, NULL, NULL, 0, 0, R_INT, false, 0));
+  INIT_WALKER(S_temp_dir, make_walker(r_temp_dir_1, NULL, NULL, 0, 0, R_STRING, false, 0));
+  INIT_WALKER(S_save_dir, make_walker(r_save_dir_1, NULL, NULL, 0, 0, R_STRING, false, 0));
+  INIT_WALKER(S_mix_chans, make_walker(r_mix_chans_1, NULL, NULL, 1, 1, R_INT, false, 1, R_INT));
+  INIT_WALKER(S_mix_track, make_walker(r_mix_track_1, NULL, NULL, 1, 1, R_INT, false, 1, R_INT));
+  INIT_WALKER(S_mix_position, make_walker(r_mix_position_1, NULL, NULL, 1, 1, R_INT, false, 1, R_INT));
+  INIT_WALKER(S_mix_frames, make_walker(r_mix_frames_1, NULL, NULL, 1, 1, R_INT, false, 1, R_INT));
+  INIT_WALKER(S_mix_inverted_p, make_walker(r_mix_inverted_1, NULL, NULL, 1, 1, R_BOOL, false, 1, R_INT));
+  INIT_WALKER(S_mix_locked_p, make_walker(r_mix_locked_1, NULL, NULL, 1, 1, R_BOOL, false, 1, R_INT));
 }
 #endif
 

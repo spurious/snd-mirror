@@ -463,9 +463,49 @@ else
           fi
 	  AC_SUBST(XLIBS)
 	  AC_SUBST(XFLAGS)
-   	  AC_CHECK_LIB(Xm, XmToolTipGetLabel, [AC_DEFINE(HAVE_XmToolTipGetLabel)], , $TEST_LIBS)
-   	  AC_CHECK_LIB(Xm, XmCreateFontSelector, [AC_DEFINE(HAVE_XmCreateFontSelector)], , $TEST_LIBS)
-   	  AC_CHECK_LIB(Xm, XmCreateColorSelector, [AC_DEFINE(HAVE_XmCreateColorSelector)], , $TEST_LIBS)
+#   	  AC_CHECK_LIB(Xm, XmToolTipGetLabel, [AC_DEFINE(HAVE_XmToolTipGetLabel)], , $TEST_LIBS)
+#   	  AC_CHECK_LIB(Xm, XmCreateFontSelector, [AC_DEFINE(HAVE_XmCreateFontSelector)], , $TEST_LIBS)
+#   	  AC_CHECK_LIB(Xm, XmCreateColorSelector, [AC_DEFINE(HAVE_XmCreateColorSelector)], , $TEST_LIBS)
+# ac_check_lib is too easily fooled
+          AC_MSG_CHECKING(for XmCreateFontSelector)
+          AC_LINK_IFELSE(
+	    [AC_LANG_PROGRAM(
+        	[#include <Xm/XmAll.h>
+                 #include <Xm/FontS.h>],
+		[ Widget w;
+                  w = XmCreateFontSelector(NULL, "font-selector", NULL, 0)
+                ])],
+            [
+ 	     AC_DEFINE(HAVE_XmCreateFontSelector)
+	     AC_MSG_RESULT(yes)
+    	    ],
+	    [AC_MSG_RESULT(no)])
+          AC_MSG_CHECKING(for XmCreateColorSelector)
+          AC_LINK_IFELSE(
+	    [AC_LANG_PROGRAM(
+        	[#include <Xm/XmAll.h>
+                 #include <Xm/ColorS.h>],
+		[ Widget w;
+                  w = XmCreateColorSelector(NULL, "color-selector", NULL, 0)
+                ])],
+            [
+ 	     AC_DEFINE(HAVE_XmCreateColorSelector)
+	     AC_MSG_RESULT(yes)
+    	    ],
+	    [AC_MSG_RESULT(no)])
+          AC_MSG_CHECKING(for XmToolTipGetLabel)
+          AC_LINK_IFELSE(
+	    [AC_LANG_PROGRAM(
+        	[#include <Xm/XmAll.h>],
+		[ Widget w = NULL;
+                  w = XmToolTipGetLabel(w)
+                ])],
+            [
+ 	     AC_DEFINE(HAVE_XmToolTipGetLabel)
+	     AC_MSG_RESULT(yes)
+    	    ],
+	    [AC_MSG_RESULT(no)])
+
 	  AC_MSG_CHECKING([whether sashes support relative panes])
 	  AC_COMPILE_IFELSE(
             [AC_LANG_PROGRAM([#include <Xm/SashP.h>],

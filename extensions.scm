@@ -693,3 +693,37 @@ If 'check' is #f, the hooks are removed."
      (lambda (y)
        (sin (+ (* y 0.5 pi) (* ind (sin (* y 2.0 pi))))))
      beg dur snd chn edpos #f)))
+
+#!
+;;; -------- delay-channel 
+;;;
+;;; this is ok going forward (I think), but not in reverse
+
+(define* (delay-channel amount #:optional (beg 0) (dur #f) (snd #f) (chn #f) (edpos #f))
+  (let ((dly amount)
+	(cur-edpos (if (or (not edpos)
+			   (= edpos current-edit-position))
+		       (edit-position snd chn)
+		       edpos)))
+    (ptree-channel (lambda (y data dir)
+		     (declare (y real) (data vct) (dir boolean))
+		     (let* ((pos (inexact->exact (floor (vct-ref data 0))))
+			    (len (inexact->exact (floor (vct-ref data 1))))
+			    (val (vct-ref data (+ pos 2))))
+		       (vct-set! data (+ pos 2) y)
+		       (set! pos (1+ pos))
+		       (if (>= pos len) (vct-set! data 0 0) (vct-set! data 0 pos))
+		       val))
+		   beg dur snd chn edpos #f
+		   (lambda (fpos fdur)
+		     (let ((data (make-vct (+ dly 2))))
+		       (vct-set! data 0 0.0)
+		       (vct-set! data 1 dly)
+		       (if (= fpos 0)
+			   data
+			   (let* ((reader (make-sample-reader (1- fpos) snd chn -1 cur-edpos)))
+			     (do ((i (1- dly) (1- i)))
+				 ((< i 0))
+			       (vct-set! data (+ i 2) (reader)))
+			     data)))))))
+!#

@@ -8945,6 +8945,7 @@ keep track of which files are in a given saved state batch, and a way to rename 
 
 
 #if DEBUGGING && 0
+  /* consistency checks for the accessor state table */
   init_hit_entries();
   check_type_info_entry(ED_SIMPLE, 0, 0, false);
   check_type_info_entry(ED_ZERO, 0, 0, true);
@@ -8992,8 +8993,4 @@ append the rest?
       SOMEDAY: change over to an array of functions: ramp_start_number, xramp+scale, ptree(zero), etc
         the basic accessor sequence can be (*(arr[1]))(sf, ((*(arr[0]))(sf, sf->data[loc...]))) --
         means changing function type slightly, and ptree_zero case is sticky, and scalers are tricky 
-
-      PERHAPS: could ptree-channel have an only-forward version?
-      PERHAPS: cleaner ptree-channel interface: split "dir" into read-forward and read-backward funcs?
-      PERHAPS: could delay-channel be just offset from beg + 0 limiter at ends? -- need to mess with reader here
 */

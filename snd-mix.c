@@ -3725,6 +3725,22 @@ void mix_at_x_y(int data, char *filename, int x, int y)
     }
 }
 
+#if WITH_RUN
+off_t r_mix_position(int n);
+off_t r_mix_position(int n) {mix_state *cs; cs = cs_from_id(n); if (cs) return(cs->beg); return(-1);}
+int r_mix_chans(int n);
+int r_mix_chans(int n) {mix_state *cs; cs = cs_from_id(n); if (cs) return(cs->chans); return(0);}
+off_t r_mix_frames(int n);
+off_t r_mix_frames(int n) {return(mix_frames(n));}
+bool r_mix_locked(int n);
+bool r_mix_locked(int n) {mix_info *md; md = md_from_id(n); if (md) return(md->active_mix_state->locked); return(false);}
+bool r_mix_inverted(int n);
+bool r_mix_inverted(int n) {mix_info *md; md = md_from_id(n); if (md) return(md->active_mix_state->inverted); return(false);}
+int r_mix_track(int n);
+int r_mix_track(int n) {mix_info *md; md = md_from_id(n); if (md) return(md->active_mix_state->track); return(0);}
+Float r_mix_speed(int n);
+Float r_mix_speed(int n) {mix_state *cs; cs = cs_from_id(n); if (cs) return(cs->speed); return(0.0);}
+#endif
 
 static XEN snd_no_such_mix_error(const char *caller, XEN n)
 {
