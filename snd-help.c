@@ -394,6 +394,9 @@ void about_snd_help(void)
 NULL);
   if (info) FREE(info);
   if (features) FREE(features);
+#if HAVE_GUILE
+  if (files) FREE(files);
+#endif
 }
 
 

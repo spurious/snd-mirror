@@ -3136,7 +3136,12 @@ static xen_value *cond_form(ptree *prog, XEN form, walk_result_t need_result)
 	test_value = make_xen_value(R_BOOL, add_int_to_ptree(prog, (Int)true), R_CONSTANT);
       else test_value = walk(prog, XEN_CAR(clause), NEED_ANY_RESULT);
       if ((test_value == NULL) || (test_value->type != R_BOOL))
-	return(run_warn("cond test: %s", XEN_AS_STRING(XEN_CAR(clause))));
+	{
+	  for (i = 0; i < clause_ctr; i++) 
+	    if (fixups[i]) FREE(fixups[i]);
+	  FREE(fixups);
+	  return(run_warn("cond test: %s", XEN_AS_STRING(XEN_CAR(clause))));
+	}
       /* test was #t */
       local_clauses = XEN_CDR(clause); /* can be null */
       local_len = XEN_LIST_LENGTH(local_clauses);

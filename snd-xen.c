@@ -1170,12 +1170,19 @@ bool listener_print_p(char *msg)
 static XEN g_region_graph_style(void) {return(C_TO_XEN_INT(region_graph_style(ss)));}
 static XEN g_set_region_graph_style(XEN val) 
 {
+  graph_style_t style;
   #define H_region_graph_style "(" S_region_graph_style "): graph style of the region dialog graph. \
 The " S_region_graph_style " choices are " S_graph_lines ", " S_graph_dots ", " S_graph_filled ", " S_graph_lollipops ", \
 and " S_graph_dots_and_lines "."
   XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, S_setB S_region_graph_style, "an integer");
-  set_region_graph_style((graph_style_t)XEN_TO_C_INT(val));
-  reflect_region_graph_style();
+  style = (graph_style_t)XEN_TO_C_INT(val);
+  if (!(GRAPH_STYLE_OK(style)))
+    XEN_OUT_OF_RANGE_ERROR(S_setB S_region_graph_style, 1, val, "~A: unknown " S_lisp_graph_style);
+  else
+    {
+      set_region_graph_style(style);
+      reflect_region_graph_style();
+    }
   return(val);
 }
 
@@ -1349,7 +1356,9 @@ normally " S_mus_bshort "; -1 here means try to use the current sound's data for
 are available, but not all are compatible with all header types"
   XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, S_setB S_default_output_format, "an integer"); 
   format = XEN_TO_C_INT(val);
-  set_default_output_format(format); 
+  if (MUS_DATA_FORMAT_OK(format))
+    set_default_output_format(format); 
+  else XEN_OUT_OF_RANGE_ERROR(S_setB S_default_output_format, 1, val, "~A: unknown data format");
   return(C_TO_XEN_INT(default_output_format(ss)));
 }
 

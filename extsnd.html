@@ -261,7 +261,7 @@ to the listener here, as described above):</p>
 <pre>
 &gt;<em class=typing>auto_resize</em>
 <em class=listener>true</em>
-&gt;<em class=typing>set_auto-resize false</em>
+&gt;<em class=typing>set_auto_resize false</em>
 <em class=listener>false</em>
 </pre>
 </td></tr></table>
@@ -301,7 +301,7 @@ function. </p>
 
 <!-- audio-output-device -->
 <tr><td colspan=2><code><a class=def name="audiooutputdevice">audio-output-device</a></code></td>
-<td><code>mus_audio-default</code></td></tr>
+<td><code>mus-audio-default</code></td></tr>
 <tr><td></td><td colspan=2>Audio output device (for the play button).
 </td></tr>
 <tr><td colspan=3></td></tr>
@@ -482,7 +482,7 @@ See <a href="grfsnd.html#sndandladspa">Snd and LADSPA</a>.
 
 <!-- log-freq-start -->
 <tr><td colspan=2><code><a class=def name="logfreqstart">log-freq-start</a></code></td>
-<td><code>25.0</code></td></tr>
+<td><code>32.0</code></td></tr>
 <tr><td></td><td colspan=2>start freq used in log freq display (ffts).  Since the log display emphasizes the lower
 frequencies, but the lowest are all inaudible, it seemed more informative to squash the lowest 30Hz or so
 into a single point (0 Hz) on the log freq graphs; otherwise the audible data starts about 1/4 of the way 
@@ -1470,7 +1470,7 @@ relative to the lisp graph axis (as if the raw mouse pixel position was passed t
 <code><a class=def name="muserrorhook">mus-error-hook</a> (error-type error-message)</code></td><td align=right><b>or</b></td>
 </tr>
 <tr><td></td><td colspan=2>
-called upon mus_error.
+called upon mus-error.
 If it returns #t, Snd ignores the error (it assumes you've handled it via the hook).
 This hook is used in <i>play-sound</i> in play.scm to flush an error message that the Snd ALSA support code generates (or used to generate).
 Both mus_error and mus_print run this hook; in the mus_print case, the <i>type</i> is mus-no-error (0).
@@ -1773,7 +1773,7 @@ desensitize the "selection" button when there is no selection.
 <code><a class=def name="snderrorhook">snd-error-hook</a> (error-message)</code></td><td align=right><b>or</b>
 </td></tr>
 <tr><td></td><td colspan=2>
-called upon snd_error.
+called upon snd-error.
 If it returns #t, Snd flushes the error (it assumes you've 
 reported it via the hook).
 </td></tr>
@@ -1792,7 +1792,7 @@ reported it via the hook).
 <code><a class=def name="sndwarninghook">snd-warning-hook</a> (warning-message)</code></td><td align=right><b>or</b>
 </td></tr>
 <tr><td></td><td colspan=2>
-called upon snd_warning.
+called upon snd-warning.
 If it returns #t, Snd flushes the warning (it assumes you've 
 reported it via the hook).
 </td></tr>
@@ -1855,7 +1855,7 @@ If it returns #t, Snd does not play the selection.
 </td></tr>
 
 <tr><td></td><td colspan=2>
-called when Snd stops playing and turns off the DAC, normally upon mus_audio_close.  See snd-motif.scm.
+called when Snd stops playing and turns off the DAC, normally upon mus-audio-close.  See snd-motif.scm.
 </td></tr><tr><td colspan=3></td></tr>
 
 <!-- stop-playing-hook -->
@@ -4210,7 +4210,7 @@ restarting the sequence whenever it reaches the end.
 </td></tr>
 <tr><td></td><td>
 This procedure returns two vcts of length 'size' containing y vals (min and max) of file's channel chan's amp envs.
-'peak-file-func' if any is used to get the name of the associated peak_env_info file if the file is very large.
+'peak-file-func' if any is used to get the name of the associated peak-env-info file if the file is very large.
 'work-proc-func' is called when the amp envs are ready if the amp envs are gathered in the background.
 If 'file' is a sound index (an integer), pts is an edit-position, and the current amp envs (if any) are returned.
 peak-file-func's args are the file and the channel.  If it returns a string, that is treated as the filename
@@ -4796,7 +4796,8 @@ is ignored.
 <code><a class=def name="fftlogfrequency">fft-log-frequency</a> (<em class=narg>snd chn</em>)</code>
 </td></tr>
 <tr><td></td><td>
-spectrum frequency axis is logarithmic (#t) or linear (#f, the default).
+spectrum frequency axis is logarithmic (#t) or linear (#f, the default).  If logarithmic, the lower end
+is set by <a href="#logfreqstart">log-freq-start</a> which defaults to 32Hz.
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -4806,7 +4807,8 @@ spectrum frequency axis is logarithmic (#t) or linear (#f, the default).
 <code><a class=def name="fftlogmagnitude">fft-log-magnitude</a> (<em class=narg>snd chn</em>)</code>
 </td></tr>
 <tr><td></td><td>
-spectrum magnitude axis is in decibels (#t) or linear (#f, the default).
+spectrum magnitude axis is in decibels (#t) or linear (#f, the default).  If in decibels, the
+minimum displayed is set by <a href="#mindb">min-dB</a> which defaults to -60.
 </td></tr>
 <tr><td colspan=2></td></tr>
 

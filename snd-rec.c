@@ -1608,10 +1608,14 @@ static XEN g_recorder_out_chans(void)
 }
 static XEN g_set_recorder_out_chans(XEN val) 
 {
+  int num;
   #define H_recorder_out_chans "(" S_recorder_out_chans "): default recorder output channels (1 or 2 usually)"
   XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, S_setB S_recorder_out_chans, "an integer"); 
   init_recorder(); 
-  rp->out_chans = XEN_TO_C_INT(val);
+  num = XEN_TO_C_INT(val);
+  if (num > 0)
+    rp->out_chans = num;
+  else XEN_OUT_OF_RANGE_ERROR(S_setB S_recorder_out_chans, XEN_ONLY_ARG, val, "must be > 0");
   return(C_TO_XEN_INT(rp->out_chans));
 }
 

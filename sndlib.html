@@ -228,7 +228,6 @@ error occurs, they return -1. </p>
   int mus_audio_mixer_write(int dev, int field, int chan, float *val)
   int mus_audio_systems(void)
   char *mus_audio_system_name(int system)
-  void mus_audio_set_dsp_devices(int cards, int *dsps, int *mixers)
 </pre>
 
 <p><i>mus_audio_initialize</i> takes care of any necessary initialization.</p>
@@ -470,7 +469,6 @@ it through a mixer (a matrix, the operation being a matrix multiply).
 <li>sine_summation -- another way to create sine waves
 <li>filter, fir_filter, iir_filter -- direct form filters of any order
 <li>wave_train -- sequence of possibly overlapping waves
-<li>buffer -- a way to handle block processing in the generator world
 <li>env -- envelopes
 <li>waveshape -- waveshaping
 <li>readin, file_to_sample, file_to_frame, in_any -- file sample input
@@ -480,6 +478,7 @@ it through a mixer (a matrix, the operation being a matrix multiply).
 <li>convolve -- convolution
 <li>phase-vocoder -- phase vocoder
 <li>average -- moving window average
+<li>ssb-am -- single side-bank amplitude modulation
 </ul>
 
 <p>Some useful functions provided by clm.c are: </p>
