@@ -506,7 +506,13 @@ static void muffle_warning(char *name, char *type, char *klass, char *defaultp, 
    *   the main ones involve scrollbar settings that are claimed to be out-of-range, but that are generated
    *   by Motif itself while unmanaging the widget!
    */
-  /* fprintf(stderr, "ignoring: %s: %s\n", name, defaultp); */
+#if DEBUGGING
+  int i;
+  fprintf(stderr, "warning: %s: %s", name, defaultp);
+  for (i = 0; i < (*num_params); i++)
+    fprintf(stderr," %s", params[i]);
+  fprintf(stderr,"\n");
+#endif
 }
 
 static void ss_graph_key_press(Widget w, XtPointer context, XEvent *event, Boolean *cont) 

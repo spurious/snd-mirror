@@ -953,6 +953,7 @@ static void az_orientation_callback(Widget w, XtPointer context, XtPointer info)
 
 void set_spectro_z_angle(snd_state *ss, Float val)
 {
+  if (val < 0) val += 360;
   in_set_spectro_z_angle(ss, val);
   if (oid) XmScaleSetValue(oid->az, (int)val);
   map_chans_field(ss, FCP_Z_ANGLE, val);

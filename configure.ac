@@ -31,7 +31,7 @@ dnl Process this file with autoconf 2.50 to produce a configure script.
 #
 #--------------------------------------------------------------------------------
 
-AC_INIT(snd, 5.7, bil@ccrma.stanford.edu)
+AC_INIT(snd, 5.8, bil@ccrma.stanford.edu)
 AC_CONFIG_SRCDIR(snd.c)
 AC_CANONICAL_HOST
 AC_CONFIG_HEADER(config.h)
@@ -506,13 +506,8 @@ else
       [
 	AC_DEFINE(HAVE_GTK2)
 	with_gtk=yes
-	AC_CHECK_LIB(m, gtk_tree_model_get_iter_first, 
-			  [AC_DEFINE(HAVE_GTK_TREE_MODEL_GET_ITER_FIRST)
-			   AC_DEFINE(HAVE_GTK_TREE_PATH_NEW_FIRST)
-      			   AC_DEFINE(HAVE_GTK_FILE_SELECTION_GET_SELECT_MULTIPLE)
-      			   AC_DEFINE(HAVE_GTK_FILE_SELECTION_SET_SELECT_MULTIPLE)
-      			   AC_DEFINE(HAVE_GTK_FILE_SELECTION_GET_SELECTIONS)
-			   ], , $GTK_LIBS)
+	AC_CHECK_LIB(m, gtk_file_selection_get_selections, [AC_DEFINE(HAVE_GTK_FILE_SELECTION_GET_SELECTIONS)], , $GTK_LIBS)
+	AC_CHECK_LIB(m, gtk_icon_set_get_type, [AC_DEFINE(HAVE_GTK_ICON_SET_GET_TYPE)], , $GTK_LIBS)
 # using -lm above since -lgtk is not safe (might find older version than the pkg-config version)
 #   our version of AM_PATH_GTK_2_0 in aclocal.m4 sets GTK_LIBS before executing this branch
 #   These five functions were all new in 1.3.15, so one can stand for all

@@ -523,7 +523,7 @@ char *g_print_1(XEN obj) /* don't free return val */
   XEN str; XEN val;
   XEN port;
   str = scm_makstr (0, 0);
-  port = scm_mkstrport (XEN_ZERO, str, SCM_OPN | SCM_WRTNG, caller);
+  port = scm_mkstrport (XEN_ZERO, str, SCM_OPN | SCM_WRTNG, __FUNCTION__);
   scm_prin1 (obj, port, 1);
   val = scm_strport_to_string(port);
   scm_close_port (port);

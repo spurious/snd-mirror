@@ -11,6 +11,7 @@
 #include <X11/keysym.h>
 
 #if (USE_RENDITIONS)
+  /* TODO: get renditions working */
   #define XM_FONT_TYPE XmRenderTable
   #define XM_FONT_RESOURCE XmNrenderTable
   #define XM_FONT_FREE XmRenderTableFree

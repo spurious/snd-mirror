@@ -13,6 +13,7 @@
 static XmRenderTable get_xm_font(snd_state *ss, XFontStruct *fs, char *font, char *tag)
 {
   XmRendition tmp;
+  XmRenderTable tabl;
   int n;
   Arg args[12];
   n = 0;
@@ -20,7 +21,9 @@ static XmRenderTable get_xm_font(snd_state *ss, XFontStruct *fs, char *font, cha
   XtSetArg(args[n], XmNfontType, XmFONT_IS_FONT); n++; 
   XtSetArg(args[n], XmNloadModel, XmLOAD_DEFERRED); n++;
   tmp = XmRenditionCreate(MAIN_SHELL(ss), tag, args, n);
-  return(XmRenderTableAddRenditions(NULL, &tmp, 1, XmMERGE_NEW));
+  tabl = XmRenderTableAddRenditions(NULL, &tmp, 1, XmMERGE_NEW);
+  XmRenditionFree(tmp);
+  return(tabl);
 }
 #else
 static XmFontList get_xm_font(snd_state *ss, XFontStruct *fs, char *font, char *tag)

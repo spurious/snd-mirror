@@ -2968,10 +2968,28 @@
 (CFNC "void gtk_file_selection_show_fileop_buttons GtkFileSelection* filesel")
 (CFNC "void gtk_file_selection_hide_fileop_buttons GtkFileSelection* filesel")
 ;;; added 1.3.15:
-(CFNC "gchar** gtk_file_selection_get_selections GtkFileSelection* filesel" 'if) ; 1.3.15
-(CFNC "void gtk_file_selection_set_select_multiple GtkFileSelection* filesel gboolean select_multiple" 'if) ; 1.3.15
-(CFNC "gboolean gtk_file_selection_get_select_multiple GtkFileSelection* filesel" 'if) ; 1.3.15
+(CFNC "gchar** gtk_file_selection_get_selections GtkFileSelection* filesel" 'if 'gtk_file_selection_get_selections) ; 1.3.15
+(CFNC "void gtk_file_selection_set_select_multiple GtkFileSelection* filesel gboolean select_multiple" 'if 'gtk_file_selection_get_selections) ; 1.3.15
+(CFNC "gboolean gtk_file_selection_get_select_multiple GtkFileSelection* filesel" 'if 'gtk_file_selection_get_selections) ; 1.3.15
 ;;;
+;;; added 2.0.0
+(CLNG "GTK_TYPE_ICON_SET" 'if 'gtk_icon_set_get_type)
+(CLNG "GTK_TYPE_ICON_SOURCE" 'if 'gtk_icon_set_get_type)
+(CLNG "GTK_TYPE_SELECTION_DATA" 'if 'gtk_icon_set_get_type)
+(CLNG "GTK_TYPE_BORDER" 'if 'gtk_icon_set_get_type)
+(CLNG "GTK_TYPE_TREE_ITER" 'if 'gtk_icon_set_get_type)
+(CLNG "GTK_TYPE_TREE_PATH" 'if 'gtk_icon_set_get_type)
+(CLNG "GTK_TYPE_IDENTIFIER" 'if 'gtk_icon_set_get_type)
+(CLNG "GTK_TYPE_REQUISITION" 'if 'gtk_icon_set_get_type)
+(CFNC "GType gtk_icon_set_get_type void" 'if 'gtk_icon_set_get_type)
+(CFNC "GType gtk_icon_source_get_type void" 'if 'gtk_icon_set_get_type)
+(CFNC "GType gtk_selection_data_get_type void" 'if 'gtk_icon_set_get_type)
+(CFNC "GType gtk_border_get_type void" 'if 'gtk_icon_set_get_type)
+(CFNC "GType gtk_tree_path_get_type void" 'if 'gtk_icon_set_get_type)
+(CFNC "GType gtk_tree_iter_get_type void" 'if 'gtk_icon_set_get_type)
+(CFNC "GType gtk_identifier_get_type void" 'if 'gtk_icon_set_get_type)
+(CFNC "GType gtk_requisition_get_type void" 'if 'gtk_icon_set_get_type)
+;;;;
 (CCAST "GTK_FIXED(obj)" "GtkFixed*")
 ;(cdef "GTK_FIXED_CLASS(klass)")
 (CCHK "GTK_IS_FIXED(obj)" "GtkFixed*")
@@ -4409,7 +4427,7 @@
 (CFNC "GtkTreePath* gtk_tree_path_new_from_string gchar* path")
 (CFNC "gchar* gtk_tree_path_to_string GtkTreePath* path")
 (CFNC "GtkTreePath* gtk_tree_path_new_root void")
-(CFNC "GtkTreePath* gtk_tree_path_new_first void" 'if) ; 1.3.15
+(CFNC "GtkTreePath* gtk_tree_path_new_first void" 'if 'gtk_file_selection_get_selections) ; 1.3.15
 (CFNC "void gtk_tree_path_append_index GtkTreePath* path gint index")
 (CFNC "void gtk_tree_path_prepend_index GtkTreePath* path gint index")
 (CFNC "gint gtk_tree_path_get_depth GtkTreePath* path")
@@ -4440,7 +4458,7 @@
 (CFNC "gboolean gtk_tree_model_get_iter GtkTreeModel* tree_model GtkTreeIter* iter GtkTreePath* path")
 (CFNC "gboolean gtk_tree_model_get_iter_from_string GtkTreeModel* tree_model GtkTreeIter* iter gchar* path_string")
 (CFNC "gboolean gtk_tree_model_get_iter_root GtkTreeModel* tree_model GtkTreeIter* iter")
-(CFNC "gboolean gtk_tree_model_get_iter_first GtkTreeModel* tree_model GtkTreeIter* iter" 'if) ; 1.3.15
+(CFNC "gboolean gtk_tree_model_get_iter_first GtkTreeModel* tree_model GtkTreeIter* iter" 'if 'gtk_file_selection_get_selections) ; 1.3.15
 (CFNC "GtkTreePath* gtk_tree_model_get_path GtkTreeModel* tree_model GtkTreeIter* iter")
 (CFNC "void gtk_tree_model_get_value GtkTreeModel* tree_model GtkTreeIter* iter gint column GValue* value")
 (CFNC "gboolean gtk_tree_model_iter_next GtkTreeModel* tree_model GtkTreeIter* iter")

@@ -628,7 +628,7 @@
       strs)
      'fnc)))
 
-(define* (CFNC data #:optional spec)
+(define* (CFNC data #:optional spec spec-name)
   (let ((name (cadr-str data))
 	(args (caddr-str data)))
     (if (assoc name names)
@@ -638,7 +638,7 @@
 	      (set! types (cons type types)))
 	  (let ((strs (parse-args args 'ok)))
 	    (if spec
-		(set! funcs (cons (list name type strs args spec) funcs))
+		(set! funcs (cons (list name type strs args spec spec-name) funcs))
 		(set! funcs (cons (list name type strs args) funcs)))
 	    (set! names (cons (cons name (func-type strs)) names)))))))
 
@@ -741,11 +741,11 @@
 	(set! dbls (cons name dbls))
 	(set! names (cons (cons name 'dbl) names)))))
 
-(define* (CLNG name #:optional type)
+(define* (CLNG name #:optional type spec-name)
   (if (assoc name names)
       (no-way "~A CLNG~%" name)
       (begin
-	(set! ulongs (cons name ulongs))
+	(set! ulongs (cons (list name type spec-name) ulongs))
 	(set! names (cons (cons name 'ulong) names)))))
 
 (define* (CINT name #:optional type)
@@ -945,12 +945,16 @@
 (hey " *~%")
 (hey " *   other flags:~%")
 
-(for-each
- (lambda (func)
-   (if (and (> (length func) 4)
-	    (eq? (list-ref func 4) 'if))
-       (hey " *     HAVE_~A~%" (string-upcase (car func)))))
- funcs)
+(let ((ifs '()))
+  (for-each
+   (lambda (func)
+     (if (and (> (length func) 4)
+	      (eq? (list-ref func 4) 'if)
+	      (not (member (list-ref func 5) ifs)))
+	 (begin
+	   (hey " *     HAVE_~A~%" (string-upcase (symbol->string (list-ref func 5))))
+	   (set! ifs (cons (list-ref func 5) ifs)))))
+   funcs))
 
 (hey " *~%")
 (hey " * reference args are ignored if passed, resultant values are returned in a list.~%")
@@ -993,6 +997,7 @@
 (hey " * TODO: test suite (snd-test 24)~%")
 (hey " *~%")
 (hey " * HISTORY:~%")
+(hey " *     13-Mar:    Gtk 2.0.0~%")
 (hey " *     12-Mar:    support for GtkDestroyNotify callbacks~%")
 (hey " *     27-Feb:    remove gtk_tree_view_column_cell_render, gtk_tree_view_column_cell_focus, ~%")
 (hey " *                  gtk_tree_view_column_cell_draw_focus and gtk_tree_view_column_cell_set_dirty (privatized in 1.3.15)~%")
@@ -1363,7 +1368,7 @@
      (check-gtk1 name #t)
      (if (and (> (length data) 4)
 	      (eq? (list-ref data 4) 'if))
-	 (hey "#if HAVE_~A~%" (string-upcase name)))
+	 (hey "#if HAVE_~A~%" (string-upcase (symbol->string (list-ref data 5)))))
      (hey "static XEN gxg_~A(" name)
      (if (= (length args) 0)
 	 (heyc "void")
@@ -1626,7 +1631,7 @@
 	 (if-fnc (and (> (length func) 4)
 		      (eq? (list-ref func 4) 'if))))
     (if if-fnc
-	(say "#if HAVE_~A~%" (string-upcase (car func))))
+	(say "#if HAVE_~A~%" (string-upcase (symbol->string (list-ref func 5)))))
     (say "XEN_~A(gxg_~A_w, gxg_~A)~%" 
 	 (if (>= cargs 10) "VARGIFY"
 	     (if (> refargs 0)
@@ -1684,7 +1689,7 @@
 		      (eq? (list-ref func 4) 'if))))
     (check-gtk1 (car func))
     (if if-fnc
-	(say-hey "#if HAVE_~A~%" (string-upcase (car func))))
+	(say-hey "#if HAVE_~A~%" (string-upcase (symbol->string (list-ref func 5)))))
     (hey "  XEN_DEFINE_PROCEDURE(XG_PRE ~S XG_POST, gxg_~A, ~D, ~D, ~D, H_~A);~%"
 		     (car func) (car func) 
 		     (if (>= cargs 10) 0 args)
@@ -1952,8 +1957,23 @@
 (hey "  g_type_init();~%")
 (hey "#endif~%~%")
 
-(for-each (lambda (val) (check-gtk1 val) (hey "  DEFINE_INTEGER(XG_PRE ~S XG_POST,~80,1T~A);~%" val val)) (reverse ints))
-(for-each (lambda (val) (check-gtk1 val) (hey "  DEFINE_ULONG(XG_PRE ~S XG_POST,~80,1T~A);~%" val val)) (reverse ulongs))
+(for-each 
+ (lambda (val) 
+   (check-gtk1 val) 
+   (hey "  DEFINE_INTEGER(XG_PRE ~S XG_POST,~80,1T~A);~%" val val)) 
+ (reverse ints))
+
+(for-each 
+ (lambda (vals)
+   (let ((val (car vals)))
+     (check-gtk1 val) 
+     (if (eq? (cadr vals) 'if)
+	 (hey "#if HAVE_~A~%" (string-upcase (symbol->string (caddr vals)))))
+     (hey "  DEFINE_ULONG(XG_PRE ~S XG_POST,~80,1T~A);~%" val val)
+     (if (eq? (cadr vals) 'if)
+	 (hey "#endif~%"))))
+ (reverse ulongs))
+
 (check-gtk1 #t)
 (if (not (null? extra-ints)) 
     (with-extra hey (lambda () (for-each (lambda (val) (hey "  DEFINE_INTEGER(XG_PRE ~S XG_POST,~80,1T~A);~%" val val)) (reverse extra-ints)))))

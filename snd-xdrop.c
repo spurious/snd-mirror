@@ -1,5 +1,8 @@
 #include "snd.h"
 
+/* SOMEDAY: transfer protocol for sound data
+ */
+
 static Atom FILE_NAME; /* Sun uses this, SGI uses STRING */
 
 static XEN drop_hook;

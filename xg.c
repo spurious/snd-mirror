@@ -8,11 +8,8 @@
  *   PANGO_ENABLE_ENGINE and PANGO_ENABLE_BACKEND are handled together, and may be removed later
  *
  *   other flags:
- *     HAVE_GTK_TREE_MODEL_GET_ITER_FIRST
- *     HAVE_GTK_TREE_PATH_NEW_FIRST
- *     HAVE_GTK_FILE_SELECTION_GET_SELECT_MULTIPLE
- *     HAVE_GTK_FILE_SELECTION_SET_SELECT_MULTIPLE
  *     HAVE_GTK_FILE_SELECTION_GET_SELECTIONS
+ *     HAVE_GTK_ICON_SET_GET_TYPE
  *
  * reference args are ignored if passed, resultant values are returned in a list.
  * null ptrs are passed and returned as #f, trailing "user_data" callback function arguments are optional (default: #f).
@@ -48,6 +45,7 @@
  * TODO: test suite (snd-test 24)
  *
  * HISTORY:
+ *     13-Mar:    Gtk 2.0.0
  *     12-Mar:    support for GtkDestroyNotify callbacks
  *     27-Feb:    remove gtk_tree_view_column_cell_render, gtk_tree_view_column_cell_focus, 
  *                  gtk_tree_view_column_cell_draw_focus and gtk_tree_view_column_cell_set_dirty (privatized in 1.3.15)
@@ -8910,7 +8908,7 @@ static XEN gxg_gtk_file_selection_get_selections(XEN filesel)
 }
 #endif
 
-#if HAVE_GTK_FILE_SELECTION_SET_SELECT_MULTIPLE
+#if HAVE_GTK_FILE_SELECTION_GET_SELECTIONS
 static XEN gxg_gtk_file_selection_set_select_multiple(XEN filesel, XEN select_multiple)
 {
   #define H_gtk_file_selection_set_select_multiple "void gtk_file_selection_set_select_multiple(GtkFileSelection* filesel, \
@@ -8922,12 +8920,76 @@ gboolean select_multiple)"
 }
 #endif
 
-#if HAVE_GTK_FILE_SELECTION_GET_SELECT_MULTIPLE
+#if HAVE_GTK_FILE_SELECTION_GET_SELECTIONS
 static XEN gxg_gtk_file_selection_get_select_multiple(XEN filesel)
 {
   #define H_gtk_file_selection_get_select_multiple "gboolean gtk_file_selection_get_select_multiple(GtkFileSelection* filesel)"
   XEN_ASSERT_TYPE(XEN_GtkFileSelection__P(filesel), filesel, 1, "gtk_file_selection_get_select_multiple", "GtkFileSelection*");
   return(C_TO_XEN_gboolean(gtk_file_selection_get_select_multiple(XEN_TO_C_GtkFileSelection_(filesel))));
+}
+#endif
+
+#if HAVE_GTK_ICON_SET_GET_TYPE
+static XEN gxg_gtk_icon_set_get_type(void)
+{
+  #define H_gtk_icon_set_get_type "GType gtk_icon_set_get_type( void)"
+  return(C_TO_XEN_GType(gtk_icon_set_get_type()));
+}
+#endif
+
+#if HAVE_GTK_ICON_SET_GET_TYPE
+static XEN gxg_gtk_icon_source_get_type(void)
+{
+  #define H_gtk_icon_source_get_type "GType gtk_icon_source_get_type( void)"
+  return(C_TO_XEN_GType(gtk_icon_source_get_type()));
+}
+#endif
+
+#if HAVE_GTK_ICON_SET_GET_TYPE
+static XEN gxg_gtk_selection_data_get_type(void)
+{
+  #define H_gtk_selection_data_get_type "GType gtk_selection_data_get_type( void)"
+  return(C_TO_XEN_GType(gtk_selection_data_get_type()));
+}
+#endif
+
+#if HAVE_GTK_ICON_SET_GET_TYPE
+static XEN gxg_gtk_border_get_type(void)
+{
+  #define H_gtk_border_get_type "GType gtk_border_get_type( void)"
+  return(C_TO_XEN_GType(gtk_border_get_type()));
+}
+#endif
+
+#if HAVE_GTK_ICON_SET_GET_TYPE
+static XEN gxg_gtk_tree_path_get_type(void)
+{
+  #define H_gtk_tree_path_get_type "GType gtk_tree_path_get_type( void)"
+  return(C_TO_XEN_GType(gtk_tree_path_get_type()));
+}
+#endif
+
+#if HAVE_GTK_ICON_SET_GET_TYPE
+static XEN gxg_gtk_tree_iter_get_type(void)
+{
+  #define H_gtk_tree_iter_get_type "GType gtk_tree_iter_get_type( void)"
+  return(C_TO_XEN_GType(gtk_tree_iter_get_type()));
+}
+#endif
+
+#if HAVE_GTK_ICON_SET_GET_TYPE
+static XEN gxg_gtk_identifier_get_type(void)
+{
+  #define H_gtk_identifier_get_type "GType gtk_identifier_get_type( void)"
+  return(C_TO_XEN_GType(gtk_identifier_get_type()));
+}
+#endif
+
+#if HAVE_GTK_ICON_SET_GET_TYPE
+static XEN gxg_gtk_requisition_get_type(void)
+{
+  #define H_gtk_requisition_get_type "GType gtk_requisition_get_type( void)"
+  return(C_TO_XEN_GType(gtk_requisition_get_type()));
 }
 #endif
 #endif
@@ -17406,7 +17468,7 @@ static XEN gxg_gtk_tree_path_new_root(void)
   return(C_TO_XEN_GtkTreePath_(gtk_tree_path_new_root()));
 }
 
-#if HAVE_GTK_TREE_PATH_NEW_FIRST
+#if HAVE_GTK_FILE_SELECTION_GET_SELECTIONS
 static XEN gxg_gtk_tree_path_new_first(void)
 {
   #define H_gtk_tree_path_new_first "GtkTreePath* gtk_tree_path_new_first( void)"
@@ -17661,7 +17723,7 @@ GtkTreeIter* iter)"
   return(C_TO_XEN_gboolean(gtk_tree_model_get_iter_root(XEN_TO_C_GtkTreeModel_(tree_model), XEN_TO_C_GtkTreeIter_(iter))));
 }
 
-#if HAVE_GTK_TREE_MODEL_GET_ITER_FIRST
+#if HAVE_GTK_FILE_SELECTION_GET_SELECTIONS
 static XEN gxg_gtk_tree_model_get_iter_first(XEN tree_model, XEN iter)
 {
   #define H_gtk_tree_model_get_iter_first "gboolean gtk_tree_model_get_iter_first(GtkTreeModel* tree_model, \
@@ -29125,11 +29187,35 @@ static void define_functions(void)
 #if HAVE_GTK_FILE_SELECTION_GET_SELECTIONS
   XEN_DEFINE_PROCEDURE(XG_PRE "gtk_file_selection_get_selections" XG_POST, gxg_gtk_file_selection_get_selections, 1, 0, 0, H_gtk_file_selection_get_selections);
 #endif
-#if HAVE_GTK_FILE_SELECTION_SET_SELECT_MULTIPLE
+#if HAVE_GTK_FILE_SELECTION_GET_SELECTIONS
   XEN_DEFINE_PROCEDURE(XG_PRE "gtk_file_selection_set_select_multiple" XG_POST, gxg_gtk_file_selection_set_select_multiple, 2, 0, 0, H_gtk_file_selection_set_select_multiple);
 #endif
-#if HAVE_GTK_FILE_SELECTION_GET_SELECT_MULTIPLE
+#if HAVE_GTK_FILE_SELECTION_GET_SELECTIONS
   XEN_DEFINE_PROCEDURE(XG_PRE "gtk_file_selection_get_select_multiple" XG_POST, gxg_gtk_file_selection_get_select_multiple, 1, 0, 0, H_gtk_file_selection_get_select_multiple);
+#endif
+#if HAVE_GTK_ICON_SET_GET_TYPE
+  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_icon_set_get_type" XG_POST, gxg_gtk_icon_set_get_type, 0, 0, 0, H_gtk_icon_set_get_type);
+#endif
+#if HAVE_GTK_ICON_SET_GET_TYPE
+  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_icon_source_get_type" XG_POST, gxg_gtk_icon_source_get_type, 0, 0, 0, H_gtk_icon_source_get_type);
+#endif
+#if HAVE_GTK_ICON_SET_GET_TYPE
+  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_selection_data_get_type" XG_POST, gxg_gtk_selection_data_get_type, 0, 0, 0, H_gtk_selection_data_get_type);
+#endif
+#if HAVE_GTK_ICON_SET_GET_TYPE
+  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_border_get_type" XG_POST, gxg_gtk_border_get_type, 0, 0, 0, H_gtk_border_get_type);
+#endif
+#if HAVE_GTK_ICON_SET_GET_TYPE
+  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_path_get_type" XG_POST, gxg_gtk_tree_path_get_type, 0, 0, 0, H_gtk_tree_path_get_type);
+#endif
+#if HAVE_GTK_ICON_SET_GET_TYPE
+  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_iter_get_type" XG_POST, gxg_gtk_tree_iter_get_type, 0, 0, 0, H_gtk_tree_iter_get_type);
+#endif
+#if HAVE_GTK_ICON_SET_GET_TYPE
+  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_identifier_get_type" XG_POST, gxg_gtk_identifier_get_type, 0, 0, 0, H_gtk_identifier_get_type);
+#endif
+#if HAVE_GTK_ICON_SET_GET_TYPE
+  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_requisition_get_type" XG_POST, gxg_gtk_requisition_get_type, 0, 0, 0, H_gtk_requisition_get_type);
 #endif
 #endif
   XEN_DEFINE_PROCEDURE(XG_PRE "gtk_fixed_get_type" XG_POST, gxg_gtk_fixed_get_type, 0, 0, 0, H_gtk_fixed_get_type);
@@ -30182,7 +30268,7 @@ static void define_functions(void)
   XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_path_new_from_string" XG_POST, gxg_gtk_tree_path_new_from_string, 1, 0, 0, H_gtk_tree_path_new_from_string);
   XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_path_to_string" XG_POST, gxg_gtk_tree_path_to_string, 1, 0, 0, H_gtk_tree_path_to_string);
   XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_path_new_root" XG_POST, gxg_gtk_tree_path_new_root, 0, 0, 0, H_gtk_tree_path_new_root);
-#if HAVE_GTK_TREE_PATH_NEW_FIRST
+#if HAVE_GTK_FILE_SELECTION_GET_SELECTIONS
   XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_path_new_first" XG_POST, gxg_gtk_tree_path_new_first, 0, 0, 0, H_gtk_tree_path_new_first);
 #endif
   XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_path_append_index" XG_POST, gxg_gtk_tree_path_append_index, 2, 0, 0, H_gtk_tree_path_append_index);
@@ -30215,7 +30301,7 @@ static void define_functions(void)
   XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_model_get_iter" XG_POST, gxg_gtk_tree_model_get_iter, 3, 0, 0, H_gtk_tree_model_get_iter);
   XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_model_get_iter_from_string" XG_POST, gxg_gtk_tree_model_get_iter_from_string, 3, 0, 0, H_gtk_tree_model_get_iter_from_string);
   XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_model_get_iter_root" XG_POST, gxg_gtk_tree_model_get_iter_root, 2, 0, 0, H_gtk_tree_model_get_iter_root);
-#if HAVE_GTK_TREE_MODEL_GET_ITER_FIRST
+#if HAVE_GTK_FILE_SELECTION_GET_SELECTIONS
   XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_model_get_iter_first" XG_POST, gxg_gtk_tree_model_get_iter_first, 2, 0, 0, H_gtk_tree_model_get_iter_first);
 #endif
   XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_model_get_path" XG_POST, gxg_gtk_tree_model_get_path, 2, 0, 0, H_gtk_tree_model_get_path);
@@ -39174,6 +39260,30 @@ static void define_integers(void)
   DEFINE_ULONG(XG_PRE "GDK_TYPE_COLORSPACE" XG_POST,                            GDK_TYPE_COLORSPACE);
   DEFINE_ULONG(XG_PRE "GDK_TYPE_PIXBUF_ERROR" XG_POST,                          GDK_TYPE_PIXBUF_ERROR);
   DEFINE_ULONG(XG_PRE "GDK_TYPE_INTERP_TYPE" XG_POST,                           GDK_TYPE_INTERP_TYPE);
+#if HAVE_GTK_ICON_SET_GET_TYPE
+  DEFINE_ULONG(XG_PRE "GTK_TYPE_ICON_SET" XG_POST,                              GTK_TYPE_ICON_SET);
+#endif
+#if HAVE_GTK_ICON_SET_GET_TYPE
+  DEFINE_ULONG(XG_PRE "GTK_TYPE_ICON_SOURCE" XG_POST,                           GTK_TYPE_ICON_SOURCE);
+#endif
+#if HAVE_GTK_ICON_SET_GET_TYPE
+  DEFINE_ULONG(XG_PRE "GTK_TYPE_SELECTION_DATA" XG_POST,                        GTK_TYPE_SELECTION_DATA);
+#endif
+#if HAVE_GTK_ICON_SET_GET_TYPE
+  DEFINE_ULONG(XG_PRE "GTK_TYPE_BORDER" XG_POST,                                GTK_TYPE_BORDER);
+#endif
+#if HAVE_GTK_ICON_SET_GET_TYPE
+  DEFINE_ULONG(XG_PRE "GTK_TYPE_TREE_ITER" XG_POST,                             GTK_TYPE_TREE_ITER);
+#endif
+#if HAVE_GTK_ICON_SET_GET_TYPE
+  DEFINE_ULONG(XG_PRE "GTK_TYPE_TREE_PATH" XG_POST,                             GTK_TYPE_TREE_PATH);
+#endif
+#if HAVE_GTK_ICON_SET_GET_TYPE
+  DEFINE_ULONG(XG_PRE "GTK_TYPE_IDENTIFIER" XG_POST,                            GTK_TYPE_IDENTIFIER);
+#endif
+#if HAVE_GTK_ICON_SET_GET_TYPE
+  DEFINE_ULONG(XG_PRE "GTK_TYPE_REQUISITION" XG_POST,                           GTK_TYPE_REQUISITION);
+#endif
   DEFINE_ULONG(XG_PRE "GTK_TYPE_ACCEL_GROUP" XG_POST,                           GTK_TYPE_ACCEL_GROUP);
   DEFINE_ULONG(XG_PRE "GTK_TYPE_ACCEL_LABEL" XG_POST,                           GTK_TYPE_ACCEL_LABEL);
   DEFINE_ULONG(XG_PRE "GTK_TYPE_ACCESSIBLE" XG_POST,                            GTK_TYPE_ACCESSIBLE);
@@ -39679,7 +39789,7 @@ static int xg_already_inited = 0;
       define_strings();
       XEN_YES_WE_HAVE("xg");
 #if HAVE_GUILE
-      XEN_EVAL_C_STRING("(define xm-version \"11-Mar-02\")");
+      XEN_EVAL_C_STRING("(define xm-version \"12-Mar-02\")");
 #endif
       xg_already_inited = 1;
     }

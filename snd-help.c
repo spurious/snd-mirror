@@ -275,6 +275,7 @@ void news_help(snd_state *ss)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+13-Mar:  snd 5.8.\n\
 12-Mar:  header editor bugfix (thanks to Ludger Brummer).\n\
 11-Mar:  removed channel-sync.\n\
 28-Feb:  edit-position bugfix (thanks to Ludger Brummer).\n\

@@ -382,7 +382,7 @@ enum {COLOR_POSITION, COLOR_ZOOM};
 
 #define spectro_z_angle(ss) ss->Spectro_Z_Angle
 #define in_set_spectro_z_angle(ss, a) ss->Spectro_Z_Angle = a
-#define DEFAULT_SPECTRO_Z_ANGLE -2.0
+#define DEFAULT_SPECTRO_Z_ANGLE 358.0
 
 #define spectro_x_scale(ss) ss->Spectro_X_Scale
 #define in_set_spectro_x_scale(ss, a) ss->Spectro_X_Scale = a

@@ -1758,6 +1758,15 @@ static snd_info *add_sound_window_with_parent (Widget parent, char *filename, sn
       XtAddCallback(sw[W_play], XmNhelpCallback, play_help_callback, ss);
       XtAddCallback(sw[W_play], XmNvalueChangedCallback, play_button_callback, (XtPointer)sp);
 
+#if 0
+      {
+	XmString play;
+	play = XmStringGenerate(STR_play, NULL, XmCHARSET_TEXT, "button_font");
+	XtVaSetValues(sw[W_play], XmNlabelString, play, NULL); n++;
+	XmStringFree(play);
+      }
+#endif
+
       n = 0;
       if (need_colors) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;

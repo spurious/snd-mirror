@@ -7612,7 +7612,7 @@
 	    (snd-display ";4th scale-by mix ~A: ~A ~A" md vals new-vals)))
       (IF (not (equal? (edits (list md)) (list 2 0)))
 	  (snd-display ";4th scaled mix edits: ~A?" (edits (list md))))
-      (set! (mix-length md) 4)
+      (if (mix? md) (set! (mix-length md) 4))
       (close-sound oboe)
       )
 
@@ -15531,7 +15531,9 @@ EDITS: 4
 				       (IF (not (string=? n "hiho"))
 					   (snd-display "XtWarning: ~A" n))))
 	    (|XtAppWarning (car (main-widgets)) "hiho")
-
+	    (|XtAppSetWarningMsgHandler (car (main-widgets)) 
+					(lambda (name type klass def pars num)
+					  (snd-print (format #f ";ignore: ~A ~A ~A~%" name def pars))))
 
 	    ;; ---------------- XM tests ----------------
 	    (let ((dpy (|XtDisplay (cadr (main-widgets))))
@@ -15725,6 +15727,8 @@ EDITS: 4
 		(let ((r1 (|XmRenditionCreate (cadr (main-widgets)) "r1" (list |XmNfontName "fixed"))))
 		  (|XmRenditionFree r1))
 		
+		(IF (not (equal? (|XmDropSiteQueryStackingOrder (list-ref (main-widgets) 4)) (list #f)))
+		    (snd-display ";XmDropSiteQueryStackingOrder: ~A" (|XmDropSiteQueryStackingOrder (list-ref (main-widgets) 4)) (list #f)))
 		(let ((tab (|XmStringComponentCreate |XmSTRING_COMPONENT_TAB 0 #f))
 		      (row #f)
 		      (table '())
@@ -16744,6 +16748,8 @@ EDITS: 4
 		(set! (|data e) "hiho")
 		(|XSendEvent dpy window #f 0 e))
 	      (|XmRemoveProtocols shell prop (list proto1)))
+	    (|XmCascadeButtonHighlight (|XmCreateCascadeButton (cadr (main-widgets)) "cascade" '()) #f)
+	    ;(|XmCascadeButtonGadgetHighlight (|XmCreateCascadeButtonGadget (cadr (main-widgets)) "gadget" '()) #f)
 
 	    (let* ((create-procs (list
 			            |XmCreateMenuShell |XmCreateSimpleCheckBox |XmCreateSimpleRadioBox
