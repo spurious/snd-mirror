@@ -4,7 +4,7 @@
 
 # Author: Michael Scholz <scholz-micha@gmx.de>
 # Created: Tue Apr 08 17:05:03 CEST 2003
-# Last: Fri Apr 16 05:59:18 CEST 2004
+# Last: Mon May 10 23:18:25 CEST 2004
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -409,7 +409,7 @@ else
   $rbm_channels      = 1                 unless defined? $rbm_channels
   $rbm_header_type   = Mus_next          unless defined? $rbm_header_type
   $rbm_data_format   = Mus_lshort        unless defined? $rbm_data_format
-  $rbm_locsig_type   = Mus_linear        unless defined? $rbm_locsig_type
+  $rbm_locsig_type   = Mus_interp_linear unless defined? $rbm_locsig_type
   $rbm_rt_bufsize    = 512               unless defined? $rbm_rt_bufsize
   $rbm_output_device = Mus_audio_default unless defined? $rbm_output_device
 end
@@ -1627,7 +1627,8 @@ Example: rbm_mix(\"tmp\")\n") if filename == :help
 end
 
 class With_DAC < Snd_Instrument
-  # handles no reverb
+  # no reverb
+  # handles instruments parallel if computing is fast enough
   def initialize(*args, &body)
     @clm = false
     super
@@ -1635,30 +1636,45 @@ class With_DAC < Snd_Instrument
     @device  = get_args(args, :device, $rbm_output_device)
     @ws_reverb = @ws_output = @reverb = false
     @output = "dac"
-    @start_dac = nil
+    # @instruments = [[first_samp, last_samp, body], ...]
+    @instruments = []
+    @current_sample = 0
   end
 
   def run_instrument(start, dur, *args, &body)
-    loc = super
-    len = seconds2samples(dur)
-    bufsize = [len, @bufsize].min
-    dac_vct  = make_vct(bufsize)
-    dac_data = make_sound_data(@channels, bufsize)
-    while (Time.now - @start_dac) < start
+    # A bad idea; it scales all current parallel instruments in method
+    # REAL_RUN with the last called instrument-locsig-gen.
+    @loc = super
+    beg, ends = times2samples(start, dur)
+    @instruments.push([beg, ends, body])
+    real_run(beg)
+  end
+
+  def real_run(sample)
+    while @current_sample < sample
+      idxs = []
+      dac_vct = make_vct(@bufsize)
       ws_interrupt?
-    end
-    ws_interrupt?
-    -1.step(len - 2, bufsize) do |samp|
-      th = Thread.new do
-        vct_map!(dac_vct, lambda do | | body.call(samp += 1) end)
-        @channels.times do |chn|
-          vct2sound_data(vct_scale!(vct_copy(dac_vct), locsig_ref(loc, chn)), dac_data, chn)
+      # calls all instruments in current sample-window bufsize times
+      # and accumulates the result in dac_vct
+      @instruments.each_with_index do |arg, idx|
+        beg, ends, body = arg
+        if @current_sample.between?(beg, ends)
+          samp = @current_sample - 1
+          vct_add!(dac_vct, vct_map!(make_vct(@bufsize), lambda do | | body.call(samp += 1) end))
+        elsif @current_sample >= ends
+          idxs.push(idx)
         end
       end
-      th.alive? and th.join
-      Thread.new(dac_data, bufsize) do |d, s|
-        mus_audio_write(@ws_output, d, s)
+      # delete collected instrument-entries <= current sample
+      idxs.reverse.each do |idx| @instruments.delete_at(idx) end
+      dac_data = make_sound_data(@channels, @bufsize)
+      ws_interrupt?
+      @channels.times do |chn|
+        vct2sound_data(vct_scale!(vct_copy(dac_vct), locsig_ref(@loc, chn)), dac_data, chn)
       end
+      mus_audio_write(@ws_output, dac_data, @bufsize)
+      @current_sample += @bufsize
     end
   end
 
@@ -1669,16 +1685,16 @@ class With_DAC < Snd_Instrument
     if @ws_output < 0
       ws_error("%s#%s: can't open DAC (%s)", self.class, get_func_name, @ws_output.inspect)
     end
-    @start_dac = Time.now
   end
 
   def after_output
-    mus_audio_close(@ws_output) if @ws_output.kind_of?(Numeric)
-    @ws_output = false
+    # flush contents of instrument array
+    real_run(@current_sample + 1) until @instruments.empty?
   end
 
   def finish_sound
-    after_output
+    mus_audio_close(@ws_output) if @ws_output.kind_of?(Numeric)
+    @ws_output = false
   end
   
   def statistics
