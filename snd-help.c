@@ -295,6 +295,7 @@ void news_help(snd_state *ss)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+20-May:  make-variable-display in snd-motif.scm.\n\
 16-May:  definstrument changes, added clm-ins.scm.\n\
 14-May:  optional begin-time arg to make-mix-sample-reader.\n\
 12-May:  removed --with-html and associated variables. added html-program.\n\

@@ -1,5 +1,6 @@
 Snd change log
 
+  20-May:    make-variable-display in snd-motif.scm.
   16-May:    definstrument changes, added clm-ins.scm.
   14-May:    optional begin-time arg to make-mix-sample-reader.
   12-May:    removed --with-html and associated variables. added html-program.

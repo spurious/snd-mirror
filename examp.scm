@@ -2050,6 +2050,8 @@ a sort of play list: (region-play-list (list (list 0.0 0) (list 0.5 1) (list 1.0
 
 ;;; -------- chain-dsps
 
+(if (not (defined? 'definstrument)) (define definstrument define*))
+
 (definstrument (chain-dsps beg dur #:rest dsps)
   ;; I assume the dsps are already made, 
   ;;          the envs are present as break-point lists

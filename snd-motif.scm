@@ -30,6 +30,8 @@
 ;;; show-minibuffer-font shows what font is associated with the minibuffer
 ;;; add-find-to-listener enables C-s and C-r in the listener
 ;;; add a function to be called when the window manager sends us a "save yourself" message
+;;; add-text-to-status-area puts a text widget in the notebook status area
+;;; make-variable-display displays an arbitrary set of expressions/variables in a notebook widget
 
 (use-modules (ice-9 common-list) (ice-9 format))
 
@@ -1470,7 +1472,7 @@ Reverb-feedback sets the scaler on the feedback.\n\
 		   (set! pix (.pixel col)))))
       pix)))
 
-(define (make-level-meter parent width height args)
+(define* (make-level-meter parent width height args #:optional (resizable #t))
   (let* ((frame (XtCreateManagedWidget "meter-frame" xmFrameWidgetClass parent
 		  (append (list XmNshadowType       XmSHADOW_ETCHED_IN
 				XmNwidth            width
@@ -1478,23 +1480,34 @@ Reverb-feedback sets the scaler on the feedback.\n\
 				XmNshadowThickness  (if (> width 500) 6 3))
 			  args)))
 	 (meter (XtCreateManagedWidget "meter" xmDrawingAreaWidgetClass frame
-		  (list XmNbackground       (white-pixel)
-			XmNforeground       (black-pixel)
-			XmNtopAttachment    XmATTACH_FORM
-			XmNbottomAttachment XmATTACH_FORM
-			XmNleftAttachment   XmATTACH_FORM
-			XmNrightAttachment  XmATTACH_FORM)))
+                  (if resizable				       
+		      (list XmNbackground       (white-pixel)
+			    XmNforeground       (black-pixel)
+			    XmNtopAttachment    XmATTACH_FORM
+			    XmNbottomAttachment XmATTACH_FORM
+			    XmNleftAttachment   XmATTACH_FORM
+			    XmNrightAttachment  XmATTACH_FORM)
+		      (list XmNbackground       (white-pixel)
+			    XmNforeground       (black-pixel)
+			    XmNwidth            width
+			    XmNheight           height
+			    XmNresizePolicy     XmRESIZE_NONE
+			    XmNtopAttachment    XmATTACH_FORM
+			    XmNbottomAttachment XmATTACH_FORM
+			    XmNleftAttachment   XmATTACH_FORM
+			    XmNrightAttachment  XmATTACH_FORM))))
 	 (context (list meter 0.0 1.0 0.0 0.0 width height)))
     (XtAddCallback meter XmNexposeCallback 
 		    (lambda (w c i) 
 		      (display-level c)) 
 		    context)
-    (XtAddCallback meter XmNresizeCallback 
-		    (lambda (w c i) 
-		      (list-set! c 5 (cadr (XtGetValues w (list XmNwidth 0))))
-		      (list-set! c 6 (cadr (XtGetValues w (list XmNheight 0))))
-		      (display-level c))
-		    context)
+    (if resizable
+	(XtAddCallback meter XmNresizeCallback 
+		       (lambda (w c i) 
+			 (list-set! c 5 (cadr (XtGetValues w (list XmNwidth 0))))
+			 (list-set! c 6 (cadr (XtGetValues w (list XmNheight 0))))
+			 (display-level c))
+		       context))
     context))
 
 (define (display-level meter-data)
@@ -2411,6 +2424,156 @@ Reverb-feedback sets the scaler on the feedback.\n\
      (thunk))
    #f))
 
+
+(define (add-text-to-status-area)
+  ;; it might be a better use of this space to put dlp's icon row in it
+  (let ((notebook (list-ref (main-widgets) 3)))
+    (if (XmIsNotebook notebook)
+	(let ((text (XtCreateManagedWidget "notebook-text" xmTextFieldWidgetClass notebook
+	              (list XmNbackground (basic-color)))))
+	  (XtAddCallback text XmNfocusCallback
+			 (lambda (w c i)
+			   (XtSetValues w (list XmNbackground (white-pixel)))))
+	  (XtAddCallback text XmNlosingFocusCallback
+			 (lambda (w c i)
+			   (XtSetValues w (list XmNbackground (basic-color)))))
+	  text)
+	#f)))
+	  
+
+
+;;; -------- state display panel --------
+
+(define variables-dialog #f)
+(define variables-notebook #f)
+(define variables-pages '())
+
+(define (make-variables-dialog)
+  (if (not (Widget? variables-dialog))
+      (let ((xdismiss (XmStringCreate "Dismiss" XmFONTLIST_DEFAULT_TAG))
+	    (titlestr (XmStringCreate "Variables" XmFONTLIST_DEFAULT_TAG)))
+	(set! variables-dialog 
+	      (XmCreateTemplateDialog (cadr (main-widgets)) "variables-dialog"
+                (list XmNokLabelString       xdismiss
+		      XmNautoUnmanage        #f
+		      XmNdialogTitle         titlestr
+		      XmNresizePolicy        XmRESIZE_GROW
+	              XmNnoResize            #f
+		      XmNtransient           #f
+		      XmNheight              400
+		      XmNbackground          (basic-color))))
+
+	(XtVaSetValues (XmMessageBoxGetChild variables-dialog XmDIALOG_OK_BUTTON)
+		       (list XmNarmColor   (pushed-button-color)
+			     XmNbackground (basic-color)))
+	(XtAddCallback variables-dialog 
+		       XmNokCallback (lambda (w context info)
+				       (XtUnmanageChild variables-dialog)))
+	(XmStringFree xdismiss)
+	(XmStringFree titlestr)
+
+	(set! variables-notebook
+	      (XtCreateManagedWidget "variables-notebook" xmNotebookWidgetClass variables-dialog
+		(list XmNleftAttachment      XmATTACH_FORM
+		      XmNrightAttachment     XmATTACH_FORM
+		      XmNtopAttachment       XmATTACH_FORM
+		      XmNbottomAttachment    XmATTACH_WIDGET
+		      XmNbottomWidget        (XmMessageBoxGetChild variables-dialog XmDIALOG_SEPARATOR)
+		      XmNbackground          (basic-color)
+		      XmNframeBackground     (zoom-color)
+		      XmNbindingWidth        14)))
+	(XtManageChild variables-dialog)
+	variables-dialog)))
+
+(define* (make-variable-display page-name variable-name #:optional (type 'text) (domain (list 0.0 1.0)))
+  ;; type = 'text, 'meter, 'graph, 'spectrum, 'scale
+  (if (not (Widget? variables-dialog)) (make-variables-dialog))
+  (let ((page (cdr (or (assoc page-name variables-pages)
+		       (let ((new-page (cons page-name 
+					     (XtCreateManagedWidget page-name xmRowColumnWidgetClass variables-notebook
+								    (list XmNorientation XmVERTICAL
+									  XmNbackground  (basic-color))))))
+			 (XtCreateManagedWidget page-name xmPushButtonWidgetClass variables-notebook
+			   (list XmNnotebookChildType XmMAJOR_TAB
+				 XmNbackground        (basic-color)))
+			 (set! variables-pages (cons new-page variables-pages))
+			 new-page))))
+	(var-label (string-append variable-name ":")))
+    (case type
+      ((text)
+	;; add a horizontal pair: label text
+       (let* ((row (XtCreateManagedWidget (string-append variable-name "-row") xmRowColumnWidgetClass page
+		     (list XmNorientation XmHORIZONTAL
+			   XmNbackground  (basic-color))))
+	      (label (XtCreateManagedWidget var-label xmLabelWidgetClass row
+		       (list XmNbackground  (basic-color)))))
+	 (XtCreateManagedWidget (string-append variable-name "-value") xmTextFieldWidgetClass row
+	   (list XmNrightAttachment XmATTACH_FORM
+		 XmNbackground (WhitePixelOfScreen (DefaultScreenOfDisplay (XtDisplay variables-dialog)))))))
+	((scale)
+	 ;; scale bar with red "thermometer"
+	 (let* ((title (XmStringCreate var-label XmFONTLIST_DEFAULT_TAG))
+		(scl (XtCreateManagedWidget variable-name xmScaleWidgetClass page
+		      (list XmNbackground  (basic-color)
+			    XmNslidingMode XmTHERMOMETER
+			    XmNminimum (inexact->exact (* 100 (car domain)))
+			    XmNmaximum (inexact->exact (* 100 (cadr domain)))
+			    XmNdecimalPoints 2
+			    XmNtitleString title
+			    XmNorientation XmHORIZONTAL
+			    XmNshowValue XmNEAR_BORDER))))
+	   (XtVaSetValues (find-child scl "Scrollbar") (list XmNtroughColor (red-pixel)))
+	   (XmStringFree title)
+	   scl))
+	((meter)
+	 ;; using the level meters in snd-motif.scm
+	 (let* ((height 70)
+		(width 210)
+		(label (XtCreateManagedWidget var-label xmLabelWidgetClass page
+					      (list XmNbackground  (basic-color)))))
+	   (make-level-meter page width height '() #f)))
+	;; TODO: graph/spectrum variable display
+	((graph) #f)
+	((spectrum) #f)
+	(else #f))))
+
+(define (dpy var widget)
+  (if (Widget? widget)
+      (if (XmIsTextField widget)
+	  (let ((old-str (XmTextFieldGetString widget))
+		(new-str (if (number? var)
+			     (number->string var)
+			     (if (string? var)
+				 var
+				 (format #f "~A" var)))))
+	    (if (not (string=? old-str new-str))
+		(begin
+		  (XmTextFieldSetString widget new-str)
+		  (if (XtIsManaged widget)
+		      (XmUpdateDisplay widget)))))
+	  (if (XmIsScale widget)
+	      (XmScaleSetValue widget (inexact->exact (* 100 var)))))
+      (if (and (list? widget)
+	       (XmIsDrawingArea (car widget)))
+	  (begin
+	    (list-set! widget 1 var)
+	    (display-level widget)
+	    (XmUpdateDisplay (car widget)))))
+  var)
+
+#!
+(define wid (make-variable-display "do-loop" "i*2" 'text))
+(define wid1 (make-variable-display "do-loop" "i" 'text))
+  (do ((i 0 (1+ i)))
+      ((= i 10))
+    (dpy (* (dpy i wid1) 2) wid))
+
+(define wid2 (make-variable-display "a-loop" "k*2" 'meter))
+;(define wid3 (make-variable-display "a-loop" "k" 'scale '(0 40)))
+  (do ((k 0 (1+ k)))
+      ((= k 11))
+    (dpy (* k .02) wid2))
+!#
 
 
 ;;; SOMEDAY: bess-translations (first case is bess.scm)

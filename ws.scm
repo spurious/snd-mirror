@@ -7,10 +7,9 @@
 ;;; TODO: continuation from interrupt? (caller could check vals, then resume -- can this be from C as well?)
 ;;;       could this be done via snd-debug (extensions.scm) and a with-sound wrapper?
 ;;; TODO: GUI for ins display/control (this could work in any algo) -- see wsx.scm
-;;;       make-panel name -> widget
-;;;       panel-display wid label val -> val
 ;;;       panel-control wid label type-or-range?) -> current value
 ;;;       some way to include gen as "val" in display
+;;; TODO: with-offset-sound notehook both could be implemented via wrapper code
 
 ;;; changed default variable names 3-Apr-03 for Common Music's benefit
 ;;;   *clm-channels* is the default number of with-sound output chans in
@@ -30,7 +29,7 @@
 (define (seconds->samples secs) (inexact->exact (round (* secs (mus-srate)))))
 (define (times->samples beg dur) (list (seconds->samples beg) (seconds->samples (+ beg dur))))
 
-(define definstrument define*)
+(if (not (defined? 'definstrument)) (define definstrument define*))
 
 (define* (with-sound-helper thunk 
 			    #:key (srate *clm-srate*) 

@@ -7,10 +7,11 @@
   #include <config.h>
 #endif
 
-#define XM_DATE "9-May-03"
+#define XM_DATE "20-May-03"
 
 
 /* HISTORY: 
+ *   20-May:    showValue resource is int (enumeration) in Motif 2.
  *   9-May:     Ruby fixups (some functions accidentally omitted earlier).
  *   8-Apr:     XSetErrorHandler proc takes XErrorEvent, not XEvent 2nd arg (thanks Friedrich Delgado Friedrichs)
  *   7-Apr:     more changes for the WITH_GTK_AND_X11 switch.
@@ -722,7 +723,8 @@ enum {XM_INT, XM_ULONG, XM_UCHAR, XM_FLOAT, XM_STRING, XM_XMSTRING, XM_STRING_TA
       XM_VISUAL, XM_RECTANGLE_LIST, XM_WIDGET_CLASS, XM_STRING_OR_INT,
       XM_TRANSFER_CALLBACK, XM_CONVERT_CALLBACK, XM_SEARCH_CALLBACK, XM_ORDER_CALLBACK,
       XM_QUALIFY_CALLBACK, XM_ALLOC_COLOR_CALLBACK, XM_POPUP_CALLBACK, XM_SCREEN_COLOR_CALLBACK,
-      XM_DROP_CALLBACK, XM_TRANSFER_ENTRY_LIST, XM_DRAG_CALLBACK, XM_STRING_OR_XMSTRING, XM_PARSE_CALLBACK
+      XM_DROP_CALLBACK, XM_TRANSFER_ENTRY_LIST, XM_DRAG_CALLBACK, XM_STRING_OR_XMSTRING, XM_PARSE_CALLBACK,
+      XM_BOOLEAN_OR_INT
 };
 
 static int resource_type(char *resource);
@@ -1743,6 +1745,12 @@ static Arg *XEN_TO_C_Args(XEN inargl)
 	  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(value), value, XEN_ONLY_ARG, name, "a boolean"); 
 	  XtSetArg(args[i], name, (XtArgVal)(XEN_TO_C_BOOLEAN(value)));
 	  break;
+	case XM_BOOLEAN_OR_INT:
+	  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(value) || XEN_INTEGER_P(value), value, XEN_ONLY_ARG, name, "a boolean or int"); 
+	  if (XEN_BOOLEAN_P(value))
+	    XtSetArg(args[i], name, (XtArgVal)(XEN_TO_C_BOOLEAN(value)));
+	  else XtSetArg(args[i], name, (XtArgVal)(XEN_TO_C_INT(value)));
+	  break;
 	case XM_PIXEL:
 	  XEN_ASSERT_TYPE(XEN_Pixel_P(value), value, XEN_ONLY_ARG, name, "a pixel"); 
 	  XtSetArg(args[i], name, (XtArgVal)(XEN_TO_C_Pixel(value)));
@@ -2015,6 +2023,7 @@ static XEN C_TO_XEN_ANY(Widget w, char *name, unsigned long *v)
       return(C_TO_XEN_Widgets((Widget *)value, ilen));
       break;
     case XM_BOOLEAN:	      return(C_TO_XEN_BOOLEAN(value));
+    case XM_BOOLEAN_OR_INT:   return(C_TO_XEN_INT(value));
     case XM_SEARCH_CALLBACK:
       j = map_over_protected_elements(find_searchproc, (unsigned long)w);
       if (j >= 0) return(XEN_LIST_REF(xm_protected_element(j), CALLBACK_FUNC));
@@ -23022,7 +23031,11 @@ static void define_strings(void)
   DEFINE_RESOURCE(XmNshowArrows, XM_BOOLEAN);
   DEFINE_RESOURCE(XmNshowAsDefault, XM_DIMENSION);
   DEFINE_RESOURCE(XmNshowSeparator, XM_BOOLEAN);
+#if MOTIF_2
+  DEFINE_RESOURCE(XmNshowValue, XM_BOOLEAN_OR_INT); /* should be int, but that's incompatible with tons of existing code */
+#else
   DEFINE_RESOURCE(XmNshowValue, XM_BOOLEAN);
+#endif
   DEFINE_RESOURCE(XmNsimpleCallback, XM_CALLBACK);
   /* doc p905 calls this an XtCallbackProc (not list), but next pages says it's a list, Motif sources appear to treat it as a proc */
   DEFINE_RESOURCE(XmNsingleSelectionCallback, XM_CALLBACK);

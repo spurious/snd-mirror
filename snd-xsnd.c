@@ -1,5 +1,12 @@
 #include "snd.h"
 
+/* TODO: if -notebook and show-listener, the listener pane is either closed or obscured */
+/* TODO: if -notebook, the status area is just blank space */
+/* SOMEDAY: user-directable snd/chn display (place current snd-handler in any widget) (reuse?) */
+/* TODO: if background pixmap, icon field is not also set (and probably not during use as well) */
+/* TODO: in all dialogs, some of the buttons (the extras?) don't get the background pixmap? ditto the menus, and effects dialogs */
+/* TODO: in filter env list Ruby case, extra comma at end:  1.000, ] */
+
 #if HAVE_XPM
   #include <X11/xpm.h>
 #endif
@@ -2537,7 +2544,10 @@ static snd_info *add_sound_window_with_parent (Widget parent, char *filename, sn
 #if (XmVERSION > 1)
       if (sound_style(ss) == SOUNDS_IN_NOTEBOOK)
 	{
-	  set_label(sx->tab, just_filename(sp->short_filename));
+	  char *name;
+	  name = just_filename(sp->short_filename);
+	  set_label(sx->tab, name);
+	  FREE(name);
 	}
 #endif
     }

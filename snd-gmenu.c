@@ -124,11 +124,7 @@ static int call_menu_hook(char *name, char *option)
   return(XEN_NOT_FALSE_P(res));
 }
 
-#if HAVE_GUILE
-  #define IF_MENU_HOOK(NAME, OPTION) if (call_menu_hook(_(NAME), _(OPTION)))
-#else
- #define IF_MENU_HOOK(NAME, OPTION)
-#endif
+#define IF_MENU_HOOK(NAME, OPTION) if (call_menu_hook(_(NAME), _(OPTION)))
 
 
 /* -------------------------------- FILE MENU -------------------------------- */

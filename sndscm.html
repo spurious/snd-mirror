@@ -2260,7 +2260,7 @@ in Linux/OSS, tries to reduce soundcard background racket.
 appends <i>msg</i> to whatever is in <i>snd</i>'s minibuffer.
 <b><a name="sndselectmix">select-mix</a></b> sets the selected mix (#f = none).
 <b>dismiss-all-dialogs</b> deactivates all active dialogs.
-<b>with-html</b>sets up Help menu callbacks to send netscape 
+<b>with-html</b> sets up Help menu callbacks to send netscape 
 a url to open, rather than opening Snd's help dialog.
 </p>
 
@@ -2312,15 +2312,18 @@ waterfall spectrum display of the incoming audio data.  <b>stop-waterfall</b> tu
   <em class=def>show-minibuffer-font</em>
   <em class=def>add-find-to-listener</em>
   <em class=def><A NAME="uponsaveyourself">upon-save-yourself, upon-take-focus</a></em>
+  <em class=def>add-text-to-status-area</em>
+  <em class=def><a name="makevariabledisplay">make-variable-display</a></em> page-name variable-name (type 'text) (domain (list 0.0 1.0))
 </pre>
 
 <p>snd-motif.scm has procedures that rely on the Motif module (xm.c).
 Some of these have been translated to Gtk and xg.c -- snd-gtk.scm.
+</p><p>
 <b>install-searcher</b> places
 our own search procedure into the filter mechanism in the File:Open
-dialog. The pair <b>zync</b> and <b>unzync</b> cause the
+dialog. </p><p>The pair <b>zync</b> and <b>unzync</b> cause the
 y-axis zoom sliders of a multi-channel file to move together or separately.
-<b>make-hidden-controls-dialog</b> adds "Hidden controls" to the Option
+</p><p><b>make-hidden-controls-dialog</b> adds "Hidden controls" to the Option
 menu.  If you click it, it
 creates a dialog that controls all the hidden control-panel variables.
 The "expand-hop" control sets the hop size (per grain), "expand-length"
@@ -2328,14 +2331,14 @@ sets the grain length, "expand-ramp" sets the slope of the grain amplitude envel
 "contrast-amp" sets the prescaler for the contrast effect, "reverb-feedback" sets the feedback
 amount in the reverberator (it sets all the comb filter scalers), and "reverb-lowpass" sets
 the lowpass filter coefficient in the reverberator. 
-<b>create-fmv-dialog</b> sets up a very simple dialog with amplitude control on
+</p><p><b>create-fmv-dialog</b> sets up a very simple dialog with amplitude control on
 the fm-violin (fmv.scm) running (interpreted!) in "real-time".
-<b>make-pixmap</b> turns xpm-style description into pixmap.
-<b>display-scanned-synthesis</b> opens a pane for experimenting with scanned synthesis.
-<b>disable-control-panel</b> does away with the control panel.
-<b>add-mark-pane</b> adds a pane to each channel giving the current mark locations (sample values).
+</p><p><b>make-pixmap</b> turns an xpm-style description into pixmap.
+</p><p><b>display-scanned-synthesis</b> opens a pane for experimenting with scanned synthesis.
+</p><p><b>disable-control-panel</b> does away with the control panel.
+</p><p><b>add-mark-pane</b> adds a pane to each channel giving the current mark locations (sample values).
 These can be edited to move the mark, or deleted to delete the mark.
-<b>select-file</b> starts a file selection dialog, running func if a file is selected.
+</p><p><b>select-file</b> starts a file selection dialog, running <i>func</i> if a file is selected:
 </p>
 <pre>
  (add-to-menu 0 "Insert File" 
@@ -2346,7 +2349,7 @@ These can be edited to move the mark, or deleted to delete the mark.
        "Insert File" "." "*" "file will be inserted at cursor")))
 </pre>
 <p><b>snd-clock-icon</b> replaces Snd's hourglass with a clock.
-<b>make-sound-box</b> makes a container of sound file icons, each icon
+</p><p><b>make-sound-box</b> makes a container of sound file icons, each icon
 containing a little sketch of the waveform, the length of the
 file, and the filename.  What happens when an icon is selected
 is up to the caller-supplied procedure.
@@ -2354,51 +2357,67 @@ is up to the caller-supplied procedure.
 <pre>
 (make-sound-box "sounds"
 		(list-ref (main-widgets) 3)
-		(lambda (file) (snd-print file))
+		(lambda (file) 
+                  (snd-print file))
 		peak-env-info-filename ; this points to ~/peaks in my case
 		(list "oboe.snd" "pistol.snd" "cardinal.snd" "storm.snd")
 		'())
 </pre>
 <p><b>show-smpte-label</b> shows the current SMPTE frame number in a box
 in the upper left corner of the graph.
-<b>make-level-meter</b> creates A VU meter of any width and height, returning
+</p><p><b>make-level-meter</b> creates A VU meter of any width and height, returning
 a list of information associated with that meter.  Pass that list to 
 <b>display-level</b> to move the needle and the red bubble.  This meter
-assumes you'll call it periodically so that the momentum needle and viscosity of
+assumes you'll call it periodically so that the momentum of the needle and the viscosity of
 the bubble will appear to behave naturally.  <b>with-level-meters</b> adds
 any number of these meters to the topmost pane in the Snd main window,
-then adds a dac-hook function to display the current playback volume
-in the respective meter.  <b>show-disk-space</b> adds a label in the
+then adds various <a href="extsnd.html#dachook">dac-hook</a> functions to display the current playback volume
+in the respective meter.  
+</p><p><b>show-disk-space</b> adds a label in the
 minibuffer area which shows the current amount of disk space available
 on the partition of the associated sound.
-<b>keep-file-dialog-open-upon-ok</b> changes File:Open so that clicking "ok" does not unmanage the dialog.
-<b>add-amp-controls</b> adds amp sliders to the control panel
-for multi-channel sounds.
-<b>add-very-useful-icons</b> adds some very useful icons. (It is now commented out, replaced 
-by dlp/new-buttons.scm).
-<b>add-rename-option</b> adds a "Rename" option to the File menu; similarly
+</p><p><b>keep-file-dialog-open-upon-ok</b> changes File:Open so that clicking "ok" does not unmanage (dismiss) the dialog.
+</p><p><b>add-amp-controls</b> adds amp sliders to the control panel
+for multi-channel sounds (each channel gets its own amp control slider).
+</p><p><b>add-rename-option</b> adds a "Rename" option to the File menu; similarly
 <b>add-delete-option</b> adds a "Delete" option.
-<b>mark-sync-color</b> uses the draw-mark-hook to set the color of sync'd marks.
-<b>add-tooltip</b> adds a tooltip (also known as bubble-help) to a widget.  Once added,
+</p><p><b>mark-sync-color</b> uses the <a href="extsnd.html#drawmarkhook">draw-mark-hook</a> to set the color of sync'd marks.
+</p><p><b>add-tooltip</b> adds a tooltip (also known as bubble-help) to a widget.  Once added,
 set the variable <b>with-tooltips</b> to #f to turn it off.
-<b>menu-option</b> returns the widget associated with a given menu item name ("Print" for example).
-<b>show-all-atoms</b> displays (via Guile's <i>display</i>) all current X atom names.
-<b>make-channel-drop-site</b> shows how to add a drop site panel to a channel.  
+</p><p><b>menu-option</b> returns the widget associated with a given menu item name ("Print" for example).
+</p><p><b>show-all-atoms</b> displays (via Guile's <i>display</i>) all current X atom names.
+</p><p><b>make-channel-drop-site</b> shows how to add a drop site panel to a channel.  
 <b>set-channel-drop</b> changes the channel's graph's drop function to <i>drop</i>, a 
 function of 3 arguments, the dropped filename (a string) and the current sound index and
 channel number.
-<b>show-font-name</b> shows the Snd-related name and the X-related name of each font in a font list (it searches
-for the XA_FULL_NAME associated with an XFontStruct).
+</p><p><b>show-font-name</b> shows the Snd-related name and the X-related name of each font in a font list
+(it searches for the XA_FULL_NAME associated with an XFontStruct).
 <b>show-minibuffer-font</b> uses that function to show what fonts are associated with the minibuffer.
-<b>add-find-to-listener</b> activates C-s and C-r in the listener via a separate dialog.
-<b>upon-save-yourself</b> causes a thunk (a function of no args) to be called if the window
-manager sends a SAVE_YOURSELF message; similarly upon-take-focus causes a thunk to be called
+</p><p><b>add-find-to-listener</b> activates C-s and C-r in the listener via a separate dialog.
+</p><p><b>upon-save-yourself</b> causes a thunk (a function of no args) to be called if the window
+manager sends a SAVE_YOURSELF message; similarly <b>upon-take-focus</b> causes a thunk to be called
 whenever Snd receives focus from the window manager.
+</p><p><b>add-text-to-status-area</b> puts a text widget in the notebook's status area
+(the lower left portion of the main Snd window when using the -notebook invocation switch).
+It returns the widget; you can write to it via XmTextFieldSetString.
+</p><p><b>make-variable-display</b> sets up a display point for an arbitrary expression which
+is updated via <b>dpy</b>.  The latter returns its argument, so it acts as a sort of
+probe, picking out any arbitrary point in an instrument and displaying it as the
+instrument is running.  Display points can be organized into "pages" (in the notebook
+widget).  Here's a simple example:
 </p>
+<pre>
+(define wid (make-variable-display "do-loop" "i*2" 'text))
+(define wid1 (make-variable-display "do-loop" "i" 'text))
+  (do ((i 0 (1+ i)))
+      ((= i 10))
+    (dpy (* (dpy i wid1) 2) wid))
+</pre>
+<br>
 
 <A NAME="sndtestdoc"></a><span class=box><h2>snd-test.scm and event.scm</h2></span>
 <p>
-snd-test.scm is a large test suite for Snd. The simplest use is:
+snd-test.scm is a test suite for Snd. The simplest use is:
 </p>
 <pre>
 snd -l snd-test
@@ -3216,6 +3235,7 @@ want your instruments to respond to C-g within the sample generating loop, use a
 event check can slow down processing, I don't call it on every sample, but you might
 want to do that while developing a new instrument.
 </p>
+
 <br>
 
 <A NAME="xmenveddoc"></a><span class=box><h2>xm-enved.scm, xm-enved.rb</h2></span>

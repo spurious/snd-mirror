@@ -109,7 +109,6 @@ void set_menu_label(Widget w, const char *label) {if (w) set_button_label(w, lab
 static XEN menu_hook;
 static int call_menu_hook(Widget w)
 {
-#if HAVE_GUILE
   XEN res = XEN_TRUE;
   if (XEN_HOOKED(menu_hook))
     res = run_or_hook(menu_hook, 
@@ -117,9 +116,6 @@ static int call_menu_hook(Widget w)
 				 C_TO_XEN_STRING(XtName(w))),
 		      S_menu_hook);
   return(XEN_NOT_FALSE_P(res));
-#else
-  return(TRUE);
-#endif
 }
 
 /* -------------------------------- FILE MENU -------------------------------- */

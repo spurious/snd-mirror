@@ -34,9 +34,9 @@
 ;;; TODO: find/"fix" clipping
 ;;; TODO: pan env field in mix dialog if stereo in/out
 ;;; TODO: doc ex of key-press-hook (cx cs=save as in xe-enved?), mix-amp-changed-hook, select-*-hook [click=>post info in box]
-;;; TODO: xemacs style top list of sounds, current takes whole screen [make-top-row tmp18.scm, files-popup-buffer in examp.scm]
+;;; TODO: xemacs style top list of sounds, current takes whole screen [make-top-row snd-motif.scm, files-popup-buffer in examp.scm]
 ;;; TOOD: extend the mix-as-list syntax to list-of-ids (tracks) (are these all rationalized now?)
-;;; effects crossref + tests + clm translations, interface crossref
+;;; TODO: effects crossref + tests + clm translations, interface crossref
 ;;; TODO: coverage tests of scm files
 
 ;;; how to send ourselves a drop?  (button2 on menu is only the first half -- how to force 2nd?)
@@ -36229,7 +36229,6 @@ EDITS: 2
 ;(set! (basic-color) (make-color 0.96 0.96 0.86))
 (dismiss-all-dialogs)
 ))
-
 
 ;;; -------------------------------- clean up and quit -------------------------------- 
 
