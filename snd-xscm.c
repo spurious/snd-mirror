@@ -53,12 +53,12 @@ int snd_color_p(SCM obj)
 static SCM g_color_p(SCM obj) 
 {
   #define H_color_p "(" S_colorQ " obj) -> #t if obj is a col" STR_OR " object"
-  return(TO_SCM_BOOLEAN(snd_color_p(obj)));
+  return(TO_SCM_BOOLEAN(COLOR_P(obj)));
 }
 
 snd_color *get_snd_color(SCM arg)
 {
-  if (snd_color_p(arg))
+  if (COLOR_P(arg))
     return((snd_color *)SND_VALUE_OF(arg));
   return(NULL);
 }
@@ -104,7 +104,7 @@ static SCM g_color2list(SCM obj)
   Colormap cmap;
   XColor tmp_color;
   Display *dpy;
-  SCM_ASSERT(snd_color_p(obj), obj, SCM_ARG1, S_color2list); 
+  SCM_ASSERT(COLOR_P(obj), obj, SCM_ARG1, S_color2list); 
   v = (snd_color *)SND_VALUE_OF(obj);
   dpy = XtDisplay(MAIN_SHELL(state));
   cmap = DefaultColormap(dpy, DefaultScreen(dpy));
@@ -168,7 +168,7 @@ SCM pixel2color(COLOR_TYPE pix)
 COLOR_TYPE color2pixel(SCM color)
 {
   snd_color *v;
-  v = get_snd_color(color); 
+  v = TO_SND_COLOR(color); 
   if (v)
     return(v->color);
   return(NO_COLOR);
@@ -265,8 +265,8 @@ static SCM g_load_colormap(SCM colors)
   vdata = SCM_VELTS(colors);
   for (i = 0; i < len; i++)
     {
-      if (snd_color_p(vdata[i]))
-	v = get_snd_color(vdata[i]);
+      if (COLOR_P(vdata[i]))
+	v = TO_SND_COLOR(vdata[i]);
       else 
 	{
 	  FREE(xcs);

@@ -27,11 +27,9 @@ static void c_io_bufclr (int *io, int *datai, int beg)
       for (k = 0; k < io[SND_IO_CHANS]; k++)
 	{
 	  j = MUS_SAMPLE_ARRAY(datai[io[SND_IO_DATS + SND_AREF_BLOCK] + k]);
-	  if (j) 
-	    {
-	      for (i = beg; i < end; i++) 
-		j[i] = MUS_SAMPLE_0;
-	    }
+	  if (j)
+	    for (i = beg; i < end; i++) 
+	      j[i] = MUS_SAMPLE_0;
 	}
     }
 }
@@ -70,7 +68,7 @@ static void reposition_file_buffers_1(int loc, int *io, int *datai)
       if (bytes > 0) 
 	{
 #if LONG_INT_P
-	  bufs = (MUS_SAMPLE_TYPE **)CALLOC(io[SND_IO_CHANS], sizeof(MUS_SAMPLE_TYPE *));
+	  bufs = (MUS_SAMPLE_TYPE **)MALLOC(io[SND_IO_CHANS], sizeof(MUS_SAMPLE_TYPE *));
 	  for (i = 0; i < io[SND_IO_CHANS]; i++) 
 	    bufs[i] = MUS_SAMPLE_ARRAY(datai[io[SND_IO_DATS + SND_AREF_BLOCK] + i]);
 	  mus_file_read_chans(io[SND_IO_FD],
@@ -191,10 +189,8 @@ int *free_file_state(int *datai)
     {
       chans = datai[SND_IO_CHANS];
       for (i = 0; i < chans; i++)
-	{
-	  if (datai[SND_IO_DATS + SND_AREF_HEADER_SIZE + i]) 
-	    MUS_FREE_SAMPLE_ARRAY(datai[SND_IO_DATS + SND_AREF_HEADER_SIZE + i]);
-	}
+	if (datai[SND_IO_DATS + SND_AREF_HEADER_SIZE + i]) 
+	  MUS_FREE_SAMPLE_ARRAY(datai[SND_IO_DATS + SND_AREF_HEADER_SIZE + i]);
       FREE(datai);
     }
   return(NULL);

@@ -129,6 +129,16 @@
   }
 #endif
 
+#if 0
+#define DEFINE_SETPROC(Name, GetFunc, SetFunc, Req, Opt, Help) \
+  define_procedure_with_setter(Name, SCM_FNC GetFunc, Help, \
+			       "set-" Name, SCM_FNC SetFunc, local_doc, Req, Opt, Req + 1, Opt)
+
+#define DEFINE_SETREVPROC(Name, GetFunc, SetFunc, RevFunc, Req, Opt, Help) \
+  define_procedure_with_reversed_setter(Name, SCM_FNC GetFunc, Help, \
+			       "set-" Name, SCM_FNC SetFunc, SCM_FNC RevFunc, local_doc, Req, Opt, Req + 1, Opt)
+#endif
+
 #define DEFINE_VAR(a, b, c) \
   { \
     gh_define(a, TO_SMALL_SCM_INT(b)); \

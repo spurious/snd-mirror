@@ -32,7 +32,7 @@ static char *Load_HTML_File(char *filename)
   fseek(file, 0, SEEK_END);
   size = ftell(file);
   rewind(file);
-  content = (char *)CALLOC(size+1, sizeof(char));
+  content = (char *)CALLOC(size + 1, sizeof(char));
   if (content == NULL) return(NULL);
   if ((fread(content, 1, size, file)) != size)
     snd_error("%s[%d] %s: did not read entire file!\n", 
@@ -55,11 +55,11 @@ static Widget back_button = NULL, forward_button = NULL;
 static void add_anchor(int html, char *anchor)
 {
   int i;
-  if (current_anchor == (MAX_HTML_HISTORY-1))
+  if (current_anchor == (MAX_HTML_HISTORY - 1))
     {
       FREE(anchors[0]);
-      for (i = 0; i < MAX_HTML_HISTORY-1; i++) 
-	anchors[i] = anchors[i+1];
+      for (i = 0; i < MAX_HTML_HISTORY - 1; i++) 
+	anchors[i] = anchors[i + 1];
     }
   else 
     {
@@ -143,22 +143,22 @@ static void anchorCB(Widget widget, XtPointer client_data, XmHTMLAnchorCallbackS
       ss = get_global_state();
       /* all contents of cbs struct are pointers into current text, so we have to save them before changing that text */
       if (strncmp(cbs->href, "extsnd", 6) == 0)
-	load_html(ss, EXTSND_HTML, (char *)(cbs->href+11), TRUE);
+	load_html(ss, EXTSND_HTML, (char *)(cbs->href + 11), TRUE);
       else 
 	if (strncmp(cbs->href, "grfsnd", 6) == 0)
-	  load_html(ss, GRFSND_HTML, (char *)(cbs->href+11), TRUE);
+	  load_html(ss, GRFSND_HTML, (char *)(cbs->href + 11), TRUE);
 	else 
 	  if (strncmp(cbs->href, "sndlib", 6) == 0)
-	    load_html(ss, SNDLIB_HTML, (char *)(cbs->href+11), TRUE);
+	    load_html(ss, SNDLIB_HTML, (char *)(cbs->href + 11), TRUE);
 	  else 
 	    if (strncmp(cbs->href, "sndscm", 6) == 0)
-	      load_html(ss, SNDSCM_HTML, (char *)(cbs->href+11), TRUE);
+	      load_html(ss, SNDSCM_HTML, (char *)(cbs->href + 11), TRUE);
 	    else 
 	      if (strncmp(cbs->href, "snd", 3) == 0)
-		load_html(ss, SND_HTML, (char *)(cbs->href+8), TRUE);
+		load_html(ss, SND_HTML, (char *)(cbs->href + 8), TRUE);
 	      else 
 		if (strncmp(cbs->href, "clm", 3) == 0)
-		  load_html(ss, CLM_HTML, (char *)(cbs->href+8), TRUE);
+		  load_html(ss, CLM_HTML, (char *)(cbs->href + 8), TRUE);
     }
   else
     {

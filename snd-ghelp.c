@@ -1,6 +1,5 @@
 /* TODO  tie into gtkhtml widget if HAVE_HTML
  * TODO  test horizontal scrolling whenever gtk implements it
- * TODO  if text selected, go to its help
  * TODO  if from glistener, and text selected, complete in listener
  */
 

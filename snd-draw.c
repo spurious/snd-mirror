@@ -251,7 +251,7 @@ static SCM g_set_foreground_color(SCM color, SCM snd, SCM chn, SCM ax)
 {
   chan_info *cp;
   SND_ASSERT_CHAN("set-" S_foreground_color, snd, chn, 2);
-  SCM_ASSERT(snd_color_p(color), color, SCM_ARG1, "set-" S_foreground_color);
+  SCM_ASSERT(COLOR_P(color), color, SCM_ARG1, "set-" S_foreground_color);
   SCM_ASSERT(INTEGER_IF_BOUND_P(ax), ax, SCM_ARG4, "set-" S_foreground_color);
   cp = get_cp(snd, chn, "set-" S_foreground_color);
   set_foreground_color(cp,                                  /* snd-xchn.c */
@@ -316,7 +316,7 @@ static int get_callback_slot(void)
       return(0);
     }
   for (i = 0; i < num_inputs; i++)
-    if (added_input_callbacks[i] == SCM_UNDEFINED)
+    if (BOUND_P(added_input_callbacks[i]))
       return(i);
   old_len = num_inputs;
   num_inputs += 4;
@@ -627,7 +627,7 @@ static SCM g_set_widget_size(SCM wid, SCM wh)
 static SCM g_recolor_widget(SCM wid, SCM color)
 {
   SCM_ASSERT(SND_WRAPPED(wid), wid, SCM_ARG1, S_recolor_widget);  
-  SCM_ASSERT(snd_color_p(color), color, SCM_ARG2, S_recolor_widget); 
+  SCM_ASSERT(COLOR_P(color), color, SCM_ARG2, S_recolor_widget); 
 #if USE_MOTIF
   XmChangeColor((GUI_WIDGET)(SND_UNWRAP(wid)), color2pixel(color));
 #else
@@ -639,7 +639,7 @@ static SCM g_recolor_widget(SCM wid, SCM color)
 static SCM g_set_widget_foreground(SCM wid, SCM color)
 {
   SCM_ASSERT(SND_WRAPPED(wid), wid, SCM_ARG1, "set-widget-foreground");  
-  SCM_ASSERT(snd_color_p(color), color, SCM_ARG2, "set-widget-foreground"); 
+  SCM_ASSERT(COLOR_P(color), color, SCM_ARG2, "set-widget-foreground"); 
 #if USE_MOTIF
   XtVaSetValues((GUI_WIDGET)(SND_UNWRAP(wid)), XmNforeground, color2pixel(color), NULL);
 #endif

@@ -509,6 +509,27 @@ void handle_listener(snd_state *ss, int new_state)
 int listener_height(void) {if (listener_text) return(widget_height(listener_text)); else return(0);}
 int listener_width(void) {if (listener_text) return(widget_width(listener_text)); else return(0);}
 
+static SCM g_listener_selected_text(void)
+{
+  char *txt;
+  SCM res = SCM_BOOL_F;
+  if (listener_text)
+    {
+      if (GTK_EDITABLE(listener_text)->has_selection)
+	{
+	  txt = gtk_editable_get_chars(GTK_EDITABLE(listener_text),
+				       GTK_EDITABLE(listener_text)->selection_start_pos,
+				       GTK_EDITABLE(listener_text)->selection_end_pos);
+	  if (txt) 
+	    {
+	      res = TO_SCM_STRING(txt);
+	      g_free(txt);
+	    }
+	}
+    }
+  return(res);
+}
+
 void g_init_gxlistener(SCM local_doc)
 {
   #define H_mouse_enter_listener_hook S_mouse_enter_listener_hook " (snd chn) is called when the mouse \
@@ -522,5 +543,7 @@ leaves the lisp listener pane"
 
   mouse_enter_listener_hook = MAKE_HOOK(S_mouse_enter_listener_hook, 1, H_mouse_enter_listener_hook);    /* arg = listener_text widget */
   mouse_leave_listener_hook = MAKE_HOOK(S_mouse_leave_listener_hook, 1, H_mouse_leave_listener_hook);    /* arg = listener_text widget */
+
+  DEFINE_PROC("listener-selection", g_listener_selected_text, 0, 0, 0, "returns current selection in listener or #f");
 }
 

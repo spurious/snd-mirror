@@ -2038,7 +2038,12 @@
 	  (vector-set! hi (+ i 1) blue)
 	  (vector-set! hi (+ i 2) green) 
 	  (vector-set! hi (+ i 3) black))
-	(load-colormap hi))))
+	(load-colormap hi))
+      (let ((ind (open-sound "oboe.snd")))
+	(recolor-widget (cadr (sound-widgets ind)) (make-color 1 0 0))
+        (set-widget-foreground (cadr (sound-widgets 0)) (make-color 0 1 0))
+	(close-sound ind))
+      ))
 
 
 (load "examp.scm")
@@ -5502,7 +5507,9 @@
 	  
 	  (save-options "hiho.scm")
 	  (if (not (= (transform-type) fourier-transform))
-	      (set! (fft-size) (min (fft-size) 128)))
+	      (begin
+		(set! (ffting #t #t) #f)
+		(set! (fft-size) (min (fft-size) 128))))
 
 	  )))
       (if open-files (map close-sound open-files))

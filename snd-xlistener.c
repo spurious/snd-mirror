@@ -1172,6 +1172,22 @@ Widget sndCreatePanedWindowWidget(char *name, Widget parent, Arg *args, int n)
   return(w);
 }
 
+static SCM g_listener_selected_text(void)
+{
+  char *txt;
+  SCM res = SCM_BOOL_F;
+  if (listener_text)
+    {
+      txt = XmTextGetSelection(listener_text);
+      if (txt) 
+	{
+	  res = TO_SCM_STRING(txt);
+	  XtFree(txt);
+	}
+    }
+  return(res);
+}
+
 void g_init_gxlistener(SCM local_doc)
 {
   #define H_mouse_enter_listener_hook S_mouse_enter_listener_hook " (snd chn) is called when the mouse \
@@ -1185,5 +1201,7 @@ leaves the lisp listener pane"
 
   mouse_enter_listener_hook = MAKE_HOOK(S_mouse_enter_listener_hook, 1, H_mouse_enter_listener_hook);    /* arg = listener_text widget */
   mouse_leave_listener_hook = MAKE_HOOK(S_mouse_leave_listener_hook, 1, H_mouse_leave_listener_hook);    /* arg = listener_text widget */
+
+  DEFINE_PROC("listener-selection", g_listener_selected_text, 0, 0, 0, "returns current selection in listener or #f");
 }
 

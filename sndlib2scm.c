@@ -346,6 +346,7 @@ static SCM mark_sound_data(SCM obj)
 }
 
 int sound_data_p(SCM obj) {return(SMOB_TYPE_P(obj, sound_data_tag));}
+#define SOUND_DATA_P(Obj) SMOB_TYPE_P(Obj, sound_data_tag)
 
 static SCM g_sound_data_p(SCM obj) 
 {
@@ -356,7 +357,7 @@ static SCM g_sound_data_p(SCM obj)
 static MUS_SAMPLE_TYPE **get_sound_data(SCM arg)
 {
   sound_data *sd;
-  if (sound_data_p(arg))
+  if (SOUND_DATA_P(arg))
     {
       sd = (sound_data *)(SND_VALUE_OF(arg));
       return(sd->data);
@@ -411,7 +412,7 @@ static SCM sound_data_length(SCM obj)
 {
   #define H_sound_data_length "(" S_sound_data_length " sd) -> length (samples) of each channel of sound-data object sd"
   sound_data *v;
-  SCM_ASSERT(sound_data_p(obj), obj, SCM_ARG1, S_sound_data_length);
+  SCM_ASSERT(SOUND_DATA_P(obj), obj, SCM_ARG1, S_sound_data_length);
   v = (sound_data *)SND_VALUE_OF(obj);
   if (v == NULL) return(0);
   return(TO_SCM_INT(v->length));
@@ -421,7 +422,7 @@ static SCM sound_data_chans(SCM obj)
 {
   #define H_sound_data_chans "(" S_sound_data_chans " sd) -> number of channels in sound-data object sd"
   sound_data *v;
-  SCM_ASSERT(sound_data_p(obj), obj, SCM_ARG1, S_sound_data_chans);
+  SCM_ASSERT(SOUND_DATA_P(obj), obj, SCM_ARG1, S_sound_data_chans);
   v = (sound_data *)SND_VALUE_OF(obj);
   if (v == NULL) return(0);
   return(TO_SMALL_SCM_INT(v->chans));
@@ -461,7 +462,7 @@ static SCM sound_data_ref(SCM obj, SCM chan, SCM frame)
   #define H_sound_data_ref "(" S_sound_data_ref " sd chan i) -> sample in channel chan at location i of sound-data object sd: sd[chan][i]"
   sound_data *v;
   int loc, chn;
-  SCM_ASSERT(sound_data_p(obj), obj, SCM_ARG1, S_sound_data_ref);
+  SCM_ASSERT(SOUND_DATA_P(obj), obj, SCM_ARG1, S_sound_data_ref);
   SCM_ASSERT(INTEGER_P(chan), chan, SCM_ARG2, S_sound_data_ref);
   SCM_ASSERT(INTEGER_P(frame), frame, SCM_ARG3, S_sound_data_ref);
   v = (sound_data *)SND_VALUE_OF(obj);
@@ -493,7 +494,7 @@ static SCM sound_data_set(SCM obj, SCM chan, SCM frame, SCM val)
   #define H_sound_data_setB "(" S_sound_data_setB " sd chan i val): set sound-data object sd's i-th element in channel chan to val: sd[chan][i] = val"
   sound_data *v;
   int loc, chn;
-  SCM_ASSERT(sound_data_p(obj), obj, SCM_ARG1, S_sound_data_setB);
+  SCM_ASSERT(SOUND_DATA_P(obj), obj, SCM_ARG1, S_sound_data_setB);
   SCM_ASSERT(INTEGER_P(chan), chan, SCM_ARG2, S_sound_data_setB);
   SCM_ASSERT(INTEGER_P(frame), frame, SCM_ARG3, S_sound_data_setB);
   SCM_ASSERT(NUMBER_P(val), val, SCM_ARG4, S_sound_data_setB);
@@ -525,7 +526,7 @@ static SCM sound_data2vct(SCM sdobj, SCM chan, SCM vobj)
   vct *v;
   sound_data *sd;
   int len, i, chn;
-  SCM_ASSERT(sound_data_p(sdobj), sdobj, SCM_ARG1, S_sound_data2vct);
+  SCM_ASSERT(SOUND_DATA_P(sdobj), sdobj, SCM_ARG1, S_sound_data2vct);
   SCM_ASSERT(INTEGER_P(chan), chan, SCM_ARG2, S_sound_data2vct);
   SCM_ASSERT(VCT_P(vobj), vobj, SCM_ARG3, S_sound_data2vct);
   v = TO_VCT(vobj);
@@ -552,7 +553,7 @@ static SCM vct2sound_data(SCM vobj, SCM sdobj, SCM chan)
   sound_data *sd;
   int len, i, chn;
   SCM_ASSERT(VCT_P(vobj), vobj, SCM_ARG1, S_vct2sound_data);
-  SCM_ASSERT(sound_data_p(sdobj), sdobj, SCM_ARG2, S_vct2sound_data);
+  SCM_ASSERT(SOUND_DATA_P(sdobj), sdobj, SCM_ARG2, S_vct2sound_data);
   SCM_ASSERT(INTEGER_P(chan), chan, SCM_ARG3, S_vct2sound_data);
   v = TO_VCT(vobj);
   sd = (sound_data *)SND_VALUE_OF(sdobj);
@@ -697,7 +698,7 @@ filling the sound-data object sdata's buffers starting at (buffer location) beg,
   SCM_ASSERT(NUMBER_P(beg), beg, SCM_ARG2, S_mus_sound_read);
   SCM_ASSERT(NUMBER_P(end), end, SCM_ARG3, S_mus_sound_read);
   SCM_ASSERT(INTEGER_P(chans), chans, SCM_ARG4, S_mus_sound_read);
-  SCM_ASSERT(sound_data_p(sv), sv, SCM_ARG5, S_mus_sound_read);
+  SCM_ASSERT(SOUND_DATA_P(sv), sv, SCM_ARG5, S_mus_sound_read);
   return(TO_SCM_INT(mus_sound_read(TO_C_INT(fd),
 				   TO_C_INT_OR_ELSE(beg, 0),
 				   TO_C_INT_OR_ELSE(end, 0),
@@ -714,7 +715,7 @@ starting at (buffer location) beg, going to end, writing to file number fd"
   SCM_ASSERT(NUMBER_P(beg), beg, SCM_ARG2, S_mus_sound_write);
   SCM_ASSERT(NUMBER_P(end), end, SCM_ARG3, S_mus_sound_write);
   SCM_ASSERT(INTEGER_P(chans), chans, SCM_ARG4, S_mus_sound_write);
-  SCM_ASSERT(sound_data_p(sv), sv, SCM_ARG5, S_mus_sound_write);
+  SCM_ASSERT(SOUND_DATA_P(sv), sv, SCM_ARG5, S_mus_sound_write);
   return(TO_SCM_INT(mus_sound_write(TO_C_INT(fd),
 				    TO_C_INT_OR_ELSE(beg, 0),
 				    TO_C_INT_OR_ELSE(end, 0),
@@ -824,7 +825,7 @@ to the audio line from the sound-data object sdata."
   sound_data *sd;
   int i, j, k, outbytes, val, frms;
   SCM_ASSERT(INTEGER_P(line), line, SCM_ARG1, S_mus_audio_write);
-  SCM_ASSERT(sound_data_p(sdata), sdata, SCM_ARG2, S_mus_audio_write);
+  SCM_ASSERT(SOUND_DATA_P(sdata), sdata, SCM_ARG2, S_mus_audio_write);
   SCM_ASSERT(INTEGER_P(frames), frames, SCM_ARG3, S_mus_audio_write);
   sd = (sound_data *)SND_VALUE_OF(sdata);
   bufs = sd->data;
@@ -857,7 +858,7 @@ from the audio line into the sound-data object sdata."
   int val, inbytes, i, j, k, frms;
   MUS_SAMPLE_TYPE **bufs;
   SCM_ASSERT(INTEGER_P(line), line, SCM_ARG1, S_mus_audio_read);
-  SCM_ASSERT(sound_data_p(sdata), sdata, SCM_ARG2, S_mus_audio_read);
+  SCM_ASSERT(SOUND_DATA_P(sdata), sdata, SCM_ARG2, S_mus_audio_read);
   SCM_ASSERT(INTEGER_P(frames), frames, SCM_ARG3, S_mus_audio_read);
   sd = (sound_data *)SND_VALUE_OF(sdata);
   bufs = sd->data;

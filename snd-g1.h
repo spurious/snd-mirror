@@ -484,7 +484,9 @@ void g_init_gxenv(SCM local_doc);
 
 
 int snd_color_p(SCM obj);
+#define COLOR_P(Obj) snd_color_p(Obj)
 snd_color *get_snd_color(SCM arg);
+#define TO_SND_COLOR(Arg) get_snd_color(Arg)
 SCM pixel2color(COLOR_TYPE pix);
 COLOR_TYPE color2pixel(SCM color);
 void recolor_button(GUI_WIDGET w, GUI_POINTER ptr);

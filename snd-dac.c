@@ -1900,7 +1900,7 @@ static void make_dac_buffers(dac_state *dacp)
       if (r_ins) FREE(r_ins);
       r_outs = (Float *)CALLOC(dacp->channels, sizeof(Float));
       r_ins = (Float *)CALLOC(dacp->channels, sizeof(Float));
-      if (v_ins == SCM_UNDEFINED)
+      if (BOUND_P(v_ins))
 	{
 	  v_ins = make_vct_wrapper(dacp->channels, r_ins);
 	  v_outs = make_vct_wrapper(dacp->channels, r_outs);

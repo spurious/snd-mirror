@@ -6381,6 +6381,10 @@ Use snd-tempnam to get a temporary filename that reflects the current
 temp-dir setting (if any).  The env-sound-interp function in <a href="sndscm.html#exampdoc">examp.scm</a>
 is an example of this.</p>
 
+<p>The sample-reader functions have made these scanning functions largely redundant.
+I may remove them, or move them into Scheme.  The mapping functions are still useful
+however.
+</p>
 
 <!-- Transforms -->
 <br>
@@ -7481,6 +7485,8 @@ variable %load-verbosely to #t.
   <b><a name="removeidler">remove-idler</a></b> (id)
 
   <b><a name="changeproperty">change-property</a></b> (known-atom property value)
+
+  <b><a name="listenerselection">listener-selection</a></b> ()
 </pre>
 <p>These are still experimental; <i>add-input</i> causes <i>callback</i> (a function of one argument, the file number)
 to be called whenever input is available on <i>file</i> (a file number, as returned by open). <i>remove-input</i>
@@ -7490,8 +7496,18 @@ As long as the function returns #t, the process keeps calling it; <i>remove-idle
 argument the thing returned by <i>add-idler</i> (the identifier of that process), and kills the
 associated background process.
 </p>
-<p><i>change-property</i> changes an X-window's property; there's an example in examp.scm.
+<p><i>change-property</i> changes an X-window's property; there's an example in examp.scm. <i>listener-selection</i>
+returns the currently selected text in the listener, or #f if there isn't any.  The following posts help related
+to the selection if "h" is typed in the graph:
 </p>
+<pre>
+  (bind-key (char->integer #\h) 0 
+    (lambda ()
+      (let ((subject (listener-selection)))
+	(if subject
+            (help-dialog subject (snd-help subject))))))
+</pre>
+
 
 <br>
 

@@ -2653,15 +2653,16 @@ static SCM mark_sf(SCM obj) {SND_SETGCMARK(obj); return(SCM_BOOL_F);}
 
 int sf_p(SCM obj); /* currently for snd-ladspa.c */
 int sf_p(SCM obj) {return(SMOB_TYPE_P(obj, sf_tag));}
+#define SAMPLE_READER_P(Obj) SMOB_TYPE_P(Obj, sf_tag)
 
 static SCM g_sf_p(SCM obj) 
 {
   #define H_sf_p "(" S_sample_readerQ " obj) -> #t if obj is a sample-reader"
-  return(TO_SCM_BOOLEAN(sf_p(obj)));
+  return(TO_SCM_BOOLEAN(SAMPLE_READER_P(obj)));
 }
 
 snd_fd *get_sf(SCM obj); /* currently for snd-ladspa.c */
-snd_fd *get_sf(SCM obj) {if (sf_p(obj)) return((snd_fd *)SND_VALUE_OF(obj)); else return(NULL);}
+snd_fd *get_sf(SCM obj) {if (SAMPLE_READER_P(obj)) return((snd_fd *)SND_VALUE_OF(obj)); else return(NULL);}
 #define TO_SAMPLE_READER(obj) ((snd_fd *)SND_VALUE_OF(obj))
 
 static int print_sf(SCM obj, SCM port, scm_print_state *pstate) 
@@ -2720,7 +2721,7 @@ static scm_sizet free_sf(SCM obj)
 static SCM g_sample_reader_at_end(SCM obj) 
 {
   #define H_sample_reader_at_end "(" S_sample_reader_at_endQ " obj) -> #t if sample-reader has reached the end of its data"
-  SCM_ASSERT(sf_p(obj), obj, SCM_ARG1, S_sample_reader_at_endQ);
+  SCM_ASSERT(SAMPLE_READER_P(obj), obj, SCM_ARG1, S_sample_reader_at_endQ);
   return(TO_SCM_BOOLEAN(read_sample_eof(TO_SAMPLE_READER(obj))));
 }
 
@@ -2814,14 +2815,14 @@ returns a reader ready to access region's channel chn data starting at 'start-sa
 static SCM g_next_sample(SCM obj)
 {
   #define H_next_sample "(" S_next_sample " reader) -> next sample from reader"
-  SCM_ASSERT(sf_p(obj), obj, SCM_ARG1, S_next_sample);
+  SCM_ASSERT(SAMPLE_READER_P(obj), obj, SCM_ARG1, S_next_sample);
   return(TO_SCM_DOUBLE(next_sample_to_float(TO_SAMPLE_READER(obj))));
 }
 
 static SCM g_previous_sample(SCM obj)
 {
   #define H_previous_sample "(" S_previous_sample " reader) -> previous sample from reader"
-  SCM_ASSERT(sf_p(obj), obj, SCM_ARG1, S_previous_sample);
+  SCM_ASSERT(SAMPLE_READER_P(obj), obj, SCM_ARG1, S_previous_sample);
   return(TO_SCM_DOUBLE(previous_sample_to_float(TO_SAMPLE_READER(obj))));
 }
 
@@ -2830,7 +2831,7 @@ static SCM g_free_sample_reader(SCM obj)
   #define H_free_sample_reader "(" S_free_sample_reader " reader) frees sample reader 'reader'"
   snd_fd *fd;
   snd_info *sp = NULL;
-  SCM_ASSERT(sf_p(obj), obj, SCM_ARG1, S_free_sample_reader);
+  SCM_ASSERT(SAMPLE_READER_P(obj), obj, SCM_ARG1, S_free_sample_reader);
   fd = TO_SAMPLE_READER(obj);
   sp = fd->local_sp; 
   fd->local_sp = NULL;
@@ -2865,7 +2866,7 @@ replacing current data with the function results; origin is the edit-history nam
   file_info *hdr;
   MUS_SAMPLE_TYPE **data;
   MUS_SAMPLE_TYPE *idata;
-  SCM_ASSERT(sf_p(reader), reader, SCM_ARG1, S_loop_samples);
+  SCM_ASSERT(SAMPLE_READER_P(reader), reader, SCM_ARG1, S_loop_samples);
   SCM_ASSERT(SND_WRAPPED(proc), proc, SCM_ARG2, S_loop_samples);
   SCM_ASSERT(INTEGER_P(calls), calls, SCM_ARG3, S_loop_samples);
   SCM_ASSERT(STRING_P(origin), origin, SCM_ARG4, S_loop_samples);
