@@ -2255,6 +2255,24 @@ continue:
         aright  = asig
         aleft   = asig
 </pre>
+<p>There's a C/CLM version of this instrument in sndlib.html.  The body of the fm-violin
+in C/CLM is:
+</p>
+<pre>
+      if (noise_amount != 0.0) fuzz = mus_rand(fmnoi,0.0);
+      if (frqf) vib = mus_env(frqf); else vib = 0.0;
+      vib += mus_triangle_wave(pervib, 0.0) + 
+             mus_rand_interp(ranvib, 0.0);
+      if (easy_case)
+        modulation = mus_env(indf1) * 
+                     mus_polynomial(coeffs, mus_oscil(fmosc1, vib, 0.0), npartials);
+      else
+        modulation = mus_env(indf1) * mus_oscil(fmosc1, (fuzz + fm1_rat * vib), 0.0) +
+                     mus_env(indf2) * mus_oscil(fmosc2, (fuzz + fm2_rat * vib), 0.0) +
+                     mus_env(indf3) * mus_oscil(fmosc3, (fuzz + fm3_rat * vib), 0.0);
+      mus_locsig(loc, i, mus_env(ampf) *
+                         mus_oscil(carrier, vib + indfuzz * modulation, 0.0));
+</pre>
 <br>
 
 <A NAME="wsdoc"></a><span class=box><h2>ws.scm</h2></span>
@@ -2311,25 +2329,27 @@ The version in ws.scm is simply an amplification of this code.
 The global variables that parallel CLM's *clm-...* are:
 </p>
 <pre>
-  <em class=def><A NAME="wssndsrate">*snd-srate*</a></em> (default-output-srate)
-  <em class=def><A NAME="wssndfilename">*snd-file-name*</a></em> "test.snd"
-  <em class=def><A NAME="wssndchannels">*snd-channels*</a></em> (default-output-chans)
-  <em class=def><A NAME="wssndexplode">*snd-explode*</a></em> #f                          
-  <em class=def><A NAME="wssnddataformat">*snd-data-format*</a></em> (default-output-format)
-  <em class=def><A NAME="wssndheadertype">*snd-header-type*</a></em> (default-output-type)
+  <em class=def><A NAME="wssndsrate">*srate*</a></em> (default-output-srate)
+  <em class=def><A NAME="wssndfilename">*file-name*</a></em> "test.snd"
+  <em class=def><A NAME="wssndchannels">*channels*</a></em> (default-output-chans)
+  <em class=def><A NAME="wssndexplode">*explode*</a></em> #f                          
+  <em class=def><A NAME="wssnddataformat">*data-format*</a></em> (default-output-format)
+  <em class=def><A NAME="wssndheadertype">*header-type*</a></em> (default-output-type)
 </pre>
-<p>*snd-explode* here refers to the <a href="extsnd.html#withmixtags">with-mix-tags</a> setting.
+<p>*explode* here refers to the <a href="extsnd.html#withmixtags">with-mix-tags</a> setting.
 </p>
 <pre>
  <em class=def><A NAME="wswithsound">with-sound</a></em>
-    #:key (srate *snd-srate*) 
-          (output *snd-file-name*) 
-	  (channels *snd-channels*)
-	  (explode *snd-explode*)
-	  (header-type *snd-header-type*)
-	  (data-format *snd-data-format*)
+    #:key (srate *srate*) 
+          (output *file-name*) 
+	  (channels *channels*)
+	  (explode *explode*)
+	  (header-type *header-type*)
+	  (data-format *data-format*)
 	  (comment #f)
 	  (continue-old-file #f)
+  	  (reverb #f)
+  	  (revfile #f)
 	  (statistics #f)
 	  (scaled-to #f)
 	  (scaled-by #f))
@@ -2338,8 +2358,26 @@ The global variables that parallel CLM's *clm-...* are:
 <pre>
   (with-sound (:srate 44100) (fm-violin 0 1 440 .1))
 </pre>
-<p>If the output file isn't specified, or isn't currently open in Snd, with-sound opens
-a new output file.  This code is highly unstable.
+<p>
+This code is highly unstable!  I originally set it up to run its body within the
+Snd editing context, but this required the use of temporary files (even if using
+as-one-edit or saving state every now and then), made reverb awkward, and made
+individual instruments messy, since they now needed to call Snd editing functions
+such as mix-vct, whereas the rest of the instrument was pure CLM-code.  So,
+in the current version, with-sound opens its output file (<i>output</i> above)
+via make-sample-&gt;file, setting the global variable *output*.  This
+is equivalent to CLM's *output* variable, and can be used the same
+way in outa or locsig.  If <i>reverb</i> is specified, *reverb* is also
+opened (corresponding to CLM's *reverb*).  So the cooperating instrument code should be:
+</p>
+<pre>
+  (define (ins args)
+    (let ...
+      (do ((i start (1+ i)))
+	  ((= i end))
+        (outa i ... *output*))))
+</pre>
+<p>which is essentially the same as in the standard CLM. 
 </p>
 
 <A NAME="zipdoc"></a><span class=box><h2>zip.scm</h2></span>

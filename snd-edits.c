@@ -290,7 +290,7 @@ static void edit_data_to_file(FILE *fd, ed_list *ed, chan_info *cp)
 		  return;
 		}
 	      idataloc = mus_sound_data_location(sf->filename);
-	      mus_file_set_descriptors(ifd,
+	      mus_file_open_descriptors(ifd,
 				       sf->filename,
 				       mus_sound_data_format(sf->filename),
 				       mus_sound_datum_size(sf->filename),
@@ -801,7 +801,7 @@ snd_data *copy_snd_data(snd_data *sd, chan_info *cp, int bufsize)
   hdr = sd->hdr;
   fd = snd_open_read(cp->state, sd->filename);
   if (fd == -1) return(NULL);
-  mus_file_set_descriptors(fd,
+  mus_file_open_descriptors(fd,
 			   sd->filename,
 			   hdr->format,
 			   mus_data_format_to_bytes_per_sample(hdr->format),
@@ -1320,7 +1320,7 @@ void file_insert_samples(int beg, int num, char *inserted_file, chan_info *cp, i
   if (hdr)
     {
       fd = snd_open_read(cp->state, inserted_file);
-      mus_file_set_descriptors(fd,
+      mus_file_open_descriptors(fd,
 			       inserted_file,
 			       hdr->format,
 			       mus_data_format_to_bytes_per_sample(hdr->format),
@@ -1596,7 +1596,7 @@ void file_change_samples(int beg, int num, char *tempfile,
   if (hdr)
     {
       fd = snd_open_read(cp->state, tempfile);
-      mus_file_set_descriptors(fd,
+      mus_file_open_descriptors(fd,
 			       tempfile,
 			       hdr->format,
 			       mus_data_format_to_bytes_per_sample(hdr->format),
@@ -1638,7 +1638,7 @@ void file_override_samples(int num, char *tempfile,
       if (num == -1) num = (hdr->samples / hdr->chans);
       prepare_edit_list(cp, num);
       fd = snd_open_read(ss, tempfile);
-      mus_file_set_descriptors(fd,
+      mus_file_open_descriptors(fd,
 			       tempfile,
 			       hdr->format,
 			       mus_data_format_to_bytes_per_sample(hdr->format),
@@ -2061,7 +2061,7 @@ int open_temp_file(char *ofile, int chans, file_info *hdr, snd_state *ss)
   if (err == -1) return(-1);
   if ((ofd = snd_reopen_write(ss, ofile)) == -1) return(-1);
   hdr->data_location = mus_header_data_location(); /* header might have changed size (aiff extras) */
-  mus_file_set_descriptors(ofd,
+  mus_file_open_descriptors(ofd,
 			   ofile,
 			   hdr->format,
 			   mus_data_format_to_bytes_per_sample(hdr->format),
@@ -2253,7 +2253,7 @@ static int save_edits_1(snd_info *sp)
       FREE(axis_data);
       return(err);
     }
-  sphdr->samples = samples*sp->nchans;
+  sphdr->samples = samples * sp->nchans;
   collapse_marks(sp);
   for (i = 0; i < sp->nchans; i++)
     {
@@ -2261,7 +2261,7 @@ static int save_edits_1(snd_info *sp)
       cp = sp->chans[i];
       if (cp->mixes) reset_mix_list(cp);
       if (cp->edits) free_edit_list(cp);
-      free_snd_fd(sf[i]);  /* must precede free_sound_list since it access the snd_data structs that free_sound_list frees */
+      free_snd_fd(sf[i]);  /* must precede free_sound_list since it accesses the snd_data structs that free_sound_list frees */
       if (cp->sounds) free_sound_list(cp);
       if (cp->samples) 
 	{

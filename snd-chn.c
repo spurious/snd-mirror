@@ -300,7 +300,7 @@ void add_channel_data_1(chan_info *cp, snd_info *sp, snd_state *ss, int graphed)
 {
   /* initialize channel, including edit/sound lists */
   axis_info *ap;
-  Float ymin, ymax, xmax, y0, y1, x0, x1, dur, gdur;
+  Float ymin = 0.0, ymax = 0.0, xmax, y0, y1, x0, x1, dur, gdur;
   char *label;
   file_info *hdr;
   int samples_per_channel, ymin_set = 0, ymax_set = 0;
@@ -449,12 +449,12 @@ void add_channel_data(char *filename, chan_info *cp, file_info *hdr, snd_state *
       fd = snd_open_read(ss, filename);
       if (fd != -1)
 	{
-	  mus_file_set_descriptors(fd,
-				   filename, chdr->format,
-				   mus_data_format_to_bytes_per_sample(chdr->format),
-				   chdr->data_location,
-				   chdr->chans,
-				   chdr->type);
+	  mus_file_open_descriptors(fd,
+				    filename, chdr->format,
+				    mus_data_format_to_bytes_per_sample(chdr->format),
+				    chdr->data_location,
+				    chdr->chans,
+				    chdr->type);
 #if HAVE_GUILE
 	  during_open(fd, filename, SND_OPEN_CHANNEL);
 #endif

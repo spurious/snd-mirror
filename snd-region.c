@@ -232,7 +232,7 @@ static void make_region_readable(region *r, snd_state *ss)
 	  if (hdr)
 	    {
 	      fd = snd_open_read(ss, r->filename);
-	      mus_file_set_descriptors(fd,
+	      mus_file_open_descriptors(fd,
 				       r->filename,
 				       hdr->format,
 				       mus_data_format_to_bytes_per_sample(hdr->format),
@@ -412,7 +412,7 @@ static int save_region_1(snd_state *ss, char *ofile, int type, int format, int s
       oloc = mus_header_data_location();
       if ((ofd = snd_reopen_write(ss, ofile)) == -1) 
 	return(MUS_CANT_OPEN_TEMP_FILE);
-      mus_file_set_descriptors(ofd, ofile, format, 
+      mus_file_open_descriptors(ofd, ofile, format, 
 			       mus_data_format_to_bytes_per_sample(format), 
 			       oloc, r->chans, type);
       mus_file_set_data_clipped(ofd, data_clipped(ss));
@@ -432,7 +432,7 @@ static int save_region_1(snd_state *ss, char *ofile, int type, int format, int s
 	  chans = mus_sound_chans(r->filename);
 	  frames = mus_sound_samples(r->filename) / chans;
 	  iloc = mus_sound_data_location(r->filename);
-	  mus_file_set_descriptors(ifd,
+	  mus_file_open_descriptors(ifd,
 				   r->filename,
 				   mus_sound_data_format(r->filename),
 				   mus_sound_datum_size(r->filename),
@@ -770,7 +770,7 @@ void save_regions(snd_state *ss, FILE *fd)
 		  MUS_SAMPLE_TYPE **ibufs;
 		  ifd = mus_file_open_read(r->filename);
 		  iloc = mus_sound_data_location(r->filename);
-		  mus_file_set_descriptors(ifd,
+		  mus_file_open_descriptors(ifd,
 					   r->filename,
 					   mus_sound_data_format(r->filename),
 					   mus_sound_datum_size(r->filename),

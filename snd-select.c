@@ -594,7 +594,7 @@ int save_selection(snd_state *ss, char *ofile, int type, int format, int srate, 
 	      ends[i] = selection_end(si->cps[i]);
 	      sfs[i] = init_sample_read(selection_beg(si->cps[i]), si->cps[i], READ_FORWARD);
 	    }
-	  mus_file_set_descriptors(ofd, ofile, format, 
+	  mus_file_open_descriptors(ofd, ofile, format, 
 				   mus_data_format_to_bytes_per_sample(format), 
 				   oloc, si->chans, type);
 	  mus_file_set_data_clipped(ofd, data_clipped(ss));

@@ -193,7 +193,8 @@ static SCM snd_catch_scm_error(void *data, SCM tag, SCM throw_args) /* error han
 		      /* and it still is -- #@$%!#@ */
 		      stack = scm_fluid_ref(SCM_CDR(scm_the_last_stack_fluid));
 		      if (SCM_NFALSEP(stack)) 
-			scm_display_backtrace(stack, port, SCM_UNDEFINED, SCM_UNDEFINED);
+			/* scm_display_backtrace(stack, port, SCM_UNDEFINED, SCM_UNDEFINED); */
+			scm_display_backtrace(stack, port, SCM_BOOL_F, SCM_BOOL_F); 
 		    }
 		}
 	    }
@@ -2075,7 +2076,7 @@ If 'data' is a list of numbers, it is treated as an envelope."
   int i, len, graph, graphs, need_update = 0;
   Float ymin, ymax, val, nominal_x0, nominal_x1;
   lisp_grf *old_lp = NULL;
-  int h, w, o, gx0, ww;
+  int h = 0, w = 0, o = 0, gx0 = 0, ww = 0;
   axis_info *uap = NULL;
   /* ldata can be a vct object, a vector, or a list of either */
   SCM_ASSERT(((vct_p(ldata)) || (gh_vector_p(ldata)) || (gh_list_p(ldata))), ldata, SCM_ARG1, S_graph);
@@ -2780,6 +2781,49 @@ void define_procedure_with_reversed_setter(char *get_name, SCM (*get_func)(), ch
   void g_ladspa_to_snd(SCM local_doc);
 #endif
 
+#if HAVE_DLFCN_H
+#include <dlfcn.h>
+/* these are included because libtool's dlopen is incredibly stupid, as is libtool in general */
+
+static SCM g_dlopen(SCM name)
+{
+  void *handle;
+  handle = dlopen(TO_C_STRING(name), RTLD_LAZY);
+  if (handle == NULL) return(TO_SCM_STRING(dlerror()));
+  return(SND_WRAP(handle));
+}
+
+static SCM g_dlclose(SCM handle)
+{
+  return(TO_SCM_INT(dlclose((void *)(SND_UNWRAP(handle)))));
+}
+
+static SCM g_dlerror(void)
+{
+  return(TO_SCM_STRING(dlerror()));
+}
+
+static SCM g_dlinit(SCM handle, SCM func)
+{
+  typedef void *(*snd_dl_func)(void);
+  void *proc;
+  proc = dlsym((void *)(SND_UNWRAP(handle)), TO_C_STRING(func));
+  if (proc == NULL) return(TO_SCM_STRING(dlerror()));
+  ((snd_dl_func)proc)();
+  return(SCM_BOOL_T);
+}
+
+static void g_init_dl(void)
+{
+  gh_new_procedure("dlopen", g_dlopen, 1, 0 ,0);
+  gh_new_procedure("dlclose", g_dlclose, 1, 0 ,0);
+  gh_new_procedure("dlerror", g_dlerror, 0, 0 ,0);
+  gh_new_procedure("dlinit", g_dlinit, 2, 0 ,0);
+  
+}
+#endif
+
+
 void g_initialize_gh(snd_state *ss)
 {
   SCM local_doc;
@@ -3270,6 +3314,9 @@ If more than one hook function, results are concatenated. If none, the current c
   g_init_gxchn(local_doc);
   g_init_draw(local_doc);
   g_init_gxdrop(local_doc);
+#endif
+#if HAVE_DLFCN_H
+  g_init_dl();
 #endif
 
 #if HAVE_LADSPA

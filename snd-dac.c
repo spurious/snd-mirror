@@ -228,7 +228,7 @@ static SCM g_set_reverb_funcs(SCM rev, SCM make_rev, SCM free_rev)
   #define H_set_reverb_funcs "(" "set-" S_reverb_funcs " reverb make-reverb free-reverb) sets the current reverb functions"
 
   char *errmsg;
-  SCM errstr, bad_func;
+  SCM errstr, bad_func = SCM_BOOL_F;
 
   errmsg = procedure_ok(rev, 3, 0, "set-" S_reverb_funcs, "reverb", 1);
   if (errmsg == NULL) 
@@ -2811,6 +2811,9 @@ static SCM g_player_p(SCM snd_chn)
 			(players[index])));
 }
 
+#if DEBUGGING
+void init_fm_violin(void);
+#endif
 
 void g_init_dac(SCM local_doc)
 {
@@ -2849,6 +2852,148 @@ If it returns #t, the sound is not played."
 
   gh_eval_str("(set-reverb-funcs snd-nrev make-snd-nrev free-snd-nrev)");
   gh_eval_str("(set-contrast-func snd-contrast)");
+
+#if DEBUGGING
+  init_fm_violin();
+#endif
 }
 
+#endif
+
+#if DEBUGGING
+static int feq(float x, int i) {return(fabs(x-i)<.00001);}
+
+static void fm_violin(mus_any *output, 
+	       float start, float dur, float frequency, float amplitude, 
+	       float fm_index)
+{
+ float pervibfrq = 5.0,
+   ranvibfrq = 16.0,
+   pervibamp = .0025,
+   ranvibamp = .005,
+   noise_amount = 0.0,
+   noise_frq = 1000.0,
+   gliss_amp = 0.0,
+   fm1_rat = 1.0,
+   fm2_rat = 3.0,
+   fm3_rat = 4.0,
+   reverb_amount = 0.0,
+   degree = 0.0,
+   distance = 1.0;
+  float fm_env[] = {0.0, 1.0, 25.0, 0.4, 75.0, 0.6, 100.0, 0.0};
+  float amp_env[] = {0.0, 0.0,  25.0, 1.0, 75.0, 1.0, 100.0, 0.0};
+  float frq_env[] = {0.0, -1.0, 15.0, 1.0, 25.0, 0.0, 100.0, 0.0};
+  int beg = 0,end,easy_case = 0,npartials,i;
+  float *coeffs,*partials;
+  float frq_scl,maxdev,logfrq,sqrtfrq,index1,index2,index3,norm,vib = 0.0,modulation = 0.0,fuzz = 0.0,indfuzz = 1.0,ampfuzz = 1.0;
+  mus_any *carrier,*fmosc1,*fmosc2,*fmosc3,*ampf,*indf1,*indf2,*indf3,*fmnoi = NULL,*pervib,*ranvib,*frqf = NULL,*loc;
+  beg = start * mus_srate();
+  end = beg + dur * mus_srate();
+  frq_scl = mus_hz2radians(frequency);
+  maxdev = frq_scl * fm_index;
+  if ((noise_amount == 0.0) && (feq(fm1_rat,floor(fm1_rat))) && (feq(fm2_rat,floor(fm2_rat))) && (feq(fm3_rat,floor(fm3_rat)))) easy_case = 1;
+  logfrq = log(frequency);
+  sqrtfrq = sqrt(frequency);
+  index1 = maxdev * 5.0 / logfrq; if (index1 > M_PI) index1 = M_PI;
+  index2 = maxdev * 3.0 * (8.5 - logfrq) / (3.0 + frequency * .001); if (index2 > M_PI) index2 = M_PI;
+  index3 = maxdev * 4.0 / sqrtfrq; if (index3 > M_PI) index3 = M_PI;
+  if (easy_case)
+    {
+      npartials = floor(fm1_rat);
+      if ((floor(fm2_rat)) > npartials) npartials = floor(fm2_rat);
+      if ((floor(fm3_rat)) > npartials) npartials = floor(fm3_rat);
+      npartials++;
+      partials = (float *)CALLOC(npartials,sizeof(float));
+      partials[(int)(fm1_rat)] = index1;
+      partials[(int)(fm2_rat)] = index2;
+      partials[(int)(fm3_rat)] = index3;
+      coeffs = mus_partials2polynomial(npartials,partials,1);
+      norm = 1.0;
+    }
+  else norm = index1;
+  carrier = mus_make_oscil(frequency,0.0);
+  if (easy_case == 0)
+    {
+      fmosc1 = mus_make_oscil(frequency * fm1_rat,0.0);
+      fmosc2 = mus_make_oscil(frequency * fm2_rat,0.0);
+      fmosc3 = mus_make_oscil(frequency * fm3_rat,0.0);
+    }
+  else fmosc1 = mus_make_oscil(frequency,0.0);
+  ampf = mus_make_env(amp_env,4,amplitude,0.0,1.0,dur,0,0,NULL);
+  indf1 = mus_make_env(fm_env,4,norm,0.0,1.0,dur,0,0,NULL);
+  if (gliss_amp != 0.0) frqf = mus_make_env(frq_env,4,gliss_amp * frq_scl,0.0,1.0,dur,0,0,NULL);
+  if (easy_case == 0)
+    {
+      indf2 = mus_make_env(fm_env,4,index2,0.0,1.0,dur,0,0,NULL);
+      indf3 = mus_make_env(fm_env,4,index3,0.0,1.0,dur,0,0,NULL);
+    }
+  pervib = mus_make_triangle_wave(pervibfrq,frq_scl * pervibamp,0.0);
+  ranvib = mus_make_rand_interp(ranvibfrq,frq_scl * ranvibamp);
+  if (noise_amount != 0.0) fmnoi = mus_make_rand(noise_frq,noise_amount * M_PI);
+  loc = mus_make_locsig(degree,distance,reverb_amount,1,(mus_output *)output,NULL);
+  for (i=beg;i<end;i++)
+    {
+      if (noise_amount != 0.0) fuzz = mus_rand(fmnoi,0.0);
+      if (frqf) vib = mus_env(frqf); else vib = 0.0;
+      vib += mus_triangle_wave(pervib,0.0) + mus_rand_interp(ranvib,0.0);
+      if (easy_case)
+        modulation = mus_env(indf1) * mus_polynomial(coeffs,mus_oscil(fmosc1,vib,0.0),npartials);
+      else
+        modulation = mus_env(indf1) * mus_oscil(fmosc1,(fuzz + fm1_rat * vib),0.0) +
+                     mus_env(indf2) * mus_oscil(fmosc2,(fuzz + fm2_rat * vib),0.0) +
+                     mus_env(indf3) * mus_oscil(fmosc3,(fuzz + fm3_rat * vib),0.0);
+      mus_locsig(loc,i,mus_env(ampf) * mus_oscil(carrier,vib + indfuzz * modulation,0.0));
+    }
+  mus_free(pervib);
+  mus_free(ranvib);
+  mus_free(carrier);
+  mus_free(fmosc1);
+  mus_free(ampf);
+  mus_free(indf1);
+  if (fmnoi) mus_free(fmnoi);
+  if (frqf) mus_free(frqf);
+  if (easy_case == 0)
+    {
+      mus_free(indf2);
+      mus_free(indf3);
+      mus_free(fmosc2);
+      mus_free(fmosc3);
+    }
+  else
+    FREE(partials);
+  mus_free(loc);
+}
+
+
+#if 0
+int main(int argc, char *argv[])
+{
+  mus_any *osc = NULL,*op = NULL;
+  init_mus_module();
+  op = mus_make_sample2file("test.snd",1,SNDLIB_16_LINEAR,NeXT_sound_file);
+  if (op)
+    {
+      fm_violin(op,0.0,20.0,440.0,.3,1.0);
+      mus_free(op);
+    }
+  return(0);
+}
+#endif
+
+static SCM g_fm_violin(SCM output, SCM start, SCM dur, SCM frequency, SCM amplitude, SCM fm_index)
+{
+  fm_violin((mus_any *)(mus_get_any(output)), 
+	    TO_C_DOUBLE(start),
+	    TO_C_DOUBLE(dur),
+	    TO_C_DOUBLE(frequency),
+	    TO_C_DOUBLE(amplitude),
+	    TO_C_DOUBLE(fm_index));
+  return(SCM_BOOL_F);
+}
+
+
+void init_fm_violin(void)
+{
+  gh_new_procedure("fm-violin", g_fm_violin, 6, 0, 0);
+}
 #endif

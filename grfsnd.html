@@ -621,6 +621,8 @@ static SCM g_free_flange(SCM g_gens)
 
 void init_eff(void)
 {
+  mus_sound_initialize();
+  init_mus_module();
   gh_new_procedure("free-flange", g_free_flange, 1, 0, 0);
   gh_new_procedure("get-flange", g_get_flange, 0, 0, 0);
   gh_new_procedure("make-flange", g_make_flange, 3, 0, 0);
@@ -642,7 +644,24 @@ ld -shared -o eff.so eff.o -rpath /home/bil/test/lib -L/home/bil/test/lib -lguil
 <pre>
 LIBS = -Xlinker -rpath -Xlinker /home/bil/test/lib -L/home/bil/test/lib -lguile -Xlinker -rpath -Xlinker /home/bil/cl -L/home/bil/cl -lsndlib -lmcheck -L/usr/X11R6/lib -lXm -lXp -lXpm -lXt -lXext -lX11 -ldl -lm
 </pre>
-<p>Once the dynamic linker is happy, the flanger can be
+<p>
+If all else fails (as it usually does when using libtool's dynamic linking),
+I've included a simple dlopen call in Snd as a fallback -- (dlopen filename) will return
+a "handle" (like dynamic-link), or give you a truthful error message.  The function corresponding to "dynamic-call"
+is dlinit: (dlinit handle func-name) where the function in question takes no arguments.
+If the sndlib.so business won't work for you, build your .so file with the sndlib object files
+included explicitly:
+</p>
+<pre>
+  ld -shared eff.o -o eff.so io.o headers.o audio.o sound.o clm.o vct.o sndlib2scm.o clm2scm.o
+</pre>
+<p>Then in Snd (assume we're on /home/bil/cl),</p>
+<pre>
+(define handle (dlopen "/home/bil/cl/eff.so"))
+(dlinit handle "init_fm_violin")
+</pre>
+<p>
+Once the dynamic linker is happy, the flanger can be 
 invoked:</p>
 <pre>
 (loop-samples (make-sample-reader 0) (get-flange) (frames) "flange" (make-flange 2.0 5.0 0.001))
@@ -1195,7 +1214,7 @@ load <i>len</i> samples of <i>filename</i> into <i>vct</i> starting at frame <i>
 <tr><td><a href="clm.html#make-rand">make-rand</a></td><td colspan=2>(frequency amplitude)</td></tr>
 <tr><td><a href="clm.html#make-rand-interp">make-rand-interp</a></td><td colspan=2>(frequency amplitude)</td></tr>
 <tr><td><a href="clm.html#make-readin">make-readin</a></td><td colspan=2>(file channel start)</td></tr>
-<tr><td><a href="clm.html#make-sample-&gt;file">make-sample-&gt;file</a></td><td colspan=2>(name chans format type)</td></tr>
+<tr><td><a href="clm.html#make-sample-&gt;file">make-sample-&gt;file</a></td><td colspan=2>(name chans format type <i>comment</i>)</td></tr>
 <tr><td><a href="clm.html#make-sawtooth-wave">make-sawtooth-wave</a></td><td colspan=2>(frequency amplitude initial-phase)</td></tr>
 <tr><td><a href="clm.html#make-sine-summation">make-sine-summation</a></td><td colspan=2>(frequency initial-phase n a ratio)</td></tr>
 <tr><td><a href="clm.html#make-square-wave">make-square-wave</a></td><td colspan=2>(frequency amplitude initial-phase)</td></tr>

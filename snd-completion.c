@@ -299,10 +299,13 @@ char *command_completer(char *original_text)
   if ((original_text) && (*original_text))
     {
       len = strlen(original_text);
-      for (i = len-1; i >= 0; i--)
+      for (i = len - 1; i >= 0; i--)
 	if ((!(isalpha((int)(original_text[i])))) &&
 	    (!(isdigit((int)(original_text[i])))) &&
-	    (original_text[i] != '-'))
+	    (original_text[i] != '-') &&
+	    (original_text[i] != '>') &&
+	    (original_text[i] != '?') &&
+	    (original_text[i] != '!'))
 	  break;
       beg = i + 1;
       if (beg == len) 

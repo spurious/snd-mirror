@@ -2,7 +2,7 @@
 
 (define pi 3.141592653589793)
 
-(define fm-violin 
+(define fm-violin
   (lambda* (startime dur frequency amplitude #:key
 	    (fm-index 1.0)
 	    (amp-env '(0 0  25 1  75 1  100 0))
@@ -27,10 +27,13 @@
 	    (fm1-index #f) 
 	    (fm2-index #f) 
 	    (fm3-index #f)
+	    (degree 0)
+	    (distance 1.0)
+	    (reverb-amount 0.01)
 	    (base 1.0)
 	    #:allow-other-keys)
-    (let* ((beg (floor (* startime (srate))))
-	   (len (floor (* dur (srate))))
+    (let* ((beg (floor (* startime (mus-srate))))
+	   (len (floor (* dur (mus-srate))))
 	   (end (+ beg len))
 	   (frq-scl (hz->radians frequency))
 	   (modulate (not (zero? fm-index)))
@@ -72,14 +75,14 @@
 	   (amp-noi (if (and (not (= 0.0 amp-noise-amount)) (not (= 0.0 amp-noise-freq)))
 			(make-rand-interp amp-noise-freq amp-noise-amount)
 			#f))
+	   (locs (make-locsig degree distance reverb-amount *output* *reverb* (mus-channels *output*)))
 	   (vib 0.0) 
 	   (modulation 0.0)
 	   (fuzz 0.0)
 	   (ind-fuzz 1.0)
-	   (amp-fuzz 1.0)
-	   (out-data (make-vct len)))
-      (do ((i 0 (1+ i)))
-	  ((= i len))
+	   (amp-fuzz 1.0))
+      (do ((i beg (1+ i)))
+	  ((= i end))
 	(if (not (= 0.0 noise-amount))
 	    (set! fuzz (rand fm-noi)))
 	(set! vib (+ (env frqf) (triangle-wave pervib) (rand-interp ranvib)))
@@ -94,9 +97,7 @@
 		      (+ (* (env indf1) (oscil fmosc1 (+ (* fm1-rat vib) fuzz)))
 			 (* (env indf2) (oscil fmosc2 (+ (* fm2-rat vib) fuzz)))
 			 (* (env indf3) (oscil fmosc3 (+ (* fm3-rat vib) fuzz)))))))
-	(vct-set! out-data i 
-		  (* (env ampf) amp-fuzz
-		     (oscil carrier (+ vib (* ind-fuzz modulation))))))
-      out-data)))
+	(locsig locs i (* (env ampf) amp-fuzz
+			  (oscil carrier (+ vib (* ind-fuzz modulation)))))))))
 
 ; (fm-violin 0 1 440 .1 :fm-index 2.0)

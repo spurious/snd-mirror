@@ -1905,6 +1905,7 @@
       (log-mem clmtest)
       (if (> tests 1) (snd-display (format #f ";clm test ~D " clmtest)))
       (set! (mus-srate) 22050)
+      (if (not (= (mus-file-buffer-size) 8192)) (snd-display (format #f ";mus-file-buffer-size: ~D?" (mus-file-buffer-size))))
       (if (not (= (mus-array-print-length) 8)) (snd-display (format #f ";mus-array-print-length: ~D?" (mus-array-print-length))))
       (set! (mus-array-print-length) 32)
       (if (not (= (mus-array-print-length) 32)) (snd-display (format #f ";set mus-array-print-length: ~D?" (mus-array-print-length))))

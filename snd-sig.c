@@ -947,7 +947,7 @@ static char *convolve_with_or_error(char *filename, Float amp, chan_info *cp)
 	      else
 		{
 		  hdr = sp->hdr;
-		  mus_file_set_descriptors(scfd,
+		  mus_file_open_descriptors(scfd,
 					   saved_chan_file,
 					   hdr->format,
 					   mus_data_format_to_bytes_per_sample(hdr->format),
@@ -959,7 +959,7 @@ static char *convolve_with_or_error(char *filename, Float amp, chan_info *cp)
 				      filename, strerror(errno)));
 		  else
 		    {
-		      mus_file_set_descriptors(fltfd,
+		      mus_file_open_descriptors(fltfd,
 					       filename,
 					       dataformat,
 					       mus_data_format_to_bytes_per_sample(dataformat),

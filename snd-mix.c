@@ -851,7 +851,7 @@ static char *save_as_temp_file(MUS_SAMPLE_TYPE **raw_data, int chans, int len, i
   hfd = snd_write_header(ss, newname, MUS_NEXT, nominal_srate, chans, 28, len * chans, format, NULL, 0, NULL);
   if (hfd == -1) return(NULL);
   ofd = snd_reopen_write(ss, newname);
-  mus_file_set_descriptors(ofd, newname, format, 4, 28, chans, MUS_NEXT);
+  mus_file_open_descriptors(ofd, newname, format, 4, 28, chans, MUS_NEXT);
   mus_file_set_data_clipped(ofd, data_clipped(ss));
   lseek(ofd, 28, SEEK_SET);
   no_space = disk_space_p(any_selected_sound(ss), ofd, len * chans * 4, 0);
@@ -960,7 +960,7 @@ static mix_info *file_mix_samples(int beg, int num, char *tempfile, chan_info *c
     }
   csf = init_sample_read(beg, cp, READ_FORWARD);
   ifd = snd_open_read(ss, tempfile);
-  mus_file_set_descriptors(ifd, tempfile,
+  mus_file_open_descriptors(ifd, tempfile,
 			   ihdr->format,
 			   mus_data_format_to_bytes_per_sample(ihdr->format),
 			   ihdr->data_location,

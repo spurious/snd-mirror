@@ -119,7 +119,7 @@ static void reposition_file_buffers(snd_data *sd, int index)
 	}
       hdr = sd->hdr;
       /* these need to flush active data before hidden close and fixup the datai indices */
-      mus_file_set_descriptors(fd,
+      mus_file_open_descriptors(fd,
 			       sd->filename,
 			       hdr->format,
 			       mus_data_format_to_bytes_per_sample(hdr->format),

@@ -3,9 +3,11 @@
 
 #define MUS_VERSION 1
 #define MUS_REVISION 44
-#define MUS_DATE "26-Mar-01"
+#define MUS_DATE "1-Apr-01"
 
 /* 
+ * 1-Apr:      mus_make_file2sample_with_comment and mus_length for file->sample/sample->file.
+ *             mus_file_buffer_size.
  * 26-Mar:     extended_type field added to mus_any_class for more robust type checking.
  * 16-Mar:     mus_phase of env -> current_value.
  * 28-Feb:     added mus_position (currently only for envs).
@@ -432,6 +434,7 @@ mus_frame *mus_file2frame       PROTO((mus_any *ptr, int samp, mus_frame *f));
 
 int mus_sample2file_p           PROTO((mus_any *ptr));
 mus_any *mus_make_sample2file   PROTO((const char *filename, int chans, int out_format, int out_type));
+mus_any *mus_make_sample2file_with_comment PROTO((const char *filename, int out_chans, int out_format, int out_type, const char *comment));
 Float mus_sample2file           PROTO((mus_any *ptr, int samp, int chan, Float val));
 int mus_close_file              PROTO((mus_any *ptr));
 
@@ -479,6 +482,7 @@ int mus_hop                     PROTO((mus_any *ptr));
 int mus_set_hop                 PROTO((mus_any *ptr, int val));
 
 int mus_set_file_buffer_size    PROTO((int size));
+int mus_file_buffer_size        PROTO((void));
 
 void mus_mix                    PROTO((const char *outfile, const char *infile, int out_start, int out_samps, int in_start, mus_mixer *mx, mus_any ***envs));
 int mus_file2fltarray           PROTO((const char *filename, int chan, int start, int samples, Float *array));

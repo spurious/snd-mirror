@@ -27,8 +27,8 @@
 
 
 #define SNDLIB_VERSION 12
-#define SNDLIB_REVISION 7
-#define SNDLIB_DATE "29-Mar-01"
+#define SNDLIB_REVISION 8
+#define SNDLIB_DATE "2-Apr-01"
 
 /* try to figure out what type of machine (and in worst case, what OS) we're running on */
 /* gcc has various compile-time macros like #cpu, but we're hoping to run in Metroworks C, Watcom C, MSC, MPW, etc */
@@ -462,6 +462,7 @@ void mus_audio_mixer_restore        PROTO((const char *file));
 /* -------- io.c -------- */
 
 int mus_file_set_descriptors        PROTO((int tfd, const char *arg, int df, int ds, int dl, int dc, int dt));
+#define mus_file_open_descriptors(Tfd, Arg, Df, Ds, Dl, Dc, Dt) mus_file_set_descriptors(Tfd, Arg, Df, Ds, Dl, Dc, Dt)
 int mus_file_close_descriptors      PROTO((int tfd));
 int mus_file_open_read              PROTO((const char *arg));
 int mus_file_probe                  PROTO((const char *arg));

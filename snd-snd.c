@@ -253,7 +253,7 @@ int tick_amp_env(chan_info *cp, env_state *es)
 	   *   accumulate over 100 bins, and I'm paranoid)
 	   */
 	  fd = mus_file_open_read(sp->fullname);
-	  mus_file_set_descriptors(fd,
+	  mus_file_open_descriptors(fd,
 				   sp->fullname,
 				   mus_sound_data_format(sp->fullname),
 				   mus_sound_datum_size(sp->fullname),
@@ -980,7 +980,7 @@ void restore_filter_string(snd_info *sp, int back) {restore_string(sp, back, FIL
 
 static void clear_strings(snd_info *sp, int which)
 {
-  mini_history *mh;
+  mini_history *mh = NULL;
   int i;
   switch (which)
     {

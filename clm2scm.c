@@ -1006,7 +1006,7 @@ static Float *whatever_to_floats(SCM inp, int size, const char *caller)
 		    invals[i] = TO_C_DOUBLE(g_call1(inp, TO_SCM_INT(i), caller));
 #else
 		  for (i = 0; i < size; i++) 
-		    invals[i] = TO_C_DOUBLE(gh_call1(inp, TO_SCM_INT(i), caller));
+		    invals[i] = TO_C_DOUBLE(gh_call1(inp, TO_SCM_INT(i)));
 #endif
 		}
 	    }
@@ -2149,6 +2149,7 @@ Use this in conjunction with the " S_two_pole " generator"
 static SCM g_make_smpflt_2(int choice, SCM arg1, SCM arg2, SCM arg3, SCM arg4, SCM arg5, SCM arg6)
 {
   mus_scm *gn;
+  mus_any *gen = NULL;
   SCM args[6], keys[3];
   int orig_arg[3] = {0, 0, 0};
   int vals;
@@ -2175,10 +2176,11 @@ static SCM g_make_smpflt_2(int choice, SCM arg1, SCM arg2, SCM arg3, SCM arg4, S
       a1 = fkeyarg(keys[1], smpflts[choice], orig_arg[1] + 1, args[orig_arg[1]], a1);
       a2 = fkeyarg(keys[2], smpflts[choice], orig_arg[2] + 1, args[orig_arg[2]], a2);
     }
-  gn = (mus_scm *)CALLOC(1, sizeof(mus_scm));
   if (choice == G_TWO_ZERO)
-    gn->gen = mus_make_two_zero(a0, a1, a2);
-  else gn->gen = mus_make_two_pole(a0, a1, a2);
+    gen = mus_make_two_zero(a0, a1, a2);
+  else gen = mus_make_two_pole(a0, a1, a2);
+  gn = (mus_scm *)CALLOC(1, sizeof(mus_scm));
+  gn->gen = gen;  /* delayed in case of mus_error in make_two_pole */
   return(mus_scm_to_smob(gn));
 }
 
@@ -2695,7 +2697,7 @@ static SCM g_frame2list(SCM fr)
   SCM res = SCM_EOL;
   SCM_ASSERT((mus_scm_p(fr)) && (mus_frame_p(mus_get_any(fr))), fr, SCM_ARG1, S_frame2list);
   val = (mus_frame *)mus_get_any(fr);
-  for (i=(val->chans)-1; i >= 0; i--) 
+  for (i = (val->chans) - 1; i >= 0; i--) 
     res = scm_cons(TO_SCM_DOUBLE(val->vals[i]), res);
   return(scm_return_first(res, fr));
 }
@@ -2992,15 +2994,15 @@ static Float *list2partials(SCM harms, int *npartials)
   if (listlen == 0) return(NULL);
   /* the list is '(partial-number partial-amp ... ) */
   maxpartial = TO_C_INT_OR_ELSE(SCM_CAR(harms), 0);
-  for (i = 2, lst = SCM_CDDR(harms); i < listlen; i+=2, lst = SCM_CDDR(lst))
+  for (i = 2, lst = SCM_CDDR(harms); i < listlen; i += 2, lst = SCM_CDDR(lst))
     {
       curpartial = TO_C_INT_OR_ELSE(SCM_CAR(lst), 0);
       if (curpartial > maxpartial) maxpartial = curpartial;
     }
   if (maxpartial < 0) return(NULL);
   partials = (Float *)CALLOC(maxpartial + 1, sizeof(Float));
-  (*npartials) = maxpartial+1;
-  for (i = 0, lst = harms; i < listlen; i+=2, lst = SCM_CDDR(lst))
+  (*npartials) = maxpartial + 1;
+  for (i = 0, lst = harms; i < listlen; i += 2, lst = SCM_CDDR(lst))
     {
       curpartial = TO_C_INT_OR_ELSE(SCM_CAR(lst), 0);
       partials[curpartial] = TO_C_DOUBLE(SCM_CADR(lst));
@@ -3574,6 +3576,7 @@ static void init_env(void)
 #define S_file2array       "file->array"
 #define S_array2file       "array->file"
 #define S_mus_close        "mus-close"
+#define S_mus_file_buffer_size "mus-file-buffer-size"
 
 static SCM g_input_p(SCM obj) 
 {
@@ -3718,9 +3721,9 @@ static SCM g_file2sample(SCM obj, SCM samp, SCM chan)
 				       channel)));
 }
 
-static SCM g_make_sample2file(SCM name, SCM chans, SCM out_format, SCM out_type)
+static SCM g_make_sample2file(SCM name, SCM chans, SCM out_format, SCM out_type, SCM comment)
 {
-  #define H_make_sample2file "(" S_make_sample2file " filename chans data-format header-type)\n\
+  #define H_make_sample2file "(" S_make_sample2file " filename chans data-format header-type comment)\n\
 returns an output generator writing the sound file 'filename' which is set up to have \
 'chans' channels of 'data-format' samples with a header of 'header-type'.  The latter \
 should be sndlib identifiers:\n\
@@ -3742,10 +3745,11 @@ should be sndlib identifiers:\n\
 	  if (chns > 0)
 	    {
 	      gn = (mus_scm *)CALLOC(1, sizeof(mus_scm));
-	      gn->gen = mus_make_sample2file(TO_C_STRING(name),
-					     chns,
-					     df,
-					     ht);
+	      gn->gen = mus_make_sample2file_with_comment(TO_C_STRING(name),
+							  chns,
+							  df,
+							  ht,
+							  (gh_string_p(comment)) ? TO_C_STRING(comment) : NULL);
 	      gn->nvcts = 0;
 	      return(scm_return_first(mus_scm_to_smob(gn), name));
 	    }
@@ -3906,6 +3910,19 @@ at frame 'start' and reading 'samples' samples altogether."
   return(scm_return_first(TO_SMALL_SCM_INT(err), filename));
 }
 
+static SCM g_mus_file_buffer_size(void)
+{
+  #define H_mus_file_buffer_size "(" S_mus_file_buffer_size ") -> current CLM IO buffer size (default is 8192)"
+  return(TO_SCM_INT(mus_file_buffer_size));
+}
+
+static SCM g_mus_set_file_buffer_size(SCM val)
+{
+  SCM_ASSERT(INTEGER_P(val), val, SCM_ARG1, "set-" S_mus_file_buffer_size);
+  return(TO_SCM_INT(mus_set_file_buffer_size(TO_C_INT(val))));
+}
+
+
 static void init_io(void)
 {
   DEFINE_PROC(gh_new_procedure(S_file2sample_p,    SCM_FNC g_file2sample_p, 1, 0, 0),    H_file2sample_p);
@@ -3915,7 +3932,7 @@ static void init_io(void)
   DEFINE_PROC(gh_new_procedure(S_make_file2frame,  SCM_FNC g_make_file2frame, 1, 0, 0),  H_make_file2frame);
   DEFINE_PROC(gh_new_procedure(S_file2frame,       SCM_FNC g_file2frame, 2, 1, 0),       H_file2frame);
   DEFINE_PROC(gh_new_procedure(S_sample2file_p,    SCM_FNC g_sample2file_p, 1, 0, 0),    H_sample2file_p);
-  DEFINE_PROC(gh_new_procedure(S_make_sample2file, SCM_FNC g_make_sample2file, 4, 0, 0), H_make_sample2file);
+  DEFINE_PROC(gh_new_procedure(S_make_sample2file, SCM_FNC g_make_sample2file, 4, 1, 0), H_make_sample2file);
   DEFINE_PROC(gh_new_procedure(S_sample2file,      SCM_FNC g_sample2file, 4, 0, 0),      H_sample2file);
   DEFINE_PROC(gh_new_procedure(S_frame2file_p,     SCM_FNC g_frame2file_p, 1, 0, 0),     H_frame2file_p);
   DEFINE_PROC(gh_new_procedure(S_frame2file,       SCM_FNC g_frame2file, 3, 0, 0),       H_frame2file);
@@ -3933,6 +3950,9 @@ static void init_io(void)
   DEFINE_PROC(gh_new_procedure(S_array2file,       SCM_FNC g_array2file, 5, 0, 0),       H_array2file);
   DEFINE_PROC(gh_new_procedure(S_file2array,       SCM_FNC g_file2array, 5, 0, 0),       H_file2array);
   DEFINE_PROC(gh_new_procedure(S_mus_close,        SCM_FNC g_mus_close, 1, 0, 0),        H_mus_close);
+
+  define_procedure_with_setter(S_mus_file_buffer_size, SCM_FNC g_mus_file_buffer_size, H_mus_file_buffer_size,
+			       "set-" S_mus_file_buffer_size, SCM_FNC g_mus_set_file_buffer_size, local_doc, 0, 0, 1, 0);
 }
 
 
@@ -4163,7 +4183,12 @@ returns a new generator for signal placement in up to 4 channels.  Channel 0 cor
 	      outp = (mus_output *)mus_get_any(keys[3]);
 	      out_chans = mus_channels((mus_any *)outp);
 	    }
-	  else scm_wrong_type_arg(S_make_locsig, orig_arg[3] + 1, args[orig_arg[3]]);
+	  else 
+	    {
+	      if ((BOUND_P(keys[3])) && (!(BOOLEAN_P(keys[3]))))
+		scm_wrong_type_arg(S_make_locsig, orig_arg[3] + 1, args[orig_arg[3]]);
+	      else keys[3] = SCM_UNDEFINED;
+	    }
 	}
       if (!(keyword_p(keys[4]))) 
 	{
@@ -4173,7 +4198,12 @@ returns a new generator for signal placement in up to 4 channels.  Channel 0 cor
 	      vlen++;
 	      revp = (mus_output *)mus_get_any(keys[4]);
 	    }
-	  else scm_wrong_type_arg(S_make_locsig, orig_arg[4] + 1, args[orig_arg[4]]);
+	  else 
+	    {
+	      if ((BOUND_P(keys[4])) && (!(BOOLEAN_P(keys[4]))))
+		scm_wrong_type_arg(S_make_locsig, orig_arg[4] + 1, args[orig_arg[4]]);
+	      else keys[4] = SCM_UNDEFINED;
+	    }
 	}
       out_chans = ikeyarg(keys[5], S_make_locsig, orig_arg[5] + 1, args[orig_arg[5]], out_chans);
     }
@@ -4235,7 +4265,7 @@ static Float funcall1 (void *ptr, int direction) /* intended for "as-needed" inp
 #if USE_SND
     return(TO_C_DOUBLE(g_call1(gn->vcts[INPUT_FUNCTION], TO_SMALL_SCM_INT(direction), "as-needed-input")));
 #else
-    return(TO_C_DOUBLE(gh_call1(gn->vcts[INPUT_FUNCTION], TO_SMALL_SCM_INT(direction), "as-needed-input")));
+    return(TO_C_DOUBLE(gh_call1(gn->vcts[INPUT_FUNCTION], TO_SMALL_SCM_INT(direction))));
 #endif
   else return(0.0);
 }
@@ -4569,7 +4599,7 @@ static int pvedit (void *ptr)
 #if USE_SND
     return(gh_scm2bool(g_call1(gn->vcts[EDIT_FUNCTION], gn->vcts[SELF_WRAPPER], __FUNCTION__)));
 #else
-    return(gh_scm2bool(gh_call1(gn->vcts[EDIT_FUNCTION], gn->vcts[SELF_WRAPPER], __FUNCTION__)));
+    return(gh_scm2bool(gh_call1(gn->vcts[EDIT_FUNCTION], gn->vcts[SELF_WRAPPER])));
 #endif
   return(0);
 }
@@ -4581,7 +4611,7 @@ static Float pvsynthesize (void *ptr)
 #if USE_SND
     return(TO_C_DOUBLE(g_call1(gn->vcts[SYNTHESIZE_FUNCTION], gn->vcts[SELF_WRAPPER], __FUNCTION__)));
 #else
-    return(TO_C_DOUBLE(gh_call1(gn->vcts[SYNTHESIZE_FUNCTION], gn->vcts[SELF_WRAPPER], __FUNCTION__)));
+    return(TO_C_DOUBLE(gh_call1(gn->vcts[SYNTHESIZE_FUNCTION], gn->vcts[SELF_WRAPPER])));
 #endif
   return(0.0);
 }
@@ -4594,7 +4624,7 @@ static int pvanalyze (void *ptr, Float (*input)(void *arg1, int direction))
 #if USE_SND
     return(gh_scm2bool(g_call2(gn->vcts[SYNTHESIZE_FUNCTION], gn->vcts[SELF_WRAPPER], gn->vcts[INPUT_FUNCTION], __FUNCTION__)));
 #else
-    return(gh_scm2bool(gh_call2(gn->vcts[SYNTHESIZE_FUNCTION], gn->vcts[SELF_WRAPPER], gn->vcts[INPUT_FUNCTION], __FUNCTION__)));
+    return(gh_scm2bool(gh_call2(gn->vcts[SYNTHESIZE_FUNCTION], gn->vcts[SELF_WRAPPER], gn->vcts[INPUT_FUNCTION])));
 #endif
   return(0);
 }

@@ -1382,7 +1382,7 @@ int recorder_start_output_file(snd_state *ss, char *comment)
 
   rp->output_file_descriptor = snd_reopen_write(ss, rp->output_file);
   mus_header_read_with_fd(rp->output_file_descriptor);
-  mus_file_set_descriptors(rp->output_file_descriptor, 
+  mus_file_open_descriptors(rp->output_file_descriptor, 
 			   rp->output_file,
 			   rp->out_format, 
 			   mus_data_format_to_bytes_per_sample(rp->out_format), 

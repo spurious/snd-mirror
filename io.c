@@ -449,8 +449,9 @@ typedef struct {
 static int io_fd_size = 0;
 static io_fd **io_fds = NULL;
 
-static void alloc_io_fd(int tfd)
+int mus_file_set_descriptors (int tfd, const char *name, int format, int size, int location, int chans, int type)
 {
+  io_fd *fd;
   int i, lim = -1;
   if (io_fd_size == 0)
     {
@@ -472,13 +473,7 @@ static void alloc_io_fd(int tfd)
 #endif
   if (io_fds[tfd] == NULL)
     io_fds[tfd] = (io_fd *)CALLOC(1, sizeof(io_fd));
-}
 
-int mus_file_set_descriptors (int tfd, const char *name, int format, int size, int location, int chans, int type)
-{
-  /* new form to make sound.c handlers cleaner, 4-Sep-99 */
-  io_fd *fd;
-  alloc_io_fd(tfd);
   fd = io_fds[tfd];
   fd->data_format = format;
   fd->bytes_per_sample = size;
