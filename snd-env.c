@@ -1775,7 +1775,7 @@ void g_init_env(void)
   XEN_EVAL_C_STRING("(defmacro* define-envelope (a b #:optional c) `(define-envelope-1 (symbol->string ',a) ,b ,c))");
 #endif
   envelope_base_sym = C_STRING_TO_XEN_SYMBOL(S_envelope_base);
-  snd_protect(envelope_base_sym);
+  XEN_PROTECT_FROM_GC(envelope_base_sym);
 #else
   XEN_DEFINE_PROCEDURE(S_define_envelope, g_define_envelope_w, 2, 1, 0, H_define_envelope);
 #endif

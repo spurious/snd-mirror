@@ -200,6 +200,7 @@ XEN xen_guile_create_hook(const char *name, int args, const char *help, XEN loca
 #endif
   return(hook);
 }
+
 #endif
 
 
@@ -851,27 +852,27 @@ void Init_Hook(void)
   rb_define_singleton_method(xen_rb_cHook, "new", xen_rb_new, -1);
 #endif
     
-  rb_define_method(xen_rb_cHook, "initialize", xen_rb_hook_initialize, -1);
-  rb_define_method(xen_rb_cHook, "add_hook!", xen_rb_hook_add_hook, -1);
-  rb_define_method(xen_rb_cHook, "remove_hook!", xen_rb_hook_remove_hook, 1);
-  rb_define_method(xen_rb_cHook, "reset_hook!", xen_rb_hook_reset_hook, 0);
+  rb_define_method(xen_rb_cHook, "initialize", XEN_PROCEDURE_CAST xen_rb_hook_initialize, -1);
+  rb_define_method(xen_rb_cHook, "add_hook!", XEN_PROCEDURE_CAST xen_rb_hook_add_hook, -1);
+  rb_define_method(xen_rb_cHook, "remove_hook!", XEN_PROCEDURE_CAST xen_rb_hook_remove_hook, 1);
+  rb_define_method(xen_rb_cHook, "reset_hook!", XEN_PROCEDURE_CAST xen_rb_hook_reset_hook, 0);
   rb_define_alias(xen_rb_cHook, "clear", "reset_hook!");
-  rb_define_method(xen_rb_cHook, "to_a", xen_rb_hook_to_a, 0);
-  rb_define_method(xen_rb_cHook, "run_hook", xen_rb_hook_run_hook, 0);
+  rb_define_method(xen_rb_cHook, "to_a", XEN_PROCEDURE_CAST xen_rb_hook_to_a, 0);
+  rb_define_method(xen_rb_cHook, "run_hook", XEN_PROCEDURE_CAST xen_rb_hook_run_hook, 0);
   rb_define_alias(xen_rb_cHook, "each", "run_hook");
-  rb_define_method(xen_rb_cHook, "call", xen_rb_hook_call, -1);
-  rb_define_method(xen_rb_cHook, "length", xen_rb_hook_length, 0);
+  rb_define_method(xen_rb_cHook, "call", XEN_PROCEDURE_CAST xen_rb_hook_call, -1);
+  rb_define_method(xen_rb_cHook, "length", XEN_PROCEDURE_CAST xen_rb_hook_length, 0);
   rb_define_alias(xen_rb_cHook, "size", "length");
-  rb_define_method(xen_rb_cHook, "empty?", xen_rb_hook_is_empty_p, 0);
-  rb_define_method(xen_rb_cHook, "name", xen_rb_hook_name, 0);
-  rb_define_method(xen_rb_cHook, "arity", xen_rb_hook_arity, 0);
-  rb_define_method(xen_rb_cHook, "describe", xen_rb_hook_describe, 0);
+  rb_define_method(xen_rb_cHook, "empty?", XEN_PROCEDURE_CAST xen_rb_hook_is_empty_p, 0);
+  rb_define_method(xen_rb_cHook, "name", XEN_PROCEDURE_CAST xen_rb_hook_name, 0);
+  rb_define_method(xen_rb_cHook, "arity", XEN_PROCEDURE_CAST xen_rb_hook_arity, 0);
+  rb_define_method(xen_rb_cHook, "describe", XEN_PROCEDURE_CAST xen_rb_hook_describe, 0);
   rb_define_alias(xen_rb_cHook, "help", "describe");
   rb_define_alias(xen_rb_cHook, "documentation", "describe");
-  rb_define_method(xen_rb_cHook, "inspect", xen_rb_hook_inspect, 0);
+  rb_define_method(xen_rb_cHook, "inspect", XEN_PROCEDURE_CAST xen_rb_hook_inspect, 0);
   
-  rb_define_global_function("make_hook", xen_rb_make_hook, -1);
-  rb_define_global_function("hook?", xen_rb_hook_p, 1);
+  rb_define_global_function("make_hook", XEN_PROCEDURE_CAST xen_rb_make_hook, -1);
+  rb_define_global_function("hook?", XEN_PROCEDURE_CAST xen_rb_hook_p, 1);
 }
 
 /* end of class Hook */

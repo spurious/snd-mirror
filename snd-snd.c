@@ -791,7 +791,7 @@ void amp_env_env_selection_by(chan_info *cp, mus_any *e, off_t beg, off_t num, i
     }
 }
 
-void amp_env_ptree(chan_info *cp, void *pt, int pos, XEN init_func, bool is_xen)
+void amp_env_ptree(chan_info *cp, void *pt, int pos, XEN init_func, bool is_xen, XEN code)
 {
   env_info *old_ep, *new_ep;
   int i;
@@ -848,9 +848,9 @@ void amp_env_ptree(chan_info *cp, void *pt, int pos, XEN init_func, bool is_xen)
 	  if (is_xen)
 	    {
 	      XEN val;
-	      val = XEN_CALL_3((XEN)pt, C_TO_XEN_DOUBLE(MUS_SAMPLE_TO_FLOAT(old_ep->data_min[i])), init_lo, XEN_TRUE, "xen-channel");
+	      val = XEN_CALL_3(code, C_TO_XEN_DOUBLE(MUS_SAMPLE_TO_FLOAT(old_ep->data_min[i])), init_lo, XEN_TRUE, "xen-channel");
 	      dmin = MUS_FLOAT_TO_SAMPLE(XEN_TO_C_DOUBLE_OR_ELSE(val, 0.0));
-	      val = XEN_CALL_3((XEN)pt, C_TO_XEN_DOUBLE(MUS_SAMPLE_TO_FLOAT(old_ep->data_max[i])), init_hi, XEN_TRUE, "xen-channel");
+	      val = XEN_CALL_3(code, C_TO_XEN_DOUBLE(MUS_SAMPLE_TO_FLOAT(old_ep->data_max[i])), init_hi, XEN_TRUE, "xen-channel");
 	      dmax = MUS_FLOAT_TO_SAMPLE(XEN_TO_C_DOUBLE_OR_ELSE(val, 0.0));
 	    }
 	  else
@@ -901,7 +901,7 @@ void amp_env_ptree(chan_info *cp, void *pt, int pos, XEN init_func, bool is_xen)
     }
 }
 
-void amp_env_ptree_selection(chan_info *cp, void *pt, off_t beg, off_t num, int pos, XEN init_func, bool is_xen)
+void amp_env_ptree_selection(chan_info *cp, void *pt, off_t beg, off_t num, int pos, XEN init_func, bool is_xen, XEN code)
 {
   env_info *old_ep, *new_ep = NULL;
   mus_sample_t fmax = MUS_SAMPLE_MIN, fmin = MUS_SAMPLE_MAX, dmin, dmax;
@@ -958,9 +958,9 @@ void amp_env_ptree_selection(chan_info *cp, void *pt, off_t beg, off_t num, int 
 			  need_unprotect = true;
 			  inited = true;
 			}
-		      val = XEN_CALL_3((XEN)pt, C_TO_XEN_DOUBLE(MUS_SAMPLE_TO_FLOAT(old_ep->data_min[i])), init_lo, XEN_TRUE, "xen-channel");
+		      val = XEN_CALL_3(code, C_TO_XEN_DOUBLE(MUS_SAMPLE_TO_FLOAT(old_ep->data_min[i])), init_lo, XEN_TRUE, "xen-channel");
 		      dmin = MUS_FLOAT_TO_SAMPLE(XEN_TO_C_DOUBLE_OR_ELSE(val, 0.0));
-		      val = XEN_CALL_3((XEN)pt, C_TO_XEN_DOUBLE(MUS_SAMPLE_TO_FLOAT(old_ep->data_max[i])), init_hi, XEN_TRUE, "xen-channel");
+		      val = XEN_CALL_3(code, C_TO_XEN_DOUBLE(MUS_SAMPLE_TO_FLOAT(old_ep->data_max[i])), init_hi, XEN_TRUE, "xen-channel");
 		      dmax = MUS_FLOAT_TO_SAMPLE(XEN_TO_C_DOUBLE_OR_ELSE(val, 0.0));
 		    }
 		  else

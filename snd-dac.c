@@ -1117,7 +1117,8 @@ static void clear_dac_buffers(dac_state *dacp)
 
 static XEN dac_hook;
 static XEN stop_dac_hook;
-static XEN sdobj = XEN_FALSE;
+static XEN sdobj;
+static int sdobj_loc = -1;
 static void cleanup_dac_hook(void)
 {
   if (XEN_HOOKED(stop_dac_hook))
@@ -1126,8 +1127,9 @@ static void cleanup_dac_hook(void)
 	     S_stop_dac_hook);
   if (!(XEN_FALSE_P(sdobj)))
     {
-      snd_unprotect(sdobj);
+      snd_unprotect_at(sdobj_loc);
       sdobj = XEN_FALSE;
+      sdobj_loc = -1;
     }
 }
 
@@ -1382,7 +1384,7 @@ static int fill_dac_buffers(dac_state *dacp, int write_ok)
       if (XEN_FALSE_P(sdobj))
 	{
 	  sdobj = wrap_sound_data(dacp->channels, dacp->frames, dac_buffers);
-	  snd_protect(sdobj);
+	  sdobj_loc = snd_protect(sdobj);
 	}
     run_hook(dac_hook, 
 	     XEN_LIST_1(sdobj),
@@ -2568,4 +2570,7 @@ If it returns #t, the sound is not played."
 
   XEN_DEFINE_PROCEDURE("disable-play", g_disable_play_w, 0, 0, 0, "internal testing function");
   XEN_DEFINE_PROCEDURE("enable-play", g_enable_play_w, 0, 0, 0, "internal testing function");
+
+  sdobj = XEN_FALSE;
+  sdobj_loc = -1;
 }

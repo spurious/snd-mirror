@@ -188,14 +188,6 @@ AC_ARG_WITH(snd-as-widget,
 	    MAKE_TARGET=widget
 	fi)
 
-AC_ARG_ENABLE(snd-debug,
-  [  --enable-snd-debug      include internal Snd debugging functions],
-  if test "$enable_snd_debug" = yes ; then
-    AC_DEFINE(DEBUGGING)
-    AC_DEFINE(DEBUG_MEMORY)
-    CFLAGS="$CFLAGS -g3 -Wall"
-  fi)
-
 
 
 #--------------------------------------------------------------------------------
@@ -292,6 +284,18 @@ if test "$with_gsl" != yes; then
     	],
 	[AC_MSG_RESULT(no)])
 fi
+
+AC_MSG_CHECKING(for __func__)
+AC_LINK_IFELSE(
+  [AC_LANG_PROGRAM(,
+    [ char *s; 
+      s = __func__
+    ])],
+  [AC_DEFINE(HAVE___FUNC__)
+   AC_MSG_RESULT(yes)
+  ],
+  [AC_MSG_RESULT(no)])
+
 
 # -------- GSL --------
 GSL_LIBS=""
@@ -464,10 +468,6 @@ else
           fi
 	  AC_SUBST(XLIBS)
 	  AC_SUBST(XFLAGS)
-#   	  AC_CHECK_LIB(Xm, XmToolTipGetLabel, [AC_DEFINE(HAVE_XmToolTipGetLabel)], , $TEST_LIBS)
-#   	  AC_CHECK_LIB(Xm, XmCreateFontSelector, [AC_DEFINE(HAVE_XmCreateFontSelector)], , $TEST_LIBS)
-#   	  AC_CHECK_LIB(Xm, XmCreateColorSelector, [AC_DEFINE(HAVE_XmCreateColorSelector)], , $TEST_LIBS)
-# ac_check_lib is too easily fooled
           AC_MSG_CHECKING(for XmCreateFontSelector)
           AC_LINK_IFELSE(
 	    [AC_LANG_PROGRAM(
@@ -659,6 +659,12 @@ if test "$with_gl" = yes || test "$with_just_gl" = yes ; then
           [AC_DEFINE(JUST_GL)])
       fi   
       GL_LIBS="-lGLU -lGL"
+      case "$host" in
+        *-apple-*)
+	  GL_LIBS="-framework OpenGL"
+# is this in place of or in additon to -lGL etc?
+	  ;;
+      esac
       if test "$with_gtk" = yes; then
 # there's no gtkglext config program, as far as I can tell, so...
         OLD_CFLAGS="$CFLAGS"
@@ -1216,6 +1222,16 @@ AC_CHECK_HEADER(nl_types.h,
       AC_MSG_RESULT(yes)
      ],
      [AC_MSG_RESULT(no)])])
+
+
+AC_ARG_ENABLE(snd-debug,
+  [  --enable-snd-debug      include internal Snd debugging functions],
+  if test "$enable_snd_debug" = yes ; then
+    AC_DEFINE(DEBUGGING)
+    AC_DEFINE(DEBUG_MEMORY)
+    VL_PROG_CC_WARNINGS()
+  fi)
+
 
 CFLAGS="-I. $CFLAGS"
 if test "$with_profiling" = yes; then

@@ -308,8 +308,9 @@ static void chans_cursor_style(chan_info *cp, void *ptr)
   style = (*((cursor_style_t *)ptr));
   if ((cp->cursor_style == CURSOR_PROC) && (XEN_PROCEDURE_P(cp->cursor_proc)))
     {
-      snd_unprotect(cp->cursor_proc);
+      snd_unprotect_at(cp->cursor_proc_loc);
       cp->cursor_proc = XEN_UNDEFINED;
+      cp->cursor_proc_loc = -1;
     }
   cp->cursor_style = style;
   cp->just_zero = (style == CURSOR_LINE); /* no point in displaying y value in this case */
@@ -4359,9 +4360,30 @@ static XEN channel_get(XEN snd_n, XEN chn_n, cp_field_t fld, char *caller)
 		return(cp->cursor_proc);
 	      return(ss->cursor_proc);
 	      break;
-	    case CP_EDIT_HOOK:               return(cp->edit_hook);                                            break;
-	    case CP_AFTER_EDIT_HOOK:         return(cp->after_edit_hook);                                      break;
-	    case CP_UNDO_HOOK:               return(cp->undo_hook);                                            break;
+	    case CP_EDIT_HOOK:
+	      if (!(XEN_HOOK_P(cp->edit_hook)))
+		{
+		  XEN_DEFINE_SIMPLE_HOOK(cp->edit_hook, 0);
+		  snd_protect(cp->edit_hook);
+		}
+	      return(cp->edit_hook);
+	      break;
+	    case CP_AFTER_EDIT_HOOK:
+	      if (!(XEN_HOOK_P(cp->after_edit_hook)))
+		{
+		  XEN_DEFINE_SIMPLE_HOOK(cp->after_edit_hook, 0);
+		  snd_protect(cp->after_edit_hook);
+		}
+	      return(cp->after_edit_hook);
+	      break;
+	    case CP_UNDO_HOOK:               
+	      if (!(XEN_HOOK_P(cp->undo_hook)))
+		{
+		  XEN_DEFINE_SIMPLE_HOOK(cp->undo_hook, 0);
+		  snd_protect(cp->undo_hook);
+		}
+	      return(cp->undo_hook);
+	      break;
 	    case CP_SHOW_Y_ZERO:             return(C_TO_XEN_BOOLEAN(cp->show_y_zero));                        break;
 	    case CP_SHOW_MARKS:              return(C_TO_XEN_BOOLEAN(cp->show_marks));                         break;
 	    case CP_TIME_GRAPH_TYPE:         return(C_TO_XEN_INT((int)(cp->time_graph_type)));                 break;
@@ -4577,8 +4599,8 @@ static XEN channel_set(XEN snd_n, XEN chn_n, XEN on, cp_field_t fld, char *calle
 	    {
 	      if ((cp->cursor_style == CURSOR_PROC) &&
 		  (XEN_PROCEDURE_P(cp->cursor_proc)))
-		snd_unprotect(cp->cursor_proc);
-	      snd_protect(on);
+		snd_unprotect_at(cp->cursor_proc_loc);
+	      cp->cursor_proc_loc = snd_protect(on);
 	      cp->cursor_proc = on;
 	      cp->cursor_style = CURSOR_PROC;
 	      return(on);
@@ -4595,8 +4617,9 @@ static XEN channel_set(XEN snd_n, XEN chn_n, XEN on, cp_field_t fld, char *calle
 	  if ((cp->cursor_style == CURSOR_PROC) &&
 	      (XEN_PROCEDURE_P(cp->cursor_proc)))
 	    {
-	      snd_unprotect(cp->cursor_proc);
+	      snd_unprotect_at(cp->cursor_proc_loc);
 	      cp->cursor_proc = XEN_UNDEFINED;
+	      cp->cursor_proc_loc = -1;
 	    }
 	  cp->cursor_style = (cursor_style_t)XEN_TO_C_INT(on); /* range already checked */
 	}
@@ -5010,8 +5033,8 @@ static XEN g_set_cursor_style(XEN on, XEN snd_n, XEN chn_n)
 	  if (error == NULL)
 	    {	  
 	      if ((cursor_style(ss) == CURSOR_PROC) && (XEN_PROCEDURE_P(ss->cursor_proc)))
-		snd_unprotect(ss->cursor_proc);
-	      snd_protect(on);
+		snd_unprotect_at(ss->cursor_proc_loc);
+	      ss->cursor_proc_loc = snd_protect(on);
 	      ss->cursor_proc = on;
 	      in_set_cursor_style(CURSOR_PROC);
 	    }

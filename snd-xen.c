@@ -18,18 +18,19 @@ static int gc_last_cleared = -1;
 static int gc_last_set = -1;
 
 #if DEBUG_MEMORY
+static int max_gc_index = 0;
 void dump_protection(FILE *Fp);
 void dump_protection(FILE *Fp)
 {
   XEN *gcdata;
   int i;
   gcdata = XEN_VECTOR_ELEMENTS(gc_protection);
-  fprintf(Fp, "\n\nsnd_protect:\n");
+  fprintf(Fp, "\n\nsnd_protect (%d table size, used: %d):\n", gc_protection_size, max_gc_index);
   for (i = 0; i < gc_protection_size; i++)
     if (!(XEN_EQ_P(gcdata[i], DEFAULT_GC_VALUE)))
       {
 #if HAVE_GUILE
-	fprintf(Fp,"  %d %p %s", i, gcdata[i], XEN_AS_STRING(gcdata[i]));
+	fprintf(Fp,"  %d %s", i, XEN_AS_STRING(gcdata[i]));
 	if (XEN_HOOK_P(gcdata[i]))
 	  fprintf(Fp, " -> %s", XEN_AS_STRING(scm_hook_to_list(gcdata[i])));
 #else
@@ -71,6 +72,9 @@ int snd_protect(XEN obj)
 	  {
 	    XEN_VECTOR_SET(gc_protection, i, obj);
 	    gc_last_set = i;
+#if DEBUG_MEMORY
+	    if (i > max_gc_index) max_gc_index = i;
+#endif
 	    return(gc_last_set);
 	  }
       tmp = gc_protection;
@@ -86,6 +90,9 @@ int snd_protect(XEN obj)
       XEN_VECTOR_SET(gc_protection, old_size, obj);
       gc_last_set = old_size;
     }
+#if DEBUG_MEMORY
+  if (gc_last_set > max_gc_index) max_gc_index = gc_last_set;
+#endif
   return(gc_last_set);
 }
 
@@ -110,6 +117,9 @@ void snd_unprotect(XEN obj)
 	gc_last_cleared = i;
 	return;
       }
+#if DEBUGGING
+  fprintf(stderr, "can't unprotect %s", XEN_AS_STRING(obj));
+#endif
 }
 
 void snd_unprotect_at(int loc)
@@ -627,7 +637,10 @@ XEN snd_no_active_selection_error(const char *caller)
 
 XEN snd_bad_arity_error(const char *caller, XEN errstr, XEN proc)
 {
-  XEN_BAD_ARITY_ERROR(caller, 0, proc, errstr);
+  XEN_ERROR(XEN_ERROR_TYPE("bad-arity"),
+            XEN_LIST_3(C_TO_XEN_STRING(caller),
+                       errstr,
+		       proc));
   return(XEN_FALSE);
 }
 

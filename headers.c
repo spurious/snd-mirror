@@ -37,7 +37,7 @@
  * Currently supported read-only (in selected data formats):
  *      8SVX (IFF), EBICSF, INRS, ESPS, SPPACK, ADC (OGI), AVR, VOC, CSL, snack "SMP", PVF,
  *      Sound Tools, Turtle Beach SMP, SoundFont 2.0, Sound Designer I, PSION alaw, MAUD, 
- *      Gravis Ultrasound, Comdisco SPW, Goldwave sample, OMF,
+ *      Gravis Ultrasound, Comdisco SPW, Goldwave sample, OMF, NVF,
  *      Sonic Foundry, SBStudio II, Delusion digital, Digiplayer ST3, Farandole Composer WaveSample,
  *      Ultratracker WaveSample, Sample Dump exchange, Yamaha SY85 and SY99 (buggy), Yamaha TX16W, 
  *      Covox v8, SPL, AVI, Kurzweil 2000, Paris Ensoniq, Impulse tracker, Korg, Akai type 4, Maui,
@@ -259,7 +259,7 @@ static const unsigned char I_SU7R[4] = {'S','U','7','R'};
 static const unsigned char I_PVF1[4] = {'P','V','F','1'};  /* portable voice format (mgetty) */
 static const unsigned char I_PVF2[4] = {'P','V','F','2'};
 static const unsigned char I_AUTH[4] = {'A','U','T','H'};
-static const unsigned char I_riff[4] = {'r','i','f','f'};  /* SourceForge */
+static const unsigned char I_riff[4] = {'r','i','f','f'};  /* SoundForge */
 static const unsigned char I_TWIN[4] = {'T','W','I','N'};  /* TwinVQ */
 static const unsigned char I_IMPS[4] = {'I','M','P','S'};  /* Impulse Tracker */
 static const unsigned char I_SMP1[4] = {'S','M','P','1'};  /* Korg */
@@ -3716,7 +3716,7 @@ static int read_sbstudio_header(int chan)
  * 0: DDSF
  * 5: name (text)
  * 55: data
- * probaby similar to DMF format describe in Dmf-form.txt but I don't see any other block names in the data
+ * probaby similar to DMF format described in Dmf-form.txt but I don't see any other block names in the data
  */
 
 static int read_delusion_header(int chan)

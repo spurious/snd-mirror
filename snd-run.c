@@ -88,7 +88,7 @@
 #include "clm-strings.h"
 #include "sndlib-strings.h"
 
-static XEN optimization_hook = XEN_FALSE;
+static XEN optimization_hook;
 
 #if HAVE_GUILE && WITH_RUN && HAVE_STRINGIZE
 
@@ -385,6 +385,7 @@ struct ptree {
   int gc_protected_ctr, gc_protected_size;
   int initial_pc;
   XEN code, form;
+  int form_loc;
   int str_ctr, strs_size;
   char **strs;
   int vct_ctr, vcts_size;
@@ -444,6 +445,7 @@ typedef struct ptree {
   int gc_protected_ctr, gc_protected_size;
   int initial_pc;
   XEN code, form;
+  int form_loc;
   int str_ctr, strs_size;
   char **strs;
   int vct_ctr, vcts_size;
@@ -975,6 +977,8 @@ static ptree *make_ptree(int initial_data_size)
   pt->gc_protected_size = 0;
   pt->initial_pc = 0;
   pt->code = XEN_FALSE;
+  pt->form = XEN_UNDEFINED;
+  pt->form_loc = -1;
   pt->strs_size = 0;
   pt->strs = NULL;
   pt->str_ctr = 0;
@@ -1021,6 +1025,9 @@ static ptree *attach_to_ptree(ptree *pt)
   new_tree->triple_ctr = 0;
   new_tree->result = NULL;
   new_tree->arity = 0;
+  new_tree->code = XEN_FALSE;
+  new_tree->form = XEN_UNDEFINED;
+  new_tree->form_loc = -1;
   if (pt->outer_tree)
     new_tree->outer_tree = pt->outer_tree;
   else new_tree->outer_tree = pt;
@@ -1343,7 +1350,7 @@ void *free_ptree(void *upt)
   if (pt)
     {
       /* free_xen_var depends (in vector case) on finding current (unfreed) data */
-      if (pt->form) snd_unprotect(pt->form);
+      if (XEN_BOUND_P(pt->form)) snd_unprotect_at(pt->form_loc);
       if (pt->vars)
 	{
 	  for (i = 0; i < pt->var_ctr; i++)
@@ -9937,7 +9944,7 @@ static xen_value *walk(ptree *prog, XEN form, walk_result_t walk_result)
 	{
 	  XEN lst;
 	  lst = get_lst(prog, args);
-	  if ((lst) && (XEN_LIST_P(lst)))
+	  if ((XEN_BOUND_P(lst)) && (XEN_LIST_P(lst)))
 	    return(clean_up(unwrap_xen_object(prog, XEN_LIST_REF_WRAPPED(get_lst(prog, args), XEN_CADDR(form)), funcname), args, num_args));
 	  else return(clean_up(run_warn("can't handle this list: ~A", XEN_AS_STRING(form)), args, num_args));
 	}
@@ -10144,7 +10151,7 @@ static void *form_to_ptree(XEN code)
       }
 #endif
       prog->form = form;
-      snd_protect(prog->form);
+      prog->form_loc = snd_protect(prog->form);
       return((void *)prog);
     }
   if (!run_warned)
@@ -10536,7 +10543,7 @@ static void init_walkers(void)
   XEN_DEFINE_VARIABLE("declare", declare, XEN_FALSE);
   XEN_DEFINE_VARIABLE("call/cc", call_cc, XEN_FALSE);
   walk_sym = C_STRING_TO_XEN_SYMBOL("snd-walk");
-  snd_protect(walk_sym);
+  XEN_PROTECT_FROM_GC(walk_sym);
 
   /* -------- special forms */
   INIT_WALKER("let", make_walker(NULL, let_form, NULL, 2, UNLIMITED_ARGS, R_ANY, false, 0));

@@ -26,7 +26,7 @@ static void after_edit(chan_info *cp)
 {
   reflect_edit_history_change(cp);
   reflect_enved_spectra_change(cp);
-  if (XEN_HOOKED(cp->after_edit_hook))
+  if ((XEN_HOOK_P(cp->after_edit_hook)) && (XEN_HOOKED(cp->after_edit_hook)))
     run_hook(cp->after_edit_hook, XEN_EMPTY_LIST, S_after_edit_hook);
 }
 
@@ -116,16 +116,20 @@ void free_ptree_list(chan_info *cp)
 	  if (cp->ptrees[i]) 
 	    cp->ptrees[i] = free_ptree(cp->ptrees[i]);
 	  if (XEN_PROCEDURE_P(cp->ptree_inits[i]))
-	    snd_unprotect(cp->ptree_inits[i]);
+	    snd_unprotect_at(cp->init_locs[i]);
 	  if (XEN_PROCEDURE_P(cp->xens[i]))
-	    snd_unprotect(cp->xens[i]);
+	    snd_unprotect_at(cp->xen_locs[i]);
 	}
       FREE(cp->ptrees);
       cp->ptrees = NULL;
       FREE(cp->xens);
       cp->xens = NULL;
+      FREE(cp->xen_locs);
+      cp->xen_locs = NULL;
       FREE(cp->ptree_inits);
       cp->ptree_inits = NULL;
+      FREE(cp->init_locs);
+      cp->init_locs = NULL;
     }
   cp->ptree_ctr = -1;
   cp->ptree_size = 0;
@@ -149,16 +153,24 @@ static int add_ptree(chan_info *cp)
 	  for (i = cp->ptree_ctr; i < cp->ptree_size; i++) cp->ptrees[i] = NULL;
  	  cp->ptree_inits = (XEN *)REALLOC(cp->ptree_inits, cp->ptree_size * sizeof(XEN));
  	  for (i = cp->ptree_ctr; i < cp->ptree_size; i++) cp->ptree_inits[i] = XEN_FALSE;
+ 	  cp->init_locs = (int *)REALLOC(cp->init_locs, cp->ptree_size * sizeof(int));
+ 	  for (i = cp->ptree_ctr; i < cp->ptree_size; i++) cp->init_locs[i] = -1;
  	  cp->xens = (XEN *)REALLOC(cp->xens, cp->ptree_size * sizeof(XEN));
  	  for (i = cp->ptree_ctr; i < cp->ptree_size; i++) cp->xens[i] = XEN_FALSE;
+ 	  cp->xen_locs = (int *)REALLOC(cp->xen_locs, cp->ptree_size * sizeof(int));
+ 	  for (i = cp->ptree_ctr; i < cp->ptree_size; i++) cp->xen_locs[i] = -1;
  	}
        else 
  	{
  	  cp->ptrees = (void **)CALLOC(cp->ptree_size, sizeof(void *));
  	  cp->ptree_inits = (XEN *)CALLOC(cp->ptree_size, sizeof(XEN));
  	  for (i = 0; i < cp->ptree_size; i++) cp->ptree_inits[i] = XEN_FALSE;
+ 	  cp->init_locs = (int *)CALLOC(cp->ptree_size, sizeof(int));
+ 	  for (i = 0; i < cp->ptree_size; i++) cp->init_locs[i] = -1;
  	  cp->xens = (XEN *)CALLOC(cp->ptree_size, sizeof(XEN));
  	  for (i = 0; i < cp->ptree_size; i++) cp->xens[i] = XEN_FALSE;
+ 	  cp->xen_locs = (int *)CALLOC(cp->ptree_size, sizeof(int));
+ 	  for (i = 0; i < cp->ptree_size; i++) cp->xen_locs[i] = -1;
 	}
     }
   return(cp->ptree_ctr);
@@ -189,6 +201,7 @@ static void prune_edits(chan_info *cp, int edpt)
 bool editable_p(chan_info *cp)
 {
   if ((!(cp->edit_hook_checked)) &&
+      (XEN_HOOK_P(cp->edit_hook)) &&
       (XEN_HOOKED(cp->edit_hook)))
     {
       XEN res;
@@ -220,6 +233,7 @@ static bool prepare_edit_list(chan_info *cp, off_t len, int pos, const char *cal
 				      C_TO_XEN_INT(cp->edit_ctr))));
     }
   if ((!(cp->edit_hook_checked)) &&
+      (XEN_HOOK_P(cp->edit_hook)) &&
       (XEN_HOOKED(cp->edit_hook)))
     {
       XEN res;
@@ -314,7 +328,7 @@ static void check_for_first_edit(chan_info *cp)
     }
 }
 
-static XEN save_state_hook = XEN_FALSE;
+static XEN save_state_hook;
 
 char *run_save_state_hook(char *file)
 {
@@ -1703,7 +1717,7 @@ static Float previous_xramp_ramp_ptree_xramp_ramp(snd_fd *sf)
 static Float next_xen_to_float(snd_fd *sf, Float arg)
 {
   XEN val;
-  val = XEN_CALL_3((XEN)(sf->ptree), C_TO_XEN_DOUBLE(arg), sf->closure, XEN_TRUE, "xen-channel");
+  val = XEN_CALL_3(sf->xen_code, C_TO_XEN_DOUBLE(arg), sf->closure, XEN_TRUE, "xen-channel");
   sf->loc++;
   return(XEN_TO_C_DOUBLE_OR_ELSE(val, 0.0));
 }
@@ -1711,7 +1725,7 @@ static Float next_xen_to_float(snd_fd *sf, Float arg)
 static Float previous_xen_to_float(snd_fd *sf, Float arg)
 {
   XEN val;
-  val = XEN_CALL_3((XEN)(sf->ptree), C_TO_XEN_DOUBLE(arg), sf->closure, XEN_FALSE, "xen-channel");
+  val = XEN_CALL_3(sf->xen_code, C_TO_XEN_DOUBLE(arg), sf->closure, XEN_FALSE, "xen-channel");
   sf->loc--;
   return(XEN_TO_C_DOUBLE_OR_ELSE(val, 0.0));
 }
@@ -3668,7 +3682,7 @@ static void get_sf_closure(snd_fd *sf)
 {
   XEN proc;
   proc = sf->cp->ptree_inits[READER_PTREE_INDEX(sf)];
-  if ((sf->closure) && (sf->closure != empty_closure) && (XEN_BOUND_P(sf->closure)))
+  if ((XEN_BOUND_P(sf->closure)) && (!(XEN_EQ_P(sf->closure, empty_closure))))
     snd_unprotect_at(sf->protect);
   sf->closure = empty_closure;
   if (XEN_PROCEDURE_P(proc))
@@ -3686,7 +3700,7 @@ static void get_sf_closure1(snd_fd *sf)
 {
   XEN proc;
   proc = sf->cp->ptree_inits[READER_PTREE2_INDEX(sf)];
-  if ((sf->closure1) && (sf->closure1 != empty_closure) && (XEN_BOUND_P(sf->closure1)))
+  if ((XEN_BOUND_P(sf->closure1)) && (!(XEN_EQ_P(sf->closure1, empty_closure))))
     snd_unprotect_at(sf->protect1);
   sf->closure1 = empty_closure;
   if (XEN_PROCEDURE_P(proc))
@@ -3745,7 +3759,7 @@ static void choose_accessor(snd_fd *sf)
     {
       if (XEN_OP(typ))
 	{
-	  sf->ptree = (void *)(sf->cp->xens[READER_PTREE_INDEX(sf)]);
+	  sf->xen_code = sf->cp->xens[READER_PTREE_INDEX(sf)];
 	  get_sf_closure(sf);
 	}
       else
@@ -4388,7 +4402,7 @@ static void display_ed_list(chan_info *cp, FILE *outp, int i, ed_list *ed, bool 
 		    {
 		      code = cp->xens[FRAGMENT_PTREE_INDEX(ed, j)];
 #if HAVE_GUILE
-		      if ((code) && (XEN_PROCEDURE_P(code)))
+		      if (XEN_PROCEDURE_P(code))
 			fprintf(outp, ", code: %s", XEN_AS_STRING(scm_procedure_source(code)));
 #endif
 		    }
@@ -4740,12 +4754,14 @@ static ed_list *free_ed_list(ed_list *ed, chan_info *cp)
 	    cp->ptrees[loc] = free_ptree(cp->ptrees[loc]);
 	  if (XEN_PROCEDURE_P(cp->ptree_inits[loc]))
 	    {
-	      snd_unprotect(cp->ptree_inits[loc]);
+	      snd_unprotect_at(cp->init_locs[loc]);
+	      cp->init_locs[loc] = -1;
 	      cp->ptree_inits[loc] = XEN_FALSE;
 	    }
 	  if (XEN_PROCEDURE_P(cp->xens[loc]))
 	    {
-	      snd_unprotect(cp->xens[loc]);
+	      snd_unprotect_at(cp->xen_locs[loc]);
+	      cp->xen_locs[loc] = -1;
 	      cp->xens[loc] = XEN_FALSE;
 	    }
 	}
@@ -5919,7 +5935,7 @@ static void make_ptree_fragment(ed_list *new_ed, int i, int ptree_loc, off_t beg
   FRAGMENT_SCALER(new_ed, i) = 1.0;
 }
 
-bool ptree_channel(chan_info *cp, void *ptree, off_t beg, off_t num, int pos, bool env_it, XEN init_func, bool is_xen)
+bool ptree_channel(chan_info *cp, void *ptree, off_t beg, off_t num, int pos, bool env_it, XEN init_func, bool is_xen, XEN code)
 {
   off_t len;
   int i, ptree_loc = 0;
@@ -5927,7 +5943,7 @@ bool ptree_channel(chan_info *cp, void *ptree, off_t beg, off_t num, int pos, bo
   if ((beg < 0) || 
       (num <= 0) ||
       (beg >= cp->samples[pos]) ||
-      (ptree == NULL))
+      ((!is_xen) && (ptree == NULL)))
     return(true); 
   len = cp->samples[pos];
   if (pos > cp->edit_ctr)
@@ -5940,15 +5956,15 @@ bool ptree_channel(chan_info *cp, void *ptree, off_t beg, off_t num, int pos, bo
   ptree_loc = add_ptree(cp);
   if (is_xen)
     {
-      snd_protect((XEN)ptree);
-      cp->xens[ptree_loc] = (XEN)ptree;
+      cp->xen_locs[ptree_loc] = snd_protect(code);
+      cp->xens[ptree_loc] = code;
     }
   else cp->ptrees[ptree_loc] = ptree;
 
   if (XEN_PROCEDURE_P(init_func))
     {
+      cp->init_locs[ptree_loc] = snd_protect(init_func);
       cp->ptree_inits[ptree_loc] = init_func;
-      snd_protect(init_func);
     }
   else cp->ptree_inits[ptree_loc] = XEN_FALSE;
 
@@ -5967,7 +5983,7 @@ bool ptree_channel(chan_info *cp, void *ptree, off_t beg, off_t num, int pos, bo
 	  make_ptree_fragment(new_ed, i, ptree_loc, beg, num, is_xen);
 	}
       if (env_it)
-	amp_env_ptree(cp, ptree, pos, init_func, is_xen);
+	amp_env_ptree(cp, ptree, pos, init_func, is_xen, code);
     }
   else 
     {
@@ -5983,7 +5999,7 @@ bool ptree_channel(chan_info *cp, void *ptree, off_t beg, off_t num, int pos, bo
 	    make_ptree_fragment(new_ed, i, ptree_loc, beg, num, is_xen);
 	}
       if (env_it)
-	amp_env_ptree_selection(cp, ptree, beg, num, pos, init_func, is_xen);
+	amp_env_ptree_selection(cp, ptree, beg, num, pos, init_func, is_xen, code);
     }
   new_ed->edit_type = (is_xen) ? XEN_EDIT : PTREE_EDIT;
   new_ed->sound_location = 0;
@@ -6012,12 +6028,12 @@ snd_fd *free_snd_fd_almost(snd_fd *sf)
   snd_data *sd;
   if (sf) 
     {
-      if ((sf->closure) && (sf->closure != empty_closure) && (XEN_BOUND_P(sf->closure)))
+      if ((XEN_BOUND_P(sf->closure)) && (!(XEN_EQ_P(sf->closure, empty_closure))))
  	{
  	  snd_unprotect_at(sf->protect);
  	  sf->closure = XEN_UNDEFINED;
  	}
-      if ((sf->closure1) && (sf->closure1 != empty_closure) && (XEN_BOUND_P(sf->closure1)))
+      if ((XEN_BOUND_P(sf->closure1)) && (!(XEN_EQ_P(sf->closure1, empty_closure))))
  	{
  	  snd_unprotect_at(sf->protect1);
  	  sf->closure1 = XEN_UNDEFINED;
@@ -6083,6 +6099,9 @@ static snd_fd *init_sample_read_any_with_bufsize(off_t samp, chan_info *cp, read
   curlen = cp->samples[edit_position];
   /* snd_fd allocated only here */
   sf = (snd_fd *)CALLOC(1, sizeof(snd_fd)); /* only creation point */
+  sf->closure = XEN_UNDEFINED;
+  sf->closure1 = XEN_UNDEFINED;
+  sf->xen_code = XEN_UNDEFINED;
   sf->region = INVALID_REGION;
   sf->initial_samp = samp;
   sf->cp = cp;
@@ -6712,7 +6731,7 @@ void revert_edits(chan_info *cp, void *ptr)
   update_graph(cp);
   reflect_mix_or_track_change(ANY_MIX_ID, ANY_TRACK_ID, false);
   reflect_enved_spectra_change(cp);
-  if (XEN_HOOKED(cp->undo_hook))
+  if ((XEN_HOOK_P(cp->undo_hook)) && (XEN_HOOKED(cp->undo_hook)))
     run_hook(cp->undo_hook, XEN_EMPTY_LIST, S_undo_hook);
 }
 
@@ -6740,7 +6759,7 @@ void undo_edit(chan_info *cp, int count)
       update_graph(cp);
       reflect_mix_or_track_change(ANY_MIX_ID, ANY_TRACK_ID, false);
       reflect_enved_spectra_change(cp);
-      if (XEN_HOOKED(cp->undo_hook))
+      if ((XEN_HOOK_P(cp->undo_hook)) && (XEN_HOOKED(cp->undo_hook)))
 	run_hook(cp->undo_hook, XEN_EMPTY_LIST, S_undo_hook);
     }
 }
@@ -6800,7 +6819,7 @@ void redo_edit(chan_info *cp, int count)
 	  reflect_mix_or_track_change(ANY_MIX_ID, ANY_TRACK_ID, false);
 	  reflect_enved_spectra_change(cp);
 	}
-      if (XEN_HOOKED(cp->undo_hook))
+      if ((XEN_HOOK_P(cp->undo_hook)) && (XEN_HOOKED(cp->undo_hook)))
 	run_hook(cp->undo_hook, XEN_EMPTY_LIST, S_undo_hook);
     }
 }
@@ -8920,7 +8939,7 @@ keep track of which files are in a given saved state batch, and a way to rename 
 
   XEN_DEFINE_HOOK(save_state_hook, S_save_state_hook, 1, H_save_state_hook);      /* arg = temp-filename */
   empty_closure = make_vct(1, (Float *)CALLOC(1, sizeof(Float)));
-  snd_protect(empty_closure);
+  XEN_PROTECT_FROM_GC(empty_closure);
 
   XEN2SAMPLE = mus_make_class_tag();
   SND2SAMPLE = mus_make_class_tag();

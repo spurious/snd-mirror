@@ -103,7 +103,7 @@
 #endif
 
 #ifndef c__FUNCTION__
-#if defined(__STDC__) && defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 199901L)
+#if (HAVE___FUNC__) || (defined(__STDC__) && defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 199901L))
   #define c__FUNCTION__ __func__
 #else
 #ifdef __GNUC__

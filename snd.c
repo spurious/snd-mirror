@@ -206,6 +206,7 @@ static void snd_gsl_error(const char *reason, const char *file, int line, int gs
   ss->Cursor_Size = DEFAULT_CURSOR_SIZE;
   ss->Cursor_Style = DEFAULT_CURSOR_STYLE;
   ss->cursor_proc = XEN_UNDEFINED;
+  ss->cursor_proc_loc = -1;
   ss->Vu_Size = DEFAULT_VU_SIZE;
   ss->Vu_Font_Size = DEFAULT_VU_FONT_SIZE;
   if (DEFAULT_VU_FONT != (char *)NULL) ss->Vu_Font = copy_string(DEFAULT_VU_FONT); else ss->Vu_Font = NULL;

@@ -2672,13 +2672,13 @@ at run-time.  See extsnd.html for the gory details."
 	  pt = form_to_ptree_3_f(proc_and_list);
 	  if (pt)
 	    {
-	      ptree_channel(cp, pt, beg, dur, pos, XEN_TRUE_P(env_too), init_func, false);
+	      ptree_channel(cp, pt, beg, dur, pos, XEN_TRUE_P(env_too), init_func, false, XEN_FALSE);
 	      return(proc_and_list);
 	    }
 	  /* ptree not ok -- use map chan? */
 	  if (XEN_FALSE_P(use_map_channel_fallback))
 	    {
-	      ptree_channel(cp, (void *)proc, beg, dur, pos, XEN_TRUE_P(env_too), init_func, true);
+	      ptree_channel(cp, NULL, beg, dur, pos, XEN_TRUE_P(env_too), init_func, true, proc);
 	      return(proc_and_list);
 	    }
 	}
@@ -2695,7 +2695,7 @@ at run-time.  See extsnd.html for the gory details."
 	  run_channel(cp, pt, beg, dur, pos);
 	  pt = free_ptree(pt);
 	}
-      else ptree_channel(cp, pt, beg, dur, pos, XEN_TRUE_P(env_too), init_func, false);
+      else ptree_channel(cp, pt, beg, dur, pos, XEN_TRUE_P(env_too), init_func, false, XEN_FALSE);
     }
   else
     {
@@ -2706,7 +2706,7 @@ at run-time.  See extsnd.html for the gory details."
 	      if (XEN_REQUIRED_ARGS(proc) != 3)
 		XEN_BAD_ARITY_ERROR(S_ptree_channel, 1, proc, "main func must take 3 args if it can't be optimized");
 	    }
-	  ptree_channel(cp, (void *)proc, beg, dur, pos, XEN_TRUE_P(env_too), init_func, true);
+	  ptree_channel(cp, NULL, beg, dur, pos, XEN_TRUE_P(env_too), init_func, true, proc);
 	}
       else g_map_chan_ptree_fallback(proc, init_func, cp, beg, dur, pos);
     }

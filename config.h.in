@@ -104,6 +104,7 @@
 #undef ESD
 #undef BSDI
 
+#undef HAVE___FUNC__
 #undef HAVE_FFTW
 #undef HAVE_FFTW3
 #undef HAVE_GUILE

@@ -24,16 +24,9 @@ chan_info *make_chan_info(chan_info *cip, int chan, snd_info *sound)
 #if HAVE_GL
       cp->gl_fft_list = NO_LIST;
 #endif
-      /* these hooks are never unprotected, so they might as well use the permanent protection mechanism */
-      XEN_DEFINE_SIMPLE_HOOK(cp->edit_hook, 0);
-      XEN_PROTECT_FROM_GC(cp->edit_hook);
-      /* snd_protect(cp->edit_hook); */
-      XEN_DEFINE_SIMPLE_HOOK(cp->after_edit_hook, 0);
-      XEN_PROTECT_FROM_GC(cp->after_edit_hook);
-      /* snd_protect(cp->after_edit_hook); */
-      XEN_DEFINE_SIMPLE_HOOK(cp->undo_hook, 0);
-      XEN_PROTECT_FROM_GC(cp->undo_hook);
-      /* snd_protect(cp->undo_hook); */
+      cp->edit_hook = XEN_FALSE;
+      cp->after_edit_hook = XEN_FALSE;
+      cp->undo_hook = XEN_FALSE;
       cp->properties = XEN_FALSE; /* will be a vector of 1 element (permanently protected) if it's ever used */
     }
   else cp = cip;
@@ -54,6 +47,7 @@ chan_info *make_chan_info(chan_info *cip, int chan, snd_info *sound)
   cp->cursor_style = cursor_style(ss);
   cp->cursor_size = cursor_size(ss);
   cp->cursor_proc = XEN_UNDEFINED;
+  cp->cursor_proc_loc = -1;
   cp->squelch_update = false;
   cp->show_y_zero = show_y_zero(ss);
   cp->show_marks = show_marks(ss);
@@ -161,8 +155,9 @@ static chan_info *free_chan_info(chan_info *cp)
     }
   if (XEN_PROCEDURE_P(cp->cursor_proc))
     {
-      snd_unprotect(cp->cursor_proc);
+      snd_unprotect_at(cp->cursor_proc_loc);
       cp->cursor_proc = XEN_UNDEFINED;
+      cp->cursor_proc_loc = -1;
     }
   if (XEN_VECTOR_P(cp->properties)) /* using vector as node for GC */
     XEN_VECTOR_SET(cp->properties, 0, XEN_EMPTY_LIST);
@@ -186,9 +181,24 @@ static chan_info *free_chan_info(chan_info *cp)
   cp->graph_lisp_p = false;
   cp->selection_transform_size = 0;
   cp->edit_hook_checked = false;
-  XEN_CLEAR_HOOK(cp->edit_hook);
-  XEN_CLEAR_HOOK(cp->after_edit_hook);
-  XEN_CLEAR_HOOK(cp->undo_hook);
+  if (XEN_HOOK_P(cp->edit_hook))
+    {
+      XEN_CLEAR_HOOK(cp->edit_hook);
+      snd_unprotect(cp->edit_hook);
+      cp->edit_hook = XEN_FALSE;
+    }
+  if (XEN_HOOK_P(cp->after_edit_hook))
+    {
+      XEN_CLEAR_HOOK(cp->after_edit_hook);
+      snd_unprotect(cp->after_edit_hook);
+      cp->after_edit_hook = XEN_FALSE;
+    }
+  if (XEN_HOOK_P(cp->undo_hook))
+    {
+      XEN_CLEAR_HOOK(cp->undo_hook);
+      snd_unprotect(cp->undo_hook);
+      cp->undo_hook = XEN_FALSE;
+    }
   return(cp);  /* pointer is left for possible future re-use */
 }
 
@@ -400,9 +410,6 @@ snd_info *completely_free_snd_info(snd_info *sp)
 		FREE((cp->cgx)->ax);
 	      FREE(cp->cgx);
 	    }
-	  snd_unprotect(cp->edit_hook);
-	  snd_unprotect(cp->after_edit_hook);
-	  snd_unprotect(cp->undo_hook);
 	  if (XEN_VECTOR_P(cp->properties))
 	    snd_unprotect(cp->properties);
 	  FREE(cp);

@@ -103,7 +103,7 @@ typedef struct snd_fd {
   off_t frag_pos;
   double incr, curval;
   void *ptree, *ptree1;
-  XEN closure, closure1;
+  XEN xen_code, closure, closure1;
   int protect, protect1;
   double incr2, curval2, incr3, curval3, incr4, curval4;
   mus_sample_t (*rev_run)(struct snd_fd *sf);
@@ -219,6 +219,7 @@ typedef struct chan_info {
   int ptree_ctr;
   void **ptrees;
   XEN *ptree_inits, *xens;
+  int *init_locs, *xen_locs;
   void *enved_spectra;
   fft_info *fft;           /* possibly null fft data */
   struct snd_info *sound; /* containing sound */
@@ -261,6 +262,7 @@ typedef struct chan_info {
   XEN edit_hook;
   XEN undo_hook;
   XEN cursor_proc;
+  int cursor_proc_loc;
   XEN after_edit_hook;
   XEN properties;
   bool selection_visible, active;
@@ -415,6 +417,7 @@ typedef struct snd_state {
   int Cursor_Size;
   cursor_style_t Cursor_Style;
   XEN cursor_proc;
+  int cursor_proc_loc;
   Float min_dB, lin_dB;
   char *HTML_Dir, *HTML_Program;
   bool error_lock;
@@ -763,7 +766,7 @@ bool scale_channel(chan_info *cp, Float scaler, off_t beg, off_t num, int pos, b
 bool ramp_channel(chan_info *cp, Float rmp0, Float rmp1, off_t beg, off_t num, int pos, bool in_as_one_edit);
 bool xramp_channel(chan_info *cp, Float rmp0, Float rmp1, Float scaler, Float offset, 
 		   off_t beg, off_t num, int pos, bool in_as_one_edit, mus_any *e, int e_pos);
-bool ptree_channel(chan_info *cp, void *ptree, off_t beg, off_t num, int pos, bool env_it, XEN init_func, bool is_xen);
+bool ptree_channel(chan_info *cp, void *ptree, off_t beg, off_t num, int pos, bool env_it, XEN init_func, bool is_xen, XEN code);
 snd_fd *init_sample_read(off_t samp, chan_info *cp, read_direction_t direction);
 snd_fd *init_sample_read_any(off_t samp, chan_info *cp, read_direction_t direction, int edit_position);
 void read_sample_change_direction(snd_fd *sf, read_direction_t dir);
@@ -1159,8 +1162,8 @@ void *make_apply_state_with_implied_beg_and_dur(void *xp);
 env_info *env_on_env(env *e, chan_info *cp);
 void amp_env_env(chan_info *cp, Float *brkpts, int npts, int pos, Float base, Float scaler, Float offset);
 void amp_env_env_selection_by(chan_info *cp, mus_any *e, off_t beg, off_t num, int pos);
-void amp_env_ptree(chan_info *cp, void *pt, int pos, XEN init_func, bool is_xen);
-void amp_env_ptree_selection(chan_info *cp, void *pt, off_t beg, off_t num, int pos, XEN init_func, bool is_xen);
+void amp_env_ptree(chan_info *cp, void *pt, int pos, XEN init_func, bool is_xen, XEN code);
+void amp_env_ptree_selection(chan_info *cp, void *pt, off_t beg, off_t num, int pos, XEN init_func, bool is_xen, XEN code);
 void amp_env_insert_zeros(chan_info *cp, off_t beg, off_t num, int pos);
 snd_info *snd_new_file(char *newname, int header_type, int data_format, int srate, int chans, char *new_comment, off_t samples);
 #if HAVE_SCM_MAKE_RATIO

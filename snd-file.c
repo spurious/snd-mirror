@@ -1077,7 +1077,9 @@ static void copy_chan_info(chan_info *ncp, chan_info *ocp)
   ncp->spectro_hop = ocp->spectro_hop;
   ncp->graphs_horizontal = ocp->graphs_horizontal;
   ncp->cursor_proc = ocp->cursor_proc;
-  if (XEN_BOUND_P(ncp->cursor_proc)) snd_protect(ncp->cursor_proc);
+  if (XEN_BOUND_P(ncp->cursor_proc)) 
+    ncp->cursor_proc_loc = snd_protect(ncp->cursor_proc);
+  else ncp->cursor_proc_loc = -1;
   if (XEN_VECTOR_P(ocp->properties))
     {
       ncp->properties = XEN_VECTOR_REF(ocp->properties, 0);
@@ -1170,8 +1172,9 @@ static void sound_restore_chan_info(snd_info *nsp, snd_info *osp)
       copy_chan_info(nsp->chans[i], cps[i]);
       if (XEN_BOUND_P(cps[i]->cursor_proc))
 	{
-	  snd_unprotect(cps[i]->cursor_proc);
+	  snd_unprotect_at(cps[i]->cursor_proc_loc);
 	  cps[i]->cursor_proc = XEN_UNDEFINED;
+	  cps[i]->cursor_proc_loc = -1;
 	}
     }
   if (XEN_BOUND_P(osp->search_proc))

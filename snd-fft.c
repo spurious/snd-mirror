@@ -589,7 +589,7 @@ static added_transform *new_added_transform(void)
 static int add_transform(char *name, char *xlabel, Float lo, Float hi, XEN proc)
 {
   added_transform *af;
-  snd_protect(proc);
+  XEN_PROTECT_FROM_GC(proc);
   af = new_added_transform();
   af->name = copy_string(name);
   af->xlabel = copy_string(xlabel);

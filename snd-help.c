@@ -1735,8 +1735,8 @@ void name_to_html_viewer(char *red_text)
     url_to_html_viewer(url);
 }
 
-static XEN help_hook = XEN_FALSE;
-static XEN output_comment_hook = XEN_FALSE;
+static XEN help_hook;
+static XEN output_comment_hook;
 
 static char *run_string_hook(XEN hook, const char *caller, char *initial_string, char *subject)
 {

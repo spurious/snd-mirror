@@ -736,17 +736,18 @@ bool xen_integer_p(XEN a);
 #define XEN_WRAPPED_C_POINTER_P(a)        (TYPE(a) == T_DATA)
 
 #if DEBUGGING
+/* the otiose casts to int here are required by g++ */
 #define XEN_DEFINE_PROCEDURE(Name, Func, ReqArg, OptArg, RstArg, Doc) \
   do { \
-      if ((Func ## _Rst != -1) && (RstArg != 1)) fprintf(stderr,"%s rest args: %d %d?\n", Name, Func ## _Rst, RstArg); \
-      if ((Func ## _Rst == -1) && (RstArg != 0)) fprintf(stderr,"%s rest args: %d %d?\n", Name, Func ## _Rst, RstArg); \
-      if ((Func ## _Opt != 0) && (OptArg == 0)) fprintf(stderr,"%s opt args: %d %d?\n", Name, Func ## _Opt, OptArg); \
-      if ((Func ## _Opt == 0) && (OptArg != 0)) fprintf(stderr,"%s opt args: %d %d?\n", Name, Func ## _Opt, OptArg); \
-      if ((Func ## _Req != 0) && (OptArg != 0)) fprintf(stderr,"%s req/opt args: %d %d?\n", Name, Func ## _Req, OptArg); \
-      if ((Func ## _Req != 0) && (ReqArg != Func ## _Req)) fprintf(stderr,"%s req args: %d %d?\n", Name, Func ## _Req, ReqArg); \
-      if ((Func ## _Req == 0) && (OptArg + ReqArg != Func ## _Opt)) \
-        fprintf(stderr,"%s total args: %d %d + %d?\n", Name, Func ## _Opt, ReqArg, OptArg); \
-      rb_define_global_function(xen_scheme_procedure_to_ruby(Name), XEN_PROCEDURE_CAST Func, ((RstArg > 0) ? -2 : (OptArg > 0) ? -1 : ReqArg)); \
+      if (((int)Func ## _Rst != -1) && (RstArg != 1)) fprintf(stderr,"%s rest args: %d %d?\n", Name, (int)Func ## _Rst, RstArg); \
+      if (((int)Func ## _Rst == -1) && (RstArg != 0)) fprintf(stderr,"%s rest args: %d %d?\n", Name, (int)Func ## _Rst, RstArg); \
+      if (((int)Func ## _Opt != 0) && (OptArg == 0)) fprintf(stderr,"%s opt args: %d %d?\n", Name, (int)Func ## _Opt, OptArg); \
+      if (((int)Func ## _Opt == 0) && (OptArg != 0)) fprintf(stderr,"%s opt args: %d %d?\n", Name, (int)Func ## _Opt, OptArg); \
+      if (((int)Func ## _Req != 0) && (OptArg != 0)) fprintf(stderr,"%s req/opt args: %d %d?\n", Name, (int)Func ## _Req, OptArg); \
+      if (((int)Func ## _Req != 0) && (ReqArg != (int)Func ## _Req)) fprintf(stderr,"%s req args: %d %d?\n", Name, (int)Func ## _Req, ReqArg); \
+      if (((int)Func ## _Req == 0) && (OptArg + ReqArg != (int)Func ## _Opt)) \
+        fprintf(stderr,"%s total args: %d %d + %d?\n", Name, (int)Func ## _Opt, ReqArg, OptArg); \
+      rb_define_global_function(xen_scheme_procedure_to_ruby(Name), XEN_PROCEDURE_CAST Func, ((RstArg > 0) ? -2 : ((OptArg > 0) ? -1 : ReqArg))); \
       if (Doc != NULL) xen_add_help(xen_scheme_procedure_to_ruby(Name), Doc); \
     } while (0)
 #else
@@ -762,7 +763,7 @@ bool xen_integer_p(XEN a);
       XEN_DEFINE_PROCEDURE(Get_Name, XEN_PROCEDURE_CAST Get_Func, Get_Req, Get_Opt, 0, Get_Help); \
       XEN_DEFINE_PROCEDURE(Set_Name, XEN_PROCEDURE_CAST Set_Func, Set_Req, Set_Opt, 0, Get_Help); \
       if (Get_Help != NULL) xen_add_help(xen_scheme_procedure_to_ruby(Get_Name), Get_Help); \
-    } while (0)
+   } while (0)
 
 #define XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(Get_Name, Get_Func, Get_Help, Set_Name, Set_Func, Rev_Func, Get_Req, Get_Opt, Set_Req, Set_Opt) \
   do { \

@@ -326,13 +326,14 @@ void command_return(widget_t w, int last_prompt)
   str = NULL;
 #if HAVE_RUBY
   {
-    int k, len, start;
+    int k, len, start, full_len;
     for (i = current_position - 1; i >= 0; i--)
       if (((full_str[i] == '\n') &&
 	   (full_str[i + 1] == prompt[0])) ||
 	  (i == 0))
 	{
-	  for (k = current_position - 1; k < strlen(full_str); k++)
+	  full_len = strlen(full_str);
+	  for (k = current_position - 1; k < full_len; k++)
 	    if (full_str[k] == '\n')
 	      break;
 	  if (i == 0) start = 1; else start = i + 2;
