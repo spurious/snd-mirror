@@ -5,6 +5,7 @@ static GtkTargetEntry target_table[] = {
   { "FILE_NAME",  0, 0},
   { "text/plain", 0, 0}
 };
+/* there is, I think, _NETSCAPE_URL also */
 
 static XEN drop_hook;
 

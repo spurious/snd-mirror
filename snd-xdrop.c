@@ -1,6 +1,7 @@
 #include "snd.h"
 
 static Atom FILE_NAME; /* Sun uses this, SGI uses STRING */
+/* others are text/plain and _NETSCAPE_URL -- would be worth a look */
 
 static XEN drop_hook;
 #define UNPACK_SOUND(a) (a >> 16)

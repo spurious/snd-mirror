@@ -35,7 +35,6 @@
 ;;; TODO: pan env field in mix dialog if stereo in/out
 ;;; TODO: xemacs style top list of sounds, current takes whole screen [make-top-row snd-motif.scm, files-popup-buffer in examp.scm]
 ;;; TOOD: extend the mix-as-list syntax to list-of-ids (tracks) (are these all rationalized now?)
-;;; TODO: effects and interface crossref
 
 ;;; how to send ourselves a drop?  (button2 on menu is only the first half -- how to force 2nd?)
 
@@ -10670,6 +10669,33 @@ EDITS: 5
 	    (snd-display ";mus-bank: ~A?" results))
 	(do ((i 0 (1+ i))) ((= i 10))
 	  (vector-set! results i (mus-bank oscils amps fms (lambda (i) 0.0)))))
+      (let ((amps (make-vct 3))
+	    (oscils (make-vector 3))
+	    (fms (make-vct 3))
+	    (results (make-vct 10)))
+	(do ((i 0 (1+ i))) ((= i 3))
+	  (vct-set! amps i (* (+ i 1) .1))
+	  (vector-set! oscils i (make-oscil :frequency (* (+ i 1) 220.0)))
+	  (vct-set! fms i (* i .05)))
+	(vct-map! results (lambda () (mus-bank oscils amps fms)))
+	(if (or (fneq (vct-ref results 1) 0.12639)
+		(fneq (vct-ref results 5) 0.48203)
+		(fneq (vct-ref results 9) 0.41001))
+	    (snd-display ";mus-bank (2 run): ~A?" results)))
+      (let ((amps (make-vct 3))
+	    (oscils (make-vector 3))
+	    (fms (make-vct 3))
+	    (fm1s (make-vct 3))
+	    (results (make-vct 10)))
+	(do ((i 0 (1+ i))) ((= i 3))
+	  (vct-set! amps i (* (+ i 1) .1))
+	  (vector-set! oscils i (make-oscil :frequency (* (+ i 1) 220.0)))
+	  (vct-set! fms i (* i .05)))
+	(vct-map! results (lambda () (mus-bank oscils amps fms fm1s)))
+	(if (or (fneq (vct-ref results 1) 0.12639)
+		(fneq (vct-ref results 5) 0.48203)
+		(fneq (vct-ref results 9) 0.41001))
+	    (snd-display ";mus-bank (3 run): ~A?" results)))
       (let ((amps (make-vct 3))
 	    (oscs (make-vector 3))
 	    (amps1 (make-vct 3))
@@ -37254,8 +37280,8 @@ EDITS: 2
 (gc)
 (mem-report)
 (if (and full-test
-	 (file-exists? "oldopt2.log"))
-    (system "diff -w optimizer.log oldopt2.log"))
+	 (file-exists? "oldopt.log"))
+    (system "diff -w optimizer.log oldopt.log"))
 
 (if (file-exists? (string-append home-dir "/dot-snd"))
     (system (string-append "cp " home-dir "/dot-snd " home-dir "/.snd")))

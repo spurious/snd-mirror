@@ -2605,6 +2605,12 @@ Reverb-feedback sets the scaler on the feedback.\n\
       ((= k 11))
     (variable-display (* k .02) wid2))
 !#
+;;; TODO: macro to auto declare (cur arg, function/file name)
+;;; TODO: if many vars, scrolled window?
+;;; TODO: bess examples via vardpy
+;;; TODO: panel-control wid -> current value (this just needs run support?)
+
+
 
 
 ;;; SOMEDAY: bess-translations (first case is bess.scm)

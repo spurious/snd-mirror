@@ -4,7 +4,6 @@
 (if (not (defined? 'local-variables)) (load-from-path "debug.scm"))
 
 ;;; TODO: with-mix
-;;; TODO: clm-style *offset* support
 
 ;;; changed default variable names 3-Apr-03 for Common Music's benefit
 ;;;   *clm-channels* is the default number of with-sound output chans in
@@ -168,7 +167,6 @@ returning you to the true top-level."
 (define *clm-channels* (default-output-chans))
 (define *clm-data-format* (default-output-format))
 (define *clm-header-type* (default-output-type))
-(define *clm-offset* 0)
 (define *to-snd* #t)
 
 (define *reverb* #f) ; these are sample->file (outa) gens
@@ -588,10 +586,9 @@ returning you to the true top-level."
 	*ws-prog*))))
 !#
 
-
-;;; -------- with-mix --------
 #!
-;;; with-mix beginnings...
+;;; -------- with-mix --------
+
 (define *with-mix-options* #f)
 (define *with-mix-calls* #f)
 
@@ -602,15 +599,20 @@ returning you to the true top-level."
 	  options
 	  calls))
 
-(define (with-mix-comment file)
+(define (eval-with-mix-comment file)
   (let ((comment (mus-sound-comment file)))
-    (if (string? comment)
-	(begin
-	  (eval-string comment)
-	  #t)
-	#f)))
+    (set *with-mix-calls* #f)
+    (and (string? comment)
+	 (catch #t
+		(lambda ()
+		  (eval-string comment)
+		  *with-mix-calls*)
+		(lambda args #f))))) ; any error means we lost
 !#
 
+
+
+;;; a test case for ws-debug
 ;;; (with-sound () (fm-violin 0 1 440 .1) (sleep 1) (fm-violin 1 1 440 .1) (sleep 1) (fm-violin 2 1 440 .1) (sleep 1))
 
 
