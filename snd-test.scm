@@ -26,13 +26,14 @@
 ;;; TODO  all dialogs need more extensive tests (perhaps built-in but undocumented test funcs)
 ;;; TODO  menu-hook (how?)
 ;;; TODO  need more careful insert-sound tests
+;;; TODO  for autotests, need to send snd-print to stdout as well
+
 
 (use-modules (ice-9 format) (ice-9 debug))
 
-(if (file-exists? "test.errors") (delete-file "test.errors"))
 (if (file-exists? "sndlib.gdbm") (delete-file "sndlib.gdbm"))
 
-(define tests 10)
+(define tests 1)
 (define snd-test -1)
 (define full-test #t)
 

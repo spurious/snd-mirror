@@ -3393,9 +3393,11 @@ static SCM g_set_mix_amp(SCM n, SCM uchan, SCM uval)
 
 static SCM g_set_mix_amp_env(SCM n, SCM chan, SCM val) 
 {
+  env *e = NULL;
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(n)),n,SCM_ARG1,"set-" S_mix_amp_env);
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(chan)),chan,SCM_ARG2,"set-" S_mix_amp_env);
-  set_mix_amp_env(g_scm2int(n),g_scm2int(chan),get_env(val,SCM_BOOL_F,"set-" S_mix_amp_env));
+  set_mix_amp_env(g_scm2int(n),g_scm2int(chan),e = get_env(val,SCM_BOOL_F,"set-" S_mix_amp_env));
+  if (e) free_env(e);
   return(val);
 }
 

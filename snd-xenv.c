@@ -257,6 +257,7 @@ static void text_field_activated(snd_state *ss)
 	  do_env_edit(active_env,TRUE);
 	  set_sensitive(saveB,newenv);
 	  env_redisplay(ss);
+	  if (newenv) free_env(e);
 	}
     }
   if (name) XtFree(name);
@@ -320,7 +321,11 @@ static void Undo_and_Apply_Enved_Callback(Widget w,XtPointer clientData,XtPointe
   /* this blindly undoes the previous edit (assumed to be an envelope) -- if the user made some other change in the meantime, too bad */
   snd_state *ss = (snd_state *)clientData;
   if ((active_channel) && (active_channel == last_active_channel))
-    undo_edit_with_sync(active_channel,1);
+    {
+      active_channel->squelch_update = 1;
+      undo_edit_with_sync(active_channel,1);
+      active_channel->squelch_update = 0;
+    }
   apply_enved(ss);
   last_active_channel = active_channel;
 }
@@ -1737,7 +1742,7 @@ static SCM g_set_enved_active_env(SCM e)
   if (active_env) free_env(active_env);
   if (gh_string_p(e))
     active_env = copy_env(find_named_env(e));
-  else active_env = copy_env(scm2env(e));
+  else active_env = scm2env(e);
   if (enved_dialog) env_redisplay(get_global_state());
   return(e);
 }

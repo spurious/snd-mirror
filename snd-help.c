@@ -256,6 +256,7 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
+10-Nov:  snd 4.8.\n\
 8-Nov:   filter text field also has history (M-p) now.\n\
 7-Nov:   shell (readline) style M-p and M-n in minibuffer with variable minibuffer-history-length (8).\n\
 6-Nov:   various cosmetic changes for the new g++ (Redhat 7.0).\n\

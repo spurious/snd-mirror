@@ -2876,11 +2876,16 @@ static SCM g_src_sound(SCM ratio_or_env, SCM base, SCM snd_n, SCM chn_n)
    by ratio, or following an envelope. Negative ratio reverses the sound"
 
   chan_info *cp;
+  env *e = NULL;
   ERRCP(S_src_sound,snd_n,chn_n,3);
   cp = get_cp(snd_n,chn_n,S_src_sound);
   if (gh_number_p(ratio_or_env))
     src_env_or_num(state,cp,NULL,gh_scm2double(ratio_or_env),TRUE,NOT_FROM_ENVED,S_src_sound,FALSE);
-  else src_env_or_num(state,cp,get_env(ratio_or_env,base,S_src_sound),1.0,FALSE,NOT_FROM_ENVED,S_src_sound,FALSE);
+  else 
+    {
+      src_env_or_num(state,cp,e = get_env(ratio_or_env,base,S_src_sound),1.0,FALSE,NOT_FROM_ENVED,S_src_sound,FALSE);
+      if (e) free_env(e);
+    }
   return(ratio_or_env);
 }
 
@@ -2888,13 +2893,17 @@ static SCM g_src_selection(SCM ratio_or_env, SCM base)
 {
   #define H_src_selection "(" S_src_selection " ratio-or-env &optional (base 1.0)) sampling-rate converts the\n\
    currently selected data by ratio (which can be an envelope)"
-
+  env *e = NULL;
   chan_info *cp;
   if (selection_is_active() == 0) return(scm_throw(NO_ACTIVE_SELECTION,SCM_LIST1(gh_str02scm(S_src_selection))));
   cp = get_cp(SCM_BOOL_F,SCM_BOOL_F,S_src_selection);
   if (gh_number_p(ratio_or_env))
     src_env_or_num(state,cp,NULL,gh_scm2double(ratio_or_env),TRUE,NOT_FROM_ENVED,S_src_selection,TRUE);
-  else src_env_or_num(state,cp,get_env(ratio_or_env,base,S_src_selection),1.0,FALSE,NOT_FROM_ENVED,S_src_selection,TRUE);
+  else 
+    {
+      src_env_or_num(state,cp,e = get_env(ratio_or_env,base,S_src_selection),1.0,FALSE,NOT_FROM_ENVED,S_src_selection,TRUE);
+      if (e) free_env(e);
+    }
   return(ratio_or_env);
 }
 
@@ -2906,6 +2915,7 @@ static SCM g_filter_sound(SCM e, SCM order, SCM snd_n, SCM chn_n)
   chan_info *cp;
   vct *v;
   int len;
+  env *ne = NULL;
   SCM_ASSERT((gh_vector_p(e)) || (gh_list_p(e)) || (vct_p(e)),e,SCM_ARG1,S_filter_sound);
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(order)),order,SCM_ARG2,S_filter_sound);
   ERRCP(S_filter_sound,snd_n,chn_n,3);
@@ -2922,7 +2932,11 @@ static SCM g_filter_sound(SCM e, SCM order, SCM snd_n, SCM chn_n)
 #endif
       apply_filter(cp,len,NULL,NOT_FROM_ENVED,S_filter_sound,FALSE,v->data);
     }
-  else apply_filter(cp,len,get_env(e,gh_double2scm(1.0),S_filter_sound),NOT_FROM_ENVED,S_filter_sound,FALSE,NULL); 
+  else 
+    {
+      apply_filter(cp,len,ne = get_env(e,gh_double2scm(1.0),S_filter_sound),NOT_FROM_ENVED,S_filter_sound,FALSE,NULL);
+      if (ne) free_env(ne); 
+    }
   return(scm_return_first(SCM_BOOL_T,e));
 }
 
@@ -2932,6 +2946,7 @@ static SCM g_filter_selection(SCM e, SCM order)
   chan_info *cp;
   vct *v;
   int len;
+  env *ne = NULL;
   SCM_ASSERT((gh_vector_p(e)) || (gh_list_p(e)) || (vct_p(e)),e,SCM_ARG1,S_filter_selection);
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(order)),order,SCM_ARG2,S_filter_selection);
   if (selection_is_active() == 0) return(scm_throw(NO_ACTIVE_SELECTION,SCM_LIST1(gh_str02scm(S_filter_selection))));
@@ -2948,7 +2963,11 @@ static SCM g_filter_selection(SCM e, SCM order)
 #endif
       apply_filter(cp,len,NULL,NOT_FROM_ENVED,S_filter_selection,TRUE,v->data);
     }
-  else apply_filter(cp,len,get_env(e,gh_double2scm(1.0),S_filter_selection),NOT_FROM_ENVED,S_filter_selection,TRUE,NULL); 
+  else 
+    {
+      apply_filter(cp,len,ne = get_env(e,gh_double2scm(1.0),S_filter_selection),NOT_FROM_ENVED,S_filter_selection,TRUE,NULL); 
+      if (ne) free_env(ne);
+    }
   return(scm_return_first(SCM_BOOL_T,e));
 }
 

@@ -1056,7 +1056,7 @@ void play_selection(int background)
 	    {
 	      sp = si->cps[i]->sound;
 	      if ((sp) && (sp->srate != 1.0) && (sp->srate > 0.0))
-		ends[i] = si->begs[i] + ((Float)selection_len() / sp->srate); /* TODO this should use the src->sample counter instead */
+		ends[i] = si->begs[i] + (int)(((Float)selection_len() / (Float)(sp->srate))); /* TODO this should use the src->sample counter instead */
 	      else ends[i] = si->begs[i] + selection_len();
 	    }
 	  play_channels(si->cps,si->chans,si->begs,ends,background);

@@ -1652,8 +1652,8 @@ static int set_up_sonogram(sonogram_state *sg)
   sonogram_state *lsg = NULL;
   int i,tempsize,dpys=1;
   cp = sg->cp;
-  cp->temp_sonogram = NULL; /* try to avoid ending up with two pointers to same memory */
   if (cp->ffting == 0) return(2);
+  /* cp->temp_sonogram = NULL; */ /* try to avoid ending up with two pointers to same memory */
   ss = cp->state;
   ap = cp->axis;
   sg->slice = 0;
@@ -1817,10 +1817,10 @@ static int cleanup_sonogram(sonogram_state *sg)
       set_chan_fft_in_progress(cp,0);
       display_channel_fft_data(cp,cp->sound,cp->state);
       if (cp->last_sonogram) FREE(cp->last_sonogram);
-      cp->temp_sonogram = NULL; /* mild paranoia */
       if (sg->outer == sg->outlim) sg->done = 1;
       sg->old_scale = (sg->scp)->scale;
       cp->last_sonogram = sg;
+      cp->temp_sonogram = NULL;
       if (sg->minibuffer_needs_to_be_cleared)
 	{
 	  finish_progress_report(cp->sound,NOT_FROM_ENVED);

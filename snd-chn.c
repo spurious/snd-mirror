@@ -5019,7 +5019,7 @@ static int cursor_insert(chan_info *cp, int count)
 	}
       si = free_sync_info(si);
     }
-  else extend_with_zeros(cp,cp->cursor,count,"C-o");
+  else extend_with_zeros(cp,iclamp(0,cp->cursor,current_ed_samples(cp)),count,"C-o");
   return(CURSOR_UPDATE_DISPLAY);
 }
 
@@ -5751,6 +5751,7 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, int with_meta)
 			  (char *)((sp->reging) ? "C-x a" : "C-x C-a"));
 	      else apply_env(active_chan,e,0,current_ed_samples(active_chan),1.0,sp->reging,NOT_FROM_ENVED,
 			     (char *)((sp->reging) ? "C-x a" : "C-x C-a"));
+	      free_env(e);
 	    }
 	  sp->reging = 0;
 	  sp->amping = 0;

@@ -772,15 +772,15 @@ void ripple_marks(chan_info *cp, int beg, int change)
   /* if change = 0, just set ptr, else copy and fixup with deletions */
   /* this is called after the tree has been pushed forward, so edit_ctr is ahead of us */
   /* but we don't do anything if no marks */
-  int old,noo,end,i,old_size;  /* "noo" due to criminal C++ stupidity (can't use "new") */
+  int old_m,new_m,end,i,old_size; 
   mark **mps,**mpo;
   mark *mp;
   if ((cp) && (cp->marks))
     {
       if (cp->edit_ctr == 0) return;
-      old = cp->edit_ctr-1;
-      noo = cp->edit_ctr;
-      if (noo>=cp->marks_size) /* groan -- we have to realloc the base array of array of pointers! */
+      old_m = cp->edit_ctr-1;
+      new_m = cp->edit_ctr;
+      if (new_m>=cp->marks_size) /* groan -- we have to realloc the base array of array of pointers! */
 	{
 	  old_size = cp->marks_size;
 	  cp->marks_size += 16;
@@ -794,16 +794,16 @@ void ripple_marks(chan_info *cp, int beg, int change)
 	      cp->marks[i] = NULL;
 	    }
 	}
-      cp->mark_size[noo] = cp->mark_size[old];
-      cp->mark_ctr[noo] = cp->mark_ctr[old];
-      if (cp->marks[noo] == NULL)
-	if (cp->mark_size[noo] > 0)
-	  cp->marks[noo] = (mark **)CALLOC(cp->mark_size[noo],sizeof(mark *));
-      if ((cp->mark_ctr[noo]>=0) && (cp->mark_size[noo]>0))
+      cp->mark_size[new_m] = cp->mark_size[old_m];
+      cp->mark_ctr[new_m] = cp->mark_ctr[old_m];
+      if (cp->marks[new_m] == NULL)
+	if (cp->mark_size[new_m] > 0)
+	  cp->marks[new_m] = (mark **)CALLOC(cp->mark_size[new_m],sizeof(mark *));
+      if ((cp->mark_ctr[new_m]>=0) && (cp->mark_size[new_m]>0))
 	{
-	  mps = cp->marks[noo];
-	  mpo = cp->marks[old];
-	  for (i=0;i<=cp->mark_ctr[noo];i++)
+	  mps = cp->marks[new_m];
+	  mpo = cp->marks[old_m];
+	  for (i=0;i<=cp->mark_ctr[new_m];i++)
 	    {
 	      if (mps[i]) free_mark(mps[i]);
 	      mps[i] = copy_mark(mpo[i]);
@@ -813,7 +813,7 @@ void ripple_marks(chan_info *cp, int beg, int change)
 	      /* if (change<0) and any marks are between beg and beg+change, they must be deleted */
 	      end = beg-change-1;
 	      i=0;
-	      while (i<=cp->mark_ctr[noo])
+	      while (i<=cp->mark_ctr[new_m])
 		{
 		  mp = mps[i];
 		  if ((mp->samp >= beg) && (mp->samp <= end)) /* was mp->samp > beg, ditto end, beg can = end */
@@ -830,7 +830,7 @@ void ripple_marks(chan_info *cp, int beg, int change)
 	    {
 	      if (change > 0)
 		{
-		  for (i=0;i<=cp->mark_ctr[noo];i++)
+		  for (i=0;i<=cp->mark_ctr[new_m];i++)
 		    {
 		      mp = mps[i];
 		      if (mp->samp > beg) mp->samp+=change;

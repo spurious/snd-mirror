@@ -937,7 +937,7 @@ static void Srate_Changed_Callback(GtkWidget *w,gpointer clientData)
   snd_state *ss = (snd_state *)clientData;
   recorder_info *rp;
   rp = get_recorder_info();
-  str = copy_string(gtk_entry_get_text(GTK_ENTRY(w))); 
+  str = copy_string(gtk_entry_get_text(GTK_ENTRY(recdat->srate_text))); /* w here gets segfault!! */
   if (str) 
     {
       n = string2int(str);
@@ -956,7 +956,7 @@ static void Rec_Size_Changed_Callback(GtkWidget *w,gpointer clientData)
   int n;
   recorder_info *rp;
   rp = get_recorder_info();
-  str = copy_string(gtk_entry_get_text(GTK_ENTRY(w))); 
+  str = copy_string(gtk_entry_get_text(GTK_ENTRY(rec_size_text)));  /* w here gets segfault!! */
   if (str) 
     {
       n = string2int(str);
@@ -1911,7 +1911,9 @@ void finish_recording(snd_state *ss, recorder_info *rp)
   set_button_label(record_button,(rp->triggering) ? STR_Triggered_Record : STR_Record);
   snd_close(rp->output_file_descriptor);
   rp->output_file_descriptor = mus_file_reopen_write(rp->output_file);
-  mus_header_update_with_fd(rp->output_file_descriptor,rp->output_header_type,rp->total_output_frames*rp->out_chans*mus_data_format_to_bytes_per_sample(rp->out_format)); 
+  mus_header_update_with_fd(rp->output_file_descriptor,
+			    rp->output_header_type,
+			    rp->total_output_frames*rp->out_chans*mus_data_format_to_bytes_per_sample(rp->out_format)); 
   close(rp->output_file_descriptor);
   rp->output_file_descriptor = -1;
   duration = (Float)rp->total_output_frames / (Float)(rp->srate);
@@ -2276,7 +2278,7 @@ void set_recorder_trigger(recorder_info *rp, Float val)
 void set_recorder_srate(recorder_info *rp, int val)
 {
   char sbuf[8];
-  if (val < 1000) return; /* TODO figure out where "2" is coming from! */
+  if (val < 1000) return;
   /* this just reflects the setting in the text field -- it doesn't actually set anything in the audio system */
   if (val > 0)
     {

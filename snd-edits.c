@@ -2931,7 +2931,6 @@ static SCM g_undo(SCM ed_n, SCM snd_n, SCM chn_n) /* opt ed_n */
   if (gh_number_p(ed_n))
     undo_edit_with_sync(cp,g_scm2int(ed_n));
   else undo_edit_with_sync(cp,1);
-  update_graph(cp,NULL);
   return(SCM_BOOL_T);
 }
 
@@ -2944,7 +2943,6 @@ static SCM g_redo(SCM ed_n, SCM snd_n, SCM chn_n) /* opt ed_n */
   if (gh_number_p(ed_n))
     redo_edit_with_sync(cp,g_scm2int(ed_n));
   else redo_edit_with_sync(cp,1);
-  update_graph(cp,NULL);
   return(SCM_BOOL_T);
 }
 
