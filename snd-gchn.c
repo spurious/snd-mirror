@@ -706,7 +706,7 @@ void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, in
 	  cw[W_f] = gtk_arrow_new(GTK_ARROW_UP, GTK_SHADOW_ETCHED_OUT);
 	  gtk_container_add(GTK_CONTAINER(cw[W_up_ev]), cw[W_f]);
 	  set_background(cw[W_f], (ss->sgx)->zoom_color);
-	  gtk_widget_set_usize(cw[W_f], 14, 14);
+	  SET_USIZE(cw[W_f], 14, 14);
 	  gtk_widget_show(cw[W_f]);
 
 	  cw[W_down_ev] = gtk_event_box_new();
@@ -716,7 +716,7 @@ void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, in
 	  cw[W_w] = gtk_arrow_new(GTK_ARROW_DOWN, GTK_SHADOW_ETCHED_OUT);
 	  gtk_container_add(GTK_CONTAINER(cw[W_down_ev]), cw[W_w]);
 	  set_background(cw[W_w], (ss->sgx)->zoom_color);
-	  gtk_widget_set_usize(cw[W_w], 14, 14);
+	  SET_USIZE(cw[W_w], 14, 14);
 	  gtk_widget_show(cw[W_w]);
 	}
 

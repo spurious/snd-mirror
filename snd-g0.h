@@ -300,5 +300,28 @@ typedef struct {
 #define snd_keypad_8 GDK_KP_8
 #define snd_keypad_9 GDK_KP_9
 
+/* now gtk 2.0 compatibility stuff */
+
+#if HAVE_GTK2
+
+  #define ALLOW_SHRINK_GROW(Window) do {gtk_window_set_size_request(Window, 0, 0); gtk_window_set_resizable(Window, TRUE); } while (0)
+  #define SET_RESIZABLE(Window, Val) gtk_window_set_resizable(Window, Val)
+  #define SET_USIZE(Widget, Width, Height) gtk_widget_set_size_request(Widget, Width, Height)
+  #define SET_UPOSITION(Widget, X, Y) gtk_window_move(GTK_WINDOW(Widget), X, Y)
+  #ifndef gdk_window_get_size
+    #define gdk_window_get_size gdk_drawable_get_size
+  #endif
+  #define LABEL_TEXT(Widget) gtk_label_get_text(Widget)
+
+#else
+
+  #define ALLOW_SHRINK_GROW(Window)  gtk_window_set_policy(Window, TRUE, TRUE, FALSE)
+  #define SET_RESIZABLE(Window, Val) gtk_window_set_policy(Window, TRUE, TRUE, Val)
+  #define SET_USIZE(Widget, Width, Height) gtk_widget_set_usize(Widget, Width, Height)
+  #define SET_UPOSITION(Widget, X, Y) gtk_widget_set_uposition(Widget, X, Y)
+  #define LABEL_TEXT(Widget) sg_label_text(Widget)
+
+#endif
+
 
 #endif

@@ -24,10 +24,10 @@ static void create_snd_error_dialog(snd_state *ss, int popup)
   snd_error_dialog = gtk_dialog_new();
   gtk_signal_connect(GTK_OBJECT(snd_error_dialog), "delete_event", GTK_SIGNAL_FUNC(delete_snd_error), (gpointer)ss);
   gtk_window_set_title(GTK_WINDOW(snd_error_dialog), STR_Error);
-  gtk_window_set_policy(GTK_WINDOW(snd_error_dialog), TRUE, TRUE, FALSE); /* allow shrink or grow */
+  ALLOW_SHRINK_GROW(GTK_WINDOW(snd_error_dialog));
   set_background(snd_error_dialog, (ss->sgx)->basic_color);
   gtk_container_set_border_width (GTK_CONTAINER(snd_error_dialog), 10);
-  gtk_widget_set_usize (GTK_WIDGET(snd_error_dialog), 400, 300);
+  SET_USIZE (GTK_WIDGET(snd_error_dialog), 400, 300);
   gtk_widget_realize(snd_error_dialog);
 
   ok_button = gtk_button_new_with_label(STR_Ok);
@@ -152,11 +152,11 @@ int snd_yes_or_no_p(snd_state *ss, const char *format, ...)
       yes_or_no_dialog = gtk_dialog_new();
       gtk_signal_connect(GTK_OBJECT(yes_or_no_dialog), "delete_event", GTK_SIGNAL_FUNC(delete_yes_or_no_dialog), (gpointer)ss);
       gtk_window_set_title(GTK_WINDOW(yes_or_no_dialog), STR_Big_Trouble);
-      gtk_window_set_policy(GTK_WINDOW(yes_or_no_dialog), TRUE, TRUE, FALSE); /* allow shrink or grow */
+      ALLOW_SHRINK_GROW(GTK_WINDOW(yes_or_no_dialog));
       set_background(yes_or_no_dialog, (ss->sgx)->basic_color);
       gtk_container_set_border_width (GTK_CONTAINER(yes_or_no_dialog), 4);
       gtk_widget_realize(yes_or_no_dialog);
-      gtk_widget_set_usize(GTK_WIDGET(yes_or_no_dialog), 180, 100);
+      SET_USIZE(GTK_WIDGET(yes_or_no_dialog), 180, 100);
 
       yes_button = gtk_button_new_with_label(STR_Yes);
       no_button = gtk_button_new_with_label(STR_No);

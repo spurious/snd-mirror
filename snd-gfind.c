@@ -72,10 +72,10 @@ void edit_find_callback(GtkWidget *w, gpointer context)
       edit_find_dialog = gtk_dialog_new();
       gtk_signal_connect(GTK_OBJECT(edit_find_dialog), "delete_event", GTK_SIGNAL_FUNC(edit_find_delete), (gpointer)ss);
       gtk_window_set_title(GTK_WINDOW(edit_find_dialog), STR_Find);
-      gtk_window_set_policy(GTK_WINDOW(edit_find_dialog), TRUE, TRUE, FALSE); /* allow shrink or grow */
+      ALLOW_SHRINK_GROW(GTK_WINDOW(edit_find_dialog));
       set_background(edit_find_dialog, (ss->sgx)->basic_color);
       gtk_container_set_border_width (GTK_CONTAINER(edit_find_dialog), 10);
-      gtk_widget_set_usize(GTK_WIDGET(edit_find_dialog), 350, 120);
+      SET_USIZE(GTK_WIDGET(edit_find_dialog), 350, 120);
       gtk_widget_realize(edit_find_dialog);
 
       help_button = gtk_button_new_with_label(STR_Help);

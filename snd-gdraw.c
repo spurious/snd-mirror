@@ -637,11 +637,11 @@ void view_color_callback(GtkWidget *w, gpointer context)
       ccd->dialog = gtk_dialog_new();
       gtk_signal_connect(GTK_OBJECT(ccd->dialog), "delete_event", GTK_SIGNAL_FUNC(delete_color_dialog), (gpointer)ss);
       gtk_window_set_title(GTK_WINDOW(ccd->dialog), STR_Color_Editor);
-      gtk_window_set_policy(GTK_WINDOW(ccd->dialog), TRUE, TRUE, FALSE); /* allow shrink or grow */
+      ALLOW_SHRINK_GROW(GTK_WINDOW(ccd->dialog));
       set_background(ccd->dialog, (ss->sgx)->basic_color);
       gtk_container_set_border_width (GTK_CONTAINER(ccd->dialog), 4);
       gtk_widget_realize(ccd->dialog);
-      gtk_widget_set_usize(GTK_WIDGET(ccd->dialog), 260, 200);
+      SET_USIZE(GTK_WIDGET(ccd->dialog), 260, 200);
 
       help_button = gtk_button_new_with_label(STR_Help);
       dismiss_button = gtk_button_new_with_label(STR_Dismiss);
@@ -663,7 +663,7 @@ void view_color_callback(GtkWidget *w, gpointer context)
       ccd->scale_adj = gtk_adjustment_new(50.0, 0.0, 101.0, 0.1, 1.0, 1.0);
       ccd->scale = gtk_hscale_new(GTK_ADJUSTMENT(ccd->scale_adj));
       GTK_WIDGET_UNSET_FLAGS(ccd->scale, GTK_CAN_FOCUS);
-      /* gtk_widget_set_usize (GTK_WIDGET(ccd->scale), 200, 30); */
+      /* SET_USIZE (GTK_WIDGET(ccd->scale), 200, 30); */
       gtk_range_set_update_policy(GTK_RANGE(GTK_SCALE(ccd->scale)), GTK_UPDATE_CONTINUOUS);
       gtk_scale_set_digits(GTK_SCALE(ccd->scale), 0);
       gtk_scale_set_value_pos(GTK_SCALE(ccd->scale), GTK_POS_TOP);
@@ -757,7 +757,7 @@ int color_dialog_is_active(void)
 GtkWidget *start_color_dialog(snd_state *ss, int width, int height)
 {
   view_color_callback(NULL, (gpointer)ss);
-  if (width != 0) gtk_widget_set_usize(GTK_WIDGET(ccd->dialog), width, height);
+  if (width != 0) SET_USIZE(GTK_WIDGET(ccd->dialog), width, height);
   return(ccd->dialog);
 }
 
@@ -999,11 +999,11 @@ void view_orientation_callback(GtkWidget *w, gpointer context)
       oid->dialog = gtk_dialog_new();
       gtk_signal_connect(GTK_OBJECT(oid->dialog), "delete_event", GTK_SIGNAL_FUNC(delete_orientation_dialog), (gpointer)ss);
       gtk_window_set_title(GTK_WINDOW(oid->dialog), STR_Spectrogram_Orientation);
-      gtk_window_set_policy(GTK_WINDOW(oid->dialog), TRUE, TRUE, FALSE); /* allow shrink or grow */
+      ALLOW_SHRINK_GROW(GTK_WINDOW(oid->dialog));
       set_background(oid->dialog, (ss->sgx)->basic_color);
       gtk_container_set_border_width (GTK_CONTAINER(oid->dialog), 4);
       gtk_widget_realize(oid->dialog);
-      gtk_widget_set_usize(GTK_WIDGET(oid->dialog), 260, 300);
+      SET_USIZE(GTK_WIDGET(oid->dialog), 260, 300);
 
       help_button = gtk_button_new_with_label(STR_Help);
       dismiss_button = gtk_button_new_with_label(STR_Dismiss);
@@ -1215,7 +1215,7 @@ int orientation_dialog_is_active(void)
 GtkWidget *start_orientation_dialog(snd_state *ss, int width, int height)
 {
   view_orientation_callback(NULL, (gpointer)ss);
-  if (width != 0) gtk_widget_set_usize(GTK_WIDGET(oid->dialog), width, height);
+  if (width != 0) SET_USIZE(GTK_WIDGET(oid->dialog), width, height);
   return(oid->dialog);
 }
 

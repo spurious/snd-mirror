@@ -454,7 +454,7 @@ void recolor_graph(chan_info *cp, int selected)
 
 void reflect_resize(snd_state *ss)
 {
-  gtk_window_set_policy(GTK_WINDOW(MAIN_SHELL(ss)), TRUE, TRUE, auto_resize(ss));
+  SET_RESIZABLE(GTK_WINDOW(MAIN_SHELL(ss)), auto_resize(ss));
 }
 
 void set_sensitive(GtkWidget *wid, int val) {if (wid) gtk_widget_set_sensitive(wid, val);}
@@ -483,12 +483,12 @@ guint16 widget_width(GtkWidget *w)
 
 void set_widget_height(GtkWidget *w, guint16 height)
 {
-  gtk_widget_set_usize(w, -2, height);
+  SET_USIZE(w, -2, height);
 }
 
 void set_widget_width(GtkWidget *w, guint16 width)
 {
-  gtk_widget_set_usize(w, width, -2);
+  SET_USIZE(w, width, -2);
 }
 
 gint16 widget_x(GtkWidget *w)
@@ -507,22 +507,22 @@ gint16 widget_y(GtkWidget *w)
 
 void set_widget_x(GtkWidget *w, gint16 x)
 {
-  gtk_widget_set_uposition(w, x, -2);
+  SET_UPOSITION(w, x, -2);
 }
 
 void set_widget_y(GtkWidget *w, gint16 y)
 {
-  gtk_widget_set_uposition(w, -2, y);
+  SET_UPOSITION(w, -2, y);
 }
 
 void set_widget_size(GtkWidget *w, guint16 width, guint16 height)
 {
-  gtk_widget_set_usize(w, width, height);
+  SET_USIZE(w, width, height);
 }
 
 void set_widget_position(GtkWidget *w, gint16 x, gint16 y)
 {
-  gtk_widget_set_uposition(w, x, y);
+  SET_UPOSITION(w, x, y);
 }
 
 void fixup_axis_context(axis_context *ax, GtkWidget *w, GdkGC *gc)
@@ -543,3 +543,7 @@ gpointer get_user_data(GtkObject *obj)
 {
   return(gtk_object_get_data(obj, OUR_DATA));
 }
+
+#if (!HAVE_GTK2)
+char *sg_label_text(GtkLabel *w) {char *text; gtk_label_get(w, &text); return(text);}
+#endif

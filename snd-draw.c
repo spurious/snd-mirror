@@ -565,13 +565,13 @@ static XEN g_widget_text(XEN wid)
 {
   #define H_widget_text "(" S_widget_text " wid) -> text)"
   GUI_WIDGET w;
-  char *text = NULL;
   XEN res = XEN_FALSE;
   XEN_ASSERT_TYPE(XEN_WRAPPED_C_POINTER_P(wid), wid, XEN_ARG_1, S_widget_text, "a wrapped object");
   w = (GUI_WIDGET)(XEN_UNWRAP_C_POINTER(wid));
   if (w)
     {
 #if USE_MOTIF
+      char *text = NULL;
       if ((XmIsText(w)) || (XmIsTextField(w)))
 	{
 	  text = XmTextGetString(w);
@@ -595,11 +595,7 @@ static XEN g_widget_text(XEN wid)
 #else
       if (GTK_IS_ENTRY(w))
 	return(C_TO_XEN_STRING(gtk_entry_get_text(GTK_ENTRY(w))));
-      else 
-	{
-	  gtk_label_get(GTK_LABEL(GTK_BIN(w)->child), &text);
-	  return(C_TO_XEN_STRING(text));
-	}
+      else return(C_TO_XEN_STRING(LABEL_TEXT(GTK_LABEL(GTK_BIN(w)->child))));
 #endif
     }
   else XEN_ERROR(NO_SUCH_WIDGET,

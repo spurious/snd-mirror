@@ -127,8 +127,8 @@ static void gsnd_main (int argc, char **argv )
 {
   gtk_init(&argc, &argv);
   shell = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-  gtk_window_set_policy(GTK_WINDOW(shell), TRUE, TRUE, FALSE);
-  gtk_widget_set_usize(shell, 200, 40);
+  ALLOW_SHRINK_GROW(GTK_WINDOW(shell));
+  SET_USIZE(shell, 200, 40);
   form = gtk_vbox_new(FALSE, 0);
   gtk_container_add(GTK_CONTAINER(shell), form);
   gtk_widget_show(form);

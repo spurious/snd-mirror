@@ -376,6 +376,9 @@ void set_widget_position(GtkWidget *w, gint16 x, gint16 y);
 void fixup_axis_context(axis_context *ax, GtkWidget *w, GdkGC *gc);
 void set_user_data(GtkObject *obj, gpointer data);
 gpointer get_user_data(GtkObject *obj);
+#if (!HAVE_GTK2)
+  char *sg_label_text(GtkLabel *w);
+#endif
 
 
 /* -------- snd-gsnd.c -------- */

@@ -431,7 +431,7 @@ void snd_doit(snd_state *ss, int argc, char **argv)
 
 #ifndef SND_AS_WIDGET
   shell = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-  gtk_window_set_policy(GTK_WINDOW(shell), TRUE, TRUE, FALSE); /* allow shrink or grow */
+  ALLOW_SHRINK_GROW(GTK_WINDOW(shell));
 #endif
 
   auto_open_files = argc-1;

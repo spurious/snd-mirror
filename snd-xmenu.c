@@ -1003,8 +1003,11 @@ static void SND_callback(Widget w, XtPointer cD, XtPointer mD)
   int callb, opt;
   XtVaGetValues(w, XmNuserData, &callb, NULL);
   opt = callb2option(callb);
-  IF_MENU_HOOK(main_menu_name(opt), added_options_names[(opt < 0) ? 0 : opt])
-    g_snd_callback(callb); /* menu option activate callback */
+  if (opt != -1)
+    {
+      IF_MENU_HOOK(main_menu_name(opt), added_options_names[(opt < 0) ? 0 : opt])
+	g_snd_callback(callb); /* menu option activate callback */
+    }
 }
 
 static void GHC_callback(Widget w, XtPointer cD, XtPointer mD) 

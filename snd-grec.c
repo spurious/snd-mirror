@@ -2037,7 +2037,7 @@ void snd_record_file(snd_state *ss)
       recorder = gtk_dialog_new();
       gtk_signal_connect(GTK_OBJECT(recorder), "delete_event", GTK_SIGNAL_FUNC(recorder_delete), (gpointer)ss);
       gtk_window_set_title(GTK_WINDOW(recorder), STR_Record);
-      gtk_window_set_policy(GTK_WINDOW(recorder), TRUE, TRUE, FALSE); /* allow shrink or grow */
+      ALLOW_SHRINK_GROW(GTK_WINDOW(recorder));
       set_background(recorder, (ss->sgx)->basic_color);
       gtk_container_set_border_width (GTK_CONTAINER(recorder), 10);
       gtk_widget_realize(recorder);

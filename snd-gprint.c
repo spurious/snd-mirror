@@ -107,10 +107,10 @@ void file_print_callback(GtkWidget *w, gpointer context)
       file_print_dialog = gtk_dialog_new();
       gtk_signal_connect(GTK_OBJECT(file_print_dialog), "delete_event", GTK_SIGNAL_FUNC(file_print_delete_callback), (gpointer)ss);
       gtk_window_set_title(GTK_WINDOW(file_print_dialog), STR_Print);
-      gtk_window_set_policy(GTK_WINDOW(file_print_dialog), TRUE, TRUE, FALSE); /* allow shrink or grow */
+      ALLOW_SHRINK_GROW(GTK_WINDOW(file_print_dialog));
       set_background(file_print_dialog, (ss->sgx)->basic_color);
       gtk_container_set_border_width (GTK_CONTAINER(file_print_dialog), 10);
-      gtk_widget_set_usize(GTK_WIDGET(file_print_dialog), 220, 160);
+      SET_USIZE(GTK_WIDGET(file_print_dialog), 220, 160);
       gtk_widget_realize(file_print_dialog);
 
       help_button = gtk_button_new_with_label(STR_Help);

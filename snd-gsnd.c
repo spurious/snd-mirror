@@ -1373,7 +1373,7 @@ snd_info *add_sound_window(char *filename, snd_state *ss, int read_only)
 	{
 	  sx->dialog = gtk_window_new(GTK_WINDOW_TOPLEVEL);
 	  set_background(sx->dialog, (ss->sgx)->basic_color);
-	  gtk_window_set_policy(GTK_WINDOW(sx->dialog), TRUE, TRUE, FALSE); /* allow shrink or grow */
+	  ALLOW_SHRINK_GROW(GTK_WINDOW(sx->dialog));
 	  gtk_container_add(GTK_CONTAINER(sx->dialog), sw[W_pane]);
 	  gtk_widget_show(sx->dialog);
 	  gtk_signal_connect(GTK_OBJECT(sx->dialog), "delete_event", GTK_SIGNAL_FUNC(close_sound_dialog), (gpointer)sp);

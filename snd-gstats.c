@@ -47,10 +47,10 @@ void update_stats_display(snd_state *ss, int all)
       stats_window = gtk_dialog_new();
       gtk_signal_connect(GTK_OBJECT(stats_window), "delete_event", GTK_SIGNAL_FUNC(stats_delete), (gpointer)ss);
       gtk_window_set_title(GTK_WINDOW(stats_window), STR_Disk_and_Memory_Usage);
-      gtk_window_set_policy(GTK_WINDOW(stats_window), TRUE, TRUE, FALSE); /* allow shrink or grow */
+      ALLOW_SHRINK_GROW(GTK_WINDOW(stats_window));
       set_background(stats_window, (ss->sgx)->basic_color);
       gtk_container_set_border_width (GTK_CONTAINER(stats_window), 10);
-      gtk_widget_set_usize(GTK_WIDGET(stats_window), 650, 250);
+      SET_USIZE(GTK_WIDGET(stats_window), 650, 250);
       gtk_widget_realize(stats_window);
 
       help_button = gtk_button_new_with_label(STR_Help);

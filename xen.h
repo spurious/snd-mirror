@@ -468,9 +468,16 @@ void xen_guile_define_procedure_with_reversed_setter(char *get_name, XEN (*get_f
 #define XEN_ARG_8 8
 
 #ifdef __cplusplus
-  #define XEN_PROCEDURE_CAST (XEN (*)())
+  #ifdef ANYARGS
+    #define XEN_PROCEDURE_CAST (XEN (*)(ANYARGS))
+    #define XEN_VALUE_ARG_PROCEDURE_CAST (XEN (*)(VALUE))
+  #else
+    #define XEN_PROCEDURE_CAST (XEN (*)())
+    #define XEN_VALUE_ARG_PROCEDURE_CAST (XEN (*)())
+  #endif
 #else
   #define XEN_PROCEDURE_CAST
+  #define XEN_VALUE_ARG_PROCEDURE_CAST
 #endif
 
 #define XEN_MARK_OBJECT_TYPE              void *

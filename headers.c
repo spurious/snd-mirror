@@ -3950,6 +3950,9 @@ static int read_tx16_header(int chan)
       else if ((hdrbuf[26] & 0xFE) == 0x10) srate = 50000;
       else if ((hdrbuf[26] & 0xFE) == 0xf6) srate = 16000;
     }
+  /*
+  {int i; for (i=0;i<32;i++) fprintf(stderr,"[%d]: %d (%x)\n",i,hdrbuf[i],hdrbuf[i]);}
+  */
   original_data_format = MUS_L12INT; /* can't read this format yet */
   data_format = MUS_UNSUPPORTED;
   data_size = (int)((float)data_size / 1.5);

@@ -681,7 +681,6 @@ dnl     it was "" to cancel -lXpm without the needed -L<dir> for the same case
                 AC_MSG_CHECKING([snd_config_get_id args])
                 AC_TRY_COMPILE(
                  [#include <sys/asoundlib.h>],
-# or alsa?? -- fix this so it parallels the change
 	         [snd_config_t *c;
   	          const char *id;
 	          snd_config_get_id(c, &id)

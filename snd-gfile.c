@@ -620,7 +620,7 @@ static void make_save_as_dialog(snd_state *ss, char *sound_name, int save_type, 
       gtk_widget_show(fbox);
 
       save_as_file_data = make_file_data_panel(ss, fbox, "data-form", FALSE, header_type, format_type, FALSE, FALSE);
-      gtk_widget_set_usize(save_as_file_data->comment_text, 100, 20);
+      SET_USIZE(save_as_file_data->comment_text, 100, 20);
       set_dialog_widget(ss, FILE_SAVE_AS_DIALOG, save_as_dialog);
     }
 }
@@ -794,7 +794,7 @@ static gint mouse_name(XEN hook, GtkWidget *w, const char *caller)
 	      if (r->parent == PREVIOUS_FILE_VIEWER)
 		label = get_prevfullname(r->pos);
 	      else
-		gtk_label_get(GTK_LABEL(GTK_BIN(w)->child), &label);
+		label = LABEL_TEXT(GTK_LABEL(GTK_BIN(w)->child));
 	    }
 	  if (label)
 	    g_c_run_progn_hook(hook,
@@ -1164,10 +1164,10 @@ void view_files_callback(GtkWidget *w, gpointer context)
       view_files_dialog = gtk_dialog_new();
       gtk_signal_connect(GTK_OBJECT(view_files_dialog), "delete_event", GTK_SIGNAL_FUNC(view_files_delete_callback), (gpointer)ss);
       gtk_window_set_title(GTK_WINDOW(view_files_dialog), STR_Files);
-      gtk_window_set_policy(GTK_WINDOW(view_files_dialog), TRUE, TRUE, FALSE); /* allow shrink or grow */
+      ALLOW_SHRINK_GROW(GTK_WINDOW(view_files_dialog));
       set_backgrounds(view_files_dialog, (ss->sgx)->basic_color);
       gtk_container_set_border_width (GTK_CONTAINER(view_files_dialog), 10);
-      gtk_widget_set_usize(GTK_WIDGET(view_files_dialog), 400, 200);
+      SET_USIZE(GTK_WIDGET(view_files_dialog), 400, 200);
       gtk_widget_realize(view_files_dialog);
 
       helpB = gtk_button_new_with_label(STR_Help);
@@ -1295,10 +1295,10 @@ static void make_raw_data_dialog(snd_state *ss)
   raw_data_dialog = gtk_dialog_new();
   gtk_signal_connect(GTK_OBJECT(raw_data_dialog), "delete_event", GTK_SIGNAL_FUNC(raw_data_delete_callback), (gpointer)ss);
   gtk_window_set_title(GTK_WINDOW(raw_data_dialog), STR_No_Header_on_File);
-  gtk_window_set_policy(GTK_WINDOW(raw_data_dialog), TRUE, TRUE, FALSE); /* allow shrink or grow */
+  ALLOW_SHRINK_GROW(GTK_WINDOW(raw_data_dialog));
   set_background(raw_data_dialog, (ss->sgx)->basic_color);
   gtk_container_set_border_width(GTK_CONTAINER(raw_data_dialog), 10);
-  gtk_widget_set_usize(GTK_WIDGET(raw_data_dialog), 350, 260);
+  SET_USIZE(GTK_WIDGET(raw_data_dialog), 350, 260);
   gtk_widget_realize(raw_data_dialog);
 
   helpB = gtk_button_new_with_label(STR_Help);
@@ -1465,10 +1465,10 @@ snd_info *make_new_file_dialog(snd_state *ss, char *newname, int header_type, in
       new_dialog = gtk_dialog_new();
       gtk_signal_connect(GTK_OBJECT(new_dialog), "delete_event", GTK_SIGNAL_FUNC(new_file_delete_callback), (gpointer)ss);
       gtk_window_set_title(GTK_WINDOW(new_dialog), title);
-      gtk_window_set_policy(GTK_WINDOW(new_dialog), TRUE, TRUE, FALSE); /* allow shrink or grow */
+      ALLOW_SHRINK_GROW(GTK_WINDOW(new_dialog));
       set_background(new_dialog, (ss->sgx)->basic_color);
       gtk_container_set_border_width (GTK_CONTAINER(new_dialog), 10);
-      gtk_widget_set_usize(GTK_WIDGET(new_dialog), 400, 250);
+      SET_USIZE(GTK_WIDGET(new_dialog), 400, 250);
       gtk_widget_realize(new_dialog);
 
       help_button = gtk_button_new_with_label(STR_Help);
@@ -1578,10 +1578,10 @@ GtkWidget *edit_header(snd_info *sp)
       edit_header_dialog = gtk_dialog_new();
       gtk_signal_connect(GTK_OBJECT(edit_header_dialog), "delete_event", GTK_SIGNAL_FUNC(edit_header_delete_callback), (gpointer)ss);
       /* gtk_window_set_title(GTK_WINDOW(edit_header_dialog), STR_Edit_Header); */
-      gtk_window_set_policy(GTK_WINDOW(edit_header_dialog), TRUE, TRUE, FALSE); /* allow shrink or grow */
+      ALLOW_SHRINK_GROW(GTK_WINDOW(edit_header_dialog));
       set_background(edit_header_dialog, (ss->sgx)->basic_color);
       gtk_container_set_border_width (GTK_CONTAINER(edit_header_dialog), 10);
-      gtk_widget_set_usize(GTK_WIDGET(edit_header_dialog), 360, 250);
+      SET_USIZE(GTK_WIDGET(edit_header_dialog), 360, 250);
       gtk_widget_realize(edit_header_dialog);
 
       help_button = gtk_button_new_with_label(STR_Help);

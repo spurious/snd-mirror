@@ -360,10 +360,10 @@ GtkWidget *make_mix_panel(snd_state *ss)
       gtk_signal_connect(GTK_OBJECT(mix_panel), "delete_event", GTK_SIGNAL_FUNC(delete_mix_panel), (gpointer)ss);
       /* gtk_signal_connect(GTK_OBJECT(mix_panel), "destroy", (GtkSignalFunc)dismiss_mix_panel, (gpointer)ss); */
       gtk_window_set_title(GTK_WINDOW(mix_panel), STR_Mix_Panel);
-      gtk_window_set_policy(GTK_WINDOW(mix_panel), TRUE, TRUE, FALSE); /* allow shrink or grow */
+      ALLOW_SHRINK_GROW(GTK_WINDOW(mix_panel));
       set_background(mix_panel, (ss->sgx)->basic_color);
       gtk_container_set_border_width (GTK_CONTAINER(mix_panel), 6);
-      /* gtk_widget_set_usize (GTK_WIDGET(mix_panel), 200, 300); */
+      /* SET_USIZE (GTK_WIDGET(mix_panel), 200, 300); */
       gtk_widget_realize(mix_panel);
       
       dismiss_button = gtk_button_new_with_label(STR_Dismiss);
