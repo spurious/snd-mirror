@@ -23,13 +23,13 @@
 ;;;  test 20: transforms                        [32509]
 ;;;  test 21: new stuff                         [34120]
 ;;;  test 22: run                               [34991]
-;;;  test 23: with-sound                        [40139]
-;;;  test 24: user-interface                    [41134]
-;;;  test 25: X/Xt/Xm                           [44293]
-;;;  test 26: Gtk                               [48789]
-;;;  test 27: GL                                [52781]
-;;;  test 28: errors                            [52890]
-;;;  test all done                              [54972]
+;;;  test 23: with-sound                        [40191]
+;;;  test 24: user-interface                    [41187]
+;;;  test 25: X/Xt/Xm                           [44346]
+;;;  test 26: Gtk                               [48842]
+;;;  test 27: GL                                [52834]
+;;;  test 28: errors                            [52943]
+;;;  test all done                              [55025]
 ;;;
 ;;; how to send ourselves a drop?  (button2 on menu is only the first half -- how to force 2nd?)
 ;;; need all html example code in autotests
@@ -13695,7 +13695,7 @@ EDITS: 5
 	    (gen3 (make-asymmetric-fm 1000 0 1.0 0.2))
 	    (gen4 (make-oscil 1000))
 	    (gen5 (make-oscil 200))
-	    (fm1 (in-hz (* 1.0 .2 1000)))) ; make notions of "index" match
+	    (fm1 (hz->radians (* 1.0 .2 1000)))) ; make notions of "index" match
 	(do ((i 0 (1+ i)))
 	    ((= i 2048))
 	  (vct-set! vct0 i (asymmetric-fm gen3 1.0 0.0))
@@ -23201,7 +23201,7 @@ EDITS: 5
 	      (if (provided? 'xm) (XSynchronize (XtDisplay (cadr (main-widgets))) #f))
 	      (if (or (not gotit)
 		      (fneq (vu-size) 0.5))
-		  (snd-display ";property vu-size: ~A" (vu-size)))
+		  (snd-display ";set window-property vu-size (should be 0.5): ~A" (vu-size)))
 	      (set! (vu-size) oldsize))))
       
       (let ((ctr 0))
@@ -40602,7 +40602,6 @@ EDITS: 2
 	(close-sound ind))
 
       (with-sound (:srate 22050) 
-		  (bes-fm 0 1 440 10.0 1.0 4.0)
 		  (fm-violin 0 .01 440 .1 :noise-amount 0.0)
 		  (pluck 0.05 .01 330 .1 .95 .95)
 		  (maraca .1 .1)
@@ -40681,6 +40680,7 @@ EDITS: 2
 		  (lbj-piano 16.5 1 440.0 .2)
 		  (resflt 17 1.0 0 0 0 #f .1 200 230 10 '(0 0 50 1 100 0) '(0 0 100 1) 500 .995 .1 1000 .995 .1 2000 .995 .1)
 		  (resflt 17.5 1.0 1 10000 .01 '(0 0 50 1 100 0) 0 0 0 0 #f #f 500 .995 .1 1000 .995 .1 2000 .995 .1)
+		  (bes-fm 18 1 440 10.0 1.0 4.0)
 		  
 		  (graphEq "oboe.snd")
 		  )
@@ -53147,7 +53147,7 @@ EDITS: 2
 		     delay delay? dot-product env env-interp env? file->array file->frame file->frame?  file->sample
 		     file->sample? filter filter? fir-filter fir-filter? formant formant-bank formant? frame* frame+
 		     frame->file frame->file? frame->frame frame->list frame->sample frame-ref frame-set! frame?
-		     granulate granulate? hz->radians iir-filter iir-filter?  in-any in-hz ina inb linear->db locsig
+		     granulate granulate? hz->radians iir-filter iir-filter?  in-any ina inb linear->db locsig
 		     locsig-ref locsig-reverb-ref locsig-reverb-set! locsig-set!  locsig? make-all-pass make-asymmetric-fm
 		     make-comb make-convolve make-delay make-env make-fft-window make-file->frame
 		     make-file->sample make-filter make-fir-filter make-formant make-frame make-frame->file make-granulate
@@ -53612,7 +53612,7 @@ EDITS: 2
 					    (snd-display ";clm ~A: tag: ~A arg: ~A [~A]" n tag arg ctr))
 					(set! ctr (1+ ctr))))
 				    (list all-pass asymmetric-fm clear-array comb convolve db->linear average
-					  degrees->radians delay env formant frame->list granulate hz->radians in-hz linear->db
+					  degrees->radians delay env formant frame->list granulate hz->radians linear->db
 					  make-all-pass make-asymmetric-fm make-comb make-convolve make-delay make-env
 					  make-file->frame make-file->sample make-filter make-fir-filter make-formant make-frame
 					  make-granulate make-iir-filter make-locsig make-notch make-one-pole make-one-zero

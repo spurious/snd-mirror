@@ -3,8 +3,6 @@
 (use-modules (ice-9 optargs))
 (provide 'snd-sndwarp.scm)
 
-;;; TODO: test various cases against CLM version, and add to ins lists in sndscm.html
-
 ;;;
 ;;; CLM 3 implementation of Richard Karpen's SNDWARP Csound Ugen.
 ;;; By Bret Battey. http://www.BatHatMedia.com

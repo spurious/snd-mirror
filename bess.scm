@@ -253,10 +253,10 @@
 		       data 0 i
 		       (* amplitude playing
 			  (oscil carosc 
-				 (+ (in-hz frequency)
+				 (+ (hz->radians frequency)
 				    (* index 
 				       (oscil modosc 
-					      (in-hz (* ratio frequency)))))))))
+					      (hz->radians (* ratio frequency)))))))))
 		    (mus-audio-write port data bufsize)
 		    #f))))
     (XtAppMainLoop app)))

@@ -334,3 +334,5 @@
 	     (remove-hook! after-save-as-hook after-save-as-hook-replace-sound))))))
 
 (define send-netscape send-mozilla)
+
+;;; eventually: (define in-hz hz->radians)

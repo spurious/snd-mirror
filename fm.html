@@ -212,7 +212,7 @@ may seem less mysterious.
 (definstrument fm (beg end freq amp mc-ratio index &amp;optional (index-env '(0 1 100 1)))
   (let* ((cr (make-oscil :frequency freq))
          (md (make-oscil :frequency (* freq mc-ratio)))
-         (fm-index (in-hz (* index mc-ratio freq)))
+         (fm-index (hz-&gt;radians (* index mc-ratio freq)))
          (ampf (make-env :envelope index-env :scaler amp)) 
          (indf (make-env :envelope index-env :scaler fm-index))) 
     (run
@@ -303,7 +303,7 @@ instrument:</p>
 (definstrument fm (beg end freq amp mc-ratio index carrier-phase mod-phase)
   (let ((cr (make-oscil :frequency freq :initial-phase carrier-phase))
         (md (make-oscil :frequency (* freq mc-ratio) :initial-phase mod-phase))
-        (fm-index (in-hz (* index mc-ratio freq))))
+        (fm-index (hz-&gt;radians (* index mc-ratio freq))))
     (run
       (loop for i from beg to end do
         (outa i (* amp (oscil cr (* fm-index (oscil md)))))))))
@@ -335,8 +335,8 @@ clm instrument that shows this effect:</p>
 (definstrument fm (beg end freq amp mc-ratio index car-phase mod-phase skew-func skew)
   (let ((cr (make-oscil :frequency freq :initial-phase car-phase))
         (md (make-oscil :frequency (* freq mc-ratio) :initial-phase mod-phase))
-        (skewf (make-env :envelope skew-func :scaler (in-hz (* skew mc-ratio freq))))
-        (fm-index (in-hz (* index mc-ratio freq))))
+        (skewf (make-env :envelope skew-func :scaler (hz-&gt;radians (* skew mc-ratio freq))))
+        (fm-index (hz-&gt;radians (* index mc-ratio freq))))
     (run
       (loop for i from beg to end do
         (outa i (* amp (oscil cr (* fm-index (oscil md (env skewf))))))))))
@@ -368,7 +368,7 @@ example:</p>
         (md1 (make-oscil :frequency (* freq mc-ratio) :initial-phase md1p))
         (am0 (make-oscil :frequency freq :initial-phase 0))
         (am1 (make-oscil :frequency freq :initial-phase (* .5 pi)))
-        (fm-index (in-hz (* index mc-ratio freq))))
+        (fm-index (hz-&gt;radians (* index mc-ratio freq))))
     (run
       (loop for i from beg to end do
         (outa i (* amp (+ (* (oscil am0) (oscil cr0 (* fm-index (oscil md0))))
@@ -439,7 +439,7 @@ spectrum somewhat. In general:</p>
       (setf (aref md-arr i)
         (make-oscil :frequency (* freq (aref mc-ratios i)) 
                     :initial-phase (aref mod-phases i)))
-      (setf (aref fm-ind-arr i) (in-hz (* (aref indexes i) (aref mc-ratios i) freq))))
+      (setf (aref fm-ind-arr i) (hz-&gt;radians (* (aref indexes i) (aref mc-ratios i) freq))))
     (run
       (loop for i from beg to end do
         (let ((sum 0.0))
@@ -466,7 +466,7 @@ merely a simple and obvious bandage.</p>
 <p>A pared down version of the fm-violin is:</p>
 <pre>
 (definstrument violin (beg end frequency amplitude fm-index)
-  (let* ((frq-scl (in-hz frequency))
+  (let* ((frq-scl (hz-&gt;radians frequency))
          (maxdev (* frq-scl fm-index))
          (index1 (* maxdev (/ 5.0 (log frequency))))
          (index2 (* maxdev 3.0 (/ (- 8.5 (log frequency)) (+ 3.0 (/ frequency 1000)))))
@@ -547,8 +547,8 @@ to show how strong this effect is:</p>
   (let ((cr (make-oscil :frequency freq))
         (md (make-oscil :frequency (* freq modrat)))
         (ca (make-oscil :frequency (* freq casrat) :initial-phase caspha))
-        (fm-ind0 (in-hz (* modind modrat freq)))
-        (fm-ind1 (in-hz (* casind (/ casrat modrat) freq))))
+        (fm-ind0 (hz-&gt;radians (* modind modrat freq)))
+        (fm-ind1 (hz-&gt;radians (* casind (/ casrat modrat) freq))))
     (run
      (loop for i from beg to end do
        (outa i (* amp (oscil cr (* fm-ind0 (oscil md (* fm-ind1 (oscil ca)))))))))))
@@ -679,7 +679,7 @@ and used in "Colony" and other pieces. In a simplified form it is:</p>
     (run
      (loop for i from beg to end do
        (setf frq (+ freq (triangle-wave per-vib) (randi ran-vib)))
-       (setf car (oscil car-os (in-Hz frq)))
+       (setf car (oscil car-os (hz-&gt;radians frq)))
        (setf sum 0.0)
        (dotimes (k 3)
          (setf frm (env (aref frmfs k)))
@@ -687,13 +687,13 @@ and used in "Colony" and other pieces. In a simplified form it is:</p>
          (setf frm-int (floor frm0))
          (if (evenp frm-int)
              (progn
-               (setf even-freq (in-Hz (* frm-int frq)))
-               (setf odd-freq (in-Hz (* (+ frm-int 1) frq)))
+               (setf even-freq (hz-&gt;radians (* frm-int frq)))
+               (setf odd-freq (hz-&gt;radians (* (+ frm-int 1) frq)))
                (setf odd-amp (- frm0 frm-int))
                (setf even-amp (- 1.0 odd-amp)))
            (progn
-             (setf odd-freq (in-Hz (* frm-int frq)))
-             (setf even-freq (in-Hz (* (+ frm-int 1) frq)))
+             (setf odd-freq (hz-&gt;radians (* frm-int frq)))
+             (setf even-freq (hz-&gt;radians (* (+ frm-int 1) frq)))
              (setf even-amp (- frm0 frm-int))
              (setf odd-amp (- 1.0 even-amp))))
          (incf sum (+ (* (aref amps k) 

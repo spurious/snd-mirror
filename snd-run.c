@@ -4893,7 +4893,7 @@ static xen_value *atan2_1(ptree *prog, xen_value **args, int num_args)
 }
 
 #if HAVE_SPECIAL_FUNCTIONS
-static void jn_f(int *args, ptree *pt) {FLOAT_RESULT = jn(FLOAT_ARG_1, FLOAT_ARG_2);}
+static void jn_f(int *args, ptree *pt) {FLOAT_RESULT = jn(INT_ARG_1, FLOAT_ARG_2);}
 static char *descr_jn_f(int *args, ptree *pt) 
 {
   return(mus_format( FLT_PT " = jn(" INT_PT ", " FLT_PT ")", args[0], FLOAT_RESULT, args[1], INT_ARG_1, args[2], FLOAT_ARG_2));
@@ -4911,7 +4911,7 @@ static xen_value *jn_1(ptree *prog, xen_value **args, int num_args)
     return(make_xen_value(R_FLOAT, add_dbl_to_ptree(prog, jn(prog->ints[args[1]->addr], prog->dbls[args[2]->addr])), R_CONSTANT));
   return(package(prog, R_FLOAT, jn_f, descr_jn_f, args, 2));
 }
-static void yn_f(int *args, ptree *pt) {FLOAT_RESULT = yn(FLOAT_ARG_1, FLOAT_ARG_2);}
+static void yn_f(int *args, ptree *pt) {FLOAT_RESULT = yn(INT_ARG_1, FLOAT_ARG_2);}
 static char *descr_yn_f(int *args, ptree *pt) 
 {
   return(mus_format( FLT_PT " = yn(" INT_PT ", " FLT_PT ")", args[0], FLOAT_RESULT, args[1], INT_ARG_1, args[2], FLOAT_ARG_2));
@@ -11140,7 +11140,6 @@ static void init_walkers(void)
 
   INIT_WALKER(S_radians_to_hz, make_walker(mus_radians_to_hz_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
   INIT_WALKER(S_hz_to_radians, make_walker(mus_hz_to_radians_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
-  INIT_WALKER(S_in_hz, make_walker(mus_hz_to_radians_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
   INIT_WALKER(S_degrees_to_radians, make_walker(mus_degrees_to_radians_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
   INIT_WALKER(S_radians_to_degrees, make_walker(mus_radians_to_degrees_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
   INIT_WALKER(S_db_to_linear, make_walker(mus_db_to_linear_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));

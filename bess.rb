@@ -321,8 +321,8 @@ begin
   RXtAppAddWorkProc(app, lambda { |dummy|
 		      (0...bufsize).each { |i|
 			sound_data_set!(data, 0, i, $amp * $play *
-					oscil(carosc, in_hz($freq) + $index * 
-					      oscil(modosc, in_hz($ratio * $freq))));
+					oscil(carosc, hz2radians($freq) + $index * 
+					      oscil(modosc, hz2radians($ratio * $freq))));
 		      }
 		      mus_audio_write(port, data, bufsize);
 		      false;

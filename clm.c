@@ -6820,7 +6820,7 @@ void mus_fft(Float *rl, Float *im, int n, int is)
 
 #if HAVE_GSL
 #include <gsl/gsl_sf_bessel.h>
-static double mus_bessi0(Float x)
+double mus_bessi0(Float x)
 {
   gsl_sf_result res;
   gsl_sf_bessel_I0_e(x, &res);
@@ -7878,26 +7878,8 @@ Float mus_phase_vocoder_with_editors(mus_any *ptr,
 	      if (buf >= pv->N) buf = 0;
 	    }
 	  pv->filptr += pv->D;
-#if HAVE_FFTW || HAVE_FFTW3
-	  /* actually this is not faster than the mus_fft case -- other processing swamps the fft here */
-	  {
-	    double temp;
-	    mus_fftw(pv->ampinc, pv->N, 1);
-	    pv->ampinc[0] = fabs(pv->ampinc[0]);
-	    pv->ampinc[N2] = fabs(pv->ampinc[N2]);
-	    for (i = 1, j = pv->N - 1; i < N2; i++, j--)
-	      {
-		pv->freqs[i] = atan2(pv->ampinc[j], pv->ampinc[i]);
-		temp = pv->ampinc[i] * pv->ampinc[i] + pv->ampinc[j] * pv->ampinc[j];
-		if (temp < .00000001) 
-		  pv->ampinc[i] = 0.0;
-		else pv->ampinc[i] = sqrt(temp);
-	      }
-	  }
-#else
 	  mus_fft(pv->ampinc, pv->freqs, pv->N, 1);
 	  mus_rectangular_to_polar(pv->ampinc, pv->freqs, N2);
-#endif
 	}
       
       if ((pv_edit == NULL) || ((*pv_edit)(pv->closure)))

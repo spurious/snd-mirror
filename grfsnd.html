@@ -625,32 +625,11 @@ void init_gsl_j0(void)
 <em class=listener>#&lt;unspecified&gt;</em>
 &gt;<em class=typing>(bes-fm 22050 440 10.0 1.0 8.0)</em>
 </pre>
+<p>
+The "J" and "Y" Bessel functions are built-in now: bes-j0, bes-j1, bes-jn, bes-y0, bes-y1, bes-yn, bes-i0.
+Also erf, erfc, and lgamma.
+</p>
 
-<p>To call internal Snd functions, you can do something like
-the following: declare an SCM variable to hold the procedure
-variable, in the init function set the variable to the
-value of scm_symbol_value0("function-name"), and in the
-rest of the code call it via scm_apply. The following
-is a sketch using the Snd internal "srate" function:</p>
-
-<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
-  #include &lt;libguile.h&gt;
-  static SCM g_srate;
-  static SCM srate_wrapper(SCM a) {return(scm_call_1(g_srate, a));}
-  void init_srate(void) 
-  { 
-    scm_c_define_gsubr("my-srate", 1, 0, 0, srate_wrapper);
-    g_srate = scm_symbol_value0("srate");
-  }
-</pre></td></tr></table>
-
-<p>Alternatively, you can simply use scm_eval_str0:</p>
-
-<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
-  scm_eval_str0("(<a class=quiet href="extsnd.html#recorderdialog">recorder-dialog</a>)");
-  scm_eval_str0("(<a class=quiet href="extsnd.html#opensound">open-sound</a> \"oboe.snd\")");
-  srate = scm_num2int(scm_eval_str0("(<a class=quiet href="extsnd.html#srate">srate</a>)"), 0, "");
-</pre></td></tr></table>
 
 
 <br>
@@ -876,7 +855,6 @@ In Guile <b>frame?</b> is part of the debugger; it is renamed <b>%frame?</b> her
 <tr><td><a href="clm.html#iir-filter">iir-filter</a></td><td>(gen input)</td><td>IIR filter</td></tr>
 <tr><td><a href="clm.html#iir-filter?">iir-filter?</a></td><td>(gen)</td><td>#t if gen is iir-filter</td></tr>
 <tr><td><a href="clm.html#in-any">in-any</a></td><td>(loc <i>chan stream</i>)</td><td>return sample in stream at loc and chan</td></tr>
-<tr><td><a class=def name="inhz">in-hz</a></td><td>(freq)</td><td>translate freq to radians/sample</td></tr>
 <tr><td><a href="clm.html#ina">ina</a></td><td>(loc <i>stream</i>)</td><td>return sample in stream at loc, chan 0</td></tr>
 <tr><td><a href="clm.html#inb">inb</a></td><td>(loc <i>stream</i>)</td><td>return sample in stream at loc, chan 1</td></tr>
 <tr><td><a href="clm.html#linear-&gt;db">linear-&gt;db</a></td><td>(val)</td><td>translate linear val to dB</td></tr>
@@ -1225,7 +1203,7 @@ Test 23 in snd-test.scm has a with-sound that includes most of these instruments
 <tr><th>Instrument</th><th>Sources</th><th>Description</th></tr>
 <tr><td>anoi</td><td>clm-ins.scm</td><td>noise reduction based on P Cook's Scrubber.m</td></tr>
 <tr><td>attract</td><td>clm-ins.scm</td><td>James McCarthy's chaotic brass</td></tr>
-<tr><td>bes-fm</td><td>clm-ins.scm</td><td>FM analog using Bessel j0 rather than sin</td></tr>
+<tr><td>bes-fm</td><td>clm-ins.scm</td><td>FM analog using Bessel j1 rather than sin</td></tr>
 <tr><td>bigbird</td><td>bird.scm, bird.rb</td><td>more bird songs</td></tr>
 <tr><td>bird</td><td>bird.scm, bird.rb</td><td>bird songs</td></tr>
 <tr><td>bow</td><td>strad.scm, strad.rb</td><td>bowed string physical model (Juan Reyes, Michael Scholz)</td></tr>

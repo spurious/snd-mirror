@@ -1,6 +1,6 @@
 ;;; CLM instruments translated to Snd/Scheme
 ;;;
-;;; all assume they're called within with-sound, all set up C-g to (throw 'with-sound-interrupt)
+;;; all assume they're called within with-sound, most set up C-g to (throw 'with-sound-interrupt)
 
 (provide 'snd-clm-ins.scm)
 
@@ -217,61 +217,6 @@ synthesis: (fofins 0 1 270 .2 .001 730 .6 1090 .3 2440 .1)"
 	     ((= i end))
 	   (outa i (* (env ampf) (wave-train wt0 (* vib (oscil vibr)))) *output*))))))
 
-
-;;; -------- bes-fm
-
-(define (j0 x)				;returns J0(x) for any real x
-  (if (< (abs x) 8.0)			;direct rational function fit
-      (let* ((y (* x x))
-	     (ans1 (+ 57568490574.0
-		      (* y (+ -13362590354.0 
-			      (* y  (+ 651619640.7
-				       (* y (+ -11214424.18 
-					       (* y (+ 77392.33017
-						       (* y -184.9052456)))))))))))
-	     (ans2 (+ 57568490411.0 
-		      (* y (+ 1029532985.0 
-			      (* y (+ 9494680.718
-				      (* y (+ 59272.64853
-					      (* y (+ 267.8532712 y)))))))))))
-	(/ ans1 ans2))
-    (let* ((ax (abs x))
-	   (z (/ 8.0 ax))
-	   (y (* z z))
-	   (xx (- ax 0.785398164))
-	   (ans1 (+ 1.0 
-		    (* y (+ -0.1098628627e-2 
-			    (* y (+ 0.2734510407e-4
-				    (* y (+ -0.2073370639e-5
-					    (* y 0.2093887211e-6)))))))))
-	   (ans2 (+ -0.1562499995e-1
-		    (* y (+ 0.1430488765e-3
-			    (* y (+ -0.6911147651e-5
-				    (* y (+ 0.7621095161e-6
-					    (* y -0.934945152e-7))))))))))
-      (* (sqrt (/ 0.636619772 ax))
-	 (- (* (cos xx) ans1)
-	    (* z (sin xx) ans2))))))
-
-(definstrument (bes-fm start len freq amp ratio index)
-  (let* ((car-ph 0.0)
-	 (mod-ph 0.0)
-	 (beg (inexact->exact (floor (* (mus-srate) start))))
-	 (dur (inexact->exact (floor (* (mus-srate) len))))
-	 (end (+ beg dur))
-	 (car-incr (hz->radians freq))
-	 (mod-incr (* ratio car-incr))
-	 (ampenv (make-env :envelope '(0 0 25 1 75 1 100 0) :scaler amp :end dur)))
-    (ws-interrupt?)
-    (run
-     (lambda ()
-       (do ((i beg (1+ i)))
-	   ((= i end))
-	 (outa i (* (env ampenv) (j0 car-ph)) *output*)
-	 (set! car-ph (+ car-ph car-incr (* index (j0 mod-ph))))
-	 (set! mod-ph (+ mod-ph mod-incr)))))))
-
-;;; (with-sound () (bes-fm 0 .5 440 5.0 1.0 8.0))
 
 
 ;;; FM TRUMPET ---------------------------------------------------
@@ -2760,6 +2705,8 @@ mjkoskin@sci.fi
     (fullmix "oboe.snd" 1 2 0 (list (list .1 (make-env '(0 0 1 1) :duration 2 :scaler .5)))))
 !#
 
+
+;;; bes-fm -- can also use bes-j0 here as in earlier versions
 
 (define (bes-fm beg dur freq amp ratio index)
   (let* ((st (inexact->exact (floor (* beg (mus-srate)))))

@@ -328,7 +328,6 @@ static XEN g_radians_to_hz(XEN val)
 static XEN g_hz_to_radians(XEN val) 
 {
   #define H_hz_to_radians "(" S_hz_to_radians " hz): convert frequency in Hz to radians per sample: hz * 2 * pi / srate"
-  #define H_in_hz "(" S_in_hz " hz) converts frequency in Hz to radians/sample: hz * 2 * pi / srate"
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, S_hz_to_radians, "a number"); 
   return(C_TO_XEN_DOUBLE(mus_hz_to_radians(XEN_TO_C_DOUBLE(val))));
 }
@@ -5678,7 +5677,7 @@ void mus_xen_init(void)
 
   XEN_DEFINE_PROCEDURE(S_radians_to_hz,        g_radians_to_hz_w,        1, 0, 0, H_radians_to_hz);
   XEN_DEFINE_PROCEDURE(S_hz_to_radians,        g_hz_to_radians_w,        1, 0, 0, H_hz_to_radians);
-  XEN_DEFINE_PROCEDURE(S_in_hz,                g_hz_to_radians_w,        1, 0, 0, H_in_hz);
+  XEN_DEFINE_PROCEDURE("in-hz",                g_hz_to_radians_w,        1, 0, 0, H_hz_to_radians); /* backwards compatibility */
   XEN_DEFINE_PROCEDURE(S_radians_to_degrees,   g_radians_to_degrees_w,   1, 0, 0, H_radians_to_degrees);
   XEN_DEFINE_PROCEDURE(S_degrees_to_radians,   g_degrees_to_radians_w,   1, 0, 0, H_degrees_to_radians);
   XEN_DEFINE_PROCEDURE(S_db_to_linear,         g_db_to_linear_w,         1, 0, 0, H_db_to_linear);
@@ -6134,7 +6133,6 @@ the closer the radius is to 1.0, the narrower the resonance."
 	       S_iir_filter,
 	       S_iir_filter_p,
 	       S_in_any,
-	       S_in_hz,
 	       S_ina,
 	       S_inb,
 	       S_kaiser_window,

@@ -234,7 +234,6 @@ instrument: bird { f: start f: dur f: freq f: freq-skew f: amp freq-env amp-enve
 <pre>
   <em class=emdef>anoi</em> file (etc)
   <em class=emdef>attract</em> beg dur amp c
-  <em class=emdef>bes-fm</em> beg dur freq amp ratio index
   <em class=emdef>canter</em> beg dur freq amp (etc)
   <em class=emdef>cellon</em> beg dur freq amp (etc)
   <em class=emdef>drone</em> beg dur freq amp (etc)
@@ -350,7 +349,7 @@ the differences between the CL and Scheme instruments.
 </p>
 <p>
 <b>bes-fm</b> is J1(J1) essentially -- using the Bessel functions where FM uses sinusoids.
-The Bessel functions I0, Jn, and Yn are built-in; Kn and In are implemented in Scheme in snd-test.scm
+The <a name="besselfuncs">Bessel functions</a> I0, Jn, and Yn are built-in; Kn and In are implemented in Scheme in snd-test.scm
 (or in CL in bessel.lisp).
 </p>
 <br>
@@ -3398,7 +3397,7 @@ In CLM, the fm-violin became (fm.html, 1989):</p>
 
 <table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (<a class=quiet href="clm.html#definstrument">definstrument</a> violin (beg end frequency amplitude fm-index)
-  (let* ((frq-scl (<a class=quiet href="grfsnd.html#inhz">in-hz</a> frequency))
+  (let* ((frq-scl (hz-&gt;radians frequency))
          (maxdev (* frq-scl fm-index))
          (index1 (* maxdev (/ 5.0 (log frequency))))
          (index2 (* maxdev 3.0 (/ (- 8.5 (log frequency)) (+ 3.0 (/ frequency 1000)))))
@@ -4570,8 +4569,8 @@ static Float set_fcomb_scaler(mus_any *ptr, Float val) {((fcomb *)ptr)-&gt;xscl 
 static void fcomb_reset(mus_any *ptr)
 {
   fcomb *gen = (fcomb *)ptr;
-  gen->loc = 0;
-  memset((void *)(gen->line), 0, gen->size * sizeof(Float));
+  gen-&gt;loc = 0;
+  memset((void *)(gen-&gt;line), 0, gen-&gt;size * sizeof(Float));
 }
 
 static int free_fcomb(mus_any *uptr) 
@@ -4602,7 +4601,7 @@ static Float mus_fcomb (mus_any *ptr, Float input, Float ignored)
   return(tap_result);
 }
 
-/* this is our core class descriptor */
+/* this is our generator class descriptor */
 
 static mus_any_class FCOMB_CLASS = {
   -1, /* MUS_FCOMB eventually */ /* mus_type: this is assigned at run-time via mus_make_class_tag below */
@@ -4611,15 +4610,15 @@ static mus_any_class FCOMB_CLASS = {
   &amp;describe_fcomb,               /* mus_describe: user-friendly description */
   &amp;fcomb_equalp,                 /* mus_equalp: check equality of fcomb gens */
   &amp;fcomb_data,                   /* mus_data: the fcomb delay line, a float array */
-  0,                             /* mus_set_data: not implemented for fcomb */
+  0,
   &amp;fcomb_length,                 /* mus_length: delay line length */
-  0,                             /* mus_set_length: not implemented for fcomb */
-  0,0,                           /* mus_frequency, mus_set_frequency */
-  0,0,                           /* mus_phase, mus_set_phase */
+  0,
+  0,0,
+  0,0,
   &amp;fcomb_scaler,                 /* mus_scaler: the feedback term */
   &amp;set_fcomb_scaler,             /* mus_set_scaler */
   0, 0,
-  &amp;mus_fcomb,                    /* mus_run: the run-time fcomb function, MUS_RUN(gen) for speed */
+  &amp;mus_fcomb,                    /* mus_run|apply: the run-time fcomb function */
   MUS_NOT_SPECIAL,               /* type extension */
   NULL,                     
   0,
@@ -4627,7 +4626,7 @@ static mus_any_class FCOMB_CLASS = {
   0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0,
-  &fcomb_reset
+  &amp;fcomb_reset
 };
 
 /* now a function to make a new generator */

@@ -79,7 +79,6 @@
 #define S_iir_filter                 "iir-filter"
 #define S_iir_filter_p               "iir-filter?"
 #define S_in_any                     "in-any"
-#define S_in_hz                      "in-hz"
 #define S_ina                        "ina"
 #define S_inb                        "inb"
 #define S_kaiser_window              "kaiser-window"
