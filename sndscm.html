@@ -208,12 +208,14 @@ end
   <em class=def>lbj-piano</em> beg dur freq amp (etc)
   <em class=def>metal</em> beg dur freq amp
   <em class=def>nrev</em> (reverb-factor 1.09) (lp-coeff 0.7) (volume-1 1.0)
+  <em class=def>pins</em> beg dur file amp (transposition 1.0) (time-scaler 1.0) (etc)
   <em class=def>pluck</em> beg dur freq amp (weighting .5) (lossfact .9)
   <em class=def>pqw-vox</em> beg dur freq spacing-freq amp ampfun freqfun freqscl phonemes formant-amps formant-shapes
   <em class=def>pqw</em> beg dur freq (etc)
   <em class=def>resflt</em> beg dur driver (etc)
   <em class=def>reson</em> beg dur freq amp (etc)
   <em class=def>rhodey</em> beg dur freq amp (base .5)
+  <em class=def><A NAME="scratch">scratch</a></em> beg file src-ratio turnlist
   <em class=def>spectra</em> beg dur freq amp (etc)
   <em class=def>stereo-flute</em> beg dur freq flow (etc)
   <em class=def>touch-tone</em> beg number
@@ -274,7 +276,12 @@ at random), and car3+mod3 putting a sort of formant at the minor third
   (define abell '(0 0 .1000 1 10 .6000 25 .3000 50 .1500 90 .1000 100 0 ))
   (fm-bell 0.0 1.0 220.0 .5 abell fbell 1.0)
 </pre>
-
+<p><i>scratch</i> moves back and forth in a sound file according to
+a list of turn times (see also <a href="#exenvsoundinterp">env-sound-interp</a>).
+</p>
+<p><i>pins</i> is a simple implementation of thje spectral modeling sysnthesis
+of Xavier Serra and Julius Smith.  It is similar to the phase vocoder.
+</p>
 
 <A NAME="dlocsigdoc"></a><span class=box><h2>dlocsig.rb</h2></span>
 
@@ -1302,7 +1309,7 @@ sound and so on). <code>(env-sound-interp '(0 0 1 1))</code> returns a copy of t
 current sound; <code>(env-sound-interp '(0 0 1 1 2 0) 2.0)</code> returns a new sound 
 with the sound copied first in normal order, then reversed.  src-sound with an
 envelope could be used for this effect, but it is much more direct to apply the
-envelope to sound sample positions.
+envelope to sound sample positions.  A similar function is <a href="#scratch">scratch</a> in clm-ins.scm.
 </p>
 <pre>
   <em class=def><A NAME="exsearchforclick">search-for-click</a></em>
@@ -1622,10 +1629,11 @@ The function that actually passes the url to the reader is <a href="extsnd.html#
   <em class=def><a name="exsnapmarktobeat">snap-mark-to-beat</a></em>
   <em class=def><a name="exmarkexplode">mark-explode</a></em>
   <em class=def><a name="markproperty">mark-property</a></em> key id
+  <em class=def><A NAME="markclickinfo">mark-click-info</a></em> id
 </pre>
 
-<p><i>mark-name-&gt;id</i> is like <a href="extsnd.html#sndfindmark">find-mark</a> but searches all currently accessible channels.
-<i>describe-mark</i> returns a description of the movements of mark id over the channel's edit history:
+<p><b>mark-name-&gt;id</b> is like <a href="extsnd.html#sndfindmark">find-mark</a> but searches all currently accessible channels.
+</p><p><b>describe-mark</b> returns a description of the movements of mark id over the channel's edit history:
 </p>
 <pre>
 :<em class=typing>(describe-mark 0)</em>
@@ -1633,16 +1641,16 @@ The function that actually passes the url to the reader is <a href="extsnd.html#
 </pre>
 <p>Here I placed a mark in oboe.snd at sample 654, then deleted a few samples
 before it, causing it to move to sample 478.
-<i>pad-marks</i> inserts <i>secs</i> seconds of silence before each in a list of marks (<i>ids</i>).
-<i>fit-selection-between-marks</i> tries to squeeze the current selection between two marks,
+</p><p><b>pad-marks</b> inserts <i>secs</i> seconds of silence before each in a list of marks (<i>ids</i>).
+</p><p><b>fit-selection-between-marks</b> tries to squeeze the current selection between two marks,
 using the granulate generator to fix up the selection duration (this still is not perfect).
-<i>syncup</i> synchronizes a list of marks by inserting silences as needed.
-<i>move-syncd-marks</i> moves any marks sharing the sync value <i>sync</i> by
-<i>samples-to-move</i> samples.  Similarly, <i>play-syncd-marks</i> starts
+</p><p><b>syncup</b> synchronizes a list of marks by inserting silences as needed.
+</p><p><b>move-syncd-marks</b> moves any marks sharing the sync value <i>sync</i> by
+<i>samples-to-move</i> samples.  Similarly, <b>play-syncd-marks</b> starts
 playing from all marks sharing its <i>sync</i> argument.
 </p>
 <p>marks.scm also has code that tries to make it simpler to sync marks together
-(see <i>start-sync</i> and <i>stop-sync</i>), and <i>report-mark-names</i>
+(see <b>start-sync</b> and <b>stop-sync</b>), and <b>report-mark-names</b>
 that causes any named mark to display its name in the minibuffer when 
 the underlying sample happens to be played.  There are also many mark-related
 functions in examp.scm and scattered around the documentation.
@@ -1655,11 +1663,13 @@ between the leftmost marks in <i>snd</i>.
 	  (lambda ()
 	    (prompt-in-minibuffer "mark eval:" eval-between-marks)))
 </pre>
-<p><i>snap-marks</i> places marks at the start and end of the current selection.
-<i>define-selection-via-marks</i> selects the portion between the given marks.
-<i>snap-mark-to-beat</i> forces a dragged mark to end up on a beat.
-<i>mark-explode</i> splits a sound into a bunch of separate files based on mark placements.
-<i>mark-property</i> associates a property list with each mark.
+<p><b>snap-marks</b> places marks at the start and end of the current selection.
+</p><p><b>define-selection-via-marks</b> selects the portion between the given marks.
+</p><p><b>snap-mark-to-beat</b> forces a dragged mark to end up on a beat.
+</p><p><b>mark-explode</b> splits a sound into a bunch of separate files based on mark placements.
+</p><p><b>mark-property</b> associates a property list with each mark.
+</p><p><b>mark-click-info</b> is a mark-click-hook function that describes a mark and its properties.  It
+is used by with-marked-sound in ws.scm.
 </p>
 
 

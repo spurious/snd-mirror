@@ -360,29 +360,6 @@
 (load "marks.scm")
 (define *note-hook* (make-hook 2)) ; args = beg[sample] comment[anything]
 
-(if (hook-empty? mark-click-hook)
-    ;; set up mark-click-hook to display the comment if clicked
-    (add-hook! mark-click-hook
-	       (lambda (n) 
-		 (help-dialog "Mark Help"
-			      (format #f "Mark ~D~A:~%  sample: ~D = ~,3F secs~A~A"
-				      n 
-				      (let ((name (mark-name n)))
-					(if (> (string-length name) 0)
-					     (format #f " (~S)" name)
-					     ""))
-				      (mark-sample n)
-				      (/ (mark-sample n) (srate (car (mark-home n))))
-				      (if (not (= (mark-sync n) 0))
-					  (format #f "~%  sync: ~A" (mark-sync n))
-					  "")
-				      (let ((props (mark-properties n)))
-					(if (and (list? props)
-						 (not (null? props)))
-					    (format #f "~%  properties: '~A" props)
-					    ""))))
-		 #t)))
-
 (defmacro with-marked-sound (args . body)
   ;; a wrapper around with-sound to set up the marks
   `(let ((*ws-prog* '())
@@ -396,6 +373,8 @@
      (add-hook! *note-hook*                          ; current hook saves mark data in *ws-prog*
 		(lambda (beg comment)
 		  (set! *ws-prog* (cons (list beg comment) *ws-prog*))))
+     (reset-hook! mark-click-hook)
+     (add-hook! mark-click-hook mark-click-info)
      (let* ((name (with-sound-helper (lambda () ,@body) ,@args)) ; with-sound itself
 	    (snd (find-sound name)))
        (reset-hook! *note-hook*)

@@ -33,10 +33,9 @@
 ;;; TODO: mouse-drag in time/fft graph hook?
 ;;; TODO: find/"fix" clipping
 ;;; TODO: pan env field in mix dialog if stereo in/out
-;;; TODO: doc ex of mix-amp-changed-hook, select-*-hook [click=>post info in box]
 ;;; TODO: xemacs style top list of sounds, current takes whole screen [make-top-row snd-motif.scm, files-popup-buffer in examp.scm]
 ;;; TOOD: extend the mix-as-list syntax to list-of-ids (tracks) (are these all rationalized now?)
-;;; TODO: effects crossref + tests + clm translations, interface crossref
+;;; TODO: effects crossref + tests + clm translations[grani?], interface crossref
 
 ;;; how to send ourselves a drop?  (button2 on menu is only the first half -- how to force 2nd?)
 
@@ -27866,6 +27865,7 @@ EDITS: 2
 	(clarinet 5.75 .3 440 .2 1.0)
 	(flute 6 .3 440 .2 1.0)
 	(fm-trumpet 6.5 .25)
+	(pins 7.0 1.0 "now.snd" 1.0 :time-scaler 2.0)
 
 	(let ((locust '(0 0 40 1 95 1 100 .5))
 	      (bug_hi '(0 1 25 .7 75 .78 100 1))
@@ -27898,6 +27898,7 @@ EDITS: 2
 		'(0 0 25 1 75 1 100 0) .75 1.0 0 0 0 0 1 0 0 220 
 		'(0 0 25 1 75 1 100 0) 0 0 0 0 
 		'(0 0 100 0) 0 0 0 0 '(0 0 100 0))
+	(scratch 15.0 "now.snd" 1.5 '(0.0 .5 .25 1.0))
 	(two-tab 15 1 440 .1)
 	(gran-synth 15.5 1 300 .0189 .03 .4)
 	(spectra 16 1 440.0 .1 '(1.0 .4 2.0 .2 3.0 .2 4.0 .1 6.0 .1) '(0.0 0.0 1.0 1.0 5.0 0.9 12.0 0.5 25.0 0.25 100.0 0.0))

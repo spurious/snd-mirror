@@ -71,6 +71,40 @@
 		     "gtk_quit_remove" "gtk_quit_remove_by_data" 
 		     "gtk_input_remove" "gtk_key_snooper_remove"))
 
+(define no-c-to-xen (list
+		     "GClosureNotify" "GSignalAccumulator" "GSignalCMarshaller" "GSignalQuery*" "GQuark*" "GSignalEmissionHook" "GDestroyNotify" 
+		     "GdkDragProtocol*" "GdkSegment*" "GdkModifierType*" "GdkGCValues*" "gint8*" "GdkWChar*" "GdkBitmap**" "gchar***" 
+		     "GdkWindowAttr*" "GdkWMDecoration*" "GdkGeometry*" "GdkPixbufDestroyNotify" "guint8*" "GdkInterpType" "GTimeVal*" 
+		     "gsize" "GtkAccelLabel*" "GtkAccelMapForeach" "GtkAccessible*" "GtkAlignment*" "GtkArrow*" "GtkAspectFrame*" "GtkButtonBox*" 
+		     "GtkBin*" "GtkBox*" "GtkPackType*" "GtkButton*" "GtkCalendar*" "GtkCellRendererText*" "GtkCellRendererToggle*" "GtkCheckMenuItem*" 
+		     "GtkTargetEntry*" "GtkColorSelection*" "GtkCombo*" "GtkItem*" "GtkContainer*" "GtkCurve*" "gfloat*" "GtkDialog*" "GtkEditable*" 
+		     "GtkEntry*" "GtkFileSelection*" "GtkFixed*" "GtkFontSelection*" "GtkFontSelectionDialog*" "GtkFrame*" "GtkHandleBox*" 
+		     "GtkImage*" "GtkImageMenuItem*" "GtkIMContextSimple*" "guint16*" "GtkIMMulticontext*" "GtkMenuShell*" "GtkItemFactoryEntry*" 
+		     "GtkLabel*" "GtkLayout*" "GtkMenuDetachFunc" "GtkMenuItem*" "GtkMisc*" "GtkNotebook*" "GtkOptionMenu*" "GtkPaned*" 
+		     "GtkPlug*" "GtkProgressBar*" "GtkRadioButton*" "GtkRadioMenuItem*" "GtkRange*" "GtkStateType*" "GtkPathPriorityType*" 
+		     "GtkRuler*" "GtkScale*" "GtkScrolledWindow*" "GdkEventSelection*" "GParamSpec*" "GtkRcPropertyParser" "GString*" 
+		     "GtkSettingsValue*" "GtkSocket*" "GtkSpinButton*" "GtkStatusbar*" "GtkTable*" "GtkTextCharPredicate" "GtkTextTagTableForeach" 
+		     "GtkTextView*" "GtkToggleButton*" "GtkToolbar*" "GtkTreeDragSource*" "GtkTreeDragDest*" "GtkTreeModelSort*" "GtkTreeModel**" 
+		     "GtkTreeSortable*" "GtkSortType*" "GtkViewport*" "GtkAllocation*" "PangoRectangle*" "PangoAttrList**" "gunichar*" "PangoAnalysis*" 
+		     "PangoFontDescription**" "PangoFontMap*" "GdkEventExpose*" "GdkEventNoExpose*" "GdkEventVisibility*" "GdkEventMotion*" 
+		     "GdkEventButton*" "GdkEventScroll*" "GdkEventCrossing*" "GdkEventFocus*" "GdkEventConfigure*" "GdkEventProperty*" "GdkEventProximity*" 
+		     "GdkEventSetting*" "GdkEventWindowState*" "GdkEventDND*" "GtkCellRendererPixbuf*" "GtkColorSelectionDialog*" "GtkDrawingArea*" 
+		     "GtkGammaCurve*" "GtkInputDialog*" "GtkInvisible*" "GtkMessageDialog*" "GdkScreen**" "GSignalAccumulator" "GSignalCMarshaller" 
+		     "GSignalEmissionHook" "GDestroyNotify" "GdkPixbufDestroyNotify" "GdkInterpType" "gsize" "GtkAccelMapForeach" "GtkMenuDetachFunc" 
+		     "GtkRcPropertyParser" "GtkTextCharPredicate" "GtkTextTagTableForeach"))
+
+(define no-xen-p (list "GdkXEvent*" "GdkVisualType*" "GError*" "GSignalInvocationHint*" "GtkAccelGroupEntry*" "GtkIconSize*" "AtkObject*"
+		       "GtkWidgetAuxInfo*" "PangoFontFamily**" "PangoFontset*" "PangoEngineShape*" "PangoLayoutRun*" "GdkDeviceAxis*"
+		       "GdkDeviceKey*" "GtkWidget**" "GtkLabelSelectionInfo*" "GtkItemFactoryCallback" "GtkNotebookPage*" "GtkRangeLayout*"
+		       "GData*" "GtkRangeStepTimer*" "GtkRcContext*" "GdkGC**" "GdkPixmap**" "GArray*" "GtkTextBTree*" "GtkTextLogAttrCache*"
+		       "GtkTableRowCol*"))
+
+(define no-xen-to-c (list "GdkXEvent*" "GSignalInvocationHint*" "GdkVisualType*" "GError*" "GtkAccelGroupEntry*" "GtkIconSize*" "AtkObject*" 
+			  "GtkWidgetAuxInfo*" "PangoFontFamily**" "PangoFontset*" "PangoEngineShape*" "PangoLayoutRun*" "GdkDeviceAxis*" 
+			  "GdkDeviceKey*" "GtkWidget**" "GtkItemFactoryCallback" "GtkLabelSelectionInfo*" "GtkNotebookPage*" "GtkRangeLayout*" 
+			  "GtkRangeStepTimer*" "GData*" "GtkRcContext*" "GdkGC**" "GdkPixmap**" "GArray*" "GtkTableRowCol*" "GtkTextBTree*" 
+			  "GtkTextLogAttrCache*"))
+
 (define (cadr-str data)
   (let ((sp1 -1)
 	(len (string-length data)))
@@ -593,7 +627,18 @@
 		   (if (or (has-stars type) 
 			   (string=? type "gpointer")
 			   (string=? type "GClosureNotify"))
-		       "_PTR" "")
+		       (if (member type no-c-to-xen)
+			   "_PTR_1"
+			   (if (member type no-xen-p)
+			       (if (member type no-xen-to-c)
+				   "_PTR_2"
+				   "_PTR_NO_P")
+			       "_PTR"))
+		       (if (member type no-c-to-xen)
+			   "_1"
+			   (if (member type no-xen-p)
+			       "_NO_P"
+			       "")))
 		   (no-stars type) 
 		   type))))))
 
@@ -949,7 +994,7 @@
 (hey " * ~A: test suite (snd-test 24)~%" (string-append "T" "ODO"))
 (hey " *~%")
 (hey " * HISTORY:~%")
-(hey " *     26-May:    removed nugatory GdkInputFunction stuff.~%")
+(hey " *     26-May:    removed nugatory GdkInputFunction stuff and some unused type converters.~%")
 (hey " *     7-Apr:     GTK_RC_STYLE has two incompatible definitions in gtk! (gtkwidget.h, gtkrc.h) -- will use int case.~%")
 (hey " *     1-Apr:     gdk_property_get uses scm_mem2string in some cases now.~%")
 (hey " *     31-Mar:    gchar* -> xen string bugfix (thanks to Friedrich Delgado Friedrichs).~%")
@@ -1054,10 +1099,29 @@
 (hey "  static XType XEN_TO_C_ ## Name (XEN val) {return((XType)XEN_TO_C_ULONG(XEN_CADR(val)));} \\~%")
 (hey "  static int XEN_ ## Name ## _P(XEN val) {return(WRAP_P(#Name, val));}~%")
 (hey "~%")
+(hey "#define XM_TYPE_1(Name, XType) \\~%")
+(hey "  static XType XEN_TO_C_ ## Name (XEN val) {return((XType)XEN_TO_C_ULONG(XEN_CADR(val)));} \\~%")
+(hey "  static int XEN_ ## Name ## _P(XEN val) {return(WRAP_P(#Name, val));}~%")
+(hey "~%")
+(hey "#define XM_TYPE_NO_P(Name, XType) \\~%")
+(hey "  static XEN C_TO_XEN_ ## Name (XType val) {return(WRAP_FOR_XEN(#Name, val));} \\~%")
+(hey "  static XType XEN_TO_C_ ## Name (XEN val) {return((XType)XEN_TO_C_ULONG(XEN_CADR(val)));} \\~%")
+(hey "~%")
 (hey "#define XM_TYPE_PTR(Name, XType) \\~%")
 (hey "  static XEN C_TO_XEN_ ## Name (XType val) {if (val) return(WRAP_FOR_XEN(#Name, val)); return(XEN_FALSE);} \\~%")
 (hey "  static XType XEN_TO_C_ ## Name (XEN val) {if (XEN_FALSE_P(val)) return(NULL); return((XType)XEN_TO_C_ULONG(XEN_CADR(val)));} \\~%")
 (hey "  static int XEN_ ## Name ## _P(XEN val) {return(XEN_FALSE_P(val) || (WRAP_P(#Name, val)));} /* if NULL ok, should be explicit? */~%")
+(hey "~%")
+(hey "#define XM_TYPE_PTR_NO_P(Name, XType) \\~%")
+(hey "  static XEN C_TO_XEN_ ## Name (XType val) {if (val) return(WRAP_FOR_XEN(#Name, val)); return(XEN_FALSE);} \\~%")
+(hey "  static XType XEN_TO_C_ ## Name (XEN val) {if (XEN_FALSE_P(val)) return(NULL); return((XType)XEN_TO_C_ULONG(XEN_CADR(val)));} \\~%")
+(hey "~%")
+(hey "#define XM_TYPE_PTR_1(Name, XType) \\~%")
+(hey "  static XType XEN_TO_C_ ## Name (XEN val) {if (XEN_FALSE_P(val)) return(NULL); return((XType)XEN_TO_C_ULONG(XEN_CADR(val)));} \\~%")
+(hey "  static int XEN_ ## Name ## _P(XEN val) {return(XEN_FALSE_P(val) || (WRAP_P(#Name, val)));} /* if NULL ok, should be explicit? */~%")
+(hey "~%")
+(hey "#define XM_TYPE_PTR_2(Name, XType) \\~%")
+(hey "  static XEN C_TO_XEN_ ## Name (XType val) {if (val) return(WRAP_FOR_XEN(#Name, val)); return(XEN_FALSE);} \\~%")
 (hey "~%")
 (hey "/* type checks for callback wrappers */~%")
 

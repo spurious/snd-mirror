@@ -18,6 +18,7 @@
 ;;;     snap-mark-to-beat forces dragged mark to end up on a beat
 ;;;     mark-explode splits a sound into a bunch of sounds based on mark placements
 ;;;     mark-property implements property lists for marks
+;;;     mark-click-info is a mark-click-hook function that describes a mark and its properties
 
 
 ;;; -------- mark-name->id is a global version of find-mark
@@ -380,4 +381,25 @@
 						       (not (mark? (car val))))
 						     all-mark-properties)))
 	     #f))
+
+(define (mark-click-info n)
+  "(mark-click-info n) is a mark-click-hook function that describes a mark and its properties"
+  (help-dialog "Mark Help"
+	       (format #f "Mark ~D~A:~%  sample: ~D = ~,3F secs~A~A"
+		       n 
+		       (let ((name (mark-name n)))
+			 (if (> (string-length name) 0)
+			     (format #f " (~S)" name)
+			     ""))
+		       (mark-sample n)
+		       (/ (mark-sample n) (srate (car (mark-home n))))
+		       (if (not (= (mark-sync n) 0))
+			   (format #f "~%  sync: ~A" (mark-sync n))
+			   "")
+		       (let ((props (mark-properties n)))
+			 (if (and (list? props)
+				  (not (null? props)))
+			     (format #f "~%  properties: '~A" props)
+			     ""))))
+  #t)
 
