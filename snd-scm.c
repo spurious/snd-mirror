@@ -26,12 +26,23 @@ SCM snd_set_object_property(SCM obj, SCM key, SCM val)
 static SCM gc_protection;
 static int gc_protection_size = 0;
 #define DEFAULT_GC_VALUE INTEGER_ZERO
+static int gc_last_cleared = -1;
+static int gc_last_set = -1;
+
+#if DEBUGGING
+static int gc_hits = 0, gc_sets = 0, gc_clears = 0, gc_max = 0;
+void report_gc_stats(int *vals);
+void report_gc_stats(int *vals) {vals[0] = gc_sets; vals[1] = gc_clears; vals[2] = gc_hits; vals[3] = gc_max;}
+#endif
 
 void snd_protect(SCM obj)
 {
   int i, old_size;
   SCM tmp, num;
   SCM *gcdata;
+#if DEBUGGING
+  gc_sets++;
+#endif
   if (gc_protection_size == 0)
     {
       gc_protection_size = 128;
@@ -39,14 +50,30 @@ void snd_protect(SCM obj)
       gc_protection = MAKE_VECTOR(gc_protection_size, DEFAULT_GC_VALUE);
       scm_permanent_object(gc_protection);
       scm_vector_set_x(gc_protection, TO_SMALL_SCM_INT(0), obj);
+      gc_last_set = 0;
     }
   else
     {
       gcdata = SCM_VELTS(gc_protection);
+      if ((gc_last_cleared >= 0) && 
+	  SCM_EQ_P(gcdata[gc_last_cleared], DEFAULT_GC_VALUE))
+	{
+#if DEBUGGING
+	  gc_hits++;
+#endif
+	  scm_vector_set_x(gc_protection, TO_SCM_INT(gc_last_cleared), obj);
+	  gc_last_set = gc_last_cleared;
+	  gc_last_cleared = -1;
+	  return;
+	}
       for (i = 0; i < gc_protection_size; i++)
 	if (SCM_EQ_P(gcdata[i], DEFAULT_GC_VALUE))
 	  {
 	    scm_vector_set_x(gc_protection, TO_SCM_INT(i), obj);
+	    gc_last_set = i;
+#if DEBUGGING
+	    if (i > gc_max) gc_max = i;
+#endif
 	    return;
 	  }
       tmp = gc_protection;
@@ -61,6 +88,10 @@ void snd_protect(SCM obj)
 	  scm_vector_set_x(tmp, num, DEFAULT_GC_VALUE);
 	}
       scm_vector_set_x(gc_protection, TO_SCM_INT(old_size), obj);
+      gc_last_set = old_size;
+#if DEBUGGING
+      gc_max = old_size;
+#endif
     }
 }
 
@@ -68,11 +99,25 @@ void snd_unprotect(SCM obj)
 {
   int i;
   SCM *gcdata;
+#if DEBUGGING
+  gc_clears++;
+#endif
   gcdata = SCM_VELTS(gc_protection);
+  if ((gc_last_set >= 0) && 
+      (SCM_EQ_P(gcdata[gc_last_set], obj)))
+    {
+#if DEBUGGING
+      gc_hits++;
+#endif
+      scm_vector_set_x(gc_protection, TO_SCM_INT(gc_last_set), DEFAULT_GC_VALUE);
+      gc_last_cleared = gc_last_set;
+      gc_last_set = -1;
+    }
   for (i = 0; i < gc_protection_size; i++)
     if (SCM_EQ_P(gcdata[i], obj))
       {
 	scm_vector_set_x(gc_protection, TO_SCM_INT(i), DEFAULT_GC_VALUE);
+	gc_last_cleared = i;
 	return;
       }
 }
@@ -292,7 +337,7 @@ char *procedure_ok(SCM proc, int req_args, int opt_args, const char *caller, con
 {
   /* if string returned, needs to be freed */
   SCM arity_list;
-  int args;
+  int rargs, oargs;
 #if TIMING
   return(NULL);
 #endif
@@ -304,26 +349,21 @@ char *procedure_ok(SCM proc, int req_args, int opt_args, const char *caller, con
   else
     {
       arity_list = ARITY(proc);
-      snd_protect(arity_list);
-      args = TO_SMALL_C_INT(SCM_CAR(arity_list));
-      if (args != req_args)
+      rargs = TO_SMALL_C_INT(SCM_CAR(arity_list));
+      oargs = TO_SMALL_C_INT(SCM_CADR(arity_list));
+      if (rargs != req_args)
 	return(mus_format("%s, arg %d to %s, should take %d required argument%s, but instead takes %d",
 			  arg_name, argn, caller,
 			  req_args, 
 			  (req_args != 1) ? "s" : "", 
-			  args));
+			  rargs));
       else
-	{
-	  args = TO_SMALL_C_INT(SCM_CADR(arity_list));
-	  if (args != opt_args)
-	    return(mus_format("%s, arg %d to %s, should take %d optional argument%s, but instead takes %d",
-			      arg_name, argn, caller,
-			      opt_args, 
-			      (opt_args != 1) ? "s" : "", 
-			      args));
-	  /* ignore &rest */
-	}
-      snd_unprotect(arity_list);
+	if (oargs != opt_args)
+	  return(mus_format("%s, arg %d to %s, should take %d optional argument%s, but instead takes %d",
+			    arg_name, argn, caller,
+			    opt_args, 
+			    (opt_args != 1) ? "s" : "", 
+			    oargs));
     }
   return(NULL);
 }
@@ -1828,7 +1868,10 @@ subsequent " S_close_sound_file ". data can be written with " S_vct_sound_file
   result = open_temp_file(name, chans, hdr, state);
   mus_error_set_handler(old_mus_error);
   if (result == -1) 
-    snd_no_such_file_error(S_open_sound_file, g_name);
+    {
+      free_file_info(hdr);
+      snd_no_such_file_error(S_open_sound_file, g_name);
+    }
   set_temp_fd(result, hdr);
   return(TO_SCM_INT(result));
 }
@@ -1852,6 +1895,7 @@ static SCM g_close_sound_file(SCM g_fd, SCM g_bytes)
     }
   result = close_temp_file(fd, hdr, bytes, any_selected_sound(state));
   unset_temp_fd(fd);
+  free_file_info(hdr);
   return(TO_SCM_INT(result));
 }
 
@@ -1875,7 +1919,7 @@ reading edit version edit-position (defaulting to the current version)"
   len = TO_C_INT_OR_ELSE(samps, cp->samples[edpos] - beg);
   if (v1)
     fvals = v1->data;
-  else fvals = (Float *)CALLOC(len, sizeof(Float));
+  else fvals = (Float *)MALLOC(len * sizeof(Float));
   sf = init_sample_read_any(beg, cp, READ_FORWARD, edpos);
   if (sf)
     {
@@ -1967,7 +2011,7 @@ static SCM vct2soundfile(SCM g_fd, SCM obj, SCM g_nums)
   else
     {
       /* v->data has doubles, but we're assuming elsewhere that these are floats in the file */
-      vals = (float *)CALLOC(nums, sizeof(float));
+      vals = (float *)MALLOC(nums * sizeof(float));
       for (i = 0; i < nums; i++)
 	vals[i] = (float)(v->data[i]);
       write(fd, (char *)vals, nums * 4);

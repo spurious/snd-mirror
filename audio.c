@@ -1,4 +1,4 @@
-/* Audio hardware handlers (SGI, OSS, ALSA, Sun, NeXT, Mac, Windows, Be, HPUX, Mac OS-X, ESD) */
+/* Audio hardware handlers (SGI, OSS, ALSA, Sun, NeXT, Mac, Windows, HPUX, Mac OS-X, ESD) */
 
 /* TODO  windoze input, read/write state
  * TODO  sgi adat in hangs
@@ -56,13 +56,8 @@
 #if (!defined(HAVE_CONFIG_H)) || (defined(HAVE_FCNTL_H))
   #include <fcntl.h>
 #endif
-#include <signal.h>
-#if (!defined(HAVE_CONFIG_H)) || (defined(HAVE_LIMITS_H))
-  #include <limits.h>
-#endif
 #include <errno.h>
 #include <stdlib.h>
-
 #if (defined(NEXT) || (defined(HAVE_LIBC_H) && (!defined(HAVE_UNISTD_H))))
   #include <libc.h>
 #else
@@ -7800,133 +7795,6 @@ void mus_audio_restore(void)
 {
   SetDefaultOutputVolume(out_vol);
   SetSysBeepVolume(beep_vol);
-}
-
-int mus_audio_initialize(void) 
-{
-  return(MUS_NO_ERROR);
-}
-
-#endif
-
-
-/* ------------------------------- BEOS ----------------------------------------- */
-
-/* rewritten 10-Apr-00 to reflect release 5 */
-/* now completely broken, and not much chance I'll ever fix it */
-
-#ifdef BEOS
-#define AUDIO_OK
-
-#if 0
-#include <be/media/SoundPlayer.h>
-#endif
-
-int mus_audio_systems(void) {return(1);}
-char *mus_audio_system_name(int system) {return("Be");}
-char *mus_audio_moniker(void) {return("Be audio");}
-
-static void describe_audio_state_1(void) 
-{
-}
-  
-#define DATA_EMPTY 0
-#define DATA_READY 1
-#define DATA_WRITTEN 2
-static int data_status;
-static int data_bytes;
-static float *data = NULL;
-
-#define SOUND_UNREADY 0
-#define SOUND_INITIALIZED 1
-#define SOUND_RUNNING 2
-static int sound_state = SOUND_UNREADY;
-#if 0
-static BSoundPlayer player;
-
-static void write_callback(void *ignored, void *buffer, size_t size, const media_raw_audio_format &format)
-{
-  int i, lim;
-  float *buf = (float *)buffer;
-  if (data_status != DATA_EMPTY)
-    {
-      if (data_bytes > size) lim = size / 4; else lim = data_bytes / 4;
-      for (i = 0; i < lim; i++) buf[i] += data[i];
-      data_status = DATA_WRITTEN;
-    }
-}
-#endif
-
-int mus_audio_open_output(int ur_dev, int srate, int chans, int format, int size) 
-{
-#if 0
-  BSoundPlayer pl("hiho", write_callback, NULL, NULL);
-  player = pl;
-  pl.Start();
-  pl.SetHasData(true);
-  data_status = DATA_EMPTY;
-  sound_state = SOUND_INITIALIZED;
-#endif
-  return(MUS_ERROR);
-}
-
-int mus_audio_open_input(int ur_dev, int srate, int chans, int format, int size) 
-{
-  return(MUS_ERROR);
-}
-
-int mus_audio_write(int line, char *buf, int bytes) 
-{
-#if 0
-  size_t size;
-  if (line != 1) {MUS_STANDARD_ERROR(MUS_AUDIO_CANT_WRITE, NULL); return(MUS_ERROR);}
-  if (sound_state == SOUND_UNREADY) {MUS_STANDARD_ERROR(MUS_AUDIO_CANT_WRITE, NULL); return(MUS_ERROR);}
-  if (sound_state == SOUND_INITIALIZED) sound_state = SOUND_RUNNING;
-  data_status = DATA_READY;
-  data_bytes = bytes;
-  data = (float *)buf;
-  while (data_status == DATA_READY)
-    {
-      
-    }
-#endif
-  return(MUS_ERROR);
-
-}
-
-int mus_audio_close(int line) 
-{
-#if 0
-  if (line == 1)
-    {
-      player.Stop();
-      sound_state = SOUND_UNREADY;
-    }
-#endif
-  return(MUS_ERROR);
-}
-
-int mus_audio_read(int line, char *buf, int bytes) 
-{
-  return(MUS_ERROR);
-}
-
-int mus_audio_mixer_read(int ur_dev, int field, int chan, float *val) 
-{
-  return(MUS_ERROR);
-}
-
-int mus_audio_mixer_write(int ur_dev, int field, int chan, float *val) 
-{
-  return(MUS_ERROR);
-}
-
-void mus_audio_save(void) 
-{
-}
-
-void mus_audio_restore(void) 
-{
 }
 
 int mus_audio_initialize(void) 

@@ -49,7 +49,7 @@
 
 <p>The sound library is a collection of sound file and audio hardware
 handlers written in C and running currently on SGI (either
-audio library), NeXT, Sun, Be, OSS or ALSA (Linux and others), Mac, Mac OS-X, HPUX, LinuxPPC, and Windoze systems.  
+audio library), NeXT, Sun, OSS or ALSA (Linux and others), Mac, Mac OS-X, HPUX, LinuxPPC, and Windoze systems.  
 It provides relatively straightforward access to many sound file headers and data
 types, and most of the features of the audio hardware. </p>
 
@@ -891,8 +891,6 @@ ld -r audio.o io.o headers.o sound.o -o sndlib.a
 cc sndplay.c -o sndplay -O -DNEXT sndlib.a
 </pre>
 <p>Some similar sequence should work on a Sun (-DSOLARIS) or in HP-UX (-DHPUX).
-In the BeOS (Intel), rename audio.c to audio.cc, then use make (for some
-reason Be's version of g++ gets a segfault if the name is audio.c).
 In Windoze, you can use the C IDE (a project builder),
 or run the compiler from a DOS shell.  In the latter case,
 (in Watcom C) cl io.c -c -DWINDOZE to create the object files (io.obj and so on), then</p>
@@ -934,7 +932,6 @@ ld -shared io.o headers.o audio.o sound.o clm.o -o sndlib.so
   <tr><td>NeXT Intel<td align=middle>ok<td align=middle>ok<td align=middle>ok<td align=middle>interruptions<td align=middle>runs (*)<td align=middle>ok
   <tr><td>SGI old and new AL<td align=middle>ok<td align=middle>ok<td align=middle>ok<td align=middle>ok<td align=middle>ok<td align=middle>ok
   <tr><td>OSS (Linux et al)<td align=middle>ok<td align=middle>ok<td align=middle>ok<td align=middle>ok<td align=middle>ok<td align=middle>ok
-  <tr><td>Be<td align=middle>ok<td align=middle>ok<td align=middle>not written<td align=middle>not written<td align=middle>not written<td align=middle>ok
   <tr><td>Mac<td align=middle>ok<td align=middle>ok<td align=middle>ok<td align=middle>ok<td align=middle>ok<td align=middle>ok
   <tr><td>Windoze<td align=middle>ok<td align=middle>ok<td align=middle>ok<td align=middle>ok<td align=middle>not written<td align=middle>ok
   <tr><td>Sun<td align=middle>ok<td align=middle>ok<td align=middle>ok<td align=middle>ok<td align=middle>interruptions<td align=middle>ok

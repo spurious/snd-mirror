@@ -68,9 +68,7 @@
   #if defined(LINUX) || defined(__bsdi__)
     #define HAVE_ISNAN 1
   #endif
-  #ifndef BEOS
-    #define HAVE_X 1
-  #endif
+  #define HAVE_X 1
   #if (!HAVE_GUILE_1_3)
     #define HAVE_SCM_MAKE_REAL 1
   #endif

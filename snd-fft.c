@@ -150,7 +150,7 @@ static void hankel_transform(int size, Float *input, Float *output)
     gsl_dht_transform_apply(t, (double *)input, (double *)output); /* the casts exist only to squelch dumb compiler complaints */
   else
     {
-      in1 = (double *)CALLOC(size, sizeof(double));
+      in1 = (double *)MALLOC(size * sizeof(double));
       out1 = (double *)CALLOC(size, sizeof(double));
       for (i = 0; i < size; i++) in1[i] = (double)input[i];
       gsl_dht_transform_apply(t, in1, out1);
@@ -202,14 +202,14 @@ static void make_abel_transformer(int n)
 	  FREE(atdat->b1);
 	}
       else atdat = (abelt *)CALLOC(1, sizeof(abelt));
-      a = (Float **)CALLOC(n, sizeof(Float *));
-      b0 = (Float **)CALLOC(n, sizeof(Float *));
-      b1 = (Float **)CALLOC(n, sizeof(Float *));
+      a = (Float **)MALLOC(n * sizeof(Float *));
+      b0 = (Float **)MALLOC(n * sizeof(Float *));
+      b1 = (Float **)MALLOC(n * sizeof(Float *));
       for (i = 0; i < n; i++) 
 	{
-	  a[i] = (Float *)CALLOC(nse, sizeof(Float));
-	  b0[i] = (Float *)CALLOC(nse, sizeof(Float));
-	  b1[i] = (Float *)CALLOC(nse, sizeof(Float));
+	  a[i] = (Float *)MALLOC(nse * sizeof(Float));
+	  b0[i] = (Float *)MALLOC(nse * sizeof(Float));
+	  b1[i] = (Float *)MALLOC(nse * sizeof(Float));
 	}
       for (i = 1; i < n; ++i) 
 	{
@@ -487,11 +487,11 @@ static void walsh_transform(Float *data, int n)
 {
   int i, j, k, m, m2, i1, i2, ipow, n2;
   Float f1, f2;
-  n2 = n>>1;
+  n2 = n >> 1;
   ipow = (int)(log(n) / log(2));
-  for (i = 1, j = 0; i < n-1; i++)
+  for (i = 1, j = 0; i < n - 1; i++)
     {
-      for (k = n2; (!((j^=k)&k)); k>>= 1);
+      for (k = n2; (!((j ^= k) & k)); k >>= 1);
       if (j > i) {f1 = data[i]; data[i] = data[j]; data[j] = f1;}
     }
   for (i = 1; i <= ipow; i++) /* for (i = ipow; i > 0; i--) */
@@ -500,7 +500,7 @@ static void walsh_transform(Float *data, int n)
       m2 = m >> 1;
       for (j = 0; j < m2; j++)
 	{
-	  for (k = 0; k < n; k+=m)
+	  for (k = 0; k < n; k += m)
 	    {
 	      i1 = k + j;
 	      i2 = i1 + m2;
@@ -528,6 +528,7 @@ static void walsh_transform(Float *data, int n)
 
 static void autocorrelation(Float *data, int n)
 {
+  /* TODO: surely this can be handled by the fht in some cases? */
   Float *rl, *im;
   Float fscl;
   int i;
@@ -542,7 +543,7 @@ static void autocorrelation(Float *data, int n)
       im[i] = 0.0;
     }
   mus_fft(rl, im, n, -1);
-  for (i = 0; i <= n/2; i++) data[i] = fscl * rl[i];
+  for (i = 0; i <= n / 2; i++) data[i] = fscl * rl[i];
   FREE(rl);
   FREE(im);
 }
@@ -747,14 +748,14 @@ int find_and_sort_fft_peaks(Float *buf, fft_peak *found, int num_peaks, int ffts
   minval = 0.0; /* (Float)fftsize2/100000.0; */
   ascl = 0.0;
   pkj = 0;
-  for (i = 0; i < fftsize2-hop; i+=hop)
+  for (i = 0; i < fftsize2 - hop; i += hop)
     {
       la = ca;
       ca = ra;
       oldpkj = pkj;
       ra = 0.0;
       for (k = 0; k < hop; k++) 
-	if (buf[i+k] > ra) 
+	if (buf[i + k] > ra) 
 	  {
 	    pkj = i + k; 
 	    ra = buf[pkj]; /* reflect user's view of the graph */
@@ -795,8 +796,8 @@ int find_and_sort_fft_peaks(Float *buf, fft_peak *found, int num_peaks, int ffts
     {
       j = inds[i];
       ca = buf[j] * ascl;
-      if (j > 0) la = buf[j-1] * ascl; else la = ca;
-      ra = buf[j+1] * ascl; 
+      if (j > 0) la = buf[j - 1] * ascl; else la = ca;
+      ra = buf[j + 1] * ascl; 
       if ((la < MIN_CHECK) || (ra < MIN_CHECK))
 	{
 	  found[k].amp = bscl * ca;
@@ -834,16 +835,16 @@ static int scramble_fft_state(fft_state *fs)
   if (!data) {snd_error("no fft data!"); return(1);}
   fs->n = (fs->nn * 2);
   j = 1;
-  for (i = 1; i < fs->n; i+=2) 
+  for (i = 1; i < fs->n; i += 2) 
     {
       if (j > i) 
 	{
 	  vr = data[j];
 	  data[j] = data[i];
 	  data[i] = vr;
-	  vr = data[j+1];
-	  data[j+1] = data[i+1];
-	  data[i+1] = vr;
+	  vr = data[j + 1];
+	  data[j + 1] = data[i + 1];
+	  data[i + 1] = vr;
 	}
       m = fs->n >> 1;
       while (m >= 2 && j > m) 
@@ -887,12 +888,12 @@ static int snd_fft(fft_state *fs)
   k = 0;
 LOOP:
   j = fs->i + fs->mmax;
-  vr = fs->wr * data[j] - fs->wi * data[j+1];
-  vi = fs->wr * data[j+1] + fs->wi * data[j];
+  vr = fs->wr * data[j] - fs->wi * data[j + 1];
+  vi = fs->wr * data[j + 1] + fs->wi * data[j];
   data[j] = data[fs->i] - vr;
-  data[j+1] = data[fs->i+1] - vi;
+  data[j + 1] = data[fs->i + 1] - vi;
   data[fs->i] += vr;
-  data[fs->i+1] += vi;
+  data[fs->i + 1] += vi;
   k++;
   fs->i += fs->istep;
   if (fs->i > fs->n)
@@ -926,7 +927,7 @@ static int snd_fft_cleanup(fft_state *fs)
   fs->wr = 1.0 + fs->c;
   fs->wi = fs->s;
   n2p3 = 2 * fs->nn + 3;
-  for (i = 2; i <=(fs->nn/2); i++) 
+  for (i = 2; i <= (fs->nn / 2); i++) 
     {
       i1 = i + i - 1;
       i2 = i1 + 1;
@@ -2334,7 +2335,7 @@ returns a vct object (vct-obj if passed), with the current transform data from s
 	  len = fp->current_size;
 	  if (v1)
 	    fvals = v1->data;
-	  else fvals = (Float *)CALLOC(len, sizeof(Float));
+	  else fvals = (Float *)MALLOC(len * sizeof(Float));
 	  for (i = 0; i < len; i++) fvals[i] = fp->data[i];
 	  if (v1)
 	    return(v);

@@ -20,12 +20,10 @@
 #define SND_LOOKUP(a) scm_symbol_value0(a)
 
 #if HAVE_SCM_REMEMBER_UPTO_HERE
-  #define SND_REMEMBER(OBJ) scm_remember_upto_here_1(OBJ)
   #define SND_TAG_TYPE scm_bits_t
   #define SND_SMOB_TYPE(TAG, OBJ) SCM_SMOB_PREDICATE(TAG, OBJ)
   #define SND_SETGCMARK(X) SCM_SETGCMARK(X)
 #else
-  #define SND_REMEMBER(OBJ) scm_remember(&OBJ)
   #define SND_TAG_TYPE long
   #define SND_SMOB_TYPE(TAG, OBJ) (SCM_TYP16(OBJ) == (SCM)TAG)
   #define SND_SETGCMARK(X) SCM_SETGC8MARK(X)

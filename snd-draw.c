@@ -193,6 +193,7 @@ static SCM g_fill_polygon(SCM pts, SCM snd, SCM chn, SCM ax_id)
 #else
   gdk_draw_polygon(ax->wn, ax->gc, TRUE, pack_pts, VECTOR_LENGTH(pts) / 2);
 #endif
+  FREE(pack_pts);
   return(pts);
 }
 
@@ -476,6 +477,7 @@ static BACKGROUND_TYPE call_idler(GUI_POINTER code)
 {
   if (TRUE_P(CALL0(SND_UNWRAP((SCM)code), "idler callback")))
     return(BACKGROUND_CONTINUE);
+  snd_unprotect((SCM)code);
   return(BACKGROUND_QUIT);
 }
 
@@ -483,6 +485,7 @@ static SCM g_add_idler(SCM code)
 {
   if (!(procedure_fits(code, 0)))
     mus_misc_error(S_add_idler, "argument should be a procedure of no args", code);
+  snd_protect(code);
   return(SND_WRAP(BACKGROUND_ADD(get_global_state(), 
 				 call_idler, 
 				 (GUI_POINTER)SND_WRAP(code))));
@@ -491,6 +494,7 @@ static SCM g_add_idler(SCM code)
 static SCM g_remove_idler(SCM id)
 {
   SCM_ASSERT(SND_WRAPPED(id), id, SCM_ARG1, S_remove_idler);
+  /* TODO: need to snd_unprotect the associated code */
   BACKGROUND_REMOVE(SND_UNWRAP(id));
   return(id);
 }

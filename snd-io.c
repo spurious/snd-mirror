@@ -331,7 +331,7 @@ static int too_many_files_cleanup(snd_state *ss)
   int *closed;
   int rtn;
   rtn = -1;
-  closed = (int *)CALLOC(1, sizeof(int));
+  closed = (int *)MALLOC(sizeof(int));
   (*closed) = 0;
   map_over_chans(ss, close_temp_files, (void *)closed);
   if ((*closed) == 0) 

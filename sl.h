@@ -84,7 +84,6 @@
 #define SND_VALUE_OF(a) Qnil
 #define SND_SET_VALUE_OF(a, b) 
 #define SND_LOOKUP(a) Qnil
-#define SND_REMEMBER(OBJ)
 #define SND_TAG_TYPE int
 #define SND_SMOB_TYPE(TAG, OBJ) Qnil
 #define SMOB_TYPE_P(OBJ, TAG) Qnil

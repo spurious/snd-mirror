@@ -25,8 +25,8 @@
 
 (use-modules (ice-9 format) (ice-9 debug))
 
-(define tests 3)
-(define snd-test 20)
+(define tests 1)
+(define snd-test -1)
 (define full-test (< snd-test 0))
 
 (if (and (not (file-exists? "4.aiff"))
@@ -4268,6 +4268,7 @@
 		 (set! delay-line (make-delay (inexact->exact (* (srate snd) delay-time))))
 		 delay-line)
 	       (lambda (ptr)
+		 (set! delay-line #f)
 		 ptr)
 	       ))
 	    (play-and-wait 0 obind)
@@ -5341,6 +5342,7 @@
 		   (set! delay-line (make-delay (inexact->exact (* (srate snd) delay-time))))
 		   delay-line)
 		 (lambda (ptr)
+		   (set! delay-line #f)
 		   ptr)
 		 )
 		(set-contrast-func (lambda (a b) (* a b))))
@@ -6553,7 +6555,6 @@
     (begin
       (if (procedure? trace-hook)  (trace-hook 20))
 
-(if #f (begin
       (for-each (lambda (n)
 		  (let ((tag
 			 (catch #t
@@ -7342,8 +7343,6 @@
 	 (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color 1 0 0) #(0 1) 3/4 
 	       (sqrt -1.0) (make-delay 32) :frequency -1 0 #f #t '() 12345678901234567890))
 	(gc)
-))
-(if #t (begin
 
 	(if (> tests 1)
 	    ;; these can take awhile...
@@ -7365,11 +7364,10 @@
 				   (lambda args (car args))))
 			  procs))
 		       (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) #(0 1) (sqrt -1.0) (make-delay 32) :start -1 0)))
-		    (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) #(0 1) (sqrt -1.0) (make-delay 32) :phase -1 0))
-		   ))
+		    (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) #(0 1) (sqrt -1.0) (make-delay 32) :phase -1 0))))
 	       (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) #(0 1) (sqrt -1.0) (make-delay 32) :channels -1 0))
 	      (gc)
-(if #t (begin	      
+
 	      ;; ---------------- 4 Args
 	      (for-each 
 	       (lambda (arg1)
@@ -7390,8 +7388,7 @@
 			     procs))
 			  (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (sqrt -1.0) (make-delay 32) :wave -1 0)))
 		       (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (sqrt -1.0) (make-delay 32) :initial-contents -1 0)))
-		    (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (sqrt -1.0) (make-delay 32) :srate -1 0))
-		   (gc)))
+		    (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (sqrt -1.0) (make-delay 32) :srate -1 0))))
 	       (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (sqrt -1.0) (make-delay 32) :input -1 0))
 
 	      ;; ---------------- 5 Args
@@ -7420,8 +7417,6 @@
 	       (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (sqrt -1.0) (make-delay 32) :order -1 0 1))
 	    (gc)
 	    ))
-))
-))
       ))
 
 

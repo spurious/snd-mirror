@@ -121,7 +121,7 @@ char *prettyf(Float num, int tens)
   if (fullf == 0) 
     {
       /* will be freed later, so can't return a constant */
-      newval=(char *)CALLOC(2, sizeof(char));
+      newval=(char *)MALLOC(2 * sizeof(char));
       newval[0] = '0';
       newval[1] = '\0';
       return(newval);

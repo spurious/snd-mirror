@@ -3539,7 +3539,7 @@ either to the end of the sound or for 'samps' samples, with segments interpolati
 static SCM g_fft_1(SCM reals, SCM imag, SCM sign, int use_fft)
 {
   vct *v1 = NULL, *v2 = NULL;
-  int ipow, n, n2, i, isign = 1;
+  int ipow, n, n2, i, isign = 1, need_free = 0;
   Float *rl, *im;
   SCM *rvdata, *ivdata;
   SCM_ASSERT(((VCT_P(reals)) || (VECTOR_P(reals))), reals, SCM_ARG1, ((use_fft) ? S_fft : S_convolve_arrays));
@@ -3558,6 +3558,7 @@ static SCM g_fft_1(SCM reals, SCM imag, SCM sign, int use_fft)
     {
       rl = (Float *)CALLOC(n2, sizeof(Float));
       im = (Float *)CALLOC(n2, sizeof(Float));
+      need_free = 1;
     }
   else
     {
@@ -3628,7 +3629,7 @@ static SCM g_fft_1(SCM reals, SCM imag, SCM sign, int use_fft)
 	      v1->data[i] = rl[i];
 	}
     }
-  if ((!v1) || (n != n2))
+  if (need_free)
     {
       FREE(rl);
       FREE(im);

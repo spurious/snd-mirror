@@ -455,8 +455,8 @@ void amp_env_scale_by(chan_info *cp, Float scl)
       if (new_ep == NULL)
 	{
 	  new_ep = (env_info *)CALLOC(1, sizeof(env_info));
-	  new_ep->data_max = (MUS_SAMPLE_TYPE *)CALLOC(old_ep->amp_env_size, sizeof(MUS_SAMPLE_TYPE));
-	  new_ep->data_min = (MUS_SAMPLE_TYPE *)CALLOC(old_ep->amp_env_size, sizeof(MUS_SAMPLE_TYPE));
+	  new_ep->data_max = (MUS_SAMPLE_TYPE *)MALLOC(old_ep->amp_env_size * sizeof(MUS_SAMPLE_TYPE));
+	  new_ep->data_min = (MUS_SAMPLE_TYPE *)MALLOC(old_ep->amp_env_size * sizeof(MUS_SAMPLE_TYPE));
 	}
       new_ep->amp_env_size = old_ep->amp_env_size;
       new_ep->samps_per_bin = old_ep->samps_per_bin;
@@ -502,8 +502,8 @@ void amp_env_scale_selection_by(chan_info *cp, Float scl, int beg, int num)
       if (new_ep == NULL)
 	{
 	  new_ep = (env_info *)CALLOC(1, sizeof(env_info));
-	  new_ep->data_max = (MUS_SAMPLE_TYPE *)CALLOC(old_ep->amp_env_size, sizeof(MUS_SAMPLE_TYPE));
-	  new_ep->data_min = (MUS_SAMPLE_TYPE *)CALLOC(old_ep->amp_env_size, sizeof(MUS_SAMPLE_TYPE));
+	  new_ep->data_max = (MUS_SAMPLE_TYPE *)MALLOC(old_ep->amp_env_size * sizeof(MUS_SAMPLE_TYPE));
+	  new_ep->data_min = (MUS_SAMPLE_TYPE *)MALLOC(old_ep->amp_env_size * sizeof(MUS_SAMPLE_TYPE));
 	}
       new_ep->amp_env_size = old_ep->amp_env_size;
       new_ep->samps_per_bin = old_ep->samps_per_bin;
@@ -584,15 +584,15 @@ env_info *amp_env_copy(chan_info *cp, int reversed)
   if ((old_ep) && (old_ep->completed))
     {
       new_ep = (env_info *)CALLOC(1, sizeof(env_info));
-      new_ep->data_max = (MUS_SAMPLE_TYPE *)CALLOC(old_ep->amp_env_size, sizeof(MUS_SAMPLE_TYPE));
-      new_ep->data_min = (MUS_SAMPLE_TYPE *)CALLOC(old_ep->amp_env_size, sizeof(MUS_SAMPLE_TYPE));
+      new_ep->data_max = (MUS_SAMPLE_TYPE *)MALLOC(old_ep->amp_env_size * sizeof(MUS_SAMPLE_TYPE));
+      new_ep->data_min = (MUS_SAMPLE_TYPE *)MALLOC(old_ep->amp_env_size * sizeof(MUS_SAMPLE_TYPE));
       new_ep->amp_env_size = old_ep->amp_env_size;
       new_ep->samps_per_bin = old_ep->samps_per_bin;
       new_ep->fmin = old_ep->fmin;
       new_ep->fmax = old_ep->fmax;
       if (reversed)
 	{
-	  for (i = 0, j = new_ep->amp_env_size-1; i < new_ep->amp_env_size; i++, j--) 
+	  for (i = 0, j = new_ep->amp_env_size - 1; i < new_ep->amp_env_size; i++, j--) 
 	    {
 	      new_ep->data_min[j] = old_ep->data_min[i];
 	      new_ep->data_max[j] = old_ep->data_max[i];
@@ -2757,8 +2757,8 @@ static SCM g_read_peak_env_info_file(SCM snd, SCM chn, SCM name)
   read(fd, (char *)mbuf, (2 * sizeof(MUS_SAMPLE_TYPE)));
   ep->fmin = mbuf[0];
   ep->fmax = mbuf[1];
-  ep->data_min = (MUS_SAMPLE_TYPE *)CALLOC(ep->amp_env_size, sizeof(MUS_SAMPLE_TYPE));
-  ep->data_max = (MUS_SAMPLE_TYPE *)CALLOC(ep->amp_env_size, sizeof(MUS_SAMPLE_TYPE));
+  ep->data_min = (MUS_SAMPLE_TYPE *)MALLOC(ep->amp_env_size * sizeof(MUS_SAMPLE_TYPE));
+  ep->data_max = (MUS_SAMPLE_TYPE *)MALLOC(ep->amp_env_size * sizeof(MUS_SAMPLE_TYPE));
   read(fd, (char *)(ep->data_min), (ep->amp_env_size * sizeof(MUS_SAMPLE_TYPE)));
   read(fd, (char *)(ep->data_max), (ep->amp_env_size * sizeof(MUS_SAMPLE_TYPE)));
   close(fd);

@@ -30,7 +30,6 @@
 #if (!defined(HAVE_CONFIG_H)) || (defined(HAVE_FCNTL_H))
   #include <fcntl.h>
 #endif
-#include <signal.h>
 #if (!defined(HAVE_CONFIG_H)) || (defined(HAVE_LIMITS_H))
   #include <limits.h>
 #endif
@@ -1028,7 +1027,7 @@ static int mus_read_any_1(int tfd, int beg, int chans, int nints, MUS_SAMPLE_TYP
       format = fd->data_format;
       siz = fd->bytes_per_sample;
 
-      if ((chans == 1) && (format == MUS_OUT_FORMAT) && (beg == 0)
+      if ((format == MUS_OUT_FORMAT) && (chans == 1) && (beg == 0)
 #if SNDLIB_USE_FLOATS 
 	  && (fd->prescaler == 1.0)
 #endif
@@ -1373,7 +1372,7 @@ static int mus_write_1(int tfd, int beg, int end, int chans, MUS_SAMPLE_TYPE **b
       data_format = fd->data_format;
       clipping = fd->data_clipped;
 
-      if ((chans == 1) && (data_format == MUS_OUT_FORMAT) && (clipping == 0) && (beg == 0))
+      if ((data_format == MUS_OUT_FORMAT) && (chans == 1) && (clipping == 0) && (beg == 0))
 	{
 #if DEBUGGING
 	  direct_writes++;

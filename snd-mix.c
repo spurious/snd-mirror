@@ -3831,7 +3831,7 @@ static int print_mf(SCM obj, SCM port, scm_print_state *pstate)
       scm_puts(desc, port); 
       FREE(desc);
     }
-  return(1);
+  return(scm_return_first(1, obj));
 }
 
 static scm_sizet free_mf(SCM obj) 
@@ -3931,7 +3931,7 @@ static int print_tf(SCM obj, SCM port, scm_print_state *pstate)
       scm_puts(desc, port); 
       FREE(desc);
     }
-  return(1);
+  return(scm_return_first(1, obj));
 }
 
 static scm_sizet free_tf(SCM obj) 
@@ -4104,8 +4104,7 @@ mixes data (a vct object) into snd's channel chn starting at beg; returns the ne
 	  FREE(data);
 	}
     }
-  SND_REMEMBER(obj);
-  return(TO_SMALL_SCM_INT(mix_id));
+  return(scm_return_first(TO_SMALL_SCM_INT(mix_id), obj));
 }
 
 

@@ -231,7 +231,7 @@ static char *print_double_array(double *arr, int len, int loc)
   lim = len;
   if (lim > array_print_length) lim = array_print_length;
   k = loc;
-  for (i = 0; i < lim-1; i++)
+  for (i = 0; i < lim - 1; i++)
     {
       sprintf(str, "%.3f ", arr[k]);
       strcat(base, str);
@@ -267,7 +267,7 @@ static char *print_int_array(int *arr, int len, int loc)
   lim = len;
   if (lim > array_print_length) lim = array_print_length;
   k = loc;
-  for (i = 0; i < lim-1; i++)
+  for (i = 0; i < lim - 1; i++)
     {
       sprintf(str, "%d ", arr[k]);
       strcat(base, str);
@@ -4971,28 +4971,25 @@ mus_any *mus_make_sample2file_with_comment(const char *filename, int out_chans, 
 {
   rdout *gen;
   int i, fd;
-  gen = (rdout *)CALLOC(1, sizeof(rdout));
-  if (gen == NULL) 
-    mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate struct for mus_make_sample2file!");
+  if (filename == NULL)
+    mus_error(MUS_NO_FILE_NAME_PROVIDED, "mus_make_sample2file requires a file name");
   else
     {
-      if (filename == NULL)
-	mus_error(MUS_NO_FILE_NAME_PROVIDED, "mus_make_sample2file requires a file name");
+      fd = mus_sound_open_output(filename, 
+				 (int)sampling_rate, 
+				 out_chans, 
+				 out_format, 
+				 out_type, 
+				 comment);
+      if (fd == -1)
+	mus_error(MUS_CANT_OPEN_FILE, 
+		  "open(%s) -> %s", 
+		  filename, strerror(errno));
       else
 	{
-	  fd = mus_sound_open_output(filename, 
-				     (int)sampling_rate, 
-				     out_chans, 
-				     out_format, 
-				     out_type, 
-				     comment);
-	  if (fd == -1)
-	    {
-	      FREE(gen);
-	      mus_error(MUS_CANT_OPEN_FILE, 
-			"open(%s) -> %s", 
-			filename, strerror(errno));
-	    }
+	  gen = (rdout *)CALLOC(1, sizeof(rdout));
+	  if (gen == NULL) 
+	    mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate struct for mus_make_sample2file!");
 	  else
 	    {
 	      gen->core = &SAMPLE2FILE_CLASS;
@@ -6442,6 +6439,7 @@ void mus_convolve_files(const char *file1, const char *file2, Float maxamp, cons
   int file1_len, file2_len, fftlen, outlen, totallen, file1_chans, file2_chans, output_chans, c1, c2;
   Float *data1, *data2, *outdat;
   MUS_SAMPLE_TYPE *samps;
+  char *errmsg = NULL;
   Float maxval = 0.0;
   int i, j, k;
   file1_len = mus_sound_frames(file1);
@@ -6472,7 +6470,7 @@ void mus_convolve_files(const char *file1, const char *file2, Float maxamp, cons
 	  for (i = 0; i < outlen; i++) data1[i] *= maxval;
 	}
       for (i = 0; i < outlen; i++) samps[i] = MUS_DOUBLE_TO_SAMPLE(data1[i]);
-      mus_array_to_file(output_file, samps, outlen, mus_sound_srate(file1), 1);
+      errmsg = mus_array_to_file_with_error(output_file, samps, outlen, mus_sound_srate(file1), 1);
       FREE(samps);
     }
   else
@@ -6508,12 +6506,14 @@ void mus_convolve_files(const char *file1, const char *file2, Float maxamp, cons
 	  for (i = 0; i < totallen; i++) outdat[i] *= maxval;
 	}
       for (i = 0; i < totallen; i++) samps[i] = MUS_DOUBLE_TO_SAMPLE(outdat[i]);
-      mus_array_to_file(output_file, samps, totallen, mus_sound_srate(file1), output_chans);
+      errmsg = mus_array_to_file_with_error(output_file, samps, totallen, mus_sound_srate(file1), output_chans);
       FREE(samps);
       FREE(outdat);
     }
   FREE(data1);
   FREE(data2);
+  if (errmsg)
+    mus_error(MUS_CANT_OPEN_FILE, errmsg);
 }
 
 
@@ -6762,13 +6762,19 @@ int mus_file2fltarray(const char *filename, int chan, int start, int samples, Fl
 int mus_fltarray2file(const char *filename, Float *ddata, int len, int srate, int channels)
 {
   MUS_SAMPLE_TYPE *idata;
-  int i, err;
+  int i;
+  char *errmsg;
   idata = (MUS_SAMPLE_TYPE *)CALLOC(len, sizeof(MUS_SAMPLE_TYPE));
   for (i = 0; i < len; i++) 
     idata[i] = MUS_FLOAT_TO_SAMPLE(ddata[i]);
-  err = mus_array_to_file(filename, idata, len, srate, channels);
+  errmsg = mus_array_to_file_with_error(filename, idata, len, srate, channels);
   FREE(idata);
-  return(err);
+  if (errmsg)
+    {
+      mus_error(MUS_CANT_OPEN_FILE, errmsg);
+      return(MUS_ERROR);
+    }
+  return(MUS_NO_ERROR);
 }
 
 Float mus_apply(mus_any *gen, ...)

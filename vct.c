@@ -152,8 +152,7 @@ static int print_vct(SCM obj, SCM port, scm_print_state *pstate)
     }
   FREE(buf);
   scm_puts(">", port);
-  SND_REMEMBER(obj); /* ?? */
-  return(1);
+  return(scm_return_first(1, obj));
 }
 
 static SCM equalp_vct(SCM obj1, SCM obj2)

@@ -10,13 +10,6 @@
 
 #include <math.h>
 #include <stdio.h>
-#if (!defined(HAVE_CONFIG_H)) || (defined(HAVE_FCNTL_H))
-  #include <fcntl.h>
-#endif
-#include <signal.h>
-#if (!defined(HAVE_CONFIG_H)) || (defined(HAVE_LIMITS_H))
-  #include <limits.h>
-#endif
 #include <errno.h>
 #include <stdlib.h>
 
@@ -993,7 +986,7 @@ int mus_file_to_array(const char *filename, int chan, int start, int samples, MU
   return(total_read);
 }
 
-int mus_array_to_file(const char *filename, MUS_SAMPLE_TYPE *ddata, int len, int srate, int channels)
+char *mus_array_to_file_with_error(const char *filename, MUS_SAMPLE_TYPE *ddata, int len, int srate, int channels)
 {
   /* put ddata into a sound file, taking byte order into account */
   /* assume ddata is interleaved already if more than one channel */
@@ -1002,13 +995,7 @@ int mus_array_to_file(const char *filename, MUS_SAMPLE_TYPE *ddata, int len, int
   mus_sound_forget(filename);
   fd = mus_file_create(filename);
   if (fd == -1) 
-    {
-      mus_error(MUS_CANT_OPEN_FILE, 
-		"can't create %s: %s\n  [%s[%d] %s]",
-		filename, strerror(errno),
-		__FILE__, __LINE__, __FUNCTION__);
-      return(MUS_ERROR);
-    }
+    return("mus_array_to_file can't create output file");
   err = mus_file_open_descriptors(fd, filename,
 				 MUS_OUT_FORMAT,
 				 mus_data_format_to_bytes_per_sample(MUS_OUT_FORMAT),
@@ -1023,6 +1010,19 @@ int mus_array_to_file(const char *filename, MUS_SAMPLE_TYPE *ddata, int len, int
 	}
     }
   mus_file_close(fd);
-  return(err);
+  if (err == MUS_ERROR)
+    return("mus_array_to_file write error");
+  return(NULL);
 }
 
+int mus_array_to_file(const char *filename, MUS_SAMPLE_TYPE *ddata, int len, int srate, int channels)
+{
+  char *errmsg;
+  errmsg = mus_array_to_file_with_error(filename, ddata, len, srate, channels);
+  if (errmsg)
+    {
+      mus_error(MUS_CANT_OPEN_FILE, errmsg);
+      return(MUS_ERROR);
+    }
+  return(MUS_NO_ERROR);
+}

@@ -395,8 +395,7 @@ static int print_sound_data(SCM obj, SCM port, scm_print_state *pstate)
       scm_puts(buf, port);
       FREE(buf);
     }
-  SND_REMEMBER(obj);
-  return(1);
+  return(scm_return_first(1, obj));
 }
 
 static SCM equalp_sound_data(SCM obj1, SCM obj2)
@@ -405,7 +404,7 @@ static SCM equalp_sound_data(SCM obj1, SCM obj2)
   v1 = (sound_data *)SND_VALUE_OF(obj1);
   v2 = (sound_data *)SND_VALUE_OF(obj2);
   if (v1 == v2) return(SCM_BOOL_T);
-  return(SCM_BOOL_F);
+  return(scm_return_first(SCM_BOOL_F, obj1, obj2));
 }
 
 static SCM sound_data_length(SCM obj)

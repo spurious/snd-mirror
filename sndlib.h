@@ -27,8 +27,8 @@
 
 
 #define SNDLIB_VERSION 12
-#define SNDLIB_REVISION 14
-#define SNDLIB_DATE "16-Apr-01"
+#define SNDLIB_REVISION 15
+#define SNDLIB_DATE "17-Apr-01"
 
 /* try to figure out what type of machine (and in worst case, what OS) we're running on */
 /* gcc has various compile-time macros like #cpu, but we're hoping to run in Metroworks C, Watcom C, MSC, MPW, etc */
@@ -90,31 +90,23 @@
 /* due to project builder stupidity, we can't always depend on -D flags here (maybe we need a SNDLIB_OS macro?) */
 /* these wouldn't work with autoconf anyway, so we'll do it by hand */
 
-#if (!defined(SGI)) && (!defined(NEXT)) && (!defined(LINUX)) && (!defined(MACOS)) && (!defined(BEOS)) && (!defined(SUN)) && (!defined(UW2)) && (!defined(SCO5)) && (!defined(ALPHA)) && (!defined(WINDOZE)) && (!defined(MAC_OSX))
-  #if defined(__BEOS__)
-    #define BEOS 1
+#if (!defined(SGI)) && (!defined(NEXT)) && (!defined(LINUX)) && (!defined(MACOS)) && (!defined(SUN)) && (!defined(UW2)) && (!defined(SCO5)) && (!defined(ALPHA)) && (!defined(WINDOZE)) && (!defined(MAC_OSX))
+  #if defined(__dest_os)
+    /* we're in Metrowerks Land */
+    #if (__dest_os == __mac_os)
+      #define MACOS 1
+    #endif
   #else
-    #if defined(__dest_os)
-      /* we're in Metrowerks Land */
-      #if (__dest_os == __be_os)
-        #define BEOS 1
-      #else
-        #if (__dest_os == __mac_os)
-          #define MACOS 1
-        #endif
-      #endif
+    #if macintosh
+      #define MACOS 1
     #else
-      #if macintosh
-        #define MACOS 1
+      #if (__WINDOWS__) || (__NT__) || (_WIN32) || (__CYGWIN__)
+        #define WINDOZE 1
+        #define MUS_LITTLE_ENDIAN 1
       #else
-        #if (__WINDOWS__) || (__NT__) || (_WIN32) || (__CYGWIN__)
-          #define WINDOZE 1
+        #ifdef __alpha__
+          #define ALPHA 1
           #define MUS_LITTLE_ENDIAN 1
-        #else
-          #ifdef __alpha__
-            #define ALPHA 1
-            #define MUS_LITTLE_ENDIAN 1
-          #endif
         #endif
       #endif
     #endif
@@ -415,6 +407,7 @@ int mus_sound_set_max_amp     PROTO((const char *ifile, MUS_SAMPLE_TYPE *vals));
 int mus_sound_max_amp_exists  PROTO((const char *ifile));
 int mus_file_to_array         PROTO((const char *filename, int chan, int start, int samples, MUS_SAMPLE_TYPE *array));
 int mus_array_to_file         PROTO((const char *filename, MUS_SAMPLE_TYPE *ddata, int len, int srate, int channels));
+char *mus_array_to_file_with_error PROTO((const char *filename, MUS_SAMPLE_TYPE *ddata, int len, int srate, int channels));
 
 
 /* -------- audio.c -------- */

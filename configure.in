@@ -614,13 +614,6 @@ dnl     it was "" to cancel -lXpm without the needed -L<dir> for the same case
         AC_DEFINE(SCO5)
 	audio_system=OSS
         ;;
-    *-*-beos) 
-        AC_DEFINE(BEOS)
-	audio_system=Be
-        AC_DEFINE(SNDLIB_USE_FLOATS)
-	AUDIO_LIB="-lmedia"
-	AC_SUBST(AUDIO_LIB)
-        ;;
     *-*-cygwin*)
 	AC_DEFINE(WINDOZE)
 	audio_system=Windoze

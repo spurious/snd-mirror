@@ -1,20 +1,5 @@
 #include "snd.h"
 
-#if HAVE_DIRENT_H
-  #include <dirent.h>
-#else
-  #define dirent direct
-  #if HAVE_SYS_NDIR_H
-    #include <sys/ndir.h>
-  #endif
-  #if HAVE_SYS_DIR_H
-    #include <sys/dir.h>
-  #endif
-  #if HAVE_NDIR_H
-    #include <ndir.h>
-  #endif
-#endif
-
 #include <X11/cursorfont.h>
 
 #define FALLBACK_FONT "fixed"
@@ -75,23 +60,13 @@
 #define DEFAULT_BUTTON_FONT "-*-times-medium-r-*-*-14-*-*-*-*-*-iso8859-1"
 #define DEFAULT_BOLD_BUTTON_FONT "-*-times-bold-r-*-*-14-*-*-*-*-*-iso8859-1"
 #define DEFAULT_AXIS_NUMBERS_FONT "-*-courier-medium-r-*-*-14-*-*-*-*-*-iso8859-1"
+#define DEFAULT_AXIS_LABEL_FONT "-*-times-medium-r-*-*-14-*-*-*-*-*-iso8859-1"
 #define DEFAULT_HELP_TEXT_FONT "9x15"
 
 #ifdef SGI
-  #define DEFAULT_AXIS_LABEL_FONT "-*-times-medium-r-normal-*-20-*-*-*-*-*-iso8859-1"
   #define ICON_TYPE PLAIN_ICON
 #else
-  #if defined(LINUX) || defined(SCO5) || defined(UW2) || defined(SOLARIS) || defined(HPUX) || defined(ALPHA)
-    #ifdef CCRMA
-      #define DEFAULT_AXIS_LABEL_FONT "-adobe-times-medium-r-*-*-16-*-*-*-*-*-iso8859-1"
-    #else
-      #define DEFAULT_AXIS_LABEL_FONT "-*-times-medium-r-*-*-16-*-*-*-*-*-iso8859-1"
-    #endif
-    #define ICON_TYPE XPM_ICON
-  #else
-    #define DEFAULT_AXIS_LABEL_FONT "-*-times-medium-r-*-*-20-*-*-*-*-*-iso8859-1"
-    #define ICON_TYPE NO_ICON
-  #endif
+  #define ICON_TYPE XPM_ICON
 #endif
 
 #define POSITION_SLIDER_WIDTH 13
@@ -384,9 +359,9 @@ static void GetStdinString (XtPointer context, int *fd, XtInputId *id)
     {
       while (bytes == 1024)
 	{
-	  size+=1024;
+	  size += 1024;
 	  buf = (char *)REALLOC(buf, size);
-	  bytes = read(*fd, (char *)(buf+size-1024), 1024);
+	  bytes = read(*fd, (char *)(buf + size - 1024), 1024);
 	}
       snd_eval_stdin_str((snd_state *)context, buf);
     }
@@ -398,10 +373,6 @@ static BACKGROUND_TYPE startup_funcs(XtPointer context)
   startup_state *tm = (startup_state *)context;
   Atom wm_delete_window;
   snd_state *ss;
-#if HAVE_OPENDIR
-  DIR *dp;
-#endif
-  int files;
   static int auto_open_ctr = 0;
   ss = tm->ss;
   switch (tm->slice)
@@ -455,17 +426,7 @@ static BACKGROUND_TYPE startup_funcs(XtPointer context)
 	}
       break;
     case 3: 
-      /* this stupid thing (which I can't customize without major hassles) takes forever on large directories */
-#if HAVE_OPENDIR
-      files = 0;
-      if ((dp = opendir(".")) != NULL)
-	while ((files < 400) && 
-	       (readdir(dp) != NULL)) 
-	  files++;
-      closedir(dp);
-      if (files < 400) 
-	CreateOpenDialog(tm->shell, (XtPointer)ss);
-#endif
+      CreateOpenDialog(tm->shell, (XtPointer)ss);
       break;
     case 4:
       if (ss->init_window_width > 0) set_widget_width(MAIN_SHELL(ss), ss->init_window_width);

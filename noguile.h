@@ -96,7 +96,6 @@
 #define SND_VALUE_OF(a) 0
 #define SND_SET_VALUE_OF(a, b) 
 #define SND_LOOKUP(a) 0
-#define SND_REMEMBER(OBJ)
 #define SND_TAG_TYPE int
 #define SND_SMOB_TYPE(TAG, OBJ) 0
 #define SMOB_TYPE_P(OBJ, TAG) 0

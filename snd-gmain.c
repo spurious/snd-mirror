@@ -42,13 +42,8 @@
 #define DEFAULT_BUTTON_FONT "-*-times-medium-r-*-*-14-*-*-*-*-*-iso8859-1"
 #define DEFAULT_BOLD_BUTTON_FONT "-*-times-bold-r-*-*-14-*-*-*-*-*-iso8859-1"
 #define DEFAULT_AXIS_NUMBERS_FONT "-*-courier-medium-r-*-*-14-*-*-*-*-*-iso8859-1"
+#define DEFAULT_AXIS_LABEL_FONT "-*-times-medium-r-*-*-14-*-*-*-*-*-iso8859-1"
 #define DEFAULT_HELP_TEXT_FONT "9x15"
-
-#if defined(LINUX) || defined(SCO5) || defined(UW2) || defined(SOLARIS) || defined(HPUX) || defined(ALPHA)
-  #define DEFAULT_AXIS_LABEL_FONT "-*-times-medium-r-*-*-16-*-*-*-*-*-iso8859-1"
-#else
-  #define DEFAULT_AXIS_LABEL_FONT "-*-times-medium-r-*-*-20-*-*-*-*-*-iso8859-1"
-#endif
 
 #define POSITION_SLIDER_WIDTH 13
 #define ZOOM_SLIDER_WIDTH 10

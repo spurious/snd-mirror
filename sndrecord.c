@@ -23,11 +23,7 @@
   #include <console.h>
 #endif
 
-#ifdef BEOS
-  #define CHANNELS 2
-#else
-  #define CHANNELS 1
-#endif
+#define CHANNELS 1
 
 #ifdef NEXT
   #define BUFFER_SIZE 1024

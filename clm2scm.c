@@ -3263,6 +3263,7 @@ enum {G_FILTER, G_FIR_FILTER, G_IIR_FILTER};
 static SCM g_make_filter_1(int choice, SCM arg1, SCM arg2, SCM arg3, SCM arg4, SCM arg5, SCM arg6)
 {
   SCM xwave = SCM_UNDEFINED, ywave = SCM_UNDEFINED;
+  mus_any *fgen = NULL;
   mus_scm *gn = NULL;
   SCM args[6], keys[3];
   int orig_arg[3] = {0, 0, 0};
@@ -3312,17 +3313,18 @@ static SCM g_make_filter_1(int choice, SCM arg1, SCM arg2, SCM arg3, SCM arg4, S
       choice = G_FIR_FILTER;
       nkeys = 2;
     }
+  switch (choice)
+    {
+    case G_FILTER: fgen = mus_make_filter(order, x->data, y->data, NULL); break;
+    case G_FIR_FILTER: fgen = mus_make_fir_filter(order, x->data, NULL); break;
+    case G_IIR_FILTER: fgen = mus_make_iir_filter(order, x->data, NULL); break;
+    }
   gn = (mus_scm *)CALLOC(1, sizeof(mus_scm));
+  gn->gen = fgen;                                    /* delay gn allocation since make_filter can throw an error */
   gn->vcts = (SCM *)CALLOC(nkeys - 1, sizeof(SCM));
   gn->vcts[0] = SCM_EOL;
   if (nkeys > 2) gn->vcts[1] = SCM_EOL;
   gn->nvcts = nkeys - 1;
-  switch (choice)
-    {
-    case G_FILTER: gn->gen = mus_make_filter(order, x->data, y->data, NULL); break;
-    case G_FIR_FILTER: gn->gen = mus_make_fir_filter(order, x->data, NULL); break;
-    case G_IIR_FILTER: gn->gen = mus_make_iir_filter(order, x->data, NULL); break;
-    }
   gn->vcts[0] = xwave;
   if (nkeys > 2) gn->vcts[1] = ywave;
   return(mus_scm_to_smob(gn));
@@ -3711,6 +3713,7 @@ should be sndlib identifiers:\n\
    (make-sample->file \"test.snd\" 2 mus-lshort mus-riff)"
 
   mus_scm *gn;
+  mus_any *rgen = NULL;
   int df, ht, chns;
   SCM_ASSERT(STRING_P(name), name, SCM_ARG1, S_make_sample2file);
   SCM_ASSERT(INTEGER_P(chans), chans, SCM_ARG2, S_make_sample2file);
@@ -3725,12 +3728,13 @@ should be sndlib identifiers:\n\
 	  chns = TO_C_INT(chans);
 	  if (chns > 0)
 	    {
-	      gn = (mus_scm *)CALLOC(1, sizeof(mus_scm));
-	      gn->gen = mus_make_sample2file_with_comment(TO_C_STRING(name),
+	      rgen = mus_make_sample2file_with_comment(TO_C_STRING(name),
 							  chns,
 							  df,
 							  ht,
 							  (STRING_P(comment)) ? TO_C_STRING(comment) : NULL);
+	      gn = (mus_scm *)CALLOC(1, sizeof(mus_scm));
+	      gn->gen = rgen;
 	      gn->nvcts = 0;
 	      return(scm_return_first(mus_scm_to_smob(gn), name));
 	    }
@@ -3797,15 +3801,17 @@ should be sndlib identifiers:\n\
    (make-frame->file \"test.snd\" 2 mus-lshort mus-riff)"
 
   mus_scm *gn;
+  mus_any *fgen = NULL;
   SCM_ASSERT(STRING_P(name), name, SCM_ARG1, S_make_frame2file);
   SCM_ASSERT(INTEGER_P(chans), chans, SCM_ARG2, S_make_frame2file);
   SCM_ASSERT(INTEGER_P(out_format), out_format, SCM_ARG3, S_make_frame2file);
   SCM_ASSERT(INTEGER_P(out_type), out_type, SCM_ARG4, S_make_frame2file);
+  fgen = mus_make_frame2file(TO_C_STRING(name),
+			     TO_C_INT(chans),
+			     TO_C_INT(out_format),
+			     TO_C_INT(out_type));
   gn = (mus_scm *)CALLOC(1, sizeof(mus_scm));
-  gn->gen = mus_make_frame2file(TO_C_STRING(name),
-				TO_C_INT(chans),
-				TO_C_INT(out_format),
-				TO_C_INT(out_type));
+  gn->gen = fgen;
   gn->nvcts = 0;
   return(scm_return_first(mus_scm_to_smob(gn), name));
 }
@@ -4313,6 +4319,7 @@ width (effectively the steepness of the low-pass filter), normally between 10 an
   gn->gen = mus_make_src(funcall1, srate, wid, gn);
   return(mus_scm_to_smob(gn));
 }
+
 
 static void init_sr(void)
 {

@@ -298,7 +298,7 @@ snd_info *make_snd_info(snd_info *sip, snd_state *state, char *filename, file_in
     {
       MUS_SAMPLE_TYPE *vals;
       int i;
-      sp->fit_data_amps = (Float *)CALLOC(sp->nchans, sizeof(Float));
+      sp->fit_data_amps = (Float *)MALLOC(sp->nchans * sizeof(Float));
       if (hdr->type == MUS_RAW)
 	{
 	  mus_sound_set_chans(sp->fullname, hdr->chans);
@@ -429,7 +429,7 @@ int map_over_chans (snd_state *ss, int (*func)(chan_info *, void *), void *userp
     for (i = 0; i < ss->max_sounds; i++)
       if ((sp = ((snd_info *)(ss->sounds[i]))) && 
 	  (sp->inuse))
-	for (j = 0; j<(sp->nchans); j++)
+	for (j = 0; j < (sp->nchans); j++)
 	  if ((cp = ((chan_info *)(sp->chans[j]))))
 	    {
 	      val = (*func)(cp, userptr);
@@ -444,7 +444,7 @@ int map_over_sound_chans (snd_info *sp, int (*func)(chan_info *, void *), void *
   int j, val;
   chan_info *cp;
   val = 0;
-  for (j = 0; j<(sp->nchans); j++)
+  for (j = 0; j < (sp->nchans); j++)
     if ((cp = sp->chans[j]))
       {
 	val = (*func)(cp, userptr);

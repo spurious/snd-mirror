@@ -84,7 +84,6 @@
 #undef SUN
 #undef SOLARIS
 #undef SCO5
-#undef BEOS
 #undef OPENBSD
 #undef WINDOZE
 #undef AIX

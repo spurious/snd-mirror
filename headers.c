@@ -73,19 +73,11 @@
 
 #include <math.h>
 #include <stdio.h>
-#if (!defined(HAVE_CONFIG_H)) || (defined(HAVE_FCNTL_H))
-  #include <fcntl.h>
-#endif
-#include <signal.h>
-#if (!defined(HAVE_CONFIG_H)) || (defined(HAVE_LIMITS_H))
-  #include <limits.h>
-#endif
 #include <errno.h>
 #include <stdlib.h>
 #if (!defined(HAVE_CONFIG_H)) || (defined(HAVE_STRING_H))
   #include <string.h>
 #endif
-
 #if (defined(NEXT) || (defined(HAVE_LIBC_H) && (!defined(HAVE_UNISTD_H))))
   #include <libc.h>
 #else

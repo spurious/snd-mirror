@@ -574,7 +574,6 @@ static SCM g_set_save_state_file(SCM val)
   return(TO_SCM_STRING(save_state_file(ss)));
 }
 
-static char **menu_strings = NULL; /* backwards compatibility */
 static SCM *menu_functions = NULL;
 static int callbacks_size = 0;
 static int callb = 0;
@@ -588,18 +587,13 @@ static int make_callback_slot(void)
       callbacks_size += CALLBACK_INCR;
       if (callb == 0)
 	{
-	  menu_strings = (char **)CALLOC(callbacks_size, sizeof(char *));
 	  menu_functions = (SCM *)CALLOC(callbacks_size, sizeof(SCM));
+	  for (i = 0; i < callbacks_size; i++) menu_functions[i] = SCM_UNDEFINED;
 	}
       else 
 	{
-	  menu_strings = (char **)REALLOC(menu_strings, callbacks_size * sizeof(char *));
 	  menu_functions = (SCM *)REALLOC(menu_functions, callbacks_size * sizeof(SCM));
-	  for (i = callbacks_size - CALLBACK_INCR; i < callbacks_size; i++)
-	    {
-	      menu_strings[i] = NULL;
-	      menu_functions[i] = 0;
-	    }
+	  for (i = callbacks_size - CALLBACK_INCR; i < callbacks_size; i++) menu_functions[i] = SCM_UNDEFINED;
 	}
     }
   old_callb = callb;
@@ -607,49 +601,31 @@ static int make_callback_slot(void)
   return(old_callb);
 }
 
-static void add_callback(int slot, SCM callstr, char *caller, int argn)
+static void add_callback(int slot, SCM callback)
 {
-  char *error;
-  SCM errstr;
-  if (STRING_P(callstr))
-    menu_strings[slot] = TO_NEW_C_STRING(callstr);
-  else 
-    {
-      error = procedure_ok(callstr, 0, 0, caller, "menu callback", argn);
-      if (error == NULL)
-	{
-	  if ((menu_functions[slot]) && 
-	      (PROCEDURE_P(menu_functions[slot]))) 
-	    snd_unprotect(menu_functions[slot]);
-	  menu_functions[slot] = callstr;
-	  snd_protect(callstr);
-	}
-      else 
-	{
-	  errstr = TO_SCM_STRING(error);
-	  FREE(error);
-	  snd_bad_arity_error(caller, errstr, callstr);
-	}
-    }
+  if ((BOUND_P(menu_functions[slot])) && 
+      (PROCEDURE_P(menu_functions[slot])))
+    snd_unprotect(menu_functions[slot]);
+  menu_functions[slot] = callback;
+  snd_protect(callback);
 }
 
 static SCM gl_add_to_main_menu(SCM label, SCM callback)
 {
   #define H_add_to_main_menu "(" S_add_to_main_menu " label &optional callback) adds label to the main (top-level) menu, returning its index"
-  int val, slot=-1;
+  int val = -1, slot=-1;
   SCM_ASSERT(STRING_P(label), label, SCM_ARG1, S_add_to_main_menu);
-  if (PROCEDURE_P(callback)) 
-    {
-      slot = make_callback_slot();
-      add_callback(slot, callback, S_add_to_main_menu, 2);
-    }
+  slot = make_callback_slot();
+  if ((BOUND_P(callback)) &&
+      (procedure_ok_with_error(callback, 0, 0, S_add_to_main_menu, "menu callback", 2)))
+    add_callback(slot, callback);
   val = g_add_to_main_menu(get_global_state(), 
 			   TO_C_STRING(label), 
 			   slot);
   return(TO_SCM_INT(val));
 }
 
-static SCM gl_add_to_menu(SCM menu, SCM label, SCM callstr)
+static SCM gl_add_to_menu(SCM menu, SCM label, SCM callback)
 {
   #define H_add_to_menu "(" S_add_to_menu " menu label func) adds label to menu invoking func when activated \
 menu is the index returned by add-to-main-menu, func should be a function of no arguments"
@@ -657,23 +633,27 @@ menu is the index returned by add-to-main-menu, func should be a function of no 
   int err = 0, slot, m;
   SCM_ASSERT(STRING_P(label), label, SCM_ARG2, S_add_to_menu);
   SCM_ASSERT(INTEGER_P(menu), menu, SCM_ARG1, S_add_to_menu);
-  m = TO_C_INT(menu);
-  if (m < 0)
-    snd_no_such_menu_error(S_add_to_menu, menu);
-  slot = make_callback_slot();
-  err = g_add_to_menu(get_global_state(), 
-		      m,
-		      TO_C_STRING(label),
-		      slot);
-  if (err == -1) 
-    snd_no_such_menu_error(S_add_to_menu, menu);
-  add_callback(slot, callstr, S_add_to_menu, 3);
+  SCM_ASSERT(PROCEDURE_P(callback), callback, SCM_ARG3, S_add_to_menu);
+  if (procedure_ok_with_error(callback, 0, 0, S_add_to_menu, "menu callback", 3))
+    {
+      m = TO_C_INT(menu);
+      if (m < 0)
+	snd_no_such_menu_error(S_add_to_menu, menu);
+      slot = make_callback_slot();
+      err = g_add_to_menu(get_global_state(), 
+			  m,
+			  TO_C_STRING(label),
+			  slot);
+      if (err == -1) 
+	snd_no_such_menu_error(S_add_to_menu, menu);
+      add_callback(slot, callback);
+    }
   return(label);
 }
 
 void g_snd_callback(int callb)
 {
-  if ((callb >= 0) && (menu_functions[callb]))
+  if ((callb >= 0) && (BOUND_P(menu_functions[callb])))
     CALL0(menu_functions[callb], "menu callback func");
 }
 
