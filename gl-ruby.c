@@ -376,34 +376,6 @@ XEN_NARGIFY_5(gxg_glMultiTexCoord4iARB_w, gxg_glMultiTexCoord4iARB)
 XEN_NARGIFY_2(gxg_glMultiTexCoord4ivARB_w, gxg_glMultiTexCoord4ivARB)
 XEN_NARGIFY_5(gxg_glMultiTexCoord4sARB_w, gxg_glMultiTexCoord4sARB)
 XEN_NARGIFY_2(gxg_glMultiTexCoord4svARB_w, gxg_glMultiTexCoord4svARB)
-XEN_NARGIFY_2(gxg_glLockArraysEXT_w, gxg_glLockArraysEXT)
-XEN_NARGIFY_0(gxg_glUnlockArraysEXT_w, gxg_glUnlockArraysEXT)
-XEN_NARGIFY_4(gxg_glBlendColorEXT_w, gxg_glBlendColorEXT)
-XEN_NARGIFY_2(gxg_glPolygonOffsetEXT_w, gxg_glPolygonOffsetEXT)
-XEN_VARGIFY(gxg_glTexImage3DEXT_w, gxg_glTexImage3DEXT)
-XEN_VARGIFY(gxg_glTexSubImage3DEXT_w, gxg_glTexSubImage3DEXT)
-XEN_NARGIFY_9(gxg_glCopyTexSubImage3DEXT_w, gxg_glCopyTexSubImage3DEXT)
-XEN_NARGIFY_2(gxg_glGenTexturesEXT_w, gxg_glGenTexturesEXT)
-XEN_NARGIFY_2(gxg_glDeleteTexturesEXT_w, gxg_glDeleteTexturesEXT)
-XEN_NARGIFY_2(gxg_glBindTextureEXT_w, gxg_glBindTextureEXT)
-XEN_NARGIFY_3(gxg_glAreTexturesResidentEXT_w, gxg_glAreTexturesResidentEXT)
-XEN_NARGIFY_1(gxg_glIsTextureEXT_w, gxg_glIsTextureEXT)
-XEN_NARGIFY_5(gxg_glVertexPointerEXT_w, gxg_glVertexPointerEXT)
-XEN_NARGIFY_4(gxg_glNormalPointerEXT_w, gxg_glNormalPointerEXT)
-XEN_NARGIFY_5(gxg_glColorPointerEXT_w, gxg_glColorPointerEXT)
-XEN_NARGIFY_4(gxg_glIndexPointerEXT_w, gxg_glIndexPointerEXT)
-XEN_NARGIFY_5(gxg_glTexCoordPointerEXT_w, gxg_glTexCoordPointerEXT)
-XEN_NARGIFY_3(gxg_glEdgeFlagPointerEXT_w, gxg_glEdgeFlagPointerEXT)
-XEN_ARGIFY_2(gxg_glGetPointervEXT_w, gxg_glGetPointervEXT)
-XEN_NARGIFY_1(gxg_glArrayElementEXT_w, gxg_glArrayElementEXT)
-XEN_NARGIFY_3(gxg_glDrawArraysEXT_w, gxg_glDrawArraysEXT)
-XEN_NARGIFY_1(gxg_glBlendEquationEXT_w, gxg_glBlendEquationEXT)
-XEN_NARGIFY_2(gxg_glPointParameterfEXT_w, gxg_glPointParameterfEXT)
-XEN_NARGIFY_2(gxg_glPointParameterfvEXT_w, gxg_glPointParameterfvEXT)
-XEN_NARGIFY_6(gxg_glColorTableEXT_w, gxg_glColorTableEXT)
-XEN_NARGIFY_6(gxg_glColorSubTableEXT_w, gxg_glColorSubTableEXT)
-XEN_ARGIFY_3(gxg_glGetColorTableParameterfvEXT_w, gxg_glGetColorTableParameterfvEXT)
-XEN_ARGIFY_3(gxg_glGetColorTableParameterivEXT_w, gxg_glGetColorTableParameterivEXT)
 static void define_functions(void)
 {
 #if USE_MOTIF
@@ -782,33 +754,5 @@ static void define_functions(void)
   XEN_DEFINE_PROCEDURE(XL_PRE "glMultiTexCoord4ivARB" XL_POST, gxg_glMultiTexCoord4ivARB_w, 2, 0, 0, H_glMultiTexCoord4ivARB);
   XEN_DEFINE_PROCEDURE(XL_PRE "glMultiTexCoord4sARB" XL_POST, gxg_glMultiTexCoord4sARB_w, 5, 0, 0, H_glMultiTexCoord4sARB);
   XEN_DEFINE_PROCEDURE(XL_PRE "glMultiTexCoord4svARB" XL_POST, gxg_glMultiTexCoord4svARB_w, 2, 0, 0, H_glMultiTexCoord4svARB);
-  XEN_DEFINE_PROCEDURE(XL_PRE "glLockArraysEXT" XL_POST, gxg_glLockArraysEXT_w, 2, 0, 0, H_glLockArraysEXT);
-  XEN_DEFINE_PROCEDURE(XL_PRE "glUnlockArraysEXT" XL_POST, gxg_glUnlockArraysEXT_w, 0, 0, 0, H_glUnlockArraysEXT);
-  XEN_DEFINE_PROCEDURE(XL_PRE "glBlendColorEXT" XL_POST, gxg_glBlendColorEXT_w, 4, 0, 0, H_glBlendColorEXT);
-  XEN_DEFINE_PROCEDURE(XL_PRE "glPolygonOffsetEXT" XL_POST, gxg_glPolygonOffsetEXT_w, 2, 0, 0, H_glPolygonOffsetEXT);
-  XEN_DEFINE_PROCEDURE(XL_PRE "glTexImage3DEXT" XL_POST, gxg_glTexImage3DEXT_w, 0, 0, 1, H_glTexImage3DEXT);
-  XEN_DEFINE_PROCEDURE(XL_PRE "glTexSubImage3DEXT" XL_POST, gxg_glTexSubImage3DEXT_w, 0, 0, 1, H_glTexSubImage3DEXT);
-  XEN_DEFINE_PROCEDURE(XL_PRE "glCopyTexSubImage3DEXT" XL_POST, gxg_glCopyTexSubImage3DEXT_w, 9, 0, 0, H_glCopyTexSubImage3DEXT);
-  XEN_DEFINE_PROCEDURE(XL_PRE "glGenTexturesEXT" XL_POST, gxg_glGenTexturesEXT_w, 2, 0, 0, H_glGenTexturesEXT);
-  XEN_DEFINE_PROCEDURE(XL_PRE "glDeleteTexturesEXT" XL_POST, gxg_glDeleteTexturesEXT_w, 2, 0, 0, H_glDeleteTexturesEXT);
-  XEN_DEFINE_PROCEDURE(XL_PRE "glBindTextureEXT" XL_POST, gxg_glBindTextureEXT_w, 2, 0, 0, H_glBindTextureEXT);
-  XEN_DEFINE_PROCEDURE(XL_PRE "glAreTexturesResidentEXT" XL_POST, gxg_glAreTexturesResidentEXT_w, 3, 0, 0, H_glAreTexturesResidentEXT);
-  XEN_DEFINE_PROCEDURE(XL_PRE "glIsTextureEXT" XL_POST, gxg_glIsTextureEXT_w, 1, 0, 0, H_glIsTextureEXT);
-  XEN_DEFINE_PROCEDURE(XL_PRE "glVertexPointerEXT" XL_POST, gxg_glVertexPointerEXT_w, 5, 0, 0, H_glVertexPointerEXT);
-  XEN_DEFINE_PROCEDURE(XL_PRE "glNormalPointerEXT" XL_POST, gxg_glNormalPointerEXT_w, 4, 0, 0, H_glNormalPointerEXT);
-  XEN_DEFINE_PROCEDURE(XL_PRE "glColorPointerEXT" XL_POST, gxg_glColorPointerEXT_w, 5, 0, 0, H_glColorPointerEXT);
-  XEN_DEFINE_PROCEDURE(XL_PRE "glIndexPointerEXT" XL_POST, gxg_glIndexPointerEXT_w, 4, 0, 0, H_glIndexPointerEXT);
-  XEN_DEFINE_PROCEDURE(XL_PRE "glTexCoordPointerEXT" XL_POST, gxg_glTexCoordPointerEXT_w, 5, 0, 0, H_glTexCoordPointerEXT);
-  XEN_DEFINE_PROCEDURE(XL_PRE "glEdgeFlagPointerEXT" XL_POST, gxg_glEdgeFlagPointerEXT_w, 3, 0, 0, H_glEdgeFlagPointerEXT);
-  XEN_DEFINE_PROCEDURE(XL_PRE "glGetPointervEXT" XL_POST, gxg_glGetPointervEXT_w, 1, 1, 0, H_glGetPointervEXT);
-  XEN_DEFINE_PROCEDURE(XL_PRE "glArrayElementEXT" XL_POST, gxg_glArrayElementEXT_w, 1, 0, 0, H_glArrayElementEXT);
-  XEN_DEFINE_PROCEDURE(XL_PRE "glDrawArraysEXT" XL_POST, gxg_glDrawArraysEXT_w, 3, 0, 0, H_glDrawArraysEXT);
-  XEN_DEFINE_PROCEDURE(XL_PRE "glBlendEquationEXT" XL_POST, gxg_glBlendEquationEXT_w, 1, 0, 0, H_glBlendEquationEXT);
-  XEN_DEFINE_PROCEDURE(XL_PRE "glPointParameterfEXT" XL_POST, gxg_glPointParameterfEXT_w, 2, 0, 0, H_glPointParameterfEXT);
-  XEN_DEFINE_PROCEDURE(XL_PRE "glPointParameterfvEXT" XL_POST, gxg_glPointParameterfvEXT_w, 2, 0, 0, H_glPointParameterfvEXT);
-  XEN_DEFINE_PROCEDURE(XL_PRE "glColorTableEXT" XL_POST, gxg_glColorTableEXT_w, 6, 0, 0, H_glColorTableEXT);
-  XEN_DEFINE_PROCEDURE(XL_PRE "glColorSubTableEXT" XL_POST, gxg_glColorSubTableEXT_w, 6, 0, 0, H_glColorSubTableEXT);
-  XEN_DEFINE_PROCEDURE(XL_PRE "glGetColorTableParameterfvEXT" XL_POST, gxg_glGetColorTableParameterfvEXT_w, 2, 1, 0, H_glGetColorTableParameterfvEXT);
-  XEN_DEFINE_PROCEDURE(XL_PRE "glGetColorTableParameterivEXT" XL_POST, gxg_glGetColorTableParameterivEXT_w, 2, 1, 0, H_glGetColorTableParameterivEXT);
 }
 

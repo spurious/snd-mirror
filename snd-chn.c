@@ -390,10 +390,10 @@ void add_channel_data_1(chan_info *cp, snd_info *sp, int graphed)
   int ymin_set = 0, ymax_set = 0;
   hdr = sp->hdr;
   samples_per_channel = hdr->samples / hdr->chans;
-  x0 = DEFAULT_INITIAL_X0;
-  x1 = DEFAULT_INITIAL_X1;
-  y0 = DEFAULT_INITIAL_Y0;
-  y1 = DEFAULT_INITIAL_Y1;
+  x0 = 0.0;
+  x1 = 0.1;
+  y0 = -1.0;
+  y1 = 1.0;
   switch (cp->x_axis_style)
     {
     case X_AXIS_IN_BEATS:      label = STR_time_beats;   break;

@@ -1376,7 +1376,7 @@ the hook.
 <!-- --></td></tr>
 <!-- -->
 <!-- --><tr><td></td><td colspan=2>
-<!-- -->called just before data is sent to DAC passing data as sound-data object.
+<!-- -->called just before data is sent to DAC passing data as sound-data object. See with-level-meters in snd-motif.scm.
 <!-- --></td></tr><tr><td colspan=3></td></tr>
 <!-- -->
 <!-- draw-mark-hook -->
@@ -4115,7 +4115,7 @@ The following substitutions can be made:
 <pre>
 <a href="#sndenv">env-sound</a> env beg dur s c e                     <a href="#envchannel">env-channel</a> clm-env-gen beg dur s c e
 <a href="#sndfilter">filter-sound</a> env order s c e                    <a href="#clmchannel">clm-channel</a> clm-filter-gen beg dur s c e overlap
-<a href="#mapchan">map-chan</a> func beg end origin s c e              <a href="#mapchannel">map-channel</a> func beg dur s c e origin
+<a href="#mapchan">map-chan</a> func beg end origin s c e              <a href="#mapchannel">map-channel</a> func beg dur s c e origin (or <a href="#ptreechannel">ptree-channel</a>)
 <a href="#scanchan">scan-chan</a> func beg end s c e                    <a href="#scanchannel">scan-channel</a> func beg dur s c e
 <a href="#sndplay">play</a> beg s c sync end e                         <a href="#playchannel">play-channel</a> beg dur s c e
 <a href="#sndreverse">reverse-sound</a> s c e                             <a href="#reversechannel">reverse-channel</a> beg dur s c e
@@ -4243,7 +4243,7 @@ the direction argument between the channel and edit-position.
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
 <!-- -->A property list associated with the given channel.  It is set to '() at the time a sound is opened.  The accessor
-<!-- --><a href="sndscm.html#exchannelproperty">channel-property</a> is provided in extensions.scm.  See enved.scm for an example use.
+<!-- --><a href="sndscm.html#exchannelproperty">channel-property</a> is provided in extensions.scm.  See enved.scm for an example.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -5453,18 +5453,38 @@ the direction argument between the channel and edit-position.
 <!-- --><tr><td></td><td>
 <!-- --><b>ptree-channel</b>
 <!-- -->applies 'proc' as a 'virtual edit'; that is, the effect of 'proc' (a function of one argument, the
-<!-- -->current sample), comes about as an implicit change in the way the data is read.  This is similar to
-<!-- -->scaling and some envelope operations in that no data actually changes.  If 'env-too' is #t,
-<!-- -->the same function is applied to the peak env values to get the new version.  If the underlying data
+<!-- -->current sample), comes about as an implicit change in the way the data is read. 
+<!-- --><br><br>
+<!-- -->To be less Orphic:
+<!-- -->all the data accesses in Snd go through the edit-history list.  The currently
+<!-- -->active member of that list
+<!-- -->chooses an accessor based on the type of edit. A  multiply by 2, for
+<!-- -->example, does not multiply anything by 2 internally; it just sets up
+<!-- -->the data accessor to multiply by 2 on any read.  From the user's
+<!-- -->point of view, the data has been multiplied.  These accessors make it
+<!-- -->unnecessary to save any data in temp files (so that undo will still
+<!-- -->work) or internal arrays, and editing the edit-history list is very
+<!-- -->fast (we just tack a new accessor choice onto the edit-history list), so the edit operation
+<!-- -->appears to be instantaneous and memory-less.  Lots of other operations
+<!-- -->are already being done this way in Snd (deletions, scaling, most
+<!-- -->envelopes, etc).  <b>ptree-channel</b> extends the idea to (nearly) arbitrary
+<!-- -->functions.  When the user calls <code>(ptree-channel (lambda (y) (* y 2)))</code>,
+<!-- -->which has the same effect as <code>(map-channel (lambda (y) (* y 2)))</code>, the
+<!-- -->optimizer makes the parse-tree that represents <code>(lambda (y) (* y 2))</code>, then the
+<!-- -->edit-history accessor function uses that tree every time the data is
+<!-- -->read.<br><br>
+<!-- -->If 'env-too' is #t,
+<!-- -->the same function is applied to the peak env values to get the new version of the peak env data.  
+<!-- -->The default is #f, and should be #t only if the old max and min values as processed through 'proc'
+<!-- -->will be the new max and min values. 
+<!-- -->If the underlying data
 <!-- -->has any envelope ramps or previous ptree operations, map-channel is called instead and the new
 <!-- -->data is saved in the normal manner (that is, I don't currently try to chain these operations
 <!-- -->together).  Also, there's currently no way to inform the 'proc' that
 <!-- -->a new read has begun, so (for now) 'proc' should not have any state or make any assumptions
 <!-- -->about where it is in the sound.  'proc' must be compatible with (and run through) the optimizer;
 <!-- -->this means the <a href="#optimization">optimization</a> variable must be greater than 0. 
-<!-- --><b>ptree-channel</b> operations are effectively instantaneous,
-<!-- -->take no memory, and save no temporary data on disk. <code>(ptree-channel (lambda (y) (+ y .1)))</code>
-<!-- -->The name refers to "parse tree" -- see snd-run.c for more details. (ptree-channel does not work in Ruby).
+<!-- -->The name refers to "parse tree" -- see <a href="#editexpl">Edit Lists</a> and snd-run.c for more details. (ptree-channel does not work in Ruby).
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -5475,7 +5495,7 @@ the direction argument between the channel and edit-position.
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
 <!-- --><b>ramp-channel</b> is a slight extension of scale-channel. It scales samples in the given sound/channel
-<!-- -->between beg and beg + dur by a ramp going from rmp0 to rmp1. (It underlies the virtual envelope operations).
+<!-- -->between beg and beg + dur by a ramp going from rmp0 to rmp1. (<b>ramp-channel</b> underlies the virtual envelope operations).
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -5485,7 +5505,7 @@ the direction argument between the channel and edit-position.
 <!-- --><span class=defbox><code><em class=def><a name="sndreadonly">read-only</a></em> (<em class=targ>snd</em>)</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
-<!-- -->#t if <i>snd</i> is read-only, #f otherwise.
+<!-- -->#t if <i>snd</i> is read-only, #f otherwise.  <a href="#sndview">view-sound</a> sets this field to #t.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -5719,6 +5739,7 @@ the direction argument between the channel and edit-position.
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
 <!-- -->(see scale-by) -- <a href="snd.html#scaling">normalize</a> <i>snd</i> to <i>scalers</i> (following sync as in scale-by).
+<!-- --><code>(scale-to 0.5)</code> scales the current channel so that it's maxamp is 0.5.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -5881,10 +5902,10 @@ the direction argument between the channel and edit-position.
 <!-- --><span class=defbox><code><em class=def><a name="showaxes">show-axes</a></em> (<em class=narg>snd chn</em>)</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
-<!-- -->(default: show-all-axes)
-<!-- -->If show-all-axes, display x and y axes; if show-x-axis, 
+<!-- -->(default: <code>show-all-axes</code>)
+<!-- -->If <b>show-axes</b> is <code>show-all-axes</code>, display x and y axes; if <code>show-x-axis</code>, 
 <!-- -->just one (bottom) x axis is displayed, reducing screen clutter. 
-<!-- -->The other choice is show-no-axes.
+<!-- -->The other choice is <code>show-no-axes</code>.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -5904,8 +5925,8 @@ the direction argument between the channel and edit-position.
 <!-- --><span class=defbox><code><em class=def><a name="showmixwaveforms">show-mix-waveforms</a></em> (<em class=narg>snd chn</em>)</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
-<!-- -->If #t (default = #t), mix displays the waveform of the sound
-<!-- -->being mixed.
+<!-- -->If #t (default is #t), a mixed sound is displayed as a separate waveform above the main data.  The rectangular tag
+<!-- -->at the start of the waveform can be dragged to move the mix, or clicked to select it for the mix panel.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -6027,7 +6048,7 @@ the direction argument between the channel and edit-position.
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
 <!-- -->list of currently active sounds (id numbers).
-<!-- -->A common Snd trope is (map func (sounds)): (map maxamp (sounds)).  This can be
+<!-- -->A common Snd trope is (map func (sounds)): <code>(map maxamp (sounds))</code>.  This can be
 <!-- -->extended to provide a complete list of sounds and channels (since many Snd functions
 <!-- -->take the "snd chn" arguments:
 <!-- --></td></tr>
@@ -6252,7 +6273,7 @@ the direction argument between the channel and edit-position.
 <!-- --><span class=defbox><code><em class=def><a name="sndsyncing">sync</a></em> (<em class=targ>snd</em>)</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
-<!-- --><i>snd</i>'s 'sync' value (an integer, 0=off).
+<!-- --><i>snd</i>'s 'sync' value (an integer, 0=none). 
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -6417,7 +6438,7 @@ the direction argument between the channel and edit-position.
 <!-- --><span class=defbox><code><em class=def><a name="sndview">view-sound</a></em> (filename)</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
-<!-- -->open <i>filename</i> read-only. [<em class=error>no-such-file</em>].
+<!-- -->open <i>filename</i> read-only (you can edit the sound, but not save the edits). [<em class=error>no-such-file</em>].
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -7158,6 +7179,7 @@ the result is a Scheme program that can be edited just like any
 other such text.
 </p>
 <p>
+<A NAME="editexpl"></a>
 Many editing operations within Snd actually only affect the current
 edit lists.  For example, if you delete a portion of a sound, the
 only thing that happens is that the edit list of that sound is
@@ -7168,7 +7190,7 @@ the edit list.  This means that ideally such operations are instantaneous
 and take no disk space no matter how large the sound being edited
 (in other cases we have to save at least the changed portion of the
 sound).  <a href="#ptreechannel">ptree-channel</a> (still in the experimental stages) extends this part of Snd to 
-arbitrary functions.
+(almost) arbitrary functions.
 </p>
 
 

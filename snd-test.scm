@@ -28,12 +28,10 @@
 ;;; test 25: Glib/gdk/gdk-pixbuf/pango/gtk (none yet)
 ;;; test 26: errors
 
-;;; TODO: test of off_t mark search
 ;;; TODO: GL tests, gtk (xg) tests
-;;; TODO: load-font current-font send-netscape apply-ladspa set-enved-selected-env
+;;; TODO: send-netscape apply-ladspa set-enved-selected-env
 ;;; TODO: mix panel env editor (apply button (|XmMessageBoxGetChild mix_panel |XmDIALOG_CANCEL_BUTTON)
 ;;; TODO: [before-]transform-hook? output-name-hook [requires New dialog]?
-;;; TODO: make-graph[-data?] of 1 samp, 
 ;;; TODO: lisp-graph-hook with forward proc, linear src moving backwards
 ;;; TODO: srate control change while using semitones
 ;;; TODO: control-panel apply to channel [apply button with ctrl and no active selection]
@@ -16858,7 +16856,7 @@ EDITS: 5
 				  (* (mus-sound-chans file) (mus-sound-srate file))))))
 	    "oboe.snd: chans: 1, srate: 22050, Sun, big endian short (16 bits), len: 2.30512475967407")
       (ftst '(mus-sound-duration "oboe.snd") 2.30512)
-      (stst '(mus-sound-comment "1.snd") ";Written Wed 08-May-02 10:37 PDT by bil at vulch (Linux/X86) using Allegro CL, clm of 9-May-02")
+      (stst '(mus-sound-comment "1.snd") ";Written Fri 21-Jun-02 08:23 PDT by bil at vulch (Linux/X86) using Allegro CL, clm of 18-June-02")
       (ftst '(radians->hz 2.84951704088598e-4) 1.0)
       (ftst '(radians->degrees 1.0) 57.2957801818848)
       (ftst '(degrees->radians 57.2957801818848) 1.0)
@@ -21090,6 +21088,8 @@ EDITS: 5
 		    (IF (not (= (|ascent struct) 10)) (snd-display ";ascent: ~A" (|ascent struct)))
 		    (IF (not (= (|descent struct) 0)) (snd-display ";descent: ~A" (|descent struct)))
 		    (IF (not (= (|attributes struct) 0)) (snd-display ";attributes: ~A" (|attributes struct)))
+		    (let ((fid (load-font "-*-helvetica-bold-r-*-*-14-*-*-*-*-*-*-*")))
+		      (if (not (|Font? fid)) (snd-display ";load-font -> ~A" fid)))
 		    )
 		  )))
 	    
@@ -21349,7 +21349,6 @@ EDITS: 5
 		   (wid (|XtCreateWidget "wid" |xmFormWidgetClass shell '()))
 		   (wid1 (|XtCreateWidget "wid1" |xmPushButtonWidgetClass wid '()))
 		   (wid2 (|XtVaCreateWidget "wid" |xmFormWidgetClass shell '())))
-	      (|XtSetWMColormapWindows shell '() 0)
 	      (IF (|XtIsApplicationShell wid) (snd-display ";XtIsApplicationShell"))
 	      (IF (not (|XtIsApplicationShell shell)) (snd-display ";XtIsApplicationShell of appshell"))
 	      (IF (not (|XtIsComposite wid)) (snd-display ";XtIsComposite"))
@@ -21658,6 +21657,7 @@ EDITS: 5
 			   (scr (|DefaultScreenOfDisplay dpy))
 			   (scrn (|XScreenNumberOfScreen scr))
 			   (gv (|XGCValues)))
+		      (if (not (|Font? (current-font ind))) (snd-display ";current-font: ~A" (current-font ind)))
 		      (set! (|foreground gv) (data-color))
 		      (set! (|background gv) (basic-color))
 		      (set! (|function gv) |GXcopy)
@@ -21826,8 +21826,6 @@ EDITS: 5
 	      (let ((cmap (|XCreateColormap dpy win vis |AllocNone)))
 		(set! cmap (|XCopyColormapAndFree dpy cmap))
 		(|XFreeColormap dpy cmap)
-		(|XSetWMColormapWindows dpy win '() 0)
-		(IF (|XGetWMColormapWindows dpy win) (snd-display ";XGetWMColormapWindows: ~A" (|XGetWMColormapWindows dpy win)))
 		(IF (|XCheckTypedWindowEvent dpy win |ExposureMask) 
 		    (snd-display ";XCheckTypedWindowEvent: ~A" (|XCheckTypedWindowEvent dpy win |ExposureMask)))
 		(IF (|XCheckTypedEvent dpy |ExposureMask) 
@@ -23050,7 +23048,7 @@ EDITS: 5
 		         |XtAppErrorMsg |XtErrorMsg |XtAppWarningMsg |XtWarningMsg |XtAppSetErrorHandler |XtSetErrorHandler
 		         |XtAppSetWarningHandler |XtSetWarningHandler |XtAppError |XtError |XtAppWarning |XtWarning
 		         |XtAddWorkProc |XtAppAddWorkProc |XtRemoveWorkProc |XtGetGC |XtAllocateGC |XtDestroyGC |XtReleaseGC
-		         |XtSetWMColormapWindows |XtFindFile |XtResolvePathname |XtDisownSelection |XtGetSelectionValue
+		         |XtFindFile |XtResolvePathname |XtDisownSelection |XtGetSelectionValue
 		         |XtGetSelectionValues |XtAppSetSelectionTimeout |XtSetSelectionTimeout |XtAppGetSelectionTimeout
 		         |XtGetSelectionTimeout |XtGetSelectionRequest |XtGetSelectionValueIncremental
 		         |XtGetSelectionValuesIncremental |XtCreateSelectionRequest |XtSendSelectionRequest
@@ -23078,7 +23076,7 @@ EDITS: 5
 		         |XScreenOfDisplay |XDefaultScreenOfDisplay |XEventMaskOfScreen |XScreenNumberOfScreen
 		         |XSetErrorHandler |XSetIOErrorHandler |XListPixmapFormats |XListDepths |XReconfigureWMWindow
 		         |XGetWMProtocols |XSetWMProtocols |XIconifyWindow |XWithdrawWindow |XGetCommand |XGetWMColormapWindows
-		         |XSetWMColormapWindows |XFreeStringList |XSetTransientForHint |XActivateScreenSaver
+		         |XFreeStringList |XSetTransientForHint |XActivateScreenSaver
 		         |XAllocColor |XAllocColorCells |XAllocColorPlanes |XAllocNamedColor
 		         |XAllowEvents |XAutoRepeatOff |XAutoRepeatOn |XBell |XBitmapBitOrder |XBitmapPad |XBitmapUnit
 		         |XCellsOfScreen |XChangeActivePointerGrab |XChangeGC |XChangeKeyboardControl |XChangeKeyboardMapping

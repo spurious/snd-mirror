@@ -403,43 +403,12 @@ AC_FUNC_VPRINTF
 # AC_CHECK_STRUCT_FOR([#include <sys/statfs.h>],statfs,f_bsize)
 
 
-# -------- OpenGL --------
-GL_LIBS=""
-GL_FILES=""
-GL_FLAGS=""
-have_gl=no
-if test "$with_gl" = yes || test "$with_just_gl" = yes ; then
-  AC_CHECK_HEADER(GL/gl.h,
-	[have_gl=yes],
-	[AC_CHECK_HEADER(/usr/X11R6/include/GL/gh.h,
-	 	[have_gl=yes
-		 GL_FLAGS="-I/usr/X11R6/include"
-		],
-		[AC_MSG_WARN(can't find GL headers)])])
-  if test "$have_gl" = yes ; then
-    AC_DEFINE(HAVE_GL)
-    if test "$with_just_gl" = yes ; then
-      AC_DEFINE(JUST_GL)
-    else
-      GL_FILES="gl.o"
-    fi   
-    GL_LIBS="-lGLU -lGL"
-    if test "$with_gtk" = yes; then
-      GL_LIBS="$GL_LIBS -lgdkglext-x11-0.x -lgtkglext-x11-0.x"
-      AC_CHECK_LIB(m, gdk_window_get_gl_config, [AC_DEFINE(HAVE_GTK_GL_EXT_0_1)], , $GL_LIBS)
-    fi
-  fi
-fi
-AC_SUBST(GL_LIBS)
-AC_SUBST(GL_FILES)
-AC_SUBST(GL_FLAGS)
-
-
 #--------------------------------------------------------------------------------
 # X/Motif/Gtk+
 #--------------------------------------------------------------------------------
 
 AC_PATH_XTRA
+have_gtk_2=no
 
 if test "$no_x" = yes || test "$with_no_gui" = yes ; then
 
@@ -558,6 +527,7 @@ else
     AM_PATH_GTK_2_0(1.3.13,
       [
 	AC_DEFINE(HAVE_GTK2)
+	have_gtk_2=yes
 	with_gtk=yes
 	AC_CHECK_LIB(m, gtk_file_selection_get_selections, [AC_DEFINE(HAVE_GTK_FILE_SELECTION_GET_SELECTIONS)], , $GTK_LIBS)
 	AC_CHECK_LIB(m, gtk_icon_set_get_type, [AC_DEFINE(HAVE_GTK_ICON_SET_GET_TYPE)], , $GTK_LIBS)
@@ -617,6 +587,42 @@ fi
 
 AC_SUBST(GX_FILES)
 AC_SUBST(GX_HEADERS)
+
+
+# -------- OpenGL --------
+GL_LIBS=""
+GL_FILES=""
+GL_FLAGS=""
+have_gl=no
+if test "$with_gl" = yes || test "$with_just_gl" = yes ; then
+  if test "$with_motif" = yes || test "$have_gtk_2" = yes ; then
+    AC_CHECK_HEADER(GL/gl.h,
+	  [have_gl=yes],
+	  [AC_CHECK_HEADER(/usr/X11R6/include/GL/gh.h,
+	 	  [have_gl=yes
+		   GL_FLAGS="-I/usr/X11R6/include"
+		  ],
+		  [AC_MSG_WARN(can't find GL headers)])])
+    if test "$have_gl" = yes ; then
+      AC_DEFINE(HAVE_GL)
+      if test "$with_just_gl" = yes ; then
+        AC_DEFINE(JUST_GL)
+      else
+        GL_FILES="gl.o"
+      fi   
+      GL_LIBS="-lGLU -lGL"
+      if test "$with_gtk" = yes; then
+        GL_LIBS="$GL_LIBS -lgdkglext-x11-0.x -lgtkglext-x11-0.x"
+        AC_CHECK_LIB(m, gdk_window_get_gl_config, [AC_DEFINE(HAVE_GTK_GL_EXT_0_1)], , $GL_LIBS)
+      fi
+    fi
+  else
+	AC_MSG_WARN([GL only works with Motif or Gtk2])
+  fi
+fi
+AC_SUBST(GL_LIBS)
+AC_SUBST(GL_FILES)
+AC_SUBST(GL_FLAGS)
 
 
 #--------------------------------------------------------------------------------

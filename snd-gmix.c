@@ -101,8 +101,8 @@ static int allocate_amps(int chans)
     {
       if (chans_allocated == 0)
 	{
-	  if (chans < 4)
-	    chans_allocated = 4;
+	  if (chans < 8)
+	    chans_allocated = 8;
 	  else chans_allocated = chans;
 	  w_amp_numbers = (GtkWidget **)CALLOC(chans_allocated, sizeof(GtkWidget *));
 	  w_amp_labels = (GtkWidget **)CALLOC(chans_allocated, sizeof(GtkWidget *));
@@ -566,7 +566,7 @@ GtkWidget *make_mix_panel(snd_state *ss)
 
 
       /* AMP */
-      chans = allocate_amps(4);
+      chans = allocate_amps(8);
       for (i = 0; i < chans; i++)
 	{
 	  w_amp_forms[i] = gtk_hbox_new(FALSE, 2);
@@ -670,7 +670,7 @@ static void update_mix_panel(int mix_id)
       gtk_entry_set_text(GTK_ENTRY(w_beg), lab);
 
       chans = mix_input_chans_from_id(mix_id);
-      if (chans > 4) chans = 4; /* TODO: fix this! */
+      if (chans > 8) chans = 8;
 
       for (i = 0; i < chans; i++)
 	{

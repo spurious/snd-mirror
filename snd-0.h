@@ -86,9 +86,9 @@
   #define INIT_FILE_NAME "snd-init"
 #endif
 
-#define STRFTIME_FORMAT                  "%a %d-%b-%Y %H:%M %Z"
+#define STRFTIME_FORMAT "%a %d-%b-%Y %H:%M %Z"
 
-#define STR_decimal                      '.'
+#define STR_decimal '.'
 /* defines the decimal point character used where I'm making float representations by hand */
 
 #define XOR(a, b) ((~((a) & (b))) & ((a) | (b)))
@@ -247,11 +247,6 @@ enum {MINI_OFF, MINI_CURSOR, MINI_FIND, MINI_PROMPT, MINI_REPORT, MINI_USER};
 #define DEFAULT_INIT_WINDOW_Y -1
 #define DEFAULT_INIT_WINDOW_WIDTH 0
 #define DEFAULT_INIT_WINDOW_HEIGHT 0
-
-#define DEFAULT_INITIAL_X0 0.0
-#define DEFAULT_INITIAL_X1 0.1
-#define DEFAULT_INITIAL_Y0 -1.0
-#define DEFAULT_INITIAL_Y1 1.0
 
 #define reverb_control_decay(ss) ss->Reverb_Control_Decay
 #define in_set_reverb_control_decay(ss, a) ss->Reverb_Control_Decay = a

@@ -1,5 +1,5 @@
-#ifndef STRS_H_LOADED
-#define STRS_H_LOADED
+#ifndef SND_STRINGS_H_LOADED
+#define SND_STRINGS_H_LOADED
 
 #define STR_Apply		     	 "Apply"
 #define STR_Back                         "Back"

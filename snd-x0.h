@@ -27,17 +27,6 @@
   #define XM_FONT_FREE XmFontListFree
 #endif
 
-#ifdef XmNtoolTipString
-  #define MOTIF_2_2 1
-#endif
-
-#if (XmVERSION >= 2)
-  #define OVERRIDE_TOGGLE 1
-  /* Motif 2.0 defines control-button1 to be "take focus" -- this is not a good idea!! */
-#else
-  #define OVERRIDE_TOGGLE 0
-#endif
-
 #if (!(defined(HAVE_XPM)))
   #ifdef LINUX
     #define HAVE_XPM 1
@@ -83,7 +72,6 @@
 #endif
 
 #define SCROLLBAR_MAX 1000
-#define SCROLLBAR_SX_MAX 2000
 #define SCROLLBAR_MID 500
 #define SCROLLBAR_LINEAR_MAX 150
 #define SCROLLBAR_LINEAR_MULT 0.0011584929
@@ -254,6 +242,7 @@ typedef struct {
 #define HELP_TEXT_FONT(a) (a->sgx)->help_text_fontlist
 #define COLOR_TYPE Pixel
 /* this was unsigned long = Pixel (/usr/X11R6/include/X11/Intrinsic.h) */
+
 #define KEY_TO_NAME(key) XKeysymToString(key)
 /* on the Sun, if key is 0, XKeysymToString segfaults! */
 

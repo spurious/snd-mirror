@@ -1,5 +1,12 @@
 #include "snd.h"
 
+#if (XmVERSION >= 2)
+  #define OVERRIDE_TOGGLE 1
+  /* Motif 2.0 defines control-button1 to be "take focus" -- this is not a good idea!! */
+#else
+  #define OVERRIDE_TOGGLE 0
+#endif
+
 static Widget listener_text = NULL;
 
 static Widget completion_help_dialog = NULL, completion_help_list = NULL;

@@ -68,8 +68,8 @@ void set_spectro_x_scale(snd_state *ss, Float val);
 void set_spectro_y_scale(snd_state *ss, Float val);
 void set_spectro_z_scale(snd_state *ss, Float val);
 void set_spectro_cutoff(snd_state *ss, Float val);
-void view_orientation_callback(Widget w, XtPointer clientData, XtPointer callData);
-void view_color_callback(Widget w, XtPointer clientData, XtPointer callData);
+void view_orientation_callback(Widget w, XtPointer context, XtPointer info);
+void view_color_callback(Widget w, XtPointer context, XtPointer info);
 int color_dialog_is_active(void);
 int orientation_dialog_is_active(void);
 void reflect_spectro(snd_state *ss);
@@ -79,8 +79,8 @@ int set_with_gl(snd_state *ss, int val);
 
 /* -------- snd-xlistener.c -------- */
 
-void textfield_focus_callback(Widget w, XtPointer clientData, XtPointer callData);
-void textfield_unfocus_callback(Widget w, XtPointer clientData, XtPointer callData);
+void textfield_focus_callback(Widget w, XtPointer context, XtPointer info);
+void textfield_unfocus_callback(Widget w, XtPointer context, XtPointer info);
 void add_completer_to_textfield(snd_state *ss, Widget w, int completer);
 void snd_completion_help(snd_state *ss, int matches, char **buffer);
 void listener_append_and_prompt(snd_state *ss, char *msg);
@@ -226,7 +226,7 @@ int region_browser_is_active(void);
 void delete_region_and_update_browser(snd_state *ss, int n);
 void reflect_play_region_stop(int n);
 void set_region_protect(int reg, int protect);
-void view_region_callback(Widget w, XtPointer clientData, XtPointer callData);
+void view_region_callback(Widget w, XtPointer context, XtPointer info);
 int region_dialog_is_active(void);
 void allocate_region_rows(int n);
 void reflect_regions_in_region_browser(void);
@@ -264,7 +264,7 @@ void get_current_color(int colormap, int j, unsigned short *r, unsigned short *g
 
 /* -------- snd-xfind.c -------- */
 
-void edit_find_callback(Widget w, XtPointer clientData, XtPointer callData);
+void edit_find_callback(Widget w, XtPointer context, XtPointer info);
 #if DEBUGGING
   void g_init_gxfind(void);
 #endif
@@ -367,7 +367,7 @@ COLOR_TYPE get_background_color(chan_info *cp, axis_context *ax);
 void set_foreground_color(chan_info *cp, axis_context *ax, Pixel color);
 GC copy_GC(chan_info *cp);
 GC erase_GC(chan_info *cp);
-void graph_key_press(Widget w, XtPointer clientData, XEvent *event, Boolean *cont);
+void graph_key_press(Widget w, XtPointer context, XEvent *event, Boolean *cont);
 void cleanup_cw(chan_info *cp);
 int fixup_cp_cgx_ax_wn(chan_info *cp);
 void change_channel_style(snd_info *sp, int new_style);
@@ -458,7 +458,7 @@ void make_a_big_star_outa_me(char *shortname, int big_star);
 void set_file_browser_play_button(char *name, int state);
 void set_file_sort_sensitive(int sensitive);
 void highlight_selected_sound(snd_state *ss);
-void view_files_callback(Widget w, XtPointer clientData, XtPointer callData);
+void view_files_callback(Widget w, XtPointer context, XtPointer info);
 Widget start_file_dialog(snd_state *ss, int width, int height);
 int file_dialog_is_active(void);
 file_info *raw_data_dialog_to_file_info(char *filename, snd_state *ss, const char *title);
@@ -528,7 +528,7 @@ int record_dialog_is_active(void);
 
 /* -------- snd-xprint.c -------- */
 
-void file_print_callback(Widget w, XtPointer clientData, XtPointer callData);
+void file_print_callback(Widget w, XtPointer context, XtPointer info);
 
 
 /* -------- snd-xxen.c -------- */

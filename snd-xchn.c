@@ -59,6 +59,8 @@ static void sy_changed(int value, chan_info *cp)
   apply_y_axis_change(ap, cp);
 }
 
+#define SCROLLBAR_SX_MAX 2000
+
 static void sx_changed(int value, chan_info *cp)
 {
   /* treat as centered with non-slider trough as defining current bounds */

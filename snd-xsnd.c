@@ -1788,12 +1788,9 @@ static snd_info *add_sound_window_with_parent (Widget parent, char *filename, sn
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XM_FONT_RESOURCE, BUTTON_FONT(ss)); n++;
       XtSetArg(args[n], XmNrecomputeSize, FALSE); n++;
-#if MOTIF_2_2
-      {
+      /* in Motif 2.2 this sets up a tooltip:
 	XtSetArg(args[n], XmNtoolTipString, XmStringCreate("play this sound", XmFONTLIST_DEFAULT_TAG)); n++;
-	/* (|XtSetValues (cadr (main-widgets)) (list |XmNtoolTipEnable #t)) */
-      }
-#endif
+      */
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNselectColor, (ss->sgx)->pushed_button_color); n++;}
       sw[W_play] = make_togglebutton_widget(STR_play, sw[W_name_form], args, n);
       XtAddCallback(sw[W_play], XmNhelpCallback, play_help_callback, ss);

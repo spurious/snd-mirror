@@ -1196,12 +1196,6 @@ static int checked_write(int tfd, char *buf, int chars)
   return(MUS_NO_ERROR);
 }
 
-#ifdef WINDOZE
-  #undef min
-#endif
-
-#define min(x, y)  ((x) < (y) ? (x) : (y))
-
 off_t mus_file_write_zeros(int tfd, off_t num)
 {
   off_t lim;
@@ -1227,14 +1221,16 @@ off_t mus_file_write_zeros(int tfd, off_t num)
       return(MUS_ERROR);
     }
   lim = num * (fd->bytes_per_sample);
-  curnum = min(lim, BUFLIM);
+  curnum = lim;
+  if (curnum > BUFLIM) curnum = BUFLIM;
   /* for (i = 0; i < curnum; i++) charbuf[i] = 0; */ /* using calloc, so surely this is unnecessary? */
   while (curnum > 0)
     {
       err = checked_write(tfd, charbuf, curnum);
       if (err == MUS_ERROR) return(MUS_ERROR);
       lim -= (BUFLIM);
-      curnum = min(lim, BUFLIM);
+      curnum = lim;
+      if (curnum > BUFLIM) curnum = BUFLIM;
     }
   FREE(charbuf);
   return(num);

@@ -409,7 +409,7 @@
 (hey "#include <string.h>~%~%")
 
 (hey "/* kludges for GL 1.1 */~%")
-(hey "#ifndef GL_VERSION_1_2~%")
+(hey "#ifndef GL_TEXTURE_BINDING_3D~%") ; can't use GL_VERSION_1_2 here
 (hey "#define GL_TEXTURE_BINDING_3D 0~%")
 (hey "#define GL_TEXTURE0_ARB 0~%")
 (hey "#define GL_TEXTURE1_ARB 0~%")
