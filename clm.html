@@ -543,7 +543,7 @@ and the amount of the x-axis taken by a given value is its weight.
 Say we want 40% .5, and 60% 1.0,
 </p><pre>
 (loop for i from 0 to 10 collect 
-  (envelope-interp (list 0 .5 40 .5 40.01 1.0 100 1.0) (random 100.0))
+  (envelope-interp (random 100.0) (list 0 .5 40 .5 40.01 1.0 100 1.0)))
 =&gt; '(1.0 1.0 0.5 1.0 1.0 0.5 0.5 1.0 0.5 1.0 1.0) 
 </pre>
 
@@ -2401,6 +2401,20 @@ freely with "normal" instruments.  The latter run to completion when they are
 called, while the currently running p-instruments wait in the background.
 Obviously, calls on these
 instruments must be ordered by begin-time.</p>
+
+<p>Any statements after the run loop in a parallel instrument are actually
+executed as soon as the instrument is called; the run loop contents are
+deferred until the scheduler starts the loop, but the lisp code has long
+since exited. This can be a problem if you open input files.
+In the no-ffi case (i.e. clisp primarily), the open and subsequent close
+happen immediately, but the rc (or rcp) program re-opens and re-closes
+such files themselves.  In the FFI case, however, the close-input frees
+the file descriptor and associated data, leading to a segfault once the
+instrument's run loop starts to run.  So... Defer close-input in such
+a case to a point after the instrument has finished processing.  Perhaps
+it would be better to provide run support for open-input and
+close-input.
+</p>
 
 <!-- TOPIC instruments -->
 <!-- INDEX ins-files:Instruments --><A NAME="ins-files"></a>

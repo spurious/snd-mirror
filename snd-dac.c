@@ -3,11 +3,7 @@
  *         then as running, at each block reset to initial - new scaled
  *         (negative pm = longer delay)
  * TODO  play with expand is cutoff too soon (and reverb?)
- * TODO  tie non-gwrapped form into same syntax (so set-reverb-funcs can use snd-nrev, etc) (and fix docs/tests!)
- * TODO  find some way to avoid consing in gwraps
  * TODO  add freeverb in both versions (and reflect in control panel name)
- * TODO  perhaps add special JUST_EXPAND/JUST_REVERB/JUST_FILTER cases?
- * TODO  filter should be settable like reverb (especially as clm-gen)
  */
 
 /* this was sound-oriented; changed to be channel-oriented 31-Aug-00 */
@@ -119,12 +115,18 @@ static SCM g_set_reverb_funcs(SCM rev, SCM make_rev, SCM free_rev)
       g_reverb = rev;
       g_make_reverb = make_rev;
       g_free_reverb = free_rev;
-      snd_protect(g_reverb);
-      snd_protect(g_make_reverb);
-      snd_protect(g_free_reverb);
       use_g_reverb = 1;
     }
-  else use_g_reverb = 0;
+  else 
+    {
+      g_make_reverb = SND_LOOKUP("make-snd-nrev");
+      g_reverb = SND_LOOKUP("snd-nrev");
+      g_free_reverb = SND_LOOKUP("free-snd-nrev");
+      use_g_reverb = 0;
+    }
+  snd_protect(g_reverb);
+  snd_protect(g_make_reverb);
+  snd_protect(g_free_reverb);
   return(rev);
 }
 
@@ -140,10 +142,14 @@ static SCM g_set_contrast_func(SCM func)
   if (procedure_ok(func,2,0,"set-" S_contrast_func,"contrast",1))
     {
       g_contrast = func;
-      snd_protect(g_contrast);
       use_g_contrast = 1;
     }
-  else use_g_contrast = 0;
+  else 
+    {
+      g_contrast = SND_LOOKUP("snd-contrast");
+      use_g_contrast = 0;
+    }
+  snd_protect(g_contrast);
   return(func);
 }
 
@@ -178,9 +184,6 @@ typedef struct {
   int num_allpasses;
   mus_any **allpasses;
   mus_any *onep;
-#if USE_GWRAPPED_FUNCS
-  Float *vals;
-#endif
 } rev_info;
 
 static void *global_reverb = NULL;
@@ -343,18 +346,65 @@ static Float expand(dac_info *dp, Float sr, Float ex)
 /* -------- reverb -------- */
 #if USE_GWRAPPED_FUNCS
 
-#define BASE_DLY_LEN 14
-static int base_dly_len[BASE_DLY_LEN] = {1433, 1601, 1867, 2053, 2251, 2399, 347, 113, 37, 59, 43, 37, 29, 19};
-static int dly_len[BASE_DLY_LEN];
-static Float comb_factors[6] = {0.822,0.802,0.773,0.753,0.753,0.733};
+static SCM s_nrev_out;
+static SCM *nrev_out;
 
-static void *make_nrev(Float revlen, Float sampling_rate, int chans)
+static SCM g_nrev(SCM ptr, SCM val, SCM chans)
+{
+  rev_info *r;
+  int i,chns;
+  Float rin,rout;
+#ifdef SCM_REAL_VALUE
+  rin = SCM_REAL_VALUE(val);
+  chns = SCM_INUM(chans);
+#else
+  rin = TO_C_DOUBLE(val);
+  chns = TO_C_INT(chans);
+#endif
+  r  = (rev_info *)gh_scm2ulong(ptr);
+  rout = mus_all_pass(r->allpasses[3],
+	   mus_one_pole(r->onep,
+	     mus_all_pass(r->allpasses[2],
+	       mus_all_pass(r->allpasses[1],
+		 mus_all_pass(r->allpasses[0],
+		   mus_comb(r->combs[0],rin,0.0) + 
+	 	   mus_comb(r->combs[1],rin,0.0) + 
+		   mus_comb(r->combs[2],rin,0.0) + 
+ 		   mus_comb(r->combs[3],rin,0.0) + 
+		   mus_comb(r->combs[4],rin,0.0) + 
+		   mus_comb(r->combs[5],rin,0.0),
+		 0.0),
+	       0.0),
+	     0.0)),
+	   0.0);
+  for (i=0;i<chns;i++)
+#ifdef SCM_REAL_VALUE
+    SCM_REAL_VALUE(nrev_out[i]) = (double)(mus_all_pass(r->allpasses[i+4],rout,0.0));
+#else
+    nrev_out[i] = gh_double2scm(mus_all_pass(r->allpasses[i+4],rout,0.0));
+#endif
+  return(s_nrev_out);
+}
+
+static Float comb_factors[6] = {0.822,0.802,0.773,0.753,0.753,0.733};
+static SCM g_make_nrev(SCM ulen, SCM srate, SCM chns) 
 {
   /* Mike McNabb's nrev from Mus10 days (ca. 1978) */
+  Float revlen,sampling_rate;
+  int chans;
+  #define BASE_DLY_LEN 14
+  static int base_dly_len[BASE_DLY_LEN] = {1433, 1601, 1867, 2053, 2251, 2399, 347, 113, 37, 59, 43, 37, 29, 19};
+  static int dly_len[BASE_DLY_LEN];
   Float srscale;
   int i,j,len;
   rev_info *r;
-  srscale = reverb_length*sampling_rate/25641.0;
+  revlen = TO_C_DOUBLE(ulen);
+  sampling_rate = TO_C_DOUBLE(srate);
+  chans = TO_C_INT(chns);
+  s_nrev_out = gh_make_vector(gh_int2scm(chans),gh_double2scm(0.0));
+  snd_protect(s_nrev_out);
+  nrev_out = SCM_VELTS(s_nrev_out);
+  srscale = revlen*sampling_rate/25641.0;
   for (i=0;i<BASE_DLY_LEN;i++) 
     dly_len[i] = get_prime((int)(srscale*base_dly_len[i]));
   r=(rev_info *)CALLOC(1,sizeof(rev_info));
@@ -374,14 +424,14 @@ static void *make_nrev(Float revlen, Float sampling_rate, int chans)
       else len = get_prime((int)(40 + mus_random(20.0)));
       r->allpasses[i+4] = mus_make_all_pass(-0.700,0.700,len,NULL,len);
     }
-  r->vals = (Float *)CALLOC(chans,sizeof(Float));
-  return((void *)r);
+  return(gh_ulong2scm((unsigned long)r));
 }
 
-static void free_nrev(void *ur)
+static SCM g_free_nrev(SCM ptr) 
 {
   int i;
-  rev_info *r = (rev_info *)ur;
+  rev_info *r;
+  r = (rev_info *)gh_scm2ulong(ptr);
   if (r)
     {
       for (i=0;i<r->num_combs;i++) if (r->combs[i]) mus_free(r->combs[i]);
@@ -389,64 +439,8 @@ static void free_nrev(void *ur)
       mus_free(r->onep);
       for (i=0;i<r->num_allpasses;i++) if (r->allpasses[i]) mus_free(r->allpasses[i]);
       FREE(r->allpasses);
-      FREE(r->vals);
       FREE(r);
     }
-}
-
-static Float *nrev(void *ur, Float rin, int chans)
-{
-  rev_info *r = (rev_info *)ur;
-  Float rout;
-  int i;
-  rout = mus_all_pass(r->allpasses[3],
-	   mus_one_pole(r->onep,
-	     mus_all_pass(r->allpasses[2],
-	       mus_all_pass(r->allpasses[1],
-		 mus_all_pass(r->allpasses[0],
-		   mus_comb(r->combs[0],rin,0.0) + 
-	 	   mus_comb(r->combs[1],rin,0.0) + 
-		   mus_comb(r->combs[2],rin,0.0) + 
- 		   mus_comb(r->combs[3],rin,0.0) + 
-		   mus_comb(r->combs[4],rin,0.0) + 
-		   mus_comb(r->combs[5],rin,0.0),
-		 0.0),
-	       0.0),
-	     0.0)),
-	   0.0);
-  for (i=0;i<chans;i++)
-    r->vals[i] = mus_all_pass(r->allpasses[i+4],rout,0.0);
-  return(r->vals);
-}
-
-static SCM s_nrev_out;
-static SCM *nrev_out;
-
-static SCM g_nrev(SCM ptr, SCM val, SCM chans)
-{
-  int i;
-  Float *vals;
-#ifdef SCM_REAL_VALUE
-  vals = nrev((void *)gh_scm2ulong(ptr),SCM_REAL_VALUE(val),SCM_INUM(chans));
-#else
-  vals = nrev((void *)gh_scm2ulong(ptr),TO_C_DOUBLE(val),TO_C_INT(chans));
-#endif
-  for (i=0;i<chans;i++)
-    nrev_out[i] = gh_double2scm(vals[i]);
-  return(s_nrev_out);
-}
-
-static SCM g_make_nrev(SCM len, SCM srate, SCM chans) 
-{
-  s_nrev_out = gh_make_vector(gh_int2scm(chans),gh_double2scm(0.0));
-  snd_protect(s_nrev_out);
-  nrev_out = SCM_VELTS(s_nrev_out);
-  return(gh_ulong2scm((unsigned long)make_nrev(TO_C_DOUBLE(len),TO_C_DOUBLE(srate),TO_C_INT(chans))));
-}
-
-static SCM g_free_nrev(SCM ptr) 
-{
-  free_nrev((void *)gh_scm2ulong(ptr));
   snd_unprotect(s_nrev_out);
   return(SCM_BOOL_T);
 }
@@ -483,13 +477,13 @@ static void reverb(void *ur, Float rin, MUS_SAMPLE_TYPE **outs, int ind, int cha
 
 /* NOT GWRAPPED */
 #define BASE_DLY_LEN 14
-static int base_dly_len[BASE_DLY_LEN] = {1433, 1601, 1867, 2053, 2251, 2399, 347, 113, 37, 59, 43, 37, 29, 19};
-static int dly_len[BASE_DLY_LEN];
 static Float comb_factors[6] = {0.822,0.802,0.773,0.753,0.753,0.733};
 
 static void *make_reverb(snd_info *sp, Float sampling_rate, int chans)
 { 
   /* Mike McNabb's nrev from Mus10 days (ca. 1978) */
+  static int base_dly_len[BASE_DLY_LEN] = {1433, 1601, 1867, 2053, 2251, 2399, 347, 113, 37, 59, 43, 37, 29, 19};
+  static int dly_len[BASE_DLY_LEN];
   Float srscale;
   int i,j,len;
   rev_info *r;
@@ -2447,13 +2441,15 @@ void g_init_dac(SCM local_doc)
   DEFINE_PROC(gh_new_procedure("make-snd-nrev",SCM_FNC g_make_nrev,3,0,0),"make-snd-nrev is the default reverb make function");
   DEFINE_PROC(gh_new_procedure("snd-nrev",SCM_FNC g_nrev,3,0,0),"snd-nrev is the default reverb");
   DEFINE_PROC(gh_new_procedure("free-snd-nrev",SCM_FNC g_free_nrev,1,0,0),"free-snd-nrev is the default reverb free function");
-
-  gh_eval_str("(set-reverb-funcs snd-nrev make-snd-nrev free-snd-nrev)");
-
   DEFINE_PROC(gh_new_procedure("snd-contrast",SCM_FNC g_mus_contrast,2,0,0),"snd-contrast is the default contrast function");
-
-  gh_eval_str("(set-contrast-func snd-contrast)");
+#else
+  gh_define("make-snd-nrev",SCM_BOOL_F);
+  gh_define("snd-nrev",SCM_BOOL_F);
+  gh_define("free-snd-nrev",SCM_BOOL_F);
+  gh_define("snd-contrast",SCM_BOOL_F);
 #endif
+  gh_eval_str("(set-reverb-funcs snd-nrev make-snd-nrev free-snd-nrev)");
+  gh_eval_str("(set-contrast-func snd-contrast)");
 }
 
 #endif

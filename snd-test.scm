@@ -4622,8 +4622,8 @@
 		(set-contrast-func (lambda (a b) (* a b))))
 	      (begin
 		(set! rev-funcs-set #f)
-		(set-reverb-funcs #f #f #f)
-		(set-contrast-func #f)))
+		(set-reverb-funcs snd-nrev make-snd-nrev free-snd-nrev)
+		(set-contrast-func snd-contrast)))
 
 	  (add-hook! (edit-hook) (lambda () #f))
 	  (as-one-edit (lambda () (set! (sample 200) .2) (set! (sample 300) .3)))

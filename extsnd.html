@@ -2001,8 +2001,7 @@ sets its value to val.
                                   the current sample and the current 'contrast' slider setting, 
                                   returning a new sample, the result of the control panel contrast 
                                   function; <i>func</i> replaces the built-in contrast function.
-                                  Pass #f to return to the built-in version. Contrast-func returns 
-                                  this function.
+                                  The built-in default (mus-contrast-enhancement) is snd-contrast.
 
   <b><a name="reverbfuncs">set-reverb-funcs</a></b>  (reverb make-reverb free-reverb)
                                   This function replaces the built-in Snd reverb with your own.
@@ -2023,23 +2022,16 @@ sets its value to val.
                                      )
 </small>
                                   The three arguments are the reverb, the function that makes or
-                                  initializes the reverb, and the function to free the reverb.  Set
-                                  these to #f to return to the built-in versions.  The make-reverb
-                                  function takes three arguments, the current value of the "len" slider,
-                                  the current sampling-rate and the number of output channels active; it
-                                  returns an SCM object that is subsequently passed to the reverb and
-                                  free-reverb functions (ignored in the example above, as is the chans
+                                  initializes the reverb, and the function to free the reverb.
+                                  The built-in defaults are snd-nrev, make-snd-nrev, and free-snd-nrev.
+                                  The make-reverb function takes three arguments, the current value of the 
+                                  "len" slider, the current sampling-rate and the number of output channels 
+                                  active; it returns an SCM object that is subsequently passed to the reverb 
+                                  and free-reverb functions (ignored in the example above, as is the chans
                                   argument to the reverb function).  The reverb function takes 3
                                   arguments, the thing returned by make-reverb, the current reverb input
                                   sample, and the number of channels of output needed; it should return
                                   a vector of output reverb contributions.
-
-                                  If Snd was built with -DUSE_GWRAPPED_FUNCS then the built-in functions
-                                  are treated exactly like a user-supplied set; their names are snd-nrev,
-                                  make-snd-nrev, and free-snd-nrev.  This flag defaults to 0 because I still
-                                  haven't figured out how to reduce the Guile function call and Scheme-to-C
-                                  float conversion overhead to the point where it has no effect on performance.
-                                  If you include this flag, you may get dropouts etc.
 
   <b><a name="sndsetsamples">set-samples</a></b>       (samp samps data <i>snd chn trunc</i>) 
                                   set <i>snd</i>'s channel <i>chn</i>'s samples starting from
