@@ -271,6 +271,7 @@ void news_help(snd_state *ss)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+7-Feb:   German translation (po/de.po) thanks to Michael Scholz.\n\
 30-Jan:  gettext changes\n\
 12-Jan:  snd-6.5\n\
 8-Jan:   removed loop-samples.\n\
