@@ -2077,6 +2077,7 @@ that were removed from or renamed in Snd-5.
   <em class=def><A NAME="adddeleteoption">add-delete-option, add-rename-option</a></em>
   <em class=def><A NAME="marksynccolor">mark-sync-color</a></em> new-color
   <em class=def><A NAME="addtooltip">add-tooltip</a></em> widget tip
+  <em class=def><A NAME="menuoption">menu-option</a></em> menu-name
 </pre>
 
 <p>snd-motif.scm has procedures that rely on the Motif module (xm.c).
@@ -2145,6 +2146,7 @@ by contrib/dlp/new-buttons.scm).
 <b>mark-sync-color</b> uses the draw-mark-hook to set the color of sync'd marks.
 <b>add-tooltip</b> adds a tooltip (also known as bubble-help) to a widget.  Once added,
 set the variable <b>with-tooltips</b> to #f to turn it off.
+<b>menu-option</b> returns the widget associated with a given menu item name ("Print" for example)
 </p>
 
 

@@ -1,5 +1,6 @@
 snd change log
 
+  25-Feb:    gtk2 port with xg (see example in grfsnd.html).
   11-Feb:    snd 5.7.
              xg.c (gtk2 bindings), makexg.scm, xgdata.scm.
   30-Jan:    removed stats dialog, snd-xstats.c, snd-gstats.c, show-usage-stats, update-usage-stats.

@@ -1,18 +1,7 @@
 #!/usr/lib/snd/bin/guile -s
 !#
 
-;;; makexg.scm > xg.c creates the gtk2/gdk/pango/glib bindings using xgdata.scm
-
-;;; TODO: Doc/Test/snd-motif-translations etc
-;;; TODO: tie into libxm (configure.ac etc)
-;;; TODO: g_signal handlers: "GtkSignalFunc" also "GtkEmissionHook"
-;;;       lambda 4(etc) arg case: void hsc(GtkWidget *w, gint row, gint column, GdkEventButton *event, gpointer context) ; from clist -- obsolete?
-;;; TODO: struct (and listable) print
-;;; TODO: event casts?
-;;;   GdkColor|GC|GCValues|Event* make?
-;;; TODO: add unicode handlers from glib
-;;; TODO: unprotect *_remove?
-;;; TODO: mark ptr args that can be null
+;;; makexg.scm creates the gtk2/gdk/pango/glib bindings using xgdata.scm, writes xg.c and xg-ruby.c
 
 (use-modules (ice-9 debug))
 (use-modules (ice-9 format))
@@ -23,8 +12,21 @@
 (debug-enable 'backtrace)
 (read-enable 'positions)
 
+(define xg-file (open-output-file "xg.c"))
+(define xg-ruby-file (open-output-file "xg-ruby.c"))
+
 (define (hey . args)
-  (display (apply format #f args)))
+  (display (apply format #f args) xg-file))
+
+(define (heyc arg)
+  (display arg xg-file))
+
+(define (say . args)
+  (display (apply format #f args) xg-ruby-file))
+
+(define (say-hey . args)
+  (apply hey args)
+  (apply say args))
 
 (define names '())
 (define types '())
@@ -126,11 +128,24 @@
   (and (= (length arg) 3)
        (eq? (caddr arg) 'null)))
 
+(define (opt-arg? arg)
+  (and (= (length arg) 3)
+       (eq? (caddr arg) 'opt)))
+
 (define (ref-args args)
   (let ((ctr 0))
     (for-each
      (lambda (arg)
        (if (ref-arg? arg)
+	   (set! ctr (1+ ctr))))
+     args)
+    ctr))
+
+(define (opt-args args)
+  (let ((ctr 0))
+    (for-each
+     (lambda (arg)
+       (if (opt-arg? arg)
 	   (set! ctr (1+ ctr))))
      args)
     ctr))
@@ -193,14 +208,19 @@
 						   (substring given-name 1 (string-length given-name))
 						   'null)
 					       data))
-			    (if (char=? (string-ref given-name 0) #\[) 
-				(begin
-				  (set! reftype (deref-type (list type)))
-				  (set! data (cons (list type 
-							 (substring given-name 1 (- (string-length given-name) 1))
-							 given-name) 
-						   data)))
-				(set! data (cons (list type given-name) data))))
+			    (if (char=? (string-ref given-name 0) #\#)
+				(set! data (cons (list type 
+						       (substring given-name 1 (string-length given-name))
+						       'opt)
+						 data))
+				(if (char=? (string-ref given-name 0) #\[) 
+				    (begin
+				      (set! reftype (deref-type (list type)))
+				      (set! data (cons (list type 
+							     (substring given-name 1 (- (string-length given-name) 1))
+							     given-name) 
+						       data)))
+				    (set! data (cons (list type given-name) data)))))
 			(if reftype (set! type reftype))
 
 			(if (eq? broken 'broken)
@@ -547,7 +567,7 @@
 
 (define (CNAM name alias)
   (if (assoc name names)
-      (hey "~A CNAM~%" name)
+      (no-way "~A CNAM~%" name)
       (begin
 	(set! vars (cons (list name alias) vars))
 	(set! names (cons (cons name 'name) names)))))
@@ -574,7 +594,7 @@
   (let ((name (cadr-str data))
 	(args (caddr-str data)))
     (if (assoc name names)
-	(hey "~A CFNC~%" name)
+	(no-way "~A CFNC~%" name)
 	(let ((type (car-str data)))
 	  (if (not (member type types))
 	      (set! types (cons type types)))
@@ -588,7 +608,7 @@
   (let ((name (cadr-str data))
 	(args (caddr-str data)))
     (if (assoc name names)
-	(hey "~A CFNC-broken~%" name)
+	(no-way "~A CFNC-broken~%" name)
 	(let ((type (car-str data)))
 	  (if (and (not (member type types))
 		   (not (member type deprecated-types))
@@ -602,7 +622,7 @@
   (let ((name (cadr-str data))
 	(args (caddr-str data)))
     (if (assoc name names)
-	(hey "~A CFNC-deprecated~%" name)
+	(no-way "~A CFNC-deprecated~%" name)
 	(let ((type (car-str data)))
 	  (if (and (not (member type types))
 		   (not (member type deprecated-types)))
@@ -615,7 +635,7 @@
   (let ((name (cadr-str data))
 	(args (caddr-str data)))
     (if (assoc name names)
-	(hey "~A CFNC-extra~%" name)
+	(no-way "~A CFNC-extra~%" name)
 	(let ((type (car-str data)))
 	  (if (and (not (member type types))
 		   (not (member type extra-types)))
@@ -630,14 +650,14 @@
 	 (len (string-length args))
 	 (typed #f)
 	 (help-max 100))
-    (display initial)
+    (hey initial)
     (do ((i 0 (1+ i)))
 	((= i len))
       (let ((ch (string-ref args i)))
 	(if (char=? ch #\space)
 	    (if typed
 		(begin
-		  (display ", ")
+		  (heyc ", ")
 		  (set! line-len (+ line-len 2))
 		  (if (> line-len help-max)
 		      (begin
@@ -646,73 +666,74 @@
 		  (set! typed #f))
 		(begin
 		  (set! line-len (1+ line-len))
-		  (display " ")
+		  (heyc " ")
 		  (set! typed #t)))
-	    (if (not (char=? ch #\@))
+	    (if (and (not (char=? ch #\@))
+		     (not (char=? ch #\#)))
 		(begin
 		  (set! line-len (1+ line-len))
-		  (display ch))))))
+		  (heyc ch))))))
     (hey ")\"~%")))
 
 (define (CATOM name)
   (if (assoc name names)
-      (hey "~A CATOM~%" name)
+      (no-way "~A CATOM~%" name)
       (begin
 	(set! atoms (cons name atoms))
 	(set! names (cons (cons name 'atom) names)))))
 
 (define (CSTR name)
   (if (assoc name names)
-      (hey "~A CSTR~%" name)
+      (no-way "~A CSTR~%" name)
       (begin
 	(set! strings (cons name strings))
 	(set! names (cons (cons name 'string) names)))))
 
 (define (CSTR-extra name)
   (if (assoc name names)
-      (hey "~A CSTR~%" name)
+      (no-way "~A CSTR~%" name)
       (begin
 	(set! extra-strings (cons name extra-strings))
 	(set! names (cons (cons name 'string) names)))))
 
 (define (CDBL name)
   (if (assoc name names)
-      (hey "~A CDBL~%" name)
+      (no-way "~A CDBL~%" name)
       (begin
 	(set! dbls (cons name dbls))
 	(set! names (cons (cons name 'dbl) names)))))
 
 (define (CLNG name)
   (if (assoc name names)
-      (hey "~A CLNG~%" name)
+      (no-way "~A CLNG~%" name)
       (begin
 	(set! ulongs (cons name ulongs))
 	(set! names (cons (cons name 'ulong) names)))))
 
 (define (CINT name)
   (if (assoc name names)
-      (hey "~A CINT~%" name)
+      (no-way "~A CINT~%" name)
       (begin
 	(set! ints (cons name ints))
 	(set! names (cons (cons name 'int) names)))))
 
 (define (CINT-extra name)
   (if (assoc name names)
-      (hey "~A CINT-extra~%" name)
+      (no-way "~A CINT-extra~%" name)
       (begin
 	(set! extra-ints (cons name extra-ints))
 	(set! names (cons (cons name 'int) names)))))
 
 (define (CINT-broken name)
   (if (assoc name names)
-      (hey "~A CINT-broken~%" name)
+      (no-way "~A CINT-broken~%" name)
       (begin
 	(set! broken-ints (cons name broken-ints))
 	(set! names (cons (cons name 'int) names)))))
 
 (define (CINT-dep name)
   (if (assoc name names)
-      (hey "~A CINT-deprecated~%" name)
+      (no-way "~A CINT-deprecated~%" name)
       (begin
 	(set! deprecated-ints (cons name deprecated-ints))
 	(set! names (cons (cons name 'int) names)))))
@@ -720,7 +741,7 @@
 
 (define (CCAST name type) ; this is the cast (type *)obj essentially but here it's (list type* (cadr obj))
   (if (assoc name names)
-      (hey "~A CCAST~%" name)
+      (no-way "~A CCAST~%" name)
       (begin
 	;;(if (not (member type types))
 	;;    (set! types (cons type types)))
@@ -729,7 +750,7 @@
 
 (define (CCHK name type) ; this is the check = (eq? type (car obj))
   (if (assoc name names)
-      (hey "~A CCHK~%" name)
+      (no-way "~A CCHK~%" name)
       (begin
 	(if (not (member type check-types))
 	    (set! check-types (cons type check-types)))
@@ -738,7 +759,7 @@
 
 (define (CCAST-broken name type)
   (if (assoc name names)
-      (hey "~A CCAST-broken~%" name)
+      (no-way "~A CCAST-broken~%" name)
       (begin
 	(if (and (not (member type types))
 		 (not (member type broken-types)))
@@ -748,7 +769,7 @@
 
 (define (CCHK-broken name type)
   (if (assoc name names)
-      (hey "~A CCHK~%" name)
+      (no-way "~A CCHK~%" name)
       (begin
 	(if (and (not (member type types))
 		 (not (member type broken-types)))
@@ -758,7 +779,7 @@
 
 (define (CCAST-dep name type)
   (if (assoc name names)
-      (hey "~A CCAST-deprecated~%" name)
+      (no-way "~A CCAST-deprecated~%" name)
       (begin
 	(if (and (not (member type types))
 		 (not (member type deprecated-types)))
@@ -768,7 +789,7 @@
 
 (define (CCHK-dep name type)
   (if (assoc name names)
-      (hey "~A CCHK~%" name)
+      (no-way "~A CCHK~%" name)
       (begin
 	(if (and (not (member type types))
 		 (not (member type deprecated-types)))
@@ -778,7 +799,7 @@
 
 (define (CCAST-extra name type)
   (if (assoc name names)
-      (hey "~A CCAST-extra~%" name)
+      (no-way "~A CCAST-extra~%" name)
       (begin
 	(if (and (not (member type types))
 		 (not (member type extra-types)))
@@ -788,7 +809,7 @@
 
 (define (CCHK-extra name type)
   (if (assoc name names)
-      (hey "~A CCHK~%" name)
+      (no-way "~A CCHK~%" name)
       (begin
 	(if (and (not (member type types))
 		 (not (member type extra-types)))
@@ -800,7 +821,7 @@
   (let ((name (car-str data)) ; struct name (type)
 	(args (cdr-str data)))
     (if (assoc name names)
-	(hey "~A STRUCT~%" name)
+	(no-way "~A STRUCT~%" name)
 	(let ((strs (parse-args args 'ok)))
 	  (if (not (member (string-append name "*") types))
 	      (set! types (cons (string-append name "*") types)))
@@ -833,6 +854,7 @@
 	 (if (char=? (string-ref name i) #\()
 	     (return (substring name 0 i))))))))
 
+;;; ---------------------------------------- read data ---------------------------------------- 
 (load "xgdata.scm")
 
 ;(define listable-types (list "gint8*" "int*" "gint*" "gdouble*"))
@@ -850,7 +872,25 @@
 	 (set! listable-types (cons type listable-types)))))
  types)
 
-(hey "/* xg.c: Guile (and someday Ruby) bindings for gdk/gtk/pango, some of glib~%")
+
+(define (with-deprecated dpy thunk)
+  (dpy "#if (!(defined(GDK_DISABLE_DEPRECATED))) && (!(defined(GTK_DISABLE_DEPRECATED))) && (!(defined(GDK_PIXBUF_DISABLE_DEPRECATED)))~%")
+  (thunk)
+  (dpy "#endif~%~%"))
+
+(define (with-broken dpy thunk)
+  (dpy "#if GDK_ENABLE_BROKEN && GTK_ENABLE_BROKEN~%")
+  (thunk)
+  (dpy "#endif~%~%"))
+
+(define (with-extra dpy thunk)
+  (dpy "#if PANGO_ENABLE_ENGINE && PANGO_ENABLE_BACKEND~%")
+  (thunk)
+  (dpy "#endif~%~%"))
+
+
+;;; ---------------------------------------- write output files ----------------------------------------
+(hey "/* xg.c: Guile and Ruby bindings for gdk/gtk/pango, some of glib~%")
 (hey " *   generated automatically from makexg.scm and xgdata.scm~%")
 (hey " *   needs xen.h~%")
 (hey " *~%")
@@ -868,7 +908,9 @@
  funcs)
 
 (hey " *~%")
-(hey " * reference args are ignored if passed, resultant values are returned in a list, marked with \"[]\" in help strings~%")
+(hey " * reference args are ignored if passed, resultant values are returned in a list.~%")
+(hey " * null ptrs are passed and returned as #f, trailing \"user_data\" callback function arguments are optional (default: #f).~%")
+(hey " * 'xg is added to *features*~%")
 (hey " *~%")
 (hey " * added funcs:~%")
 (hey " *    (xm-version) -> date string.~%")
@@ -898,16 +940,18 @@
 (hey " *     win32-specific functions~%")
 (hey " *~%")
 (hey " * TODO:~%")
-(hey " *     check out the g_signal handlers: GtkSignalFunc also GtkEmissionHook (gtk_signal_* should be ok)~%")
+(hey " *     check out the g_signal handlers (gtk_signal_* is ok)~%")
 (hey " *     GdkEvent casts~%")
 (hey " *     struct print, more struct instance creators(?)~%")
 (hey " *     tie into libxm (configure.ac etc), Snd (snd-motif translation)~%")
 (hey " *     add unicode handlers from glib -- anything else?~%")
 (hey " *     unprotect *_remove, unprotect old upon reset callback~%")
-(hey " *     document/test (libxm|grfsnd.html, snd-test.scm)~%")
-(hey " *     add Ruby linkages~%")
+(hey " *     test -- snd-test.scm~%")
+(hey " *     auto-generated test suite?~%")
 (hey " *~%")
 (hey " * HISTORY:~%")
+(hey " *     25-Feb:    dialog example in libxm.html~%")
+(hey " *                Ruby support via xg-ruby.c~%")
 (hey " *     21-Feb:    #f=NULL throughout, gdk-pixbuf, GTypes.~%")
 (hey " *     11-Feb-02: initial version.~%")
 (hey " */~%~%")
@@ -935,11 +979,20 @@
 
 (hey "/* -------------------------------- smob for GC -------------------------------- */~%")
 (hey "static XEN_OBJECT_TYPE xm_obj_tag;~%")
+(hey "#if HAVE_GUILE~%")
 (hey "static size_t xm_obj_free(XEN obj)~%")
 (hey "{~%")
 (hey "  FREE((void *)XEN_OBJECT_REF(obj));~%")
-(hey "  return(sizeof(void *));~%")
+(hey "  return(0);~%")
 (hey "}~%")
+(hey "#endif~%")
+(hey "#if HAVE_RUBY~%")
+(hey "static void *xm_obj_free(XEN obj)~%")
+(hey "{~%")
+(hey "  FREE((void *)obj);~%")
+(hey "  return(NULL);~%")
+(hey "}~%")
+(hey "#endif~%")
 (hey "static XEN make_xm_obj(void *ptr)~%")
 (hey "{~%")
 (hey "  XEN_MAKE_AND_RETURN_OBJECT(xm_obj_tag, ptr, 0, xm_obj_free);~%")
@@ -947,11 +1000,23 @@
 (hey "static void define_xm_obj(void)~%")
 (hey "{~%")
 (hey "  xm_obj_tag = XEN_MAKE_OBJECT_TYPE(\"XmObj\", sizeof(void *));~%")
+(hey "#if HAVE_GUILE~%")
 (hey "  scm_set_smob_free(xm_obj_tag, xm_obj_free);~%")
+(hey "#endif~%")
 (hey "}  ~%")
 (hey "~%")
 
-(hey "#define XG_PRE \"|\"~%#define XG_POST \"\"~%~%")
+(hey "/* prefix for all names */~%")
+(hey "#if HAVE_GUILE~%")
+(hey "  #define XG_PRE \"|\"~%")
+(hey "  #define XG_POST \"\"~%")
+(hey "#else~%")
+(hey "/* for Ruby, XG PRE needs to be uppercase */~%")
+(hey "  #define XG_PRE \"R\"~%")
+(hey "  #define XG_POST \"\"~%")
+(hey "#endif~%")
+(hey "~%")
+
 (hey "#define WRAP_FOR_XEN(Name, Value) XEN_LIST_2(C_STRING_TO_XEN_SYMBOL(Name), C_TO_XEN_ULONG((unsigned long)Value))~%")
 (hey "#define WRAP_P(Name, Value) (XEN_LIST_P(Value) && \\~%")
 (hey "                            (XEN_LIST_LENGTH(Value) >= 2) && \\~%")
@@ -1008,28 +1073,20 @@
 
 (for-each check-type-it (reverse check-types))
 
-(if (not (null? extra-types))
-    (begin
-      (hey "~%#if PANGO_ENABLE_ENGINE && PANGO_ENABLE_BACKEND~%")
-      (for-each type-it (reverse extra-types))
-      (for-each check-type-it  (reverse extra-types))
-      (hey "#endif~%~%")))
+(if (not (null? extra-types)) 
+    (with-extra hey (lambda () 
+		      (for-each type-it (reverse extra-types))
+		      (for-each check-type-it  (reverse extra-types)))))
 
 (if (not (null? deprecated-types))
-    (begin
-      (hey "~%/* -------------------- deprecated types -------------------- */~%")
-      (hey "#if (!(defined(GDK_DISABLE_DEPRECATED))) && (!(defined(GTK_DISABLE_DEPRECATED))) && (!(defined(GDK_PIXBUF_DISABLE_DEPRECATED)))~%")
-      (for-each type-it (reverse deprecated-types))
-      (for-each check-type-it (reverse deprecated-types))
-      (hey "#endif~%~%")))
+    (with-deprecated hey (lambda () 
+			   (for-each type-it (reverse deprecated-types))
+			   (for-each check-type-it (reverse deprecated-types)))))
 
 (if (not (null? broken-types))
-    (begin
-      (hey "~%/* -------------------- obsolete types -------------------- */~%")
-      (hey "#if GDK_ENABLE_BROKEN && GTK_ENABLE_BROKEN~%")
-      (for-each type-it (reverse broken-types))
-      (for-each check-type-it (reverse broken-types))
-      (hey "#endif~%~%")))
+    (with-broken hey (lambda ()
+		       (for-each type-it (reverse broken-types))
+		       (for-each check-type-it (reverse broken-types)))))
 
 
 (hey "/* -------------------------------- gc protection -------------------------------- */~%")
@@ -1160,21 +1217,21 @@
 		       (hey "  result = ")
 		       (hey "return(XEN_TO_C_~A("
 			    (no-stars type))))
-	       (hey "XEN_CALL_~D(~A(func_data),~%"
+	       (hey "XEN_CALL_~D(~A((XEN)func_data),~%"
 		    (length args)
 		    (if (eq? fname 'GtkClipboardClearFunc)
 			"XEN_CADDR"
 			"XEN_CAR"))
 	       (for-each
 		(lambda (arg)
-		  (display (substring "                                                                   " 0 castlen))
+		  (hey (substring "                                                                   " 0 castlen))
 		  (if (not (string=? (car arg) "lambda_data"))
 		      (hey "C_TO_XEN_~A(~A),~%"
 			   (no-stars (car arg))
 			   (cadr arg))
-		      (hey "XEN_CADR(func_data),~%")))
+		      (hey "XEN_CADR((XEN)func_data),~%")))
 		args)
-	       (display (substring "                                                                      " 0 castlen))
+	       (hey (substring "                                                                      " 0 castlen))
 	       (hey "__FUNCTION__)")
 	       (if void?
 		   (hey ";~%")
@@ -1182,7 +1239,7 @@
 		       (begin
 			 (hey ";~%")
 			 (hey "  if (XEN_BOOLEAN_P(result)) call_again = XEN_TO_C_BOOLEAN(result); else call_again = XEN_TO_C_INT_OR_ELSE(result, 0);~%")
-			 (hey "  if (!call_again) xm_unprotect_at(XEN_TO_C_INT(XEN_CADDR(func_data)));~%")
+			 (hey "  if (!call_again) xm_unprotect_at(XEN_TO_C_INT(XEN_CADDR((XEN)func_data)));~%")
 			 (hey "  return(call_again);~%"))
 		       (hey "));~%"))))
 	     (hey "}~%~%")))))
@@ -1190,10 +1247,10 @@
 
 (hey "static void gxg_func3(GtkWidget *w, GdkEventAny *ev, gpointer data)~%")
 (hey "{~%")
-(hey "  XEN_CALL_3(XEN_CAR(data),~%")
+(hey "  XEN_CALL_3(XEN_CAR((XEN)data),~%")
 (hey "             C_TO_XEN_GtkWidget_(w),~%")
 (hey "             C_TO_XEN_GdkEventAny_(ev),~%")
-(hey "             XEN_CADR(data),~%")
+(hey "             XEN_CADR((XEN)data),~%")
 (hey "             __FUNCTION__);~%")
 (hey "}~%~%")
 
@@ -1231,18 +1288,18 @@
        ;; no cr -- just append
        (let ((line (apply format #f args)))
 	 (set! line-len (+ line-len (string-length line)))
-	 (display line)))
+	 (heyc line)))
 
      (define (hey-ok arg)
        ;; cr ok after arg
        (set! line-len (+ line-len (string-length arg)))
-       (display arg)
+       (heyc arg)
        (if (> line-len line-max)
 	   (begin
-	     (display (format #f "~%"))
+	     (hey "~%")
 	     (do ((i 0 (1+ i)))
 		 ((= i arg-start))
-	       (display " "))
+	       (heyc " "))
 	     (set! line-len arg-start))))
 
      (if (and (> (length data) 4)
@@ -1250,15 +1307,15 @@
 	 (hey "#if HAVE_~A~%" (string-upcase name)))
      (hey "static XEN gxg_~A(" name)
      (if (= (length args) 0)
-	 (display "void")
+	 (heyc "void")
 	 (if (>= (length args) max-args)
-	     (display "XEN arglist")
+	     (heyc "XEN arglist")
 	     (let ((previous-arg #f))
 	       (for-each 
 		(lambda (arg)
 		  (let ((argname (cadr arg))
 			(argtype (car arg)))
-		    (if previous-arg (display ", "))
+		    (if previous-arg (heyc ", "))
 		    (set! previous-arg #t)
 		    (hey "XEN ~A" argname)))
 		args))))
@@ -1273,12 +1330,12 @@
      (if (and (>= (length args) max-args)
 	      (> xgargs 0))
 	 (let ((previous-arg #f))
-	   (hey "  XEN ")
+	   (heyc "  XEN ")
 	   (for-each
 	    (lambda (arg)
 	      (if (< (length arg) 3)
 		  (begin
-		    (if previous-arg (display ", "))
+		    (if previous-arg (heyc ", "))
 		    (set! previous-arg #t)
 		    (hey "~A" (cadr arg)))))
 	    args)
@@ -1297,11 +1354,16 @@
 	      (let ((argname (cadr arg))
 		    (argtype (car arg)))
 		(if (not (ref-arg? arg))
-		    (if (not (null-arg? arg))
-			(hey "  XEN_ASSERT_TYPE(XEN_~A_P(~A), ~A, ~D, ~S, ~S);~%"
-			     (no-stars argtype) argname argname ctr name argtype)
+		    (if (null-arg? arg)
 			(hey "  XEN_ASSERT_TYPE(XEN_~A_P(~A) || XEN_FALSE_P(~A), ~A, ~D, ~S, ~S);~%" 
-			     (no-stars argtype) argname argname argname ctr name argtype)))
+			     (no-stars argtype) argname argname argname ctr name argtype)
+			(if (opt-arg? arg)
+			    (begin
+			      (hey "  if (XEN_NOT_BOUND_P(~A)) ~A = XEN_FALSE; ~%" argname argname)
+			      (hey "  else XEN_ASSERT_TYPE(XEN_~A_P(~A), ~A, ~D, ~S, ~S);~%" 
+				   (no-stars argtype) argname argname ctr name argtype))
+			    (hey "  XEN_ASSERT_TYPE(XEN_~A_P(~A), ~A, ~D, ~S, ~S);~%"
+				 (no-stars argtype) argname argname ctr name argtype))))
 		(set! ctr (1+ ctr))))
 	    args)))
      (let ((using-result #f)
@@ -1329,7 +1391,7 @@
 	     (hey-start)
 	     (if using-result
 		 (hey-on "    result = C_TO_XEN_~A(" (no-stars return-type))
-		 (hey "    ")))
+		 (heyc "    ")))
 	   (begin
 	     (set! using-result (and (> refargs 0)
 				     (not (string=? return-type "void"))))
@@ -1365,11 +1427,11 @@
 		    args)))
 	     (if (not (eq? lambda-type 'fnc))
 		 (if (not (string=? return-type "void")) 
-		     (hey ")"))
+		     (heyc ")"))
 		 (if (not (string=? return-type "void"))
 		     (if (= refargs 0)
-			 (hey "))")
-			 (hey ")"))))
+			 (heyc "))")
+			 (heyc ")"))))
 	     (hey ");~%")
 	     (if (not (eq? lambda-type 'fnc))
 		 (begin
@@ -1387,14 +1449,14 @@
 		 (begin
 		   (if (> refargs 0)
 		       (let* ((previous-arg using-result))
-			 (if using-result (hey "  "))
+			 (if using-result (heyc "  "))
 			 (hey "  return(XEN_LIST_~D(" (+ refargs (if using-result 1 0)))
-			 (if using-result (hey "result"))
+			 (if using-result (heyc "result"))
 			 (for-each 
 			  (lambda (arg)
 			    (if (ref-arg? arg)
 				(begin
-				  (if previous-arg (hey ", "))
+				  (if previous-arg (heyc ", "))
 				  (hey "C_TO_XEN_~A(~A)" (no-stars (deref-type arg)) (deref-name arg))
 				  (set! previous-arg #t))))
 			  args)
@@ -1422,7 +1484,7 @@
 		    (if previous-arg (hey-ok ", "))
 		    (set! previous-arg #t)
 		    (if (string=? argtype "lambda")
-			(display "(GtkSignalFunc)gxg_func2")
+			(hey-on "(GtkSignalFunc)gxg_func2")
 			(hey-on "XEN_TO_C_~A(~A)" (no-stars argtype) argname))))
 		args))
 	     (if (not (string=? return-type "void"))
@@ -1442,7 +1504,7 @@
 		    (if previous-arg (hey-ok ", "))
 		    (set! previous-arg #t)
 		    (if (string=? argtype "lambda")
-			(display "(GtkSignalFunc)gxg_func3")
+			(hey-on "(GtkSignalFunc)gxg_func3")
 			(hey-on "XEN_TO_C_~A(~A)" (no-stars argtype) argname))))
 		args))
 	     (if (string=? return-type "void")
@@ -1458,26 +1520,9 @@
      (hey "~%"))))
 
 (for-each handle-func (reverse funcs))
-
-(if (not (null? extra-funcs))
-    (begin
-      (hey "#if PANGO_ENABLE_ENGINE && PANGO_ENABLE_BACKEND~%")
-      (for-each handle-func (reverse extra-funcs))
-      (hey "#endif~%~%")))
-
-(if (not (null? deprecated-funcs))
-    (begin
-      (hey "~%/* -------------------- deprecated functions -------------------- */~%")
-      (hey "#if (!(defined(GDK_DISABLE_DEPRECATED))) && (!(defined(GTK_DISABLE_DEPRECATED))) && (!(defined(GDK_PIXBUF_DISABLE_DEPRECATED)))~%")
-      (for-each handle-func (reverse deprecated-funcs))
-      (hey "#endif~%/* -------------------- end deprecated functions -------------------- */~%~%~%")))
-
-(if (not (null? broken-funcs))
-    (begin
-      (hey "~%/* -------------------- obsolete functions -------------------- */~%")
-      (hey "#if GDK_ENABLE_BROKEN && GTK_ENABLE_BROKEN~%")
-      (for-each handle-func (reverse broken-funcs))
-      (hey "#endif~%/* -------------------- end obsolete functions -------------------- */~%~%~%")))
+(if (not (null? extra-funcs)) (with-extra hey (lambda () (for-each handle-func (reverse extra-funcs)))))
+(if (not (null? deprecated-funcs)) (with-deprecated hey (lambda () (for-each handle-func (reverse deprecated-funcs)))))
+(if (not (null? broken-funcs)) (with-broken hey (lambda () (for-each handle-func (reverse broken-funcs)))))
 
 (define cast-it
  (lambda (cast)
@@ -1486,141 +1531,117 @@
      (hey "static XEN gxg_~A(XEN obj)" (no-arg cast-name))
      (hey " {return(XEN_LIST_2(C_STRING_TO_XEN_SYMBOL(~S), XEN_CADR(obj)));}~%" (no-stars cast-type)))))
 
-(hey "~%~%/* ---------------------------------------- casts ---------------------------------------- */~%~%")
 (for-each cast-it (reverse casts))
+(if (not (null? extra-casts)) (with-extra hey (lambda () (for-each cast-it (reverse extra-casts)))))
+(if (not (null? deprecated-casts)) (with-deprecated hey (lambda () (for-each cast-it (reverse deprecated-casts)))))
+(if (not (null? broken-casts)) (with-broken hey (lambda () (for-each cast-it (reverse broken-casts)))))
 
-(if (not (null? extra-casts))
-    (begin
-      (hey "~%#if PANGO_ENABLE_ENGINE && PANGO_ENABLE_BACKEND~%")
-      (for-each cast-it (reverse extra-casts))
-      (hey "#endif~%~%")))
 
-(if (not (null? deprecated-casts))
-    (begin
-      (hey "~%  /* -------------------- deprecated casts -------------------- */~%")
-      (hey "#if (!(defined(GDK_DISABLE_DEPRECATED))) && (!(defined(GTK_DISABLE_DEPRECATED))) && (!(defined(GDK_PIXBUF_DISABLE_DEPRECATED)))~%")
-      (for-each cast-it (reverse deprecated-casts))
-      (hey "#endif~%~%")))
+;;; ---------------- Ruby step 1 ----------------
+(say "/* Ruby connection for xg.c */~%~%")
 
-(if (not (null? broken-casts))
-    (begin
-      (hey "~%  /* -------------------- obsolete casts -------------------- */~%")
-      (hey "#if GDK_ENABLE_BROKEN && GTK_ENABLE_BROKEN~%")
-      (for-each cast-it (reverse broken-casts))
-      (hey "#endif~%~%")))
-
-(hey "static void define_functions(void)~%")
-(hey "{~%")
-
-(hey "  xm_gc_table = XEN_MAKE_VECTOR(1, XEN_FALSE);~%")
-(hey "  XEN_PROTECT_FROM_GC(xm_gc_table);~%")
-(hey "  xm_protected_size = 512;~%")
-(hey "  xm_protected = XEN_MAKE_VECTOR(xm_protected_size, XEN_FALSE);~%")
-(hey "  XEN_VECTOR_SET(xm_gc_table, 0, xm_protected);~%~%")
-
-(define (defun func)
+(define (argify-func func)
   (let* ((cargs (length (caddr func)))
-	 (refargs (ref-args (caddr func)))
+	 (refargs (+ (ref-args (caddr func)) (opt-args (caddr func))))
 	 (args (- cargs refargs))
 	 (if-fnc (and (> (length func) 4)
 		      (eq? (list-ref func 4) 'if))))
     (if if-fnc
-	(hey "#if HAVE_~A~%" (string-upcase (car func))))
+	(say "#if HAVE_~A~%" (string-upcase (car func))))
+    (say "XEN_~A(gxg_~A_w, gxg_~A)~%" 
+	 (if (>= cargs 10) "VARGIFY"
+	     (if (> refargs 0)
+		 (format #f "ARGIFY_~D" cargs)
+		 (format #f "NARGIFY_~D" cargs)))
+	 (car func) (car func))
+    (if if-fnc
+	(say "#endif~%"))))
+	 
+(for-each argify-func (reverse funcs))
+(if (not (null? extra-funcs)) (with-extra say (lambda () (for-each argify-func (reverse extra-funcs)))))
+(if (not (null? deprecated-funcs)) (with-deprecated say (lambda () (for-each argify-func (reverse deprecated-funcs)))))
+(if (not (null? broken-funcs)) (with-broken say (lambda () (for-each argify-func (reverse broken-funcs)))))
+
+(define (ruby-cast func) (say "XEN_NARGIFY_1(gxg_~A_w, gxg_~A)~%" (no-arg (car func)) (no-arg (car func)))) 
+(for-each ruby-cast (reverse casts))
+(if (not (null? extra-casts)) (with-extra say (lambda () (for-each ruby-cast (reverse extra-funcs)))))
+(if (not (null? deprecated-casts)) (with-deprecated say (lambda () (for-each ruby-cast (reverse deprecated-casts)))))
+(if (not (null? broken-casts)) (with-broken say (lambda () (for-each ruby-cast (reverse broken-casts)))))
+
+(define (ruby-check func) (say "XEN_NARGIFY_1(XEN_~A_p_w, XEN_~A_p)~%" (no-stars (cadr func)) (no-stars (cadr func)))) 
+(for-each ruby-check (reverse checks))
+(if (not (null? extra-checks)) (with-extra say (lambda () (for-each ruby-check (reverse extra-checks)))))
+(if (not (null? deprecated-checks)) (with-deprecated say (lambda () (for-each ruby-check (reverse deprecated-checks)))))
+(if (not (null? broken-checks)) (with-broken say (lambda () (for-each ruby-check (reverse broken-checks)))))
+
+(for-each (lambda (field) (say "XEN_NARGIFY_1(gxg_~A_w, gxg_~A)~%" field field)) struct-fields)
+(for-each (lambda (struct) 
+	    (let* ((s (find-struct struct)))
+	      (if (> (length (cadr s)) 0)
+		  (say "XEN_VARGIFY(gxg_make_~A_w, gxg_make_~A)~%" struct struct)
+		  (say "XEN_NARGIFY_0(gxg_make_~A_w, gxg_make_~A)~%" struct struct))))
+ (reverse make-structs))
+(say "~%")
+;;; ---------------- end Ruby step 1 ----------------
+
+
+(hey "#if HAVE_GUILE~%")
+(say-hey "static void define_functions(void)~%")
+(say-hey "{~%")
+
+(say-hey "  xm_gc_table = XEN_MAKE_VECTOR(1, XEN_FALSE);~%")
+(say-hey "  XEN_PROTECT_FROM_GC(xm_gc_table);~%")
+(say-hey "  xm_protected_size = 512;~%")
+(say-hey "  xm_protected = XEN_MAKE_VECTOR(xm_protected_size, XEN_FALSE);~%")
+(say-hey "  XEN_VECTOR_SET(xm_gc_table, 0, xm_protected);~%~%")
+
+(define (defun func)
+  (let* ((cargs (length (caddr func)))
+	 (refargs (+ (ref-args (caddr func)) (opt-args (caddr func))))
+	 (args (- cargs refargs))
+	 (if-fnc (and (> (length func) 4)
+		      (eq? (list-ref func 4) 'if))))
+    (if if-fnc
+	(say-hey "#if HAVE_~A~%" (string-upcase (car func))))
     (hey "  XEN_DEFINE_PROCEDURE(XG_PRE ~S XG_POST, gxg_~A, ~D, ~D, ~D, H_~A);~%"
 		     (car func) (car func) 
 		     (if (>= cargs 10) 0 args)
 		     (if (>= cargs 10) 0 refargs) ; optional ignored
 		     (if (>= cargs 10) 1 0)
 		     (car func))
-    (if if-fnc (hey "#endif~%"))))
+    (say "  XEN_DEFINE_PROCEDURE(XG_PRE ~S XG_POST, gxg_~A_w, ~D, ~D, ~D, H_~A);~%"
+		     (car func) (car func) 
+		     (if (>= cargs 10) 0 args)
+		     (if (>= cargs 10) 0 refargs) ; optional ignored
+		     (if (>= cargs 10) 1 0)
+		     (car func))
+    (if if-fnc (say-hey "#endif~%"))))
 
 (for-each defun (reverse funcs))
+(if (not (null? extra-funcs)) (with-extra say-hey (lambda () (for-each defun (reverse extra-funcs)))))
+(if (not (null? deprecated-funcs)) (with-deprecated say-hey (lambda () (for-each defun (reverse deprecated-funcs)))))
+(if (not (null? broken-funcs)) (with-broken say-hey (lambda () (for-each defun (reverse broken-funcs)))))
 
-(if (not (null? extra-funcs))
-    (begin
-      (hey "~%#if PANGO_ENABLE_ENGINE && PANGO_ENABLE_BACKEND~%")
-      (for-each defun (reverse extra-funcs))
-      (hey "#endif~%~%")))
+(define (cast-out func)
+  (hey "  XEN_DEFINE_PROCEDURE(XG_PRE ~S XG_POST, gxg_~A, 1, 0, 0, NULL);~%" (no-arg (car func)) (no-arg (car func)))
+  (say "  XEN_DEFINE_PROCEDURE(XG_PRE ~S XG_POST, gxg_~A_w, 1, 0, 0, NULL);~%" (no-arg (car func)) (no-arg (car func))))
 
-(if (not (null? deprecated-funcs))
-    (begin
-      (hey "~%  /* -------------------- deprecated functions -------------------- */~%")
-      (hey "#if (!(defined(GDK_DISABLE_DEPRECATED))) && (!(defined(GTK_DISABLE_DEPRECATED))) && (!(defined(GDK_PIXBUF_DISABLE_DEPRECATED)))~%")
-      (for-each defun (reverse deprecated-funcs))
-      (hey "#endif~%~%")))
+(for-each cast-out (reverse casts))
+(if (not (null? extra-casts)) (with-extra say-hey (lambda () (for-each cast-out (reverse extra-casts)))))
+(if (not (null? deprecated-casts)) (with-deprecated say-hey (lambda () (for-each cast-out (reverse deprecated-casts)))))
+(if (not (null? broken-casts)) (with-broken say-hey (lambda () (for-each cast-out (reverse broken-casts)))))
 
-(if (not (null? broken-funcs))
-    (begin
-      (hey "~%  /* -------------------- obsolete functions -------------------- */~%")
-      (hey "#if GDK_ENABLE_BROKEN && GTK_ENABLE_BROKEN~%")
-      (for-each defun (reverse broken-funcs))
-      (hey "#endif~%~%")))
+(define (check-out func)
+  (hey "  XEN_DEFINE_PROCEDURE(XG_PRE ~S XG_POST, XEN_~A_p, 1, 0, 0, NULL);~%" (no-arg (car func)) (no-stars (cadr func)))
+  (say "  XEN_DEFINE_PROCEDURE(XG_PRE ~S XG_POST, XEN_~A_p_w, 1, 0, 0, NULL);~%" (no-arg (car func)) (no-stars (cadr func))))
 
-(for-each 
- (lambda (func) 
-   (hey "  XEN_DEFINE_PROCEDURE(XG_PRE ~S XG_POST, gxg_~A, 1, 0, 0, NULL);~%" (no-arg (car func)) (no-arg (car func))))
- (reverse casts))
+(for-each check-out (reverse checks))
+(if (not (null? extra-checks)) (with-extra say-hey (lambda () (for-each check-out (reverse extra-checks)))))
+(if (not (null? deprecated-checks)) (with-deprecated say-hey (lambda () (for-each check-out (reverse deprecated-checks)))))
+(if (not (null? broken-checks)) (with-broken say-hey (lambda () (for-each check-out (reverse broken-checks)))))
 
-(if (not (null? extra-casts))
-    (begin
-      (hey "~%#if PANGO_ENABLE_ENGINE && PANGO_ENABLE_BACKEND~%")
-      (for-each 
-       (lambda (func) 
-	 (hey "  XEN_DEFINE_PROCEDURE(XG_PRE ~S XG_POST, gxg_~A, 1, 0, 0, NULL);~%" (no-arg (car func)) (no-arg (car func))))
-       (reverse extra-casts))
-      (hey "#endif~%~%")))
-
-(if (not (null? deprecated-casts))
-    (begin
-      (hey "#if (!(defined(GDK_DISABLE_DEPRECATED))) && (!(defined(GTK_DISABLE_DEPRECATED))) && (!(defined(GDK_PIXBUF_DISABLE_DEPRECATED)))~%")
-      (for-each
-       (lambda (func)
-	 (hey "  XEN_DEFINE_PROCEDURE(XG_PRE ~S XG_POST, gxg_~A, 1, 0, 0, NULL);~%" (no-arg (car func)) (no-arg (car func))))
-       (reverse deprecated-casts))
-      (hey "#endif~%~%")))
-
-(if (not (null? broken-casts))
-    (begin
-      (hey "#if GDK_ENABLE_BROKEN && GTK_ENABLE_BROKEN~%")
-      (for-each
-       (lambda (func)
-	 (hey "  XEN_DEFINE_PROCEDURE(XG_PRE ~S XG_POST, gxg_~A, 1, 0, 0, NULL);~%" (no-arg (car func)) (no-arg (car func))))
-       (reverse broken-casts))
-      (hey "#endif~%~%")))
-
-(for-each 
- (lambda (func) 
-   (hey "  XEN_DEFINE_PROCEDURE(XG_PRE ~S XG_POST, XEN_~A_p, 1, 0, 0, NULL);~%" (no-arg (car func)) (no-stars (cadr func))))
- (reverse checks))
-
-(if (not (null? extra-checks))
-    (begin
-      (hey "~%#if PANGO_ENABLE_ENGINE && PANGO_ENABLE_BACKEND~%")
-      (for-each 
-       (lambda (func) 
-	 (hey "  XEN_DEFINE_PROCEDURE(XG_PRE ~S XG_POST, XEN_~A_p, 1, 0, 0, NULL);~%" (no-arg (car func)) (no-stars (cadr func))))
-       (reverse extra-checks))
-      (hey "#endif~%~%")))
-
-(if (not (null? deprecated-checks))
-    (begin
-      (hey "#if (!(defined(GDK_DISABLE_DEPRECATED))) && (!(defined(GTK_DISABLE_DEPRECATED))) && (!(defined(GDK_PIXBUF_DISABLE_DEPRECATED)))~%")
-      (for-each
-       (lambda (func)
-	 (hey "  XEN_DEFINE_PROCEDURE(XG_PRE ~S XG_POST, XEN_~A_p, 1, 0, 0, NULL);~%" (no-arg (car func)) (no-stars (cadr func))))
-       (reverse deprecated-checks))
-      (hey "#endif~%~%")))
-
-(if (not (null? broken-checks))
-    (begin
-      (hey "#if GDK_ENABLE_BROKEN && GTK_ENABLE_BROKEN~%")
-      (for-each
-       (lambda (func)
-	 (hey "  XEN_DEFINE_PROCEDURE(XG_PRE ~S XG_POST, XEN_~A_p, 1, 0, 0, NULL);~%" (no-arg (car func)) (no-stars (cadr func))))
-       (reverse broken-checks))
-      (hey "#endif~%~%")))
-
-(hey "}~%~%")
+(say-hey "}~%~%")
+(hey "#endif~%")
 
 
 (hey "/* ---------------------------------------- structs ---------------------------------------- */~%~%")
@@ -1719,7 +1740,7 @@
 		  (and (= (length vals) 2)
 		       (= ctr 1)))
 	      (hey "  if (XEN_~A__P(ptr)) " (car val))
-	      (hey "  "))
+	      (heyc "  "))
 	  (set! ctr (+ ctr 1))
 	  (hey "return(C_TO_XEN_~A((~A)((XEN_TO_C_~A_(ptr))->~A)));~%"
 	       (no-stars (cadr val)) (cadr val) (car val) field))
@@ -1769,42 +1790,42 @@
 	   (hey "}~%~%")))))
  (reverse make-structs))
 
-(hey "static void define_structs(void)~%")
-(hey "{~%~%")
+(hey "#if HAVE_GUILE~%")
+(say-hey "static void define_structs(void)~%")
+(say-hey "{~%~%")
 
 (hey "  XEN_DEFINE_PROCEDURE(XG_PRE \"c-array->list\" XG_POST, c_array_to_xen_list, 2, 0, 0, NULL);~%")
 (hey "  XEN_DEFINE_PROCEDURE(XG_PRE \"list->c-array\" XG_POST, xen_list_to_c_array, 2, 0, 0, NULL);~%~%")
 
 (for-each 
  (lambda (field)
-   (hey "  XEN_DEFINE_PROCEDURE(XG_PRE ~S XG_POST, gxg_~A, 1, 0, 0, NULL);~%"
-		    field field))
+   (hey "  XEN_DEFINE_PROCEDURE(XG_PRE ~S XG_POST, gxg_~A, 1, 0, 0, NULL);~%" field field)
+   (say "  XEN_DEFINE_PROCEDURE(XG_PRE ~S XG_POST, gxg_~A_w, 1, 0, 0, NULL);~%" field field))
  struct-fields)
 
 (for-each 
  (lambda (struct)
    (let* ((s (find-struct struct)))
-     (hey "  XEN_DEFINE_PROCEDURE(XG_PRE ~S XG_POST, gxg_make_~A, 0, 0, ~D, NULL);~%"
-	  struct struct
-	  (if (> (length (cadr s)) 0) 1 0)))) 
+     (hey "  XEN_DEFINE_PROCEDURE(XG_PRE ~S XG_POST, gxg_make_~A, 0, 0, ~D, NULL);~%" struct struct (if (> (length (cadr s)) 0) 1 0))
+     (say "  XEN_DEFINE_PROCEDURE(XG_PRE ~S XG_POST, gxg_make_~A_w, 0, 0, ~D, NULL);~%" struct struct (if (> (length (cadr s)) 0) 1 0))))
  (reverse make-structs))
 
-(hey "}~%~%")
-
+(say-hey "}~%~%")
+(hey "#else~%")
+(hey "  #include \"xg-ruby.c\"~%")
+(hey "#endif~%")
 
 
 (hey "/* ---------------------------------------- macros ---------------------------------------- */~%~%")
 (hey "static void define_macros(void)~%")
 (hey "{~%")
-
-(hey "#if (!(defined(GDK_DISABLE_DEPRECATED))) && (!(defined(GTK_DISABLE_DEPRECATED))) && (!(defined(GDK_PIXBUF_DISABLE_DEPRECATED)))~%")
-(for-each
- (lambda (mac)
-   (hey "  XEN_EVAL_C_STRING(\"(define \" XG_PRE \"~A\" XG_POST \" \" XG_PRE \"~A\" XG_POST \")\");~%"
-		    (car mac) (cadr mac)))
- (reverse vars))
-(hey "#endif~%")
-
+(with-deprecated hey
+		 (lambda ()
+		   (for-each
+		    (lambda (mac)
+		      (hey "  XEN_EVAL_C_STRING(\"(define \" XG_PRE \"~A\" XG_POST \" \" XG_PRE \"~A\" XG_POST \")\");~%"
+			   (car mac) (cadr mac)))
+		    (reverse vars))))
 (hey "}~%~%")
 
 
@@ -1826,47 +1847,15 @@
 (hey "~%")
 (hey "  g_type_init();~%~%")
 
-(for-each
- (lambda (val)
-   (hey "  DEFINE_INTEGER(XG_PRE ~S XG_POST,~80,1T~A);~%" val val))
- (reverse ints))
-
-(for-each
- (lambda (val)
-   (hey "  DEFINE_ULONG(XG_PRE ~S XG_POST,~80,1T~A);~%" val val))
- (reverse ulongs))
-
-(if (not (null? extra-ints))
-    (begin
-      (hey "~%#if PANGO_ENABLE_ENGINE && PANGO_ENABLE_BACKEND~%")
-      (for-each
-       (lambda (val)
-	 (hey "  DEFINE_INTEGER(XG_PRE ~S XG_POST,~80,1T~A);~%" val val))
-       (reverse extra-ints))
-      (hey "#endif~%~%")))
-
+(for-each (lambda (val) (hey "  DEFINE_INTEGER(XG_PRE ~S XG_POST,~80,1T~A);~%" val val)) (reverse ints))
+(for-each (lambda (val) (hey "  DEFINE_ULONG(XG_PRE ~S XG_POST,~80,1T~A);~%" val val)) (reverse ulongs))
+(if (not (null? extra-ints)) 
+    (with-extra hey (lambda () (for-each (lambda (val) (hey "  DEFINE_INTEGER(XG_PRE ~S XG_POST,~80,1T~A);~%" val val)) (reverse extra-ints)))))
 (if (not (null? deprecated-ints))
-    (begin
-      (hey "~%  /* -------------------- deprecated ints -------------------- */~%")
-      (hey "#if (!(defined(GDK_DISABLE_DEPRECATED))) && (!(defined(GTK_DISABLE_DEPRECATED))) && (!(defined(GDK_PIXBUF_DISABLE_DEPRECATED)))~%")
-      (for-each
-       (lambda (val)
-	 (hey "  DEFINE_INTEGER(XG_PRE ~S XG_POST,~80,1T~A);~%" val val))
-       (reverse deprecated-ints))
-      (hey "#endif~%~%")))
-
+    (with-deprecated hey (lambda () (for-each (lambda (val) (hey "  DEFINE_INTEGER(XG_PRE ~S XG_POST,~80,1T~A);~%" val val)) (reverse deprecated-ints)))))
 (if (not (null? broken-ints))
-    (begin
-      (hey "~%  /* -------------------- obsolete ints -------------------- */~%")
-      (hey "#if GDK_ENABLE_BROKEN && GTK_ENABLE_BROKEN~%")
-      (for-each
-       (lambda (val)
-	 (hey "  DEFINE_INTEGER(XG_PRE ~S XG_POST,~80,1T~A);~%" val val))
-       (reverse broken-ints))
-      (hey "#endif~%~%")))
-
+    (with-broken hey (lambda () (for-each (lambda (val) (hey "  DEFINE_INTEGER(XG_PRE ~S XG_POST,~80,1T~A);~%" val val)) (reverse broken-ints)))))
 (hey "}~%~%")
-
 
 (hey "static void define_doubles(void)~%")
 (hey "{~%~%")
@@ -1925,20 +1914,9 @@
 (hey "  #define DEFINE_STRING(Name, Value) rb_define_global_const(Name, C_TO_XEN_STRING(Value))~%")
 (hey "#endif~%")
 
-(for-each
- (lambda (str)
-   (hey "  DEFINE_STRING(XG_PRE ~S XG_POST,~80,1T~A);~%" str str))
- (reverse strings))
-
+(for-each (lambda (str) (hey "  DEFINE_STRING(XG_PRE ~S XG_POST,~80,1T~A);~%" str str)) (reverse strings))
 (if (not (null? extra-strings))
-    (begin
-      (hey "~%#if PANGO_ENABLE_ENGINE && PANGO_ENABLE_BACKEND~%")
-      (for-each
-       (lambda (str)
-	 (hey "  DEFINE_STRING(XG_PRE ~S XG_POST,~80,1T~A);~%" str str))
-       (reverse extra-strings))
-      (hey "#endif~%~%")))
-
+    (with-extra hey (lambda () (for-each (lambda (str) (hey "  DEFINE_STRING(XG_PRE ~S XG_POST,~80,1T~A);~%" str str)) (reverse extra-strings)))))
 (hey "}~%~%")
 
 
@@ -1973,6 +1951,9 @@
 (hey "}~%")
 
 ;(hey "~A~%~A~%" funcs struct-fields)
+
+(close-output-port xg-file)
+(close-output-port xg-ruby-file)
 
 ;/* cc -c xg.c -g3 -DUSE_GTK -DDEBUGGING -DDEBUG_MEMORY -DLINUX -DUSE_SND -DWITH_BIG_COLORMAP -DHAVE_GNU_LIBC_VERSION_H -DHAVE_GSL -DHAVE_DLFCN_H -DHAVE_GUILE -DHAVE_LLONGS -DHAVE_APPLICABLE_SMOB -DHAVE_SCM_REMEMBER_UPTO_HERE -DHAVE_SCM_OBJECT_TO_STRING -DHAVE_SCM_NUM2LONG_LONG -DHAVE_SCM_C_MAKE_VECTOR -DHAVE_SCM_C_DEFINE -DHAVE_SCM_NUM2INT -DHAVE_SCM_C_DEFINE_GSUBR -DHAVE_SCM_LIST_N -DHAVE_SCM_C_EVAL_STRING -DHAVE_SCM_STR2SYMBOL -DHAVE_SCM_MAKE_REAL -DHAVE_SCM_T_CATCH_BODY -DHAVE_EXTENSION_LANGUAGE -DHAVE_STATIC_XM -DHAVE_GTK2 -I/home/bil/test/g3/include -I/home/bil/test/g3/include/glib-2.0 -I/home/bil/test/g3/include/pango-1.0 -I/home/bil/test/g3/include/gtk-2.0 -I/home/bil/test/g3/lib/gtk-2.0/include -I/home/bil/test/g3/include/atk-1.0 -I/home/bil/test/include -DGTK_ENABLE_BROKEN -DPANGO_ENABLE_ENGINE -DPANGO_ENABLE_BACKEND -DGDK_ENABLE_BROKEN */
 

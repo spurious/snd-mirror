@@ -7,9 +7,11 @@
  * TODO: XmVaCreateSimple* (need special arglist handlers)
  * TODO: Motif 2.2 has a bunch of widgets that seem to be partly ICS-specific? (Xi... rather than Xm...)
  * TODO: callback struct print (and tie makers into Ruby)
+ * TODO: XWindowChanges and XSetWindowAttributes accessible
  */
 
 /* HISTORY: 
+ *   25-Feb:    XmTextBlock fields
  *   22-Feb:    #f = NULL and vice-versa throughout
  *   21-Feb:    added various callback struct makers, changed XtCallCallbacks to be compatible with them.
  *   18-Feb:    removed undocumented functions: XmCvtFromHorizontalPixels, XmCvtFromVerticalPixels, XmCvtToHorizontalPixels, XInitImage
@@ -383,7 +385,6 @@ XM_TYPE_PTR(XmDropFinishCallbackStruct, XmDropFinishCallbackStruct *)
 XM_TYPE_PTR(XmDropProcCallbackStruct, XmDropProcCallbackStruct *)
 XM_TYPE_PTR(XmDropSiteEnterCallbackStruct, XmDropSiteEnterCallbackStruct *)
 XM_TYPE_PTR(XmDropSiteLeaveCallbackStruct, XmDropSiteLeaveCallbackStruct *)
-XM_TYPE(XmDropSiteVisuals, XmDropSiteVisuals)
 XM_TYPE_PTR(XmDropStartCallbackStruct, XmDropStartCallbackStruct *)
 XM_TYPE_PTR(XmFileSelectionBoxCallbackStruct, XmFileSelectionBoxCallbackStruct *)
 XM_TYPE_PTR(XmListCallbackStruct, XmListCallbackStruct *)
@@ -397,7 +398,7 @@ XM_TYPE_PTR(XmComboBoxCallbackStruct, XmComboBoxCallbackStruct *)
 XM_TYPE_PTR(XmContainerOutlineCallbackStruct, XmContainerOutlineCallbackStruct *)
 XM_TYPE_PTR(XmContainerSelectCallbackStruct, XmContainerSelectCallbackStruct *)
 XM_TYPE_PTR(XmNotebookCallbackStruct, XmNotebookCallbackStruct *)
-XM_TYPE_PTR(XmNotebookPageInfo, XmNotebookPageInfo *)
+XM_TYPE_PTR_OBJ(XmNotebookPageInfo, XmNotebookPageInfo *)
 XM_TYPE_PTR(XmRenderTable, XmRenderTable)
 XM_TYPE_PTR(XmRendition, XmRendition)
 XM_TYPE_PTR(XmSpinBoxCallbackStruct, XmSpinBoxCallbackStruct *)
@@ -421,6 +422,7 @@ XM_TYPE_PTR(XmScaleCallbackStruct, XmScaleCallbackStruct *)
 XM_TYPE_PTR(XmScrollBarCallbackStruct, XmScrollBarCallbackStruct *)
 XM_TYPE_PTR(XmSelectionBoxCallbackStruct, XmSelectionBoxCallbackStruct *)
 XM_TYPE_PTR(XmTextVerifyCallbackStruct, XmTextVerifyCallbackStruct *)
+XM_TYPE_PTR(XmTextBlock, XmTextBlock)
 XM_TYPE_PTR(XmToggleButtonCallbackStruct, XmToggleButtonCallbackStruct *)
 #if (!XM_DISABLE_DEPRECATED)
   XM_TYPE(XmFontContext, XmFontContext) /* opaque */
@@ -554,7 +556,6 @@ XM_Make(XmDropFinishCallbackStruct)
 XM_Make(XmDropProcCallbackStruct)
 XM_Make(XmDropSiteEnterCallbackStruct)
 XM_Make(XmDropSiteLeaveCallbackStruct)
-XM_Make(XmDropSiteVisuals)
 XM_Make(XmDropStartCallbackStruct)
 XM_Make(XmFileSelectionBoxCallbackStruct)
 XM_Make(XmListCallbackStruct)
@@ -566,6 +567,7 @@ XM_Make(XmScrollBarCallbackStruct)
 XM_Make(XmSelectionBoxCallbackStruct)
 XM_Make(XmTextVerifyCallbackStruct)
 XM_Make(XmToggleButtonCallbackStruct)
+XM_Make(XmTextBlock)
 #if MOTIF_2
 XM_Make(XmDestinationCallbackStruct)
 XM_Make(XmConvertCallbackStruct)
@@ -596,7 +598,6 @@ static void define_makes(void)
   XM_Declare(XmDropProcCallbackStruct);
   XM_Declare(XmDropSiteEnterCallbackStruct);
   XM_Declare(XmDropSiteLeaveCallbackStruct);
-  XM_Declare(XmDropSiteVisuals);
   XM_Declare(XmDropStartCallbackStruct);
   XM_Declare(XmFileSelectionBoxCallbackStruct);
   XM_Declare(XmListCallbackStruct);
@@ -608,6 +609,7 @@ static void define_makes(void)
   XM_Declare(XmSelectionBoxCallbackStruct);
   XM_Declare(XmTextVerifyCallbackStruct);
   XM_Declare(XmToggleButtonCallbackStruct);
+  XM_Declare(XmTextBlock);
 #if MOTIF_2
   XM_Declare(XmDestinationCallbackStruct);
   XM_Declare(XmConvertCallbackStruct);
@@ -6078,21 +6080,22 @@ returns a list of data ID/private ID pairs"
    */
   unsigned long len;
   XmClipboardPendingList clst;
-  int i, loc;
+  int i, loc, rtn;
   XEN lst = XEN_EMPTY_LIST;
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XmClipboardInquirePendingItems", "Display*");
   XEN_ASSERT_TYPE(XEN_Window_P(arg2), arg2, 2, "XmClipboardInquirePendingItems", "Window");
   XEN_ASSERT_TYPE(XEN_STRING_P(arg3), arg3, 3, "XmClipboardInquirePendingItems", "char*");
-  XmClipboardInquirePendingItems(XEN_TO_C_Display(arg1), 
-				 XEN_TO_C_Window(arg2), 
-				 XEN_TO_C_STRING(arg3), 
-				 &clst,
-				 &len);
+  rtn = XmClipboardInquirePendingItems(XEN_TO_C_Display(arg1), 
+				       XEN_TO_C_Window(arg2), 
+				       XEN_TO_C_STRING(arg3), 
+				       &clst,
+				       &len);
   loc = xm_protect(lst);
   for (i = len - 1; i >= 0; i--)
     lst = XEN_CONS(XEN_LIST_2(C_TO_XEN_INT(clst[i].DataId), 
 			      C_TO_XEN_INT(clst[i].PrivateId)),
 		   lst);
+  lst = XEN_CONS(C_TO_XEN_INT(rtn), lst);
   xm_unprotect_at(loc);
   return(lst);
 }
@@ -6118,7 +6121,7 @@ static XEN gxm_XmClipboardInquireFormat(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 returns a specified format name"
   /* DIFF: XmClipboardInquireFormat omits arg4 (XtPointer buffer) and arg6, returns them
    */
-  XtPointer *buf;
+  XtPointer buf;
   unsigned long len, n;
   int val;
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XmClipboardInquireFormat", "Display*");
@@ -6127,7 +6130,7 @@ returns a specified format name"
   XEN_ASSERT_TYPE(XEN_ULONG_P(arg4), arg4, 4, "XmClipboardInquireFormat", "ulong");
   len = XEN_TO_C_ULONG(arg4);
   if (len <= 0) return(XEN_FALSE);
-  buf = (XtPointer *)CALLOC(len, sizeof(XtPointer));
+  buf = (XtPointer)MALLOC(len);
   val = XmClipboardInquireFormat(XEN_TO_C_Display(arg1), 
 				 XEN_TO_C_Window(arg2), 
 				 XEN_TO_C_INT(arg3), 
@@ -6161,28 +6164,24 @@ static XEN gxm_XmClipboardRetrieve(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
    */
   unsigned long n;
   long id;
-  XtPointer *buf;
-  int len, val, i;
-  XEN vect;
-  XEN *velts;
+  XtPointer buf;
+  int len, val;
+  XEN str;
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XmClipboardRetrieve", "Display*");
   XEN_ASSERT_TYPE(XEN_Window_P(arg2), arg2, 2, "XmClipboardRetrieve", "Window");
   XEN_ASSERT_TYPE(XEN_STRING_P(arg3), arg3, 3, "XmClipboardRetrieve", "char*");
   XEN_ASSERT_TYPE(XEN_ULONG_P(arg4), arg4, 4, "XmClipboardRetrieve", "ulong");
   len = XEN_TO_C_ULONG(arg4);
   if (len <= 0) return(XEN_FALSE);
-  buf = (XtPointer *)CALLOC(len, sizeof(XtPointer));
+  buf = (XtPointer)MALLOC(len);
   val = XmClipboardRetrieve(XEN_TO_C_Display(arg1), 
 			    XEN_TO_C_Window(arg2), 
 			    XEN_TO_C_STRING(arg3), 
 			    buf, len, &n, &id);
-  vect = XEN_MAKE_VECTOR(len, XEN_ZERO);
-  velts = XEN_VECTOR_ELEMENTS(vect);
-  for (i = 0; i < len; i++)
-    velts[i] = C_TO_XEN_ULONG(buf[i]);
+  str = C_TO_XEN_STRING((char *)buf);
   FREE(buf);
   return(XEN_LIST_3(C_TO_XEN_INT(val),
-		    vect,
+		    str,
 		    C_TO_XEN_ULONG(id)));
 }
 
@@ -6240,12 +6239,11 @@ static XEN gxm_XmClipboardCopyByName(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XmClipboardCopyByName", "long");
   XEN_ASSERT_TYPE(XEN_STRING_P(arg4), arg4, 4, "XmClipboardCopyByName", "XtPointer");
   XEN_ASSERT_TYPE(XEN_ULONG_P(arg5), arg5, 5, "XmClipboardCopyByName", "ulong");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg6), arg6, 6, "XmClipboardCopyByName", "long");
   return(C_TO_XEN_INT(XmClipboardCopyByName(XEN_TO_C_Display(arg1), 
 					    XEN_TO_C_Window(arg2), XEN_TO_C_INT(arg3), 
 					    (XtPointer)XEN_TO_C_STRING(arg4), 
 					    XEN_TO_C_ULONG(arg5), 
-					    XEN_TO_C_INT(arg6))));
+					    (unsigned long)arg6)));
 }
 
 static XEN gxm_XmClipboardWithdrawFormat(XEN arg1, XEN arg2, XEN arg3)
@@ -7042,14 +7040,17 @@ static XEN gxm_XmInternAtom(XEN arg1, XEN arg2, XEN arg3)
 }
 
 #if MOTIF_2
-static XEN gxm_XmNotebookGetPageInfo(XEN arg1, XEN arg2, XEN arg3)
+static XEN gxm_XmNotebookGetPageInfo(XEN arg1, XEN arg2)
 {
-  #define H_XmNotebookGetPageInfo "XmNotebookPageStatus XmNotebookGetPageInfo(Widget notebook, int page_number, XmNotebookPageInfo *page_info) \
+  #define H_XmNotebookGetPageInfo "XmNotebookPageStatus XmNotebookGetPageInfo(Widget notebook, int page_number) \
 A Notebook function that returns page information"
+  XmNotebookPageInfo *info;
+  int err;
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmNotebookGetPageInfo", "Widget");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 2, "XmNotebookGetPageInfo", "int");
-  XEN_ASSERT_TYPE(XEN_XmNotebookPageInfo_P(arg3), arg3, 3, "XmNotebookGetPageInfo", "XmNotebookPageInfo*");
-  return(C_TO_XEN_INT(XmNotebookGetPageInfo(XEN_TO_C_Widget(arg1), XEN_TO_C_INT(arg2), XEN_TO_C_XmNotebookPageInfo(arg3))));
+  info = (XmNotebookPageInfo *)CALLOC(1, sizeof(XmNotebookPageInfo));
+  err = XmNotebookGetPageInfo(XEN_TO_C_Widget(arg1), XEN_TO_C_INT(arg2), info);
+  return(XEN_LIST_2(C_TO_XEN_INT(err), C_TO_XEN_XmNotebookPageInfo(info)));
 }
 
 static XEN gxm_XmCreateNotebook(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
@@ -17520,7 +17521,7 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmCreateArrowButton" XM_POSTFIX, gxm_XmCreateArrowButton, 3, 1, 0, H_XmCreateArrowButton);
 #if MOTIF_2
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmCreateNotebook" XM_POSTFIX, gxm_XmCreateNotebook, 3, 1, 0, H_XmCreateNotebook);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmNotebookGetPageInfo" XM_POSTFIX, gxm_XmNotebookGetPageInfo, 3, 0, 0, H_XmNotebookGetPageInfo);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmNotebookGetPageInfo" XM_POSTFIX, gxm_XmNotebookGetPageInfo, 2, 0, 0, H_XmNotebookGetPageInfo);
 #if HAVE_XP
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmPrintSetup" XM_POSTFIX, gxm_XmPrintSetup, 4, 1, 0, H_XmPrintSetup);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmPrintToFile" XM_POSTFIX, gxm_XmPrintToFile, 4, 0, 0, H_XmPrintToFile);
@@ -19101,6 +19102,9 @@ static XEN gxm_format(XEN ptr)
   if (XEN_XmSelectionCallbackStruct_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XmSelectionCallbackStruct(ptr))->format)));
   if (XEN_XmConvertCallbackStruct_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XmConvertCallbackStruct(ptr))->format)));
 #endif
+#if HAVE_MOTIF
+  if (XEN_XmTextBlock_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XmTextBlock(ptr))->format)));
+#endif
   if (XEN_XClientMessageEvent_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XClientMessageEvent(ptr))->format)));
   XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "format", "XClientMessageEvent");
   return(XEN_FALSE);
@@ -19109,8 +19113,11 @@ static XEN gxm_format(XEN ptr)
 static XEN gxm_set_format(XEN ptr, XEN val)
 {
   XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ARG_2, "set format", "an integer");
-  XEN_ASSERT_TYPE(XEN_XClientMessageEvent_P(ptr), ptr, XEN_ARG_1, "set format", "XClientMessageEvent");
-  (XEN_TO_C_XClientMessageEvent(ptr))->format = XEN_TO_C_INT(val);
+  if (XEN_XClientMessageEvent_P(ptr)) (XEN_TO_C_XClientMessageEvent(ptr))->format = XEN_TO_C_INT(val);
+#if HAVE_MOTIF
+  else if (XEN_XmTextBlock_P(ptr)) (XEN_TO_C_XmTextBlock(ptr))->format = XEN_TO_C_INT(val);
+#endif
+  else XEN_ASSERT_TYPE(0, ptr, XEN_ARG_1, "set format", "XClientMessageEvent or XmTextBlock");
   return(val);
 }
 
@@ -20203,9 +20210,6 @@ static XEN gxm_set_plane_mask(XEN ptr, XEN val)
 static XEN gxm_foreground(XEN ptr)
 {
   if (XEN_XGCValues_P(ptr)) return(C_TO_XEN_Pixel((Pixel)((XEN_TO_C_XGCValues(ptr))->foreground)));
-#if HAVE_MOTIF
-  if (XEN_XmDropSiteVisuals_P(ptr)) return(C_TO_XEN_Pixel((Pixel)((XEN_TO_C_XmDropSiteVisuals(ptr))->foreground)));
-#endif
   XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "foreground", "a struct with a foreground field");
   return(XEN_FALSE);
 }
@@ -20221,9 +20225,6 @@ static XEN gxm_set_foreground(XEN ptr, XEN val)
 static XEN gxm_background(XEN ptr)
 {
   if (XEN_XGCValues_P(ptr)) return(C_TO_XEN_Pixel((Pixel)((XEN_TO_C_XGCValues(ptr))->background)));
-#if HAVE_MOTIF
-  if (XEN_XmDropSiteVisuals_P(ptr)) return(C_TO_XEN_Pixel((Pixel)((XEN_TO_C_XmDropSiteVisuals(ptr))->background)));
-#endif
   XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "background", "a struct with a background field");
   return(XEN_FALSE);
 }
@@ -20981,6 +20982,7 @@ static XEN gxm_remaining(XEN ptr)
 
 static XEN gxm_destination_data(XEN ptr)
 {
+  /* widget-class specific interpretation -- is it worth untangling? */
   XEN_ASSERT_TYPE(XEN_XmDestinationCallbackStruct_P(ptr), ptr, XEN_ONLY_ARG, "destination_data", "XmDestinationCallbackStruct");
   return(C_TO_XEN_ULONG(((XEN_TO_C_XmDestinationCallbackStruct(ptr))->destination_data)));
 }
@@ -20999,6 +21001,7 @@ static XEN gxm_length(XEN ptr)
 {
   if (XEN_XmFileSelectionBoxCallbackStruct_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XmFileSelectionBoxCallbackStruct(ptr))->length)));
   if (XEN_XmCommandCallbackStruct_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XmCommandCallbackStruct(ptr))->length)));
+  if (XEN_XmTextBlock_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XmTextBlock(ptr))->length)));
 #if MOTIF_2
   if (XEN_XmSelectionBoxCallbackStruct_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XmSelectionBoxCallbackStruct(ptr))->length)));
   if (XEN_XmSelectionCallbackStruct_P(ptr)) return(C_TO_XEN_ULONG((ulong)((XEN_TO_C_XmSelectionCallbackStruct(ptr))->length)));
@@ -21006,6 +21009,28 @@ static XEN gxm_length(XEN ptr)
 #endif
   XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "length", "a struct with a length field");
   return(XEN_FALSE);
+}
+
+static XEN gxm_set_length(XEN ptr, XEN val)
+{
+  XEN_ASSERT_TYPE(XEN_XmTextBlock_P(ptr), ptr, XEN_ARG_1, "set length", "XmTextBlock");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ARG_2, "set length", "int");
+  (XEN_TO_C_XmTextBlock(ptr))->length = XEN_TO_C_INT(val);
+  return(val);
+}
+
+static XEN gxm_ptr(XEN ptr)
+{
+  XEN_ASSERT_TYPE(XEN_XmTextBlock_P(ptr), ptr, XEN_ARG_1, "ptr", "XmTextBlock");
+  return(C_TO_XEN_STRING((XEN_TO_C_XmTextBlock(ptr))->ptr));
+}
+
+static XEN gxm_set_ptr(XEN ptr, XEN val)
+{
+  XEN_ASSERT_TYPE(XEN_XmTextBlock_P(ptr), ptr, XEN_ARG_1, "set ptr", "XmTextBlock");
+  XEN_ASSERT_TYPE(XEN_STRING_P(val), val, XEN_ARG_2, "set length", "char*");
+  (XEN_TO_C_XmTextBlock(ptr))->ptr = XEN_TO_C_STRING(val);
+  return(val);
 }
 
 static XEN gxm_value(XEN ptr)
@@ -21082,6 +21107,7 @@ static XEN gxm_parm(XEN ptr)
 
 static XEN gxm_location_data(XEN ptr)
 {
+  /* widget-class specific interpretation -- is it worth untangling? */
   XEN_ASSERT_TYPE(XEN_XmDestinationCallbackStruct_P(ptr) || XEN_XmConvertCallbackStruct_P(ptr), 
 		  ptr, XEN_ONLY_ARG, "location_data", "a struct with a location_data field");
   if (XEN_XmDestinationCallbackStruct_P(ptr)) return(C_TO_XEN_ULONG((XtPointer)((XEN_TO_C_XmDestinationCallbackStruct(ptr))->location_data)));
@@ -21100,60 +21126,6 @@ static XEN gxm_client_data(XEN ptr)
   return(C_TO_XEN_ULONG((XtPointer)((XEN_TO_C_XmTransferDoneCallbackStruct(ptr))->client_data)));
 }
 #endif
-
-static XEN gxm_borderWidth(XEN ptr)
-{
-  XEN_ASSERT_TYPE(XEN_XmDropSiteVisuals_P(ptr), ptr, XEN_ONLY_ARG, "borderWidth", "XmDropSiteVisuals");
-  return(C_TO_XEN_Dimension((Dimension)((XEN_TO_C_XmDropSiteVisuals(ptr))->borderWidth)));
-}
-
-static XEN gxm_highlightThickness(XEN ptr)
-{
-  XEN_ASSERT_TYPE(XEN_XmDropSiteVisuals_P(ptr), ptr, XEN_ONLY_ARG, "highlightThickness", "XmDropSiteVisuals");
-  return(C_TO_XEN_Dimension((Dimension)((XEN_TO_C_XmDropSiteVisuals(ptr))->highlightThickness)));
-}
-
-static XEN gxm_highlightPixmap(XEN ptr)
-{
-  XEN_ASSERT_TYPE(XEN_XmDropSiteVisuals_P(ptr), ptr, XEN_ONLY_ARG, "highlightPixmap", "XmDropSiteVisuals");
-  return(C_TO_XEN_Pixmap((Pixmap)((XEN_TO_C_XmDropSiteVisuals(ptr))->highlightPixmap)));
-}
-
-static XEN gxm_highlightColor(XEN ptr)
-{
-  XEN_ASSERT_TYPE(XEN_XmDropSiteVisuals_P(ptr), ptr, XEN_ONLY_ARG, "highlightColor", "XmDropSiteVisuals");
-  return(C_TO_XEN_Pixel((Pixel)((XEN_TO_C_XmDropSiteVisuals(ptr))->highlightColor)));
-}
-
-static XEN gxm_shadowThickness(XEN ptr)
-{
-  XEN_ASSERT_TYPE(XEN_XmDropSiteVisuals_P(ptr), ptr, XEN_ONLY_ARG, "shadowThickness", "XmDropSiteVisuals");
-  return(C_TO_XEN_Dimension((Dimension)((XEN_TO_C_XmDropSiteVisuals(ptr))->shadowThickness)));
-}
-
-static XEN gxm_bottomShadowPixmap(XEN ptr)
-{
-  XEN_ASSERT_TYPE(XEN_XmDropSiteVisuals_P(ptr), ptr, XEN_ONLY_ARG, "bottomShadowPixmap", "XmDropSiteVisuals");
-  return(C_TO_XEN_Pixmap((Pixmap)((XEN_TO_C_XmDropSiteVisuals(ptr))->bottomShadowPixmap)));
-}
-
-static XEN gxm_bottomShadowColor(XEN ptr)
-{
-  XEN_ASSERT_TYPE(XEN_XmDropSiteVisuals_P(ptr), ptr, XEN_ONLY_ARG, "bottomShadowColor", "XmDropSiteVisuals");
-  return(C_TO_XEN_Pixel((Pixel)((XEN_TO_C_XmDropSiteVisuals(ptr))->bottomShadowColor)));
-}
-
-static XEN gxm_topShadowPixmap(XEN ptr)
-{
-  XEN_ASSERT_TYPE(XEN_XmDropSiteVisuals_P(ptr), ptr, XEN_ONLY_ARG, "topShadowPixmap", "XmDropSiteVisuals");
-  return(C_TO_XEN_Pixmap((Pixmap)((XEN_TO_C_XmDropSiteVisuals(ptr))->topShadowPixmap)));
-}
-
-static XEN gxm_topShadowColor(XEN ptr)
-{
-  XEN_ASSERT_TYPE(XEN_XmDropSiteVisuals_P(ptr), ptr, XEN_ONLY_ARG, "topShadowColor", "XmDropSiteVisuals");
-  return(C_TO_XEN_Pixel((Pixel)((XEN_TO_C_XmDropSiteVisuals(ptr))->topShadowColor)));
-}
 
 static XEN gxm_animate(XEN ptr)
 {
@@ -21588,21 +21560,15 @@ static void define_structs(void)
 				   XM_PREFIX "set_set" XM_POSTFIX, gxm_set_set, 1, 0, 2, 0);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "click_count" XM_POSTFIX, gxm_click_count, "",
 				   XM_PREFIX "set_click_count" XM_POSTFIX, gxm_set_click_count, 1, 0, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "length" XM_POSTFIX, gxm_length, "",
+				   XM_PREFIX "set_length" XM_POSTFIX, gxm_set_length, 1, 0, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "ptr" XM_POSTFIX, gxm_ptr, "",
+				   XM_PREFIX "set_ptr" XM_POSTFIX, gxm_set_ptr, 1, 0, 2, 0);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "dropAction" XM_POSTFIX, gxm_dropAction, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "iccHandle" XM_POSTFIX, gxm_iccHandle, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "completionStatus" XM_POSTFIX, gxm_completionStatus, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "dragContext" XM_POSTFIX, gxm_dragContext, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "animate" XM_POSTFIX, gxm_animate, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "topShadowColor" XM_POSTFIX, gxm_topShadowColor, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "topShadowPixmap" XM_POSTFIX, gxm_topShadowPixmap, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "bottomShadowColor" XM_POSTFIX, gxm_bottomShadowColor, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "bottomShadowPixmap" XM_POSTFIX, gxm_bottomShadowPixmap, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "shadowThickness" XM_POSTFIX, gxm_shadowThickness, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "highlightColor" XM_POSTFIX, gxm_highlightColor, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "highlightPixmap" XM_POSTFIX, gxm_highlightPixmap, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "highlightThickness" XM_POSTFIX, gxm_highlightThickness, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "borderWidth" XM_POSTFIX, gxm_borderWidth, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "length" XM_POSTFIX, gxm_length, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "widget" XM_POSTFIX, gxm_widget, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "item_position" XM_POSTFIX, gxm_item_position, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "callbackstruct" XM_POSTFIX, gxm_callbackstruct, 1, 0, 0, NULL);

@@ -1866,6 +1866,9 @@ static BACKGROUND_TYPE fft_in_slices(void *fftData)
   fft_state *fs;
   int res = 0;
   fs = (fft_state *)fftData;
+#if DEBUGGING
+      if (fs->slice > 8) abort();
+#endif
   switch (fs->slice)
     {
     case 0: res = snd_fft_set_up(fs);            break;

@@ -95,7 +95,6 @@ static XEN g_make_snd_color(XEN r, XEN g, XEN b)
   snd_color *new_color;
   GdkColor gcolor;
   Float rf, gf, bf;
-  gboolean rtn;
   XEN_ASSERT_TYPE(XEN_NUMBER_P(r), r, XEN_ARG_1, S_make_color, "a number");
   /* someday accept a list as r */
   XEN_ASSERT_TYPE(XEN_NUMBER_P(g), g, XEN_ARG_2, S_make_color, "a number");
@@ -108,11 +107,7 @@ static XEN g_make_snd_color(XEN r, XEN g, XEN b)
   gcolor.green = (unsigned short)(65535 * gf);
   gcolor.blue = (unsigned short)(65535 * bf);
   new_color->color = gdk_color_copy(&gcolor);
-  rtn = gdk_color_alloc(gdk_colormap_get_system(), new_color->color);
-  if (rtn == FALSE)
-    XEN_ERROR(NO_SUCH_COLOR,
-	      XEN_LIST_2(C_TO_XEN_STRING(S_make_color),
-			 XEN_LIST_3(r, g, b)));
+  SG_COLOR_ALLOC(gdk_colormap_get_system(), new_color->color);
   XEN_MAKE_AND_RETURN_OBJECT(snd_color_tag, new_color, 0, free_snd_color);
 }
 

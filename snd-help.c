@@ -262,12 +262,14 @@ char *version_info(void)
 
 void news_help(snd_state *ss)
 {
-  char *info;
+  char *info = NULL, *features = NULL;
   info = version_info();
+  features = word_wrap(XEN_TO_C_STRING(XEN_TO_STRING(XEN_EVAL_C_STRING("*features*"))), 600);
   ssnd_help(ss, STR_News,
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+25-Feb:  gtk2 port with xg (see example in grfsnd.html).\n\
 11-Feb:  snd 5.7.\n\
          xg.c (gtk2 bindings), makexg.scm, xgdata.scm.\n\
 30-Jan:  removed stats dialog, snd-xstats.c, snd-gstats.c, show-usage-stats, update-usage-stats.\n\
@@ -280,20 +282,15 @@ void news_help(snd_state *ss)
 14-Jan:  gsl-error.\n\
          snd.rb (Ruby code and tests).\n\
 11-Jan:  snd 5.6. flute.scm.\n\
-7-Jan:   mix-channel, insert-channel in extensions.scm.\n\
-         event.scm.\n\
-         the Snd widget lists now return objects compatible with the xm module,\n\
-           so the various \"cast\" functions such as |Widget are now no-ops.\n\
 ",
 #if HAVE_GUILE
-	    "\n    *features*: \n'",
-	    word_wrap(XEN_TO_C_STRING(XEN_TO_STRING(XEN_EVAL_C_STRING("*features*"))), 600),
-	    "\n\n",
+	    "\n    *features*: \n'", features, "\n\n",
 #else
 	    "\n",
 #endif
 NULL);
-  FREE(info);
+  if (info) FREE(info);
+  if (features) FREE(features);
 }
 
 /* ---------------- help menu strings ---------------- */

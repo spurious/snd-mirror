@@ -501,7 +501,7 @@ void allocate_color_map(snd_state *ss, int colormap)
 	  tmp_color.green = curmap[j++];
 	  tmp_color.blue = curmap[j++];
 	  grays[i] = gdk_color_copy(&tmp_color);
-	  gdk_color_alloc(cmap, grays[i]);
+	  SG_COLOR_ALLOC(cmap, grays[i]);
 	}
       grays_allocated = colormap;
     }

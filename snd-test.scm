@@ -13176,16 +13176,31 @@ EDITS: 4
 			 (fdata (find-child file-pane "file-data"))
 			 (ff (find-child fdata "ff-form"))
 			 (file-text (find-child ff "text"))
-			 (buttons '()))
+			 (buttons '())
+			 (sliders '())
+			 (numbers '()))
 		    (for-each-child recd (lambda (w) 
 					   (if (and (|XmIsPushButton w) 
 						    (string=? (|XtName w) "A")) 
-					       (set! buttons (cons w buttons)))))
+					       (set! buttons (cons w buttons)))
+					   (if (and (|XmIsPushButton w) 
+						    (string=? (|XtName w) "amp-number")) 
+					       (set! numbers (cons w numbers)))
+					   (if (and (|XmIsScrollBar w) 
+						    (or (string=? (|XtName w) "amp")
+							(string=? (|XtName w) "trigger-scale")))
+					       (set! sliders (cons w sliders)))))
 		    (|XmTextSetString file-text "fmv.snd")
+		    (for-each (lambda (w) (click-button w #t)) buttons)
+		    (for-each (lambda (w) (click-button w #t)) numbers)
 		    (for-each
 		     (lambda (w)
-		       (click-button w #t))
-		     buttons)
+		       (|XtCallCallbacks w |XmNdragCallback
+					  (let ((cb (|XmScrollBarCallbackStruct)))
+					    (set! (|value cb) 65)
+					    (set! (|event cb) (|XEvent))
+					    cb)))
+		     sliders)
 		    (click-button record-button #t)
 		    (click-button record-button #f)
 		    (click-button reset-button)
@@ -13248,6 +13263,7 @@ EDITS: 4
 			 (flt-button (list-ref enved-widgets 14))
 			 (amp-button (list-ref enved-widgets 15))
 			 (src-button (list-ref enved-widgets 16))
+			 (clip-button (list-ref enved-widgets 17))
 			 (dB-button (list-ref enved-widgets 18))
 			 (exp-button (list-ref enved-widgets 20))
 			 (lin-button (list-ref enved-widgets 21))
@@ -13306,6 +13322,8 @@ EDITS: 4
 			  (click-button undo-button) (force-event)
 			  (click-button redo-button) (force-event)))
 		      (click-button revert-button) (force-event)
+		      (click-button clip-button) (force-event)
+		      (click-button clip-button) (force-event)
 		      (let ((active-env (enved-active-env)))
 			(IF (not (ffeql active-env (list 0.0 0.0 1.0 0.0)))
 			    (snd-display ";enved revert: ~A?" active-env)))
@@ -13388,6 +13406,11 @@ EDITS: 4
 			    (snd-display ";apply src length: ~A ~A?" fr (frames ind)))
 			(click-button (find-child (car enved-widgets) "exp:"))
 			(|XtCallCallbacks (find-child (car enved-widgets) "expscl") |XmNdragCallback
+					  (let ((cb (|XmScrollBarCallbackStruct)))
+					    (set! (|value cb) 65)
+					    (set! (|event cb) (|XEvent))
+					    cb))
+			(|XtCallCallbacks (find-child (car enved-widgets) "expscl") |XmNvalueChangedCallback
 					  (let ((cb (|XmScrollBarCallbackStruct)))
 					    (set! (|value cb) 65)
 					    (set! (|event cb) (|XEvent))
@@ -13891,6 +13914,7 @@ EDITS: 4
 		      (|XmToggleButtonSetState sv2 #f #t)
 		      (|XmToggleButtonSetState pl2 #f #t))
 		    (lambda args args))
+		  (enter-event nm1)
 		  (set! name (cadr (|XmStringGetLtoR (cadr (|XtVaGetValues nm2 (list |XmNlabelString 0))) "bold_button_font")))
 		  (close-sound (car (sounds)))
 		  (|XmToggleButtonSetState sv1 #t #t)		  
@@ -14080,12 +14104,15 @@ EDITS: 4
 		  (close-sound ind))
 
 		;; ---------------- print dialog ----------------
-		(let ((printd (list-ref (dialog-widgets) 17))
-		      (ind (open-sound "oboe.snd")))
-		  (if (|Widget? printd)
-		      (begin
-			(|XtManageChild printd)
-			(let ((txt (find-child printd "text")))
+		(let* ((ind (open-sound "oboe.snd"))
+		       (print-menu (menu-option "Print")))
+		  (|XtSetSensitive print-menu #t)
+		  (click-button print-menu #t)
+		  (let ((printd (list-ref (dialog-widgets) 17)))
+		    (if (|Widget? printd)
+			(begin
+			  (if (not (|XtIsManaged printd)) (|XtManageChild printd))
+			  (let ((txt (find-child printd "text")))
 			  (|XmTextSetString txt "test.eps")
 			  (click-button (|XmMessageBoxGetChild printd |XmDIALOG_OK_BUTTON))
 			  (IF (not (file-exists? "test.eps"))
@@ -14093,8 +14120,9 @@ EDITS: 4
 			      (delete-file "test.eps"))
 			  (click-button (|XmMessageBoxGetChild printd |XmDIALOG_CANCEL_BUTTON))
 			  (IF (|XtIsManaged printd)
-			      (snd-display ";why is print dialog alive?")))))
-		  (close-sound ind))
+			      (snd-display ";why is print dialog alive?"))))
+		      (snd-display ";no print dialog?"))
+		  (close-sound ind)))
 
 		;; ---------------- recorder dialog ----------------
                 (let ((old-val (with-background-processes)))
@@ -15247,7 +15275,6 @@ EDITS: 4
 			     (set! row #f)))))
 		   (list "this" "is" "a" "test" "of" "the" "renditions" "and" "rendertables" 
 			 "perhaps" "all" "will" "go" "well" "and" "then" "again" "perhaps" "not"))
-		  
 		  (let* ((n (car table))
 			 (c (|XmStringInitContext n))
 			 (ctr 0))
@@ -15652,12 +15679,35 @@ EDITS: 4
 
 	    (let* ((frm (add-main-pane "hi" |xmFormWidgetClass (list |XmNpaneMinimum 120)))
 		   (current-time (list 'Time |CurrentTime))
+		   (calls (make-vector 10 "none"))
 		   (txt (|XtCreateManagedWidget "text" |xmTextWidgetClass frm
 						(list |XmNeditable #t
 						      |XmNleftAttachment      |XmATTACH_FORM
 						      |XmNrightAttachment     |XmATTACH_FORM
 						      |XmNtopAttachment       |XmATTACH_FORM
-						      |XmNbottomAttachment    |XmATTACH_NONE)))
+						      |XmNbottomAttachment    |XmATTACH_NONE
+						      |XmNdestinationCallback 
+						       (list (lambda (w c i) 
+							       (vector-set! calls c "dest")
+							       (IF (< (|destination_data i) 0) (snd-display "destination_data: A~" (|destination_data i)))
+							       (IF (< (|location_data i) 0) (snd-display "location_data: A~" (|location_data i))))
+							     1)
+						      |XmNactivateCallback (list (lambda (w c i) (vector-set! calls c "act")) 2)
+						      |XmNfocusCallback (list (lambda (w c i) (vector-set! calls c "focus")) 3)
+						      |XmNlosingFocusCallback (list (lambda (w c i) (vector-set! calls c "losingfocus")) 4)
+						      |XmNgainPrimaryCallback (list (lambda (w c i) (vector-set! calls c "gain")) 5)
+						      |XmNlosePrimaryCallback (list (lambda (w c i) (vector-set! calls c "lose")) 6)
+						      |XmNmodifyVerifyCallback 
+						       (list (lambda (w c i) 
+							       (vector-set! calls c "modify")
+							       (IF (< (|currInsert i) 0) (snd-display "currInsert: A~" (|currInsert i)))
+							       (IF (< (|newInsert i) 0) (snd-display "newInsert: A~" (|newInsert i)))
+							       (IF (string? (|doit i)) (snd-display "doit: A~" (|doit i)))
+							       (IF (< (|startPos i) 0) (snd-display "startPos: A~" (|startPos i)))
+							       (IF (< (|endPos i) 0) (snd-display "endPos: A~" (|endPos i))))
+							     7)
+						      |XmNmotionVerifyCallback (list (lambda (w c i) (vector-set! calls c "motion")) 8)
+						      |XmNvalueChangedCallback (list (lambda (w c i) (vector-set! calls c "value")) 9))))
 		   (txtf (|XtVaCreateManagedWidget "textfield" |xmTextFieldWidgetClass frm
 						(list |XmNeditable #t
 						      |XmNleftAttachment      |XmATTACH_FORM
@@ -15825,7 +15875,52 @@ EDITS: 4
 	      (|XmTextFieldSetAddMode txtf #t)
 	      (IF (not (|XmTextFieldGetAddMode txtf)) (snd-display ";XmTextFieldSetAddMode?"))
 	      
+	      (IF (not (string=? (vector-ref calls 1) "dest")) (snd-display ";destination callback: ~A" (vector-ref calls 1)))
+	      ;(IF (not (string=? (vector-ref calls 3) "focus")) (snd-display ";focus callback: ~A" (vector-ref calls 3)))
+	      ;(IF (not (string=? (vector-ref calls 4) "losingfocus")) (snd-display ";losingfocus callback: ~A" (vector-ref calls 4)))
+	      (IF (not (string=? (vector-ref calls 5) "gain")) (snd-display ";gain callback: ~A" (vector-ref calls 5)))
+	      (IF (not (string=? (vector-ref calls 6) "lose")) (snd-display ";lose callback: ~A" (vector-ref calls 6)))
+	      (IF (not (string=? (vector-ref calls 7) "modify")) (snd-display ";modify callback: ~A" (vector-ref calls 7)))
+	      (IF (not (string=? (vector-ref calls 8) "motion")) (snd-display ";motion callback: ~A" (vector-ref calls 8)))
+	      (IF (not (string=? (vector-ref calls 9) "value")) (snd-display ";value callback: ~A" (vector-ref calls 9)))
+
+	      (|XtAppAddActions (car (main-widgets)) (list (list "hiho" (lambda args (snd-print "hiho")))))
+	      (|XtAugmentTranslations txt (|XtParseTranslationTable "Ctrl <Key>i: hiho()\n"))
+	      (|XtCallActionProc txt "hiho" (|XEvent) "" 0)
+	      (|XtUninstallTranslations txt)
+
 	      (|XtUnmanageChild frm))
+
+	    (let* ((shell (cadr (main-widgets)))
+		   (dpy (|XtDisplay shell))
+		   (win (|XtWindow shell))
+		   (err (|XmClipboardRegisterFormat dpy "SND_DATA" 8)))
+	      (if (not (= err |ClipboardSuccess)) 
+		  (snd-display "XmClipboardRegisterFormat: ~A" err)
+		  (let ((vals (|XmClipboardStartCopy dpy win
+						     (|XmStringCreateLocalized "SND_DATA") 
+						     (list 'Time |CurrentTime) 
+						     shell
+						     (lambda (w id pid reason)
+						       (let ((status (|XmClipboardCopyByName dpy win id "copy this" 10 123))))))))
+		    (IF (not (= (car vals) |ClipboardSuccess))
+			(snd-display ";XmClipboardStartCopy: ~A" vals)
+			(let ((data-id (cadr vals)))
+			  (set! err (|XmClipboardCopy dpy win data-id "SND_DATA" "copy this" 10 0))
+			  (IF (not (= (car err) |ClipboardSuccess)) (snd-display ";XmClipboardCopy: ~A" err))
+			  (let ((item-id (cadr err)))
+			    (set! err (|XmClipboardEndCopy dpy win data-id))
+			    (IF (not (= err |ClipboardSuccess)) (snd-display (format "copy ~A" err)))
+			    (IF (not (= (cadr (|XmClipboardInquireLength dpy win "SND_DATA")) 10))
+				(snd-display "clip len: ~A" (|XmClipboardInquireLength dpy win "SND_DATA")))
+			    (let ((pend (|XmClipboardInquirePendingItems dpy win "SND_DATA")))
+			      (IF (not (= (car pend) |ClipboardSuccess)) (snd-display ";XmClipboardInquirePendingItems: ~A" pend)))
+			    (let ((formats (|XmClipboardInquireCount dpy win)))
+			      (IF (= (cadr formats) 0) (snd-display ";XmClipboardInquireCount: ~A" formats))
+			      (let ((data (|XmClipboardInquireFormat dpy win 1 10)))
+				(let ((clip (|XmClipboardRetrieve dpy win "SND_DATA" 10)))
+				  (IF (not (string=? (cadr clip) "copy this")) (snd-display ";XmClipboardRetrieve: ~A" clip))
+				  (|XmClipboardWithdrawFormat dpy win item-id))))))))))
 
 	    (let* ((frm (add-main-pane "hi" |xmFormWidgetClass (list |XmNpaneMinimum 120)))
 		   (current-time (list 'Time |CurrentTime))
@@ -15866,13 +15961,29 @@ EDITS: 4
 						      |XmNtopAttachment       |XmATTACH_WIDGET
 						      |XmNtopWidget           cmd
 						      |XmNbottomAttachment    |XmATTACH_NONE)))
-		   (cmb (|XtCreateManagedWidget "cmb" |xmComboBoxWidgetClass frm
+		   (notes (|XtCreateManagedWidget "notes" |xmNotebookWidgetClass frm
 						(list |XmNleftAttachment      |XmATTACH_FORM
 						      |XmNrightAttachment     |XmATTACH_FORM
 						      |XmNtopAttachment       |XmATTACH_WIDGET
 						      |XmNtopWidget           scl
+						      |XmNbottomAttachment    |XmATTACH_NONE)))
+
+		   (cmb (|XtCreateManagedWidget "cmb" |xmComboBoxWidgetClass frm
+						(list |XmNleftAttachment      |XmATTACH_FORM
+						      |XmNrightAttachment     |XmATTACH_FORM
+						      |XmNtopAttachment       |XmATTACH_WIDGET
+						      |XmNtopWidget           notes
 						      |XmNbottomAttachment    |XmATTACH_FORM)))
 		   (toggled 0))
+	      (|XtCreateManagedWidget "one" |xmPushButtonWidgetClass notes '())
+	      (|XtCreateManagedWidget "two" |xmPushButtonWidgetClass notes '())
+	      (let ((info (cadr (|XmNotebookGetPageInfo notes 1))))
+		(IF (not (= (|page_number info) 1)) (snd-display "page_number: ~A" (|page_number info)))
+		(IF (|page_widget info) (snd-display "page_widget: ~A" (|page_widget info)))
+		(IF (|status_area_widget info) (snd-display "status_area_widget: ~A" (|status_area_widget info)))
+		(IF (not (|Widget? (|major_tab_widget info))) (snd-display "major_tab_widget: ~A" (|major_tab_widget info)))
+		(IF (|minor_tab_widget info) (snd-display "minor_tab_widget: ~A" (|minor_tab_widget info))))
+
 	      (|XmMainWindowSetAreas mnw #f box #f #f spn)
 	      (IF (not (|Widget? (|XmMainWindowSep1 mnw))) (snd-display ";XmMainWindowSep1: ~A" (|XmMainWindowSep1 mnw)))
 	      (IF (not (|Widget? (|XmMainWindowSep2 mnw))) (snd-display ";XmMainWindowSep2: ~A" (|XmMainWindowSep2 mnw)))
@@ -16499,8 +16610,7 @@ EDITS: 4
 				|new_outline_state |prev_page_number |prev_page_widget |rendition |render_table |last_page |crossed_boundary
 				|client_data |status |font_name |tag |traversal_destination |dragProtocolStyle |direction |reason
 				|timeStamp |operation |operations |dropSiteStatus |dropAction |iccHandle |completionStatus |dragContext
-				|animate |topShadowColor |topShadowPixmap |bottomShadowColor |bottomShadowPixmap |shadowThickness |highlightColor
-				|highlightPixmap |highlightThickness |borderWidth |length |click_count |widget |item_position |callbackstruct
+				|animate |length |click_count |widget |item_position |callbackstruct
 				|set |item |item_length |selected_items |selected_item_count |selected_item_positions |selection_type
 				|mask |mask_length |dir |dir_length |pattern |pattern_length |position |currInsert |newInsert |startPos
 				|endPos |text |request_code |error_code |first_keycode |request |resourceid |format |message_type |new
@@ -16529,8 +16639,7 @@ EDITS: 4
 				'|new_outline_state '|prev_page_number '|prev_page_widget '|rendition '|render_table '|last_page '|crossed_boundary
 				'|client_data '|status '|font_name '|tag '|traversal_destination '|dragProtocolStyle '|direction '|reason
 				'|timeStamp '|operation '|operations '|dropSiteStatus '|dropAction '|iccHandle '|completionStatus '|dragContext
-				'|animate '|topShadowColor '|topShadowPixmap '|bottomShadowColor '|bottomShadowPixmap '|shadowThickness '|highlightColor
-				'|highlightPixmap '|highlightThickness '|borderWidth '|length '|click_count '|widget '|item_position '|callbackstruct
+				'|animate '|length '|click_count '|widget '|item_position '|callbackstruct
 				'|set '|item '|item_length '|selected_items '|selected_item_count '|selected_item_positions '|selection_type
 				'|mask '|mask_length '|dir '|dir_length '|pattern '|pattern_length '|position '|currInsert '|newInsert '|startPos
 				'|endPos '|text '|request_code '|error_code '|first_keycode '|request '|resourceid '|format '|message_type '|new

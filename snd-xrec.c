@@ -1529,10 +1529,10 @@ static void make_file_info_pane(snd_state *ss, recorder_info *rp, Widget file_pa
   XtSetArg(args[n], XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET); n++;
   XtSetArg(args[n], XmNtopWidget, trigger_label); n++;
   XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
-  XtSetArg(args[n], XmNvalue, (int)(100*(rp->trigger))); n++;
+  XtSetArg(args[n], XmNvalue, (int)(100 * rp->trigger)); n++;
   XtSetArg(args[n], XmNdragCallback, n1 = make_callback_list(drag_trigger_callback, (XtPointer)ss)); n++;
   XtSetArg(args[n], XmNvalueChangedCallback, n2 = make_callback_list(change_trigger_callback, (XtPointer)ss)); n++;
-  trigger_scale = XtCreateManagedWidget("scale", xmScaleWidgetClass, file_form, args, n);
+  trigger_scale = XtCreateManagedWidget("trigger-scale", xmScaleWidgetClass, file_form, args, n);
   XtAddCallback(trigger_scale, XmNhelpCallback, trigger_help_callback, ss);
 
   /* buttons */

@@ -114,7 +114,52 @@ and macros.
 <p>For many examples, see event.scm, snd-motif.scm, popup.scm, new-effects.scm,
 all the contrib/dlp directory, and snd-test.scm in the Snd tarball. There is
 also some further discussion of this stuff in Snd's grfsnd.html (Ruby examples,
-etc).  The Gtk+ bindings depend on version 1.3.13 ("gtk2") or later.
+etc).  The Gtk+ bindings depend on version 1.3.13 ("gtk2") or later.  Here's
+a Snd-related gtk example:
+</p>
+<pre>
+(define scale-dialog #f)
+(define current-scaler 1.0)
+
+(define (create-scale-dialog parent)
+  (if (not scale-dialog)
+      (begin
+	(set! scale-dialog (|gtk_dialog_new))
+	(|gtk_signal_connect (|GTK_OBJECT scale-dialog) "delete-event"
+			     (lambda (w ev info)
+			       (|gtk_widget_hide w)))
+	(|gtk_window_set_title (|GTK_WINDOW scale-dialog) "Scale")
+	(|gtk_widget_realize scale-dialog)
+	(let ((dismiss (|gtk_button_new_with_label "Dismiss"))
+	      (help (|gtk_button_new_with_label "Help")))
+	  (|gtk_box_pack_start (|GTK_BOX (|action_area (|GTK_DIALOG scale-dialog))) dismiss #t #t 4)
+	  (|gtk_box_pack_end (|GTK_BOX (|action_area (|GTK_DIALOG scale-dialog))) help #t #t 4)	
+	  (|gtk_signal_connect (|GTK_OBJECT dismiss) "clicked"
+			       (lambda (w info)
+				 (|gtk_widget_hide scale-dialog)))
+	  (|gtk_signal_connect (|GTK_OBJECT help) "clicked"
+			       (lambda (w info)
+				 (help-dialog "Scaler Dialog" "move the slider to affect the volume")))
+	  (|gtk_widget_show dismiss)
+	  (|gtk_widget_show help)
+	  (let* ((adj (|gtk_adjustment_new 0.0 0.0 1.01 0.01 0.01 .01))
+		 (scale (|gtk_hscale_new (|GTK_ADJUSTMENT adj))))
+	    (|gtk_range_set_update_policy (|GTK_RANGE (|GTK_SCALE scale)) |GTK_UPDATE_CONTINUOUS)
+	    (|gtk_scale_set_draw_value (|GTK_SCALE scale) #t)
+	    (|gtk_scale_set_digits (|GTK_SCALE scale) 2)
+	    (|gtk_signal_connect (|GTK_OBJECT adj) "value_changed"
+				 (lambda (wadj info)
+				   (set! current-scaler (|value (|GTK_ADJUSTMENT wadj)))))
+	    (|gtk_box_pack_start (|GTK_BOX (|vbox (|GTK_DIALOG scale-dialog))) scale #f #f 6)
+	    (|gtk_widget_show scale)))))
+  (|gtk_widget_show scale-dialog))
+
+(create-scale-dialog (cadr (main-widgets)))
+</pre>
+<p>The only change from the C code was the addition of GTK_ADJUSTMENT in the scale value_changed
+callback -- currently the xg module assumes the first argument to the two-argument callback is
+a GtkWidget, so we have to cast a GtkAdjustment back to its original type.  Once I figure out
+how the "marshaller" works in Gtk, I may be able to fix this.
 </p>
 </body>
 </html>

@@ -683,7 +683,7 @@
   XEN_ARGIFY_4(gxm_XmCreateArrowButton_w, gxm_XmCreateArrowButton)
 #if MOTIF_2
   XEN_ARGIFY_4(gxm_XmCreateNotebook_w, gxm_XmCreateNotebook)
-  XEN_NARGIFY_3(gxm_XmNotebookGetPageInfo_w, gxm_XmNotebookGetPageInfo)
+  XEN_NARGIFY_2(gxm_XmNotebookGetPageInfo_w, gxm_XmNotebookGetPageInfo)
 #if HAVE_XP
   XEN_ARGIFY_5(gxm_XmPrintSetup_w, gxm_XmPrintSetup)
   XEN_NARGIFY_4(gxm_XmPrintToFile_w, gxm_XmPrintToFile)
@@ -1910,7 +1910,7 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmCreateArrowButton" XM_POSTFIX, gxm_XmCreateArrowButton_w, 3, 1, 0, H_XmCreateArrowButton);
 #if MOTIF_2
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmCreateNotebook" XM_POSTFIX, gxm_XmCreateNotebook_w, 3, 1, 0, H_XmCreateNotebook);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmNotebookGetPageInfo" XM_POSTFIX, gxm_XmNotebookGetPageInfo_w, 3, 0, 0, H_XmNotebookGetPageInfo);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmNotebookGetPageInfo" XM_POSTFIX, gxm_XmNotebookGetPageInfo_w, 2, 0, 0, H_XmNotebookGetPageInfo);
 #if HAVE_XP
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmPrintSetup" XM_POSTFIX, gxm_XmPrintSetup_w, 4, 1, 0, H_XmPrintSetup);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmPrintToFile" XM_POSTFIX, gxm_XmPrintToFile_w, 4, 0, 0, H_XmPrintToFile);

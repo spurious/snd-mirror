@@ -374,7 +374,7 @@ static void play_button_click_callback(GtkWidget *w, gpointer data)
       else set_active_color(w, (ss->sgx)->pushed_button_color);
       play_sound(sp, 0, NO_END_SPECIFIED, IN_BACKGROUND, 
 		 C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION),
-		 "play button", 0);                        /* should this follow the sync button? */
+		 "play_button", 0);                        /* should this follow the sync button? */
     }
 }
 

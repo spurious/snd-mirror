@@ -47,7 +47,15 @@ static void mus_print2snd(char *msg)
   add_to_error_history(ss, msg, FALSE);
   if (record_dialog_is_active()) recorder_error(msg);
   if (!(ignore_mus_error(MUS_NO_ERROR, msg)))
-    listener_append(ss, msg);
+    if (msg)
+      {
+	listener_append(ss, ";");
+	if (msg[0] == '\n')
+	  listener_append(ss, (char *)(msg + 1));
+	else listener_append(ss, msg);
+	if (msg[strlen(msg) - 1] != '\n')
+	  listener_append(ss, "\n");
+      }
 }
 
 #if HAVE_SYS_FPU_H

@@ -358,7 +358,13 @@ typedef struct {
   #define SG_LIST_INSERT(Widget, Pos, Str)   sg_list_insert(Widget, Pos, Str)
   #define SG_LIST_SET_TEXT(Widget, Row, Str) sg_list_set_text(Widget, Row, Str)
 
-  /* still using deprecated stuff here */
+  /* still using deprecated stuff here -- is this gtk_pixmap gtk_image now? */
+
+/* "gdk_gc_set_rgb_fg_color() and gdk_gc_set_rgb_bg_color() 
+    are provided as convenience functions; these call gdk_rgb_find_color() on the passed-in color, then set the color on the GC. "
+*/
+  #define SG_COLOR_ALLOC(CMap, Color)        gdk_rgb_find_color(CMap, Color)
+
   #define SG_PIXMAP_NEW(Map, Mask)           gtk_pixmap_new(Map, Mask)
   #define SG_PIXMAP_NEW_XYD(Window, Width, Height, Depth) gdk_pixmap_new(Window, Width, Height, Depth)
   #define SG_XPM_TO_PIXMAP(Window, Bits, Mask) gdk_pixmap_create_from_xpm_d(Window, &Mask, NULL, Bits)
@@ -420,6 +426,7 @@ typedef struct {
   #define SG_PIXMAP_NEW_XYD(Window, Width, Height, Depth) gdk_pixmap_new(Window, Width, Height, Depth)
   #define SG_PIXMAP_SET(Holder, Map, Mask)   gtk_pixmap_set(GTK_PIXMAP(Holder), Map, Mask)
   #define SG_XPM_TO_PIXMAP(Window, Bits, Mask) gdk_pixmap_create_from_xpm_d(Window, &Mask, NULL, Bits)
+  #define SG_COLOR_ALLOC(CMap, Color)        gdk_color_alloc(CMap, Color)
   #define SG_FONT_LOAD(Font)                 gdk_font_load(Font)
   #define SG_SET_FONT(Gc, Font)              gdk_gc_set_font(Gc, Font)
   #define SG_TEXT_WIDTH(Txt, Font)           gdk_text_width(Font, (gchar *)Txt, (gint)strlen(Txt))

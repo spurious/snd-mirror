@@ -307,7 +307,7 @@ void set_button_label_bold(GtkWidget *button, const char *str)
   if (ss->using_schemes) return;
   style = gtk_style_copy(gtk_widget_get_style(button));
 #if HAVE_GTK2
-  /* style->font_desc = (ss->sgx)->bold_button_fnt; */
+  gtk_widget_modify_font(button, (ss->sgx)->bold_button_fnt);
 #else
   style->font = (ss->sgx)->bold_button_fnt;
 #endif
@@ -623,6 +623,7 @@ void sg_set_cursor(GtkWidget *w, int position)
   buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(w));
   gtk_text_buffer_get_iter_at_offset(buf, &pos, position);
   gtk_text_buffer_place_cursor(buf, &pos);
+  gtk_text_view_scroll_mark_onscreen(GTK_TEXT_VIEW(w), gtk_text_buffer_get_insert(buf));
 }
 
 int sg_cursor_position(GtkWidget *w)
@@ -747,7 +748,7 @@ GtkWidget *sg_make_list(gpointer gp, int num_items, char **items, GtkSignalFunc 
   cell = gtk_cell_renderer_text_new();
   g_object_set(G_OBJECT(cell), "style", PANGO_STYLE_NORMAL, NULL);
 
-  column = gtk_tree_view_column_new_with_attributes("a title", cell, "text", 0, NULL);
+  column = gtk_tree_view_column_new_with_attributes(NULL, cell, "text", 0, NULL);
 #if 0
   column = gtk_tree_view_column_new();
   gtk_tree_view_column_pack_start(column, cell, TRUE);
@@ -765,6 +766,7 @@ GtkWidget *sg_make_list(gpointer gp, int num_items, char **items, GtkSignalFunc 
       gtk_tree_store_set(GTK_TREE_STORE(model), &iter, 0, items[i], -1);
     }
   gtk_tree_view_expand_all(GTK_TREE_VIEW(list));
+  gtk_widget_hide(gtk_tree_view_column_get_widget(column));
 #else
   char *str;
   list = gtk_clist_new(1);

@@ -23,6 +23,7 @@
 ;;; add delete and rename options to the file menu (add-delete-option) (add-rename-option)
 ;;; (mark-sync-color new-color) sets the color of syncd marks
 ;;; (add-tooltip widget tip) adds tooltip tip to widget
+;;; access menu items
 
 (use-modules (ice-9 common-list) (ice-9 format))
 
@@ -2189,6 +2190,23 @@ Reverb-feedback sets the scaler on the feedback.\n\
     (|XtAddEventHandler widget |LeaveWindowMask #f (lambda (w c ev flag) (stop-tooltip)))))
 
 
+(define (menu-option name)
+  ;; find the widget associated with a given menu item name ("Print" for example)
+  (call-with-current-continuation
+   (lambda (return)
+     (for-each
+      (lambda (top-menu)
+	(for-each-child
+	 top-menu
+	 (lambda (w)
+	   (let ((option-holder (cadr (|XtGetValues w (list |XmNsubMenuId 0)))))
+	     (for-each-child
+	      option-holder
+	      (lambda (menu)
+		(if (string=? name (|XtName menu))
+		    (return menu))))))))
+      (cdr (menu-widgets)))
+     (throw 'no-such-menu (list "menu-option" name)))))
 
 ;;; TODO: bess-translations
 ;;; TODO: equivalent of zync (x too) across sounds

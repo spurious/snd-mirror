@@ -35,15 +35,21 @@
 #define ENVED_POINT_SIZE 10
 #define NOTEBOOK_BINDING_WIDTH 20
 
-#define TINY_FONT "6x12"
-
-/* we assume later that we can always find these fonts */
-
-#define DEFAULT_BUTTON_FONT "-*-times-medium-r-*-*-14-*-*-*-*-*-iso8859-1"
-#define DEFAULT_BOLD_BUTTON_FONT "-*-times-bold-r-*-*-14-*-*-*-*-*-iso8859-1"
-#define DEFAULT_AXIS_NUMBERS_FONT "-*-courier-medium-r-*-*-14-*-*-*-*-*-iso8859-1"
-#define DEFAULT_AXIS_LABEL_FONT "-*-times-medium-r-*-*-14-*-*-*-*-*-iso8859-1"
-#define DEFAULT_HELP_TEXT_FONT "9x15"
+#if HAVE_GTK2
+  #define TINY_FONT "Monospace 12"
+  #define DEFAULT_BUTTON_FONT "Serif 14"
+  #define DEFAULT_BOLD_BUTTON_FONT "Serif Bold 14"
+  #define DEFAULT_AXIS_NUMBERS_FONT "Monospace 14"
+  #define DEFAULT_AXIS_LABEL_FONT "Serif 14"
+  #define DEFAULT_HELP_TEXT_FONT "Monospace 14"
+#else
+  #define TINY_FONT "6x12"
+  #define DEFAULT_BUTTON_FONT "-*-times-medium-r-*-*-14-*-*-*-*-*-iso8859-1"
+  #define DEFAULT_BOLD_BUTTON_FONT "-*-times-bold-r-*-*-14-*-*-*-*-*-iso8859-1"
+  #define DEFAULT_AXIS_NUMBERS_FONT "-*-courier-medium-r-*-*-14-*-*-*-*-*-iso8859-1"
+  #define DEFAULT_AXIS_LABEL_FONT "-*-times-medium-r-*-*-14-*-*-*-*-*-iso8859-1"
+  #define DEFAULT_HELP_TEXT_FONT "9x15"
+#endif
 
 #define POSITION_SLIDER_WIDTH 13
 #define ZOOM_SLIDER_WIDTH 10
@@ -390,7 +396,7 @@ static GdkColor *get_color(char *defined_color, char *fallback_color, char *seco
 	}
     }
   new_color = gdk_color_copy(&tmp_color);
-  gdk_color_alloc(gdk_colormap_get_system(), new_color);
+  SG_COLOR_ALLOC(gdk_colormap_get_system(), new_color);
   return(new_color);
 }
 

@@ -1129,6 +1129,11 @@ static void fixup_edlist_endmark(ed_list *new_state, ed_list *current_state, int
 	new_state->size = k + 1;
       else
 	{
+	  /* this block should never be executed */
+#if DEBUGGING
+	  fprintf(stderr,"fixup endmark?");
+	  abort();
+#endif
 	  if (new_state->size == current_state->size)
 	    {
 	      if (new_state->size < (len + 1))

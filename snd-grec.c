@@ -287,14 +287,14 @@ static void allocate_meter_1(snd_state *ss, vu_label *vu)
 	  tmp_color.blue = (unsigned short)(256 * yellow_vals[i]);
 	  tmp_color.green = (unsigned short)(256 * 230 + 26 * yellow_vals[i]);
 	  yellows[i] = gdk_color_copy(&tmp_color);
-	  gdk_color_alloc(cmap, yellows[i]);
+	  SG_COLOR_ALLOC(cmap, yellows[i]);
 	}
       for (i = 0; i < VU_COLORS; i++)
 	{
 	  tmp_color.blue = (unsigned short)(128 * yellow_vals[i]);
 	  tmp_color.green = (unsigned short)(128 * yellow_vals[i]);
 	  reds[i] = gdk_color_copy(&tmp_color);
-	  gdk_color_alloc(cmap, reds[i]);
+	  SG_COLOR_ALLOC(cmap, reds[i]);
 	}
     }
   for (k = 0; k < 2; k++) 
