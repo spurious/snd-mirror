@@ -618,6 +618,7 @@
 #define S_oss_buffers                   "oss-buffers"
 #define S_output_comment_hook           "output-comment-hook"
 #define S_output_name_hook              "output-name-hook"
+#define S_pad_channel                   "pad-channel"
 #define S_peak_env_info                 "peak-env-info"
 #define S_peaks                         "peaks"
 #define S_play                          "play"

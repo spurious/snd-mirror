@@ -936,7 +936,7 @@ static mix_info *file_mix_samples(int beg, int num, char *tempfile, chan_info *c
     }
   len = current_ed_samples(cp);
   if (beg >= len)
-    extend_with_zeros(cp, len, beg - len + 1, "(mix-extend)");
+    extend_with_zeros(cp, len, beg - len + 1, "(mix-extend)", cp->edit_ctr);
   /* might set flag here that we need backup after file_mix_samples below (backup_edit_list(cp)) */
   /* otherwise user sees unexplained mix-extend in edit history list */
   if (beg < 0) beg = 0;
@@ -1031,7 +1031,7 @@ static mix_info *file_mix_samples(int beg, int num, char *tempfile, chan_info *c
   FREE(data);
   free_file_info(ihdr);
   free_file_info(ohdr);
-  file_change_samples(beg, num, ofile, cp, 0, DELETE_ME, DONT_LOCK_MIXES, origin);
+  file_change_samples(beg, num, ofile, cp, 0, DELETE_ME, DONT_LOCK_MIXES, origin, cp->edit_ctr);
   if (ofile) FREE(ofile);
   if (with_tag)
     return(add_mix(cp, chan, beg, num, tempfile, in_chans, temp));
@@ -1371,8 +1371,8 @@ static void remix_file(mix_info *md, const char *origin)
   free_mix_fd(sub);
 
   if (use_temp_file)
-    file_change_samples(beg, num, ofile, cp, 0, DELETE_ME, DONT_LOCK_MIXES, origin);
-  else change_samples(beg, num, data[0], cp, DONT_LOCK_MIXES, origin);
+    file_change_samples(beg, num, ofile, cp, 0, DELETE_ME, DONT_LOCK_MIXES, origin, cp->edit_ctr);
+  else change_samples(beg, num, data[0], cp, DONT_LOCK_MIXES, origin, cp->edit_ctr);
   FREE(data[0]);
   FREE(data);
  

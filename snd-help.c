@@ -1112,8 +1112,8 @@ all refer to the same thing.\n\
   " S_data_location "     (snd)\n\
   " S_delete_mark "       (id snd chn)\n\
   " S_delete_marks "      (snd chn)\n\
-  " S_delete_sample "     (samp snd chn)\n\
-  " S_delete_samples "    (samp samps snd chn)\n\
+  " S_delete_sample "     (samp snd chn edpos)\n\
+  " S_delete_samples "    (samp samps snd chn edpos)\n\
   " S_delete_selection "  ()\n\
   " S_dismiss_all_dialogs "()\n\
   " S_edit_fragment "     (num snd chn)\n\
@@ -1156,11 +1156,11 @@ all refer to the same thing.\n\
   " S_help_dialog "       (subject help)\n\
   " S_in "                (ms code)\n\
   " S_insert_region "     (beg reg snd chn)\n\
-  " S_insert_sample "     (samp value snd chn)\n\
-  " S_insert_samples "    (samp data snd chn)\n\
+  " S_insert_sample "     (samp value snd chn edpos)\n\
+  " S_insert_samples "    (samp data snd chn edpos)\n\
   " S_insert_selection "  (beg snd chn)\n\
   " S_insert_silence "    (beg num snd chn)\n\
-  " S_insert_sound "      (file beg in_chan snd chn)\n\
+  " S_insert_sound "      (file beg in_chan snd chn edpos)\n\
   " S_key "               (key state)\n\
   " S_key_binding "       (key state)\n\
   " S_left_sample "       (snd chn)\n\

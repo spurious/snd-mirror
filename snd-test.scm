@@ -2467,6 +2467,26 @@
 	    (snd-display ";silence 0: ~A" (vct-peak v1))))
       (close-sound index)
       (delete-file "fmv.snd")
+
+      (set! index (new-sound "fmv.snd" mus-next mus-bshort 22050 2 "unequal lens"))
+      (pad-channel 0 1000 index 1)
+      (if (or (not (= (frames index 0) 2))
+	      (not (= (frames index 1) 1002)))
+	  (snd-display ";pad-channel 1: ~A ~A" (frames index 0) (frames index 1)))
+      (let ((v0 (samples->vct 0 1000 index 0))
+	    (v1 (samples->vct 0 1000 index 1)))
+	(if (fneq (vct-peak v0) 0.0)
+	    (snd-display ";pad 0: ~A" (vct-peak v0)))
+	(if (fneq (vct-peak v1) 0.0)
+	    (snd-display ";pad 1: ~A" (vct-peak v1))))
+      (map-channel (lambda (n) 1.0) 0 2 index 0)
+      (map-channel (lambda (n) 1.0) 0 1002 index 1)
+      (pad-channel 0 1000 index 0 1)
+      (if (not (= (frames index 1) 1002))
+	  (snd-display ";pad-channel ed 1: ~A ~A" (frames index 0) (frames index 1)))
+      (close-sound index)
+      (delete-file "fmv.snd")
+
       (set! index (new-sound "fmv.snd" mus-ircam mus-bshort 22050 1 "this is a comment"))
       (let ((v0 (make-vct 128)))
 	(vct-set! v0 64 .5)
@@ -11722,7 +11742,8 @@ EDITS: 3
 	       two-zero? wave-train wave-train?  waveshape waveshape?  make-vct vct-add! vct-subtract!  vct-copy
 	       vct-length vct-multiply! vct-offset! vct-ref vct-scale! vct-fill! vct-set! mus-audio-describe vct-peak
 	       vct? list->vct vct->list vector->vct vct-move!  vct-subseq vct little-endian?
-	       clm-channel env-channel map-channel scan-channel play-channel reverse-channel smooth-channel vct->channel channel->vct src-channel
+	       clm-channel env-channel map-channel scan-channel play-channel reverse-channel 
+	       smooth-channel vct->channel channel->vct src-channel scale-channel pad-channel
 	       ))
 
 (define set-procs (list 

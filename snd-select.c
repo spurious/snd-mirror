@@ -155,7 +155,7 @@ static int cp_delete_selection(chan_info *cp, void *origin)
   ed = cp->edits[cp->edit_ctr];
   if ((ed) && (ed->selection_beg != NO_SELECTION))
     {
-      delete_samples(ed->selection_beg, cp_selection_len(cp, NULL), cp, (const char *)origin);
+      delete_samples(ed->selection_beg, cp_selection_len(cp, NULL), cp, (const char *)origin, cp->edit_ctr);
       ed = cp->edits[cp->edit_ctr];
       ed->selection_beg = NO_SELECTION;
     }
@@ -339,7 +339,7 @@ static int insert_selection(snd_state *ss, chan_info *cp, int beg, const char *o
 			      cp_selection_len(cp_in, NULL),
 			      tempfile, cp_out, i,
 			      (si_in->chans > 1) ? MULTICHANNEL_DELETION : DELETE_ME,
-			      origin);
+			      origin, cp_out->edit_ctr);
 	  update_graph(cp_out, NULL);
 	}
       free_sync_info(si_in);

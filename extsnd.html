@@ -2585,7 +2585,7 @@ functions:</p>
 <!-- --><td><code>vobj1[i] -= vobj2[i]</code>, returns vobj1.</td></tr>
 <!-- -->
 <!-- vct->channel -->
-<!-- --><tr><td><span class=defbox><code><em class=def><a name="vct2channel">vct-&gt;channel</a></em> (v <i>beg dur snd chn</i>)</code></span></td>
+<!-- --><tr><td><span class=defbox><code><em class=def><a name="vct2channel">vct-&gt;channel</a></em> (v <i>beg dur snd chn edpos</i>)</code></span></td>
 <!-- --><td>The <a href="#regularizedargs">regularized</a> version of <a href="#vct2samples">vct-&gt;samples</a>.</td></tr>
 <!-- -->
 <!-- vct->list -->
@@ -3990,10 +3990,11 @@ The following substitutions can be made:
 <a href="#sndplay">play</a> beg s c sync end e                     <a href="#playchannel">play-channel</a> beg dur s c e
 <a href="#sndreverse">reverse-sound</a> s c e                         <a href="#reversechannel">reverse-channel</a> beg dur s c e
 <a href="#sndscalesoundby">scale-sound-by</a> scl beg dur s c e            <a href="#scalechannel">scale-channel</a> scl beg dur s c e
-<a href="#sndsetsamples">set-samples</a> beg dur data s c trunc fchan    <a href="#vct2channel">vct-&gt;channel</a> vct beg dur s c [edpos doesn't apply here]
+<a href="#sndsetsamples">set-samples</a> beg dur data s c trunc fchan    <a href="#vct2channel">vct-&gt;channel</a> vct beg dur s c e
 <a href="#sndsmooth">smooth-sound</a> beg dur s c                    <a href="#smoothchannel">smooth-channel</a> beg dur s c e
 <a href="#samples2vct">samples-&gt;vct</a> beg dur snd chn v e            <a href="#channel2vct">channel-&gt;vct</a> beg dur s c e
-<a href="#vct2samples">vct-&gt;samples</a> beg dur vct s c                <a href="#vct2channel">vct-&gt;channel</a> vct beg dur s c [edpos doesn't apply here]
+<a href="#vct2samples">vct-&gt;samples</a> beg dur vct s c                <a href="#vct2channel">vct-&gt;channel</a> vct beg dur s c e
+<a href="#sndinsertsilence">insert-silence</a> beg dur s c                  <a href="#padchannel">pad-channel</a> beg dur s c e
 <a href="#sndsrc">src-sound</a> num base s c e                    <a href="#srcchannel">src-channel</a> ratio-or-env-gen beg dur s c e
 <a href="#sndconvolvewith">convolve-with</a> file amp s c e               
 </pre>
@@ -4348,7 +4349,7 @@ The following substitutions can be made:
 <!-- -->
 <!-- delete-sample -->
 <!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="snddeletesample">delete-sample</a></em> (samp <i>snd chn</i>)</code></span>
+<!-- --><span class=defbox><code><em class=def><a name="snddeletesample">delete-sample</a></em> (samp <i>snd chn edpos</i>)</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
 <!-- -->delete sample <i>samp</i> in <i>snd</i>'s channel <i>chn</i> [<em class=error>no-such-sample</em>].
@@ -4358,7 +4359,7 @@ The following substitutions can be made:
 <!-- -->
 <!-- delete-samples -->
 <!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="snddeletesamples">delete-samples</a></em> (samp samps <i>snd chn</i>)</code></span>
+<!-- --><span class=defbox><code><em class=def><a name="snddeletesamples">delete-samples</a></em> (samp samps <i>snd chn edpos</i>)</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
 <!-- -->delete <i>samps</i> samples starting at sample <i>samp</i>.
@@ -4694,7 +4695,7 @@ The following substitutions can be made:
 <!-- -->
 <!-- insert-sound -->
 <!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="sndinsertfile">insert-sound</a></em> (file <i>beg in_chan snd chn</i>)</code></span>
+<!-- --><span class=defbox><code><em class=def><a name="sndinsertfile">insert-sound</a></em> (file <i>beg in_chan snd chn edpos</i>)</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
 <!-- -->insert channel <i>in_chan</i> of <i>file</i> at sample <i>beg</i> in <i>snd</i>'s channel <i>chn</i>.
@@ -4706,7 +4707,7 @@ The following substitutions can be made:
 <!-- -->
 <!-- insert-sample -->
 <!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="sndinsertsample">insert-sample</a></em> (samp value <i>snd chn</i>)</code></span>
+<!-- --><span class=defbox><code><em class=def><a name="sndinsertsample">insert-sample</a></em> (samp value <i>snd chn edpos</i>)</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
 <!-- -->insert sample <i>value</i> at sample <i>samp</i> in <i>snd</i>'s channel <i>chn</i> 
@@ -4717,7 +4718,7 @@ The following substitutions can be made:
 <!-- -->
 <!-- insert-samples -->
 <!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="sndinsertsamples">insert-samples</a></em> (samp samps data <i>snd chn</i>)</code></span>
+<!-- --><span class=defbox><code><em class=def><a name="sndinsertsamples">insert-samples</a></em> (samp samps data <i>snd chn edpos</i>)</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
 <!-- -->insert <i>samps</i> samples of <i>data</i> starting at sample <i>samp</i> in <i>snd</i>'s channel <i>chn</i>.
@@ -5018,6 +5019,18 @@ The following substitutions can be made:
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
 <!-- -->open <i>name</i> as in File menu Open option.  [<em class=error>no-such-file</em>].
+<!-- --></td></tr>
+<!-- --><tr><td colspan=2></td></tr>
+<!-- -->
+<!-- -->
+<!-- pad-channel -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="padchannel">pad-channel</a></em> (beg dur <i>snd chn edpos</i>)</code></span>
+<!-- --></td></tr>
+<!-- --><tr><td></td><td>
+<!-- -->insert num zeros at beg in <i>snd</i>'s channel <i>chn</i>. This is the <a href="#regularizedargs">regularized</a> 
+<!-- -->version of <a href="#sndinsertsilence">insert-silence</a>.  A similar function for setting to zero might be:
+<!-- --><code>(define (silence-channel beg dur snd chn edpos) (scale-channel 0.0 beg dur snd chn edpos))</code>
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -5554,7 +5567,7 @@ The following substitutions can be made:
 <!-- -->
 <!-- set-samples -->
 <!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="sndsetsamples">set-samples</a></em> (samp samps data <i>snd chn trunc infile-chan</i>)</code></span>
+<!-- --><span class=defbox><code><em class=def><a name="sndsetsamples">set-samples</a></em> (samp samps data <i>snd chn trunc infile-chan edpos</i>)</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
 <!-- -->set <i>snd</i>'s channel <i>chn</i>'s samples starting from

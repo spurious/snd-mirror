@@ -360,15 +360,13 @@ else
   AC_MSG_ERROR(cannot find an integral type capable of storing a pointer: "$ac_cv_sizeof_void_p" bytes)
 fi
 
-dnl from fftw's configure.in
-AC_MSG_CHECKING([for isnan])
-AC_TRY_LINK([#include <math.h>
-], if (!isnan(3.14159)) isnan(2.7183);, ok=yes, ok=no)
-if test "$ok" = "yes"; then
-	AC_DEFINE(HAVE_ISNAN)
-fi
-AC_MSG_RESULT(${ok})
-
+dnl from gsl's configure.in
+AC_CHECK_FUNCS(isnan, ,[
+    AC_MSG_CHECKING([for isnan with <math.h>])
+    AC_TRY_LINK([#include <math.h>], [float f = 0.0; isnan(f)],[
+        AC_MSG_RESULT(yes)
+        AC_DEFINE(HAVE_ISNAN)],
+        AC_MSG_RESULT(no))])
 
 AC_TYPE_SIGNAL
 AC_FUNC_STRFTIME

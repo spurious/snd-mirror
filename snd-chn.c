@@ -3947,13 +3947,13 @@ static XEN cp_iwrite(XEN snd_n, XEN chn_n, XEN on, int fld, char *caller)
       if (curlen > newlen)
 	{
 	  if (newlen > 0)
-	    delete_samples(newlen - 1, curlen - newlen, cp, "(set-frames)");
-	  else delete_samples(0, curlen, cp, "(set-frames)");
+	    delete_samples(newlen - 1, curlen - newlen, cp, "(set-frames)", cp->edit_ctr);
+	  else delete_samples(0, curlen, cp, "(set-frames)", cp->edit_ctr);
 	}
       else
 	{
 	  if (newlen > curlen)
-	    extend_with_zeros(cp, curlen, newlen - curlen, "(set-frames)");
+	    extend_with_zeros(cp, curlen, newlen - curlen, "(set-frames)", cp->edit_ctr);
 	}
       update_graph(cp, NULL);
       break;

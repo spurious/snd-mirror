@@ -1288,7 +1288,7 @@ static void edit_dragged_mark(chan_info *cp, mark *m, int initial_sample)
   m->samp = initial_sample;
   id = mark_id(m);
   if (num > 0)
-    extend_with_zeros(cp, initial_sample, num, "mark dragged");
+    extend_with_zeros(cp, initial_sample, num, "mark dragged", cp->edit_ctr);
       /* at this point, old mark pointer is irrelevant (it lives in the previous edit history list) */
       /*   but since the ripple didn't touch it, we need to move it forward to reflect the insertion */
   else 
@@ -1296,7 +1296,7 @@ static void edit_dragged_mark(chan_info *cp, mark *m, int initial_sample)
       {
 	new_m = map_over_marks(cp, find_mark_id_1, (void *)(&id), READ_FORWARD);
 	new_m->samp = initial_sample;
-	delete_samples(mark_final_sample, -num, cp, "mark dragged");
+	delete_samples(mark_final_sample, -num, cp, "mark dragged", cp->edit_ctr);
       }
   if (num != 0) 
     {

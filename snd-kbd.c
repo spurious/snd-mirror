@@ -740,7 +740,7 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, int with_meta)
 		  if (!active_chan) active_chan = sp->chans[0];
 		  for (i = active_chan->chan, j = 0; (j < nc) && (i < sp->nchans); i++, j++)
 		    {
-		      file_insert_samples(active_chan->cursor, len, str1, sp->chans[i], j, DONT_DELETE_ME, "C-x C-i");
+		      file_insert_samples(active_chan->cursor, len, str1, sp->chans[i], j, DONT_DELETE_ME, "C-x C-i", sp->chans[i]->edit_ctr);
 		      update_graph(sp->chans[i], NULL);
 		    }
 		  clear_minibuffer(sp);

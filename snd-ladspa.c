@@ -473,7 +473,7 @@ Information about about parameters can be acquired using analyse-ladspa."
 
   LADSPA_Data *pfControls;
   LADSPA_Data **pfOutputBuffer;
-  chan_info *cp;
+  chan_info *cp, *ncp;
   snd_info *sp;
   char *ofile, *msg;
   int num, i, j = 0, ofd, datumb, err = 0, inchans = 1, readers = 1;
@@ -737,15 +737,17 @@ Information about about parameters can be acquired using analyse-ladspa."
 
   for (i = 0; i < readers; i++)
     {
+      ncp = sf[i]->cp;
       file_change_samples(sf[i]->initial_samp,
 			  num,
 			  ofile,
-			  sf[i]->cp,
+			  ncp,
 			  i,
 			  (readers > 1) ? MULTICHANNEL_DELETION : DELETE_ME,
 			  LOCK_MIXES,
-			  XEN_TO_NEW_C_STRING(origin));
-      update_graph(sf[i]->cp, NULL);
+			  XEN_TO_NEW_C_STRING(origin),
+			  ncp->edit_ctr);
+      update_graph(ncp, NULL);
     }
   if (ofile) FREE(ofile);
   for (i = 0; i < readers; i++)

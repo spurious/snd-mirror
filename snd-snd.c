@@ -1289,7 +1289,7 @@ BACKGROUND_TYPE apply_controls(GUI_POINTER ptr)
 			{
 			  file_change_samples(apply_beg, apply_dur, ap->ofile, sp->chans[i], i,
 					      (sp->nchans > 1) ? MULTICHANNEL_DELETION : DELETE_ME,
-					      LOCK_MIXES, "Apply");
+					      LOCK_MIXES, "Apply", sp->chans[i]->edit_ctr);
 			  update_graph(sp->chans[i], NULL);
 			}
 		    }
@@ -1307,7 +1307,7 @@ BACKGROUND_TYPE apply_controls(GUI_POINTER ptr)
 		  if (apply_beg > 0)
 		    {
 		      file_change_samples(apply_beg, apply_dur, ap->ofile, sp->chans[curchan], 0, 
-					  DELETE_ME, LOCK_MIXES, "Apply to channel");
+					  DELETE_ME, LOCK_MIXES, "Apply to channel", sp->chans[curchan]->edit_ctr);
 		      update_graph(sp->chans[curchan], NULL);
 		    }
 		  else file_override_samples(apply_dur, ap->ofile, sp->chans[curchan], 0, 
@@ -1323,7 +1323,7 @@ BACKGROUND_TYPE apply_controls(GUI_POINTER ptr)
 			{
 			  file_change_samples(si->begs[i], apply_dur, ap->ofile, si->cps[i], i,
 					      (si->chans > 1) ? MULTICHANNEL_DELETION : DELETE_ME,
-					      LOCK_MIXES, "Apply to selection");
+					      LOCK_MIXES, "Apply to selection", si->cps[i]->edit_ctr);
 			  update_graph(si->cps[i], NULL);
 			}
 		    }
@@ -1333,7 +1333,7 @@ BACKGROUND_TYPE apply_controls(GUI_POINTER ptr)
 		      ok = delete_selection("Apply to selection", DONT_UPDATE_DISPLAY);
 		      for (i = 0; i < si->chans; i++)
 			{
-			  file_insert_samples(si->begs[i], apply_dur, ap->ofile, si->cps[i], 0, DELETE_ME, "Apply to selection");
+			  file_insert_samples(si->begs[i], apply_dur, ap->ofile, si->cps[i], 0, DELETE_ME, "Apply to selection", si->cps[i]->edit_ctr);
 			  reactivate_selection(si->cps[i], si->begs[i], si->begs[i] + apply_dur);
 			  if (ok) backup_edit_list(si->cps[i]);
 			}
