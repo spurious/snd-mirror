@@ -54,6 +54,7 @@
 ;;; move sound down 8ve using fft
 ;;; swap selection chans
 ;;; sound-interp, env-sound-interp
+;;; compute-uniform-circular-string (and scanned-synthesis)
 
 
 (use-modules (ice-9 debug))
@@ -2404,3 +2405,110 @@
       ;; #t trunc arg to set-samples shortens the sound as needed
       (set-samples 0 newlen tempfilename snd chn #t))))
 
+
+;;; compute-uniform-circular-string
+;;;
+;;; this is a simplification of the underlying table-filling routine for "scanned synthesis".
+;;; To watch the wave, open some sound (so Snd has someplace to put the graph), turn off
+;;; the time domain display (to give our graph all the window -- I may make this available
+;;; in a simpler form), then (testunif 1.0 0.1 0.0) or whatever.
+
+(define compute-uniform-circular-string
+  (lambda (size x0 x1 x2 mass xspring damp)
+    (define circle-vct-ref 
+      (lambda (v i)
+	(if (< i 0)
+	    (vct-ref v (+ size i))
+	    (if (>= i size)
+		(vct-ref v (- i size))
+		(vct-ref v i)))))
+    (let* ((dm (/ damp mass))
+	   (km (/ xspring mass))
+	   (denom (+ 1.0 dm))
+	   (p1 (/ (+ 2.0 (- dm (* 2.0 km))) denom))
+	   (p2 (/ km denom))
+	   (p3 (/ -1.0 denom)))
+      (do ((i 0 (1+ i)))
+	  ((= i size))
+	(vct-set! x0 i (+ (* p1 (vct-ref x1 i))
+			  (* p2 (+ (circle-vct-ref x1 (- i 1)) (circle-vct-ref x1 (+ i 1))))
+			  (* p3 (vct-ref x2 i)))))
+      (vct-fill! x2 0.0)
+      (vct-add! x2 x1)
+      (vct-fill! x1 0.0)
+      (vct-add! x1 x0))))
+
+(define testunif
+  (lambda (mass xspring damp)
+    (let* ((size 128)
+	   (x0 (make-vct size))	   
+	   (x1 (make-vct size))	   
+	   (x2 (make-vct size)))
+      (do ((i 0 (1+ i)))
+	  ((= i 12))
+	(let ((val (sin (/ (* 2 pi i) 12.0))))
+	  (vct-set! x1 (+ i (- (/ size 4) 6)) val)))
+      (do ((i 0 (1+ i)))
+	  ((or (abort?) (= i 1024)))
+	(compute-uniform-circular-string size x0 x1 x2 mass xspring damp)
+	(graph x0 "string" 0 1.0 -10.0 10.0)))))
+
+(define test-scanned-synthesis
+  ;; check out scanned-synthesis
+  (lambda (amp dur mass xspring damp)
+    (let* ((size 256)
+	   (x0 (make-vct size))	   
+	   (x1 (make-vct size))	   
+	   (x2 (make-vct size)))
+      (do ((i 0 (1+ i)))
+	  ((= i 12))
+	(let ((val (sin (/ (* 2 pi i) 12.0))))
+	  (vct-set! x1 (+ i (- (/ size 4) 6)) val)))
+      (let ((gen1 (make-table-lookup 440.0 :wave x1))
+	    (gen2 (make-table-lookup 440.0 :wave x2))
+	    (recompute-samps 30) ;just a quick guess
+	    (data (make-vct dur)))
+	(do ((i 0 (1+ i))
+	     (k 0.0)
+	     (kincr (/ 1.0 recompute-samps)))
+	    ((or (abort?) (= i dur)))
+	  (if (>= k 1.0)
+	      (begin
+		(set! k 0.0)
+		(compute-uniform-circular-string size x0 x1 x2 mass xspring damp))
+	      (set! k (+ k kincr)))
+	  (let ((g1 (table-lookup gen1))
+		(g2 (table-lookup gen2)))
+	    (vct-set! data i (+ g2 (* k (- g1 g2))))))
+	(let ((curamp (vct-peak data)))
+	  (vct-scale! data (/ amp curamp)))
+	(vct->samples 0 dur data)))))
+
+(define compute-string
+  ;; this is the more general form
+  (lambda (size x0 x1 x2 masses xsprings esprings damps haptics)
+    (define circle-vct-ref 
+      (lambda (v i)
+	(if (< i 0)
+	    (vct-ref v (+ size i))
+	    (if (>= i size)
+		(vct-ref v (- i size))
+		(vct-ref v i)))))
+    (do ((i 0 (1+ i)))
+	((= i size))
+      (let* ((dm (/ (vct-ref damps i) (vct-ref masses i)))
+	     (km (/ (vct-ref xsprings i) (vct-ref masses i)))
+	     (cm (/ (vct-ref esprings i) (vct-ref masses i)))
+	     (denom (+ 1.0 dm cm))
+	     (p1 (/ (+ 2.0 (- dm (* 2.0 km))) denom))
+	     (p2 (/ km denom))
+	     (p3 (/ -1.0 denom))
+	     (p4 (/ (vct-ref haptics i) (* (vct-ref masses i) denom))))
+	(vct-set! x0 i (+ (* p1 (vct-ref x1 i))
+			  (* p2 (+ (circle-vct-ref x1 (- i 1)) (circle-vct-ref x1 (+ i 1))))
+			  (* p3 (vct-ref x2 i))
+			  p4))))
+    (do ((i 0 (1+ i)))
+	((= i size))
+      (vct-set! x2 i (vct-ref x1 i))
+      (vct-set! x1 i (vct-ref x0 i)))))

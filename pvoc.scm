@@ -88,7 +88,7 @@
 
 	  (if (pvoc-analyze pv)
 	      ((pvoc-analyze pv) pv input)
-	      ;; if no analysis func, do:
+	      ;; if no analysis func:
 	      (begin
 		(vct-fill! freqs 0.0)
 		(set-pvoc-output pv 0)

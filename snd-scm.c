@@ -3566,13 +3566,13 @@ static SCM g_filter_sound(SCM e, SCM order, SCM snd_n, SCM chn_n)
   ERRCP(S_filter_sound,snd_n,chn_n,3);
   cp = get_cp(snd_n,chn_n,S_filter_sound);
   len = g_scm2int(order);
-#if (!HAVE_GUILE_1_3_0)
+#if HAVE_GUILE_1_4
   if (len <= 0) scm_out_of_range_pos(S_filter_sound,order,SCM_MAKINUM(2));
 #endif
   if (vct_p(e)) /* the filter coefficients direct */
     {
       v = get_vct(e);
-#if (!HAVE_GUILE_1_3_0)
+#if HAVE_GUILE_1_4
       if (len > v->length) scm_out_of_range_pos(S_filter_sound,order,SCM_MAKINUM(2));
 #endif
       apply_filter(cp,len,NULL,FALSE,S_filter_sound,FALSE,v->data);
@@ -3592,13 +3592,13 @@ static SCM g_filter_selection(SCM e, SCM order)
   if (selection_is_current() == 0) return(scm_throw(NO_ACTIVE_SELECTION,SCM_LIST1(gh_str02scm(S_filter_selection))));
   cp = get_cp(SCM_BOOL_F,SCM_BOOL_F,S_filter_selection);
   len = g_scm2int(order);
-#if (!HAVE_GUILE_1_3_0)
+#if HAVE_GUILE_1_4
   if (len <= 0) scm_out_of_range_pos(S_filter_selection,order,SCM_MAKINUM(2));
 #endif
   if (vct_p(e)) /* the filter coefficients direct */
     {
       v = get_vct(e);
-#if (!HAVE_GUILE_1_3_0)
+#if HAVE_GUILE_1_4
       if (len > v->length) scm_out_of_range_pos(S_filter_sound,order,SCM_MAKINUM(2));
 #endif
       apply_filter(cp,len,NULL,FALSE,S_filter_selection,TRUE,v->data);

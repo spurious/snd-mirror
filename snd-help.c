@@ -192,6 +192,7 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
+2-Aug:   compute-uniform-circular-string in examp.scm.\n\
 1-Aug:   removed xmin,xmax,ymin,ymax (redundant and pointless).\n\
 31-Jul:  amp env subsampling, C-x v, and superimposed fft bugs (thanks to Daniel Aronovitch).\n\
          control panel funcs (set-amp etc) can take snd arg = #t -> all sounds.\n\
@@ -214,16 +215,6 @@ void news_help(snd_state *ss)
          mixes now returns a list similar to marks.\n\
          removed active-sounds.\n\
 6-Jul:   snd 4.4.\n\
-         user-specified menu callbacks must be functions (not strings).\n\
-         removed dsp-devices.\n\
-5-Jul:   experimental erase-zeros flag.\n\
-         swap-channels\n\
-3-Jul:   save-hook and auto-save (examp.scm) improvements.\n\
-         ok? renamed sound?, mix-ok? -> mix?, added mark?, region?, selection?\n\
-         setf.scm for (setf (<var>) <val>) in place of (set-<var> <val>).\n\
-         control-panel reverb can handle any number of chans (and now gets input from all).\n\
-         show-axes variable changed: now has 3 values, show-all-axes (default), show-no-axes, show-x-axis.\n\
-           removed View:Show Axes menu item; also these no longer affect the control-panel filter graph.\n\
 ",
 NULL);
   FREE(info);
