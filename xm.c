@@ -4,6 +4,7 @@
  */
 
 /* HISTORY: 
+ *   1-Oct:     some int args are now KeyCodes (Modifiermap stuff).
  *   23-Sep:    X ScreenSaver constants omitted earlier.
  *   18-Sep:    properties XFontStruct field now returns list of all properties.
  *              removed XmFontListCreate_r, XmFontListEntryCreate_r
@@ -4353,9 +4354,9 @@ The default keycode-to-keysym translator -> (modifiers keysym)"
   Modifiers m;
   KeySym k;
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XmTranslateKey", "Display*");
-  XEN_ASSERT_TYPE(XEN_ULONG_P(arg2), arg2, 2, "XmTranslateKey", "unsigned int");
+  XEN_ASSERT_TYPE(XEN_KeyCode_P(arg2), arg2, 2, "XmTranslateKey", "KeyCode");
   XEN_ASSERT_TYPE(XEN_Modifiers_P(arg3), arg3, 3, "XmTranslateKey", "Modifiers");
-  XmTranslateKey(XEN_TO_C_Display(arg1), XEN_TO_C_ULONG(arg2), XEN_TO_C_Modifiers(arg3), &m, &k);
+  XmTranslateKey(XEN_TO_C_Display(arg1), XEN_TO_C_KeyCode(arg2), XEN_TO_C_Modifiers(arg3), &m, &k);
   return(XEN_LIST_2(C_TO_XEN_Modifiers(m),
 		    C_TO_XEN_KeySym(k)));
 }
@@ -11934,10 +11935,10 @@ the symbols for the specified number of KeyCodes starting with first_keycode."
   KeySym *keys;
   XEN lst = XEN_EMPTY_LIST;
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XGetKeyboardMapping", "Display*");
-  XEN_ASSERT_TYPE(XEN_ULONG_P(arg2), arg2, 2, "XGetKeyboardMapping", "unsigned int");
+  XEN_ASSERT_TYPE(XEN_KeyCode_P(arg2), arg2, 2, "XGetKeyboardMapping", "KeyCode");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XGetKeyboardMapping", "int");
   count = XEN_TO_C_INT(arg3);
-  keys = XGetKeyboardMapping(XEN_TO_C_Display(arg1), XEN_TO_C_ULONG(arg2), count, &n);
+  keys = XGetKeyboardMapping(XEN_TO_C_Display(arg1), XEN_TO_C_KeyCode(arg2), count, &n);
   len = count * n;
   loc = xm_protect(lst);
   for (i = len - 1; i >= 0; i--)
@@ -11961,9 +11962,9 @@ static XEN gxm_XKeycodeToKeysym(XEN arg1, XEN arg2, XEN arg3)
   #define H_XKeycodeToKeysym "KeySym XKeycodeToKeysym(display, keycode, index) uses internal Xlib tables and returns the KeySym defined \
 for the specified KeyCode and the element of the KeyCode vector."
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XKeycodeToKeysym", "Display*");
-  XEN_ASSERT_TYPE(XEN_ULONG_P(arg2), arg2, 2, "XKeycodeToKeysym", "unsigned int");
+  XEN_ASSERT_TYPE(XEN_KeyCode_P(arg2), arg2, 2, "XKeycodeToKeysym", "KeyCode");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XKeycodeToKeysym", "int");
-  return(C_TO_XEN_KeySym(XKeycodeToKeysym(XEN_TO_C_Display(arg1), XEN_TO_C_ULONG(arg2), XEN_TO_C_INT(arg3))));
+  return(C_TO_XEN_KeySym(XKeycodeToKeysym(XEN_TO_C_Display(arg1), XEN_TO_C_KeyCode(arg2), XEN_TO_C_INT(arg3))));
 }
 
 static XEN gxm_XListProperties(XEN arg1, XEN arg2)
@@ -12535,9 +12536,9 @@ static XEN gxm_XInsertModifiermapEntry(XEN arg1, XEN arg2, XEN arg3)
   #define H_XInsertModifiermapEntry "XModifierKeymap *XInsertModifiermapEntry(modmap, keycode_entry, modifier) adds the specified KeyCode to \
 the set that controls the specified modifier and returns the resulting XModifierKeymap structure (expanded as needed)."
   XEN_ASSERT_TYPE(XEN_XModifierKeymap_P(arg1), arg1, 1, "XInsertModifiermapEntry", "XModifierKeymap*");
-  XEN_ASSERT_TYPE(XEN_ULONG_P(arg2), arg2, 2, "XInsertModifiermapEntry", "unsigned int");
+  XEN_ASSERT_TYPE(XEN_KeyCode_P(arg2), arg2, 2, "XInsertModifiermapEntry", "KeyCode");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XInsertModifiermapEntry", "int");
-  return(C_TO_XEN_XModifierKeymap(XInsertModifiermapEntry(XEN_TO_C_XModifierKeymap(arg1), XEN_TO_C_ULONG(arg2), XEN_TO_C_INT(arg3))));
+  return(C_TO_XEN_XModifierKeymap(XInsertModifiermapEntry(XEN_TO_C_XModifierKeymap(arg1), XEN_TO_C_KeyCode(arg2), XEN_TO_C_INT(arg3))));
 }
 
 static XEN gxm_XGetModifierMapping(XEN arg1)
@@ -12553,9 +12554,9 @@ static XEN gxm_XDeleteModifiermapEntry(XEN arg1, XEN arg2, XEN arg3)
   #define H_XDeleteModifiermapEntry "XModifierKeymap *XDeleteModifiermapEntry(modmap, keycode_entry, modifier) deletes the specified KeyCode \
 from the set that controls the specified modifier and returns a pointer to the resulting XModifierKeymap structure."
   XEN_ASSERT_TYPE(XEN_XModifierKeymap_P(arg1), arg1, 1, "XDeleteModifiermapEntry", "XModifierKeymap*");
-  XEN_ASSERT_TYPE(XEN_ULONG_P(arg2), arg2, 2, "XDeleteModifiermapEntry", "unsigned int");
+  XEN_ASSERT_TYPE(XEN_KeyCode_P(arg2), arg2, 2, "XDeleteModifiermapEntry", "KeyCode");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XDeleteModifiermapEntry", "int");
-  return(C_TO_XEN_XModifierKeymap(XDeleteModifiermapEntry(XEN_TO_C_XModifierKeymap(arg1), XEN_TO_C_ULONG(arg2), XEN_TO_C_INT(arg3))));
+  return(C_TO_XEN_XModifierKeymap(XDeleteModifiermapEntry(XEN_TO_C_XModifierKeymap(arg1), XEN_TO_C_KeyCode(arg2), XEN_TO_C_INT(arg3))));
 }
 
 static XEN gxm_XGetMotionEvents(XEN arg1, XEN arg2, XEN arg3, XEN arg4)

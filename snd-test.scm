@@ -5650,7 +5650,10 @@
 	      (snd-display ";make-delay bad size #f: ~A" var)))
 	(let ((var (catch #t (lambda () (make-delay 3 :initial-element (make-oscil))) (lambda args args))))
 	  (IF (not (eq? (car var) 'wrong-type-arg))
-	      (snd-display ";make-delay bad initial element: ~A" var))))
+	      (snd-display ";make-delay bad initial element: ~A" var)))
+	(let ((var (catch #t (lambda () (make-delay -3)) (lambda args args))))
+	  (IF (not (eq? (car var) 'mus-error))
+	      (snd-display ";make-delay bad size: ~A" var))))
 
       (test-gen-equal (let ((d1 (make-delay 3))) (delay d1 1.0) d1) 
 		      (let ((d2 (make-delay 3))) (delay d2 1.0) d2)
@@ -7207,6 +7210,7 @@
 	(IF (fneq (mus-frequency gen) 440.0) (snd-display ";wave-train frequency: ~F?" (mus-frequency gen)))
 	(IF (or (fneq (vct-ref v0 1) 0.5) (fneq (vct-ref v0 8) 4.0)) (snd-display ";wave-train output: ~A" v0))
 	(set! (mus-data gen) (make-vct 3)))
+      (set! (mus-data (make-oscil)) (make-vct 3))
 
       (test-gen-equal (make-wave-train 440.0 0.0 (make-vct 20)) (make-wave-train 440.0 0.0 (make-vct 20)) (make-wave-train 100.0 0.0 (make-vct 20)))
       (test-gen-equal (make-wave-train 440.0 0.0 (make-vct 20)) (make-wave-train 440.0 0.0 (make-vct 20)) (make-wave-train 440.0 1.0 (make-vct 20)))
@@ -10671,6 +10675,8 @@
 	      (ph #f)
 	      (ph1 #f)
 	      (pc #f))
+	  (if (provided? 'snd-debug) (enable-play))
+
 	  (add-hook! start-playing-hook
 		     (lambda (snd)
 		       (IF (not (= snd ind))
@@ -10728,6 +10734,8 @@
 
 	  ;; stop-playing-region-hook selection also
 	  ;;   what about start-playing-region-hook? 
+
+	  (if (provided? 'snd-debug) (disable-play))
 	  )
 
 	(let ((e0 #f)
@@ -12857,6 +12865,279 @@
 
 ;;; ---------------- test 16: regularized funcs ----------------
 
+(define (undo-env s c)
+  (let ((len (car (edits s c))))
+    (if (> len 0)
+	(call-with-current-continuation
+	 (lambda (break)
+	   (do ((i 1 (1+ i)))
+	       ((> i len) #f)
+	     (let ((ed (edit-fragment i s c)))
+	       (if (and ed
+			(or (string=? (cadr ed) "env")
+			    (string=? (cadr ed) "ptree")))
+		   (begin
+		     (set! (edit-position s c) (1- i))
+		     (break #t)))))))
+	#f)))
+
+(define (opt-test choice)
+  (let* ((snds (sounds))
+	 (cursnd (list-ref snds (random (length snds))))
+	 (curchn (random (chans cursnd)))
+	 (chan-list (all-chans))
+	 (cur-maxamps (apply map maxamp chan-list))
+	 (cur-edits (apply map edit-position chan-list))
+	 (cur-frames (apply map frames chan-list))
+	 (cur-amp (maxamp cursnd curchn))
+	 (cur-edit (edit-position cursnd curchn))
+	 (cur-frame (frames cursnd curchn)))
+
+;    (snd-display "~%;[~A ~A, ~A, ~A]" cursnd curchn (map sync snds) cur-maxamps)
+
+    (case choice
+      ;; scale-channel
+      ((0) (let* ((scaler (if (< (maxamp cursnd curchn) 1.0) (+ 1.0 (random 1.0)) (+ 0.5 (random 0.5))))
+		  (cur-loc (random cur-frame))
+		  (cur-samp (sample cur-loc cursnd curchn)))
+	     (scale-channel scaler 0 (frames cursnd curchn) cursnd curchn)
+;	     (snd-display ";scale-channel ~A" scaler)
+	     (if (not (= (edit-position cursnd curchn) (1+ cur-edit))) 
+		 (snd-display ";scale-channel ~A[~A] edit pos: ~A ~A" (short-file-name cursnd) curchn (edit-position cursnd curchn) cur-edit))
+	     (if (not (= (frames cursnd curchn) cur-frame))
+		 (snd-display ";scale-channel ~A[~A] frames: ~A ~A" (short-file-name cursnd) curchn (frames cursnd curchn) cur-frame))
+	     (if (fneq (maxamp cursnd curchn) (* scaler cur-amp))
+		 (snd-display ";scale-channel ~A[~A] maxamp: ~A ~A (~A, scaler: ~A)" 
+			      (short-file-name cursnd) curchn (maxamp cursnd curchn) (* scaler cur-amp)
+			      (abs (- (maxamp cursnd curchn) (* scaler cur-amp)))
+			      scaler))
+	     (if (fneq (sample cur-loc cursnd curchn) (* scaler cur-samp))
+		 (snd-display ";scale-channel ~A[~A] cur-samp: ~A ~A" (short-file-name cursnd) curchn (sample cur-loc cursnd curchn) (* scaler cur-samp)))
+	     (for-each
+	      (lambda (s c amp ed fr)
+		(if (not (and (= s cursnd)
+			      (= c curchn)))
+		    (begin
+		      (if (not (= (edit-position s c) ed))
+			  (snd-display ";scale-channel ~A[~A] wrong edit pos: ~A ~A" (short-file-name s) c (edit-position s c) ed))
+		      (if (not (= (frames s c) fr))
+			  (snd-display ";scale-channel ~A[~A] wrong frames: ~A ~A" (short-file-name s) c (frames s c) fr))
+		      (if (fneq (maxamp s c) amp)
+			  (snd-display ";scale-channel ~A[~A] wrong maxamp: ~A ~A" (short-file-name s) c (maxamp s c) amp)))))
+	      (car chan-list)
+	      (cadr chan-list)
+	      cur-maxamps
+	      cur-edits
+	      cur-frames)))
+      
+      ;; scale-by
+      ((1) (let* ((maxscl (apply max cur-maxamps))
+		  (scaler (if (< maxscl 1.0) (+ 1.0 (random 1.0)) (+ 0.5 (random 0.5)))))
+;	     (snd-display ";scale by ~A" scaler)
+	     (scale-by scaler cursnd curchn)
+	     (for-each
+	      (lambda (s c amp ed fr)
+		(if (or (and (= (sync cursnd) 0) 
+			     (or (not (= s cursnd))
+				 (not (= c curchn))))
+			(not (= (sync s) (sync cursnd))))
+		    (begin
+		      (if (not (= (edit-position s c) ed))
+			  (snd-display ";scale-by ~A[~A] wrong edit pos: ~A ~A" (short-file-name s) c (edit-position s c) ed))
+		      (if (not (= (frames s c) fr))
+			  (snd-display ";scale-by ~A[~A] wrong frames: ~A ~A" (short-file-name s) c (frames s c) fr))
+		      (if (fneq (maxamp s c) amp)
+			  (snd-display ";scale-by ~A[~A] wrong maxamp: ~A ~A" (short-file-name s) c (maxamp s c) amp)))
+		    (begin
+		      (if (not (= (edit-position s c) (1+ ed))) 
+			  (snd-display ";scale-by ~A[~A] edit pos: ~A ~A" (short-file-name s) c (edit-position s c) ed))
+		      (if (not (= (frames s c) fr))
+			  (snd-display ";scale-by ~A[~A] frames: ~A ~A" (short-file-name s) c (frames s c) fr))
+		      (if (fneq (maxamp s c) (* scaler amp))
+			  (snd-display ";scale-by ~A[~A] maxamp: ~A ~A" (short-file-name s) c (maxamp s c) (* scaler amp))))))
+	      (car chan-list)
+	      (cadr chan-list)
+	      cur-maxamps
+	      cur-edits
+	      cur-frames)))
+      
+      ;; scale-sound-by
+      ((4) (let* ((maxscl (apply max cur-maxamps))
+		  (scaler (if (< maxscl 1.0) (+ 1.0 (random 1.0)) (+ 0.5 (random 0.5)))))
+;	     (snd-display ";scale-sound by ~A ~A" scaler cursnd)
+	     (scale-sound-by scaler 1000 1000 cursnd)
+	     (for-each
+	      (lambda (s c amp ed fr)
+		(if (not (= s cursnd))
+		    (begin
+		      (if (not (= (edit-position s c) ed))
+			  (snd-display ";scale-sound-by ~A[~A] wrong edit pos: ~A ~A" (short-file-name s) c (edit-position s c) ed))
+		      (if (not (= (frames s c) fr))
+			  (snd-display ";scale-sound-by ~A[~A] wrong frames: ~A ~A" (short-file-name s) c (frames s c) fr))
+		      (if (fneq (maxamp s c) amp)
+			  (snd-display ";scale-sound-by ~A[~A] wrong maxamp: ~A ~A" (short-file-name s) c (maxamp s c) amp)))
+		    (begin
+		      (if (not (= (edit-position s c) (1+ ed))) 
+			  (snd-display ";scale-sound-by ~A[~A] edit pos: ~A ~A" (short-file-name s) c (edit-position s c) ed))
+		      (if (not (= (frames s c) fr))
+			  (snd-display ";scale-sound-by ~A[~A] frames: ~A ~A" (short-file-name s) c (frames s c) fr)))))
+	      (car chan-list)
+	      (cadr chan-list)
+	      cur-maxamps
+	      cur-edits
+	      cur-frames)))
+
+      ((5) (let ((pos (edit-position cursnd curchn)))
+	     (if (> pos 0)
+		 (undo (random pos) cursnd curchn))))
+
+      ((6) (let ((len (frames cursnd curchn)))
+	     (if (> len 10000)
+		 (let ((beg (random (inexact->exact (/ len 2)))))
+		   (delete-samples beg 10 cursnd curchn)))))
+
+      ((7) (let ((beg (random (- (frames cursnd curchn) 10))))
+	     (set! (samples beg 10 cursnd curchn) (make-vct 10 1.0))))
+
+      ((8) (let ((beg (random (- (frames cursnd curchn) 10))))
+	     (insert-samples beg 10 (make-vct 10 1.0) cursnd curchn)))
+
+      ((9) (add-mark (random (frames cursnd curchn)) cursnd curchn))
+
+      ((10) (let ((beg (random (- (frames cursnd curchn) 10))))
+	      (mix-vct (make-vct 10 (random 1.0)) beg cursnd curchn)))
+
+      ((11) (let ((beg (random (- (frames cursnd curchn) 10))))
+	      (pad-channel beg 10 cursnd curchn)))
+
+      ((12) (let ((beg (random (- (frames cursnd curchn) 10))))
+	      (ptree-channel (lambda (y) (* y 2.0)) beg 10 cursnd curchn)))
+
+      ((13) (let ((beg (random (- (frames cursnd curchn) 10))))
+	      (scale-channel .5 beg 10 cursnd curchn)))
+      
+      ((14) (let ((beg (random (- (frames cursnd curchn) 20))))
+	      (scale-channel .5 beg 10 cursnd curchn)
+	      (scale-channel .5 (+ beg 10) 10 cursnd curchn)))
+      
+      ((15) (let ((beg (random (- (frames cursnd curchn) 20))))
+	      (scale-channel .5 beg 10 cursnd curchn)
+	      (scale-channel 2.0 beg 10 cursnd curchn)))
+      
+      ;; env-channel
+      ((2) (let* ((pts (1+ (random 6)))
+		  (maxpt 0.0)
+		  (e (let ((e1 '())
+			   (x 0.0)
+			   (y 0.0))
+		       (do ((i 0 (1+ i)))
+			   ((= i pts))
+			 (set! e1 (cons x e1))
+			 (if (> (random 3) 0)
+			     (set! y (- (random 2.0) 1.0)))
+			 (set! e1 (cons y e1))
+			 (if (> (abs y) maxpt) (set! maxpt (abs y)))
+			 (set! x (+ x (+ .01 (random 1.0)))))
+		       (reverse e1))))
+;	     (snd-display "env-channel at ~D ~D" cursnd curchn)
+	     (if (undo-env cursnd curchn)
+		 (begin
+		   (set! cur-maxamps (apply map maxamp chan-list))
+		   (set! cur-edits (apply map edit-position chan-list))
+		   (set! cur-frames (apply map frames chan-list))
+		   (set! cur-amp (maxamp cursnd curchn))
+		   (set! cur-edit (edit-position cursnd curchn))
+		   (set! cur-frame (frames cursnd curchn))))
+	     (env-channel e 0 (frames cursnd curchn) cursnd curchn)
+;	     (snd-display ";env-channel ~A" maxpt)
+	     (if (not (= (edit-position cursnd curchn) (1+ cur-edit))) 
+		 (snd-display ";env-channel ~A[~A] edit pos: ~A ~A" (short-file-name cursnd) curchn (edit-position cursnd curchn) cur-edit))
+	     (if (not (= (frames cursnd curchn) cur-frame))
+		 (snd-display ";env-channel ~A[~A] frames: ~A ~A" (short-file-name cursnd) curchn (frames cursnd curchn) cur-frame))
+	     (if (> (- (maxamp cursnd curchn) .01) (* maxpt cur-amp))
+		 (begin
+		   (snd-display ";env-channel ~A[~A] maxamp: ~A ~A from ~A" (short-file-name cursnd) curchn (maxamp cursnd curchn) (* maxpt cur-amp) e)
+		   (throw 'mus-error)))
+	     (for-each
+	      (lambda (s c amp ed fr)
+		(if (not (and (= s cursnd)
+			      (= c curchn)))
+		    (begin
+		      (if (not (= (edit-position s c) ed))
+			  (snd-display ";env-channel ~A[~A] wrong edit pos: ~A ~A" (short-file-name s) c (edit-position s c) ed))
+		      (if (not (= (frames s c) fr))
+			  (snd-display ";env-channel ~A[~A] wrong frames: ~A ~A" (short-file-name s) c (frames s c) fr))
+		      (if (fneq (maxamp s c) amp)
+			  (snd-display "env-channel ~A[~A] wrong maxamp: ~A ~A" (short-file-name s) c (maxamp s c) amp)))))
+	      (car chan-list)
+	      (cadr chan-list)
+	      cur-maxamps
+	      cur-edits
+	      cur-frames)))
+
+      ;; env-sound
+      ((3) (let* ((pts (1+ (random 6)))
+		  (maxpt 0.0)
+		  (recalc #f)
+		  (e (let ((e1 '())
+			   (x 0.0)
+			   (y 0.0))
+		       (do ((i 0 (1+ i)))
+			   ((= i pts))
+			 (set! e1 (cons x e1))
+			 (if (> (random 3) 0)
+			     (set! y (- (random 2.0) 1.0)))
+			 (set! e1 (cons y e1))
+			 (if (> (abs y) maxpt) (set! maxpt (abs y)))
+			 (set! x (+ x (+ .01 (random 1.0)))))
+		       (reverse e1)))
+		  (end (apply min cur-frames)) ; env-sound can lengthen a shorter sound if syncd+multichannel
+		  (beg (random (inexact->exact (/ end 2)))))
+	     (for-each
+	      (lambda (s c)
+		(if (not (or (and (= (sync cursnd) 0) 
+				  (or (not (= s cursnd)) 
+				      (not (= c curchn))))
+			     (not (= (sync s) (sync cursnd)))))
+		    (let ((val (undo-env s c)))
+		      (set! recalc (or recalc val)))))
+	      (car chan-list)
+	      (cadr chan-list))
+	     (if recalc
+		 (begin
+		   (set! cur-maxamps (apply map maxamp chan-list))
+		   (set! cur-edits (apply map edit-position chan-list))
+		   (set! cur-frames (apply map frames chan-list))
+		   (set! cur-amp (maxamp cursnd curchn))
+		   (set! cur-edit (edit-position cursnd curchn))
+		   (set! cur-frame (frames cursnd curchn))))
+	     (env-sound e beg (max pts (- end beg)) 1.0 cursnd curchn) ; dur here, not end point
+;	     (snd-display ";env-sound ~A ~A ~A (~A)" e beg (max pts (- end beg)) maxpt)
+	     (for-each
+	      (lambda (s c amp ed fr)
+		(if (or (and (= (sync cursnd) 0) 
+			     (or (not (= s cursnd)) 
+				 (not (= c curchn))))
+			(not (= (sync s) (sync cursnd))))
+		    (begin
+		      (if (not (= (edit-position s c) ed))
+			  (snd-display ";env-sound ~A[~A] wrong edit pos: ~A ~A" (short-file-name s) c (edit-position s c) ed))
+		      (if (not (= (frames s c) fr))
+			  (snd-display ";env-sound ~A[~A] wrong frames: ~A ~A" (short-file-name s) c (frames s c) fr))
+		      (if (fneq (maxamp s c) amp)
+			  (snd-display "env-sound ~A[~A] wrong maxamp: ~A ~A" (short-file-name s) c (maxamp s c) amp)))
+		    (begin
+		      (if (not (= (edit-position s c) (1+ ed))) 
+			  (snd-display ";env-sound ~A[~A] edit pos: ~A ~A" (short-file-name s) c (edit-position s c) ed))
+		      (if (not (= (frames s c) fr))
+			  (snd-display ";env-sound ~A[~A] frames: ~A ~A" (short-file-name s) c (frames s c) fr)))))
+	      (car chan-list)
+	      (cadr chan-list)
+	      cur-maxamps
+	      cur-edits
+	      cur-frames)))
+      )))
+
 (define (amp-envs-equal? snd chn pos0 pos1 df)
   (let* ((env0 (channel-amp-envs snd chn pos0))
 	 (len0 (and env0 (list? env0) (= (length env0) 2) (vector-length (cadr env0))))
@@ -13822,6 +14103,51 @@
 	       (let ((rev-read (make-sample-reader (1- dur) i1 0 -1)))
 		 (check-env 'scl-rev-pyr cur-read rev-read)))
 	     (undo 3)
+	     (if (= dur 10000)
+		 (begin
+		   (for-each 
+		    (lambda (beg local-dur)
+		      (env-sound '(0 0 1 1 2 0))
+		      (scale-channel .5 beg local-dur)
+		      (check-env 'env+scl 
+				 (make-sample-reader 0)
+				 (let ((e (make-env '(0 0 1 1 2 0) :end (1- dur)))
+				       (ctr 0))
+				   (lambda ()
+				     (let ((val (env e)))
+				       (set! ctr (1+ ctr))
+				       (if (and (> ctr beg)
+						(<= ctr (+ beg local-dur)))
+					   (* val .5)
+					   val)))))
+		      (undo 2))
+		    (list 0    0    1000 1000 4000 5000 6000 5000)
+		    (list 1000 6000 1000 4000 2000 1000 1000 5000))))
+	     (if (= dur 10000)
+		 (begin
+		   (for-each 
+		    (lambda (env-beg env-dur scl-beg scl-dur)
+		      (env-channel '(0 0 1 1 2 1 3 0) env-beg env-dur)
+		      (scale-channel .5 scl-beg scl-dur)
+		      (check-env 'env+scl-partial
+				 (make-sample-reader 0)
+				 (let ((e (make-env '(0 0 1 1 2 1 3 0) :end (1- env-dur)))
+				       (ctr 0))
+				   (lambda ()
+				     (let ((val 1.0))
+				       (set! ctr (1+ ctr))
+				       (if (and (> ctr env-beg)
+						(<= ctr (+ env-beg env-dur)))
+					   (set! val (* val (env e))))
+				       (if (and (> ctr scl-beg)
+						(<= ctr (+ scl-beg scl-dur)))
+					   (set! val (* val 0.5)))
+				       val))))
+		      (undo 2))
+		    (list 0    0     1000 1000 4000 5000 6000 5000)
+		    (list 1000 6000  1000 4000 2000 1000 1000 5000)
+		    (list 500  0     0    2000 5000 4000 0    8000)
+		    (list 200  10000 1500 1000 500  2000 2000 2000))))
 	     (env-sound '(0 0 1 1))
 	     (env-sound '(0 0 1 1))
 	     (check-env 'unenv-ramp 
@@ -14882,6 +15208,69 @@ EDITS: 6
 	      ((8) (let ((dur (inexact->exact (random 100)))) (vct->channel (make-vct dur) (random (* 1.25 (frames))) dur)))
 	      ((9) (map-channel (lambda (y) (* y 2)) (random (* .5 (frames))) (random 1000)))))
 
+	  (close-sound ind))
+
+	(let ((ind0 (open-sound "oboe.snd"))
+	      (ind1 (open-sound "2.snd"))
+	      (ind2 (open-sound "4.aiff")))
+  
+	  (set! (squelch-update ind0 #t) #t)
+	  (set! (squelch-update ind1 #t) #t)
+	  (set! (squelch-update ind2 #t) #t)
+  
+	  (catch 'mus-error
+		 (lambda ()
+		   (do ((i 0 (1+ i)))
+		       ((= i 500))
+		     (set! (sync ind0) (random 3))
+		     (set! (sync ind1) (random 3))
+		     (set! (sync ind2) (random 3))
+		     
+		     (opt-test (random 16)))
+		   
+		   (close-sound ind0)
+		   (close-sound ind1)
+		   (close-sound ind2))
+	 
+		 (lambda args
+		   (snd-display "caught mus-error")
+		   #f)))
+
+	(let ((ind (open-sound "oboe.snd")))
+	  (env-channel '(0 0 1 1 2 0) 1000 10000)
+	  (ptree-channel (lambda (y) (* y 2)) 20000 10000)
+	  (ramp-channel .2 .6 40000 10000)
+	  (scale-channel .5 0 500)
+	  (check-edit-tree '((0 0 0 499 0.5 0.0 0.0 0) 
+			     (500 0 500 999 1.0 0.0 0.0 0) 
+			     (1000 0 1000 6000 1.0 1.71387285873709e-12 1.0 1) 
+			     (6001 0 6001 10999 1.0 0.999799966812134 6.29921462214078e-17 1) 
+			     (11000 0 11000 19999 1.0 0.0 0.0 0) 
+			     (20000 0 20000 29999 1.0 1.19209289550781e-7 0.0 2) 
+			     (30000 0 30000 39999 1.0 0.0 0.0 0) 
+			     (40000 0 40000 49999 1.0 0.200000002980232 0.600000023841858 1) 
+			     (50000 0 50000 50827 1.0 0.0 0.0 0)
+			     (50828 -2 0 0 0.0 0.0 0.0 0))
+			   #f "no-overlaps")
+	  (revert-sound ind)
+	  (pad-channel 0 1000)
+	  (ptree-channel (lambda (y) (+ y .1)) 0 2000)
+	  (let ((val (sample 100)))
+	    (if (fneq val .1)
+		(snd-display ";pad+ptree: ~A" val)))
+	  (undo 2)
+	  (pad-channel 0 2000)
+	  (ptree-channel (lambda (y) (+ y .1)) 1000 200)
+	  (let ((val (sample 1100)))
+	    (if (fneq val .1)
+		(snd-display ";pad+ptree(2): ~A" val)))
+	  (undo 2)
+	  (pad-channel 1000 1000)
+	  (ptree-channel (lambda (y) (+ y .1)) 0 1500)
+	  (let ((val (sample 1100)))
+	    (if (fneq val .1)
+		(snd-display ";pad+ptree(3): ~A" val)))
+	  (undo 2)
 	  (close-sound ind))
 
 	)))
@@ -22052,6 +22441,15 @@ EDITS: 5
 		  (snd-display ";Requests: ~A ~A" (NextRequest dpy) (LastKnownRequestProcessed dpy)))
 	      (IF (not (= (XDisplayMotionBufferSize dpy) 256))
 		  (snd-display ";XDisplayMotionBufferSize: ~A" (XDisplayMotionBufferSize dpy)))
+	      (XGetMotionEvents dpy win (list 'Time 100) (list 'Time CurrentTime))
+	      (let ((map (XNewModifiermap 2)))
+		(if (not (XModifierKeymap? map))
+		    (snd-display ";xNewModifiermap: ~A" map)
+		    (begin
+		      (XInsertModifiermapEntry map (list 'KeyCode 50) ShiftMapIndex)
+		      (XDeleteModifiermapEntry map (list 'KeyCode 50) ShiftMapIndex)
+		      ;(XFreeModifiermap map) ;segfault in X
+		      )))
 	      (IF (not (= (XExtendedMaxRequestSize dpy) 1048575))
 		  (snd-display ";XExtendedMaxRequestSize ~A" (XExtendedMaxRequestSize dpy)))
 	      (IF (not (= (XMaxRequestSize dpy) 65535))
@@ -23177,8 +23575,8 @@ EDITS: 5
 	      (IF (not (XEvent? (XtLastEventProcessed dpy)))
 		  (snd-display ";XtLastEventProcessed: ~A" (XtLastEventProcessed dpy)))
 	      (XtBuildEventMask shell)
-	      (let ((k (XtConvertCase dpy (XKeycodeToKeysym dpy XK_b 0)))
-		    (x (XConvertCase (XKeycodeToKeysym dpy XK_b 0))))
+	      (let ((k (XtConvertCase dpy (XKeycodeToKeysym dpy (list 'KeyCode XK_b) 0)))
+		    (x (XConvertCase (XKeycodeToKeysym dpy (list 'KeyCode XK_b) 0))))
 		(IF (not (KeySym? (car k)))
 		    (snd-display ";XtConvertCase: ~A" k))
 		(IF (not (equal? k x))
@@ -23210,7 +23608,7 @@ EDITS: 5
 		(let ((newvals (XtTranslateKeycode dpy (list 'KeyCode XK_B) 0)))
 		  (IF (not (equal? vals newvals)) (snd-display ";XtSetKeyTranslator: ~A ~A" vals newvals)))
 		(XtSetKeyTranslator dpy #f))
-	      (IF (not (KeySym? (cadr (XmTranslateKey dpy XK_B 0))))
+	      (IF (not (KeySym? (cadr (XmTranslateKey dpy (list 'KeyCode XK_B) 0))))
 		  (snd-display ";XmTranslateKey: ~A" (XmTranslateKey dpy XK_B 0)))
 	      (let ((kv (XtKeysymToKeycodeList dpy (list 'KeySym 65509))))
 		(IF (not (equal? (car kv) (list 'KeyCode 66))) 
@@ -23817,7 +24215,7 @@ EDITS: 5
 		(XVisualIDFromVisual vis)
 		(XLockDisplay dpy)
 		(XUnlockDisplay dpy)
-		(let ((keys (XGetKeyboardMapping dpy 40 1)))
+		(let ((keys (XGetKeyboardMapping dpy (list 'KeyCode 40) 1)))
 		  (IF (not (equal? keys (list (list 'KeySym 100) (list 'KeySym 68))))
 		      (snd-display ";XGetKeyboardMapping: ~A" keys)))
 		(XGrabServer dpy)
@@ -24692,7 +25090,7 @@ EDITS: 5
 	      (XmVaCreateSimpleMenuBar (caddr (main-widgets)) "hiho" '())
 	      (XmVaCreateSimpleOptionMenu (caddr (main-widgets)) "hiho" 
 					   (XmStringCreateLocalized "away") 
-					   (XKeycodeToKeysym dpy XK_b 0)
+					   (XKeycodeToKeysym dpy (list 'KeyCode XK_b) 0)
 					   0  (lambda (w c i) #f) '())
 	      
 	      (IF (not (XmIsMotifWMRunning (cadr (main-widgets)))) (snd-display ";XmIsMotifWMRunning?"))

@@ -831,9 +831,6 @@ static int find_split_loc(off_t samp, ed_list *current_state)
   for (i = 0; i < current_state->size; i++)
     if (FRAGMENT_GLOBAL_POSITION(current_state, i) >= samp) 
       return(i);
-#if DEBUGGING
-  fprintf(stderr,"return 0 from split\n");
-#endif
   return(0);
 }
 
@@ -1036,7 +1033,7 @@ void extend_with_zeros(chan_info *cp, off_t beg, off_t num, const char *origin, 
   else new_len = len + num;
   prepare_edit_list(cp, new_len);
   cp->edits[cp->edit_ctr] = insert_samples_1(beg, num, cp->edits[edpos], cp, &cb, origin, 0.0);
-  cb->snd = -1;
+  cb->snd = EDIT_LIST_ZERO_MARK;
   cp->edits[cp->edit_ctr]->edit_type = ZERO_EDIT;
   cp->edits[cp->edit_ctr]->sound_location = 0;
   reflect_edit_history_change(cp);
@@ -1542,9 +1539,10 @@ void scale_channel(chan_info *cp, Float scl, off_t beg, off_t num, int pos, int 
 	  if (current > 0) new_ed->fragments[current - 1]->rmp1 = val;
 
 	  previous = find_split_loc(beg + num, old_ed);
-	  if (FRAGMENT_GLOBAL_POSITION(old_ed, previous) > (beg + num)) previous--;
+	  if (FRAGMENT_GLOBAL_POSITION(old_ed, previous) >= (beg + num)) previous--;
 	  old_end = old_ed->fragments[previous];
-	  current = find_split_loc(beg + num, new_ed) - 1;
+	  current = find_split_loc(beg + num, new_ed);
+	  if (FRAGMENT_GLOBAL_POSITION(new_ed, current) >= (beg + num)) current--;
 	  new_end = new_ed->fragments[current];
 	  rmp0 = old_end->rmp0;
 	  rmp1 = old_end->rmp1;
@@ -1980,6 +1978,50 @@ static Float previous_sample_to_float_with_ptree(snd_fd *sf)
   else return(sf->cb->scl * evaluate_ptree_1f2f(sf->ptree, sf->cb->rmp0 * sf->data[sf->loc--]));
 }
 
+static mus_sample_t next_sample_with_ptree_on_air(snd_fd *sf)
+{
+  if (sf->loc > sf->last)
+     return(next_sound(sf));
+  else 
+    {
+      sf->loc++;
+      return(MUS_FLOAT_TO_SAMPLE(sf->cb->scl * evaluate_ptree_1f2f(sf->ptree, 0.0)));
+    }
+}
+
+static mus_sample_t previous_sample_with_ptree_on_air(snd_fd *sf)
+{
+  if (sf->loc < sf->first)
+    return(previous_sound(sf));
+  else 
+    {
+      sf->loc--;
+      return(MUS_FLOAT_TO_SAMPLE(sf->cb->scl * evaluate_ptree_1f2f(sf->ptree, 0.0)));
+    }
+}
+
+static Float next_sample_to_float_with_ptree_on_air(snd_fd *sf)
+{
+  if (sf->loc > sf->last)
+     return(MUS_SAMPLE_TO_FLOAT(next_sound(sf)));
+  else 
+    {
+      sf->loc++;
+      return(sf->cb->scl * evaluate_ptree_1f2f(sf->ptree, 0.0));
+    }
+}
+
+static Float previous_sample_to_float_with_ptree_on_air(snd_fd *sf)
+{
+  if (sf->loc < sf->first)
+    return(MUS_SAMPLE_TO_FLOAT(previous_sound(sf)));
+  else 
+    {
+      sf->loc--;
+      return(sf->cb->scl * evaluate_ptree_1f2f(sf->ptree, 0.0));
+    }
+}
+
 
 void read_sample_change_direction(snd_fd *sf, int dir)
 {
@@ -2087,7 +2129,7 @@ static void choose_accessor(snd_fd *sf)
   /* fragment-specific reader choice */
   if (sf->direction == READ_FORWARD)
     {
-      if (sf->cb->scl == 0)
+      if (sf->cb->scl == 0.0)
 	{
 	  sf->run = next_zero_sample;
 	  sf->runf = next_zero_sample_to_float;
@@ -2108,8 +2150,20 @@ static void choose_accessor(snd_fd *sf)
 	      sf->runf = next_sample_to_float_with_ramp;
 	      break;
 	    case ED_PTREE:
-	      sf->run = next_sample_with_ptree;
-	      sf->runf = next_sample_to_float_with_ptree;
+	      /* one special case here -- since zero blocks have scl=0.0 and snd=-1,
+	       *   the transfer of the scaler to the ptree's rmp0 means that when
+	       *   the underlying block is actually a phantom zero block, rmp0=0.0 and snd=-1.
+	       */
+	      if ((sf->cb->rmp0 == 0.0) || (sf->cb->snd == EDIT_LIST_ZERO_MARK))
+		{
+		  sf->run = next_sample_with_ptree_on_air;
+		  sf->runf = next_sample_to_float_with_ptree_on_air;
+		}
+	      else
+		{
+		  sf->run = next_sample_with_ptree;
+		  sf->runf = next_sample_to_float_with_ptree;
+		}
 	      sf->ptree = sf->cp->ptrees[sf->cb->loc];
 	      break;
 	    default:
@@ -2146,7 +2200,7 @@ static void choose_accessor(snd_fd *sf)
     }
   else
     {
-      if (sf->cb->scl == 0)
+      if (sf->cb->scl == 0.0)
 	{
 	  sf->run = previous_zero_sample;
 	  sf->runf = previous_zero_sample_to_float;
@@ -2167,8 +2221,16 @@ static void choose_accessor(snd_fd *sf)
 	      sf->runf = previous_sample_to_float_with_ramp;
 	      break;
 	    case ED_PTREE:
-	      sf->run = previous_sample_with_ptree;
-	      sf->runf = previous_sample_to_float_with_ptree;
+	      if ((sf->cb->rmp0 == 0.0) || (sf->cb->snd == EDIT_LIST_ZERO_MARK))
+		{
+		  sf->run = previous_sample_with_ptree_on_air;
+		  sf->runf = previous_sample_to_float_with_ptree_on_air;
+		}
+	      else
+		{
+		  sf->run = previous_sample_with_ptree;
+		  sf->runf = previous_sample_to_float_with_ptree;
+		}
 	      sf->ptree = sf->cp->ptrees[sf->cb->loc];
 	      break;
 	    default:
@@ -2257,7 +2319,7 @@ static snd_fd *init_sample_read_any_with_bufsize(off_t samp, chan_info *cp, int 
 	  indx = sf->cb->beg + sf->frag_pos;
 	  ind1 = sf->cb->end;
 	  sf->fscaler = MUS_SAMPLE_TO_FLOAT(sf->cb->scl);
-	  if (sf->cb->scl == 0)
+	  if ((sf->cb->scl == 0.0) || (sf->cb->snd == EDIT_LIST_ZERO_MARK))
 	    {
 	      sf->current_sound = NULL;
 	      sf->loc = indx;
@@ -2362,7 +2424,7 @@ mus_sample_t previous_sound (snd_fd *sf)
       ind0 = sf->cb->beg;
       ind1 = sf->cb->end;
       sf->fscaler = MUS_SAMPLE_TO_FLOAT(sf->cb->scl);
-      if (sf->cb->scl == 0)
+      if ((sf->cb->scl == 0.0) || (sf->cb->snd == EDIT_LIST_ZERO_MARK))
 	{
 	  sf->current_sound = NULL;
 	  sf->loc = ind1;
@@ -2428,7 +2490,7 @@ mus_sample_t next_sound (snd_fd *sf)
       ind0 = sf->cb->beg;
       ind1 = sf->cb->end;
       sf->fscaler = MUS_SAMPLE_TO_FLOAT(sf->cb->scl);
-      if (sf->cb->scl == 0)
+      if ((sf->cb->scl == 0.0) || (sf->cb->snd == EDIT_LIST_ZERO_MARK))
 	{
 	  sf->current_sound = NULL;
 	  sf->loc = ind0;
@@ -3023,8 +3085,7 @@ associated with snd's channel chn; the returned value is a list (origin type sta
     }
   XEN_ERROR(NO_SUCH_EDIT,
 	    XEN_LIST_4(C_TO_XEN_STRING(S_edit_fragment),
-		       snd, chn,
-		       uctr));
+		       uctr, snd, chn));
   return(uctr);
 }
 

@@ -764,6 +764,7 @@ static BACKGROUND_TYPE dac_in_background(GUI_POINTER ptr);
 #if DEBUGGING
 static int disable_play = 0;
 static XEN g_disable_play(void) {disable_play = 1; return(XEN_FALSE);}
+static XEN g_enable_play(void) {disable_play = 0; return(XEN_TRUE);}
 #endif
 
 static void start_dac(snd_state *ss, int srate, int channels, int background)
@@ -2473,5 +2474,6 @@ If it returns #t, the sound is not played."
 
 #if DEBUGGING
   XEN_DEFINE_PROCEDURE("disable-play", g_disable_play, 0, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE("enable-play", g_enable_play, 0, 0, 0, NULL);
 #endif
 }

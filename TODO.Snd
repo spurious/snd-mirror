@@ -43,3 +43,20 @@ Gtk versions of popup.scm and snd-motif.scm.
 
 A nice user-interface to the track mechanism, perhaps as an
   extension of the current Mix Panel.
+
+For some kind soul who enjoys surfing the net, I need more
+audio file examples for testing sndlib.  Examples I'd love
+to get:  
+  aifc using "sowt" (little endian) data
+  aifc using "fl64" (big endian double) data
+  riff using unsigned byte data
+  rifx (rifx) using big endian data of any kind
+  bicsf with header extensions like "COMM"
+  voc using mulaw or alaw data
+  voc "extended" header
+  8svx (iff) using "fibonacci" compression
+  Digitracker SPL (Fast tracker? Impulse tracker?)
+  CSRE adf
+  DVSM 
+  IBM CVSD
+  And any others that aren't currently handled (and that accept uncompressed samples)
