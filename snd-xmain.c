@@ -972,17 +972,12 @@ void snd_doit(snd_state *ss, int argc, char **argv)
   gv.function = GXcopy;
   gv.background = sx->basic_color;
   gv.foreground = sx->black;
-  sx->fltenv_basic_gc = XCreateGC(dpy, wn, GCForeground | GCFunction, &gv);
+  sx->fltenv_basic_gc = XCreateGC(dpy, wn, GCBackground | GCForeground | GCFunction, &gv);
 
   gv.function = GXcopy;
   gv.background = sx->basic_color;
   gv.foreground = sx->filter_waveform_color;
   sx->fltenv_data_gc = XCreateGC(dpy, wn, GCBackground | GCForeground | GCFunction, &gv);
-
-  gv.function = GXcopy;
-  gv.background = sx->basic_color;
-  gv.foreground = sx->black;
-  sx->speed_gc = XCreateGC(dpy, wn, GCForeground | GCBackground, &gv);
 
   initialize_colormap(ss);
 

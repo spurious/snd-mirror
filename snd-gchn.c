@@ -1034,7 +1034,10 @@ static XEN g_channel_widgets(XEN snd, XEN chn)
 	           XEN_CONS(XEN_WRAP_WIDGET(channel_zx(cp)),
 	             XEN_CONS(XEN_WRAP_WIDGET(channel_zy(cp)),
 		       XEN_CONS(XEN_WRAP_WIDGET(EDIT_HISTORY_LIST(cp)),
-	                 XEN_EMPTY_LIST)))))))));
+			 XEN_CONS(XEN_WRAP_WIDGET(channel_gsy(cp)),
+			   XEN_CONS(XEN_WRAP_WIDGET(channel_gzy(cp)),
+			     XEN_CONS(XEN_WRAP_WIDGET(channel_main_pane(cp)),
+	                       XEN_EMPTY_LIST))))))))))));
 }
 
 #ifdef XEN_ARGIFY_1

@@ -45,7 +45,7 @@ Long-term stuff is marked with "SOMEDAY".
 
 I'd like Snd to work in Windoze -- I think the current CVS guile
 is buildable even in MS C, and there are rumors that gtk works
-in cygwin(?), so it's not impossible Snd would build and work
+in cygwin, so it's not impossible Snd would build and work
 the first time, but I don't have any way to find out.
 
 In snd-test.scm, the gtk (xg) section needs to be written.

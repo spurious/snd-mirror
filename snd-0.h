@@ -74,10 +74,6 @@
   #define HAVE_ISNAN 1
 #endif
 
-#ifndef UW2
-  #define HAVE_ARROW_KEYS 1
-#endif
-
 #ifndef STATFS_ARGS
   #define STATFS_ARGS 2
 #endif

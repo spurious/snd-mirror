@@ -3396,14 +3396,11 @@ classes and methods in Scheme:
 </pre>
 <p>
 But our real interest here is how to do the same thing in CLM-in-C (clm.c).
-The following is extracted from snd-dac.c's translation of Fernando's
-translation of Wakefield's freeverb.  It implements fcomb and ties it
-into CLM so it can be treated just like oscil or comb or whatever.
+The following example implements a comb filter with a one-zero filter on the feedback.
 </p>
 <pre>
 #include "sndlib.h"
 #include "clm.h"
-#include "sg.h"
 #include "xen.h"
 #include "clm2xen.h"
 
@@ -3500,7 +3497,7 @@ static mus_any_class FCOMB_CLASS = {
   0, 0,
   &amp;mus_fcomb,                    /* mus_run: the run-time fcomb function, MUS_RUN(gen) for speed */
   0,                             /* type extension (normally 0) */
-  NULL                          
+  NULL, 0                         
 };
 
 /* now a function to make a new generator */
@@ -3545,7 +3542,7 @@ static XEN g_fcomb(XEN obj, XEN input)
 
 static XEN g_fcomb_p(XEN obj)
 {
-  return(C_TO_XEN_BOOLEAN((MUS_XEN_P(obj)) &amp;&amp; (mus_fcomb_p(MUS_XEN_TO_CLM(obj)))));
+  return(C_TO_XEN_BOOLEAN((mus_xen_p(obj)) &amp;&amp; (mus_fcomb_p(MUS_XEN_TO_CLM(obj)))));
 }
 
 static XEN g_make_fcomb(XEN scaler, XEN size, XEN a0, XEN a1)

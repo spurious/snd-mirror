@@ -2068,7 +2068,7 @@ static int set_up_sonogram(sonogram_state *sg)
     sg->outlim = ap->height / cp->spectro_hop;
   else sg->outlim = ap->window_width / dpys;
   if (sg->outlim <= 1) return(2);
-  sg->hop = (int)(ceil((Float)(ap->hisamp - ap->losamp + 1) / (Float)(sg->outlim)));
+  sg->hop = (int)(ceil((double)(ap->hisamp - ap->losamp + 1) / (double)(sg->outlim)));
   /* if fewer samps than pixels, draw rectangles */
   if ((cp->transform_type == FOURIER) || 
       (cp->transform_type == AUTOCORRELATION))

@@ -59,10 +59,8 @@
 #define XEN_WRAP_APPCONTEXT(Value)   XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("XtAppContext"), C_TO_XEN_ULONG((unsigned long)Value))
 #define XEN_WRAP_PIXEL(Value)        XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("Pixel"), C_TO_XEN_ULONG((unsigned long)Value))
 #define XEN_UNWRAP_WIDGET(Value)     (XEN_LIST_P(Value) ? XEN_TO_C_ULONG(XEN_CADR(Value)) : 0)
-#define XEN_UNWRAP_WINDOW(Value)     (XEN_LIST_P(Value) ? XEN_TO_C_ULONG(XEN_CADR(Value)) : 0)
 #define XEN_UNWRAP_GC(Value)         XEN_TO_C_ULONG(XEN_CADR(Value))
 #define XEN_UNWRAP_PIXEL(Value)      XEN_TO_C_ULONG(XEN_CADR(Value))
-#define XEN_UNWRAP_APPCONTEXT(Value) XEN_TO_C_ULONG(XEN_CADR(Value))
 #define XEN_WIDGET_P(Value) (XEN_LIST_P(Value) && (XEN_LIST_LENGTH(Value) >= 2) && (XEN_SYMBOL_P(XEN_CAR(Value))) && \
                             (strcmp("Widget", XEN_SYMBOL_TO_C_STRING(XEN_CAR(Value))) == 0))
 
@@ -142,7 +140,7 @@ typedef struct {
 } chan_context;
 
 typedef struct {
-  Pixmap speed_r, speed_l, file_pix;
+  Pixmap file_pix;
   BACKGROUND_FUNCTION_TYPE apply_in_progress;
   Widget *snd_widgets;
   Widget tab;
@@ -186,7 +184,7 @@ typedef struct {
   GC erase_gc, selected_erase_gc;        
   GC mark_gc, selected_mark_gc;          
   GC mix_gc, selected_mix_gc;         
-  GC fltenv_basic_gc, fltenv_data_gc, speed_gc;
+  GC fltenv_basic_gc, fltenv_data_gc;
 
   XEvent *text_activate_event;
   Widget text_widget, listener_pane;

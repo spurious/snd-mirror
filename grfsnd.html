@@ -174,6 +174,15 @@ is equivalent to the -h flag; if 1, sounds are layed out
 horizontally rather than vertically;  if 2, you get a notebook
 widget holding the sounds.
 </p>
+<p>In Gtk2, the (pango) font defaults are:</p>
+<pre>
+tiny-font         "Monospace 8"
+button-font       "Serif 14"
+bold-button-font  "Serif Bold 14"
+axis-numbers-font "Monospace 10"
+axis-label-font   "Serif 14"
+help-text-font    "Monospace 14"
+</pre>
 
 <p><A NAME="aboutcolors"></a>The various color resources are:</p>
 
@@ -298,10 +307,13 @@ Here's a more extended example:
 
 (set! (window-width) 800)
 (set! (window-height) 500)
-(set! (button-font) "-adobe-times-medium-r-*-*-14-*-*-*-*-*-*-*")
-(set! (bold-button-font) "-adobe-times-bold-r-*-*-14-*-*-*-*-*-*-*")
-(set! (axis-label-font) "-adobe-times-medium-r-normal-*-18-*-*-*-*-*-*-*")
-(set! (axis-numbers-font) "9x15")
+
+(if (not (provided? 'snd-gtk))
+    (begin
+      (set! (button-font) "-adobe-times-medium-r-*-*-14-*-*-*-*-*-*-*")
+      (set! (bold-button-font) "-adobe-times-bold-r-*-*-14-*-*-*-*-*-*-*")
+      (set! (axis-label-font) "-adobe-times-medium-r-normal-*-18-*-*-*-*-*-*-*")
+      (set! (axis-numbers-font) "9x15")))
 
 (set! (show-mix-waveforms) #t)
 (set! (listener-prompt) ":")

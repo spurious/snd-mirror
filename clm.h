@@ -2,8 +2,8 @@
 #define MUS_H
 
 #define MUS_VERSION 2
-#define MUS_REVISION 8
-#define MUS_DATE "31-May-02"
+#define MUS_REVISION 9
+#define MUS_DATE "5-June-02"
 
 /* 
  * 31-May:     changed mus_any_class.

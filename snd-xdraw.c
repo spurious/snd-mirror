@@ -1159,52 +1159,14 @@ void reflect_spectro(snd_state *ss)
     }
 }
 
-#if HAVE_GL
-/* TODO: resets for gtk GL */
-static Float gl_currents[6] = {DEFAULT_SPECTRO_X_ANGLE, DEFAULT_SPECTRO_Y_ANGLE, DEFAULT_SPECTRO_Z_ANGLE, 
-			       DEFAULT_SPECTRO_X_SCALE, DEFAULT_SPECTRO_Y_SCALE, DEFAULT_SPECTRO_Z_SCALE};
-static Float x_currents[6] = {90.0, 0.0, 358.0, 1.0, 1.0, 0.1};
-
-static void save_currents(snd_state *ss)
-{
-  Float *vals;
-  if (with_gl(ss)) vals = gl_currents; else vals = x_currents;
-  vals[0] = spectro_x_angle(ss);
-  vals[1] = spectro_y_angle(ss);
-  vals[2] = spectro_z_angle(ss);
-  vals[3] = spectro_x_scale(ss);
-  vals[4] = spectro_y_scale(ss);
-  vals[5] = spectro_z_scale(ss);
-}
-
-static void set_currents(snd_state *ss)
-{
-  Float *vals;
-  if (with_gl(ss)) vals = gl_currents; else vals = x_currents;
-  in_set_spectro_x_angle(ss, vals[0]);
-  in_set_spectro_y_angle(ss, vals[1]);
-  in_set_spectro_z_angle(ss, vals[2]);
-  in_set_spectro_x_scale(ss, vals[3]);
-  in_set_spectro_y_scale(ss, vals[4]);
-  in_set_spectro_z_scale(ss, vals[5]);
-  reflect_spectro(ss);
-  map_chans_field(ss, FCP_X_ANGLE, vals[0]);
-  map_chans_field(ss, FCP_Y_ANGLE, vals[1]);
-  map_chans_field(ss, FCP_Z_ANGLE, vals[2]);
-  map_chans_field(ss, FCP_X_SCALE, vals[3]);
-  map_chans_field(ss, FCP_Y_SCALE, vals[4]);
-  map_chans_field(ss, FCP_Z_SCALE, vals[5]);
-}
-#endif
-
 int set_with_gl(snd_state *ss, int val)
 {
 #if HAVE_GL
-  save_currents(ss);
+  sgl_save_currents(ss);
 #endif
   in_set_with_gl(ss, val);
 #if HAVE_GL
-  set_currents(ss);
+  sgl_set_currents(ss);
   if (oid) XmToggleButtonSetState(oid->glbutton, val, FALSE);
   map_over_chans(ss, update_graph, NULL);
 #endif
@@ -1218,9 +1180,9 @@ static void with_gl_callback(Widget w, XtPointer context, XtPointer info)
   XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)info;
   ASSERT_WIDGET_TYPE(XmIsToggleButton(w), w);
   ss = get_global_state();
-  save_currents(ss);
+  sgl_save_currents(ss);
   in_set_with_gl(ss, cb->set);
-  set_currents(ss);
+  sgl_set_currents(ss);
   map_over_chans(ss, update_graph, NULL);
 }
 

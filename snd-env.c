@@ -400,6 +400,7 @@ void handle_filter_point(snd_state *ss, snd_info *sp, int evx, int evy, TIME_TYP
   if (spf->env_pos == 0) x = e->data[0];
   if (spf->env_pos == (e->pts - 1)) x = e->data[(e->pts - 1) * 2];
   y = ungrf_y(ap, evy);
+  if (y < 0.0) y = 0.0;
   if (y < ap->y0) y = ap->y0;
   if (y > ap->y1) y = ap->y1;
   if (sp->filter_control_in_dB) y = un_dB(ss, y);
@@ -424,6 +425,7 @@ void handle_filter_press(snd_info *sp, int evx, int evy, TIME_TYPE time)
   pos = hit_point(sp->state, spf->current_xs, spf->current_ys, e->pts, evx, evy);
   x = ungrf_x(ap, evx);
   y = sp_ungrf_y_dB(sp, ap, evy);
+  if (y < 0.0) y = 0.0;
   if (pos == -1)
     {
       if (x <= 0.0)

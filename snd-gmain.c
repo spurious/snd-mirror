@@ -260,11 +260,6 @@ static void setup_gcs (snd_state *ss)
   gdk_gc_set_foreground(sx->fltenv_data_gc, sx->filter_waveform_color);
   gdk_gc_set_function(sx->fltenv_data_gc, GDK_COPY);
 
-  sx->speed_gc = gdk_gc_new(wn);
-  gdk_gc_set_background(sx->speed_gc, sx->basic_color);
-  gdk_gc_set_foreground(sx->speed_gc, sx->black);
-  gdk_gc_set_function(sx->speed_gc, GDK_COPY);
-
   initialize_colormap(ss);
 }
 

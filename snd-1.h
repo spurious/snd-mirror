@@ -463,7 +463,6 @@ void help_dialog_help(snd_state *ss);
 void transform_dialog_help(snd_state *ss);
 void color_dialog_help(snd_state *ss);
 void orientation_dialog_help(snd_state *ss);
-void listener_dialog_help(snd_state *ss);
 void envelope_editor_dialog_help(snd_state *ss);
 void region_dialog_help(snd_state *ss);
 void raw_data_dialog_help(snd_state *ss);
@@ -1364,6 +1363,10 @@ void g_init_run(void);
   void g_init_draw(void);
   void set_dialog_widget(snd_state *ss, int which, GUI_WIDGET wid);
   void run_new_widget_hook(GUI_WIDGET w);
+#endif
+#if HAVE_GL
+  void sgl_save_currents(snd_state *ss);
+  void sgl_set_currents(snd_state *ss);
 #endif
 #endif
 

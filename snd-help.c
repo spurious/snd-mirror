@@ -248,11 +248,6 @@ void news_help(snd_state *ss)
          added gl.c, makegl.scm, gldata.scm (GL example in grfsnd.html).\n\
 15-May:  update-hook.\n\
 13-May:  snd 5.10.\n\
-9-May:   sound-loop-info bugfix (thanks to Dave Phillips).\n\
-6-May:   support for files larger than 2^31 bytes.\n\
-1-May:   maraca.scm, piano.scm.\n\
-30-Apr:  vct-map\n\
-29-Apr:  snd5.scm, singer.scm, fade.scm.\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*: \n'", features, "\n\n",

@@ -1175,9 +1175,21 @@ void fht(int powerOfFour, Float *array)
 	      L6 = L5 + d2;
 	      L7 = L5 + d3;
 	      L8 = L5 + d4;
+	      a1 = k * n_over_d3;
+	      a2 = 2 * a1;
+	      a3 = 3 * a1;
+	      /* (these never even get close to n so the mod is not needed)
 	      a1 = (int) (k * n_over_d3) % n;
 	      a2 = (a1 + a1) % n;
 	      a3 = (a1 + a2) % n;
+	      */
+#if DEBUGGING
+	      if (a3 >= n)
+		{
+		  fprintf(stderr, "fht n: %d, a3: %d\n", n, a3);
+		  abort();
+		}
+#endif
 	      /* use of table-lookup here speeds up the overall function by a factor of about 8! */
 	      t5 = array[L2] * fht_cosines[a1] + array[L6] * fht_sines[a1];
 	      t6 = array[L3] * fht_cosines[a2] + array[L7] * fht_sines[a2];

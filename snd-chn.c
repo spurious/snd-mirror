@@ -2081,6 +2081,8 @@ static int make_spectrogram(chan_info *cp, snd_info *sp, snd_state *ss)
 	  Colormap cmap;
 	  XColor tmp_color;
 	  Display *dpy;
+#else
+	  GdkColor *tmp_color;
 #endif
 	  inv_scl = 1.0 / si->scale;
 	  fp = cp->fft;
@@ -2138,13 +2140,18 @@ static int make_spectrogram(chan_info *cp, snd_info *sp, snd_state *ss)
 	  br = tmp_color.red;
 	  bg = tmp_color.green;
 	  bb = tmp_color.blue;
-	  glClearColor((float)tmp_color.red / 65535.0,
-		       (float)tmp_color.green / 65535.0,
-		       (float)tmp_color.blue / 65535.0,
+	  glClearColor((float)(tmp_color.red) / 65535.0,
+		       (float)(tmp_color.green) / 65535.0,
+		       (float)(tmp_color.blue) / 65535.0,
 		       0.0);
 #else
-	  /* TODO: bg color for gtk gl */
-	  glClearColor(1.0, 1.0, 1.0, 0.0);
+	  if (cp == selected_channel(ss))
+	    tmp_color = ss->sgx->selected_graph_color;
+	  else tmp_color = ss->sgx->graph_color;
+	  glClearColor((float)(tmp_color->red) / 65535.0,
+		       (float)(tmp_color->green) / 65535.0,
+		       (float)(tmp_color->blue) / 65535.0,
+		       0.0);
 #endif
 	  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	  if (cp->fft_changed == FFT_CHANGED)

@@ -1268,7 +1268,6 @@ void keyboard_command (chan_info *cp, int keysym, int state)
 	    case snd_K_underscore: 
 	      undo_edit_with_sync(cp, count); 
 	      break;
-#if HAVE_ARROW_KEYS
 	    case snd_keypad_Left: 
 	    case snd_keypad_4: 
 	      set_spectro_y_angle(ss, spectro_y_angle(ss) - 1.0);
@@ -1289,24 +1288,6 @@ void keyboard_command (chan_info *cp, int keysym, int state)
 	      set_spectro_x_angle(ss, spectro_x_angle(ss) + 1.0);
 	      reflect_spectro(ss); 
 	      break;
-#else
-	    case snd_keypad_4: 
-	      set_spectro_y_angle(ss, spectro_y_angle(ss) - 1.0);
-	      reflect_spectro(ss); 
-	      break;
-	    case snd_keypad_6: 
-	      set_spectro_y_angle(ss, spectro_y_angle(ss) + 1.0);
-	      reflect_spectro(ss); 
-	      break;
-	    case snd_keypad_2:
-	      set_spectro_x_angle(ss, spectro_x_angle(ss) - 1.0);
-	      reflect_spectro(ss); 
-	      break;
-	    case snd_keypad_8: 
-	      set_spectro_x_angle(ss, spectro_x_angle(ss) + 1.0);
-	      reflect_spectro(ss); 
-	      break;
-#endif
 	    default:
 	      report_in_minibuffer(sp, "C-%s undefined", key_to_name(keysym));
 	      break;
@@ -1476,7 +1457,6 @@ void keyboard_command (chan_info *cp, int keysym, int state)
 	      break;
 
 	      /* fUn WiTh KeYpAd! */
-#if HAVE_ARROW_KEYS
 	    case snd_keypad_Up: case snd_keypad_8: 
 	      set_spectro_z_scale(ss, spectro_z_scale(ss) + .01);
 	      reflect_spectro(ss);
@@ -1493,24 +1473,6 @@ void keyboard_command (chan_info *cp, int keysym, int state)
 	      set_spectro_z_angle(ss, spectro_z_angle(ss) + 1.0);
 	      reflect_spectro(ss); 
 	      break;
-#else
-	    case snd_keypad_8: 
-	      set_spectro_z_scale(ss, spectro_z_scale(ss) + .01);
-	      reflect_spectro(ss);
-	      break;
-	    case snd_keypad_2: 
-	      set_spectro_z_scale(ss, spectro_z_scale(ss) - .01);
-	      reflect_spectro(ss); 
-	      break;
-	    case snd_keypad_4: 
-	      set_spectro_z_angle(ss, spectro_z_angle(ss) - 1.0);
-	      reflect_spectro(ss);
-	      break;
-	    case snd_keypad_6: 
-	      set_spectro_z_angle(ss, spectro_z_angle(ss) + 1.0);
-	      reflect_spectro(ss); 
-	      break;
-#endif
 	    case snd_keypad_Add:
 	      if (time_graph_type(ss) == GRAPH_TIME_AS_WAVOGRAM) 
 		set_wavo_trace(ss, wavo_trace(ss) + 1); 
@@ -1537,7 +1499,6 @@ void keyboard_command (chan_info *cp, int keysym, int state)
 	      if (transform_size(ss) > 4) 
 		set_transform_size(ss, transform_size(ss) / 2); 
 	      break;
-#if HAVE_ARROW_KEYS
 	    case snd_keypad_Delete: case snd_keypad_Decimal: 
 	      set_dot_size(ss, dot_size(ss) + 1); 
 	      break;
@@ -1554,24 +1515,6 @@ void keyboard_command (chan_info *cp, int keysym, int state)
 		set_spectro_cutoff(ss, spectro_cutoff(ss) / .95); 
 	      reflect_spectro(ss); 
 	      break;
-#else
-	    case snd_keypad_Decimal: 
-	      set_dot_size(ss, dot_size(ss) + 1);
-	      break;
-	    case_snd_keypad_0: 
-	      if (dot_size(ss) > 1) 
-		set_dot_size(ss, dot_size(ss) - 1); 
-	      break;
-	    case snd_keypad_3: 
-	      set_spectro_cutoff(ss, spectro_cutoff(ss) * .95); 
-	      reflect_spectro(ss); 
-	      break;
-	    case snd_keypad_9: 
-	      if (spectro_cutoff(ss) < 1.0) 
-		set_spectro_cutoff(ss, spectro_cutoff(ss) / .95); 
-	      reflect_spectro(ss); 
-	      break;
-#endif
 	    case snd_keypad_Enter: 
 	      reset_spectro(ss); 
 	      reflect_spectro(ss); 

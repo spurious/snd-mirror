@@ -52,7 +52,6 @@
 #define XEN_WRAP_GC(Value)       ((Value) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GdkGC_"), C_TO_XEN_ULONG((unsigned long)Value)) : XEN_FALSE)
 #define XEN_WRAP_PIXEL(Value)    ((Value) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GdkColor_"), C_TO_XEN_ULONG((unsigned long)Value)) : XEN_FALSE)
 #define XEN_UNWRAP_WIDGET(Value) (XEN_LIST_P(Value) ? XEN_TO_C_ULONG(XEN_CADR(Value)) : 0)
-#define XEN_UNWRAP_WINDOW(Value) (XEN_LIST_P(Value) ? XEN_TO_C_ULONG(XEN_CADR(Value)) : 0)
 #define XEN_UNWRAP_GC(Value)     (XEN_LIST_P(Value) ? XEN_TO_C_ULONG(XEN_CADR(Value)) : 0)
 #define XEN_UNWRAP_PIXEL(Value)  (XEN_LIST_P(Value) ? XEN_TO_C_ULONG(XEN_CADR(Value)) : 0)
 #define XEN_WIDGET_P(Value) (XEN_LIST_P(Value) && (XEN_LIST_LENGTH(Value) >= 2) && (XEN_SYMBOL_P(XEN_CAR(Value))) && \
@@ -133,7 +132,7 @@ typedef struct {
   GdkGC *erase_gc, *selected_erase_gc;        
   GdkGC *mark_gc, *selected_mark_gc;          
   GdkGC *mix_gc, *selected_mix_gc;    
-  GdkGC *fltenv_basic_gc, *fltenv_data_gc, *speed_gc;
+  GdkGC *fltenv_basic_gc, *fltenv_data_gc;
 
   GtkWidget **dialogs;
   int graph_is_active;

@@ -759,15 +759,16 @@
       (IF (not (equal? (selected-mix) #f)) 
 	  (snd-display ";selected-mix set def: ~A" (selected-mix)))
 
-      (for-each
-       (lambda (func name)
-	 (let ((val (func)))
-	   (set! (func) "8x123")
-	   (IF (or (not (string? (func)))
-		   (not (string=? val (func))))
-	       (snd-display ";set ~A to bogus value: ~A ~A" name val (func)))))
-       (list axis-label-font axis-numbers-font listener-font help-text-font tiny-font button-font bold-button-font)
-       (list 'axis-label-font 'axis-numbers-font 'listener-font 'help-text-font 'tiny-font button-font 'bold-button-font))
+      (if (not (provided? 'snd-gtk))
+	  (for-each
+	   (lambda (func name)
+	     (let ((val (func)))
+	       (set! (func) "8x123")
+	       (IF (or (not (string? (func)))
+		       (not (string=? val (func))))
+		   (snd-display ";set ~A to bogus value: ~A ~A" name val (func)))))
+	   (list axis-label-font axis-numbers-font listener-font help-text-font tiny-font button-font bold-button-font)
+	   (list 'axis-label-font 'axis-numbers-font 'listener-font 'help-text-font 'tiny-font button-font 'bold-button-font)))
 
       ))
 

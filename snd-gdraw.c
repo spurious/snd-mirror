@@ -776,6 +776,9 @@ typedef struct {
   GtkWidget *ax, *ay, *az, *sx, *sy, *sz, *hop, *cut; 
   GtkObject *ax_adj, *az_adj, *ay_adj, *sx_adj, *sz_adj, *sy_adj, *hop_adj, *cut_adj;
   snd_state *state;
+#if HAVE_GL
+  GtkWidget *glbutton;
+#endif
 } orientation_info;
 
 static orientation_info *oid = NULL;
@@ -989,6 +992,17 @@ static void reset_orientation_callback(GtkWidget *w, gpointer context)
   map_over_chans(ss, update_graph, NULL);
 }
 
+#if HAVE_GL
+static void glbutton_callback(GtkWidget *w, gpointer context)
+{
+  snd_state *ss = (snd_state *)context;
+  sgl_save_currents(ss);
+  in_set_with_gl(ss, GTK_TOGGLE_BUTTON(w)->active);
+  sgl_set_currents(ss);
+  map_over_chans(ss, update_graph, NULL);
+}
+#endif
+
 void view_orientation_callback(GtkWidget *w, gpointer context)
 {
   snd_state *ss = (snd_state *)context;
@@ -1027,7 +1041,11 @@ void view_orientation_callback(GtkWidget *w, gpointer context)
       gtk_widget_show(dismiss_button);
       gtk_widget_show(help_button);
 
+#if HAVE_GL
+      outer_table = gtk_table_new(5, 2, FALSE);
+#else
       outer_table = gtk_table_new(4, 2, FALSE);
+#endif
       gtk_container_add(GTK_CONTAINER(GTK_DIALOG(oid->dialog)->vbox), outer_table);
 
       /* AX */
@@ -1206,6 +1224,15 @@ void view_orientation_callback(GtkWidget *w, gpointer context)
       gtk_widget_show(cut_label);
       gtk_widget_show(cut_box);
 
+#if HAVE_GL
+      oid->glbutton = gtk_check_button_new_with_label("use OpenGL");
+      gtk_table_attach_defaults(GTK_TABLE(outer_table), oid->glbutton, 0, 1, 4, 5);
+      SG_SIGNAL_CONNECT(GTK_OBJECT(oid->glbutton), "toggled", GTK_SIGNAL_FUNC(glbutton_callback), (gpointer)ss);
+      gtk_widget_show(oid->glbutton);
+      set_toggle_button(oid->glbutton, with_gl(ss), FALSE, (gpointer)ss);
+      set_pushed_button_colors(oid->glbutton, ss);
+#endif
+
       gtk_widget_show(outer_table);
       set_dialog_widget(ss, ORIENTATION_DIALOG, oid->dialog);
     }
@@ -1228,5 +1255,14 @@ GtkWidget *start_orientation_dialog(snd_state *ss, int width, int height)
 int set_with_gl(snd_state *ss, int val)
 {
   in_set_with_gl(ss, val);
+#if HAVE_GL
+  sgl_save_currents(ss);
+#endif
+  in_set_with_gl(ss, val);
+#if HAVE_GL
+  sgl_set_currents(ss);
+  set_toggle_button(oid->glbutton, val, FALSE, (gpointer)ss);
+  map_over_chans(ss, update_graph, NULL);
+#endif
   return(with_gl(ss));
 }

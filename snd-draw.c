@@ -599,7 +599,11 @@ static XEN g_widget_text(XEN wid)
 #else
       if (GTK_IS_ENTRY(w))
 	return(C_TO_XEN_STRING((char *)gtk_entry_get_text(GTK_ENTRY(w))));
-      else return(C_TO_XEN_STRING(SG_LABEL_TEXT(GTK_LABEL(GTK_BIN(w)->child))));
+      else
+	{
+	  if ((GTK_IS_BIN(w)) && (GTK_IS_LABEL(GTK_BIN(w)->child)))
+	    return(C_TO_XEN_STRING(SG_LABEL_TEXT(GTK_LABEL(GTK_BIN(w)->child))));
+	}
 #endif
     }
   else XEN_ERROR(NO_SUCH_WIDGET,
@@ -714,7 +718,7 @@ static XEN g_snd_gcs(void)
 {
   #define H_snd_gcs "(" S_snd_gcs ") -> list of Snd graphics contexts (basic selected_basic combined \
 cursor selected_cursor selection selected_selection erase selected_erase mark selected_mark mix \
-selected_mix fltenv_basic fltenv_data speed)"
+selected_mix fltenv_basic fltenv_data)"
 
   snd_state *ss;
   state_context *sx;
@@ -736,10 +740,48 @@ selected_mix fltenv_basic fltenv_data speed)"
                        XEN_CONS(XEN_WRAP_GC(sx->selected_mix_gc), 
                         XEN_CONS(XEN_WRAP_GC(sx->fltenv_basic_gc), 
                          XEN_CONS(XEN_WRAP_GC(sx->fltenv_data_gc), 
-                          XEN_CONS(XEN_WRAP_GC(sx->speed_gc),
-			   XEN_EMPTY_LIST)))))))))))))))));
+			  XEN_EMPTY_LIST))))))))))))))));
   return(XEN_EMPTY_LIST);
 }
+
+#if HAVE_GL
+/* TODO: resets for gtk GL */
+static Float gl_currents[6] = {DEFAULT_SPECTRO_X_ANGLE, DEFAULT_SPECTRO_Y_ANGLE, DEFAULT_SPECTRO_Z_ANGLE, 
+			       DEFAULT_SPECTRO_X_SCALE, DEFAULT_SPECTRO_Y_SCALE, DEFAULT_SPECTRO_Z_SCALE};
+static Float x_currents[6] = {90.0, 0.0, 358.0, 1.0, 1.0, 0.1};
+
+void sgl_save_currents(snd_state *ss)
+{
+  Float *vals;
+  if (with_gl(ss)) vals = gl_currents; else vals = x_currents;
+  vals[0] = spectro_x_angle(ss);
+  vals[1] = spectro_y_angle(ss);
+  vals[2] = spectro_z_angle(ss);
+  vals[3] = spectro_x_scale(ss);
+  vals[4] = spectro_y_scale(ss);
+  vals[5] = spectro_z_scale(ss);
+}
+
+void sgl_set_currents(snd_state *ss)
+{
+  Float *vals;
+  if (with_gl(ss)) vals = gl_currents; else vals = x_currents;
+  in_set_spectro_x_angle(ss, vals[0]);
+  in_set_spectro_y_angle(ss, vals[1]);
+  in_set_spectro_z_angle(ss, vals[2]);
+  in_set_spectro_x_scale(ss, vals[3]);
+  in_set_spectro_y_scale(ss, vals[4]);
+  in_set_spectro_z_scale(ss, vals[5]);
+  reflect_spectro(ss);
+  map_chans_field(ss, FCP_X_ANGLE, vals[0]);
+  map_chans_field(ss, FCP_Y_ANGLE, vals[1]);
+  map_chans_field(ss, FCP_Z_ANGLE, vals[2]);
+  map_chans_field(ss, FCP_X_SCALE, vals[3]);
+  map_chans_field(ss, FCP_Y_SCALE, vals[4]);
+  map_chans_field(ss, FCP_Z_SCALE, vals[5]);
+}
+#endif
+
 
 
 #ifdef XEN_ARGIFY_1

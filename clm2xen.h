@@ -14,6 +14,8 @@ typedef struct {
 int mus_xen_p(XEN obj);
 void mus_xen_init(void);
 char *mus_fft_window_name(int i);
+XEN mus_xen_to_object(mus_xen *gn);
+XEN mus_xen_to_object_with_vct(mus_xen *gn, XEN v);
 
 #define S_bartlett_window        "bartlett-window"
 #define S_blackman2_window       "blackman2-window"

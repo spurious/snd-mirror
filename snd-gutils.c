@@ -631,38 +631,29 @@ void fixup_axis_context(axis_context *ax, GtkWidget *w, GdkGC *gc)
 
 static GtkObject **our_objects;
 static gpointer *our_data;
-static int our_data_size = 0;
+static int our_data_size = 0, our_data_ctr = 0;
 
 void set_user_data(GtkObject *obj, gpointer data)
 {
-  int i, loc, new_size;
-  if (our_data_size == 0)
+  if (our_data_ctr >= our_data_size)
     {
-      our_data_size = 256;
-      our_data = (gpointer *)CALLOC(our_data_size, sizeof(gpointer));
-      our_objects = (GtkObject **)CALLOC(our_data_size, sizeof(GtkObject *));
-      loc = 0;
-    }
-  else
-    {
-      loc = -1;
-      for (i = 0; i < our_data_size; i++)
-	if (our_objects[i] == NULL)
-	  {
-	    loc = i;
-	    break;
-	  }
-      if (loc == -1)
+      if (our_data_size == 0)
 	{
+	  our_data_size = 256;
+	  our_data = (gpointer *)CALLOC(our_data_size, sizeof(gpointer));
+	  our_objects = (GtkObject **)CALLOC(our_data_size, sizeof(GtkObject *));
+	}
+      else
+	{
+	  int new_size;
 	  new_size = our_data_size + 256;
-	  our_data = (gpointer *)REALLOC(our_data, our_data_size * sizeof(gpointer));
-	  our_objects = (GtkObject **)REALLOC(our_objects, our_data_size * sizeof(GtkObject *));
-	  loc = our_data_size;
+	  our_data = (gpointer *)REALLOC(our_data, new_size * sizeof(gpointer));
+	  our_objects = (GtkObject **)REALLOC(our_objects, new_size * sizeof(GtkObject *));
 	  our_data_size = new_size;
 	}
     }
-  our_data[loc] = data;
-  our_objects[loc] = obj;
+  our_data[our_data_ctr] = data;
+  our_objects[our_data_ctr++] = obj;
 }
 
 gpointer get_user_data(GtkObject *obj)
@@ -716,7 +707,7 @@ void sg_set_cursor(GtkWidget *w, int position)
   GtkTextIter pos;
   GtkTextBuffer *buf;
   buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(w));
-  gtk_text_buffer_get_iter_at_offset(buf, &pos, position - 1); /* TODO: can't put the cursor at the end in gtk2! */
+  gtk_text_buffer_get_iter_at_offset(buf, &pos, position - 1); /* can't put the cursor at the end in gtk2! */
   gtk_text_buffer_place_cursor(buf, &pos);
   gtk_text_view_scroll_mark_onscreen(GTK_TEXT_VIEW(w), gtk_text_buffer_get_insert(buf));
 }

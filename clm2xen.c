@@ -700,14 +700,14 @@ static XEN mus_xen_apply(XEN gen, XEN arg1, XEN arg2)
 }
 #endif
 
-static XEN mus_xen_to_object(mus_xen *gn)
+XEN mus_xen_to_object(mus_xen *gn) /* global for user-defined gens */
 {
   XEN_MAKE_AND_RETURN_OBJECT(mus_xen_tag, gn, mark_mus_xen, free_mus_xen);
 }
 
 #define MUS_DATA_POSITION 0
 
-static XEN mus_xen_to_object_with_vct(mus_xen *gn, XEN v)
+XEN mus_xen_to_object_with_vct(mus_xen *gn, XEN v) /* global for user-defined gens */
 {
   XEN new_dly = XEN_FALSE;
   XEN_MAKE_OBJECT(new_dly, mus_xen_tag, gn, mark_mus_xen, free_mus_xen);

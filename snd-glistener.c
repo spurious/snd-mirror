@@ -331,7 +331,7 @@ static gboolean listener_key_press(GtkWidget *w, GdkEventKey *event, gpointer da
 static gint clear_paren_check(gpointer nada)
 {
 #if (!HAVE_GTK2)
-  /* TODO: major gtk bug here -- their own internal iterator gets fatally screwed up */
+  /* major gtk bug here -- their own internal iterator gets fatally screwed up */
   if (last_highlight_position != -1)
     {
       SG_TEXT_UNSELECT(listener_text);

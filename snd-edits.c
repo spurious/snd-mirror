@@ -4080,6 +4080,215 @@ XEN_ARGIFY_9(g_set_samples_w, g_set_samples)
 #if DEBUGGING
 static float test_a2(float b) {return(b * 2.0);}
 static XEN g_get_test_a2(void) {return(XEN_WRAP_C_POINTER(test_a2));}
+
+/* test the grfsnd.html example */
+typedef struct {
+  mus_any *del, *ri;
+} flg;
+
+static flg *make_flange(float flg_speed, float flg_amount, float flg_time)
+{
+  flg *gens;
+  int len;
+  len = (int)(flg_time * 22050) + 1;
+  gens = (flg *)calloc(1, sizeof(flg));
+  gens->del = mus_make_delay(len, NULL, (int)(len + 1 + flg_amount));
+  gens->ri = mus_make_rand_interp(flg_speed, flg_amount);
+  return(gens);
+}
+
+static float run_flange(float inval, void *ugens)
+{
+  flg *gens = (flg *)ugens;
+  return(0.75 * (inval + mus_delay(gens->del, inval, mus_rand_interp(gens->ri, 0.0))));
+}
+
+static void free_flange(flg *gens)
+{
+  mus_free(gens->del);
+  mus_free(gens->ri);
+  free(gens);
+}
+
+static SCM g_make_flange(SCM speed, SCM amount, SCM time)
+{
+  flg *gens;
+  gens = make_flange(scm_num2dbl(speed, "make-flange"), scm_num2dbl(amount, "make-flange"), scm_num2dbl(time, "make-flange"));
+  return(scm_ulong2num((unsigned long)(gens)));
+}
+
+static SCM g_get_flange(void)
+{
+  return(scm_ulong2num((unsigned long)run_flange));
+}
+
+static SCM g_free_flange(SCM g_gens)
+{
+  free_flange((flg *)scm_num2ulong(g_gens, 0, "free-flange"));
+  return(XEN_FALSE);
+}
+
+/* test the sndscm.html examples */
+#include "clm2xen.h"
+static int MUS_FCOMB = 0; /* this will be our fcomb type identifier */
+
+typedef struct {
+  mus_any_class *core;
+  int loc, size;
+  Float *line;
+  Float xscl, a0, a1, x1;
+} fcomb;
+
+/* each CLM-in-C generator has mus_any_class *core as the first thing in its structure.
+ *   it defines most of the built-in "generic" functions like mus-describe.
+ * The next set of functions implement the core functions/
+ *   The address of the function is stored in the class's core struct.
+ *   For example, the scaler method is defined as Float (*scaler)(void *ptr);
+ *   in the mus_any_class declaration (clm.h); for fcomb it will correspond
+ *   to the fcomb_scaler function below; it is invoked via mus_scaler(gen)
+ *   where gen is an fcomb generator (the actual call is (*((gen->core)->scaler))(gen)).
+ *   the core->scaler pointer (the function address) is set in the declaration
+ *   of mus_any_class FCOMB_CLASS below.  If a method doesn't apply to a given
+ *   generator class, just set its slot to 0.
+ */
+
+static int mus_fcomb_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_FCOMB));}
+
+static char *describe_fcomb(void *ptr) 
+{
+  char *desc = NULL;
+  fcomb *gen = (fcomb *)ptr;
+  desc = (char *)calloc(1024, sizeof(char));
+  if (desc)
+    {
+      if (mus_fcomb_p((mus_any *)ptr))
+        sprintf(desc, "fcomb: scaler: %.3f,  a0: %.3f,  a1: %.3f,  line[%d]", 
+                gen->xscl, gen->a0, gen->a1, gen->size);
+      else sprintf(desc, "not an fcomb gen");
+    }
+  return(desc);
+}
+
+static int fcomb_equalp(void *p1, void *p2) {return(p1 == p2);}
+static int fcomb_length(void *ptr) {return(((fcomb *)ptr)->size);}
+static Float *fcomb_data(void *ptr) {return(((fcomb *)ptr)->line);}
+static Float fcomb_scaler(void *ptr) {return(((fcomb *)ptr)->xscl);}
+static Float set_fcomb_scaler(void *ptr, Float val) {((fcomb *)ptr)->xscl = val; return(val);}
+
+static int free_fcomb(void *uptr) 
+{
+  fcomb *ptr = (fcomb *)uptr;
+  if (ptr)
+    {
+      if (ptr->line) 
+        free(ptr->line);
+      free(ptr); 
+    }
+  return(0);
+}
+
+/* now the actual run-time code executed by fcomb */
+/* the extra "ignored" argument is for the run method */
+
+static Float mus_fcomb (mus_any *ptr, Float input, Float ignored) 
+{
+  fcomb *gen = (fcomb *)ptr;
+  Float tap_result, filter_result;
+  tap_result = gen->line[gen->loc];
+  filter_result = (gen->a0 * tap_result) + (gen->a1 * gen->x1);
+  gen->x1 = tap_result;
+  gen->line[gen->loc] = input + filter_result * gen->xscl;
+  gen->loc++;
+  if (gen->loc >= gen->size) gen->loc = 0;
+  return(tap_result);
+}
+
+/* this is our core class descriptor */
+
+static mus_any_class FCOMB_CLASS = {
+  -1, /* MUS_FCOMB eventually */ /* mus_type: this is assigned at run-time via mus_make_class_tag below */
+  "fcomb",                       /* mus_name: class name (used in descriptive/error messages */
+  &free_fcomb,                   /* mus_free: free gen's struct etc */
+  &describe_fcomb,               /* mus_describe: user-friendly description */
+  &describe_fcomb,               /* mus_inspect: internal debugging description */
+  &fcomb_equalp,                 /* mus_equalp: check equality of fcomb gens */
+  &fcomb_data,                   /* mus_data: the fcomb delay line, a float array */
+  0,                             /* mus_set_data: not implemented for fcomb */
+  &fcomb_length,                 /* mus_length: delay line length */
+  0,                             /* mus_set_length: not implemented for fcomb */
+  0,0,                           /* mus_frequency, mus_set_frequency */
+  0,0,                           /* mus_phase, mus_set_phase */
+  &fcomb_scaler,                 /* mus_scaler: the feedback term */
+  &set_fcomb_scaler,             /* mus_set_scaler */
+  0, 0,
+  &mus_fcomb,                    /* mus_run: the run-time fcomb function, MUS_RUN(gen) for speed */
+  0,                             /* type extension (normally 0) */
+  NULL, 0                         
+};
+
+/* now a function to make a new generator */
+
+static mus_any *mus_make_fcomb (Float scaler, int size, Float a0, Float a1)
+{
+  fcomb *gen = NULL;
+  gen = (fcomb *)calloc(1, sizeof(fcomb));
+  if (gen == NULL) 
+    mus_error(MUS_MEMORY_ALLOCATION_FAILED, 
+              "can't allocate struct for mus_make_fcomb!");
+  else
+    {
+      gen->core = &FCOMB_CLASS;
+      if (MUS_FCOMB == 0) 
+        {
+          MUS_FCOMB = mus_make_class_tag();  /* this gives us a unique fcomb type id */
+          gen->core->type = MUS_FCOMB;
+        }
+      gen->loc = 0;
+      gen->xscl = scaler;
+      gen->x1 = 0.0;
+      gen->a0 = a0;
+      gen->a1 = a1;
+      gen->size = size;
+      gen->line = (Float *)calloc(size, sizeof(Float));
+      if (gen->line == NULL) 
+        mus_error(MUS_MEMORY_ALLOCATION_FAILED, 
+                  "can't allocate %d bytes for fcomb delay line in mus_make_fcomb!",
+                  (int)(size * sizeof(Float)));
+    }
+  return((mus_any *)gen);
+}
+
+/* that is the end of the C side; the rest ties this generator into Guile/Ruby via the Xen package */
+/*   in Snd's case, it's actually not needed because the generator is only called from C */
+
+static XEN g_fcomb(XEN obj, XEN input)
+{
+  return(C_TO_XEN_DOUBLE(mus_fcomb(MUS_XEN_TO_CLM(obj), XEN_TO_C_DOUBLE(input), 0.0)));
+}
+
+static XEN g_fcomb_p(XEN obj)
+{
+  return(C_TO_XEN_BOOLEAN((mus_xen_p(obj)) && (mus_fcomb_p(MUS_XEN_TO_CLM(obj)))));
+}
+
+static XEN g_make_fcomb(XEN scaler, XEN size, XEN a0, XEN a1)
+{
+  mus_xen *gn;
+  gn = (mus_xen *)CALLOC(1,sizeof(mus_xen));
+  gn->gen = mus_make_fcomb(XEN_TO_C_DOUBLE(scaler),
+                           XEN_TO_C_INT(size),
+                           XEN_TO_C_DOUBLE(a0),
+                           XEN_TO_C_DOUBLE(a1));
+  gn->nvcts = 0;
+  return(mus_xen_to_object(gn));
+}
+
+static void init_fcomb(void)
+{
+  XEN_DEFINE_PROCEDURE("dfcomb?", g_fcomb_p, 1, 0, 0, "(fcomb? gen) -> #t if gen is an fcomb generator");
+  XEN_DEFINE_PROCEDURE("dmake-fcomb", g_make_fcomb, 4, 0, 0, "(make-fcomb scaler size a0 a1) -> new fcomb gen");
+  XEN_DEFINE_PROCEDURE("dfcomb", g_fcomb, 2, 0, 0, "(fcomb gen input) returns result of running fcomb gen");
+}
 #endif
 
 void g_init_edits(void)
@@ -4152,5 +4361,8 @@ the file is being saved under a new name (as in sound-save-as)."
 
 #if DEBUGGING
   XEN_DEFINE_PROCEDURE("get-test-a2", g_get_test_a2, 0, 0, 0, "internal test function");
+  scm_c_define_gsubr("free-flange", 1, 0, 0, g_free_flange);
+  scm_c_define_gsubr("get-flange", 0, 0, 0, g_get_flange);
+  scm_c_define_gsubr("make-flange", 3, 0, 0, g_make_flange);
 #endif
 }

@@ -1449,7 +1449,10 @@ static void close_sound_dialog(Widget w, XtPointer context, XtPointer info)
 {
   snd_info *sp = (snd_info *)context;
   if (sp) snd_close_file(sp, sp->state);
-} 
+}
+
+static Pixmap spd_r, spd_l;
+static int spd_ok = 0;
 
 static snd_info *add_sound_window_with_parent (Widget parent, char *filename, snd_state *ss, int read_only)
 {  
@@ -1943,17 +1946,20 @@ static snd_info *add_sound_window_with_parent (Widget parent, char *filename, sn
       XtSetArg(args[n], XmNtopOffset, 0); n++;
       sw[W_srate_arrow] = make_togglebutton_widget("dir", sw[W_amp_form], args, n);
       form = sw[W_srate_arrow];
-      rb = XCreateBitmapFromData(XtDisplay(form), RootWindowOfScreen(XtScreen(form)), (const char *)speed_r_bits1, 16, 12);
-      lb = XCreateBitmapFromData(XtDisplay(form), RootWindowOfScreen(XtScreen(form)), (const char *)speed_l_bits1, 16, 12);
-      XtVaGetValues(form, XmNdepth, &depth, NULL);
-      sx->speed_r = XCreatePixmap(XtDisplay(form), RootWindowOfScreen(XtScreen(form)), 16, 12, depth);
-      sx->speed_l = XCreatePixmap(XtDisplay(form), RootWindowOfScreen(XtScreen(form)), 16, 12, depth);
-      XCopyPlane(XtDisplay(form), rb, sx->speed_r, (ss->sgx)->speed_gc, 0, 0, 16, 12, 0, 0, 1);
-      XCopyPlane(XtDisplay(form), lb, sx->speed_l, (ss->sgx)->speed_gc, 0, 0, 16, 12, 0, 0, 1);
-      XFreePixmap(XtDisplay(form), rb);
-      XFreePixmap(XtDisplay(form), lb);
-      XtVaSetValues(form, XmNselectPixmap, sx->speed_l, XmNlabelPixmap, sx->speed_r, NULL);
-      /* pretty damn tedious -- we can't use the bare pixmap because X dies sputtering incomprehensible jargon */
+      if (spd_ok == 0)
+	{
+	  rb = XCreateBitmapFromData(XtDisplay(form), RootWindowOfScreen(XtScreen(form)), (const char *)speed_r_bits1, 16, 12);
+	  lb = XCreateBitmapFromData(XtDisplay(form), RootWindowOfScreen(XtScreen(form)), (const char *)speed_l_bits1, 16, 12);
+	  XtVaGetValues(form, XmNdepth, &depth, NULL);
+	  spd_r = XCreatePixmap(XtDisplay(form), RootWindowOfScreen(XtScreen(form)), 16, 12, depth);
+	  spd_l = XCreatePixmap(XtDisplay(form), RootWindowOfScreen(XtScreen(form)), 16, 12, depth);
+	  XCopyPlane(XtDisplay(form), rb, spd_r, (ss->sgx)->fltenv_basic_gc, 0, 0, 16, 12, 0, 0, 1);
+	  XCopyPlane(XtDisplay(form), lb, spd_l, (ss->sgx)->fltenv_basic_gc, 0, 0, 16, 12, 0, 0, 1);
+	  XFreePixmap(XtDisplay(form), rb);
+	  XFreePixmap(XtDisplay(form), lb);
+	  spd_ok = 1;
+	}
+      XtVaSetValues(form, XmNselectPixmap, spd_l, XmNlabelPixmap, spd_r, NULL);
       XtAddCallback(sw[W_srate_arrow], XmNhelpCallback, srate_arrow_help_callback, ss);
       XtAddEventHandler(sw[W_srate_arrow], KeyPressMask, FALSE, graph_key_press, (XtPointer)sp);
       XtAddCallback(sw[W_srate_arrow], XmNvalueChangedCallback, play_arrow_callback, (XtPointer)sp);
