@@ -1087,7 +1087,7 @@ formants: (map-chan (osc-formants .99 '(400 800 1200) '(400 800 1200) '(4 2 3)))
 
 (define (flecho scaler secs)
   "(flecho scaler secs) returns a low-pass filtered echo maker: (map-chan (flecho .5 .9) 0 75000)"
-  (let* ((flt (make-fir-filter :order 4 :xcoeffs (list->vct '(.125 .25 .25 .125))))
+  (let* ((flt (make-fir-filter :order 4 :xcoeffs (vct .125 .25 .25 .125)))
 	 (del (make-delay  (round (* secs (srate))))))
     (lambda (inval)
       (+ inval 

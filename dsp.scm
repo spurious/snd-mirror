@@ -574,7 +574,7 @@
     (lambda (x)
       (fir-filter flt x))))
 
-;(map-chan (fltit-1 10 (list->vct '(0 1.0 0 0 0 0 0 0 1.0 0))))
+;(map-chan (fltit-1 10 (vct 0 1.0 0 0 0 0 0 0 1.0 0)))
 ;
 ;(let ((notched-spectr (make-vct 40)))
 ;  (vct-set! notched-spectr 2 1.0)  
@@ -783,8 +783,8 @@
 	 (c4 (* 2.0 (- r2 1.0) c1))
 	 (c5 (* (+ (- 1.0 (* r (sqrt 2.0))) r2) c1)))
     (make-filter 3
-		 (list->vct (list c1 c2 c3))
-		 (list->vct (list 0.0 c4 c5)))))
+		 (vct c1 c2 c3)
+		 (vct 0.0 c4 c5))))
 
 (define (make-butter-low-pass fq)
   "(make-butter-low-pass freq) makes a Butterworth filter with low pass cutoff at 'freq'.  The result 
@@ -797,8 +797,8 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 	 (c4 (* 2.0 (- 1.0 r2) c1))
 	 (c5  (* (+ (- 1.0 (* r (sqrt 2.0))) r2) c1)))
     (make-filter 3
-		 (list->vct (list c1 c2 c3))
-		 (list->vct (list 0.0 c4 c5)))))
+		 (vct c1 c2 c3)
+		 (vct 0.0 c4 c5))))
 
 (define (make-butter-band-pass fq bw)
   "(make-butter-band-pass freq band) makes a bandpass Butterworth filter with low edge at 'freq' and width 'band'"
@@ -810,8 +810,8 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 	 (c4 (* (- c) d c1))
 	 (c5 (* (- c 1.0) c1)))
     (make-filter 3
-		 (list->vct (list c1 c2 c3))
-		 (list->vct (list 0.0 c4 c5)))))
+		 (vct c1 c2 c3)
+		 (vct 0.0 c4 c5))))
 
 (define (make-butter-band-reject fq bw)
   "(make-butter-band-reject freq band) makes a band-reject Butterworth filter with low edge at 'freq' and width 'band'"
@@ -823,8 +823,8 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 	 (c4 c2)
 	 (c5 (* (- 1.0 c) c1)))
     (make-filter 3
-		 (list->vct (list c1 c2 c3))
-		 (list->vct (list 0.0 c4 c5)))))
+		 (vct c1 c2 c3)
+		 (vct 0.0 c4 c5))))
 
 ;;; simplest use is (filter-sound (make-butter-low-pass 500.0))
 ;;; see also effects.scm
@@ -1199,7 +1199,7 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 	  (atan cw sw))))
 
 ;;; this is a faster version of find-sine using the "Goertzel algorithm" taken from R Lyons "Understanding DSP" p 529
-;;; it returns the same result as find-sine above if you take (* 2 (/ (goertzel...) dur))
+;;; it returns the same result as find-sine above if you take (* 2 (/ (goertzel...) dur)) -- see snd-test.scm examples
 (define* (goertzel freq #:optional beg dur)
   (let* ((sr (srate))
 	 (y2 0.0)
@@ -1214,3 +1214,7 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 		   #f)
 		  (or beg 0) (or dur (frames)))
     (magnitude (- y0 (* y1 (exp (make-rectangular 0.0 (- rfreq))))))))
+
+
+(define (make-spencer-filter)
+  (make-fir-filter 15 (apply vct (map (lambda (n) (/ n 320.0)) (list -3 -6 -5 3 21 46 67 74 67 46 21 3 -5 -6 -3)))))

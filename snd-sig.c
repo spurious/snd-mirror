@@ -2558,7 +2558,7 @@ static XEN g_map_chan_1(XEN proc_and_list, XEN s_beg, XEN s_end, XEN org, XEN sn
 	}
       rpt4 = MAX_BUFFER_SIZE / 4;
       filename = snd_tempnam();
-      outgen = mus_make_sample2file(filename, 1, MUS_OUT_FORMAT, MUS_NEXT);
+      outgen = mus_make_sample_to_file(filename, 1, MUS_OUT_FORMAT, MUS_NEXT);
       j = 0;
       ss->stopped_explicitly = false;
       for (kp = 0; kp < num; kp++)
@@ -2682,7 +2682,7 @@ static XEN g_map_chan_ptree_fallback(XEN proc, XEN init_func, chan_info *cp, off
   if (temp_file)
     {
       filename = snd_tempnam();
-      outgen = mus_make_sample2file(filename, 1, MUS_OUT_FORMAT, MUS_NEXT);
+      outgen = mus_make_sample_to_file(filename, 1, MUS_OUT_FORMAT, MUS_NEXT);
       if (XEN_PROCEDURE_P(init_func))
 	{
 	  int loc;

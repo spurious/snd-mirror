@@ -193,7 +193,7 @@ The Ruby version of this file is bird.rb.  Just for comparison, the bird instrum
 in Ruby is:</p>
 <pre>
 def bird(start, dur, frequency, freqskew, amplitude, freq_envelope, amp_envelope)
-  gls_env = make_env(freq_envelope, hz2radians(freqskew), dur)
+  gls_env = make_env(freq_envelope, hz_to_radians(freqskew), dur)
   os = make_oscil(frequency)
   amp_env = make_env(amp_envelope, amplitude, dur)
   beg = (srate() * start).round
@@ -534,6 +534,7 @@ the listener?
   <tr><td><A class=def NAME="exdht">dht</a> data</td><td>slow Hartley transform </td></tr>
   <tr><td><em class=emdef>find-sine</em> freq beg dur</td><td>DFT at a particular frequency</td></tr>
   <tr><td><em class=emdef>goertzel</em> freq beg dur</td><td>same as find-sine but faster</td></tr>
+  <tr><td><em class=emdef>make-spencer-filter</em></td><td>return FIR filter with Spencer coefficients</td></tr>
 </table>
 
 <p><b>dolph</b> is the Dolph-Chebyshev fft data window, taken
@@ -553,7 +554,7 @@ version of Snd's very simple spectrum-&gt;coefficients procedure ("frequency sam
 It returns the FIR filter coefficients given the filter order and desired spectral envelope.
 </p>
 <pre>
-(<a class=quiet href="extsnd.html#mapchan">map-chan</a> (fltit-1 10 (<a class=quiet href="extsnd.html#list2vct">list-&gt;vct</a> '(0 1.0 0 0 0 0 0 0 1.0 0))))
+(<a class=quiet href="extsnd.html#mapchan">map-chan</a> (fltit-1 10 (<a class=quiet href="extsnd.html#vct">vct</a> 0 1.0 0 0 0 0 0 0 1.0 0)))
 </pre>
 <p>
 <b>down-oct</b> tries to move a sound down an octave by goofing with the fft data,
@@ -3445,7 +3446,7 @@ def fm_violin(start = 0.0, dur = 1.0, freq = 440.0, amp = 0.3, *args)
   chans = (channels() rescue $rbm_channels);
   beg = (srate * start).round;
   len = (srate * dur).round;
-  frq_scl = hz2radians(freq);
+  frq_scl = hz_to_radians(freq);
   modulate = fm_index.nonzero?;
   maxdev = frq_scl * fm_index;
   vln = (not (index_type == :cello))
@@ -3462,7 +3463,7 @@ def fm_violin(start = 0.0, dur = 1.0, freq = 440.0, amp = 0.3, *args)
 	       (fm2_rat - fm2_rat.floor).zero? and 
 	       (fm3_rat - fm3_rat.floor).zero?);
   coeffs = (easy_case and modulate and 
-	    partials2polynomial([fm1_rat, index1, 
+	    partials_to_polynomial([fm1_rat, index1, 
 				  (fm2_rat / fm1_rat).floor, index2,
 				  (fm3_rat / fm1_rat).floor, index3]));
   norm = ((easy_case and modulate and 1.0) or index1);

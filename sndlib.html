@@ -473,8 +473,8 @@ it through a mixer (a matrix, the operation being a matrix multiply).
 <li>buffer -- a way to handle block processing in the generator world
 <li>env -- envelopes
 <li>waveshape -- waveshaping
-<li>readin, file2sample, file2frame, in_any -- file sample input
-<li>locsig, sample2file, frame2file, out_any -- file sample output
+<li>readin, file_to_sample, file_to_frame, in_any -- file sample input
+<li>locsig, sample_to_file, frame_to_file, out_any -- file sample output
 <li>src -- sampling rate conversion
 <li>granulate -- granular synthesis
 <li>convolve -- convolution
@@ -483,10 +483,10 @@ it through a mixer (a matrix, the operation being a matrix multiply).
 
 <p>Some useful functions provided by clm.c are: </p>
 <ul>
-<li>float mus_radians2hz(float rads) -- convert radians/sample to cycles/sec.
-<li>float mus_hz2radians(float hz) -- and the reverse.
-<li>float mus_degrees2radians(float deg) -- convert degrees to radians.
-<li>float mus_radians2degrees(float rads) -- and the reverse.
+<li>float mus_radians_to_hz(float rads) -- convert radians/sample to cycles/sec.
+<li>float mus_hz_to_radians(float hz) -- and the reverse.
+<li>float mus_degrees_to_radians(float deg) -- convert degrees to radians.
+<li>float mus_radians_to_degrees(float rads) -- and the reverse.
 <li>float mus_srate(void) -- current sampling rate
 <li>float mus_set_srate(float rate) -- set current sampling rate
 <li>float mus_ring_modulate(float sig1, float sig2) -- multiply sig1 by sig2
@@ -497,13 +497,13 @@ it through a mixer (a matrix, the operation being a matrix multiply).
 <li>float mus_array_interp(float *wave, float phase, int size)
 <li>float mus_polynomial(float *coeffs, float x, int ncoeffs);
 <li>void mus_multiply_arrays(float *data, float *window, int len);
-<li>void mus_rectangular2polar(float *rl, float *im, int size);
+<li>void mus_rectangular_to_polar(float *rl, float *im, int size);
 <li>void mus_spectrum(float *rdat, float *idat, float *window, int n, int type)
 <li>void mus_fft(float *rl, float *im, int n, int isign)
 <li>float *mus_make_fft_window(int size, int type, float beta)
 <li>void mus_convolution(float* rl1, float* rl2, int n, int ipow)
-<li>float *mus_partials2wave(float *partial_data, int partials, float *table, int table_size, int normalize)
-<li>float *mus_phasepartials2wave(float *partial_data, int partials, float *table, int table_size, int normalize)
+<li>float *mus_partials_to_wave(float *partial_data, int partials, float *table, int table_size, int normalize)
+<li>float *mus_phasepartials_to_wave(float *partial_data, int partials, float *table, int table_size, int normalize)
 <li>float mus_samples_to_seconds(off_t samps)
 <li>off_t mus_seconds_to_samples(float secs)
 </ul>
@@ -732,10 +732,10 @@ int main(int argc, char *argv[])
   mus_sound_initialize();	
   init_mus_module();
   osc = mus_make_oscil(440.0, 0.0);
-  op = mus_make_sample2file("test.snd", 1, MUS_BSHORT, MUS_NEXT);
+  op = mus_make_sample_to_file("test.snd", 1, MUS_BSHORT, MUS_NEXT);
   if (op) 
     for (i = 0; i &lt; 22050; i++) 
-      mus_sample2file(op, i, 0, .1 * mus_oscil(osc, 0.0, 0.0));
+      mus_sample_to_file(op, i, 0, .1 * mus_oscil(osc, 0.0, 0.0));
   mus_free(osc);
   if (op) mus_free(op);
   return(0);
@@ -771,7 +771,7 @@ void fm_violin(float start, float dur, float frequency, float amplitude, float f
   mus_any *indf1, *indf2, *indf3, *fmnoi = NULL, *pervib, *ranvib, *frqf = NULL, *loc;
   beg = start * mus_srate();
   end = beg + dur * mus_srate();
-  frq_scl = mus_hz2radians(frequency);
+  frq_scl = mus_hz_to_radians(frequency);
   maxdev = frq_scl * fm_index;
   if ((noise_amount == 0.0) &amp;&amp; 
       (feq(fm1_rat, floor(fm1_rat))) &amp;&amp; 
@@ -796,7 +796,7 @@ void fm_violin(float start, float dur, float frequency, float amplitude, float f
       partials[(int)(fm1_rat)] = index1;
       partials[(int)(fm2_rat)] = index2;
       partials[(int)(fm3_rat)] = index3;
-      coeffs = mus_partials2polynomial(npartials, partials, 1);
+      coeffs = mus_partials_to_polynomial(npartials, partials, 1);
       norm = 1.0;
     }
   else norm = index1;
@@ -860,7 +860,7 @@ int main(int argc, char *argv[])
   mus_any *osc = NULL, *op = NULL;
   mus_sound_initialize();	
   init_mus_module();
-  op = mus_make_sample2file("test.snd", 1, MUS_BSHORT, MUS_NEXT);
+  op = mus_make_sample_to_file("test.snd", 1, MUS_BSHORT, MUS_NEXT);
   if (op)
     {
       fm_violin(0.0, 20.0, 440.0, .3, 1.0, op);

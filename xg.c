@@ -24,6 +24,7 @@
  *    (->string val) interprets 'val' as a string.
  *    (c-array->list arr len) derefs each member of arr, returning lisp list, len=#f: null terminated array
  *    (list->c-array lst ctype) packages each member of list as c-type "type" returning (wrapped) c array
+ *    (make-target-entry lst) returns a GtkTargetEntry table, each member of 'lst' should be (list target flags info)
  *    (GdkColor #:optional pixel red green blue) -> GdkColor struct
  *    (GdkCursor #:optional type ref_count) -> GdkCursor struct
  *    (GdkPoint #:optional x y) -> GdkPoint struct
@@ -43,6 +44,7 @@
  *     win32-specific functions
  *
  * HISTORY:
+ *     14-Apr:    make-target-entry.
  *     4-Apr:     various additions, deletions, and bugfixes for snd-test 26
  *     29-Mar:    support for some ... args.
  *     22-Mar:    g_source_remove and related changes.
@@ -198,7 +200,6 @@ static void define_xm_obj(void)
 #define XEN_GtkDestroyNotify_P(Arg)  XEN_FALSE_P(Arg) || (XEN_PROCEDURE_P(Arg) && (XEN_REQUIRED_ARGS(Arg) == 1))
 #define XEN_GdkFilterFunc_P(Arg)  XEN_FALSE_P(Arg) || (XEN_PROCEDURE_P(Arg) && (XEN_REQUIRED_ARGS(Arg) == 3))
 #define XEN_GdkEventFunc_P(Arg)  XEN_FALSE_P(Arg) || (XEN_PROCEDURE_P(Arg) && (XEN_REQUIRED_ARGS(Arg) == 2))
-#define XEN_GdkSpanFunc_P(Arg)  XEN_FALSE_P(Arg) || (XEN_PROCEDURE_P(Arg) && (XEN_REQUIRED_ARGS(Arg) == 2))
 #define XEN_GtkFunction_P(Arg)  XEN_FALSE_P(Arg) || (XEN_PROCEDURE_P(Arg) && (XEN_REQUIRED_ARGS(Arg) == 1))
 #define XEN_GtkKeySnoopFunc_P(Arg)  XEN_FALSE_P(Arg) || (XEN_PROCEDURE_P(Arg) && (XEN_REQUIRED_ARGS(Arg) == 3))
 #define XEN_GtkMenuPositionFunc_P(Arg)  XEN_FALSE_P(Arg) || (XEN_PROCEDURE_P(Arg) && (XEN_REQUIRED_ARGS(Arg) == 5))
@@ -233,7 +234,6 @@ static void define_xm_obj(void)
 #define XEN_TO_C_GtkDestroyNotify(Arg) XEN_FALSE_P(Arg) ? NULL : gxg_destroy_func
 #define XEN_TO_C_GdkFilterFunc(Arg) XEN_FALSE_P(Arg) ? NULL : gxg_filter_func
 #define XEN_TO_C_GdkEventFunc(Arg) XEN_FALSE_P(Arg) ? NULL : gxg_event_func
-#define XEN_TO_C_GdkSpanFunc(Arg) XEN_FALSE_P(Arg) ? NULL : gxg_span_func
 #define XEN_TO_C_GtkFunction(Arg) XEN_FALSE_P(Arg) ? NULL : gxg_func1
 #define XEN_TO_C_GtkKeySnoopFunc(Arg) XEN_FALSE_P(Arg) ? NULL : gxg_snoop_func
 #define XEN_TO_C_GtkMenuPositionFunc(Arg) XEN_FALSE_P(Arg) ? NULL : gxg_menu_position_func
@@ -291,7 +291,6 @@ XM_TYPE_PTR(GClosure_, GClosure*)
 XM_TYPE_PTR(GtkWidget_, GtkWidget*)
 XM_TYPE_PTR_2(GdkXEvent_, GdkXEvent*)
 XM_TYPE_PTR(GdkEvent_, GdkEvent*)
-XM_TYPE_PTR(GdkSpan_, GdkSpan*)
 XM_TYPE_PTR(GdkEventKey_, GdkEventKey*)
 XM_TYPE_PTR(GtkMenu_, GtkMenu*)
 XM_TYPE_PTR(gint_, gint*)
@@ -574,7 +573,7 @@ XM_TYPE_PTR(GtkCellEditable_, GtkCellEditable*)
 XM_TYPE_PTR_1(GtkCellRendererText_, GtkCellRendererText*)
 XM_TYPE_PTR_1(GtkCellRendererToggle_, GtkCellRendererToggle*)
 XM_TYPE_PTR_1(GtkCheckMenuItem_, GtkCheckMenuItem*)
-XM_TYPE_PTR_1(GtkTargetEntry_, GtkTargetEntry*)
+XM_TYPE_PTR(GtkTargetEntry_, GtkTargetEntry*)
 XM_TYPE_PTR_1(GtkColorSelection_, GtkColorSelection*)
 #define C_TO_XEN_guint16(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_guint16(Arg) (guint16)(XEN_TO_C_INT(Arg))
@@ -1072,13 +1071,6 @@ static void gxg_event_func(GdkEvent* event, gpointer func_data)
 {
   XEN_CALL_2(XEN_CAR((XEN)func_data),
              C_TO_XEN_GdkEvent_(event),
-             XEN_CADR((XEN)func_data),
-             c__FUNCTION__);
-}
-static void gxg_span_func(GdkSpan* span, gpointer func_data)
-{
-  XEN_CALL_2(XEN_CAR((XEN)func_data),
-             C_TO_XEN_GdkSpan_(span),
              XEN_CADR((XEN)func_data),
              c__FUNCTION__);
 }
@@ -10609,11 +10601,15 @@ static XEN gxg_gtk_target_list_remove(XEN list, XEN target)
 static XEN gxg_gtk_target_list_find(XEN list, XEN target, XEN info)
 {
   #define H_gtk_target_list_find "gboolean gtk_target_list_find(GtkTargetList* list, GdkAtom target, \
-guint* info)"
+guint* [info])"
+  guint ref_info;
   XEN_ASSERT_TYPE(XEN_GtkTargetList__P(list), list, 1, "gtk_target_list_find", "GtkTargetList*");
   XEN_ASSERT_TYPE(XEN_GdkAtom_P(target), target, 2, "gtk_target_list_find", "GdkAtom");
-  XEN_ASSERT_TYPE(XEN_guint__P(info), info, 3, "gtk_target_list_find", "guint*");
-  return(C_TO_XEN_gboolean(gtk_target_list_find(XEN_TO_C_GtkTargetList_(list), XEN_TO_C_GdkAtom(target), XEN_TO_C_guint_(info))));
+  {
+    XEN result = XEN_FALSE;
+    result = C_TO_XEN_gboolean(gtk_target_list_find(XEN_TO_C_GtkTargetList_(list), XEN_TO_C_GdkAtom(target), &ref_info));
+    return(XEN_LIST_2(result, C_TO_XEN_guint(ref_info)));
+   }
 }
 static XEN gxg_gtk_selection_owner_set(XEN widget, XEN selection, XEN time)
 {
@@ -15294,16 +15290,16 @@ GtkTreeModel* tree_model, GtkTreeIter* iter, gboolean is_expander, gboolean is_e
 static XEN gxg_gtk_tree_view_column_cell_get_size(XEN tree_column, XEN cell_area, XEN x_offset, XEN y_offset, XEN width, XEN height)
 {
   #define H_gtk_tree_view_column_cell_get_size "void gtk_tree_view_column_cell_get_size(GtkTreeViewColumn* tree_column, \
-GdkRectangle* cell_area, gint* x_offset, gint* y_offset, gint* width, gint* height)"
+GdkRectangle* cell_area, gint* [x_offset], gint* [y_offset], gint* [width], gint* [height])"
+  gint ref_x_offset;
+  gint ref_y_offset;
+  gint ref_width;
+  gint ref_height;
   XEN_ASSERT_TYPE(XEN_GtkTreeViewColumn__P(tree_column), tree_column, 1, "gtk_tree_view_column_cell_get_size", "GtkTreeViewColumn*");
   XEN_ASSERT_TYPE(XEN_GdkRectangle__P(cell_area), cell_area, 2, "gtk_tree_view_column_cell_get_size", "GdkRectangle*");
-  XEN_ASSERT_TYPE(XEN_gint__P(x_offset), x_offset, 3, "gtk_tree_view_column_cell_get_size", "gint*");
-  XEN_ASSERT_TYPE(XEN_gint__P(y_offset), y_offset, 4, "gtk_tree_view_column_cell_get_size", "gint*");
-  XEN_ASSERT_TYPE(XEN_gint__P(width), width, 5, "gtk_tree_view_column_cell_get_size", "gint*");
-  XEN_ASSERT_TYPE(XEN_gint__P(height), height, 6, "gtk_tree_view_column_cell_get_size", "gint*");
-  gtk_tree_view_column_cell_get_size(XEN_TO_C_GtkTreeViewColumn_(tree_column), XEN_TO_C_GdkRectangle_(cell_area), XEN_TO_C_gint_(x_offset), 
-                                     XEN_TO_C_gint_(y_offset), XEN_TO_C_gint_(width), XEN_TO_C_gint_(height));
-  return(XEN_FALSE);
+  gtk_tree_view_column_cell_get_size(XEN_TO_C_GtkTreeViewColumn_(tree_column), XEN_TO_C_GdkRectangle_(cell_area), &ref_x_offset, 
+                                     &ref_y_offset, &ref_width, &ref_height);
+  return(XEN_LIST_4(C_TO_XEN_gint(ref_x_offset), C_TO_XEN_gint(ref_y_offset), C_TO_XEN_gint(ref_width), C_TO_XEN_gint(ref_height)));
 }
 static XEN gxg_gtk_tree_view_column_cell_is_visible(XEN tree_column)
 {
@@ -23285,6 +23281,26 @@ static XEN gxg_freeGdkPoints(XEN arg1)
   FREE(pts);
   return(XEN_FALSE);
 }
+
+static XEN gxg_make_target_entry(XEN lst)
+{
+  GtkTargetEntry* targets;
+  XEN val;
+  int i, len;
+  #define H_make_target_entry "(make-target-entry lst) -> GtkTargetEntry*, each member of 'lst' should be (list target flags info)"
+  XEN_ASSERT_TYPE(XEN_LIST_P(lst), lst, XEN_ONLY_ARG, "make-target-entry", "a list of lists describing each target");
+  len = XEN_LIST_LENGTH(lst);
+  if (len == 0) return(XEN_FALSE);
+  targets = (GtkTargetEntry *)CALLOC(len, sizeof(GtkTargetEntry));
+  for (i = 0; i < len; i++)
+    {
+      val = XEN_LIST_REF(lst, i);
+      targets[i].target = strdup(XEN_TO_C_STRING(XEN_LIST_REF(val, 0)));
+      targets[i].flags = (guint)XEN_TO_C_ULONG(XEN_LIST_REF(val, 1));
+      targets[i].info = (guint)XEN_TO_C_ULONG(XEN_LIST_REF(val, 2));
+    }
+  return(C_TO_XEN_GtkTargetEntry_(targets));
+}
 static XEN c_array_to_xen_list(XEN val, XEN clen);
 static XEN xen_list_to_c_array(XEN val, XEN type);
 
@@ -23304,6 +23320,7 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(freeGdkPoints, gxg_freeGdkPoints, 1, 0, 0, H_freeGdkPoints);
   XG_DEFINE_PROCEDURE(vector->GdkPoints, gxg_vector2GdkPoints, 1, 0, 0, H_vector2GdkPoints);
   XG_DEFINE_PROCEDURE(->string, c_to_xen_string, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(make-target-entry, gxg_make_target_entry, 1, 0, 0, H_make_target_entry);
   XG_DEFINE_PROCEDURE(g_type_name, gxg_g_type_name, 1, 0, 0, H_g_type_name);
   XG_DEFINE_PROCEDURE(g_type_qname, gxg_g_type_qname, 1, 0, 0, H_g_type_qname);
   XG_DEFINE_PROCEDURE(g_type_from_name, gxg_g_type_from_name, 1, 0, 0, H_g_type_from_name);
@@ -24456,7 +24473,7 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_target_list_add, gxg_gtk_target_list_add, 4, 0, 0, H_gtk_target_list_add);
   XG_DEFINE_PROCEDURE(gtk_target_list_add_table, gxg_gtk_target_list_add_table, 3, 0, 0, H_gtk_target_list_add_table);
   XG_DEFINE_PROCEDURE(gtk_target_list_remove, gxg_gtk_target_list_remove, 2, 0, 0, H_gtk_target_list_remove);
-  XG_DEFINE_PROCEDURE(gtk_target_list_find, gxg_gtk_target_list_find, 3, 0, 0, H_gtk_target_list_find);
+  XG_DEFINE_PROCEDURE(gtk_target_list_find, gxg_gtk_target_list_find, 2, 1, 0, H_gtk_target_list_find);
   XG_DEFINE_PROCEDURE(gtk_selection_owner_set, gxg_gtk_selection_owner_set, 3, 0, 0, H_gtk_selection_owner_set);
   XG_DEFINE_PROCEDURE(gtk_selection_add_target, gxg_gtk_selection_add_target, 4, 0, 0, H_gtk_selection_add_target);
   XG_DEFINE_PROCEDURE(gtk_selection_add_targets, gxg_gtk_selection_add_targets, 4, 0, 0, H_gtk_selection_add_targets);
@@ -24962,7 +24979,7 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_tree_view_column_set_sort_order, gxg_gtk_tree_view_column_set_sort_order, 2, 0, 0, H_gtk_tree_view_column_set_sort_order);
   XG_DEFINE_PROCEDURE(gtk_tree_view_column_get_sort_order, gxg_gtk_tree_view_column_get_sort_order, 1, 0, 0, H_gtk_tree_view_column_get_sort_order);
   XG_DEFINE_PROCEDURE(gtk_tree_view_column_cell_set_cell_data, gxg_gtk_tree_view_column_cell_set_cell_data, 5, 0, 0, H_gtk_tree_view_column_cell_set_cell_data);
-  XG_DEFINE_PROCEDURE(gtk_tree_view_column_cell_get_size, gxg_gtk_tree_view_column_cell_get_size, 6, 0, 0, H_gtk_tree_view_column_cell_get_size);
+  XG_DEFINE_PROCEDURE(gtk_tree_view_column_cell_get_size, gxg_gtk_tree_view_column_cell_get_size, 2, 4, 0, H_gtk_tree_view_column_cell_get_size);
   XG_DEFINE_PROCEDURE(gtk_tree_view_column_cell_is_visible, gxg_gtk_tree_view_column_cell_is_visible, 1, 0, 0, H_gtk_tree_view_column_cell_is_visible);
   XG_DEFINE_PROCEDURE(gtk_tree_view_get_type, gxg_gtk_tree_view_get_type, 0, 0, 0, H_gtk_tree_view_get_type);
   XG_DEFINE_PROCEDURE(gtk_tree_view_new, gxg_gtk_tree_view_new, 0, 0, 0, H_gtk_tree_view_new);
@@ -29679,10 +29696,10 @@ static bool xg_already_inited = false;
       define_strings();
       XEN_YES_WE_HAVE("xg");
 #if HAVE_GUILE
-      XEN_EVAL_C_STRING("(define xm-version \"12-Apr-04\")");
+      XEN_EVAL_C_STRING("(define xm-version \"13-Apr-04\")");
 #endif
 #if HAVE_RUBY
-      rb_define_global_const("Xm_Version", C_TO_XEN_STRING("12-Apr-04"));
+      rb_define_global_const("Xm_Version", C_TO_XEN_STRING("13-Apr-04"));
 #endif
       xg_already_inited = true;
 #if WITH_GTK_AND_X11

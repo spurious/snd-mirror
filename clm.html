@@ -2812,7 +2812,7 @@ To provide a quick overview, the CL bird instrument is</p>
 </p>
 <pre><small>
 def bird(start, dur, frequency, freqskew, amplitude, freq_envelope, amp_envelope)
-  gls_env = make_env(freq_envelope, hz2radians(freqskew), dur)
+  gls_env = make_env(freq_envelope, hz_to_radians(freqskew), dur)
   os = make_oscil(frequency)
   amp_env = make_env(amp_envelope, amplitude, dur)
   beg = (srate() * start).round
@@ -3888,9 +3888,8 @@ See <a href="headers.c">headers.c</a> for all the gory details.  In
 the keyword :header-type, and the data type with the :data-format keyword.</p>
 
 <p>The CLM names for the output header types, as used with the :header-type argument to with-sound, are
-<a name="mus-aiff">mus-aiff</a>, <a name="mus-aifc">mus-aifc</a>, <a name="mus-sun">mus-sun</a>, 
+<a name="mus-aiff">mus-aiff</a>, <a name="mus-aifc">mus-aifc</a>, <a name="mus-next">mus-next</a>, 
 <a name="mus-riff">mus-riff</a>, and <a name="mus-ircam">mus-ircam</a>.
-(The type mus-next is a synonym for mus-sun).
 The data-formats
 that are exported from the clm package are <a name="mus-bshort">mus-bshort</a>, mus-lshort, mus-bint, mus-lint,
 mus-bfloat, mus-lfloat, mus-mulaw, mus-alaw, mus-byte, mus-ubyte, mus-b24int, mus-l24int, mus-bdouble,
@@ -4252,7 +4251,7 @@ replace the current intermediate C file.
   <tr><td><em class=tab><a href="clm.html#add-region">add-region</a></em></td><td><em class=tab><a href="clm.html#env">env</a></em></td><td><em class=tab><a href="clm.html#make-granulate">make-granulate</a></em></td><td><em class=tab><a href="clm.html#mus-scaler">mus-scaler</a></em></td><td><em class=tab><a href="clm.html#savedimages"><b>saved images</b></a></em></td></tr>
   <tr><td><em class=tab><a href="clm.html#all-pass">all-pass</a></em></td><td><em class=tab><a href="clm.html#env-interp">env-interp</a></em></td><td><em class=tab><a href="clm.html#make-identity-mixer">make-identity-mixer</a></em></td><td><em class=tab><a href="clm.html#mus-set-rand-seed">mus-set-rand-seed</a></em></td><td><em class=tab><a href="clm.html#sawtooth-wave">sawtooth-wave</a></em></td></tr>
   <tr><td><em class=tab><a href="clm.html#all-pass?">all-pass?</a></em></td><td><em class=tab><a href="clm.html#env?">env?</a></em></td><td><em class=tab><a href="clm.html#make-iir-filter">make-iir-filter</a></em></td><td><em class=tab><a href="clm.html#mus-set-raw-header-defaults">mus-set-raw-header-defaults</a></em></td><td><em class=tab><a href="clm.html#sawtooth-wave?">sawtooth-wave?</a></em></td></tr>
-  <tr><td><em class=tab><a href="clm.html#amplitude-modulate">amplitude-modulate</a></em></td><td><em class=tab><a href="clm.html#envelope-&gt;coeffs">envelope-&gt;coeffs</a></em></td><td><em class=tab><a href="clm.html#make-locsig">make-locsig</a></em></td><td><em class=tab><a href="clm.html#mus-sun">mus-sun</a></em></td><td><em class=tab><a href="clm.html#scale-envelope">scale-envelope</a></em></td></tr>
+  <tr><td><em class=tab><a href="clm.html#amplitude-modulate">amplitude-modulate</a></em></td><td><em class=tab><a href="clm.html#envelope-&gt;coeffs">envelope-&gt;coeffs</a></em></td><td><em class=tab><a href="clm.html#make-locsig">make-locsig</a></em></td><td></td><td><em class=tab><a href="clm.html#scale-envelope">scale-envelope</a></em></td></tr>
   <tr><td><em class=tab><a href="clm.html#array-&gt;file">array-&gt;file</a></em></td><td><em class=tab><a href="clm.html#envelope-exp">envelope-exp</a></em></td><td><em class=tab><a href="clm.html#make-mixer">make-mixer</a></em></td><td><em class=tab><a href="clm.html#mus-width">mus-width</a></em></td><td><em class=tab><a href="clm.html#seconds-&gt;samples">seconds-&gt;samples</a></em></td></tr>
   <tr><td><em class=tab><a href="clm.html#array-interp">array-interp</a></em></td><td><em class=tab><a href="clm.html#envelope-interp">envelope-interp</a></em></td><td><em class=tab><a href="clm.html#make-notch">make-notch</a></em></td><td><em class=tab><a href="clm.html#mus-xcoeffs">mus-xcoeffs</a></em></td><td><em class=tab><a href="clm.html#send-and-receive-snd">send-and-receive-snd</a></em></td></tr>
   <tr><td><em class=tab><a href="clm.html#asymmetric-fm">asymmetric-fm</a></em></td><td><em class=tab><a href="clm.html#envelopes"><b>Envelopes</b></a></em></td><td><em class=tab><a href="clm.html#make-one-pole">make-one-pole</a></em></td><td><em class=tab><a href="clm.html#mus-ycoeffs">mus-ycoeffs</a></em></td><td><em class=tab><a href="clm.html#send-snd">send-snd</a></em></td></tr>

@@ -112,7 +112,7 @@
 	"GtkMessageDialog*" "GtkMisc*" "GtkNotebook*" "GtkOptionMenu*" "GtkPackType*" "GtkPaned*" "GtkPathPriorityType*" "GtkPlug*"
 	"GtkProgressBar*" "GtkRadioButton*" "GtkRadioMenuItem*" "GtkRadioToolButton*" "GtkRange*" "GtkRcPropertyParser" "GtkRuler*"
 	"GtkScale*" "GtkScrolledWindow*" "GtkSeparatorToolItem*" "GtkSettingsValue*" "GtkSocket*" "GtkSortType*" "GtkSpinButton*"
-	"GtkStateType*" "GtkStatusbar*" "GtkTable*" "GtkTargetEntry*" "GtkTextCharPredicate" "GtkTextTagTableForeach" "GtkTextView*"
+	"GtkStateType*" "GtkStatusbar*" "GtkTable*" "GtkTextCharPredicate" "GtkTextTagTableForeach" "GtkTextView*"
 	"GtkToggleActionEntry*" "GtkToggleButton*" "GtkToggleToolButton*" "GtkToolButton*" "GtkToolbar*" "GtkTreeDragDest*"
 	"GtkTreeDragSource*" "GtkTreeModel**" "GtkTreeModelFilter*" "GtkTreeModelSort*" "GtkTreeSortable*" "GtkUIManagerItemType"
 	"GtkViewport*" "PangoAnalysis*" "PangoAttrList**" "PangoFontDescription**" "PangoFontFace*" "PangoFontMap*" "PangoRectangle*"
@@ -385,11 +385,11 @@
 			      "event_func"
 			      (parse-args "GdkEvent* event lambda_data func_data" 'callback)
 			      'permanent)
-			(list 'GdkSpanFunc
-			      "void"
-			      "span_func"
-			      (parse-args "GdkSpan* span lambda_data func_data" 'callback)
-			      'temporary)
+;			(list 'GdkSpanFunc
+;			      "void"
+;			      "span_func"
+;			      (parse-args "GdkSpan* span lambda_data func_data" 'callback)
+;			      'temporary)
 			(list 'GtkFunction
 			      "gboolean"
 			      "func1"
@@ -1289,6 +1289,7 @@
 (hey " *    (->string val) interprets 'val' as a string.~%")
 (hey " *    (c-array->list arr len) derefs each member of arr, returning lisp list, len=#f: null terminated array~%")
 (hey " *    (list->c-array lst ctype) packages each member of list as c-type \"type\" returning (wrapped) c array~%")
+(hey " *    (make-target-entry lst) returns a GtkTargetEntry table, each member of 'lst' should be (list target flags info)~%")
 
 (for-each
  (lambda (name)
@@ -1311,6 +1312,7 @@
 (hey " *     win32-specific functions~%")
 (hey " *~%")
 (hey " * HISTORY:~%")
+(hey " *     14-Apr:    make-target-entry.~%")
 (hey " *     4-Apr:     various additions, deletions, and bugfixes for snd-test 26~%")
 (hey " *     29-Mar:    support for some ... args.~%")
 (hey " *     22-Mar:    g_source_remove and related changes.~%")
@@ -2210,6 +2212,26 @@
 (hey "  FREE(pts);~%")
 (hey "  return(XEN_FALSE);~%")
 (hey "}~%")
+(hey "~%")
+(hey "static XEN gxg_make_target_entry(XEN lst)~%")
+(hey "{~%")
+(hey "  GtkTargetEntry* targets;~%")
+(hey "  XEN val;~%")
+(hey "  int i, len;~%")
+(hey "  #define H_make_target_entry \"(make-target-entry lst) -> GtkTargetEntry*, each member of 'lst' should be (list target flags info)\"~%")
+(hey "  XEN_ASSERT_TYPE(XEN_LIST_P(lst), lst, XEN_ONLY_ARG, \"make-target-entry\", \"a list of lists describing each target\");~%")
+(hey "  len = XEN_LIST_LENGTH(lst);~%")
+(hey "  if (len == 0) return(XEN_FALSE);~%")
+(hey "  targets = (GtkTargetEntry *)CALLOC(len, sizeof(GtkTargetEntry));~%")
+(hey "  for (i = 0; i < len; i++)~%")
+(hey "    {~%")
+(hey "      val = XEN_LIST_REF(lst, i);~%")
+(hey "      targets[i].target = strdup(XEN_TO_C_STRING(XEN_LIST_REF(val, 0)));~%")
+(hey "      targets[i].flags = (guint)XEN_TO_C_ULONG(XEN_LIST_REF(val, 1));~%")
+(hey "      targets[i].info = (guint)XEN_TO_C_ULONG(XEN_LIST_REF(val, 2));~%")
+(hey "    }~%")
+(hey "  return(C_TO_XEN_GtkTargetEntry_(targets));~%")
+(hey "}~%")
 
 
 
@@ -2256,6 +2278,8 @@
 (say "XEN_NARGIFY_2(xen_list_to_c_array_w, xen_list_to_c_array)~%")
 (say "XEN_NARGIFY_1(gxg_freeGdkPoints_w, gxg_freeGdkPoints)~%")
 (say "XEN_NARGIFY_1(gxg_vector2GdkPoints_w, gxg_vector2GdkPoints)~%")
+(say "XEN_NARGIFY_1(gxg_make_target_entry_w, gxg_make_target_entry)~%")
+(say "XEN_NARGIFY_1(c_to_xen_string_w, c_to_xen_string)~%")
 
 (let ((in-x11 #f))
   (for-each 
@@ -2340,6 +2364,7 @@
 (hey "  XG_DEFINE_PROCEDURE(freeGdkPoints, gxg_freeGdkPoints, 1, 0, 0, H_freeGdkPoints);~%")
 (hey "  XG_DEFINE_PROCEDURE(vector->GdkPoints, gxg_vector2GdkPoints, 1, 0, 0, H_vector2GdkPoints);~%")
 (hey "  XG_DEFINE_PROCEDURE(->string, c_to_xen_string, 1, 0, 0, NULL);~%")
+(hey "  XG_DEFINE_PROCEDURE(make-target-entry, gxg_make_target_entry, 1, 0, 0, H_make_target_entry);~%")
 
 (define (defun func)
   (let* ((cargs (length (caddr func)))
@@ -2384,7 +2409,8 @@
 (say "  XG_DEFINE_PROCEDURE(list->c-array, xen_list_to_c_array_w, 2, 0, 0, NULL);~%")
 (say "  XG_DEFINE_PROCEDURE(freeGdkPoints, gxg_freeGdkPoints_w, 1, 0, 0, H_freeGdkPoints);~%")
 (say "  XG_DEFINE_PROCEDURE(vector->GdkPoints, gxg_vector2GdkPoints_w, 1, 0, 0, H_vector2GdkPoints);~%")
-(say "  XG_DEFINE_PROCEDURE(->string, c_to_xen_string, 1, 0, 0, NULL);~%")
+(say "  XG_DEFINE_PROCEDURE(->string, c_to_xen_string_w, 1, 0, 0, NULL);~%")
+(say "  XG_DEFINE_PROCEDURE(make-target-entry, gxg_make_target_entry_w, 1, 0, 0, H_make_target_entry);~%")
 
 (define (check-out func)
   (hey "  XG_DEFINE_PROCEDURE(~A, gxg_~A, 1, 0, 0, NULL);~%" (no-arg (car func)) (no-arg (car func)))

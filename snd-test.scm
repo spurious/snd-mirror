@@ -31,8 +31,28 @@
 ;;; test 28: errors
 
 ;;; how to send ourselves a drop?  (button2 on menu is only the first half -- how to force 2nd?)
+;;; check: add-comment channel-data check-for-unsaved-edits color-samples cross-synthesis dlocsig envelope-base
+;;;        explode-sf2 extract-channel(s) fft-edit fft-squelch fractional-fourier-transform make-biquad
+;;;        make-identity-mixer map-sound-files mark-context mark-explode mark-loops menu-hook
+;;;        mouse-enter|leave-text-hook mpg mus-audio-error mus-audio-error-name mus-audio-set-oss-buffers
+;;;        notch-out-rumble-and-hiss play-syncd-marks power-env remember-sound-state
+;;;        seconds->samples [samples->seconds?] snap-mark-to-beat snap-mix-to-beat snd-apropos snd-break snd-debug
+;;;        snd-remember-paths snd-trace sound-interp undo-channel undo-edit window-samples
+;;;        z-transform zip-sound zipper attract bird one-bird make-birds anoi expfil jl-reverb
+;;;        touch-tone map-envelopes power-env-channel comb-filter osc-formants filtered-env
+;;;        zcomb notch-filter formant-filter remove-clicks squelch-vowels snd-out flash-selected-data
+;;;        files-popup-buffer open-next-file-in-directory flecho ring-mod chained-dsps read-ogg
+;;;        write-ogg read-speex write-speex read-flac write-flac window-rms fft-peak
+;;;        make-sound-interp next-peak find-pitch sound-data->list redo-channel make-fm-violin
+;;;        descibe-hook remove-local-hook! *html-reader* html ? prune-db stop-dac delete-all-tracks
+;;;        make-pvocoder pvocoder show-input in-out snd-clock-icon show-sounds-in-directory make-level-meter
+;;;        show-disk-space add-very-useful-icons add-tooltip show-all-atoms set-channel-drop
+;;;        show-font-name show-widget-font add-text-to-status-area with-minmax-button set-root-window-color
+;;;        notebook-with-top-tabs *clm-file-name* *clm-channels* *clm-data-format* *clm-delete-reverb*
+;;;        *clm-verbose* *clm-play* *clm-statistics* *clm-reverb* *clm-reverb-data* *clm-reverb-channels*
+;;;        xe-create-enved xe-envelope make-zipper
 
-(use-modules (ice-9 format) (ice-9 debug) (ice-9 optargs) (ice-9 popen) (ice-9 session))
+(use-modules (ice-9 format) (ice-9 debug) (ice-9 optargs) (ice-9 popen))
 
 (define (snd-display . args)
   (let ((str (if (null? (cdr args))
@@ -11664,8 +11684,8 @@ EDITS: 5
 	    (gen1 (make-all-pass .4 .6 3))
 	    (v1 (make-vct 10)))
 	(print-and-check gen 
-			 "all_pass"
-			 "all_pass: feedback: 0.400, feedforward: 0.600, line[3]:[0.000 0.000 0.000]"
+			 "all-pass"
+			 "all-pass: feedback: 0.400, feedforward: 0.600, line[3]:[0.000 0.000 0.000]"
 			 "dly line[3,3 at 0,0 (external)]: [0.000 0.000 0.000], xscl: 0.600000, yscl: 0.400000")
 	(do ((i 0 (1+ i)))
 	    ((= i 10))
@@ -12170,8 +12190,8 @@ EDITS: 5
 	    (gen1 (make-one-pole .4 .7))
 	    (v1 (make-vct 10)))
 	(print-and-check gen 
-			 "one_pole"
-			 "one_pole: a0: 0.400, b1: 0.700, y1: 0.000"
+			 "one-pole"
+			 "one-pole: a0: 0.400, b1: 0.700, y1: 0.000"
 			 "smpflt a0: 0.400000, a1: 0.000000, a2: 0.000000, b1: 0.700000, b2: 0.000000, x1: 0.000000, x2: 0.000000, y1: 0.000000, y2: 0.000000")
 	(do ((i 0 (1+ i)))
 	    ((= i 10))
@@ -12190,8 +12210,8 @@ EDITS: 5
 	    (gen1 (make-one-zero .4 .7))
 	    (v1 (make-vct 10)))
 	(print-and-check gen
-			 "one_zero"
-			 "one_zero: a0: 0.400, a1: 0.700, x1: 0.000"
+			 "one-zero"
+			 "one-zero: a0: 0.400, a1: 0.700, x1: 0.000"
 			 "smpflt a0: 0.400000, a1: 0.700000, a2: 0.000000, b1: 0.000000, b2: 0.000000, x1: 0.000000, x2: 0.000000, y1: 0.000000, y2: 0.000000")
 	(do ((i 0 (1+ i)))
 	    ((= i 10))
@@ -12209,8 +12229,8 @@ EDITS: 5
 	    (gen1 (make-two-zero .4 .7 .3))
 	    (v1 (make-vct 10)))
 	(print-and-check gen 
-			 "two_zero"
-			 "two_zero: a0: 0.400, a1: 0.700, a2: 0.300, x1: 0.000, x2: 0.000"
+			 "two-zero"
+			 "two-zero: a0: 0.400, a1: 0.700, a2: 0.300, x1: 0.000, x2: 0.000"
 			 "smpflt a0: 0.400000, a1: 0.700000, a2: 0.300000, b1: 0.000000, b2: 0.000000, x1: 0.000000, x2: 0.000000, y1: 0.000000, y2: 0.000000")
 	(do ((i 0 (1+ i)))
 	    ((= i 10))
@@ -12245,8 +12265,8 @@ EDITS: 5
 	    (gen1 (make-two-pole .4 .7 .3))
 	    (v1 (make-vct 10)))
 	(print-and-check gen 
-			 "two_pole"
-			 "two_pole: a0: 0.400, b1: 0.700, b2: 0.300, y1: 0.000, y2: 0.000"
+			 "two-pole"
+			 "two-pole: a0: 0.400, b1: 0.700, b2: 0.300, y1: 0.000, y2: 0.000"
 			 "smpflt a0: 0.400000, a1: 0.000000, a2: 0.000000, b1: 0.700000, b2: 0.300000, x1: 0.000000, x2: 0.000000, y1: 0.000000, y2: 0.000000")
 	(do ((i 0 (1+ i)))
 	    ((= i 10))
@@ -12592,8 +12612,8 @@ EDITS: 5
 	    (gen1 (make-sum-of-cosines 10 440.0))
 	    (v1 (make-vct 10)))
 	(print-and-check gen 
-			 "sum_of_cosines"
-			 "sum_of_cosines freq: 440.000Hz, phase: 0.000, cosines: 10"
+			 "sum-of-cosines"
+			 "sum-of-cosines freq: 440.000Hz, phase: 0.000, cosines: 10"
 			 "cosp freq: 0.125379, phase: 0.000000, cosines: 10, scaler: 0.047619")
 	(do ((i 0 (1+ i)))
 	    ((= i 10))
@@ -12619,8 +12639,8 @@ EDITS: 5
 	    (gen1 (make-sine-summation 440.0))
 	    (v1 (make-vct 10)))
 	(print-and-check gen 
-			 "sine_summation"
-			 "sine_summation: frequency: 440.000, phase: 0.000, n: 1, a: 0.500, ratio: 1.000"
+			 "sine-summation"
+			 "sine-summation: frequency: 440.000, phase: 0.000, n: 1, a: 0.500, ratio: 1.000"
 			 "sss freq: 0.125379, phase: 0.000000, a: 0.500000, b: 1.000000, an: 0.250000, a2: 1.250000, n: 1")
 	(do ((i 0 (1+ i)))
 	    ((= i 10))
@@ -12707,7 +12727,7 @@ EDITS: 5
 	    (gen1 (make-asymmetric-fm 440.0))
 	    (v1 (make-vct 10)))
 	(print-and-check gen 
-			 "asymmetric_fm"
+			 "asymmetric-fm"
 			 "asymmetric-fm freq: 440.000Hz, phase: 0.000, ratio: 1.000, r: 1.000"
 			 "asyfm r: 1.000000, freq: 0.125379, phase: 0.000000, ratio: 1.000000, cosr: 0.000000, sinr: 1.000000")
 	(do ((i 0 (1+ i)))
@@ -12807,8 +12827,8 @@ EDITS: 5
 	    (gen1 (make-fir-filter 3 (list->vct '(.5 .25 .125))))
 	    (v1 (make-vct 10)))
 	(print-and-check gen 
-			 "fir_filter"
-			 "fir_filter: order: 3"
+			 "fir-filter"
+			 "fir-filter: order: 3"
 			 "flt order: 3, state (local): [0.000 0.000 0.000], x: [0.500 0.250 0.125], y: nil")
 	(vct-set! v0 0 (fir-filter gen 1.0))
 	(do ((i 1 (1+ i)))
@@ -12860,8 +12880,8 @@ EDITS: 5
 	    (gen1 (make-iir-filter 3 (list->vct '(.5 .25 .125))))
 	    (v1 (make-vct 10)))
 	(print-and-check gen 
-			 "iir_filter"
-			 "iir_filter: order: 3"
+			 "iir-filter"
+			 "iir-filter: order: 3"
 			 "flt order: 3, state (local): [0.000 0.000 0.000], x: nil, y: [0.500 0.250 0.125]")
 	(vct-set! v0 0 (iir-filter gen 1.0))
 	(do ((i 1 (1+ i)))
@@ -13262,8 +13282,8 @@ EDITS: 5
 	    (gen1 (make-sawtooth-wave 440.0))
 	    (v1 (make-vct 10)))
 	(print-and-check gen 
-			 "sawtooth_wave"
-			 "sawtooth freq: 440.000Hz, phase: 3.142, amp: 1.000"
+			 "sawtooth-wave"
+			 "sawtooth-wave freq: 440.000Hz, phase: 3.142, amp: 1.000"
 			 "sw current_value: 0.000000, freq: 0.125379, phase: 3.141593, base: 0.318310")
 	(do ((i 0 (1+ i)))
 	    ((= i 10))
@@ -13289,8 +13309,8 @@ EDITS: 5
 	    (gen1 (make-square-wave 440.0))
 	    (v1 (make-vct 10)))
 	(print-and-check gen 
-			 "square_wave"
-			 "square_wave freq: 440.000Hz, phase: 0.000, amp: 1.000"
+			 "square-wave"
+			 "square-wave freq: 440.000Hz, phase: 0.000, amp: 1.000"
 			 "sw current_value: 1.000000, freq: 0.125379, phase: 0.000000, base: 1.000000")
 	(do ((i 0 (1+ i)))
 	    ((= i 10))
@@ -13322,8 +13342,8 @@ EDITS: 5
 	    (gen2 (make-triangle-wave 440.0))
 	    (v1 (make-vct 10)))
 	(print-and-check gen 
-			 "triangle_wave"
-			 "triangle_wave freq: 440.000Hz, phase: 0.000, amp: 1.000"
+			 "triangle-wave"
+			 "triangle-wave freq: 440.000Hz, phase: 0.000, amp: 1.000"
 			 "sw current_value: 0.000000, freq: 0.125379, phase: 0.000000, base: 0.636620")
 	(do ((i 0 (1+ i)))
 	    ((= i 10))
@@ -13348,8 +13368,8 @@ EDITS: 5
 	    (gen1 (make-pulse-train 440.0))
 	    (v1 (make-vct 10)))
 	(print-and-check gen 
-			 "pulse_train"
-			 "pulse_train freq: 440.000Hz, phase: 6.283, amp: 1.000"
+			 "pulse-train"
+			 "pulse-train freq: 440.000Hz, phase: 6.283, amp: 1.000"
 			 "sw current_value: 0.000000, freq: 0.125379, phase: 6.283185, base: 1.000000")
 	(do ((i 0 (1+ i)))
 	    ((= i 10))
@@ -13999,8 +14019,8 @@ EDITS: 5
 	    (gen4 (make-table-lookup 440.0 :wave (partials->wave '(1 1 2 1))))
 	    (v2 (make-vct 10)))
 	(print-and-check gen 
-			 "table_lookup"
-			 "table_lookup: freq: 440.000Hz, phase: 0.000, length: 512"
+			 "table-lookup"
+			 "table-lookup: freq: 440.000Hz, phase: 0.000, length: 512"
 			 (mus-inspect gen))
 	;; problem with mus-inspect here is that it includes the table pointer itself
 	(if (not (= (mus-length gen) 512)) (snd-display ";table-lookup length: ~A?" (mus-length gen)))
@@ -14104,8 +14124,8 @@ EDITS: 5
 	    (gen1 (make-wave-train 440.0 0.0 (make-vct 20)))
 	    (v1 (make-vct 10)))
 	(print-and-check gen 
-			 "wave_train"
-			 "wave_train freq: 440.000Hz, phase: 0.000, size: 20"
+			 "wave-train"
+			 "wave-train freq: 440.000Hz, phase: 0.000, size: 20"
 			 "wt freq: 440.000000, phase: 0.000000, wave[20 (external)]: [0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000...], b: rblk buf[20 (local)]: [0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000...], loc: 0, fill_time: 0.000000, empty: true")
 	(do ((i 0 (1+ i)))
 	    ((= i 20))
@@ -14201,8 +14221,8 @@ EDITS: 5
       (let ((gen (make-file->sample "oboe.snd"))
 	    (v0 (make-vct 10)))
 	(print-and-check gen 
-			 "file2sample"
-			 "file2sample: oboe.snd"
+			 "file->sample"
+			 "file->sample: oboe.snd"
 			 "rdin chan: 0, dir: 0, loc: 0, chans: 1, data_start: 0, data_end: -1, file_end: 50828, file_name: oboe.snd")
 	(if (not (mus-input? gen)) (snd-display ";~A not input?" gen))
 	(if (not (= (mus-length gen) 50828)) (snd-display ";file->sample length: ~A?" (mus-length gen)))
@@ -14284,8 +14304,8 @@ EDITS: 5
       (let ((gen (make-file->frame "oboe.snd"))
 	    (v0 (make-vct 10)))
 	(print-and-check gen 
-			 "file2frame"
-			 "file2frame: oboe.snd"
+			 "file->frame"
+			 "file->frame: oboe.snd"
 			 "rdin chan: 0, dir: 0, loc: 0, chans: 1, data_start: 0, data_end: -1, file_end: 50828, file_name: oboe.snd")
 	(if (not (mus-input? gen)) (snd-display ";~A not input?" gen))
 	(if (not (= (mus-length gen) 50828)) (snd-display ";file->frame length: ~A?" (mus-length gen)))
@@ -14302,8 +14322,8 @@ EDITS: 5
       (if (file-exists? "fmv3.snd") (delete-file "fmv3.snd"))
       (let ((gen (make-sample->file "fmv.snd" 2 mus-lshort mus-riff)))
 	(print-and-check gen 
-			 "sample2file"
-			 "sample2file: fmv.snd"
+			 "sample->file"
+			 "sample->file: fmv.snd"
 			 "rdout chan: 0, loc: 0, file_name: fmv.snd, chans: 2, data_start: 0, data_end: 8191, out_end: 0")
 	(if (not (mus-output? gen)) (snd-display ";~A not output?" gen))
 	(if (not (sample->file? gen)) (snd-display ";~A not sample->file?" gen))
@@ -14332,8 +14352,8 @@ EDITS: 5
 	     (val8 (in-any 60 0 gen))
 	     (val9 (in-any 60 1 gen)))
 	(print-and-check gen 
-			 "file2sample"
-			 "file2sample: fmv.snd"
+			 "file->sample"
+			 "file->sample: fmv.snd"
 			 "rdin chan: 0, dir: 0, loc: 0, chans: 2, data_start: 20, data_end: 100, file_end: 100, file_name: fmv.snd")
 	(if (not (= (mus-channels gen) 2)) (snd-display ";make-sample->file chans: ~A?" (mus-channels gen)))
 	(if (not (mus-input? gen)) (snd-display ";~A not input?" gen))
@@ -14345,8 +14365,8 @@ EDITS: 5
       
       (let ((gen (make-sample->file "fmv.snd" 4 mus-lshort mus-riff)))
 	(print-and-check gen 
-			 "sample2file"
-			 "sample2file: fmv.snd"
+			 "sample->file"
+			 "sample->file: fmv.snd"
 			 "rdout chan: 0, loc: 0, file_name: fmv.snd, chans: 4, data_start: 0, data_end: 8191, out_end: 0")
 	(do ((i 0 (1+ i)))
 	    ((= i 10))
@@ -14363,8 +14383,8 @@ EDITS: 5
 	(mus-close gen))
       (let* ((gen (make-file->sample "fmv.snd")))
 	(print-and-check gen 
-			 "file2sample"
-			 "file2sample: fmv.snd"
+			 "file->sample"
+			 "file->sample: fmv.snd"
 			 "rdin chan: 0, dir: 0, loc: 0, chans: 4, data_start: 0, data_end: -1, file_end: 10, file_name: fmv.snd")
 	(do ((i 0 (1+ i)))
 	    ((= i 10))
@@ -14389,8 +14409,8 @@ EDITS: 5
       
       (let ((gen (make-frame->file "fmv1.snd" 2 mus-bshort mus-next)))
 	(print-and-check gen 
-			 "frame2file"
-			 "frame2file: fmv1.snd"
+			 "frame->file"
+			 "frame->file: fmv1.snd"
 			 "rdout chan: 0, loc: 0, file_name: fmv1.snd, chans: 2, data_start: 0, data_end: 8191, out_end: 0")
 	(if (not (mus-output? gen)) (snd-display ";~A not output?" gen))
 	(if (not (frame->file? gen)) (snd-display ";~A not frame->file?" gen))
@@ -14417,8 +14437,8 @@ EDITS: 5
       
       (let ((gen (make-sample->file "fmv2.snd" 4 mus-bshort mus-aifc)))
 	(print-and-check gen 
-			 "sample2file"
-			 "sample2file: fmv2.snd"
+			 "sample->file"
+			 "sample->file: fmv2.snd"
 			 "rdout chan: 0, loc: 0, file_name: fmv2.snd, chans: 4, data_start: 0, data_end: 8191, out_end: 0")
 	(if (not (mus-output? gen)) (snd-display ";~A not output?" gen))
 	(if (not (sample->file? gen)) (snd-display ";~A not sample->file?" gen))
@@ -14495,7 +14515,7 @@ EDITS: 5
       (let ((gen (make-rand-interp 4000.0))
 	    (v0 (make-vct 10)))
 	(print-and-check gen 
-			 "rand_interp"
+			 "rand-interp"
 			 (mus-describe gen)
 			 (mus-inspect gen)) ; problem here is the random incr field
 	(do ((i 0 (1+ i)))
@@ -15321,8 +15341,8 @@ EDITS: 5
 	     (reader (make-sample-reader 0)))
 	(if (not (phase-vocoder? pv)) (snd-display ";~A not phase-vocoder?" pv))
 	(print-and-check pv 
-			 "phase_vocoder"
-			 "phase_vocoder: outctr: 128, interp: 128, filptr: 0, N: 512, D: 128, in_data: nil"
+			 "phase-vocoder"
+			 "phase-vocoder: outctr: 128, interp: 128, filptr: 0, N: 512, D: 128, in_data: nil"
 			 "pv_info outctr: 128, interp: 128, filptr: 0, N: 512, D: 128, in_data: nil, amps: [0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000...], freqs: [0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000...]")
 	(select-sound ind)
 	(map-chan (lambda (val)
@@ -45145,7 +45165,14 @@ EDITS: 2
 		(gtk_target_list_add _GtkTargetList_ GDK_TARGET_STRING 0 0)
 		(gtk_target_list_ref _GtkTargetList_)
 		(gtk_target_list_unref _GtkTargetList_)
-		(gtk_target_list_remove _GtkTargetList_ GDK_TARGET_STRING))
+		(gtk_target_list_remove _GtkTargetList_ GDK_TARGET_STRING)
+		(gtk_drag_dest_set (cadr (main-widgets)) GTK_DEST_DEFAULT_ALL 
+				   (make-target-entry (list (list "STRING" 0 0) (list "FILENAME" 0 0))) 2 
+				   (logior GDK_ACTION_COPY GDK_ACTION_MOVE))
+		(let ((trg (gtk_drag_dest_get_target_list (cadr (main-widgets)))))
+		  (gtk_drag_dest_set_target_list (cadr (main-widgets)) trg))
+
+		)
 	      (let* ((_GtkRadioAction_ (gtk_radio_action_new "hi" "label" "tool" GTK_STOCK_CANCEL 0))
 		     (_gint (gtk_radio_action_get_current_value _GtkRadioAction_))
 		     (_GSList_ (gtk_radio_action_get_group _GtkRadioAction_)))

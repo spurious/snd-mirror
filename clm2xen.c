@@ -296,47 +296,47 @@ static char *FFT_WINDOW_CONSTANTS[17] = {S_rectangular_window, S_hann_window, S_
 char *mus_fft_window_name(mus_fft_window_t i) {return(FFT_WINDOW_CONSTANTS[(int)i]);}
 
 
-static XEN g_radians2hz(XEN val) 
+static XEN g_radians_to_hz(XEN val) 
 {
-  #define H_radians_hz "(" S_radians_hz " rads): convert radians per sample to frequency in Hz: rads * srate / (2 * pi)"
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, S_radians_hz, "a number");
-  return(C_TO_XEN_DOUBLE(mus_radians2hz(XEN_TO_C_DOUBLE(val))));
+  #define H_radians_to_hz "(" S_radians_to_hz " rads): convert radians per sample to frequency in Hz: rads * srate / (2 * pi)"
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, S_radians_to_hz, "a number");
+  return(C_TO_XEN_DOUBLE(mus_radians_to_hz(XEN_TO_C_DOUBLE(val))));
 }
 
-static XEN g_hz2radians(XEN val) 
+static XEN g_hz_to_radians(XEN val) 
 {
-  #define H_hz_radians "(" S_hz_radians " hz): convert frequency in Hz to radians per sample: hz * 2 * pi / srate"
+  #define H_hz_to_radians "(" S_hz_to_radians " hz): convert frequency in Hz to radians per sample: hz * 2 * pi / srate"
   #define H_in_hz "(" S_in_hz " hz) converts frequency in Hz to radians/sample: hz * 2 * pi / srate"
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, S_hz_radians, "a number"); 
-  return(C_TO_XEN_DOUBLE(mus_hz2radians(XEN_TO_C_DOUBLE(val))));
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, S_hz_to_radians, "a number"); 
+  return(C_TO_XEN_DOUBLE(mus_hz_to_radians(XEN_TO_C_DOUBLE(val))));
 }
 
-static XEN g_radians2degrees(XEN val) 
+static XEN g_radians_to_degrees(XEN val) 
 {
-  #define H_radians_degrees "(" S_radians_degrees " rads): convert radians to degrees: rads * 360 / (2 * pi)"
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, S_radians_degrees, "a number"); 
-  return(C_TO_XEN_DOUBLE(mus_radians2degrees(XEN_TO_C_DOUBLE(val))));
+  #define H_radians_to_degrees "(" S_radians_to_degrees " rads): convert radians to degrees: rads * 360 / (2 * pi)"
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, S_radians_to_degrees, "a number"); 
+  return(C_TO_XEN_DOUBLE(mus_radians_to_degrees(XEN_TO_C_DOUBLE(val))));
 }
 
-static XEN g_degrees2radians(XEN val) 
+static XEN g_degrees_to_radians(XEN val) 
 {
-  #define H_degrees_radians "(" S_degrees_radians " deg): convert degrees to radians: deg * 2 * pi / 360"
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, S_degrees_radians, "a number"); 
-  return(C_TO_XEN_DOUBLE(mus_degrees2radians(XEN_TO_C_DOUBLE(val))));
+  #define H_degrees_to_radians "(" S_degrees_to_radians " deg): convert degrees to radians: deg * 2 * pi / 360"
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, S_degrees_to_radians, "a number"); 
+  return(C_TO_XEN_DOUBLE(mus_degrees_to_radians(XEN_TO_C_DOUBLE(val))));
 }
 
-static XEN g_db2linear(XEN val) 
+static XEN g_db_to_linear(XEN val) 
 {
-  #define H_db_linear "(" S_db_linear " db): convert decibel value db to linear value: pow(10, db / 20)"
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, S_db_linear, "a number");
-  return(C_TO_XEN_DOUBLE(mus_db2linear(XEN_TO_C_DOUBLE(val))));
+  #define H_db_to_linear "(" S_db_to_linear " db): convert decibel value db to linear value: pow(10, db / 20)"
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, S_db_to_linear, "a number");
+  return(C_TO_XEN_DOUBLE(mus_db_to_linear(XEN_TO_C_DOUBLE(val))));
 }
 
-static XEN g_linear2db(XEN val) 
+static XEN g_linear_to_db(XEN val) 
 {
-  #define H_linear_db "(" S_linear_db " lin): convert linear value to decibels: 20 * log10(lin)"
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, S_linear_db, "a number");
-  return(C_TO_XEN_DOUBLE(mus_linear2db(XEN_TO_C_DOUBLE(val))));
+  #define H_linear_to_db "(" S_linear_to_db " lin): convert linear value to decibels: 20 * log10(lin)"
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, S_linear_to_db, "a number");
+  return(C_TO_XEN_DOUBLE(mus_linear_to_db(XEN_TO_C_DOUBLE(val))));
 }
 
 /* can't use a variable *srate* directly here because the set! side would not communicate the change to C */
@@ -438,8 +438,8 @@ static XEN g_fft_window_1(char *caller, xclm_window_t choice, XEN val1, XEN val2
   switch (choice)
     {
     case G_MULTIPLY_ARRAYS: mus_multiply_arrays(v1->data, v2->data, len); break;
-    case G_RECTANGULAR_POLAR: mus_rectangular2polar(v1->data, v2->data, len); break;
-    case G_POLAR_RECTANGULAR: mus_polar2rectangular(v1->data, v2->data, len); break;
+    case G_RECTANGULAR_POLAR: mus_rectangular_to_polar(v1->data, v2->data, len); break;
+    case G_POLAR_RECTANGULAR: mus_polar_to_rectangular(v1->data, v2->data, len); break;
     }
   return(xen_return_first(val1, val2));
 }
@@ -450,20 +450,20 @@ static XEN g_multiply_arrays(XEN val1, XEN val2, XEN len)
   return(g_fft_window_1(S_multiply_arrays, G_MULTIPLY_ARRAYS, val1, val2, len));
 }
 
-static XEN g_rectangular2polar(XEN val1, XEN val2) 
+static XEN g_rectangular_to_polar(XEN val1, XEN val2) 
 {
-  #define H_rectangular2polar "(" S_rectangular2polar " rl im): convert real/imaginary \
+  #define H_rectangular_to_polar "(" S_rectangular_to_polar " rl im): convert real/imaginary \
 data in (vcts) rl and im from rectangular form (fft output) to polar form (a spectrum)"
 
-  return(g_fft_window_1(S_rectangular2polar, G_RECTANGULAR_POLAR, val1, val2, XEN_UNDEFINED));
+  return(g_fft_window_1(S_rectangular_to_polar, G_RECTANGULAR_POLAR, val1, val2, XEN_UNDEFINED));
 }
 
-static XEN g_polar2rectangular(XEN val1, XEN val2) 
+static XEN g_polar_to_rectangular(XEN val1, XEN val2) 
 {
-  #define H_polar2rectangular "(" S_polar2rectangular " rl im): convert real/imaginary \
+  #define H_polar_to_rectangular "(" S_polar_to_rectangular " rl im): convert real/imaginary \
 data in (vcts) rl and im from polar form (spectrum) to rectangular form (fft-style)"
 
-  return(g_fft_window_1(S_polar2rectangular, G_POLAR_RECTANGULAR, val1, val2, XEN_UNDEFINED));
+  return(g_fft_window_1(S_polar_to_rectangular, G_POLAR_RECTANGULAR, val1, val2, XEN_UNDEFINED));
 }
 
 static XEN g_mus_fft(XEN url, XEN uim, XEN len, XEN usign)
@@ -1556,9 +1556,9 @@ static XEN g_table_lookup_p(XEN obj)
   return(C_TO_XEN_BOOLEAN((MUS_XEN_P(obj)) && (mus_table_lookup_p(XEN_TO_MUS_ANY(obj)))));
 }
 
-static XEN g_partials2wave(XEN partials, XEN utable, XEN normalize)
+static XEN g_partials_to_wave(XEN partials, XEN utable, XEN normalize)
 {
-  #define H_partials2wave "(" S_partials2wave " partials (wave #f) (normalize #f)): \
+  #define H_partials_to_wave "(" S_partials_to_wave " partials (wave #f) (normalize #f)): \
 take a list of partials (harmonic number and associated amplitude) and produce \
 a waveform for use in " S_table_lookup ".  If wave (a vct) is not given, \
 a new one is created.  If normalize is #t, the resulting waveform goes between -1.0 and 1.0.\n\
@@ -1569,12 +1569,12 @@ a new one is created.  If normalize is #t, the resulting waveform goes between -
   XEN lst;
   Float *partial_data, *wave;
   int len = 0, i;
-  XEN_ASSERT_TYPE(XEN_LIST_P_WITH_LENGTH(partials, len), partials, XEN_ARG_1, S_partials2wave, "a list");
-  XEN_ASSERT_TYPE(VCT_P(utable) || XEN_FALSE_P(utable) || (!(XEN_BOUND_P(utable))), utable, XEN_ARG_2, S_partials2wave, "a vct or #f");
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(normalize), normalize, XEN_ARG_3, S_partials2wave, "a boolean");
+  XEN_ASSERT_TYPE(XEN_LIST_P_WITH_LENGTH(partials, len), partials, XEN_ARG_1, S_partials_to_wave, "a list");
+  XEN_ASSERT_TYPE(VCT_P(utable) || XEN_FALSE_P(utable) || (!(XEN_BOUND_P(utable))), utable, XEN_ARG_2, S_partials_to_wave, "a vct or #f");
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(normalize), normalize, XEN_ARG_3, S_partials_to_wave, "a boolean");
   if (len == 0)
     XEN_ERROR(NO_DATA, 
-	      XEN_LIST_3(C_TO_XEN_STRING(S_partials2wave), 
+	      XEN_LIST_3(C_TO_XEN_STRING(S_partials_to_wave), 
 			 C_TO_XEN_STRING("partials list empty?"), 
 			 partials));
   if ((XEN_NOT_BOUND_P(utable)) || (!(VCT_P(utable))))
@@ -1591,30 +1591,30 @@ a new one is created.  If normalize is #t, the resulting waveform goes between -
     return(clm_mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate partials table"));
   for (i = 0, lst = XEN_COPY_ARG(partials); i < len; i++, lst = XEN_CDR(lst)) 
     partial_data[i] = XEN_TO_C_DOUBLE_OR_ELSE(XEN_CAR(lst), 0.0);
-  mus_partials2wave(partial_data, len / 2, f->data, f->length, (XEN_TRUE_P(normalize)));
+  mus_partials_to_wave(partial_data, len / 2, f->data, f->length, (XEN_TRUE_P(normalize)));
   FREE(partial_data);
   return(xen_return_first(table, partials, utable));
 }
 
-static XEN g_phasepartials2wave(XEN partials, XEN utable, XEN normalize)
+static XEN g_phase_partials_to_wave(XEN partials, XEN utable, XEN normalize)
 {
   vct *f;
   XEN table, lst;
   Float *partial_data, *wave;
   int len = 0, i;
 
-  #define H_phasepartials2wave "(" S_phasepartials2wave " partials (wave #f) (normalize #f)): \
+  #define H_phase_partials_to_wave "(" S_phase_partials_to_wave " partials (wave #f) (normalize #f)): \
 take a list of partials (harmonic number, amplitude, initial phase) and produce \
 a waveform for use in " S_table_lookup ".  If wave (a vct) is not given, \
 a new one is created.  If normalize is #t, the resulting waveform goes between -1.0 and 1.0.\n\
   (set! gen (make-table-lookup 440.0 :wave (phase-partials->wave (list 1 .75 0.0 2 .25 (* pi .5)))))"
 
-  XEN_ASSERT_TYPE(XEN_LIST_P_WITH_LENGTH(partials, len), partials, XEN_ARG_1, S_phasepartials2wave, "a list");
-  XEN_ASSERT_TYPE(VCT_P(utable) || XEN_FALSE_P(utable) || (!(XEN_BOUND_P(utable))), utable, XEN_ARG_2, S_phasepartials2wave, "a vct or #f");
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(normalize), normalize, XEN_ARG_3, S_phasepartials2wave, "a boolean");
+  XEN_ASSERT_TYPE(XEN_LIST_P_WITH_LENGTH(partials, len), partials, XEN_ARG_1, S_phase_partials_to_wave, "a list");
+  XEN_ASSERT_TYPE(VCT_P(utable) || XEN_FALSE_P(utable) || (!(XEN_BOUND_P(utable))), utable, XEN_ARG_2, S_phase_partials_to_wave, "a vct or #f");
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(normalize), normalize, XEN_ARG_3, S_phase_partials_to_wave, "a boolean");
   if (len == 0)
     XEN_ERROR(NO_DATA,
-	      XEN_LIST_3(C_TO_XEN_STRING(S_phasepartials2wave), 
+	      XEN_LIST_3(C_TO_XEN_STRING(S_phase_partials_to_wave), 
 			 C_TO_XEN_STRING("partials list empty?"),
 			 partials));
   if ((XEN_NOT_BOUND_P(utable)) || (!(VCT_P(utable))))
@@ -1631,7 +1631,7 @@ a new one is created.  If normalize is #t, the resulting waveform goes between -
     return(clm_mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate partials table"));
   for (i = 0, lst = XEN_COPY_ARG(partials); i < len; i++, lst = XEN_CDR(lst)) 
     partial_data[i] = XEN_TO_C_DOUBLE_OR_ELSE(XEN_CAR(lst), 0.0);
-  mus_phasepartials2wave(partial_data, len / 3, f->data, f->length, (XEN_TRUE_P(normalize)));
+  mus_phase_partials_to_wave(partial_data, len / 3, f->data, f->length, (XEN_TRUE_P(normalize)));
   FREE(partial_data);
   return(xen_return_first(table, partials, utable));
 }
@@ -2458,31 +2458,31 @@ static XEN g_mixer_multiply(XEN uf1, XEN uf2, XEN ures) /* optional res */
 		      (res) ? true : false));
 }
 
-static XEN g_frame2frame(XEN mx, XEN infr, XEN outfr) /* optional outfr */
+static XEN g_frame_to_frame(XEN mx, XEN infr, XEN outfr) /* optional outfr */
 {
-  #define H_frame2frame "(" S_frame2frame " m f (outf #f)): pass frame f through mixer m \
+  #define H_frame_to_frame "(" S_frame_to_frame " m f (outf #f)): pass frame f through mixer m \
 returning frame outf (or creating a new frame if necessary); this is a matrix multiply of m and f"
 
   mus_any *res = NULL;
-  XEN_ASSERT_TYPE((MUS_XEN_P(mx)) && (mus_mixer_p(XEN_TO_MUS_ANY(mx))), mx, XEN_ARG_1, S_frame2frame, "a mixer");
-  XEN_ASSERT_TYPE((MUS_XEN_P(infr)) && (mus_frame_p(XEN_TO_MUS_ANY(infr))), infr, XEN_ARG_2, S_frame2frame, "a frame");
+  XEN_ASSERT_TYPE((MUS_XEN_P(mx)) && (mus_mixer_p(XEN_TO_MUS_ANY(mx))), mx, XEN_ARG_1, S_frame_to_frame, "a mixer");
+  XEN_ASSERT_TYPE((MUS_XEN_P(infr)) && (mus_frame_p(XEN_TO_MUS_ANY(infr))), infr, XEN_ARG_2, S_frame_to_frame, "a frame");
   if ((MUS_XEN_P(outfr)) && 
       (mus_frame_p(XEN_TO_MUS_ANY(outfr)))) 
     res = (mus_any *)XEN_TO_MUS_ANY(outfr);
-  return(g_wrap_frame(mus_frame2frame((mus_any *)XEN_TO_MUS_ANY(mx),
-				      (mus_any *)XEN_TO_MUS_ANY(infr),
-				      res),
+  return(g_wrap_frame(mus_frame_to_frame((mus_any *)XEN_TO_MUS_ANY(mx),
+					 (mus_any *)XEN_TO_MUS_ANY(infr),
+					 res),
 		      (res) ? true : false));
 }
 
-static XEN g_frame2list(XEN fr)
+static XEN g_frame_to_list(XEN fr)
 {
-  #define H_frame2list "(" S_frame2list " f): return contents of frame f as a list"
+  #define H_frame_to_list "(" S_frame_to_list " f): return contents of frame f as a list"
   mus_any *val;
   int i;
   Float *vals;
   XEN res = XEN_EMPTY_LIST;
-  XEN_ASSERT_TYPE((MUS_XEN_P(fr)) && (mus_frame_p(XEN_TO_MUS_ANY(fr))), fr, XEN_ONLY_ARG, S_frame2list, "a frame");
+  XEN_ASSERT_TYPE((MUS_XEN_P(fr)) && (mus_frame_p(XEN_TO_MUS_ANY(fr))), fr, XEN_ONLY_ARG, S_frame_to_list, "a frame");
   val = (mus_any *)XEN_TO_MUS_ANY(fr);
   vals = mus_data(val);
   for (i = (int)mus_length(val) - 1; i >= 0; i--) 
@@ -2490,29 +2490,29 @@ static XEN g_frame2list(XEN fr)
   return(xen_return_first(res, fr));
 }
 
-static XEN g_frame2sample(XEN mx, XEN fr)
+static XEN g_frame_to_sample(XEN mx, XEN fr)
 {
-  #define H_frame2sample "(" S_frame2sample " m f): pass frame f through mixer (or frame) m to produce a sample"
-  XEN_ASSERT_TYPE((MUS_XEN_P(mx)), mx, XEN_ARG_1, S_frame2sample, "a frame or mixer");
-  XEN_ASSERT_TYPE((MUS_XEN_P(fr)) && (mus_frame_p(XEN_TO_MUS_ANY(fr))), fr, XEN_ARG_2, S_frame2sample, "a frame");
-  return(C_TO_XEN_DOUBLE(mus_frame2sample(XEN_TO_MUS_ANY(mx),
-					  (mus_any *)XEN_TO_MUS_ANY(fr))));
+  #define H_frame_to_sample "(" S_frame_to_sample " m f): pass frame f through mixer (or frame) m to produce a sample"
+  XEN_ASSERT_TYPE((MUS_XEN_P(mx)), mx, XEN_ARG_1, S_frame_to_sample, "a frame or mixer");
+  XEN_ASSERT_TYPE((MUS_XEN_P(fr)) && (mus_frame_p(XEN_TO_MUS_ANY(fr))), fr, XEN_ARG_2, S_frame_to_sample, "a frame");
+  return(C_TO_XEN_DOUBLE(mus_frame_to_sample(XEN_TO_MUS_ANY(mx),
+					     (mus_any *)XEN_TO_MUS_ANY(fr))));
 }
 
-static XEN g_sample2frame(XEN mx, XEN insp, XEN outfr) /* optional outfr */
+static XEN g_sample_to_frame(XEN mx, XEN insp, XEN outfr) /* optional outfr */
 {
-  #define H_sample2frame "(" S_sample2frame " m val (outf #f)): pass the sample val through mixer m \
+  #define H_sample_to_frame "(" S_sample_to_frame " m val (outf #f)): pass the sample val through mixer m \
 returning frame outf (creating it if necessary)"
 
   mus_any *res = NULL;
-  XEN_ASSERT_TYPE((MUS_XEN_P(mx)), mx, XEN_ARG_1, S_sample2frame, "a frame or mixer");
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(insp), insp, XEN_ARG_2, S_sample2frame, "a number");
+  XEN_ASSERT_TYPE((MUS_XEN_P(mx)), mx, XEN_ARG_1, S_sample_to_frame, "a frame or mixer");
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(insp), insp, XEN_ARG_2, S_sample_to_frame, "a number");
   if ((MUS_XEN_P(outfr)) && 
       (mus_frame_p(XEN_TO_MUS_ANY(outfr)))) 
     res = (mus_any *)XEN_TO_MUS_ANY(outfr);
-  return(g_wrap_frame(mus_sample2frame(XEN_TO_MUS_ANY(mx),
-				       XEN_TO_C_DOUBLE(insp),
-				       res),
+  return(g_wrap_frame(mus_sample_to_frame(XEN_TO_MUS_ANY(mx),
+					  XEN_TO_C_DOUBLE(insp),
+					  res),
 		      (res) ? true : false));
 }
 
@@ -2635,24 +2635,24 @@ processing, normally involving overlap-adds."
   return(clm_mus_error(local_error_type, local_error_msg));
 }
 
-static XEN g_buffer2sample(XEN obj)
+static XEN g_buffer_to_sample(XEN obj)
 {
-  #define H_buffer2sample "(" S_buffer2sample " gen): next sample in buffer, removing it from the buffer"
-  XEN_ASSERT_TYPE((MUS_XEN_P(obj)) && (mus_buffer_p(XEN_TO_MUS_ANY(obj))), obj, XEN_ONLY_ARG, S_buffer2sample, "a buffer gen");
-  return(C_TO_XEN_DOUBLE(mus_buffer2sample(XEN_TO_MUS_ANY(obj))));
+  #define H_buffer_to_sample "(" S_buffer_to_sample " gen): next sample in buffer, removing it from the buffer"
+  XEN_ASSERT_TYPE((MUS_XEN_P(obj)) && (mus_buffer_p(XEN_TO_MUS_ANY(obj))), obj, XEN_ONLY_ARG, S_buffer_to_sample, "a buffer gen");
+  return(C_TO_XEN_DOUBLE(mus_buffer_to_sample(XEN_TO_MUS_ANY(obj))));
 }
 
-static XEN g_buffer2frame(XEN obj, XEN fr)
+static XEN g_buffer_to_frame(XEN obj, XEN fr)
 {
-  #define H_buffer2frame "(" S_buffer2frame " gen (frame #f)): next frame of samples in buffer, removing them"
-  XEN_ASSERT_TYPE((MUS_XEN_P(obj)) && (mus_buffer_p(XEN_TO_MUS_ANY(obj))), obj, XEN_ARG_1, S_buffer2frame, "a buffer gen");
+  #define H_buffer_to_frame "(" S_buffer_to_frame " gen (frame #f)): next frame of samples in buffer, removing them"
+  XEN_ASSERT_TYPE((MUS_XEN_P(obj)) && (mus_buffer_p(XEN_TO_MUS_ANY(obj))), obj, XEN_ARG_1, S_buffer_to_frame, "a buffer gen");
   if (XEN_BOUND_P(fr))
     {
-      XEN_ASSERT_TYPE((MUS_XEN_P(fr)) && (mus_frame_p(XEN_TO_MUS_ANY(fr))), fr, XEN_ARG_2, S_buffer2frame, "a frame");
+      XEN_ASSERT_TYPE((MUS_XEN_P(fr)) && (mus_frame_p(XEN_TO_MUS_ANY(fr))), fr, XEN_ARG_2, S_buffer_to_frame, "a frame");
       /* the "{}" here are not redundant!!  SCM_ASSERT_TYPE expands into if ... then error... */
     }
   else fr = g_make_frame(XEN_LIST_1(C_TO_XEN_INT(1)));
-  mus_buffer2frame((mus_any *)(XEN_TO_MUS_ANY(obj)), (mus_any *)(XEN_TO_MUS_ANY(fr)));
+  mus_buffer_to_frame((mus_any *)(XEN_TO_MUS_ANY(obj)), (mus_any *)(XEN_TO_MUS_ANY(fr)));
   return(fr);
 }
 
@@ -2670,21 +2670,21 @@ static XEN g_buffer_full_p(XEN obj)
   return(C_TO_XEN_BOOLEAN(mus_buffer_full_p(XEN_TO_MUS_ANY(obj))));
 }
 
-static XEN g_sample2buffer(XEN obj, XEN val)
+static XEN g_sample_to_buffer(XEN obj, XEN val)
 {
-  #define H_sample2buffer "(" S_sample2buffer " gen val): append val to current end of data in buffer"
-  XEN_ASSERT_TYPE((MUS_XEN_P(obj)) && (mus_buffer_p(XEN_TO_MUS_ANY(obj))), obj, XEN_ARG_1, S_sample2buffer, "a buffer gen");
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_2, S_sample2buffer, "a number");
-  return(C_TO_XEN_DOUBLE(mus_sample2buffer(XEN_TO_MUS_ANY(obj),
+  #define H_sample_to_buffer "(" S_sample_to_buffer " gen val): append val to current end of data in buffer"
+  XEN_ASSERT_TYPE((MUS_XEN_P(obj)) && (mus_buffer_p(XEN_TO_MUS_ANY(obj))), obj, XEN_ARG_1, S_sample_to_buffer, "a buffer gen");
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_2, S_sample_to_buffer, "a number");
+  return(C_TO_XEN_DOUBLE(mus_sample_to_buffer(XEN_TO_MUS_ANY(obj),
 					   XEN_TO_C_DOUBLE(val))));
 }
 
-static XEN g_frame2buffer(XEN obj, XEN val)
+static XEN g_frame_to_buffer(XEN obj, XEN val)
 {
-  #define H_frame2buffer "(" S_frame2buffer " gen f): append sample in frame f to end of data in buffer"
-  XEN_ASSERT_TYPE((MUS_XEN_P(obj)) && (mus_buffer_p(XEN_TO_MUS_ANY(obj))), obj, XEN_ARG_1, S_frame2buffer, "a buffer gen");
-  XEN_ASSERT_TYPE((MUS_XEN_P(val)) && (mus_frame_p(XEN_TO_MUS_ANY(val))), val, XEN_ARG_2, S_frame2buffer, "a frame");
-  mus_frame2buffer(XEN_TO_MUS_ANY(obj), XEN_TO_MUS_ANY(val));
+  #define H_frame_to_buffer "(" S_frame_to_buffer " gen f): append sample in frame f to end of data in buffer"
+  XEN_ASSERT_TYPE((MUS_XEN_P(obj)) && (mus_buffer_p(XEN_TO_MUS_ANY(obj))), obj, XEN_ARG_1, S_frame_to_buffer, "a buffer gen");
+  XEN_ASSERT_TYPE((MUS_XEN_P(val)) && (mus_frame_p(XEN_TO_MUS_ANY(val))), val, XEN_ARG_2, S_frame_to_buffer, "a frame");
+  mus_frame_to_buffer(XEN_TO_MUS_ANY(obj), XEN_TO_MUS_ANY(val));
   return(val);
 }
 
@@ -2857,9 +2857,9 @@ is the same in effect as make-oscil"
 	  Float data[2];
 	  data[0] = 0.0;
 	  data[1] = 1.0;
-	  wave = mus_partials2waveshape(1, data, wsize, (Float *)CALLOC(wsize, sizeof(Float)));
+	  wave = mus_partials_to_waveshape(1, data, wsize, (Float *)CALLOC(wsize, sizeof(Float)));
 	}
-      else wave = mus_partials2waveshape(npartials, partials, wsize, (Float *)CALLOC(wsize, sizeof(Float)));
+      else wave = mus_partials_to_waveshape(npartials, partials, wsize, (Float *)CALLOC(wsize, sizeof(Float)));
     }
   if (partials_allocated) {FREE(partials); partials = NULL;}
   ge = mus_make_waveshape(freq, 0.0, wave, wsize);
@@ -2890,57 +2890,57 @@ static XEN g_waveshape_p(XEN obj)
   return(C_TO_XEN_BOOLEAN((MUS_XEN_P(obj)) && (mus_waveshape_p(XEN_TO_MUS_ANY(obj)))));
 }
 
-static XEN g_partials2waveshape(XEN amps, XEN s_size)
+static XEN g_partials_to_waveshape(XEN amps, XEN s_size)
 {
-  #define H_partials2waveshape "(" S_partials2waveshape " partials (size 512)): \
+  #define H_partials_to_waveshape "(" S_partials_to_waveshape " partials (size 512)): \
 produce a waveshaping lookup table (suitable for the " S_waveshape " generator) \
 that will produce the harmonic spectrum given by the partials argument"
 
   int npartials, size, len = 0;
   Float *partials, *wave;
   XEN gwave;
-  XEN_ASSERT_TYPE(XEN_LIST_P_WITH_LENGTH(amps, len), amps, XEN_ARG_1, S_partials2waveshape, "a list");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(s_size), s_size, XEN_ARG_2, S_partials2waveshape, "an integer");
+  XEN_ASSERT_TYPE(XEN_LIST_P_WITH_LENGTH(amps, len), amps, XEN_ARG_1, S_partials_to_waveshape, "a list");
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(s_size), s_size, XEN_ARG_2, S_partials_to_waveshape, "an integer");
   if (XEN_INTEGER_P(s_size))
     size = XEN_TO_C_INT(s_size);
   else size = DEFAULT_TABLE_SIZE;
   if ((size <= 0) || (size > MAX_TABLE_SIZE))
-    XEN_OUT_OF_RANGE_ERROR(S_partials2waveshape, 2, s_size, "~A: bad size?");
+    XEN_OUT_OF_RANGE_ERROR(S_partials_to_waveshape, 2, s_size, "~A: bad size?");
   if (len == 0)
     XEN_ERROR(NO_DATA,
-	      XEN_LIST_3(C_TO_XEN_STRING(S_partials2waveshape), 
+	      XEN_LIST_3(C_TO_XEN_STRING(S_partials_to_waveshape), 
 			 C_TO_XEN_STRING("partials list empty?"), 
 			 amps));
   partials = list2partials(amps, &npartials);
-  wave = mus_partials2waveshape(npartials, partials, size, (Float *)CALLOC(size, sizeof(Float)));
+  wave = mus_partials_to_waveshape(npartials, partials, size, (Float *)CALLOC(size, sizeof(Float)));
   gwave = make_vct(size, wave);
   FREE(partials);
   return(xen_return_first(gwave, amps));
 }
 
-static XEN g_partials2polynomial(XEN amps, XEN ukind)
+static XEN g_partials_to_polynomial(XEN amps, XEN ukind)
 {
-  #define H_partials2polynomial "(" S_partials2polynomial " partials (kind 1)): \
+  #define H_partials_to_polynomial "(" S_partials_to_polynomial " partials (kind 1)): \
 produce a Chebyshev polynomial suitable for use with the " S_polynomial " generator \
 to create (via waveshaping) the harmonic spectrum described by the partials argument:\n\
-   (let ((v0 (" S_partials2polynomial " '(1 1 2 1)))\n\
+   (let ((v0 (" S_partials_to_polynomial " '(1 1 2 1)))\n\
          (os (" S_make_oscil ")))\n\
      (" S_polynomial " v0 (" S_oscil " os)))"
 
   int npartials, kind, len = 0;
   Float *partials, *wave;
-  XEN_ASSERT_TYPE(XEN_LIST_P_WITH_LENGTH(amps, len), amps, XEN_ARG_1, S_partials2polynomial, "a list");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ukind), ukind, XEN_ARG_2, S_partials2polynomial, "an integer");
+  XEN_ASSERT_TYPE(XEN_LIST_P_WITH_LENGTH(amps, len), amps, XEN_ARG_1, S_partials_to_polynomial, "a list");
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ukind), ukind, XEN_ARG_2, S_partials_to_polynomial, "an integer");
   if (XEN_INTEGER_P(ukind))
     kind = XEN_TO_C_INT(ukind);
   else kind = 1;
   if (len == 0)
     XEN_ERROR(NO_DATA, 
-	      XEN_LIST_3(C_TO_XEN_STRING(S_partials2polynomial), 
+	      XEN_LIST_3(C_TO_XEN_STRING(S_partials_to_polynomial), 
 			 C_TO_XEN_STRING("partials list empty?"), 
 			 amps));
   partials = list2partials(amps, &npartials);
-  wave = mus_partials2polynomial(npartials, partials, kind);
+  wave = mus_partials_to_polynomial(npartials, partials, kind);
   return(xen_return_first(make_vct(npartials, wave), amps));
 }
 
@@ -3368,28 +3368,28 @@ static XEN g_output_p(XEN obj)
   return(C_TO_XEN_BOOLEAN((MUS_XEN_P(obj)) && (mus_output_p(XEN_TO_MUS_ANY(obj)))));
 }
 
-static XEN g_file2sample_p(XEN obj) 
+static XEN g_file_to_sample_p(XEN obj) 
 {
-  #define H_file2sample_p "(" S_file2sample_p " gen): #t if gen is a " S_file2sample " generator"
-  return(C_TO_XEN_BOOLEAN((MUS_XEN_P(obj)) && (mus_file2sample_p(XEN_TO_MUS_ANY(obj)))));
+  #define H_file_to_sample_p "(" S_file_to_sample_p " gen): #t if gen is a " S_file_to_sample " generator"
+  return(C_TO_XEN_BOOLEAN((MUS_XEN_P(obj)) && (mus_file_to_sample_p(XEN_TO_MUS_ANY(obj)))));
 }
 
-static XEN g_file2frame_p(XEN obj) 
+static XEN g_file_to_frame_p(XEN obj) 
 {
-  #define H_file2frame_p "(" S_file2frame_p " gen): #t if gen is a " S_file2frame " generator"
-  return(C_TO_XEN_BOOLEAN((MUS_XEN_P(obj)) && (mus_file2frame_p(XEN_TO_MUS_ANY(obj)))));
+  #define H_file_to_frame_p "(" S_file_to_frame_p " gen): #t if gen is a " S_file_to_frame " generator"
+  return(C_TO_XEN_BOOLEAN((MUS_XEN_P(obj)) && (mus_file_to_frame_p(XEN_TO_MUS_ANY(obj)))));
 }
 
-static XEN g_sample2file_p(XEN obj) 
+static XEN g_sample_to_file_p(XEN obj) 
 {
-  #define H_sample2file_p "(" S_sample2file_p " gen): #t if gen is a " S_sample2file " generator"
-  return(C_TO_XEN_BOOLEAN((MUS_XEN_P(obj)) && (mus_sample2file_p(XEN_TO_MUS_ANY(obj)))));
+  #define H_sample_to_file_p "(" S_sample_to_file_p " gen): #t if gen is a " S_sample_to_file " generator"
+  return(C_TO_XEN_BOOLEAN((MUS_XEN_P(obj)) && (mus_sample_to_file_p(XEN_TO_MUS_ANY(obj)))));
 }
 
-static XEN g_frame2file_p(XEN obj) 
+static XEN g_frame_to_file_p(XEN obj) 
 {
-  #define H_frame2file_p "(" S_frame2file_p " gen): #t if gen is a " S_frame2file " generator"
-  return(C_TO_XEN_BOOLEAN((MUS_XEN_P(obj)) && (mus_frame2file_p(XEN_TO_MUS_ANY(obj)))));
+  #define H_frame_to_file_p "(" S_frame_to_file_p " gen): #t if gen is a " S_frame_to_file " generator"
+  return(C_TO_XEN_BOOLEAN((MUS_XEN_P(obj)) && (mus_frame_to_file_p(XEN_TO_MUS_ANY(obj)))));
 }
 
 static XEN g_in_any_1(char *caller, XEN frame, XEN chan, XEN inp)
@@ -3467,18 +3467,18 @@ static XEN g_mus_close(XEN ptr)
   return(C_TO_XEN_INT(mus_close_file((mus_any *)XEN_TO_MUS_ANY(ptr))));
 }
 
-static XEN g_make_file2sample(XEN name)
+static XEN g_make_file_to_sample(XEN name)
 {
-  #define H_make_file2sample "(" S_make_file2sample " filename): return an input generator reading 'filename' (a sound file)"
+  #define H_make_file_to_sample "(" S_make_file_to_sample " filename): return an input generator reading 'filename' (a sound file)"
   mus_xen *gn;
   mus_any *ge;
-  XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ONLY_ARG, S_make_file2sample, "a string");
+  XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ONLY_ARG, S_make_file_to_sample, "a string");
   if (!(mus_file_probe(XEN_TO_C_STRING(name))))
     XEN_ERROR(NO_SUCH_FILE,
-	      XEN_LIST_3(C_TO_XEN_STRING(S_make_file2sample),
+	      XEN_LIST_3(C_TO_XEN_STRING(S_make_file_to_sample),
 			 name,
 			 C_TO_XEN_STRING(strerror(errno))));
-  ge = mus_make_file2sample(XEN_TO_C_STRING(name));
+  ge = mus_make_file_to_sample(XEN_TO_C_STRING(name));
   if (ge)
     {
       gn = (mus_xen *)CALLOC(1, sizeof(mus_xen));
@@ -3489,25 +3489,25 @@ static XEN g_make_file2sample(XEN name)
   return(XEN_FALSE);
 }
 
-static XEN g_file2sample(XEN obj, XEN samp, XEN chan)
+static XEN g_file_to_sample(XEN obj, XEN samp, XEN chan)
 {
-  #define H_file2sample "(" S_file2sample " obj frame chan): sample value in sound file read by 'obj' in channel chan at frame"
+  #define H_file_to_sample "(" S_file_to_sample " obj frame chan): sample value in sound file read by 'obj' in channel chan at frame"
   int channel = 0;
-  XEN_ASSERT_TYPE((MUS_XEN_P(obj)) && (mus_input_p(XEN_TO_MUS_ANY(obj))), obj, XEN_ARG_1, S_file2sample, "an input gen");
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(samp), samp, XEN_ARG_2, S_file2sample, "a number");
+  XEN_ASSERT_TYPE((MUS_XEN_P(obj)) && (mus_input_p(XEN_TO_MUS_ANY(obj))), obj, XEN_ARG_1, S_file_to_sample, "an input gen");
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(samp), samp, XEN_ARG_2, S_file_to_sample, "a number");
   if (XEN_BOUND_P(chan))
     {
-      XEN_ASSERT_TYPE(XEN_INTEGER_P(chan), chan, XEN_ARG_3, S_file2sample, "an integer");
+      XEN_ASSERT_TYPE(XEN_INTEGER_P(chan), chan, XEN_ARG_3, S_file_to_sample, "an integer");
       channel = XEN_TO_C_INT(chan);
     }
-  return(C_TO_XEN_DOUBLE(mus_file2sample(XEN_TO_MUS_ANY(obj),
-					 XEN_TO_C_OFF_T_OR_ELSE(samp, 0),
-					 channel)));
+  return(C_TO_XEN_DOUBLE(mus_file_to_sample(XEN_TO_MUS_ANY(obj),
+					    XEN_TO_C_OFF_T_OR_ELSE(samp, 0),
+					    channel)));
 }
 
-static XEN g_make_sample2file(XEN name, XEN chans, XEN out_format, XEN out_type, XEN comment)
+static XEN g_make_sample_to_file(XEN name, XEN chans, XEN out_format, XEN out_type, XEN comment)
 {
-  #define H_make_sample2file "(" S_make_sample2file " filename chans data-format header-type comment): \
+  #define H_make_sample_to_file "(" S_make_sample_to_file " filename chans data-format header-type comment): \
 return an output generator writing the sound file 'filename' which is set up to have \
 'chans' channels of 'data-format' samples with a header of 'header-type'.  The latter \
 should be sndlib identifiers:\n\
@@ -3516,10 +3516,10 @@ should be sndlib identifiers:\n\
   mus_xen *gn;
   mus_any *rgen = NULL;
   int df, ht, chns;
-  XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ARG_1, S_make_sample2file, "a string");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(chans), chans, XEN_ARG_2, S_make_sample2file, "an integer");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(out_format), out_format, XEN_ARG_3, S_make_sample2file, "an integer (data format id)");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(out_type), out_type, XEN_ARG_4, S_make_sample2file, "an integer (header type id)");
+  XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ARG_1, S_make_sample_to_file, "a string");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(chans), chans, XEN_ARG_2, S_make_sample_to_file, "an integer");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(out_format), out_format, XEN_ARG_3, S_make_sample_to_file, "an integer (data format id)");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(out_type), out_type, XEN_ARG_4, S_make_sample_to_file, "an integer (header type id)");
   df = XEN_TO_C_INT(out_format);
   if (MUS_DATA_FORMAT_OK(df))
     {
@@ -3529,11 +3529,11 @@ should be sndlib identifiers:\n\
 	  chns = XEN_TO_C_INT(chans);
 	  if (chns > 0)
 	    {
-	      rgen = mus_make_sample2file_with_comment(XEN_TO_C_STRING(name),
-						       chns,
-						       df,
-						       ht,
-						       (XEN_STRING_P(comment)) ? XEN_TO_C_STRING(comment) : NULL);
+	      rgen = mus_make_sample_to_file_with_comment(XEN_TO_C_STRING(name),
+							  chns,
+							  df,
+							  ht,
+							  (XEN_STRING_P(comment)) ? XEN_TO_C_STRING(comment) : NULL);
 	      if (rgen)
 		{
 		  gn = (mus_xen *)CALLOC(1, sizeof(mus_xen));
@@ -3542,23 +3542,23 @@ should be sndlib identifiers:\n\
 		  return(xen_return_first(mus_xen_to_object(gn), name));
 		}
 	    }
-	  else XEN_OUT_OF_RANGE_ERROR(S_make_sample2file, 2, chans, "chans ~A <= 0?");
+	  else XEN_OUT_OF_RANGE_ERROR(S_make_sample_to_file, 2, chans, "chans ~A <= 0?");
 	}
-      else XEN_OUT_OF_RANGE_ERROR(S_make_sample2file, 4, out_type, "~A: invalid header type");
+      else XEN_OUT_OF_RANGE_ERROR(S_make_sample_to_file, 4, out_type, "~A: invalid header type");
     }
-  else XEN_OUT_OF_RANGE_ERROR(S_make_sample2file, 3, out_format, "~A: invalid data format");
+  else XEN_OUT_OF_RANGE_ERROR(S_make_sample_to_file, 3, out_format, "~A: invalid data format");
   return(XEN_FALSE);
 }
 
-static XEN g_continue_sample2file(XEN name)
+static XEN g_continue_sample_to_file(XEN name)
 {
-  #define H_continue_sample2file "(" S_continue_sample2file " filename): return an output generator \
-that reopens an existing sound file 'filename' ready for output via " S_sample2file
+  #define H_continue_sample_to_file "(" S_continue_sample_to_file " filename): return an output generator \
+that reopens an existing sound file 'filename' ready for output via " S_sample_to_file
 
   mus_xen *gn;
   mus_any *rgen = NULL;
-  XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ARG_1, S_continue_sample2file, "a string");
-  rgen = mus_continue_sample2file(XEN_TO_C_STRING(name));
+  XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ARG_1, S_continue_sample_to_file, "a string");
+  rgen = mus_continue_sample_to_file(XEN_TO_C_STRING(name));
   if (rgen)
     {
       gn = (mus_xen *)CALLOC(1, sizeof(mus_xen));
@@ -3569,33 +3569,33 @@ that reopens an existing sound file 'filename' ready for output via " S_sample2f
   return(XEN_FALSE);
 }
 
-static XEN g_sample2file(XEN obj, XEN samp, XEN chan, XEN val)
+static XEN g_sample_to_file(XEN obj, XEN samp, XEN chan, XEN val)
 {
-  #define H_sample2file "(" S_sample2file " obj samp chan val): add val to the output stream \
+  #define H_sample_to_file "(" S_sample_to_file " obj samp chan val): add val to the output stream \
 handled by the output generator 'obj', in channel 'chan' at frame 'samp'"
 
-  XEN_ASSERT_TYPE((MUS_XEN_P(obj)) && (mus_output_p(XEN_TO_MUS_ANY(obj))), obj, XEN_ARG_1, S_sample2file, "an output gen");
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(samp), samp, XEN_ARG_2, S_sample2file, "a number");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(chan), chan, XEN_ARG_3, S_sample2file, "an integer");
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_4, S_sample2file, "a number");
-  return(C_TO_XEN_DOUBLE(mus_sample2file(XEN_TO_MUS_ANY(obj),
-					 XEN_TO_C_OFF_T_OR_ELSE(samp, 0),
-					 XEN_TO_C_INT(chan),
-					 XEN_TO_C_DOUBLE(val))));
+  XEN_ASSERT_TYPE((MUS_XEN_P(obj)) && (mus_output_p(XEN_TO_MUS_ANY(obj))), obj, XEN_ARG_1, S_sample_to_file, "an output gen");
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(samp), samp, XEN_ARG_2, S_sample_to_file, "a number");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(chan), chan, XEN_ARG_3, S_sample_to_file, "an integer");
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_4, S_sample_to_file, "a number");
+  return(C_TO_XEN_DOUBLE(mus_sample_to_file(XEN_TO_MUS_ANY(obj),
+					    XEN_TO_C_OFF_T_OR_ELSE(samp, 0),
+					    XEN_TO_C_INT(chan),
+					    XEN_TO_C_DOUBLE(val))));
 }
 
-static XEN g_make_file2frame(XEN name)
+static XEN g_make_file_to_frame(XEN name)
 {
-  #define H_make_file2frame "(" S_make_file2frame " filename): return an input generator reading 'filename' (a sound file)"
+  #define H_make_file_to_frame "(" S_make_file_to_frame " filename): return an input generator reading 'filename' (a sound file)"
   mus_xen *gn;
   mus_any *ge;
-  XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ONLY_ARG, S_make_file2frame, "a string");
+  XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ONLY_ARG, S_make_file_to_frame, "a string");
   if (!(mus_file_probe(XEN_TO_C_STRING(name))))
     XEN_ERROR(NO_SUCH_FILE,
-	      XEN_LIST_3(C_TO_XEN_STRING(S_make_file2frame),
+	      XEN_LIST_3(C_TO_XEN_STRING(S_make_file_to_frame),
 			 name,
 			 C_TO_XEN_STRING(strerror(errno))));
-  ge = mus_make_file2frame(XEN_TO_C_STRING(name));
+  ge = mus_make_file_to_frame(XEN_TO_C_STRING(name));
   if (ge)
     {
       gn = (mus_xen *)CALLOC(1, sizeof(mus_xen));
@@ -3606,24 +3606,24 @@ static XEN g_make_file2frame(XEN name)
   return(XEN_FALSE);
 }
 
-static XEN g_file2frame(XEN obj, XEN samp, XEN outfr)
+static XEN g_file_to_frame(XEN obj, XEN samp, XEN outfr)
 {
-  #define H_file2frame "(" S_file2frame " obj samp outf): frame of samples at frame 'samp' in sound file read by 'obj'"
+  #define H_file_to_frame "(" S_file_to_frame " obj samp outf): frame of samples at frame 'samp' in sound file read by 'obj'"
   mus_any *res = NULL;
-  XEN_ASSERT_TYPE((MUS_XEN_P(obj)) && (mus_input_p(XEN_TO_MUS_ANY(obj))), obj, XEN_ARG_1, S_file2frame, "an input gen");
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(samp), samp, XEN_ARG_2, S_file2frame, "a number");
+  XEN_ASSERT_TYPE((MUS_XEN_P(obj)) && (mus_input_p(XEN_TO_MUS_ANY(obj))), obj, XEN_ARG_1, S_file_to_frame, "an input gen");
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(samp), samp, XEN_ARG_2, S_file_to_frame, "a number");
   if ((MUS_XEN_P(outfr)) && 
       (mus_frame_p(XEN_TO_MUS_ANY(outfr)))) 
     res = (mus_any *)XEN_TO_MUS_ANY(outfr);
-  return(g_wrap_frame(mus_file2frame(XEN_TO_MUS_ANY(obj),
-				     XEN_TO_C_OFF_T_OR_ELSE(samp, 0),
-				     res),
+  return(g_wrap_frame(mus_file_to_frame(XEN_TO_MUS_ANY(obj),
+					XEN_TO_C_OFF_T_OR_ELSE(samp, 0),
+					res),
 		      (res) ? true : false));
 }
 
-static XEN g_make_frame2file(XEN name, XEN chans, XEN out_format, XEN out_type)
+static XEN g_make_frame_to_file(XEN name, XEN chans, XEN out_format, XEN out_type)
 {
-  #define H_make_frame2file "(" S_make_frame2file " filename chans data-format header-type): \
+  #define H_make_frame_to_file "(" S_make_frame_to_file " filename chans data-format header-type): \
 return an output generator writing the sound file 'filename' which is set up to have \
 'chans' channels of 'data-format' samples with a header of 'header-type'.  The latter \
 should be sndlib identifiers:\n\
@@ -3631,14 +3631,14 @@ should be sndlib identifiers:\n\
 
   mus_xen *gn;
   mus_any *fgen = NULL;
-  XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ARG_1, S_make_frame2file, "a string");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(chans), chans, XEN_ARG_2, S_make_frame2file, "an integer");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(out_format), out_format, XEN_ARG_3, S_make_frame2file, "an integer (data format id)");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(out_type), out_type, XEN_ARG_4, S_make_frame2file, "an integer (header-type id)");
-  fgen = mus_make_frame2file(XEN_TO_C_STRING(name),
-			     XEN_TO_C_INT(chans),
-			     XEN_TO_C_INT(out_format),
-			     XEN_TO_C_INT(out_type));
+  XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ARG_1, S_make_frame_to_file, "a string");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(chans), chans, XEN_ARG_2, S_make_frame_to_file, "an integer");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(out_format), out_format, XEN_ARG_3, S_make_frame_to_file, "an integer (data format id)");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(out_type), out_type, XEN_ARG_4, S_make_frame_to_file, "an integer (header-type id)");
+  fgen = mus_make_frame_to_file(XEN_TO_C_STRING(name),
+				XEN_TO_C_INT(chans),
+				XEN_TO_C_INT(out_format),
+				XEN_TO_C_INT(out_type));
   if (fgen)
     {
       gn = (mus_xen *)CALLOC(1, sizeof(mus_xen));
@@ -3649,82 +3649,82 @@ should be sndlib identifiers:\n\
   return(XEN_FALSE);
 }
 
-static XEN g_frame2file(XEN obj, XEN samp, XEN val)
+static XEN g_frame_to_file(XEN obj, XEN samp, XEN val)
 {
-  #define H_frame2file "(" S_frame2file " obj samp val): add frame 'val' to the output stream \
+  #define H_frame_to_file "(" S_frame_to_file " obj samp val): add frame 'val' to the output stream \
 handled by the output generator 'obj' at frame 'samp'"
 
-  XEN_ASSERT_TYPE((MUS_XEN_P(obj)) && (mus_output_p(XEN_TO_MUS_ANY(obj))), obj, XEN_ARG_1, S_frame2file, "an output gen");
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(samp), samp, XEN_ARG_2, S_frame2file, "a number");
-  XEN_ASSERT_TYPE((MUS_XEN_P(val)) && (mus_frame_p(XEN_TO_MUS_ANY(val))), val, XEN_ARG_3, S_frame2file, "a frame");
-  return(g_wrap_frame(mus_frame2file(XEN_TO_MUS_ANY(obj),
-				     XEN_TO_C_OFF_T_OR_ELSE(samp, 0),
-				     (mus_any *)XEN_TO_MUS_ANY(val)),
+  XEN_ASSERT_TYPE((MUS_XEN_P(obj)) && (mus_output_p(XEN_TO_MUS_ANY(obj))), obj, XEN_ARG_1, S_frame_to_file, "an output gen");
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(samp), samp, XEN_ARG_2, S_frame_to_file, "a number");
+  XEN_ASSERT_TYPE((MUS_XEN_P(val)) && (mus_frame_p(XEN_TO_MUS_ANY(val))), val, XEN_ARG_3, S_frame_to_file, "a frame");
+  return(g_wrap_frame(mus_frame_to_file(XEN_TO_MUS_ANY(obj),
+					XEN_TO_C_OFF_T_OR_ELSE(samp, 0),
+					(mus_any *)XEN_TO_MUS_ANY(val)),
 		      true));
 }
 
-static XEN g_array2file(XEN filename, XEN data, XEN len, XEN srate, XEN channels)
+static XEN g_array_to_file(XEN filename, XEN data, XEN len, XEN srate, XEN channels)
 {
-  #define H_array2file "(" S_array2file " filename data len srate channels): write 'data', \
+  #define H_array_to_file "(" S_array_to_file " filename data len srate channels): write 'data', \
 a vct of interleaved samples, to the sound file 'filename' set up to have the given \
 srate and channels.  'len' samples are written."
 
   int olen, samps;
   vct *v;
-  XEN_ASSERT_TYPE(XEN_STRING_P(filename), filename, XEN_ARG_1, S_array2file, "a string");
-  XEN_ASSERT_TYPE(VCT_P(data), data, XEN_ARG_2, S_array2file, "a vct");
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(len), len, XEN_ARG_3, S_array2file, "a number");
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(srate), srate, XEN_ARG_4, S_array2file, "a number");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(channels), channels, XEN_ARG_5, S_array2file, "an integer");
+  XEN_ASSERT_TYPE(XEN_STRING_P(filename), filename, XEN_ARG_1, S_array_to_file, "a string");
+  XEN_ASSERT_TYPE(VCT_P(data), data, XEN_ARG_2, S_array_to_file, "a vct");
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(len), len, XEN_ARG_3, S_array_to_file, "a number");
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(srate), srate, XEN_ARG_4, S_array_to_file, "a number");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(channels), channels, XEN_ARG_5, S_array_to_file, "an integer");
   v = TO_VCT(data);
   samps = XEN_TO_C_INT_OR_ELSE(len, 1);
   if (samps <= 0)
-    XEN_OUT_OF_RANGE_ERROR(S_array2file, 3, len, "samples ~A <= 0?");
+    XEN_OUT_OF_RANGE_ERROR(S_array_to_file, 3, len, "samples ~A <= 0?");
   if (samps > v->length)
     samps = v->length;
-  olen = mus_fltarray2file(XEN_TO_C_STRING(filename),
-			   v->data,
-			   samps,
-			   XEN_TO_C_INT_OR_ELSE(srate, 0),
-			   XEN_TO_C_INT(channels));
+  olen = mus_fltarray_to_file(XEN_TO_C_STRING(filename),
+			      v->data,
+			      samps,
+			      XEN_TO_C_INT_OR_ELSE(srate, 0),
+			      XEN_TO_C_INT(channels));
   return(xen_return_first(C_TO_XEN_INT(olen), filename));
 }
 
-static XEN g_file2array(XEN filename, XEN chan, XEN start, XEN samples, XEN data)
+static XEN g_file_to_array(XEN filename, XEN chan, XEN start, XEN samples, XEN data)
 {
-  #define H_file2array "(" S_file2array " filename chan start samples data): read the sound file \
+  #define H_file_to_array "(" S_file_to_array " filename chan start samples data): read the sound file \
 'filename' placing samples from channel 'chan' into the vct 'data' starting in the file \
 at frame 'start' and reading 'samples' samples altogether."
 
   int chn, samps;
   vct *v;
   char *name;
-  XEN_ASSERT_TYPE(XEN_STRING_P(filename), filename, XEN_ARG_1, S_file2array, "a string");
+  XEN_ASSERT_TYPE(XEN_STRING_P(filename), filename, XEN_ARG_1, S_file_to_array, "a string");
   name = XEN_TO_C_STRING(filename);
   if (!(mus_file_probe(name)))
     XEN_ERROR(NO_SUCH_FILE,
-	      XEN_LIST_3(C_TO_XEN_STRING(S_file2array),
+	      XEN_LIST_3(C_TO_XEN_STRING(S_file_to_array),
 			 filename,
 			 C_TO_XEN_STRING(strerror(errno))));
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(chan), chan, XEN_ARG_2, S_file2array, "an integer");
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(start), start, XEN_ARG_3, S_file2array, "a number");
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(samples), samples, XEN_ARG_4, S_file2array, "a number");
-  XEN_ASSERT_TYPE((VCT_P(data)), data, XEN_ARG_5, S_file2array, "a vct");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(chan), chan, XEN_ARG_2, S_file_to_array, "an integer");
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(start), start, XEN_ARG_3, S_file_to_array, "a number");
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(samples), samples, XEN_ARG_4, S_file_to_array, "a number");
+  XEN_ASSERT_TYPE((VCT_P(data)), data, XEN_ARG_5, S_file_to_array, "a vct");
   v = TO_VCT(data);
   samps = XEN_TO_C_INT_OR_ELSE(samples, 1);
   if (samps <= 0) 
-    XEN_OUT_OF_RANGE_ERROR(S_file2array, 4, samples, "samples ~A <= 0?");
+    XEN_OUT_OF_RANGE_ERROR(S_file_to_array, 4, samples, "samples ~A <= 0?");
   chn = XEN_TO_C_INT(chan);
   if ((chn < 0) || (chn > mus_sound_chans(name)))
     XEN_ERROR(NO_SUCH_CHANNEL,
-	      XEN_LIST_3(C_TO_XEN_STRING(S_file2array),
+	      XEN_LIST_3(C_TO_XEN_STRING(S_file_to_array),
 			 C_TO_XEN_STRING("invalid chan: ~A, ~A has ~A chans"),
 			 XEN_LIST_3(chan,
 				    filename,
 				    C_TO_XEN_INT(mus_sound_chans(name)))));
   if (mus_sound_chans(name) <= 0)
     XEN_ERROR(BAD_HEADER,
-	      XEN_LIST_3(C_TO_XEN_STRING(S_file2array),
+	      XEN_LIST_3(C_TO_XEN_STRING(S_file_to_array),
 			 filename,
 			 C_TO_XEN_STRING("chans <= 0")));
   if (samps > v->length)
@@ -4631,7 +4631,7 @@ mix infile into outfile starting at outloc in outfile and inloc in infile \
 mixing 'frames' frames into 'outfile'.  frames defaults to the length of infile. If mixer, \
 use it to scale the various channels; if envs (an array of envelope generators), use \
 it in conjunction with mixer to scale/envelope all the various ins and outs. \
-'outfile' can also be a " S_frame2file " generator, and 'infile' can be a " S_file2frame " generator."
+'outfile' can also be a " S_frame_to_file " generator, and 'infile' can be a " S_file_to_frame " generator."
 
   mus_any *outf = NULL, *inf = NULL;
   mus_any *mx1 = NULL;
@@ -4732,9 +4732,9 @@ it in conjunction with mixer to scale/envelope all the various ins and outs. \
   else
     {
       if (infile)
-	inf = mus_make_file2frame(infile);
+	inf = mus_make_file_to_frame(infile);
       if (outfile)
-	outf = mus_continue_sample2file(outfile);
+	outf = mus_continue_sample_to_file(outfile);
       mus_mix_with_reader_and_writer(outf, inf, ostart, osamps, istart, mx1, envs1);
       if (infile)
 	mus_free((mus_any *)inf);
@@ -4755,12 +4755,12 @@ XEN_NARGIFY_0(g_srate_w, g_srate)
 XEN_NARGIFY_1(g_set_srate_w, g_set_srate)
 XEN_NARGIFY_0(g_array_print_length_w, g_array_print_length)
 XEN_NARGIFY_1(g_set_array_print_length_w, g_set_array_print_length)
-XEN_NARGIFY_1(g_radians2hz_w, g_radians2hz)
-XEN_NARGIFY_1(g_hz2radians_w, g_hz2radians)
-XEN_NARGIFY_1(g_radians2degrees_w, g_radians2degrees)
-XEN_NARGIFY_1(g_degrees2radians_w, g_degrees2radians)
-XEN_NARGIFY_1(g_db2linear_w, g_db2linear)
-XEN_NARGIFY_1(g_linear2db_w, g_linear2db)
+XEN_NARGIFY_1(g_radians_to_hz_w, g_radians_to_hz)
+XEN_NARGIFY_1(g_hz_to_radians_w, g_hz_to_radians)
+XEN_NARGIFY_1(g_radians_to_degrees_w, g_radians_to_degrees)
+XEN_NARGIFY_1(g_degrees_to_radians_w, g_degrees_to_radians)
+XEN_NARGIFY_1(g_db_to_linear_w, g_db_to_linear)
+XEN_NARGIFY_1(g_linear_to_db_w, g_linear_to_db)
 XEN_NARGIFY_2(g_ring_modulate_w, g_ring_modulate)
 XEN_NARGIFY_3(g_amplitude_modulate_w, g_amplitude_modulate)
 XEN_NARGIFY_2(g_contrast_enhancement_w, g_contrast_enhancement)
@@ -4772,8 +4772,8 @@ XEN_ARGIFY_3(g_make_fft_window_w, g_make_fft_window)
 XEN_ARGIFY_4(g_mus_fft_w, g_mus_fft)
 XEN_ARGIFY_4(g_spectrum_w, g_spectrum)
 XEN_ARGIFY_3(g_convolution_w, g_convolution)
-XEN_NARGIFY_2(g_rectangular2polar_w, g_rectangular2polar)
-XEN_NARGIFY_2(g_polar2rectangular_w, g_polar2rectangular)
+XEN_NARGIFY_2(g_rectangular_to_polar_w, g_rectangular_to_polar)
+XEN_NARGIFY_2(g_polar_to_rectangular_w, g_polar_to_rectangular)
 XEN_ARGIFY_3(g_array_interp_w, g_array_interp)
 XEN_NARGIFY_2(g_sum_of_sines_w, g_sum_of_sines)
 XEN_NARGIFY_1(g_mus_inspect_w, g_mus_inspect)
@@ -4831,8 +4831,8 @@ XEN_NARGIFY_1(g_mus_set_rand_seed_w, g_mus_set_rand_seed)
 XEN_NARGIFY_1(g_table_lookup_p_w, g_table_lookup_p)
 XEN_ARGIFY_8(g_make_table_lookup_w, g_make_table_lookup)
 XEN_ARGIFY_2(g_table_lookup_w, g_table_lookup)
-XEN_ARGIFY_3(g_partials2wave_w, g_partials2wave)
-XEN_ARGIFY_3(g_phasepartials2wave_w, g_phasepartials2wave)
+XEN_ARGIFY_3(g_partials_to_wave_w, g_partials_to_wave)
+XEN_ARGIFY_3(g_phase_partials_to_wave_w, g_phase_partials_to_wave)
 XEN_ARGIFY_6(g_make_sawtooth_wave_w, g_make_sawtooth_wave)
 XEN_ARGIFY_2(g_sawtooth_wave_w, g_sawtooth_wave)
 XEN_NARGIFY_1(g_sawtooth_wave_p_w, g_sawtooth_wave_p)
@@ -4892,26 +4892,26 @@ XEN_NARGIFY_1(g_mixer_p_w, g_mixer_p)
 XEN_ARGIFY_3(g_mixer_multiply_w, g_mixer_multiply)
 XEN_NARGIFY_3(g_mixer_ref_w, g_mixer_ref)
 XEN_NARGIFY_4(g_set_mixer_ref_w, g_set_mixer_ref)
-XEN_NARGIFY_2(g_frame2sample_w, g_frame2sample)
-XEN_NARGIFY_1(g_frame2list_w, g_frame2list)
-XEN_ARGIFY_3(g_frame2frame_w, g_frame2frame)
-XEN_ARGIFY_3(g_sample2frame_w, g_sample2frame)
+XEN_NARGIFY_2(g_frame_to_sample_w, g_frame_to_sample)
+XEN_NARGIFY_1(g_frame_to_list_w, g_frame_to_list)
+XEN_ARGIFY_3(g_frame_to_frame_w, g_frame_to_frame)
+XEN_ARGIFY_3(g_sample_to_frame_w, g_sample_to_frame)
 XEN_ARGIFY_4(g_make_buffer_w, g_make_buffer)
 XEN_NARGIFY_1(g_buffer_p_w, g_buffer_p)
 XEN_NARGIFY_1(g_buffer_empty_p_w, g_buffer_empty_p)
 XEN_NARGIFY_1(g_buffer_full_p_w, g_buffer_full_p)
-XEN_NARGIFY_1(g_buffer2sample_w, g_buffer2sample)
-XEN_ARGIFY_2(g_buffer2frame_w, g_buffer2frame)
-XEN_NARGIFY_2(g_sample2buffer_w, g_sample2buffer)
-XEN_NARGIFY_2(g_frame2buffer_w, g_frame2buffer)
+XEN_NARGIFY_1(g_buffer_to_sample_w, g_buffer_to_sample)
+XEN_ARGIFY_2(g_buffer_to_frame_w, g_buffer_to_frame)
+XEN_NARGIFY_2(g_sample_to_buffer_w, g_sample_to_buffer)
+XEN_NARGIFY_2(g_frame_to_buffer_w, g_frame_to_buffer)
 XEN_ARGIFY_8(g_make_wave_train_w, g_make_wave_train)
 XEN_ARGIFY_2(g_wave_train_w, g_wave_train)
 XEN_NARGIFY_1(g_wave_train_p_w, g_wave_train_p)
 XEN_ARGIFY_8(g_make_waveshape_w, g_make_waveshape)
 XEN_ARGIFY_3(g_waveshape_w, g_waveshape)
 XEN_NARGIFY_1(g_waveshape_p_w, g_waveshape_p)
-XEN_ARGIFY_2(g_partials2waveshape_w, g_partials2waveshape)
-XEN_ARGIFY_2(g_partials2polynomial_w, g_partials2polynomial)
+XEN_ARGIFY_2(g_partials_to_waveshape_w, g_partials_to_waveshape)
+XEN_ARGIFY_2(g_partials_to_polynomial_w, g_partials_to_polynomial)
 XEN_VARGIFY(g_make_sine_summation_w, g_make_sine_summation)
 XEN_ARGIFY_2(g_sine_summation_w, g_sine_summation)
 XEN_NARGIFY_1(g_sine_summation_p_w, g_sine_summation_p)
@@ -4932,19 +4932,19 @@ XEN_NARGIFY_1(g_env_w, g_env)
 XEN_NARGIFY_1(g_restart_env_w, g_restart_env)
 XEN_VARGIFY(g_make_env_w, g_make_env)
 XEN_NARGIFY_2(g_env_interp_w, g_env_interp)
-XEN_NARGIFY_1(g_file2sample_p_w, g_file2sample_p)
-XEN_NARGIFY_1(g_make_file2sample_w, g_make_file2sample)
-XEN_ARGIFY_3(g_file2sample_w, g_file2sample)
-XEN_NARGIFY_1(g_file2frame_p_w, g_file2frame_p)
-XEN_NARGIFY_1(g_make_file2frame_w, g_make_file2frame)
-XEN_ARGIFY_3(g_file2frame_w, g_file2frame)
-XEN_NARGIFY_1(g_sample2file_p_w, g_sample2file_p)
-XEN_ARGIFY_5(g_make_sample2file_w, g_make_sample2file)
-XEN_NARGIFY_1(g_continue_sample2file_w, g_continue_sample2file)
-XEN_NARGIFY_4(g_sample2file_w, g_sample2file)
-XEN_NARGIFY_1(g_frame2file_p_w, g_frame2file_p)
-XEN_NARGIFY_3(g_frame2file_w, g_frame2file)
-XEN_NARGIFY_4(g_make_frame2file_w, g_make_frame2file)
+XEN_NARGIFY_1(g_file_to_sample_p_w, g_file_to_sample_p)
+XEN_NARGIFY_1(g_make_file_to_sample_w, g_make_file_to_sample)
+XEN_ARGIFY_3(g_file_to_sample_w, g_file_to_sample)
+XEN_NARGIFY_1(g_file_to_frame_p_w, g_file_to_frame_p)
+XEN_NARGIFY_1(g_make_file_to_frame_w, g_make_file_to_frame)
+XEN_ARGIFY_3(g_file_to_frame_w, g_file_to_frame)
+XEN_NARGIFY_1(g_sample_to_file_p_w, g_sample_to_file_p)
+XEN_ARGIFY_5(g_make_sample_to_file_w, g_make_sample_to_file)
+XEN_NARGIFY_1(g_continue_sample_to_file_w, g_continue_sample_to_file)
+XEN_NARGIFY_4(g_sample_to_file_w, g_sample_to_file)
+XEN_NARGIFY_1(g_frame_to_file_p_w, g_frame_to_file_p)
+XEN_NARGIFY_3(g_frame_to_file_w, g_frame_to_file)
+XEN_NARGIFY_4(g_make_frame_to_file_w, g_make_frame_to_file)
 XEN_NARGIFY_1(g_input_p_w, g_input_p)
 XEN_NARGIFY_1(g_output_p_w, g_output_p)
 XEN_NARGIFY_3(g_in_any_w, g_in_any)
@@ -4955,8 +4955,8 @@ XEN_NARGIFY_3(g_outa_w, g_outa)
 XEN_NARGIFY_3(g_outb_w, g_outb)
 XEN_NARGIFY_3(g_outc_w, g_outc)
 XEN_NARGIFY_3(g_outd_w, g_outd)
-XEN_NARGIFY_5(g_array2file_w, g_array2file)
-XEN_NARGIFY_5(g_file2array_w, g_file2array)
+XEN_NARGIFY_5(g_array_to_file_w, g_array_to_file)
+XEN_NARGIFY_5(g_file_to_array_w, g_file_to_array)
 XEN_NARGIFY_1(g_mus_close_w, g_mus_close)
 XEN_NARGIFY_0(g_mus_file_buffer_size_w, g_mus_file_buffer_size)
 XEN_NARGIFY_1(g_mus_set_file_buffer_size_w, g_mus_set_file_buffer_size)
@@ -5010,12 +5010,12 @@ XEN_ARGIFY_7(g_mus_mix_w, g_mus_mix)
 #define g_set_srate_w g_set_srate
 #define g_array_print_length_w g_array_print_length
 #define g_set_array_print_length_w g_set_array_print_length
-#define g_radians2hz_w g_radians2hz
-#define g_hz2radians_w g_hz2radians
-#define g_radians2degrees_w g_radians2degrees
-#define g_degrees2radians_w g_degrees2radians
-#define g_db2linear_w g_db2linear
-#define g_linear2db_w g_linear2db
+#define g_radians_to_hz_w g_radians_to_hz
+#define g_hz_to_radians_w g_hz_to_radians
+#define g_radians_to_degrees_w g_radians_to_degrees
+#define g_degrees_to_radians_w g_degrees_to_radians
+#define g_db_to_linear_w g_db_to_linear
+#define g_linear_to_db_w g_linear_to_db
 #define g_ring_modulate_w g_ring_modulate
 #define g_amplitude_modulate_w g_amplitude_modulate
 #define g_contrast_enhancement_w g_contrast_enhancement
@@ -5027,8 +5027,8 @@ XEN_ARGIFY_7(g_mus_mix_w, g_mus_mix)
 #define g_mus_fft_w g_mus_fft
 #define g_spectrum_w g_spectrum
 #define g_convolution_w g_convolution
-#define g_rectangular2polar_w g_rectangular2polar
-#define g_polar2rectangular_w g_polar2rectangular
+#define g_rectangular_to_polar_w g_rectangular_to_polar
+#define g_polar_to_rectangular_w g_polar_to_rectangular
 #define g_array_interp_w g_array_interp
 #define g_sum_of_sines_w g_sum_of_sines
 #define g_mus_inspect_w g_mus_inspect
@@ -5086,8 +5086,8 @@ XEN_ARGIFY_7(g_mus_mix_w, g_mus_mix)
 #define g_table_lookup_p_w g_table_lookup_p
 #define g_make_table_lookup_w g_make_table_lookup
 #define g_table_lookup_w g_table_lookup
-#define g_partials2wave_w g_partials2wave
-#define g_phasepartials2wave_w g_phasepartials2wave
+#define g_partials_to_wave_w g_partials_to_wave
+#define g_phase_partials_to_wave_w g_phase_partials_to_wave
 #define g_make_sawtooth_wave_w g_make_sawtooth_wave
 #define g_sawtooth_wave_w g_sawtooth_wave
 #define g_sawtooth_wave_p_w g_sawtooth_wave_p
@@ -5147,26 +5147,26 @@ XEN_ARGIFY_7(g_mus_mix_w, g_mus_mix)
 #define g_mixer_multiply_w g_mixer_multiply
 #define g_mixer_ref_w g_mixer_ref
 #define g_set_mixer_ref_w g_set_mixer_ref
-#define g_frame2sample_w g_frame2sample
-#define g_frame2list_w g_frame2list
-#define g_frame2frame_w g_frame2frame
-#define g_sample2frame_w g_sample2frame
+#define g_frame_to_sample_w g_frame_to_sample
+#define g_frame_to_list_w g_frame_to_list
+#define g_frame_to_frame_w g_frame_to_frame
+#define g_sample_to_frame_w g_sample_to_frame
 #define g_make_buffer_w g_make_buffer
 #define g_buffer_p_w g_buffer_p
 #define g_buffer_empty_p_w g_buffer_empty_p
 #define g_buffer_full_p_w g_buffer_full_p
-#define g_buffer2sample_w g_buffer2sample
-#define g_buffer2frame_w g_buffer2frame
-#define g_sample2buffer_w g_sample2buffer
-#define g_frame2buffer_w g_frame2buffer
+#define g_buffer_to_sample_w g_buffer_to_sample
+#define g_buffer_to_frame_w g_buffer_to_frame
+#define g_sample_to_buffer_w g_sample_to_buffer
+#define g_frame_to_buffer_w g_frame_to_buffer
 #define g_make_wave_train_w g_make_wave_train
 #define g_wave_train_w g_wave_train
 #define g_wave_train_p_w g_wave_train_p
 #define g_make_waveshape_w g_make_waveshape
 #define g_waveshape_w g_waveshape
 #define g_waveshape_p_w g_waveshape_p
-#define g_partials2waveshape_w g_partials2waveshape
-#define g_partials2polynomial_w g_partials2polynomial
+#define g_partials_to_waveshape_w g_partials_to_waveshape
+#define g_partials_to_polynomial_w g_partials_to_polynomial
 #define g_make_sine_summation_w g_make_sine_summation
 #define g_sine_summation_w g_sine_summation
 #define g_sine_summation_p_w g_sine_summation_p
@@ -5187,19 +5187,19 @@ XEN_ARGIFY_7(g_mus_mix_w, g_mus_mix)
 #define g_restart_env_w g_restart_env
 #define g_make_env_w g_make_env
 #define g_env_interp_w g_env_interp
-#define g_file2sample_p_w g_file2sample_p
-#define g_make_file2sample_w g_make_file2sample
-#define g_file2sample_w g_file2sample
-#define g_file2frame_p_w g_file2frame_p
-#define g_make_file2frame_w g_make_file2frame
-#define g_file2frame_w g_file2frame
-#define g_sample2file_p_w g_sample2file_p
-#define g_make_sample2file_w g_make_sample2file
-#define g_continue_sample2file_w g_continue_sample2file
-#define g_sample2file_w g_sample2file
-#define g_frame2file_p_w g_frame2file_p
-#define g_frame2file_w g_frame2file
-#define g_make_frame2file_w g_make_frame2file
+#define g_file_to_sample_p_w g_file_to_sample_p
+#define g_make_file_to_sample_w g_make_file_to_sample
+#define g_file_to_sample_w g_file_to_sample
+#define g_file_to_frame_p_w g_file_to_frame_p
+#define g_make_file_to_frame_w g_make_file_to_frame
+#define g_file_to_frame_w g_file_to_frame
+#define g_sample_to_file_p_w g_sample_to_file_p
+#define g_make_sample_to_file_w g_make_sample_to_file
+#define g_continue_sample_to_file_w g_continue_sample_to_file
+#define g_sample_to_file_w g_sample_to_file
+#define g_frame_to_file_p_w g_frame_to_file_p
+#define g_frame_to_file_w g_frame_to_file
+#define g_make_frame_to_file_w g_make_frame_to_file
 #define g_input_p_w g_input_p
 #define g_output_p_w g_output_p
 #define g_in_any_w g_in_any
@@ -5210,8 +5210,8 @@ XEN_ARGIFY_7(g_mus_mix_w, g_mus_mix)
 #define g_outb_w g_outb
 #define g_outc_w g_outc
 #define g_outd_w g_outd
-#define g_array2file_w g_array2file
-#define g_file2array_w g_file2array
+#define g_array_to_file_w g_array_to_file
+#define g_file_to_array_w g_file_to_array
 #define g_mus_close_w g_mus_close
 #define g_mus_file_buffer_size_w g_mus_file_buffer_size
 #define g_mus_set_file_buffer_size_w g_mus_set_file_buffer_size
@@ -5318,13 +5318,13 @@ void mus_xen_init(void)
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_array_print_length, g_array_print_length_w, H_mus_array_print_length,
 				   S_setB S_mus_array_print_length, g_set_array_print_length_w,  0, 0, 1, 0);
 
-  XEN_DEFINE_PROCEDURE(S_radians_hz,           g_radians2hz_w,           1, 0, 0, H_radians_hz);
-  XEN_DEFINE_PROCEDURE(S_hz_radians,           g_hz2radians_w,           1, 0, 0, H_hz_radians);
-  XEN_DEFINE_PROCEDURE(S_in_hz,                g_hz2radians_w,           1, 0, 0, H_in_hz);
-  XEN_DEFINE_PROCEDURE(S_radians_degrees,      g_radians2degrees_w,      1, 0, 0, H_radians_degrees);
-  XEN_DEFINE_PROCEDURE(S_degrees_radians,      g_degrees2radians_w,      1, 0, 0, H_degrees_radians);
-  XEN_DEFINE_PROCEDURE(S_db_linear,            g_db2linear_w,            1, 0, 0, H_db_linear);
-  XEN_DEFINE_PROCEDURE(S_linear_db,            g_linear2db_w,            1, 0, 0, H_linear_db);
+  XEN_DEFINE_PROCEDURE(S_radians_to_hz,        g_radians_to_hz_w,        1, 0, 0, H_radians_to_hz);
+  XEN_DEFINE_PROCEDURE(S_hz_to_radians,        g_hz_to_radians_w,        1, 0, 0, H_hz_to_radians);
+  XEN_DEFINE_PROCEDURE(S_in_hz,                g_hz_to_radians_w,        1, 0, 0, H_in_hz);
+  XEN_DEFINE_PROCEDURE(S_radians_to_degrees,   g_radians_to_degrees_w,   1, 0, 0, H_radians_to_degrees);
+  XEN_DEFINE_PROCEDURE(S_degrees_to_radians,   g_degrees_to_radians_w,   1, 0, 0, H_degrees_to_radians);
+  XEN_DEFINE_PROCEDURE(S_db_to_linear,         g_db_to_linear_w,         1, 0, 0, H_db_to_linear);
+  XEN_DEFINE_PROCEDURE(S_linear_to_db,         g_linear_to_db_w,         1, 0, 0, H_linear_to_db);
   XEN_DEFINE_PROCEDURE(S_ring_modulate,        g_ring_modulate_w,        2, 0, 0, H_ring_modulate);
   XEN_DEFINE_PROCEDURE(S_amplitude_modulate,   g_amplitude_modulate_w,   3, 0, 0, H_amplitude_modulate);
   XEN_DEFINE_PROCEDURE(S_contrast_enhancement, g_contrast_enhancement_w, 2, 0, 0, H_contrast_enhancement);
@@ -5336,8 +5336,8 @@ void mus_xen_init(void)
   XEN_DEFINE_PROCEDURE(S_mus_fft,              g_mus_fft_w,              2, 2, 0, H_mus_fft);
   XEN_DEFINE_PROCEDURE(S_spectrum,             g_spectrum_w,             3, 1, 0, H_mus_spectrum); 
   XEN_DEFINE_PROCEDURE(S_convolution,          g_convolution_w,          2, 1, 0, H_mus_convolution);
-  XEN_DEFINE_PROCEDURE(S_rectangular2polar,    g_rectangular2polar_w,    2, 0, 0, H_rectangular2polar);
-  XEN_DEFINE_PROCEDURE(S_polar2rectangular,    g_polar2rectangular_w,    2, 0, 0, H_polar2rectangular);
+  XEN_DEFINE_PROCEDURE(S_rectangular_to_polar, g_rectangular_to_polar_w, 2, 0, 0, H_rectangular_to_polar);
+  XEN_DEFINE_PROCEDURE(S_polar_to_rectangular, g_polar_to_rectangular_w, 2, 0, 0, H_polar_to_rectangular);
   XEN_DEFINE_PROCEDURE(S_array_interp,         g_array_interp_w,         2, 1, 0, H_array_interp);
   XEN_DEFINE_PROCEDURE(S_sum_of_sines,         g_sum_of_sines_w,         2, 0, 0, H_sum_of_sines);
 
@@ -5451,8 +5451,8 @@ void mus_xen_init(void)
   XEN_DEFINE_PROCEDURE(S_table_lookup_p,     g_table_lookup_p_w,     1, 0, 0, H_table_lookup_p);
   XEN_DEFINE_PROCEDURE(S_make_table_lookup,  g_make_table_lookup_w,  0, 8, 0, H_make_table_lookup);
   XEN_DEFINE_PROCEDURE(S_table_lookup,       g_table_lookup_w,       1, 1, 0, H_table_lookup);
-  XEN_DEFINE_PROCEDURE(S_partials2wave,      g_partials2wave_w,      1, 2, 0, H_partials2wave);
-  XEN_DEFINE_PROCEDURE(S_phasepartials2wave, g_phasepartials2wave_w, 1, 2, 0, H_phasepartials2wave);
+  XEN_DEFINE_PROCEDURE(S_partials_to_wave,   g_partials_to_wave_w,   1, 2, 0, H_partials_to_wave);
+  XEN_DEFINE_PROCEDURE(S_phase_partials_to_wave, g_phase_partials_to_wave_w, 1, 2, 0, H_phase_partials_to_wave);
 
 
   XEN_DEFINE_PROCEDURE(S_make_sawtooth_wave, g_make_sawtooth_wave_w, 0, 6, 0, H_make_sawtooth_wave);
@@ -5507,14 +5507,14 @@ void mus_xen_init(void)
   XEN_DEFINE_PROCEDURE(S_wave_train_p,    g_wave_train_p_w,    1, 0, 0, H_wave_train_p);
 
 
-  XEN_DEFINE_PROCEDURE(S_make_buffer,    g_make_buffer_w,    0, 4, 0, H_make_buffer);
-  XEN_DEFINE_PROCEDURE(S_buffer_p,       g_buffer_p_w,       1, 0, 0, H_buffer_p);
-  XEN_DEFINE_PROCEDURE(S_buffer_empty_p, g_buffer_empty_p_w, 1, 0, 0, H_buffer_empty_p);
-  XEN_DEFINE_PROCEDURE(S_buffer_full_p,  g_buffer_full_p_w,  1, 0, 0, H_buffer_full_p);
-  XEN_DEFINE_PROCEDURE(S_buffer2sample,  g_buffer2sample_w,  1, 0, 0, H_buffer2sample);
-  XEN_DEFINE_PROCEDURE(S_buffer2frame,   g_buffer2frame_w,   1, 1, 0, H_buffer2frame);
-  XEN_DEFINE_PROCEDURE(S_sample2buffer,  g_sample2buffer_w,  2, 0, 0, H_sample2buffer);
-  XEN_DEFINE_PROCEDURE(S_frame2buffer,   g_frame2buffer_w,   2, 0, 0, H_frame2buffer);
+  XEN_DEFINE_PROCEDURE(S_make_buffer,       g_make_buffer_w,       0, 4, 0, H_make_buffer);
+  XEN_DEFINE_PROCEDURE(S_buffer_p,          g_buffer_p_w,          1, 0, 0, H_buffer_p);
+  XEN_DEFINE_PROCEDURE(S_buffer_empty_p,    g_buffer_empty_p_w,    1, 0, 0, H_buffer_empty_p);
+  XEN_DEFINE_PROCEDURE(S_buffer_full_p,     g_buffer_full_p_w,     1, 0, 0, H_buffer_full_p);
+  XEN_DEFINE_PROCEDURE(S_buffer_to_sample,  g_buffer_to_sample_w,  1, 0, 0, H_buffer_to_sample);
+  XEN_DEFINE_PROCEDURE(S_buffer_to_frame,   g_buffer_to_frame_w,   1, 1, 0, H_buffer_to_frame);
+  XEN_DEFINE_PROCEDURE(S_sample_to_buffer,  g_sample_to_buffer_w,  2, 0, 0, H_sample_to_buffer);
+  XEN_DEFINE_PROCEDURE(S_frame_to_buffer,   g_frame_to_buffer_w,   2, 0, 0, H_frame_to_buffer);
 
 
   XEN_DEFINE_PROCEDURE(S_make_frame,     g_make_frame_w,     0, 0, 1, H_make_frame);
@@ -5541,11 +5541,11 @@ void mus_xen_init(void)
 #else
   XEN_DEFINE_PROCEDURE(S_mixer_ref,      g_mixer_ref_w,      3, 0, 0, H_mixer_ref);
 #endif
-  XEN_DEFINE_PROCEDURE(S_mixer_set,      g_set_mixer_ref_w,  4, 0, 0, H_mixer_set);
-  XEN_DEFINE_PROCEDURE(S_frame2sample,   g_frame2sample_w,   2, 0, 0, H_frame2sample);
-  XEN_DEFINE_PROCEDURE(S_frame2list,     g_frame2list_w,     1, 0, 0, H_frame2list);
-  XEN_DEFINE_PROCEDURE(S_frame2frame,    g_frame2frame_w,    2, 1, 0, H_frame2frame);
-  XEN_DEFINE_PROCEDURE(S_sample2frame,   g_sample2frame_w,   2, 1, 0, H_sample2frame);
+  XEN_DEFINE_PROCEDURE(S_mixer_set,         g_set_mixer_ref_w,     4, 0, 0, H_mixer_set);
+  XEN_DEFINE_PROCEDURE(S_frame_to_sample,   g_frame_to_sample_w,   2, 0, 0, H_frame_to_sample);
+  XEN_DEFINE_PROCEDURE(S_frame_to_list,     g_frame_to_list_w,     1, 0, 0, H_frame_to_list);
+  XEN_DEFINE_PROCEDURE(S_frame_to_frame,    g_frame_to_frame_w,    2, 1, 0, H_frame_to_frame);
+  XEN_DEFINE_PROCEDURE(S_sample_to_frame,   g_sample_to_frame_w,   2, 1, 0, H_sample_to_frame);
 
 
   XEN_DEFINE_PROCEDURE(S_formant_bank, g_formant_bank_w, 2, 1, 0, H_formant_bank);
@@ -5562,11 +5562,11 @@ the closer the radius is to 1.0, the narrower the resonance."
   XEN_DEFINE_PROCEDURE(S_mus_set_formant_radius_and_frequency, g_set_formant_radius_and_frequency_w, 3, 0, 0, H_mus_set_formant_radius_and_frequency);
 
 
-  XEN_DEFINE_PROCEDURE(S_make_waveshape,      g_make_waveshape_w,      0, 8, 0, H_make_waveshape);
-  XEN_DEFINE_PROCEDURE(S_waveshape,           g_waveshape_w,           1, 2, 0, H_waveshape);
-  XEN_DEFINE_PROCEDURE(S_waveshape_p,         g_waveshape_p_w,         1, 0, 0, H_waveshape_p);
-  XEN_DEFINE_PROCEDURE(S_partials2waveshape,  g_partials2waveshape_w,  1, 1, 0, H_partials2waveshape);
-  XEN_DEFINE_PROCEDURE(S_partials2polynomial, g_partials2polynomial_w, 1, 1, 0, H_partials2polynomial);
+  XEN_DEFINE_PROCEDURE(S_make_waveshape,         g_make_waveshape_w,         0, 8, 0, H_make_waveshape);
+  XEN_DEFINE_PROCEDURE(S_waveshape,              g_waveshape_w,              1, 2, 0, H_waveshape);
+  XEN_DEFINE_PROCEDURE(S_waveshape_p,            g_waveshape_p_w,            1, 0, 0, H_waveshape_p);
+  XEN_DEFINE_PROCEDURE(S_partials_to_waveshape,  g_partials_to_waveshape_w,  1, 1, 0, H_partials_to_waveshape);
+  XEN_DEFINE_PROCEDURE(S_partials_to_polynomial, g_partials_to_polynomial_w, 1, 1, 0, H_partials_to_polynomial);
 
 
   XEN_DEFINE_PROCEDURE(S_make_sine_summation, g_make_sine_summation_w, 0, 0, 1, H_make_sine_summation);
@@ -5617,32 +5617,32 @@ the closer the radius is to 1.0, the narrower the resonance."
   XEN_DEFINE_PROCEDURE(S_locsig_reverb_set, g_locsig_reverb_set_w, 3, 0, 0, H_locsig_reverb_set);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_locsig_type, g_locsig_type_w, H_locsig_type, S_setB S_locsig_type, g_set_locsig_type_w,  0, 0, 1, 0);
 
-  XEN_DEFINE_PROCEDURE(S_file2sample_p,        g_file2sample_p_w,        1, 0, 0, H_file2sample_p);
-  XEN_DEFINE_PROCEDURE(S_make_file2sample,     g_make_file2sample_w,     1, 0, 0, H_make_file2sample);
-  XEN_DEFINE_PROCEDURE(S_file2sample,          g_file2sample_w,          2, 1, 0, H_file2sample);
-  XEN_DEFINE_PROCEDURE(S_file2frame_p,         g_file2frame_p_w,         1, 0, 0, H_file2frame_p);
-  XEN_DEFINE_PROCEDURE(S_make_file2frame,      g_make_file2frame_w,      1, 0, 0, H_make_file2frame);
-  XEN_DEFINE_PROCEDURE(S_file2frame,           g_file2frame_w,           2, 1, 0, H_file2frame);
-  XEN_DEFINE_PROCEDURE(S_sample2file_p,        g_sample2file_p_w,        1, 0, 0, H_sample2file_p);
-  XEN_DEFINE_PROCEDURE(S_make_sample2file,     g_make_sample2file_w,     4, 1, 0, H_make_sample2file);
-  XEN_DEFINE_PROCEDURE(S_continue_sample2file, g_continue_sample2file_w, 1, 0, 0, H_continue_sample2file);
-  XEN_DEFINE_PROCEDURE(S_sample2file,          g_sample2file_w,          4, 0, 0, H_sample2file);
-  XEN_DEFINE_PROCEDURE(S_frame2file_p,         g_frame2file_p_w,         1, 0, 0, H_frame2file_p);
-  XEN_DEFINE_PROCEDURE(S_frame2file,           g_frame2file_w,           3, 0, 0, H_frame2file);
-  XEN_DEFINE_PROCEDURE(S_make_frame2file,      g_make_frame2file_w,      4, 0, 0, H_make_frame2file);
-  XEN_DEFINE_PROCEDURE(S_mus_input_p,          g_input_p_w,              1, 0, 0, H_mus_input_p);
-  XEN_DEFINE_PROCEDURE(S_mus_output_p,         g_output_p_w,             1, 0, 0, H_mus_output_p);
-  XEN_DEFINE_PROCEDURE(S_in_any,               g_in_any_w,               3, 0, 0, H_in_any);
-  XEN_DEFINE_PROCEDURE(S_ina,                  g_ina_w,                  2, 0, 0, H_ina);  
-  XEN_DEFINE_PROCEDURE(S_inb,                  g_inb_w,                  2, 0, 0, H_inb);
-  XEN_DEFINE_PROCEDURE(S_out_any,              g_out_any_w,              4, 0, 0, H_out_any);
-  XEN_DEFINE_PROCEDURE(S_outa,                 g_outa_w,                 3, 0, 0, H_outa);
-  XEN_DEFINE_PROCEDURE(S_outb,                 g_outb_w,                 3, 0, 0, H_outb);
-  XEN_DEFINE_PROCEDURE(S_outc,                 g_outc_w,                 3, 0, 0, H_outc);
-  XEN_DEFINE_PROCEDURE(S_outd,                 g_outd_w,                 3, 0, 0, H_outd);
-  XEN_DEFINE_PROCEDURE(S_array2file,           g_array2file_w,           5, 0, 0, H_array2file);
-  XEN_DEFINE_PROCEDURE(S_file2array,           g_file2array_w,           5, 0, 0, H_file2array);
-  XEN_DEFINE_PROCEDURE(S_mus_close,            g_mus_close_w,            1, 0, 0, H_mus_close);
+  XEN_DEFINE_PROCEDURE(S_file_to_sample_p,        g_file_to_sample_p_w,        1, 0, 0, H_file_to_sample_p);
+  XEN_DEFINE_PROCEDURE(S_make_file_to_sample,     g_make_file_to_sample_w,     1, 0, 0, H_make_file_to_sample);
+  XEN_DEFINE_PROCEDURE(S_file_to_sample,          g_file_to_sample_w,          2, 1, 0, H_file_to_sample);
+  XEN_DEFINE_PROCEDURE(S_file_to_frame_p,         g_file_to_frame_p_w,         1, 0, 0, H_file_to_frame_p);
+  XEN_DEFINE_PROCEDURE(S_make_file_to_frame,      g_make_file_to_frame_w,      1, 0, 0, H_make_file_to_frame);
+  XEN_DEFINE_PROCEDURE(S_file_to_frame,           g_file_to_frame_w,           2, 1, 0, H_file_to_frame);
+  XEN_DEFINE_PROCEDURE(S_sample_to_file_p,        g_sample_to_file_p_w,        1, 0, 0, H_sample_to_file_p);
+  XEN_DEFINE_PROCEDURE(S_make_sample_to_file,     g_make_sample_to_file_w,     4, 1, 0, H_make_sample_to_file);
+  XEN_DEFINE_PROCEDURE(S_continue_sample_to_file, g_continue_sample_to_file_w, 1, 0, 0, H_continue_sample_to_file);
+  XEN_DEFINE_PROCEDURE(S_sample_to_file,          g_sample_to_file_w,          4, 0, 0, H_sample_to_file);
+  XEN_DEFINE_PROCEDURE(S_frame_to_file_p,         g_frame_to_file_p_w,         1, 0, 0, H_frame_to_file_p);
+  XEN_DEFINE_PROCEDURE(S_frame_to_file,           g_frame_to_file_w,           3, 0, 0, H_frame_to_file);
+  XEN_DEFINE_PROCEDURE(S_make_frame_to_file,      g_make_frame_to_file_w,      4, 0, 0, H_make_frame_to_file);
+  XEN_DEFINE_PROCEDURE(S_mus_input_p,             g_input_p_w,                 1, 0, 0, H_mus_input_p);
+  XEN_DEFINE_PROCEDURE(S_mus_output_p,            g_output_p_w,                1, 0, 0, H_mus_output_p);
+  XEN_DEFINE_PROCEDURE(S_in_any,                  g_in_any_w,                  3, 0, 0, H_in_any);
+  XEN_DEFINE_PROCEDURE(S_ina,                     g_ina_w,                     2, 0, 0, H_ina);  
+  XEN_DEFINE_PROCEDURE(S_inb,                     g_inb_w,                     2, 0, 0, H_inb);
+  XEN_DEFINE_PROCEDURE(S_out_any,                 g_out_any_w,                 4, 0, 0, H_out_any);
+  XEN_DEFINE_PROCEDURE(S_outa,                    g_outa_w,                    3, 0, 0, H_outa);
+  XEN_DEFINE_PROCEDURE(S_outb,                    g_outb_w,                    3, 0, 0, H_outb);
+  XEN_DEFINE_PROCEDURE(S_outc,                    g_outc_w,                    3, 0, 0, H_outc);
+  XEN_DEFINE_PROCEDURE(S_outd,                    g_outd_w,                    3, 0, 0, H_outd);
+  XEN_DEFINE_PROCEDURE(S_array_to_file,           g_array_to_file_w,           5, 0, 0, H_array_to_file);
+  XEN_DEFINE_PROCEDURE(S_file_to_array,           g_file_to_array_w,           5, 0, 0, H_file_to_array);
+  XEN_DEFINE_PROCEDURE(S_mus_close,               g_mus_close_w,               1, 0, 0, H_mus_close);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_file_buffer_size, g_mus_file_buffer_size_w, H_mus_file_buffer_size,
 				   S_setB S_mus_file_buffer_size, g_mus_set_file_buffer_size_w,  0, 0, 1, 0);
@@ -5695,7 +5695,7 @@ the closer the radius is to 1.0, the narrower the resonance."
 	       S_all_pass,
 	       S_all_pass_p,
 	       S_amplitude_modulate,
-	       S_array2file,
+	       S_array_to_file,
 	       S_array_interp,
 	       S_asymmetric_fm,
 	       S_asymmetric_fm_p,
@@ -5705,8 +5705,8 @@ the closer the radius is to 1.0, the narrower the resonance."
 	       S_blackman2_window,
 	       S_blackman3_window,
 	       S_blackman4_window,
-	       S_buffer2frame,
-	       S_buffer2sample,
+	       S_buffer_to_frame,
+	       S_buffer_to_sample,
 	       S_buffer_empty_p,
 	       S_buffer_full_p,
 	       S_buffer_p,
@@ -5715,14 +5715,14 @@ the closer the radius is to 1.0, the narrower the resonance."
 	       S_clear_sincs,
 	       S_comb,
 	       S_comb_p,
-	       S_continue_sample2file,
+	       S_continue_sample_to_file,
 	       S_contrast_enhancement,
 	       S_convolution,
 	       S_convolve,
 	       S_convolve_files,
 	       S_convolve_p,
-	       S_db_linear,
-	       S_degrees_radians,
+	       S_db_to_linear,
+	       S_degrees_to_radians,
 	       S_delay,
 	       S_delay_p,
 	       S_dolph_chebyshev_window,
@@ -5731,11 +5731,11 @@ the closer the radius is to 1.0, the narrower the resonance."
 	       S_env_interp,
 	       S_env_p,
 	       S_exponential_window,
-	       S_file2array,
-	       S_file2frame,
-	       S_file2frame_p,
-	       S_file2sample,
-	       S_file2sample_p,
+	       S_file_to_array,
+	       S_file_to_frame,
+	       S_file_to_frame_p,
+	       S_file_to_sample,
+	       S_file_to_sample_p,
 	       S_filter,
 	       S_filter_p,
 	       S_fir_filter,
@@ -5743,12 +5743,12 @@ the closer the radius is to 1.0, the narrower the resonance."
 	       S_formant,
 	       S_formant_bank,
 	       S_formant_p,
-	       S_frame2buffer,
-	       S_frame2file,
-	       S_frame2file_p,
-	       S_frame2frame,
-	       S_frame2list,
-	       S_frame2sample,
+	       S_frame_to_buffer,
+	       S_frame_to_file,
+	       S_frame_to_file_p,
+	       S_frame_to_frame,
+	       S_frame_to_list,
+	       S_frame_to_sample,
 	       S_frame_add,
 	       S_frame_multiply,
 	       S_frame_p,
@@ -5784,14 +5784,14 @@ the closer the radius is to 1.0, the narrower the resonance."
 	       S_make_delay,
 	       S_make_env,
 	       S_make_fft_window,
-	       S_make_file2frame,
-	       S_make_file2sample,
+	       S_make_file_to_frame,
+	       S_make_file_to_sample,
 	       S_make_filter,
 	       S_make_fir_coeffs,
 	       S_make_fir_filter,
 	       S_make_formant,
 	       S_make_frame,
-	       S_make_frame2file,
+	       S_make_frame_to_file,
 	       S_make_granulate,
 	       S_make_iir_filter,
 	       S_make_locsig,
@@ -5806,7 +5806,7 @@ the closer the radius is to 1.0, the narrower the resonance."
 	       S_make_rand,
 	       S_make_rand_interp,
 	       S_make_readin,
-	       S_make_sample2file,
+	       S_make_sample_to_file,
 	       S_make_sawtooth_wave,
 	       S_make_sine_summation,
 	       S_make_square_wave,
@@ -5888,15 +5888,15 @@ the closer the radius is to 1.0, the narrower the resonance."
 	       S_outb,
 	       S_outc,
 	       S_outd,
-	       S_partials2polynomial,
-	       S_partials2wave,
-	       S_partials2waveshape,
+	       S_partials_to_polynomial,
+	       S_partials_to_wave,
+	       S_partials_to_waveshape,
 	       S_parzen_window,
 	       S_phase_vocoder,
 	       S_phase_vocoder_p,
-	       S_phasepartials2wave,
+	       S_phase_partials_to_wave,
 	       S_poisson_window,
-	       S_polar2rectangular,
+	       S_polar_to_rectangular,
 	       S_polynomial,
 	       S_pulse_train,
 	       S_pulse_train_p,
@@ -5906,23 +5906,23 @@ the closer the radius is to 1.0, the narrower the resonance."
 	       S_pv_outctr,
 	       S_pv_phase_increments,
 	       S_pv_phases,
-	       S_radians_degrees,
-	       S_radians_hz,
+	       S_radians_to_degrees,
+	       S_radians_to_hz,
 	       S_rand,
 	       S_rand_interp,
 	       S_rand_interp_p,
 	       S_rand_p,
 	       S_readin,
 	       S_readin_p,
-	       S_rectangular2polar,
+	       S_rectangular_to_polar,
 	       S_rectangular_window,
 	       S_restart_env,
 	       S_riemann_window,
 	       S_ring_modulate,
-	       S_sample2buffer,
-	       S_sample2file,
-	       S_sample2file_p,
-	       S_sample2frame,
+	       S_sample_to_buffer,
+	       S_sample_to_file,
+	       S_sample_to_file_p,
+	       S_sample_to_frame,
 	       S_sawtooth_wave,
 	       S_sawtooth_wave_p,
 	       S_sine_summation,

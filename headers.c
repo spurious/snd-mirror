@@ -4036,6 +4036,7 @@ static int read_pvf_header(const char *filename, int chan)
 {
   char *buf;
   int bits, i;
+  if (hdrbuf[4] != '\n') return(mus_error(MUS_HEADER_READ_FAILED, "PVF header messed up"));
   type_specifier = mus_char_to_uninterpreted_int((unsigned char *)hdrbuf);
   buf = (char *)(hdrbuf + 5);
   sscanf(buf, "%d %d %d", &chans, &srate, &bits);

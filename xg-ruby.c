@@ -1152,7 +1152,7 @@ XEN_NARGIFY_1(gxg_gtk_target_list_unref_w, gxg_gtk_target_list_unref)
 XEN_NARGIFY_4(gxg_gtk_target_list_add_w, gxg_gtk_target_list_add)
 XEN_NARGIFY_3(gxg_gtk_target_list_add_table_w, gxg_gtk_target_list_add_table)
 XEN_NARGIFY_2(gxg_gtk_target_list_remove_w, gxg_gtk_target_list_remove)
-XEN_NARGIFY_3(gxg_gtk_target_list_find_w, gxg_gtk_target_list_find)
+XEN_ARGIFY_3(gxg_gtk_target_list_find_w, gxg_gtk_target_list_find)
 XEN_NARGIFY_3(gxg_gtk_selection_owner_set_w, gxg_gtk_selection_owner_set)
 XEN_NARGIFY_4(gxg_gtk_selection_add_target_w, gxg_gtk_selection_add_target)
 XEN_NARGIFY_4(gxg_gtk_selection_add_targets_w, gxg_gtk_selection_add_targets)
@@ -1658,7 +1658,7 @@ XEN_NARGIFY_1(gxg_gtk_tree_view_column_get_sort_indicator_w, gxg_gtk_tree_view_c
 XEN_NARGIFY_2(gxg_gtk_tree_view_column_set_sort_order_w, gxg_gtk_tree_view_column_set_sort_order)
 XEN_NARGIFY_1(gxg_gtk_tree_view_column_get_sort_order_w, gxg_gtk_tree_view_column_get_sort_order)
 XEN_NARGIFY_5(gxg_gtk_tree_view_column_cell_set_cell_data_w, gxg_gtk_tree_view_column_cell_set_cell_data)
-XEN_NARGIFY_6(gxg_gtk_tree_view_column_cell_get_size_w, gxg_gtk_tree_view_column_cell_get_size)
+XEN_ARGIFY_6(gxg_gtk_tree_view_column_cell_get_size_w, gxg_gtk_tree_view_column_cell_get_size)
 XEN_NARGIFY_1(gxg_gtk_tree_view_column_cell_is_visible_w, gxg_gtk_tree_view_column_cell_is_visible)
 XEN_NARGIFY_0(gxg_gtk_tree_view_get_type_w, gxg_gtk_tree_view_get_type)
 XEN_NARGIFY_0(gxg_gtk_tree_view_new_w, gxg_gtk_tree_view_new)
@@ -3016,6 +3016,8 @@ XEN_NARGIFY_2(c_array_to_xen_list_w, c_array_to_xen_list)
 XEN_NARGIFY_2(xen_list_to_c_array_w, xen_list_to_c_array)
 XEN_NARGIFY_1(gxg_freeGdkPoints_w, gxg_freeGdkPoints)
 XEN_NARGIFY_1(gxg_vector2GdkPoints_w, gxg_vector2GdkPoints)
+XEN_NARGIFY_1(gxg_make_target_entry_w, gxg_make_target_entry)
+XEN_NARGIFY_1(c_to_xen_string_w, c_to_xen_string)
 #if (!WITH_GTK_AND_X11)
 XEN_NARGIFY_1(gxg_parent_w, gxg_parent)
 #endif
@@ -4402,7 +4404,7 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_target_list_add, gxg_gtk_target_list_add_w, 4, 0, 0, H_gtk_target_list_add);
   XG_DEFINE_PROCEDURE(gtk_target_list_add_table, gxg_gtk_target_list_add_table_w, 3, 0, 0, H_gtk_target_list_add_table);
   XG_DEFINE_PROCEDURE(gtk_target_list_remove, gxg_gtk_target_list_remove_w, 2, 0, 0, H_gtk_target_list_remove);
-  XG_DEFINE_PROCEDURE(gtk_target_list_find, gxg_gtk_target_list_find_w, 3, 0, 0, H_gtk_target_list_find);
+  XG_DEFINE_PROCEDURE(gtk_target_list_find, gxg_gtk_target_list_find_w, 2, 1, 0, H_gtk_target_list_find);
   XG_DEFINE_PROCEDURE(gtk_selection_owner_set, gxg_gtk_selection_owner_set_w, 3, 0, 0, H_gtk_selection_owner_set);
   XG_DEFINE_PROCEDURE(gtk_selection_add_target, gxg_gtk_selection_add_target_w, 4, 0, 0, H_gtk_selection_add_target);
   XG_DEFINE_PROCEDURE(gtk_selection_add_targets, gxg_gtk_selection_add_targets_w, 4, 0, 0, H_gtk_selection_add_targets);
@@ -4908,7 +4910,7 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_tree_view_column_set_sort_order, gxg_gtk_tree_view_column_set_sort_order_w, 2, 0, 0, H_gtk_tree_view_column_set_sort_order);
   XG_DEFINE_PROCEDURE(gtk_tree_view_column_get_sort_order, gxg_gtk_tree_view_column_get_sort_order_w, 1, 0, 0, H_gtk_tree_view_column_get_sort_order);
   XG_DEFINE_PROCEDURE(gtk_tree_view_column_cell_set_cell_data, gxg_gtk_tree_view_column_cell_set_cell_data_w, 5, 0, 0, H_gtk_tree_view_column_cell_set_cell_data);
-  XG_DEFINE_PROCEDURE(gtk_tree_view_column_cell_get_size, gxg_gtk_tree_view_column_cell_get_size_w, 6, 0, 0, H_gtk_tree_view_column_cell_get_size);
+  XG_DEFINE_PROCEDURE(gtk_tree_view_column_cell_get_size, gxg_gtk_tree_view_column_cell_get_size_w, 2, 4, 0, H_gtk_tree_view_column_cell_get_size);
   XG_DEFINE_PROCEDURE(gtk_tree_view_column_cell_is_visible, gxg_gtk_tree_view_column_cell_is_visible_w, 1, 0, 0, H_gtk_tree_view_column_cell_is_visible);
   XG_DEFINE_PROCEDURE(gtk_tree_view_get_type, gxg_gtk_tree_view_get_type_w, 0, 0, 0, H_gtk_tree_view_get_type);
   XG_DEFINE_PROCEDURE(gtk_tree_view_new, gxg_gtk_tree_view_new_w, 0, 0, 0, H_gtk_tree_view_new);
@@ -6096,7 +6098,8 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(list->c-array, xen_list_to_c_array_w, 2, 0, 0, NULL);
   XG_DEFINE_PROCEDURE(freeGdkPoints, gxg_freeGdkPoints_w, 1, 0, 0, H_freeGdkPoints);
   XG_DEFINE_PROCEDURE(vector->GdkPoints, gxg_vector2GdkPoints_w, 1, 0, 0, H_vector2GdkPoints);
-  XG_DEFINE_PROCEDURE(->string, c_to_xen_string, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(->string, c_to_xen_string_w, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(make-target-entry, gxg_make_target_entry_w, 1, 0, 0, H_make_target_entry);
   XG_DEFINE_PROCEDURE(GDK_IS_COLORMAP, gxg_GDK_IS_COLORMAP_w, 1, 0, 0, NULL);
   XG_DEFINE_PROCEDURE(GDK_IS_DRAG_CONTEXT, gxg_GDK_IS_DRAG_CONTEXT_w, 1, 0, 0, NULL);
   XG_DEFINE_PROCEDURE(GDK_IS_DRAWABLE, gxg_GDK_IS_DRAWABLE_w, 1, 0, 0, NULL);

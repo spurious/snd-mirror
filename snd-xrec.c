@@ -157,7 +157,7 @@ static Pixmap transform_text (Widget w, char *str, XFontStruct *font, Float angl
   int i, j;
   if (str == NULL) return(0);
   /* set up transformation matrix */
-  angle_in_radians = mus_degrees2radians(angle_in_degrees);
+  angle_in_radians = mus_degrees_to_radians(angle_in_degrees);
   matrix[0] = cos(angle_in_radians) * xscl;
   matrix[1] = sin(angle_in_radians) * xscl;
   matrix[2] = -sin(angle_in_radians) * yscl;
@@ -690,7 +690,7 @@ static void allocate_meter_1(vu_label *vu)
   /* draw the axis ticks */
   for (i = 0; i < 5; i++)
     {
-      rdeg = mus_degrees2radians(45 - i * 22.5);
+      rdeg = mus_degrees_to_radians(45 - i * 22.5);
       x0 = (int)(120 * size * (1.0 + sin(rdeg)));
       y0 = (int)(160 * size - 120 * size * cos(rdeg));
       x1 = (int)(120 * size + 130 * size * sin(rdeg));
@@ -704,7 +704,7 @@ static void allocate_meter_1(vu_label *vu)
       if (i < 4)
 	for (j = 1; j < 6; j++)
 	  {
-	    rdeg = mus_degrees2radians(45 - i * 22.5 - j * (90.0 / 20.0));
+	    rdeg = mus_degrees_to_radians(45 - i * 22.5 - j * (90.0 / 20.0));
 	    x0 = (int)(120 * size * (1.0 + sin(rdeg)));
 	    y0 = (int)(160 * size - 120 * size * cos(rdeg));
 	    x1 = (int)(120 * size + 126 * size * sin(rdeg));
@@ -771,8 +771,8 @@ static void display_vu_meter(VU *vu)
   vu->last_val = val;
   deg = -45.0 + val * 90.0;
   /* if (deg < -45.0) deg = -45.0; else if (deg > 45.0) deg = 45.0; */
-  rdeg = mus_degrees2radians(deg);
-  nx0 = vu->center_x - (int)((Float)(vu->center_y - vu->light_y) / tan(mus_degrees2radians(deg + 90)));
+  rdeg = mus_degrees_to_radians(deg);
+  nx0 = vu->center_x - (int)((Float)(vu->center_y - vu->light_y) / tan(mus_degrees_to_radians(deg + 90)));
   /* not sure this is needed -- see snd-motif.scm for simpler code */
   ny0 = vu->light_y;
   nx1 = (int)(vu->center_x + 130 * size * sin(rdeg));

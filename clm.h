@@ -2,10 +2,11 @@
 #define CLM_H
 
 #define MUS_VERSION 2
-#define MUS_REVISION 43
-#define MUS_DATE "12-Apr-04"
+#define MUS_REVISION 44
+#define MUS_DATE "14-Apr-04"
 
 /*
+ * 14-Apr:     changed "2" to "_to_" in several function names.
  * 12-Apr:     mus_average, mus_average_p, mus_make_average.
  * 17-Mar:     edit function added to mus_granulate.
  *             replaced MUS_DATA_POSITION with MUS_DATA_WRAPPER.
@@ -213,12 +214,21 @@ extern "C" {
 void init_mus_module(void);
 
 int mus_make_class_tag(void);
-Float mus_radians2hz(Float rads);
-Float mus_hz2radians(Float hz);
-Float mus_degrees2radians(Float degree);
-Float mus_radians2degrees(Float rads);
-Float mus_db2linear(Float x);
-Float mus_linear2db(Float x);
+Float mus_radians_to_hz(Float radians);
+Float mus_hz_to_radians(Float hz);
+Float mus_degrees_to_radians(Float degrees);
+Float mus_radians_to_degrees(Float radians);
+Float mus_db_to_linear(Float x);
+Float mus_linear_to_db(Float x);
+
+/* backwards compatibility */
+#define mus_radians2hz(Radians) mus_radians_to_hz(Radians)
+#define mus_hz2radians(Hz) mus_hz_to_radians(Hz)
+#define mus_degrees2radians(Degrees) mus_degrees_to_radians(Degrees)
+#define mus_radians2degrees(Radians) mus_radians_to_hz(Radians)
+#define mus_db2linear(X) mus_db_to_linear(X)
+#define mus_linear2db(X) mus_linear_to_db(X)
+
 Float mus_srate(void);
 Float mus_set_srate(Float val);
 off_t mus_seconds_to_samples(Float secs);
@@ -235,8 +245,12 @@ Float mus_dot_product(Float *data1, Float *data2, int size);
 void mus_clear_array(Float *arr, int size);
 Float mus_polynomial(Float *coeffs, Float x, int ncoeffs);
 void mus_multiply_arrays(Float *data, Float *window, int len);
-void mus_rectangular2polar(Float *rl, Float *im, int size);
-void mus_polar2rectangular(Float *rl, Float *im, int size);
+
+void mus_rectangular_to_polar(Float *rl, Float *im, int size);
+void mus_polar_to_rectangular(Float *rl, Float *im, int size);
+#define mus_rectangular2polar(Real, Imag, Size) mus_rectangular_to_polar(Real, Imag, Size)
+#define mus_polar2rectangular(Real, Imag, Size) mus_polar_to_rectangular(Real, IMag, Size)
+
 Float mus_array_interp(Float *wave, Float phase, int size);
 
 int mus_free(mus_any *ptr);
@@ -310,8 +324,10 @@ Float mus_table_lookup(mus_any *gen, Float fm);
 Float mus_table_lookup_1(mus_any *gen);
 mus_any *mus_make_table_lookup(Float freq, Float phase, Float *wave, int wave_size);
 bool mus_table_lookup_p(mus_any *ptr);
-Float *mus_partials2wave(Float *partial_data, int partials, Float *table, int table_size, bool normalize);
-Float *mus_phasepartials2wave(Float *partial_data, int partials, Float *table, int table_size, bool normalize);
+Float *mus_partials_to_wave(Float *partial_data, int partials, Float *table, int table_size, bool normalize);
+Float *mus_phase_partials_to_wave(Float *partial_data, int partials, Float *table, int table_size, bool normalize);
+#define mus_partials2wave(Data, Partials, Table, Size, Normalize) mus_partials_to_wave(Data, Partials, Table, Size, Normalize)
+#define mus_phasepartials2wave(Data, Partials, Table, Size, Normalize) mus_phase_partials_to_wave(Data, Partials, Table, Size, Normalize)
 
 Float mus_sawtooth_wave(mus_any *gen, Float fm);
 mus_any *mus_make_sawtooth_wave(Float freq, Float amp, Float phase);
@@ -421,21 +437,27 @@ Float mus_wave_train_1(mus_any *gen);
 mus_any *mus_make_wave_train(Float freq, Float phase, Float *wave, int wsize);
 bool mus_wave_train_p(mus_any *gen);
 
-Float mus_buffer2sample(mus_any *ptr);
-Float mus_sample2buffer(mus_any *ptr, Float val);
+Float mus_buffer_to_sample(mus_any *ptr);
+Float mus_sample_to_buffer(mus_any *ptr, Float val);
+#define mus_buffer2sample(Ptr) mus_buffer_to_sample(Ptr)
+#define mus_sample2buffer(Ptr, Val) mus_sample_to_buffer(Ptr, Val)
 mus_any *mus_make_buffer(Float *preloaded_buffer, int size, Float current_file_time);
 bool mus_buffer_p(mus_any *ptr);
 bool mus_buffer_empty_p(mus_any *ptr);
 bool mus_buffer_full_p(mus_any *ptr);
-mus_any *mus_buffer2frame(mus_any *rb, mus_any *fr);
-mus_any *mus_frame2buffer(mus_any *rb, mus_any *fr);
+mus_any *mus_buffer_to_frame(mus_any *rb, mus_any *fr);
+mus_any *mus_frame_to_buffer(mus_any *rb, mus_any *fr);
+#define mus_buffer2frame(Rb, Fr) mus_buffer_to_frame(Rb, Fr)
+#define mus_frame2buffer(Rb, Fr) mus_frame_to_buffer(Rb, Fr)
 
 mus_any *mus_make_waveshape(Float frequency, Float phase, Float *table, int size);
 Float mus_waveshape(mus_any *ptr, Float index, Float fm);
 Float mus_waveshape_1(mus_any *ptr, Float index);
 bool mus_waveshape_p(mus_any *ptr);
-Float *mus_partials2waveshape(int npartials, Float *partials, int size, Float *table);
-Float *mus_partials2polynomial(int npartials, Float *partials, int kind);
+Float *mus_partials_to_waveshape(int npartials, Float *partials, int size, Float *table);
+Float *mus_partials_to_polynomial(int npartials, Float *partials, int kind);
+#define mus_partials2waveshape(Npartials, Partials, Size, Table) mus_partials_to_waveshape(Npartials, Partials, Size, Table)
+#define mus_partials2polynomial(Npartials, Partials, Kind) mus_partials_to_polynomial(Npartials, Partials, Kind)
 
 Float mus_env(mus_any *ptr);
 mus_any *mus_make_env(Float *brkpts, int pts, Float scaler, Float offset, Float base, Float duration, off_t start, off_t end, Float *odata);
@@ -466,14 +488,20 @@ mus_any *mus_make_mixer(int chans, ...);
 Float **mus_mixer_data(mus_any *f);
 Float mus_mixer_ref(mus_any *f, int in, int out);
 Float mus_mixer_set(mus_any *f, int in, int out, Float val);
-mus_any *mus_frame2frame(mus_any *f, mus_any *in, mus_any *out);
-mus_any *mus_sample2frame(mus_any *f, Float in, mus_any *out);
-Float mus_frame2sample(mus_any *f, mus_any *in);
+mus_any *mus_frame_to_frame(mus_any *f, mus_any *in, mus_any *out);
+mus_any *mus_sample_to_frame(mus_any *f, Float in, mus_any *out);
+Float mus_frame_to_sample(mus_any *f, mus_any *in);
+#define mus_frame2frame(Fr, In, Out) mus_frame_to_frame(Fr, In, Out)
+#define mus_sample2frame(Fr, In, Out) mus_sample_to_frame(Fr, In, Out)
+#define mus_frame2sample(fr, In) mus_frame_to_sample(fr, In)
 mus_any *mus_mixer_multiply(mus_any *f1, mus_any *f2, mus_any *res);
 
-bool mus_file2sample_p(mus_any *ptr);
-mus_any *mus_make_file2sample(const char *filename);
-Float mus_file2sample(mus_any *ptr, off_t samp, int chan);
+bool mus_file_to_sample_p(mus_any *ptr);
+mus_any *mus_make_file_to_sample(const char *filename);
+Float mus_file_to_sample(mus_any *ptr, off_t samp, int chan);
+#define mus_file2sample_p(Ptr) mus_file_to_sample_p(Ptr)
+#define mus_make_file2sample(Filename) mus_make_file_to_sample(Filename)
+#define mus_file2sample(Ptr, Samp, Chan) mus_file_to_sample(Ptr, Samp, Chan)
 
 Float mus_readin(mus_any *rd);
 mus_any *mus_make_readin(const char *filename, int chan, off_t start, int direction);
@@ -490,16 +518,24 @@ Float mus_in_any(off_t frame, int chan, mus_any *IO);
 Float mus_ina(off_t frame, mus_any *inp);
 Float mus_inb(off_t frame, mus_any *inp);
 
-mus_any *mus_make_file2frame(const char *filename);
-bool mus_file2frame_p(mus_any *ptr);
-mus_any *mus_file2frame(mus_any *ptr, off_t samp, mus_any *f);
+mus_any *mus_make_file_to_frame(const char *filename);
+bool mus_file_to_frame_p(mus_any *ptr);
+mus_any *mus_file_to_frame(mus_any *ptr, off_t samp, mus_any *f);
+#define mus_make_file2frame(Filename) mus_make_file_to_frame(Filename)
+#define mus_file2frame_p(Ptr) mus_file_to_frame_p(Ptr)
+#define mus_file2frame(Ptr, Samp, Fr) mus_file_to_frame(Ptr, Samp, Fr)
 
-bool mus_sample2file_p(mus_any *ptr);
-mus_any *mus_make_sample2file(const char *filename, int chans, int out_format, int out_type);
-mus_any *mus_make_sample2file_with_comment(const char *filename, int out_chans, int out_format, int out_type, const char *comment);
-Float mus_sample2file(mus_any *ptr, off_t samp, int chan, Float val);
+bool mus_sample_to_file_p(mus_any *ptr);
+mus_any *mus_make_sample_to_file(const char *filename, int chans, int out_format, int out_type);
+mus_any *mus_make_sample_to_file_with_comment(const char *filename, int out_chans, int out_format, int out_type, const char *comment);
+Float mus_sample_to_file(mus_any *ptr, off_t samp, int chan, Float val);
+mus_any *mus_continue_sample_to_file(const char *filename);
+#define mus_sample2file_p(Ptr) mus_sample_to_file_p(Ptr)
+#define mus_make_sample2file(Filename, Chans, Format, Type) mus_make_sample_to_file(Filename, Chans, Format, Type)
+#define mus_make_sample2file_with_comment(Filename, Chans, Format, Type, Comment) mus_make_sample_to_file_with_comment(Filename, Chans, Format, Type, Comment)
+#define mus_sample2file(Ptr, Samp, Chan, Val) mus_sample_to_file(Ptr, Samp, Chan, Val)
+#define mus_continue_sample2file(Filename) mus_continue_sample_to_file(Filename)
 int mus_close_file(mus_any *ptr);
-mus_any *mus_continue_sample2file(const char *filename);
 
 Float mus_out_any(off_t frame, Float val, int chan, mus_any *IO);
 Float mus_outa(off_t frame, Float val, mus_any *IO);
@@ -507,9 +543,12 @@ Float mus_outb(off_t frame, Float val, mus_any *IO);
 Float mus_outc(off_t frame, Float val, mus_any *IO);
 Float mus_outd(off_t frame, Float val, mus_any *IO);
 
-mus_any *mus_make_frame2file(const char *filename, int chans, int out_format, int out_type);
-bool mus_frame2file_p(mus_any *ptr);
-mus_any *mus_frame2file(mus_any *ptr, off_t samp, mus_any *data);
+mus_any *mus_make_frame_to_file(const char *filename, int chans, int out_format, int out_type);
+bool mus_frame_to_file_p(mus_any *ptr);
+mus_any *mus_frame_to_file(mus_any *ptr, off_t samp, mus_any *data);
+#define mus_make_frame2file(Filename, Chans, Format, Type) mus_make_frame_to_file(Filename, Chans, Format, Type)
+#define mus_frame2file_p(Ptr) mus_frame_to_file_p(Ptr)
+#define mus_frame2file(Ptr, Samp, Data) mus_frame_to_file(Ptr, Samp, Data)
 
 mus_any *mus_locsig(mus_any *ptr, off_t loc, Float val);
 mus_any *mus_make_locsig(Float degree, Float distance, Float reverb, int chans, mus_any *output, mus_any *revput, mus_locsig_interp_t type);
@@ -559,8 +598,10 @@ int mus_file_buffer_size(void);
 
 void mus_mix(const char *outfile, const char *infile, off_t out_start, off_t out_samps, off_t in_start, mus_any *mx, mus_any ***envs);
 void mus_mix_with_reader_and_writer(mus_any *outf, mus_any *inf, off_t out_start, off_t out_frames, off_t in_start, mus_any *umx, mus_any ***envs);
-int mus_file2fltarray(const char *filename, int chan, off_t start, int samples, Float *array);
-int mus_fltarray2file(const char *filename, Float *ddata, int len, int srate, int channels);
+int mus_file_to_fltarray(const char *filename, int chan, off_t start, int samples, Float *array);
+int mus_fltarray_to_file(const char *filename, Float *ddata, int len, int srate, int channels);
+#define mus_file2fltarray(Filename, Chan, Start, Samples, Array) mus_file_to_fltarray(Filename, Chan, Start, Samples, Array)
+#define mus_fltarray2file(Filename, Ddata, Len, Srate, Channels) mus_fltarray_to_file(Filename, Ddata, Len, Srate, Channels)
 
 Float mus_apply(mus_any *gen, ...);
 Float mus_bank(mus_any **gens, Float *scalers, Float *arg1, Float *arg2, int size);

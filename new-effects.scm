@@ -703,7 +703,7 @@
     
     (define flecho-1
       (lambda (scaler secs input-samps)
-	(let* ((flt (make-fir-filter :order 4 :xcoeffs (list->vct '(.125 .25 .25 .125))))
+	(let* ((flt (make-fir-filter :order 4 :xcoeffs (vct .125 .25 .25 .125)))
 	       (del (make-delay  (round (* secs (srate)))))
 	       (samp 0))
 	  (lambda (inval)

@@ -2092,8 +2092,8 @@ of these below.
 Many of the Snd and CLM functions handle vectors (arrays) of data.
 By defining a new vector type, named vct, and providing a package
 of old-style array-processing calls upon that type, we can speed up many
-operations by a factor of 30.  This is enough of a difference to warrant
-the added complexity, I think.  A vct can be viewed as a vector;
+operations by a factor of 30 -- enough of a difference to warrant
+the added complexity.  A vct can be viewed as a vector;
 to make one, call <i>make-vct</i>.  It is freed by the
 garbage collector when it can't be referenced any further.  To get 
 an element of a vct, use <i>vct-ref</i>; similarly <i>vct-set!</i>
@@ -2114,7 +2114,7 @@ functions:</p>
 
 <!-- list->vct -->
 <tr><td colspan=2><code><a class=def name="list2vct">list-&gt;vct</a> (lst)</code></td></tr>
-<tr><td width=50></td><td>return vct with elements of list <i>lst</i></td></tr>
+<tr><td width=50></td><td>return vct with elements of list <i>lst</i>. Equivalent to <code>(apply vct lst)</code>.</td></tr>
 
 <!-- make-vct -->
 <tr><td colspan=2><code><a class=def name="makevct">make-vct</a> (len (initial-element 0.0))</code></td></tr>
@@ -4957,7 +4957,7 @@ are arranged vertically or horizontally.
 The header type (e.g. mus-aiff) of the file that underlies <i>snd</i>.  Snd can read about 60 header types, and write 7 or so.
 Each header type has its own peculiarities; if in doubt, use mus-next because it is simple,
 and can handle any data format that Snd can write (whereas each of the others is restricted in this regard).
-The writable header types are mus-next (also named mus-sun), mus-nist (NIST Sphere), mus-aiff (obsolete, rarely needed), mus-aifc, mus-riff (MS wave),
+The writable header types are mus-next, mus-nist (NIST Sphere), mus-aiff (obsolete, rarely needed), mus-aifc, mus-riff (MS wave),
 mus-ircam, and mus-raw (no header -- it's up to you to remember what's in the file).  For descriptions of the headers,
 see headers.c; for actual sound files, see sf.tar.gz at ccrma-ftp.
 To turn a type number into a string, use <a href="#soundtypename">mus-header-type-name</a>. To get
@@ -9762,7 +9762,7 @@ to put the date and time in the Snd title bar.
 
 <p><b>Sndlib</b> (see <a href="sndlib.html#sndlibguile">sndlib.html</a> for a complete list):</p>
 <pre>
-  <a name="nextsoundfile">mus-next</a> mus-aifc mus-riff mus-nist mus-raw mus-ircam mus-aiff
+  mus-next mus-aifc mus-riff mus-nist mus-raw mus-ircam mus-aiff
   mus-bicsf mus-soundfont mus-voc mus-svx
 
   mus-bshort  mus-lshort mus-mulaw  mus-alaw   mus-byte   mus-ubyte   mus-bfloat

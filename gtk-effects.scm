@@ -655,7 +655,7 @@
 		     (lambda (w data)
 		       (map-chan-over-target-with-sync
 			(lambda (input-samps) 
-			  (let* ((flt (make-fir-filter :order 4 :xcoeffs (list->vct '(.125 .25 .25 .125))))
+			  (let* ((flt (make-fir-filter :order 4 :xcoeffs (vct .125 .25 .25 .125)))
 				 (del (make-delay  (round (* flecho-delay (srate)))))
 				 (samp 0))
 			    (lambda (inval)
