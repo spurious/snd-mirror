@@ -6271,7 +6271,8 @@ return the brief (no directory) form of <i>snd</i>'s filename.
 (default: <code>show-all-axes</code>)
 If <b>show-axes</b> is <code>show-all-axes</code>, display x and y axes; if <code>show-x-axis</code>, 
 just one (bottom) x axis is displayed, reducing screen clutter. 
-The other choice is <code>show-no-axes</code>.
+<code>show-no-axes</code> omits both x and y axes.  To remove the x axis label, use
+either <code>show-x-axis-unlabelled</code> or <code>show-all-axes-unlabelled</code>.
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -8977,7 +8978,7 @@ return a list giving the widget width and height (pixels).  Can be set. See nb.s
 
 <p><b>Axis placement</b> choice (<a href="#showaxes">show-axes</a>):</p>
 <pre>
-  show-all-axes  show-no-axes  show-x-axis
+  show-all-axes  show-no-axes  show-x-axis  show-all-axes-unlabelled  show-x-axis-unlabelled
 </pre><br>
 
 <p><b>Graph</b> id (for <a href="#y2position">y-&gt;position</a> etc):</p>

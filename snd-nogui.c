@@ -5,7 +5,7 @@ int add_channel_window(snd_info *sound, int channel, int chan_y, int insertion, 
 int snd_help(const char *subject, const char *help, bool with_wrap) {fprintf(stdout, help); return(0);}
 void add_to_error_history(char *msg, bool popup) {}
 void post_error_dialog(char *msg) {}
-bool snd_yes_or_no_p(char *format, ...) {return(0);}
+bool snd_yes_or_no_p(char *format, ...) {return(false);}
 void draw_line (axis_context *ax, int x0, int y0, int x1, int y1) {}
 void fill_rectangle (axis_context *ax, int x0, int y0, int width, int height) {}
 void fill_polygon(axis_context *ax, int points, ...) {}
@@ -42,8 +42,8 @@ void set_spectro_x_scale(Float val) {}
 void set_spectro_y_scale(Float val) {}
 void set_spectro_z_scale(Float val) {}
 void set_spectro_cutoff(Float val) {}
-bool color_dialog_is_active(void) {return(0);}
-bool orientation_dialog_is_active(void) {return(0);}
+bool color_dialog_is_active(void) {return(false);}
+bool orientation_dialog_is_active(void) {return(false);}
 void reflect_spectro(void) {}
 void listener_append_and_prompt(char *msg) {fprintf(stderr, "%s", msg);}
 void goto_listener(void) {}
@@ -118,7 +118,7 @@ int g_remove_from_menu(int which_menu, char *label) {return(0);}
 void reflect_play_stop_in_popup_menu(void) {}
 void reflect_play_selection_stop(void) {}
 int fire_up_transform_dialog(bool managed) {return(0);}
-bool transform_dialog_is_active(void) {return(0);}
+bool transform_dialog_is_active(void) {return(false);}
 void set_show_transform_peaks(bool val) {}
 void set_fft_log_magnitude(bool val) {}
 void set_fft_log_frequency(bool val) {}
@@ -127,10 +127,10 @@ void set_show_selection_transform(bool show) {}
 void reflect_regions_in_region_browser(void) {}
 void reflect_no_regions_in_region_browser(void) {}
 void update_region_browser(bool grf_too) {}
-bool region_browser_is_active(void) {return(0);}
+bool region_browser_is_active(void) {return(false);}
 void delete_region_and_update_browser(int n) {}
 void reflect_play_region_stop(int n) {}
-bool region_dialog_is_active(void) {return(0);}
+bool region_dialog_is_active(void) {return(false);}
 void allocate_region_rows(int n) {}
 void reflect_region_graph_style(void) {}
 void snd_completion_help(int matches, char **buffer) {}
@@ -175,7 +175,7 @@ void resize_sx(chan_info *cp) {}
 void resize_zx(chan_info *cp) {}
 void resize_sy(chan_info *cp) {}
 void resize_zy(chan_info *cp) {}
-bool channel_open_pane(chan_info *cp, void *ptr) {return(0);}
+bool channel_open_pane(chan_info *cp, void *ptr) {return(false);}
 void reflect_edit_history_change(chan_info *cp) {}
 void reflect_edit_counter_change(chan_info *cp) {}
 void set_peak_numbers_font(chan_info *cp) {}
@@ -218,7 +218,7 @@ void reflect_amp_env_completion(snd_info *sp) {}
 void equalize_all_panes(void) {}
 void sound_show_ctrls(snd_info *sp) {}
 void sound_hide_ctrls(snd_info *sp) {}
-bool control_panel_open(snd_info *sp) {return(0);}
+bool control_panel_open(snd_info *sp) {return(false);}
 void start_progress_report(snd_info *sp, enved_progress_t from_enved) {}
 void finish_progress_report(snd_info *sp, enved_progress_t from_enved) {}
 void progress_report(snd_info *sp, const char *funcname, int curchan, int chans, Float pct, enved_progress_t from_enved) {}
@@ -235,7 +235,7 @@ void view_curfiles_set_row_name(int pos) {}
 void set_file_browser_play_button(char *name, int state) {}
 void highlight_selected_sound(void) {}
 int start_file_dialog(int width, int height) {return(0);}
-bool file_dialog_is_active(void) {return(0);}
+bool file_dialog_is_active(void) {return(false);}
 int edit_header(snd_info *sp) {return(0);}
 void make_edit_save_as_dialog(void) {}
 void make_file_save_as_dialog(void) {}
@@ -261,14 +261,14 @@ void set_enved_base(Float val) {}
 void set_enved_target(enved_target_t val) {}
 void set_enved_wave_p(bool val) {}
 void set_enved_in_dB(bool val) {}
-bool enved_dialog_is_active(void) {return(0);}
+bool enved_dialog_is_active(void) {return(false);}
 void set_enved_filter_order(int order) {}
 void enved_reflect_selection(bool on) {}
 void reflect_mix_in_enved(void) {}
 void lock_recording_audio(void) {}
 void unlock_recording_audio(void) {}
 void snd_record_file(void) {}
-bool record_dialog_is_active(void) {return(0);}
+bool record_dialog_is_active(void) {return(false);}
 void recorder_error(char *msg) {}
 void reflect_record_size(int val) {}
 void unsensitize_control_buttons(void) {}
@@ -359,8 +359,9 @@ static int auto_open_files = 0;
 static bool noglob = false, noinit = false, nostdin = false;
 
 #if HAVE_SETJMP_H
-#if TRAP_SEGFAULT
 #include <setjmp.h>
+
+#if TRAP_SEGFAULT
 /* stolen from scwm.c */
 static sigjmp_buf envHandleEventsLoop;
 
@@ -370,8 +371,12 @@ static RETSIGTYPE segv(int ignored)
 }
 #endif
 
+static jmp_buf top_level_jump;
 RETSIGTYPE top_level_catch(int ignore);
-RETSIGTYPE top_level_catch(int ignore) {}
+RETSIGTYPE top_level_catch(int ignore)
+{
+  longjmp(top_level_jump, 1);
+}
 #endif
 
 #define FALLBACK_FONT "9x15"
@@ -528,13 +533,22 @@ void snd_doit(int argc, char **argv)
   if ((ss->sounds) && (ss->sounds[0]) && ((ss->sounds[0])->inuse == SOUND_NORMAL))
     select_channel(ss->sounds[0], 0);
 
+#if HAVE_SETJMP_H
 #if TRAP_SEGFAULT
   if (sigsetjmp(envHandleEventsLoop, 1))
     {
       snd_error(_("Caught seg fault (will try to continue):\n"));
     }
 #endif
+  if (setjmp(top_level_jump))
+    {
+      if (!(ss->jump_ok))
+	snd_error(_("Caught top level error (will try to continue):\n"));
+      else ss->jump_ok = false;
+    }
+#endif
 
   xen_repl(1, argv);
 }
 
+/* TODO: this is segfaulting in snd-test test 1 graph-transform? */

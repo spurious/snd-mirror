@@ -246,9 +246,7 @@
 	  (lambda ()
 	    ,func)
 	  (lambda args 
-					;(snd-display ";warning: ~A" (car args))
 	    (car args))))
-;(defmacro without-errors (func) `(begin ,func))
 
 (load "hooks.scm")
 (load "ws.scm")
@@ -404,6 +402,11 @@
 	'copy-context copy-context 0
 	'cursor-context cursor-context 3
 	'selection-context selection-context 2
+	'show-no-axes show-no-axes 0
+	'show-all-axes show-all-axes 1
+	'show-x-axis show-x-axis 2
+	'show-all-axes-unlabelled show-all-axes-unlabelled 3
+	'show-x-axis-unlabelled show-x-axis-unlabelled 4
 	
 	;; sndlib constants
 	'mus-unsupported mus-unsupported 0
@@ -6627,6 +6630,10 @@ EDITS: 5
 	(undo)
 	(set! (samples 0 100) (make-vct 100))
 	(if (not (= (cursor) 1000)) (snd-display ";set-samples cursor: ~A" (cursor)))
+	(set! (show-axes ind 0) show-x-axis-unlabelled)
+	(update-time-graph)
+	(set! (show-axes ind 0) show-all-axes-unlabelled)
+	(update-time-graph)
 	(close-sound ind))
       
       (let* ((index (open-sound "oboe.snd"))
@@ -38772,8 +38779,11 @@ EDITS: 2
 	      (check-error-tag 'no-such-file (lambda () (mix "/bad/baddy")))
 	      (check-error-tag 'no-such-sound (lambda () (swap-channels ind 0 123)))
 	      (check-error-tag 'out-of-range (lambda () (set! (show-axes ind 0) 123)))
+	      (check-error-tag 'out-of-range (lambda () (set! (show-axes ind 0) -123)))
 	      (check-error-tag 'out-of-range (lambda () (set! (x-axis-style ind 0) 123)))
+	      (check-error-tag 'out-of-range (lambda () (set! (x-axis-style ind 0) -123)))
 	      (check-error-tag 'out-of-range (lambda () (set! (graph-style ind 0) 123)))
+	      (check-error-tag 'out-of-range (lambda () (set! (graph-style ind 0) -123)))
 	      (check-error-tag 'out-of-range (lambda () (env-sound '(0 0 1 1) 0 #f -1.5)))
 	      (check-error-tag 'out-of-range (lambda () (xramp-channel 0.0 1.0 -1.6)))
 	      (check-error-tag 'no-such-sample (lambda () (samples->sound-data -1)))

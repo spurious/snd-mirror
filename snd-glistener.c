@@ -671,14 +671,8 @@ static gboolean mouse_leave_text_callback(GtkWidget *w, GdkEventCrossing *ev, gp
   return(false);
 }
 
-GtkWidget *snd_entry_new(GtkWidget *container, bool with_white_background)
+void connect_mouse_to_text(GtkWidget *text)
 {
-  GtkWidget *text;
-  text = gtk_entry_new();
-  gtk_editable_set_editable(GTK_EDITABLE(text), true);
-  gtk_box_pack_start(GTK_BOX(container), text, true, true, 2);
-  if (with_white_background) set_background(text, (ss->sgx)->white);
-  gtk_widget_show(text);
   g_signal_connect_closure_by_id(GTK_OBJECT(text),
 				 g_signal_lookup("enter_notify_event", G_OBJECT_TYPE(GTK_OBJECT(text))),
 				 0,
@@ -689,6 +683,17 @@ GtkWidget *snd_entry_new(GtkWidget *container, bool with_white_background)
 				 0,
 				 g_cclosure_new(GTK_SIGNAL_FUNC(mouse_leave_text_callback), NULL, 0),
 				 0);
+}
+
+GtkWidget *snd_entry_new(GtkWidget *container, bool with_white_background)
+{
+  GtkWidget *text;
+  text = gtk_entry_new();
+  gtk_editable_set_editable(GTK_EDITABLE(text), true);
+  gtk_box_pack_start(GTK_BOX(container), text, true, true, 2);
+  if (with_white_background) set_background(text, (ss->sgx)->white);
+  gtk_widget_show(text);
+  connect_mouse_to_text(text);
   return(text);
 }
 

@@ -141,12 +141,14 @@ void textfield_focus_callback(Widget w, XtPointer context, XtPointer info)
 {
   if (!(ss->using_schemes)) 
     XtVaSetValues(w, XmNbackground, (ss->sgx)->text_focus_color, NULL);
+  XtVaSetValues(w, XmNcursorPositionVisible, true, NULL);
 }
 
 void textfield_unfocus_callback(Widget w, XtPointer context, XtPointer info)
 {
   if (!(ss->using_schemes)) 
     XtVaSetValues(w, XmNbackground, (ss->sgx)->basic_color, NULL);
+  XtVaSetValues(w, XmNcursorPositionVisible, false, NULL);
 }
 
 
@@ -847,6 +849,7 @@ Widget make_textfield_widget(char *name, Widget parent, Arg *args, int n, text_c
   if (n1) {FREE(n1); n1 = NULL;}
   XtSetArg(args[n], XmNactivateCallback, n1 = make_callback_list(remember_event, NULL)); n++;
   /* can't use XmNuserData here because it is in use elsewhere (snd-xmix.c) */
+  XtSetArg(args[n], XmNcursorPositionVisible, false); n++;
   df = XtCreateManagedWidget(name, xmTextFieldWidgetClass, parent, args, n);
   XtAddCallback(df, XmNfocusCallback, textfield_focus_callback, NULL);
   XtAddCallback(df, XmNlosingFocusCallback, textfield_unfocus_callback, NULL);
@@ -886,6 +889,7 @@ void add_completer_to_textfield(Widget w, int completer)
 Widget make_text_widget(char *name, Widget parent, Arg *args, int n)
 {
   /* white background when active, emacs translations, text_activate_event in ss->sgx for subsequent activation check */
+  /* used only for comment widget in file data box (snd-xfile.c) */
   Widget df;
   if (!actions_loaded) 
     {
@@ -895,12 +899,13 @@ Widget make_text_widget(char *name, Widget parent, Arg *args, int n)
   if (n1) {FREE(n1); n1 = NULL;}
   XtSetArg(args[n], XmNactivateCallback, n1 = make_callback_list(remember_event, NULL)); n++;
   XtSetArg(args[n], XmNeditMode, XmMULTI_LINE_EDIT); n++;
+  XtSetArg(args[n], XmNcursorPositionVisible, false); n++;
   df = XmCreateScrolledText(parent, name, args, n);
   XtManageChild(df);
-  /* df = XtCreateManagedWidget(name, xmTextWidgetClass, parent, args, n); */
-  /* XtAddCallback(df, XmNfocusCallback, textfield_focus_callback, NULL); */
+  XtAddCallback(df, XmNfocusCallback, textfield_focus_callback, NULL);
   XtAddCallback(df, XmNlosingFocusCallback, textfield_unfocus_callback, NULL);
-  /* b1_press action overrides focus */
+  XtAddEventHandler(df, EnterWindowMask, false, mouse_enter_text_callback, NULL);
+  XtAddEventHandler(df, LeaveWindowMask, false, mouse_leave_text_callback, NULL);
   if (!transTable3) 
     transTable3 = XtParseTranslationTable(TextTrans3);
   XtOverrideTranslations(df, transTable3);

@@ -1,5 +1,7 @@
 #include "snd.h"
 
+/* TODO: if chans united only the bottom (visible) axis should be labelled */
+
 axis_context *free_axis_context(axis_context *ax)
 {
   if (ax) FREE(ax);
@@ -357,7 +359,9 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
 
   if (show_x_axis)
     {
-      include_x_label = ((ap->xlabel) && ((height > 100) && (width > 100)));
+      if ((axes == SHOW_X_AXIS_UNLABELLED) || (axes == SHOW_ALL_AXES_UNLABELLED))
+	include_x_label = false;
+      else include_x_label = ((ap->xlabel) && ((height > 100) && (width > 100)));
       include_x_tick_labels = ((height > 60) && (width > 100));
       include_x_ticks = ((height > 40) && (width > 40));
     }
@@ -367,7 +371,7 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
       include_x_tick_labels = false;
       include_x_ticks = false;
     }
-  if (axes != SHOW_X_AXIS)
+  if ((axes != SHOW_X_AXIS) && (axes != SHOW_X_AXIS_UNLABELLED))
     {
       include_y_tick_labels = ((width > 100) && (height > 60));
       include_y_ticks = ((width > 100) && (height > 40));
@@ -602,7 +606,7 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
 #endif
       fill_rectangle(ax, ap->x_axis_x0, ap->x_axis_y0, (unsigned int)(ap->x_axis_x1 - ap->x_axis_x0), axis_thickness);
     }
-  if (axes != SHOW_X_AXIS)
+  if ((axes != SHOW_X_AXIS) && (axes != SHOW_X_AXIS_UNLABELLED))
     {
 #if HAVE_GL
       if (ap->use_gl)
@@ -635,7 +639,7 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
     {
       if (show_x_axis)
 	ps_fill_rectangle(ap, ap->x_axis_x0, ap->x_axis_y0, ap->x_axis_x1 - ap->x_axis_x0, axis_thickness);
-      if (axes != SHOW_X_AXIS)
+      if ((axes != SHOW_X_AXIS) && (axes != SHOW_X_AXIS_UNLABELLED))
 	ps_fill_rectangle(ap, ap->y_axis_x0, ap->y_axis_y1, axis_thickness, ap->y_axis_y0 - ap->y_axis_y1);
       if ((include_y_tick_labels) || 
 	  (include_x_tick_labels)) 
@@ -1044,7 +1048,7 @@ x0 y0 x1 y1 xmin ymin xmax ymax pix_x0 pix_y0 pix_x1 pix_y1 y_offset xscale ysca
 #endif
 
 #define AXIS_STYLE_OK(Id) (((Id) >= X_AXIS_IN_SECONDS) && ((Id) <= X_AXIS_IN_BEATS))
-#define SHOW_AXES_OK(Id) (((Id) >= SHOW_NO_AXES) && ((Id) <= SHOW_X_AXIS))
+#define SHOW_AXES_OK(Id) (((Id) >= SHOW_NO_AXES) && ((Id) <= SHOW_X_AXIS_UNLABELLED))
 
 #if (!USE_NO_GUI)
 static XEN g_draw_axes(XEN args)

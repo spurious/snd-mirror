@@ -90,7 +90,8 @@ void set_enved_undo_sensitive(bool val) {set_sensitive(undoB, val);}
 void set_enved_save_sensitive(bool val) {set_sensitive(saveB, val);}
 void set_enved_show_sensitive(bool val) {set_sensitive(showB, val);}
 
-void make_scrolled_env_list (void)
+static bool use_listener_font = false;
+void make_scrolled_env_list(void)
 {
   XmString *strs;
   int n, size;
@@ -99,7 +100,7 @@ void make_scrolled_env_list (void)
     XtVaSetValues(screnvlst, XmNbackground, (ss->sgx)->highlight_color, NULL); 
   strs = (XmString *)CALLOC(size, sizeof(XmString)); 
   for (n = 0; n < size; n++) 
-    strs[n] = XmStringCreate(enved_all_names(n), XmFONTLIST_DEFAULT_TAG);
+    strs[n] = XmStringCreate(enved_all_names(n), (use_listener_font) ? "listener_font" : XmFONTLIST_DEFAULT_TAG);
   XtVaSetValues(screnvlst, 
 		XmNitems, strs, 
 		XmNitemCount, size, 
@@ -1486,6 +1487,14 @@ Widget create_envelope_editor(void)
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNtopWidget, screnvname); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
+      if ((ss->sgx)->listener_fontlist) 
+	{
+#if USE_RENDITIONS
+	  XtSetArg(args[n], XmNfontList, NULL); n++;
+#endif
+	  XtSetArg(args[n], XM_FONT_RESOURCE, (ss->sgx)->listener_fontlist); n++;
+	  use_listener_font = true;
+	}
       screnvlst = XmCreateScrolledList(colD, "scrolled-env-list", args, n);
       XtManageChild(screnvlst); 
       XtAddCallback(screnvlst, XmNbrowseSelectionCallback, env_browse_callback, NULL);

@@ -691,7 +691,11 @@ Reverb-feedback sets the scaler on the feedback.\n\
   (for-each-child 
     widget
     (lambda (w) 
-      (XtSetValues w (list XmNbackgroundPixmap wd)))))
+      (XtSetValues w (list XmNbackgroundPixmap wd))
+      (if (XmIsLabel w)
+	  (let ((val (cadr (XtVaGetValues w (list XmNlabelType 0)))))
+	    (if (= val XmPIXMAP)
+		(XtVaSetValues w (list XmNlabelPixmap wd))))))))
 
 (paint-all (cadr (main-widgets)))
 (for-each

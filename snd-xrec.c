@@ -2394,6 +2394,9 @@ static Widget make_vertical_gain_sliders(recorder_info *rp, PANE *p, int num_gai
 	  XtSetArg(args[n], XmNleftAttachment, XmATTACH_NONE); n++;
 	  XtSetArg(args[n], XmNrightAttachment, XmATTACH_WIDGET); n++;
 	  XtSetArg(args[n], XmNrightWidget, icon_label); n++;
+#if USE_RENDITIONS
+	  XtSetArg(args[n], XmNfontList, NULL); n++;
+#endif
 	  XtSetArg(args[n], XM_FONT_RESOURCE, small_fontlist); n++;
 	  XtSetArg(args[n], XmNalignment, XmALIGNMENT_CENTER); n++;
 	  XtSetArg(args[n], XmNwidth, 30); n++;
@@ -2490,7 +2493,13 @@ static Widget make_button_box(recorder_info *rp, PANE *p, Float meter_size,
   XtSetArg(args[n], XmNleftWidget, vu_vertical_sep); n++;
   XtSetArg(args[n], XmNrightAttachment, XmATTACH_WIDGET); n++;
   XtSetArg(args[n], XmNrightWidget, p->button_vertical_sep); n++;
-  if (meter_size < SMALL_FONT_CUTOFF) {XtSetArg(args[n], XM_FONT_RESOURCE, small_fontlist); n++;}
+  if (meter_size < SMALL_FONT_CUTOFF) 
+    {
+#if USE_RENDITIONS
+      XtSetArg(args[n], XmNfontList, NULL); n++;
+#endif
+      XtSetArg(args[n], XM_FONT_RESOURCE, small_fontlist); n++;
+    }
   if ((rp->systems == 1) || (!input))
     button_label = XtCreateManagedWidget(recorder_device_name(p->device), xmLabelWidgetClass, p->pane, args, n);
   else 
@@ -2506,7 +2515,13 @@ static Widget make_button_box(recorder_info *rp, PANE *p, Float meter_size,
       XtSetArg(args[n], XmNleftWidget, vu_vertical_sep); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNrightWidget, p->button_vertical_sep); n++;
-      if (meter_size < SMALL_FONT_CUTOFF) {XtSetArg(args[n], XM_FONT_RESOURCE, small_fontlist); n++;}
+      if (meter_size < SMALL_FONT_CUTOFF) 
+	{
+#if USE_RENDITIONS
+	  XtSetArg(args[n], XmNfontList, NULL); n++;
+#endif
+	  XtSetArg(args[n], XM_FONT_RESOURCE, small_fontlist); n++;
+	}
       button_label = XtCreateManagedWidget(recorder_device_name(p->device), xmLabelWidgetClass, p->pane, args, n);
     }
   
@@ -2556,7 +2571,13 @@ static Widget make_button_box(recorder_info *rp, PANE *p, Float meter_size,
 	  XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
 	  XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
 	}
-      if (meter_size < SMALL_FONT_CUTOFF) {XtSetArg(args[n], XM_FONT_RESOURCE, small_fontlist); n++;}
+      if (meter_size < SMALL_FONT_CUTOFF) 
+	{
+#if USE_RENDITIONS
+	  XtSetArg(args[n], XmNfontList, NULL); n++;
+#endif
+	  XtSetArg(args[n], XM_FONT_RESOURCE, small_fontlist); n++;
+	}
       if (((i + 1) % columns) != 0)
 	{
 	  /* these are the right sides of the buttons before the rightmost one */
@@ -2611,7 +2632,13 @@ static Widget make_button_box(recorder_info *rp, PANE *p, Float meter_size,
       n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       XtSetArg(args[n], XmNrecomputeSize, false); n++;
-      if (meter_size < SMALL_FONT_CUTOFF) {XtSetArg(args[n], XM_FONT_RESOURCE, small_fontlist); n++;}
+      if (meter_size < SMALL_FONT_CUTOFF) 
+	{
+#if USE_RENDITIONS
+	  XtSetArg(args[n], XmNfontList, NULL); n++;
+#endif
+	  XtSetArg(args[n], XM_FONT_RESOURCE, small_fontlist); n++;
+	}
       max_label = XtCreateManagedWidget("0.000", xmLabelWidgetClass, last_max, args, n);
       wd = (Wdesc *)CALLOC(1, sizeof(Wdesc));
       wd->chan = i;
@@ -2657,7 +2684,13 @@ static void make_reset_button(PANE *p, Float meter_size, Widget button_box, Widg
   XtSetArg(args[n], XmNleftWidget, vu_vertical_sep); n++;
   XtSetArg(args[n], XmNrightAttachment, XmATTACH_WIDGET); n++;
   XtSetArg(args[n], XmNrightWidget, p->button_vertical_sep); n++;
-  if (meter_size < SMALL_FONT_CUTOFF) {XtSetArg(args[n], XM_FONT_RESOURCE, small_fontlist); n++;}
+  if (meter_size < SMALL_FONT_CUTOFF) 
+    {
+#if USE_RENDITIONS
+      XtSetArg(args[n], XmNfontList, NULL); n++;
+#endif
+      XtSetArg(args[n], XM_FONT_RESOURCE, small_fontlist); n++;
+    }
   XtSetArg(args[n], XmNlabelString, labelstr); n++;
   p->reset_button = XtCreateManagedWidget("reset", xmPushButtonWidgetClass, p->pane, args, n);
   XtAddCallback(p->reset_button, XmNactivateCallback, vu_reset_callback, p);

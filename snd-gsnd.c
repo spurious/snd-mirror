@@ -2066,6 +2066,7 @@ void finish_progress_report(snd_info *sp, enved_progress_t from_enved)
   if (from_enved == FROM_ENVED)
     display_enved_progress(NULL, blank);
   else snd_file_glasses_icon(sp, false, 0);
+  if (!(ss->stopped_explicitly)) clear_minibuffer(sp);
 }
 
 void start_progress_report(snd_info *sp, enved_progress_t from_enved)

@@ -298,6 +298,7 @@ void news_help(void)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+8-Sep:   added show-all-axes-unlabelled and show-x-axis-unlabelled.\n\
 2-Sep:   removed bold-button-font and boldbuttonFont resource.\n\
 29-Aug:  gcc complex trig replaces GSL if it's available.\n\
 21-Aug:  added snd->sample and xen->sample (Snd-specific) generators to redirect\n\
@@ -308,8 +309,6 @@ void news_help(void)
          removed dlp/dp-new-effects.scm and plugins-menu.scm.\n\
          int -> bool changes (ISO C99).\n\
 7-Aug:   dac-is-running.\n\
-1-Aug:   ladspa.scm and ladspa-help.scm thanks to Kjetil S. Matheussen.\n\
-         ladspa struct constants and accessors.\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*: \n'", features, "\n\n",

@@ -66,9 +66,11 @@ static char *show_axes2string(show_axes_t ax)
 {
   switch (ax)
     {
-    case SHOW_NO_AXES: return(TO_VAR_NAME(S_show_no_axes));  break;
-    case SHOW_X_AXIS:  return(TO_VAR_NAME(S_show_x_axis));   break;
-    default:           return(TO_VAR_NAME(S_show_all_axes)); break;
+    case SHOW_NO_AXES:           return(TO_VAR_NAME(S_show_no_axes));             break;
+    case SHOW_X_AXIS:            return(TO_VAR_NAME(S_show_x_axis));              break;
+    case SHOW_X_AXIS_UNLABELLED: return(TO_VAR_NAME(S_show_x_axis_unlabelled));   break;
+    case SHOW_ALL_AXES:          return(TO_VAR_NAME(S_show_all_axes));            break;
+    default:                     return(TO_VAR_NAME(S_show_all_axes_unlabelled)); break;
     }
 }
 

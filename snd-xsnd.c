@@ -3007,13 +3007,19 @@ void progress_report(snd_info *sp, const char *funcname, int curchan, int chans,
   int which;
 #if HAVE_XPM
   char glass_num[8];
+  char expr_str[8];
   if (sp->inuse != SOUND_NORMAL) return;
   which = (int)(pct * NUM_GLASSES);
+  mus_snprintf(expr_str, 8, "%.2f", pct);
   if (which >= NUM_GLASSES) which = NUM_GLASSES - 1;
   if (which < 0) which = 0;
   if (from_enved == FROM_ENVED)
-    display_enved_progress(NULL, mini_glasses[which]);
-  else snd_file_glasses_icon(sp, true, which);
+    display_enved_progress(expr_str, mini_glasses[which]);
+  else 
+    {
+      report_in_minibuffer(sp, expr_str);
+      snd_file_glasses_icon(sp, true, which);
+    }
   if (chans > 1) 
     {
       mus_snprintf(glass_num, 8, "[%d]", curchan);
@@ -3045,8 +3051,8 @@ void finish_progress_report(snd_info *sp, enved_progress_t from_enved)
     display_enved_progress(NULL, blank_pixmap);
   else snd_file_glasses_icon(sp, false, 0);
   clear_minibuffer_prompt(sp);
+  if (!(ss->stopped_explicitly)) clear_minibuffer(sp);
 #else
-
   if (from_enved == FROM_ENVED)
     display_enved_progress((ss->stopped_explicitly) ? _("stopped") : "", 0);
   else report_in_minibuffer(sp, (ss->stopped_explicitly) ? _("stopped") : "");
@@ -3057,7 +3063,8 @@ void start_progress_report(snd_info *sp, enved_progress_t from_enved)
 {
   if (sp->inuse != SOUND_NORMAL) return;
 #if HAVE_XPM
-  if (from_enved == NOT_FROM_ENVED) snd_file_glasses_icon(sp, true, 0);
+  if (from_enved == NOT_FROM_ENVED) 
+    snd_file_glasses_icon(sp, true, 0);
 #else
   if (from_enved == NOT_FROM_ENVED)
     display_enved_progress("", 0);

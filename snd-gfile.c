@@ -521,6 +521,7 @@ file_data *make_file_data_panel(GtkWidget *parent, char *name,
       gtk_frame_set_shadow_type(GTK_FRAME(frame), GTK_SHADOW_IN);
       gtk_widget_show(frame);
       fdat->comment_text = make_scrolled_text(frame, true, NULL, NULL);
+      connect_mouse_to_text(fdat->comment_text);
     }
 
   return(fdat);

@@ -824,7 +824,9 @@ XEN run_hook(XEN hook, XEN args, const char *caller);
 void during_open(int fd, char *file, open_reason_t reason);
 void after_open(int index);
 bool listener_print_p(char *msg);
-Float check_color_range(const char *caller, XEN val);
+#if (!USE_NO_GUI)
+  Float check_color_range(const char *caller, XEN val);
+#endif
 int string2int(char *str);
 Float string2Float(char *str);
 off_t string2off_t(char *str);
@@ -1082,7 +1084,9 @@ axis_info *make_axis_info (chan_info *cp, double xmin, double xmax, Float ymin, 
 			   char *xlabel, double x0, double x1, Float y0, Float y1,
 			   axis_info *old_ap);
 
-void g_init_axis(void);
+#if (!USE_NO_GUI)
+  void g_init_axis(void);
+#endif
 #if HAVE_GL
   void reload_label_font(void);
   void reload_number_font(void);
@@ -1327,7 +1331,6 @@ bool record_in_progress(void);
 void init_recorder(void);
 void save_recorder_state(FILE *fd);
 void close_recorder_audio(void);
-void recorder_error(char *msg);
 void g_init_recorder(void);
 void fire_up_recorder(void);
 

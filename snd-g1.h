@@ -93,6 +93,7 @@ void clear_listener(void);
 void g_init_gxlistener(void);
 GtkWidget *snd_entry_new(GtkWidget *container, bool with_white_background);
 bool highlight_unbalanced_paren(void);
+void connect_mouse_to_text(GtkWidget *text);
 
 
 
@@ -504,6 +505,7 @@ void unlock_recording_audio(void);
 void cleanup_recording (void);
 void snd_record_file(void);
 bool record_dialog_is_active(void);
+void recorder_error(char *msg);
 
 
 

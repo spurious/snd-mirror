@@ -2865,6 +2865,7 @@ static void make_axes(chan_info *cp, axis_info *ap, x_axis_style_t x_style, bool
   make_axes_1(ap, x_style, SND_SRATE(sp), cp->show_axes, cp->printing,
 	      ((sp->channel_style != CHANNELS_COMBINED) || 
 	       (cp->show_axes == SHOW_ALL_AXES) || 
+	       (cp->show_axes == SHOW_ALL_AXES_UNLABELLED) || 
 	       (cp->chan == (sp->nchans - 1))));
 }
 
@@ -6005,8 +6006,8 @@ static XEN g_set_show_axes(XEN on, XEN snd, XEN chn)
   show_axes_t val;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(on), on, XEN_ARG_1, S_setB S_show_axes, "an integer");
   val = (show_axes_t)XEN_TO_C_INT(on);
-  if ((val < SHOW_NO_AXES) || (val > SHOW_X_AXIS))
-    XEN_OUT_OF_RANGE_ERROR(S_setB S_show_axes, 1, on, "~A, but must be " S_show_all_axes ", " S_show_x_axis ", or " S_show_no_axes);
+  if ((val < SHOW_NO_AXES) || (val > SHOW_X_AXIS_UNLABELLED))
+    XEN_OUT_OF_RANGE_ERROR(S_setB S_show_axes, 1, on, "~A, but must be " S_show_all_axes ", " S_show_x_axis ", or " S_show_no_axes ", or *-unlabelled");
   if (XEN_BOUND_P(snd))
     return(channel_set(snd, chn, on, CP_SHOW_AXES, S_setB S_show_axes));
   else
@@ -7000,12 +7001,16 @@ void g_init_chn(void)
 					    0, 2, 1, 2);
 
   #define H_show_all_axes "The value for " S_show_axes " that causes both the x and y axes to be displayed"
+  #define H_show_all_axes_unlabelled "The value for " S_show_axes " that causes both the x and y axes to be displayed, but without any label"
   #define H_show_no_axes "The value for " S_show_axes " that causes neither the x or y axes to be displayed"
   #define H_show_x_axis "The value for " S_show_axes " that causes only the x axis to be displayed"
+  #define H_show_x_axis_unlabelled "The value for " S_show_axes " that causes only the x axis to be displayed, but without any label"
 
-  XEN_DEFINE_CONSTANT(S_show_all_axes,         SHOW_ALL_AXES, H_show_all_axes);
-  XEN_DEFINE_CONSTANT(S_show_no_axes,          SHOW_NO_AXES,  H_show_no_axes);
-  XEN_DEFINE_CONSTANT(S_show_x_axis,           SHOW_X_AXIS,   H_show_x_axis);
+  XEN_DEFINE_CONSTANT(S_show_all_axes,           SHOW_ALL_AXES,            H_show_all_axes);
+  XEN_DEFINE_CONSTANT(S_show_all_axes_unlabelled,SHOW_ALL_AXES_UNLABELLED, H_show_all_axes_unlabelled);
+  XEN_DEFINE_CONSTANT(S_show_no_axes,            SHOW_NO_AXES,             H_show_no_axes);
+  XEN_DEFINE_CONSTANT(S_show_x_axis,             SHOW_X_AXIS,              H_show_x_axis);
+  XEN_DEFINE_CONSTANT(S_show_x_axis_unlabelled,  SHOW_X_AXIS_UNLABELLED,   H_show_x_axis_unlabelled);
 
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_show_axes, g_show_axes_w, H_show_axes,
 					    S_setB S_show_axes, g_set_show_axes_w, g_set_show_axes_reversed, 0, 2, 1, 2);
