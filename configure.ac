@@ -773,6 +773,8 @@ else
 	# gtk 2.4.0|1|2|3|4: no API changes
 	AC_CHECK_LIB(m, gtk_about_dialog_new, [AC_DEFINE(HAVE_GTK_ABOUT_DIALOG_NEW)], ,$GTK_LIBS)
 	# gtk 2.5.0
+	AC_CHECK_LIB(m, gtk_label_set_ellipsize, [AC_DEFINE(HAVE_GTK_LABEL_SET_ELLIPSIZE)], ,$GTK_LIBS)
+	# gtk 2.5.1
 
         if test "$with_x11" = yes ; then
 	  AC_DEFINE(WITH_GTK_AND_X11)
@@ -1005,6 +1007,7 @@ if test $GUILE_CONFIG_works = yes; then
     AC_CHECK_LIB($GNAME, scm_make_ratio,         [AC_DEFINE(HAVE_SCM_MAKE_RATIO)])
     AC_CHECK_LIB($GNAME, scm_make_complex,       [AC_DEFINE(HAVE_SCM_MAKE_COMPLEX)])
     AC_CHECK_LIB($GNAME, scm_to_signed_integer,  [AC_DEFINE(HAVE_SCM_TO_SIGNED_INTEGER)])
+    AC_CHECK_LIB($GNAME, scm_c_make_rectangular, [AC_DEFINE(HAVE_SCM_C_MAKE_RECTANGULAR)])
     AC_CHECK_LIB($GNAME, scm_c_define_module,    [AC_DEFINE(HAVE_SCM_C_DEFINE_MODULE)
                                                  if test "$with_modules" = yes; then
 						   AC_DEFINE(WITH_MODULES)

@@ -283,9 +283,21 @@
 #endif
 
 #if HAVE_COMPLEX_TRIG
-  #define XEN_TO_C_COMPLEX(a)         XEN_TO_C_DOUBLE(scm_real_part(a)) + (XEN_TO_C_DOUBLE(scm_imag_part(a)) * 1.0fi)
-  #define C_TO_XEN_COMPLEX(a)         scm_make_complex(__real__ a, __imag__ a)
-  #define XEN_COMPLEX_P(Arg)          (XEN_NOT_FALSE_P(scm_number_p(Arg)))
+  #if HAVE_SCM_C_MAKE_RECTANGULAR
+    #if defined(__GNUC__) && (!(defined(__cplusplus)))
+      #define XEN_TO_C_COMPLEX(a)       ({ XEN _xen_h_23_ = a; (scm_c_real_part(_xen_h_23_) + scm_c_imag_part(_xen_h_23_) * 1.0fi); })    
+      #define C_TO_XEN_COMPLEX(a)       ({ XEN _xen_h_24_ = a; scm_c_make_rectangular(__real__ _xen_h_24_, __imag__ _xen_h_24_); })
+      #define XEN_COMPLEX_P(Arg)        scm_is_complex(Arg)
+    #else
+      #define XEN_TO_C_COMPLEX(a)       (scm_c_real_part(a) + scm_c_imag_part(a) * 1.0fi)
+      #define C_TO_XEN_COMPLEX(a)       scm_c_make_rectangular(__real__ a, __imag__ a)
+      #define XEN_COMPLEX_P(Arg)        scm_is_complex(Arg)
+    #endif
+  #else
+    #define XEN_TO_C_COMPLEX(a)         XEN_TO_C_DOUBLE(scm_real_part(a)) + (XEN_TO_C_DOUBLE(scm_imag_part(a)) * 1.0fi)
+    #define C_TO_XEN_COMPLEX(a)         scm_make_complex(__real__ a, __imag__ a)
+    #define XEN_COMPLEX_P(Arg)          (XEN_NOT_FALSE_P(scm_number_p(Arg)))
+  #endif
 #endif
 
 /* there is SCM_CONTINUATIONP -- why doesn't scheme have continuation? */
@@ -511,12 +523,16 @@
   #define C_TO_XEN_CHAR(c)            SCM_MAKICHR(c)
 #endif
 
-#if HAVE_SCM_MAKE_RATIO
+#if HAVE_SCM_MAKE_RATIO || HAVE_SCM_C_MAKE_RECTANGULAR
   #define XEN_NUMERATOR(Arg)          scm_numerator(Arg)
   #define XEN_DENOMINATOR(Arg)        scm_denominator(Arg)
   #define XEN_RATIONALIZE(Arg1, Arg2) scm_rationalize(scm_inexact_to_exact(Arg1), scm_inexact_to_exact(Arg2))
   #define XEN_RATIO_P(Arg)            SCM_FRACTIONP(Arg)
-  #define XEN_MAKE_RATIO(Num, Den)    scm_make_ratio(Num, Den)
+  #if HAVE_SCM_C_MAKE_RECTANGULAR
+    #define XEN_MAKE_RATIO(Num, Den)  scm_divide(Num, Den)
+  #else
+    #define XEN_MAKE_RATIO(Num, Den)  scm_make_ratio(Num, Den)
+  #endif
 #endif
 
 #define XEN_CONS_P(Arg)               SCM_CONSP(Arg)

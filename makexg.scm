@@ -99,6 +99,10 @@
 (define ulongs-250 '())
 (define ints-250 '())
 
+(define ints-251 '())
+(define funcs-251 '())
+(define types-251 '())
+
 (define idlers (list "g_source_remove" "g_idle_remove_by_data"
 		     "gtk_quit_remove" "gtk_quit_remove_by_data" 
 		     "gtk_key_snooper_remove"))
@@ -363,8 +367,18 @@
 							 (not (member type types-234))
 							 (not (member type types-250)))
 						    (set! types-250 (cons type types-250)))
-						(if (not (member type types))
-						    (set! types (cons type types)))))))))
+						(if (or (eq? extra '251)
+							(eq? extra 'callback-251))
+						    (if (and (not (member type types))
+							     (not (member type types-21))
+							     (not (member type types-22))
+							     (not (member type types-23))
+							     (not (member type types-234))
+							     (not (member type types-250))
+							     (not (member type types-251)))
+						    (set! types-251 (cons type types-251)))
+						    (if (not (member type types))
+							(set! types (cons type types))))))))))
 			(set! type #f))
 		      (if (> i (1+ sp))
 			  (set! type (substring args (1+ sp) i))))
@@ -691,6 +705,7 @@
 	(cons "PangoUnderline" "INT")
 	(cons "PangoFontMask" "INT")
 	(cons "PangoWrapMode" "INT")
+	(cons "PangoEllipsizeMode" "INT")
 	(cons "PangoAlignment" "INT")
 	(cons "PangoCoverageLevel" "INT")
 	(cons "PangoGlyph" "ULONG")
@@ -949,6 +964,24 @@
 	    (set! funcs-250 (cons (list name type strs args) funcs-250))
 	    (set! names (cons (cons name (func-type strs)) names)))))))
 
+(define* (CFNC-251 data)
+  (let ((name (cadr-str data))
+	(args (caddr-str data)))
+    (if (assoc name names)
+	(no-way "CFNC-251: ~A~%" (list name data))
+	(let ((type (car-str data)))
+	  (if (and (not (member type types))
+		   (not (member type types-21))
+		   (not (member type types-22))
+		   (not (member type types-23))
+		   (not (member type types-234))
+		   (not (member type types-250))
+		   (not (member type types-251)))
+	      (set! types-251 (cons type types-251)))
+	  (let ((strs (parse-args args '251)))
+	    (set! funcs-251 (cons (list name type strs args) funcs-251))
+	    (set! names (cons (cons name (func-type strs)) names)))))))
+
 (define* (CFNC-22 data)
   (let ((name (cadr-str data))
 	(args (caddr-str data)))
@@ -1127,6 +1160,14 @@
 	(set! ints-250 (cons name ints-250))
 	(set! names (cons (cons name 'int) names)))))
 
+(define* (CINT-251 name #:optional type)
+  (save-declared-type type)
+  (if (assoc name names)
+      (no-way "~A CINT-251~%" name)
+      (begin
+	(set! ints-251 (cons name ints-251))
+	(set! names (cons (cons name 'int) names)))))
+
 (define* (CINT-extra name #:optional type)
   (save-declared-type type)
   (if (assoc name names)
@@ -1260,7 +1301,8 @@
 		   (not (member type-name types-22))
 		   (not (member type-name types-23))
 		   (not (member type-name types-234))
-		   (not (member type-name types-250)))
+		   (not (member type-name types-250))
+		   (not (member type-name types-251)))
 	      (set! types (cons (string-append name "*") types)))
 	  (for-each 
 	   (lambda (field)
@@ -1363,6 +1405,11 @@
   (thunk)
   (dpy "#endif~%~%"))
 
+(define (with-251 dpy thunk)
+  (dpy "#if HAVE_GTK_LABEL_SET_ELLIPSIZE~%")
+  (thunk)
+  (dpy "#endif~%~%"))
+
 
 ;;; ---------------------------------------- write output files ----------------------------------------
 (hey "/* xg.c: Guile and Ruby bindings for gdk/gtk/pango, some of glib~%")
@@ -1381,6 +1428,7 @@
 (hey " *     HAVE_GTK_COMBO_BOX_ENTRY_NEW_TEXT for gtk+-2.3.5~%")
 (hey " *     HAVE_GBOOLEAN_GTK_FILE_CHOOSER_SET_FILENAME for gtk+-2.3.6~%")
 (hey " *     HAVE_GTK_ABOUT_DIALOG_NEW for gtk+-2.5.0~%")
+(hey " *     HAVE_GTK_LABEL_SET_ELLIPSIZE for gtk+-2.5.1~%")
 (hey " *~%")
 (hey " * reference args initial values are usually ignored, resultant values are returned in a list.~%")
 (hey " * null ptrs are passed and returned as #f, trailing \"user_data\" callback function arguments are optional (default: #f).~%")
@@ -1415,6 +1463,7 @@
 (hey " *     win32-specific functions~%")
 (hey " *~%")
 (hey " * HISTORY:~%")
+(hey " *     5-Aug:     gtk 2.5.1 changes.~%")
 (hey " *     21-Jul:    gtk 2.5.0 changes.~%")
 (hey " *     2-Jun:     gdk_atom_name needs to free return value~%")
 (hey " *     28-May:    GtkFileSelection struct support put back in -- need ok_button et al.~%")
@@ -1655,6 +1704,12 @@
     (with-250 hey
 	     (lambda ()
 	       (for-each type-it (reverse types-250))
+	       )))
+
+(if (not (null? types-251))
+    (with-251 hey
+	     (lambda ()
+	       (for-each type-it (reverse types-251))
 	       )))
 
 (hey "#define XLS(a, b) XEN_TO_C_gchar_(XEN_LIST_REF(a, b))~%")
@@ -2275,6 +2330,7 @@
 (if (not (null? funcs-235)) (with-235 hey (lambda () (for-each handle-func (reverse funcs-235)))))
 (if (not (null? funcs-236)) (with-236 hey (lambda () (for-each handle-func (reverse funcs-236)))))
 (if (not (null? funcs-250)) (with-250 hey (lambda () (for-each handle-func (reverse funcs-250)))))
+(if (not (null? funcs-251)) (with-251 hey (lambda () (for-each handle-func (reverse funcs-251)))))
 
 (define cast-it
  (lambda (cast)
@@ -2381,6 +2437,7 @@
 (if (not (null? funcs-235)) (with-235 say (lambda () (for-each argify-func (reverse funcs-235)))))
 (if (not (null? funcs-236)) (with-236 say (lambda () (for-each argify-func (reverse funcs-236)))))
 (if (not (null? funcs-250)) (with-250 say (lambda () (for-each argify-func (reverse funcs-250)))))
+(if (not (null? funcs-251)) (with-251 say (lambda () (for-each argify-func (reverse funcs-251)))))
 
 (define (ruby-cast func) (say "XEN_NARGIFY_1(gxg_~A_w, gxg_~A)~%" (no-arg (car func)) (no-arg (car func)))) 
 (for-each ruby-cast (reverse casts))
@@ -2519,6 +2576,7 @@
 (if (not (null? funcs-235)) (with-235 say-hey (lambda () (for-each defun (reverse funcs-235)))))
 (if (not (null? funcs-236)) (with-236 say-hey (lambda () (for-each defun (reverse funcs-236)))))
 (if (not (null? funcs-250)) (with-250 say-hey (lambda () (for-each defun (reverse funcs-250)))))
+(if (not (null? funcs-251)) (with-251 say-hey (lambda () (for-each defun (reverse funcs-251)))))
 
 (define (cast-out func)
   (hey "  XG_DEFINE_PROCEDURE(~A, gxg_~A, 1, 0, 0, NULL);~%" (no-arg (car func)) (no-arg (car func)))
@@ -2861,6 +2919,8 @@
     (with-235 hey (lambda () (for-each (lambda (val) (hey "  DEFINE_INTEGER(~A);~%" val)) (reverse ints-235)))))
 (if (not (null? ints-250))
     (with-250 hey (lambda () (for-each (lambda (val) (hey "  DEFINE_INTEGER(~A);~%" val)) (reverse ints-250)))))
+(if (not (null? ints-251))
+    (with-251 hey (lambda () (for-each (lambda (val) (hey "  DEFINE_INTEGER(~A);~%" val)) (reverse ints-251)))))
 
 
 (for-each 

@@ -14,6 +14,7 @@
  *     HAVE_GTK_COMBO_BOX_ENTRY_NEW_TEXT for gtk+-2.3.5
  *     HAVE_GBOOLEAN_GTK_FILE_CHOOSER_SET_FILENAME for gtk+-2.3.6
  *     HAVE_GTK_ABOUT_DIALOG_NEW for gtk+-2.5.0
+ *     HAVE_GTK_LABEL_SET_ELLIPSIZE for gtk+-2.5.1
  *
  * reference args initial values are usually ignored, resultant values are returned in a list.
  * null ptrs are passed and returned as #f, trailing "user_data" callback function arguments are optional (default: #f).
@@ -45,6 +46,7 @@
  *     win32-specific functions
  *
  * HISTORY:
+ *     5-Aug:     gtk 2.5.1 changes.
  *     21-Jul:    gtk 2.5.0 changes.
  *     2-Jun:     gdk_atom_name needs to free return value
  *     28-May:    GtkFileSelection struct support put back in -- need ok_button et al.
@@ -944,6 +946,12 @@ XM_TYPE_PTR(GtkIconView_, GtkIconView*)
 XM_TYPE_PTR_1(GtkCellView_, GtkCellView*)
 XM_TYPE_PTR_1(GValue_, GValue*)
 XM_TYPE_PTR_1(GtkAboutDialog_, GtkAboutDialog*)
+#endif
+
+#if HAVE_GTK_LABEL_SET_ELLIPSIZE
+#define C_TO_XEN_PangoEllipsizeMode(Arg) C_TO_XEN_INT(Arg)
+#define XEN_TO_C_PangoEllipsizeMode(Arg) (PangoEllipsizeMode)(XEN_TO_C_INT(Arg))
+#define XEN_PangoEllipsizeMode_P(Arg) XEN_INTEGER_P(Arg)
 #endif
 
 #define XLS(a, b) XEN_TO_C_gchar_(XEN_LIST_REF(a, b))
@@ -23095,21 +23103,6 @@ gboolean add_tearoffs)"
   gtk_combo_box_set_add_tearoffs(XEN_TO_C_GtkComboBox_(combo_box), XEN_TO_C_gboolean(add_tearoffs));
   return(XEN_FALSE);
 }
-static XEN gxg_gtk_combo_box_set_row_separator_column(XEN combo_box, XEN column)
-{
-  #define H_gtk_combo_box_set_row_separator_column "void gtk_combo_box_set_row_separator_column(GtkComboBox* combo_box, \
-gint column)"
-  XEN_ASSERT_TYPE(XEN_GtkComboBox__P(combo_box), combo_box, 1, "gtk_combo_box_set_row_separator_column", "GtkComboBox*");
-  XEN_ASSERT_TYPE(XEN_gint_P(column), column, 2, "gtk_combo_box_set_row_separator_column", "gint");
-  gtk_combo_box_set_row_separator_column(XEN_TO_C_GtkComboBox_(combo_box), XEN_TO_C_gint(column));
-  return(XEN_FALSE);
-}
-static XEN gxg_gtk_combo_box_get_row_separator_column(XEN combo_box)
-{
-  #define H_gtk_combo_box_get_row_separator_column "gint gtk_combo_box_get_row_separator_column(GtkComboBox* combo_box)"
-  XEN_ASSERT_TYPE(XEN_GtkComboBox__P(combo_box), combo_box, 1, "gtk_combo_box_get_row_separator_column", "GtkComboBox*");
-  return(C_TO_XEN_gint(gtk_combo_box_get_row_separator_column(XEN_TO_C_GtkComboBox_(combo_box))));
-}
 static XEN gxg_gtk_combo_box_get_active_text(XEN combo_box)
 {
   #define H_gtk_combo_box_get_active_text "gchar* gtk_combo_box_get_active_text(GtkComboBox* combo_box)"
@@ -23659,6 +23652,40 @@ static XEN gxg_gtk_cell_renderer_progress_new(void)
 {
   #define H_gtk_cell_renderer_progress_new "GtkCellRenderer* gtk_cell_renderer_progress_new( void)"
   return(C_TO_XEN_GtkCellRenderer_(gtk_cell_renderer_progress_new()));
+}
+#endif
+
+#if HAVE_GTK_LABEL_SET_ELLIPSIZE
+static XEN gxg_gtk_combo_box_set_row_separator_func(XEN combo_box, XEN func, XEN func_data, XEN destroy)
+{
+  #define H_gtk_combo_box_set_row_separator_func "void gtk_combo_box_set_row_separator_func(GtkComboBox* combo_box, \
+GtkTreeViewRowSeparatorFunc func, lambda_data func_data, GtkDestroyNotify destroy)"
+  XEN_ASSERT_TYPE(XEN_GtkComboBox__P(combo_box), combo_box, 1, "gtk_combo_box_set_row_separator_func", "GtkComboBox*");
+  XEN_ASSERT_TYPE(XEN_GtkTreeViewRowSeparatorFunc_P(func), func, 2, "gtk_combo_box_set_row_separator_func", "GtkTreeViewRowSeparatorFunc");
+  XEN_ASSERT_TYPE(XEN_lambda_data_P(func_data), func_data, 3, "gtk_combo_box_set_row_separator_func", "lambda_data");
+  XEN_ASSERT_TYPE(XEN_GtkDestroyNotify_P(destroy), destroy, 4, "gtk_combo_box_set_row_separator_func", "GtkDestroyNotify");
+  {
+    XEN gxg_ptr = XEN_LIST_5(func, func_data, XEN_FALSE, XEN_FALSE, XEN_FALSE);
+    xm_protect(gxg_ptr);
+    XEN_LIST_SET(gxg_ptr, 3, destroy);
+    gtk_combo_box_set_row_separator_func(XEN_TO_C_GtkComboBox_(combo_box), XEN_TO_C_GtkTreeViewRowSeparatorFunc(func), XEN_TO_C_lambda_data(func_data), 
+                                     XEN_TO_C_GtkDestroyNotify(destroy));
+    return(XEN_FALSE);
+   }
+}
+static XEN gxg_gtk_label_set_ellipsize(XEN label, XEN mode)
+{
+  #define H_gtk_label_set_ellipsize "void gtk_label_set_ellipsize(GtkLabel* label, PangoEllipsizeMode mode)"
+  XEN_ASSERT_TYPE(XEN_GtkLabel__P(label), label, 1, "gtk_label_set_ellipsize", "GtkLabel*");
+  XEN_ASSERT_TYPE(XEN_PangoEllipsizeMode_P(mode), mode, 2, "gtk_label_set_ellipsize", "PangoEllipsizeMode");
+  gtk_label_set_ellipsize(XEN_TO_C_GtkLabel_(label), XEN_TO_C_PangoEllipsizeMode(mode));
+  return(XEN_FALSE);
+}
+static XEN gxg_gtk_label_get_ellipsize(XEN label)
+{
+  #define H_gtk_label_get_ellipsize "PangoEllipsizeMode gtk_label_get_ellipsize(GtkLabel* label)"
+  XEN_ASSERT_TYPE(XEN_GtkLabel__P(label), label, 1, "gtk_label_get_ellipsize", "GtkLabel*");
+  return(C_TO_XEN_PangoEllipsizeMode(gtk_label_get_ellipsize(XEN_TO_C_GtkLabel_(label))));
 }
 #endif
 
@@ -26785,8 +26812,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_combo_box_get_column_span_column, gxg_gtk_combo_box_get_column_span_column, 1, 0, 0, H_gtk_combo_box_get_column_span_column);
   XG_DEFINE_PROCEDURE(gtk_combo_box_get_add_tearoffs, gxg_gtk_combo_box_get_add_tearoffs, 1, 0, 0, H_gtk_combo_box_get_add_tearoffs);
   XG_DEFINE_PROCEDURE(gtk_combo_box_set_add_tearoffs, gxg_gtk_combo_box_set_add_tearoffs, 2, 0, 0, H_gtk_combo_box_set_add_tearoffs);
-  XG_DEFINE_PROCEDURE(gtk_combo_box_set_row_separator_column, gxg_gtk_combo_box_set_row_separator_column, 2, 0, 0, H_gtk_combo_box_set_row_separator_column);
-  XG_DEFINE_PROCEDURE(gtk_combo_box_get_row_separator_column, gxg_gtk_combo_box_get_row_separator_column, 1, 0, 0, H_gtk_combo_box_get_row_separator_column);
   XG_DEFINE_PROCEDURE(gtk_combo_box_get_active_text, gxg_gtk_combo_box_get_active_text, 1, 0, 0, H_gtk_combo_box_get_active_text);
   XG_DEFINE_PROCEDURE(gtk_drag_dest_add_text_targets, gxg_gtk_drag_dest_add_text_targets, 1, 0, 0, H_gtk_drag_dest_add_text_targets);
   XG_DEFINE_PROCEDURE(gtk_drag_source_add_text_targets, gxg_gtk_drag_source_add_text_targets, 1, 0, 0, H_gtk_drag_source_add_text_targets);
@@ -26863,6 +26888,12 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_cell_renderer_combo_new, gxg_gtk_cell_renderer_combo_new, 0, 0, 0, H_gtk_cell_renderer_combo_new);
   XG_DEFINE_PROCEDURE(gtk_cell_renderer_progress_get_type, gxg_gtk_cell_renderer_progress_get_type, 0, 0, 0, H_gtk_cell_renderer_progress_get_type);
   XG_DEFINE_PROCEDURE(gtk_cell_renderer_progress_new, gxg_gtk_cell_renderer_progress_new, 0, 0, 0, H_gtk_cell_renderer_progress_new);
+#endif
+
+#if HAVE_GTK_LABEL_SET_ELLIPSIZE
+  XG_DEFINE_PROCEDURE(gtk_combo_box_set_row_separator_func, gxg_gtk_combo_box_set_row_separator_func, 4, 0, 0, H_gtk_combo_box_set_row_separator_func);
+  XG_DEFINE_PROCEDURE(gtk_label_set_ellipsize, gxg_gtk_label_set_ellipsize, 2, 0, 0, H_gtk_label_set_ellipsize);
+  XG_DEFINE_PROCEDURE(gtk_label_get_ellipsize, gxg_gtk_label_get_ellipsize, 1, 0, 0, H_gtk_label_get_ellipsize);
 #endif
 
   XG_DEFINE_PROCEDURE(GDK_COLORMAP, gxg_GDK_COLORMAP, 1, 0, 0, NULL);
@@ -30225,6 +30256,76 @@ static void define_integers(void)
   DEFINE_INTEGER(GDK_OWNER_CHANGE);
 #endif
 
+#if HAVE_GTK_LABEL_SET_ELLIPSIZE
+  DEFINE_INTEGER(PANGO_ATTR_FALLBACK);
+  DEFINE_INTEGER(PANGO_ATTR_LETTER_SPACING);
+  DEFINE_INTEGER(PANGO_UNDERLINE_ERROR);
+  DEFINE_INTEGER(PANGO_WRAP_WORD_CHAR);
+  DEFINE_INTEGER(PANGO_ELLIPSIZE_NONE);
+  DEFINE_INTEGER(PANGO_ELLIPSIZE_START);
+  DEFINE_INTEGER(PANGO_ELLIPSIZE_MIDDLE);
+  DEFINE_INTEGER(PANGO_ELLIPSIZE_END);
+  DEFINE_INTEGER(PANGO_SCRIPT_INVALID_CODE);
+  DEFINE_INTEGER(PANGO_SCRIPT_COMMON);
+  DEFINE_INTEGER(PANGO_SCRIPT_INHERITED);
+  DEFINE_INTEGER(PANGO_SCRIPT_ARABIC);
+  DEFINE_INTEGER(PANGO_SCRIPT_ARMENIAN);
+  DEFINE_INTEGER(PANGO_SCRIPT_BENGALI);
+  DEFINE_INTEGER(PANGO_SCRIPT_BOPOMOFO);
+  DEFINE_INTEGER(PANGO_SCRIPT_CHEROKEE);
+  DEFINE_INTEGER(PANGO_SCRIPT_COPTIC);
+  DEFINE_INTEGER(PANGO_SCRIPT_CYRILLIC);
+  DEFINE_INTEGER(PANGO_SCRIPT_DESERET);
+  DEFINE_INTEGER(PANGO_SCRIPT_DEVANAGARI);
+  DEFINE_INTEGER(PANGO_SCRIPT_ETHIOPIC);
+  DEFINE_INTEGER(PANGO_SCRIPT_GEORGIAN);
+  DEFINE_INTEGER(PANGO_SCRIPT_GOTHIC);
+  DEFINE_INTEGER(PANGO_SCRIPT_GREEK);
+  DEFINE_INTEGER(PANGO_SCRIPT_GUJARATI);
+  DEFINE_INTEGER(PANGO_SCRIPT_GURMUKHI);
+  DEFINE_INTEGER(PANGO_SCRIPT_HAN);
+  DEFINE_INTEGER(PANGO_SCRIPT_HANGUL);
+  DEFINE_INTEGER(PANGO_SCRIPT_HEBREW);
+  DEFINE_INTEGER(PANGO_SCRIPT_HIRAGANA);
+  DEFINE_INTEGER(PANGO_SCRIPT_KANNADA);
+  DEFINE_INTEGER(PANGO_SCRIPT_KATAKANA);
+  DEFINE_INTEGER(PANGO_SCRIPT_KHMER);
+  DEFINE_INTEGER(PANGO_SCRIPT_LAO);
+  DEFINE_INTEGER(PANGO_SCRIPT_LATIN);
+  DEFINE_INTEGER(PANGO_SCRIPT_MALAYALAM);
+  DEFINE_INTEGER(PANGO_SCRIPT_MONGOLIAN);
+  DEFINE_INTEGER(PANGO_SCRIPT_MYANMAR);
+  DEFINE_INTEGER(PANGO_SCRIPT_OGHAM);
+  DEFINE_INTEGER(PANGO_SCRIPT_OLD_ITALIC);
+  DEFINE_INTEGER(PANGO_SCRIPT_ORIYA);
+  DEFINE_INTEGER(PANGO_SCRIPT_RUNIC);
+  DEFINE_INTEGER(PANGO_SCRIPT_SINHALA);
+  DEFINE_INTEGER(PANGO_SCRIPT_SYRIAC);
+  DEFINE_INTEGER(PANGO_SCRIPT_TAMIL);
+  DEFINE_INTEGER(PANGO_SCRIPT_TELUGU);
+  DEFINE_INTEGER(PANGO_SCRIPT_THAANA);
+  DEFINE_INTEGER(PANGO_SCRIPT_THAI);
+  DEFINE_INTEGER(PANGO_SCRIPT_TIBETAN);
+  DEFINE_INTEGER(PANGO_SCRIPT_CANADIAN_ABORIGINAL);
+  DEFINE_INTEGER(PANGO_SCRIPT_YI);
+  DEFINE_INTEGER(PANGO_SCRIPT_TAGALOG);
+  DEFINE_INTEGER(PANGO_SCRIPT_HANUNOO);
+  DEFINE_INTEGER(PANGO_SCRIPT_BUHID);
+  DEFINE_INTEGER(PANGO_SCRIPT_TAGBANWA);
+  DEFINE_INTEGER(PANGO_SCRIPT_BRAILLE);
+  DEFINE_INTEGER(PANGO_SCRIPT_CYPRIOT);
+  DEFINE_INTEGER(PANGO_SCRIPT_LIMBU);
+  DEFINE_INTEGER(PANGO_SCRIPT_OSMANYA);
+  DEFINE_INTEGER(PANGO_SCRIPT_SHAVIAN);
+  DEFINE_INTEGER(PANGO_SCRIPT_LINEAR_B);
+  DEFINE_INTEGER(PANGO_SCRIPT_TAI_LE);
+  DEFINE_INTEGER(PANGO_SCRIPT_UGARITIC);
+  DEFINE_INTEGER(PANGO_TAB_LEFT);
+  DEFINE_INTEGER(PANGO_DIRECTION_WEAK_LTR);
+  DEFINE_INTEGER(PANGO_DIRECTION_WEAK_RTL);
+  DEFINE_INTEGER(PANGO_DIRECTION_NEUTRAL);
+#endif
+
   DEFINE_ULONG(GDK_TYPE_PIXBUF);
   DEFINE_ULONG(GDK_TYPE_PIXBUF_ANIMATION);
   DEFINE_ULONG(GDK_TYPE_PIXBUF_ANIMATION_ITER);
@@ -30742,10 +30843,10 @@ static bool xg_already_inited = false;
       define_strings();
       XEN_YES_WE_HAVE("xg");
 #if HAVE_GUILE
-      XEN_EVAL_C_STRING("(define xm-version \"25-Jul-04\")");
+      XEN_EVAL_C_STRING("(define xm-version \"04-Aug-04\")");
 #endif
 #if HAVE_RUBY
-      rb_define_global_const("Xm_Version", C_TO_XEN_STRING("25-Jul-04"));
+      rb_define_global_const("Xm_Version", C_TO_XEN_STRING("04-Aug-04"));
 #endif
       xg_already_inited = true;
 #if WITH_GTK_AND_X11

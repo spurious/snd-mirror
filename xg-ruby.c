@@ -2678,8 +2678,6 @@ XEN_NARGIFY_1(gxg_gtk_combo_box_get_row_span_column_w, gxg_gtk_combo_box_get_row
 XEN_NARGIFY_1(gxg_gtk_combo_box_get_column_span_column_w, gxg_gtk_combo_box_get_column_span_column)
 XEN_NARGIFY_1(gxg_gtk_combo_box_get_add_tearoffs_w, gxg_gtk_combo_box_get_add_tearoffs)
 XEN_NARGIFY_2(gxg_gtk_combo_box_set_add_tearoffs_w, gxg_gtk_combo_box_set_add_tearoffs)
-XEN_NARGIFY_2(gxg_gtk_combo_box_set_row_separator_column_w, gxg_gtk_combo_box_set_row_separator_column)
-XEN_NARGIFY_1(gxg_gtk_combo_box_get_row_separator_column_w, gxg_gtk_combo_box_get_row_separator_column)
 XEN_NARGIFY_1(gxg_gtk_combo_box_get_active_text_w, gxg_gtk_combo_box_get_active_text)
 XEN_NARGIFY_1(gxg_gtk_drag_dest_add_text_targets_w, gxg_gtk_drag_dest_add_text_targets)
 XEN_NARGIFY_1(gxg_gtk_drag_source_add_text_targets_w, gxg_gtk_drag_source_add_text_targets)
@@ -2756,6 +2754,12 @@ XEN_NARGIFY_0(gxg_gtk_cell_renderer_combo_get_type_w, gxg_gtk_cell_renderer_comb
 XEN_NARGIFY_0(gxg_gtk_cell_renderer_combo_new_w, gxg_gtk_cell_renderer_combo_new)
 XEN_NARGIFY_0(gxg_gtk_cell_renderer_progress_get_type_w, gxg_gtk_cell_renderer_progress_get_type)
 XEN_NARGIFY_0(gxg_gtk_cell_renderer_progress_new_w, gxg_gtk_cell_renderer_progress_new)
+#endif
+
+#if HAVE_GTK_LABEL_SET_ELLIPSIZE
+XEN_NARGIFY_4(gxg_gtk_combo_box_set_row_separator_func_w, gxg_gtk_combo_box_set_row_separator_func)
+XEN_NARGIFY_2(gxg_gtk_label_set_ellipsize_w, gxg_gtk_label_set_ellipsize)
+XEN_NARGIFY_1(gxg_gtk_label_get_ellipsize_w, gxg_gtk_label_get_ellipsize)
 #endif
 
 XEN_NARGIFY_1(gxg_GDK_COLORMAP_w, gxg_GDK_COLORMAP)
@@ -6064,8 +6068,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_combo_box_get_column_span_column, gxg_gtk_combo_box_get_column_span_column_w, 1, 0, 0, H_gtk_combo_box_get_column_span_column);
   XG_DEFINE_PROCEDURE(gtk_combo_box_get_add_tearoffs, gxg_gtk_combo_box_get_add_tearoffs_w, 1, 0, 0, H_gtk_combo_box_get_add_tearoffs);
   XG_DEFINE_PROCEDURE(gtk_combo_box_set_add_tearoffs, gxg_gtk_combo_box_set_add_tearoffs_w, 2, 0, 0, H_gtk_combo_box_set_add_tearoffs);
-  XG_DEFINE_PROCEDURE(gtk_combo_box_set_row_separator_column, gxg_gtk_combo_box_set_row_separator_column_w, 2, 0, 0, H_gtk_combo_box_set_row_separator_column);
-  XG_DEFINE_PROCEDURE(gtk_combo_box_get_row_separator_column, gxg_gtk_combo_box_get_row_separator_column_w, 1, 0, 0, H_gtk_combo_box_get_row_separator_column);
   XG_DEFINE_PROCEDURE(gtk_combo_box_get_active_text, gxg_gtk_combo_box_get_active_text_w, 1, 0, 0, H_gtk_combo_box_get_active_text);
   XG_DEFINE_PROCEDURE(gtk_drag_dest_add_text_targets, gxg_gtk_drag_dest_add_text_targets_w, 1, 0, 0, H_gtk_drag_dest_add_text_targets);
   XG_DEFINE_PROCEDURE(gtk_drag_source_add_text_targets, gxg_gtk_drag_source_add_text_targets_w, 1, 0, 0, H_gtk_drag_source_add_text_targets);
@@ -6142,6 +6144,12 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_cell_renderer_combo_new, gxg_gtk_cell_renderer_combo_new_w, 0, 0, 0, H_gtk_cell_renderer_combo_new);
   XG_DEFINE_PROCEDURE(gtk_cell_renderer_progress_get_type, gxg_gtk_cell_renderer_progress_get_type_w, 0, 0, 0, H_gtk_cell_renderer_progress_get_type);
   XG_DEFINE_PROCEDURE(gtk_cell_renderer_progress_new, gxg_gtk_cell_renderer_progress_new_w, 0, 0, 0, H_gtk_cell_renderer_progress_new);
+#endif
+
+#if HAVE_GTK_LABEL_SET_ELLIPSIZE
+  XG_DEFINE_PROCEDURE(gtk_combo_box_set_row_separator_func, gxg_gtk_combo_box_set_row_separator_func_w, 4, 0, 0, H_gtk_combo_box_set_row_separator_func);
+  XG_DEFINE_PROCEDURE(gtk_label_set_ellipsize, gxg_gtk_label_set_ellipsize_w, 2, 0, 0, H_gtk_label_set_ellipsize);
+  XG_DEFINE_PROCEDURE(gtk_label_get_ellipsize, gxg_gtk_label_get_ellipsize_w, 1, 0, 0, H_gtk_label_get_ellipsize);
 #endif
 
   XG_DEFINE_PROCEDURE(GDK_COLORMAP, gxg_GDK_COLORMAP_w, 1, 0, 0, NULL);

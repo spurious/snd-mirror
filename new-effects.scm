@@ -8,6 +8,7 @@
 	  (dlinit hxm "init_xm"))))
 
 (define pi 3.141592653589793)
+(if (not (provided? 'snd-snd-motif.scm)) (load-from-path "snd-motif.scm")) ; raise-dialog
 (if (not (provided? 'snd-xm-enved.scm)) (load-from-path "xm-enved.scm"))
 (if (not (provided? 'snd-moog.scm)) (load-from-path "moog.scm"))
 (if (not (provided? 'snd-rubber.scm)) (load-from-path "rubber.scm"))

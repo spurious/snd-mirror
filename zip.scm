@@ -13,7 +13,7 @@ a thunk (normally a ramp from 0 to 1) which sets where we are in the zipping pro
 'frame-size' is the maximum frame length during the zip in seconds (defaults to 0.05), and 
 'frame-env' is a thunk returning the current frame size during the zip process."
 
-  (let ((max-size (+ 1 (ceiling (* (safe-srate) (or frame-size 0.05))))))
+  (let ((max-size (+ 1 (inexact->exact (ceiling (* (safe-srate) (or frame-size 0.05)))))))
     (list
      20                       ;min section len in samples
      0                        ;frame-loc
