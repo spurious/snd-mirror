@@ -398,7 +398,7 @@ integer packing the card number ("system" in the left half, and the
 device number in the right. On the ALSA system I'm testing at the moment,
 the MIDI device is apparently "hw:1,0" or "/dev/snd/midiC1D0"; this
 maps into sndlib as card 1, device 0; the corresponding "sysdev" number
-is 1 << 16. 
+is 1 &lt;&lt; 16. 
 The corresponding Guile functions are:
 </p>
 <pre>
@@ -983,7 +983,7 @@ ld -shared io.o headers.o audio.o sound.o clm.o -o sndlib.so
   <tr><th>System</th><th>SndSine</th><th>SndInfo</th><th>Audinfo</th><th>SndPlay</th><th>SndRecord</th><th>CLM</th><th>MIDI</th></tr>
   <tr><td width=180>NeXT 68k</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>ok</td><td>not written</td></tr>
   <tr><td>NeXT Intel</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>interruptions</td><td align=middle>runs (*)</td><td align=middle>ok</td><td>not written</td></tr>
-  <tr><td>SGI old and new AL</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>ok</td><td>untested</td></tr>
+  <tr><td>SGI old and new AL</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>ok</td><td>partly tested</td></tr>
   <tr><td>OSS (Linux et al)</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>ok</td><td>untested</td></tr>
   <tr><td>Mac</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>ok</td><td>not written</td></tr>
   <tr><td>Windoze</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>not written</td><td align=middle>ok</td><td>not written</td></tr>
@@ -991,7 +991,7 @@ ld -shared io.o headers.o audio.o sound.o clm.o -o sndlib.so
   <tr><td>HPUX</td><td align=middle>untested</td><td align=middle>untested</td><td align=middle>untested</td><td align=middle>untested</td><td align=middle>untested</td><td align=middle>untried</td><td>not written</td></tr>
   <tr><td>LinuxPPC</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>untested (**)</td><td align=middle>ok</td><td>untested</td></tr>
   <tr><td>ALSA</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>ok</td><td>partly tested</td></tr>
-  <tr><td>Mac OS-X</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>not written</td><td align=middle>ok</td><td>not written</td></tr>
+  <tr><td>Mac OS-X</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>not written</td><td align=middle>ok</td><td>untested</td></tr>
 </table>
 
 <br>

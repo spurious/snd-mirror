@@ -21,45 +21,6 @@
 </style>
 </head>
 
-<!-- -------------------------------------------------------------------------------- -->
-<!-- an experiment: click button to post an example; I'd like the buttons on the right to take less space somehow -->
-<!--    also, need some automatic way to update the location references etc -->
-<!-- func args: title example-code definition-loc related-stuff comments... -->
-<SCRIPT>
-var win = null;
-function example()
-{
-  if ((win == null) || (win.closed))
-    {
-      win = window.open("","example","width=500,height=300,resizable");
-      win.document.open();
-     }
-  win.document.write('<body bgcolor=white><p><b>', arguments[0], '</b></p>');
-  if (arguments.length > 1)
-    {
-      win.document.write('<pre>', arguments[1], '</pre>');
-      if (arguments.length > 2)
-        {
-          win.document.write('<p>defined: ', arguments[2], '</p>');
-          if (arguments.length > 3)
-            {
-              win.document.write('<p>see also: ', arguments[3], '</p>');
-              if (arguments.length > 4)
-                {
-                  win.document.write('<hr>');
-                  for (var i = 4; i < arguments.length; i++)
-                    win.document.write('<p>', arguments[i], '</p>');
-		}
-            }
-	}
-    }
-  win.document.write('</body>');
-  win.document.close();
-  return true;
-}
-</SCRIPT>
-<!-- -------------------------------------------------------------------------------- -->
-
 <body bgcolor=white>
 
 <!-- I'm using A NAME (i.e caps) where the entity should be ignored by the indexer (index.cl) -->
@@ -362,30 +323,14 @@ spring, summer, colorcube, flag, and lines.  -1 means black and white.
 
 <p>The color object handlers are:</p>
 
-<form>
-<table border=0 cellspacing=0 cellpadding=0 width="100%">
+<table border=0 cellspacing=4>
 <tr>
 <td width="20%"><code><em class=def><a name="colorp">color?</a></em> (obj)</code></td>
-<td>#t if <i>obj</i> is a color object (see <a href="#makecolor">make-color</a>).</td>
-<td align right><input type="button" value="->" onClick="example(
-  'color?', 
-  '(define blue (make-color 0 0 1))\n(color? blue)\n  =&gt; #t',
-  '<code>snd-x|gscm.c g_color_p</code>',
-  'rgb.scm'
-);">
-</input></td>
-</tr>
+<td>#t if <i>obj</i> is a color object (see <a href="#makecolor">make-color</a>).</td></tr>
 
 <tr>
 <td><code><em class=def><a name="color3list">color-&gt;list</a></em> (obj)</code></td>
-<td>return list (r g b) of color components.</td>
-<td><input type="button" value="->" onClick="example(
-  'color-&gt;list', 
-  '(define red (make-color 1 0 0))\n(color-&gt;list red)\n =&gt; \'(1.0 0.0 0.0)',
-  '<code>snd-x|gscm.c g_color2list</code>'
-);">
-</input></td>
-</tr>
+<td>return list (r g b) of color components.</td></tr>
 
 <tr>
 <td valign=top><code><em class=def><a name="makecolor">make-color</a></em> (r g b)</code></td>
@@ -394,24 +339,9 @@ as a function, it returns the list of rgb values.
 If, for example, blue is a defined color, <code>(blue)</code> is the same as <code>(color-&gt;list blue)</code>.
 Two colors are equal (i.e. equal? returns #t) if their rgb values are the same.
 </td>
-<td valign=top><input type="button" value="->" onClick="example(
-  'make-color', 
-  '(define red (make-color 1 0 0))\
-(define beige (make-color 0.96 0.96 0.86))\
-(red)\
-  =&gt; (1.0 0.0 0.0)\
-(eq? red (make-color 1 0 0))\
-  =&gt; #f\
-(equal? red (make-color 1 0 0))\
-  =&gt; #t',
-  '<code>snd-x|gscm.c g_make_snd_color</code>',
-  'rbg.scm',
-  'The arguments are floats between 0.0 and 1.0 (as in Postscript).'
-);">
-</input></td>
 </tr>
 </table>
-</form>
+
 
 <p><small>(British spelling enthusiasts can use "colour" throughout Snd by building it with the CFLAG
  -DSTR_OR=\"our\").</small>

@@ -557,7 +557,6 @@ char *mus_midi_describe(void)
   return(buf);
 }
 
-#if 0
 #define BUFFER_SIZE 1024
 static MIDIClientRef us = NULL;
 static MIDIPortRef inp = NULL, outp = NULL;
@@ -613,9 +612,9 @@ int mus_midi_write(int line, unsigned char *buffer, int bytes)
   MIDIPacket *pk;
   if ((line < 1) || (buffer == NULL) || (outp == NULL)) return(-1);
   /* create the packetlist and packet */
-  pk = MIDIPackListInit(list);
+  pk = MIDIPacketListInit(list);
   MIDIPacketListAdd(list, sizeof(bb), pk, 0, bytes, (Byte *)buffer);  /* 0 is the time stamp = now? */
-  MIDISend(outp, MIDIGetDestination(0), &list);
+  MIDISend(outp, MIDIGetDestination(0), list);
 }
 
 int mus_midi_open_read(const char *name)
@@ -644,14 +643,7 @@ int mus_midi_close(int line)
   return(0);
 }
 
-#else
-int mus_midi_open_read(const char *name) {return(-1);}
-int mus_midi_open_write(const char *name) {return(-1);}
-int mus_midi_close(int line) {return(-1);}
-int mus_midi_read(int line, unsigned char *buffer, int bytes) {return(-1);}
-int mus_midi_write(int line, unsigned char *buffer, int bytes) {return(-1);}
 char *mus_midi_device_name(int sysdev) {return("none");}
-#endif
 
 #endif
 
