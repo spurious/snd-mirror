@@ -378,6 +378,7 @@ void about_snd_help(void)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+10-Nov:  removed next-mix-sample, next-track-sample.\n\
 5-Nov:   Jack audio support thanks to Kjetil S. Matheussen.\n\
          mix-anchor -> mix-tag-position.\n\
 4-Nov:   copy-mix, copy-track.\n\
@@ -693,7 +694,16 @@ static char *record_xrefs[4] = {
 
 void track_help(void) 
 {
-  /* TODO: track help + xrefs */
+  snd_help_with_xrefs("Tracks",
+"A track is a list of mixes, each member mix having its track set to the track id.  The make-track \
+function takes the initial mixes, returning the track id (an integer).  The \
+track function returns the list of mixes that are members of the given track.  The rest of the track functions \
+take the track id as their initial argument.  A track has much the same structure as a mix: an amplitude, speed, \
+amplitude envelope, track, position, and so on.  If its track field is not 0, the entire track is a member \
+of the given track, just as a mix would be.",
+		      true,
+		      snd_xrefs("Track"),
+		      snd_xref_urls("Track"));
 }
 
 void recording_help(void) 
@@ -1354,24 +1364,24 @@ static char *topic_url(const char *topic)
   return(NULL);
 }
 
-#define NUM_XREFS 28
+#define NUM_XREFS 29
 static char *xrefs[NUM_XREFS] = {
   "Mark", "Mix", "Region", "Selection", "Cursor", "Tracking cursor", "Delete", "Envelope", "Filter",
   "Search", "Insert", "Maxamp", "Play", "Reverse", "Save", "Smooth", "Resample", "FFT", "Reverb",
-  "Src", "Find", "Undo", "Redo", "Sync", "Control panel", "Record", "Header", "Key"};
+  "Src", "Find", "Undo", "Redo", "Sync", "Control panel", "Record", "Header", "Key", "Track"};
 
 static char **xref_tables[NUM_XREFS] = {
   Marking_xrefs, Mixing_xrefs, Regions_xrefs, Selections_xrefs, Cursors_xrefs, Tracking_cursors_xrefs,
   Deletions_xrefs, Envelopes_xrefs, Filters_xrefs, Searching_xrefs, Insertions_xrefs, Maxamps_xrefs,
   Playing_xrefs, Reversing_xrefs, Saving_xrefs, Smoothing_xrefs, Resampling_xrefs, FFTs_xrefs, Reverb_xrefs,
   Resampling_xrefs, Searching_xrefs, Undo_and_Redo_xrefs, Undo_and_Redo_xrefs, 
-  sync_xrefs, control_xrefs, record_xrefs, header_and_data_xrefs, key_xrefs};
+  sync_xrefs, control_xrefs, record_xrefs, header_and_data_xrefs, key_xrefs, Tracks_xrefs};
 
 static char **xref_url_tables[NUM_XREFS] = {
   Marking_urls, Mixing_urls, Regions_urls, Selections_urls, Cursors_urls, Tracking_cursors_urls,
   Deletions_urls, Envelopes_urls, Filters_urls, Searching_urls, Insertions_urls, Maxamps_urls,
   Playing_urls, Reversing_urls, Saving_urls, Smoothing_urls, Resampling_urls, FFTs_urls, Reverb_urls,
-  Resampling_urls, Searching_urls, Undo_and_Redo_urls, Undo_and_Redo_urls, 
+  Resampling_urls, Searching_urls, Undo_and_Redo_urls, Undo_and_Redo_urls, Tracks_urls,
   NULL, NULL, NULL, NULL, NULL};
 
 typedef void (*help_func)(void);
@@ -1380,7 +1390,7 @@ static help_func help_funcs[NUM_XREFS] = {
   &delete_help, &env_help, &filter_help, &find_help, &insert_help, NULL,
   &play_help, NULL, &save_help, NULL, &resample_help, &fft_help, &reverb_help,
   &resample_help, &find_help, &undo_help, &undo_help,
-  &sync_help, &controls_help, recording_help, &sound_files_help, &key_binding_help};
+  &sync_help, &controls_help, recording_help, &sound_files_help, &key_binding_help, &track_help};
 
 static char **snd_xrefs(const char *topic)
 {

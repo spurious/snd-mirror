@@ -14,8 +14,8 @@
 ;;; (save-mix mix filename) saves mix data in file filename
 ;;; (mix-maxamp id) maxamp of mix
 ;;;
-;;; (track->vct track) place track data in vct
-;;; (save-track track filename) save track data in file
+;;; (track->vct track (chan 0)) place track data in vct
+;;; (save-track track filename (chan 0)) save track data in file
 ;;; (filter-track track coeffs) filter track data
 ;;; (reverse-track track) reverses the mix order
 ;;; (delete-all-tracks) removes all mixes that have an associated track (sets all amps to 0)
@@ -188,7 +188,7 @@ in the other channel. 'chn' is the start channel for all this (logical channel 0
 	     (reader (make-mix-sample-reader id)))
 	(do ((i 0 (1+ i)))
 	    ((= i len))
-	  (vct-set! v i (next-mix-sample reader)))
+	  (vct-set! v i (read-mix-sample reader)))
 	(free-mix-sample-reader reader)
 	v)
       (throw 'no-such-mix (list "mix->vct" id))))
@@ -205,10 +205,10 @@ in the other channel. 'chn' is the start channel for all this (logical channel 0
       (let* ((len (mix-frames id))
 	     (peak 0.0)
 	     (reader (make-mix-sample-reader id)))
-	(set! peak (abs (next-mix-sample reader)))
+	(set! peak (abs (read-mix-sample reader)))
 	(do ((i 1 (1+ i)))
 	    ((= i len))
-	  (let ((val (abs (next-mix-sample reader))))
+	  (let ((val (abs (read-mix-sample reader))))
 	    (if (> val peak)
 		(set! peak val))))
 	(free-mix-sample-reader reader)
@@ -367,7 +367,7 @@ in the other channel. 'chn' is the start channel for all this (logical channel 0
 			  (reader (make-track-sample-reader trk i))) ; beg is next arg if it's needed
 		      (do ((j 0 (1+ j)))
 			  ((= j chan-len))
-			(vct-set! v (+ i (* chans (+ chan-pos j))) (next-track-sample reader)))))
+			(vct-set! v (+ i (* chans (+ chan-pos j))) (read-track-sample reader)))))
 		  (vct->sound-file fd v (vct-length v))
 		  (close-sound-file fd (* 4 (vct-length v))))
 		(throw 'no-such-channel (list "save-track" chan)))))
@@ -378,10 +378,10 @@ in the other channel. 'chn' is the start channel for all this (logical channel 0
       (let* ((len (track-frames id chan))
 	     (peak 0.0)
 	     (reader (make-track-sample-reader id)))
-	(set! peak (abs (next-track-sample reader)))
+	(set! peak (abs (read-track-sample reader)))
 	(do ((i 1 (1+ i)))
 	    ((= i len))
-	  (let ((val (abs (next-track-sample reader))))
+	  (let ((val (abs (read-track-sample reader))))
 	    (if (> val peak)
 		(set! peak val))))
 	(free-track-sample-reader reader)
@@ -424,7 +424,7 @@ in the other channel. 'chn' is the start channel for all this (logical channel 0
 		(flt (make-fir-filter order (list->vct fir-filter-coeffs)))
 		(reader (make-track-sample-reader track-id chan 0)))
 	    (map-channel (lambda (y)
-			   (let ((val (next-track-sample reader)))
+			   (let ((val (read-track-sample reader)))
 			     (+ y (- (fir-filter flt val) val))))
 			 beg (+ dur order) #f #f #f "filter-track"))))
       (throw 'no-such-track (list "filter-track" track-id))))

@@ -463,7 +463,7 @@ void add_channel_data_1(chan_info *cp, int srate, off_t frames, channel_graph_t 
       (XEN_HOOKED(initial_graph_hook)))
     {
       XEN res;
-      int len;
+      int len = 0;
       res = run_or_hook(initial_graph_hook,
 			XEN_LIST_3(C_TO_SMALL_XEN_INT(cp->sound->index),
 				   C_TO_SMALL_XEN_INT(cp->chan),
@@ -6335,7 +6335,7 @@ If 'data' is a list of numbers, it is treated as an envelope."
   char *label = NULL;
   vct *v = NULL;
   XEN *vdata;
-  int i, len, graph, graphs;
+  int i, len = 0, graph, graphs;
   bool need_update = false;
   Float ymin, ymax, val;
   double nominal_x0, nominal_x1;

@@ -385,7 +385,7 @@ static void track_panel_play_callback(Widget w, XtPointer context, XtPointer inf
     {
       mix_playing = true;
       if ((track_play) && (!(ss->using_schemes))) XmChangeColor(track_play, (ss->sgx)->pushed_button_color);
-      track_play_from_id(mix_panel_id);
+      play_track_from_id(mix_panel_id);
     }
 }
 

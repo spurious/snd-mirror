@@ -273,7 +273,7 @@ static XEN snd_format_if_needed(XEN args)
     char *temp;
     temp = scheme_to_ruby(errmsg);
     result = C_TO_XEN_STRING(temp);
-    FREE(temp);
+    if (temp) free(temp); /* calloc in xen.c */
   }
 #else
   result = C_TO_XEN_STRING(errmsg);

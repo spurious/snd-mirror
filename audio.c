@@ -9525,11 +9525,25 @@ int jack_mus_audio_close(int line)
   sndjack_num_channels_inuse=0;
   return MUS_NO_ERROR;
  }
+
+int jack_mus_audio_mixer_read(int dev, int field, int chan, float *val) 
+{
+  if(field==MUS_AUDIO_FORMAT){
+#if MUS_LITTLE_ENDIAN
+    val[1]=MUS_LFLOAT;
+#else
+    val[1]=MUS_BFLOAT;
+#endif
+    val[0]=1;
+    return(MUS_NO_ERROR);
+  }
+  return(MUS_ERROR);
+}
+
  
 static void jack_describe_audio_state_1(void) {pprint("jack audio");}
 int jack_mus_audio_open_input(int dev, int srate, int chans, int format, int size) {return(MUS_ERROR);}
 int jack_mus_audio_read(int line, char *buf, int bytes) {return(MUS_ERROR);}
-int jack_mus_audio_mixer_read(int dev, int field, int chan, float *val) {return(MUS_ERROR);}
 int jack_mus_audio_mixer_write(int dev, int field, int chan, float *val) {return(MUS_ERROR);}
 void jack_mus_audio_save(void) {}
 void jack_mus_audio_restore(void) {}

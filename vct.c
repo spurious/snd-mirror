@@ -497,7 +497,7 @@ static XEN vct_subseq(XEN vobj, XEN start, XEN end, XEN newv)
 static XEN list2vct(XEN lst)
 {
   #define H_list2vct "(" S_list2vct " lst): returns a new vct filled with elements of list lst"
-  int len, i;
+  int len = 0, i;
   vct *v;
   XEN scv, lst1;
   XEN_ASSERT_TYPE(XEN_LIST_P_WITH_LENGTH(lst, len), lst, XEN_ONLY_ARG, S_list2vct, "a list");

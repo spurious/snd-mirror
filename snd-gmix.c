@@ -372,7 +372,7 @@ static void track_play_callback(GtkWidget *w, gpointer context)
       mix_playing = true;
       track_speaker_pix = speaker_on_pix;
       gdk_draw_drawable(GDK_DRAWABLE(track_play_pix->window), ss->sgx->basic_gc, track_speaker_pix, 0, 0, 2, 4, 12, 12);
-      track_play_from_id(mix_panel_id);
+      play_track_from_id(mix_panel_id);
     }
 }
 

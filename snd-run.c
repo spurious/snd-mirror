@@ -293,7 +293,7 @@ static int last_type = R_ANY;
 static int type_names_size = BUILT_IN_TYPES;
 static char **type_names = NULL;
 static char *basic_type_names[BUILT_IN_TYPES] = {"unspecified", "int", "float", "boolean", "char", "string", "list", "pair", 
-						 "symbol", "keyword", "function", "continuation", "vct", "reader", "clm", "x-clm", 
+						 "symbol", "keyword", "function", "continuation", "vct", "sample-reader", "clm", "x-clm", 
 						 "float-vector", "int-vector", "vct-vector", "clm-vector", 
 						 "number", "cons", "vector", "xen", "any"};
 static void init_type_names(void)

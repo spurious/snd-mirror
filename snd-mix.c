@@ -2356,6 +2356,8 @@ typedef struct {int *xs; int orig, x; off_t *origs;} track_graph_t;
 static track_graph_t *track_drag_data;
 static track_graph_t *track_save_graph(mix_info *orig_md);
 static void finish_dragging_track(int track_id, track_graph_t *data, bool remix);
+static void move_mix(mix_info *md);
+static void move_track(int track_id, track_graph_t *data);
 static track_graph_t *free_track_graph(track_graph_t *ptr);
 static bool mix_dragged = false;
 
@@ -2381,9 +2383,6 @@ void clear_mix_y(chan_info *cp)
 {
   map_over_channel_mixes(cp, clear_mix_y_1, NULL);
 }
-
-static void move_mix(mix_info *md);
-static void move_track(int track_id, track_graph_t *data);
 
 void move_mix_tag(int mix_tag, int x)
 {
@@ -3570,8 +3569,8 @@ static XEN g_mix_position(XEN n)
 {
   #define H_mix_position "(" S_mix_position " id): sample number of start of mix"
   mix_state *cs; 
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(n), n, XEN_ONLY_ARG, S_mix_position, "an integer");
-  cs = cs_from_id(XEN_TO_C_INT_OR_ELSE(n, 0));
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(n), n, XEN_ONLY_ARG, S_mix_position, "an integer");
+  cs = cs_from_id(XEN_TO_C_INT(n));
   if (cs == NULL)
     return(snd_no_such_mix_error(S_mix_position, n));
   return(C_TO_XEN_OFF_T(cs->beg));  /* was orig 6-May-03 */
@@ -3581,8 +3580,8 @@ static XEN g_mix_chans(XEN n)
 {
   #define H_mix_chans "(" S_mix_chans " id): input channels in mix"
   mix_state *cs; 
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(n), n, XEN_ONLY_ARG, S_mix_chans, "an integer");
-  cs = cs_from_id(XEN_TO_C_INT_OR_ELSE(n, 0));
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(n), n, XEN_ONLY_ARG, S_mix_chans, "an integer");
+  cs = cs_from_id(XEN_TO_C_INT(n));
   if (cs == NULL)
     return(snd_no_such_mix_error(S_mix_chans, n));
   return(C_TO_XEN_INT(cs->chans));
@@ -3600,8 +3599,8 @@ static XEN g_mix_frames(XEN n)
 {
   #define H_mix_frames "(" S_mix_frames " id): mix's length in frames"
   off_t len;
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(n), n, XEN_ONLY_ARG, S_mix_frames, "an integer");
-  len = mix_frames(XEN_TO_C_INT_OR_ELSE(n, 0));
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(n), n, XEN_ONLY_ARG, S_mix_frames, "an integer");
+  len = mix_frames(XEN_TO_C_INT(n));
   if (len == -1) 
     return(snd_no_such_mix_error(S_mix_frames, n));
   return(C_TO_XEN_OFF_T(len));
@@ -3611,8 +3610,8 @@ static XEN g_mix_locked(XEN n)
 {
   #define H_mix_locked_p "(" S_mix_locked_p " id): #t if mix cannot be moved (due to subsequent edits overlapping it)"
   mix_info *md;
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(n), n, XEN_ONLY_ARG, S_mix_locked_p, "an integer");
-  md = md_from_id(XEN_TO_C_INT_OR_ELSE(n, 0));
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(n), n, XEN_ONLY_ARG, S_mix_locked_p, "an integer");
+  md = md_from_id(XEN_TO_C_INT(n));
   if (md == NULL)
     return(snd_no_such_mix_error(S_mix_locked_p, n));
   return(C_TO_XEN_BOOLEAN((md->active_mix_state)->locked));
@@ -3622,8 +3621,8 @@ static XEN g_mix_tag_position(XEN n)
 {
   #define H_mix_tag_position "(" S_mix_tag_position " id): location (sample offset) of mix tag within mix (defaults to 0)"
   mix_state *cs;
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(n), n, XEN_ONLY_ARG, S_mix_tag_position, "an integer");
-  cs = cs_from_id(XEN_TO_C_INT_OR_ELSE(n, 0));
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(n), n, XEN_ONLY_ARG, S_mix_tag_position, "an integer");
+  cs = cs_from_id(XEN_TO_C_INT(n));
   if (cs == NULL)
     return(snd_no_such_mix_error(S_mix_tag_position, n));
   return(C_TO_XEN_OFF_T(cs->tag_position));
@@ -3633,8 +3632,8 @@ static XEN g_mix_track(XEN n)
 {
   #define H_mix_track "(" S_mix_track " id): track that mix is a member of"
   mix_info *md; 
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(n), n, XEN_ONLY_ARG, S_mix_track, "an integer");
-  md = md_from_id(XEN_TO_C_INT_OR_ELSE(n, 0));
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(n), n, XEN_ONLY_ARG, S_mix_track, "an integer");
+  md = md_from_id(XEN_TO_C_INT(n));
   if (md == NULL)
     return(snd_no_such_mix_error(S_mix_track, n));
   return(C_TO_XEN_INT(md->active_mix_state->track));
@@ -3644,8 +3643,8 @@ static XEN g_mix_tag_y(XEN n)
 {
   #define H_mix_tag_y "(" S_mix_tag_y " id): height of mix's tag"
   mix_state *cs; 
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(n), n, XEN_ONLY_ARG, S_mix_tag_y, "an integer");
-  cs = cs_from_id(XEN_TO_C_INT_OR_ELSE(n, 0));
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(n), n, XEN_ONLY_ARG, S_mix_tag_y, "an integer");
+  cs = cs_from_id(XEN_TO_C_INT(n));
   if (cs == NULL)
     return(snd_no_such_mix_error(S_mix_tag_y, n));
   return(C_TO_XEN_INT(cs->tag_y));
@@ -3655,8 +3654,8 @@ static XEN g_mix_speed(XEN n)
 {
   #define H_mix_speed "(" S_mix_speed " id): srate (speed slider setting) of mix"
   mix_state *cs; 
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(n), n, XEN_ONLY_ARG, S_mix_speed, "an integer");
-  cs = cs_from_id(XEN_TO_C_INT_OR_ELSE(n, 0));
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(n), n, XEN_ONLY_ARG, S_mix_speed, "an integer");
+  cs = cs_from_id(XEN_TO_C_INT(n));
   if (cs == NULL)
     return(snd_no_such_mix_error(S_mix_speed, n));
   return(C_TO_XEN_DOUBLE(cs->speed));
@@ -3706,8 +3705,8 @@ static XEN g_mix_home(XEN n)
 {
   #define H_mix_home "(" S_mix_home " id): list of sound index and channel affected by mix"
   mix_info *md; 
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(n), n, XEN_ONLY_ARG, S_mix_home, "an integer");
-  md = md_from_id(XEN_TO_C_INT_OR_ELSE(n, 0));
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(n), n, XEN_ONLY_ARG, S_mix_home, "an integer");
+  md = md_from_id(XEN_TO_C_INT(n));
   if (md == NULL)
     return(snd_no_such_mix_error(S_mix_home, n));
   return(XEN_LIST_2(C_TO_XEN_INT(((md->cp)->sound)->index),
@@ -3719,9 +3718,9 @@ static XEN g_mix_amp(XEN n, XEN uchan)
   #define H_mix_amp "(" S_mix_amp " id (chan 0)): amp of mix's channel chan"
   mix_state *cs; 
   int chan;
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(n), n, XEN_ARG_1, S_mix_amp, "an integer");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(n), n, XEN_ARG_1, S_mix_amp, "an integer");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(uchan), uchan, XEN_ARG_2, S_mix_amp, "an integer");
-  cs = cs_from_id(XEN_TO_C_INT_OR_ELSE(n, 0));
+  cs = cs_from_id(XEN_TO_C_INT(n));
   if (cs == NULL)
     return(snd_no_such_mix_error(S_mix_amp, n));
   chan = XEN_TO_C_INT_OR_ELSE(uchan, 0);
@@ -3734,9 +3733,9 @@ static XEN g_mix_amp_env(XEN n, XEN chan)
 {
   #define H_mix_amp_env "(" S_mix_amp_env " id (chan 0)): amplitude envelope applied to mix's channel chan"
   env *e;
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(n), n, XEN_ARG_1, S_mix_amp_env, "an integer");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(n), n, XEN_ARG_1, S_mix_amp_env, "an integer");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(chan), chan, XEN_ARG_2, S_mix_amp_env, "an integer");
-  e = mix_amp_env_from_id(XEN_TO_C_INT_OR_ELSE(n, 0), 
+  e = mix_amp_env_from_id(XEN_TO_C_INT(n), 
 			  XEN_TO_C_INT_OR_ELSE(chan, 0));
   if (e) return(env_to_xen(e));
   return(XEN_EMPTY_LIST);
@@ -3744,20 +3743,20 @@ static XEN g_mix_amp_env(XEN n, XEN chan)
 
 static XEN g_set_mix_position(XEN n, XEN uval) 
 {
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(n), n, XEN_ARG_1, S_setB S_mix_position, "a number");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(n), n, XEN_ARG_1, S_setB S_mix_position, "an integer");
   XEN_ASSERT_TYPE(XEN_OFF_T_P(uval), uval, XEN_ARG_2, S_setB S_mix_position, "an integer");
-  if (set_mix_position(XEN_TO_C_INT_OR_ELSE(n, 0), 
+  if (set_mix_position(XEN_TO_C_INT(n), 
 		       beg_to_sample(uval, S_setB S_mix_position)) == INVALID_MIX_ID)
     return(snd_no_such_mix_error(S_setB S_mix_position, n));
   return(uval);
 }
 
-static void set_mix_locked(mix_info *md, bool on, bool redisplay)
+static void set_mix_locked(mix_info *md, bool on, bool redisplay, char *origin)
 {
   mix_state *cs;
   cs = md->active_mix_state;
   cs->locked = on;
-  remix_file(md, S_setB S_mix_locked_p, redisplay);
+  remix_file(md, origin, redisplay);
 }
 
 static XEN g_set_mix_locked(XEN n, XEN val) 
@@ -3768,11 +3767,11 @@ static XEN g_set_mix_locked(XEN n, XEN val)
   md = md_from_id(XEN_TO_C_INT(n));
   if (md == NULL)
     return(snd_no_such_mix_error(S_setB S_mix_locked_p, n));
-  set_mix_locked(md, XEN_TO_C_BOOLEAN(val), true);
+  set_mix_locked(md, XEN_TO_C_BOOLEAN(val), true, S_setB S_mix_locked_p);
   return(val);
 }
 
-static bool delete_mix_1(int mix_id, bool redisplay)
+static bool delete_mix_1(int mix_id, bool redisplay, char *origin)
 {
   mix_info *md; 
   mix_state *cs;
@@ -3783,7 +3782,7 @@ static bool delete_mix_1(int mix_id, bool redisplay)
       cs = md->active_mix_state;
       for (i = 0; i < md->in_chans; i++)
 	cs->scalers[i] = 0.0;
-      set_mix_locked(md, true, redisplay);
+      set_mix_locked(md, true, redisplay, origin);
       reflect_mix_in_mix_panel(mix_id);
       return(true);
     }
@@ -3795,7 +3794,7 @@ static XEN g_delete_mix(XEN n)
   #define H_delete_mix "(" S_delete_mix " id) deletes the given mix (this is undo-able)"
 
   XEN_ASSERT_TYPE(XEN_INTEGER_P(n), n, XEN_ONLY_ARG, S_delete_mix, "an integer");
-  if (!(delete_mix_1(XEN_TO_C_INT(n), true)))
+  if (!(delete_mix_1(XEN_TO_C_INT(n), true, S_delete_mix)))
     return(snd_no_such_mix_error(S_delete_mix, n));
   return(n);
 }
@@ -4260,13 +4259,6 @@ static XEN g_make_mix_sample_reader(XEN mix_id, XEN ubeg)
   return(XEN_FALSE);
 }
 
-static XEN g_next_mix_sample(XEN obj)
-{
-  #define H_next_mix_sample "(" S_next_mix_sample " reader): next sample from mix reader"
-  XEN_ASSERT_TYPE(MIX_SAMPLE_READER_P(obj), obj, XEN_ONLY_ARG, S_next_mix_sample, "a mix-sample-reader");
-  return(C_TO_XEN_DOUBLE(next_mix_sample(TO_MIX_SAMPLE_READER(obj))));
-}
-
 static XEN g_read_mix_sample(XEN obj)
 {
   #define H_read_mix_sample "(" S_read_mix_sample " reader): read sample from mix reader"
@@ -4425,22 +4417,21 @@ static XEN g_backward_mix(XEN count, XEN snd, XEN chn)
 #ifdef XEN_ARGIFY_1
 XEN_ARGIFY_2(g_make_mix_sample_reader_w, g_make_mix_sample_reader)
 XEN_NARGIFY_1(g_read_mix_sample_w, g_read_mix_sample)
-XEN_NARGIFY_1(g_next_mix_sample_w, g_next_mix_sample)
 XEN_NARGIFY_1(g_free_mix_sample_reader_w, g_free_mix_sample_reader)
 XEN_NARGIFY_1(g_mf_p_w, g_mf_p)
 XEN_ARGIFY_2(g_play_mix_w, g_play_mix)
-XEN_ARGIFY_1(g_mix_position_w, g_mix_position)
+XEN_NARGIFY_1(g_mix_position_w, g_mix_position)
 XEN_NARGIFY_2(g_set_mix_position_w, g_set_mix_position)
-XEN_ARGIFY_1(g_mix_frames_w, g_mix_frames)
-XEN_ARGIFY_1(g_mix_locked_w, g_mix_locked)
+XEN_NARGIFY_1(g_mix_frames_w, g_mix_frames)
+XEN_NARGIFY_1(g_mix_locked_w, g_mix_locked)
 XEN_NARGIFY_2(g_set_mix_locked_w, g_set_mix_locked)
-XEN_ARGIFY_1(g_mix_tag_position_w, g_mix_tag_position)
+XEN_NARGIFY_1(g_mix_tag_position_w, g_mix_tag_position)
 XEN_NARGIFY_2(g_set_mix_tag_position_w, g_set_mix_tag_position)
-XEN_ARGIFY_1(g_mix_track_w, g_mix_track)
+XEN_NARGIFY_1(g_mix_track_w, g_mix_track)
 XEN_NARGIFY_2(g_set_mix_track_w, g_set_mix_track)
-XEN_ARGIFY_1(g_mix_tag_y_w, g_mix_tag_y)
+XEN_NARGIFY_1(g_mix_tag_y_w, g_mix_tag_y)
 XEN_NARGIFY_2(g_set_mix_tag_y_w, g_set_mix_tag_y)
-XEN_ARGIFY_1(g_mix_speed_w, g_mix_speed)
+XEN_NARGIFY_1(g_mix_speed_w, g_mix_speed)
 XEN_NARGIFY_2(g_set_mix_speed_w, g_set_mix_speed)
 XEN_NARGIFY_0(g_mix_waveform_height_w, g_mix_waveform_height)
 XEN_NARGIFY_1(g_set_mix_waveform_height_w, g_set_mix_waveform_height)
@@ -4453,9 +4444,9 @@ XEN_ARGIFY_2(g_mix_amp_w, g_mix_amp)
 XEN_ARGIFY_3(g_set_mix_amp_w, g_set_mix_amp)
 XEN_ARGIFY_2(g_mix_amp_env_w, g_mix_amp_env)
 XEN_ARGIFY_3(g_set_mix_amp_env_w, g_set_mix_amp_env)
-XEN_ARGIFY_1(g_mix_chans_w, g_mix_chans)
-XEN_ARGIFY_1(g_mix_p_w, g_mix_p)
-XEN_ARGIFY_1(g_mix_home_w, g_mix_home)
+XEN_NARGIFY_1(g_mix_chans_w, g_mix_chans)
+XEN_NARGIFY_1(g_mix_p_w, g_mix_p)
+XEN_NARGIFY_1(g_mix_home_w, g_mix_home)
 XEN_ARGIFY_2(g_mixes_w, g_mixes)
 XEN_ARGIFY_8(g_mix_file_w, g_mix_file)
 XEN_ARGIFY_7(g_mix_vct_w, g_mix_vct)
@@ -4468,7 +4459,6 @@ XEN_ARGIFY_3(g_forward_mix_w, g_forward_mix)
 XEN_ARGIFY_3(g_backward_mix_w, g_backward_mix)
 #else
 #define g_make_mix_sample_reader_w g_make_mix_sample_reader
-#define g_next_mix_sample_w g_next_mix_sample
 #define g_read_mix_sample_w g_read_mix_sample
 #define g_free_mix_sample_reader_w g_free_mix_sample_reader
 #define g_mf_p_w g_mf_p
@@ -4528,23 +4518,22 @@ void g_init_mix(void)
 #endif
 
   XEN_DEFINE_PROCEDURE(S_make_mix_sample_reader, g_make_mix_sample_reader_w, 1, 1, 0, H_make_mix_sample_reader);
-  XEN_DEFINE_PROCEDURE(S_next_mix_sample,        g_next_mix_sample_w,        1, 0, 0, H_next_mix_sample);
   XEN_DEFINE_PROCEDURE(S_read_mix_sample,        g_read_mix_sample_w,        1, 0, 0, H_read_mix_sample);
   XEN_DEFINE_PROCEDURE(S_free_mix_sample_reader, g_free_mix_sample_reader_w, 1, 0, 0, H_free_mix_sample_reader);
   XEN_DEFINE_PROCEDURE(S_mix_sample_reader_p,    g_mf_p_w,                   1, 0, 0, H_mf_p);
 
   XEN_DEFINE_PROCEDURE(S_play_mix,               g_play_mix_w,               0, 2, 0, H_play_mix);
   XEN_DEFINE_PROCEDURE(S_delete_mix,             g_delete_mix_w,             1, 0, 0, H_delete_mix);
-  XEN_DEFINE_PROCEDURE(S_mix_frames,             g_mix_frames_w,             0, 1, 0, H_mix_frames);
+  XEN_DEFINE_PROCEDURE(S_mix_frames,             g_mix_frames_w,             1, 0, 0, H_mix_frames);
 
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_position, g_mix_position_w, H_mix_position, S_setB S_mix_position, g_set_mix_position_w, 0, 1, 2, 0);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_locked_p, g_mix_locked_w, H_mix_locked_p, S_setB S_mix_locked_p, g_set_mix_locked_w, 0, 1, 2, 0);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_track, g_mix_track_w, H_mix_track, S_setB S_mix_track, g_set_mix_track_w, 0, 1, 2, 0);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_tag_y, g_mix_tag_y_w, H_mix_tag_y, S_setB S_mix_tag_y, g_set_mix_tag_y_w, 0, 1, 2, 0);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_speed, g_mix_speed_w, H_mix_speed, S_setB S_mix_speed, g_set_mix_speed_w, 0, 1, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_position, g_mix_position_w, H_mix_position, S_setB S_mix_position, g_set_mix_position_w, 1, 0, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_locked_p, g_mix_locked_w, H_mix_locked_p, S_setB S_mix_locked_p, g_set_mix_locked_w, 1, 0, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_track, g_mix_track_w, H_mix_track, S_setB S_mix_track, g_set_mix_track_w, 1, 0, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_tag_y, g_mix_tag_y_w, H_mix_tag_y, S_setB S_mix_tag_y, g_set_mix_tag_y_w, 1, 0, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_speed, g_mix_speed_w, H_mix_speed, S_setB S_mix_speed, g_set_mix_speed_w, 1, 0, 2, 0);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_tag_position, g_mix_tag_position_w, H_mix_tag_position, 
-				   S_setB S_mix_tag_position, g_set_mix_tag_position_w, 0, 1, 2, 0);
+				   S_setB S_mix_tag_position, g_set_mix_tag_position_w, 1, 0, 2, 0);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_waveform_height, g_mix_waveform_height_w, H_mix_waveform_height,
 				   S_setB S_mix_waveform_height, g_set_mix_waveform_height_w, 0, 0, 1, 0);
@@ -4558,13 +4547,13 @@ void g_init_mix(void)
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_color, g_mix_color_w, H_mix_color,
 				   S_setB S_mix_color, g_set_mix_color_w,  0, 1, 1, 1);
 
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_amp, g_mix_amp_w, H_mix_amp, S_setB S_mix_amp, g_set_mix_amp_w, 0, 2, 2, 1);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_amp_env, g_mix_amp_env_w, H_mix_amp_env, S_setB S_mix_amp_env, g_set_mix_amp_env_w, 0, 2, 2, 1);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_amp, g_mix_amp_w, H_mix_amp, S_setB S_mix_amp, g_set_mix_amp_w, 1, 1, 2, 1);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_amp_env, g_mix_amp_env_w, H_mix_amp_env, S_setB S_mix_amp_env, g_set_mix_amp_env_w, 1, 1, 2, 1);
 
   XEN_DEFINE_PROCEDURE(S_mix_tag_xy, g_mix_tag_xy_w,     1, 0, 0, H_mix_tag_xy);
-  XEN_DEFINE_PROCEDURE(S_mix_chans,    g_mix_chans_w,    0, 1, 0, H_mix_chans);
-  XEN_DEFINE_PROCEDURE(S_mix_p,        g_mix_p_w,        0, 1, 0, H_mix_p);
-  XEN_DEFINE_PROCEDURE(S_mix_home,     g_mix_home_w,     0, 1, 0, H_mix_home);
+  XEN_DEFINE_PROCEDURE(S_mix_chans,    g_mix_chans_w,    1, 0, 0, H_mix_chans);
+  XEN_DEFINE_PROCEDURE(S_mix_p,        g_mix_p_w,        1, 0, 0, H_mix_p);
+  XEN_DEFINE_PROCEDURE(S_mix_home,     g_mix_home_w,     1, 0, 0, H_mix_home);
   XEN_DEFINE_PROCEDURE(S_mixes,        g_mixes_w,        0, 2, 0, H_mixes);
   XEN_DEFINE_PROCEDURE(S_mix,          g_mix_file_w,     1, 7, 0, H_mix_file);
   XEN_DEFINE_PROCEDURE(S_mix_vct,      g_mix_vct_w,      1, 6, 0, H_mix_vct);
@@ -4587,416 +4576,8 @@ void g_init_mix(void)
 
 /* ---------------- TRACKS ---------------- */
 
-/* track reader: an array of mix readers with state: active, waiting, null (done) */
-typedef struct {
-  int mixes, track;
-  off_t *state;
-  off_t *len;
-  mix_fd **fds;
-} track_fd;
-
-static track_fd *init_track_reader(chan_info *cp, int track_num, bool global, off_t beg) /* edit-position? direction? */
-{
-  /* beg is offset within track which starts within overall sound(s) at track_beg */
-  track_fd *fd = NULL;
-  int mixes = 0, i, mix;
-  off_t track_beg;
-  mix_info *md;
-  mix_state *cs;
-  track_beg = CURRENT_SAMPLES(cp);
-  for (i = 0; i < mix_infos_ctr; i++) 
-    if (mix_ok(i))
-      {
-	md = mix_infos[i];
-	if (md->active_mix_state->track == track_num)
-	  {
-	    if (md->cp == cp) mixes++;
-	    cs = md->active_mix_state;
-	    if ((global) || (md->cp == cp))
-	      if (cs->orig < track_beg) 
-		track_beg = cs->orig;
-	  }
-      }
-  if (mixes > 0)
-    {
-      fd = (track_fd *)CALLOC(1, sizeof(track_fd));
-      fd->track = track_num;
-      fd->mixes = mixes;
-      fd->state = (off_t *)CALLOC(mixes, sizeof(off_t));
-      fd->len = (off_t *)CALLOC(mixes, sizeof(off_t));
-      fd->fds = (mix_fd **)CALLOC(mixes, sizeof(mix_fd *));
-      mix = 0;
-      for (i = 0; i < mix_infos_ctr; i++)
-	if (mix_ok(i))
-	  {
-	    md = mix_infos[i];
-	    if ((md->active_mix_state->track == track_num) && 
-		(md->cp == cp))
-	      {
-		off_t true_beg, mix_start;
-		true_beg = track_beg + beg;
-		cs = md->active_mix_state;
-		mix_start = true_beg - cs->orig;
-		fd->state[mix] = -mix_start;
-		if (mix_start > 0)
-		  {
-		    fd->fds[mix] = init_mix_read(md, CURRENT_MIX, mix_start);
-		    fd->len[mix] = cs->len - mix_start;
-		  }
-		else 
-		  {
-		    fd->fds[mix] = init_mix_read(md, CURRENT_MIX, 0);
-		    fd->len[mix] = cs->len;
-		  }
-		mix++;
-	      }
-	  }
-    }
-  return(fd);
-}
-
-static void free_track_fd_almost(track_fd *fd)
-{
-  int i;
-  if (fd)
-    {
-      if (fd->fds)
-	{
-	  for (i = 0; i < fd->mixes; i++)
-	    if (fd->fds[i]) 
-	      fd->fds[i] = free_mix_fd(fd->fds[i]);
-	  FREE(fd->fds);
-	  fd->fds = NULL;
-	}
-      fd->mixes = 0;
-      if (fd->state) {FREE(fd->state); fd->state = NULL;}
-      if (fd->len) {FREE(fd->len); fd->len = NULL;}
-    }
-}
-
-static void free_track_fd(track_fd *fd)
-{
-  if (fd)
-    {
-      free_track_fd_almost(fd);
-      FREE(fd);
-    }
-}
-
-static Float next_track_sample(track_fd *fd)
-{
-  int i;
-  Float sum = 0.0;
-  if (fd)
-    for (i = 0; i < fd->mixes; i++)
-      if ((fd->fds[i]) && 
-	  (fd->len[i] > 0))
-	{
-	  if (fd->state[i] <= 0)
-	    {
-	      sum += next_mix_sample(fd->fds[i]);
-	      fd->len[i]--;
-	      if (fd->len[i] <= 0) 
-		{
-		  unlist_mix_reader(fd->fds[i]);
-		  fd->fds[i] = free_mix_fd(fd->fds[i]);
-		}
-	    }
-	  else fd->state[i]--;
-	}
-  return(sum);
-}
-
-/* TODO: play-track can use mix-lists? does it assume all chans start together? */
-
-static int play_track(chan_info **ucps, int chans, int track_num, off_t beg, bool from_gui)
-{
-  track_fd **fds;
-  chan_info **cps;
-  snd_info *sp;
-  chan_info *locp;
-  int playfd, i, j, k, n, samps, chan = 0, format, datum_bytes, outchans, frames;
-  bool happy = false, need_free = false;
-#if HAVE_ALSA
-  mus_sample_t **buf;
-  char *outbuf;
-  float val[4]; /* not Float */
-#else
-  OutSample *buf;
-#endif
-  if (ucps == NULL)
-    {
-      chans = active_channels(WITH_VIRTUAL_CHANNELS);
-      if (chans == 0) return(-1);
-      cps = (chan_info **)CALLOC(chans, sizeof(chan_info *));
-      need_free = true;
-      chan = 0;
-      for (i = 0; i < mix_infos_ctr; i++) 
-	if ((mix_ok(i)) && 
-	    (mix_infos[i]->active_mix_state->track == track_num))
-	  {
-	    locp = mix_infos[i]->cp;
-	    happy = false;
-	    for (j = 0; j < chan; j++) 
-	      if (cps[j] == locp) 
-		{
-		  happy = true; 
-		  break;
-		}
-	    if (!happy)
-	      {
-		cps[chan] = locp;
-		chan++;
-	      }
-	  }
-      chans = chan;
-    }
-  else cps = ucps;
-  samps = 0;
-  if (chans == 0) return(-1);
-  outchans = chans;
-  format = mus_audio_compatible_format(MUS_AUDIO_PACK_SYSTEM(0) | audio_output_device(ss));
-  datum_bytes = mus_bytes_per_sample(format);
-  frames = 256;
-  fds = (track_fd **)CALLOC(chans, sizeof(track_fd *));
-
-#if HAVE_ALSA
-  /* in ALSA we have no way to tell what the possible output format is, or min chans, so... */
-  mus_audio_mixer_read(MUS_AUDIO_PACK_SYSTEM(0) | audio_output_device(ss), MUS_AUDIO_CHANNEL, 2, val);
-  if (chans < (int)(val[1])) outchans = (int)(val[1]);
-  mus_audio_mixer_read(MUS_AUDIO_PACK_SYSTEM(0) | audio_output_device(ss), MUS_AUDIO_SAMPLES_PER_CHANNEL, 2, val);
-  frames = (int)(val[0]);
-  set_dac_size(outchans * frames * mus_bytes_per_sample(format));
-  buf = (mus_sample_t **)CALLOC(outchans, sizeof(mus_sample_t *));
-  for (i = 0; i < chans; i++) buf[i] = (mus_sample_t *)CALLOC(frames, sizeof(mus_sample_t));
-  outbuf = (char *)CALLOC(frames * datum_bytes * outchans, sizeof(char));
-#else
-  buf = (OutSample *)CALLOC(chans * frames, sizeof(OutSample));
-#endif
-  for (i = 0; i < chans; i++)
-    {
-      fds[i] = init_track_reader(cps[i], track_num, need_free, beg);
-      if (fds[i]) /* perhaps bad track number? */
-	for (n = 0; n < fds[i]->mixes; n++)
-	  {
-	    j = fds[i]->state[n] + fds[i]->len[n];
-	    if (j > samps) samps = j;
-	  }
-    }
-  if (samps > 0)
-    {
-      sp = cps[0]->sound;
-      clear_minibuffer(sp);
-      playfd = mus_audio_open_output(MUS_AUDIO_PACK_SYSTEM(0) | audio_output_device(ss), 
-				     SND_SRATE(sp), 
-				     outchans, 
-				     format, 
-				     dac_size(ss));
-      if (playfd != -1)
-	{
-	  ss->stopped_explicitly = false;
-	  for (i = 0; i < samps; i += frames)
-	    {
-#if HAVE_ALSA
-	      for (k = 0; k < chans; k++)
-		if (fds[k])
-		  for (j = 0; j < frames; j++)
-		    buf[k][j] = MUS_FLOAT_TO_SAMPLE(next_track_sample(fds[k]));
-	      mus_file_write_buffer(format, 0, frames - 1, outchans, buf, outbuf, true);
-	      mus_audio_write(playfd, outbuf, frames * datum_bytes * outchans);
-#else
-	      for (k = 0; k < chans; k++)
-		if (fds[k])
-		  for (j = k; j < frames * chans; j += chans)
-		    buf[j] = MUS_CONVERT(next_track_sample(fds[k]));
-	      mus_audio_write(playfd, (char *)buf, frames * datum_bytes * chans);
-#endif
-	      check_for_event();
-	      if ((ss->stopped_explicitly) || ((from_gui) && (mix_play_stopped())))
-		{
-		  ss->stopped_explicitly = false;
-		  report_in_minibuffer(sp, _("stopped"));
-		  break;
-		}
-	    }
-	  mus_audio_close(playfd);
-	}
-    }
-  for (i = 0; i < chans; i++) free_track_fd(fds[i]);
-  reflect_mix_play_stop();
-  FREE(fds);
-#if HAVE_ALSA
-  for (i = 0; i < chans; i++) if (buf[i]) FREE(buf[i]);
-  FREE(outbuf);
-#endif
-  FREE(buf);
-  if (need_free) FREE(cps);
-  return(0);
-}
-
-void track_play_from_id(int mix_id)
-{
-  mix_info *md;
-  md = md_from_id(mix_id);
-  if (md->active_mix_state->track != 0)
-    play_track(NULL, 0, md->active_mix_state->track, 0, true);
-  else play_mix(md, 0, true);
-}
-
-/* ---------------- track sample readers ---------------- */
-
-static int xen_to_c_track(XEN id, const char *origin);
-static chan_info *track_channel(int id, int chn);
-static void set_track_position_1(mix_info *md, void *val);
-static void remix_track(int id, void (*func)(mix_info *, void *), void *val);
-
-static XEN_OBJECT_TYPE tf_tag;
-static bool tf_p(XEN obj) {return(XEN_OBJECT_TYPE_P(obj, tf_tag));}
-#define TO_TRACK_SAMPLE_READER(obj) ((track_fd *)XEN_OBJECT_REF(obj))
-#define TRACK_SAMPLE_READER_P(Obj) XEN_OBJECT_TYPE_P(Obj, tf_tag)
-
-static XEN g_tf_p(XEN obj) 
-{
-  #define H_tf_p "(" S_track_sample_reader_p " obj): #t if obj is a track-sample-reader"
-  return(C_TO_XEN_BOOLEAN(tf_p(obj)));
-}
-
-static char *tf_to_string(track_fd *fd) 
-{
-  mix_info *md;
-  mix_fd *mf = NULL;
-  char *desc;
-  char toi[16];
-  int i, len, desc_len;
-  bool happy = false, banner = false, previous = false;
-  desc_len = PRINT_BUFFER_SIZE;
-  desc = (char *)CALLOC(desc_len, sizeof(char));
-  if (fd == NULL)
-    sprintf(desc, "#<track-sample-reader: null>");
-  else
-    {
-      if ((fd->fds) && (fd->mixes > 0))
-	{
-	  len = fd->mixes;
-	  for (i = 0; i < len; i++)
-	    {
-	      mf = fd->fds[i];
-	      if ((mf) && (mf->md) && (MIX_TYPE_OK(mf->type)))
-		{
-		  md = mf->md;
-		  happy = true;
-		  if (!banner)
-		    {
-
-		      mus_snprintf(desc, PRINT_BUFFER_SIZE, "#<track-sample-reader track %d: %s chan %d via mixes '(",
-				   fd->track,
-				   md->in_filename,
-				   (md->cp)->chan);
-		      banner = true;
-		    }
-		  mus_snprintf(toi, 16, "%s%d", (previous) ? " ": "", (mf->md)->id);
-		  previous = true;
-		  desc = snd_strcat(desc, toi, &desc_len);
-		}
-	    }
-	  desc = snd_strcat(desc, ")>", &desc_len);
-	}
-      if (!happy)
-	mus_snprintf(desc, PRINT_BUFFER_SIZE, "#<track-sample-reader %p: inactive>", fd);
-    }
-  return(desc);
-}
-
-XEN_MAKE_OBJECT_PRINT_PROCEDURE(track_fd, print_tf, tf_to_string)
-
-static void tf_free(track_fd *fd)
-{
-  int i;
-  if (fd) 
-    {
-      if (fd->fds)
-	{
-	  for (i = 0; i < fd->mixes; i++)
-	    if (fd->fds[i]) 
-	      unlist_mix_reader(fd->fds[i]);
-	}
-      free_track_fd(fd); 
-    }
-}
-
-XEN_MAKE_OBJECT_FREE_PROCEDURE(track_fd, free_tf, tf_free)
-
-  /* TODO: play-track all chans */
-
-static XEN g_make_track_sample_reader(XEN id, XEN chn, XEN beg)
-{
-  #define H_make_track_sample_reader "(" S_make_track_sample_reader " track (chn #f) (beg 0)): \
-return a reader ready to access track's data associated with track's channel chn, starting in the track from beg"
-
-  track_fd *tf = NULL;
-  chan_info *cp;
-  int i;
-  off_t samp;
-  int track_id;
-  XEN_ASSERT_TYPE(XEN_INTEGER_OR_BOOLEAN_IF_BOUND_P(chn), chn, XEN_ARG_2, S_make_track_sample_reader, "int");
-  track_id = xen_to_c_track(id, S_make_track_sample_reader);
-  ASSERT_SAMPLE_TYPE(S_make_track_sample_reader, beg, XEN_ARG_3);
-  samp = beg_to_sample(beg, S_make_track_sample_reader);
-  cp = track_channel(track_id, (XEN_INTEGER_P(chn)) ? (XEN_TO_C_INT(chn)) : 0);
-  if (cp == NULL)
-    XEN_ERROR(NO_SUCH_CHANNEL,
-	      XEN_LIST_2(C_TO_XEN_STRING(S_make_track_sample_reader),
-			 chn));
-  tf = init_track_reader(cp, 
-			 track_id, 
-			 false, /* true to track all chans in parallel (assuming different starting points) */
-			 samp); 
-  if (tf == NULL)
-    XEN_ERROR(NO_SUCH_TRACK,
-	      XEN_LIST_2(C_TO_XEN_STRING(S_make_track_sample_reader),
-			 id));
-  if (tf->fds)
-    {
-      for (i = 0; i < tf->mixes; i++)
-	if (tf->fds[i]) 
-	  list_mix_reader(tf->fds[i]);
-    }
-  XEN_MAKE_AND_RETURN_OBJECT(tf_tag, tf, 0, free_tf);
-}
-
-static XEN g_next_track_sample(XEN obj)
-{
-  #define H_next_track_sample "(" S_next_track_sample " reader): next sample from track reader"
-  XEN_ASSERT_TYPE(TRACK_SAMPLE_READER_P(obj), obj, XEN_ONLY_ARG, S_next_track_sample, "a track-sample-reader");
-  return(C_TO_XEN_DOUBLE(next_track_sample(TO_TRACK_SAMPLE_READER(obj))));
-}
-
-static XEN g_read_track_sample(XEN obj)
-{
-  #define H_read_track_sample "(" S_read_track_sample " reader): read sample from track reader"
-  XEN_ASSERT_TYPE(TRACK_SAMPLE_READER_P(obj), obj, XEN_ONLY_ARG, S_read_track_sample, "a track-sample-reader");
-  return(C_TO_XEN_DOUBLE(next_track_sample(TO_TRACK_SAMPLE_READER(obj))));
-}
-
-static XEN g_free_track_sample_reader(XEN obj)
-{
-  #define H_free_track_sample_reader "(" S_free_track_sample_reader " reader): free the track sample reader"
-  track_fd *tf = NULL;
-  int i;
-  XEN_ASSERT_TYPE(TRACK_SAMPLE_READER_P(obj), obj, XEN_ONLY_ARG, S_free_track_sample_reader, "a track-sample-reader");
-  tf = TO_TRACK_SAMPLE_READER(obj);
-  if ((tf) && (tf->fds))
-    {
-      for (i = 0; i < tf->mixes; i++)
-	if (tf->fds[i]) 
-	  unlist_mix_reader(tf->fds[i]);
-    }
-  free_track_fd_almost(tf);
-  return(xen_return_first(XEN_FALSE, obj));
-}
-
-
-/* -------- track handlers -------- */
+static void record_track_info_given_track(int track_id);
+static void record_track_info(chan_info *cp, int loc);
 
 typedef struct {
   Float amp, speed;
@@ -5016,117 +4597,6 @@ static track_list **tracks;
 static int tracks_size = 0;
 static int track_ctr = 0; /* 0 is the no-track indication */
 
-static int plausible_track(void)
-{
-  int i;
-  for (i = 1; i < track_ctr; i++)
-    if (track_p(i))
-      return(i);
-  return(INVALID_TRACK_ID);
-}
-
-static int xen_to_c_track(XEN id, const char *origin)
-{
-  int track_id;
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(id), id, XEN_ARG_1, origin, "an integer");
-  if (XEN_INTEGER_P(id))
-    track_id = XEN_TO_C_INT(id);
-  else track_id = plausible_track();
-  if (!(track_p(track_id)))
-    XEN_ERROR(NO_SUCH_TRACK,
-	      XEN_LIST_2(C_TO_XEN_STRING(origin),
-			 id));
-  return(track_id);
-}
-
-static int xen_to_c_track_no_default(XEN id, const char *origin)
-{
-  int track_id;
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(id), id, XEN_ARG_1, origin, "an integer");
-  track_id = XEN_TO_C_INT(id);
-  if (!(track_p(track_id)))
-    XEN_ERROR(NO_SUCH_TRACK,
-	      XEN_LIST_2(C_TO_XEN_STRING(origin),
-			 id));
-  return(track_id);
-}
-
-static int xen_to_c_track_no_default_zero_ok(XEN id, const char *origin)
-{
-  int track_id;
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(id), id, XEN_ARG_1, origin, "an integer");
-  track_id = XEN_TO_C_INT(id);
-  if ((track_id != 0) && (!(track_p(track_id))))
-    XEN_ERROR(NO_SUCH_TRACK,
-	      XEN_LIST_2(C_TO_XEN_STRING(origin),
-			 id));
-  return(track_id);
-}
-
-static XEN g_play_track(XEN id, XEN chn, XEN beg)
-{
-  #define H_play_track "(" S_play_track " track (chn #f) (beg 0)): play track. If 'chn' is #t, \
-play all the mixes in the track, even if in different channels.  'beg' is where to start playing within the track."
-  chan_info *cp = NULL;
-  int err, track_id;
-  off_t samp;
-  track_id = xen_to_c_track(id, S_play_track);
-  /* in this case if chn=#t, play all associated mixes in all chans */
-  ASSERT_SAMPLE_TYPE(S_play_track, beg, XEN_ARG_3);
-  samp = beg_to_sample(beg, S_play_track);
-  if (!(XEN_INTEGER_P(chn)))
-    err = play_track(NULL, 0, track_id, samp, false);
-  else 
-    {
-      cp = track_channel(track_id, XEN_TO_C_INT(chn));
-      err = play_track(&cp, 1, track_id, samp, false);
-    }
-  return(id);
-}
-
-static mix_track_state *copy_mix_track_state(mix_track_state *cs)
-{
-  mix_track_state *ncs = NULL;
-  if (cs)
-    {
-      int i;
-      ncs = (mix_track_state *)CALLOC(1, sizeof(mix_track_state));
-      ncs->chans = cs->chans;
-      ncs->speed = cs->speed;
-      ncs->len = cs->len;
-      ncs->scalers = (Float *)CALLOC(ncs->chans, sizeof(Float));
-      if (cs->amp_envs)
-	ncs->amp_envs = (env **)CALLOC(ncs->chans, sizeof(env *));
-      else ncs->amp_envs = NULL;
-      for (i = 0; i < ncs->chans; i++)
-	{
-	  ncs->scalers[i] = cs->scalers[i];
-	  if ((cs->amp_envs) && (cs->amp_envs[i]))
-	    ncs->amp_envs[i] = copy_env(cs->amp_envs[i]);
-	}
-    }
-  return(ncs);
-}
-
-static mix_track_state *free_mix_track_state(mix_track_state *cs)
-{
-  if (cs)
-    {
-      int i;
-      if (cs->amp_envs)
-	{
-	  for (i = 0; i < cs->chans; i++)
-	    free_env(cs->amp_envs[i]);
-	  FREE(cs->amp_envs);
-	  cs->amp_envs = NULL;
-	}
-      if (cs->scalers) FREE(cs->scalers);
-      cs->scalers = NULL;
-      FREE(cs);
-    }
-  return(NULL);
-}
-
 #if 0
 bool track_p_1(int trk, char *caller)
 #else
@@ -5137,14 +4607,6 @@ bool track_p(int trk)
 	 (trk < track_ctr) &&
 	 (tracks[trk]));
 }
-
-static XEN g_track_p(XEN id)
-{
-  #define H_track_p "(" S_track_p " id) -> #t if id refers to an active track"
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(id), id, XEN_ONLY_ARG, S_track_p, "an integer");
-  return(C_TO_XEN_BOOLEAN(track_p(XEN_TO_C_INT(id))));
-}
-
 
 static track_state *active_track_state(int trk)
 {
@@ -5207,13 +4669,65 @@ static bool active_track_color_set(int id)
   return(false);
 }
 
-/* each field setting prunes all existing states in the list beyond loc,
- *   adds a new track_state to the list,
- *   copies the loc state (or makes initial?), sets field, increments loc
- */
+static bool found_track_amp_env(int trk)
+{
+  while (track_p(trk))
+    {
+      if (active_track_amp_env(trk)) return(true);
+      trk = active_track_track(trk);      
+    }
+  return(false);
+}
 
-static void record_track_info_given_track(int track_id);
-static void record_track_info(chan_info *cp, int loc);
+static Float gather_track_amp(int id)
+{
+  Float amp = 1.0;
+  while (track_p(id))
+    {
+      amp *= active_track_amp(id);
+      id = active_track_track(id);
+    }
+  return(amp);
+}
+
+static Float gather_track_speed(int id)
+{
+  Float speed = 1.0;
+  while (track_p(id))
+    {
+      speed *= active_track_speed(id);
+      id = active_track_track(id);
+    }
+  return(speed);
+}
+
+static env *gather_track_amp_env(int id, off_t mix_beg, off_t mix_dur)
+{
+  env *e = NULL, *temp = NULL;
+  off_t track_beg, track_dur;
+  while (track_p(id))
+    {
+      track_beg = track_position(id, -1);
+      track_dur = track_frames(id, -1);
+      if (active_track_amp_env(id))
+	{
+	  /* track amps can be left until later (gather track amp) */
+	  if (!e) 
+	    e = window_env(active_track_amp_env(id), mix_beg, mix_dur, track_beg, track_dur);
+	  else 
+	    {
+	      e = multiply_envs(e, 
+				temp = window_env(active_track_amp_env(id), mix_beg, mix_dur, track_beg, track_dur),
+				MULTIPLY_ENVS_INCR);
+	      temp = free_env(temp);
+	    }
+	}
+      /* if intermediate track has no env, that's as if it were a flat env -- a no-op, not a break in the chain */
+      id = active_track_track(id);      
+    }
+  return(e);
+}
+
 
 static track_state *free_track_state(track_state *ts)
 {
@@ -5224,6 +4738,54 @@ static track_state *free_track_state(track_state *ts)
     }
   return(NULL);
 }
+
+static mix_track_state *copy_mix_track_state(mix_track_state *cs)
+{
+  mix_track_state *ncs = NULL;
+  if (cs)
+    {
+      int i;
+      ncs = (mix_track_state *)CALLOC(1, sizeof(mix_track_state));
+      ncs->chans = cs->chans;
+      ncs->speed = cs->speed;
+      ncs->len = cs->len;
+      ncs->scalers = (Float *)CALLOC(ncs->chans, sizeof(Float));
+      if (cs->amp_envs)
+	ncs->amp_envs = (env **)CALLOC(ncs->chans, sizeof(env *));
+      else ncs->amp_envs = NULL;
+      for (i = 0; i < ncs->chans; i++)
+	{
+	  ncs->scalers[i] = cs->scalers[i];
+	  if ((cs->amp_envs) && (cs->amp_envs[i]))
+	    ncs->amp_envs[i] = copy_env(cs->amp_envs[i]);
+	}
+    }
+  return(ncs);
+}
+
+static mix_track_state *free_mix_track_state(mix_track_state *cs)
+{
+  if (cs)
+    {
+      int i;
+      if (cs->amp_envs)
+	{
+	  for (i = 0; i < cs->chans; i++)
+	    free_env(cs->amp_envs[i]);
+	  FREE(cs->amp_envs);
+	  cs->amp_envs = NULL;
+	}
+      if (cs->scalers) FREE(cs->scalers);
+      cs->scalers = NULL;
+      FREE(cs);
+    }
+  return(NULL);
+}
+
+/* each field setting prunes all existing states in the list beyond loc,
+ *   adds a new track_state to the list,
+ *   copies the loc state (or makes initial?), sets field, increments loc
+ */
 
 static track_state *extend_track_list(int trk, bool copy_amp_env)
 {
@@ -5332,6 +4894,7 @@ static color_t set_active_track_color(int id, color_t c)
   return(c);
 }
 
+
 typedef struct {int id; int mixes;} track_members_t;
 
 static int track_members_1(mix_info *md, void *ptr)
@@ -5366,9 +4929,6 @@ static int track_members(int track_id)
   FREE(tm);
   return(mixes);
 }
-
-
-/* -------- track chain -------- */
 
 typedef struct {
   int *lst; 
@@ -5444,206 +5004,6 @@ static void map_over_track_mixes(int track_id, void (*func)(mix_info *, void *),
   free_track_mix_list(trk);
 }
 
-static track_graph_t *track_save_graph(mix_info *orig_md)
-{
-  track_graph_t *tg = NULL;
-  track_mix_list_t *trk;
-  mix_info *md;
-  mix_state *cs;
-  chan_info *cp = NULL;
-  int i, pts = 0, track_id;
-  track_id = orig_md->active_mix_state->track;
-  trk = track_mixes(track_id);
-  if (trk->lst_ctr > 0)
-    {
-      tg = (track_graph_t *)CALLOC(1, sizeof(track_graph_t));
-      tg->xs = (int *)CALLOC(trk->lst_ctr, sizeof(int));
-      tg->origs = (off_t *)CALLOC(trk->lst_ctr, sizeof(off_t));
-      for (i = 0; i < trk->lst_ctr; i++)
-	{
-	  md = md_from_id(trk->lst[i]);
-	  cs = md->active_mix_state;
-	  tg->origs[i] = cs->orig;
-	  tg->xs[i] = md->x;
-	  if (md == orig_md) tg->orig = i;
-	  if (cp != md->cp)
-	    {
-	      cp = md->cp;
-	      pts = make_graph(cp);
-	    }
-	  mix_save_graph(md->wg, pts);
-	}
-    }
-  free_track_mix_list(trk);
-  return(tg);
-}
-
-static void move_track(int track_id, track_graph_t *data)
-{
-  track_mix_list_t *trk;
-  int i, diff;
-  mix_info *md;
-  trk = track_mixes(track_id);
-  diff = data->x - data->xs[data->orig];
-  for (i = 0; i < trk->lst_ctr; i++)
-    {
-      md = md_from_id(trk->lst[i]);
-      if (i == data->orig)
-	md->x = data->x;
-      else md->x = data->xs[i] + diff;
-      move_mix(md);
-    }
-  free_track_mix_list(trk);
-}
-
-static void finish_dragging_track(int track_id, track_graph_t *data, bool remix)
-{
-  track_mix_list_t *trk;
-  int i;
-  mix_info *md;
-  mix_context *ms;
-  mix_state *cs;
-  off_t change = 0;
-  trk = track_mixes(track_id);
-  for (i = 0; i < trk->lst_ctr; i++)
-    {
-      md = md_from_id(trk->lst[i]);
-      ms = md->wg;
-      ms->lastpj = 0;
-      if (i == data->orig)
-	{
-	  /* TODO: finish drag still broken if drag past end and start drag doesn't erase original (need 0 edit) */
-	  md->x = data->x;
-	  move_mix(md);          /* update to last beg */
-	  cs = md->active_mix_state; 
-	  change = cs->beg - cs->orig;
-	}
-      cs = md->active_mix_state;
-      cs->orig = data->origs[i]; /* clear out temp drag-related changes */
-      cs->beg = data->origs[i];
-    }
-  free_track_mix_list(trk);
-  remix_track(track_id, set_track_position_1, (void *)(&change));
-}
-
-static track_graph_t *free_track_graph(track_graph_t *ptr)
-{
-  if (ptr)
-    {
-      if (ptr->origs) FREE(ptr->origs);
-      if (ptr->xs) FREE(ptr->xs);
-      FREE(ptr);
-    }
-  return(NULL);
-}
-
-static void record_track_info_given_track(int track_id)
-{
-  track_mix_list_t *trk;
-  int i;
-  trk = track_mixes(track_id);
-  for (i = 0; i < trk->cps_ctr; i++)
-    record_track_info(trk->cps[i], trk->cps[i]->edit_ctr);
-  free_track_mix_list(trk);
-}
-
-static XEN g_track(XEN id, XEN chn)
-{
-  /* given track id, return list of constituent mixes */
-  #define H_track "(" S_track " track-id chn) returns a list of the mixes contained in the given track (and channel if specified)"
-  int i, track_id;
-  XEN result;
-  track_mix_list_t *trk;
-  track_id = xen_to_c_track(id, S_track);
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(chn), chn, XEN_ARG_2, S_track, "int");  
-  trk = track_mixes(track_id);
-  result = XEN_EMPTY_LIST;
-  if (XEN_INTEGER_P(chn))
-    {
-      chan_info *cp;
-      cp = track_channel(track_id, XEN_TO_C_INT(chn));
-      if (cp == NULL)
-	XEN_ERROR(NO_SUCH_CHANNEL,
-		  XEN_LIST_2(C_TO_XEN_STRING(S_track),
-			     chn));
-      for (i = trk->lst_ctr - 1; i >= 0; i--)
-	{
-	  mix_info *md;
-	  md = md_from_id(trk->lst[i]);
-	  if (md->cp == cp)
-	    result = XEN_CONS(C_TO_XEN_INT(trk->lst[i]), result);
-	}
-    }
-  else
-    {
-      for (i = trk->lst_ctr - 1; i >= 0; i--)
-	result = XEN_CONS(C_TO_XEN_INT(trk->lst[i]), result);
-    }
-  free_track_mix_list(trk);
-  return(result);
-}
-
-static void set_track_color(int id, color_t color)
-{
-  /* not considered an edit */
-  int i;
-  track_mix_list_t *trk;
-  if ((track_p(id)) && (active_track_color(id) != color))
-    {
-      set_active_track_color(id, color);
-      trk = track_mixes(id);
-      for (i = 0; i < trk->lst_ctr; i++)
-	color_one_mix_from_id(trk->lst[i], color); 
-      for (i = 0; i < trk->cps_ctr; i++)
-	update_graph(trk->cps[i]);
-      free_track_mix_list(trk);
-    }
-}
-
-static void unset_track_color(int id)
-{
-  /* not considered an edit */
-  int i;
-  track_mix_list_t *trk;
-  track_state *ts;
-  if ((track_p(id)) && (active_track_color_set(id)))
-    {
-      ts = active_track_state(id);
-      if (ts) 
-	{
-	  ts->color = (color_t)0;
-	  ts->color_set = false;
-	}
-      trk = track_mixes(id);
-      for (i = 0; i < trk->lst_ctr; i++)
-	color_one_mix_from_id(trk->lst[i], ss->sgx->mix_color);
-      for (i = 0; i < trk->cps_ctr; i++)
-	update_graph(trk->cps[i]);
-      free_track_mix_list(trk);
-    }
-}
-
-static XEN g_track_color(XEN id)
-{
-  #define H_track_color "(" S_track_color " id) -> id's mix's mix-color"
-  int track_id;
-  track_id = xen_to_c_track(id, S_track_color);
-  if (active_track_color_set(track_id))
-    return(XEN_WRAP_PIXEL(active_track_color(track_id)));
-  return(XEN_FALSE);
-}
-
-static XEN g_set_track_color(XEN id, XEN val)
-{
-  int track_id;
-  track_id = xen_to_c_track_no_default(id, S_setB S_track_color);
-  XEN_ASSERT_TYPE(XEN_PIXEL_P(val) || XEN_FALSE_P(val), val, XEN_ARG_2, S_setB S_track_color, "a color");
-  if (XEN_FALSE_P(val))
-    unset_track_color(track_id);
-  else set_track_color(track_id, XEN_UNWRAP_PIXEL(val));
-  return(val);
-}
-
 static void remix_track(int id, void (*func)(mix_info *, void *), void *val)
 {
   int i;
@@ -5695,50 +5055,6 @@ static void remix_track_channel(int id, int chan, void (*func)(mix_info *, void 
   free_track_mix_list(trk);
 }
 
-static void redisplay_track(int id)
-{
-  int i;
-  track_mix_list_t *trk;
-  trk = track_mixes(id);
-  if (trk->cps_ctr > 0)
-    for (i = 0; i < trk->cps_ctr; i++)
-      update_graph(trk->cps[i]);
-  free_track_mix_list(trk);
-}
-
-static void set_track_amp_1(mix_info *md, void *val)
-{
-  remix_file(md, S_setB S_track_amp, false);
-}
-
-static void set_track_amp(int id, Float amp)
-{
-  if ((track_p(id)) && (active_track_amp(id) != amp))
-    {
-      set_active_track_amp(id, amp);
-      remix_track(id, set_track_amp_1, NULL);
-    }
-}
-
-/* TODO: for mix-panel display, we could follow selected chan */
-
-static XEN g_track_amp(XEN id)
-{
-  #define H_track_amp "(" S_track_amp " id) -> id's amp"
-  int track_id;
-  track_id = xen_to_c_track(id, S_track_amp);
-  return(C_TO_XEN_DOUBLE(active_track_amp(track_id)));
-}
-
-static XEN g_set_track_amp(XEN id, XEN val)
-{
-  int track_id;
-  track_id = xen_to_c_track_no_default(id, S_setB S_track_amp);
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_2, S_setB S_track_amp, "a number");
-  set_track_amp(track_id, XEN_TO_C_DOUBLE(val));
-  return(val);
-}
-
 static chan_info *track_channel(int id, int chn)
 {
   track_mix_list_t *trk;
@@ -5752,54 +5068,45 @@ static chan_info *track_channel(int id, int chn)
 
 typedef struct {
   off_t pos; 
-  int track_id;
   chan_info *cp;
 } track_pos_t;
 
-static int gather_track_position(mix_info *md, void *ptr)
+static void gather_track_position(mix_info *md, void *ptr)
 {
   track_pos_t *pt = (track_pos_t *)ptr;
   mix_state *cs;
-  if (md->active_mix_state->track == pt->track_id)
-    {
-      cs = md->active_mix_state;
-      if ((cs) &&
-	  (cs->beg < pt->pos)) 
-	pt->pos = cs->beg;
-    }
-  return(0);
+  cs = md->active_mix_state;
+  if ((cs) &&
+      (cs->beg < pt->pos)) 
+    pt->pos = cs->beg;
 }
 
-static int gather_track_channel_position(mix_info *md, void *ptr)
+static void gather_track_channel_position(mix_info *md, void *ptr)
 {
   track_pos_t *pt = (track_pos_t *)ptr;
   mix_state *cs;
-  if (md->active_mix_state->track == pt->track_id)
-    {
-      cs = md->active_mix_state;
-      if ((cs) && 
-	  (md->cp == pt->cp) &&
-	  (cs->beg < pt->pos))
-	pt->pos = cs->beg;
-    }
-  return(0);
+  cs = md->active_mix_state;
+  if ((cs) && 
+      (md->cp == pt->cp) &&
+      (cs->beg < pt->pos))
+    pt->pos = cs->beg;
 }
+
+#define UNLIKELY_POSITION 1234567890
 
 static off_t track_position(int id, int chan)
 {
-  #define UNLIKELY_POSITION 1234567890
   track_pos_t *pt;
   off_t result;
   if ((chan == -1) && (tracks[id]->beg)) return(tracks[id]->beg[0]);
   pt = (track_pos_t *)CALLOC(1, sizeof(track_pos_t));
   pt->pos = UNLIKELY_POSITION;
-  pt->track_id = id;
   if (chan == -1)
-    map_over_active_mixes(gather_track_position, (void *)pt);
+    map_over_track_mixes(id, gather_track_position, (void *)pt);
   else 
     {
       pt->cp = track_channel(id, chan);
-      map_over_active_mixes(gather_track_channel_position, (void *)pt);
+      map_over_track_mixes(id, gather_track_channel_position, (void *)pt);
     }
   result = pt->pos;
   FREE(pt);
@@ -5808,46 +5115,25 @@ static off_t track_position(int id, int chan)
   return(result);
 }
 
-static XEN g_track_position(XEN id, XEN chn)
-{
-  #define H_track_position "(" S_track_position " id chn) -> id's position (location of first mixed sample)"
-  int track_id;
-  track_id = xen_to_c_track(id, S_track_position);
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(chn), chn, XEN_ARG_2, S_track_position, "integer");
-  return(C_TO_XEN_OFF_T(track_position(track_id, (XEN_INTEGER_P(chn)) ? XEN_TO_C_INT(chn) : -1)));
-}
-
-static int gather_track_end(mix_info *md, void *ptr)
+static void gather_track_end(mix_info *md, void *ptr)
 {
   track_pos_t *pt = (track_pos_t *)ptr;
   mix_state *cs;
-  if ((md) && 
-      (mix_ok_and_unlocked(md->id)) &&
-      (md->active_mix_state->track == pt->track_id))
-    {
-      cs = md->active_mix_state;
-      if ((cs) &&
-	  (cs->beg + cs->len) > pt->pos)
-	pt->pos = cs->beg + cs->len;
-    }
-  return(0);
+  cs = md->active_mix_state;
+  if ((cs) &&
+      (cs->beg + cs->len) > pt->pos)
+    pt->pos = cs->beg + cs->len;
 }
 
-static int gather_track_channel_end(mix_info *md, void *ptr)
+static void gather_track_channel_end(mix_info *md, void *ptr)
 {
   track_pos_t *pt = (track_pos_t *)ptr;
   mix_state *cs;
-  if ((md) && 
-      (mix_ok_and_unlocked(md->id)) &&
-      (md->active_mix_state->track == pt->track_id))
-    {
-      cs = md->active_mix_state;
-      if ((cs) &&
-	  (md->cp == pt->cp) &&
-	  (cs->beg + cs->len) > pt->pos)
-	pt->pos = cs->beg + cs->len;
-    }
-  return(0);
+  cs = md->active_mix_state;
+  if ((cs) &&
+      (md->cp == pt->cp) &&
+      (cs->beg + cs->len) > pt->pos)
+    pt->pos = cs->beg + cs->len;
 }
 
 static off_t track_frames(int id, int chan)
@@ -5859,124 +5145,18 @@ static off_t track_frames(int id, int chan)
   if (curpos == -1) return(0);
   pt = (track_pos_t *)CALLOC(1, sizeof(track_pos_t));
   pt->pos = -1;
-  pt->track_id = id;
   if (chan == -1)
-    map_over_active_mixes(gather_track_end, (void *)pt);
+    map_over_track_mixes(id, gather_track_end, (void *)pt);
   else 
     {
       pt->cp = track_channel(id, chan);
-      map_over_active_mixes(gather_track_channel_end, (void *)pt);
+      map_over_track_mixes(id, gather_track_channel_end, (void *)pt);
     }
   curend = pt->pos;
   FREE(pt);
   if (curend == -1) /* no mixes found? */
     return(0);
   return(curend - curpos); /* no -1 in the end point above, so no +1 here */
-}
-
-static XEN g_track_frames(XEN id, XEN chn)
-{
-  #define H_track_frames "(" S_track_frames " id chn) -> id's length (samples)"
-  int track_id;
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(chn), chn, XEN_ARG_2, S_track_frames, "int");
-  track_id = xen_to_c_track(id, S_track_frames);
-  return(C_TO_XEN_OFF_T(track_frames(track_id, (XEN_INTEGER_P(chn)) ? XEN_TO_C_INT(chn) : -1)));
-}
-
-static int track_chans(int id)
-{
-  int chans = 0;
-  track_mix_list_t *trk;
-  trk = track_mixes(id);
-  chans = trk->cps_ctr;
-  free_track_mix_list(trk);
-  return(chans);
-}
-
-/* TODO: test chan args (etc) to play-track */
-static XEN g_track_chans(XEN id)
-{
-  #define H_track_chans "(" S_track_chans " id) -> chans associated with track 'id'. Each such channel \
-has at least one active mix that is a member of the given track."
-  int track_id;
-  track_id = xen_to_c_track(id, S_track_chans);
-  return(C_TO_XEN_OFF_T(track_chans(track_id)));
-}
-
-static XEN g_track_amp_env(XEN id) 
-{
-  #define H_track_amp_env "(" S_track_amp_env " id): amplitude envelope applied to all of track's mixes"
-  int track_id;
-  track_id = xen_to_c_track(id, S_track_amp_env);
-  if (active_track_amp_env(track_id))
-    return(env_to_xen(active_track_amp_env(track_id)));
-  return(XEN_EMPTY_LIST);
-}
-
-static void set_track_amp_env_1(mix_info *md, void *val)
-{
-  remix_file(md, S_setB S_track_amp_env, false);
-}
-
-static void set_track_amp_env(int id, env *e)
-{
-  if (track_p(id))
-    {
-      set_active_track_amp_env(id, e);
-      remix_track(id, set_track_amp_env_1, NULL);
-    }
-}
-
-static XEN g_set_track_amp_env(XEN id, XEN e)
-{
-  int track_id;
-  track_id = xen_to_c_track_no_default(id, S_setB S_track_amp_env);
-  XEN_ASSERT_TYPE(XEN_LIST_P(e) || XEN_FALSE_P(e), e, XEN_ARG_2, S_setB S_track_amp_env, "an envelope (a list of breakpoints) or #f");
-  set_track_amp_env(track_id, xen_to_env(e));
-  return(e);
-}
-
-static XEN g_track_track(XEN id)
-{
-  #define H_track_track "(" S_track_track " id) -> id's track (0 = none)"
-  int track_id;
-  track_id = xen_to_c_track(id, S_track_track);
-  return(C_TO_XEN_INT(active_track_track(track_id)));
-}
-
-static void set_track_track_1(mix_info *md, void *ptr)
-{
-  remix_file(md, S_setB S_track_track, false);
-}
-
-static bool set_track_track(int id, int trk)
-{
-  if (active_track_track(id) != trk)
-    {
-      if (trk > 0)
-	{
-	  int tid;
-	  tid = trk;
-	  while (track_p(tid))
-	    {
-	      if (tid == id) return(false);
-	      tid = active_track_track(tid);
-	    }
-	}
-      set_active_track_track(id, trk);
-      remix_track(id, set_track_track_1, NULL);
-    }
-  return(true);
-}
-
-static XEN g_set_track_track(XEN id, XEN trk)
-{
-  int track_id, its_track;
-  track_id = xen_to_c_track_no_default(id, S_setB S_track_track);
-  its_track = xen_to_c_track_no_default_zero_ok(trk, S_setB S_track_track);
-  if (!(set_track_track(track_id, its_track)))
-    XEN_OUT_OF_RANGE_ERROR(S_setB S_track_track, XEN_ARG_2, trk, "a track's track can't be a member of that track");
-  return(trk);
 }
 
 typedef struct {off_t beg, end; int id, trk; Float speed;} track_reset_position_t;
@@ -6001,7 +5181,7 @@ static void remix_track_with_preset_times(int id, off_t new_position, off_t new_
   tracks[id]->beg[0] = new_position;
   tracks[id]->dur = (off_t *)CALLOC(1, sizeof(off_t));
   tracks[id]->dur[0] = new_frames;
-  trk = active_track_track(id); /* TODO: does this need to start from the mix list? (embedded or local tracks) */
+  trk = active_track_track(id);
   while (track_p(trk))
     {
       /* now find all other track mixes not in current (id) track and reset beg/dur */
@@ -6032,16 +5212,6 @@ static void remix_track_with_preset_times(int id, off_t new_position, off_t new_
       tracks[trk]->dur = NULL;
       trk = active_track_track(trk);
     }
-}
-
-static bool found_track_amp_env(int trk)
-{
-  while (track_p(trk))
-    {
-      if (active_track_amp_env(trk)) return(true);
-      trk = active_track_track(trk);      
-    }
-  return(false);
 }
 
 static void set_track_position_1(mix_info *md, void *val)
@@ -6109,173 +5279,74 @@ static void set_track_channel_position_1(mix_info *md, void *val)
   remix_file(md, S_setB S_track_position, false);
 }
 
+typedef struct {chan_info *cp; off_t beg, end;} track_channel_bounds_t;
+
+static void set_track_channel_bounds(mix_info *md, void *ptr)
+{
+  track_channel_bounds_t *tcb = (track_channel_bounds_t *)ptr;
+  mix_state *cs;
+  if (md->cp != tcb->cp)
+    {
+      cs = md->active_mix_state;
+      if ((tcb->beg == -1) || (cs->beg < tcb->beg)) tcb->beg = cs->beg;
+      if ((cs->beg + cs->len) > tcb->end) tcb->end = cs->beg + cs->len;
+    }
+}
+
+static int track_chans(int id)
+{
+  int chans = 0;
+  track_mix_list_t *trk;
+  trk = track_mixes(id);
+  chans = trk->cps_ctr;
+  free_track_mix_list(trk);
+  return(chans);
+}
+
 static void set_track_channel_position(int id, int chan, off_t pos)
 {
   off_t curpos, change;
-  curpos = track_position(id, -1);
+  curpos = track_position(id, chan);
   if ((track_p(id)) && (curpos != pos))
     {
       change = pos - curpos;
       if ((track_chans(id) > 1) && 
 	  (found_track_amp_env(id)))  /* if amp-env and bounds change, need preset bounds during remix */
 	{
-	  off_t trk_beg, trk_len, trk_end, chn_len;
-	  trk_len = track_frames(id, -1);
+	  off_t old_trk_beg, old_trk_len, old_trk_end, chn_len;
+	  track_channel_bounds_t *tcb;
+	  old_trk_len = track_frames(id, -1);
+	  old_trk_beg = track_position(id, -1);
+	  old_trk_end = old_trk_beg + old_trk_len;
 	  chn_len = track_frames(id, chan);
-	  trk_beg = track_position(id, -1);
-	  trk_end = trk_beg + trk_len;
-	  if ((trk_beg > pos) || 
-	      (trk_end < (pos + chn_len)))
+	  tcb = (track_channel_bounds_t *)CALLOC(1, sizeof(track_channel_bounds_t));
+	  tcb->cp = track_channel(id, chan);
+	  tcb->beg = -1;
+	  tcb->end = -1;
+	  map_over_track_mixes(id, set_track_channel_bounds, (void *)tcb);
+	  if (pos < tcb->beg) tcb->beg = pos;
+	  if ((pos + chn_len) > tcb->end) tcb->end = pos + chn_len;
+	  if ((old_trk_beg != tcb->beg) || 
+	      (old_trk_end != tcb->end))
 	    {
 	      track_channel_position_t *tc;
-	      if (trk_beg > pos) trk_beg = pos;
-	      if (trk_end < (pos + chn_len)) trk_len = (pos + chn_len - trk_beg);
 	      tc = (track_channel_position_t *)CALLOC(1, sizeof(track_channel_position_t));
 	      tc->change = change;
 	      tc->cp = track_channel(id, chan);
-	      remix_track_with_preset_times(id, trk_beg, trk_len, reset_position, 1.0, set_track_channel_position_1, (void *)tc);
+	      remix_track_with_preset_times(id, tcb->beg, tcb->end - tcb->beg, reset_position, 1.0, set_track_channel_position_1, (void *)tc);
 	      FREE(tc);
 	    }
 	  else
 	    {
 	      remix_track_channel(id, chan, set_track_position_1, (void *)(&change));
 	    }
+	  FREE(tcb);
 	}
       else
 	{
 	  remix_track_channel(id, chan, set_track_position_1, (void *)(&change));
 	}
     }
-}
-
-static XEN g_set_track_position(XEN id, XEN pos, XEN chn)
-{
-  int track_id;
-  track_id = xen_to_c_track_no_default(id, S_setB S_track_position);
-  if (XEN_NOT_BOUND_P(chn))
-    {
-      XEN_ASSERT_TYPE(XEN_OFF_T_P(pos), pos, XEN_ARG_2, S_setB S_track_position, "a sample number");
-      set_track_position(track_id, XEN_TO_C_OFF_T(pos));
-      return(pos);
-    }
-  else
-    {
-      /* in this case, (set! (track-position id chn) pos) flips pos and chn */
-      XEN_ASSERT_TYPE(XEN_OFF_T_P(chn), chn, XEN_ARG_3, S_setB S_track_position, "a sample number");
-      XEN_ASSERT_TYPE(XEN_INTEGER_OR_BOOLEAN_IF_BOUND_P(pos), pos, XEN_ARG_2, S_setB S_track_position, "int");
-      set_track_channel_position(track_id, XEN_TO_C_INT(pos), XEN_TO_C_OFF_T(chn));
-      return(chn);
-    }
-}
-
-
-
-static void reset_frames(mix_info *md, void *val)
-{
-  track_reset_position_t *tr = (track_reset_position_t *)val;
-  if (md->active_mix_state->track != tr->id)
-    {
-      mix_state *cs;
-      cs = md->active_mix_state;
-      if (cs)
-	{
-	  if (cs->beg < tr->beg)
-	    tr->beg = cs->beg;
-	  if ((cs->beg + (cs->len * tr->speed)) > tr->end)
-	    tr->end = cs->beg + (off_t)(cs->len * tr->speed);
-	}
-    }
-}
-
-static void set_track_speed_1(mix_info *md, void *val)
-{
-  remix_file(md, S_setB S_track_speed, false);
-}
-
-static void set_track_speed(int id, Float speed)
-{
-  if ((track_p(id)) && (active_track_speed(id) != speed))
-    {
-      if ((found_track_amp_env(id)) &&
-	  (track_members(id) > 1))
-	{
-	  off_t beg, dur;
-	  Float change;
-	  track_reset_position_t *tr;
-	  beg = track_position(id, -1);
-	  change = active_track_speed(id) / speed;
-	  tr = (track_reset_position_t *)CALLOC(1, sizeof(track_reset_position_t));
-	  tr->id = INVALID_TRACK_ID;
-	  tr->speed = change;
-	  tr->beg = beg;
-	  tr->end = beg + track_frames(id, -1);
-	  tr->trk = id;
-	  map_over_track_mixes(id, reset_frames, (void *)tr);
-	  dur = tr->end - tr->beg;
-	  FREE(tr);
-	  tr = NULL;
-	  set_active_track_speed(id, speed);
-	  remix_track_with_preset_times(id, beg, dur, reset_frames, change, set_track_speed_1, NULL);
-	}
-      else
-	{     
-	  set_active_track_speed(id, speed);
-	  remix_track(id, set_track_speed_1, (void *)(&speed));
-	}
-    }
-}
-
-static XEN g_track_speed(XEN id)
-{
-  #define H_track_speed "(" S_track_speed " id) -> id's speed"
-  int track_id;
-  track_id = xen_to_c_track(id, S_track_speed);
-  return(C_TO_XEN_DOUBLE(active_track_speed(track_id)));
-}
-
-static XEN g_set_track_speed(XEN id, XEN val)
-{
-  int track_id;
-  track_id = xen_to_c_track_no_default(id, S_setB S_track_speed);
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_2, S_setB S_track_speed, "a number");
-  set_track_speed(track_id, XEN_TO_C_DOUBLE(val));
-  return(val);
-}
-
-
-static XEN g_tracks(void)
-{
-  #define H_tracks "(" S_tracks ") returns a list of the currently active tracks (the tracks that contain active mixes)"
-  int i;
-  XEN lst = XEN_EMPTY_LIST;
-  for (i = 1; i < track_ctr; i++)
-    if (track_p(i))
-      lst = XEN_CONS(C_TO_XEN_INT(i), lst);
-  return(lst);
-}
-
-static int new_track(void)
-{
-  int id;
-  if (tracks_size <= track_ctr)
-    {
-      if (tracks_size == 0)
-	{
-	  tracks_size = 8;
-	  track_ctr = 1; /* track 0 is "no track" indication */
-	  tracks = (track_list **)CALLOC(tracks_size, sizeof(track_list *));
-	}
-      else
-	{
-	  int i;
-	  tracks_size += 8;
-	  tracks = (track_list **)REALLOC(tracks, tracks_size * sizeof(track_list *));
-	  for (i = track_ctr; i < tracks_size; i++) tracks[i] = NULL;
-	}
-    }
-  id = track_ctr++;
-  extend_track_list(id, true);
-  return(id);
 }
 
 static void set_mix_track_1(mix_info *md, void *val)
@@ -6313,228 +5384,12 @@ static void set_mix_track(mix_info *md, int trk, bool redisplay)
 	color_one_mix_from_id(md->id, active_track_color(trk));
       if ((check_old) && 
 	  ((track_position(old_track, -1) != old_beg) || (track_frames(old_track, -1) != old_len)))
-	{
-#if DEBUGGING
-	  fprintf(stderr,"set mix %d track from %d so remix\n", md->id, old_track);
-#endif
-	  remix_track(old_track, set_mix_track_1, NULL);
-	}
+	remix_track(old_track, set_mix_track_1, NULL);
       if ((check_new) && 
 	  ((track_position(trk, -1) != new_beg) || (track_frames(trk, -1) != new_len)))
-	{
-#if DEBUGGING
-	  fprintf(stderr,"set mix %d track to %d so remix\n", md->id, trk);
-#endif
-	  remix_track(trk, set_mix_track_1, NULL);
-	}
+	remix_track(trk, set_mix_track_1, NULL);
       else remix_file(md, S_setB S_mix_track, redisplay); 
     }
-}
-
-static int make_track(int *mixes, int len)
-{
-  int track_id, mix_id, k;
-  mix_info *md;
-  int *edpos = NULL;
-  chan_info **cps = NULL;
-  track_id = new_track();
-  if (len > 0)
-    {
-      bool got_that_one = false;
-      int ctr = 0, i;
-      edpos = (int *)CALLOC(len, sizeof(int));
-      cps = (chan_info **)CALLOC(len, sizeof(chan_info *));
-      for (k = 0; k < len; k++)
-	{
-	  mix_id = mixes[k];
-	  md = md_from_id(mix_id);
-	  got_that_one = false;
-	  for (i = 0; i < ctr; i++)
-	    if (cps[i] == md->cp)
-	      {
-		got_that_one = true;
-		break;
-	      }
-	  if (!got_that_one)
-	    {
-	      cps[ctr] = md->cp;
-	      edpos[ctr] = md->cp->edit_ctr + 1;
-	      ctr++;
-	    }
-	  md->active_mix_state->track = track_id;
-	}
-      for (k = 0; k < len; k++)
-	{
-	  mix_id = mixes[k];
-	  md = md_from_id(mix_id);
-	  remix_file(md, S_make_track, false); /* TODO: what about the other (previous) tracks? */
-	}
-      /* now make sure this looks like one edit operation */
-      for (i = 0; i < ctr; i++)
-	{
-	  chan_info *cp;
-	  cp = cps[i];
-	  while (cp->edit_ctr > edpos[i]) backup_edit_list(cp);
-	  update_graph(cp);
-	}
-      if (edpos) FREE(edpos);
-      if (cps) FREE(cps);
-    }
-  return(track_id);
-}
-
-static XEN g_make_track(XEN ids)
-{
-  #define H_make_track "(" S_make_track "mix-ids...) returns a new track containing the mixes passed as its argument"
-  int i, len = 0, track_id;
-  XEN lst;
-  int *mixes = NULL;
-  for (lst = XEN_COPY_ARG(ids); XEN_NOT_NULL_P(lst); lst = XEN_CDR(lst))
-    if ((!(XEN_INTEGER_P(XEN_CAR(lst)))) ||
-	(!(mix_ok(XEN_TO_C_INT(XEN_CAR(lst))))))
-      XEN_ERROR(NO_SUCH_MIX,
-		XEN_LIST_3(C_TO_XEN_STRING(S_make_track),
-			   XEN_CAR(lst),
-			   ids));
-  len = XEN_LIST_LENGTH(ids);
-  if (len > 0)
-    {
-      mixes = (int *)CALLOC(len, sizeof(int));
-      for (i = 0, lst = XEN_COPY_ARG(ids); XEN_NOT_NULL_P(lst); lst = XEN_CDR(lst), i++)
-	mixes[i] = XEN_TO_C_INT(XEN_CAR(lst));
-    }
-  /* null arg is ok here -- just open track for later mix adds */
-  track_id = make_track(mixes, len);
-  if (mixes) FREE(mixes);
-  return(xen_return_first(C_TO_XEN_INT(track_id), ids));
-}
-
-static int unset_track(mix_info *md, void *ptr)
-{
-  int id = (int)ptr;
-  if (md->active_mix_state->track == id)
-    set_mix_track(md, 0, true); /* redisplay here? mix panel? */
-  return(0);
-}
-
-static void free_track_list(int id)
-{
-  int i;
-  track_list *tl;
-  tl = tracks[id];
-  if (tl)
-    {
-      map_over_mixes(unset_track, (void *)id);
-      if (tl->states)
-	{
-	  for (i = 0; i < tl->size; i++)
-	    if (tl->states[i])
-	      tl->states[i] = free_track_state(tl->states[i]);
-	  FREE(tl->states);
-	  tl->states = NULL;
-	}
-      FREE(tl);
-      tracks[id] = NULL;
-    }
-}
-
-static XEN g_free_track(XEN id)
-{
-  #define H_free_track "(" S_free_track " id) frees all memory associated with track 'id'. This is not undoable."
-  int track_id;
-  track_id = xen_to_c_track(id, S_free_track);
-  free_track_list(track_id);
-  return(XEN_FALSE);
-}
-
-static Float gather_track_amp(int id)
-{
-  Float amp = 1.0;
-  while (track_p(id))
-    {
-      amp *= active_track_amp(id);
-      id = active_track_track(id);
-    }
-  return(amp);
-}
-
-static Float gather_track_speed(int id)
-{
-  Float speed = 1.0;
-  while (track_p(id))
-    {
-      speed *= active_track_speed(id);
-      id = active_track_track(id);
-    }
-  return(speed);
-}
-
-static env *gather_track_amp_env(int id, off_t mix_beg, off_t mix_dur)
-{
-  env *e = NULL, *temp = NULL;
-  off_t track_beg, track_dur;
-  while (track_p(id))
-    {
-      track_beg = track_position(id, -1);
-      track_dur = track_frames(id, -1);
-      if (active_track_amp_env(id))
-	{
-	  /* track amps can be left until later (gather track amp) */
-	  if (!e) 
-	    e = window_env(active_track_amp_env(id), mix_beg, mix_dur, track_beg, track_dur);
-	  else 
-	    {
-	      e = multiply_envs(e, 
-				temp = window_env(active_track_amp_env(id), mix_beg, mix_dur, track_beg, track_dur),
-				MULTIPLY_ENVS_INCR);
-	      temp = free_env(temp);
-	    }
-	}
-      /* if intermediate track has no env, that's as if it were a flat env -- a no-op, not a break in the chain */
-      id = active_track_track(id);      
-    }
-  return(e);
-}
-
-static void delete_track_1(mix_info *md, void *ptr)
-{
-  delete_mix_1(md->id, false);
-}
-
-static XEN g_delete_track(XEN id)
-{
-  #define H_delete_track "(" S_delete_track " id) removes all mixes associated with track 'id'"
-  int i, track_id;
-  track_mix_list_t *trk;
-  track_id = xen_to_c_track(id, S_delete_track);
-  trk = track_mixes(track_id);
-  set_active_track_amp(track_id, 0.0);
-  remix_track(track_id, delete_track_1, NULL);
-  for (i = 0; i < trk->cps_ctr; i++)
-    {
-      chan_info *cp;
-      cp = trk->cps[i];
-      if (cp->edits[cp->edit_ctr]->origin) FREE(cp->edits[cp->edit_ctr]->origin);
-      cp->edits[cp->edit_ctr]->origin = copy_string(S_delete_track);
-    }
-  free_track_mix_list(trk);
-  redisplay_track(track_id);
-  return(id);
-}
-
-static void lock_track_1(mix_info *md, void *ptr)
-{
-  set_mix_locked(md, true, false);
-}
-
-static XEN g_lock_track(XEN id)
-{
-  #define H_lock_track "(" S_lock_track " id) locks all mixes associated with track 'id'."
-  int track_id;
-  track_id = xen_to_c_track(id, S_lock_track);
-  remix_track(track_id, lock_track_1, NULL);
-  redisplay_track(track_id);
-  return(id);
 }
 
 
@@ -6607,6 +5462,16 @@ static int gather_track_info(mix_info *md, void *ptr)
   return(0);
 }
 
+static void record_track_info_given_track(int track_id)
+{
+  track_mix_list_t *trk;
+  int i;
+  trk = track_mixes(track_id);
+  for (i = 0; i < trk->cps_ctr; i++)
+    record_track_info(trk->cps[i], trk->cps[i]->edit_ctr);
+  free_track_mix_list(trk);
+}
+
 static void record_track_info(chan_info *cp, int loc)
 {
   track_info *ti;
@@ -6631,6 +5496,9 @@ void record_initial_track_info(chan_info *cp)
 {
   record_track_info(cp, cp->edit_ctr);
 }
+
+
+/*---------------- snd-edit chan track update ---------------- */
 
 void update_track_lists(chan_info *cp, int top_ctr)
 {
@@ -6660,6 +5528,772 @@ void update_track_lists(chan_info *cp, int top_ctr)
 	}
     }
 }
+
+
+/* ---------------- drag track ---------------- */
+
+static track_graph_t *track_save_graph(mix_info *orig_md)
+{
+  track_graph_t *tg = NULL;
+  track_mix_list_t *trk;
+  mix_info *md;
+  mix_state *cs;
+  chan_info *cp = NULL;
+  int i, pts = 0, track_id;
+  track_id = orig_md->active_mix_state->track;
+  trk = track_mixes(track_id);
+  if (trk->lst_ctr > 0)
+    {
+      tg = (track_graph_t *)CALLOC(1, sizeof(track_graph_t));
+      tg->xs = (int *)CALLOC(trk->lst_ctr, sizeof(int));
+      tg->origs = (off_t *)CALLOC(trk->lst_ctr, sizeof(off_t));
+      for (i = 0; i < trk->lst_ctr; i++)
+	{
+	  md = md_from_id(trk->lst[i]);
+	  cs = md->active_mix_state;
+	  tg->origs[i] = cs->orig;
+	  tg->xs[i] = md->x;
+	  if (md == orig_md) tg->orig = i;
+	  if (cp != md->cp)
+	    {
+	      cp = md->cp;
+	      pts = make_graph(cp);
+	    }
+	  mix_save_graph(md->wg, pts);
+	}
+    }
+  free_track_mix_list(trk);
+  return(tg);
+}
+
+static void move_track(int track_id, track_graph_t *data)
+{
+  track_mix_list_t *trk;
+  int i, diff;
+  mix_info *md;
+  trk = track_mixes(track_id);
+  diff = data->x - data->xs[data->orig];
+  for (i = 0; i < trk->lst_ctr; i++)
+    {
+      md = md_from_id(trk->lst[i]);
+      if (i == data->orig)
+	md->x = data->x;
+      else md->x = data->xs[i] + diff;
+      move_mix(md);
+    }
+  free_track_mix_list(trk);
+}
+
+static void finish_dragging_track(int track_id, track_graph_t *data, bool remix)
+{
+  track_mix_list_t *trk;
+  int i;
+  mix_info *md;
+  mix_context *ms;
+  mix_state *cs;
+  off_t change = 0;
+  trk = track_mixes(track_id);
+  for (i = 0; i < trk->lst_ctr; i++)
+    {
+      md = md_from_id(trk->lst[i]);
+      ms = md->wg;
+      ms->lastpj = 0;
+      if (i == data->orig)
+	{
+	  md->x = data->x;
+	  move_mix(md);          /* update to last beg */
+	  cs = md->active_mix_state; 
+	  change = cs->beg - cs->orig;
+	}
+      cs = md->active_mix_state;
+      cs->orig = data->origs[i]; /* clear out temp drag-related changes */
+      cs->beg = data->origs[i];
+    }
+  free_track_mix_list(trk);
+  remix_track(track_id, set_track_position_1, (void *)(&change));
+}
+
+static track_graph_t *free_track_graph(track_graph_t *ptr)
+{
+  if (ptr)
+    {
+      if (ptr->origs) FREE(ptr->origs);
+      if (ptr->xs) FREE(ptr->xs);
+      FREE(ptr);
+    }
+  return(NULL);
+}
+
+
+/* ---------------- xen side ---------------- */
+
+static int xen_to_c_track(XEN id, const char *origin)
+{
+  int track_id;
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(id), id, XEN_ARG_1, origin, "an integer");
+  track_id = XEN_TO_C_INT(id);
+  if (!(track_p(track_id)))
+    XEN_ERROR(NO_SUCH_TRACK,
+	      XEN_LIST_2(C_TO_XEN_STRING(origin),
+			 id));
+  return(track_id);
+}
+
+static int xen_to_c_track_zero_ok(XEN id, const char *origin)
+{
+  int track_id;
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(id), id, XEN_ARG_1, origin, "an integer");
+  track_id = XEN_TO_C_INT(id);
+  if ((track_id != 0) && (!(track_p(track_id))))
+    XEN_ERROR(NO_SUCH_TRACK,
+	      XEN_LIST_2(C_TO_XEN_STRING(origin),
+			 id));
+  return(track_id);
+}
+
+
+/* ---------------- track?, track, tracks ---------------- */
+
+static XEN g_track_p(XEN id)
+{
+  #define H_track_p "(" S_track_p " id) -> #t if id refers to an active track"
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(id), id, XEN_ONLY_ARG, S_track_p, "an integer");
+  return(C_TO_XEN_BOOLEAN(track_p(XEN_TO_C_INT(id))));
+}
+
+static XEN g_tracks(void)
+{
+  #define H_tracks "(" S_tracks ") returns a list of the currently active tracks (the tracks that contain active mixes)"
+  int i;
+  XEN lst = XEN_EMPTY_LIST;
+  for (i = 1; i < track_ctr; i++)
+    if (track_p(i))
+      lst = XEN_CONS(C_TO_XEN_INT(i), lst);
+  return(lst);
+}
+
+static XEN g_track(XEN id, XEN chn)
+{
+  /* given track id, return list of constituent mixes */
+  #define H_track "(" S_track " track-id (chn 0)) returns a list of the mixes contained in the given track (and channel if specified)"
+  int i, track_id;
+  XEN result;
+  track_mix_list_t *trk;
+  track_id = xen_to_c_track(id, S_track);
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(chn), chn, XEN_ARG_2, S_track, "int");  
+  trk = track_mixes(track_id);
+  result = XEN_EMPTY_LIST;
+  if (XEN_INTEGER_P(chn))
+    {
+      chan_info *cp;
+      cp = track_channel(track_id, XEN_TO_C_INT(chn));
+      if (cp == NULL)
+	{
+	  free_track_mix_list(trk);
+	  XEN_ERROR(NO_SUCH_CHANNEL,
+		    XEN_LIST_2(C_TO_XEN_STRING(S_track),
+			       chn));
+	}
+      for (i = trk->lst_ctr - 1; i >= 0; i--)
+	{
+	  mix_info *md;
+	  md = md_from_id(trk->lst[i]);
+	  if (md->cp == cp)
+	    result = XEN_CONS(C_TO_XEN_INT(trk->lst[i]), result);
+	}
+    }
+  else
+    {
+      for (i = trk->lst_ctr - 1; i >= 0; i--)
+	result = XEN_CONS(C_TO_XEN_INT(trk->lst[i]), result);
+    }
+  free_track_mix_list(trk);
+  return(result);
+}
+
+
+/* ---------------- make-track ---------------- */
+
+static int new_track(void)
+{
+  int id;
+  if (tracks_size <= track_ctr)
+    {
+      if (tracks_size == 0)
+	{
+	  tracks_size = 8;
+	  track_ctr = 1; /* track 0 is "no track" indication */
+	  tracks = (track_list **)CALLOC(tracks_size, sizeof(track_list *));
+	}
+      else
+	{
+	  int i;
+	  tracks_size += 8;
+	  tracks = (track_list **)REALLOC(tracks, tracks_size * sizeof(track_list *));
+	  for (i = track_ctr; i < tracks_size; i++) tracks[i] = NULL;
+	}
+    }
+  id = track_ctr++;
+  extend_track_list(id, true);
+  return(id);
+}
+
+static void make_track_1(mix_info *md, void *val)
+{
+  remix_file(md, S_make_track, false);
+}
+
+static int make_track(int *mixes, int len)
+{
+  int track_id, mix_id, k;
+  mix_info *md;
+  int *edpos = NULL;
+  chan_info **cps = NULL;
+  mix_state *cs;
+  int *old_tracks = NULL;
+  int old_tracks_size = 0, old_tracks_ctr = 0;
+  off_t *old_tracks_beg = NULL, *old_tracks_len = NULL;
+  bool *old_tracks_got_env = NULL;
+  track_id = new_track();
+  if (len > 0)
+    {
+      bool got_that_one = false;
+      int ctr = 0, i;
+      edpos = (int *)CALLOC(len, sizeof(int));
+      cps = (chan_info **)CALLOC(len, sizeof(chan_info *));
+
+      /* collect current track bounds if found-amp-env and not yet collected */
+      for (k = 0; k < len; k++)
+	{
+	  mix_id = mixes[k];
+	  md = md_from_id(mix_id);
+	  cs = md->active_mix_state;
+	  got_that_one = false;
+	  for (i = 0; i < ctr; i++)
+	    if (cps[i] == md->cp)
+	      {
+		got_that_one = true;
+		break;
+	      }
+	  if (!got_that_one)
+	    {
+	      cps[ctr] = md->cp;
+	      edpos[ctr] = md->cp->edit_ctr + 1;
+	      ctr++;
+	    }
+	  if (track_p(cs->track))
+	    {
+	      got_that_one = false;
+	      for (i = 0; i < old_tracks_ctr; i++)
+		if (old_tracks[i] == cs->track)
+		  {
+		    got_that_one = true;
+		    break;
+		  }
+	      if (!got_that_one)
+		{
+		  if (old_tracks_ctr == 0)
+		    {
+		      old_tracks_size = 4;
+		      old_tracks = (int *)CALLOC(old_tracks_size, sizeof(int));
+		      old_tracks_got_env = (bool *)CALLOC(old_tracks_size, sizeof(bool));
+		      old_tracks_beg = (off_t *)CALLOC(old_tracks_size, sizeof(off_t));
+		      old_tracks_len = (off_t *)CALLOC(old_tracks_size, sizeof(off_t));
+		    }
+		  else
+		    {
+		      if (old_tracks_ctr >= old_tracks_size)
+			{
+			  old_tracks_size += 4;
+			  old_tracks = (int *)REALLOC(old_tracks, old_tracks_size * sizeof(int));
+			  old_tracks_got_env = (bool *)REALLOC(old_tracks_got_env, old_tracks_size * sizeof(bool));
+			  old_tracks_beg = (off_t *)REALLOC(old_tracks_beg, old_tracks_size * sizeof(off_t));
+			  old_tracks_len = (off_t *)REALLOC(old_tracks_len, old_tracks_size * sizeof(off_t));
+			}
+		    }
+		  old_tracks[old_tracks_ctr] = cs->track;
+		  old_tracks_got_env[old_tracks_ctr] = ((found_track_amp_env(cs->track)) && (track_members(cs->track) > 1));
+		  if (old_tracks_got_env[old_tracks_ctr])
+		    {
+		      old_tracks_beg[old_tracks_ctr] = track_position(cs->track, -1);
+		      old_tracks_len[old_tracks_ctr] = track_frames(cs->track, -1);
+
+		    }
+		  old_tracks_ctr++;
+		}
+	    }
+	}
+      /* set new track */
+      for (k = 0; k < len; k++)
+	{
+	  mix_id = mixes[k];
+	  md = md_from_id(mix_id);
+	  md->active_mix_state->track = track_id;
+	}
+
+      /* if any old_tracks above, recheck bounds, if changed remix track */
+      if (old_tracks_ctr > 0)
+	{
+	  for (k = 0; k < old_tracks_ctr; k++)
+	    {
+	      if (old_tracks_got_env[k])
+		{
+		  off_t new_track_beg, new_track_len;
+		  new_track_beg = track_position(old_tracks[k], -1);
+		  new_track_len = track_frames(old_tracks[k], -1);
+		  if ((new_track_beg != old_tracks_beg[k]) ||
+		      (new_track_len != old_tracks_len[k]))
+		    {
+		      remix_track(old_tracks[k], make_track_1, NULL);
+		    }
+		}
+	    }
+	}
+      if (old_tracks_beg) FREE(old_tracks_beg);
+      if (old_tracks_len) FREE(old_tracks_len);
+      if (old_tracks) FREE(old_tracks);
+      if (old_tracks_got_env) FREE(old_tracks_got_env);
+
+      /* set up current track */
+      for (k = 0; k < len; k++)
+	{
+	  mix_id = mixes[k];
+	  md = md_from_id(mix_id);
+	  remix_file(md, S_make_track, false);
+	}
+
+      /* make sure this looks like one edit operation */
+      for (i = 0; i < ctr; i++)
+	{
+	  chan_info *cp;
+	  cp = cps[i];
+	  while (cp->edit_ctr > edpos[i]) backup_edit_list(cp);
+	  update_graph(cp);
+	}
+      if (edpos) FREE(edpos);
+      if (cps) FREE(cps);
+    }
+  return(track_id);
+}
+
+static XEN g_make_track(XEN ids)
+{
+  #define H_make_track "(" S_make_track "mix-ids...) returns a new track containing the mixes passed as its argument"
+  int i, len = 0, track_id;
+  XEN lst;
+  int *mixes = NULL;
+  for (lst = XEN_COPY_ARG(ids); XEN_NOT_NULL_P(lst); lst = XEN_CDR(lst))
+    if ((!(XEN_INTEGER_P(XEN_CAR(lst)))) ||
+	(!(mix_ok(XEN_TO_C_INT(XEN_CAR(lst))))))
+      XEN_ERROR(NO_SUCH_MIX,
+		XEN_LIST_3(C_TO_XEN_STRING(S_make_track),
+			   XEN_CAR(lst),
+			   ids));
+  len = XEN_LIST_LENGTH(ids);
+  if (len > 0)
+    {
+      mixes = (int *)CALLOC(len, sizeof(int));
+      for (i = 0, lst = XEN_COPY_ARG(ids); XEN_NOT_NULL_P(lst); lst = XEN_CDR(lst), i++)
+	mixes[i] = XEN_TO_C_INT(XEN_CAR(lst));
+    }
+  /* null arg is ok here -- just open track for later mix adds */
+  track_id = make_track(mixes, len);
+  if (mixes) FREE(mixes);
+  return(xen_return_first(C_TO_XEN_INT(track_id), ids));
+}
+
+
+/* ---------------- free-track ---------------- */
+
+static int unset_track(mix_info *md, void *ptr)
+{
+  int id = (int)ptr;
+  if (md->active_mix_state->track == id)
+    set_mix_track(md, 0, true); /* redisplay here? mix panel? */
+  return(0);
+}
+
+static void free_track_list(int id)
+{
+  int i;
+  track_list *tl;
+  tl = tracks[id];
+  if (tl)
+    {
+      map_over_mixes(unset_track, (void *)id);
+      if (tl->states)
+	{
+	  for (i = 0; i < tl->size; i++)
+	    if (tl->states[i])
+	      tl->states[i] = free_track_state(tl->states[i]);
+	  FREE(tl->states);
+	  tl->states = NULL;
+	}
+      FREE(tl);
+      tracks[id] = NULL;
+    }
+}
+
+static XEN g_free_track(XEN id)
+{
+  #define H_free_track "(" S_free_track " id) frees all memory associated with track 'id'. This is not undoable."
+  int track_id;
+  track_id = xen_to_c_track(id, S_free_track);
+  free_track_list(track_id);
+  return(XEN_FALSE);
+}
+
+
+/* ---------------- track-amp ---------------- */
+
+static void set_track_amp_1(mix_info *md, void *val)
+{
+  remix_file(md, S_setB S_track_amp, false);
+}
+
+static void set_track_amp(int id, Float amp)
+{
+  if ((track_p(id)) && (active_track_amp(id) != amp))
+    {
+      set_active_track_amp(id, amp);
+      remix_track(id, set_track_amp_1, NULL);
+    }
+}
+
+static XEN g_track_amp(XEN id)
+{
+  #define H_track_amp "(" S_track_amp " id) -> track's amp"
+  int track_id;
+  track_id = xen_to_c_track(id, S_track_amp);
+  return(C_TO_XEN_DOUBLE(active_track_amp(track_id)));
+}
+
+static XEN g_set_track_amp(XEN id, XEN val)
+{
+  int track_id;
+  track_id = xen_to_c_track(id, S_setB S_track_amp);
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_2, S_setB S_track_amp, "a number");
+  set_track_amp(track_id, XEN_TO_C_DOUBLE(val));
+  return(val);
+}
+
+
+/* ---------------- track-color ---------------- */
+
+static void set_track_color(int id, color_t color)
+{
+  /* not considered an edit */
+  int i;
+  track_mix_list_t *trk;
+  if ((track_p(id)) && (active_track_color(id) != color))
+    {
+      set_active_track_color(id, color);
+      trk = track_mixes(id);
+      for (i = 0; i < trk->lst_ctr; i++)
+	color_one_mix_from_id(trk->lst[i], color); 
+      for (i = 0; i < trk->cps_ctr; i++)
+	update_graph(trk->cps[i]);
+      free_track_mix_list(trk);
+    }
+}
+
+static void unset_track_color(int id)
+{
+  /* not considered an edit */
+  int i;
+  track_mix_list_t *trk;
+  track_state *ts;
+  if ((track_p(id)) && (active_track_color_set(id)))
+    {
+      ts = active_track_state(id);
+      if (ts) 
+	{
+	  ts->color = (color_t)0;
+	  ts->color_set = false;
+	}
+      trk = track_mixes(id);
+      for (i = 0; i < trk->lst_ctr; i++)
+	color_one_mix_from_id(trk->lst[i], ss->sgx->mix_color);
+      for (i = 0; i < trk->cps_ctr; i++)
+	update_graph(trk->cps[i]);
+      free_track_mix_list(trk);
+    }
+}
+
+static XEN g_track_color(XEN id)
+{
+  #define H_track_color "(" S_track_color " id) -> track's (track-wide) mix-color"
+  int track_id;
+  track_id = xen_to_c_track(id, S_track_color);
+  if (active_track_color_set(track_id))
+    return(XEN_WRAP_PIXEL(active_track_color(track_id)));
+  return(XEN_FALSE);
+}
+
+static XEN g_set_track_color(XEN id, XEN val)
+{
+  int track_id;
+  track_id = xen_to_c_track(id, S_setB S_track_color);
+  XEN_ASSERT_TYPE(XEN_PIXEL_P(val) || XEN_FALSE_P(val), val, XEN_ARG_2, S_setB S_track_color, "a color");
+  if (XEN_FALSE_P(val))
+    unset_track_color(track_id);
+  else set_track_color(track_id, XEN_UNWRAP_PIXEL(val));
+  return(val);
+}
+
+
+/* ---------------- track-speed ---------------- */
+
+static void reset_frames(mix_info *md, void *val)
+{
+  track_reset_position_t *tr = (track_reset_position_t *)val;
+  if (md->active_mix_state->track != tr->id)
+    {
+      mix_state *cs;
+      cs = md->active_mix_state;
+      if (cs)
+	{
+	  if (cs->beg < tr->beg)
+	    tr->beg = cs->beg;
+	  if ((cs->beg + (cs->len * tr->speed)) > tr->end)
+	    tr->end = cs->beg + (off_t)(cs->len * tr->speed);
+	}
+    }
+}
+
+static void set_track_speed_1(mix_info *md, void *val)
+{
+  remix_file(md, S_setB S_track_speed, false);
+}
+
+static void set_track_speed(int id, Float speed)
+{
+  if ((track_p(id)) && (active_track_speed(id) != speed))
+    {
+      if ((found_track_amp_env(id)) &&
+	  (track_members(id) > 1))
+	{
+	  off_t beg, dur;
+	  Float change;
+	  track_reset_position_t *tr;
+	  beg = track_position(id, -1);
+	  change = active_track_speed(id) / speed;
+	  tr = (track_reset_position_t *)CALLOC(1, sizeof(track_reset_position_t));
+	  tr->id = INVALID_TRACK_ID;
+	  tr->speed = change;
+	  tr->beg = beg;
+	  tr->end = beg + track_frames(id, -1);
+	  tr->trk = id;
+	  map_over_track_mixes(id, reset_frames, (void *)tr);
+	  dur = tr->end - tr->beg;
+	  FREE(tr);
+	  tr = NULL;
+	  set_active_track_speed(id, speed);
+	  remix_track_with_preset_times(id, beg, dur, reset_frames, change, set_track_speed_1, NULL);
+	}
+      else
+	{     
+	  set_active_track_speed(id, speed);
+	  remix_track(id, set_track_speed_1, (void *)(&speed));
+	}
+    }
+}
+
+static XEN g_track_speed(XEN id)
+{
+  #define H_track_speed "(" S_track_speed " id) -> track's speed"
+  int track_id;
+  track_id = xen_to_c_track(id, S_track_speed);
+  return(C_TO_XEN_DOUBLE(active_track_speed(track_id)));
+}
+
+static XEN g_set_track_speed(XEN id, XEN val)
+{
+  int track_id;
+  track_id = xen_to_c_track(id, S_setB S_track_speed);
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_2, S_setB S_track_speed, "a number");
+  set_track_speed(track_id, XEN_TO_C_DOUBLE(val));
+  return(val);
+}
+
+
+/* ---------------- track-amp-env ---------------- */
+
+static void set_track_amp_env_1(mix_info *md, void *val)
+{
+  remix_file(md, S_setB S_track_amp_env, false);
+}
+
+static void set_track_amp_env(int id, env *e)
+{
+  if (track_p(id))
+    {
+      set_active_track_amp_env(id, e);
+      remix_track(id, set_track_amp_env_1, NULL);
+    }
+}
+
+static XEN g_track_amp_env(XEN id) 
+{
+  #define H_track_amp_env "(" S_track_amp_env " id): amplitude envelope applied to all of track's mixes"
+  int track_id;
+  track_id = xen_to_c_track(id, S_track_amp_env);
+  if (active_track_amp_env(track_id))
+    return(env_to_xen(active_track_amp_env(track_id)));
+  return(XEN_EMPTY_LIST);
+}
+
+static XEN g_set_track_amp_env(XEN id, XEN e)
+{
+  int track_id;
+  track_id = xen_to_c_track(id, S_setB S_track_amp_env);
+  XEN_ASSERT_TYPE(XEN_LIST_P(e) || XEN_FALSE_P(e), e, XEN_ARG_2, S_setB S_track_amp_env, "an envelope (a list of breakpoints) or #f");
+  set_track_amp_env(track_id, xen_to_env(e));
+  return(e);
+}
+
+
+/* ---------------- track-track ---------------- */
+
+static void set_track_track_1(mix_info *md, void *ptr)
+{
+  remix_file(md, S_setB S_track_track, false);
+}
+
+static bool set_track_track(int id, int trk)
+{
+  if (active_track_track(id) != trk)
+    {
+      if (trk > 0)
+	{
+	  int tid;
+	  tid = trk;
+	  while (track_p(tid))
+	    {
+	      if (tid == id) return(false);
+	      tid = active_track_track(tid);
+	    }
+	}
+      set_active_track_track(id, trk);
+      remix_track(id, set_track_track_1, NULL);
+    }
+  return(true);
+}
+
+static XEN g_track_track(XEN id)
+{
+  #define H_track_track "(" S_track_track " id) -> tracks's track (0 = none); tracks can be members of other tracks."
+  int track_id;
+  track_id = xen_to_c_track(id, S_track_track);
+  return(C_TO_XEN_INT(active_track_track(track_id)));
+}
+
+static XEN g_set_track_track(XEN id, XEN trk)
+{
+  int track_id, its_track;
+  track_id = xen_to_c_track(id, S_setB S_track_track);
+  its_track = xen_to_c_track_zero_ok(trk, S_setB S_track_track);
+  if (!(set_track_track(track_id, its_track)))
+    XEN_OUT_OF_RANGE_ERROR(S_setB S_track_track, XEN_ARG_2, trk, "a track's track can't be a member of that track");
+  return(trk);
+}
+
+/* ---------------- track position, track-frames, track-chans  ---------------- */
+
+static XEN g_track_position(XEN id, XEN chn)
+{
+  #define H_track_position "(" S_track_position " id (chn 0)) -> track's position (location of first mixed sample)"
+  int track_id;
+  track_id = xen_to_c_track(id, S_track_position);
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(chn), chn, XEN_ARG_2, S_track_position, "integer");
+  return(C_TO_XEN_OFF_T(track_position(track_id, XEN_TO_C_INT_OR_ELSE(chn, -1))));
+}
+
+static XEN g_set_track_position(XEN id, XEN pos, XEN chn)
+{
+  int track_id;
+  track_id = xen_to_c_track(id, S_setB S_track_position);
+  if (XEN_NOT_BOUND_P(chn))
+    {
+      XEN_ASSERT_TYPE(XEN_OFF_T_P(pos), pos, XEN_ARG_2, S_setB S_track_position, "a sample number");
+      set_track_position(track_id, XEN_TO_C_OFF_T(pos));
+      return(pos);
+    }
+  else
+    {
+      /* in this case, (set! (track-position id chn) pos) flips pos and chn */
+      XEN_ASSERT_TYPE(XEN_OFF_T_P(chn), chn, XEN_ARG_3, S_setB S_track_position, "a sample number");
+      XEN_ASSERT_TYPE(XEN_INTEGER_OR_BOOLEAN_IF_BOUND_P(pos), pos, XEN_ARG_2, S_setB S_track_position, "int");
+      set_track_channel_position(track_id, XEN_TO_C_INT(pos), XEN_TO_C_OFF_T(chn));
+      return(chn);
+    }
+}
+
+static XEN g_track_frames(XEN id, XEN chn)
+{
+  #define H_track_frames "(" S_track_frames " id (chn 0)) -> id's length (samples)"
+  int track_id;
+  track_id = xen_to_c_track(id, S_track_frames);
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(chn), chn, XEN_ARG_2, S_track_frames, "int");
+  return(C_TO_XEN_OFF_T(track_frames(track_id, (XEN_INTEGER_P(chn)) ? XEN_TO_C_INT(chn) : -1)));
+}
+
+static XEN g_track_chans(XEN id)
+{
+  #define H_track_chans "(" S_track_chans " id) -> chans associated with track 'id'. Each such channel \
+has at least one active mix that is a member of the given track."
+  int track_id;
+  track_id = xen_to_c_track(id, S_track_chans);
+  return(C_TO_XEN_OFF_T(track_chans(track_id)));
+}
+
+
+/* ---------------- delete-track, lock-track ---------------- */
+
+static void redisplay_track(int id)
+{
+  int i;
+  track_mix_list_t *trk;
+  trk = track_mixes(id);
+  if (trk->cps_ctr > 0)
+    for (i = 0; i < trk->cps_ctr; i++)
+      update_graph(trk->cps[i]);
+  free_track_mix_list(trk);
+}
+
+static void delete_track_1(mix_info *md, void *ptr)
+{
+  delete_mix_1(md->id, false, S_delete_track);
+}
+
+static XEN g_delete_track(XEN id)
+{
+  #define H_delete_track "(" S_delete_track " id) removes all mixes associated with track 'id'"
+  int track_id;
+  track_id = xen_to_c_track(id, S_delete_track);
+  set_active_track_amp(track_id, 0.0);
+  remix_track(track_id, delete_track_1, NULL);
+  redisplay_track(track_id);
+  return(id);
+}
+
+static void lock_track_1(mix_info *md, void *ptr)
+{
+  set_mix_locked(md, true, false, S_lock_track);
+}
+
+static XEN g_lock_track(XEN id)
+{
+  #define H_lock_track "(" S_lock_track " id) locks all mixes associated with track 'id'."
+  int track_id;
+  track_id = xen_to_c_track(id, S_lock_track);
+  remix_track(track_id, lock_track_1, NULL);
+  redisplay_track(track_id);
+  return(id);
+}
+
+
+/* ---------------- copy-mix, copy-track ---------------- */
 
 static int copy_mix(int id, off_t beg)
 {
@@ -6874,7 +6508,7 @@ the copy at 'beg' which defaults to the copied track's position."
 
   int new_id, old_id;
   off_t old_pos, pos;
-  new_id = xen_to_c_track_no_default(id, S_copy_track);
+  new_id = xen_to_c_track(id, S_copy_track);
   ASSERT_SAMPLE_TYPE(S_copy_mix, beg, 2);
   old_id = XEN_TO_C_INT(id);
   if (!(track_p(old_id)))
@@ -6887,9 +6521,391 @@ the copy at 'beg' which defaults to the copied track's position."
   return(C_TO_XEN_INT(new_id));
 }
 
+
+/* ---------------- track-reader, play-track ---------------- */
+
+/* track reader: an array of mix readers with state: active, waiting, null (done) */
+typedef struct {
+  int mixes, track;
+  off_t *state;
+  off_t *len;
+  mix_fd **fds;
+} track_fd;
+
+static track_fd *init_track_reader(int track_num, int chan, off_t beg, bool global)
+{
+  /* beg is offset within track which starts within overall sound(s) at track_beg */
+  off_t track_beg = UNLIKELY_POSITION;
+  chan_info *cp;
+  track_fd *fd = NULL;
+  int mixes = 0, i, mix;
+  track_mix_list_t *trk;
+  mix_info *md;
+  mix_state *cs;
+  trk = track_mixes(track_num);
+  if ((chan >= 0) && (chan < trk->cps_ctr))
+    {
+      cp = trk->cps[chan];
+      for (i = 0; i < trk->lst_ctr; i++)
+	{
+	  md = md_from_id(trk->lst[i]);
+	  if (md->cp == cp) mixes++;
+	  cs = md->active_mix_state;
+	  if ((global) || (md->cp == cp))
+	    if (cs->orig < track_beg) 
+	      track_beg = cs->orig;
+	}
+      if (mixes > 0)
+	{
+	  fd = (track_fd *)CALLOC(1, sizeof(track_fd));
+	  fd->track = track_num;
+	  fd->mixes = mixes;
+	  fd->state = (off_t *)CALLOC(mixes, sizeof(off_t));
+	  fd->len = (off_t *)CALLOC(mixes, sizeof(off_t));
+	  fd->fds = (mix_fd **)CALLOC(mixes, sizeof(mix_fd *));
+	  mix = 0;
+	  for (i = 0; i < trk->lst_ctr; i++)
+	    {
+	      md = md_from_id(trk->lst[i]);
+	      if (md->cp == cp)
+		{
+		  off_t true_beg, mix_start;
+		  true_beg = track_beg + beg;
+		  cs = md->active_mix_state;
+		  mix_start = true_beg - cs->orig;
+		  fd->state[mix] = -mix_start;
+		  if (mix_start > 0)
+		    {
+		      fd->fds[mix] = init_mix_read(md, CURRENT_MIX, mix_start);
+		      fd->len[mix] = cs->len - mix_start;
+		    }
+		  else 
+		    {
+		      fd->fds[mix] = init_mix_read(md, CURRENT_MIX, 0);
+		      fd->len[mix] = cs->len;
+		    }
+		  mix++;
+		}
+	    }
+	}
+    }
+  free_track_mix_list(trk);
+  return(fd);
+}
+
+static void free_track_fd_almost(track_fd *fd)
+{
+  int i;
+  if (fd)
+    {
+      if (fd->fds)
+	{
+	  for (i = 0; i < fd->mixes; i++)
+	    if (fd->fds[i]) 
+	      fd->fds[i] = free_mix_fd(fd->fds[i]);
+	  FREE(fd->fds);
+	  fd->fds = NULL;
+	}
+      fd->mixes = 0;
+      if (fd->state) {FREE(fd->state); fd->state = NULL;}
+      if (fd->len) {FREE(fd->len); fd->len = NULL;}
+    }
+}
+
+static void free_track_fd(track_fd *fd)
+{
+  if (fd)
+    {
+      free_track_fd_almost(fd);
+      FREE(fd);
+    }
+}
+
+static Float next_track_sample(track_fd *fd)
+{
+  int i;
+  Float sum = 0.0;
+  if (fd)
+    for (i = 0; i < fd->mixes; i++)
+      if ((fd->fds[i]) && 
+	  (fd->len[i] > 0))
+	{
+	  if (fd->state[i] <= 0)
+	    {
+	      sum += next_mix_sample(fd->fds[i]);
+	      fd->len[i]--;
+	      if (fd->len[i] <= 0) 
+		{
+		  unlist_mix_reader(fd->fds[i]);
+		  fd->fds[i] = free_mix_fd(fd->fds[i]);
+		}
+	    }
+	  else fd->state[i]--;
+	}
+  return(sum);
+}
+
+static int play_track(int track_num, int chan, off_t beg, bool from_gui)
+{
+  track_fd **fds;
+  snd_info *sp;
+  int playfd, i, j, k, n, samps = 0, chans, format, datum_bytes, outchans, frames;
+#if HAVE_ALSA
+  mus_sample_t **buf;
+  char *outbuf;
+  float val[4]; /* not Float */
+#else
+  OutSample *buf;
+#endif
+  track_mix_list_t *trk;
+
+  trk = track_mixes(track_num);
+  if (chan == -1) chans = trk->cps_ctr; else chans = 1;
+  if (chans == 0) return(-1);
+  outchans = chans;
+  format = mus_audio_compatible_format(MUS_AUDIO_PACK_SYSTEM(0) | audio_output_device(ss));
+  datum_bytes = mus_bytes_per_sample(format);
+  frames = 256;
+  fds = (track_fd **)CALLOC(chans, sizeof(track_fd *));
+
+#if HAVE_ALSA
+  /* in ALSA we have no way to tell what the possible output format is, or min chans, so... */
+  mus_audio_mixer_read(MUS_AUDIO_PACK_SYSTEM(0) | audio_output_device(ss), MUS_AUDIO_CHANNEL, 2, val);
+  if (chans < (int)(val[1])) outchans = (int)(val[1]);
+  mus_audio_mixer_read(MUS_AUDIO_PACK_SYSTEM(0) | audio_output_device(ss), MUS_AUDIO_SAMPLES_PER_CHANNEL, 2, val);
+  frames = (int)(val[0]);
+  set_dac_size(outchans * frames * mus_bytes_per_sample(format));
+  buf = (mus_sample_t **)CALLOC(outchans, sizeof(mus_sample_t *));
+  for (i = 0; i < chans; i++) buf[i] = (mus_sample_t *)CALLOC(frames, sizeof(mus_sample_t));
+  outbuf = (char *)CALLOC(frames * datum_bytes * outchans, sizeof(char));
+#else
+  buf = (OutSample *)CALLOC(chans * frames, sizeof(OutSample));
+#endif
+  for (i = 0; i < chans; i++)
+    {
+      fds[i] = init_track_reader(track_num, i, beg, (chan == -1));
+      if (fds[i]) /* perhaps bad track number? */
+	for (n = 0; n < fds[i]->mixes; n++)
+	  {
+	    j = fds[i]->state[n] + fds[i]->len[n];
+	    if (j > samps) samps = j;
+	  }
+    }
+  if (samps > 0)
+    {
+      sp = trk->cps[0]->sound;
+      clear_minibuffer(sp);
+      playfd = mus_audio_open_output(MUS_AUDIO_PACK_SYSTEM(0) | audio_output_device(ss), 
+				     SND_SRATE(sp), 
+				     outchans, 
+				     format, 
+				     dac_size(ss));
+      if (playfd != -1)
+	{
+	  ss->stopped_explicitly = false;
+	  for (i = 0; i < samps; i += frames)
+	    {
+#if HAVE_ALSA
+	      for (k = 0; k < chans; k++)
+		if (fds[k])
+		  for (j = 0; j < frames; j++)
+		    buf[k][j] = MUS_FLOAT_TO_SAMPLE(next_track_sample(fds[k]));
+	      mus_file_write_buffer(format, 0, frames - 1, outchans, buf, outbuf, true);
+	      mus_audio_write(playfd, outbuf, frames * datum_bytes * outchans);
+#else
+	      for (k = 0; k < chans; k++)
+		if (fds[k])
+		  for (j = k; j < frames * chans; j += chans)
+		    buf[j] = MUS_CONVERT(next_track_sample(fds[k]));
+	      mus_audio_write(playfd, (char *)buf, frames * datum_bytes * chans);
+#endif
+	      check_for_event();
+	      if ((ss->stopped_explicitly) || ((from_gui) && (mix_play_stopped())))
+		{
+		  ss->stopped_explicitly = false;
+		  report_in_minibuffer(sp, _("stopped"));
+		  break;
+		}
+	    }
+	  mus_audio_close(playfd);
+	}
+    }
+  for (i = 0; i < chans; i++) free_track_fd(fds[i]);
+  reflect_mix_play_stop();
+  FREE(fds);
+#if HAVE_ALSA
+  for (i = 0; i < chans; i++) if (buf[i]) FREE(buf[i]);
+  FREE(outbuf);
+#endif
+  FREE(buf);
+  free_track_mix_list(trk);
+  return(0);
+}
+
+void play_track_from_id(int mix_id)
+{
+  /* mix panel hook */
+  mix_info *md;
+  md = md_from_id(mix_id);
+  if (md->active_mix_state->track != 0)
+    play_track(md->active_mix_state->track, -1, 0, true);
+  else play_mix(md, 0, true);
+}
+
+static XEN g_play_track(XEN id, XEN chn, XEN beg)
+{
+  #define H_play_track "(" S_play_track " track (chn #f) (beg 0)): play track. If 'chn' is #t, \
+play all the mixes in the track, even if in different channels.  'beg' is where to start playing within the track."
+  int err, track_id;
+  off_t samp;
+  track_id = xen_to_c_track(id, S_play_track);
+  /* in this case if chn=#t, play all associated mixes in all chans */
+  ASSERT_SAMPLE_TYPE(S_play_track, beg, XEN_ARG_3);
+  samp = beg_to_sample(beg, S_play_track);
+  if (!(XEN_INTEGER_P(chn)))
+    err = play_track(track_id, -1, samp, false);
+  else err = play_track(track_id, XEN_TO_C_INT(chn), samp, false);
+  return(id);
+}
+
+
+/* ---------------- track sample readers ---------------- */
+
+static XEN_OBJECT_TYPE tf_tag;
+static bool tf_p(XEN obj) {return(XEN_OBJECT_TYPE_P(obj, tf_tag));}
+#define TO_TRACK_SAMPLE_READER(obj) ((track_fd *)XEN_OBJECT_REF(obj))
+#define TRACK_SAMPLE_READER_P(Obj) XEN_OBJECT_TYPE_P(Obj, tf_tag)
+
+static XEN g_tf_p(XEN obj) 
+{
+  #define H_tf_p "(" S_track_sample_reader_p " obj): #t if obj is a track-sample-reader"
+  return(C_TO_XEN_BOOLEAN(tf_p(obj)));
+}
+
+static char *tf_to_string(track_fd *fd) 
+{
+  mix_info *md;
+  mix_fd *mf = NULL;
+  char *desc;
+  char toi[16];
+  int i, len, desc_len;
+  bool happy = false, banner = false, previous = false;
+  desc_len = PRINT_BUFFER_SIZE;
+  desc = (char *)CALLOC(desc_len, sizeof(char));
+  if (fd == NULL)
+    sprintf(desc, "#<track-sample-reader: null>");
+  else
+    {
+      if ((fd->fds) && (fd->mixes > 0))
+	{
+	  len = fd->mixes;
+	  for (i = 0; i < len; i++)
+	    {
+	      mf = fd->fds[i];
+	      if ((mf) && (mf->md) && (MIX_TYPE_OK(mf->type)))
+		{
+		  md = mf->md;
+		  happy = true;
+		  if (!banner)
+		    {
+
+		      mus_snprintf(desc, PRINT_BUFFER_SIZE, "#<track-sample-reader track %d: %s chan %d via mixes '(",
+				   fd->track,
+				   md->in_filename,
+				   (md->cp)->chan);
+		      banner = true;
+		    }
+		  mus_snprintf(toi, 16, "%s%d", (previous) ? " ": "", (mf->md)->id);
+		  previous = true;
+		  desc = snd_strcat(desc, toi, &desc_len);
+		}
+	    }
+	  desc = snd_strcat(desc, ")>", &desc_len);
+	}
+      if (!happy)
+	mus_snprintf(desc, PRINT_BUFFER_SIZE, "#<track-sample-reader %p: inactive>", fd);
+    }
+  return(desc);
+}
+
+XEN_MAKE_OBJECT_PRINT_PROCEDURE(track_fd, print_tf, tf_to_string)
+
+static void tf_free(track_fd *fd)
+{
+  int i;
+  if (fd) 
+    {
+      if (fd->fds)
+	{
+	  for (i = 0; i < fd->mixes; i++)
+	    if (fd->fds[i]) 
+	      unlist_mix_reader(fd->fds[i]);
+	}
+      free_track_fd(fd); 
+    }
+}
+
+XEN_MAKE_OBJECT_FREE_PROCEDURE(track_fd, free_tf, tf_free)
+
+static XEN g_make_track_sample_reader(XEN id, XEN chn, XEN beg)
+{
+  #define H_make_track_sample_reader "(" S_make_track_sample_reader " track (chn #f) (beg 0)): \
+return a reader ready to access track's data associated with track's channel chn, starting in the track from beg"
+
+  track_fd *tf = NULL;
+  int i;
+  off_t samp;
+  int track_id;
+  track_id = xen_to_c_track(id, S_make_track_sample_reader);
+  XEN_ASSERT_TYPE(XEN_INTEGER_OR_BOOLEAN_IF_BOUND_P(chn), chn, XEN_ARG_2, S_make_track_sample_reader, "int");
+  ASSERT_SAMPLE_TYPE(S_make_track_sample_reader, beg, XEN_ARG_3);
+  samp = beg_to_sample(beg, S_make_track_sample_reader);
+  tf = init_track_reader(track_id,
+			 XEN_TO_C_INT_OR_ELSE(chn, 0),
+			 samp,
+			 false); 
+  if (tf == NULL)
+    XEN_ERROR(NO_SUCH_TRACK,
+	      XEN_LIST_2(C_TO_XEN_STRING(S_make_track_sample_reader),
+			 id));
+  if (tf->fds)
+    {
+      for (i = 0; i < tf->mixes; i++)
+	if (tf->fds[i]) 
+	  list_mix_reader(tf->fds[i]);
+    }
+  XEN_MAKE_AND_RETURN_OBJECT(tf_tag, tf, 0, free_tf);
+}
+
+static XEN g_read_track_sample(XEN obj)
+{
+  #define H_read_track_sample "(" S_read_track_sample " reader): read sample from track reader"
+  XEN_ASSERT_TYPE(TRACK_SAMPLE_READER_P(obj), obj, XEN_ONLY_ARG, S_read_track_sample, "a track-sample-reader");
+  return(C_TO_XEN_DOUBLE(next_track_sample(TO_TRACK_SAMPLE_READER(obj))));
+}
+
+static XEN g_free_track_sample_reader(XEN obj)
+{
+  #define H_free_track_sample_reader "(" S_free_track_sample_reader " reader): free the track sample reader"
+  track_fd *tf = NULL;
+  int i;
+  XEN_ASSERT_TYPE(TRACK_SAMPLE_READER_P(obj), obj, XEN_ONLY_ARG, S_free_track_sample_reader, "a track-sample-reader");
+  tf = TO_TRACK_SAMPLE_READER(obj);
+  if ((tf) && (tf->fds))
+    {
+      for (i = 0; i < tf->mixes; i++)
+	if (tf->fds[i]) 
+	  unlist_mix_reader(tf->fds[i]);
+    }
+  free_track_fd_almost(tf);
+  return(xen_return_first(XEN_FALSE, obj));
+}
+
+
+/* ---------------- init track xen connection ---------------- */
+
 #ifdef XEN_ARGIFY_1
 XEN_ARGIFY_3(g_make_track_sample_reader_w, g_make_track_sample_reader)
-XEN_NARGIFY_1(g_next_track_sample_w, g_next_track_sample)
 XEN_NARGIFY_1(g_read_track_sample_w, g_read_track_sample)
 XEN_NARGIFY_1(g_free_track_sample_reader_w, g_free_track_sample_reader)
 XEN_NARGIFY_1(g_tf_p_w, g_tf_p)
@@ -6898,28 +6914,27 @@ XEN_NARGIFY_1(g_free_track_w, g_free_track)
 XEN_NARGIFY_1(g_track_p_w, g_track_p)
 XEN_NARGIFY_0(g_tracks_w, g_tracks)
 XEN_ARGIFY_2(g_track_w, g_track)
-XEN_ARGIFY_1(g_track_color_w, g_track_color)
+XEN_NARGIFY_1(g_track_color_w, g_track_color)
 XEN_NARGIFY_2(g_set_track_color_w, g_set_track_color)
-XEN_ARGIFY_1(g_track_amp_w, g_track_amp)
+XEN_NARGIFY_1(g_track_amp_w, g_track_amp)
 XEN_NARGIFY_2(g_set_track_amp_w, g_set_track_amp)
-XEN_ARGIFY_1(g_track_speed_w, g_track_speed)
+XEN_NARGIFY_1(g_track_speed_w, g_track_speed)
 XEN_NARGIFY_2(g_set_track_speed_w, g_set_track_speed)
-XEN_ARGIFY_1(g_track_amp_env_w, g_track_amp_env)
+XEN_NARGIFY_1(g_track_amp_env_w, g_track_amp_env)
 XEN_NARGIFY_2(g_set_track_amp_env_w, g_set_track_amp_env)
 XEN_ARGIFY_2(g_track_position_w, g_track_position)
 XEN_ARGIFY_3(g_set_track_position_w, g_set_track_position)
-XEN_ARGIFY_1(g_track_track_w, g_track_track)
+XEN_NARGIFY_1(g_track_track_w, g_track_track)
 XEN_NARGIFY_1(g_track_chans_w, g_track_chans)
 XEN_NARGIFY_2(g_set_track_track_w, g_set_track_track)
 XEN_ARGIFY_2(g_track_frames_w, g_track_frames)
-XEN_ARGIFY_1(g_delete_track_w, g_delete_track)
-XEN_ARGIFY_1(g_lock_track_w, g_lock_track)
+XEN_NARGIFY_1(g_delete_track_w, g_delete_track)
+XEN_NARGIFY_1(g_lock_track_w, g_lock_track)
 XEN_VARGIFY(g_make_track_w, g_make_track)
 XEN_ARGIFY_2(g_copy_mix_w, g_copy_mix)
 XEN_ARGIFY_2(g_copy_track_w, g_copy_track)
 #else
 #define g_make_track_sample_reader_w g_make_track_sample_reader
-#define g_next_track_sample_w g_next_track_sample
 #define g_read_track_sample_w g_read_track_sample
 #define g_free_track_sample_reader_w g_free_track_sample_reader
 #define g_tf_p_w g_tf_p
@@ -6964,23 +6979,22 @@ void g_init_track(void)
 #endif
 
   XEN_DEFINE_PROCEDURE(S_make_track_sample_reader, g_make_track_sample_reader_w, 1, 2, 0, H_make_track_sample_reader);
-  XEN_DEFINE_PROCEDURE(S_next_track_sample,        g_next_track_sample_w,        1, 0, 0, H_next_track_sample);
   XEN_DEFINE_PROCEDURE(S_read_track_sample,        g_read_track_sample_w,        1, 0, 0, H_read_track_sample);
   XEN_DEFINE_PROCEDURE(S_free_track_sample_reader, g_free_track_sample_reader_w, 1, 0, 0, H_free_track_sample_reader);
   XEN_DEFINE_PROCEDURE(S_track_sample_reader_p,    g_tf_p_w,                     1, 0, 0, H_tf_p);
   XEN_DEFINE_PROCEDURE(S_play_track,               g_play_track_w,               1, 2, 0, H_play_track);
   XEN_DEFINE_PROCEDURE(S_free_track,               g_free_track_w,               1, 0, 0, H_free_track);
 
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_track_color,    g_track_color_w,    H_track_color,    S_setB S_track_color,    g_set_track_color_w,    0, 1, 2, 0);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_track_amp,      g_track_amp_w,      H_track_amp,      S_setB S_track_amp,      g_set_track_amp_w,      0, 1, 2, 0);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_track_speed,    g_track_speed_w,    H_track_speed,    S_setB S_track_speed,    g_set_track_speed_w,    0, 1, 2, 0);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_track_amp_env,  g_track_amp_env_w,  H_track_amp_env,  S_setB S_track_amp_env,  g_set_track_amp_env_w,  0, 1, 2, 0);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_track_position, g_track_position_w, H_track_position, S_setB S_track_position, g_set_track_position_w, 0, 2, 2, 1);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_track_track,    g_track_track_w,    H_track_track,    S_setB S_track_track,    g_set_track_track_w,    0, 1, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_track_color,    g_track_color_w,    H_track_color,    S_setB S_track_color,    g_set_track_color_w,    1, 0, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_track_amp,      g_track_amp_w,      H_track_amp,      S_setB S_track_amp,      g_set_track_amp_w,      1, 0, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_track_speed,    g_track_speed_w,    H_track_speed,    S_setB S_track_speed,    g_set_track_speed_w,    1, 0, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_track_amp_env,  g_track_amp_env_w,  H_track_amp_env,  S_setB S_track_amp_env,  g_set_track_amp_env_w,  1, 0, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_track_position, g_track_position_w, H_track_position, S_setB S_track_position, g_set_track_position_w, 1, 1, 2, 1);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_track_track,    g_track_track_w,    H_track_track,    S_setB S_track_track,    g_set_track_track_w,    1, 0, 2, 0);
 
-  XEN_DEFINE_PROCEDURE(S_track_frames, g_track_frames_w, 0, 2, 0, H_track_frames);
-  XEN_DEFINE_PROCEDURE(S_delete_track, g_delete_track_w, 0, 1, 0, H_delete_track);
-  XEN_DEFINE_PROCEDURE(S_lock_track,   g_lock_track_w,   0, 1, 0, H_lock_track);
+  XEN_DEFINE_PROCEDURE(S_track_frames, g_track_frames_w, 1, 1, 0, H_track_frames);
+  XEN_DEFINE_PROCEDURE(S_delete_track, g_delete_track_w, 1, 0, 0, H_delete_track);
+  XEN_DEFINE_PROCEDURE(S_lock_track,   g_lock_track_w,   1, 0, 0, H_lock_track);
   XEN_DEFINE_PROCEDURE(S_track,        g_track_w,        1, 1, 0, H_track);
   XEN_DEFINE_PROCEDURE(S_tracks,       g_tracks_w,       0, 0, 0, H_tracks);
   XEN_DEFINE_PROCEDURE(S_make_track,   g_make_track_w,   0, 0, 1, H_make_track);  
@@ -6990,8 +7004,7 @@ void g_init_track(void)
   XEN_DEFINE_PROCEDURE(S_copy_track,   g_copy_track_w,   1, 1, 0, H_copy_track);
 }
 
-/* SOMEDAY: how to save-(mix|track)-state? -- mixes are not currently saved, but the track states could be
-   TODO: check dlp/mix-menu etc (need make-track for "assign" case), need 'no-such-track catch in other cases
+/* SOMEDAY: how to save|restore-(mix|track)-state? -- mixes are not currently saved, but the track states could be
    TODO: test lock-track and make it work with undo/redo somehow (similarly for mix-locked?)
    TODO: view:track-panel dialog to automate track edits (tempo slider)
    TODO: pan choices with linear, sinusoidal, exponential envs
@@ -7001,4 +7014,7 @@ void g_init_track(void)
    TODO: if mix-waveform-height 50 top of mix waveform can be pushed off top of graph
    TODO: first and last samples of mix-peak-amp-waveform don't cancel
    PERHAPS: change mix process to use amp=0 as "previous", then just one reader elsewhere (can this work?)
+   TODO: for mix-panel display, we could follow selected chan
+   TODO: finish drag still broken if drag past end and start drag doesn't erase original (need 0 edit)
+   SOMEDAY: describe-* [mix|mark|selection|sound|channel|track|region, gen|(mix,track)reader|player|(sound)file|key|plugin|hook|dialog(i.e. recorder)|audio]
 */

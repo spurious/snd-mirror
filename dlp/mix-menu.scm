@@ -41,7 +41,10 @@
 (define delete-mix-dialog #f)
 
 (define (cp-delete-mix)
-  (delete-mix delete-mix-number))
+  (catch 'no-such-mix
+	 (lambda ()
+	   (delete-mix delete-mix-number))
+	 (lambda args (snd-print ";no such mix"))))
 
 (if (provided? 'xm) ; if xm module is loaded, popup a dialog here
     (begin
@@ -105,6 +108,19 @@
 
 (add-to-menu mix-menu #f #f)
 
+
+
+(define (ensure-track new-num)
+  ;; make sure the given track exists
+  (if (and (not (= new-num 0))
+	   (not (track? new-num)))
+      (call-with-current-continuation
+       (lambda (break)
+	 (do ((i 0 (1+ i)))
+	     ((= i new-num))
+	   (let ((id (make-track)))
+	     (if (= id new-num) (break))))))))
+
 ;;; -------- Assign all tracks
 ;;;
 ;;;
@@ -114,10 +130,12 @@
 (define renumber-tracks-dialog #f)
 
 (define (set-all-tracks new-num)
-  (tree-for-each
-    (lambda (n)
-      (set! (mix-track n) new-num))
-    (mixes)))
+  (ensure-track new-num)
+  (lambda ()
+    (tree-for-each
+     (lambda (n)
+       (set! (mix-track n) new-num))
+     (mixes))))
 
 (define (cp-renumber-tracks)
   (set-all-tracks renumber-tracks-number))
@@ -136,7 +154,8 @@
                                           (cp-renumber-tracks))
                                         (lambda (w context info)
                                           (help-dialog "Assign all tracks"
-                                                "Assign all tracks to number specified by the slider."))
+                                                "Assign all tracks to number specified by the slider.\
+The track number 0 is the 'untrack' so to speak."))
                                         (lambda (w c i)
                                           (set! renumber-tracks-number initial-renumber-tracks-number)
                                           (XtSetValues (list-ref sliders 0) (list XmNvalue (inexact->exact (* renumber-tracks-number 1)))))))
@@ -164,12 +183,16 @@
 ;;;
 ;;;
 
-(define delete-track-number 0)
+(define delete-track-number 1)
 (define delete-track-label "Delete track")
 (define delete-track-dialog #f)
 
 (define (cp-delete-track)
-  (delete-track delete-track-number))
+  (catch 'no-such-track
+	 (lambda ()
+	   (delete-track delete-track-number))
+	 (lambda args 
+	   (snd-print ";no such track"))))
 
 (if (provided? 'xm) ; if xm module is loaded, popup a dialog here
     (begin
@@ -177,7 +200,7 @@
       (define (post-delete-track-dialog)
         (if (not (Widget? delete-track-dialog))
             ;; if delete-track-dialog doesn't exist, create it
-            (let ((initial-delete-track-number 0)
+            (let ((initial-delete-track-number 1)
                   (sliders '()))
               (set! delete-track-dialog
                     (make-effect-dialog delete-track-label
@@ -213,12 +236,16 @@
 ;;;
 ;;;
 
-(define play-track-number 0)
+(define play-track-number 1)
 (define play-track-label "Play track")
 (define play-track-dialog #f)
 
 (define (cp-play-track)
-  (play-track play-track-number))
+  (catch 'no-such-track
+	 (lambda ()
+	   (play-track play-track-number))
+	 (lambda args 
+	   (snd-print ";no such track"))))
 
 (if (provided? 'xm) ; if xm module is loaded, popup a dialog here
     (begin
@@ -226,7 +253,7 @@
       (define (post-play-track-dialog)
         (if (not (Widget? play-track-dialog))
             ;; if play-track-dialog doesn't exist, create it
-            (let ((initial-play-track-number 0)
+            (let ((initial-play-track-number 1)
                   (sliders '()))
               (set! play-track-dialog
                     (make-effect-dialog play-track-label
@@ -260,12 +287,16 @@
 ;;;
 ;;;
 
-(define reverse-track-number 0)
+(define reverse-track-number 1)
 (define reverse-track-label "Reverse track")
 (define reverse-track-dialog #f)
 
 (define (cp-reverse-track)
-  (reverse-track reverse-track-number))
+  (catch 'no-such-track
+	 (lambda ()
+	   (reverse-track reverse-track-number))
+	 (lambda args 
+	   (snd-print ";no such track"))))
 
 (if (provided? 'xm) ; if xm module is loaded, popup a dialog here
     (begin
@@ -273,7 +304,7 @@
       (define (post-reverse-track-dialog)
         (if (not (Widget? reverse-track-dialog))
             ;; if reverse-track-dialog doesn't exist, create it
-            (let ((initial-reverse-track-number 0)
+            (let ((initial-reverse-track-number 1)
                   (sliders '()))
               (set! reverse-track-dialog
                     (make-effect-dialog reverse-track-label
@@ -307,12 +338,13 @@
 ;;; -------- Set track amplitude
 ;;;
 
-(define set-track-amp-tracknum 0)
+(define set-track-amp-tracknum 1)
 (define set-track-amp-scaler 1.0)
 (define set-track-amp-label "Set track amplitude")
 (define set-track-amp-dialog #f)
 
 (define (cp-set-track-amp)
+  (ensure-track set-track-amp-tracknum)
   (set! (track-amp set-track-amp-tracknum) set-track-amp-scaler))
 
 (if (provided? 'xm) ; if xm module is loaded, popup a dialog here
@@ -321,7 +353,7 @@
       (define (post-set-track-amp-dialog)
         (if (not (Widget? set-track-amp-dialog))
             ;; if set-track-amp-dialog doesn't exist, create it
-            (let ((initial-set-track-amp-tracknum 0)
+            (let ((initial-set-track-amp-tracknum 1)
                   (initial-set-track-amp-scaler 1.0)
                   (sliders '()))
               (set! set-track-amp-dialog
@@ -361,12 +393,13 @@
 ;;; -------- Set track speed
 ;;;
 
-(define set-track-speed-tracknum 0)
+(define set-track-speed-tracknum 1)
 (define set-track-speed-scaler 1.0)
 (define set-track-speed-label "Set track speed")
 (define set-track-speed-dialog #f)
 
 (define (cp-set-track-speed)
+  (ensure-track set-track-speed-tracknum)
   (set! (track-speed set-track-speed-tracknum) set-track-speed-scaler))
 
 (if (provided? 'xm) ; if xm module is loaded, popup a dialog here
@@ -375,7 +408,7 @@
       (define (post-set-track-speed-dialog)
         (if (not (Widget? set-track-speed-dialog))
             ;; if set-track-speed-dialog doesn't exist, create it
-            (let ((initial-set-track-speed-tracknum 0)
+            (let ((initial-set-track-speed-tracknum 1)
                   (initial-set-track-speed-scaler 1.0)
                   (sliders '()))
               (set! set-track-speed-dialog
@@ -415,13 +448,17 @@
 ;;; -------- Set track tempo
 ;;;
 
-(define set-track-tempo-tracknum 0)
+(define set-track-tempo-tracknum 1)
 (define set-track-tempo-value 1.0)
 (define set-track-tempo-label "Set track tempo")
 (define set-track-tempo-dialog #f)
 
 (define (cp-set-track-tempo)
-  (retempo-track set-track-tempo-tracknum set-track-tempo-value))
+  (catch 'no-such-track
+	 (lambda ()
+	   (retempo-track set-track-tempo-tracknum set-track-tempo-value))
+	 (lambda args
+	   (snd-print ";no such track"))))
 
 (if (provided? 'xm) ; if xm module is loaded, popup a dialog here
     (begin
@@ -429,7 +466,7 @@
       (define (post-set-track-tempo-dialog)
         (if (not (Widget? set-track-tempo-dialog))
             ;; if set-track-tempo-dialog doesn't exist, create it
-            (let ((initial-set-track-tempo-tracknum 0)
+            (let ((initial-set-track-tempo-tracknum 1)
                   (initial-set-track-tempo-value 1.0)
                   (sliders '()))
               (set! set-track-tempo-dialog
@@ -469,12 +506,13 @@
 ;;; -------- Transpose track
 ;;;
 
-(define transpose-track-number 0)
+(define transpose-track-number 1)
 (define transpose-track-semitones 0)
 (define transpose-track-label "Transpose track")
 (define transpose-track-dialog #f)
 
 (define (cp-transpose-track)
+  (ensure-track transpose-track-number)
   (transpose-track transpose-track-number transpose-track-semitones))
 
 (if (provided? 'xm) ; if xm module is loaded, popup a dialog here
@@ -483,7 +521,7 @@
       (define (post-transpose-track-dialog)
         (if (not (Widget? transpose-track-dialog))
             ;; if transpose-track-dialog doesn't exist, create it
-            (let ((initial-transpose-track-number 0)
+            (let ((initial-transpose-track-number 1)
                   (initial-transpose-track-semitones 0)
                   (sliders '()))
               (set! transpose-track-dialog
@@ -523,12 +561,16 @@
 ;;; Save track
 ;;;
 
-(define save-track-number 0)
+(define save-track-number 1)
 (define save-track-label "Save track")
 (define save-track-dialog #f)
 
 (define (cp-save-track)
-  (save-track save-track-number (format #f "track-~A.snd" save-track-number)))
+  (catch #t
+	 (lambda ()
+	   (save-track save-track-number (format #f "track-~A.snd" save-track-number)))
+	 (lambda args
+	   (snd-print ";can't save track"))))
 
 (if (provided? 'xm) ; if xm module is loaded, popup a dialog here
     (begin
@@ -536,7 +578,7 @@
       (define (post-save-track-dialog)
         (if (not (Widget? save-track-dialog))
             ;; if save-track-dialog doesn't exist, create it
-            (let ((initial-save-track-number 0)
+            (let ((initial-save-track-number 1)
                   (sliders '()))
               (set! save-track-dialog
                     (make-effect-dialog save-track-label

@@ -754,7 +754,7 @@ bool xen_integer_p(XEN a);
   #define XEN_PROCEDURE_P(Arg)  ({ XEN _xen_h_10_ = Arg;       (XEN_BOUND_P(_xen_h_10_) && (rb_obj_is_kind_of(_xen_h_10_, rb_cProc))); })
   #define XEN_OFF_T_P(Arg)      ({ int _xen_h_11_ = TYPE(Arg); ((_xen_h_11_ == T_FIXNUM) || (_xen_h_11_ == T_BIGNUM)); })
   #define XEN_KEYWORD_P(Obj)    ({ XEN _xen_h_12_ = Obj;       (XEN_BOUND_P(_xen_h_12_) && SYMBOL_P(_xen_h_12_)); })
-  #define XEN_LIST_P_WITH_LENGTH(Arg, Len) ({ XEN _xen_h_13_ = Arg; ((XEN_LIST_P(_xen_h_13_)) ? (Len = RARRAY(_xen_h_13_)->len) : 0); })
+  #define XEN_LIST_P_WITH_LENGTH(Arg, Len) ({ XEN _xen_h_13_ = Arg; ((XEN_LIST_P(_xen_h_13_)) ? (Len = RARRAY(_xen_h_13_)->len) : (Len = 0)); })
 #else
   #define XEN_BOOLEAN_P(Arg)    (XEN_TRUE_P(Arg) || XEN_FALSE_P(Arg))
   #define XEN_NUMBER_P(Arg)     ((TYPE(Arg) == T_FLOAT) || (TYPE(Arg) == T_FIXNUM) || (TYPE(Arg) == T_BIGNUM))
@@ -762,7 +762,7 @@ bool xen_integer_p(XEN a);
   #define XEN_PROCEDURE_P(Arg)  (XEN_BOUND_P(Arg) && (rb_obj_is_kind_of(Arg, rb_cProc)))
   #define XEN_OFF_T_P(Arg)      ((TYPE(Arg) == T_FIXNUM) || (TYPE(Arg) == T_BIGNUM))
   #define XEN_KEYWORD_P(Obj)    (XEN_BOUND_P(Obj) && SYMBOL_P(Obj))
-  #define XEN_LIST_P_WITH_LENGTH(Arg, Len) ((XEN_LIST_P(Arg)) ? (Len = RARRAY(Arg)->len) : 0)
+  #define XEN_LIST_P_WITH_LENGTH(Arg, Len) ((XEN_LIST_P(Arg)) ? (Len = RARRAY(Arg)->len) : (Len = 0))
 #endif
 
 #define XEN_STRING_P(Arg)       (TYPE(Arg) == T_STRING)

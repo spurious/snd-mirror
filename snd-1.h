@@ -1307,7 +1307,7 @@ void finish_moving_mix_tag(int mix_tag, int x);
 int hit_mix(chan_info *cp, int x, int y);
 chan_info *mix_channel_from_id(int mix_id);
 void mix_play_from_id(int mix_id);
-void track_play_from_id(int mix_id);
+void play_track_from_id(int mix_id);
 void start_mix_panel_slider_drag(int mix_id);
 int set_mix_speed_from_id(int mix_id, Float val, bool dragging);
 int set_mix_amp_from_id(int mix_id, int chan, Float val, bool dragging);

@@ -1,5 +1,6 @@
 Snd change log
 
+  10-Nov:    removed next-mix-sample, next-track-sample.
   5-Nov:     Jack audio support thanks to Kjetil S. Matheussen.
              mix-anchor -> mix-tag-position.
   4-Nov:     copy-mix, copy-track.

@@ -1368,7 +1368,7 @@ env *string2env(char *str)
 {
 #if HAVE_EXTENSION_LANGUAGE
   XEN res;
-  int len;
+  int len = 0;
   res = snd_catch_any(eval_str_wrapper, str, "string->env");
   if (XEN_LIST_P_WITH_LENGTH(res, len))
     {

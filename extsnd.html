@@ -2626,10 +2626,10 @@ data is:</p>
 <p>There is a similar set of functions giving access to the mix data.
 <i>make-mix-sample-reader</i> returns a mix reader for the desired mix,
 <i>mix-sample-reader?</i> returns #t if its argument in a mix sample reader,
-<i>next-mix-sample</i> returns the next sample (before it is mixed into
+<i>read-mix-sample</i> returns the next sample (before it is mixed into
 the output), and <i>free-mix-sample-reader</i> releases a reader.
 Mixes can be collected into tracks, so there are also <i>make-track-sample-reader</i>, <i>track-sample-reader?</i>,
-<i>next-track-sample</i>, and <i>free-track-sample-reader</i>.
+<i>read-track-sample</i>, and <i>free-track-sample-reader</i>.
 </p>
 
 <!-- -------------------------------- SAMPLE-READER TABLE -------------------------------- -->
@@ -2701,7 +2701,7 @@ can read external sounds without going to the trouble of loading them into Snd.
 <tr><td colspan=2></td></tr>
 
 <!-- make-track-sample-reader -->
-<tr><td colspan=2><span class=defbox><code><em class=def><a name="maketracksamplereader">make-track-sample-reader</a></em> (track chn beg)</code></span></td></tr>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="maketracksamplereader">make-track-sample-reader</a></em> (track <i>chn beg</i>)</code></span></td></tr>
 <tr><td></td>
 <td>create a track-sample-reader reading <i>track</i>.  <i>beg</i> is the starting point of the reader within the track.
 </td></tr> 
@@ -2710,17 +2710,9 @@ can read external sounds without going to the trouble of loading them into Snd.
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="mixsamplereaderQ">mix-sample-reader?</a></em> (obj)</code></span></td></tr>
 <tr><td></td><td>#t if <i>obj</i> is a mix-sample-reader.</td></tr>
 
-<!-- next-mix-sample -->
-<tr><td colspan=2><span class=defbox><code><em class=def><a name="nextmixsample">next-mix-sample</a></em>   (obj)</code></span></td></tr>
-<tr><td></td><td>return next sample read by mix-sample-reader <i>obj</i>.</td></tr>
-
 <!-- next-sample -->
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="nextsample">next-sample</a></em>       (obj)</code></span></td></tr>
 <tr><td></td><td>return next sample (reading forward) read by sample-reader <i>obj</i>.</td></tr>
-
-<!-- next-track-sample -->
-<tr><td colspan=2><span class=defbox><code><em class=def><a name="nexttracksample">next-track-sample</a></em> (obj)</code></span></td></tr>
-<tr><td></td><td>return next sample read by track-sample-reader <i>obj</i>.</td></tr>
 
 <!-- previous-sample -->
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="previoussample">previous-sample</a></em>   (obj)</code></span></td></tr>
@@ -2819,6 +2811,8 @@ ina and file-&gt;sample, as well as snd-&gt;sample will call the snd-&gt;sample 
 
 <br>
 <table width="100%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h3><A NAME="sndmarks">Marks</a></h3></td></tr></table>
+
+<A NAME="markstuff"></a>
 
 <p>A mark is an object that refers to a particular sample.
 Each mark has an associated sample number (<b>mark-sample</b>), name (<b>mark-name</b>), sync value (<b>mark-sync</b>), and
@@ -3005,8 +2999,7 @@ the list of ids reflects the mark list at that time in the edit history.  See de
 
 </table>
 
-<!-- INDEX markexamples:Marking -->
-<A NAME="markexamples"></a>
+<!-- INDEX markstuff:Marking -->
 <p>
 See <a href="sndscm.html#marksdoc">marks.scm</a> for
 more examples including:
@@ -3109,12 +3102,12 @@ mixed without creating any mix tags.  <i>track</i> is the mix track number.
 </td></tr>
 
 <!-- mix-amp -->
-<tr><td colspan=2><span class=defbox><code><em class=def><a name="sndmixamp">mix-amp</a></em> (<i>mix chan</i>)</code></span></td></tr>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="sndmixamp">mix-amp</a></em> (mix <i>chan</i>)</code></span></td></tr>
 <tr><td></td><td>amplitude of <i>mix</i>'s channel <i>chan</i>.
 </td></tr>
 
 <!-- mix-amp-env -->
-<tr><td colspan=2><span class=defbox><code><em class=def><a name="sndmixampenv">mix-amp-env</a></em> (<i>mix chan</i>)</code></span></td></tr>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="sndmixampenv">mix-amp-env</a></em> (mix <i>chan</i>)</code></span></td></tr>
 <tr><td></td><td>amplitude envelope of <i>mix</i>'s channel <i>chan</i> (a list of breakpoints).  To reset this to its default (null) state, use #f.
 <code>(set! (mix-amp-env 0 0) '(0 0 1 1))</code> sets mix 0's 0-chan envelope to a ramp.
 </td></tr>
@@ -3134,37 +3127,24 @@ red; but <code>(set! (mix-color 3) red)</code> sets only mix #3 to be red.
 </td></tr>
 
 <!-- mix-frames -->
-<tr><td colspan=2><span class=defbox><code><em class=def><a name="sndmixframes">mix-frames</a></em> (<i>mix</i>)</code></span></td></tr>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="sndmixframes">mix-frames</a></em> (mix)</code></span></td></tr>
 <tr><td></td><td>mix's length in samples (not settable).
 </td></tr>
 
 <!-- mix-home-->
-<tr><td colspan=2><span class=defbox><code><em class=def><a name="sndmixhome">mix-home</a></em> (<i>mix</i>)</code></span></td></tr>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="sndmixhome">mix-home</a></em> (mix)</code></span></td></tr>
 <tr><td></td><td>a list of the sound index and channel number affected by <i>mix</i>.
 </td></tr>
 
 <!-- mix-locked? -->
-<tr><td colspan=2><span class=defbox><code><em class=def><a name="sndmixlocked">mix-locked?</a></em> (<i>mix</i>)</code></span></td></tr>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="sndmixlocked">mix-locked?</a></em> (mix)</code></span></td></tr>
 <tr><td></td><td>#t if <i>mix</i> is locked.  A mix is automatically locked (i.e. made immovable) if an edit operation
 affects some portion of the data that the mix also affects.  For example, if you delete a portion of a sound
-that has actively mixed data, the associated mix tag goes away until you undo that deletion.  This can
-be used deliberately to remove a mix:
-</td></tr>
-<tr><td></td><td>
-<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
-(define (delete-mix id)
-  (if (mix? id)
-      (as-one-edit
-       (lambda ()
-	 (do ((i 0 (1+ i)))
-	     ((= i (mix-chans id)))
-	   (set! (mix-amp id i) 0.0))
-	 (set! (<em class=red>mix-locked?</em> id) #t)))))
-</pre></td></tr></table>
+that has actively mixed data, the associated mix tag goes away until you undo that deletion. 
 </td></tr>
 
 <!-- mix-position -->
-<tr><td colspan=2><span class=defbox><code><em class=def><a name="sndmixposition">mix-position</a></em> (<i>mix</i>)</code></span></td></tr>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="sndmixposition">mix-position</a></em> (mix)</code></span></td></tr>
 <tr><td></td><td>position (a sample number) of <i>mix</i>.
 </td></tr>
 
@@ -3182,7 +3162,7 @@ mix (add) selection starting at beg in snd's channel chn.  Return new mix id.
 </td></tr>
 
 <!-- mix-speed -->
-<tr><td colspan=2><span class=defbox><code><em class=def><a name="sndmixspeed">mix-speed</a></em> (<i>mix</i>)</code></span></td></tr>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="sndmixspeed">mix-speed</a></em> (mix)</code></span></td></tr>
 <tr><td></td><td>speed (resampling ratio) of <i>mix</i>; 1.0 (default) means no resampling; 2.0 reads the mix data twice as fast.
 </td></tr>
 
@@ -3192,7 +3172,7 @@ mix (add) selection starting at beg in snd's channel chn.  Return new mix id.
 </td></tr>
 
 <!-- mix-tag-position -->
-<tr><td colspan=2><span class=defbox><code><em class=def><a name="sndmixtagposition">mix-tag-position</a></em> (<i>mix</i>)</code></span></td></tr>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="sndmixtagposition">mix-tag-position</a></em> (mix)</code></span></td></tr>
 <tr><td></td><td>tagposition (tag) position (within the mix) of <i>mix</i>; a sample number.
 </td></tr>
 
@@ -3202,12 +3182,12 @@ mix (add) selection starting at beg in snd's channel chn.  Return new mix id.
 </td></tr>
 
 <!-- mix-tag-y -->
-<tr><td colspan=2><span class=defbox><code><em class=def><a name="sndmixtagy">mix-tag-y</a></em> (<i>mix</i>)</code></span></td></tr>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="sndmixtagy">mix-tag-y</a></em> (mix)</code></span></td></tr>
 <tr><td></td><td>tag y offset in graph of <i>mix</i> (default 0).  The x offset of the tag is determined by <a href="sndmixtagposition">mix-tag-position</a>.
 </td></tr>
 
 <!-- mix-track -->
-<tr><td colspan=2><span class=defbox><code><em class=def><a name="sndmixtrack">mix-track</a></em> (<i>mix</i>)</code></span></td></tr>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="sndmixtrack">mix-track</a></em> (mix)</code></span></td></tr>
 <tr><td></td><td>mix track (0 = none).
 A "track" is a list of associated mixes (see below).
 </td></tr>
@@ -3227,12 +3207,12 @@ If <i>track</i> is the id of an existing track, the subsequent mix is placed in 
 </td></tr>
 
 <!-- mix? -->
-<tr><td colspan=2><span class=defbox><code><em class=def><a name="sndmixok">mix?</a></em> (<i>mix</i>)</code></span></td></tr>
-<tr><td></td><td>#t if <i>mix</i> is active.
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="sndmixok">mix?</a></em> (id)</code></span></td></tr>
+<tr><td></td><td>#t if <i>id</i> is an active mix.
 </td></tr>
 
 <!-- play-mix -->
-<tr><td colspan=2><span class=defbox><code><em class=def><a name="sndplaymix">play-mix</a></em> (<i>mix beg</i>)</code></span></td></tr>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="sndplaymix">play-mix</a></em> (mix <i>beg</i>)</code></span></td></tr>
 <tr><td></td><td>play mix <i>mix</i>.  'beg' is where to start playing within the mix.
 </td></tr>
 
@@ -3244,10 +3224,7 @@ mix so that it can be easily moved around.
 
 </table>
 
-<! TODO: track help menu item/ xref table -->
-
-<!-- INDEX mixingexamples:Mixing -->
-<A NAME="mixingexamples"></a>
+<!-- INDEX sndmixes:Mixing -->
 <br>
 <TABLE border=3 bordercolor="tan" hspace=40><tr><td>
 <blockquote><small>
@@ -3279,10 +3256,14 @@ delete all mixes: <a href="sndscm.html#deleteallmixes">delete-all-mixes</a><br>
 <br>
 <table width="100%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3>Tracks</h3></td></tr></table>
 
+<A NAME="trackstuff"></a>
+
 <p>A track is a list of mixes, each member mix having its track set to the track id.  The <b>make-track</b>
 function takes the initial mixes, returning the track id (an integer).  The
 <b>track</b> function returns the list of mixes that are members of the given track.  The rest of the track functions
-take the track id as their initial argument.  
+take the track id as their initial argument.  A track has much the same structure as a mix: an amplitude, speed,
+amplitude envelope, track, position, and so on.  If its track field is not 0, the entire track is a member
+of the given track, just as a mix would be.
 </p>
 
 <!-- -------------------------------- TRACK FUNCTION TABLE -------------------------------- -->
@@ -3313,12 +3294,14 @@ to preserve its overall amp-env despite some subsequent editing that changes the
 
 <!-- make-track -->
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="maketrack">make-track</a></em> (<i>mix-ids...</i>)</code></span></td></tr>
-<tr><td width=50><br></td><td>Create new track, returning its id.  You can add a track subsequently using mix-track.
-<code>(make-track 1 3)</code> creates a new track with mixes 1 and 3.
+<tr><td width=50><br></td><td>Create new track, returning its id.  You can add a mix to the track subsequently by setting mix-track.
+<code>(make-track 1 3)</code> creates a new track with mixes 1 and 3.  A mix can be a member (directly) of only one track, so
+if its track field is already set, and it is included as an argument to make-track, the previous setting is cancelled.
+If the previous track had an amplitude envelope, this can cause its remaining mixes to be re-enveloped.
 </td></tr>
 
 <!-- play-track -->
-<tr><td colspan=2><span class=defbox><code><em class=def><a name="sndplaytrack">play-track</a></em> (<i>track-id chn beg</i>)</code></span></td></tr>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="sndplaytrack">play-track</a></em> (track-id <i>chn beg</i>)</code></span></td></tr>
 <tr><td></td><td>play track <i>track</i>. If chn is #t, play all associated mixes, even if in different sounds.
 'beg' is where to start playing within the track.
 </td></tr>
@@ -3350,6 +3333,9 @@ not currently garbage collected; to free one, use <a href="#freetrack">free-trac
 The amplitude envelope is applied over the entire track;
 each mix's resultant amp env is the result of multiplying its env (if any) by
 the portion of the track env that happens to fall over it.  Use #f to reset it to the default (null) envelope.
+Anything that changes the track's bounds causes the track envelope to be reapplied; there are many ways
+this can happen implicitly: set mix-track, mix-position, mix-speed (of a constituent mix), track-position,
+and track-speed; even make-track if it steals away one of our member mixes.
 </td></tr>
 
 <!-- track-chans -->
@@ -3412,9 +3398,24 @@ track are moved.
 </table>
 <br>
 
-<!-- TODO: doc how nested tracks work, track xref table (also->help snd-xref etc)
--->
-
+<!-- INDEX trackstuff:Tracks -->
+<TABLE border=3 bordercolor="tan" hspace=40><tr><td>
+<blockquote><small>
+<br>
+place track in vct: <a href="sndscm.html#track2vct">track-&gt;vct</a><br>
+place track in file: <a href="sndscm.html#savetrack">save-track</a><br>
+filter track data: <a href="sndscm.html#filtertrack">filter-track</a><br>
+transpose track: <a href="sndscm.html#transposetrack">transpose-track</a><br>
+change track tempo: <a href="sndscm.html#retempotrack">retempo-track</a><br>
+maxamp of track data: <a href="sndscm.html#trackmaxamp">track-maxamp</a><br>
+track property list: <a href="sndscm.html#trackproperty">track-property</a><br>
+reverse track: <a href="sndscm.html#reversetrack">reverse-track</a><br>
+various dialogs for track operations: dlp/mix-menu.scm and dlp/track-colors.scm<br>
+<br>
+</small></blockquote>
+</td></tr></TABLE>
+<br>
+<br>
 
 <table width="100%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h3><A NAME="sndregions">Regions and Selections</a></h3></td></tr></table>
 
@@ -3427,6 +3428,7 @@ Most of the region arguments default to the current region (the top of the regio
 
 <!-- -------------------------------- REGION TABLE -------------------------------- -->
 
+<A NAME="regionstuff"></a>
 <table border=0 cellspacing=10>
 
 <!-- forget-region -->
@@ -3545,8 +3547,7 @@ is mus-next), with header comment <i>comment</i>.
 </td></tr>
 
 </table>
-<!-- INDEX regionexamples:Regions -->
-<A NAME="regionexamples"></a>
+<!-- INDEX regionstuff:Regions -->
 <TABLE border=3 bordercolor="tan" hspace=40><tr><td>
 <small><blockquote>
 See also:<br>
@@ -3567,6 +3568,7 @@ region-play-list and region-play-sequence in examp.scm<br>
 
 <!-- -------------------------------- SELECTION TABLE -------------------------------- -->
 
+<A NAME="selectionstuff"></a>
 <table border=0 cellspacing=10>
 
 <!-- convolve-selection-with -->
@@ -3730,8 +3732,7 @@ this is the same as <i>src-sound</i> but applied to selection.
 </table>
 <br>
 
-<!-- INDEX selectionexamples:Selections -->
-<A NAME="selectionexamples"></a>
+<!-- INDEX selectionstuff:Selections -->
 <TABLE border=3 bordercolor="tan" hspace=40><tr><td>
 <small><blockquote>
 See also:<br>

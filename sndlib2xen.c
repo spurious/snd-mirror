@@ -1362,21 +1362,27 @@ static XEN sound_data_dup(XEN obj)
 
 #endif
 
+#if HAVE_RUBY
+  #define TO_LANG(Str) xen_scheme_constant_to_ruby(Str)
+#else
+  #define TO_LANG(Str) Str
+#endif
+
 char *mus_header_type_to_constant_name(int type)
 {
   switch (type)
     {
-    case MUS_NEXT: return(S_mus_next);
-    case MUS_AIFF: return(S_mus_aiff);
-    case MUS_AIFC: return(S_mus_aifc);
-    case MUS_RIFF: return(S_mus_riff);
-    case MUS_NIST: return(S_mus_nist);
-    case MUS_IRCAM: return(S_mus_ircam);
-    case MUS_RAW: return(S_mus_raw);
-    case MUS_BICSF: return(S_mus_bicsf);
-    case MUS_VOC: return(S_mus_voc);
-    case MUS_SVX: return(S_mus_svx);
-    case MUS_SOUNDFONT: return(S_mus_soundfont);
+    case MUS_NEXT: return(TO_LANG(S_mus_next));
+    case MUS_AIFF: return(TO_LANG(S_mus_aiff));
+    case MUS_AIFC: return(TO_LANG(S_mus_aifc));
+    case MUS_RIFF: return(TO_LANG(S_mus_riff));
+    case MUS_NIST: return(TO_LANG(S_mus_nist));
+    case MUS_IRCAM: return(TO_LANG(S_mus_ircam));
+    case MUS_RAW: return(TO_LANG(S_mus_raw));
+    case MUS_BICSF: return(TO_LANG(S_mus_bicsf));
+    case MUS_VOC: return(TO_LANG(S_mus_voc));
+    case MUS_SVX: return(TO_LANG(S_mus_svx));
+    case MUS_SOUNDFONT: return(TO_LANG(S_mus_soundfont));
     }
   return(NULL);
 }
@@ -1385,28 +1391,28 @@ char *mus_data_format_to_constant_name(int format)
 {
   switch (format)
     {
-    case MUS_BSHORT: return(S_mus_bshort);
-    case MUS_LSHORT: return(S_mus_lshort);
-    case MUS_MULAW: return(S_mus_mulaw);
-    case MUS_ALAW: return(S_mus_alaw);
-    case MUS_BYTE: return(S_mus_byte);
-    case MUS_UBYTE: return(S_mus_ubyte);
-    case MUS_BFLOAT: return(S_mus_bfloat);
-    case MUS_LFLOAT: return(S_mus_lfloat);
-    case MUS_BINT: return(S_mus_bint);
-    case MUS_LINT: return(S_mus_lint);
-    case MUS_BINTN: return(S_mus_bintn);
-    case MUS_LINTN: return(S_mus_lintn);
-    case MUS_B24INT: return(S_mus_b24int);
-    case MUS_L24INT: return(S_mus_l24int);
-    case MUS_BDOUBLE: return(S_mus_bdouble);
-    case MUS_LDOUBLE: return(S_mus_ldouble);
-    case MUS_UBSHORT: return(S_mus_ubshort);
-    case MUS_ULSHORT: return(S_mus_ulshort);
-    case MUS_BDOUBLE_UNSCALED: return(S_mus_bdouble_unscaled);
-    case MUS_LDOUBLE_UNSCALED: return(S_mus_ldouble_unscaled);
-    case MUS_BFLOAT_UNSCALED: return(S_mus_bfloat_unscaled);
-    case MUS_LFLOAT_UNSCALED: return(S_mus_lfloat_unscaled);
+    case MUS_BSHORT: return(TO_LANG(S_mus_bshort));
+    case MUS_LSHORT: return(TO_LANG(S_mus_lshort));
+    case MUS_MULAW: return(TO_LANG(S_mus_mulaw));
+    case MUS_ALAW: return(TO_LANG(S_mus_alaw));
+    case MUS_BYTE: return(TO_LANG(S_mus_byte));
+    case MUS_UBYTE: return(TO_LANG(S_mus_ubyte));
+    case MUS_BFLOAT: return(TO_LANG(S_mus_bfloat));
+    case MUS_LFLOAT: return(TO_LANG(S_mus_lfloat));
+    case MUS_BINT: return(TO_LANG(S_mus_bint));
+    case MUS_LINT: return(TO_LANG(S_mus_lint));
+    case MUS_BINTN: return(TO_LANG(S_mus_bintn));
+    case MUS_LINTN: return(TO_LANG(S_mus_lintn));
+    case MUS_B24INT: return(TO_LANG(S_mus_b24int));
+    case MUS_L24INT: return(TO_LANG(S_mus_l24int));
+    case MUS_BDOUBLE: return(TO_LANG(S_mus_bdouble));
+    case MUS_LDOUBLE: return(TO_LANG(S_mus_ldouble));
+    case MUS_UBSHORT: return(TO_LANG(S_mus_ubshort));
+    case MUS_ULSHORT: return(TO_LANG(S_mus_ulshort));
+    case MUS_BDOUBLE_UNSCALED: return(TO_LANG(S_mus_bdouble_unscaled));
+    case MUS_LDOUBLE_UNSCALED: return(TO_LANG(S_mus_ldouble_unscaled));
+    case MUS_BFLOAT_UNSCALED: return(TO_LANG(S_mus_bfloat_unscaled));
+    case MUS_LFLOAT_UNSCALED: return(TO_LANG(S_mus_lfloat_unscaled));
     }
   return(NULL);
 }

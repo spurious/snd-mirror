@@ -1054,7 +1054,7 @@ static XEN g_make_delay_1(int choice, XEN arglist)
   XEN args[14]; 
   XEN keys[7];
   int orig_arg[7] = {0, 0, 0, 0, 0, 0, 0};
-  int vals, i, argn = 0, len, arglist_len, keyn, max_size = -1;
+  int vals, i, argn = 0, len = 0, arglist_len, keyn, max_size = -1;
   int size = 1, size_key = 0;
   Float *line = NULL;
   Float scaler = 0.0, feedback = 0.0, feedforward = 0.0;
@@ -1507,7 +1507,7 @@ a new one is created.  If normalize is #t, the resulting waveform goes between -
   XEN table; 
   XEN lst;
   Float *partial_data, *wave;
-  int len, i;
+  int len = 0, i;
   XEN_ASSERT_TYPE(XEN_LIST_P_WITH_LENGTH(partials, len), partials, XEN_ARG_1, S_partials2wave, "a list");
   XEN_ASSERT_TYPE(VCT_P(utable) || XEN_FALSE_P(utable) || (!(XEN_BOUND_P(utable))), utable, XEN_ARG_2, S_partials2wave, "a vct or #f");
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(normalize), normalize, XEN_ARG_3, S_partials2wave, "a boolean");
@@ -1540,7 +1540,7 @@ static XEN g_phasepartials2wave(XEN partials, XEN utable, XEN normalize)
   vct *f;
   XEN table, lst;
   Float *partial_data, *wave;
-  int len, i;
+  int len = 0, i;
 
   #define H_phasepartials2wave "(" S_phasepartials2wave " partials (wave #f) (normalize #f)): \
 take a list of partials (harmonic number, amplitude, initial phase) and produce \
@@ -2235,7 +2235,7 @@ with chans samples, each sample set from the trailing arguments (defaulting to 0
   mus_any *fr;
   Float *vals;
   XEN cararg, lst;
-  int size = 0, i, len;
+  int size = 0, i, len = 0;
   XEN_ASSERT_TYPE((XEN_LIST_P_WITH_LENGTH(arglist, len)) && (len > 0), arglist, XEN_ARG_1, S_make_frame, "a list");
   cararg = XEN_CAR(arglist);
   XEN_ASSERT_TYPE(XEN_NUMBER_P(cararg), cararg, 1, S_make_frame, "a number");
@@ -2473,7 +2473,7 @@ giving | (a*.5 + b*.125) (a*.25 + b*1.0) |"
   mus_any *fr;
   Float **vals;
   XEN cararg, lst;
-  int size = 0, i, j, k, len;
+  int size = 0, i, j, k, len = 0;
   XEN_ASSERT_TYPE(XEN_LIST_P_WITH_LENGTH(arglist, len), arglist, XEN_ARG_1, S_make_mixer, "a list");
   if (len == 0) mus_misc_error(S_make_mixer, "need at least 1 arg", arglist);
   cararg = XEN_CAR(arglist);
@@ -2854,7 +2854,7 @@ static XEN g_partials2waveshape(XEN amps, XEN s_size)
 produce a waveshaping lookup table (suitable for the " S_waveshape " generator) \
 that will produce the harmonic spectrum given by the partials argument"
 
-  int npartials, size, len;
+  int npartials, size, len = 0;
   Float *partials, *wave;
   XEN gwave;
   XEN_ASSERT_TYPE(XEN_LIST_P_WITH_LENGTH(amps, len), amps, XEN_ARG_1, S_partials2waveshape, "a list");
@@ -2885,7 +2885,7 @@ to create (via waveshaping) the harmonic spectrum described by the partials argu
          (os (make-oscil)))\n\
      (polynomial v0 (oscil os)))"
 
-  int npartials, kind, len;
+  int npartials, kind, len = 0;
   Float *partials, *wave;
   XEN_ASSERT_TYPE(XEN_LIST_P_WITH_LENGTH(amps, len), amps, XEN_ARG_1, S_partials2polynomial, "a list");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ukind), ukind, XEN_ARG_2, S_partials2polynomial, "an integer");
