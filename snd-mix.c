@@ -3038,7 +3038,7 @@ static void play_mix(snd_state *ss, mix_info *md)
 	      for (j = 0; j < 256; j++)
 		buf[0][j] = MUS_FLOAT_TO_SAMPLE(next_mix_sample(mf));
 	      mus_file_write_buffer(format, 0, 255, 1, buf, outbuf, TRUE);
-	      mus_audio_write(playfd, outbuf, 256 * datum_bytes);
+	      mus_audio_write(play_fd, outbuf, 256 * datum_bytes);
   #else
 	      for (j = 0; j < 256; j++) 
 		buf[j] = MUS_SAMPLE_TO_SHORT(MUS_FLOAT_TO_SAMPLE(next_mix_sample(mf)));
