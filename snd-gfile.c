@@ -148,7 +148,7 @@ static GtkWidget *snd_gtk_file_selection_new(snd_state *ss, char *title, GtkSign
   set_background(new_dialog, (ss->sgx)->basic_color);
   gtk_signal_connect(GTK_OBJECT(new_dialog), "delete_event", gdelete, (gpointer)ss);
   gtk_signal_connect(GTK_OBJECT(GTK_ICON_FILESEL(new_dialog)->ok_button), "clicked", ok, (gpointer)ss);
-  gtk_signal_connect_object(GTK_OBJECT(GTK_ICON_FILESEL(new_dialog)->cancel_button), "clicked", cancel, (gpointer)ss);
+  gtk_signal_connect_object(GTK_OBJECT(GTK_ICON_FILESEL(new_dialog)->cancel_button), "clicked", cancel, (GtkObject *)ss);
   set_pushed_button_colors(GTK_ICON_FILESEL(new_dialog)->ok_button, ss);
   set_pushed_button_colors(GTK_ICON_FILESEL(new_dialog)->cancel_button, ss);
   #if HAVE_GETCWD
@@ -1507,12 +1507,12 @@ void edit_header(snd_info *sp)
 static SCM g_just_sounds(void)
 {
   #define H_just_sounds "not implemented in Gtk+ version of Snd"
-  return(SCM_UNSPECIFIED);
+  return(SCM_BOOL_F);
 }
 
 static SCM g_set_just_sounds(SCM on) 
 {
-  return(SCM_UNSPECIFIED);
+  return(SCM_BOOL_F);
 }
 
 void g_initialize_xgfile(SCM local_doc)

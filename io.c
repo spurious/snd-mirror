@@ -1187,16 +1187,32 @@ static int mus_read_any_1(int tfd, int beg, int chans, int nints, MUS_SAMPLE_TYP
 			buffer[loc] = MUS_BYTE_TO_SAMPLE((int)(*jchar) - 128);
 		      break;
 		    case MUS_BFLOAT:
-		      for (; loc < loclim; loc++, jchar += siz_chans) 
-			buffer[loc] = (MUS_SAMPLE_TYPE) (prescaling * (m_big_endian_float(jchar)));
+		      if (prescaling == 1.0)
+			{
+			  for (; loc < loclim; loc++, jchar += siz_chans) 
+			    buffer[loc] = (MUS_SAMPLE_TYPE) (m_big_endian_float(jchar));
+			}
+		      else
+			{
+			  for (; loc < loclim; loc++, jchar += siz_chans) 
+			    buffer[loc] = (MUS_SAMPLE_TYPE) (prescaling * (m_big_endian_float(jchar)));
+			}
 		      break;
 		    case MUS_BDOUBLE:   
 		      for (; loc < loclim; loc++, jchar += siz_chans)
 			buffer[loc] = (MUS_SAMPLE_TYPE) (prescaling * (m_big_endian_double(jchar)));
 		      break;
 		    case MUS_LFLOAT:    
-		      for (; loc < loclim; loc++, jchar += siz_chans) 
-			buffer[loc] = (MUS_SAMPLE_TYPE) (prescaling * (m_little_endian_float(jchar)));
+		      if (prescaling == 1.0)
+			{
+			  for (; loc < loclim; loc++, jchar += siz_chans) 
+			    buffer[loc] = (MUS_SAMPLE_TYPE) (m_little_endian_float(jchar));
+			}
+		      else
+			{
+			  for (; loc < loclim; loc++, jchar += siz_chans) 
+			    buffer[loc] = (MUS_SAMPLE_TYPE) (prescaling * (m_little_endian_float(jchar)));
+			}
 		      break;
 		    case MUS_LDOUBLE:   
 		      for (; loc < loclim; loc++, jchar += siz_chans) 

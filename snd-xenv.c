@@ -1037,7 +1037,7 @@ static void make_base_label(snd_state *ss, Float bval)
   mus_snprintf(sfs, len, "%f", bval);
   scale_len = (int)(enved_power(ss) + 3);
   buf = (char *)CALLOC(scale_len, sizeof(char));
-  for (i = 0; i < scale_len-1; i++) 
+  for (i = 0; i < scale_len - 1; i++) 
     buf[i] = sfs[i];
   set_button_label(baseValue, buf);
   FREE(sfs);

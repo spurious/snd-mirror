@@ -268,6 +268,10 @@ void eval_expression(chan_info *cp, snd_info *sp, int count, int regexpr)
     }
 }
 
+/* TODO: move all but the basics into scheme here (i.e. map-chan, and (map-any-chans...) with list of parallel chans
+ *         the collected series cases can be handled in scheme
+ */
+
 enum {SCAN_CURRENT_CHAN, SCAN_SOUND_CHANS, SCAN_SYNCD_CHANS, SCAN_ALL_CHANS};
 
 static SCM series_scan(snd_state *ss, chan_info *cp, SCM proc, int chan_choice, int beg, int end, 
@@ -282,6 +286,9 @@ static SCM series_scan(snd_state *ss, chan_info *cp, SCM proc, int chan_choice, 
   int kp, j, ip, len, num, reporting = 0, rpt = 0, rpt4, counts = 0;
   SCM res;
   char *errmsg;
+#if USE_OPT_APPLY
+  int closurep = 0;
+#endif
   errmsg = procedure_ok(proc, 1, 0, origin, procname, procn);
   if (errmsg)
     {
@@ -309,6 +316,9 @@ static SCM series_scan(snd_state *ss, chan_info *cp, SCM proc, int chan_choice, 
   si = sc->si;
   sfs = sc->sfs;
   rpt4 = MAX_BUFFER_SIZE / 4;
+#if USE_OPT_APPLY
+  if (SCM_CLOSUREP(proc)) closurep = 1;
+#endif
   for (ip = 0; ip < si->chans; ip++)
     {
       cp = si->cps[ip];
@@ -331,6 +341,15 @@ static SCM series_scan(snd_state *ss, chan_info *cp, SCM proc, int chan_choice, 
 	  if (reporting) start_progress_report(sp, NOT_FROM_ENVED);
 	  for (kp = 0; kp < num; kp++)
 	    {
+#if USE_OPT_APPLY
+	      /* we can't get here at all without being within snd_catch_any already, I think */
+	      if (closurep)
+		res = scm_eval_body(SCM_CDR(SCM_CODE(proc)), 
+				    SCM_EXTEND_ENV(SCM_CAR(SCM_CODE(proc)),
+						   SCM_LIST1(TO_SCM_DOUBLE((double)next_sample_to_float(sf))),
+						   SCM_ENV(proc)));
+	      else
+#endif
 	      res = CALL1(proc,
 			  TO_SCM_DOUBLE((double)next_sample_to_float(sf)),
 			  origin);
@@ -346,9 +365,6 @@ static SCM series_scan(snd_state *ss, chan_info *cp, SCM proc, int chan_choice, 
 		      free_sync_state(sc); 
 		      if (reporting) 
 			finish_progress_report(sp, NOT_FROM_ENVED);
-		      if (SYMBOL_P(res))
-			scm_throw(res,
-				  SCM_LIST1(TO_SCM_STRING(origin)));
 		      return(SCM_LIST5(res,
 				       TO_SCM_INT(kp + beg),
 				       TO_SMALL_SCM_INT(cp->chan),
@@ -405,6 +421,9 @@ static SCM parallel_scan(snd_state *ss, chan_info *cp, SCM proc, int chan_choice
   int kp, ip, pos = 0, len, num, reporting = 0, rpt = 0, rpt4;
   SCM res = SCM_UNDEFINED, args, g_chns;
   char *errmsg;
+#if USE_OPT_APPLY
+  int closurep = 0;
+#endif
   errmsg = procedure_ok(proc, 2, 0, origin, procname, procn);
   if (errmsg)
     {
@@ -450,11 +469,23 @@ static SCM parallel_scan(snd_state *ss, chan_info *cp, SCM proc, int chan_choice
   num = end - beg + 1;
   reporting = (num > MAX_BUFFER_SIZE);
   if (reporting) start_progress_report(sp, NOT_FROM_ENVED);
+#if USE_OPT_APPLY
+  if (SCM_CLOSUREP(proc)) closurep = 1;
+#endif
   if (si->chans == 1)
     { /* optimize common special case */
       for (kp = 0; kp < num; kp++)
 	{
 	  vdata[0] = TO_SCM_DOUBLE((double)next_sample_to_float(sfs[0]));
+#if USE_OPT_APPLY
+	  /* we can't get here at all without being within snd_catch_any already, I think */
+	  if (closurep)
+	    res = scm_eval_body(SCM_CDR(SCM_CODE(proc)), 
+				SCM_EXTEND_ENV(SCM_CAR(SCM_CODE(proc)),
+					       SCM_LIST2(args, g_chns),
+					       SCM_ENV(proc)));
+	  else
+#endif
 	  res = CALL2(proc, args, g_chns, origin);
 	  if (NOT_FALSE_P(res))
 	    {
@@ -470,7 +501,7 @@ static SCM parallel_scan(snd_state *ss, chan_info *cp, SCM proc, int chan_choice
 		  rpt = 0;
 		}
 	    }
-	  if ((ss->stopped_explicitly) || (!(cp->sound))) break;
+	  if ((ss->stopped_explicitly) || (!(cp->active))) break;
 	}
     }
   else
@@ -479,6 +510,15 @@ static SCM parallel_scan(snd_state *ss, chan_info *cp, SCM proc, int chan_choice
 	{
 	  for (ip = 0; ip < si->chans; ip++)
 	    vdata[ip] = TO_SCM_DOUBLE((double)next_sample_to_float(sfs[ip]));
+#if USE_OPT_APPLY
+	  /* we can't get here at all without being within snd_catch_any already, I think */
+	  if (closurep)
+	    res = scm_eval_body(SCM_CDR(SCM_CODE(proc)), 
+				SCM_EXTEND_ENV(SCM_CAR(SCM_CODE(proc)),
+					       SCM_LIST2(args, g_chns),
+					       SCM_ENV(proc)));
+	  else
+#endif
 	  res = CALL2(proc, args, g_chns, origin);
 	  if (NOT_FALSE_P(res))
 	    {
@@ -628,6 +668,9 @@ static SCM series_map(snd_state *ss, chan_info *cp, SCM proc, int chan_choice, i
   MUS_SAMPLE_TYPE *vals;
   SCM res;
   SCM errstr;
+#if USE_OPT_APPLY
+  int closurep = 0;
+#endif
   char *errmsg;
   errmsg = procedure_ok(proc, 1, 0, origin, procname, procn);
   if (errmsg)
@@ -656,6 +699,9 @@ static SCM series_map(snd_state *ss, chan_info *cp, SCM proc, int chan_choice, i
   si = sc->si;
   sfs = sc->sfs;
   rpt4 = MAX_BUFFER_SIZE / 4;
+#if USE_OPT_APPLY
+  if (SCM_CLOSUREP(proc)) closurep = 1;
+#endif
   for (ip = 0; ip < si->chans; ip++)
     {
       cp = si->cps[ip];
@@ -670,10 +716,18 @@ static SCM series_map(snd_state *ss, chan_info *cp, SCM proc, int chan_choice, i
 	  os = start_output(MAX_BUFFER_SIZE, sp->hdr, num);
 	  for (kp = 0; kp < num; kp++)
 	    {
+#if USE_OPT_APPLY
+	      /* we can't get here at all without being within snd_catch_any already, I think */
+	      if (closurep)
+		res = scm_eval_body(SCM_CDR(SCM_CODE(proc)), 
+				    SCM_EXTEND_ENV(SCM_CAR(SCM_CODE(proc)),
+						   SCM_LIST1(TO_SCM_DOUBLE((double)next_sample_to_float(sf))),
+						   SCM_ENV(proc)));
+	      else
+#endif
 	      res = CALL1(proc, 
 			  TO_SCM_DOUBLE((double)next_sample_to_float(sf)),
 			  origin);
-
 	      if (NUMBER_P(res))                         /* one number -> replace current sample */
 		output_sample(ss, os, SND_SRATE(sp), MUS_FLOAT_TO_SAMPLE(TO_C_DOUBLE(res)));
 	      else
@@ -691,15 +745,6 @@ static SCM series_map(snd_state *ss, chan_info *cp, SCM proc, int chan_choice, i
 			}
 		      else
 			{
-			  if (SYMBOL_P(res))
-			    {
-			      end_output(os, beg, cp, origin);
-			      for (j = ip; j < si->chans; j++) free_snd_fd(sfs[j]);    
-			      free_sync_state(sc); 
-			      if (reporting) finish_progress_report(sp, NOT_FROM_ENVED);
-			      scm_throw(res,
-					SCM_LIST1(TO_SCM_STRING(origin)));
-			    }
 			  val_size = 0;
 			  vals = g_floats_to_samples(res, &val_size, origin, 1);
 			  if (vals)
@@ -754,6 +799,9 @@ static SCM parallel_map(snd_state *ss, chan_info *cp, SCM proc, int chan_choice,
   MUS_SAMPLE_TYPE *vals;
   SCM res = SCM_UNDEFINED, args, g_chns, resval, errstr;
   char *errmsg;
+#if USE_OPT_APPLY
+  int closurep = 0;
+#endif
   errmsg = procedure_ok(proc, 2, 0, origin, procname, procn);
   if (errmsg)
     {
@@ -797,15 +845,27 @@ static SCM parallel_map(snd_state *ss, chan_info *cp, SCM proc, int chan_choice,
   g_chns = TO_SMALL_SCM_INT(si->chans);
   args = MAKE_VECTOR(si->chans, SCM_BOOL_F);
   vargs = SCM_VELTS(args);
+#if USE_OPT_APPLY
+  if (SCM_CLOSUREP(proc)) closurep = 1;
+#endif
   for (kp = 0; kp < num; kp++)
     {
       for (ip = 0; ip < si->chans; ip++)
 	vargs[ip] = TO_SCM_DOUBLE((double)next_sample_to_float(sfs[ip]));
+#if USE_OPT_APPLY
+      /* we can't get here at all without being within snd_catch_any already, I think */
+      if (closurep)
+	res = scm_eval_body(SCM_CDR(SCM_CODE(proc)), 
+			    SCM_EXTEND_ENV(SCM_CAR(SCM_CODE(proc)),
+					   SCM_LIST2(args, g_chns),
+					   SCM_ENV(proc)));
+      else
+#endif
       res = CALL2(proc, args, g_chns, origin);
                                                       /* #f -> no output in any channel, #t -> halt */
       if (NOT_FALSE_P(res))                           /* if #f, no output on this pass */
 	{
-	  if ((TRUE_P(res)) || (SYMBOL_P(res)))       /* if #t we halt the entire map */
+	  if (TRUE_P(res))                            /* if #t we halt the entire map */
 	    break;
 	  else
 	    {
@@ -857,9 +917,6 @@ static SCM parallel_map(snd_state *ss, chan_info *cp, SCM proc, int chan_choice,
     }
   FREE(os_arr);
   free_sync_state(sc);
-  if (SYMBOL_P(res))
-    scm_throw(res,
-	      SCM_LIST1(TO_SCM_STRING(origin)));
   if (ss->stopped_explicitly)
     {
       ss->stopped_explicitly = 0;
@@ -3692,22 +3749,22 @@ static SCM g_snd_spectrum(SCM data, SCM win, SCM len, SCM linear_or_dB)
   #define H_snd_spectrum "(" S_snd_spectrum " data window len linear-or-dB)\n\
 return magnitude spectrum of data (vct) in data using fft-window win and fft length len"
 
-  int i, n, linear, wtype;
+  int i, j, n, p = 0, n2, linear, wtype;
   Float maxa, todb, lowest, val;
   Float *idat, *rdat, *window;
   vct *v;
   SCM_ASSERT((VCT_P(data)), data, SCM_ARG1, S_snd_spectrum);
-  SCM_ASSERT(INTEGER_P(win), win, SCM_ARG2, S_snd_spectrum);
-  SCM_ASSERT(INTEGER_P(len), len, SCM_ARG3, S_snd_spectrum);
-  SCM_ASSERT(BOOLEAN_IF_BOUND_P(linear_or_dB), linear_or_dB, SCM_ARG1, S_snd_spectrum);
+  SCM_ASSERT(INTEGER_IF_BOUND_P(win), win, SCM_ARG2, S_snd_spectrum);
+  SCM_ASSERT(INTEGER_IF_BOUND_P(len), len, SCM_ARG3, S_snd_spectrum);
+  SCM_ASSERT(BOOLEAN_IF_BOUND_P(linear_or_dB), linear_or_dB, SCM_ARG4, S_snd_spectrum);
   v = TO_VCT(data);
   rdat = v->data;
-  n = TO_C_INT(len);
+  n = TO_C_INT_OR_ELSE(len, v->length);
   if (n <= 0)
     mus_misc_error(S_snd_spectrum, "length <= 0?", len);
   if (n > v->length) n = v->length;
-  if (TRUE_P(linear_or_dB)) linear = 1; else linear = 0;
-  wtype = TO_C_INT(win);
+  if (NOT_FALSE_P(linear_or_dB)) linear = 1; else linear = 0;
+  wtype = TO_C_INT_OR_ELSE(win, MUS_RECTANGULAR_WINDOW);
   if (!(MUS_FFT_WINDOW_OK(wtype)))
     mus_misc_error(S_snd_spectrum, "unknown fft window", win);
   idat = (Float *)CALLOC(n, sizeof(Float));
@@ -3715,16 +3772,41 @@ return magnitude spectrum of data (vct) in data using fft-window win and fft len
   make_fft_window_1(window, n, wtype, 0.0);
   for (i = 0; i < n; i++) rdat[i] *= window[i];
   FREE(window);
-  /* TODO: this could be optimized (see autocorrelate in snd-fft.c) */
-  mus_fft(rdat, idat, n, 1);
+
+  p = (int)(log(n) / log(4.0));
+  if (n == (int)pow(4, p))
+    {
+      fht(p, rdat);
+      rdat[0] *= rdat[0];
+      n2 = n / 2;
+      rdat[n2] *= rdat[n2];
+      for (i = 1, j = n - 1; i < n2; i++, j--)
+	{
+	  rdat[i] = 0.5 * ((rdat[i] * rdat[i]) + (rdat[j] * rdat[j]));
+	  rdat[j] = rdat[i];
+	}
+    }
+  else
+    {
+      mus_fft(rdat, idat, n, 1);
+      rdat[0] *= rdat[0];
+      n2 = n / 2;
+      rdat[n2] *= rdat[n2];
+      for (i = 1, j = n - 1; i < n2; i++, j--)
+	{
+	  rdat[i] = rdat[i] * rdat[i] + idat[i] * idat[i];
+	  rdat[j] = rdat[i];
+	}
+    }
+
   lowest = 0.00000001;
   maxa = 0.0;
   n = n / 2;
   for (i = 0; i < n; i++)
     {
-      val = rdat[i] * rdat[i] + idat[i] * idat[i];
+      val = rdat[i];
       if (val < lowest)
-	idat[i] = .0001;
+	idat[i] = 0.0;
       else 
 	{
 	  idat[i] = sqrt(val);
@@ -3738,7 +3820,9 @@ return magnitude spectrum of data (vct) in data using fft-window win and fft len
 	{
 	  todb = 20.0 / log(10.0);
 	  for (i = 0; i < n; i++) 
-	    idat[i] = todb * log(idat[i] * maxa);
+	    if (idat[i] > 0.0)
+	      idat[i] = todb * log(idat[i] * maxa);
+	    else idat[i] = -90.0;
 	}
       else 
 	for (i = 0; i < n; i++) 
@@ -4051,7 +4135,7 @@ void g_init_sig(SCM local_doc)
   DEFINE_PROC(S_env_selection,           g_env_selection, 1, 3, 0,           H_env_selection);
   DEFINE_PROC(S_env_sound,               g_env_sound, 1, 5, 0,               H_env_sound);
   DEFINE_PROC(S_fft,                     g_fft, 2, 1, 0,                     H_fft);
-  DEFINE_PROC(S_snd_spectrum,            g_snd_spectrum, 3, 1, 0,            H_snd_spectrum);
+  DEFINE_PROC(S_snd_spectrum,            g_snd_spectrum, 1, 3, 0,            H_snd_spectrum);
   DEFINE_PROC(S_convolve_arrays,         g_convolve, 1, 1, 0,                H_convolve);
   DEFINE_PROC(S_convolve_with,           g_convolve_with, 1, 3, 0,           H_convolve_with);
   DEFINE_PROC(S_convolve_selection_with, g_convolve_selection_with, 1, 1, 0, H_convolve_selection_with);

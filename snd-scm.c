@@ -655,7 +655,7 @@ int snd_eval_str(snd_state *ss, char *buf, int count)
   int ctr;
   char *str = NULL;
   for (ctr = 0; ctr < count; ctr++)
-    result = snd_catch_any(eval_str_wrapper, buf, buf);
+    result = snd_catch_any(eval_str_wrapper, (void *)buf, buf);
   str = gl_print(result, "eval-str");
   if (ss->mx_sp)
     {
@@ -678,7 +678,7 @@ void snd_eval_listener_str(snd_state *ss, char *buf)
   SCM result;
   char *str;
   if ((snd_strlen(buf) == 0) || ((snd_strlen(buf) == 1) && (buf[0] == '\n'))) return;
-  result = snd_catch_any(eval_str_wrapper, buf, buf);
+  result = snd_catch_any(eval_str_wrapper, (void *)buf, buf);
   str = gl_print(result, "eval-listener-str");
   ss->result_printout = MESSAGE_WITH_CARET;
   snd_append_command(ss, str);
@@ -734,7 +734,7 @@ void snd_eval_stdin_str(snd_state *ss, char *buf)
 #if HAVE_LIBREP
       result = EVAL_STRING(buf);
 #else
-      result = snd_catch_any(eval_str_wrapper, str, str);
+      result = snd_catch_any(eval_str_wrapper, (void *)str, str);
 #endif
       send_error_output_to_stdout = 0;
       FREE(stdin_str); /* same as str in this case */
@@ -758,7 +758,7 @@ void snd_load_init_file(snd_state *ss, int nog, int noi)
       if (fd != -1)
 	{
 	  close(fd);
-	  snd_catch_any(eval_file_wrapper, SND_CONF, "(load " SND_CONF ")");
+	  snd_catch_any(eval_file_wrapper, (void *)SND_CONF, "(load " SND_CONF ")");
 	}
     }
 #endif
@@ -769,7 +769,7 @@ void snd_load_init_file(snd_state *ss, int nog, int noi)
       if (fd != -1) 
 	{
 	  close(fd);
-	  snd_catch_any(eval_file_wrapper, str, "(load ~/.snd)");
+	  snd_catch_any(eval_file_wrapper, (void *)str, "(load ~/.snd)");
 	}
       if (str) FREE(str);
     }
@@ -789,10 +789,10 @@ void snd_load_file(char *filename)
       if (!mus_file_probe(str1))
 	snd_error("can't load %s: %s", filename, strerror(errno));
       /* snd_error ok here because all uses of this are user-interface generated (autoload, memo-file, etc) */
-      else snd_catch_any(eval_file_wrapper, str1, str2);
+      else snd_catch_any(eval_file_wrapper, (void *)str1, str2);
       FREE(str1);
     }
-  else snd_catch_any(eval_file_wrapper, str, str2);
+  else snd_catch_any(eval_file_wrapper, (void *)str, str2);
   if (str) FREE(str);
   if (str2) FREE(str2);
 }
@@ -2011,7 +2011,7 @@ static SCM vct2soundfile(SCM g_fd, SCM obj, SCM g_nums)
 Float string2Float(char *str) 
 {
   SCM res;
-  res = snd_catch_any(eval_str_wrapper, str, "string->float");
+  res = snd_catch_any(eval_str_wrapper, (void *)str, "string->float");
   if (NUMBER_P(res))
     return(TO_C_DOUBLE(res));
   else snd_error("%s is not a number", str);
@@ -2021,7 +2021,7 @@ Float string2Float(char *str)
 int string2int(char *str) 
 {
   SCM res;
-  res = snd_catch_any(eval_str_wrapper, str, "string->int");
+  res = snd_catch_any(eval_str_wrapper, (void *)str, "string->int");
   if (NUMBER_P(res))
     return(TO_C_INT_OR_ELSE(res, 0));
   else snd_error("%s is not a number", str);
@@ -2032,7 +2032,7 @@ int string2int(char *str)
 char *string2string(char *str) 
 {
   SCM res;
-  res = snd_catch_any(eval_str_wrapper, str, "string->string");
+  res = snd_catch_any(eval_str_wrapper, (void *)str, "string->string");
   if (STRING_P(res))
     return(TO_NEW_C_STRING(res));
   else snd_error("%s is not a string", str);
@@ -2247,8 +2247,12 @@ If 'data' is a list of numbers, it is treated as an envelope."
 	    }
 	  if (v)
 	    {
+#if HAVE_MEMMOVE
+	      memmove((void *)(lg->data[graph]), (void *)(v->data), len * sizeof(Float));
+#else
 	      for (i = 0; i < len; i++) 
 		lg->data[graph][i] = v->data[i];
+#endif
 	    }
 	  else 
 	    {
@@ -2924,7 +2928,7 @@ void define_procedure_with_reversed_setter(char *get_name, SCM (*get_func)(), ch
   void g_ladspa_to_snd(SCM local_doc);
 #endif
 
-#if HAVE_DLFCN_H
+#if HAVE_GUILE && HAVE_DLFCN_H
 #include <dlfcn.h>
 /* these are included because libtool's dlopen is incredibly stupid, as is libtool in general */
 
@@ -3475,7 +3479,7 @@ If more than one hook function, results are concatenated. If none, the current c
   g_init_draw(local_doc);
   g_init_gxdrop(local_doc);
 #endif
-#if HAVE_DLFCN_H
+#if HAVE_GUILE && HAVE_DLFCN_H
   g_init_dl(local_doc);
 #endif
 #if HAVE_LADSPA
@@ -3626,3 +3630,11 @@ SCM librep_eval_string(char *data)
 }
 
 #endif
+
+#if (!HAVE_MACRO_VARARGS) && (!HAVE_GUILE) && (!HAVE_LIBREP)
+SCM scm_return_first(SCM a, ...)
+{
+  return(a);
+}
+#endif
+

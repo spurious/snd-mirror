@@ -502,7 +502,10 @@ int save_region(snd_state *ss, int n, char *ofile, int data_format)
 static int paste_region_1(int n, chan_info *cp, int add, int beg, const char *origin)
 {
   region *r;
-  int i, j, err = MUS_NO_ERROR, id = -1, idtmp;
+  int i, err = MUS_NO_ERROR, id = -1, idtmp;
+#if (!HAVE_MEMMOVE)
+  int j;
+#endif
   snd_info *sp;
   sync_info *si;
   chan_info *ncp;
@@ -538,9 +541,13 @@ static int paste_region_1(int n, chan_info *cp, int add, int beg, const char *or
 	  ncp = si->cps[i];                       /* currently syncd chan that we might paste to */
 	  if (r->use_temp_file == REGION_ARRAY)
 	    {
-	      data = (MUS_SAMPLE_TYPE *)CALLOC(r->frames, sizeof(MUS_SAMPLE_TYPE));
+	      data = (MUS_SAMPLE_TYPE *)MALLOC(r->frames * sizeof(MUS_SAMPLE_TYPE));
+#if HAVE_MEMMOVE
+	      memmove((void *)data, (void *)(r->data[i]), r->frames * sizeof(MUS_SAMPLE_TYPE));
+#else
 	      for (j = 0; j < r->frames; j++) 
 		data[j] = r->data[i][j];
+#endif
 	      insert_samples(beg, r->frames, data, ncp, origin);
 	      FREE(data);
 	    }

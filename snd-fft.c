@@ -1291,7 +1291,7 @@ static void make_sonogram_axes(chan_info *cp)
 static int apply_fft_window(fft_state *fs)
 {
   /* apply the window, reading data if necessary, resetting IO blocks to former state */
-  int i, j, ind0, result = 5, p, use_fht = 0;
+  int i, j, ind0, result = 5, p = 0, use_fht = 0;
   Float *window, *fft_data;
   int data_len, pad = 0;
   snd_fd *sf;
@@ -2408,7 +2408,11 @@ returns a vct object (vct-obj if passed), with the current transform data from s
 	  if (v1)
 	    fvals = v1->data;
 	  else fvals = (Float *)MALLOC(len * sizeof(Float));
+#if HAVE_MEMMOVE
+	  memmove((void *)fvals, (void *)(fp->data), len * sizeof(Float));
+#else
 	  for (i = 0; i < len; i++) fvals[i] = fp->data[i];
+#endif
 	  if (v1)
 	    return(v);
 	  else return(make_vct(len, fvals));
@@ -2471,7 +2475,11 @@ static SCM g_snd_transform(SCM type, SCM data, SCM hint)
 #if HAVE_GSL
       dat = (Float *)CALLOC(v->length, sizeof(Float));
       hankel_transform(v->length, v->data, dat);
+#if HAVE_MEMMOVE
+      memmove((void *)(v->data), (void *)dat, (v->length * sizeof(Float)));
+#else
       for (i = 0; i < v->length; i++) v->data[i] = dat[i];
+#endif
       FREE(dat);
 #endif
       break;
@@ -2498,7 +2506,11 @@ static SCM g_snd_transform(SCM type, SCM data, SCM hint)
     case HADAMARD:
       dat = (Float *)CALLOC(v->length, sizeof(Float));
       fast_hwt(dat, v->data, (int)(log((Float)(v->length + 1)) / log(2.0)));
+#if HAVE_MEMMOVE
+      memmove((void *)(v->data), (void *)dat, (v->length * sizeof(Float)));
+#else
       for (i = 0; i < v->length; i++) v->data[i] = dat[i];
+#endif
       FREE(dat);
       break;
     }

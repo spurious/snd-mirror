@@ -292,7 +292,7 @@ static void Channel_Expose_Callback(GtkWidget *w, GdkEventExpose *ev, gpointer d
   snd_state *ss;
 
   cp = (chan_info *)data;
-  if (cp->sound == NULL) return;
+  if (!(cp->active)) return;
   ss = cp->state;
 
   if ((cp->mixes) && (mix_dragging())) return;

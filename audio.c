@@ -9989,7 +9989,7 @@ int mus_audio_write(int line, char *buf, int bytes)
     char *from = buf;
     char *p;
     int samps = bytes/2;
-    p = to = alloca(bytes);
+    p = to = (char *)alloca(bytes);
     while (samps--) {
       *p++ = *(from+1);
       *p++ = *(from);
@@ -10071,7 +10071,7 @@ int mus_audio_mixer_read(int ur_dev, int field, int chan, float *val)
   /* Not really sure what to do here.  Mixer is at the other end of the
      socket.  Needs work.  NJB */
 
-    int card = MUS_AUDIO_SYSTEM(ur_dev);
+  /* int card = MUS_AUDIO_SYSTEM(ur_dev); */
     int device = MUS_AUDIO_DEVICE(ur_dev);
 
     if (device==MUS_AUDIO_MIXER) {

@@ -967,10 +967,16 @@ static SCM g_set_data(SCM gen, SCM val)
 static Float *copy_vct_data(vct *v)
 {
   Float *line = NULL;
+#if (!HAVE_MEMMOVE)
   int i;
-  line = (Float *)CALLOC(v->length, sizeof(Float));
+#endif
+  line = (Float *)MALLOC(v->length * sizeof(Float));
   if (line) 
+#if HAVE_MEMMOVE
+    memmove((void *)line, (void *)(v->data), (v->length * sizeof(Float)));
+#else
     for (i = 0; i < v->length; i++) line[i] = v->data[i];
+#endif
   return(line);
 }
 
@@ -983,7 +989,7 @@ static Float *whatever_to_floats(SCM inp, int size, const char *caller)
   if (size <= 0) return(NULL);
   if (VECTOR_P(inp))
     {
-      invals = (Float *)CALLOC(size, sizeof(Float));
+      invals = (Float *)MALLOC(size * sizeof(Float));
       data = SCM_VELTS(inp);
       for (i = 0; i < size; i++) 
 	invals[i] = TO_C_DOUBLE(data[i]);
@@ -996,7 +1002,7 @@ static Float *whatever_to_floats(SCM inp, int size, const char *caller)
 	{
 	  if (NUMBER_P(inp)) 
 	    {
-	      invals = (Float *)CALLOC(size, sizeof(Float));
+	      invals = (Float *)MALLOC(size * sizeof(Float));
 	      inval = TO_C_DOUBLE(inp);
 	      for (i = 0; i < size; i++) 
 		invals[i] = inval;
@@ -1005,7 +1011,7 @@ static Float *whatever_to_floats(SCM inp, int size, const char *caller)
 	    {
 	      if (procedure_fits(inp, 1))
 		{
-		  invals = (Float *)CALLOC(size, sizeof(Float));
+		  invals = (Float *)MALLOC(size * sizeof(Float));
 		  for (i = 0; i < size; i++) 
 		    invals[i] = TO_C_DOUBLE(CALL1(inp, TO_SCM_INT(i), caller));
 		}

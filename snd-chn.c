@@ -1801,7 +1801,7 @@ static void make_sonogram(chan_info *cp, snd_info *sp, snd_state *ss)
 	  if (cp->printing)
 	    {
 	      check_for_event(ss);
-	      if ((ss->stopped_explicitly) || (!(cp->sound))) /* user closed file while trying to print */
+	      if ((ss->stopped_explicitly) || (!(cp->active))) /* user closed file while trying to print */
 		{
 		  ss->stopped_explicitly = 0;
 		  report_in_minibuffer(sp, "stopped");
@@ -1938,7 +1938,7 @@ static void make_spectrogram(chan_info *cp, snd_info *sp, snd_state *ss)
 		{
 		  ps_draw_grf_points(cp, fap, bins, 0.0, FFT_GRAPH_STYLE(cp));
 		  check_for_event(ss);
-		  if ((ss->stopped_explicitly) || (!(cp->sound)))
+		  if ((ss->stopped_explicitly) || (!(cp->active)))
 		    {
 		      ss->stopped_explicitly = 0;
 		      report_in_minibuffer(sp, "stopped");
@@ -1998,7 +1998,7 @@ static void make_spectrogram(chan_info *cp, snd_info *sp, snd_state *ss)
 	      if (cp->printing) 
 		{
 		  check_for_event(ss);
-		  if ((ss->stopped_explicitly) || (!(cp->sound)))
+		  if ((ss->stopped_explicitly) || (!(cp->active)))
 		    {
 		      ss->stopped_explicitly = 0;
 		      report_in_minibuffer(sp, "stopped");

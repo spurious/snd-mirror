@@ -58,8 +58,12 @@
 #define scm_procedure_documentation(a) 0
 #define scm_procedure_property(a, b) 0
 
+#if HAVE_MACRO_VARARGS
 #ifdef __GNUC__
   #define scm_return_first(a, ...) a
+#else
+  SCM scm_return_first(SCM a, ...)
+#endif
 #else
   SCM scm_return_first(SCM a, ...);
 #endif

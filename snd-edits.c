@@ -26,6 +26,7 @@
  *   seg envs could be similar, but add incr (so now + * not just *)
  * reverse could set read-dir and loc based on assumed reverse; if subsequent edit, perform the reverse
  *   or do the reverse as a background op until it's needed (whereupon force completion)
+ * offsets could be added, but need reader-proc at init time (and isn't a very common editing operation)
  */
 
 
@@ -825,7 +826,9 @@ snd_data *copy_snd_data(snd_data *sd, chan_info *cp, int bufsize)
 snd_data *make_snd_data_buffer(MUS_SAMPLE_TYPE *data, int len, int ctr)
 {
   snd_data *sf;
+#if (!HAVE_MEMMOVE)
   int i;
+#endif
   sf = (snd_data *)CALLOC(1, sizeof(snd_data));
   sf->type = SND_DATA_BUFFER;
   sf->buffered_data = (MUS_SAMPLE_TYPE *)MALLOC((len + 1) * sizeof(MUS_SAMPLE_TYPE));
@@ -833,8 +836,12 @@ snd_data *make_snd_data_buffer(MUS_SAMPLE_TYPE *data, int len, int ctr)
   /*   the real problem here is that I never decided whether insert starts at the cursor or just past it */
   /*   when the cursor is on the final sample, this causes cross-fragment ambiguity as to the length of a trailing insertion */
   /*   C > (make-region 1000 2000) (insert-region (cursor)) C-v hits this empty slot and gets confused about the previously final sample value */
+#if HAVE_MEMMOVE
+  memmove((void *)(sf->buffered_data), (void *)data, len * sizeof(MUS_SAMPLE_TYPE));
+#else
   for (i = 0; i < len; i++) 
     sf->buffered_data[i] = data[i];
+#endif
   sf->edit_ctr = ctr;
   sf->copy = FALSE;
   sf->inuse = FALSE;
@@ -1159,7 +1166,7 @@ static void fixup_edlist_endmark(ed_list *new_state, ed_list *current_state, int
   int k;
   if (FRAGMENT_SOUND(new_state, (new_state->size - 1)) != EDIT_LIST_END_MARK)
     {
-      for (k = new_state->size-1; k > 0; k--)
+      for (k = new_state->size - 1; k > 0; k--)
 	if (FRAGMENT_SOUND(new_state, k) == EDIT_LIST_END_MARK) break;
       if (k > 0) 
 	new_state->size = k + 1;
@@ -1422,7 +1429,7 @@ static ed_list *delete_samples_1(int beg, int num, ed_list *current_state, chan_
   
   if (FRAGMENT_SOUND(new_state, (new_state->size - 1)) != EDIT_LIST_END_MARK)
     {
-      for (k = new_state->size-1; k > 0; k--)
+      for (k = new_state->size - 1; k > 0; k--)
 	if (FRAGMENT_SOUND(new_state, k) == EDIT_LIST_END_MARK) break;
       if (k > 0) 
 	new_state->size = k + 1; 
@@ -1688,8 +1695,12 @@ void parse_tree_scale_by(chan_info *cp, Float scl)
   prepare_edit_list(cp, len);
   new_ed = make_ed_list(cp->edits[pos]->size);
   cp->edits[cp->edit_ctr] = new_ed;
+#if HAVE_MEMMOVE
+  memmove((void *)(new_ed->fragments), (void *)(old_ed->fragments), new_ed->size * ED_SIZE * sizeof(int));
+#else
   for (i = 0; i < new_ed->size * ED_SIZE; i++) 
     new_ed->fragments[i] = old_ed->fragments[i];
+#endif
   for (i = 0; i < new_ed->size; i++) 
     {
       ed_scl = (float)(scl * INT_AS_FLOAT(FRAGMENT_SCALER(new_ed, i)));
@@ -1754,20 +1765,18 @@ Float sample(int samp, chan_info *cp)
   data = current_state->fragments;
   len = current_state->size;
   for (i = 0, cb = 0; i < len; i++, cb+=ED_SIZE)
-    {
-      if (samp < data[cb + ED_OUT])
-	{
-	  true_cb = cb-ED_SIZE;
-	  if (data[true_cb + ED_SND] == EDIT_LIST_END_MARK) return(0.0);
-	  index = data[true_cb + ED_BEG] + samp - data[true_cb + ED_OUT];
-	  sd = cp->sounds[data[true_cb + ED_SND]];
-	  if (sd->type == SND_DATA_BUFFER)
-	    return(UNWRAP_SAMPLE(MUS_SAMPLE_TO_FLOAT(sd->buffered_data[index]),
-				 data[true_cb + ED_SCL]));
-	  else return(UNWRAP_SAMPLE(MUS_SAMPLE_TO_FLOAT(snd_file_read_sample(sd, index, cp)),
-				    data[true_cb + ED_SCL]));
-	}
-    }
+    if (samp < data[cb + ED_OUT])
+      {
+	true_cb = cb-ED_SIZE;
+	if (data[true_cb + ED_SND] == EDIT_LIST_END_MARK) return(0.0);
+	index = data[true_cb + ED_BEG] + samp - data[true_cb + ED_OUT];
+	sd = cp->sounds[data[true_cb + ED_SND]];
+	if (sd->type == SND_DATA_BUFFER)
+	  return(UNWRAP_SAMPLE(MUS_SAMPLE_TO_FLOAT(sd->buffered_data[index]),
+			       data[true_cb + ED_SCL]));
+	else return(UNWRAP_SAMPLE(MUS_SAMPLE_TO_FLOAT(snd_file_read_sample(sd, index, cp)),
+				  data[true_cb + ED_SCL]));
+      }
   return(0.0);
 }
 
@@ -1845,7 +1854,7 @@ snd_fd *init_sample_read_any(int samp, chan_info *cp, int direction, int edit_po
     }
   if (samp >= curlen) samp = curlen - 1;
   len = ed->size;
-  for (i = 0, k = 0; i < len; i++, k+=ED_SIZE)
+  for (i = 0, k = 0; i < len; i++, k += ED_SIZE)
     {
       cb = (int *)(ed->fragments + k);
       if ((cb[ED_OUT] > samp) || 
@@ -2655,7 +2664,7 @@ static SCM g_edit_tree(SCM snd, SCM chn, SCM upos)
 	{
 	  res = SCM_EOL;
 	  len = ed->size; /* fragments in this list */
-	  for (i = len-1; i >= 0; i--)
+	  for (i = len - 1; i >= 0; i--)
 	    res = CONS(SCM_LIST5(TO_SCM_INT(FRAGMENT_GLOBAL_POSITION(ed, i)),
 				 TO_SCM_INT(FRAGMENT_SOUND(ed, i)),
 				 TO_SCM_INT(FRAGMENT_LOCAL_POSITION(ed, i)),

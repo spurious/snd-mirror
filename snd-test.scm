@@ -97,8 +97,13 @@
 
 ;;; preliminaries -- check constants, default variable values (assumes -noinit), sndlib and clm stuff
 
+(define timings (make-vector 22))
+
 (snd-display (format #f ";;~A" (snd-version)))
 (define trace-hook (lambda (n)
+		     (if (and (> n 0) (number? (vector-ref timings (- n 1))))
+			 (vector-set! timings (- n 1) (- (get-internal-real-time) (vector-ref timings (- n 1)))))
+		     (vector-set! timings n (get-internal-real-time))
 		     (snd-display (format #f ";test ~D~%" n))
 		     ;(snd-display (gc-stats))
 		     ))
@@ -7708,6 +7713,32 @@
       (if (not (vequal d0 fn))
 	  (snd-display (format #f ";mus-fft 3: ~A ~A?" d0 fn)))
 
+      (for-each 
+       (lambda (size)
+	 (set! d0 (make-vct size))
+	 (vct-set! d0 0 1.0)
+	 (set! d1 (snd-spectrum d0 rectangular-window size))
+	 (do ((i 0 (1+ i)))
+	     ((= i (/ size 2)))
+	   (if (fneq (vct-ref d1 i) 1.0)
+	       (snd-display (format #f ";snd-spectrum (1.0) [~D: ~D]: ~A?" i size (vct-ref d1 i)))))
+
+	 (set! d1 (snd-spectrum d0 rectangular-window))
+	 (if (fneq (vct-ref d1 0) 1.0)
+	     (snd-display (format ";snd-spectrum back (1.0 ~D): ~A?" size (vct-ref d1 0))))
+	 (do ((i 1 (1+ i)))
+	     ((= i (/ size 2)))
+	   (if (fneq (vct-ref d1 i) 0.0)
+	       (snd-display (format #f ";snd-spectrum (0.0) [~D: ~D]: ~A?" i size (vct-ref d1 i)))))
+
+	 (set! d1 (snd-spectrum d0 rectangular-window size #f)) ; dB (0.0 = max)
+	 (do ((i 0 (1+ i)))
+	     ((= i (/ size 2)))
+	   (if (fneq (vct-ref d1 i) 0.0)
+	       (snd-display (format #f ";snd-spectrum dB (0.0) [~D: ~D]: ~A?" i size (vct-ref d1 i))))))
+
+       (list 8 16))
+
 
       ;; -------- fht
       
@@ -8007,6 +8038,7 @@
 (save-listener "test.output")
 (set! (listener-prompt) original-prompt)
 (update-usage-stats)
+
 (snd-display (format #f ";all done!~%~A" original-prompt))
 (if (provided? 'snd-new-smob)
     (snd-display (format #f "timings:~%  ~A: total~%  GC: ~A~%~{    ~A~%~})~%" 
@@ -8020,5 +8052,12 @@
     (for-each (lambda (n)
 		(snd-display (format #f "  ~A: ~A~%" (cadr n) (car n))))
 	      times))
+
+(if (number? (vector-ref timings 21)) 
+    (vector-set! timings 21 (- (get-internal-real-time) (vector-ref timings 21))))
+(do ((i 0 (1+ i)))
+    ((= i 22))
+  (if (number? (vector-ref timings i))
+      (snd-display (format #f "  [~D: ~A]" i (/ (vector-ref timings i) 100)))))
 
 (if (= snd-test -1) (exit))

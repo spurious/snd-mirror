@@ -317,7 +317,7 @@ BACKGROUND_TYPE get_amp_env(GUI_POINTER ptr)
   if ((!cp) || (!(cp->cgx))) return(BACKGROUND_QUIT);
   cgx = cp->cgx;
   pos = cp->edit_ctr;
-  if ((pos == -1) || (!(cp->sound)))
+  if ((pos == -1) || (!(cp->active)))
     {
       free_env_state(cp);
       return(BACKGROUND_QUIT);
@@ -943,7 +943,7 @@ void remember_filter_string(snd_info *sp, char *str) {remember_string(sp, str, F
 
 static void restore_string(snd_info *sp, int back, int which)
 {
-  mini_history *mh;
+  mini_history *mh = NULL;
   char *str;
   switch (which)
     {
@@ -1059,7 +1059,7 @@ BACKGROUND_TYPE apply_controls(GUI_POINTER ptr)
   Float scaler[1];
   if (ptr == NULL) return(BACKGROUND_QUIT);
   sp = ap->sp;
-  if (!(sp->inuse)) return(BACKGROUND_QUIT);
+  if (!(sp->active)) return(BACKGROUND_QUIT);
   ss = sp->state;
   if (sp->filtering) added_dur = sp->filter_order;
   mult_dur = 1.0 / fabs(sp->srate);

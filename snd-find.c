@@ -33,12 +33,7 @@ static int run_global_search (snd_state *ss, gfd *g)
 		samp = next_sample_to_float(sf);
 	      else samp = previous_sample_to_float(sf);
 	      res = CALL1(ss->search_proc, TO_SCM_DOUBLE((double)(samp)), "global search func");
-	      if (SYMBOL_P(res))
-		{
-		  g->n = -1;
-		  return(1);
-		}
-	      if (NOT_FALSE_P(res))
+	      if (TRUE_P(res))
 		{
 		  g->n = i;
 		  return(1);
@@ -50,13 +45,11 @@ static int run_global_search (snd_state *ss, gfd *g)
 		  g->cps[i] = NULL;
 		  k = 0;
 		  for (j = 0; j < g->chans; j++) 
-		    {
-		      if (g->cps[i]) 
-			{
-			  k = 1;
-			  break;
-			}
-		    }
+		    if (g->cps[i]) 
+		      {
+			k = 1;
+			break;
+		      }
 		  if (k == 0) /* all at eof */
 		    {
 		      g->n = -1;
@@ -146,6 +139,55 @@ char *global_search(snd_state *ss, int direction)
   return(search_no_luck);
 }
 
+#if USE_OPT_APPLY
+typedef struct {
+  int c, i, end;
+  snd_fd *sf;
+  snd_info *sp;
+} find_data;
+
+static SCM find_call_1(void *arg)
+{
+  find_data *ft = (find_data *)arg;
+  snd_state *ss;
+  SCM res = SCM_BOOL_F, code;
+  int i, end, inc;
+  snd_fd *sf;
+  int pass = 0;
+  code = ft->sp->search_proc;
+  ss = get_global_state();
+  i = ft->i;
+  sf = ft->sf;
+  end = ft->end;
+  if (sf->direction == READ_FORWARD) inc = 1; else inc = -1;
+  while ((i != end) && (!(read_sample_eof(sf))))
+    {
+      res = scm_eval_body(SCM_CDR(SCM_CODE(code)), 
+			  SCM_EXTEND_ENV(SCM_CAR(SCM_CODE(code)),
+					 SCM_LIST1(TO_SCM_DOUBLE((inc == 1) ? 
+								 (double)next_sample_to_float(sf) : 
+								 (double)previous_sample_to_float(sf))),
+					 SCM_ENV(code)));
+      if (TRUE_P(res)) 
+	{
+	  ft->c--;
+	  if (ft->c == 0) break;
+	}
+      i += inc;
+      pass++;
+      if (pass > 100)
+	{
+	  check_for_event(ss);
+	  if (!(ft->sp->active)) break;
+	  pass = 0;
+	}
+      if (ss->stopped_explicitly) break;
+    }
+  ft->i = i;
+  return(res);
+}
+#endif
+
 static int cursor_find(snd_info *sp, chan_info *cp, int count, int end_sample)
 {
   /* count > 0 -> search forward, else back */
@@ -181,13 +223,28 @@ static int cursor_find(snd_info *sp, chan_info *cp, int count, int end_sample)
       return(-1);
     }
   if (count > 0) sf->direction = READ_FORWARD; else sf->direction = READ_BACKWARD;
+#if USE_OPT_APPLY
+  if (SCM_CLOSUREP(sp->search_proc))
+    {
+      find_data ft;
+      ft.c = c;
+      ft.sf = sf;
+      ft.i = i;
+      ft.end = end_sample;
+      ft.sp = sp;
+      snd_catch_any(find_call_1, (void *)(&ft), S_find);
+      i = ft.i;
+      c = ft.c;
+    }
+  else
+#endif
+    {
   while ((c > 0) && (i != end_sample) && (!read_sample_eof(sf)))
     {
       if (count > 0)
 	samp = next_sample_to_float(sf);
       else samp = previous_sample_to_float(sf);
       res = CALL1(sp->search_proc, TO_SCM_DOUBLE((double)samp), "local search func");
-      if (SYMBOL_P(res)) break;
       if (NOT_FALSE_P(res)) 
 	{
 	  c--; 
@@ -199,11 +256,11 @@ static int cursor_find(snd_info *sp, chan_info *cp, int count, int end_sample)
 	{
 	  check_for_event(ss);
 	  /* if user types C-s during an active search, we risk stomping on our current pointers */
-	  if (!(sp->inuse)) break;
+	  if (!(sp->active)) break;
 	  passes = 0;
 	}
       if (ss->stopped_explicitly) break;
-    }
+    }}
   ss->stopped_explicitly = 0;
   free_snd_fd(sf);
   ss->search_in_progress = 0;

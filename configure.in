@@ -47,6 +47,7 @@ MAKE_TARGET="snd"
 #   --with-esd            use Enlightened Sound Daemon
 #   --with-no-gui         make Snd without any graphics support
 #   --with-motif-prefix   set location of Motif (untested as yet)
+#   --with-no-guile       build without Guile (for autotesting sequence)
 #--------------------------------------------------------------------------------
 
 AC_ARG_WITH(esd,[  --with-esd		  use ESD])
@@ -54,6 +55,7 @@ AC_ARG_WITH(alsa,[  --with-alsa		  use ALSA])
 AC_ARG_WITH(static-alsa,[  --with-static-alsa	  use ALSA statically loaded])
 AC_ARG_WITH(gtk,[  --with-gtk		  use Gtk+ to build Snd])
 AC_ARG_WITH(no-gui,[  --with-no-gui	  	  make Snd without any graphics support])
+AC_ARG_WITH(no-guile,[  --with-no-guile	  	  make Snd without any extension language])
 AC_ARG_WITH(doubles,[  --with-doubles	  use doubles throughout])
 
 if test "$with_doubles" = yes; then
@@ -261,7 +263,7 @@ AC_MSG_RESULT(${ok})
 
 AC_TYPE_SIGNAL
 AC_FUNC_STRFTIME
-AC_CHECK_FUNCS(getcwd strerror tempnam mallinfo readlink setlocale access opendir sleep signal memset finite mkstemp strdup fstatfs clock vsnprintf snprintf)
+AC_CHECK_FUNCS(getcwd strerror tempnam mallinfo readlink setlocale access opendir sleep signal memset memmove finite mkstemp strdup fstatfs clock vsnprintf snprintf)
 AC_FUNC_CLOSEDIR_VOID
 AC_FUNC_VPRINTF
 
@@ -414,6 +416,10 @@ GUILE_CFLAGS=""
 GUILE_CONFIG_path=""
 GUILE_LIB_path=""
 
+if test "$with_no_guile" = yes ; then
+  AC_DEFINE(HAVE_GUILE, 0)
+else
+
 AC_CHECK_FILE(/usr/lib/snd/bin/guile-config,[
   GUILE_CONFIG_path=/usr/lib/snd/bin/
   GUILE_LIB_path=/usr/lib/snd/lib
@@ -497,7 +503,7 @@ if test $GUILE_CONFIG_works = yes; then
 else
   AC_DEFINE(HAVE_GUILE,0)
 fi
-
+fi
 
 #--------------------------------------------------------------------------------
 # Audio library
@@ -714,6 +720,17 @@ AC_MSG_RESULT($fstatfs_args)
 AC_DEFINE_UNQUOTED(FSTATFS_ARGS,$fstatfs_args)
 dnl on NeXT, this is apparently in libc.h?
 
+AC_MSG_CHECKING([macro varargs])
+macro_varargs="no"
+AC_TRY_COMPILE( ,
+  [#define HIHO(a, ...) a
+   int i; i = HIHO(1,2,3);
+  ],
+  [macro_varargs="yes"
+   AC_DEFINE(HAVE_MACRO_VARARGS)
+  ])
+AC_MSG_RESULT($macro_varargs)   
+  
 
 #--------------------------------------------------------------------------------
 # sigsetjmp special case

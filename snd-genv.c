@@ -174,7 +174,7 @@ static void apply_enved(snd_state *ss)
 	      break;
 	    case SRATE_ENV:
 	      max_env = copy_env(active_env);
-	      for (i = 0, j = 1; i < max_env->pts; i++, j+=2)
+	      for (i = 0, j = 1; i < max_env->pts; i++, j += 2)
 		if (max_env->data[j] < .01) max_env->data[j] = .01;
 	      within_selection_src = 1;
 	      src_env_or_num(ss, active_channel, max_env, 0.0, FALSE, FROM_ENVED, "Enved: src", apply_to_selection, NULL);
@@ -680,7 +680,7 @@ static void make_base_label(snd_state *ss, Float bval)
   mus_snprintf(sfs, len, "%f", bval);
   scale_len = (int)(enved_power(ss) + 3);
   buf = (char *)CALLOC(scale_len, sizeof(char));
-  for (i = 0; i < scale_len-1; i++) buf[i] = sfs[i];
+  for (i = 0; i < scale_len - 1; i++) buf[i] = sfs[i];
   gtk_label_set_text(GTK_LABEL(baseValue), buf);
   FREE(sfs);
   FREE(buf);

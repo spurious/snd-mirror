@@ -86,8 +86,11 @@ static repv snd_rep_main(repv arg)
   /* if HAVE_GSL and the environment variable GSL_IEEE_MODE exists, use it */
 #if HAVE_GSL
   /* GSL_IEEE_MODE=double-precision,mask-underflow,mask-denormalized */
-  if (getenv("GSL_IEEE_MODE")) need_ieee_setup = 0;
-  gsl_ieee_env_setup();
+  if (getenv("GSL_IEEE_MODE")) 
+    {
+      need_ieee_setup = 0;
+      gsl_ieee_env_setup();
+    }
 #endif
 #if HAVE_FPU_CONTROL_H
   #if __GLIBC_MINOR__ < 1
@@ -96,7 +99,8 @@ static repv snd_rep_main(repv arg)
   if (need_ieee_setup) {__setfpucw(_FPU_IEEE);}
   #else
     #ifndef __alpha__
-      {int __fpu_ieee = _FPU_IEEE; if (need_ieee_setup) {_FPU_SETCW(__fpu_ieee);}}
+      /* 22 in low bits = mask denormalized + mask underflow, both are on in _FPU_IEEE, so this looks right */
+      if (need_ieee_setup) {int __fpu_ieee = _FPU_IEEE; _FPU_SETCW(__fpu_ieee);}
       /* this bugfix thanks to Paul Barton-Davis */
     #endif
   #endif

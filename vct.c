@@ -205,15 +205,22 @@ static SCM copy_vct(SCM obj)
   #define H_vct_copy "(" S_vct_copy " v) -> a copy of vct v"
   vct *v;
   Float *copied_data;
-  int len, i;
+  int len;
+#if (!HAVE_MEMMOVE)
+  int i;
+#endif
   SCM_ASSERT(VCT_P(obj), obj, SCM_ARG1, S_vct_copy);
   v = TO_VCT(obj);
   if (v)
     {
       len = v->length;
-      copied_data = (Float *)CALLOC(len, sizeof(Float));
+      copied_data = (Float *)MALLOC(len * sizeof(Float));
+#if HAVE_MEMMOVE
+      memmove((void *)copied_data, (void *)(v->data), (len * sizeof(Float)));
+#else
       for (i = 0; i < len; i++) 
 	copied_data[i] = v->data[i];
+#endif
       return(make_vct(len, copied_data));
     }
   return(scm_return_first(SCM_BOOL_F, obj));
@@ -244,8 +251,9 @@ static SCM vct_move(SCM obj, SCM newi, SCM oldi, SCM backwards)
 		       "old-index too high?",
 		       SCM_LIST2(oldi,
 				 TO_SCM_INT(v->length)));
-      if (v) for (i = ni, j = nj; (j >= 0) && (i >= 0); i--, j--) 
-	v->data[i] = v->data[j];
+      if (v) 
+	for (i = ni, j = nj; (j >= 0) && (i >= 0); i--, j--) 
+	  v->data[i] = v->data[j];
     }
   else
     {
@@ -257,8 +265,9 @@ static SCM vct_move(SCM obj, SCM newi, SCM oldi, SCM backwards)
 	mus_misc_error(S_vct_moveB,
 		       "old-index < 0?",
 		       oldi);
-      if (v) for (i = ni, j = nj; (j < v->length) && (i < v->length); i++, j++) 
-	v->data[i] = v->data[j];
+      if (v) 
+	for (i = ni, j = nj; (j < v->length) && (i < v->length); i++, j++) 
+	  v->data[i] = v->data[j];
     }
   return(obj);
 }

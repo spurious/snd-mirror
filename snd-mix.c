@@ -565,15 +565,13 @@ static Float next_mix_sample(mix_fd *mf)
 	    {
 	      mf->x -= move;
 	      for (j = 0; j < move; j++)
-		{
-		  for (i = 0; i < mf->chans; i++)
-		    {
-		      mf->lst[i] = mf->nxt[i];
-		      if (mf->type == MIX_INPUT_SOUND)
-			mf->nxt[i] = next_sample_to_float(mf->sfs[i]);
-		      else mf->nxt[i] = next_mix_input_amp_env_sample(mf, i);
-		    }
-		}
+		for (i = 0; i < mf->chans; i++)
+		  {
+		    mf->lst[i] = mf->nxt[i];
+		    if (mf->type == MIX_INPUT_SOUND)
+		      mf->nxt[i] = next_sample_to_float(mf->sfs[i]);
+		    else mf->nxt[i] = next_mix_input_amp_env_sample(mf, i);
+		  }
 	    }
 	}
       break;
