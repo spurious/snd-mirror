@@ -21,7 +21,7 @@
 ;;; test 18: enved
 ;;; test 19: save and restore
 ;;; test 20: errors
-;;; test 21: transforms (in progress...)
+;;; test 21: transforms
 
 (use-modules (ice-9 format) (ice-9 debug))
 
@@ -2180,7 +2180,7 @@
 	(if (not (fveql v3 '(1.000 2.000 -8.000 0.000 16.000 0.000) 0)) (snd-display (format #f ";partials->polynomial(4): ~A?" v3)))
 	(if (not (fveql v4 '(-0.510 0.700 1.180 0.400 -0.480 0.000 0.320) 0)) (snd-display (format #f ";partials->polynomial(5): ~A?" v4)))
 	(if (not (fveql v5 '(0.900 1.060 0.400 -0.320 0.000 0.320 0.000) 0)) (snd-display (format #f ";partials->polynomial(6): ~A?" v5))))
-
+      
       (let* ((amps (list->vct '(1.0)))
 	     (phases (list->vct '(0.0)))
 	     (val (sum-of-sines amps phases)))
@@ -2192,7 +2192,7 @@
 	(set! phases (list->vct '(1.0 0.5 2.0)))
 	(set! val (sum-of-sines amps phases))
 	(if (fneq val 1.44989) (snd-display (format #f ";sum-of-sines: ~A 1.449?" val))))
-
+      
       (let ((rdat (make-vct 16))
 	    (idat (make-vct 16))
 	    (vdat (make-vct 16)))
@@ -2205,7 +2205,7 @@
 	    (if (fneq (vct-ref v0 i) (vct-ref v1 i))
 		(snd-display (format #f ";spectra not equal: ~A ~A" v0 v1))))))
       (if (rs .5) (gc))
-
+      
       (let ((rdat (make-vct 16))
 	    (idat (make-vct 16))
 	    (xdat (make-vct 16))
@@ -2222,7 +2222,7 @@
 	      ((= i 8)) 
 	    (if (fneq (vct-ref v0 i) (vct-ref v1 i))
 		(snd-display (format #f ";convolutions not equal: ~A ~A" v0 v1))))))
-
+      
       (let ((rdat (make-vct 16))
 	    (idat (make-vct 16))
 	    (xdat (make-vct 16))
@@ -2241,7 +2241,7 @@
 	      (snd-display (format #f ";fft real[~D]: ~A ~A?" i (vct-ref rdat i) (vct-ref xdat i))))
 	  (if (or (fneq (vct-ref idat i) 0.0) (fneq (vct-ref ydat i) 0.0))
 	      (snd-display (format #f ";fft imag[~D]: ~A ~A?" i (vct-ref idat i) (vct-ref ydat i))))))
-
+      
       (let ((rdat (make-vector 16))
 	    (idat (make-vector 16)))
 	(do ((i 0 (1+ i)))
@@ -2254,8 +2254,7 @@
 	(if (or (fneq (vector-ref rdat 3) 16.0)
 		(fneq (vector-ref rdat 4) 0.0))
 	    (snd-display (format #f ";vector fft real[~D]: ~A ~A?" i (vector-ref rdat 3) (vector-ref rdat 4)))))
-
-
+      
       (let* ((size 256)
 	     (rdat (make-vct 256))
 	     (idat (make-vct 256))
@@ -2284,7 +2283,7 @@
 	    (snd-display (format #f ";ifft: ~A" (vct-ref rdat 3))))
 	(if (fneq (vct-ref xdat 4) 0.0)
 	    (snd-display (format #f ";ifht: ~A" (vct-ref xdat 3)))))
-
+      
       (let ((v0 (make-vct 10))
 	    (v1 (make-vct 10)))
 	(vct-fill! v0 1.0)
@@ -2299,37 +2298,7 @@
 	(vct-fill! v1 0.5)
 	(let ((v2 (rectangular->polar v0 v1)))
 	  (if (fneq (vct-ref v2 0) 1.118) (snd-display (format #f ";rectangular->polar: ~A?" v2)))))
-
-      (for-each 
-       (lambda (size)
-	 (for-each
-	  (lambda (loc)
-	    (let ((rdat (make-vct size)))
-	      (vct-set! rdat loc 1.0)
-	      (autocorrelate rdat)
-	      (if (fneq (vct-ref rdat 0) 2.0) (snd-display (format #f ";autocorrelate ~D:~D: ~A?" size loc rdat)))
-	      (do ((i 1 (1+ i)))
-		  ((= i (/ size 2)))
-		(if (fneq (vct-ref rdat i) 0.0) (snd-display (format #f ";autocorrelate ~D:~D[~D]: ~A?" size loc i (vct-ref rdat i)))))))
-	  (list 0 1 2 3)))
-       (list 8 16 128 256))
-
-      (for-each 
-       (lambda (size)
-	 (for-each
-	  (lambda (loc)
-	    (let ((rdat (make-vct size)))
-	      (vct-set! rdat loc 1.0)
-	      (vct-set! rdat (+ loc 1) 1.0)
-	      (autocorrelate rdat)
-	      (if (fneq (vct-ref rdat 0) 4.0) (snd-display (format #f ";autocorrelate(4) ~D:~D: ~A?" size loc rdat)))
-	      (if (fneq (vct-ref rdat 1) 2.0) (snd-display (format #f ";autocorrelate(4:1) ~D:~D: ~A?" size loc rdat)))
-	      (do ((i 2 (1+ i)))
-		  ((= i (/ size 2)))
-		(if (fneq (vct-ref rdat i) 0.0) (snd-display (format #f ";autocorrelate(4) ~D:~D[~D]: ~A?" size loc i (vct-ref rdat i)))))))
-	  (list 0 1 2 3)))
-       (list 8 16 128 256))
-
+      
       (let ((v0 (make-vct 3)))
 	(vct-set! v0 0 1.0)
 	(vct-set! v0 1 0.5)
@@ -2338,9 +2307,9 @@
 		(fneq (polynomial v0 1.0) 1.6)
 		(fneq (polynomial v0 2.0) 2.4))
 	    (snd-display (format #f ";polynomial: ~A ~A ~A?"
-			       (polynomial v0 0.0)
-			       (polynomial v0 1.0)
-			       (polynomial v0 2.0)))))
+				 (polynomial v0 0.0)
+				 (polynomial v0 1.0)
+				 (polynomial v0 2.0)))))
       
       (let ((v0 (make-vct 10)))
 	(do ((i 0 (1+ i))) ((= i 10))
@@ -2378,7 +2347,7 @@
 		(fneq (delay gen1) 0.0)
 		(fneq (delay gen1) 0.0))
 	    (snd-display (format #f ";delay with initial-contents confused"))))
-
+      
       (let ((gen (make-all-pass .4 .6 3))
 	    (v0 (make-vct 10)))
 	(print-and-check gen 
@@ -2518,7 +2487,7 @@
 	    ((= i 10))
 	  (if (fneq (vct-ref v0 i) (vct-ref v1 i))
 	      (snd-display (format #f ";mus-apply oscil at ~D: ~A ~A?" i (vct-ref v0 i) (vct-ref v1 i))))))
-
+      
       (let ((gen (make-oscil 440.0))
 	    (gen1 (make-oscil 440.0)))
 	(do ((i 0 (1+ i)))
@@ -2527,7 +2496,7 @@
 		(mval (mus-run gen1 .1)))
 	    (if (fneq oval mval)
 		(snd-display (format #f ";mus-run ~A but oscil ~A?" mval oval))))))
-
+      
       (let ((gen (make-oscil 440.0))
 	    (gen1 (make-oscil 440.0))
 	    (gen2 (make-oscil 440.0))
@@ -2570,7 +2539,7 @@
 		(fneq (vector-ref results 5) 0.48203)
 		(fneq (vector-ref results 9) 0.41001))
 	    (snd-display (format #f ";oscil-bank: ~A?" results))))
-
+      
       (let ((amps (make-vector 3))
 	    (oscils (make-vector 3))
 	    (fms (make-vector 3))
@@ -2585,7 +2554,7 @@
 		(fneq (vector-ref results 5) 0.48203)
 		(fneq (vector-ref results 9) 0.41001))
 	    (snd-display (format #f ";mus-bank: ~A?" results))))
-
+      
       (let ((gen (make-buffer 3)))
 	(if (not (buffer-empty? gen)) (snd-display (format #f ";new buf not buffer-empty: ~A?" gen)))
 	(sample->buffer gen 1.0)
@@ -2690,7 +2659,7 @@
 		  (fneq (vct-ref data 18) 0.166)
 		  (fneq (vct-ref data 89) 0.923))
 	      (snd-display (format #f ";filter xcoeffs: ~A?" data)))))
-
+      
       (let ((gen (make-iir-filter 3 (list->vct '(.5 .25 .125))))
 	    (v0 (make-vct 10)))
 	(print-and-check gen 
@@ -2852,7 +2821,7 @@
 	(map-chan (poltergeist 300 0.1 0.0 30.0 '(0 100 1 4000.0) '(0 0.99 1 .9)))  ;; should sound like "whyieee?"
 	(play-and-wait 0 ob)
 	(close-sound ob))
-
+      
       (let ((gen (make-mixer 2 .5 .25 .125 1.0))
 	    (fr0 (make-frame 2 1.0 1.0))
 	    (fr1 (make-frame 2 0.0 0.0)))
@@ -2903,7 +2872,7 @@
 	  (let ((frout (make-frame 2)))
 	    (sample->frame mx2 1.0 frout)
 	    (if (not (equal? frout fr0)) (snd-display (format #f ";sample->frame via frout: ~A ~A?" frout fr0))))))
-
+      
       (let ((gen (make-fft-window hamming-window 16)))
 	(if (or (fneq (vct-ref gen 0) 0.080) (fneq (vct-ref gen 8) 1.0))
 	    (snd-display (format #f ";hamming window: ~A" gen))))
@@ -7443,13 +7412,569 @@
       ))
 
 
-;;; TODO: make some real transform tests!  -- use snd-transform here
+;;; ---------------- test 21: transforms ----------------
+
 ;;; TODO: test data windows also
+;;; TODO: find actual test cases
+
+(define (bes-j0 x)				;returns J0(x) for any real x
+  (if (< (abs x) 8.0)			;direct rational function fit
+      (let* ((y (* x x))
+	     (ans1 (+ 57568490574.0
+		      (* y (+ -13362590354.0 
+			      (* y  (+ 651619640.7
+				       (* y (+ -11214424.18 
+					       (* y (+ 77392.33017
+						       (* y -184.9052456)))))))))))
+	     (ans2 (+ 57568490411.0 
+		      (* y (+ 1029532985.0 
+			      (* y (+ 9494680.718
+				      (* y (+ 59272.64853
+					      (* y (+ 267.8532712 y)))))))))))
+	(/ ans1 ans2))
+    (let* ((ax (abs x))
+	   (z (/ 8.0 ax))
+	   (y (* z z))
+	   (xx (- ax 0.785398164))
+	   (ans1 (+ 1.0 
+		    (* y (+ -0.1098628627e-2 
+			    (* y (+ 0.2734510407e-4
+				    (* y (+ -0.2073370639e-5
+					    (* y 0.2093887211e-6)))))))))
+	   (ans2 (+ -0.1562499995e-1
+		    (* y (+ 0.1430488765e-3
+			    (* y (+ -0.6911147651e-5
+				    (* y (+ 0.7621095161e-6
+					    (* y -0.934945152e-7))))))))))
+      (* (sqrt (/ 0.636619772 ax))
+	 (- (* (cos xx) ans1)
+	    (* z (sin xx) ans2))))))
+
+(define (peak-at data)
+  (let ((len (vct-length data))
+	(peak (vct-ref data 0))
+	(loc 0))
+    (do ((i 1 (1+ i)))
+	((= i len) (list loc peak))
+      (if (> (vct-ref data i) peak)
+	  (begin
+	    (set! peak (vct-ref data i))
+	    (set! loc i))))))
+
+(define (vequal v0 v1)
+  (define (dequal ctr len)
+    (if (= ctr len)
+	#t
+	(and (< (abs (- (vct-ref v0 ctr) (vct-ref v1 ctr))) .001)
+	     (dequal (1+ ctr) len))))
+  (let ((len (vct-length v0)))
+    (and (= len (vct-length v1))
+	 (dequal 0 len))))
+
+(define (chebyshev-polynomial a x kind lim)	
+  ;; evaluate the sum of the Chebyshev polynomials (coeffs in a) at x
+  ;;  similar to make-waveshape-table which runs through -1<=x<=1 internally,
+  ;;  but intended to be parallel to the polynomial unit generator --
+  ;; (polynomial (get-chebyshev-coefficients harms-and-amps) x) is equivalent to 
+  ;; (chebyshev-polynomial harm-amps x)
+  (let* ((n (1- (vct-length a)))
+	 (r (* kind x))
+	 (s 1.0)
+	 (h 0.0)
+	 (sum (vct-ref a 0)))
+    (do ((k 1 (1+ k)))
+	((= k n))
+      (set! h r)
+      (set! sum (+ sum (* r (vct-ref a k))))
+      (set! r (- (* 2 r x) s))
+      (set! s h))
+    (+ sum (* r (vct-ref a n)))))
+
+(define (inverse-haar f)
+  (let* ((n (vct-length f))
+	 (g (make-vct n))
+	 (s2 (sqrt 2.0))
+	 (v (/ 1.0 (sqrt n))))
+    (vct-set! f 0 (* (vct-ref f 0) v))
+    (do ((m 2 (* m 2)))
+	((> m n))
+      (let ((mh (/ m 2)))
+	(do ((j 0 (+ j 2))
+	     (k 0 (+ k 1)))
+	    ((= j m))
+	  (let ((x (vct-ref f k))
+		(y (* (vct-ref f (+ mh k)) v)))
+	    (vct-set! g j (+ x y))
+	    (vct-set! g (+ j 1) (- x y))))
+	(do ((i (- m 1) (- i 1)))
+	    ((< i 0))
+	  (vct-set! f i (vct-ref g i)))
+	(set! v (* v s2))))
+    f))
+
+(define (wavelet data n isign wf cc)
+  (let* ((cc-size (vct-length cc))
+	 (ccr (make-vct cc-size))
+	 (sig -1.0))
+    (do ((i 0 (1+ i))
+	 (j (- cc-size 1) (1- j)))
+	((= i cc-size))
+      (vct-set! ccr j (* sig (vct-ref cc i)))
+      (set! sig (- sig)))
+    (if (>= n 4)
+	(if (>= isign 0)
+	    (do ((nn n (/ nn 2)))
+		((< nn 4))
+	      (wf data nn isign cc ccr))
+	    (do ((nn 4 (* nn 2)))
+		((> nn n))
+	      (wf data nn isign cc ccr))))))
+
+(define (pwt data n isign cc cr)
+  (let* ((data1 (make-vct n))
+	 (n1 (1- n))
+	 (ncof (vct-length cc))
+	 (nmod (* ncof n))
+	 (nh (inexact->exact (floor (/ n 2))))
+	 (joff (inexact->exact (- (floor (/ ncof 2)))))
+	 (ioff joff))
+    (if (>= isign 0)
+	(do ((ii 0 (1+ ii))
+	     (i 1 (+ i 2)))
+	    ((> i n))
+	  (let ((ni (+ i nmod ioff))
+		(nj (+ i nmod joff)))
+	    (do ((k 1 (1+ k)))
+		((> k ncof))
+	      (let ((jf (logand n1 (+ ni k))) ;gad wotta kludge...
+		    (jr (logand n1 (+ nj k))))
+		(vct-set! data1 ii (+ (vct-ref data1 ii)
+				      (* (vct-ref cc (1- k)) 
+					 (vct-ref data jf))))
+		(vct-set! data1 (+ ii nh) (+ (vct-ref data1 (+ ii nh))
+					     (* (vct-ref cr (1- k)) 
+						(vct-ref data jr))))))))
+	(do ((ii 0 (1+ ii))
+	     (i 1 (+ i 2)))
+	    ((> i n))
+	  (let ((ai (vct-ref data ii))
+		(ai1 (vct-ref data (+ ii nh)))
+		(ni (+ i nmod ioff))
+		(nj (+ i nmod joff)))
+	    (do ((k 1 (1+ k)))
+		((> k ncof))
+	      (let ((jf (logand n1 (+ ni k)))
+		    (jr (logand n1 (+ nj k))))
+		(vct-set! data1 jf (+ (vct-ref data1 jf) 
+					       (* ai (vct-ref cc (1- k)))))
+		(vct-set! data1 jr (+ (vct-ref data1 jr)
+				      (* ai1 (vct-ref cr (1- k))))))))))
+    (do ((i 0 (1+ i)))
+	((= i n))
+      (vct-set! data i (vct-ref data1 i)))
+    data))
+
+;;; --------------------------------
+;;; coefficients
+
+(define daub4 (vct 0.4829629131445341 0.8365163037378079 0.2241438680420134 -0.1294095225512604))
+(define daub6 (vct 0.332670552950 0.806891509311 0.459877502118 -0.135011020010 -0.085441273882 0.035226291886))
+(define daub8 (vct 0.230377813309 0.714846570553 0.630880767930 -0.027983769417 -0.187034811719 0.030841381836
+		   0.032883011667 -0.010597401785))
+(define daub10 (vct 0.160102397974 0.603829269797 0.724308528438 0.138428145901 -0.242294887066 -0.032244869585
+		    0.077571493840 -0.006241490213 -0.012580751999 0.003335725285))
+(define daub12 (vct 0.111540743350 0.494623890398 0.751133908021 0.315250351709 -0.226264693965 -0.129766867567
+		    0.097501605587 0.027522865530 -0.031582039317 0.000553842201 0.004777257511 -0.001077301085))
+(define daub14 (vct 0.077852054085 0.396539319482 0.729132090846 0.469782287405 -0.143906003929 -0.224036184994
+		    0.071309219267 0.080612609151 -0.038029936935 -0.016574541631 0.012550998556 0.000429577973
+		    -0.001801640704 0.000353713800))
+(define daub16 (vct 0.054415842243 0.312871590914 0.675630736297 0.585354683654 -0.015829105256 -0.284015542962
+		    0.000472484574 0.128747426620 -0.017369301002 -0.044088253931 0.013981027917 0.008746094047
+		    -0.004870352993 -0.000391740373 0.000675449406 -0.000117476784))
+(define daub18 (vct 0.038077947364 0.243834674613 0.604823123690 0.657288078051 0.133197385825 -0.293273783279
+		    -0.096840783223 0.148540749338 0.030725681479 -0.067632829061 0.000250947115 0.022361662124
+		    -0.004723204758 -0.004281503682 0.001847646883 0.000230385764 -0.000251963189 0.000039347320))
+(define daub20 (vct 0.026670057901 0.188176800077 0.527201188931 0.688459039453 0.281172343661 -0.249846424327
+		    -0.195946274377 0.127369340336 0.093057364604 -0.071394147166 -0.029457536822 0.033212674059
+		    0.003606553567 -0.010733175483 0.001395351747 0.001992405295 -0.000685856695 -0.000116466855
+		    0.000093588670 -0.000013264203))
+
+(define SQRT2 1.41421356237309504880168872420969808)
+
+(define Battle-Lemarie (vct (* SQRT2 -0.002) (* SQRT2 -0.003) (* SQRT2  0.006) (* SQRT2  0.006) (* SQRT2 -0.013)
+			    (* SQRT2 -0.012) (* SQRT2  0.030) (* SQRT2  0.023) (* SQRT2 -0.078) (* SQRT2 -0.035)
+			    (* SQRT2  0.307) (* SQRT2  0.542) (* SQRT2  0.307) (* SQRT2 -0.035) (* SQRT2 -0.078)
+			    (* SQRT2  0.023) (* SQRT2  0.030) (* SQRT2 -0.012) (* SQRT2 -0.013) (* SQRT2  0.006)
+			    (* SQRT2  0.006) (* SQRT2 -0.003) (* SQRT2 -0.002) 0.0))
+(define Burt-Adelson (vct (* SQRT2 (/ -1.0 20.0)) (* SQRT2 (/ 5.0 20.0)) (* SQRT2 (/ 12.0 20.0))
+			  (* SQRT2 (/ 5.0 20.0)) (* SQRT2 (/ -1.0 20.0)) 0.0))
+
+(define Beylkin (vct 0.099305765374353 0.424215360812961 0.699825214056600 0.449718251149468
+		     -.110927598348234 -.264497231446384 0.026900308803690 0.155538731877093
+		     -.017520746266529 -.088543630622924 0.019679866044322 0.042916387274192
+		     -.017460408696028 -.014365807968852 0.010040411844631 .0014842347824723
+		     -.002736031626258 .0006404853285212))
+
+(define SQRT15 3.87298334620741688517927)
+
+(define coif2 (vct (/ (* SQRT2 (- SQRT15 3)) 32.0) (/ (* SQRT2 (- 1 SQRT15)) 32.0) (/ (* SQRT2 (- 6 (* 2 SQRT15))) 32.0)
+		   (/ (* SQRT2 (+ (* 2 SQRT15) 6)) 32.0) (/ (* SQRT2 (+ SQRT15 13)) 32.0) (/ (* SQRT2 (- 9 SQRT15)) 32.0)))
+(define coif4 (vct 0.0011945726958388 	-0.01284557955324 0.024804330519353 0.050023519962135 -0.15535722285996
+		   -0.071638282295294 0.57046500145033 0.75033630585287 0.28061165190244 -0.0074103835186718
+		   -0.014611552521451 -0.0013587990591632))
+(define coif6 (vct -0.0016918510194918 -0.00348787621998426 0.019191160680044 0.021671094636352 -0.098507213321468
+		   -0.056997424478478 0.45678712217269 0.78931940900416 0.38055713085151 -0.070438748794943 
+		   -0.056514193868065 0.036409962612716 0.0087601307091635 -0.011194759273835 -0.0019213354141368
+		   0.0020413809772660 0.00044583039753204 -0.00021625727664696))
+
+(define sym2 (vct (* SQRT2 -0.125) (* SQRT2  0.25) (* SQRT2  0.75) (* SQRT2  0.25) (* SQRT2 -0.125)))
+(define sym3 (vct (/ (* SQRT2 1.0) 8.0) (/ (* SQRT2 3.0) 8.0) (/ (* SQRT2 3.0) 8.0) (/ (* SQRT2 1.0) 8.0)))
+(define sym4 (vct (/ (* SQRT2   3.0) 128.0) (/ (* SQRT2  -6.0) 128.0) (/ (* SQRT2 -16.0) 128.0)
+		  (/ (* SQRT2  38.0) 128.0) (/ (* SQRT2  90.0) 128.0) (/ (* SQRT2  38.0) 128.0)
+		  (/ (* SQRT2 -16.0) 128.0) (/ (* SQRT2  -6.0) 128.0) (/ (* SQRT2   3.0) 128.0) 0.0))
+(define sym5 (vct (/ (* SQRT2  3.0) 64.0) (/ (* SQRT2 -9.0) 64.0) (/ (* SQRT2 -7.0) 64.0) (/ (* SQRT2 45.0) 64.0)
+		  (/ (* SQRT2 45.0) 64.0) (/ (* SQRT2 -7.0) 64.0) (/ (* SQRT2 -9.0) 64.0) (/ (* SQRT2  3.0) 64.0)))
+(define sym6 (vct (/ (* SQRT2   -35.0) 16384.0) (/ (* SQRT2  -105.0) 16384.0) (/ (* SQRT2  -195.0) 16384.0)
+		  (/ (* SQRT2   865.0) 16384.0) (/ (* SQRT2   363.0) 16384.0) (/ (* SQRT2 -3489.0) 16384.0)
+		  (/ (* SQRT2  -307.0) 16384.0) (/ (* SQRT2 11025.0) 16384.0) (/ (* SQRT2 11025.0) 16384.0)
+		  (/ (* SQRT2  -307.0) 16384.0) (/ (* SQRT2 -3489.0) 16384.0) (/ (* SQRT2   363.0) 16384.0)
+		  (/ (* SQRT2   865.0) 16384.0) (/ (* SQRT2  -195.0) 16384.0) (/ (* SQRT2  -105.0) 16384.0)
+		  (/ (* SQRT2   -35.0) 16384.0)))
+
+(define wts (list 
+  daub4 daub6 daub8 daub10 daub12 daub14 daub16 daub18 daub20
+  Battle-Lemarie Burt-Adelson Beylkin coif2 coif4 coif6
+  sym2 sym3 sym4 sym5 sym6))
+
 
 (if (or full-test (= snd-test 21))
-    (begin
+    (let ((d0 #f) (d1 #f) (fn #f))
       (if (procedure? trace-hook) (trace-hook 21))
       
+      ;; -------- fft
+
+      (set! d0 (make-vct 16))
+      (vct-set! d0 0 1.0)
+      (snd-transform fourier-transform d0 0)
+      (do ((i 0 (1+ i)))
+	  ((= i 16))
+	(if (fneq (vct-ref d0 i) 1.0)
+	    (snd-display (format #f ";fourier (1.0) [~D]: ~A?" i (vct-ref d0 i)))))
+
+      (snd-transform fourier-transform d0 0)
+      (if (fneq (vct-ref d0 0) 256.0)
+	  (snd-display (format ";fourier (256.0): ~A?" (vct-ref d0 0))))
+      (do ((i 1 (1+ i)))
+	  ((= i 16))
+	(if (fneq (vct-ref d0 i) 0.0)
+	    (snd-display (format #f ";fourier (0.0) [~D]: ~A?" i (vct-ref d0 i)))))
+
+      (set! d0 (make-vct 8))
+      (set! d1 (make-vct 8))
+      (vct-set! d0 2 1.0)
+      (mus-fft d0 d1 8 1)
+      (if (or (not (vequal d0 (vct 1.000 0.000 -1.000 -0.000 1.000 0.000 -1.000 -0.000)))
+	      (not (vequal d1 (vct 0.000 1.000 0.000 -1.000 0.000 1.000 0.000 -1.000))))
+	  (snd-display (format #f ";mus-fft 1: ~A ~A?" d0 d1)))
+      (mus-fft d0 d1 8 -1)
+      (if (or (not (vequal d0 (vct 0.000 0.000 8.000 0.000 0.000 0.000 0.000 0.000)))
+	      (not (vequal d1 (vct 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000))))
+	  (snd-display (format #f ";mus-fft -1: ~A ~A?" d0 d1)))
+      
+      (vct-fill! d0 1.0)
+      (vct-fill! d1 0.0)
+      (mus-fft d0 d1 8)
+      (if (or (not (vequal d0 (vct 8.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000)))
+	      (not (vequal d1 (vct 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000))))
+	  (snd-display (format #f ";mus-fft 2: ~A ~A?" d0 d1)))
+      (mus-fft d0 d1 8 -1)
+      (if (or (not (vequal d0 (vct 8.000 8.000 8.000 8.000 8.000 8.000 8.000 8.000)))
+	      (not (vequal d1 (vct 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000))))
+	  (snd-display (format #f ";mus-fft -2: ~A ~A?" d0 d1)))
+
+      (vct-fill! d1 0.0)
+      (vct-map! d0 (lambda () (random 1.0)))
+      (set! fn (vct-copy d0))
+      (mus-fft d0 d1 8)
+      (mus-fft d0 d1 8 -1)
+      (vct-scale! d0 (/ 1.0 8.0))
+      (if (not (vequal d0 fn))
+	  (snd-display (format #f ";mus-fft 3: ~A ~A?" d0 fn)))
+
+
+      ;; -------- fht
+      
+      (set! d0 (make-vct 16))
+      (set! d1 (make-vct 16))
+      (do ((i 0 (1+ i)))
+	  ((= i 16))
+	(vct-set! d0 i (random 1.0)) 
+	(vct-set! d1 i (vct-ref d0 i)))
+      (fht d0)
+      (fht d0)
+      (vct-scale! d0 (/ 1.0 16.0))
+      (do ((i 0 (1+ i)))
+	  ((= i 16))
+	(if (fneq (vct-ref d0 i) (vct-ref d1 i))
+	    (snd-display (format ";fht twice [~D]:~A ~A?" i (vct-ref d0 i) (vct-ref d1 i)))))
+
+      (for-each 
+       (lambda (size)
+	 (for-each
+	  (lambda (loc)
+	    (let ((rdat (make-vct size)))
+	      (vct-set! rdat loc 1.0)
+	      (autocorrelate rdat)
+	      (if (fneq (vct-ref rdat 0) 2.0) (snd-display (format #f ";autocorrelate ~D:~D: ~A?" size loc rdat)))
+	      (do ((i 1 (1+ i)))
+		  ((= i (/ size 2)))
+		(if (fneq (vct-ref rdat i) 0.0) (snd-display (format #f ";autocorrelate ~D:~D[~D]: ~A?" size loc i (vct-ref rdat i)))))))
+	  (list 0 1 2 3)))
+       (list 8 16 128 256))
+
+      (for-each 
+       (lambda (size)
+	 (for-each
+	  (lambda (loc)
+	    (let ((rdat (make-vct size)))
+	      (vct-set! rdat loc 1.0)
+	      (vct-set! rdat (+ loc 1) 1.0)
+	      (autocorrelate rdat)
+	      (if (fneq (vct-ref rdat 0) 4.0) (snd-display (format #f ";autocorrelate(4) ~D:~D: ~A?" size loc rdat)))
+	      (if (fneq (vct-ref rdat 1) 2.0) (snd-display (format #f ";autocorrelate(4:1) ~D:~D: ~A?" size loc rdat)))
+	      (do ((i 2 (1+ i)))
+		  ((= i (/ size 2)))
+		(if (fneq (vct-ref rdat i) 0.0) (snd-display (format #f ";autocorrelate(4) ~D:~D[~D]: ~A?" size loc i (vct-ref rdat i)))))))
+	  (list 0 1 2 3)))
+       (list 8 16 128 256))
+
+
+      ;; -------- hankel
+
+      (set! d0 (make-vct 128))
+      (do ((i 0 (1+ i))) 
+	  ((= i 128)) 
+	(vct-set! d0 i (bes-j0 (/ (* i 12 3.14159) 128.0))))
+      (snd-transform hankel-transform d0)
+      (let ((pinfo (peak-at d0)))
+	(if (not (= (car pinfo) 5))
+	    (snd-display (format #f ";hankel 1: ~A?" pinfo))))
+
+      (do ((i 0 (1+ i))) 
+	  ((= i 128)) 
+	(vct-set! d0 i (+ (bes-j0 (/ (* i 12 3.14159) 128.0)) 
+			  (bes-j0 (/ (* i 20 3.14159) 128.0)))))
+      (snd-transform hankel-transform d0)
+      (let ((pinfo (peak-at d0)))
+	(if (and (not (= (car pinfo) 5))
+		 (not (= (car pinfo) 9)))
+	    (snd-display (format #f ";hankel 2: ~A?" pinfo)))
+	(vct-set! d0 (car pinfo) 0.0)
+	(let ((pinfo (peak-at d0)))
+	  (if (and (not (= (car pinfo) 5))
+		   (not (= (car pinfo) 9)))
+	      (snd-display (format #f ";hankel 3: ~A?" pinfo)))))
+
+      (do ((i 0 (1+ i))) 
+	  ((= i 128)) 
+	(vct-set! d0 i (+ (bes-j0 (/ (* i 12 3.14159) 128.0)) 
+			  (* 4.0 (bes-j0 (/ (* i 20 3.14159) 128.0))))))
+      (snd-transform hankel-transform d0)
+      (let ((pinfo (peak-at d0)))
+	(if (not (= (car pinfo) 9))
+	    (snd-display (format #f ";hankel 4: ~A?" pinfo)))
+	(vct-set! d0 9 0.0)
+	(let ((npinfo (peak-at d0)))
+	  (if (not (= (car npinfo) 5))
+	      (snd-display (format #f ";hankel 5: ~A?" npinfo)))
+	  (if (not (> (cadr pinfo) (cadr npinfo)))
+	      (snd-display (format #f ";hankel 6: ~A?" pinfo)))))
+
+      (do ((i 0 (1+ i))) 
+	  ((= i 128)) 
+	(vct-set! d0 i (bes-j0 (/ (* i 3.14159) 128.0))))
+      (snd-transform hankel-transform d0)
+      (let ((pinfo (peak-at d0)))
+	(if (not (= (car pinfo) 0))
+	    (snd-display (format #f ";hankel 7: ~A?" pinfo))))
+
+      (set! d0 (make-vct 8))
+      (do ((i 0 (1+ i))) 
+	  ((= i 8)) 
+	(vct-set! d0 i (bes-j0 (/ (* i 3.14159) 8.0))))
+      (snd-transform hankel-transform d0)
+      (if (< (/ (abs (vct-ref d0 0))
+		(abs (vct-ref d0 1)))
+	     3.0)
+	  (snd-display (format #f ";hankel 8: ~A?" d0)))
+
+
+      ;; -------- walsh
+
+      (set! d0 (make-vct 8))
+      (vct-set! d0 0 1.0)
+      (snd-transform walsh-transform d0)
+      (if (not (vequal d0 (vct 1.000 1.000 1.000 1.000 0.000 0.000 0.000 0.000)))
+	  (snd-display (format #f ";walsh 1: ~A" d0)))
+      (snd-transform walsh-transform d0)
+      (if (not (vequal d0 (vct 4.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000)))
+	  (snd-display (format #f ";walsh -1: ~A" d0)))
+      
+      (set! d0 (make-vct 8))
+      (vct-set! d0 1 1.0)
+      (snd-transform walsh-transform d0)
+      (if (not (vequal d0 (vct 1.000 -1.000 1.000 -1.000 0.000 0.000 0.000 0.000)))
+	  (snd-display (format #f ";walsh 2: ~A" d0)))
+      (snd-transform walsh-transform d0)
+      (if (not (vequal d0 (vct 0.000 4.000 0.000 0.000 0.000 0.000 0.000 0.000)))
+	  (snd-display (format #f ";walsh -2: ~A" d0)))
+
+      (set! d0 (make-vct 8))
+      (vct-set! d0 1 1.0)
+      (vct-set! d0 0 0.5)
+      (snd-transform walsh-transform d0)
+      (if (not (vequal d0 (vct 1.500 -0.500 1.500 -0.500 0.000 0.000 0.000 0.000)))
+	  (snd-display (format #f ";walsh 3: ~A" d0)))
+      (snd-transform walsh-transform d0)
+      (if (not (vequal d0 (vct 2.000 4.000 0.000 0.000 0.000 0.000 0.000 0.000)))
+	  (snd-display (format #f ";walsh -3: ~A" d0)))
+
+      (set! d0 (make-vct 8))
+      (vct-map! d0 (lambda () (random 1.0)))
+      (set! d1 (vct-copy d0))
+      (snd-transform walsh-transform d0)
+      (snd-transform walsh-transform d0)
+      (vct-scale! d0 (/ 1.0 4.0))
+      (if (not (vequal d0 d1))
+	  (snd-display (format #f ";walsh 4: ~A ~A" d0 d1)))
+
+
+      ;; -------- haar
+      
+      (set! d0 (make-vct 8))
+      (vct-set! d0 2 1.0)
+      (snd-transform haar-transform d0)
+      (if (not (vequal d0 (vct 0.354 0.354 -0.500 0.000 0.000 0.707 0.000 0.000)))
+	  (snd-display (format #f ";haar 1: ~A" d0)))
+      (inverse-haar d0)
+      (if (not (vequal d0 (vct 0.000 0.000 1.000 0.000 0.000 0.000 0.000 0.000)))
+	  (snd-display (format #f ";inverse haar 1: ~A" d0)))
+
+      (set! d0 (make-vct 8))
+      (vct-set! d0 0 1.0)
+      (snd-transform haar-transform d0)
+      (if (not (vequal d0 (vct 0.354 0.354 0.500 0.000 0.707 0.000 0.000 0.000)))
+	  (snd-display (format #f ";haar 2: ~A" d0)))
+      (inverse-haar d0)
+      (if (not (vequal d0 (vct 1.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000)))
+	  (snd-display (format #f ";inverse haar 2: ~A" d0)))
+
+      (set! d0 (make-vct 8))
+      (set! d1 (make-vct 8))
+      (do ((i 0 (1+ i)))
+	  ((= i 8))
+	(vct-set! d0 i (random 1.0))
+	(vct-set! d1 i (vct-ref d0 i)))
+      (snd-transform haar-transform d0)
+      (inverse-haar d0)
+      (if (not (vequal d0 d1))
+	  (snd-display (format #f ";inverse haar 3: ~A ~A" d0 d1)))
+
+
+      ;; -------- chebyshev
+
+      (set! fn (make-vct 128))
+      (do ((i 0 (1+ i)))
+	  ((= i 128))
+	(vct-set! fn i (* i (/ 1.0 128))))
+      (snd-transform chebyshev-transform fn)
+      (set! d0 (make-vct 128))
+      (do ((i 0 (1+ i)))
+	  ((= i 128))
+	(vct-set! d0 i (chebyshev-polynomial fn (- (* i (/ 2.0 128)) 1.0) 1 128)))
+      (if (> (vct-ref d0 1) (vct-ref d0 4))
+	  (snd-display (format #f ";cheby ramp: ~A?" d0)))
+
+      (do ((i 0 (1+ i)))
+	  ((= i 128))
+	(vct-set! fn i (sin (/ (* i 3.14159) 64.0))))
+      (snd-transform chebyshev-transform fn)
+      (set! d0 (make-vct 128))
+      (do ((i 0 (1+ i)))
+	  ((= i 128))
+	(vct-set! d0 i (chebyshev-polynomial fn (- (* i (/ 2.0 128)) 1.0) 1 128)))
+      (let ((error 0.0))
+	(do ((i 0 (1+ i)))
+	    ((= i 128))
+	  (set! error (+ error (abs (- (sin (/ (* i 3.14159) 64.0)) (* .01 (vct-ref d0 i)))))))
+	(if (> error 3.0)
+	    (snd-display (format #f ";cheby sine: ~A?" error))))
+
+
+      ;; --------- wavelet
+
+      (for-each 
+       (lambda (size)
+	 (do ((i 0 (1+ i)))
+	     ((= i 20))
+	   (let ((d1 (make-vct size))
+		 (d2 (make-vct size)))
+	     (vct-set! d1 2 1.0)
+	     (vct-set! d2 2 1.0)
+	     (wavelet d1 size 0 pwt (list-ref wts i))
+	     (snd-transform wavelet-transform d2 i)
+	     (if (not (vequal d1 d2))
+		 (snd-display (format #f ";wavelet ~D: ~A ~A" i d1 d2)))
+	     (wavelet d2 size -1 pwt (list-ref wts i))
+	     (vct-fill! d1 0.0)
+	     (vct-set! d1 2 1.0)
+	     (if (not (vequal d1 d2))
+		 (if (or (= i 9) (= i 10))
+		     (begin
+		       (vct-set! d2 2 0.0)
+		       (if (> (vct-peak d2) .1)
+			   (snd-display (format #f ";inverse wavelet ~D: ~A ~A" i d1 d2))))
+		     (if (> i 14)
+			 (let ((pk (vct-ref d2 2)))
+			   (vct-set! d2 2 0.0)
+			   (if (> (vct-peak d2) pk)
+			       (snd-display (format #f ";inverse wavelet ~D: ~A ~A" i d1 d2))))
+			 (snd-display (format #f ";inverse wavelet ~D: ~A ~A" i d1 d2)))))))
+	 (do ((i 0 (1+ i)))
+	     ((= i 9))
+	   (let ((d1 #f)
+		 (d2 (make-vct size)))
+	     (vct-map! d2 (lambda () (random 1.0)))
+	     (set! d1 (vct-copy d2))
+	     (snd-transform wavelet-transform d2 i)
+	     (wavelet d2 size -1 pwt (list-ref wts i))
+	     (if (not (vequal d1 d2))
+		 (snd-display (format #f ";random wavelet ~D: ~A ~A" i d1 d2))))))
+       (list 16 64))
+
+
+      ;; -------- hadamard
+
+      (set! d0 (make-vct 8))
+      (vct-set! d0 2 1.0)
+      (snd-transform hadamard-transform d0)
+      (if (not (vequal d0 (vct 1.000 1.000 -1.000 -1.000 -1.000 -1.000 1.000 1.000)))
+	  (snd-display (format #f ";hadamard 1: ~A?" d0)))
+      (snd-transform hadamard-transform d0)
+      (vct-scale! d0 (/ 1.0 8.0))
+      (if (not (vequal d0 (vct 0.000 0.000 1.000 0.000 0.000 0.000 0.000 0.000)))
+	  (snd-display (format #f ";hadamard -1: ~A?" d0)))
+
+      (let ((d1 #f)
+	    (d2 (make-vct 64)))
+	(vct-map! d2 (lambda () (random 1.0)))
+	(set! d1 (vct-copy d2))
+	(snd-transform hadamard-transform d2)
+	(snd-transform hadamard-transform d2)
+	(vct-scale! d2 (/ 1.0 64.0))
+	(if (not (vequal d1 d2))
+	    (snd-display (format #f ";random hadamard: ~A ~A" d1 d2))))
+
       ))
 
 ;;; -------------------------------- clean up and quit -------------------------------- 
@@ -7487,4 +8012,4 @@
 		(snd-display (format #f "  ~A: ~A~%" (cadr n) (car n))))
 	      times))
 
-(if (= snd-test -1) (exit)))
+(if (= snd-test -1) (exit))

@@ -294,32 +294,40 @@ static Float *data1 = NULL;
 
 static void wavelet_transform(Float *data, int num, Float *cc, int cc_size)
 {
-  int i, jf, i1, k, i2, sig;
-  int n;
-  Float val;
-  if (num < 4) return;
-  for (n = num; n >= 4; n >>= 1)
+  Float sig = -1.0;
+  Float *cr;
+  int i, j, n, n1, nmod, nh, joff, ii, ni, k, jf;
+  cr = (Float *)CALLOC(cc_size, sizeof(Float));
+  for (i = 0, j = cc_size - 1; i < cc_size; i++, j--)
     {
-      if (n > data1_size)
+      cr[j] = sig * cc[i];
+      sig = -sig;
+    }
+  for (n = num; n >= 4; n /= 2)
+    {
+      if (data1_size < n)
 	{
 	  if (data1) FREE(data1);
-	  data1 = (Float *)CALLOC(n, sizeof(Float));
 	  data1_size = n;
+	  data1 = (Float *)CALLOC(n, sizeof(Float));
 	}
       else for (i = 0; i < n; i++) data1[i] = 0.0;
-      jf = (int)(cc_size * (n - 0.5));
-      for (i1 = 0, i = 1, i2 = (n >> 1); i <= n; i += 2, i1++, i2++)
+      n1 = n - 1;
+      nmod = cc_size * n;
+      nh = n >> 1;
+      joff = -(cc_size >> 1);
+      for (ii = 0, i = 1; i <= n; i += 2, ii++)
 	{
-	  sig = -1;
+	  ni = i + nmod + joff;
 	  for (k = 0; k < cc_size; k++)
 	    {
-	      val = data[(i + jf + k - 1) % n];
-	      data1[i1] += (cc[k] * val);
-	      data1[i2] += (sig * cc[cc_size - k - 1] * val);
-	      sig = -sig;
+	      jf = n1 & (ni + k + 1);
+	      data1[ii] += cc[k] * data[jf];
+	      data1[ii + nh] += cr[k] * data[jf];
 	    }
 	}
-      for (i = 0; i < n; i++) data[i] = data1[i];
+      for (i = 0; i < n; i++)
+	data[i] = data1[i];
     }
 }
 
@@ -368,15 +376,18 @@ static Float sym5[8] = {0.066291265, -0.19887379, -0.15467963, 0.994369, 0.99436
 static Float sym6[16] = {-0.0030210863, -0.009063259, -0.016831767, 0.07466399, 0.03133298, -0.30115914, -0.026499243, 
 			 0.9516422, 0.9516422, -0.026499243, -0.30115914, 0.03133298, 0.07466399, -0.016831767, -0.009063259, -0.0030210863};
 
-static char *wavelet_names[] ={"daub4", "daub6", "daub8", "daub10", "daub12", "daub14", "daub16", "daub18", "daub20",
-			      "battle_lemarie", "burt_adelson", "beylkin", "coif2", "coif4", "coif6",
-			      "sym2", "sym3", "sym4", "sym5", "sym6"};
-static int wavelet_sizes[] ={4, 6, 8, 10, 12, 14, 16, 18, 20,
-			    24, 6, 18, 6, 12, 18,
-			    5, 4, 10, 8, 16};
-static Float *wavelet_data[] ={daub4, daub6, daub8, daub10, daub12, daub14, daub16, daub18, daub20,
-			      Battle_Lemarie, Burt_Adelson, Beylkin, coif2, coif4, coif6,
-			      sym2, sym3, sym4, sym5, sym6};
+static char *wavelet_names[NUM_WAVELETS] =
+  {"daub4", "daub6", "daub8", "daub10", "daub12", "daub14", "daub16", "daub18", "daub20",
+   "battle_lemarie", "burt_adelson", "beylkin", "coif2", "coif4", "coif6",
+   "sym2", "sym3", "sym4", "sym5", "sym6"};
+static int wavelet_sizes[NUM_WAVELETS] =
+  {4, 6, 8, 10, 12, 14, 16, 18, 20,
+   24, 6, 18, 6, 12, 18,
+   5, 4, 10, 8, 16};
+static Float *wavelet_data[NUM_WAVELETS] =
+  {daub4, daub6, daub8, daub10, daub12, daub14, daub16, daub18, daub20,
+   Battle_Lemarie, Burt_Adelson, Beylkin, coif2, coif4, coif6,
+   sym2, sym3, sym4, sym5, sym6};
 
 
 /* tested with pulse train and oboe.snd */
@@ -389,14 +400,12 @@ static Float *wavelet_data[] ={daub4, daub6, daub8, daub10, daub12, daub14, daub
 
 static void haar_transform(Float *f, int n)
 {
-  int ldn;
-  unsigned int m, mh, i, j, k;
+  int m, mh, i, j, k;
   Float s2;
   Float v = 1.0;
   Float x, y;
   Float *g;
   s2 = sqrt(0.5);
-  ldn = (int)(log(n) / log(2));
   g = (Float *)CALLOC(n, sizeof(Float));
   for (m = n; m > 1; m >>= 1)
     {
@@ -409,9 +418,10 @@ static void haar_transform(Float *f, int n)
 	  g[k] = x + y;
 	  g[mh + k] = (x - y) * v;
         }
-      for (i = m; i > 0; i--) f[i] = g[i];
+      for (i = m - 1; i >= 0; i--) f[i] = g[i];
     }
   f[0] *= v;
+  FREE(g);
 }
 
 
@@ -519,42 +529,26 @@ static void chebyshev_transform(Float *data, int n)
 
 static void walsh_transform(Float *data, int n)
 {
-  int i, j, k, m, m2, i1, i2, ipow, n2;
-  Float f1, f2;
-  n2 = n >> 1;
+  int i, j, m, ipow;
+  int r, t1, t2, mh;
+  Float u, v;
   ipow = (int)(log(n) / log(2));
-  for (i = 1, j = 0; i < n - 1; i++)
-    {
-      for (k = n2; (!((j ^= k) & k)); k >>= 1);
-      if (j > i) {f1 = data[i]; data[i] = data[j]; data[j] = f1;}
-    }
-  for (i = 1; i <= ipow; i++) /* for (i = ipow; i > 0; i--) */
+  for (i = ipow; i >= 1; --i)
     {
       m = (1 << i);
-      m2 = m >> 1;
-      for (j = 0; j < m2; j++)
-	{
-	  for (k = 0; k < n; k += m)
-	    {
-	      i1 = k + j;
-	      i2 = i1 + m2;
-	      f1 = data[i1];
-	      f2 = data[i2];
-	      data[i1] = f1 + f2;
-	      data[i2] = f1 - f2;
-	    }
-	}
+      mh = (m >> 1);
+      for (r = 0; r < n; r += m)
+        {
+	  for (j = 0, t1 = r, t2 = r + mh; j < mh; ++j, ++t1, ++t2)
+            {
+	      u = data[t1];
+	      v = data[t2];
+	      data[t1] = u + v;
+	      data[t2] = u - v;
+            }
+        }
     }
 }
-
-/*
-(with-sound () 
-  (loop for i from 0 to 63 do (outa i .15)) 
-  (loop for i from 64 to 127 do (outa i -.15)) 
-  (loop for i from 128 to 191 do (outa i .15)) 
-  (loop for i from 192 to 256 do (outa i -.15)) 
-  (loop for i from 0 to 256 do (outa i .05)))
-  */
 
 
 
@@ -2504,7 +2498,8 @@ static SCM g_snd_transform(SCM type, SCM data, SCM hint)
       break;
     case WAVELET:
       hnt = TO_SMALL_C_INT(hint);
-      wavelet_transform(v->data, v->length, wavelet_data[hnt], wavelet_sizes[hnt]);
+      if (hnt < NUM_WAVELETS)
+	wavelet_transform(v->data, v->length, wavelet_data[hnt], wavelet_sizes[hnt]);
       break;
     case HAAR:
       haar_transform(v->data, v->length);
@@ -2520,6 +2515,12 @@ static SCM g_snd_transform(SCM type, SCM data, SCM hint)
       break;
     case AUTOCORRELATION:
       autocorrelation(v->data, v->length);
+      break;
+    case HADAMARD:
+      dat = (Float *)CALLOC(v->length, sizeof(Float));
+      fast_hwt(dat, v->data, (int)(log((Float)(v->length + 1)) / log(2.0)));
+      for (i = 0; i < v->length; i++) v->data[i] = dat[i];
+      FREE(dat);
       break;
     }
   return(data);
