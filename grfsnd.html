@@ -102,7 +102,7 @@ snd -e "(set! (<a class=quiet href="extsnd.html#datacolor">data-color</a>) (<a c
 </pre>
 <p>reads ~/.snd, if any, then sets the (unselected) data color to red, then opens oboe.snd.</p>
 <pre>
-./snd -eval '(begin (display (+ 1 2)) (<a class=quiet href="extsnd.html#sndexit">exit</a>))'
+./snd -eval '(begin (display (+ 1 2)) (<a class=quiet href="extsnd.html#exit">exit</a>))'
 </pre>
 <p>prints "3" and exits.  The "-title" argument works in both versions of Snd.
 The following adds "WAV" to the sound file extension table before preloading the directory:
@@ -162,7 +162,7 @@ Here's a more elaborate initialization file:
       (set! (<a class=quiet href="extsnd.html#axisnumbersfont">axis-numbers-font</a>) "Monospace 10")))
 
 (set! (<a class=quiet href="extsnd.html#listenerprompt">listener-prompt</a>) ":")        ;change listener prompt from the default "&gt;" to ":"
-(set! (<a class=quiet href="extsnd.html#sndshowlistener">show-listener</a>) #t)           ;include the listener window initially
+(set! (<a class=quiet href="extsnd.html#showlistener">show-listener</a>) #t)           ;include the listener window initially
 (set! (<a class=quiet href="extsnd.html#showindices">show-indices</a>) #t)            ;include sound index values with the sound name
 
 (define beige (<a class=quiet href="extsnd.html#makecolor">make-color</a> 0.96 0.96 0.86))
@@ -525,9 +525,9 @@ is a sketch using the Snd internal "srate" function:</p>
 </pre>
 <p>Alternatively, you can simply use scm_eval_str0:</p>
 <pre>
-  scm_eval_str0("(<a class=quiet href="extsnd.html#sndrecorderdialog">recorder-dialog</a>)");
-  scm_eval_str0("(<a class=quiet href="extsnd.html#sndopen">open-sound</a> \"oboe.snd\")");
-  srate = scm_num2int(scm_eval_str0("(<a class=quiet href="extsnd.html#sndsrate">srate</a>)"), 0, "");
+  scm_eval_str0("(<a class=quiet href="extsnd.html#recorderdialog">recorder-dialog</a>)");
+  scm_eval_str0("(<a class=quiet href="extsnd.html#opensound">open-sound</a> \"oboe.snd\")");
+  srate = scm_num2int(scm_eval_str0("(<a class=quiet href="extsnd.html#srate">srate</a>)"), 0, "");
 </pre>
 
 <br>
@@ -549,7 +549,7 @@ as a batch program.
 <p>
 Say we have a sound processing CLM instrument we like; it takes
 two sound file names as its arguments, reading the first and writing the second.
-In Snd we write the current edited state to a temporary file (<a href="extsnd.html#sndsaveas">save-sound-as</a>),
+In Snd we write the current edited state to a temporary file (<a href="extsnd.html#savesoundas">save-sound-as</a>),
 start CLM, call the instrument 
 passing it the input filename (just written by Snd), then pass CLM's output back
 to Snd.  Snd replaces (via set-samples) the current data with the data our instrument wrote, as if it had incorporated that
@@ -601,20 +601,20 @@ these declarations in ~/.snd:
     (do ((i 0 (1+ i))) 
         ((= i data-size))
       (<a class=quiet href="extsnd.html#vctset">vct-set!</a> data i (fun)))
-    (<a class=quiet href="extsnd.html#sndgraph">graph</a> data)))
+    (<a class=quiet href="extsnd.html#graph">graph</a> data)))
 
 (define runf
   (lambda (fun)
     (do ((i 0 (1+ i))) 
         ((= i data-size))
       (<a class=quiet href="extsnd.html#vctset">vct-set!</a> data i (fun)))
-    (<a class=quiet href="extsnd.html#sndgraph">graph</a> (<a class=quiet href="extsnd.html#sndspectrum">snd-spectrum</a> data blackman2-window data-size #t))))
+    (<a class=quiet href="extsnd.html#graph">graph</a> (<a class=quiet href="extsnd.html#sndspectrum">snd-spectrum</a> data blackman2-window data-size #t))))
 </pre></td></tr></table>
 
 <p>Now we can open the listener, and type:</p>
 <pre>
 (define hi (<a class=quiet href="clm.html#make-oscil">make-oscil</a>))
-(<a class=quiet href="extsnd.html#sndrun">run</a> (lambda () (<a class=quiet href="clm.html#oscil">oscil</a> hi)))
+(<a class=quiet href="extsnd.html#run">run</a> (lambda () (<a class=quiet href="clm.html#oscil">oscil</a> hi)))
 (define ho (<a class=quiet href="clm.html#make-oscil">make-oscil</a>))
 (runf (lambda () (<a class=quiet href="clm.html#oscil">oscil</a> hi (* .5 (<a class=quiet href="clm.html#oscil">oscil</a> ho)))))
 </pre>
@@ -624,7 +624,7 @@ to edit sounds.  Say we want an echo effect:</p>
 <table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (define echo 
   (lambda (scaler secs)
-    (let ((del (<a class=quiet href="clm.html#make-delay">make-delay</a> (round (* secs (<a class=quiet href="extsnd.html#sndsrate">srate</a>))))))
+    (let ((del (<a class=quiet href="clm.html#make-delay">make-delay</a> (round (* secs (<a class=quiet href="extsnd.html#srate">srate</a>))))))
       (lambda (inval)
         (+ inval (<a class=quiet href="clm.html#delay">delay</a> del (* scaler (+ (<a class=quiet href="clm.html#tap">tap</a> del) inval))))))))
 </pre></td></tr></table>
@@ -1327,7 +1327,7 @@ match-sound-files from extensions.scm):
     (XmStringTableUnparse st len #f XmCHARSET_TEXT XmCHARSET_TEXT #f 0 XmOUTPUT_ALL))
   (define (list-&gt;XmStringTable strs)
     (XmStringTableParseStringArray strs (length strs) #f XmCHARSET_TEXT #f 0 #f))
-  (XtSetValues (let ((m (<a class=quiet href="extsnd.html#sndopenfiledialog">open-file-dialog</a> #f)))
+  (XtSetValues (let ((m (<a class=quiet href="extsnd.html#openfiledialog">open-file-dialog</a> #f)))
                          ; make sure the dialog exists
 		  (list-ref (<a class=quiet href="extsnd.html#dialogwidgets">dialog-widgets</a>) 6))
 		(list XmNfileSearchProc                             ; set dialog file search procedure
@@ -1387,7 +1387,7 @@ Here's the scale-dialog in xg/gtk:
 				 (gtk_widget_hide scale-dialog)))
 	  (g_signal_connect help "clicked"
 			       (lambda (w info)
-				 (<a class=quiet href="extsnd.html#sndhelpdialog">help-dialog</a> "Scaler Dialog" "move the slider to affect the volume")))
+				 (<a class=quiet href="extsnd.html#helpdialog">help-dialog</a> "Scaler Dialog" "move the slider to affect the volume")))
 	  (gtk_widget_show dismiss)
 	  (gtk_widget_show help)
 	  (let* ((adj (gtk_adjustment_new 0.0 0.0 1.01 0.01 0.01 .01))
@@ -1421,16 +1421,16 @@ the non-interface related functions are available, so you can do things
 like:
 </p>
 <pre>
-<em class=listener>snd&gt;</em><em class=typing> (<a class=quiet href="extsnd.html#sndnew">new-sound</a> "new.snd")</em>
+<em class=listener>snd&gt;</em><em class=typing> (<a class=quiet href="extsnd.html#newsound">new-sound</a> "new.snd")</em>
 <em class=listener>0</em>
 <em class=listener>snd&gt;</em><em class=typing> (load "v.scm")</em>
 <em class=listener>snd&gt;</em><em class=typing> (fm-violin 0 1 440 .1)</em>
 <em class=listener>-1</em>
 <em class=listener>snd&gt;</em><em class=typing> (<a class=quiet href="extsnd.html#frames">frames</a> 0)</em>
 <em class=listener>22050</em>
-<em class=listener>snd&gt;</em><em class=typing> (<a class=quiet href="extsnd.html#sndplay">play</a>)</em>
+<em class=listener>snd&gt;</em><em class=typing> (<a class=quiet href="extsnd.html#play">play</a>)</em>
 <em class=listener>#t</em>
-<em class=listener>snd&gt;</em><em class=typing> (<a class=quiet href="extsnd.html#sndexit">exit</a>)</em>
+<em class=listener>snd&gt;</em><em class=typing> (<a class=quiet href="extsnd.html#exit">exit</a>)</em>
 </pre>
 <p>Guile's repl has its own error handlers, different from the
 normal Snd handlers; name completion, if it exists at all,
@@ -1457,42 +1457,42 @@ if you have an executable file with:
 hiho
 :a-test
 32
-:(<a class=quiet href="extsnd.html#sndexit">exit</a>)
+:(<a class=quiet href="extsnd.html#exit">exit</a>)
 /home/bil/test/snd-7/ 
 </pre>
 <p>The difference between this use of Snd, and using guile itself
 for scripts is that Snd uses the -l switch where guile would use -s.
 As noted above, you can use the -e switch to use Snd as a pure
-command-line program, and, of course, (<a class=quiet href="extsnd.html#sndexit">exit</a>) to drop back to the shell.
+command-line program, and, of course, (<a class=quiet href="extsnd.html#exit">exit</a>) to drop back to the shell.
 Here's a script that doubles every sample in "oboe.snd" and
 writes the result as "test.snd":
 </p>
 <pre>
 #!/home/bil/test/snd-7/snd -l
 !#
-(<a class=quiet href="extsnd.html#sndopen">open-sound</a> "oboe.snd")
-(<a class=quiet href="extsnd.html#sndscaleby">scale-by</a> 2.0)
-(<a class=quiet href="extsnd.html#sndsaveas">save-sound-as</a> "test.snd")
-(<a class=quiet href="extsnd.html#sndexit">exit</a>)
+(<a class=quiet href="extsnd.html#opensound">open-sound</a> "oboe.snd")
+(<a class=quiet href="extsnd.html#scaleby">scale-by</a> 2.0)
+(<a class=quiet href="extsnd.html#savesoundas">save-sound-as</a> "test.snd")
+(<a class=quiet href="extsnd.html#exit">exit</a>)
 </pre>
 <p>The functions <b>script-args</b> and <b>script-arg</b> can be used
 to access the script's arguments, and if necessary (if not exiting)
 tell Snd to ignore arguments.  script-args returns a list of strings
 giving the arguments.  The first two are always "-l" and the script
-file name. The current argument is (<a class=quiet href="extsnd.html#sndscriptarg">script-arg</a>).  If you set this to
+file name. The current argument is (<a class=quiet href="extsnd.html#scriptarg">script-arg</a>).  If you set this to
 a higher value, Snd will subsequently ignore the intevening arguments
 as it scans the startup arguments (see snd-test.scm).
 </p>
 <pre>
 #!/home/bil/test/snd-7/snd -l
 !#
-(if (= (length (<a class=quiet href="extsnd.html#sndscriptargs">script-args</a>)) 2) ;i.e. ("-l" "script")
+(if (= (length (<a class=quiet href="extsnd.html#scriptargs">script-args</a>)) 2) ;i.e. ("-l" "script")
   (display "usage: script file-name...\n")
   (begin
-    (<a class=quiet href="extsnd.html#sndopen">open-sound</a> (list-ref (<a class=quiet href="extsnd.html#sndscriptargs">script-args</a>) (+ (<a class=quiet href="extsnd.html#sndscriptarg">script-arg</a>) 1)))
-    (<a class=quiet href="extsnd.html#sndscaleby">scale-by</a> 2.0)
-    (<a class=quiet href="extsnd.html#sndsaveas">save-sound-as</a> "test.snd")))
-(<a class=quiet href="extsnd.html#sndexit">exit</a>)
+    (<a class=quiet href="extsnd.html#opensound">open-sound</a> (list-ref (<a class=quiet href="extsnd.html#scriptargs">script-args</a>) (+ (<a class=quiet href="extsnd.html#scriptarg">script-arg</a>) 1)))
+    (<a class=quiet href="extsnd.html#scaleby">scale-by</a> 2.0)
+    (<a class=quiet href="extsnd.html#savesoundas">save-sound-as</a> "test.snd")))
+(<a class=quiet href="extsnd.html#exit">exit</a>)
 </pre>
 <p>This either grumbles if no argument is given,
 or scales its argument sound by 2.0:
@@ -1508,13 +1508,13 @@ the following displays all the comments it finds:
 #!/home/bil/cl/snd -l
 !#
 (use-modules (ice-9 format))
-(if (= (length (<a class=quiet href="extsnd.html#sndscriptargs">script-args</a>)) 2) ;i.e. ("-l" "script")
+(if (= (length (<a class=quiet href="extsnd.html#scriptargs">script-args</a>)) 2) ;i.e. ("-l" "script")
   (display "usage: script file-name...\n")
-  (do ((arg (+ (<a class=quiet href="extsnd.html#sndscriptarg">script-arg</a>) 1) (1+ arg)))
-      ((= arg (length (<a class=quiet href="extsnd.html#sndscriptargs">script-args</a>))))
-    (let ((name (list-ref (<a class=quiet href="extsnd.html#sndscriptargs">script-args</a>) arg)))
+  (do ((arg (+ (<a class=quiet href="extsnd.html#scriptarg">script-arg</a>) 1) (1+ arg)))
+      ((= arg (length (<a class=quiet href="extsnd.html#scriptargs">script-args</a>))))
+    (let ((name (list-ref (<a class=quiet href="extsnd.html#scriptargs">script-args</a>) arg)))
       (display (format #f "~A: ~A~%" name (<a class=quiet href="extsnd.html#soundcomment">mus-sound-comment</a> name))))))
-(<a class=quiet href="extsnd.html#sndexit">exit</a>)
+(<a class=quiet href="extsnd.html#exit">exit</a>)
 </pre>
 <p>
 Say we save this as the file "comments".</p>
@@ -1541,24 +1541,24 @@ than 40 seconds in duration, and truncates them to 40 seconds:
 <pre>
 #!/usr/local/bin/snd -l
 !#
-(if (= (length (<a class=quiet href="extsnd.html#sndscriptargs">script-args</a>)) 2)
+(if (= (length (<a class=quiet href="extsnd.html#scriptargs">script-args</a>)) 2)
   (display "usage: trunc.scm file-name...\n")
-  (do ((arg (+ (<a class=quiet href="extsnd.html#sndscriptarg">script-arg</a>) 1) (1+ arg)))
-      ((= arg (length (<a class=quiet href="extsnd.html#sndscriptargs">script-args</a>))))
-    (let* ((name (list-ref (<a class=quiet href="extsnd.html#sndscriptargs">script-args</a>) arg)))
+  (do ((arg (+ (<a class=quiet href="extsnd.html#scriptarg">script-arg</a>) 1) (1+ arg)))
+      ((= arg (length (<a class=quiet href="extsnd.html#scriptargs">script-args</a>))))
+    (let* ((name (list-ref (<a class=quiet href="extsnd.html#scriptargs">script-args</a>) arg)))
       (if (&gt; (<a class=quiet href="extsnd.html#soundduration">mus-sound-duration</a> name) 40.0)
-	  (let* ((ind (<a class=quiet href="extsnd.html#sndopen">open-sound</a> name)))
-	    (set! (<a class=quiet href="extsnd.html#frames">frames</a> ind) (* 40 (<a class=quiet href="extsnd.html#sndsrate">srate</a> ind)))
-	    (<a class=quiet href="extsnd.html#sndsave">save-sound</a> ind)
-	    (<a class=quiet href="extsnd.html#sndclose">close-sound</a> ind))))))
-(<a class=quiet href="extsnd.html#sndexit">exit</a>)
+	  (let* ((ind (<a class=quiet href="extsnd.html#opensound">open-sound</a> name)))
+	    (set! (<a class=quiet href="extsnd.html#frames">frames</a> ind) (* 40 (<a class=quiet href="extsnd.html#srate">srate</a> ind)))
+	    (<a class=quiet href="extsnd.html#savesound">save-sound</a> ind)
+	    (<a class=quiet href="extsnd.html#closesound">close-sound</a> ind))))))
+(<a class=quiet href="extsnd.html#exit">exit</a>)
 </pre>
 <p>Here's a sndplay replacement script:</p>
 <pre>
 #!snd -b
 !#
-(<a class=quiet href="extsnd.html#sndplayandwait">play-and-wait</a> (list-ref (<a class=quiet href="extsnd.html#sndscriptargs">script-args</a>) (+ (<a class=quiet href="extsnd.html#sndscriptarg">script-arg</a>) 1)))
-(<a class=quiet href="extsnd.html#sndexit">exit</a>)
+(<a class=quiet href="extsnd.html#playandwait">play-and-wait</a> (list-ref (<a class=quiet href="extsnd.html#scriptargs">script-args</a>) (+ (<a class=quiet href="extsnd.html#scriptarg">script-arg</a>) 1)))
+(<a class=quiet href="extsnd.html#exit">exit</a>)
 </pre>
 <p>And here's a script that splits a multi-channel file
 into a bunch of mono files:
@@ -1566,23 +1566,23 @@ into a bunch of mono files:
 <pre>
 #!snd -b
 !#
-(if (= (length (<a class=quiet href="extsnd.html#sndscriptargs">script-args</a>)) 2)
+(if (= (length (<a class=quiet href="extsnd.html#scriptargs">script-args</a>)) 2)
   (display "usage: split.scm filename\n")
-  (let* ((name (list-ref (<a class=quiet href="extsnd.html#sndscriptargs">script-args</a>) (1+ (<a class=quiet href="extsnd.html#sndscriptarg">script-arg</a>))))
+  (let* ((name (list-ref (<a class=quiet href="extsnd.html#scriptargs">script-args</a>) (1+ (<a class=quiet href="extsnd.html#scriptarg">script-arg</a>))))
 	 (chns (<a class=quiet href="extsnd.html#soundchans">mus-sound-chans</a> name)))
     (if (&gt; chns 1)
-	(let ((ind (<a class=quiet href="extsnd.html#sndopen">open-sound</a> name)))
+	(let ((ind (<a class=quiet href="extsnd.html#opensound">open-sound</a> name)))
 	  (do ((i 0 (1+ i)))
 	      ((= i chns))
 	    (display (format #f "~A.~D " name i))
-	    (<a class=quiet href="extsnd.html#sndsaveas">save-sound-as</a> (format #f "~A.~D" name i)
+	    (<a class=quiet href="extsnd.html#savesoundas">save-sound-as</a> (format #f "~A.~D" name i)
 			   ind
-			   (<a class=quiet href="extsnd.html#sndheadertype">header-type</a> ind)
-			   (<a class=quiet href="extsnd.html#snddataformat">data-format</a> ind)
-			   (<a class=quiet href="extsnd.html#sndsrate">srate</a> ind)
+			   (<a class=quiet href="extsnd.html#headertype">header-type</a> ind)
+			   (<a class=quiet href="extsnd.html#dataformat">data-format</a> ind)
+			   (<a class=quiet href="extsnd.html#srate">srate</a> ind)
 			   i))
-	  (<a class=quiet href="extsnd.html#sndclose">close-sound</a> ind)))))
-(<a class=quiet href="extsnd.html#sndexit">exit</a>)
+	  (<a class=quiet href="extsnd.html#closesound">close-sound</a> ind)))))
+(<a class=quiet href="extsnd.html#exit">exit</a>)
 </pre>
 <br>
 
@@ -1595,7 +1595,7 @@ the "-" are "_", "-&gt;" is "2", hooks and memo_sound have "$" prepended
 (e.g. Autocorrelation).  The generalized set! functions are replaced
 by "set_" plus the base name (e.g. set_window_width), with arguments
 reordered in some cases to place the optional values after the new value.  That is,
-<code>(set! (<a class=quiet href="extsnd.html#sndsyncing">sync</a> snd) 1)</code> becomes <code>set_sync(1, snd)</code>.
+<code>(set! (<a class=quiet href="extsnd.html#sync">sync</a> snd) 1)</code> becomes <code>set_sync(1, snd)</code>.
 Hooks in Ruby (which have little or nothing to do with Ruby's "hookable variables")
 are just procedures or nil, not lists of procedures as in Guile.
 Here's the Ruby version of the init file given
@@ -1900,13 +1900,13 @@ data directly to the DAC:
   ;; (ladspa-it "cmt" "delay_5s" .3 .5)
   (init-ladspa)
   (let* ((descriptor (ladspa-descriptor library label))
-	 (handle (ladspa-instantiate descriptor (<a class=quiet href="extsnd.html#sndsrate">srate</a>)))
+	 (handle (ladspa-instantiate descriptor (<a class=quiet href="extsnd.html#srate">srate</a>)))
 	 (block-size 256)
 	 (in-block (<a class=quiet href="extsnd.html#makevct">make-vct</a> block-size))
 	 (out-block (<a class=quiet href="extsnd.html#makevct">make-vct</a> block-size))
 	 (len (<a class=quiet href="extsnd.html#frames">frames</a>))
 	 (data (<a class=quiet href="extsnd.html#makesounddata">make-sound-data</a> 1 block-size))
-	 (audio-port (<a class=quiet href="extsnd.html#musaudioopenoutput">mus-audio-open-output</a> mus-audio-default (<a class=quiet href="extsnd.html#sndsrate">srate</a>) 1 mus-lshort (* block-size 2))))
+	 (audio-port (<a class=quiet href="extsnd.html#musaudioopenoutput">mus-audio-open-output</a> mus-audio-default (<a class=quiet href="extsnd.html#srate">srate</a>) 1 mus-lshort (* block-size 2))))
   (dynamic-wind
    (lambda ()
      (let ((count 0))

@@ -550,7 +550,7 @@ version of Snd's very simple spectrum-&gt;coefficients procedure ("frequency sam
 It returns the FIR filter coefficients given the filter order and desired spectral envelope.
 </p>
 <pre>
-(<a class=quiet href="extsnd.html#mapchan">map-chan</a> (fltit-1 10 (<a class=quiet href="extsnd.html#sndlist2vct">list-&gt;vct</a> '(0 1.0 0 0 0 0 0 0 1.0 0))))
+(<a class=quiet href="extsnd.html#mapchan">map-chan</a> (fltit-1 10 (<a class=quiet href="extsnd.html#list2vct">list-&gt;vct</a> '(0 1.0 0 0 0 0 0 0 1.0 0))))
 </pre>
 <p>
 <b>down-oct</b> tries to move a sound down an octave by goofing with the fft data,
@@ -580,7 +580,7 @@ The code:
 	(logra (log10 (/ (+ cor-peak (<a class=quiet href="extsnd.html#vctref">vct-ref</a> data (+ i 2))) (* 2 cor-peak))))
 	(offset (/ (* 0.5 (- logla logra))
 		   (+ logla logra (* -2.0 logca)))))
-   (return (/ (<a class=quiet href="extsnd.html#sndsrate">srate</a> snd)
+   (return (/ (<a class=quiet href="extsnd.html#srate">srate</a> snd)
 	      (* 2 (+ i 1 offset)))))
 </pre>
 <p>is using Xavier Serra's interpolation technique to find the true location
@@ -699,18 +699,18 @@ The effects include:
 <!-- I(reverberate file):M(Effects: Reverberate)(effectsdoc) -->
 <!-- I(normalize sound):M(Effects: Normalize)(effectsdoc) -->
 <!-- I(normalize sound):A(effectsdoc) -->
-<!-- I(normalize sound):L(scale-to)(sndscaleto) -->
+<!-- I(normalize sound):L(scale-to)(scaleto) -->
 <!-- I(insert zeros):M(Effects: Add Silence)(effectsdoc) -->
 <!-- I(change tempo):M(Effects: Expsrc)(effectsdoc) -->
 
-<p>Most of these are either simple calls on Snd functions ("invert" is <code>(<a class=quiet href="extsnd.html#sndscaleby">scale-by</a> -1)</code>),
+<p>Most of these are either simple calls on Snd functions ("invert" is <code>(<a class=quiet href="extsnd.html#scaleby">scale-by</a> -1)</code>),
 or use functions in the other scm files.  The actual operations follow the sync chain of the
 currently active channel.  
 </p>
 <p>One possibly interesting part of new-effects.scm is the implementation of the
 Effects menu.  If you change one of the variables, you'll notice that the
 menu updates its notion of that variable as well.  This is handled through
-<i>update-callback</i> argument to <a href="extsnd.html#sndaddtomainmenu">add-to-main-menu</a>
+<i>update-callback</i> argument to <a href="extsnd.html#addtomainmenu">add-to-main-menu</a>
 function.  Each effect is added (when new-effects.scm is loaded) to the <i>effects-list</i>.
 Then each time you click the Effects menu, causing its options to be dispayed,
 the update-callback function itself calls each effect's update function to
@@ -719,7 +719,7 @@ get its current option label.  That is,
 <pre>
 (define effects-list '())
 (define effects-menu 
-  (<a class=quiet href="extsnd.html#sndaddtomainmenu">add-to-main-menu</a> "Effects" 
+  (<a class=quiet href="extsnd.html#addtomainmenu">add-to-main-menu</a> "Effects" 
                     (lambda ()
  		      (define (update-label effects)
 		        (if (not (null? effects))
@@ -737,14 +737,14 @@ adds its update function to the effects-list when it is loaded:
 <pre>
 (set! effects-list (cons (lambda ()
 			   (let ((new-label (format #f "gain (~1,2F)" gain-amount)))
-			     (<a class=quiet href="extsnd.html#sndchangemenulabel">change-menu-label</a> effects-menu gain-label new-label)
+			     (<a class=quiet href="extsnd.html#changemenulabel">change-menu-label</a> effects-menu gain-label new-label)
 			     (set! gain-label new-label)))
 			 effects-list))
 </pre>
 <p>The sound effect itself is the callback function of the given option:
 </p>
 <pre>
-(<a class=quiet href="extsnd.html#sndaddtomenu">add-to-menu</a> effects-menu "reverse" (lambda () (<a class=quiet href="extsnd.html#sndreverse">reverse-sound</a>)))
+(<a class=quiet href="extsnd.html#addtomenu">add-to-menu</a> effects-menu "reverse" (lambda () (<a class=quiet href="extsnd.html#reversesound">reverse-sound</a>)))
 </pre>
 <p>I can't decide whether it would be useful to describe some of these
 effects in more detail.  The code is straightforward, and
@@ -1084,7 +1084,7 @@ Some examples:
 <p>In all these cases, however, it's actually much faster to pass the
 filter to filter-sound:</p>
 <pre>
-(<a class=quiet href="extsnd.html#sndfilter">filter-sound</a> (<a class=quiet href="clm.html#make-formant">make-formant</a> .99 2400))
+(<a class=quiet href="extsnd.html#filtersound">filter-sound</a> (<a class=quiet href="clm.html#make-formant">make-formant</a> .99 2400))
 </pre>
 <p><b>formants</b> applies three formants in parallel.
 <b>moving-formant</b> moves a formant according to an envelope.
@@ -1150,8 +1150,8 @@ size.  The simpler one is:
 <pre>
 (add-hook! <a class=quiet href="extsnd.html#graphhook">graph-hook</a> 
 	   (lambda (snd chn y0 y1)
-	     (if (and (<a class=quiet href="extsnd.html#sndffting">transform-graph?</a> snd chn) 
-                      (= (<a class=quiet href="extsnd.html#lfftstyle">transform-graph-type</a> snd chn) <a class=quiet href="extsnd.html#lfftstyle">graph-once</a>))
+	     (if (and (<a class=quiet href="extsnd.html#transformgraphp">transform-graph?</a> snd chn) 
+                      (= (<a class=quiet href="extsnd.html#transformgraphtype">transform-graph-type</a> snd chn) <a class=quiet href="extsnd.html#transformgraphtype">graph-once</a>))
 		 (begin
 		   (set! (<a class=quiet href="extsnd.html#lfftsize">transform-size</a> snd chn)
 			 (expt 2 (ceiling 
@@ -1170,7 +1170,7 @@ up to the nearest power of 2.
 <p><b>show-draggable-graph</b>, in imitation of Snd's FFT display, implements a
 draggable X axis in the lisp graph window.  (This is slightly messier than
 it ought to be).
-Two of the examples are imitations of Xemacs: a Buffers menu and an auto-save hook (now in <a href="autosavedoc">autosave.scm</a>).</p>
+Two of the examples are imitations of Xemacs: a Buffers menu and an auto-save hook (now in <a href="#autosavedoc">autosave.scm</a>).</p>
 <pre>
   <A class=def NAME="exopenbuffer">open-buffer</a> filename
   <em class=emdef>close-buffer</em> snd
@@ -1284,7 +1284,7 @@ The two in examp.scm are:
   <em class=emdef>first-mark-in-window-at-left</em>
   <a class=def name="exmarkloops">mark-loops</a>
 
-(<a class=quiet href="extsnd.html#sndbindkey">bind-key</a> (char-&gt;integer #\l) 0 
+(<a class=quiet href="extsnd.html#bindkey">bind-key</a> (char-&gt;integer #\l) 0 
           (lambda () 
             (first-mark-in-window-at-left)))
 </pre>
@@ -1317,7 +1317,7 @@ of ways. The fastest and simplest uses CLM's dot-product function:
 (define (region-rms n)
   "(region-rms n) -&gt; rms of region n's data (chan 0)"
   (if (<a class=quiet href="extsnd.html#regionok">region?</a> n)
-      (let* ((data (<a class=quiet href="extsnd.html#sndregionsamples2vct">region-samples-&gt;vct</a> 0 0 n)))
+      (let* ((data (<a class=quiet href="extsnd.html#regionsamples2vct">region-samples-&gt;vct</a> 0 0 n)))
 	(sqrt (/ (<a class=quiet href="clm.html#dot-product">dot-product</a> data data) (<a class=quiet href="extsnd.html#vctlength">vct-length</a> data))))
       (throw 'no-such-region (list "region-rms" n))))
 </pre>
@@ -1466,7 +1466,7 @@ corresponding code in extsnd.html.  These include:
 <b>every-sample?</b> applies <i>func</i> to each sample in the current channel and returns
 #t if <i>func</i> is not #f for all samples; otherwise it moves the cursor to the first offending sample.
 <b>sort-samples</b> provides a histogram of the samples (by amplitude) in <i>bins</i> bins.
-<b>window-samples</b> returns (via the function <a href="extsnd.html#sndsamples">samples</a>) the samples
+<b>window-samples</b> returns (via the function <a href="extsnd.html#samples">samples</a>) the samples
 displayed in the current window for <i>snd</i>'s channel <i>chn</i>.
 <b>display-energy</b> is a graph-hook function to display the time domain data squared.
 <b>window-rms</b> returns the rms of the data in currently selected graph window.
@@ -1579,7 +1579,7 @@ convenient if they were in one file.
 <p><b>channel-property</b> returns the value associated with <i>key</i> in the given channel's
 property list.  To add or change a property, use set! with this procedure.  Similarly,
 <b>sound-property</b> provides access to a sound's property list.
-These properties are normally saved when Snd's state is saved (via <a href="extsnd.html#sndsavestate">save-state</a>
+These properties are normally saved when Snd's state is saved (via <a href="extsnd.html#savestate">save-state</a>
 or the Options:Save State menu).  To omit a given property at that time, add its name (a symbol) to
 the property 'save-state-ignore (a list of symbols); see 'inset-envelope in extensions.scm.
 <b>channel-sync</b> uses the channel-properties list to implement a channel-local sync field.
@@ -1595,11 +1595,11 @@ name might be map-selection.
 The code:
 </p>
 <pre>
-(<a class=quiet href="extsnd.html#sndbindkey">bind-key</a> (char-&gt;integer #\x) 4
+(<a class=quiet href="extsnd.html#bindkey">bind-key</a> (char-&gt;integer #\x) 4
 	  (lambda ()
 	    (if (<a class=quiet href="extsnd.html#selectionok">selection?</a>)
-		(<a class=quiet href="extsnd.html#sndpromptinminibuffer">prompt-in-minibuffer</a> "selection eval:" eval-over-selection)
-		(<a class=quiet href="extsnd.html#sndreportinminibuffer">report-in-minibuffer</a> "no selection")))
+		(<a class=quiet href="extsnd.html#promptinminibuffer">prompt-in-minibuffer</a> "selection eval:" eval-over-selection)
+		(<a class=quiet href="extsnd.html#reportinminibuffer">report-in-minibuffer</a> "no selection")))
 	  #t)
 </pre>
 <p>binds the key sequence C-x x to a function that checks for an active selection,
@@ -1664,7 +1664,7 @@ sound-files in directory.  We're using some procedures written by Dirk Herrman h
 	string&lt;?))
 </pre>
 
-<p><b>normalized-mix</b> is like <a href="extsnd.html#sndmix">mix</a> but the mixed result has same peak amplitude as the 
+<p><b>normalized-mix</b> is like <a href="extsnd.html#mix">mix</a> but the mixed result has same peak amplitude as the 
 original data. <b>enveloped-mix</b> is like <a href="#mixsound">mix-sound</a>, but includes an
 amplitude envelope over the mixed-in data.
 </p>
@@ -1679,7 +1679,7 @@ those hooks.
 and if that same sound is subsquently re-opened, restores the previous state.
 </p>
 
-<p><b>mix-channel</b> is a regularized version of the file mixing functions (<a class=quiet href="extsnd.html#sndmix">mix</a> and mix-sound).
+<p><b>mix-channel</b> is a regularized version of the file mixing functions (<a class=quiet href="extsnd.html#mix">mix</a> and mix-sound).
 It's first argument can be either a filename (a string) or a list containing the filename, the
 start point in the file, and (optionally) the channel of the file to mix:
 </p>
@@ -1693,7 +1693,7 @@ start point in the file, and (optionally) the channel of the file to mix:
 </p>
 
 <p><b>redo-channel</b> and <b>undo-channel</b> are regularized versions of
-<a href="extsnd.html#sndredo">redo</a> and <a href="extsnd.html#sndundo">undo</a>.
+<a href="extsnd.html#redo">redo</a> and <a href="extsnd.html#undo">undo</a>.
 <b>offset-channel</b> adds a constant to a sound, using <a href="extsnd.html#ptreechannel">ptree-channel</a>.
 <b>contrast-channel</b> is the CLM <a href="clm.html#contrast-enhancement">contrast-enhancement</a> function,
 equivalent to the control panel Contrast slider.
@@ -1784,7 +1784,7 @@ in fmv.scm, the simpler one being:
 	  ((= i dur))
 	(<a class=quiet href="extsnd.html#vctset">vct-set!</a> data i (+ (<a class=quiet href="extsnd.html#vctref">vct-ref</a> data i)
 			    (v))))
-      (<a class=quiet href="extsnd.html#sndsetsamples">set-samples</a> beg dur data))))
+      (<a class=quiet href="extsnd.html#setsamples">set-samples</a> beg dur data))))
 </pre>
 <p>Here we are setting up an fm-violin generator (via make-fm-violin), then
 calling it <i>dur</i> times, mixing its output into the current data (this could
@@ -1851,7 +1851,7 @@ and DotEmacs is by Fernando Lopez-Lezcano.
 <p>
 jc-reverb is a reverberator developed by John Chowning a long time ago
 (I can't actually remember when -- before 1976 probably). It "colors" the
-sound much more than <a href="clminsdoc">nrev</a>, and has noticeable echos,
+sound much more than <a href="#clminsdoc">nrev</a>, and has noticeable echos,
 but I liked the effect a lot.  new-effects.scm has a version of jc-reverb
 that run as a normal snd editing function (via map-channel), whereas the
 jcrev.scm version assumes it is being called within with-sound:
@@ -1869,21 +1869,21 @@ an ordinary editing function:
 (define* (clm-reverb-sound reverb-amount reverb #:optional (reverb-data '()) snd)
   (let ((output (<a class=quiet href="extsnd.html#sndtempnam">snd-tempnam</a>))
 	(revout (<a class=quiet href="extsnd.html#sndtempnam">snd-tempnam</a>))
-	(len (+ (<a class=quiet href="extsnd.html#frames">frames</a> snd) (<a class=quiet href="extsnd.html#sndsrate">srate</a> snd))))
-    (<a class=quiet href="extsnd.html#sndscaleby">scale-by</a> (- 1.0 reverb-amount) snd)
-    (<a class=quiet href="extsnd.html#sndsaveas">save-sound-as</a> output snd)
-    (<a class=quiet href="extsnd.html#sndundo">undo</a> 1 snd)
-    (<a class=quiet href="extsnd.html#sndscaleby">scale-by</a> reverb-amount snd)
-    (<a class=quiet href="extsnd.html#sndsaveas">save-sound-as</a> revout snd)
-    (<a class=quiet href="extsnd.html#sndundo">undo</a> 1 snd)
+	(len (+ (<a class=quiet href="extsnd.html#frames">frames</a> snd) (<a class=quiet href="extsnd.html#srate">srate</a> snd))))
+    (<a class=quiet href="extsnd.html#scaleby">scale-by</a> (- 1.0 reverb-amount) snd)
+    (<a class=quiet href="extsnd.html#savesoundas">save-sound-as</a> output snd)
+    (<a class=quiet href="extsnd.html#undo">undo</a> 1 snd)
+    (<a class=quiet href="extsnd.html#scaleby">scale-by</a> reverb-amount snd)
+    (<a class=quiet href="extsnd.html#savesoundas">save-sound-as</a> revout snd)
+    (<a class=quiet href="extsnd.html#undo">undo</a> 1 snd)
     (set! *output* (<a class=quiet href="clm.html#continue-sample-&gt;file">continue-sample-&gt;file</a> output))
-    (set! (<a class=quiet href="grfsnd.html#mussrate">mus-srate</a>) (<a class=quiet href="extsnd.html#sndsrate">srate</a> snd))
+    (set! (<a class=quiet href="grfsnd.html#mussrate">mus-srate</a>) (<a class=quiet href="extsnd.html#srate">srate</a> snd))
     (set! *reverb* (<a class=quiet href="clm.html#make-file-&gt;sample">make-file-&gt;sample</a> revout))
     (apply reverb reverb-data)
     (<a class=quiet href="clm.html#mus-close">mus-close</a> *reverb*)
     (<a class=quiet href="clm.html#mus-close">mus-close</a> *output*)
     (delete-file revout)
-    (set! (<a class=quiet href="extsnd.html#sndsamples">samples</a> 0 len snd #f #f #f 0 #f #t) output)))
+    (set! (<a class=quiet href="extsnd.html#samples">samples</a> 0 len snd #f #f #f 0 #f #t) output)))
 
 ;;; (clm-reverb-sound .1 (lambda (dur) (jc-reverb #f 1.0 #f dur)))
 </pre>
@@ -1905,7 +1905,7 @@ jc-reverb: <a href="#jcrevdoc">jcrev.scm</a><br>
 jl-reverb: <a href="#clminsdoc">clm-ins.scm</a><br>
 nrev: <a href="#clminsdoc">clm-ins.scm</a><br>
 control panel reverb: <a href="snd.html#reverb">Reverb</a>, <a href="extsnd.html#reverbdecay">control variables</a><br>
-convolution reverb: <a href="extsnd.html#sndconvolvewith">conrev</a><br>
+convolution reverb: <a href="extsnd.html#convolvewith">conrev</a><br>
 plate-reverb: ladspa.scm (a LADSPA effect)<br>
 *reverb*: <a href="#wsdoc">with-sound</a><br>
 <br>
@@ -1947,7 +1947,7 @@ to control and preview each effect.  The related help strings are in ladspa-help
   <A class=def NAME="savemarkproperties">save-mark-properties</a>
 </pre>
 
-<p><b>mark-name-&gt;id</b> is like <a href="extsnd.html#sndfindmark">find-mark</a> but searches all currently accessible channels.
+<p><b>mark-name-&gt;id</b> is like <a href="extsnd.html#findmark">find-mark</a> but searches all currently accessible channels.
 </p><p><b>describe-mark</b> returns a description of the movements of mark id over the channel's edit history:
 </p>
 <pre>
@@ -1974,9 +1974,9 @@ functions in examp.scm and scattered around the documentation.
 between the leftmost marks in <i>snd</i>.
 </p>
 <pre>
-(<a class=quiet href="extsnd.html#sndbindkey">bind-key</a> (char-&gt;integer #\m) 0 
+(<a class=quiet href="extsnd.html#bindkey">bind-key</a> (char-&gt;integer #\m) 0 
 	  (lambda ()
-	    (<a class=quiet href="extsnd.html#sndpromptinminibuffer">prompt-in-minibuffer</a> "mark eval:" eval-between-marks)))
+	    (<a class=quiet href="extsnd.html#promptinminibuffer">prompt-in-minibuffer</a> "mark eval:" eval-between-marks)))
 </pre>
 <p><b>snap-marks</b> places marks at the start and end of the current selection.
 </p><p><b>define-selection-via-marks</b> selects the portion between the given marks.
@@ -2032,10 +2032,10 @@ track amp env is interpreted as a panning envelope.
 To tie this into C-x C-q, in place of the default "mix" function,
 </p>
 <pre>
-(<a class=quiet href="extsnd.html#sndbindkey">bind-key</a> (char-&gt;integer #\q) 4 ; C-q
+(<a class=quiet href="extsnd.html#bindkey">bind-key</a> (char-&gt;integer #\q) 4 ; C-q
 	  (lambda ()
-	    (<a class=quiet href="extsnd.html#sndpromptinminibuffer">prompt-in-minibuffer</a> "mix:" (lambda (str) ; use pan-mix at cursor
-					   (<em class=red>pan-mix</em> str (or (<a class=quiet href="extsnd.html#sndcursor">cursor</a>) 0)) #f #t)))
+	    (<a class=quiet href="extsnd.html#promptinminibuffer">prompt-in-minibuffer</a> "mix:" (lambda (str) ; use pan-mix at cursor
+					   (<em class=red>pan-mix</em> str (or (<a class=quiet href="extsnd.html#cursor">cursor</a>) 0)) #f #t)))
 	  #t  ; an extended (C-x) command
           "C-x C-q")
 </pre>
@@ -2083,9 +2083,9 @@ mixes happen more quickly):
 <pre>
 :<em class=typing>(retempo-track (<a class=quiet href="extsnd.html#track">track</a> 1) 2.0)</em>
 <em class=listener>(1500 7770)</em>
-:<em class=typing>(<a class=quiet href="extsnd.html#sndmixposition">mix-position</a> 0)</em>
+:<em class=typing>(<a class=quiet href="extsnd.html#mixposition">mix-position</a> 0)</em>
 <em class=listener>1500</em>
-:<em class=typing>(<a class=quiet href="extsnd.html#sndmixposition">mix-position</a> 1)</em>
+:<em class=typing>(<a class=quiet href="extsnd.html#mixposition">mix-position</a> 1)</em>
 <em class=listener>7770</em>
 :<em class=typing>(+ 1500 (* .5 (- 14039 1500))) ; 14039 is the former mix 1 begin time (see above)</em>
 <em class=listener>7769.5</em>
@@ -2242,8 +2242,8 @@ To set up the keyboard
 as a kind of extended piano, we could map keys to sounds:
 </p>
 <pre>
-(<a class=quiet href="extsnd.html#sndbindkey">bind-key</a> (char-&gt;integer #\o) 0 (lambda () (<a class=quiet href="extsnd.html#sndplay">play</a> "oboe.snd")))
-(<a class=quiet href="extsnd.html#sndbindkey">bind-key</a> (char-&gt;integer #\p) 0 (lambda () (<a class=quiet href="extsnd.html#sndplay">play</a> "pistol.snd")))
+(<a class=quiet href="extsnd.html#bindkey">bind-key</a> (char-&gt;integer #\o) 0 (lambda () (<a class=quiet href="extsnd.html#play">play</a> "oboe.snd")))
+(<a class=quiet href="extsnd.html#bindkey">bind-key</a> (char-&gt;integer #\p) 0 (lambda () (<a class=quiet href="extsnd.html#play">play</a> "pistol.snd")))
 </pre>
 <p>The various play hooks can be used to play sounds over and over. 
 </p>
@@ -2252,8 +2252,8 @@ as a kind of extended piano, we could map keys to sounds:
   <A class=def NAME="explayuntilcg">play-until-c-g</A>
   <A class=def NAME="explayregionforever">play-region-forever</a> region
 
-(<a class=quiet href="extsnd.html#sndbindkey">bind-key</a> (char-&gt;integer #\p) 0 (lambda (n) (play-often (max 1 n))))
-(<a class=quiet href="extsnd.html#sndbindkey">bind-key</a> (char-&gt;integer #\r) 0 (lambda (n) (play-region-forever (max 0 n))))
+(<a class=quiet href="extsnd.html#bindkey">bind-key</a> (char-&gt;integer #\p) 0 (lambda (n) (play-often (max 1 n))))
+(<a class=quiet href="extsnd.html#bindkey">bind-key</a> (char-&gt;integer #\r) 0 (lambda (n) (play-region-forever (max 0 n))))
 </pre>
 <p>Now C-u 31 p plays the current sound 31 times; C-u 3 r plays region 3 until we type C-g.
 <b>play-often</b> uses stop-playing-hook, and <b>play-region-forever</b> uses stop-playing-region-hook.
@@ -2308,7 +2308,7 @@ posted if you click button3 in the listener.
 in CLM.  One starting point for physical modelling is Smith, "Music Applications of Digital Waveguides", CCRMA, Stan-M-39, 1987,
 or Julius's <a href="http://www-ccrma.stanford.edu/~jos">home</a> page, or
 any of several classic papers also by Julius Smith.  Perry's own version of this code can be
-found in <a href="www-ccrma.stanford.edu/CCRMA/Software/STK/">STK</a>.
+found in <a href="http://www-ccrma.stanford.edu/CCRMA/Software/STK/">STK</a>.
 The example instruments are:
 </p>
 <table border=0>
@@ -2556,9 +2556,9 @@ number and the current loop index.
 backwards compatibility within version 6.
 Currently, these are just some old (untypable) constant names,
 and some slightly inconsistent old function names.
-</p><p><b><a class=def name="sndclearaudioinputs">clear-audio-inputs</a></b>
+</p><p><b><a class=def name="clearaudioinputs">clear-audio-inputs</a></b>
 in Linux/OSS, tries to reduce soundcard background racket.
-</p><p><b><a class=def name="sndappendtominibuffer">append-to-minibuffer</a></b> (msg <i>snd</i>)
+</p><p><b><a class=def name="appendtominibuffer">append-to-minibuffer</a></b> (msg <i>snd</i>)
 appends <i>msg</i> to whatever is in <i>snd</i>'s minibuffer.
 </p><p><b>dismiss-all-dialogs</b> deactivates all active dialogs.
 </p><p><b><a class=def name="mixname">mix-name</a></b> asociates a name with a mix, and
@@ -2648,11 +2648,11 @@ These can be edited to move the mark, or deleted to delete the mark.
 </p><p><b>select-file</b> starts a file selection dialog, running <i>func</i> if a file is selected:
 </p>
 <pre>
- (<a class=quiet href="extsnd.html#sndaddtomenu">add-to-menu</a> 0 "Insert File" 
+ (<a class=quiet href="extsnd.html#addtomenu">add-to-menu</a> 0 "Insert File" 
    (lambda () 
      (select-file 
        (lambda (filename)
-         (<a class=quiet href="extsnd.html#sndinsertfile">insert-sound</a> filename))
+         (<a class=quiet href="extsnd.html#insertsound">insert-sound</a> filename))
        "Insert File" "." "*" "file will be inserted at cursor")))
 </pre>
 <p><b>snd-clock-icon</b> replaces Snd's hourglass with a clock.
@@ -2694,7 +2694,7 @@ minibuffer area which shows the current amount of disk space available
 on the partition of the associated sound.
 </p><p><b>keep-file-dialog-open-upon-ok</b> changes File:Open so that clicking "ok" does not unmanage (dismiss) the dialog.
 <b>keep-mix-file-dialog-open-upon-ok</b> does the same for the File:Mix dialog.
-<b>use-pan-mix-in-mix-menu</b> changes the File:Mix dialog to use <a href="#panmix">pan-mix</a> rather than <a href="extsnd.html#sndmix">mix</a>.
+<b>use-pan-mix-in-mix-menu</b> changes the File:Mix dialog to use <a href="#panmix">pan-mix</a> rather than <a href="extsnd.html#mix">mix</a>.
 </p><p><b>add-amp-controls</b> adds amp sliders to the control panel
 for multi-channel sounds (each channel gets its own amp control slider).
 </p><p><b>add-rename-option</b> adds a "Rename" option to the File menu; similarly
@@ -3702,11 +3702,11 @@ an upward ramp and a downward ramp, then zips them together:
 <pre>
 (define (ramp-test)
   (let ((data (<a class=quiet href="extsnd.html#makevct">make-vct</a> 10000)))
-    (<a class=quiet href="extsnd.html#sndnew">new-sound</a> "new-0.snd")
+    (<a class=quiet href="extsnd.html#newsound">new-sound</a> "new-0.snd")
     (do ((i 0 (1+ i))) ((= i 10000)) 
       (<a class=quiet href="extsnd.html#vctset">vct-set!</a> data i (* i .0001)))
     (<a class=quiet href="extsnd.html#vct2samples">vct-&gt;samples</a> 0 10000 data 0)
-    (<a class=quiet href="extsnd.html#sndnew">new-sound</a> "new-1.snd")
+    (<a class=quiet href="extsnd.html#newsound">new-sound</a> "new-1.snd")
     (do ((i 0 (1+ i))) ((= i 10000)) 
       (<a class=quiet href="extsnd.html#vctset">vct-set!</a> data i (- 1.0 (* i .0001))))
     (<a class=quiet href="extsnd.html#vct2samples">vct-&gt;samples</a> 0 10000 data 1)
@@ -3951,7 +3951,7 @@ wrong-type-arg
 &gt;asdf
 unbound-variable: (#f "Unbound variable: ~S" (asdf) #f)
 unbound-variable
-&gt;(<a class=quiet href="extsnd.html#sndexit">exit</a>)
+&gt;(<a class=quiet href="extsnd.html#exit">exit</a>)
 </pre>
 <p>But now the <i>scm_eval_str0</i> use generates a compiler complaint about type
 mismatches (though it works).  We can fix that by:
@@ -4459,7 +4459,7 @@ back down at the end.
 To see how things look, I reset the graph y bounds:
 </p>
 <pre>
-(set! (<a class=quiet href="extsnd.html#sndybounds">y-bounds</a>) (list -1.5 1.5))
+(set! (<a class=quiet href="extsnd.html#ybounds">y-bounds</a>) (list -1.5 1.5))
 </pre>
 <p>
 Now to conjure up a plausible sine wave between the clip begin and
@@ -4530,7 +4530,7 @@ end points.  (This is also "just-good-enough" software).
 </pre>
 <p>
 This produced 418 edits, with a maxamp of 2.26.  So scale it back down:
-<code>(<a class=quiet href="extsnd.html#sndscaleto">scale-to</a> .9)</code>.
+<code>(<a class=quiet href="extsnd.html#scaleto">scale-to</a> .9)</code>.
 Next I ran some large ffts to see what sort of overall spectrum I had:
 <code>(set! (<a class=quiet href="extsnd.html#lfftsize">transform-size</a>) (expt 2 23))</code>.
 This showed a massive DC component, and numerous harmonics of 60 Hz.
@@ -4538,11 +4538,11 @@ I decided to get rid of the portions that were clearly noise.  Since I was deali
 telephone recordings, I assumed anything under 40 Hz or above
 4000 Hz was extraneous.
 </p>
-<!-- TODO: why no regularized filter-channel? -->
+
 <pre>
 (define* (<a name="notchoutrumbleandhiss">notch-out-rumble-and-hiss</a> #:optional (snd #f) (chn #f))
-  (let* ((cur-srate (exact-&gt;inexact (<a class=quiet href="extsnd.html#sndsrate">srate</a> snd))))
-    (<a class=quiet href="extsnd.html#sndfilter">filter-sound</a>
+  (let* ((cur-srate (exact-&gt;inexact (<a class=quiet href="extsnd.html#srate">srate</a> snd))))
+    (<a class=quiet href="extsnd.html#filtersound">filter-sound</a>
      (list 0.0 0.0                    ; get rid of DC
 	   (/ 80.0 cur-srate) 0.0     ; get rid of anything under 40 Hz (1.0=srate/2 here)
 	   (/ 90.0 cur-srate) 1.0     ; now the passband
@@ -4565,20 +4565,20 @@ So I bound a few keys:
 
 <pre>
 (define (play-from-cursor current)
-  (<a class=quiet href="extsnd.html#sndplay">play</a> (<a class=quiet href="extsnd.html#sndcursor">cursor</a>) #f #f #f #f (if current #f (1- (<a class=quiet href="extsnd.html#sndeditposition">edit-position</a>)))))
+  (<a class=quiet href="extsnd.html#play">play</a> (<a class=quiet href="extsnd.html#cursor">cursor</a>) #f #f #f #f (if current #f (1- (<a class=quiet href="extsnd.html#editposition">edit-position</a>)))))
 
 (define (play-from-cursor-with-tracking current)
   ;; patterned after pfc in extsnd.html
-  (let ((old-tracking (<a class=quiet href="extsnd.html#sndcursorfollowsplay">cursor-follows-play</a>)))
-    (set! (<a class=quiet href="extsnd.html#sndcursorfollowsplay">cursor-follows-play</a>) #t)
+  (let ((old-tracking (<a class=quiet href="extsnd.html#cursorfollowsplay">cursor-follows-play</a>)))
+    (set! (<a class=quiet href="extsnd.html#cursorfollowsplay">cursor-follows-play</a>) #t)
     (add-hook! <a class=quiet href="extsnd.html#stopplayinghook">stop-playing-hook</a> 
 	       (lambda (snd)
-		 (set! (<a class=quiet href="extsnd.html#sndcursorfollowsplay">cursor-follows-play</a>) old-tracking)))
-    (<a class=quiet href="extsnd.html#sndplay">play</a> (<a class=quiet href="extsnd.html#sndcursor">cursor</a>) #f #f #f #f (if current #f (1- (<a class=quiet href="extsnd.html#sndeditposition">edit-position</a>))))))
+		 (set! (<a class=quiet href="extsnd.html#cursorfollowsplay">cursor-follows-play</a>) old-tracking)))
+    (<a class=quiet href="extsnd.html#play">play</a> (<a class=quiet href="extsnd.html#cursor">cursor</a>) #f #f #f #f (if current #f (1- (<a class=quiet href="extsnd.html#editposition">edit-position</a>))))))
 
-(<a class=quiet href="extsnd.html#sndbindkey">bind-key</a> (char-&gt;integer #\p) 0 (lambda () (play-from-cursor #t) keyboard-no-action))
-(<a class=quiet href="extsnd.html#sndbindkey">bind-key</a> (char-&gt;integer #\P) 1 (lambda () (play-from-cursor #f) keyboard-no-action))
-(<a class=quiet href="extsnd.html#sndbindkey">bind-key</a> (char-&gt;integer #\p) 4 (lambda () (play-from-cursor-with-tracking #t) keyboard-no-action))
+(<a class=quiet href="extsnd.html#bindkey">bind-key</a> (char-&gt;integer #\p) 0 (lambda () (play-from-cursor #t) keyboard-no-action))
+(<a class=quiet href="extsnd.html#bindkey">bind-key</a> (char-&gt;integer #\P) 1 (lambda () (play-from-cursor #f) keyboard-no-action))
+(<a class=quiet href="extsnd.html#bindkey">bind-key</a> (char-&gt;integer #\p) 4 (lambda () (play-from-cursor-with-tracking #t) keyboard-no-action))
 </pre>
 <p>
 So, if the mouse is in the channel graph, 'p' plays from the cursor,
@@ -4653,17 +4653,17 @@ and see what is left:
     (reverse freq-response)))
 
 (define* (notch-channel freqs #:optional (filter-order #f) (snd #f) (chn #f) (notch-width 2))
-  (<a class=quiet href="extsnd.html#sndfilter">filter-sound</a> (make-notch-frequency-response (exact-&gt;inexact (<a class=quiet href="extsnd.html#sndsrate">srate</a> snd)) freqs notch-width)
-		(or filter-order (inexact-&gt;exact (expt 2 (ceiling (/ (log (/ (<a class=quiet href="extsnd.html#sndsrate">srate</a> snd) notch-width)) (log 2.0))))))
+  (<a class=quiet href="extsnd.html#filtersound">filter-sound</a> (make-notch-frequency-response (exact-&gt;inexact (<a class=quiet href="extsnd.html#srate">srate</a> snd)) freqs notch-width)
+		(or filter-order (inexact-&gt;exact (expt 2 (ceiling (/ (log (/ (<a class=quiet href="extsnd.html#srate">srate</a> snd) notch-width)) (log 2.0))))))
 		snd chn))
 
 (define* (notch-sound freqs #:optional (filter-order #f) (snd #f) (notch-width 2))
-  (<a class=quiet href="extsnd.html#sndfilter">filter-sound</a> (make-notch-frequency-response (exact-&gt;inexact (<a class=quiet href="extsnd.html#sndsrate">srate</a> snd)) freqs notch-width)
-		(or filter-order (inexact-&gt;exact (expt 2 (ceiling (/ (log (/ (<a class=quiet href="extsnd.html#sndsrate">srate</a> snd) notch-width)) (log 2.0))))))
+  (<a class=quiet href="extsnd.html#filtersound">filter-sound</a> (make-notch-frequency-response (exact-&gt;inexact (<a class=quiet href="extsnd.html#srate">srate</a> snd)) freqs notch-width)
+		(or filter-order (inexact-&gt;exact (expt 2 (ceiling (/ (log (/ (<a class=quiet href="extsnd.html#srate">srate</a> snd) notch-width)) (log 2.0))))))
 		snd))
 
 (define* (notch-selection freqs #:optional (filter-order #f) (notch-width 2))
-  (<a class=quiet href="extsnd.html#sndfilterselection">filter-selection</a> (make-notch-frequency-response (exact-&gt;inexact (<a class=quiet href="extsnd.html#selectionsrate">selection-srate</a>)) freqs notch-width)
+  (<a class=quiet href="extsnd.html#filterselection">filter-selection</a> (make-notch-frequency-response (exact-&gt;inexact (<a class=quiet href="extsnd.html#selectionsrate">selection-srate</a>)) freqs notch-width)
 		    (or filter-order (inexact-&gt;exact (expt 2 (ceiling (/ (log (/ (<a class=quiet href="extsnd.html#selectionsrate">selection-srate</a>) notch-width)) (log 2.0))))))))
 
 (notch-sound (list 425 450 470 546 667 789 910) #f 1 10)
@@ -4683,7 +4683,7 @@ individual characteristics of each voice were.
 </p>
 <p>
 The next step was to take out noisy sections between snipits, mostly
-using <code>(<a class=quiet href="extsnd.html#sndenvselection">env-selection</a> '(0 1 1 0 10 0 11 1))</code>
+using <code>(<a class=quiet href="extsnd.html#envsoundselection">env-selection</a> '(0 1 1 0 10 0 11 1))</code>
 and equalizing each snipit, more or less, with scale-selection-by.
 There were a few "you-are-being-recorded" beeps which I deleted (via the Edit
 menu delete selection option).  
@@ -4692,7 +4692,7 @@ between sections of speech the background hum would gradually increase, then
 the voice would abruptly start with a large peak amplitude. These
 were fixed mostly with small-section scale-by's and envelopes.
 In the female voice sections, it seemed to help to:
-<code>(<a class=quiet href="extsnd.html#sndfilterselection">filter-selection</a> '(0 0 .01 0 .02 1 1 1) 1024)</code>
+<code>(<a class=quiet href="extsnd.html#filterselection">filter-selection</a> '(0 0 .01 0 .02 1 1 1) 1024)</code>
 which got rid of some of the rumble without noticeably affecting
 the vocal timbre.
 </p>

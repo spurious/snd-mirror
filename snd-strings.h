@@ -188,6 +188,7 @@
 #define S_file_save_as_dialog           "file-save-as-dialog"
 #define S_fill_polygon                  "fill-polygon"
 #define S_fill_rectangle                "fill-rectangle"
+#define S_filter_channel                "filter-channel"
 #define S_filter_control_coeffs         "filter-control-coeffs"
 #define S_filter_control_envelope       "filter-control-envelope"
 #define S_filter_control_in_dB          "filter-control-in-dB"

@@ -764,6 +764,9 @@
 			(progn
 			  (setf epos (search ">" dline))
 			  (setf (aref names name) (concatenate 'string file "#" (subseq dline 0 (- epos 1))))
+			  (loop for i from 0 below name do
+			    (if (string= (aref names i) (aref names name))
+				(format t "ambiguous name: ~A (~A[~D])~%" (aref names i) file linectr)))
 			  (incf name)
 			  (setf dline (subseq dline epos))
 			  (setf pos-simple (search "<a name=" dline :test #'string-equal))
@@ -788,7 +791,17 @@
 			  (setf epos (search "\"" dline :start2 1))
 			  (if (char= (elt dline 0) #\#)
 			      (setf (aref hrefs href) (concatenate 'string file (subseq dline 0 epos)))
-			    (setf (aref hrefs href) (subseq dline 0 epos)))
+			    (progn
+			      (setf (aref hrefs href) (subseq dline 0 epos))
+			      (let ((pos (search "#" (aref hrefs href))))
+				(if (and (not pos)
+					 (not (probe-file (aref hrefs href)))
+					 (not (string-equal (subseq (aref hrefs href) 0 4) "ftp:"))
+					 (not (string-equal (subseq (aref hrefs href) 0 5) "http:")))
+				    (format t "reference to missing file ~S in ~A[~D]~%"
+					    (aref hrefs href)
+					    file linectr)))
+			      ))
 			  (setf (aref lines href) linectr)
 			  (setf (aref refs href) file)
 			  (incf href)
@@ -825,3 +838,5 @@
   (check-all)
   (index '("snd.html" "extsnd.html" "grfsnd.html" "sndscm.html" "sndlib.html" "clm.html" "fm.html")
 	 nil "test.html" 5 '("XmHTML" "AIFF" "NeXT" "Sun" "RIFF" "IRCAM" "FIR" "IIR" "Hilbert" "AIFC") t t))
+
+

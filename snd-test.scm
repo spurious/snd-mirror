@@ -34,6 +34,7 @@
 ;;; how to send ourselves a drop?  (button2 on menu is only the first half -- how to force 2nd?)
 ;;; TODO: replace all the (buggy) keystroke junk with snd-simulate-keystroke 
 ;;; TODO: test 8 is enough to hit the GC bug
+;;; TODO: test filter-channel
 
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 optargs) (ice-9 popen) (ice-9 session))
 
@@ -18545,9 +18546,9 @@ EDITS: 5
 	(edit-header-dialog ind)
 	(dismiss-all-dialogs)
 	(close-sound ind))
-      (if (not (string=? (snd-url 'open-sound) "extsnd.html#sndopen"))
+      (if (not (string=? (snd-url 'open-sound) "extsnd.html#opensound"))
 	  (snd-display ";snd-url 'open-sound: ~A" (snd-url 'open-sound)))
-      (if (not (string=? (snd-url "open-sound") "extsnd.html#sndopen"))
+      (if (not (string=? (snd-url "open-sound") "extsnd.html#opensound"))
 	  (snd-display ";snd-url \"open-sound\": ~A" (snd-url "open-sound")))
       (if (not (list? (snd-urls))) (snd-display "snd-urls: ~A" (snd-urls)))
       (let ((str1 (snd-help open-sound))
