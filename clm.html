@@ -1955,6 +1955,13 @@ The simple-src instrument above could be written to use an input function instea
         (<a class=quiet href="#outa">outa</a> i (* amp (<em class=red>src</em> src-gen (<a class=quiet href="#env">env</a> senv) #'(lambda (dir) (<em class=red>readin</em> rd)))))))))
 </pre>
 </td></tr></table>
+<p>
+If you jump around in the input (via <b>mus-location</b> for example), you can use the
+<b>mus-reset</b> function to clear out any lingering state before starting to read at
+the new position. (<b>src</b>, like many other generators, has an internal buffer
+of recently read samples, so a sudden jump to a new location will otherwise cause
+a click).
+</p>
 
 <br>
 

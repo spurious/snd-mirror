@@ -5443,10 +5443,9 @@
 ;;; apparently buggy
 (CFNC-260 "void gtk_text_view_get_iter_at_position GtkTextView* text_view GtkTextIter* iter gint* trailing gint x gint y")
 
-;;; what happened here?
-;(CFNC-260 "PangoAttribute* pango_attr_size_new_absolute int size")
-;(CFNC-260 "void pango_font_description_set_absolute_size PangoFontDescription* desc double size")
+(CFNC-260 "PangoAttribute* pango_attr_size_new_absolute int size")
+(CFNC-260 "void pango_font_description_set_absolute_size PangoFontDescription* desc double size")
 ;;; (CFNC-260 "gboolean pango_font_description_get_size_is_absolute const PangoFontDescription* desc")
-;(CFNC-260 "PangoFontDescription* pango_layout_get_font_description PangoLayout* layout")
+(CFNC-260 "PangoFontDescription* pango_layout_get_font_description PangoLayout* layout" 'const-return)
 
-; (CINT-260 "PANGO_WEIGHT_SEMIBOLD")
+(CINT-260 "PANGO_WEIGHT_SEMIBOLD")
