@@ -164,16 +164,22 @@ is no longer accessible."
       new-mix)))
 
 (define* (pan-mix-selection #:optional (beg 0) (envelope 1.0) snd (chn 0))
+  "(pan-mix-selection (start 0) (envelope 1.0) snd (chn 0)) mixes the current selection  into the sound 'snd' \
+starting at 'start' (in samples) using 'envelope' to pan (0: all chan 0, 1: all chan 1)."
   (if (not (selection?))
       (throw 'no-active-selection (list "pan-mix-selection"))
       (pan-mix (save-selection (snd-tempnam)) beg envelope snd chn #t)))
 
 (define* (pan-mix-region reg #:optional (beg 0) (envelope 1.0) snd (chn 0))
+  "(pan-mix-region reg (start 0) (envelope 1.0) snd (chn 0)) mixes the given region into the sound 'snd' \
+starting at 'start' (in samples) using 'envelope' to pan (0: all chan 0, 1: all chan 1)."
   (if (not (region? reg))
       (throw 'no-such-region (list "pan-mix-region" reg))
       (pan-mix (save-region reg (snd-tempnam)) beg envelope snd chn #t)))
 
 (define* (pan-mix-vct v #:optional (beg 0) (envelope 1.0) snd (chn 0))
+  "(pan-mix-vct v (start 0) (envelope 1.0) snd (chn 0)) mixes the vct data into the sound 'snd' \
+starting at 'start' (in samples) using 'envelope' to pan (0: all chan 0, 1: all chan 1)."
   (let* ((temp-file (snd-tempnam))
 	 (fd (open-sound-file temp-file 1 (srate snd) "")))
     (vct->sound-file fd v (vct-length v))
@@ -201,6 +207,7 @@ is no longer accessible."
     (close-sound-file fd (* 4 (vct-length v)))))
 
 (define (mix-maxamp id)
+  "(mix-maxamp id) returns the max amp in the given mix"
   (if (mix? id)
       (let* ((len (mix-frames id))
 	     (peak 0.0)
@@ -374,6 +381,7 @@ is no longer accessible."
       (throw 'no-such-track (list "save-track" trk))))
 	  
 (define (track-maxamp id chan)
+  "(track-maxamp id chan) returns the max amp in the given track"
   (if (track? id)
       (let* ((len (track-frames id chan))
 	     (peak 0.0)

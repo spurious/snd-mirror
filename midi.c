@@ -537,7 +537,9 @@ char *mus_midi_describe(void)
   char name[64], mfg[64], model[64], all[192];
   char *buf;
   n = MIDIGetNumberOfDevices();
-  buf = (char *)CALLOC(n * 192, sizeof(char));
+  if (n <= 0)
+    buf = (char *)CALLOC(192, sizeof(char));
+  else buf = (char *)CALLOC(n * 192, sizeof(char));
   if (n <= 0)
     sprintf(buf, "no midi");
   else

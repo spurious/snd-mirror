@@ -1385,6 +1385,7 @@ int next_track_id(int id);
 int previous_track_id(int id);
 char *track_dialog_track_info(int id);
 void release_pending_track_states(void);
+void display_track_waveform(int track_id, axis_info *ap);
 
 Float mix_read_sample_to_float(void *ptr);
 bool mf_p(XEN obj);

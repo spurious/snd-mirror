@@ -1295,6 +1295,16 @@ static GtkWidget *w_track_env_frame, *w_track_env;
 static axis_context *track_ax = NULL;
 static GdkGC *track_cur_gc;
 static env_editor *track_spf;
+static bool with_track_background_wave = false;
+
+void show_track_background_wave(int pts, bool two_sided)
+{
+  gdk_gc_set_foreground(track_ax->gc, (ss->sgx)->enved_waveform_color);
+  if (two_sided)
+    draw_both_grf_points(1, track_ax, pts, GRAPH_LINES);
+  else draw_grf_points(1, track_ax, pts, track_spf->axis, ungrf_y(track_spf->axis, 0.0), GRAPH_LINES);
+  gdk_gc_set_foreground(track_ax->gc, (ss->sgx)->black);
+}
 
 static void track_amp_env_resize(GtkWidget *w)
 {
@@ -1327,6 +1337,8 @@ static void track_amp_env_resize(GtkWidget *w)
       env_editor_display_env(track_spf, cur_env, track_ax, _("track env"), 0, 0, widget_width(w), widget_height(w), false);
       gdk_gc_set_foreground(track_ax->gc, (ss->sgx)->black);
     }
+  if (with_track_background_wave)
+    display_track_waveform(track_dialog_id, track_spf->axis);
 }
 
 static gboolean track_drawer_button_press(GtkWidget *w, GdkEventButton *ev, gpointer data)
@@ -1561,6 +1573,25 @@ static gboolean w_track_play_pix_expose(GtkWidget *w, GdkEventExpose *ev, gpoint
 }
 
 
+static void track_dB_callback(GtkWidget *w, gpointer context) 
+{
+  if (track_spf) track_spf->in_dB = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w));
+  track_amp_env_resize(w_track_env);
+}
+
+static void track_clip_callback(GtkWidget *w, gpointer context) 
+{
+  if (track_spf) track_spf->clip_p = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w));
+  track_amp_env_resize(w_track_env);
+}
+
+static void track_wave_callback(GtkWidget *w, gpointer context) 
+{
+  with_track_background_wave = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w));
+  track_amp_env_resize(w_track_env);
+}
+
+
 static void apply_track_dialog(GtkWidget *w, gpointer context)
 {
   env *e;
@@ -1616,9 +1647,10 @@ static void track_dialog_help_callback(GtkWidget *w, gpointer context)
 GtkWidget *make_track_dialog(void)
 {
   GtkWidget *dismiss_button, *help_button, *rc, *apply_button, *track_frame, *t_frame, *rc_top, *rc1;
-
+  GtkWidget *lo_hbox, *w_dB_frame, *w_dB, *w_clip, *w_wave, *w_dB_row;
   if (track_dialog == NULL)
     {
+      track_spf = new_env_editor();
       track_dialog_id = any_track_id();
       track_dialog = snd_gtk_dialog_new();
       g_signal_connect_closure_by_id(GTK_OBJECT(track_dialog),
@@ -1918,10 +1950,51 @@ GtkWidget *make_track_dialog(void)
       gtk_widget_show(w_track_amp_form);
 
 
-      /* GRAPH */
+
+      lo_hbox = gtk_hbox_new(false, 0);
+      gtk_box_pack_start(GTK_BOX(GTK_DIALOG(track_dialog)->vbox), lo_hbox, true, true, 5);
+      gtk_widget_show(lo_hbox);
+
+      /* GRAPH (frame) */
       w_track_env_frame = gtk_frame_new(NULL);
-      gtk_box_pack_start(GTK_BOX(GTK_DIALOG(track_dialog)->vbox), w_track_env_frame, true, true, 10);
-      
+      gtk_box_pack_start(GTK_BOX(lo_hbox), w_track_env_frame, true, true, 10);
+
+      /* GRAPH (buttons) */
+      w_dB_frame = gtk_frame_new(NULL);
+      gtk_box_pack_end(GTK_BOX(lo_hbox), w_dB_frame, false, false, 2);
+      gtk_widget_show(w_dB_frame);
+
+      w_dB_row = gtk_vbox_new(false, 0);
+      gtk_container_add(GTK_CONTAINER(w_dB_frame), w_dB_row);
+      gtk_widget_show(w_dB_row);	
+
+      w_clip = gtk_check_button_new_with_label(_("clip"));
+      g_signal_connect_closure_by_id(GTK_OBJECT(w_clip),
+				     g_signal_lookup("toggled", G_OBJECT_TYPE(GTK_OBJECT(w_clip))),
+				     0,
+				     g_cclosure_new(GTK_SIGNAL_FUNC(track_clip_callback), NULL, 0),
+				     0);
+      gtk_box_pack_start(GTK_BOX(w_dB_row), w_clip, false, false, 0);
+      gtk_widget_show(w_clip);
+
+      w_wave = gtk_check_button_new_with_label(_("wave"));
+      g_signal_connect_closure_by_id(GTK_OBJECT(w_wave),
+				     g_signal_lookup("toggled", G_OBJECT_TYPE(GTK_OBJECT(w_wave))),
+				     0,
+				     g_cclosure_new(GTK_SIGNAL_FUNC(track_wave_callback), NULL, 0),
+				     0);
+      gtk_box_pack_start(GTK_BOX(w_dB_row), w_wave, false, false, 0);
+      gtk_widget_show(w_wave);
+
+      w_dB = gtk_check_button_new_with_label(_("dB"));
+      g_signal_connect_closure_by_id(GTK_OBJECT(w_dB),
+				     g_signal_lookup("toggled", G_OBJECT_TYPE(GTK_OBJECT(w_dB))),
+				     0,
+				     g_cclosure_new(GTK_SIGNAL_FUNC(track_dB_callback), NULL, 0),
+				     0);
+      gtk_box_pack_start(GTK_BOX(w_dB_row), w_dB, false, false, 0);
+      gtk_widget_show(w_dB);
+
       w_track_env = gtk_drawing_area_new();
       gtk_widget_set_events(w_track_env, GDK_ALL_EVENTS_MASK);
       gtk_container_add(GTK_CONTAINER(w_track_env_frame), w_track_env);
@@ -1957,13 +2030,13 @@ GtkWidget *make_track_dialog(void)
       gtk_widget_show(track_dialog);
       set_dialog_widget(TRACK_DIALOG, track_dialog);
 
-      track_spf = new_env_editor();
       track_speed_number_buffer[1] = local_decimal_point();
       track_tempo_number_buffer[1] = local_decimal_point();
       track_amp_number_buffer[1] = local_decimal_point();
 
       if ((widget_width(track_dialog) > 0) && (widget_height(track_dialog) < 300))
 	set_widget_size(track_dialog, widget_width(track_dialog), 300);
+      gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(w_clip), true);
     }
   else 
     {

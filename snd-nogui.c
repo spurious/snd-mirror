@@ -296,7 +296,7 @@ int mix_dialog_mix(void) {return(0);}
 int mix_dialog_set_mix(int id) {return(0);}
 int track_dialog_track(void) {return(0);}
 int track_dialog_set_track(int id) {return(0);}
-
+void show_track_background_wave(int pts, bool two_sided) {}
 void set_fft_window_beta(Float val) {in_set_fft_window_beta(val);}
 void set_transform_size(int val) {in_set_transform_size(val);}
 void set_fft_window(mus_fft_window_t val) {in_set_fft_window(val);}

@@ -6282,6 +6282,59 @@ static track_graph_t *free_track_graph(track_graph_t *ptr)
 }
 
 
+/* display track for track dialog env editor */
+
+void display_track_waveform(int track_id, axis_info *ap)
+{
+  Float scl, x0, x1, y0, y1;
+  off_t old_lo, old_hi;
+  double cur_srate = -1.0;
+  off_t t_beg, t_dur;
+  int i;
+  track_mix_list_t *trk;
+  mix_info *md;
+  trk = track_mixes(track_id);
+  if (trk->lst_ctr > 0)
+    {
+      md = md_from_id(trk->lst[0]);
+      cur_srate = (double)SND_SRATE(md->cp->sound);
+      scl = ap->y_axis_y0 - ap->y_axis_y1;
+      old_lo = ap->losamp;
+      old_hi = ap->hisamp;
+      x0 = ap->x0;
+      x1 = ap->x1;
+      y0 = ap->y0;
+      y1 = ap->y1;
+      t_beg = track_position(track_id, -1);
+      t_dur = track_frames(track_id, -1);
+      ap->losamp = t_beg;
+      ap->hisamp = t_beg + t_dur;
+      ap->x0 = (double)(ap->losamp) / cur_srate;
+      ap->x1 = (double)(ap->hisamp) / cur_srate;
+      ap->y0 = -1.0;
+      ap->y1 = 1.0;
+      init_axis_scales(ap);
+      for (i = 0; i < trk->lst_ctr; i++)
+	{
+	  int pts;
+	  bool two_sided;
+	  md = md_from_id(trk->lst[i]);
+	  pts = prepare_mix_waveform(md, md->active_mix_state, ap, scl * .5, scl * .5, cur_srate, true, &two_sided);
+	  if (pts > 0)
+	    show_track_background_wave(pts, two_sided);
+	}
+      free_track_mix_list(trk);
+      ap->x0 = x0;
+      ap->x1 = x1;
+      ap->y0 = y0;
+      ap->y1 = y1;
+      ap->losamp = old_lo;
+      ap->hisamp = old_hi;
+      init_axis_scales(ap);
+    }
+}
+
+
 /* ---------------- track dialog ---------------- */
 
 env *track_dialog_env(int n)

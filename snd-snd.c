@@ -1129,7 +1129,6 @@ void snd_rationalize(Float a, int *num, int *den)
   gloc = snd_protect(ratio);
   (*num) = XEN_TO_C_INT(scm_numerator(ratio));
   (*den) = XEN_TO_C_INT(scm_denominator(ratio));
-  /* fprintf(stderr,"%f: %d/%d\n", a, (*num), (*den)); */
   snd_unprotect_at(gloc);
 }
 #endif
@@ -1896,7 +1895,6 @@ static void map_sounds_speed_style(snd_info *sp, void *val)
 #endif
   if (control_panel_open(sp))
     set_snd_speed(sp, sp->speed_control);
-  /* TODO: src as ratio? mix|track-speed? ramp/env? both base+points, track tempo? */
 }
 
 void set_speed_style(speed_style_t val) 

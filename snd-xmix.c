@@ -526,8 +526,6 @@ static void mix_previous_callback(Widget w, XtPointer context, XtPointer info)
     }
 }
 
-/* TODO: how does the pan button work given the mix amp envs?  need some indication of what's going on! */
-
 static void mix_dialog_pan_callback(Widget w, XtPointer context, XtPointer info) 
 {
   bool inverted;
@@ -1302,6 +1300,16 @@ static Widget w_track_env_frame, w_track_env;
 static axis_context *track_ax = NULL;
 static GC track_cur_gc;
 static env_editor *track_spf;
+static bool with_track_background_wave = false;
+
+void show_track_background_wave(int pts, bool two_sided)
+{
+  XSetForeground(MAIN_DISPLAY(ss), track_ax->gc, (ss->sgx)->enved_waveform_color);
+  if (two_sided)
+    draw_both_grf_points(1, track_ax, pts, GRAPH_LINES);
+  else draw_grf_points(1, track_ax, pts, track_spf->axis, ungrf_y(track_spf->axis, 0.0), GRAPH_LINES);
+  XSetForeground(MAIN_DISPLAY(ss), track_ax->gc, (ss->sgx)->black);  
+}
 
 static void track_amp_env_resize(Widget w, XtPointer context, XtPointer info) 
 {
@@ -1331,6 +1339,8 @@ static void track_amp_env_resize(Widget w, XtPointer context, XtPointer info)
       env_editor_display_env(track_spf, cur_env, track_ax, _("track env"), 0, 0, widget_width(w), widget_height(w), false);
       XSetForeground(MAIN_DISPLAY(ss), track_ax->gc, (ss->sgx)->black);
     }
+  if (with_track_background_wave)
+    display_track_waveform(track_dialog_id, track_spf->axis);
 }
 
 #ifdef MAC_OSX
@@ -1516,6 +1526,29 @@ static void track_beg_activated(void)
     }
 }
 
+/* graph buttons */
+static void track_dB_callback(Widget w, XtPointer context, XtPointer info)
+{
+  XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)info; 
+  if (track_spf) track_spf->in_dB = cb->set;
+  track_amp_env_resize(w_track_env, NULL, NULL);
+}
+
+static void track_clip_callback(Widget w, XtPointer context, XtPointer info)
+{
+  XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)info; 
+  if (track_spf) track_spf->clip_p = cb->set;
+  track_amp_env_resize(w_track_env, NULL, NULL);
+}
+
+static void track_wave_callback(Widget w, XtPointer context, XtPointer info)
+{
+  XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)info; 
+  with_track_background_wave = cb->set;
+  track_amp_env_resize(w_track_env, NULL, NULL);
+}
+
+
 static void apply_track_dialog_callback(Widget w, XtPointer context, XtPointer info) 
 {
   env *e;
@@ -1634,6 +1667,7 @@ static Widget w_track_frame = NULL;
 Widget make_track_dialog(void) 
 {
   Widget mainform, track_row, track_track_row, track_track_frame, sep, sep2;
+  Widget w_dB_frame, w_dB, w_clip, w_wave, w_dB_row;
   XmString xdismiss, xhelp, xtitle, s1, xapply;
   int n;
   Arg args[20];
@@ -2010,6 +2044,44 @@ Widget make_track_dialog(void)
       XtSetArg(args[n], XmNseparatorType, XmNO_LINE); n++;
       w_track_sep1 = XtCreateManagedWidget("track-dialog-sep1", xmSeparatorWidgetClass, mainform, args, n);
       
+      /* button box for dB clip wave */
+      n = 0;
+      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
+      XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
+      XtSetArg(args[n], XmNtopWidget, w_track_sep1); n++;
+      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
+      XtSetArg(args[n], XmNleftAttachment, XmATTACH_NONE); n++;
+      XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
+      XtSetArg(args[n], XmNshadowType, XmSHADOW_ETCHED_IN); n++;
+      XtSetArg(args[n], XmNshadowThickness, 4); n++;
+      w_dB_frame = XtCreateManagedWidget("track-dB-frame", xmFrameWidgetClass, mainform, args, n);
+
+      n = 0;
+      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->highlight_color); n++;}
+      XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
+      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
+      XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
+      XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
+      w_dB_row = XtCreateManagedWidget("track-dB-row", xmRowColumnWidgetClass, w_dB_frame, args, n);
+
+      n = 0;
+      if (!(ss->using_schemes)) 
+	{
+	  XtSetArg(args[n], XmNbackground, (ss->sgx)->highlight_color); n++;
+	  XtSetArg(args[n], XmNselectColor, (ss->sgx)->pushed_button_color); n++;
+	}
+      if (ss->toggle_size > 0) {XtSetArg(args[n], XmNindicatorSize, ss->toggle_size); n++;}
+
+      w_clip = make_togglebutton_widget(_("clip"), w_dB_row, args, n);
+      XtAddCallback(w_clip, XmNvalueChangedCallback, track_clip_callback, NULL);
+      XmToggleButtonSetState(w_clip, true, false);
+
+      w_wave = make_togglebutton_widget(_("wave"), w_dB_row, args, n);
+      XtAddCallback(w_wave, XmNvalueChangedCallback, track_wave_callback, NULL);
+
+      w_dB = make_togglebutton_widget(_("dB"), w_dB_row, args, n);
+      XtAddCallback(w_dB, XmNvalueChangedCallback, track_dB_callback, NULL);
+
       /* amp env */
       n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
@@ -2019,8 +2091,13 @@ Widget make_track_dialog(void)
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_POSITION); n++;
       XtSetArg(args[n], XmNleftPosition, 4); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_POSITION); n++;
+      /*
       XtSetArg(args[n], XmNrightPosition, 98); n++;
       XtSetArg(args[n], XmNallowResize, true); n++;
+      */
+      XtSetArg(args[n], XmNrightAttachment, XmATTACH_WIDGET); n++;
+      XtSetArg(args[n], XmNrightWidget, w_dB_frame); n++;
+
       XtSetArg(args[n], XmNshadowType, XmSHADOW_ETCHED_IN); n++;
       XtSetArg(args[n], XmNshadowThickness, 4); n++;
       w_track_env_frame = XtCreateManagedWidget("track-amp-env-frame", xmFrameWidgetClass, mainform, args, n);

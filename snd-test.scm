@@ -30862,6 +30862,7 @@ EDITS: 2
 	    (define v (make-vct 8))
 	    
 	    (btst '(let ((gen (make-all-pass))) (all-pass? gen)) #t)
+	    (btst '(let ((gen (make-all-pass))) (if gen #t #f)) #t)
 	    (btst '(let ((gen (make-asymmetric-fm))) (asymmetric-fm? gen)) #t)
 	    (btst '(let ((gen (make-buffer))) (buffer? gen)) #t)
 	    (btst '(let ((gen (make-comb))) (comb? gen)) #t)

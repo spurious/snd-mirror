@@ -19,7 +19,7 @@
 */
 /* TODO: add env name field to mix/track enveds (undo/redo? lin/exp/proc?) */
 /* TODO: xm-enved packaged enved access (widgets and callbacks) */
-/* TODO: clip/dB/wave buttons in track dialogs (exp scale?) */
+/* PERHAPS: mix/track dialog exp scale? */
 /* TODO: incorporate env props throughout Snd (env.scm?) */
 
 /* TODO: in ruby, view envs gets the env val, but edit env doesn't?? */
@@ -1044,9 +1044,6 @@ void alert_envelope_editor(char *name, env *val)
   else add_envelope(name, val);
 }
 
-/* TODO: bring out snd/chn or mix/track? (per chan) -- how to show track wave? (display_mix_waveform in snd-mix) */
-
-
 typedef struct {
   int size;
   Float *data;
@@ -1545,19 +1542,16 @@ void add_or_edit_symbol(char *name, env *val)
   /* called from envelope editor -- pass new definition into scheme */
 #if HAVE_RUBY
   /* TODO: in Ruby, save in xenv doesn't update properties */
-  XEN_VARIABLE_SET(name, env_to_xen(val));
-#if 0
   char *buf, *tmpstr = NULL;
   int len;
   if (!val) return;
   tmpstr = env_to_string(val);
   len = snd_strlen(tmpstr) + snd_strlen(name) + 32;
   buf = (char *)CALLOC(len, sizeof(char));
-  mus_snprintf(buf, len, "%s = %s", name, tmpstr); /* this is wrong anyway -- should use xen_scheme_global_variable_to_ruby */
+  mus_snprintf(buf, len, "%s = %s", name, tmpstr);
   if (tmpstr) FREE(tmpstr);
   snd_catch_any(eval_str_wrapper, buf, buf);
   FREE(buf);
-#endif
 #else
   XEN e;
   if (!val) return;

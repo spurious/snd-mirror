@@ -513,6 +513,7 @@ int mix_dialog_mix(void);
 int mix_dialog_set_mix(int id);
 int track_dialog_track(void);
 int track_dialog_set_track(int id);
+void show_track_background_wave(int pts, bool two_sided);
 
 
 

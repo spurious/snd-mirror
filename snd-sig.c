@@ -3861,7 +3861,7 @@ magnitude spectrum of data (a vct), in data if in-place, using fft-window win an
     }
   if (in_data)
     return(data);
-  return(xen_return_first(make_vct(n, idat), data));
+  return(xen_return_first(make_vct(n, idat), data, win));
 }
 
 static XEN g_convolve_with_1(XEN file, XEN new_amp, chan_info *cp, XEN edpos, const char *caller)

@@ -2511,6 +2511,12 @@ static char *descr_jump_if_not(int *args, ptree *pt)
   return(mus_format("if (!" BOOL_PT ") jump " INT_PT , args[1], B2S(INT_ARG_1), args[0], INT_RESULT));
 }
 
+static void jump_if_not_clm(int *args, ptree *pt) {if (CLM_ARG_1 == 0) PC += pt->ints[args[0]];}
+static char *descr_jump_if_not_clm(int *args, ptree *pt) 
+{
+  return(mus_format("if (!" CLM_PT ") jump " INT_PT , args[1], DESC_CLM_ARG_1, args[0], INT_RESULT));
+}
+
 static void store_i(int *args, ptree *pt) {INT_RESULT = INT_ARG_1;}
 static char *descr_store_i(int *args, ptree *pt) {return(mus_format( INT_PT " = " INT_PT , args[0], INT_RESULT, args[1], INT_ARG_1));}
 
@@ -2903,11 +2909,9 @@ static xen_value *if_form(ptree *prog, XEN form, walk_result_t need_result)
   has_false = (XEN_LIST_LENGTH(form) == 4);
   if_value = walk(prog, XEN_CADR(form), NEED_ANY_RESULT);                                      /* walk selector */
   if (if_value == NULL) return(run_warn("if: bad selector? %s", XEN_AS_STRING(XEN_CADR(form))));
-
-  /* SOMEDAY: if clm-gen ... */
-
-  if (if_value->type != R_BOOL) 
-    return(run_warn("if: selector type not boolean: %s %s", 
+  if ((if_value->type != R_BOOL) &&
+      (if_value->type != R_CLM))
+    return(run_warn("if: selector type not boolean or clm gen: %s %s", 
 		    XEN_AS_STRING(XEN_CADR(form)), 
 		    type_name(if_value->type)));
   if (if_value->constant == R_CONSTANT)
@@ -2927,7 +2931,11 @@ static xen_value *if_form(ptree *prog, XEN form, walk_result_t need_result)
     }
   current_pc = prog->triple_ctr;
   jump_to_false = make_xen_value(R_INT, add_int_to_ptree(prog, 0), R_VARIABLE);
-  add_triple_to_ptree(prog, va_make_triple(jump_if_not, descr_jump_if_not, 2, jump_to_false, if_value));
+  switch (if_value->type)
+    {
+    case R_BOOL: add_triple_to_ptree(prog, va_make_triple(jump_if_not, descr_jump_if_not, 2, jump_to_false, if_value)); break;
+    case R_CLM: add_triple_to_ptree(prog, va_make_triple(jump_if_not_clm, descr_jump_if_not_clm, 2, jump_to_false, if_value)); break;
+    }
   FREE(if_value);
   true_result = walk(prog, XEN_CADDR(form), need_result);                           /* walk true branch */
   if (true_result == NULL) 

@@ -1192,7 +1192,7 @@ static XEN g_make_delay_1(xclm_delay_t choice, XEN arglist)
       return(mus_xen_to_object_with_vct(gn, make_vct(max_size, line)));
     }
   if (line) FREE(line);
-  return(clm_mus_error(local_error_type, local_error_msg));
+  return(xen_return_first(clm_mus_error(local_error_type, local_error_msg), arglist));
 }
 
 static XEN g_make_delay(XEN args) 
@@ -1533,7 +1533,7 @@ a new one is created.  If normalize is #t, the resulting waveform goes between -
     partial_data[i] = XEN_TO_C_DOUBLE_OR_ELSE(XEN_CAR(lst), 0.0);
   mus_partials2wave(partial_data, len / 2, f->data, f->length, (XEN_TRUE_P(normalize)));
   FREE(partial_data);
-  return(table);
+  return(xen_return_first(table, partials, utable));
 }
 
 static XEN g_phasepartials2wave(XEN partials, XEN utable, XEN normalize)
@@ -1573,7 +1573,7 @@ a new one is created.  If normalize is #t, the resulting waveform goes between -
     partial_data[i] = XEN_TO_C_DOUBLE_OR_ELSE(XEN_CAR(lst), 0.0);
   mus_phasepartials2wave(partial_data, len / 3, f->data, f->length, (XEN_TRUE_P(normalize)));
   FREE(partial_data);
-  return(table);
+  return(xen_return_first(table, partials, utable));
 }
 
 static XEN g_make_table_lookup (XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6, XEN arg7, XEN arg8)
@@ -2267,7 +2267,7 @@ with chans samples, each sample set from the trailing arguments (defaulting to 0
 	}
       return(mus_xen_to_object(gn));
     }
-  return(XEN_FALSE);
+  return(xen_return_first(XEN_FALSE, arglist));
 }
 
 static XEN g_frame_p(XEN obj) 
@@ -2518,7 +2518,7 @@ giving | (a*.5 + b*.125) (a*.25 + b*1.0) |"
 	}
       return(mus_xen_to_object(gn));
     }
-  return(XEN_FALSE);
+  return(xen_return_first(XEN_FALSE, arglist));
 }
 
 
@@ -2875,7 +2875,7 @@ that will produce the harmonic spectrum given by the partials argument"
   wave = mus_partials2waveshape(npartials, partials, size, (Float *)CALLOC(size, sizeof(Float)));
   gwave = make_vct(size, wave);
   FREE(partials);
-  return(gwave);
+  return(xen_return_first(gwave, amps));
 }
 
 static XEN g_partials2polynomial(XEN amps, XEN ukind)
@@ -2901,7 +2901,7 @@ to create (via waveshaping) the harmonic spectrum described by the partials argu
 			 amps));
   partials = list2partials(amps, &npartials);
   wave = mus_partials2polynomial(npartials, partials, kind);
-  return(make_vct(npartials, wave));
+  return(xen_return_first(make_vct(npartials, wave), amps));
 }
 
 
