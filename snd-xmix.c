@@ -768,8 +768,8 @@ static void update_mix_panel(int mix_id)
       beg = mix_position_from_id(mix_id);
       len = mix_length(mix_id);
       mus_snprintf(lab, LABEL_BUFFER_SIZE, "%.3f : %.3f",
-	      (float)beg / (float)SND_SRATE(cp->sound),
-	      (float)(beg + len) / (float)SND_SRATE(cp->sound));
+		   (float)((double)beg / (float)SND_SRATE(cp->sound)),
+		   (float)((double)(beg + len) / (float)SND_SRATE(cp->sound)));
       XmTextSetString(w_beg, lab);
 
       chans = mix_input_chans_from_id(mix_id);

@@ -27,6 +27,7 @@ FONT_TYPE *get_vu_font(snd_state *ss, Float size)
 	  else vu_font_name = "times";
 	}
     }
+  /* TODO: vu_font name needs gtk2 (pango) names */
   mus_snprintf(font_name, LABEL_BUFFER_SIZE, "-*-%s-%s-r-*-*-%d-*-*-*-*-*-*",
 	  vu_font_name,
 	  (font_size > 10) ? "bold" : "*",
@@ -1277,11 +1278,11 @@ static BACKGROUND_TYPE read_adc(snd_state *ss)
       rp->total_output_frames += out_frame;
       if (rp->total_output_frames > rp->duration_label_update_frames)
 	{
-	  reflect_recorder_duration((Float)rp->total_output_frames / (Float)sr);
+	  reflect_recorder_duration((Float)((double)(rp->total_output_frames) / (Float)sr));
 	  rp->duration_label_update_frames += (sr / 4);
 	}
     }
-  return(((rp->total_output_frames/sr) >= rp->max_duration) ? BACKGROUND_QUIT : BACKGROUND_CONTINUE);
+  return(((rp->total_output_frames / sr) >= rp->max_duration) ? BACKGROUND_QUIT : BACKGROUND_CONTINUE);
 }
 
 #else
@@ -1400,7 +1401,7 @@ static BACKGROUND_TYPE read_adc(snd_state *ss)
       rp->total_output_frames += out_frame;
       if (rp->total_output_frames > rp->duration_label_update_frames)
 	{
-	  reflect_recorder_duration((Float)rp->total_output_frames / (Float)sr);
+	  reflect_recorder_duration((Float)((double)(rp->total_output_frames) / (Float)sr));
 	  rp->duration_label_update_frames += (sr / 4);
 	}
     }

@@ -5436,6 +5436,7 @@ static Float run_src_gen(mus_any *srptr, Float sr_change, Float unused) {return(
 static void *src_environ(mus_any *rd) {return(((sr *)rd)->environ);}
 static Float src_increment(void *rd) {return(((sr *)rd)->incr);}
 static Float src_set_increment(void *rd, Float val) {((sr *)rd)->incr = val; return(val);}
+static Float *src_sinc_table(void *rd) {return(((sr *)rd)->sinc_table);}
 
 static mus_any_class SRC_CLASS = {
   MUS_SRC,
@@ -5444,7 +5445,7 @@ static mus_any_class SRC_CLASS = {
   &describe_src,
   &inspect_sr,
   &src_equalp,
-  0, 0,
+  &src_sinc_table, 0,
   &src_length,  /* sinc width actually */
   0,
   0, 0, 0, 0,

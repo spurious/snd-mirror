@@ -9844,7 +9844,7 @@
 	(change-property "SND_VERSION" "SND_COMMAND" "(make-vector 10 3.14)")
 	(set! (vu-size) oldsize))
 
-      (if (provided? 'snd-motif) (load "new-effects.scm"))
+      (if (and (provided? 'snd-motif) (provided? 'xm)) (load "new-effects.scm"))
 
       (add-hook! menu-hook
 		 (lambda (name option)
@@ -13555,35 +13555,36 @@
 	 (list 10 10000))
 	(let ((data (map
 		     (lambda (sound)
-		       (let ((ind (view-sound sound)))
-			 (set! (squelch-update ind) #t)
-			 (let ((times (map
-				       (lambda (function)
-					 (let ((start (get-internal-real-time)))
-					   (function)
-					   (revert-sound)
-					   (/ (- (get-internal-real-time) start) 100)))
-				       (list (lambda () (scale-channel 2.0))
-					     (lambda () (reverse-channel))
-					     (lambda () (env-channel '(0 0 1 1)))
-					     (lambda () (map-channel (lambda (y) (* y 2))))
-					     (lambda () (ptree-channel (lambda (y) (+ y .2)) #f #f ind 0 #f #t))
-					     (lambda () (scan-channel (lambda (y) (> y 1.0))))
-					     (lambda () (pad-channel 0 2000))
-					     (lambda () (vct->channel (vct-fill! (make-vct 1000) .1)) 0 1000)
-					     (lambda () (clm-channel (make-two-zero .5 .5)))
-					     (lambda () (mix "pistol.snd" 12345))
-					     (lambda () (src-channel 2.0))
-					     (lambda () (delete-samples 10 200))
-					     ))))
-			   (close-sound ind)
-			   times)))
-		     (list "1a.snd" "oboe.snd" "storm.snd" "~/test/sound/away.snd"))))
+		       (if (file-exists? sound)
+			   (let ((ind (view-sound sound)))
+			     (set! (squelch-update ind) #t)
+			     (let ((times (map
+					   (lambda (function)
+					     (let ((start (get-internal-real-time)))
+					       (function)
+					       (revert-sound)
+					       (/ (- (get-internal-real-time) start) 100)))
+					   (list (lambda () (scale-channel 2.0))
+						 (lambda () (reverse-channel))
+						 (lambda () (env-channel '(0 0 1 1)))
+						 (lambda () (map-channel (lambda (y) (* y 2))))
+						 (lambda () (ptree-channel (lambda (y) (+ y .2)) #f #f ind 0 #f #t))
+						 (lambda () (scan-channel (lambda (y) (> y 1.0))))
+						 (lambda () (pad-channel 0 2000))
+						 (lambda () (vct->channel (vct-fill! (make-vct 1000) .1)) 0 1000)
+						 (lambda () (clm-channel (make-two-zero .5 .5)))
+						 (lambda () (mix "pistol.snd" 12345))
+						 (lambda () (src-channel 2.0))
+						 (lambda () (delete-samples 10 200))
+						 ))))
+			       (close-sound ind)
+			       times))))
+		     (list "1a.snd" "oboe.snd" "storm.snd" "/home/bil/test/sound/away.snd"))))
 	  (snd-display "timings:  scl   rev   env   map   ptree  scn  pad   wrt   clm   mix   src   del")
 	  (snd-display "1a:     ~{~6,F~}" (car data))  
 	  (snd-display "oboe:   ~{~6,F~}" (cadr data))  
 	  (snd-display "storm:  ~{~6,F~}" (caddr data))
-	  (snd-display "away:   ~{~6,F~}" (cadddr data)))
+	  (if (cadddr data) (snd-display "away:   ~{~6,F~}" (cadddr data))))
 	
 ;;; timings:  scl   rev   env   map   scn   pad   wrt   clm   mix   src   del  
 ;;; 1a:        0.0   0.0  0.01   0.0  0.01   0.0   0.0  0.01  0.01  0.01   0.0
@@ -17913,7 +17914,8 @@ EDITS: 5
 
 ;;; ---------------- test 23: user-interface ----------------
 
-(if (provided? 'snd-motif)
+(if (and (provided? 'snd-motif)
+	 (provided? 'xm))
     (begin
       (load "popup.scm")
       (load "snd-motif.scm")
@@ -17950,7 +17952,8 @@ EDITS: 5
     (begin
       (if (procedure? test-hook) (test-hook 23))
 
-      (if (provided? 'snd-motif)
+      (if (and (provided? 'snd-motif)
+	       (provided? 'xm))
 	  (let ((snd-return-key #xFF0D)
 		(snd-left-key #xFF51)
 		(snd-up-key #xFF52)
@@ -20360,7 +20363,7 @@ EDITS: 5
 (if (or full-test (= snd-test 24) (and keep-going (<= snd-test 24)))
     (begin
       (if (procedure? test-hook) (test-hook 24))
-      (if (and (provided? 'snd-motif) (not (provided? 'gl)))
+      (if (and (provided? 'snd-motif) (provided? 'xm) (not (provided? 'gl)))
 	  (begin
 	    ;; ---------------- X tests ----------------
 	    (let ((scr (current-screen))
@@ -25064,7 +25067,10 @@ EDITS: 5
 (mem-report)
 (system "fgrep -H -n 'snd-run' memlog >> optimizer.log")
 
-(system "cp /home/bil/dot-snd /home/bil/.snd")
+(if (file-exists? "/home/bil/dot-snd")
+    (system "cp /home/bil/dot-snd /home/bil/.snd")
+    (if (file-exists? "/space/home/bil/dot-snd")
+	(system "cp /space/home/bil/dot-snd /space/home/bil/.snd")))
 (if with-exit (exit))
 
 

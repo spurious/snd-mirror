@@ -910,7 +910,7 @@ void *free_ptree(void *upt)
   if (pt)
     {
       /* free_xen_var depends (in vector case) on finding current (unfreed) data */
-      snd_unprotect(pt->form);
+      if (pt->form) snd_unprotect(pt->form);
       if (pt->vars)
 	{
 	  for (i = 0; i < pt->var_ctr; i++)

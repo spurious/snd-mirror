@@ -982,7 +982,7 @@ void play_selection(int background, XEN edpos, const char *caller, int arg_pos)
 	      if ((sp) && 
 		  (sp->speed_control != 1.0) && 
 		  (sp->speed_control > 0.0))
-		ends[i] = si->begs[i] + (off_t)(((Float)selection_len() / (Float)(sp->speed_control)));
+		ends[i] = si->begs[i] + (off_t)(((double)selection_len() / (Float)(sp->speed_control)));
 	      /* user might move speed control while playing selection, so ideally we'd watch dp->chn_fd here */
 	      else ends[i] = si->begs[i] + selection_len();
 	    }

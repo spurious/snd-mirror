@@ -300,7 +300,7 @@ snd_info *make_snd_info(snd_info *sip, snd_state *state, char *filename, file_in
   sp->sync = DEFAULT_SYNC;
   sp->previous_sync = sp->sync;
   initialize_control_panel(ss, sp);
-  secs = (Float)hdr->samples / (Float)(hdr->chans * hdr->srate);
+  secs = (Float)((double)(hdr->samples) / (Float)(hdr->chans * hdr->srate));
   sp->searching = 0;
   if (chans > 1)
     sp->channel_style = channel_style(ss);
@@ -839,7 +839,7 @@ void display_info(snd_info *sp)
 		       "srate: %d\nchans: %d\nlength: %.3f (" OFF_TD " %s)\ntype: %s\nformat: %s\nwritten: %s%s%s%s\n",
 		       hdr->srate,
 		       hdr->chans,
-		       (Float)(hdr->samples) / (Float)(hdr->chans * hdr->srate),
+		       (Float)((double)(hdr->samples) / (Float)(hdr->chans * hdr->srate)),
 		       (off_t)((hdr->samples) / (hdr->chans)),
 		       (hdr->chans == 1) ? "samples" : "frames",
 		       mus_header_type_name(hdr->type),

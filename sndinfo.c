@@ -83,7 +83,7 @@ int main(int argc, char *argv[])
       samples = mus_sound_samples(argv[1]);
       comment = mus_sound_comment(argv[1]); 
       if ((chans > 0) && (srate > 0))
-	length = (float)samples / (float)(chans * srate);
+	length = (float)((double)samples / (double)(chans * srate));
       loops = mus_sound_loop_info(argv[1]);
       type = mus_sound_header_type(argv[1]);
       header_name = (char *)mus_header_type_name(type);

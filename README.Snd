@@ -86,7 +86,7 @@ argument syntax, so Guile 1.4 is actually not a reasonable default
 anymore, but Guile 1.6 will apparently never arrive. In the meantime,
 you can get a 1.6 facsimile from
 
-  ftp://alpha.gnu.org/gnu/guile/guile-1.5.4.tar.gz
+  ftp://alpha.gnu.org/gnu/guile/guile-1.5.6.tar.gz
 
 To include guile in Snd, either use the configure script (which should
 be able to find the guile library automatically), or go to the

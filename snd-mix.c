@@ -1702,7 +1702,7 @@ static void make_temporary_graph(chan_info *cp, mix_info *md, console_state *cs)
   lo = ap->losamp;
   hi = ap->hisamp;
   samps = ap->hisamp - ap->losamp + 1;
-  samples_per_pixel = (Float)(samps - 1) / (Float)(x_end - x_start);
+  samples_per_pixel = (Float)((double)(samps - 1) / (Float)(x_end - x_start));
   if ((samples_per_pixel < 5.0) && 
       (samps < POINT_BUFFER_SIZE))
     {
@@ -1875,7 +1875,7 @@ static int display_mix_amp_env(mix_info *md, Float scl, int yoff, off_t newbeg, 
 
   if (lo > newbeg) 
     {
-      for (sum = (Float)lo; sum < (Float)newbeg; sum += max_fd->samps_per_bin) 
+      for (sum = (double)lo; sum < (double)newbeg; sum += max_fd->samps_per_bin) 
 	{
 	  low = next_mix_sample(min_fd);
 	  high = next_mix_sample(max_fd);
@@ -1886,15 +1886,15 @@ static int display_mix_amp_env(mix_info *md, Float scl, int yoff, off_t newbeg, 
     }
   else 
     {
-      xstart = (Float)(newbeg) / srate;
+      xstart = (double)(newbeg) / srate;
       ymin = 100.0;
       ymax = -100.0;
     }
 
   if (hi < newend)
     xend = ap->x1;
-  else xend = (Float)(newend) / srate;
-  xstep = (Float)(max_fd->samps_per_bin) / srate;
+  else xend = (double)(newend) / srate;
+  xstep = (double)(max_fd->samps_per_bin) / srate;
   lastx = local_grf_x(xstart, ap);
   for (j = 0; xstart < xend; xstart += xstep)
     {
@@ -1989,7 +1989,7 @@ static int display_mix_waveform(chan_info *cp, mix_info *md, console_state *cs, 
   x_end = ap->x_axis_x1;
   if (newend > hi) newend = hi;
   samps = ap->hisamp - ap->losamp + 1;
-  samples_per_pixel = (Float)(samps - 1) / (Float)(x_end - x_start);
+  samples_per_pixel = (Float)((double)(samps - 1) / (Float)(x_end - x_start));
   yoff = md->y;
 
   if ((draw) && (!(watch_mix_proc)))

@@ -128,7 +128,7 @@ typedef struct {
   mus_sample_t **output_bufs;  /* formatted non-interleaved output (for file and monitor outputs) */
 
   int duration_label_update_frames; /* frames between updates of the duration label */
-  int total_output_frames;
+  off_t total_output_frames;
   int systems;                    /* soundcards normally = how many independent input sources from sndlib's point of view */
   int *ordered_devices, *ordered_systems; /* soundcards in recorder dialog order with output at end */
   int ordered_devices_size;

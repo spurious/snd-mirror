@@ -762,7 +762,7 @@ static void swap_channels(snd_state *ss, off_t beg, off_t dur, snd_fd *c0, snd_f
 	      err = mus_file_write(ofd1, 0, j - 1, 1, data1);
 	      j = 0;
 	      if (err == -1) break;
-	      if (reporting) progress_report(sp0, "scl", 1, 1, (Float)k / (Float)dur, NOT_FROM_ENVED);
+	      if (reporting) progress_report(sp0, "scl", 1, 1, (Float)((double)k / (double)dur), NOT_FROM_ENVED);
 	    }
 	}
       if (j > 0) 
@@ -890,6 +890,9 @@ static char *src_channel_with_error(chan_info *cp, snd_fd *sf, off_t beg, off_t 
   j = 0;
   if (egen == NULL)
     {
+      /* by moving the mus_src code here and taking the stable stuff out of the loop
+       *   this loop can be sped up by about 30%
+       */
       for (k = 0; sr->sample < dur; k++) /* sr->sample tracks input location -- produce output until input exhausted */
 	{
 	  idata[j] = (MUS_FLOAT_TO_SAMPLE(mus_src(sr->gen, 0.0, &src_input_as_needed)));
@@ -901,7 +904,7 @@ static char *src_channel_with_error(chan_info *cp, snd_fd *sf, off_t beg, off_t 
 	      if (err == -1) break;
 	      if (reporting) 
 		{
-		  progress_report(sp, origin, curchan + 1, chans, (Float)(sr->sample) / (Float)dur, from_enved);
+		  progress_report(sp, origin, curchan + 1, chans, (Float)((double)(sr->sample) / (double)dur), from_enved);
 		  if (ss->stopped_explicitly) break;
 		}
 	    }
@@ -956,7 +959,7 @@ static char *src_channel_with_error(chan_info *cp, snd_fd *sf, off_t beg, off_t 
 	      if (err == -1) break;
 	      if (reporting) 
 		{
-		  progress_report(sp, origin, curchan + 1, chans, (Float)(sr->sample) / (Float)dur, from_enved);
+		  progress_report(sp, origin, curchan + 1, chans, (Float)((double)(sr->sample) / (double)dur), from_enved);
 		  if (ss->stopped_explicitly) break;
 		}
 	    }
@@ -1360,7 +1363,8 @@ static char *apply_filter_or_error(chan_info *ncp, int order, env *e, int from_e
       (!gen) && 
       (!over_selection) &&   /* TODO: make fft-filter work with selection */
       ((order == 0) || (order >= 128)) && 
-      ((int)((to_c_edit_samples(ncp, edpos, origin, arg_pos) + order) / 128) < ss->memory_available)) /* this is in Kbytes */
+      ((ss->memory_available == 0) ||
+       ((int)((to_c_edit_samples(ncp, edpos, origin, arg_pos) + order) / 128) < ss->memory_available))) /* this is in Kbytes */
     {
       /* use convolution if order is large and there's memory available (and not over_selection) */
       /*   probably faster here would be overlap-add */
@@ -1533,7 +1537,7 @@ static char *apply_filter_or_error(chan_info *ncp, int order, env *e, int from_e
 		      if (err == -1) break;
 		      if (reporting) 
 			{
-			  progress_report(sp, S_filter_sound, i + 1, si->chans, (Float)offk / (Float)dur, from_enved);
+			  progress_report(sp, S_filter_sound, i + 1, si->chans, (Float)((double)offk / (double)dur), from_enved);
 			  if (ss->stopped_explicitly) break;
 			}
 		    }
@@ -1987,7 +1991,7 @@ void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, Float scaler, int re
 	      if ((temp_file) && (j == FILE_BUFFER_SIZE))
 		{
 		  if (reporting) 
-		    progress_report(sp, origin, 0, 0, (Float)ioff / ((Float)dur), from_enved);
+		    progress_report(sp, origin, 0, 0, (Float)((double)ioff / ((double)dur)), from_enved);
 		  err = mus_file_write(ofd, 0, j - 1, si->chans, data);
 		  j = 0;
 		  if (err == -1) break;
@@ -2008,7 +2012,7 @@ void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, Float scaler, int re
 		  if ((temp_file) && (j == FILE_BUFFER_SIZE))
 		    {
 		      if (reporting)
-			progress_report(sp, origin, 0, 0, (Float)ioff / ((Float)dur), from_enved);
+			progress_report(sp, origin, 0, 0, (Float)((double)ioff / ((double)dur)), from_enved);
 		      err = mus_file_write(ofd, 0, j - 1, 1, data);
 		      j = 0;
 		      if (err == -1) break;
@@ -2117,7 +2121,7 @@ void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, Float scaler, int re
 		      if (k == 0) 
 			ramp_channel(si->cps[i], (Float)(data[m]),
 				     (Float)(data[m + 2]), segbeg, segnum, pos);
-		      else ramp_channel(si->cps[i], (Float)(data[m]) + (data[m + 2] - data[m]) / (Float)segnum,
+		      else ramp_channel(si->cps[i], (Float)(data[m]) + (data[m + 2] - data[m]) / (double)segnum,
 					(Float)(data[m + 2]), segbeg, segnum, pos);
 		    }
 		  pos = si->cps[i]->edit_ctr;
@@ -2292,7 +2296,7 @@ static void smooth_channel(chan_info *cp, off_t beg, off_t dur, int edpos, const
   y0 = chn_sample(beg, cp, edpos);
   y1 = chn_sample(beg + dur, cp, edpos); /* one past end -- this is a debatable choice */
   if (y1 > y0) angle = M_PI; else angle = 0.0;
-  incr = M_PI / (Float)dur;
+  incr = M_PI / (double)dur;
   off = 0.5 * (y1 + y0);
   scale = 0.5 * fabs(y0 - y1);
   data = (mus_sample_t *)CALLOC(dur, sizeof(mus_sample_t));
@@ -2530,7 +2534,7 @@ static XEN g_map_chan_1(XEN proc_and_list, XEN s_beg, XEN s_end, XEN org, XEN sn
 	      rpt++;
 	      if (rpt > rpt4)
 		{
-		  progress_report(sp, caller, 1, 1, (Float)kp / (Float)num, NOT_FROM_ENVED);
+		  progress_report(sp, caller, 1, 1, (Float)((double)kp / (double)num), NOT_FROM_ENVED);
 		  rpt = 0;		    
 		}
 	    }
@@ -2722,7 +2726,7 @@ static XEN g_sp_scan(XEN proc_and_list, XEN s_beg, XEN s_end, XEN snd, XEN chn,
 	      rpt++;
 	      if (rpt > rpt4)
 		{
-		  progress_report(sp, caller, 1, 1, (Float)kp / (Float)num, NOT_FROM_ENVED);
+		  progress_report(sp, caller, 1, 1, (Float)((double)kp / (double)num), NOT_FROM_ENVED);
 		  rpt = 0;
 		}
 	    }

@@ -1835,7 +1835,7 @@ void finish_recording(snd_state *ss, recorder_info *rp)
 			    rp->total_output_frames * rp->out_chans * mus_data_format_to_bytes_per_sample(rp->out_format)); 
   close(rp->output_file_descriptor);
   rp->output_file_descriptor = -1;
-  duration = (Float)rp->total_output_frames / (Float)(rp->srate);
+  duration = (Float)((double)(rp->total_output_frames) / (Float)(rp->srate));
   reflect_recorder_duration(duration);
   str = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
   mus_snprintf(str, PRINT_BUFFER_SIZE, "recorded %s:\n  duration: %.2f\n  srate: %d, chans: %d\n  type: %s, format: %s",

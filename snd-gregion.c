@@ -106,7 +106,7 @@ static void make_region_labels(file_info *hdr)
   set_label(srate_text, str);
   mus_snprintf(str, PRINT_BUFFER_SIZE, STR_chans, hdr->chans);
   set_label(chans_text, str);
-  mus_snprintf(str, PRINT_BUFFER_SIZE, STR_length, (float)(hdr->samples) / (float)(hdr->chans * hdr->srate));
+  mus_snprintf(str, PRINT_BUFFER_SIZE, STR_length, (float)((double)(hdr->samples) / (float)(hdr->chans * hdr->srate)));
   set_label(length_text, str);
   mus_snprintf(str, PRINT_BUFFER_SIZE, STR_maxamp, region_maxamp(stack_position_to_id(current_region)));
   set_label(maxamp_text, str);

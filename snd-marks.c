@@ -1514,7 +1514,7 @@ static void make_mark_graph(chan_info *cp, snd_info *sp, off_t initial_sample, o
   if (pixels >= POINT_BUFFER_SIZE) pixels = POINT_BUFFER_SIZE - 1;
   if ((x_start == x_end) || (samps <= 1))
     samples_per_pixel = 0.01; /* any non-zero value < 1.0 should be ok here */
-  else samples_per_pixel = (Float)(samps - 1) / (Float)pixels;
+  else samples_per_pixel = (Float)((double)(samps - 1) / (Float)pixels);
 
   /* this is assuming one dragged mark per channel */
   if ((samples_per_pixel < 5.0) && (samps < POINT_BUFFER_SIZE))
@@ -1599,9 +1599,9 @@ static void make_mark_graph(chan_info *cp, snd_info *sp, off_t initial_sample, o
 		  (ii >= current_sample) && 
 		  (ii < initial_sample))
 		{
-		  xf = (Float)initial_sample / (Float)ep->samps_per_bin;
+		  xf = (Float)((double)initial_sample / (Float)ep->samps_per_bin);
 		  ii = initial_sample;
-		  xki = (Float)initial_sample;
+		  xki = (double)initial_sample;
 		}
 	      else 
 		{

@@ -1542,7 +1542,7 @@ void make_fft_graph(chan_info *cp, snd_info *sp, axis_info *fap, axis_context *a
   /* no scaling etc here!! see snd_display_fft in snd-fft.c */
   scale = fp->scale;
   if (cp->printing) ps_allocate_grf_points();
-  samples_per_pixel = (Float)(hisamp - losamp) / (Float)(fap->x_axis_x1 - fap->x_axis_x0);
+  samples_per_pixel = (Float)((double)(hisamp - losamp) / (Float)(fap->x_axis_x1 - fap->x_axis_x0));
   if (cp->printing) ps_fg(fap, ax);
   if (samples_per_pixel < 4.0)
     {
@@ -1577,7 +1577,7 @@ void make_fft_graph(chan_info *cp, snd_info *sp, axis_info *fap, axis_context *a
 	  if (cp->fft_log_frequency) 
 	    {
 	      ymax = LOG_FACTOR;
-	      incr = ymax / (Float)(hisamp - losamp);
+	      incr = ymax / (Float)((double)(hisamp - losamp));
 	      scaler = 1.0 / log(ymax + 1.0);
 	    }
 	  else scaler = 0.0;
@@ -1613,7 +1613,7 @@ void make_fft_graph(chan_info *cp, snd_info *sp, axis_info *fap, axis_context *a
       if (cp->fft_log_frequency) 
 	{
 	  ymax = LOG_FACTOR;
-	  incr = ymax / (Float)(hisamp - losamp);
+	  incr = ymax / (Float)((double)(hisamp - losamp));
 	  scaler = 1.0 / log(ymax + 1.0);
 	}
       else scaler = 0.0;

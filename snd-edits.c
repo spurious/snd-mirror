@@ -2377,8 +2377,8 @@ static int snd_make_file(char *ofile, int chans, file_info *hdr, snd_fd **sfs, o
   /* create ofile, fill it by following sfs, use hdr for srate/type/format decisions */
   /* used only in this file and snd-chn (for external temps, snd->temp) */
   int ofd;
-  int i, j, datumb, reporting = 0, total = 0, err = 0;
-  off_t len;
+  int i, j, datumb, reporting = 0, err = 0;
+  off_t len, total = 0;
   chan_info *cp = NULL;
   mus_sample_t **obufs;
   err = MUS_NO_ERROR;
@@ -2399,29 +2399,38 @@ static int snd_make_file(char *ofile, int chans, file_info *hdr, snd_fd **sfs, o
     }
   if (chans == 1)
     {
-      for (len = 0; len < length; len++)
+      if (length > FILE_BUFFER_SIZE)
 	{
-	  obufs[0][j] = read_sample(sfs[0]);
-	  j++;
-	  if (j == FILE_BUFFER_SIZE)
+	  for (len = 0; len < length; len++)
 	    {
-	      err = mus_file_write(ofd, 0, j - 1, 1, obufs);
-	      j = 0;
-	      if (err == -1) break;
-	      if (reporting)
+	      obufs[0][j] = read_sample(sfs[0]);
+	      j++;
+	      if (j == FILE_BUFFER_SIZE)
 		{
-		  total += FILE_BUFFER_SIZE;
-		  progress_report(cp->sound, NULL, 1, 1, (Float)total / (Float)length, NOT_FROM_ENVED);
-		}
-	      check_for_event(ss);
-	      if (ss->stopped_explicitly)
-		{
-		  ss->stopped_explicitly = 0;
-		  snd_warning("file save cancelled by C-g");
-		  err = MUS_INTERRUPTED;
-		  break;
+		  err = mus_file_write(ofd, 0, j - 1, 1, obufs);
+		  j = 0;
+		  if (err == -1) break;
+		  if (reporting)
+		    {
+		      total += FILE_BUFFER_SIZE;
+		      progress_report(cp->sound, NULL, 1, 1, (Float)((double)total / (double)length), NOT_FROM_ENVED);
+		    }
+		  check_for_event(ss);
+		  if (ss->stopped_explicitly)
+		    {
+		      ss->stopped_explicitly = 0;
+		      snd_warning("file save cancelled by C-g");
+		      err = MUS_INTERRUPTED;
+		      break;
+		    }
 		}
 	    }
+	}
+      else
+	{
+	  for (len = 0; len < length; len++)
+	    obufs[0][len] = read_sample(sfs[0]);
+	  j = length;
 	}
     }
   else
@@ -2439,7 +2448,7 @@ static int snd_make_file(char *ofile, int chans, file_info *hdr, snd_fd **sfs, o
 	      if (reporting)
 		{
 		  total += FILE_BUFFER_SIZE;
-		  progress_report(cp->sound, NULL, 1, 1, (Float)total / (Float)length, NOT_FROM_ENVED);
+		  progress_report(cp->sound, NULL, 1, 1, (Float)((double)total / (double)length), NOT_FROM_ENVED);
 		}
 	      check_for_event(ss);
 	      if (ss->stopped_explicitly)
@@ -3831,7 +3840,7 @@ static XEN samples2vct_1(XEN samp_0, XEN samps, XEN snd_n, XEN chn_n, XEN v, XEN
 			 C_TO_XEN_OFF_T(len)));
 #if HAVE_LLONGS
   ss = get_global_state();
-  if (ss->memory_available < (len / 1024))
+  if ((ss->memory_available > 0) && (ss->memory_available < (len / 1024)))
     {
       snd_error("not enough memory!");
       return(XEN_FALSE);
@@ -4334,19 +4343,6 @@ typedef struct {
   Float *line;
   Float xscl, a0, a1, x1;
 } fcomb;
-
-/* each CLM-in-C generator has mus_any_class *core as the first thing in its structure.
- *   it defines most of the built-in "generic" functions like mus-describe.
- * The next set of functions implement the core functions/
- *   The address of the function is stored in the class's core struct.
- *   For example, the scaler method is defined as Float (*scaler)(void *ptr);
- *   in the mus_any_class declaration (clm.h); for fcomb it will correspond
- *   to the fcomb_scaler function below; it is invoked via mus_scaler(gen)
- *   where gen is an fcomb generator (the actual call is (*((gen->core)->scaler))(gen)).
- *   the core->scaler pointer (the function address) is set in the declaration
- *   of mus_any_class FCOMB_CLASS below.  If a method doesn't apply to a given
- *   generator class, just set its slot to 0.
- */
 
 static int mus_fcomb_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_FCOMB));}
 

@@ -140,7 +140,7 @@ static env_state *make_env_state(chan_info *cp, off_t samples)
 		      /* here we'll try to take advantage of an existing envelope */
 		      old_ep = cp->amp_envs[cp->edit_ctr - 1];
 		      ep->samps_per_bin = old_ep->samps_per_bin;
-		      ep->amp_env_size = (int)(ceil((Float)(es->samples) / (Float)(ep->samps_per_bin)));
+		      ep->amp_env_size = (int)(ceil((double)(es->samples) / (double)(ep->samps_per_bin)));
 		      ep->data_max = (mus_sample_t *)CALLOC(ep->amp_env_size, sizeof(mus_sample_t));
 		      ep->data_min = (mus_sample_t *)CALLOC(ep->amp_env_size, sizeof(mus_sample_t));
 		      start_bin = (int)(start / ep->samps_per_bin);
@@ -181,7 +181,7 @@ static env_state *make_env_state(chan_info *cp, off_t samples)
 	  val = (int)(log((double)(es->samples)));
 	  if (val > 20) val = 20;
 	  ep->amp_env_size = snd_ipow2(val);
-	  ep->samps_per_bin = (int)(ceil((Float)(es->samples) / (Float)(ep->amp_env_size)));
+	  ep->samps_per_bin = (int)(ceil((double)(es->samples) / (double)(ep->amp_env_size)));
 	  ep->data_max = (mus_sample_t *)CALLOC(ep->amp_env_size, sizeof(mus_sample_t));
 	  ep->data_min = (mus_sample_t *)CALLOC(ep->amp_env_size, sizeof(mus_sample_t));
 	  ep->bin = 0;
@@ -705,7 +705,7 @@ void amp_env_env_selection_by(chan_info *cp, mus_any *e, off_t beg, off_t num, i
 	      /* if segment is entirely in scaled section, just scale it */
 	      if ((cursamp >= beg) && ((cursamp + new_ep->samps_per_bin) <= end))
 		{
-		  val = mus_env_interp((Float)(cursamp - beg) * xmax / (Float)num, e);
+		  val = mus_env_interp((double)(cursamp - beg) * xmax / (double)num, e);
 		  if (val >= 0.0)
 		    {
 		      new_ep->data_max[i] = (mus_sample_t)(old_ep->data_max[i] * val);
@@ -1022,7 +1022,7 @@ void sp_name_click(snd_info *sp)
       if (hdr)
 	{
 	  linked = is_link(sp->filename);
-	  dur = (Float)(hdr->samples) / (Float)(hdr->chans * hdr->srate);
+	  dur = (Float)((double)(hdr->samples) / (double)(hdr->chans * hdr->srate));
 #if HAVE_STRFTIME
 	  strftime(timebuf,
 		   TIME_STR_SIZE,

@@ -742,8 +742,8 @@ int define_region(sync_info *si, off_t *ends)
   r->name = copy_string(sp0->short_filename);
   r->chans = si->chans;
   r->frames = len;
-  r->start = prettyf((Float)si->begs[0] / (Float)(r->srate), 2);
-  r->end = prettyf((Float)ends[0] / (Float)(r->srate), 2);
+  r->start = prettyf((Float)((double)(si->begs[0]) / (Float)(r->srate)), 2);
+  r->end = prettyf((Float)((double)(ends[0]) / (Float)(r->srate)), 2);
   r->use_temp_file = REGION_DEFERRED;
   ss->deferred_regions++;
   r->dr = (deferred_region *)CALLOC(1, sizeof(deferred_region));

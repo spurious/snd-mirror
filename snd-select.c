@@ -677,7 +677,7 @@ int save_selection(snd_state *ss, char *ofile, int type, int format, int srate, 
 		  j = 0;
 		  if (err == MUS_ERROR) break; /* error message already posted */
 		  if (reporting) 
-		    progress_report(sp, "save-selection", chans - 1, chans, (Float)ioff / (Float)dur, NOT_FROM_ENVED);
+		    progress_report(sp, "save-selection", chans - 1, chans, (Float)((double)ioff / (double)dur), NOT_FROM_ENVED);
 		  if (ss->stopped_explicitly)
 		    {
 		      ss->stopped_explicitly = 0;

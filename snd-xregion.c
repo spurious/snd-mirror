@@ -115,7 +115,7 @@ static void make_region_labels(file_info *hdr)
   set_button_label_bold(reg_srtxt, str);
   mus_snprintf(str, PRINT_BUFFER_SIZE, STR_chans, hdr->chans);
   set_button_label_bold(reg_chntxt, str);
-  mus_snprintf(str, PRINT_BUFFER_SIZE, STR_length, (float)(hdr->samples) / (float)(hdr->chans * hdr->srate));
+  mus_snprintf(str, PRINT_BUFFER_SIZE, STR_length, (float)((double)(hdr->samples) / (float)(hdr->chans * hdr->srate)));
   set_button_label_bold(reg_lentxt, str);
   mus_snprintf(str, PRINT_BUFFER_SIZE, STR_maxamp, region_maxamp(stack_position_to_id(current_region)));
   set_button_label_bold(reg_maxtxt, str);

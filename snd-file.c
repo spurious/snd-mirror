@@ -2213,7 +2213,7 @@ void edit_header_callback(snd_state *ss, snd_info *sp, file_data *edit_header_da
 
 /* raw data dialog funcs */
 
-static int swap_int (int n)
+static int swap_int(int n)
 {
   int o;
   unsigned char *inp, *outp; 
@@ -2226,7 +2226,24 @@ static int swap_int (int n)
   return(o);
 }
 
-static short swap_short (short n)
+static off_t swap_off_t(off_t n)
+{
+  off_t o;
+  unsigned char *inp, *outp; 
+  inp = (unsigned char *)&n; 
+  outp = (unsigned char *)&o;
+  outp[0] = inp[7]; 
+  outp[1] = inp[6]; 
+  outp[2] = inp[5]; 
+  outp[3] = inp[4]; 
+  outp[4] = inp[3]; 
+  outp[5] = inp[2];
+  outp[6] = inp[1];
+  outp[7] = inp[0];
+  return(o);
+}
+
+static short swap_short(short n)
 {
   short o;
   unsigned char *inp, *outp; 
@@ -2240,6 +2257,7 @@ static short swap_short (short n)
 static char *raw_data_explanation(char *filename, snd_state *ss, file_info *hdr)
 {
   char *reason_str, *tmp_str, *file_string;
+  off_t nsamp;
   int ns, better_srate = 0, better_chans = 0;
   reason_str = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
   tmp_str = (char *)CALLOC(LABEL_BUFFER_SIZE, sizeof(char));
@@ -2266,30 +2284,30 @@ static char *raw_data_explanation(char *filename, snd_state *ss, file_info *hdr)
       strcat(reason_str, tmp_str);
     }
   mus_snprintf(tmp_str, LABEL_BUFFER_SIZE, "\nlength: %.3f (" OFF_TD " samples, " OFF_TD " bytes total)",
-	       (float)(hdr->samples) / (float)(hdr->chans * hdr->srate),
+	       (float)((double)(hdr->samples) / (float)(hdr->chans * hdr->srate)),
 	       hdr->samples,
 	       mus_sound_length(filename));
   strcat(reason_str, tmp_str);
-  ns = swap_int(hdr->samples);
-  if (ns < mus_sound_length(filename))
+  nsamp = swap_off_t(hdr->samples);
+  if (nsamp < mus_sound_length(filename))
     {
-      mus_snprintf(tmp_str, LABEL_BUFFER_SIZE, "\n  (swapped: %d", ns);
+      mus_snprintf(tmp_str, LABEL_BUFFER_SIZE, "\n  (swapped: " OFF_TD , nsamp);
       strcat(reason_str, tmp_str);
       if ((better_chans) && (better_srate))
 	{
 	  mus_snprintf(tmp_str, LABEL_BUFFER_SIZE,
 		       ", swapped length: %.3f / sample-size-in-bytes)",
-		       (float)ns / (float)(better_chans * better_srate));
+		       (float)((double)nsamp / (float)(better_chans * better_srate)));
 	  strcat(reason_str, tmp_str);
 	}
       else strcat(reason_str, ")");
     }
   mus_snprintf(tmp_str, LABEL_BUFFER_SIZE, "\ndata location: " OFF_TD, hdr->data_location);
   strcat(reason_str, tmp_str);
-  ns = swap_int(hdr->data_location);
-  if ((ns > 0) && (ns <= 1024)) 
+  nsamp = swap_off_t(hdr->data_location);
+  if ((nsamp > 0) && (nsamp <= 1024)) 
     {
-      mus_snprintf(tmp_str, LABEL_BUFFER_SIZE, " (swapped: %d)", ns);
+      mus_snprintf(tmp_str, LABEL_BUFFER_SIZE, " (swapped: " OFF_TD ")", nsamp);
       strcat(reason_str, tmp_str);
     }
   mus_snprintf(tmp_str, LABEL_BUFFER_SIZE, "\ntype: %s", mus_header_type_name(hdr->type));
