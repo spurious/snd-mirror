@@ -1218,7 +1218,7 @@ void display_frequency_response(snd_state *ss, env *e, axis_info *ap, axis_conte
   FREE(coeffs);
 }
 
-static char *clm_channel(chan_info *cp, mus_any *gen, off_t beg, off_t dur, int edpos, char *caller, int arg_pos, off_t overlap)
+static char *clm_channel(chan_info *cp, mus_any *gen, off_t beg, off_t dur, int edpos, char *caller, off_t overlap)
 {
   /* calls gen over cp[beg for dur] data, replacing. */
   snd_state *ss;
@@ -3157,7 +3157,7 @@ applies gen to snd's channel chn starting at beg for dur samples. overlap is the
   if (dur == 0) return(XEN_FALSE);
   XEN_ASSERT_TYPE(mus_xen_p(gen), gen, XEN_ARG_1, S_clm_channel, "a clm generator");
   egen = MUS_XEN_TO_CLM(gen);
-  errmsg = clm_channel(cp, egen, beg, dur, pos, S_clm_channel, 6, XEN_TO_C_OFF_T_OR_ELSE(overlap, 0));
+  errmsg = clm_channel(cp, egen, beg, dur, pos, S_clm_channel, XEN_TO_C_OFF_T_OR_ELSE(overlap, 0));
   if (errmsg)
     {
       str = C_TO_XEN_STRING(errmsg);
@@ -3170,7 +3170,7 @@ applies gen to snd's channel chn starting at beg for dur samples. overlap is the
 static XEN g_env_1(XEN edata, off_t beg, off_t dur, XEN base, chan_info *cp, XEN edpos, const char *caller, int selection)
 {
   env *e;
-  mus_any *egen;
+  mus_any *egen = NULL;
   if (XEN_LIST_P(edata))
     {
       e = get_env(edata, (char *)caller);

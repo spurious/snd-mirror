@@ -15,9 +15,6 @@ dB display in VU meters (in the record dialog -- the dB value is ready
 
 dlocsig from CLM + a path envelope editor dialog
 
-Add Gnome tie-ins.  (The main useful one, I think, is the "save-yourself"
-  signal (no one can save himself...)).
-
 Gettext support, if there's interest. 
 
 A "master volume" control in the recorder.

@@ -4058,7 +4058,8 @@ clm, doing away with most of cmus.c, and most of the "exploded" code in cmus.lis
 Instead of passing in the int/float arrays, just pass an array of pointers, with
 everything allocated (and handled for that matter) in C.  Second, match all the names
 across the three versions, using the sndlib names in both lisp and scheme (currently
-they randomly drop the "mus-" and so on).  
+they randomly drop the "mus-" and so on).  Then use the optimizer in snd-run.c to
+replace the current intermediate C file.
 </p>
 <br>
 -->

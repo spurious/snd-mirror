@@ -2183,10 +2183,34 @@ void set_html_dir(snd_state *ss, char *new_dir)
 #endif
 }
 
+#if HAVE_HTML && (!USE_NO_GUI)
+static XEN g_html_dir(void) 
+{
+  #define H_html_dir "(" S_html_dir ") -> location of Snd documentation"
+  return(C_TO_XEN_STRING(html_dir(get_global_state())));
+}
+
+static XEN g_set_html_dir(XEN val) 
+{
+  XEN_ASSERT_TYPE(XEN_STRING_P(val), val, XEN_ONLY_ARG, "set-" S_html_dir, "a string");
+  set_html_dir(get_global_state(), copy_string(XEN_TO_C_STRING(val))); 
+  return(val);
+}
+#endif
+
+
 #ifdef XEN_ARGIFY_1
 XEN_ARGIFY_1(g_listener_help_w, g_listener_help)
+#if HAVE_HTML && (!USE_NO_GUI)
+XEN_NARGIFY_0(g_html_dir_w, g_html_dir)
+XEN_NARGIFY_1(g_set_html_dir_w, g_set_html_dir)
+#endif
 #else
 #define g_listener_help_w g_listener_help
+#if HAVE_HTML && (!USE_NO_GUI)
+#define g_html_dir_w g_html_dir
+#define g_set_html_dir_w g_set_html_dir
+#endif
 #endif
 
 void g_init_help(void)
@@ -2197,4 +2221,10 @@ void g_init_help(void)
 if returns a string, it replaces 'help-string' (the default help)"
 
   XEN_DEFINE_HOOK(help_hook, S_help_hook, 2, H_help_hook);    /* args = subject help-string */
+
+#if HAVE_HTML && (!USE_NO_GUI)
+  XEN_YES_WE_HAVE("snd-html");
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_html_dir, g_html_dir_w, H_html_dir,
+				   "set-" S_html_dir, g_set_html_dir_w,  0, 0, 1, 0);
+#endif
 }

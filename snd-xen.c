@@ -712,10 +712,10 @@ static char *stdin_check_for_full_expression(char *newstr)
       FREE(str);
     }
   else stdin_str = copy_string(newstr);
-  end_of_text = check_balance(stdin_str, 0, strlen(stdin_str)); /* can be strlen! */
+  end_of_text = check_balance(stdin_str, 0, snd_strlen(stdin_str));
   if (end_of_text > 0)
     {
-      if (end_of_text + 1 < snd_strlen(stdin_str)) /* is this needed?  see warning above, which no longer makes any sense to me... */
+      if (end_of_text + 1 < snd_strlen(stdin_str))
 	stdin_str[end_of_text + 1] = 0;
       return(stdin_str);
     }
@@ -1080,51 +1080,6 @@ are available, but not all are compatible with all header types"
   format = XEN_TO_C_INT(val);
   set_default_output_format(ss, format); 
   return(C_TO_XEN_INT(default_output_format(ss)));
-}
-
-static XEN g_eps_file(void) {return(C_TO_XEN_STRING(eps_file(get_global_state())));}
-static XEN g_set_eps_file(XEN val) 
-{
-  #define H_eps_file "(" S_eps_file ") -> current eps ('Print' command) file name (snd.eps)"
-  snd_state *ss;
-  ss = get_global_state();
-  XEN_ASSERT_TYPE(XEN_STRING_P(val), val, XEN_ONLY_ARG, "set-" S_eps_file, "a string"); 
-  if (eps_file(ss)) FREE(eps_file(ss));
-  set_eps_file(ss, copy_string(XEN_TO_C_STRING(val))); 
-  return(C_TO_XEN_STRING(eps_file(ss)));
-}
-
-static XEN g_eps_left_margin(void) {return(C_TO_XEN_DOUBLE(eps_left_margin(get_global_state())));}
-static XEN g_set_eps_left_margin(XEN val) 
-{
-  #define H_eps_left_margin "(" S_eps_left_margin ") -> current eps ('Print' command) left margin"
-  snd_state *ss;
-  ss = get_global_state();
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, "set-" S_eps_left_margin, "a number"); 
-  set_eps_left_margin(ss, XEN_TO_C_DOUBLE(val));
-  return(C_TO_XEN_DOUBLE(eps_left_margin(ss)));
-}
-
-static XEN g_eps_bottom_margin(void) {return(C_TO_XEN_DOUBLE(eps_bottom_margin(get_global_state())));}
-static XEN g_set_eps_bottom_margin(XEN val) 
-{
-  #define H_eps_bottom_margin "(" S_eps_bottom_margin ") -> current eps ('Print' command) bottom margin"
-  snd_state *ss;
-  ss = get_global_state();
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, "set-" S_eps_bottom_margin, "a number"); 
-  set_eps_bottom_margin(ss, XEN_TO_C_DOUBLE(val));
-  return(C_TO_XEN_DOUBLE(eps_bottom_margin(ss)));
-}
-
-static XEN g_eps_size(void) {return(C_TO_XEN_DOUBLE(eps_size(get_global_state())));}
-static XEN g_set_eps_size(XEN val) 
-{
-  #define H_eps_size "(" S_eps_size ") -> current eps ('Print' command) overall picture size scaler (1.0)"
-  snd_state *ss;
-  ss = get_global_state();
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, "set-" S_eps_size, "a number"); 
-  set_eps_size(ss, XEN_TO_C_DOUBLE(val));
-  return(C_TO_XEN_DOUBLE(eps_size(ss)));
 }
 
 static XEN g_listener_prompt(void) {return(C_TO_XEN_STRING(listener_prompt(get_global_state())));}
@@ -2221,25 +2176,7 @@ static XEN g_mus_audio_describe(void)
   return(XEN_TRUE);
 }
 
-
 #if (!USE_NO_GUI)
-
-#if HAVE_HTML
-static XEN g_html_dir(void) 
-{
-  #define H_html_dir "(" S_html_dir ") -> location of Snd documentation"
-  return(C_TO_XEN_STRING(html_dir(get_global_state())));
-}
-
-static XEN g_set_html_dir(XEN val) 
-{
-  XEN_ASSERT_TYPE(XEN_STRING_P(val), val, XEN_ONLY_ARG, "set-" S_html_dir, "a string");
-  set_html_dir(get_global_state(), copy_string(XEN_TO_C_STRING(val))); 
-  return(val);
-}
-#endif
-
-
 /* -------- shared color funcs -------- */
 
 static XEN g_color_p(XEN obj) 
@@ -2759,8 +2696,8 @@ char *g_c_run_concat_hook(XEN hook, const char *caller, char *initial_string, ch
 				C_TO_XEN_STRING(newstr),
 				caller);
 	  else result = XEN_CALL_1(XEN_CAR(procs),
-			      C_TO_XEN_STRING(newstr),
-			      caller);
+				   C_TO_XEN_STRING(newstr),
+				   caller);
 #else
 	  if (subject)
 	    result = XEN_CALL_2(procs,
@@ -2899,14 +2836,6 @@ XEN_NARGIFY_0(g_default_output_type_w, g_default_output_type)
 XEN_ARGIFY_1(g_set_default_output_type_w, g_set_default_output_type)
 XEN_NARGIFY_0(g_default_output_format_w, g_default_output_format)
 XEN_ARGIFY_1(g_set_default_output_format_w, g_set_default_output_format)
-XEN_NARGIFY_0(g_eps_file_w, g_eps_file)
-XEN_NARGIFY_1(g_set_eps_file_w, g_set_eps_file)
-XEN_NARGIFY_0(g_eps_left_margin_w, g_eps_left_margin)
-XEN_ARGIFY_1(g_set_eps_left_margin_w, g_set_eps_left_margin)
-XEN_NARGIFY_0(g_eps_size_w, g_eps_size)
-XEN_ARGIFY_1(g_set_eps_size_w, g_set_eps_size)
-XEN_NARGIFY_0(g_eps_bottom_margin_w, g_eps_bottom_margin)
-XEN_ARGIFY_1(g_set_eps_bottom_margin_w, g_set_eps_bottom_margin)
 XEN_NARGIFY_0(g_listener_prompt_w, g_listener_prompt)
 XEN_ARGIFY_1(g_set_listener_prompt_w, g_set_listener_prompt)
 XEN_NARGIFY_0(g_audio_state_file_w, g_audio_state_file)
@@ -2982,10 +2911,6 @@ XEN_ARGIFY_1(g_set_window_width_w, g_set_window_width)
 XEN_NARGIFY_0(g_window_height_w, g_window_height)
 XEN_ARGIFY_1(g_set_window_height_w, g_set_window_height)
 #if (!USE_NO_GUI)
-#if HAVE_HTML
-XEN_NARGIFY_0(g_html_dir_w, g_html_dir)
-XEN_NARGIFY_1(g_set_html_dir_w, g_set_html_dir)
-#endif
 XEN_NARGIFY_0(g_selection_color_w, g_selection_color)
 XEN_NARGIFY_1(g_set_selection_color_w, g_set_selection_color)
 XEN_NARGIFY_0(g_zoom_color_w, g_zoom_color)
@@ -3101,14 +3026,6 @@ XEN_NARGIFY_1(g_snd_completion_w, g_snd_completion)
 #define g_set_default_output_type_w g_set_default_output_type
 #define g_default_output_format_w g_default_output_format
 #define g_set_default_output_format_w g_set_default_output_format
-#define g_eps_file_w g_eps_file
-#define g_set_eps_file_w g_set_eps_file
-#define g_eps_left_margin_w g_eps_left_margin
-#define g_set_eps_left_margin_w g_set_eps_left_margin
-#define g_eps_size_w g_eps_size
-#define g_set_eps_size_w g_set_eps_size
-#define g_eps_bottom_margin_w g_eps_bottom_margin
-#define g_set_eps_bottom_margin_w g_set_eps_bottom_margin
 #define g_listener_prompt_w g_listener_prompt
 #define g_set_listener_prompt_w g_set_listener_prompt
 #define g_audio_state_file_w g_audio_state_file
@@ -3184,10 +3101,6 @@ XEN_NARGIFY_1(g_snd_completion_w, g_snd_completion)
 #define g_window_height_w g_window_height
 #define g_set_window_height_w g_set_window_height
 #if (!USE_NO_GUI)
-#if HAVE_HTML
-#define g_html_dir_w g_html_dir
-#define g_set_html_dir_w g_set_html_dir
-#endif
 #define g_selection_color_w g_selection_color
 #define g_set_selection_color_w g_set_selection_color
 #define g_zoom_color_w g_zoom_color
@@ -3396,18 +3309,6 @@ void g_initialize_gh(void)
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_default_output_format, g_default_output_format_w, H_default_output_format,
 				   "set-" S_default_output_format, g_set_default_output_format_w,  0, 0, 0, 1);
 
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_eps_file, g_eps_file_w, H_eps_file,
-				   "set-" S_eps_file, g_set_eps_file_w,  0, 0, 1, 0);
-
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_eps_left_margin, g_eps_left_margin_w, H_eps_left_margin,
-				   "set-" S_eps_left_margin, g_set_eps_left_margin_w,  0, 0, 0, 1);
-  
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_eps_bottom_margin, g_eps_bottom_margin_w, H_eps_bottom_margin,
-				   "set-" S_eps_bottom_margin, g_set_eps_bottom_margin_w,  0, 0, 0, 1);
-
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_eps_size, g_eps_size_w, H_eps_size,
-				   "set-" S_eps_size, g_set_eps_size_w,  0, 0, 0, 1);
-
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_listener_prompt, g_listener_prompt_w, H_listener_prompt,
 				   "set-" S_listener_prompt, g_set_listener_prompt_w,  0, 0, 0, 1);
 
@@ -3521,12 +3422,6 @@ void g_initialize_gh(void)
 
 
 #if (!USE_NO_GUI)
-  #if HAVE_HTML
-  XEN_YES_WE_HAVE("snd-html");
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_html_dir, g_html_dir_w, H_html_dir,
-				   "set-" S_html_dir, g_set_html_dir_w,  0, 0, 1, 0);
-  #endif
-
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_selection_color, g_selection_color_w, H_selection_color,
 				   "set-" S_selection_color, g_set_selection_color_w,  0, 0, 1, 0);
 

@@ -376,7 +376,7 @@ static Float *sample_linear_env(env *e, int order)
   return(data);
 }
 
-static dac_info *make_dac_info(chan_info *cp, snd_info *sp, snd_fd *fd, int edpos)
+static dac_info *make_dac_info(chan_info *cp, snd_info *sp, snd_fd *fd)
 {
   dac_info *dp;
   Float *data = NULL;
@@ -696,11 +696,11 @@ static int find_slot_to_play(void)
   return(old_size);
 }
 
-static dac_info *init_dp(int slot, chan_info *cp, snd_info *sp, snd_fd *fd, off_t beg, off_t end, int edpos)
+static dac_info *init_dp(int slot, chan_info *cp, snd_info *sp, snd_fd *fd, off_t beg, off_t end)
 {
   dac_info *dp;
   play_list_members++;
-  dp = make_dac_info(cp, sp, fd, edpos);
+  dp = make_dac_info(cp, sp, fd);
   dp->end = end;
   if (end != NO_END_SPECIFIED) 
     {
@@ -864,7 +864,7 @@ static dac_info *add_channel_to_play_list(chan_info *cp, snd_info *sp, off_t sta
 	      cursor_moveto_without_verbosity(cp, start);
 	    }
 	}
-      return(init_dp(slot, cp, sp, sf, start, end, pos));
+      return(init_dp(slot, cp, sp, sf, start, end));
     }
   return(NULL);
 }
@@ -877,7 +877,7 @@ static dac_info *add_region_channel_to_play_list(int region, int chan, off_t beg
   if (slot == -1) return(NULL);
   fd = init_region_read(beg, region, chan, READ_FORWARD);
   if (fd)
-    return(init_dp(slot, fd->cp, NULL, fd, beg, end, fd->cp->edit_ctr));
+    return(init_dp(slot, fd->cp, NULL, fd, beg, end));
   return(NULL);
 }
 
@@ -1383,7 +1383,7 @@ static void unset_dac_print(void)
   mus_print_set_handler(old_dac_printer);
 }
 
-static char *describe_dac(int error_type)
+static char *describe_dac(void)
 {
   /* this is only called in dac_error and only then upon a failed mus_audio_open_output */
   int players = 0, i;
@@ -1404,7 +1404,7 @@ static void dac_error(const char *file, int line, const char *function)
 {
   stop_playing_all_sounds();
   snd_error("can't play %s\n  (%s)\n  [%s[%d] %s]",
-	    describe_dac(0),
+	    describe_dac(),
 	    (last_print) ? last_print : "reason not known",
 	    file, line, function);
 }

@@ -21,30 +21,36 @@ The configure program has several Snd-related arguments:
    --with-motif          use Motif (the default)
      --with-static-motif same, but load Motif statically (for RPM)
      --with-motif-prefix set Motif location (will append lib and include)
-   --with-gtk            use Gtk+ (not recommended -- this port needs a lot of work)
-   --with-gtk-extra      use the file selection widget from libgtkextra
-   --with-alsa           use ALSA if possible
+   --with-gtk            use Gtk+ (this port still needs a lot of work)
+     --with-gtk-extra    use the file selection widget from libgtkextra
+   --with-no-gui         make Snd without any graphics support
+
+   --with-alsa           use ALSA if possible (default is OSS in Linux)
      --with-static-alsa  use ALSA statically loaded (for RPM generation)
-   --with-html           include the XmHTML or mozilla browser library
-   --with-snd-as-widget  make Snd a loadable widget, not a standalone program
+   --with-esd            use the enlightened sound daemon, if possible
+
    --with-doubles        use doubles throughout (default is floats)
    --with-float-samples  represent samples internally as floats (default: ints)
-   --with-ladspa         include LADSPA plugin support (Linux)
    --with-sample-width=N use N bits of samples (default = 24). N = 32 or so is 
                          not recommended because it does not leave you any 
                          "head room" during mixes. N < 16 isn't supported.
-   --with-esd            use the enlightened sound daemon, if possible
-   --with-no-gui         make Snd without any graphics support
-   --with-static-gsl     try to load GSL statically (for RPM)
-   --with-ruby           try to use Ruby as the extension language
-     --with-ruby-prefix  set location of Ruby
+
+   --with-gl             include support for OpenGL (default = no)
+     --with-just-gl      same but omit Guile bindings in gl.c (default = no)
+   --with-html           include the XmHTML or mozilla browser library
+                           (mozilla is used with Gtk, XmHTML with Motif)
+   --with-ladspa         include LADSPA plugin support (Linux)
    --with-static-xm      include the xm module (rather than loading it dynamically)
 			   this option affects xm.c for Motif, xg.c for Gtk
+   --with-static-gsl     try to load GSL statically (for RPM)
+                           GSL is loaded in any case, if it is available
+
+   --with-snd-as-widget  make Snd a loadable widget, not a standalone program
+   --with-ruby           try to use Ruby as the extension language
+     --with-ruby-prefix  set location of Ruby
    --with-temp-dir       directory to use for temp files
    --with-save-dir       directory to use for saved-state files
    --with-run            Guile optimizer (default = yes)
-   --with-gl             include support for OpenGL (default = no)
-   --with-just-gl        same but omit Guile bindings in gl.c (default = no)
 
 If the configure/make process fails, please send me
 (bil@ccrma.stanford.edu) the files config.h, config.log, and makefile,
@@ -269,6 +275,7 @@ On recording, here's a note from Fernando from cmdist:
     
     -- Fernando
 
+There's also a discussion of RME cards in the cmdist archives.
 
 
 ---- Gtk+: ----

@@ -581,13 +581,87 @@ static XEN g_graph2ps(XEN filename)
   return(C_TO_XEN_STRING(file));
 }
 
+static XEN g_eps_file(void) {return(C_TO_XEN_STRING(eps_file(get_global_state())));}
+static XEN g_set_eps_file(XEN val) 
+{
+  #define H_eps_file "(" S_eps_file ") -> current eps ('Print' command) file name (snd.eps)"
+  snd_state *ss;
+  ss = get_global_state();
+  XEN_ASSERT_TYPE(XEN_STRING_P(val), val, XEN_ONLY_ARG, "set-" S_eps_file, "a string"); 
+  if (eps_file(ss)) FREE(eps_file(ss));
+  set_eps_file(ss, copy_string(XEN_TO_C_STRING(val))); 
+  return(C_TO_XEN_STRING(eps_file(ss)));
+}
+
+static XEN g_eps_left_margin(void) {return(C_TO_XEN_DOUBLE(eps_left_margin(get_global_state())));}
+static XEN g_set_eps_left_margin(XEN val) 
+{
+  #define H_eps_left_margin "(" S_eps_left_margin ") -> current eps ('Print' command) left margin"
+  snd_state *ss;
+  ss = get_global_state();
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, "set-" S_eps_left_margin, "a number"); 
+  set_eps_left_margin(ss, XEN_TO_C_DOUBLE(val));
+  return(C_TO_XEN_DOUBLE(eps_left_margin(ss)));
+}
+
+static XEN g_eps_bottom_margin(void) {return(C_TO_XEN_DOUBLE(eps_bottom_margin(get_global_state())));}
+static XEN g_set_eps_bottom_margin(XEN val) 
+{
+  #define H_eps_bottom_margin "(" S_eps_bottom_margin ") -> current eps ('Print' command) bottom margin"
+  snd_state *ss;
+  ss = get_global_state();
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, "set-" S_eps_bottom_margin, "a number"); 
+  set_eps_bottom_margin(ss, XEN_TO_C_DOUBLE(val));
+  return(C_TO_XEN_DOUBLE(eps_bottom_margin(ss)));
+}
+
+static XEN g_eps_size(void) {return(C_TO_XEN_DOUBLE(eps_size(get_global_state())));}
+static XEN g_set_eps_size(XEN val) 
+{
+  #define H_eps_size "(" S_eps_size ") -> current eps ('Print' command) overall picture size scaler (1.0)"
+  snd_state *ss;
+  ss = get_global_state();
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, "set-" S_eps_size, "a number"); 
+  set_eps_size(ss, XEN_TO_C_DOUBLE(val));
+  return(C_TO_XEN_DOUBLE(eps_size(ss)));
+}
+
+
 #ifdef XEN_ARGIFY_1
 XEN_ARGIFY_1(g_graph2ps_w, g_graph2ps)
+XEN_NARGIFY_0(g_eps_file_w, g_eps_file)
+XEN_NARGIFY_1(g_set_eps_file_w, g_set_eps_file)
+XEN_NARGIFY_0(g_eps_left_margin_w, g_eps_left_margin)
+XEN_ARGIFY_1(g_set_eps_left_margin_w, g_set_eps_left_margin)
+XEN_NARGIFY_0(g_eps_size_w, g_eps_size)
+XEN_ARGIFY_1(g_set_eps_size_w, g_set_eps_size)
+XEN_NARGIFY_0(g_eps_bottom_margin_w, g_eps_bottom_margin)
+XEN_ARGIFY_1(g_set_eps_bottom_margin_w, g_set_eps_bottom_margin)
 #else
 #define g_graph2ps_w g_graph2ps
+#define g_eps_file_w g_eps_file
+#define g_set_eps_file_w g_set_eps_file
+#define g_eps_left_margin_w g_eps_left_margin
+#define g_set_eps_left_margin_w g_set_eps_left_margin
+#define g_eps_size_w g_eps_size
+#define g_set_eps_size_w g_set_eps_size
+#define g_eps_bottom_margin_w g_eps_bottom_margin
+#define g_set_eps_bottom_margin_w g_set_eps_bottom_margin
 #endif
 
 void g_init_print(void)
 {
   XEN_DEFINE_PROCEDURE(S_graph2ps, g_graph2ps_w, 0, 1, 0, H_graph2ps);
+
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_eps_file, g_eps_file_w, H_eps_file,
+				   "set-" S_eps_file, g_set_eps_file_w,  0, 0, 1, 0);
+
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_eps_left_margin, g_eps_left_margin_w, H_eps_left_margin,
+				   "set-" S_eps_left_margin, g_set_eps_left_margin_w,  0, 0, 0, 1);
+  
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_eps_bottom_margin, g_eps_bottom_margin_w, H_eps_bottom_margin,
+				   "set-" S_eps_bottom_margin, g_set_eps_bottom_margin_w,  0, 0, 0, 1);
+
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_eps_size, g_eps_size_w, H_eps_size,
+				   "set-" S_eps_size, g_set_eps_size_w,  0, 0, 0, 1);
 }
