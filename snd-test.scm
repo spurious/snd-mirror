@@ -30,7 +30,7 @@
 ;;; test 27: openGL
 ;;; test 28: errors
 
-;;; TODO: recorder-file-hook, enved-ramp-procedure tests
+;;; TODO: recorder-file-hook, enved-style tests
 
 ;;; how to send ourselves a drop?  (button2 on menu is only the first half -- how to force 2nd?)
 
@@ -394,6 +394,8 @@
 	'cursor-cross cursor-cross 0
 	'cursor-line cursor-line 1
 	'dont-normalize dont-normalize 0
+	'enved-linear enved-linear 0
+	'enved-exponential enved-exponential 1
 	'normalize-by-channel normalize-by-channel 1
 	'normalize-by-sound normalize-by-sound 2
 	'normalize-globally normalize-globally 3
@@ -576,9 +578,9 @@
       (set! (enved-in-dB) (enved-in-dB))
       (if (not (equal? (enved-in-dB)  #f )) 
 	  (snd-display ";enved-in-dB set def: ~A" (enved-in-dB)))
-      (set! (enved-exp?) (enved-exp?))
-      (if (not (equal? (enved-exp?)  #f )) 
-	  (snd-display ";enved-exp? set def: ~A" (enved-exp?)))
+      (set! (enved-style) (enved-style))
+      (if (not (equal? (enved-style)  enved-linear )) 
+	  (snd-display ";enved-style set def: ~A" (enved-style)))
       (set! (enved-power) (enved-power))
       (if (fneq (enved-power)  3.0)
 	  (snd-display ";enved-power set def: ~A" (enved-power)))
@@ -891,7 +893,7 @@
 	'enved-filter-order (enved-filter-order) 40
 	'enved-filter (enved-filter) #t
 	'enved-in-dB (enved-in-dB) #f 
-	'enved-exp? (enved-exp?) #f 
+	'enved-style (enved-style) enved-linear
 	'enved-power (enved-power) 3.0
 	'enved-target (enved-target) 0 
 	'enved-wave? (enved-wave?) #f 
@@ -1439,7 +1441,7 @@
 	  (list 'enved-base enved-base 1.0  1.5)
 	  (list 'enved-clip? enved-clip? #f #t)
 	  (list 'enved-in-dB enved-in-dB #f #t)
-	  (list 'enved-exp? enved-exp? #f #t)
+	  (list 'enved-style enved-style enved-linear enved-exponential)
 	  (list 'enved-power enved-power 3.0 3.5)
 	  (list 'enved-target enved-target 0 1)
 	  (list 'enved-wave? enved-wave? #f #t)
@@ -1737,7 +1739,7 @@
 	      (m1 (mus-sound-maxamp-exists? "oboe.snd"))
 	      (mal (mus-sound-maxamp "oboe.snd"))
 	      (mz (mus-sound-maxamp "z.snd"))
-	      (bytes (mus-data-format-bytes-per-sample (mus-sound-data-format "oboe.snd")))
+	      (bytes (mus-bytes-per-sample (mus-sound-data-format "oboe.snd")))
 	      (sys (mus-audio-systems)))
 	  (if (or (not (= (car mz) 0))
 		  (fneq (cadr mz) 0.0))
@@ -1752,8 +1754,8 @@
 			     4)))
 	    (for-each
 	     (lambda (frm siz)
-	       (if (not (= (mus-data-format-bytes-per-sample frm) siz))
-		   (snd-display ";mus-data-format-bytes-per-sample ~A: ~A" (mus-data-format-name frm) siz)))
+	       (if (not (= (mus-bytes-per-sample frm) siz))
+		   (snd-display ";mus-bytes-per-sample ~A: ~A" (mus-data-format-name frm) siz)))
 	     formats
 	     sizes))
 	  (if (provided? 'snd-debug)
@@ -2589,7 +2591,7 @@
 			     ((= i samps))
 			   (sound-data-set! sdata k i (- (random 2.0) 1.0))))))
 		    (mus-sound-write fd 0 (- samps 1) chans sdata)
-		    (mus-sound-close-output fd (* samps chans (mus-data-format-bytes-per-sample (car df-ht))))
+		    (mus-sound-close-output fd (* samps chans (mus-bytes-per-sample (car df-ht))))
 		    (set! fd (mus-sound-open-input "fmv5.snd"))
 		    (mus-sound-read fd 0 (- samps 1) chans ndata)
 		    (let ((pos (mus-sound-seek-frame fd 100)))
@@ -6836,15 +6838,15 @@ EDITS: 5
 	  (set! (cursor index 0) 30) 
 	  (set! (cursor-style) cursor-line)
 	  (set! (cursor index 0) 20) 
-	  (if with-gui
-	      (set! (cursor-style index 0)
-		    (lambda (snd chn ax)
-		      (let* ((point (cursor-position))
-			     (x (car point))
-			     (y (cadr point))
-			     (size (inexact->exact (floor (/ (cursor-size) 2)))))
-			(draw-line (- x size) (- y size) (+ x size) (+ y size) snd chn cursor-context)    
-			(draw-line (- x size) (+ y size) (+ x size) (- y size) snd chn cursor-context)))))
+	  (set! (cursor-style index 0)
+		(lambda (snd chn ax)
+		  (let* ((point (cursor-position))
+			 (x (car point))
+			 (y (cadr point))
+			 (size (inexact->exact (floor (/ (cursor-size) 2)))))
+		    (draw-line (- x size) (- y size) (+ x size) (+ y size) snd chn cursor-context)    
+		    (draw-line (- x size) (+ y size) (+ x size) (- y size) snd chn cursor-context))))
+	  (if (not (procedure? (cursor-style index 0))) (snd-display ";set cursor-style to proc: ~A" (cursor-style index 0)))
 	  (set! (cursor index) 50)
 	  (insert-sound "fyow.snd" (cursor) 0 index 0) 
 	  (if (or (fneq (sample 40) s40) (not (fneq (sample 100) s100)) (fneq (sample 100) 0.001831))
@@ -18761,6 +18763,7 @@ EDITS: 5
   (add-hook! color-hook arg0) (carg0 color-hook)
   (add-hook! orientation-hook arg0) (carg0 orientation-hook)
   (add-hook! start-playing-selection-hook arg0) (carg0 start-playing-selection-hook)
+  (add-hook! selection-changed-hook arg0) (carg0 selection-changed-hook)
   
   (add-hook! during-open-hook arg3) (carg3 during-open-hook)
   (add-hook! transform-hook arg3) (carg3 transform-hook)
@@ -19327,6 +19330,7 @@ EDITS: 5
 	    (cl #f)
 	    (ig #f)
 	    (scl #f)
+	    (sel #f)
 	    (other #f))
 	(add-hook! open-hook 
 		   (lambda (filename)
@@ -19350,6 +19354,7 @@ EDITS: 5
 			 (snd-display ";initial-graph-hook (channel): ~A not 0?" chn))
 		     (set! ig #t)
 		     #f))
+	(add-hook! selection-changed-hook (lambda () (set! sel #t)))
 	
 	(set! ind (open-sound "oboe.snd"))
 	
@@ -19358,10 +19363,14 @@ EDITS: 5
 	(if (not ig) (snd-display ";initial-graph-hook not called?"))
 	(if (not (number? aop)) (snd-display ";after-open-hook not called?"))
 	(if (not (= aop ind)) (snd-display ";after-open-hook ~A but ind: ~A?" aop ind))
+	(if sel (snd-display ";selection-changed-hook called for no reason?"))
+	(select-all)
+	(if (not sel) (snd-display ";selection-changed-hook not called?"))
 	(reset-hook! open-hook)
 	(reset-hook! during-open-hook)
 	(reset-hook! after-open-hook)
 	(reset-hook! initial-graph-hook)
+	(reset-hook! selection-changed-hook)
 	
 	(add-hook! open-hook (lambda (filename) #t))
 	(let ((pistol (open-sound "pistol.snd")))
@@ -20820,7 +20829,7 @@ EDITS: 5
 		(list 'enved-base enved-base #f 0.01  100.0)
 		(list 'enved-clip? enved-clip? #f #f #t)
 		(list 'enved-in-dB enved-in-dB #f #f #t)
-		(list 'enved-exp? enved-exp? #f #f #t)
+		(list 'enved-style enved-style #f enved-linear enved-exponential)
 		(list 'enved-power enved-power #f 3.0 3.5)
 		(list 'enved-target enved-target #f 0 2)
 		(list 'enved-wave? enved-wave? #f #f #t)
@@ -30871,7 +30880,7 @@ EDITS: 2
 	    (stst '(mus-header-type-name mus-aifc) "AIFC")
 	    (stst '(mus-header-type-name (mus-sound-header-type "oboe.snd")) "Sun")
 	    (etst '(mus-header-type-name "hiho"))
-	    (itst '(mus-data-format-bytes-per-sample mus-bshort) 2)
+	    (itst '(mus-bytes-per-sample mus-bshort) 2)
 	    (etst '(make-vct 3 "hi"))
 	    (btst '(let* ((file "oboe.snd")
 		          (str (string-append file ": chans: "
@@ -34750,7 +34759,7 @@ EDITS: 2
 			 (exp-button (list-ref enved-widgets 20))
 			 (lin-button (list-ref enved-widgets 21))
 			 (env-list (list-ref enved-widgets 24))
-			 (fir-button (list-ref enved-widgets 25))
+			 (fir-button (list-ref enved-widgets 25)) ; proc button is 26
 			 (ewid drawer)
 			 (senv #f))
 		    
@@ -40547,7 +40556,7 @@ EDITS: 2
 		     delete-mark delete-marks forget-region delete-sample delete-samples delete-samples-with-origin
 		     delete-selection dialog-widgets display-edits dot-size draw-dot draw-dots draw-line
 		     draw-lines draw-string edit-header-dialog edit-fragment edit-position edit-tree edits env-selection
-		     env-sound enved-active-env enved-base enved-clip? enved-in-dB enved-dialog enved-exp? enved-power
+		     env-sound enved-active-env enved-base enved-clip? enved-in-dB enved-dialog enved-style enved-power
 		     enved-selected-env enved-target enved-waveform-color enved-wave? eps-file eps-left-margin emacs-style-save-as
 		     eps-bottom-margin eps-size expand-control expand-control-hop expand-control-length expand-control-ramp
 		     expand-control? fft fft-window-beta fft-log-frequency fft-log-magnitude transform-size disk-kspace
@@ -40555,7 +40564,7 @@ EDITS: 2
 		     fill-rectangle filter-sound filter-control-in-dB filter-control-env enved-filter-order enved-filter
 		     filter-env-in-hz filter-control-order filter-selection filter-waveform-color filter-control? find
 		     find-mark find-sound finish-progress-report foreground-color forward-graph forward-mark forward-mix
-		     frames free-sample-reader graph enved-ramp-procedure
+		     frames free-sample-reader graph 
 		     graph-color graph-cursor graph-data graph->ps graph-style lisp-graph?  graphs-horizontal header-type
 		     help-dialog info-dialog highlight-color in insert-region insert-sample insert-samples
 		     insert-samples-with-origin insert-selection insert-silence insert-sound just-sounds key key-binding
@@ -40606,7 +40615,7 @@ EDITS: 2
 		     mus-sound-samples mus-sound-frames mus-sound-duration mus-sound-datum-size mus-sound-data-location data-size
 		     mus-sound-chans mus-sound-srate mus-sound-header-type mus-sound-data-format mus-sound-length
 		     mus-sound-type-specifier mus-header-type-name mus-data-format-name mus-sound-comment mus-sound-write-date
-		     mus-data-format-bytes-per-sample mus-sound-loop-info mus-audio-report mus-audio-sun-outputs
+		     mus-bytes-per-sample mus-sound-loop-info mus-audio-report mus-audio-sun-outputs
 		     mus-sound-maxamp mus-sound-maxamp-exists? mus-sound-open-input mus-sound-open-output
 		     mus-sound-reopen-output mus-sound-close-input mus-sound-close-output mus-sound-read mus-sound-write
 		     mus-sound-seek-frame mus-file-prescaler mus-file-data-clipped
@@ -40666,7 +40675,7 @@ EDITS: 2
 			 contrast-control? auto-update-interval current-font cursor cursor-color channel-properties
 			 cursor-follows-play cursor-size cursor-style dac-combines-channels dac-size data-clipped data-color
 			 default-output-chans default-output-format default-output-srate default-output-type dot-size
-			 enved-active-env enved-base enved-clip? enved-in-dB enved-exp? enved-power enved-selected-env
+			 enved-active-env enved-base enved-clip? enved-in-dB enved-style enved-power enved-selected-env
 			 enved-target enved-waveform-color enved-wave? eps-file eps-left-margin eps-bottom-margin eps-size
 			 expand-control expand-control-hop expand-control-length expand-control-ramp expand-control?
 			 fft-window-beta fft-log-frequency fft-log-magnitude transform-size transform-graph-type fft-window
@@ -40694,7 +40703,7 @@ EDITS: 2
 			 channels chans colormap comment data-format data-location data-size edit-position frames header-type maxamp
 			 minibuffer-history-length read-only right-sample sample samples selected-channel
 			 selected-sound selection-position selection-frames selection-member? sound-loop-info
-			 srate time-graph-type x-position-slider x-zoom-slider enved-ramp-procedure
+			 srate time-graph-type x-position-slider x-zoom-slider 
 			 y-position-slider y-zoom-slider sound-data-ref mus-a0 mus-a1 mus-a2 mus-x1 mus-x2 mus-y1 mus-y2 mus-array-print-length 
 			 mus-b1 mus-b2 mus-cosines mus-data mus-feedback mus-feedforward mus-formant-radius mus-frequency mus-hop
 			 mus-increment mus-length mus-location mus-phase mus-ramp mus-scaler vct-ref x-axis-label
@@ -41040,7 +41049,7 @@ EDITS: 2
 		      (list mus-sound-samples mus-sound-frames mus-sound-duration mus-sound-datum-size
 			    mus-sound-data-location mus-sound-chans mus-sound-srate mus-sound-header-type mus-sound-data-format
 			    mus-sound-length mus-sound-type-specifier mus-header-type-name mus-data-format-name mus-sound-comment
-			    mus-sound-write-date mus-data-format-bytes-per-sample mus-sound-loop-info mus-sound-maxamp
+			    mus-sound-write-date mus-bytes-per-sample mus-sound-loop-info mus-sound-maxamp
 			    mus-sound-maxamp-exists?))
 	    
 	    (for-each (lambda (n)
@@ -41054,7 +41063,7 @@ EDITS: 2
 		      (list mus-sound-samples mus-sound-frames mus-sound-duration mus-sound-datum-size
 			    mus-sound-data-location mus-sound-chans mus-sound-srate mus-sound-header-type mus-sound-data-format
 			    mus-sound-length mus-sound-type-specifier mus-header-type-name mus-data-format-name mus-sound-comment
-			    mus-sound-write-date mus-data-format-bytes-per-sample mus-sound-loop-info mus-sound-maxamp
+			    mus-sound-write-date mus-bytes-per-sample mus-sound-loop-info mus-sound-maxamp
 			    mus-sound-maxamp-exists?))
 	    
 	    (for-each (lambda (n)
@@ -41367,7 +41376,7 @@ EDITS: 2
 			      channel-style color-cutoff color-dialog color-inverted color-scale
 			      cursor-color dac-combines-channels dac-size data-clipped data-color default-output-chans emacs-style-save-as
 			      default-output-format default-output-srate default-output-type enved-active-env enved-base
-			      enved-clip? enved-in-dB enved-dialog enved-exp?  enved-power enved-selected-env enved-target
+			      enved-clip? enved-in-dB enved-dialog enved-style  enved-power enved-selected-env enved-target
 			      enved-waveform-color enved-wave? eps-file eps-left-margin eps-bottom-margin eps-size
 			      foreground-color graph-color graph-cursor highlight-color just-sounds key-binding
 			      listener-color listener-font listener-prompt listener-text-color max-regions
@@ -41376,7 +41385,7 @@ EDITS: 2
 			      previous-files-sort print-length pushed-button-color recorder-in-device recorder-autoload
 			      recorder-buffer-size recorder-file recorder-in-format recorder-max-duration recorder-out-chans
 			      recorder-out-format recorder-out-type recorder-srate recorder-trigger sash-color ladspa-dir save-dir save-state-file
-			      selected-channel selected-data-color selected-graph-color enved-ramp-procedure
+			      selected-channel selected-data-color selected-graph-color 
 			      selected-sound selection-creates-region show-backtrace show-controls show-indices show-listener
 			      show-selection-transform sinc-width temp-dir text-focus-color tiny-font
 			      trap-segfault optimization unbind-key verbose-cursor vu-font vu-font-size vu-size window-height
@@ -41453,6 +41462,24 @@ EDITS: 2
 			    (list mouse-press-hook 'mouse-press-hook)
 			    (list mouse-click-hook 'mouse-click-hook)
 			    (list enved-hook 'enved-hook)))
+
+	    (for-each (lambda (n)
+			(let* ((hook (car n))
+			       (hook-name (cadr n))
+			       (tag
+				(catch #t
+				       (lambda () (add-hook! hook (lambda (a b c) (+ a b c))))
+				       (lambda args (car args)))))
+			  (if (not (eq? tag 'wrong-type-arg))
+			      (snd-display ";hooks ~A: ~A" hook-name tag))))
+		      (list (list exit-hook 'exit-hook)
+			    (list stop-dac-hook 'stop-dac-hook)
+			    (list output-name-hook 'output-name-hook)
+			    (list stop-playing-selection-hook 'stop-playing-selection-hook)
+			    (list color-hook 'color-hook)
+			    (list orientation-hook 'orientation-hook)
+			    (list start-playing-selection-hook 'start-playing-selection-hook)
+			    (list selection-changed-hook 'selection-changed-hook)))
 	    
 	    (check-error-tag 'no-such-envelope (lambda () (set! (enved-active-env) "not-an-env")))
 	    (check-error-tag 'no-such-envelope (lambda () (set! (enved-selected-env) "not-an-env")))

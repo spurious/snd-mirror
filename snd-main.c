@@ -315,7 +315,7 @@ static void save_snd_state_options (FILE *fd)
   if (enved_wave_p(ss) != DEFAULT_ENVED_WAVE_P) pss_ss(fd, S_enved_wave_p, b2s(enved_wave_p(ss)));
   if (enved_in_dB(ss) != DEFAULT_ENVED_IN_DB) pss_ss(fd, S_enved_in_dB, b2s(enved_in_dB(ss)));
   if (enved_clip_p(ss) != DEFAULT_ENVED_CLIP_P) pss_ss(fd, S_enved_clip_p, b2s(enved_clip_p(ss)));
-  if (enved_exp_p(ss) != DEFAULT_ENVED_EXP_P) pss_ss(fd, S_enved_exp_p, b2s(enved_exp_p(ss)));
+  if (enved_style(ss) == ENVED_EXPONENTIAL) pss_ss(fd, S_enved_style, TO_VAR_NAME(S_enved_exponential));
 
   if (vu_font(ss)) pss_sq(fd, S_vu_font, vu_font(ss));
   if (save_state_file(ss))
@@ -788,6 +788,8 @@ int handle_next_startup_arg(int auto_open_ctr, char **auto_open_file_names, bool
 		  (strcmp("-batch", argname) == 0) ||
 		  ((file_extension(argname)) && 
 		   ((strcmp(file_extension(argname), "scm") == 0) ||
+		    (strcmp(file_extension(argname), "cl") == 0) ||
+		    (strcmp(file_extension(argname), "lisp") == 0) ||
 		    (strcmp(file_extension(argname), "rb") == 0))))
 		{
 		  if ((strcmp("-l", argname) == 0) || 

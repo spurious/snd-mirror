@@ -1,9 +1,5 @@
 (use-modules (ice-9 format) (ice-9 common-list))
 
-;;; TODO: if no selection, unsensitize selection button, similarly for marks
-;;;       this needs a (un)make-selection-hook to handle the button if the dialog is already active
-;;;       mark-hook can handle the other case
-
 (if (not (provided? 'xm))
     (let ((hxm (dlopen "xm.so")))
       (if (string? hxm)
@@ -83,36 +79,46 @@
   ;;         'cursor -> beg=cursor, dur=samples to end of sound
   ;; decay is how long to run the effect past the end of the sound
   (lambda (func target origin decay)
-    (let* ((snc (sync))
-	   (ms (and (eq? target 'marks)
-		    (plausible-mark-samples)))
-	   (beg (if (eq? target 'sound)
-		    0
-		    (if (eq? target 'selection)
-			(selection-position)
-			(if (eq? target 'cursor)
-			    (cursor (selected-sound) (selected-channel))
-			    (car ms)))))
-	   (overlap (if decay
-			(inexact->exact (floor (* (srate) decay)))
-			0)))
-      (apply for-each
-	     (lambda (snd chn)
-	       (let ((end (if (or (eq? target 'sound)
-				  (eq? target 'cursor))
-			      (1- (frames snd chn))
-			      (if (eq? target 'selection)
-				  (+ (selection-position) (selection-frames))
-				  (cadr ms)))))
-		 (if (= (sync snd) snc)
-		     (map-chan (func (- end beg))
-			       beg 
-			       (+ end overlap)
-			       origin snd chn))))
-	     (if (> snc 0) 
-		 (all-chans) 
-		 (list (list (selected-sound)) 
-		       (list (selected-channel))))))))
+    (if (and (eq? target 'selection)
+	     (not (selection?)))
+	(snd-print ";no selection")
+	(if (and (eq? target 'sound)
+		 (null? (sounds)))
+	    (snd-print ";no sound")
+	    (if (and (eq? target 'marks)
+		     (or (null? (sounds))
+			 (< (length (marks (selected-sound) (selected-channel))) 2)))
+		(snd-print ";no marks")
+		(let* ((snc (sync))
+		       (ms (and (eq? target 'marks)
+				(plausible-mark-samples)))
+		       (beg (if (eq? target 'sound)
+				0
+				(if (eq? target 'selection)
+				    (selection-position)
+				    (if (eq? target 'cursor)
+					(cursor (selected-sound) (selected-channel))
+					(car ms)))))
+		       (overlap (if decay
+				    (inexact->exact (floor (* (srate) decay)))
+				    0)))
+		  (apply for-each
+			 (lambda (snd chn)
+			   (let ((end (if (or (eq? target 'sound)
+					      (eq? target 'cursor))
+					  (1- (frames snd chn))
+					  (if (eq? target 'selection)
+					      (+ (selection-position) (selection-frames))
+					      (cadr ms)))))
+			     (if (= (sync snd) snc)
+				 (map-chan (func (- end beg))
+					   beg 
+					   (+ end overlap)
+					   origin snd chn))))
+			 (if (> snc 0) 
+			     (all-chans) 
+			     (list (list (selected-sound)) 
+				   (list (selected-channel)))))))))))
 
 (define (make-effect-dialog label ok-callback help-callback reset-callback)
   ;; make a standard dialog
@@ -301,6 +307,8 @@
 		   (set! pix (.pixel col)))))
       pix)))
 
+(define selection-buttons '())
+
 (define (add-target mainform target-callback truncate-callback)
   ;; add a set of 3 radio buttons at the bottom of the main section for choice between sound, selection, between-marks
   ;;   target-callback should take one arg, a symbol: 'sound, 'selection, 'marks, and apply the effect accordingly (upon "DoIt")
@@ -321,12 +329,18 @@
 		      XmNisHomogeneous    #t))))
     (for-each
      (lambda (name type on)
-       (XtCreateManagedWidget name xmToggleButtonWidgetClass rc
-                (list XmNbackground       (basic-color)
-		      XmNset              on
-		      XmNselectColor      (yellow-pixel)
-		      XmNindicatorType    XmONE_OF_MANY_ROUND
-		      XmNarmCallback      (list (lambda (w c i) (target-callback type)) #f))))
+       (let ((button (XtCreateManagedWidget name xmToggleButtonWidgetClass rc
+					    (list XmNbackground       (basic-color)
+						  XmNset              on
+						  XmNselectColor      (yellow-pixel)
+						  XmNindicatorType    XmONE_OF_MANY_ROUND
+						  XmNarmCallback      (list (lambda (w c i) (target-callback type)) #f)))))
+	 (if (eq? type 'selection)
+	     (begin
+	       (set! selection-buttons (cons button selection-buttons))
+	       (if (not (selection?))
+		   (XtSetSensitive button #f))))
+	 button))
      (list "entire sound" "selection" "between marks")
      (list 'sound 'selection 'marks)
      (list #t #f #f))
@@ -340,6 +354,13 @@
 	  (XtAddCallback trbutton XmNvalueChangedCallback (lambda (w c i) (truncate-callback (.set i)))) ))
     rc))
 
+(if (null? selection-buttons)
+    (add-hook! selection-changed-hook
+	       (lambda ()
+		 (let ((on (selection?)))
+		   (for-each (lambda (button)
+			       (XtSetSensitive button on))
+			     selection-buttons)))))
 
 (define (activate-dialog dialog)
   (if (not (XtIsManaged dialog))
@@ -407,12 +428,15 @@
 				   (if with-env
 				       (env-selection with-env)
 				       (scale-selection-by gain-amount))
-				   (snd-print "no selection"))
-			       (let ((pts (plausible-mark-samples)))
+				   (snd-print ";no selection"))
+			       (let ((pts (catch 'no-such-mark 
+						 (lambda () (plausible-mark-samples))
+						 (lambda args #f))))
 				 (if pts
 				     (if with-env
 					 (env-sound with-env (car pts) (- (cadr pts) (car pts)))
-					 (scale-sound-by gain-amount (car pts) (- (cadr pts) (car pts))))))))))
+					 (scale-sound-by gain-amount (car pts) (- (cadr pts) (car pts))))
+				     (snd-print ";no marks")))))))
 		   (lambda (w context info)
 		     (help-dialog "Gain"
 				  "Move the slider to change the gain scaling amount."))
@@ -483,7 +507,7 @@
 			 (if (eq? normalize-target 'selection)
 			     (if (selection?)
 				 (scale-selection-to normalize-amount)
-				 (snd-print "no selection"))
+				 (snd-print ";no selection"))
 			     (let ((pts (plausible-mark-samples)))
 			       (if pts
 				   (scale-sound-to normalize-amount (car pts) (- (cadr pts) (car pts))))))))
@@ -1453,7 +1477,7 @@ Move the sliders to set the filter cutoff frequency and resonance."))
 			 (if (eq? src-target 'selection)
 			     (if (selection?)
 				 (src-selection src-amount)
-				 (snd-print "no selection"))
+				 (snd-print ";no selection"))
 			     (snd-print "can't apply src between marks yet"))))
 		   
 		   
@@ -1611,7 +1635,7 @@ Values greater than 1.0 speed up file play,\n\ negative values reverse it."))
 			   (if (eq? src-timevar-target 'selection)
 			       (if (selection-member? (selected-sound))
 				   (src-selection env)
-				   (display "no selection"))
+				   (display ";no selection"))
 			       (let ((pts (plausible-mark-samples)))
 				 (if pts
 				     (let* ((beg (car pts))

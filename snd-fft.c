@@ -806,8 +806,7 @@ static void apply_fft(fft_state *fs)
       for (i = 0; i < data_len; i++)
 	fft_data[i] = window[i] * read_sample_to_float(sf);
       if (data_len < fs->size) 
-	for (i = data_len; i < fs->size; i++) 
-	  fft_data[i] = 0.0;
+	memset((void *)(fft_data + data_len), 0, (fs->size - data_len) * sizeof(Float));
 #if HAVE_FFTW || HAVE_FFTW3
       {
 	int j;
@@ -831,22 +830,19 @@ static void apply_fft(fft_state *fs)
     case WAVELET:
       for (i = 0; i < data_len; i++) fft_data[i] = read_sample_to_float(sf);
       if (data_len < fs->size) 
-	for (i = data_len; i < fs->size; i++) 
-	  fft_data[i] = 0.0;
+	memset((void *)(fft_data + data_len), 0, (fs->size - data_len) * sizeof(Float));
       wavelet_transform(fft_data, fs->size, wavelet_data[cp->wavelet_type], wavelet_sizes[cp->wavelet_type]);
       break;
     case HAAR:
       for (i = 0; i < data_len; i++) fft_data[i] = read_sample_to_float(sf);
       if (data_len < fs->size) 
-	for (i = data_len; i < fs->size; i++) 
-	  fft_data[i] = 0.0;
+	memset((void *)(fft_data + data_len), 0, (fs->size - data_len) * sizeof(Float));
       haar_transform(fft_data, fs->size);
       break;
     case CEPSTRUM:
       for (i = 0; i < data_len; i++) fft_data[i] = read_sample_to_float(sf);
       if (data_len < fs->size) 
-	for (i = data_len; i < fs->size; i++) 
-	  fft_data[i] = 0.0;
+	memset((void *)(fft_data + data_len), 0, (fs->size - data_len) * sizeof(Float));
       cepstrum(fft_data, fs->size);
       break;
     case HADAMARD:
@@ -855,8 +851,7 @@ static void apply_fft(fft_state *fs)
 	  window = (Float *)CALLOC(fs->size, sizeof(Float));
 	  for (i = 0; i < data_len; i++) fft_data[i] = read_sample_to_float(sf);
 	  if (data_len < fs->size) 
-	    for (i = data_len; i < fs->size; i++) 
-	      fft_data[i] = 0.0;
+	    memset((void *)(fft_data + data_len), 0, (fs->size - data_len) * sizeof(Float));
 	  fast_hwt(window, fft_data, (int)(log((Float)(fs->size + 1)) / log(2.0)));
 	  for (i = 0; i < fs->size; i++) fft_data[i] = window[i];
 	  FREE(window);
@@ -865,15 +860,13 @@ static void apply_fft(fft_state *fs)
     case WALSH:
       for (i = 0; i < data_len; i++) fft_data[i] = read_sample_to_float(sf);
       if (data_len < fs->size) 
-	for (i = data_len; i < fs->size; i++) 
-	  fft_data[i] = 0.0;
+	memset((void *)(fft_data + data_len), 0, (fs->size - data_len) * sizeof(Float));
       walsh_transform(fft_data, fs->size);
       break;
     case AUTOCORRELATION:
       for (i = 0; i < data_len; i++) fft_data[i] = read_sample_to_float(sf);
       if (data_len < fs->size) 
-	for (i = data_len; i < fs->size; i++) 
-	  fft_data[i] = 0.0;
+	memset((void *)(fft_data + data_len), 0, (fs->size - data_len) * sizeof(Float));
       autocorrelation(fft_data, fs->size);
       break;
     default:

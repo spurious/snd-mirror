@@ -378,6 +378,10 @@ void about_snd_help(void)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+22-Dec:  selection-changed-hook.\n\
+         changed enved-exp? to enved-style for user-defined segment connectors,\n\
+           (enved-linear, enved-exponential, or a list of 2 procedures, mimicking cursor-style).\n\
+           old enved-exp? is in snd7.scm.\n\
 15-Dec:  kosine-summation in dsp.scm -- sum-of-cosines with an \"FM index\".\n\
          sine-ramp and sine-env-channel for envelopes that connect the dots\n\
            with a sinusoidal curve.\n\

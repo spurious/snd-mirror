@@ -1677,6 +1677,16 @@ called when a sound is selected. The argument is the about-to-be-selected sound'
 </td></tr>
 <tr><td colspan=3></td></tr>
 
+<!-- selection-changed-hook -->
+<tr><td colspan=2>
+<span class=defbox><code><em class=def><a name="selectionchangedhook">selection-changed-hook</a></em> ()</code></span></td><td>
+</td></tr>
+<tr><td></td><td colspan=2>
+called when a portion of the sound data is selected or deselected.  This hook is used in new-effects.scm to
+desensitize the "selection" button when there is no selection.
+</td></tr>
+<tr><td colspan=3></td></tr>
+
 <!-- snd-error-hook -->
 <tr><td colspan=2>
 <span class=defbox><code><em class=def><a name="snderrorhook">snd-error-hook</a></em> (error-message)</code></span></td><td align=right><b>or</b>
@@ -3824,6 +3834,7 @@ See also:<br>
 <a href="sndscm.html#editmenudoc">append-selection</a>: append selection<br>
 <a href="sndscm.html#editmenudoc">selection-&gt;new</a>: write selection to a file<br>
 <a href="sndscm.html#dlpdoc">deselect-all</a>: undo select-all.<br>
+<a href="#selectionchangedhook">selection-changed-hook</a>: hook called when selection created or deleted.<br>
 <br>
 </blockquote></small>
 </td></tr></TABLE>
@@ -8218,9 +8229,13 @@ should return that list, sorted as it pleases.  The following sorts the list by 
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="sndenveddialog">enved-dialog</a></em> ()</code></span></td></tr>
 <tr><td></td><td>start the Envelope editor dialog, return the dialog widget.</td></tr>
 
-<!-- enved-exp? -->
-<tr><td colspan=2><span class=defbox><code><em class=def><a name="envedexping">enved-exp?</a></em> ()</code></span></td></tr>
-<tr><td></td><td>envelope editor 'exp' and 'lin' buttons (type of connecting segments) (#f)</td></tr>
+<!-- enved-style -->
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="envedstyle">enved-style</a></em> ()</code></span></td></tr>
+<tr><td></td><td>envelope editor choice for connecting breakpoints.  Can be <i>enved-linear</i> (the default),
+<i>enved-exponential</i>, or 
+a list of the two procedures suitable for ptree-channel usage.
+<!-- TODO: enved-style example -->
+</td></tr>
 
 <!-- enved-filter -->
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="filterenv">enved-filter</a></em> ()</code></span></td></tr>
@@ -8246,10 +8261,6 @@ as the default:
 <!-- enved-power -->
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="envedpower">enved-power</a></em> ()</code></span></td></tr>
 <tr><td></td><td>envelope editor base scale range (9.0^power). (3.0)</td></tr>
-
-<!-- enved-ramp-procedure -->
-<tr><td colspan=2><span class=defbox><code><em class=def><a name="envedrampprocedure">enved-ramp-procedure</a></em> ()</code></span></td></tr>
-<tr><td></td><td>The procedure used to make a ramp in the envelope editor, or #f to clear it.</td></tr>
 
 <!-- enved-selected-env -->
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="envedselectedenv">enved-selected-env</a></em> ()</code></span></td></tr>
@@ -9343,6 +9354,11 @@ return a list giving the widget width and height (pixels).  Can be set. See nb.s
 <p><b>Envelope Editor</b> target (<a href="#envedtarget">enved-target</a>):</p>
 <pre>
   enved-amplitude      enved-spectrum       enved-srate
+</pre><br>
+
+<p><b>Envelope Editor</b> ramp choice (<a href="#envedstyle">enved-style</a>):</p>
+<pre>
+  enved-linear         enved-exponential
 </pre><br>
 
 <p><b>Graph Line</b> style (<a href="#graphstyle">graph-style</a>):</p>

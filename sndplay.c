@@ -23,6 +23,7 @@
   #include <console.h>
 #endif
 
+/* TODO: make bufsize an argument to sndplay (matters mainly in OSX) */
 #if MAC_OSX
   #define BUFFER_SIZE 256
 #else

@@ -533,7 +533,7 @@ bool edp_display_graph(void *spf, const char *name, axis_context *ax,
     init_env_axes(ap, name, x, y, width, height, ex0, ex1, ey0, ey1, false);
   ix1 = grf_x(e->data[0], ap);
   iy1 = edp_grf_y_dB(e->data[1], ap, use_dB);
-  /* TODO: use ramp-procedure (also in apply-env) */
+  /* TODO: use enved-proc if ENVED_PROC (also in apply-env), exp env in edp? */
   if (with_dots)
     {
       if (e->pts < 100)
@@ -825,6 +825,7 @@ void display_enved_env(env *e, axis_context *ax, char *name, int x0, int y0, int
 	  set_current_point(0, ix1, iy1);
 	  draw_arc(ax, ix1, iy1, size);
 	}
+      /* TODO: use enved-proc if ENVED_PROC -- what if showing all envs? */
       if (base == 1.0)
 	{
 	  if (enved_in_dB(ss))
@@ -1069,7 +1070,7 @@ void undo_env_edit(void)
       if (env_list_top == 0)
 	{
 	  set_enved_undo_sensitive(false);
-	  set_enved_revert_sensitive(false);
+	  /* set_enved_revert_sensitive(false); */
 	}
       set_enved_save_sensitive(true);
     }
@@ -1650,15 +1651,64 @@ if clipping, the motion of the mouse is restricted to the current graph bounds."
   return(C_TO_XEN_BOOLEAN(enved_clip_p(ss)));
 }
 
-static XEN g_enved_exp_p(void) {return(C_TO_XEN_BOOLEAN(enved_exp_p(ss)));}
-static XEN g_set_enved_exp_p(XEN val) 
+static XEN g_enved_style(void) 
 {
-  #define H_enved_exp_p "(" S_enved_exp_p "): envelope editor 'exp' and 'lin' buttons; \
-if enved-exping, the connecting segments use exponential curves rather than straight lines."
+  if (enved_style(ss) == ENVED_PROC)
+    return(ss->enved_proc);
+  return(C_TO_XEN_INT(enved_style(ss)));
+}
 
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(val), val, XEN_ONLY_ARG, S_setB S_enved_exp_p, "a boolean");
-  set_enved_exp_p(XEN_TO_C_BOOLEAN(val)); 
-  return(C_TO_XEN_BOOLEAN(enved_clip_p(ss)));
+static XEN g_set_enved_style(XEN val) 
+{
+  #define H_enved_style "(" S_enved_style "): envelope editor breakpoint connection choice: can \
+be enved-linear, enved-exponential, or a list of 2 procedures."
+
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(val) || XEN_LIST_P(val), val, XEN_ONLY_ARG, S_setB S_enved_style, 
+		  S_enved_linear ", " S_enved_exponential ", or a list of 2 procedures");
+  if (XEN_INTEGER_P(val))
+    {
+      int choice;
+      choice = XEN_TO_C_INT(val);
+      if ((choice == ENVED_LINEAR) || (choice == ENVED_EXPONENTIAL))
+	{
+	  set_enved_style((enved_style_t)choice);
+	  reflect_enved_style();
+	}
+      else XEN_OUT_OF_RANGE_ERROR(S_enved_style, XEN_ONLY_ARG, val, "must be " S_enved_linear ", " S_enved_exponential ", or a list of 2 procedures");
+    }
+  else
+    {
+      XEN proc, init_func;
+      /* the values here are the bare procedures (not as in ptree-channel):
+       *   (set! (enved-style) (list (lambda (a b c) #f) (lambda (a b) #f)))
+       *   -> (#<procedure #f ((a b c) #f)> #<procedure #f ((a b) #f)>)
+       *   scm_procedure_source(XEN_CAR(val)) XEN_AS_STRING(scm_procedure_source(XEN_CADR(val)))
+       */
+      if (XEN_LIST_P(ss->enved_proc))
+	snd_unprotect(ss->enved_proc);
+      if (XEN_LIST_LENGTH(val) == 2)
+	{
+	  proc = XEN_CAR(val);
+	  init_func = XEN_CADR(val);
+	  if (!(XEN_PROCEDURE_P(proc)))
+	    XEN_WRONG_TYPE_ARG_ERROR(S_enved_style, XEN_ONLY_ARG, proc, "ramp func must be a procedure");
+	  if (XEN_REQUIRED_ARGS(proc) != 3)
+	    XEN_BAD_ARITY_ERROR(S_enved_style, XEN_ONLY_ARG, proc, "ramp func must take 3 args");
+	  if (!(XEN_PROCEDURE_P(init_func)))
+	    XEN_WRONG_TYPE_ARG_ERROR(S_enved_style, XEN_ONLY_ARG, init_func, "ramp init func must be a procedure");
+	  if (XEN_REQUIRED_ARGS(init_func) != 2)
+	    XEN_BAD_ARITY_ERROR(S_enved_style, XEN_ONLY_ARG, init_func, "ramp init-func must take 2 args");
+	  snd_protect(val);
+	  ss->enved_proc = val;
+	  set_enved_style(ENVED_PROC);
+	  reflect_enved_style();
+	  /* to get ptree: form_to_ptree_3_f(XEN_LIST_2(scm_procedure_source(XEN_CAR(val)), XEN_CAR(val)));
+	   * init can be saved as is (XEN_CADR(val))
+	   */
+	}
+      else XEN_WRONG_TYPE_ARG_ERROR(S_enved_style, XEN_ONLY_ARG, val, "must be list of 2 procedures");
+    }
+  return(val);
 }
 
 static XEN g_enved_target(void) {return(C_TO_XEN_INT((int)enved_target(ss)));}
@@ -1705,20 +1755,6 @@ static XEN g_set_enved_filter_order(XEN val)
   return(C_TO_XEN_INT(enved_filter_order(ss)));
 }
 
-static XEN g_enved_ramp_procedure(void) {return(enved_ramp_procedure(ss));}
-static XEN g_set_enved_ramp_procedure(XEN val) 
-{
-  #define H_enved_ramp_procedure "(" S_enved_ramp_procedure "): envelope editor's ramp maker."
-  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(val) || XEN_FALSE_P(val), val, XEN_ONLY_ARG, S_setB S_enved_ramp_procedure, "#f or a procedure"); 
-  /* TODO: ramp-procedure arity check */
-  if (XEN_PROCEDURE_P(enved_ramp_procedure(ss)))
-    snd_unprotect(enved_ramp_procedure(ss));
-  set_enved_ramp_procedure(val);
-  if (XEN_PROCEDURE_P(val))
-    snd_protect(val);
-  return(val);
-}
-
 static XEN g_enved_dialog(void) 
 {
   #define H_enved_dialog "(" S_enved_dialog "): start the Envelope Editor"
@@ -1734,8 +1770,8 @@ XEN_NARGIFY_0(g_enved_power_w, g_enved_power)
 XEN_NARGIFY_1(g_set_enved_power_w, g_set_enved_power)
 XEN_NARGIFY_0(g_enved_clip_p_w, g_enved_clip_p)
 XEN_NARGIFY_1(g_set_enved_clip_p_w, g_set_enved_clip_p)
-XEN_NARGIFY_0(g_enved_exp_p_w, g_enved_exp_p)
-XEN_NARGIFY_1(g_set_enved_exp_p_w, g_set_enved_exp_p)
+XEN_NARGIFY_0(g_enved_style_w, g_enved_style)
+XEN_NARGIFY_1(g_set_enved_style_w, g_set_enved_style)
 XEN_NARGIFY_0(g_enved_target_w, g_enved_target)
 XEN_NARGIFY_1(g_set_enved_target_w, g_set_enved_target)
 XEN_NARGIFY_0(g_enved_wave_p_w, g_enved_wave_p)
@@ -1744,8 +1780,6 @@ XEN_NARGIFY_0(g_enved_in_dB_w, g_enved_in_dB)
 XEN_NARGIFY_1(g_set_enved_in_dB_w, g_set_enved_in_dB)
 XEN_NARGIFY_0(g_enved_filter_order_w, g_enved_filter_order)
 XEN_NARGIFY_1(g_set_enved_filter_order_w, g_set_enved_filter_order)
-XEN_NARGIFY_0(g_enved_ramp_procedure_w, g_enved_ramp_procedure)
-XEN_NARGIFY_1(g_set_enved_ramp_procedure_w, g_set_enved_ramp_procedure)
 XEN_NARGIFY_0(g_enved_dialog_w, g_enved_dialog)
 XEN_ARGIFY_1(g_save_envelopes_w, g_save_envelopes)
 XEN_NARGIFY_2(g_define_envelope_w, g_define_envelope)
@@ -1756,8 +1790,8 @@ XEN_NARGIFY_2(g_define_envelope_w, g_define_envelope)
 #define g_set_enved_power_w g_set_enved_power
 #define g_enved_clip_p_w g_enved_clip_p
 #define g_set_enved_clip_p_w g_set_enved_clip_p
-#define g_enved_exp_p_w g_enved_exp_p
-#define g_set_enved_exp_p_w g_set_enved_exp_p
+#define g_enved_style_w g_enved_style
+#define g_set_enved_style_w g_set_enved_style
 #define g_enved_target_w g_enved_target
 #define g_set_enved_target_w g_set_enved_target
 #define g_enved_wave_p_w g_enved_wave_p
@@ -1766,8 +1800,6 @@ XEN_NARGIFY_2(g_define_envelope_w, g_define_envelope)
 #define g_set_enved_in_dB_w g_set_enved_in_dB
 #define g_enved_filter_order_w g_enved_filter_order
 #define g_set_enved_filter_order_w g_set_enved_filter_order
-#define g_enved_ramp_procedure_w g_enved_ramp_procedure
-#define g_set_enved_ramp_procedure_w g_set_enved_ramp_procedure
 #define g_enved_dialog_w g_enved_dialog
 #define g_save_envelopes_w g_save_envelopes
 #define g_define_envelope_w g_define_envelope
@@ -1786,16 +1818,13 @@ void g_init_env(void)
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_enved_base,   g_enved_base_w,   H_enved_base,   S_setB S_enved_base,   g_set_enved_base_w,  0, 0, 1, 0);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_enved_power,  g_enved_power_w,  H_enved_power,  S_setB S_enved_power,  g_set_enved_power_w,  0, 0, 1, 0);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_enved_clip_p, g_enved_clip_p_w, H_enved_clip_p, S_setB S_enved_clip_p, g_set_enved_clip_p_w,  0, 0, 1, 0);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_enved_exp_p,  g_enved_exp_p_w,  H_enved_exp_p,  S_setB S_enved_exp_p,  g_set_enved_exp_p_w,  0, 0, 1, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_enved_style,  g_enved_style_w,  H_enved_style,  S_setB S_enved_style,  g_set_enved_style_w,  0, 0, 1, 0);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_enved_target, g_enved_target_w, H_enved_target, S_setB S_enved_target, g_set_enved_target_w,  0, 0, 1, 0);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_enved_wave_p, g_enved_wave_p_w, H_enved_wave_p, S_setB S_enved_wave_p, g_set_enved_wave_p_w,  0, 0, 1, 0);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_enved_in_dB,  g_enved_in_dB_w,  H_enved_in_dB,  S_setB S_enved_in_dB,  g_set_enved_in_dB_w,  0, 0, 1, 0);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_enved_filter_order, g_enved_filter_order_w, H_enved_filter_order,
 				   S_setB S_enved_filter_order, g_set_enved_filter_order_w,  0, 0, 1, 0);
-
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_enved_ramp_procedure, g_enved_ramp_procedure_w, H_enved_ramp_procedure,
-				   S_setB S_enved_ramp_procedure, g_set_enved_ramp_procedure_w,  0, 0, 1, 0);
 
   XEN_DEFINE_PROCEDURE(S_enved_dialog,    g_enved_dialog_w, 0, 0, 0,     H_enved_dialog);
   XEN_DEFINE_PROCEDURE(S_save_envelopes,  g_save_envelopes_w, 0, 1, 0,   H_save_envelopes);
@@ -1804,6 +1833,9 @@ void g_init_env(void)
   XEN_DEFINE_CONSTANT(S_enved_add_point,    ENVED_ADD_POINT,    S_enved_hook " 'reason' arg when point is added");
   XEN_DEFINE_CONSTANT(S_enved_delete_point, ENVED_DELETE_POINT, S_enved_hook " 'reason' arg when point is deleted");
   XEN_DEFINE_CONSTANT(S_enved_move_point,   ENVED_MOVE_POINT,   S_enved_hook " 'reason' arg when point is moved");
+
+  XEN_DEFINE_CONSTANT(S_enved_linear,       ENVED_LINEAR,       S_enved_style " choice: linear connections between breakpoints");
+  XEN_DEFINE_CONSTANT(S_enved_exponential,  ENVED_EXPONENTIAL,  S_enved_style " choice: exponential connections between breakpoints");
 
   #define H_enved_hook S_enved_hook " (env pt new-x new-y reason): \
 called each time a breakpoint is changed in the envelope editor; \

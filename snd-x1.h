@@ -486,7 +486,7 @@ void set_enved_click_to_delete(bool n);
 void enved_print(char *name);
 Widget create_envelope_editor (void);
 void set_enved_clip_p(bool val);
-void set_enved_exp_p(bool val);
+void reflect_enved_style(void);
 void set_enved_base(Float val);
 void set_enved_target(enved_target_t val);
 void set_enved_wave_p(bool val);

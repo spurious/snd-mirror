@@ -61,14 +61,6 @@
  *
  *   various sndlib, clm, and snd functions
  *
- * tests in snd-test.scm, test 22
- *
- * SOMEDAY: split Scheme from Snd/Clm here and do the latter via an FFI of some sort
- * SOMEDAY: save ptree somehow (local runs make this problematic) -- perhaps definstrument here
- * PERHAPS: xen2sample and make-snd2sample (requires support for snd2sample structs)
- * SOMEDAY PERHAPS: complex numbers and ratios
- * SOMEDAY: throw with 2nd arg
- *
  * LIMITATIONS: <insert anxious lucubration here about DSP context and so on>
  *      variables can have only one type, the type has to be ascertainable somehow (similarly for vector elements)
  *      some variables (imported from outside our context) cannot be set, in some cases they can't even be found (args to define* for example)
@@ -6229,7 +6221,7 @@ static xen_value * CName ## _1(ptree *prog, xen_value **args, int num_args) \
      select-channel select-sound
 */
 
-INT_OP(mus_data_format_to_bytes_per_sample)
+INT_OP(mus_bytes_per_sample)
 
   /* others need export */
 
@@ -10144,15 +10136,7 @@ void *form_to_ptree_1_b(XEN code)
 
 void *form_to_ptree_1_b_without_env(XEN code)
 {
-  ptree *pt;
-  pt = (ptree *)form_to_ptree(XEN_LIST_2(code, XEN_FALSE));
-  if (pt)
-    {
-      if ((pt->result->type == R_BOOL) && (pt->arity == 1))
-	return(pt);
-      free_ptree(pt);
-    }
-  return(NULL);
+  return(form_to_ptree_1_b(XEN_LIST_2(code, XEN_FALSE)));
 }
 
 
@@ -10877,7 +10861,7 @@ static void init_walkers(void)
 
   INIT_WALKER(S_mus_header_type_name, make_walker(mus_header_type_name_1, NULL, NULL, 1, 1, R_STRING, false, 1, R_INT));
   INIT_WALKER(S_mus_data_format_name, make_walker(mus_data_format_name_1, NULL, NULL, 1, 1, R_STRING, false, 1, R_INT));
-  INIT_WALKER(S_mus_data_format_bytes_per_sample, make_walker(mus_data_format_to_bytes_per_sample_1, NULL, NULL, 1, 1, R_INT, false, 1, R_INT));
+  INIT_WALKER(S_mus_bytes_per_sample, make_walker(mus_bytes_per_sample_1, NULL, NULL, 1, 1, R_INT, false, 1, R_INT));
 
   INIT_WALKER(S_vct_ref, make_walker(vct_ref_1, NULL, vct_set_1, 2, 2, R_FLOAT, false, 2, R_VCT, R_INT));
   INIT_WALKER(S_vct_length, make_walker(vct_length_1, NULL, NULL, 1, 1, R_INT, false, 1, R_VCT));

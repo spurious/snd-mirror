@@ -483,7 +483,7 @@ static int snd_make_file(const char *ofile, int chans, file_info *hdr, snd_fd **
   ofd = open_temp_file(ofile, chans, hdr);
   mus_file_set_data_clipped(ofd, data_clipped(ss));
   if (ofd == -1) return(MUS_CANT_OPEN_TEMP_FILE);
-  datumb = mus_data_format_to_bytes_per_sample(hdr->format);
+  datumb = mus_bytes_per_sample(hdr->format);
   obufs = (mus_sample_t **)MALLOC(chans * sizeof(mus_sample_t *));
   ss->stopped_explicitly = false;
   for (i = 0; i < chans; i++)
@@ -5330,8 +5330,8 @@ void backup_edit_list(chan_info *cp)
   new_ed->edpos = old_ed->edpos;
   new_ed->backed_up = true;
 
-  /* make sure backup doesn't clobber our ptrees */
-  /* TODO: gc of un-needed ptrees at edit time (not close time) */
+  /* make sure backup_edit_list (as-one-edit) doesn't clobber our ptrees */
+  /* this puts off gc of un-needed ptrees until close time -- a bit wasteful. */
   /*   it might be enough to save the second tree loc in ptree2 cases, and include it in the block above */
   if ((old_ed->edit_type == PTREE_EDIT) || (old_ed->edit_type == XEN_EDIT))
     old_ed->edit_type = ED_SIMPLE;
@@ -5709,7 +5709,7 @@ bool file_insert_samples(off_t beg, off_t num, char *inserted_file, chan_info *c
       mus_file_open_descriptors(fd,
 				inserted_file,
 				hdr->format,
-				mus_data_format_to_bytes_per_sample(hdr->format),
+				mus_bytes_per_sample(hdr->format),
 				hdr->data_location,
 				hdr->chans,
 				hdr->type);
@@ -5958,7 +5958,7 @@ bool file_change_samples(off_t beg, off_t num, char *tempfile, chan_info *cp, in
       mus_file_open_descriptors(fd,
 				tempfile,
 				hdr->format,
-				mus_data_format_to_bytes_per_sample(hdr->format),
+				mus_bytes_per_sample(hdr->format),
 				hdr->data_location,
 				hdr->chans,
 				hdr->type);
@@ -6003,7 +6003,7 @@ bool file_override_samples(off_t num, char *tempfile, chan_info *cp, int chan, f
       mus_file_open_descriptors(fd,
 				tempfile,
 				hdr->format,
-				mus_data_format_to_bytes_per_sample(hdr->format),
+				mus_bytes_per_sample(hdr->format),
 				hdr->data_location,
 				hdr->chans,
 				hdr->type);
@@ -6968,7 +6968,7 @@ bool copy_then_swap_channels(chan_info *cp0, chan_info *cp1, int pos0, int pos1)
   mus_file_open_descriptors(fd,
 			    name,
 			    hdr0->format,
-			    mus_data_format_to_bytes_per_sample(hdr0->format),
+			    mus_bytes_per_sample(hdr0->format),
 			    hdr0->data_location,
 			    hdr0->chans,
 			    hdr0->type);
@@ -6981,7 +6981,7 @@ bool copy_then_swap_channels(chan_info *cp0, chan_info *cp1, int pos0, int pos1)
   mus_file_open_descriptors(fd,
 			    name,
 			    hdr1->format,
-			    mus_data_format_to_bytes_per_sample(hdr1->format),
+			    mus_bytes_per_sample(hdr1->format),
 			    hdr1->data_location,
 			    hdr1->chans,
 			    hdr1->type);
@@ -9555,6 +9555,7 @@ append the rest?
       reverse as pure-top-level (i.e. any split=>make explicit)
         but init_read within reversed fragment needs to get beg correctly etc
 
-      TODO: tie sine-env (et al) into the envelope editors
-              need enved-ramp-procedure, application of it to underlying portion, spin-button (or whatever) to set
+      TODO: tie sine-env (et al) into the envelope editors (enved, mix, xm-enved)
+              enved: need enved-ramp(int)-procedure, application of it to underlying portion, spin-button (or whatever) to set
+	      new_env_type?  then list of available env types
 */

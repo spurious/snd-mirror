@@ -2654,6 +2654,8 @@ at run-time.  See extsnd.html for the gory details."
   bool ptrees_present = false;
   XEN proc = XEN_FALSE;
   void *pt = NULL;
+  /* (ptree-channel (lambda (y) (* y 2))) -> ((lambda (y) (* y 2)) #<procedure #f ((y) (* y 2))>) as "proc_and_list" */
+  /*   the cadr proc gives access to the environment, run walks the car */
   if (XEN_LIST_P(proc_and_list))
     proc = XEN_CADR(proc_and_list);
   XEN_ASSERT_TYPE((XEN_PROCEDURE_P(proc)) && ((XEN_REQUIRED_ARGS(proc) == 1) || (XEN_REQUIRED_ARGS(proc) == 3)),

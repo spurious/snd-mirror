@@ -2,8 +2,8 @@
 #define SNDLIB_H
 
 #define SNDLIB_VERSION 18
-#define SNDLIB_REVISION 12
-#define SNDLIB_DATE "1-Dec-03"
+#define SNDLIB_REVISION 13
+#define SNDLIB_DATE "19-Dec-03"
 
 /* try to figure out what type of machine (and in worst case, what OS) we're running on */
 
@@ -418,8 +418,8 @@ const char *mus_header_type_name(int type);
 const char *mus_data_format_name(int format);
 const char *mus_short_data_format_name(int format);
 char *mus_sound_comment(const char *name);
-int mus_data_format_to_bytes_per_sample(int format);
-#define mus_bytes_per_sample(Format) mus_data_format_to_bytes_per_sample(Format)
+int mus_bytes_per_sample(int format);
+#define mus_data_format_to_bytes_per_sample(Format) mus_bytes_per_sample(Format)
 float mus_sound_duration(const char *arg);
 int mus_sound_initialize(void);
 int mus_sample_bits(void);

@@ -216,7 +216,6 @@ static void snd_gsl_error(const char *reason, const char *file, int line, int gs
   ss->Graph_Style = DEFAULT_GRAPH_STYLE;
   ss->Region_Graph_Style = DEFAULT_GRAPH_STYLE;
   ss->Enved_Filter_Order = DEFAULT_ENVED_FILTER_ORDER;
-  ss->Enved_Ramp_Procedure = DEFAULT_ENVED_RAMP_PROCEDURE;
   ss->Filter_Env_In_Hz = DEFAULT_FILTER_ENV_IN_HZ;
   ss->Verbose_Cursor = DEFAULT_VERBOSE_CURSOR;
   if (DEFAULT_TEMP_DIR != (char *)NULL) ss->Temp_Dir = copy_string(DEFAULT_TEMP_DIR); else ss->Temp_Dir = NULL;
@@ -259,7 +258,7 @@ static void snd_gsl_error(const char *reason, const char *file, int line, int gs
   ss->Enved_Wave_p = DEFAULT_ENVED_WAVE_P;
   ss->Enved_in_dB = DEFAULT_ENVED_IN_DB;
   ss->Enved_Clip_p = DEFAULT_ENVED_CLIP_P;
-  ss->Enved_Exp_p = DEFAULT_ENVED_EXP_P;
+  ss->Enved_Style = DEFAULT_ENVED_STYLE;
   ss->Enved_Target = DEFAULT_ENVED_TARGET;
   ss->Dac_Size = DEFAULT_DAC_SIZE;
   ss->Dac_Combines_Channels = DEFAULT_DAC_COMBINES_CHANNELS;
@@ -305,6 +304,7 @@ static void snd_gsl_error(const char *reason, const char *file, int line, int gs
   ss->search_proc = XEN_UNDEFINED;
   ss->file_sort_proc = XEN_UNDEFINED;
   ss->search_tree = NULL;
+  ss->enved_proc = XEN_UNDEFINED;
   mus_error_set_handler(mus_error2snd);
   mus_print_set_handler(mus_print2snd);
 

@@ -343,8 +343,16 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
   if (width < 250) x_tick_spacing = 10 + (width / 25);
   y_tick_spacing = 20; 
   if (height < 250) y_tick_spacing = 10 + (height / 25);
-  major_tick_length = 9;
-  minor_tick_length = 5;
+  if ((height < 100) || (width < 100))
+    {
+      major_tick_length = 4;
+      minor_tick_length = 2;
+    }
+  else
+    {
+      major_tick_length = 9;
+      minor_tick_length = 5;
+    }
   axis_thickness = 2;
 #if HAVE_GL
   xthick = (Float)(2 * axis_thickness) / (Float)height;

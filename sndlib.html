@@ -113,7 +113,7 @@ name of the sound file.
   int mus_sound_write_date (const char *arg)       /* bare (uninterpreted) file write date */
   int mus_sound_type_specifier (const char *arg)   /* original header type identifier */
   int mus_sound_bits_per_sample(const char *arg)   /* bits per sample */
-  int mus_data_format_to_bytes_per_sample(int format) /* bytes per sample */
+  int mus_bytes_per_sample(int format)             /* bytes per sample */
   int mus_sound_maxamp(const char *arg, int *vals) /* return list of maxamp sample pairs */
   int *mus_sound_loop_info(const char *arg)        /* 6 loop vals (mode,start,end) then base-detune and base-note  (empty list if no loop info found) */
   int mus_sound_initialize(void)                   /* initialize everything */
@@ -706,7 +706,7 @@ int main(int argc, char *argv[])
 	    }
 	}
       if (k &gt; 0) mus_sound_write(fd, 0, k - 1, 1, obuf);
-      mus_sound_close_output(fd, 22050 * mus_data_format_to_bytes_per_sample(MUS_BSHORT));
+      mus_sound_close_output(fd, 22050 * mus_bytes_per_sample(MUS_BSHORT));
       free(obuf[0]);
     }
   return(0);

@@ -68,7 +68,7 @@
 #define S_mus_bintn                     "mus-bintn"
 #define S_mus_bshort                    "mus-bshort"
 #define S_mus_byte                      "mus-byte"
-#define S_mus_data_format_bytes_per_sample "mus-data-format-bytes-per-sample"
+#define S_mus_bytes_per_sample          "mus-bytes-per-sample"
 #define S_mus_data_format_name          "mus-data-format-name"
 #define S_mus_error_to_string           "mus-error-to-string"
 #define S_mus_expand_filename           "mus-expand-filename"

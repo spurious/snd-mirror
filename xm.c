@@ -4,13 +4,13 @@
  */
 
 #if defined(HAVE_CONFIG_H)
-  #include <config.h>
+#include <config.h>
 #endif
 
 #define XM_DATE "1-Dec-03"
 
-
 /* HISTORY: 
+ *   --------
  *   1-Dec:     XShapeGetRectangles XRectangle array needed local allocation.
  *              removed (unusable) XtCallCallbackList.
  *   25-Nov:    more GC protection. Removed XInitThreads, XLockDisplay, XUnlockDisplay. Fixed XmTextBlock allocation bug.
@@ -25842,3 +25842,171 @@ static bool xm_already_inited = false;
 
 #endif
 /* end HAVE_EXTENSION_LANGUAGE */
+
+
+/* TODO: Motif 2.2.3: MultiList, DropDown, FontSelector, ColorSelector, DataField
+            Hierarchy, Outline, Tree, Panned, TabBox, TabStack, IconButton, ButtonBox, Column, IconBox
+         these (public?) h files appear to be new: 
+	   ButtonBox.h ColorS.h Column.h ComboBox2.h DataF.h DrawUtils.h DropDown.h Ext18List.h Ext.h FontS.h Hierarchy.h 
+	   IconBox.h IconButton.h MultiList.h Outline.h Paned.h SlideC.h TabBox.h TabList.h TabStack.h Tree.h
+
+	   the following lists need to be pruned!
+
+         resource names:
+	 XmNbadActionParameters
+	 XmNbadMotionParams
+	 XmNbadRowPixmap
+	 XmNbadXlfdFont
+	 XmNcellNotEmpty
+	 XmNcolorNameTooLong
+	 XmNcontextSaveFailed
+	 XmNconversionFailure
+	 XmNcouldNotFindFamilyData
+	 XmNforceGreaterThanZero
+	 XmNinsertBeforeNotSibling
+	 XmNnoComboShell
+	 XmNnoEmptyCells
+	 XmNnoGadgetSupport
+	 XmNpixEditBadImageCreate
+	 XmNsameAsImageOrPix
+	 XmNselfOrOutsideOfApplicationDrop
+	 XmNstaticResource
+	 XmNtextVerifyFailed
+	 XmNunexpectedEvent
+	 XmNunparsableColor
+	 XmNnodeParentIsSelf
+	 XmNstringGetFailed
+	 XmNslideFinishCallback
+	 XmNslideMotionCallback
+	 XmNslideWidget
+	 XmNslideInterval
+	 XmNslideDestWidth
+	 XmNslideDestHeight
+	 XmNslideDestX
+	 XmNslideDestY
+
+	 widget classes:
+	 xmButtonBoxWidgetClass
+	 xmColorSelectorWidgetClass
+	 xmColumnWidgetClass
+	 xmCombinationBox2WidgetClass
+	 xmDataFieldWidgetClass
+	 xmMultiListWidgetClass
+	 xmFontSelectorWidgetClass
+	 xiHierarchyWidgetClass
+	 xmIconBoxWidgetClass;
+	 xmIconButtonWidgetClass
+	 xmOutlineWidgetClass
+	 xmSlideContextWidgetClass
+	 xiTabBoxWidgetClass
+	 xmTabStackWidgetClass
+	 xmTreeWidgetClass
+
+	 macros/enums (ints):
+	 XmMULTILIST_FOUND
+	 XmMULTILIST_NOT_FOUND
+	 XmCOLOR_DYNAMIC
+	 XmPIXMAP_DYNAMIC
+	 XmTAB_LAST_POSITION
+	 XmTAB_NOT_FOUND
+	 XmTAB_LABEL_STRING
+	 XmTAB_LABEL_PIXMAP
+	 XmTAB_PIXMAP_PLACEMENT
+	 XmTAB_BACKGROUND
+	 XmTAB_FOREGROUND
+	 XmTAB_VALUE_MODE
+	 XmTAB_LABEL_ALIGNMENT
+	 XmTAB_STRING_DIRECTION
+	 XmTAB_BACKGROUND_PIXMAP
+	 XmTAB_SENSITIVE
+	 XmTAB_ALL_FLAGS
+	 XmIconBoxAnyCell
+
+	 structs:
+	 XmDataFieldCallbackStruct: Widget w; String text; Boolean accept;
+	 XmIconBoxDropData: Position cell_x, cell_y;
+	 XmIconButtonCallbackInfo: Boolean state; XEvent *event;
+	 XmTabStackCallbackStruct: int reason; XEvent *event; Widget selected_child;
+
+	 functions:
+	 XmIsTabStack(w)
+	 XmIsColumn(w)
+	 Widget XmCreateButtonBox(Widget, String, ArgList, Cardinal);
+	 Widget XmCreateColorSelector(Widget, String, ArgList, Cardinal);
+	 Widget XmCreateColumn(Widget, String, ArgList, Cardinal);
+	 Widget XmColumnGetChildLabel(Widget);
+	 Widget XmCreateDataField(Widget, String, ArgList, Cardinal);
+	 Boolean _XmDataFieldReplaceText(XmDataFieldWidget, XEvent*, XmTextPosition, XmTextPosition, char*, int, Boolean);
+	 void XmDataFieldSetString(Widget, char*);
+	 char *XmDataFieldGetString(Widget);
+	 void XmDataFieldSetHighlight(Widget, XmTextPosition, XmTextPosition, XmHighlightMode);
+	 void XmDataFieldSetAddMode(Widget, Boolean);
+	 char *XmDataFieldGetSelection(Widget);
+	 void XmDataFieldSetSelection(Widget, XmTextPosition, XmTextPosition, Time);
+	 Boolean XmDataFieldGetSelectionPosition(Widget, XmTextPosition *, XmTextPosition *);
+	 XmTextPosition XmDataFieldXYToPos(Widget, Position, Position);
+	 void XmDataFieldShowPosition(Widget, XmTextPosition);
+	 Boolean XmDataFieldCut(Widget, Time);
+	 Boolean XmDataFieldCopy(Widget, Time);
+	 Boolean XmDataFieldPaste(Widget);
+	 void XmDataFieldSetEditable(Widget, Boolean);
+	 void XmDataFieldSetInsertionPosition(Widget, XmTextPosition);
+	 XmDropDownGetValue(w)
+	 XmCreateDropDown(w,name,args,args_count)
+	 XmDropDownGetLabel(w)
+	 XmDropDownGetArrow(w)
+	 XmDropDownGetText(w)
+	 XmDropDownGetList(w)
+	 Widget XmCreateFontSelector(Widget, String, ArgList, Cardinal);
+	 void XmHierarchyOpenAllAncestors(Widget);
+	 WidgetList XmHierarchyGetChildNodes(Widget);
+	 Boolean XmIconBoxIsCellEmpty(Widget, Position, Position, Widget);
+	 Widget XmCreateIconBox(Widget, String, ArgList, Cardinal);
+	 Widget XmCreateIconButton(Widget, String, ArgList, Cardinal);
+	 XmMultiListGetSelectedRows(w)
+	 XmCreateMultiList(w,s,a,c)
+	 XmMultiListUnselectAllItems(w)
+	 XmMultiListDeselectAllItems(w)
+	 XmMultiListUnselectItem(w,r)
+	 XmMultiListDeselectItem(w,r)
+	 XmMultiListToggleRow(w,n)
+	 XmMultiListSelectItems(w,i,c,n)
+	 XmMultiListDeselectItems(w,i,c)
+	 XmMultiListSelectAllItems(w,n)
+	 XmMultiListSelectRow(w,r,n)
+	 XmMultiListDeselectRow(w,r)
+	 XmMultiListGetSelectedRowArray(w,n)
+	 XmMultiListMakeRowVisible(w,r)
+	 Widget XmCreateOutline(Widget, String, ArgList, Cardinal);
+	 XmIsTabBox(w)
+	 Widget XmCreateTabBox(Widget, String, ArgList, Cardinal);
+	 int XmTabBoxGetIndex(Widget, int, int);
+	 int XmTabBoxGetNumRows(Widget);
+	 int XmTabBoxGetNumColumns(Widget);
+	 int XmTabBoxGetNumTabs(Widget);
+	 int XmTabBoxGetTabRow(Widget, int);
+	 int XmTabBoxXYToIndex(Widget, int, int);
+	 XmTabbedStackList XmTabbedStackListCreate(void);
+	 XmTabbedStackList XmTabbedStackListCopy(XmTabbedStackList);
+	 void XmTabbedStackListFree(XmTabbedStackList);
+	 void XmTabbedStackListRemove(XmTabbedStackList, int);
+	 int XmTabbedStackListInsert(XmTabbedStackList, int, XtValueMask, XmTabAttributes);
+	 int XmTabbedStackListAppend(XmTabbedStackList, XtValueMask, XmTabAttributes);
+	 void XmTabbedStackListModify(XmTabbedStackList, int, XtValueMask, XmTabAttributes);
+	 void XmTabbedStackListQuery(XmTabbedStackList, int, XmTabAttributes);
+	 int XmTabbedStackListFind(XmTabbedStackList, XmString);
+	 void XmTabbedStackListSimpleRemove(XmTabbedStackList, XmString);
+	 int XmTabbedStackListSimpleInsert(XmTabbedStackList, int, XmString);
+	 int XmTabbedStackListSimpleAppend(XmTabbedStackList, XmString);
+	 void XmTabbedStackListSimpleModify(XmTabbedStackList, int, XmString);
+	 XmString XmTabbedStackListSimpleQuery(XmTabbedStackList, int);
+	 XmTabResult XmTabbedStackListCompare(XmTabbedStackList, XmTabbedStackList);
+	 void XmTabAttibutesFree(XmTabAttributes);
+	 extern Widget XmCreateTabStack(Widget, String, ArgList, Cardinal);
+	 extern Widget XmTabStackGetSelectedTab(Widget);
+	 extern void   XmTabStackSelectTab(Widget, Boolean);
+	 extern Widget XmTabStackIndexToWidget(Widget, int);
+	 extern Widget XmTabStackXYToWidget(Widget, int, int);
+	 Widget XmCreateTree(Widget, String, ArgList, Cardinal);
+*/
+

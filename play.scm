@@ -48,7 +48,7 @@
 	    (let ((err (mus-audio-mixer-read mus-audio-default mus-audio-samples-per-channel 2 vals)))
 	      (if (not (= err -1))
 		  (set! size (inexact->exact (vector-ref vals 0))))
-	      (let* ((bps (mus-data-format-bytes-per-sample fmt)))
+	      (let* ((bps (mus-bytes-per-sample fmt)))
 		(set! outbytes (* bps size outchans))
 		(set! audio-fd (mus-audio-open-output mus-audio-default (srate) outchans fmt outbytes)))))))
     ;; it's still possible the srate is unplayable -- Mac OSX only accepts stereo 44100!

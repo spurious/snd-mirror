@@ -256,7 +256,7 @@ void enved_display_point_label(Float x, Float y) {}
 void set_enved_click_to_delete(bool n) {}
 int create_envelope_editor (void) {return(0);}
 void set_enved_clip_p(bool val) {}
-void set_enved_exp_p(bool val) {}
+void reflect_enved_style(void) {}
 void set_enved_base(Float val) {}
 void set_enved_target(enved_target_t val) {}
 void set_enved_wave_p(bool val) {}

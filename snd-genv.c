@@ -6,7 +6,7 @@ static GtkWidget *enved_dialog = NULL;
 static GtkWidget *applyB, *apply2B, *cancelB, *drawer, *showB, *saveB, *resetB, *firB = NULL;
 static GtkWidget *revertB, *undoB, *redoB, *printB, *brktxtL, *brkpixL, *graphB, *fltB, *ampB, *srcB, *rbrow, *clipB, *deleteB;
 static GtkWidget *nameL, *textL, *env_list, *dBB, *orderL;
-static GtkWidget *expB, *linB, *lerow, *baseScale, *baseLabel, *baseValue, *selectionB, *selrow, *revrow, *unrow, *saverow;
+static GtkWidget *expB, *linB, *procB, *lerow, *baseScale, *baseLabel, *baseValue, *selectionB, *selrow, *revrow, *unrow, *saverow;
 static GtkObject *baseAdj, *orderAdj;
 static GdkGC *gc, *rgc, *ggc;
 
@@ -30,6 +30,7 @@ static axis_info *axis = NULL;
 static axis_info *gray_ap = NULL;
 static bool FIR_p = true;
 static bool old_clip_p = false;
+static bool ignore_button_release = false;
 
 axis_info *enved_make_axis(char *name, axis_context *ax, 
 			   int ex0, int ey0, int width, int height, 
@@ -158,7 +159,7 @@ static void apply_enved(void)
 			CURRENT_SAMPLES(active_channel),
 			apply_to_selection, FROM_ENVED, 
 			"Enved: amp", NULL,
-			C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), 0, (enved_exp_p(ss)) ? active_env_base : 1.0);
+			C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), 0, (enved_style(ss) == ENVED_EXPONENTIAL) ? active_env_base : 1.0);
 	      /* calls update_graph, I think, but in short files that doesn't update the amp-env */
 	      if (enved_wave_p(ss)) env_redisplay();
 	      break;
@@ -177,7 +178,7 @@ static void apply_enved(void)
 	      within_selection_src = true;
 	      src_env_or_num(active_channel, max_env, 0.0, 
 			     false, FROM_ENVED, "Enved: src", apply_to_selection, NULL,
-			     C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), 0, (enved_exp_p(ss)) ? active_env_base : 1.0);
+			     C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), 0, (enved_style(ss) == ENVED_EXPONENTIAL) ? active_env_base : 1.0);
 	      within_selection_src = false;
 	      max_env = free_env(max_env);
 	      if (enved_wave_p(ss)) env_redisplay();
@@ -204,7 +205,7 @@ static void env_redisplay_1(bool printing)
 	  if (!name) name = _("noname");
 	  display_env(active_env, name, gc, 0, 0, 
 		      env_window_width, env_window_height, 1, 
-		      (enved_exp_p(ss)) ? active_env_base : 1.0,
+		      (enved_style(ss) == ENVED_EXPONENTIAL) ? active_env_base : 1.0,
 		      printing);
 	  name = NULL;
 	  if (enved_wave_p(ss))
@@ -308,8 +309,11 @@ static void reflect_segment_state (void)
 {
   if (enved_dialog)
     {
-      gtk_widget_modify_bg(expB, GTK_STATE_NORMAL, (enved_exp_p(ss)) ? (ss->sgx)->yellow : (ss->sgx)->basic_color);
-      gtk_widget_modify_bg(linB, GTK_STATE_NORMAL, (enved_exp_p(ss)) ? (ss->sgx)->basic_color : (ss->sgx)->yellow);
+      if ((!(XEN_LIST_P(ss->enved_proc))) && (enved_style(ss) == ENVED_PROC)) set_enved_style(ENVED_LINEAR);
+      gtk_widget_set_sensitive(procB, (XEN_LIST_P(ss->enved_proc)));
+      gtk_widget_modify_bg(expB, GTK_STATE_NORMAL, (enved_style(ss) == ENVED_EXPONENTIAL) ? (ss->sgx)->yellow : (ss->sgx)->basic_color);
+      gtk_widget_modify_bg(linB, GTK_STATE_NORMAL, (enved_style(ss) == ENVED_LINEAR) ? (ss->sgx)->yellow : (ss->sgx)->basic_color);
+      gtk_widget_modify_bg(procB, GTK_STATE_NORMAL, (enved_style(ss) == ENVED_PROC) ? (ss->sgx)->yellow : (ss->sgx)->basic_color);
       if ((active_env) && (!(showing_all_envs))) env_redisplay();
     }
 }
@@ -330,7 +334,7 @@ static void select_or_edit_env(int pos)
   set_sensitive(undoB, false);
   set_sensitive(revertB, false);
   set_sensitive(saveB, false);
-  set_enved_exp_p((active_env_base != 1.0));
+  if (enved_style(ss) != ENVED_PROC) set_enved_style((active_env_base == 1.0) ? ENVED_LINEAR : ENVED_EXPONENTIAL);
   set_enved_base(active_env_base);
   env_redisplay();
   set_sensitive(deleteB, true);
@@ -378,6 +382,7 @@ static gboolean drawer_button_motion(GtkWidget *w, GdkEventMotion *ev, gpointer 
   Tempus motion_time;
   axis_info *ap;
   Float x0, x1, x, y;
+  ignore_button_release = false;
   if (ev->state & GDK_BUTTON1_MASK)
     {
       if (ev->is_hint)
@@ -435,7 +440,10 @@ static gboolean drawer_button_press(GtkWidget *w, GdkEventButton *ev, gpointer d
       sg_list_select(env_list, pos);
       if ((pos >= 0) && 
 	  (pos < enved_all_envs_top())) 
-	select_or_edit_env(pos);
+	{
+	  select_or_edit_env(pos);
+	  ignore_button_release = true;
+	}
     }
   else
     {
@@ -454,19 +462,24 @@ void set_enved_click_to_delete(bool n) {click_to_delete = n;}
 
 static gboolean drawer_button_release(GtkWidget *w, GdkEventButton *ev, gpointer data)
 {
-  if (!showing_all_envs)
+  if (ignore_button_release)
+    ignore_button_release = false;
+  else
     {
-      if ((click_to_delete) && (!env_dragged) && (env_pos != 0) && (env_pos != active_env->pts - 1))
+      if (!showing_all_envs)
 	{
-	  if (check_enved_hook(active_env, env_pos, 0, 0, ENVED_DELETE_POINT) == 0)
-	    delete_point(active_env, env_pos);
+	  if ((click_to_delete) && (!env_dragged) && (env_pos != 0) && (env_pos != active_env->pts - 1))
+	    {
+	      if (check_enved_hook(active_env, env_pos, 0, 0, ENVED_DELETE_POINT) == 0)
+		delete_point(active_env, env_pos);
+	    }
+	  do_env_edit(active_env, false);
+	  env_pos = 0;
+	  env_dragged = false;
+	  click_to_delete = false;
+	  env_redisplay();
+	  clear_point_label();
 	}
-      do_env_edit(active_env, false);
-      env_pos = 0;
-      env_dragged = false;
-      click_to_delete = false;
-      env_redisplay();
-      clear_point_label();
     }
   return(false);
 }
@@ -587,7 +600,7 @@ static void src_button_pressed(GtkWidget *w, gpointer context)
 static void enved_reset(void)
 {
   set_enved_clip_p(DEFAULT_ENVED_CLIP_P);
-  set_enved_exp_p(DEFAULT_ENVED_EXP_P);
+  set_enved_style(ENVED_LINEAR);
   set_enved_power(DEFAULT_ENVED_POWER);
   set_enved_base(DEFAULT_ENVED_BASE);
   set_enved_target(DEFAULT_ENVED_TARGET);
@@ -603,6 +616,7 @@ static void enved_reset(void)
   set_enved_env_list_top(0);
   do_env_edit(active_env, true);
   set_sensitive(saveB, true);
+  reflect_enved_style();
   env_redisplay();
 }
 
@@ -664,12 +678,10 @@ static void clip_button_callback(GtkWidget *w, gpointer context)
 
 static void exp_button_pressed(GtkWidget *w, gpointer context)
 {
-  in_set_enved_exp_p((!(enved_exp_p(ss))));
+  set_enved_style(ENVED_EXPONENTIAL);
   if ((active_env) && (!(showing_all_envs)))
     {
-      if (enved_exp_p(ss))
-	active_env_base = enved_base(ss);
-      else active_env_base = 1.0;
+      active_env_base = enved_base(ss);
       set_sensitive(saveB, true);
     }
   reflect_segment_state();
@@ -677,12 +689,21 @@ static void exp_button_pressed(GtkWidget *w, gpointer context)
 
 static void lin_button_pressed(GtkWidget *w, gpointer context)
 {
-  in_set_enved_exp_p((!(enved_exp_p(ss))));
+  set_enved_style(ENVED_LINEAR);
   if ((active_env) && (!(showing_all_envs)))
     {
-      if (enved_exp_p(ss))
-	active_env_base = enved_base(ss);
-      else active_env_base = 1.0;
+      active_env_base = 1.0;
+      set_sensitive(saveB, true);
+    }
+  reflect_segment_state();
+}
+
+static void proc_button_pressed(GtkWidget *w, gpointer context)
+{
+  set_enved_style(ENVED_PROC);
+  if ((active_env) && (!(showing_all_envs)))
+    {
+      active_env_base = 1.0;
       set_sensitive(saveB, true);
     }
   reflect_segment_state();
@@ -712,7 +733,7 @@ static void make_base_label(Float bval)
   if ((active_env) && (!(showing_all_envs))) 
     {
       active_env_base = enved_base(ss);
-      if (enved_exp_p(ss)) env_redisplay();
+      if (enved_style(ss) == ENVED_EXPONENTIAL) env_redisplay();
     }
 }
 
@@ -734,7 +755,7 @@ static void base_changed(Float val)
 	}
     }
   make_base_label(bval);
-  if ((active_env) && (enved_exp_p(ss))) set_sensitive(saveB, true); /* what about undo/redo here? */
+  if ((active_env) && (enved_style(ss) == ENVED_EXPONENTIAL)) set_sensitive(saveB, true); /* what about undo/redo here? */
 }
 
 static void reflect_changed_base(Float val)
@@ -993,7 +1014,7 @@ GtkWidget *create_envelope_editor (void)
       gtk_box_pack_start(GTK_BOX(leftbox), lerow, false, false, BB_MARGIN);
       gtk_widget_show(lerow);
 
-      linB = gtk_button_new_with_label(_("linear"));
+      linB = gtk_button_new_with_label(_("lin"));
       gtk_box_pack_start(GTK_BOX(lerow), linB, true, true, BB_MARGIN);
       g_signal_connect_closure_by_id(GTK_OBJECT(linB),
 				     g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(linB))),
@@ -1012,6 +1033,17 @@ GtkWidget *create_envelope_editor (void)
 				     0);
       gtk_widget_show(expB);
       gtk_widget_set_size_request(GTK_WIDGET(expB), -1, BUTTON_HEIGHT);
+
+      procB = gtk_button_new_with_label(_("proc"));
+      gtk_box_pack_start(GTK_BOX(lerow), procB, true, true, BB_MARGIN);
+      g_signal_connect_closure_by_id(GTK_OBJECT(procB),
+				     g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(procB))),
+				     0,
+				     g_cclosure_new(GTK_SIGNAL_FUNC(proc_button_pressed), NULL, 0),
+				     0);
+      gtk_widget_show(procB);
+      gtk_widget_set_size_request(GTK_WIDGET(procB), -1, BUTTON_HEIGHT);
+      gtk_widget_set_sensitive(procB, XEN_LIST_P(ss->enved_proc));
 
       selrow = gtk_hbox_new(false, 0);
       gtk_box_pack_start(GTK_BOX(leftbox), selrow, false, false, BB_MARGIN);
@@ -1192,10 +1224,8 @@ void set_enved_clip_p(bool val)
   if (enved_dialog) set_toggle_button(clipB, val, false, NULL);
 }
 
-void set_enved_exp_p(bool val) 
+void reflect_enved_style(void)
 {
-  in_set_enved_exp_p(val); 
-  /* if (enved_dialog) set_toggle_button(expB, val, false, NULL);  */ /* not a toggle button */
   reflect_segment_state();
 }
 
@@ -1379,7 +1409,8 @@ static XEN g_enved_dialog_widgets(void)
 				  XEN_CONS(XEN_WRAP_WIDGET(resetB),
 				   XEN_CONS(XEN_WRAP_WIDGET(env_list),
 				    XEN_CONS(XEN_WRAP_WIDGET(firB),
-				     XEN_EMPTY_LIST)))))))))))))))))))))))))));
+				     XEN_CONS(XEN_WRAP_WIDGET(procB),
+				      XEN_EMPTY_LIST))))))))))))))))))))))))))));
   return(XEN_EMPTY_LIST);
 }
 

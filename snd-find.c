@@ -415,6 +415,8 @@ static XEN g_set_search_procedure(XEN snd, XEN proc)
   snd_info *sp;
   char *error = NULL;
   XEN errstr;
+  /* (set! (search-procedure) (lambda (y) #t)) -> #<procedure #f ((n) #t)> as "proc" */
+  /*   why is this different from ptree-channel's proc arg? */
   if (XEN_INTEGER_P(snd)) /* could be the proc arg if no snd */
     {
       ASSERT_SOUND(S_setB S_search_procedure, snd, 1);
@@ -435,7 +437,7 @@ static XEN g_set_search_procedure(XEN snd, XEN proc)
 		{
 #if HAVE_GUILE
 		  if (optimization(ss) > 0)
-		    sp->search_tree = form_to_ptree_1_b_without_env(scm_procedure_source(proc));
+		    sp->search_tree = form_to_ptree_1_b(XEN_LIST_2(scm_procedure_source(proc), proc));
 #endif
 		  sp->search_proc = proc;
 		  snd_protect(proc);
@@ -467,7 +469,7 @@ static XEN g_set_search_procedure(XEN snd, XEN proc)
 	    {
 #if HAVE_GUILE
 	      if (optimization(ss) > 0)
-		ss->search_tree = form_to_ptree_1_b_without_env(scm_procedure_source(snd));
+		ss->search_tree = form_to_ptree_1_b(XEN_LIST_2(scm_procedure_source(snd), snd));
 #endif
 	      ss->search_proc = snd;
 	      snd_protect(snd);

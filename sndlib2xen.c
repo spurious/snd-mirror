@@ -230,13 +230,12 @@ static XEN g_mus_data_format_name(XEN format)
   return(C_TO_XEN_STRING(mus_data_format_name(XEN_TO_C_INT(format))));
 }
 
-/* TODO: mus-data-format-bytes... but mus_data_format_to_bytes...? */
-static XEN g_mus_data_format_to_bytes_per_sample(XEN format) 
+static XEN g_mus_bytes_per_sample(XEN format) 
 {
-  #define H_mus_data_format_bytes_per_sample "(" S_mus_data_format_bytes_per_sample " format): number of bytes per sample in \
+  #define H_mus_bytes_per_sample "(" S_mus_bytes_per_sample " format): number of bytes per sample in \
 format (e.g. " S_mus_bshort " = 2)"
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(format), format, XEN_ONLY_ARG, S_mus_data_format_bytes_per_sample, "an integer (data-format id)"); 
-  return(C_TO_XEN_INT(mus_data_format_to_bytes_per_sample(XEN_TO_C_INT(format))));
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(format), format, XEN_ONLY_ARG, S_mus_bytes_per_sample, "an integer (data-format id)"); 
+  return(C_TO_XEN_INT(mus_bytes_per_sample(XEN_TO_C_INT(format))));
 }
 
 static XEN g_mus_audio_report(void) 
@@ -1187,7 +1186,7 @@ XEN_NARGIFY_1(g_mus_header_type_name_w, g_mus_header_type_name)
 XEN_NARGIFY_1(g_mus_data_format_name_w, g_mus_data_format_name)
 XEN_NARGIFY_1(g_mus_sound_comment_w, g_mus_sound_comment)
 XEN_NARGIFY_1(g_mus_sound_write_date_w, g_mus_sound_write_date)
-XEN_NARGIFY_1(g_mus_data_format_to_bytes_per_sample_w, g_mus_data_format_to_bytes_per_sample)
+XEN_NARGIFY_1(g_mus_bytes_per_sample_w, g_mus_bytes_per_sample)
 XEN_NARGIFY_1(g_mus_sound_loop_info_w, g_mus_sound_loop_info)
 XEN_NARGIFY_1(g_mus_sound_maxamp_w, g_mus_sound_maxamp)
 XEN_NARGIFY_2(g_mus_sound_set_maxamp_w, g_mus_sound_set_maxamp)
@@ -1256,7 +1255,7 @@ XEN_NARGIFY_2(g_mus_audio_set_oss_buffers_w, g_mus_audio_set_oss_buffers)
 #define g_mus_data_format_name_w g_mus_data_format_name
 #define g_mus_sound_comment_w g_mus_sound_comment
 #define g_mus_sound_write_date_w g_mus_sound_write_date
-#define g_mus_data_format_to_bytes_per_sample_w g_mus_data_format_to_bytes_per_sample
+#define g_mus_bytes_per_sample_w g_mus_bytes_per_sample
 #define g_mus_sound_loop_info_w g_mus_sound_loop_info
 #define g_mus_sound_maxamp_w g_mus_sound_maxamp
 #define g_mus_sound_set_maxamp_w g_mus_sound_set_maxamp
@@ -1571,7 +1570,8 @@ void mus_sndlib2xen_initialize(void)
   XEN_DEFINE_PROCEDURE(S_mus_data_format_name,     g_mus_data_format_name_w,       1, 0, 0, H_mus_data_format_name);
   XEN_DEFINE_PROCEDURE(S_mus_sound_comment,        g_mus_sound_comment_w,          1, 0, 0, H_mus_sound_comment);
   XEN_DEFINE_PROCEDURE(S_mus_sound_write_date,     g_mus_sound_write_date_w,       1, 0, 0, H_mus_sound_write_date);
-  XEN_DEFINE_PROCEDURE(S_mus_data_format_bytes_per_sample, g_mus_data_format_to_bytes_per_sample_w, 1, 0, 0, H_mus_data_format_bytes_per_sample);
+  XEN_DEFINE_PROCEDURE(S_mus_bytes_per_sample,     g_mus_bytes_per_sample_w,       1, 0, 0, H_mus_bytes_per_sample);
+  XEN_DEFINE_PROCEDURE("mus-data-format-bytes-per-sample", g_mus_bytes_per_sample_w, 1, 0, 0, H_mus_bytes_per_sample); /* backwards compatibility */
   XEN_DEFINE_PROCEDURE(S_mus_sound_loop_info,      g_mus_sound_loop_info_w,        1, 0, 0, H_mus_sound_loop_info);
   XEN_DEFINE_PROCEDURE(S_mus_sound_maxamp_exists,  g_mus_sound_maxamp_exists_w,    1, 0, 0, H_mus_sound_maxamp_exists);
   XEN_DEFINE_PROCEDURE(S_mus_sound_forget,         g_mus_sound_forget_w,           1, 0, 0, H_mus_sound_forget);
@@ -1701,7 +1701,7 @@ void mus_sndlib2xen_initialize(void)
 	       S_mus_bintn,
 	       S_mus_bshort,
 	       S_mus_byte,
-	       S_mus_data_format_bytes_per_sample,
+	       S_mus_bytes_per_sample,
 	       S_mus_data_format_name,
 	       S_mus_error_to_string,
 	       S_mus_expand_filename,

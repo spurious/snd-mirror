@@ -1,5 +1,10 @@
 Snd change log
 
+2004 ----------------------------------------------------------------
+
+  22-Dec:    selection-changed-hook.
+             changed enved-exp? to enved-style for user-defined segment connectors,
+               (enved-linear, enved-exponential, or a list of 2 procedures, mimicking cursor-style).
   15-Dec:    kosine-summation in dsp.scm -- sum-of-cosines with an "FM index".
              sine-ramp and sine-env-channel for envelopes that connect the dots
                 with a sinusoidal curve.

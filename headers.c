@@ -20,8 +20,8 @@
  *        int mus_header_type_specifier (void)                  original (header-specific) type ID
  *        int mus_header_bits_per_sample (void)                 sample width in bits
  *        off_t mus_header_true_length (void)                   true (lseek) file length
- *        int mus_data_format_to_bytes_per_sample (int format)  sample width in bytes
- *        bool mus_header_writable(int type, int format)
+ *        int mus_bytes_per_sample (int format)                 sample width in bytes
+ *        bool mus_header_writable(int type, int format)        can we write this header
  * --------------------------------
  *
  *   "Linear" below means 2's complement integer.
@@ -307,7 +307,7 @@ int mus_header_mark_position(int id) {int i; for (i = 0; i < markers; i++) {if (
 int mus_header_base_detune(void) {return(base_detune);}
 int mus_header_base_note(void) {return(base_note);}
 
-int mus_data_format_to_bytes_per_sample (int format)
+int mus_bytes_per_sample (int format)
 {
   switch (format)
     {
