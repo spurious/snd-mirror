@@ -1293,33 +1293,6 @@ static XEN g_all_pass_p(XEN obj)
   return(C_TO_XEN_BOOLEAN((MUS_XEN_P(obj)) && (mus_all_pass_p(MUS_XEN_TO_CLM(obj)))));
 }
 
-static XEN g_feedback(XEN obj)
-{
-  #define H_mus_feedback "(" S_mus_feedback " gen) -> feedback value of gen"
-  XEN_ASSERT_TYPE(MUS_XEN_P(obj), obj, XEN_ONLY_ARG, S_mus_feedback, "a generator");
-  return(C_TO_XEN_DOUBLE(mus_feedback(MUS_XEN_TO_CLM(obj))));
-}
-
-static XEN g_set_feedback(XEN obj, XEN val)
-{
-  XEN_ASSERT_TYPE(MUS_XEN_P(obj), obj, XEN_ARG_1, S_mus_set_feedback, "a generator");
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_2, S_mus_set_feedback, "a number");
-  return(C_TO_XEN_DOUBLE(mus_set_feedback(MUS_XEN_TO_CLM(obj), XEN_TO_C_DOUBLE(val))));
-}
-
-static XEN g_feedforward(XEN obj)
-{
-  #define H_mus_feedforward "(" S_mus_feedforward " gen) -> feedforward term of gen"
-  XEN_ASSERT_TYPE(MUS_XEN_P(obj), obj, XEN_ONLY_ARG, S_mus_feedforward, "a generator");
-  return(C_TO_XEN_DOUBLE(mus_feedforward(MUS_XEN_TO_CLM(obj))));
-}
-
-static XEN g_set_feedforward(XEN obj, XEN val)
-{
-  XEN_ASSERT_TYPE(MUS_XEN_P(obj), obj, XEN_ARG_1, S_mus_set_feedforward, "a generator");
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_2, S_mus_set_feedforward, "a number");
-  return(C_TO_XEN_DOUBLE(mus_set_feedforward(MUS_XEN_TO_CLM(obj), XEN_TO_C_DOUBLE(val))));
-}
 
 
 /* -------- sum-of-cosines -------- */
@@ -2043,13 +2016,6 @@ static XEN g_two_pole_p(XEN obj)
   return(C_TO_XEN_BOOLEAN((MUS_XEN_P(obj)) && (mus_two_pole_p(MUS_XEN_TO_CLM(obj)))));
 }
 
-static XEN g_a0(XEN obj) 
-{
-  #define H_mus_a0 "(" S_mus_a0 " gen) -> gen's " S_mus_a0 " coefficient (scaler on x(n)), if any"
-  XEN_ASSERT_TYPE(MUS_XEN_P(obj), obj, XEN_ONLY_ARG, S_mus_a0, "a generator");
-  return(C_TO_XEN_DOUBLE(mus_a0(MUS_XEN_TO_CLM(obj))));
-}
-
 static XEN g_a1(XEN obj)
 {
   #define H_mus_a1 "(" S_mus_a1 " gen) -> gen's " S_mus_a1 " coefficient (scaler on x(n-1)), if any"
@@ -2064,25 +2030,11 @@ static XEN g_a2(XEN obj)
   return(C_TO_XEN_DOUBLE(mus_a2(MUS_XEN_TO_CLM(obj))));
 }
 
-static XEN g_b1(XEN obj)
-{
-  #define H_mus_b1 "(" S_mus_b1 " gen) -> gen's " S_mus_b1 " coefficient (scaler on y(n-1)), if any"
-  XEN_ASSERT_TYPE(MUS_XEN_P(obj), obj, XEN_ONLY_ARG, S_mus_b1, "a generator");
-  return(C_TO_XEN_DOUBLE(mus_b1(MUS_XEN_TO_CLM(obj))));
-}
-
 static XEN g_b2(XEN obj)
 {
   #define H_mus_b2 "(" S_mus_b2 " gen) -> gen's " S_mus_b2 " coefficient (scaler on y(n-2)), if any"
   XEN_ASSERT_TYPE(MUS_XEN_P(obj), obj, XEN_ONLY_ARG, S_mus_b2, "a generator");
   return(C_TO_XEN_DOUBLE(mus_b2(MUS_XEN_TO_CLM(obj))));
-}
-
-static XEN g_set_a0(XEN obj, XEN val)
-{
-  XEN_ASSERT_TYPE(MUS_XEN_P(obj), obj, XEN_ARG_1, S_mus_a0, "a generator");
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_2, S_mus_a0, "a number");
-  return(C_TO_XEN_DOUBLE(mus_set_a0(MUS_XEN_TO_CLM(obj), XEN_TO_C_DOUBLE(val))));
 }
 
 static XEN g_set_a1(XEN obj, XEN val)
@@ -2097,13 +2049,6 @@ static XEN g_set_a2(XEN obj, XEN val)
   XEN_ASSERT_TYPE(MUS_XEN_P(obj), obj, XEN_ARG_1, S_mus_a2, "a generator");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_2, S_mus_a2, "a number");
   return(C_TO_XEN_DOUBLE(mus_set_a2(MUS_XEN_TO_CLM(obj), XEN_TO_C_DOUBLE(val))));
-}
-
-static XEN g_set_b1(XEN obj, XEN val)
-{
-  XEN_ASSERT_TYPE(MUS_XEN_P(obj), obj, XEN_ARG_1, S_mus_b1, "a generator");
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_2, S_mus_b1, "a number");
-  return(C_TO_XEN_DOUBLE(mus_set_b1(MUS_XEN_TO_CLM(obj), XEN_TO_C_DOUBLE(val))));
 }
 
 static XEN g_set_b2(XEN obj, XEN val)
@@ -2174,23 +2119,6 @@ static XEN g_formant_p(XEN os)
 {
   #define H_formant_p "(" S_formant_p " gen) -> #t if gen is a " S_formant " generator, else #f"
   return(C_TO_XEN_BOOLEAN((MUS_XEN_P(os)) && (mus_formant_p(MUS_XEN_TO_CLM(os)))));
-}
-
-static XEN g_formant_radius (XEN gen)
-{
-  #define H_mus_formant_radius  "(" S_mus_formant_radius  " gen) -> (" S_formant " generator) gen's pole radius \
-(the closer the radius is to 1.0, the narrower the resonance)."
-
-  XEN_ASSERT_TYPE((MUS_XEN_P(gen) && (mus_formant_p(MUS_XEN_TO_CLM(gen)))), gen, XEN_ONLY_ARG, S_mus_formant_radius, "a formant gen");
-  return(C_TO_XEN_DOUBLE(mus_formant_radius(MUS_XEN_TO_CLM(gen))));
-}
-
-static XEN g_set_formant_radius (XEN gen, XEN val)
-{
-  #define H_mus_set_formant_radius  "(" S_mus_set_formant_radius  " gen val) sets (" S_formant " generator) gen's " S_mus_formant_radius " to val"
-  XEN_ASSERT_TYPE((MUS_XEN_P(gen) && (mus_formant_p(MUS_XEN_TO_CLM(gen)))), gen, XEN_ARG_1, S_mus_set_formant_radius, "a formant gen");
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_2, S_mus_set_formant_radius, "a number");
-  return(C_TO_XEN_DOUBLE(mus_set_formant_radius(MUS_XEN_TO_CLM(gen), XEN_TO_C_DOUBLE(val))));
 }
 
 static XEN g_set_formant_radius_and_frequency (XEN gen, XEN rad, XEN frq)
@@ -3056,13 +2984,6 @@ static XEN g_make_iir_filter(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   #define H_make_iir_filter "(" S_make_iir_filter " &opt-key order ycoeffs) returns a new IIR filter"
   return(g_make_filter_1(G_IIR_FILTER, arg1, arg2, arg3, arg4, XEN_UNDEFINED, XEN_UNDEFINED));
-}
-
-static XEN g_mus_order(XEN obj)
-{
-  #define H_mus_order "(" S_mus_order " gen) -> gen's filter order"
-  XEN_ASSERT_TYPE(MUS_XEN_P(obj), obj, XEN_ONLY_ARG, S_mus_order, "a generator");
-  return(C_TO_SMALL_XEN_INT(mus_order(MUS_XEN_TO_CLM(obj))));
 }
 
 static XEN g_mus_xcoeffs(XEN gen) 
@@ -4749,10 +4670,6 @@ XEN_NARGIFY_1(g_delay_p_w, g_delay_p)
 XEN_NARGIFY_1(g_notch_p_w, g_notch_p)
 XEN_NARGIFY_1(g_comb_p_w, g_comb_p)
 XEN_NARGIFY_1(g_all_pass_p_w, g_all_pass_p)
-XEN_NARGIFY_1(g_feedback_w, g_feedback)
-XEN_NARGIFY_2(g_set_feedback_w, g_set_feedback)
-XEN_NARGIFY_1(g_feedforward_w, g_feedforward)
-XEN_NARGIFY_2(g_set_feedforward_w, g_set_feedforward)
 XEN_ARGIFY_6(g_make_sum_of_cosines_w, g_make_sum_of_cosines)
 XEN_ARGIFY_2(g_sum_of_cosines_w, g_sum_of_cosines)
 XEN_NARGIFY_1(g_sum_of_cosines_p_w, g_sum_of_cosines_p)
@@ -4800,12 +4717,8 @@ XEN_ARGIFY_2(g_two_pole_w, g_two_pole)
 XEN_NARGIFY_1(g_two_pole_p_w, g_two_pole_p)
 XEN_ARGIFY_4(g_make_zpolar_w, g_make_zpolar)
 XEN_ARGIFY_4(g_make_ppolar_w, g_make_ppolar)
-XEN_NARGIFY_1(g_a0_w, g_a0)
-XEN_NARGIFY_2(g_set_a0_w, g_set_a0)
 XEN_NARGIFY_1(g_a1_w, g_a1)
 XEN_NARGIFY_2(g_set_a1_w, g_set_a1)
-XEN_NARGIFY_1(g_b1_w, g_b1)
-XEN_NARGIFY_2(g_set_b1_w, g_set_b1)
 XEN_NARGIFY_1(g_b2_w, g_b2)
 XEN_NARGIFY_2(g_set_b2_w, g_set_b2)
 XEN_NARGIFY_1(g_a2_w, g_a2)
@@ -4814,8 +4727,6 @@ XEN_ARGIFY_3(g_formant_bank_w, g_formant_bank)
 XEN_NARGIFY_1(g_formant_p_w, g_formant_p)
 XEN_ARGIFY_6(g_make_formant_w, g_make_formant)
 XEN_ARGIFY_2(g_formant_w, g_formant)
-XEN_NARGIFY_1(g_formant_radius_w, g_formant_radius)
-XEN_NARGIFY_2(g_set_formant_radius_w, g_set_formant_radius)
 XEN_NARGIFY_3(g_set_formant_radius_and_frequency_w, g_set_formant_radius_and_frequency)
 XEN_VARGIFY(g_make_frame_w, g_make_frame)
 XEN_NARGIFY_1(g_frame_p_w, g_frame_p)
@@ -4860,7 +4771,6 @@ XEN_NARGIFY_1(g_fir_filter_p_w, g_fir_filter_p)
 XEN_ARGIFY_4(g_make_iir_filter_w, g_make_iir_filter)
 XEN_NARGIFY_2(g_iir_filter_w, g_iir_filter)
 XEN_NARGIFY_1(g_iir_filter_p_w, g_iir_filter_p)
-XEN_NARGIFY_1(g_mus_order_w, g_mus_order)
 XEN_NARGIFY_1(g_mus_xcoeffs_w, g_mus_xcoeffs)
 XEN_NARGIFY_1(g_mus_ycoeffs_w, g_mus_ycoeffs)
 XEN_NARGIFY_1(g_env_p_w, g_env_p)
@@ -5012,10 +4922,6 @@ XEN_ARGIFY_7(g_mus_mix_w, g_mus_mix)
 #define g_notch_p_w g_notch_p
 #define g_comb_p_w g_comb_p
 #define g_all_pass_p_w g_all_pass_p
-#define g_feedback_w g_feedback
-#define g_set_feedback_w g_set_feedback
-#define g_feedforward_w g_feedforward
-#define g_set_feedforward_w g_set_feedforward
 #define g_make_sum_of_cosines_w g_make_sum_of_cosines
 #define g_sum_of_cosines_w g_sum_of_cosines
 #define g_sum_of_cosines_p_w g_sum_of_cosines_p
@@ -5063,12 +4969,8 @@ XEN_ARGIFY_7(g_mus_mix_w, g_mus_mix)
 #define g_two_pole_p_w g_two_pole_p
 #define g_make_zpolar_w g_make_zpolar
 #define g_make_ppolar_w g_make_ppolar
-#define g_a0_w g_a0
-#define g_set_a0_w g_set_a0
 #define g_a1_w g_a1
 #define g_set_a1_w g_set_a1
-#define g_b1_w g_b1
-#define g_set_b1_w g_set_b1
 #define g_b2_w g_b2
 #define g_set_b2_w g_set_b2
 #define g_a2_w g_a2
@@ -5077,8 +4979,6 @@ XEN_ARGIFY_7(g_mus_mix_w, g_mus_mix)
 #define g_formant_p_w g_formant_p
 #define g_make_formant_w g_make_formant
 #define g_formant_w g_formant
-#define g_formant_radius_w g_formant_radius
-#define g_set_formant_radius_w g_set_formant_radius
 #define g_set_formant_radius_and_frequency_w g_set_formant_radius_and_frequency
 #define g_make_frame_w g_make_frame
 #define g_frame_p_w g_frame_p
@@ -5123,7 +5023,6 @@ XEN_ARGIFY_7(g_mus_mix_w, g_mus_mix)
 #define g_make_iir_filter_w g_make_iir_filter
 #define g_iir_filter_w g_iir_filter
 #define g_iir_filter_p_w g_iir_filter_p
-#define g_mus_order_w g_mus_order
 #define g_mus_xcoeffs_w g_mus_xcoeffs
 #define g_mus_ycoeffs_w g_mus_ycoeffs
 #define g_env_p_w g_env_p
@@ -5240,10 +5139,10 @@ void mus_xen_init(void)
   rb_define_method(mus_xen_tag, "scaler", XEN_PROCEDURE_CAST g_scaler, 0);
   rb_define_method(mus_xen_tag, "length", XEN_PROCEDURE_CAST g_length, 0);
   rb_define_method(mus_xen_tag, "data", XEN_PROCEDURE_CAST g_data, 0);
-  rb_define_method(mus_xen_tag, "feedforward", XEN_PROCEDURE_CAST g_feedforward, 0);
-  rb_define_method(mus_xen_tag, "feedback", XEN_PROCEDURE_CAST g_feedback, 0);
+  rb_define_method(mus_xen_tag, "feedforward", XEN_PROCEDURE_CAST g_scaler, 0);
+  rb_define_method(mus_xen_tag, "feedback", XEN_PROCEDURE_CAST g_increment, 0);
   rb_define_method(mus_xen_tag, "cosines", XEN_PROCEDURE_CAST g_cosines, 0);
-  rb_define_method(mus_xen_tag, "order", XEN_PROCEDURE_CAST g_mus_order, 0);
+  rb_define_method(mus_xen_tag, "order", XEN_PROCEDURE_CAST g_length, 0);
   rb_define_method(mus_xen_tag, "call", XEN_PROCEDURE_CAST mus_xen_apply, 2);
   rb_define_method(mus_xen_tag, "location", XEN_PROCEDURE_CAST g_location, 0);
   rb_define_method(mus_xen_tag, "increment", XEN_PROCEDURE_CAST g_increment, 0);
@@ -5253,10 +5152,10 @@ void mus_xen_init(void)
   rb_define_method(mus_xen_tag, "ycoeffs", XEN_PROCEDURE_CAST g_mus_ycoeffs, 0);
   rb_define_method(mus_xen_tag, "ramp", XEN_PROCEDURE_CAST g_ramp, 0);
   rb_define_method(mus_xen_tag, "hop", XEN_PROCEDURE_CAST g_hop, 0);
-  rb_define_method(mus_xen_tag, "a0", XEN_PROCEDURE_CAST g_a0, 0);
+  rb_define_method(mus_xen_tag, "a0", XEN_PROCEDURE_CAST g_scaler, 0);
   rb_define_method(mus_xen_tag, "a1", XEN_PROCEDURE_CAST g_a1, 0);
   rb_define_method(mus_xen_tag, "a2", XEN_PROCEDURE_CAST g_a2, 0);
-  rb_define_method(mus_xen_tag, "b1", XEN_PROCEDURE_CAST g_b1, 0);
+  rb_define_method(mus_xen_tag, "b1", XEN_PROCEDURE_CAST g_increment, 0);
   rb_define_method(mus_xen_tag, "b2", XEN_PROCEDURE_CAST g_b2, 0);
 #endif  
 
@@ -5367,8 +5266,10 @@ void mus_xen_init(void)
   XEN_DEFINE_PROCEDURE(S_comb_p,        g_comb_p_w, 1, 0, 0,        H_comb_p);
   XEN_DEFINE_PROCEDURE(S_all_pass_p,    g_all_pass_p_w, 1, 0, 0,    H_all_pass_p);
 
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_feedback, g_feedback_w, H_mus_feedback, S_mus_set_feedback, g_set_feedback_w,  1, 0, 2, 0);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_feedforward, g_feedforward_w, H_mus_feedforward, S_mus_set_feedforward, g_set_feedforward_w,  1, 0, 2, 0);
+  #define H_mus_feedback "(" S_mus_feedback " gen) -> feedback value of gen"
+  #define H_mus_feedforward "(" S_mus_feedforward " gen) -> feedforward term of gen"
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_feedback, g_increment_w, H_mus_feedback, S_mus_set_feedback, g_set_increment_w,  1, 0, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_feedforward, g_scaler_w, H_mus_feedforward, S_mus_set_feedforward, g_set_scaler_w,  1, 0, 2, 0);
 
   XEN_DEFINE_PROCEDURE(S_make_rand,        g_make_rand_w, 0, 4, 0,        H_make_rand);
   XEN_DEFINE_PROCEDURE(S_make_rand_interp, g_make_rand_interp_w, 0, 4, 0, H_make_rand_interp);
@@ -5429,9 +5330,11 @@ void mus_xen_init(void)
   XEN_DEFINE_PROCEDURE(S_make_zpolar,   g_make_zpolar_w, 0, 4, 0,   H_make_zpolar);
   XEN_DEFINE_PROCEDURE(S_make_ppolar,   g_make_ppolar_w, 0, 4, 0,   H_make_ppolar);
 
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_a0, g_a0_w, H_mus_a0, S_mus_set_a0, g_set_a0_w,  1, 0, 2, 0);
+  #define H_mus_a0 "(" S_mus_a0 " gen) -> gen's " S_mus_a0 " coefficient (scaler on x(n)), if any"
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_a0, g_scaler_w, H_mus_a0, S_mus_set_a0, g_set_scaler_w,  1, 0, 2, 0);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_a1, g_a1_w, H_mus_a1, S_mus_set_a1, g_set_a1_w,  1, 0, 2, 0);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_b1, g_b1_w, H_mus_b1, S_mus_set_b1, g_set_b1_w,  1, 0, 2, 0);
+  #define H_mus_b1 "(" S_mus_b1 " gen) -> gen's " S_mus_b1 " coefficient (scaler on y(n-1)), if any"
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_b1, g_increment_w, H_mus_b1, S_mus_set_b1, g_set_increment_w,  1, 0, 2, 0);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_b2, g_b2_w, H_mus_b2, S_mus_set_b2, g_set_b2_w,  1, 0, 2, 0);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_a2, g_a2_w, H_mus_a2, S_mus_set_a2, g_set_a2_w,  1, 0, 2, 0);
 
@@ -5478,8 +5381,11 @@ void mus_xen_init(void)
   XEN_DEFINE_PROCEDURE(S_make_formant, g_make_formant_w, 0, 6, 0, H_make_formant);
   XEN_DEFINE_PROCEDURE(S_formant,      g_formant_w, 1, 1, 0,      H_formant);
 
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_formant_radius, g_formant_radius_w, H_mus_formant_radius,
-				   S_mus_set_formant_radius, g_set_formant_radius_w,  1, 0, 2, 0);
+  #define H_mus_formant_radius  "(" S_mus_formant_radius  " gen) -> (" S_formant " generator) gen's pole radius; \
+the closer the radius is to 1.0, the narrower the resonance."
+
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_formant_radius, g_phase_w, H_mus_formant_radius,
+				   S_mus_set_formant_radius, g_set_phase_w,  1, 0, 2, 0);
 
   XEN_DEFINE_PROCEDURE(S_mus_set_formant_radius_and_frequency, g_set_formant_radius_and_frequency_w, 3, 0, 0, H_mus_set_formant_radius_and_frequency);
 
@@ -5505,7 +5411,8 @@ void mus_xen_init(void)
   XEN_DEFINE_PROCEDURE(S_make_iir_filter, g_make_iir_filter_w, 0, 4, 0, H_make_iir_filter);
   XEN_DEFINE_PROCEDURE(S_iir_filter,      g_iir_filter_w, 2, 0, 0,      H_iir_filter);
   XEN_DEFINE_PROCEDURE(S_iir_filter_p,    g_iir_filter_p_w, 1, 0, 0,    H_iir_filter_p);
-  XEN_DEFINE_PROCEDURE(S_mus_order,       g_mus_order_w, 1, 0, 0,       H_mus_order);
+  #define H_mus_order "(" S_mus_order " gen) -> gen's filter order"
+  XEN_DEFINE_PROCEDURE(S_mus_order,       g_length_w, 1, 0, 0,          H_mus_order);
   XEN_DEFINE_PROCEDURE(S_mus_xcoeffs,     g_mus_xcoeffs_w, 1, 0, 0,     H_mus_xcoeffs);
   XEN_DEFINE_PROCEDURE(S_mus_ycoeffs,     g_mus_ycoeffs_w, 1, 0, 0,     H_mus_ycoeffs);
 

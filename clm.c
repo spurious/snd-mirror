@@ -1,6 +1,6 @@
 /* CLM (music V) implementation as a C module */
 /*
- * SOMEDAY: restart method? feedback? channels? add-method? mus-copy? filter class (and filter_p) for a0 etc?
+ * SOMEDAY: restart method? channels? add-method? mus-copy? filter class (and filter_p) for a1 etc?
  */
 
 #if defined(HAVE_CONFIG_H)
@@ -913,11 +913,11 @@ static char *describe_comb(void *ptr)
       if (gen->zdly)
 	mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, 
 		     "comb: scaler: %.3f, line[%d,%d]: %s", 
-		     gen->xscl, gen->size, gen->zsize, 
+		     gen->yscl, gen->size, gen->zsize, 
 		     str = print_array(gen->line, gen->size, gen->zloc));
       else mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, 
 			"comb: scaler: %.3f, line[%d]: %s", 
-			gen->xscl, gen->size, 
+			gen->yscl, gen->size, 
 			str = print_array(gen->line, gen->size, gen->loc));
       if (str) FREE(str);
     }
@@ -955,11 +955,11 @@ static char *describe_all_pass(void *ptr)
       if (gen->zdly)
 	mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, 
 		     "all_pass: feedback: %.3f, feedforward: %.3f, line[%d,%d]:%s",
-		     gen->xscl, gen->yscl, gen->size, gen->zsize, 
+		     gen->yscl, gen->xscl, gen->size, gen->zsize, 
 		     str = print_array(gen->line, gen->size, gen->zloc));
       else mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, 
 			"all_pass: feedback: %.3f, feedforward: %.3f, line[%d]:%s",
-			gen->xscl, gen->yscl, gen->size, 
+			gen->yscl, gen->xscl, gen->size, 
 			str = print_array(gen->line, gen->size, gen->loc));
       if (str) FREE(str);
     }
@@ -995,6 +995,8 @@ static int delay_length(void *ptr) {return(((dly *)ptr)->size);}
 static Float *delay_data(void *ptr) {return(((dly *)ptr)->line);}
 static Float delay_scaler(void *ptr) {return(((dly *)ptr)->xscl);}
 static Float set_delay_scaler(void *ptr, Float val) {((dly *)ptr)->xscl = val; return(val);}
+static Float delay_fb(void *ptr) {return(((dly *)ptr)->yscl);}
+static Float set_delay_fb(void *ptr, Float val) {((dly *)ptr)->yscl = val; return(val);}
 
 static Float *delay_set_data(void *ptr, Float *val) 
 {
@@ -1053,8 +1055,8 @@ Float mus_comb (mus_any *ptr, Float input, Float pm)
 {
   dly *gen = (dly *)ptr;
   if (gen->zdly)
-    return(mus_delay(ptr, input + (gen->xscl * mus_tap(ptr, pm)), pm));
-  else return(mus_delay(ptr, input + (gen->line[gen->loc] * gen->xscl), 0.0));
+    return(mus_delay(ptr, input + (gen->yscl * mus_tap(ptr, pm)), pm));
+  else return(mus_delay(ptr, input + (gen->line[gen->loc] * gen->yscl), 0.0));
 }
 
 static mus_any_class COMB_CLASS = {
@@ -1071,7 +1073,8 @@ static mus_any_class COMB_CLASS = {
   0, 0, 0, 0, /* freq phase */
   &delay_scaler,
   &set_delay_scaler,
-  0, 0,
+  &delay_fb,
+  &set_delay_fb,
   &mus_comb,
   0,
   NULL
@@ -1084,7 +1087,7 @@ mus_any *mus_make_comb (Float scaler, int size, Float *line, int line_size)
   if (gen)
     {
       gen->core = &COMB_CLASS;
-      gen->xscl = scaler;
+      gen->yscl = scaler;
       return((mus_any *)gen);
     }
   return(NULL);
@@ -1159,7 +1162,8 @@ static mus_any_class ALL_PASS_CLASS = {
   0, 0, 0, 0, /* freq phase */
   &delay_scaler,
   &set_delay_scaler,
-  0, 0,
+  &delay_fb,
+  &set_delay_fb,
   &mus_all_pass,
   0,
   NULL
@@ -1177,56 +1181,6 @@ mus_any *mus_make_all_pass (Float backward, Float forward, int size, Float *line
       return((mus_any *)gen);
     }
   return(NULL);
-}
-
-Float mus_feedback(mus_any *ptr)
-{
-  if (check_gen(ptr, "mus-feedback"))
-    {
-      if (mus_comb_p(ptr))
-	return(((dly *)ptr)->xscl);
-      else
-	{
-	  if (mus_all_pass_p(ptr))
-	    return(((dly *)ptr)->yscl);
-	}
-    }
-  return(0.0);
-}
-
-Float mus_set_feedback(mus_any *ptr, Float val)
-{
-  if (check_gen(ptr, "mus-set-feedback"))
-    {
-      if (mus_comb_p(ptr))
-	((dly *)ptr)->xscl = val;
-      else
-	{
-	  if (mus_all_pass_p(ptr))
-	    ((dly *)ptr)->yscl = val;
-	}
-    }
-  return(val);
-}
-
-Float mus_feedforward(mus_any *ptr)
-{
-  if (check_gen(ptr, "feedforward"))
-    {
-      if ((mus_notch_p(ptr)) || (mus_all_pass_p(ptr)))
-	return(((dly *)ptr)->xscl);
-    }
-  return(0.0);
-}
-
-Float mus_set_feedforward(mus_any *ptr, Float val)
-{
-  if (check_gen(ptr, "mus-set-feedforward"))
-    {
-      if ((mus_notch_p(ptr)) || (mus_all_pass_p(ptr)))
-	((dly *)ptr)->xscl = val;
-    }
-  return(val);
 }
 
 
@@ -2092,6 +2046,10 @@ Float mus_one_zero(mus_any *ptr, Float input)
 static Float run_one_zero(mus_any *ptr, Float input, Float unused) {return(mus_one_zero(ptr, input));}
 static int one_length(void *ptr) {return(1);}
 static int two_length(void *ptr) {return(2);}
+static Float smp_a0(void *ptr) {return(((smpflt *)ptr)->a0);}
+static Float smp_set_a0(void *ptr, Float val) {((smpflt *)ptr)->a0 = val; return(val);}
+static Float smp_b1(void *ptr) {return(((smpflt *)ptr)->b1);}
+static Float smp_set_b1(void *ptr, Float val) {((smpflt *)ptr)->b1 = val; return(val);}
 
 static mus_any_class ONE_ZERO_CLASS = {
   MUS_ONE_ZERO,
@@ -2103,7 +2061,8 @@ static mus_any_class ONE_ZERO_CLASS = {
   0, 0,
   &one_length, 0,
   0, 0, 0, 0,
-  0, 0,
+  &smp_a0,
+  &smp_set_a0,
   0, 0,
   &run_one_zero,
   0,
@@ -2141,8 +2100,10 @@ static mus_any_class ONE_POLE_CLASS = {
   0, 0,
   &one_length, 0,
   0, 0, 0, 0,
-  0, 0,
-  0, 0,
+  &smp_a0,
+  &smp_set_a0,
+  &smp_b1,
+  &smp_set_b1,
   &run_one_pole,
   0,
   NULL
@@ -2182,7 +2143,8 @@ static mus_any_class TWO_ZERO_CLASS = {
   0, 0,
   &two_length, 0,
   0, 0, 0, 0,
-  0, 0,
+  &smp_a0,
+  &smp_set_a0,
   0, 0,
   &run_two_zero,
   0,
@@ -2229,8 +2191,10 @@ static mus_any_class TWO_POLE_CLASS = {
   0, 0,
   &two_length, 0,
   0, 0, 0, 0,
-  0, 0,
-  0, 0,
+  &smp_a0,
+  &smp_set_a0,
+  &smp_b1,
+  &smp_set_b1,
   &run_two_pole,
   0,
   NULL
@@ -2270,32 +2234,6 @@ int mus_two_pole_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_TWO_
 mus_any *mus_make_ppolar(Float radius, Float frequency)
 {
   return(mus_make_two_pole(1.0, -2.0 * radius * cos(mus_hz2radians(frequency)), radius * radius));
-}
-
-Float mus_a0(mus_any *ptr)
-{
-  smpflt *gen = (smpflt *)ptr;
-  if (check_gen(ptr, "mus-a0"))
-    {
-      if (((gen->core)->type == MUS_ONE_ZERO) || ((gen->core)->type == MUS_ONE_POLE) ||
-	  ((gen->core)->type == MUS_TWO_ZERO) || ((gen->core)->type == MUS_TWO_POLE) ||
-	  ((gen->core)->type == MUS_FORMANT))
-	return(gen->a0);
-    }
-  return(0.0);
-}
-
-Float mus_set_a0(mus_any *ptr, Float val)
-{
-  smpflt *gen = (smpflt *)ptr;
-  if (check_gen(ptr, "mus-set-a0"))
-    {
-      if (((gen->core)->type == MUS_ONE_ZERO) || ((gen->core)->type == MUS_ONE_POLE) ||
-	  ((gen->core)->type == MUS_TWO_ZERO) || ((gen->core)->type == MUS_TWO_POLE) ||
-	  ((gen->core)->type == MUS_FORMANT))
-	gen->a0 = val;
-    }
-  return(val);
 }
 
 Float mus_a1(mus_any *ptr)
@@ -2338,28 +2276,6 @@ Float mus_set_a2(mus_any *ptr, Float val)
     {
       if (((gen->core)->type == MUS_TWO_ZERO) || ((gen->core)->type == MUS_FORMANT))
 	gen->a2 = val;
-    }
-  return(val);
-}
-
-Float mus_b1(mus_any *ptr)
-{
-  smpflt *gen = (smpflt *)ptr;
-  if (check_gen(ptr, "mus-b1"))
-    {
-      if (((gen->core)->type == MUS_ONE_POLE) || ((gen->core)->type == MUS_TWO_POLE) || ((gen->core)->type == MUS_FORMANT))
-	return(gen->b1);
-    }
-  return(0.0);
-}
-
-Float mus_set_b1(mus_any *ptr, Float val)
-{
-  smpflt *gen = (smpflt *)ptr;
-  if (check_gen(ptr, "mus-set-b1"))
-    {
-      if (((gen->core)->type == MUS_ONE_POLE) || ((gen->core)->type == MUS_TWO_POLE) || ((gen->core)->type == MUS_FORMANT))
-	gen->b1 = val;
     }
   return(val);
 }
@@ -2454,24 +2370,8 @@ static Float set_formant_frequency(void *ptr, Float val)
   return(val);
 }
 
-Float mus_formant_radius(mus_any *ptr)
-{
-  smpflt *gen = (smpflt *)ptr;
-  if (check_gen(ptr, "mus-formant-radius"))
-    {
-      if (mus_formant_p(ptr)) 
-	return(gen->radius);
-    }
-  return(0.0);
-}
-
-Float mus_set_formant_radius(mus_any *ptr, Float val)
-{
-  smpflt *gen = (smpflt *)ptr;
-  if (check_gen(ptr, "mus-set-formant-radius"))
-    mus_set_formant_radius_and_frequency(ptr, val, gen->frequency);
-  return(val);
-}
+static Float f_radius(void *ptr) {return(((smpflt *)ptr)->radius);}
+static Float f_set_radius(void *ptr, Float val) {mus_set_formant_radius_and_frequency((mus_any *)ptr, val, ((smpflt *)ptr)->frequency); return(val);}
 
 static mus_any_class FORMANT_CLASS = {
   MUS_FORMANT,
@@ -2484,8 +2384,12 @@ static mus_any_class FORMANT_CLASS = {
   &two_length, 0,
   &formant_frequency,
   &set_formant_frequency,
-  0, 0, 0, 0,
-  0, 0,
+  &f_radius,
+  &f_set_radius,
+  &smp_a0,
+  &smp_set_a0,
+  &smp_b1,
+  &smp_set_b1,
   &run_formant,
   0,
   NULL
@@ -2862,8 +2766,6 @@ Float *mus_ycoeffs(mus_any *ptr)
     }
   return(NULL);
 }
-
-int mus_order(mus_any *ptr) {return(mus_length(ptr));}
 
 Float *mus_make_fir_coeffs(int order, Float *envl, Float *aa)
 {

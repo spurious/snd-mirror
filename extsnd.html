@@ -4126,7 +4126,7 @@ The following substitutions can be made:
 <a href="#sndinsertsilence">insert-silence</a> beg dur s c                      <a href="#padchannel">pad-channel</a> beg dur s c e
 <a href="#sndsrc">src-sound</a> num base s c e                        <a href="#srcchannel">src-channel</a> ratio-or-env-gen beg dur s c e
 <a href="#sndconvolvewith">convolve-with</a> file amp s c e                    <a href="#clmchannel">clm-channel</a> convolve-gen beg dur s c e
-<a href="#loopsamples">loop-samples</a> reader c-func dur origin ptr       <a href="#cchannel">c-channel</a> c-func beg dur s c e ptr
+<a href="#loopsamples">loop-samples</a> reader c-func dur origin ptr       <a href="sndscm.html#cchannel">c-channel</a> c-func beg dur s c e ptr
 <a href="grfsnd.html#applyladspa">apply-ladspa</a> reader dat dur origin              <a href="grfsnd.html#ladspachannel">ladspa-channel</a> dat beg dur s c e
 <a href="#sndmix">mix</a> file beg filechn s c with-tags              <a href="sndscm.html#mixchannel">mix-channel</a> filedat beg dur s c e
 <a href="#sndmixsound">mix-sound</a> file beg                              <a href="sndscm.html#mixchannel">mix-channel</a> filedat beg dur s c e
@@ -4306,7 +4306,7 @@ the direction argument between the channel and edit-position.
 <!-- --><spacer type=horizontal size=40><code><em class=def><a name="chans">chans</a></em> (<em class=targ>snd</em>)</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
-<!-- -->number of channels in <i>snd</i>.  <a name="sndchans">chans</a> is another name for this procedure.
+<!-- -->number of channels in <i>snd</i>.  <i>chans</i> is another name for this procedure.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -4982,7 +4982,7 @@ the direction argument between the channel and edit-position.
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
 <!-- --><table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
-(define* (<A NAME="cchannel">c-channel</A> func #:optional (beg 0) dur snd chn edpos call-data)
+(define* (<A NAME="excchannel">c-channel</A> func #:optional (beg 0) dur snd chn edpos call-data)
   (let ((reader (make-sample-reader beg snd chn 1 edpos))
         (samps (or dur (frames snd chn edpos))))
     (<em class=red>loop-samples</em> reader func samps "c-channel" call-data)))
@@ -8779,7 +8779,8 @@ is handy in snd-motif.scm where many of the procedures want an X-style Pixel val
         <!-- I(undo edit):L(undo)(sndundo) -->
 	<!-- I(redo edit):L(redo)(sndredo) -->
         <!-- I(cut selection):L(delete-selection)(snddeleteselection) -->
-	<!-- I(insert selection):L(insert-region)(sndinsertregion) -->
+	<!-- I(insert selection):O(insert-region)(sndinsertregion) -->
+	<!-- I(insert selection):L(insert-selection)(sndinsertselection) -->
 	<!-- I(play file):L(play, stop)(sndplay) -->
         <!-- I(show marks):L(show-marks)(showmarks) --><!-- I(show marks):A(showmarks) -->
 	<!-- I(y=0 line):L(show-y-zero)(showyzero) -->
@@ -8807,6 +8808,7 @@ is handy in snd-motif.scm where many of the procedures want an X-style Pixel val
         <!-- I(color):L(color-dialog)(sndcolordialog) -->
 	<!-- I(color):O(color-scale,color-cutoff)(colorscale) -->
         <!-- I(orientation):L(orientation-dialog)(sndorientationdialog) -->
+        <!-- I(orientation):O(spectro-x-angle etc)(spectroxangle) -->
 	<!-- I(file lists):L(file-dialog)(sndfiledialog) -->
         <!-- I(define selection):L(make-region)(sndmakeregion) -->
 	<!-- I(delete samples):L(delete-samples)(snddeletesamples) -->
@@ -8817,7 +8819,8 @@ is handy in snd-motif.scm where many of the procedures want an X-style Pixel val
         <!-- I(fft window parameter):L(fft-window-beta)(fftbeta) -->
 	<!-- I(move cursor ahead):L(forward-sample)(sndforwardsample) -->
         <!-- I(move cursor back):L(backward-sample)(sndbackwardsample) -->
-        <!-- I(insert zeros):L(insert-samples)(sndinsertsamples) -->
+        <!-- I(insert zeros):L(insert-silence)(sndinsertsilence) -->
+        <!-- I(insert zeros):O(pad-channel)(padchannel) -->
 	<!-- I(change samples):L(set-samples)(sndsetsamples) -->
 	<!-- I(srate conversion):L(src-sound)(sndsrc) --><!-- I(srate conversion):M(Edit: Edit Env)(editenvelope) -->
         <!-- I(srate conversion):O(src-selection)(sndsrcselection) --><!-- I(srate conversion):A(sndsrc) -->
@@ -8835,7 +8838,6 @@ is handy in snd-motif.scm where many of the procedures want an X-style Pixel val
 	<!-- I(spectrogram):L(transform-graph-type)(lfftstyle) -->
         <!-- I(X axis units):L(x-axis-style)(xaxisstyle) -->
 	<!-- I(speed units):L(speed-control-style)(lspeedstyle) -->
-        <!-- I(transform normalization):L(transform-normalization)(normalizefft) -->
 	<!-- I(speed units):O(speed-control-tones)(speedtones) -->
 	<!-- I(change srate):L(src-sound)(sndsrc) -->	
 	<!-- I(edit env):L(enved-dialog)(sndenveddialog) -->
@@ -8845,12 +8847,16 @@ is handy in snd-motif.scm where many of the procedures want an X-style Pixel val
 	<!-- I(move mixed file):L(mix-position)(sndmixposition) -->
 	<!-- I(move to mark):L(forward-mark)(sndforwardmark) -->
 	<!-- I(move to mix):L(forward-mix)(sndforwardmix) -->
-	<!-- I(play selection):L(play-region)(sndplayregion) -->
+	<!-- I(play selection):L(play-selection)(sndplayselection) -->
+	<!-- I(play selection):O(play-region)(sndplayregion) -->
 	<!-- I(update file):L(update)(sndupdate) -->
 	<!-- I(view envs):L(enved-dialog)(sndenveddialog) -->
-	<!-- I(play channel):L(play)(sndplay) -->
-	<!-- I(mix selection):L(mix-region)(sndmixregion) -->
-	<!-- I(interrupt Snd):L(stop)(sndstop) -->
+	<!-- I(play channel):L(play-channel)(playchannel) -->
+	<!-- I(play channel):O(play)(sndplay) -->
+	<!-- I(mix selection):O(mix-region)(sndmixregion) -->
+	<!-- I(mix selection):L(mix-selection)(sndmixselection) -->
+	<!-- I(interrupt Snd):L(stop-playing)(sndstop) -->
+	<!-- I(interrupt Snd):O(c-g!)(sndoops) -->
 	<!-- I(move window back):L(left-sample)(sndleftsample) -->
 	<!-- I(move window ahead):L(right-sample)(sndrightsample) -->
 	<!-- I(change tempo):L(expand)(sndexpand) -->
@@ -8880,8 +8886,15 @@ is handy in snd-motif.scm where many of the procedures want an X-style Pixel val
 	<!-- I(overlay sounds):L(graph-data)(graphdata) -->
 	<!-- I(overlay sounds):A(graphdata) -->
 	<!-- I(edit env):O(enved-hook)(envedhook) -->
+	<!-- I(close file):O(close-hook)(closehook) -->
+	<!-- I(change samples):O(edit-hook)(edithook) -->
 	<!-- I(file lists):O(mouse-enter-label-hook)(mouseenterlabelhook) -->
 	<!-- I(swap channels):A(swapchannels) -->
+	<!-- I(extend file):L(pad-channel)(padchannel) -->
+	<!-- I(extract channel):O(channel-&gt;vct)(channel2vct) -->
+	<!-- I(fft normalization):L(transform-normalization)(normalizefft) -->
+	<!-- I(fft normalization):A(normalizefft) -->
+	<!-- I(file formats):L(data-format)(snddataformat) -->
 
 <center>
 <span class=htmlbox>related documentation</span><span class=htmlbox><a href="snd.html">snd.html</a><spacer type=horizontal size=25><a href="grfsnd.html">grfsnd.html</a><spacer type=horizontal size=25><a href="clm.html">clm.html</a><spacer type=horizontal size=25><a href="sndlib.html">sndlib.html</a><spacer type=horizontal size=25><a href="sndscm.html">sndscm.html</a><spacer type=horizontal size=25><a href="index.html">index.html</a></span>

@@ -552,7 +552,7 @@
       (IF (not (equal? (transform-size)  256 )) 
 	  (snd-display ";transform-size set def: ~A" (transform-size)))
       (set! (transform-graph-type) (transform-graph-type))
-      (IF (not (equal? (transform-graph-type)  0)) 
+      (IF (not (equal? (transform-graph-type) 0))
 	  (snd-display ";transform-graph-type set def: ~A" (transform-graph-type)))
       (set! (fft-window) (fft-window))
       (IF (not (equal? (fft-window)  6 )) 
@@ -663,22 +663,22 @@
       (IF (fneq (spectro-start)  0.0 )
 	  (snd-display ";spectro-start set def: ~A" (spectro-start)))
       (set! (spectro-x-angle) (spectro-x-angle))
-      (IF (fneq (spectro-x-angle)  90.0 )
+      (IF (fneq (spectro-x-angle)  (if (provided? 'gl) 300.0 90.0))
 	  (snd-display ";spectro-x-angle set def: ~A" (spectro-x-angle)))
       (set! (spectro-x-scale) (spectro-x-scale))
-      (IF (fneq (spectro-x-scale)  1.0)
+      (IF (fneq (spectro-x-scale) (if (provided? 'gl) 1.5 1.0))
 	  (snd-display ";spectro-x-scale set def: ~A" (spectro-x-scale)))
       (set! (spectro-y-angle) (spectro-y-angle))
-      (IF (fneq (spectro-y-angle)  0.0 )
+      (IF (fneq (spectro-y-angle) (if (provided? 'gl) 320.0 0.0))
 	  (snd-display ";spectro-y-angle set def: ~A" (spectro-y-angle)))
       (set! (spectro-y-scale) (spectro-y-scale))
       (IF (fneq (spectro-y-scale)  1.0 )
 	  (snd-display ";spectro-y-scale set def: ~A" (spectro-y-scale)))
       (set! (spectro-z-angle) (spectro-z-angle))
-      (IF (fneq (spectro-z-angle)  358.0)
+      (IF (fneq (spectro-z-angle) (if (provided? 'gl) 0.0 358.0))
 	  (snd-display ";spectro-z-angle set def: ~A" (spectro-z-angle)))
       (set! (spectro-z-scale) (spectro-z-scale))
-      (IF (fneq (spectro-z-scale)  0.1 )
+      (IF (fneq (spectro-z-scale) (if (provided? 'gl) 1.0 0.1))
 	  (snd-display ";spectro-z-scale set def: ~A" (spectro-z-scale)))
       (set! (speed-control-style) (speed-control-style))
       (IF (not (equal? (speed-control-style)  0 )) 
@@ -797,7 +797,7 @@
 	'color-cutoff (color-cutoff) 0.003 
 	'color-inverted (color-inverted) #t
 	'color-scale (color-scale) 1.0 
-	'colormap (colormap) -1 
+	'colormap (colormap) (if (provided? 'gl) 2 -1)
 	'contrast-control (without-errors (contrast-control)) 'no-such-sound
 	'contrast-control-amp (without-errors (contrast-control-amp)) 'no-such-sound
 	'contrast-control? (without-errors (contrast-control?)) 'no-such-sound
@@ -888,12 +888,12 @@
 	'spectro-cutoff (spectro-cutoff) 1.0
 	'spectro-hop (spectro-hop) 4 
 	'spectro-start (spectro-start) 0.0 
-	'spectro-x-angle (spectro-x-angle) 90.0 
-	'spectro-x-scale (spectro-x-scale) 1.0
-	'spectro-y-angle (spectro-y-angle) 0.0 
+	'spectro-x-angle (spectro-x-angle) (if (provided? 'gl) 300.0 90.0)
+	'spectro-x-scale (spectro-x-scale) (if (provided? 'gl) 1.5 1.0)
+	'spectro-y-angle (spectro-y-angle) (if (provided? 'gl) 320.0 0.0)
 	'spectro-y-scale (spectro-y-scale) 1.0 
-	'spectro-z-angle (spectro-z-angle) 358.0
-	'spectro-z-scale (spectro-z-scale) 0.1 
+	'spectro-z-angle (spectro-z-angle) (if (provided? 'gl) 0.0 358.0)
+	'spectro-z-scale (spectro-z-scale) (if (provided? 'gl) 1.0 0.1)
 	'speed-control (without-errors (speed-control)) 'no-such-sound
 	'speed-control-style (speed-control-style) 0 
 	'speed-control-tones (speed-control-tones) 12
@@ -1389,12 +1389,12 @@
 	  (list 'spectro-cutoff spectro-cutoff 1.0 set-spectro-cutoff 0.7)
 	  (list 'spectro-hop spectro-hop 4 set-spectro-hop 10)
 	  (list 'spectro-start spectro-start 0.0 set-spectro-start 0.1)
-	  (list 'spectro-x-angle spectro-x-angle 90.0 set-spectro-x-angle 60.0)
-	  (list 'spectro-x-scale spectro-x-scale 1.0 set-spectro-x-scale 2.0)
-	  (list 'spectro-y-angle spectro-y-angle 0.0 set-spectro-y-angle 60.0)
+	  (list 'spectro-x-angle spectro-x-angle (if (provided? 'gl) 300.0 90.0) set-spectro-x-angle 60.0)
+	  (list 'spectro-x-scale spectro-x-scale (if (provided? 'gl) 1.5 1.0) set-spectro-x-scale 2.0)
+	  (list 'spectro-y-angle spectro-y-angle (if (provided? 'gl) 320.0 0.0) set-spectro-y-angle 60.0)
 	  (list 'spectro-y-scale spectro-y-scale 1.0 set-spectro-y-scale 2.0)
-	  (list 'spectro-z-angle spectro-z-angle 358.0 set-spectro-z-angle 60.0)
-	  (list 'spectro-z-scale spectro-z-scale 0.1 set-spectro-z-scale 0.2)
+	  (list 'spectro-z-angle spectro-z-angle (if (provided? 'gl) 0.0 358.0) set-spectro-z-angle 60.0)
+	  (list 'spectro-z-scale spectro-z-scale (if (provided? 'gl) 1.0 0.1) set-spectro-z-scale 0.2)
 	  (list 'speed-control speed-control 1.0 set-speed-control 0.5)
 	  (list 'speed-control-style speed-control-style 0 set-speed-control-style 1)
 	  (list 'speed-control-tones speed-control-tones 12 set-speed-control-tones 18)
@@ -3959,7 +3959,7 @@
 		  (snd-display ";loop-samples ~A -> ~A" s1000 (sample 1000 ind4 0)))
 	      (IF (fneq (maxamp) (* 2 max1)) 
 		  (snd-display ";loop-samples test-a2 max: ~A ~A" max1 (maxamp)))
-	      (loop-samples (make-sample-reader 0 0 0) (get-flange) (frames) "flange" (make-flange 2.0 5.0 0.001))
+	      (loop-samples (make-sample-reader 0 ind4 0) (get-flange) (frames) "flange" (make-flange 2.0 5.0 0.001))
 	      (close-sound ind4)))
 
 	(delete-samples 0 10000 ind1 0)
@@ -3973,7 +3973,7 @@
 	(IF (not (= (mus-sound-frames "fmv1.snd") (frames ind1 0 1)))
 	    (snd-display ";save-sound-as (edpos 1): ~A ~A?" (mus-sound-frames "fmv.snd") (frames ind1 0 1)))
 	(IF (= (mus-sound-frames "fmv.snd") (frames ind1 0 1))
-	    (snd-display ";save-sound-as (edpos 1): ~A ~A?" (mus-sound-frames "fmv.snd") (frames ind1 0 1)))
+	    (snd-display ";save-sound-as (edpos 1)(2): ~A ~A?" (mus-sound-frames "fmv.snd") (frames ind1 0 1)))
 	(let ((ind2 (open-sound "fmv.snd"))
 	      (ind3 (open-sound "fmv1.snd")))
 	  (IF (not (vequal (samples->vct 12000 10 ind1 0 #f 0) (samples->vct 12000 10 ind2 0)))
@@ -5218,7 +5218,7 @@
 	    (v1 (make-vct 10)))
 	(print-and-check gen 
 			 "all_pass"
-			 "all_pass: feedback: 0.600, feedforward: 0.400, line[3]:[0.000 0.000 0.000]"
+			 "all_pass: feedback: 0.400, feedforward: 0.600, line[3]:[0.000 0.000 0.000]"
 			 "dly line[3,3 at 0,0 (external)]: [0.000 0.000 0.000], xscl: 0.600000, yscl: 0.400000")
 	(do ((i 0 (1+ i)))
 	    ((= i 10))
@@ -5257,7 +5257,7 @@
 	(print-and-check gen 
 			 "comb"
 			 "comb: scaler: 0.400, line[3]: [0.000 0.000 0.000]"
-			 "dly line[3,3 at 0,0 (external)]: [0.000 0.000 0.000], xscl: 0.400000, yscl: 0.000000")
+			 "dly line[3,3 at 0,0 (external)]: [0.000 0.000 0.000], xscl: 0.000000, yscl: 0.400000")
 	(do ((i 0 (1+ i)))
 	    ((= i 10))
 	  (vct-set! v0 i (comb gen 1.0)))
@@ -5536,10 +5536,10 @@
       (let ((var (catch #t (lambda () (set! (mus-frequency (make-one-pole)) 0)) (lambda args args))))
 	(IF (not (eq? (car var) 'mus-error))
 	    (snd-display ";set mus-frequency bad gen: ~A" var)))
-      (let ((var (catch #t (lambda () (mus-scaler (make-one-pole))) (lambda args args))))
+      (let ((var (catch #t (lambda () (mus-scaler (make-delay 3))) (lambda args args))))
 	(IF (not (eq? (car var) 'mus-error))
 	    (snd-display ";mus-scaler bad gen: ~A" var)))
-      (let ((var (catch #t (lambda () (set! (mus-scaler (make-one-pole)) 0)) (lambda args args))))
+      (let ((var (catch #t (lambda () (set! (mus-scaler (make-delay 3)) 0)) (lambda args args))))
 	(IF (not (eq? (car var) 'mus-error))
 	    (snd-display ";set mus-scaler bad gen: ~A" var)))
 

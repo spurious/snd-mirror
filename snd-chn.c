@@ -2069,6 +2069,7 @@ static int make_spectrogram(chan_info *cp, snd_info *sp, snd_state *ss)
 	        glReadPixels(fap->graph_x0, 0, fap->width, fap->height, GL_RGB, GL_UNSIGNED_SHORT, array_for_pixels)
 		then PS colorimage op [see gtkplotps.c, ps doc p 225]
 	 TODO: glLightfv needed in gl.c (and others -- is there a max size?)
+	 SOMEDAY: should there be an error return 'gl-error? is this (or wavogram) called from Scheme?
       */
       if (((sp->nchans == 1) || (sp->channel_style == CHANNELS_SEPARATE)) &&
 	  (color_map(ss) != BLACK_AND_WHITE) &&
@@ -2138,7 +2139,6 @@ static int make_spectrogram(chan_info *cp, snd_info *sp, snd_state *ss)
 		       (float)tmp_color.blue / 65535.0,
 		       0.0);
 	  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
 	  if (cp->fft_changed == FFT_CHANGED)
 	    {
 	      glNewList((GLuint)(cp->gl_fft_list), GL_COMPILE);
@@ -2217,7 +2217,6 @@ static int make_spectrogram(chan_info *cp, snd_info *sp, snd_state *ss)
 	  glRotatef(cp->spectro_z_angle, 0.0, 0.0, 1.0);
 	  glScalef(cp->spectro_x_scale, cp->spectro_y_scale, cp->spectro_z_scale);
 	  glCallList((GLuint)(cp->gl_fft_list));
-
 	  fap->use_gl = TRUE;
 	  make_axis_info(cp,
 			 cp->axis->x0, cp->axis->x1,
@@ -2232,7 +2231,14 @@ static int make_spectrogram(chan_info *cp, snd_info *sp, snd_state *ss)
 	  if (ss->gl_has_double_buffer)
 	    glXSwapBuffers(MAIN_DISPLAY(ss), XtWindow(channel_graph(cp)));
 	  else glFlush();
-
+#if DEBUGGING
+	  {
+	    GLenum errcode;
+	    errcode = glGetError();
+	    if (errcode != GL_NO_ERROR)
+	      fprintf(stderr, "spectro GL: %s\n", gluErrorString(errcode));
+	  }
+#endif
 	  /* if (cp->printing) make a pixmap of the graph and turn it into PS bits */
 
 	  /* a kludge to get the normal graph drawn (again...) */
@@ -2450,6 +2456,14 @@ static void make_wavogram(chan_info *cp, snd_info *sp, snd_state *ss)
       if (ss->gl_has_double_buffer)
 	glXSwapBuffers(MAIN_DISPLAY(ss), XtWindow(channel_graph(cp)));
       else glFlush();
+#if DEBUGGING
+      {
+	GLenum errcode;
+	errcode = glGetError();
+	if (errcode != GL_NO_ERROR)
+	  fprintf(stderr, "wavo GL: %s\n", gluErrorString(errcode));
+      }
+#endif
       /* (set! (time-graph-type) graph-time-as-wavogram) */
       for (i = 0; i < lines; i++) 
 	{

@@ -289,10 +289,11 @@ int mus_notch_p                 PROTO((mus_any *ptr));
 Float mus_all_pass              PROTO((mus_any *gen, Float input, Float pm));
 mus_any *mus_make_all_pass      PROTO((Float backward, Float forward, int size, Float *line, int line_size));
 int mus_all_pass_p              PROTO((mus_any *ptr));
-Float mus_feedback              PROTO((mus_any *ptr));
-Float mus_set_feedback          PROTO((mus_any *ptr, Float val));
-Float mus_feedforward           PROTO((mus_any *ptr));
-Float mus_set_feedforward       PROTO((mus_any *ptr, Float val));
+
+#define mus_feedforward(Gen) mus_scaler(Gen)
+#define mus_set_feedforward(Gen, Val) mus_set_scaler(Gen, Val)
+#define mus_feedback(Gen) mus_increment(Gen)
+#define mus_set_feedback(Gen, Val) mus_set_increment(Gen, Val)
 
 Float mus_table_lookup          PROTO((mus_any *gen, Float fm));
 mus_any *mus_make_table_lookup  PROTO((Float freq, Float phase, Float *wave, int wave_size));
@@ -350,14 +351,14 @@ mus_any *mus_make_two_pole      PROTO((Float a0, Float b1, Float b2));
 int mus_two_pole_p              PROTO((mus_any *gen));
 mus_any *mus_make_ppolar        PROTO((Float radius, Float frequency));
 
-Float mus_a0                    PROTO((mus_any *ptr));
-Float mus_set_a0                PROTO((mus_any *ptr, Float val));
+#define mus_a0(Gen) mus_scaler(Gen)
+#define mus_set_a0(Gen, Val) mus_set_scaler(Gen, Val)
 Float mus_a1                    PROTO((mus_any *ptr));
 Float mus_set_a1                PROTO((mus_any *ptr, Float val));
 Float mus_a2                    PROTO((mus_any *ptr));
 Float mus_set_a2                PROTO((mus_any *ptr, Float val));
-Float mus_b1                    PROTO((mus_any *ptr));
-Float mus_set_b1                PROTO((mus_any *ptr, Float val));
+#define mus_b1(Gen) mus_increment(Gen)
+#define mus_set_b1(Gen, Val) mus_set_increment(Gen, Val)
 Float mus_b2                    PROTO((mus_any *ptr));
 Float mus_set_b2                PROTO((mus_any *ptr, Float val));
 
@@ -365,8 +366,8 @@ Float mus_formant               PROTO((mus_any *ptr, Float input));
 Float mus_formant_bank          PROTO((Float *amps, mus_any **formants, Float inval, int size));
 mus_any *mus_make_formant       PROTO((Float radius, Float frequency, Float gain));
 int mus_formant_p               PROTO((mus_any *ptr));
-Float mus_formant_radius        PROTO((mus_any *ptr));
-Float mus_set_formant_radius    PROTO((mus_any *ptr, Float val));
+#define mus_formant_radius(Gen) mus_phase(Gen)
+#define mus_set_formant_radius(Gen, Val) mus_set_phase(Gen, Val)
 void mus_set_formant_radius_and_frequency PROTO((mus_any *ptr, Float radius, Float frequency));
 
 Float mus_sine_summation        PROTO((mus_any *ptr, Float fm));
@@ -388,7 +389,7 @@ Float *mus_make_fir_coeffs      PROTO((int order, Float *env, Float *aa));
 
 Float *mus_xcoeffs              PROTO((mus_any *ptr));
 Float *mus_ycoeffs              PROTO((mus_any *ptr));
-int mus_order                   PROTO((mus_any *ptr));
+#define mus_order(Gen) mus_length(Gen)
 void mus_clear_filter_state     PROTO((mus_any *gen));
 
 Float mus_wave_train            PROTO((mus_any *gen, Float fm));

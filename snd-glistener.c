@@ -456,6 +456,7 @@ static void make_command_widget(snd_state *ss, int height)
       listener_text = make_scrolled_text(ss, frame, TRUE, NULL, NULL);
 #if HAVE_GTK2
       layout = gtk_widget_create_pango_layout (listener_text, "");
+      if (ss->sgx->listener_fnt) gtk_widget_modify_font(listener_text, ss->sgx->listener_fnt);
 #endif
       SG_SIGNAL_CONNECT(GTK_OBJECT(listener_text), "key_press_event", GTK_SIGNAL_FUNC(listener_key_press), (gpointer)ss);
       SG_SIGNAL_CONNECT_AFTER(GTK_OBJECT(listener_text), "key_press_event", GTK_SIGNAL_FUNC(check_parens), (gpointer)ss);

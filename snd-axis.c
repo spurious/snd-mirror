@@ -508,6 +508,14 @@ void make_axes_1(axis_info *ap, int x_style, int srate, int axes, int printing, 
 #if HAVE_GL
   if (ap->use_gl) activate_gl_fonts(ss);
   ap->used_gl = ap->use_gl;
+#if DEBUGGING
+  {
+    GLenum errcode;
+    errcode = glGetError();
+    if (errcode != GL_NO_ERROR)
+      fprintf(stderr, "GL fonts: %s\n", gluErrorString(errcode));
+  }
+#endif
 #endif
   if (include_x_label)
     {
@@ -700,7 +708,6 @@ void make_axes_1(axis_info *ap, int x_style, int srate, int axes, int printing, 
 	  Float ypos;
 	  ypos = (fy - ap->y0) / (ap->y1 - ap->y0) - 0.5;
 	  glBegin(GL_LINES);
-	  glLineWidth(3.0);
 	  glVertex3f(-0.50 - ymajorlen, 0.0, ypos);
 	  glVertex3f(-0.501, 0.0, ypos);
 	  glEnd();
@@ -727,7 +734,6 @@ void make_axes_1(axis_info *ap, int x_style, int srate, int axes, int printing, 
 	      Float ypos;
 	      ypos = (fy - ap->y0) / (ap->y1 - ap->y0) - 0.5;
 	      glBegin(GL_LINES);
-	      if (x == majx) glLineWidth(3.0); else glLineWidth(2.0);
 	      glVertex3f(-0.50 - ((x == majx) ? ymajorlen : yminorlen), 0.0, ypos);
 	      glVertex3f(-0.501, 0.0, ypos);
 	      glEnd();
@@ -757,7 +763,6 @@ void make_axes_1(axis_info *ap, int x_style, int srate, int axes, int printing, 
 	      Float ypos;
 	      ypos = (fy - ap->y0) / (ap->y1 - ap->y0) - 0.5;
 	      glBegin(GL_LINES);
-	      if (x == majx) glLineWidth(3.0); else glLineWidth(2.0);
 	      glVertex3f(-0.50 - ((x == majx) ? ymajorlen : yminorlen), 0.0, ypos);
 	      glVertex3f(-0.501, 0.0, ypos);
 	      glEnd();
@@ -783,7 +788,6 @@ void make_axes_1(axis_info *ap, int x_style, int srate, int axes, int printing, 
 	  Float xpos;
 	  xpos = (fx - ap->x0) / (ap->x1 - ap->x0) - 0.5;
 	  glBegin(GL_LINES);
-	  glLineWidth(3.0);
 	  glVertex3f(xpos, 0.0, -0.50 - xmajorlen);
 	  glVertex3f(xpos, 0.0, -0.501);
 	  glEnd();
@@ -810,7 +814,6 @@ void make_axes_1(axis_info *ap, int x_style, int srate, int axes, int printing, 
 	      Float xpos;
 	      xpos = (fx - ap->x0) / (ap->x1 - ap->x0) - 0.5;
 	      glBegin(GL_LINES);
-	      if (y == majy) glLineWidth(3.0); else glLineWidth(2.0);
 	      glVertex3f(xpos, 0.0, -0.50 - ((y == majy) ? xmajorlen : xminorlen));
 	      glVertex3f(xpos, 0.0, -0.501);
 	      glEnd();
@@ -840,7 +843,6 @@ void make_axes_1(axis_info *ap, int x_style, int srate, int axes, int printing, 
 	      Float xpos;
 	      xpos = (fx - ap->x0) / (ap->x1 - ap->x0) - 0.5;
 	      glBegin(GL_LINES);
-	      if (y == majy) glLineWidth(3.0); else glLineWidth(2.0);
 	      glVertex3f(xpos, 0.0, -0.50 - ((y == majy) ? xmajorlen : xminorlen));
 	      glVertex3f(xpos, 0.0, -0.501);
 	      glEnd();

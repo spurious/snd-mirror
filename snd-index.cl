@@ -228,7 +228,7 @@
 	(format ofil "<html><body>~%~%<table border rows=~D>~%  ~
                                          <caption>Index</caption>~%  ~
                                          <!-- created ~A -->~%  ~
-                                         <tr><th>Action<th>Menu<th>Keyboard<th>Lisp<th>Other</tr>~%"
+                                         <tr><th>Action</th><th>Menu</th><th>Keyboard</th><th>Lisp</th><th>Other</th></tr>~%"
 		(1+ topic-ctr)
 		#+clm (clm::c-strftime "%a %d-%b-%y %H:%M %Z") #-clm "whenever")
 	(loop for i from 0 to topic-ctr do

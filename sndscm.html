@@ -763,7 +763,7 @@ I'm slowly dividing out related groups of procedures to separate files.
   <em class=def><A NAME="exformants">formants</a></em> r1 f1 r2 f2 r3 f3
   <em class=def><A NAME="exmovingformant">moving-formant radius</a></em> move-envelope
   <em class=def><A NAME="exoscformants">osc-formants</a></em> radius bases amounts freqs
-  <em class=def><A NAME="exremoveclicks">remove-click</a></em>
+  <em class=def><A NAME="exremoveclick">remove-click</a></em>
 </pre>
 <p>The two versions of <i>comb-filter</i> implement a comb filter both
 "by hand" and using CLM. <i>comb-chord</i> uses comb filters at harmonically
@@ -1252,8 +1252,6 @@ convenient if they were in one file.
   <em class=def><a name="mixchannel">mix-channel</a></em> filedat beg dur snd chn edpos
   <em class=def><a name="insertchannel">insert-channel</a></em> filedat beg dur snd chn edpos
   <em class=def><a name="cchannel">c-channel</a></em> func beg dur snd chn edpos
-
-  <em class=def><a name="extvctmap">vct-map</a></em> thunk v ...
 </pre>
 
 <p><i>channel-property</i> returns the value associated with <i>key</i> in the given channel's
@@ -1496,7 +1494,7 @@ yet.  There are days when it seems to me that there must be something neat we co
   <em class=def><a name="exdescribehook">describe-hook</a></em> hook
   <em class=def><a name="withlocalhook">with-local-hook</a></em> hook local-hook-procs thunk
   <em class=def><a name="resetallhooks">reset-all-hooks</a></em>
-  <em class=def><a name="sndhooks">snd-hooks</a></em>
+  <em class=def><a name="sndhooks1">snd-hooks</a></em>
 </pre>
 <p>hooks.scm has various hook-related functions.
 <i>describe-hook</i> tries to decipher the functions on the hook list.

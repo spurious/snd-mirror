@@ -626,7 +626,7 @@ void sg_set_cursor(GtkWidget *w, int position)
   GtkTextIter pos;
   GtkTextBuffer *buf;
   buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(w));
-  gtk_text_buffer_get_iter_at_offset(buf, &pos, position);
+  gtk_text_buffer_get_iter_at_offset(buf, &pos, position - 1); /* can't put the cursor at the end in gtk2! */
   gtk_text_buffer_place_cursor(buf, &pos);
   gtk_text_view_scroll_mark_onscreen(GTK_TEXT_VIEW(w), gtk_text_buffer_get_insert(buf));
 }
