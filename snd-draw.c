@@ -891,7 +891,6 @@ void g_init_draw(void)
   /* ---------------- unstable ---------------- */
 
   XEN_DEFINE_PROCEDURE(S_make_bezier,     g_make_bezier_w, 0, 0, 1,     H_make_bezier);
-  XEN_DEFINE_CONSTANT("colormap-size", COLORMAP_SIZE, "colormap size");
   XEN_DEFINE_PROCEDURE(S_snd_gcs, g_snd_gcs, 0, 0, 0, H_snd_gcs);
 
   #define H_new_widget_hook S_new_widget_hook " (widget) is called each time a dialog or \

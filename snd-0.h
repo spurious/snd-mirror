@@ -65,9 +65,6 @@
   #if (!HAVE_GUILE_1_3)
     #define HAVE_SCM_MAKE_REAL 1
   #endif
-  #ifndef WITH_BIG_COLORMAP
-    #define WITH_BIG_COLORMAP
-  #endif
 #endif
 
 #if defined(__bsdi__) && (!HAVE_ISNAN)

@@ -207,7 +207,7 @@ static gboolean amp_release_callback(GtkWidget *w, GdkEventButton *ev, gpointer 
 /* ---------------- AMP ENV ---------------- */
 
 static GtkWidget *w_env_frame, *w_env;
-static chan_info *axis_cp = NULL;
+static axis_info *axis = NULL;
 static axis_context *ax = NULL;
 static GdkGC *cur_gc;
 
@@ -228,12 +228,10 @@ static void amp_env_display(GtkWidget *w, snd_state *ss)
       ax->gc = cur_gc;
     }
   else clear_window(ax);
-  if (axis_cp == NULL) 
-    {
-      axis_cp = new_env_axis(ss);
-      fixup_axis_context(axis_cp->axis->ax, w_env, ax->gc);
-    }
-  display_mix_amp_envs(ss, axis_cp, ax, widget_width(w), widget_height(w));
+  if (axis == NULL) 
+    axis = (axis_info *)CALLOC(1, sizeof(axis_info));
+  axis->ax = ax;
+  display_mix_amp_envs(ss, axis, ax, widget_width(w), widget_height(w));
 }
 
 static gboolean mix_amp_env_expose(GtkWidget *w, GdkEventExpose *ev, gpointer data)

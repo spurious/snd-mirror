@@ -48,7 +48,6 @@ MAKE_TARGET="snd"
 #   --with-alsa           use ALSA if possible
 #   --with-static-alsa    use ALSA statically loaded (for RPM generation)
 #   --with-html           include the XmHTML or mozilla browser library
-#   --with-big-colormap   use big colormap (default = yes)
 #   --with-snd-as-widget  make Snd a loadable widget, not a standalone program
 #   --with-doubles        use doubles throughout (default is floats)
 #   --with-float-samples  represent samples internally as floats 
@@ -101,13 +100,6 @@ AC_ARG_WITH(html,
             GTKHTML_FLAGS="-I/usr/include/mozilla"
 dnl which we actually use is decided later
 	fi)
-
-AC_ARG_WITH(big-colormap, [  --with-big-colormap	  assume at least 512 colors are available (default=yes)])
-if test "$with_big_colormap" = no ; then
-  AC_DEFINE_UNQUOTED(WITH_BIG_COLORMAP,0)
-else
-  AC_DEFINE(WITH_BIG_COLORMAP)
-fi
 
 AC_ARG_WITH(motif,
 	[  --with-motif		  use libXm to build Snd],

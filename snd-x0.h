@@ -65,11 +65,8 @@
                             (strcmp("Widget", XEN_SYMBOL_TO_C_STRING(XEN_CAR(Value))) == 0))
 
 #define POINT_BUFFER_SIZE 4096
-
-#ifdef WITH_BIG_COLORMAP
+#ifndef COLORMAP_SIZE
   #define COLORMAP_SIZE 512
-#else
-  #define COLORMAP_SIZE 64
 #endif
 
 #define ACTIVATABLE 1

@@ -989,7 +989,7 @@ void toggle_reverb_button(snd_info *sp, int state)
 
 #define MIN_FILTER_GRAPH_HEIGHT 20
 
-void sp_display_env(snd_info *sp)
+static void display_filter_env(snd_info *sp)
 {
   snd_state *ss;
   axis_context *ax;
@@ -1007,7 +1007,20 @@ void sp_display_env(snd_info *sp)
   ax->wn = drawer->window;
   ax->w = drawer;
   gdk_window_clear(ax->wn);
-  display_filter_graph(ss, sp, ax, width, height);
+  if (edp_display_graph(ss,
+			sp->sgx->flt,
+			"frequency response",
+			ax, width, height, 
+			sp->filter_control_env, 
+			sp->filter_control_in_dB))
+    {
+      ax->gc = (ss->sgx)->fltenv_data_gc;
+      display_frequency_response(ss, 
+				 sp->filter_control_env, 
+				 edp_ap(sp->sgx->flt), ax, 
+				 sp->filter_control_order, 
+				 sp->filter_control_in_dB);
+    }
   ax = free_axis_context(ax);
 }
 
@@ -1025,20 +1038,40 @@ static gboolean filter_drawer_button_motion(GtkWidget *w, GdkEventMotion *ev, gp
 	  evx = (int)(ev->x);
 	  evy = (int)(ev->y);
 	}
-      handle_filter_point(sp->state, sp, evx, evy, ev->time);
+      edp_handle_point(sp->state, 
+		       sp->sgx->flt,
+		       evx, evy, ev->time, 
+		       sp->filter_control_env, 
+		       sp->filter_control_in_dB,
+		       sp->filter_control_env_xmax);
+      display_filter_env(sp);
+      sp->filter_control_changed = 1;
     }
   return(FALSE);
 }
 
 static gboolean filter_drawer_button_press(GtkWidget *w, GdkEventButton *ev, gpointer data)
 {
-  handle_filter_press((snd_info *)data, (int)(ev->x), (int)(ev->y), ev->time);
+  snd_info *sp = (snd_info *)data;
+  if (edp_handle_press(sp->state, 
+		       sp->sgx->flt,
+		       (int)(ev->x), (int)(ev->y), ev->time, 
+		       sp->filter_control_env, 
+		       sp->filter_control_in_dB,
+		       sp->filter_control_env_xmax))
+    display_filter_env(sp);
   return(FALSE);
 }
 
 static gboolean filter_drawer_button_release(GtkWidget *w, GdkEventButton *ev, gpointer data)
 {
-  handle_filter_release((snd_info *)data);
+  char *tmpstr = NULL;
+  snd_info *sp = (snd_info *)data;
+  edp_handle_release(sp->sgx->flt, sp->filter_control_env);
+  display_filter_env(sp);
+  set_filter_text(sp, tmpstr = env_to_string(sp->filter_control_env));
+  if (tmpstr) FREE(tmpstr);
+  sp->filter_control_changed = 1;
   return(FALSE);
 }
 
@@ -1055,14 +1088,14 @@ void set_filter_text(snd_info *sp, char *str)
 static gboolean filter_drawer_expose(GtkWidget *w, GdkEventExpose *ev, gpointer data)
 {
   snd_info *sp = (snd_info *)data;
-  sp_display_env(sp);
+  display_filter_env(sp);
   return(FALSE);
 }
 
 static gboolean filter_drawer_resize(GtkWidget *w, GdkEventConfigure *ev, gpointer data)
 {
   snd_info *sp = (snd_info *)data;
-  sp_display_env(sp);
+  display_filter_env(sp);
   return(FALSE);
 }
 
@@ -1083,7 +1116,7 @@ static void filter_db_callback(GtkWidget *w, gpointer context)
 {
   snd_info *sp = (snd_info *)context;
   sp->filter_control_in_dB = GTK_TOGGLE_BUTTON(w)->active;
-  sp_display_env(sp);
+  display_filter_env(sp);
 }
 
 void set_filter_in_dB(snd_info *sp, int val)
@@ -1092,7 +1125,7 @@ void set_filter_in_dB(snd_info *sp, int val)
   if (!(IS_PLAYER(sp)))
     {
       set_toggle_button(FILTER_DB_BUTTON(sp), val, FALSE, (void *)sp);
-      sp_display_env(sp);
+      display_filter_env(sp);
     }
 }
 
@@ -1101,7 +1134,7 @@ static void set_snd_filter_order_1(snd_info *sp, int order, int setadj)
   sp->filter_control_order = order;
   if (setadj)
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(FILTER_ORDER_TEXT(sp)), (gfloat)order);
-  sp_display_env(sp);
+  display_filter_env(sp);
   sp->filter_control_changed = 1;
 }  
 
@@ -1133,8 +1166,8 @@ static void filter_activate_callback(GtkWidget *w, gpointer context)
   sp->filter_control_env = string2env(str);
   if (!(sp->filter_control_env)) /* maybe user cleared text field? */
     sp->filter_control_env = default_env(sp->filter_control_env_xmax, 1.0);
-  report_filter_edit(sp);
-  sp_display_env(sp);
+  edp_edited(sp->sgx->flt);
+  display_filter_env(sp);
   sp->filter_control_changed = 1;
 }
 
@@ -1151,8 +1184,8 @@ void filter_env_changed(snd_info *sp, env *e)
 	  FREE(tmpstr);
 	}
       else gtk_entry_set_text(GTK_ENTRY(FILTER_COEFFS_TEXT(sp)), stupid);
-      report_filter_edit(sp);
-      sp_display_env(sp);
+      edp_edited(sp->sgx->flt);
+      display_filter_env(sp);
       /* this is called also from snd-scm.c */
     }
   sp->filter_control_changed = 1;
@@ -1168,7 +1201,7 @@ void color_filter_waveform(snd_state *ss, GdkColor *color)
     {
       sp = ss->sounds[i];
       if ((sp) && (sp->inuse)) 
-	sp_display_env(sp);
+	display_filter_env(sp);
     }
 }
 
@@ -1793,7 +1826,7 @@ snd_info *add_sound_window(char *filename, snd_state *ss, int read_only)
       SG_SIGNAL_CONNECT(GTK_OBJECT(sw[W_filter_env]), "motion_notify_event", GTK_SIGNAL_FUNC(filter_drawer_button_motion), (gpointer)sp);
 
       gtk_widget_show(sw[W_filter_frame]);
-      new_flt(sp);
+      sp->sgx->flt = new_env_editor();
       
       /* end if control-panel */
       gtk_widget_show(sw[W_control_panel]);

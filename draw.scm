@@ -131,6 +131,7 @@ the y-zoom-slider controls the graph amp"
 	 (samps (- right left))
 	 (x0 (x->position (/ left (srate))))
 	 (y0 (y->position (vct-ref data 0)))
+	 (colormap-size 512)
 	 (colors (make-vector colormap-size #f)))
     (do ((i (+ left 1) (1+ i))
 	 (j 1 (1+ j)))

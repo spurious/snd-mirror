@@ -853,7 +853,7 @@ static void filter_textfield_deactivate(snd_info *sp)
 
 #define MIN_FILTER_GRAPH_HEIGHT 20
 
-void sp_display_env(snd_info *sp)
+static void display_filter_env(snd_info *sp)
 {
   snd_state *ss;
   axis_context *ax;
@@ -869,7 +869,20 @@ void sp_display_env(snd_info *sp)
   ax->wn = XtWindow(drawer);
   ax->dp = XtDisplay(drawer);
   XClearWindow(ax->dp, ax->wn);
-  display_filter_graph(ss, sp, ax, width, height);
+  if (edp_display_graph(ss, 
+			sp->sgx->flt,
+			"frequency response",
+			ax, width, height, 
+			sp->filter_control_env, 
+			sp->filter_control_in_dB))
+    {
+      ax->gc = (ss->sgx)->fltenv_data_gc;
+      display_frequency_response(ss, 
+				 sp->filter_control_env, 
+				 edp_ap(sp->sgx->flt), ax, 
+				 sp->filter_control_order, 
+				 sp->filter_control_in_dB);
+    }
   ax = free_axis_context(ax);
 }
 
@@ -891,25 +904,44 @@ static void filter_drawer_button_motion(Widget w, XtPointer context, XEvent *eve
 {
   snd_info *sp = (snd_info *)context;
   XMotionEvent *ev = (XMotionEvent *)event;
-  handle_filter_point(sp->state, sp, ev->x, ev->y, ev->time);
+  edp_handle_point(sp->state, 
+		   sp->sgx->flt,
+		   ev->x, ev->y, ev->time, 
+		   sp->filter_control_env, 
+		   sp->filter_control_in_dB,
+		   sp->filter_control_env_xmax);
+  display_filter_env(sp);
+  sp->filter_control_changed = 1;
 }
 
 static void filter_drawer_button_press(Widget w, XtPointer context, XEvent *event, Boolean *cont) 
 {
   snd_info *sp = (snd_info *)context;
   XButtonEvent *ev = (XButtonEvent *)event;
-  handle_filter_press(sp, ev->x, ev->y, ev->time);
+  if (edp_handle_press(sp->state, 
+		       sp->sgx->flt,
+		       ev->x, ev->y, ev->time, 
+		       sp->filter_control_env, 
+		       sp->filter_control_in_dB,
+		       sp->filter_control_env_xmax))
+    display_filter_env(sp);
 }
 
 static void filter_drawer_button_release(Widget w, XtPointer context, XEvent *event, Boolean *cont) 
 {
-  handle_filter_release((snd_info *)context);
+  char *tmpstr = NULL;
+  snd_info *sp = (snd_info *)context;
+  edp_handle_release(sp->sgx->flt, sp->filter_control_env);
+  display_filter_env(sp);
+  set_filter_text(sp, tmpstr = env_to_string(sp->filter_control_env));
+  if (tmpstr) FREE(tmpstr);
+  sp->filter_control_changed = 1;
 }
 
 static void filter_drawer_resize(Widget w, XtPointer context, XtPointer info) 
 {
   snd_info *sp = (snd_info *)context;
-  sp_display_env(sp);
+  display_filter_env(sp);
 }
 
 static void filter_dB_callback(Widget w, XtPointer context, XtPointer info) 
@@ -918,7 +950,7 @@ static void filter_dB_callback(Widget w, XtPointer context, XtPointer info)
   XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)info;
   ASSERT_WIDGET_TYPE(XmIsToggleButton(w), w);
   sp->filter_control_in_dB = (cb->set);
-  sp_display_env(sp);
+  display_filter_env(sp);
 }
 
 void set_filter_in_dB(snd_info *sp, int val)
@@ -927,7 +959,7 @@ void set_filter_in_dB(snd_info *sp, int val)
   if (!(IS_PLAYER(sp)))
     {
       XmToggleButtonSetState(FILTER_DB_BUTTON(sp), val, FALSE);
-      sp_display_env(sp);
+      display_filter_env(sp);
     }
 }
 
@@ -943,7 +975,7 @@ void set_snd_filter_order(snd_info *sp, int order)
       mus_snprintf(fltorder, LABEL_BUFFER_SIZE, "%d", order);
       XmTextSetString(FILTER_ORDER_TEXT(sp), fltorder);
       FREE(fltorder);
-      sp_display_env(sp);
+      display_filter_env(sp);
     }
   sp->filter_control_changed = 1;
 }
@@ -1015,8 +1047,8 @@ static void filter_activate_callback(Widget w, XtPointer context, XtPointer info
       sp->filter_control_order = order;
       XtFree(str);
     }
-  report_filter_edit(sp);
-  sp_display_env(sp);
+  edp_edited(sp->sgx->flt);
+  display_filter_env(sp);
   filter_textfield_deactivate(sp);
   sp->filter_control_changed = 1;
 }
@@ -1034,7 +1066,7 @@ static void filter_order_activate_callback(Widget w, XtPointer context, XtPointe
       if (order <= 0) order = 2;
       sp->filter_control_order = order;
       sp->filter_control_changed = 1;
-      sp_display_env(sp);
+      display_filter_env(sp);
       XtFree(str);
     }
   filter_textfield_deactivate(sp);
@@ -1048,8 +1080,8 @@ void filter_env_changed(snd_info *sp, env *e)
     {
       XmTextSetString(FILTER_COEFFS_TEXT(sp), tmpstr = env_to_string(e));
       if (tmpstr) FREE(tmpstr);
-      report_filter_edit(sp);
-      sp_display_env(sp);
+      edp_edited(sp->sgx->flt);
+      display_filter_env(sp);
       /* this is called also from snd-scm.c */
     }
   sp->filter_control_changed = 1;
@@ -2530,7 +2562,7 @@ static snd_info *add_sound_window_with_parent (Widget parent, char *filename, sn
       XtAddCallback(sw[W_filter_env], XmNresizeCallback, filter_drawer_resize, (XtPointer)sp);
       XtAddCallback(sw[W_filter_env], XmNexposeCallback, filter_drawer_resize, (XtPointer)sp);
 
-      new_flt(sp);
+      sp->sgx->flt = new_env_editor();
 
       XtAddEventHandler(sw[W_filter_env], ButtonPressMask, FALSE, filter_drawer_button_press, sp);
       XtAddEventHandler(sw[W_filter_env], ButtonMotionMask, FALSE, filter_drawer_button_motion, sp);
@@ -2845,7 +2877,7 @@ void color_filter_waveform(snd_state *ss, Pixel color)
   for (i = 0; i < ss->max_sounds; i++)
     {
       sp = ss->sounds[i];
-      if ((sp) && (sp->inuse)) sp_display_env(sp);
+      if ((sp) && (sp->inuse)) display_filter_env(sp);
     }
 }
 

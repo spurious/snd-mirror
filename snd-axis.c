@@ -165,7 +165,9 @@ static Locus tick_grf_x(double val, axis_info *ap, int style, int srate)
       res = (int)(ap->x_base + val * ap->x_scale); 
       break;
     case X_AXIS_IN_BEATS: 
-      res = (int)(ap->x_base + val * ap->x_scale * 60.0 / ap->cp->beats_per_minute);
+      if (ap->cp)
+	res = (int)(ap->x_base + val * ap->x_scale * 60.0 / ap->cp->beats_per_minute);
+      else res = (int)(ap->x_base + val * ap->x_scale); 
       break;
     case X_AXIS_IN_SAMPLES: 
       res = (int)(ap->x_axis_x0 + (val - ap->x0 * srate) * ap->x_scale / srate); 
@@ -471,10 +473,12 @@ void make_axes_1(axis_info *ap, int x_style, int srate, int axes, int printing, 
 	  tdx = describe_ticks((tick_descriptor *)(ap->x_ticks), ap->x0 * srate, ap->x1 * srate, num_ticks); 
 	  break;
 	case X_AXIS_IN_BEATS: 
-	  tdx = describe_ticks((tick_descriptor *)(ap->x_ticks), 
-			       (ap->x0 * ap->cp->beats_per_minute / 60.0), 
-			       (ap->x1 * ap->cp->beats_per_minute / 60.0), 
-			       num_ticks); 
+	  if (ap->cp)
+	    tdx = describe_ticks((tick_descriptor *)(ap->x_ticks), 
+				 (ap->x0 * ap->cp->beats_per_minute / 60.0), 
+				 (ap->x1 * ap->cp->beats_per_minute / 60.0), 
+				 num_ticks); 
+	  else tdx = describe_ticks((tick_descriptor *)(ap->x_ticks), ap->x0, ap->x1, num_ticks); 
 	  break;
 	case X_AXIS_AS_PERCENTAGE: 
 	  tdx = describe_ticks((tick_descriptor *)(ap->x_ticks), ap->x0 / ap->xmax, ap->x1 / ap->xmax, num_ticks); 
@@ -535,7 +539,7 @@ void make_axes_1(axis_info *ap, int x_style, int srate, int axes, int printing, 
   ap->x_label_y += ap->y_offset;
   ap->x_base = (double)(ap->x_axis_x0 - ap->x0 * ap->x_scale);
   ap->y_base = (Float)(ap->y_axis_y0 - ap->y0 * ap->y_scale);
-  if ((printing) &&
+  if ((printing) && (ap->cp) &&
       ((ap->cp->chan == 0) || (ap->cp->sound->channel_style != CHANNELS_SUPERIMPOSED)))
     ps_bg(ap, ax);
 #if HAVE_GL

@@ -257,7 +257,6 @@ char **speaker_bits(void);
 /* -------- snd-gxcolormaps.c -------- */
 
 char **colormap_names(void);
-unsigned short *snd_colormap(int n);
 void get_current_color(int colormap, int j, unsigned short *r, unsigned short *g, unsigned short *b);
 
 
@@ -425,7 +424,6 @@ void set_snd_revlen(snd_info *sp, Float val);
 void set_snd_revscl(snd_info *sp, Float val);
 void set_snd_filter_order(snd_info *sp, int order);
 void set_filter_text(snd_info *sp, char *str);
-void sp_display_env(snd_info *sp);
 void toggle_expand_button(snd_info *sp, int state);
 void toggle_contrast_button(snd_info *sp, int state);
 void toggle_reverb_button(snd_info *sp, int state);
@@ -471,8 +469,10 @@ void reflect_no_mix_in_mix_panel(void);
 
 /* -------- snd-genv.c -------- */
 
-chan_info *enved_make_axis_cp(snd_state *ss, char *name, axis_context *ax, int ex0, int ey0, int width, int height, Float xmin, Float xmax, Float ymin, Float ymax);
-void display_enved_env_with_selection(snd_state *ss, env *e, char *name, int x0, int y0, int width, int height, int dots, Float base);
+axis_info *enved_make_axis(snd_state *ss, char *name, axis_context *ax, 
+			   int ex0, int ey0, int width, int height, Float xmin, Float xmax, Float ymin, Float ymax, int printing);
+void display_enved_env_with_selection(snd_state *ss, env *e, char *name, 
+				      int x0, int y0, int width, int height, int dots, Float base, int printing);
 void set_enved_redo_sensitive(int val);
 void set_enved_revert_sensitive(int val);
 void set_enved_undo_sensitive(int val);
@@ -482,6 +482,7 @@ void make_scrolled_env_list (snd_state *ss);
 void alert_enved_amp_env(snd_info *sp);
 void new_active_channel_alert(snd_state *ss);
 void env_redisplay(snd_state *ss);
+void env_redisplay_with_print(snd_state *ss);
 void enved_display_point_label(snd_state *ss, Float x, Float y);
 void display_enved_progress(char *str, SG_PIXMAP *pix, SG_BITMAP *mask);
 void set_enved_click_to_delete(int n);

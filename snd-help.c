@@ -239,6 +239,7 @@ void news_help(snd_state *ss)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+6-Jun:   removed --with-big-colormap switch (use -DCOLORMAP_SIZE=64 to get old form).\n\
 4-Jun:   Gtk OpenGL support via the gtkglext library.\n\
 3-Jun:   removed \"colour\" spelling option (snd5.scm has backwards compatible definitions).\n\
 28-May:  Dave Phillips' Snd tutorial added in contrib/tutorial.\n\

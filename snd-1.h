@@ -593,7 +593,7 @@ void ps_set_peak_numbers_font(void);
 void ps_set_tiny_numbers_font(void);
 void snd_print(snd_state *ss, char *output);
 void region_print(char *output, char* title, chan_info *cp);
-void print_enved(char *output, chan_info *cp, int y0);
+void print_enved(char *output, int y0);
 void g_init_print(void);
 
 
@@ -880,18 +880,20 @@ env *make_envelope(Float *env_buffer, int len);
 void move_point (env *e, int pos, Float x, Float y);
 void delete_point(env *e, int pos);
 env *default_env(Float x1, Float y);
-void new_flt(snd_info *sp);
-void snd_filter_cleanup(snd_info *sp);
-void display_filter_graph(snd_state *ss, snd_info *sp, axis_context *ax, int width, int height);
-void handle_filter_point(snd_state *ss, snd_info *sp, int evx, int evy, TIME_TYPE motion_time);
-void handle_filter_press(snd_info *sp, int evx, int evy, TIME_TYPE time);
-void handle_filter_release(snd_info *sp);
-void report_filter_edit(snd_info *sp);
-chan_info *new_env_axis(snd_state *ss);
-void init_env_axes(chan_info *acp, char *name, int x_offset, int ey0, int width, int height, Float xmin, Float xmax, Float ymin, Float ymax);
-axis_info *new_wave_axis(void);
-void display_enved_env(snd_state *ss, env *e, axis_context *ax, chan_info *axis_cp, char *name, int x0, int y0, int width, int height, int dots, Float base);
-void view_envs(snd_state *ss, int env_window_width, int env_window_height);
+void *new_env_editor(void);
+void edp_reset(void *spf);
+axis_info *edp_ap(void *spf);
+int edp_display_graph(snd_state *ss, void *spf, const char *name, axis_context *ax, int width, int height, env *e, int in_dB);
+void edp_handle_point(snd_state *ss, void *spf, int evx, int evy, TIME_TYPE motion_time, env *e, int in_dB, Float xmax);
+int edp_handle_press(snd_state *ss, void *spf, int evx, int evy, TIME_TYPE time, env *e, int in_dB, Float xmax);
+void edp_handle_release(void *spf, env *e);
+void edp_edited(void *spf);
+axis_info *new_env_axis(snd_state *ss);
+void init_env_axes(axis_info *ap, const char *name, int x_offset, int ey0, int width, int height, 
+		   Float xmin, Float xmax, Float ymin, Float ymax, int printing);
+void display_enved_env(snd_state *ss, env *e, axis_context *ax, char *name, 
+		       int x0, int y0, int width, int height, int dots, Float base, int printing);
+void view_envs(snd_state *ss, int env_window_width, int env_window_height, int printing);
 int hit_env(int xe, int ye, int env_window_width, int env_window_height);
 void do_enved_edit(env *new_env);
 void redo_env_edit(void);
@@ -902,7 +904,7 @@ char *enved_all_names(int n);
 void set_enved_env_list_top(int n);
 env *enved_all_envs(int pos);
 void alert_envelope_editor(snd_state *ss, char *name, env *val);
-void enved_show_background_waveform(snd_state *ss, chan_info *axis_cp, axis_info *gray_ap, int apply_to_mix, int apply_to_selection, int show_fft);
+void enved_show_background_waveform(snd_state *ss, axis_info *ap, axis_info *gray_ap, int apply_to_selection, int show_fft, int printing);
 int enved_button_press_display(snd_state *ss, axis_info *ap, env *active_env, int evx, int evy);
 void save_envelope_editor_state(FILE *fd);
 char *env_name_completer(char *text);
@@ -1223,7 +1225,7 @@ int any_mix_id(void);
 int mix_ok_and_unlocked(int n);
 int set_mix_amp_env(int n, int chan, env *val);
 env *mix_amp_env_from_id(int n, int chan);
-void display_mix_amp_envs(snd_state *ss, chan_info *axis_cp, axis_context *ax, int width, int height);
+void display_mix_amp_envs(snd_state *ss, axis_info *ap, axis_context *ax, int width, int height);
 void reflect_mix_edit(chan_info *input_cp, const char *origin);
 
 void g_init_mix(void);
@@ -1231,7 +1233,6 @@ void g_init_mix(void);
 void color_one_mix_from_id(int mix_id, COLOR_TYPE color);
 COLOR_TYPE mix_to_color_from_id(int ix_id);
 
-int display_mix_waveform_at_zero(chan_info *cp, int mix_id);
 snd_info *make_mix_readable_from_id(int id);
 int mix_selected_channel(int id);
 

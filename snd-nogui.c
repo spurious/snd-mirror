@@ -174,7 +174,6 @@ int widget_y(int w) {return(0);}
 void set_widget_x(int w, int x) {}
 void set_widget_y(int w, int y) {}
 void set_open_file_play_button(int val) {}
-void fixup_axis_context(axis_context *ax, int w, int gc) {}
 int channel_w(chan_info *cp) {return(0);}
 int channel_f(chan_info *cp) {return(0);}
 int channel_graph(chan_info *cp) {return(0);}
@@ -214,7 +213,6 @@ void toggle_contrast_button(snd_info *sp, int state) {}
 void toggle_reverb_button(snd_info *sp, int state) {}
 void toggle_filter_button(snd_info *sp, int state) {}
 void toggle_direction_arrow(snd_info *sp, int state) {}
-void sp_display_env(snd_info *sp) {}
 void filter_env_changed(snd_info *sp, env *e) {}
 void set_play_button(snd_info *sp, int val) {}
 void play_button_pause(snd_state *ss, int pausing) {}
@@ -253,8 +251,9 @@ int file_dialog_is_active(void) {return(0);}
 int edit_header(snd_info *sp) {return(0);}
 void make_edit_save_as_dialog(snd_state *ss) {}
 void make_file_save_as_dialog(snd_state *ss) {}
-chan_info *enved_make_axis_cp(snd_state *ss, char *name, axis_context *ax, int ex0, int ey0, int width, int height, Float xmin, Float xmax, Float ymin, Float ymax) {return(NULL);}
-void display_enved_env_with_selection(snd_state *ss, env *e, char *name, int x0, int y0, int width, int height, int dots, Float base) {}
+axis_info *enved_make_axis(snd_state *ss, char *name, axis_context *ax, int ex0, int ey0, int width, int height, 
+			   Float xmin, Float xmax, Float ymin, Float ymax, int printing) {return(NULL);}
+void display_enved_env_with_selection(snd_state *ss, env *e, char *name, int x0, int y0, int width, int height, int dots, Float base, int printing) {}
 void set_enved_redo_sensitive(int val) {}
 void set_enved_revert_sensitive(int val) {}
 void set_enved_undo_sensitive(int val) {}
@@ -264,6 +263,7 @@ void enved_fft_update(void) {}
 void make_scrolled_env_list (snd_state *ss) {}
 void new_active_channel_alert(snd_state *ss) {}
 void env_redisplay(snd_state *ss) {}
+void env_redisplay_with_print(snd_state *ss) {}
 void enved_display_point_label(snd_state *ss, Float x, Float y) {}
 void set_enved_click_to_delete(int n) {}
 int create_envelope_editor (snd_state *ss) {return(0);}

@@ -486,23 +486,18 @@ void allocate_sono_rects(int size)
 
 void allocate_color_map(snd_state *ss, int colormap)
 {
-  int i, j;
+  int i;
   GdkColormap *cmap;
   GdkColor tmp_color;
-  unsigned short *curmap;
   if (grays_allocated != colormap)
     {
-      curmap = snd_colormap(colormap);
       cmap = gdk_colormap_get_system();
       if (grays_allocated != -1) 
 	for (i = 0; i < COLORMAP_SIZE; i++) 
 	  gdk_color_free(grays[i]);
-      j = 0;
       for (i = 0; i < COLORMAP_SIZE; i++)
 	{
-	  tmp_color.red = curmap[j++];
-	  tmp_color.green = curmap[j++];
-	  tmp_color.blue = curmap[j++];
+	  get_current_color(colormap, i, &(tmp_color.red), &(tmp_color.green), &tmp_color.blue);
 	  grays[i] = gdk_color_copy(&tmp_color);
 	  SG_COLOR_ALLOC(cmap, grays[i]);
 	}

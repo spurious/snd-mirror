@@ -349,9 +349,10 @@ void free_snd_info(snd_info *sp)
   if (sp->sgx)
     {
       if ((sp->sgx)->apply_in_progress) remove_apply(sp);
+      edp_reset(sp->sgx->flt);
+      set_filter_text(sp, "");
     }
   snd_info_cleanup(sp);
-  snd_filter_cleanup(sp);
   sp->sync = 0;
   sp->previous_sync = sp->sync;
   for (i = 0; i < sp->nchans; i++)

@@ -539,7 +539,7 @@ void region_print(char *output, char* title, chan_info *cp)
   else snd_error("print region: eps file name needed");
 }
 
-void print_enved(char *output, chan_info *cp, int y0)
+void print_enved(char *output, int y0)
 {
   int err;
   if ((output) && (*output))
@@ -547,11 +547,9 @@ void print_enved(char *output, chan_info *cp, int y0)
       err = start_ps_graph(output, "Envelope Editor");
       if (err == 0)
 	{
-	  cp->printing = 1;
 	  bx0 = 0;
 	  by0 = y0;
-	  env_redisplay(cp->state);
-	  cp->printing = 0;
+	  env_redisplay_with_print(get_global_state());
 	  end_ps_graph();
 	}
       else snd_error("print env %s failed: %s", output, strerror(errno));

@@ -854,7 +854,6 @@ Optional Packages:
   --with-gl		  include OpenGL support
   --with-just-gl	  include OpenGL support, but omit the GL/Guile bindings
   --with-html		  include the XmHTML or mozilla browser library
-  --with-big-colormap	  assume at least 512 colors are available (default=yes)
   --with-motif		  use libXm to build Snd
   --with-motif-prefix=PFX where Motif is installed
   --with-static-motif	  use libXm.a to build Snd
@@ -2513,7 +2512,6 @@ MAKE_TARGET="snd"
 #   --with-alsa           use ALSA if possible
 #   --with-static-alsa    use ALSA statically loaded (for RPM generation)
 #   --with-html           include the XmHTML or mozilla browser library
-#   --with-big-colormap   use big colormap (default = yes)
 #   --with-snd-as-widget  make Snd a loadable widget, not a standalone program
 #   --with-doubles        use doubles throughout (default is floats)
 #   --with-float-samples  represent samples internally as floats
@@ -2637,24 +2635,6 @@ _ACEOF
             GTKHTML_FLAGS="-I/usr/include/mozilla"
 	fi
 fi;
-
-
-# Check whether --with-big-colormap or --without-big-colormap was given.
-if test "${with_big_colormap+set}" = set; then
-  withval="$with_big_colormap"
-
-fi;
-if test "$with_big_colormap" = no ; then
-  cat >>confdefs.h <<_ACEOF
-#define WITH_BIG_COLORMAP 0
-_ACEOF
-
-else
-  cat >>confdefs.h <<\_ACEOF
-#define WITH_BIG_COLORMAP 1
-_ACEOF
-
-fi
 
 
 # Check whether --with-motif or --without-motif was given.
@@ -9834,6 +9814,7 @@ fi
 
 fi
 # if with_gl and with_gtk look got gtkglext
+# TODO: find the current version of libgtkglext somehow
 if test "$have_gl" = yes && test "$with_gtk" = yes; then
   GL_LIBS="$GL_LIBS -lgdkglext-x11-0.x -lgtkglext-x11-0.x"
 fi

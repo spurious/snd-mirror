@@ -2111,20 +2111,6 @@ static int display_mix_waveform(chan_info *cp, mix_info *md, console_state *cs, 
   return(j);
 }
 
-int display_mix_waveform_at_zero(chan_info *cp, int mix_id)
-{
-  int pts;
-  console_state *cs;
-  mix_info *md;
-  off_t old_beg;
-  md = md_from_id(mix_id);
-  cs = md->current_cs;
-  old_beg = cs->beg;
-  cs->beg = 0;
-  pts = display_mix_waveform(cp, md, cs, TRUE);
-  cs->beg = old_beg;
-  return(pts);
-}
 
 
 /* -------------------------------- moving mix consoles -------------------------------- */
@@ -3378,9 +3364,8 @@ int mix_selected_channel(int id)
 
 static env *flat_env = NULL;
 
-void display_mix_amp_envs(snd_state *ss, chan_info *axis_cp, axis_context *ax, int width, int height)
+void display_mix_amp_envs(snd_state *ss, axis_info *ap, axis_context *ax, int width, int height)
 {
-  axis_info *ap;
   int chans, chan, mix_id;
   env *e;
   int i, j;
@@ -3418,12 +3403,12 @@ void display_mix_amp_envs(snd_state *ss, chan_info *axis_cp, axis_context *ax, i
       if ((ey0 == ey1) && (ey1 == 0.0)) ey1 = 1.0; /* fixup degenerate case */
       if (ey1 < 1.0) ey1 = 1.0;
 
-      init_env_axes(axis_cp, "mix env",
+      init_env_axes(ap, "mix env",
 		    (int)(chan * width / chans),
 		    (int)ey0,
 		    width/chans, height,
-		    ex0, ex1, ey0, ey1);
-      ap = axis_cp->axis;
+		    ex0, ex1, ey0, ey1,
+		    FALSE); /* not printing I presume */
 
       ix1 = local_grf_x(e->data[0], ap);
       iy1 = local_grf_y(e->data[1], ap);
@@ -3768,13 +3753,24 @@ static XEN g_set_mix_speed(XEN n, XEN uval)
   return(uval);
 }
 
-static XEN g_set_mix_amp(XEN n, XEN uchan, XEN uval) 
+static XEN g_set_mix_amp(XEN n, XEN uchan_1, XEN uval_1) 
 {
   int res;
+  XEN uchan, uval;
+  if (XEN_BOUND_P(uval_1))
+    {
+      uchan = uchan_1;
+      uval = uval_1;
+    }
+  else
+    {
+      uchan = uval_1;
+      uval = uchan_1;
+    }
   XEN_ASSERT_TYPE(XEN_INTEGER_P(n), n, XEN_ARG_1, "set-" S_mix_amp, "an integer");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(uchan), uchan, XEN_ARG_2, "set-" S_mix_amp, "an integer");
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(uchan), uchan, XEN_ARG_2, "set-" S_mix_amp, "an integer");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(uval), uval, XEN_ARG_3, "set-" S_mix_amp, "a number");
-  res = set_mix_amp(XEN_TO_C_INT(n), XEN_TO_C_INT(uchan), XEN_TO_C_DOUBLE(uval), FALSE, TRUE);
+  res = set_mix_amp(XEN_TO_C_INT(n), (XEN_BOUND_P(uchan)) ? XEN_TO_C_INT(uchan) : 0, XEN_TO_C_DOUBLE(uval), FALSE, TRUE);
   if (res == INVALID_MIX_ID)
     snd_no_such_mix_error("set-" S_mix_amp, n);
   else 
@@ -3783,15 +3779,26 @@ static XEN g_set_mix_amp(XEN n, XEN uchan, XEN uval)
   return(uval);
 }
 
-static XEN g_set_mix_amp_env(XEN n, XEN chan, XEN val) 
+static XEN g_set_mix_amp_env(XEN n, XEN chan_1, XEN val_1) 
 {
   env *e = NULL;
   int res;
+  XEN chan, val;
+  if (XEN_BOUND_P(val_1))
+    {
+      chan = chan_1;
+      val = val_1;
+    }
+  else
+    {
+      chan = val_1;
+      val = chan_1;
+    }
   XEN_ASSERT_TYPE(XEN_INTEGER_P(n), n, XEN_ARG_1, "set-" S_mix_amp_env, "an integer");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(chan), chan, XEN_ARG_2, "set-" S_mix_amp_env, "an integer");
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(chan), chan, XEN_ARG_2, "set-" S_mix_amp_env, "an integer");
   XEN_ASSERT_TYPE(XEN_LIST_P(val), val, XEN_ARG_3, "set-" S_mix_amp_env, "a list");
   res = set_mix_amp_env(XEN_TO_C_INT(n), 
-			XEN_TO_C_INT(chan), 
+			(XEN_BOUND_P(chan)) ? XEN_TO_C_INT(chan) : 0,
 			e = get_env(val, "set-" S_mix_amp_env));
   if (e) free_env(e);
   if (res == INVALID_MIX_ID)
@@ -4426,9 +4433,9 @@ XEN_NARGIFY_1(g_set_mix_tag_width_w, g_set_mix_tag_width)
 XEN_NARGIFY_0(g_mix_tag_height_w, g_mix_tag_height)
 XEN_NARGIFY_1(g_set_mix_tag_height_w, g_set_mix_tag_height)
 XEN_ARGIFY_2(g_mix_amp_w, g_mix_amp)
-XEN_NARGIFY_3(g_set_mix_amp_w, g_set_mix_amp)
+XEN_ARGIFY_3(g_set_mix_amp_w, g_set_mix_amp)
 XEN_ARGIFY_2(g_mix_amp_env_w, g_mix_amp_env)
-XEN_NARGIFY_3(g_set_mix_amp_env_w, g_set_mix_amp_env)
+XEN_ARGIFY_3(g_set_mix_amp_env_w, g_set_mix_amp_env)
 XEN_ARGIFY_1(g_mix_chans_w, g_mix_chans)
 XEN_ARGIFY_1(g_mix_p_w, g_mix_p)
 XEN_ARGIFY_1(g_mix_home_w, g_mix_home)
@@ -4568,10 +4575,10 @@ void g_init_mix(void)
 				   "set-" S_mix_tag_height, g_set_mix_tag_height_w, 0, 0, 1, 0);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_amp, g_mix_amp_w, H_mix_amp,
-				   "set-" S_mix_amp, g_set_mix_amp_w, 0, 2, 3, 0);
+				   "set-" S_mix_amp, g_set_mix_amp_w, 0, 2, 2, 1);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_amp_env, g_mix_amp_env_w, H_mix_amp_env,
-				   "set-" S_mix_amp_env, g_set_mix_amp_env_w, 0, 2, 3, 0);
+				   "set-" S_mix_amp_env, g_set_mix_amp_env_w, 0, 2, 2, 1);
 
   XEN_DEFINE_PROCEDURE(S_mix_tag_position, g_mix_tag_position_w, 1, 0, 0, H_mix_tag_position);
 

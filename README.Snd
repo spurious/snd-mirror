@@ -26,7 +26,6 @@ The configure program has several Snd-related arguments:
    --with-alsa           use ALSA if possible
      --with-static-alsa  use ALSA statically loaded (for RPM generation)
    --with-html           include the XmHTML or mozilla browser library
-   --with-big-colormap   use big colormap (default = yes)
    --with-snd-as-widget  make Snd a loadable widget, not a standalone program
    --with-doubles        use doubles throughout (default is floats)
    --with-float-samples  represent samples internally as floats (default: ints)

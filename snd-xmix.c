@@ -200,7 +200,7 @@ static int mix_amp_to_int(Float amp, int chan)
 /* ---------------- AMP ENV ---------------- */
 
 static Widget w_env_frame, w_env;
-static chan_info *axis_cp = NULL;
+static axis_info *axis = NULL;
 static axis_context *ax = NULL;
 static GC cur_gc;
 
@@ -221,12 +221,10 @@ static void mix_amp_env_resize(Widget w, XtPointer context, XtPointer info)
       ax->gc = cur_gc;
     }
   else clear_window(ax);
-  if (axis_cp == NULL) 
-    {
-      axis_cp = new_env_axis(ss); /* just creates the axis struct and sets basic fields */
-      fixup_axis_context(axis_cp->axis->ax, w_env, ax->gc);
-    }
-  display_mix_amp_envs(ss, axis_cp, ax, widget_width(w), widget_height(w));
+  if (axis == NULL) 
+    axis = (axis_info *)CALLOC(1, sizeof(axis_info));
+  axis->ax = ax;
+  display_mix_amp_envs(ss, axis, ax, widget_width(w), widget_height(w));
 }
 
 

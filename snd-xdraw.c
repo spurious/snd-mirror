@@ -503,27 +503,22 @@ void allocate_sono_rects(int size)
 void allocate_color_map(snd_state *ss, int colormap)
 {
   static int warned_color = 0;
-  int i, j;
+  int i;
   Colormap cmap;
   XColor tmp_color;
   Display *dpy;
   int scr;
-  unsigned short *curmap;
   if (grays_allocated != colormap)
     {
-      curmap = snd_colormap(colormap);
       tmp_color.flags = DoRed | DoGreen | DoBlue;
       dpy = XtDisplay(MAIN_SHELL(ss));
       scr = DefaultScreen(dpy);
       cmap = DefaultColormap(dpy, scr);
       /* 8-bit color displays can't handle all these colors, apparently, so we have to check status */
       if (grays_allocated != -1) XFreeColors(dpy, cmap, grays, COLORMAP_SIZE, 0);
-      j = 0;
       for (i = 0; i < COLORMAP_SIZE; i++)
 	{
-	  tmp_color.red = curmap[j++];
-	  tmp_color.green = curmap[j++];
-	  tmp_color.blue = curmap[j++];
+	  get_current_color(colormap, i, &(tmp_color.red), &(tmp_color.green), &tmp_color.blue);
 	  if ((XAllocColor(dpy, cmap, &tmp_color)) == 0) /* 0 = failure -- try black as a fallback */
 	    {
 	      tmp_color.red = 0;

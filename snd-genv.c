@@ -28,43 +28,48 @@ static chan_info *active_channel = NULL, *last_active_channel = NULL;
 static env* selected_env = NULL; /* if during view, one env is clicked, it is "selected" and can be pasted elsewhere */
 static env* active_env = NULL;   /* env currently being edited */
 
-static chan_info *axis_cp = NULL;
+static axis_info *axis = NULL;
 static axis_info *gray_ap = NULL;
 static int FIR_p = 1;
 static int old_clip_p = 0;
 
-chan_info *enved_make_axis_cp(snd_state *ss, char *name, axis_context *ax, 
-			      int ex0, int ey0, int width, int height, Float xmin, Float xmax, Float ymin, Float ymax)
+axis_info *enved_make_axis(snd_state *ss, char *name, axis_context *ax, 
+			   int ex0, int ey0, int width, int height, 
+			   Float xmin, Float xmax, Float ymin, Float ymax,
+			   int printing)
 {
   /* conjure up minimal context for axis drawer in snd-axis.c */
-  if (!axis_cp) 
+  if (!axis) 
     {
-      axis_cp = new_env_axis(ss);
-      fixup_axis_context(axis_cp->axis->ax, drawer, ax->gc);
+      axis = (axis_info *)CALLOC(1, sizeof(axis_info));
+      axis->ax = (axis_context *)CALLOC(1, sizeof(axis_context));
+      fixup_axis_context(axis->ax, drawer, ax->gc);
     }
   if (!gray_ap) 
     {
-      gray_ap = new_wave_axis();
+      gray_ap = (axis_info *)CALLOC(1, sizeof(axis_info));
+      gray_ap->ax = (axis_context *)CALLOC(1, sizeof(axis_context));
+      gray_ap->graph_active = 1;
       fixup_axis_context(gray_ap->ax, drawer, ggc);
     }
-  init_env_axes(axis_cp, name, ex0, ey0, width, height, xmin, xmax, ymin, ymax);
-  return(axis_cp);
+  init_env_axes(axis, name, ex0, ey0, width, height, xmin, xmax, ymin, ymax, printing);
+  return(axis);
 }
 
-static void display_env(snd_state *ss, env *e, char *name, GdkGC *cur_gc, int x0, int y0, int width, int height, int dots, Float base)
+static void display_env(snd_state *ss, env *e, char *name, GdkGC *cur_gc, int x0, int y0, int width, int height, int dots, Float base, int printing)
 {
   axis_context *ax = NULL;  
   ax = (axis_context *)CALLOC(1, sizeof(axis_context));
   ax->wn = drawer->window;
   ax->w = drawer;
   ax->gc = cur_gc;
-  display_enved_env(ss, e, ax, axis_cp, name, x0, y0, width, height, dots, base);
+  display_enved_env(ss, e, ax, name, x0, y0, width, height, dots, base, printing);
   ax = free_axis_context(ax);
 }
 
-void display_enved_env_with_selection(snd_state *ss, env *e, char *name, int x0, int y0, int width, int height, int dots, Float base)
+void display_enved_env_with_selection(snd_state *ss, env *e, char *name, int x0, int y0, int width, int height, int dots, Float base, int printing)
 {
-  display_env(ss, e, name, (selected_env == e) ? rgc : gc, x0, y0, width, height, dots, base);
+  display_env(ss, e, name, (selected_env == e) ? rgc : gc, x0, y0, width, height, dots, base, printing);
 }
 
 static void do_env_edit(env *new_env, int loading)
@@ -206,30 +211,32 @@ static void apply_enved(snd_state *ss)
     }
 }
 
-void env_redisplay(snd_state *ss)
+static void env_redisplay_1(snd_state *ss, int printing)
 {
   char *name = NULL;
   if (enved_dialog_is_active())
     {
       gdk_window_clear(drawer->window);
       if (showing_all_envs) 
-	view_envs(ss, env_window_width, env_window_height);
+	view_envs(ss, env_window_width, env_window_height, printing);
       else 
 	{
 	  name = (char *)gtk_entry_get_text(GTK_ENTRY(textL));
 	  if (!name) name = "noname";
-	  display_env(ss, active_env, name, gc, 0, 0, env_window_width, env_window_height, 1, active_env_base);
+	  display_env(ss, active_env, name, gc, 0, 0, env_window_width, env_window_height, 1, active_env_base, printing);
 	  name = NULL;
-	  if (enved_wave_p(ss))
+	  if ((enved_wave_p(ss)) && (!apply_to_mix))
 	    {
-	      if ((enved_target(ss) == ENVED_SPECTRUM) && (active_env))
-		display_frequency_response(ss, active_env, axis_cp->axis, gray_ap->ax, enved_filter_order(ss), enved_in_dB(ss));
-	      enved_show_background_waveform(ss, axis_cp, gray_ap, apply_to_mix, apply_to_selection,
-					     (enved_target(ss) == ENVED_SPECTRUM));
+	      if ((enved_target(ss) == ENVED_SPECTRUM) && (active_env) && (!printing))
+		display_frequency_response(ss, active_env, axis, gray_ap->ax, enved_filter_order(ss), enved_in_dB(ss));
+	      enved_show_background_waveform(ss, axis, gray_ap, apply_to_selection, (enved_target(ss) == ENVED_SPECTRUM), printing);
 	    }
 	}
     }
 }
+
+void env_redisplay(snd_state *ss) {env_redisplay_1(ss, FALSE);}
+void env_redisplay_with_print(snd_state *ss) {env_redisplay_1(ss, TRUE);}
 
 void enved_fft_update(void)
 {
@@ -241,7 +248,7 @@ void enved_fft_update(void)
       if ((enved_wave_p(ss)) &&
 	  (enved_target(ss) == ENVED_SPECTRUM) && 
 	  (active_env))
-	enved_show_background_waveform(ss, axis_cp, gray_ap, apply_to_mix, apply_to_selection,TRUE);
+	enved_show_background_waveform(ss, axis, gray_ap, apply_to_selection, TRUE, FALSE);
     }
 }
 
@@ -353,7 +360,7 @@ static void select_or_edit_env(snd_state *ss, int pos)
   else
     {
       selected_env = enved_all_envs(pos);
-      if (showing_all_envs) view_envs(ss, env_window_width, env_window_height);
+      if (showing_all_envs) view_envs(ss, env_window_width, env_window_height, FALSE);
     }
   set_sensitive(deleteB, TRUE);
 }
@@ -413,7 +420,7 @@ static gboolean drawer_button_motion(GtkWidget *w, GdkEventMotion *ev, gpointer 
     {
       env_dragged = 1;
       click_to_delete = 0;
-      ap = axis_cp->axis;
+      ap = axis;
       x = ungrf_x(ap, evx);
       if (env_pos > 0) 
 	x0 = active_env->data[env_pos * 2 - 2]; else 
@@ -462,7 +469,7 @@ static gboolean drawer_button_press(GtkWidget *w, GdkEventButton *ev, gpointer d
 	  active_env_base = 1.0;
 	  env_redisplay(ss); /* needed to get current_xs set up correctly */
 	}
-      env_pos = enved_button_press_display(ss, axis_cp->axis, active_env, (int)(ev->x), (int)(ev->y));
+      env_pos = enved_button_press_display(ss, axis, active_env, (int)(ev->x), (int)(ev->y));
     }
   return(FALSE);
 }
@@ -677,7 +684,7 @@ static void reset_button_pressed(GtkWidget *w, gpointer context)
 
 void enved_print(char *name)
 {
-  print_enved(name, axis_cp, env_window_height);
+  print_enved(name, env_window_height);
 }
 
 static void print_button_pressed(GtkWidget *w, gpointer context)
@@ -1374,9 +1381,9 @@ static XEN g_enved_axis_info(void)
   axis_info *ap;
   if (enved_dialog)
     {
-      if (axis_cp == NULL)
+      if (axis == NULL)
 	enved_reset();
-      ap = axis_cp->axis;
+      ap = axis;
       return(XEN_CONS(C_TO_XEN_INT(ap->x_axis_x0),
                XEN_CONS(C_TO_XEN_INT(ap->y_axis_y0),
                  XEN_CONS(C_TO_XEN_INT(ap->x_axis_x1),
