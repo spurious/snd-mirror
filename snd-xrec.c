@@ -998,8 +998,8 @@ static void messages_help_callback(Widget w, XtPointer context, XtPointer info)
 {
   snd_state *ss = (snd_state *)context;
   snd_help_with_wrap(ss,
-		     _("Message Pane"),
-_("This pane contains any messages the recorder generates.  Each is time stamped.  Many are merely informational or mild gripes."));
+		     "Message Pane",
+"This pane contains any messages the recorder generates.  Each is time stamped.  Many are merely informational or mild gripes.");
 }
 
 static Widget make_message_pane(snd_state *ss, Widget message_pane)
@@ -1035,32 +1035,32 @@ static void file_label_help_callback(Widget w, XtPointer context, XtPointer info
 {
   snd_state *ss = (snd_state *)context;
   snd_help_with_wrap(ss,
-		     _("Output File Name"),
-_("This field sets the name of the output file."));	   
+		     "Output File Name",
+"This field sets the name of the output file.");	   
 }
 
 static void duration_label_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_state *ss = (snd_state *)context;
   snd_help_with_wrap(ss,
-		     _("Output File Duration"),
-_("This field shows the duration of the current or previous recording."));	   
+		     "Output File Duration",
+"This field shows the duration of the current or previous recording.");	   
 }
 
 static void button_holder_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_state *ss = (snd_state *)context;
   snd_help_with_wrap(ss,
-		     _("Record Options"),
-_("These buttons configure the appearance of the recorder; 'Autoload Recording', if set, causes the recorded output to be loaded automatically into Snd."));
+		     "Record Options",
+"These buttons configure the appearance of the recorder; 'Autoload Recording', if set, causes the recorded output to be loaded automatically into Snd.");
 }
 
 static void autoload_file_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_state *ss = (snd_state *)context;
   snd_help_with_wrap(ss,
-		     _("Autoload File"),
-_("If this button is set, the recorded file is automatically loaded into Snd."));	   
+		     "Autoload File",
+"If this button is set, the recorded file is automatically loaded into Snd.");	   
 }
 
 static void help_record_callback(Widget w, XtPointer context, XtPointer info) 
@@ -1072,17 +1072,17 @@ static void vu_reset_help_callback(Widget w, XtPointer context, XtPointer info)
 {
   snd_state *ss = (snd_state *)context;
   snd_help_with_wrap(ss,
-		     _("Reset Button"),
-_("This button resets the fields above it that indicate the on-going max amp encountered since the last reset"));
+		     "Reset Button",
+"This button resets the fields above it that indicate the on-going max amp encountered since the last reset");
 }
 
 static void trigger_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_state *ss = (snd_state *)context;
   snd_help_with_wrap(ss,
-		     _("Record Trigger"),
-_("This scale sets the auto-record trigger value.  If it is non-zero, when you push the \
-'Rp->Triggered Record' button, Snd waits until it receives data above that value before starting the actual recording."));
+		     "Record Trigger",
+"This scale sets the auto-record trigger value.  If it is non-zero, when you push the \
+'Rp->Triggered Record' button, Snd waits until it receives data above that value before starting the actual recording.");
 }
 
 static void make_trigger_label(Float val)
@@ -1277,11 +1277,11 @@ static void save_audio_settings_help_callback(Widget w, XtPointer context, XtPoi
 {
   snd_state *ss = (snd_state *)context;
   snd_help_with_wrap(ss,
-		     _("Save Audio Settings"),
-_("Normally, Snd saves the state of the audio hardware (the 'mixer' in Linux jargon) before opening the \
+		     "Save Audio Settings",
+"Normally, Snd saves the state of the audio hardware (the 'mixer' in Linux jargon) before opening the \
 recorder window, then restores it upon closing that window.  This means that any changes you make via \
 the sliders will be erased upon exit.  To save the current state, press this button.  The mixer state \
-will be written to the file .snd-mixer which can be deleted to cancel the save."));	   
+will be written to the file .snd-mixer which can be deleted to cancel the save.");	   
 }
 #endif
 
@@ -1323,9 +1323,9 @@ static void rec_size_help_callback(Widget w, XtPointer context, XtPointer info)
 {
   snd_state *ss = (snd_state *)context;
   snd_help_with_wrap(ss,
-		     _("Record Input Buffer Size"),
-_("This field sets the size of the recorder's input buffers.  If you are getting clicks, and have already \
-tried everything else (you're writing to a local disk, in the host's native data format), try goofing around with this number."));
+		     "Record Input Buffer Size",
+"This field sets the size of the recorder's input buffers.  If you are getting clicks, and have already \
+tried everything else (you're writing to a local disk, in the host's native data format), try goofing around with this number.");
 }
 
 static void make_file_info_pane(snd_state *ss, recorder_info *rp, Widget file_pane, int ndevs)
@@ -1865,13 +1865,13 @@ static void button_matrix_help_callback(Widget w, XtPointer context, XtPointer i
 {
   snd_state *ss = (snd_state *)context;
   snd_help_with_wrap(ss, 
-		     _("Channel Matrix"),
-_("This set of buttons controls which amplitude sliders are visible in the pane.  To conserve screen space, only \
+		     "Channel Matrix",
+"This set of buttons controls which amplitude sliders are visible in the pane.  To conserve screen space, only \
 the most commonly used sliders are visible by default, but you can press the button corresponding to the slider you want \
 at any time.  It is also possible to drag the mouse through a row or column, setting (button 1) or unsetting (button 2) \
 buttons as you go.  Click in the corner (the '/' label) to set all (button 1) or unset all (button 2). Similarly, click \
 above a column or to the left of a row to set (button 1) or unset (button 2) the entire column or row.  Control-click in \
-the corner to return to the default settings."));
+the corner to return to the default settings.");
 }
 
 static Widget make_recorder_slider(snd_state *ss, PANE *p, AMP *a, Widget last_slider, int input)

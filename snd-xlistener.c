@@ -14,10 +14,11 @@ static Widget completion_help_dialog = NULL, completion_help_list = NULL;
 static void completion_help_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_state *ss = (snd_state *)context;
-  snd_help(ss, _("completion"),
-_("These are the completions that Snd thinks might be likely.\n\
+  snd_help(ss, 
+	   "completion",
+"These are the completions that Snd thinks might be likely.\n\
 If you select one, it will be used to complete the current name.\n\
-"));
+");
 }
 
 static void completion_help_browse_callback(Widget w, XtPointer context, XtPointer info) 

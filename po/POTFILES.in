@@ -1,10 +1,10 @@
-audio.c
-clm.c
-clm2xen.c
-gl.c
-headers.c
-io.c
-midi.c
+# audio.c
+# clm.c
+# clm2xen.c
+# gl.c
+# headers.c
+# io.c
+# midi.c
 snd-axis.c
 snd-chn.c
 snd-completion.c
@@ -36,11 +36,8 @@ snd-gregion.c
 snd-gsnd.c
 snd-gutils.c
 snd-gxbitmaps.c
-snd-gxbitmaps.c
-snd-gxcolormaps.c
 snd-gxcolormaps.c
 snd-gxen.c
-snd-gxutils.c
 snd-gxutils.c
 snd-help.c
 snd-io.c
@@ -82,9 +79,9 @@ snd-xsnd.c
 snd-xutils.c
 snd-xxen.c
 snd.c
-sndlib2xen.c
-sound.c
-vct.c
-xen.c
-xg.c
-xm.c
+# sndlib2xen.c
+# sound.c
+# vct.c
+# xen.c
+# xg.c
+# xm.c

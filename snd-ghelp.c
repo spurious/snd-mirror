@@ -33,15 +33,15 @@ static void create_help_monolog(snd_state *ss)
 				 0,
 				 g_cclosure_new(GTK_SIGNAL_FUNC(delete_help), (gpointer)ss, 0),
 				 0);
-  gtk_window_set_title(GTK_WINDOW(help_dialog), "Help");
+  gtk_window_set_title(GTK_WINDOW(help_dialog), _("Help"));
   sg_make_resizable(help_dialog);
   set_background(help_dialog, (ss->sgx)->basic_color);
   gtk_container_set_border_width (GTK_CONTAINER(help_dialog), 10);
   gtk_window_resize(GTK_WINDOW(help_dialog), HELP_COLUMNS * 9, HELP_ROWS * 20);
   gtk_widget_realize(help_dialog);
 
-  help_button = gtk_button_new_with_label("Help");
-  ok_button = gtk_button_new_with_label("Ok");
+  help_button = gtk_button_new_with_label(_("Help"));
+  ok_button = gtk_button_new_with_label(_("Ok"));
   gtk_box_pack_start(GTK_BOX(GTK_DIALOG(help_dialog)->action_area), ok_button, FALSE, TRUE, 20);
   gtk_box_pack_end(GTK_BOX(GTK_DIALOG(help_dialog)->action_area), help_button, FALSE, TRUE, 20);
   g_signal_connect_closure_by_id(GTK_OBJECT(ok_button),
@@ -67,7 +67,7 @@ static GtkWidget *snd_help_1(snd_state *ss, char *subject, char *helpstr, int wi
   /* place help string in scrollable help window */
   /* if window is already active, add this help at the top and reposition */
   if (!(help_dialog)) create_help_monolog(ss); else raise_dialog(help_dialog);
-  mus_snprintf(help_window_label, LABEL_BUFFER_SIZE, "%s help", subject);
+  mus_snprintf(help_window_label, LABEL_BUFFER_SIZE, _("%s help"), subject);
   gtk_window_set_title(GTK_WINDOW(help_dialog), help_window_label);
   gtk_text_buffer_set_text(gtk_text_view_get_buffer(GTK_TEXT_VIEW(help_text)), "", 0);
   if (with_wrap)
@@ -103,17 +103,17 @@ static void create_help_monolog(snd_state *ss)
 				 0,
 				 g_cclosure_new(GTK_SIGNAL_FUNC(delete_help), (gpointer)ss, 0),
 				 0);
-  gtk_window_set_title(GTK_WINDOW(help_dialog), "Help");
+  gtk_window_set_title(GTK_WINDOW(help_dialog), _("Help"));
   sg_make_resizable(help_dialog);
   set_background(help_dialog, (ss->sgx)->basic_color);
   gtk_container_set_border_width (GTK_CONTAINER(help_dialog), 10);
   gtk_window_resize(GTK_WINDOW(help_dialog), 500, 500);
   gtk_widget_realize(help_dialog);
 
-  help_button = gtk_button_new_with_label("Help");
-  ok_button = gtk_button_new_with_label("Ok");
-  back_button = gtk_button_new_with_label("Back");
-  forward_button = gtk_button_new_with_label("Forward");
+  help_button = gtk_button_new_with_label(_("Help"));
+  ok_button = gtk_button_new_with_label(_("Ok"));
+  back_button = gtk_button_new_with_label(_("Back"));
+  forward_button = gtk_button_new_with_label(_("Forward"));
   gtk_box_pack_start(GTK_BOX(GTK_DIALOG(help_dialog)->action_area), ok_button, FALSE, TRUE, 20);
   gtk_box_pack_start(GTK_BOX(GTK_DIALOG(help_dialog)->action_area), back_button, FALSE, TRUE, 20);
   gtk_box_pack_start(GTK_BOX(GTK_DIALOG(help_dialog)->action_area), forward_button, FALSE, TRUE, 20);
@@ -156,7 +156,7 @@ static GtkWidget *snd_help_1(snd_state *ss, char *subject, char *helpstr, int wi
   int i, len, lim;
   char *url, *urldir;
   if (!(help_dialog)) create_help_monolog(ss); else raise_dialog(help_dialog);
-  mus_snprintf(help_window_label, LABEL_BUFFER_SIZE, "%s help", subject);
+  mus_snprintf(help_window_label, LABEL_BUFFER_SIZE, _("%s help"), subject);
   gtk_window_set_title(GTK_WINDOW(help_dialog), help_window_label);
   len = snd_strlen(helpstr);
   if (len < 15) lim = len; else lim = 15;

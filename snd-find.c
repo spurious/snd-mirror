@@ -198,7 +198,7 @@ static off_t cursor_find_forward(snd_info *sp, chan_info *cp, int count)
   ss = sp->state;
   if (search_in_progress) 
     {
-      report_in_minibuffer(sp, "search in progress");
+      report_in_minibuffer(sp, _("search in progress"));
       return(-1);
     }
   search_in_progress = TRUE;

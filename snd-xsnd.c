@@ -67,199 +67,199 @@ Widget w_snd_name(snd_info *sp)   {return((sp->sgx)->snd_widgets[W_name]);}
 static void info_help_callback(Widget w, XtPointer context, XtPointer info)
 {
   snd_help_with_url_and_wrap((snd_state *)context, 
-			     _("Minibuffer"), "#panelayout",
-_("This is the 'minibuffer', to use Emacs jargon.  Although it looks inert and wasted,  \
+			     "Minibuffer", "#panelayout",
+"This is the 'minibuffer', to use Emacs jargon.  Although it looks inert and wasted,  \
 there is in fact a text window lurking beneath that has access to the Lisp evaluator, not \
-to mention much of the innards of the Snd program."));
+to mention much of the innards of the Snd program.");
 }
 
 static void play_help_callback(Widget w, XtPointer context, XtPointer info)
 {  
   snd_help_with_url_and_wrap((snd_state *)context, 
-			     _("Play"), "#play",
-_("Snd can play any number of sounds at once or should be able to anyway.  A sort of \
-clumsy realtime mixer, although it was not intended to fill that role."));
+			     "Play", "#play",
+"Snd can play any number of sounds at once or should be able to anyway.  A sort of \
+clumsy realtime mixer, although it was not intended to fill that role.");
 }
 
 static void info_sep_help_callback(Widget w, XtPointer context, XtPointer info)        
 {  
   snd_help_with_wrap((snd_state *)context, 
-		     _("Name Separator"), 
-_("When reading a very large file, Snd tries to keep an overview at hand of the channels so \
+		     "Name Separator", 
+"When reading a very large file, Snd tries to keep an overview at hand of the channels so \
 that you can move around quickly in very large data sets; when first read in, these overviews \
 are set underway, and when they are finally ready for use, the line after the file name \
-appears.  If you try to zoom out to a large view before the separator line appears, the graphics update process may be slow. "));
+appears.  If you try to zoom out to a large view before the separator line appears, the graphics update process may be slow. ");
 }
 
 static void amp_help_callback(Widget w, XtPointer context, XtPointer info)             
 {
   snd_help_with_wrap((snd_state *)context, 
-		     _("Amp"), 
-_("This scrollbar controls the amplitude at which the sound is played.  Click the \
-amp label to return to 1.0. Control-Click returns to the previous value."));
+		     "Amp", 
+"This scrollbar controls the amplitude at which the sound is played.  Click the \
+amp label to return to 1.0. Control-Click returns to the previous value.");
 }
 
 static void srate_help_callback(Widget w, XtPointer context, XtPointer info)           
 {
   snd_help_with_url_and_wrap((snd_state *)context, 
-			     _("Srate"), "#speed", 
-_("This scrollbar controls the sampling rate at which the sound is played.  The arrow \
-controls the direction (forwards or backwards) of playback.  Label clicks behave as with amp."));
+			     "Srate", "#speed", 
+"This scrollbar controls the sampling rate at which the sound is played.  The arrow \
+controls the direction (forwards or backwards) of playback.  Label clicks behave as with amp.");
 }
 
 static void srate_arrow_help_callback(Widget w, XtPointer context, XtPointer info)     
 {
   snd_help_with_wrap((snd_state *)context, 
-		     _("Srate Arrow"),
-_("This button determines which direction the sound file is played.  When pointing \
-to the right, the sound is played forwards;  to the left, backwards."));
+		     "Srate Arrow",
+"This button determines which direction the sound file is played.  When pointing \
+to the right, the sound is played forwards;  to the left, backwards.");
 }
 
 static void expand_help_callback(Widget w, XtPointer context, XtPointer info)          
 {  
   snd_help_with_url_and_wrap((snd_state *)context, 
-			     _("Expand"), "#expand",
-_("This scrollbar controls the tempo at which the sound is played back, using granular \
-synthesis. The expand button must be down to get any expansion. Label clicks as in amp."));
+			     "Expand", "#expand",
+"This scrollbar controls the tempo at which the sound is played back, using granular \
+synthesis. The expand button must be down to get any expansion. Label clicks as in amp.");
 }
 
 static void contrast_help_callback(Widget w, XtPointer context, XtPointer info)        
 {  
   snd_help_with_url((snd_state *)context, 
-		    _("Contrast"), "#contrast",
-_("This scrollbar controls the amount of 'contrast enhancement' applied during \
-playback.  The contrast button must be down to get any effect.  Label clicks as in amp."));
+		    "Contrast", "#contrast",
+"This scrollbar controls the amount of 'contrast enhancement' applied during \
+playback.  The contrast button must be down to get any effect.  Label clicks as in amp.");
 }
 
 static void revscl_help_callback(Widget w, XtPointer context, XtPointer info)          
 {  
   snd_help_with_url_and_wrap((snd_state *)context, 
-			     _("Reverb amount"), "#reverb",
-_("This scrollbar controls the amount of the sound that is fed into the reverberator. \
-The reverb button must be down to get any reverb during playback.  Label clicks as in amp."));
+			     "Reverb amount", "#reverb",
+"This scrollbar controls the amount of the sound that is fed into the reverberator. \
+The reverb button must be down to get any reverb during playback.  Label clicks as in amp.");
 }
 
 static void revlen_help_callback(Widget w, XtPointer context, XtPointer info)          
 {
   snd_help_with_url_and_wrap((snd_state *)context, 
-			     _("Reverb length"), "#reverb", 
-_("This scrollbar controls the lengths of the various delay lines in the reverb. \
+			     "Reverb length", "#reverb", 
+"This scrollbar controls the lengths of the various delay lines in the reverb. \
 It only takes effect when the reverb is created, that is, only when the play \
-operation starts from silence.  Label clicks as in amp."));
+operation starts from silence.  Label clicks as in amp.");
 }
 
 static void filter_help_callback(Widget w, XtPointer context, XtPointer info)          
 {
   snd_help_with_wrap((snd_state *)context, 
-		     _("Filter"), 
-_("The Snd filter is an FIR filter of arbitrary order.  You specify the filter you want by \
+		     "Filter", 
+"The Snd filter is an FIR filter of arbitrary order.  You specify the filter you want by \
 defining the frequency response as an envelope in the 'env' window; set the desired order in \
 the 'order' window; then turn it on by pushing the filter button at the right.  The filter \
 design algorithm uses frequency sampling. The higher the order, the closer the filter \
 can approximate the envelope you draw. You can also specify the filter coefficients \
 in a file of floats, then load them into the Snd filter by typing the file name in the \
-filter envelope text window."));
+filter envelope text window.");
 }
 
 static void filter_order_help_callback(Widget w, XtPointer context, XtPointer info)    
 {
   snd_help_with_wrap((snd_state *)context, 
-		     _("Filter Order"), 
-_("The filter order determines how closely the filter approximates the frequency response curve you drew in the 'env' window. "));
+		     "Filter Order", 
+"The filter order determines how closely the filter approximates the frequency response curve you drew in the 'env' window. ");
 }
 
 static void filter_envelope_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_help_with_wrap((snd_state *)context, 
-		     _("Filter Envelope"), 
-_("The filter envelope is a line-segment description of the frequency response \
+		     "Filter Envelope", 
+"The filter envelope is a line-segment description of the frequency response \
 you want.  It consists of a sequence of x, y pairs; normally the x axis goes \
 from 0 to .5 or 0 to 1.0.  For example, a low-pass filter envelope could be: \
-0.0 1.0 .25 1.0 .5 0.0 1.0 0.0"));
+0.0 1.0 .25 1.0 .5 0.0 1.0 0.0");
 }
 
 static void name_help_callback(Widget w, XtPointer context, XtPointer info)            
 {
   snd_help_with_wrap((snd_state *)context,
-		     _("Minibuffer"),
-_("This portion of the snd display has several parts: the sound file name, with an asterisk if \
+		     "Minibuffer",
+"This portion of the snd display has several parts: the sound file name, with an asterisk if \
 the file has unsaved edits; a minibuffer for various expression evaluations; a sync button \
 that causes operations on one channel to be applied to all channels; and a play button \
 that causes the sound to be played.  The lower portion of the pane, normally hidden, \
-contains a variety of sound manipulation controls that can be applied while it is playing."));
+contains a variety of sound manipulation controls that can be applied while it is playing.");
 }
 
 static void expand_button_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
-  snd_help((snd_state *)context, _("Expand Button"), _("This button turns on expansion (granular synthesis time scaling)\n"));
+  snd_help((snd_state *)context, "Expand Button", "This button turns on expansion (granular synthesis time scaling)\n");
 }
 
 static void contrast_button_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
-  snd_help((snd_state *)context, _("Contrast Button"), _("This button turns on contrast enhancement (a form of companding)\n"));
+  snd_help((snd_state *)context, "Contrast Button", "This button turns on contrast enhancement (a form of companding)\n");
 }
 
 static void reverb_button_help_callback(Widget w, XtPointer context, XtPointer info)
 {
-  snd_help((snd_state *)context, _("Reverb Button"), _("This button turns on reverberation (Nrev)\n"));
+  snd_help((snd_state *)context, "Reverb Button", "This button turns on reverberation (Nrev)\n");
 }
 
 static void filter_button_help_callback(Widget w, XtPointer context, XtPointer info)
 {
-  snd_help((snd_state *)context, _("Filter Button"), _("This button turns on the filter\n"));
+  snd_help((snd_state *)context, "Filter Button", "This button turns on the filter\n");
 }
 
 static void filter_dB_help_callback(Widget w, XtPointer context, XtPointer info)
 {
   snd_help_with_wrap((snd_state *)context, 
-		     _("Filter dB"),
-_("This button chooses between dB and linear y axis in the frequency response graph"));
+		     "Filter dB",
+"This button chooses between dB and linear y axis in the frequency response graph");
 }
 
 static void sync_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_help_with_wrap((snd_state *)context,
-		     _("Sync Button"),
-_("This button causes edit operations on one channel to be applied to all channels at the same time."));
+		     "Sync Button",
+"This button causes edit operations on one channel to be applied to all channels at the same time.");
 }
 
 static void unite_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_help_with_wrap((snd_state *)context,
-		     _("Unite Button"),
-_("This button causes all channels to be displayed in one window, sharing the various channel controls.  Two extra scrollbars on \
+		     "Unite Button",
+"This button causes all channels to be displayed in one window, sharing the various channel controls.  Two extra scrollbars on \
 the right provide scroll and zoom for the overall set of channel graphs. The default multichannel display style can be set in \
-the Snd initialization file by setting the variable " S_channel_style "."));
+the Snd initialization file by setting the variable " S_channel_style ".");
 }
 
 
 static void apply_help_callback(Widget w, XtPointer context, XtPointer info)
 {
   snd_help_with_wrap((snd_state *)context,
-		     _("Apply"),
-_("The Apply button saves the last recorded run over the current file (see Record) as an edit of the current file."));
+		     "Apply",
+"The Apply button saves the last recorded run over the current file (see Record) as an edit of the current file.");
 }
 
 static void reset_help_callback(Widget w, XtPointer context, XtPointer info)
 {
   snd_help_with_wrap((snd_state *)context,
-		     _("Reset"),
-_("The 'Reset' button clears the control panel settings to the no-change state."));
+		     "Reset",
+"The 'Reset' button clears the control panel settings to the no-change state.");
 }
 
 static void remember_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_help_with_wrap((snd_state *)context,
-		     _("Remember"),
-_("The 'Remember' button saves the current control panel state for a subsequent 'Restore'."));
+		     "Remember",
+"The 'Remember' button saves the current control panel state for a subsequent 'Restore'.");
 }
 
 static void restore_help_callback(Widget w, XtPointer context, XtPointer info)
 {
   snd_help_with_wrap((snd_state *)context,
-		     _("Restore"),
-_("The 'Restore' button returns the control panel to the state at the time of the last 'Remember', or the initial state if there \
-has been no 'Remember'."));
+		     "Restore",
+"The 'Restore' button returns the control panel to the state at the time of the last 'Remember', or the initial state if there \
+has been no 'Remember'.");
 }
 
 void goto_minibuffer(snd_info *sp)
@@ -491,7 +491,7 @@ void toggle_direction_arrow(snd_info *sp, int state)
 #define EXPAND_SCROLLBAR_MULT (.9697 / SCROLLBAR_MAX)
 #define EXPAND_SCROLLBAR_SPLIT (0.1 * SCROLLBAR_MAX)
 
-/* TODO: these STR_decimal things should eb done correctly */
+/* TODO: these STR_decimal things should be done correctly */
 static char expand_number_buffer[5] ={'1', STR_decimal, '0', '0', '\0'};
 
 static int snd_expand_to_int(Float ep)
@@ -898,9 +898,9 @@ void set_filter_text(snd_info *sp, char *str)
 static void filter_drawer_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_help_with_wrap((snd_state *)context, 
-		     _("Filter Frequency Response"),
-_("This graph shows the current filter frequency response envelope, and the actual response (dependent on the filter order). \
-See the envelope editor documentation for editing directions."));
+		     "Filter Frequency Response",
+"This graph shows the current filter frequency response envelope, and the actual response (dependent on the filter order). \
+See the envelope editor documentation for editing directions.");
 }
 
 #ifdef MAC_OSX
@@ -1010,15 +1010,15 @@ static void filter_order_down_callback(Widget w, XtPointer context, XtPointer in
 static void filter_order_up_help_callback(Widget w, XtPointer context, XtPointer info)
 {
   snd_help_with_wrap((snd_state *)context,
-		     _("Filter Order Increment Button"),
-_("This button causes the filter order to be incremented"));
+		     "Filter Order Increment Button",
+"This button causes the filter order to be incremented");
 }
 
 static void filter_order_down_help_callback(Widget w, XtPointer context, XtPointer info)
 {
   snd_help_with_wrap((snd_state *)context,
-		     _("Filter Order Decrement Button"),
-_("This button causes the filter order to be decremented"));
+		     "Filter Order Decrement Button",
+"This button causes the filter order to be decremented");
 }
 
 static void filter_activate_callback(Widget w, XtPointer context, XtPointer info)
@@ -1869,12 +1869,12 @@ static snd_info *add_sound_window_with_parent (Widget parent, char *filename, sn
 	  attributes.valuemask = XpmColorSymbols | XpmDepth | XpmColormap | XpmVisual;
 	  pixerr = XpmCreatePixmapFromData(dp, wn, mini_lock_bits(), &mini_lock, &shape1, &attributes);
 	  if (pixerr != XpmSuccess) 
-	    snd_error(_("lock pixmap trouble: %s\n"), XpmGetErrorString(pixerr));
+	    snd_error("lock pixmap trouble: %s\n", XpmGetErrorString(pixerr));
 	  else
 	    {
 	      pixerr = XpmCreatePixmapFromData(dp, wn, blank_bits(), &blank_pixmap, &shape1, &attributes);
 	      if (pixerr != XpmSuccess) 
-		snd_error(_("blank pixmap trouble: %s\n"), XpmGetErrorString(pixerr));
+		snd_error("blank pixmap trouble: %s\n", XpmGetErrorString(pixerr));
 	      else
 		{
 		  for (k = 0; k < 15; k++)
@@ -1882,13 +1882,13 @@ static snd_info *add_sound_window_with_parent (Widget parent, char *filename, sn
 		      pixerr = XpmCreatePixmapFromData(dp, wn, mini_bomb_bits(k), &(mini_bombs[k]), &shape2, &attributes);
 		      if (pixerr != XpmSuccess) 
 			{
-			  snd_error(_("bomb pixmap trouble: %s\n"), XpmGetErrorString(pixerr)); 
+			  snd_error("bomb pixmap trouble: %s\n", XpmGetErrorString(pixerr)); 
 			  break;
 			}
 		      pixerr = XpmCreatePixmapFromData(dp, wn, mini_glass_bits(k), &(mini_glasses[k]), &shape3, &attributes);
 		      if (pixerr != XpmSuccess) 
 			{
-			  snd_error(_("glass pixmap trouble: %s\n"), XpmGetErrorString(pixerr)); 
+			  snd_error("glass pixmap trouble: %s\n", XpmGetErrorString(pixerr)); 
 			  break;
 			}
 		    }
@@ -3305,6 +3305,20 @@ widgets: (0)pane (1)name (2)control-panel (3)minibuffer (4)play-button (5)filter
 	           XEN_EMPTY_LIST)))))))))));
 }
 
+#if DEBUGGING
+static XEN g_sash(void)
+{
+  int i;
+  XEN lst = XEN_EMPTY_LIST;
+  snd_protect(lst);
+  for (i = 0; i < sashes_size; i++)
+    if (sashes[i])
+      lst = XEN_CONS(XEN_WRAP_WIDGET(sashes[i]), lst);
+  snd_unprotect(lst);
+  return(lst);
+}
+#endif
+
 #ifdef XEN_ARGIFY_1
   XEN_ARGIFY_1(g_sound_widgets_w, g_sound_widgets)
 #else
@@ -3314,6 +3328,9 @@ widgets: (0)pane (1)name (2)control-panel (3)minibuffer (4)play-button (5)filter
 void g_init_gxsnd(void)
 {
   XEN_DEFINE_PROCEDURE(S_sound_widgets, g_sound_widgets_w, 0, 1, 0, H_sound_widgets);
+#if DEBUGGING && HAVE_GUILE
+  XEN_DEFINE_PROCEDURE("top-sash", g_sash, 0, 0, 0, "autotest func");
+#endif
 }
 
 

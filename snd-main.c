@@ -1,10 +1,6 @@
 #include "snd.h"
 #include "clm2xen.h"
 
-#if HAVE_LOCALE_H
-  #include <locale.h>
-#endif
-
 #if HAVE_RUBY
   #define TO_VAR_NAME(Str) xen_scheme_constant_to_ruby(Str)
   #define TO_PROC_NAME(Str) xen_scheme_procedure_to_ruby(Str)
@@ -664,7 +660,7 @@ int handle_next_startup_arg(snd_state *ss, int auto_open_ctr, char **auto_open_f
 	      auto_open_ctr++;
 	      if ((auto_open_ctr >= args) ||
 		  (auto_open_file_names[auto_open_ctr] == NULL))
-		snd_error("%s but no directory to preload?", argname);
+		snd_error(_("%s but no directory to preload?"), argname);
 	      else add_directory_to_prevlist(ss, auto_open_file_names[auto_open_ctr]);
 	    }
 	  else

@@ -18,8 +18,6 @@ dB display in VU meters (in the record dialog -- the dB value is ready
 dlocsig from CLM + a path envelope editor dialog
 maxf.ins and strad.ins -> scm
 
-Gettext support, if there's interest. 
-
 A "master volume" control in the recorder.
 
 user-interface extension projects from snd-motif.scm:

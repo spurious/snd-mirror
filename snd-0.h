@@ -76,7 +76,7 @@
   #define STATFS_ARGS 2
 #endif
 
-#if ENABLE_NLS
+#if ENABLE_NLS && HAVE_GETTEXT
   #include "gettext.h"
   #define _(String) gettext (String)
   #define gettext_noop(String) String

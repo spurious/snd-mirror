@@ -50,7 +50,8 @@ static void dismiss_completion_callback(GtkWidget *w, gpointer context)
 
 static void help_completion_callback(GtkWidget *w, gpointer context)
 {
-  snd_help(get_global_state(), "completion",
+  snd_help(get_global_state(), 
+	   "completion",
 "These are the completions that Snd thinks might be likely.\n\
 If you select one, it will be used to complete the current name.\n\
 ");
@@ -75,15 +76,15 @@ static void start_completion_dialog(int num_items, char **items)
 				     0,
 				     g_cclosure_new(GTK_SIGNAL_FUNC(delete_completion_dialog), (gpointer)ss, 0),
 				     0);
-      gtk_window_set_title(GTK_WINDOW(completion_dialog), "Completions");
+      gtk_window_set_title(GTK_WINDOW(completion_dialog), _("Completions"));
       sg_make_resizable(completion_dialog);
       set_background(completion_dialog, (ss->sgx)->basic_color);
       gtk_container_set_border_width (GTK_CONTAINER(completion_dialog), 4);
       gtk_widget_realize(completion_dialog);
       gtk_window_resize(GTK_WINDOW(completion_dialog), 260, 200);
 
-      help_button = gtk_button_new_with_label("Help");
-      dismiss_button = gtk_button_new_with_label("Dismiss");
+      help_button = gtk_button_new_with_label(_("Help"));
+      dismiss_button = gtk_button_new_with_label(_("Dismiss"));
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(completion_dialog)->action_area), dismiss_button, FALSE, TRUE, 10);
       gtk_box_pack_end(GTK_BOX(GTK_DIALOG(completion_dialog)->action_area), help_button, FALSE, TRUE, 10);
       g_signal_connect_closure_by_id(GTK_OBJECT(dismiss_button),
@@ -99,7 +100,7 @@ static void start_completion_dialog(int num_items, char **items)
       gtk_widget_show(dismiss_button);
       gtk_widget_show(help_button);
       first_time = TRUE;
-      completion_list = sg_make_list("Completions", 
+      completion_list = sg_make_list(_("Completions"), 
 				     GTK_DIALOG(completion_dialog)->vbox,
 				     CONTAINER_ADD,
 				     (gpointer)ss,
@@ -897,11 +898,11 @@ void handle_listener(snd_state *ss, int open)
       if (!listener_text)
 	make_command_widget(ss, 100);
       else gtk_widget_show(listener_text);
-      set_view_listener_label("Hide listener");
+      set_view_listener_label(_("Hide listener"));
     }
   else
     {
-      set_view_listener_label("Show listener");
+      set_view_listener_label(_("Show listener"));
       gtk_widget_hide(listener_text);
     }
 }

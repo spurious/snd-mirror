@@ -344,11 +344,11 @@ static void save_button_pressed(Widget w, XtPointer context, XtPointer info)
 static void save_button_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_help_with_wrap((snd_state *)context,
-		     _("Save Current Envelope"),
-_("The envelope in the editor is not saved until you press the 'save' button.  Once saved, it can be \
+		     "Save Current Envelope",
+"The envelope in the editor is not saved until you press the 'save' button.  Once saved, it can be \
 used in other portions of Snd (for example, as the argument to C-x C-a), or saved to a file via the \
 Option menu Save State option.  Similarly, a file of CLM (lisp) envelope definitions can be loaded \
-using load."));
+using load.");
 }
 
 static void apply_enved_callback(Widget w, XtPointer context, XtPointer info) 
@@ -393,9 +393,9 @@ static void undo_and_apply_enved_callback(Widget w, XtPointer context, XtPointer
 static void undo_and_apply_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_help_with_wrap((snd_state *)context,
-		     _("Undo and Apply"),
-_("This button first tries to undo a previous apply then calls apply, the point obviously being to make \
-it easy to retry an envelope after some minor change."));
+		     "Undo and Apply",
+"This button first tries to undo a previous apply then calls apply, the point obviously being to make \
+it easy to retry an envelope after some minor change.");
 }
 
 static void reflect_segment_state (snd_state *ss)
@@ -580,42 +580,42 @@ static void drawer_resize(Widget w, XtPointer context, XtPointer info)
 static void drawer_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_help_with_wrap((snd_state *)context,
-		     _("Envelope Editor Display"),
-_("This portion of the envelope editor displays either the envelope currently being edited, or all currently \
+		     "Envelope Editor Display",
+"This portion of the envelope editor displays either the envelope currently being edited, or all currently \
 loaded envelopes.  In the latter case, click an envelope to select it, click the selected envelope to load it into \
 the editor portion.  In the former case, click anywhere in the graph to place a new breakpoint at that point; click \
 an existing point to delete it; drag an existing point to move it.  Put some envelope name in the text field and click \
 the 'save' button to save the current envelope under the chosen name.  Unlimited undo/redo are available through the \
 'undo' and 'redo' buttons.  Set the 'w' button to see the currently active sound under the envelope; set the 'f' button \
 to apply the envelope to the sound's frequency, rather than amplitude; set the 'c' button to clip mouse motion to the current \
-y axis bounds."));
+y axis bounds.");
 }
 
 static void text_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_help_with_wrap((snd_state *)context,
-		     _("Envelope Name"),
-_("To load an exisiting envelope into the editor,  type its name in this field; to give a name to \
+		     "Envelope Name",
+"To load an exisiting envelope into the editor,  type its name in this field; to give a name to \
 the envelope as it is currently defined in the graph viewer, type its name in this field, then \
 either push return or the 'save' button; to define a new envelope by its break point values, give the \
 values in this field as though it were a defvar call in M-X -- that is, '(0 0 1 1)<cr> in this \
-field fires up a ramp as a new envelope."));
+field fires up a ramp as a new envelope.");
 }
 
 static void scrolled_list_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_help_with_wrap((snd_state *)context,
-		     _("Loaded Envelope Names"),
-_("This is the list of all currently loaded envelopes by name.  When a new envelope is saved, its name is \
+		     "Loaded Envelope Names",
+"This is the list of all currently loaded envelopes by name.  When a new envelope is saved, its name is \
 added to the end of the list.  Click a name to select that envelope; click the selected envelope to load it \
-into the editor.  The selected envelope is displayed in red."));
+into the editor.  The selected envelope is displayed in red.");
 }
 
 static void brkpt_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_help_with_wrap((snd_state *)context,
-		     _("Breakpoint Data"),
-_("This portion ofthe envelope editor displays the current breakpoint values while the mouse is dragging a point"));
+		     "Breakpoint Data",
+"This portion ofthe envelope editor displays the current breakpoint values while the mouse is dragging a point");
 }
 
 static void show_button_pressed(Widget w, XtPointer context, XtPointer info) 
@@ -629,11 +629,11 @@ static void show_button_pressed(Widget w, XtPointer context, XtPointer info)
 static void show_button_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_help_with_wrap((snd_state *)context,
-		     _("View Envs or Edit Env"),
-_("There are two sides to the Envelope Editor, the editor itself, and an envelope viewer.  This button \
+		     "View Envs or Edit Env",
+"There are two sides to the Envelope Editor, the editor itself, and an envelope viewer.  This button \
 chooses which is active.  In the envelope viewer,  all currently loaded envelopes are displayed, and \
 you can select one by clicking it; click the selected envelope to load it into the editor portion.  The \
-other choice is the editor which displays the current state of the envelope being edited."));
+other choice is the editor which displays the current state of the envelope being edited.");
 }
 
 static void selection_button_pressed(Widget s, XtPointer context, XtPointer info) 
@@ -705,15 +705,15 @@ static void mix_button_pressed(Widget w, XtPointer context, XtPointer info)
 static void selection_button_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_help_with_wrap((snd_state *)context,
-		     _("Apply to Selection or Sound"),
-_("The 'Apply' button can affect either the current selection, the current sound, or the currently selected mix."));
+		     "Apply to Selection or Sound",
+"The 'Apply' button can affect either the current selection, the current sound, or the currently selected mix.");
 }
 
 static void mix_button_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_help_with_wrap((snd_state *)context,
-		     _("Apply to Mix"),
-_("The 'Apply' button can affect either the currently selected mix, or the entire current sound, or the current selection."));
+		     "Apply to Mix",
+"The 'Apply' button can affect either the currently selected mix, or the entire current sound, or the current selection.");
 }
 
 static void delete_button_pressed(Widget w, XtPointer context, XtPointer info) 
@@ -740,8 +740,8 @@ static void delete_button_pressed(Widget w, XtPointer context, XtPointer info)
 static void delete_button_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_help_with_wrap((snd_state *)context,
-		     _("Delete Selected Envelope"),
-_("If an envelope is selected in the envs list, this will remove it"));
+		     "Delete Selected Envelope",
+"If an envelope is selected in the envs list, this will remove it");
 }
 
 static void revert_button_pressed(Widget w, XtPointer context, XtPointer info) 
@@ -755,9 +755,9 @@ static void revert_button_pressed(Widget w, XtPointer context, XtPointer info)
 static void revert_button_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_help_with_wrap((snd_state *)context,
-		     _("Revert to Original Envelope"),
-_("The revert button undoes all the edits back to the original state, and if clicked again at that \
-point, clears the editor to a clean state (that is, the envelope '(0 0 1 0))."));
+		     "Revert to Original Envelope",
+"The revert button undoes all the edits back to the original state, and if clicked again at that \
+point, clears the editor to a clean state (that is, the envelope '(0 0 1 0)).");
 }
 
 static void undo_button_pressed(Widget w, XtPointer context, XtPointer info) 
@@ -771,9 +771,9 @@ static void undo_button_pressed(Widget w, XtPointer context, XtPointer info)
 static void undo_button_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_help_with_wrap((snd_state *)context,
-		     _("Undo Edit"),
-_("The undo button undoes the previous edit.  The list of edits is not cleared until you changed to \
-a new envelope, so you can undo and redo every edit without limitation."));
+		     "Undo Edit",
+"The undo button undoes the previous edit.  The list of edits is not cleared until you changed to \
+a new envelope, so you can undo and redo every edit without limitation.");
 }
 
 static void redo_button_pressed(Widget w, XtPointer context, XtPointer info) 
@@ -787,9 +787,9 @@ static void redo_button_pressed(Widget w, XtPointer context, XtPointer info)
 static void redo_button_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_help_with_wrap((snd_state *)context,
-		     _("Redo Edit"),
-_("The redo button redoes an edit that was previously undone.  There is no limit on the number of edits \
-all_that can be undone and redone."));
+		     "Redo Edit",
+"The redo button redoes an edit that was previously undone.  There is no limit on the number of edits \
+all_that can be undone and redone.");
 }
 
 static void reflect_apply_state (snd_state *ss)
@@ -821,11 +821,11 @@ static void freq_button_callback(Widget w, XtPointer context, XtPointer info)
 static void freq_button_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_help_with_wrap((snd_state *)context,
-		     _("Apply Envelope to Spectrum"),
-_("When the 'Apply' button is pressed, the envelope in the editor window is applied to the current sound \
+		     "Apply Envelope to Spectrum",
+"When the 'Apply' button is pressed, the envelope in the editor window is applied to the current sound \
 and any sounds sync'd to it. If this button is set,  the envelope is interpreted as a frequency response \
 curve, and used to design an FIR filter that is then applied to the current sound. The order of the filter \
-is determined by the variable " S_enved_filter_order " which defaults to 40."));
+is determined by the variable " S_enved_filter_order " which defaults to 40.");
 }
 
 static void amp_button_callback(Widget w, XtPointer context, XtPointer info) 
@@ -840,9 +840,9 @@ static void amp_button_callback(Widget w, XtPointer context, XtPointer info)
 static void amp_button_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_help_with_wrap((snd_state *)context,
-		     _("Apply Envelope to Amplitude"),
-_("When the 'Apply' button is pressed, the envelope in the editor window is applied to the current sound \
-and any sounds sync'd to it. If this button is set,  the envelope is interpreted as a amplitude envelope."));
+		     "Apply Envelope to Amplitude",
+"When the 'Apply' button is pressed, the envelope in the editor window is applied to the current sound \
+and any sounds sync'd to it. If this button is set,  the envelope is interpreted as a amplitude envelope.");
 }
 
 static void src_button_callback(Widget w, XtPointer context, XtPointer info) 
@@ -862,9 +862,9 @@ static void reset_button_callback(Widget w, XtPointer context, XtPointer info)
 static void src_button_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_help_with_wrap((snd_state *)context,
-		     _("Apply Envelope to Srate"),
-_("When the 'Apply' button is pressed, the envelope in the editor window is applied to the current sound \
-and any sounds sync'd to it. If this button is set,  the envelope is applied to the sampling rate."));
+		     "Apply Envelope to Srate",
+"When the 'Apply' button is pressed, the envelope in the editor window is applied to the current sound \
+and any sounds sync'd to it. If this button is set,  the envelope is applied to the sampling rate.");
 }
 
 void enved_print(char *name)
@@ -882,9 +882,9 @@ static void print_button_pressed(Widget w, XtPointer context, XtPointer info)
 static void print_button_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_help_with_wrap((snd_state *)context,
-		     _("Print Envelopes"),
-_("The print button causes the current envelope editor display (whether the envelope being edited, or all the \
-envelopes currently loaded) to be saved in a postscript file named aaa.eps.  You can send this to a printer with lpr."));
+		     "Print Envelopes",
+"The print button causes the current envelope editor display (whether the envelope being edited, or all the \
+envelopes currently loaded) to be saved in a postscript file named aaa.eps.  You can send this to a printer with lpr.");
 }
 
 static void env_browse_callback(Widget w, XtPointer context, XtPointer info) 
@@ -907,11 +907,11 @@ static void graph_button_callback(Widget w, XtPointer context, XtPointer info)
 static void graph_button_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_help_with_wrap((snd_state *)context,
-		     _("Show Current Active Channel"),
-_("This button, if set, causes a light-colored version of the current channel's overall data to be displayed \
+		     "Show Current Active Channel",
+"This button, if set, causes a light-colored version of the current channel's overall data to be displayed \
 in the envelope editor window, making it easier to design an envelope to fit the exact contours of the \
 sound.  Since the envelope is always applied to the entire sound, the x-axis bounds in the envelope editor \
-are arbitrary."));
+are arbitrary.");
 }
 
 static void dB_button_callback(Widget w, XtPointer context, XtPointer info) 
@@ -925,8 +925,8 @@ static void dB_button_callback(Widget w, XtPointer context, XtPointer info)
 static void dB_button_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_help_with_wrap((snd_state *)context,
-		     _("Linear or Log Y Axis"),
-_("This button, if set, causes the y axis to be in dB"));
+		     "Linear or Log Y Axis",
+"This button, if set, causes the y axis to be in dB");
 }
 
 static void clip_button_callback(Widget w, XtPointer context, XtPointer info) 
@@ -940,9 +940,9 @@ static void clip_button_callback(Widget w, XtPointer context, XtPointer info)
 static void clip_button_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_help_with_wrap((snd_state *)context,
-		     _("Y Axis Clipped"),
-_("This button, if set, causes break point motion in the y direction to be clipped at the current \
-axis bounds.  If unset, the bounds will try to change to accommodate the current mouse position."));
+		     "Y Axis Clipped",
+"This button, if set, causes break point motion in the y direction to be clipped at the current \
+axis bounds.  If unset, the bounds will try to change to accommodate the current mouse position.");
 }
 
 static void exp_button_callback(Widget w, XtPointer context, XtPointer info) 
@@ -964,8 +964,8 @@ static void exp_button_callback(Widget w, XtPointer context, XtPointer info)
 static void exp_button_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_help_with_wrap((snd_state *)context,
-		     _("Linear or Exponential Segments"),
-_("This button, if set, causes the segments to be drawn with an exponential curve"));
+		     "Linear or Exponential Segments",
+"This button, if set, causes the segments to be drawn with an exponential curve");
 }
 
 static void lin_button_callback(Widget w, XtPointer context, XtPointer info) 
@@ -987,29 +987,29 @@ static void lin_button_callback(Widget w, XtPointer context, XtPointer info)
 static void lin_button_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_help_with_wrap((snd_state *)context,
-		     _("Linear or Exponential Segments"),
-_("This button, if set, causes the segments to be drawn with an straight line."));
+		     "Linear or Exponential Segments",
+"This button, if set, causes the segments to be drawn with an straight line.");
 }
 
 static void base_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_help_with_wrap((snd_state *)context,
-		     _("Exponential Envelope Base"),
-_("This slider sets the base of the exponential used to connect the envelope breakpoints."));
+		     "Exponential Envelope Base",
+"This slider sets the base of the exponential used to connect the envelope breakpoints.");
 }
 
 static void order_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_help_with_wrap((snd_state *)context,
-		     _("Filter Order"),
-_("This text field sets the order of the FIR filter used by the 'flt' envelope."));
+		     "Filter Order",
+"This text field sets the order of the FIR filter used by the 'flt' envelope.");
 }
 
 static void FIR_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_help_with_wrap((snd_state *)context,
-		     _("Filter Type"),
-_("This button sets the type of filter used by the 'flt' envelope -- FIR or FFT."));
+		     "Filter Type",
+"This button sets the type of filter used by the 'flt' envelope -- FIR or FFT.");
 }
 
 #define BASE_MAX 400

@@ -1,9 +1,5 @@
 #include "snd.h"
 
-#if HAVE_LOCALE_H
-  #include <locale.h>
-#endif
-
 /* create Postscript version of graph */
 
 static char *pbuf = NULL;

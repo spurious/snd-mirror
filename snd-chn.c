@@ -1802,7 +1802,7 @@ static int display_transform_peaks(chan_info *ucp, char *filename)
 	  str = (char *)CALLOC(chars + 1, sizeof(char));
 	  fread(str, 1, chars, fd);
 	  snd_fclose(fd, filename);
-	  snd_help(ss, _("fft peaks"), str);
+	  snd_help(ss, "fft peaks", str);
 	  FREE(str);
 	  err = snd_remove(filename, FALSE);
 	  FREE(filename);

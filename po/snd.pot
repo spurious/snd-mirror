@@ -7,14 +7,13 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2003-01-29 15:06-0800\n"
+"POT-Creation-Date: 2003-01-31 09:02-0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=CHARSET\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
 
 #: snd-chn.c:402 snd-menu.c:456
 msgid "time (beats)"
@@ -45,7 +44,7 @@ msgstr ""
 msgid "(len: <PRId64>/%d)"
 msgstr ""
 
-#: snd-chn.c:1724 snd-main.c:538
+#: snd-chn.c:1724 snd-main.c:534
 #, c-format
 msgid "can't write %s: %s"
 msgstr ""
@@ -74,12 +73,8 @@ msgstr ""
 msgid "can't close %s: %s"
 msgstr ""
 
-#: snd-chn.c:1805
-msgid "fft peaks"
-msgstr ""
-
 #: snd-chn.c:1931 snd-chn.c:2353 snd-chn.c:2410 snd-mix.c:2941 snd-mix.c:3047
-#: snd-sig.c:1441 snd-sig.c:1480 snd-xsnd.c:3271 snd-xsnd.c:3272
+#: snd-sig.c:1432 snd-sig.c:1471 snd-xsnd.c:3271 snd-xsnd.c:3272
 msgid "stopped"
 msgstr ""
 
@@ -115,8 +110,8 @@ msgstr ""
 msgid " Hz"
 msgstr ""
 
-#: snd-chn.c:3444 snd-chn.c:3464 snd-xenv.c:1348 snd-xfft.c:758
-#: snd-xsnd.c:2602
+#: snd-chn.c:3444 snd-chn.c:3464 snd-genv.c:1179 snd-gfft.c:555
+#: snd-gsnd.c:1849 snd-xenv.c:1348 snd-xfft.c:758 snd-xsnd.c:2602
 msgid "dB"
 msgstr ""
 
@@ -145,7 +140,12 @@ msgstr ""
 msgid "can't play %s: %s"
 msgstr ""
 
-#: snd-dac.c:1820 snd-dac.c:1873
+#: snd-dac.c:1573
+#, c-format
+msgid "%s: can't read direction, ignoring device %d"
+msgstr ""
+
+#: snd-dac.c:1700 snd-dac.c:1820 snd-dac.c:1873
 #, c-format
 msgid "folding %d chans into %d "
 msgstr ""
@@ -188,7 +188,7 @@ msgid ""
 "written: %s%s%s%s\n"
 msgstr ""
 
-#: snd-data.c:874 snd-xmenu.c:453 snd-xmenu.c:817
+#: snd-data.c:874 snd-gmenu.c:1048 snd-gmenu.c:1049 snd-xmenu.c:817
 msgid "samples"
 msgstr ""
 
@@ -206,6 +206,11 @@ msgstr ""
 msgid "empty vector?"
 msgstr ""
 
+#: snd-edits.c:877
+#, c-format
+msgid "save edits: can't open %s: %s!"
+msgstr ""
+
 #: snd-edits.c:1625
 msgid "can't delete sample <PRId64> (current len =<PRId64>)"
 msgstr ""
@@ -214,85 +219,89 @@ msgstr ""
 msgid "can't delete samples <PRId64> to <PRId64> (current len =<PRId64>)"
 msgstr ""
 
-#: snd-edits.c:7084
+#: snd-edits.c:7081
 #, c-format
 msgid "file %s no longer exists!"
 msgstr ""
 
-#: snd-edits.c:7085
+#: snd-edits.c:7082
 #, c-format
 msgid "file %s has changed since we last read it!"
 msgstr ""
 
-#: snd-edits.c:7501 snd-edits.c:7536
+#: snd-edits.c:7498 snd-edits.c:7533
 msgid "file save cancelled by C-g"
 msgstr ""
 
-#: snd-edits.c:7592 snd-xfile.c:1047 snd-xfile.c:1083
+#: snd-edits.c:7589 snd-xfile.c:1047 snd-xfile.c:1083
 #, c-format
 msgid "saving %s"
 msgstr ""
 
-#: snd-edits.c:7653
+#: snd-edits.c:7650
 #, c-format
 msgid "file write failed: %s, edits are saved in: %s"
 msgstr ""
 
-#: snd-edits.c:7654
+#: snd-edits.c:7651
 #, c-format
 msgid "wrote %s"
 msgstr ""
 
-#: snd-edits.c:7677 snd-file.c:2131 snd-xfile.c:2320
+#: snd-edits.c:7674 snd-file.c:2131 snd-gfile.c:1601 snd-xfile.c:2320
 #, c-format
 msgid "%s is write-protected"
 msgstr ""
 
-#: snd-edits.c:7717
+#: snd-edits.c:7714
 #, c-format
 msgid "save-edits: unknown header type? %d"
 msgstr ""
 
-#: snd-edits.c:7723
+#: snd-edits.c:7720
 #, c-format
 msgid "save-edits: unknown data format? %d"
 msgstr ""
 
-#: snd-edits.c:7745
+#: snd-edits.c:7742
 #, c-format
 msgid "can't save (extract) channel as %s (%s is write-protected)"
 msgstr ""
 
-#: snd-edits.c:7761
+#: snd-edits.c:7758
 #, c-format
 msgid "save channel as %s hit error: %s)"
 msgstr ""
 
-#: snd-edits.c:7814
+#: snd-edits.c:7811
 #, c-format
 msgid "%s changed on disk! Save anyway?"
 msgstr ""
 
-#: snd-edits.c:7827
+#: snd-edits.c:7824
 msgid "(no changes need to be saved)"
 msgstr ""
 
-#: snd-edits.c:7830
+#: snd-edits.c:7827
 #, c-format
 msgid "can't write %s (it is read-only)"
 msgstr ""
 
-#: snd-edits.c:8359
+#: snd-edits.c:8356
 msgid ""
 "can't undo an underlying mix edit except through the outer (mixed-into) sound"
 msgstr ""
 
-#: snd-edits.c:8378
+#: snd-edits.c:8375
 msgid ""
 "can't redo an underlying mix edit except through the outer (mixed-into) sound"
 msgstr ""
 
-#: snd-edits.c:8905
+#: snd-edits.c:8599
+msgid "maxamp check interrupted..."
+msgstr ""
+
+#: snd-edits.c:8902
 msgid "not enough memory!"
 msgstr ""
 
@@ -397,6 +406,11 @@ msgstr ""
 msgid "can't close file %s: %s"
 msgstr ""
 
+#: snd-file.c:1233
+#, c-format
+msgid "%s no longer exists!"
+msgstr ""
+
 #: snd-file.c:1240
 #, c-format
 msgid "updated %s"
@@ -437,22 +451,6 @@ msgstr ""
 msgid "can't write file %s: %s"
 msgstr ""
 
-#: snd-file.c:2243
-#, c-format
-msgid ""
-"\n"
-"length: %.3f (<PRId64> samples, <PRId64> bytes total)"
-msgstr ""
-
-#: snd-file.c:2275
-msgid "Current header values"
-msgstr ""
-
-#: snd-file.c:2278
-#, c-format
-msgid "Bogus header found for %s"
-msgstr ""
-
 #: snd-file.c:2355
 msgid "sound is write-protected"
 msgstr ""
@@ -462,7 +460,7 @@ msgstr ""
 msgid "changing %s's header from %s to aifc to accommodate loop info"
 msgstr ""
 
-#: snd-find.c:102 snd-find.c:266 snd-find.c:340
+#: snd-find.c:102 snd-find.c:201 snd-find.c:266 snd-find.c:340
 msgid "search in progress"
 msgstr ""
 
@@ -487,6 +485,1092 @@ msgstr ""
 #: snd-find.c:379
 #, c-format
 msgid "%s%sy = %s at %s (<PRId64>)"
+msgstr ""
+
+#: snd-gchn.c:652
+msgid "Edits"
+msgstr ""
+
+#: snd-gchn.c:764 snd-xchn.c:890
+msgid "f"
+msgstr ""
+
+#: snd-gchn.c:779 snd-xchn.c:896
+msgid "w"
+msgstr ""
+
+#: snd-gdraw.c:658 snd-xdraw.c:729
+msgid "Color Editor"
+msgstr ""
+
+#: snd-gdraw.c:665 snd-gdraw.c:1073 snd-genv.c:891 snd-gfft.c:436
+#: snd-gfile.c:1152 snd-gfile.c:1345 snd-gfile.c:1510 snd-gfile.c:1636
+#: snd-gfind.c:101 snd-ghelp.c:36 snd-ghelp.c:43 snd-ghelp.c:106
+#: snd-ghelp.c:113 snd-glistener.c:86 snd-gmenu.c:1225 snd-gmenu.c:1226
+#: snd-gmenu.c:1448 snd-gmix.c:510 snd-gprint.c:119 snd-grec.c:2049
+#: snd-gregion.c:333 snd-xdraw.c:728 snd-xdraw.c:1296 snd-xenv.c:1143
+#: snd-xfft.c:482 snd-xfile.c:1763 snd-xfile.c:1963 snd-xfile.c:2199
+#: snd-xfile.c:2351 snd-xhelp.c:205 snd-xmenu.c:896 snd-xmenu.c:983
+#: snd-xmix.c:490 snd-xprint.c:122 snd-xrec.c:3326 snd-xregion.c:313
+msgid "Help"
+msgstr ""
+
+#: snd-gdraw.c:666 snd-gdraw.c:1074 snd-genv.c:208 snd-genv.c:892
+#: snd-gfft.c:437 snd-gfile.c:1153 snd-gfind.c:73 snd-gfind.c:102
+#: snd-glistener.c:87 snd-gmix.c:492 snd-gprint.c:120 snd-grec.c:2050
+#: snd-gregion.c:334 snd-xdraw.c:727 snd-xdraw.c:1295 snd-xenv.c:208
+#: snd-xenv.c:1142 snd-xfft.c:481 snd-xfile.c:1762 snd-xfind.c:65
+#: snd-xfind.c:97 snd-xmix.c:488 snd-xprint.c:123 snd-xrec.c:3325
+#: snd-xregion.c:312
+msgid "Dismiss"
+msgstr ""
+
+#: snd-gdraw.c:703 snd-xdraw.c:846
+msgid "light"
+msgstr ""
+
+#: snd-gdraw.c:706 snd-xdraw.c:856
+msgid "dark"
+msgstr ""
+
+#: snd-gdraw.c:732 snd-xdraw.c:870
+msgid "data cutoff"
+msgstr ""
+
+#: snd-gdraw.c:740 snd-xdraw.c:887
+msgid "invert"
+msgstr ""
+
+#: snd-gdraw.c:1066 snd-xdraw.c:1298
+msgid "Spectrogram Orientation"
+msgstr ""
+
+#: snd-gdraw.c:1075 snd-genv.c:895 snd-grec.c:1692 snd-grec.c:1812
+#: snd-grec.c:1838 snd-grec.c:1865 snd-grec.c:2051 snd-gsnd.c:1908
+#: snd-xdraw.c:1297 snd-xenv.c:1186 snd-xrec.c:2895 snd-xrec.c:2896
+#: snd-xrec.c:3048 snd-xrec.c:3080 snd-xrec.c:3114 snd-xrec.c:3327
+#: snd-xsnd.c:2705
+msgid "Reset"
+msgstr ""
+
+#: snd-gdraw.c:1126 snd-xdraw.c:1358
+msgid "x angle"
+msgstr ""
+
+#: snd-gdraw.c:1156 snd-xdraw.c:1372
+msgid "y angle"
+msgstr ""
+
+#: snd-gdraw.c:1186 snd-xdraw.c:1386
+msgid "z angle"
+msgstr ""
+
+#: snd-gdraw.c:1216 snd-xdraw.c:1400
+msgid "hop"
+msgstr ""
+
+#: snd-gdraw.c:1246 snd-xdraw.c:1415
+msgid "x scale"
+msgstr ""
+
+#: snd-gdraw.c:1275 snd-xdraw.c:1430
+msgid "y scale"
+msgstr ""
+
+#: snd-gdraw.c:1304 snd-xdraw.c:1445
+msgid "z scale"
+msgstr ""
+
+#: snd-gdraw.c:1332 snd-xdraw.c:1460
+msgid "percent of spectrum"
+msgstr ""
+
+#: snd-gdraw.c:1342 snd-xdraw.c:1477
+msgid "use OpenGL"
+msgstr ""
+
+#: snd-genv.c:15 snd-genv.c:1132 snd-xenv.c:12 snd-xenv.c:1310
+msgid "amp env:"
+msgstr ""
+
+#: snd-genv.c:15 snd-xenv.c:12
+msgid "flt env:"
+msgstr ""
+
+#: snd-genv.c:15 snd-xenv.c:12
+msgid "src env:"
+msgstr ""
+
+#: snd-genv.c:167 snd-gfind.c:71 snd-gmenu.c:252 snd-gprint.c:49
+#: snd-xenv.c:165 snd-xfind.c:61 snd-xmenu.c:247 snd-xprint.c:44
+msgid "Stop"
+msgstr ""
+
+#: snd-genv.c:224 snd-xenv.c:224
+msgid "noname"
+msgstr ""
+
+#: snd-genv.c:302 snd-xenv.c:336
+msgid "unnamed"
+msgstr ""
+
+#: snd-genv.c:346 snd-genv.c:527 snd-genv.c:956 snd-xenv.c:425 snd-xenv.c:625
+#: snd-xenv.c:1462
+msgid "view envs"
+msgstr ""
+
+#: snd-genv.c:527 snd-xenv.c:625
+msgid "edit env"
+msgstr ""
+
+#: snd-genv.c:872 snd-gmenu.c:774 snd-gmenu.c:775 snd-xenv.c:1144
+#: snd-xmenu.c:703
+msgid "Edit Envelope"
+msgstr ""
+
+#: snd-genv.c:893 snd-gsnd.c:1876 snd-xenv.c:1145 snd-xsnd.c:2649
+msgid "Apply"
+msgstr ""
+
+#: snd-genv.c:894 snd-xenv.c:1182
+msgid "Undo&Apply"
+msgstr ""
+
+#: snd-genv.c:970
+msgid " save "
+msgstr ""
+
+#: snd-genv.c:980
+msgid " print  "
+msgstr ""
+
+#: snd-genv.c:994
+msgid "revert "
+msgstr ""
+
+#: snd-genv.c:1004 snd-xenv.c:1530
+msgid "delete"
+msgstr ""
+
+#: snd-genv.c:1018
+msgid " undo "
+msgstr ""
+
+#: snd-genv.c:1028
+msgid " redo "
+msgstr ""
+
+#: snd-genv.c:1042 snd-xenv.c:1555
+msgid "amp"
+msgstr ""
+
+#: snd-genv.c:1052
+msgid "flt"
+msgstr ""
+
+#: snd-genv.c:1062 snd-xenv.c:1557
+msgid "src"
+msgstr ""
+
+#: snd-genv.c:1076 snd-xenv.c:1591
+msgid "linear"
+msgstr ""
+
+#: snd-genv.c:1086 snd-xenv.c:1596
+msgid "exp"
+msgstr ""
+
+#: snd-genv.c:1100 snd-gfft.c:585 snd-xenv.c:1620 snd-xfft.c:812
+msgid "selection"
+msgstr ""
+
+#: snd-genv.c:1110 snd-xenv.c:1621
+msgid "mix"
+msgstr ""
+
+#: snd-genv.c:1120 snd-xenv.c:1637
+msgid "envs:"
+msgstr ""
+
+#: snd-genv.c:1161 snd-xenv.c:1382
+msgid "clip"
+msgstr ""
+
+#: snd-genv.c:1170 snd-xenv.c:1365
+msgid "wave"
+msgstr ""
+
+#: snd-genv.c:1188 snd-xenv.c:1217
+msgid "exp:"
+msgstr ""
+
+#: snd-gerror.c:28 snd-xerror.c:13
+msgid "Error"
+msgstr ""
+
+#: snd-gerror.c:35 snd-gfile.c:1348 snd-gfile.c:1512 snd-ghelp.c:44
+#: snd-ghelp.c:114 snd-xfile.c:1964 snd-xfile.c:2201
+msgid "Ok"
+msgstr ""
+
+#: snd-gerror.c:90 snd-xerror.c:109
+msgid "no errors yet"
+msgstr ""
+
+#: snd-gerror.c:135 snd-xerror.c:148
+msgid "Yow!"
+msgstr ""
+
+#: snd-gerror.c:142 snd-xerror.c:149
+msgid "Yes"
+msgstr ""
+
+#: snd-gerror.c:143 snd-xerror.c:150
+msgid "No"
+msgstr ""
+
+#: snd-gfft.c:429 snd-gmenu.c:1100 snd-gmenu.c:1101 snd-xfft.c:483
+#: snd-xfft.c:497 snd-xmenu.c:839
+msgid "Transform Options"
+msgstr ""
+
+#: snd-gfft.c:438 snd-gmenu.c:873 snd-gmenu.c:874 snd-xdraw.c:739
+#: snd-xfft.c:485 snd-xfft.c:519 snd-xmenu.c:743
+msgid "Color"
+msgstr ""
+
+#: snd-gfft.c:439 snd-gmenu.c:883 snd-gmenu.c:884 snd-xdraw.c:1310
+#: snd-xfft.c:484 snd-xmenu.c:746
+msgid "Orientation"
+msgstr ""
+
+#: snd-gfft.c:490 snd-xfft.c:567
+msgid "type"
+msgstr ""
+
+#: snd-gfft.c:497 snd-gfile.c:697 snd-xfft.c:624 snd-xfile.c:1269
+msgid "size"
+msgstr ""
+
+#: snd-gfft.c:502 snd-xfft.c:675
+msgid "display"
+msgstr ""
+
+#: snd-gfft.c:515 snd-xfft.c:683
+msgid "single transform"
+msgstr ""
+
+#: snd-gfft.c:525 snd-xfft.c:702
+msgid "sonogram"
+msgstr ""
+
+#: snd-gfft.c:535 snd-xfft.c:721
+msgid "spectrogram"
+msgstr ""
+
+#: snd-gfft.c:545 snd-xfft.c:740
+msgid "peaks"
+msgstr ""
+
+#: snd-gfft.c:565 snd-xfft.c:776
+msgid "log freq"
+msgstr ""
+
+#: snd-gfft.c:575 snd-xfft.c:794
+msgid "normalize"
+msgstr ""
+
+#: snd-gfft.c:599 snd-xfft.c:853
+msgid "wavelet"
+msgstr ""
+
+#: snd-gfft.c:606 snd-xfft.c:922 snd-xfft.c:976
+msgid "window"
+msgstr ""
+
+#: snd-gfile.c:265 snd-xfile.c:510
+msgid "play selected sound"
+msgstr ""
+
+#: snd-gfile.c:301 snd-xfile.c:576 snd-xfile.c:616
+#, c-format
+msgid "%s is a directory"
+msgstr ""
+
+#: snd-gfile.c:320 snd-gmenu.c:512 snd-gmenu.c:513 snd-gmenu.c:1444
+#: snd-xmenu.c:599 snd-xmenu.c:979
+msgid "File"
+msgstr ""
+
+#: snd-gfile.c:357 snd-kbd.c:1367
+msgid "mix file:"
+msgstr ""
+
+#: snd-gfile.c:439 snd-xfile.c:835
+msgid "header"
+msgstr ""
+
+#: snd-gfile.c:441 snd-xfile.c:880
+msgid "data"
+msgstr ""
+
+#: snd-gfile.c:453 snd-gfile.c:1386 snd-gregion.c:406 snd-xfile.c:922
+#: snd-xfile.c:2005 snd-xregion.c:394
+msgid "srate:"
+msgstr ""
+
+#: snd-gfile.c:461 snd-gfile.c:1394 snd-gregion.c:411 snd-xfile.c:947
+#: snd-xfile.c:2029 snd-xregion.c:406
+msgid "chans:"
+msgstr ""
+
+#: snd-gfile.c:469 snd-xfile.c:972
+msgid "location:"
+msgstr ""
+
+#: snd-gfile.c:481 snd-xfile.c:1009
+msgid "comment:"
+msgstr ""
+
+#: snd-gfile.c:524
+msgid "not saved (no name given)"
+msgstr ""
+
+#: snd-gfile.c:555 snd-xfile.c:1042
+msgid "save as:"
+msgstr ""
+
+#: snd-gfile.c:611 snd-xfile.c:1116
+msgid "current selection"
+msgstr ""
+
+#: snd-gfile.c:693 snd-xfile.c:1267
+msgid "name"
+msgstr ""
+
+#: snd-gfile.c:695 snd-xfile.c:1268
+msgid "date"
+msgstr ""
+
+#: snd-gfile.c:699 snd-xfile.c:1270
+msgid "entry"
+msgstr ""
+
+#: snd-gfile.c:701 snd-xfile.c:1271
+msgid "proc"
+msgstr ""
+
+#: snd-gfile.c:717 snd-xfile.c:1253
+msgid "sort"
+msgstr ""
+
+#: snd-gfile.c:1145 snd-gmenu.c:863 snd-gmenu.c:864 snd-xfile.c:1765
+#: snd-xmenu.c:739
+msgid "Files"
+msgstr ""
+
+#: snd-gfile.c:1154 snd-gmenu.c:586 snd-gmenu.c:587 snd-xfile.c:1799
+#: snd-xmenu.c:625
+msgid "Update"
+msgstr ""
+
+#: snd-gfile.c:1155 snd-xfile.c:1764
+msgid "Clear"
+msgstr ""
+
+#: snd-gfile.c:1202 snd-gregion.c:362 snd-xfile.c:1842 snd-xregion.c:353
+msgid "save"
+msgstr ""
+
+#: snd-gfile.c:1202 snd-gfile.c:1210 snd-gregion.c:362 snd-gsnd.c:1479
+#: snd-xfile.c:1842 snd-xfile.c:1863 snd-xmix.c:583 snd-xregion.c:353
+#: snd-xsnd.c:1975
+msgid "play"
+msgstr ""
+
+#: snd-gfile.c:1202 snd-xfile.c:1842
+msgid "current files"
+msgstr ""
+
+#: snd-gfile.c:1210 snd-xfile.c:1863
+msgid "unlist"
+msgstr ""
+
+#: snd-gfile.c:1210 snd-xfile.c:1863
+msgid "previous files"
+msgstr ""
+
+#: snd-gfile.c:1338 snd-xfile.c:1965
+msgid "No Header on File"
+msgstr ""
+
+#: snd-gfile.c:1346 snd-gfile.c:1511 snd-gfile.c:1637 snd-grec.c:1966
+#: snd-xfile.c:1962 snd-xfile.c:2200 snd-xfile.c:2350 snd-xrec.c:3229
+#: snd-xrec.c:3357
+msgid "Cancel"
+msgstr ""
+
+#: snd-gfile.c:1347 snd-xfile.c:1994
+msgid "Default"
+msgstr ""
+
+#: snd-gfile.c:1406 snd-xfile.c:2053
+msgid "data location:"
+msgstr ""
+
+#: snd-gfile.c:1412 snd-xfile.c:2072
+msgid "data format:"
+msgstr ""
+
+#: snd-gfile.c:1494 snd-xfile.c:2194
+#, c-format
+msgid "create new sound: %s"
+msgstr ""
+
+#: snd-gfile.c:1539 snd-xfile.c:2230
+msgid "New file:"
+msgstr ""
+
+#: snd-gfile.c:1638 snd-gmenu.c:542 snd-gmenu.c:543 snd-gmenu.c:1793
+#: snd-gmenu.c:1794 snd-xfile.c:1044 snd-xfile.c:2352 snd-xmenu.c:534
+#: snd-xmenu.c:1304
+msgid "Save"
+msgstr ""
+
+#: snd-gfile.c:1661 snd-gmenu.c:784 snd-gmenu.c:785 snd-xfile.c:2353
+#: snd-xmenu.c:707
+msgid "Edit Header"
+msgstr ""
+
+#: snd-gfile.c:1667 snd-xfile.c:2343
+#, c-format
+msgid "Edit header of %s"
+msgstr ""
+
+#: snd-gfind.c:51 snd-gfind.c:63 snd-xfind.c:40 snd-xfind.c:53
+#, c-format
+msgid "find: %s"
+msgstr ""
+
+#: snd-gfind.c:94 snd-gmenu.c:686 snd-gmenu.c:687 snd-gmenu.c:1255
+#: snd-gmenu.c:1256 snd-xfind.c:100 snd-xmenu.c:551 snd-xmenu.c:909
+msgid "Find"
+msgstr ""
+
+#: snd-gfind.c:103 snd-xfind.c:98 snd-xfind.c:127
+msgid "Next"
+msgstr ""
+
+#: snd-gfind.c:104 snd-xfind.c:99
+msgid "Previous"
+msgstr ""
+
+#: snd-gfind.c:138 snd-xfind.c:137
+msgid "find:"
+msgstr ""
+
+#: snd-gfind.c:149
+msgid "global search"
+msgstr ""
+
+#: snd-ghelp.c:70 snd-ghelp.c:159 snd-xhelp.c:306
+#, c-format
+msgid "%s help"
+msgstr ""
+
+#: snd-ghelp.c:115 snd-xhelp.c:207 snd-xhelp.c:228
+msgid "Back"
+msgstr ""
+
+#: snd-ghelp.c:116 snd-xhelp.c:208 snd-xhelp.c:231
+msgid "Forward"
+msgstr ""
+
+#: snd-glistener.c:79 snd-glistener.c:103 snd-xlistener.c:118
+msgid "Completions"
+msgstr ""
+
+#: snd-glistener.c:901 snd-xmenu.c:389
+msgid "Hide listener"
+msgstr ""
+
+#: snd-glistener.c:905 snd-xmenu.c:389
+msgid "Show listener"
+msgstr ""
+
+#: snd-gmain.c:407
+#, c-format
+msgid "can't get %s -- will use white\n"
+msgstr ""
+
+#: snd-gmain.c:412
+#, c-format
+msgid "can't get %s -- will use black\n"
+msgstr ""
+
+#: snd-gmain.c:540 snd-gmain.c:544 snd-gmain.c:548 snd-gmain.c:552
+#: snd-gmain.c:556 snd-gmain.c:560 snd-gmain.c:564 snd-gmain.c:568
+#, c-format
+msgid "can't find font: %s"
+msgstr ""
+
+#: snd-gmain.c:640 snd-nogui.c:540 snd-xmain.c:1026
+msgid "Caught seg fault (will try to continue):\n"
+msgstr ""
+
+#: snd-gmain.c:646 snd-xmain.c:1032
+msgid "Caught top level error (will try to continue):\n"
+msgstr ""
+
+#: snd-gmenu.c:261 snd-gmenu.c:736 snd-gmenu.c:737 snd-xmenu.c:256
+#: snd-xmenu.c:544
+msgid "Play Selection"
+msgstr ""
+
+#: snd-gmenu.c:521 snd-gmenu.c:522 snd-xfile.c:583 snd-xmenu.c:533
+msgid "Open"
+msgstr ""
+
+#: snd-gmenu.c:531 snd-gmenu.c:532 snd-xmenu.c:541
+msgid "Close"
+msgstr ""
+
+#: snd-gmenu.c:553 snd-gmenu.c:554 snd-xmenu.c:613
+msgid "Save as"
+msgstr ""
+
+#: snd-gmenu.c:564 snd-gmenu.c:565 snd-xmenu.c:617
+msgid "Revert"
+msgstr ""
+
+#: snd-gmenu.c:575 snd-gmenu.c:576 snd-xfile.c:624 snd-xmenu.c:535
+msgid "Mix"
+msgstr ""
+
+#: snd-gmenu.c:597 snd-gmenu.c:598 snd-xmenu.c:629
+msgid "New"
+msgstr ""
+
+#: snd-gmenu.c:607 snd-gmenu.c:608 snd-grec.c:682 snd-grec.c:1814
+#: snd-grec.c:1866 snd-grec.c:2043 snd-grec.c:2052 snd-xmenu.c:633
+#: snd-xrec.c:1114 snd-xrec.c:3051 snd-xrec.c:3117 snd-xrec.c:3328
+#: snd-xrec.c:3341
+msgid "Record"
+msgstr ""
+
+#: snd-gmenu.c:617 snd-gmenu.c:618 snd-gmenu.c:797 snd-gmenu.c:798
+#: snd-gmenu.c:1446 snd-xmenu.c:636 snd-xmenu.c:719 snd-xmenu.c:981
+msgid "View"
+msgstr ""
+
+#: snd-gmenu.c:627 snd-gmenu.c:628 snd-gprint.c:91 snd-gprint.c:112
+#: snd-gprint.c:121 snd-xmenu.c:640 snd-xprint.c:85 snd-xprint.c:121
+#: snd-xprint.c:124
+msgid "Print"
+msgstr ""
+
+#: snd-gmenu.c:643 snd-gmenu.c:644 snd-xmenu.c:649
+msgid "Exit"
+msgstr ""
+
+#: snd-gmenu.c:654 snd-gmenu.c:655 snd-gmenu.c:1445 snd-xmenu.c:660
+#: snd-xmenu.c:980
+msgid "Edit"
+msgstr ""
+
+#: snd-gmenu.c:663 snd-gmenu.c:664 snd-gmenu.c:1771 snd-gmenu.c:1772
+#: snd-xmenu.c:536 snd-xmenu.c:1298
+msgid "Undo"
+msgstr ""
+
+#: snd-gmenu.c:674 snd-gmenu.c:675 snd-gmenu.c:1782 snd-gmenu.c:1783
+#: snd-xmenu.c:537 snd-xmenu.c:1301
+msgid "Redo"
+msgstr ""
+
+#: snd-gmenu.c:703 snd-gmenu.c:704 snd-xmenu.c:678
+msgid "Delete Selection"
+msgstr ""
+
+#: snd-gmenu.c:714 snd-gmenu.c:715 snd-xmenu.c:542
+msgid "Insert Selection"
+msgstr ""
+
+#: snd-gmenu.c:725 snd-gmenu.c:726 snd-xmenu.c:543
+msgid "Mix Selection"
+msgstr ""
+
+#: snd-gmenu.c:747 snd-gmenu.c:748 snd-xmenu.c:545
+msgid "Save Selection"
+msgstr ""
+
+#: snd-gmenu.c:758 snd-gmenu.c:759 snd-xmenu.c:698
+msgid "Select all"
+msgstr ""
+
+#: snd-gmenu.c:806 snd-gmenu.c:807 snd-gsnd.c:2087 snd-xmenu.c:722
+#: snd-xsnd.c:3209
+msgid "Show controls"
+msgstr ""
+
+#: snd-gmenu.c:817 snd-gmenu.c:818 snd-xmenu.c:799 snd-xmenu.c:1307
+msgid "Equalize Panes"
+msgstr ""
+
+#: snd-gmenu.c:830 snd-gmenu.c:831 snd-xmenu.c:727
+msgid "Open listener"
+msgstr ""
+
+#: snd-gmenu.c:841 snd-gmenu.c:842 snd-gmix.c:462 snd-gmix.c:486
+#: snd-xmenu.c:732 snd-xmix.c:491 snd-xmix.c:503
+msgid "Mix Panel"
+msgstr ""
+
+#: snd-gmenu.c:852 snd-gmenu.c:853 snd-gregion.c:326 snd-xmenu.c:735
+#: snd-xregion.c:315 snd-xregion.c:327
+msgid "Regions"
+msgstr ""
+
+#: snd-gmenu.c:900 snd-gmenu.c:901 snd-xmenu.c:756
+msgid "Graph style"
+msgstr ""
+
+#: snd-gmenu.c:909 snd-gmenu.c:910 snd-gxcolormaps.c:7 snd-xmenu.c:758
+msgid "lines"
+msgstr ""
+
+#: snd-gmenu.c:920 snd-gmenu.c:921 snd-xmenu.c:762
+msgid "dots"
+msgstr ""
+
+#: snd-gmenu.c:931 snd-gmenu.c:932 snd-xmenu.c:766
+msgid "filled"
+msgstr ""
+
+#: snd-gmenu.c:942 snd-gmenu.c:943 snd-xmenu.c:770
+msgid "dots and lines"
+msgstr ""
+
+#: snd-gmenu.c:953 snd-gmenu.c:954 snd-xmenu.c:774
+msgid "lollipops"
+msgstr ""
+
+#: snd-gmenu.c:964 snd-gmenu.c:965 snd-menu.c:384 snd-xmenu.c:778
+msgid "Verbose cursor"
+msgstr ""
+
+#: snd-gmenu.c:975 snd-gmenu.c:976 snd-xmenu.c:785
+msgid "Channel style"
+msgstr ""
+
+#: snd-gmenu.c:984 snd-gmenu.c:985 snd-xmenu.c:787
+msgid "separate"
+msgstr ""
+
+#: snd-gmenu.c:995 snd-gmenu.c:996 snd-xmenu.c:791
+msgid "combined"
+msgstr ""
+
+#: snd-gmenu.c:1006 snd-gmenu.c:1007 snd-xmenu.c:795
+msgid "superimposed"
+msgstr ""
+
+#: snd-gmenu.c:1018 snd-gmenu.c:1019 snd-menu.c:369 snd-xmenu.c:803
+msgid "Show Y = 0"
+msgstr ""
+
+#: snd-gmenu.c:1028 snd-gmenu.c:1029 snd-xmenu.c:811
+msgid "X axis units"
+msgstr ""
+
+#: snd-gmenu.c:1037 snd-gmenu.c:1038 snd-xmenu.c:813
+msgid "seconds"
+msgstr ""
+
+#: snd-gmenu.c:1058 snd-gmenu.c:1059 snd-xmenu.c:820
+msgid "percentage"
+msgstr ""
+
+#: snd-gmenu.c:1068 snd-gmenu.c:1069 snd-xmenu.c:823
+msgid "beats"
+msgstr ""
+
+#: snd-gmenu.c:1078 snd-gmenu.c:1079 snd-xerror.c:34 snd-xmenu.c:826
+msgid "Error History"
+msgstr ""
+
+#: snd-gmenu.c:1091 snd-gmenu.c:1092 snd-gmenu.c:1447 snd-xmenu.c:837
+#: snd-xmenu.c:982
+msgid "Options"
+msgstr ""
+
+#: snd-gmenu.c:1110 snd-gmenu.c:1111 snd-xmenu.c:848
+msgid "Speed style"
+msgstr ""
+
+#: snd-gmenu.c:1119 snd-gmenu.c:1120 snd-xmenu.c:850
+msgid "float"
+msgstr ""
+
+#: snd-gmenu.c:1129 snd-gmenu.c:1130 snd-xmenu.c:853
+msgid "semitones"
+msgstr ""
+
+#: snd-gmenu.c:1139 snd-gmenu.c:1140 snd-xmenu.c:856
+msgid "ratio"
+msgstr ""
+
+#: snd-gmenu.c:1150 snd-gmenu.c:1151 snd-xmenu.c:864
+msgid "Zoom focus"
+msgstr ""
+
+#: snd-gmenu.c:1159 snd-gmenu.c:1160 snd-xmenu.c:866
+msgid "window left edge"
+msgstr ""
+
+#: snd-gmenu.c:1169 snd-gmenu.c:1170 snd-xmenu.c:869
+msgid "window right edge"
+msgstr ""
+
+#: snd-gmenu.c:1179 snd-gmenu.c:1180 snd-xmenu.c:872
+msgid "window midpoint"
+msgstr ""
+
+#: snd-gmenu.c:1189 snd-gmenu.c:1190 snd-xmenu.c:875
+msgid "cursor or selection"
+msgstr ""
+
+#: snd-gmenu.c:1201 snd-gmenu.c:1202 snd-xmenu.c:880
+msgid "Save options"
+msgstr ""
+
+#: snd-gmenu.c:1211 snd-gmenu.c:1212 snd-xmenu.c:884
+msgid "Save state"
+msgstr ""
+
+#: snd-gmenu.c:1235 snd-gmenu.c:1236 snd-xmenu.c:902
+msgid "Overview"
+msgstr ""
+
+#: snd-gmenu.c:1245 snd-gmenu.c:1246 snd-xmenu.c:906
+msgid "FFT"
+msgstr ""
+
+#: snd-gmenu.c:1265 snd-gmenu.c:1266 snd-xmenu.c:912
+msgid "Undo and redo"
+msgstr ""
+
+#: snd-gmenu.c:1275 snd-gmenu.c:1276 snd-xmenu.c:915
+msgid "Sync"
+msgstr ""
+
+#: snd-gmenu.c:1285 snd-gmenu.c:1286 snd-xmenu.c:918
+msgid "Speed"
+msgstr ""
+
+#: snd-gmenu.c:1295 snd-gmenu.c:1296 snd-xmenu.c:921
+msgid "Expand"
+msgstr ""
+
+#: snd-gmenu.c:1305 snd-gmenu.c:1306 snd-xmenu.c:924
+msgid "Reverb"
+msgstr ""
+
+#: snd-gmenu.c:1315 snd-gmenu.c:1316 snd-xmenu.c:927
+msgid "Contrast"
+msgstr ""
+
+#: snd-gmenu.c:1325 snd-gmenu.c:1326 snd-xmenu.c:930
+msgid "Envelope"
+msgstr ""
+
+#: snd-gmenu.c:1335 snd-gmenu.c:1336 snd-xmenu.c:933
+msgid "Marks"
+msgstr ""
+
+#: snd-gmenu.c:1345 snd-gmenu.c:1346 snd-xmenu.c:936
+msgid "Mixing"
+msgstr ""
+
+#: snd-gmenu.c:1355 snd-gmenu.c:1356 snd-xmenu.c:939
+msgid "Formats"
+msgstr ""
+
+#: snd-gmenu.c:1365 snd-gmenu.c:1366 snd-xmenu.c:942
+msgid "Customization"
+msgstr ""
+
+#: snd-gmenu.c:1375 snd-gmenu.c:1376 snd-xmenu.c:945
+msgid "Recording"
+msgstr ""
+
+#: snd-gmenu.c:1385 snd-gmenu.c:1386 snd-xmenu.c:948
+msgid "CLM"
+msgstr ""
+
+#: snd-gmenu.c:1395 snd-gmenu.c:1396 snd-xmenu.c:951
+msgid "News"
+msgstr ""
+
+#: snd-gmenu.c:1449 snd-xmenu.c:984
+msgid "Popup"
+msgstr ""
+
+#: snd-gmenu.c:1689 snd-gmenu.c:1709 snd-gmenu.c:1760 snd-gmenu.c:1761
+#: snd-xmenu.c:1206 snd-xmenu.c:1225 snd-xmenu.c:1295
+msgid "Play"
+msgstr ""
+
+#: snd-gmenu.c:1698 snd-xmenu.c:1215
+msgid "Stop playing"
+msgstr ""
+
+#: snd-gmenu.c:1804 snd-gmenu.c:1805 snd-xmenu.c:1310
+msgid "Info"
+msgstr ""
+
+#: snd-gmix.c:240 snd-gmix.c:248 snd-xmix.c:231 snd-xmix.c:239
+msgid "mix env"
+msgstr ""
+
+#: snd-gmix.c:463
+msgid "This dialog controls the currently selected mix"
+msgstr ""
+
+#: snd-gmix.c:501 snd-xmix.c:489
+msgid "Apply Env"
+msgstr ""
+
+#: snd-gmix.c:526 snd-xmix.c:541
+msgid "mix id:"
+msgstr ""
+
+#: snd-gmix.c:551 snd-xmix.c:563
+msgid "track:"
+msgstr ""
+
+#: snd-gmix.c:599 snd-gsnd.c:1587 snd-xmix.c:588 snd-xsnd.c:2101
+msgid "speed:"
+msgstr ""
+
+#: snd-gmix.c:647 snd-xmix.c:647
+#, c-format
+msgid "amp %d:"
+msgstr ""
+
+#: snd-gprint.c:51 snd-xprint.c:46
+#, c-format
+msgid "printing %s"
+msgstr ""
+
+#: snd-gprint.c:70 snd-xprint.c:67
+msgid "can't print!"
+msgstr ""
+
+#: snd-gprint.c:92 snd-gprint.c:169 snd-xprint.c:86 snd-xprint.c:112
+#, c-format
+msgid "print %s"
+msgstr ""
+
+#: snd-gprint.c:154 snd-kbd.c:1318 snd-xprint.c:134 snd-xprint.c:153
+msgid "eps file:"
+msgstr ""
+
+#: snd-gprint.c:161 snd-xprint.c:170
+msgid "direct to printer"
+msgstr ""
+
+#: snd-gprint.c:171 snd-xprint.c:115
+msgid "print env"
+msgstr ""
+
+#: snd-grec.c:682 snd-grec.c:1814 snd-grec.c:1866 snd-xrec.c:1114
+#: snd-xrec.c:3051 snd-xrec.c:3117
+msgid "Triggered Record"
+msgstr ""
+
+#: snd-grec.c:786 snd-xrec.c:1241
+msgid "open output"
+msgstr ""
+
+#: snd-grec.c:892 snd-kbd.c:1333 snd-kbd.c:1387 snd-kbd.c:1657 snd-xrec.c:1383
+msgid "file:"
+msgstr ""
+
+#: snd-grec.c:922 snd-xrec.c:1457
+msgid "duration:"
+msgstr ""
+
+#: snd-grec.c:930 snd-xrec.c:1485
+msgid "buf:"
+msgstr ""
+
+#: snd-grec.c:951 snd-xrec.c:1524
+msgid "trigger:"
+msgstr ""
+
+#: snd-grec.c:996 snd-xrec.c:1594
+msgid "Autoload Recording"
+msgstr ""
+
+#: snd-grec.c:1009 snd-xrec.c:1602
+msgid "Save Audio Settings"
+msgstr ""
+
+#: snd-grec.c:1042 snd-xrec.c:1635
+msgid "Restart"
+msgstr ""
+
+#: snd-grec.c:1266 snd-xrec.c:2178
+msgid "out"
+msgstr ""
+
+#: snd-grec.c:1270 snd-xrec.c:2194
+msgid "i"
+msgstr ""
+
+#: snd-grec.c:1274 snd-xrec.c:2210
+msgid "n"
+msgstr ""
+
+#: snd-grec.c:1538 snd-rec.c:510 snd-rec.c:528
+#, c-format
+msgid "gain (slider) number too high: %d > %d"
+msgstr ""
+
+#: snd-grec.c:1573 snd-xrec.c:2643
+msgid "ton"
+msgstr ""
+
+#: snd-grec.c:1818 snd-xrec.c:3060
+msgid " recording cancelled"
+msgstr ""
+
+#: snd-grec.c:1877 snd-xrec.c:3138
+#, c-format
+msgid ""
+"recorded %s:\n"
+"  duration: %.2f\n"
+"  srate: %d, chans: %d\n"
+"  type: %s, format: %s"
+msgstr ""
+
+#: snd-grec.c:1926 snd-xrec.c:3188
+msgid "can't record: you screwed up the output channel number!"
+msgstr ""
+
+#: snd-grec.c:1939 snd-xrec.c:3200
+#, c-format
+msgid "chans field (%d) doesn't match file out panel (%d channels active)"
+msgstr ""
+
+#: snd-grec.c:1960 snd-xrec.c:3223
+msgid "can't record: no inputs enabled"
+msgstr ""
+
+#: snd-grec.c:1967 snd-xrec.c:3232
+msgid "Done"
+msgstr ""
+
+#: snd-grec.c:1973 snd-xrec.c:3240
+msgid "can't record: no output file name supplied"
+msgstr ""
+
+#: snd-gregion.c:97 snd-xregion.c:106
+#, c-format
+msgid "srate: %d"
+msgstr ""
+
+#: snd-gregion.c:99 snd-xregion.c:108
+#, c-format
+msgid "chans: %d"
+msgstr ""
+
+#: snd-gregion.c:101 snd-xregion.c:110
+#, c-format
+msgid "length: %.3f"
+msgstr ""
+
+#: snd-gregion.c:103 snd-xregion.c:112
+#, c-format
+msgid "maxamp: %.3f"
+msgstr ""
+
+#: snd-gregion.c:335 snd-xregion.c:314
+msgid "Delete"
+msgstr ""
+
+#: snd-gregion.c:362 snd-xregion.c:353
+msgid "regions"
+msgstr ""
+
+#: snd-gregion.c:416 snd-xregion.c:418
+msgid "length:"
+msgstr ""
+
+#: snd-gregion.c:421 snd-xregion.c:430
+msgid "maxamp:"
+msgstr ""
+
+#: snd-gregion.c:426 snd-xregion.c:446
+msgid "edit"
+msgstr ""
+
+#: snd-gregion.c:435 snd-xregion.c:463
+msgid "print"
+msgstr ""
+
+#: snd-gsnd.c:977 snd-xsnd.c:877
+msgid "frequency response"
+msgstr ""
+
+#: snd-gsnd.c:1493 snd-xsnd.c:1992
+msgid "sync"
+msgstr ""
+
+#: snd-gsnd.c:1507 snd-xsnd.c:2011
+msgid "unite"
+msgstr ""
+
+#: snd-gsnd.c:1545 snd-xsnd.c:2045
+msgid "amp:"
+msgstr ""
+
+#: snd-gsnd.c:1651 snd-xsnd.c:2192
+msgid "expand:"
+msgstr ""
+
+#: snd-gsnd.c:1702 snd-xsnd.c:2274
+msgid "contrast:"
+msgstr ""
+
+#: snd-gsnd.c:1753 snd-xsnd.c:2356
+msgid "reverb:"
+msgstr ""
+
+#: snd-gsnd.c:1786 snd-xsnd.c:2440
+msgid "len:"
+msgstr ""
+
+#: snd-gsnd.c:1827 snd-xsnd.c:2501
+msgid "filter:"
+msgstr ""
+
+#: snd-gsnd.c:1890 snd-xsnd.c:2668
+msgid "Remember"
+msgstr ""
+
+#: snd-gsnd.c:1899 snd-xsnd.c:2687
+msgid "Restore"
+msgstr ""
+
+#: snd-gsnd.c:1997 snd-xsnd.c:2809
+#, c-format
+msgid "(translated %s)"
+msgstr ""
+
+#: snd-gsnd.c:2073 snd-xsnd.c:3195
+msgid "Hide controls"
 msgstr ""
 
 #: snd-gxcolormaps.c:6
@@ -549,27 +1633,6 @@ msgstr ""
 msgid "flag"
 msgstr ""
 
-#: snd-gxcolormaps.c:7 snd-xmenu.c:308 snd-xmenu.c:758
-msgid "lines"
-msgstr ""
-
-#: snd-help.c:29
-msgid " Snd built expecting float samples, but sndlib uses int!"
-msgstr ""
-
-#: snd-help.c:33
-msgid " Snd built expecting int samples, but sndlib uses float!"
-msgstr ""
-
-#: snd-help.c:38
-#, c-format
-msgid " Snd expects %d bit int samples, but sndlib uses %d bits!"
-msgstr ""
-
-#: snd-help.c:119
-msgid "gtkGL not supported?"
-msgstr ""
-
 #: snd-help.c:134
 msgid "This is Snd version "
 msgstr ""
@@ -608,6 +1671,12 @@ msgstr ""
 msgid ""
 "\n"
 "    with large file support"
+msgstr ""
+
+#: snd-help.c:244
+msgid ""
+"\n"
+"    with gettext"
 msgstr ""
 
 #: snd-io.c:56
@@ -698,10 +1767,6 @@ msgstr ""
 msgid "C-%s undefined"
 msgstr ""
 
-#: snd-kbd.c:1318 snd-xprint.c:134 snd-xprint.c:153
-msgid "eps file:"
-msgstr ""
-
 #: snd-kbd.c:1324
 msgid "no macro active?"
 msgstr ""
@@ -710,20 +1775,12 @@ msgstr ""
 msgid "macro name:"
 msgstr ""
 
-#: snd-kbd.c:1333 snd-kbd.c:1387 snd-kbd.c:1657 snd-xrec.c:1383
-msgid "file:"
-msgstr ""
-
 #: snd-kbd.c:1341
 msgid "insert file:"
 msgstr ""
 
 #: snd-kbd.c:1350
 msgid "load:"
-msgstr ""
-
-#: snd-kbd.c:1367
-msgid "mix file:"
 msgstr ""
 
 #: snd-kbd.c:1408
@@ -779,45 +1836,50 @@ msgstr ""
 msgid " interrupted"
 msgstr ""
 
-#: snd-main.c:234
+#: snd-main.c:230
 #, c-format
 msgid ""
 "\n"
 "%s Snd %s (%s) options saved %s\n"
 msgstr ""
 
-#: snd-main.c:236
+#: snd-main.c:232
 #, c-format
 msgid ""
 "\n"
 "%s Snd %s (%s)\n"
 msgstr ""
 
-#: snd-main.c:353
+#: snd-main.c:349
 #, c-format
 msgid "%s end of snd options\n"
 msgstr ""
 
-#: snd-main.c:395
+#: snd-main.c:391
 #, c-format
 msgid "save-options in %s hit error: %s"
 msgstr ""
 
-#: snd-main.c:687
+#: snd-main.c:663
+#, c-format
+msgid "%s but no directory to preload?"
+msgstr ""
+
+#: snd-main.c:683
 #, c-format
 msgid "%s but no file to load?"
 msgstr ""
 
-#: snd-main.c:707
+#: snd-main.c:703
 #, c-format
 msgid "%s but no form to evaluate?"
 msgstr ""
 
-#: snd-main.c:718
+#: snd-main.c:714
 msgid "-title but no title?"
 msgstr ""
 
-#: snd-main.c:729
+#: snd-main.c:725
 msgid "-I but no path?"
 msgstr ""
 
@@ -865,16 +1927,8 @@ msgstr ""
 msgid "Hide Y = 0"
 msgstr ""
 
-#: snd-menu.c:369 snd-xmenu.c:346 snd-xmenu.c:803
-msgid "Show Y = 0"
-msgstr ""
-
 #: snd-menu.c:384
 msgid "Silent cursor"
-msgstr ""
-
-#: snd-menu.c:384 snd-xmenu.c:352 snd-xmenu.c:778
-msgid "Verbose cursor"
 msgstr ""
 
 #: snd-mix.c:847
@@ -923,42 +1977,38 @@ msgstr ""
 msgid "byte swap problem: chans should be %d"
 msgstr ""
 
-#: snd-nogui.c:540 snd-xmain.c:1026
-msgid "Caught seg fault (will try to continue):\n"
-msgstr ""
-
-#: snd-print.c:103
+#: snd-print.c:99
 msgid "eps file"
 msgstr ""
 
-#: snd-print.c:482
+#: snd-print.c:478
 msgid "nothing to print?"
 msgstr ""
 
-#: snd-print.c:511
+#: snd-print.c:507
 #, c-format
 msgid "print %s failed: %s"
 msgstr ""
 
-#: snd-print.c:516
+#: snd-print.c:512
 msgid "print sound: eps file name needed"
 msgstr ""
 
-#: snd-print.c:541
+#: snd-print.c:537
 #, c-format
 msgid "print region %s failed: %s"
 msgstr ""
 
-#: snd-print.c:543
+#: snd-print.c:539
 msgid "print region: eps file name needed"
 msgstr ""
 
-#: snd-print.c:559
+#: snd-print.c:555
 #, c-format
 msgid "print env %s failed: %s"
 msgstr ""
 
-#: snd-print.c:561
+#: snd-print.c:557
 msgid "print envelope: eps file name needed"
 msgstr ""
 
@@ -1131,11 +2181,6 @@ msgstr ""
 msgid "the cd gain"
 msgstr ""
 
-#: snd-rec.c:510 snd-rec.c:528
-#, c-format
-msgid "gain (slider) number too high: %d > %d"
-msgstr ""
-
 #: snd-rec.c:558
 msgid "set input source: "
 msgstr ""
@@ -1236,299 +2281,299 @@ msgstr ""
 msgid "can't make region temp file (%s: %s)"
 msgstr ""
 
-#: snd-run.c:1390
+#: snd-run.c:1396
 #, c-format
 msgid "can't find %s"
 msgstr ""
 
-#: snd-run.c:1725
+#: snd-run.c:1752
 #, c-format
 msgid "%s: can't handle %s"
 msgstr ""
 
-#: snd-run.c:1744
+#: snd-run.c:1771
 #, c-format
 msgid "can't handle this define: %s"
 msgstr ""
 
-#: snd-run.c:1749
+#: snd-run.c:1776
 #, c-format
 msgid "can't handle this definition: %s"
 msgstr ""
 
-#: snd-run.c:1753
+#: snd-run.c:1780
 #, c-format
 msgid "can't handle this define value: %s"
 msgstr ""
 
-#: snd-run.c:1814 snd-run.c:1849
+#: snd-run.c:1841 snd-run.c:1876
 #, c-format
 msgid "can't handle %s var: %s"
 msgstr ""
 
-#: snd-run.c:1871
+#: snd-run.c:1896
 #, c-format
 msgid "can't handle non-explicit lambda args: %s"
 msgstr ""
 
-#: snd-run.c:1978
+#: snd-run.c:2003
 #, c-format
 msgid "can't handle this embedded lambda: %s"
 msgstr ""
 
-#: snd-run.c:2025
+#: snd-run.c:2050
 #, c-format
 msgid "if: bad selector? %s"
 msgstr ""
 
-#: snd-run.c:2027
+#: snd-run.c:2052
 #, c-format
 msgid "if: selector type not boolean: %s %s"
 msgstr ""
 
-#: snd-run.c:2053
+#: snd-run.c:2078
 #, c-format
 msgid "if: can't handle true branch %s"
 msgstr ""
 
-#: snd-run.c:2088
+#: snd-run.c:2113
 #, c-format
 msgid "if: can't handle false branch %s"
 msgstr ""
 
-#: snd-run.c:2089
+#: snd-run.c:2114
 #, c-format
 msgid "if branch types differ incompatibly: %s and %s"
 msgstr ""
 
-#: snd-run.c:2122
+#: snd-run.c:2147
 msgid "empty cond?"
 msgstr ""
 
-#: snd-run.c:2133
+#: snd-run.c:2158
 #, c-format
 msgid "cond test: %s"
 msgstr ""
 
-#: snd-run.c:2163
+#: snd-run.c:2188
 #, c-format
 msgid "cond clause types differ: %s %s"
 msgstr ""
 
-#: snd-run.c:2213
+#: snd-run.c:2238
 #, c-format
 msgid "can't handle case selector: %s"
 msgstr ""
 
-#: snd-run.c:2214
+#: snd-run.c:2239
 #, c-format
 msgid "case only with ints: %s"
 msgstr ""
 
-#: snd-run.c:2233
+#: snd-run.c:2258
 #, c-format
 msgid "case clause types differ: %s %s"
 msgstr ""
 
-#: snd-run.c:2258
+#: snd-run.c:2283
 #, c-format
 msgid "bad case key: %s"
 msgstr ""
 
-#: snd-run.c:2270
+#: snd-run.c:2295
 #, c-format
 msgid "case only accepts integer selectors: %s"
 msgstr ""
 
-#: snd-run.c:2362
+#: snd-run.c:2387
 msgid "do: null test"
 msgstr ""
 
-#: snd-run.c:2385
+#: snd-run.c:2410
 #, c-format
 msgid "do test must be boolean: %s"
 msgstr ""
 
-#: snd-run.c:2542
+#: snd-run.c:2567
 msgid "call/cc: types differ"
 msgstr ""
 
-#: snd-run.c:2581
+#: snd-run.c:2606
 #, c-format
 msgid "or: can't handle %s"
 msgstr ""
 
-#: snd-run.c:2582
+#: snd-run.c:2607
 #, c-format
 msgid "or: type not boolean: %s"
 msgstr ""
 
-#: snd-run.c:2630
+#: snd-run.c:2655
 #, c-format
 msgid "and: can't handle %s"
 msgstr ""
 
-#: snd-run.c:2631
+#: snd-run.c:2656
 #, c-format
 msgid "and: type not boolean: %s"
 msgstr ""
 
-#: snd-run.c:2669 snd-run.c:2733
+#: snd-run.c:2694 snd-run.c:2758
 #, c-format
 msgid "set!: can't handle: %s"
 msgstr ""
 
-#: snd-run.c:2703
+#: snd-run.c:2728
 #, c-format
 msgid "generalized set! for %s not implemented yet"
 msgstr ""
 
-#: snd-run.c:2749
+#: snd-run.c:2774
 #, c-format
 msgid "can't set pointer var (%s) to alias other such var"
 msgstr ""
 
-#: snd-run.c:2769
+#: snd-run.c:2794
 #, c-format
 msgid "set! can't change var's type (%s -> %s): %s"
 msgstr ""
 
-#: snd-run.c:2803
+#: snd-run.c:2828
 #, c-format
 msgid "set!: can't set local or list vars: %s"
 msgstr ""
 
-#: snd-run.c:2804
+#: snd-run.c:2829
 #, c-format
 msgid "set! variable problem: %s"
 msgstr ""
 
-#: snd-run.c:2991
+#: snd-run.c:3016
 msgid "* trouble"
 msgstr ""
 
-#: snd-run.c:3082
+#: snd-run.c:3107
 msgid "+ trouble"
 msgstr ""
 
-#: snd-run.c:3184
+#: snd-run.c:3209
 msgid "- trouble"
 msgstr ""
 
-#: snd-run.c:3335
+#: snd-run.c:3360
 msgid "division by zero"
 msgstr ""
 
-#: snd-run.c:3603
+#: snd-run.c:3628
 msgid "max trouble"
 msgstr ""
 
-#: snd-run.c:3674
+#: snd-run.c:3699
 msgid "min trouble"
 msgstr ""
 
-#: snd-run.c:3762
+#: snd-run.c:3787
 msgid "odd? can't convert arg"
 msgstr ""
 
-#: snd-run.c:3773
+#: snd-run.c:3798
 msgid "even? can't convert arg"
 msgstr ""
 
-#: snd-run.c:4121
+#: snd-run.c:4146
 msgid "gcd can't convert to int"
 msgstr ""
 
-#: snd-run.c:4178
+#: snd-run.c:4203
 msgid "lcm can't convert to int"
 msgstr ""
 
-#: snd-run.c:4228
+#: snd-run.c:4253
 msgid "modulo arg1 can't convert to int"
 msgstr ""
 
-#: snd-run.c:4230
+#: snd-run.c:4255
 msgid "modulo arg2 can't convert to int"
 msgstr ""
 
-#: snd-run.c:4244
+#: snd-run.c:4269
 msgid "remainder arg1 can't convert to int"
 msgstr ""
 
-#: snd-run.c:4246
+#: snd-run.c:4271
 msgid "remainder arg2 can't convert to int"
 msgstr ""
 
-#: snd-run.c:4260
+#: snd-run.c:4285
 msgid "quotient arg1 can't convert to int"
 msgstr ""
 
-#: snd-run.c:4262
+#: snd-run.c:4287
 msgid "quotient arg2 can't convert to int"
 msgstr ""
 
-#: snd-run.c:4551
+#: snd-run.c:4576
 msgid "constant 1st arg to string-fill!"
 msgstr ""
 
-#: snd-run.c:4565
+#: snd-run.c:4590
 msgid "constant 1st arg to string-set!"
 msgstr ""
 
-#: snd-run.c:4743
+#: snd-run.c:4768
 msgid "substring: args out of range"
 msgstr ""
 
-#: snd-run.c:5021
+#: snd-run.c:5046
 #, c-format
 msgid "wrong number of args (%d) for func"
 msgstr ""
 
-#: snd-run.c:7175
+#: snd-run.c:7203
 #, c-format
 msgid "problem with %s (def-clm-struct) value: %s from %s"
 msgstr ""
 
-#: snd-run.c:7226
+#: snd-run.c:7254
 #, c-format
 msgid "%s argument %d (%s) is a %s, not a %s?"
 msgstr ""
 
-#: snd-run.c:7377
+#: snd-run.c:7404
 msgid "continuation types differ"
 msgstr ""
 
-#: snd-run.c:7392
+#: snd-run.c:7419
 #, c-format
 msgid "not enough args (%d) for %s"
 msgstr ""
 
-#: snd-run.c:7395
+#: snd-run.c:7422
 #, c-format
 msgid "too many args (%d) for %s"
 msgstr ""
 
-#: snd-run.c:7491
+#: snd-run.c:7518
 #, c-format
 msgid "can't handle: %s"
 msgstr ""
 
-#: snd-run.c:7517 snd-run.c:7548
+#: snd-run.c:7544 snd-run.c:7575
 #, c-format
 msgid "can't set %s (a %s) to %s (a %s)"
 msgstr ""
 
-#: snd-run.c:7565
+#: snd-run.c:7592
 #, c-format
 msgid "can't set %s"
 msgstr ""
 
-#: snd-run.c:7612
+#: snd-run.c:7639
 #, c-format
 msgid "can't optimize: %s\n"
 msgstr ""
 
-#: snd-run.c:7852
+#: snd-run.c:7879
 msgid "no vcts passed to vct-map"
 msgstr ""
 
@@ -1588,8 +2633,8 @@ msgstr ""
 msgid "can't open swap-channels temp file %s: %s\n"
 msgstr ""
 
-#: snd-sig.c:900 snd-sig.c:1294 snd-sig.c:1465 snd-sig.c:1533 snd-sig.c:1664
-#: snd-sig.c:2000
+#: snd-sig.c:900 snd-sig.c:1285 snd-sig.c:1456 snd-sig.c:1524 snd-sig.c:1655
+#: snd-sig.c:1991
 #, c-format
 msgid "can't open %s temp file %s: %s\n"
 msgstr ""
@@ -1598,45 +2643,45 @@ msgstr ""
 msgid "src interrupted"
 msgstr ""
 
-#: snd-sig.c:1280
+#: snd-sig.c:1271
 #, c-format
 msgid "clm-channel: %s can't handle %s generators"
 msgstr ""
 
-#: snd-sig.c:1284
+#: snd-sig.c:1275
 #, c-format
 msgid "%s: can't read %s[%d] channel data!"
 msgstr ""
 
-#: snd-sig.c:1389
+#: snd-sig.c:1380
 #, c-format
 msgid "filter-channel: %s can't handle %s generators"
 msgstr ""
 
-#: snd-sig.c:2402
+#: snd-sig.c:2393
 #, c-format
 msgid "run-channel: can't read %s[%d] channel data!"
 msgstr ""
 
-#: snd-sig.c:2412
+#: snd-sig.c:2403
 #, c-format
 msgid "can't open run-channel temp file %s: %s\n"
 msgstr ""
 
-#: snd-sig.c:2896 snd-sig.c:3046
+#: snd-sig.c:2887 snd-sig.c:3037
 #, c-format
 msgid "C-G stopped %s at sample <PRId64>"
 msgstr ""
 
-#: snd-sig.c:4009
+#: snd-sig.c:4000
 msgid "src envelope hits 0.0"
 msgstr ""
 
-#: snd-sig.c:4016 snd-sig.c:4022
+#: snd-sig.c:4007 snd-sig.c:4013
 msgid "src envelope passes through 0.0"
 msgstr ""
 
-#: snd-sig.c:4164
+#: snd-sig.c:4155
 msgid "order > length coeffs?"
 msgstr ""
 
@@ -1738,283 +2783,8 @@ msgid ""
 "  (%s header: %s (0x%x) data format)\n"
 msgstr ""
 
-#: snd-xchn.c:430
-msgid ""
-"This portion of the Snd display shows the sound data in the time and/or "
-"frequency domains. If you click on the time domain wave, you can edit it "
-"using emacs-like keyboard commands, as well as using mouse-click-and-drag to "
-"define the selection.  Once defined, the selected portion can be cut, "
-"deleted, or pasted elsewhere, the latter with the middle mouse button."
-msgstr ""
-
-#: snd-xchn.c:440
-msgid "Edit History"
-msgstr ""
-
-#: snd-xchn.c:442
-msgid ""
-"The current state of the undo/redo list can be viewed as a scrolled list of "
-"strings in the pane on the left of the graph (in Motif 1, there's a 'Show "
-"Edit History' menu option).  If there are no current edits, it just lists "
-"the associated file name (i.e. the zero-edits state).  As you edit the "
-"sound, the operations appear in the edit list window.  Click on a member of "
-"the list to move to that point in the edit list (equivalent to some number "
-"of undo's or redo's).  To move to a given edit point and follow the sync "
-"chain (if any), use control-click."
-msgstr ""
-
-#: snd-xchn.c:454
-msgid "X axis scroll"
-msgstr ""
-
-#: snd-xchn.c:455
-msgid ""
-"This scrollbar controls the position of the x axis within the overall sound "
-"file. The arrows increment the view by one window."
-msgstr ""
-
-#: snd-xchn.c:461
-msgid "Y axis scroll"
-msgstr ""
-
-#: snd-xchn.c:462
-msgid ""
-"This (nearly useless) scrollbar controls the position of the y-axis within "
-"the current y axis limits."
-msgstr ""
-
-#: snd-xchn.c:468
-msgid "X axis zoom"
-msgstr ""
-
-#: snd-xchn.c:469
-msgid ""
-"This scrollbar zooms in (as you move it to the left) or out along the x axis."
-msgstr ""
-
-#: snd-xchn.c:475
-msgid "Y axis zoom"
-msgstr ""
-
-#: snd-xchn.c:476
-msgid "This scrollbar zooms in (as you move it down) or out along the y axis."
-msgstr ""
-
-#: snd-xchn.c:482
-msgid "Graph position"
-msgstr ""
-
-#: snd-xchn.c:483
-msgid ""
-"This scrollbar controls the position in the overall combined graph of the "
-"portion visible in the sound pane."
-msgstr ""
-
-#: snd-xchn.c:489
-msgid "Graph zoom"
-msgstr ""
-
-#: snd-xchn.c:490
-msgid ""
-"This scrollbar controls how much of the overall combined graph is visible in "
-"the sound pane."
-msgstr ""
-
-#: snd-xchn.c:496
-msgid "fft button"
-msgstr ""
-
-#: snd-xchn.c:497
-msgid ""
-"This button controls whether an FFT is displayed alongside the waveform.  To "
-"affect all channels at once, use control-click."
-msgstr ""
-
-#: snd-xchn.c:503
-msgid "time domain waveform button"
-msgstr ""
-
-#: snd-xchn.c:504
-msgid ""
-"This button determines whether the time domain waveform is displayed.  If "
-"both the 'w' and 'f' buttons are off, only the lisp graph (if any) is "
-"displayed.  To affect all channels at once, use control-click."
-msgstr ""
-
-#: snd-xchn.c:890
-msgid "f"
-msgstr ""
-
-#: snd-xchn.c:896
-msgid "w"
-msgstr ""
-
 #: snd-xdraw.c:556
 msgid "can't even allocate black?!?"
-msgstr ""
-
-#: snd-xdraw.c:727 snd-xdraw.c:1295 snd-xenv.c:208 snd-xenv.c:1142
-#: snd-xfft.c:481 snd-xfile.c:1762 snd-xfind.c:65 snd-xfind.c:97
-#: snd-xmix.c:488 snd-xprint.c:123 snd-xrec.c:3325 snd-xregion.c:312
-msgid "Dismiss"
-msgstr ""
-
-#: snd-xdraw.c:728 snd-xdraw.c:1296 snd-xenv.c:1143 snd-xfft.c:482
-#: snd-xfile.c:1763 snd-xfile.c:1963 snd-xfile.c:2199 snd-xfile.c:2351
-#: snd-xhelp.c:205 snd-xmenu.c:509 snd-xmenu.c:510 snd-xmenu.c:511
-#: snd-xmenu.c:512 snd-xmenu.c:513 snd-xmenu.c:514 snd-xmenu.c:515
-#: snd-xmenu.c:516 snd-xmenu.c:517 snd-xmenu.c:518 snd-xmenu.c:519
-#: snd-xmenu.c:520 snd-xmenu.c:521 snd-xmenu.c:522 snd-xmenu.c:523
-#: snd-xmenu.c:524 snd-xmenu.c:525 snd-xmenu.c:896 snd-xmenu.c:983
-#: snd-xmix.c:490 snd-xprint.c:122 snd-xrec.c:3326 snd-xregion.c:313
-msgid "Help"
-msgstr ""
-
-#: snd-xdraw.c:729
-msgid "Color Editor"
-msgstr ""
-
-#: snd-xdraw.c:739 snd-xfft.c:485 snd-xfft.c:519 snd-xmenu.c:378
-#: snd-xmenu.c:743
-msgid "Color"
-msgstr ""
-
-#: snd-xdraw.c:846
-msgid "light"
-msgstr ""
-
-#: snd-xdraw.c:856
-msgid "dark"
-msgstr ""
-
-#: snd-xdraw.c:870
-msgid "data cutoff"
-msgstr ""
-
-#: snd-xdraw.c:887
-msgid "invert"
-msgstr ""
-
-#: snd-xdraw.c:964
-msgid "x angle slider"
-msgstr ""
-
-#: snd-xdraw.c:965
-msgid "This slider causes the graph to rotate around the x axis."
-msgstr ""
-
-#: snd-xdraw.c:995
-msgid "y angle slider"
-msgstr ""
-
-#: snd-xdraw.c:996
-msgid "This slider causes the graph to rotate around the y axis."
-msgstr ""
-
-#: snd-xdraw.c:1026
-msgid "z angle slider"
-msgstr ""
-
-#: snd-xdraw.c:1027
-msgid "This slider causes the graph to rotate around the z axis."
-msgstr ""
-
-#: snd-xdraw.c:1056
-msgid "x scale slider"
-msgstr ""
-
-#: snd-xdraw.c:1057
-msgid "This slider causes the graph to expand or contract along the x axis."
-msgstr ""
-
-#: snd-xdraw.c:1086
-msgid "y scale slider"
-msgstr ""
-
-#: snd-xdraw.c:1087
-msgid "This slider causes the graph to expand or contract along the y axis."
-msgstr ""
-
-#: snd-xdraw.c:1116
-msgid "z scale slider"
-msgstr ""
-
-#: snd-xdraw.c:1117
-msgid "This slider causes the graph to expand or contract along the z axis."
-msgstr ""
-
-#: snd-xdraw.c:1153
-msgid "hop slider"
-msgstr ""
-
-#: snd-xdraw.c:1154
-msgid "This slider changes the hop size."
-msgstr ""
-
-#: snd-xdraw.c:1186
-msgid "percent of spectrum slider"
-msgstr ""
-
-#: snd-xdraw.c:1187
-msgid "This slider determines how much of the spectrum is displayed"
-msgstr ""
-
-#: snd-xdraw.c:1252
-msgid "with-gl button"
-msgstr ""
-
-#: snd-xdraw.c:1253
-msgid "This buttons determines whether OpenGL is used for various displays"
-msgstr ""
-
-#: snd-xdraw.c:1297 snd-xenv.c:1186 snd-xrec.c:2895 snd-xrec.c:2896
-#: snd-xrec.c:3048 snd-xrec.c:3080 snd-xrec.c:3114 snd-xrec.c:3327
-#: snd-xsnd.c:246 snd-xsnd.c:2705
-msgid "Reset"
-msgstr ""
-
-#: snd-xdraw.c:1298
-msgid "Spectrogram Orientation"
-msgstr ""
-
-#: snd-xdraw.c:1310 snd-xfft.c:484 snd-xmenu.c:373 snd-xmenu.c:746
-msgid "Orientation"
-msgstr ""
-
-#: snd-xdraw.c:1358
-msgid "x angle"
-msgstr ""
-
-#: snd-xdraw.c:1372
-msgid "y angle"
-msgstr ""
-
-#: snd-xdraw.c:1386
-msgid "z angle"
-msgstr ""
-
-#: snd-xdraw.c:1400
-msgid "hop"
-msgstr ""
-
-#: snd-xdraw.c:1415
-msgid "x scale"
-msgstr ""
-
-#: snd-xdraw.c:1430
-msgid "y scale"
-msgstr ""
-
-#: snd-xdraw.c:1445
-msgid "z scale"
-msgstr ""
-
-#: snd-xdraw.c:1460
-msgid "percent of spectrum"
-msgstr ""
-
-#: snd-xdraw.c:1477
-msgid "use OpenGL"
 msgstr ""
 
 #: snd-xen.c:352
@@ -2027,390 +2797,36 @@ msgstr ""
 msgid "%s function (%s arg %d) should take %d args, not %d"
 msgstr ""
 
-#: snd-xen.c:373
-#, c-format
-msgid ""
-"%s function (%s arg %d) should take %d argument, but instead requires %d"
-msgid_plural ""
-"%s function (%s arg %d) should take %d arguments, but instead requires %d"
-msgstr[0] ""
-msgstr[1] ""
-
-#: snd-xen.c:378
-#, c-format
-msgid ""
-"%s function (%s arg %d) should accept at least %d argument, but instead "
-"accepts only %d"
-msgid_plural ""
-"%s function (%s arg %d) should accept at least %d arguments, but instead "
-"accepts only %d"
-msgstr[0] ""
-msgstr[1] ""
-
-#: snd-xen.c:384
+#: snd-xen.c:372
 #, c-format
 msgid ""
 "%s function (%s arg %d) should take %d argument%s, but instead requires %d"
 msgstr ""
 
-#: snd-xen.c:387
+#: snd-xen.c:375
 #, c-format
 msgid ""
 "%s function (%s arg %d) should accept at least %d argument%s, but instead "
 "accepts only %d"
 msgstr ""
 
-#: snd-xen.c:865
+#: snd-xen.c:852
 #, c-format
 msgid "can't load %s: %s"
 msgstr ""
 
-#: snd-xen.c:1242
+#: snd-xen.c:1229
 #, c-format
 msgid "%s: directory %s is not writable: %s"
 msgstr ""
 
-#: snd-xen.c:2012 snd-xen.c:2028
+#: snd-xen.c:1983 snd-xen.c:1999 snd-xen.c:2015
 #, c-format
 msgid "%s is not a number"
 msgstr ""
 
-#: snd-xenv.c:12 snd-xenv.c:1310
-msgid "amp env:"
-msgstr ""
-
-#: snd-xenv.c:12
-msgid "flt env:"
-msgstr ""
-
-#: snd-xenv.c:12
-msgid "src env:"
-msgstr ""
-
-#: snd-xenv.c:165 snd-xfind.c:61 snd-xmenu.c:247 snd-xprint.c:44
-msgid "Stop"
-msgstr ""
-
-#: snd-xenv.c:224
-msgid "noname"
-msgstr ""
-
-#: snd-xenv.c:336
-msgid "unnamed"
-msgstr ""
-
-#: snd-xenv.c:347
-msgid "Save Current Envelope"
-msgstr ""
-
-#: snd-xenv.c:348
-msgid ""
-"The envelope in the editor is not saved until you press the 'save' button.  "
-"Once saved, it can be used in other portions of Snd (for example, as the "
-"argument to C-x C-a), or saved to a file via the Option menu Save State "
-"option.  Similarly, a file of CLM (lisp) envelope definitions can be loaded "
-"using load."
-msgstr ""
-
-#: snd-xenv.c:396
-msgid "Undo and Apply"
-msgstr ""
-
-#: snd-xenv.c:397
-msgid ""
-"This button first tries to undo a previous apply then calls apply, the point "
-"obviously being to make it easy to retry an envelope after some minor change."
-msgstr ""
-
-#: snd-xenv.c:425 snd-xenv.c:625 snd-xenv.c:1462
-msgid "view envs"
-msgstr ""
-
-#: snd-xenv.c:583
-msgid "Envelope Editor Display"
-msgstr ""
-
-#: snd-xenv.c:584
-msgid ""
-"This portion of the envelope editor displays either the envelope currently "
-"being edited, or all currently loaded envelopes.  In the latter case, click "
-"an envelope to select it, click the selected envelope to load it into the "
-"editor portion.  In the former case, click anywhere in the graph to place a "
-"new breakpoint at that point; click an existing point to delete it; drag an "
-"existing point to move it.  Put some envelope name in the text field and "
-"click the 'save' button to save the current envelope under the chosen name.  "
-"Unlimited undo/redo are available through the 'undo' and 'redo' buttons.  "
-"Set the 'w' button to see the currently active sound under the envelope; set "
-"the 'f' button to apply the envelope to the sound's frequency, rather than "
-"amplitude; set the 'c' button to clip mouse motion to the current y axis "
-"bounds."
-msgstr ""
-
-#: snd-xenv.c:597
-msgid "Envelope Name"
-msgstr ""
-
-#: snd-xenv.c:598
-msgid ""
-"To load an exisiting envelope into the editor,  type its name in this field; "
-"to give a name to the envelope as it is currently defined in the graph "
-"viewer, type its name in this field, then either push return or the 'save' "
-"button; to define a new envelope by its break point values, give the values "
-"in this field as though it were a defvar call in M-X -- that is, '(0 0 1 1)"
-"<cr> in this field fires up a ramp as a new envelope."
-msgstr ""
-
-#: snd-xenv.c:608
-msgid "Loaded Envelope Names"
-msgstr ""
-
-#: snd-xenv.c:609
-msgid ""
-"This is the list of all currently loaded envelopes by name.  When a new "
-"envelope is saved, its name is added to the end of the list.  Click a name "
-"to select that envelope; click the selected envelope to load it into the "
-"editor.  The selected envelope is displayed in red."
-msgstr ""
-
-#: snd-xenv.c:617
-msgid "Breakpoint Data"
-msgstr ""
-
-#: snd-xenv.c:618
-msgid ""
-"This portion ofthe envelope editor displays the current breakpoint values "
-"while the mouse is dragging a point"
-msgstr ""
-
-#: snd-xenv.c:625
-msgid "edit env"
-msgstr ""
-
-#: snd-xenv.c:632
-msgid "View Envs or Edit Env"
-msgstr ""
-
-#: snd-xenv.c:633
-msgid ""
-"There are two sides to the Envelope Editor, the editor itself, and an "
-"envelope viewer.  This button chooses which is active.  In the envelope "
-"viewer,  all currently loaded envelopes are displayed, and you can select "
-"one by clicking it; click the selected envelope to load it into the editor "
-"portion.  The other choice is the editor which displays the current state of "
-"the envelope being edited."
-msgstr ""
-
-#: snd-xenv.c:708
-msgid "Apply to Selection or Sound"
-msgstr ""
-
-#: snd-xenv.c:709
-msgid ""
-"The 'Apply' button can affect either the current selection, the current "
-"sound, or the currently selected mix."
-msgstr ""
-
-#: snd-xenv.c:715
-msgid "Apply to Mix"
-msgstr ""
-
-#: snd-xenv.c:716
-msgid ""
-"The 'Apply' button can affect either the currently selected mix, or the "
-"entire current sound, or the current selection."
-msgstr ""
-
-#: snd-xenv.c:743
-msgid "Delete Selected Envelope"
-msgstr ""
-
-#: snd-xenv.c:744
-msgid "If an envelope is selected in the envs list, this will remove it"
-msgstr ""
-
-#: snd-xenv.c:758
-msgid "Revert to Original Envelope"
-msgstr ""
-
-#: snd-xenv.c:759
-msgid ""
-"The revert button undoes all the edits back to the original state, and if "
-"clicked again at that point, clears the editor to a clean state (that is, "
-"the envelope '(0 0 1 0))."
-msgstr ""
-
-#: snd-xenv.c:774
-msgid "Undo Edit"
-msgstr ""
-
-#: snd-xenv.c:775
-msgid ""
-"The undo button undoes the previous edit.  The list of edits is not cleared "
-"until you changed to a new envelope, so you can undo and redo every edit "
-"without limitation."
-msgstr ""
-
-#: snd-xenv.c:790
-msgid "Redo Edit"
-msgstr ""
-
-#: snd-xenv.c:791
-msgid ""
-"The redo button redoes an edit that was previously undone.  There is no "
-"limit on the number of edits all_that can be undone and redone."
-msgstr ""
-
-#: snd-xenv.c:824
-msgid "Apply Envelope to Spectrum"
-msgstr ""
-
-#: snd-xenv.c:825
-msgid ""
-"When the 'Apply' button is pressed, the envelope in the editor window is "
-"applied to the current sound and any sounds sync'd to it. If this button is "
-"set,  the envelope is interpreted as a frequency response curve, and used to "
-"design an FIR filter that is then applied to the current sound. The order of "
-"the filter is determined by the variable "
-msgstr ""
-
-#: snd-xenv.c:828
-msgid " which defaults to 40."
-msgstr ""
-
-#: snd-xenv.c:843
-msgid "Apply Envelope to Amplitude"
-msgstr ""
-
-#: snd-xenv.c:844
-msgid ""
-"When the 'Apply' button is pressed, the envelope in the editor window is "
-"applied to the current sound and any sounds sync'd to it. If this button is "
-"set,  the envelope is interpreted as a amplitude envelope."
-msgstr ""
-
-#: snd-xenv.c:865
-msgid "Apply Envelope to Srate"
-msgstr ""
-
-#: snd-xenv.c:866
-msgid ""
-"When the 'Apply' button is pressed, the envelope in the editor window is "
-"applied to the current sound and any sounds sync'd to it. If this button is "
-"set,  the envelope is applied to the sampling rate."
-msgstr ""
-
-#: snd-xenv.c:885
-msgid "Print Envelopes"
-msgstr ""
-
-#: snd-xenv.c:886
-msgid ""
-"The print button causes the current envelope editor display (whether the "
-"envelope being edited, or all the envelopes currently loaded) to be saved in "
-"a postscript file named aaa.eps.  You can send this to a printer with lpr."
-msgstr ""
-
-#: snd-xenv.c:910
-msgid "Show Current Active Channel"
-msgstr ""
-
-#: snd-xenv.c:911
-msgid ""
-"This button, if set, causes a light-colored version of the current channel's "
-"overall data to be displayed in the envelope editor window, making it easier "
-"to design an envelope to fit the exact contours of the sound.  Since the "
-"envelope is always applied to the entire sound, the x-axis bounds in the "
-"envelope editor are arbitrary."
-msgstr ""
-
-#: snd-xenv.c:928
-msgid "Linear or Log Y Axis"
-msgstr ""
-
-#: snd-xenv.c:929
-msgid "This button, if set, causes the y axis to be in dB"
-msgstr ""
-
-#: snd-xenv.c:943
-msgid "Y Axis Clipped"
-msgstr ""
-
-#: snd-xenv.c:944
-msgid ""
-"This button, if set, causes break point motion in the y direction to be "
-"clipped at the current axis bounds.  If unset, the bounds will try to change "
-"to accommodate the current mouse position."
-msgstr ""
-
-#: snd-xenv.c:967 snd-xenv.c:990
-msgid "Linear or Exponential Segments"
-msgstr ""
-
-#: snd-xenv.c:968
-msgid ""
-"This button, if set, causes the segments to be drawn with an exponential "
-"curve"
-msgstr ""
-
-#: snd-xenv.c:991
-msgid ""
-"This button, if set, causes the segments to be drawn with an straight line."
-msgstr ""
-
-#: snd-xenv.c:997
-msgid "Exponential Envelope Base"
-msgstr ""
-
-#: snd-xenv.c:998
-msgid ""
-"This slider sets the base of the exponential used to connect the envelope "
-"breakpoints."
-msgstr ""
-
-#: snd-xenv.c:1004 snd-xsnd.c:167
-msgid "Filter Order"
-msgstr ""
-
-#: snd-xenv.c:1005
-msgid ""
-"This text field sets the order of the FIR filter used by the 'flt' envelope."
-msgstr ""
-
-#: snd-xenv.c:1011
-msgid "Filter Type"
-msgstr ""
-
-#: snd-xenv.c:1012
-msgid ""
-"This button sets the type of filter used by the 'flt' envelope -- FIR or FFT."
-msgstr ""
-
-#: snd-xenv.c:1144 snd-xmenu.c:202 snd-xmenu.c:703
-msgid "Edit Envelope"
-msgstr ""
-
-#: snd-xenv.c:1145 snd-xsnd.c:239 snd-xsnd.c:2649
-msgid "Apply"
-msgstr ""
-
 #: snd-xenv.c:1158
 msgid "envelope editor"
-msgstr ""
-
-#: snd-xenv.c:1182
-msgid "Undo&Apply"
-msgstr ""
-
-#: snd-xenv.c:1217
-msgid "exp:"
-msgstr ""
-
-#: snd-xenv.c:1365
-msgid "wave"
-msgstr ""
-
-#: snd-xenv.c:1382
-msgid "clip"
 msgstr ""
 
 #: snd-xenv.c:1482
@@ -2433,233 +2849,20 @@ msgstr ""
 msgid "revert"
 msgstr ""
 
-#: snd-xenv.c:1530
-msgid "delete"
-msgstr ""
-
-#: snd-xenv.c:1555
-msgid "amp"
-msgstr ""
-
 #: snd-xenv.c:1556
 msgid " flt "
-msgstr ""
-
-#: snd-xenv.c:1557
-msgid "src"
-msgstr ""
-
-#: snd-xenv.c:1591
-msgid "linear"
-msgstr ""
-
-#: snd-xenv.c:1596
-msgid "exp"
-msgstr ""
-
-#: snd-xenv.c:1620 snd-xfft.c:812
-msgid "selection"
-msgstr ""
-
-#: snd-xenv.c:1621
-msgid "mix"
-msgstr ""
-
-#: snd-xenv.c:1637
-msgid "envs:"
-msgstr ""
-
-#: snd-xerror.c:13
-msgid "Error"
-msgstr ""
-
-#: snd-xerror.c:34 snd-xmenu.c:340 snd-xmenu.c:826
-msgid "Error History"
 msgstr ""
 
 #: snd-xerror.c:44
 msgid "OK"
 msgstr ""
 
-#: snd-xerror.c:109
-msgid "no errors yet"
-msgstr ""
-
-#: snd-xerror.c:148
-msgid "Yow!"
-msgstr ""
-
-#: snd-xerror.c:149
-msgid "Yes"
-msgstr ""
-
-#: snd-xerror.c:150
-msgid "No"
-msgstr ""
-
-#: snd-xfft.c:142
-msgid "FFT Size"
-msgstr ""
-
-#: snd-xfft.c:143
-msgid ""
-"Any size FFT can be accommodated here, as long as it will fit in memory "
-"somehow.  The larger the FFT, the longer it takes to compute. The size must "
-"be a power of 2."
-msgstr ""
-
-#: snd-xfft.c:206
-msgid "Wavelet Choice"
-msgstr ""
-
-#: snd-xfft.c:207
-msgid ""
-"These names refer to various standard wavelets. The actual coefficients are "
-"in snd-fft.c."
-msgstr ""
-
-#: snd-xfft.c:234
-msgid "FFT Window"
-msgstr ""
-
-#: snd-xfft.c:235
-msgid ""
-"The FFT window names are taken from the article of Harris that discusses "
-"most FFT windows at great length.  The default window is a second order "
-"Blackman window."
-msgstr ""
-
-#: snd-xfft.c:259
-msgid "Transform Type"
-msgstr ""
-
-#: snd-xfft.c:260
-msgid "This list presents the various transforms that are available."
-msgstr ""
-
-#: snd-xfft.c:399
-msgid "FFT Window Parameter"
-msgstr ""
-
-#: snd-xfft.c:400
-msgid ""
-"This scale sets the FFT window parameter ometimes known as alpha or beta.  "
-"The scale tries to provide access to 'normal' values, given the current FFT "
-"window."
-msgstr ""
-
-#: snd-xfft.c:423
-msgid "Window Graph"
-msgstr ""
-
-#: snd-xfft.c:424
-msgid ""
-"This shows a graph of the current fft window and the spectrum thereof -- the "
-"spectrum is in dB with the min at -80dB."
-msgstr ""
-
-#: snd-xfft.c:483 snd-xfft.c:497 snd-xmenu.c:396 snd-xmenu.c:839
-msgid "Transform Options"
-msgstr ""
-
-#: snd-xfft.c:567
-msgid "type"
-msgstr ""
-
-#: snd-xfft.c:624 snd-xfile.c:1269
-msgid "size"
-msgstr ""
-
-#: snd-xfft.c:675
-msgid "display"
-msgstr ""
-
-#: snd-xfft.c:683
-msgid "single transform"
-msgstr ""
-
-#: snd-xfft.c:702
-msgid "sonogram"
-msgstr ""
-
-#: snd-xfft.c:721
-msgid "spectrogram"
-msgstr ""
-
-#: snd-xfft.c:740
-msgid "peaks"
-msgstr ""
-
-#: snd-xfft.c:776
-msgid "log freq"
-msgstr ""
-
-#: snd-xfft.c:794
-msgid "normalize"
-msgstr ""
-
-#: snd-xfft.c:853
-msgid "wavelet"
-msgstr ""
-
-#: snd-xfft.c:922 snd-xfft.c:976
-msgid "window"
-msgstr ""
-
-#: snd-xfile.c:178 snd-xmenu.c:132 snd-xmenu.c:137 snd-xmenu.c:142
-#: snd-xmenu.c:147 snd-xmenu.c:152 snd-xmenu.c:157 snd-xmenu.c:162
-#: snd-xmenu.c:167 snd-xmenu.c:172 snd-xmenu.c:177 snd-xmenu.c:182
-#: snd-xmenu.c:187 snd-xmenu.c:599 snd-xmenu.c:979
-msgid "File"
-msgstr ""
-
-#: snd-xfile.c:179
-msgid ""
-"If you click the 'Sound Files Only' button, only those files in the current "
-"directory that look vaguely like sound files will be displayed."
-msgstr ""
-
-#: snd-xfile.c:243 snd-xfile.c:510
-msgid "play selected sound"
-msgstr ""
-
-#: snd-xfile.c:244
-msgid ""
-"If you click the 'play selected sound' button, the currently selected sound "
-"(if and) in the file selection box file list is played."
-msgstr ""
-
-#: snd-xfile.c:413 snd-xfile.c:506
+#: snd-xfile.c:506
 msgid "sound files only"
-msgstr ""
-
-#: snd-xfile.c:414
-msgid ""
-"If you click the 'sound files only' button, only those files in the current "
-"directory that look vaguely like sound files will be displayed.  The "
-"decision is based on the file's extension."
-msgstr ""
-
-#: snd-xfile.c:435
-#, c-format
-msgid "%s: %d chan%s, %d Hz, %.3f secs"
-msgstr ""
-
-#: snd-xfile.c:576 snd-xfile.c:616
-#, c-format
-msgid "%s is a directory"
-msgstr ""
-
-#: snd-xfile.c:583 snd-xmenu.c:132 snd-xmenu.c:533
-msgid "Open"
 msgstr ""
 
 #: snd-xfile.c:583
 msgid "open:"
-msgstr ""
-
-#: snd-xfile.c:624 snd-xmenu.c:182 snd-xmenu.c:535
-msgid "Mix"
 msgstr ""
 
 #: snd-xfile.c:624
@@ -2668,243 +2871,6 @@ msgstr ""
 
 #: snd-xfile.c:680
 msgid "not saved (no file name given)"
-msgstr ""
-
-#: snd-xfile.c:699
-msgid "Save As"
-msgstr ""
-
-#: snd-xfile.c:700
-msgid ""
-"You can save the current state of a file or region under a different file "
-"name using the Save As option.  The output header type, data format,  and "
-"sampling rate can also be set.  The data formats are big-endian where "
-"relevant except for 'wave' output.  If a file by the chosen name already "
-"exists it is silently overwritten, unless that file is already open in Snd "
-"and has edits.  In that case,  you'll be asked what to do.  If you want to "
-"be warned whenever a file is about to be overwritten by this option, set the "
-"resource overwriteCheck to 1. If you give the current file name to Save As,  "
-"any current edits will be saved and the current version in Snd will be "
-"updated (that is, in this case, the current edit tree is not preserved)."
-msgstr ""
-
-#: snd-xfile.c:746
-msgid "File Header Type"
-msgstr ""
-
-#: snd-xfile.c:747
-msgid "This list shows the output header types that Snd is willing to write."
-msgstr ""
-
-#: snd-xfile.c:753
-msgid "File Data Format"
-msgstr ""
-
-#: snd-xfile.c:754
-msgid ""
-"This list shows the data format choices available with the currently "
-"selected header choice.  'Short' means 16-bit two's complement integer.  "
-"'Mulaw' and 'Alaw' are common 8-bit compression schemes. 'Long' is 32-bit "
-"integer. 'Float' is 32-bit float.  In each case, the decision as to byte "
-"order ('endianess') depends on the header type."
-msgstr ""
-
-#: snd-xfile.c:762
-msgid "File Data Location"
-msgstr ""
-
-#: snd-xfile.c:763
-msgid "If you know the data location (in bytes) you can set it in this field."
-msgstr ""
-
-#: snd-xfile.c:769 snd-xfile.c:776
-msgid "File Srate"
-msgstr ""
-
-#: snd-xfile.c:770
-msgid "This field sets the nominal file sampling rate."
-msgstr ""
-
-#: snd-xfile.c:777
-msgid "This field sets the number of channels in the output file."
-msgstr ""
-
-#: snd-xfile.c:784
-msgid "Output File Comment"
-msgstr ""
-
-#: snd-xfile.c:785
-msgid ""
-"This optional field provides any comments that you want saved in the output "
-"file's header."
-msgstr ""
-
-#: snd-xfile.c:835
-msgid "header"
-msgstr ""
-
-#: snd-xfile.c:880
-msgid "data"
-msgstr ""
-
-#: snd-xfile.c:922 snd-xfile.c:2005 snd-xregion.c:394
-msgid "srate:"
-msgstr ""
-
-#: snd-xfile.c:947 snd-xfile.c:2029 snd-xregion.c:406
-msgid "chans:"
-msgstr ""
-
-#: snd-xfile.c:972
-msgid "location:"
-msgstr ""
-
-#: snd-xfile.c:1009
-msgid "comment:"
-msgstr ""
-
-#: snd-xfile.c:1042
-msgid "save as:"
-msgstr ""
-
-#: snd-xfile.c:1044 snd-xfile.c:2352 snd-xmenu.c:157 snd-xmenu.c:534
-#: snd-xmenu.c:1230 snd-xmenu.c:1304
-msgid "Save"
-msgstr ""
-
-#: snd-xfile.c:1116
-msgid "current selection"
-msgstr ""
-
-#: snd-xfile.c:1253
-msgid "sort"
-msgstr ""
-
-#: snd-xfile.c:1267
-msgid "name"
-msgstr ""
-
-#: snd-xfile.c:1268
-msgid "date"
-msgstr ""
-
-#: snd-xfile.c:1270
-msgid "entry"
-msgstr ""
-
-#: snd-xfile.c:1271
-msgid "proc"
-msgstr ""
-
-#: snd-xfile.c:1764
-msgid "Clear"
-msgstr ""
-
-#: snd-xfile.c:1765 snd-xmenu.c:383 snd-xmenu.c:739
-msgid "Files"
-msgstr ""
-
-#: snd-xfile.c:1799 snd-xmenu.c:162 snd-xmenu.c:625
-msgid "Update"
-msgstr ""
-
-#: snd-xfile.c:1842 snd-xregion.c:353
-msgid "save"
-msgstr ""
-
-#: snd-xfile.c:1842 snd-xfile.c:1863 snd-xmix.c:583 snd-xregion.c:353
-#: snd-xsnd.c:1975
-msgid "play"
-msgstr ""
-
-#: snd-xfile.c:1842
-msgid "current files"
-msgstr ""
-
-#: snd-xfile.c:1863
-msgid "unlist"
-msgstr ""
-
-#: snd-xfile.c:1863
-msgid "previous files"
-msgstr ""
-
-#: snd-xfile.c:1962 snd-xfile.c:2200 snd-xfile.c:2350 snd-xrec.c:3229
-#: snd-xrec.c:3357
-msgid "Cancel"
-msgstr ""
-
-#: snd-xfile.c:1964 snd-xfile.c:2201
-msgid "Ok"
-msgstr ""
-
-#: snd-xfile.c:1965
-msgid "No Header on File"
-msgstr ""
-
-#: snd-xfile.c:1994
-msgid "Default"
-msgstr ""
-
-#: snd-xfile.c:2053
-msgid "data location:"
-msgstr ""
-
-#: snd-xfile.c:2072
-msgid "data format:"
-msgstr ""
-
-#: snd-xfile.c:2194
-#, c-format
-msgid "create new sound: %s"
-msgstr ""
-
-#: snd-xfile.c:2230
-msgid "New file:"
-msgstr ""
-
-#: snd-xfile.c:2343
-#, c-format
-msgid "Edit header of %s"
-msgstr ""
-
-#: snd-xfile.c:2353 snd-xmenu.c:264 snd-xmenu.c:707
-msgid "Edit Header"
-msgstr ""
-
-#: snd-xfind.c:10
-msgid "Global Find"
-msgstr ""
-
-#: snd-xfind.c:11
-msgid ""
-"This search travels through all the current channels in parallel until a "
-"match is found.  The find expression is a Scheme function of one argument,  "
-"the current sample value.  It should return #t when the search is "
-"satisified.  For example, (lambda (n) (> n .1)) looks for the next sample "
-"that is greater than .1."
-msgstr ""
-
-#: snd-xfind.c:40 snd-xfind.c:53
-#, c-format
-msgid "find: %s"
-msgstr ""
-
-#: snd-xfind.c:98 snd-xfind.c:127
-msgid "Next"
-msgstr ""
-
-#: snd-xfind.c:99
-msgid "Previous"
-msgstr ""
-
-#: snd-xfind.c:100 snd-xmenu.c:274 snd-xmenu.c:511 snd-xmenu.c:551
-#: snd-xmenu.c:909
-msgid "Find"
-msgstr ""
-
-#: snd-xfind.c:137
-msgid "find:"
 msgstr ""
 
 #: snd-xhelp.c:26
@@ -2916,38 +2882,11 @@ msgstr ""
 msgid "html reader (file_to_string): did not read entire file!"
 msgstr ""
 
-#: snd-xhelp.c:207 snd-xhelp.c:228
-msgid "Back"
-msgstr ""
-
-#: snd-xhelp.c:208 snd-xhelp.c:231
-msgid "Forward"
-msgstr ""
-
-#: snd-xhelp.c:306
-#, c-format
-msgid "%s help"
-msgstr ""
-
-#: snd-xlistener.c:17
-msgid "completion"
-msgstr ""
-
-#: snd-xlistener.c:18
-msgid ""
-"These are the completions that Snd thinks might be likely.\n"
-"If you select one, it will be used to complete the current name.\n"
-msgstr ""
-
-#: snd-xlistener.c:117
-msgid "Completions"
-msgstr ""
-
-#: snd-xlistener.c:1077
+#: snd-xlistener.c:1078
 msgid "Lisp Listener"
 msgstr ""
 
-#: snd-xlistener.c:1079
+#: snd-xlistener.c:1080
 msgid ""
 "This is the lisp listener pane; it is one way to access the interpreter."
 msgstr ""
@@ -2979,260 +2918,6 @@ msgstr ""
 #: snd-xmain.c:854
 #, c-format
 msgid "can't find font %s"
-msgstr ""
-
-#: snd-xmain.c:1032
-msgid "Caught top level error (will try to continue):\n"
-msgstr ""
-
-#: snd-xmenu.c:137 snd-xmenu.c:283 snd-xmenu.c:288 snd-xmenu.c:293
-#: snd-xmenu.c:298 snd-xmenu.c:303 snd-xmenu.c:308 snd-xmenu.c:313
-#: snd-xmenu.c:318 snd-xmenu.c:323 snd-xmenu.c:329 snd-xmenu.c:335
-#: snd-xmenu.c:340 snd-xmenu.c:346 snd-xmenu.c:352 snd-xmenu.c:358
-#: snd-xmenu.c:368 snd-xmenu.c:373 snd-xmenu.c:378 snd-xmenu.c:383
-#: snd-xmenu.c:636 snd-xmenu.c:719 snd-xmenu.c:981
-msgid "View"
-msgstr ""
-
-#: snd-xmenu.c:142 snd-xmenu.c:629
-msgid "New"
-msgstr ""
-
-#: snd-xmenu.c:147 snd-xmenu.c:633 snd-xrec.c:1114 snd-xrec.c:3051
-#: snd-xrec.c:3117 snd-xrec.c:3328 snd-xrec.c:3341
-msgid "Record"
-msgstr ""
-
-#: snd-xmenu.c:152 snd-xmenu.c:541
-msgid "Close"
-msgstr ""
-
-#: snd-xmenu.c:167 snd-xmenu.c:613
-msgid "Save as"
-msgstr ""
-
-#: snd-xmenu.c:172 snd-xmenu.c:617
-msgid "Revert"
-msgstr ""
-
-#: snd-xmenu.c:177 snd-xmenu.c:649
-msgid "Exit"
-msgstr ""
-
-#: snd-xmenu.c:187 snd-xmenu.c:640 snd-xprint.c:85 snd-xprint.c:121
-#: snd-xprint.c:124
-msgid "Print"
-msgstr ""
-
-#: snd-xmenu.c:197 snd-xmenu.c:202 snd-xmenu.c:207 snd-xmenu.c:212
-#: snd-xmenu.c:217 snd-xmenu.c:222 snd-xmenu.c:227 snd-xmenu.c:232
-#: snd-xmenu.c:245 snd-xmenu.c:264 snd-xmenu.c:274 snd-xmenu.c:660
-#: snd-xmenu.c:980
-msgid "Edit"
-msgstr ""
-
-#: snd-xmenu.c:197 snd-xmenu.c:543
-msgid "Mix Selection"
-msgstr ""
-
-#: snd-xmenu.c:207 snd-xmenu.c:678
-msgid "Delete Selection"
-msgstr ""
-
-#: snd-xmenu.c:212 snd-xmenu.c:542
-msgid "Insert Selection"
-msgstr ""
-
-#: snd-xmenu.c:217 snd-xmenu.c:545
-msgid "Save Selection"
-msgstr ""
-
-#: snd-xmenu.c:222 snd-xmenu.c:698
-msgid "Select all"
-msgstr ""
-
-#: snd-xmenu.c:227 snd-xmenu.c:536 snd-xmenu.c:1236 snd-xmenu.c:1298
-msgid "Undo"
-msgstr ""
-
-#: snd-xmenu.c:232 snd-xmenu.c:537 snd-xmenu.c:1242 snd-xmenu.c:1301
-msgid "Redo"
-msgstr ""
-
-#: snd-xmenu.c:245 snd-xmenu.c:256 snd-xmenu.c:544
-msgid "Play Selection"
-msgstr ""
-
-#: snd-xmenu.c:283 snd-xmenu.c:787
-msgid "separate"
-msgstr ""
-
-#: snd-xmenu.c:288 snd-xmenu.c:791
-msgid "combined"
-msgstr ""
-
-#: snd-xmenu.c:293 snd-xmenu.c:795
-msgid "superimposed"
-msgstr ""
-
-#: snd-xmenu.c:298 snd-xmenu.c:799 snd-xmenu.c:1247 snd-xmenu.c:1307
-msgid "Equalize Panes"
-msgstr ""
-
-#: snd-xmenu.c:303 snd-xmenu.c:762
-msgid "dots"
-msgstr ""
-
-#: snd-xmenu.c:313 snd-xmenu.c:766
-msgid "filled"
-msgstr ""
-
-#: snd-xmenu.c:318 snd-xmenu.c:770
-msgid "dots and lines"
-msgstr ""
-
-#: snd-xmenu.c:323 snd-xmenu.c:774
-msgid "lollipops"
-msgstr ""
-
-#: snd-xmenu.c:329 snd-xmenu.c:389
-msgid "Show listener"
-msgstr ""
-
-#: snd-xmenu.c:335 snd-xmenu.c:732 snd-xmix.c:426 snd-xmix.c:491
-#: snd-xmix.c:503
-msgid "Mix Panel"
-msgstr ""
-
-#: snd-xmenu.c:358 snd-xmenu.c:722 snd-xsnd.c:3209
-msgid "Show controls"
-msgstr ""
-
-#: snd-xmenu.c:368 snd-xmenu.c:735 snd-xregion.c:315 snd-xregion.c:327
-msgid "Regions"
-msgstr ""
-
-#: snd-xmenu.c:389
-msgid "Hide listener"
-msgstr ""
-
-#: snd-xmenu.c:396 snd-xmenu.c:402 snd-xmenu.c:408 snd-xmenu.c:413
-#: snd-xmenu.c:418 snd-xmenu.c:423 snd-xmenu.c:428 snd-xmenu.c:433
-#: snd-xmenu.c:438 snd-xmenu.c:443 snd-xmenu.c:448 snd-xmenu.c:453
-#: snd-xmenu.c:458 snd-xmenu.c:464 snd-xmenu.c:837 snd-xmenu.c:982
-msgid "Options"
-msgstr ""
-
-#: snd-xmenu.c:402 snd-xmenu.c:880
-msgid "Save options"
-msgstr ""
-
-#: snd-xmenu.c:408 snd-xmenu.c:869
-msgid "window right edge"
-msgstr ""
-
-#: snd-xmenu.c:413 snd-xmenu.c:866
-msgid "window left edge"
-msgstr ""
-
-#: snd-xmenu.c:418 snd-xmenu.c:872
-msgid "window midpoint"
-msgstr ""
-
-#: snd-xmenu.c:423 snd-xmenu.c:875
-msgid "cursor or selection"
-msgstr ""
-
-#: snd-xmenu.c:428 snd-xmenu.c:850
-msgid "float"
-msgstr ""
-
-#: snd-xmenu.c:433 snd-xmenu.c:856
-msgid "ratio"
-msgstr ""
-
-#: snd-xmenu.c:438 snd-xmenu.c:853
-msgid "semitones"
-msgstr ""
-
-#: snd-xmenu.c:443 snd-xmenu.c:813
-msgid "seconds"
-msgstr ""
-
-#: snd-xmenu.c:448 snd-xmenu.c:823
-msgid "beats"
-msgstr ""
-
-#: snd-xmenu.c:458 snd-xmenu.c:820
-msgid "percentage"
-msgstr ""
-
-#: snd-xmenu.c:464 snd-xmenu.c:884
-msgid "Save state"
-msgstr ""
-
-#: snd-xmenu.c:509 snd-xmenu.c:902
-msgid "Overview"
-msgstr ""
-
-#: snd-xmenu.c:510 snd-xmenu.c:906
-msgid "FFT"
-msgstr ""
-
-#: snd-xmenu.c:512 snd-xmenu.c:912
-msgid "Undo and redo"
-msgstr ""
-
-#: snd-xmenu.c:513 snd-xmenu.c:915
-msgid "Sync"
-msgstr ""
-
-#: snd-xmenu.c:514 snd-xmenu.c:918
-msgid "Speed"
-msgstr ""
-
-#: snd-xmenu.c:515 snd-xmenu.c:921 snd-xsnd.c:121
-msgid "Expand"
-msgstr ""
-
-#: snd-xmenu.c:516 snd-xmenu.c:924
-msgid "Reverb"
-msgstr ""
-
-#: snd-xmenu.c:517 snd-xmenu.c:927 snd-xsnd.c:129
-msgid "Contrast"
-msgstr ""
-
-#: snd-xmenu.c:518 snd-xmenu.c:930
-msgid "Envelope"
-msgstr ""
-
-#: snd-xmenu.c:519 snd-xmenu.c:933
-msgid "Marks"
-msgstr ""
-
-#: snd-xmenu.c:520 snd-xmenu.c:936
-msgid "Mixing"
-msgstr ""
-
-#: snd-xmenu.c:521 snd-xmenu.c:939
-msgid "Formats"
-msgstr ""
-
-#: snd-xmenu.c:522 snd-xmenu.c:942
-msgid "Customization"
-msgstr ""
-
-#: snd-xmenu.c:523 snd-xmenu.c:945
-msgid "Recording"
-msgstr ""
-
-#: snd-xmenu.c:524 snd-xmenu.c:948
-msgid "CLM"
-msgstr ""
-
-#: snd-xmenu.c:525 snd-xmenu.c:951
-msgid "News"
 msgstr ""
 
 #: snd-xmenu.c:601
@@ -3279,109 +2964,8 @@ msgstr ""
 msgid "Save Selection   C-x w"
 msgstr ""
 
-#: snd-xmenu.c:727
-msgid "Open listener"
-msgstr ""
-
-#: snd-xmenu.c:756
-msgid "Graph style"
-msgstr ""
-
-#: snd-xmenu.c:785
-msgid "Channel style"
-msgstr ""
-
-#: snd-xmenu.c:811
-msgid "X axis units"
-msgstr ""
-
-#: snd-xmenu.c:848
-msgid "Speed style"
-msgstr ""
-
-#: snd-xmenu.c:864
-msgid "Zoom focus"
-msgstr ""
-
 #: snd-xmenu.c:898
 msgid "Click for help"
-msgstr ""
-
-#: snd-xmenu.c:984 snd-xmenu.c:1199 snd-xmenu.c:1230 snd-xmenu.c:1236
-#: snd-xmenu.c:1242 snd-xmenu.c:1247 snd-xmenu.c:1253
-msgid "Popup"
-msgstr ""
-
-#: snd-xmenu.c:1199 snd-xmenu.c:1206 snd-xmenu.c:1225 snd-xmenu.c:1295
-#: snd-xsnd.c:79
-msgid "Play"
-msgstr ""
-
-#: snd-xmenu.c:1215
-msgid "Stop playing"
-msgstr ""
-
-#: snd-xmenu.c:1253 snd-xmenu.c:1310
-msgid "Info"
-msgstr ""
-
-#: snd-xmix.c:231 snd-xmix.c:239
-msgid "mix env"
-msgstr ""
-
-#: snd-xmix.c:427
-msgid ""
-"This dialog provides various commonly-used controls on the currently "
-"selected mix.  At the top are the mix id, name, begin and end times, track "
-"number, and a play button.  Beneath that are various sliders controlling the "
-"speed (sampling rate) of the mix, and the amplitude of each input channel; "
-"and finally, an editor for the mix's (input) channels. The current mix amp "
-"env is not actually changed until you click 'Apply Env'.The editor envelope "
-"is drawn in black with dots whereas the current mix amp env (if any) is "
-"drawn in blue."
-msgstr ""
-
-#: snd-xmix.c:489
-msgid "Apply Env"
-msgstr ""
-
-#: snd-xmix.c:541
-msgid "mix id:"
-msgstr ""
-
-#: snd-xmix.c:563
-msgid "track:"
-msgstr ""
-
-#: snd-xmix.c:588 snd-xsnd.c:2101
-msgid "speed:"
-msgstr ""
-
-#: snd-xmix.c:647
-#, c-format
-msgid "amp %d:"
-msgstr ""
-
-#: snd-xprint.c:46
-#, c-format
-msgid "printing %s"
-msgstr ""
-
-#: snd-xprint.c:67
-msgid "can't print!"
-msgstr ""
-
-#: snd-xprint.c:86 snd-xprint.c:112
-#, c-format
-msgid "print %s"
-msgstr ""
-
-#: snd-xprint.c:115
-msgid "print env"
-msgstr ""
-
-#: snd-xprint.c:170
-msgid "direct to printer"
 msgstr ""
 
 #: snd-xrec.c:391
@@ -3403,168 +2987,14 @@ msgid ""
 "will use the colorless 'off label'\n"
 msgstr ""
 
-#: snd-xrec.c:1001
-msgid "Message Pane"
-msgstr ""
-
-#: snd-xrec.c:1002
-msgid ""
-"This pane contains any messages the recorder generates.  Each is time "
-"stamped.  Many are merely informational or mild gripes."
-msgstr ""
-
-#: snd-xrec.c:1038
-msgid "Output File Name"
-msgstr ""
-
-#: snd-xrec.c:1039
-msgid "This field sets the name of the output file."
-msgstr ""
-
-#: snd-xrec.c:1046
-msgid "Output File Duration"
-msgstr ""
-
-#: snd-xrec.c:1047
-msgid "This field shows the duration of the current or previous recording."
-msgstr ""
-
-#: snd-xrec.c:1054
-msgid "Record Options"
-msgstr ""
-
-#: snd-xrec.c:1055
-msgid ""
-"These buttons configure the appearance of the recorder; 'Autoload "
-"Recording', if set, causes the recorded output to be loaded automatically "
-"into Snd."
-msgstr ""
-
-#: snd-xrec.c:1062
-msgid "Autoload File"
-msgstr ""
-
-#: snd-xrec.c:1063
-msgid ""
-"If this button is set, the recorded file is automatically loaded into Snd."
-msgstr ""
-
-#: snd-xrec.c:1075
-msgid "Reset Button"
-msgstr ""
-
-#: snd-xrec.c:1076
-msgid ""
-"This button resets the fields above it that indicate the on-going max amp "
-"encountered since the last reset"
-msgstr ""
-
-#: snd-xrec.c:1083
-msgid "Record Trigger"
-msgstr ""
-
-#: snd-xrec.c:1084
-msgid ""
-"This scale sets the auto-record trigger value.  If it is non-zero, when you "
-"push the 'Rp->Triggered Record' button, Snd waits until it receives data "
-"above that value before starting the actual recording."
-msgstr ""
-
 #: snd-xrec.c:1095
 #, c-format
 msgid "trigger: %.3f"
 msgstr ""
 
-#: snd-xrec.c:1114 snd-xrec.c:3051 snd-xrec.c:3117
-msgid "Triggered Record"
-msgstr ""
-
-#: snd-xrec.c:1241
-msgid "open output"
-msgstr ""
-
-#: snd-xrec.c:1280 snd-xrec.c:1602
-msgid "Save Audio Settings"
-msgstr ""
-
-#: snd-xrec.c:1281
-msgid ""
-"Normally, Snd saves the state of the audio hardware (the 'mixer' in Linux "
-"jargon) before opening the recorder window, then restores it upon closing "
-"that window.  This means that any changes you make via the sliders will be "
-"erased upon exit.  To save the current state, press this button.  The mixer "
-"state will be written to the file .snd-mixer which can be deleted to cancel "
-"the save."
-msgstr ""
-
-#: snd-xrec.c:1326
-msgid "Record Input Buffer Size"
-msgstr ""
-
-#: snd-xrec.c:1327
-msgid ""
-"This field sets the size of the recorder's input buffers.  If you are "
-"getting clicks, and have already tried everything else (you're writing to a "
-"local disk, in the host's native data format), try goofing around with this "
-"number."
-msgstr ""
-
-#: snd-xrec.c:1457
-msgid "duration:"
-msgstr ""
-
-#: snd-xrec.c:1485
-msgid "buf:"
-msgstr ""
-
-#: snd-xrec.c:1524
-msgid "trigger:"
-msgstr ""
-
-#: snd-xrec.c:1594
-msgid "Autoload Recording"
-msgstr ""
-
-#: snd-xrec.c:1635
-msgid "Restart"
-msgstr ""
-
-#: snd-xrec.c:1868
-msgid "Channel Matrix"
-msgstr ""
-
-#: snd-xrec.c:1869
-msgid ""
-"This set of buttons controls which amplitude sliders are visible in the "
-"pane.  To conserve screen space, only the most commonly used sliders are "
-"visible by default, but you can press the button corresponding to the slider "
-"you want at any time.  It is also possible to drag the mouse through a row "
-"or column, setting (button 1) or unsetting (button 2) buttons as you go.  "
-"Click in the corner (the '/' label) to set all (button 1) or unset all "
-"(button 2). Similarly, click above a column or to the left of a row to set "
-"(button 1) or unset (button 2) the entire column or row.  Control-click in "
-"the corner to return to the default settings."
-msgstr ""
-
-#: snd-xrec.c:2178
-msgid "out"
-msgstr ""
-
-#: snd-xrec.c:2194
-msgid "i"
-msgstr ""
-
-#: snd-xrec.c:2210
-msgid "n"
-msgstr ""
-
 #: snd-xrec.c:2623
 #, c-format
 msgid "make_vertical_gain_sliders: overflow %d > %d"
-msgstr ""
-
-#: snd-xrec.c:2643
-msgid "ton"
 msgstr ""
 
 #: snd-xrec.c:2684
@@ -3574,10 +3004,6 @@ msgstr ""
 #: snd-xrec.c:3055
 #, c-format
 msgid "Record Reset: can't close %s: %s!"
-msgstr ""
-
-#: snd-xrec.c:3060
-msgid " recording cancelled"
 msgstr ""
 
 #: snd-xrec.c:3121
@@ -3590,356 +3016,8 @@ msgstr ""
 msgid "Record Done: can't update %s: %s"
 msgstr ""
 
-#: snd-xrec.c:3138
-#, c-format
-msgid ""
-"recorded %s:\n"
-"  duration: %.2f\n"
-"  srate: %d, chans: %d\n"
-"  type: %s, format: %s"
-msgstr ""
-
-#: snd-xrec.c:3188
-msgid "can't record: you screwed up the output channel number!"
-msgstr ""
-
-#: snd-xrec.c:3200
-#, c-format
-msgid "chans field (%d) doesn't match file out panel (%d channels active)"
-msgstr ""
-
-#: snd-xrec.c:3223
-msgid "can't record: no inputs enabled"
-msgstr ""
-
-#: snd-xrec.c:3232
-msgid "Done"
-msgstr ""
-
-#: snd-xrec.c:3240
-msgid "can't record: no output file name supplied"
-msgstr ""
-
-#: snd-xregion.c:106
-#, c-format
-msgid "srate: %d"
-msgstr ""
-
-#: snd-xregion.c:108
-#, c-format
-msgid "chans: %d"
-msgstr ""
-
-#: snd-xregion.c:110
-#, c-format
-msgid "length: %.3f"
-msgstr ""
-
-#: snd-xregion.c:112
-#, c-format
-msgid "maxamp: %.3f"
-msgstr ""
-
 #: snd-xregion.c:291
 msgid "region"
-msgstr ""
-
-#: snd-xregion.c:314
-msgid "Delete"
-msgstr ""
-
-#: snd-xregion.c:353
-msgid "regions"
-msgstr ""
-
-#: snd-xregion.c:418
-msgid "length:"
-msgstr ""
-
-#: snd-xregion.c:430
-msgid "maxamp:"
-msgstr ""
-
-#: snd-xregion.c:446
-msgid "edit"
-msgstr ""
-
-#: snd-xregion.c:463
-msgid "print"
-msgstr ""
-
-#: snd-xsnd.c:70 snd-xsnd.c:184
-msgid "Minibuffer"
-msgstr ""
-
-#: snd-xsnd.c:71
-msgid ""
-"This is the 'minibuffer', to use Emacs jargon.  Although it looks inert and "
-"wasted,  there is in fact a text window lurking beneath that has access to "
-"the Lisp evaluator, not to mention much of the innards of the Snd program."
-msgstr ""
-
-#: snd-xsnd.c:80
-msgid ""
-"Snd can play any number of sounds at once or should be able to anyway.  A "
-"sort of clumsy realtime mixer, although it was not intended to fill that "
-"role."
-msgstr ""
-
-#: snd-xsnd.c:87
-msgid "Name Separator"
-msgstr ""
-
-#: snd-xsnd.c:88
-msgid ""
-"When reading a very large file, Snd tries to keep an overview at hand of the "
-"channels so that you can move around quickly in very large data sets; when "
-"first read in, these overviews are set underway, and when they are finally "
-"ready for use, the line after the file name appears.  If you try to zoom out "
-"to a large view before the separator line appears, the graphics update "
-"process may be slow. "
-msgstr ""
-
-#: snd-xsnd.c:97
-msgid "Amp"
-msgstr ""
-
-#: snd-xsnd.c:98
-msgid ""
-"This scrollbar controls the amplitude at which the sound is played.  Click "
-"the amp label to return to 1.0. Control-Click returns to the previous value."
-msgstr ""
-
-#: snd-xsnd.c:105
-msgid "Srate"
-msgstr ""
-
-#: snd-xsnd.c:106
-msgid ""
-"This scrollbar controls the sampling rate at which the sound is played.  The "
-"arrow controls the direction (forwards or backwards) of playback.  Label "
-"clicks behave as with amp."
-msgstr ""
-
-#: snd-xsnd.c:113
-msgid "Srate Arrow"
-msgstr ""
-
-#: snd-xsnd.c:114
-msgid ""
-"This button determines which direction the sound file is played.  When "
-"pointing to the right, the sound is played forwards;  to the left, backwards."
-msgstr ""
-
-#: snd-xsnd.c:122
-msgid ""
-"This scrollbar controls the tempo at which the sound is played back, using "
-"granular synthesis. The expand button must be down to get any expansion. "
-"Label clicks as in amp."
-msgstr ""
-
-#: snd-xsnd.c:130
-msgid ""
-"This scrollbar controls the amount of 'contrast enhancement' applied during "
-"playback.  The contrast button must be down to get any effect.  Label clicks "
-"as in amp."
-msgstr ""
-
-#: snd-xsnd.c:137
-msgid "Reverb amount"
-msgstr ""
-
-#: snd-xsnd.c:138
-msgid ""
-"This scrollbar controls the amount of the sound that is fed into the "
-"reverberator. The reverb button must be down to get any reverb during "
-"playback.  Label clicks as in amp."
-msgstr ""
-
-#: snd-xsnd.c:145
-msgid "Reverb length"
-msgstr ""
-
-#: snd-xsnd.c:146
-msgid ""
-"This scrollbar controls the lengths of the various delay lines in the "
-"reverb. It only takes effect when the reverb is created, that is, only when "
-"the play operation starts from silence.  Label clicks as in amp."
-msgstr ""
-
-#: snd-xsnd.c:154
-msgid "Filter"
-msgstr ""
-
-#: snd-xsnd.c:155
-msgid ""
-"The Snd filter is an FIR filter of arbitrary order.  You specify the filter "
-"you want by defining the frequency response as an envelope in the 'env' "
-"window; set the desired order in the 'order' window; then turn it on by "
-"pushing the filter button at the right.  The filter design algorithm uses "
-"frequency sampling. The higher the order, the closer the filter can "
-"approximate the envelope you draw. You can also specify the filter "
-"coefficients in a file of floats, then load them into the Snd filter by "
-"typing the file name in the filter envelope text window."
-msgstr ""
-
-#: snd-xsnd.c:168
-msgid ""
-"The filter order determines how closely the filter approximates the "
-"frequency response curve you drew in the 'env' window. "
-msgstr ""
-
-#: snd-xsnd.c:174
-msgid "Filter Envelope"
-msgstr ""
-
-#: snd-xsnd.c:175
-msgid ""
-"The filter envelope is a line-segment description of the frequency response "
-"you want.  It consists of a sequence of x, y pairs; normally the x axis goes "
-"from 0 to .5 or 0 to 1.0.  For example, a low-pass filter envelope could be: "
-"0.0 1.0 .25 1.0 .5 0.0 1.0 0.0"
-msgstr ""
-
-#: snd-xsnd.c:185
-msgid ""
-"This portion of the snd display has several parts: the sound file name, with "
-"an asterisk if the file has unsaved edits; a minibuffer for various "
-"expression evaluations; a sync button that causes operations on one channel "
-"to be applied to all channels; and a play button that causes the sound to be "
-"played.  The lower portion of the pane, normally hidden, contains a variety "
-"of sound manipulation controls that can be applied while it is playing."
-msgstr ""
-
-#: snd-xsnd.c:194
-msgid "Expand Button"
-msgstr ""
-
-#: snd-xsnd.c:194
-msgid "This button turns on expansion (granular synthesis time scaling)\n"
-msgstr ""
-
-#: snd-xsnd.c:199
-msgid "Contrast Button"
-msgstr ""
-
-#: snd-xsnd.c:199
-msgid "This button turns on contrast enhancement (a form of companding)\n"
-msgstr ""
-
-#: snd-xsnd.c:204
-msgid "Reverb Button"
-msgstr ""
-
-#: snd-xsnd.c:204
-msgid "This button turns on reverberation (Nrev)\n"
-msgstr ""
-
-#: snd-xsnd.c:209
-msgid "Filter Button"
-msgstr ""
-
-#: snd-xsnd.c:209
-msgid "This button turns on the filter\n"
-msgstr ""
-
-#: snd-xsnd.c:215
-msgid "Filter dB"
-msgstr ""
-
-#: snd-xsnd.c:216
-msgid ""
-"This button chooses between dB and linear y axis in the frequency response "
-"graph"
-msgstr ""
-
-#: snd-xsnd.c:222
-msgid "Sync Button"
-msgstr ""
-
-#: snd-xsnd.c:223
-msgid ""
-"This button causes edit operations on one channel to be applied to all "
-"channels at the same time."
-msgstr ""
-
-#: snd-xsnd.c:229
-msgid "Unite Button"
-msgstr ""
-
-#: snd-xsnd.c:230
-msgid ""
-"This button causes all channels to be displayed in one window, sharing the "
-"various channel controls.  Two extra scrollbars on the right provide scroll "
-"and zoom for the overall set of channel graphs. The default multichannel "
-"display style can be set in the Snd initialization file by setting the "
-"variable "
-msgstr ""
-
-#: snd-xsnd.c:232
-msgid "."
-msgstr ""
-
-#: snd-xsnd.c:240
-msgid ""
-"The Apply button saves the last recorded run over the current file (see "
-"Record) as an edit of the current file."
-msgstr ""
-
-#: snd-xsnd.c:247
-msgid ""
-"The 'Reset' button clears the control panel settings to the no-change state."
-msgstr ""
-
-#: snd-xsnd.c:253 snd-xsnd.c:2668
-msgid "Remember"
-msgstr ""
-
-#: snd-xsnd.c:254
-msgid ""
-"The 'Remember' button saves the current control panel state for a subsequent "
-"'Restore'."
-msgstr ""
-
-#: snd-xsnd.c:260 snd-xsnd.c:2687
-msgid "Restore"
-msgstr ""
-
-#: snd-xsnd.c:261
-msgid ""
-"The 'Restore' button returns the control panel to the state at the time of "
-"the last 'Remember', or the initial state if there has been no 'Remember'."
-msgstr ""
-
-#: snd-xsnd.c:877
-msgid "frequency response"
-msgstr ""
-
-#: snd-xsnd.c:901
-msgid "Filter Frequency Response"
-msgstr ""
-
-#: snd-xsnd.c:902
-msgid ""
-"This graph shows the current filter frequency response envelope, and the "
-"actual response (dependent on the filter order). See the envelope editor "
-"documentation for editing directions."
-msgstr ""
-
-#: snd-xsnd.c:1013
-msgid "Filter Order Increment Button"
-msgstr ""
-
-#: snd-xsnd.c:1014
-msgid "This button causes the filter order to be incremented"
-msgstr ""
-
-#: snd-xsnd.c:1020
-msgid "Filter Order Decrement Button"
-msgstr ""
-
-#: snd-xsnd.c:1021
-msgid "This button causes the filter order to be decremented"
 msgstr ""
 
 #: snd-xsnd.c:1663
@@ -3947,69 +3025,8 @@ msgstr ""
 msgid "%s has changed since we last read it!"
 msgstr ""
 
-#: snd-xsnd.c:1872
-#, c-format
-msgid "lock pixmap trouble: %s\n"
-msgstr ""
-
-#: snd-xsnd.c:1877
-#, c-format
-msgid "blank pixmap trouble: %s\n"
-msgstr ""
-
-#: snd-xsnd.c:1885
-#, c-format
-msgid "bomb pixmap trouble: %s\n"
-msgstr ""
-
-#: snd-xsnd.c:1891
-#, c-format
-msgid "glass pixmap trouble: %s\n"
-msgstr ""
-
-#: snd-xsnd.c:1992
-msgid "sync"
-msgstr ""
-
-#: snd-xsnd.c:2011
-msgid "unite"
-msgstr ""
-
-#: snd-xsnd.c:2045
-msgid "amp:"
-msgstr ""
-
-#: snd-xsnd.c:2192
-msgid "expand:"
-msgstr ""
-
-#: snd-xsnd.c:2274
-msgid "contrast:"
-msgstr ""
-
-#: snd-xsnd.c:2356
-msgid "reverb:"
-msgstr ""
-
-#: snd-xsnd.c:2440
-msgid "len:"
-msgstr ""
-
-#: snd-xsnd.c:2501
-msgid "filter:"
-msgstr ""
-
-#: snd-xsnd.c:2809
-#, c-format
-msgid "(translated %s)"
-msgstr ""
-
 #: snd-xsnd.c:2881
 msgid "none"
-msgstr ""
-
-#: snd-xsnd.c:3195
-msgid "Hide controls"
 msgstr ""
 
 #: snd-xutils.c:352
@@ -4021,6 +3038,6 @@ msgstr ""
 msgid "goto_window: keyboard focus policy is not explicit!"
 msgstr ""
 
-#: snd.c:162
+#: snd.c:159
 msgid "Snd is a sound editor; see http://www-ccrma.stanford.edu/software/snd/."
 msgstr ""

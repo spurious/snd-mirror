@@ -368,25 +368,12 @@ char *procedure_ok(XEN proc, int args, const char *caller, const char *arg_name,
       oargs = XEN_TO_SMALL_C_INT(XEN_CADR(arity));
       restargs = ((XEN_TRUE_P(XEN_CADDR(arity))) ? 1 : 0);
       snd_unprotect(arity);
-#if ENABLE_NLS
-      if (rargs > args)
-	return(mus_format(ngettext("%s function (%s arg %d) should take %d argument, but instead requires %d",
-				   "%s function (%s arg %d) should take %d arguments, but instead requires %d",
-				   args),
-			  arg_name, caller, argn, args, rargs));
-      if ((restargs == 0) && ((rargs + oargs) < args))
-	return(mus_format(ngettext("%s function (%s arg %d) should accept at least %d argument, but instead accepts only %d",
-				   "%s function (%s arg %d) should accept at least %d arguments, but instead accepts only %d",
-				   args),
-			  arg_name, caller, argn, args, rargs + oargs));
-#else
       if (rargs > args)
 	return(mus_format(_("%s function (%s arg %d) should take %d argument%s, but instead requires %d"),
 			  arg_name, caller, argn, args, (args != 1) ? "s" : "", rargs));
       if ((restargs == 0) && ((rargs + oargs) < args))
 	return(mus_format(_("%s function (%s arg %d) should accept at least %d argument%s, but instead accepts only %d"),
 			  arg_name, caller, argn, args, (args != 1) ? "s" : "", rargs + oargs));
-#endif
 #endif
     }
   return(NULL);
@@ -1993,7 +1980,7 @@ Float string2Float(char *str)
   res = snd_catch_any(eval_str_wrapper, (void *)str, "string->float");
   if (XEN_NUMBER_P(res))
     return(XEN_TO_C_DOUBLE(res));
-  else snd_error("%s is not a number", str);
+  else snd_error(_("%s is not a number"), str);
   return(0.0);
 #else
   Float res = 0.0;

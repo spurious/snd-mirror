@@ -743,6 +743,9 @@ XEN mus_xen_to_object_with_vct(mus_xen *gn, XEN v) /* global for user-defined ge
 #define S_mus_set_data       "mus-set-data"
 #define S_mus_scaler         "mus-scaler"
 #define S_mus_set_scaler     "mus-set-scaler"
+#define S_mus_width          "mus-width"
+#define S_mus_set_width      "mus-set-width"
+#define S_mus_offset         "mus-offset"
 #define S_mus_file_name      "mus-file-name"
 #define S_mus_inspect        "mus-inspect"
 #define S_mus_describe       "mus-describe"
@@ -790,6 +793,27 @@ static XEN g_set_scaler(XEN gen, XEN val)
   XEN_ASSERT_TYPE(MUS_XEN_P(gen), gen, XEN_ARG_1, S_mus_set_scaler, "a generator");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_2, S_mus_set_scaler, "a number");
   return(C_TO_XEN_DOUBLE(mus_set_scaler(MUS_XEN_TO_CLM(gen), XEN_TO_C_DOUBLE(val))));
+}
+
+static XEN g_width(XEN gen) 
+{
+  #define H_mus_width "(" S_mus_width " gen) -> gen's width, if any"
+  XEN_ASSERT_TYPE(MUS_XEN_P(gen), gen, XEN_ONLY_ARG, S_mus_width, "a generator");
+  return(C_TO_XEN_DOUBLE(mus_width(MUS_XEN_TO_CLM(gen))));
+}
+
+static XEN g_set_width(XEN gen, XEN val) 
+{
+  XEN_ASSERT_TYPE(MUS_XEN_P(gen), gen, XEN_ARG_1, S_mus_set_width, "a generator");
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_2, S_mus_set_width, "a number");
+  return(C_TO_XEN_DOUBLE(mus_set_width(MUS_XEN_TO_CLM(gen), XEN_TO_C_DOUBLE(val))));
+}
+
+static XEN g_offset(XEN gen) 
+{
+  #define H_mus_offset "(" S_mus_offset " gen) -> gen's offset, if any"
+  XEN_ASSERT_TYPE(MUS_XEN_P(gen), gen, XEN_ONLY_ARG, S_mus_offset, "a generator");
+  return(C_TO_XEN_DOUBLE(mus_offset(MUS_XEN_TO_CLM(gen))));
 }
 
 static XEN g_frequency(XEN gen) 
@@ -4734,8 +4758,11 @@ XEN_ARGIFY_3(g_run_w, g_run)
 XEN_ARGIFY_4(g_mus_bank_w, g_mus_bank)
 XEN_NARGIFY_1(g_phase_w, g_phase)
 XEN_NARGIFY_2(g_set_phase_w, g_set_phase)
+XEN_NARGIFY_1(g_width_w, g_width)
+XEN_NARGIFY_2(g_set_width_w, g_set_width)
 XEN_NARGIFY_1(g_scaler_w, g_scaler)
 XEN_NARGIFY_2(g_set_scaler_w, g_set_scaler)
+XEN_NARGIFY_1(g_offset_w, g_offset)
 XEN_NARGIFY_1(g_frequency_w, g_frequency)
 XEN_NARGIFY_2(g_set_frequency_w, g_set_frequency)
 XEN_NARGIFY_1(g_length_w, g_length)
@@ -4976,6 +5003,9 @@ XEN_ARGIFY_7(g_mus_mix_w, g_mus_mix)
 #define g_set_phase_w g_set_phase
 #define g_scaler_w g_scaler
 #define g_set_scaler_w g_set_scaler
+#define g_width_w g_width
+#define g_set_width_w g_set_width
+#define g_offset_w g_offset
 #define g_frequency_w g_frequency
 #define g_set_frequency_w g_set_frequency
 #define g_length_w g_length
@@ -5207,6 +5237,8 @@ void mus_xen_init(void)
   rb_define_method(mus_xen_tag, "frequency", XEN_PROCEDURE_CAST g_frequency, 0);
   rb_define_method(mus_xen_tag, "phase", XEN_PROCEDURE_CAST g_phase, 0);
   rb_define_method(mus_xen_tag, "scaler", XEN_PROCEDURE_CAST g_scaler, 0);
+  rb_define_method(mus_xen_tag, "width", XEN_PROCEDURE_CAST g_width, 0);
+  rb_define_method(mus_xen_tag, "offset", XEN_PROCEDURE_CAST g_offset, 0);
   rb_define_method(mus_xen_tag, "length", XEN_PROCEDURE_CAST g_length, 0);
   rb_define_method(mus_xen_tag, "data", XEN_PROCEDURE_CAST g_data, 0);
   rb_define_method(mus_xen_tag, "feedforward", XEN_PROCEDURE_CAST g_scaler, 0);
@@ -5312,9 +5344,11 @@ void mus_xen_init(void)
   XEN_DEFINE_PROCEDURE(S_mus_name,     g_name_w, 1, 0, 0,     H_mus_name);
   XEN_DEFINE_PROCEDURE(S_mus_run,      g_run_w, 1, 2, 0,      H_mus_run);
   XEN_DEFINE_PROCEDURE(S_mus_bank,     g_mus_bank_w, 2, 2, 0, H_mus_bank);
+  XEN_DEFINE_PROCEDURE(S_mus_offset,   g_offset_w, 1, 0, 0,   H_mus_offset);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_phase, g_phase_w, H_mus_phase, S_mus_set_phase, g_set_phase_w,  1, 0, 2, 0);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_scaler, g_scaler_w, H_mus_scaler, S_mus_set_scaler, g_set_scaler_w,  1, 0, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_width, g_width_w, H_mus_width, S_mus_set_width, g_set_width_w,  1, 0, 2, 0);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_frequency, g_frequency_w, H_mus_frequency, S_mus_set_frequency, g_set_frequency_w,  1, 0, 2, 0);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_length, g_length_w, H_mus_length, S_mus_set_length, g_set_length_w,  1, 0, 2, 0);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_data, g_data_w, H_mus_data, S_mus_set_data, g_set_data_w,  1, 0, 2, 0);

@@ -2,10 +2,12 @@
 #define MUS_H
 
 #define MUS_VERSION 2
-#define MUS_REVISION 20
-#define MUS_DATE "7-Jan-03"
+#define MUS_REVISION 21
+#define MUS_DATE "3-Feb-03"
 
 /* 
+ * 3-Feb:      mus_offset for envs, mus_width for square_wave et al.
+ *             new core class fields (10) for various methods.
  * 7-Jan-03:   mus_src with very large sr_change segfault bugfix.
  * --------
  * 17-Dec:     mus_env_offset|initial_power for Snd exp env optimizations.
@@ -167,6 +169,17 @@ typedef struct mus__any_class {
   int extended_type;
   void  *(*environ)(mus_any *gen);
   int   (*channels)(void *ptr);
+  Float (*offset)(void *ptr);
+  Float (*set_offset)(void *ptr, Float val);
+  Float (*width)(void *ptr);
+  Float (*set_width)(void *ptr, Float val);
+  Float (*b2)(void *ptr);
+  Float (*set_b2)(void *ptr, Float val);
+  int   (*hop)(void *ptr);
+  int   (*set_hop)(void *ptr, int new_length);
+  int   (*ramp)(void *ptr);
+  int   (*set_ramp)(void *ptr, int new_length);
+
 } mus_any_class;
 
 typedef struct {
@@ -275,6 +288,10 @@ char *mus_name                  PROTO((mus_any *ptr));
 int mus_type                    PROTO((mus_any *ptr));
 Float mus_scaler                PROTO((mus_any *gen));
 Float mus_set_scaler            PROTO((mus_any *gen, Float val));
+Float mus_offset                PROTO((mus_any *gen));
+Float mus_set_offset            PROTO((mus_any *gen, Float val));
+Float mus_width                 PROTO((mus_any *gen));
+Float mus_set_width             PROTO((mus_any *gen, Float val));
 const char *mus_file_name       PROTO((mus_any *ptr));
 
 Float mus_oscil                 PROTO((mus_any *o, Float fm, Float pm));
@@ -378,10 +395,10 @@ mus_any *mus_make_ppolar        PROTO((Float radius, Float frequency));
 
 #define mus_a0(Gen) mus_scaler(Gen)
 #define mus_set_a0(Gen, Val) mus_set_scaler(Gen, Val)
-Float mus_a1                    PROTO((mus_any *ptr));
-Float mus_set_a1                PROTO((mus_any *ptr, Float val));
-Float mus_a2                    PROTO((mus_any *ptr));
-Float mus_set_a2                PROTO((mus_any *ptr, Float val));
+#define mus_a1(Gen) mus_offset(Gen)
+#define mus_set_a1(Gen, Val) mus_set_offset(Gen, Val)
+#define mus_a2(Gen) mus_width(Gen)
+#define mus_set_a2(Gen, Val) mus_set_width(Gen, Val)
 #define mus_b1(Gen) mus_increment(Gen)
 #define mus_set_b1(Gen, Val) mus_set_increment(Gen, Val)
 Float mus_b2                    PROTO((mus_any *ptr));
@@ -446,6 +463,7 @@ Float mus_env_interp            PROTO((Float x, mus_any *env));
 off_t *mus_env_passes           PROTO((mus_any *gen)); /* for Snd */
 double *mus_env_rates           PROTO((mus_any *gen)); /* for Snd */
 double mus_env_offset           PROTO((mus_any *gen)); /* for Snd */
+double mus_env_scaler           PROTO((mus_any *gen)); /* for Snd */
 double mus_env_initial_power    PROTO((mus_any *gen)); /* for Snd */
 #define mus_position(Gen) mus_channels(Gen)
 

@@ -679,7 +679,7 @@ static void internal_trigger_set(Float val)
   rp->triggering = (val > 0.0);
   rp->triggered = (!rp->triggering);
   if (!(rp->recording)) /* else wait for current session to end (via click) */
-    set_button_label(record_button, (rp->triggering) ? "Triggered Record" : "Record");
+    set_button_label(record_button, (rp->triggering) ? _("Triggered Record") : _("Record"));
 }
 
 static void change_trigger_callback(GtkAdjustment *adj, gpointer context)
@@ -783,7 +783,7 @@ static void device_button_callback(GtkWidget *w, gpointer context)
 							   rp->srate, rp->monitor_chans, rp->out_format, rp->buffer_size);
 		  if (rp->monitor_port == -1)
 		    {
-		      record_report(messages, "open output", NULL);
+		      record_report(messages, _("open output"), NULL);
 		      rp->monitoring = FALSE;
 		    }
 		  else rp->monitoring = TRUE;
@@ -889,7 +889,7 @@ static void make_file_info_pane(snd_state *ss, recorder_info *rp, GtkWidget *fil
   gtk_box_pack_start(GTK_BOX(left_form), filebox, FALSE, FALSE, 0);
   gtk_widget_show(filebox);
 
-  file_label = gtk_label_new("file:");
+  file_label = gtk_label_new(_("file:"));
   gtk_box_pack_start(GTK_BOX(filebox), file_label, FALSE, FALSE, 0);
   gtk_widget_show(file_label);
 
@@ -919,7 +919,7 @@ static void make_file_info_pane(snd_state *ss, recorder_info *rp, GtkWidget *fil
   gtk_box_pack_start(GTK_BOX(right_form), durbox, FALSE, FALSE, 0);
   gtk_widget_show(durbox);
 
-  duration_label = gtk_label_new("duration:");
+  duration_label = gtk_label_new(_("duration:"));
   gtk_box_pack_start(GTK_BOX(durbox), duration_label, FALSE, FALSE, 0);
   gtk_widget_show(duration_label);
 
@@ -927,7 +927,7 @@ static void make_file_info_pane(snd_state *ss, recorder_info *rp, GtkWidget *fil
   gtk_box_pack_start(GTK_BOX(durbox), file_duration, TRUE, TRUE, 0);
   gtk_widget_show(file_duration);
   
-  rec_size_label = gtk_label_new("buf:");
+  rec_size_label = gtk_label_new(_("buf:"));
   gtk_box_pack_start(GTK_BOX(durbox), rec_size_label, FALSE, FALSE, 0);
   gtk_widget_show(rec_size_label);
 
@@ -948,7 +948,7 @@ static void make_file_info_pane(snd_state *ss, recorder_info *rp, GtkWidget *fil
   gtk_box_pack_end(GTK_BOX(right_form), triggerbox, FALSE, FALSE, 0);
   gtk_widget_show(triggerbox);
 
-  trigger_label = gtk_label_new("trigger:");
+  trigger_label = gtk_label_new(_("trigger:"));
   gtk_box_pack_start(GTK_BOX(triggerbox), trigger_label, FALSE, FALSE, 4);
   gtk_widget_show(trigger_label);
 
@@ -993,7 +993,7 @@ static void make_file_info_pane(snd_state *ss, recorder_info *rp, GtkWidget *fil
       set_toggle_button(device_buttons[i], TRUE, FALSE, (void *)(all_panes[i]));
     }
 
-  autoload_file = gtk_check_button_new_with_label("Autoload Recording");
+  autoload_file = gtk_check_button_new_with_label(_("Autoload Recording"));
   gtk_box_pack_start(GTK_BOX(button_holder), autoload_file, TRUE, TRUE, 0);
   gtk_widget_show(autoload_file);
   device_buttons[ndevs] = autoload_file;
@@ -1006,7 +1006,7 @@ static void make_file_info_pane(snd_state *ss, recorder_info *rp, GtkWidget *fil
 				 0);
   set_toggle_button(autoload_file, rp->autoload, FALSE, (void *)ss); 
 #if (HAVE_OSS || HAVE_ALSA)
-  save_audio_settings = gtk_check_button_new_with_label("Save Audio Settings");
+  save_audio_settings = gtk_check_button_new_with_label(_("Save Audio Settings"));
   gtk_box_pack_start(GTK_BOX(button_holder), save_audio_settings, TRUE, TRUE, 0);
   gtk_widget_show(save_audio_settings);
   g_signal_connect_closure_by_id(GTK_OBJECT(save_audio_settings),
@@ -1039,7 +1039,7 @@ void unlock_recording_audio(void)
     {
       set_sensitive(record_button, TRUE);
       set_sensitive(reset_button, TRUE);
-      set_button_label(reset_button, "Restart");
+      set_button_label(reset_button, _("Restart"));
     }
 }
 
@@ -1263,19 +1263,19 @@ static GtkWidget *make_button_matrix(snd_state *ss, PANE *p, char *name, GtkWidg
   gtk_box_pack_start(GTK_BOX(top_hbox), diag_button, FALSE, FALSE, 0);
   gtk_widget_show(diag_button);
 
-  outputs_label = gtk_label_new("out");
+  outputs_label = gtk_label_new(_("out"));
   gtk_box_pack_start(GTK_BOX(top_hbox), outputs_label, TRUE, TRUE, 0);
   gtk_widget_show(outputs_label);
 
-  inputs_label0 = gtk_label_new("i");
+  inputs_label0 = gtk_label_new(_("i"));
   gtk_box_pack_start(GTK_BOX(left_vbox), inputs_label0, FALSE, FALSE, 0);
   gtk_widget_show(inputs_label0);
 
-  inputs_label1 = gtk_label_new("n");
+  inputs_label1 = gtk_label_new(_("n"));
   gtk_box_pack_start(GTK_BOX(left_vbox), inputs_label1, FALSE, FALSE, 0);
   gtk_widget_show(inputs_label1);
 
-  inputs_label2 = gtk_label_new("s");
+  inputs_label2 = gtk_label_new(" ");
   gtk_box_pack_start(GTK_BOX(left_vbox), inputs_label2, FALSE, FALSE, 0);
   gtk_widget_show(inputs_label2);
 
@@ -1535,8 +1535,8 @@ static void make_vertical_gain_sliders(snd_state *ss, recorder_info *rp, PANE *p
       wd->p = p;
       wd->gain = gain_ctr + chan;
       if (wd->gain > rp->num_mixer_gains) 
-	snd_error("%s: overflow %d > %d", 
-		  __FUNCTION__, wd->gain, rp->num_mixer_gains);
+	snd_error(_("gain (slider) number too high: %d > %d"), 
+		  wd->gain, rp->num_mixer_gains);
       gain_sliders[wd->gain] = wd;
       vol = mixer_gain(wd->system, wd->device, wd->chan, wd->gain, wd->field);
       if (vol < 0.0) vol = 0.0;
@@ -1570,7 +1570,7 @@ static void make_vertical_gain_sliders(snd_state *ss, recorder_info *rp, PANE *p
 	  if (last_device == this_device)
 	    {
 	      if ((!input) && (this_device == MUS_AUDIO_DAC_FILTER))
-		slabel = gtk_label_new("ton");
+		slabel = gtk_label_new(_("ton"));
 	      else slabel = gtk_label_new(recorder_field_abbreviation(this_device));
 	      gtk_box_pack_start(GTK_BOX(sbox), slabel, FALSE, FALSE, 0);
 	      gtk_widget_show(slabel);
@@ -1689,7 +1689,7 @@ static GtkWidget *make_button_box(snd_state *ss, recorder_info *rp, PANE *p, Flo
 
 static void make_reset_button(snd_state *ss, PANE *p, GtkWidget *btab)
 {
-  p->reset_button = gtk_button_new_with_label("Reset");
+  p->reset_button = gtk_button_new_with_label(_("Reset"));
   set_background(p->reset_button, (ss->sgx)->basic_color);
   gtk_box_pack_start(GTK_BOX(btab), p->reset_button, TRUE, TRUE, 0);
   gtk_widget_show(p->reset_button);
@@ -1809,13 +1809,13 @@ static void reset_record_callback(GtkWidget *w, gpointer context)
       rp->recording = 0;
       rp->triggered = (!rp->triggering);
       sensitize_control_buttons();
-      set_button_label(reset_button, "Reset");
+      set_button_label(reset_button, _("Reset"));
       set_backgrounds(record_button, (ss->sgx)->basic_color);
-      set_button_label(record_button, (rp->triggering) ? "Triggered Record" : "Record");
+      set_button_label(record_button, (rp->triggering) ? _("Triggered Record") : _("Record"));
       mus_file_close(rp->output_file_descriptor);
       rp->output_file_descriptor = -1;
       str = just_filename(rp->output_file);
-      record_report(messages, str, " recording cancelled", NULL);
+      record_report(messages, str, _(" recording cancelled"), NULL);
       FREE(str);
       snd_remove(rp->output_file, TRUE);
     }
@@ -1835,7 +1835,7 @@ static void reset_record_callback(GtkWidget *w, gpointer context)
       if (!(rp->taking_input))            /* restart */
 	{
 	  fire_up_recorder(ss);
-	  set_button_label(reset_button, "Reset");
+	  set_button_label(reset_button, _("Reset"));
 	}
     }
 }
@@ -1862,8 +1862,8 @@ void finish_recording(snd_state *ss, recorder_info *rp)
   Float duration;
   sensitize_control_buttons();
   set_backgrounds(record_button, (ss->sgx)->basic_color);
-  set_button_label(reset_button, "Reset");
-  set_button_label(record_button, (rp->triggering) ? "Triggered Record" : "Record");
+  set_button_label(reset_button, _("Reset"));
+  set_button_label(record_button, (rp->triggering) ? _("Triggered Record") : _("Record"));
   mus_file_close(rp->output_file_descriptor);
   rp->output_file_descriptor = mus_file_reopen_write(rp->output_file);
   mus_header_update_with_fd(rp->output_file_descriptor,
@@ -1874,7 +1874,7 @@ void finish_recording(snd_state *ss, recorder_info *rp)
   duration = (Float)((double)(rp->total_output_frames) / (Float)(rp->srate));
   reflect_recorder_duration(duration);
   str = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
-  mus_snprintf(str, PRINT_BUFFER_SIZE, "recorded %s:\n  duration: %.2f\n  srate: %d, chans: %d\n  type: %s, format: %s",
+  mus_snprintf(str, PRINT_BUFFER_SIZE, _("recorded %s:\n  duration: %.2f\n  srate: %d, chans: %d\n  type: %s, format: %s"),
 	       rp->output_file, duration, rp->srate, rp->out_chans,
 	       mus_header_type_name(rp->output_header_type), 
 	       mus_data_format_name(rp->out_format));
@@ -1923,7 +1923,7 @@ static void record_button_callback(GtkWidget *w, gpointer context)
 
 	  if (rp->out_chans <= 0)
 	    {
-	      record_report(messages, "can't record: you screwed up the output channel number!", NULL);
+	      record_report(messages, _("can't record: you screwed up the output channel number!"), NULL);
 	      rp->recording = 0;
 	      rp->triggered = (!rp->triggering);
 	      return;
@@ -1936,7 +1936,7 @@ static void record_button_callback(GtkWidget *w, gpointer context)
 	    {
 	      if (msgbuf == NULL) msgbuf = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
 	      mus_snprintf(msgbuf, PRINT_BUFFER_SIZE,
-			   "chans field (%d) doesn't match file out panel (%d channels active)", 
+			   _("chans field (%d) doesn't match file out panel (%d channels active)"), 
 			   rp->out_chans, out_chans_active());
 	      record_report(messages, msgbuf, NULL);
 	      wd = (Wdesc *)CALLOC(1, sizeof(Wdesc));
@@ -1957,20 +1957,20 @@ static void record_button_callback(GtkWidget *w, gpointer context)
 	    }
 	  if (in_chans_active() == 0)
 	    {
-	      record_report(messages, "can't record: no inputs enabled", NULL);
+	      record_report(messages, _("can't record: no inputs enabled"), NULL);
 	      rp->recording = 0;
 	      rp->triggered = (!rp->triggering);
 	      return;
 	    }
 	  set_backgrounds(record_button, (ss->sgx)->red);
-	  set_button_label(reset_button, "Cancel");
-	  set_button_label(record_button, "Done");
+	  set_button_label(reset_button, _("Cancel"));
+	  set_button_label(record_button, _("Done"));
 
 	  if (recorder_start_output_file(ss, comment)) return; /* true = error */
 	}
       else
 	{
-	  record_report(messages, "can't record: no output file name supplied", NULL);
+	  record_report(messages, _("can't record: no output file name supplied"), NULL);
 	  rp->recording = 0;
 	  rp->triggered = (!rp->triggering);
 	  return;
@@ -2040,16 +2040,16 @@ void snd_record_file(snd_state *ss)
 				     0,
 				     g_cclosure_new(GTK_SIGNAL_FUNC(recorder_delete), (gpointer)ss, 0),
 				     0);
-      gtk_window_set_title(GTK_WINDOW(recorder), "Record");
+      gtk_window_set_title(GTK_WINDOW(recorder), _("Record"));
       sg_make_resizable(recorder);
       set_background(recorder, (ss->sgx)->basic_color);
       gtk_container_set_border_width (GTK_CONTAINER(recorder), 10);
       gtk_widget_realize(recorder);
 
-      help_button = gtk_button_new_with_label("Help");
-      dismiss_button = gtk_button_new_with_label("Dismiss");
-      reset_button = gtk_button_new_with_label("Reset");
-      record_button = gtk_button_new_with_label("Record");
+      help_button = gtk_button_new_with_label(_("Help"));
+      dismiss_button = gtk_button_new_with_label(_("Dismiss"));
+      reset_button = gtk_button_new_with_label(_("Reset"));
+      record_button = gtk_button_new_with_label(_("Record"));
       set_backgrounds(record_button, (ss->sgx)->basic_color);
 
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(recorder)->action_area), dismiss_button, TRUE, TRUE, 10);

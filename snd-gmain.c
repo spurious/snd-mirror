@@ -404,12 +404,12 @@ static GdkColor *get_color(char *defined_color, char *fallback_color, char *seco
       if (use_white)
 	{
 	  /* snd_error here can cause trouble (no error dialog or something) */
-	  fprintf(stderr, "can't get %s -- will use white\n", defined_color);
+	  fprintf(stderr, _("can't get %s -- will use white\n"), defined_color);
 	  gdk_color_parse("white", &tmp_color);
 	}
       else
 	{
-	  fprintf(stderr, "can't get %s -- will use black\n", defined_color);
+	  fprintf(stderr, _("can't get %s -- will use black\n"), defined_color);
 	  gdk_color_parse("black", &tmp_color);
 	}
     }
@@ -537,35 +537,35 @@ void snd_doit(snd_state *ss, int argc, char **argv)
 
   if ((!(set_button_font(ss, DEFAULT_BUTTON_FONT))) &&
       (!(set_button_font(ss, FALLBACK_FONT))))
-    fprintf(stderr, "can't find font: %s", DEFAULT_BUTTON_FONT);
+    fprintf(stderr, _("can't find font: %s"), DEFAULT_BUTTON_FONT);
 
   if ((!(set_tiny_font(ss, TINY_FONT))) &&
       (!(set_tiny_font(ss, FALLBACK_FONT))))
-    fprintf(stderr, "can't find font: %s", TINY_FONT);
+    fprintf(stderr, _("can't find font: %s"), TINY_FONT);
 
   if ((!(set_bold_button_font(ss, DEFAULT_BOLD_BUTTON_FONT))) &&
       (!(set_bold_button_font(ss, FALLBACK_FONT))))
-    fprintf(stderr, "can't find font: %s", DEFAULT_BOLD_BUTTON_FONT);
+    fprintf(stderr, _("can't find font: %s"), DEFAULT_BOLD_BUTTON_FONT);
 
   if ((!(set_axis_label_font(ss, DEFAULT_AXIS_LABEL_FONT))) &&
       (!(set_axis_label_font(ss, FALLBACK_FONT))))
-    fprintf(stderr, "can't find font: %s", DEFAULT_AXIS_LABEL_FONT);
+    fprintf(stderr, _("can't find font: %s"), DEFAULT_AXIS_LABEL_FONT);
 
   if ((!(set_axis_numbers_font(ss, DEFAULT_AXIS_NUMBERS_FONT))) &&
       (!(set_axis_numbers_font(ss, FALLBACK_FONT))))
-    fprintf(stderr, "can't find font: %s", DEFAULT_AXIS_NUMBERS_FONT);
+    fprintf(stderr, _("can't find font: %s"), DEFAULT_AXIS_NUMBERS_FONT);
 
   if ((!(set_help_text_font(ss, DEFAULT_HELP_TEXT_FONT))) &&
       (!(set_help_text_font(ss, FALLBACK_FONT))))
-    fprintf(stderr, "can't find font: %s", DEFAULT_HELP_TEXT_FONT);
+    fprintf(stderr, _("can't find font: %s"), DEFAULT_HELP_TEXT_FONT);
 
   if ((!(set_peaks_font(ss, DEFAULT_PEAKS_FONT))) &&
       (!(set_peaks_font(ss, FALLBACK_FONT))))
-    fprintf(stderr, "can't find font: %s", DEFAULT_PEAKS_FONT);
+    fprintf(stderr, _("can't find font: %s"), DEFAULT_PEAKS_FONT);
 
   if ((!(set_bold_peaks_font(ss, DEFAULT_BOLD_PEAKS_FONT))) &&
       (!(set_bold_peaks_font(ss, FALLBACK_FONT))))
-    fprintf(stderr, "can't find font: %s", DEFAULT_BOLD_PEAKS_FONT);
+    fprintf(stderr, _("can't find font: %s"), DEFAULT_BOLD_PEAKS_FONT);
 
   ss->init_file = copy_string(getenv(SND_INIT_FILE_ENVIRONMENT_NAME));
   if (ss->init_file == NULL)
@@ -637,13 +637,13 @@ void snd_doit(snd_state *ss, int argc, char **argv)
 #if TRAP_SEGFAULT
   if (sigsetjmp(envHandleEventsLoop, 1))
     {
-      snd_error("Caught seg fault (will try to continue):\n");
+      snd_error(_("Caught seg fault (will try to continue):\n"));
     }
 #endif
   if (setjmp(top_level_jump))
     {
       if (!(ss->jump_ok))
-	snd_error("Caught top level error (will try to continue):\n");
+	snd_error(_("Caught top level error (will try to continue):\n"));
       else ss->jump_ok = FALSE;
     }
 #endif

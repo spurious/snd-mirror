@@ -1,5 +1,6 @@
 Snd change log
 
+  30-Jan:    gettext changes.
   12-Jan:    snd-6.5.
   8-Jan:     removed loop-samples.
   7-Jan:     added various simple FIR filters to dsp.scm.

@@ -769,8 +769,8 @@ void view_color_callback(Widget w, XtPointer context, XtPointer info)
       
       n = 0;
       cmaps = (XmString *)CALLOC(NUM_COLORMAPS, sizeof(XmString));
-      names = _(colormap_names());
-      for (i = 0; i < NUM_COLORMAPS; i++) cmaps[i] = XmStringCreate(names[i], XmFONTLIST_DEFAULT_TAG);
+      names = colormap_names();
+      for (i = 0; i < NUM_COLORMAPS; i++) cmaps[i] = XmStringCreate(_(names[i]), XmFONTLIST_DEFAULT_TAG);
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
@@ -961,8 +961,8 @@ void set_spectro_x_angle(snd_state *ss, Float val)
 static void ax_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_help_with_wrap((snd_state *)context, 
-		     _("x angle slider"), 
-_("This slider causes the graph to rotate around the x axis."));
+		     "x angle slider", 
+"This slider causes the graph to rotate around the x axis.");
 }
 
 static void ay_orientation_callback(Widget w, XtPointer context, XtPointer info) 
@@ -992,8 +992,8 @@ void set_spectro_y_angle(snd_state *ss, Float val)
 static void ay_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_help_with_wrap((snd_state *)context, 
-		     _("y angle slider"), 
-_("This slider causes the graph to rotate around the y axis."));
+		     "y angle slider", 
+"This slider causes the graph to rotate around the y axis.");
 }
 
 static void az_orientation_callback(Widget w, XtPointer context, XtPointer info) 
@@ -1023,8 +1023,8 @@ void set_spectro_z_angle(snd_state *ss, Float val)
 static void az_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_help_with_wrap((snd_state *)context, 
-		     _("z angle slider"), 
-_("This slider causes the graph to rotate around the z axis."));
+		     "z angle slider", 
+"This slider causes the graph to rotate around the z axis.");
 }
 
 static void sx_orientation_callback(Widget w, XtPointer context, XtPointer info) 
@@ -1053,8 +1053,8 @@ void set_spectro_x_scale(snd_state *ss, Float val)
 static void sx_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_help_with_wrap((snd_state *)context, 
-		     _("x scale slider"), 
-_("This slider causes the graph to expand or contract along the x axis."));
+		     "x scale slider", 
+"This slider causes the graph to expand or contract along the x axis.");
 }
 
 static void sy_orientation_callback(Widget w, XtPointer context, XtPointer info) 
@@ -1083,8 +1083,8 @@ void set_spectro_y_scale(snd_state *ss, Float val)
 static void sy_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_help_with_wrap((snd_state *)context, 
-		     _("y scale slider"), 
-_("This slider causes the graph to expand or contract along the y axis."));
+		     "y scale slider", 
+"This slider causes the graph to expand or contract along the y axis.");
 }
 
 static void sz_orientation_callback(Widget w, XtPointer context, XtPointer info) 
@@ -1113,8 +1113,8 @@ void set_spectro_z_scale(snd_state *ss, Float val)
 static void sz_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_help_with_wrap((snd_state *)context, 
-		     _("z scale slider"), 
-_("This slider causes the graph to expand or contract along the z axis."));
+		     "z scale slider", 
+"This slider causes the graph to expand or contract along the z axis.");
 }
 
 static void chans_spectro_hop(chan_info *cp, void *ptr) {cp->spectro_hop = (*((int *)ptr));}
@@ -1150,8 +1150,8 @@ void set_spectro_hop(snd_state *ss, int val)
 static void hop_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_help_with_wrap((snd_state *)context, 
-		     _("hop slider"), 
-_("This slider changes the hop size."));
+		     "hop slider", 
+"This slider changes the hop size.");
 }
 
 static void chans_spectro_cut(chan_info *cp) {cp->fft_changed = FFT_CHANGE_LOCKED;}
@@ -1183,8 +1183,8 @@ void set_spectro_cutoff(snd_state *ss, Float val)
 static void cut_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_help_with_wrap((snd_state *)context, 
-		     _("percent of spectrum slider"), 
-_("This slider determines how much of the spectrum is displayed"));
+		     "percent of spectrum slider", 
+"This slider determines how much of the spectrum is displayed");
 }
 
 static int fixup_angle(Float ang)
@@ -1249,8 +1249,8 @@ static void with_gl_callback(Widget w, XtPointer context, XtPointer info)
 static void with_gl_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_help_with_wrap((snd_state *)context, 
-		     _("with-gl button"), 
-_("This buttons determines whether OpenGL is used for various displays"));
+		     "with-gl button", 
+"This buttons determines whether OpenGL is used for various displays");
 }
 #endif
 

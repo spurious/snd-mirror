@@ -1570,7 +1570,7 @@ static void scan_audio_devices(void)
 					      &direction)) != MUS_NO_ERROR) 
 		{
 		  stop_playing_all_sounds();
-		  snd_error("%s: can't read direction, ignoring device %d", 
+		  snd_error(_("%s: can't read direction, ignoring device %d"), 
 			    __FUNCTION__, dev);
 		  direction = 0;
 		} 
@@ -1697,7 +1697,7 @@ static int start_audio_output_1 (dac_state *dacp)
       if (alloc_chans < dacp->channels) 
 	{
 	  if (dac_combines_channels(ss)) 
-	    snd_warning("folding %d chans into %d ", 
+	    snd_warning(_("folding %d chans into %d "), 
 			dacp->channels, alloc_chans);
 	  dacp->channels = alloc_chans;
 	}

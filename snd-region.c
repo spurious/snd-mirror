@@ -1373,10 +1373,8 @@ selection is used."
       else
 	{
 	  cp = get_cp(snd_n, chn_n, S_make_region);
-	  if (cp) si = make_simple_sync(cp, ibeg);
+	  si = make_simple_sync(cp, ibeg);
 	}
-      if (si == NULL)
-	return(C_TO_XEN_INT(INVALID_REGION));
       ends = (off_t *)CALLOC(si->chans, sizeof(off_t));
       for (i = 0; i < si->chans; i++)
 	{

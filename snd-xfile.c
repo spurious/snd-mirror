@@ -175,8 +175,8 @@ typedef struct {
 static void file_help_callback (Widget w, XtPointer context, XtPointer info) 
 {
   snd_help_with_wrap(get_global_state(),
-		     _("File"),
-_("If you click the 'Sound Files Only' button, only those files in the current directory that look vaguely like sound files will be displayed."));
+		     "File",
+"If you click the 'Sound Files Only' button, only those files in the current directory that look vaguely like sound files will be displayed.");
 }
 
 static void file_dialog_stop_playing(file_dialog_info *fd)
@@ -240,8 +240,8 @@ static void play_selected_callback(Widget w, XtPointer context, XtPointer info)
 static void play_selected_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_help_with_wrap(get_global_state(),
-		     _("play selected sound"),
-_("If you click the 'play selected sound' button, the currently selected sound (if and) in the file selection box file list is played."));
+		     "play selected sound",
+"If you click the 'play selected sound' button, the currently selected sound (if any) in the file selection box file list is played.");
 }
 
 static file_dialog_info *open_dialog = NULL;
@@ -410,9 +410,9 @@ static void just_sounds_callback(Widget w, XtPointer context, XtPointer info)
 static void just_sounds_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_help_with_wrap((snd_state *)context,
-		     _("sound files only"),
-_("If you click the 'sound files only' button, only those files in the current directory that look vaguely like sound \
-files will be displayed.  The decision is based on the file's extension."));
+		     "sound files only",
+"If you click the 'sound files only' button, only those files in the current directory that look vaguely like sound \
+files will be displayed.  The decision is based on the file's extension.");
 }
 
 #if (XmVERSION > 1)
@@ -432,7 +432,7 @@ static void file_dialog_select_callback(Widget w, XtPointer context, XtPointer i
     {
       XtManageChild(fd->play_selected_button);
       buf = (char *)CALLOC(LABEL_BUFFER_SIZE, sizeof(char));
-      mus_snprintf(buf, LABEL_BUFFER_SIZE, _("%s: %d chan%s, %d Hz, %.3f secs"),
+      mus_snprintf(buf, LABEL_BUFFER_SIZE, "%s: %d chan%s, %d Hz, %.3f secs",
 		   filename_without_home_directory(filename),
 		   mus_sound_chans(filename),
 		   (mus_sound_chans(filename) > 1) ? "s" : "",
@@ -696,15 +696,15 @@ static void save_as_ok_callback(Widget w, XtPointer context, XtPointer info)
 static void save_as_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_help_with_wrap((snd_state *)context,
-		     _("Save As"),
-_("You can save the current state of a file or region under a different file name using the Save \
+		     "Save As",
+"You can save the current state of a file or region under a different file name using the Save \
 As option.  The output header type, data format,  and sampling rate can also be set.  The data formats \
 are big-endian where relevant except for 'wave' output.  If a file by the chosen name already exists \
 it is silently overwritten, unless that file is already open in Snd and has edits.  In that case,  \
 you'll be asked what to do.  If you want to be warned whenever a file is about to be overwritten by this \
 option, set the resource overwriteCheck to 1. If you give the current file name to Save As,  \
 any current edits will be saved and the current version in Snd will be updated (that is, in this \
-case, the current edit tree is not preserved)."));
+case, the current edit tree is not preserved).");
 }
 
 static void save_as_cancel_callback(Widget w, XtPointer context, XtPointer info)
@@ -743,46 +743,46 @@ static void file_data_format_callback(Widget w, XtPointer context, XtPointer inf
 static void file_header_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_help_with_wrap((snd_state *)context,
-		     _("File Header Type"),
-_("This list shows the output header types that Snd is willing to write."));
+		     "File Header Type",
+"This list shows the output header types that Snd is willing to write.");
 }
 
 static void file_data_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_help_with_wrap((snd_state *)context,
-		     _("File Data Format"),
-_("This list shows the data format choices available with the currently selected header choice.  'Short' means 16-bit two's complement \
+		     "File Data Format",
+"This list shows the data format choices available with the currently selected header choice.  'Short' means 16-bit two's complement \
 integer.  'Mulaw' and 'Alaw' are common 8-bit compression schemes. 'Long' is 32-bit integer. 'Float' is 32-bit float.  In each case, the \
-decision as to byte order ('endianess') depends on the header type."));
+decision as to byte order ('endianess') depends on the header type.");
 }
 
 static void file_data_location_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_help_with_wrap((snd_state *)context,
-		     _("File Data Location"),
-_("If you know the data location (in bytes) you can set it in this field."));
+		     "File Data Location",
+"If you know the data location (in bytes) you can set it in this field.");
 }
 
 static void file_srate_help_callback(Widget w, XtPointer context, XtPointer info)
 {
   snd_help_with_wrap((snd_state *)context,
-		     _("File Srate"),
-_("This field sets the nominal file sampling rate."));
+		     "File Srate",
+"This field sets the nominal file sampling rate.");
 } 
 
 static void file_chans_help_callback(Widget w, XtPointer context, XtPointer info)
 {
   snd_help_with_wrap((snd_state *)context,
-		     _("File Srate"),
-_("This field sets the number of channels in the output file."));
+		     "File Srate",
+"This field sets the number of channels in the output file.");
 } 
 
 static void file_comment_label_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_state *ss = (snd_state *)context;
   snd_help_with_wrap(ss,
-		     _("Output File Comment"),
-_("This optional field provides any comments that you want saved in the output file's header."));	   
+		     "Output File Comment",
+"This optional field provides any comments that you want saved in the output file's header.");	   
 }
 
 #define NUM_HEADER_TYPES 7

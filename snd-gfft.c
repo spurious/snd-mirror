@@ -426,17 +426,17 @@ GtkWidget *fire_up_transform_dialog(snd_state *ss, int managed)
 				     0,
 				     g_cclosure_new(GTK_SIGNAL_FUNC(delete_transform_dialog), (gpointer)ss, 0),
 				     0);
-      gtk_window_set_title(GTK_WINDOW(transform_dialog), "Transform Options");
+      gtk_window_set_title(GTK_WINDOW(transform_dialog), _("Transform Options"));
       sg_make_resizable(transform_dialog);
       set_background(transform_dialog, (ss->sgx)->basic_color);
       gtk_container_set_border_width(GTK_CONTAINER(transform_dialog), 4);
       gtk_widget_realize(transform_dialog);
       gtk_window_resize(GTK_WINDOW(transform_dialog), 400, 500);
 
-      help_button = gtk_button_new_with_label("Help");
-      dismiss_button = gtk_button_new_with_label("Dismiss");
-      color_button = gtk_button_new_with_label("Color");
-      orient_button = gtk_button_new_with_label("Orientation");
+      help_button = gtk_button_new_with_label(_("Help"));
+      dismiss_button = gtk_button_new_with_label(_("Dismiss"));
+      color_button = gtk_button_new_with_label(_("Color"));
+      orient_button = gtk_button_new_with_label(_("Orientation"));
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(transform_dialog)->action_area), dismiss_button, FALSE, TRUE, 10);
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(transform_dialog)->action_area), color_button, FALSE, TRUE, 10);
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(transform_dialog)->action_area), orient_button, FALSE, TRUE, 10);
@@ -487,19 +487,19 @@ GtkWidget *fire_up_transform_dialog(snd_state *ss, int managed)
 	      transform_names[i] = TRANSFORM_TYPES[i];
 	    else transform_names[i] = added_transform_name(i);
 	  }
-	transform_list = sg_make_list("type", outer_table, TABLE_ATTACH, (gpointer)ss, num_transform_types, transform_names, 
+	transform_list = sg_make_list(_("type"), outer_table, TABLE_ATTACH, (gpointer)ss, num_transform_types, transform_names, 
 				      GTK_SIGNAL_FUNC(transform_browse_callback), 0, 1, 0, 1);
 	gtk_widget_show(transform_list);
 	FREE(transform_names);
       }
 
       /* SIZE */
-      size_list = sg_make_list("size", outer_table, TABLE_ATTACH, (gpointer)ss, NUM_TRANSFORM_SIZES, TRANSFORM_SIZES, 
+      size_list = sg_make_list(_("size"), outer_table, TABLE_ATTACH, (gpointer)ss, NUM_TRANSFORM_SIZES, TRANSFORM_SIZES, 
 			       GTK_SIGNAL_FUNC(size_browse_callback), 1, 2, 0, 1);
       gtk_widget_show(size_list);
 
       /* DISPLAY */
-      display_frame = gtk_frame_new("display");
+      display_frame = gtk_frame_new(_("display"));
       /* gtk_table_attach_defaults(GTK_TABLE(outer_table), display_frame, 2, 3, 0, 1); */
       gtk_table_attach(GTK_TABLE(outer_table), display_frame, 2, 3, 0, 1,
 		       (GtkAttachOptions)(GTK_FILL | GTK_SHRINK), 
@@ -512,7 +512,7 @@ GtkWidget *fire_up_transform_dialog(snd_state *ss, int managed)
       gtk_container_add(GTK_CONTAINER(display_frame), buttons);
       set_background(buttons, (ss->sgx)->position_color);
 
-      normal_fft_button = gtk_radio_button_new_with_label(NULL, "single transform");
+      normal_fft_button = gtk_radio_button_new_with_label(NULL, _("single transform"));
       gtk_box_pack_start(GTK_BOX(buttons), normal_fft_button, FALSE, FALSE, 0);
       gtk_widget_show(normal_fft_button);
       g_signal_connect_closure_by_id(GTK_OBJECT(normal_fft_button),
@@ -522,7 +522,7 @@ GtkWidget *fire_up_transform_dialog(snd_state *ss, int managed)
 				     0);
       gtk_widget_set_size_request(GTK_WIDGET(normal_fft_button), BUTTON_WIDTH, BUTTON_HEIGHT);
 
-      sono_button = gtk_radio_button_new_with_label(gtk_radio_button_get_group(GTK_RADIO_BUTTON(normal_fft_button)), "sonogram");
+      sono_button = gtk_radio_button_new_with_label(gtk_radio_button_get_group(GTK_RADIO_BUTTON(normal_fft_button)), _("sonogram"));
       gtk_box_pack_start(GTK_BOX(buttons), sono_button, FALSE, FALSE, 0);
       gtk_widget_show(sono_button);
       g_signal_connect_closure_by_id(GTK_OBJECT(sono_button),
@@ -532,7 +532,7 @@ GtkWidget *fire_up_transform_dialog(snd_state *ss, int managed)
 				     0);
       gtk_widget_set_size_request(GTK_WIDGET(sono_button), BUTTON_WIDTH, BUTTON_HEIGHT);
 
-      spectro_button = gtk_radio_button_new_with_label(gtk_radio_button_get_group(GTK_RADIO_BUTTON(normal_fft_button)), "spectrogram");
+      spectro_button = gtk_radio_button_new_with_label(gtk_radio_button_get_group(GTK_RADIO_BUTTON(normal_fft_button)), _("spectrogram"));
       gtk_box_pack_start(GTK_BOX(buttons), spectro_button, FALSE, FALSE, 0);
       gtk_widget_show(spectro_button);
       g_signal_connect_closure_by_id(GTK_OBJECT(spectro_button),
@@ -542,7 +542,7 @@ GtkWidget *fire_up_transform_dialog(snd_state *ss, int managed)
 				     0);
       gtk_widget_set_size_request(GTK_WIDGET(spectro_button), BUTTON_WIDTH, BUTTON_HEIGHT);
       
-      peaks_button = gtk_check_button_new_with_label("peaks");
+      peaks_button = gtk_check_button_new_with_label(_("peaks"));
       gtk_box_pack_start(GTK_BOX(buttons), peaks_button, FALSE, FALSE, 0);
       gtk_widget_show(peaks_button);
       g_signal_connect_closure_by_id(GTK_OBJECT(peaks_button),
@@ -552,7 +552,7 @@ GtkWidget *fire_up_transform_dialog(snd_state *ss, int managed)
 				     0);
       gtk_widget_set_size_request(GTK_WIDGET(peaks_button), BUTTON_WIDTH, BUTTON_HEIGHT);
  
-      db_button = gtk_check_button_new_with_label("dB");
+      db_button = gtk_check_button_new_with_label(_("dB"));
       gtk_box_pack_start(GTK_BOX(buttons), db_button, FALSE, FALSE, 0);
       gtk_widget_show(db_button);
       g_signal_connect_closure_by_id(GTK_OBJECT(db_button),
@@ -562,7 +562,7 @@ GtkWidget *fire_up_transform_dialog(snd_state *ss, int managed)
 				     0);
       gtk_widget_set_size_request(GTK_WIDGET(db_button), BUTTON_WIDTH, BUTTON_HEIGHT);
  
-      logfreq_button = gtk_check_button_new_with_label("log freq");
+      logfreq_button = gtk_check_button_new_with_label(_("log freq"));
       gtk_box_pack_start(GTK_BOX(buttons), logfreq_button, FALSE, FALSE, 0);
       gtk_widget_show(logfreq_button);
       g_signal_connect_closure_by_id(GTK_OBJECT(logfreq_button),
@@ -572,7 +572,7 @@ GtkWidget *fire_up_transform_dialog(snd_state *ss, int managed)
 				     0);
       gtk_widget_set_size_request(GTK_WIDGET(logfreq_button), BUTTON_WIDTH, BUTTON_HEIGHT);
 
-      normalize_button = gtk_check_button_new_with_label("normalize");
+      normalize_button = gtk_check_button_new_with_label(_("normalize"));
       gtk_box_pack_start(GTK_BOX(buttons), normalize_button, FALSE, FALSE, 0);
       gtk_widget_show(normalize_button);
       g_signal_connect_closure_by_id(GTK_OBJECT(normalize_button),
@@ -582,7 +582,7 @@ GtkWidget *fire_up_transform_dialog(snd_state *ss, int managed)
 				     0);
       gtk_widget_set_size_request(GTK_WIDGET(normalize_button), BUTTON_WIDTH, BUTTON_HEIGHT);
 
-      selection_button = gtk_check_button_new_with_label("selection");
+      selection_button = gtk_check_button_new_with_label(_("selection"));
       gtk_box_pack_start(GTK_BOX(buttons), selection_button, FALSE, FALSE, 0);
       gtk_widget_show(selection_button);
       g_signal_connect_closure_by_id(GTK_OBJECT(selection_button),
@@ -596,14 +596,14 @@ GtkWidget *fire_up_transform_dialog(snd_state *ss, int managed)
       gtk_widget_show(display_frame);
 
       /* WAVELET */
-      wavelet_list = sg_make_list("wavelet", outer_table, TABLE_ATTACH, (gpointer)ss, NUM_WAVELETS, WAVELETS, 
+      wavelet_list = sg_make_list(_("wavelet"), outer_table, TABLE_ATTACH, (gpointer)ss, NUM_WAVELETS, WAVELETS, 
 				  GTK_SIGNAL_FUNC(wavelet_browse_callback), 0, 1, 1, 2);
       gtk_widget_show(wavelet_list);
 
       /* WINDOW */
       window_box = gtk_table_new(2, 2, FALSE);
       gtk_table_attach_defaults(GTK_TABLE(outer_table), window_box, 1, 2, 1, 2);
-      window_list = sg_make_list("window", window_box, TABLE_ATTACH, (gpointer)ss, GUI_NUM_FFT_WINDOWS, FFT_WINDOWS, 
+      window_list = sg_make_list(_("window"), window_box, TABLE_ATTACH, (gpointer)ss, GUI_NUM_FFT_WINDOWS, FFT_WINDOWS, 
 				 GTK_SIGNAL_FUNC(window_browse_callback), 0, 1, 0, 1);
 
       beta_adj = gtk_adjustment_new(0.0, 0.0, 1.01, 0.001, 0.01, .01);

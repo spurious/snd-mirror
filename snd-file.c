@@ -1230,7 +1230,7 @@ snd_info *snd_update(snd_state *ss, snd_info *sp)
   if (mus_file_probe(sp->filename) == 0)
     {
       /* user deleted file while editing it? */
-      report_in_minibuffer_and_save(sp, "%s no longer exists!", sp->short_filename);
+      report_in_minibuffer_and_save(sp, _("%s no longer exists!"), sp->short_filename);
       return(sp);
     }
   app_x = widget_width(MAIN_SHELL(ss));
@@ -2240,7 +2240,7 @@ static char *raw_data_explanation(char *filename, snd_state *ss, file_info *hdr)
       mus_snprintf(tmp_str, LABEL_BUFFER_SIZE, " (swapped: %d)", ns);
       strcat(reason_str, tmp_str);
     }
-  mus_snprintf(tmp_str, LABEL_BUFFER_SIZE, _("\nlength: %.3f (" PRId64 " samples, " PRId64 " bytes total)"),
+  mus_snprintf(tmp_str, LABEL_BUFFER_SIZE, "\nlength: %.3f (" PRId64 " samples, " PRId64 " bytes total)",
 	       (float)((double)(hdr->samples) / (float)(hdr->chans * hdr->srate)),
 	       hdr->samples,
 	       mus_sound_length(filename));
@@ -2272,10 +2272,10 @@ static char *raw_data_explanation(char *filename, snd_state *ss, file_info *hdr)
   mus_snprintf(tmp_str, LABEL_BUFFER_SIZE, "\nformat: %s\n", mus_data_format_name(hdr->format));
   strcat(reason_str, tmp_str);
   hdr->type = MUS_RAW;
-  snd_help(ss, _("Current header values"), reason_str);
+  snd_help(ss, "Current header values", reason_str);
   file_string = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
   mus_snprintf(file_string, PRINT_BUFFER_SIZE,
-	       _("Bogus header found for %s"), 
+	       "Bogus header found for %s", 
 	       filename_without_home_directory(filename));
   FREE(tmp_str);
   FREE(reason_str);

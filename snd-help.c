@@ -26,16 +26,16 @@ static char *sndlib_consistency_check(void)
 {
 #if SNDLIB_USE_FLOATS
   if (mus_sample_bits() > 0) 
-    return(_(" Snd built expecting float samples, but sndlib uses int!")); 
+    return(" Snd built expecting float samples, but sndlib uses int!"); 
 #else
   char *buf;
   if (mus_sample_bits() == 0)
-    return(_(" Snd built expecting int samples, but sndlib uses float!")); 
+    return(" Snd built expecting int samples, but sndlib uses float!"); 
   else
     if (mus_sample_bits() != MUS_SAMPLE_BITS)
       {
 	buf = (char *)CALLOC(LABEL_BUFFER_SIZE, sizeof(char)); /* memory leak here is the least of our worries... */
-	mus_snprintf(buf, LABEL_BUFFER_SIZE, _(" Snd expects %d bit int samples, but sndlib uses %d bits!"),
+	mus_snprintf(buf, LABEL_BUFFER_SIZE, " Snd expects %d bit int samples, but sndlib uses %d bits!",
 		     MUS_SAMPLE_BITS,
 		     mus_sample_bits());
 	return(buf);
@@ -116,7 +116,7 @@ static char *glx_version(void)
       gdk_gl_query_version (&major, &minor);
       mus_snprintf(version, 128, " %d.%d", major, minor);
     }
-  else mus_snprintf(version, 128, _("gtkGL not supported?"));
+  else mus_snprintf(version, 128, "gtkGL not supported?");
 #endif
   return(version);
 }
@@ -239,6 +239,9 @@ char *version_info(void)
 #endif
 #if (defined(SIZEOF_OFF_T) && (SIZEOF_OFF_T > 4)) || (defined(_FILE_OFFSET_BITS) && (_FILE_OFFSET_BITS == 64))
 	  _("\n    with large file support"),
+#endif
+#if ENABLE_NLS && HAVE_GETTEXT
+	  _("\n    with gettext"),
 #endif
 #ifdef __DATE__
 	  "\n    Compiled ", __DATE__, " ", __TIME__,

@@ -874,7 +874,7 @@ static void edit_data_to_file(FILE *fd, ed_list *ed, chan_info *cp)
 	      ifd = mus_file_open_read(sd->filename);
 	      if (ifd == -1) 
 		{
-		  snd_error("save edits: can't open %s: %s!",
+		  snd_error(_("save edits: can't open %s: %s!"),
 			    sd->filename,
 			    strerror(errno));
 		  return;
@@ -4337,9 +4337,6 @@ static mus_sample_t previous_sample_with_ptree_ramp_xramp_ramp(snd_fd *sf)
 {
   return(MUS_FLOAT_TO_SAMPLE(previous_sample_to_float_with_ptree_ramp_xramp_ramp(sf)));
 }
-
-/* TODO: should closure init and xen call be no_catch?  what happens to errors now? need dynamic-wind to release snd_fd?
- */
 
 /* ---------------- xen ---------------- */
 
@@ -8141,15 +8138,15 @@ static XEN g_inspect_sample_reader(XEN obj)
   XEN_ASSERT_TYPE(SAMPLE_READER_P(obj), obj, XEN_ONLY_ARG, "inspect-sample-reader", "a sample-reader");
   sf = TO_SAMPLE_READER(obj);
   buf = (char *)malloc(4096);
-  snprintf(buf, 4096, "snd_fd: %f, %s[%d](%s%s) beg: " OFF_TD ", at " OFF_TD " [frag_pos: " OFF_TD ", first: " OFF_TD ", last: " OFF_TD "], fragment %d",
-	   sf->curval,
-	   sf->cp->sound->filename,
-	   sf->cp->chan,
-	   (sf->direction == 1) ? "forward" : "backward",
-	   (sf->at_eof) ? ", at eof" : "",
-	   sf->initial_samp,
-	   sf->loc, sf->frag_pos, sf->first, sf->last,
-	   sf->cbi);
+  mus_snprintf(buf, 4096, "snd_fd: %f, %s[%d](%s%s) beg: " OFF_TD ", at " OFF_TD " [frag_pos: " OFF_TD ", first: " OFF_TD ", last: " OFF_TD "], fragment %d",
+	       sf->curval,
+	       sf->cp->sound->filename,
+	       sf->cp->chan,
+	       (sf->direction == 1) ? "forward" : "backward",
+	       (sf->at_eof) ? ", at eof" : "",
+	       sf->initial_samp,
+	       sf->loc, sf->frag_pos, sf->first, sf->last,
+	       sf->cbi);
   res = C_TO_XEN_STRING(buf);
   free(buf);
   return(res);
@@ -8599,7 +8596,7 @@ Float local_maxamp(chan_info *cp, off_t beg, off_t num, int edpos)
 	      if (ss->stopped_explicitly)
 		{
 		  ss->stopped_explicitly = FALSE;
-		  report_in_minibuffer(cp->sound, "maxamp check interrupted...");
+		  report_in_minibuffer(cp->sound, _("maxamp check interrupted..."));
 		  break;
 		}
 	    }

@@ -40,6 +40,10 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
+#if ((!defined(HAVE_CONFIG_H)) || (HAVE_LOCALE_H && HAVE_SETLOCALE))
+  #include <locale.h>
+#endif
+
 #ifndef HAVE_EXTENSION_LANGUAGE
   #define HAVE_EXTENSION_LANGUAGE 1
   #if (!HAVE_RUBY)
@@ -57,6 +61,9 @@
 #include "xen.h"
 
 #if HAVE_GUILE
+/* this is needed because guile's linguile.h->tags.h->inttypes.h picks up
+   a version of PRId64 that doesn't work with gettext as advertised.
+*/
   #undef PRId64
   #if (defined(SIZEOF_OFF_T) && (SIZEOF_OFF_T > 4)) || (defined(_FILE_OFFSET_BITS) && (_FILE_OFFSET_BITS == 64))
     #define PRId64 "%lld"
@@ -92,7 +99,7 @@
 
 #include "snd-strings.h"
 
-#define SND_VERSION "30-Jan-03"
+#define SND_VERSION "3-Feb-03"
 #define SND_RPM_VERSION "6.6"
 #define SND_MAJOR_VERSION 6
 #define SND_MINOR_VERSION 6

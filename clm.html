@@ -494,6 +494,9 @@ discussion of fm.</p>
 <tr><td colspan=2><center>env methods</center></td></tr>
 <tr><td><em class=gen>mus-location</em></td><td>call counter value (number of calls so far on <i>env</i>)</td></tr>
 <tr><td><em class=gen>mus-increment</em></td><td>base value</td></tr>
+<tr><td><em class=gen>mus-data</em></td><td>original breakpoint list</td></tr>
+<tr><td><em class=gen>mus-scaler</em></td><td>original scaler</td></tr>
+<tr><td><em class=gen>mus-offset</em></td><td>original offset</td></tr>
 </table>
 
 <p>An envelope is a list of break point pairs:  '(0 0 100 1)  is
@@ -742,6 +745,7 @@ same fm applied to the same waveform in <a href="#table-lookup">table-lookup</a>
 <tr><td><em class=gen>mus-frequency</em></td><td>frequency in Hz</td></tr>
 <tr><td><em class=gen>mus-phase</em></td><td>phase in radians</td></tr>
 <tr><td><em class=gen>mus-scaler</em></td><td>amplitude arg used in make-&lt;gen&gt;</td></tr>
+<tr><td><em class=gen>mus-width</em></td><td>width of square-wave pulse (0.0 to 1.0)</td></tr>
 </table>
 <pre><small>
 One popular kind of vibrato is:
@@ -1725,7 +1729,7 @@ set these fields, use these functions (they are described in conjunction with th
   <a name="mus-scaler"><em class=def>mus-scaler</em></a>     <a name="mus-ycoeffs"><em class=def>mus-ycoeffs</em></a>         <a name="mus-ramp"><em class=def>mus-ramp</em></a>      <a name="mus-feedback"><em class=def>mus-feedback</em></a>
   <a name="mus-a0"><em class=def>mus-a0</em></a>         <a name="mus-feedforward"><em class=def>mus-feedforward</em></a>     <a name="mus-a1"><em class=def>mus-a1</em></a>        <a name="mus-hop"><em class=def>mus-hop</em></a>
   <a name="mus-a2"><em class=def>mus-a2</em></a>         <a name="mus-b1"><em class=def>mus-b1</em></a>              <a name="mus-b2"><em class=def>mus-b2</em></a>        <a name="mus-run"><em class=def>mus-run</em></a>
-  <a name="mus-file-name"><em class=def>mus-file-name</em></a>
+  <a name="mus-file-name"><em class=def>mus-file-name</em></a>  <a name="mus-offset"><em class=def>mus-offset</em></a>          <a name="mus-width"><em class=def>mus-width</em></a>
 </pre>
 <p>
 For example (setf (mus-frequency osc1) 440.0)

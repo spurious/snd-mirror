@@ -427,82 +427,82 @@ static void graph_help_callback(Widget w, XtPointer context, XtPointer info)
 {
   snd_help_with_url_and_wrap((snd_state *)context,
 			     "Graph", "#panelayout",
-_("This portion of the Snd display shows the sound data in the time and/or frequency domains. \
+"This portion of the Snd display shows the sound data in the time and/or frequency domains. \
 If you click on the time domain wave, you can edit it using emacs-like keyboard commands, as \
 well as using mouse-click-and-drag to define the selection.  Once defined, the selected portion \
-can be cut, deleted, or pasted elsewhere, the latter with the middle mouse button."));
+can be cut, deleted, or pasted elsewhere, the latter with the middle mouse button.");
 }
 
 #if (XmVERSION > 1)
 static void history_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_help_with_url_and_wrap((snd_state *)context,
-			     _("Edit History"),
+			     "Edit History",
 			     "#edithistory",
-_("The current state of the undo/redo list can be viewed as a scrolled list of strings in the pane \
+"The current state of the undo/redo list can be viewed as a scrolled list of strings in the pane \
 on the left of the graph (in Motif 1, there's a 'Show Edit History' menu option).  If there are no \
 current edits, it just lists the associated file name (i.e. the zero-edits state).  As you edit the \
 sound, the operations appear in the edit list window.  Click on a member of the list to move to \
 that point in the edit list (equivalent to some number of undo's or redo's).  To move to a given \
-edit point and follow the sync chain (if any), use control-click."));
+edit point and follow the sync chain (if any), use control-click.");
 }
 #endif
 
 static void sx_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_help_with_wrap((snd_state *)context,
-		     _("X axis scroll"),
-_("This scrollbar controls the position of the x axis within the overall sound file. The arrows increment the view by one window."));
+		     "X axis scroll",
+"This scrollbar controls the position of the x axis within the overall sound file. The arrows increment the view by one window.");
 }
 
 static void sy_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_help_with_wrap((snd_state *)context,
-		     _("Y axis scroll"),
-_("This (nearly useless) scrollbar controls the position of the y-axis within the current y axis limits."));
+		     "Y axis scroll",
+"This (nearly useless) scrollbar controls the position of the y-axis within the current y axis limits.");
 }
 
 static void zx_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_help_with_wrap((snd_state *)context,
-		     _("X axis zoom"),
-_("This scrollbar zooms in (as you move it to the left) or out along the x axis."));
+		     "X axis zoom",
+"This scrollbar zooms in (as you move it to the left) or out along the x axis.");
 }
 
 static void zy_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_help_with_wrap((snd_state *)context,
-		     _("Y axis zoom"),
-_("This scrollbar zooms in (as you move it down) or out along the y axis."));
+		     "Y axis zoom",
+"This scrollbar zooms in (as you move it down) or out along the y axis.");
 }
 
 static void gsy_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_help_with_wrap((snd_state *)context,
-		     _("Graph position"),
-_("This scrollbar controls the position in the overall combined graph of the portion visible in the sound pane."));
+		     "Graph position",
+"This scrollbar controls the position in the overall combined graph of the portion visible in the sound pane.");
 }
 
 static void gzy_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_help_with_wrap((snd_state *)context,
-		     _("Graph zoom"),
-_("This scrollbar controls how much of the overall combined graph is visible in the sound pane."));
+		     "Graph zoom",
+"This scrollbar controls how much of the overall combined graph is visible in the sound pane.");
 }
 
 static void f_button_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_help_with_wrap((snd_state *)context,
-		     _("fft button"),
-_("This button controls whether an FFT is displayed alongside the waveform.  To affect all channels at once, use control-click."));
+		     "fft button",
+"This button controls whether an FFT is displayed alongside the waveform.  To affect all channels at once, use control-click.");
 }
 
 static void w_button_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_help_with_wrap((snd_state *)context,
-		     _("time domain waveform button"),
-_("This button determines whether the time domain waveform is displayed.  If both the 'w' and 'f' buttons are off, only the lisp \
-graph (if any) is displayed.  To affect all channels at once, use control-click."));
+		     "time domain waveform button",
+"This button determines whether the time domain waveform is displayed.  If both the 'w' and 'f' buttons are off, only the lisp \
+graph (if any) is displayed.  To affect all channels at once, use control-click.");
 }
 
 

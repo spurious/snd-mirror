@@ -1093,16 +1093,7 @@ void src_env_or_num(snd_state *ss, chan_info *cp, env *e, Float ratio, int just_
   if ((just_num) && (ratio == 0.0)) return;
 
   /* get envelope or src ratio */
-  if (cp == NULL)
-    {
-      sp = any_selected_sound(ss); 
-      if (sp) 
-	cp = any_selected_channel(sp); 
-      else 
-	if (!over_selection) 
-	  return;
-    }
-  else sp = cp->sound;
+  sp = cp->sound;
   /* get current syncd chans */
   sc = get_sync_state(ss, sp, cp, 0, over_selection, 
 		      (ratio < 0.0) ? READ_BACKWARD : READ_FORWARD, /* 0->beg, 0->regexpr (ratio = 0.0 if from_enved) */
@@ -1885,7 +1876,7 @@ void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, int regexpr,
   len = mus_length(egen);
   passes = mus_env_passes(egen);
   rates = mus_env_rates(egen);
-  scaler = mus_scaler(egen);
+  scaler = mus_env_scaler(egen);
   offset = mus_env_offset(egen);
   base = mus_increment(egen);
 
@@ -3689,12 +3680,12 @@ between beg and beg + num by an exponential ramp going from rmp0 to rmp1 with cu
 		  rates = mus_env_rates(e);
 		  passes = mus_env_passes(e);
 		  r1 = r0 + passes[0] * rates[0];
-		  xramp_channel(cp, r0, r1, mus_scaler(e), mus_env_offset(e), samp, samps, pos, FALSE);
+		  xramp_channel(cp, r0, r1, mus_env_scaler(e), mus_env_offset(e), samp, samps, pos, FALSE);
 		  if (cp->amp_envs[pos])
 		    {
 		      if ((samp == 0) && 
 			  (samps >= cp->samples[pos]))
-			amp_env_env(cp, data, 2, pos, ebase, mus_scaler(e), mus_env_offset(e));
+			amp_env_env(cp, data, 2, pos, ebase, mus_env_scaler(e), mus_env_offset(e));
 		      else 
 			{
 			  mus_any *egen;

@@ -6,10 +6,6 @@
 
 #include "snd.h"
 
-#if HAVE_LOCALE_H
-  #include <locale.h>
-#endif
-
 static snd_state *ss;
 #if DEBUGGING
   static snd_state *initial_ss = NULL;
@@ -135,7 +131,8 @@ static void snd_gsl_error(const char *reason, const char *file, int line, int gs
    *   int __fpu_ieee = _FPU_IEEE; _FPU_SETCW(__fpu_ieee);
    */
 
-#if ENABLE_NLS
+#if ENABLE_NLS && HAVE_GETTEXT
+  /* both flags needed to avoid idiotic confusion on the Sun */
   #if HAVE_SETLOCALE
     setlocale (LC_ALL, "");
   #endif
