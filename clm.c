@@ -5,8 +5,7 @@
  *   or add-to-existing would need access to current
  */
 
-/* TODO: mus-interp-type -- doc[method tables too]/test etc */
-/* TODO: tests for table-lookup|wave-train interps */
+/* TODO: tests for wave-train interps */
 /* TODO: some independent test for lagrange/hermite interpolations */
 
 #if defined(HAVE_CONFIG_H)
@@ -664,6 +663,34 @@ static Float mus_array_hermite_interp(Float *wave, Float x, int size)
   return(((c3 * p + c2) * p + c1) * p + c0);
 }
 
+#if 0
+Float mus_array_interp_with_interp_type(Float *wave, Float phase, int size, mus_interp_t type)
+{
+  /* TODO: this needs correct phase handlers */
+  int loc;
+  switch (type)
+    {
+    case MUS_INTERP_NONE:
+      loc = (int)(floor(phase)) % size;
+      if (loc < 0) loc += size;
+      if (loc >= size) loc -= size;
+      return(wave[loc]);
+      break;
+    case MUS_INTERP_LAGRANGE:
+      return(mus_array_lagrange_interp(wave, phase, size));
+      break;
+    case MUS_INTERP_HERMITE:
+      return(mus_array_hermite_interp(wave, phase, size));
+      break;
+    case MUS_INTERP_LINEAR:
+      return(mus_array_interp(wave, phase, size));
+      break;
+    default: 
+      mus_error(MUS_ARG_OUT_OF_RANGE, "unimplemented interp type");
+      break;
+    }
+}
+#endif
 
 static Float *array_normalize(Float *table, int table_size)
 {
@@ -3521,6 +3548,8 @@ mus_any *mus_make_waveshape(Float frequency, Float phase, Float *table, int size
   gen->offset = (Float)(size - 1) / 2.0;
   return((mus_any *)gen);
 }
+
+/* TODO: if interp choice in waveshape -- what is the correct form? */
 
 Float mus_waveshape(mus_any *ptr, Float index, Float fm)
 {

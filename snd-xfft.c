@@ -2,6 +2,8 @@
 
 #include "snd.h"
 
+/* TODO: the window graph y axis should show dB scale if dB is in use */
+
 static Widget transform_dialog = NULL; /* main dialog shell */
 static Widget type_list, size_list, wavelet_list, window_list, window_beta_scale,
               db_button, peaks_button, logfreq_button, sono_button, spectro_button, normo_button, normalize_button, selection_button,

@@ -700,6 +700,7 @@ mus-interp-linear, mus-interp-lagrange, or mus-interp-hermite.
 <tr><td><em class=gen>mus-phase</em></td><td>phase in radians (wave-size/(2*pi))</td></tr>
 <tr><td><em class=gen>mus-data</em></td><td>wave array</td></tr>
 <tr><td><em class=gen>mus-length</em></td><td>wave size (no setf)</td></tr>
+<tr><td><em class=gen>mus-interp-type</em></td><td>interpolation choice (no setf)</td></tr>
 </table>
 <pre><small>
 (prog1
@@ -907,6 +908,7 @@ use this for VOSIM and other related techniques.</p>
 <tr><td><em class=gen>mus-phase</em></td><td>phase in radians</td></tr>
 <tr><td><em class=gen>mus-data</em></td><td>wave array (no setf)</td></tr>
 <tr><td><em class=gen>mus-length</em></td><td>length of wave array (no setf)</td></tr>
+<tr><td><em class=gen>mus-interp-type</em></td><td>interpolation choice (no setf)</td></tr>
 </table>
 
 <pre><small>
@@ -1405,6 +1407,7 @@ The value returned is the 'input' argument.
 <tr><td><em class=gen>mus-length</em></td><td>length of delay (no setf)</td></tr>
 <tr><td><em class=gen>mus-order</em></td><td>same as mus-length</td></tr>
 <tr><td><em class=gen>mus-data</em></td><td>delay line itself (no setf)</td></tr>
+<tr><td><em class=gen>mus-interp-type</em></td><td>interpolation choice (no setf)</td></tr>
 </table>
 
 <pre><small>
@@ -1461,6 +1464,7 @@ the <i>pm</i> argument to the generator is ignored in some cases (in Scheme and 
 <tr><td><em class=gen>mus-data</em></td><td>delay line itself (no setf)</td></tr>
 <tr><td><em class=gen>mus-feedback</em></td><td>scaler (comb only)</td></tr>
 <tr><td><em class=gen>mus-feedforward</em></td><td>scaler (notch only)</td></tr>
+<tr><td><em class=gen>mus-interp-type</em></td><td>interpolation choice (no setf)</td></tr>
 </table>
 
 <pre><small>
@@ -1498,6 +1502,7 @@ average comb filter.  If both scale terms = 0, we get a pure delay line. </p>
 <tr><td><em class=gen>mus-data</em></td><td>delay line itself (no setf)</td></tr>
 <tr><td><em class=gen>mus-feedback</em></td><td>feedback scaler</td></tr>
 <tr><td><em class=gen>mus-feedforward</em></td><td>feedforward scaler</td></tr>
+<tr><td><em class=gen>mus-interp-type</em></td><td>interpolation choice (no setf)</td></tr>
 </table>
 
 <pre><small>
@@ -1939,7 +1944,7 @@ set these fields, use these functions (they are described in conjunction with th
   <a class=def name="mus-scaler">mus-scaler</a>     <a class=def name="mus-ycoeffs">mus-ycoeffs</a>         <a class=def name="mus-ramp">mus-ramp</a>      <a class=def name="mus-feedback">mus-feedback</a>
   <a class=def name="mus-a0">mus-a0</a>         <a class=def name="mus-feedforward">mus-feedforward</a>     <a class=def name="mus-a1">mus-a1</a>        <a class=def name="mus-hop">mus-hop</a>
   <a class=def name="mus-a2">mus-a2</a>         <a class=def name="mus-b1">mus-b1</a>              <a class=def name="mus-b2">mus-b2</a>        <a class=def name="mus-run">mus-run</a>
-  <a class=def name="mus-file-name">mus-file-name</a>  <a class=def name="mus-offset">mus-offset</a>          <a class=def name="mus-width">mus-width</a>
+  <a class=def name="mus-file-name">mus-file-name</a>  <a class=def name="mus-offset">mus-offset</a>          <a class=def name="mus-width">mus-width</a>     <a class=def name="mus-interp-type">mus-interp-type</a>
 </pre>
 <p>
 <code>(setf (mus-frequency osc1) 440.0)</code>

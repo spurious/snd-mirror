@@ -279,7 +279,7 @@ Float mus_set_offset(mus_any *gen, Float val);
 Float mus_width(mus_any *gen);
 Float mus_set_width(mus_any *gen, Float val);
 char *mus_file_name(mus_any *ptr);
-#define mus_interp_type(Gen) mus_channel(Gen)
+#define mus_interp_type(Gen) mus_channels(Gen)
 
 Float mus_oscil(mus_any *o, Float fm, Float pm);
 Float mus_oscil_0(mus_any *ptr);

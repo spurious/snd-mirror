@@ -3,6 +3,8 @@
 ;;;   rubber-sound looks for stable portions and either inserts or deletes periods 
 ;;;     period length is determined via autocorrelation
 
+(use-modules (ice-9 format))
+
 (define zeros-checked 8)
 (define extension 10.0)
 (define show-details #f)
