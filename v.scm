@@ -100,7 +100,7 @@ This version of the fm-violin assumes it is running within with-sound (where *ou
 	   (fuzz 0.0)
 	   (ind-fuzz 1.0)
 	   (amp-fuzz 1.0))
-      (if (c-g?) (throw 'interrupted))
+      (if (c-g?) (throw 'with-sound-interrupt))
       (if (or (not easy-case) ind-noi amp-noi (> noise-amount 0.0))
 	  (run
 	   (lambda ()

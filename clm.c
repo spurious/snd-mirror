@@ -5104,6 +5104,11 @@ static Float sample_file(mus_any *ptr, off_t samp, int chan, Float val)
       if (samp > gen->out_end) 
 	gen->out_end = samp;
     }
+  /* It would be useful if this returned the new value MUS_SAMPLE_TO_FLOAT(gen->obufs[chan][samp - gen->data_start])
+   *   because we could break on overflow in an instrument, or watch the overall output, but
+   *   that's inconsistent with locsig (but locsig could return a frame of the updated values),
+   *   and requires a second type conversion.  Perhaps a parallel output set?
+   */
   return(val);
 }
 

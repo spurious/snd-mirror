@@ -36,14 +36,7 @@
 ;;; TODO: doc ex of key-press-hook (cx cs=save as in xe-enved?), mix-amp-changed-hook, select-*-hook [click=>post info in box]
 ;;; TODO: xemacs style top list of sounds, current takes whole screen [make-top-row tmp18.scm, files-popup-buffer in examp.scm]
 ;;; TOOD: extend the mix-as-list syntax to list-of-ids (tracks) (are these all rationalized now?)
-;;; TODO: translate clm ins: prc96.ins, canter.ins+drone.ins+bag.clm, badd.ins, addflt.ins, add.ins
-;;; TODO:           grani.ins, dlocsig, jcvoi?, lbjPiano?, resflt?, reson?, san?, scanned?, vox?, ugex?
-;;; effects crossref + tests, interface crossref
-;;; are there redundancies in examp.scm? (jcrev?)
-;;; mus10+sam versions?
-;;;
-;;; doc: grfsnd table + sndscm for new
-;;; test: test 23 
+;;; effects crossref + tests + clm translations, interface crossref
 
 
 ;;; how to send ourselves a drop?  (button2 on menu is only the first half -- how to force 2nd?)
@@ -234,6 +227,7 @@
 	    (car args))))
 ;(defmacro without-errors (func) `(begin ,func))
 (load "hooks.scm")
+(load "ws.scm")
 
 (define (reset-almost-all-hooks)
   (with-local-hook optimization-hook '() reset-all-hooks))
@@ -11441,6 +11435,11 @@ EDITS: 5
 		      (make-table-lookup 440.0 :wave (partials->wave '(1 1 2 1)))
 		      (make-table-lookup 440.0 :wave (partials->wave '(1 1 2 .5))))
 
+      (let ((hi (make-table-lookup :size 256)))
+	(if (not (= (mus-length hi) 256)) (snd-display ";table-lookup set length: ~A?" (mus-length hi))))
+      (let ((tag (catch #t (lambda () (make-table-lookup :size 0)) (lambda args (car args)))))
+	(if (not (eq? tag 'out-of-range)) (snd-display ";table-lookup size 0: ~A" tag)))
+
       (let ((gen0 (make-waveshape 440.0 :wave (partials->waveshape '(1 1))))
 	    (gen (make-waveshape 440.0 :size 512 :partials '(1 1)))
 	    (v0 (make-vct 10))
@@ -11487,6 +11486,8 @@ EDITS: 5
       (let ((var (catch #t (lambda () (make-waveshape 440.0 :size 0)) (lambda args args))))
 	(if (not (eq? (car var) 'out-of-range))
 	    (snd-display ";make-waveshape bad size -1: ~A" var)))
+      (let ((hi (make-waveshape :size 256)))
+	(if (not (= (mus-length hi) 256)) (snd-display ";waveshape set length: ~A?" (mus-length hi))))
 
       (let ((gen (make-wave-train 440.0 0.0 (make-vct 20)))
 	    (v0 (make-vct 10))
@@ -11521,6 +11522,11 @@ EDITS: 5
 
       (test-gen-equal (make-wave-train 440.0 0.0 (make-vct 20)) (make-wave-train 440.0 0.0 (make-vct 20)) (make-wave-train 100.0 0.0 (make-vct 20)))
       (test-gen-equal (make-wave-train 440.0 0.0 (make-vct 20)) (make-wave-train 440.0 0.0 (make-vct 20)) (make-wave-train 440.0 1.0 (make-vct 20)))
+
+      (let ((hi (make-wave-train :size 256)))
+	(if (not (= (mus-length hi) 256)) (snd-display ";wave-train set length: ~A?" (mus-length hi))))
+      (let ((tag (catch #t (lambda () (make-wave-train :size 0)) (lambda args (car args)))))
+	(if (not (eq? tag 'out-of-range)) (snd-display ";wave-train size 0: ~A" tag)))
 
       (let ((gen (make-readin "oboe.snd" 0 1490))
 	    (v0 (make-vct 10))
@@ -16621,8 +16627,15 @@ EDITS: 5
 			       (if (= position 128) (set! position 0)))))
 			 old-y)
 		     #f)))))
-	  (let ((maxval (+ (maxamp) .01)))
-	    (if (not (every-sample? (lambda (y) (< y maxval)))) (snd-display ";every-sample: ~A?" maxval)))
+
+	  (let ((maxval1 (+ (maxamp) .01)))
+	    (if (not (every-sample? (lambda (y) (< y maxval1)))) 
+		(let ((res (scan-chan (lambda (y) (>= y maxval1)))))
+		  (snd-display ";~A, every-sample: ~A ~A [~A: ~A]?" (short-file-name) maxval1 res (cursor) (sample (cursor)))
+		  (do ((i 0 (1+ i)))
+		      ((= i (edit-position)))
+		    (snd-display ";~D: ~A ~A" i (maxamp #f 0 i) (edit-fragment i))))))
+		    
 	  (map-chan (echo .5 .75) 0 60000)
 	  (reset-hook! transform-hook)
 	  (reset-hook! lisp-graph-hook)
@@ -23506,8 +23519,6 @@ EDITS: 2
 
 ;;; ---------------- test 22: run ----------------
 
-(load "ws.scm")
-
 (defmacro time-it (a) 
   `(let ((start (get-internal-real-time))) 
    ,a 
@@ -25801,6 +25812,8 @@ EDITS: 2
 	(if (not (eq? tag 'cannot-parse))
 	    (snd-display ";format arg type check? ~A" tag)))
       
+      (let ((tag (catch #t (lambda () (run-eval (lambda () (eq? .3 .2)))) (lambda args (car args)))))
+	(if (not (eq? tag 'cannot-parse)) (snd-display ";cannot parse case: ~A" tag)))
       
       (def-clm-struct hiho2 (i 0 :type int) (x 0.0 :type float) (v #f :type vct) (s "hiho") (ii 3 :type int) (xx 1.0 :type float))
       (define hi2 (make-hiho2 :v (make-vct 3 .1)))
@@ -27091,13 +27104,10 @@ EDITS: 2
 (load "v.scm")
 (load "jcrev.scm") ; redefines jc-reverb (different from examp.scm version used above)
 (load "maraca.scm")
-(load "bell.scm")
 (load "singer.scm")
 (load "strad.scm")
-(load "pqwvox.scm")
 (load "noise.scm")
 (load "clm-ins.scm")
-(load "flute.scm")
 (load "bird.scm")
 (load "piano.scm")
 
@@ -27290,6 +27300,103 @@ EDITS: 2
 
       (set! (mus-srate) 22050)
       (set! (default-output-srate) 22050)
+
+      (let ((fmt1 '(0 1200 100 1000))
+	    (fmt2 '(0 2250 100 1800))
+	    (fmt3 '(0 4500 100 4500))
+	    (fmt4 '(0 6750 100 8100))
+	    (amp1 '(0 .67 100 .7))
+	    (amp2 '(0 .95 100 .95))
+	    (amp3 '(0 .28 100 .33))
+	    (amp4 '(0 .14 100 .15))
+	    (ind1 '(0 .75 100 .65))
+	    (ind2 '(0 .75 100 .75))
+	    (ind3 '(0 1 100 1))
+	    (ind4 '(0 1 100 1))
+	    (skwf '(0 0 100 0))
+	    (ampf '(0 0 25 1 75 1 100 0))
+	    (ranf '(0 .5 100 .5))
+	    (index '(0 1 100 1))
+	    (zero_fun '(0 0 100 0))
+	    (atskew '(0 -1 15 .3 22 -.1 25 0 75 0 100 -.2))
+	    (vibfun '(0 0 .3 .3 15 .6 25 1 100 1))
+	    (slopefun '(0 1 75 1 100 0))
+	    (trap '(0 0 25 1 75 1 100 0))
+	    (ramp '(0 0 25 0 75 1 100 1))
+	    (solid '(0 0 5 1 95 1 100 0))
+	    (sfz '(0 0 25 1 30 .6 50 .5 75 .2 100 0))
+	    (mound '(0 0 10 .4 25 .8 40 1 60 1 75 .8 90 .4 100 0))
+	    (vio '(0 0 7 .2 25 .5 40 .6 60 .6 75 .5 90 .2 100 0))
+	    (bassdr2 '(.5 .06 1 .62 1.5 .07 2.0 .6 2.5 .08 3.0 .56 4.0 .24 
+			  5 .98 6 .53 7 .16 8 .33 9 .62 10 .12 12 .14 14 .86
+			  16 .12 23 .14 24 .17))
+	    (bassdrstr '(.5 .06 1.0 .63 1.5 .07 2.01 .6 2.5 .08 3.02 .56
+			    4.04 .24 5.05 .98 6.06 .53 7.07 .16 8.08 .33 9.09 .62
+			    10.1 .12 12.12 .14 13.13 .37 14.14 .86 16.16 .12 23.23 .14 24.24 .17))
+	    (tenordr '(.3 .04 1 .81 2 .27 3 .2 4 .21 5 .18 6 .35 7 .03 8 .07 9 .02 10 .025 11 .035))
+	    (tenordrstr '(.3 .04 1.03 .81 2.03 .27 3.03 .20 4.03 .21 5.03 .18
+			     6.03 .35 7.03 .03 8.03 .07 9.03 .02 10.03 .03 11.03 .04)))
+	(with-sound (:reverb nrev)
+          (drone  .000  4.000  115.000  (* .25 .500) solid bassdr2  .100  .500
+		  .030  45.000 1  .010 10)
+	  (drone  .000  4.000  229.000  (* .25 .500) solid tenordr  .100  .500
+		  .030  45.000 1  .010 11)
+	  (drone  .000  4.000  229.500  (* .25 .500) solid tenordr  .100  .500
+		  .030  45.000 1  .010 9)
+	  (canter  .000  2.100 918  (* .25 .700)  45.000 1  .050 ampf ranf skwf
+		   .050  .010 10 index  .005  .005 amp1 ind1 fmt1 amp2
+		   ind2 fmt2 amp3 ind3 fmt3 amp4 ind4 fmt4  )
+	  (canter  2.100  .300 688.5  (* .25 .700)  45.000 1  .050 ampf ranf skwf
+		   .050  .010 10 index  .005  .005 amp1 ind1 fmt1 amp2
+		   ind2 fmt2 amp3 ind3 fmt3 amp4 ind4 fmt4  )
+	  (canter  2.400  .040 826.2  (* .25 .700)  45.000 1  .050 ampf ranf skwf
+		   .050  .010 10 index  .005  .005 amp1 ind1 fmt1 amp2
+		   ind2 fmt2 amp3 ind3 fmt3 amp4 ind4 fmt4  )
+	  (canter  2.440  .560 459  (* .25 .700)  45.000 1  .050 ampf ranf skwf
+		   .050  .010 10 index  .005  .005 amp1 ind1 fmt1 amp2
+		   ind2 fmt2 amp3 ind3 fmt3 amp4 ind4 fmt4  )
+	  (canter  3.000  .040 408  (* .25 .700)  45.000 1  .050 ampf ranf skwf
+		   .050  .010 10 index  .005  .005 amp1 ind1 fmt1 amp2
+		   ind2 fmt2 amp3 ind3 fmt3 amp4 ind4 fmt4  )
+	  (canter  3.040  .040 619.65  (* .25 .700)  45.000 1  .050 ampf ranf skwf
+		   .050  .010 10 index  .005  .005 amp1 ind1 fmt1 amp2
+		   ind2 fmt2 amp3 ind3 fmt3 amp4 ind4 fmt4  )
+	  (canter  3.080  .040 408  (* .25 .700)  45.000 1  .050 ampf ranf skwf
+		   .050  .010 10 index  .005  .005 amp1 ind1 fmt1 amp2
+		   ind2 fmt2 amp3 ind3 fmt3 amp4 ind4 fmt4  )
+	  (canter  3.120  .040 688.5  (* .25 .700)  45.000 1  .050 ampf ranf skwf
+		   .050  .010 10 index  .005  .005 amp1 ind1 fmt1 amp2
+		   ind2 fmt2 amp3 ind3 fmt3 amp4 ind4 fmt4  )
+	  (canter  3.160  .290 459  (* .25 .700)  45.000 1  .050 ampf ranf skwf
+		   .050  .010 10 index  .005  .005 amp1 ind1 fmt1 amp2
+		   ind2 fmt2 amp3 ind3 fmt3 amp4 ind4 fmt4  )
+	  (canter  3.450  .150 516.375  (* .25 .700)  45.000 1  .050 ampf ranf skwf
+		   .050  .010 10 index  .005  .005 amp1 ind1 fmt1 amp2
+		   ind2 fmt2 amp3 ind3 fmt3 amp4 ind4 fmt4  )
+	  (canter  3.600  .040 826.2  (* .25 .700)  45.000 1  .050 ampf ranf skwf
+		   .050  .010 10 index  .005  .005 amp1 ind1 fmt1 amp2
+		   ind2 fmt2 amp3 ind3 fmt3 amp4 ind4 fmt4  )
+	  (canter  3.640  .040 573.75  (* .25 .700)  45.000 1  .050 ampf ranf skwf
+		   .050  .010 10 index  .005  .005 amp1 ind1 fmt1 amp2
+		   ind2 fmt2 amp3 ind3 fmt3 amp4 ind4 fmt4  )
+	  (canter  3.680  .040 619.65  (* .25 .700)  45.000 1  .050 ampf ranf skwf
+		   .050  .010 10 index  .005  .005 amp1 ind1 fmt1 amp2
+		   ind2 fmt2 amp3 ind3 fmt3 amp4 ind4 fmt4  )
+	  (canter  3.720  .180 573.75  (* .25 .700)  45.000 1  .050 ampf ranf skwf
+		   .050  .010 10 index  .005  .005 amp1 ind1 fmt1 amp2
+		   ind2 fmt2 amp3 ind3 fmt3 amp4 ind4 fmt4  )
+	  (canter  3.900  .040 688.5  (* .25 .700)  45.000 1  .050 ampf ranf skwf
+		   .050  .010 10 index  .005  .005 amp1 ind1 fmt1 amp2
+		   ind2 fmt2 amp3 ind3 fmt3 amp4 ind4 fmt4  )
+	  (canter  3.940  .260 459  (* .25 .700)  45.000 1  .050 ampf ranf skwf
+		   .050  .010 10 index  .005  .005 amp1 ind1 fmt1 amp2
+		   ind2 fmt2 amp3 ind3 fmt3 amp4 ind4 fmt4  )))
+
+      (if (defined? 'enable-play) (enable-play))
+      (let ((ind (find-sound "test.snd")))
+	(play-and-wait ind)
+	(close-sound ind))
+
       (with-sound (:srate 22050) 
 	(fm-violin 0 .01 440 .1 :noise-amount 0.0)
 	(pluck 0.05 .01 330 .1 .95 .95)
@@ -27317,8 +27424,47 @@ EDITS: 2
 	(clarinet 5.75 .3 440 .2 1.0)
 	(flute 6 .3 440 .2 1.0)
 	(fm-trumpet 6.5 .25)
+
+	(let ((locust '(0 0 40 1 95 1 100 .5))
+	      (bug_hi '(0 1 25 .7 75 .78 100 1))
+	      (amp    '(0 0 25 1 75 .7 100 0)))
+	  (fm-insect 7      1.699  4142.627  .015 amp 60 -16.707 locust 500.866 bug_hi  .346  .500)
+	  (fm-insect 7.195   .233  4126.284  .030 amp 60 -12.142 locust 649.490 bug_hi  .407  .500)
+	  (fm-insect 7.217  2.057  3930.258  .045 amp 60 -3.011  locust 562.087 bug_hi  .591  .500)
+	  (fm-insect 9.100  1.500   900.627  .06  amp 40 -16.707 locust 300.866 bug_hi  .346  .500)
+	  (fm-insect 10.000  1.500   900.627  .06  amp 40 -16.707 locust 300.866 bug_hi  .046  .500)
+	  (fm-insect 10.450  1.500   900.627  .09  amp 40 -16.707 locust 300.866 bug_hi  .006  .500)
+	  (fm-insect 10.950  1.500   900.627  .12  amp 40 -10.707 locust 300.866 bug_hi  .346  .500)
+	  (fm-insect 11.300  1.500   900.627  .09  amp 40 -20.707 locust 300.866 bug_hi  .246  .500))
+
+	(fm-drum 7.5 1.5 55 .3 5 #f)
+	(fm-drum 8 1.5 66 .3 4 #t)
+	(gong 9 3 261.61 .6)
+	(attract 10 .25 .5 2.0)
+	(pqw 11 .5 200 1000 .2 '(0 0 25 1 100 0) '(0 1 100 0) '(2 .1 3 .3 6 .5))
+
+	(tubebell 12 2 440 .2)
+	(wurley 12.5 .25 440 .2)
+	(rhodey 12.75 .25 440 .2)
+	(hammondoid 13 .25 440 .2)
+	(metal 13.5 .25 440 .2)
+	(reson 14.0 1.0 440 .1 2 '(0 0 100 1) '(0 0 100 1) .1 .1 .1 5 .01 5 .01 0 1.0 0.01
+	       '(((0 0 100 1) 1200 .5 .1 .1 0 1.0 .1 .1)
+		 ((0 1 100 0) 2400 .5 .1 .1 0 1.0 .1 .1)))
+	(touch-tone 14 '(7 2 3 4 9 7 1))
+	(cellon 14.5 1 220 .1 
+		'(0 0 25 1 75 1 100 0) 
+		'(0 0 25 1 75 1 100 0) .75 1.0 0 0 0 0 1 0 0 220 
+		'(0 0 25 1 75 1 100 0) 0 0 0 0 
+		'(0 0 100 0) 0 0 0 0 '(0 0 100 0))
+	(two-tab 15 1 440 .1)
+	(gran-synth 15.5 1 300 .0189 .03 .4)
+	(spectra 16 1 440.0 .1 '(1.0 .4 2.0 .2 3.0 .2 4.0 .1 6.0 .1) '(0.0 0.0 1.0 1.0 5.0 0.9 12.0 0.5 25.0 0.25 100.0 0.0))
+	(lbj-piano 17 1 440.0 .2)
+	(resflt 18 1.0 0 0 0 nil .1 200 230 10 '(0 0 50 1 100 0) '(0 0 100 1) 500 .995 .1 1000 .995 .1 2000 .995 .1)
+	(resflt 19 1.0 1 10000 .01 '(0 0 50 1 100 0) 0 0 0 0 nil nil 500 .995 .1 1000 .995 .1 2000 .995 .1)
+
 	)
-      (if (defined? 'enable-play) (enable-play))
       (let ((ind (find-sound "test.snd")))
 	(if (or (not (vequal (channel->vct 45 10) (vct -0.068 -0.059 -0.045 -0.028 -0.011 0.005 0.018 0.028 0.035 0.039)))
 		(not (vequal (channel->vct 210 10) (vct 0.015 0.014 0.013 0.011 0.009 0.007 0.005 0.003 0.001 0.000))))

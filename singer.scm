@@ -21,8 +21,7 @@
   ;; data is a list of lists very similar to the sequence of synthesize calls in Perry's original implementation.
   ;;    Each imbedded list has the form: dur shape glot pitch glotamp noiseamps vibramt.
   ;;    See below for examples.
-  (let* ((*srate* 22050)
-	 (setup (car data))
+  (let* ((setup (car data))
 	 (amp amp-1)
 	 (durs (map car data))
 	 (dur (apply + durs))
@@ -34,7 +33,7 @@
 			      durs))))
 	 (beg-samps (map
 		     (lambda (x)
-		       (inexact->exact (round (* x *srate*))))
+		       (inexact->exact (round (* x (mus-srate)))))
 		     begs))
 	 (change-times (let* ((len (length beg-samps))
 			      (v (make-vct (1+ len)))
@@ -126,7 +125,7 @@
 	   (two-pi (* 2 3.14159))
 	   (one-over-two-pi  0.159154943)
 	   (two-pi-over-table-size (/ two-pi table-size))
-	   (table-size-over-sampling-rate (/ table-size *srate*))
+	   (table-size-over-sampling-rate (/ table-size (mus-srate)))
 	   (dpole 0.998)
 	   (dgain (- 1.0 dpole))
 	   (tong-hump-pole 0.998)
@@ -205,7 +204,7 @@
 	   (new-tract 1)
 	   (first-tract 1)
 	   (offset -1)
-	   (bg (inexact->exact (floor (* *srate* beg))))
+	   (bg (inexact->exact (floor (* (mus-srate) beg))))
 	   (nd (inexact->exact (vct-ref change-times (1- (vct-length change-times)))))
 	   (next-offset bg)
 	   (last-sfd -1)
@@ -237,6 +236,7 @@
       (vct-set! radii-pole-gains 4 tong-hump-gain)
       (vct-set! radii-pole-gains 5 tong-tip-gain)
 
+      (if (c-g?) (throw 'with-sound-interrupt))
       (run
        (lambda ()
 	 (do ((i bg (1+ i)))

@@ -3,7 +3,6 @@
 
 (if (not (defined? '*output*)) (load-from-path "ws.scm"))
 
-(define *srate* 22050)
 (define two-pi (* 2 3.14159))
 
 (definstrument (maraca beg dur #:optional (amp .1) 
@@ -12,8 +11,8 @@
 		 (probability .0625)
 		 (shell-freq 3200.0)
 		 (shell-reso 0.96))
-  (let* ((st (inexact->exact (floor (* *srate* beg))))
-	 (nd (+ st (inexact->exact (floor (* *srate* dur)))))
+  (let* ((st (inexact->exact (floor (* (mus-srate) beg))))
+	 (nd (+ st (inexact->exact (floor (* (mus-srate) dur)))))
 	 (temp 0.0)
 	 (shake-energy 0.0)
 	 (snd-level 0.0)
@@ -23,11 +22,13 @@
 	 (num-beans 64)
 	 (j 0)
 	 (sndamp (/ amp 16384.0))
-	 (srate4 (inexact->exact (floor (/ *srate* 4))))
+	 (srate4 (inexact->exact (floor (/ (mus-srate) 4))))
 	 (gain (/ (* (/ (log num-beans) (log 4.0)) 40) num-beans)))
+    (if (c-g?) (throw 'with-sound-interrupt))
     ;; gourd resonance filter
     (vct-set! coeffs 0 (* -2.0 shell-reso (cos (hz->radians shell-freq))))
     (vct-set! coeffs 1 (* shell-reso shell-reso))
+
     (run
      (lambda ()
        (do ((i st (1+ i)))
@@ -71,8 +72,8 @@
 		     (randiff .01)
 		     (with-filters #t))
   ;; like maraca, but takes a list of resonances and includes low-pass filter (or no filter)			   
-  (let* ((st (inexact->exact (floor (* *srate* beg))))
-	 (nd (+ st (inexact->exact (floor (* *srate* dur)))))
+  (let* ((st (inexact->exact (floor (* (mus-srate) beg))))
+	 (nd (+ st (inexact->exact (floor (* (mus-srate) dur)))))
 	 (temp 0.0)
 	 (temp1 0.0)
 	 (resn (length shell-freqs))
@@ -89,14 +90,16 @@
 	 (num-beans 64)
 	 (j 0)
 	 (sndamp (/ amp (* 16384.0 resn)))
-	 (srate4 (floor (/ *srate* 4)))
+	 (srate4 (floor (/ (mus-srate) 4)))
 	 (gain (/ (* (/ (log num-beans) (log 4)) 40) num-beans)))
     ;; gourd resonance filters
+    (if (c-g?) (throw 'with-sound-interrupt))
     (do ((i 0 (1+ i)))
 	((= i resn))
       (vct-set! coeffs (+ (* i 2) 0) (* -2.0 (list-ref shell-resos i) (cos (hz->radians (list-ref shell-freqs i)))))
       (vct-set! basesf i (vct-ref coeffs (+ (* i 2) 0)))
       (vct-set! coeffs (+ (* i 2) 1) (* (list-ref shell-resos i) (list-ref shell-resos i))))
+
     (run
      (lambda ()
        (do ((i st (1+ i)))

@@ -154,7 +154,7 @@ void highlight_color(snd_state *ss, int w) {}
 void white_color(snd_state *ss, int w) {}
 void set_title(snd_state *ss, const char *title) {}
 void goto_window(int text) {}
-void check_for_event(snd_state *ss) {}
+void check_for_event(snd_state *ss) {} /* TODO: C-g in no-gui: can't we use shell escapes here? */
 int event_pending(snd_state *ss) {return(0);}
 void recolor_graph(chan_info *cp, int selected) {}
 void reflect_resize(snd_state *ss) {}

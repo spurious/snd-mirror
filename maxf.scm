@@ -66,8 +66,8 @@
 	  (famp ,ampl)
 	  (ffreq ,frequ)
 	  (fdecay ,decaying)
-	  (tper (/ 1.0 *srate*))
-	  (centerfreq (/ (* 2.0 pi ffreq) *srate*))
+	  (tper (/ 1.0 (mus-srate)))
+	  (centerfreq (/ (* 2.0 pi ffreq) (mus-srate)))
 	  (maxdecay (/ (* 2.0 tper) (* centerfreq centerfreq)))
 	  (mindecay (/ tper centerfreq)))
      ;; Conditions for JOS constraints
@@ -78,8 +78,8 @@
 	 (set! fdecay (* 1.0 fdecay)))
      (if (<= fdecay mindecay)
 	 (set! fdecay mindecay))
-     (set! (mvm-pp1 b) (- 1.0 (/ 2.0  (* fdecay *srate*))))
-     (set! (mvm-pp2 b) (/ (* 2.0 pi ffreq) *srate*))
+     (set! (mvm-pp1 b) (- 1.0 (/ 2.0  (* fdecay (mus-srate)))))
+     (set! (mvm-pp2 b) (/ (* 2.0 pi ffreq) (mus-srate)))
      (set! (mvm-pp3 b) (* (mvm-pp2 b) famp))))
 
 (define* (maxfilter file beg #:key
@@ -113,9 +113,9 @@ the desired phase.
    (numf  9)   9 filters
    (numf 12)  12 filters
    (numf 13)  13 filters"
-  (let* ((beg (inexact->exact (* beg *srate*)))
+  (let* ((beg (inexact->exact (* beg (mus-srate))))
 	 (dur (mus-sound-duration file))
-	 (end (+ beg (inexact->exact (* dur *srate*))))
+	 (end (+ beg (inexact->exact (* dur (mus-srate)))))
 	 (rdA (make-readin :file file :channel 0))
 	 (formfil (make-mvm))
 	 (ampf (make-env :envelope amp-env :scaler amplitude :duration dur))

@@ -2,10 +2,18 @@
 
 (use-modules (ice-9 optargs) (ice-9 format))
 
-;;; TODO: with-mix?
-;;; TODO: definstrument run loop needs to be interruptible via C-g (and this should interrupt with-sound as well)
-;;; TODO: definstrument state readback
-
+;;; TODO: with-mix
+;;; TODO: definstrument state readback (display panel etc)
+;;; TODO: continuation from interrupt? (caller could check vals, then resume -- can this be from C as well?)
+;;; TODO: GUI for ins display/control (this could work in any algo)
+;;;       make-panel name -> widget
+;;;       panel-display wid label val -> val
+;;;       panel-control wid label type-or-range?) -> current value
+;;;       some way to include gen as "val" in display
+;;; TODO: *explode* -> each note as tagged mix with property holding original notelist call
+;;;       (but mix properties are defined in mix.scm -- move to extensions?)
+;;; TODO: note-hook :mark (mark-prop for call)/:explode (mix-prop for call)
+;;; TODO: does C-g work outside run (ie opt=0)?
 
 ;;; changed default variable names 3-Apr-03 for Common Music's benefit
 ;;;   *clm-channels* is the default number of with-sound output chans in
@@ -25,6 +33,7 @@
 (define (seconds->samples secs) (inexact->exact (round (* secs (mus-srate)))))
 (define (times->samples beg dur) (list (seconds->samples beg) (seconds->samples (+ beg dur))))
 
+(define definstrument define*)
 
 (define* (with-sound-helper thunk 
 			    #:key (srate *clm-srate*) 
@@ -68,7 +77,7 @@
        (let ((start (if statistics (get-internal-real-time)))
 	     (intp #f)
 	     (cycles 0))
-	 (catch 'interrupted
+	 (catch 'with-sound-interrupt
 		thunk
 		(lambda args 
 		  (begin
@@ -85,20 +94,23 @@
 	 (if statistics
 	     (set! cycles (/ (- (get-internal-real-time) start) 100)))
 	 (if to-snd
-	     (let ((snd-output (open-sound output-1)))
-	       (set! (sync snd-output) #t)
-	       (if statistics
-		   (snd-print 
-		    (format #f "~A:~%  maxamp: ~A,~%  compute time: ~A~%"
-			    output-1
-			    (maxamp snd-output #t)
-			    cycles)))
-	       (if scaled-to
-		   (scale-to scaled-to snd-output)
-		   (if scaled-by
-		       (scale-by scaled-by snd-output)))
-	       (if play (play-and-wait snd-output))
-	       (update-time-graph snd-output)))
+	     (begin
+	       (let ((cur (find-sound output-1)))
+		 (if cur (close-sound cur)))
+	       (let ((snd-output (open-sound output-1)))
+		 (set! (sync snd-output) #t)
+		 (if statistics
+		     (snd-print 
+		      (format #f "~A:~%  maxamp: ~A,~%  compute time: ~A~%"
+			      output-1
+			      (maxamp snd-output #t)
+			      cycles)))
+		 (if scaled-to
+		     (scale-to scaled-to snd-output)
+		     (if scaled-by
+			 (scale-by scaled-by snd-output)))
+		 (if play (play-and-wait snd-output))
+		 (update-time-graph snd-output))))
 	 output-1))
 
      (lambda () 

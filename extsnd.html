@@ -132,7 +132,6 @@ Extensions to Snd can be found in:
 
 <table border=8 bordercolor="lightsteelblue">
 <tr><td width=140><a href="sndscm.html#autosavedoc">autosave.scm</a></td><td>auto-save (edit backup) support</td></tr>
-<tr><td><a href="sndscm.html#belldoc">bell.scm</a></td>              <td>the fm-bell from CLM</td></tr>
 <tr><td><a href="sndscm.html#bessdoc">bess.scm, bess.rb</a></td>     <td>FM demo (from bess.cl in CLM)</td></tr>
 <tr><td><a href="sndscm.html#birddoc">bird.scm, bird.rb</a></td>     <td>various North-American birds (from bird.clm)</td></tr>
 <tr><td><a href="sndscm.html#clminsdoc">clm-ins.scm</a></td>         <td>various CLM instruments translated to Snd</td></tr>
@@ -147,7 +146,6 @@ Extensions to Snd can be found in:
 <tr><td><a href="sndscm.html#eventdoc">event.scm</a></td>            <td>xm module stuff for automatic user-interface tests</td></tr>
 <tr><td><a href="sndscm.html#extensionsdoc">extensions.scm</a></td>  <td>extensions of Snd</td></tr>
 <tr><td><a href="sndscm.html#fadedoc">fade.scm</a></td>              <td>frequency-domain cross-fades</td></tr>
-<tr><td><a href="sndscm.html#flutedoc">flute.scm</a></td>            <td>Nicky Hind's flute physical model</td></tr>
 <tr><td><a href="sndscm.html#fmvdoc">fmv.scm</a></td>                <td>the fm-violin tied to real-time stuff</td></tr>
 <tr><td><a href="sndscm.html#freeverbdoc">freverb.scm, freeverb.rb</a></td><td>a reverb</td></tr>
 <tr><td><a href="sndscm.html#goopsnddoc">goopsnd.scm</a></td>        <td>first look at Goops (Guile Object System) for Snd</td></tr>
@@ -165,7 +163,6 @@ Extensions to Snd can be found in:
 <tr><td><a href="sndscm.html#pianodoc">piano.scm, piano.rb</a></td>  <td>piano physical model</td></tr>
 <tr><td><a href="sndscm.html#playdoc">play.scm</a></td>              <td>play-related functions</td></tr>
 <tr><td><a href="sndscm.html#popupdoc">popup.scm, gtk-popup.scm, popup.rb</a></td><td>Popup menu specializations</td></tr>
-<tr><td><a href="sndscm.html#pqwvoxdoc">pqwvox.scm</a></td>          <td>phase-quadrature waveshaping (from CLM)</td></tr>
 <tr><td><a href="sndscm.html#prc95doc">prc95.scm</a></td>            <td>Perry Cook's physical model examples (from CLM)</td></tr>
 <tr><td><a href="sndscm.html#pvocdoc">pvoc.scm</a></td>              <td>phase-vocoder examples</td></tr>
 <tr><td><a href="sndscm.html#rgbdoc">rgb.scm, rgb.rb</a></td>        <td>color definitions</td></tr>
@@ -467,7 +464,9 @@ find out what the optimizer found confusing.
 One dangerous assumption involved in local variables (optimization = 5) is that
 such a variable might be a continuation set within the run-optimized code, but then
 called from outside that block.  This (obviously!) won't work, but it's too much trouble to
-try to trap it in the context of run.
+try to trap it in the context of run.  Another problem can arise if optimization = 6: 
+a shadowed variable can be found in place of the actual local variable (this is on my
+"todo" list to fix).
 Here are some representative results;
 the first number is the unoptimized time, the second is the optimized time, the third is
 the speed-up ratio:<br><br></td></tr>
@@ -4397,7 +4396,7 @@ Butterworth filters: make-butter-high-pass, make-butter-low etc in dsp.scm, used
 IIR filters of various orders/kinds: dsp.scm<br>
 Hilbert transform: make-hilbert-transform in dsp.scm<br>
 differentiator: make-differentiator in dsp.scm<br>
-block DC: see dc-block in prc95.scm, also flute.scm.<br>
+block DC: see dc-block in prc95.scm, also stereo-flute in clm-ins.scm.<br>
 hum elimination: see eliminate-hum in dsp.scm<br>
 arbitrary spectrum via FIR filter: spectrum-&gt;coeffs in dsp.scm<br>
 filtered echo sound effect: flecho in examp.scm<br>

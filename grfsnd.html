@@ -883,12 +883,12 @@ In Guile <b>frame?</b> is part of the debugger; it is renamed <b>%frame?</b> her
 <tr><td><a href="clm.html#make-square-wave">make-square-wave</a></td><td colspan=2>(frequency amplitude initial-phase)</td></tr>
 <tr><td><a href="clm.html#make-src">make-src</a></td><td colspan=2>(input srate width)</td></tr>
 <tr><td><a href="clm.html#make-sum-of-cosines">make-sum-of-cosines</a></td><td colspan=2>(frequency initial-phase cosines)</td></tr>
-<tr><td><a href="clm.html#make-table-lookup">make-table-lookup</a></td><td colspan=2>(frequency initial-phase wave)</td></tr>
+<tr><td><a href="clm.html#make-table-lookup">make-table-lookup</a></td><td colspan=2>(frequency initial-phase wave size)</td></tr>
 <tr><td><a href="clm.html#make-triangle-wave">make-triangle-wave</a></td><td colspan=2>(frequency amplitude initial-phase)</td></tr>
 <tr><td><a href="clm.html#make-two-pole">make-two-pole</a></td><td colspan=2>(a0 b1 b2)</td></tr>
 <tr><td><a href="clm.html#make-two-zero">make-two-zero</a></td><td colspan=2>(a0 a1 a2)</td></tr>
-<tr><td><a href="clm.html#make-wave-train">make-wave-train</a></td><td colspan=2>(frequency initial-phase wave)</td></tr>
-<tr><td><a href="clm.html#make-waveshape">make-waveshape</a></td><td colspan=2>(frequency partials)</td></tr>
+<tr><td><a href="clm.html#make-wave-train">make-wave-train</a></td><td colspan=2>(frequency initial-phase wave size)</td></tr>
+<tr><td><a href="clm.html#make-waveshape">make-waveshape</a></td><td colspan=2>(frequency partials wave size)</td></tr>
 <tr><td><a href="clm.html#make-zpolar">make-zpolar</a></td><td colspan=2>(radius frequency)</td></tr>
 <tr><td><a href="clm.html#mixer*">mixer*</a></td><td>(mix1 mix2 <i>outmx</i>)</td><td>matrix multiply of mix1 and mix2</td></tr>
 <tr><td><a href="clm.html#mixer-ref">mixer-ref</a></td><td>(mix in out)</td><td>mix-scaler[in,out]</td></tr>
@@ -1170,74 +1170,54 @@ You can load Rick Taube's CM into Snd as Scheme code:
 <p>It's hard to decide what's an "instrument" in this context, but I think I'll treat
 it as something that can be called as a note in a notelist (say in with-sound) and
 generate its own sound, or a reverberator.
-In many cases, I've used "definstrument" in place of define* for CM's benefit.
 See test 23 in snd-test.scm for example calls.
 </p>
 <table border=1 cellpadding=5>
 <tr><th>Instrument</th><th>Sources</th><th>Description</th></tr>
-<tr><td>pluck</td><td>clm-ins.scm</td><td>David Jaffe's Karplus-Strong (physical model) plucked string</td></tr>
-<tr><td>fm-violin</td><td>v.scm, v.rb, fmv.scm, sndscm.html</td><td>violin-like sounds via FM</td></tr>
-<tr><td>jc-reverb</td><td>jcrev.scm, examp.scm, examp.rb</td><td>Chowning's old reverb</td></tr>
-<tr><td>maraca, big-maraca</td><td>maraca.scm</td><td>Perry Cook's maraca physical model</td></tr>
-<tr><td>fm-bell</td><td>bell.scm, examp.rb</td><td>Mike McNabb's FM bell</td></tr>
-<tr><td>singer</td><td>singer.scm</td><td>Perry Cook's vocal tract physical model</td></tr>
-<tr><td>stereo-flute</td><td>flute.scm</td><td>Nicky Hind's flute physical model</td></tr>
-<tr><td>fofins</td><td>clm-ins.scm</td><td>FOF synthesis</td></tr>
-<tr><td>bow</td><td>strad.scm, strad.rb</td><td>bowed string physical model (Juan Reyes, Michael Scholz)</td></tr>
-<tr><td>pqw-vox</td><td>pqwvox.scm</td><td>vocal sounds from phase-quadrature waveshaping</td></tr>
-<tr><td>fm-noise</td><td>noise.scm, noise.rb</td><td>noise maker</td></tr>
-<tr><td>scm-simp</td><td>clm.html</td><td>simple sine wave example instrument</td></tr>
+<tr><td>attract</td><td>clm-ins.scm</td><td>James McCarthy's choatic brass</td></tr>
 <tr><td>bes-fm</td><td>clm-ins.scm</td><td>FM analog using Bessel j0 rather than sin</td></tr>
-<tr><td>chain-dsps</td><td>examp.scm</td><td>instrument gets gen patch from its args</td></tr>
-<tr><td>freeverb</td><td>freeverb.scm</td><td>a reverberator</td></tr>
-<tr><td>vox</td><td>clm-ins.scm</td><td>voice using "leapfrog" FM-generated formants</td></tr>
-<tr><td>p</td><td>piano.scm, piano.rb</td><td>Scott van Duyne's piano physical model</td></tr>
-<tr><td>bird</td><td>bird.scm, bird.rb</td><td>bird songs</td></tr>
 <tr><td>bigbird</td><td>bird.scm, bird.rb</td><td>more bird songs</td></tr>
-<tr><td>plucky</td><td>prc95.scm</td><td>plucked string pysical model</td></tr>
+<tr><td>bird</td><td>bird.scm, bird.rb</td><td>bird songs</td></tr>
+<tr><td>bow</td><td>strad.scm, strad.rb</td><td>bowed string physical model (Juan Reyes, Michael Scholz)</td></tr>
 <tr><td>bowstr</td><td>prc95.scm</td><td>bowed string pysical model</td></tr>
 <tr><td>brass</td><td>prc95.scm</td><td>brass pysical model</td></tr>
+<tr><td>cellon</td><td>clm-ins.scm</td><td>S Krupowicz's feedback FM</td></tr>
+<tr><td>chain-dsps</td><td>examp.scm</td><td>instrument gets gen patch from its args</td></tr>
 <tr><td>clarinet</td><td>prc95.scm</td><td>clarinet pysical model</td></tr>
+<tr><td>drone, canter</td><td>clm-ins.scm</td><td>Peter Common's bagpipe</td></tr>
 <tr><td>flute</td><td>prc95.scm</td><td>flute pysical model</td></tr>
+<tr><td>fm-bell</td><td>clm-ins.scm, examp.rb</td><td>Mike McNabb's FM bell</td></tr>
+<tr><td>fm-drum</td><td>clm-ins.scm</td><td>Jan Mattox's FM dum</td></tr>
+<tr><td>fm-insect</td><td>clm-ins.scm</td><td>FM insect (katydid)</td></tr>
+<tr><td>fm-noise</td><td>noise.scm, noise.rb</td><td>noise maker</td></tr>
 <tr><td>fm-trumpet</td><td>clm-ins.scm</td><td>Dexter Morrill's FM trumpet</td></tr>
-<!-- TODO: finish this table! fixup sndscm arglists etc -->
-<!--
-
-add:
-addflt.ins:(definstrument addflts (start dur numfilts driver freqfun freq0 freq1 ampfun amp cosnum 
-add.ins:(definstrument (complete-add :exp-env nil)
-addsnd.ins:(definstrument add-sound (file beg &optional dur
-badd.ins:(definstrument (badd :exp-env nil)
-canter.ins:(definstrument canter (beg dur pitch amp-1 deg dis pcrev ampfun ranfun skewfun
-cellon.ins:(definstrument cellon (beg dur pitch0 amp ampfun betafun 
-drone.ins:(definstrument drone (startime dur frequency amp-1
-fmex.ins:(definstrument fm-drum (start-time duration frequency amplitude index 
-fmex.ins:(definstrument gong (start-time duration frequency amplitude
-grani.ins:(definstrument grani 
-insect.ins:(definstrument fm-insect (startime dur frequency amplitude amp-env 
-jcvoi.ins:(definstrument fm-voice (beg dur pitch amp vowel-1 sex-1 ampfun1 ampfun2 ampfun3 indxfun skewfun vibfun ranfun
-jllrev.ins:(definstrument jll-reverb
-jlrev.ins:(definstrument jl-reverb
-lbjPiano.ins:(definstrument lbj-piano
-nrev.ins:(definstrument nrev (startime dur &key (reverb-factor 1.09)
-pqw.ins:(definstrument pqw (start dur spacing-freq carrier-freq amplitude ampfun indexfun partials
-prc96.ins:(definstrument tubebell (beg dur freq amp &optional (base 32))
-prc96.ins:(definstrument wurley (beg dur freq amp)
-prc96.ins:(definstrument Rhodey (beg dur freq amp &optional (base .5))
-prc96.ins:(definstrument hammondoid (beg dur freq amp)
-prc96.ins:(definstrument metal (beg dur freq amp)
-resflt.ins:(definstrument resflt (start dur driver 
-reson.ins:(definstrument reson
-scanned.ins:(definstrument scanned (start dur freq amp &key
-ugex.ins:(definstrument gran-synth (start-time duration audio-freq grain-dur grain-interval amp)
-ugex.ins:(definstrument touch-tone-telephone (telephone-number)
-ugex.ins:(definstrument spectrum (start-time duration frequency amplitude
-ugex.ins:(definstrument two-tab (start-time duration frequency amplitude
-ugex.ins:(definstrument noi-attempt (beg dur amp R freq)
-clm.html:(definstrument fractal (start duration m x amp)
-clm.html:(definstrument attract (beg dur amp c) ;c from 1 to 10 or so
-clm.html:(definstrument simp (start dur freq amp &amp;key (degree 0) (dist 1.0) (reverb 0)) -- move-locsig test?
--->
+<tr><td>fm-violin</td><td>v.scm, v.rb, fmv.scm, sndscm.html</td><td>violin-like sounds via FM</td></tr>
+<tr><td>fofins</td><td>clm-ins.scm</td><td>FOF synthesis</td></tr>
+<tr><td>freeverb</td><td>freeverb.scm</td><td>a reverberator</td></tr>
+<tr><td>gong</td><td>clm-ins.scm</td><td>Paul Weineke's FM gong</td></tr>
+<tr><td>gran-synth</td><td>clm-ins.scm</td><td>simple granular synthesis example</td></tr>
+<tr><td>jc-reverb</td><td>jcrev.scm, examp.rb</td><td>Chowning's old reverb</td></tr>
+<tr><td>jl-reverb</td><td>clm-ins.scm</td><td>cavernous version of jc-reverb</td></tr>
+<tr><td>lbj-piano</td><td>clm-ins.scm</td><td>additive synthesis piano (Doug Fulton)</td></tr>
+<tr><td>maraca, big-maraca</td><td>maraca.scm</td><td>Perry Cook's maraca physical model</td></tr>
+<tr><td>metal</td><td>clm-ins.scm</td><td>more FM by Perry</td></tr>
+<tr><td>nrev</td><td>clm-ins.scm</td><td>Mike McNabb's reverb</td></tr>
+<tr><td>p</td><td>piano.scm, piano.rb</td><td>Scott van Duyne's piano physical model</td></tr>
+<tr><td>pluck</td><td>clm-ins.scm</td><td>David Jaffe's Karplus-Strong (physical model) plucked string</td></tr>
+<tr><td>plucky</td><td>prc95.scm</td><td>plucked string pysical model</td></tr>
+<tr><td>pqw-vox</td><td>clm-ins.scm</td><td>vocal sounds from phase-quadrature waveshaping</td></tr>
+<tr><td>pqw</td><td>clm-ins.scm</td><td>phase-quadrature waveshaping</td></tr>
+<tr><td>resflt</td><td>clm-ins.scm</td><td>two-poles for resonances (Xavier Serra)</td></tr>
+<tr><td>reson</td><td>clm-ins.scm</td><td>parallel FM creating resonances</td></tr>
+<tr><td>rhodey, wurley, hammondoid</td><td>clm-ins.scm</td><td>FM stuff from Perry Cook</td></tr>
+<tr><td>scm-simp</td><td>clm.html</td><td>simple sine wave example instrument</td></tr>
+<tr><td>singer</td><td>singer.scm</td><td>Perry Cook's vocal tract physical model</td></tr>
+<tr><td>spectra</td><td>clm-ins.scm</td><td>simple additive synthesis</td></tr>
+<tr><td>stereo-flute</td><td>clm-ins.scm</td><td>Nicky Hind's flute physical model</td></tr>
+<tr><td>touch-tone</td><td>clm-ins.scm</td><td>touch-tone telephone</td></tr>
+<tr><td>tubebell</td><td>clm-ins.scm</td><td>Perry Cook's FM tubular bell</td></tr>
+<tr><td>two-tab</td><td>clm-ins.scm</td><td>interpolate between two spectra</td></tr>
+<tr><td>vox</td><td>clm-ins.scm</td><td>voice using "leapfrog" FM-generated formants</td></tr>
 </table>
 <br><br>
 
@@ -1257,27 +1237,26 @@ is limited to functions that aren't already built into Snd/CLM.
      brighten-slightly chorus flanger chordalize zero-phase(etc) vibro/ringmod fp sum-of-cos exs
 
 add:
-backandforth.ins:(definstrument backandforth (onset duration file src-ratio)
-clm.html:(definstrument inside-out (beg dur file amp lo hi &amp;optional (fftsize 1024))
-zdelay.ins:(definstrument zdelay (time duration file
-zd.ins:(definstrument zc (time dur freq amp length1 length2 feedback)
-zd.ins:(definstrument zn (time dur freq amp length1 length2 feedforward)
-zipper.ins:(definstrument zipper (beg dur file1 file2 ramp-envelope frame-size &optional (ramp-envelope-base 1.0) frame-envelope)
-comb.ins:(definstrument comb-test (del-time dur f-dif)
-cross.ins:(definstrument cross-synthesis (beg dur file1 file2 amp &optional (fftsize 128) (r two-pi) (lo 2) (hi nil))
-envsnd.ins:(definstrument env-sound (file beg &optional (amp 1.0) (amp-env '(0 1 100 1)))
-expfil.ins:(definstrument expfil (start duration hopsecs rampsecs steadysecs file1 file2)
-expins.ins:(definstrument expins (dur k m)
-expsnd.ins:(definstrument expsnd (file beg dur amp &optional exp-amt ramp seglen sr hop ampenv)
-expsrc.ins:(definstrument expsrc (beg dur input-file exp-ratio src-ratio amp &optional rev start-in-file)
-expsrc.ins:(definstrument expsrc1 (beg dur input-file exp-ratio src-ratio amp &optional rev start-in-file)
-expsrc.ins:(definstrument expsnd (file beg dur amp &optional exp-amt ramp seglen sr hop ampenv)
-expsrc.ins:(definstrument expfil (beg dur exp-amt ramplen steadylen file1 file2)
-expsrc.ins:(definstrument interleave-files (start duration hopsecs rampsecs steadysecs &rest files)
-fade.ins:(definstrument cross-fade (beg dur amp file1 file2 ramp-beg ramp-dur ramp-type &optional (bank-dur .1) (fs 256) (fwidth two-pi))
-fade.ins:(definstrument dissolve-fade (beg dur amp file1 file2 &optional (fsize 128) (r two-pi) (lo 2) (hi nil))
-dissolve.ins:(definstrument dissolve (beg dur file1 file2 renv)
-
+backandforth.ins:definstrument backandforth 
+clm.html:definstrument inside-out
+zdelay.ins:definstrument zdelay 
+zd.ins:definstrument zc 
+zd.ins:definstrument zn 
+zipper.ins:definstrument zipper
+comb.ins:definstrument comb-test
+cross.ins:definstrument cross-synthesis
+envsnd.ins:definstrument env-sound 
+expfil.ins:definstrument expfil 
+expins.ins:definstrument expins 
+expsnd.ins:definstrument expsnd 
+expsrc.ins:definstrument expsrc 
+expsrc.ins:definstrument expsrc1
+expsrc.ins:definstrument expsnd 
+expsrc.ins:definstrument expfil 
+expsrc.ins:definstrument interleave-files 
+fade.ins:definstrument cross-fade 
+fade.ins:definstrument dissolve-fade 
+dissolve.ins:definstrument dissolve 
 -->
 </table>
 

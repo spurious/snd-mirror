@@ -276,10 +276,10 @@ static void minify_maxify_window(Widget w, XtPointer context, XEvent *event, Boo
 
 static Atom snd_v, snd_c;
 
-#ifndef SND_AS_WIDGET
 #if HAVE_EXTENSION_LANGUAGE
 static XEN window_property_changed_hook;
 
+#ifndef SND_AS_WIDGET
 static void who_called(Widget w, XtPointer context, XEvent *event, Boolean *cont) 
 {
   /* watch for communication from some other program via the SND_COMMAND property */

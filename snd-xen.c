@@ -142,7 +142,7 @@ static char *gl_print(XEN result);
 static XEN snd_format_if_needed(XEN args)
 {
   /* if car has formatting info, use next arg as arg list for it */
-  #define ERR_SIZE 2048
+  #define ERR_SIZE 8192
   XEN format_args = XEN_EMPTY_LIST, cur_arg, result;
   int i, start = 0, num_args, format_info_len, got_tilde = FALSE, was_formatted = FALSE;
   char *format_info, *errmsg = NULL;
@@ -188,7 +188,22 @@ static XEN snd_format_if_needed(XEN args)
 			      FREE(vstr);
 			    }
 			}
-		      else strcat(errmsg, XEN_AS_STRING(cur_arg));
+		      else
+			{
+#if HAVE_GUILE
+			  if (XEN_PROCEDURE_P(cur_arg))
+			    {
+			      /* don't need the source, just the name here, I think */
+			      XEN str;
+			      str = scm_procedure_name(cur_arg);
+			      if (!(XEN_FALSE_P(str)))
+				strcat(errmsg, XEN_AS_STRING(str));
+			      else strcat(errmsg, XEN_AS_STRING(cur_arg));
+			    }
+			  else 
+#endif
+			    strcat(errmsg, XEN_AS_STRING(cur_arg));
+			}
 		    }
 		  /* else ignore it */
 		  break;
@@ -299,10 +314,7 @@ static XEN snd_catch_scm_error(void *data, XEN tag, XEN throw_args) /* error han
     }
   else 
     {
-      /* this probably doesn't happen? */
-#if DEBUGGING
-      fprintf(stderr,"hit unlikely error case!");
-#endif
+      /* 'cannot-parse can get us here */
       XEN_DISPLAY(tag, port);
       XEN_PUTS(": ", port);
       XEN_DISPLAY(throw_args, port);
@@ -3488,7 +3500,6 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
   XEN_EVAL_C_STRING("(defmacro declare args #f)");     /* for optimizer */
   XEN_EVAL_C_STRING("(define redo-edit redo)");        /* consistency with Ruby */
   XEN_EVAL_C_STRING("(define undo-edit undo)");
-  XEN_EVAL_C_STRING("(define definstrument define*)"); /* this is for CM linkages */
 
   /* from ice-9/r4rs.scm but with output to snd listener */
   XEN_EVAL_C_STRING("(define snd-remember-paths #f)");

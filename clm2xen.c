@@ -1572,31 +1572,37 @@ a new one is created.  If normalize is #t, the resulting waveform goes between -
   return(table);
 }
 
-static XEN g_make_table_lookup (XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6)
+static XEN g_make_table_lookup (XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6, XEN arg7, XEN arg8)
 {
-  #define H_make_table_lookup "(" S_make_table_lookup " (:frequency 440.0) (:initial-phase 0.0) (:wave)): \
+  #define H_make_table_lookup "(" S_make_table_lookup " (:frequency 440.0) (:initial-phase 0.0) (:wave) (:size)): \
 return a new " S_table_lookup " generator.  This is known as an oscillator in other synthesis systems. \
-The default table size is 512; to use some other size, pass your own vct as the 'wave'.\n\
+The default table size is 512; use :size to set some other size, or pass your own vct as the 'wave'.\n\
    (set! gen (make-table-lookup 440.0 :wave (partials->wave '(1 1.0)))\n\
 is the same in effect as " S_make_oscil "."
 
   mus_xen *gn;
   mus_any *ge;
   int vals, table_size = DEFAULT_TABLE_SIZE, need_free = FALSE;
-  XEN args[6]; XEN keys[3];
-  int orig_arg[3] = {0, 0, 0};
+  XEN args[8]; XEN keys[4];
+  int orig_arg[4] = {0, 0, 0, 0};
   Float freq = 440.0, phase = 0.0;
   Float *table = NULL;
   vct *v;
   keys[0] = all_keys[C_frequency];
   keys[1] = all_keys[C_initial_phase];
   keys[2] = all_keys[C_wave];
-  args[0] = arg1; args[1] = arg2; args[2] = arg3; args[3] = arg4; args[4] = arg5; args[5] = arg6;
-  vals = decode_keywords(S_make_table_lookup, 3, keys, 6, args, orig_arg);
+  keys[3] = all_keys[C_size];
+  args[0] = arg1; args[1] = arg2; args[2] = arg3; args[3] = arg4; args[4] = arg5; args[5] = arg6; args[6] = arg7; args[7] = arg8;
+  vals = decode_keywords(S_make_table_lookup, 4, keys, 8, args, orig_arg);
   if (vals > 0)
     {
       freq = fkeyarg(keys[0], S_make_table_lookup, orig_arg[0] + 1, freq);
       phase = fkeyarg(keys[1], S_make_table_lookup, orig_arg[1] + 1, phase);
+      table_size = ikeyarg(keys[3], S_make_table_lookup, orig_arg[3] + 1, table_size);
+      if (table_size <= 0)
+	XEN_OUT_OF_RANGE_ERROR(S_make_table_lookup, 4, keys[3], "size ~A <= 0?");
+      if (table_size > MAX_TABLE_SIZE)
+	XEN_OUT_OF_RANGE_ERROR(S_make_table_lookup, 4, keys[3], "size ~A too large");
       if (!(XEN_KEYWORD_P(keys[2])))
 	{
 	  XEN_ASSERT_TYPE(VCT_P(keys[2]), keys[2], orig_arg[2] + 1, S_make_table_lookup, "a vct");
@@ -2614,31 +2620,36 @@ static XEN g_frame2buffer(XEN obj, XEN val)
 
 /* ---------------- wave-train ---------------- */
 
-static XEN g_make_wave_train(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6)
+static XEN g_make_wave_train(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6, XEN arg7, XEN arg8)
 {
-  #define H_make_wave_train "(" S_make_wave_train " (:frequency 440.0) (:initial-phase 0.0) (:wave)): \
+  #define H_make_wave_train "(" S_make_wave_train " (:frequency 440.0) (:initial-phase 0.0) (:wave) (:size)): \
 return a new wave-train generator (an extension of pulse-train).   Frequency is \
 the repetition rate of the wave found in wave. Successive waves can overlap."
 
   mus_xen *gn;
   mus_any *ge;
-  XEN args[6]; XEN keys[3];
-  int orig_arg[3] = {0, 0, 0};
-  int vals, wsize, need_free = FALSE;
+  XEN args[8]; XEN keys[4];
+  int orig_arg[4] = {0, 0, 0, 0};
+  int vals, wsize = DEFAULT_TABLE_SIZE, need_free = FALSE;
   vct *v;
   Float freq = 440.0;
   Float phase = 0.0;
   Float *wave = NULL;
-  wsize = DEFAULT_TABLE_SIZE;
   keys[0] = all_keys[C_frequency];
   keys[1] = all_keys[C_initial_phase];
   keys[2] = all_keys[C_wave];
-  args[0] = arg1; args[1] = arg2; args[2] = arg3; args[3] = arg4; args[4] = arg5; args[5] = arg6; 
-  vals = decode_keywords(S_make_wave_train, 3, keys, 6, args, orig_arg);
+  keys[3] = all_keys[C_size];
+  args[0] = arg1; args[1] = arg2; args[2] = arg3; args[3] = arg4; args[4] = arg5; args[5] = arg6; args[6] = arg7; args[7] = arg8;
+  vals = decode_keywords(S_make_wave_train, 4, keys, 8, args, orig_arg);
   if (vals > 0)
     {
       freq = fkeyarg(keys[0], S_make_wave_train, orig_arg[0] + 1, freq);
       phase = fkeyarg(keys[1], S_make_wave_train, orig_arg[1] + 1, phase);
+      wsize = ikeyarg(keys[3], S_make_wave_train, orig_arg[3] + 1, wsize);
+      if (wsize <= 0)
+	XEN_OUT_OF_RANGE_ERROR(S_make_wave_train, 4, keys[3], "size ~A <= 0?");
+      if (wsize > MAX_TABLE_SIZE)
+	XEN_OUT_OF_RANGE_ERROR(S_make_wave_train, 4, keys[3], "size ~A too large");
       if (!(XEN_KEYWORD_P(keys[2])))
         {
 	  XEN_ASSERT_TYPE(VCT_P(keys[2]), keys[2], orig_arg[2] + 1, S_make_wave_train, "a vct");
@@ -4705,7 +4716,7 @@ XEN_NARGIFY_1(g_mus_random_w, g_mus_random)
 XEN_NARGIFY_0(g_rand_seed_w, g_rand_seed)
 XEN_NARGIFY_1(g_set_rand_seed_w, g_set_rand_seed)
 XEN_NARGIFY_1(g_table_lookup_p_w, g_table_lookup_p)
-XEN_ARGIFY_6(g_make_table_lookup_w, g_make_table_lookup)
+XEN_ARGIFY_8(g_make_table_lookup_w, g_make_table_lookup)
 XEN_ARGIFY_2(g_table_lookup_w, g_table_lookup)
 XEN_ARGIFY_3(g_partials2wave_w, g_partials2wave)
 XEN_ARGIFY_3(g_phasepartials2wave_w, g_phasepartials2wave)
@@ -4780,7 +4791,7 @@ XEN_NARGIFY_1(g_buffer2sample_w, g_buffer2sample)
 XEN_ARGIFY_2(g_buffer2frame_w, g_buffer2frame)
 XEN_NARGIFY_2(g_sample2buffer_w, g_sample2buffer)
 XEN_NARGIFY_2(g_frame2buffer_w, g_frame2buffer)
-XEN_ARGIFY_6(g_make_wave_train_w, g_make_wave_train)
+XEN_ARGIFY_8(g_make_wave_train_w, g_make_wave_train)
 XEN_ARGIFY_2(g_wave_train_w, g_wave_train)
 XEN_NARGIFY_1(g_wave_train_p_w, g_wave_train_p)
 XEN_ARGIFY_8(g_make_waveshape_w, g_make_waveshape)
@@ -5318,7 +5329,7 @@ void mus_xen_init(void)
 
 
   XEN_DEFINE_PROCEDURE(S_table_lookup_p,     g_table_lookup_p_w, 1, 0, 0,     H_table_lookup_p);
-  XEN_DEFINE_PROCEDURE(S_make_table_lookup,  g_make_table_lookup_w, 0, 6, 0,  H_make_table_lookup);
+  XEN_DEFINE_PROCEDURE(S_make_table_lookup,  g_make_table_lookup_w, 0, 8, 0,  H_make_table_lookup);
   XEN_DEFINE_PROCEDURE(S_table_lookup,       g_table_lookup_w, 1, 1, 0,       H_table_lookup);
   XEN_DEFINE_PROCEDURE(S_partials2wave,      g_partials2wave_w, 1, 2, 0,      H_partials2wave);
   XEN_DEFINE_PROCEDURE(S_phasepartials2wave, g_phasepartials2wave_w, 1, 2, 0, H_phasepartials2wave);
@@ -5371,7 +5382,7 @@ void mus_xen_init(void)
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_y1, g_y1_w, H_mus_y1, S_setB S_mus_y1, g_set_y1_w,  1, 0, 2, 0);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_y2, g_y2_w, H_mus_y2, S_setB S_mus_y2, g_set_y2_w,  1, 0, 2, 0);
 
-  XEN_DEFINE_PROCEDURE(S_make_wave_train, g_make_wave_train_w, 0, 6, 0, H_make_wave_train);
+  XEN_DEFINE_PROCEDURE(S_make_wave_train, g_make_wave_train_w, 0, 8, 0, H_make_wave_train);
   XEN_DEFINE_PROCEDURE(S_wave_train,      g_wave_train_w, 1, 1, 0,      H_wave_train);
   XEN_DEFINE_PROCEDURE(S_wave_train_p,    g_wave_train_p_w, 1, 0, 0,    H_wave_train_p);
 

@@ -44,8 +44,8 @@
   ;; whistle, very broad more of a whoosh.  this is basically "simple
   ;; fm", but the modulating signal is white noise.
   
-  (let* ((beg (inexact->exact (* startime *srate*)))
-	 (end (+ beg (inexact->exact (* dur *srate*))))
+  (let* ((beg (inexact->exact (* startime (mus-srate))))
+	 (end (+ beg (inexact->exact (* dur (mus-srate)))))
 	 (carrier (make-oscil :frequency freq0))
 	 (modulator (make-rand :frequency rfreq0 :amplitude 1.0))
 	 (loc (make-locsig :degree degree :distance distance :channels (mus-channels *output*)
@@ -92,6 +92,7 @@
 			   :duration dur :scaler (hz->radians (- freq1 freq0))))
 	 (rfreq-f (make-env :envelope (stretch-envelope rfreqfun 25 rfreq-attack 75 rfreq-decay)
 			    :duration dur :scaler (hz->radians (- rfreq1 rfreq0)))))
+    (if (c-g?) (throw 'with-sound-interrupt))
     (run
      (lambda ()
        (do ((i beg (1+ i)))
@@ -173,7 +174,7 @@
 ;;        (data (vct-map! (make-vct len) (make-fm-noise len 500))))
 ;;   (if snd
 ;;       (close-sound snd))
-;;   (set! snd (new-sound outfile mus-next mus-bshort *srate* chns))
+;;   (set! snd (new-sound outfile mus-next mus-bshort (mus-srate) chns))
 ;;   (do ((i 0 (1+ i)))
 ;;       ((= i chns))
 ;;     (mix-vct (vct-scale! (vct-copy data) (locsig-ref loc i)) beg snd i #f))

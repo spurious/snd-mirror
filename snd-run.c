@@ -59,6 +59,7 @@
  *   display number->string format[as a callback into Guile]
  *   make-vector if 2nd arg exists and is float
  *   list|pair ops that reference constant lists and return something we can handle (like a number)
+ *   throw with just the 1st arg (experimental...)
  *
  *   various sndlib, clm, and snd functions
  *
@@ -67,7 +68,12 @@
  * SOMEDAY: split Scheme from Snd/Clm here and do the latter via an FFI of some sort
  * SOMEDAY: save ptree somehow (local runs make this problematic) -- perhaps definstrument here
  *
- * TODO: do loop limit as inexact ints are 0?
+ * SOMEDAY: mus-bank?
+ * TODO: it's possible for the env-search to find a shadowed var (if opt>5):
+ *       (set! (optimization) 6)
+ *       (define hi 3.0)
+ *       (let ((hi 0.0)) (every-sample? (lambda (y) (> hi 1.0))))
+ *       -> probably when func-as-arg is expanded, we should search its env (closure) -- is this accessible?
  *
  * LIMITATIONS: <insert anxious lucubration here about DSP context and so on>
  *      variables can have only one type, the type has to be ascertainable somehow (similarly for vector elements)
@@ -166,6 +172,7 @@ static XEN optimization_hook = XEN_FALSE;
 #define XEN_SET_PROCEDURE_PROPERTY(Obj, Prop, Val) scm_set_procedure_property_x(Obj, Prop, Val)
 #define XEN_PROCEDURE_SOURCE(Proc)          scm_procedure_source(Proc)
 #define XEN_PROCEDURE_WITH_SETTER_P(Proc)   scm_procedure_with_setter_p(Proc)
+#define XEN_THROW(Tag, Arg)                 scm_throw(Tag, Arg)
 
 #define INT_PT  "i%d(%d)"
 #define FLT_PT  "d%d(%.4f)"
@@ -3932,7 +3939,7 @@ static xen_value *not_p(ptree *prog, xen_value **args, int num_args)
 
 /* ---------------- eq?, eqv?, equal? ---------------- */
 
-static void eq_b(int *args, Int *ints, Float *dbls) {BOOL_RESULT = (INT_ARG_1 == INT_ARG_2);}
+static void eq_b(int *args, Int *ints, Float *dbls) {BOOL_RESULT = (INT_ARG_1 == INT_ARG_2);} /* safe because float arg -> #f below */
 static char *descr_eq_b(int *args, Int *ints, Float *dbls) 
 {
   return(mus_format( BOOL_PT " = eq?(" INT_PT ", " INT_PT ")", args[0], B2S(BOOL_RESULT), args[1], INT_ARG_1, args[2], INT_ARG_2));
@@ -5580,15 +5587,27 @@ static xen_value *channels_1(ptree *pt, xen_value **args, int num_args)
 
 static void c_g_p(int *args, Int *ints, Float *dbls) 
 {
-  snd_state *ss;
-  ss = get_global_state();
-  check_for_event(ss);
-  if (ss->stopped_explicitly)
+#if USE_GTK
+  if (gtk_events_pending())
+#else
+  #if USE_MOTIF
+  if ((XtPending()) & (XtIMXEvent | XtIMAlternateInput))
+  #endif
+#endif
     {
-      ss->stopped_explicitly = FALSE;
-      BOOL_RESULT = TRUE;
+      snd_state *ss;
+      ss = get_global_state();
+      check_for_event(ss);
+      if (ss->stopped_explicitly)
+	{
+	  ss->stopped_explicitly = FALSE;
+	  BOOL_RESULT = TRUE;
+	}
+      else BOOL_RESULT = FALSE;
     }
+#if USE_GTK || USE_MOTIF
   else BOOL_RESULT = FALSE;
+#endif
 }
 
 static char *descr_c_g_p(int *args, Int *ints, Float *dbls)
@@ -7798,6 +7817,20 @@ static xen_value *format_1(ptree *prog, xen_value **args, int num_args)
   return(package_n_indirect(prog, R_STRING, format_s, descr_format_s, args, num_args));
 }
 
+static char *descr_throw_s_1(int *args, Int *ints, Float *dbls) 
+{
+  return(mus_format("throw('%s)", XEN_AS_STRING((XEN)(ints[args[1]]))));
+}
+static void throw_s_1(int *args, Int *ints, Float *dbls) 
+{
+  XEN_THROW((XEN)(ints[args[1]]), XEN_FALSE);
+}
+static xen_value *throw_1(ptree *prog, xen_value **args, int num_args)
+{
+  return(package(prog, R_BOOL, throw_s_1, descr_throw_s_1, args, 1));
+}
+/* TODO: throw with 2nd arg */
+
 typedef struct {
   xen_value *(*walker)(ptree *prog, xen_value **args, int num_args);
   xen_value *(*special_walker)(ptree *prog, XEN form, int need_result);
@@ -9208,6 +9241,7 @@ XEN_NARGIFY_2(g_vct_map_w, g_vct_map)
 
 #if HAVE_GUILE && WITH_RUN
 
+/* make_walker: walker, special walker, set walker, req args, max args, result type, need int, num arg types, ... */
 #if WITH_PROCPROP
 #define INIT_WALKER(Name, Val) \
   XEN_SET_OBJECT_PROPERTY(C_STRING_TO_XEN_SYMBOL(Name), walk_sym, C_TO_XEN_ULONG(Val)); \
@@ -9311,6 +9345,8 @@ static void init_walkers(void)
   INIT_WALKER("positive?", make_walker(positive_p, NULL, NULL, 1, 1, R_BOOL, FALSE, 1, R_NUMBER));
   INIT_WALKER("negative?", make_walker(negative_p, NULL, NULL, 1, 1, R_BOOL, FALSE, 1, R_NUMBER));
   INIT_WALKER("not", make_walker(not_p, NULL, NULL, 1, 1, R_BOOL, FALSE, 0)); /* ?? */
+
+  INIT_WALKER("throw", make_walker(throw_1, NULL, NULL, 1, 1, R_BOOL, FALSE, 1, R_SYMBOL));
 
   /* -------- char funcs */
   INIT_WALKER("char-alphabetic?", make_walker(char_alphabetic_p, NULL, NULL, 1, 1, R_BOOL, FALSE, 1, R_CHAR));

@@ -17,7 +17,7 @@
 (define-method (initialize (obj <rmsgain>) initargs)
   (next-method)
   (let* ((hp (get-keyword #:hp initargs 10))
- 	 (b (- 2 (cos (* hp (/ (* 2 pi) *srate*))))))
+ 	 (b (- 2 (cos (* hp (/ (* 2 pi) (mus-srate)))))))
     (set! (c2 obj) (- b (sqrt (- (* b b) 1))))
     (set! (c1 obj) (- 1 (c2 obj)))))
 

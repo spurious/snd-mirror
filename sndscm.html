@@ -32,7 +32,6 @@
 <center><A NAME="introduction"></a>
 <ul>
   <li><a href="#autosavedoc">autosave.scm: auto-save support</a>
-  <li><a href="#belldoc">bell.scm: the fm-bell from CLM</a>
   <li><a href="#bessdoc">bess.scm, bess.rb: FM demo</a>
   <li><a href="#birddoc">bird.scm, bird.rb: North-American birds</a>
   <li><a href="#clminsdoc">clm-ins.scm: more CLM instruments</a>
@@ -48,7 +47,6 @@
   <li><a href="#exampdoc">examp.scm, examp.rb: many examples</a>
   <li><a href="#extensionsdoc">extensions.scm: various generally useful Snd extensions</a>
   <li><a href="#fadedoc">fade.scm: frequency-domain cross-fades</a>
-  <li><a href="#flutedoc">flute.scm: Nicky Hind's flute physcial model</a>
   <li><a href="#fmvdoc">fmv.scm: a controller for the fm-violin</a>
   <li><a href="#freeverbdoc">freeverb.scm, freeverb.rb: a reverb</a>
   <li><a href="#goopsnddoc">goopsnd.scm: look at Goops</a>
@@ -66,7 +64,6 @@
   <li><a href="#pianodoc">piano.scm, piano.rb: piano physical model</a>
   <li><a href="#playdoc">play.scm: play-related functions</a>
   <li><a href="#popupdoc">popup.scm, gtk-popup.scm, popup.rb: Popup menu specializations</a>
-  <li><a href="#pqwvoxdoc">pqwvox.scm: phase-quadrature waveshaping</a>
   <li><a href="#prc95doc">prc95.scm: Perry Cook's physical model examples</a>
   <li><a href="#pvocdoc">pvoc.scm: phase-vocoder</a>
   <li><a href="#rgbdoc">rgb.scm, rgb.rb: colors</a>
@@ -93,8 +90,8 @@
 <br>
 
 <p>This file contains notes on the Scheme and Ruby files included with Snd.
-To use any of these files, (load &lt;file&gt;); for example <code>(load "bell.scm")</code>.  To start Snd with
-the file already loaded, <code>snd -l bell.scm</code>, or put the load statement in ~/.snd.
+To use any of these files, (load &lt;file&gt;); for example <code>(load "v.scm")</code>.  To start Snd with
+the file already loaded, <code>snd -l v.scm</code>, or put the load statement in ~/.snd.
 </p>
 
 <A NAME="autosavedoc"></a><span class=box><h2>autosave.scm</h2></span>
@@ -113,33 +110,6 @@ is set by the variable <i>auto-save-interval</i> which defaults to 60.0 seconds.
 To start auto-saving, (load "autosave.scm").  Thereafter <code>(cancel-auto-save)</code>
 stops autosaving, and <code>(auto-save)</code> restarts it.
 </p>
-
-<A NAME="belldoc"></a><span class=box><h2>bell.scm</h2></span>
-<pre>
-  <em class=def>fm-bell</em> startime dur frequency amplitude amp-env index-env index
-</pre>
-<p>The FM bell was developed by Michael McNabb in Mus10 in the late '70s.  It is intended
-for low bell sounds (say middle C or so). The lines
-</p>
-<pre>
-	   (mod1 (make-oscil (* frequency 2)))
-	   (mod2 (make-oscil (* frequency 1.41)))
-	   (mod3 (make-oscil (* frequency 2.82)))
-	   (mod4 (make-oscil (* frequency 2.4)))
-	   (car1 (make-oscil frequency))
-	   (car2 (make-oscil frequency))
-	   (car3 (make-oscil (* frequency 2.4)))
-</pre>
-<p>set up three FM pairs, car1+mod1 handling the basic harmonic spectra,
-car2+mod2 creating inharmonic spectra (using the square root of 2 more or less
-at random), and car3+mod3 putting a sort of formant at the minor third
-(2.4 = a ratio of 12/5 = octave+6/5 = minor tenth).
-</p>
-<pre>
-  (define fbell '(0 1 2 1.1000 25 .7500 75 .5000 100 .2000 ))
-  (define abell '(0 0 .1000 1 10 .6000 25 .3000 50 .1500 90 .1000 100 0 ))
-  (fm-bell 0.0 1.0 220.0 .5 abell fbell 1.0)
-</pre>
 
 <A NAME="bessdoc"></a><span class=box><h2>bess.scm</h2></span>
 
@@ -221,10 +191,36 @@ end
 <p>These are instruments from the CLM tarball translated for use in Snd.
 </p>
 <pre>
-  <em class=def>bes-fm</em>           from Bessel.lisp, FM analog using J0 rather than sin
-  <em class=def>fofins</em> ...many args...
-  <em class=def>pluck</em> start dur freq amp weighting lossfact
+  <em class=def>attract</em> beg dur amp c
+  <em class=def>bes-fm</em> beg dur freq amp ratio index
+  <em class=def>canter</em> beg dur freq amp (etc)
+  <em class=def>cellon</em> beg dur freq amp (etc)
+  <em class=def>drone</em> beg dur freq amp (etc)
+  <em class=def>fm-bell</em> beg dur frequency amplitude amp-env index-env index
+  <em class=def>fm-drum</em> beg dur freq amp ind (etc)
+  <em class=def>fm-insect</em> beg dur freq amp (etc)
+  <em class=def>fm-trumpet</em> beg dur (etc)
+  <em class=def>fofins</em> beg dur frq amp uvib f0 a0 f1 a1 f2 a2 (amp-env '(0 0 1 1 2 1 3 0))
+  <em class=def>gong</em> beg dur freq amp (etc)
+  <em class=def>gran-synth</em> beg dur freq grain-dur grain-hop amp
+  <em class=def>hammondoid</em> beg dur freq amp
+  <em class=def>jl-reverb</em>
+  <em class=def>lbj-piano</em> beg dur freq amp (etc)
+  <em class=def>metal</em> beg dur freq amp
+  <em class=def>nrev</em> (reverb-factor 1.09) (lp-coeff 0.7) (volume-1 1.0)
+  <em class=def>pluck</em> beg dur freq amp (weighting .5) (lossfact .9)
+  <em class=def>pqw-vox</em> beg dur freq spacing-freq amp ampfun freqfun freqscl phonemes formant-amps formant-shapes
+  <em class=def>pqw</em> beg dur freq (etc)
+  <em class=def>resflt</em> beg dur driver (etc)
+  <em class=def>reson</em> beg dur freq amp (etc)
+  <em class=def>rhodey</em> beg dur freq amp (base .5)
+  <em class=def>spectra</em> beg dur freq amp (etc)
+  <em class=def>stereo-flute</em> beg dur freq flow (etc)
+  <em class=def>touch-tone</em> beg number
+  <em class=def>tubebell</em> beg dur freq amp (base 32.0)
+  <em class=def>two-tab</em> beg dur freq amp (etc)
   <em class=def>vox</em> beg dur freq amp ampfun freqfun freqscl voxfun index vibscl
+  <em class=def>wurley</em> beg dur freq amp
 </pre>
 <p>
 <i>fofins</i> is an implementation of FOF synthesis, taken originally from
@@ -235,10 +231,50 @@ fof.c of Perry Cook and the article
 the Karplus-Strong algorithm as extended by David Jaffe and Julius Smith -- see 
 Jaffe and Smith, "Extensions of the Karplus-Strong Plucked-String Algorithm"
 CMJ vol 7 no 2 Summer 1983, reprinted in "The Music Machine".
-Another physical model is Nicky Hind's flute in flute.scm.
-<i>vox</i> is a translations of Marc LeBrun's MUS10 waveshaping voice instrument
-using FM in this case.  The waveshaping version can be found in <a href="#pqwvoxdoc">pqwvox.scm</a>.
+Another physical model is Nicky Hind's stereo-flute.
 </p>
+<p>
+<i>vox</i> is a translations of Marc LeBrun's MUS10 waveshaping voice instrument
+using FM in this case.  The waveshaping version is <i>pqwvox</i>
+("phase-quadrature waveshaping voice").
+The basic idea is that each of the three vocal formants is created by two
+sets of waveshapers, one centered on the even multiple of the base frequency closest to the desired formant frequency,
+and the other on the nearest odd multiple.  As the base frequency moves (vibrato, glissando),
+these center frequencies are recalculated (on each sample), and the respective amplitudes
+set from the distance to the desired frequency.  If a center frequency moves (for example,
+the base frequency moves down far enough that the previous upper member of the pair has
+to become the lower member), the upper waveshaper (which has ramped to zero amplitude), jumps
+down to its new center. The formant table was provided by Robert Poor.
+The phase-quadrature part of the business creates single side-band spectra.
+For details on waveshaping, see Le Brun, "Digital Waveshaping Synthesis", JAES 1979 April, vol 27, no 4, p250.
+It might be simpler to set up three formant generators and drive them with the waveshapers,
+but the leap-frog idea was a neat hack -- such things are worth keeping even when
+they aren't all that sensible anymore.  (Also, I noticed while writing this paragraph that
+the single-sideband cancellation is not working as I expected -- another bug to track down...)
+</p>
+<p>The FM bell was developed by Michael McNabb in Mus10 in the late '70s.  It is intended
+for low bell sounds (say middle C or so). The lines
+</p>
+<pre>
+	   (mod1 (make-oscil (* frequency 2)))
+	   (mod2 (make-oscil (* frequency 1.41)))
+	   (mod3 (make-oscil (* frequency 2.82)))
+	   (mod4 (make-oscil (* frequency 2.4)))
+	   (car1 (make-oscil frequency))
+	   (car2 (make-oscil frequency))
+	   (car3 (make-oscil (* frequency 2.4)))
+</pre>
+<p>set up three FM pairs, car1+mod1 handling the basic harmonic spectra,
+car2+mod2 creating inharmonic spectra (using the square root of 2 more or less
+at random), and car3+mod3 putting a sort of formant at the minor third
+(2.4 = a ratio of 12/5 = octave+6/5 = minor tenth).
+</p>
+<pre>
+  (define fbell '(0 1 2 1.1000 25 .7500 75 .5000 100 .2000 ))
+  (define abell '(0 0 .1000 1 10 .6000 25 .3000 50 .1500 90 .1000 100 0 ))
+  (fm-bell 0.0 1.0 220.0 .5 abell fbell 1.0)
+</pre>
+
 
 <A NAME="dlocsigdoc"></a><span class=box><h2>dlocsig.rb</h2></span>
 
@@ -1149,7 +1185,6 @@ the split depends on the panning envelope (0 = all in chan 0, etc).
   <em class=def><a name="excrosssynthesis">cross-synthesis</a></em> cross-snd amp fftsize radius
   <em class=def><a name="exvoiced2unvoiced">voiced-&gt;unvoiced</a></em> amp fftsize r tempo
   <em class=def>cnvtest</em> snd0 snd1 amp
-  <em class=def>jc-reverb</em> decay-dur low-pass volume amp-env
   <em class=def>"vector synthesis"</em>	
   <em class=def>chained-dsps</em> beg dur #:rest dsps
 </pre>
@@ -1159,8 +1194,7 @@ to lengthen or shorten a sound without changing its pitch.  The same idea is use
 change follows an envelope.  In <i>cross-synthesis</i>, <i>cross-snd</i> is the index
 of the sound that controls the spectra, not the affected sound.  <i>voiced-&gt;unvoiced</i>
 is essentially the same idea, but drives the synthesis with white noise.
-<i>cnvtest</i> demonstrates convolution.  <i>jc-reverb</i> is an old Mus10 reverberator
-written originally by John Chowning; see jcrev.ins in CLM or jcrev.scm. 
+<i>cnvtest</i> demonstrates convolution.
 Here are some sample calls:
 </p>
 <pre>
@@ -1178,7 +1212,6 @@ Here are some sample calls:
 (map-chan (cross-synthesis 1 .5 128 6.0))
 (voiced-&gt;unvoiced 1.0 256 2.0 2.0)
 (cnvtest 0 1 .1)
-(jc-reverb 2.0 #f .1 #f)
 </pre>
 <p>There are lots more sound effects scattered around the Snd distribution.
 "vector synthesis" cycles through a collection of incoming audio streams, playing whatever
@@ -1463,11 +1496,6 @@ The two instruments in fade.scm perform frequency-domain cross-fades, that is, t
 cross-fade is handled by a bank of bandpass filters (formant generators).  The effect
 is sometimes only slightly different from a normal (time-domain) cross-fade, but
 there are some interesting possibilities ("sound evaporation", etc).
-</p>
-
-<A NAME="flutedoc"></a><span class=box><h2>flute.scm</h2></span>
-
-<p>flute.scm is a translation of the CLM version of Nicky Hind's flute physical model.
 </p>
 
 <A NAME="fmvdoc"></a><span class=box><h2>fmv.scm</h2></span>
@@ -1969,29 +1997,6 @@ posted if you click button3 in the listener.
 </p>
 
 
-<A NAME="pqwvoxdoc"></a><span class=box><h2>pqwvox.scm</h2></span>
-<pre>
-  <em class=def>pqw-vox</em> beg dur freq spacing-freq amp ampfun freqfun freqscl phonemes formant-amps formant-shapes
-</pre>
-<p>pqwvox ("phase-quadrature waveshaping voice") was originally written by Marc LeBrun in the late 70's using waveshaping.  It was 
-changed to use FM for the Samson Box since the box had trouble performing waveshaping, then
-changed back to waveshaping in this version.
-The basic idea is that each of the three vocal formants is created by two
-sets of waveshapers, one centered on the even multiple of the base frequency closest to the desired formant frequency,
-and the other on the nearest odd multiple.  As the base frequency moves (vibrato, glissando),
-these center frequencies are recalculated (on each sample), and the respective amplitudes
-set from the distance to the desired frequency.  If a center frequency moves (for example,
-the base frequency moves down far enough that the previous upper member of the pair has
-to become the lower member), the upper waveshaper (which has ramped to zero amplitude), jumps
-down to its new center. The formant table was provided by Robert Poor.
-The phase-quadrature part of the business creates single side-band spectra.
-For details on waveshaping, see Le Brun, "Digital Waveshaping Synthesis", JAES 1979 April, vol 27, no 4, p250.
-It might be simpler to set up three formant generators and drive them with the waveshapers,
-but the leap-frog idea was a neat hack -- such things are worth keeping even when
-they aren't all that sensible anymore.  (Also, I noticed while writing this paragraph that
-the single-sideband cancellation is not working as I expected -- another bug to track down...)
-</p>
-
 <A NAME="prc95doc"></a><span class=box><h2>prc95.scm</h2></span>
 
 <!-- INDEX prc95doc:Physical Models -->
@@ -2023,9 +2028,9 @@ See also:
   piano: <a href="#pianodoc">piano.scm, piano.rb</a>
   singer: <a href="#singerdoc">singer.scm</a>
   bowed string: <a href="#straddoc">strad.scm, strad.rb</a>
-  flute: <a href="#flutedoc">flute.scm</a>
+  flute: <a href="#clminsdoc">clm-ins.scm</a>
   string: <a href="#excomputeuniformcircularstring">compute-string</a>
-  plucked string: pluck in examp.scm
+  plucked string: pluck in clm-ins.scm
   plate-reverb: plugins-menu.scm
 </small></blockquote></pre>
 <br>
@@ -3137,7 +3142,7 @@ opened (corresponding to CLM's *reverb*).  So the cooperating instrument code sh
     (run
       (lambda ()
         (do ((i start (1+ i)))
-            ((= i end))
+            ((= i end)) ; see below for interruptible case
           (outa i ... *output*))))))
 </pre>
 <p>which is the same as in the standard CLM (change the loop statement to a do statement),
@@ -3152,8 +3157,10 @@ latter is going through the C intermediate file!
 <pre>
 (with-sound (:continue-old-file #t) (fm-violin 0 1 440 .1))
 </pre>
-<p>with-sound returns the output file name.</p>
-<p>ws.scm also has a scheme version of <a href="clm.html#def-clm-struct">def-clm-struct</a>
+<p>with-sound returns the output file name. If a previous file of the same name
+is currently open, it is closed before the new version is opened.
+</p>
+<p>ws.scm also has a version of <a href="clm.html#def-clm-struct">def-clm-struct</a>
 and <a href="clm.html#sound-let">sound-let</a>.  with-sounds and sound-lets can be nested --
 see clm.html.
 <b>def-clm-struct</b> in Snd/Guile provides a way to package up heterogenous data 
@@ -3192,6 +3199,22 @@ split with-sound into two pieces, primarily for Common Music's benefit.
 and the saved-state-prettification functions <b>mus-data-format-&gt;string</b> and
 <b>mus-header-type-&gt;string</b>.  The *clm-* variables are saved in the save-state
 file by <b>ws-save-state</b>, which may not be a good idea -- feedback welcome!
+</p>
+<p>
+with-sound establishes a catch named 'with-sound-interrupt that jumps out of the
+with-sound notelist, cleans up output files, and exits with-sound.  If you
+want your instruments to respond to C-g within the sample generating loop, use an outer 'do' loop similar to:
+</p>
+<pre>
+  (do ((i beg (1+ i)))
+      ((or (= i end) 
+           (and (c-g?) 
+                (throw 'with-sound-interrupt))))
+      ...)
+</pre>
+<p>Instruments normally check for C-g just before diving into the run loop; because the
+event check can slow down processing, I don't call it on every sample, but you might
+want to do that while developing a new instrument.
 </p>
 <br>
 
