@@ -38,6 +38,7 @@
 
 (use-modules (ice-9 format))
 
+(define pi 3.141592653589793)
 (define effects-list '()) ; menu labels are updated to show current default settings
 
 (define effects-menu (add-to-main-menu "Effects" (lambda ()

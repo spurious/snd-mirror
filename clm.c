@@ -2787,9 +2787,9 @@ Float *mus_ycoeffs(mus_any *ptr)
 
 int mus_order(mus_any *ptr) {return(mus_length(ptr));}
 
-Float *mus_make_fir_coeffs(int order, Float *env, Float *aa)
+Float *mus_make_fir_coeffs(int order, Float *envl, Float *aa)
 {
- /* env = evenly sampled freq response, has order samples */
+ /* envl = evenly sampled freq response, has order samples */
   int n, m, i, j, jj;
   Float am, q, xt = 0.0;
   Float *a;
@@ -2803,9 +2803,9 @@ Float *mus_make_fir_coeffs(int order, Float *env, Float *aa)
   q = TWO_PI / (Float)n;
   for (j = 0, jj = n - 1; j < m; j++, jj--)
     {
-      xt = env[0] * 0.5;
+      xt = envl[0] * 0.5;
       for (i = 1; i < m; i++)
-	xt += (env[i] * cos(q * (am - j - 1) * i));
+	xt += (envl[i] * cos(q * (am - j - 1) * i));
       a[j] = 2.0 * xt / (Float)n;
       a[jj] = a[j];
     }
@@ -6901,15 +6901,15 @@ Float mus_increment(mus_any *rd)
   return(0);
 }
 
-Float mus_set_increment(mus_any *rd, Float dir)
+Float mus_set_increment(mus_any *rd, Float direction)
 {
-  if (mus_readin_p(rd)) ((rdin *)rd)->dir = (int)dir; 
-  if (mus_file2sample_p(rd)) ((rdin *)rd)->dir = (int)dir; 
-  if (mus_src_p(rd)) ((sr *)rd)->incr = dir;
-  if (mus_buffer_p(rd)) {((rblk *)rd)->fill_time = dir; ((rblk *)rd)->empty = (dir == 0.0);}
-  if (mus_granulate_p(rd)) {((grn_info *)rd)->input_hop = (int)(((grn_info *)rd)->output_hop / dir);}
-  if (mus_phase_vocoder_p(rd)) ((pv_info *)rd)->interp = (int)dir;
-  return(dir);
+  if (mus_readin_p(rd)) ((rdin *)rd)->dir = (int)direction; 
+  if (mus_file2sample_p(rd)) ((rdin *)rd)->dir = (int)direction; 
+  if (mus_src_p(rd)) ((sr *)rd)->incr = direction;
+  if (mus_buffer_p(rd)) {((rblk *)rd)->fill_time = direction; ((rblk *)rd)->empty = (direction == 0.0);}
+  if (mus_granulate_p(rd)) {((grn_info *)rd)->input_hop = (int)(((grn_info *)rd)->output_hop / direction);}
+  if (mus_phase_vocoder_p(rd)) ((pv_info *)rd)->interp = (int)direction;
+  return(direction);
 }
 
 static Float *phase_vocoder_data(void *ptr) {return(((pv_info *)ptr)->in_data);}

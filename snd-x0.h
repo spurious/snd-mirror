@@ -22,12 +22,6 @@
 
 #define HAVE_CLICK_FOR_HELP 1
 
-#if __GNUC__
-#ifdef LESSTIF_VERSION
-  #warning You appear to be using Lesstif: this is not recommended!  Expect bugs...
-#endif
-#endif
-
 #if (XmVERSION >= 2)
   #define OVERRIDE_TOGGLE 1
   /* Motif 2.0 defines control-button1 to be "take focus" -- this is not a good idea!! */

@@ -2,6 +2,13 @@
 
 #include <X11/IntrinsicP.h>
 
+#if __GNUC__
+#ifdef LESSTIF_VERSION
+  /* moved the warning here so it only is displayed once */
+  #warning You appear to be using Lesstif: this is not recommended!  Expect bugs...
+#endif
+#endif
+
 axis_context *free_axis_context(axis_context *ax)
 {
   if (ax) FREE(ax);
