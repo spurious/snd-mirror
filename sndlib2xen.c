@@ -900,9 +900,11 @@ open the audio device ready for input with the indicated attributes; return the 
 
 static XEN g_mus_audio_close(XEN line)
 {
+  int res;
   #define H_mus_audio_close "(" S_mus_audio_close " line): close the audio hardware line"
   XEN_ASSERT_TYPE(XEN_INTEGER_P(line), line, XEN_ONLY_ARG, S_mus_audio_close, "an integer");
-  return(C_TO_XEN_INT(mus_audio_close(XEN_TO_C_INT(line))));
+  res = mus_audio_close(XEN_TO_C_INT(line));
+  return(C_TO_XEN_INT(res));
 }
 
 static XEN g_mus_audio_save (void) 

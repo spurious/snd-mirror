@@ -176,7 +176,7 @@ static void prune_edits(chan_info *cp, int edpt)
   int i;
   if (cp->edits[edpt]) 
     {
-      if ((ss) && (ss->deferred_regions > 0))
+      if (ss->deferred_regions > 0)
 	sequester_deferred_regions(cp, edpt - 1);
       for (i = edpt; i < cp->edit_size; i++) 
 	{
@@ -1724,7 +1724,8 @@ static ed_list *change_samples_in_list(off_t beg, off_t num, int pos, chan_info 
   return(new_state);
 }
 
-void file_change_samples(off_t beg, off_t num, char *tempfile, chan_info *cp, int chan, file_delete_t auto_delete, int lock, const char *origin, int edpos)
+void file_change_samples(off_t beg, off_t num, char *tempfile, chan_info *cp, int chan, 
+			 file_delete_t auto_delete, lock_mix_t lock, const char *origin, int edpos)
 {
   off_t prev_len, new_len;
   ed_fragment *cb;
@@ -1778,7 +1779,7 @@ void file_change_samples(off_t beg, off_t num, char *tempfile, chan_info *cp, in
     }
 }
 
-void file_override_samples(off_t num, char *tempfile, chan_info *cp, int chan, file_delete_t auto_delete, int lock, const char *origin)
+void file_override_samples(off_t num, char *tempfile, chan_info *cp, int chan, file_delete_t auto_delete, lock_mix_t lock, const char *origin)
 {
   int fd;
   ed_list *e;
@@ -1824,7 +1825,7 @@ void file_override_samples(off_t num, char *tempfile, chan_info *cp, int chan, f
     }
 }
 
-void change_samples(off_t beg, off_t num, mus_sample_t *vals, chan_info *cp, int lock, const char *origin, int edpos)
+void change_samples(off_t beg, off_t num, mus_sample_t *vals, chan_info *cp, lock_mix_t lock, const char *origin, int edpos)
 {
   off_t prev_len, new_len;
   ed_fragment *cb;
@@ -8645,7 +8646,7 @@ void as_one_edit(chan_info *cp, int one_edit, const char *one_edit_origin) /* or
   need_backup = (cp->edit_ctr > one_edit);      /* cp->edit_ctr will be changing, so save this */
   if (cp->edit_ctr >= one_edit)                 /* ">=" here because the origin needs to be set even if there were no extra edits */
     {
-      if ((ss) && (ss->deferred_regions > 0))
+      if (ss->deferred_regions > 0)
 	sequester_deferred_regions(cp, one_edit - 1);
       while (cp->edit_ctr > one_edit) backup_edit_list(cp);
       if ((need_backup) && (cp->mixes)) backup_mix_list(cp, one_edit);

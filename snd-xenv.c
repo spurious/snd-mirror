@@ -108,7 +108,7 @@ void make_scrolled_env_list (void)
 
 void alert_enved_amp_env(snd_info *sp)
 {
-  if ((ss) && (enved_dialog) && (active_channel) && (enved_wave_p(ss)))
+  if ((enved_dialog) && (active_channel) && (enved_wave_p(ss)))
     if (active_channel->sound == sp) 
       env_redisplay();
 }

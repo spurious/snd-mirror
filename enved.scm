@@ -112,7 +112,7 @@
 	  (edit-envelope-point mouse-pos lx ly cur-env))
     (update-lisp-graph snd chn)))
 
-(define (mouse-release-envelope snd chn button state x y)
+(define (mouse-release-envelope snd chn button state ux uy axis)
 
   (define (remove-envelope-point pos cur-env)
     (let ((new-env '()))
@@ -126,16 +126,19 @@
 		  (search-point (cddr e) (+ npos 2))))))
       (search-point cur-env 0)))
 
-  (let ((cur-env (channel-envelope snd chn)))
-    (set! mouse-up (get-internal-real-time))
-    (if (and (not mouse-new)
-	     (<= (- mouse-up mouse-down) click-time)
-	     (not (= mouse-pos 0))
-	     (not (>= mouse-pos (- (length cur-env) 2))))
-	(set! (channel-envelope snd chn)
-	      (remove-envelope-point mouse-pos cur-env)))
-    (update-lisp-graph snd chn)
-    (set! mouse-new #f)))
+  (if (= axis lisp-graph)
+      (let ((cur-env (channel-envelope snd chn)))
+	(set! mouse-up (get-internal-real-time))
+	(if (and (not mouse-new)
+		 (<= (- mouse-up mouse-down) click-time)
+		 (not (= mouse-pos 0))
+		 (not (>= mouse-pos (- (length cur-env) 2))))
+	    (set! (channel-envelope snd chn)
+		  (remove-envelope-point mouse-pos cur-env)))
+	(update-lisp-graph snd chn)
+	(set! mouse-new #f)
+	#t)
+      #f))
 
 (define (enveloping-key-press snd chn key state)
   ;; C-g returns to original env
@@ -157,7 +160,7 @@
   (add-hook! after-open-hook create-initial-envelopes)
   (add-hook! mouse-press-hook mouse-press-envelope)
   (add-hook! mouse-drag-hook mouse-drag-envelope)
-  (add-hook! mouse-release-hook mouse-release-envelope)
+  (add-hook! mouse-click-hook mouse-release-envelope)
   (add-hook! key-press-hook enveloping-key-press))
 
 (define (stop-enveloping)
@@ -165,7 +168,7 @@
   (remove-hook! after-open-hook create-initial-envelopes)
   (remove-hook! mouse-press-hook mouse-press-envelope)
   (remove-hook! mouse-drag-hook mouse-drag-envelope)
-  (remove-hook! mouse-release-hook mouse-release-envelope)
+  (remove-hook! mouse-click-hook mouse-release-envelope)
   (remove-hook! key-press-hook enveloping-key-press))
 
 

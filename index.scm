@@ -642,7 +642,6 @@ and if one is found, and the Snd documentation can be found, calls (html-program
     (list "mouse-leave-listener-hook" "extsnd.html#mousleavelistenerhook" "snd-glistener.c")
     (list "mouse-leave-text-hook" "extsnd.html#mousleavetexthook" "snd-glistener.c")
     (list "mouse-press-hook" "extsnd.html#mousepresshook" "snd-chn.c")
-    (list "mouse-release-hook" "extsnd.html#mousereleasehook" "snd-chn.c")
     (list "move-locsig" "clm.html#move-locsig" "clm2xen.c")
     (list "mpg" "sndscm.html#exmpg" "examp.scm")
     (list "multichannel-mix-hook" "extsnd.html#multichannelmixhook" "snd-mix.c")

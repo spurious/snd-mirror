@@ -575,6 +575,11 @@ XEN xen_rb_copy_list(XEN val)
   return(collect);
 }
 
+XEN xen_rb_str_new2(char *arg)
+{
+  return(rb_str_new2((arg) ? arg : ""));
+}
+
 #endif
 
 

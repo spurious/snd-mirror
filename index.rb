@@ -540,7 +540,6 @@ Snd_names_and_urls =
     ["mouse_leave_listener_hook", "extsnd.html#mousleavelistenerhook", "snd-glistener.c"],
     ["mouse_leave_text_hook", "extsnd.html#mousleavetexthook", "snd-glistener.c"],
     ["mouse_press_hook", "extsnd.html#mousepresshook", "snd-chn.c"],
-    ["mouse_release_hook", "extsnd.html#mousereleasehook", "snd-chn.c"],
     ["move_locsig", "clm.html#move-locsig", "clm2xen.c"],
     ["multichannel_mix_hook", "extsnd.html#multichannelmixhook", "snd-mix.c"],
     ["multiply_arrays", "clm.html#multiply-arrays", "clm2xen.c"],

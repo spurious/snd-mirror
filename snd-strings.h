@@ -334,7 +334,6 @@
 #define S_mouse_leave_listener_hook     "mouse-leave-listener-hook"
 #define S_mouse_leave_text_hook         "mouse-leave-text-hook"
 #define S_mouse_press_hook              "mouse-press-hook"
-#define S_mouse_release_hook            "mouse-release-hook"
 #define S_multichannel_mix_hook         "multichannel-mix-hook"
 #define S_mus_error_hook                "mus-error-hook"
 #define S_name_click_hook               "name-click-hook"

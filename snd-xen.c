@@ -335,10 +335,12 @@ static XEN snd_catch_scm_error(void *data, XEN tag, XEN throw_args) /* error han
     {
       /* this actually isn't very useful since it points to the end of the enclosing form */
       char *info;
+      XEN portline;
+      portline = scm_port_line(scm_current_load_port());
       info = (char *)CALLOC(1024, sizeof(char));
       sprintf(info, " (%s: line %d)", 
 	      filename_without_home_directory(XEN_TO_C_STRING(scm_port_filename(scm_current_load_port()))),
-	      XEN_TO_C_INT(scm_port_line(scm_current_load_port())));
+	      XEN_TO_C_INT(portline));
       XEN_PUTS(info, port);
       FREE(info);
     }

@@ -1267,7 +1267,7 @@ If it returns #t, the actual remix is the hook's responsibility (see <i>respeed-
 <span class=defbox><code><em class=def><a name="mouseclickhook">mouse-click-hook</a></em> (snd chn button state x y axis) </code></span></td><td align=right><b>or</b>
 </td></tr>
 <tr><td></td><td colspan=2>
-called upon a mouse button click (press and release without drag).  If it returns #t, the click is ignored by Snd.
+called upon a mouse button release or click (with various exceptions).  If it returns #t, the click is ignored by Snd.
 See the <i>current-window-location</i> procedures in draw.scm.  Here's a simpler example:</td></tr>
 <tr><td></td><td colspan=2>
 <table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
@@ -1415,15 +1415,6 @@ called when the mouse leaves a text widget.
 called upon a mouse button press within the lisp graph (see enved.scm).  The x and y values are 
 relative to the lisp graph axis (as if the raw mouse pixel position was passed through
 <a href="#position2x">position-&gt;x</a> and <a href="#position2y">position-&gt;y</a>).
-</td></tr>
-<tr><td colspan=3></td></tr>
-
-<!-- mouse-release-hook -->
-<tr><td colspan=2>
-<span class=defbox><code><em class=def><a name="mousereleasehook">mouse-release-hook</a></em> (snd chn button state x y) </code></span></td><td>
-</td></tr>
-<tr><td></td><td colspan=2>
-called upon a mouse button release within the lisp graph (see enved.scm).
 </td></tr>
 <tr><td colspan=3></td></tr>
 

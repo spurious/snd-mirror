@@ -304,7 +304,12 @@ file_info *make_file_info(const char *fullname)
 	      mus_header_raw_defaults(&srate, &chans, &data_format);
 	      if (len > 0) chans = XEN_TO_C_INT(XEN_CAR(res));
 	      if (len > 1) srate = XEN_TO_C_INT(XEN_CADR(res));
-	      if (len > 2) data_format = XEN_TO_C_INT(XEN_LIST_REF(res, 2)); 
+	      if (len > 2) 
+		{
+		  XEN df;
+		  df = XEN_LIST_REF(res, 2);
+		  data_format = XEN_TO_C_INT(df);
+		}
 	      if (len > 3) data_location = XEN_TO_C_OFF_T(XEN_LIST_REF(res, 3)); else data_location = 0;
 	      if (len > 4) bytes = XEN_TO_C_OFF_T(XEN_LIST_REF(res, 4)); else bytes = mus_sound_length(fullname) - data_location;
 	      mus_header_set_raw_defaults(srate, chans, data_format);

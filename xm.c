@@ -7,10 +7,11 @@
   #include <config.h>
 #endif
 
-#define XM_DATE "11-Aug-03"
+#define XM_DATE "20-Aug-03"
 
 
 /* HISTORY: 
+ *   20-Aug:    XtEventHandler *flag settable.
  *   11-Aug:    int -> bool.
  *   17-July:   XpmAttributes .colorsymbols is a list.
  *   15-July:   type check cleanups.
@@ -15809,13 +15810,16 @@ enum {EVENT_HANDLER_TYPE, EVENT_HANDLER_FUNC, EVENT_HANDLER_DATA, EVENT_HANDLER_
 
 static void gxm_XtEventHandler(Widget w, XtPointer context, XEvent *event, Boolean *flag)
 {
+  XEN result;
   XEN descr = (XEN)context;
-  XEN_CALL_4(XEN_LIST_REF(descr, EVENT_HANDLER_FUNC),
-	     C_TO_XEN_Widget(w),
-	     XEN_LIST_REF(descr, EVENT_HANDLER_DATA),
-	     C_TO_XEN_XEvent(event),
-	     C_TO_XEN_BOOLEAN(*flag),
-	     c__FUNCTION__);
+  result = XEN_CALL_4(XEN_LIST_REF(descr, EVENT_HANDLER_FUNC),
+		      C_TO_XEN_Widget(w),
+		      XEN_LIST_REF(descr, EVENT_HANDLER_DATA),
+		      C_TO_XEN_XEvent(event),
+		      C_TO_XEN_BOOLEAN(*flag),
+		      c__FUNCTION__);
+  if ((XEN_SYMBOL_P(result)) && (strcmp("done", XEN_SYMBOL_TO_C_STRING(result)) == 0))
+    (*flag) = false;
 }
 
 static bool find_xteventproc_1(XEN val, int loc, unsigned long wd)
@@ -15943,7 +15947,8 @@ static XEN gxm_XtRemoveEventHandler(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN 
 static XEN gxm_XtAddEventHandler(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5)
 {
   #define H_XtAddEventHandler "void XtAddEventHandler(w, event_mask, nonmaskable, proc, client_data) registers a procedure with the dispatch \
-mechanism that is to be called when an event that matches the mask occurs on the specified widget."
+mechanism that is to be called when an event that matches the mask occurs on the specified widget.  To set the 'continue_to_dispatch' \
+flag to 'false', return the symbol 'done from the event handler."
   XEN call_descr = XEN_EMPTY_LIST;
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XtAddEventHandler", "Widget");
   XEN_ASSERT_TYPE(XEN_ULONG_P(arg2), arg2, 2, "XtAddEventHandler", "EventMask");

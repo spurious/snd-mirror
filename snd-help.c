@@ -114,18 +114,21 @@ static char *glx_version(void)
 {
   int major = 0, minor = 0;
   char *version;
-  if (ss == NULL) return(""); /* snd --help for example */
+  if ((ss == NULL) || (ss->sgx == NULL)) return(""); /* snd --help for example */
   version = (char *)CALLOC(128, sizeof(char));
 #if USE_MOTIF
-  if ((ss->sgx) && (ss->sgx->cx))
+  if (MAIN_DISPLAY(ss) != NULL)
     {
-      glXMakeCurrent(MAIN_DISPLAY(ss), XtWindow(ss->sgx->mainshell), ss->sgx->cx);
-      mus_snprintf(version, 128, " %s", glGetString(GL_VERSION));
-    }
-  else 
-    {
-      glXQueryVersion(MAIN_DISPLAY(ss), &major, &minor);
-      mus_snprintf(version, 128, " %d.%d", major, minor);
+      if (ss->sgx->cx)
+	{
+	  glXMakeCurrent(MAIN_DISPLAY(ss), XtWindow(ss->sgx->mainshell), ss->sgx->cx);
+	  mus_snprintf(version, 128, " %s", glGetString(GL_VERSION));
+	}
+      else 
+	{
+	  glXQueryVersion(MAIN_DISPLAY(ss), &major, &minor);
+	  mus_snprintf(version, 128, " %d.%d", major, minor);
+	}
     }
 #else
   if (gdk_gl_query_extension() != 0)
@@ -295,6 +298,7 @@ void news_help(void)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+19-Aug:  removed mouse-release-hook (use mouse-click-hook).\n\
 15-Aug:  snd 6.11.\n\
 11-Aug:  start-playing-selection-hook (suggested by Kjetil S. Matheussen).\n\
          removed dlp/dp-new-effects.scm and plugins-menu.scm.\n\

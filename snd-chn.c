@@ -15,7 +15,6 @@ static XEN mouse_press_hook;
 static XEN mark_click_hook; 
 static XEN mix_click_hook; 
 static XEN mouse_click_hook;
-static XEN mouse_release_hook; 
 static XEN mouse_drag_hook; 
 static XEN key_press_hook; 
 static XEN transform_hook;
@@ -3779,8 +3778,9 @@ void graph_button_press_callback(chan_info *cp, int x, int y, int key_state, int
   if (mouse_mark == NULL) 
     play_mark = hit_triangle(cp, x, y);
   click_within_graph = within_graph(cp, x, y);
-  if (click_within_graph == FFT_AXIS) 
+  switch (click_within_graph)
     {
+    case FFT_AXIS:
       if (cp->transform_graph_type != GRAPH_AS_SONOGRAM)
 	{
 #if HAVE_GL
@@ -3790,27 +3790,28 @@ void graph_button_press_callback(chan_info *cp, int x, int y, int key_state, int
 	  fft_axis_start = x;
 	}
       else fft_axis_start = y;
-    }
-  else
-    {
-      if (click_within_graph == LISP)
-	{
-	  if (XEN_HOOKED(mouse_press_hook))
-	    run_hook(mouse_press_hook,
-		     XEN_LIST_6(C_TO_SMALL_XEN_INT(sp->index),
-				C_TO_SMALL_XEN_INT(cp->chan),
-				C_TO_XEN_INT(button),
-				C_TO_XEN_INT(key_state),
-				C_TO_XEN_DOUBLE(ungrf_x(((lisp_grf *)(cp->lisp_info))->axis, x)),
-				C_TO_XEN_DOUBLE(ungrf_y(((lisp_grf *)(cp->lisp_info))->axis, y))),
-		     S_mouse_press_hook);
-	}
-      else
-	{
-	  if ((mouse_mark == NULL) && 
-	      (play_mark == NULL))
-	    mix_tag = hit_mix(cp, x, y);
-	}
+      break;
+    case LISP:
+      if (XEN_HOOKED(mouse_press_hook))
+	run_hook(mouse_press_hook,
+		 XEN_LIST_6(C_TO_SMALL_XEN_INT(sp->index),
+			    C_TO_SMALL_XEN_INT(cp->chan),
+			    C_TO_XEN_INT(button),
+			    C_TO_XEN_INT(key_state),
+			    C_TO_XEN_DOUBLE(ungrf_x(((lisp_grf *)(cp->lisp_info))->axis, x)),
+			    C_TO_XEN_DOUBLE(ungrf_y(((lisp_grf *)(cp->lisp_info))->axis, y))),
+		 S_mouse_press_hook);
+      /* TODO: mouse-press-hook add axis, pass in unaltered x,y */
+      /* TODO: mouse-click-hook rename as mouse-press-hook? */
+      break;
+    case WAVE:
+      if ((mouse_mark == NULL) && 
+	  (play_mark == NULL))
+	mix_tag = hit_mix(cp, x, y);
+      break;
+    case NOGRAPH:
+    case FFT_MAIN:
+      break;
     }
 }
 
@@ -3825,7 +3826,7 @@ void graph_button_release_callback(chan_info *cp, int x, int y, int key_state, i
   snd_info *sp;
   axis_info *ap;
   mark *old_mark;
-  int actax;
+  click_loc_t actax;
   off_t samps;
   char *str = NULL;
   sp = cp->sound;
@@ -3880,8 +3881,9 @@ void graph_button_release_callback(chan_info *cp, int x, int y, int key_state, i
 				      S_mouse_click_hook))))
 	    return;
 
-	  if (actax == WAVE)
+	  switch (actax)
 	    {
+	    case WAVE:
 	      if (button == BUTTON_2) /* the middle button */
 		{
 		  cp->cursor_on = true;
@@ -3946,32 +3948,19 @@ void graph_button_release_callback(chan_info *cp, int x, int y, int key_state, i
 			}
 		    }
 		}
-	    }
-	  else
-	    {
-	      if (actax == FFT_MAIN)
-		{
-		  str = describe_fft_point(cp, x, y);
-		  report_in_minibuffer(sp, str);
-		  if (str) FREE(str);
-		}
-	      else
-		if ((actax == LISP) && 
-		    (XEN_HOOKED(mouse_release_hook)))
-		  run_hook(mouse_release_hook,
-			   XEN_LIST_6(C_TO_SMALL_XEN_INT(sp->index),
-				      C_TO_SMALL_XEN_INT(cp->chan),
-				      C_TO_XEN_INT(button),
-				      C_TO_XEN_INT(key_state),
-				      C_TO_XEN_DOUBLE(ungrf_x(((lisp_grf *)(cp->lisp_info))->axis, x)),
-				      C_TO_XEN_DOUBLE(ungrf_y(((lisp_grf *)(cp->lisp_info))->axis, y))),
-			   S_mouse_release_hook);
+	      break;
+	    case FFT_MAIN:
+	      str = describe_fft_point(cp, x, y);
+	      report_in_minibuffer(sp, str);
+	      if (str) FREE(str);
+	      break;
+	    default:
+	      break;
 	    }
 	}
     }
   else
     {
-      /* lisp graph dragged? */
       if (mouse_mark)
 	{
 	  finish_moving_mark(cp, mouse_mark);
@@ -4018,6 +4007,9 @@ void graph_button_release_callback(chan_info *cp, int x, int y, int key_state, i
 static Tempus first_time = 0;
 static off_t mouse_cursor = 0;
 static XEN mark_drag_triangle_hook;
+
+/* TODO: add raw-mouse-[press/motion/release]-hook? press/motion/release, any axis xy etc time? */
+/*       could this be done via xm? -- how to pre-empt existing callbacks and restore? */
 
 void graph_button_motion_callback(chan_info *cp, int x, int y, Tempus time, Tempus click_time)
 {
@@ -4087,8 +4079,9 @@ void graph_button_motion_callback(chan_info *cp, int x, int y, Tempus time, Temp
 	}
       else
 	{
-	  if (click_within_graph == WAVE)
+	  switch (click_within_graph)
 	    {
+	    case WAVE:
 	      if (mix_tag != NO_MIX_TAG)
 		{
 		  move_mix_tag(mix_tag, x);
@@ -4103,73 +4096,63 @@ void graph_button_motion_callback(chan_info *cp, int x, int y, Tempus time, Temp
 		  move_selection(cp, x);
 		}
 	      dragged = true;
-	    }
-	  else
-	    {
-	      
-	      if (click_within_graph == FFT_AXIS)
+	      break;
+	    case FFT_AXIS:
+	      /* change spectro_cutoff(ss) and redisplay fft */
+	      old_cutoff = cp->spectro_cutoff;
+	      if (cp->transform_graph_type != GRAPH_AS_SONOGRAM)
 		{
-		  /* change spectro_cutoff(ss) and redisplay fft */
-		  old_cutoff = cp->spectro_cutoff;
-		  if (cp->transform_graph_type != GRAPH_AS_SONOGRAM)
-		    {
 #if HAVE_GL
-		      if ((with_gl(ss)) && (cp->transform_graph_type == GRAPH_AS_SPECTROGRAM))
-			{
-			  Float ny;
-			  ny = unproject2y(x, y);
-			  set_spectro_cutoff(cp->spectro_cutoff + (fft_faxis_start - ny));
-			  fft_faxis_start = ny;
-			}
-		      else
+		  if ((with_gl(ss)) && (cp->transform_graph_type == GRAPH_AS_SPECTROGRAM))
+		    {
+		      Float ny;
+		      ny = unproject2y(x, y);
+		      set_spectro_cutoff(cp->spectro_cutoff + (fft_faxis_start - ny));
+		      fft_faxis_start = ny;
+		    }
+		  else
 #endif 
-		      set_spectro_cutoff(cp->spectro_cutoff + ((Float)(fft_axis_start - x) / fft_axis_extent(cp)));
-		      fft_axis_start = x;
-		    }
-		  else 
-		    {
-		      set_spectro_cutoff(cp->spectro_cutoff + ((Float)(y - fft_axis_start) / fft_axis_extent(cp)));
-		      fft_axis_start = y;
-		    }
-		  if (spectro_cutoff(ss) > 1.0) set_spectro_cutoff(1.0);
-		  if (spectro_cutoff(ss) < 0.001) set_spectro_cutoff(0.001);
-		  if (old_cutoff != spectro_cutoff(ss)) 
-		    {
-		      reflect_spectro();
-		      if (cp->transform_graph_type != GRAPH_ONCE)
-			for_each_chan(sono_update);
-		      else for_each_chan(update_graph);
-		    }
+		    set_spectro_cutoff(cp->spectro_cutoff + ((Float)(fft_axis_start - x) / fft_axis_extent(cp)));
+		  fft_axis_start = x;
 		}
-	      else
+	      else 
 		{
-		  if (click_within_graph == LISP)
-		    {
-		      if (XEN_HOOKED(mouse_drag_hook))
-			  run_hook(mouse_drag_hook,
-				   XEN_LIST_6(C_TO_SMALL_XEN_INT(cp->sound->index),
-					      C_TO_SMALL_XEN_INT(cp->chan),
-					      C_TO_XEN_INT(-1),
-					      C_TO_XEN_INT(-1),
-					      C_TO_XEN_DOUBLE(ungrf_x(((lisp_grf *)(cp->lisp_info))->axis, x)),
-					      C_TO_XEN_DOUBLE(ungrf_y(((lisp_grf *)(cp->lisp_info))->axis, y))),
-				   S_mouse_drag_hook);
-		      /* I didn't extend this to the time/fft graphs (and add a parameter to tell which is active)
-		       *   because in the time graph, there are already many ways to interpret the drag ahead of
-		       *   the hook (mark-drag, mix-drag, mark-triangle-drag, etc), and in the fft there is the
-		       *   fft-axis drag complication.  Also it's not obvious that anything useful can be done.
-		       *   Spectral editing (treat fft-graph drag as spectrum portion selection) would need
-		       *   much other support (redisplay as if selected fft portion, etc).
-		       */
-		      return;
-		    }
-		  if ((cp->verbose_cursor) && (within_graph(cp, x, y) == FFT_MAIN))
-		    {
-		      str = describe_fft_point(cp, x, y);
-		      report_in_minibuffer(cp->sound, str);
-		      if (str) FREE(str);
-		    }
+		  set_spectro_cutoff(cp->spectro_cutoff + ((Float)(y - fft_axis_start) / fft_axis_extent(cp)));
+		  fft_axis_start = y;
 		}
+	      if (spectro_cutoff(ss) > 1.0) set_spectro_cutoff(1.0);
+	      if (spectro_cutoff(ss) < 0.001) set_spectro_cutoff(0.001);
+	      if (old_cutoff != spectro_cutoff(ss)) 
+		{
+		  reflect_spectro();
+		  if (cp->transform_graph_type != GRAPH_ONCE)
+		    for_each_chan(sono_update);
+		  else for_each_chan(update_graph);
+		}
+	      break;
+	    case LISP:
+	      if (XEN_HOOKED(mouse_drag_hook))
+		run_hook(mouse_drag_hook,
+			 XEN_LIST_6(C_TO_SMALL_XEN_INT(cp->sound->index),
+				    C_TO_SMALL_XEN_INT(cp->chan),
+				    C_TO_XEN_INT(-1),
+				    C_TO_XEN_INT(-1),
+				    C_TO_XEN_DOUBLE(ungrf_x(((lisp_grf *)(cp->lisp_info))->axis, x)),
+				    C_TO_XEN_DOUBLE(ungrf_y(((lisp_grf *)(cp->lisp_info))->axis, y))),
+			 S_mouse_drag_hook);
+	      /* TODO: mouse-drag-hook: pass in unaltered x y, add axis */
+	      break;
+	    case FFT_MAIN:
+	      if ((cp->verbose_cursor) && 
+		  (within_graph(cp, x, y) == FFT_MAIN))
+		{
+		  str = describe_fft_point(cp, x, y);
+		  report_in_minibuffer(cp->sound, str);
+		  if (str) FREE(str);
+		}
+	      break;
+	    default:
+	      break;
 	    }
 	}
     }
@@ -4770,6 +4753,8 @@ static XEN channel_set(XEN snd_n, XEN chn_n, XEN on, cp_field_t fld, char *calle
 	  cp->beats_per_minute = curamp;
 	  update_graph(cp);
 	}
+      break;
+    default:
       break;
     }
   return(C_TO_XEN_BOOLEAN(val));
@@ -7045,7 +7030,6 @@ this makes it possible to use different colors for the various graphs. \
 If it returns a function (of no arguments), that function is called rather than the standard graph routine."
   #define H_mouse_press_hook S_mouse_press_hook " (snd chn button state x y): called upon mouse button press within the lisp graph."
   #define H_mouse_click_hook S_mouse_click_hook " (snd chn button state x y axis): called upon button click."
-  #define H_mouse_release_hook S_mouse_release_hook " (snd chn button state x y): called upon mouse button release within the lisp graph."
   #define H_mouse_drag_hook S_mouse_drag_hook " (snd chn button state x y): called upon mouse drag within the lisp graph."
   #define H_mark_click_hook S_mark_click_hook " (id): called when a mark is clicked; return #t to squelch the default message."
   #define H_mix_click_hook S_mix_click_hook " (id): called when a mix is clicked; return #t to squelch the default message."
@@ -7064,7 +7048,6 @@ and #t thereafter."
   XEN_DEFINE_HOOK(lisp_graph_hook,    S_lisp_graph_hook, 2,    H_lisp_graph_hook);    /* args = sound channel */
   XEN_DEFINE_HOOK(mouse_press_hook,   S_mouse_press_hook, 6,   H_mouse_press_hook);   /* args = sound channel button state x y */
   XEN_DEFINE_HOOK(mouse_click_hook,   S_mouse_click_hook, 7,   H_mouse_click_hook);   /* args = sound channel button state x y axis */
-  XEN_DEFINE_HOOK(mouse_release_hook, S_mouse_release_hook, 6, H_mouse_release_hook); /* args = sound channel button state x y */
   XEN_DEFINE_HOOK(mouse_drag_hook,    S_mouse_drag_hook, 6,    H_mouse_drag_hook);    /* args = sound channel button state x y */
   XEN_DEFINE_HOOK(key_press_hook,     S_key_press_hook, 4,     H_key_press_hook);     /* args = sound channel key state */
   XEN_DEFINE_HOOK(mark_click_hook,    S_mark_click_hook, 1,    H_mark_click_hook);    /* arg = id */

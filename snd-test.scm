@@ -1294,8 +1294,6 @@
 	  (snd-display ";mix-drag-hook: ~A?" mix-drag-hook))
       (if (or (not (hook? mouse-drag-hook)) (not (hook-empty? mouse-drag-hook)))
 	  (snd-display ";mouse-drag-hook: ~A?" mouse-drag-hook))
-      (if (or (not (hook? mouse-release-hook)) (not (hook-empty? mouse-release-hook)))
-	  (snd-display ";mouse-release-hook: ~A?" mouse-release-hook))
       (if (or (not (hook? mouse-click-hook)) (not (hook-empty? mouse-click-hook)))
 	  (snd-display ";mouse-click-hook: ~A?" mouse-click-hook))
       (if (or (not (hook? mouse-press-hook)) (not (hook-empty? mouse-press-hook)))
@@ -16569,7 +16567,6 @@ EDITS: 5
   
   (add-hook! mouse-drag-hook arg6) (carg6 mouse-drag-hook)
   (add-hook! mouse-press-hook arg6) (carg6 mouse-press-hook)
-  (add-hook! mouse-release-hook arg6) (carg6 mouse-release-hook)
   
   (add-hook! enved-hook arg5) (carg5 enved-hook)
   (reset-almost-all-hooks)
@@ -38109,7 +38106,6 @@ EDITS: 2
 			    (list mouse-drag-hook 'mouse-drag-hook)
 			    (list mouse-press-hook 'mouse-press-hook)
 			    (list mouse-click-hook 'mouse-click-hook)
-			    (list mouse-release-hook 'mouse-release-hook)
 			    (list enved-hook 'enved-hook)))
 	    
 	    (check-error-tag 'no-such-envelope (lambda () (set! (enved-active-env) "not-an-env")))

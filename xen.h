@@ -18,6 +18,7 @@
 
 /* HISTORY:
  *  
+ *   19-Aug-03: xen_rb_str_new2 to avoid unwanted side-effects.
  *   12-Aug-03: various changes for ISO C99.
  *   30-Jul-03: use new SCM_VECTOR_REF/SET macros if they're defined.
  *   7-Apr-03:  changes to error handlers for more perspicuous error messages
@@ -617,7 +618,7 @@ void xen_guile_define_procedure_with_reversed_setter(char *get_name, XEN (*get_f
   #define XEN_TO_C_LONG_LONG(a)           XEN_TO_C_INT(a)
 #endif
 
-#define C_TO_XEN_STRING(a)                rb_str_new2((a) ? ((char *)a) : "")
+#define C_TO_XEN_STRING(a)                xen_rb_str_new2((char *)a)
 #define XEN_TO_C_STRING(Str)              RSTRING(Str)->ptr
 
 #define C_TO_XEN_BOOLEAN(a)               ((a) ? Qtrue : Qfalse)
@@ -1145,7 +1146,7 @@ XEN xen_rb_apply(XEN func, XEN args);
 XEN xen_rb_funcall_0(XEN func);
 int xen_rb_required_args(XEN val);
 XEN xen_rb_copy_list(XEN val); /* Ruby arrays (lists) are passed by reference */
-
+XEN xen_rb_str_new2(char *arg);
 #endif
 /* end RUBY */
 

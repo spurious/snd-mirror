@@ -896,7 +896,8 @@ Widget start_color_dialog(void)
 static XEN orientation_hook;
 static void check_orientation_hook(void)
 {
-  run_hook(orientation_hook, XEN_EMPTY_LIST, S_orientation_hook);
+  if (XEN_HOOKED(orientation_hook))
+    run_hook(orientation_hook, XEN_EMPTY_LIST, S_orientation_hook);
 }
 
 typedef struct {

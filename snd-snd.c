@@ -2282,6 +2282,8 @@ static XEN sound_set(XEN snd_n, XEN val, sp_field_t fld, char *caller)
     case SP_REVERB_DECAY:     
       sp->reverb_control_decay = XEN_TO_C_DOUBLE_WITH_CALLER(val, caller);
       break;
+    default:
+      break;
     }
   return(val);
 }

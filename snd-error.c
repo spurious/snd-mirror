@@ -33,7 +33,7 @@ void snd_warning(char *format, ...)
 				   XEN_LIST_1(C_TO_XEN_STRING(snd_error_buffer)),
 				   S_snd_warning_hook))))
     return;
-  if ((ss) && (!(ss->batch_mode)))
+  if ((ss) && (!(ss->batch_mode)) && (ss->max_sounds > 0))
     {
       sp = any_selected_sound();
       if ((sp) && (sp->active))

@@ -713,9 +713,11 @@ void release_dangling_readers(chan_info *cp, int edit_ctr);
 void extend_with_zeros(chan_info *cp, off_t beg, off_t num, const char *origin, int edpos);
 void file_insert_samples(off_t beg, off_t num, char *tempfile, chan_info *cp, int chan, file_delete_t auto_delete, const char *origin, int edpos);
 void delete_samples(off_t beg, off_t num, chan_info *cp, const char *origin, int edpos);
-void change_samples(off_t beg, off_t num, mus_sample_t *vals, chan_info *cp, int lock, const char *origin, int edpos);
-void file_change_samples(off_t beg, off_t num, char *tempfile, chan_info *cp, int chan, file_delete_t auto_delete, int lock, const char *origin, int edpos);
-void file_override_samples(off_t num, char *tempfile, chan_info *cp, int chan, file_delete_t auto_delete, int lock, const char *origin);
+void change_samples(off_t beg, off_t num, mus_sample_t *vals, chan_info *cp, lock_mix_t lock, const char *origin, int edpos);
+void file_change_samples(off_t beg, off_t num, char *tempfile, chan_info *cp, int chan, 
+			 file_delete_t auto_delete, lock_mix_t lock, const char *origin, int edpos);
+void file_override_samples(off_t num, char *tempfile, chan_info *cp, int chan, 
+			   file_delete_t auto_delete, lock_mix_t lock, const char *origin);
 Float chn_sample(off_t samp, chan_info *cp, int pos);
 snd_fd *free_snd_fd(snd_fd *sf);
 char *sf_to_string(snd_fd *fd);
