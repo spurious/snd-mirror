@@ -14404,8 +14404,46 @@ EDITS: 3
 			(lambda () (n arg1 arg2))
 			(lambda args (car args))))
 	       make-procs))
-	    (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-delay 32) :wave -1 0 1 #f #t '() 12345678901234567890)))
+	    (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) :wave -1 0 1 #f #t '() 12345678901234567890)))
 	 keyargs)
+
+	(if all-args
+	    (begin
+	      (for-each
+	       (lambda (arg1)
+		 (for-each 
+		  (lambda (arg2)
+		    (for-each 
+		     (lambda (arg3)
+		       (for-each 
+			(lambda (n)
+			  (catch #t
+				 (lambda () (n arg1 arg2 arg3))
+				 (lambda args (car args))))
+			make-procs))
+		     (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) :wave -1 0 1 #f #t '() 12345678901234567890)))
+		  keyargs))
+	       (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) :wave -1 0 1 #f #t '() 12345678901234567890))
+	      
+	      (for-each
+	       (lambda (arg1)
+		 (for-each 
+		  (lambda (arg2)
+		    (for-each 
+		     (lambda (arg3)
+		       (for-each 
+			(lambda (arg4)
+			  (for-each 
+			   (lambda (n)
+			     (catch #t
+				    (lambda () (n arg1 arg2 arg3))
+				    (lambda args (car args))))
+			   make-procs))
+			(list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) :wave -1 0 1 #f #t '() 12345678901234567890)))
+		     keyargs))
+		  (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) :wave -1 0 1 #f #t '() 12345678901234567890)))
+	       keyargs)))
+	(gc)
 
 	;; ---------------- 0 Args
 	(for-each 

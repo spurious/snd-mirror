@@ -449,9 +449,9 @@ static XEN g_move_scale(XEN scale, XEN val)
   /* weird that Motif does not have a notify arg (or any equivalent anywhere) for XmScaleSetValue */
   Widget scl;
   XmScaleCallbackStruct *cbs;
-  cbs = CALLOC(1, sizeof(XmScaleCallbackStruct));
+  cbs = calloc(1, sizeof(XmScaleCallbackStruct));
   cbs->value = XEN_TO_C_INT(val);
-  cbs->event = CALLOC(1, sizeof(XEvent)); /* needed else freed mem troubles -- who is freeing these pointers? */
+  cbs->event = calloc(1, sizeof(XEvent)); /* needed else freed mem troubles -- who is freeing these pointers? */
   scl = (Widget)(XEN_UNWRAP_C_POINTER(scale));
   XmScaleSetValue(scl, cbs->value);
   XtCallCallbacks(scl, XmNvalueChangedCallback, (XtPointer)cbs);

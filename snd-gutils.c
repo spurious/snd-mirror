@@ -9,7 +9,8 @@ int set_help_text_font(snd_state *ss, char *font)
   fs = gdk_font_load(font);
   if (fs)
     {
-      in_set_help_text_font(ss, font);
+      if (help_text_font(ss)) FREE(help_text_font(ss));
+      in_set_help_text_font(ss, copy_string(font));
       sgx->help_text_fnt = fs;
       return(TRUE);
     }
@@ -25,7 +26,8 @@ int set_tiny_font(snd_state *ss, char *font)
   fs = gdk_font_load(font);
   if (fs)
     {
-      in_set_tiny_font(ss, font);
+      if (tiny_font(ss)) FREE(tiny_font(ss));
+      in_set_tiny_font(ss, copy_string(font));
       sgx->tiny_fnt = fs;
       return(TRUE);
     }
@@ -39,7 +41,8 @@ int set_listener_font(snd_state *ss, char *font)
   fs = gdk_font_load(font);
   if (fs)
     {
-      in_set_listener_font(ss, font);
+      if (listener_font(ss)) FREE(listener_font(ss));
+      in_set_listener_font(ss, copy_string(font));
       (ss->sgx)->listener_fnt = fs;
       return(TRUE);
     }
@@ -53,7 +56,8 @@ int set_button_font(snd_state *ss, char *font)
   fs = gdk_font_load(font);
   if (fs)
     {
-      in_set_button_font(ss, font);
+      if (button_font(ss)) FREE(button_font(ss));
+      in_set_button_font(ss, copy_string(font));
       (ss->sgx)->button_fnt = fs;
       return(TRUE);
     }
@@ -67,7 +71,8 @@ int set_bold_button_font(snd_state *ss, char *font)
   fs = gdk_font_load(font);
   if (fs)
     {
-      in_set_bold_button_font(ss, font);
+      if (bold_button_font(ss)) FREE(bold_button_font(ss));
+      in_set_bold_button_font(ss, copy_string(font));
       (ss->sgx)->bold_button_fnt = fs;
       return(TRUE);
     }
@@ -81,7 +86,8 @@ int set_axis_label_font(snd_state *ss, char *font)
   fs = gdk_font_load(font);
   if (fs)
     {
-      in_set_axis_label_font(ss, font);
+      if (axis_label_font(ss)) FREE(axis_label_font(ss));
+      in_set_axis_label_font(ss, copy_string(font));
       (ss->sgx)->axis_label_fnt = fs;
       return(TRUE);
     }
@@ -95,7 +101,8 @@ int set_axis_numbers_font(snd_state *ss, char *font)
   fs = gdk_font_load(font);
   if (fs)
     {
-      in_set_axis_numbers_font(ss, font);
+      if (axis_numbers_font(ss)) FREE(axis_numbers_font(ss));
+      in_set_axis_numbers_font(ss, copy_string(font));
       (ss->sgx)->axis_numbers_fnt = fs;
       return(TRUE);
     }
@@ -165,7 +172,7 @@ void clear_window(axis_context *ax)
 void map_over_children (GtkWidget *w, void (*func)(GtkWidget *w, gpointer ptr), void *userptr)
 {
   /* apply func to each child in entire tree beneath top widget */
-  /* used mostly to get colors right in non-scheme environments with "convenience" widgets */
+  /* used mostly to get colors right in "convenience" widgets */
 
   if (w)
     {

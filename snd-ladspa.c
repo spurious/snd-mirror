@@ -198,7 +198,7 @@ static void loadLADSPALibrary(void * pvPluginHandle,
    loadLADSPA. */
 static void loadLADSPADirectory(const char * pcDirectory) {
 
-  char * pcFilename;
+  char * pcFilename = NULL;
   DIR * psDirectory;
   LADSPA_Descriptor_Function fDescriptorFunction;
   long lDirLength;
@@ -251,6 +251,8 @@ static void loadLADSPADirectory(const char * pcDirectory) {
 	/* dlclose(pcFilename); */
       }
     }
+    if (pcFilename) FREE(pcFilename);
+    pcFilename = NULL;
   }
 }
 
@@ -258,7 +260,7 @@ static void loadLADSPADirectory(const char * pcDirectory) {
 
 static void loadLADSPA() {
 
-  char * pcBuffer;
+  char * pcBuffer = NULL;
   const char * pcEnd;
   const char * pcLADSPAPath;
   const char * pcStart;
@@ -295,6 +297,9 @@ static void loadLADSPA() {
     pcStart = pcEnd;
     if (*pcStart == ':')
       pcStart++;
+
+    if (pcBuffer) FREE(pcBuffer);
+    pcBuffer = NULL;
   }
 
   /* FIXME: It might be nice to qsort the data in the repository by
@@ -466,7 +471,7 @@ Information about about parameters can be acquired using analyse-ladspa."
   XEN xenParameters;
   LADSPA_PortDescriptor iPortDescriptor;
 
-  LADSPA_Data *pfControls;
+  LADSPA_Data *pfControls = NULL;
   LADSPA_Data **pfOutputBuffer;
   chan_info *cp, *ncp;
   snd_info *sp;
@@ -746,6 +751,8 @@ Information about about parameters can be acquired using analyse-ladspa."
 #endif
       FREE(data[i]);
     }
+  if (sf) FREE(sf);
+  if (pfControls) FREE(pfControls);
   FREE(data);
   FREE(pfInputBuffer);
 #if (!SNDLIB_USE_FLOATS)

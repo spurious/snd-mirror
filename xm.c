@@ -21680,7 +21680,8 @@ static int alphabet_compare(const void *a, const void *b)
   return(strcmp(d1->name, d2->name));
 }
 
-#define XM_HASH_SIZE 1024
+/* #define XM_HASH_SIZE 1024 */
+#define XM_HASH_SIZE 700
 
 static hdata **xm_hash = NULL;
 static int hd_ctr = 0;

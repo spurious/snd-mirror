@@ -42,7 +42,8 @@ int set_help_text_font(snd_state *ss, char *font)
   fs = XLoadQueryFont(MAIN_DISPLAY(ss), font);
   if (fs)
     {
-      in_set_help_text_font(ss, font);
+      if (help_text_font(ss)) FREE(help_text_font(ss));
+      in_set_help_text_font(ss, copy_string(font)); /* may be temporary from caller's viewpoint */
       sgx->help_text_fontstruct = fs;
       if (sgx->help_text_fontlist) XM_FONT_FREE(sgx->help_text_fontlist);
       sgx->help_text_fontlist = get_xm_font(ss, sgx->help_text_fontstruct, font, "help_text_font");
@@ -59,7 +60,8 @@ int set_tiny_font(snd_state *ss, char *font)
   fs = XLoadQueryFont(MAIN_DISPLAY(ss), font);
   if (fs)
     {
-      in_set_tiny_font(ss, font);
+      if (tiny_font(ss)) FREE(tiny_font(ss));
+      in_set_tiny_font(ss, copy_string(font));
       sgx->tiny_fontstruct = fs;
       if (sgx->tiny_fontlist) XM_FONT_FREE(sgx->tiny_fontlist);
       sgx->tiny_fontlist = get_xm_font(ss, sgx->tiny_fontstruct, font, "tiny_font");
@@ -74,7 +76,8 @@ int set_listener_font(snd_state *ss, char *font)
   fs = XLoadQueryFont(MAIN_DISPLAY(ss), font);
   if (fs)
     {
-      in_set_listener_font(ss, font);
+      if (listener_font(ss)) FREE(listener_font(ss));
+      in_set_listener_font(ss, copy_string(font));
       (ss->sgx)->listener_fontstruct = fs;
       if ((ss->sgx)->listener_fontlist) XM_FONT_FREE((ss->sgx)->listener_fontlist);
       (ss->sgx)->listener_fontlist = get_xm_font(ss, (ss->sgx)->listener_fontstruct, font, "listener_font");
@@ -89,7 +92,8 @@ int set_button_font(snd_state *ss, char *font)
   fs = XLoadQueryFont(MAIN_DISPLAY(ss), font);
   if (fs)
     {
-      in_set_button_font(ss, font);
+      if (button_font(ss)) FREE(button_font(ss));
+      in_set_button_font(ss, copy_string(font));
       (ss->sgx)->button_fontstruct = fs;
       if ((ss->sgx)->button_fontlist) XM_FONT_FREE((ss->sgx)->button_fontlist);
       (ss->sgx)->button_fontlist = get_xm_font(ss, (ss->sgx)->button_fontstruct, font, "button_font");
@@ -104,7 +108,8 @@ int set_bold_button_font(snd_state *ss, char *font)
   fs = XLoadQueryFont(MAIN_DISPLAY(ss), font);
   if (fs)
     {
-      in_set_bold_button_font(ss, font);
+      if (bold_button_font(ss)) FREE(bold_button_font(ss));
+      in_set_bold_button_font(ss, copy_string(font));
       (ss->sgx)->bold_button_fontstruct = fs;
       if ((ss->sgx)->bold_button_fontlist) XM_FONT_FREE((ss->sgx)->bold_button_fontlist);
       (ss->sgx)->bold_button_fontlist = get_xm_font(ss, (ss->sgx)->bold_button_fontstruct, font, "bold_button_font");
@@ -119,7 +124,8 @@ int set_axis_label_font(snd_state *ss, char *font)
   fs = XLoadQueryFont(MAIN_DISPLAY(ss), font);
   if (fs)
     {
-      in_set_axis_label_font(ss, font);
+      if (axis_label_font(ss)) FREE(axis_label_font(ss));
+      in_set_axis_label_font(ss, copy_string(font));
       (ss->sgx)->axis_label_fontstruct = fs;
       return(TRUE);
     }
@@ -132,7 +138,8 @@ int set_axis_numbers_font(snd_state *ss, char *font)
   fs = XLoadQueryFont(MAIN_DISPLAY(ss), font);
   if (fs)
     {
-      in_set_axis_numbers_font(ss, font);
+      if (axis_numbers_font(ss)) FREE(axis_numbers_font(ss));
+      in_set_axis_numbers_font(ss, copy_string(font));
       (ss->sgx)->axis_numbers_fontstruct = fs;
       return(TRUE);
     }

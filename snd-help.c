@@ -180,7 +180,7 @@ char *version_info(void)
 	                itoa[1] = snd_itoa(MUS_REVISION), " (", 
                         MUS_DATE, ")",
 #if HAVE_GSL
-	  "\n    gsl",
+	  "\n    GSL",
   #ifdef GSL_VERSION
           ": ", GSL_VERSION,
   #endif
@@ -267,6 +267,7 @@ void news_help(snd_state *ss)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+10-Nov:  new-widget-hook.\n\
 5-Nov:   snd 5.4.\n\
 29-Oct:  added contrib/dlp directory with Dave Phillips' ladspa plugin stuff.\n\
 16-Oct:  multichannel ladspa plugins, ladspa-dir.\n\

@@ -1400,8 +1400,7 @@ static XEN g_set_help_text_font(XEN val)
 {
   #define H_help_text_font "(" S_help_text_font ") -> font used in the Help dialog"
   XEN_ASSERT_TYPE(XEN_STRING_P(val), val, XEN_ONLY_ARG, "set-" S_help_text_font, "a string"); 
-  /* TODO: check free here and below [needs a bazillion copy_strings in snd-xmain and so on] */
-  set_help_text_font(state, copy_string(XEN_TO_C_STRING(val))); 
+  set_help_text_font(state, XEN_TO_C_STRING(val)); 
   return(val);
 }
 
@@ -1410,7 +1409,7 @@ static XEN g_set_tiny_font(XEN val)
 {
   #define H_tiny_font "(" S_tiny_font ") -> font use for some info in the graphs"
   XEN_ASSERT_TYPE(XEN_STRING_P(val), val, XEN_ONLY_ARG, "set-" S_tiny_font, "a string"); 
-  set_tiny_font(state, copy_string(XEN_TO_C_STRING(val))); 
+  set_tiny_font(state, XEN_TO_C_STRING(val)); 
   return(val);
 }
 
@@ -1419,7 +1418,7 @@ static XEN g_set_axis_label_font(XEN val)
 {
   #define H_axis_label_font "(" S_axis_label_font ") -> font used for axis labels"
   XEN_ASSERT_TYPE(XEN_STRING_P(val), val, XEN_ONLY_ARG, "set-" S_axis_label_font, "a string"); 
-  set_axis_label_font(state, copy_string(XEN_TO_C_STRING(val))); 
+  set_axis_label_font(state, XEN_TO_C_STRING(val)); 
   return(val);
 }
 
@@ -1428,7 +1427,7 @@ static XEN g_set_axis_numbers_font(XEN val)
 {
   #define H_axis_numbers_font "(" S_axis_numbers_font ") -> font used for axis numbers"
   XEN_ASSERT_TYPE(XEN_STRING_P(val), val, XEN_ONLY_ARG, "set-" S_axis_numbers_font, "a string"); 
-  set_axis_numbers_font(state, copy_string(XEN_TO_C_STRING(val))); 
+  set_axis_numbers_font(state, XEN_TO_C_STRING(val)); 
   return(val);
 }
 
@@ -1437,7 +1436,7 @@ static XEN g_set_listener_font(XEN val)
 {
   #define H_listener_font "(" S_listener_font ") -> font used by the lisp listener"
   XEN_ASSERT_TYPE(XEN_STRING_P(val), val, XEN_ONLY_ARG, "set-" S_listener_font, "a string");
-  set_listener_font(state, copy_string(XEN_TO_C_STRING(val))); 
+  set_listener_font(state, XEN_TO_C_STRING(val)); 
   return(val);
 }
 
@@ -1446,7 +1445,7 @@ static XEN g_set_bold_button_font(XEN val)
 {
   #define H_bold_button_font "(" S_bold_button_font ") -> font used by some buttons"
   XEN_ASSERT_TYPE(XEN_STRING_P(val), val, XEN_ONLY_ARG, "set-" S_bold_button_font, "a string"); 
-  set_bold_button_font(state, copy_string(XEN_TO_C_STRING(val))); 
+  set_bold_button_font(state, XEN_TO_C_STRING(val)); 
   return(val);
 }
 
@@ -1455,7 +1454,7 @@ static XEN g_set_button_font(XEN val)
 {
   #define H_button_font "(" S_button_font ") -> font used by some buttons"
   XEN_ASSERT_TYPE(XEN_STRING_P(val), val, XEN_ONLY_ARG, "set-" S_button_font, "a string"); 
-  set_button_font(state, copy_string(XEN_TO_C_STRING(val))); 
+  set_button_font(state, XEN_TO_C_STRING(val)); 
   return(val);
 }
 
@@ -1486,10 +1485,13 @@ static XEN g_window_y(void)
 static int snd_screen_height(void)
 {
 #if USE_MOTIF
-  /* TODO: find gtk equivalent of screenwidth macro */
   return(HeightOfScreen(ScreenOfDisplay(MAIN_DISPLAY(get_global_state()), 0)));
 #else
+#if USE_GTK
+  return(gdk_screen_height());
+#else
   return(4000);
+#endif
 #endif
 }
 
@@ -1498,7 +1500,11 @@ static int snd_screen_width(void)
 #if USE_MOTIF
   return(WidthOfScreen(ScreenOfDisplay(MAIN_DISPLAY(get_global_state()), 0)));
 #else
+#if USE_GTK
+  return(gdk_screen_width());
+#else
   return(4000);
+#endif
 #endif
 }
 
