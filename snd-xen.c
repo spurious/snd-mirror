@@ -1955,7 +1955,7 @@ reading edit version edit-position (defaulting to the current version)"
   snd_fd *sf;
   sound_data *sd;
   XEN newsd = XEN_FALSE;
-  int i, len, chn = 0, pos;
+  int i, len, chn = 0, pos, maxlen = 0;
   off_t beg;
   XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(samp_0), samp_0, XEN_ARG_1, S_samples2sound_data, "a number");
   XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(samps), samps, XEN_ARG_2, S_samples2sound_data, "a number");
@@ -1966,7 +1966,9 @@ reading edit version edit-position (defaulting to the current version)"
   beg = XEN_TO_C_OFF_T_OR_ELSE(samp_0, 0);
   if (beg < 0)
     mus_misc_error(S_samples2sound_data, "invalid begin sample", samp_0);
-  len = XEN_TO_C_INT_OR_ELSE(samps, (int)(cp->samples[pos] - beg));
+  maxlen = (int)(cp->samples[pos] - beg);
+  len = XEN_TO_C_INT_OR_ELSE(samps, maxlen);
+  if (len > maxlen) len = maxlen;
   if (len > 0)
     {
       chn = XEN_TO_C_INT_OR_ELSE(sdchan, 0);
@@ -1978,9 +1980,12 @@ reading edit version edit-position (defaulting to the current version)"
 	{
 	  newsd = make_sound_data(chn + 1, len);
 	  sd = (sound_data *)XEN_OBJECT_REF(newsd);
+	  if ((sd->data == NULL) || (sd->data[chn] == NULL))
+	    mus_misc_error(S_samples2sound_data, "sound_data memory allocation trouble", newsd);
 	}
       if (chn < sd->chans)
 	{
+	  if (len > sd->length) len = sd->length;
 	  sf = init_sample_read_any(beg, cp, READ_FORWARD, pos);
 	  if (sf)
 	    {

@@ -190,7 +190,7 @@ void chans_field(snd_state *ss, int field, Float val)
 	    case FCP_START:   sp->chans[j]->spectro_start = mus_fclamp(0.0, val, 1.0);   break;
 	    case FCP_CUTOFF:  sp->chans[j]->spectro_cutoff = mus_fclamp(0.0, val, 1.0);  break;
 	    case FCP_BETA:    sp->chans[j]->fft_window_beta = mus_fclamp(0.0, val, 1.0); break;
-	    case FCP_BEATS:   sp->chans[j]->beats_per_minute = val;                      break;
+	    case FCP_BEATS:   if (val > 0.0) sp->chans[j]->beats_per_minute = val;       break;
 	    }
     }
 }
@@ -1227,7 +1227,7 @@ XEN make_graph_data(chan_info *cp, int edit_pos, off_t losamp, off_t hisamp)
   x_start = ap->x_axis_x0;
   x_end = ap->x_axis_x1;
   samps = hisamp - losamp + 1;
-  if ((x_start == x_end) && (samps > 10)) return(XEN_FALSE);
+  if ((samps <= 0) || ((x_start == x_end) && (samps > 10))) return(XEN_FALSE);
   pixels = x_end - x_start;
   if (pixels >= POINT_BUFFER_SIZE) pixels = POINT_BUFFER_SIZE - 1;
   if ((x_start == x_end) || (samps <= 1))
@@ -1356,6 +1356,7 @@ void draw_graph_data(chan_info *cp, off_t losamp, off_t hisamp, int data_size,
       if (hisamp == -1)
 	hisamp = (off_t)(ap->x1 * cur_srate);
       samps = hisamp - losamp + 1;
+      if (samps <= 0) return;
       if (samps > data_size) samps = data_size;
       incr = (double)1.0 / cur_srate;
       for (i = 0, x = start_time; i < samps; i++, x += incr)
@@ -1371,6 +1372,7 @@ void draw_graph_data(chan_info *cp, off_t losamp, off_t hisamp, int data_size,
       if (hisamp == -1)
 	hisamp = data_size - 1;
       samps = hisamp - losamp + 1;
+      if (samps <= 0) return;
       if (samps > data_size) samps = data_size;
       for (i = 0, xi = (ap->x_axis_x0 + losamp); i < samps; i++, xi++)
 	set_grf_points(xi, i, 
@@ -2443,6 +2445,7 @@ static void make_wavogram(chan_info *cp, snd_info *sp, snd_state *ss)
       /* each line is wavo_trace samps, there are (height / wave_hop) of these? */
       int lines, len;
       lines = (int)(ap->height / cp->wavo_hop);
+      if (lines == 0) return;
       len = cp->wavo_trace;
       samps = (Float **)CALLOC(lines, sizeof(Float *));
       js = (int **)CALLOC(lines, sizeof(int *));
@@ -4444,7 +4447,7 @@ static XEN channel_set(XEN snd_n, XEN chn_n, XEN on, int fld, char *caller)
       return(C_TO_XEN_INT(cp->wavo_trace));
       break;
     case CP_MAX_TRANSFORM_PEAKS:
-      cp->max_transform_peaks = g_imin(0, on, DEFAULT_MAX_TRANSFORM_PEAKS); 
+      cp->max_transform_peaks = g_imin(1, on, DEFAULT_MAX_TRANSFORM_PEAKS); 
       return(C_TO_XEN_INT(cp->max_transform_peaks));
       break;
     case CP_ZERO_PAD:
@@ -4645,8 +4648,12 @@ static XEN channel_set(XEN snd_n, XEN chn_n, XEN on, int fld, char *caller)
 	}
       break;
     case CP_BEATS_PER_MINUTE:
-      cp->beats_per_minute = XEN_TO_C_DOUBLE(on);
-      update_graph(cp);
+      curamp = XEN_TO_C_DOUBLE(on);
+      if (curamp > 0.0)
+	{
+	  cp->beats_per_minute = curamp;
+	  update_graph(cp);
+	}
       break;
     }
   return(C_TO_XEN_BOOLEAN(val));
@@ -5696,7 +5703,7 @@ static XEN g_set_max_transform_peaks(XEN n, XEN snd, XEN chn)
     {
       lim = XEN_TO_C_INT(n);
       ss = get_global_state();
-      if (lim >= 0)
+      if (lim >= 1)
 	set_max_transform_peaks(ss, lim);
       return(C_TO_XEN_INT(max_transform_peaks(ss)));
     }
@@ -5884,8 +5891,11 @@ static XEN g_set_beats_per_minute(XEN beats, XEN snd, XEN chn)
     return(channel_set(snd, chn, beats, CP_BEATS_PER_MINUTE, S_setB S_beats_per_minute));
   else
     {
+      Float val;
       ss = get_global_state();
-      set_beats_per_minute(ss, XEN_TO_C_DOUBLE(beats));
+      val = XEN_TO_C_DOUBLE(beats);
+      if (val > 0.0)
+	set_beats_per_minute(ss, val);
       return(C_TO_XEN_DOUBLE(beats_per_minute(ss)));
     }
 }

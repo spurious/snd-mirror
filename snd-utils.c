@@ -466,6 +466,7 @@ void *mem_calloc(size_t len, size_t size, const char *func, const char *file, in
 #else
   ptr = calloc(len, size);
 #endif
+  if (ptr == NULL) {fprintf(stderr,"calloc->null"); abort();}
   remember_pointer(ptr, len * size, func, file, line);
   return(ptr);
 }
@@ -483,6 +484,7 @@ void *mem_malloc(size_t len, const char *func, const char *file, int line)
 #else
   ptr = malloc(len);
 #endif
+  if (ptr == NULL) {fprintf(stderr,"malloc->null"); abort();}
   remember_pointer(ptr, len, func, file, line);
   return(ptr);
 }
@@ -512,6 +514,7 @@ void *mem_realloc(void *ptr, size_t size, const char *func, const char *file, in
 #else
   new_ptr = realloc(ptr, size);
 #endif
+  if (new_ptr == NULL) {fprintf(stderr,"realloc->null"); abort();}
   remember_pointer(new_ptr, size, func, file, line);
   return(new_ptr);
 }
@@ -702,6 +705,7 @@ void mem_report(void)
       ptrs[loc] = ptr;
     }
   Fp = fopen("memlog", "w");
+  if (Fp == NULL) return;
 
   time(&ts);
   strftime(time_buf, TIME_STR_SIZE, STRFTIME_FORMAT, localtime(&ts));

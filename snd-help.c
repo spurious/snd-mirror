@@ -272,6 +272,7 @@ void news_help(snd_state *ss)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+5-Mar:   contrib/popup.rb from Michael Scholz.\n\
 4-Mar:   redo renamed redo_edit in Ruby version.\n\
 3-Mar:   contrib/effects.rb from Michael Scholz.\n\
 1-Mar:   make-power-env and power-env in env.scm.\n\

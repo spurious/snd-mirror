@@ -5487,7 +5487,7 @@ edit position to the start of the list.
 For more about the edit history list, see <a href="#editlists">Edit Lists</a>.
 <br><br>
 In Ruby, <b>redo</b> is a part of the loop handling, so Snd's redo is renamed redo_edit.
-redo-edit also exists in Scheme, for consistency.
+<a name="redoedit">redo-edit</a> also exists in Scheme, for consistency.
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -6531,8 +6531,8 @@ is not 0, which sometimes means that the channel arg is simply ignored.  The fol
       (undo edits snd)))
 </pre>
 See also <a href="#undohook">undo-hook</a>.
-Since <b>redo</b> collides with Ruby, causing me to change its name to redo_edit,
-undo can also be accessed under the name undo_edit (in Scheme, undo-edit).
+Since <b>redo</b> collides with Ruby, forcing me to change its name to redo_edit,
+undo can also be accessed under the name undo_edit (in Scheme, <a name="undoedit">undo-edit</a>).
 </td></tr>
 <tr><td colspan=2></td></tr>
 

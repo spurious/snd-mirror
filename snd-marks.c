@@ -813,7 +813,6 @@ static mark *display_channel_marks_1(chan_info *cp, mark *mp, void *m)
   dpy_last *ls = (dpy_last *)m;
   ap = cp->axis;
   if (mp->samp > ap->hisamp) return(mp); /* terminates loop */
-  /* fprintf(stderr,"mark %d: samp: " OFF_TD ", last: " OFF_TD "\n", mark_id(mp), mp->samp, ls->last_samp); */
   if (mp->samp == ls->last_samp)
     return(NULL); 
   /* actually this should notice how wide in samples the mark stem is and avoid any redraw until we get to the next clear pixel */
@@ -1035,6 +1034,7 @@ void reverse_marks(chan_info *cp, off_t beg, off_t dur) /* beg -1 for full sound
   if (cp->marks == NULL) return;
   ed = cp->edit_ctr;
   mps = cp->marks[ed];
+  if (mps == NULL) return;
   if (beg == -1)
     {
       m = make_mark_1(CURRENT_SAMPLES(cp) - 1, NULL, 0, 0);
@@ -1052,7 +1052,7 @@ void reverse_marks(chan_info *cp, off_t beg, off_t dur) /* beg -1 for full sound
 	    m->samp = end - (m->samp - beg);
 	}
     }
-  if ((mps) && (cp->mark_ctr[ed] >= 0))
+  if (cp->mark_ctr[ed] >= 0)
     qsort((void *)mps, cp->mark_ctr[ed] + 1, sizeof(mark *), compare_mark_samps);
 }
 
@@ -1156,7 +1156,7 @@ void ripple_trailing_marks(chan_info *cp, off_t beg, off_t old_len, off_t new_le
 void swap_marks(chan_info *cp0, chan_info *cp1)
 {
   mark **mps0 = NULL, **mps1 = NULL;
-  int ctr0 = 0, ctr1 = 0;
+  int ctr0 = -1, ctr1 = -1;
   int size0 = 0, size1 = 0;
   int pos0, pos1;
   if ((cp0->marks) || (cp1->marks))

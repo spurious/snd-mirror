@@ -729,7 +729,7 @@ void set_ed_maxamp(chan_info *cp, int edpos, Float val);
 Float ed_maxamp(chan_info *cp, int edpos);
 void set_ed_selection_maxamp(chan_info *cp, Float val);
 Float ed_selection_maxamp(chan_info *cp);
-void copy_then_swap_channels(chan_info *cp0, chan_info *cp1, off_t num, int pos0, int pos1);
+void copy_then_swap_channels(chan_info *cp0, chan_info *cp1, int pos0, int pos1);
 void reflect_file_change_in_label(chan_info *cp);
 
 

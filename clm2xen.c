@@ -2952,9 +2952,7 @@ static XEN g_iir_filter(XEN obj, XEN input)
 
 enum {G_FILTER, G_FIR_FILTER, G_IIR_FILTER};
 enum {G_FILTER_STATE, G_FILTER_XCOEFFS, G_FILTER_YCOEFFS};
-#if (G_FILTER_STATE != MUS_DATA_POSITION)
-  #warn G_FILTER_STATE is wrong
-#endif
+/* G_FILTER_STATE must = MUS_DATA_POSITION */
 
 static XEN g_make_filter_1(int choice, XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6)
 {

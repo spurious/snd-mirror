@@ -189,7 +189,8 @@ static void make_current_console(mix_info *md)
 	if (cs->amp_envs)
 	  cur->amp_envs[i] = copy_env(cs->amp_envs[i]);
       }
-  reflect_mix_in_mix_panel(md->id); /* ??? */
+  /* reflect_mix_in_mix_panel(md->id); */ /* ??? */
+  /* TODO: figure out why this gets an infinite recursion */
 }
 
 static console_state *free_console_state(console_state *cs)

@@ -1,8 +1,8 @@
 # popup.rb -- Specialize Popup Menus converted from Guile to Ruby.
 
 # Translator/Author: Michael Scholz <scholz-micha@gmx.de>
-# Last: Tue Mar 04 04:55:52 CET 2003
-# Version: $Revision: 1.6 $
+# Last: Tue Mar 04 18:02:06 CET 2003
+# Version: $Revision: 1.7 $
 
 # Requires the Motif module (xm.so) or --with-static-xm!
 
@@ -81,6 +81,8 @@ def for_each_child(w, func = nil)
 Applies FUNC to W and each of its children.\n") if w == :help
   func.call(w)
   get_xtvalue(w, RXmNchildren).each do |n| for_each_child(n, func) end if RXtIsComposite(w)
+rescue
+  die get_func_name
 end
 
 def change_label(w, new_label = nil)
@@ -107,6 +109,8 @@ creates a popup menu\n") if name == :help
     end
   end
   menu
+rescue
+  die get_func_name
 end
 
 $selection_popup_menu = lambda do
@@ -124,105 +128,105 @@ $selection_popup_menu = lambda do
                   main_widgets()[2],
                   [RXmNpopupEnabled, true, RXmNbackground, highlight_color()],
                   [["Selection", RxmLabelWidgetClass, every_menu],
-                    ["sep", RxmSeparatorWidgetClass, every_menu],
-                    ["Play", RxmPushButtonWidgetClass, every_menu,
-                      lambda do |w, c, i|
-                        if stopping
-                          stopping = false
-                          change_label(w, "Play")
-                          if stopping1
-                            stopping1 = false
-                            change_label(stop_widget1, "Loop play")
-                            $stop_playing_selection_hook.remove_hook!("popup_play_selection")
-                          end
-                          stop_playing()
-                        else
-                          change_label(w, "Stop")
-                          stop_widget = w
-                          stopping = true
-                          play_selection()
-                        end
-                      end],
-                    ["Loop play", RxmPushButtonWidgetClass, every_menu,
-                      lambda do |w, c, i|
+                   ["sep", RxmSeparatorWidgetClass, every_menu],
+                   ["Play", RxmPushButtonWidgetClass, every_menu,
+                    lambda do |w, c, i|
+                      if stopping
+                        stopping = false
+                        change_label(w, "Play")
                         if stopping1
                           stopping1 = false
-                          change_label(w, "Loop play")
+                          change_label(stop_widget1, "Loop play")
                           $stop_playing_selection_hook.remove_hook!("popup_play_selection")
-                          if stopping
-                            stopping = false
-                            change_label(stop_widget, "Play")
-                          end
-                          stop_playing()
-                        else
-                          change_label(w, "Stop!")
-                          stop_widget1 = w
-                          stopping1 = true
-                          $stop_playing_selection_hook.add_hook!("popup_play_selection") do | |
-                            play_selection()
-                          end
+                        end
+                        stop_playing()
+                      else
+                        change_label(w, "Stop")
+                        stop_widget = w
+                        stopping = true
+                        play_selection()
+                      end
+                    end],
+                   ["Loop play", RxmPushButtonWidgetClass, every_menu,
+                    lambda do |w, c, i|
+                      if stopping1
+                        stopping1 = false
+                        change_label(w, "Loop play")
+                        $stop_playing_selection_hook.remove_hook!("popup_play_selection")
+                        if stopping
+                          stopping = false
+                          change_label(stop_widget, "Play")
+                        end
+                        stop_playing()
+                      else
+                        change_label(w, "Stop!")
+                        stop_widget1 = w
+                        stopping1 = true
+                        $stop_playing_selection_hook.add_hook!("popup_play_selection") do | |
                           play_selection()
                         end
-                      end],
-                    ["Delete", RxmPushButtonWidgetClass, every_menu,
-                      lambda do |w, c, i| delete_selection() end],
-                    ["Zero", RxmPushButtonWidgetClass, every_menu,
-                      lambda do |w, c, i| scale_selection_by(0.0) end],
-                    ["Crop", RxmPushButtonWidgetClass, every_menu,
-                      lambda do |w, c, i|
-                        sndlist = []
-                        sounds().each do |snd|
-                          (channels(snd) - 1).downto(0) do |i|
-                            sndlist.unshift([snd, i]) if selection_member?(snd, i)
-                          end
+                        play_selection()
+                      end
+                    end],
+                   ["Delete", RxmPushButtonWidgetClass, every_menu,
+                    lambda do |w, c, i| delete_selection() end],
+                   ["Zero", RxmPushButtonWidgetClass, every_menu,
+                    lambda do |w, c, i| scale_selection_by(0.0) end],
+                   ["Crop", RxmPushButtonWidgetClass, every_menu,
+                    lambda do |w, c, i|
+                      sndlist = []
+                      sounds().each do |snd|
+                        (channels(snd) - 1).downto(0) do |i|
+                          sndlist.unshift([snd, i]) if selection_member?(snd, i)
                         end
-                        sndlist.each do |selection|
-                          as_one_edit(lambda do | |
-                                        snd = selection[0]
-                                        chn = selection[1]
-                                        beg = selection_position(snd, chn)
-                                        len = selection_frames(snd, chn)
-                                        delete_samples(0, beg, snd, chn) if beg > 0
-                                        if len < frames(snd, chn)
-                                          delete_samples(len + 1, frames(snd, chn) - len, snd, chn)
-                                        end
-                                      end)
-                        end
-                      end],
-                    ["Save as", RxmPushButtonWidgetClass, every_menu,
-                      lambda do |w, c, i| edit_save_as_dialog() end],
-                    ["Copy->New", RxmPushButtonWidgetClass, every_menu,
-                      lambda do |w, c, i|
-                        new_file_name = "newf-#{selctr}.snd"
-                        selctr += 1
-                        save_selection(new_file_name)
-                        open_sound(new_file_name)
-                      end],
-                    ["Cut->New", RxmPushButtonWidgetClass, every_menu,
-                      lambda do |w, c, i|
-                        new_file_name = "newf-#{selctr}.snd"
-                        selctr += 1
-                        save_selection(new_file_name)
-                        delete_selection()
-                        open_sound(new_file_name)
-                      end],
-                    ["Snap marks", RxmPushButtonWidgetClass, every_menu,
-                      lambda do |w, c, i|
-                        selection_members().each do |snd, chn|
-                          pos = selection_position(snd, chn)
-                          len = selection_frames(snd, chn)
-                          add_mark(pos, snd, chn)
-                          add_mark(pos + len, snd, chn)
-                        end
-                      end],
-                    ["Unselect", RxmPushButtonWidgetClass, every_menu,
-                      lambda do |w, c, i| set_selection_member?(false, true) end],
-                    ["Revert", RxmPushButtonWidgetClass, every_menu,
-                      lambda do |w, c, i| reverse_selection() end],
-                    ["Mix", RxmPushButtonWidgetClass, every_menu,
-                      lambda do |w, c, i| mix_selection(cursor()) end],
-                    ["Invert", RxmPushButtonWidgetClass, every_menu,
-                      lambda do |w, c, i| scale_selection_by(-1) end]])
+                      end
+                      sndlist.each do |selection|
+                        as_one_edit(lambda do | |
+                                      snd = selection[0]
+                                      chn = selection[1]
+                                      beg = selection_position(snd, chn)
+                                      len = selection_frames(snd, chn)
+                                      delete_samples(0, beg, snd, chn) if beg > 0
+                                      if len < frames(snd, chn)
+                                        delete_samples(len + 1, frames(snd, chn) - len, snd, chn)
+                                      end
+                                    end)
+                      end
+                    end],
+                   ["Save as", RxmPushButtonWidgetClass, every_menu,
+                    lambda do |w, c, i| edit_save_as_dialog() end],
+                   ["Copy->New", RxmPushButtonWidgetClass, every_menu,
+                    lambda do |w, c, i|
+                      new_file_name = "newf-#{selctr}.snd"
+                      selctr += 1
+                      save_selection(new_file_name)
+                      open_sound(new_file_name)
+                    end],
+                   ["Cut->New", RxmPushButtonWidgetClass, every_menu,
+                    lambda do |w, c, i|
+                      new_file_name = "newf-#{selctr}.snd"
+                      selctr += 1
+                      save_selection(new_file_name)
+                      delete_selection()
+                      open_sound(new_file_name)
+                    end],
+                   ["Snap marks", RxmPushButtonWidgetClass, every_menu,
+                    lambda do |w, c, i|
+                      selection_members().each do |snd, chn|
+                        pos = selection_position(snd, chn)
+                        len = selection_frames(snd, chn)
+                        add_mark(pos, snd, chn)
+                        add_mark(pos + len, snd, chn)
+                      end
+                    end],
+                   ["Unselect", RxmPushButtonWidgetClass, every_menu,
+                    lambda do |w, c, i| set_selection_member?(false, true) end],
+                   ["Revert", RxmPushButtonWidgetClass, every_menu,
+                    lambda do |w, c, i| reverse_selection() end],
+                   ["Mix", RxmPushButtonWidgetClass, every_menu,
+                    lambda do |w, c, i| mix_selection(cursor()) end],
+                   ["Invert", RxmPushButtonWidgetClass, every_menu,
+                    lambda do |w, c, i| scale_selection_by(-1) end]])
 end.call
 
 $graph_popup_snd = nil
@@ -242,166 +246,172 @@ $graph_popup_menu = lambda do
                   main_widgets()[2],
                   [RXmNpopupEnabled, true, RXmNbackground, highlight_color()],
                   [["Snd", RxmLabelWidgetClass, every_menu],
-                    ["sep", RxmSeparatorWidgetClass, every_menu],
-                    ["Play", RxmPushButtonWidgetClass, every_menu,
-                      lambda do |w, c, i|
-                        if stopping
-                          stopping = false
-                          change_label(w, "Play")
-                          stop_playing()
-                        else
-                          change_label(w, "Stop")
-                          stopping = true
-                          play(0, $graph_popup_snd)
-                        end
-                      end, lambda do |wid| stop_widget = wid end],
-                    ["Play channel", RxmPushButtonWidgetClass, every_menu,
-                      lambda do |w, c, i|
+                   ["sep", RxmSeparatorWidgetClass, every_menu],
+                   ["Play", RxmPushButtonWidgetClass, every_menu,
+                    lambda do |w, c, i|
+                      if stopping
+                        stopping = false
+                        change_label(w, "Play")
+                        stop_playing()
+                      else
+                        change_label(w, "Stop")
                         stopping = true
-                        change_label(stop_widget, "Stop")
-                        play(0, $graph_popup_snd, $graph_popup_chn)
-                      end],
-                    ["Play from cursor", RxmPushButtonWidgetClass, every_menu,
-                      lambda do |w, c, i|
-                        stopping = true
-                        change_label(stop_widget, "Stop")
-                        play(cursor($graph_popup_snd, $graph_popup_chn), $graph_popup_snd)
-                      end],
-                    ["Play previous", RxmPushButtonWidgetClass, every_menu,
-                      lambda do |w, c, i|
-                        stopping = true
-                        change_label(stop_widget, "Stop")
-                        play(0, $graph_popup_snd, $graph_popup_chn, false, false,
-                             edit_position() - 1)
-                      end],
-                    ["Play original", RxmPushButtonWidgetClass, every_menu,
-                      lambda do |w, c, i|
-                        stopping = true
-                        change_label(stop_widget, "Stop")
-                        play(0, $graph_popup_snd, $graph_popup_chn, false, false, 0)
-                      end],
-                    ["Undo", RxmPushButtonWidgetClass, every_menu,
-                      lambda do |w, c, i| undo(1, $graph_popup_snd, $graph_popup_chn) end],
-                    # FIXME
-                    # Snd's redo meets Ruby's redo
-                    # ["Redo", RxmPushButtonWidgetClass, every_menu,
-                    #   lambda do |w, c, i| redo(1, $graph_popup_snd, $graph_popup_chn) end],
-                    ["Revert", RxmPushButtonWidgetClass, every_menu,
-                      lambda do |w, c, i| revert_sound($graph_popup_snd) end],
-                    ["Save", RxmPushButtonWidgetClass, every_menu,
-                      lambda do |w, c, i| save_sound($graph_popup_snd) end],
-                    ["Save as", RxmPushButtonWidgetClass, every_menu,
-                      lambda do |w, c, i|
-                        select_sound($graph_popup_snd)
-                        file_save_as_dialog()
-                      end],
-                    ["Close", RxmPushButtonWidgetClass, every_menu,
-                      lambda do |w, c, i| close_sound($graph_popup_snd) end],
-                    ["Mix selection", RxmPushButtonWidgetClass, every_menu,
-                      lambda do |w, c, i|
-                        mix_selection(cursor($graph_popup_snd, $graph_popup_chn),
-                                      $graph_popup_snd, $graph_popup_chn)
-                      end],
-                    ["Insert selection", RxmPushButtonWidgetClass, every_menu,
-                      lambda do |w, c, i|
-                        insert_selection(cursor($graph_popup_snd, $graph_popup_chn),
-                                         $graph_popup_snd, $graph_popup_chn)
-                      end],
-                    ["Replace with selection", RxmPushButtonWidgetClass, every_menu,
-                      lambda do |w, c, i|
-                        snd = $graph_popup_snd
-                        chn = $graph_popup_chn
-                        beg = cursor(snd, chn)
-                        len = selection_frames()
-                        sbeg = selection_position()
-                        if (not selection_member?(snd, chn)) or
-                           ((beg + len) < sbeg) or
-                           (beg > (sbeg + len))
-                          delete_samples(beg, len, snd, chn)
-                          insert_selection(beg, snd, chn)
-                        elsif beg < sbeg
-                          delete_samples(beg, sbeg - beg, snd, chn)
-                        end
-                      end],
-                    ["Select all", RxmPushButtonWidgetClass, every_menu,
-                      lambda do |w, c, i| select_all($graph_popup_snd, $graph_popup_chn) end],
-                    ["Unselect", RxmPushButtonWidgetClass, every_menu,
-                      lambda do |w, c, i| set_selection_member?(false, true) end],
-                    ["Equalize panes", RxmPushButtonWidgetClass, every_menu,
-                      lambda do |w, c, i| equalize_panes() end],
-                    ["Info", RxmPushButtonWidgetClass, every_menu,
-                      lambda do |w, c, i|
-                        ptr = DBM.open($nb_database) rescue warn("DBM.open(#{$nb_database}")
-                        snd = $graph_popup_snd
-                        chn = $graph_popup_chn
-                        file = file_name(snd)
-                        max_a = maxamp(snd, true)
-                        comm = comment(snd)
-                        loops = mus_sound_loop_info(file)
-                        ftime = Time.at(mus_sound_write_date(file))
-                        date = ftime.localtime.strftime("%a %d-%b-%y %H:%M %Z")
-                        notes = ((ptr and ptr.key?(file)) ? ptr.fetch(file) : "")
-                        help_dialog("#{file} info",
-                                    format("\
+                        play(0, $graph_popup_snd)
+                      end
+                    end, lambda do |wid| stop_widget = wid end],
+                   ["Play channel", RxmPushButtonWidgetClass, every_menu,
+                    lambda do |w, c, i|
+                      stopping = true
+                      change_label(stop_widget, "Stop")
+                      play(0, $graph_popup_snd, $graph_popup_chn)
+                    end],
+                   ["Play from cursor", RxmPushButtonWidgetClass, every_menu,
+                    lambda do |w, c, i|
+                      stopping = true
+                      change_label(stop_widget, "Stop")
+                      play(cursor($graph_popup_snd, $graph_popup_chn), $graph_popup_snd)
+                    end],
+                   ["Play previous", RxmPushButtonWidgetClass, every_menu,
+                    lambda do |w, c, i|
+                      stopping = true
+                      change_label(stop_widget, "Stop")
+                      play(0, $graph_popup_snd, $graph_popup_chn, false, false,
+                           edit_position() - 1)
+                    end],
+                   ["Play original", RxmPushButtonWidgetClass, every_menu,
+                    lambda do |w, c, i|
+                      stopping = true
+                      change_label(stop_widget, "Stop")
+                      play(0, $graph_popup_snd, $graph_popup_chn, false, false, 0)
+                    end],
+                   begin
+                     ["Undo", RxmPushButtonWidgetClass, every_menu,
+                      lambda do |w, c, i| undo_edit(1, $graph_popup_snd, $graph_popup_chn) end]
+                   rescue
+                     warn "you need the the latest CVS version of Snd with undo_edit()"
+                   end,
+                   begin
+                     ["Redo", RxmPushButtonWidgetClass, every_menu,
+                      lambda do |w, c, i| redo_edit(1, $graph_popup_snd, $graph_popup_chn) end]
+                   rescue
+                     warn "you need the the latest CVS version of Snd with redo_edit()"
+                   end,
+                   ["Revert", RxmPushButtonWidgetClass, every_menu,
+                    lambda do |w, c, i| revert_sound($graph_popup_snd) end],
+                   ["Save", RxmPushButtonWidgetClass, every_menu,
+                    lambda do |w, c, i| save_sound($graph_popup_snd) end],
+                   ["Save as", RxmPushButtonWidgetClass, every_menu,
+                    lambda do |w, c, i|
+                      select_sound($graph_popup_snd)
+                      file_save_as_dialog()
+                    end],
+                   ["Close", RxmPushButtonWidgetClass, every_menu,
+                    lambda do |w, c, i| close_sound($graph_popup_snd) end],
+                   ["Mix selection", RxmPushButtonWidgetClass, every_menu,
+                    lambda do |w, c, i|
+                      mix_selection(cursor($graph_popup_snd, $graph_popup_chn),
+                                    $graph_popup_snd, $graph_popup_chn)
+                    end],
+                   ["Insert selection", RxmPushButtonWidgetClass, every_menu,
+                    lambda do |w, c, i|
+                      insert_selection(cursor($graph_popup_snd, $graph_popup_chn),
+                                       $graph_popup_snd, $graph_popup_chn)
+                    end],
+                   ["Replace with selection", RxmPushButtonWidgetClass, every_menu,
+                    lambda do |w, c, i|
+                      snd = $graph_popup_snd
+                      chn = $graph_popup_chn
+                      beg = cursor(snd, chn)
+                      len = selection_frames()
+                      sbeg = selection_position()
+                      if (not selection_member?(snd, chn)) or
+                         ((beg + len) < sbeg) or
+                         (beg > (sbeg + len))
+                        delete_samples(beg, len, snd, chn)
+                        insert_selection(beg, snd, chn)
+                      elsif beg < sbeg
+                        delete_samples(beg, sbeg - beg, snd, chn)
+                      end
+                    end],
+                   ["Select all", RxmPushButtonWidgetClass, every_menu,
+                    lambda do |w, c, i| select_all($graph_popup_snd, $graph_popup_chn) end],
+                   ["Unselect", RxmPushButtonWidgetClass, every_menu,
+                    lambda do |w, c, i| set_selection_member?(false, true) end],
+                   ["Equalize panes", RxmPushButtonWidgetClass, every_menu,
+                    lambda do |w, c, i| equalize_panes() end],
+                   ["Info", RxmPushButtonWidgetClass, every_menu,
+                    lambda do |w, c, i|
+                      ptr = DBM.open($nb_database) rescue warn("DBM.open(#{$nb_database}")
+                      snd = $graph_popup_snd
+                      chn = $graph_popup_chn
+                      file = file_name(snd)
+                      max_a = maxamp(snd, true)
+                      comm = comment(snd)
+                      loops = mus_sound_loop_info(file)
+                      ftime = Time.at(mus_sound_write_date(file))
+                      date = ftime.localtime.strftime("%a %d-%b-%y %H:%M %Z")
+                      notes = ((ptr and ptr.key?(file)) ? ptr.fetch(file) : "")
+                      help_dialog("#{file} info",
+                                  format("\
   chans: %d, srate: %d
  length: %.3f (%d samples)
  format: %s [%s]
  maxamp: %s
 written: %s
 %s%s%s\n%s",
-                                           chans(snd), srate(snd),
-                                           frames(snd, chn) / srate(snd).to_f,
-                                           mus_sound_frames(file),
-                                           mus_data_format_name(data_format(snd)),
-                                           mus_header_type_name(header_type(snd)),
-                                           max_a.map do |x| ("%.3f" % x).to_f end.inspect, date,
-                                           comm.empty? ? "" : "comment: #{comm}\n",
-                                           loops ? "   loop: #{loops.inspect}\n" : "",
-                                           (soundfont_info() or ""),
-                                           (notes or "")))
-                        ptr.close if ptr
-                      end],
-                    ["Add mark", RxmPushButtonWidgetClass, every_menu,
-                      lambda do |w, c, i|
-                        add_mark(cursor($graph_popup_snd, $graph_popup_chn),
-                                 $graph_popup_snd, $graph_popup_chn)
-                      end],
-                    ["Delete mark", RxmPushButtonWidgetClass, every_menu,
-                      lambda do |w, c, i|
-                        ms = marks($graph_popup_snd, $graph_popup_chn)
-                        id = if ms.empty?
-                               false
-                             elsif ms.length == 1
-                               ms[0]
-                             else
-                               loc = cursor()
-                               find_closest_mark = lambda do |lst, cur_min, cur_id|
-                                 if (not lst) or lst.empty?
-                                   cur_id
-                                 else
-                                   this_id = lst[0]
-                                   this_min = (loc - mark_sample(this_id)).abs
-                                   if this_min < cur_min
-                                     find_closest_mark.call(lst[1..-1], this_min, this_id)
-                                   else 
-                                     find_closest_mark.call(lst[1..-1], cur_min, cur_id)
-                                   end
+                                         chans(snd), srate(snd),
+                                         frames(snd, chn) / srate(snd).to_f,
+                                         mus_sound_frames(file),
+                                         mus_data_format_name(data_format(snd)),
+                                         mus_header_type_name(header_type(snd)),
+                                         max_a.map do |x| ("%.3f" % x).to_f end.inspect, date,
+                                         comm.empty? ? "" : "comment: #{comm}\n",
+                                         loops ? "   loop: #{loops.inspect}\n" : "",
+                                         (soundfont_info() or ""),
+                                         (notes or "")))
+                      ptr.close if ptr
+                    end],
+                   ["Add mark", RxmPushButtonWidgetClass, every_menu,
+                    lambda do |w, c, i|
+                      add_mark(cursor($graph_popup_snd, $graph_popup_chn),
+                               $graph_popup_snd, $graph_popup_chn)
+                    end],
+                   ["Delete mark", RxmPushButtonWidgetClass, every_menu,
+                    lambda do |w, c, i|
+                      ms = marks($graph_popup_snd, $graph_popup_chn)
+                      id = if ms.empty?
+                             false
+                           elsif ms.length == 1
+                             ms[0]
+                           else
+                             loc = cursor()
+                             find_closest_mark = lambda do |lst, cur_min, cur_id|
+                               if (not lst) or lst.empty?
+                                 cur_id
+                               else
+                                 this_id = lst[0]
+                                 this_min = (loc - mark_sample(this_id)).abs
+                                 if this_min < cur_min
+                                   find_closest_mark.call(lst[1..-1], this_min, this_id)
+                                 else 
+                                   find_closest_mark.call(lst[1..-1], cur_min, cur_id)
                                  end
                                end
-                               find_closest_mark.call(ms[1..-1],
-                                                      (loc - mark_sample(ms[0])).abs, ms[0])
                              end
-                        delete_mark(id) if id
-                      end],
-                    ["To next mark", RxmPushButtonWidgetClass, every_menu,
-                      lambda do |w, c, i| forward_mark(1, $graph_popup_snd, $graph_popup_chn) end],
-                    ["To last mark", RxmPushButtonWidgetClass, every_menu,
-                      lambda do |w, c, i|
-                        backward_mark(1, $graph_popup_snd, $graph_popup_chn)
-                      end],
-                    ["sep", RxmSeparatorWidgetClass, every_menu],
-                    ["Exit", RxmPushButtonWidgetClass, every_menu,
-                      lambda do |w, c, i| exit(0) end]])
+                             find_closest_mark.call(ms[1..-1],
+                                                    (loc - mark_sample(ms[0])).abs, ms[0])
+                           end
+                      delete_mark(id) if id
+                    end],
+                   ["To next mark", RxmPushButtonWidgetClass, every_menu,
+                    lambda do |w, c, i| forward_mark(1, $graph_popup_snd, $graph_popup_chn) end],
+                   ["To last mark", RxmPushButtonWidgetClass, every_menu,
+                    lambda do |w, c, i|
+                      backward_mark(1, $graph_popup_snd, $graph_popup_chn)
+                    end],
+                   ["sep", RxmSeparatorWidgetClass, every_menu],
+                   ["Exit", RxmPushButtonWidgetClass, every_menu,
+                    lambda do |w, c, i| exit(0) end]])
 end.call
 
 def edit_graph_popup_menu(snd, chn = nil)
@@ -437,6 +447,8 @@ and CHN\n") if snd == :help
                      (marks(snd, chn) ? RXtManageChild(w) : RXtUnmanageChild(w))
                    end
                  end)
+rescue
+  die get_func_name
 end
 
 def make_simple_popdown_menu(label, pd_labels = [], parent = nil, cascade_func = nil, args = nil)
@@ -454,6 +466,8 @@ creates a simple popdown menu\n") if label == :help
     RXtAddCallback(top_cascade, RXmNcascadingCallback,
                    lambda do |w, c, i| cascade_func.call(children) end)
   end
+rescue
+  die get_func_name
 end
 
 $fft_popup_menu = lambda do
@@ -504,11 +518,11 @@ $fft_popup_menu = lambda do
                  end)
   make_simple_popdown_menu("Graph type",
                            [["once", Graph_once],
-                             ["sonogram", Graph_as_sonogram],
-                             ["spectrogram", Graph_as_spectrogram]].map do |name, val|
+                            ["sonogram", Graph_as_sonogram],
+                            ["spectrogram", Graph_as_spectrogram]].map do |name, val|
                              [name, lambda do |w, c, i|
-                                 set_transform_graph_type(val, $graph_popup_snd, choose_chan.call)
-                               end]
+                                set_transform_graph_type(val, $graph_popup_snd, choose_chan.call)
+                              end]
                            end,
                            fft_popup,
                            lambda do |lst|
@@ -524,9 +538,9 @@ $fft_popup_menu = lambda do
   make_simple_popdown_menu("Size",
                            sizes.map do |val|
                              [val.to_s,
-                               lambda do |w, c, i|
-                                 set_transform_size(val, $graph_popup_snd, choose_chan.call)
-                               end]
+                              lambda do |w, c, i|
+                                set_transform_size(val, $graph_popup_snd, choose_chan.call)
+                              end]
                            end,
                            fft_popup,
                            lambda do |lst|
@@ -537,28 +551,28 @@ $fft_popup_menu = lambda do
                              end
                            end, every_menu)
   windows = [["Rectangular", Rectangular_window],
-    ["Hann", Hann_window],
-    ["Welch", Welch_window],
-    ["Parzen", Parzen_window],
-    ["Bartlett", Bartlett_window],
-    ["Hamming", Hamming_window],
-    ["Blackman2", Blackman2_window],
-    ["Blackman3", Blackman3_window],
-    ["Blackman4", Blackman4_window],
-    ["Exponential", Exponential_window],
-    ["Riemann", Riemann_window],
-    ["Kaiser", Kaiser_window],
-    ["Cauchy", Cauchy_window],
-    ["Poisson", Poisson_window],
-    ["Gaussian", Gaussian_window],
-    ["Tukey", Tukey_window],
-    ["Dolph-Chebyshev", Dolph_chebyshev_window]]
+             ["Hann", Hann_window],
+             ["Welch", Welch_window],
+             ["Parzen", Parzen_window],
+             ["Bartlett", Bartlett_window],
+             ["Hamming", Hamming_window],
+             ["Blackman2", Blackman2_window],
+             ["Blackman3", Blackman3_window],
+             ["Blackman4", Blackman4_window],
+             ["Exponential", Exponential_window],
+             ["Riemann", Riemann_window],
+             ["Kaiser", Kaiser_window],
+             ["Cauchy", Cauchy_window],
+             ["Poisson", Poisson_window],
+             ["Gaussian", Gaussian_window],
+             ["Tukey", Tukey_window],
+             ["Dolph-Chebyshev", Dolph_chebyshev_window]]
   make_simple_popdown_menu("Window",
                            windows.map do |name, val|
                              [name,
-                               lambda do |w, c, i|
-                                 set_fft_window(val, $graph_popup_snd, choose_chan.call)
-                               end]
+                              lambda do |w, c, i|
+                                set_fft_window(val, $graph_popup_snd, choose_chan.call)
+                              end]
                            end,
                            fft_popup,
                            lambda do |lst|
@@ -569,18 +583,18 @@ $fft_popup_menu = lambda do
                              end
                            end, every_menu)
   types = [["Fourier", Fourier_transform],
-    ["Wavelet", Wavelet_transform],
-    ["Autocorrelate", Autocorrelation],
-    ["Cepstrum", Cepstrum],
-    ["Walsh", Walsh_transform],
-    ["Hadamard", Hadamard_transform],
-    ["Haar", Haar_transform]]
+           ["Wavelet", Wavelet_transform],
+           ["Autocorrelate", Autocorrelation],
+           ["Cepstrum", Cepstrum],
+           ["Walsh", Walsh_transform],
+           ["Hadamard", Hadamard_transform],
+           ["Haar", Haar_transform]]
   make_simple_popdown_menu("Transform type",
                            types.map do |name, val|
                              [name,
-                               lambda do |w, c, i|
-                                 set_transform_type(val, $graph_popup_snd, choose_chan.call)
-                               end]
+                              lambda do |w, c, i|
+                                set_transform_type(val, $graph_popup_snd, choose_chan.call)
+                              end]
                            end,
                            fft_popup,
                            lambda do |lst|
@@ -594,13 +608,13 @@ $fft_popup_menu = lambda do
                            begin
                              ary = []
                              ["daub4", "daub6", "daub8", "daub10", "daub12", "daub14", "daub16",
-                               "daub18", "daub20", "battle_lemarie", "burt_adelson", "beylkin",
-                               "coif2", "coif4", "coif6", "sym2", "sym3", "sym4", "sym5",
-                               "sym6"].each_with_index do |name, idx|
+                              "daub18", "daub20", "battle_lemarie", "burt_adelson", "beylkin",
+                              "coif2", "coif4", "coif6", "sym2", "sym3", "sym4", "sym5",
+                              "sym6"].each_with_index do |name, idx|
                                ary << [name,
-                                 lambda do |w, c, i|
-                                   set_wavelet_type(idx, $graph_popup_snd, choose_chan.call)
-                                 end]
+                                       lambda do |w, c, i|
+                                         set_wavelet_type(idx, $graph_popup_snd, choose_chan.call)
+                                       end]
                              end
                              ary
                            end,
@@ -633,6 +647,8 @@ changes the fft-related popup menu to reflect the state of SND and CHN\n") if sn
                      change_label(w, (fft_log_frequency(snd, chn) ? "Linear freq" : "Log freq"))
                    end
                  end)
+rescue
+  die get_func_name
 end
 
 def add_selection_popup(doc = nil)
@@ -706,6 +722,8 @@ makes the selection-related popup menu\n") if doc == :help
   end
   $after_open_hook.add_hook!("popup_add_popup") do |snd| add_popup.call(snd) end
   sounds().each do |snd| add_popup.call(snd) end if sounds()
+rescue
+  die get_func_name
 end
 
 def change_menu_color(menu, new_color = nil)
@@ -730,6 +748,8 @@ make_color)\n") if menu == :help
                   make_color(new_color[0], new_color[1], new_color[2])
                 end
   for_each_child(menu, lambda do |n| RXmChangeColor(n, color_pixel) end)
+rescue
+  die get_func_name
 end
 
 def change_selection_popup_color(new_color)
@@ -794,6 +814,8 @@ makes a new listener popup menu entry\n") if label == :help
                    setup.call(children, current_sounds)
                  end)
   [:Popdown, top_one, top_two, top_two_cascade, collect]
+rescue
+  die get_func_name
 end
 
 def add_listener_popup
@@ -822,67 +844,67 @@ def add_listener_popup
   listener_popup_menu = [make_popdown_entry("Play", listener_popup,
                                             lambda do |snd| play(0, snd) end, every_menu,
                                             lambda do |snd| identity.call(snd) end, true),
-    begin
-      help_widget = RXtCreateManagedWidget("Help",
-                                           RxmPushButtonWidgetClass, 
-                                           listener_popup, every_menu)
-      RXtAddCallback(help_widget, RXmNactivateCallback,
-                     lambda do |w, c, i|
-                       selected = listener_selection()
-                       help = (selected and snd_help(selected))
-                       help_dialog(selected, help) if help
-                     end)
-      help_widget
-    end,
-    begin
-      open_widget = RXtCreateManagedWidget("Open",
-                                           RxmPushButtonWidgetClass,
-                                           listener_popup, every_menu)
-      RXtAddCallback(open_widget, RXmNactivateCallback,
-                     lambda do |w, c, i| open_file_dialog() end)
-      open_widget
-    end,
-    make_popdown_entry("Close", listener_popup,
-                       lambda do |snd| close_sound(snd) end, every_menu,
-                       lambda do |snd| identity.call(snd) end, true),
-    make_popdown_entry("Save", listener_popup,
-                       lambda do |snd| save_sound(snd) end, every_menu,
-                       lambda do |snd| edited.call(snd) end, true),
-    make_popdown_entry("Revert", listener_popup,
-                       lambda do |snd| revert_sound(snd) end, every_menu,
-                       lambda do |snd| edited.call(snd) end, true),
-    begin
-      panes_widget = RXtCreateManagedWidget("Equalize panes",
-                                            RxmPushButtonWidgetClass,
-                                            listener_popup, every_menu)
-      RXtAddCallback(panes_widget, RXmNactivateCallback,
-                     lambda do |w, c, i| equalize_panes() end)
-      panes_widget
-    end,
-    make_popdown_entry("Focus", listener_popup,
-                       lambda do |us|
-                         pane = sound_widgets(us)[0]
-                         old_resize = auto_resize()
-                         RXtSetValues(main_widgets()[1],
-                                      [RXmNallowShellResize, false])
-                         sounds().each do |them|
-                           RXtUnmanageChild(sound_widgets(them)[0])
-                         end
-                         RXtManageChild(pane)
-                         RXtSetValues(main_widgets()[1],
-                                      [RXmNallowShellResize, old_resize])
-                       end, every_menu,
-                       lambda do |snd| focused.call(snd) end, false),
-    RXtCreateManagedWidget("sep", RxmSeparatorWidgetClass,
-                           listener_popup, every_menu),
-    begin
-      exit_widget = RXtCreateManagedWidget("Exit",
-                                           RxmPushButtonWidgetClass,
-                                           listener_popup, every_menu)
-      RXtAddCallback(exit_widget, RXmNactivateCallback,
-                     lambda do |w, c, i| exit(0) end)
-      exit_widget
-    end]
+                         begin
+                           help_widget = RXtCreateManagedWidget("Help",
+                                                                RxmPushButtonWidgetClass, 
+                                                                listener_popup, every_menu)
+                           RXtAddCallback(help_widget, RXmNactivateCallback,
+                                          lambda do |w, c, i|
+                                            selected = listener_selection()
+                                            help = (selected and snd_help(selected))
+                                            help_dialog(selected, help) if help
+                                          end)
+                           help_widget
+                         end,
+                         begin
+                           open_widget = RXtCreateManagedWidget("Open",
+                                                                RxmPushButtonWidgetClass,
+                                                                listener_popup, every_menu)
+                           RXtAddCallback(open_widget, RXmNactivateCallback,
+                                          lambda do |w, c, i| open_file_dialog() end)
+                           open_widget
+                         end,
+                         make_popdown_entry("Close", listener_popup,
+                                            lambda do |snd| close_sound(snd) end, every_menu,
+                                            lambda do |snd| identity.call(snd) end, true),
+                         make_popdown_entry("Save", listener_popup,
+                                            lambda do |snd| save_sound(snd) end, every_menu,
+                                            lambda do |snd| edited.call(snd) end, true),
+                         make_popdown_entry("Revert", listener_popup,
+                                            lambda do |snd| revert_sound(snd) end, every_menu,
+                                            lambda do |snd| edited.call(snd) end, true),
+                         begin
+                           panes_widget = RXtCreateManagedWidget("Equalize panes",
+                                                                 RxmPushButtonWidgetClass,
+                                                                 listener_popup, every_menu)
+                           RXtAddCallback(panes_widget, RXmNactivateCallback,
+                                          lambda do |w, c, i| equalize_panes() end)
+                           panes_widget
+                         end,
+                         make_popdown_entry("Focus", listener_popup,
+                                            lambda do |us|
+                                              pane = sound_widgets(us)[0]
+                                              old_resize = auto_resize()
+                                              RXtSetValues(main_widgets()[1],
+                                                           [RXmNallowShellResize, false])
+                                              sounds().each do |them|
+                                                RXtUnmanageChild(sound_widgets(them)[0])
+                                              end
+                                              RXtManageChild(pane)
+                                              RXtSetValues(main_widgets()[1],
+                                                           [RXmNallowShellResize, old_resize])
+                                            end, every_menu,
+                                            lambda do |snd| focused.call(snd) end, false),
+                         RXtCreateManagedWidget("sep", RxmSeparatorWidgetClass,
+                                                listener_popup, every_menu),
+                         begin
+                           exit_widget = RXtCreateManagedWidget("Exit",
+                                                                RxmPushButtonWidgetClass,
+                                                                listener_popup, every_menu)
+                           RXtAddCallback(exit_widget, RXmNactivateCallback,
+                                          lambda do |w, c, i| exit(0) end)
+                           exit_widget
+                         end]
   RXtAddCallback(listener, RXmNpopupHandlerCallback,
                  lambda do |w, c, i|
                    if RButtonPress == Rtype(Revent(i))
@@ -914,6 +936,8 @@ def add_listener_popup
                    end
                  end)
   listener_popup
+rescue
+  die get_func_name
 end
 
 add_selection_popup()

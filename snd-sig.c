@@ -2341,6 +2341,11 @@ static void smooth_channel(chan_info *cp, off_t beg, off_t dur, int edpos, const
   off_t k;
   Float y0, y1, angle, incr, off, scale;
   if ((beg < 0) || (dur <= 0)) return;
+  if ((beg + dur) > cp->samples[edpos]) 
+    {
+      dur = cp->samples[edpos] - beg;
+      if (dur <= 0) return;
+    }
   y0 = chn_sample(beg, cp, edpos);
   y1 = chn_sample(beg + dur, cp, edpos); /* one past end -- this is a debatable choice */
   if (y1 > y0) angle = M_PI; else angle = 0.0;
@@ -3323,11 +3328,11 @@ static XEN g_swap_channels(XEN snd0, XEN chn0, XEN snd1, XEN chn1, XEN beg, XEN 
 	  else
 	    {
 	      /* look for simple cases where copying the current edit tree entry is not too hard */
-	      if ((ptree_or_sound_fragments_in_use(cp0, pos0)) ||
-		  (ptree_or_sound_fragments_in_use(cp1, pos1)) ||
-		  (num < FILE_BUFFER_SIZE))
+	      if ((num < FILE_BUFFER_SIZE) ||
+		  (ptree_or_sound_fragments_in_use(cp0, pos0)) ||
+		  (ptree_or_sound_fragments_in_use(cp1, pos1)))
 		swap_channels(cp0, cp1, beg0, num, pos0, pos1);
-	      else copy_then_swap_channels(cp0, cp1, num, pos0, pos1); /* snd-edits.c */
+	      else copy_then_swap_channels(cp0, cp1, pos0, pos1); /* snd-edits.c */
 	    }
 	}
     }
@@ -3697,9 +3702,9 @@ between beg and beg + num by an exponential ramp going from rmp0 to rmp1 with cu
 static XEN g_fft_1(XEN reals, XEN imag, XEN sign, int use_fft)
 {
   vct *v1 = NULL, *v2 = NULL;
-  int ipow, n, n2, i, isign = 1, need_free = FALSE;
-  Float *rl, *im;
-  XEN *rvdata; XEN *ivdata;
+  int ipow = 0, n = 0, n2 = 0, i, isign = 1, need_free = FALSE, use_vectors = FALSE;
+  Float *rl = NULL, *im = NULL;
+  XEN *rvdata = NULL, *ivdata = NULL;
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(sign), sign, XEN_ARG_3, (use_fft) ? S_fft : S_vct_convolve, "an integer");
   if (!(((VCT_P(reals)) && (VCT_P(imag))) || 
 	((XEN_VECTOR_P(reals)) && (XEN_VECTOR_P(imag)))))
@@ -3714,22 +3719,27 @@ static XEN g_fft_1(XEN reals, XEN imag, XEN sign, int use_fft)
       v1 = (vct *)XEN_OBJECT_REF(reals);
       v2 = (vct *)XEN_OBJECT_REF(imag);
       n = v1->length;
+      if (v2->length < n) n = v2->length;
     }
   else
     {
       n = XEN_VECTOR_LENGTH(reals);
-      if (n == 0) return(XEN_ZERO);
-      n = XEN_VECTOR_LENGTH(imag);
-      if (n == 0) return(XEN_ZERO);
+      if (XEN_VECTOR_LENGTH(imag) < n)
+	n = XEN_VECTOR_LENGTH(imag);
+      use_vectors = TRUE;
     }
+  if (n == 0) return(XEN_ZERO);
   if (POWER_OF_2_P(n))
     n2 = n;
   else
     {
-      ipow = (int)(log(n + 1) / log(2.0));
+      ipow = (int)ceil(log(n + 1) / log(2.0)); /* ceil because we're assuming below that n2 >= n */
       n2 = snd_ipow2(ipow);
+#if DEBUGGING
+      if (n2 < n) {fprintf(stderr,"n2: %d, n: %d\n", n2, n); abort();}
+#endif
     }
-  if ((!v1) || (n != n2))
+  if ((use_vectors) || (n != n2))
     {
       rl = (Float *)CALLOC(n2, sizeof(Float));
       im = (Float *)CALLOC(n2, sizeof(Float));
@@ -3740,7 +3750,7 @@ static XEN g_fft_1(XEN reals, XEN imag, XEN sign, int use_fft)
       rl = v1->data;
       im = v2->data;
     }
-  if (v1 == NULL)
+  if (use_vectors)
     {
       rvdata = XEN_VECTOR_ELEMENTS(reals);
       ivdata = XEN_VECTOR_ELEMENTS(imag);
@@ -3752,7 +3762,7 @@ static XEN g_fft_1(XEN reals, XEN imag, XEN sign, int use_fft)
     }
   else
     {
-      if (n != n2)
+      if (need_free)
 	{
 	  for (i = 0; i < n; i++)
 	    {
@@ -3764,7 +3774,7 @@ static XEN g_fft_1(XEN reals, XEN imag, XEN sign, int use_fft)
   if (use_fft) 
     {
       mus_fft(rl, im, n2, isign);
-      if (v1 == NULL)
+      if (use_vectors)
 	{
 	  rvdata = XEN_VECTOR_ELEMENTS(reals);
 	  ivdata = XEN_VECTOR_ELEMENTS(imag);
@@ -3777,7 +3787,7 @@ static XEN g_fft_1(XEN reals, XEN imag, XEN sign, int use_fft)
 	}
       else
 	{
-	  if (n != n2)
+	  if (need_free)
 	    {
 	      for (i = 0; i < n; i++)
 		{
@@ -3790,7 +3800,7 @@ static XEN g_fft_1(XEN reals, XEN imag, XEN sign, int use_fft)
   else 
     {
       mus_convolution(rl, im, n2);
-      if (v1 == NULL)
+      if (use_vectors)
 	{
 	  rvdata = XEN_VECTOR_ELEMENTS(reals);
 	  for (i = 0; i < n; i++)
@@ -3798,7 +3808,7 @@ static XEN g_fft_1(XEN reals, XEN imag, XEN sign, int use_fft)
 	}
       else
 	{
-	  if (n != n2)
+	  if (need_free)
 	    for (i = 0; i < n; i++) 
 	      v1->data[i] = rl[i];
 	}

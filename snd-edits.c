@@ -7441,7 +7441,7 @@ static Float next_sound_as_float(snd_fd *sf)
 }
 
 
-void copy_then_swap_channels(chan_info *cp0, chan_info *cp1, off_t num, int pos0, int pos1)
+void copy_then_swap_channels(chan_info *cp0, chan_info *cp1, int pos0, int pos1)
 {
   int i, fd, new0, new1;
   char *name;
@@ -7449,8 +7449,12 @@ void copy_then_swap_channels(chan_info *cp0, chan_info *cp1, off_t num, int pos0
   file_info *hdr0, *hdr1;
   snd_state *ss;
   env_info *e0, *e1;
-  Float maxamp0, maxamp1;
   ss = cp0->state;
+  /*
+  fprintf(stderr,"copy then swap %s[%d]:%d of %d and %s[%d]:%d of %d\n",
+	  cp0->sound->short_filename, cp0->chan, pos0, cp0->edit_ctr,
+	  cp1->sound->short_filename, cp1->chan, pos1, cp1->edit_ctr);
+  */
   name = cp0->sound->filename;
   hdr0 = copy_header(name, cp0->sound->hdr);
   fd = snd_open_read(ss, name);
@@ -7479,41 +7483,40 @@ void copy_then_swap_channels(chan_info *cp0, chan_info *cp1, off_t num, int pos0
 				     hdr1, DONT_DELETE_ME, cp1->chan);
   e0 = amp_env_copy(cp0, FALSE, pos0);
   e1 = amp_env_copy(cp1, FALSE, pos1);
-
   old_ed = cp1->edits[pos1];
-  maxamp1 = old_ed->maxamp;
   prepare_edit_list(cp0, cp1->samples[pos1], AT_CURRENT_EDIT_POSITION, S_swap_channels);
   new_ed = make_ed_list(old_ed->size);
   new_ed->edit_type = CHANGE_EDIT;
   new_ed->sound_location = new1;
-  new_ed->edpos = cp0->edit_ctr - 1;
-  new_ed->maxamp = maxamp1;
+  new_ed->edpos = pos1;
+  new_ed->maxamp = old_ed->maxamp;
   new_ed->beg = 0;
-  new_ed->len = num;
+  new_ed->len = old_ed->len;
   new_ed->origin = copy_string(TO_PROC_NAME(S_swap_channels));
   cp0->edits[cp0->edit_ctr] = new_ed;
-  for (i = 0; i < new_ed->size; i++) 
-    {
-      copy_ed_fragment(FRAGMENT(new_ed, i), FRAGMENT(old_ed, i));
-      if (FRAGMENT_SOUND(new_ed, i) == 0) FRAGMENT_SOUND(new_ed, i) = new1;
-    }
+  if (new_ed->len > 0)
+    for (i = 0; i < new_ed->size; i++) 
+      {
+	copy_ed_fragment(FRAGMENT(new_ed, i), FRAGMENT(old_ed, i));
+	if (FRAGMENT_SOUND(new_ed, i) == 0) FRAGMENT_SOUND(new_ed, i) = new1;
+      }
   old_ed = cp0->edits[pos0];
-  maxamp0 = old_ed->maxamp;
   prepare_edit_list(cp1, cp0->samples[pos0], AT_CURRENT_EDIT_POSITION, S_swap_channels);
   new_ed = make_ed_list(old_ed->size);
   new_ed->edit_type = CHANGE_EDIT;
   new_ed->sound_location = new0;
-  new_ed->edpos = cp1->edit_ctr - 1;
-  new_ed->maxamp = maxamp0;
+  new_ed->edpos = pos0;
+  new_ed->maxamp = old_ed->maxamp;
   new_ed->beg = 0;
-  new_ed->len = num;
+  new_ed->len = old_ed->len;
   new_ed->origin = copy_string(TO_PROC_NAME(S_swap_channels));
   cp1->edits[cp1->edit_ctr] = new_ed;
-  for (i = 0; i < new_ed->size; i++) 
-    {
-      copy_ed_fragment(FRAGMENT(new_ed, i), FRAGMENT(old_ed, i));
-      if (FRAGMENT_SOUND(new_ed, i) == 0) FRAGMENT_SOUND(new_ed, i) = new0;
-    }
+  if (new_ed->len > 0)
+    for (i = 0; i < new_ed->size; i++) 
+      {
+	copy_ed_fragment(FRAGMENT(new_ed, i), FRAGMENT(old_ed, i));
+	if (FRAGMENT_SOUND(new_ed, i) == 0) FRAGMENT_SOUND(new_ed, i) = new0;
+      }
   if ((e0) && (e1))
     {
       cp0->amp_envs[cp0->edit_ctr] = e1;
@@ -7524,6 +7527,10 @@ void copy_then_swap_channels(chan_info *cp0, chan_info *cp1, off_t num, int pos0
   swap_marks(cp0, cp1);
   reflect_edit_history_change(cp0);
   reflect_edit_history_change(cp1);
+  if (cp0->samples[cp0->edit_ctr] != cp0->samples[cp0->edit_ctr - 1])
+    reflect_sample_change_in_axis(cp0);
+  if (cp1->samples[cp1->edit_ctr] != cp1->samples[cp1->edit_ctr - 1])
+    reflect_sample_change_in_axis(cp1);
   update_graph(cp0);
   update_graph(cp1);
 }
@@ -8973,13 +8980,9 @@ sets snd's channel chn's samples starting at beg for dur samps from vct data"
   return(g_set_samples(beg, dur, v, snd_n, chn_n, XEN_FALSE, C_TO_XEN_STRING(S_vct2channel), XEN_FALSE, edpos));
 }
 
-
 static XEN samples2vct_1(XEN samp_0, XEN samps, XEN snd_n, XEN chn_n, XEN v, XEN edpos, const char *caller)
 {
   chan_info *cp;
-#if HAVE_LLONGS
-  snd_state *ss;
-#endif
   snd_fd *sf;
   Float *fvals;
   off_t i, len, beg;
@@ -8998,14 +9001,6 @@ static XEN samples2vct_1(XEN samp_0, XEN samps, XEN snd_n, XEN chn_n, XEN v, XEN
 	      XEN_LIST_3(C_TO_XEN_STRING(caller),
 			 C_TO_XEN_OFF_T(beg),
 			 C_TO_XEN_OFF_T(len)));
-#if HAVE_LLONGS
-  ss = get_global_state();
-  if ((ss->memory_available > 0) && (ss->memory_available < (len / 1024)))
-    {
-      snd_error(_("not enough memory!"));
-      return(XEN_FALSE);
-    }
-#endif
   if (v1)
     {
       fvals = v1->data;
@@ -9027,7 +9022,7 @@ static XEN samples2vct_1(XEN samp_0, XEN samps, XEN snd_n, XEN chn_n, XEN v, XEN
 
 static XEN g_samples2vct(XEN samp_0, XEN samps, XEN snd_n, XEN chn_n, XEN v, XEN edpos)
 {
-  #define H_samples2vct "(" S_samples2vct " &optional (start-samp 0)\n    samps snd chn vct-obj edit-position)\n\
+  #define H_samples2vct "(" S_samples2vct " &optional (start-samp 0) samps snd chn vct-obj edit-position)\n\
 returns a vct object (vct-obj if given) containing snd channel chn's data starting at start-samp for samps, \
 reading edit version edit-position (defaulting to the current version)"
   return(samples2vct_1(samp_0, samps, snd_n, chn_n, v, edpos, S_samples2vct));
