@@ -3484,8 +3484,6 @@ saves the result under the same name, exiting Snd.  All of this is
 compatible with the debugging and display uses of Snd.  For example,
 'display' starts Snd itself if one isn't started yet,
 and that same Snd process can handle the editing operations described above.
-Similarly, <b>to-snd</b> fires up Snd unless it is already running, then
-calls with-sound on its arguments, passing the result to Snd.
 </p>
 <p>The Snd envelope editor can be used in conjunction with clm; <b>clm-envelope</b>
 passes its argument (assumed to be a list) to Snd, and <b>snd-envelope</b> returns
@@ -3523,6 +3521,37 @@ CLM to delete that file when it is done with it.  The macros <b>snd-cleanup</b> 
 files up as they are created, they are finally deleted when snd-stop is called,
 or when CLM is exited.  If something goes wrong, just delete any file on
 the temp directory (/tmp or /var/tmp normally) whose name begins with "snd_".</p>
+
+<p><b>to-snd</b> is a version of with-sound that sends causes Snd to open the
+output file when with-sound is done.
+</p>
+<pre>
+  (to-snd (:statistics t) (fm-violin 0 1 440 .1))
+</pre>
+<p>
+There are two gotchas with to-snd, both occurring only when to-snd has
+to start a new Snd image itself (i.e. there's no Snd already running).
+In this case, while Snd is active, it gets stdin, so typing to the ACL
+listener is actually communicating with Snd, not CLM. And, with the
+change to sndplay (for CLM's dac function) in most cases, sndplay is
+playing the sound at the very moment that Snd is starting up in the
+background and trying to figure out what audio devices are available.
+I added mus-audio-reinitialize to clear this confusion (i.e. if Snd
+complains it can't play the sound, force it to reinitialize its notion
+of what's out there).
+</p>
+<p>
+to-snd is just a simple macro (clm-snd.lisp) that calls send-snd
+opening the result of the with-sound call, so to open the new sound
+and make sure the control panel is open:
+</p>
+<pre>
+(defmacro to-snd-with-controls ((&rest args) &body body)
+  `(send-snd (format nil 
+	             "(let ((snd (open-sound ~S))) 
+                        (set! (show-controls snd) #t))" 
+	             (with-sound ,args ,@body))))
+</pre>
 <br>
 
 <span class=box><h2><A NAME="appendices">Appendices</a></h2></span>

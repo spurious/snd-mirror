@@ -27,8 +27,8 @@
 
 
 #define SNDLIB_VERSION 13
-#define SNDLIB_REVISION 6
-#define SNDLIB_DATE "27-Aug-01"
+#define SNDLIB_REVISION 7
+#define SNDLIB_DATE "29-Aug-01"
 
 /* try to figure out what type of machine (and in worst case, what OS) we're running on */
 
@@ -443,6 +443,9 @@ int mus_audio_mixer_write     PROTO((int dev, int field, int chan, float *val));
 void mus_audio_save           PROTO((void));
 void mus_audio_restore        PROTO((void));
 int mus_audio_initialize      PROTO((void));
+#if HAVE_OSS
+int mus_audio_reinitialize    PROTO((void)); /* 29-Aug-01 for CLM/Snd bugfix? */
+#endif
 int mus_audio_systems         PROTO((void));
 char *mus_audio_system_name   PROTO((int sys));
 char *mus_audio_moniker       PROTO((void));

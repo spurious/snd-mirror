@@ -1195,6 +1195,13 @@ static XEN sound_data_compare(XEN vr1, XEN vr2)
 }
 #endif
 
+#if HAVE_OSS
+static XEN g_mus_audio_reinitialize(void)
+{
+  return(C_TO_XEN_INT(mus_audio_reinitialize()));
+}
+#endif
+
 void mus_sndlib2xen_initialize(void)
 {
   mus_sound_initialize();
@@ -1354,6 +1361,10 @@ void mus_sndlib2xen_initialize(void)
 #if HAVE_GUILE
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_sound_data_ref, sound_data_ref_w, H_sound_data_ref,
 			       "set-" S_sound_data_ref, sound_data_set_w,  3, 0, 4, 0);
+#endif
+
+#if HAVE_OSS
+  XEN_DEFINE_PROCEDURE("mus-audio-reinitialize", g_mus_audio_reinitialize, 0, 0, 0, "force audio device re-initilization");
 #endif
 
   XEN_YES_WE_HAVE("sndlib");
