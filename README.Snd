@@ -524,7 +524,7 @@ and config.guess to the main fftw directory (clobbering its ancient
 versions), then configure --disable-shared, and ignore the (bogus)
 error messages.
 
-Here's some info from Josh (last name?):
+Here's some info from Josh Mattoon:
 
     "It turns out everything required for snd is now in fink! 
 
