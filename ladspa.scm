@@ -213,25 +213,32 @@
   (define (get-input-control num)
     (vct-ref (list-ref ports num) 0))
 
+;(((x) & LADSPA_HINT_DEFAULT_MASK)   \
+;                                           == LADSPA_HINT_DEFAULT_0)
+
+
+
   (define (set-default-input-controls)
     (for-each (lambda (x)
 		(let ((hint (car (cadr x)))
 		      (lo (cadr (cadr x)))
 		      (hi (caddr (cadr x))))
 		  (define (ishint dashint)
+		    (= (logand hint LADSPA_HINT_DEFAULT_MASK) dashint))
+		  (define (ishint_notdefault dashint)
 		    (not (= (logand hint dashint ) 0)))
 		  (input-control-set! (car x) 
 				      (cond ((ishint LADSPA_HINT_DEFAULT_0) 0)
 					    ((ishint LADSPA_HINT_DEFAULT_MINIMUM) lo)
-					    ((ishint LADSPA_HINT_DEFAULT_LOW) (if (ishint LADSPA_HINT_LOGARITHMIC)
+					    ((ishint LADSPA_HINT_DEFAULT_LOW) (if (ishint_notdefault LADSPA_HINT_LOGARITHMIC)
 										  (exp (+ (* 0.75 (log lo)) (* 0.25 (log hi))))
 										  (+ (* 0.75 lo) (* 0.25 hi))))
 					    ((ishint LADSPA_HINT_DEFAULT_1) 1)
 					    ((ishint LADSPA_HINT_DEFAULT_MAXIMUM) hi)
-					    ((ishint LADSPA_HINT_DEFAULT_HIGH) (if (ishint LADSPA_HINT_LOGARITHMIC)
+					    ((ishint LADSPA_HINT_DEFAULT_HIGH) (if (ishint_notdefault LADSPA_HINT_LOGARITHMIC)
 										  (exp (+ (* 0.75 (log hi)) (* 0.25 (log lo))))
 										  (+ (* 0.75 hi) (* 0.25 lo))))
-					    ((ishint LADSPA_HINT_DEFAULT_MIDDLE) (if (ishint LADSPA_HINT_LOGARITHMIC)
+					    ((ishint LADSPA_HINT_DEFAULT_MIDDLE) (if (ishint_notdefault LADSPA_HINT_LOGARITHMIC)
 										     (exp (+ (* 0.5 (log hi)) (* 0.5 (log lo))))
 										     (+ (* 0.5 hi) (* 0.5 lo))))
 					    ((ishint LADSPA_HINT_DEFAULT_100) 100)
@@ -242,7 +249,7 @@
 	      (map (lambda (x) (list x (list-ref (.PortRangeHints descriptor) x)))
 		   input-controls)))
   
-
+  
   
   (define (minimum-num-handles sndchannels pluginchannels)
     (+ (if (> (modulo sndchannels pluginchannels) 0) 1 0)
@@ -675,8 +682,6 @@
 
 	(define (ishint dashint dashint2)
 	  (not (= (logand dashint dashint2 ) 0)))
-
-
 
 	(set! ladspa-object (ladspa-class libraryname effectname (if (string=? "vst" libraryname)
 								     1024
