@@ -356,7 +356,6 @@ enum {MUS_NO_ERROR, MUS_NO_FREQUENCY, MUS_NO_PHASE, MUS_NO_GEN, MUS_NO_LENGTH,
   #endif
 #endif 
 
-#define MUS_MAX_FILE_NAME 256
 #define MUS_LOOP_INFO_SIZE 8
 
 #ifndef Float

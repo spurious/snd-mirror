@@ -1408,21 +1408,27 @@ Ptr NewPtr_realloc(Ptr p, Size newSize)
 }
 #endif
 
+static int sndlib_strlen(const char *str)
+{
+  /* strlen(NULL) -> seg fault! */
+  if ((str) && (*str)) return(strlen(str));
+  return(0);
+}
 
-static char *file_name_buf = NULL;
+#ifndef PATH_MAX
+  #define PATH_MAX 1024
+#endif
 
 char *mus_expand_filename(const char *filename)
 {
   /* fill out under-specified library pathnames etc */
+  char *file_name_buf = NULL;
   char *tok = NULL, *orig = NULL;
   int i, j = 0, len = 0;
   if ((filename) && (*filename)) 
     len = strlen(filename); 
   else return(NULL);
   if (len == 0) return(NULL);
-  if (file_name_buf == NULL) 
-    file_name_buf = (char *)CALLOC(MUS_MAX_FILE_NAME, sizeof(char));
-  else file_name_buf[0] = '\0';
   orig = strdup(filename);
   tok = orig;
   /* get rid of "//" */
@@ -1438,31 +1444,51 @@ char *mus_expand_filename(const char *filename)
 	tok[i] = tok[j];
       tok[i] ='\0';
     }
-  /* get rid of "~/" at start */
 #ifdef MACOS
+  file_name_buf = (char *)CALLOC(len + 8, sizeof(char));
   strcpy(file_name_buf, tok);
 #else
+  /* get rid of "~/" at start */
   if (tok[0] != '/')
     {
-      if ((tok[0] == '~') && (getenv("HOME") != NULL))
+      char *home = NULL;
+      if ((tok[0] == '~') && (home = getenv("HOME")))
 	{
-	  strcpy(file_name_buf, getenv("HOME"));
+	  file_name_buf = (char *)CALLOC(len + sndlib_strlen(home) + 8, sizeof(char));
+	  strcpy(file_name_buf, home);
 	  strcat(file_name_buf, ++tok);
 	}
       else
 	{
-#ifndef WINDOZE
+	  char *pwd = NULL, *res = NULL;
+	  /* get_current_dir_name isn't ready for prime time yet */
 #if HAVE_GETCWD
-	  getcwd(file_name_buf, MUS_MAX_FILE_NAME);
+	  for (i = 64;; i *= 2)
+	    {
+	      if (pwd) FREE(pwd);
+	      pwd = (char *)CALLOC(i, sizeof(char));
+	      res = getcwd(pwd, i);
+	      if (res) break;
+	    }
 #else
-	  getwd(file_name_buf);
+	  pwd = (char *)CALLOC(PATH_MAX, sizeof(char));
+	  getwd(pwd);
 #endif
-#endif
-	  strcat(file_name_buf, "/");
+	  file_name_buf = (char *)CALLOC(len + sndlib_strlen(pwd) + 8, sizeof(char));
+	  if (pwd) 
+	    {
+	      strcpy(file_name_buf, pwd);
+	      FREE(pwd);
+	      strcat(file_name_buf, "/");
+	    }
 	  strcat(file_name_buf, tok);
 	}
     }
-  else strcpy(file_name_buf, tok);
+  else 
+    {
+      file_name_buf = (char *)CALLOC(len + 8, sizeof(char));
+      strcpy(file_name_buf, tok);
+    }
   /* get rid of "/../" and "/./" */
   {
     int slash_at = -1;
@@ -1506,11 +1532,7 @@ char *mus_expand_filename(const char *filename)
 #else
   free(orig);
 #endif
-#if DEBUG_MEMORY
-  return(copy_string(file_name_buf));
-#else
-  return(strdup(file_name_buf));
-#endif
+  return(file_name_buf);
 }
 
 

@@ -433,8 +433,6 @@ void reflect_amp_env_in_progress(snd_info *sp);
 snd_info *add_sound_window (char *filename, bool read_only);
 void set_sound_pane_file_label(snd_info *sp, char *str);
 void snd_info_cleanup(snd_info *sp);
-void equalize_sound_panes(snd_info *sp, chan_info *ncp, bool all_panes);
-void equalize_all_panes(void);
 void sound_show_ctrls(snd_info *sp);
 void sound_hide_ctrls(snd_info *sp);
 bool control_panel_open(snd_info *sp);

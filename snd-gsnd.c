@@ -2027,17 +2027,8 @@ void set_apply_button(snd_info *sp, bool val)
   gtk_widget_set_sensitive(APPLY_BUTTON(sp), val);
 }
 
-void equalize_sound_panes(snd_info *sp, chan_info *ncp, bool all_panes)
-{
-  return;
-}
 
 /* ---------------- normalize sounds ---------------- */
-
-void equalize_all_panes(void)
-{
-  return;
-}
 
 void sound_show_ctrls(snd_info *sp)
 {

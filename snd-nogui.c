@@ -211,9 +211,7 @@ void snd_file_lock_icon(snd_info *sp, bool on) {}
 void snd_file_bomb_icon(snd_info *sp, bool on) {}
 void x_bomb(snd_info *sp, bool on) {}
 void set_sound_pane_file_label(snd_info *sp, char *str) {}
-void equalize_sound_panes(snd_info *sp, chan_info *ncp, bool all_panes) {}
 void reflect_amp_env_completion(snd_info *sp) {}
-void equalize_all_panes(void) {}
 void sound_show_ctrls(snd_info *sp) {}
 void sound_hide_ctrls(snd_info *sp) {}
 bool control_panel_open(snd_info *sp) {return(false);}

@@ -262,14 +262,14 @@ snd_info *new_file_from_menu(void)
   header_type = default_output_type(ss);
   if (new_file_name == NULL)
     {
-      new_file_name = (char *)CALLOC(MUS_MAX_FILE_NAME, sizeof(char));
+      new_file_name = (char *)CALLOC(64, sizeof(char));
       switch (header_type)
 	{
 	case MUS_AIFC: case MUS_AIFF: extension = "aiff"; break;
 	case MUS_RIFF:                extension = "wav";  break;
 	default:                      extension = "snd";  break;
 	}
-      mus_snprintf(new_file_name, MUS_MAX_FILE_NAME, _("new-%d.%s"), new_ctr++, extension);
+      mus_snprintf(new_file_name, 64, _("new-%d.%s"), new_ctr++, extension);
     }
   chans = default_output_chans(ss);
   data_format = default_output_format(ss);

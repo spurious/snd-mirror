@@ -585,18 +585,26 @@ static void add_sound_to_active_list (snd_info *sp, void *sptr1)
   (sptr->active_sounds)++;
 }
 
-static char title_buffer[4 * (MUS_MAX_FILE_NAME)];
-
 void reflect_file_change_in_title(void)
 {
+  char *title_buffer = NULL;
   active_sound_list *alist;
-  int i, j;
+  int i, j, len;
   alist = (active_sound_list *)CALLOC(1, sizeof(active_sound_list));
   alist->sounds = (int *)CALLOC(ss->max_sounds, sizeof(int));
   alist->names = (char **)CALLOC(ss->max_sounds, sizeof(char *));
   for_each_sound(add_sound_to_active_list, alist);
-  mus_snprintf(title_buffer, 4 * (MUS_MAX_FILE_NAME),
-	       "%s%s", 
+  len = snd_strlen(ss->startup_title) + 16;
+  if (alist->active_sounds > 0)
+    {
+      if (alist->active_sounds < 4) 
+	j = alist->active_sounds; 
+      else j = 4;
+      for (i = 0; i < j; i++)
+	len += snd_strlen(filename_without_home_directory(alist->names[i]));
+    }
+  title_buffer = (char *)CALLOC(len, sizeof(char));
+  mus_snprintf(title_buffer, len, "%s%s", 
 	       ss->startup_title, 
 	       ((alist->active_sounds > 0) ? ": " : ""));
   if (alist->active_sounds > 0)
@@ -614,6 +622,7 @@ void reflect_file_change_in_title(void)
 	strcat(title_buffer, "...");
     }
   set_title(title_buffer);
+  FREE(title_buffer);
   FREE(alist->sounds);
   FREE(alist->names);
   FREE(alist);
@@ -1378,7 +1387,9 @@ void view_curfiles_select(int pos)
   if (sp != osp)
     {
       select_channel(sp, 0);
+#if USE_MOTIF
       equalize_sound_panes(sp, sp->chans[0], false);
+#endif
       /* goto_graph(sp->chans[0]); */
     }
 }

@@ -67,7 +67,9 @@
 (if (file-exists? "/export/home/bil/cl/oboe.snd")
     (set! home-dir "/export/home/bil")
     (if (file-exists? "/Users/bill/cl/oboe.snd")
-	(set! home-dir "/Users/bill")))
+	(set! home-dir "/Users/bill")
+	(if (file-exists? "/users/b/bil/cl/oboe.snd")
+	    (set! home-dir "/users/b/bil"))))
 (system (string-append "cp " home-dir "/.snd " home-dir "/dot-snd"))
 (define cwd (string-append (getcwd) "/"))
 (define sf-dir "/sf1")
@@ -1273,6 +1275,8 @@
 	    (list "zulu_a4.w11" 1 33000 1.21987879276276 "TX-16W" "unknown" 23342 40042)))
 
 	  (for-each (lambda (in-name real-name)
+		      (if (not (string=? (mus-expand-filename in-name) real-name))
+			  (snd-display ";mus-expand-filename ~A -> ~A" in-name (mus-expand-filename in-name)))
 		      (if (file-exists? "/home/bil/./sf1/o2.voc")
 			  (let ((ind (open-sound in-name)))
 			    (if (not (sound? ind))
@@ -3801,11 +3805,11 @@ EDITS: 5
 	    (snd-display ";xramp 2: ~A" (display-edits ind 0 2)))
 	(undo)
 	(xramp-channel 0.0 1.0 0.0)
-	(if (not (string-=? (display-edits ind 0 2) "
+	(if (not (string-=? (display-edits ind 0 2) (string-append "
  (scale 0 10) ; scale-channel 0.000 0 10 [2:2]:
-   (at 0, cp->sounds[0][0:9, 0.000]) [file: /home/bil/cl/test.snd[0]]
+   (at 0, cp->sounds[0][0:9, 0.000]) [file: " (getcwd) "/test.snd[0]]
    (at 10, end_mark)
-"))
+")))
 	    (snd-display ";xramp 3: ~A" (display-edits ind 0 2)))
 	(undo)
 	(xramp-channel 0.0 1.0 1.0)
@@ -4581,11 +4585,11 @@ EDITS: 5
 	(ptree-channel (lambda (y) (+ y 0.25)))
 	(if (not (vequal (channel->vct) (make-vct 11 0.75)))
 	    (snd-display ";ptree2-zero 1: ~A" (channel->vct)))
-	(if (not (string-=? (display-edits ind 0 4) "
+	(if (not (string-=? (display-edits ind 0 4) (string-append "
  (ptree[1] 0 11) ; ptree 1 0 11 [4:2]:
-   (at 0, cp->sounds[0][0:10, 1.000, loc2: 1, pos2: 0, scl2: 1.000, loc: 0, pos: 0, scl: 0.000, code: (lambda (y) (+ y 0.5))]) [file: /home/bil/cl/test.snd[0]]
+   (at 0, cp->sounds[0][0:10, 1.000, loc2: 1, pos2: 0, scl2: 1.000, loc: 0, pos: 0, scl: 0.000, code: (lambda (y) (+ y 0.5))]) [file: " (getcwd) "/test.snd[0]]
    (at 11, end_mark)
-"))
+")))
 	    (snd-display ";ptree2-zero 2: ~A" (display-edits ind 0 4)))
 	(undo 3)
 	(scale-channel 0.0 2 4)
@@ -4830,29 +4834,29 @@ EDITS: 5
 	   (scale-by 0.0)
 	   (func-zero)
 	   (ramp-channel 0 1)
-	   (if (not (string-=? (display-edits ind 0 4 #f) "
+	   (if (not (string-=? (display-edits ind 0 4 #f) (string-append "
  (ramp 0 11) ; ramp-channel 0.000 1.000 0 11 [4:2]:
-   (at 0, cp->sounds[0][0:10, 1.000, [1]-0.000 -> 1.000, loc: 0, pos: 0, scl: 0.000]) [file: /home/bil/cl/test.snd[0]]
+   (at 0, cp->sounds[0][0:10, 1.000, [1]-0.000 -> 1.000, loc: 0, pos: 0, scl: 0.000]) [file: " (getcwd) "/test.snd[0]]
    (at 11, end_mark)
-"))
+")))
 	       (snd-display ";~A-zero 1: ~A" name (display-edits ind 0 4 #f)))
 	   (if (not (vequal (channel->vct) (vct 0.000 0.050 0.100 0.150 0.200 0.250 0.300 0.350 0.400 0.450 0.500)))
 	       (snd-display ";~A-zero 1: ~A" name (channel->vct)))
 	   (ramp-channel 0 1)
-	   (if (not (string-=? (display-edits ind 0 5 #f) "
+	   (if (not (string-=? (display-edits ind 0 5 #f) (string-append "
  (ramp 0 11) ; ramp-channel 0.000 1.000 0 11 [5:2]:
-   (at 0, cp->sounds[0][0:10, 1.000, [1]-0.000 -> 1.000, [2]-0.000 -> 1.000, loc: 0, pos: 0, scl: 0.000]) [file: /home/bil/cl/test.snd[0]]
+   (at 0, cp->sounds[0][0:10, 1.000, [1]-0.000 -> 1.000, [2]-0.000 -> 1.000, loc: 0, pos: 0, scl: 0.000]) [file: " (getcwd) "/test.snd[0]]
    (at 11, end_mark)
-"))
+")))
 	       (snd-display ";~A-zero 2: ~A" name (display-edits ind 0 5 #f)))
 	   (if (not (vequal (channel->vct) (vct 0.000 0.005 0.020 0.045 0.080 0.125 0.180 0.245 0.320 0.405 0.500)))
 	       (snd-display ";~A-zero 2: ~A" name (channel->vct)))
 	   (ramp-channel 0 1)
-	   (if (not (string-=? (display-edits ind 0 6 #f) "
+	   (if (not (string-=? (display-edits ind 0 6 #f) (string-append "
  (ramp 0 11) ; ramp-channel 0.000 1.000 0 11 [6:2]:
-   (at 0, cp->sounds[0][0:10, 1.000, [1]-0.000 -> 1.000, [2]-0.000 -> 1.000, [3]-0.000 -> 1.000, loc: 0, pos: 0, scl: 0.000]) [file: /home/bil/cl/test.snd[0]]
+   (at 0, cp->sounds[0][0:10, 1.000, [1]-0.000 -> 1.000, [2]-0.000 -> 1.000, [3]-0.000 -> 1.000, loc: 0, pos: 0, scl: 0.000]) [file: " (getcwd) "/test.snd[0]]
    (at 11, end_mark)
-"))
+")))
 	       (snd-display ";~A-zero 3: ~A" name (display-edits ind 0 6 #f)))
 	   (if (not (vequal (channel->vct) (vct 0.000 0.000 0.004 0.013 0.032 0.062 0.108 0.171 0.256 0.364 0.500)))
 	       (snd-display ";~A-zero 3: ~A" name (channel->vct)))
@@ -6125,30 +6129,30 @@ EDITS: 5
 	(ptree-channel (lambda (y) (+ y 0.5)))
 	(ptree-channel (lambda (y) (* y 2.0)))
 	(ramp-channel 0 1)
-	(if (not (string=? (display-edits ind 0 4 #f) "
+	(if (not (string=? (display-edits ind 0 4 #f) (string-append "
  (ptree[1] 0 11) ; ptree 1 0 11 [4:2]:
-   (at 0, cp->sounds[0][0:10, 1.000, loc2: 1, pos2: 0, scl2: 1.000, loc: 0, pos: 0, scl: 0.000]) [file: /home/bil/cl/test.snd[0]]
+   (at 0, cp->sounds[0][0:10, 1.000, loc2: 1, pos2: 0, scl2: 1.000, loc: 0, pos: 0, scl: 0.000]) [file: " (getcwd) "/test.snd[0]]
    (at 11, end_mark)
-"))
+")))
 	    (snd-display ";ramp ptree2 zero: ~A" (display-edits ind 0 4 #f)))
 	(if (not (vequal (channel->vct) (vct 0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0)))
 	    (snd-display ";ramp ptree2 zero: ~A" (channel->vct)))
 	(ramp-channel 0 1)
-	(if (not (string-=? (display-edits ind 0 5 #f) "
+	(if (not (string-=? (display-edits ind 0 5 #f) (string-append "
  (ramp 0 11) ; ramp-channel 0.000 1.000 0 11 [5:2]:
-   (at 0, cp->sounds[0][0:10, 1.000, [1]-0.000 -> 1.000, loc2: 1, pos2: 0, scl2: 1.000, loc: 0, pos: 0, scl: 0.000]) [file: /home/bil/cl/test.snd[0]]
+   (at 0, cp->sounds[0][0:10, 1.000, [1]-0.000 -> 1.000, loc2: 1, pos2: 0, scl2: 1.000, loc: 0, pos: 0, scl: 0.000]) [file: " (getcwd) "/test.snd[0]]
    (at 11, end_mark)
-"))
+")))
 	    (snd-display ";ramp2 ptree2 zero: ~A" (display-edits ind 0 5 #f)))
 	(if (not (vequal (channel->vct) (vct 0.000 0.010 0.040 0.090 0.160 0.250 0.360 0.490 0.640 0.810 1.000)))
 	    (snd-display ";ramp2 ptree2 zero: ~A" (channel->vct)))
 	(undo 2)
 	(xramp-channel 0 1 32)
-	(if (not (string=? (display-edits ind 0 4 #f) "
+	(if (not (string=? (display-edits ind 0 4 #f) (string-append "
  (ptree[1] 0 11) ; ptree 1 0 11 [4:2]:
-   (at 0, cp->sounds[0][0:10, 1.000, loc2: 1, pos2: 0, scl2: 1.000, loc: 0, pos: 0, scl: 0.000]) [file: /home/bil/cl/test.snd[0]]
+   (at 0, cp->sounds[0][0:10, 1.000, loc2: 1, pos2: 0, scl2: 1.000, loc: 0, pos: 0, scl: 0.000]) [file: " (getcwd) "/test.snd[0]]
    (at 11, end_mark)
-"))
+")))
 	    (snd-display ";xramp ptree2 zero: ~A" (display-edits ind 0 4 #f)))
 	(if (not (vequal (channel->vct) (vct 0.000 0.013 0.032 0.059 0.097 0.150 0.226 0.333 0.484 0.698 1.000)))
 	    (snd-display ";xramp ptree2 zero: ~A" (channel->vct)))

@@ -49,6 +49,7 @@
 ;;;   but that forces us to use Libtool's very poor dlopen wrapper.
 
 (if (not (defined? 'sound-property)) (load-from-path "extensions.scm"))
+(if (not (defined? 'open-play-output)) (load-from-path "play.scm"))
 
 (define (current-screen)
   "(current-screen) returns the current X screen number of the current display"
@@ -657,11 +658,12 @@ Reverb-feedback sets the scaler on the feedback.
 		     (lambda (w context info)
 		       (if running
 			   (set! running #f)
-			   (let* ((size 128)
-				  (data (make-sound-data 1 size))
-				  (v (make-fm-violin 440 amplitude :amp-env (lambda () amplitude)))
-				  (bytes (* size 2))
-				  (audio-fd (mus-audio-open-output mus-audio-default 22050 1 mus-lshort bytes)))
+			   (let* ((v (make-fm-violin 440 amplitude :amp-env (lambda () amplitude)))
+				  (audio-info (open-play-output 1 22050 #f 128))
+				  (audio-fd (car audio-info))
+				  (outchans (cadr audio-info))
+				  (frames (caddr audio-info))
+				  (data (make-sound-data outchans frames)))
 			     (set! running #t)
 			     (if (not (= audio-fd -1))
 				 (do ()
@@ -670,9 +672,9 @@ Reverb-feedback sets the scaler on the feedback.
 					(set! running #f)
 					(mus-audio-close audio-fd)))
 				   (do ((k 0 (1+ k)))
-				       ((= k size))
+				       ((= k frames))
 				     (sound-data-set! data 0 k (v)))
-				   (mus-audio-write audio-fd data size))
+				   (mus-audio-write audio-fd data frames))
 				 (set! running #f)))))))))
   (XtManageChild fmv-dialog))
 
@@ -1008,9 +1010,11 @@ Reverb-feedback sets the scaler on the feedback.
 		     (lambda (w context info)
 		       (if playing
 			   (set! playing #f)
-			   (let* ((data (make-sound-data 1 size))
-				  (bytes (* size 2))
-				  (audio-fd (mus-audio-open-output mus-audio-default 22050 1 mus-lshort bytes)))
+			   (let* ((audio-info (open-play-output 1 22050 #f 128))
+				  (audio-fd (car audio-info))
+				  (outchans (cadr audio-info))
+				  (frames (caddr audio-info))
+				  (data (make-sound-data outchans frames)))
 			     (set! playing #t)
 			     (if (not (= audio-fd -1))
 				 (do ()
@@ -1020,9 +1024,9 @@ Reverb-feedback sets the scaler on the feedback.
 					(mus-audio-close audio-fd)))
 				   (tick-synthesis work-proc)
 				   (do ((k 0 (1+ k)))
-				       ((= k size))
+				       ((= k frames))
 				     (sound-data-set! data 0 k (* amplitude (table-lookup tbl))))
-				   (mus-audio-write audio-fd data size))
+				   (mus-audio-write audio-fd data frames))
 				 (set! playing #f)))))))
     
     (XtAddCallback scan-pane XmNresizeCallback (lambda (w context info) (redraw-graph)))

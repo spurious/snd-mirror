@@ -3166,7 +3166,7 @@ static XEN g_sash(void)
 
 void g_init_gxsnd(void)
 {
-  XEN_DEFINE_PROCEDURE(S_sound_widgets, g_sound_widgets_w, 0, 1, 0, H_sound_widgets);
+  XEN_DEFINE_PROCEDURE(S_sound_widgets,  g_sound_widgets_w,  0, 1, 0, H_sound_widgets);
 #if DEBUGGING && HAVE_GUILE
   XEN_DEFINE_PROCEDURE("top-sash", g_sash, 0, 0, 0, "autotest func");
 #endif

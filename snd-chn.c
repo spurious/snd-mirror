@@ -3,7 +3,6 @@
 
 /* SOMEDAY: if superimposed and 2chn cursor set, 1chan is xor'd, subsequent click sets both (and chan1 cursor takes precedence?) */
 /*    cursor redraw can check for this, but it gloms up code */
-/* TODO: auto-to-mix in ws (with-mix -> to-mix?) */
 
 typedef enum {NOGRAPH, WAVE, FFT_AXIS, LISP, FFT_MAIN} click_loc_t;    /* for marks, regions, mouse click detection */
 

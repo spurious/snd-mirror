@@ -1169,7 +1169,7 @@ static XEN g_set_auto_resize(XEN val)
   #define H_auto_resize "(" S_auto_resize "): #t if Snd can change its main window size as it pleases (default: #t)"
   XEN_ASSERT_TYPE(XEN_BOOLEAN_P(val), val, XEN_ONLY_ARG, S_setB S_auto_resize, "a boolean");
   set_auto_resize(XEN_TO_C_BOOLEAN(val)); 
-#if HAVE_MOTIF
+#if USE_MOTIF
   XtVaSetValues(MAIN_SHELL(ss), XmNallowShellResize, auto_resize(ss), NULL);
 #endif
   return(C_TO_XEN_BOOLEAN(auto_resize(ss)));
@@ -1510,23 +1510,6 @@ static XEN g_sounds(void)
 			  result);
     }
   return(result);
-}
-
-static XEN g_equalize_panes(XEN snd) 
-{
-  #define H_equalize_panes "(" S_equalize_panes " (snd #f)): try to give all channels about the same screen space"
-  snd_info *sp;
-  if (XEN_NOT_BOUND_P(snd))
-    equalize_all_panes(); 
-  else 
-    {
-      sp = get_sp(snd, NO_PLAYERS);
-      if ((sp) && (sp->inuse == SOUND_NORMAL))
-	equalize_sound_panes(sp,
-			     sp->chans[0],
-			     true);
-    }
-  return(XEN_FALSE);
 }
 
 static XEN g_tiny_font(void) {return(C_TO_XEN_STRING(tiny_font(ss)));}
@@ -2665,7 +2648,6 @@ XEN_NARGIFY_1(g_yes_or_no_p_w, g_yes_or_no_p)
 XEN_NARGIFY_0(g_abort_w, g_abort)
 XEN_NARGIFY_0(g_abortq_w, g_abortq)
 XEN_NARGIFY_0(g_snd_version_w, g_snd_version)
-XEN_ARGIFY_1(g_equalize_panes_w, g_equalize_panes)
 XEN_ARGIFY_7(samples2sound_data_w, samples2sound_data)
 XEN_NARGIFY_1(g_snd_print_w, g_snd_print)
 XEN_NARGIFY_0(g_little_endian_w, g_little_endian)
@@ -2831,7 +2813,6 @@ XEN_NARGIFY_2(g_fmod_w, g_fmod)
 #define g_abort_w g_abort
 #define g_abortq_w g_abortq
 #define g_snd_version_w g_snd_version
-#define g_equalize_panes_w g_equalize_panes
 #define samples2sound_data_w samples2sound_data
 #define g_snd_print_w g_snd_print
 #define g_little_endian_w g_little_endian
@@ -3116,7 +3097,6 @@ void g_initialize_gh(void)
   XEN_DEFINE_PROCEDURE(S_abort,               g_abort_w,               0, 0, 0, H_abort);
   XEN_DEFINE_PROCEDURE(S_c_g,                 g_abortq_w,              0, 0, 0, H_abortQ);
   XEN_DEFINE_PROCEDURE(S_snd_version,         g_snd_version_w,         0, 0, 0, H_snd_version);
-  XEN_DEFINE_PROCEDURE(S_equalize_panes,      g_equalize_panes_w,      0, 1, 0, H_equalize_panes);
   XEN_DEFINE_PROCEDURE(S_samples2sound_data,  samples2sound_data_w,    0, 7, 0, H_samples2sound_data);
   XEN_DEFINE_PROCEDURE(S_snd_print,           g_snd_print_w,           1, 0, 0, H_snd_print);
   XEN_DEFINE_PROCEDURE("little-endian?",      g_little_endian_w,       0, 0, 0, "return #t if host is little endian");

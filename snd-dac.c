@@ -935,6 +935,7 @@ void play_region(int region, play_process_t background)
 {
   /* just plays region (not current selection) -- no control panel etc */
   int chans, i;
+  bool happy = false;
   dac_info *dp = NULL;
   if ((background == NOT_IN_BACKGROUND) && (play_list_members > 0)) return;
   if (!(region_ok(region))) return;
@@ -943,9 +944,13 @@ void play_region(int region, play_process_t background)
   for (i = 0; i < chans; i++) 
     {
       dp = add_region_channel_to_play_list(region, i, 0, NO_END_SPECIFIED);
-      if (dp) dp->region = region;
+      if (dp) 
+	{
+	  happy = true;
+	  dp->region = region;
+	}
     }
-  if (dp) start_dac(region_srate(region), chans, background, DEFAULT_REVERB_CONTROL_DECAY);
+  if (happy) start_dac(region_srate(region), chans, background, DEFAULT_REVERB_CONTROL_DECAY);
 }
 
 static bool call_start_playing_hook(snd_info *sp)
@@ -992,15 +997,19 @@ void play_sound(snd_info *sp, off_t start, off_t end, play_process_t background,
 {
   /* just plays one sound (ignores possible sync) */
   int i;
+  bool happy = false;
   dac_info *dp = NULL;
   if ((background == NOT_IN_BACKGROUND) && 
       (play_list_members > 0)) 
     return;
   if (sp->inuse == SOUND_IDLE) return;
   if (call_start_playing_hook(sp)) return;
-  for (i = 0; i < sp->nchans; i++) 
-    dp = add_channel_to_play_list(sp->chans[i], start, end, edpos, caller, arg_pos);
-  if (dp)
+  for (i = 0; i < sp->nchans; i++)
+    {
+      dp = add_channel_to_play_list(sp->chans[i], start, end, edpos, caller, arg_pos);
+      if (dp) happy = true;
+    }
+  if (happy)
     {
       set_play_button(sp, true);
       start_dac(SND_SRATE(sp), sp->nchans, background, sp->reverb_control_decay);
@@ -1012,6 +1021,7 @@ void play_channels(chan_info **cps, int chans, off_t *starts, off_t *ur_ends, pl
 {
   /* ends can be NULL */
   int i;
+  bool happy = false;
   snd_info *sp = NULL;
   dac_info *dp = NULL;
   off_t *ends;
@@ -1036,13 +1046,19 @@ void play_channels(chan_info **cps, int chans, off_t *starts, off_t *ur_ends, pl
 	ends[i] = NO_END_SPECIFIED;
     }
   for (i = 0; i < chans; i++) 
-    dp = add_channel_to_play_list(cps[i], 
-				  starts[i], ends[i],
-				  edpos, caller, arg_pos);
-  if ((dp) && (selection)) dp->selection = true;
+    {
+      dp = add_channel_to_play_list(cps[i], 
+				    starts[i], ends[i],
+				    edpos, caller, arg_pos);
+      if (dp) 
+	{
+	  happy = true;
+	  if (selection) dp->selection = true;
+	}
+    }
   if (ur_ends == NULL) FREE(ends);
   sp = cps[0]->sound;
-  if ((sp) && (dp)) 
+  if ((sp) && (happy)) 
     {
       set_play_button(sp, true);
       start_dac(SND_SRATE(sp), chans, background, sp->reverb_control_decay);
@@ -2185,7 +2201,7 @@ static XEN g_play_1(XEN samp_n, XEN snd_n, XEN chn_n, bool back, bool syncd, XEN
 
 static XEN g_play(XEN samp_n, XEN snd_n, XEN chn_n, XEN syncd, XEN end_n, XEN edpos) 
 {
-  #define H_play "(" S_play " (start 0) (snd #f) (chn #f) (sync 0) (end #f) (pos -1)): play snd or snd's channel chn starting at start. \
+  #define H_play "(" S_play " (start 0) (snd #f) (chn #f) (sync #f) (end #f) (pos -1)): play snd or snd's channel chn starting at start. \
 'start' can also be a filename: (" S_play " \"oboe.snd\").  If 'sync' is true, all sounds syncd to snd are played. \
 If 'end' is not given, " S_play " plays to the end of the sound.  If 'pos' is -1 or not given, the current edit position is \
 played."
@@ -2226,7 +2242,7 @@ before returning."
 
 static XEN g_play_and_wait(XEN samp_n, XEN snd_n, XEN chn_n, XEN syncd, XEN end_n, XEN edpos) 
 {
-  #define H_play_and_wait "(" S_play_and_wait " (start 0) (snd #f) (chn #f) (end #f) (pos -1)): \
+  #define H_play_and_wait "(" S_play_and_wait " (start 0) (snd #f) (chn #f) (syncd #f) (end #f) (pos -1)): \
 play snd or snd's channel chn starting at start \
 and waiting for the play to complete before returning.  'start' can also be a filename: (" S_play_and_wait " \"oboe.snd\")"
 

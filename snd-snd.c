@@ -1917,8 +1917,10 @@ static XEN g_select_sound(XEN snd_n)
 	      (sp->inuse == SOUND_NORMAL))
 	    {
 	      select_channel(sp, 0);
+#if USE_MOTIF
 	      equalize_sound_panes(sp, sp->chans[0], false);
 	      for_each_chan(update_graph);
+#endif
 	      return(snd_n);
 	    }
 	}
@@ -4417,6 +4419,26 @@ static XEN g_vct2soundfile(XEN g_fd, XEN obj, XEN g_nums)
   return(xen_return_first(C_TO_XEN_INT(nums >> 2), obj));
 }
 
+static XEN g_equalize_panes(XEN snd) 
+{
+  #define H_equalize_panes "(" S_equalize_panes " (snd #f)): try to give all channels about the same screen space (Motif version only)"
+  snd_info *sp;
+#if USE_MOTIF
+  if (XEN_NOT_BOUND_P(snd))
+    equalize_all_panes(); 
+  else 
+    {
+      sp = get_sp(snd, NO_PLAYERS);
+      if ((sp) && (sp->inuse == SOUND_NORMAL))
+	equalize_sound_panes(sp,
+			     sp->chans[0],
+			     true);
+    }
+#endif
+  return(XEN_FALSE);
+}
+
+
 
 
 #ifdef XEN_ARGIFY_1
@@ -4540,6 +4562,7 @@ XEN_ARGIFY_5(g_progress_report_w, g_progress_report)
 XEN_VARGIFY(g_open_sound_file_w, g_open_sound_file)
 XEN_NARGIFY_2(g_close_sound_file_w, g_close_sound_file)
 XEN_NARGIFY_3(g_vct2soundfile_w, g_vct2soundfile)
+XEN_ARGIFY_1(g_equalize_panes_w, g_equalize_panes)
 #else
 #define g_sound_p_w g_sound_p
 #define g_bomb_w g_bomb
@@ -4661,6 +4684,7 @@ XEN_NARGIFY_3(g_vct2soundfile_w, g_vct2soundfile)
 #define g_open_sound_file_w g_open_sound_file
 #define g_close_sound_file_w g_close_sound_file
 #define g_vct2soundfile_w g_vct2soundfile
+#define g_equalize_panes_w g_equalize_panes
 #endif
 
 void g_init_snd(void)
@@ -4864,4 +4888,5 @@ If it returns #t, the apply is aborted."
   XEN_DEFINE_PROCEDURE(S_open_sound_file,          g_open_sound_file_w,          0, 0, 1, H_open_sound_file);
   XEN_DEFINE_PROCEDURE(S_close_sound_file,         g_close_sound_file_w,         2, 0, 0, H_close_sound_file);
   XEN_DEFINE_PROCEDURE(S_vct2sound_file,           g_vct2soundfile_w,            3, 0, 0, H_vct2sound_file);
+  XEN_DEFINE_PROCEDURE(S_equalize_panes,           g_equalize_panes_w,           0, 1, 0, H_equalize_panes);
 }
