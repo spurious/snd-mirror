@@ -54,6 +54,7 @@
          }
        amp_env_scale_by(cp, 1.0, pos); 
  */
+/* TODO: preliminary tests for ramp|ptree on ramp|ptree, xen on all, swap in simple cases */
 
 
 static int dont_edit(chan_info *cp) 
@@ -5059,3 +5060,18 @@ keep track of which files are in a given saved state batch, and a way to rename 
   init_fcomb();
 #endif
 }
+
+/* from Anders:
+
+How to have the trees displayed in a meaningful manner,
+especially related to common-music type work?  Maybe the edits
+could be given optional names?  ie. "inversed", "prolongue-1",
+"scale-1" etc. - and a more specialised graphing system put
+together.
+
+If all this is based on closures, doing "Select-All", should it
+write out a temp-file of the state as now?  And how to import it
+into some arbitrary place in the tree again?  Would pasting it in
+be analogous to take a certain stage of the edit-history and
+append the rest?
+*/

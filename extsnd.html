@@ -4784,10 +4784,19 @@ the direction argument between the channel and edit-position:
 <!-- --><span class=defbox><code><em class=def><a name="sndnew">new-sound</a></em> (<i>name header-type data-format srate chans comment</i>)</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
-<!-- -->create a new (empty) sound named <i>name</i>.  If the <i>type</i> and other 
-<!-- -->arguments are not specified, a dialog is posted to get the needed 
-<!-- -->values which default to the current <a href="#defaultoutputtype">default-output-type</a> and 
-<!-- -->related settings.  Data formats are (b=big-endian, l=little, u=unsigned):
+<!-- -->create a new (empty) sound named <i>name</i>.  The following function opens a new (blank) sound,
+<!-- -->extends it to 'dur' samples, and initializes all samples to 'val':
+<!-- --><br><br><pre>
+(define (init-sound val dur)
+  (let ((ind (<em class=red>new-sound</em> "test.snd")))
+    (insert-silence 0 dur)
+    (map-chan (lambda (y) val))
+    ind))
+<!-- --></pre>
+<!-- -->If the <i>type</i> and other 
+<!-- -->arguments are not specified, they
+<!-- -->default to the current <a href="#defaultoutputtype">default-output-type</a> and 
+<!-- -->related settings. Data formats are (b=big-endian, l=little, u=unsigned):
 <!-- --><pre>
 <!-- -->mus-bshort  mus-lshort mus-mulaw  mus-alaw   mus-byte   mus-ubyte   mus-bfloat
 <!-- -->mus-lfloat  mus-bint   mus-lint   mus-b24int mus-l24int mus-bdouble mus-ldouble
