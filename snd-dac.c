@@ -2067,7 +2067,7 @@ static XEN g_play_1(XEN samp_n, XEN snd_n, XEN chn_n, int background, int syncd,
   return(XEN_TRUE);
 }
 
-#define TO_C_BOOLEAN_OR_F(a) ((XEN_TRUE_P(a) || ((XEN_INTEGER_P(a)) && (XEN_TO_SMALL_C_INT(a) == 1))) ? 1 : 0)
+#define TO_C_BOOLEAN_OR_F(a) ((XEN_TRUE_P(a) || ((XEN_INTEGER_P(a)) && (XEN_TO_C_INT(a) == 1))) ? 1 : 0)
 
 static XEN g_play(XEN samp_n, XEN snd_n, XEN chn_n, XEN syncd, XEN end_n, XEN edpos) 
 {
@@ -2259,7 +2259,7 @@ static XEN g_player_home(XEN snd_chn)
   int index;
   chan_info *cp;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(snd_chn), snd_chn, XEN_ONLY_ARG, S_player_home, "an integer");
-  index = -XEN_TO_SMALL_C_INT(snd_chn);
+  index = -XEN_TO_C_INT(snd_chn);
   if ((index > 0) && 
       (index < players_size) && 
       (players[index]) &&
@@ -2288,7 +2288,7 @@ The start, end, and edit-position of the portion played can be specified."
   XEN_ASSERT_TYPE(XEN_INTEGER_P(snd_chn), snd_chn, XEN_ARG_1, S_add_player, "an integer");
   XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(start), start, XEN_ARG_2, S_add_player, "a number");
   XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(end), end, XEN_ARG_3, S_add_player, "a number");
-  index = -XEN_TO_SMALL_C_INT(snd_chn);
+  index = -XEN_TO_C_INT(snd_chn);
   if ((index > 0) && (index < players_size)) sp = players[index];
   if (sp)
     {
@@ -2338,7 +2338,7 @@ static XEN g_stop_player(XEN snd_chn)
   int index;
   snd_info *sp = NULL;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(snd_chn), snd_chn, XEN_ONLY_ARG, S_stop_player, "an integer");
-  index = -XEN_TO_SMALL_C_INT(snd_chn);
+  index = -XEN_TO_C_INT(snd_chn);
   if ((index > 0) && (index < players_size)) sp = players[index];
   if (sp) 
     stop_playing_sound(sp);
@@ -2353,7 +2353,7 @@ static XEN g_player_p(XEN snd_chn)
   #define H_player_p "(" S_player_p " obj): is 'obj' an active player"
   int index;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(snd_chn), snd_chn, XEN_ONLY_ARG, S_player_p, "an integer");
-  index = -XEN_TO_SMALL_C_INT(snd_chn);
+  index = -XEN_TO_C_INT(snd_chn);
   return(C_TO_XEN_BOOLEAN((index > 0) && 
 			  (index < players_size) && 
 			  (players[index])));

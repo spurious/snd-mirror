@@ -3864,7 +3864,7 @@ void graph_button_release_callback(chan_info *cp, int x, int y, int key_state, i
 			  XEN res = XEN_FALSE;
 			  if (XEN_HOOKED(mark_click_hook))
 			    res = run_progn_hook(mark_click_hook,
-						 XEN_LIST_1(C_TO_SMALL_XEN_INT(mark_id(mouse_mark))),
+						 XEN_LIST_1(C_TO_XEN_INT(mark_id(mouse_mark))),
 						 S_mark_click_hook);
 			  if (!(XEN_TRUE_P(res)))
 			    report_in_minibuffer(sp, _("mark %d at sample " PRId64), 
@@ -3879,7 +3879,7 @@ void graph_button_release_callback(chan_info *cp, int x, int y, int key_state, i
 			      /* the mix has already been selected by hit-mix above (to preapre drag) */
 			      if (XEN_HOOKED(mix_click_hook))
 				res = run_progn_hook(mix_click_hook,
-						     XEN_LIST_1(C_TO_SMALL_XEN_INT(mix_tag)),
+						     XEN_LIST_1(C_TO_XEN_INT(mix_tag)),
 						     S_mix_click_hook);
 			      if (!(XEN_TRUE_P(res)))
 				report_in_minibuffer(sp, _("mix %d "), mix_tag);

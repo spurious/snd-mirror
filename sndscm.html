@@ -1,7 +1,7 @@
 <html>
 <!-- documentation for some of the Scheme code included with Snd -->
 <head>
-<title>Scheme Functions included with Snd</title>
+<title>Scheme and Ruby Functions included with Snd</title>
 <style type="text/css">
 <!-- 
 	EM.red {color:red; font-style:normal}
@@ -21,7 +21,7 @@
 </style>
 </head>
 <body bgcolor=white>
-<span class=box><h1>Scheme Functions included with Snd</h1></span>
+<span class=box><h1>Scheme and Ruby Functions included with Snd</h1></span>
 <br>
 <center>
 <span class=htmlbox>related documentation</span><span class=htmlbox><a href="snd.html">snd.html</a><spacer type=horizontal size=25> <a href="extsnd.html">extsnd.html</a><spacer type=horizontal size=25> <a href="grfsnd.html">grfsnd.html</a><spacer type=horizontal size=25> <a href="clm.html">clm.html</a><spacer type=horizontal size=25> <a href="sndlib.html">sndlib.html</a><spacer type=horizontal size=25> <a href="libxm.html">libxm.html</a><spacer type=horizontal size=25> <a href="index.html">index.html</a></span>
@@ -329,57 +329,51 @@ the listener?
 
 <A NAME="dspdoc"></a><span class=box><h2>dsp.scm</h2></span>
 
-  <ul>
-    <li>Dolph-Chebyshev fft data window
-    <li>dht -- slow Hartley transform 
-    <li>find-sine -- DFT at a particular frequency
-    <li>Butterworth filters
-    <li>frequency-response -&gt; FIR coeffs
-    <li>move sound down 8ve using fft
-    <li>compute-uniform-circular-string (and scanned-synthesis)
-    <li>"frequency division"
-    <li>"adaptive saturation"
-    <li>spike effect
-    <li>easily-fooled autocorrelation-based pitch tracker 
-    <li>zero-phase, rotate-phase
-    <li>asyfm
-    <li>cosine-summation, legendre-summation
-    <li>brighten-slightly
-    <li>simple FIR filters
-  </ul>
-
-<p>These are DSP-related procedures that aren't closely tied to CLM.
+<p>A DSP grabbag, mostly filters.
 </p>
-<pre>
-  <em class=def><A NAME="exdolph">dolph</a></em> n gamma
-  <em class=def><A NAME="exdht">dht</a></em> data
-  <em class=def>find-sine</em> freq beg dur
-  <em class=def>butter</em> gen
-  <em class=def>make-butter-high-pass</em> freq
-  <em class=def>make-butter-low-pass</em> freq
-  <em class=def>make-butter-band-pass</em> freq bandwidth
-  <em class=def>make-butter-band-reject</em> freq bandwidth
-  <em class=def>fltit-1</em>
-  <em class=def>spectrum-&gt;coeffs</em> order spectrum-envelope
-  <em class=def><A NAME="exdownoct">down-oct</a></em>
-  <em class=def>freqdiv</em> n
-  <em class=def>adsat</em> size
-  <em class=def>spike</em>
-  <em class=def><a name="excomputeuniformcircularstring">compute-uniform-circular-string</a></em> size x0 x1 x2 mass xspring damp
-  <em class=def>compute-string</em>size x0 x1 x2 masses xsprings esprings damps haptics
-  <em class=def>spot-freq</em>
-  <em class=def><A NAME="zerophase">zero-phase, rotate-phase</a></em>
-  <em class=def>both forms of asymmetric-fm</em>
-  <em class=def><a name="cosinesummation">cosine-summation</a></em>
-  <em class=def><a name="legendresummation">legendre-summation</a></em>
-  <em class=def>brighten-slightly</em> amount
-  <em class=def><a name="makehilberttransform">make-hilbert-transform</a></em> length
-  <em class=def><a name="makelowpass">make-lowpass</a></em> fc length
-  <em class=def><a name="makehighpass">make-highpass</a></em> fc length
-  <em class=def><a name="makebandpass">make-bandpass</a></em> flo fhi length
-  <em class=def><a name="makebandstop">make-bandstop</a></em> flo fhi length
-  <em class=def><a name="makedifferentiator">make-differentiator</a></em> length
-</pre>
+<table border=1>
+  <tr><td><em class=def><A NAME="exdolph">dolph</a></em> n gamma</td><td>Dolph-Chebyshev fft data window</td></tr>
+  <tr><td><em class=def><A NAME="exdht">dht</a></em> data</td><td>slow Hartley transform </td></tr>
+  <tr><td><em class=def>find-sine</em> freq beg dur</td><td>DFT at a particular frequency</td></tr>
+  <tr><td><em class=def>make-butter-high-pass</em> freq</td><td>2nd order Butterworth highpass</td></tr>
+  <tr><td><em class=def>make-butter-low-pass</em> freq</td><td>2nd order Butterworth lowpass</td></tr>
+  <tr><td><em class=def>make-butter-band-pass</em> freq bandwidth</td><td>2nd order Butterworth bandpass</td></tr>
+  <tr><td><em class=def>make-butter-band-reject</em> freq bandwidth</td><td>2nd order Butterworth bandstop</td></tr>
+  <tr><td><em class=def>fltit-1</em></td><td></td></tr>
+  <tr><td><em class=def>spectrum-&gt;coeffs</em> order spectrum-envelope</td><td>frequency-response envelope -&gt; FIR coeffs</td></tr>
+  <tr><td><em class=def><A NAME="exdownoct">down-oct</a></em></td><td>move sound down 8ve using fft</td></tr>
+  <tr><td><em class=def>freqdiv</em> n</td><td>"frequency division" effect</td></tr>
+  <tr><td><em class=def>adsat</em> size</td><td>"adaptive saturation" effect</td></tr>
+  <tr><td><em class=def>spike</em></td><td>spikey sound effect</td></tr>
+  <tr><td><em class=def><a name="excomputeuniformcircularstring">compute-uniform-circular-string</a></em> size ...</td><td>scanned synthesis</td></tr>
+  <tr><td><em class=def>compute-string</em> size ...</td><td></td></tr>
+  <tr><td><em class=def>spot-freq</em></td><td>easily-fooled autocorrelation-based pitch tracker</td></tr>
+  <tr><td><em class=def><A NAME="zerophase">zero-phase, rotate-phase</a></em></td><td>phase-based effects</td></tr>
+  <tr><td><em class=def>both forms of asymmetric-fm</em></td><td></td></tr>
+  <tr><td><em class=def><a name="cosinesummation">cosine-summation</a></em></td><td>sum-of-cosines stuff</td></tr>
+  <tr><td><em class=def><a name="legendresummation">legendre-summation</a></em></td><td></td></tr>
+  <tr><td><em class=def>brighten-slightly</em> amount</td><td>add harmonics</td></tr>
+  <tr><td><em class=def><a name="makehilberttransform">make-hilbert-transform</a></em> length</td><td>Hilbert transform</td></tr>
+  <tr><td><em class=def><a name="makelowpass">make-lowpass</a></em> fc length</td><td>FIR lowpass</td></tr>
+  <tr><td><em class=def><a name="makehighpass">make-highpass</a></em> fc length</td><td>FIR highpass</td></tr>
+  <tr><td><em class=def><a name="makebandpass">make-bandpass</a></em> flo fhi length</td><td>FIR bandpass</td></tr>
+  <tr><td><em class=def><a name="makebandstop">make-bandstop</a></em> flo fhi length</td><td>FIR bandstop</td></tr>
+  <tr><td><em class=def><a name="makedifferentiator">make-differentiator</a></em> length</td><td>FIR differentiator</td></tr>
+  <tr><td><em class=def>make-biquad</em> a0 a1 a2 b1 b2</td><td>IIR cascade section</td></tr>
+  <tr><td><em class=def>make-iir-low-pass-1</em> fc</td><td>IIR 1st order lowpass</td></tr>
+  <tr><td><em class=def>make-iir-high-pass-1</em> fc</td><td>IIR 1st order highpass</td></tr>
+  <tr><td><em class=def>make-iir-low-pass-2</em> fc d</td><td>IIR 2nd order lowpass</td></tr>
+  <tr><td><em class=def>make-iir-high-pass-2</em> fc d</td><td>IIR 2nd order highpass</td></tr>
+  <tr><td><em class=def>make-iir-band-pass-2</em> f1 f2</td><td>IIR 2nd order bandpass</td></tr>
+  <tr><td><em class=def>make-iir-band-stop-2</em> f1 f2</td><td>IIR 2nd order bandstop</td></tr>
+  <tr><td><em class=def>make-eliminate-hum</em> freq ...</td><td>hum eliminator (cascaded bandstops)</td></tr>
+  <tr><td><em class=def>make-peaking-2</em> f1 f2 m</td><td>slight resonance effect</td></tr>
+  <tr><td><em class=def>cascade-&gt;canonical</em> coeffs</td><td>convert cascade coeffs to canonical (for CLM's filter gen)</td></tr>
+  <tr><td><em class=def>make-butter-lp</em> M fc</td><td>any even order Butterworth lowpass</td></tr>
+  <tr><td><em class=def>make-butter-hp</em> M fc</td><td>any even order Butterworth highpass</td></tr>
+  <tr><td><em class=def>make-butter-bp</em> M f1 f2</td><td>any even order Butterworth bandpass</td></tr>
+  <tr><td><em class=def>make-butter-bs</em> M f1 f2</td><td>any even order Butterworth bandstop</td></tr>
+</table>
 
 <p><i>dolph</i> is the Dolph-Chebyshev fft data window, taken
 from Richard Lyons, "Understanding DSP".
@@ -388,8 +382,9 @@ taken from Perry Cook's SignalProcessor.m.
 The Hartley transform is a kind of Fourier transform.
 A similar function, using the DFT, is <i>find-sine</i>.
 It returns the amplitude and initial-phase (for sin) at freq between beg and dur.
-The Butterworth filters are taken from Sam Heisz's CLM version
+The simple Butterworth filters are taken from Sam Heisz's CLM version
 of Paris Smaragdis's Csound version of Charles Dodge's code from "Computer Music: synthesis, composition, and performance".
+The second set (make-butter-lp et al) provide arbitrary order Butterworths.
 See also the notch filter in new-effects.scm.
 <i>spectrum-&gt;coeffs</i> is a Scheme
 version of Snd's very simple spectrum-&gt;coefficients procedure ("frequency sampling").

@@ -330,13 +330,13 @@ static XEN g_set_srate(XEN val)
 static XEN g_array_print_length(void) 
 {
   #define H_mus_array_print_length "(" S_mus_array_print_length "): current clm array print length (default is 8)"
-  return(C_TO_SMALL_XEN_INT(mus_array_print_length()));
+  return(C_TO_XEN_INT(mus_array_print_length()));
 }
 
 static XEN g_set_array_print_length(XEN val) 
 {
   XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, S_setB S_mus_array_print_length, "an integer");
-  return(C_TO_SMALL_XEN_INT(mus_set_array_print_length(XEN_TO_C_INT(val))));
+  return(C_TO_XEN_INT(mus_set_array_print_length(XEN_TO_C_INT(val))));
 }
 
 static XEN g_ring_modulate(XEN val1, XEN val2) 
@@ -802,14 +802,14 @@ static XEN g_length(XEN gen)
 {
   #define H_mus_length "(" S_mus_length " gen): gen's length, if any"
   XEN_ASSERT_TYPE(MUS_XEN_P(gen), gen, XEN_ONLY_ARG, S_mus_length, "a generator");
-  return(C_TO_SMALL_XEN_INT(mus_length(XEN_TO_MUS_ANY(gen))));
+  return(C_TO_XEN_INT(mus_length(XEN_TO_MUS_ANY(gen))));
 }
 
 static XEN g_set_length(XEN gen, XEN val) 
 {
   XEN_ASSERT_TYPE(MUS_XEN_P(gen), gen, XEN_ARG_1, S_setB S_mus_length, "a generator");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_2, S_setB S_mus_length, "a number");
-  return(C_TO_SMALL_XEN_INT(mus_set_length(XEN_TO_MUS_ANY(gen), XEN_TO_C_INT_OR_ELSE(val, 0))));
+  return(C_TO_XEN_INT(mus_set_length(XEN_TO_MUS_ANY(gen), XEN_TO_C_INT_OR_ELSE(val, 0))));
 }
 
 static XEN g_name(XEN gen) 
@@ -2579,14 +2579,14 @@ static XEN g_buffer_empty_p(XEN obj)
 {
   #define H_buffer_empty_p "(" S_buffer_empty_p " gen): #t if buffer is in need of more samples"
   XEN_ASSERT_TYPE((MUS_XEN_P(obj)) && (mus_buffer_p(XEN_TO_MUS_ANY(obj))), obj, XEN_ONLY_ARG, S_buffer_empty_p, "a buffer gen");
-  return(C_TO_SMALL_XEN_INT(mus_buffer_empty_p(XEN_TO_MUS_ANY(obj))));
+  return(C_TO_XEN_BOOLEAN(mus_buffer_empty_p(XEN_TO_MUS_ANY(obj))));
 }
 
 static XEN g_buffer_full_p(XEN obj)
 {
   #define H_buffer_full_p "(" S_buffer_full_p " gen): #t if buffer has no room for any more samples"
   XEN_ASSERT_TYPE((MUS_XEN_P(obj)) && (mus_buffer_p(XEN_TO_MUS_ANY(obj))), obj, XEN_ONLY_ARG, S_buffer_full_p, "a buffer gen");
-  return(C_TO_SMALL_XEN_INT(mus_buffer_full_p(XEN_TO_MUS_ANY(obj))));
+  return(C_TO_XEN_BOOLEAN(mus_buffer_full_p(XEN_TO_MUS_ANY(obj))));
 }
 
 static XEN g_sample2buffer(XEN obj, XEN val)
@@ -4513,14 +4513,14 @@ static XEN g_hop(XEN obj)
 {
   #define H_mus_hop "(" S_mus_hop " gen): gen's " S_mus_hop " field"
   XEN_ASSERT_TYPE(MUS_XEN_P(obj), obj, XEN_ONLY_ARG, S_mus_hop, "a generator");
-  return(C_TO_SMALL_XEN_INT(mus_hop(XEN_TO_MUS_ANY(obj))));
+  return(C_TO_XEN_INT(mus_hop(XEN_TO_MUS_ANY(obj))));
 }
 
 static XEN g_set_hop(XEN obj, XEN val)
 {
   XEN_ASSERT_TYPE(MUS_XEN_P(obj), obj, XEN_ARG_1, S_setB S_mus_hop, "a generator");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_2, S_setB S_mus_hop, "a number");
-  return(C_TO_SMALL_XEN_INT(mus_set_hop(XEN_TO_MUS_ANY(obj), XEN_TO_C_INT_OR_ELSE(val, 0))));
+  return(C_TO_XEN_INT(mus_set_hop(XEN_TO_MUS_ANY(obj), XEN_TO_C_INT_OR_ELSE(val, 0))));
 }
 
 

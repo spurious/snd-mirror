@@ -163,7 +163,7 @@ static XEN g_set_graph_cursor(XEN curs)
 {
   int val;
   snd_state *ss;
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(curs), curs, XEN_ONLY_ARG, S_setB S_graph_cursor, "a number");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(curs), curs, XEN_ONLY_ARG, S_setB S_graph_cursor, "an integer");
   /* X11/cursorfont.h has various even-numbered glyphs, but the odd numbers are ok, and XC_num_glyphs is a lie */
   /*   if you use too high a number here, X dies */
   val = XEN_TO_C_INT(curs);

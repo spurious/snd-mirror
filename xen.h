@@ -305,6 +305,7 @@
 #define XEN_NUMBER_P(Arg)             (XEN_NOT_FALSE_P(scm_real_p(Arg)))
 #define XEN_DOUBLE_P(Arg)             (XEN_NOT_FALSE_P(scm_real_p(Arg)))
 #define XEN_OFF_T_P(Arg)              (XEN_NOT_FALSE_P(scm_integer_p(Arg)))
+/* XEN_COMPLEX_P(Arg) (XEN_NOT_FALSE_P(scm_number_p(Arg))) */
 
 #define XEN_SYMBOL_P(Arg)             (SCM_SYMBOLP(Arg))
 #define XEN_PROCEDURE_P(Arg)          (XEN_NOT_FALSE_P(scm_procedure_p(Arg)))
@@ -673,6 +674,7 @@ void xen_guile_define_procedure_with_reversed_setter(char *get_name, XEN (*get_f
 #define XEN_EXACT_P(Arg1)                XEN_INTEGER_P(Arg1)
 #define XEN_OFF_T_P(Arg)                 ((TYPE(Arg) == T_FIXNUM) || (TYPE(Arg) == T_BIGNUM))
 #define XEN_HOOK_P(Arg)                  XEN_PROCEDURE_P(Arg)
+/* apparently no complex numbers (built-in) in Ruby? */
 
 #define XEN_LIST_P(Arg)                  (TYPE(Arg) == T_ARRAY)
 #define XEN_LIST_P_WITH_LENGTH(Arg, Len) ((XEN_LIST_P(Arg)) ? (Len = RARRAY(Arg)->len) : 0)

@@ -3517,7 +3517,7 @@ static XEN g_mixes(XEN snd, XEN chn)
 	  cp = get_cp(snd, chn, S_mixes);
 	  for (i = 0; i < mix_infos_ctr; i++)
 	    if ((mix_ok(i)) && (mix_infos[i]->cp == cp))
-	      res1 = XEN_CONS(C_TO_SMALL_XEN_INT(i), res1);
+	      res1 = XEN_CONS(C_TO_XEN_INT(i), res1);
 	}
       else
 	{
@@ -3525,7 +3525,7 @@ static XEN g_mixes(XEN snd, XEN chn)
 	  if (sp == NULL) 
 	    return(snd_no_such_sound_error(S_mixes, snd));
 	  for (i = sp->nchans - 1; i >= 0; i--)
-	    res1 = XEN_CONS(g_mixes(snd, C_TO_SMALL_XEN_INT(i)), res1);
+	    res1 = XEN_CONS(g_mixes(snd, C_TO_XEN_INT(i)), res1);
 	}
     }
   else
@@ -3535,7 +3535,7 @@ static XEN g_mixes(XEN snd, XEN chn)
 	{
 	  sp = ss->sounds[j];
 	  if ((sp) && (sp->inuse))
-	    res1 = XEN_CONS(g_mixes(C_TO_SMALL_XEN_INT(j), 
+	    res1 = XEN_CONS(g_mixes(C_TO_XEN_INT(j), 
 				    XEN_UNDEFINED), 
 			    res1);
 	}
@@ -3698,11 +3698,11 @@ static XEN g_set_mix_tag_y(XEN n, XEN val)
 {
   mix_info *md;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(n), n, XEN_ARG_1, S_setB S_mix_tag_y, "an integer");
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_2, S_setB S_mix_tag_y, "a number");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ARG_2, S_setB S_mix_tag_y, "an integer");
   md = md_from_id(XEN_TO_C_INT(n));
   if (md == NULL)
     return(snd_no_such_mix_error(S_setB S_mix_tag_y, n));
-  md->tag_y = XEN_TO_C_INT_OR_ELSE(val, 0);
+  md->tag_y = XEN_TO_C_INT(val);
   update_graph(md->cp);
   return(val);
 }
@@ -3795,7 +3795,9 @@ static XEN g_mix_sound(XEN file, XEN start_samp)
       if (len > 0)
 	err = mix(beg, len,
 		  sp->nchans, sp->chans,
-		  filename, DONT_DELETE_ME, S_mix_sound, with_mix_tags(ss)); 
+		  filename, DONT_DELETE_ME, 
+		  S_mix_sound, 
+		  with_mix_tags(ss)); 
     }
   else err = -1;
   if (filename) FREE(filename);
@@ -3856,9 +3858,9 @@ static XEN g_set_mix_tag_width(XEN val)
   #define H_mix_tag_width "(" S_mix_tag_width "): width (pixels) of mix tags (6)"
   snd_state *ss; 
   int width;
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, S_setB S_mix_tag_width, "a number"); 
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, S_setB S_mix_tag_width, "an integer"); 
   ss = get_global_state(); 
-  width = XEN_TO_C_INT_OR_ELSE(val, DEFAULT_MIX_TAG_WIDTH);
+  width = XEN_TO_C_INT(val);
   set_mix_tag_width(ss, width);
   for_each_chan(ss, update_graph);
   return(C_TO_XEN_INT(mix_tag_width(ss)));
@@ -3870,9 +3872,9 @@ static XEN g_set_mix_tag_height(XEN val)
   #define H_mix_tag_height "(" S_mix_tag_height "): height (pixels) of mix tags (14)"
   snd_state *ss; 
   int height;
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, S_setB S_mix_tag_height, "a number"); 
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, S_setB S_mix_tag_height, "an integer"); 
   ss = get_global_state(); 
-  height = XEN_TO_C_INT_OR_ELSE(val, DEFAULT_MIX_TAG_HEIGHT);
+  height = XEN_TO_C_INT(val);
   set_mix_tag_height(ss, height);
   for_each_chan(ss, update_graph);
   return(C_TO_XEN_INT(mix_tag_height(ss)));
@@ -3884,7 +3886,7 @@ static XEN g_selected_mix(void)
   snd_state *ss;
   ss = get_global_state();
   if (ss->selected_mix != INVALID_MIX_ID)
-    return(C_TO_SMALL_XEN_INT(ss->selected_mix));
+    return(C_TO_XEN_INT(ss->selected_mix));
   return(XEN_FALSE); /* changed 26-Mar-02 */
 }
 
@@ -3960,7 +3962,13 @@ If file_chn is omitted, file's channels are mixed until snd runs out of channels
   beg = XEN_TO_C_OFF_T_OR_ELSE(chn_samp_n, CURSOR(cp));
   if (XEN_NOT_BOUND_P(file_chn))
     {
-      id = mix_complete_file(any_selected_sound(ss), beg, name, S_mix, with_mixer);
+      id = mix_complete_file(any_selected_sound(ss), beg, name, 
+#if DEBUGGING
+			     "mix_complete_file line 3967",
+#else
+			     S_mix, 
+#endif
+			     with_mixer);
       if (id == -1) 
 	{
 	  if (name) FREE(name);
@@ -3997,7 +4005,11 @@ If file_chn is omitted, file's channels are mixed until snd runs out of channels
 				cp, 
 				file_channel,
 				DONT_DELETE_ME, 
+#if DEBUGGING
+				"file_mix_samples line 4001",
+#else
 				S_mix,
+#endif
 				with_mixer);
 	  if (md) 
 	    id = md->id;
@@ -4325,7 +4337,7 @@ static void call_multichannel_mix_hook(int *ids, int n)
   if (XEN_HOOKED(multichannel_mix_hook))
     {
       for (i = n - 1; i >= 0; i--)
-	lst = XEN_CONS(C_TO_SMALL_XEN_INT(ids[i]), lst);
+	lst = XEN_CONS(C_TO_XEN_INT(ids[i]), lst);
       run_hook(multichannel_mix_hook,
 	       XEN_LIST_1(lst),
 	       S_multichannel_mix_hook);
@@ -4338,7 +4350,7 @@ static int call_mix_speed_changed_hook(mix_info *md)
   if ((md) && 
       (XEN_HOOKED(mix_speed_changed_hook)))
     res = run_progn_hook(mix_speed_changed_hook,
-			 XEN_LIST_1(C_TO_SMALL_XEN_INT(md->id)),
+			 XEN_LIST_1(C_TO_XEN_INT(md->id)),
 			 S_mix_speed_changed_hook);
   return(XEN_TRUE_P(res));
 }
@@ -4349,7 +4361,7 @@ static int call_mix_amp_changed_hook(mix_info *md)
   if ((md) && 
       (XEN_HOOKED(mix_amp_changed_hook)))
     res = run_progn_hook(mix_amp_changed_hook,
-			 XEN_LIST_1(C_TO_SMALL_XEN_INT(md->id)),
+			 XEN_LIST_1(C_TO_XEN_INT(md->id)),
 			 S_mix_amp_changed_hook);
   return(XEN_TRUE_P(res));
 }
@@ -4360,7 +4372,7 @@ static int call_mix_position_changed_hook(mix_info *md, off_t samps)
   if ((md) && 
       (XEN_HOOKED(mix_position_changed_hook)))
     res = run_progn_hook(mix_position_changed_hook,
-			 XEN_LIST_2(C_TO_SMALL_XEN_INT(md->id),
+			 XEN_LIST_2(C_TO_XEN_INT(md->id),
 				    C_TO_XEN_OFF_T(samps)),
 			 S_mix_position_changed_hook);
   return(XEN_TRUE_P(res));
@@ -4411,7 +4423,7 @@ mix data (a vct) into snd's channel chn starting at beg; return the new mix id"
     }
   update_graph(cp);
   FREE(data);
-  return(xen_return_first(C_TO_SMALL_XEN_INT(mix_id), obj));
+  return(xen_return_first(C_TO_XEN_INT(mix_id), obj));
 }
 
 static XEN g_find_mix(XEN samp_n, XEN snd_n, XEN chn_n) 
@@ -4445,7 +4457,7 @@ static XEN g_set_mix_color (XEN arg1, XEN arg2)
     }
   XEN_ASSERT_TYPE(XEN_PIXEL_P(color), color, XEN_ONLY_ARG, S_setB S_mix_color, "a color"); 
   if (XEN_INTEGER_P(mix_id))
-    color_one_mix_from_id(XEN_TO_SMALL_C_INT(mix_id), XEN_UNWRAP_PIXEL(color));
+    color_one_mix_from_id(XEN_TO_C_INT(mix_id), XEN_UNWRAP_PIXEL(color));
   else set_mix_color(ss, XEN_UNWRAP_PIXEL(color));
   for_each_chan(ss, update_graph);
   return(color);
@@ -4457,7 +4469,7 @@ static XEN g_mix_color(XEN mix_id)
   snd_state *ss;
   ss = get_global_state();
   if (XEN_INTEGER_P(mix_id))
-    return(XEN_WRAP_PIXEL(mix_to_color_from_id(XEN_TO_SMALL_C_INT(mix_id))));
+    return(XEN_WRAP_PIXEL(mix_to_color_from_id(XEN_TO_C_INT(mix_id))));
   return(XEN_WRAP_PIXEL((ss->sgx)->mix_color));
 }
 

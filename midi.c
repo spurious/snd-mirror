@@ -163,7 +163,7 @@ int mus_midi_open_write(const char *name) {return(midi_open(name, MIDI_WRITE));}
 
 int mus_midi_close(int line)
 {
-  int err;
+  int err = 0;
   if ((line >= 0) && (line < midis))
     {
       free(midi_names[line]);

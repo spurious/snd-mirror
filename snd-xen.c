@@ -2106,7 +2106,7 @@ static XEN vct2soundfile(XEN g_fd, XEN obj, XEN g_nums)
       write(fd, (char *)vals, nums * 4);
       FREE(vals);
     }
-  return(xen_return_first(C_TO_SMALL_XEN_INT(nums>>2), obj));
+  return(xen_return_first(C_TO_XEN_INT(nums >> 2), obj));
 }
 
 

@@ -4059,7 +4059,6 @@ snd_pcm_hw_params_t * alsa_get_hardware_params(char *name, snd_pcm_stream_t stre
 
 snd_pcm_sw_params_t * alsa_allocate_software_params(void)
 {
-    int err;
     snd_pcm_sw_params_t *params;
     params = (snd_pcm_sw_params_t *)calloc(1, snd_pcm_sw_params_sizeof());
     if (params == NULL) {
@@ -4179,7 +4178,6 @@ static int alsa_mus_audio_initialize(void)
     char *name;
     char *pname;
     char *cname;
-    char *string;
     int value; 
     int dir;
     snd_pcm_uframes_t min_periods, max_periods, min_rec_periods, max_rec_periods;
@@ -4382,7 +4380,7 @@ static int alsa_audio_open(int ur_dev, int srate, int chans, int format, int siz
     if ((err = snd_pcm_open(&handle, alsa_name, alsa_stream, alsa_open_mode))!=0) {
 	snd_pcm_close(handle);
 	return(alsa_mus_error(MUS_AUDIO_CANT_OPEN, 
-			      mus_format("%s: open pcm %s stream %s: %s", __FUNCTION__,
+			      mus_format("%s: open pcm %s (%s) stream %s: %s", __FUNCTION__,
 					 mus_audio_device_name(device), alsa_name, snd_pcm_stream_name(alsa_stream), 
 					 snd_strerror(err))));
     }
@@ -9308,9 +9306,8 @@ int mus_audio_compatible_format(int dev)
 	  return(ival[i]);
       return(ival[1]);
     }
-#else
-  return(MUS_COMPATIBLE_FORMAT);
 #endif
+  return(MUS_COMPATIBLE_FORMAT);
 }
 
 

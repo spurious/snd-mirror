@@ -242,8 +242,8 @@ v[new--] = v[old--] if backwards is #t"
   XEN_ASSERT_TYPE(XEN_INTEGER_P(oldi), oldi, XEN_ARG_3, S_vct_moveB, "an integer");
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(backwards), backwards, XEN_ARG_4, S_vct_moveB, "a boolean");
   v = TO_VCT(obj);
-  ni = XEN_TO_SMALL_C_INT(newi);
-  nj = XEN_TO_SMALL_C_INT(oldi);
+  ni = XEN_TO_C_INT(newi);
+  nj = XEN_TO_C_INT(oldi);
   if ((XEN_BOOLEAN_P(backwards)) && 
       (XEN_NOT_FALSE_P(backwards)))
     {

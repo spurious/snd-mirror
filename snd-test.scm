@@ -36,7 +36,6 @@
 ;;; TODO: doc ex of key-press-hook (cx cs=save as in xe-enved?), mix-amp-changed-hook, select-*-hook [click=>post info in box]
 ;;; TODO: does multi-chan mix try to delete temp file twice?
 ;;; TODO: xemacs style top list of sounds, current takes whole screen [make-top-row tmp18.scm, files-popup-buffer in examp.scm]
-;;; TODO: mix-drag: doc (ex)/test
 ;;; TODO: test ruby case of sound property save-state
 ;;; TOOD: extend the mix-as-list syntax to list-of-ids (tracks) (are these all rationalized now?)
 ;;;       do we need make-track|mix-sample-reader? should they accept all the standard args?
@@ -13213,7 +13212,9 @@ EDITS: 5
 	    (begin
 	      (mix-panel)
 	      (let* ((mixd (list-ref (dialog-widgets) 16))
-		     (spdscr (find-child mixd "speed")))
+		     (spdscr (find-child mixd "speed"))
+		     (dragged #f))
+		(add-hook! mix-drag-hook (lambda (n) (set! dragged n)))
 		(XtCallCallbacks spdscr XmNvalueChangedCallback
 				 (let ((cb (XmScrollBarCallbackStruct)))
 				   (set! (.value cb) 650)
@@ -13230,6 +13231,10 @@ EDITS: 5
 		  (if (= (mix-position md) pos)
 		      (snd-display ";pos: ~A -> ~A ~A" pos (mix-position md) (mix-position (1+ md))))
 		  (XtUnmanageChild mixd)
+		  (if (or (not dragged)
+			  (not (= dragged md)))
+		      (snd-display ";mix-drag-hook: ~A (~A)" dragged md))
+		  (reset-hook! mix-drag-hook)
 		  ))))
 	(reset-hook! mix-position-changed-hook)
 	(reset-hook! mix-speed-changed-hook)

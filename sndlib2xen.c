@@ -89,7 +89,7 @@ static XEN glmus_sound(const char *caller, off_t (*func)(const char *file), XEN 
 static XEN glmus_sound_set(const char *caller, int (*func)(const char *file, off_t newval), XEN gfilename, XEN val)
 {
   XEN_ASSERT_TYPE(XEN_STRING_P(gfilename), gfilename, XEN_ARG_1, caller, "a string"); 
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_2, caller, "a long");
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_2, caller, "a number");
   return(C_TO_XEN_OFF_T((*func)(local_mus_expand_filename(XEN_TO_C_STRING(gfilename)), XEN_TO_C_OFF_T(val))));
 }
 

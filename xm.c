@@ -1751,7 +1751,7 @@ static Arg *XEN_TO_C_Args(XEN inargl)
 	  XtSetArg(args[i], name, (XtArgVal)(XEN_TO_C_Pixmap(value)));
 	  break;
 	case XM_DIMENSION:
-	  XEN_ASSERT_TYPE(XEN_NUMBER_P(value), value, XEN_ONLY_ARG, name, "a number");      
+	  XEN_ASSERT_TYPE(XEN_INTEGER_P(value), value, XEN_ONLY_ARG, name, "a Dimension (integer)");      
 	  XtSetArg(args[i], name, (XtArgVal)(XEN_TO_C_Dimension(value)));
 	  break;
 	case XM_ATOM:
@@ -18986,7 +18986,7 @@ static XEN gxm_y2(XEN ptr)
 
 static XEN gxm_set_y2(XEN ptr, XEN val)
 {
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_1, "set_y2", "a number");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ARG_1, "set_y2", "an integer");
   XEN_ASSERT_TYPE(XEN_XSegment_P(ptr), ptr, XEN_ARG_2, "set_y2", "XSegment");
   (XEN_TO_C_XSegment(ptr))->y2 = (short)XEN_TO_C_INT(val);
   return(val);
@@ -19004,7 +19004,7 @@ static XEN gxm_x2(XEN ptr)
 
 static XEN gxm_set_x2(XEN ptr, XEN val)
 {
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_1, "set_x2", "a number");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ARG_1, "set_x2", "an integer");
   XEN_ASSERT_TYPE(XEN_XSegment_P(ptr), ptr, XEN_ARG_2, "set_x2", "XSegment");
   (XEN_TO_C_XSegment(ptr))->x2 = (short)XEN_TO_C_INT(val);
   return(val);
@@ -19022,7 +19022,7 @@ static XEN gxm_y1(XEN ptr)
 
 static XEN gxm_set_y1(XEN ptr, XEN val)
 {
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_1, "set_y1", "a number");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ARG_1, "set_y1", "an integer");
   XEN_ASSERT_TYPE(XEN_XSegment_P(ptr), ptr, XEN_ARG_2, "set_y1", "XSegment");
   (XEN_TO_C_XSegment(ptr))->y1 = (short)XEN_TO_C_INT(val);
   return(val);
@@ -19040,7 +19040,7 @@ static XEN gxm_x1(XEN ptr)
 
 static XEN gxm_set_x1(XEN ptr, XEN val)
 {
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_1, "set_x1", "a number");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ARG_1, "set_x1", "an integer");
   XEN_ASSERT_TYPE(XEN_XSegment_P(ptr), ptr, XEN_ARG_2, "set_x1", "XSegment");
   (XEN_TO_C_XSegment(ptr))->x1 = (short)XEN_TO_C_INT(val);
   return(val);
@@ -19113,7 +19113,7 @@ static XEN gxm_angle2(XEN ptr)
 
 static XEN gxm_set_angle2(XEN ptr, XEN val)
 {
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_1, "set_angle2", "a number");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ARG_1, "set_angle2", "an integer");
   XEN_ASSERT_TYPE(XEN_XArc_P(ptr), ptr, XEN_ARG_2, "set_angle2", "XArc");
   (XEN_TO_C_XArc(ptr))->angle2 = (short)XEN_TO_C_INT(val);
   return(val);
@@ -19127,7 +19127,7 @@ static XEN gxm_angle1(XEN ptr)
 
 static XEN gxm_set_angle1(XEN ptr, XEN val)
 {
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_1, "set_angle1", "a number");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ARG_1, "set_angle1", "an integer");
   XEN_ASSERT_TYPE(XEN_XArc_P(ptr), ptr, XEN_ARG_2, "set_angle1", "XArc");
   (XEN_TO_C_XArc(ptr))->angle1 = (short)XEN_TO_C_INT(val);
   return(val);

@@ -1179,6 +1179,14 @@ in mix.scm for a fancier version):
 <tr><td></td><td colspan=2>
 called when a mix-is dragged.
 </td></tr>
+<tr><td></td><td colspan=2>
+<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+(add-hook! mix-drag-hook 
+  (lambda (n) 
+    (report-in-minibuffer 
+      (format #f "mix ~A at ~D: ~,3F" n (mix-position n) (/ (mix-position n) (srate))))))
+</td></tr>
+</pre></td></tr></table></td></tr>
 <tr><td colspan=3></td></tr>
 
 <!-- mix-position-changed-hook -->

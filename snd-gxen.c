@@ -123,7 +123,7 @@ static XEN g_set_graph_cursor(XEN curs)
   int val;
   snd_state *ss;
   ss = get_global_state();
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(curs), curs, XEN_ONLY_ARG, S_setB S_graph_cursor, "a number");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(curs), curs, XEN_ONLY_ARG, S_setB S_graph_cursor, "an integer");
   val = XEN_TO_C_INT(curs);
   if ((val >= 0) && (val <= GDK_XTERM))
     {
