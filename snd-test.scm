@@ -3761,16 +3761,16 @@ EDITS: 5
 	    (scale-channel 0.5 (* i 10) 10))
 	  (if (not (string=? (display-edits ind 0 12 #f) "
  (scale 90 10) ; scale-channel 0.5000 90 10 [12:11]:
-   (at 0, cp->sounds[1][0:9, 0.500000, loc: 0, pos: 0, arg: 1.000000]) [buf: 100] 
-   (at 10, cp->sounds[1][10:19, 0.500000, loc: 0, pos: 10, arg: 1.000000]) [buf: 100] 
-   (at 20, cp->sounds[1][20:29, 0.500000, loc: 0, pos: 20, arg: 1.000000]) [buf: 100] 
-   (at 30, cp->sounds[1][30:39, 0.500000, loc: 0, pos: 30, arg: 1.000000]) [buf: 100] 
-   (at 40, cp->sounds[1][40:49, 0.500000, loc: 0, pos: 40, arg: 1.000000]) [buf: 100] 
-   (at 50, cp->sounds[1][50:59, 0.500000, loc: 0, pos: 50, arg: 1.000000]) [buf: 100] 
-   (at 60, cp->sounds[1][60:69, 0.500000, loc: 0, pos: 60, arg: 1.000000]) [buf: 100] 
-   (at 70, cp->sounds[1][70:79, 0.500000, loc: 0, pos: 70, arg: 1.000000]) [buf: 100] 
-   (at 80, cp->sounds[1][80:89, 0.500000, loc: 0, pos: 80, arg: 1.000000]) [buf: 100] 
-   (at 90, cp->sounds[1][90:99, 0.500000, loc: 0, pos: 90, arg: 1.000000]) [buf: 100] 
+   (at 0, cp->sounds[1][0:9, 0.500000, loc: 0, pos: 0, scl: 1.000000]) [buf: 100] 
+   (at 10, cp->sounds[1][10:19, 0.500000, loc: 0, pos: 10, scl: 1.000000]) [buf: 100] 
+   (at 20, cp->sounds[1][20:29, 0.500000, loc: 0, pos: 20, scl: 1.000000]) [buf: 100] 
+   (at 30, cp->sounds[1][30:39, 0.500000, loc: 0, pos: 30, scl: 1.000000]) [buf: 100] 
+   (at 40, cp->sounds[1][40:49, 0.500000, loc: 0, pos: 40, scl: 1.000000]) [buf: 100] 
+   (at 50, cp->sounds[1][50:59, 0.500000, loc: 0, pos: 50, scl: 1.000000]) [buf: 100] 
+   (at 60, cp->sounds[1][60:69, 0.500000, loc: 0, pos: 60, scl: 1.000000]) [buf: 100] 
+   (at 70, cp->sounds[1][70:79, 0.500000, loc: 0, pos: 70, scl: 1.000000]) [buf: 100] 
+   (at 80, cp->sounds[1][80:89, 0.500000, loc: 0, pos: 80, scl: 1.000000]) [buf: 100] 
+   (at 90, cp->sounds[1][90:99, 0.500000, loc: 0, pos: 90, scl: 1.000000]) [buf: 100] 
    (at 100, end_mark)
 "))
 	      (snd-display ";multi-tree 0: ~A" (display-edits ind 0 12 #f)))
@@ -3786,16 +3786,16 @@ EDITS: 5
 	  (cosine-channel-via-ptree 0 100)
 	  (if (not (string=? (display-edits ind 0 12 #f) "
  (ptree[1] 0 100) ; ptree 1 0 100 [12:11]:
-   (at 0, cp->sounds[1][0:9, 1.000000, loc: 1, pos: 0, arg: 0.500000]) [buf: 100] 
-   (at 10, cp->sounds[1][10:19, 1.000000, loc: 1, pos: 10, arg: 0.500000]) [buf: 100] 
-   (at 20, cp->sounds[1][20:29, 1.000000, loc: 1, pos: 20, arg: 0.500000]) [buf: 100] 
-   (at 30, cp->sounds[1][30:39, 1.000000, loc: 1, pos: 30, arg: 0.500000]) [buf: 100] 
-   (at 40, cp->sounds[1][40:49, 1.000000, loc: 1, pos: 40, arg: 0.500000]) [buf: 100] 
-   (at 50, cp->sounds[1][50:59, 1.000000, loc: 1, pos: 50, arg: 0.500000]) [buf: 100] 
-   (at 60, cp->sounds[1][60:69, 1.000000, loc: 1, pos: 60, arg: 0.500000]) [buf: 100] 
-   (at 70, cp->sounds[1][70:79, 1.000000, loc: 1, pos: 70, arg: 0.500000]) [buf: 100] 
-   (at 80, cp->sounds[1][80:89, 1.000000, loc: 1, pos: 80, arg: 0.500000]) [buf: 100] 
-   (at 90, cp->sounds[1][90:99, 1.000000, loc: 1, pos: 90, arg: 0.500000]) [buf: 100] 
+   (at 0, cp->sounds[1][0:9, 1.000000, loc: 1, pos: 0, scl: 0.500000]) [buf: 100] 
+   (at 10, cp->sounds[1][10:19, 1.000000, loc: 1, pos: 10, scl: 0.500000]) [buf: 100] 
+   (at 20, cp->sounds[1][20:29, 1.000000, loc: 1, pos: 20, scl: 0.500000]) [buf: 100] 
+   (at 30, cp->sounds[1][30:39, 1.000000, loc: 1, pos: 30, scl: 0.500000]) [buf: 100] 
+   (at 40, cp->sounds[1][40:49, 1.000000, loc: 1, pos: 40, scl: 0.500000]) [buf: 100] 
+   (at 50, cp->sounds[1][50:59, 1.000000, loc: 1, pos: 50, scl: 0.500000]) [buf: 100] 
+   (at 60, cp->sounds[1][60:69, 1.000000, loc: 1, pos: 60, scl: 0.500000]) [buf: 100] 
+   (at 70, cp->sounds[1][70:79, 1.000000, loc: 1, pos: 70, scl: 0.500000]) [buf: 100] 
+   (at 80, cp->sounds[1][80:89, 1.000000, loc: 1, pos: 80, scl: 0.500000]) [buf: 100] 
+   (at 90, cp->sounds[1][90:99, 1.000000, loc: 1, pos: 90, scl: 0.500000]) [buf: 100] 
    (at 100, end_mark)
 "))
 	      (snd-display ";multi-tree 1: ~A" (display-edits ind 0 12 #f)))
@@ -3819,15 +3819,15 @@ EDITS: 5
 	  (if (not (string=? (display-edits ind 0 12 #f) "
  (scale 90 10) ; scale-channel 0.5000 90 10 [12:11]:
    (at 0, cp->sounds[1][0:9, 0.500000]) [buf: 100] 
-   (at 10, cp->sounds[1][10:19, 0.500000, loc: 2, pos: 0, arg: 1.000000]) [buf: 100] 
-   (at 20, cp->sounds[1][20:29, 0.500000, loc: 2, pos: 10, arg: 1.000000]) [buf: 100] 
-   (at 30, cp->sounds[1][30:39, 0.500000, loc: 2, pos: 20, arg: 1.000000]) [buf: 100] 
-   (at 40, cp->sounds[1][40:49, 0.500000, loc: 2, pos: 30, arg: 1.000000]) [buf: 100] 
-   (at 50, cp->sounds[1][50:59, 0.500000, loc: 2, pos: 40, arg: 1.000000]) [buf: 100] 
-   (at 60, cp->sounds[1][60:69, 0.500000, loc: 2, pos: 50, arg: 1.000000]) [buf: 100] 
-   (at 70, cp->sounds[1][70:79, 0.500000, loc: 2, pos: 60, arg: 1.000000]) [buf: 100] 
-   (at 80, cp->sounds[1][80:89, 0.500000, loc: 2, pos: 70, arg: 1.000000]) [buf: 100] 
-   (at 90, cp->sounds[1][90:99, 0.500000, loc: 2, pos: 80, arg: 1.000000]) [buf: 100] 
+   (at 10, cp->sounds[1][10:19, 0.500000, loc: 2, pos: 0, scl: 1.000000]) [buf: 100] 
+   (at 20, cp->sounds[1][20:29, 0.500000, loc: 2, pos: 10, scl: 1.000000]) [buf: 100] 
+   (at 30, cp->sounds[1][30:39, 0.500000, loc: 2, pos: 20, scl: 1.000000]) [buf: 100] 
+   (at 40, cp->sounds[1][40:49, 0.500000, loc: 2, pos: 30, scl: 1.000000]) [buf: 100] 
+   (at 50, cp->sounds[1][50:59, 0.500000, loc: 2, pos: 40, scl: 1.000000]) [buf: 100] 
+   (at 60, cp->sounds[1][60:69, 0.500000, loc: 2, pos: 50, scl: 1.000000]) [buf: 100] 
+   (at 70, cp->sounds[1][70:79, 0.500000, loc: 2, pos: 60, scl: 1.000000]) [buf: 100] 
+   (at 80, cp->sounds[1][80:89, 0.500000, loc: 2, pos: 70, scl: 1.000000]) [buf: 100] 
+   (at 90, cp->sounds[1][90:99, 0.500000, loc: 2, pos: 80, scl: 1.000000]) [buf: 100] 
    (at 100, end_mark)
 "))
 	      (snd-display ";multi-tree 2: ~A" (display-edits ind 0 12 #f)))
@@ -3850,14 +3850,14 @@ EDITS: 5
 	  (if (not (string=? (display-edits ind 0 12 #f) "
  (ptree[3] 10 80) ; ptree 3 10 80 [12:11]:
    (at 0, cp->sounds[1][0:9, 0.500000]) [buf: 100] 
-   (at 10, cp->sounds[1][10:19, 1.000000, loc: 3, pos: 0, arg: 0.500000]) [buf: 100] 
-   (at 20, cp->sounds[1][20:29, 1.000000, loc: 3, pos: 10, arg: 0.500000]) [buf: 100] 
-   (at 30, cp->sounds[1][30:39, 1.000000, loc: 3, pos: 20, arg: 0.500000]) [buf: 100] 
-   (at 40, cp->sounds[1][40:49, 1.000000, loc: 3, pos: 30, arg: 0.500000]) [buf: 100] 
-   (at 50, cp->sounds[1][50:59, 1.000000, loc: 3, pos: 40, arg: 0.500000]) [buf: 100] 
-   (at 60, cp->sounds[1][60:69, 1.000000, loc: 3, pos: 50, arg: 0.500000]) [buf: 100] 
-   (at 70, cp->sounds[1][70:79, 1.000000, loc: 3, pos: 60, arg: 0.500000]) [buf: 100] 
-   (at 80, cp->sounds[1][80:89, 1.000000, loc: 3, pos: 70, arg: 0.500000]) [buf: 100] 
+   (at 10, cp->sounds[1][10:19, 1.000000, loc: 3, pos: 0, scl: 0.500000]) [buf: 100] 
+   (at 20, cp->sounds[1][20:29, 1.000000, loc: 3, pos: 10, scl: 0.500000]) [buf: 100] 
+   (at 30, cp->sounds[1][30:39, 1.000000, loc: 3, pos: 20, scl: 0.500000]) [buf: 100] 
+   (at 40, cp->sounds[1][40:49, 1.000000, loc: 3, pos: 30, scl: 0.500000]) [buf: 100] 
+   (at 50, cp->sounds[1][50:59, 1.000000, loc: 3, pos: 40, scl: 0.500000]) [buf: 100] 
+   (at 60, cp->sounds[1][60:69, 1.000000, loc: 3, pos: 50, scl: 0.500000]) [buf: 100] 
+   (at 70, cp->sounds[1][70:79, 1.000000, loc: 3, pos: 60, scl: 0.500000]) [buf: 100] 
+   (at 80, cp->sounds[1][80:89, 1.000000, loc: 3, pos: 70, scl: 0.500000]) [buf: 100] 
    (at 90, cp->sounds[1][90:99, 0.500000]) [buf: 100] 
    (at 100, end_mark)
 "))
@@ -3882,16 +3882,16 @@ EDITS: 5
 	    (scale-channel 0.5 (* i 10) 10))
 	  (if (not (string=? (display-edits ind 0 13 #f) "
  (scale 90 10) ; scale-channel 0.5000 90 10 [13:11]:
-   (at 0, cp->sounds[1][0:9, 0.500000, 0.000000 -> 0.090909, loc: 4, pos: 0, arg: 1.000000]) [buf: 100] 
-   (at 10, cp->sounds[1][10:19, 0.500000, 0.101010 -> 0.191919, loc: 4, pos: 10, arg: 1.000000]) [buf: 100] 
-   (at 20, cp->sounds[1][20:29, 0.500000, 0.202020 -> 0.292929, loc: 4, pos: 20, arg: 1.000000]) [buf: 100] 
-   (at 30, cp->sounds[1][30:39, 0.500000, 0.303030 -> 0.393939, loc: 4, pos: 30, arg: 1.000000]) [buf: 100] 
-   (at 40, cp->sounds[1][40:49, 0.500000, 0.404040 -> 0.494950, loc: 4, pos: 40, arg: 1.000000]) [buf: 100] 
-   (at 50, cp->sounds[1][50:59, 0.500000, 0.505051 -> 0.595960, loc: 4, pos: 50, arg: 1.000000]) [buf: 100] 
-   (at 60, cp->sounds[1][60:69, 0.500000, 0.606061 -> 0.696970, loc: 4, pos: 60, arg: 1.000000]) [buf: 100] 
-   (at 70, cp->sounds[1][70:79, 0.500000, 0.707071 -> 0.797980, loc: 4, pos: 70, arg: 1.000000]) [buf: 100] 
-   (at 80, cp->sounds[1][80:89, 0.500000, 0.808081 -> 0.898990, loc: 4, pos: 80, arg: 1.000000]) [buf: 100] 
-   (at 90, cp->sounds[1][90:99, 0.500000, 0.909091 -> 1.000000, loc: 4, pos: 90, arg: 1.000000]) [buf: 100] 
+   (at 0, cp->sounds[1][0:9, 0.500000, 0.000000 -> 0.090909, loc: 4, pos: 0, scl: 1.000000]) [buf: 100] 
+   (at 10, cp->sounds[1][10:19, 0.500000, 0.101010 -> 0.191919, loc: 4, pos: 10, scl: 1.000000]) [buf: 100] 
+   (at 20, cp->sounds[1][20:29, 0.500000, 0.202020 -> 0.292929, loc: 4, pos: 20, scl: 1.000000]) [buf: 100] 
+   (at 30, cp->sounds[1][30:39, 0.500000, 0.303030 -> 0.393939, loc: 4, pos: 30, scl: 1.000000]) [buf: 100] 
+   (at 40, cp->sounds[1][40:49, 0.500000, 0.404040 -> 0.494950, loc: 4, pos: 40, scl: 1.000000]) [buf: 100] 
+   (at 50, cp->sounds[1][50:59, 0.500000, 0.505051 -> 0.595960, loc: 4, pos: 50, scl: 1.000000]) [buf: 100] 
+   (at 60, cp->sounds[1][60:69, 0.500000, 0.606061 -> 0.696970, loc: 4, pos: 60, scl: 1.000000]) [buf: 100] 
+   (at 70, cp->sounds[1][70:79, 0.500000, 0.707071 -> 0.797980, loc: 4, pos: 70, scl: 1.000000]) [buf: 100] 
+   (at 80, cp->sounds[1][80:89, 0.500000, 0.808081 -> 0.898990, loc: 4, pos: 80, scl: 1.000000]) [buf: 100] 
+   (at 90, cp->sounds[1][90:99, 0.500000, 0.909091 -> 1.000000, loc: 4, pos: 90, scl: 1.000000]) [buf: 100] 
    (at 100, end_mark)
 "))
 	      (snd-display ";multi-tree 4: ~A" (display-edits ind 0 13 #f)))
@@ -3908,16 +3908,16 @@ EDITS: 5
 	  (cosine-channel-via-ptree 0 100)
 	  (if (not (string=? (display-edits ind 0 13 #f) "
  (ptree[5] 0 100) ; ptree 5 0 100 [13:11]:
-   (at 0, cp->sounds[1][0:9, 1.000000, 0.000000 -> 0.090909, loc: 5, pos: 0, arg: 0.500000]) [buf: 100] 
-   (at 10, cp->sounds[1][10:19, 1.000000, 0.101010 -> 0.191919, loc: 5, pos: 10, arg: 0.500000]) [buf: 100] 
-   (at 20, cp->sounds[1][20:29, 1.000000, 0.202020 -> 0.292929, loc: 5, pos: 20, arg: 0.500000]) [buf: 100] 
-   (at 30, cp->sounds[1][30:39, 1.000000, 0.303030 -> 0.393939, loc: 5, pos: 30, arg: 0.500000]) [buf: 100] 
-   (at 40, cp->sounds[1][40:49, 1.000000, 0.404040 -> 0.494950, loc: 5, pos: 40, arg: 0.500000]) [buf: 100] 
-   (at 50, cp->sounds[1][50:59, 1.000000, 0.505051 -> 0.595960, loc: 5, pos: 50, arg: 0.500000]) [buf: 100] 
-   (at 60, cp->sounds[1][60:69, 1.000000, 0.606061 -> 0.696970, loc: 5, pos: 60, arg: 0.500000]) [buf: 100] 
-   (at 70, cp->sounds[1][70:79, 1.000000, 0.707071 -> 0.797980, loc: 5, pos: 70, arg: 0.500000]) [buf: 100] 
-   (at 80, cp->sounds[1][80:89, 1.000000, 0.808081 -> 0.898990, loc: 5, pos: 80, arg: 0.500000]) [buf: 100] 
-   (at 90, cp->sounds[1][90:99, 1.000000, 0.909091 -> 1.000000, loc: 5, pos: 90, arg: 0.500000]) [buf: 100] 
+   (at 0, cp->sounds[1][0:9, 1.000000, 0.000000 -> 0.090909, loc: 5, pos: 0, scl: 0.500000]) [buf: 100] 
+   (at 10, cp->sounds[1][10:19, 1.000000, 0.101010 -> 0.191919, loc: 5, pos: 10, scl: 0.500000]) [buf: 100] 
+   (at 20, cp->sounds[1][20:29, 1.000000, 0.202020 -> 0.292929, loc: 5, pos: 20, scl: 0.500000]) [buf: 100] 
+   (at 30, cp->sounds[1][30:39, 1.000000, 0.303030 -> 0.393939, loc: 5, pos: 30, scl: 0.500000]) [buf: 100] 
+   (at 40, cp->sounds[1][40:49, 1.000000, 0.404040 -> 0.494950, loc: 5, pos: 40, scl: 0.500000]) [buf: 100] 
+   (at 50, cp->sounds[1][50:59, 1.000000, 0.505051 -> 0.595960, loc: 5, pos: 50, scl: 0.500000]) [buf: 100] 
+   (at 60, cp->sounds[1][60:69, 1.000000, 0.606061 -> 0.696970, loc: 5, pos: 60, scl: 0.500000]) [buf: 100] 
+   (at 70, cp->sounds[1][70:79, 1.000000, 0.707071 -> 0.797980, loc: 5, pos: 70, scl: 0.500000]) [buf: 100] 
+   (at 80, cp->sounds[1][80:89, 1.000000, 0.808081 -> 0.898990, loc: 5, pos: 80, scl: 0.500000]) [buf: 100] 
+   (at 90, cp->sounds[1][90:99, 1.000000, 0.909091 -> 1.000000, loc: 5, pos: 90, scl: 0.500000]) [buf: 100] 
    (at 100, end_mark)
 "))
 	      (snd-display ";multi-tree 5: ~A" (display-edits ind 0 13 #f)))
@@ -3928,16 +3928,16 @@ EDITS: 5
 	  (scale-channel 0.5)
 	  (if (not (string=? (display-edits ind 0 14 #f) "
  (scale 0 100) ; scale-channel 0.5000 0 100 [14:11]:
-   (at 0, cp->sounds[1][0:9, 0.500000, 0.000000 -> 0.090909, loc: 5, pos: 0, arg: 0.500000]) [buf: 100] 
-   (at 10, cp->sounds[1][10:19, 0.500000, 0.101010 -> 0.191919, loc: 5, pos: 10, arg: 0.500000]) [buf: 100] 
-   (at 20, cp->sounds[1][20:29, 0.500000, 0.202020 -> 0.292929, loc: 5, pos: 20, arg: 0.500000]) [buf: 100] 
-   (at 30, cp->sounds[1][30:39, 0.500000, 0.303030 -> 0.393939, loc: 5, pos: 30, arg: 0.500000]) [buf: 100] 
-   (at 40, cp->sounds[1][40:49, 0.500000, 0.404040 -> 0.494950, loc: 5, pos: 40, arg: 0.500000]) [buf: 100] 
-   (at 50, cp->sounds[1][50:59, 0.500000, 0.505051 -> 0.595960, loc: 5, pos: 50, arg: 0.500000]) [buf: 100] 
-   (at 60, cp->sounds[1][60:69, 0.500000, 0.606061 -> 0.696970, loc: 5, pos: 60, arg: 0.500000]) [buf: 100] 
-   (at 70, cp->sounds[1][70:79, 0.500000, 0.707071 -> 0.797980, loc: 5, pos: 70, arg: 0.500000]) [buf: 100] 
-   (at 80, cp->sounds[1][80:89, 0.500000, 0.808081 -> 0.898990, loc: 5, pos: 80, arg: 0.500000]) [buf: 100] 
-   (at 90, cp->sounds[1][90:99, 0.500000, 0.909091 -> 1.000000, loc: 5, pos: 90, arg: 0.500000]) [buf: 100] 
+   (at 0, cp->sounds[1][0:9, 0.500000, 0.000000 -> 0.090909, loc: 5, pos: 0, scl: 0.500000]) [buf: 100] 
+   (at 10, cp->sounds[1][10:19, 0.500000, 0.101010 -> 0.191919, loc: 5, pos: 10, scl: 0.500000]) [buf: 100] 
+   (at 20, cp->sounds[1][20:29, 0.500000, 0.202020 -> 0.292929, loc: 5, pos: 20, scl: 0.500000]) [buf: 100] 
+   (at 30, cp->sounds[1][30:39, 0.500000, 0.303030 -> 0.393939, loc: 5, pos: 30, scl: 0.500000]) [buf: 100] 
+   (at 40, cp->sounds[1][40:49, 0.500000, 0.404040 -> 0.494950, loc: 5, pos: 40, scl: 0.500000]) [buf: 100] 
+   (at 50, cp->sounds[1][50:59, 0.500000, 0.505051 -> 0.595960, loc: 5, pos: 50, scl: 0.500000]) [buf: 100] 
+   (at 60, cp->sounds[1][60:69, 0.500000, 0.606061 -> 0.696970, loc: 5, pos: 60, scl: 0.500000]) [buf: 100] 
+   (at 70, cp->sounds[1][70:79, 0.500000, 0.707071 -> 0.797980, loc: 5, pos: 70, scl: 0.500000]) [buf: 100] 
+   (at 80, cp->sounds[1][80:89, 0.500000, 0.808081 -> 0.898990, loc: 5, pos: 80, scl: 0.500000]) [buf: 100] 
+   (at 90, cp->sounds[1][90:99, 0.500000, 0.909091 -> 1.000000, loc: 5, pos: 90, scl: 0.500000]) [buf: 100] 
    (at 100, end_mark)
 "))
 	      (snd-display ";multi-tree 5 + scl: ~A" (display-edits ind 0 14 #f)))
@@ -3956,14 +3956,14 @@ EDITS: 5
 	  (if (not (string=? (display-edits ind 0 13 #f) "
  (ptree[6] 10 80) ; ptree 6 10 80 [13:11]:
    (at 0, cp->sounds[1][0:9, 0.500000, 0.000000 -> 0.090909]) [buf: 100] 
-   (at 10, cp->sounds[1][10:19, 1.000000, 0.101010 -> 0.191919, loc: 6, pos: 0, arg: 0.500000]) [buf: 100] 
-   (at 20, cp->sounds[1][20:29, 1.000000, 0.202020 -> 0.292929, loc: 6, pos: 10, arg: 0.500000]) [buf: 100] 
-   (at 30, cp->sounds[1][30:39, 1.000000, 0.303030 -> 0.393939, loc: 6, pos: 20, arg: 0.500000]) [buf: 100] 
-   (at 40, cp->sounds[1][40:49, 1.000000, 0.404040 -> 0.494950, loc: 6, pos: 30, arg: 0.500000]) [buf: 100] 
-   (at 50, cp->sounds[1][50:59, 1.000000, 0.505051 -> 0.595960, loc: 6, pos: 40, arg: 0.500000]) [buf: 100] 
-   (at 60, cp->sounds[1][60:69, 1.000000, 0.606061 -> 0.696970, loc: 6, pos: 50, arg: 0.500000]) [buf: 100] 
-   (at 70, cp->sounds[1][70:79, 1.000000, 0.707071 -> 0.797980, loc: 6, pos: 60, arg: 0.500000]) [buf: 100] 
-   (at 80, cp->sounds[1][80:89, 1.000000, 0.808081 -> 0.898990, loc: 6, pos: 70, arg: 0.500000]) [buf: 100] 
+   (at 10, cp->sounds[1][10:19, 1.000000, 0.101010 -> 0.191919, loc: 6, pos: 0, scl: 0.500000]) [buf: 100] 
+   (at 20, cp->sounds[1][20:29, 1.000000, 0.202020 -> 0.292929, loc: 6, pos: 10, scl: 0.500000]) [buf: 100] 
+   (at 30, cp->sounds[1][30:39, 1.000000, 0.303030 -> 0.393939, loc: 6, pos: 20, scl: 0.500000]) [buf: 100] 
+   (at 40, cp->sounds[1][40:49, 1.000000, 0.404040 -> 0.494950, loc: 6, pos: 30, scl: 0.500000]) [buf: 100] 
+   (at 50, cp->sounds[1][50:59, 1.000000, 0.505051 -> 0.595960, loc: 6, pos: 40, scl: 0.500000]) [buf: 100] 
+   (at 60, cp->sounds[1][60:69, 1.000000, 0.606061 -> 0.696970, loc: 6, pos: 50, scl: 0.500000]) [buf: 100] 
+   (at 70, cp->sounds[1][70:79, 1.000000, 0.707071 -> 0.797980, loc: 6, pos: 60, scl: 0.500000]) [buf: 100] 
+   (at 80, cp->sounds[1][80:89, 1.000000, 0.808081 -> 0.898990, loc: 6, pos: 70, scl: 0.500000]) [buf: 100] 
    (at 90, cp->sounds[1][90:99, 0.500000, 0.909091 -> 1.000000]) [buf: 100] 
    (at 100, end_mark)
 "))
@@ -3991,14 +3991,14 @@ EDITS: 5
  (scale 90 10) ; scale-channel 0.5000 90 10 [13:13]:
    (at 0, cp->sounds[1][0:9, 0.500000, 0.000000 -> 0.090909]) [buf: 100] 
    (at 10, cp->sounds[1][10:14, 0.500000, 0.101010 -> 0.141414]) [buf: 100] 
-   (at 15, cp->sounds[1][15:19, 0.500000, 0.151515 -> 0.191919, loc: 8, pos: 0, arg: 1.000000]) [buf: 100] 
-   (at 20, cp->sounds[1][20:29, 0.500000, 0.202020 -> 0.292929, loc: 8, pos: 5, arg: 1.000000]) [buf: 100] 
-   (at 30, cp->sounds[1][30:39, 0.500000, 0.303030 -> 0.393939, loc: 8, pos: 15, arg: 1.000000]) [buf: 100] 
-   (at 40, cp->sounds[1][40:49, 0.500000, 0.404040 -> 0.494950, loc: 8, pos: 25, arg: 1.000000]) [buf: 100] 
-   (at 50, cp->sounds[1][50:59, 0.500000, 0.505051 -> 0.595960, loc: 8, pos: 35, arg: 1.000000]) [buf: 100] 
-   (at 60, cp->sounds[1][60:69, 0.500000, 0.606061 -> 0.696970, loc: 8, pos: 45, arg: 1.000000]) [buf: 100] 
-   (at 70, cp->sounds[1][70:79, 0.500000, 0.707071 -> 0.797980, loc: 8, pos: 55, arg: 1.000000]) [buf: 100] 
-   (at 80, cp->sounds[1][80:84, 0.500000, 0.808081 -> 0.848485, loc: 8, pos: 65, arg: 1.000000]) [buf: 100] 
+   (at 15, cp->sounds[1][15:19, 0.500000, 0.151515 -> 0.191919, loc: 8, pos: 0, scl: 1.000000]) [buf: 100] 
+   (at 20, cp->sounds[1][20:29, 0.500000, 0.202020 -> 0.292929, loc: 8, pos: 5, scl: 1.000000]) [buf: 100] 
+   (at 30, cp->sounds[1][30:39, 0.500000, 0.303030 -> 0.393939, loc: 8, pos: 15, scl: 1.000000]) [buf: 100] 
+   (at 40, cp->sounds[1][40:49, 0.500000, 0.404040 -> 0.494950, loc: 8, pos: 25, scl: 1.000000]) [buf: 100] 
+   (at 50, cp->sounds[1][50:59, 0.500000, 0.505051 -> 0.595960, loc: 8, pos: 35, scl: 1.000000]) [buf: 100] 
+   (at 60, cp->sounds[1][60:69, 0.500000, 0.606061 -> 0.696970, loc: 8, pos: 45, scl: 1.000000]) [buf: 100] 
+   (at 70, cp->sounds[1][70:79, 0.500000, 0.707071 -> 0.797980, loc: 8, pos: 55, scl: 1.000000]) [buf: 100] 
+   (at 80, cp->sounds[1][80:84, 0.500000, 0.808081 -> 0.848485, loc: 8, pos: 65, scl: 1.000000]) [buf: 100] 
    (at 85, cp->sounds[1][85:89, 0.500000, 0.858586 -> 0.898990]) [buf: 100] 
    (at 90, cp->sounds[1][90:99, 0.500000, 0.909091 -> 1.000000]) [buf: 100] 
    (at 100, end_mark)
@@ -4025,16 +4025,16 @@ EDITS: 5
 	  (scale-channel 0.5 (* i 10) 10))
 	(if (not (string=? (display-edits ind 0 13 #f) "
  (scale 90 10) ; scale-channel 0.5000 90 10 [13:11]:
-   (at 0, cp->sounds[1][0:9, 0.500000, 0.000000 -> 0.315067, off: -0.032258, scl: 0.032258, loc: 0, pos: 0, arg: 1.000000]) [buf: 100] 
-   (at 10, cp->sounds[1][10:19, 0.500000, 0.350074 -> 0.665141, off: -0.032258, scl: 0.032258, loc: 0, pos: 10, arg: 1.000000]) [buf: 100] 
-   (at 20, cp->sounds[1][20:29, 0.500000, 0.700149 -> 1.015216, off: -0.032258, scl: 0.032258, loc: 0, pos: 20, arg: 1.000000]) [buf: 100] 
-   (at 30, cp->sounds[1][30:39, 0.500000, 1.050223 -> 1.365290, off: -0.032258, scl: 0.032258, loc: 0, pos: 30, arg: 1.000000]) [buf: 100] 
-   (at 40, cp->sounds[1][40:49, 0.500000, 1.400297 -> 1.715364, off: -0.032258, scl: 0.032258, loc: 0, pos: 40, arg: 1.000000]) [buf: 100] 
-   (at 50, cp->sounds[1][50:59, 0.500000, 1.750372 -> 2.065439, off: -0.032258, scl: 0.032258, loc: 0, pos: 50, arg: 1.000000]) [buf: 100] 
-   (at 60, cp->sounds[1][60:69, 0.500000, 2.100446 -> 2.415513, off: -0.032258, scl: 0.032258, loc: 0, pos: 60, arg: 1.000000]) [buf: 100] 
-   (at 70, cp->sounds[1][70:79, 0.500000, 2.450520 -> 2.765587, off: -0.032258, scl: 0.032258, loc: 0, pos: 70, arg: 1.000000]) [buf: 100] 
-   (at 80, cp->sounds[1][80:89, 0.500000, 2.800595 -> 3.115662, off: -0.032258, scl: 0.032258, loc: 0, pos: 80, arg: 1.000000]) [buf: 100] 
-   (at 90, cp->sounds[1][90:99, 0.500000, 3.150669 -> 3.465736, off: -0.032258, scl: 0.032258, loc: 0, pos: 90, arg: 1.000000]) [buf: 100] 
+   (at 0, cp->sounds[1][0:9, 0.500000, 0.000000 -> 0.315067, off: -0.032258, scl: 0.032258, loc: 0, pos: 0, scl: 1.000000]) [buf: 100] 
+   (at 10, cp->sounds[1][10:19, 0.500000, 0.350074 -> 0.665141, off: -0.032258, scl: 0.032258, loc: 0, pos: 10, scl: 1.000000]) [buf: 100] 
+   (at 20, cp->sounds[1][20:29, 0.500000, 0.700149 -> 1.015216, off: -0.032258, scl: 0.032258, loc: 0, pos: 20, scl: 1.000000]) [buf: 100] 
+   (at 30, cp->sounds[1][30:39, 0.500000, 1.050223 -> 1.365290, off: -0.032258, scl: 0.032258, loc: 0, pos: 30, scl: 1.000000]) [buf: 100] 
+   (at 40, cp->sounds[1][40:49, 0.500000, 1.400297 -> 1.715364, off: -0.032258, scl: 0.032258, loc: 0, pos: 40, scl: 1.000000]) [buf: 100] 
+   (at 50, cp->sounds[1][50:59, 0.500000, 1.750372 -> 2.065439, off: -0.032258, scl: 0.032258, loc: 0, pos: 50, scl: 1.000000]) [buf: 100] 
+   (at 60, cp->sounds[1][60:69, 0.500000, 2.100446 -> 2.415513, off: -0.032258, scl: 0.032258, loc: 0, pos: 60, scl: 1.000000]) [buf: 100] 
+   (at 70, cp->sounds[1][70:79, 0.500000, 2.450520 -> 2.765587, off: -0.032258, scl: 0.032258, loc: 0, pos: 70, scl: 1.000000]) [buf: 100] 
+   (at 80, cp->sounds[1][80:89, 0.500000, 2.800595 -> 3.115662, off: -0.032258, scl: 0.032258, loc: 0, pos: 80, scl: 1.000000]) [buf: 100] 
+   (at 90, cp->sounds[1][90:99, 0.500000, 3.150669 -> 3.465736, off: -0.032258, scl: 0.032258, loc: 0, pos: 90, scl: 1.000000]) [buf: 100] 
    (at 100, end_mark)
 "))
 	    (snd-display ";multi-tree 9: ~A" (display-edits ind 0 13 #f)))
@@ -4051,16 +4051,16 @@ EDITS: 5
 	(cosine-channel-via-ptree 0 100)
 	(if (not (string=? (display-edits ind 0 13 #f) "
  (ptree[1] 0 100) ; ptree 1 0 100 [13:11]:
-   (at 0, cp->sounds[1][0:9, 1.000000, 0.000000 -> 0.315067, off: -0.032258, scl: 0.032258, loc: 1, pos: 0, arg: 0.500000]) [buf: 100] 
-   (at 10, cp->sounds[1][10:19, 1.000000, 0.350074 -> 0.665141, off: -0.032258, scl: 0.032258, loc: 1, pos: 10, arg: 0.500000]) [buf: 100] 
-   (at 20, cp->sounds[1][20:29, 1.000000, 0.700149 -> 1.015216, off: -0.032258, scl: 0.032258, loc: 1, pos: 20, arg: 0.500000]) [buf: 100] 
-   (at 30, cp->sounds[1][30:39, 1.000000, 1.050223 -> 1.365290, off: -0.032258, scl: 0.032258, loc: 1, pos: 30, arg: 0.500000]) [buf: 100] 
-   (at 40, cp->sounds[1][40:49, 1.000000, 1.400297 -> 1.715364, off: -0.032258, scl: 0.032258, loc: 1, pos: 40, arg: 0.500000]) [buf: 100] 
-   (at 50, cp->sounds[1][50:59, 1.000000, 1.750372 -> 2.065439, off: -0.032258, scl: 0.032258, loc: 1, pos: 50, arg: 0.500000]) [buf: 100] 
-   (at 60, cp->sounds[1][60:69, 1.000000, 2.100446 -> 2.415513, off: -0.032258, scl: 0.032258, loc: 1, pos: 60, arg: 0.500000]) [buf: 100] 
-   (at 70, cp->sounds[1][70:79, 1.000000, 2.450520 -> 2.765587, off: -0.032258, scl: 0.032258, loc: 1, pos: 70, arg: 0.500000]) [buf: 100] 
-   (at 80, cp->sounds[1][80:89, 1.000000, 2.800595 -> 3.115662, off: -0.032258, scl: 0.032258, loc: 1, pos: 80, arg: 0.500000]) [buf: 100] 
-   (at 90, cp->sounds[1][90:99, 1.000000, 3.150669 -> 3.465736, off: -0.032258, scl: 0.032258, loc: 1, pos: 90, arg: 0.500000]) [buf: 100] 
+   (at 0, cp->sounds[1][0:9, 1.000000, 0.000000 -> 0.315067, off: -0.032258, scl: 0.032258, loc: 1, pos: 0, scl: 0.500000]) [buf: 100] 
+   (at 10, cp->sounds[1][10:19, 1.000000, 0.350074 -> 0.665141, off: -0.032258, scl: 0.032258, loc: 1, pos: 10, scl: 0.500000]) [buf: 100] 
+   (at 20, cp->sounds[1][20:29, 1.000000, 0.700149 -> 1.015216, off: -0.032258, scl: 0.032258, loc: 1, pos: 20, scl: 0.500000]) [buf: 100] 
+   (at 30, cp->sounds[1][30:39, 1.000000, 1.050223 -> 1.365290, off: -0.032258, scl: 0.032258, loc: 1, pos: 30, scl: 0.500000]) [buf: 100] 
+   (at 40, cp->sounds[1][40:49, 1.000000, 1.400297 -> 1.715364, off: -0.032258, scl: 0.032258, loc: 1, pos: 40, scl: 0.500000]) [buf: 100] 
+   (at 50, cp->sounds[1][50:59, 1.000000, 1.750372 -> 2.065439, off: -0.032258, scl: 0.032258, loc: 1, pos: 50, scl: 0.500000]) [buf: 100] 
+   (at 60, cp->sounds[1][60:69, 1.000000, 2.100446 -> 2.415513, off: -0.032258, scl: 0.032258, loc: 1, pos: 60, scl: 0.500000]) [buf: 100] 
+   (at 70, cp->sounds[1][70:79, 1.000000, 2.450520 -> 2.765587, off: -0.032258, scl: 0.032258, loc: 1, pos: 70, scl: 0.500000]) [buf: 100] 
+   (at 80, cp->sounds[1][80:89, 1.000000, 2.800595 -> 3.115662, off: -0.032258, scl: 0.032258, loc: 1, pos: 80, scl: 0.500000]) [buf: 100] 
+   (at 90, cp->sounds[1][90:99, 1.000000, 3.150669 -> 3.465736, off: -0.032258, scl: 0.032258, loc: 1, pos: 90, scl: 0.500000]) [buf: 100] 
    (at 100, end_mark)
 "))
 	    (snd-display ";multi-tree 10: ~A" (display-edits ind 0 13 #f)))
@@ -4079,14 +4079,14 @@ EDITS: 5
 	(if (not (string=? (display-edits ind 0 13 #f) "
  (ptree[2] 10 80) ; ptree 2 10 80 [13:11]:
    (at 0, cp->sounds[1][0:9, 0.500000, 0.000000 -> 0.315067, off: -0.032258, scl: 0.032258]) [buf: 100] 
-   (at 10, cp->sounds[1][10:19, 1.000000, 0.350074 -> 0.665141, off: -0.032258, scl: 0.032258, loc: 2, pos: 0, arg: 0.500000]) [buf: 100] 
-   (at 20, cp->sounds[1][20:29, 1.000000, 0.700149 -> 1.015216, off: -0.032258, scl: 0.032258, loc: 2, pos: 10, arg: 0.500000]) [buf: 100] 
-   (at 30, cp->sounds[1][30:39, 1.000000, 1.050223 -> 1.365290, off: -0.032258, scl: 0.032258, loc: 2, pos: 20, arg: 0.500000]) [buf: 100] 
-   (at 40, cp->sounds[1][40:49, 1.000000, 1.400297 -> 1.715364, off: -0.032258, scl: 0.032258, loc: 2, pos: 30, arg: 0.500000]) [buf: 100] 
-   (at 50, cp->sounds[1][50:59, 1.000000, 1.750372 -> 2.065439, off: -0.032258, scl: 0.032258, loc: 2, pos: 40, arg: 0.500000]) [buf: 100] 
-   (at 60, cp->sounds[1][60:69, 1.000000, 2.100446 -> 2.415513, off: -0.032258, scl: 0.032258, loc: 2, pos: 50, arg: 0.500000]) [buf: 100] 
-   (at 70, cp->sounds[1][70:79, 1.000000, 2.450520 -> 2.765587, off: -0.032258, scl: 0.032258, loc: 2, pos: 60, arg: 0.500000]) [buf: 100] 
-   (at 80, cp->sounds[1][80:89, 1.000000, 2.800595 -> 3.115662, off: -0.032258, scl: 0.032258, loc: 2, pos: 70, arg: 0.500000]) [buf: 100] 
+   (at 10, cp->sounds[1][10:19, 1.000000, 0.350074 -> 0.665141, off: -0.032258, scl: 0.032258, loc: 2, pos: 0, scl: 0.500000]) [buf: 100] 
+   (at 20, cp->sounds[1][20:29, 1.000000, 0.700149 -> 1.015216, off: -0.032258, scl: 0.032258, loc: 2, pos: 10, scl: 0.500000]) [buf: 100] 
+   (at 30, cp->sounds[1][30:39, 1.000000, 1.050223 -> 1.365290, off: -0.032258, scl: 0.032258, loc: 2, pos: 20, scl: 0.500000]) [buf: 100] 
+   (at 40, cp->sounds[1][40:49, 1.000000, 1.400297 -> 1.715364, off: -0.032258, scl: 0.032258, loc: 2, pos: 30, scl: 0.500000]) [buf: 100] 
+   (at 50, cp->sounds[1][50:59, 1.000000, 1.750372 -> 2.065439, off: -0.032258, scl: 0.032258, loc: 2, pos: 40, scl: 0.500000]) [buf: 100] 
+   (at 60, cp->sounds[1][60:69, 1.000000, 2.100446 -> 2.415513, off: -0.032258, scl: 0.032258, loc: 2, pos: 50, scl: 0.500000]) [buf: 100] 
+   (at 70, cp->sounds[1][70:79, 1.000000, 2.450520 -> 2.765587, off: -0.032258, scl: 0.032258, loc: 2, pos: 60, scl: 0.500000]) [buf: 100] 
+   (at 80, cp->sounds[1][80:89, 1.000000, 2.800595 -> 3.115662, off: -0.032258, scl: 0.032258, loc: 2, pos: 70, scl: 0.500000]) [buf: 100] 
    (at 90, cp->sounds[1][90:99, 0.500000, 3.150669 -> 3.465736, off: -0.032258, scl: 0.032258]) [buf: 100] 
    (at 100, end_mark)
 "))
@@ -4114,14 +4114,14 @@ EDITS: 5
  (scale 90 10) ; scale-channel 0.5000 90 10 [13:13]:
    (at 0, cp->sounds[1][0:9, 0.500000, 0.000000 -> 0.315067, off: -0.032258, scl: 0.032258]) [buf: 100] 
    (at 10, cp->sounds[1][10:14, 0.500000, 0.350074 -> 0.490104, off: -0.032258, scl: 0.032258]) [buf: 100] 
-   (at 15, cp->sounds[1][15:19, 0.500000, 0.525111 -> 0.665141, off: -0.032258, scl: 0.032258, loc: 4, pos: 0, arg: 1.000000]) [buf: 100] 
-   (at 20, cp->sounds[1][20:29, 0.500000, 0.700149 -> 1.015216, off: -0.032258, scl: 0.032258, loc: 4, pos: 5, arg: 1.000000]) [buf: 100] 
-   (at 30, cp->sounds[1][30:39, 0.500000, 1.050223 -> 1.365290, off: -0.032258, scl: 0.032258, loc: 4, pos: 15, arg: 1.000000]) [buf: 100] 
-   (at 40, cp->sounds[1][40:49, 0.500000, 1.400297 -> 1.715364, off: -0.032258, scl: 0.032258, loc: 4, pos: 25, arg: 1.000000]) [buf: 100] 
-   (at 50, cp->sounds[1][50:59, 0.500000, 1.750372 -> 2.065439, off: -0.032258, scl: 0.032258, loc: 4, pos: 35, arg: 1.000000]) [buf: 100] 
-   (at 60, cp->sounds[1][60:69, 0.500000, 2.100446 -> 2.415513, off: -0.032258, scl: 0.032258, loc: 4, pos: 45, arg: 1.000000]) [buf: 100] 
-   (at 70, cp->sounds[1][70:79, 0.500000, 2.450520 -> 2.765587, off: -0.032258, scl: 0.032258, loc: 4, pos: 55, arg: 1.000000]) [buf: 100] 
-   (at 80, cp->sounds[1][80:84, 0.500000, 2.800595 -> 2.940624, off: -0.032258, scl: 0.032258, loc: 4, pos: 65, arg: 1.000000]) [buf: 100] 
+   (at 15, cp->sounds[1][15:19, 0.500000, 0.525111 -> 0.665141, off: -0.032258, scl: 0.032258, loc: 4, pos: 0, scl: 1.000000]) [buf: 100] 
+   (at 20, cp->sounds[1][20:29, 0.500000, 0.700149 -> 1.015216, off: -0.032258, scl: 0.032258, loc: 4, pos: 5, scl: 1.000000]) [buf: 100] 
+   (at 30, cp->sounds[1][30:39, 0.500000, 1.050223 -> 1.365290, off: -0.032258, scl: 0.032258, loc: 4, pos: 15, scl: 1.000000]) [buf: 100] 
+   (at 40, cp->sounds[1][40:49, 0.500000, 1.400297 -> 1.715364, off: -0.032258, scl: 0.032258, loc: 4, pos: 25, scl: 1.000000]) [buf: 100] 
+   (at 50, cp->sounds[1][50:59, 0.500000, 1.750372 -> 2.065439, off: -0.032258, scl: 0.032258, loc: 4, pos: 35, scl: 1.000000]) [buf: 100] 
+   (at 60, cp->sounds[1][60:69, 0.500000, 2.100446 -> 2.415513, off: -0.032258, scl: 0.032258, loc: 4, pos: 45, scl: 1.000000]) [buf: 100] 
+   (at 70, cp->sounds[1][70:79, 0.500000, 2.450520 -> 2.765587, off: -0.032258, scl: 0.032258, loc: 4, pos: 55, scl: 1.000000]) [buf: 100] 
+   (at 80, cp->sounds[1][80:84, 0.500000, 2.800595 -> 2.940624, off: -0.032258, scl: 0.032258, loc: 4, pos: 65, scl: 1.000000]) [buf: 100] 
    (at 85, cp->sounds[1][85:89, 0.500000, 2.975632 -> 3.115662, off: -0.032258, scl: 0.032258]) [buf: 100] 
    (at 90, cp->sounds[1][90:99, 0.500000, 3.150669 -> 3.465736, off: -0.032258, scl: 0.032258]) [buf: 100] 
    (at 100, end_mark)
@@ -4130,6 +4130,127 @@ EDITS: 5
 	
 	(close-sound ind))
       
+      ;; ptree2
+      (let ((ind (new-sound "test.snd"))
+	    (case1 #f)
+	    (case2 #f))
+	(map-chan (lambda (y) 1.0) 0 10)
+	(ptree-channel (lambda (y) (* y 0.5)))
+	(if (not (vequal (channel->vct) (make-vct 11 0.5)))
+	    (snd-display ";ptree2 0: ~A" (channel->vct)))
+	(if (not (string=? (display-edits ind 0 2) "
+ (ptree[0] 0 11) ; ptree 0 0 11 [2:2]:
+   (at 0, cp->sounds[1][0:10, 1.000000, loc: 0, pos: 0, scl: 1.000000, code: (lambda (y) (* y 0.5))]) [buf: 11] 
+   (at 11, end_mark)
+"))
+	    (snd-display ";ptree2 3: ~A" (display-edits ind 0 2)))
+	(ptree-channel (lambda (y) (* y 1.5)))
+	(if (not (vequal (channel->vct) (make-vct 11 0.75)))
+	    (snd-display ";ptree2 1: ~A" (channel->vct)))
+	(if (not (string=? (display-edits ind 0 3) "
+ (ptree[1] 0 11) ; ptree 1 0 11 [3:2]:
+   (at 0, cp->sounds[1][0:10, 1.000000, loc2: 1, scl2: 1.000000, loc: 0, pos: 0, scl: 1.000000, code: (lambda (y) (* y 0.5))]) [buf: 11] 
+   (at 11, end_mark)
+"))
+	    (snd-display ";ptree2 4: ~A" (display-edits ind 0 3)))
+	(undo)
+	(scale-by 1.5)
+	(if (not (vequal (channel->vct) (make-vct 11 0.75)))
+	    (snd-display ";ptree2 5: ~A" (channel->vct)))
+	(if (not (string=? (display-edits ind 0 3) "
+ (scale 0 11) ; scale-channel 1.5000 0 11 [3:2]:
+   (at 0, cp->sounds[1][0:10, 1.500000, loc: 0, pos: 0, scl: 1.000000, code: (lambda (y) (* y 0.5))]) [buf: 11] 
+   (at 11, end_mark)
+"))
+	    (snd-display ";ptree2 6: ~A" (display-edits ind 0 3)))
+	(ptree-channel (lambda (y) (* y 0.1)))
+	(if (not (vequal (channel->vct) (make-vct 11 0.075)))
+	    (snd-display ";ptree2 7: ~A" (channel->vct)))
+	(if (not (string=? (display-edits ind 0 4) "
+ (ptree[2] 0 11) ; ptree 2 0 11 [4:2]:
+   (at 0, cp->sounds[1][0:10, 1.000000, loc2: 2, scl2: 1.500000, loc: 0, pos: 0, scl: 1.000000, code: (lambda (y) (* y 0.5))]) [buf: 11] 
+   (at 11, end_mark)
+"))
+	    (snd-display ";ptree2 8: ~A" (display-edits ind 0 4)))
+	(undo 3)
+	(scale-by 0.5)
+	(ptree-channel (lambda (y) (* y 1.5)))
+	(scale-by 2.0)
+	(ptree-channel (lambda (y) (* y 0.1)))
+	(scale-by 3.0)
+	(if (not (vequal (channel->vct) (make-vct 11 0.45)))
+	    (snd-display ";ptree2 9: ~A" (channel->vct)))
+	(if (not (string=? (display-edits ind 0 6) "
+ (scale 0 11) ; scale-channel 3.0000 0 11 [6:2]:
+   (at 0, cp->sounds[1][0:10, 3.000000, loc2: 4, scl2: 2.000000, loc: 3, pos: 0, scl: 0.500000, code: (lambda (y) (* y 1.5))]) [buf: 11] 
+   (at 11, end_mark)
+"))
+	    (snd-display ";ptree2 10: ~A" (display-edits ind 0 6)))
+	(undo 2)
+	(ptree-channel (lambda (y) (* y 0.1)) 2 4)
+	(scale-by 3.0)
+	(if (not (vequal (channel->vct) (vct 4.500 4.500 0.450 0.450 0.450 0.450 4.500 4.500 4.500 4.500 4.500)))
+	    (snd-display ";ptree2 11: ~A" (channel->vct)))
+	(if (not (string=? (display-edits ind 0 6) "
+ (scale 0 11) ; scale-channel 3.0000 0 11 [6:4]:
+   (at 0, cp->sounds[1][0:1, 6.000000, loc: 3, pos: 0, scl: 0.500000, code: (lambda (y) (* y 1.5))]) [buf: 11] 
+   (at 2, cp->sounds[1][2:5, 3.000000, loc2: 5, scl2: 2.000000, loc: 3, pos: 0, scl: 0.500000, code: (lambda (y) (* y 1.5))]) [buf: 11] 
+   (at 6, cp->sounds[1][6:10, 6.000000, loc: 3, pos: 6, scl: 0.500000, code: (lambda (y) (* y 1.5))]) [buf: 11] 
+   (at 11, end_mark)
+"))
+	    (snd-display ";ptree2 12: ~A" (display-edits ind 0 6)))
+	(close-sound ind))
+
+      ;; ptree2-zero
+      (let ((ind (new-sound "test.snd"))
+	    (case1 #f)
+	    (case2 #f))
+	(map-chan (lambda (y) 1.0) 0 10)
+	(scale-by 0.0)
+	(ptree-channel (lambda (y) (+ y 0.5)))
+	(if (not (vequal (channel->vct) (make-vct 11 0.5)))
+	    (snd-display ";ptree2-zero 0: ~A" (channel->vct)))
+	(ptree-channel (lambda (y) (+ y 0.25)))
+	(if (not (vequal (channel->vct) (make-vct 11 0.75)))
+	    (snd-display ";ptree2-zero 1: ~A" (channel->vct)))
+	(if (not (string=? (display-edits ind 0 4) "
+ (ptree[1] 0 11) ; ptree 1 0 11 [4:2]:
+   (at 0, cp->sounds[1][0:10, 1.000000, loc2: 1, scl2: 1.000000, loc: 0, pos: 0, scl: 0.000000, code: (lambda (y) (+ y 0.5))]) [buf: 11] 
+   (at 11, end_mark)
+"))
+	    (snd-display ";ptree2-zero 2: ~A" (display-edits ind 0 4)))
+	(undo 3)
+	(scale-channel 0.0 2 4)
+	(ptree-channel (lambda (y) (+ y 0.5)))
+	(ptree-channel (lambda (y) (+ y 0.25)))
+	(if (not (vequal (channel->vct) (vct 1.750 1.750 0.750 0.750 0.750 0.750 1.750 1.750 1.750 1.750 1.750)))
+	    (snd-display ";ptree2-zero 3: ~A" (channel->vct)))
+
+	;; ptree2-ramp
+	(revert-sound)
+	(map-chan (lambda (y) 1.0) 0 10)
+	(ramp-channel 0.0 1.0)
+	(ptree-channel (lambda (y) (* y .5)))
+	(ptree-channel (lambda (y) (+ y .25)))
+	(if (not (vequal (channel->vct) (vct 0.250 0.300 0.350 0.400 0.450 0.500 0.550 0.600 0.650 0.700 0.750)))
+	    (snd-display ";ptree2-ramp 1: ~A" (channel->vct)))
+	(if (not (string=? (display-edits ind 0 4) "
+ (ptree[5] 0 11) ; ptree 5 0 11 [4:2]:
+   (at 0, cp->sounds[1][0:10, 1.000000, -0.000000 -> 1.000000, loc2: 5, scl2: 1.000000, loc: 4, pos: 0, scl: 1.000000, code: (lambda (y) (* y 0.5))]) [buf: 11] 
+   (at 11, end_mark)
+"))
+	    (snd-display ";ptree2-ramp 2: ~A" (display-edits ind 0 4)))
+	(scale-by 0.5)
+	(if (not (vequal (channel->vct) (vct 0.125 0.150 0.175 0.200 0.225 0.250 0.275 0.300 0.325 0.350 0.375)))
+	    (snd-display ";ptree2-ramp 3: ~A" (channel->vct)))
+	(if (not (string=? (display-edits ind 0 5) "
+ (scale 0 11) ; scale-channel 0.5000 0 11 [5:2]:
+   (at 0, cp->sounds[1][0:10, 0.500000, -0.000000 -> 1.000000, loc2: 5, scl2: 1.000000, loc: 4, pos: 0, scl: 1.000000, code: (lambda (y) (* y 0.5))]) [buf: 11] 
+   (at 11, end_mark)
+"))
+	    (snd-display ";ptree2-ramp 4: ~A" (display-edits ind 0 5)))
+	(close-sound ind))
+
       ;; ramp2
       (let ((ind (new-sound "test.snd")))
 	(map-chan (lambda (y) 1.0) 0 10)
@@ -4426,6 +4547,162 @@ EDITS: 5
 	    (snd-display ";xramp-ramp 7: ~A" (display-edits ind 0 4)))
 	(close-sound ind))
 
+      ;; ramp2+xramp
+      (let ((ind (new-sound "test.snd"))
+	    (case1 #f)
+	    (case2 #f))
+	(map-chan (lambda (y) 1.0) 0 10)
+	(xramp-channel 0.0 1.0 32.0)
+	(ramp-channel 0.0 1.0)
+	(ramp-channel 0.0 1.0)
+	(if (not (string=? (display-edits ind 0 4) "
+ (ramp 0 11) ; ramp-channel 0.0000 1.0000 0.0000 0.0000 0 11 [4:2]:
+   (at 0, cp->sounds[1][0:10, 1.000000, 0.000000 -> 3.465736, -0.000000 -> 1.000000, -0.000000 -> 1.000000, off: -0.032258, scl: 0.032258]) [buf: 11] 
+   (at 11, end_mark)
+"))
+	    (snd-display ";ramp2+xramp 0: ~A" (display-edits ind 0 4)))
+	(set! case1 (channel->vct))
+	(if (not (vequal case1 (vct 0.000 0.000 0.001 0.005 0.015 0.038 0.081 0.163 0.310 0.565 1.000)))
+	    (snd-display ";ramp2+xramp (1): ~A" case1))
+	(scale-channel 0.5)
+	(if (not (string=? (display-edits ind 0 5) "
+ (scale 0 11) ; scale-channel 0.5000 0 11 [5:2]:
+   (at 0, cp->sounds[1][0:10, 0.500000, 0.000000 -> 3.465736, -0.000000 -> 1.000000, -0.000000 -> 1.000000, off: -0.032258, scl: 0.032258]) [buf: 11] 
+   (at 11, end_mark)
+"))
+	    (snd-display ";ramp2+xramp 1: ~A" (display-edits ind 0 5)))
+	(undo)
+	(scale-channel 0.5 0 5)
+	(if (not (string=? (display-edits ind 0 5) "
+ (scale 0 5) ; scale-channel 0.5000 0 5 [5:3]:
+   (at 0, cp->sounds[1][0:4, 0.500000, 0.000000 -> 1.386294, -0.000000 -> 0.400000, -0.000000 -> 0.400000, off: -0.032258, scl: 0.032258]) [buf: 11] 
+   (at 5, cp->sounds[1][5:10, 1.000000, 1.732868 -> 3.465736, 0.500000 -> 1.000000, 0.500000 -> 1.000000, off: -0.032258, scl: 0.032258]) [buf: 11] 
+   (at 11, end_mark)
+"))
+	    (snd-display ";ramp2+xramp 2: ~A" (display-edits ind 0 5)))
+	(set! case2 (channel->vct))
+	(if (not (vequal case2 (vct 0.000 0.000 0.001 0.003 0.008 0.038 0.081 0.163 0.310 0.565 1.000)))
+	    (snd-display ";ramp2+xramp (2): ~A" case2))
+	(undo)
+	(scale-channel 0.5 2 4)
+	(if (not (string=? (display-edits ind 0 5) "
+ (scale 2 4) ; scale-channel 0.5000 2 4 [5:4]:
+   (at 0, cp->sounds[1][0:1, 1.000000, 0.000000 -> 0.346574, -0.000000 -> 0.100000, -0.000000 -> 0.100000, off: -0.032258, scl: 0.032258]) [buf: 11] 
+   (at 2, cp->sounds[1][2:5, 0.500000, 0.693147 -> 1.732868, 0.200000 -> 0.500000, 0.200000 -> 0.500000, off: -0.032258, scl: 0.032258]) [buf: 11] 
+   (at 6, cp->sounds[1][6:10, 1.000000, 2.079442 -> 3.465736, 0.600000 -> 1.000000, 0.600000 -> 1.000000, off: -0.032258, scl: 0.032258]) [buf: 11] 
+   (at 11, end_mark)
+"))
+	    (snd-display ";ramp2+xramp 3: ~A" (display-edits ind 0 5)))
+	(undo 2)
+	(ramp-channel 0.75 0.25)
+	(if (not (string=? (display-edits ind 0 4) "
+ (ramp 0 11) ; ramp-channel 0.7500 0.2500 0.0000 0.0000 0 11 [4:2]:
+   (at 0, cp->sounds[1][0:10, 1.000000, 0.000000 -> 3.465736, -0.000000 -> 1.000000, 0.750000 -> 0.250000, off: -0.032258, scl: 0.032258]) [buf: 11] 
+   (at 11, end_mark)
+"))
+	    (snd-display ";ramp2+xramp 4: ~A" (display-edits ind 0 4)))
+	(undo)
+	(ramp-channel .2 .6 2 6)
+	(if (not (string=? (display-edits ind 0 4) "
+ (ramp 2 6) ; ramp-channel 0.2000 0.6000 0.0000 0.0000 2 6 [4:4]:
+   (at 0, cp->sounds[1][0:1, 1.000000, 0.000000 -> 0.346574, -0.000000 -> 0.100000, off: -0.032258, scl: 0.032258]) [buf: 11] 
+   (at 2, cp->sounds[1][2:7, 1.000000, 0.693147 -> 2.426015, 0.200000 -> 0.700000, 0.200000 -> 0.600000, off: -0.032258, scl: 0.032258]) [buf: 11] 
+   (at 8, cp->sounds[1][8:10, 1.000000, 2.772589 -> 3.465736, 0.800000 -> 1.000000, off: -0.032258, scl: 0.032258]) [buf: 11] 
+   (at 11, end_mark)
+"))
+	    (snd-display ";ramp2+xramp 5: ~A" (display-edits ind 0 4)))
+	(scale-channel 0.5 0 5)
+	(if (not (string=? (display-edits ind 0 5) "
+ (scale 0 5) ; scale-channel 0.5000 0 5 [5:5]:
+   (at 0, cp->sounds[1][0:1, 0.500000, 0.000000 -> 0.346574, -0.000000 -> 0.100000, off: -0.032258, scl: 0.032258]) [buf: 11] 
+   (at 2, cp->sounds[1][2:4, 0.500000, 0.693147 -> 1.386294, 0.200000 -> 0.400000, 0.200000 -> 0.360000, off: -0.032258, scl: 0.032258]) [buf: 11] 
+   (at 5, cp->sounds[1][5:7, 1.000000, 1.732868 -> 2.426015, 0.500000 -> 0.700000, 0.440000 -> 0.600000, off: -0.032258, scl: 0.032258]) [buf: 11] 
+   (at 8, cp->sounds[1][8:10, 1.000000, 2.772589 -> 3.465736, 0.800000 -> 1.000000, off: -0.032258, scl: 0.032258]) [buf: 11] 
+   (at 11, end_mark)
+"))
+	    (snd-display ";ramp2+xramp 6: ~A" (display-edits ind 0 5)))
+	(undo)
+	(set! (sample 4) .5)
+	(if (not (string=? (display-edits ind 0 5) "
+ (set 4 1) ; set! sample [5:6]:
+   (at 0, cp->sounds[1][0:1, 1.000000, 0.000000 -> 0.346574, -0.000000 -> 0.100000, off: -0.032258, scl: 0.032258]) [buf: 11] 
+   (at 2, cp->sounds[1][2:3, 1.000000, 0.693147 -> 1.039721, 0.200000 -> 0.300000, 0.200000 -> 0.280000, off: -0.032258, scl: 0.032258]) [buf: 11] 
+   (at 4, cp->sounds[2][0:0, 1.000000]) [buf: 1] 
+   (at 5, cp->sounds[1][5:7, 1.000000, 1.732868 -> 2.426015, 0.500000 -> 0.700000, 0.440000 -> 0.600000, off: -0.032258, scl: 0.032258]) [buf: 11] 
+   (at 8, cp->sounds[1][8:10, 1.000000, 2.772589 -> 3.465736, 0.800000 -> 1.000000, off: -0.032258, scl: 0.032258]) [buf: 11] 
+   (at 11, end_mark)
+"))
+	    (snd-display ";ramp2+xramp 7: ~A" (display-edits ind 0 5)))
+	(revert-sound)
+	(map-chan (lambda (y) 1.0) 0 10)
+	(ramp-channel 0.0 1.0)
+	(ramp-channel 0.0 1.0)
+	(xramp-channel 0.0 1.0 32.0)
+	(if (not (string=? (display-edits ind 0 4) "
+ (set 0 11) ; ramp-channel [4:2]:
+   (at 0, cp->sounds[2][0:10, 1.000000]) [buf: 11] 
+   (at 11, end_mark)
+"))
+	    (snd-display ";xramp+ramp2 0: ~A" (display-edits ind 0 4)))
+	(if (not (vequal case1 (channel->vct)))
+	    (snd-display ";xramp+ramp2 (1): ~A" (channel->vct)))
+	(close-sound ind))
+
+      (let ((ind (new-sound "test.snd"))
+	    (case3 #f))
+	(map-channel (lambda (y) 1.0) 0 100)
+	(scale-channel 0.5)
+	(xramp-channel 1.0 0.0 32.0)
+	(ramp-channel 0.0 1.0)
+	(ramp-channel 0.0 1.0)
+	(set! case3 (channel->vct))
+	(undo 4)
+
+	;; multi-ramp2+xramp
+	(do ((i 0 (1+ i)))
+	    ((= i 10))
+	  (scale-channel 0.5 (* i 10) 10))
+	(xramp-channel 1.0 0.0 32.0)
+	(ramp-channel 0.0 1.0)
+	(ramp-channel 0.0 1.0)
+	(if (not (string=? (display-edits ind 0 14) "
+ (ramp 0 100) ; ramp-channel 0.0000 1.0000 0.0000 0.0000 0 100 [14:11]:
+   (at 0, cp->sounds[1][0:9, 0.500000, 3.465736 -> 3.150669, 0.000000 -> 0.090909, 0.000000 -> 0.090909, off: -0.032258, scl: 0.032258]) [buf: 100] 
+   (at 10, cp->sounds[1][10:19, 0.500000, 3.115662 -> 2.800595, 0.101010 -> 0.191919, 0.101010 -> 0.191919, off: -0.032258, scl: 0.032258]) [buf: 100] 
+   (at 20, cp->sounds[1][20:29, 0.500000, 2.765587 -> 2.450521, 0.202020 -> 0.292929, 0.202020 -> 0.292929, off: -0.032258, scl: 0.032258]) [buf: 100] 
+   (at 30, cp->sounds[1][30:39, 0.500000, 2.415513 -> 2.100446, 0.303030 -> 0.393939, 0.303030 -> 0.393939, off: -0.032258, scl: 0.032258]) [buf: 100] 
+   (at 40, cp->sounds[1][40:49, 0.500000, 2.065439 -> 1.750372, 0.404040 -> 0.494950, 0.404040 -> 0.494950, off: -0.032258, scl: 0.032258]) [buf: 100] 
+   (at 50, cp->sounds[1][50:59, 0.500000, 1.715364 -> 1.400297, 0.505051 -> 0.595960, 0.505051 -> 0.595960, off: -0.032258, scl: 0.032258]) [buf: 100] 
+   (at 60, cp->sounds[1][60:69, 0.500000, 1.365290 -> 1.050223, 0.606061 -> 0.696970, 0.606061 -> 0.696970, off: -0.032258, scl: 0.032258]) [buf: 100] 
+   (at 70, cp->sounds[1][70:79, 0.500000, 1.015216 -> 0.700149, 0.707071 -> 0.797980, 0.707071 -> 0.797980, off: -0.032258, scl: 0.032258]) [buf: 100] 
+   (at 80, cp->sounds[1][80:89, 0.500000, 0.665141 -> 0.350074, 0.808081 -> 0.898990, 0.808081 -> 0.898990, off: -0.032258, scl: 0.032258]) [buf: 100] 
+   (at 90, cp->sounds[1][90:99, 0.500000, 0.315067 -> -0.000000, 0.909091 -> 1.000000, 0.909091 -> 1.000000, off: -0.032258, scl: 0.032258]) [buf: 100] 
+   (at 100, end_mark)
+"))
+	    (snd-display ";multi-ramp2+xramp 1: ~A" (display-edits ind 0 14)))
+	(if (not (vequal case3 (channel->vct)))
+	    (snd-display ";multi-ramp2+xramp: ~A" (channel->vct)))
+	(revert-sound)
+	(map-channel (lambda (y) 1.0) 0 100)
+	(xramp-channel 1.0 0.0 32.0)
+
+	(ramp-channel 0.0 1.0 10 20)
+	(ramp-channel 0.0 1.0 50 10)
+	(ramp-channel 0.0 1.0 25 10)
+	(if (not (string=? (display-edits ind 0 5) "
+ (ramp 25 10) ; ramp-channel 0.0000 1.0000 0.0000 0.0000 25 10 [5:8]:
+   (at 0, cp->sounds[1][0:9, 1.000000, 3.465736 -> 3.150669, off: -0.032258, scl: 0.032258]) [buf: 100] 
+   (at 10, cp->sounds[1][10:24, 1.000000, 3.115662 -> 2.625557, -0.000000 -> 0.736842, off: -0.032258, scl: 0.032258]) [buf: 100] 
+   (at 25, cp->sounds[1][25:29, 1.000000, 2.590550 -> 2.450520, 0.789474 -> 1.000000, -0.000000 -> 0.444444, off: -0.032258, scl: 0.032258]) [buf: 100] 
+   (at 30, cp->sounds[1][30:34, 1.000000, 2.415513 -> 2.275483, 0.555556 -> 1.000000, off: -0.032258, scl: 0.032258]) [buf: 100] 
+   (at 35, cp->sounds[1][35:49, 1.000000, 2.240476 -> 1.750372, off: -0.032258, scl: 0.032258]) [buf: 100] 
+   (at 50, cp->sounds[1][50:59, 1.000000, 1.715364 -> 1.400297, -0.000000 -> 1.000000, off: -0.032258, scl: 0.032258]) [buf: 100] 
+   (at 60, cp->sounds[1][60:99, 1.000000, 1.365290 -> 0.000000, off: -0.032258, scl: 0.032258]) [buf: 100] 
+   (at 100, end_mark)
+"))
+	    (snd-display ";multi-ramp2+xramp 2: ~A" (display-edits ind 0 5)))
+	(close-sound ind))
+
       (let ((ind (new-sound "test.snd"))
 	    (case3 #f))
 	(map-channel (lambda (y) 1.0) 0 100)
@@ -4643,7 +4920,7 @@ EDITS: 5
 	(ptree-channel (lambda (y) y))
 	(if (not (string=? (display-edits ind 0 4 #f) "
  (ptree[0] 0 11) ; ptree 0 0 11 [4:2]:
-   (at 0, cp->sounds[1][0:10, 1.000000, -0.000000 -> 1.000000, -0.000000 -> 1.000000, loc: 0, pos: 0, arg: 1.000000]) [buf: 11] 
+   (at 0, cp->sounds[1][0:10, 1.000000, -0.000000 -> 1.000000, -0.000000 -> 1.000000, loc: 0, pos: 0, scl: 1.000000]) [buf: 11] 
    (at 11, end_mark)
 "))
 	    (snd-display ";ptree-ramp2 0: ~A" (display-edits ind 0 4 #f)))
@@ -4652,7 +4929,7 @@ EDITS: 5
 	(scale-channel 0.5)
 	(if (not (string=? (display-edits ind 0 5 #f) "
  (scale 0 11) ; scale-channel 0.5000 0 11 [5:2]:
-   (at 0, cp->sounds[1][0:10, 0.500000, -0.000000 -> 1.000000, -0.000000 -> 1.000000, loc: 0, pos: 0, arg: 1.000000]) [buf: 11] 
+   (at 0, cp->sounds[1][0:10, 0.500000, -0.000000 -> 1.000000, -0.000000 -> 1.000000, loc: 0, pos: 0, scl: 1.000000]) [buf: 11] 
    (at 11, end_mark)
 "))
 	    (snd-display ";ptree-ramp2 1: ~A" (display-edits ind 0 5 #f)))
@@ -4660,8 +4937,8 @@ EDITS: 5
 	(scale-channel 0.5 0 5)
 	(if (not (string=? (display-edits ind 0 5 #f) "
  (scale 0 5) ; scale-channel 0.5000 0 5 [5:3]:
-   (at 0, cp->sounds[1][0:4, 0.500000, -0.000000 -> 0.400000, -0.000000 -> 0.400000, loc: 0, pos: 0, arg: 1.000000]) [buf: 11] 
-   (at 5, cp->sounds[1][5:10, 1.000000, 0.500000 -> 1.000000, 0.500000 -> 1.000000, loc: 0, pos: 5, arg: 1.000000]) [buf: 11] 
+   (at 0, cp->sounds[1][0:4, 0.500000, -0.000000 -> 0.400000, -0.000000 -> 0.400000, loc: 0, pos: 0, scl: 1.000000]) [buf: 11] 
+   (at 5, cp->sounds[1][5:10, 1.000000, 0.500000 -> 1.000000, 0.500000 -> 1.000000, loc: 0, pos: 5, scl: 1.000000]) [buf: 11] 
    (at 11, end_mark)
 "))
 	    (snd-display ";ptree-ramp2 2: ~A" (display-edits ind 0 5 #f)))
@@ -4675,10 +4952,10 @@ EDITS: 5
 	(ptree-channel (lambda (y) y))
 	(if (not (string=? (display-edits ind 0 5 #f) "
  (ptree[1] 0 11) ; ptree 1 0 11 [5:5]:
-   (at 0, cp->sounds[1][0:1, 1.000000, -0.000000 -> 0.200000, loc: 1, pos: 0, arg: 0.500000]) [buf: 11] 
-   (at 2, cp->sounds[1][2:4, 1.000000, 0.400000 -> 0.800000, 0.000000 -> 1.000000, loc: 1, pos: 2, arg: 0.500000]) [buf: 11] 
-   (at 5, cp->sounds[1][5:5, 1.000000, 1.000000 -> 1.000000, loc: 1, pos: 5, arg: 0.500000]) [buf: 11] 
-   (at 6, cp->sounds[1][6:10, 1.000000, 0.800000 -> 0.000000, loc: 1, pos: 6, arg: 0.500000]) [buf: 11] 
+   (at 0, cp->sounds[1][0:1, 1.000000, -0.000000 -> 0.200000, loc: 1, pos: 0, scl: 0.500000]) [buf: 11] 
+   (at 2, cp->sounds[1][2:4, 1.000000, 0.400000 -> 0.800000, 0.000000 -> 1.000000, loc: 1, pos: 2, scl: 0.500000]) [buf: 11] 
+   (at 5, cp->sounds[1][5:5, 1.000000, 1.000000 -> 1.000000, loc: 1, pos: 5, scl: 0.500000]) [buf: 11] 
+   (at 6, cp->sounds[1][6:10, 1.000000, 0.800000 -> 0.000000, loc: 1, pos: 6, scl: 0.500000]) [buf: 11] 
    (at 11, end_mark)
 "))
 	    (snd-display ";ptree-ramp2 4: ~A" (display-edits ind 0 5 #f)))
@@ -4694,7 +4971,7 @@ EDITS: 5
 			 (vct 0.5)))
 	(if (not (string=? (display-edits ind 0 4 #f) "
  (ptree[2] 0 11) ; ptree 2 0 11 [4:2]:
-   (at 0, cp->sounds[1][0:10, 1.000000, -0.000000 -> 1.000000, -0.000000 -> 1.000000, loc: 2, pos: 0, arg: 1.000000]) [buf: 11] 
+   (at 0, cp->sounds[1][0:10, 1.000000, -0.000000 -> 1.000000, -0.000000 -> 1.000000, loc: 2, pos: 0, scl: 1.000000]) [buf: 11] 
    (at 11, end_mark)
 "))
 	    (snd-display ";ptree-ramp2 5: ~A" (display-edits ind 0 4 #f)))
@@ -4715,22 +4992,63 @@ EDITS: 5
 	(ptree-channel (lambda (y) y))
 	(if (not (string=? (display-edits ind 0 14 #f) "
  (ptree[0] 0 100) ; ptree 0 0 100 [14:11]:
-   (at 0, cp->sounds[1][0:9, 1.000000, 0.000000 -> 0.090909, 1.000000 -> 0.909091, loc: 0, pos: 0, arg: 0.500000]) [buf: 100] 
-   (at 10, cp->sounds[1][10:19, 1.000000, 0.101010 -> 0.191919, 0.898990 -> 0.808081, loc: 0, pos: 10, arg: 0.500000]) [buf: 100] 
-   (at 20, cp->sounds[1][20:29, 1.000000, 0.202020 -> 0.292929, 0.797980 -> 0.707071, loc: 0, pos: 20, arg: 0.500000]) [buf: 100] 
-   (at 30, cp->sounds[1][30:39, 1.000000, 0.303030 -> 0.393939, 0.696970 -> 0.606061, loc: 0, pos: 30, arg: 0.500000]) [buf: 100] 
-   (at 40, cp->sounds[1][40:49, 1.000000, 0.404040 -> 0.494950, 0.595960 -> 0.505051, loc: 0, pos: 40, arg: 0.500000]) [buf: 100] 
-   (at 50, cp->sounds[1][50:59, 1.000000, 0.505051 -> 0.595960, 0.494950 -> 0.404040, loc: 0, pos: 50, arg: 0.500000]) [buf: 100] 
-   (at 60, cp->sounds[1][60:69, 1.000000, 0.606061 -> 0.696970, 0.393939 -> 0.303030, loc: 0, pos: 60, arg: 0.500000]) [buf: 100] 
-   (at 70, cp->sounds[1][70:79, 1.000000, 0.707071 -> 0.797980, 0.292929 -> 0.202020, loc: 0, pos: 70, arg: 0.500000]) [buf: 100] 
-   (at 80, cp->sounds[1][80:89, 1.000000, 0.808081 -> 0.898990, 0.191919 -> 0.101010, loc: 0, pos: 80, arg: 0.500000]) [buf: 100] 
-   (at 90, cp->sounds[1][90:99, 1.000000, 0.909091 -> 1.000000, 0.090909 -> -0.000000, loc: 0, pos: 90, arg: 0.500000]) [buf: 100] 
+   (at 0, cp->sounds[1][0:9, 1.000000, 0.000000 -> 0.090909, 1.000000 -> 0.909091, loc: 0, pos: 0, scl: 0.500000]) [buf: 100] 
+   (at 10, cp->sounds[1][10:19, 1.000000, 0.101010 -> 0.191919, 0.898990 -> 0.808081, loc: 0, pos: 10, scl: 0.500000]) [buf: 100] 
+   (at 20, cp->sounds[1][20:29, 1.000000, 0.202020 -> 0.292929, 0.797980 -> 0.707071, loc: 0, pos: 20, scl: 0.500000]) [buf: 100] 
+   (at 30, cp->sounds[1][30:39, 1.000000, 0.303030 -> 0.393939, 0.696970 -> 0.606061, loc: 0, pos: 30, scl: 0.500000]) [buf: 100] 
+   (at 40, cp->sounds[1][40:49, 1.000000, 0.404040 -> 0.494950, 0.595960 -> 0.505051, loc: 0, pos: 40, scl: 0.500000]) [buf: 100] 
+   (at 50, cp->sounds[1][50:59, 1.000000, 0.505051 -> 0.595960, 0.494950 -> 0.404040, loc: 0, pos: 50, scl: 0.500000]) [buf: 100] 
+   (at 60, cp->sounds[1][60:69, 1.000000, 0.606061 -> 0.696970, 0.393939 -> 0.303030, loc: 0, pos: 60, scl: 0.500000]) [buf: 100] 
+   (at 70, cp->sounds[1][70:79, 1.000000, 0.707071 -> 0.797980, 0.292929 -> 0.202020, loc: 0, pos: 70, scl: 0.500000]) [buf: 100] 
+   (at 80, cp->sounds[1][80:89, 1.000000, 0.808081 -> 0.898990, 0.191919 -> 0.101010, loc: 0, pos: 80, scl: 0.500000]) [buf: 100] 
+   (at 90, cp->sounds[1][90:99, 1.000000, 0.909091 -> 1.000000, 0.090909 -> -0.000000, loc: 0, pos: 90, scl: 0.500000]) [buf: 100] 
    (at 100, end_mark)
 "))
 	    (snd-display ";ptree multi-ramp2 1: ~A" (display-edits ind 0 14 #f)))
 	(undo 12)
 	(close-sound ind))
       
+      (let ((ind (new-sound "test.snd")))
+	(map-chan (lambda (y) 1.0) 0 10)
+
+	(ramp-channel 0.0 1.0)
+	(ramp-channel 0.0 1.0)
+	(ramp-channel 0.0 1.0)
+	(ptree-channel (lambda (y) (+ y .1)))
+	(if (not (string=? (display-edits ind 0 5 #f) "
+ (ptree[0] 0 11) ; ptree 0 0 11 [5:2]:
+   (at 0, cp->sounds[1][0:10, 1.000000, -0.000000 -> 1.000000, -0.000000 -> 1.000000, -0.000000 -> 1.000000, loc: 0, pos: 0, scl: 1.000000]) [buf: 11] 
+   (at 11, end_mark)
+"))
+	    (snd-display ";ptree-ramp3 0: ~A" (display-edits ind 0 5 #f)))
+	(if (not (vequal (channel->vct) (vct 0.100 0.101 0.108 0.127 0.164 0.225 0.316 0.443 0.612 0.829 1.100)))
+	    (snd-display ";ptree-ramp3 1: ~A" (channel->vct)))
+	(scale-channel 0.5)
+	(if (not (string=? (display-edits ind 0 6 #f) "
+ (scale 0 11) ; scale-channel 0.5000 0 11 [6:2]:
+   (at 0, cp->sounds[1][0:10, 0.500000, -0.000000 -> 1.000000, -0.000000 -> 1.000000, -0.000000 -> 1.000000, loc: 0, pos: 0, scl: 1.000000]) [buf: 11] 
+   (at 11, end_mark)
+"))
+	    (snd-display ";ptree-ramp3 2: ~A" (display-edits ind 0 6 #f)))
+
+	(undo 5)
+	(ramp-channel 0 1)
+	(ramp-channel 0 1 5 5)
+	(ramp-channel 0 1 7 3)
+	(ptree-channel (lambda (y) (+ y .1)))
+	(if (not (string=? (display-edits ind 0 5 #f) "
+ (ptree[1] 0 11) ; ptree 1 0 11 [5:5]:
+   (at 0, cp->sounds[1][0:4, 1.000000, -0.000000 -> 0.400000, loc: 1, pos: 0, scl: 1.000000]) [buf: 11] 
+   (at 5, cp->sounds[1][5:6, 1.000000, 0.500000 -> 0.600000, 0.000000 -> 0.250000, loc: 1, pos: 5, scl: 1.000000]) [buf: 11] 
+   (at 7, cp->sounds[1][7:9, 1.000000, 0.700000 -> 0.900000, 0.500000 -> 1.000000, 0.000000 -> 1.000000, loc: 1, pos: 7, scl: 1.000000]) [buf: 11] 
+   (at 10, cp->sounds[1][10:10, 1.000000, 1.000000 -> 1.000000, loc: 1, pos: 10, scl: 1.000000]) [buf: 11] 
+   (at 11, end_mark)
+"))
+	    (snd-display ";ptree-ramp3 3: ~A" (display-edits ind 0 5 #f)))
+	(if (not (vequal (channel->vct) (vct 0.100 0.200 0.300 0.400 0.500 0.100 0.250 0.100 0.400 1.000 1.100)))
+	    (snd-display ";ptree-ramp3 4: ~A" (channel->vct)))
+	(close-sound ind))
+
       ;; ramp3
       (let ((ind (new-sound "test.snd")))
 	(map-chan (lambda (y) 1.0) 0 10)
@@ -4872,7 +5190,7 @@ EDITS: 5
 		       (list 0.5)))
 	(if (not (string=? (display-edits ind 0 2) "
  (xen[0] 0 11) ; xen 0 0 11 [2:2]:
-   (at 0, cp->sounds[1][0:10, 1.000000, loc: 0, pos: 0, arg: 1.000000, code: (lambda (y data forward) (+ y (list-ref data 0))), init: (lambda (pos dur) (list 0.5))]) [buf: 11] 
+   (at 0, cp->sounds[1][0:10, 1.000000, loc: 0, pos: 0, scl: 1.000000, code: (lambda (y data forward) (+ y (list-ref data 0))), init: (lambda (pos dur) (list 0.5))]) [buf: 11] 
    (at 11, end_mark)
 "))
 	    (snd-display ";xen 0: ~A" (display-edits ind 0 2)))
@@ -4910,12 +5228,12 @@ EDITS: 5
 			   (* outer y)))))
 	(if (and (not (string=? (display-edits ind 0 4 #f) "
  (xen[2] 0 11) ; xen 2 0 11 [4:2]:
-   (at 0, cp->sounds[1][0:10, 1.000000, -0.000000 -> 1.000000, 1.000000 -> -0.000000, loc: 2, pos: 0, arg: 1.000000]) [buf: 11] 
+   (at 0, cp->sounds[1][0:10, 1.000000, -0.000000 -> 1.000000, 1.000000 -> -0.000000, loc: 2, pos: 0, scl: 1.000000]) [buf: 11] 
    (at 11, end_mark)
 "))
 		 (not (string=? (display-edits ind 0 4 #f) "
  (xen[2] 0 11) ; xen 2 0 11 [4:2]:
-   (at 0, cp->sounds[1][0:10, 1.000000, -0.000000 -> 1.000000, 1.000000 -> 0.000000, loc: 2, pos: 0, arg: 1.000000]) [buf: 11] 
+   (at 0, cp->sounds[1][0:10, 1.000000, -0.000000 -> 1.000000, 1.000000 -> 0.000000, loc: 2, pos: 0, scl: 1.000000]) [buf: 11] 
    (at 11, end_mark)
 ")))
 	    (snd-display ";xen 2: ~A" (display-edits ind 0 4 #f)))
@@ -4935,7 +5253,7 @@ EDITS: 5
 			 val)))
 	(if (not (string=? (display-edits ind 0 3 #f) "
  (xen[3] 0 11) ; xen 3 0 11 [3:2]:
-   (at 0, cp->sounds[1][0:10, 1.000000, -0.000000 -> 1.098612, off: -0.500000, scl: 0.500000, loc: 3, pos: 0, arg: 1.000000]) [buf: 11] 
+   (at 0, cp->sounds[1][0:10, 1.000000, -0.000000 -> 1.098612, off: -0.500000, scl: 0.500000, loc: 3, pos: 0, scl: 1.000000]) [buf: 11] 
    (at 11, end_mark)
 "))
 	    (snd-display ";xen 3: ~A" (display-edits ind 0 3 #f)))
@@ -4947,9 +5265,9 @@ EDITS: 5
 	(xen-channel (lambda (y data forward) (+ y .1)))
 	(if (not (string=? (display-edits ind 0 3 #f) "
  (xen[4] 0 16) ; xen 4 0 16 [3:4]:
-   (at 0, cp->sounds[1][0:1, 1.000000, loc: 4, pos: 0, arg: 1.000000]) [buf: 11] 
-   (at 2, cp->sounds[-1][0:4, 1.000000, loc: 4, pos: 2, arg: 0.000000])
-   (at 7, cp->sounds[1][2:10, 1.000000, loc: 4, pos: 7, arg: 1.000000]) [buf: 11] 
+   (at 0, cp->sounds[1][0:1, 1.000000, loc: 4, pos: 0, scl: 1.000000]) [buf: 11] 
+   (at 2, cp->sounds[-1][0:4, 1.000000, loc: 4, pos: 2, scl: 0.000000])
+   (at 7, cp->sounds[1][2:10, 1.000000, loc: 4, pos: 7, scl: 1.000000]) [buf: 11] 
    (at 16, end_mark)
 "))
 	    (snd-display ";xen 5: ~A" (display-edits ind 0 3 #f)))
@@ -4972,16 +5290,16 @@ EDITS: 5
 			 val)))
 	(if (not (string=? (display-edits ind 0 12 #f) "
  (xen[5] 0 100) ; xen 5 0 100 [12:11]:
-   (at 0, cp->sounds[1][0:9, 1.000000, loc: 5, pos: 0, arg: 0.500000]) [buf: 100] 
-   (at 10, cp->sounds[1][10:19, 1.000000, loc: 5, pos: 10, arg: 0.500000]) [buf: 100] 
-   (at 20, cp->sounds[1][20:29, 1.000000, loc: 5, pos: 20, arg: 0.500000]) [buf: 100] 
-   (at 30, cp->sounds[1][30:39, 1.000000, loc: 5, pos: 30, arg: 0.500000]) [buf: 100] 
-   (at 40, cp->sounds[1][40:49, 1.000000, loc: 5, pos: 40, arg: 0.500000]) [buf: 100] 
-   (at 50, cp->sounds[1][50:59, 1.000000, loc: 5, pos: 50, arg: 0.500000]) [buf: 100] 
-   (at 60, cp->sounds[1][60:69, 1.000000, loc: 5, pos: 60, arg: 0.500000]) [buf: 100] 
-   (at 70, cp->sounds[1][70:79, 1.000000, loc: 5, pos: 70, arg: 0.500000]) [buf: 100] 
-   (at 80, cp->sounds[1][80:89, 1.000000, loc: 5, pos: 80, arg: 0.500000]) [buf: 100] 
-   (at 90, cp->sounds[1][90:99, 1.000000, loc: 5, pos: 90, arg: 0.500000]) [buf: 100] 
+   (at 0, cp->sounds[1][0:9, 1.000000, loc: 5, pos: 0, scl: 0.500000]) [buf: 100] 
+   (at 10, cp->sounds[1][10:19, 1.000000, loc: 5, pos: 10, scl: 0.500000]) [buf: 100] 
+   (at 20, cp->sounds[1][20:29, 1.000000, loc: 5, pos: 20, scl: 0.500000]) [buf: 100] 
+   (at 30, cp->sounds[1][30:39, 1.000000, loc: 5, pos: 30, scl: 0.500000]) [buf: 100] 
+   (at 40, cp->sounds[1][40:49, 1.000000, loc: 5, pos: 40, scl: 0.500000]) [buf: 100] 
+   (at 50, cp->sounds[1][50:59, 1.000000, loc: 5, pos: 50, scl: 0.500000]) [buf: 100] 
+   (at 60, cp->sounds[1][60:69, 1.000000, loc: 5, pos: 60, scl: 0.500000]) [buf: 100] 
+   (at 70, cp->sounds[1][70:79, 1.000000, loc: 5, pos: 70, scl: 0.500000]) [buf: 100] 
+   (at 80, cp->sounds[1][80:89, 1.000000, loc: 5, pos: 80, scl: 0.500000]) [buf: 100] 
+   (at 90, cp->sounds[1][90:99, 1.000000, loc: 5, pos: 90, scl: 0.500000]) [buf: 100] 
    (at 100, end_mark)
 "))
 	    (snd-display ";xen 4: ~A" (display-edits ind 0 12 #f)))
@@ -5002,6 +5320,55 @@ EDITS: 5
 	  (if (not (vequal vals (channel->vct)))
 	      (snd-display ";ramp3 opt vs unopt: ~A ~A" vals (channel->vct))))
 	  
+	(close-sound ind))
+
+      (let ((ind (new-sound "test.snd")))
+	(map-chan (lambda (y) 1.0) 0 10)
+
+	(ramp-channel 0.0 1.0)
+	(ramp-channel 0.0 1.0)
+	(ramp-channel 0.0 1.0)
+	(xen-channel (lambda (y data forward)
+		       (+ y (list-ref data 0)))
+		     0 (frames) ind 0 #f #f
+		     (lambda (pos dur)
+		       (list 0.1)))
+	(if (not (string=? (display-edits ind 0 5 #f) "
+ (xen[0] 0 11) ; xen 0 0 11 [5:2]:
+   (at 0, cp->sounds[1][0:10, 1.000000, -0.000000 -> 1.000000, -0.000000 -> 1.000000, -0.000000 -> 1.000000, loc: 0, pos: 0, scl: 1.000000]) [buf: 11] 
+   (at 11, end_mark)
+"))
+	    (snd-display ";xen-ramp3 0: ~A" (display-edits ind 0 5 #f)))
+	(if (not (vequal (channel->vct) (vct 0.100 0.101 0.108 0.127 0.164 0.225 0.316 0.443 0.612 0.829 1.100)))
+	    (snd-display ";xen-ramp3 1: ~A" (channel->vct)))
+	(scale-channel 0.5)
+	(if (not (string=? (display-edits ind 0 6 #f) "
+ (scale 0 11) ; scale-channel 0.5000 0 11 [6:2]:
+   (at 0, cp->sounds[1][0:10, 0.500000, -0.000000 -> 1.000000, -0.000000 -> 1.000000, -0.000000 -> 1.000000, loc: 0, pos: 0, scl: 1.000000]) [buf: 11] 
+   (at 11, end_mark)
+"))
+	    (snd-display ";xen-ramp3 2: ~A" (display-edits ind 0 6 #f)))
+
+	(undo 5)
+	(ramp-channel 0 1)
+	(ramp-channel 0 1 5 5)
+	(ramp-channel 0 1 7 3)
+	(xen-channel (lambda (y data forward)
+		       (+ y (list-ref data 0)))
+		     0 (frames) ind 0 #f #f
+		     (lambda (pos dur)
+		       (list 0.1)))
+	(if (not (string=? (display-edits ind 0 5 #f) "
+ (xen[1] 0 11) ; xen 1 0 11 [5:5]:
+   (at 0, cp->sounds[1][0:4, 1.000000, -0.000000 -> 0.400000, loc: 1, pos: 0, scl: 1.000000]) [buf: 11] 
+   (at 5, cp->sounds[1][5:6, 1.000000, 0.500000 -> 0.600000, 0.000000 -> 0.250000, loc: 1, pos: 5, scl: 1.000000]) [buf: 11] 
+   (at 7, cp->sounds[1][7:9, 1.000000, 0.700000 -> 0.900000, 0.500000 -> 1.000000, 0.000000 -> 1.000000, loc: 1, pos: 7, scl: 1.000000]) [buf: 11] 
+   (at 10, cp->sounds[1][10:10, 1.000000, 1.000000 -> 1.000000, loc: 1, pos: 10, scl: 1.000000]) [buf: 11] 
+   (at 11, end_mark)
+"))
+	    (snd-display ";xen-ramp3 3: ~A" (display-edits ind 0 5 #f)))
+	(if (not (vequal (channel->vct) (vct 0.100 0.200 0.300 0.400 0.500 0.100 0.250 0.100 0.400 1.000 1.100)))
+	    (snd-display ";xen-ramp3 4: ~A" (channel->vct)))
 	(close-sound ind))
 
       ;; various cases not optimized, presumably
@@ -5138,25 +5505,25 @@ EDITS: 5
 	    (snd-display ";xramp+ramp+ptree: ~A" (display-edits ind 0 4)))
 	(undo 3)
 
-	;; ramp3+ptree
+	;; ramp3+ptree (now optimized)
 	(ramp-channel 0.0 1.0)
 	(ramp-channel 0.0 1.0)
 	(ramp-channel 0.0 1.0)
 	(ptree-channel (lambda (y) y))
 	(if (not (string=? (display-edits ind 0 5) "
- (set 0 11) ; map-channel [5:2]:
-   (at 0, cp->sounds[2][0:10, 1.000000]) [buf: 11] 
+ (ptree[1] 0 11) ; ptree 1 0 11 [5:2]:
+   (at 0, cp->sounds[1][0:10, 1.000000, -0.000000 -> 1.000000, -0.000000 -> 1.000000, -0.000000 -> 1.000000, loc: 1, pos: 0, scl: 1.000000, code: (lambda (y) y)]) [buf: 11] 
    (at 11, end_mark)
 "))
 	    (snd-display ";ramp3+ptree: ~A" (display-edits ind 0 5)))
 	(undo 4)
 
-	;; ptree+ptree
+	;; ptree+ptree (now optimized)
 	(ptree-channel (lambda (y) y))
 	(ptree-channel (lambda (y) y))
 	(if (not (string=? (display-edits ind 0 3) "
- (set 0 11) ; map-channel [3:2]:
-   (at 0, cp->sounds[2][0:10, 1.000000]) [buf: 11] 
+ (ptree[3] 0 11) ; ptree 3 0 11 [3:2]:
+   (at 0, cp->sounds[1][0:10, 1.000000, loc2: 3, scl2: 1.000000, loc: 2, pos: 0, scl: 1.000000, code: (lambda (y) y)]) [buf: 11] 
    (at 11, end_mark)
 "))
 	    (snd-display ";ptree+ptree: ~A" (display-edits ind 0 3)))
@@ -17400,6 +17767,10 @@ EDITS: 5
 	(ptree-channel (lambda (y) (* y 0.5)))
 	(zigzag-check "ptree" ind 0)
 	(undo)
+	(ptree-channel (lambda (y) (* y 0.5)))
+	(ptree-channel (lambda (y) (* y 1.5)))
+	(zigzag-check "ptree2" ind 0)
+	(undo 2)
 	(ramp-channel 0.0 1.0)
 	(ramp-channel 1.0 0.0)
 	(zigzag-check "ramp2" ind 0)
@@ -17430,6 +17801,11 @@ EDITS: 5
 	(ramp-channel 1.0 0.0)
 	(zigzag-check "ramp+xramp" ind 0)
 	(undo 2)
+	(xramp-channel 0.0 1.0 32.0)
+	(ramp-channel 1.0 0.0)
+	(ramp-channel 1.0 0.0)
+	(zigzag-check "ramp2+xramp" ind 0)
+	(undo 3)
 	(ramp-channel 0.0 1.0)
 	(ptree-channel (lambda (y) (* y 0.5)))
 	(zigzag-check "ptree+ramp" ind 0)
@@ -17439,6 +17815,12 @@ EDITS: 5
 	(ptree-channel (lambda (y) (* y 0.5)))
 	(zigzag-check "ptree+ramp2" ind 0)
 	(undo 3)
+	(ramp-channel 0.0 1.0)
+	(ramp-channel 0.0 1.0)
+	(ramp-channel 0.0 1.0)
+	(ptree-channel (lambda (y) (+ y 0.5)))
+	(zigzag-check "ptree+ramp3" ind 0)
+	(undo 4)
 	(pad-channel 2 3)
 	(zigzag-check "zero" ind 0)
 	(undo)
@@ -17478,6 +17860,16 @@ EDITS: 5
 	(ptree-channel (lambda (y) (* y 0.5)))
 	(zigzag-check "ptree+zero" ind 0)
 	(undo 2)
+	(scale-channel 0.0 3 4)
+	(ptree-channel (lambda (y) (* y 0.5)))
+	(ptree-channel (lambda (y) (+ y .1)))
+	(zigzag-check "ptree2+zero" ind 0)
+	(undo 3)
+	(ramp-channel 0.0 1.0)
+	(ptree-channel (lambda (y) (* y 0.5)))
+	(ptree-channel (lambda (y) (+ y .1)))
+	(zigzag-check "ptree2+ramp" ind 0)
+	(undo 3)
 	(pad-channel 2 4)
 	(ptree-channel (lambda (y) (* y 0.5)))
 	(zigzag-check "ptree+pad" ind 0)
@@ -17565,28 +17957,28 @@ EDITS: 6
    (at 101, end_mark)
 
  (ptree[0] 0 101) ; ptree 0 0 101 [3:2]:
-   (at 0, cp->sounds[1][0:100, 1.000000, loc: 0, pos: 0, arg: 1.000000, code: (lambda (y data forward) (declare (y real) (data vct) (forward boolean)) (let* ((angle (vct-ref data 0)) (incr (vct-ref data 1)) (val (* y (cos angle)))) (if forward (vct-set! data 0 (+ angle incr)) (vct-set! data 0 (- angle incr))) val)), init: (lambda (frag-beg frag-dur) (let ((incr (/ pi frag-dur))) (vct (+ (* -0.5 pi) (* frag-beg incr)) incr)))]) [buf: 101] 
+   (at 0, cp->sounds[1][0:100, 1.000000, loc: 0, pos: 0, scl: 1.000000, code: (lambda (y data forward) (declare (y real) (data vct) (forward boolean)) (let* ((angle (vct-ref data 0)) (incr (vct-ref data 1)) (val (* y (cos angle)))) (if forward (vct-set! data 0 (+ angle incr)) (vct-set! data 0 (- angle incr))) val)), init: (lambda (frag-beg frag-dur) (let ((incr (/ pi frag-dur))) (vct (+ (* -0.5 pi) (* frag-beg incr)) incr)))]) [buf: 101] 
    (at 101, end_mark)
 
  (delete 10 1) ; delete-sample [4:3]:
-   (at 0, cp->sounds[1][0:9, 1.000000, loc: 0, pos: 0, arg: 1.000000, code: (lambda (y data forward) (declare (y real) (data vct) (forward boolean)) (let* ((angle (vct-ref data 0)) (incr (vct-ref data 1)) (val (* y (cos angle)))) (if forward (vct-set! data 0 (+ angle incr)) (vct-set! data 0 (- angle incr))) val)), init: (lambda (frag-beg frag-dur) (let ((incr (/ pi frag-dur))) (vct (+ (* -0.5 pi) (* frag-beg incr)) incr)))]) [buf: 101] 
-   (at 10, cp->sounds[1][11:100, 1.000000, loc: 0, pos: 11, arg: 1.000000, code: (lambda (y data forward) (declare (y real) (data vct) (forward boolean)) (let* ((angle (vct-ref data 0)) (incr (vct-ref data 1)) (val (* y (cos angle)))) (if forward (vct-set! data 0 (+ angle incr)) (vct-set! data 0 (- angle incr))) val)), init: (lambda (frag-beg frag-dur) (let ((incr (/ pi frag-dur))) (vct (+ (* -0.5 pi) (* frag-beg incr)) incr)))]) [buf: 101] 
+   (at 0, cp->sounds[1][0:9, 1.000000, loc: 0, pos: 0, scl: 1.000000, code: (lambda (y data forward) (declare (y real) (data vct) (forward boolean)) (let* ((angle (vct-ref data 0)) (incr (vct-ref data 1)) (val (* y (cos angle)))) (if forward (vct-set! data 0 (+ angle incr)) (vct-set! data 0 (- angle incr))) val)), init: (lambda (frag-beg frag-dur) (let ((incr (/ pi frag-dur))) (vct (+ (* -0.5 pi) (* frag-beg incr)) incr)))]) [buf: 101] 
+   (at 10, cp->sounds[1][11:100, 1.000000, loc: 0, pos: 11, scl: 1.000000, code: (lambda (y data forward) (declare (y real) (data vct) (forward boolean)) (let* ((angle (vct-ref data 0)) (incr (vct-ref data 1)) (val (* y (cos angle)))) (if forward (vct-set! data 0 (+ angle incr)) (vct-set! data 0 (- angle incr))) val)), init: (lambda (frag-beg frag-dur) (let ((incr (/ pi frag-dur))) (vct (+ (* -0.5 pi) (* frag-beg incr)) incr)))]) [buf: 101] 
    (at 100, end_mark)
 
  (set 20 1) ; set! sample [5:5]:
-   (at 0, cp->sounds[1][0:9, 1.000000, loc: 0, pos: 0, arg: 1.000000, code: (lambda (y data forward) (declare (y real) (data vct) (forward boolean)) (let* ((angle (vct-ref data 0)) (incr (vct-ref data 1)) (val (* y (cos angle)))) (if forward (vct-set! data 0 (+ angle incr)) (vct-set! data 0 (- angle incr))) val)), init: (lambda (frag-beg frag-dur) (let ((incr (/ pi frag-dur))) (vct (+ (* -0.5 pi) (* frag-beg incr)) incr)))]) [buf: 101] 
-   (at 10, cp->sounds[1][11:20, 1.000000, loc: 0, pos: 11, arg: 1.000000, code: (lambda (y data forward) (declare (y real) (data vct) (forward boolean)) (let* ((angle (vct-ref data 0)) (incr (vct-ref data 1)) (val (* y (cos angle)))) (if forward (vct-set! data 0 (+ angle incr)) (vct-set! data 0 (- angle incr))) val)), init: (lambda (frag-beg frag-dur) (let ((incr (/ pi frag-dur))) (vct (+ (* -0.5 pi) (* frag-beg incr)) incr)))]) [buf: 101] 
+   (at 0, cp->sounds[1][0:9, 1.000000, loc: 0, pos: 0, scl: 1.000000, code: (lambda (y data forward) (declare (y real) (data vct) (forward boolean)) (let* ((angle (vct-ref data 0)) (incr (vct-ref data 1)) (val (* y (cos angle)))) (if forward (vct-set! data 0 (+ angle incr)) (vct-set! data 0 (- angle incr))) val)), init: (lambda (frag-beg frag-dur) (let ((incr (/ pi frag-dur))) (vct (+ (* -0.5 pi) (* frag-beg incr)) incr)))]) [buf: 101] 
+   (at 10, cp->sounds[1][11:20, 1.000000, loc: 0, pos: 11, scl: 1.000000, code: (lambda (y data forward) (declare (y real) (data vct) (forward boolean)) (let* ((angle (vct-ref data 0)) (incr (vct-ref data 1)) (val (* y (cos angle)))) (if forward (vct-set! data 0 (+ angle incr)) (vct-set! data 0 (- angle incr))) val)), init: (lambda (frag-beg frag-dur) (let ((incr (/ pi frag-dur))) (vct (+ (* -0.5 pi) (* frag-beg incr)) incr)))]) [buf: 101] 
    (at 20, cp->sounds[2][0:0, 1.000000]) [buf: 1] 
-   (at 21, cp->sounds[1][22:100, 1.000000, loc: 0, pos: 22, arg: 1.000000, code: (lambda (y data forward) (declare (y real) (data vct) (forward boolean)) (let* ((angle (vct-ref data 0)) (incr (vct-ref data 1)) (val (* y (cos angle)))) (if forward (vct-set! data 0 (+ angle incr)) (vct-set! data 0 (- angle incr))) val)), init: (lambda (frag-beg frag-dur) (let ((incr (/ pi frag-dur))) (vct (+ (* -0.5 pi) (* frag-beg incr)) incr)))]) [buf: 101] 
+   (at 21, cp->sounds[1][22:100, 1.000000, loc: 0, pos: 22, scl: 1.000000, code: (lambda (y data forward) (declare (y real) (data vct) (forward boolean)) (let* ((angle (vct-ref data 0)) (incr (vct-ref data 1)) (val (* y (cos angle)))) (if forward (vct-set! data 0 (+ angle incr)) (vct-set! data 0 (- angle incr))) val)), init: (lambda (frag-beg frag-dur) (let ((incr (/ pi frag-dur))) (vct (+ (* -0.5 pi) (* frag-beg incr)) incr)))]) [buf: 101] 
    (at 100, end_mark)
 
  (silence 30 1) ; insert-silence [6:7]:
-   (at 0, cp->sounds[1][0:9, 1.000000, loc: 0, pos: 0, arg: 1.000000, code: (lambda (y data forward) (declare (y real) (data vct) (forward boolean)) (let* ((angle (vct-ref data 0)) (incr (vct-ref data 1)) (val (* y (cos angle)))) (if forward (vct-set! data 0 (+ angle incr)) (vct-set! data 0 (- angle incr))) val)), init: (lambda (frag-beg frag-dur) (let ((incr (/ pi frag-dur))) (vct (+ (* -0.5 pi) (* frag-beg incr)) incr)))]) [buf: 101] 
-   (at 10, cp->sounds[1][11:20, 1.000000, loc: 0, pos: 11, arg: 1.000000, code: (lambda (y data forward) (declare (y real) (data vct) (forward boolean)) (let* ((angle (vct-ref data 0)) (incr (vct-ref data 1)) (val (* y (cos angle)))) (if forward (vct-set! data 0 (+ angle incr)) (vct-set! data 0 (- angle incr))) val)), init: (lambda (frag-beg frag-dur) (let ((incr (/ pi frag-dur))) (vct (+ (* -0.5 pi) (* frag-beg incr)) incr)))]) [buf: 101] 
+   (at 0, cp->sounds[1][0:9, 1.000000, loc: 0, pos: 0, scl: 1.000000, code: (lambda (y data forward) (declare (y real) (data vct) (forward boolean)) (let* ((angle (vct-ref data 0)) (incr (vct-ref data 1)) (val (* y (cos angle)))) (if forward (vct-set! data 0 (+ angle incr)) (vct-set! data 0 (- angle incr))) val)), init: (lambda (frag-beg frag-dur) (let ((incr (/ pi frag-dur))) (vct (+ (* -0.5 pi) (* frag-beg incr)) incr)))]) [buf: 101] 
+   (at 10, cp->sounds[1][11:20, 1.000000, loc: 0, pos: 11, scl: 1.000000, code: (lambda (y data forward) (declare (y real) (data vct) (forward boolean)) (let* ((angle (vct-ref data 0)) (incr (vct-ref data 1)) (val (* y (cos angle)))) (if forward (vct-set! data 0 (+ angle incr)) (vct-set! data 0 (- angle incr))) val)), init: (lambda (frag-beg frag-dur) (let ((incr (/ pi frag-dur))) (vct (+ (* -0.5 pi) (* frag-beg incr)) incr)))]) [buf: 101] 
    (at 20, cp->sounds[2][0:0, 1.000000]) [buf: 1] 
-   (at 21, cp->sounds[1][22:30, 1.000000, loc: 0, pos: 22, arg: 1.000000, code: (lambda (y data forward) (declare (y real) (data vct) (forward boolean)) (let* ((angle (vct-ref data 0)) (incr (vct-ref data 1)) (val (* y (cos angle)))) (if forward (vct-set! data 0 (+ angle incr)) (vct-set! data 0 (- angle incr))) val)), init: (lambda (frag-beg frag-dur) (let ((incr (/ pi frag-dur))) (vct (+ (* -0.5 pi) (* frag-beg incr)) incr)))]) [buf: 101] 
+   (at 21, cp->sounds[1][22:30, 1.000000, loc: 0, pos: 22, scl: 1.000000, code: (lambda (y data forward) (declare (y real) (data vct) (forward boolean)) (let* ((angle (vct-ref data 0)) (incr (vct-ref data 1)) (val (* y (cos angle)))) (if forward (vct-set! data 0 (+ angle incr)) (vct-set! data 0 (- angle incr))) val)), init: (lambda (frag-beg frag-dur) (let ((incr (/ pi frag-dur))) (vct (+ (* -0.5 pi) (* frag-beg incr)) incr)))]) [buf: 101] 
    (at 30, cp->sounds[-1][0:0, 0.000000])
-   (at 31, cp->sounds[1][31:100, 1.000000, loc: 0, pos: 31, arg: 1.000000, code: (lambda (y data forward) (declare (y real) (data vct) (forward boolean)) (let* ((angle (vct-ref data 0)) (incr (vct-ref data 1)) (val (* y (cos angle)))) (if forward (vct-set! data 0 (+ angle incr)) (vct-set! data 0 (- angle incr))) val)), init: (lambda (frag-beg frag-dur) (let ((incr (/ pi frag-dur))) (vct (+ (* -0.5 pi) (* frag-beg incr)) incr)))]) [buf: 101] 
+   (at 31, cp->sounds[1][31:100, 1.000000, loc: 0, pos: 31, scl: 1.000000, code: (lambda (y data forward) (declare (y real) (data vct) (forward boolean)) (let* ((angle (vct-ref data 0)) (incr (vct-ref data 1)) (val (* y (cos angle)))) (if forward (vct-set! data 0 (+ angle incr)) (vct-set! data 0 (- angle incr))) val)), init: (lambda (frag-beg frag-dur) (let ((incr (/ pi frag-dur))) (vct (+ (* -0.5 pi) (* frag-beg incr)) incr)))]) [buf: 101] 
    (at 101, end_mark)
 "))))
 	      (snd-display ";cosine channel edits: ~A"
@@ -17614,13 +18006,13 @@ EDITS: 3
    (at 50828, end_mark)
 
  (ptree[0] 0 50828) ; ptree 0 0 50828 [2:2]:
-   (at 0, cp->sounds[0][0:50827, 1.000000, loc: 0, pos: 0, arg: 0.000000, code: (lambda (y) (+ y 0.1))]) [file: " home-dir "/cl/oboe.snd[0]]
+   (at 0, cp->sounds[0][0:50827, 1.000000, loc: 0, pos: 0, scl: 0.000000, code: (lambda (y) (+ y 0.1))]) [file: " home-dir "/cl/oboe.snd[0]]
    (at 50828, end_mark)
 
  (set 100 1) ; set! sample [3:4]:
-   (at 0, cp->sounds[0][0:99, 1.000000, loc: 0, pos: 0, arg: 0.000000, code: (lambda (y) (+ y 0.1))]) [file: " home-dir "/cl/oboe.snd[0]]
+   (at 0, cp->sounds[0][0:99, 1.000000, loc: 0, pos: 0, scl: 0.000000, code: (lambda (y) (+ y 0.1))]) [file: " home-dir "/cl/oboe.snd[0]]
    (at 100, cp->sounds[1][0:0, 1.000000]) [buf: 1] 
-   (at 101, cp->sounds[0][101:50827, 1.000000, loc: 0, pos: 101, arg: 0.000000, code: (lambda (y) (+ y 0.1))]) [file: " home-dir "/cl/oboe.snd[0]]
+   (at 101, cp->sounds[0][101:50827, 1.000000, loc: 0, pos: 101, scl: 0.000000, code: (lambda (y) (+ y 0.1))]) [file: " home-dir "/cl/oboe.snd[0]]
    (at 50828, end_mark)
 "))))
 	      (snd-display ";ptree split: ~A" (display-edits)))
@@ -18922,11 +19314,11 @@ EDITS: 3
    (at 50828, end_mark)
 
  (ptree[1] 0 50828) ; ptree 1 0 50828 [2:2]:
-   (at 0, cp->sounds[0][0:50827, 1.000000, loc: 1, pos: 0, arg: 2.000000, code: (lambda (y) (+ y 0.1))]) [file: " home-dir "/cl/oboe.snd[0]]
+   (at 0, cp->sounds[0][0:50827, 1.000000, loc: 1, pos: 0, scl: 2.000000, code: (lambda (y) (+ y 0.1))]) [file: " home-dir "/cl/oboe.snd[0]]
    (at 50828, end_mark)
 
  (scale 0 50828) ; scale-channel 2.0000 0 50828 [3:2]:
-   (at 0, cp->sounds[0][0:50827, 2.000000, loc: 1, pos: 0, arg: 2.000000, code: (lambda (y) (+ y 0.1))]) [file: " home-dir "/cl/oboe.snd[0]]
+   (at 0, cp->sounds[0][0:50827, 2.000000, loc: 1, pos: 0, scl: 2.000000, code: (lambda (y) (+ y 0.1))]) [file: " home-dir "/cl/oboe.snd[0]]
    (at 50828, end_mark)
 "))))
 	      (snd-display ";ptree display edits: ~A" (display-edits ind-ptree)))
@@ -18946,15 +19338,15 @@ EDITS: 3
 EDITS: 2
 
  (begin) [0:2]:
-   (at 0, cp->sounds[0][0:50827, 1.000000]) [file: " home-dir "/cl/oboe.snd[0]]
+   (at 0, cp->sounds[0][0:50827, 1.000000]) [file: /home/bil/cl/oboe.snd[0]]
    (at 50828, end_mark)
 
  (ptree[2] 0 50828) ; ptree 2 0 50828 [1:2]:
-   (at 0, cp->sounds[0][0:50827, 1.000000, loc: 2, pos: 0, arg: 1.000000, code: (lambda (y) (* 2.0 (sin y)))]) [file: " home-dir "/cl/oboe.snd[0]]
+   (at 0, cp->sounds[0][0:50827, 1.000000, loc: 2, pos: 0, scl: 1.000000, code: (lambda (y) (* 2.0 (sin y)))]) [file: /home/bil/cl/oboe.snd[0]]
    (at 50828, end_mark)
 
- (set 0 50828) ; map-channel [2:2]:
-   (at 0, cp->sounds[1][0:50827, 1.000000]) [buf: 50828] 
+ (ptree[3] 0 50828) ; ptree 3 0 50828 [2:2]:
+   (at 0, cp->sounds[0][0:50827, 1.000000, loc2: 3, scl2: 1.000000, loc: 2, pos: 0, scl: 1.000000, code: (lambda (y) (* 2.0 (sin y)))]) [file: /home/bil/cl/oboe.snd[0]]
    (at 50828, end_mark)
 "))))
 	      (snd-display ";ptree display: ~A" (display-edits ind-ptree)))
@@ -18994,27 +19386,27 @@ EDITS: 2
 EDITS: 3
 
  (begin) [0:2]:
-   (at 0, cp->sounds[0][0:50827, 1.000000]) [file: " home-dir "/cl/oboe.snd[0]]
+   (at 0, cp->sounds[0][0:50827, 1.000000]) [file: /home/bil/cl/oboe.snd[0]]
    (at 50828, end_mark)
 
- (ptree[5] 100 100) ; ptree 5 100 100 [1:4]:
-   (at 0, cp->sounds[0][0:99, 1.000000]) [file: " home-dir "/cl/oboe.snd[0]]
-   (at 100, cp->sounds[0][100:199, 1.000000, loc: 5, pos: 0, arg: 1.000000, code: (lambda (y) (+ y 0.1))]) [file: " home-dir "/cl/oboe.snd[0]]
-   (at 200, cp->sounds[0][200:50827, 1.000000]) [file: " home-dir "/cl/oboe.snd[0]]
+ (ptree[6] 100 100) ; ptree 6 100 100 [1:4]:
+   (at 0, cp->sounds[0][0:99, 1.000000]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 100, cp->sounds[0][100:199, 1.000000, loc: 6, pos: 0, scl: 1.000000, code: (lambda (y) (+ y 0.1))]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 200, cp->sounds[0][200:50827, 1.000000]) [file: /home/bil/cl/oboe.snd[0]]
    (at 50828, end_mark)
 
  (scale 0 50828) ; scale-channel 2.0000 0 50828 [2:4]:
-   (at 0, cp->sounds[0][0:99, 2.000000]) [file: " home-dir "/cl/oboe.snd[0]]
-   (at 100, cp->sounds[0][100:199, 2.000000, loc: 5, pos: 0, arg: 1.000000, code: (lambda (y) (+ y 0.1))]) [file: " home-dir "/cl/oboe.snd[0]]
-   (at 200, cp->sounds[0][200:50827, 2.000000]) [file: " home-dir "/cl/oboe.snd[0]]
+   (at 0, cp->sounds[0][0:99, 2.000000]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 100, cp->sounds[0][100:199, 2.000000, loc: 6, pos: 0, scl: 1.000000, code: (lambda (y) (+ y 0.1))]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 200, cp->sounds[0][200:50827, 2.000000]) [file: /home/bil/cl/oboe.snd[0]]
    (at 50828, end_mark)
 
- (ptree[6] 1000 100) ; ptree 6 1000 100 [3:6]:
-   (at 0, cp->sounds[0][0:99, 2.000000]) [file: " home-dir "/cl/oboe.snd[0]]
-   (at 100, cp->sounds[0][100:199, 2.000000, loc: 5, pos: 0, arg: 1.000000, code: (lambda (y) (+ y 0.1))]) [file: " home-dir "/cl/oboe.snd[0]]
-   (at 200, cp->sounds[0][200:999, 2.000000]) [file: " home-dir "/cl/oboe.snd[0]]
-   (at 1000, cp->sounds[0][1000:1099, 1.000000, loc: 6, pos: 0, arg: 2.000000, code: (lambda (y) (+ y 0.2))]) [file: " home-dir "/cl/oboe.snd[0]]
-   (at 1100, cp->sounds[0][1100:50827, 2.000000]) [file: " home-dir "/cl/oboe.snd[0]]
+ (ptree[7] 1000 100) ; ptree 7 1000 100 [3:6]:
+   (at 0, cp->sounds[0][0:99, 2.000000]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 100, cp->sounds[0][100:199, 2.000000, loc: 6, pos: 0, scl: 1.000000, code: (lambda (y) (+ y 0.1))]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 200, cp->sounds[0][200:999, 2.000000]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 1000, cp->sounds[0][1000:1099, 1.000000, loc: 7, pos: 0, scl: 2.000000, code: (lambda (y) (+ y 0.2))]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 1100, cp->sounds[0][1100:50827, 2.000000]) [file: /home/bil/cl/oboe.snd[0]]
    (at 50828, end_mark)
 "))))
 	      (snd-display ";ptree[1000] display: ~A" (display-edits ind-ptree)))
@@ -19034,58 +19426,65 @@ EDITS: 3
 EDITS: 6
 
  (begin) [0:2]:
-   (at 0, cp->sounds[0][0:50827, 1.000000]) [file: " home-dir "/cl/oboe.snd[0]]
+   (at 0, cp->sounds[0][0:50827, 1.000000]) [file: /home/bil/cl/oboe.snd[0]]
    (at 50828, end_mark)
 
- (ptree[5] 100 100) ; ptree 5 100 100 [1:4]:
-   (at 0, cp->sounds[0][0:99, 1.000000]) [file: " home-dir "/cl/oboe.snd[0]]
-   (at 100, cp->sounds[0][100:199, 1.000000, loc: 5, pos: 0, arg: 1.000000, code: (lambda (y) (+ y 0.1))]) [file: " home-dir "/cl/oboe.snd[0]]
-   (at 200, cp->sounds[0][200:50827, 1.000000]) [file: " home-dir "/cl/oboe.snd[0]]
+ (ptree[6] 100 100) ; ptree 6 100 100 [1:4]:
+   (at 0, cp->sounds[0][0:99, 1.000000]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 100, cp->sounds[0][100:199, 1.000000, loc: 6, pos: 0, scl: 1.000000, code: (lambda (y) (+ y 0.1))]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 200, cp->sounds[0][200:50827, 1.000000]) [file: /home/bil/cl/oboe.snd[0]]
    (at 50828, end_mark)
 
  (scale 0 50828) ; scale-channel 2.0000 0 50828 [2:4]:
-   (at 0, cp->sounds[0][0:99, 2.000000]) [file: " home-dir "/cl/oboe.snd[0]]
-   (at 100, cp->sounds[0][100:199, 2.000000, loc: 5, pos: 0, arg: 1.000000, code: (lambda (y) (+ y 0.1))]) [file: " home-dir "/cl/oboe.snd[0]]
-   (at 200, cp->sounds[0][200:50827, 2.000000]) [file: " home-dir "/cl/oboe.snd[0]]
+   (at 0, cp->sounds[0][0:99, 2.000000]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 100, cp->sounds[0][100:199, 2.000000, loc: 6, pos: 0, scl: 1.000000, code: (lambda (y) (+ y 0.1))]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 200, cp->sounds[0][200:50827, 2.000000]) [file: /home/bil/cl/oboe.snd[0]]
    (at 50828, end_mark)
 
- (ptree[6] 1000 100) ; ptree 6 1000 100 [3:6]:
-   (at 0, cp->sounds[0][0:99, 2.000000]) [file: " home-dir "/cl/oboe.snd[0]]
-   (at 100, cp->sounds[0][100:199, 2.000000, loc: 5, pos: 0, arg: 1.000000, code: (lambda (y) (+ y 0.1))]) [file: " home-dir "/cl/oboe.snd[0]]
-   (at 200, cp->sounds[0][200:999, 2.000000]) [file: " home-dir "/cl/oboe.snd[0]]
-   (at 1000, cp->sounds[0][1000:1099, 1.000000, loc: 6, pos: 0, arg: 2.000000, code: (lambda (y) (+ y 0.2))]) [file: " home-dir "/cl/oboe.snd[0]]
-   (at 1100, cp->sounds[0][1100:50827, 2.000000]) [file: " home-dir "/cl/oboe.snd[0]]
+ (ptree[7] 1000 100) ; ptree 7 1000 100 [3:6]:
+   (at 0, cp->sounds[0][0:99, 2.000000]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 100, cp->sounds[0][100:199, 2.000000, loc: 6, pos: 0, scl: 1.000000, code: (lambda (y) (+ y 0.1))]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 200, cp->sounds[0][200:999, 2.000000]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 1000, cp->sounds[0][1000:1099, 1.000000, loc: 7, pos: 0, scl: 2.000000, code: (lambda (y) (+ y 0.2))]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 1100, cp->sounds[0][1100:50827, 2.000000]) [file: /home/bil/cl/oboe.snd[0]]
    (at 50828, end_mark)
 
  (ramp 2501 499) ; env-channel (make-env '(0.000 0.000 1.000 1.000 2.000 0.000 ) :base 1.0000 :end 999) 2000 1000 [4:9]:
-   (at 0, cp->sounds[0][0:99, 2.000000]) [file: " home-dir "/cl/oboe.snd[0]]
-   (at 100, cp->sounds[0][100:199, 2.000000, loc: 5, pos: 0, arg: 1.000000, code: (lambda (y) (+ y 0.1))]) [file: " home-dir "/cl/oboe.snd[0]]
-   (at 200, cp->sounds[0][200:999, 2.000000]) [file: " home-dir "/cl/oboe.snd[0]]
-   (at 1000, cp->sounds[0][1000:1099, 1.000000, loc: 6, pos: 0, arg: 2.000000, code: (lambda (y) (+ y 0.2))]) [file: " home-dir "/cl/oboe.snd[0]]
-   (at 1100, cp->sounds[0][1100:1999, 2.000000]) [file: " home-dir "/cl/oboe.snd[0]]
-   (at 2000, cp->sounds[0][2000:2500, 2.000000, -0.000000 -> 1.000000]) [file: " home-dir "/cl/oboe.snd[0]]
-   (at 2501, cp->sounds[0][2501:2999, 2.000000, 0.997996 -> 0.000000]) [file: " home-dir "/cl/oboe.snd[0]]
-   (at 3000, cp->sounds[0][3000:50827, 2.000000]) [file: " home-dir "/cl/oboe.snd[0]]
+   (at 0, cp->sounds[0][0:99, 2.000000]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 100, cp->sounds[0][100:199, 2.000000, loc: 6, pos: 0, scl: 1.000000, code: (lambda (y) (+ y 0.1))]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 200, cp->sounds[0][200:999, 2.000000]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 1000, cp->sounds[0][1000:1099, 1.000000, loc: 7, pos: 0, scl: 2.000000, code: (lambda (y) (+ y 0.2))]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 1100, cp->sounds[0][1100:1999, 2.000000]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 2000, cp->sounds[0][2000:2500, 2.000000, -0.000000 -> 1.000000]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 2501, cp->sounds[0][2501:2999, 2.000000, 0.997996 -> 0.000000]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 3000, cp->sounds[0][3000:50827, 2.000000]) [file: /home/bil/cl/oboe.snd[0]]
    (at 50828, end_mark)
 
- (ptree[7] 4000 100) ; ptree 7 4000 100 [5:11]:
-   (at 0, cp->sounds[0][0:99, 2.000000]) [file: " home-dir "/cl/oboe.snd[0]]
-   (at 100, cp->sounds[0][100:199, 2.000000, loc: 5, pos: 0, arg: 1.000000, code: (lambda (y) (+ y 0.1))]) [file: " home-dir "/cl/oboe.snd[0]]
-   (at 200, cp->sounds[0][200:999, 2.000000]) [file: " home-dir "/cl/oboe.snd[0]]
-   (at 1000, cp->sounds[0][1000:1099, 1.000000, loc: 6, pos: 0, arg: 2.000000, code: (lambda (y) (+ y 0.2))]) [file: " home-dir "/cl/oboe.snd[0]]
-   (at 1100, cp->sounds[0][1100:1999, 2.000000]) [file: " home-dir "/cl/oboe.snd[0]]
-   (at 2000, cp->sounds[0][2000:2500, 2.000000, -0.000000 -> 1.000000]) [file: " home-dir "/cl/oboe.snd[0]]
-   (at 2501, cp->sounds[0][2501:2999, 2.000000, 0.997996 -> 0.000000]) [file: " home-dir "/cl/oboe.snd[0]]
-   (at 3000, cp->sounds[0][3000:3999, 2.000000]) [file: " home-dir "/cl/oboe.snd[0]]
-   (at 4000, cp->sounds[0][4000:4099, 1.000000, loc: 7, pos: 0, arg: 2.000000, code: (lambda (y) (+ y 0.3))]) [file: " home-dir "/cl/oboe.snd[0]]
-   (at 4100, cp->sounds[0][4100:50827, 2.000000]) [file: " home-dir "/cl/oboe.snd[0]]
+ (ptree[8] 4000 100) ; ptree 8 4000 100 [5:11]:
+   (at 0, cp->sounds[0][0:99, 2.000000]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 100, cp->sounds[0][100:199, 2.000000, loc: 6, pos: 0, scl: 1.000000, code: (lambda (y) (+ y 0.1))]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 200, cp->sounds[0][200:999, 2.000000]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 1000, cp->sounds[0][1000:1099, 1.000000, loc: 7, pos: 0, scl: 2.000000, code: (lambda (y) (+ y 0.2))]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 1100, cp->sounds[0][1100:1999, 2.000000]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 2000, cp->sounds[0][2000:2500, 2.000000, -0.000000 -> 1.000000]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 2501, cp->sounds[0][2501:2999, 2.000000, 0.997996 -> 0.000000]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 3000, cp->sounds[0][3000:3999, 2.000000]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 4000, cp->sounds[0][4000:4099, 1.000000, loc: 8, pos: 0, scl: 2.000000, code: (lambda (y) (+ y 0.3))]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 4100, cp->sounds[0][4100:50827, 2.000000]) [file: /home/bil/cl/oboe.snd[0]]
    (at 50828, end_mark)
 
- (set 0 3200) ; map-channel [6:5]:
-   (at 0, cp->sounds[1][0:3199, 1.000000]) [buf: 3200] 
-   (at 3200, cp->sounds[0][3200:3999, 2.000000]) [file: " home-dir "/cl/oboe.snd[0]]
-   (at 4000, cp->sounds[0][4000:4099, 1.000000, loc: 7, pos: 0, arg: 2.000000, code: (lambda (y) (+ y 0.3))]) [file: " home-dir "/cl/oboe.snd[0]]
-   (at 4100, cp->sounds[0][4100:50827, 2.000000]) [file: " home-dir "/cl/oboe.snd[0]]
+ (ptree[9] 0 3200) ; ptree 9 0 3200 [6:12]:
+   (at 0, cp->sounds[0][0:99, 1.000000, loc: 9, pos: 0, scl: 2.000000, code: (lambda (y) (+ y 0.1))]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 100, cp->sounds[0][100:199, 1.000000, loc2: 9, scl2: 2.000000, loc: 6, pos: 100, scl: 1.000000, code: (lambda (y) (+ y 0.1))]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 200, cp->sounds[0][200:999, 1.000000, loc: 9, pos: 200, scl: 2.000000, code: (lambda (y) (+ y 0.1))]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 1000, cp->sounds[0][1000:1099, 1.000000, loc2: 9, scl2: 1.000000, loc: 7, pos: 1000, scl: 2.000000, code: (lambda (y) (+ y 0.2))]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 1100, cp->sounds[0][1100:1999, 1.000000, loc: 9, pos: 1100, scl: 2.000000, code: (lambda (y) (+ y 0.1))]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 2000, cp->sounds[0][2000:2500, 1.000000, -0.000000 -> 1.000000, loc: 9, pos: 2000, scl: 2.000000, code: (lambda (y) (+ y 0.1))]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 2501, cp->sounds[0][2501:2999, 1.000000, 0.997996 -> 0.000000, loc: 9, pos: 2501, scl: 2.000000, code: (lambda (y) (+ y 0.1))]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 3000, cp->sounds[0][3000:3199, 1.000000, loc: 9, pos: 3000, scl: 2.000000, code: (lambda (y) (+ y 0.1))]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 3200, cp->sounds[0][3200:3999, 2.000000]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 4000, cp->sounds[0][4000:4099, 1.000000, loc: 8, pos: 0, scl: 2.000000, code: (lambda (y) (+ y 0.3))]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 4100, cp->sounds[0][4100:50827, 2.000000]) [file: /home/bil/cl/oboe.snd[0]]
    (at 50828, end_mark)
 "))))
 	      (snd-display ";ptree[3200] display: ~A" (display-edits ind-ptree)))

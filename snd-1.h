@@ -94,7 +94,7 @@ typedef struct snd__fd {
   int iscaler;
   off_t frag_pos;
   double incr, curval;
-  void *ptree;
+  void *ptree, *ptree1;
   XEN closure;
   double incr2, curval2, incr3, curval3;
   mus_sample_t (*rev_run)(struct snd__fd *sf);
@@ -711,7 +711,7 @@ snd_fd *init_sample_read_any(off_t samp, chan_info *cp, int direction, int edit_
 void read_sample_change_direction(snd_fd *sf, int dir);
 int ramp_or_ptree_fragments_in_use(chan_info *cp, off_t beg, off_t dur, int pos, Float base);
 int ptree_or_sound_fragments_in_use(chan_info *cp, int pos);
-int ptree_fragments_in_use(chan_info *cp, off_t beg, off_t dur, int pos);
+int ptree_fragments_in_use(chan_info *cp, off_t beg, off_t dur, int pos, int have_init_func);
 #define read_sample(Sf) (*Sf->run)(Sf)
 #define read_sample_to_float(Sf) (*Sf->runf)(Sf)
 Float protected_next_sample_to_float(snd_fd *sf);

@@ -2771,7 +2771,7 @@ for the gory details."
   dur = dur_to_samples(s_dur, beg, cp, pos, 3, S_ptree_channel);
   if (dur <= 0) return(XEN_FALSE);
   clear_minibuffer(cp->sound);
-  ptrees_present = ptree_fragments_in_use(cp, beg, dur, pos);
+  ptrees_present = ptree_fragments_in_use(cp, beg, dur, pos, XEN_PROCEDURE_P(init_func));
   if (XEN_PROCEDURE_P(init_func))
     {
       if (XEN_REQUIRED_ARGS(init_func) != 2)

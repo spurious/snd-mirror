@@ -306,7 +306,8 @@ is turned off.
 <!-- dac-size -->
 <tr><td><code><em class=def><a name="dacsize">dac-size</a></em></code></td>
 <td><code>256</code></td>
-<td>Audio output buffer size (not always meaningful).
+<td>Audio output buffer size (not always meaningful).  See <i>play-with-envs</i> in enved.scm or
+<i>play-sound</i> in play.scm.
 </td></tr>
 <tr><td colspan=3></td></tr>
 
@@ -4161,6 +4162,10 @@ or (an alternative that sets the underlying database entry, rather than the curr
 <tr><td></td><td>
 If you set any of these fields, it is possible that the sound's index may change (there can be an embedded update-sound).
 To deal with MPEG or OGG files, see examp.scm (mpg) or contrib/dlp/misc.scm (mpg123 and ogg123).
+<br><br>
+To turn a data-format number into a string, use <a href="#soundformatname">mus-data-format-name</a>. To get
+the data format of some sound file, use <a href="#sounddataformat">mus-sound-data-format</a>.
+The default output (new-sound, sound-save-as) data-format is <a href="#defaultoutputformat">default-output-format</a>.
 </td></tr>
 
 <tr><td colspan=2></td></tr>
@@ -4172,7 +4177,9 @@ To deal with MPEG or OGG files, see examp.scm (mpg) or contrib/dlp/misc.scm (mpg
 </td></tr>
 <tr><td></td><td>
 The location of the sound samples (an offset in bytes) in the file represented by <i>snd</i>.  In a raw (headerless) file,
-this is 0, but normally the data comes after the header.  
+this is 0, but normally the data comes after some portion of the header.  
+To get the data-location of some sound file, use <a href="#sounddatalocation">mus-sound-data-location</a>.
+If you set this field (you don't want to do this!), the underlying file is immediately rewritten.
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -4193,6 +4200,7 @@ delete sample <i>samp</i> in <i>snd</i>'s channel <i>chn</i>.
 </td></tr>
 <tr><td></td><td>
 delete a block of samples.  The deleted portion starts at sample <i>samp</i> and runs for <i>samps</i> samples.
+See <a href="#deletetozero">delete-to-zero</a> or <i>delete-selection-and-smooth</i> in extensions.scm.
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -5215,9 +5223,9 @@ If 'env-too' is #f, a background process is launched reading all the sound data 
 'proc'; this can be time-consuming, so if you're viewing a half-hour of sound data,
 it can take awhile for the ptree-channel results to be displayed if 'env-too' is #f.
 <br><br>If the underlying data
-has any previous ptree operations, map-channel is called instead and the new
-data is saved in the normal manner (that is, I don't currently try to chain these operations
-together).  
+has too many previous ptree operations, map-channel is called instead and the new
+data is saved in the normal manner (that is, I don't currently try to chain any number of these operations
+together).  Envelopes have a similar limitation (currently 2 ptrees and 3 envs).
 <br><br>
 If no 'init-func' is specified, the editing procedure ('proc') should not assume anything about
 the context in which it is called;  in this case, there's no way for 'proc' to know where it starts, or when it is being restarted,
@@ -7556,6 +7564,7 @@ The wave shown is the time domain display, even when filtering.
 <tr><td colspan=2 valign=top><span class=defbox><code><em class=def><a name="sndhelpdialog">help-dialog</a></em> (subject help-string) </code></span></td>
 <tr><td></td><td>start the help dialog with title <i>subject</i> and body <i>help</i>, returning the dialog widget.<br>
 <code>(help-dialog "xyzzy" "are we having fUn?")</code>
+<br>There are many examples in new-effects.scm.
 </td></tr>
 
 <!-- help-text-font -->
@@ -8368,8 +8377,7 @@ In the next example, we'll rebind them to treat same-sense zero-crossings as lin
 
 <tr><td></td><td>
 <table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
-<A NAME="newcp"></a>
-(define (find-zero forwards)
+(define (<A NAME="newcp">find-zero</a> forwards)
   (let* ((loc (cursor))
 	 (twice #f)
 	 (dir (if forwards 1 -1))
@@ -8389,7 +8397,7 @@ In the next example, we'll rebind them to treat same-sense zero-crossings as lin
 		  (set! twice #t))))))
     loc))
 
-(define (delete-to-zero forwards)
+(define (<A NAME="deletetozero">delete-to-zero</a> forwards)
   (let ((loc (cursor))
 	(zero-loc (find-zero forwards)))
     (if (not (= loc zero-loc))
@@ -9160,6 +9168,8 @@ the graphics mode to use to draw over whatever is currently in a graph.
 The "contexts" refer to graphics contexts used throughout Snd; the <i>copy-context</i>
 copies into the current graph, whereas the <i>cursor-context</i> uses XOR.
 The error returned for an unimplemented 'context' is 'no-such-graphics-context.
+See draw.scm or <a href="#displaysampsinred">display-samps-in-red</a> 
+for examples.
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -9176,7 +9186,10 @@ returns the current font (also settable).</td></tr>
 <span class=defbox><code><em class=def><a name="cursorcontext">cursor-context</a></em></code></span></td></tr>
 
 <tr><td></td><td>
-the graphics mode for XOR drawing in the cursor color (for cursors, normally).</td></tr>
+the graphics mode for XOR drawing in the cursor color (for cursors, normally).
+See <a href="#xcursor">x-cursor</a> for example, or
+<a href="#foregroundcolor">foreground-color</a>.
+</td></tr>
 <tr><td colspan=2></td></tr>
 
 <!-- draw-axes -->
@@ -9212,7 +9225,9 @@ draws dots of size <i>dot-size</i> from the (x y) pairs in the vector <i>positio
 <span class=defbox><code><em class=def><a name="drawline">draw-line</a></em> (x0 y0 x1 y1 snd chn context)</code></span></td></tr>
 
 <tr><td></td><td>
-draws a line from (x0 y0) to (x1 y1) in the given context.</td></tr>
+draws a line from (x0 y0) to (x1 y1) in the given context.
+See <i>show-hiho</i> below.
+</td></tr>
 <tr><td colspan=2></td></tr>
 
 <!-- draw-lines -->
