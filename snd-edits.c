@@ -3098,7 +3098,7 @@ static SCM g_section_scale_by(SCM scl, SCM beg, SCM num, SCM snd, SCM chn)
   chan_info *cp;
   ERRCP("section-scale-by",snd,chn,4);
   cp = get_cp(snd,chn,"section-scale-by");
-  parse_tree_selection_scale_by(cp,gh_scm2double(scl),gh_scm2int(beg),gh_scm2int(num));
+  parse_tree_selection_scale_by(cp,TO_C_DOUBLE(scl),TO_C_INT(beg),gh_scm2int(num));
   return(scl);
 }
 

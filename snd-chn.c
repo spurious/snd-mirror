@@ -3229,7 +3229,7 @@ static SCM series_map(snd_state *ss, chan_info *cp, SCM proc, int chan_choice, i
 			  return(scm_throw(res,SCM_LIST1(gh_str02scm(origin))));
 			}
 		      if (gh_number_p(res)) /* one number -> replace current sample */
-			output_sample(ss,os,SND_SRATE(sp),MUS_FLOAT_TO_SAMPLE(gh_scm2double(res)));
+			output_sample(ss,os,SND_SRATE(sp),MUS_FLOAT_TO_SAMPLE(TO_C_DOUBLE(res)));
 		      else /* list or vector or vct, splice in data */
 			{
 			  val_size = 0;
@@ -3340,7 +3340,7 @@ static SCM parallel_map(snd_state *ss, chan_info *cp, SCM proc, int chan_choice,
 		      if (SCM_NFALSEP(resval))
 			{
 			  if (gh_number_p(resval)) /* one number -> replace current sample */
-			    output_sample(ss,os_arr[n],SND_SRATE(sp),MUS_FLOAT_TO_SAMPLE(gh_scm2double(resval)));
+			    output_sample(ss,os_arr[n],SND_SRATE(sp),MUS_FLOAT_TO_SAMPLE(TO_C_DOUBLE(resval)));
 			  else /* list or vector or vct, splice in data */
 			    {
 			      val_size = 0;
@@ -5330,7 +5330,7 @@ static void eval_expression(chan_info *cp, snd_info *sp, int count, int regexpr)
 		      scm_throw(res,SCM_LIST1(gh_str02scm("eval expression")));
 		      return;
 		    }
-		  if (gh_number_p(res)) val = gh_scm2double(res);
+		  if (gh_number_p(res)) val = TO_C_DOUBLE(res);
 		  j++;
 		  if (j == MAX_BUFFER_SIZE)
 		    {
@@ -7540,12 +7540,14 @@ static SCM g_temps_to_sound(SCM data, SCM new_names, SCM origin)
 
   snd_exf *program_data;
   int i,len;
+  SCM *vdata;
   SCM_ASSERT((gh_vector_p(new_names)),new_names,SCM_ARG2,S_temps_to_sound);
   SCM_ASSERT(gh_string_p(origin),origin,SCM_ARG3,S_temps_to_sound);
   program_data = (snd_exf *)(gh_scm2ulong(data));
   len = (int)gh_vector_length(new_names);
+  vdata = SCM_VELTS(new_names);
   for (i=0;i<len;i++)
-    program_data->new_filenames[i] = gh_scm2newstr(gh_vector_ref(new_names,gh_int2scm(i)),NULL);
+    program_data->new_filenames[i] = gh_scm2newstr(vdata[i],NULL);
   temp_to_snd(program_data,gh_scm2newstr(origin,NULL));
   return(SCM_BOOL_T);
 }
@@ -8197,23 +8199,23 @@ static SCM cp_fwrite(SCM snd_n, SCM chn_n, SCM on, int fld, char *caller)
   cp = get_cp(snd_n,chn_n,caller);
   switch (fld)
     {
-    case CP_AP_SX:           reset_x_display(cp, fclamp(0.0,gh_scm2double(on),1.0), cp->axis->zx);                             break;
-    case CP_AP_ZX:           reset_x_display(cp, cp->axis->sx, fclamp(0.0,gh_scm2double(on),1.0));                             break;
-    case CP_AP_SY:           reset_y_display(cp, fclamp(0.0,gh_scm2double(on),1.0), cp->axis->zy);                             break;
-    case CP_AP_ZY:           reset_y_display(cp, cp->axis->sy, fclamp(0.0,gh_scm2double(on),1.0));                             break;
-    case CP_MIN_DB:          cp->min_dB = gh_scm2double(on); cp->lin_dB = pow(10.0,cp->min_dB * 0.05); calculate_fft(cp,NULL); break;
-    case CP_SPECTRO_X_ANGLE: cp->spectro_x_angle = gh_scm2double(on); calculate_fft(cp,NULL);                                  break;
-    case CP_SPECTRO_Y_ANGLE: cp->spectro_y_angle = gh_scm2double(on); calculate_fft(cp,NULL);                                  break;
-    case CP_SPECTRO_Z_ANGLE: cp->spectro_z_angle = gh_scm2double(on); calculate_fft(cp,NULL);                                  break;
-    case CP_SPECTRO_X_SCALE: cp->spectro_x_scale = gh_scm2double(on); calculate_fft(cp,NULL);                                  break;
-    case CP_SPECTRO_Y_SCALE: cp->spectro_y_scale = gh_scm2double(on); calculate_fft(cp,NULL);                                  break;
-    case CP_SPECTRO_Z_SCALE: cp->spectro_z_scale = gh_scm2double(on); calculate_fft(cp,NULL);                                  break;
-    case CP_SPECTRO_CUTOFF:  cp->spectro_cutoff = fclamp(0.0,gh_scm2double(on),1.0); calculate_fft(cp,NULL); return(gh_double2scm(cp->spectro_cutoff)); break;
-    case CP_SPECTRO_START:   cp->spectro_start = fclamp(0.0,gh_scm2double(on),1.0); calculate_fft(cp,NULL); return(gh_double2scm(cp->spectro_start));   break;
-    case CP_FFT_BETA:        cp->fft_beta = fclamp(0.0,gh_scm2double(on),1.0); calculate_fft(cp,NULL); return(gh_double2scm(cp->fft_beta));             break;
+    case CP_AP_SX:           reset_x_display(cp, fclamp(0.0,TO_C_DOUBLE(on),1.0), cp->axis->zx);                             break;
+    case CP_AP_ZX:           reset_x_display(cp, cp->axis->sx, fclamp(0.0,TO_C_DOUBLE(on),1.0));                             break;
+    case CP_AP_SY:           reset_y_display(cp, fclamp(0.0,TO_C_DOUBLE(on),1.0), cp->axis->zy);                             break;
+    case CP_AP_ZY:           reset_y_display(cp, cp->axis->sy, fclamp(0.0,TO_C_DOUBLE(on),1.0));                             break;
+    case CP_MIN_DB:          cp->min_dB = TO_C_DOUBLE(on); cp->lin_dB = pow(10.0,cp->min_dB * 0.05); calculate_fft(cp,NULL); break;
+    case CP_SPECTRO_X_ANGLE: cp->spectro_x_angle = TO_C_DOUBLE(on); calculate_fft(cp,NULL);                                  break;
+    case CP_SPECTRO_Y_ANGLE: cp->spectro_y_angle = TO_C_DOUBLE(on); calculate_fft(cp,NULL);                                  break;
+    case CP_SPECTRO_Z_ANGLE: cp->spectro_z_angle = TO_C_DOUBLE(on); calculate_fft(cp,NULL);                                  break;
+    case CP_SPECTRO_X_SCALE: cp->spectro_x_scale = TO_C_DOUBLE(on); calculate_fft(cp,NULL);                                  break;
+    case CP_SPECTRO_Y_SCALE: cp->spectro_y_scale = TO_C_DOUBLE(on); calculate_fft(cp,NULL);                                  break;
+    case CP_SPECTRO_Z_SCALE: cp->spectro_z_scale = TO_C_DOUBLE(on); calculate_fft(cp,NULL);                                  break;
+    case CP_SPECTRO_CUTOFF:  cp->spectro_cutoff = fclamp(0.0,TO_C_DOUBLE(on),1.0); calculate_fft(cp,NULL); return(gh_double2scm(cp->spectro_cutoff)); break;
+    case CP_SPECTRO_START:   cp->spectro_start = fclamp(0.0,TO_C_DOUBLE(on),1.0); calculate_fft(cp,NULL); return(gh_double2scm(cp->spectro_start));   break;
+    case CP_FFT_BETA:        cp->fft_beta = fclamp(0.0,TO_C_DOUBLE(on),1.0); calculate_fft(cp,NULL); return(gh_double2scm(cp->fft_beta));             break;
     case CP_MAXAMP:
       curamp = get_maxamp(cp->sound,cp);
-      newamp[0] = gh_scm2double(on);
+      newamp[0] = TO_C_DOUBLE(on);
       if (curamp != newamp[0])
 	{
 	  scale_to(cp->state,cp->sound,cp,newamp,1,FALSE);
@@ -8504,7 +8506,7 @@ static SCM g_set_min_dB(SCM val, SCM snd, SCM chn)
   else
     {
       SCM_ASSERT((SCM_EQ_P(snd,SCM_UNDEFINED)),snd,SCM_ARG2,"set-" S_min_dB);
-      db = gh_scm2double(val);
+      db = TO_C_DOUBLE(val);
       ss = get_global_state();
       ss->min_dB = db;
       ss->lin_dB = pow(10.0,db*0.05);
@@ -8534,7 +8536,7 @@ static SCM g_set_fft_beta(SCM val, SCM snd, SCM chn)
     {
       SCM_ASSERT((SCM_EQ_P(snd,SCM_UNDEFINED)),snd,SCM_ARG2,"set-" S_fft_beta);
       ss = get_global_state();
-      set_fft_beta(ss,fclamp(0.0,gh_scm2double(val),1.0));
+      set_fft_beta(ss,fclamp(0.0,TO_C_DOUBLE(val),1.0));
       RTNFLT(fft_beta(ss));
     }
 }
@@ -8560,7 +8562,7 @@ static SCM g_set_spectro_cutoff(SCM val, SCM snd, SCM chn)
     {
       SCM_ASSERT((SCM_EQ_P(snd,SCM_UNDEFINED)),snd,SCM_ARG2,"set-" S_spectro_cutoff);
       ss = get_global_state();
-      set_spectro_cutoff(ss,fclamp(0.0,gh_scm2double(val),1.0));
+      set_spectro_cutoff(ss,fclamp(0.0,TO_C_DOUBLE(val),1.0));
       RTNFLT(spectro_cutoff(ss));
     }
 }
@@ -8586,7 +8588,7 @@ static SCM g_set_spectro_start(SCM val, SCM snd, SCM chn)
     {
       SCM_ASSERT((SCM_EQ_P(snd,SCM_UNDEFINED)),snd,SCM_ARG2,"set-" S_spectro_start);
       ss = get_global_state();
-      set_spectro_start(ss,fclamp(0.0,gh_scm2double(val),1.0));
+      set_spectro_start(ss,fclamp(0.0,TO_C_DOUBLE(val),1.0));
       RTNFLT(spectro_start(ss));
     }
 }
@@ -8612,7 +8614,7 @@ static SCM g_set_spectro_x_angle(SCM val, SCM snd, SCM chn)
     {
       SCM_ASSERT((SCM_EQ_P(snd,SCM_UNDEFINED)),snd,SCM_ARG2,"set-" S_spectro_x_angle);
       ss = get_global_state();
-      set_spectro_x_angle(ss,gh_scm2double(val));
+      set_spectro_x_angle(ss,TO_C_DOUBLE(val));
       RTNFLT(spectro_x_angle(ss));
     }
 }
@@ -8638,7 +8640,7 @@ static SCM g_set_spectro_x_scale(SCM val, SCM snd, SCM chn)
     {
       SCM_ASSERT((SCM_EQ_P(snd,SCM_UNDEFINED)),snd,SCM_ARG2,"set-" S_spectro_x_scale);
       ss = get_global_state();
-      set_spectro_x_scale(ss,gh_scm2double(val));
+      set_spectro_x_scale(ss,TO_C_DOUBLE(val));
       RTNFLT(spectro_x_scale(ss));
     }
 }
@@ -8664,7 +8666,7 @@ static SCM g_set_spectro_y_angle(SCM val, SCM snd, SCM chn)
     {
       SCM_ASSERT((SCM_EQ_P(snd,SCM_UNDEFINED)),snd,SCM_ARG2,"set-" S_spectro_y_angle);
       ss = get_global_state();
-      set_spectro_y_angle(ss,gh_scm2double(val));
+      set_spectro_y_angle(ss,TO_C_DOUBLE(val));
       RTNFLT(spectro_y_angle(ss));
     }
 }
@@ -8690,7 +8692,7 @@ static SCM g_set_spectro_y_scale(SCM val, SCM snd, SCM chn)
     {
       SCM_ASSERT((SCM_EQ_P(snd,SCM_UNDEFINED)),snd,SCM_ARG2,"set-" S_spectro_y_scale);
       ss = get_global_state();
-      set_spectro_y_scale(ss,gh_scm2double(val));
+      set_spectro_y_scale(ss,TO_C_DOUBLE(val));
       RTNFLT(spectro_y_scale(ss));
     }
 }
@@ -8716,7 +8718,7 @@ static SCM g_set_spectro_z_angle(SCM val, SCM snd, SCM chn)
     {
       SCM_ASSERT((SCM_EQ_P(snd,SCM_UNDEFINED)),snd,SCM_ARG2,"set-" S_spectro_z_angle);
       ss = get_global_state();
-      set_spectro_z_angle(ss,gh_scm2double(val));
+      set_spectro_z_angle(ss,TO_C_DOUBLE(val));
       RTNFLT(spectro_z_angle(ss));
     }
 }
@@ -8742,7 +8744,7 @@ static SCM g_set_spectro_z_scale(SCM val, SCM snd, SCM chn)
     {
       SCM_ASSERT((SCM_EQ_P(snd,SCM_UNDEFINED)),snd,SCM_ARG2,"set-" S_spectro_z_scale);
       ss = get_global_state();
-      set_spectro_z_scale(ss,gh_scm2double(val));
+      set_spectro_z_scale(ss,TO_C_DOUBLE(val));
       RTNFLT(spectro_z_scale(ss));
     }
 }
@@ -9458,8 +9460,8 @@ static SCM g_set_x_bounds(SCM bounds, SCM snd_n, SCM chn_n)
   Float x0,x1;
   ERRCP("set-" S_x_bounds,snd_n,chn_n,2);
   cp = get_cp(snd_n,chn_n,"set-" S_x_bounds);
-  x0 = gh_scm2double(gh_car(bounds));
-  x1 = gh_scm2double(gh_cadr(bounds));
+  x0 = TO_C_DOUBLE(gh_car(bounds));
+  x1 = TO_C_DOUBLE(gh_cadr(bounds));
   if (x1 > x0)
     set_x_axis_x0x1(cp,x0,x1);
   else return(scm_throw(IMPOSSIBLE_BOUNDS,SCM_LIST2(gh_str02scm("set-" S_x_bounds),bounds)));
@@ -9483,9 +9485,9 @@ static SCM g_set_y_bounds(SCM bounds, SCM snd_n, SCM chn_n)
     }
   if (gh_number_p(y0))
     {
-      low = gh_scm2double(y0);
+      low = TO_C_DOUBLE(y0);
       if (gh_number_p(y1))
-	hi = gh_scm2double(y1);
+	hi = TO_C_DOUBLE(y1);
       else
 	{
 	  if (low < 0.0)

@@ -443,7 +443,7 @@ static SCM sound_data_set(SCM obj, SCM chan, SCM frame, SCM val)
 	{
 	  loc = g_scm2int(frame);
 	  if ((loc >= 0) && (loc < v->length))
-	    v->data[chn][loc] = MUS_DOUBLE_TO_SAMPLE(gh_scm2double(val));
+	    v->data[chn][loc] = MUS_DOUBLE_TO_SAMPLE(TO_C_DOUBLE(val));
 	  else scm_misc_error(S_sound_data_setB,"invalid frame: ~S[~S]: ~S",SCM_LIST3(obj,chan,frame));
 	}
       else scm_misc_error(S_sound_data_setB,"invalid channel: ~S[~S]: ~S",SCM_LIST3(obj,chan,frame));
@@ -789,7 +789,7 @@ static SCM g_write_audio_state(SCM dev, SCM field, SCM chan, SCM vals)
     {
       fvals = (float *)CALLOC(len,sizeof(float));
       vdata = SCM_VELTS(vals);
-      for (i=0;i<len;i++) fvals[i] = gh_scm2double(vdata[i]);
+      for (i=0;i<len;i++) fvals[i] = TO_C_DOUBLE(vdata[i]);
     }
   res = mus_audio_mixer_write(g_scm2int(dev),g_scm2int(field),g_scm2int(chan),fvals);
   FREE(fvals);
@@ -816,7 +816,7 @@ static SCM g_mus_set_prescaler(SCM fd, SCM val)
   #define H_mus_file_set_prescaler "(" S_mus_file_set_prescaler " fd val) sets the current prescaler associated with fd"
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(fd)),fd,SCM_ARG1,S_mus_file_set_prescaler);
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(val)),val,SCM_ARG2,S_mus_file_set_prescaler);
-  return(gh_double2scm(mus_file_set_prescaler(g_scm2int(fd),gh_scm2double(val))));
+  return(gh_double2scm(mus_file_set_prescaler(g_scm2int(fd),TO_C_DOUBLE(val))));
 }
 
 #if DEBUGGING

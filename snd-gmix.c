@@ -208,31 +208,12 @@ static void amp_release_callback(GtkWidget *w, GdkEventButton *ev, gpointer data
 
 static GtkWidget *w_env_frame,*w_env;
 static chan_info *axis_cp = NULL;
-static axis_context *ax;
+static axis_context *ax = NULL;
 static GdkGC *cur_gc;
-static env *flat_env = NULL;
 
 static void Amp_Env_Display(GtkWidget *w, snd_state *ss)
 {
   GdkWindow *wn;
-  axis_info *ap;
-  env *e;
-  int i,j;
-  Float ex0,ey0,ex1,ey1,val;
-  int ix0,ix1,iy0,iy1;
-  Float flat[4];
-
-  e = mix_amp_env_from_id(current_mix_id(ss),0);
-  if (!e)
-    {
-      if (!flat_env)
-	{
-	  flat[0] = 0.0; flat[1] = 1.0; flat[2] = 1.0; flat[3] = 1.0;
-	  flat_env = make_envelope(flat,4);
-	}
-      e = flat_env;
-    }
-
   if (ax == NULL)
     {
       wn = MAIN_WINDOW(ss);
@@ -246,40 +227,12 @@ static void Amp_Env_Display(GtkWidget *w, snd_state *ss)
       ax->gc = cur_gc;
     }
   else clear_window(ax);
-
-  ex0 = e->data[0];
-  ey0 = e->data[1];
-  ex1 = e->data[(e->pts*2) - 2];
-  ey1 = ey0;
-  for (i=3;i<e->pts*2;i+=2)
-    {
-      val = e->data[i];
-      if (ey0 > val) ey0 = val;
-      if (ey1 < val) ey1 = val;
-    }
-  if (ey0 > 0.0) ey0 = 0.0;
-  if ((ey0 == ey1) && (ey1 == 0.0)) ey1 = 1.0; /* fixup degenerate case */
-  if (ey1 < 1.0) ey1 = 1.0;
-
   if (axis_cp == NULL) 
     {
       axis_cp = new_env_axis(ss);
       fixup_axis_context(axis_cp->axis->ax,w_env,ax->gc);
     }
-  init_env_axes(axis_cp,"mix amp env",(int)ex0,(int)ey0,widget_width(w),widget_height(w),ex0,ex1,ey0,ey1);
-
-  ap = axis_cp->axis;
-
-  ix1 = grf_x(e->data[0],ap);
-  iy1 = grf_y(e->data[1],ap);
-  for (j=1,i=2;i<e->pts*2;i+=2,j++)
-    {
-      ix0 = ix1;
-      iy0 = iy1;
-      ix1 = grf_x(e->data[i],ap);
-      iy1 = grf_y(e->data[i+1],ap);
-      draw_line(ax,ix0,iy0,ix1,iy1);
-    }
+  display_mix_amp_envs(ss,axis_cp,ax,widget_width(w),widget_height(w));
 }
 
 static void Mix_Amp_Env_Expose(GtkWidget *w, GdkEventExpose *ev, gpointer data)

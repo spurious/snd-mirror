@@ -951,7 +951,7 @@ static SCM sg_sample2x(SCM samp, SCM snd, SCM chn)
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(samp)),samp,SCM_ARG1,Sg_sample2x);
   ERRCP(Sg_sample2x,snd,chn,2);
   cp = get_cp(snd,chn,Sg_sample2x);
-  return(gh_int2scm(grf_x((double)(gh_scm2int(samp))/(double)SND_SRATE(cp->sound),cp->axis)));
+  return(gh_int2scm(grf_x((double)(TO_C_INT(samp))/(double)SND_SRATE(cp->sound),cp->axis)));
 }
 
 static SCM sg_sample2y(SCM samp, SCM snd, SCM chn)
@@ -960,7 +960,7 @@ static SCM sg_sample2y(SCM samp, SCM snd, SCM chn)
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(samp)),samp,SCM_ARG1,Sg_sample2y);
   ERRCP(Sg_sample2y,snd,chn,2);
   cp = get_cp(snd,chn,Sg_sample2y);
-  return(gh_int2scm(grf_y(sample(gh_scm2int(samp),cp),cp->axis)));
+  return(gh_int2scm(grf_y(sample(TO_C_INT(samp),cp),cp->axis)));
 }
 
 static SCM sg_channel_graph_widget(SCM snd, SCM chn)

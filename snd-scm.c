@@ -98,7 +98,7 @@ int g_scm2int(SCM obj)
     return(SCM_INUM(obj));
   else
     if (gh_number_p(obj))
-      return((int)scm_num2dbl(obj,"g_scm2int"));
+      return((int)TO_C_DOUBLE(obj));
   return(0);
 }
 
@@ -109,7 +109,7 @@ int g_scm2intdef(SCM obj,int fallback)
     return(SCM_INUM(obj));
   else
     if (gh_number_p(obj))
-      return((int)scm_num2dbl(obj,"g_scm2intdef"));
+      return((int)TO_C_DOUBLE(obj));
   return(fallback);
 }
 
@@ -290,14 +290,14 @@ int procedure_ok(SCM proc, int req_args, int opt_args, char *caller, char *arg_n
 #else
       arity_list = scm_i_procedure_arity(proc);
       snd_protect(arity_list);
-      args = gh_scm2int(gh_car(arity_list));
+      args = TO_C_INT(gh_car(arity_list));
       if (args != req_args)
 	snd_error("%s, arg %d to %s, should take %d required argument%s, but instead takes %d",
 		  arg_name,argn,caller,
 		  req_args,(req_args != 1) ? "s" : "",args);
       else
 	{
-	  args = gh_scm2int(gh_cadr(arity_list));
+	  args = TO_C_INT(gh_cadr(arity_list));
 	  if (args != opt_args)
 	    snd_error("%s, arg %d to %s, should take %d optional argument%s, but instead takes %d",
 		      arg_name,argn,caller,
@@ -767,7 +767,7 @@ static SCM g_set_color_cutoff(SCM val)
 {
   #define H_color_cutoff "(" S_color_cutoff ") -> color map cutoff point (default .003)"
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(val)),val,SCM_ARG1,"set-" S_color_cutoff);
-  set_color_cutoff(state,fclamp(0.0,gh_scm2double(val),0.25)); 
+  set_color_cutoff(state,fclamp(0.0,TO_C_DOUBLE(val),0.25)); 
   RTNFLT(color_cutoff(state));
 }
 
@@ -785,7 +785,7 @@ static SCM g_set_color_scale(SCM val)
 {
   #define H_color_scale "(" S_color_scale ") -> essentially a darkness setting for colormaps (0.5)"
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(val)),val,SCM_ARG1,"set-" S_color_scale); 
-  set_color_scale(state,fclamp(0.0,gh_scm2double(val),1.0)); 
+  set_color_scale(state,fclamp(0.0,TO_C_DOUBLE(val),1.0)); 
   RTNFLT(color_scale(state));
 }
 
@@ -794,7 +794,7 @@ static SCM g_set_corruption_time(SCM val)
 {
   #define H_corruption_time "(" S_corruption_time ") -> time (seconds) between background checks for changed file on disk (60)"
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(val)),val,SCM_ARG1,"set-" S_corruption_time); 
-  set_corruption_time(state,gh_scm2double(val)); 
+  set_corruption_time(state,TO_C_DOUBLE(val)); 
   RTNFLT(corruption_time(state));
 }
 
@@ -851,7 +851,7 @@ static SCM g_set_enved_base(SCM val)
 {
   #define H_enved_base "(" S_enved_base ") -> envelope editor exponential base value (1.0)"
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(val)),val,SCM_ARG1,"set-" S_enved_base); 
-  set_enved_base(state,gh_scm2double(val));
+  set_enved_base(state,TO_C_DOUBLE(val));
   RTNFLT(enved_base(state));
 }
 
@@ -860,7 +860,7 @@ static SCM g_set_enved_power(SCM val)
 {
   #define H_enved_power "(" S_enved_power ") -> envelope editor base scale range (9.0^power)"
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(val)),val,SCM_ARG1,"set-" S_enved_power); 
-  set_enved_power(state,gh_scm2double(val));
+  set_enved_power(state,TO_C_DOUBLE(val));
   RTNFLT(enved_power(state));
 }
 
@@ -928,7 +928,7 @@ static SCM g_set_eps_left_margin(SCM val)
 {
   #define H_eps_left_margin "(" S_eps_left_margin ") -> current eps ('Print' command) left margin"
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(val)),val,SCM_ARG1,"set-" S_eps_left_margin); 
-  set_eps_left_margin(state,gh_scm2double(val));
+  set_eps_left_margin(state,TO_C_DOUBLE(val));
   RTNFLT(eps_left_margin(state));
 }
 
@@ -937,7 +937,7 @@ static SCM g_set_eps_bottom_margin(SCM val)
 {
   #define H_eps_bottom_margin "(" S_eps_bottom_margin ") -> current eps ('Print' command) bottom margin"
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(val)),val,SCM_ARG1,"set-" S_eps_bottom_margin); 
-  set_eps_bottom_margin(state,gh_scm2double(val));
+  set_eps_bottom_margin(state,TO_C_DOUBLE(val));
   RTNFLT(eps_bottom_margin(state));
 }
 
@@ -991,7 +991,7 @@ static SCM g_set_initial_x0(SCM val)
 {
   #define H_initial_x0 "(" S_initial_x0 ") -> initial time domain window left edge (seconds, 0.0)"
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(val)),val,SCM_ARG1,"set-" S_initial_x0); 
-  set_initial_x0(state,gh_scm2double(val));
+  set_initial_x0(state,TO_C_DOUBLE(val));
   RTNFLT(initial_x0(state));
 }
 
@@ -1000,7 +1000,7 @@ static SCM g_set_initial_x1(SCM val)
 {
   #define H_initial_x1 "(" S_initial_x1 ") -> initial time domain window right edge (seconds, 0.1)"
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(val)),val,SCM_ARG1,"set-" S_initial_x1); 
-  set_initial_x1(state,gh_scm2double(val));
+  set_initial_x1(state,TO_C_DOUBLE(val));
   RTNFLT(initial_x1(state));
 }
 
@@ -1009,7 +1009,7 @@ static SCM g_set_initial_y0(SCM val)
 {
   #define H_initial_y0 "(" S_initial_y0 ") -> initial time domain window lower edge (-1.0)"
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(val)),val,SCM_ARG1,"set-" S_initial_y0); 
-  set_initial_y0(state,gh_scm2double(val));
+  set_initial_y0(state,TO_C_DOUBLE(val));
   RTNFLT(initial_y0(state));
 }
 
@@ -1018,7 +1018,7 @@ static SCM g_set_initial_y1(SCM val)
 {
   #define H_initial_y1 "(" S_initial_y1 ") -> initial time domain window upper edge (1.0)"
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(val)),val,SCM_ARG1,"set-" S_initial_y1); 
-  set_initial_y1(state,gh_scm2double(val));
+  set_initial_y1(state,TO_C_DOUBLE(val));
   RTNFLT(initial_y1(state));
 }
 
@@ -1267,7 +1267,7 @@ static SCM g_set_vu_font_size(SCM val)
 {
   #define H_vu_font_size "(" S_vu_font_size ") -> size of VU font meter labels (1.0)"
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(val)),val,SCM_ARG1,"set-" S_vu_font_size); 
-  set_vu_font_size(state,gh_scm2double(val));
+  set_vu_font_size(state,TO_C_DOUBLE(val));
   RTNFLT(vu_font_size(state));
 }
 
@@ -1276,7 +1276,7 @@ static SCM g_set_vu_size(SCM val)
 {
   #define H_vu_size "(" S_vu_size ") -> size of VU meters (1.0)"
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(val)),val,SCM_ARG1,"set-" S_vu_size); 
-  set_vu_size(state,gh_scm2double(val));
+  set_vu_size(state,TO_C_DOUBLE(val));
   RTNFLT(vu_size(state));
 }
 
@@ -1922,7 +1922,7 @@ MUS_SAMPLE_TYPE *g_floats_to_samples(SCM obj, int *size, char *caller, int posit
       if ((*size) == 0) num = gh_length(obj); else num = (*size);
       vals = (MUS_SAMPLE_TYPE *)CALLOC(num,sizeof(MUS_SAMPLE_TYPE));
       for (i=0,lst=obj;i<num;i++,lst=SCM_CDR(lst)) 
-	vals[i] = MUS_FLOAT_TO_SAMPLE(gh_scm2double(SCM_CAR(lst)));
+	vals[i] = MUS_FLOAT_TO_SAMPLE(TO_C_DOUBLE(SCM_CAR(lst)));
     }
   else
     {
@@ -1932,7 +1932,7 @@ MUS_SAMPLE_TYPE *g_floats_to_samples(SCM obj, int *size, char *caller, int posit
 	  vals = (MUS_SAMPLE_TYPE *)CALLOC(num,sizeof(MUS_SAMPLE_TYPE));
 	  vdata = SCM_VELTS(obj);
 	  for (i=0;i<num;i++) 
-	    vals[i] = MUS_FLOAT_TO_SAMPLE(gh_scm2double(vdata[i]));
+	    vals[i] = MUS_FLOAT_TO_SAMPLE(TO_C_DOUBLE(vdata[i]));
 	}
       else
 	{
@@ -1971,7 +1971,7 @@ static SCM g_set_sample(SCM samp_n, SCM val, SCM snd_n, SCM chn_n)
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(val)),val,SCM_ARG2,"set-" S_sample);
   ERRCP("set-" S_sample,snd_n,chn_n,3);
   cp = get_cp(snd_n,chn_n,"set-" S_sample);
-  ival[0] = MUS_FLOAT_TO_SAMPLE(gh_scm2double(val));
+  ival[0] = MUS_FLOAT_TO_SAMPLE(TO_C_DOUBLE(val));
   change_samples(g_scm2int(samp_n),1,ival,cp,LOCK_MIXES,"set-" S_sample);
   update_graph(cp,NULL);
   return(val);
@@ -2100,7 +2100,7 @@ static SCM g_change_samples_with_origin(SCM samp_0, SCM samps, SCM origin, SCM v
       ivals = (MUS_SAMPLE_TYPE *)CALLOC(len,sizeof(MUS_SAMPLE_TYPE));
       vdata = SCM_VELTS(vect);
 #if SNDLIB_USE_FLOATS
-      for (i=0;i<len;i++) ivals[i] = gh_scm2double(vdata[i]);
+      for (i=0;i<len;i++) ivals[i] = TO_C_DOUBLE(vdata[i]);
 #else
       for (i=0;i<len;i++) ivals[i] = g_scm2int(vdata[i]);
 #endif
@@ -2180,7 +2180,7 @@ static SCM g_insert_sample(SCM samp_n, SCM val, SCM snd_n, SCM chn_n)
   cp = get_cp(snd_n,chn_n,S_insert_sample);
   beg = g_scm2int(samp_n);
   if (beg < 0) return(scm_throw(NO_SUCH_SAMPLE,SCM_LIST4(gh_str02scm(S_insert_sample),samp_n,snd_n,chn_n)));
-  ival[0] = MUS_FLOAT_TO_SAMPLE(gh_scm2double(val));
+  ival[0] = MUS_FLOAT_TO_SAMPLE(TO_C_DOUBLE(val));
   insert_samples(g_scm2int(samp_n),1,ival,cp,S_insert_sample);
   update_graph(cp,NULL);
   return(val);
@@ -2238,7 +2238,7 @@ static SCM g_insert_samples_with_origin(SCM samp, SCM samps, SCM origin, SCM vec
       ivals = (MUS_SAMPLE_TYPE *)CALLOC(len,sizeof(MUS_SAMPLE_TYPE));
       vdata = SCM_VELTS(vect);
 #if SNDLIB_USE_FLOATS
-      for (i=0;i<len;i++) ivals[i] = gh_scm2double(vdata[i]);
+      for (i=0;i<len;i++) ivals[i] = TO_C_DOUBLE(vdata[i]);
 #else
       for (i=0;i<len;i++) ivals[i] = g_scm2int(vdata[i]);
 #endif
@@ -2325,7 +2325,7 @@ Float string2Float(char *str)
   SCM res;
   res = snd_internal_stack_catch(SCM_BOOL_T,eval_str_wrapper,str,snd_catch_scm_error,str);
   if (gh_number_p(res))
-    return(gh_scm2double(res));
+    return(TO_C_DOUBLE(res));
   else snd_error("%s is not a number",str);
   return(0.0);
 }
@@ -2503,17 +2503,17 @@ static Float *load_Floats(SCM scalers, int *result_len)
     {
       vdata = SCM_VELTS(scalers);
       for (i=0;i<len;i++) 
-	scls[i] = (Float)gh_scm2double(vdata[i]);
+	scls[i] = (Float)TO_C_DOUBLE(vdata[i]);
     }
   else
     if (gh_list_p(scalers))
       {
 	for (i=0,lst=scalers;i<len;i++,lst=SCM_CDR(lst)) 
-	  scls[i] = (Float)gh_scm2double(SCM_CAR(lst));
+	  scls[i] = (Float)TO_C_DOUBLE(SCM_CAR(lst));
       }
     else
       if (gh_number_p(scalers))
-	scls[0] = (Float)gh_scm2double(scalers);
+	scls[0] = (Float)TO_C_DOUBLE(scalers);
       else scls[0] = 1.0;
   result_len[0] = len;
   return(scls);
@@ -2771,8 +2771,8 @@ static SCM g_fft_1(SCM reals, SCM imag, SCM sign, int use_fft)
       ivdata = SCM_VELTS(imag);
       for (i=0;i<n;i++)
 	{
-	  rl[i] = gh_scm2double(rvdata[i]);
-	  im[i] = gh_scm2double(ivdata[i]);
+	  rl[i] = TO_C_DOUBLE(rvdata[i]);
+	  im[i] = TO_C_DOUBLE(ivdata[i]);
 	}
     }
   else
@@ -2855,7 +2855,7 @@ static SCM g_convolve_with(SCM file, SCM new_amp, SCM snd_n, SCM chn_n)
   ERRCP(S_convolve_with,snd_n,chn_n,3);
   cp = get_cp(snd_n,chn_n,S_convolve_with);
   if (gh_number_p(new_amp)) 
-    amp = gh_scm2double(new_amp);
+    amp = TO_C_DOUBLE(new_amp);
   else
     {
       if (SCM_FALSEP(new_amp))
@@ -2935,7 +2935,7 @@ static SCM g_convolve_selection_with(SCM file, SCM new_amp)
   SCM_ASSERT(gh_string_p(file),file,SCM_ARG1,S_convolve_selection_with);
   if (selection_is_active() == 0) return(scm_throw(NO_ACTIVE_SELECTION,SCM_LIST1(gh_str02scm(S_convolve_selection_with))));
   if (gh_number_p(new_amp)) 
-    amp = gh_scm2double(new_amp);
+    amp = TO_C_DOUBLE(new_amp);
   else
     {
       if (SCM_FALSEP(new_amp))
@@ -2975,7 +2975,7 @@ static SCM g_src_sound(SCM ratio_or_env, SCM base, SCM snd_n, SCM chn_n)
   ERRCP(S_src_sound,snd_n,chn_n,3);
   cp = get_cp(snd_n,chn_n,S_src_sound);
   if (gh_number_p(ratio_or_env))
-    src_env_or_num(state,cp,NULL,gh_scm2double(ratio_or_env),TRUE,NOT_FROM_ENVED,S_src_sound,FALSE,NULL);
+    src_env_or_num(state,cp,NULL,TO_C_DOUBLE(ratio_or_env),TRUE,NOT_FROM_ENVED,S_src_sound,FALSE,NULL);
   else 
     {
       if (gh_list_p(ratio_or_env))
@@ -3008,7 +3008,7 @@ static SCM g_src_selection(SCM ratio_or_env, SCM base)
   if (selection_is_active() == 0) return(scm_throw(NO_ACTIVE_SELECTION,SCM_LIST1(gh_str02scm(S_src_selection))));
   cp = get_cp(SCM_BOOL_F,SCM_BOOL_F,S_src_selection);
   if (gh_number_p(ratio_or_env))
-    src_env_or_num(state,cp,NULL,gh_scm2double(ratio_or_env),TRUE,NOT_FROM_ENVED,S_src_selection,TRUE,NULL);
+    src_env_or_num(state,cp,NULL,TO_C_DOUBLE(ratio_or_env),TRUE,NOT_FROM_ENVED,S_src_selection,TRUE,NULL);
   else 
     {
       if (gh_list_p(ratio_or_env))
@@ -3135,10 +3135,10 @@ static SCM g_graph(SCM ldata, SCM xlabel, SCM x0, SCM x1, SCM y0, SCM y1, SCM sn
       (cp->axis == NULL))
     return(SCM_BOOL_F);
   if (gh_string_p(xlabel)) label = gh_scm2newstr(xlabel,NULL); 
-  if (gh_number_p(x0)) nominal_x0 = gh_scm2double(x0); else nominal_x0 = 0.0;
-  if (gh_number_p(x1)) nominal_x1 = gh_scm2double(x1); else nominal_x1 = 1.0;
-  if (gh_number_p(y0)) ymin = gh_scm2double(y0);
-  if (gh_number_p(y1)) ymax = gh_scm2double(y1);
+  if (gh_number_p(x0)) nominal_x0 = TO_C_DOUBLE(x0); else nominal_x0 = 0.0;
+  if (gh_number_p(x1)) nominal_x1 = TO_C_DOUBLE(x1); else nominal_x1 = 1.0;
+  if (gh_number_p(y0)) ymin = TO_C_DOUBLE(y0);
+  if (gh_number_p(y1)) ymax = TO_C_DOUBLE(y1);
   if ((!(gh_list_p(ldata))) || (gh_number_p(SCM_CAR(ldata))))
     graphs = 1; 
   else graphs = gh_length(ldata);
@@ -3166,7 +3166,7 @@ static SCM g_graph(SCM ldata, SCM xlabel, SCM x0, SCM x1, SCM y0, SCM y1, SCM sn
 	  lg->len[0] = len;
 	}
       for (i=0,lst=ldata;i<len;i++,lst=SCM_CDR(lst))
-	lg->data[0][i] = gh_scm2double(SCM_CAR(lst));
+	lg->data[0][i] = TO_C_DOUBLE(SCM_CAR(lst));
       if ((!gh_number_p(y0)) || (!gh_number_p(y1)))
 	{
 	  for (i=1;i<len;i+=2)
@@ -3209,7 +3209,7 @@ static SCM g_graph(SCM ldata, SCM xlabel, SCM x0, SCM x1, SCM y0, SCM y1, SCM sn
 	    {
 	      vdata = SCM_VELTS(data);
 	      for (i=0;i<len;i++) 
-		lg->data[graph][i] = gh_scm2double(vdata[i]);
+		lg->data[graph][i] = TO_C_DOUBLE(vdata[i]);
 	    }
 	  if ((!gh_number_p(y0)) || (!gh_number_p(y1)))
 	    {
@@ -3317,7 +3317,7 @@ static SCM g_progress_report(SCM pct, SCM name, SCM cur_chan, SCM chans, SCM snd
       progress_report(sp,str,
 		      g_scm2intdef(cur_chan,0),
 		      g_scm2intdef(chans,sp->nchans),
-		      gh_scm2double(pct),
+		      TO_C_DOUBLE(pct),
 		      NOT_FROM_ENVED);
       free(str);
     }

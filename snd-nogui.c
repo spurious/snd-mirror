@@ -1,6 +1,3 @@
-/* TODO: should this implement all the GUI-specific scm functions? (make-color etc)
- */
-
 #include "snd.h"
 
 void snd_help(snd_state *ss, char *subject, char *help) {}
@@ -249,7 +246,7 @@ void set_file_browser_play_button(char *name, int state) {}
 void highlight_selected_sound(snd_state *ss) {}
 void start_file_dialog(snd_state *ss, int width, int height) {}
 int file_dialog_is_active(void) {return(0);}
-file_info *get_raw_file_info(char *filename, snd_state *ss) {return(NULL);}
+file_info *get_raw_file_info(char *filename, snd_state *ss) {if (mus_file_probe(filename)) return(make_file_info_1(filename,ss)); return(NULL);}
 file_info *get_reasonable_file_info(char *filename, snd_state *ss, file_info *hdr) {return(NULL);}
 void edit_header(snd_info *sp) {}
 chan_info *enved_make_axis_cp(snd_state *ss, char *name, axis_context *ax, int ex0, int ey0, int width, int height, Float xmin, Float xmax, Float ymin, Float ymax) {return(NULL);}
@@ -294,7 +291,13 @@ void update_stats(snd_state *ss) {}
 void update_stats_display(snd_state *ss, int all) {}
 void check_stats_window(snd_state *ss, int val) {}
 void get_current_color(int colormap, int j, int *r, int *g, int *b) {}
+#if HAVE_GUILE
+#define NUM_TRANSFORM_TYPES 8
+static char *TRANSFORM_TYPE_CONSTANTS[NUM_TRANSFORM_TYPES]={S_fourier_transform,S_wavelet_transform,S_hankel_transform,S_walsh_transform,S_autocorrelation,S_chebyshev_transform,S_cepstrum,S_hadamard_transform};
+char *transform_type_name(int choice) {return(TRANSFORM_TYPE_CONSTANTS[choice]);}
+#else
 char *transform_type_name(int choice) {return(NULL);}
+#endif
 int add_transform_to_list(char *name) {return(0);}
 void set_filter_text(snd_info *sp, char *str) {}
 int max_transform_type(void) {return(19);}
@@ -377,8 +380,101 @@ void snd_doit(snd_state *ss,int argc, char **argv)
   if (ss->init_file == NULL)
     ss->init_file = INIT_FILE_NAME;
   set_eps_file(ss,EPS_FILE_NAME);
+  ss->Use_Raw_Defaults = TRUE;
 
   gh_eval_str("(set! scm-repl-prompt \"snd> \")");
+
+  gh_eval_str("(define (" S_region_dialog " . args) #f)\
+               (define (" S_in " . args) #f)\
+               (define (" S_make_color " . args) #f)\
+               (define (" S_colorQ " . args) #f)\
+               (define (" S_color2list " .args) #f)\
+               (define (" S_load_colormap " . args) #f)\
+               (define (test-menus) #f)");
+
+  gh_eval_str("(define (set-" S_enved_active_env " obj) obj)\
+               (define (set-" S_enved_selected_env " obj) obj)\
+               (define (set-" S_just_sounds " obj) obj)\
+               (define (set-" S_html_dir " obj) obj)\
+               (define (set-" S_basic_color " obj) obj)\
+               (define (set-" S_zoom_color " obj) obj)\
+               (define (set-" S_position_color " obj) obj)\
+               (define (set-" S_mark_color " obj) obj)\
+               (define (set-" S_listener_color " obj) obj)\
+               (define (set-" S_selected_mix_color " obj) obj)\
+               (define (set-" S_enved_waveform_color " obj) obj)\
+               (define (set-" S_filter_waveform_color " obj) obj)\
+               (define (set-" S_highlight_color " obj) obj)\
+               (define (set-" S_graph_color " obj) obj)\
+               (define (set-" S_selected_graph_color " obj) obj)\
+               (define (set-" S_data_color " obj) obj)\
+               (define (set-" S_selected_data_color " obj) obj)\
+               (define (set-" S_cursor_color " obj) obj)\
+               (define (set-" S_selection_color " obj) obj)\
+               (define (set-" S_pushed_button_color " obj) obj)\
+               (define (set-" S_text_focus_color " obj) obj)\
+               (define (set-" S_sash_color " obj) obj)\
+               (define (set-" S_graph_cursor " obj) obj)\
+               (define (set-" S_mix_color " . args) #f)\
+               (define (set-" S_selected_mix_color " . args) #f)");
+
+#if HAVE_GENERALIZED_SET
+  gh_eval_str("(define " S_enved_active_env " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
+               (define " S_enved_selected_env " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
+               (define " S_just_sounds " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
+               (define " S_html_dir " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
+               (define " S_basic_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
+               (define " S_zoom_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
+               (define " S_position_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
+               (define " S_mark_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
+               (define " S_listener_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
+               (define " S_selected_mix_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
+               (define " S_enved_waveform_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
+               (define " S_filter_waveform_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
+               (define " S_highlight_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
+               (define " S_graph_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
+               (define " S_selected_graph_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
+               (define " S_data_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
+               (define " S_selected_data_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
+               (define " S_cursor_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
+               (define " S_selection_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
+               (define " S_pushed_button_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
+               (define " S_text_focus_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
+               (define " S_sash_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
+               (define " S_graph_cursor " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
+               (define " S_mix_color " (make-procedure-with-setter (lambda args #f) (lambda args #f)))\
+               (define " S_selected_mix_color " (make-procedure-with-setter (lambda args #f) (lambda args #f)))");
+#else
+  gh_eval_str("(define (" S_enved_active_env ") #f)\
+               (define (" S_enved_selected_env ") #f)\
+               (define (" S_just_sounds ") #f)\
+               (define (" S_html_dir ") #f)\
+               (define (" S_basic_color ") #f)\
+               (define (" S_zoom_color ") #f)\
+               (define (" S_position_color ") #f)\
+               (define (" S_mark_color ") #f)\
+               (define (" S_listener_color ") #f)\
+               (define (" S_selected_mix_color ") #f)\
+               (define (" S_enved_waveform_color ") #f)\
+               (define (" S_filter_waveform_color ") #f)\
+               (define (" S_highlight_color ") #f)\
+               (define (" S_graph_color ") #f)\
+               (define (" S_selected_graph_color ") #f)\
+               (define (" S_data_color ") #f)\
+               (define (" S_selected_data_color ") #f)\
+               (define (" S_cursor_color ") #f)\
+               (define (" S_selection_color ") #f)\
+               (define (" S_pushed_button_color ") #f)\
+               (define (" S_text_focus_color ") #f)\
+               (define (" S_sash_color ") #f)\
+               (define (" S_graph_cursor ") #f)\
+               (define (" S_mix_color " . args) #f)\
+               (define (" S_selected_mix_color " . args) #f)");
+#endif
+
+#if HAVE_HOOKS
+  scm_create_hook(S_menu_hook,2);
+#endif
 
   for (i=1;i<argc;i++)
     {

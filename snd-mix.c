@@ -1102,6 +1102,7 @@ int mix_complete_file(snd_info *sp, char *str, char *origin, int with_tag)
   char *fullname = NULL;
   if ((sp) && (str) && (*str))
     {
+      clear_minibuffer(sp);
       fullname = mus_file_full_name(str);
       nc = mus_sound_chans(fullname);
       if (nc != -1)
@@ -2889,15 +2890,16 @@ static int set_mix_amp(int mix_id, int chan, Float val, int from_gui, int remix)
 		  else make_temporary_graph(md->cp,md,cs);
 		}
 	    }
+	  else return(INVALID_MIX_CHANNEL);
 	}
       return(mix_id);
     }
   return(INVALID_MIX_ID);
 }
 
-void set_mix_amp_from_id(int mix_id, int chan, Float val, int dragging)
+int set_mix_amp_from_id(int mix_id, int chan, Float val, int dragging)
 {
-  set_mix_amp(mix_id,chan,val,TRUE,!dragging);
+  return(set_mix_amp(mix_id,chan,val,TRUE,!dragging));
 }
 
 Float mix_amp_from_id(int mix_id, int chan)
@@ -2951,9 +2953,9 @@ static int set_mix_speed(int mix_id, Float val, int from_gui, int remix)
   return(INVALID_MIX_ID);
 }
 
-void set_mix_speed_from_id(int mix_id, Float val, int dragging) 
+int set_mix_speed_from_id(int mix_id, Float val, int dragging) 
 {
-  set_mix_speed(mix_id,val,TRUE,!dragging);
+  return(set_mix_speed(mix_id,val,TRUE,!dragging));
 }
 
 Float mix_speed_from_id(int mix_id)
@@ -3059,7 +3061,7 @@ env *mix_amp_env_from_id(int n, int chan)
   return(NULL);
 }
 
-void set_mix_amp_env(int n, int chan, env *val)
+int set_mix_amp_env(int n, int chan, env *val)
 {
   mix_info *md;
   console_state *cs;
@@ -3074,8 +3076,11 @@ void set_mix_amp_env(int n, int chan, env *val)
 	  if (cs->amp_envs == NULL) cs->amp_envs = (env **)CALLOC(cs->chans,sizeof(env *));
 	  cs->amp_envs[chan] = copy_env(val);
 	  remix_file(md,"set-" S_mix_amp_env);
+	  return(0);
 	}
+      else return(INVALID_MIX_CHANNEL);
     }
+  else return(INVALID_MIX_ID);
 }
 
 int mix_selected_channel(int id)
@@ -3086,6 +3091,69 @@ int mix_selected_channel(int id)
     return(md->selected_chan);
   return(NO_SELECTION);
 }
+
+static env *flat_env = NULL;
+
+void display_mix_amp_envs(snd_state *ss, chan_info *axis_cp, axis_context *ax, int width, int height)
+{
+  axis_info *ap;
+  int chans,chan,mix_id;
+  env *e;
+  int i,j;
+  Float ex0,ey0,ex1,ey1,val;
+  int ix0,ix1,iy0,iy1;
+  Float flat[4];
+
+  mix_id = current_mix_id(ss);
+  chans = mix_input_chans_from_id(mix_id);
+
+  for (chan=0;chan<chans;chan++)
+    {
+      e = mix_amp_env_from_id(mix_id,chan);
+      if (!e)
+	{
+	  if (!flat_env)
+	    {
+	      flat[0] = 0.0; flat[1] = 1.0; flat[2] = 1.0; flat[3] = 1.0;
+	      flat_env = make_envelope(flat,4);
+	    }
+	  e = flat_env;
+	}
+
+      ex0 = e->data[0];
+      ey0 = e->data[1];
+      ex1 = e->data[(e->pts*2) - 2];
+      ey1 = ey0;
+      for (i=3;i<e->pts*2;i+=2)
+	{
+	  val = e->data[i];
+	  if (ey0 > val) ey0 = val;
+	  if (ey1 < val) ey1 = val;
+	}
+      if (ey0 > 0.0) ey0 = 0.0;
+      if ((ey0 == ey1) && (ey1 == 0.0)) ey1 = 1.0; /* fixup degenerate case */
+      if (ey1 < 1.0) ey1 = 1.0;
+
+      init_env_axes(axis_cp,"mix env",
+		    (int)(chan * width / chans),
+		    (int)ex0,(int)ey0,
+		    width/chans,height,
+		    ex0,ex1,ey0,ey1);
+      ap = axis_cp->axis;
+
+      ix1 = grf_x(e->data[0],ap);
+      iy1 = grf_y(e->data[1],ap);
+      for (j=1,i=2;i<e->pts*2;i+=2,j++)
+	{
+	  ix0 = ix1;
+	  iy0 = iy1;
+	  ix1 = grf_x(e->data[i],ap);
+	  iy1 = grf_y(e->data[i+1],ap);
+	  draw_line(ax,ix0,iy0,ix1,iy1);
+	}
+    }
+}
+
 
 /* -------------------------------- SCM connection -------------------------------- */
 #if HAVE_GUILE
@@ -3410,28 +3478,39 @@ static SCM g_set_mix_speed(SCM n, SCM uval)
 {
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(n)),n,SCM_ARG1,"set-" S_mix_speed);
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(uval)),uval,SCM_ARG2,"set-" S_mix_speed);
-  if (set_mix_speed(g_scm2int(n),gh_scm2double(uval),FALSE,TRUE) == INVALID_MIX_ID)
+  if (set_mix_speed(g_scm2int(n),TO_C_DOUBLE(uval),FALSE,TRUE) == INVALID_MIX_ID)
     return(scm_throw(NO_SUCH_MIX,SCM_LIST2(gh_str02scm("set-" S_mix_speed),n)));
   return(uval);
 }
 
 static SCM g_set_mix_amp(SCM n, SCM uchan, SCM uval) 
 {
+  int res;
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(n)),n,SCM_ARG1,"set-" S_mix_amp);
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(uchan)),uchan,SCM_ARG2,"set-" S_mix_amp);
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(uval)),uval,SCM_ARG3,"set-" S_mix_amp);
-  if (set_mix_amp(g_scm2int(n),g_scm2int(uchan),gh_scm2double(uval),FALSE,TRUE) == INVALID_MIX_ID)
+  res = set_mix_amp(g_scm2int(n),g_scm2int(uchan),TO_C_DOUBLE(uval),FALSE,TRUE);
+  if (res == INVALID_MIX_ID)
     return(scm_throw(NO_SUCH_MIX,SCM_LIST2(gh_str02scm("set-" S_mix_amp),n)));
+  else 
+    if (res == INVALID_MIX_CHANNEL)
+      return(scm_throw(NO_SUCH_CHANNEL,SCM_LIST3(gh_str02scm("set-" S_mix_amp),n,uchan)));
   return(uval);
 }
 
 static SCM g_set_mix_amp_env(SCM n, SCM chan, SCM val) 
 {
   env *e = NULL;
+  int res;
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(n)),n,SCM_ARG1,"set-" S_mix_amp_env);
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(chan)),chan,SCM_ARG2,"set-" S_mix_amp_env);
-  set_mix_amp_env(g_scm2int(n),g_scm2int(chan),e = get_env(val,SCM_BOOL_F,"set-" S_mix_amp_env));
+  res = set_mix_amp_env(g_scm2int(n),g_scm2int(chan),e = get_env(val,SCM_BOOL_F,"set-" S_mix_amp_env));
   if (e) free_env(e);
+  if (res == INVALID_MIX_ID)
+    return(scm_throw(NO_SUCH_MIX,SCM_LIST2(gh_str02scm("set-" S_mix_amp_env),n)));
+  else 
+    if (res == INVALID_MIX_CHANNEL)
+      return(scm_throw(NO_SUCH_CHANNEL,SCM_LIST3(gh_str02scm("set-" S_mix_amp_env),n,chan)));
   return(val);
 }
 

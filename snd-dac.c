@@ -1,7 +1,7 @@
 /* TODO  make revlen follow slider in "real-time":
- * TODO    set up line_size in mus_make_comb to 5.0*srate/25641, then
- * TODO    then as running, at each block reset to initial - new scaled
- * TODO    (negative pm = longer delay)
+ *         set up line_size in mus_make_comb to 5.0*srate/25641, then
+ *         then as running, at each block reset to initial - new scaled
+ *         (negative pm = longer delay)
  * TODO  play with expand is cutoff too soon (and reverb?)
  */
 
@@ -351,7 +351,7 @@ static Float expand(dac_info *dp, Float sr, Float ex)
       if (speeding) 
 	fval = speed(dp,sr);
       else fval = next_sample_to_float(dp->chn_fd);
-      return(gh_scm2double(g_call3(g_expand,(SCM)(dp->spd),gh_double2scm(fval),gh_double2scm(ex))));
+      return(TO_C_DOUBLE(g_call3(g_expand,(SCM)(dp->spd),gh_double2scm(fval),gh_double2scm(ex))));
     }
   else
 #endif
@@ -438,11 +438,13 @@ static void reverb(void *ur, Float rin, MUS_SAMPLE_TYPE **outs, int ind, int cha
   int i;
 #if HAVE_GUILE
   SCM outputs;
+  SCM *vdata;
   if (use_g_reverb)
     {
       outputs = g_call3(g_reverb,(SCM)ur,gh_double2scm(rin),gh_int2scm(chans));
+      vdata = SCM_VELTS(outputs);
       for (i=0;i<chans;i++) 
-	outs[i][ind] += MUS_FLOAT_TO_SAMPLE(((Float)(gh_scm2double(gh_vector_ref(outputs,gh_int2scm(i))))));
+	outs[i][ind] += MUS_FLOAT_TO_SAMPLE(((Float)(TO_C_DOUBLE(vdata[i]))));
     }
   else
 #endif
@@ -472,7 +474,7 @@ static Float contrast (dac_info *dp, Float amp, Float index, Float inval)
 {
 #if HAVE_GUILE
   if (use_g_contrast)
-    return(amp * gh_scm2double(g_call2(g_contrast,
+    return(amp * TO_C_DOUBLE(g_call2(g_contrast,
 				       gh_double2scm(dp->contrast_amp * inval),
 				       gh_double2scm(index))));
   else
@@ -2140,7 +2142,7 @@ static SCM g_add_player(SCM snd_chn, SCM start, SCM end)
   chan_info *cp;
   int index;
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(snd_chn)),snd_chn,SCM_ARG1,S_add_player);
-  index = -gh_scm2int(snd_chn);
+  index = -TO_C_INT(snd_chn);
   if ((index > 0) && (index < players_size)) sp = players[index];
   if (sp)
     {
@@ -2164,7 +2166,7 @@ static SCM g_stop_player(SCM snd_chn)
   #define H_stop_player "(" S_stop_player " player) stops player"
   int index;
   snd_info *sp = NULL;
-  index = -gh_scm2int(snd_chn);
+  index = -TO_C_INT(snd_chn);
   if ((index > 0) && (index < players_size)) sp = players[index];
   if (sp) 
     stop_playing_sound(sp);
@@ -2179,7 +2181,7 @@ static SCM g_player_p(SCM snd_chn)
   #define H_playerQ "(" S_playerQ " obj) -> is obj an active player"
   int index;
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(snd_chn)),snd_chn,SCM_ARG1,S_playerQ);
-  index = -gh_scm2int(snd_chn);
+  index = -TO_C_INT(snd_chn);
   RTNBOOL((index > 0) && (index < players_size) && (players[index]));
 }
 

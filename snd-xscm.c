@@ -155,9 +155,9 @@ static SCM g_make_snd_color(SCM r, SCM g, SCM b)
   dpy=XtDisplay(MAIN_SHELL(state));
   cmap=DefaultColormap(dpy,DefaultScreen(dpy));
   tmp_color.flags = DoRed | DoGreen | DoBlue;
-  tmp_color.red = (int)(65535 * gh_scm2double(r));
-  tmp_color.green = (int)(65535 * gh_scm2double(g));
-  tmp_color.blue = (int)(65535 * gh_scm2double(b));
+  tmp_color.red = (int)(65535 * TO_C_DOUBLE(r));
+  tmp_color.green = (int)(65535 * TO_C_DOUBLE(g));
+  tmp_color.blue = (int)(65535 * TO_C_DOUBLE(b));
   if ((XAllocColor(dpy,cmap,&tmp_color)) == 0)
     new_color->color = BlackPixel(dpy,DefaultScreen(dpy)); 
   else new_color->color = tmp_color.pixel;
@@ -534,7 +534,7 @@ static SCM g_set_mix_color (SCM arg1, SCM arg2)
   if (v) 
     {
       if (gh_number_p(mix_id))
-	color_one_mix_from_id(gh_scm2int(mix_id),v->color);
+	color_one_mix_from_id(TO_C_INT(mix_id),v->color);
       else set_mix_color(state,v->color);
       map_over_chans(state,update_graph,NULL);
     }
@@ -545,7 +545,7 @@ static SCM g_mix_color(SCM mix_id)
 {
   #define H_mix_color "(" S_mix_color ") -> color of mix consoles"
   if (gh_number_p(mix_id))
-    return(pixel2color(mix_to_color_from_id(gh_scm2int(mix_id))));
+    return(pixel2color(mix_to_color_from_id(TO_C_INT(mix_id))));
   return(pixel2color((state->sgx)->mix_color));
 }
 
@@ -648,6 +648,7 @@ static SCM g_load_colormap(SCM colors)
       xcs[i] = v->color;
     }
   x_load_colormap(xcs);
+  FREE(xcs);
   return(gh_int2scm(len));
 }
 
@@ -660,7 +661,7 @@ static SCM g_graph_cursor(void)
 static SCM g_set_graph_cursor(SCM curs)
 {
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(curs)),curs,SCM_ARG1,"set-" S_graph_cursor);
-  state->Graph_Cursor = gh_scm2int(curs);
+  state->Graph_Cursor = TO_C_INT(curs);
   (state->sgx)->graph_cursor = XCreateFontCursor(XtDisplay(MAIN_SHELL(state)),in_graph_cursor(state));
   return(curs);
 }
@@ -694,7 +695,7 @@ static SCM g_main_shell(void)
 void make_bg(snd_state *ss, unsigned int width, unsigned int height);
 static SCM g_make_bg(SCM wid, SCM hgt)
 {
-  make_bg(get_global_state(),gh_scm2int(wid),gh_scm2int(hgt));
+  make_bg(get_global_state(),TO_C_INT(wid),TO_C_INT(hgt));
   return(SCM_BOOL_F);
 }
 

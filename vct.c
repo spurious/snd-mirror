@@ -193,7 +193,7 @@ static SCM g_make_vct(SCM len)
   #define H_make_vct "(" S_make_vct " len) -> a new vct object of length len"
   int size;
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(len)),len,SCM_ARG1,S_make_vct);
-  size = gh_scm2int(len);
+  size = TO_C_INT(len);
   if (size <= 0) 
     {
       scm_out_of_range(S_make_vct,len);
@@ -279,7 +279,7 @@ static SCM vct_ref(SCM obj, SCM pos)
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(pos)),pos,SCM_ARG2,S_vct_ref);
   if (v)
     {
-      loc = gh_scm2int(pos);
+      loc = TO_C_INT(pos);
       if (loc < 0)
 	scm_misc_error(S_vct_ref,"index: ~A?",SCM_LIST1(pos));
       else
@@ -303,14 +303,14 @@ static SCM vct_set(SCM obj, SCM pos, SCM val)
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(val)),val,SCM_ARG3,S_vct_setB);
   if (v)
     {
-      loc = gh_scm2int(pos);
+      loc = TO_C_INT(pos);
       if (loc < 0)
 	scm_misc_error(S_vct_setB,"index: ~A?",SCM_LIST1(pos));
       else
 	{
 	  if (loc >= v->length)
 	    scm_misc_error(S_vct_setB,"index: ~A but vct length: ~A?",SCM_LIST2(pos,gh_int2scm(v->length)));
-	  else v->data[loc] = gh_scm2double(val);
+	  else v->data[loc] = TO_C_DOUBLE(val);
 	}
     }
   else scm_misc_error(S_vct_ref,"~A is null?",SCM_LIST1(obj));
@@ -382,7 +382,7 @@ static SCM vct_scale(SCM obj1, SCM obj2)
   SCM_ASSERT(vct_p(obj1),obj1,SCM_ARG1,S_vct_scaleB);
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(obj2)),obj2,SCM_ARG2,S_vct_scaleB);
   v1 = get_vct(obj1);
-  scl = gh_scm2double(obj2);
+  scl = TO_C_DOUBLE(obj2);
   if (v1)
     for (i=0;i<v1->length;i++) v1->data[i] *= scl;
   return(scm_return_first(obj1,obj2));
@@ -397,7 +397,7 @@ static SCM vct_offset(SCM obj1, SCM obj2)
   SCM_ASSERT(vct_p(obj1),obj1,SCM_ARG1,S_vct_offsetB);
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(obj2)),obj2,SCM_ARG2,S_vct_offsetB);
   v1 = get_vct(obj1);
-  scl = gh_scm2double(obj2);
+  scl = TO_C_DOUBLE(obj2);
   if (v1)
     for (i=0;i<v1->length;i++) v1->data[i] += scl;
   return(scm_return_first(obj1,obj2));
@@ -412,7 +412,7 @@ static SCM vct_fill(SCM obj1, SCM obj2)
   SCM_ASSERT(vct_p(obj1),obj1,SCM_ARG1,S_vct_fillB);
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(obj2)),obj2,SCM_ARG2,S_vct_fillB);
   v1 = get_vct(obj1);
-  scl = gh_scm2double(obj2);
+  scl = TO_C_DOUBLE(obj2);
   if (v1)
     for (i=0;i<v1->length;i++) v1->data[i] = scl;
   return(scm_return_first(obj1,obj2));
@@ -427,9 +427,9 @@ static SCM vct_map(SCM obj, SCM proc)
   SCM_ASSERT((gh_procedure_p(proc)),proc,SCM_ARG2,S_vct_mapB);
   v = get_vct(obj);
 #if USE_SND
-  if (v) for (i=0;i<v->length;i++) v->data[i] = gh_scm2double(g_call0(proc));
+  if (v) for (i=0;i<v->length;i++) v->data[i] = TO_C_DOUBLE(g_call0(proc));
 #else
-  if (v) for (i=0;i<v->length;i++) v->data[i] = gh_scm2double(gh_call0(proc));
+  if (v) for (i=0;i<v->length;i++) v->data[i] = TO_C_DOUBLE(gh_call0(proc));
 #endif
   return(obj);
 }
@@ -443,9 +443,9 @@ static SCM vct_do(SCM obj, SCM proc)
   SCM_ASSERT((gh_procedure_p(proc)),proc,SCM_ARG2,S_vct_doB);
   v = get_vct(obj);
 #if USE_SND
-  if (v) for (i=0;i<v->length;i++) v->data[i] = gh_scm2double(g_call1(proc,gh_int2scm(i)));
+  if (v) for (i=0;i<v->length;i++) v->data[i] = TO_C_DOUBLE(g_call1(proc,gh_int2scm(i)));
 #else
-  if (v) for (i=0;i<v->length;i++) v->data[i] = gh_scm2double(gh_call1(proc,gh_int2scm(i)));
+  if (v) for (i=0;i<v->length;i++) v->data[i] = TO_C_DOUBLE(gh_call1(proc,gh_int2scm(i)));
 #endif
   return(obj);
 }
@@ -495,7 +495,7 @@ static SCM vcts_map(SCM args)
       if (gh_list_p(arg))
 	{
 	  for (vi=0,lst=arg;vi<vnum;vi++,lst=SCM_CDR(lst))
-	    v[vi]->data[i] = gh_scm2double(SCM_CAR(lst));
+	    v[vi]->data[i] = TO_C_DOUBLE(SCM_CAR(lst));
 	}
     }
   FREE(v);
@@ -547,7 +547,7 @@ static SCM vcts_do(SCM args)
       if (gh_list_p(arg))
 	{
 	  for (vi=0,lst=arg;vi<vnum;vi++,lst=SCM_CDR(lst))
-	    v[vi]->data[i] = gh_scm2double(SCM_CAR(lst));
+	    v[vi]->data[i] = TO_C_DOUBLE(SCM_CAR(lst));
 	}
     }
   FREE(v);
@@ -585,7 +585,7 @@ static SCM list2vct(SCM lst)
   scv = make_vct(len,(Float *)CALLOC(len,sizeof(Float)));
   v = get_vct(scv);
   for (i=0,lst1=lst;i<len;i++,lst1=SCM_CDR(lst1)) 
-    v->data[i] = (Float)gh_scm2double(SCM_CAR(lst1));
+    v->data[i] = (Float)TO_C_DOUBLE(SCM_CAR(lst1));
   return(scm_return_first(scv,lst));
 }
 
@@ -619,7 +619,7 @@ static SCM vector2vct(SCM vect)
   scv = make_vct(len,(Float *)CALLOC(len,sizeof(Float)));
   v = get_vct(scv);
   vdata = SCM_VELTS(vect);
-  for (i=0;i<len;i++) v->data[i] = (Float)gh_scm2double(vdata[i]);
+  for (i=0;i<len;i++) v->data[i] = (Float)TO_C_DOUBLE(vdata[i]);
   return(scm_return_first(scv,vect));
 }
 

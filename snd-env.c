@@ -301,7 +301,7 @@ static void sp_make_axis_cp(snd_info *sp, char *name, int ex0, int ey0, int widt
       spf->gray_ap = new_wave_axis(ss);
       fixup_axis_context(spf->gray_ap->ax,w_snd_filter_env(sp),(ss->sgx)->fltenv_data_gc);
     }
-  init_env_axes(spf->axis_cp,name,ex0,ey0,width,height,xmin,xmax,ymin,ymax);
+  init_env_axes(spf->axis_cp,name,ex0,ex0,ey0,width,height,xmin,xmax,ymin,ymax);
 }
 
 #define EXP_SEGLEN 4
@@ -579,7 +579,7 @@ axis_info *new_wave_axis(snd_state *ss)
   return(gap);
 }
 
-void init_env_axes(chan_info *acp, char *name, int ex0, int ey0, int width, int height, Float xmin, Float xmax, Float ymin, Float ymax)
+void init_env_axes(chan_info *acp, char *name, int x_offset, int ex0, int ey0, int width, int height, Float xmin, Float xmax, Float ymin, Float ymax)
 {
   axis_info *ap;
   ap = acp->axis;
@@ -597,7 +597,7 @@ void init_env_axes(chan_info *acp, char *name, int ex0, int ey0, int width, int 
   ap->window_width = width;
   ap->y_offset = ey0;
   ap->height = height;
-  ap->graph_x0 = ex0;
+  ap->graph_x0 = x_offset;
   make_axes_1(acp, ap, X_IN_SECONDS, 1);
   /* if this is too small for an axis, it still sets up the fields needed for grf_x|y, so tiny envelope graphs will work */
 }
@@ -1252,7 +1252,7 @@ env *scm2env(SCM res)
 	    {
 	      el = SCM_CAR(lst);
 	      if (gh_number_p(el))
-		data[i] = gh_scm2double(el);
+		data[i] = TO_C_DOUBLE(el);
 	      else data[i] = 0.0;
 	    }
 	  rtn = make_envelope(data,len);
@@ -1269,10 +1269,10 @@ static int x_increases(SCM res)
   SCM lst;
   Float x,nx;
   len = gh_length(res);
-  x = gh_scm2double(SCM_CAR(res));
+  x = TO_C_DOUBLE(SCM_CAR(res));
   for (i=2,lst=SCM_CDDR(res);i<len;i+=2,lst=SCM_CDDR(lst))
     {
-      nx = gh_scm2double(SCM_CAR(lst));
+      nx = TO_C_DOUBLE(SCM_CAR(lst));
       if (x >= nx) return(0);
       x = nx;
     }
@@ -1344,7 +1344,7 @@ static SCM g_set_env_base(SCM name, SCM val)
   i = find_env(urn);
   free(urn);
   if (i != -1) 
-    all_envs[i]->base = gh_scm2double(val);
+    all_envs[i]->base = TO_C_DOUBLE(val);
   else scm_throw(NO_SUCH_ENVELOPE,SCM_LIST1(name));
   return(val);
 }
@@ -1384,7 +1384,7 @@ env *get_env(SCM e, SCM base, char *origin) /* list or vector in e */
       buf = (Float *)CALLOC(len,sizeof(Float));
       vdata = SCM_VELTS(e);
       for (i=0;i<len;i++) 
-	buf[i] = gh_scm2double(vdata[i]);
+	buf[i] = TO_C_DOUBLE(vdata[i]);
     }
   else
     if (gh_list_p(e))
@@ -1392,11 +1392,11 @@ env *get_env(SCM e, SCM base, char *origin) /* list or vector in e */
 	len = gh_length(e);
 	buf = (Float *)CALLOC(len,sizeof(Float));
         for (i=0,lst=e;i<len;i++,lst=SCM_CDR(lst)) 
-	  buf[i] = gh_scm2double(SCM_CAR(lst));
+	  buf[i] = TO_C_DOUBLE(SCM_CAR(lst));
       }
     else return(NULL);
   newenv = make_envelope(buf,len);
-  if (gh_number_p(base)) newenv->base = gh_scm2double(base); else newenv->base = 1.0;
+  if (gh_number_p(base)) newenv->base = TO_C_DOUBLE(base); else newenv->base = 1.0;
   if (buf) FREE(buf);
   return(newenv);
 }

@@ -1454,11 +1454,11 @@ static SCM g_restore_marks(SCM size, SCM snd, SCM chn, SCM marklist)
   snd_state *ss;
   int i,j,list_size,in_size,id,sync;
   ss = get_global_state();
-  sp = ss->sounds[gh_scm2int(snd)];
-  cp = sp->chans[gh_scm2int(chn)];
+  sp = ss->sounds[TO_C_INT(snd)];
+  cp = sp->chans[TO_C_INT(chn)];
   if ((cp) && (!(cp->marks)))
     {
-      cp->marks_size = gh_scm2int(size);
+      cp->marks_size = TO_C_INT(size);
       cp->marks = (mark ***)CALLOC(cp->marks_size,sizeof(mark **));
       cp->mark_size = (int *)CALLOC(cp->marks_size,sizeof(int));
       cp->mark_ctr = (int *)CALLOC(cp->marks_size,sizeof(int));
@@ -1467,8 +1467,8 @@ static SCM g_restore_marks(SCM size, SCM snd, SCM chn, SCM marklist)
       for (i=0,olst=marklist;i<list_size;i++,olst=SCM_CDR(olst))
 	{
 	  lst = SCM_CAR(olst);
-	  cp->mark_size[i] = gh_scm2int(SCM_CAR(lst));
-	  cp->mark_ctr[i] = gh_scm2int(SCM_CADR(lst));
+	  cp->mark_size[i] = TO_C_INT(SCM_CAR(lst));
+	  cp->mark_ctr[i] = TO_C_INT(SCM_CADR(lst));
           if (cp->mark_size[i] > 0)
 	    {
 	      mlst = SCM_CADDR(lst);
@@ -1485,11 +1485,11 @@ static SCM g_restore_marks(SCM size, SCM snd, SCM chn, SCM marklist)
 		      if (SCM_NFALSEP(nm))
 			str = gh_scm2newstr(nm,NULL);
 		      else str = NULL;
-		      id = gh_scm2int(SCM_CADDR(el));
+		      id = TO_C_INT(SCM_CADDR(el));
 		      if (gh_length(el) > 3)
-			sync = gh_scm2int(SCM_CADDDR(el));
+			sync = TO_C_INT(SCM_CADDDR(el));
 		      else sync = 0;
-		      cp->marks[i][j] = make_mark_1(gh_scm2int(sm),str,id,sync);
+		      cp->marks[i][j] = make_mark_1(TO_C_INT(sm),str,id,sync);
 		      if (id > mark_id_counter) mark_id_counter = id;
 		      if (str) {free(str); str=NULL;}
 		    }
@@ -1722,7 +1722,7 @@ static SCM g_syncd_marks(SCM sync)
   int *ids;
   SCM res;
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(sync)),sync,SCM_ARG1,S_syncd_marks);
-  ids = syncd_marks(get_global_state(),gh_scm2int(sync));
+  ids = syncd_marks(get_global_state(),TO_C_INT(sync));
   if ((ids == NULL) || (ids[0] == 0)) return(SCM_EOL);
   res = int_array_to_list(ids,1,ids[0]);
   FREE(ids);

@@ -881,16 +881,16 @@ static SCM g_restore_region(SCM n, SCM chans, SCM len, SCM srate, SCM maxamp, SC
   int i,j,k,regn;
   SCM *vdata;
   r = (region *)CALLOC(1,sizeof(region));
-  regn = gh_scm2int(n);
+  regn = TO_C_INT(n);
   regions[regn] = r;
   r->id = region_id_ctr++;
-  r->maxamp = gh_scm2double(maxamp);
-  r->chans = gh_scm2int(chans);
+  r->maxamp = TO_C_DOUBLE(maxamp);
+  r->chans = TO_C_INT(chans);
   r->rsp = NULL;
   r->editor_copy = NULL;
   r->editor_name = NULL;
-  r->frames = gh_scm2int(len);
-  r->srate = gh_scm2int(srate);
+  r->frames = TO_C_INT(len);
+  r->srate = TO_C_INT(srate);
   r->name = g_scm2newstr(name);
   r->start = g_scm2newstr(start);
   r->end = g_scm2newstr(end);
@@ -912,7 +912,7 @@ static SCM g_restore_region(SCM n, SCM chans, SCM len, SCM srate, SCM maxamp, SC
 	  for (j=0;j<r->frames;j++,k++)
 	    {
 #if SNDLIB_USE_FLOATS
-	      r->data[i][j] = gh_scm2double(vdata[k]);
+	      r->data[i][j] = TO_C_DOUBLE(vdata[k]);
 #else
 	      r->data[i][j] = SCM_INUM(vdata[k]);
 #endif

@@ -2138,7 +2138,7 @@ static SCM g_autocorrelate(SCM reals)
       n = gh_vector_length(reals);
       rl = (Float *)CALLOC(n,sizeof(Float));
       vdata = SCM_VELTS(reals);
-      for (i=0;i<n;i++) rl[i] = gh_scm2double(vdata[i]);
+      for (i=0;i<n;i++) rl[i] = TO_C_DOUBLE(vdata[i]);
     }
   autocorrelation(rl,n);
   if (v1 == NULL) 
@@ -2168,7 +2168,7 @@ static SCM g_add_transform(SCM name, SCM xlabel, SCM lo, SCM hi, SCM proc)
   str2 = gh_scm2newstr(xlabel,NULL);
   SCM_ASSERT(gh_procedure_p(proc),proc,SCM_ARG5,S_add_transform);
   if (procedure_ok(proc,2,0,S_add_transform,"func",5))
-    res = gh_int2scm(add_transform(str1,str2,gh_scm2double(lo),gh_scm2double(hi),proc));
+    res = gh_int2scm(add_transform(str1,str2,TO_C_DOUBLE(lo),TO_C_DOUBLE(hi),proc));
   if (str1) free(str1);
   if (str2) free(str2);
   return(res);

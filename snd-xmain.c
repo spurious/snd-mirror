@@ -1,9 +1,5 @@
 #include "snd.h"
 
-/* TODO: (unrequested) resize by window manager causes truncation etc
- * TODO  some window managers (BlackBox apparently) expose without sending an expose event?
- */
-
 #if defined(NEXT) || defined(HAVE_SYS_DIR_H)
   #include <sys/dir.h>
   #include <sys/dirent.h>

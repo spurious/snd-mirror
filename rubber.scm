@@ -259,7 +259,7 @@
 	      (vector-set! cross-weights best-mark 1000.0)))
 
 	  (set! edit-list (sort edit-list >))
-	  (snd-print (format #f "edits: ~A" edit-list))
+	  ;(snd-print (format #f "edits: ~A" edit-list))
 
 	  (do ((i 0 (1+ i)))
 	      ((= i (length edit-list)))

@@ -1497,7 +1497,7 @@ static SCM g_set_recorder_trigger(SCM val)
 {
   #define H_recorder_trigger "(" S_recorder_trigger ") -> if doing triggered record, min amp that can trigger recording"
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(val)),val,SCM_ARG1,"set-" S_recorder_trigger); 
-  set_recorder_trigger(rp,gh_scm2double(val));
+  set_recorder_trigger(rp,TO_C_DOUBLE(val));
   RTNFLT(rp->trigger);
 }
 
@@ -1506,7 +1506,7 @@ static SCM g_set_recorder_max_duration(SCM val)
 {
   #define H_recorder_max_duration "(" S_recorder_max_duration ") -> max recorder output file length"
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(val)),val,SCM_ARG1,"set-" S_recorder_max_duration); 
-  rp->max_duration = gh_scm2double(val);
+  rp->max_duration = TO_C_DOUBLE(val);
   RTNFLT(rp->max_duration);
 }
 
@@ -1534,7 +1534,7 @@ static SCM g_set_recorder_gain (SCM num, SCM amp)
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(num)),num,SCM_ARG1,"set-" S_recorder_gain);
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(amp)),amp,SCM_ARG2,"set-" S_recorder_gain); 
   ind = g_scm2int(num);
-  rp->mixer_gains[ind] = gh_scm2double(amp);
+  rp->mixer_gains[ind] = TO_C_DOUBLE(amp);
   reflect_recorder_mixer_gain(ind,rp->mixer_gains[ind]);
   return(amp);
 }
@@ -1547,7 +1547,7 @@ static SCM g_set_recorder_in_amp (SCM in, SCM out, SCM amp)
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(amp)),amp,SCM_ARG3,"set-" S_recorder_in_amp);
   in_ind = g_scm2int(in);
   out_ind = g_scm2int(out);
-  rp->in_amps[in_ind][out_ind] = gh_scm2double(amp);
+  rp->in_amps[in_ind][out_ind] = TO_C_DOUBLE(amp);
   reflect_recorder_in_amp(in_ind,out_ind,rp->in_amps[in_ind][out_ind]);
   return(amp);
 }
@@ -1558,7 +1558,7 @@ static SCM g_set_recorder_out_amp (SCM num, SCM amp)
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(num)),num,SCM_ARG1,"set-" S_recorder_out_amp);
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(amp)),amp,SCM_ARG2,"set-" S_recorder_out_amp); 
   ind = g_scm2int(num);
-  rp->out_amps[ind] = gh_scm2double(amp); 
+  rp->out_amps[ind] = TO_C_DOUBLE(amp); 
   reflect_recorder_out_amp(ind,rp->out_amps[ind]);
   return(amp);
 }

@@ -133,9 +133,9 @@ static SCM g_make_snd_color(SCM r, SCM g, SCM b)
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(g)),g,SCM_ARG2,S_make_color);
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(b)),b,SCM_ARG3,S_make_color);
   new_color = (snd_color *)CALLOC(1,sizeof(snd_color));
-  gcolor.red = (unsigned short)(65535 * gh_scm2double(r));
-  gcolor.green = (unsigned short)(65535 * gh_scm2double(g));
-  gcolor.blue = (unsigned short)(65535 * gh_scm2double(b));
+  gcolor.red = (unsigned short)(65535 * TO_C_DOUBLE(r));
+  gcolor.green = (unsigned short)(65535 * TO_C_DOUBLE(g));
+  gcolor.blue = (unsigned short)(65535 * TO_C_DOUBLE(b));
   new_color->color = gdk_color_copy(&gcolor);
   gdk_color_alloc(gdk_colormap_get_system(),new_color->color);
   SND_RETURN_NEWSMOB(snd_color_tag,new_color);
@@ -491,7 +491,7 @@ static SCM g_set_mix_color (SCM arg1, SCM arg2)
   if (v) 
     {
       if (gh_number_p(mix_id))
-	color_one_mix_from_id(gh_scm2int(mix_id),v->color);
+	color_one_mix_from_id(TO_C_INT(mix_id),v->color);
       else set_mix_color(state,v->color);
       map_over_chans(state,update_graph,NULL);
     }
@@ -502,7 +502,7 @@ static SCM g_mix_color(SCM mix_id)
 {
   #define H_mix_color "(" S_mix_color ") -> color of mix consoles"
   if (gh_number_p(mix_id))
-    return(gcolor2sndcolor(mix_to_color_from_id(gh_scm2int(mix_id))));
+    return(gcolor2sndcolor(mix_to_color_from_id(TO_C_INT(mix_id))));
   return(gcolor2sndcolor((state->sgx)->mix_color));
 }
 
@@ -599,6 +599,7 @@ static SCM g_load_colormap(SCM colors)
       xcs[i] = v->color;
     }
   /* TODO: colormaps? x_load_colormap(xcs); */
+  FREE(xcs);
   return(gh_int2scm(len));
 }
 
@@ -611,7 +612,7 @@ static SCM g_graph_cursor(void)
 static SCM g_set_graph_cursor(SCM curs)
 {
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(curs)),curs,SCM_ARG1,"set-" S_graph_cursor);
-  state->Graph_Cursor = gh_scm2int(curs);
+  state->Graph_Cursor = TO_C_INT(curs);
   (state->sgx)->graph_cursor = gdk_cursor_new((GdkCursorType)in_graph_cursor(state));
   return(curs);
 }
