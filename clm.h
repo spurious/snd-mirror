@@ -2,17 +2,18 @@
 #define MUS_H
 
 #define MUS_VERSION 1
-#define MUS_REVISION 36
-#define MUS_DATE "28-Dec-00"
+#define MUS_REVISION 37
+#define MUS_DATE "2-Jan-01"
 
 /* 
- * 28-Dec:     added mus_clear_filter_state and other minor tweaks for Snd.
- * 28-Nov:     added Dolph-Chebyshev window (under HAVE_GSL flag -- needs complex trig support).
- * 8-Nov:      added mus_clear_sinc_tables.
+ * 2-Jan:      mus_run method.
+ * 28-Dec:     mus_clear_filter_state and other minor tweaks for Snd.
+ * 28-Nov:     Dolph-Chebyshev window (under HAVE_GSL flag -- needs complex trig support).
+ * 8-Nov:      mus_clear_sinc_tables.
  * 12-Oct:     mus_formant_bank takes one input (can't remember why I had an array here)
  * 27-Sep:     mus_array_interp bugfix (imitates mus.lisp now).
  * 18-Sep:     clm now assumes it's used as a part of sndlib.
- * 11-Sep:     added generalized set! to generic functions in clm2scm.c.
+ * 11-Sep:     generalized set! to generic functions in clm2scm.c.
  * 31-Aug:     changed formant field setters (thanks to Anders Vinjar).
  * 10-Aug:     removed built-in setf support (clm2scm.c).
  * 31-Jul:     mus_granulate tries to protect against illegal length and ramp values.
@@ -100,6 +101,10 @@
 #endif
 
 typedef struct {
+  struct mus__any_class *core;
+} mus_any;
+
+typedef struct mus__any_class {
   int type;
   char *name;
   int   (*release)(void *ptr);
@@ -116,11 +121,8 @@ typedef struct {
   Float (*set_phase)(void *ptr, Float new_phase);
   Float (*scaler)(void *ptr);
   Float (*set_scaler)(void *ptr, Float val);
+  Float (*run)(mus_any *gen, Float arg1, Float arg2);
 } mus_any_class;
-
-typedef struct {
-  mus_any_class *core;
-} mus_any;
 
 typedef struct {
   mus_any_class *core;
@@ -175,6 +177,9 @@ enum {MUS_RECTANGULAR_WINDOW,MUS_HANNING_WINDOW,MUS_WELCH_WINDOW,MUS_PARZEN_WIND
       MUS_EXPONENTIAL_WINDOW,MUS_RIEMANN_WINDOW,MUS_KAISER_WINDOW,MUS_CAUCHY_WINDOW,MUS_POISSON_WINDOW,
       MUS_GAUSSIAN_WINDOW,MUS_TUKEY_WINDOW,MUS_DOLPH_CHEBYSHEV_WINDOW};
 
+#define MUS_RUN(GEN,ARG1,ARG2) 	((*((GEN->core)->run))(GEN,ARG1,ARG2))
+#define MUS_RUN_EXISTS(GEN) 	((GEN->core)->run)
+
 
 __BEGIN_DECLS
 
@@ -212,6 +217,7 @@ Float mus_phase                 PROTO((mus_any *gen));
 Float mus_set_phase             PROTO((mus_any *gen, Float val));
 Float mus_set_frequency         PROTO((mus_any *gen, Float val));
 Float mus_frequency             PROTO((mus_any *gen));
+Float mus_run                   PROTO((mus_any *gen, Float arg1, Float arg2));
 int mus_length                  PROTO((mus_any *gen));
 int mus_set_length              PROTO((mus_any *gen, int len));
 Float *mus_data                 PROTO((mus_any *gen));

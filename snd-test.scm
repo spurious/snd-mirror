@@ -2577,7 +2577,7 @@
 	      ((= i 100))
 	    (let ((v5 (env-interp (* i .02) e3))
 		  (v6 (env e3)))
-	      (if (ffneq v5 v6) (snd-display (format #f ";env-interp[tri ~F]: ~A (~A)?" (* .2 i) v5 v6))))))
+	      (if (ffneq v5 v6) (snd-display (format #f ";env-interp[tri ~F]: ~A (~A)?" (* .02 i) v5 v6))))))
 
 	(set! gen (make-env '(0 0 1 1 2 0) :end 9))
 	(do ((i 0 (1+ i))) ((= i 4)) (env gen))

@@ -5,6 +5,7 @@
  */
 
 /* TODO: tie in configuration scripts to possible use of sndlib.so
+ * TODO: make background as separate thread option (for multi-processor machines)
  */
 
 #include "snd.h"

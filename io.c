@@ -948,7 +948,7 @@ static int checked_write(int tfd, char *buf, int chars)
     }
   else
     {
-      bytes=write(tfd,buf,chars);
+      bytes = write(tfd,buf,chars);
       if (bytes != chars) 
 	{
 	  if ((io_fds == NULL) || (tfd >= io_fd_size) || (tfd < 0) || (io_fds[tfd] == NULL))

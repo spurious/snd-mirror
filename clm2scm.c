@@ -13,6 +13,7 @@
  */
 
 /* TODO:   add vct-wrappers for other internal arrays?
+ * TODO:   tests for mus-run
  */
 
 #if defined(HAVE_CONFIG_H)
@@ -939,6 +940,7 @@ static SCM mus_scm_to_smob_with_vct(mus_scm *gn, SCM v)
 #define S_mus_inspect        "mus-inspect"
 #define S_mus_describe       "mus-describe"
 #define S_mus_name           "mus-name"
+#define S_mus_run            "mus-run"
 
 static SCM g_inspect(SCM gen)
 {
@@ -1006,6 +1008,15 @@ static SCM g_set_frequency(SCM gen, SCM val)
   return(gh_double2scm(mus_set_frequency(mus_get_any(gen),gh_scm2double(val))));
 }
 
+static SCM g_run(SCM gen, SCM arg1, SCM arg2) 
+{
+  #define H_mus_run "(" S_mus_run " gen &optional arg1 arg2) -> apply gen to arg1 and arg2"
+  SCM_ASSERT((mus_scm_p(gen)),gen,SCM_ARG1,S_mus_run);
+  return(gh_double2scm(mus_run(mus_get_any(gen),
+			       (SCM_NFALSEP(scm_real_p(arg1))) ? gh_scm2double(arg1) : 0.0,
+			       (SCM_NFALSEP(scm_real_p(arg2))) ? gh_scm2double(arg2) : 0.0)));
+}
+
 static SCM g_length(SCM gen) 
 {
   #define H_mus_length "(" S_mus_length " gen) -> gen's length, if any"
@@ -1062,6 +1073,7 @@ static void init_generic_funcs(void)
   DEFINE_PROC(gh_new_procedure1_0(S_mus_inspect,g_inspect),H_mus_inspect);
   DEFINE_PROC(gh_new_procedure1_0(S_mus_describe,g_describe),H_mus_describe);
   DEFINE_PROC(gh_new_procedure1_0(S_mus_name,g_name),H_mus_name);
+  DEFINE_PROC(gh_new_procedure1_2(S_mus_run,g_run),H_mus_run);
 
   define_procedure_with_setter(S_mus_phase,SCM_FNC g_phase,H_mus_phase,
 			       S_mus_set_phase,SCM_FNC g_set_phase,local_doc,1,0,2,0);
@@ -4830,7 +4842,7 @@ void init_mus2scm_module(void)
 }
 
 
-#define NUM_CLM_NAMES 228
+#define NUM_CLM_NAMES 229
 static char *clm_names[NUM_CLM_NAMES] = {
 S_all_pass,S_all_pass_p,S_amplitude_modulate,S_array2file,S_array_interp,S_asymmetric_fm,S_asymmetric_fm_p,S_bartlett_window,
 S_blackman2_window,S_blackman3_window,S_blackman4_window,S_buffer2frame,S_buffer2sample,S_buffer_empty_p,S_buffer_full_p,
@@ -4849,7 +4861,7 @@ S_make_two_pole,S_make_two_zero,S_make_wave_train,S_make_waveshape,S_make_zpolar
 S_mixer_p,S_multiply_arrays,S_mus_a0,S_mus_a1,S_mus_a2,S_mus_array_print_length,S_mus_b1,S_mus_b2,S_mus_channel,S_mus_channels,
 S_mus_close,S_mus_cosines,S_mus_data,S_mus_describe,S_mus_feedback,S_mus_feedforward,S_mus_fft,S_mus_formant_radius,S_mus_frequency,
 S_mus_hop,S_mus_increment,S_mus_input_p,S_mus_inspect,S_mus_length,S_mus_location,S_mus_mix,S_mus_order,S_mus_output_p,S_mus_phase,
-S_mus_ramp,S_mus_random,S_mus_scaler,S_mus_set_rand_seed,S_mus_srate,
+S_mus_ramp,S_mus_random,S_mus_run,S_mus_scaler,S_mus_set_rand_seed,S_mus_srate,
 S_mus_xcoeffs,S_mus_ycoeffs,S_notch,S_notch_p,S_one_pole,S_one_pole_p,S_one_zero,S_one_zero_p,S_oscil,S_oscil_bank,S_oscil_p,
 S_out_any,S_outa,S_outb,S_outc,S_outd,S_partials2polynomial,S_partials2wave,S_partials2waveshape,S_parzen_window,S_phasepartials2wave,
 S_phase_vocoder,S_phase_vocoder_p,S_poisson_window,S_polynomial,S_pulse_train,S_pulse_train_p,S_radians_degrees,S_radians_hz,
@@ -5007,6 +5019,7 @@ static char CLM_help_string[] =
   mus-phase           (gen)                phase of gen (radians)\n\
   mus-ramp            (gen)                ramp time of gen (granulate)\n\
   mus-random          (val)                random numbers bewteen -val and val\n\
+  mus-run             (gen arg1 arg2)      apply gen to args\n\
   mus-scaler          (gen)                scaler of gen\n\
   mus-set-rand-seed   (val)                set random number generator seed to val\n\
   mus-set-srate       (val)                also (set! (mus-srate) val)\n\

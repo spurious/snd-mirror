@@ -1,8 +1,5 @@
 #include "snd.h" 
 
-/* TODO region creation should happen in the background (and be cancelable)
- */
-
 #define REGION_ARRAY 0
 #define REGION_FILE 1
 /* region data can be stored either in-core (if less than MAX_BUFFER_SIZE ints), else in a temp file that */
@@ -423,7 +420,7 @@ static int save_region_1(snd_state *ss, char *ofile,int type, int format, int sr
 	  bufs = (MUS_SAMPLE_TYPE **)CALLOC(chans,sizeof(MUS_SAMPLE_TYPE *));
 	  for (i=0;i<chans;i++) bufs[i] = (MUS_SAMPLE_TYPE *)CALLOC(FILE_BUFFER_SIZE,sizeof(MUS_SAMPLE_TYPE));
 
-	  /* TODO: check for disk space */
+	  /* TODO: check for disk space (progress report?) */
 
 	  for (i=0;i<frames;i+=FILE_BUFFER_SIZE)
 	    {

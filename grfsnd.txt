@@ -1083,6 +1083,7 @@ See clm.html for full details. Optional args are in italics.
   mus-phase           (gen)                        phase of gen (radians)
   mus-ramp            (gen)                        ramp time of gen (granulate)
   mus-random          (val)                        random numbers bewteen -val and val
+  mus-run             (gen arg1 arg2)               apply gen to args
   mus-scaler          (gen)                        scaler of gen
   mus-set-rand-seed   (val)                        set random number generator seed to val
   mus-set-srate       (val)                        set sampling rate to val -- (set! (mus-srate) val) is the same.

@@ -4515,39 +4515,17 @@ void apply_filter(chan_info *ncp, int order, env *e, int from_enved, char *origi
 #else
   int pow4;
 #endif
-  Float (*filter_body)(mus_any *gen, Float input);
-  Float (*filter_body_2)(mus_any *gen, Float input, Float pm);
-  int arg2 = 0;
 
   if ((!e) && (!ur_a) && (!gen)) return;
-  if (gen)
+  if ((gen) && (!(MUS_RUN_EXISTS(gen))))
     {
-      switch (mus_type(gen))
-	{
-	case MUS_FIR_FILTER: filter_body = mus_fir_filter; break;
-	case MUS_FILTER:     filter_body = mus_filter;     break;
-	case MUS_IIR_FILTER: filter_body = mus_iir_filter; break;
-	case MUS_ONE_ZERO:   filter_body = mus_one_zero;   break;
-	case MUS_ONE_POLE:   filter_body = mus_one_pole;   break;
-	case MUS_TWO_ZERO:   filter_body = mus_two_zero;   break;
-	case MUS_TWO_POLE:   filter_body = mus_two_pole;   break;
-	case MUS_FORMANT:    filter_body = mus_formant;    break;
-
-	case MUS_DELAY:      filter_body_2 = mus_delay;    arg2 = 1; break;
-	case MUS_COMB:       filter_body_2 = mus_comb;     arg2 = 1; break;
-	case MUS_NOTCH:      filter_body_2 = mus_notch;    arg2 = 1; break;
-	case MUS_ALL_PASS:   filter_body_2 = mus_all_pass; arg2 = 1; break;
-
-	default: 
-	  snd_error("%s can't handle %s generators [%s[%d]: %s]",
-		    origin,
-		    mus_name(gen),
-		    __FILE__,__LINE__,__FUNCTION__);
-	  return;
-	  break;
-	  /* MUS_CONVOLVE? MUS_GRANULATE? MUS_SRC? (etc -- clearing/input may be problematic) */
-	}
+      snd_error("%s can't handle %s generators [%s[%d]: %s]",
+		origin,
+		mus_name(gen),
+		__FILE__,__LINE__,__FUNCTION__);
+      return;
     }
+
   ss = ncp->state;
   sp = ncp->sound;
   sc = get_sync_state_1(ss,sp,ncp,0,over_selection,READ_FORWARD,(over_selection) ? (order-1) : 0);
@@ -4721,11 +4699,7 @@ void apply_filter(chan_info *ncp, int order, env *e, int from_enved, char *origi
 	      for (k=0;k<dur;k++)
 		{
 		  if (gen)
-		    {
-		      if (arg2)
-			x = filter_body_2(gen,next_sample_to_float(sf),0.0);
-		      else x = filter_body(gen,next_sample_to_float(sf));
-		    }
+		    x = MUS_RUN(gen,next_sample_to_float(sf),0.0);
 		  else
 		    {
 		      x=0.0; 
