@@ -211,6 +211,7 @@ AC_CHECK_HEADERS(fcntl.h limits.h unistd.h string.h sys/soundcard.h soundcard.h 
 AC_CHECK_HEADER(/usr/local/lib/oss/include/sys/soundcard.h,[AC_DEFINE(USR_LOCAL_LIB_OSS)])
 AC_CHECK_HEADER(/usr/lib/oss/include/sys/soundcard.h,[AC_DEFINE(USR_LIB_OSS)])
 AC_CHECK_HEADER(/opt/oss/include/sys/soundcard.h,[AC_DEFINE(OPT_OSS)])
+AC_CHECK_HEADER(/var/lib/oss/include/sys/soundcard.h,[AC_DEFINE(VAR_LIB_OSS)])
 AC_CHECK_HEADER(sys/sam9407.h,[AC_DEFINE(HAVE_SAM_9407)])
 AC_CHECK_HEADER(gnu/libc-version.h,[AC_DEFINE(HAVE_GNU_LIBC_VERSION_H)])
 AC_HEADER_TIME
@@ -420,6 +421,7 @@ if test $GUILE_CONFIG_works = yes; then
         AC_SUBST(GUILE_GTK_LIBS)
         guile_gtk_version="`$GUILE_GTK_PROG -c '(use-modules (gtk config)) (display gtkconf-guile-gtk-version)'`"
         AC_DEFINE_UNQUOTED(GUILE_GTK_VERSION,"${guile_gtk_version}")
+dnl     we should check here that if we're using guile 1.4, we found at least guile-gtk 0.19
       fi
     fi
   fi
@@ -447,7 +449,9 @@ else
 case "$host" in
     *-*-linux*) 
 	AC_DEFINE(LINUX)
-        LIBS=""
+        LIBS="-lm"
+dnl     This ^ used to be "" but in redhat 7 the -lm needs to be explicit for make sndsine etc
+dnl     it was "" to cancel -lXpm without the needed -L<dir> for the same case
         AC_CHECK_LIB(asound,main,[ 
 	if test "$use_alsa" = yes ; then 
 	       audio_system=ALSA;

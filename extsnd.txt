@@ -38,7 +38,7 @@ functions, and much of the user interface. You can, for example, add your
 own menu choices, editing operations, or graphing alternatives. Nearly
 everything in Snd can be set in an initialization file, loaded at any time
 from a file of scheme code or a saved state file, specified via
-inter-process communciation or from stdin from any other program (CLM and
+inter-process communication or from stdin from any other program (CLM and
 Emacs in particular), imbedded in a keyboard macro, or accessed in the lisp
 listener. The easiest way to get acquainted with this aspect of Snd is to
 open the listener (via the View:Open listener menu option), and type
@@ -798,7 +798,7 @@ Snd are:
   mus-sound-read       (fd beg end chans sdata)
                                       read data from sound file fd loading the data array from beg
                                       to end. sdata is a sound-data object that should be able to
-                                      accomodate the read
+                                      accommodate the read
   mus-sound-reopen-output
                        (filename chans data-format header-type data-location)
                                       reopen (without disturbing) filename, ready to be written

@@ -36,10 +36,8 @@
  *                 MUS_SAMPLE_BITS (this sets the size of the "fraction").  Floats are
  *                 slightly faster on the Pentium.
  *
- *   USR_LIB_OSS    
- *   USR_LOCAL_LIB_OSS 
- *   OPT_OSS
- *                 define if OSS library/header files are in /usr/lib or /usr/local/lib.
+ *   USR_LIB_OSS, USR_LOCAL_LIB_OSS, OPT_OSS, VAR_LIB_OSS
+ *                 define if OSS library/header files are in the indicated directory.
  *                 These are sometimes needed to find the correct version of soundcard.h
  *                 OSS is one of the main sound support providers for Linux.
  *                 http://www.4front-tech.com/ or maybe www.4front.com
@@ -176,7 +174,7 @@
 #endif
 #include "snd-strings.h"
 
-#define SND_VERSION "2-Nov-00"
+#define SND_VERSION "4-Nov-00"
 #define SND_RPM_VERSION "4.7"
 #define SND_MAJOR_VERSION 4
 #define SND_MINOR_VERSION 7

@@ -343,7 +343,7 @@ static void make_region_dialog(snd_state *ss)
   region_rows = (regrow **)CALLOC(max_regions(ss),sizeof(regrow *));
   for (i=0;i<max_regions(ss);i++)
     {
-      r = make_regrow(ss,region_list,region_save_Callback,region_play_Callback,region_focus_Callback);
+      r = make_regrow(ss,region_list,(void (*)())region_save_Callback,(void (*)())region_play_Callback,(void (*)())region_focus_Callback);
       region_rows[i] = r;
       r->pos = i;
       r->ss = ss;
@@ -483,7 +483,7 @@ void allocate_region_rows(snd_state *ss, int n)
       region_rows = (regrow **)REALLOC(region_rows,n * sizeof(regrow *));
       for (i=max_regions(ss);i<n;i++)
 	{
-	  r = make_regrow(ss,region_list,region_save_Callback,region_play_Callback,region_focus_Callback);
+	  r = make_regrow(ss,region_list,(void (*)())region_save_Callback,(void (*)())region_play_Callback,(void (*)())region_focus_Callback);
 	  region_rows[i] = r;
 	  r->pos = i;
 	  r->ss = ss;

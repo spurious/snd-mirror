@@ -1899,7 +1899,7 @@ void sound_check_control_panel(snd_info *sp, int height)
 
 /* -------- PROGRESS REPORT -------- */
 
-void progress_report(snd_info *sp, char *funcname, int curchan, int chans, Float pct, int from_enved)
+void progress_report(snd_info *sp, const char *funcname, int curchan, int chans, Float pct, int from_enved)
 {
   int which;
   which = (int)(pct * NUM_GLASSES);

@@ -451,7 +451,10 @@ void fire_up_transform_dialog(snd_state *ss)
       /* DISPLAY */
       display_frame = gtk_frame_new(STR_display);
       /* gtk_table_attach_defaults(GTK_TABLE(outer_table),display_frame,2,3,0,1); */
-      gtk_table_attach(GTK_TABLE(outer_table),display_frame,2,3,0,1,GTK_FILL | GTK_SHRINK, GTK_FILL | GTK_SHRINK,0,0);
+      gtk_table_attach(GTK_TABLE(outer_table),display_frame,2,3,0,1,
+		       (GtkAttachOptions)(GTK_FILL | GTK_SHRINK), 
+		       (GtkAttachOptions)(GTK_FILL | GTK_SHRINK),
+		       0,0);
       gtk_frame_set_label_align(GTK_FRAME(display_frame),0.5, 0.0);
       gtk_frame_set_shadow_type(GTK_FRAME(display_frame),GTK_SHADOW_ETCHED_IN);
 
@@ -569,7 +572,10 @@ void fire_up_transform_dialog(snd_state *ss)
       gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(window_scroller),GTK_POLICY_AUTOMATIC,GTK_POLICY_AUTOMATIC);
       gtk_scrolled_window_add_with_viewport(GTK_SCROLLED_WINDOW(window_scroller),window_list);
       /* gtk_table_attach_defaults(GTK_TABLE(window_box),window_scroller,0,1,0,1); */
-      gtk_table_attach(GTK_TABLE(window_box),window_scroller, 0, 1, 0, 1, GTK_FILL | GTK_EXPAND, GTK_FILL | GTK_EXPAND | GTK_SHRINK, 0, 0);
+      gtk_table_attach(GTK_TABLE(window_box),window_scroller, 0, 1, 0, 1, 
+		       (GtkAttachOptions)(GTK_FILL | GTK_EXPAND), 
+		       (GtkAttachOptions)(GTK_FILL | GTK_EXPAND | GTK_SHRINK), 
+		       0, 0);
 
       beta_adj = gtk_adjustment_new(0.0,0.0,1.01,0.001,0.01,.01);
       window_beta_scale = gtk_hscale_new(GTK_ADJUSTMENT(beta_adj));
@@ -579,7 +585,10 @@ void fire_up_transform_dialog(snd_state *ss)
       gtk_scale_set_value_pos(GTK_SCALE(window_beta_scale),GTK_POS_TOP);
       gtk_scale_set_draw_value(GTK_SCALE(window_beta_scale),TRUE);
       gtk_signal_connect(GTK_OBJECT(beta_adj),"value_changed",GTK_SIGNAL_FUNC(beta_Callback),(gpointer)ss);
-      gtk_table_attach(GTK_TABLE(window_box),window_beta_scale,0,1,1,2,GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
+      gtk_table_attach(GTK_TABLE(window_box),window_beta_scale,0,1,1,2,
+		       (GtkAttachOptions)(GTK_EXPAND | GTK_FILL), 
+		       (GtkAttachOptions)(GTK_FILL), 
+		       0, 0);
 
       gtk_widget_show(window_beta_scale);
       gtk_widget_show(window_list);

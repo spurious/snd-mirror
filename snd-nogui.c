@@ -105,7 +105,7 @@ int popup_save_menu(void) {return(0);}
 int popup_normalize_menu(void) {return(0);}
 int popup_info_menu(void) {return(0);}
 int popup_menu_exists(void) {return(0);}
-void set_menu_label(int w, char *label) {}
+void set_menu_label(int w, const char *label) {}
 int gh_change_menu_label(int which_menu,char *old_label, char *new_label) {return(0);}
 int gh_set_menu_sensitive(int which_menu,char *old_label, int on) {return(0);}
 int gh_menu_is_sensitive(int which_menu,char *old_label) {return(0);}
@@ -148,7 +148,7 @@ int mark_name_width(snd_state *ss, char *txt) {return(0);}
 void clear_window(axis_context *ax) {}
 void highlight_color(snd_state *ss, int w) {}
 void white_color(snd_state *ss, int w) {}
-void set_title(snd_state *ss, char *title) {}
+void set_title(snd_state *ss, const char *title) {}
 void goto_window(int text) {}
 void check_for_event(snd_state *ss) {}
 void work_wait(snd_state *ss) {}
@@ -185,7 +185,7 @@ void reflect_save_as_in_edit_history(chan_info *cp, char *filename) {}
 void set_peak_numbers_font(chan_info *cp) {}
 void set_bold_peak_numbers_font(chan_info *cp) {}
 void set_tiny_numbers_font(chan_info *cp) {}
-COLOR_TYPE get_foreground_color(chan_info *cp, axis_context *ax) {}
+COLOR_TYPE get_foreground_color(chan_info *cp, axis_context *ax) {return(0);}
 void set_foreground_color(chan_info *cp, axis_context *ax, int color) {}
 void change_channel_style(snd_info *sp, int new_style) {}
 void reflect_amp_env_in_progress(snd_info *sp) {}
@@ -226,7 +226,7 @@ void sound_hide_ctrls(snd_info *sp) {}
 int control_panel_open(snd_info *sp) {return(0);}
 void start_progress_report(snd_info *sp, int from_enved) {}
 void finish_progress_report(snd_info *sp, int from_enved) {}
-void progress_report(snd_info *sp, char *funcname, int curchan, int chans, Float pct, int from_enved) {}
+void progress_report(snd_info *sp, const char *funcname, int curchan, int chans, Float pct, int from_enved) {}
 char *clm2snd_help(void) {return(NULL);}
 char *read_file_data_choices(file_data *fdat, int *srate, int *chans, int *type, int *format, int *location) {return(NULL);}
 void alert_new_file(void) {}
@@ -245,7 +245,7 @@ int file_dialog_is_active(void) {return(0);}
 file_info *get_raw_file_info(char *filename, snd_state *ss) {return(NULL);}
 file_info *get_reasonable_file_info(char *filename, snd_state *ss, file_info *hdr) {return(NULL);}
 void edit_header(snd_info *sp) {}
-chan_info *enved_make_axis_cp(snd_state *ss, char *name, axis_context *ax, int ex0, int ey0, int width, int height, Float xmin, Float xmax, Float ymin, Float ymax) {}
+chan_info *enved_make_axis_cp(snd_state *ss, char *name, axis_context *ax, int ex0, int ey0, int width, int height, Float xmin, Float xmax, Float ymin, Float ymax) {return(NULL);}
 void display_enved_env_with_selection(snd_state *ss, env *e, char *name, int x0, int y0, int width, int height, int dots) {}
 void set_enved_redo_sensitive(int val) {}
 void set_enved_revert_sensitive(int val) {}

@@ -179,7 +179,7 @@ static void who_called(GtkWidget *w,GdkEvent *event, gpointer clientData)
 	{
 	  if (version[0])
 	    {
-	      snd_eval_listener_str(ss,version[0]);
+	      snd_eval_listener_str(ss,(char *)(version[0]));
 	      free(version[0]);
 	    }
 	}
@@ -339,7 +339,7 @@ static BACKGROUND_TYPE startup_funcs(gpointer clientData)
       snd_v = gdk_atom_intern("SND_VERSION",FALSE);
       snd_c = gdk_atom_intern("SND_COMMAND",FALSE);
 
-      gdk_property_change(MAIN_WINDOW(ss),snd_v,GDK_TARGET_STRING,8,GDK_PROP_MODE_REPLACE,SND_VERSION,strlen(SND_VERSION)+1);
+      gdk_property_change(MAIN_WINDOW(ss),snd_v,GDK_TARGET_STRING,8,GDK_PROP_MODE_REPLACE,(guchar *)(SND_VERSION),strlen(SND_VERSION)+1);
       gtk_widget_add_events (tm->shell,gtk_widget_get_events (tm->shell) | GDK_PROPERTY_CHANGE_MASK);
       gtk_signal_connect(GTK_OBJECT(tm->shell),"property_notify_event",GTK_SIGNAL_FUNC(who_called),(gpointer)ss);
 
@@ -349,7 +349,7 @@ static BACKGROUND_TYPE startup_funcs(gpointer clientData)
       gtk_signal_connect(GTK_OBJECT(tm->shell),"unmap_event",GTK_SIGNAL_FUNC(iconify_window),(gpointer)ss);
 #endif
 
-      (ss->sgx)->graph_cursor = gdk_cursor_new(in_graph_cursor(ss));
+      (ss->sgx)->graph_cursor = gdk_cursor_new((GdkCursorType)in_graph_cursor(ss));
       (ss->sgx)->mix_cursor = gdk_cursor_new(GDK_LEFT_PTR);
       (ss->sgx)->wait_cursor = gdk_cursor_new(GDK_WATCH);
       (ss->sgx)->arrow_cursor = gdk_cursor_new(GDK_LEFT_PTR);

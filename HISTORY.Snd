@@ -1,7 +1,8 @@
 snd change log
 
-  2-Nov:     added insert-selection, mix-selection, delete-selection.
-  1-Nov:     added filter-env-in-hz switch.
+  6-Nov:     various cosmetic changes for the new g++ (Redhat 7.0).
+  2-Nov:     insert-selection, mix-selection, delete-selection.
+  1-Nov:     filter-env-in-hz switch.
   31-Oct:    syncing -> sync. Set! extended to frames, maxamp, x|y-zoom|position-slider.
   30-Oct:    examp.scm soft-port example of redirecting display to Snd's listener.
              support for GSL 0.7.
@@ -21,7 +22,7 @@ snd change log
              removed .sndrc and other related stuff.
              removed Show Marks menu item.
   16-Oct:    snd 4.7.  
-             added optional environ arg to loop-samples and clm example to grfsnd.html.
+             optional environ arg to loop-samples and clm example to grfsnd.html.
   11-Oct:    delete button in envelope editor.
   10-Oct:    removed scaler arg to mix-region and associated kbd scaler arg.
   9-Oct:     bird.scm.  added origin arg to as-one-edit.

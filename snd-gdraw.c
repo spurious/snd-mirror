@@ -701,14 +701,17 @@ void View_Color_Callback(GtkWidget *w,gpointer clientData)
       gtk_widget_show(cutoff_box);
 
       ccd->invert = gtk_check_button_new_with_label(STR_invert);
-      gtk_table_attach(GTK_TABLE(outer_table),ccd->invert,0,1,2,3,0,0,0,4);
+      gtk_table_attach(GTK_TABLE(outer_table),ccd->invert,0,1,2,3,(GtkAttachOptions)0,(GtkAttachOptions)0,0,4);
       gtk_signal_connect(GTK_OBJECT(ccd->invert),"toggled",GTK_SIGNAL_FUNC(Invert_Color_Callback),(gpointer)ss);
       gtk_widget_show(ccd->invert);
       set_toggle_button(ccd->invert,color_inverted(ss),FALSE,(gpointer)ss);
       set_pushed_button_colors(ccd->invert,ss);
 
       colormap_box = gtk_vbox_new(FALSE,0);
-      gtk_table_attach(GTK_TABLE(outer_table),colormap_box,1,2,0,3,GTK_FILL | GTK_EXPAND, GTK_FILL | GTK_EXPAND, 10, 4);
+      gtk_table_attach(GTK_TABLE(outer_table),colormap_box,1,2,0,3,
+		       (GtkAttachOptions)(GTK_FILL | GTK_EXPAND),
+		       (GtkAttachOptions)(GTK_FILL | GTK_EXPAND), 
+		       10, 4);
 
       maplabel = gtk_label_new("colormap");
       gtk_misc_set_alignment(GTK_MISC(maplabel),0.5,0.0);
@@ -881,7 +884,7 @@ static void Hop_Orientation_Callback(GtkAdjustment *adj, gpointer clientData)
   int val;
   orientation_info *od = (orientation_info *)clientData;
   ss = od->state;
-  val = iclamp(1,adj->value,20);
+  val = iclamp(1,(int)(adj->value),20);
   in_set_spectro_hop(ss,val);
   map_over_chans(ss,map_chans_spectro_hop,(void *)val);
   map_over_chans(ss,update_graph,NULL);

@@ -27,8 +27,8 @@
 
 
 #define SNDLIB_VERSION 11
-#define SNDLIB_REVISION 14
-#define SNDLIB_DATE "2-Nov-00"
+#define SNDLIB_REVISION 15
+#define SNDLIB_DATE "6-Nov-00"
 
 #ifndef HAVE_SNDLIB
   #define HAVE_SNDLIB 1
@@ -127,8 +127,7 @@
 
 #ifndef HAVE_OSS
 #ifndef HAVE_ALSA
-  #if defined(LINUX) || defined(SCO5) || defined(UW2) || defined(HAVE_SOUNDCARD_H) || defined(HAVE_SYS_SOUNDCARD_H) || defined(HAVE_MACHINE_SOUNDCARD_H) || defined(USR_LIB_OSS) || defined(USR_LOCAL_LIB_OSS) || defined(OPT_OSS) || defined(__FreeBSD__)
-
+  #if defined(LINUX) || defined(SCO5) || defined(UW2) || defined(HAVE_SOUNDCARD_H) || defined(HAVE_SYS_SOUNDCARD_H) || defined(HAVE_MACHINE_SOUNDCARD_H) || defined(USR_LIB_OSS) || defined(USR_LOCAL_LIB_OSS) || defined(OPT_OSS) || defined(VAR_LIB_OSS) || defined(__FreeBSD__)
     #define HAVE_OSS 1
   #else
     #define HAVE_OSS 0
@@ -573,10 +572,10 @@ void mus_sndlib2scm_initialize      PROTO((void));
 
 #ifdef DEBUG_MEMORY
   /* snd-utils.c (only used in conjunction with Snd's memory tracking functions) */
-  void *mem_calloc                  PROTO((size_t len, size_t size, char *func, char *file, int line));
-  void *mem_malloc                  PROTO((size_t len, char *func, char *file, int line));
-  void mem_free                     PROTO((void *ptr, char *func, char *file, int line));
-  void *mem_realloc                 PROTO((void *ptr, size_t size, char *func, char *file, int line));
+  void *mem_calloc                  PROTO((size_t len, size_t size, const char *func, const char *file, int line));
+  void *mem_malloc                  PROTO((size_t len, const char *func, const char *file, int line));
+  void mem_free                     PROTO((void *ptr, const char *func, const char *file, int line));
+  void *mem_realloc                 PROTO((void *ptr, size_t size, const char *func, const char *file, int line));
 #endif
 
 __END_DECLS

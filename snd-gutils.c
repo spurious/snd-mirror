@@ -314,7 +314,7 @@ void raise_widget(GtkWidget *w)
 }
 
 #if 0
-void set_button_label_normal(GtkWidget *button,char *str)
+void set_button_label_normal(GtkWidget *button,const char *str)
 {
   GtkStyle *style;
   snd_state *ss;
@@ -327,7 +327,7 @@ void set_button_label_normal(GtkWidget *button,char *str)
 }
 #endif
 
-void set_button_label_bold(GtkWidget *button,char *str)
+void set_button_label_bold(GtkWidget *button,const char *str)
 {
   GtkStyle *style;
   snd_state *ss;
@@ -338,12 +338,12 @@ void set_button_label_bold(GtkWidget *button,char *str)
   gtk_label_set_text(GTK_LABEL(GTK_BIN(button)->child),str);
 }
 
-void set_button_label(GtkWidget *label,char *str)
+void set_button_label(GtkWidget *label,const char *str)
 {
   gtk_label_set_text(GTK_LABEL(GTK_BIN(label)->child),str);
 }
 
-void set_label(GtkWidget *label,char *str)
+void set_label(GtkWidget *label,const char *str)
 {
   gtk_label_set_text(GTK_LABEL(label),str);
 }
@@ -364,7 +364,7 @@ void check_for_event(snd_state *ss)
   ss->checking_explicitly = 0;
 }
 
-void set_title(snd_state *ss, char *title)
+void set_title(snd_state *ss, const char *title)
 {
 #ifndef SND_AS_WIDGET
   gtk_window_set_title(GTK_WINDOW(MAIN_SHELL(ss)),title);

@@ -826,7 +826,7 @@ void make_file_save_as_dialog(snd_state *ss)
   save_as_dialog_type = FILE_SAVE_AS;
   sp = any_selected_sound(ss);
   if (sp) hdr = sp->hdr;
-  make_save_as_dialog(ss,(sp) ? sp->shortname : "",
+  make_save_as_dialog(ss,(char *)((sp) ? sp->shortname : ""),
 		      default_output_type(ss),
 		      default_output_format(ss));
 

@@ -745,17 +745,26 @@ static GtkWidget *make_message_pane(snd_state *ss)
   text = gtk_text_new (NULL, NULL);
   set_text_background(text,(ss->sgx)->light_blue);
   messages = text;
-  gtk_table_attach (GTK_TABLE (table), text, 0, 1, 0, 1, GTK_FILL | GTK_EXPAND, GTK_FILL | GTK_EXPAND | GTK_SHRINK, 0, 0);
+  gtk_table_attach (GTK_TABLE (table), text, 0, 1, 0, 1, 
+		    (GtkAttachOptions)(GTK_FILL | GTK_EXPAND), 
+		    (GtkAttachOptions)(GTK_FILL | GTK_EXPAND | GTK_SHRINK), 
+		    0, 0);
   gtk_text_set_editable(GTK_TEXT(text),FALSE);
   gtk_text_set_word_wrap(GTK_TEXT(text),FALSE);
   gtk_widget_show (text);
   hscrollbar = gtk_hscrollbar_new (GTK_TEXT (text)->hadj);
   set_background(hscrollbar,(ss->sgx)->position_color);
-  gtk_table_attach (GTK_TABLE (table), hscrollbar, 0, 1, 1, 2, GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
+  gtk_table_attach (GTK_TABLE (table), hscrollbar, 0, 1, 1, 2, 
+		    (GtkAttachOptions)(GTK_EXPAND | GTK_FILL), 
+		    (GtkAttachOptions)(GTK_FILL), 
+		    0, 0);
   gtk_widget_show (hscrollbar);
   vscrollbar = gtk_vscrollbar_new (GTK_TEXT (text)->vadj);
   set_background(vscrollbar,(ss->sgx)->position_color);
-  gtk_table_attach (GTK_TABLE (table), vscrollbar, 1, 2, 0, 1, GTK_FILL, GTK_EXPAND | GTK_FILL | GTK_SHRINK, 0, 0);
+  gtk_table_attach (GTK_TABLE (table), vscrollbar, 1, 2, 0, 1, 
+		    (GtkAttachOptions)(GTK_FILL), 
+		    (GtkAttachOptions)(GTK_EXPAND | GTK_FILL | GTK_SHRINK), 
+		    0, 0);
   gtk_widget_show (vscrollbar);
   return(table);
 }
@@ -1007,7 +1016,7 @@ static void make_file_info_pane(snd_state *ss, recorder_info *rp, GtkWidget *fil
   gtk_widget_show(ff_sep3);
 
   recdat = sndCreateFileDataForm(ss,left_form,"data-form",TRUE,rp->output_header_type,rp->out_format,FALSE,TRUE);
-  gtk_signal_connect_object(GTK_OBJECT(recdat->srate_text),"activate",GTK_SIGNAL_FUNC(Srate_Changed_Callback),(gpointer)ss);
+  gtk_signal_connect_object(GTK_OBJECT(recdat->srate_text),"activate",GTK_SIGNAL_FUNC(Srate_Changed_Callback),(GtkObject *)ss);
 
 #if defined(SGI)
   err = mus_audio_mixer_read(MUS_AUDIO_PACK_SYSTEM(0) | MUS_AUDIO_MICROPHONE,MUS_AUDIO_SRATE,0,val);
@@ -1039,7 +1048,7 @@ static void make_file_info_pane(snd_state *ss, recorder_info *rp, GtkWidget *fil
   gtk_box_pack_start(GTK_BOX(durbox),rec_size_text,TRUE,TRUE,2);
   set_background(rec_size_text,(ss->sgx)->white);
   gtk_widget_show(rec_size_text);
-  gtk_signal_connect_object(GTK_OBJECT(rec_size_text),"activate",GTK_SIGNAL_FUNC(Rec_Size_Changed_Callback),(gpointer)ss);
+  gtk_signal_connect_object(GTK_OBJECT(rec_size_text),"activate",GTK_SIGNAL_FUNC(Rec_Size_Changed_Callback),(GtkObject *)ss);
   sprintf(timbuf,"%d",rp->buffer_size);
   gtk_entry_set_text(GTK_ENTRY(rec_size_text),timbuf);
 
@@ -1062,7 +1071,7 @@ static void make_file_info_pane(snd_state *ss, recorder_info *rp, GtkWidget *fil
   gtk_scale_set_draw_value(GTK_SCALE(trigger_scale),TRUE);
   gtk_scale_set_value_pos(GTK_SCALE(trigger_scale),GTK_POS_LEFT);
   gtk_box_pack_start(GTK_BOX(triggerbox),trigger_scale,TRUE,TRUE,0);
-  gtk_signal_connect(GTK_OBJECT(trigger_adj),"value_changed",GTK_SIGNAL_FUNC(change_trigger_Callback),(gpointer)ss);
+  gtk_signal_connect(GTK_OBJECT(trigger_adj),"value_changed",GTK_SIGNAL_FUNC(change_trigger_Callback),(GtkObject *)ss);
   gtk_widget_show(trigger_scale);
 
   /* buttons */

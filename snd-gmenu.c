@@ -114,7 +114,7 @@ GtkWidget *popup_save_menu(void) {return(popup_children[W_pop_save]);}
 GtkWidget *popup_normalize_menu(void) {return(NULL);}
 GtkWidget *popup_info_menu(void) {return(popup_children[W_pop_info]);}
 
-void set_menu_label(GtkWidget *w, char *label) {if (w) set_button_label(w,label);}
+void set_menu_label(GtkWidget *w, const char *label) {if (w) set_button_label(w,label);}
 
 #if HAVE_HOOKS
 static SCM menu_hook;

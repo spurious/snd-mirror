@@ -16,6 +16,7 @@
 ;;;      selection->new
 ;;;      cut selection->new
 ;;;      add silence (at cursor)
+;;;      append selection (and append sound)
 ;;;
 ;;; These follow sync lists starting from current chan
 ;;;
@@ -24,7 +25,6 @@
 ;;; TODO chorus (see below -- it works on some files)
 ;;; TODO noise reduction -- how?
 ;;; TODO increase/decrease file length -- meaning src or expand?
-;;; TODO append (selection?)
 ;;; TODO mix/crossfade
 ;;; TODO phase-vocoder time/pitch
 ;;; TODO un-hum (notch)
@@ -440,3 +440,15 @@
 			   (set! silence-label new-label)))
 			 effects-list))
 
+
+;;; -------- append sound (and append selection for lafs)
+
+(define (append-sound name)
+  ;; appends sound file
+  (mix-sound name (frames))) ;this ought to use insert-sound...
+
+(define (append-selection)
+  (if (selection?)
+      (insert-selection (frames))))
+
+(add-to-menu effects-menu "append selection" append-selection)

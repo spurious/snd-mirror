@@ -445,7 +445,7 @@ static gint real_graph_key_press(GtkWidget *w, GdkEventKey *ev, gpointer data)
   snd_state *ss;
   GdkModifierType key_state;
   gdk_window_get_pointer(ev->window,&x,&y,&key_state);
-  key_state = ev->state;
+  key_state = (GdkModifierType)(ev->state);
   keysym = ev->keyval;
   ss = cp->state;
   /* fprintf(stderr,"grf: %s %d ",gdk_keyval_name(keysym),key_state); */
@@ -463,7 +463,7 @@ gint graph_key_press(GtkWidget *w, GdkEventKey *ev, gpointer data)
   snd_state *ss;
   GdkModifierType key_state;
   gdk_window_get_pointer(ev->window,&x,&y,&key_state);
-  key_state = ev->state;
+  key_state = (GdkModifierType)(ev->state);
   keysym = ev->keyval;
   ss = cp->state;
   /* fprintf(stderr,"key: %s %d ",gdk_keyval_name(keysym),key_state); */
@@ -571,7 +571,10 @@ void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, in
 
       cw[W_graph] = gtk_drawing_area_new();
       gtk_widget_set_events(cw[W_graph], GDK_ALL_EVENTS_MASK);
-      gtk_table_attach(GTK_TABLE(cw[W_graph_window]), cw[W_graph], 2, 3, 0, 2, GTK_FILL | GTK_EXPAND, GTK_FILL | GTK_EXPAND | GTK_SHRINK, 0, 0);
+      gtk_table_attach(GTK_TABLE(cw[W_graph_window]), cw[W_graph], 2, 3, 0, 2, 
+		       (GtkAttachOptions)(GTK_FILL | GTK_EXPAND), 
+		       (GtkAttachOptions)(GTK_FILL | GTK_EXPAND | GTK_SHRINK), 
+		       0, 0);
       set_background(cw[W_graph],(ss->sgx)->graph_color);
       set_foreground(cw[W_graph],(ss->sgx)->data_color);
       gtk_widget_show(cw[W_graph]);
@@ -589,7 +592,10 @@ void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, in
 
       cw[W_bottom_scrollers] = gtk_vbox_new(TRUE,0);
       gtk_box_set_spacing(GTK_BOX(cw[W_bottom_scrollers]),0);
-      gtk_table_attach(GTK_TABLE(cw[W_graph_window]), cw[W_bottom_scrollers], 2, 3, 2, 3, GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
+      gtk_table_attach(GTK_TABLE(cw[W_graph_window]), cw[W_bottom_scrollers], 2, 3, 2, 3, 
+		       (GtkAttachOptions)(GTK_EXPAND | GTK_FILL), 
+		       (GtkAttachOptions)(GTK_FILL), 
+		       0, 0);
       gtk_widget_show(cw[W_bottom_scrollers]);
 
       adjs[W_sx_adj] = gtk_adjustment_new(0.0,0.0,1.00,0.001,0.01,.01);
@@ -653,14 +659,20 @@ void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, in
       adjs[W_zy_adj] = gtk_adjustment_new(0.0,0.0,1.1,0.001,0.01,.1);   /* 0 -> 1 (upside down) */
       cw[W_zy] = gtk_vscrollbar_new(GTK_ADJUSTMENT(adjs[W_zy_adj]));
       set_background(cw[W_zy],(ss->sgx)->zoom_color);
-      gtk_table_attach(GTK_TABLE(cw[W_graph_window]), cw[W_zy], 0, 1, 0, 1, GTK_FILL, GTK_EXPAND | GTK_FILL | GTK_SHRINK, 0, 0);
+      gtk_table_attach(GTK_TABLE(cw[W_graph_window]), cw[W_zy], 0, 1, 0, 1, 
+		       (GtkAttachOptions)(GTK_FILL), 
+		       (GtkAttachOptions)(GTK_EXPAND | GTK_FILL | GTK_SHRINK), 
+		       0, 0);
       gtk_signal_connect(GTK_OBJECT(adjs[W_zy_adj]),"value_changed",GTK_SIGNAL_FUNC(W_zy_ValueChanged_Callback),(gpointer)cp);
       gtk_widget_show(cw[W_zy]);
 
       adjs[W_sy_adj] = gtk_adjustment_new(0.5,0.0,1.01,0.001,0.01,.01);
       cw[W_sy] = gtk_vscrollbar_new(GTK_ADJUSTMENT(adjs[W_sy_adj]));
       set_background(cw[W_sy],(ss->sgx)->position_color);
-      gtk_table_attach(GTK_TABLE(cw[W_graph_window]), cw[W_sy], 1, 2, 0, 1, GTK_FILL, GTK_EXPAND | GTK_FILL | GTK_SHRINK, 0, 0);
+      gtk_table_attach(GTK_TABLE(cw[W_graph_window]), cw[W_sy], 1, 2, 0, 1, 
+		       (GtkAttachOptions)(GTK_FILL), 
+		       (GtkAttachOptions)(GTK_EXPAND | GTK_FILL | GTK_SHRINK), 
+		       0, 0);
       gtk_signal_connect(GTK_OBJECT(adjs[W_sy_adj]),"value_changed",GTK_SIGNAL_FUNC(W_sy_ValueChanged_Callback),(gpointer)cp);
       gtk_widget_show(cw[W_sy]);
 
@@ -669,14 +681,20 @@ void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, in
 	  adjs[W_gsy_adj] = gtk_adjustment_new(0.0,0.0,1.0,0.001,0.01,.01);
 	  cw[W_gsy] = gtk_vscrollbar_new(GTK_ADJUSTMENT(adjs[W_gsy_adj]));
 	  set_background(cw[W_gsy],(ss->sgx)->position_color);
-	  gtk_table_attach(GTK_TABLE(cw[W_graph_window]), cw[W_gsy], 3, 4, 0, 2, GTK_FILL, GTK_EXPAND | GTK_FILL | GTK_SHRINK, 0, 0);
+	  gtk_table_attach(GTK_TABLE(cw[W_graph_window]), cw[W_gsy], 3, 4, 0, 2, 
+			   (GtkAttachOptions)(GTK_FILL), 
+			   (GtkAttachOptions)(GTK_EXPAND | GTK_FILL | GTK_SHRINK), 
+			   0, 0);
 	  gtk_signal_connect(GTK_OBJECT(adjs[W_gsy_adj]),"value_changed",GTK_SIGNAL_FUNC(W_gsy_ValueChanged_Callback),(gpointer)cp);
 	  gtk_widget_show(cw[W_gsy]);
 
 	  adjs[W_gzy_adj] = gtk_adjustment_new(1.0,0.0,1.00,0.001,0.01,.01);
 	  cw[W_gzy] = gtk_vscrollbar_new(GTK_ADJUSTMENT(adjs[W_gzy_adj]));
 	  set_background(cw[W_gzy],(ss->sgx)->zoom_color);
-	  gtk_table_attach(GTK_TABLE(cw[W_graph_window]), cw[W_gzy], 4, 5, 0, 2, GTK_FILL, GTK_EXPAND | GTK_FILL | GTK_SHRINK, 0, 0);
+	  gtk_table_attach(GTK_TABLE(cw[W_graph_window]), cw[W_gzy], 4, 5, 0, 2, 
+			   (GtkAttachOptions)(GTK_FILL), 
+			   (GtkAttachOptions)(GTK_EXPAND | GTK_FILL | GTK_SHRINK), 
+			   0, 0);
 	  gtk_signal_connect(GTK_OBJECT(adjs[W_gzy_adj]),"value_changed",GTK_SIGNAL_FUNC(W_gzy_ValueChanged_Callback),(gpointer)cp);
 	  gtk_widget_show(cw[W_gzy]);
 	  

@@ -1409,13 +1409,17 @@ void mus_audio_restore (void)
     #if (OPT_OSS)
       #include "/opt/oss/include/sys/soundcard.h"
     #else
-      #if defined(HAVE_SYS_SOUNDCARD_H) || defined(LINUX) || defined(UW2)
-        #include <sys/soundcard.h>
+      #if (VAR_LIB_OSS)
+        #include "/var/lib/oss/include/sys/soundcard.h"
       #else
-        #if defined(HAVE_MACHINE_SOUNDCARD_H)
-          #include <machine/soundcard.h>
+        #if defined(HAVE_SYS_SOUNDCARD_H) || defined(LINUX) || defined(UW2)
+          #include <sys/soundcard.h>
         #else
-          #include <soundcard.h>
+          #if defined(HAVE_MACHINE_SOUNDCARD_H)
+            #include <machine/soundcard.h>
+          #else
+            #include <soundcard.h>
+          #endif
         #endif
       #endif
     #endif

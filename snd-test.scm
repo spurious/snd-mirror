@@ -21,11 +21,10 @@
 
 
 ;;; TODO  add to test-spectral-difference set (reading o2 etc)
-;;; TODO  also mix-selection (from menu) is untested currently
 ;;; TODO  formant-bank
 ;;; TODO  cscm + eff test (i.e. dynamically loaded code)
 ;;; TODO  all dialogs need more extensive tests (perhaps built-in but undocumented test funcs)
-;;; TODO  menu-hook (how? -- via accelerators?)
+;;; TODO  menu-hook (how?)
 
 (use-modules (ice-9 format) (ice-9 debug))
 

@@ -5,7 +5,7 @@
                                   [Image]
 
 Snd is a sound editor modelled loosely after Emacs and an old, sorely-missed
-PDP-10 sound editor named Dpysnd. It can accomodate any number of sounds
+PDP-10 sound editor named Dpysnd. It can accommodate any number of sounds
 each with any number of channels, and can be customized and extended using
 guile and guile-gtk. Snd is free (LGPL); the code is available via anonymous
 ftp as snd-4.tar.gz. Snd has a home page and a CVS repository.
@@ -643,7 +643,7 @@ The distance from the cursor to a mark can be used as a numeric argument for
 other commands by following C-u with C-m. Any number in-between is the
 number of marks to jump forward before getting the distance.
 
-The current marks assoicated with a sound can be saved in a file that Snd
+The current marks associated with a sound can be saved in a file that Snd
 will load automatically later via (save-marks).
 
 Regions
@@ -834,7 +834,7 @@ x and y-axis scrollbars apply to all the channels at once, as do the 'f' and
 furthest right scrollbar affects the placement of the window within the
 overall set of graphs, and the scrollbar on its left zooms in and out of the
 overall graph. For stereo files, this is user-interface overkill, but the
-hope is to accomodate sounds with many channels, making it easy to focus on
+hope is to accommodate sounds with many channels, making it easy to focus on
 particular portions and so on. The View menu Channel style option has the
 same effect but applies to all active multichannel sounds. Control-click the
 unite button to get superimposed channels. If the channels are not combined
@@ -872,7 +872,7 @@ functions:
 
 scale-by scales the current sync'd channels by its arguments, and scale-to
 scales them to its arguments (a "normalization"). The arguments in each case
-are either a list of floats corresponding to each successsive member of the
+are either a list of floats corresponding to each successive member of the
 current set of sync'd channels, or just one argument. In the latter case,
 scale-by uses that scaler for all its channels, and scale-to normalizes all
 the channels together so that the loudest reaches that amplitude (that is,

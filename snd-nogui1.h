@@ -125,7 +125,7 @@ int popup_save_menu(void);
 int popup_normalize_menu(void);
 int popup_info_menu(void);
 int popup_menu_exists(void);
-void set_menu_label(int w, char *label);
+void set_menu_label(int w, const char *label);
 
 int gh_change_menu_label(int which_menu,char *old_label, char *new_label);
 int gh_set_menu_sensitive(int which_menu,char *old_label, int on);
@@ -133,8 +133,12 @@ int gh_menu_is_sensitive(int which_menu,char *old_label);
 int gh_add_to_main_menu(snd_state *ss, char *label, int slot);
 int gh_add_to_menu(snd_state *ss, int which_menu, char *label, int callb);
 int gh_remove_from_menu(int which_menu, char *label);
+#if HAVE_GUILE
+void g_initialize_xgh(snd_state *ss, SCM local_doc);
+void g_init_gxutils(void);
 #if HAVE_HOOKS
 void g_init_gxmenu(void);
+#endif
 #endif
 
 
@@ -206,7 +210,7 @@ int mark_name_width(snd_state *ss, char *txt);
 void clear_window(axis_context *ax);
 void highlight_color(snd_state *ss, int w);
 void white_color(snd_state *ss, int w);
-void set_title(snd_state *ss, char *title);
+void set_title(snd_state *ss, const char *title);
 void check_for_event(snd_state *ss);
 void work_wait(snd_state *ss);
 void recolor_graph(chan_info *cp, int selected);
@@ -305,7 +309,7 @@ void sound_hide_ctrls(snd_info *sp);
 int control_panel_open(snd_info *sp);
 void start_progress_report(snd_info *sp, int from_enved);
 void finish_progress_report(snd_info *sp, int from_enved);
-void progress_report(snd_info *sp, char *funcname, int curchan, int chans, Float pct, int from_enved);
+void progress_report(snd_info *sp, const char *funcname, int curchan, int chans, Float pct, int from_enved);
 void reflect_amp_env_in_progress(snd_info *sp);
 
 
@@ -327,6 +331,7 @@ int file_dialog_is_active(void);
 file_info *get_raw_file_info(char *filename, snd_state *ss);
 file_info *get_reasonable_file_info(char *filename, snd_state *ss, file_info *hdr);
 void edit_header(snd_info *sp);
+void make_a_big_star_outa_me(char *shortname, int big_star);
 #if HAVE_GUILE
   void g_initialize_xgfile(SCM local_doc);
 #endif

@@ -613,7 +613,7 @@ static SCM g_set_graph_cursor(SCM curs)
 {
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(curs)),curs,SCM_ARG1,"set-" S_graph_cursor);
   state->Graph_Cursor = gh_scm2int(curs);
-  (state->sgx)->graph_cursor = gdk_cursor_new(in_graph_cursor(state));
+  (state->sgx)->graph_cursor = gdk_cursor_new((GdkCursorType)in_graph_cursor(state));
   return(curs);
 }
 

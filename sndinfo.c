@@ -25,10 +25,10 @@
 #endif
 
 #ifdef DEBUG_MEMORY
-void *mem_calloc(size_t len, size_t size, char *func, char *file, int line) {return(calloc(len,size));}
-void *mem_malloc(size_t len, char *func, char *file, int line) {return(malloc(len));}
-void mem_free(void *ptr, char *func, char *file, int line) {free(ptr);}
-void *mem_realloc(void *ptr, size_t size, char *func, char *file, int line) {return(realloc(ptr,size));}
+void *mem_calloc(size_t len, size_t size, const char *func, const char *file, int line) {return(calloc(len,size));}
+void *mem_malloc(size_t len, const char *func, const char *file, int line) {return(malloc(len));}
+void mem_free(void *ptr, const char *func, const char *file, int line) {free(ptr);}
+void *mem_realloc(void *ptr, size_t size, const char *func, const char *file, int line) {return(realloc(ptr,size));}
 #endif
 
 int main(int argc, char *argv[])

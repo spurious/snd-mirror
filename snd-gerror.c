@@ -39,17 +39,26 @@ static void create_snd_error_dialog(snd_state *ss, int popup)
 
   table = gtk_table_new (2, 2, FALSE);
   snd_error_history = gtk_text_new (NULL, NULL);
-  gtk_table_attach(GTK_TABLE(table), snd_error_history, 0, 1, 0, 1, GTK_FILL | GTK_EXPAND, GTK_FILL | GTK_EXPAND | GTK_SHRINK, 0, 0);
+  gtk_table_attach(GTK_TABLE(table), snd_error_history, 0, 1, 0, 1, 
+		   (GtkAttachOptions)(GTK_FILL | GTK_EXPAND), 
+		   (GtkAttachOptions)(GTK_FILL | GTK_EXPAND | GTK_SHRINK), 
+		   0, 0);
   gtk_text_set_editable(GTK_TEXT(snd_error_history),FALSE);
   gtk_text_set_word_wrap(GTK_TEXT(snd_error_history),FALSE);
   gtk_widget_show (snd_error_history);
   hscrollbar = gtk_hscrollbar_new(GTK_TEXT(snd_error_history)->hadj);
   set_background(hscrollbar,(ss->sgx)->position_color);
-  gtk_table_attach(GTK_TABLE(table),hscrollbar, 0, 1, 1, 2, GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
+  gtk_table_attach(GTK_TABLE(table),hscrollbar, 0, 1, 1, 2, 
+		   (GtkAttachOptions)(GTK_EXPAND | GTK_FILL), 
+		   (GtkAttachOptions)(GTK_FILL), 
+		   0, 0);
   gtk_widget_show (hscrollbar);
   vscrollbar = gtk_vscrollbar_new(GTK_TEXT (snd_error_history)->vadj);
   set_background(vscrollbar,(ss->sgx)->position_color);
-  gtk_table_attach(GTK_TABLE(table),vscrollbar, 1, 2, 0, 1, GTK_FILL, GTK_EXPAND | GTK_FILL | GTK_SHRINK, 0, 0);
+  gtk_table_attach(GTK_TABLE(table),vscrollbar, 1, 2, 0, 1,
+		   (GtkAttachOptions)(GTK_FILL), 
+		   (GtkAttachOptions)(GTK_EXPAND | GTK_FILL | GTK_SHRINK), 
+		   0, 0);
   gtk_widget_show (vscrollbar);
 
   gtk_container_add(GTK_CONTAINER(GTK_DIALOG(snd_error_dialog)->vbox),table);

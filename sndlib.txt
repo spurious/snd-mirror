@@ -1,10 +1,8 @@
-html>
-
 SndLib
 
                  Bill Schottstaedt (bil@ccrma.stanford.edu)
 
-                  snd.html extsnd.html grfsnd.html clm.html
+   related documentationsnd.html   extsnd.html    grfsnd.html   clm.html
 
 Contents
 
@@ -445,8 +443,6 @@ Before using any of these functions, call init_mus_module. Errors are
 reported through mus_error which can be redirected or muffled. See clm2scm.c
 for an example.
 
-  ------------------------------------------------------------------------
-
 Examples
 
 In the following examples I've omitted the usual garrulous C-header gab and
@@ -769,14 +765,10 @@ static SCM call_phase-vocoder(void)
   /* etc */
 }
 
-  ------------------------------------------------------------------------
-
 Other Examples
 
 The primary impetus for the sound library was the development of Snd and
 CLM, both of which are freely available.
-
-  ------------------------------------------------------------------------
 
 How to Make Sndlib and the examples
 
@@ -849,8 +841,6 @@ ld -shared io.o headers.o audio.o sound.o -o sndlib.so
 (in Linux), or (to include the CLM module),
 
 ld -shared io.o headers.o audio.o sound.o clm.o -o sndlib.so
-
-  ------------------------------------------------------------------------
 
 Current Status
 
@@ -1067,7 +1057,7 @@ translations of the constants and functions described above into Scheme.
   mus-sound-close-input (fd)               close sound file
   mus-sound-close-output (fd bytes)        close sound file and update its length indication, if any
   mus-sound-read (fd beg end chans sdata)  read data from sound file fd loading the data array from beg to end
-                                           sdata is a sound-data object that should be able to accomodate the read
+                                           sdata is a sound-data object that should be able to accommodate the read
   mus-sound-write (fd beg end chans sdata) write data to sound file fd
   mus-sound-seek (fd offset origin)        complicated -- see mus_sound_seek above
   mus-sound-seek-frame (fd frame)          move to frame in sound file fd
@@ -1148,4 +1138,4 @@ translations of the constants and functions described above into Scheme.
         (mus-sound-close-input sound-fd)
         (mus-audio-close audio-fd)))))
 
-                  snd.html extsnd.html grfsnd.html clm.html
+   related documentationsnd.html   extsnd.html    grfsnd.html   clm.html

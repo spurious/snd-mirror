@@ -4574,7 +4574,7 @@ static void reverse_sound(chan_info *ncp, int over_selection)
 	      else file_change_samples(0,dur,ofile,cp,0,DELETE_ME,LOCK_MIXES,S_reverse_sound);
 	      if (ofile) {free(ofile); ofile=NULL;}
 	    }
-	  else change_samples(si->begs[i],dur,data[0],cp,LOCK_MIXES,(over_selection) ? S_reverse_selection : S_reverse_sound);
+	  else change_samples(si->begs[i],dur,data[0],cp,LOCK_MIXES,(char *)((over_selection) ? S_reverse_selection : S_reverse_sound));
 	  if (ep) cp->amp_envs[cp->edit_ctr] = ep;
 	  ep = NULL;
 	  if (cp->marks)
@@ -5725,9 +5725,9 @@ void snd_minibuffer_activate(snd_info *sp, int keysym)
 	    {
 	      if (sp->amping != 1)
 		apply_env(active_chan,e,active_chan->cursor,sp->amping,1.0,sp->reging,NOT_FROM_ENVED,
-			  (sp->reging) ? "C-x a" : "C-x C-a");
+			  (char *)((sp->reging) ? "C-x a" : "C-x C-a"));
 	      else apply_env(active_chan,e,0,current_ed_samples(active_chan),1.0,sp->reging,NOT_FROM_ENVED,
-			     (sp->reging) ? "C-x a" : "C-x C-a");
+			     (char *)((sp->reging) ? "C-x a" : "C-x C-a"));
 	    }
 	  sp->reging = 0;
 	  sp->amping = 0;
@@ -5904,7 +5904,7 @@ int keyboard_command (chan_info *cp, int keysym, int state)
   /* should we check snd_keypad_Decimal as well as snd_K_period? -- is this assuming USA float syntax? */
   /*   (similarly snd_keypad_0...9) */
 
-  if ((selection_creation_in_progress) &&
+  if ((selection_creation_in_progress()) &&
       ((extended_mode) || (stop_selecting(keysym,state))))
     finish_selection_creation();
 
@@ -6405,6 +6405,9 @@ int keyboard_command (chan_info *cp, int keysym, int state)
 	      break;
 	    default:
 	      /* try to send unbuckified random keyboard input to the lisp listener */
+
+	      /* TODO: if Meta key here and menu accelerators... */
+	    
 	      if (ss->listening != LISTENER_CLOSED)
 		{
 		  if (listener_height() > 5)

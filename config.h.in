@@ -47,6 +47,7 @@
 #undef USR_LIB_OSS
 #undef USR_LOCAL_LIB_OSS
 #undef OPT_OSS
+#undef VAR_LIB_OSS
 #undef HAVE_LIBC_H
 #undef HAVE_SYS_VFS_H
 #undef HAVE_SYS_STATFS_H

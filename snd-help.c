@@ -256,13 +256,14 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
-2-Nov:   added insert-selection, mix-selection, delete-selection.\n\
-1-Nov:   added filter-env-in-hz switch.\n\
+6-Nov:   various cosmetic changes for the new g++ (Redhat 7.0).\n\
+2-Nov:   insert-selection, mix-selection, delete-selection.\n\
+1-Nov:   filter-env-in-hz switch.\n\
 31-Oct:  syncing -> sync. Set! extended to frames, maxamp, x|y-zoom|position-slider.\n\
-30-Oct:  added examp.scm soft-port example of redirecting display to Snd's listener.\n\
-         added support for GSL 0.7\n\
+30-Oct:  examp.scm soft-port example of redirecting display to Snd's listener.\n\
+         support for GSL 0.7\n\
          scale-selection-to bugfix.\n\
-         added selection-creates-region switch, channel-sync.\n\
+         selection-creates-region switch, channel-sync.\n\
 25-Oct:  emacs subjob 'read: unexpected \")\"' bugfix, I hope.\n\
 24-Oct:  eps-bottom-margin and eps-left-margin (for Print command).\n\
          menu-hook\n\
@@ -277,8 +278,8 @@ void news_help(snd_state *ss)
          removed .sndrc and other related stuff.\n\
          removed Show Marks menu item.\n\
 16-Oct:  snd 4.7.\n\
-         added optional environ arg to loop-samples and clm example to grfsnd.html.\n\
-11-Oct:  added delete button in envelope editor.\n\
+         optional environ arg to loop-samples and clm example to grfsnd.html.\n\
+11-Oct:  delete button in envelope editor.\n\
 10-Oct:  removed scaler arg to mix-region and associated kbd scaler arg.\n\
 9-Oct:   bird.scm.  added origin arg to as-one-edit.\n\
 ",

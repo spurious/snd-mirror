@@ -134,19 +134,28 @@ void update_stats_display(snd_state *ss, int all)
 
       table = gtk_table_new(2, 2, FALSE);
       stats_form = gtk_text_new(NULL,NULL);
-      gtk_table_attach (GTK_TABLE(table), stats_form, 0, 1, 0, 1, GTK_FILL | GTK_EXPAND, GTK_FILL | GTK_EXPAND | GTK_SHRINK, 0, 0);
+      gtk_table_attach (GTK_TABLE(table), stats_form, 0, 1, 0, 1, 
+			(GtkAttachOptions)(GTK_FILL | GTK_EXPAND), 
+			(GtkAttachOptions)(GTK_FILL | GTK_EXPAND | GTK_SHRINK), 
+			0, 0);
       gtk_text_set_editable(GTK_TEXT(stats_form),FALSE);
       gtk_text_set_word_wrap(GTK_TEXT(stats_form),FALSE);
       gtk_widget_show(stats_form);
 
       hscrollbar = gtk_hscrollbar_new (GTK_TEXT(stats_form)->hadj);
       set_background(hscrollbar,(ss->sgx)->position_color);
-      gtk_table_attach (GTK_TABLE (table), hscrollbar, 0, 1, 1, 2, GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
+      gtk_table_attach (GTK_TABLE (table), hscrollbar, 0, 1, 1, 2, 
+			(GtkAttachOptions)(GTK_EXPAND | GTK_FILL), 
+			(GtkAttachOptions)(GTK_FILL), 
+			0, 0);
       gtk_widget_show (hscrollbar);
 
       vscrollbar = gtk_vscrollbar_new (GTK_TEXT (stats_form)->vadj);
       set_background(vscrollbar,(ss->sgx)->position_color);
-      gtk_table_attach (GTK_TABLE (table), vscrollbar, 1, 2, 0, 1, GTK_FILL, GTK_EXPAND | GTK_FILL | GTK_SHRINK, 0, 0);
+      gtk_table_attach (GTK_TABLE (table), vscrollbar, 1, 2, 0, 1, 
+			(GtkAttachOptions)(GTK_FILL), 
+			(GtkAttachOptions)(GTK_EXPAND | GTK_FILL | GTK_SHRINK), 
+			0, 0);
       gtk_widget_show (vscrollbar);
 
       gtk_container_add(GTK_CONTAINER(GTK_DIALOG(stats_window)->vbox),table);

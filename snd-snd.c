@@ -2291,9 +2291,9 @@ void g_init_snd(SCM local_doc)
   name_click_hook = gh_define(S_name_click_hook,SCM_BOOL_F);
 #endif
 
-  DEFINE_PROC(gh_new_procedure0_1(S_soundQ,SCM_FNC g_soundQ),H_soundQ);
-  DEFINE_PROC(gh_new_procedure0_2(S_bomb,SCM_FNC g_bomb),H_bomb);
-  DEFINE_PROC(gh_new_procedure1_0(S_find_sound,SCM_FNC g_find_sound),H_find_sound);
+  DEFINE_PROC(gh_new_procedure(S_soundQ,SCM_FNC g_soundQ,0,1,0),H_soundQ);
+  DEFINE_PROC(gh_new_procedure(S_bomb,SCM_FNC g_bomb,0,2,0),H_bomb);
+  DEFINE_PROC(gh_new_procedure(S_find_sound,SCM_FNC g_find_sound,1,0,0),H_find_sound);
 
   define_procedure_with_setter(S_channels,SCM_FNC g_channels,H_channels,
 			       "set-" S_channels,SCM_FNC g_set_channels,local_doc,0,1,0,2);
@@ -2316,11 +2316,11 @@ void g_init_snd(SCM local_doc)
   define_procedure_with_setter(S_comment,SCM_FNC g_comment,H_comment,
 			       "set-" S_comment,SCM_FNC g_set_comment,local_doc,0,1,0,2);
 
-  DEFINE_PROC(gh_new_procedure0_1(S_file_name,SCM_FNC g_file_name),H_file_name);
-  DEFINE_PROC(gh_new_procedure0_1(S_short_file_name,SCM_FNC g_short_file_name),H_short_file_name);
-  DEFINE_PROC(gh_new_procedure0_1(S_save_control_panel,SCM_FNC g_save_control_panel),H_save_control_panel);
-  DEFINE_PROC(gh_new_procedure0_1(S_restore_control_panel,SCM_FNC g_restore_control_panel),H_restore_control_panel);
-  DEFINE_PROC(gh_new_procedure0_1(S_reset_control_panel,SCM_FNC g_reset_control_panel),H_reset_control_panel);
+  DEFINE_PROC(gh_new_procedure(S_file_name,SCM_FNC g_file_name,0,1,0),H_file_name);
+  DEFINE_PROC(gh_new_procedure(S_short_file_name,SCM_FNC g_short_file_name,0,1,0),H_short_file_name);
+  DEFINE_PROC(gh_new_procedure(S_save_control_panel,SCM_FNC g_save_control_panel,0,1,0),H_save_control_panel);
+  DEFINE_PROC(gh_new_procedure(S_restore_control_panel,SCM_FNC g_restore_control_panel,0,1,0),H_restore_control_panel);
+  DEFINE_PROC(gh_new_procedure(S_reset_control_panel,SCM_FNC g_reset_control_panel,0,1,0),H_reset_control_panel);
 
   define_procedure_with_setter(S_selected_sound,SCM_FNC g_selected_sound,H_selected_sound,
 			       "set-" S_selected_sound,SCM_FNC g_select_sound,local_doc,0,0,0,1);
@@ -2328,20 +2328,20 @@ void g_init_snd(SCM local_doc)
   define_procedure_with_setter(S_selected_channel,SCM_FNC g_selected_channel,H_selected_channel,
 			       "set-" S_selected_channel,SCM_FNC g_set_selected_channel,local_doc,0,1,0,2);
 
-  DEFINE_PROC(gh_new_procedure0_1(S_select_sound,SCM_FNC g_select_sound),H_select_sound);
-  DEFINE_PROC(gh_new_procedure0_1(S_select_channel,SCM_FNC g_select_channel),H_select_channel);
+  DEFINE_PROC(gh_new_procedure(S_select_sound,SCM_FNC g_select_sound,0,1,0),H_select_sound);
+  DEFINE_PROC(gh_new_procedure(S_select_channel,SCM_FNC g_select_channel,0,1,0),H_select_channel);
 
-  DEFINE_PROC(gh_new_procedure0_1(S_close_sound,SCM_FNC g_close_sound),H_close_sound);
-  DEFINE_PROC(gh_new_procedure0_1(S_update_sound,SCM_FNC g_update_sound),H_update_sound);
-  DEFINE_PROC(gh_new_procedure0_1(S_save_sound,SCM_FNC g_save_sound),H_save_sound);
-  DEFINE_PROC(gh_new_procedure1_0(S_open_sound,SCM_FNC g_open_sound),H_open_sound);
-  DEFINE_PROC(gh_new_procedure4_0(S_open_raw_sound,SCM_FNC g_open_raw_sound),H_open_raw_sound);
-  DEFINE_PROC(gh_new_procedure1_0(S_open_alternate_sound,SCM_FNC g_open_alternate_sound),H_open_alternate_sound);
-  DEFINE_PROC(gh_new_procedure1_0(S_view_sound,SCM_FNC g_view_sound),H_view_sound);
+  DEFINE_PROC(gh_new_procedure(S_close_sound,SCM_FNC g_close_sound,0,1,0),H_close_sound);
+  DEFINE_PROC(gh_new_procedure(S_update_sound,SCM_FNC g_update_sound,0,1,0),H_update_sound);
+  DEFINE_PROC(gh_new_procedure(S_save_sound,SCM_FNC g_save_sound,0,1,0),H_save_sound);
+  DEFINE_PROC(gh_new_procedure(S_open_sound,SCM_FNC g_open_sound,1,0,0),H_open_sound);
+  DEFINE_PROC(gh_new_procedure(S_open_raw_sound,SCM_FNC g_open_raw_sound,4,0,0),H_open_raw_sound);
+  DEFINE_PROC(gh_new_procedure(S_open_alternate_sound,SCM_FNC g_open_alternate_sound,1,0,0),H_open_alternate_sound);
+  DEFINE_PROC(gh_new_procedure(S_view_sound,SCM_FNC g_view_sound,1,0,0),H_view_sound);
   DEFINE_PROC(gh_new_procedure(S_new_sound,SCM_FNC g_new_sound,1,5,0),H_new_sound);
-  DEFINE_PROC(gh_new_procedure0_1(S_revert_sound,SCM_FNC g_revert_sound),H_revert_sound);
+  DEFINE_PROC(gh_new_procedure(S_revert_sound,SCM_FNC g_revert_sound,0,1,0),H_revert_sound);
   DEFINE_PROC(gh_new_procedure(S_save_sound_as,SCM_FNC g_save_sound_as,1,5,0),H_save_sound_as);
-  DEFINE_PROC(gh_new_procedure0_2(S_call_apply,SCM_FNC g_call_apply),H_call_apply);
+  DEFINE_PROC(gh_new_procedure(S_call_apply,SCM_FNC g_call_apply,0,2,0),H_call_apply);
 
 
   define_procedure_with_reversed_setter(S_filter_env,SCM_FNC g_filter_env,H_filter_env,

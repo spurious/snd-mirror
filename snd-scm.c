@@ -5,6 +5,7 @@
  *         but would be much faster if we can wait until the amp-env is computed
  * TODO  mark-moved-hook? sample-color?
  * TODO  should snd-out soft-port (examp.scm) be built-in?
+ * TODO  insert-sound seems out-of-place -- shouldn't it follow sync and provide beg as arg (not cursor)?
  */
 
 #if HAVE_GUILE
@@ -553,7 +554,7 @@ static char *stdin_check_for_full_expression(char *newstr)
   end_of_text = check_balance(stdin_str,0,strlen(stdin_str)); /* can be strlen! */
   if (end_of_text > 0)
     {
-      if (end_of_text+1 < strlen(stdin_str)) /* is this needed?  see warning above */
+      if (end_of_text+1 < snd_strlen(stdin_str)) /* is this needed?  see warning above */
 	stdin_str[end_of_text+1] = 0;
       return(stdin_str);
     }
@@ -1865,7 +1866,9 @@ static SCM mix_vct(SCM obj, SCM beg, SCM snd, SCM chn, SCM with_consoles, SCM or
 	    data[0][i] = MUS_FLOAT_TO_SAMPLE(v->data[i]);
 	  if (gh_string_p(origin))
 	    edname = gh_scm2newstr(origin,NULL);
-	  mix_id = mix_array(bg,len,data,cp,1,1,SND_SRATE(cp[0]->sound),(edname == NULL) ? S_mix_vct : edname,with_mixers);
+	  mix_id = mix_array(bg,len,data,cp,1,1,SND_SRATE(cp[0]->sound),
+			     (char *)((edname == NULL) ? S_mix_vct : edname),
+			     with_mixers);
 	  if (edname) free(edname);
 	  FREE(data[0]);
 	  FREE(data);

@@ -811,7 +811,7 @@ static SCM g_sound_print_cache(void)
 #endif
 
 #ifdef __cplusplus
-  static SCM gh_new_procedure5_1 (char *proc_name,SCM (*fn)(SCM,SCM,SCM,SCM,SCM,SCM)) {return(gh_new_procedure(proc_name,(SCM (*)(...))fn,5,1,0));}
+  static SCM gh_new_procedure5_1 (char *proc_name,SCM (*fn)(SCM,SCM,SCM,SCM,SCM,SCM)) {return(gh_new_procedure(proc_name,SCM_FNC fn,5,1,0));}
 #else
   static SCM gh_new_procedure5_1 (char *proc_name,SCM (*fn)()) {return(gh_new_procedure(proc_name,fn,5,1,0));}
 #endif

@@ -265,10 +265,10 @@ void set_main_color_of_widget (Widget w,void *userptr)
 void highlight_color(snd_state *ss, Widget w) {XmChangeColor(w,(ss->sgx)->highlight_color);}
 void white_color(snd_state *ss, Widget w) {XmChangeColor(w,(ss->sgx)->white);}
 
-void set_button_label_normal(Widget button,char *str) 
+void set_button_label_normal(Widget button, const char *str) 
 {
   XmString s1;
-  s1=XmStringCreate(str,"button_font");
+  s1=XmStringCreate((char *)str,"button_font");
 #if (USE_RENDITIONS)
   XtVaSetValues(button,XmNlabelString,s1,XmNrenderTable,BUTTON_FONT(get_global_state()),NULL);
 #else
@@ -277,10 +277,10 @@ void set_button_label_normal(Widget button,char *str)
   XmStringFree(s1);
 }
 
-void set_button_label_bold(Widget button,char *str)
+void set_button_label_bold(Widget button, const char *str)
 {
   XmString s1;
-  s1=XmStringCreate(str,"bold_button_font");
+  s1=XmStringCreate((char *)str,"bold_button_font");
 #if (USE_RENDITIONS)
   XtVaSetValues(button,XmNlabelString,s1,XmNrenderTable,BOLD_BUTTON_FONT(get_global_state()),NULL);
 #else
@@ -289,20 +289,20 @@ void set_button_label_bold(Widget button,char *str)
   XmStringFree(s1);
 }
 
-void set_label(Widget label,char *str)
+void set_label(Widget label, const char *str)
 {
   XmString s1;
-  s1=XmStringCreate(str,XmFONTLIST_DEFAULT_TAG);
+  s1=XmStringCreate((char *)str,XmFONTLIST_DEFAULT_TAG);
   XtVaSetValues(label,XmNlabelString,s1,NULL);
   XmStringFree(s1);
 }
 
-void set_button_label (Widget label,char *str) {set_label(label,str);}
+void set_button_label (Widget label, const char *str) {set_label(label,str);}
 
 
-void set_title(snd_state *ss, char *title)
+void set_title(snd_state *ss, const char *title)
 {
-  XtVaSetValues(MAIN_SHELL(ss),XmNtitle,title,NULL);
+  XtVaSetValues(MAIN_SHELL(ss),XmNtitle,(char*)title,NULL);
 }
 
 static int complain_about_focus_policy = 1;

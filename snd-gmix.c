@@ -265,7 +265,7 @@ static void Amp_Env_Display(GtkWidget *w, snd_state *ss)
       axis_cp = new_env_axis(ss);
       fixup_axis_context(axis_cp->axis->ax,w_env,ax->gc);
     }
-  init_env_axes(axis_cp,"mix amp env",ex0,ey0,widget_width(w),widget_height(w),ex0,ex1,ey0,ey1);
+  init_env_axes(axis_cp,"mix amp env",(int)ex0,(int)ey0,widget_width(w),widget_height(w),ex0,ex1,ey0,ey1);
 
   ap = axis_cp->axis;
 

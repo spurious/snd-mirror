@@ -368,7 +368,7 @@ static int forgetting = 0;
 static int mem_location = -1;
 static int mem_locations = 0;
 
-static int find_mem_location(char *ur_func, char *file, int line)
+static int find_mem_location(const char *ur_func, const char *file, int line)
 {
   int i;
   char *func = NULL;
@@ -377,7 +377,7 @@ static int find_mem_location(char *ur_func, char *file, int line)
       func = (char *)calloc(strlen(encloser)+strlen(ur_func)+4,sizeof(char));
       sprintf(func,"%s->%s",encloser,ur_func);
     }
-  else func = ur_func;
+  else func = (char *)ur_func;
   for (i=0;i<=mem_location;i++)
     {
       if ((line == lines[i]) &&
@@ -418,7 +418,7 @@ static int find_mem_location(char *ur_func, char *file, int line)
   return(mem_location);
 }
 
-static void forget_pointer(void *ptr, char *func, char *file, int line)
+static void forget_pointer(void *ptr, const char *func, const char *file, int line)
 {
   int i;
   if (ptr == NULL) {fprintf(stderr,"attempt to free NULL"); abort();}
@@ -431,7 +431,7 @@ static void forget_pointer(void *ptr, char *func, char *file, int line)
   if (forgetting == 0) {fprintf(stderr,"forget %p ",ptr); abort();}
 }
 
-static void remember_pointer(void *ptr, size_t len, char *func, char *file, int line)
+static void remember_pointer(void *ptr, size_t len, const char *func, const char *file, int line)
 {
   int i,least=10000,least_loc=-1;
   for (i=0;i<MEM_SIZE;i++)
@@ -455,7 +455,7 @@ static void remember_pointer(void *ptr, size_t len, char *func, char *file, int 
 
 #define MAX_MALLOC (1 << 24)
 
-void *mem_calloc(size_t len, size_t size, char *func, char *file, int line)
+void *mem_calloc(size_t len, size_t size, const char *func, const char *file, int line)
 {
   void *ptr;
 #if DEBUGGING
@@ -470,7 +470,7 @@ void *mem_calloc(size_t len, size_t size, char *func, char *file, int line)
   return(ptr);
 }
 
-void *mem_malloc(size_t len, char *func, char *file, int line)
+void *mem_malloc(size_t len, const char *func, const char *file, int line)
 {
   void *ptr;
 #if DEBUGGING
@@ -485,13 +485,13 @@ void *mem_malloc(size_t len, char *func, char *file, int line)
   return(ptr);
 }
 
-void mem_free(void *ptr, char *func, char *file, int line)
+void mem_free(void *ptr, const char *func, const char *file, int line)
 {
   forget_pointer(ptr,func,file,line);
   free(ptr);
 }
 
-void *mem_realloc(void *ptr, size_t size, char *func, char *file, int line)
+void *mem_realloc(void *ptr, size_t size, const char *func, const char *file, int line)
 {
   void *new_ptr;
 #if DEBUGGING

@@ -772,7 +772,7 @@ static SCM g_array_interp(SCM obj, SCM phase, SCM size) /* opt size */
 }
 
 #ifdef __cplusplus
-  static SCM gh_new_procedure3_1 (char *proc_name,SCM (*fn)(SCM,SCM,SCM,SCM)) {return(gh_new_procedure(proc_name,(SCM (*)(...))fn,3,1,0));}
+  static SCM gh_new_procedure3_1 (char *proc_name,SCM (*fn)(SCM,SCM,SCM,SCM)) {return(gh_new_procedure(proc_name,SCM_FNC fn,3,1,0));}
 #else
   static SCM gh_new_procedure3_1 (char *proc_name,SCM (*fn)()) {return(gh_new_procedure(proc_name,fn,3,1,0));}
 #endif
@@ -1252,10 +1252,10 @@ static SCM g_mus_apply(SCM arglist)
 
 static void init_oscil(void)
 {
-  DEFINE_PROC(gh_new_procedure1_0(S_oscil_p,SCM_FNC g_oscil_p),H_oscil_p);
+  DEFINE_PROC(gh_new_procedure(S_oscil_p,SCM_FNC g_oscil_p,1,0,0),H_oscil_p);
   DEFINE_PROC(gh_new_procedure(S_make_oscil,SCM_FNC g_make_oscil,0,4,0),H_make_oscil);
-  DEFINE_PROC(gh_new_procedure1_2(S_oscil,SCM_FNC g_oscil),H_oscil);
-  DEFINE_PROC(gh_new_procedure2_2(S_oscil_bank,SCM_FNC g_oscil_bank),H_oscil_bank);
+  DEFINE_PROC(gh_new_procedure(S_oscil,SCM_FNC g_oscil,1,2,0),H_oscil);
+  DEFINE_PROC(gh_new_procedure(S_oscil_bank,SCM_FNC g_oscil_bank,2,2,0),H_oscil_bank);
   DEFINE_PROC(gh_new_procedure(S_mus_apply,SCM_FNC g_mus_apply,0,0,1),H_mus_apply);
 }
 

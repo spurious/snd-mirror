@@ -228,7 +228,7 @@ static void sound_mus_error(int type, char *msg)
   else (*old_sound_handler)(type,msg);
 }
 
-static void set_sound_error(const char *lfile, int line, char *sfunc)
+static void set_sound_error(const char *lfile, int line, const char *sfunc)
 {
   local_filename = lfile;
   local_line = line;

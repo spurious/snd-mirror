@@ -1355,7 +1355,7 @@ static void unset_dac_print(void)
   mus_print_set_handler(old_dac_printer);
 }
 
-static void dac_error(dac_state *dacp, char *file, int line, char *function)
+static void dac_error(dac_state *dacp, const char *file, int line, const char *function)
 {
   snd_error("can't play %s\n  (%s)\n  [%s[%d] %s]",
 	    describe_dac(dacp,0),

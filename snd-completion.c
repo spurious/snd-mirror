@@ -651,6 +651,6 @@ static SCM g_apropos(SCM text)
 
 void g_init_completions(SCM local_doc)
 {
-  DEFINE_PROC(gh_new_procedure1_0(S_snd_apropos,SCM_FNC g_apropos),H_apropos);
+  DEFINE_PROC(gh_new_procedure(S_snd_apropos,SCM_FNC g_apropos,1,0,0),H_apropos);
 }
 #endif

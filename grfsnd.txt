@@ -30,8 +30,8 @@ Snd Startup
 
 Snd resources
 
-In the Motif version, there are a few X-style resources that Snd explicity
-looks for (see Snd.ad):
+In the Motif version, there are a few X-style resources that Snd looks for
+(see Snd.ad):
 
 initFile       "~/.snd"
 epsFile        "snd.eps"
@@ -113,7 +113,7 @@ snd*helpTextFont:       9x15
 
 The autoResize resource determines how Snd acts when files are added or
 removed from its overall display. The default (1) causes Snd to expand or
-contract the main window's size to accomodate the sounds (many people find
+contract the main window's size to accommodate the sounds (many people find
 this distracting); if autoResize is 0, the outer window size remains the
 same, and the sounds try to fit as best they can. See also the variable
 auto-resize. If overwriteCheck is 1, Snd asks before overwriting existing
@@ -950,7 +950,7 @@ See clm.html for full details. Optional args are in italics.
   comb?               (gen)                        #t if gen is comb filter
   contrast-enhancement(input (index 1.0))          a kind of phase modulation or companding
   convolution         (sig1 sig2 n)                convolve sig1 with sig2 (size n), returning new sig1
-  convolve            (gen input-function)         convolve generator
+  convolve            (gen input-function)          convolve generator
   convolve?           (gen)                        #t if gen is convolve generator
   convolve-files      (f1 f2 maxamp outf)          convolve f1 with f2, normalize to maxamp, write outf
   db->linear          (db)                         translate dB value to linear

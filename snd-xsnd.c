@@ -2724,7 +2724,7 @@ void hide_controls(snd_state *ss)
  * if no xpm, send a string, else post an hourglass
  */
 
-void progress_report(snd_info *sp, char *funcname, int curchan, int chans, Float pct, int from_enved)
+void progress_report(snd_info *sp, const char *funcname, int curchan, int chans, Float pct, int from_enved)
 {
   int which;
 #if HAVE_XPM

@@ -1138,7 +1138,7 @@ static void internal_trigger_set(Float val)
   make_trigger_label(val);
   if (!(rp->recording)) /* else wait for current session to end (via click) */
     {
-      s1 = XmStringCreate((rp->triggering) ? STR_Triggered_Record : STR_Record,XmFONTLIST_DEFAULT_TAG);
+      s1 = XmStringCreate((char *)((rp->triggering) ? STR_Triggered_Record : STR_Record),XmFONTLIST_DEFAULT_TAG);
       XtVaSetValues(record_button,XmNlabelString,s1,NULL);
       XmStringFree(s1);
     }
@@ -3067,7 +3067,7 @@ static void Reset_Record_Callback(Widget w,XtPointer clientData,XtPointer callDa
       s1 = XmStringCreate(STR_Reset,XmFONTLIST_DEFAULT_TAG);
       XtVaSetValues(reset_button,XmNlabelString,s1,NULL);
       XmStringFree(s1);
-      s1 = XmStringCreate((rp->triggering) ? STR_Triggered_Record : STR_Record,XmFONTLIST_DEFAULT_TAG);
+      s1 = XmStringCreate((char *)((rp->triggering) ? STR_Triggered_Record : STR_Record),XmFONTLIST_DEFAULT_TAG);
       XtVaSetValues(record_button,XmNlabelString,s1,NULL);
       XmStringFree(s1);
       snd_close(rp->output_file_descriptor);
@@ -3130,7 +3130,7 @@ void finish_recording(snd_state *ss, recorder_info *rp)
   s1 = XmStringCreate(STR_Reset,XmFONTLIST_DEFAULT_TAG);
   XtVaSetValues(reset_button,XmNlabelString,s1,NULL);
   XmStringFree(s1);
-  s2 = XmStringCreate((rp->triggering) ? STR_Triggered_Record : STR_Record,XmFONTLIST_DEFAULT_TAG);
+  s2 = XmStringCreate((char *)((rp->triggering) ? STR_Triggered_Record : STR_Record),XmFONTLIST_DEFAULT_TAG);
   XtVaSetValues(record_button,XmNlabelString,s2,NULL);
   XmStringFree(s2);
   snd_close(rp->output_file_descriptor);
