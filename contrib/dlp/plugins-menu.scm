@@ -930,6 +930,60 @@
                           (post-overdrive-dialog))))
 
 
+
+;;; Barry's Satan maximiser
+;;;
+
+(define satan-decay-time 10)
+(define satan-knee-point 0)
+(define satan-dialog #f)
+(define satan-label "Satan maximiser")
+
+(define (cp-satan)
+   (apply-ladspa (make-sample-reader (cursor))
+      (list "satan_maximiser_1408" "satanMaximiser" satan-decay-time satan-knee-point)
+         (- (frames) (cursor))
+         "Satan maximiser"))
+
+(if (and (provided? 'snd-ladspa)
+         (provided? 'xm))
+  (begin
+
+    (define (post-satan-dialog)
+       (if (not (Widget? satan-dialog))
+           (let ((sliders '()))
+             (set! satan-dialog
+                   (make-effect-dialog "satan ladspa plugin"
+                                       (lambda (w context info) (cp-satan))
+                                       (lambda (w context info) (XtUnmanageChild satan-dialog))
+                                       (lambda (w context info)
+                                         (help-dialog "Satan maximiser"
+                                                      "Compresses signals with a stupidly short attack and decay, infinite ratio and hard knee. Not really a compressor, but good harsh distortion.\n\ Decay time (samples): Controls the envelope decay time.\n\ Knee point (dB): Controls the knee roll-off point, i.e. the point above which the compression kicks in. 0 will have no effect, -90 will remove virtually the entire dynamic range."))
+                                       (lambda (w c i)
+                                         (set! satan-decay-time 10)
+                                         (XtSetValues (list-ref sliders 0) (list XmNvalue (inexact->exact (* satan-decay-time 1))))
+                                         (set! satan-knee-point 0)
+                                         (XtSetValues (list-ref sliders 1) (list XmNvalue (inexact->exact (* satan-knee-point 1)))))))
+             (set! sliders
+                   (add-sliders satan-dialog
+                                (list (list "decay time (samples)" 2 10 30
+                                            (lambda (w context info)
+                                              (set! satan-decay-time (/ (.value info) 1)))
+                                            1)
+                                      (list "knee point (dB)" -90 0 0
+                                            (lambda (w context info)
+                                              (set! satan-knee-point (/ (.value info) 1)))
+                                            1))))))
+       (activate-dialog satan-dialog))))
+
+      (let ((child (XtCreateManagedWidget "Satan maximiser" xmPushButtonWidgetClass ladspa-distort-menu
+                                           (list XmNbackground (basic-color)))))
+        (XtAddCallback child XmNactivateCallback
+                        (lambda (w c i)
+                          (post-satan-dialog))))
+
+
+
 ;;; Signal sifter
 ;;;
 
@@ -1252,6 +1306,53 @@
         (XtAddCallback child XmNactivateCallback
                         (lambda (w c i)
                           (post-comb-filter-dialog))))
+
+
+;;; Karaoke
+;;;
+
+(define karaoke-vocal-volume 0)
+(define karaoke-dialog #f)
+(define karaoke-label "Karaoke")
+
+(define (cp-karaoke)
+   (apply-ladspa (make-sample-reader (cursor))
+      (list "karaoke_1409" "amp" karaoke-vocal-volume)
+         (- (frames) (cursor))
+         "Karaoke"))
+
+(if (and (provided? 'snd-ladspa)
+         (provided? 'xm))
+  (begin
+
+    (define (post-karaoke-dialog)
+       (if (not (Widget? karaoke-dialog))
+           (let ((sliders '()))
+             (set! karaoke-dialog
+                   (make-effect-dialog "karaoke ladspa plugin"
+                                       (lambda (w context info) (cp-karaoke))
+                                       (lambda (w context info) (XtUnmanageChild karaoke-dialog))
+                                       (lambda (w context info)
+                                         (help-dialog "Karaoke"
+                                                      "Attempts to strip the vocals from a stereo signal.\n\ Vocal volume (dB): Controls the attenuation of the vocal (center channel) in decibels. The greater the attenuation the greater the loss of the stereo field."))
+                                       (lambda (w c i)
+                                         (set! karaoke-vocal-volume 0)
+                                         (XtSetValues (list-ref sliders 0) (list XmNvalue (inexact->exact (* karaoke-vocal-volume 1)))))))
+             (set! sliders
+                   (add-sliders karaoke-dialog
+                                (list (list "vocal volume (dB)" -70 0 0
+                                            (lambda (w context info)
+                                              (set! karaoke-vocal-volume (/ (.value info) 1)))
+                                            1))))))
+       (activate-dialog karaoke-dialog))))
+
+      (let ((child (XtCreateManagedWidget "Karaoke" xmPushButtonWidgetClass ladspa-filter-menu
+                                           (list XmNbackground (basic-color)))))
+        (XtAddCallback child XmNactivateCallback
+                        (lambda (w c i)
+                          (post-karaoke-dialog))))
+
+
 
 ;;; State variable filter
 ;;;
@@ -2772,6 +2873,66 @@
         (XtAddCallback child XmNactivateCallback
                         (lambda (w c i)
                           (post-gverb-dialog))))
+
+
+
+;;; Plate reverb
+;;;
+
+(define plate-reverb-time 1.0)
+(define plate-reverb-damping 0.5)
+(define plate-reverb-mix 0.5)
+(define plate-reverb-dialog #f)
+(define plate-reverb-label "Plate reverb")
+
+(define (cp-plate-reverb)
+  (apply-ladspa (make-sample-reader (cursor))
+                (list "plate_1423" "plate" plate-reverb-time plate-reverb-damping plate-reverb-mix)
+                (- (frames) (cursor))
+                "plate reverb"))
+
+(if (and (provided? 'snd-ladspa)
+         (provided? 'xm))
+  (begin
+
+     (define (post-plate-reverb-dialog)
+       (if (not (Widget? plate-reverb-dialog))
+           (let ((sliders '()))
+             (set! plate-reverb-dialog
+                   (make-effect-dialog "plate reverb ladspa plugin"
+                                       (lambda (w context info) (cp-plate-reverb))
+                                       (lambda (w context info) (XtUnmanageChild plate-reverb-dialog))
+                                       (lambda (w context info)
+                                         (help-dialog "Plate reverb" "A physical model of a steel plate reverb. Based on Josep Comajuncosas' gong model, it uses 8 linear waveguides to model the plate.\n\ Reverb time: Controls the RT60 time of the reverb. Actually controls the size of the plate. The mapping betwwen plate size and RT60 time is just a heuristic, so it's not very accurate.\n\ Damping: Controls the degree that the surface of the plate is damped.\n\ Dry/wet mix: Controls the balance between the dry and wet signals."))
+                                       (lambda (w c i)
+                                         (set! plate-reverb-time 1.0)
+                                         (XtSetValues (list-ref sliders 0) (list XmNvalue (inexact->exact (* plate-reverb-time 100))))
+                                         (set! plate-reverb-damping 0.5)
+                                         (XtSetValues (list-ref sliders 1) (list XmNvalue (inexact->exact (* plate-reverb-damping 100))))
+					 (set! plate-reverb-mix 0.5) 
+                                         (XtSetValues (list-ref sliders 2) (list XmNvalue (inexact->exact (* plate-reverb-mix 100)))))))
+             (set! sliders
+                   (add-sliders plate-reverb-dialog
+                                (list
+                                      (list "reverb time" 0.01 1.0 8.5
+                                            (lambda (w context info)
+                                              (set! plate-reverb-time (/ (.value info) 100)))
+                                            100)
+                                      (list "damping" 0.0 0.5 1.0
+                                            (lambda (w context info)
+                                              (set! plate-reverb-damping (/ (.value info) 100)))
+                                            100)
+				      (list "dry/wet mix" 0.0 0.5 1.0
+                                            (lambda (w context info)
+                                              (set! plate-reverb-mix (/ (.value info) 100)))
+                                            100))))))
+       (activate-dialog plate-reverb-dialog))))
+
+      (let ((child (XtCreateManagedWidget "Plate reverb" xmPushButtonWidgetClass ladspa-reverb-menu
+                                           (list XmNbackground (basic-color)))))
+        (XtAddCallback child XmNactivateCallback
+                        (lambda (w c i)
+                          (post-plate-reverb-dialog))))
 
 
 

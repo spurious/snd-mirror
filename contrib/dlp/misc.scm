@@ -20,7 +20,7 @@
 (load-from-path "mix-menu.scm") 
 (load-from-path "new-buttons.scm") 
 ;(load-from-path "effects.scm") 
-(load-from-path "new-effects.scm") 
+(load-from-path "dp-new-effects.scm") 
 (load-from-path "panic.scm") 
 (load-from-path "plugins-menu.scm") 
 (load-from-path "fft-menu.scm") 
@@ -96,6 +96,44 @@
 (add-sound-file-extension "w10")
 
 
+;;;
+;;; OpenGL FFT display
+;;;
+
+(define (draw-it)
+   (|glXMakeCurrent (XtDisplay (cadr (main-widgets)))
+                    (XtWindow (car (channel-widgets)))
+                    (snd-glx-context))
+   (|glEnable |GL_DEPTH_TEST)
+   (|glDepthFunc |GL_LEQUAL)
+   (|glClearDepth 1.0)
+   (|glClearColor 0.0 0.0 0.0 0.0)
+   (|glLoadIdentity)
+   (|gluPerspective 40.0 1.0 10.0 200.0)
+   (|glTranslatef 0.0 0.0 -50.0)
+   (|glRotatef -58.0 0.0 1.0 0.0)
+   (let ((vals (XtVaGetValues (car (channel-widgets)) (list XmNwidth 0 XmNheight 0))))
+     (|glViewport 0 0 (list-ref vals 1) (list-ref vals 3)))
+   (|glClear (logior |GL_COLOR_BUFFER_BIT |GL_DEPTH_BUFFER_BIT))
+   (|glBegin |GL_POLYGON)
+   (|glColor3f 0.0 0.0 0.0)   (|glVertex3f -10.0 -10.0 0.0)
+   (|glColor3f 0.7 0.7 0.7)   (|glVertex3f 10.0 -10.0 0.0)
+   (|glColor3f 1.0 1.0 1.0)   (|glVertex3f -10.0 10.0 0.0)
+   (|glEnd)
+   (|glBegin |GL_POLYGON)
+   (|glColor3f 1.0 1.0 0.0)   (|glVertex3f 0.0 -10.0 -10.0)
+   (|glColor3f 0.0 1.0 0.7)   (|glVertex3f 0.0 -10.0 10.0)
+   (|glColor3f 0.0 0.0 1.0)   (|glVertex3f 0.0 5.0 -10.0)
+   (|glEnd)
+   (|glBegin |GL_POLYGON)
+   (|glColor3f 1.0 1.0 0.0)   (|glVertex3f -10.0 6.0 4.0)
+   (|glColor3f 1.0 0.0 1.0)   (|glVertex3f -10.0 3.0 4.0)
+   (|glColor3f 0.0 0.0 1.0)   (|glVertex3f 4.0 -9.0 -10.0)
+   (|glColor3f 1.0 0.0 1.0)   (|glVertex3f 4.0 -6.0 -10.0)
+   (|glEnd)
+   (|glXSwapBuffers (XtDisplay (cadr (main-widgets)))
+                    (XtWindow (car (channel-widgets))))
+   (|glFlush))
 
 
 ;;;
@@ -238,10 +276,10 @@
                (if (= (XAllocNamedColor dpy cmap new-color col col) 0)
                    (snd-error "can't allocate ~S" new-color)
                    (.pixel col)))
-	     (if (color? new-color)
-		 new-color
-		 ;; assume a list of rgb vals?
-		 (apply make-color new-color)))))
+             (if (color? new-color)
+                     new-color
+                     ;; assume a list of rgb vals?
+                     (apply make-color new-color)))))
     (for-each-child
      selection-popup-menu
      (lambda (n)
@@ -260,9 +298,9 @@
                    (snd-error "can't allocate ~S" new-color)
                    (.pixel col)))
              (if (color? new-color)
-		 new-color
-		 ;; assume a list of rgb vals?
-		 (apply make-color new-color)))))
+                     new-color
+                     ;; assume a list of rgb vals?
+                     (apply make-color new-color)))))
     (for-each-child
      fft-popup-menu
      (lambda (n)
@@ -338,7 +376,6 @@
 ;;;
 ;;; open and convert stereo OGG files automatically
 ;;;
-;;; (see examp.scm for writing these files, and a slightly improved reader)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (add-hook! open-raw-sound-hook
@@ -352,6 +389,7 @@
                    (system (format #f "ogg123 -d raw -f ~A ~A" rawfile filename))
                    rawfile)
                  #f)))
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;

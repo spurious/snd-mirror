@@ -823,3 +823,25 @@ loc (* offset 2))) 1)))
 
 (add-to-menu marks-menu "Delete all marks" delete-marks)
 
+(add-to-menu marks-menu #f #f)
+
+;;; -------- Explode all marks to separate files
+;;;
+
+(define (mark-explode)
+  (let ((start 0)
+        (file-ctr 0))
+    (for-each
+     (lambda (mark)
+       (let ((len (- (mark-sample mark) start))
+;             (filename (format #f "mark-~D.snd" file-ctr)))
+              (filename (snd-tempnam)))
+;         (if (file-exists? filename) (delete-file filename))
+         (array->file filename
+                      (channel->vct start len)
+                      len (srate) 1)
+         (set! file-ctr (1+ file-ctr))
+         (set! start (mark-sample mark))))
+     (caar (marks)))))
+
+(add-to-menu marks-menu "Explode marks to files" mark-explode)
