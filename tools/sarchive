@@ -1,0 +1,62 @@
+#!/bin/csh -f
+
+set snddir = /home/bil/dist/snd
+set snddlp = /home/bil/dist/snd/dlp
+set sndtools = /home/bil/dist/snd/tools
+set movdir = /home/bil/mov
+set curdir = /home/bil/cl
+set curdlp = /home/bil/cl/dlp
+set curtools = /home/bil/cl
+
+date > $curdir/hi
+echo ' ' >> $curdir/hi
+
+chdir snddir
+foreach file (*.h *.c *.cl *.el *.html makefile.* make.* *.gtkrc *.in *.scm makesnd.* *.lisp snd.spec old-snd.spec *.Snd Snd.ad snd.1 configure.ac *.rb *.m4 config.guess config.sub)
+  if (-e $curdir/$file) then
+    diff -bcw $curdir/$file $snddir/$file >> $curdir/hi
+    find $curdir/$file -newer $snddir/$file -exec echo ' updating ' $file \;
+    find $curdir/$file -newer $snddir/$file -exec cp $snddir/$file $movdir \;
+    find $curdir/$file -newer $snddir/$file -exec cp $curdir/$file $snddir \;
+  endif
+end
+
+chdir curdlp
+foreach file (*.scm)
+  if (-e $curdir/$file) then
+    find $curdir/$file -newer $curdlp/$file -exec echo ' cl-dlp mismatch ' $file \;
+  endif
+end
+
+chdir snddlp
+foreach file (*.h *.c *.cl *.el *.html makefile.* make.* *.gtkrc *.in *.scm makesnd.* *.lisp snd.spec old-snd.spec *.Snd Snd.ad snd.1 configure.ac *.rb *.m4 config.guess config.sub)
+  if (-e $curdlp/$file) then
+    diff -bcw $curdlp/$file $snddlp/$file >> $curdir/hi
+    find $curdlp/$file -newer $snddlp/$file -exec echo ' updating ' dlp/$file \;
+    find $curdlp/$file -newer $snddlp/$file -exec cp $snddlp/$file $movdir \;
+    find $curdlp/$file -newer $snddlp/$file -exec cp $curdlp/$file $snddlp \;
+  endif
+end
+
+chdir sndtools
+foreach file (*)
+  if (-e $curtools/$file) then
+    diff -bcw $curtools/$file $sndtools/$file >> $curdir/hi
+    find $curtools/$file -newer $sndtools/$file -exec echo ' updating ' tools/$file \;
+    find $curtools/$file -newer $sndtools/$file -exec cp $sndtools/$file $movdir \;
+    find $curtools/$file -newer $sndtools/$file -exec cp $curtools/$file $sndtools \;
+  endif
+end
+  
+
+chdir snddir
+cp $curdir/configure $snddir
+
+rm snd.tar
+tar -chf snd.tar *
+
+chdir curdir
+wc hi
+mv po/snd.pot $movdir
+xgettext --keyword=_ --keyword=N_ --files-from=po/POTFILES.in -o po/snd.pot
+cp po/snd.pot $snddir/po/snd.pot

@@ -2769,9 +2769,12 @@ static XEN g_make_scalar_mixer(XEN chans, XEN val)
 with 'chans' channels, and 'val' along the diagonal"
 
   mus_any *mx = NULL;
+  int size;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(chans), chans, XEN_ARG_1, S_make_scalar_mixer, "an integer");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_2, S_make_scalar_mixer, "a number");
-  mx = mus_make_scalar_mixer(XEN_TO_C_INT(chans), XEN_TO_C_DOUBLE(val));
+  size = XEN_TO_C_INT(chans);
+  if (size <= 0) XEN_OUT_OF_RANGE_ERROR(S_make_scalar_mixer, 1, chans, "chans ~A <= 0?");
+  mx = mus_make_scalar_mixer(size, XEN_TO_C_DOUBLE(val));
   if (mx)
     return(mus_xen_to_object((mus_xen *)_mus_wrap_no_vcts(mx)));
   return(XEN_FALSE);

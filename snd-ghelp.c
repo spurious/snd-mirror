@@ -197,7 +197,6 @@ static gboolean text_release_callback(GtkTreeSelection *selection, gpointer *gp)
 	  g_free(txt);
 	}
     }
-
   return(false);
 }
 

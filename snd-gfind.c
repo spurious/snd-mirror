@@ -163,7 +163,7 @@ static XEN g_find_dialog(XEN managed)
 {
   #define H_find_dialog "(" S_find_dialog "): create and activate the Edit:Find dialog, return the dialog widget"
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(managed), managed, XEN_ONLY_ARG, S_find_dialog, "a boolean");
-  make_edit_find_dialog(XEN_TO_C_BOOLEAN_OR_TRUE(managed));
+  make_edit_find_dialog(XEN_TO_C_BOOLEAN(managed));
   return(XEN_WRAP_WIDGET(edit_find_dialog));
 }
 

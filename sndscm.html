@@ -40,7 +40,7 @@
   <li><a href="#bessdoc">bess.scm, bess.rb</a>: FM demo
   <li><a href="#bess1doc">bess1.scm, bess1.rb</a>: FM violin demo
   <li><a href="#birddoc">bird.scm, bird.rb</a>: North-American birds
-  <li><a href="#clminsdoc">clm-ins.scm, clm-ins.rb</a>: more CLM instruments
+  <li><a href="#clminsdoc">clm-ins.scm, clm-ins.rb, clm23.scm</a>: more CLM instruments
   <li><a href="#debugdoc">debug.scm</a>: debugging aids
   <li><a href="#dlocsigdoc">dlocsig.rb</a>: moving sounds (Michael Scholz)
   <li><a href="#dlpdoc">dlp</a>: tutorial directories from Dave Phillips
@@ -334,7 +334,9 @@ generators, with an optional envelope on each formant.
 <b>anoi</b> is a stab at noise reduction
 based on Perry Cook's Scrubber.m.
 </p>
-<p><b>fullmix</b> is a complicated way to mix stuff.
+<p><b>fullmix</b> is a complicated way to mix stuff.  clm23.scm is a translation of
+the CLM test instruments in ug2.ins and ug3.ins.  It has some comments about
+the differences between the CL and Scheme instruments.
 </p>
 <br>
 
@@ -537,7 +539,7 @@ the listener?
   <tr><td><em class=emdef>make-spencer-filter</em></td><td>return FIR filter with Spencer coefficients</td></tr>
   <tr><td><A class=def NAME="anyrandom">any-random</A></td><td>random numbers of arbitrary distribution using rejection method</td></tr>
   <tr><td><em class=emdef>channel-variance</em> etc</td><td> miscellaneous funcs from Julius Smith, Mathematics of the DFT</td></tr>
-  <tr><td><em class=emdef>map-ssb-am</em></td><td>shift all components by some frequency ("single-sideband amplitude modulation")</td></tr>
+  <tr><td><em class=emdef>shift-channel-pitch</em></td><td>shift all components by some frequency ("single-sideband amplitude modulation")</td></tr>
   <tr><td><a class=def name="ssbbank">ssb-bank</a></td><td>time/pitch changes using ssb-am gens</td></tr>
   <tr><td><a class=def name="ssbbankenv">ssb-bank-env</a></td><td>time/pitch changes using ssb-am gens and a frequency envelope</td></tr>
   <tr><td><a class=def name="ssbfm">make-ssb-fm, ssb-fm</a></td><td>quasi-single-sideband FM</td></tr>

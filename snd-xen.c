@@ -1858,7 +1858,7 @@ static XEN g_color_dialog(XEN managed)
   widget_t w;
   #define H_color_dialog "(" S_color_dialog "): start the Color dialog"
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(managed), managed, XEN_ONLY_ARG, S_color_dialog, "a boolean");
-  w = start_color_dialog(XEN_TO_C_BOOLEAN_OR_TRUE(managed));
+  w = start_color_dialog(XEN_TO_C_BOOLEAN(managed));
   return(XEN_WRAP_WIDGET(w));
 }
 
@@ -1867,7 +1867,7 @@ static XEN g_orientation_dialog(XEN managed)
   widget_t w;
   #define H_orientation_dialog "(" S_orientation_dialog " (managed #t)): start the Orientation dialog"
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(managed), managed, XEN_ONLY_ARG, S_orientation_dialog, "a boolean");
-  w = start_orientation_dialog(XEN_TO_C_BOOLEAN_OR_TRUE(managed));
+  w = start_orientation_dialog(XEN_TO_C_BOOLEAN(managed));
   return(XEN_WRAP_WIDGET(w));
 }
 
@@ -1876,7 +1876,7 @@ static XEN g_transform_dialog(XEN managed)
   widget_t w;
   #define H_transform_dialog "(" S_transform_dialog " (managed #t)): start the Transforms dialog"
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(managed), managed, XEN_ONLY_ARG, S_transform_dialog, "a boolean");
-  w = fire_up_transform_dialog(XEN_TO_C_BOOLEAN_OR_TRUE(managed));
+  w = fire_up_transform_dialog(XEN_TO_C_BOOLEAN(managed));
   return(XEN_WRAP_WIDGET(w));
 }
 
@@ -1885,7 +1885,7 @@ static XEN g_view_files_dialog(XEN managed)
   widget_t w;
   #define H_view_files_dialog "(" S_view_files_dialog "): start the View Files dialog"
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(managed), managed, XEN_ONLY_ARG, S_view_files_dialog, "a boolean");
-  w = start_file_dialog(XEN_TO_C_BOOLEAN_OR_TRUE(managed));
+  w = start_file_dialog(XEN_TO_C_BOOLEAN(managed));
   return(XEN_WRAP_WIDGET(w));
 }
 
@@ -1906,7 +1906,7 @@ static XEN g_save_selection_dialog(XEN managed)
   widget_t w;
   #define H_save_selection_dialog "(" S_save_selection_dialog "): start the Selection Save-as dialog"
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(managed), managed, XEN_ONLY_ARG, S_save_selection_dialog, "a boolean");
-  w = make_edit_save_as_dialog(XEN_TO_C_BOOLEAN_OR_TRUE(managed));
+  w = make_edit_save_as_dialog(XEN_TO_C_BOOLEAN(managed));
   return(XEN_WRAP_WIDGET(w));
 }
 
@@ -1915,7 +1915,7 @@ static XEN g_save_sound_dialog(XEN managed)
   widget_t w;
   #define H_save_sound_dialog "(" S_save_sound_dialog "): start the File Save-as dialog"
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(managed), managed, XEN_ONLY_ARG, S_save_sound_dialog, "a boolean");
-  w = make_file_save_as_dialog(XEN_TO_C_BOOLEAN_OR_TRUE(managed));
+  w = make_file_save_as_dialog(XEN_TO_C_BOOLEAN(managed));
   return(XEN_WRAP_WIDGET(w));
 }
 
@@ -1924,7 +1924,7 @@ static XEN g_print_dialog(XEN managed)
   widget_t w;
   #define H_print_dialog "(" S_print_dialog " (managed #t)): start the File Print dialog"
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(managed), managed, XEN_ONLY_ARG, S_print_dialog, "a boolean");
-  w = make_file_print_dialog(XEN_TO_C_BOOLEAN_OR_TRUE(managed));
+  w = make_file_print_dialog(XEN_TO_C_BOOLEAN(managed));
   return(XEN_WRAP_WIDGET(w));
 }
 

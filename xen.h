@@ -21,11 +21,12 @@
  */
 
 #define XEN_MAJOR_VERSION 1
-#define XEN_MINOR_VERSION 15
-#define XEN_VERSION "1.15"
+#define XEN_MINOR_VERSION 16
+#define XEN_VERSION "1.16"
 
 /* HISTORY:
  *
+ *  29-Jul-04: deprecated XEN_TO_C_BOOLEAN_OR_TRUE.
  *  21-Jul-04: deprecated XEN_TO_SMALL_C_INT and C_TO_SMALL_XEN_INT.
  *             use new Guile 1.7 numerical function names (under flag HAVE_SCM_TO_SIGNED_INTEGER).
  *  28-Jun-04: XEN_REQUIRED_ARGS_OK to make it easier to turn off this check.
@@ -120,10 +121,6 @@
 
 #define XEN_UNDEFINED       SCM_UNDEFINED
 
-#ifndef SCM_EQ_P
-  #define SCM_EQ_P(a, b)   ((a) == (b))
-#endif
-
 #if HAVE_SCM_C_DEFINE
   #define XEN_VARIABLE_REF(Var)               SCM_VARIABLE_REF(Var)
   #define XEN_VARIABLE_SET(Var, Val)          SCM_VARIABLE_SET(Var, Val)
@@ -189,8 +186,17 @@
     return(0); \
   }
 
-#define XEN_TRUE_P(a)                SCM_EQ_P(a, XEN_TRUE)
-#define XEN_FALSE_P(a)               SCM_EQ_P(a, XEN_FALSE)
+#if HAVE_SCM_TO_SIGNED_INTEGER
+  #define XEN_EQ_P(a, b)             scm_is_eq(a, b)
+#else
+  #ifndef SCM_EQ_P
+    #define SCM_EQ_P(a, b)           ((a) == (b))
+  #endif
+  #define XEN_EQ_P(a, b)             SCM_EQ_P(a, b)
+#endif
+
+#define XEN_TRUE_P(a)                XEN_EQ_P(a, XEN_TRUE)
+#define XEN_FALSE_P(a)               XEN_EQ_P(a, XEN_FALSE)
 #define XEN_NULL_P(a)                SCM_NULLP(a)
 #define XEN_BOUND_P(Arg)             (!(SCM_UNBNDP(Arg)))
 #define XEN_NOT_BOUND_P(Arg)         SCM_UNBNDP(Arg)
@@ -203,7 +209,6 @@
 #define XEN_CDR(a)                   SCM_CDR(a)
 #define XEN_CDDR(a)                  SCM_CDDR(a)
 #define XEN_COPY_ARG(Lst)            Lst
-#define XEN_EQ_P(a, b)               SCM_EQ_P(a, b)
 #define XEN_EQV_P(A, B)              XEN_TO_C_BOOLEAN(scm_eqv_p(A, B))
 #define XEN_EQUAL_P(A, B)            XEN_TO_C_BOOLEAN(scm_equal_p(A, B))
 
@@ -296,11 +301,6 @@
 #define C_TO_XEN_STRING(a)            scm_makfrom0str((const char *)(a))
 
 #define C_TO_XEN_BOOLEAN(a)           ((a) ? XEN_TRUE : XEN_FALSE)
-#if defined(__GNUC__) && (!(defined(__cplusplus)))
-  #define XEN_TO_C_BOOLEAN_OR_TRUE(a) ({ XEN _xen_h_2_ = a; (!((XEN_FALSE_P(_xen_h_2_) || ((SCM_INUMP(_xen_h_2_)) && (SCM_INUM(_xen_h_2_) == 0))))); })
-#else
-  #define XEN_TO_C_BOOLEAN_OR_TRUE(a) xen_to_c_boolean_or_true(a)
-#endif
 #define XEN_TO_C_BOOLEAN(a)           (!(XEN_FALSE_P(a)))
 
 #if HAVE_SCM_C_EVAL_STRING
@@ -425,6 +425,7 @@
 
 /* these are only needed in 1.3.4, but it's hard to find the right way to distinguish it */
 #ifndef SCM_PACK
+  #define SCM_BOOLP(Arg)              gh_boolean_p(Arg)
   /* the next exist in 1.3.4 but are not usable in this context (need SCM_NIMP check) */
   #undef SCM_STRINGP
   #undef SCM_VECTORP
@@ -639,7 +640,6 @@ void xen_guile_define_procedure_with_reversed_setter(char *get_name, XEN (*get_f
 						     int get_req, int get_opt, int set_req, int set_opt);
 double xen_to_c_double_or_else(XEN a, double b);
 int xen_to_c_int(XEN a);
-bool xen_to_c_boolean_or_true(XEN a);
 bool xen_integer_p(XEN a);
 #if XEN_DEBUGGING
 XEN xen_guile_dbg_new_procedure(const char *name, XEN (*func)(), int req, int opt, int rst);
@@ -767,7 +767,6 @@ XEN xen_guile_dbg_new_procedure(const char *name, XEN (*func)(), int req, int op
 #define XEN_TO_C_STRING(Str)              RSTRING(Str)->ptr
 
 #define C_TO_XEN_BOOLEAN(a)               ((a) ? Qtrue : Qfalse)
-#define XEN_TO_C_BOOLEAN_OR_TRUE(a)       (!(XEN_FALSE_P(a)))
 #define XEN_TO_C_BOOLEAN(a)               (!(XEN_FALSE_P(a)))
 
 #define XEN_NAME_AS_C_STRING_TO_VALUE(a)  rb_gv_get(xen_scheme_global_variable_to_ruby(a))
@@ -1399,7 +1398,6 @@ typedef XEN (*XEN_CATCH_BODY_TYPE) (void *data);
 #define C_TO_XEN_STRING(a) 0
 #define C_TO_XEN_BOOLEAN(a) 0
 #define C_STRING_TO_XEN_SYMBOL(a) 0
-#define XEN_TO_C_BOOLEAN_OR_TRUE(a) 0
 #define XEN_TO_C_BOOLEAN(a) 0
 #define C_STRING_TO_XEN_FORM(Str) 0
 #define XEN_EVAL_FORM(Form) 0
@@ -1555,5 +1553,6 @@ void xen_gc_mark(XEN val);
 #ifndef XEN_DISABLE_DEPRECATED
   #define C_TO_SMALL_XEN_INT(a) C_TO_XEN_INT(a)
   #define XEN_TO_SMALL_C_INT(a) XEN_TO_C_INT(a)
+  #define XEN_TO_C_BOOLEAN_OR_TRUE(a) (!(XEN_FALSE_P(a)))
 #endif
 #endif

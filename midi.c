@@ -1,10 +1,6 @@
 /* (simple, low level) midi support, work in progress... */
 /*   based on code of Scott Wilson and Craig Sapp */
 
-/* TODO: test, tie into CLM (rt.lisp, sndlib2clm.lisp etc)
- * TODO: add mus-midi support to run macro(s) [unsigned char* buf arg is a list in scheme]
- */
-
 /*
  * int mus_midi_open_read(const char *name)
  * int mus_midi_open_write(const char *name)
@@ -667,8 +663,6 @@ char *mus_midi_describe(void) {return(NULL);}            /* result should be fre
 
 /* ---------------- XEN ---------------- */
 /* tie foregoing into Xen (Guile or Ruby) */
-
-/* TODO: mus-midi example in scm */
 
 #if HAVE_EXTENSION_LANGUAGE
 

@@ -1458,8 +1458,10 @@ char *mus_expand_filename(const char *filename)
 	      if (res) break;
 	    }
 #else
+#if HAVE_GETWD
 	  pwd = (char *)CALLOC(PATH_MAX, sizeof(char));
 	  getwd(pwd);
+#endif
 #endif
 	  file_name_buf = (char *)CALLOC(len + sndlib_strlen(pwd) + 8, sizeof(char));
 	  if (pwd) 

@@ -1,0 +1,1035 @@
+#!/bin/bash -f
+
+for file 
+do
+	echo $file
+	mv $file $$.subhld
+
+	sed 's/(abort/(<a class=quiet href="extsnd.html#abort">abort<\/a>/g
+s/(add-comment/(<a class=quiet href="extsnd.html#addcomment">add-comment<\/a>/g
+s/(add-listener-popup/(<a class=quiet href="sndscm.html#addlistenerpopup">add-listener-popup<\/a>/g
+s/(add-mark/(<a class=quiet href="extsnd.html#sndaddmark">add-mark<\/a>/g
+s/(add-mark-pane/(<a class=quiet href="sndscm.html#addmarkpane">add-mark-pane<\/a>/g
+s/(add-player/(<a class=quiet href="extsnd.html#addplayer">add-player<\/a>/g
+s/(add-region/(<a class=quiet href="clm.html#add-region">add-region<\/a>/g
+s/(add-selection-popup/(<a class=quiet href="sndscm.html#addselectionpopup">add-selection-popup<\/a>/g
+s/(add-sound-file-extension/(<a class=quiet href="extsnd.html#addsoundfileextension">add-sound-file-extension<\/a>/g
+s/(add-to-main-menu/(<a class=quiet href="extsnd.html#sndaddtomainmenu">add-to-main-menu<\/a>/g
+s/(add-to-menu/(<a class=quiet href="extsnd.html#sndaddtomenu">add-to-menu<\/a>/g
+s/(add-transform/(<a class=quiet href="extsnd.html#addtransform">add-transform<\/a>/g
+s/(all-pass?/(<a class=quiet href="clm.html#all-pass?">all-pass?<\/a>/g
+s/(all-pass/(<a class=quiet href="clm.html#all-pass">all-pass<\/a>/g
+s/(amp-control/(<a class=quiet href="extsnd.html#sndamp">amp-control<\/a>/g
+s/(amplitude-modulate/(<a class=quiet href="clm.html#amplitude-modulate">amplitude-modulate<\/a>/g
+s/(analyse-ladspa/(<a class=quiet href="grfsnd.html#analyseladspa">analyse-ladspa<\/a>/g
+s/(append-to-minibuffer/(<a class=quiet href="sndscm.html#sndappendtominibuffer">append-to-minibuffer<\/a>/g
+s/(apply-controls/(<a class=quiet href="extsnd.html#applycontrols">apply-controls<\/a>/g
+s/(apply-ladspa/(<a class=quiet href="grfsnd.html#applyladspa">apply-ladspa<\/a>/g
+s/(array-\&gt;file/(<a class=quiet href="clm.html#array-\&gt;file">array-\&gt;file<\/a>/g
+s/(array-interp/(<a class=quiet href="clm.html#array-interp">array-interp<\/a>/g
+s/(as-one-edit/(<a class=quiet href="extsnd.html#asoneedit">as-one-edit<\/a>/g
+s/(ask-before-overwrite)/(<a class=quiet href="extsnd.html#askbeforeoverwrite">ask-before-overwrite<\/a>)/g
+s/(asymmetric-fm?/(<a class=quiet href="clm.html#asymmetric-fm?">asymmetric-fm?<\/a>/g
+s/(asymmetric-fm/(<a class=quiet href="clm.html#asymmetric-fm">asymmetric-fm<\/a>/g
+s/(audio-input-device/(<a class=quiet href="extsnd.html#audioinputdevice">audio-input-device<\/a>/g
+s/(audio-output-device/(<a class=quiet href="extsnd.html#audiooutputdevice">audio-output-device<\/a>/g
+s/(auto-resize/(<a class=quiet href="extsnd.html#autoresize">auto-resize<\/a>/g
+s/(auto-save /(<a class=quiet href="sndscm.html#exautosave">auto-save<\/a> /g
+s/(auto-save)/(<a class=quiet href="sndscm.html#exautosave">auto-save<\/a>)/g
+s/(auto-update-interval)/(<a class=quiet href="extsnd.html#corruptiontime">auto-update-interval<\/a>)/g
+s/(auto-update/(<a class=quiet href="extsnd.html#autoupdate">auto-update<\/a>/g
+s/(autocorrelate /(<a class=quiet href="extsnd.html#sndautocorrelate">autocorrelate<\/a> /g
+s/(axis-info/(<a class=quiet href="extsnd.html#axisinfo">axis-info<\/a>/g
+s/(axis-label-font)/(<a class=quiet href="extsnd.html#axislabelfont">axis-label-font<\/a>)/g
+s/(axis-numbers-font)/(<a class=quiet href="extsnd.html#axisnumbersfont">axis-numbers-font<\/a>)/g
+s/(backward-graph/(<a class=quiet href="extsnd.html#sndbackwardgraph">backward-graph<\/a>/g
+s/(backward-mark/(<a class=quiet href="extsnd.html#sndbackwardmark">backward-mark<\/a>/g
+s/(backward-mix/(<a class=quiet href="extsnd.html#sndbackwardmix">backward-mix<\/a>/g
+s/(basic-color)/(<a class=quiet href="extsnd.html#basiccolor">basic-color<\/a>)/g
+s/(beats-per-minute/(<a class=quiet href="extsnd.html#beatsperminute">beats-per-minute<\/a>/g
+s/(bigbird /(<a class=quiet href="sndscm.html#bigbird">bigbird<\/a> /g
+s/(bind-key/(<a class=quiet href="extsnd.html#sndbindkey">bind-key<\/a>/g
+s/(bold-peaks-font)/(<a class=quiet href="extsnd.html#boldpeaksfont">bold-peaks-font<\/a>)/g
+s/(bomb /(<a class=quiet href="extsnd.html#bomb">bomb<\/a> /g
+s/(buffer-\&gt;frame/(<a class=quiet href="clm.html#buffer-\&gt;frame">buffer-\&gt;frame<\/a>/g
+s/(buffer-\&gt;sample/(<a class=quiet href="clm.html#buffer-\&gt;sample">buffer-\&gt;sample<\/a>/g
+s/(buffer-empty?/(<a class=quiet href="clm.html#buffer-empty?">buffer-empty?<\/a>/g
+s/(buffer-full?/(<a class=quiet href="clm.html#buffer-full?">buffer-full?<\/a>/g
+s/(buffer?/(<a class=quiet href="clm.html#buffer?">buffer?<\/a>/g
+s/(c-g!)/(<a class=quiet href="extsnd.html#sndoops">c-g!<\/a>)/g
+s/(c-g?)/(<a class=quiet href="extsnd.html#sndabort">c-g?<\/a>)/g
+s/(call_in /(<a class=quiet href="extsnd.html#callin">call_in<\/a> /g
+s/(change-menu-label/(<a class=quiet href="extsnd.html#sndchangemenulabel">change-menu-label<\/a>/g
+s/(change-window-property/(<a class=quiet href="extsnd.html#changeproperty">change-window-property<\/a>/g
+s/(channel-\&gt;vct/(<a class=quiet href="extsnd.html#channel2vct">channel-\&gt;vct<\/a>/g
+s/(channel-amp-envs/(<a class=quiet href="extsnd.html#channelampenvs">channel-amp-envs<\/a>/g
+s/(channel-data /(<a class=quiet href="extsnd.html#channeldata">channel-data<\/a> /g
+s/(channel-envelope/(<a class=quiet href="sndscm.html#channelenvelope">channel-envelope<\/a>/g
+s/(channel-properties/(<a class=quiet href="extsnd.html#sndchannelproperties">channel-properties<\/a>/g
+s/(channel-property/(<a class=quiet href="sndscm.html#exchannelproperty">channel-property<\/a>/g
+s/(channel-style/(<a class=quiet href="extsnd.html#channelstyle">channel-style<\/a>/g
+s/(channel-widgets/(<a class=quiet href="extsnd.html#channelwidgets">channel-widgets<\/a>/g
+s/(channels /(<a class=quiet href="extsnd.html#channels">channels<\/a> /g
+s/(channels)/(<a class=quiet href="extsnd.html#channels">channels<\/a>)/g
+s/(channels-separate/(<a class=quiet href="extsnd.html#channelstyleconstants">channels-separate<\/a>/g
+s/(chans /(<a class=quiet href="extsnd.html#chans">chans<\/a> /g
+s/(chans)/(<a class=quiet href="extsnd.html#chans">chans<\/a>)/g
+s/(check-for-unsaved-edits/(<a class=quiet href="sndscm.html#exunsavededits">check-for-unsaved-edits<\/a>/g
+s/(clear-audio-inputs)/(<a class=quiet href="sndscm.html#sndclearaudioinputs">clear-audio-inputs<\/a>)/g
+s/(clear-listener)/(<a class=quiet href="extsnd.html#sndclearlistener">clear-listener<\/a>)/g
+s/(clm-channel/(<a class=quiet href="extsnd.html#clmchannel">clm-channel<\/a>/g
+s/(clm-envelope/(<a class=quiet href="clm.html#clmenv">clm-envelope<\/a>/g
+s/(clm-help/(<a class=quiet href="clm.html#clm-help">clm-help<\/a>/g
+s/(clm-load/(<a class=quiet href="clm.html#clm-load">clm-load<\/a>/g
+s/(clm-print/(<a class=quiet href="clm.html#clm-print">clm-print<\/a>/g
+s/(clm-random/(<a class=quiet href="clm.html#clm-random">clm-random<\/a>/g
+s/(clone-sound-as/(<a class=quiet href="extsnd.html#clonesoundas">clone-sound-as<\/a>/g
+s/(close-input/(<a class=quiet href="clm.html#close-input">close-input<\/a>/g
+s/(close-output/(<a class=quiet href="clm.html#close-output">close-output<\/a>/g
+s/(close-sound-file/(<a class=quiet href="extsnd.html#sndclosesoundfile">close-sound-file<\/a>/g
+s/(close-sound/(<a class=quiet href="extsnd.html#sndclose">close-sound<\/a>/g
+s/(color-\&gt;list/(<a class=quiet href="extsnd.html#color3list">color-\&gt;list<\/a>/g
+s/(color-cutoff/(<a class=quiet href="extsnd.html#colorcutoff">color-cutoff<\/a>/g
+s/(color-dialog)/(<a class=quiet href="extsnd.html#sndcolordialog">color-dialog<\/a>)/g
+s/(color-inverted)/(<a class=quiet href="extsnd.html#colorinverted">color-inverted<\/a>)/g
+s/(color-samples/(<a class=quiet href="sndscm.html#colorsamples">color-samples<\/a>/g
+s/(color-scale/(<a class=quiet href="extsnd.html#colorscale">color-scale<\/a>/g
+s/(color? /(<a class=quiet href="extsnd.html#colorp">color?<\/a> /g
+s/(colormap-ref/(<a class=quiet href="extsnd.html#colormapref">colormap-ref<\/a>/g
+s/(colormap /(<a class=quiet href="extsnd.html#colormap">colormap<\/a> /g
+s/(colormap)/(<a class=quiet href="extsnd.html#colormap">colormap<\/a>)/g
+s/(comb /(<a class=quiet href="clm.html#comb">comb<\/a> /g
+s/(comb? /(<a class=quiet href="clm.html#comb?">comb?<\/a> /g
+s/(comment /(<a class=quiet href="extsnd.html#sndcomment">comment<\/a> /g
+s/(comment)/(<a class=quiet href="extsnd.html#sndcomment">comment<\/a>)/g
+s/(compand-channel/(<a class=quiet href="sndscm.html#excompandchannel">compand-channel<\/a>/g
+s/(concatenate-envelopes/(<a class=quiet href="sndscm.html#concatenateenvelopes">concatenate-envelopes<\/a>/g
+s/(continue-sample-\&gt;file/(<a class=quiet href="clm.html#continue-sample-\&gt;file">continue-sample-\&gt;file<\/a>/g
+s/(contrast-channel/(<a class=quiet href="sndscm.html#contrastchannel">contrast-channel<\/a>/g
+s/(contrast-control-amp/(<a class=quiet href="extsnd.html#sndcontrastamp">contrast-control-amp<\/a>/g
+s/(contrast-control?/(<a class=quiet href="extsnd.html#sndcontrasting">contrast-control?<\/a>/g
+s/(contrast-control/(<a class=quiet href="extsnd.html#sndcontrast">contrast-control<\/a>/g
+s/(contrast-enhancement/(<a class=quiet href="clm.html#contrast-enhancement">contrast-enhancement<\/a>/g
+s/(convolution /(<a class=quiet href="clm.html#convolution">convolution<\/a> /g
+s/(convolve /(<a class=quiet href="clm.html#convolve">convolve<\/a> /g
+s/(convolve-files/(<a class=quiet href="clm.html#convolvefiles">convolve-files<\/a>/g
+s/(convolve-selection-with/(<a class=quiet href="extsnd.html#sndconvolveselectionwith">convolve-selection-with<\/a>/g
+s/(convolve-with/(<a class=quiet href="extsnd.html#sndconvolvewith">convolve-with<\/a>/g
+s/(convolve? /(<a class=quiet href="clm.html#convolve?">convolve?<\/a> /g
+s/copy-context/<a class=quiet href="extsnd.html#copycontext">copy-context<\/a>/g
+s/(copy-mix/(<a class=quiet href="extsnd.html#copymix">copy-mix<\/a>/g
+s/(copy-sample-reader/(<a class=quiet href="extsnd.html#copysamplereader">copy-sample-reader<\/a>/g
+s/(copy-track/(<a class=quiet href="extsnd.html#copytrack">copy-track<\/a>/g
+s/(count-matches/(<a class=quiet href="extsnd.html#lcountmatches">count-matches<\/a>/g
+s/(cross-synthesis/(<a class=quiet href="sndscm.html#excrosssynthesis">cross-synthesis<\/a>/g
+s/current-edit-position/<a class=quiet href="extsnd.html#currenteditposition">current-edit-position<\/a>/g
+s/(current-font/(<a class=quiet href="extsnd.html#currentfont">current-font<\/a>/g
+s/(cursor /(<a class=quiet href="extsnd.html#sndcursor">cursor<\/a> /g
+s/(cursor)/(<a class=quiet href="extsnd.html#sndcursor">cursor<\/a>)/g
+s/(cursor-color/(<a class=quiet href="extsnd.html#cursorcolor">cursor-color<\/a>/g
+s/cursor-context/<a class=quiet href="extsnd.html#cursorcontext">cursor-context<\/a>/g
+s/(cursor-follows-play/(<a class=quiet href="extsnd.html#sndcursorfollowsplay">cursor-follows-play<\/a>/g
+s/cursor-in-view/<a class=quiet href="extsnd.html#cursorchoices">cursor-in-view<\/a>/g
+s/(cursor-position/(<a class=quiet href="extsnd.html#cursorposition">cursor-position<\/a>/g
+s/(cursor-size/(<a class=quiet href="extsnd.html#cursorsize">cursor-size<\/a>/g
+s/(cursor-style/(<a class=quiet href="extsnd.html#cursorstyle">cursor-style<\/a>/g
+s/(dac /(<a class=quiet href="clm.html#dac">dac<\/a> /g
+s/(dac)/(<a class=quiet href="clm.html#dac">dac<\/a>)/g
+s/(dac-combines-channels)/(<a class=quiet href="extsnd.html#dacfolding">dac-combines-channels<\/a>)/g
+s/(dac-is-running)/(<a class=quiet href="extsnd.html#dacisrunning">dac-is-running<\/a>)/g
+s/(dac-size)/(<a class=quiet href="extsnd.html#dacsize">dac-size<\/a>)/g
+s/(data-clipped/(<a class=quiet href="extsnd.html#dataclipped">data-clipped<\/a>/g
+s/(data-color)/(<a class=quiet href="extsnd.html#datacolor">data-color<\/a>)/g
+s/(data-format/(<a class=quiet href="extsnd.html#snddataformat">data-format<\/a>/g
+s/(data-location/(<a class=quiet href="extsnd.html#snddatalocation">data-location<\/a>/g
+s/(data-size/(<a class=quiet href="extsnd.html#snddatasize">data-size<\/a>/g
+s/(db-\&gt;linear/(<a class=quiet href="clm.html#db-\&gt;linear">db-\&gt;linear<\/a>/g
+s/(def-clm-fun/(<a class=quiet href="clm.html#def-clm-fun">def-clm-fun<\/a>/g
+s/(def-clm-struct/(<a class=quiet href="clm.html#def-clm-struct">def-clm-struct<\/a>/g
+s/(default-output-chans)/(<a class=quiet href="extsnd.html#defaultoutputchans">default-output-chans<\/a>)/g
+s/(default-output-format)/(<a class=quiet href="extsnd.html#defaultoutputformat">default-output-format<\/a>)/g
+s/(default-output-srate)/(<a class=quiet href="extsnd.html#defaultoutputsrate">default-output-srate<\/a>)/g
+s/(default-output-type)/(<a class=quiet href="extsnd.html#defaultoutputtype">default-output-type<\/a>)/g
+s/(define-selection-via-marks/(<a class=quiet href="sndscm.html#exdefineselectionviamarks">define-selection-via-marks<\/a>/g
+s/(definstrument/(<a class=quiet href="clm.html#definstrument">definstrument<\/a>/g
+s/(defpinstrument/(<a class=quiet href="clm.html#defpinstrument">defpinstrument<\/a>/g
+s/(defvar/(<a class=quiet href="extsnd.html#ldefvar">defvar<\/a>/g
+s/(degrees-\&gt;radians/(<a class=quiet href="clm.html#degrees-\&gt;radians">degrees-\&gt;radians<\/a>/g
+s/(delay? /(<a class=quiet href="clm.html#delay?">delay?<\/a> /g
+s/(delay /(<a class=quiet href="clm.html#delay">delay<\/a> /g
+s/(delete-mark/(<a class=quiet href="extsnd.html#snddeletemark">delete-mark<\/a>/g
+s/(delete-marks/(<a class=quiet href="extsnd.html#snddeletemarks">delete-marks<\/a>/g
+s/(delete-mix/(<a class=quiet href="extsnd.html#snddeletemix">delete-mix<\/a>/g
+s/(delete-samples/(<a class=quiet href="extsnd.html#snddeletesamples">delete-samples<\/a>/g
+s/(delete-sample/(<a class=quiet href="extsnd.html#snddeletesample">delete-sample<\/a>/g
+s/(delete-selection-and-smooth/(<a class=quiet href="sndscm.html#exdeleteselectionandsmooth">delete-selection-and-smooth<\/a>/g
+s/(delete-selection/(<a class=quiet href="extsnd.html#snddeleteselection">delete-selection<\/a>/g
+s/(delete-track/(<a class=quiet href="extsnd.html#deletetrack">delete-track<\/a>/g
+s/(describe-instrument/(<a class=quiet href="clm.html#describe-instrument">describe-instrument<\/a>/g
+s/(describe-mark/(<a class=quiet href="sndscm.html#describemark">describe-mark<\/a>/g
+s/(dialog-widgets/(<a class=quiet href="extsnd.html#dialogwidgets">dialog-widgets<\/a>/g
+s/(display-edits/(<a class=quiet href="extsnd.html#snddisplayedits">display-edits<\/a>/g
+s/(dlocsig /(<a class=quiet href="clm.html#dlocsig">dlocsig<\/a> /g
+s/(doit-again-button-color)/(<a class=quiet href="extsnd.html#doitagainbuttoncolor">doit-again-button-color<\/a>)/g
+s/(doit-button-color/(<a class=quiet href="extsnd.html#doitbuttoncolor">doit-button-color<\/a>/g
+s/(dot-product/(<a class=quiet href="clm.html#dot-product">dot-product<\/a>/g
+s/(dot-size/(<a class=quiet href="extsnd.html#dotsize">dot-size<\/a>/g
+s/(draw-axes/(<a class=quiet href="extsnd.html#drawaxes">draw-axes<\/a>/g
+s/(draw-dots/(<a class=quiet href="extsnd.html#drawdots">draw-dots<\/a>/g
+s/(draw-dot /(<a class=quiet href="extsnd.html#drawdot">draw-dot<\/a> /g
+s/(draw-lines/(<a class=quiet href="extsnd.html#drawlines">draw-lines<\/a>/g
+s/(draw-line /(<a class=quiet href="extsnd.html#drawline">draw-line<\/a> /g
+s/(draw-string/(<a class=quiet href="extsnd.html#drawstring">draw-string<\/a>/g
+s/(edit-fragment/(<a class=quiet href="extsnd.html#sndeditfragment">edit-fragment<\/a>/g
+s/(edit-header-dialog)/(<a class=quiet href="extsnd.html#sndeditheaderdialog">edit-header-dialog<\/a>)/g
+s/(edit-position/(<a class=quiet href="extsnd.html#sndeditposition">edit-position<\/a>/g
+s/(edit-save-as-dialog)/(<a class=quiet href="extsnd.html#sndeditsaveasdialog">edit-save-as-dialog<\/a>)/g
+s/(edit-tree/(<a class=quiet href="extsnd.html#sndedittree">edit-tree<\/a>/g
+s/(edits /(<a class=quiet href="extsnd.html#sndedits">edits<\/a> /g
+s/(emacs-style-save-as)/(<a class=quiet href="extsnd.html#emacssytlesaveas">emacs-style-save-as<\/a>)/g
+s/(env-channel/(<a class=quiet href="extsnd.html#envchannel">env-channel<\/a>/g
+s/(env-interp/(<a class=quiet href="clm.html#env-interp">env-interp<\/a>/g
+s/(env-selection/(<a class=quiet href="extsnd.html#sndenvselection">env-selection<\/a>/g
+s/(env-sound-interp/(<a class=quiet href="sndscm.html#exenvsoundinterp">env-sound-interp<\/a>/g
+s/(env-sound/(<a class=quiet href="extsnd.html#sndenv">env-sound<\/a>/g
+s/(env? /(<a class=quiet href="clm.html#env?">env?<\/a> /g
+s/(enved-base)/(<a class=quiet href="extsnd.html#envedbase">enved-base<\/a>)/g
+s/(enved-clip?)/(<a class=quiet href="extsnd.html#envedclipping">enved-clip?<\/a>)/g
+s/(enved-dialog)/(<a class=quiet href="extsnd.html#sndenveddialog">enved-dialog<\/a>)/g
+s/(enved-envelope)/(<a class=quiet href="extsnd.html#envedenvelope">enved-envelope<\/a>)/g
+s/(enved-filter)/(<a class=quiet href="extsnd.html#filterenv">enved-filter<\/a>)/g
+s/(enved-filter-order)/(<a class=quiet href="extsnd.html#filterenvorder">enved-filter-order<\/a>)/g
+s/(enved-in-dB)/(<a class=quiet href="extsnd.html#envedin-dB">enved-in-dB<\/a>)/g
+s/(enved-power)/(<a class=quiet href="extsnd.html#envedpower">enved-power<\/a>)/g
+s/(enved-style)/(<a class=quiet href="extsnd.html#envedstyle">enved-style<\/a>)/g
+s/(enved-target)/(<a class=quiet href="extsnd.html#envedtarget">enved-target<\/a>)/g
+s/(enved-wave?)/(<a class=quiet href="extsnd.html#envedwaving">enved-wave?<\/a>)/g
+s/(enved-waveform-color)/(<a class=quiet href="extsnd.html#envedwaveformcolor">enved-waveform-color<\/a>)/g
+s/(envelope-\&gt;coeffs/(<a class=quiet href="clm.html#envelope-\&gt;coeffs">envelope-\&gt;coeffs<\/a>/g
+s/(envelope-exp/(<a class=quiet href="clm.html#envelope-exp">envelope-exp<\/a>/g
+s/(envelope-interp/(<a class=quiet href="clm.html#envelope-interp">envelope-interp<\/a>/g
+s/(enveloped-mix/(<a class=quiet href="sndscm.html#exenvelopedmix">enveloped-mix<\/a>/g
+s/(eps-bottom-margin)/(<a class=quiet href="extsnd.html#epsbottommargin">eps-bottom-margin<\/a>)/g
+s/(eps-file)/(<a class=quiet href="extsnd.html#epsfile">eps-file<\/a>)/g
+s/(eps-left-margin)/(<a class=quiet href="extsnd.html#epsleftmargin">eps-left-margin<\/a>)/g
+s/(eps-size)/(<a class=quiet href="extsnd.html#epssize">eps-size<\/a>)/g
+s/(equalize-panes)/(<a class=quiet href="extsnd.html#sndequalizepanes">equalize-panes<\/a>)/g
+s/(eval-between-marks/(<a class=quiet href="sndscm.html#exevalbetweenmarks">eval-between-marks<\/a>/g
+s/(eval-over-selection/(<a class=quiet href="sndscm.html#exevaloverselection">eval-over-selection<\/a>/g
+s/(every-sample?/(<a class=quiet href="sndscm.html#exeverysample">every-sample?<\/a>/g
+s/(exit)/(<a class=quiet href="extsnd.html#sndexit">exit<\/a>)/g
+s/(expand-control-hop/(<a class=quiet href="extsnd.html#sndexpandhop">expand-control-hop<\/a>/g
+s/(expand-control-length/(<a class=quiet href="extsnd.html#sndexpandlength">expand-control-length<\/a>/g
+s/(expand-control-ramp/(<a class=quiet href="extsnd.html#sndexpandramp">expand-control-ramp<\/a>/g
+s/(expand-control?/(<a class=quiet href="extsnd.html#sndexpanding">expand-control?<\/a>/g
+s/(expand-control/(<a class=quiet href="extsnd.html#sndexpand">expand-control<\/a>/g
+s/(explode-sf2/(<a class=quiet href="sndscm.html#exexplodesf2">explode-sf2<\/a>/g
+s/(fft /(<a class=quiet href="extsnd.html#sndfft">fft<\/a> /g
+s/(fft-edit/(<a class=quiet href="sndscm.html#exfftedit">fft-edit<\/a>/g
+s/(fft-log-frequency/(<a class=quiet href="extsnd.html#fftlogfrequency">fft-log-frequency<\/a>/g
+s/(fft-log-magnitude/(<a class=quiet href="extsnd.html#fftlogmagnitude">fft-log-magnitude<\/a>/g
+s/(fft-squelch/(<a class=quiet href="sndscm.html#exfftsquelch">fft-squelch<\/a>/g
+s/(fft-window-beta/(<a class=quiet href="extsnd.html#fftbeta">fft-window-beta<\/a>/g
+s/(fft-window/(<a class=quiet href="extsnd.html#lfftwindow">fft-window<\/a>/g
+s/(file-\&gt;array/(<a class=quiet href="clm.html#file-\&gt;array">file-\&gt;array<\/a>/g
+s/(file-\&gt;frame? /(<a class=quiet href="clm.html#file-\&gt;frame?">file-\&gt;frame?<\/a> /g
+s/(file-\&gt;frame/(<a class=quiet href="clm.html#file-\&gt;frame">file-\&gt;frame<\/a>/g
+s/(file-\&gt;sample? /(<a class=quiet href="clm.html#file-\&gt;sample?">file-\&gt;sample?<\/a> /g
+s/(file-\&gt;sample/(<a class=quiet href="clm.html#file-\&gt;sample">file-\&gt;sample<\/a>/g
+s/(file-dialog)/(<a class=quiet href="extsnd.html#sndfiledialog">file-dialog<\/a>)/g
+s/(file-name /(<a class=quiet href="extsnd.html#sndfilename">file-name<\/a> /g
+s/(file-name)/(<a class=quiet href="extsnd.html#sndfilename">file-name<\/a>)/g
+s/(file-save-as-dialog)/(<a class=quiet href="extsnd.html#sndfilesaveasdialog">file-save-as-dialog<\/a>)/g
+s/(fill-polygon/(<a class=quiet href="extsnd.html#fillpolygon">fill-polygon<\/a>/g
+s/(fill-rectangle/(<a class=quiet href="extsnd.html#fillrectangle">fill-rectangle<\/a>/g
+s/(filter-control-coeffs/(<a class=quiet href="extsnd.html#sndfiltercoeffs">filter-control-coeffs<\/a>/g
+s/(filter-control-env/(<a class=quiet href="extsnd.html#sndfilterenv">filter-control-env<\/a>/g
+s/(filter-control-in-dB/(<a class=quiet href="extsnd.html#sndfilterdbing">filter-control-in-dB<\/a>/g
+s/(filter-control-order/(<a class=quiet href="extsnd.html#sndfilterorder">filter-control-order<\/a>/g
+s/(filter-control?/(<a class=quiet href="extsnd.html#sndfiltering">filter-control?<\/a>/g
+s/(filter-env-in-hz/(<a class=quiet href="extsnd.html#filterenvinhz">filter-env-in-hz<\/a>/g
+s/(filter-selection/(<a class=quiet href="extsnd.html#sndfilterselection">filter-selection<\/a>/g
+s/(filter-sound/(<a class=quiet href="extsnd.html#sndfilter">filter-sound<\/a>/g
+s/(filter-track/(<a class=quiet href="sndscm.html#filtertrack">filter-track<\/a>/g
+s/(filter-waveform-color/(<a class=quiet href="extsnd.html#filterwaveformcolor">filter-waveform-color<\/a>/g
+s/(filter? /(<a class=quiet href="clm.html#filter?">filter?<\/a> /g
+s/(filter /(<a class=quiet href="clm.html#filter">filter<\/a> /g
+s/(find /(<a class=quiet href="extsnd.html#lfind">find<\/a> /g
+s/(find-mark/(<a class=quiet href="extsnd.html#sndfindmark">find-mark<\/a>/g
+s/(find-mix/(<a class=quiet href="sndscm.html#findmix">find-mix<\/a>/g
+s/(find-sound/(<a class=quiet href="extsnd.html#sndfindsound">find-sound<\/a>/g
+s/(finish-progress-report/(<a class=quiet href="extsnd.html#finishprogressreport">finish-progress-report<\/a>/g
+s/(fir-filter? /(<a class=quiet href="clm.html#fir-filter?">fir-filter?<\/a> /g
+s/(fir-filter /(<a class=quiet href="clm.html#fir-filter">fir-filter<\/a> /g
+s/(focus-widget/(<a class=quiet href="extsnd.html#focuswidget">focus-widget<\/a>/g
+s/(for-each-child/(<a class=quiet href="sndscm.html#foreachchild">for-each-child<\/a>/g
+s/(for-each-sound-file/(<a class=quiet href="sndscm.html#exforeachsoundfile">for-each-sound-file<\/a>/g
+s/(foreground-color)/(<a class=quiet href="extsnd.html#foregroundcolor">foreground-color<\/a>)/g
+s/(forget-region/(<a class=quiet href="extsnd.html#forgetregion">forget-region<\/a>/g
+s/(formant-bank/(<a class=quiet href="grfsnd.html#formantbank">formant-bank<\/a>/g
+s/(formant? /(<a class=quiet href="clm.html#formant?">formant?<\/a> /g
+s/(formant /(<a class=quiet href="clm.html#formant">formant<\/a> /g
+s/(forward-graph/(<a class=quiet href="extsnd.html#sndforwardgraph">forward-graph<\/a>/g
+s/(forward-mark/(<a class=quiet href="extsnd.html#sndforwardmark">forward-mark<\/a>/g
+s/(forward-mix/(<a class=quiet href="extsnd.html#sndforwardmix">forward-mix<\/a>/g
+s/fourier-transform/<a class=quiet href="extsnd.html#fouriertransform">fourier-transform<\/a>/g
+s/(frame+/(<a class=quiet href="clm.html#frame+">frame+<\/a>/g
+s/(frame-\&gt;buffer/(<a class=quiet href="clm.html#frame-\&gt;buffer">frame-\&gt;buffer<\/a>/g
+s/(frame-\&gt;file? /(<a class=quiet href="clm.html#frame-\&gt;file?">frame-\&gt;file?<\/a> /g
+s/(frame-\&gt;file/(<a class=quiet href="clm.html#frame-\&gt;file">frame-\&gt;file<\/a>/g
+s/(frame-\&gt;frame/(<a class=quiet href="clm.html#frame-\&gt;frame">frame-\&gt;frame<\/a>/g
+s/(frame-\&gt;list/(<a class=quiet href="clm.html#frame-\&gt;list">frame-\&gt;list<\/a>/g
+s/(frame-\&gt;sample/(<a class=quiet href="clm.html#frame-\&gt;sample">frame-\&gt;sample<\/a>/g
+s/(frame-ref/(<a class=quiet href="clm.html#frame-ref">frame-ref<\/a>/g
+s/(frame-set!/(<a class=quiet href="clm.html#frame-set!">frame-set!<\/a>/g
+s/(frame? /(<a class=quiet href="clm.html#frame?">frame?<\/a> /g
+s/(frames/(<a class=quiet href="extsnd.html#frames">frames<\/a>/g
+s/(free-sample-reader/(<a class=quiet href="extsnd.html#freesamplereader">free-sample-reader<\/a>/g
+s/(free-track/(<a class=quiet href="extsnd.html#freetrack">free-track<\/a>/g
+s/(glSpectrogram/(<a class=quiet href="extsnd.html#glspectrogram">glSpectrogram<\/a>/g
+s/(granulate? /(<a class=quiet href="clm.html#granulate?">granulate?<\/a> /g
+s/(granulate /(<a class=quiet href="clm.html#granulate">granulate<\/a> /g
+s/(graph /(<a class=quiet href="extsnd.html#sndgraph">graph<\/a> /g
+s/(graph-\&gt;ps/(<a class=quiet href="extsnd.html#sndgraph2ps">graph-\&gt;ps<\/a>/g
+s/(graph-color)/(<a class=quiet href="extsnd.html#graphcolor">graph-color<\/a>)/g
+s/(graph-cursor/(<a class=quiet href="extsnd.html#graphcursor">graph-cursor<\/a>/g
+s/(graph-data/(<a class=quiet href="extsnd.html#graphdata">graph-data<\/a>/g
+s/graph-lines/<a class=quiet href="extsnd.html#graphlines">graph-lines<\/a>/g
+s/(graph-style/(<a class=quiet href="extsnd.html#graphstyle">graph-style<\/a>/g
+s/(graphs-horizontal/(<a class=quiet href="extsnd.html#graphshorizontal">graphs-horizontal<\/a>/g
+s/(header-type/(<a class=quiet href="extsnd.html#sndheadertype">header-type<\/a>/g
+s/(help-button-color)/(<a class=quiet href="extsnd.html#helpbuttoncolor">help-button-color<\/a>)/g
+s/(help-dialog)/(<a class=quiet href="extsnd.html#sndhelpdialog">help-dialog<\/a>)/g
+s/(hide-widget/(<a class=quiet href="extsnd.html#hidewidget">hide-widget<\/a>/g
+s/(highlight-color)/(<a class=quiet href="extsnd.html#highlightcolor">highlight-color<\/a>)/g
+s/(html-dir)/(<a class=quiet href="extsnd.html#htmldir">html-dir<\/a>)/g
+s/(html-program)/(<a class=quiet href="extsnd.html#htmlprogram">html-program<\/a>/g
+s/(hz-\&gt;radians/(<a class=quiet href="clm.html#hz-\&gt;radians">hz-\&gt;radians<\/a>)/g
+s/(iir-filter? /(<a class=quiet href="clm.html#iir-filter?">iir-filter?<\/a> /g
+s/(iir-filter /(<a class=quiet href="clm.html#iir-filter">iir-filter<\/a> /g
+s/(in-any/(<a class=quiet href="clm.html#in-any">in-any<\/a>/g
+s/(in-hz/(<a class=quiet href="grfsnd.html#inhz">in-hz<\/a>/g
+s/(ina /(<a class=quiet href="clm.html#ina">ina<\/a> /g
+s/(inb /(<a class=quiet href="clm.html#inb">inb<\/a> /g
+s/(info-dialog)/(<a class=quiet href="extsnd.html#infodialog">info-dialog<\/a>)/g
+s/(init-ladspa/(<a class=quiet href="grfsnd.html#initladspa">init-ladspa<\/a>/g
+s/(ins-var/(<a class=quiet href="clm.html#ins-var">ins-var<\/a>/g
+s/(insert-channel/(<a class=quiet href="sndscm.html#insertchannel">insert-channel<\/a>/g
+s/(insert-region/(<a class=quiet href="extsnd.html#sndinsertregion">insert-region<\/a>/g
+s/(insert-samples/(<a class=quiet href="extsnd.html#sndinsertsamples">insert-samples<\/a>/g
+s/(insert-sample/(<a class=quiet href="extsnd.html#sndinsertsample">insert-sample<\/a>/g
+s/(insert-selection/(<a class=quiet href="extsnd.html#sndinsertselection">insert-selection<\/a>/g
+s/(insert-silence/(<a class=quiet href="extsnd.html#sndinsertsilence">insert-silence<\/a>/g
+s/(insert-sound/(<a class=quiet href="extsnd.html#sndinsertfile">insert-sound<\/a>/g
+s/(instrument-let/(<a class=quiet href="clm.html#instrument-let">instrument-let<\/a>/g
+s/(just-sounds/(<a class=quiet href="extsnd.html#justsounds">just-sounds<\/a>/g
+s/(key /(<a class=quiet href="extsnd.html#sndkey">key<\/a> /g
+s/(key-binding/(<a class=quiet href="extsnd.html#keybinding">key-binding<\/a>/g
+s/(ladspa-descriptor/(<a class=quiet href="grfsnd.html#ladspadescriptor">ladspa-descriptor<\/a>/g
+s/(ladspa-dir/(<a class=quiet href="extsnd.html#ladspadir">ladspa-dir<\/a>/g
+s/(left-sample/(<a class=quiet href="extsnd.html#sndleftsample">left-sample<\/a>/g
+s/(linear-\&gt;db/(<a class=quiet href="clm.html#linear-\&gt;db">linear-\&gt;db<\/a>/g
+s/(linux-help/(<a class=quiet href="clm.html#linux-help">linux-help<\/a>/g
+s/(lisp-graph-style/(<a class=quiet href="extsnd.html#lispgraphstyle">lisp-graph-style<\/a>/g
+s/(lisp-graph?/(<a class=quiet href="extsnd.html#sndgraphing">lisp-graph?<\/a>/g
+s/(list-\&gt;vct/(<a class=quiet href="extsnd.html#sndlist2vct">list-\&gt;vct<\/a>/g
+s/(list-ladspa/(<a class=quiet href="grfsnd.html#listladspa">list-ladspa<\/a>/g
+s/(listener-color)/(<a class=quiet href="extsnd.html#listenercolor">listener-color<\/a>)/g
+s/(listener-font)/(<a class=quiet href="extsnd.html#listenerfont">listener-font<\/a>)/g
+s/(listener-prompt)/(<a class=quiet href="extsnd.html#listenerprompt">listener-prompt<\/a>)/g
+s/(listener-selection)/(<a class=quiet href="extsnd.html#listenerselection">listener-selection<\/a>)/g
+s/(listener-text-color)/(<a class=quiet href="extsnd.html#listenertextcolor">listener-text-color<\/a>)/g
+s/(load-font/(<a class=quiet href="extsnd.html#loadfont">load-font<\/a>/g
+s/(lock-track/(<a class=quiet href="extsnd.html#locktrack">lock-track<\/a>/g
+s/(locsig /(<a class=quiet href="clm.html#locsig">locsig<\/a> /g
+s/(locsig-ref/(<a class=quiet href="clm.html#locsig-ref">locsig-ref<\/a>/g
+s/(locsig-reverb-ref/(<a class=quiet href="clm.html#locsig-reverb-ref">locsig-reverb-ref<\/a>/g
+s/(locsig-reverb-set!/(<a class=quiet href="clm.html#locsig-reverb-set!">locsig-reverb-set!<\/a>/g
+s/(locsig-set!/(<a class=quiet href="clm.html#locsig-set!">locsig-set!<\/a>/g
+s/(locsig? /(<a class=quiet href="clm.html#locsig?">locsig?<\/a> /g
+s/(main-menu/(<a class=quiet href="extsnd.html#mainmenu">main-menu<\/a>/g
+s/(main-widgets/(<a class=quiet href="extsnd.html#mainwidgets">main-widgets<\/a>/g
+s/(make-all-pass/(<a class=quiet href="clm.html#make-all-pass">make-all-pass<\/a>/g
+s/(make-asymmetric-fm/(<a class=quiet href="clm.html#make-asymmetric-fm">make-asymmetric-fm<\/a>/g
+s/(make-bandpass/(<a class=quiet href="sndscm.html#makebandpass">make-bandpass<\/a>/g
+s/(make-bandstop/(<a class=quiet href="sndscm.html#makebandstop">make-bandstop<\/a>/g
+s/(make-biquad/(<a class=quiet href="sndscm.html#makebiquad">make-biquad<\/a>/g
+s/(make-buffer/(<a class=quiet href="clm.html#make-buffer">make-buffer<\/a>/g
+s/(make-color/(<a class=quiet href="extsnd.html#makecolor">make-color<\/a>/g
+s/(make-comb/(<a class=quiet href="clm.html#make-comb">make-comb<\/a>/g
+s/(make-convolve/(<a class=quiet href="clm.html#make-convolve">make-convolve<\/a>/g
+s/(make-delay/(<a class=quiet href="clm.html#make-delay">make-delay<\/a>/g
+s/(make-differentiator/(<a class=quiet href="sndscm.html#makedifferentiator">make-differentiator<\/a>/g
+s/(make-env/(<a class=quiet href="clm.html#make-env">make-env<\/a>/g
+s/(make-fft-window/(<a class=quiet href="clm.html#make-fft-window">make-fft-window<\/a>/g
+s/(make-file-\&gt;frame/(<a class=quiet href="clm.html#make-file-\&gt;frame">make-file-\&gt;frame<\/a>/g
+s/(make-file-\&gt;sample/(<a class=quiet href="clm.html#make-file-\&gt;sample">make-file-\&gt;sample<\/a>/g
+s/(make-filter/(<a class=quiet href="clm.html#make-filter">make-filter<\/a>/g
+s/(make-fir-filter/(<a class=quiet href="clm.html#make-fir-filter">make-fir-filter<\/a>/g
+s/(make-formant/(<a class=quiet href="clm.html#make-formant">make-formant<\/a>/g
+s/(make-frame/(<a class=quiet href="clm.html#make-frame">make-frame<\/a>/g
+s/(make-frame-\&gt;file/(<a class=quiet href="clm.html#make-frame-\&gt;file">make-frame-\&gt;file<\/a>/g
+s/(make-granulate/(<a class=quiet href="clm.html#make-granulate">make-granulate<\/a>/g
+s/(make-graph-data/(<a class=quiet href="extsnd.html#makegraphdata">make-graph-data<\/a>/g
+s/(make-highpass/(<a class=quiet href="sndscm.html#makehighpass">make-highpass<\/a>/g
+s/(make-hilbert-transform/(<a class=quiet href="sndscm.html#makehilberttransform">make-hilbert-transform<\/a>/g
+s/(make-identity-mixer/(<a class=quiet href="clm.html#make-identity-mixer">make-identity-mixer<\/a>/g
+s/(make-iir-filter/(<a class=quiet href="clm.html#make-iir-filter">make-iir-filter<\/a>/g
+s/(make-locsig/(<a class=quiet href="clm.html#make-locsig">make-locsig<\/a>/g
+s/(make-lowpass/(<a class=quiet href="sndscm.html#makelowpass">make-lowpass<\/a>/g
+s/(make-mix-sample-reader/(<a class=quiet href="extsnd.html#makemixsamplereader">make-mix-sample-reader<\/a>/g
+s/(make-mixer/(<a class=quiet href="clm.html#make-mixer">make-mixer<\/a>/g
+s/(make-notch/(<a class=quiet href="clm.html#make-notch">make-notch<\/a>/g
+s/(make-one-pole/(<a class=quiet href="clm.html#make-one-pole">make-one-pole<\/a>/g
+s/(make-one-zero/(<a class=quiet href="clm.html#make-one-zero">make-one-zero<\/a>/g
+s/(make-oscil/(<a class=quiet href="clm.html#make-oscil">make-oscil<\/a>/g
+s/(make-phase-vocoder/(<a class=quiet href="clm.html#make-phase-vocoder">make-phase-vocoder<\/a>/g
+s/(make-player/(<a class=quiet href="extsnd.html#makeplayer">make-player<\/a>/g
+s/(make-ppolar/(<a class=quiet href="clm.html#make-ppolar">make-ppolar<\/a>/g
+s/(make-pulse-train/(<a class=quiet href="clm.html#make-pulse-train">make-pulse-train<\/a>/g
+s/(make-rand/(<a class=quiet href="clm.html#make-rand">make-rand<\/a>/g
+s/(make-rand-interp/(<a class=quiet href="clm.html#make-rand-interp">make-rand-interp<\/a>/g
+s/(make-readin/(<a class=quiet href="clm.html#make-readin">make-readin<\/a>/g
+s/(make-region-sample-reader/(<a class=quiet href="extsnd.html#makeregionsamplereader">make-region-sample-reader<\/a>/g
+s/(make-region /(<a class=quiet href="extsnd.html#sndmakeregion">make-region<\/a> /g
+s/(make-sample-\&gt;file/(<a class=quiet href="clm.html#make-sample-\&gt;file">make-sample-\&gt;file<\/a>/g
+s/(make-sample-reader/(<a class=quiet href="extsnd.html#makesamplereader">make-sample-reader<\/a>/g
+s/(make-sawtooth-wave/(<a class=quiet href="clm.html#make-sawtooth-wave">make-sawtooth-wave<\/a>/g
+s/(make-selection/(<a class=quiet href="sndscm.html#exmakeselection">make-selection<\/a>/g
+s/(make-sine-summation/(<a class=quiet href="clm.html#make-sine-summation">make-sine-summation<\/a>/g
+s/(make-snd-\&gt;sample/(<a class=quiet href="extsnd.html#makesnd2sample">make-snd-\&gt;sample<\/a>/g
+s/(make-sound-box/(<a class=quiet href="sndscm.html#makesoundbox">make-sound-box<\/a>/g
+s/(make-sound-data/(<a class=quiet href="extsnd.html#makesounddata">make-sound-data<\/a>/g
+s/(make-square-wave/(<a class=quiet href="clm.html#make-square-wave">make-square-wave<\/a>/g
+s/(make-src/(<a class=quiet href="clm.html#make-src">make-src<\/a>/g
+s/(make-sum-of-cosines/(<a class=quiet href="clm.html#make-sum-of-cosines">make-sum-of-cosines<\/a>/g
+s/(make-table-lookup/(<a class=quiet href="clm.html#make-table-lookup">make-table-lookup<\/a>/g
+s/(make-track-sample-reader/(<a class=quiet href="extsnd.html#maketracksamplereader">make-track-sample-reader<\/a>/g
+s/(make-track/(<a class=quiet href="extsnd.html#maketrack">make-track<\/a>/g
+s/(make-triangle-wave/(<a class=quiet href="clm.html#make-triangle-wave">make-triangle-wave<\/a>/g
+s/(make-two-pole/(<a class=quiet href="clm.html#make-two-pole">make-two-pole<\/a>/g
+s/(make-two-zero/(<a class=quiet href="clm.html#make-two-zero">make-two-zero<\/a>/g
+s/(make-variable-display/(<a class=quiet href="sndscm.html#makevariabledisplay">make-variable-display<\/a>/g
+s/(make-variable-graph/(<a class=quiet href="extsnd.html#makevariablegraph">make-variable-graph<\/a>/g
+s/(make-vct/(<a class=quiet href="extsnd.html#makevct">make-vct<\/a>/g
+s/(make-wave-train/(<a class=quiet href="clm.html#make-wave-train">make-wave-train<\/a>/g
+s/(make-waveshape/(<a class=quiet href="clm.html#make-waveshape">make-waveshape<\/a>/g
+s/(make-xen-\&gt;sample/(<a class=quiet href="extsnd.html#makexen2sample">make-xen-\&gt;sample<\/a>/g
+s/(make-zpolar/(<a class=quiet href="clm.html#make-zpolar">make-zpolar<\/a>/g
+s/(map-channel/(<a class=quiet href="extsnd.html#mapchannel">map-channel<\/a>/g
+s/(map-chan /(<a class=quiet href="extsnd.html#mapchan">map-chan<\/a> /g
+s/(map-sound-files/(<a class=quiet href="sndscm.html#exmapsoundfiles">map-sound-files<\/a>/g
+s/(mark-color)/(<a class=quiet href="extsnd.html#markcolor">mark-color<\/a>)/g
+s/mark-context/<a class=quiet href="extsnd.html#markcontext">mark-context<\/a>/g
+s/(mark-explode/(<a class=quiet href="sndscm.html#exmarkexplode">mark-explode<\/a>/g
+s/(mark-home/(<a class=quiet href="extsnd.html#markhome">mark-home<\/a>/g
+s/(mark-loops/(<a class=quiet href="sndscm.html#exmarkloops">mark-loops<\/a>/g
+s/(mark-name-\&gt;id/(<a class=quiet href="sndscm.html#markname2id">mark-name-\&gt;id<\/a>/g
+s/(mark-name/(<a class=quiet href="extsnd.html#sndmarkname">mark-name<\/a>/g
+s/(mark-property/(<a class=quiet href="sndscm.html#markproperty">mark-property<\/a>/g
+s/(mark-sample/(<a class=quiet href="extsnd.html#sndmarksample">mark-sample<\/a>/g
+s/(mark-sync-max)/(<a class=quiet href="extsnd.html#sndmarksyncmax">mark-sync-max<\/a>)/g
+s/(mark-sync/(<a class=quiet href="extsnd.html#sndmarksync">mark-sync<\/a>/g
+s/(mark? /(<a class=quiet href="extsnd.html#sndmarkok">mark?<\/a> /g
+s/(marks/(<a class=quiet href="extsnd.html#emarks">marks<\/a>/g
+s/(match-sound-files/(<a class=quiet href="sndscm.html#exmatchsoundfiles">match-sound-files<\/a>/g
+s/(max-envelope/(<a class=quiet href="sndscm.html#maxenvelope">max-envelope<\/a>/g
+s/(max-regions/(<a class=quiet href="extsnd.html#maxregions">max-regions<\/a>/g
+s/(max-transform-peaks/(<a class=quiet href="extsnd.html#maxfftpeaks">max-transform-peaks<\/a>/g
+s/(maxamp /(<a class=quiet href="extsnd.html#sndmaxamp">maxamp<\/a> /g
+s/memo-sound/<a class=quiet href="extsnd.html#memosound">memo-sound<\/a>/g
+s/(menu-sensitive/(<a class=quiet href="extsnd.html#menusensitive">menu-sensitive<\/a>/g
+s/(menu-widgets/(<a class=quiet href="extsnd.html#menuwidgets">menu-widgets<\/a>/g
+s/(min-dB/(<a class=quiet href="extsnd.html#mindb">min-dB<\/a>/g
+s/(minibuffer-history-length)/(<a class=quiet href="extsnd.html#minibufferhistorylength">minibuffer-history-length<\/a>)/g
+s/(mix /(<a class=quiet href="extsnd.html#sndmix">mix<\/a> /g
+s/(mix-\&gt;vct/(<a class=quiet href="sndscm.html#mix2vct">mix-\&gt;vct<\/a>/g
+s/(mix-amp-env/(<a class=quiet href="extsnd.html#sndmixampenv">mix-amp-env<\/a>/g
+s/(mix-amp/(<a class=quiet href="extsnd.html#sndmixamp">mix-amp<\/a>/g
+s/(mix-channel/(<a class=quiet href="sndscm.html#mixchannel">mix-channel<\/a>/g
+s/(mix-chans/(<a class=quiet href="extsnd.html#sndmixchans">mix-chans<\/a>/g
+s/(mix-color/(<a class=quiet href="extsnd.html#mixcolor">mix-color<\/a>/g
+s/(mix-dialog)/(<a class=quiet href="extsnd.html#sndmixdialog">mix-dialog<\/a>)/g
+s/(mix-dialog-mix)/(<a class=quiet href="extsnd.html#sndmixdialogmix">mix-dialog-mix<\/a>)/g
+s/(mix-file-dialog)/(<a class=quiet href="extsnd.html#sndmixfiledialog">mix-file-dialog<\/a>)/g
+s/(mix-frames/(<a class=quiet href="extsnd.html#sndmixframes">mix-frames<\/a>/g
+s/(mix-home/(<a class=quiet href="extsnd.html#sndmixhome">mix-home<\/a>/g
+s/(mix-inverted? /(<a class=quiet href="extsnd.html#sndmixinverted">mix-inverted?<\/a> /g
+s/(mix-locked? /(<a class=quiet href="extsnd.html#sndmixlocked">mix-locked?<\/a> /g
+s/(mix-name-\&gt;id/(<a class=quiet href="sndscm.html#mixname2id">mix-name-\&gt;id<\/a>/g
+s/(mix-name/(<a class=quiet href="sndscm.html#mixname">mix-name<\/a>/g
+s/(mix-position/(<a class=quiet href="extsnd.html#sndmixposition">mix-position<\/a>/g
+s/(mix-property/(<a class=quiet href="sndscm.html#mixproperty">mix-property<\/a>/g
+s/(mix-region/(<a class=quiet href="extsnd.html#sndmixregion">mix-region<\/a>/g
+s/(mix-sample-reader?/(<a class=quiet href="extsnd.html#mixsamplereaderQ">mix-sample-reader?<\/a>/g
+s/(mix-selection/(<a class=quiet href="extsnd.html#sndmixselection">mix-selection<\/a>/g
+s/(mix-sound/(<a class=quiet href="sndscm.html#mixsound">mix-sound<\/a>/g
+s/(mix-speed/(<a class=quiet href="extsnd.html#sndmixspeed">mix-speed<\/a>/g
+s/(mix-tag-height/(<a class=quiet href="extsnd.html#sndmixtagheighth">mix-tag-height<\/a>/g
+s/(mix-tag-position/(<a class=quiet href="extsnd.html#sndmixtagposition">mix-tag-position<\/a>/g
+s/(mix-tag-width/(<a class=quiet href="extsnd.html#sndmixtagwidth">mix-tag-width<\/a>/g
+s/(mix-tag-y/(<a class=quiet href="extsnd.html#sndmixtagy">mix-tag-y<\/a>/g
+s/(mix-track/(<a class=quiet href="extsnd.html#sndmixtrack">mix-track<\/a>/g
+s/(mix-vct/(<a class=quiet href="extsnd.html#sndmixvct">mix-vct<\/a>/g
+s/(mix-waveform-height/(<a class=quiet href="extsnd.html#mixwaveformheight">mix-waveform-height<\/a>/g
+s/(mix? /(<a class=quiet href="extsnd.html#sndmixok">mix?<\/a> /g
+s/(mixer-ref/(<a class=quiet href="clm.html#mixer-ref">mixer-ref<\/a>/g
+s/(mixer-set!/(<a class=quiet href="clm.html#mixer-set!">mixer-set!<\/a>/g
+s/(mixer? /(<a class=quiet href="clm.html#mixer?">mixer?<\/a> /g
+s/(mixes/(<a class=quiet href="extsnd.html#mixes">mixes<\/a>/g
+s/(moog-filter/(<a class=quiet href="sndscm.html#moogfilter">moog-filter<\/a>/g
+s/(move-locsig/(<a class=quiet href="clm.html#move-locsig">move-locsig<\/a>/g
+s/(mpg/(<a class=quiet href="sndscm.html#exmpg">mpg<\/a>/g
+s/(multiply-arrays/(<a class=quiet href="clm.html#multiply-arrays">multiply-arrays<\/a>/g
+s/(mus-a0/(<a class=quiet href="clm.html#mus-a0">mus-a0<\/a>/g
+s/(mus-a1/(<a class=quiet href="clm.html#mus-a1">mus-a1<\/a>/g
+s/(mus-a2/(<a class=quiet href="clm.html#mus-a2">mus-a2<\/a>/g
+s/(mus-array-print-length)/(<a class=quiet href="grfsnd.html#musarrayprintlength">mus-array-print-length<\/a>)/g
+s/(mus-audio-close/(<a class=quiet href="extsnd.html#musaudioclose">mus-audio-close<\/a>/g
+s/(mus-audio-describe/(<a class=quiet href="extsnd.html#describeaudiostate">mus-audio-describe<\/a>/g
+s/(mus-audio-error-name/(<a class=quiet href="extsnd.html#audioerror-name">mus-audio-error-name<\/a>/g
+s/(mus-audio-error/(<a class=quiet href="extsnd.html#audioerror">mus-audio-error<\/a>/g
+s/(mus-audio-mixer-read/(<a class=quiet href="extsnd.html#musaudiomixerread">mus-audio-mixer-read<\/a>/g
+s/(mus-audio-mixer-write/(<a class=quiet href="extsnd.html#musaudiomixerwrite">mus-audio-mixer-write<\/a>/g
+s/(mus-audio-open-input/(<a class=quiet href="extsnd.html#musaudioopeninput">mus-audio-open-input<\/a>/g
+s/(mus-audio-open-output/(<a class=quiet href="extsnd.html#musaudioopenoutput">mus-audio-open-output<\/a>/g
+s/(mus-audio-read/(<a class=quiet href="extsnd.html#musaudioread">mus-audio-read<\/a>/g
+s/(mus-audio-restore/(<a class=quiet href="extsnd.html#musaudiorestore">mus-audio-restore<\/a>/g
+s/(mus-audio-save/(<a class=quiet href="extsnd.html#musaudiosave">mus-audio-save<\/a>/g
+s/(mus-audio-set-oss-buffers/(<a class=quiet href="extsnd.html#setossbuffers">mus-audio-set-oss-buffers<\/a>/g
+s/(mus-audio-write/(<a class=quiet href="extsnd.html#musaudiowrite">mus-audio-write<\/a>/g
+s/(mus-b1/(<a class=quiet href="clm.html#mus-b1">mus-b1<\/a>/g
+s/(mus-b2/(<a class=quiet href="clm.html#mus-b2">mus-b2<\/a>/g
+s/(mus-bank/(<a class=quiet href="clm.html#musbank">mus-bank<\/a>/g
+s/(mus-channels/(<a class=quiet href="clm.html#mus-channels">mus-channels<\/a>/g
+s/(mus-channel/(<a class=quiet href="clm.html#mus-channel">mus-channel<\/a>/g
+s/(mus-close/(<a class=quiet href="clm.html#mus-close">mus-close<\/a>/g
+s/(mus-cosines/(<a class=quiet href="clm.html#mus-cosines">mus-cosines<\/a>/g
+s/(mus-create/(<a class=quiet href="clm.html#mus-create">mus-create<\/a>/g
+s/(mus-data-format-name/(<a class=quiet href="extsnd.html#soundformatname">mus-data-format-name<\/a>/g
+s/(mus-data/(<a class=quiet href="clm.html#mus-data">mus-data<\/a>/g
+s/(mus-expand-filename/(<a class=quiet href="extsnd.html#musexpandfilename">mus-expand-filename<\/a>/g
+s/(mus-feedback/(<a class=quiet href="clm.html#mus-feedback">mus-feedback<\/a>/g
+s/(mus-feedforward/(<a class=quiet href="clm.html#mus-feedforward">mus-feedforward<\/a>/g
+s/(mus-file-buffer-size/(<a class=quiet href="grfsnd.html#musfilebuffersize">mus-file-buffer-size<\/a>/g
+s/(mus-file-name/(<a class=quiet href="clm.html#mus-file-name">mus-file-name<\/a>/g
+s/(mus-file-prescaler/(<a class=quiet href="extsnd.html#musfileprescaler">mus-file-prescaler<\/a>/g
+s/(mus-formant-radius/(<a class=quiet href="clm.html#mus-formant-radius">mus-formant-radius<\/a>/g
+s/(mus-frequency/(<a class=quiet href="clm.html#mus-frequency">mus-frequency<\/a>/g
+s/(mus-header-type-name/(<a class=quiet href="extsnd.html#soundtypename">mus-header-type-name<\/a>/g
+s/(mus-hop/(<a class=quiet href="clm.html#mus-hop">mus-hop<\/a>/g
+s/(mus-increment/(<a class=quiet href="clm.html#mus-increment">mus-increment<\/a>/g
+s/(mus-input? /(<a class=quiet href="clm.html#mus-input?">mus-input?<\/a> /g
+s/(mus-length/(<a class=quiet href="clm.html#mus-length">mus-length<\/a>/g
+s/(mus-location/(<a class=quiet href="clm.html#mus-location">mus-location<\/a>/g
+s/(mus-mix/(<a class=quiet href="grfsnd.html#musmix">mus-mix<\/a>/g
+s/(mus-offset/(<a class=quiet href="clm.html#mus-offset">mus-offset<\/a>/g
+s/(mus-open-read/(<a class=quiet href="clm.html#mus-open-read">mus-open-read<\/a>/g
+s/(mus-open-write/(<a class=quiet href="clm.html#mus-open-write">mus-open-write<\/a>/g
+s/(mus-order/(<a class=quiet href="clm.html#mus-order">mus-order<\/a>/g
+s/(mus-out-format/(<a class=quiet href="extsnd.html#musoutformat">mus-out-format<\/a>/g
+s/(mus-output? /(<a class=quiet href="clm.html#mus-output?">mus-output?<\/a> /g
+s/(mus-phase/(<a class=quiet href="clm.html#mus-phase">mus-phase<\/a>/g
+s/(mus-ramp/(<a class=quiet href="clm.html#mus-ramp">mus-ramp<\/a>/g
+s/(mus-random/(<a class=quiet href="clm.html#mus-random">mus-random<\/a>/g
+s/(mus-reopen-write/(<a class=quiet href="clm.html#mus-reopen-write">mus-reopen-write<\/a>/g
+s/(mus-run/(<a class=quiet href="clm.html#mus-run">mus-run<\/a>/g
+s/(mus-scaler/(<a class=quiet href="clm.html#mus-scaler">mus-scaler<\/a>/g
+s/(mus-set-rand-seed/(<a class=quiet href="clm.html#mus-set-rand-seed">mus-set-rand-seed<\/a>/g
+s/(mus-set-raw-header-defaults/(<a class=quiet href="clm.html#mus-set-raw-header-defaults">mus-set-raw-header-defaults<\/a>/g
+s/(mus-sound-chans/(<a class=quiet href="extsnd.html#soundchans">mus-sound-chans<\/a>/g
+s/(mus-sound-close-input/(<a class=quiet href="extsnd.html#mussoundcloseinput">mus-sound-close-input<\/a>/g
+s/(mus-sound-close-output/(<a class=quiet href="extsnd.html#mussoundcloseoutput">mus-sound-close-output<\/a>/g
+s/(mus-sound-comment/(<a class=quiet href="extsnd.html#soundcomment">mus-sound-comment<\/a>/g
+s/(mus-sound-data-format/(<a class=quiet href="extsnd.html#sounddataformat">mus-sound-data-format<\/a>/g
+s/(mus-sound-data-location/(<a class=quiet href="extsnd.html#sounddatalocation">mus-sound-data-location<\/a>/g
+s/(mus-sound-duration/(<a class=quiet href="extsnd.html#soundduration">mus-sound-duration<\/a>/g
+s/(mus-sound-forget/(<a class=quiet href="extsnd.html#soundforget">mus-sound-forget<\/a>/g
+s/(mus-sound-frames/(<a class=quiet href="extsnd.html#soundframes">mus-sound-frames<\/a>/g
+s/(mus-sound-header-type/(<a class=quiet href="extsnd.html#soundheadertype">mus-sound-header-type<\/a>/g
+s/(mus-sound-length/(<a class=quiet href="extsnd.html#soundlength">mus-sound-length<\/a>/g
+s/(mus-sound-loop-info/(<a class=quiet href="extsnd.html#soundloopinfo">mus-sound-loop-info<\/a>/g
+s/(mus-sound-maxamp/(<a class=quiet href="extsnd.html#mussoundmaxamp">mus-sound-maxamp<\/a>/g
+s/(mus-sound-maxamp-exists?/(<a class=quiet href="extsnd.html#mussoundmaxampexists">mus-sound-maxamp-exists?<\/a>/g
+s/(mus-sound-open-input/(<a class=quiet href="extsnd.html#mussoundopeninput">mus-sound-open-input<\/a>/g
+s/(mus-sound-open-output/(<a class=quiet href="extsnd.html#mussoundopenoutput">mus-sound-open-output<\/a>/g
+s/(mus-sound-prune/(<a class=quiet href="extsnd.html#soundprune">mus-sound-prune<\/a>/g
+s/(mus-sound-read/(<a class=quiet href="extsnd.html#mussoundread">mus-sound-read<\/a>/g
+s/(mus-sound-reopen-output/(<a class=quiet href="extsnd.html#mussoundreopenoutput">mus-sound-reopen-output<\/a>/g
+s/(mus-sound-report-cache/(<a class=quiet href="extsnd.html#mussoundreportcache">mus-sound-report-cache<\/a>/g
+s/(mus-sound-samples/(<a class=quiet href="extsnd.html#soundsamples">mus-sound-samples<\/a>/g
+s/(mus-sound-seek-frame/(<a class=quiet href="extsnd.html#mussoundseekframe">mus-sound-seek-frame<\/a>/g
+s/(mus-sound-srate/(<a class=quiet href="extsnd.html#soundsrate">mus-sound-srate<\/a>/g
+s/(mus-sound-write/(<a class=quiet href="extsnd.html#mussoundwrite">mus-sound-write<\/a>/g
+s/(mus-sound-write-date/(<a class=quiet href="extsnd.html#soundwritedate">mus-sound-write-date<\/a>/g
+s/(mus-srate/(<a class=quiet href="grfsnd.html#mussrate">mus-srate<\/a>/g
+s/(mus-width/(<a class=quiet href="clm.html#mus-width">mus-width<\/a>/g
+s/(mus-xcoeffs/(<a class=quiet href="clm.html#mus-xcoeffs">mus-xcoeffs<\/a>/g
+s/(mus-ycoeffs/(<a class=quiet href="clm.html#mus-ycoeffs">mus-ycoeffs<\/a>/g
+s/(new-sound/(<a class=quiet href="extsnd.html#sndnew">new-sound<\/a>/g
+s/(next-sample/(<a class=quiet href="extsnd.html#nextsample">next-sample<\/a>/g
+s/(normalize-envelope/(<a class=quiet href="clm.html#normalize-envelope">normalize-envelope<\/a>/g
+s/(normalized-mix/(<a class=quiet href="sndscm.html#exnormalizedmix">normalized-mix<\/a>/g
+s/(notch /(<a class=quiet href="clm.html#notch">notch<\/a> /g
+s/(notch? /(<a class=quiet href="clm.html#notch?">notch?<\/a> /g
+s/(notehook/(<a class=quiet href="clm.html#notehook">notehook<\/a>/g
+s/(offset-channel/(<a class=quiet href="sndscm.html#offsetchannel">offset-channel<\/a>/g
+s/(one-pole /(<a class=quiet href="clm.html#one-pole">one-pole<\/a> /g
+s/(one-pole? /(<a class=quiet href="clm.html#one-pole?">one-pole?<\/a> /g
+s/(one-zero /(<a class=quiet href="clm.html#one-zero">one-zero<\/a> /g
+s/(one-zero? /(<a class=quiet href="clm.html#one-zero?">one-zero?<\/a> /g
+s/(open-file-dialog)/(<a class=quiet href="extsnd.html#sndopenfiledialog">open-file-dialog<\/a>)/g
+s/(open-input/(<a class=quiet href="clm.html#open-input">open-input<\/a>/g
+s/(open-output/(<a class=quiet href="clm.html#open-output">open-output<\/a>/g
+s/(open-raw-sound/(<a class=quiet href="extsnd.html#sndrawopen">open-raw-sound<\/a>/g
+s/(open-sound-file/(<a class=quiet href="extsnd.html#sndopensoundfile">open-sound-file<\/a>/g
+s/(open-sound/(<a class=quiet href="extsnd.html#sndopen">open-sound<\/a>/g
+s/(optimization)/(<a class=quiet href="extsnd.html#optimization">optimization<\/a>)/g
+s/(optional-key/(<a class=quiet href="clm.html#optional-key">optional-key<\/a>/g
+s/(orientation-dialog)/(<a class=quiet href="extsnd.html#sndorientationdialog">orientation-dialog<\/a>)/g
+s/(oscil-bank/(<a class=quiet href="clm.html#oscilbank">oscil-bank<\/a>/g
+s/(oscil? /(<a class=quiet href="clm.html#oscil?">oscil?<\/a> /g
+s/(oscil /(<a class=quiet href="clm.html#oscil">oscil<\/a> /g
+s/(out-any/(<a class=quiet href="clm.html#out-any">out-any<\/a>/g
+s/(outa /(<a class=quiet href="clm.html#outa">outa<\/a> /g
+s/(outb /(<a class=quiet href="clm.html#outb">outb<\/a> /g
+s/(outc /(<a class=quiet href="clm.html#outc">outc<\/a> /g
+s/(outd /(<a class=quiet href="clm.html#outd">outd<\/a> /g
+s/(pad-channel/(<a class=quiet href="extsnd.html#padchannel">pad-channel<\/a>/g
+s/(pad-marks/(<a class=quiet href="sndscm.html#padmarks">pad-marks<\/a>/g
+s/(pan-mix/(<a class=quiet href="sndscm.html#panmix">pan-mix<\/a>/g
+s/(partials-\&gt;polynomial/(<a class=quiet href="clm.html#partials-\&gt;polynomial">partials-\&gt;polynomial<\/a>/g
+s/(partials-\&gt;waveshape/(<a class=quiet href="clm.html#partials-\&gt;waveshape">partials-\&gt;waveshape<\/a>/g
+s/(partials-\&gt;wave/(<a class=quiet href="clm.html#partials-\&gt;wave">partials-\&gt;wave<\/a>/g
+s/(peak-env-info/(<a class=quiet href="extsnd.html#peakenvinfo">peak-env-info<\/a>/g
+s/(peaks-font/(<a class=quiet href="extsnd.html#peaksfont">peaks-font<\/a>/g
+s/(peaks/(<a class=quiet href="extsnd.html#sndpeaks">peaks<\/a>/g
+s/(phase-partials-\&gt;wave/(<a class=quiet href="clm.html#phase-partials-\&gt;wave">phase-partials-\&gt;wave<\/a>/g
+s/(phase-vocoder /(<a class=quiet href="clm.html#phase-vocoder">phase-vocoder<\/a> /g
+s/(phase-vocoder? /(<a class=quiet href="clm.html#phase-vocoder?">phase-vocoder?<\/a> /g
+s/(play /(<a class=quiet href="extsnd.html#sndplay">play<\/a> /g
+s/(play-and-wait/(<a class=quiet href="extsnd.html#sndplayandwait">play-and-wait<\/a>/g
+s/(play-channel/(<a class=quiet href="extsnd.html#playchannel">play-channel<\/a>/g
+s/(play-mix/(<a class=quiet href="extsnd.html#sndplaymix">play-mix<\/a>/g
+s/(play-region/(<a class=quiet href="extsnd.html#sndplayregion">play-region<\/a>/g
+s/(play-selection/(<a class=quiet href="extsnd.html#sndplayselection">play-selection<\/a>/g
+s/(play-syncd-marks/(<a class=quiet href="sndscm.html#playsyncdmarks">play-syncd-marks<\/a>/g
+s/(play-track/(<a class=quiet href="extsnd.html#sndplaytrack">play-track<\/a>/g
+s/(player-home/(<a class=quiet href="extsnd.html#playerhome">player-home<\/a>/g
+s/(player? /(<a class=quiet href="extsnd.html#playerQ">player?<\/a> /g
+s/(polar-\&gt;rectangular/(<a class=quiet href="clm.html#polar-\&gt;rectangular">polar-\&gt;rectangular<\/a>/g
+s/(polynomial /(<a class=quiet href="clm.html#polynomial">polynomial<\/a> /g
+s/(position-\&gt;x/(<a class=quiet href="extsnd.html#position2x">position-\&gt;x<\/a>/g
+s/(position-\&gt;y/(<a class=quiet href="extsnd.html#position2y">position-\&gt;y<\/a>/g
+s/(position-color)/(<a class=quiet href="extsnd.html#positioncolor">position-color<\/a>)/g
+s/(power-env/(<a class=quiet href="sndscm.html#powerenv">power-env<\/a>/g
+s/(preload-directory/(<a class=quiet href="extsnd.html#sndpreloaddirectory">preload-directory<\/a>/g
+s/(preload-file/(<a class=quiet href="extsnd.html#sndpreloadfile">preload-file<\/a>/g
+s/(previous-files-sort-procedure/(<a class=quiet href="extsnd.html#filessortproc">previous-files-sort-procedure<\/a>/g
+s/(previous-files-sort/(<a class=quiet href="extsnd.html#previousfilessort">previous-files-sort<\/a>/g
+s/(previous-sample/(<a class=quiet href="extsnd.html#previoussample">previous-sample<\/a>/g
+s/(print-length/(<a class=quiet href="extsnd.html#printlength">print-length<\/a>/g
+s/(progress-report/(<a class=quiet href="extsnd.html#progressreport">progress-report<\/a>/g
+s/(prompt-in-minibuffer/(<a class=quiet href="extsnd.html#sndpromptinminibuffer">prompt-in-minibuffer<\/a>/g
+s/(ptree-channel/(<a class=quiet href="extsnd.html#ptreechannel">ptree-channel<\/a>/g
+s/(pulse-train /(<a class=quiet href="clm.html#pulse-train">pulse-train<\/a> /g
+s/(pulse-train? /(<a class=quiet href="clm.html#pulse-train?">pulse-train?<\/a> /g
+s/(pushed-button-color)/(<a class=quiet href="extsnd.html#pushedbuttoncolor">pushed-button-color<\/a>)/g
+s/(quit-button-color)/(<a class=quiet href="extsnd.html#quitbuttoncolor">quit-button-color<\/a>)/g
+s/(radians-\&gt;degrees/(<a class=quiet href="clm.html#radians-\&gt;degrees">radians-\&gt;degrees<\/a>/g
+s/(radians-\&gt;hz/(<a class=quiet href="clm.html#radians-\&gt;hz">radians-\&gt;hz<\/a>/g
+s/(ramp-channel/(<a class=quiet href="extsnd.html#rampchannel">ramp-channel<\/a>/g
+s/(rand /(<a class=quiet href="clm.html#rand">rand<\/a> /g
+s/(rand-interp /(<a class=quiet href="clm.html#rand-interp">rand-interp<\/a> /g
+s/(rand-interp? /(<a class=quiet href="clm.html#rand-interp?">rand-interp?<\/a> /g
+s/(rand? /(<a class=quiet href="clm.html#rand?">rand?<\/a> /g
+s/(rc/(<a class=quiet href="clm.html#rc">rc<\/a>/g
+s/(read-mix-sample/(<a class=quiet href="extsnd.html#readmixsample">read-mix-sample<\/a>/g
+s/(read-only/(<a class=quiet href="extsnd.html#sndreadonly">read-only<\/a>/g
+s/(read-peak-env-info-file/(<a class=quiet href="extsnd.html#readpeakenvinfofile">read-peak-env-info-file<\/a>/g
+s/(read-region-sample/(<a class=quiet href="extsnd.html#readregionsample">read-region-sample<\/a>/g
+s/(read-sample/(<a class=quiet href="extsnd.html#readsample">read-sample<\/a>/g
+s/(read-track-sample/(<a class=quiet href="extsnd.html#readtracksample">read-track-sample<\/a>/g
+s/(readin /(<a class=quiet href="clm.html#readin">readin<\/a> /g
+s/(readin? /(<a class=quiet href="clm.html#readin?">readin?<\/a> /g
+s/(rec-any /(<a class=quiet href="clm.html#rec-any">rec-any<\/a> /g
+s/(receive-snd/(<a class=quiet href="clm.html#receive-snd">receive-snd<\/a>/g
+s/(recolor-widget/(<a class=quiet href="extsnd.html#recolorwidget">recolor-widget<\/a>/g
+s/(recorder-autoload)/(<a class=quiet href="extsnd.html#recorderautoload">recorder-autoload<\/a>)/g
+s/(recorder-buffer-size)/(<a class=quiet href="extsnd.html#recorderbuffersize">recorder-buffer-size<\/a>)/g
+s/(recorder-dialog)/(<a class=quiet href="extsnd.html#sndrecorderdialog">recorder-dialog<\/a>)/g
+s/(recorder-file)/(<a class=quiet href="extsnd.html#recorderfile">recorder-file<\/a>)/g
+s/(recorder-gain/(<a class=quiet href="extsnd.html#sndrecordergain">recorder-gain<\/a>/g
+s/(recorder-in-amp/(<a class=quiet href="extsnd.html#sndrecorderinamp">recorder-in-amp<\/a>/g
+s/(recorder-in-device)/(<a class=quiet href="extsnd.html#recorderindevice">recorder-in-device<\/a>)/g
+s/(recorder-in-format)/(<a class=quiet href="extsnd.html#recorderinformat">recorder-in-format<\/a>)/g
+s/(recorder-max-duration)/(<a class=quiet href="extsnd.html#recordermaxduration">recorder-max-duration<\/a>)/g
+s/(recorder-out-amp/(<a class=quiet href="extsnd.html#sndrecorderoutamp">recorder-out-amp<\/a>/g
+s/(recorder-out-chans)/(<a class=quiet href="extsnd.html#recorderoutchans">recorder-out-chans<\/a>)/g
+s/(recorder-out-format)/(<a class=quiet href="extsnd.html#recorderoutformat">recorder-out-format<\/a>)/g
+s/(recorder-out-type)/(<a class=quiet href="extsnd.html#recorderouttype">recorder-out-type<\/a>)/g
+s/(recorder-srate)/(<a class=quiet href="extsnd.html#recordersrate">recorder-srate<\/a>)/g
+s/(recorder-trigger)/(<a class=quiet href="extsnd.html#recordertrigger">recorder-trigger<\/a>)/g
+s/(rectangular-\&gt;polar/(<a class=quiet href="clm.html#rectangular-\&gt;polar">rectangular-\&gt;polar<\/a>/g
+s/(redo /(<a class=quiet href="extsnd.html#sndredo">redo<\/a> /g
+s/(redo)/(<a class=quiet href="extsnd.html#sndredo">redo<\/a>)/g
+s/(redo-channel/(<a class=quiet href="extsnd.html#redochannel">redo-channel<\/a>/g
+s/(redo-edit/(<a class=quiet href="extsnd.html#redoedit">redo-edit<\/a>/g
+s/(region-chans/(<a class=quiet href="extsnd.html#sndregionchans">region-chans<\/a>/g
+s/(region-dialog)/(<a class=quiet href="extsnd.html#sndregiondialog">region-dialog<\/a>)/g
+s/(region-frames/(<a class=quiet href="extsnd.html#sndregionframes">region-frames<\/a>/g
+s/(region-graph-style/(<a class=quiet href="extsnd.html#sndregiongraphstyle">region-graph-style<\/a>/g
+s/(region-maxamp/(<a class=quiet href="extsnd.html#sndregionmaxamp">region-maxamp<\/a>/g
+s/(region-sample-reader?/(<a class=quiet href="extsnd.html#regionsamplereaderQ">region-sample-reader?<\/a>/g
+s/(region-samples-\&gt;vct/(<a class=quiet href="extsnd.html#sndregionsamples2vct">region-samples-\&gt;vct<\/a>/g
+s/(region-sample /(<a class=quiet href="extsnd.html#sndregionsample">region-sample<\/a> /g
+s/(region-srate/(<a class=quiet href="extsnd.html#sndregionsrate">region-srate<\/a>/g
+s/(region? /(<a class=quiet href="extsnd.html#regionok">region?<\/a> /g
+s/(regions)/(<a class=quiet href="extsnd.html#eregions">regions<\/a>)/g
+s/(remember-sound-state/(<a class=quiet href="sndscm.html#exremembersoundstate">remember-sound-state<\/a>/g
+s/(remove-from-menu/(<a class=quiet href="extsnd.html#sndremovefrommenu">remove-from-menu<\/a>/g
+s/(reopen-output/(<a class=quiet href="clm.html#reopen-output">reopen-output<\/a>/g
+s/(report-in-minibuffer/(<a class=quiet href="extsnd.html#sndreportinminibuffer">report-in-minibuffer<\/a>/g
+s/(reset-button-color)/(<a class=quiet href="extsnd.html#resetbuttoncolor">reset-button-color<\/a>)/g
+s/(reset-controls/(<a class=quiet href="extsnd.html#sndcontrolreset">reset-controls<\/a>/g
+s/(reset-listener-cursor)/(<a class=quiet href="extsnd.html#resetlistenercursor">reset-listener-cursor<\/a>)/g
+s/(restart-clm/(<a class=quiet href="clm.html#restart-clm">restart-clm<\/a>/g
+s/(restart-env/(<a class=quiet href="clm.html#restart-env">restart-env<\/a>/g
+s/(restore-controls/(<a class=quiet href="extsnd.html#sndcontrolrestore">restore-controls<\/a>/g
+s/(reverb-control-decay/(<a class=quiet href="extsnd.html#reverbdecay">reverb-control-decay<\/a>/g
+s/(reverb-control-feedback/(<a class=quiet href="extsnd.html#sndreverbfeedback">reverb-control-feedback<\/a>/g
+s/(reverb-control-length/(<a class=quiet href="extsnd.html#sndreverblength">reverb-control-length<\/a>/g
+s/(reverb-control-lowpass/(<a class=quiet href="extsnd.html#sndreverblowpass">reverb-control-lowpass<\/a>/g
+s/(reverb-control-scale/(<a class=quiet href="extsnd.html#sndreverbscale">reverb-control-scale<\/a>/g
+s/(reverb-control?/(<a class=quiet href="extsnd.html#sndreverbing">reverb-control?<\/a>/g
+s/(reverse-channel/(<a class=quiet href="extsnd.html#reversechannel">reverse-channel<\/a>/g
+s/(reverse-envelope/(<a class=quiet href="sndscm.html#reverseenvelope">reverse-envelope<\/a>/g
+s/(reverse-selection/(<a class=quiet href="extsnd.html#sndreverseselection">reverse-selection<\/a>/g
+s/(reverse-sound/(<a class=quiet href="extsnd.html#sndreverse">reverse-sound<\/a>/g
+s/(reverse-track/(<a class=quiet href="sndscm.html#reversetrack">reverse-track<\/a>/g
+s/(revert-sound/(<a class=quiet href="extsnd.html#sndrevert">revert-sound<\/a>/g
+s/(right-sample/(<a class=quiet href="extsnd.html#sndrightsample">right-sample<\/a>/g
+s/(ring-modulate/(<a class=quiet href="clm.html#ring-modulate">ring-modulate<\/a>/g
+s/(rubber-sound/(<a class=quiet href="sndscm.html#rubbersound">rubber-sound<\/a>/g
+s/(run /(<a class=quiet href="extsnd.html#sndrun">run<\/a> /g
+s/(sample /(<a class=quiet href="extsnd.html#sndsample">sample<\/a> /g
+s/(sample-\&gt;buffer/(<a class=quiet href="clm.html#sample-\&gt;buffer">sample-\&gt;buffer<\/a>/g
+s/(sample-\&gt;file /(<a class=quiet href="clm.html#sample-\&gt;file">sample-\&gt;file<\/a> /g
+s/(sample-\&gt;file? /(<a class=quiet href="clm.html#sample-\&gt;file?">sample-\&gt;file?<\/a> /g
+s/(sample-\&gt;frame/(<a class=quiet href="clm.html#sample-\&gt;frame">sample-\&gt;frame<\/a>/g
+s/(sample-reader-at-end? /(<a class=quiet href="extsnd.html#samplereaderatendQ">sample-reader-at-end?<\/a> /g
+s/(sample-reader-home/(<a class=quiet href="extsnd.html#samplereaderhome">sample-reader-home<\/a>/g
+s/(sample-reader-position/(<a class=quiet href="extsnd.html#samplereaderposition">sample-reader-position<\/a>/g
+s/(sample-reader? /(<a class=quiet href="extsnd.html#samplereaderQ">sample-reader?<\/a> /g
+s/(samples /(<a class=quiet href="extsnd.html#sndsamples">samples<\/a> /g
+s/(samples-\&gt;sound-data/(<a class=quiet href="extsnd.html#samples2sounddata">samples-\&gt;sound-data<\/a>/g
+s/(samples-\&gt;vct/(<a class=quiet href="extsnd.html#samples2vct">samples-\&gt;vct<\/a>/g
+s/(sash-color)/(<a class=quiet href="extsnd.html#sashcolor">sash-color<\/a>)/g
+s/(save-controls/(<a class=quiet href="extsnd.html#sndcontrolsave">save-controls<\/a>/g
+s/(save-dir)/(<a class=quiet href="extsnd.html#savedir">save-dir<\/a>)/g
+s/(save-edit-history/(<a class=quiet href="extsnd.html#sndsaveedithistory">save-edit-history<\/a>/g
+s/(save-envelopes)/(<a class=quiet href="extsnd.html#sndsaveenvelopes">save-envelopes<\/a>)/g
+s/(save-listener)/(<a class=quiet href="extsnd.html#sndsavelistener">save-listener<\/a>)/g
+s/(save-macros)/(<a class=quiet href="extsnd.html#sndsavemacros">save-macros<\/a>)/g
+s/(save-marks)/(<a class=quiet href="extsnd.html#sndsavemarks">save-marks<\/a>)/g
+s/(save-options/(<a class=quiet href="extsnd.html#sndsaveoptions">save-options<\/a>/g
+s/(save-region/(<a class=quiet href="extsnd.html#sndsaveregion">save-region<\/a>/g
+s/(save-selection/(<a class=quiet href="extsnd.html#sndsaveselection">save-selection<\/a>/g
+s/(save-signal/(<a class=quiet href="clm.html#save-signal">save-signal<\/a>/g
+s/(save-sound /(<a class=quiet href="extsnd.html#sndsave">save-sound<\/a> /g
+s/(save-sound-as/(<a class=quiet href="extsnd.html#sndsaveas">save-sound-as<\/a>/g
+s/(save-state-file)/(<a class=quiet href="extsnd.html#lsavestatefile">save-state-file<\/a>)/g
+s/(save-state/(<a class=quiet href="extsnd.html#sndsavestate">save-state<\/a>/g
+s/(save-track/(<a class=quiet href="sndscm.html#savetrack">save-track<\/a>/g
+s/(sawtooth-wave /(<a class=quiet href="clm.html#sawtooth-wave">sawtooth-wave<\/a> /g
+s/(sawtooth-wave? /(<a class=quiet href="clm.html#sawtooth-wave?">sawtooth-wave?<\/a> /g
+s/(scale-by/(<a class=quiet href="extsnd.html#sndscaleby">scale-by<\/a>/g
+s/(scale-channel/(<a class=quiet href="extsnd.html#scalechannel">scale-channel<\/a>/g
+s/(scale-envelope/(<a class=quiet href="sndscm.html#scaleenvelope">scale-envelope<\/a>/g
+s/(scale-selection-by/(<a class=quiet href="extsnd.html#sndscaleselectionby">scale-selection-by<\/a>/g
+s/(scale-selection-to/(<a class=quiet href="extsnd.html#sndscaleselectionto">scale-selection-to<\/a>/g
+s/(scale-sound-by/(<a class=quiet href="extsnd.html#sndscalesoundby">scale-sound-by<\/a>/g
+s/(scale-sound-to/(<a class=quiet href="extsnd.html#sndscalesoundto">scale-sound-to<\/a>/g
+s/(scale-to/(<a class=quiet href="extsnd.html#sndscaleto">scale-to<\/a>/g
+s/(scan-chan /(<a class=quiet href="extsnd.html#scanchan">scan-chan<\/a> /g
+s/(scan-channel/(<a class=quiet href="extsnd.html#scanchannel">scan-channel<\/a>/g
+s/(script-arg /(<a class=quiet href="extsnd.html#sndscriptarg">script-arg<\/a> /g
+s/(script-args)/(<a class=quiet href="extsnd.html#sndscriptargs">script-args<\/a>)/g
+s/(search-procedure/(<a class=quiet href="extsnd.html#searchprocedure">search-procedure<\/a>/g
+s/(seconds-\&gt;samples/(<a class=quiet href="clm.html#seconds-\&gt;samples">seconds-\&gt;samples<\/a>/g
+s/(select-all/(<a class=quiet href="extsnd.html#sndselectall">select-all<\/a>/g
+s/(select-channel/(<a class=quiet href="extsnd.html#sndselectchannel">select-channel<\/a>/g
+s/(select-sound/(<a class=quiet href="extsnd.html#sndselectsound">select-sound<\/a>/g
+s/(selected-channel)/(<a class=quiet href="extsnd.html#selectedchannel">selected-channel<\/a>)/g
+s/(selected-data-color)/(<a class=quiet href="extsnd.html#selecteddatacolor">selected-data-color<\/a>)/g
+s/(selected-graph-color)/(<a class=quiet href="extsnd.html#selectedgraphcolor">selected-graph-color<\/a>)/g
+s/(selected-sound)/(<a class=quiet href="extsnd.html#selectedsound">selected-sound<\/a>)/g
+s/(selection-chans)/(<a class=quiet href="extsnd.html#selectionchans">selection-chans<\/a>)/g
+s/(selection-color)/(<a class=quiet href="extsnd.html#selectioncolor">selection-color<\/a>)/g
+s/selection-context/<a class=quiet href="extsnd.html#selectioncontext">selection-context<\/a>/g
+s/(selection-creates-region)/(<a class=quiet href="extsnd.html#selectioncreatesregion">selection-creates-region<\/a>)/g
+s/(selection-frames)/(<a class=quiet href="extsnd.html#selectionframes">selection-frames<\/a>)/g
+s/(selection-maxamp)/(<a class=quiet href="extsnd.html#sndselectionmaxamp">selection-maxamp<\/a>)/g
+s/(selection-member?/(<a class=quiet href="extsnd.html#selectionmember">selection-member?<\/a>/g
+s/(selection-members)/(<a class=quiet href="sndscm.html#exselectionmembers">selection-members<\/a>)/g
+s/(selection-position/(<a class=quiet href="extsnd.html#selectionposition">selection-position<\/a>/g
+s/(selection-srate)/(<a class=quiet href="extsnd.html#selectionsrate">selection-srate<\/a>)/g
+s/(selection?)/(<a class=quiet href="extsnd.html#selectionok">selection?<\/a>)/g
+s/(send-and-receive-snd/(<a class=quiet href="clm.html#send-and-receive-snd">send-and-receive-snd<\/a>/g
+s/(send-netscape/(<a class=quiet href="extsnd.html#sendnetscape">send-netscape<\/a>/g
+s/(send-snd/(<a class=quiet href="clm.html#send-snd">send-snd<\/a>/g
+s/(set-samples/(<a class=quiet href="extsnd.html#sndsetsamples">set-samples<\/a>/g
+s/(short-file-name/(<a class=quiet href="extsnd.html#shortfilename">short-file-name<\/a>/g
+s/(show-axes/(<a class=quiet href="extsnd.html#showaxes">show-axes<\/a>/g
+s/(show-backtrace/(<a class=quiet href="extsnd.html#showbacktrace">show-backtrace<\/a>/g
+s/(show-controls/(<a class=quiet href="extsnd.html#sndshowcontrols">show-controls<\/a>/g
+s/(show-indices/(<a class=quiet href="extsnd.html#showindices">show-indices<\/a>/g
+s/(show-listener/(<a class=quiet href="extsnd.html#sndshowlistener">show-listener<\/a>/g
+s/(show-marks/(<a class=quiet href="extsnd.html#showmarks">show-marks<\/a>/g
+s/(show-mix-waveforms/(<a class=quiet href="extsnd.html#showmixwaveforms">show-mix-waveforms<\/a>/g
+s/(show-selection-transform/(<a class=quiet href="extsnd.html#lshowselectiontransform">show-selection-transform<\/a>/g
+s/(show-smpte-label/(<a class=quiet href="sndscm.html#showsmptelabel">show-smpte-label<\/a>/g
+s/(show-transform-peaks/(<a class=quiet href="extsnd.html#showfftpeaks">show-transform-peaks<\/a>/g
+s/(show-widget/(<a class=quiet href="extsnd.html#showwidget">show-widget<\/a>/g
+s/(show-y-zero/(<a class=quiet href="extsnd.html#showyzero">show-y-zero<\/a>/g
+s/(sinc-width/(<a class=quiet href="extsnd.html#sincwidth">sinc-width<\/a>/g
+s/(sine-env-channel/(<a class=quiet href="sndscm.html#sineenvchannel">sine-env-channel<\/a>/g
+s/(sine-ramp/(<a class=quiet href="sndscm.html#sineramp">sine-ramp<\/a>/g
+s/(sine-summation /(<a class=quiet href="clm.html#sine-summation">sine-summation<\/a> /g
+s/(sine-summation? /(<a class=quiet href="clm.html#sine-summation?">sine-summation?<\/a> /g
+s/(sl-dac/(<a class=quiet href="clm.html#sldac">sl-dac<\/a>/g
+s/(smooth-channel/(<a class=quiet href="extsnd.html#smoothchannel">smooth-channel<\/a>/g
+s/(smooth-selection/(<a class=quiet href="extsnd.html#sndsmoothselection">smooth-selection<\/a>/g
+s/(smooth-sound/(<a class=quiet href="extsnd.html#sndsmooth">smooth-sound<\/a>/g
+s/(snap-mark-to-beat/(<a class=quiet href="sndscm.html#exsnapmarktobeat">snap-mark-to-beat<\/a>/g
+s/(snap-mix-to-beat/(<a class=quiet href="sndscm.html#snapmixtobeat">snap-mix-to-beat<\/a>/g
+s/(snd-\&gt;sample /(<a class=quiet href="extsnd.html#snd2sample">snd-\&gt;sample<\/a> /g
+s/(snd-\&gt;sample? /(<a class=quiet href="extsnd.html#snd2samplep">snd-\&gt;sample?<\/a> /g
+s/(snd-apropos/(<a class=quiet href="extsnd.html#sndapropos">snd-apropos<\/a>/g
+s/(snd-break/(<a class=quiet href="sndscm.html#exsndbreak">snd-break<\/a>/g
+s/(snd-cleanup/(<a class=quiet href="clm.html#snd-cleanup">snd-cleanup<\/a>/g
+s/(snd-debug/(<a class=quiet href="sndscm.html#exsnddebug">snd-debug<\/a>/g
+s/(snd-edit /(<a class=quiet href="clm.html#snd-edit">snd-edit<\/a> /g
+s/(snd-edit-sound/(<a class=quiet href="clm.html#snd-edit-sound">snd-edit-sound<\/a>/g
+s/(snd-envelope/(<a class=quiet href="clm.html#sndenv">snd-envelope<\/a>/g
+s/(snd-error/(<a class=quiet href="extsnd.html#snderror">snd-error<\/a>/g
+s/(snd-gcs)/(<a class=quiet href="extsnd.html#sndgcs">snd-gcs<\/a>)/g
+s/(snd-help/(<a class=quiet href="extsnd.html#sndhelp">snd-help<\/a>/g
+s/(snd-memo/(<a class=quiet href="clm.html#snd-memo">snd-memo<\/a>/g
+s/(snd-print/(<a class=quiet href="extsnd.html#sndprint">snd-print<\/a>/g
+s/(snd-region/(<a class=quiet href="clm.html#snd-region">snd-region<\/a>/g
+s/(snd-remember-paths/(<a class=quiet href="extsnd.html#sndrememberpaths">snd-remember-paths<\/a>/g
+s/(snd-sound/(<a class=quiet href="clm.html#snd-sound">snd-sound<\/a>/g
+s/(snd-spectrum/(<a class=quiet href="extsnd.html#sndspectrum">snd-spectrum<\/a>/g
+s/(snd-tempnam/(<a class=quiet href="extsnd.html#sndtempnam">snd-tempnam<\/a>/g
+s/(snd-trace/(<a class=quiet href="sndscm.html#exsndtrace">snd-trace<\/a>/g
+s/(snd-urls)/(<a class=quiet href="extsnd.html#sndurls">snd-urls<\/a>)/g
+s/(snd-url/(<a class=quiet href="extsnd.html#sndurl">snd-url<\/a>/g
+s/(snd-version/(<a class=quiet href="extsnd.html#sndversion">snd-version<\/a>/g
+s/(snd-warning/(<a class=quiet href="extsnd.html#sndwarning">snd-warning<\/a>/g
+s/(sound-chans/(<a class=quiet href="clm.html#sound-chans">sound-chans<\/a>/g
+s/(sound-data-\&gt;vct/(<a class=quiet href="extsnd.html#sounddata2vct">sound-data-\&gt;vct<\/a>/g
+s/(sound-data-chans/(<a class=quiet href="extsnd.html#sounddatachans">sound-data-chans<\/a>/g
+s/(sound-data-format/(<a class=quiet href="clm.html#sound-data-format">sound-data-format<\/a>/g
+s/(sound-data-length/(<a class=quiet href="extsnd.html#sounddatalength">sound-data-length<\/a>/g
+s/(sound-data-location/(<a class=quiet href="clm.html#sound-data-location">sound-data-location<\/a>/g
+s/(sound-data-maxamp/(<a class=quiet href="extsnd.html#sounddatamaxamp">sound-data-maxamp<\/a>/g
+s/(sound-data-ref/(<a class=quiet href="extsnd.html#sounddataref">sound-data-ref<\/a>/g
+s/(sound-data-set!/(<a class=quiet href="extsnd.html#sounddataset">sound-data-set!<\/a>/g
+s/(sound-data? /(<a class=quiet href="extsnd.html#sounddata?">sound-data?<\/a> /g
+s/(sound-datum-size/(<a class=quiet href="clm.html#sound-datum-size">sound-datum-size<\/a>/g
+s/(sound-duration/(<a class=quiet href="clm.html#sound-duration">sound-duration<\/a>/g
+s/(sound-files-in-directory/(<a class=quiet href="extsnd.html#soundfilesindirectory">sound-files-in-directory<\/a>/g
+s/(sound-format-name/(<a class=quiet href="clm.html#sound-format-name">sound-format-name<\/a>/g
+s/(sound-frames/(<a class=quiet href="clm.html#sound-frames">sound-frames<\/a>/g
+s/(sound-header-type/(<a class=quiet href="clm.html#sound-header-type">sound-header-type<\/a>/g
+s/(sound-interp/(<a class=quiet href="sndscm.html#exsoundinterp">sound-interp<\/a>/g
+s/(sound-length/(<a class=quiet href="clm.html#sound-length">sound-length<\/a>/g
+s/(sound-let/(<a class=quiet href="clm.html#sound-let">sound-let<\/a>/g
+s/(sound-loop-info/(<a class=quiet href="extsnd.html#sndsoundloopinfo">sound-loop-info<\/a>/g
+s/(sound-maxamp/(<a class=quiet href="clm.html#sound-maxamp">sound-maxamp<\/a>/g
+s/(sound-properties/(<a class=quiet href="extsnd.html#sndsoundproperties">sound-properties<\/a>/g
+s/(sound-property/(<a class=quiet href="sndscm.html#exsoundproperty">sound-property<\/a>/g
+s/(sound-samples/(<a class=quiet href="clm.html#sound-samples">sound-samples<\/a>/g
+s/(sound-set-loop-info/(<a class=quiet href="clm.html#sound-set-loop-info">sound-set-loop-info<\/a>/g
+s/(sound-srate/(<a class=quiet href="clm.html#sound-srate">sound-srate<\/a>/g
+s/(sound-type-name/(<a class=quiet href="clm.html#sound-type-name">sound-type-name<\/a>/g
+s/(sound-widgets/(<a class=quiet href="extsnd.html#soundwidgets">sound-widgets<\/a>/g
+s/(sound? /(<a class=quiet href="extsnd.html#sndok">sound?<\/a> /g
+s/(soundfont-info/(<a class=quiet href="extsnd.html#soundfontinfo">soundfont-info<\/a>/g
+s/(sounds)/(<a class=quiet href="extsnd.html#sounds">sounds<\/a>)/g
+s/(spectro-cutoff/(<a class=quiet href="extsnd.html#spectrocutoff">spectro-cutoff<\/a>/g
+s/(spectro-hop/(<a class=quiet href="extsnd.html#spectrohop">spectro-hop<\/a>/g
+s/(spectro-start/(<a class=quiet href="extsnd.html#spectrostart">spectro-start<\/a>/g
+s/(spectro-x-angle/(<a class=quiet href="extsnd.html#spectroxangle">spectro-x-angle<\/a>/g
+s/(spectro-x-scale/(<a class=quiet href="extsnd.html#spectroxscale">spectro-x-scale<\/a>/g
+s/(spectro-y-angle/(<a class=quiet href="extsnd.html#spectroyangle">spectro-y-angle<\/a>/g
+s/(spectro-y-scale/(<a class=quiet href="extsnd.html#spectroyscale">spectro-y-scale<\/a>/g
+s/(spectro-z-angle/(<a class=quiet href="extsnd.html#spectrozangle">spectro-z-angle<\/a>/g
+s/(spectro-z-scale/(<a class=quiet href="extsnd.html#spectrozscale">spectro-z-scale<\/a>/g
+s/(spectrum /(<a class=quiet href="clm.html#spectrum">spectrum<\/a> /g
+s/(speed-control-style/(<a class=quiet href="extsnd.html#lspeedstyle">speed-control-style<\/a>/g
+s/(speed-control-tones/(<a class=quiet href="extsnd.html#speedtones">speed-control-tones<\/a>/g
+s/(speed-control/(<a class=quiet href="extsnd.html#sndspeed">speed-control<\/a>/g
+s/(square-wave /(<a class=quiet href="clm.html#square-wave">square-wave<\/a> /g
+s/(square-wave? /(<a class=quiet href="clm.html#square-wave?">square-wave?<\/a> /g
+s/(squelch-update/(<a class=quiet href="extsnd.html#squelchupdate">squelch-update<\/a>/g
+s/(srate/(<a class=quiet href="extsnd.html#sndsrate">srate<\/a>/g
+s/(src /(<a class=quiet href="clm.html#src">src<\/a> /g
+s/(src-channel/(<a class=quiet href="extsnd.html#srcchannel">src-channel<\/a>/g
+s/(src-selection/(<a class=quiet href="extsnd.html#sndsrcselection">src-selection<\/a>/g
+s/(src-sound/(<a class=quiet href="extsnd.html#sndsrc">src-sound<\/a>/g
+s/(src? /(<a class=quiet href="clm.html#src?">src?<\/a> /g
+s/(start-playing/(<a class=quiet href="extsnd.html#startplaying">start-playing<\/a>/g
+s/(start-progress-report/(<a class=quiet href="extsnd.html#startprogressreport">start-progress-report<\/a>/g
+s/(start-snd/(<a class=quiet href="clm.html#start-snd">start-snd<\/a>/g
+s/(start-waterfall/(<a class=quiet href="sndscm.html#startwaterfall">start-waterfall<\/a>/g
+s/(stop-dac/(<a class=quiet href="clm.html#stop-dac">stop-dac<\/a>/g
+s/(stop-player/(<a class=quiet href="extsnd.html#stopplayer">stop-player<\/a>/g
+s/(stop-playing/(<a class=quiet href="extsnd.html#sndstop">stop-playing<\/a>/g
+s/(stretch-envelope/(<a class=quiet href="sndscm.html#stretchenvelope">stretch-envelope<\/a>/g
+s/(sum-of-cosines /(<a class=quiet href="clm.html#sum-of-cosines">sum-of-cosines<\/a> /g
+s/(sum-of-cosines? /(<a class=quiet href="clm.html#sum-of-cosines?">sum-of-cosines?<\/a> /g
+s/(sum-of-sines/(<a class=quiet href="clm.html#sum-of-sines">sum-of-sines<\/a>/g
+s/(superimpose-ffts/(<a class=quiet href="sndscm.html#exsuperimposeffts">superimpose-ffts<\/a>/g
+s/(swap-channels/(<a class=quiet href="extsnd.html#swapchannels">swap-channels<\/a>/g
+s/(swap-selection-channels/(<a class=quiet href="sndscm.html#exswapselectionchannels">swap-selection-channels<\/a>/g
+s/(sync /(<a class=quiet href="extsnd.html#sndsyncing">sync<\/a> /g
+s/(sync)/(<a class=quiet href="extsnd.html#sndsyncing">sync<\/a>)/g
+s/(syncd-marks/(<a class=quiet href="extsnd.html#syncdmarks">syncd-marks<\/a>/g
+s/(table-lookup /(<a class=quiet href="clm.html#table-lookup">table-lookup<\/a> /g
+s/(table-lookup? /(<a class=quiet href="clm.html#table-lookup?">table-lookup?<\/a> /g
+s/(tap /(<a class=quiet href="clm.html#tap">tap<\/a> /g
+s/(temp-dir)/(<a class=quiet href="extsnd.html#tempdir">temp-dir<\/a>)/g
+s/(text-focus-color)/(<a class=quiet href="extsnd.html#textfocuscolor">text-focus-color<\/a>)/g
+s/(time-graph-style/(<a class=quiet href="extsnd.html#timegraphstyle">time-graph-style<\/a>/g
+s/(time-graph-type/(<a class=quiet href="extsnd.html#wavo">time-graph-type<\/a>/g
+s/(time-graph?/(<a class=quiet href="extsnd.html#timegraphp">time-graph?<\/a>/g
+s/(times-\&gt;samples/(<a class=quiet href="clm.html#times-\&gt;samples">times-\&gt;samples<\/a>/g
+s/(tiny-font)/(<a class=quiet href="extsnd.html#tinyfont">tiny-font<\/a>)/g
+s/(to-snd/(<a class=quiet href="clm.html#to-snd">to-snd<\/a>/g
+s/(track /(<a class=quiet href="extsnd.html#track">track<\/a> /g
+s/(track-\&gt;vct/(<a class=quiet href="sndscm.html#track2vct">track-\&gt;vct<\/a>/g
+s/(track-amp-env/(<a class=quiet href="extsnd.html#trackampenv">track-amp-env<\/a>/g
+s/(track-amp /(<a class=quiet href="extsnd.html#trackamp">track-amp<\/a> /g
+s/(track-chans/(<a class=quiet href="extsnd.html#trackchans">track-chans<\/a>/g
+s/(track-color/(<a class=quiet href="extsnd.html#trackcolor">track-color<\/a>/g
+s/(track-dialog)/(<a class=quiet href="extsnd.html#sndtrackdialog">track-dialog<\/a>)/g
+s/(track-dialog-track)/(<a class=quiet href="extsnd.html#sndtrackdialogtrack">track-dialog-track<\/a>)/g
+s/(track-frames/(<a class=quiet href="extsnd.html#trackframes">track-frames<\/a>/g
+s/(track-position/(<a class=quiet href="extsnd.html#trackposition">track-position<\/a>/g
+s/(track-property/(<a class=quiet href="sndscm.html#trackproperty">track-property<\/a>/g
+s/(track-sample-reader? /(<a class=quiet href="extsnd.html#tracksamplereaderQ">track-sample-reader?<\/a> /g
+s/(track-speed/(<a class=quiet href="extsnd.html#trackspeed">track-speed<\/a>/g
+s/(track-tempo/(<a class=quiet href="extsnd.html#tracktempo">track-tempo<\/a>/g
+s/(track-track/(<a class=quiet href="extsnd.html#tracktrack">track-track<\/a>/g
+s/(track? /(<a class=quiet href="extsnd.html#trackp">track?<\/a> /g
+s/(tracks/(<a class=quiet href="extsnd.html#tracks">tracks<\/a>/g
+s/(transform-dialog)/(<a class=quiet href="extsnd.html#sndtransformdialog">transform-dialog<\/a>)/g
+s/(transform-graph-style/(<a class=quiet href="extsnd.html#transformgraphstyle">transform-graph-style<\/a>/g
+s/(transform-graph-type/(<a class=quiet href="extsnd.html#lfftstyle">transform-graph-type<\/a>/g
+s/(transform-graph?/(<a class=quiet href="extsnd.html#sndffting">transform-graph?<\/a>/g
+s/(transform-normalization/(<a class=quiet href="extsnd.html#normalizefft">transform-normalization<\/a>/g
+s/(transform-sample /(<a class=quiet href="extsnd.html#sndtransformsample">transform-sample<\/a> /g
+s/(transform-samples-\&gt;vct/(<a class=quiet href="extsnd.html#transformsamples2vct">transform-samples-\&gt;vct<\/a>/g
+s/(transform-samples-size/(<a class=quiet href="extsnd.html#transformgraphsize">transform-samples-size<\/a>/g
+s/(transform-size/(<a class=quiet href="extsnd.html#lfftsize">transform-size<\/a>/g
+s/(transform-type/(<a class=quiet href="extsnd.html#ltransformtype">transform-type<\/a>/g
+s/(transpose-track/(<a class=quiet href="sndscm.html#transposetrack">transpose-track<\/a>/g
+s/(trap-segfault/(<a class=quiet href="extsnd.html#trapsegfault">trap-segfault<\/a>/g
+s/(triangle-wave /(<a class=quiet href="clm.html#triangle-wave">triangle-wave<\/a> /g
+s/(triangle-wave? /(<a class=quiet href="clm.html#triangle-wave?">triangle-wave?<\/a> /g
+s/two-pi/<a class=quiet href="clm.html#two-pi">two-pi<\/a>/g
+s/(two-pole /(<a class=quiet href="clm.html#two-pole">two-pole<\/a> /g
+s/(two-pole? /(<a class=quiet href="clm.html#two-pole?">two-pole?<\/a> /g
+s/(two-zero /(<a class=quiet href="clm.html#two-zero">two-zero<\/a> /g
+s/(two-zero? /(<a class=quiet href="clm.html#two-zero?">two-zero?<\/a> /g
+s/(unbind-key/(<a class=quiet href="extsnd.html#sndunbindkey">unbind-key<\/a>/g
+s/(undo /(<a class=quiet href="extsnd.html#sndundo">undo<\/a> /g
+s/(undo)/(<a class=quiet href="extsnd.html#sndundo">undo<\/a>)/g
+s/(undo-channel/(<a class=quiet href="extsnd.html#undochannel">undo-channel<\/a>/g
+s/(undo-edit/(<a class=quiet href="extsnd.html#undoedit">undo-edit<\/a>/g
+s/(update-lisp-graph/(<a class=quiet href="extsnd.html#sndupdatelispgraph">update-lisp-graph<\/a>/g
+s/(update-sound/(<a class=quiet href="extsnd.html#sndupdate">update-sound<\/a>/g
+s/(update-time-graph/(<a class=quiet href="extsnd.html#sndupdategraph">update-time-graph<\/a>/g
+s/(update-transform-graph/(<a class=quiet href="extsnd.html#sndupdatefft">update-transform-graph<\/a>/g
+s/(variable-display/(<a class=quiet href="sndscm.html#variabledisplay">variable-display<\/a>/g
+s/(vct /(<a class=quiet href="extsnd.html#sndvct">vct<\/a> /g
+s/(vct-\&gt;channel/(<a class=quiet href="extsnd.html#vct2channel">vct-\&gt;channel<\/a>/g
+s/(vct-\&gt;list/(<a class=quiet href="extsnd.html#vct2list">vct-\&gt;list<\/a>/g
+s/(vct-\&gt;samples/(<a class=quiet href="extsnd.html#vct2samples">vct-\&gt;samples<\/a>/g
+s/(vct-\&gt;sound-data/(<a class=quiet href="extsnd.html#vct2sounddata">vct-\&gt;sound-data<\/a>/g
+s/(vct-\&gt;sound-file/(<a class=quiet href="extsnd.html#vct2soundfile">vct-\&gt;sound-file<\/a>/g
+s/(vct-\&gt;vector/(<a class=quiet href="extsnd.html#sndvct2vector">vct-\&gt;vector<\/a>/g
+s/(vct-add!/(<a class=quiet href="extsnd.html#vctadd">vct-add!<\/a>/g
+s/(vct-convolve!/(<a class=quiet href="extsnd.html#vctconvolve">vct-convolve!<\/a>/g
+s/(vct-copy/(<a class=quiet href="extsnd.html#vctcopy">vct-copy<\/a>/g
+s/(vct-fill!/(<a class=quiet href="extsnd.html#vctfill">vct-fill!<\/a>/g
+s/(vct-length/(<a class=quiet href="extsnd.html#vctlength">vct-length<\/a>/g
+s/(vct-map /(<a class=quiet href="extsnd.html#vctmap1">vct-map<\/a> /g
+s/(vct-map!/(<a class=quiet href="extsnd.html#vctmap">vct-map!<\/a>/g
+s/(vct-move!/(<a class=quiet href="extsnd.html#vctmove">vct-move!<\/a>/g
+s/(vct-multiply!/(<a class=quiet href="extsnd.html#vctmultiply">vct-multiply!<\/a>/g
+s/(vct-offset!/(<a class=quiet href="extsnd.html#vctoffset">vct-offset!<\/a>/g
+s/(vct-peak/(<a class=quiet href="extsnd.html#vctpeak">vct-peak<\/a>/g
+s/(vct-ref/(<a class=quiet href="extsnd.html#vctref">vct-ref<\/a>/g
+s/(vct-scale!/(<a class=quiet href="extsnd.html#vctscale">vct-scale!<\/a>/g
+s/(vct-set!/(<a class=quiet href="extsnd.html#vctset">vct-set!<\/a>/g
+s/(vct-subseq/(<a class=quiet href="extsnd.html#vctsubseq">vct-subseq<\/a>/g
+s/(vct-subtract!/(<a class=quiet href="extsnd.html#vctsubtract">vct-subtract!<\/a>/g
+s/(vct? /(<a class=quiet href="extsnd.html#vctp">vct?<\/a> /g
+s/(vector-\&gt;vct/(<a class=quiet href="extsnd.html#sndvector2vct">vector-\&gt;vct<\/a>/g
+s/(verbose-cursor/(<a class=quiet href="extsnd.html#verbosecursor">verbose-cursor<\/a>/g
+s/(view-sound/(<a class=quiet href="extsnd.html#sndview">view-sound<\/a>/g
+s/(voiced-\&gt;unvoiced/(<a class=quiet href="sndscm.html#exvoiced2unvoiced">voiced-\&gt;unvoiced<\/a>/g
+s/(volume /(<a class=quiet href="clm.html#volume">volume<\/a> /g
+s/(vu-font)/(<a class=quiet href="extsnd.html#vufont">vu-font<\/a>)/g
+s/(vu-font-size)/(<a class=quiet href="extsnd.html#vufontsize">vu-font-size<\/a>)/g
+s/(vu-size)/(<a class=quiet href="extsnd.html#vusize">vu-size<\/a>)/g
+s/(wave-train /(<a class=quiet href="clm.html#wave-train">wave-train<\/a> /g
+s/(wave-train? /(<a class=quiet href="clm.html#wave-train?">wave-train?<\/a> /g
+s/(wavelet-type/(<a class=quiet href="extsnd.html#wavelettype">wavelet-type<\/a>/g
+s/(waveshape /(<a class=quiet href="clm.html#waveshape">waveshape<\/a> /g
+s/(waveshape? /(<a class=quiet href="clm.html#waveshape?">waveshape?<\/a> /g
+s/(wavo-hop/(<a class=quiet href="extsnd.html#wavohop">wavo-hop<\/a>/g
+s/(wavo-trace/(<a class=quiet href="extsnd.html#wavotrace">wavo-trace<\/a>/g
+s/(widget-position/(<a class=quiet href="extsnd.html#widgetposition">widget-position<\/a>/g
+s/(widget-size/(<a class=quiet href="extsnd.html#widgetsize">widget-size<\/a>/g
+s/(window-envelope/(<a class=quiet href="sndscm.html#windowenvelope">window-envelope<\/a>/g
+s/(window-height/(<a class=quiet href="extsnd.html#windowheight">window-height<\/a>/g
+s/(window-samples/(<a class=quiet href="sndscm.html#exwindowsamples">window-samples<\/a>/g
+s/(window-width/(<a class=quiet href="extsnd.html#windowwidth">window-width<\/a>/g
+s/(window-x/(<a class=quiet href="extsnd.html#windowx">window-x<\/a>/g
+s/(window-y/(<a class=quiet href="extsnd.html#windowy">window-y<\/a>/g
+s/(with-background-processes)/(<a class=quiet href="extsnd.html#withbackgroundprocesses">with-background-processes<\/a>)/g
+s/(with-dac/(<a class=quiet href="clm.html#with-dac">with-dac<\/a>/g
+s/(with-gl/(<a class=quiet href="extsnd.html#withgl">with-gl<\/a>/g
+s/(with-mix /(<a class=quiet href="clm.html#with-mix">with-mix<\/a> /g
+s/(with-mix-tags)/(<a class=quiet href="extsnd.html#withmixtags">with-mix-tags<\/a>)/g
+s/(with-offset/(<a class=quiet href="clm.html#with-offset">with-offset<\/a>/g
+s/(with-psound/(<a class=quiet href="clm.html#with-psound">with-psound<\/a>/g
+s/(with-relative-panes/(<a class=quiet href="extsnd.html#withrelativepanes">with-relative-panes<\/a>/g
+s/(with-sound/(<a class=quiet href="clm.html#with-sound">with-sound<\/a>/g
+s/(write-peak-env-info-file/(<a class=quiet href="extsnd.html#writepeakenvinfofile">write-peak-env-info-file<\/a>/g
+s/(x-\&gt;position/(<a class=quiet href="extsnd.html#x2position">x-\&gt;position<\/a>/g
+s/(x-axis-label/(<a class=quiet href="extsnd.html#xaxislabel">x-axis-label<\/a>/g
+s/(x-axis-style/(<a class=quiet href="extsnd.html#xaxisstyle">x-axis-style<\/a>/g
+s/(x-bounds/(<a class=quiet href="extsnd.html#sndxbounds">x-bounds<\/a>/g
+s/(x-position-slider/(<a class=quiet href="extsnd.html#xpositionslider">x-position-slider<\/a>/g
+s/(x-zoom-slider/(<a class=quiet href="extsnd.html#xzoomslider">x-zoom-slider<\/a>/g
+s/(xen-\&gt;sample /(<a class=quiet href="extsnd.html#xen2sample">xen-\&gt;sample<\/a> /g
+s/(xen-\&gt;sample? /(<a class=quiet href="extsnd.html#xen2samplep">xen-\&gt;sample?<\/a> /g
+s/(xen-channel/(<a class=quiet href="extsnd.html#xenchannel">xen-channel<\/a>/g
+s/(xramp-channel/(<a class=quiet href="extsnd.html#xrampchannel">xramp-channel<\/a>/g
+s/(y-\&gt;position/(<a class=quiet href="extsnd.html#y2position">y-\&gt;position<\/a>/g
+s/(y-bounds/(<a class=quiet href="extsnd.html#sndybounds">y-bounds<\/a>/g
+s/(y-position-slider/(<a class=quiet href="extsnd.html#ypositionslider">y-position-slider<\/a>/g
+s/(y-zoom-slider/(<a class=quiet href="extsnd.html#yzoomslider">y-zoom-slider<\/a>/g
+s/(yes-or-no?/(<a class=quiet href="extsnd.html#sndyesornop">yes-or-no?<\/a>/g
+s/(zero-pad/(<a class=quiet href="extsnd.html#zeropad">zero-pad<\/a>/g
+s/(zip-sound/(<a class=quiet href="sndscm.html#zipsound">zip-sound<\/a>/g
+s/(zipper/(<a class=quiet href="sndscm.html#zipper">zipper<\/a>/g
+s/(zoom-color)/(<a class=quiet href="extsnd.html#zoomcolor">zoom-color<\/a>)/g
+s/(zoom-focus-style)/(<a class=quiet href="extsnd.html#zoomfocusstyle">zoom-focus-style<\/a>)/g' $$.subhld > $file
+done
+rm $$.subhld

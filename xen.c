@@ -98,11 +98,7 @@ double xen_to_c_double_or_else(XEN a, double b)
 #endif
 }
 
-bool xen_to_c_boolean_or_true(XEN a) 
-{
-  return((!((XEN_FALSE_P(a) || ((SCM_INUMP(a)) && (SCM_INUM(a) == 0))))));
-}
-
+/* TODO: replace the two SCM_INUM cases if HAVE_SCM_TO_SIGNED_INTEGER */
 bool xen_integer_p(XEN a) 
 {
 #ifndef SCM_PACK

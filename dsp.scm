@@ -1514,14 +1514,14 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 
 ;;; -------- ssb-am friends
 
-(define* (map-ssb-am freq #:optional (order 40)) ; higher order = better cancellation
-  ;; TODO: a better name -- perhaps channel-shift-spectrum? shift-channel-spectrum?
+(define* (shift-channel-pitch freq #:optional (order 40) (beg 0) dur snd chn edpos)
+  ;; higher order = better cancellation
   (let* ((gen (make-ssb-am freq order)))
-    (map-channel (lambda (y) (ssb-am gen y)))))
+    (map-channel (lambda (y) (ssb-am gen y)) beg dur snd chn edpos "channel-shift-pitch")))
 
 (define (hz->2pi freq) (/ (* 2 pi freq) (srate))) ; hz->radians follows mus-srate unfortunately
 
-(define* (ssb-bank old-freq new-freq pairs-1 #:optional (order 40) (bw 50.0))
+(define* (ssb-bank old-freq new-freq pairs-1 #:optional (order 40) (bw 50.0) (beg 0) dur snd chn edpos)
   (let* ((pairs pairs-1) ; for run's benefit
 	 (ssbs (make-vector pairs))
 	 (bands (make-vector pairs))
@@ -1547,10 +1547,11 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 					 (bandpass (vector-ref bands i) 
 						   y)))))
 	      (set! nmx (max nmx (abs sum)))
-	      sum)))
-	 (scale-by (/ mx nmx)))))))
+	      sum))
+	  beg dur snd chn edpos)
+	 (scale-channel (/ mx nmx) beg dur snd chn edpos))))))
 
-(define* (ssb-bank-env old-freq new-freq freq-env pairs-1 #:optional (order 40) (bw 50.0))
+(define* (ssb-bank-env old-freq new-freq freq-env pairs-1 #:optional (order 40) (bw 50.0) (beg 0) dur snd chn edpos)
   ;; this version adds a frequency envelope
   ;; (ssb-bank-env 557 880 '(0 0 1 100.0) 7)
   (let* ((pairs pairs-1) ; for run's benefit
@@ -1583,12 +1584,12 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 						   y)
 					 (env (vector-ref frenvs i))))))
 	      (set! nmx (max nmx (abs sum)))
-	      sum)))
-	 (scale-by (/ mx nmx)))))))
+	      sum))
+	  beg dur snd chn edpos)
+	 (scale-channel (/ mx nmx) beg dur snd chn edpos))))))
 
 ;;; TODO: auto-detect main freq so ssb-bank can work semi-automatically (bw/pairs choices also automated)
 ;;; TODO: if pitch follower, auto-remove gliss/vib (ssb-bank-env could be written to use oscil or triangle wave = add vib)
-;;; TODO: a channel (regularized) version of ssb-bank -- repitch-channel? (+ retime or whatever)
 ;;; TODO: a realtime interface to this -- a slider for pitch/bw etc
 
 #!

@@ -1,0 +1,20 @@
+#!/usr/bin/expect -f
+set timeout 1800
+cd ../tmp
+spawn ftp -i goggle
+expect "ftp> "
+send "cd /mnt/zip/bil\r"
+expect {
+    "550 /mnt/zip/*ftp> " {
+	send "quit\r"
+	puts "/mnt/zip not mounted"
+	exit
+    }
+    "ftp> " {
+	send "mput *\r"
+	expect "ftp> "
+	send "quit\r"
+	expect "/home/bil/ "
+    }
+}
+exit

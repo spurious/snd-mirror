@@ -3,7 +3,7 @@
 #include "clm-strings.h"
 
 /* TODO: show sonogram in wave window so marks/selections etc can be used to edit that data */
-/* TODO: drag sample (x and y) */
+/* TODO: drag sample (x and y) -- also mix/selection? (tag up/down = overall amp change) */
 /* SOMEDAY: if superimposed and 2chn cursor set, 1chan is xor'd, subsequent click sets both (and chan1 cursor takes precedence?) */
 /*    cursor redraw can check for this, but it gloms up code */
 

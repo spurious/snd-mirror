@@ -14,6 +14,7 @@
 
 #undef WORDS_BIGENDIAN
 #undef HAVE_GETCWD
+#undef HAVE_GETWD
 #undef HAVE_STRFTIME
 #undef HAVE_STRERROR
 #undef HAVE_VPRINTF

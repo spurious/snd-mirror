@@ -1965,7 +1965,7 @@ static XEN g_bomb(XEN snd, XEN on)
   sp = get_sp(snd, NO_PLAYERS);
   if (sp == NULL)
     return(snd_no_such_sound_error(S_bomb, snd));
-  x_bomb(sp, XEN_TO_C_BOOLEAN_OR_TRUE(on));
+  x_bomb(sp, XEN_TO_C_BOOLEAN(on));
   return(on);
 }
 

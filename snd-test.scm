@@ -1,35 +1,35 @@
 ;;; Snd tests
 ;;;
-;;; test 0: constants                            [330]
-;;; test 1: defaults                             [862]
-;;; test 2: headers                              [1029]
-;;; test 3: variables                            [1327]
-;;; test 4: sndlib                               [1710]
-;;; test 5: overall checks                       [3506]
-;;; test 6: vcts                                 [10735]
-;;; test 7: colors                               [10947]
-;;; test 8: clm                                  [11443]
-;;; test 9: mixes                                [16920]
-;;; test 10: marks                               [19916]
-;;; test 11: dialogs                             [20614]
-;;; test 12: sound file extensions etc           [20924]
-;;; test 13: menus, edit lists, hooks, etc       [21338]
-;;; test 14: all functions                       [22596]
-;;; test 15: chan-local vars                     [23643]
-;;; test 16: regularized funcs                   [24902]
-;;; test 17: graphics                            [29276]
-;;; test 18: enved                               [29350]
-;;; test 19: save and restore                    [29370]
-;;; test 20: transforms                          [29966]
-;;; test 21: new stuff                           [31022]
-;;; test 22: run                                 [31766]
-;;; test 23: with-sound                          [36773]
-;;; test 24: Snd user-interface                  [37408]
-;;; test 25: X/Xt/Xm/Xpm                         [40577]
-;;; test 26: Glib/gdk/gtk                        [45096]
-;;; test 27: openGL                              [48025]
-;;; test 28: errors                              [48129]
-;;; end stats:                                   [50022]
+;;;  test 0: constants                          [334]
+;;;  test 1: defaults                           [869]
+;;;  test 2: headers                            [1037]
+;;;  test 3: variables                          [1336]
+;;;  test 4: sndlib                             [1720]
+;;;  test 5: simple overall checks              [3519]
+;;;  test 6: vcts                               [10748]
+;;;  test 7: colors                             [10986]
+;;;  test 8: clm                                [11482]
+;;;  test 9: mix                                [17303]
+;;;  test 10: marks                             [20299]
+;;;  test 11: dialogs                           [20997]
+;;;  test 12: extensions                        [21307]
+;;;  test 13: menus, edit lists, hooks, etc     [21721]
+;;;  test 14: all together now                  [22981]
+;;;  test 15: chan-local vars                   [24029]
+;;;  test 16: regularized funcs                 [25288]
+;;;  test 17: dialogs and graphics              [29662]
+;;;  test 18: enved                             [29736]
+;;;  test 19: save and restore                  [29756]
+;;;  test 20: transforms                        [30352]
+;;;  test 21: new stuff                         [31408]
+;;;  test 22: run                               [32154]
+;;;  test 23: with-sound                        [37252]
+;;;  test 24: user-interface                    [38136]
+;;;  test 25: X/Xt/Xm                           [41308]
+;;;  test 26: Gtk                               [45827]
+;;;  test 27: GL                                [48810]
+;;;  test 28: errors                            [48914]
+;;;  test all done                              [50802]
 
 ;;; how to send ourselves a drop?  (button2 on menu is only the first half -- how to force 2nd?)
 ;;; need all html example code in autotests
@@ -866,7 +866,7 @@
       ))
 
 
-;;; ---------------- test 1: default values ----------------
+;;; ---------------- test 1: defaults ----------------
 (if (or full-test (= snd-test 1) (and keep-going (<= snd-test 1)))
     (letrec ((test-defaults
 	      (lambda (lst)
@@ -1333,7 +1333,7 @@
 
 (if (not (provided? 'snd-snd6.scm)) (load "snd6.scm"))
 
-;;; ---------------- test 3: can variables be set/reset ----------------
+;;; ---------------- test 3: variables ----------------
 (if (or full-test (= snd-test 3) (and keep-going (<= snd-test 3)))
     (let ((ind #f))
       (run-hook before-test-hook 3)
@@ -1717,7 +1717,7 @@
       (run-hook after-test-hook 3)
       ))
 
-;;; ---------------- test 4: sndlib tests ----------------
+;;; ---------------- test 4: sndlib ----------------
 
 (define play-sound-1
   (lambda (file)
@@ -2931,7 +2931,6 @@
 			    "no such channel" "no file name provided" "no location method" "no channel method"
 			    "no such fft window" "unsupported data format" "header read failed"
 			    "unsupported header type" "file descriptors not initialized" "not a sound file" "file closed" "write error"
-			    "bogus free" "buffer overflow" "buffer underflow" "file overflow"
 			    "header write failed" "can't open temp file" "interrupted" "bad envelope"
 			    "audio channels not available" "audio srate not available" "audio format not available"
 			    "no audio input available" "audio configuration not available" 
@@ -2947,7 +2946,7 @@
 	    (call-with-current-continuation
 	     (lambda (quit)
 	       (do ((i 0 (1+ i)))
-		   ((= i 72))
+		   ((= i 67))
 		 (if (not (string-=? (list-ref errs i) (mus-error-to-string i)))
 		     (begin
 		       (snd-display ";mus-error-to-string ~D: ~A ~A" i (list-ref errs i) (mus-error-to-string i))
@@ -10745,7 +10744,7 @@ EDITS: 5
       ))
 
 
-;;; ---------------- test 6 vcts ----------------
+;;; ---------------- test 6: vcts ----------------
 
 (if (or full-test (= snd-test 6) (and keep-going (<= snd-test 6)))
     (begin 
@@ -11850,6 +11849,15 @@ EDITS: 5
 	(set! phases (list->vct '(1.0 0.5 2.0)))
 	(set! val (sine-bank amps phases))
 	(if (fneq val 1.44989) (snd-display ";sine-bank: ~A 1.449?" val)))
+      
+      (let* ((amps (list->vct '(1.0)))
+	     (oscs (make-vector 1 #f)))
+	(vector-set! oscs 0 (make-oscil 440.0))
+	(let ((val (oscil-bank amps oscs #f)))
+	  (if (fneq val 0.0) (snd-display ";oscil-bank: ~A 0.0?" val))
+	  (set! (mus-phase (vector-ref oscs 0)) (/ pi 2))
+	  (set! val (oscil-bank amps oscs))
+	  (if (fneq val 1.0) (snd-display ";oscil-bank: ~A 1.0?" val))))
       
       (let ((rdat (make-vct 16))
 	    (idat (make-vct 16))
@@ -21295,7 +21303,7 @@ EDITS: 5
 	(else (cons (car l) (remove-if p (cdr l))))))
 
 
-;;; ---------------- test 12:  extensions etc ----------------
+;;; ---------------- test 12: extensions ----------------
 
 (define (spectral-difference snd1 snd2)
   (let* ((size (max (frames snd1) (frames snd2)))
@@ -21709,7 +21717,7 @@ EDITS: 5
    (snd-hooks))
   )
 
-;;; ---------------- test 13: menus, edit lists, hooks, seach/key funcs ----------------
+;;; ---------------- test 13: menus, edit lists, hooks, etc ----------------
 
 (define (test-menus)
   (for-each-child
@@ -31396,7 +31404,7 @@ EDITS: 2
 
 
 
-;;; ---------------- test 21: ----------------
+;;; ---------------- test 21: new stuff ----------------
 
 (define* (add-comment sample comment #:optional snd1 chn1)
   (let* ((snd (or snd1 (selected-sound)))
@@ -32448,11 +32456,8 @@ EDITS: 2
 	    (etst '(let ((a 1))))
 	    (etst '(let* ((a 1))))
 	    (etst '(do))
-	    (etst '(do*))
 	    (etst '(do ()))
-	    (etst '(do* ()))
 	    (etst '(do () ()))
-	    (etst '(do* () ()))
 	    (etst '(if))
 	    (etst '(if #t))
 	    (etst '(if #f #f #f #f))
@@ -33670,13 +33675,10 @@ EDITS: 2
 	    (itst '(let ((a 0)) (do () ((= a 3) a) (set! a (1+ a))) (set! a -1) a) -1)
 	    (itst '(let ((a 0) (b 3)) (do ((i 0 (1+ i))) ((= i (1- b))) (set! a (1+ a))) (set! a -1) a) -1)
 	    
-	    (itst '(let ((k 123)) (do ((i 0 (1+ i)) (j 0 i)) ((= i 3) k) (set! k j))) 1)
-	    (itst '(let ((k 123)) (do ((i 0 (1+ i)) (j 0 (+ i 1))) ((= i 3) k) (set! k j))) 2)
-	    (itst '(let ((k 123)) (do ((i 0 (1+ i)) (j 0 (+ j 1)) (m 0 (+ j 1))) ((= i 3) k) (set! k j))) 2)
+	    (itst '(let ((k 123)) (do ((i 0 (1+ i)) (j 0 (1+ j))) ((= i 3) k) (set! k j))) 2)
+	    (itst '(let ((k 123)) (do ((j 0 (1+ j)) (i 0 (1+ i))) ((= i 3) k) (set! k j))) 2)
+	    (itst '(let ((k 123)) (do ((i 0 (1+ i)) (j 0 i)) ((= i 3) k) (set! k j))) 1) ; the "i" ref is to the previous value
 	    (itst '(let ((k 123)) (do ((i 0 (1+ i)) (j 0)) ((= i 3) k) (set! k j))) 0)
-	    (itst '(let ((k 123)) (do* ((i 0 (1+ i)) (j 0 i)) ((= i 3) k) (set! k j))) 2)
-	    (itst '(let ((k 123)) (do* ((i 0 (1+ i)) (j 0 (+ i 1))) ((= i 3) k) (set! k j))) 3)
-	    (itst '(let ((k 123)) (do* ((i 0 (1+ i)) (j 0)) ((= i 3) k) (set! k j))) 0)
 	    
 	    (itst '(let ((a 0) (b 3)) (if (> b 2) (set! a 2) (set! b 2)) (set! a -1) a) -1)
 	    (itst '(let ((a 0) (b 3)) (if (< b 2) (set! a 2) (set! b 2)) (set! a -1) a) -1)
@@ -33697,9 +33699,6 @@ EDITS: 2
 	    (btst '(let ((a 0)) (do ((i 0 (1+ i)) (j 3)) ((= i 3)) (set! a (1+ a)))) #f)
 	    (btst '(let ((a 0)) (do ((i 0 (1+ i)) (j 3)) ((= i 3)) (set! a (1+ a)))) #f)
 	    (itst '(let ((a 0)) (do ((i 0 (1+ i)) (j 3)) ((= i 3) j) (set! a (1+ a)))) 3)
-	    (itst '(let ((a 0)) (do* ((i 0 (1+ i))) ((= i 3) a) (set! a (1+ a)))) 3)
-	    (itst '(let ((a 0)) (do* ((i 0 (1+ i)) (j (+ i 1) (+ j 1))) ((= i 3) j) (set! a (1+ a)))) 4)
-	    (itst '(let ((a 0)) (do* ((i 0 (1+ i)) (a (+ i 1) (+ a 1))) ((= i 3)) (set! a (1+ a))) (+ a 1)) 1)
 	    (itst '(let ((a 32)) (let ((a 3)) (set! a 4)) a) 32)
 	    
 	    (set! int-var 32)
@@ -35885,6 +35884,14 @@ EDITS: 2
 	      (vct-map! v (lambda () (sine-bank amps phases)))
 	      (if (fneq (vct-ref v 0) 1.44989) (snd-display ";run sine-bank: ~A?" (vct-ref v 0))))
 	    
+	    (let ((v (make-vct 1))
+		  (amps (list->vct '(1.0)))
+		  (fms (list->vct '(.1)))
+		  (oscs (make-vector 1)))
+	      (vector-set! oscs 0 (make-oscil 440.0 (/ pi 2)))
+	      (vct-map! v (lambda () (oscil-bank amps oscs fms)))
+	      (if (fneq (vct-ref v 0) 1.0) (snd-display ";run oscil-bank: ~A?" (vct-ref v 0))))
+	    
 	    (let ((fr0 (make-frame 2 1.0 1.0))
 		  (fr1 (make-frame 2 0.0 0.0))
 		  (gen (make-mixer 2 .5 .25 .125 1.0))
@@ -37259,6 +37266,32 @@ EDITS: 2
 (define old-opt-23 (optimization))
 (set! (optimization) max-optimization)
 
+(define (make-cndf n freq)
+  (let ((amps (make-vct (1- n) 0.0))
+	(oscs (make-vector (1- n) #f))
+	(r 1))
+    (do ((i 1 (1+ i)))
+	((= i n))
+      (vct-set! amps (1- i) (/ 1.0 r))
+      (vector-set! oscs (1- i) (make-oscil (* freq r r)))
+      (set! r (* r (1+ i))))
+    (list amps oscs)))
+
+(define (cndf gen)
+  (oscil-bank (car gen) (cadr gen)))
+
+(define (cndf-ins beg dur amp freq n)
+  (let* ((start (inexact->exact (floor (* beg (mus-srate)))))
+	 (end (+ start (inexact->exact (floor (* dur (mus-srate))))))
+	 (gen (make-cndf n freq)))
+    (run
+     (lambda ()
+       (do ((i start (1+ i))) 
+	   ((= i end))
+	 (out-any i (* amp (cndf gen)) 0 *output*))))))
+
+;(with-sound () (cndf-ins 0 1 .1 40.0 6))
+
 (define (ws-sine freq)
   (let ((o (make-oscil freq)))
     (run
@@ -38090,6 +38123,7 @@ EDITS: 2
 		  (sample-arrintp 6.25 .2 440 .1)
 		  (sample-if 6.5 .2 440 .1)
 		  (sample-arrfile 6.75 .2 440 .15)
+		  (cndf-ins 7 .2 .1 40.0 6)
 		  )
       (if (not (null? (sounds))) (for-each close-sound (sounds)))
       
@@ -41270,7 +41304,7 @@ EDITS: 2
 (set! (optimization) 0)
 
 
-;;; -------------------- test 25: X/Xt/Xm --------------------
+;;; ---------------- test 25: X/Xt/Xm --------------------
 
 (define (x->snd-color color-name)
   "(x->snd-color color-name) returns a Snd color object corresponding to the X11 color name 'color-name'"
@@ -45789,7 +45823,7 @@ EDITS: 2
       (run-hook after-test-hook 25)
       ))
 
-;;; -------------------- test 26: Gtk --------------------
+;;; ---------------- test 26: Gtk --------------------
 
 (if (or full-test (= snd-test 26) (and keep-going (<= snd-test 26)))
     (begin
@@ -48713,66 +48747,66 @@ EDITS: 2
 	      (let* ((_GtkRadioAction_ (gtk_radio_action_new "hi" "label" "tool" GTK_STOCK_CANCEL 0))
 		     (_gint (gtk_radio_action_get_current_value _GtkRadioAction_))
 		     (_GSList_ (gtk_radio_action_get_group _GtkRadioAction_)))
-		(if (not (= 0 _gint)) (snd-display ";radio action value: ~A" _gint))))))
+		(if (not (= 0 _gint)) (snd-display ";radio action value: ~A" _gint))))
 
-      (let ((dialog (gtk_about_dialog_new)))
-	;; sort of half-implemented, apparently
-	(if (not (GTK_IS_ABOUT_DIALOG dialog)) (snd-display ";about dialog isn't?"))
-	(gtk_about_dialog_set_name (GTK_ABOUT_DIALOG dialog) "About Dialog")
-	(let ((name (gtk_about_dialog_get_name (GTK_ABOUT_DIALOG dialog))))
-	  (if (not (string=? name "About Dialog")) (snd-display ";about dialog name: ~A" name)))
-	(gtk_about_dialog_set_version (GTK_ABOUT_DIALOG dialog) "1234.4321.89765")
-	(let ((version (gtk_about_dialog_get_version (GTK_ABOUT_DIALOG dialog))))
-	  (if (not (string=? version "1234.4321.89765")) (snd-display ";about dialog version: ~A" version)))
-	(gtk_about_dialog_set_copyright (GTK_ABOUT_DIALOG dialog) "(c) 1234 Roger Bacon")
-	(let ((copyright (gtk_about_dialog_get_copyright (GTK_ABOUT_DIALOG dialog))))
-	  (if (not (string=? copyright "(c) 1234 Roger Bacon")) (snd-display ";about dialog copyright: ~A" copyright)))
-	(gtk_about_dialog_set_comments (GTK_ABOUT_DIALOG dialog) "This here dialog is About")
-	(let ((comments (gtk_about_dialog_get_comments (GTK_ABOUT_DIALOG dialog))))
-	  (if (not (string=? comments "This here dialog is About")) (snd-display ";about dialog comments: ~A" comments)))
-	(gtk_about_dialog_set_license (GTK_ABOUT_DIALOG dialog) "You can't use this, it sez right here!")
-	(let ((license (gtk_about_dialog_get_license (GTK_ABOUT_DIALOG dialog))))
-	  (if (not (string=? license "You can't use this, it sez right here!")) (snd-display ";about dialog license: ~A" license)))
-	(gtk_about_dialog_set_website (GTK_ABOUT_DIALOG dialog) "http://www.this.is.silly.com")
-	(let ((website (gtk_about_dialog_get_website (GTK_ABOUT_DIALOG dialog))))
-	  (if (not (string=? website "http://www.this.is.silly.com")) (snd-display ";about dialog website: ~A" website)))
-	(gtk_about_dialog_set_website_label (GTK_ABOUT_DIALOG dialog) "The Home Of About")
-	(let ((website_label (gtk_about_dialog_get_website_label (GTK_ABOUT_DIALOG dialog))))
-	  (if (and (string? website_label)
-		   (not (string=? website_label "The Home Of About")))
-	      (snd-display ";about dialog website_label: ~A" website_label)))
-	(gtk_about_dialog_set_authors (GTK_ABOUT_DIALOG dialog) (list->c-array (list "Who" "Why") "gchar**"))
-	(let ((authors (c-array->list (gtk_about_dialog_get_name (GTK_ABOUT_DIALOG dialog)) 2)))
-	  (if (and (list? authors)
-		   (string? (car authors))
-		   (not (string=? (car authors) "Who Else?")))
-	      (snd-display ";about dialog authors: ~A" authors)))
-	(gtk_about_dialog_set_documenters (GTK_ABOUT_DIALOG dialog) (list->c-array (list "gah" "use an o") "gchar**"))
-	(let ((documenters (c-array->list (gtk_about_dialog_get_documenters (GTK_ABOUT_DIALOG dialog)) 2)))
-	  (if (and (list? documenters)
-		   (string? (car documenters))
-		   (not (string=? (car documenters) "gah")))
-	      (snd-display ";about dialog documenters: ~A" documenters)))
-	(gtk_about_dialog_set_artists (GTK_ABOUT_DIALOG dialog) (list->c-array (list "Me!" "Just me!") "gchar**"))
-	(let ((artists (c-array->list (gtk_about_dialog_get_artists (GTK_ABOUT_DIALOG dialog)) 2)))
-	  (if (and (list? artists)
-		   (string? (car artists))
-		   (not (string=? (car artists) "Me!")))
-	      (snd-display ";about dialog artists: ~A" artists)))
-	(gtk_about_dialog_set_translator_credits (GTK_ABOUT_DIALOG dialog) "he did it all")
-	(let ((translator_credits (gtk_about_dialog_get_name (GTK_ABOUT_DIALOG dialog))))
-	  ;; oops...
-	  (if (and (string? translator_credits)
-		   (not (string=? translator_credits "he did it all")))
-	      (snd-display ";about dialog translator_credits: ~A" translator_credits)))
-	(gtk_widget_show dialog)
-	(gtk_widget_hide dialog))
+	    (let ((dialog (gtk_about_dialog_new)))
+	      ;; sort of half-implemented, apparently
+	      (if (not (GTK_IS_ABOUT_DIALOG dialog)) (snd-display ";about dialog isn't?"))
+	      (gtk_about_dialog_set_name (GTK_ABOUT_DIALOG dialog) "About Dialog")
+	      (let ((name (gtk_about_dialog_get_name (GTK_ABOUT_DIALOG dialog))))
+		(if (not (string=? name "About Dialog")) (snd-display ";about dialog name: ~A" name)))
+	      (gtk_about_dialog_set_version (GTK_ABOUT_DIALOG dialog) "1234.4321.89765")
+	      (let ((version (gtk_about_dialog_get_version (GTK_ABOUT_DIALOG dialog))))
+		(if (not (string=? version "1234.4321.89765")) (snd-display ";about dialog version: ~A" version)))
+	      (gtk_about_dialog_set_copyright (GTK_ABOUT_DIALOG dialog) "(c) 1234 Roger Bacon")
+	      (let ((copyright (gtk_about_dialog_get_copyright (GTK_ABOUT_DIALOG dialog))))
+		(if (not (string=? copyright "(c) 1234 Roger Bacon")) (snd-display ";about dialog copyright: ~A" copyright)))
+	      (gtk_about_dialog_set_comments (GTK_ABOUT_DIALOG dialog) "This here dialog is About")
+	      (let ((comments (gtk_about_dialog_get_comments (GTK_ABOUT_DIALOG dialog))))
+		(if (not (string=? comments "This here dialog is About")) (snd-display ";about dialog comments: ~A" comments)))
+	      (gtk_about_dialog_set_license (GTK_ABOUT_DIALOG dialog) "You can't use this, it sez right here!")
+	      (let ((license (gtk_about_dialog_get_license (GTK_ABOUT_DIALOG dialog))))
+		(if (not (string=? license "You can't use this, it sez right here!")) (snd-display ";about dialog license: ~A" license)))
+	      (gtk_about_dialog_set_website (GTK_ABOUT_DIALOG dialog) "http://www.this.is.silly.com")
+	      (let ((website (gtk_about_dialog_get_website (GTK_ABOUT_DIALOG dialog))))
+		(if (not (string=? website "http://www.this.is.silly.com")) (snd-display ";about dialog website: ~A" website)))
+	      (gtk_about_dialog_set_website_label (GTK_ABOUT_DIALOG dialog) "The Home Of About")
+	      (let ((website_label (gtk_about_dialog_get_website_label (GTK_ABOUT_DIALOG dialog))))
+		(if (and (string? website_label)
+			 (not (string=? website_label "The Home Of About")))
+		    (snd-display ";about dialog website_label: ~A" website_label)))
+	      (gtk_about_dialog_set_authors (GTK_ABOUT_DIALOG dialog) (list->c-array (list "Who" "Why") "gchar**"))
+	      (let ((authors (c-array->list (gtk_about_dialog_get_name (GTK_ABOUT_DIALOG dialog)) 2)))
+		(if (and (list? authors)
+			 (string? (car authors))
+			 (not (string=? (car authors) "Who Else?")))
+		    (snd-display ";about dialog authors: ~A" authors)))
+	      (gtk_about_dialog_set_documenters (GTK_ABOUT_DIALOG dialog) (list->c-array (list "gah" "use an o") "gchar**"))
+	      (let ((documenters (c-array->list (gtk_about_dialog_get_documenters (GTK_ABOUT_DIALOG dialog)) 2)))
+		(if (and (list? documenters)
+			 (string? (car documenters))
+			 (not (string=? (car documenters) "gah")))
+		    (snd-display ";about dialog documenters: ~A" documenters)))
+	      (gtk_about_dialog_set_artists (GTK_ABOUT_DIALOG dialog) (list->c-array (list "Me!" "Just me!") "gchar**"))
+	      (let ((artists (c-array->list (gtk_about_dialog_get_artists (GTK_ABOUT_DIALOG dialog)) 2)))
+		(if (and (list? artists)
+			 (string? (car artists))
+			 (not (string=? (car artists) "Me!")))
+		    (snd-display ";about dialog artists: ~A" artists)))
+	      (gtk_about_dialog_set_translator_credits (GTK_ABOUT_DIALOG dialog) "he did it all")
+	      (let ((translator_credits (gtk_about_dialog_get_name (GTK_ABOUT_DIALOG dialog))))
+		;; oops...
+		(if (and (string? translator_credits)
+			 (not (string=? translator_credits "he did it all")))
+		    (snd-display ";about dialog translator_credits: ~A" translator_credits)))
+	      (gtk_widget_show dialog)
+	      (gtk_widget_hide dialog))
 
+	    ))
       (run-hook after-test-hook 26)
       ))
 
-
-;;; -------------------- test 27: GL --------------------
+;;; ---------------- test 27: GL --------------------
 
 (if (and with-gui (or full-test (= snd-test 27) (and keep-going (<= snd-test 27))))
     (begin
@@ -49058,7 +49092,7 @@ EDITS: 2
 		     make-iir-filter make-locsig move-locsig make-mixer make-notch make-one-pole make-one-zero make-oscil make-ppolar
 		     make-pulse-train make-rand make-rand-interp make-readin make-sample->file make-sawtooth-wave
 		     make-sine-summation make-square-wave make-src make-sum-of-cosines make-sum-of-sines make-ssb-am make-table-lookup make-triangle-wave
-		     make-two-pole make-two-zero make-wave-train make-waveshape make-zpolar mixer* mixer-ref mixer-set! mixer?
+		     make-two-pole make-two-zero make-wave-train make-waveshape make-zpolar mixer* mixer-ref mixer-set! mixer? mixer+ mixer-scale
 		     multiply-arrays mus-a0 mus-a1 mus-a2 mus-array-print-length mus-b1 mus-b2 mus-channel mus-channels
 		     mus-close mus-cosines mus-data mus-feedback mus-feedforward mus-fft mus-formant-radius mus-frequency
 		     mus-hop mus-increment mus-input? mus-file-name mus-length mus-location mus-mix mus-order mus-output?  mus-phase
@@ -49075,16 +49109,18 @@ EDITS: 2
 		     clm-channel env-channel map-channel scan-channel play-channel reverse-channel seconds->samples samples->seconds
 		     smooth-channel vct->channel channel->vct src-channel scale-channel ramp-channel pad-channel
 		     cursor-position clear-listener mus-sound-prune mus-sound-forget xramp-channel ptree-channel
-		     snd->sample xen->sample snd->sample? xen->sample? make-snd->sample make-xen->sample 
+		     snd->sample xen->sample snd->sample? xen->sample? make-snd->sample make-xen->sample make-scalar-mixer
 		     
 		     beats-per-minute buffer-full? channel-amp-envs convolve-files filter-control-coeffs 
 		     locsig-type make-phase-vocoder mus-audio-mixer-read mus-bank 
 		     mus-describe mus-inspect mus-error-to-string mus-file-buffer-size mus-name mus-offset mus-out-format
 		     mus-rand-seed mus-width phase-vocoder?
 		     polar->rectangular previous-files-sort-procedure 
-		     phase-vocoder-amp-increments phase-vocoder-amps phase-vocoder-freqs phase-vocoder-outctr phase-vocoder-phase-increments phase-vocoder-phases 
+		     phase-vocoder-amp-increments phase-vocoder-amps phase-vocoder-freqs phase-vocoder-outctr 
+		     phase-vocoder-phase-increments phase-vocoder-phases 
+
 		     read-sample reset-listener-cursor goto-listener-end sample-reader-home selection-chans selection-srate snd-gcs
-		     snd-warning sine-bank vct-map make-variable-graph channel-data x-axis-label
+		     snd-warning sine-bank oscil-bank vct-map make-variable-graph channel-data x-axis-label
 		     snd-url snd-urls tempo-control-bounds
 		     quit-button-color help-button-color reset-button-color doit-button-color doit-again-button-color
 
@@ -49184,7 +49220,7 @@ EDITS: 2
 			  make-pulse-train make-rand make-rand-interp make-readin make-sample->file make-sawtooth-wave
 			  make-sine-summation make-square-wave make-src make-sum-of-cosines make-sum-of-sines make-table-lookup make-triangle-wave
 			  make-two-pole make-two-zero make-wave-train make-waveshape make-zpolar make-phase-vocoder make-ssb-am
-			  make-color make-player make-track make-region
+			  make-color make-player make-track make-region make-scalar-mixer
 			  ))
       
       (define keyargs
@@ -49489,11 +49525,11 @@ EDITS: 2
 			    make-iir-filter make-locsig make-notch make-one-pole make-one-zero make-oscil make-phase-vocoder
 			    make-ppolar make-pulse-train make-rand make-rand-interp make-readin make-sawtooth-wave make-average
 			    make-sine-summation make-square-wave make-src make-sum-of-cosines make-sum-of-sines make-table-lookup make-triangle-wave
-			    make-two-pole make-two-zero make-wave-train make-waveshape make-zpolar mixer* multiply-arrays mus-bank
+			    make-two-pole make-two-zero make-wave-train make-waveshape make-zpolar mixer* mixer+ mixer-scale multiply-arrays mus-bank
 			    notch one-pole one-zero oscil oscil-bank partials->polynomial partials->wave partials->waveshape
 			    phase-partials->wave phase-vocoder polynomial pulse-train rand rand-interp rectangular->polar
 			    ring-modulate sample->buffer sample->frame sawtooth-wave sine-summation square-wave src sum-of-cosines sum-of-sines 
-			    sine-bank table-lookup tap triangle-wave two-pole two-zero wave-train waveshape ssb-am make-ssb-am))
+			    sine-bank oscil-bank table-lookup tap triangle-wave two-pole two-zero wave-train waveshape ssb-am make-ssb-am))
 	    
 	    (for-each (lambda (n)
 			(let ((tag
@@ -50762,7 +50798,7 @@ EDITS: 2
 	    ))
       ))
 
-;;; -------------------------------- clean up and quit -------------------------------- 
+;;; ---------------- test all done
 
 ;(set! (max-regions) 2)
 (let ((regs (regions)))

@@ -1192,7 +1192,6 @@ snd_info *snd_new_file(char *newname, int header_type, int data_format, int srat
 void g_init_snd(void);
 XEN snd_no_such_sound_error(const char *caller, XEN n);
 
-void set_speed_style(speed_style_t val);
 void amp_env_scale_by(chan_info *cp, Float scl, int pos);
 void amp_env_scale_selection_by(chan_info *cp, Float scl, off_t beg, off_t num, int pos);
 env_info *amp_env_copy(chan_info *cp, bool reversed, int edpos);

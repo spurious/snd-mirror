@@ -4314,6 +4314,7 @@ static mus_any_class FRAME_CLASS = {
 mus_any *mus_make_empty_frame(int chans)
 {
   mus_frame *nf;
+  if (chans <= 0) return(NULL);
   nf = (mus_frame *)clm_calloc(1, sizeof(mus_frame), S_make_frame);
   nf->core = &FRAME_CLASS;
   nf->chans = chans;
@@ -4325,6 +4326,7 @@ mus_any *mus_make_empty_frame(int chans)
 mus_any *mus_make_frame_with_data(int chans, Float *data)
 {
   mus_frame *nf;
+  if (chans <= 0) return(NULL);
   nf = (mus_frame *)clm_calloc(1, sizeof(mus_frame), S_make_frame);
   nf->core = &FRAME_CLASS;
   nf->chans = chans;
@@ -4335,17 +4337,22 @@ mus_any *mus_make_frame_with_data(int chans, Float *data)
 
 mus_any *mus_make_frame(int chans, ...)
 {
-  mus_frame *nf;
+  mus_frame *nf = NULL;
   va_list ap;
   int i;
-  nf = (mus_frame *)mus_make_empty_frame(chans);
-  if (nf)
+  if (chans <= 0)
+    mus_error(MUS_ARG_OUT_OF_RANGE, S_make_frame ": chans: %d", chans);
+  else
     {
-      va_start(ap, chans);
-      for (i = 0; i < chans; i++)
-	nf->vals[i] = (Float)(va_arg(ap, double)); /* float not safe here apparently */
-      va_end(ap);
-      return((mus_any *)nf);
+      nf = (mus_frame *)mus_make_empty_frame(chans);
+      if (nf)
+	{
+	  va_start(ap, chans);
+	  for (i = 0; i < chans; i++)
+	    nf->vals[i] = (Float)(va_arg(ap, double)); /* float not safe here apparently */
+	  va_end(ap);
+	  return((mus_any *)nf);
+	}
     }
   return(NULL);
 }
@@ -4530,6 +4537,7 @@ mus_any *mus_make_mixer_with_data(int chans, Float *data)
 {
   mus_mixer *nf;
   int i;
+  if (chans <= 0) return(NULL);
   nf = (mus_mixer *)clm_calloc(1, sizeof(mus_mixer), S_make_mixer);
   nf->core = &MIXER_CLASS;
   nf->chans = chans;
@@ -4542,7 +4550,7 @@ mus_any *mus_make_mixer_with_data(int chans, Float *data)
 
 mus_any *mus_make_empty_mixer(int chans)
 {
-  mus_mixer *nf;
+  mus_mixer *nf = NULL;
   int i;
   nf = (mus_mixer *)clm_calloc(1, sizeof(mus_mixer), S_make_mixer);
   nf->core = &MIXER_CLASS;
@@ -4556,10 +4564,15 @@ mus_any *mus_make_empty_mixer(int chans)
 
 mus_any *mus_make_scalar_mixer(int chans, Float scalar)
 {
-  mus_mixer *mx;
+  mus_mixer *mx = NULL;
   int i;
-  mx = (mus_mixer *)mus_make_empty_mixer(chans);
-  if (mx) for (i = 0; i < chans; i++) mx->vals[i][i] = scalar;
+  if (chans <= 0)
+    mus_error(MUS_ARG_OUT_OF_RANGE, S_make_scalar_mixer ": chans: %d", chans);
+  else
+    {
+      mx = (mus_mixer *)mus_make_empty_mixer(chans);
+      if (mx) for (i = 0; i < chans; i++) mx->vals[i][i] = scalar;
+    }
   return((mus_any *)mx);
 }
 
@@ -4570,18 +4583,22 @@ mus_any *mus_make_identity_mixer(int chans)
 
 mus_any *mus_make_mixer(int chans, ...)
 {
-  mus_mixer *mx;
+  mus_mixer *mx = NULL;
   int i, j;
   va_list ap;
-  if (chans <= 0) return(NULL);
-  mx = (mus_mixer *)mus_make_empty_mixer(chans);
-  if (mx) 
+  if (chans <= 0) 
+    mus_error(MUS_ARG_OUT_OF_RANGE, S_make_scalar_mixer ": chans: %d", chans);
+  else
     {
-      va_start(ap, chans);
-      for (i = 0; i < chans; i++)
-	for (j = 0; j < chans; j++)
-	  mx->vals[i][j] = (Float)(va_arg(ap, double));
-      va_end(ap);
+      mx = (mus_mixer *)mus_make_empty_mixer(chans);
+      if (mx) 
+	{
+	  va_start(ap, chans);
+	  for (i = 0; i < chans; i++)
+	    for (j = 0; j < chans; j++)
+	      mx->vals[i][j] = (Float)(va_arg(ap, double));
+	  va_end(ap);
+	}
     }
   return((mus_any *)mx);
 }

@@ -4313,7 +4313,7 @@ cut off filter output at end of selection, else mix"
   return(g_filter_1(e, order, XEN_FALSE, XEN_FALSE, 
 		    C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), 
 		    S_filter_selection, OVER_SELECTION, 
-		    XEN_TO_C_BOOLEAN_OR_TRUE(truncate)));
+		    XEN_TO_C_BOOLEAN(truncate)));
 }
 
 static XEN g_sinc_width(void) {return(C_TO_XEN_INT(sinc_width(ss)));}

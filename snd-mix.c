@@ -4261,7 +4261,7 @@ track-id is the track value for each newly created mix."
   ss->catch_message = NULL;
   if (XEN_NOT_BOUND_P(tag))
     with_mixer = with_mix_tags(ss);
-  else with_mixer = XEN_TO_C_BOOLEAN_OR_TRUE(tag);
+  else with_mixer = XEN_TO_C_BOOLEAN(tag);
   cp = get_cp(snd_n, chn_n, S_mix);
   beg = XEN_TO_C_OFF_T_OR_ELSE(chn_samp_n, CURSOR(cp));
   if (XEN_BOOLEAN_P(auto_delete)) delete_file = XEN_TO_C_BOOLEAN(auto_delete);
@@ -4606,7 +4606,7 @@ mix data (a vct) into snd's channel chn starting at beg; return the new mix id"
   bg = beg_to_sample(beg, S_mix_vct);
   if (XEN_NOT_BOUND_P(with_tag))
     with_mixer = with_mix_tags(ss);
-  else with_mixer = XEN_TO_C_BOOLEAN_OR_TRUE(with_tag);
+  else with_mixer = XEN_TO_C_BOOLEAN(with_tag);
   data = (mus_sample_t *)CALLOC(len, sizeof(mus_sample_t));
   for (i = 0; i < len; i++)
     data[i] = MUS_FLOAT_TO_SAMPLE(v->data[i]);

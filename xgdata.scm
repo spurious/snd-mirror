@@ -2,8 +2,7 @@
 ;;; || for ref arg list, {} for ref arg int as list len
 ;;; & in struct for settable field
 
-;;; gtk 2.5 TODO: new widgets: GtkIconView, GtkCellView
-;;;      new funcs (GtkComboBox, GtkComboBoxEntry)
+;;; gtk 2.5 TODO: tests for new widgets: GtkIconView, GtkCellView, new funcs re GtkComboBox, GtkComboBoxEntry
 
 (CFNC "gchar* g_type_name GType type")
 (CFNC "GQuark g_type_qname GType type")
@@ -5046,7 +5045,7 @@
 (CFNC-250 "void gtk_cell_view_set_model GtkCellView* cell_view GtkTreeModel* model")
 (CFNC-250 "void gtk_cell_view_set_displayed_row GtkCellView* cell_view GtkTreePath* path")
 (CFNC-250 "GtkTreePath* gtk_cell_view_get_displayed_row GtkCellView* cell_view")
-(CFNC-250 "gboolean gtk_cell_view_get_size_of_row GtkCellView* cell_view GtkTreePath* path GtkRequisition* requisition")
+(CFNC-250 "gboolean gtk_cell_view_get_size_of_row GtkCellView* cell_view GtkTreePath* path GtkRequisition* requisition") ; assumes requisition is alloc'd
 (CFNC-250 "void gtk_cell_view_set_background_color GtkCellView* cell_view GdkColor* color")
 (CFNC-250 "void gtk_cell_view_set_cell_data GtkCellView* cellview")
 (CFNC-250 "GList* gtk_cell_view_get_cell_renderers GtkCellView* cellview")

@@ -1,0 +1,25 @@
+#!/bin/csh -f
+
+set gtkolddir = /home/bil/test/gtk+-2.4.4
+set gtknewdir = /home/bil/test/gtk+-2.5.0
+set curdir = $cwd
+
+date > $curdir/hi
+echo ' ' >> $curdir/hi
+
+chdir $gtknewdir/gdk
+foreach file (*.h)
+  echo '---------------------------------  ' $file '        --------------------------------' >> $curdir/hi
+  if (-e $gtkolddir/gdk/$file) then
+    diff -bcw $gtkolddir/gdk/$file $gtknewdir/gdk/$file >> $curdir/hi
+  endif
+end
+
+chdir $gtknewdir/gtk
+foreach file (*.h)
+  echo '---------------------------------  ' $file '        --------------------------------' >> $curdir/hi
+  if (-e $gtkolddir/gtk/$file) then
+    diff -bcw $gtkolddir/gtk/$file $gtknewdir/gtk/$file >> $curdir/hi
+  endif
+end
+

@@ -2513,7 +2513,7 @@ If a play-list is waiting, start it."
   srate = XEN_TO_C_INT_OR_ELSE(Srate, 44100);
   if (srate <= 0)
     XEN_OUT_OF_RANGE_ERROR(S_start_playing, 2, Srate, "srate ~A <= 0?");
-  back = XEN_TO_C_BOOLEAN_OR_TRUE(In_Background);
+  back = XEN_TO_C_BOOLEAN(In_Background);
   start_dac(srate, chans, (back) ? IN_BACKGROUND : NOT_IN_BACKGROUND, DEFAULT_REVERB_CONTROL_DECAY);
   return(XEN_FALSE);
 }

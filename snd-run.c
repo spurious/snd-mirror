@@ -42,7 +42,7 @@
  *
  *   lambda (use 'declare' to set arg types)
  *   call-with-current-continuation call/cc
- *   if begin or and not let let* set! cond do do* define case[int keys]
+ *   if begin or and not let let* set! cond do define case[int keys]
  *   * + - / > < >= <= = max min 1+ 1-
  *   sin cos tan abs log exp expt acos asin atan sqrt
  *   boolean? exact? inexact? integer? real? number? quote
@@ -3323,7 +3323,7 @@ static bool tree_member(XEN varlst, XEN expr)
   return(tree_member(varlst, XEN_CDR(expr)));
 }
 
-static xen_value *do_form_1(ptree *prog, XEN form, walk_result_t need_result, bool sequential)
+static xen_value *do_form(ptree *prog, XEN form, walk_result_t need_result)
 {
   /* (do ([(var val [up])...]) (test [res ...]) [exp ...]): (do () (#t))  */
 
@@ -3346,9 +3346,7 @@ static xen_value *do_form_1(ptree *prog, XEN form, walk_result_t need_result, bo
   /*   for res, return last if any */
 
   locals_loc = prog->var_ctr; /* lets can be nested */
-  if (sequential)
-    trouble = sequential_binds(prog, vars, "do*");
-  else trouble = parallel_binds(prog, vars, "do");
+  trouble = parallel_binds(prog, vars, "do");
   if (trouble) return(run_warn_with_free(trouble));
 
   test_loc = prog->triple_ctr;
@@ -3373,44 +3371,41 @@ static xen_value *do_form_1(ptree *prog, XEN form, walk_result_t need_result, bo
     }
   FREE(expr);
   expr = NULL;
-  /* now increment the vars (if step-val exists) -- increments are done first if not sequential (the norm in Scheme) */
+  /* now increment the vars (if step-val exists) -- increments are done first (the norm in Scheme) */
   varlen = XEN_LIST_LENGTH(vars);
   if (varlen > 0)
     {
-      if (!sequential)
+      bool sequential = true;
+      if (varlen > 1)    /* 0=doesn't matter, 1=no possible non-sequential ref */
+	/* the step expr can refer to a previous do local var, but it is to the previous value -- very weird semantics */
 	{
-	  /* here we can optimize better if sequential is true, so look for such cases */
-	  sequential = true; /* assume success */
-	  if (varlen > 1)    /* 0=doesn't matter, 1=no possible non-sequential ref */
+	  int loc;
+	  XEN varlst = XEN_EMPTY_LIST, update = XEN_FALSE;
+	  loc = snd_protect(varlst);
+	  vars = XEN_CADR(form);
+	  varlst = XEN_CONS(XEN_CAAR(vars), varlst);
+	  for (vars = XEN_CDR(vars), i = 1; i < varlen; i++, vars = XEN_CDR(vars))
 	    {
-	      int loc;
-	      XEN varlst = XEN_EMPTY_LIST, update = XEN_FALSE;
-	      loc = snd_protect(varlst);
-	      vars = XEN_CADR(form);
-	      varlst = XEN_CONS(XEN_CAAR(vars), varlst);
-	      for (vars = XEN_CDR(vars), i = 1; i < varlen; i++, vars = XEN_CDR(vars))
+	      var = XEN_CAR(vars);
+	      /* current var is CAR(var), init can be ignored (it would refer to outer var), update is CADDR(var) */
+	      /*   we'll scan CADDR for any member of varlst */
+	      if ((XEN_NOT_NULL_P(XEN_CDDR(var))) && (XEN_NOT_NULL_P(XEN_CADDR(var))))
 		{
-		  var = XEN_CAR(vars);
-		  /* current var is CAR(var), init can be ignored (it would refer to outer var), update is CADDR(var) */
-		  /*   we'll scan CADDR for any member of varlst */
-		  if ((XEN_NOT_NULL_P(XEN_CDDR(var))) && (XEN_NOT_NULL_P(XEN_CADDR(var))))
+		  /* if update null, can't be ref */
+		  update = XEN_CADDR(var);
+		  if (((XEN_LIST_P(update)) && (tree_member(varlst, update))) ||
+		      ((XEN_SYMBOL_P(update)) && (list_member(update, varlst))))
 		    {
-		      /* if update null, can't be ref */
-		      update = XEN_CADDR(var);
-		      if (((XEN_LIST_P(update)) && (tree_member(varlst, update))) ||
-			  ((XEN_SYMBOL_P(update)) && (list_member(update, varlst))))
-			{
-			  /* fprintf(stderr, "found seq ref %s\n", XEN_AS_STRING(vars)); */
-			  sequential = false;
-			  break;
-			}
+		      /* fprintf(stderr, "found seq ref %s\n", XEN_AS_STRING(vars)); */
+		      sequential = false;
+		      break;
 		    }
-		  varlst = XEN_CONS(XEN_CAR(var), varlst);
 		}
-	      snd_unprotect_at(loc);
-	      if (!sequential)
-		exprs = (xen_value **)CALLOC(varlen, sizeof(xen_value *));
+	      varlst = XEN_CONS(XEN_CAR(var), varlst);
 	    }
+	  snd_unprotect_at(loc);
+	  if (!sequential)
+	    exprs = (xen_value **)CALLOC(varlen, sizeof(xen_value *));
 	}
       for (vars = XEN_CADR(form), i = 0; i < varlen; i++, vars = XEN_CDR(vars))
 	{
@@ -3496,9 +3491,6 @@ static xen_value *do_form_1(ptree *prog, XEN form, walk_result_t need_result, bo
   undefine_locals(prog, locals_loc);
   return(result);
 }
-
-static xen_value *do_form(ptree *prog, XEN form, walk_result_t need_result) {return(do_form_1(prog, form, need_result, false));}
-static xen_value *do_star_form(ptree *prog, XEN form, walk_result_t need_result) {return(do_form_1(prog, form, need_result, true));}
 
 static xen_value *callcc_form(ptree *prog, XEN form, walk_result_t need_result)
 {
@@ -7944,7 +7936,6 @@ static xen_value *mus_bank_1(ptree *prog, xen_value **args, int num_args)
 }
 
 
-/* TODO: tests for opt oscil-bank */
 /* ---------------- oscil-bank ---------------- */
 
 static char *descr_oscil_bank_2f(int *args, ptree *pt) 
@@ -11106,12 +11097,11 @@ XEN_NARGIFY_2(g_vct_map_w, g_vct_map)
 
 static void init_walkers(void)
 {
-  XEN do_star, declare;
+  XEN declare;
 #if (!HAVE_GUILE_CALL_CC)
   XEN call_cc;
   XEN_DEFINE_VARIABLE("call/cc", call_cc, XEN_FALSE);
 #endif
-  XEN_DEFINE_VARIABLE("do*", do_star, XEN_FALSE);
   XEN_DEFINE_VARIABLE("declare", declare, XEN_FALSE);
   walk_sym = C_STRING_TO_XEN_SYMBOL("snd-walk");
   XEN_PROTECT_FROM_GC(walk_sym);
@@ -11120,7 +11110,6 @@ static void init_walkers(void)
   INIT_WALKER("let", make_walker(NULL, let_form, NULL, 2, UNLIMITED_ARGS, R_ANY, false, 0));
   INIT_WALKER("let*", make_walker(NULL, let_star_form, NULL, 2, UNLIMITED_ARGS, R_ANY, false, 0));
   INIT_WALKER("do", make_walker(NULL, do_form, NULL, 2, UNLIMITED_ARGS, R_ANY, false, 0));
-  INIT_WALKER("do*", make_walker(NULL, do_star_form, NULL, 2, UNLIMITED_ARGS, R_ANY, false, 0));
   INIT_WALKER("begin", make_walker(NULL, begin_form, NULL, 0, UNLIMITED_ARGS, R_ANY, false, 0));
   INIT_WALKER("if", make_walker(NULL, if_form, NULL, 2, 3, R_ANY, false, 0));
   INIT_WALKER("cond", make_walker(NULL, cond_form, NULL, 1, UNLIMITED_ARGS, R_ANY, false, 0));
