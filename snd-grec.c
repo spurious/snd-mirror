@@ -799,7 +799,7 @@ static GtkWidget *make_message_pane(snd_state *ss)
 
 static void Help_Record_Callback(GtkWidget *w, gpointer context) 
 {
-  record_dialog_help((snd_state *)context);
+  recording_help((snd_state *)context);
 }
 
 static void internal_trigger_set(Float val)

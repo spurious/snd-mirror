@@ -765,7 +765,7 @@ void snd_doit(snd_state *ss, int argc, char **argv)
     fprintf(stderr, "can't find font %s", snd_rs.listener_font);
 
   if (!(ss->using_schemes)) XtVaSetValues(shell, XmNbackground, sx->basic_color, NULL);
-  ss->init_file = getenv(SND_INIT_FILE_ENVIRONMENT_NAME);
+  ss->init_file = copy_string(getenv(SND_INIT_FILE_ENVIRONMENT_NAME));
   if (ss->init_file == NULL)
     ss->init_file = snd_rs.init_file_name; /* doesn't make any sense to pass this out to the user -- what can he do? */
   if (eps_file(ss)) free(eps_file(ss));

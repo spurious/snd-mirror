@@ -2175,6 +2175,12 @@ int read_sample_eof (snd_fd *sf)
 
 /* -------------------------------- EDITS -------------------------------- */
 
+static int local_mus_error = MUS_NO_ERROR;
+static mus_error_handler_t *old_error_handler;
+static void local_mus_error2snd(int type, char *msg)
+{
+  local_mus_error = type;
+}
 
 int open_temp_file(char *ofile, int chans, file_info *hdr, snd_state *ss)
 {
@@ -2192,8 +2198,15 @@ int open_temp_file(char *ofile, int chans, file_info *hdr, snd_state *ss)
 	  hdr->format = MUS_OUT_FORMAT;
 	}
     }
+  /* trap mus_error locally here so that callers of open_temp_file can cleanup sample readers and whatnot */
+  old_error_handler = mus_error_set_handler(local_mus_error2snd);
   err = snd_write_header(ss, ofile, hdr->type, hdr->srate, chans, 0, 0, hdr->format, hdr->comment, len, hdr->loops);
-  if (err == -1) return(-1);
+  mus_error_set_handler(old_error_handler);
+  if ((err == -1) || (local_mus_error != MUS_NO_ERROR))
+    {
+      local_mus_error = MUS_NO_ERROR;
+      return(-1);
+    }
   if ((ofd = snd_reopen_write(ss, ofile)) == -1) return(-1);
   hdr->data_location = mus_header_data_location(); /* header might have changed size (aiff extras) */
   mus_file_open_descriptors(ofd,
@@ -2327,7 +2340,6 @@ static int save_edits_and_update_display(snd_info *sp)
   snd_state *ss;
   int i, samples;
   chan_info *cp;
-  axis_info *ap;
   snd_fd **sf;
   axes_data *sa;
   file_info *sphdr = NULL;

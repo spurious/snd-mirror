@@ -32,6 +32,7 @@
   int disk_kspace (char *filename) {return(1234567);}
   int is_link(char *filename) {return(0);}
   int is_directory(char *filename) {return(0);}
+  static int is_empty_file(char *filename) {return(0);}
 #else
 
 int disk_kspace (char *filename)
@@ -70,6 +71,14 @@ int is_directory(char *filename)
   if (lstat(filename, &statbuf) >= 0) 
     return(S_ISDIR(statbuf.st_mode));
   return(0);
+}
+
+static int is_empty_file(char *filename)
+{
+  struct stat statbuf;
+  if (lstat(filename, &statbuf) >= 0) 
+    return(statbuf.st_size == 0);
+  return(1);
 }
 #endif
 
@@ -475,7 +484,8 @@ dir *find_sound_files_in_dir (char *name)
 		dot = (++sp);
 	    if (dot)
 	      for (i = 0; i < sound_file_extensions_end; i++)
-		if (strcmp(dot, sound_file_extensions[i]) == 0)
+		if ((strcmp(dot, sound_file_extensions[i]) == 0) && 
+		    (!(is_empty_file(dirp->d_name))))
 		  {
 		    XEN res = XEN_TRUE;
 		    if (XEN_HOOKED(just_sounds_hook))
@@ -2345,8 +2355,10 @@ static XEN g_sound_files_in_directory(XEN dirname)
   char *name = NULL;
   int i;
   XEN res = XEN_EMPTY_LIST;
-  XEN_ASSERT_TYPE(XEN_STRING_P(dirname), dirname, XEN_ONLY_ARG, S_sound_files_in_directory, "a string");
-  name = XEN_TO_C_STRING(dirname);
+  XEN_ASSERT_TYPE(XEN_STRING_IF_BOUND_P(dirname), dirname, XEN_ONLY_ARG, S_sound_files_in_directory, "a string");
+  if (XEN_STRING_P(dirname))
+    name = XEN_TO_C_STRING(dirname);
+  else name = ".";
   if (name)
     {
       dp = find_sound_files_in_dir(name);
@@ -2390,7 +2402,7 @@ XEN_NARGIFY_1(g_file_write_date_w, g_file_write_date)
 XEN_ARGIFY_1(g_soundfont_info_w, g_soundfont_info)
 XEN_NARGIFY_1(g_preload_directory_w, g_preload_directory)
 XEN_NARGIFY_1(g_preload_file_w, g_preload_file)
-XEN_NARGIFY_1(g_sound_files_in_directory_w, g_sound_files_in_directory)
+XEN_ARGIFY_1(g_sound_files_in_directory_w, g_sound_files_in_directory)
 XEN_ARGIFY_1(g_sound_loop_info_w, g_sound_loop_info)
 XEN_ARGIFY_2(g_set_sound_loop_info_w, g_set_sound_loop_info)
 XEN_NARGIFY_0(g_previous_files_sort_procedure_w, g_previous_files_sort_procedure)
@@ -2421,7 +2433,7 @@ void g_init_file(void)
   XEN_DEFINE_PROCEDURE(S_soundfont_info,              g_soundfont_info_w, 0, 1, 0,            H_soundfont_info);
   XEN_DEFINE_PROCEDURE(S_preload_directory,           g_preload_directory_w, 1, 0, 0,         H_preload_directory);
   XEN_DEFINE_PROCEDURE(S_preload_file,                g_preload_file_w, 1, 0, 0,              H_preload_file);
-  XEN_DEFINE_PROCEDURE(S_sound_files_in_directory,    g_sound_files_in_directory_w, 1, 0, 0,  H_sound_files_in_directory);
+  XEN_DEFINE_PROCEDURE(S_sound_files_in_directory,    g_sound_files_in_directory_w, 0, 1, 0,  H_sound_files_in_directory);
   XEN_DEFINE_PROCEDURE(S_open_file_dialog,            g_open_file_dialog_w, 0, 1, 0,          H_open_file_dialog);
   XEN_DEFINE_PROCEDURE(S_mix_file_dialog, g_mix_file_dialog_w, 0, 1, 0, H_mix_file_dialog);
   XEN_DEFINE_PROCEDURE(S_disk_kspace,                 g_disk_kspace_w, 1, 0, 0,               H_disk_kspace);

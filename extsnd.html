@@ -7987,9 +7987,11 @@ variable %load-verbosely to #t.
 <!-- -->
 <!-- sound-files-in-directory -->
 <!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="soundfilesindirectory">sound-files-in-directory</a></em> (dir)</code></span></td></tr>
+<!-- --><span class=defbox><code><em class=def><a name="soundfilesindirectory">sound-files-in-directory</a></em> (<i>dir</i>)</code></span></td></tr>
 <!-- --><tr><td></td><td>
-<!-- -->return a list of sound file names.
+<!-- -->return a list of sound file names.  A file is considered a sound file if it is non-empty and
+<!-- -->its extension is on the sound file extension list (see <a href="#addsoundfileextension">add-sound-file-extension</a>).
+<!-- -->The directory name defaults to the current directory.
 <!-- -->This is useful for "batch" processing of sounds.  The following,
 <!-- -->for example, prints the names of all the stereo AIFC files it finds:
 <!-- --></td></tr>
@@ -8001,7 +8003,7 @@ variable %load-verbosely to #t.
     (if (and (= (mus-sound-header-type filename) mus-aifc)
              (= (mus-sound-chans filename) 2))
         (snd-print (format #f "~%~A" filename))))
-  (<em class=red>sound-files-in-directory</em> "."))
+  (<em class=red>sound-files-in-directory</em>))
 <!-- --></pre></td></tr></table></td></tr>
 <!-- -->
 <!-- --><tr><td></td><td>

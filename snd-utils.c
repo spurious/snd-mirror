@@ -182,16 +182,16 @@ static char *get_tmpdir(void)
 {
   char *tmpdir = NULL;
   int len;
-  tmpdir = getenv("TMPDIR");
-  if (tmpdir == NULL) tmpdir = DEFAULT_TEMP_DIR;
+  tmpdir = copy_string(getenv("TMPDIR"));
+  if (tmpdir == NULL) tmpdir = copy_string(DEFAULT_TEMP_DIR);
 #ifdef P_tmpdir
-  if (tmpdir == NULL) tmpdir = P_tmpdir; /* /usr/include/stdio.h */
+  if (tmpdir == NULL) tmpdir = copy_string(P_tmpdir); /* /usr/include/stdio.h */
 #else
-  if (tmpdir == NULL) tmpdir = "/tmp";
+  if (tmpdir == NULL) return(copy_string("/tmp"));
 #endif
-  if (tmpdir == NULL) tmpdir = ".";
+  if (tmpdir == NULL) return(copy_string("."));
   len = strlen(tmpdir);
-  if (tmpdir[len - 1] == '/') tmpdir[len - 1] = 0; /* sgi... */
+  if (tmpdir[len - 1] == '/') tmpdir[len - 1] = 0; /* this is what forces us to copy the string above (Sun segfaults otherwise) */
   return(tmpdir);
 }
 
@@ -199,10 +199,13 @@ static int sect_ctr = 0;
 char *shorter_tempnam(char *udir, char *prefix)
 {
   /* tempnam turns out names that are inconveniently long (in this case the filename is user-visible) */
-  char *str;
+  char *str, *tmpdir = NULL;
   str = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
-  if ((udir == NULL) || (snd_strlen(udir) == 0)) udir = get_tmpdir(); /* incoming dir could be "" */
-  mus_snprintf(str, PRINT_BUFFER_SIZE, "%s/%s%d_%d.snd", udir, (prefix) ? prefix : "snd_", getpid(), sect_ctr++);
+  if ((udir == NULL) || (snd_strlen(udir) == 0)) 
+    tmpdir = get_tmpdir(); /* incoming dir could be "" */
+  else tmpdir = copy_string(udir);
+  mus_snprintf(str, PRINT_BUFFER_SIZE, "%s/%s%d_%d.snd", tmpdir, (prefix) ? prefix : "snd_", getpid(), sect_ctr++);
+  if (tmpdir) FREE(tmpdir);
   return(str);
 }
 
@@ -589,7 +592,6 @@ void mem_report(void)
 		    ((snd_fd *)(pointers[i]))->filename,
 		    ((snd_fd *)(pointers[i]))->beg,
 		    ((snd_fd *)(pointers[i]))->end);
-
 	break;
       }
   for (loc = 0; loc <= mem_location; loc++)

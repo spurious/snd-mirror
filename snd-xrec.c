@@ -82,7 +82,7 @@ static PANE **all_panes = NULL;
 static int out_file_pane;
 
 static Widget rec_size_text, trigger_scale, trigger_label;
-static Widget file_duration, messages, record_button, reset_button, file_text;
+static Widget file_duration, messages = NULL, record_button, reset_button, file_text;
 static Widget *device_buttons;
 static int device_buttons_size = 0;
 #if NEW_SGI_AL || defined(SUN)
@@ -130,7 +130,7 @@ static void record_report(Widget text, ...)
 
 void recorder_error(char *msg)
 {
-  if (recorder)
+  if ((recorder) && (messages)) /* on SGI during make_recorder, errors can try to print to not-yet-ready messages pane */
     record_report(messages, msg, NULL);
 }
 
@@ -1107,9 +1107,7 @@ static void button_holder_help_callback(Widget w, XtPointer context, XtPointer i
   snd_state *ss = (snd_state *)context;
   snd_help_with_wrap(ss,
 		     "Record Options",
-"These buttons configure the appearance of the recorder;  \
-'Autoload Recording', if set, causes the recorded output to be \
-loaded automatically into Snd.");
+"These buttons configure the appearance of the recorder; 'Autoload Recording', if set, causes the recorded output to be loaded automatically into Snd.");
 }
 
 static void autoload_file_help_callback(Widget w, XtPointer context, XtPointer info) 
@@ -1122,7 +1120,7 @@ static void autoload_file_help_callback(Widget w, XtPointer context, XtPointer i
 
 static void Help_Record_Callback(Widget w, XtPointer context, XtPointer info) 
 {
-  record_dialog_help((snd_state *)context);
+  recording_help((snd_state *)context);
 }
 
 static void VU_Reset_Help_Callback(Widget w, XtPointer context, XtPointer info) 

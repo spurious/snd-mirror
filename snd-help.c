@@ -1481,115 +1481,122 @@ sashIndent          -6\n\
 
 #ifndef _MSC_VER
 static char mix_help_string[] = 
-"Since mixing is the most common and most\n\
-useful editing operation performed on\n\
-sounds, there is relatively elaborate\n\
-support for it in Snd. To mix in a file,\n\
-use the File Mix menu option, the\n\
-command C-x C-q, or one of the various\n\
-mixing functions. Currently the only\n\
-difference between the first two is that\n\
-the Mix menu option tries to take the\n\
-current sync state into account, whereas\n\
-the C-x C-q command does not. To mix a\n\
-selection, use C-x q. The mix starts at\n\
-the current cursor location. It is\n\
-displayed as a separate waveform above\n\
-the main waveform with a red tag at the\n\
-beginning.  You can drag the tag to\n\
-reposition the mix. The underlying sound\n\
-being mixed can be edited by the same\n\
-functions used throughout Snd; the mix\n\
-number is used as the first (only)\n\
-member of a list where the functions\n\
-take the sound index argument. It is\n\
-usually handier, however, to adjust the\n\
-mix via the Mix Panel.\n\
-\n\
-The Mix Panel is a dialog (under the\n\
-View Menu) that provides various\n\
-commonly-used controls on the currently\n\
-selected mix. At the top are the mix id,\n\
-name, begin and end times, track number,\n\
-and a play button. Beneath that are\n\
-various sliders controlling the speed\n\
-(sampling rate) of the mix, amplitude of\n\
-each input channel, and the amplitude\n\
-envelope. This part of Snd is in flux\n\
-currently.\n\
-\n\
-To move the cursor from one mix to the\n\
-next, in the same manner as C-j moves\n\
-through marks, use C-x C-j.\n\
-\n\
-It is often handy to collect several\n\
-mixes into a 'track'; mix.scm implements\n\
-a variety of track-related operations.\n\
+"Since mixing is the most common and most \
+useful editing operation performed on \
+sounds, there is relatively elaborate \
+support for it in Snd. To mix in a file, \
+use the File Mix menu option, the \
+command C-x C-q, or one of the various \
+mixing functions. Currently the only \
+difference between the first two is that \
+the Mix menu option tries to take the \
+current sync state into account, whereas \
+the C-x C-q command does not. To mix a \
+selection, use C-x q. The mix starts at \
+the current cursor location. It is \
+displayed as a separate waveform above \
+the main waveform with a red tag at the \
+beginning.  You can drag the tag to \
+reposition the mix. The underlying sound \
+being mixed can be edited by the same \
+functions used throughout Snd; the mix \
+number is used as the first (only) \
+member of a list where the functions \
+take the sound index argument. It is \
+usually handier, however, to adjust the \
+mix via the Mix Panel. \
+\n\n\
+The Mix Panel is a dialog (under the \
+View Menu) that provides various \
+commonly-used controls on the currently \
+selected mix. At the top are the mix id, \
+name, begin and end times, track number, \
+and a play button. Beneath that are \
+various sliders controlling the speed \
+(sampling rate) of the mix, amplitude of \
+each input channel, and the amplitude \
+envelope. This part of Snd is in flux \
+currently. \
+\n\n\
+To move the cursor from one mix to the \
+next, in the same manner as C-j moves \
+through marks, use C-x C-j. \
+\n\n\
+It is often handy to collect several \
+mixes into a 'track'; mix.scm implements \
+a variety of track-related operations. \
 ";
 #else
 static char mix_help_string[] = "";
 #endif
 
 static char recording_help_string[] = 
-"To make a recording, choose 'Record' from the\n\
-File menu. A window opens with the various\n\
-recording controls.  The top three panes display\n\
-the status of the input and output lines. If a\n\
-channel is active, its meter will glow\n\
-yellow. If some signal clips during recording,\n\
-the meter will flash red. The numbers below the\n\
-channel buttons indicate the signal maximum\n\
-since it was last reset. The sliders underneath\n\
-the meters scale the audio data in various ways\n\
-before it is mixed into the output. The vertical\n\
-sliders on the right scale the line-in and\n\
-microphone signals before the meter, and the\n\
-output signal before it gets to the speaker\n\
-(these are needed to avoid clipping on input, \n\
-and to set the 'monitor' volume of the output\n\
-independent of the output file volume).\n\
-\n\
-The fourth pane has information about the\n\
-current output file (its name and so on), and\n\
-the layout of the window. The buttons on the\n\
-right can be used to open and close panes\n\
-painlessly. If the button is not square (a\n\
-diamond on the SGI), the underlying audio\n\
-hardware can't handle input from that device at\n\
-the same time as it reads other 'radio' button\n\
-devices. So, in that case, opening the panel via\n\
-the button also turns off the other incompatible\n\
-device. The fifth pane contains a history of\n\
-whatever the recorder thought worth\n\
-reporting. The duration field gives the current\n\
-output file's duration. The bottom row of\n\
-buttons dismiss the window, start recording,\n\
-cancel the current take, and provide some\n\
-help. There's also a slider on the far right\n\
-that controls the speaker output volume\n\
-(independent of the output file volume).\n\
-\n\
-To make a recording, choose the inputs and\n\
-outputs you want; for example, to record channel\n\
-A from the microphone to channel A of the output\n\
-file, click the Microphone panel's A button and\n\
-the Output panel's A button. Then when you're\n\
-ready to go, click the Record button. Click it\n\
-again to finish the recording.\n\
-\n\
-If the record window's VU meters are too big (or\n\
-too small) for your screen, you can fool around\n\
-with the variable " S_vu_size " which defaults to 1.0.\n\
-Similarly the variable " S_vu_font_size " tries to\n\
-change the size of the numbers on the label, and\n\
-" S_vu_font " chooses the family name of the font\n\
-used.\n\
-\n\
-Digital input is slightly tricky -- you\n\
-need to set the sampling rate before you\n\
-click the 'digital input' button; otherwise\n\
-you'll get a stuttering effect because the output\n\
-(monitor) rate doesn't match the input rate.\n\
+"To make a recording, choose 'Record' from the \
+File menu. A window opens with the various \
+recording controls.  The top three panes display \
+the status of the input and output lines. If a \
+channel is active, its meter will glow \
+yellow. If some signal clips during recording, \
+the meter will flash red. The numbers below the \
+channel buttons indicate the signal maximum \
+since it was last reset. The sliders underneath \
+the meters scale the audio data in various ways \
+before it is mixed into the output. The vertical \
+sliders on the right scale the line-in and \
+microphone signals before the meter, and the \
+output signal before it gets to the speaker \
+(these are needed to avoid clipping on input,  \
+and to set the 'monitor' volume of the output \
+independent of the output file volume). \
+\n\n\
+The fourth pane has information about the \
+current output file (its name and so on), and \
+the layout of the window. The buttons on the \
+right can be used to open and close panes \
+painlessly. If the button is not square (a \
+diamond on the SGI), the underlying audio \
+hardware can't handle input from that device at \
+the same time as it reads other 'radio' button \
+devices. So, in that case, opening the panel via \
+the button also turns off the other incompatible \
+device. The fifth pane contains a history of \
+whatever the recorder thought worth \
+reporting. The duration field gives the current \
+output file's duration. The bottom row of \
+buttons dismiss the window, start recording, \
+cancel the current take, and provide some \
+help. There's also a slider on the far right \
+that controls the speaker output volume \
+(independent of the output file volume). \
+\n\n\
+To make a recording, choose the inputs and \
+outputs you want; for example, to record channel \
+A from the microphone to channel A of the output \
+file, click the Microphone panel's A button and \
+the Output panel's A button. Then when you're \
+ready to go, click the Record button. Click it \
+again to finish the recording. \
+\n\n\
+If the record window's VU meters are too big (or \
+too small) for your screen, you can fool around \
+with the variable " S_vu_size " which defaults to 1.0. \
+Similarly the variable " S_vu_font_size " tries to \
+change the size of the numbers on the label, and \
+" S_vu_font " chooses the family name of the font \
+used. \
+\n\n\
+If you go to the main Snd window while the \
+recorder is active and play a sound, the \
+recorder's audio lines are made inactive \
+to try to reduce confusion.  To re-activate \
+the recorder, press the 'reset' button at \
+the bottom of the window. \
+\n\n\
+Digital input is slightly tricky -- you \
+need to set the sampling rate before you \
+click the 'digital input' button; otherwise \
+you'll get a stuttering effect because the output \
+(monitor) rate doesn't match the input rate. \
 ";
 
 void envelope_editor_dialog_help(snd_state *ss)
@@ -1727,9 +1734,9 @@ void speed_help(snd_state *ss) {snd_help_with_url_and_wrap(ss, STR_Speed, "#spee
 void expand_help(snd_state *ss) {snd_help_with_url_and_wrap(ss, STR_Expand, "#expand", expand_help_string);}
 void reverb_help(snd_state *ss) {snd_help_with_url_and_wrap(ss, STR_Reverb, "#reverb", reverb_help_string);}
 void marks_help(snd_state *ss) {snd_help_with_url(ss, STR_Marks, "#marks", mark_help_string);}
-void mix_help(snd_state *ss) {snd_help_with_url(ss, STR_Mixing, "#mixingfiles", mix_help_string);}
+void mix_help(snd_state *ss) {snd_help_with_url_and_wrap(ss, STR_Mixing, "#mixingfiles", mix_help_string);}
 void sound_files_help(snd_state *ss) {snd_help_with_url(ss, STR_Format, "#formats", sound_files_help_string);}
-void recording_help(snd_state *ss) {snd_help_with_url(ss, STR_Recording, "#recordfile", recording_help_string);}
+void recording_help(snd_state *ss) {snd_help_with_url_and_wrap(ss, STR_Recording, "#recordfile", recording_help_string);}
 void init_file_help(snd_state *ss) {ssnd_help_with_url(ss, STR_Customization, "grfsnd.html", init_file_help_string, "\n", resource_help_string, NULL);}
 
 #if HAVE_CLICK_FOR_HELP
@@ -2117,23 +2124,6 @@ void orientation_dialog_help(snd_state *ss)
   snd_help_with_wrap(ss,
 		     "View Orientation",
 "This dialog sets the rotation and scaling variables used during sonogram, spectrogram, and wavogram display.");	   
-}
-
-void record_dialog_help(snd_state *ss)
-{
-  ssnd_help_with_url(ss,
-		     "Record",
-		     "#recordfile",
-recording_help_string,
-"\n\
-If you go to the main Snd window while the\n\
-recorder is active and play a sound, the\n\
-recorder's audio lines are made inactive\n\
-to try to reduce confusion.  To re-activate\n\
-the recorder, press the 'reset' button at\n\
-the bottom of the window.\n\
-",
-NULL);
 }
 
 void region_dialog_help(snd_state *ss)

@@ -470,7 +470,6 @@ void transform_dialog_help(snd_state *ss);
 void color_dialog_help(snd_state *ss);
 void orientation_dialog_help(snd_state *ss);
 void listener_dialog_help(snd_state *ss);
-void record_dialog_help(snd_state *ss);
 void envelope_editor_dialog_help(snd_state *ss);
 void region_dialog_help(snd_state *ss);
 void raw_data_dialog_help(snd_state *ss);

@@ -5563,30 +5563,40 @@ mus_any *mus_make_src(Float (*input)(void *arg, int direction), Float srate, int
 {
   sr *srp;
   int i, lim, wid;
-  srp = (sr *)CALLOC(1, sizeof(sr));
-  if (srp == NULL) 
-    mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate struct for mus_make_src!");
+  if (srate > (Float)(1 << 16))
+    mus_error(MUS_ARG_OUT_OF_RANGE, "mus_make_src srate arg invalid: %f", srate);
   else
     {
-      if (width == 0) width = SRC_SINC_WIDTH;
-      if (width < (srate * 2)) wid = (int)(ceil(srate) * 2); else wid = width;
-      srp->core = &SRC_CLASS;
-      srp->x = 0.0;
-      srp->feeder = input;
-      srp->environ = environ;
-      srp->incr = srate;
-      srp->width = wid;
-      lim = 2 * wid;
-      srp->len = wid * SRC_SINC_DENSITY;
-      srp->data = (Float *)CALLOC(lim + 1, sizeof(Float));
-      srp->sinc_table = init_sinc_table(wid);
-      if (srp->data == NULL) 
-	mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate src data array in mus_make_src!");
+      if ((width < 0) || (width > (1 << 16)))
+	mus_error(MUS_ARG_OUT_OF_RANGE, "mus_make_src width arg invalid: %d", width);
       else
-	for (i = wid-1; i < lim; i++) 
-	  srp->data[i] = (*input)(environ, (srate >= 0.0) ? 1 : -1);
-      /* was i = 0 here but we want the incoming data centered */
-      return((mus_any *)srp);
+	{
+	  srp = (sr *)CALLOC(1, sizeof(sr));
+	  if (srp == NULL) 
+	    mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate struct for mus_make_src!");
+	  else
+	    {
+	      if (width == 0) width = SRC_SINC_WIDTH;
+	      if (width < (srate * 2)) wid = (int)(ceil(fabs(srate)) * 2); else wid = width;
+	      srp->core = &SRC_CLASS;
+	      srp->x = 0.0;
+	      srp->feeder = input;
+	      srp->environ = environ;
+	      srp->incr = srate;
+	      srp->width = wid;
+	      lim = 2 * wid;
+	      srp->len = wid * SRC_SINC_DENSITY;
+	      srp->data = (Float *)CALLOC(lim + 1, sizeof(Float));
+	      srp->sinc_table = init_sinc_table(wid);
+	      if (srp->data == NULL) 
+		mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate src data array in mus_make_src!");
+	      else
+		for (i = wid - 1; i < lim; i++) 
+		  srp->data[i] = (*input)(environ, (srate >= 0.0) ? 1 : -1);
+	      /* was i = 0 here but we want the incoming data centered */
+	      return((mus_any *)srp);
+	    }
+	}
     }
   return(NULL);
 }

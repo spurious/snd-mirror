@@ -2,8 +2,8 @@
 #define MUS_H
 
 #define MUS_VERSION 1
-#define MUS_REVISION 52
-#define MUS_DATE "1-Sep-01"
+#define MUS_REVISION 53
+#define MUS_DATE "17-Sep-01"
 
 /* 
  * 1-Sep:      mus_polar2rectangular.

@@ -390,7 +390,7 @@ void snd_doit(snd_state *ss, int argc, char **argv)
   int i;
   ss->sgx = (state_context *)CALLOC(1, sizeof(state_context));
 
-  ss->init_file = getenv(SND_INIT_FILE_ENVIRONMENT_NAME);
+  ss->init_file = copy_string(getenv(SND_INIT_FILE_ENVIRONMENT_NAME));
   if (ss->init_file == NULL)
     ss->init_file = INIT_FILE_NAME;
 

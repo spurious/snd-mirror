@@ -515,7 +515,7 @@ void snd_doit(snd_state *ss, int argc, char **argv)
       (!(set_help_text_font(ss, FALLBACK_FONT))))
     fprintf(stderr, "can't find font: %s", DEFAULT_HELP_TEXT_FONT);
 
-  ss->init_file = getenv(SND_INIT_FILE_ENVIRONMENT_NAME);
+  ss->init_file = copy_string(getenv(SND_INIT_FILE_ENVIRONMENT_NAME));
   if (ss->init_file == NULL)
     ss->init_file = INIT_FILE_NAME;
 
