@@ -10666,7 +10666,7 @@ actually returned."
   Atom a;
   int ret, val;
   unsigned long len = 0, bytes;
-  unsigned char *data;
+  unsigned char *data[1];
   arg1 = XEN_LIST_REF(args, 0);
   arg2 = XEN_LIST_REF(args, 1);
   arg3 = XEN_LIST_REF(args, 2);
@@ -10688,16 +10688,12 @@ actually returned."
 			   XEN_TO_C_INT(arg5), 
 			   XEN_TO_C_BOOLEAN(arg6), 
 			   XEN_TO_C_Atom(arg7), 
-			   &a, &ret, &len, &bytes, &data);
+			   &a, &ret, &len, &bytes, (unsigned char **)data);
   if ((a != (Atom)None) && (len > 0))
     {
-#if HAVE_GUILE && (HAVE_SCM_MEM2STRING || HAVE_SCM_C_MAKE_RECTANGULAR)
       if (a == XA_STRING)
-	result = C_TO_XEN_STRING((char *)data);
-      else result = C_TO_XEN_STRINGN((char *)data, len * ret / 8); /* is this a good idea? -- perhaps a void pointer here? */
-#else
-      result = C_TO_XEN_STRING((char *)data);
-#endif
+	result = C_TO_XEN_STRING((char *)data[0]);
+      else result = C_TO_XEN_STRINGN((char *)data[0], len * ret / 8); /* is this a good idea? -- perhaps a void pointer here? */
       if (data) XFree(data);
     }
   return(XEN_LIST_6(C_TO_XEN_INT(val),

@@ -9,27 +9,27 @@
 ;;;  test 6: vcts                               [10966]
 ;;;  test 7: colors                             [11257]
 ;;;  test 8: clm                                [11759]
-;;;  test 9: mix                                [18715]
-;;;  test 10: marks                             [21773]
-;;;  test 11: dialogs                           [22475]
-;;;  test 12: extensions                        [22792]
-;;;  test 13: menus, edit lists, hooks, etc     [23207]
-;;;  test 14: all together now                  [24507]
-;;;  test 15: chan-local vars                   [25572]
-;;;  test 16: regularized funcs                 [26832]
-;;;  test 17: dialogs and graphics              [31199]
-;;;  test 18: enved                             [31274]
-;;;  test 19: save and restore                  [31294]
-;;;  test 20: transforms                        [32768]
-;;;  test 21: new stuff                         [34381]
-;;;  test 22: run                               [35259]
-;;;  test 23: with-sound                        [40482]
-;;;  test 24: user-interface                    [41485]
-;;;  test 25: X/Xt/Xm                           [44646]
-;;;  test 26: Gtk                               [49142]
-;;;  test 27: GL                                [53134]
-;;;  test 28: errors                            [53245]
-;;;  test all done                              [55338]
+;;;  test 9: mix                                [18935]
+;;;  test 10: marks                             [21993]
+;;;  test 11: dialogs                           [22695]
+;;;  test 12: extensions                        [23012]
+;;;  test 13: menus, edit lists, hooks, etc     [23427]
+;;;  test 14: all together now                  [24727]
+;;;  test 15: chan-local vars                   [25792]
+;;;  test 16: regularized funcs                 [27052]
+;;;  test 17: dialogs and graphics              [31419]
+;;;  test 18: enved                             [31494]
+;;;  test 19: save and restore                  [31514]
+;;;  test 20: transforms                        [32988]
+;;;  test 21: new stuff                         [34636]
+;;;  test 22: run                               [35514]
+;;;  test 23: with-sound                        [40744]
+;;;  test 24: user-interface                    [41747]
+;;;  test 25: X/Xt/Xm                           [44908]
+;;;  test 26: Gtk                               [49404]
+;;;  test 27: GL                                [53396]
+;;;  test 28: errors                            [53507]
+;;;  test all done                              [55600]
 ;;;
 ;;; how to send ourselves a drop?  (button2 on menu is only the first half -- how to force 2nd?)
 ;;; need all html example code in autotests
@@ -12353,6 +12353,11 @@ EDITS: 5
 			 (polynomial v0 0.0)
 			 (polynomial v0 1.0)
 			 (polynomial v0 2.0))))
+      (if (fneq (polynomial (vct 2.0) 0.5) 1.0) 
+	  (snd-display ";polynomial 2.0 * 0.5: ~A" (polynomial (vct 2.0) 0.5)))
+	(let ((var (catch #t (lambda () (polynomial #f 1.0)) (lambda args args))))
+	  (if (not (eq? (car var) 'wrong-type-arg))
+	      (snd-display ";polynomial empty coeffs: ~A" var))))
       
       (let ((v0 (make-vct 10)))
 	(do ((i 0 (1+ i))) ((= i 10))

@@ -2447,13 +2447,9 @@
 				   (begin
 				     ;; special case -- type returned is dependent to some extent on atom
 				     (hey "  {~%      XEN data_val = XEN_FALSE;~%\
-#if HAVE_GUILE && (HAVE_SCM_MEM2STRING || HAVE_SCM_C_MAKE_RECTANGULAR)~%\
       if (ref_actual_property_type == GDK_TARGET_STRING)~%\
 	data_val = C_TO_XEN_STRING((char *)ref_data);~%\
       else if (ref_actual_length > 0) data_val = C_TO_XEN_STRINGN((char *)ref_data, ref_actual_length * ref_actual_format / 8);~%\
-#else~%\
-      data_val = C_TO_XEN_STRING((char *)ref_data);~%\
-#endif~%\
      return(XEN_LIST_5(result, C_TO_XEN_GdkAtom(ref_actual_property_type), C_TO_XEN_gint(ref_actual_format), ~%\
                        C_TO_XEN_gint(ref_actual_length), data_val));~%\
     }~%  }~%")

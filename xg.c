@@ -3393,13 +3393,9 @@ guchar** [data])"
                                                 &ref_actual_property_type, &ref_actual_format, &ref_actual_length, &ref_data));
     {
       XEN data_val = XEN_FALSE;
-#if HAVE_GUILE && (HAVE_SCM_MEM2STRING || HAVE_SCM_C_MAKE_RECTANGULAR)
       if (ref_actual_property_type == GDK_TARGET_STRING)
 	data_val = C_TO_XEN_STRING((char *)ref_data);
       else if (ref_actual_length > 0) data_val = C_TO_XEN_STRINGN((char *)ref_data, ref_actual_length * ref_actual_format / 8);
-#else
-      data_val = C_TO_XEN_STRING((char *)ref_data);
-#endif
      return(XEN_LIST_5(result, C_TO_XEN_GdkAtom(ref_actual_property_type), C_TO_XEN_gint(ref_actual_format), 
                        C_TO_XEN_gint(ref_actual_length), data_val));
     }
@@ -32325,10 +32321,10 @@ static bool xg_already_inited = false;
       define_strings();
       XEN_YES_WE_HAVE("xg");
 #if HAVE_GUILE
-      XEN_EVAL_C_STRING("(define xg-version \"23-Feb-05\")");
+      XEN_EVAL_C_STRING("(define xg-version \"28-Mar-05\")");
 #endif
 #if HAVE_RUBY
-      rb_define_global_const("Xg_Version", C_TO_XEN_STRING("23-Feb-05"));
+      rb_define_global_const("Xg_Version", C_TO_XEN_STRING("28-Mar-05"));
 #endif
       xg_already_inited = true;
 #if WITH_GTK_AND_X11

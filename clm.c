@@ -655,6 +655,7 @@ Float mus_polynomial(Float *coeffs, Float x, int ncoeffs)
   int i;
   if (ncoeffs <= 0) return(x);
   sum = coeffs[ncoeffs - 1];
+  if (ncoeffs == 1) return(sum * x);
   for (i = ncoeffs - 2; i >= 0; i--) sum = (sum * x) + coeffs[i];
   return(sum);
 }

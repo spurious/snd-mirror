@@ -143,13 +143,9 @@ static XEN g_window_property(XEN winat, XEN name)
       (type != None) &&
       (len > 0))
     {
-#if HAVE_GUILE && (HAVE_SCM_MEM2STRING || HAVE_SCM_C_MAKE_RECTANGULAR)
       if (type == XA_STRING)
 	result = C_TO_XEN_STRING((char *)data[0]);
-      else result = C_TO_XEN_STRINGN((char *)data[0], len * format / 8);
-#else
-      result = C_TO_XEN_STRING((char *)data);
-#endif
+      else result = C_TO_XEN_STRINGN((char *)data[0], len * format / 8); 
       if (data[0]) 
 	XFree((char *)(data[0]));
     }

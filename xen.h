@@ -3,28 +3,20 @@
 
 /* macros for extension language support 
  *
- * Guile:     covers 1.3.4 to present (1.7.0) given the configuration macros in the Snd or Libxm config.h.in.
- * Ruby:      still a few gaps, tested in 1.6.*, 1.7.*, 1.8.*, 1.9.0
+ * Guile:     covers 1.3.4 to present (1.7.2) given the configuration macros in the Snd or Libxm config.h.in.
+ * Ruby:      covers 1.6 to present (1.9)
  * None:      covers all known versions of None
- *
- * I also have incomplete versions for SCM, MzScheme, Python, and librep if anyone is interested,
- *   and much of Elk, but the latter defines Object, False, and True which collide with Xt's Object etc.
- *   Last I looked, MzScheme's user-defined-type stuff was not very good.
- *   Librep's main problem is that any code that uses it is completely undebuggable.
- *   Python doesn't strike me as very different from Ruby.
- *   SCM, like MIT_Scheme, isn't really oriented toward extending C programs.
- *   I've also looked briefly at Haskell (FFI too primitive), Lua (looks ok, though minimal, but lots of
- *     work to fit into the Xen model), and ocaml (FFI in flux, apparently).
  *
  * "xen" from Greek xenos (guest, foreigner)
  */
 
 #define XEN_MAJOR_VERSION 1
-#define XEN_MINOR_VERSION 31
-#define XEN_VERSION "1.31"
+#define XEN_MINOR_VERSION 32
+#define XEN_VERSION "1.32"
 
 /* HISTORY:
  *
+ *  29-Mar-05: C_TO_XEN_STRINGN changes.
  *  24-Mar-05: Ruby properties (Mike Scholz).
  *  8-Mar-05:  Ruby improvements in keywords and hooks (Mike Scholz).
  *  7-Mar-05:  C99 complex number changes (creal, _Complex_I) (Steve Bankowitz).
@@ -44,7 +36,7 @@
  *  21-Jul-04: deprecated XEN_TO_SMALL_C_INT and C_TO_SMALL_XEN_INT.
  *             use new Guile 1.7 numerical function names (under flag HAVE_SCM_TO_SIGNED_INTEGER).
  *  28-Jun-04: XEN_REQUIRED_ARGS_OK to make it easier to turn off this check.
- *  9-June-04: complex number conversions (Guile) -- I don't think Ruby has complex numbers.
+ *  9-June-04: complex number conversions (Guile) -- Ruby complex numbers are an optional module?
  *  21-May-04: plug some memory leaks in Ruby cases.
  *  23-Feb-04: changed DEBUGGING to XEN_DEBUGGING, added redefinition checks under that switch.
  *  2-Feb-04:  C_TO_XEN_CHAR, ratio support (Guile), XEN_CONS_P, XEN_PAIR_P, etc
@@ -305,7 +297,11 @@
     /* this assumes its argument is a XEN string and does not allocate new space */
   #endif
   #define C_TO_XEN_STRING(a)          scm_makfrom0str((const char *)(a))
-  #define C_TO_XEN_STRINGN(Str, Len)  scm_mem2string(Str, Len)
+  #if HAVE_SCM_MEM2STRING
+    #define C_TO_XEN_STRINGN(Str, Len)  scm_mem2string(Str, Len)
+  #else
+    #define C_TO_XEN_STRINGN(Str, Len)  scm_makfromstr(Str, Len, 0)
+  #endif
 #endif
 
 #define C_TO_XEN_BOOLEAN(a)           ((a) ? XEN_TRUE : XEN_FALSE)
@@ -818,6 +814,7 @@ char *xen_guile_to_c_string_with_eventual_free(XEN str);
 #define XEN_TO_C_LONG_LONG(a)             NUM2OFFT(a)
 
 #define C_TO_XEN_STRING(a)                xen_rb_str_new2((char *)a)
+#define C_TO_XEN_STRINGN(a, len)          rb_str_new((char *)a, len)
 #define XEN_TO_C_STRING(Str)              RSTRING(Str)->ptr
 
 #define C_TO_XEN_BOOLEAN(a)               ((a) ? Qtrue : Qfalse)
@@ -1465,6 +1462,7 @@ XEN rb_set_documentation(XEN name, XEN help);
 #define C_TO_XEN_LONG_LONG(a) a
 #define XEN_TO_C_LONG_LONG(a) a
 #define C_TO_XEN_STRING(a) 0
+#define C_TO_XEN_STRINGN(Str, Len) 0
 #define C_TO_XEN_BOOLEAN(a) 0
 #define C_STRING_TO_XEN_SYMBOL(a) 0
 #define XEN_TO_C_BOOLEAN(a) 0

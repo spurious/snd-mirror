@@ -741,9 +741,9 @@ static void make_sonogram_axes(chan_info *cp)
 	    {
 	      if (yang < 45.0) xlabel = _("frequency");
 	      else if (yang < 135.0) xlabel = _("time");
-	      else if (yang < 225.0) xlabel = _("wavelength");
-	      else if (yang < 315.0) xlabel = _("reversed time");
-	      else xlabel = "frequency";
+	      else if (yang < 225.0) xlabel = _("wavelength?");
+	      else if (yang < 315.0) xlabel = _("reversed time?");
+	      else xlabel = _("frequency");
 	    }
 	  else xlabel = spectro_xlabel(cp);
 	  fp->axis = make_axis_info(cp,
@@ -758,7 +758,7 @@ static void make_sonogram_axes(chan_info *cp)
 	fp->axis = make_axis_info(cp,
 				  ap->x0, ap->x1,
 				  min_freq, max_freq,
-				  "time",
+				  _("time"),
 				  ap->x0, ap->x1,
 				  min_freq, max_freq,
 				  fp->axis);
@@ -1052,12 +1052,7 @@ static void display_fft(fft_state *fs)
 	}
       if (cp->fft_log_magnitude) 
 	{
-	  /*
-	   * this looks very dumb...
-	  if (cp->transform_normalization == DONT_NORMALIZE)
-	    max_val = in_dB(cp->min_dB, cp->lin_dB, data_max);
-	  else max_val = 0.0;
-	  */
+	  /* the DONT_NORMALIZE option is ignored because it really looks dumb in this context */
 	  max_val = 0.0;
 	  min_val = cp->min_dB;
 	}
@@ -1607,10 +1602,6 @@ Cessate sonogram_in_slices(void *sono)
     case SONO_RUN:  sg->slice = run_all_ffts(sg);                              break; 
     case SONO_QUIT: sg->slice = cleanup_sonogram(sg); return(BACKGROUND_QUIT); break;
     default: 
-#if DEBUGGING
-      fprintf(stderr, "runaway sonogram? (%d) ", (int)(sg->slice)); 
-      abort();
-#endif
       cleanup_sonogram(sg); 
       return(BACKGROUND_QUIT); 
       break;
