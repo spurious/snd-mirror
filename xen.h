@@ -13,6 +13,9 @@
  *   Librep's main problem is that any code that uses it is completely undebuggable.
  *   Python doesn't strike me as very different from Ruby.
  *   SCM, like MIT_Scheme, isn't really oriented toward extending C programs.
+ *   I've also looked briefly at Haskell (FFI too primitive), Lua (looks ok, though minimal, but lots of
+ *     work to fit into the Xen mode), ocaml (FFI in flux, apparently, and I think it
+ *     insists on being the main program).
  *
  * "xen" from Greek xenos (guest, foreigner)
  */

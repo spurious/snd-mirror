@@ -1,7 +1,5 @@
 /* sndplay plays sounds */
 
-/* TODO: in OSX sndplay output is garbled */
-
 #if defined(HAVE_CONFIG_H)
   #include <config.h>
 #endif

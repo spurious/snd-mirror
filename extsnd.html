@@ -24,6 +24,7 @@
 
 <!-- SOMEDAY: we could use onmouseover to post the help string for each function (see edits below) -->
 <!-- SOMEDAY:   similar status string in Snd listener -->
+<!-- SOMEDAY: parallel Ruby code for all the Guile examples -->
 
 <body bgcolor=white>
 
@@ -86,6 +87,9 @@
 <p>Snd is a highly customizable, extensible program.
 The syntax used throughout this documentation is Scheme (a form of lisp) as implemented by the Gnu Guile library.
 You can also use Ruby, but need to make the obvious <a href="grfsnd.html#sndandruby">changes</a>.
+(I am slowly adding Ruby code to parallel the Guile examples in this document; nearly all
+such code is thanks to Michael Scholz; the Ruby version of a given example is set to the
+right, normally in a different background color).
 I've tried to bring out to lisp nearly every portion
 of Snd, both the signal-processing functions, and
 much of the user interface.  You can, for example,
@@ -102,12 +106,22 @@ with this aspect of Snd is to open the listener
 experiments in its window.  Its prompt is "&gt;". So,
 say we've opened the listener (my typing is 
 in <em class=typing>this font</em> and Snd's responses
-are in <em class=listener>this font</em>):
+are in <em class=listener>this font</em>; the Guile case
+is on the left, the Ruby case is on the right with a blue background):
 </p>
+
+<table border=0><tr><td>
 <pre>
 &gt;<em class=typing>(+ 1 2)</em>
 <em class=listener>3</em>
 </pre>
+</td><td width=100></td><td bgcolor=aliceblue>
+<pre>
+&gt;<em class=typing>1+2</em>
+<em class=listener>3</em>
+</pre>
+</td></tr></table>
+
 <p><small>If the listener is active, and some sound
 is selected, any characters typed while in the sound
 graph which it can't handle are passed to the
@@ -239,12 +253,22 @@ overall window stick to one size.  The Snd variable associated
 with this is "auto-resize"; it can be accessed as follows (we're typing
 to the listener here, as described above):</p>
 
+<table border=0><tr><td>
 <pre>
 &gt;<em class=typing>(<a class=quiet href="#autoresize">auto-resize</a>)</em>
 <em class=listener>#t</em>
 &gt;<em class=typing>(set! (<a class=quiet href="#autoresize">auto-resize</a>) #f)</em>
 <em class=listener>#f</em>
 </pre>
+</td><td width=100></td><td bgcolor=aliceblue>
+<pre>
+&gt;<em class=typing><a class=quiet href="#autoresize">auto_resize</a></em>
+<em class=listener>true</em>
+&gt;<em class=typing>set_auto-resize</a> false</em>
+<em class=listener>false</em>
+</pre>
+</td></tr></table>
+
 
 <p>As this illustrates, 
 variables in Snd are accessed as though each were a function, and set using set!.  auto-resize's current
@@ -7207,12 +7231,16 @@ autocorrelation    walsh-transform     hadamard-transform  cepstrum
 undo <i>edits</i> edits (default 1) in <i>snd</i>'s channel <i>chn</i>.
 Undo follows the sync field if it
 is not 0, which sometimes means that the channel arg is simply ignored.  The following might be a more reasonable undo function:
-<br><br><pre>
+<br>
+<pre>
 (define* (<a name="undochannel">undo-channel</a> #:optional (<a class=quiet href="#sndedits">edits</a> 1) snd chn)
   (if (and snd (not (= (<a class=quiet href="#sndsyncing">sync</a> snd) 0)) chn)
-      (set! (<a class=quiet href="#sndeditposition">edit-position</a> snd chn) (max 0 (- (<a class=quiet href="#sndeditposition">edit-position</a> snd chn) edits)))
+      (set! (<a class=quiet href="#sndeditposition">edit-position</a> snd chn) 
+         (max 0 (- (<a class=quiet href="#sndeditposition">edit-position</a> snd chn) edits)))
       (undo edits snd)))
 </pre>
+
+
 See also <a href="#undohook">undo-hook</a>.
 Since <b>redo</b> collides with Ruby, forcing me to change its name to redo_edit,
 undo can also be accessed under the name undo_edit (in Scheme, <a name="undoedit">undo-edit</a>).
@@ -7587,7 +7615,7 @@ full effect of the compander).
 <code><a class=def name="sndcontrasting">contrast-control?</a> (<em class=targ>snd</em>)</code>
 </td></tr>
 <tr><td></td><td>
-The <a href="snd.html#contrast">contrast</a> button.
+#t if the <a href="snd.html#contrast">contrast</a> button is set (i.e. the contrast compander is active).
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -7608,7 +7636,7 @@ output and input grain spacing.  If it is greater than 1.0, the result is longer
 <code><a class=def name="sndexpandhop">expand-control-hop</a> (<em class=targ>snd</em>)</code>
 </td></tr>
 <tr><td></td><td>
-The <a href="snd.html#expand">expansion</a> hop amount in seconds.
+The <a href="snd.html#expand">expansion</a> hop amount in seconds (the distance between successive grains).
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -7641,7 +7669,7 @@ rattling effect.
 <code><a class=def name="sndexpanding">expand-control?</a> (<em class=targ>snd</em>)</code>
 </td></tr>
 <tr><td></td><td>
-The expand button.
+#t if the expand button is set (i.e. the expansion effect is active).
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -7651,7 +7679,9 @@ The expand button.
 <code><a class=def name="sndfiltercoeffs">filter-control-coeffs</a> (<em class=targ>snd</em>)</code>
 </td></tr>
 <tr><td></td><td>
-The <a href="snd.html#filtercontrol">filter</a> coefficients (read-only currently).
+The <a href="snd.html#filtercontrol">filter</a> coefficients (read-only currently).  It is
+a vct suitable for use with the <a href="clm.html#filter">filter generator</a> or with
+<a href="#sndfilter">filter-sound</a>.
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -7678,11 +7708,13 @@ graph is displayed in dB.
 
 
 <!-- filter-control-in-hz -->
-<tr><td colspan=2><code><a class=def name="filtercontrolinhz">filter-control-in-hz</a> (<em class=targ>snd</em>)</code></td>
-<td><code>#f</code></td></tr>
-<tr><td></td><td colspan=2>If #t, filter frequency response envelope (sound control panel) x axis is in Hz, otherwise 0 to 1.0 (where 1.0 corresponds to srate/2).
+<tr><td colspan=2>
+<code><a class=def name="filtercontrolinhz">filter-control-in-hz</a> (<em class=targ>snd</em>)</code>
 </td></tr>
-<tr><td colspan=3></td></tr>
+<tr><td></td><td>
+If #t, filter frequency response envelope (sound control panel) x axis is in Hz, otherwise 0 to 1.0 (where 1.0 corresponds to srate/2).
+</td></tr>
+<tr><td colspan=2></td></tr>
 
 
 <!-- filter-control-order -->
@@ -7691,7 +7723,7 @@ graph is displayed in dB.
 </td></tr>
 <tr><td></td><td>
 The <a href="snd.html#filtercontrol">filter</a> order.  This affects how much computing
-is needed to run the filter, and how close the filter can get to the desired frequency envelope.
+is needed to run the filter, and how close the filter can get to the desired frequency response envelope.
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -7701,7 +7733,7 @@ is needed to run the filter, and how close the filter can get to the desired fre
 <code><a class=def name="filterwaveformcolor">filter-control-waveform-color</a></code>
 </td></tr>
 <tr><td></td><td>
-The control panel filter frequency response waveform color.
+The filter frequency response waveform color.
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -7711,7 +7743,7 @@ The control panel filter frequency response waveform color.
 <code><a class=def name="sndfiltering">filter-control?</a> (<em class=targ>snd</em>)</code>
 </td></tr>
 <tr><td></td><td>
-The control panel filter button.
+#t if the filter button is set (i.e. the filter is active).
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -7721,7 +7753,7 @@ The control panel filter button.
 <code><a class=def name="sndcontrolreset">reset-controls</a> (<em class=targ>snd</em>)</code>
 </td></tr>
 <tr><td></td><td>
-The 'reset' button.
+The 'Reset' button.  This sets all the controls to their default state.
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -7731,7 +7763,8 @@ The 'reset' button.
 <code><a class=def name="sndcontrolrestore">restore-controls</a> (<em class=targ>snd</em>)</code>
 </td></tr>
 <tr><td></td><td>
-The '<a href="snd.html#savcontrols">restore</a>' button (see new-effects.scm).
+The '<a href="snd.html#savcontrols">Restore</a>' button. This sets all the
+controls to the last saved state.
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -7751,7 +7784,7 @@ finished (default: 1.0).
 <code><a class=def name="sndreverbfeedback">reverb-control-feedback</a> (<em class=targ>snd</em>)</code>
 </td></tr>
 <tr><td></td><td>
-The reverb feedback coefficient.
+The reverb feedback coefficient.  The more feedback, the happier Elvis.
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -7761,7 +7794,8 @@ The reverb feedback coefficient.
 <code><a class=def name="sndreverblength">reverb-control-length</a> (<em class=targ>snd</em>)</code>
 </td></tr>
 <tr><td></td><td>
-The <a href="snd.html#reverb">reverb</a> delay line length scaler. 
+The <a href="snd.html#reverb">reverb</a> delay line length scaler. Longer reverb simulates, to some
+extent, a bigger hall.
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -7771,7 +7805,7 @@ The <a href="snd.html#reverb">reverb</a> delay line length scaler.
 <code><a class=def name="sndreverblowpass">reverb-control-lowpass</a> (<em class=targ>snd</em>)</code>
 </td></tr>
 <tr><td></td><td>
-The reverb low pass filter coefficient.
+The reverb low pass filter coefficient.  (This filter is in the feedback loop).
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -7782,6 +7816,7 @@ The reverb low pass filter coefficient.
 </td></tr>
 <tr><td></td><td>
 The <a href="snd.html#reverb">reverb</a> amount (the amount of the direct signal sent to the reverb).
+You can never have enough reverb.
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -7791,7 +7826,7 @@ The <a href="snd.html#reverb">reverb</a> amount (the amount of the direct signal
 <code><a class=def name="sndreverbing">reverb-control?</a> (<em class=targ>snd</em>)</code>
 </td></tr>
 <tr><td></td><td>
-The control panel's reverb button.
+#t if the reverb button is set (i.e. the reverberator is active).
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -7801,7 +7836,16 @@ The control panel's reverb button.
 <code><a class=def name="sndcontrolsave">save-controls</a> (<em class=targ>snd</em>)</code>
 </td></tr>
 <tr><td></td><td>
-The control panel '<a href="snd.html#savcontrols">s</a>' button.
+The <a href="snd.html#savcontrols">Remember</a> button.  This remembers the current
+settings for a later 'Restore'.  In new-effects.scm, the effects that use the control panel
+internally (post-expsrc-dialog, for example) can save and restore the current state via:
+<pre>
+(save-controls)
+(reset-controls)
+;;; now set the ones that are of interest for the current effect
+(apply-controls)
+(restore-controls)
+</pre>
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -7821,7 +7865,7 @@ If set to #t, <i>snd</i>'s control panel is opened, else it is closed.
 <code><a class=def name="sndspeed">speed-control</a> (<em class=targ>snd</em>)</code>
 </td></tr>
 <tr><td></td><td>
-current <a href="snd.html#speed">speed</a>.
+current <a href="snd.html#speed">speed</a>.  A speed of 2 plays the sound twice as fast.
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -7832,7 +7876,7 @@ current <a href="snd.html#speed">speed</a>.
 </td></tr>
 <tr><td></td><td>
 The speed control can be interpreted as a 
-float, (<i>speed-control-as-float</i>, the default), as a just-intonation ratio 
+float, (<i>speed-control-as-float</i>, the default), as a ratio 
 of relatively small integers (<i>speed-control-as-ratio</i>), or as a step in a 
 microtonal scale (<i>speed-control-as-semitone</i>).  
 </td></tr>
@@ -7848,9 +7892,13 @@ The number of tones per octave in the <i>speed-control-as-semitone</i> speed
 style (default: 12).
 </td></tr>
 <tr><td colspan=2></td></tr>
-
-
 </table>
+
+<a href="sndscm.html#makehiddencontrolsdialog">make-hidden-controls-dialog</a> in
+snd-motif.scm sets up a dialog to handle the controls that aren't handled by
+the control panel (expand-control-hop, expand-control-length, expand-control-ramp,
+contrast-control-amp, reverb-control-lowpass, and reverb-control-feedback).
+<br><br>
 
 <!-- INDEX editlists:Edit lists -->
 <!-- Edit Lists -->

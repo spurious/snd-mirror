@@ -531,6 +531,11 @@ static xen_value *make_xen_value(int typ, int address, xen_value_constant_t cons
 
 #define OPTIMIZER_WARNING_BUFFER_SIZE 1024
 static char optimizer_warning_buffer[OPTIMIZER_WARNING_BUFFER_SIZE];
+
+#ifdef __GNUC__
+static xen_value *run_warn(const char *format, ...) __attribute ((format (printf, 1, 2)));
+#endif
+
 static xen_value *run_warn(const char *format, ...)
 {
   va_list ap;
@@ -1375,7 +1380,6 @@ void *free_ptree(void *upt)
 		{
 		  if (v->gc)
 		    {
-
 		      switch (v->type)
 			{
 			case R_FLOAT_VECTOR:
@@ -6288,17 +6292,14 @@ char *r_mark_name(int n);
   int from 0: [selection-position(2)] [selection-frames(2)] [selected-sound -> #f]
   int from 1/2: track-position track-frames 
   flt from 1/2: selection-maxamp mix-amp
-  str from 1: mark-name short-file-name file-name
+  str from 1 or 0/1: mark-name short-file-name file-name
   str from 0 with need for free: snd-tempnam
   int/bool from 1: sync selected-channel
 
-     current-edit-position
      select-channel select-sound
 
      error returns?
      set cases?
-
-  PERHAPS: optimize goops methods (rmsgain fcomb)
 */
 
 
@@ -6307,9 +6308,7 @@ char *r_mark_name(int n);
 
 static snd_info *run_get_sp(int offset, int *args, Int *ints)
 {
-
   int spint;
-
   spint = ints[args[offset]];
   if (spint == -1)
     return(any_selected_sound());
@@ -6533,8 +6532,6 @@ static void c_g_p(int *args, ptree *pt)
   #endif
 #endif
     {
-
-
       check_for_event();
       if (ss->stopped_explicitly)
 	{
@@ -9946,7 +9943,7 @@ static xen_value *walk(ptree *prog, XEN form, walk_result_t walk_result)
 	  lst = get_lst(prog, args);
 	  if ((XEN_BOUND_P(lst)) && (XEN_LIST_P(lst)))
 	    return(clean_up(unwrap_xen_object(prog, XEN_LIST_REF_WRAPPED(get_lst(prog, args), XEN_CADDR(form)), funcname), args, num_args));
-	  else return(clean_up(run_warn("can't handle this list: ~A", XEN_AS_STRING(form)), args, num_args));
+	  else return(clean_up(run_warn("can't handle this list: %s", XEN_AS_STRING(form)), args, num_args));
 	}
       /*
       fprintf(stderr, "arg 1 %p: addr: %d type: %s\n", args[1], args[1]->addr, type_name(args[1]->type));

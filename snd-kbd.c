@@ -306,7 +306,7 @@ void save_macro_state (FILE *fd)
     save_macro_1(named_macros[i], fd);
 }
 
-static char *vstr(char *format, va_list ap)
+static char *vstr(const char *format, va_list ap)
 {
   char *buf;
   int len;
@@ -330,7 +330,7 @@ static char *vstr(char *format, va_list ap)
   return(buf);
 }
 
-void report_in_minibuffer(snd_info *sp, char *format, ...)
+void report_in_minibuffer(snd_info *sp, const char *format, ...)
 {
   char *buf;
   va_list ap;
@@ -345,7 +345,7 @@ void report_in_minibuffer(snd_info *sp, char *format, ...)
   /* leave sp->minibuffer off so that keyboard_command doesn't clear it */
 }
 
-void report_in_minibuffer_and_save(snd_info *sp, char *format, ...)
+void report_in_minibuffer_and_save(snd_info *sp, const char *format, ...)
 {
   char *buf;
   va_list ap;

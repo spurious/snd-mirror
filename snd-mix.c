@@ -2411,7 +2411,7 @@ static void display_mix_waveform(chan_info *cp, mix_info *md, bool draw)
 typedef struct {int *xs; int orig, x; int *edpos;} track_graph_t;
 static track_graph_t *track_drag_data;
 static track_graph_t *track_save_graph(mix_info *orig_md, int track_id);
-static void finish_dragging_track(int track_id, track_graph_t *data, bool remix);
+static void finish_dragging_track(int track_id, track_graph_t *data);
 static void move_mix(mix_info *md);
 static void move_track(int track_id, track_graph_t *data);
 static track_graph_t *free_track_graph(track_graph_t *ptr);
@@ -2529,7 +2529,7 @@ void finish_moving_mix_tag(int mix_tag, int x)
   else
     {
       track_drag_data->x = x;
-      finish_dragging_track(md->active_mix_state->track, track_drag_data, (!(XEN_TRUE_P(res))));
+      finish_dragging_track(md->active_mix_state->track, track_drag_data);
       track_drag_data = free_track_graph(track_drag_data);
     }
 }
@@ -4281,7 +4281,7 @@ track-id is the track value for each newly created mix."
       if ((track_num > 0) && (!(track_p(track_num))))
 	XEN_ERROR(NO_SUCH_TRACK,
 		  XEN_LIST_2(C_TO_XEN_STRING(S_mix),
-			     C_TO_XEN_INT(track_id)));
+			     track_id));
     }
   if (((!(XEN_INTEGER_P(file_chn))) || (XEN_TO_C_INT(file_chn) == 0)) &&
       (!(XEN_INTEGER_P(chn_n))))
@@ -4641,7 +4641,7 @@ mix data (a vct) into snd's channel chn starting at beg; return the new mix id"
 	      cp->edit_hook_checked = false;
 	      XEN_ERROR(NO_SUCH_TRACK,
 			XEN_LIST_2(C_TO_XEN_STRING(S_mix_vct),
-				   C_TO_XEN_INT(track_id)));
+				   track_id));
 	    }
 	}
       newname = save_as_temp_file(&data, 1, len, SND_SRATE(cp->sound));
@@ -6223,7 +6223,7 @@ static void move_track(int track_id, track_graph_t *data)
   free_track_mix_list(trk);
 }
 
-static void finish_dragging_track(int track_id, track_graph_t *data, bool remix)
+static void finish_dragging_track(int track_id, track_graph_t *data)
 {
   track_mix_list_t *trk;
   int i, k;

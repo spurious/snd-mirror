@@ -11,10 +11,7 @@
 
 #define ENVED_DOT_SIZE 10
 
-/* TODO: add env name field to mix/track enveds (undo/redo? lin/exp?) */
-/* TODO: xm-enved packaged enved access (widgets and callbacks) */
 /* TODO: in ruby, view envs gets the env val, but edit env doesn't?? */
-
 
 #if HAVE_GUILE
   XEN envelope_base_sym;
