@@ -53,10 +53,13 @@
 
 void init_mus2scm_module(void);
 
+#if 0
+/* this isn't a safe default -- Guile aborts the main program if the throw tag isn't caught */
 static void mus_error2scm(int type, char *msg)
 {
   scm_throw(MUS_ERROR,SCM_LIST2(gh_int2scm(type),gh_str02scm(msg)));
 }
+#endif
 
 #if (!USE_SND)
 static int g_scm2int(SCM obj)
@@ -4785,7 +4788,7 @@ void init_mus2scm_module(void)
 
   init_mus_module();
   init_mus_scm();
-  mus_error_set_handler(mus_error2scm);
+  /* mus_error_set_handler(mus_error2scm); */
   init_keywords();
   init_simple_stuff();
   init_generic_funcs();

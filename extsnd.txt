@@ -1373,12 +1373,9 @@ value to val.
                                   Returns #f if it can't open name, otherwise the new index.
   open-raw-sound    (name chans srate format)
                                   open name as a raw (no header) sound in the layout specified.
-                                  If the file has a header, it is not ignored (use override-data-format
+                                  If the file has a header, it is not ignored (use (set! (data-format ...))
                                   and friends if you want to ignore the header).
   open-sound        (name)        open name as in File menu Open option.
-  override-data-format (format snd)force data format (ignore header)
-  override-data-location (loc snd) force data location (ignore header)
-  override-data-size (samps snd)   force data size (ignore header)
   peaks             (file snd chn) display fft peak information.  If file is not null, write
                                   the information to that file, else post it in a help window
                                   (where it can be selected and pasted elsewhere).

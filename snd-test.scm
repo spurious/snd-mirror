@@ -27,7 +27,7 @@
 
 (define tests 1)
 (set! full-test #t)
-;(set! snd-test 3)
+;(set! snd-test 12)
 ;;; to run a specific test: ./snd -e "(set! snd-test 4) (set! full-test #f)" -l snd-test.scm
 (define include-clm #f)
 (define original-prompt (listener-prompt))
@@ -3105,6 +3105,31 @@
 
 
 ;;; ---------------- test 12:  extensions etc ----------------
+
+(define (spectral-difference snd1 snd2)
+  (let* ((size (max (frames snd1) (frames snd2)))
+	 (pow2 (ceiling (/ (log size) (log 2))))
+	 (fftlen (inexact->exact (expt 2 pow2)))
+	 (fdr1 (samples->vct 0 fftlen snd1 0))
+	 (fdr2 (samples->vct 0 fftlen snd2 0))
+	 (spectr1 (snd-spectrum fdr1 blackman2-window fftlen #t))
+	 (spectr2 (snd-spectrum fdr2 blackman2-window fftlen #t))
+	 (diff 0.0)
+	 (diffs (vct-subtract! spectr1 spectr2))
+	 (len (vct-length diffs)))
+    (do ((i 0 (1+ i)))
+	((= i len) diff)
+      (set! diff (+ diff (abs (vct-ref diffs i)))))))
+
+(define (test-spectral-difference snd1 snd2 maxok)
+  (let ((s1 (open-sound snd1))
+	(s2 (open-sound snd2)))
+    (let ((diff (spectral-difference s1 s2)))
+      (close-sound s1)
+      (close-sound s2)
+      (if (> diff maxok)
+	  (snd-print (format #f "translate ~A: ~A > ~A?" snd2 diff maxok))))))
+
 (if (or full-test (= snd-test 12))
     (if sf-dir-files
 	(let ((open-files '())
@@ -3141,6 +3166,13 @@
 	  (let ((fd (open-raw-sound (string-append sf-dir "addf8.nh") 1 8012 mus-mulaw)))
 	    (if (not (= (car (data-format fd)) mus-mulaw)) (snd-print (format #f ";open-raw-sound: ~A?" (data-format fd))))
 	    (close-sound fd))
+
+	  (test-spectral-difference "oboe.snd" (string-append sf-dir "oboe.g723_24") 20.0)
+	  (test-spectral-difference "oboe.snd" (string-append sf-dir "oboe.g723_40") 3.0)
+	  (test-spectral-difference "oboe.snd" (string-append sf-dir "oboe.g721") 6.0)
+	  (test-spectral-difference (string-append sf-dir "o2.wave") (string-append sf-dir "o2_dvi.wave") 10.0)
+	  (test-spectral-difference (string-append sf-dir "wood.riff") (string-append sf-dir "wood.sds") 1.0)
+	  (test-spectral-difference (string-append sf-dir "nist-10.wav") (string-append sf-dir "nist-shortpack.wav") 1.0)
 	  )))
 
 (define read-or-run

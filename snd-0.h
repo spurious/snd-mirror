@@ -162,9 +162,6 @@ enum {DONT_NORMALIZE,NORMALIZE_BY_CHANNEL,NORMALIZE_BY_SOUND,NORMALIZE_GLOBALLY}
 #define NOT_FROM_ENVED 0
 #define FROM_ENVED 1
 
-#define FILE_EXISTS 1
-#define FILE_DOES_NOT_EXIST 0
-
 #define IS_PLAYER(snd) ((snd) && (snd->index < 0))
 #define PLAYER(snd) (-(snd->index))
 

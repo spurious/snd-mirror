@@ -20,13 +20,17 @@ lisp_grf *free_lisp_info(chan_info *cp)
       lg = cp->lisp_info;
       if (lg)
 	{
-	  if (lg->axis) free_axis_info(lg->axis);
+	  if (lg->axis) 
+	    free_axis_info(lg->axis);
 	  if (lg->data) 
 	    {
-	      for (i=0;i<lg->graphs;i++) if (lg->data[i]) FREE(lg->data[i]);
+	      for (i=0;i<lg->graphs;i++) 
+		if (lg->data[i]) 
+		  FREE(lg->data[i]);
 	      FREE(lg->data);
 	    }
-	  if (lg->len) FREE(lg->len);
+	  if (lg->len) 
+	    FREE(lg->len);
 	  FREE(lg);
 	}
     }
@@ -366,7 +370,8 @@ void free_snd_info(snd_info *sp)
       if (sp->channel_filenames)
 	{
 	  for (i=0;i<sp->nchans;i++)
-	    if (sp->channel_filenames[i]) FREE(sp->channel_filenames[i]);
+	    if (sp->channel_filenames[i]) 
+	      FREE(sp->channel_filenames[i]);
 	  FREE(sp->channel_filenames);
 	}
       sp->channel_filenames = NULL;
@@ -387,7 +392,8 @@ snd_info *completely_free_snd_info(snd_info *sp)
 	{
 	  if (cp->cgx) 
 	    {
-	      if ((cp->cgx)->ax) FREE((cp->cgx)->ax);
+	      if ((cp->cgx)->ax) 
+		FREE((cp->cgx)->ax);
 	      FREE(cp->cgx);
 	    }
 	  FREE(cp);
@@ -418,7 +424,7 @@ int map_over_chans (snd_state *ss, int (*func)(chan_info *,void *), void *userpt
 		      if ((cp=((chan_info *)(sp->chans[j]))))
 			{
 			  val = (*func)(cp,userptr);
-			  if (val) return(val);}}}}}} /* I wish I were a'Lispin... */
+			  if (val) return(val);}}}}}}
   return(val);
 }
 
@@ -474,11 +480,7 @@ int map_over_separate_chans(snd_state *ss, int (*func)(chan_info *,void *), void
 		  if (sp->combining != CHANNELS_SEPARATE)
 		    val = (*func)(sp->chans[0],userptr);
 		  else val = map_over_sound_chans(sp,func,userptr);
-		  if (val) return(val);
-		}
-	    }
-	}
-    }
+		  if (val) return(val);}}}}
   return(val);
 }
 
@@ -664,7 +666,8 @@ sync_info *snd_sync(snd_state *ss, int sync)
   for (i=0;i<ss->max_sounds;i++)
     {
       sp = ss->sounds[i];
-      if ((sp) && (sp->inuse) && (sp->syncing == sync)) chans += sp->nchans;
+      if ((sp) && (sp->inuse) && (sp->syncing == sync)) 
+	chans += sp->nchans;
     }
   if (chans > 0)
     {
@@ -677,12 +680,8 @@ sync_info *snd_sync(snd_state *ss, int sync)
 	{
 	  sp = ss->sounds[i];
 	  if ((sp) && (sp->inuse) && (sp->syncing == sync))
-	    {
-	      for (k=0;k<sp->nchans;k++,j++)
-		{
-		  si->cps[j] = sp->chans[k];
-		}
-	    }
+	    for (k=0;k<sp->nchans;k++,j++)
+	      si->cps[j] = sp->chans[k];
 	}
       return(si);
     }
@@ -720,15 +719,15 @@ snd_info *find_sound(snd_state *ss, char *name)
     {
       sp = ss->sounds[i];
       if ((sp) && (sp->inuse))
-	{
-	  if ((strcmp(name,sp->shortname) == 0) || (strcmp(name,sp->fullname) == 0)) return(sp);
-	}
+	if ((strcmp(name,sp->shortname) == 0) || (strcmp(name,sp->fullname) == 0)) 
+	  return(sp);
     }
   sname = filename_without_home_directory(name);
   for (i=0;i<ss->max_sounds;i++)
     {
       sp = ss->sounds[i];
-      if ((sp) && (sp->inuse) && (strcmp(sname,sp->shortname) == 0)) return(sp);
+      if ((sp) && (sp->inuse) && (strcmp(sname,sp->shortname) == 0))
+	return(sp);
     }
   return(NULL);
 }
@@ -750,8 +749,10 @@ void display_info(snd_info *sp)
 	  cstr = mus_sound_comment(sp->fullname);
 	  comment = cstr;
 	  while ((comment) && (*comment) && 
-		 (((*comment) == '\n') || ((*comment) == '\t') || 
-		  ((*comment) == ' ') || ((*comment) == '\xd')))
+		 (((*comment) == '\n') || 
+		  ((*comment) == '\t') || 
+		  ((*comment) == ' ') || 
+		  ((*comment) == '\xd')))
 	    comment++;
 #if (!defined(HAVE_CONFIG_H)) || defined(HAVE_STRFTIME)
 	  strftime(timestr,TIME_STR_SIZE,STRFTIME_FORMAT,localtime(&(sp->write_date)));
@@ -759,7 +760,9 @@ void display_info(snd_info *sp)
 	  sprintf(buffer,"srate: %d\nchans: %d\nlength: %.3f (%d %s)\ntype: %s\nformat: %s\nwritten: %s\ncomment: %s\n",
 		  hdr->srate,
 		  hdr->chans,
-		  (Float)(hdr->samples)/(Float)(hdr->chans * hdr->srate),(hdr->samples)/(hdr->chans),(hdr->chans == 1) ? "samples" : "frames",
+		  (Float)(hdr->samples)/(Float)(hdr->chans * hdr->srate),
+		  (hdr->samples)/(hdr->chans),
+		  (hdr->chans == 1) ? "samples" : "frames",
 		  mus_header_type_name(hdr->type),
 		  mus_data_format_name(hdr->format),
 		  timestr,
@@ -782,14 +785,26 @@ static void file_maxamps(char *ifile, Float *vals, int ichans, int format)
   MUS_SAMPLE_TYPE **ibufs;
   if ((ifd=mus_file_open_read(ifile)) == -1) return;
   idataloc = mus_sound_data_location(ifile);
-  mus_file_set_descriptors(ifd,ifile,
-			   format,mus_data_format_to_bytes_per_sample(format),idataloc,
-			   ichans,mus_sound_header_type(ifile));
+  mus_file_set_descriptors(ifd,
+			   ifile,
+			   format,
+			   mus_data_format_to_bytes_per_sample(format),
+			   idataloc,
+			   ichans,
+			   mus_sound_header_type(ifile));
   idatasize = mus_sound_samples(ifile);
   samples = (idatasize / ichans);
-  if (samples <= 0) {mus_file_close(ifd); return;}
+  if (samples <= 0) 
+    {
+      mus_file_close(ifd); 
+      return;
+    }
   loc=mus_file_seek(ifd,idataloc,SEEK_SET);
-  if (loc<idataloc) {mus_file_close(ifd); return;}
+  if (loc<idataloc) 
+    {
+      mus_file_close(ifd); 
+      return;
+    }
   ibufs = (MUS_SAMPLE_TYPE **)CALLOC(ichans,sizeof(MUS_SAMPLE_TYPE *));
   for (i=0;i<ichans;i++) ibufs[i] = (MUS_SAMPLE_TYPE *)CALLOC(FILE_BUFFER_SIZE,sizeof(MUS_SAMPLE_TYPE));
   amps = (MUS_SAMPLE_TYPE *)CALLOC(ichans,sizeof(MUS_SAMPLE_TYPE));

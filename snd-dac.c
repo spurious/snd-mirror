@@ -863,6 +863,19 @@ static void free_dac_state(dac_state *dacp)
     }
 }
 
+static char *describe_dac(dac_state *dacp, int error_type)
+{
+  /* TODO: pass back the relevant dac state given the error indication */
+  int players=0,i;
+  dac_info *ptr=NULL;
+  for (i=0;i<dac_max_sounds;i++) 
+    if (play_list[i]) {ptr = play_list[i]; players++;}
+  if (players == 1)
+    return(ptr->sp->shortname);
+  return("");
+}
+
+
 static BACKGROUND_TYPE dac_in_background(GUI_POINTER ptr);
 
 static void start_dac(snd_state *ss, int srate, int channels, int background)
@@ -1341,6 +1354,40 @@ static int fill_dac_buffers(dac_state *dacp, int write_ok)
 }
 
 
+/* -------------------------------- specialize mus_print -------------------------------- */
+
+static mus_print_handler_t *old_dac_printer = NULL;
+static char *last_print = NULL;
+
+static void dac_mus_print(char *msg)
+{
+  if (last_print) FREE(last_print);
+  last_print = copy_string(msg);
+  (*old_dac_printer)(msg);
+}
+
+static void set_dac_print(void)
+{
+  if (last_print) FREE(last_print);
+  last_print = NULL;
+  if (old_dac_printer != dac_mus_print)
+    old_dac_printer = mus_print_set_handler(dac_mus_print);
+}
+
+static void unset_dac_print(void)
+{
+  mus_print_set_handler(old_dac_printer);
+}
+
+static void dac_error(dac_state *dacp, char *file, int line, char *function)
+{
+  snd_error("can't play %s\n  (%s)\n  [%s[%d] %s]",
+	    describe_dac(dacp,0),
+	    (last_print) ? last_print : "reason not known",
+	    __FILE__,__LINE__,__FUNCTION__);
+}
+
+
 /* -------------------------------- initialize DAC -------------------------------- */
 
 static void make_dac_buffers(dac_state *dacp)
@@ -1386,7 +1433,8 @@ int mus_audio_compatible_format(int dev)
   err = mus_audio_mixer_read(dev,MUS_AUDIO_FORMAT,32,val);
   if (err != MUS_ERROR)
     {
-      for (i=0;i<=val[0];i++) ival[i] = (int)(val[i]);
+      for (i=0;i<=(int)(val[0]);i++) ival[i] = (int)(val[i]);
+      /*          ^ this cast is vital!  Memory clobbered otherwise in LinuxPPC */
       for (i=1;i<=ival[0];i++)
 	if (ival[i] == MUS_COMPATIBLE_FORMAT) 
 	  return(MUS_COMPATIBLE_FORMAT);
@@ -1612,7 +1660,9 @@ static int start_audio_output_1 (dac_state *dacp)
 		}
 	    }
 	  /* FIXME: assumes devices are same size... */
+	  set_dac_print();
 	  dev_fd[d] = mus_audio_open_output(alsa_devices[out_dev[d]], dacp->srate, channels, dacp->out_format, (dac_size(ss)));
+	  unset_dac_print();
       
 	  if (dev_fd[d] == -1) 
 	    {
@@ -1622,7 +1672,7 @@ static int start_audio_output_1 (dac_state *dacp)
 		{
 		  mus_audio_close(alsa_devices[out_dev[i]]);
 		}
-	      snd_error("can't play");
+	      dac_error(dacp,__FILE__,__LINE__,__FUNCTION__);
 	      dac_running = 0;
 	      unlock_recording_audio();
 	      if (global_reverb) {free_reverb(global_reverb); global_reverb = NULL;}
@@ -1657,7 +1707,9 @@ static int start_audio_output_1 (dac_state *dacp)
 	{
 	  if (mus_audio_systems() > 1)
 	    {
+	      set_dac_print();
 	      dev_fd[0] = mus_audio_open_output(MUS_AUDIO_PACK_SYSTEM(0) | audio_output_device(ss),dacp->srate,2,dacp->out_format,dac_size(ss));
+	      unset_dac_print();
 	      if (dev_fd[0] != MUS_ERROR) 
 		dev_fd[1] = mus_audio_open_output(MUS_AUDIO_PACK_SYSTEM(1) | audio_output_device(ss),dacp->srate,2,dacp->out_format,dac_size(ss));
 	    }
@@ -1667,7 +1719,9 @@ static int start_audio_output_1 (dac_state *dacp)
 	       * by sending two channels (non-clock-synchronous with the other two)
 	       * out the line in port, but this possibility confuses LinuxPPC (OSS-Free)
 	       */
+	      set_dac_print();
 	      dev_fd[0] = mus_audio_open_output(MUS_AUDIO_AUX_OUTPUT,dacp->srate,2,dacp->out_format,dac_size(ss));
+	      unset_dac_print();
 	      if (dev_fd[0] != MUS_ERROR) 
 		dev_fd[1] = mus_audio_open_output(audio_output_device(ss),dacp->srate,2,dacp->out_format,dac_size(ss));
 	    }
@@ -1684,11 +1738,13 @@ static int start_audio_output_1 (dac_state *dacp)
 	  if (dac_folding(ss)) snd_warning("folding %d chans into %d ",dacp->channels,oss_available_chans);
 	  dacp->channels = oss_available_chans;
 	}
+      set_dac_print();
       if (dev_fd[0] == MUS_ERROR)
 	dev_fd[0] = mus_audio_open_output(audio_output_device(ss),dacp->srate,dacp->channels,dacp->out_format,dac_size(ss));
+      unset_dac_print();
       if (dev_fd[0] == MUS_ERROR)
 	{
-	  snd_error("can't play");
+	  dac_error(dacp,__FILE__,__LINE__,__FUNCTION__);
 	  dac_running = 0;
 	  unlock_recording_audio();
 	  if (global_reverb) {free_reverb(global_reverb); global_reverb = NULL;}
@@ -1728,8 +1784,11 @@ static int start_audio_output_1 (dac_state *dacp)
       if (dac_folding(ss)) snd_warning("folding %d chans into %d ",dacp->channels,available_chans);
       dacp->channels = available_chans;
     }
+  
+  set_dac_print();
   if (dev_fd[0] == MUS_ERROR)
     dev_fd[0] = mus_audio_open_output(audio_output_device(ss),dacp->srate,dacp->channels,dacp->out_format,dac_size(ss));
+  unset_dac_print();
   if (dev_fd[0] == MUS_ERROR)
     {
       dac_running = 0;
@@ -1737,7 +1796,7 @@ static int start_audio_output_1 (dac_state *dacp)
       if (global_reverb) {free_reverb(global_reverb); global_reverb = NULL;}
       max_active_slot = -1;
       free_dac_state(dacp); 
-      snd_error("can't play");
+      dac_error(dacp,__FILE__,__LINE__,__FUNCTION__);
       return(FALSE);
     }
   dacp->devices = 1;

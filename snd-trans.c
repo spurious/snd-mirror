@@ -276,7 +276,8 @@ static int read_ieee_text(char *oldname, char *newname, char *hdr)
   if (buf[0] != '%') 
     {
       CLEANUP();
-      mus_error(MUS_UNSUPPORTED_DATA_FORMAT,"can't translate IEEE text file %s:\n  Expected initial \"%%\" but found \"%c\"\n  [snd-trans.c[%d] %s]",
+      mus_error(MUS_UNSUPPORTED_DATA_FORMAT,
+		"can't translate IEEE text file %s:\n  Expected initial \"%%\" but found \"%c\"\n  [snd-trans.c[%d] %s]",
 		oldname,buf[0],__LINE__,__FUNCTION__);
       return(MUS_ERROR);
     }
@@ -426,7 +427,8 @@ static int read_mus10(char *oldname, char *newname, char *hdr)
   if ((mode != 4) && (mode != 0)) 
     {
       CLEANUP();
-      mus_error(MUS_UNSUPPORTED_DATA_FORMAT,"can't translate Mus10 file %s:\n  mode = %d\n  [snd-trans.c[%d] %s]",
+      mus_error(MUS_UNSUPPORTED_DATA_FORMAT,
+		"can't translate Mus10 file %s:\n  mode = %d\n  [snd-trans.c[%d] %s]",
 		oldname,mode,__LINE__,__FUNCTION__);
       return(MUS_ERROR);
     }
@@ -644,7 +646,12 @@ static int read_hcom(char *oldname, char *newname, char *hdr)
 	}
       if (happy)
 	{
-	  if (bits == 0) {curval = mus_char_to_bint((unsigned char *)(buf+isp)); isp+=4; bits = 32;}
+	  if (bits == 0) 
+	    {
+	      curval = mus_char_to_bint((unsigned char *)(buf+isp)); 
+	      isp+=4; 
+	      bits = 32;
+	    }
 	  if (curval & 0x80000000) di = d[di][1]; else di = d[di][0];
 	  curval = curval << 1;
 	  bits--;
@@ -884,7 +891,8 @@ static int read_dvi_adpcm(char *oldname, char *newname, char *hdr, int type)
   samps = mus_sound_fact_samples(oldname);
   if ((chans != 1) || (mus_sound_bits_per_sample(oldname) != 4))
     {
-      mus_error(MUS_UNSUPPORTED_DATA_FORMAT,"can't translate DVI ADPCM file %s: chans: %d and bits: %d\n  [snd-trans.c[%d] %s]",
+      mus_error(MUS_UNSUPPORTED_DATA_FORMAT,
+		"can't translate DVI ADPCM file %s: chans: %d and bits: %d\n  [snd-trans.c[%d] %s]",
 		oldname,chans,mus_sound_bits_per_sample(oldname),
 		__LINE__,__FUNCTION__);
       return(MUS_ERROR);
@@ -962,7 +970,8 @@ static int read_oki_adpcm(char *oldname, char *newname, char *hdr)
   chans = mus_sound_chans(oldname);
   if (chans != 1)
     {
-      mus_error(MUS_UNSUPPORTED_DATA_FORMAT,"can't translate Oki ADPCM file %s: chans: %d\n  [snd-trans.c[%d] %s]",
+      mus_error(MUS_UNSUPPORTED_DATA_FORMAT,
+		"can't translate Oki ADPCM file %s: chans: %d\n  [snd-trans.c[%d] %s]",
 		oldname,chans,
 		__LINE__,__FUNCTION__);
       return(MUS_ERROR);
@@ -1466,7 +1475,8 @@ static int read_g72x_adpcm(char *oldname, char *newname, char *hdr, int which_g)
   chans = mus_sound_chans(oldname);
   if (chans != 1)
     {
-      mus_error(MUS_UNSUPPORTED_DATA_FORMAT,"can't translate G72x file %s: chans: %d\n  [snd-trans.c[%d] %s]",
+      mus_error(MUS_UNSUPPORTED_DATA_FORMAT,
+		"can't translate G72x file %s: chans: %d\n  [snd-trans.c[%d] %s]",
 		oldname,chans,
 		__LINE__,__FUNCTION__);
       return(MUS_ERROR);
@@ -1553,12 +1563,26 @@ static int read_g72x_adpcm(char *oldname, char *newname, char *hdr, int which_g)
 #define NeXT_G723 25
 #define NeXT_G723_5 26
 
+static int MUS_CANT_TRANSLATE = 0;
+
+char *any_format_name(char *name)
+{
+  int format;
+  format = mus_sound_data_format(name);
+  if (format != MUS_UNSUPPORTED)
+    return(mus_data_format_name(format));
+  else return(mus_header_original_format_name(mus_sound_original_format(name),
+					      mus_sound_header_type(name)));
+}
+
 int snd_translate(char *oldname, char *newname, int type)
 {
   /* read oldname, translate to newname as 16-bit linear NeXT file */
   /* called from snd-file.c */
-  int orig,err=MUS_ERROR;
+  int orig,err;
   char *hdr = NULL;
+  if (MUS_CANT_TRANSLATE == 0) MUS_CANT_TRANSLATE = mus_make_error("mus_cant_translate");
+  err = MUS_CANT_TRANSLATE;
   hdr = (char *)CALLOC(TRANS_BUF_SIZE,sizeof(char));
   /* set up default output header */
   mus_bint_to_char((unsigned char *)hdr,0x2e736e64); /* .snd */
@@ -1617,6 +1641,14 @@ int snd_translate(char *oldname, char *newname, int type)
       break;
     }
   FREE(hdr);
+  if (err == MUS_CANT_TRANSLATE) /* i.e a case we don't even try to handle */
+    mus_error(MUS_CANT_TRANSLATE,
+	      "can't translate %s\n  (%s header: %s (0x%x) data format)\n  [snd-trans.c[%d] %s]",
+	      oldname,
+	      mus_header_type_name(type),
+	      any_format_name(oldname),
+	      mus_sound_original_format(oldname),
+	      __LINE__,__FUNCTION__);
   return(err);
 }
 

@@ -1814,7 +1814,11 @@ BACKGROUND_TYPE sonogram_in_slices(void *sono)
     case 0: res = set_up_sonogram(sg); break; /* return 1 to go on, 2 to quit early */
     case 1: res = run_all_ffts(sg);    break; /* return 0 until done with all ffts, then 1 -- 1 causes cleanup whether done or not */
     case 2: res = cleanup_sonogram(sg); return(BACKGROUND_QUIT); break;
-    default: snd_error("runaway sonogram? (%d) ",sg->slice); cleanup_sonogram(sg); return(BACKGROUND_QUIT); break;
+    default: 
+      snd_error("runaway sonogram? (%d) ",sg->slice); 
+      cleanup_sonogram(sg); 
+      return(BACKGROUND_QUIT); 
+      break;
     }
   sg->slice += res;
   return(BACKGROUND_CONTINUE);
@@ -1885,7 +1889,7 @@ void c_convolve (char *fname, Float amp, int filec, int filehdr, int filterc, in
 	  (pbuffer == NULL) || (pbuffer[0] == NULL) || (cm == NULL) ||
 	  (fbuffer == NULL) || (fbuffer[filter_chan] == NULL) || (fcm == NULL))
 	{
-	  snd_error("not enough memory for convolve");
+	  snd_error("not enough memory for convolve of %s (filter size: %d, fft size: %d",fname,filtersize,fftsize);
 	}
       else
 	{

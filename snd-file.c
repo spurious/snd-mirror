@@ -191,9 +191,9 @@ file_info *make_file_info(char *fullname, snd_state *ss)
       else
 	{
 	  format = mus_sound_data_format(fullname);
-	  if ((format == MUS_UNSUPPORTED) || (format == MUS_UNKNOWN))
-	    hdr = translate_file(fullname,ss,type);
-	  else hdr = make_file_info_1(fullname,ss);
+	  if (MUS_DATA_FORMAT_OK(format))
+	    hdr = make_file_info_1(fullname,ss);
+	  else hdr = translate_file(fullname,ss,type);
 	}
     }
   else
@@ -265,7 +265,8 @@ int *make_file_state(int fd, file_info *hdr, int direction, int chan, int sugges
       for (i=0;i<hdr->chans;i++) 
 	datai[SND_IO_DATS + SND_AREF_HEADER_SIZE+i] = (int)(MUS_MAKE_SAMPLE_ARRAY(bufsize));
     }
-  if (direction == SND_IO_IN_FILE) mus_file_reset(0,datai,datai); /* get ready to read -- we're assuming mus_file_read_chans here */
+  if (direction == SND_IO_IN_FILE) 
+    mus_file_reset(0,datai,datai); /* get ready to read -- we're assuming mus_file_read_chans here */
   return(datai);
 }
 
@@ -278,7 +279,8 @@ int *free_file_state(int *datai)
       chans = datai[SND_IO_CHANS];
       for (i=0;i<chans;i++)
 	{
-	  if (datai[SND_IO_DATS + SND_AREF_HEADER_SIZE+i]) MUS_FREE_SAMPLE_ARRAY(datai[SND_IO_DATS + SND_AREF_HEADER_SIZE+i]);
+	  if (datai[SND_IO_DATS + SND_AREF_HEADER_SIZE+i]) 
+	    MUS_FREE_SAMPLE_ARRAY(datai[SND_IO_DATS + SND_AREF_HEADER_SIZE+i]);
 	}
       FREE(datai);
     }
@@ -306,7 +308,10 @@ dir *free_dir (dir *dp)
   if (dp->name) FREE(dp->name);
   if (dp->files)
     {
-      for (i=0;i<dp->len;i++) {if (dp->files[i]) FREE(dp->files[i]);}
+      for (i=0;i<dp->len;i++) 
+	{
+	  if (dp->files[i]) FREE(dp->files[i]);
+	}
       FREE(dp->files);
     }
   FREE(dp);
@@ -397,7 +402,7 @@ dir *find_sound_files_in_dir (char *name)
 #if defined(CLOSEDIR_VOID)
       closedir(dpos);
 #else
-      if (closedir(dpos) != 0) snd_error("%s[%d] %s: closedir failed!",__FILE__,__LINE__,__FUNCTION__);
+      if (closedir(dpos) != 0) snd_error("%s[%d] %s: closedir %s failed!",__FILE__,__LINE__,__FUNCTION__,name);
 #endif
     }
   return(dp);
@@ -424,7 +429,7 @@ dir *all_files_in_dir (char *name)
 #if defined(CLOSEDIR_VOID)
       closedir(dpos);
 #else
-      if (closedir(dpos) != 0) snd_error("%s[%d] %s: closedir failed!",__FILE__,__LINE__,__FUNCTION__);
+      if (closedir(dpos) != 0) snd_error("%s[%d] %s: closedir %s failed!",__FILE__,__LINE__,__FUNCTION__,name);
 #endif
     }
   return(dp);
@@ -511,7 +516,8 @@ dir *filter_sound_files(dir *dp, char *pattern)
   ndp = make_dir("");
   for (i=0;i<dp->len;i++)
     {
-      if (names_match(dp->files[i],pattern)) {add_snd_file_to_dir_list(ndp,dp->files[i]);}
+      if (names_match(dp->files[i],pattern)) 
+	add_snd_file_to_dir_list(ndp,dp->files[i]);
     }
   return(ndp);
 }
@@ -564,8 +570,7 @@ static char *memo_file_name(snd_info *sp)
   int len;
   len = strlen(sp->fullname);
   newname = (char *)CALLOC(len+5,sizeof(char));
-  strcpy(newname,sp->fullname);
-  newname[len]='.'; newname[len+1]='s'; newname[len+2]='c'; newname[len+3]='m'; newname[len+4]='\0'; 
+  sprintf(newname,"%s.scm",sp->fullname);
   return(newname);
 }
 
@@ -722,7 +727,13 @@ int copy_file(char *oldname, char *newname)
     {
       total += bytes;
       wb = write(ofd,buf,bytes);
-      if (wb != bytes) {close(ofd); close(ifd); FREE(buf); return(MUS_WRITE_ERROR);}
+      if (wb != bytes) 
+	{
+	  close(ofd); 
+	  close(ifd); 
+	  FREE(buf); 
+	  return(MUS_WRITE_ERROR);
+	}
     }
   close(ifd);
   total = total >> 10;
@@ -730,7 +741,8 @@ int copy_file(char *oldname, char *newname)
   if (wb < 0) 
     snd_error(strerror(errno));
   else
-    if (total > wb) snd_error("disk nearly full: used %d Kbytes leaving %d",(int)total,(int)wb);
+    if (total > wb) 
+      snd_error("disk nearly full: used %d Kbytes leaving %d",(int)total,(int)wb);
   FREE(buf);
   close(ofd);
   return(MUS_NO_ERROR);
@@ -802,13 +814,25 @@ snd_info *make_sound_readable(snd_state *ss, char *filename, int post_close)
       cp->edit_size = 1;
       cp->sound_size = 1;
       fd = snd_open_read(ss,filename);
-      mus_file_set_descriptors(fd,filename,hdr->format,mus_sound_datum_size(filename),hdr->data_location,hdr->chans,hdr->type);
+      mus_file_set_descriptors(fd,
+			       filename,
+			       hdr->format,
+			       mus_sound_datum_size(filename),
+			       hdr->data_location,
+			       hdr->chans,
+			       hdr->type);
       datai = make_file_state(fd,hdr,SND_IO_IN_FILE,i,(post_close) ? MAX_BUFFER_SIZE : MIX_FILE_BUFFER_SIZE);
       cp->sounds[0] = make_snd_data_file(filename,datai,
 					 MUS_SAMPLE_ARRAY(datai[SND_IO_DATS + SND_AREF_HEADER_SIZE+i]),
 					 copy_header(hdr->name,hdr),
 					 DONT_DELETE_ME,cp->edit_ctr,i);
-      if (post_close) {snd_close(fd); sd = cp->sounds[0]; sd->open = FD_CLOSED; datai[SND_IO_FD] = -1;}
+      if (post_close) 
+	{
+	  snd_close(fd); 
+	  sd = cp->sounds[0]; 
+	  sd->open = FD_CLOSED; 
+	  datai[SND_IO_FD] = -1;
+	}
       /* this is not as crazy as it looks -- we've read in the first 64K (or whatever) samples,
        * and may need this file channel for other opens, so this file can be closed until mus_file_reset
        */
@@ -884,7 +908,7 @@ void snd_update(snd_state *ss, snd_info *sp)
 {
   int app_x,app_y;
   if (sp->edited_region) return;
-  if ((snd_probe_file(sp->fullname)) == FILE_DOES_NOT_EXIST)
+  if (mus_file_probe(sp->fullname) == 0)
     {
       /* user deleted file while editing it? */
       report_in_minibuffer(sp,"%s no longer exists!",sp->shortname);
@@ -1914,45 +1938,6 @@ static SCM g_file_write_date(SCM file)
   return(gh_int2scm(date));
 }
 
-static SCM g_override_data_location(SCM loc, SCM snd) 
-{
-  #define H_override_data_location "(" S_override_data_location " loc &optional snd) overrides snd's notion of its data location"
-  snd_info *sp;
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(loc)),loc,SCM_ARG1,S_override_data_location);
-  ERRSP(S_override_data_location,snd,2);
-  sp = get_sp(snd);
-  if (sp == NULL) return(scm_throw(NO_SUCH_SOUND,SCM_LIST2(gh_str02scm(S_override_data_location),snd)));
-  mus_sound_override_header(sp->fullname,-1,-1,-1,-1,g_scm2int(loc),-1);
-  snd_update(sp->state,sp);
-  return(loc);
-}
-
-static SCM g_override_data_format(SCM frm, SCM snd) 
-{
-  #define H_override_data_format "(" S_override_data_format " format &optional snd) overrides snd's notion of its data format"
-  snd_info *sp;
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(frm)),frm,SCM_ARG1,S_override_data_format);
-  ERRSP(S_override_data_format,snd,2);
-  sp = get_sp(snd);
-  if (sp == NULL) return(scm_throw(NO_SUCH_SOUND,SCM_LIST2(gh_str02scm(S_override_data_format),snd)));
-  mus_sound_override_header(sp->fullname,-1,-1,g_scm2int(frm),-1,-1,-1);
-  snd_update(sp->state,sp);
-  return(frm);
-}
-
-static SCM g_override_data_size(SCM over, SCM snd) 
-{
-  #define H_override_data_size "(" S_override_data_size " samples &optional snd) overrides snd's notion of its data size"
-  snd_info *sp;
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(over)),over,SCM_ARG1,S_override_data_size);
-  ERRSP(S_override_data_size,snd,2);
-  sp = get_sp(snd);
-  if (sp == NULL) return(scm_throw(NO_SUCH_SOUND,SCM_LIST2(gh_str02scm(S_override_data_size),snd)));
-  mus_sound_override_header(sp->fullname,-1,-1,-1,-1,-1,g_scm2int(over));
-  snd_update(sp->state,sp);
-  return(over);
-}
-
 static SCM g_set_sound_loop_info(SCM start0, SCM end0, SCM start1, SCM end1, SCM snd)
 {
   #define H_set_sound_loop_info "(" "set-" S_sound_loop_info " start0 end0 &optional start1 end1 snd) sets loop points"
@@ -2072,11 +2057,11 @@ void g_init_file(SCM local_doc)
 {
   DEFINE_PROC(gh_new_procedure1_0(S_add_sound_file_extension,g_add_sound_file_extension),H_add_sound_file_extension);
   DEFINE_PROC(gh_new_procedure1_0(S_file_write_date,g_file_write_date),H_file_write_date);
+
   DEFINE_PROC(gh_new_procedure("set-" S_sound_loop_info,SCM_FNC g_set_sound_loop_info,2,3,0),H_set_sound_loop_info);
   DEFINE_PROC(gh_new_procedure0_1(S_soundfont_info,g_soundfont_info),H_soundfont_info);
-  DEFINE_PROC(gh_new_procedure1_1(S_override_data_location,g_override_data_location),H_override_data_location);
-  DEFINE_PROC(gh_new_procedure1_1(S_override_data_format,g_override_data_format),H_override_data_format);
-  DEFINE_PROC(gh_new_procedure1_1(S_override_data_size,g_override_data_size),H_override_data_size);
+  /* TODO: make this generalized set! */
+
   DEFINE_PROC(gh_new_procedure1_0(S_preload_directory,g_preload_directory),H_preload_directory);
   DEFINE_PROC(gh_new_procedure1_0(S_preload_file,g_preload_file),H_preload_file);
   DEFINE_PROC(gh_new_procedure1_0(S_sound_files_in_directory,g_sound_files_in_directory),H_sound_files_in_directory);

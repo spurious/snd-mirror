@@ -1144,6 +1144,13 @@ static SCM sp_iwrite(SCM snd_n, SCM val, int fld, char *caller)
 	case SHOWCONTROLSF: if (ival) sound_show_ctrls(sp); else sound_hide_ctrls(sp); break;
 	case SPEEDTONESF: sp->speed_tones = ival; break;
 	case SPEEDSTYLEF: sp->speed_style = ival; break;
+
+	case SRATEF:        mus_sound_override_header(sp->fullname,ival,-1,-1,-1,-1,-1); snd_update(sp->state,sp); break;
+	case NCHANSF:       mus_sound_override_header(sp->fullname,-1,ival,-1,-1,-1,-1); snd_update(sp->state,sp); break;
+	case DATAFORMATF:   mus_sound_override_header(sp->fullname,-1,-1,ival,-1,-1,-1); snd_update(sp->state,sp); break;
+	case HEADERTYPEF:   mus_sound_override_header(sp->fullname,-1,-1,-1,ival,-1,-1); snd_update(sp->state,sp); break;
+	case DATALOCATIONF: mus_sound_override_header(sp->fullname,-1,-1,-1,-1,ival,-1); snd_update(sp->state,sp); break;
+	  /* last arg is size */
 	}
     }
   RTNBOOL(ival);
@@ -1158,11 +1165,25 @@ static SCM g_channels(SCM snd_n)
   return(sp_iread(snd_n,NCHANSF,S_channels));
 }
 
+static SCM g_set_channels(SCM snd_n, SCM val)
+{
+  if (SCM_UNBNDP(val))
+    return(sp_iwrite(SCM_UNDEFINED,snd_n,NCHANSF,"set-" S_channels));
+  else return(sp_iwrite(snd_n,val,NCHANSF,"set-" S_channels));
+}
+
 static SCM g_srate(SCM snd_n) 
 {
   #define H_srate "(" S_srate " &optional snd) -> snd's srate"
   ERRSPT(S_srate,snd_n,1); 
   return(sp_iread(snd_n,SRATEF,S_srate));
+}
+
+static SCM g_set_srate(SCM snd_n, SCM val) 
+{
+  if (SCM_UNBNDP(val))
+    return(sp_iwrite(SCM_UNDEFINED,snd_n,SRATEF,"set-" S_srate));
+  else return(sp_iwrite(snd_n,val,SRATEF,"set-" S_srate));
 }
 
 static SCM g_data_location(SCM snd_n) 
@@ -1172,6 +1193,13 @@ static SCM g_data_location(SCM snd_n)
   return(sp_iread(snd_n,DATALOCATIONF,S_data_location));
 }
 
+static SCM g_set_data_location(SCM snd_n, SCM val) 
+{
+  if (SCM_UNBNDP(val))
+    return(sp_iwrite(SCM_UNDEFINED,snd_n,DATALOCATIONF,"set-" S_data_location));
+  else return(sp_iwrite(snd_n,val,DATALOCATIONF,"set-" S_data_location));
+}
+
 static SCM g_data_format(SCM snd_n) 
 {
   #define H_data_format "(" S_data_format " &optional snd) -> snd's data format (e.g. mus-bshort)"
@@ -1179,11 +1207,25 @@ static SCM g_data_format(SCM snd_n)
   return(sp_iread(snd_n,DATAFORMATF,S_data_format));
 }
 
+static SCM g_set_data_format(SCM snd_n, SCM val) 
+{
+  if (SCM_UNBNDP(val))
+    return(sp_iwrite(SCM_UNDEFINED,snd_n,DATAFORMATF,"set-" S_data_format));
+  else return(sp_iwrite(snd_n,val,DATAFORMATF,"set-" S_data_format));
+}
+
 static SCM g_header_type(SCM snd_n) 
 {
   #define H_header_type "(" S_header_type " &optional snd) -> snd's header type (e.g. mus-aiff)"
   ERRSPT(S_header_type,snd_n,1); 
   return(sp_iread(snd_n,HEADERTYPEF,S_header_type));
+}
+
+static SCM g_set_header_type(SCM snd_n, SCM val) 
+{
+  if (SCM_UNBNDP(val))
+    return(sp_iwrite(SCM_UNDEFINED,snd_n,HEADERTYPEF,"set-" S_header_type));
+  else return(sp_iwrite(snd_n,val,HEADERTYPEF,"set-" S_header_type));
 }
 
 static SCM g_comment(SCM snd_n)
@@ -2132,13 +2174,25 @@ void g_init_snd(SCM local_doc)
   DEFINE_PROC(gh_new_procedure0_2(S_bomb,SCM_FNC g_bomb),H_bomb);
   DEFINE_PROC(gh_new_procedure1_0(S_find_sound,SCM_FNC g_find_sound),H_find_sound);
 
-  DEFINE_PROC(gh_new_procedure0_1(S_channels,SCM_FNC g_channels),H_channels);
-  DEFINE_PROC(gh_new_procedure0_1(S_chans,SCM_FNC g_channels),H_channels);
-  DEFINE_PROC(gh_new_procedure0_1(S_srate,SCM_FNC g_srate),H_srate);
-  DEFINE_PROC(gh_new_procedure0_1(S_data_location,SCM_FNC g_data_location),H_data_location);
-  DEFINE_PROC(gh_new_procedure0_1(S_data_format,SCM_FNC g_data_format),H_data_format);
-  DEFINE_PROC(gh_new_procedure0_1(S_header_type,SCM_FNC g_header_type),H_header_type);
   DEFINE_PROC(gh_new_procedure0_1(S_comment,SCM_FNC g_comment),H_comment);
+
+  define_procedure_with_setter(S_channels,SCM_FNC g_channels,H_channels,
+			       "set-" S_channels,SCM_FNC g_set_channels,local_doc,0,1,0,2);
+
+  define_procedure_with_setter(S_chans,SCM_FNC g_channels,H_channels,
+			       "set-" S_chans,SCM_FNC g_set_channels,local_doc,0,1,0,2);
+
+  define_procedure_with_setter(S_srate,SCM_FNC g_srate,H_srate,
+			       "set-" S_srate,SCM_FNC g_set_srate,local_doc,0,1,0,2);
+
+  define_procedure_with_setter(S_data_location,SCM_FNC g_data_location,H_data_location,
+			       "set-" S_data_location,SCM_FNC g_set_data_location,local_doc,0,1,0,2);
+
+  define_procedure_with_setter(S_data_format,SCM_FNC g_data_format,H_data_format,
+			       "set-" S_data_format,SCM_FNC g_set_data_format,local_doc,0,1,0,2);
+
+  define_procedure_with_setter(S_header_type,SCM_FNC g_header_type,H_header_type,
+			       "set-" S_header_type,SCM_FNC g_set_header_type,local_doc,0,1,0,2);
 
   DEFINE_PROC(gh_new_procedure0_1(S_file_name,SCM_FNC g_file_name),H_file_name);
   DEFINE_PROC(gh_new_procedure0_1(S_short_file_name,SCM_FNC g_short_file_name),H_short_file_name);

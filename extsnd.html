@@ -1465,12 +1465,9 @@ sets its value to val.
                                   Returns #f if it can't open <i>name</i>, otherwise the new index.
   <a name="sndrawopen">open-raw-sound</a>    (name chans srate format) 
                                   open <i>name</i> as a raw (no header) sound in the layout specified.
-                                  If the file has a header, it is not ignored (use override-data-format
+                                  If the file has a header, it is not ignored (use (set! (data-format ...))
                                   and friends if you want to ignore the header).
   <a name="sndopen">open-sound</a>        (name)        open <i>name</i> as in File menu Open option.
-  <a name="overridedataformat">override-data-format</a> (format <i>snd</i>)force data format (ignore header)
-  <a name="overridedatalocation">override-data-location</a> (loc <i>snd</i>) force data location (ignore header)
-  <a name="overridedatasize">override-data-size</a> (samps <i>snd</i>)   force data size (ignore header)
   <a name="sndpeaks">peaks</a>             (<i>file snd chn</i>) display fft peak information.  If <i>file</i> is not null, write 
                                   the information to that file, else post it in a help window 
                                   (where it can be selected and pasted elsewhere).

@@ -5,6 +5,9 @@
  *       check for Mac OS changes
  *       re-implement BeOS support
  *       when reading device_field, put default input device first, or mark somehow 
+ *
+ * make better error messages throughout!
+ *  use MUS_ERROR (-1) and MUS_NO_ERROR wherever appropriate
  */
 
 /*
@@ -100,7 +103,7 @@ char *strerror(int errnum)
   mus_print("%s\n  [%s[%d] %s]",Error_Message,__FILE__,__LINE__,__FUNCTION__)
 
 #define MUS_STANDARD_IO_ERROR(Error_Type,IO_Func,IO_Name) \
-  mus_print("%s(%s): %s\n  [%s[%d] %s]",IO_Func,IO_Name,strerror(errno),__FILE__,__LINE__,__FUNCTION__)
+  mus_print("%s %s: %s\n  [%s[%d] %s]",IO_Func,IO_Name,strerror(errno),__FILE__,__LINE__,__FUNCTION__)
 
 
 

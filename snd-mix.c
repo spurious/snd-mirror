@@ -3394,7 +3394,7 @@ static SCM g_mix_sound(SCM file, SCM start_samp)
   beg = g_scm2int(start_samp);
   ss = get_global_state();
   sp = any_selected_sound(ss);  /* why not as arg?? -- apparently this is assuming CLM with-sound explode */
-  if (snd_probe_file(filename) == FILE_EXISTS)
+  if (mus_file_probe(filename))
     err = mix(beg,mus_sound_frames(filename),sp->nchans,sp->chans,filename,DONT_DELETE_ME,S_mix_sound,with_mix_consoles(ss)); 
   else err = -1;
   if (filename) free(filename);

@@ -27,8 +27,8 @@
 
 
 #define SNDLIB_VERSION 11
-#define SNDLIB_REVISION 0
-#define SNDLIB_DATE "21-Sep-00"
+#define SNDLIB_REVISION 1
+#define SNDLIB_DATE "22-Sep-00"
 
 #ifndef HAVE_SNDLIB
   #define HAVE_SNDLIB 1
@@ -570,6 +570,7 @@ int mus_header_sf2_start            PROTO((int n));
 int mus_header_sf2_end              PROTO((int n));
 int mus_header_sf2_loop_start       PROTO((int n));
 int mus_header_sf2_loop_end         PROTO((int n));
+char *mus_header_original_format_name PROTO((int format, int type));
 
 void mus_header_set_aifc            PROTO((int val)); /* backwards compatibility, sort of */
 

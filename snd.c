@@ -24,7 +24,7 @@ static void mus_error2snd(int type, char *msg)
 #endif
       snd_error(msg);
 #if HAVE_GUILE
-      if (ss->catch_exists) /* damned thing exits if catch is not active!! */
+      if (ss->catch_exists) /* damned thing aborts main program if throw to tag is not caught! */
 	{
 	  if (msg == NULL)
 	    scm_throw(MUS_MISC_ERROR,SCM_LIST1(gh_str02scm((char *)mus_error_to_string(type))));
@@ -57,9 +57,11 @@ static void mus_print2snd(char *msg)
 #endif
 {
   int i;
+
 #ifdef SGI
   union fpc_csr f; f.fc_word = get_fpc_csr(); f.fc_struct.flush = 1; set_fpc_csr(f.fc_word);
 #endif
+
 #ifdef HAVE_FPU_CONTROL_H
   #if __GLIBC_MINOR__ < 1
     /* in linux there's <fpu_control.h> with __setfpucw which Clisp calls as __setfpucw(_FPU_IEEE); */

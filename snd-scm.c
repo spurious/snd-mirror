@@ -2696,7 +2696,7 @@ static SCM g_convolve_with(SCM file, SCM new_amp, SCM snd_n, SCM chn_n)
       else amp = 1.0;
     }
   fname = full_filename(file);
-  if (snd_probe_file(fname) == FILE_EXISTS)
+  if (mus_file_probe(fname))
     convolve_with(fname,amp,cp);
   else return(scm_throw(NO_SUCH_FILE,SCM_LIST2(gh_str02scm(S_convolve_with),file)));
   if (fname) FREE(fname);
@@ -2771,7 +2771,7 @@ static SCM g_convolve_selection_with(SCM file, SCM new_amp)
       else amp = 1.0;
     }
   fname = full_filename(file);
-  if (snd_probe_file(fname) == FILE_EXISTS)
+  if (mus_file_probe(fname))
     convolve_with(fname,amp,NULL);
   else return(scm_throw(NO_SUCH_FILE,SCM_LIST2(gh_str02scm(S_convolve_selection_with),file)));
   if (fname) FREE(fname);

@@ -405,7 +405,6 @@ typedef struct {
 void mus_file_reset(int loc0, int *io, int *datai);
 void snd_file_reset(snd_data *sd, int index);
 int snd_open_read(snd_state *ss, char *arg);
-int snd_probe_file(char *name);
 int snd_reopen_write(snd_state *ss, char *arg);
 void snd_close(int fd);
 int snd_write_header(snd_state *ss, char *name, int type, int srate, int chans, int loc, int size, int format, char *comment, int len, int *loops);
@@ -1250,6 +1249,7 @@ int cursor_search(chan_info *cp, int count);
 
 /* -------- snd-trans.c -------- */
 
+char *any_format_name(char *name);
 int snd_translate(char *oldname, char *newname, int type);
 
 

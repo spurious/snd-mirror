@@ -151,7 +151,9 @@ int mus_header_initialize (void)
       if ((hdrbuf == NULL) || (aux_comment_start == NULL) || (aux_comment_end == NULL) ||
 	  (loop_modes == NULL) || (loop_starts == NULL) || (loop_ends == NULL))
 	{
-	  mus_error(MUS_MEMORY_ALLOCATION_FAILED,"header buffer allocation trouble\n  [%s[%d] %s]",__FILE__,__LINE__,__FUNCTION__);
+	  mus_error(MUS_MEMORY_ALLOCATION_FAILED,
+		    "header buffer allocation trouble\n  [%s[%d] %s]",
+		    __FILE__,__LINE__,__FUNCTION__);
 	  return(MUS_ERROR);
 	}
     }
@@ -483,6 +485,13 @@ char *mus_data_format_name(int format)
     }
 }
 
+static char *any_data_format_name(int sndlib_format)
+{
+  if (MUS_DATA_FORMAT_OK(sndlib_format))
+    return(mus_data_format_name(sndlib_format));
+  else return(mus_header_original_format_name(mus_header_original_format(),mus_header_type()));
+}
+
 static int read_bicsf_header (int chan);
 
 
@@ -577,8 +586,9 @@ int mus_header_write_next_header (int chan, int srate, int chans, int loc, int s
     case MUS_LINTN: mus_bint_to_char((unsigned char *)(hdrbuf+12),33); break; /* see above */
     case MUS_ALAW: mus_bint_to_char((unsigned char *)(hdrbuf+12),27); break;
     default: 
-      mus_error(MUS_UNSUPPORTED_DATA_FORMAT,"can't write NeXT/Sun data format: %d (%s)\n  [%s[%d] %s]",
-		format,mus_data_format_name(format),
+      mus_error(MUS_UNSUPPORTED_DATA_FORMAT,
+		"can't write NeXT/Sun data format: %d (%s)\n  [%s[%d] %s]",
+		format,any_data_format_name(format),
 		__FILE__,__LINE__,__FUNCTION__); 
       return(MUS_ERROR); 
       break;
@@ -811,7 +821,9 @@ static int read_aiff_header (int chan, int overall_offset)
       offset += chunkloc;
       if (seek_and_read(chan,(unsigned char *)hdrbuf,offset,32) <= 0)
 	{
-	  mus_error(MUS_HEADER_READ_FAILED,"AIFF header chunks confused at %d\n  [%s[%d] %s]",offset,__FILE__,__LINE__,__FUNCTION__);
+	  mus_error(MUS_HEADER_READ_FAILED,
+		    "AIFF header chunks confused at %d\n  [%s[%d] %s]",
+		    offset,__FILE__,__LINE__,__FUNCTION__);
 	  return(MUS_ERROR);
 	}
       chunksize = mus_char_to_bint((unsigned char *)(hdrbuf+4));
@@ -1061,9 +1073,10 @@ static int write_aif_header (int chan, int srate, int chans, int siz, int format
       mus_bshort_to_char((unsigned char *)(hdrbuf+26),8); 
       break;
     default: 
-      mus_error(MUS_UNSUPPORTED_DATA_FORMAT,"can't write AIFF data format: %d (%s)\n  [%s[%d] %s]",
+      mus_error(MUS_UNSUPPORTED_DATA_FORMAT,
+		"can't write AIFF data format: %d (%s)\n  [%s[%d] %s]",
 		format,
-		mus_data_format_name(format),
+		any_data_format_name(format),
 		__FILE__,__LINE__,__FUNCTION__);
       return(MUS_ERROR);
       break;
@@ -1350,7 +1363,9 @@ static int read_riff_header (int chan)
       offset += chunkloc;
       if (seek_and_read(chan,(unsigned char *)hdrbuf,offset,32) <= 0)
 	{
-	  mus_error(MUS_HEADER_READ_FAILED,"RIFF header chunks confused at %d\n  [%s[%d] %s]",offset,__FILE__,__LINE__,__FUNCTION__);
+	  mus_error(MUS_HEADER_READ_FAILED,
+		    "RIFF header chunks confused at %d\n  [%s[%d] %s]",offset,
+		    __FILE__,__LINE__,__FUNCTION__);
 	  return(MUS_ERROR);
 	}
       chunksize = big_or_little_endian_int((unsigned char *)(hdrbuf+4),little);
@@ -1470,9 +1485,10 @@ static int write_riff_header (int chan, int srate, int chans, int siz, int forma
       mus_lshort_to_char((unsigned char *)(hdrbuf+34),32); 
       break;
     default: 
-      mus_error(MUS_UNSUPPORTED_DATA_FORMAT,"can't write RIFF data format: %d (%s)\n  [%s[%d] %s]",
+      mus_error(MUS_UNSUPPORTED_DATA_FORMAT,
+		"can't write RIFF data format: %d (%s)\n  [%s[%d] %s]",
 		format,
-		mus_data_format_name(format),
+		any_data_format_name(format),
 		__FILE__,__LINE__,__FUNCTION__);
       return(MUS_ERROR);
       break;
@@ -1594,7 +1610,9 @@ static int read_avi_header (int chan)
       offset += chunkloc;
       if (seek_and_read(chan,(unsigned char *)hdrbuf,offset,32) <= 0)
 	{
-	  mus_error(MUS_HEADER_READ_FAILED,"AVI header chunks confused at %d\n  [%s[%d] %s]",offset,__FILE__,__LINE__,__FUNCTION__);
+	  mus_error(MUS_HEADER_READ_FAILED,
+		    "AVI header chunks confused at %d\n  [%s[%d] %s]",
+		    offset,__FILE__,__LINE__,__FUNCTION__);
 	  return(MUS_ERROR);
 	}
       chunksize = mus_char_to_lint((unsigned char *)(hdrbuf+4));
@@ -1753,7 +1771,9 @@ static int read_soundfont_header (int chan)
       offset += chunkloc;
       if (seek_and_read(chan,(unsigned char *)hdrbuf,offset,32) <= 0)
 	{
-	  mus_error(MUS_HEADER_READ_FAILED,"SoundFont header chunks confused at %d\n  [%s[%d] %s]",offset,__FILE__,__LINE__,__FUNCTION__);
+	  mus_error(MUS_HEADER_READ_FAILED,
+		    "SoundFont header chunks confused at %d\n  [%s[%d] %s]",
+		    offset,__FILE__,__LINE__,__FUNCTION__);
 	  return(MUS_ERROR);
 	}
       chunksize = mus_char_to_lint((unsigned char *)(hdrbuf+4));
@@ -1926,7 +1946,9 @@ static int read_nist_header (int chan)
 	    {
 	      header_type = MUS_RAW; 
 	      data_format = MUS_UNSUPPORTED; 
-	      mus_error(MUS_UNSUPPORTED_HEADER_TYPE,"invalid NIST header?\n  [%s[%d] %s]",__FILE__,__LINE__,__FUNCTION__);
+	      mus_error(MUS_UNSUPPORTED_HEADER_TYPE,
+			"invalid NIST header (field length = %d)?\n  [%s[%d] %s]",
+			nm,__FILE__,__LINE__,__FUNCTION__);
 	      return(MUS_ERROR);
 	    }
 	  name[nm]=0;
@@ -2065,7 +2087,9 @@ static int read_bicsf_header (int chan)
 	  offset += chunkloc;
 	  if (seek_and_read(chan,(unsigned char *)hdrbuf,offset,32) <= 0)
 	    {
-	      mus_error(MUS_HEADER_READ_FAILED,"Bicsf header chunks confused at %d\n  [%s[%d] %s]",offset,__FILE__,__LINE__,__FUNCTION__);
+	      mus_error(MUS_HEADER_READ_FAILED,
+			"Bicsf header chunks confused at %d\n  [%s[%d] %s]",
+			offset,__FILE__,__LINE__,__FUNCTION__);
 	      return(MUS_ERROR);
 	    }
 	  chunkname = mus_char_to_uninterpreted_int((unsigned char *)hdrbuf);
@@ -2155,7 +2179,9 @@ static int read_ircam_header (int chan)
       offset += bloc;
       if (seek_and_read(chan,(unsigned char *)hdrbuf,offset,32) <= 0)
 	{
-	  mus_error(MUS_HEADER_READ_FAILED,"IRCAM header chunks confused at %d\n  [%s[%d] %s]",offset,__FILE__,__LINE__,__FUNCTION__);
+	  mus_error(MUS_HEADER_READ_FAILED,
+		    "IRCAM header chunks confused at %d\n  [%s[%d] %s]",
+		    offset,__FILE__,__LINE__,__FUNCTION__);
 	  return(MUS_ERROR);
 	}
       bcode = big_or_little_endian_short((unsigned char *)hdrbuf,little);
@@ -2192,9 +2218,10 @@ static int write_ircam_header (int chan, int srate, int chans, int format, const
     case MUS_BINT: mus_bint_to_char((unsigned char *)(hdrbuf+12),0x40004); break;
     case MUS_BFLOAT: mus_bint_to_char((unsigned char *)(hdrbuf+12),4); break;
     default: 
-      mus_error(MUS_UNSUPPORTED_DATA_FORMAT,"IRCAM unsupported sound data format type: %d (%s)\n  [%s[%d] %s]",
+      mus_error(MUS_UNSUPPORTED_DATA_FORMAT,
+		"IRCAM unsupported sound data format type: %d (%s)\n  [%s[%d] %s]",
 		format,
-		mus_data_format_name(format),
+		any_data_format_name(format),
 		__FILE__,__LINE__,__FUNCTION__);
       return(MUS_ERROR);
       break;
@@ -2270,7 +2297,9 @@ static int read_8svx_header (int chan)
       offset += chunkloc;
       if (seek_and_read(chan,(unsigned char *)hdrbuf,offset,32) <= 0)
 	{
-	  mus_error(MUS_HEADER_READ_FAILED,"IFF header chunks confused at %d\n  [%s[%d] %s]",offset,__FILE__,__LINE__,__FUNCTION__);
+	  mus_error(MUS_HEADER_READ_FAILED,
+		    "IFF header chunks confused at %d\n  [%s[%d] %s]",
+		    offset,__FILE__,__LINE__,__FUNCTION__);
 	  return(MUS_ERROR);
 	}
       chunksize = mus_char_to_bint((unsigned char *)(hdrbuf+4));
@@ -2406,7 +2435,9 @@ static int read_voc_header(int chan)
 		    }
 		  if (seek_and_read(chan,(unsigned char *)hdrbuf,curbase+len+4,HDRBUFSIZ) <= 0)
 		    {
-		      mus_error(MUS_HEADER_READ_FAILED,"VOC header looks wrong\n  [%s[%d] %s]",__FILE__,__LINE__,__FUNCTION__);
+		      mus_error(MUS_HEADER_READ_FAILED,
+				"VOC header mangled?\n  [%s[%d] %s]",
+				__FILE__,__LINE__,__FUNCTION__);
 		      return(MUS_ERROR);
 		    }
 		  curbase += len;
@@ -2506,7 +2537,9 @@ static int read_avr_header(int chan)
     }
   if (seek_and_read(chan,(unsigned char *)hdrbuf,64,64) <= 0)
     {
-      mus_error(MUS_HEADER_READ_FAILED,"AVR header looks wrong\n  [%s[%d] %s]",__FILE__,__LINE__,__FUNCTION__);
+      mus_error(MUS_HEADER_READ_FAILED,
+		"AVR header mangled?\n  [%s[%d] %s]",
+		__FILE__,__LINE__,__FUNCTION__);
       return(MUS_ERROR);
     }
   comment_start = 64;
@@ -2790,7 +2823,9 @@ static int read_esps_header (int chan)
 	    {
 	      if (seek_and_read(chan,(unsigned char *)hdrbuf,curbase+n,32) <= 0)
 		{
-		  mus_error(MUS_HEADER_READ_FAILED,"ESPS header looks wrong\n  [%s[%d] %s]",__FILE__,__LINE__,__FUNCTION__);
+		  mus_error(MUS_HEADER_READ_FAILED,
+			    "ESPS header mangled?\n  [%s[%d] %s]",
+			    __FILE__,__LINE__,__FUNCTION__);
 		  return(MUS_ERROR);
 		}
 	      n=0;
@@ -2885,7 +2920,9 @@ static int read_maud_header (int chan)
       offset += chunkloc;
       if (seek_and_read(chan,(unsigned char *)hdrbuf,offset,32) <= 0)
 	{
-	  mus_error(MUS_HEADER_READ_FAILED,"MAUD header chunk bogus at %d\n  [%s[%d] %s]",offset,__FILE__,__LINE__,__FUNCTION__);
+	  mus_error(MUS_HEADER_READ_FAILED,
+		    "MAUD header bogus chunk at %d\n  [%s[%d] %s]",
+		    offset,__FILE__,__LINE__,__FUNCTION__);
 	  return(MUS_ERROR);
 	}
       chunksize = mus_char_to_bint((unsigned char *)(hdrbuf+4));
@@ -2970,7 +3007,9 @@ static int read_csl_header (int chan)
       offset += chunkloc;
       if (seek_and_read(chan,(unsigned char *)hdrbuf,offset,64) <= 0)
 	{
-	  mus_error(MUS_HEADER_READ_FAILED,"CSL header chunk bogus at %d\n  [%s[%d] %s]",offset,__FILE__,__LINE__,__FUNCTION__);
+	  mus_error(MUS_HEADER_READ_FAILED,
+		    "CSL header bogus chunk at %d\n  [%s[%d] %s]",
+		    offset,__FILE__,__LINE__,__FUNCTION__);
 	  return(MUS_ERROR);
 	}
       chunksize = mus_char_to_lint((unsigned char *)(hdrbuf+4));
@@ -4441,7 +4480,9 @@ int mus_header_read (const char *name)
   chan = mus_file_open_read(name);
   if (chan == -1) 
     {
-      mus_error(MUS_CANT_OPEN_FILE,"%s: %s\n  [%s[%d] %s]",name,strerror(errno),__FILE__,__LINE__,__FUNCTION__); 
+      mus_error(MUS_CANT_OPEN_FILE,
+		"can't read header of %s: %s\n  [%s[%d] %s]",
+		name,strerror(errno),__FILE__,__LINE__,__FUNCTION__); 
       return(MUS_ERROR);
     }
   err = mus_header_read_with_fd(chan);
@@ -4509,7 +4550,8 @@ int mus_header_write_with_fd (int chan, int type, int in_srate, int in_chans, in
       break;
     default:
       {
-	mus_error(MUS_UNSUPPORTED_HEADER_TYPE,"can't write %s header\n  [%s[%d] %s]",
+	mus_error(MUS_UNSUPPORTED_HEADER_TYPE,
+		  "Sndlib can't write %s headers\n  [%s[%d] %s]",
 		  mus_header_type_name(type),
 		  __FILE__,__LINE__,__FUNCTION__);
 	return(MUS_ERROR);
@@ -4525,7 +4567,8 @@ int mus_header_write (const char *name, int type, int in_srate, int in_chans, in
   chan = mus_file_create(name);
   if (chan == -1) 
     {
-      mus_error(MUS_CANT_OPEN_FILE,"%s: %s\n  [%s[%d] %s]",
+      mus_error(MUS_CANT_OPEN_FILE,
+		"can't write header of %s: %s\n  [%s[%d] %s]",
 		name,strerror(errno),
 		__FILE__,__LINE__,__FUNCTION__);
       return(MUS_ERROR);
@@ -4549,7 +4592,8 @@ int mus_header_update_with_fd(int chan, int type, int size)
     case MUS_RAW: break;
     default:
       {
-	mus_error(MUS_UNSUPPORTED_HEADER_TYPE,"can't udpate %s header\n  [%s[%d] %s]",
+	mus_error(MUS_UNSUPPORTED_HEADER_TYPE,
+		  "Sndlib can't update %s headers\n  [%s[%d] %s]",
 		  mus_header_type_name(type),
 		  __FILE__,__LINE__,__FUNCTION__);
 	return(MUS_ERROR);
@@ -4565,7 +4609,8 @@ int mus_header_update (const char *name, int type, int size, int srate, int form
   chan = mus_file_reopen_write(name);
   if (chan == -1) 
     {
-      mus_error(MUS_CANT_OPEN_FILE,"%s: %s\n  [%s[%d] %s]",
+      mus_error(MUS_CANT_OPEN_FILE,
+		"can't update header of %s: %s\n  [%s[%d] %s]",
 		name,strerror(errno),
 		__FILE__,__LINE__,__FUNCTION__);
       return(MUS_ERROR);
@@ -4603,7 +4648,8 @@ int mus_header_update_comment (const char *name, int loc, const char *comment, i
   chan = mus_file_reopen_write(name);
   if (chan == MUS_ERROR)
     {
-      mus_error(MUS_CANT_OPEN_FILE,"%s: %s\n  [%s[%d] %s]",
+      mus_error(MUS_CANT_OPEN_FILE,
+		"can't update header comment of %s: %s\n  [%s[%d] %s]",
 		name,strerror(errno),
 		__FILE__,__LINE__,__FUNCTION__);
       return(MUS_ERROR);
@@ -4616,7 +4662,8 @@ int mus_header_update_comment (const char *name, int loc, const char *comment, i
     case MUS_RAW: break;
     default:
       {
-	mus_error(MUS_UNSUPPORTED_HEADER_TYPE,"can't udpate %s header comment\n  [%s[%d] %s]",
+	mus_error(MUS_UNSUPPORTED_HEADER_TYPE,
+		  "Sndlib can't udpate %s header comments\n  [%s[%d] %s]",
 		  mus_header_type_name(typ),
 		  __FILE__,__LINE__,__FUNCTION__);
 	return(MUS_ERROR);
@@ -5050,3 +5097,78 @@ for (i=0;i<HDRBUFSIZ;i++)
 void mus_header_set_aifc(int val) {} /* backwards compatibility, sort of */
 
 /* sfs files apparently start with SFS\0 */
+
+/* try to give some info on data formats that aren't supported by sndlib */
+char *mus_header_original_format_name(int format, int type)
+{
+  char *f4;
+  switch (type)
+    {
+    case MUS_NEXT:
+      switch (format)
+	{
+	case 0: return("unspecified"); break; case 8: return("indirect"); break; case 9: return("nested"); break;
+	case 10: return("dsp_core"); break; case 11: return("dsp_data_8"); break; case 12: return("dsp_data_16"); break;
+	case 13: return("dsp_data_24"); break; case 14: return("dsp_data_32"); break; case 16: return("display"); break;
+	case 17: return("mulaw_squelch"); break; case 18: return("emphasized"); break; case 19: return("compressed"); break;
+	case 20: return("compressed_emphasized"); break; case 21: return("dsp_commands"); break; case 22: return("dsp_commands_samples"); break;
+	case 23: return("adpcm_g721"); break; case 24: return("adpcm_g722"); break; case 25: return("adpcm_g723"); break;
+	case 26: return("adpcm_g723_5"); break; case 28: return("aes"); break; case 29: return("delat_mulaw_8"); break;
+	}
+      break;
+    case MUS_AIFC:
+      if (format)
+	{
+	  f4 = (char *)calloc(5,sizeof(char));
+#ifdef MUS_LITTLE_ENDIAN
+	  sprintf(f4,"%c%c%c%c",format&0xff,(format>>8)&0xff,(format>>16)&0xff,(format>>24)&0xff);
+#else
+	  sprintf(f4,"%c%c%c%c",(format>>24)&0xff,(format>>16)&0xff,(format>>8)&0xff,format&0xff);
+#endif	
+	  return(f4);
+	}
+      break;
+    case MUS_RIFF:
+      switch (format)
+	{
+	case 2: return("ADPCM"); break; case 4: return("VSELP"); break; case 5: return("IBM_CVSD"); break;
+	case 0x10: return("OKI_ADPCM"); break; case 0x11: return("DVI_ADPCM"); break; case 0x12: return("MediaSpace_ADPCM"); break;
+	case 0x13: return("Sierra_ADPCM"); break; case 0x14: return("G723_ADPCM"); break; case 0x15: return("DIGISTD"); break;
+	case 0x16: return("DIGIFIX"); break; case 0x17: return("Dialogic ADPCM"); break; case 0x18: return("Mediavision ADPCM"); break;
+	case 0x19: return("HP cu codec"); break; case 0x20: return("Yamaha_ADPCM"); break; case 0x21: return("SONARC"); break;
+	case 0x22: return("DSPGroup_TrueSpeech"); break; case 0x23: return("EchoSC1"); break; case 0x24: return("AudioFile_AF36"); break;
+	case 0x25: return("APTX"); break; case 0x26: return("AudioFile_AF10"); break; case 0x27: return("prosody 1612"); break;
+	case 0x28: return("lrc"); break; case 0x30: return("Dolby_Ac2"); break; case 0x31: return("GSM610"); break;
+	case 0x32: return("MSN audio codec"); break; case 0x33: return("Antext_ADPCM"); break; case 0x34: return("Control_res_vqlpc"); break;
+	case 0x35: return("DIGIREAL"); break; case 0x36: return("DIGIADPCM"); break; case 0x37: return("Control_res_cr10"); break;
+	case 0x38: return("NMS_VBXADPCM"); break; case 0x39: return("oland rdac"); break; case 0x3a: return("echo sc3"); break;
+	case 0x3b: return("Rockwell adpcm"); break; case 0x3c: return("Rockwell digitalk codec"); break; case 0x3d: return("Xebec"); break;
+	case 0x40: return("G721_ADPCM"); break; case 0x41: return("G728 CELP"); break; case 0x42: return("MS G723"); break;
+	case 0x50: return("MPEG"); break; case 0x52: return("RT24"); break; case 0x53: return("PAC"); break;
+	case 0x55: return("Mpeg layer 3"); break; case 0x59: return("Lucent G723"); break; case 0x60: return("Cirrus"); break;
+	case 0x61: return("ESS Tech pcm"); break; case 0x62: return("voxware "); break; case 0x63: return("canopus atrac"); break;
+	case 0x64: return("G726"); break; case 0x65: return("G722"); break; case 0x66: return("DSAT"); break;
+	case 0x67: return("DSAT display"); break; case 0x69: return("voxware "); break; case 0x70: return("voxware ac8 "); break;
+	case 0x71: return("voxware ac10 "); break; case 0x72: return("voxware ac16"); break; case 0x73: return("voxware ac20"); break;
+	case 0x74: return("voxware rt24"); break; case 0x75: return("voxware rt29"); break; case 0x76: return("voxware rt29hw"); break;
+	case 0x77: return("voxware vr12 "); break; case 0x78: return("voxware vr18"); break; case 0x79: return("voxware tq40"); break;
+	case 0x80: return("softsound"); break; case 0x81: return("voxware tq60 "); break; case 0x82: return("MS RT24"); break;
+	case 0x83: return("G729A"); break; case 0x84: return("MVI_MVI2"); break; case 0x85: return("DF G726"); break;
+	case 0x86: return("DF GSM610"); break; case 0x88: return("isaudio"); break; case 0x89: return("onlive"); break;
+	case 0x91: return("sbc24"); break; case 0x92: return("dolby ac3 spdif"); break; case 0x97: return("zyxel adpcm"); break;
+	case 0x98: return("philips lpcbb"); break; case 0x99: return("packed"); break; case 0x100: return("rhetorex adpcm"); break;
+	case 0x101: return("Irat"); break; case 0x102: return("IBM_alaw?"); break; case 0x103: return("IBM_ADPCM?"); break;
+	case 0x111: return("vivo G723"); break; case 0x112: return("vivo siren"); break; case 0x123: return("digital g273"); break;
+	case 0x200: return("Creative_ADPCM"); break; case 0x202: return("Creative fastspeech 8"); break; 
+	case 0x203: return("Creative fastspeech 10"); break;
+	case 0x220: return("quarterdeck"); break; case 0x300: return("FM_TOWNS_SND"); break; case 0x400: return("BTV digital"); break;
+	case 0x680: return("VME vmpcm"); break; case 0x1000: return("OLIGSM"); break; case 0x1001: return("OLIADPCM"); break;
+	case 0x1002: return("OLICELP"); break; case 0x1003: return("OLISBC"); break; case 0x1004: return("OLIOPR"); break;
+	case 0x1100: return("LH codec"); break; case 0x1400: return("Norris"); break; case 0x1401: return("isaudio"); break;
+	case 0x1500: return("Soundspace musicompression"); break; case 0x2000: return("DVM"); break; 
+	}
+      break;
+    }
+  return(NULL);
+}
+

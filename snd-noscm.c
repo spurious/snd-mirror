@@ -625,7 +625,7 @@ static int symit(snd_state *ss,char **str)
 	  if (cp) 
 	    {
 	      filename = mus_file_full_name(sstr(str[1]));
-	      if (snd_probe_file(filename) == FILE_EXISTS)
+	      if (mus_file_probe(filename))
 		convolve_with(filename,fstr(str[2]),cp); 
 	      if (filename) FREE(filename);
 	    }
@@ -635,7 +635,7 @@ static int symit(snd_state *ss,char **str)
       if (strcmp(tok,S_convolve_selection_with) == 0) 
 	{
 	  filename = mus_file_full_name(sstr(str[1]));
-	  if (snd_probe_file(filename) == FILE_EXISTS)
+	  if (mus_file_probe(filename))
 	    convolve_with(filename,fstr(str[2]),NULL); 
 	  if (filename) FREE(filename);
 	  isym(ss,0); 
@@ -883,39 +883,6 @@ static int symit(snd_state *ss,char **str)
 	  return(0);
 	}
       if (strcmp(tok,S_orientation_dialog) == 0) {start_orientation_dialog(ss,0,0); isym(ss,0); return(0);}
-      if (strcmp(tok,S_override_data_location) == 0) 
-	{
-	  sp = get_sp(ss,str[2]);
-	  if (sp)
-	    {
-	      mus_sound_override_header(sp->fullname,-1,-1,-1,-1,istr(str[1]),-1);
-	      snd_update(ss,sp);
-	    }
-	  isym(ss,0); 
-	  return(0);
-	}
-      if (strcmp(tok,S_override_data_format) == 0) 
-	{
-	  sp = get_sp(ss,str[2]);
-	  if (sp)
-	    {
-	      mus_sound_override_header(sp->fullname,-1,-1,istr(str[1]),-1,-1,-1);
-	      snd_update(ss,sp);
-	    }
-	  isym(ss,0); 
-	  return(0);
-	}
-      if (strcmp(tok,S_override_data_size) == 0) 
-	{
-	  sp = get_sp(ss,str[2]);
-	  if (sp)
-	    {
-	      mus_sound_override_header(sp->fullname,-1,-1,-1,-1,-1,istr(str[1]));
-	      snd_update(ss,sp);
-	    }
-	  isym(ss,0); 
-	  return(0);
-	}
       break;
     case 'p':
       if (strcmp(tok,S_play_region) == 0) 

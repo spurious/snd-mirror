@@ -218,19 +218,11 @@ static mus_error_handler_t *old_sound_handler = NULL;
 
 static void sound_mus_error(int type, char *msg)
 {
-#if DEBUGGING
-  if (old_sound_handler == NULL) {fprintf(stderr,"lost previous handler"); abort();}
-  /* this is trickier than I'd like -- if by accident a sound.c function calls a lower-level sndlib function,
-   *   and that function calls back to sound.c and both have error handlers in effect, we get an infinite
-   *   loop -- how to break this?  I'll look for obvious (one-level) cases below
-   */
-#endif
   if (local_filename)
     {
       if (sound_err_buf == NULL) sound_err_buf = (char *)CALLOC(512,sizeof(char));
       sprintf(sound_err_buf,"%s\n  [sound.c[%d] %s: %s]",
 	      msg,local_line,local_func,local_filename);
-fprintf(stderr,"msg: %s\n",sound_err_buf);
       (*old_sound_handler)(type,sound_err_buf);
     }
   else (*old_sound_handler)(type,msg);

@@ -211,7 +211,10 @@ void make_axes_1(chan_info *cp, axis_info *ap, int x_style, int srate)
       return;
     }
 
-  show_x_axis = ((sp == NULL) || (sp->combining != CHANNELS_COMBINED) || (cp->show_axes == SHOW_ALL_AXES) || (cp->chan == (sp->nchans - 1)));
+  show_x_axis = ((sp == NULL) || 
+		 (sp->combining != CHANNELS_COMBINED) || 
+		 (cp->show_axes == SHOW_ALL_AXES) || 
+		 (cp->chan == (sp->nchans - 1)));
   /* sp is null in the control panel filter envelope display */
 
   left_border_width = 10;
@@ -219,8 +222,10 @@ void make_axes_1(chan_info *cp, axis_info *ap, int x_style, int srate)
   top_border_width = 10;
   right_border_width = 14;
   inner_border_width = 5;
-  x_tick_spacing = 20; if (width < 250) x_tick_spacing = 10 + (width/25);
-  y_tick_spacing = 20; if (height < 250) y_tick_spacing = 10 + (height/25);
+  x_tick_spacing = 20; 
+  if (width < 250) x_tick_spacing = 10 + (width/25);
+  y_tick_spacing = 20; 
+  if (height < 250) y_tick_spacing = 10 + (height/25);
   major_tick_length = 9;
   minor_tick_length = 5;
   axis_thickness = 2;

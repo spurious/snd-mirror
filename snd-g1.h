@@ -19,7 +19,7 @@ int help_dialog_is_active(void);
 
 /* -------- snd-gerror.c -------- */
 
-void add_to_error_history(snd_state *ss, char *msg);
+void add_to_error_history(snd_state *ss, char *msg, int popup);
 void post_error_dialog(snd_state *ss, char *msg);
 void show_snd_errors(snd_state *ss);
 

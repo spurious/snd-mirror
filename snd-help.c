@@ -251,6 +251,8 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
+22-Sep:  removed override-data-format|header-type|data-location and replaced with\n\
+           generalized set! of header fields.\n\
 18-Sep:  snd 4.6.\n\
          selection now follows the edit history lists.\n\
          selection-beg is now selection-position (to be consistent with everything else).\n\

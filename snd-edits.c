@@ -1620,7 +1620,7 @@ snd_fd *init_sample_read_any (int samp, chan_info *cp, int direction, int edit_p
   sp = cp->sound;
   if (sp->need_update) 
     {
-      if ((snd_probe_file(sp->fullname)) == FILE_DOES_NOT_EXIST)
+      if (mus_file_probe(sp->fullname) == 0)
 	snd_error("%s no longer exists!",sp->shortname);
       else snd_warning("%s has changed since we last read it!",sp->shortname);
     }
@@ -2185,11 +2185,11 @@ int save_edits_2(snd_info *sp, char *new_name, int type, int format, int srate, 
 	}
       else 
 	{
-	  snd_error("unknown header type?!? %d ",type);
+	  snd_error("save-edits: unknown header type?!? %d ",type);
 	  return(MUS_UNSUPPORTED_HEADER_TYPE);
 	}
     }
-  else snd_error("impossible data format?!? %d ",format);
+  else snd_error("save-edits: impossible data format?!? %d",format);
   return(MUS_UNSUPPORTED_DATA_FORMAT);
 }
 

@@ -15,7 +15,7 @@
 #endif
       
 
-#define NUM_COMMANDS 553
+#define NUM_COMMANDS 550
 
 static char *snd_commands[NUM_COMMANDS]={
   S_abort,S_abortQ,S_activate_listener,S_add_mark,S_add_player,S_add_sound_file_extension,S_add_to_main_menu,S_add_to_menu,S_add_transform,
@@ -89,7 +89,6 @@ static char *snd_commands[NUM_COMMANDS]={
 
   S_open_alternate_sound,S_open_hook,S_open_multifile_sound_hook,S_open_raw_sound,S_open_sound,S_open_sound_file,S_orientation_dialog,
   S_output_comment_hook,S_output_name_hook,
-  S_override_data_format,S_override_data_location,S_override_data_size,
 
   S_peaks,S_play,S_play_and_wait,S_play_mix,S_play_region,S_play_selection,S_play_track,
   S_position_color,S_prefix_arg,S_preload_directory,S_preload_file,
@@ -407,7 +406,8 @@ char *filename_completer(char *text)
 #if defined(CLOSEDIR_VOID)
       closedir(dpos);
 #else
-      if (closedir(dpos) != 0) snd_error("%s[%d] %s: closedir failed!",__FILE__,__LINE__,__FUNCTION__);
+      if (closedir(dpos) != 0) 
+	snd_error("closedir %s failed! [%s[%d] %s]",dir_name,__FILE__,__LINE__,__FUNCTION__);
 #endif
     }
   if (dir_name) FREE(dir_name);

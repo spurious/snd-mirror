@@ -37,25 +37,40 @@ void mus_file_reset(int loc0, int *io, int *datai)
 	  (io[SND_IO_DATA_START] != io[SND_IO_DATA_END]))
 	{
 	  if (io[SND_IO_DATA_END] > io[SND_IO_BUFSIZ])
-	    snd_error("data end indication in IO buffer is too big: %d > %d",io[SND_IO_DATA_END],io[SND_IO_BUFSIZ]);
+	    snd_error("data end indication in IO buffer is too big: %d > %d",
+		      io[SND_IO_DATA_END],io[SND_IO_BUFSIZ]);
 	  else
 	    {
-	      mus_file_seek(io[SND_IO_FD],io[SND_IO_HDR_END]+(2*io[SND_IO_CHANS]*(io[SND_IO_BEG]+io[SND_IO_DATA_START])),SEEK_SET);
+	      mus_file_seek(io[SND_IO_FD],
+			    io[SND_IO_HDR_END]+(2*io[SND_IO_CHANS]*(io[SND_IO_BEG]+io[SND_IO_DATA_START])),
+			    SEEK_SET);
 	      if ((io[SND_IO_DATA_START] < 0) || (io[SND_IO_DATA_END] < 0)) 
 		{
 		  snd_error("file buffer index is negative! -- will try to fix it...");
-		  if (io[SND_IO_DATA_START] < 0) io[SND_IO_DATA_START] = 0; else io[SND_IO_DATA_END] = 0;
+		  if (io[SND_IO_DATA_START] < 0) 
+		    io[SND_IO_DATA_START] = 0; 
+		  else io[SND_IO_DATA_END] = 0;
 		}
 #if LONG_INT_P
 	      bufs = (MUS_SAMPLE_TYPE **)CALLOC(io[SND_IO_CHANS],sizeof(MUS_SAMPLE_TYPE *));
-	      for (i=0;i<io[SND_IO_CHANS];i++) bufs[i] = MUS_SAMPLE_ARRAY(datai[io[SND_IO_DATS + SND_AREF_BLOCK]+i]);
-	      mus_file_write(io[SND_IO_FD],io[SND_IO_DATA_START],io[SND_IO_DATA_END],io[SND_IO_CHANS],bufs);
+	      for (i=0;i<io[SND_IO_CHANS];i++) 
+		bufs[i] = MUS_SAMPLE_ARRAY(datai[io[SND_IO_DATS + SND_AREF_BLOCK]+i]);
+	      mus_file_write(io[SND_IO_FD],
+			     io[SND_IO_DATA_START],
+			     io[SND_IO_DATA_END],
+			     io[SND_IO_CHANS],
+			     bufs);
 	      FREE(bufs);
 #else
-	      mus_file_write(io[SND_IO_FD],io[SND_IO_DATA_START],io[SND_IO_DATA_END],io[SND_IO_CHANS],(MUS_SAMPLE_TYPE **)(datai+io[SND_IO_DATS + SND_AREF_BLOCK]));
+	      mus_file_write(io[SND_IO_FD],
+			     io[SND_IO_DATA_START],
+			     io[SND_IO_DATA_END],
+			     io[SND_IO_CHANS],
+			     (MUS_SAMPLE_TYPE **)(datai+io[SND_IO_DATS + SND_AREF_BLOCK]));
 #endif
 	      io[SND_IO_DATA_START] = io[SND_IO_DATA_END];
-	      if (io[SND_IO_SIZE] <= (io[SND_IO_BEG] + io[SND_IO_DATA_END])) io[SND_IO_SIZE] = (io[SND_IO_BEG] + 1 + io[SND_IO_DATA_END]);
+	      if (io[SND_IO_SIZE] <= (io[SND_IO_BEG] + io[SND_IO_DATA_END])) 
+		io[SND_IO_SIZE] = (io[SND_IO_BEG] + 1 + io[SND_IO_DATA_END]);
 	    }
 	}
     }
@@ -67,10 +82,15 @@ void mus_file_reset(int loc0, int *io, int *datai)
     }
   file_end = io[SND_IO_SIZE];
   bytes = file_end - loc;
-  if (bytes > io[SND_IO_BUFSIZ]) bytes=io[SND_IO_BUFSIZ];
+  if (bytes > io[SND_IO_BUFSIZ]) bytes = io[SND_IO_BUFSIZ];
   if (bytes < 0)                   /* tried to access beyond current end of file */
     {
-      if (io[SND_IO_DIR] == SND_IO_IN_FILE) {io[SND_IO_BEG]=loc; c_io_bufclr(io,datai,0);} /* different from CLM */
+      if (io[SND_IO_DIR] == SND_IO_IN_FILE) 
+	{
+	  /* different from CLM */
+	  io[SND_IO_BEG]=loc; 
+	  c_io_bufclr(io,datai,0);
+	} 
       else
 	{
 	  c_io_bufclr(io,datai,0);
@@ -80,12 +100,14 @@ void mus_file_reset(int loc0, int *io, int *datai)
 	  mus_file_seek(io[SND_IO_FD],0,SEEK_END);
 	  if (io[SND_IO_CHANS] != 1)
 	    {
-	      mus_file_write_zeros(io[SND_IO_FD],io[SND_IO_CHANS]*(loc-file_end)); 
+	      mus_file_write_zeros(io[SND_IO_FD],
+				   io[SND_IO_CHANS]*(loc-file_end)); 
 	      io[SND_IO_BEG]=loc;
 	    }
 	  else
 	    {
-	      mus_file_write_zeros(io[SND_IO_FD],loc-file_end); 
+	      mus_file_write_zeros(io[SND_IO_FD],
+				   loc-file_end); 
 	      if ((loc%2)==0) io[SND_IO_BEG]=loc; 
 	      else io[SND_IO_BEG]=loc-1;
 	    }
@@ -93,7 +115,9 @@ void mus_file_reset(int loc0, int *io, int *datai)
     }
   else /* bytes is positive or 0 */
     {
-      mus_file_seek(io[SND_IO_FD],io[SND_IO_HDR_END]+(2*io[SND_IO_CHANS]*loc),SEEK_SET);
+      mus_file_seek(io[SND_IO_FD],
+		    io[SND_IO_HDR_END]+(2*io[SND_IO_CHANS]*loc),
+		    SEEK_SET);
       io[SND_IO_BEG] = loc;
       if (bytes > 0) 
 	{
@@ -103,13 +127,20 @@ void mus_file_reset(int loc0, int *io, int *datai)
 	    {
 #if LONG_INT_P
 	      bufs = (MUS_SAMPLE_TYPE **)CALLOC(io[SND_IO_CHANS],sizeof(MUS_SAMPLE_TYPE *));
-	      for (i=0;i<io[SND_IO_CHANS];i++) bufs[i] = MUS_SAMPLE_ARRAY(datai[io[SND_IO_DATS + SND_AREF_BLOCK]+i]);
-	      mus_file_read_chans(io[SND_IO_FD],0,bytes-1,io[SND_IO_CHANS],bufs,(MUS_SAMPLE_TYPE *)bufs);
+	      for (i=0;i<io[SND_IO_CHANS];i++) 
+		bufs[i] = MUS_SAMPLE_ARRAY(datai[io[SND_IO_DATS + SND_AREF_BLOCK]+i]);
+	      mus_file_read_chans(io[SND_IO_FD],
+				  0,bytes-1,
+				  io[SND_IO_CHANS],
+				  bufs,
+				  (MUS_SAMPLE_TYPE *)bufs);
 	      FREE(bufs);
 #else
-	      mus_file_read_chans(io[SND_IO_FD],0,bytes-1,io[SND_IO_CHANS],
-			     (MUS_SAMPLE_TYPE **)(datai+io[SND_IO_DATS + SND_AREF_BLOCK]),
-			     (MUS_SAMPLE_TYPE *)(datai+io[SND_IO_DATS + SND_AREF_BLOCK]));
+	      mus_file_read_chans(io[SND_IO_FD],
+				  0,bytes-1,
+				  io[SND_IO_CHANS],
+				  (MUS_SAMPLE_TYPE **)(datai+io[SND_IO_DATS + SND_AREF_BLOCK]),
+				  (MUS_SAMPLE_TYPE *)(datai+io[SND_IO_DATS + SND_AREF_BLOCK]));
 	      /* too clever -- I'm using the array of pointers to data buffers as the channel chooser as well */
 #endif
 	    }
@@ -231,12 +262,6 @@ int snd_open_read(snd_state *ss, char *arg)
       if (fd == -1) snd_error("%s: %s",arg,strerror(errno));
     }
   return(fd);
-}
-
-int snd_probe_file(char *name)
-{
-  if (mus_file_probe(name)) return(FILE_EXISTS);
-  return(FILE_DOES_NOT_EXIST);
 }
 
 int snd_overwrite_ok(snd_state *ss, char *ofile)

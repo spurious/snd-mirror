@@ -91,13 +91,26 @@ static mark *make_mark_1(int samp, char *name, int id, unsigned int sc)
 }
 
 static int mark_id_counter = 0;
+
 static mark *make_mark(int samp, char *name) {return(make_mark_1(samp,name,mark_id_counter++,0));}
+
 static mark *copy_mark(mark *m) {return(make_mark_1(m->samp,m->name,mark_id(m),m->sync));}
+
 int mark_id(mark *m) {return(m->id & MARK_ID_MASK);}
+
 static int mark_sync(mark *m) {return(m->sync);}
+
 static int sync_max = 0;
+
 int mark_sync_max(void) {return(sync_max);}
-int set_mark_sync(mark *m, int val) {m->sync = (unsigned int)val; if (val > sync_max) sync_max = val; return(val);}
+
+int set_mark_sync(mark *m, int val) 
+{
+  m->sync = (unsigned int)val; 
+  if (val > sync_max) 
+    sync_max = val; 
+  return(val);
+}
 
 static mark *free_mark (mark *mp)
 {
@@ -299,7 +312,8 @@ mark *hit_triangle(chan_info *cp, int x, int y)
   if (cp->marks)
     {
       /* first check that we're in the bottom portion of the graph where the mark triangles are */
-      if ((y >= ap->y_axis_y0) && (y <= (ap->y_axis_y0+2*PLAY_ARROW_SIZE)))
+      if ((y >= ap->y_axis_y0) && 
+	  (y <= (ap->y_axis_y0+2*PLAY_ARROW_SIZE)))
 	{
 	  md = (mdata *)CALLOC(2,sizeof(mdata));
 	  md->x = x;
