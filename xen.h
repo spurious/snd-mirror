@@ -422,10 +422,6 @@
   #define XEN_CALL_4(Func, Arg1, Arg2, Arg3, Arg4, Caller) g_call_any(Func, XEN_LIST_4(Arg1, Arg2, Arg3, Arg4), Caller) 
   #define XEN_CALL_5(Func, Arg1, Arg2, Arg3, Arg4, Arg5, Caller) g_call_any(Func, XEN_LIST_5(Arg1, Arg2, Arg3, Arg4, Arg5), Caller) 
   #define XEN_CALL_6(Func, Arg1, Arg2, Arg3, Arg4, Arg5, Arg6, Caller) g_call_any(Func, XEN_LIST_6(Arg1, Arg2, Arg3, Arg4, Arg5, Arg6), Caller) 
-  #define XEN_CALL_0_NO_CATCH(Func, Caller)                   g_call0_unprotected(Func)
-  #define XEN_CALL_1_NO_CATCH(Func, Arg1, Caller)             g_call1_unprotected(Func, Arg1)
-  #define XEN_CALL_2_NO_CATCH(Func, Arg1, Arg2, Caller)       g_call2_unprotected(Func, Arg1, Arg2)
-  #define XEN_CALL_3_NO_CATCH(Func, Arg1, Arg2, Arg3, Caller) g_call3_unprotected(Func, Arg1, Arg2, Arg3)
 #else
   #define XEN_CALL_0(Func, Caller)                   scm_apply(Func, XEN_EMPTY_LIST, XEN_EMPTY_LIST)
   #define XEN_CALL_1(Func, Arg1, Caller)             scm_apply(Func, Arg1, scm_listofnull)
@@ -438,12 +434,12 @@
      scm_apply(Func, Arg1, scm_cons2(Arg2, Arg3, scm_cons2(Arg4, Arg5, scm_listofnull)))
   #define XEN_CALL_6(Func, Arg1, Arg2, Arg3, Arg4, Arg5, Arg6, Caller) \
      scm_apply(Func, Arg1, scm_cons2(Arg2, Arg3, scm_cons2(Arg4, Arg5, scm_cons(Arg6, scm_listofnull))))
-  #define XEN_CALL_0_NO_CATCH(Func, Caller)                   scm_apply(Func, XEN_EMPTY_LIST, XEN_EMPTY_LIST)
-  #define XEN_CALL_1_NO_CATCH(Func, Arg1, Caller)             scm_apply(Func, Arg1, scm_listofnull)
-  #define XEN_CALL_2_NO_CATCH(Func, Arg1, Arg2, Caller)       scm_apply(Func, Arg1, scm_cons(Arg2, scm_listofnull))
-  #define XEN_CALL_3_NO_CATCH(Func, Arg1, Arg2, Arg3, Caller) scm_apply(Func, Arg1, scm_cons2(Arg2, Arg3, scm_listofnull))
 #endif
 #define XEN_APPLY_NO_CATCH(Func, Args, Caller)              scm_apply(Func, Args, XEN_EMPTY_LIST)
+#define XEN_CALL_0_NO_CATCH(Func, Caller)                   scm_apply(Func, XEN_EMPTY_LIST, XEN_EMPTY_LIST)
+#define XEN_CALL_1_NO_CATCH(Func, Arg1, Caller)             scm_apply(Func, Arg1, scm_listofnull)
+#define XEN_CALL_2_NO_CATCH(Func, Arg1, Arg2, Caller)       scm_apply(Func, Arg1, scm_cons(Arg2, scm_listofnull))
+#define XEN_CALL_3_NO_CATCH(Func, Arg1, Arg2, Arg3, Caller) scm_apply(Func, Arg1, scm_cons2(Arg2, Arg3, scm_listofnull))
 
 #ifdef WINDOZE
 /* can't use scm_listofnull in Windows because the loader can't deal with it:

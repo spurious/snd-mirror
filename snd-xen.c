@@ -619,15 +619,6 @@ static XEN g_call0_1(void *arg)
 }
 #endif
 
-XEN g_call0_unprotected(XEN proc)
-{
-#if HAVE_GUILE
-  return(scm_apply(proc, XEN_EMPTY_LIST, XEN_EMPTY_LIST));
-#else
-  return(proc);
-#endif
-}
-
 XEN g_call0(XEN proc, const char *caller) /* replacement for gh_call0 -- protect ourselves from premature exit(!$#%@$) */
 {
 #if HAVE_GUILE
@@ -645,15 +636,6 @@ static XEN g_call1_1(void *arg)
  		   XEN_APPLY_ARG_LIST_END));
 }
 #endif
-
-XEN g_call1_unprotected(XEN proc, XEN arg)
-{
-#if HAVE_GUILE
-  return(scm_apply(proc, arg, XEN_APPLY_ARG_LIST_END));
-#else
-  return(arg);
-#endif
-}
 
 XEN g_call1(XEN proc, XEN arg, const char *caller)
 {
@@ -697,15 +679,6 @@ static XEN g_call2_1(void *arg)
 }
 #endif
 
-XEN g_call2_unprotected(XEN proc, XEN arg1, XEN arg2)
-{
-#if HAVE_GUILE
-  return(scm_apply(proc, arg1, XEN_CONS(arg2, XEN_APPLY_ARG_LIST_END)));
-#else
-  return(arg1);
-#endif
-}
-
 XEN g_call2(XEN proc, XEN arg1, XEN arg2, const char *caller)
 {
   XEN args[3];
@@ -729,15 +702,6 @@ static XEN g_call3_1(void *arg)
 			      XEN_APPLY_ARG_LIST_END)));
 }
 #endif
-
-XEN g_call3_unprotected(XEN proc, XEN arg1, XEN arg2, XEN arg3)
-{
-#if HAVE_GUILE
-  return(scm_apply(proc, arg1, XEN_CONS_2(arg2, arg3, XEN_APPLY_ARG_LIST_END)));
-#else
-  return(arg1);
-#endif
-}
 
 XEN g_call3(XEN proc, XEN arg1, XEN arg2, XEN arg3, const char *caller)
 {

@@ -717,6 +717,7 @@ static XEN gl_remove_from_menu(XEN menu, XEN label)
 
 static XEN gl_change_menu_label(XEN menu, XEN old_label, XEN new_label)
 {
+  /* TODO: wouldn't it be better to replace change-menu-label with settable menu-label? */
   #define H_change_menu_label "(" S_change_menu_label " menu old-label new-label): changes menu's label"
   int val, m;
   XEN_ASSERT_TYPE(XEN_STRING_P(old_label), old_label, XEN_ARG_2, S_change_menu_label, "a string");
@@ -728,7 +729,7 @@ static XEN gl_change_menu_label(XEN menu, XEN old_label, XEN new_label)
   val = g_change_menu_label(m,
 			    XEN_TO_C_STRING(old_label), 
 			    XEN_TO_C_STRING(new_label));
-  if (val == -1)
+  if (val < 0)
     XEN_ERROR(NO_SUCH_MENU,
 	      XEN_LIST_3(C_TO_XEN_STRING(S_change_menu_label),
 			 C_TO_XEN_STRING("menu: ~A, labels ~A -> ~A"),
@@ -747,6 +748,8 @@ static XEN gl_menu_sensitive(XEN menu, XEN label)
     return(snd_no_such_menu_error(S_menu_sensitive, menu));
   val = g_menu_is_sensitive(m,
 			    XEN_TO_C_STRING(label));
+  if (val < 0)
+    return(snd_no_such_menu_error(S_menu_sensitive, menu));
   return(C_TO_XEN_BOOLEAN(val));
 }
 
@@ -762,6 +765,8 @@ static XEN gl_set_menu_sensitive(XEN menu, XEN label, XEN on)
   val = g_set_menu_sensitive(m,
 			     XEN_TO_C_STRING(label), 
 			     XEN_TO_C_BOOLEAN(on));
+  if (val < 0)
+    return(snd_no_such_menu_error(S_setB S_menu_sensitive, menu));
   return(C_TO_XEN_BOOLEAN(val));
 }
 

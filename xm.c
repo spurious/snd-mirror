@@ -7,10 +7,11 @@
   #include <config.h>
 #endif
 
-#define XM_DATE "7-Apr-03"
+#define XM_DATE "8-Apr-03"
 
 
 /* HISTORY: 
+ *   8-Apr:     XSetErrorHandler proc takes XErrorEvent, not XEvent 2nd arg (thanks Friedrich Delgado Friedrichs)
  *   7-Apr:     more changes for the WITH_GTK_AND_X11 switch.
  *   1-Apr:     XGetWindowProperty uses mem2string if not XA_STRING.
  *   31-Mar:    added WITH_GTK_AND_X11 switch for xg+local X funcs.
@@ -373,7 +374,7 @@ XM_TYPE_PTR_NO_C2X(XConfigureRequestEvent, XConfigureRequestEvent *)
 XM_TYPE_PTR_NO_C2X(XCreateWindowEvent, XCreateWindowEvent *)
 XM_TYPE_PTR_NO_C2X(XCrossingEvent, XCrossingEvent *)
 XM_TYPE_PTR_NO_C2X(XDestroyWindowEvent, XDestroyWindowEvent *)
-XM_TYPE_PTR_NO_C2X(XErrorEvent, XErrorEvent *)
+XM_TYPE_PTR(XErrorEvent, XErrorEvent *)
 XM_TYPE_PTR_NO_C2X(XExposeEvent, XExposeEvent *)
 XM_TYPE_PTR_NO_C2X(XFocusChangeEvent, XFocusChangeEvent *)
 XM_TYPE_PTR_NO_C2X(XGraphicsExposeEvent, XGraphicsExposeEvent *)
@@ -11811,6 +11812,7 @@ static XEN gxm_XSetIOErrorHandler(XEN arg1)
 {
   #define H_XSetIOErrorHandler "int (*XSetIOErrorHandler(handler))() sets the fatal I/O error handler. "
   XEN old_val;
+  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg1), arg1, XEN_ONLY_ARG, "XIOSetErrorHandler", "proc of 1 arg");
   xm_protect(arg1);
   old_val = xm_XIOErrorHandler;
   xm_XIOErrorHandler = arg1;
@@ -11822,14 +11824,15 @@ static XEN gxm_XSetIOErrorHandler(XEN arg1)
 static XEN xm_XErrorHandler = XEN_FALSE;
 static int gxm_XErrorHandler(Display *dpy, XErrorEvent *e)
 {
-  XEN_CALL_2(xm_XErrorHandler, C_TO_XEN_Display(dpy), C_TO_XEN_XEvent((XEvent *)e), __FUNCTION__);
+  XEN_CALL_2(xm_XErrorHandler, C_TO_XEN_Display(dpy), C_TO_XEN_XErrorEvent((XErrorEvent *)e), __FUNCTION__);
   return(0); /* never happens */
 }
 
 static XEN gxm_XSetErrorHandler(XEN arg1)
 {
-  #define H_XSetErrorHandler "XSetErrorHandler(proc) causes proc to be called is an error occurs"
+  #define H_XSetErrorHandler "XSetErrorHandler(proc) causes proc to be called if an error occurs"
   XEN old_val;
+  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg1), arg1, XEN_ONLY_ARG, "XSetErrorHandler", "proc of 2 args");
   xm_protect(arg1);
   old_val = xm_XErrorHandler;
   xm_XErrorHandler = arg1;

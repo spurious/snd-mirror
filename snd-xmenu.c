@@ -1106,7 +1106,7 @@ int g_menu_is_sensitive(int which_menu, char *old_label)
       or_over_children(top_menu, is_sensitive_menu, (void *)(&sm));
       return(sm.on);
     }
-  return(FALSE);
+  return(INVALID_MENU);
 }
 
 static void set_widget_name(Widget w, char *new_name)

@@ -1581,7 +1581,7 @@ int g_menu_is_sensitive(int which_menu, char *old_label)
 	(strcmp(old_label, added_options_names[i]) == 0) && 
 	(added_options[i]))
       return(is_sensitive(added_options[i]));
-  return(0);
+  return(INVALID_MENU);
 }
 
 int g_set_menu_sensitive(int which_menu, char *old_label, int on)
