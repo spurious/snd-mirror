@@ -48,8 +48,6 @@ snd.h for a discussion of the various compile-time switches, and fixup
 the relevant makefile:
 
 SGI:                   makefile.sgi
-Linux with Motif:      makefile.linux
-Linux with Gtk+:       makefile.gtk
 Unixware 7:            makefile.uw7
 OpenServer 5:          makefile.sco5
 Sun/Solaris:           makefile.solaris

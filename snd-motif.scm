@@ -17,6 +17,8 @@
 ;;; (select-file func &optional title dir filter help) starts a Snd-like File Selection Dialog running func if a file is selected
 ;;; (show-disk-space) adds a label to the minibuffer area showing the current free space 
 ;;; (keep-file-dialog-open-upon-ok) changes File:Open so that clicking "ok" does not "unmanage" the dialog
+;;; (add-amp-control) adds another amp slider to the control panel
+;;; (add-very-useful-icons) adds some very useful icons
 
 
 (use-modules (ice-9 common-list))
@@ -34,6 +36,35 @@
 (define (white-pixel)  (|WhitePixelOfScreen (current-display)))
 (define (black-pixel)  (|BlackPixelOfScreen (current-display)))
 (define (screen-depth) (|DefaultDepthOfScreen (current-display)))
+
+;;; -------- apply func to every widget belonging to w (and w) --------
+
+(define (for-each-child w func)
+  (func w)
+  (if (|XtIsComposite w)
+      (for-each 
+       (lambda (n)
+	 (for-each-child n func))
+       (cadr (|XtGetValues w (list |XmNchildren 0) 1)))))
+
+(define (find-child widget name)
+  (call-with-current-continuation
+   (lambda (return)
+     (for-each-child
+      widget
+      (lambda (child)
+	(if (string=? (|XtName child) name)
+	    (return child)))))))
+
+(define (set-main-color-of-widget w)
+  (for-each-child 
+   w
+   (lambda (n)
+     (if (|XtIsWidget n)
+	 (if (|XmIsScrollBar n)
+	     (|XmChangeColor n (|Pixel (snd-pixel (position-color))))
+	     (|XmChangeColor n (|Pixel (snd-pixel (basic-color)))))))))
+
 
 
 
@@ -266,26 +297,6 @@
 
 (define (remove-menu-bar-menu which)
   (|XtUnmanageChild (|Widget (list-ref (menu-widgets) which))))
-
-
-;;; -------- apply func to every widget belonging to w (and w) --------
-
-(define (for-each-child w func)
-  (func w)
-  (if (|XtIsComposite w)
-      (for-each 
-       (lambda (n)
-	 (for-each-child n func))
-       (cadr (|XtGetValues w (list |XmNchildren 0) 1)))))
-
-(define (set-main-color-of-widget w)
-  (for-each-child 
-   w
-   (lambda (n)
-     (if (|XtIsWidget n)
-	 (if (|XmIsScrollBar n)
-	     (|XmChangeColor n (|Pixel (snd-pixel (position-color))))
-	     (|XmChangeColor n (|Pixel (snd-pixel (basic-color)))))))))
 
 
 ;;; -------- disable control panel --------
@@ -551,7 +562,7 @@ Reverb-feedback sets the scaler on the feedback.\n\
     (set! (|colorsymbols attr) symb)
     (set! (|numsymbols attr) 1)
     (set! (|valuemask attr) (logior |XpmColorSymbols |XpmDepth |XpmColormap |XpmVisual))
-    (|XpmCreatePixmapFromData dpy win strs attr)))
+    (cadr (|XpmCreatePixmapFromData dpy win strs attr))))
 
 ; (|XtSetValues (|Widget (list-ref (sound-widgets) 8)) (list |XmNlabelPixmap (make-pixmap (cadr (|Widget (cadr (main-widgets))) arrow-strs))))
 
@@ -559,7 +570,7 @@ Reverb-feedback sets the scaler on the feedback.\n\
 
 ;;; (load "backgrounds.scm")
 ;;; (define wd (make-pixmap (|Widget (cadr (main-widgets))) wood))
-;;; (for-each-child (|Widget (cadr (main-widgets))) (lambda (w) (|XtSetValues w (list |XmNbackgroundPixmap (cadr wd)))))
+;;; (for-each-child (|Widget (cadr (main-widgets))) (lambda (w) (|XtSetValues w (list |XmNbackgroundPixmap wd))))
 
 
 (define right-arrow (list
@@ -798,6 +809,7 @@ Reverb-feedback sets the scaler on the feedback.\n\
     (|XtAddCallback scan-start |XmNactivateCallback (lambda (w c i) (start-synthesis)))
     (|XtAddCallback scan-continue |XmNactivateCallback (lambda (w c i) (continue-synthesis)))
     (|XtAddCallback scan-stop |XmNactivateCallback (lambda (w c i) (stop-synthesis)))
+
     #t ; for slightly prettier listener output
     ))
 
@@ -1664,14 +1676,116 @@ Reverb-feedback sets the scaler on the feedback.\n\
 
 
 
+;;; -------- add another amp slider in control panel
+;;;
+;;; just step one of this section
+;;; TODO: after-open callback to reflect current channel number
+;;; TODO: tie new scrollers into Play/Apply (this will require support from Snd)
+;;; TODO: handle n>2 scrollers
+;;; TODO: don't remanage controls unless it's previously open
+
+(define (amp-scroller->amp val)
+  ;; same as Snd's built-in amp scroller callbacks
+  (if (= val 0)
+      0.0
+      (if (< val 15)
+	  (* val 0.011584929) ; linear section
+	  (exp (/ (- val 50) 20.0)))))
+
+(define (amp-callback w c i)
+  (let* ((amp (amp-scroller->amp (|value i)))
+	 (ampstr (|XmStringCreateLocalized (format #f "~,2F" amp))))
+    (|XtSetValues c (list |XmNlabelString ampstr))
+    (|XmStringFree ampstr)))
+
+(define (make-amp-package parent)
+  (let* ((s1 (|XmStringCreateLocalized "amp:"))
+	 (label (|XtCreateManagedWidget "amp-label" |xmPushButtonWidgetClass parent
+	 	  (list |XmNbackground (|Pixel (snd-pixel (basic-color)))
+			|XmNalignment |XmALIGNMENT_BEGINNING
+			|XmNtopAttachment |XmATTACH_FORM
+			|XmNbottomAttachment |XmATTACH_NONE
+			|XmNleftAttachment |XmATTACH_FORM
+			|XmNrightAttachment |XmATTACH_NONE
+			|XmNlabelString s1
+			|XmNmarginHeight 1
+			|XmNrecomputeSize #f
+			|XmNshadowThickness 0
+			|XmNhighlightThickness 0
+			|XmNfillOnArm #f)))
+	 (s2 (|XmStringCreateLocalized "1.00"))
+	 (number (|XtCreateManagedWidget "amp-number" |xmLabelWidgetClass parent
+	 	  (list |XmNbackground (|Pixel (snd-pixel (basic-color)))
+			|XmNalignment |XmALIGNMENT_BEGINNING
+			|XmNtopAttachment |XmATTACH_OPPOSITE_WIDGET
+			|XmNtopWidget label
+			|XmNbottomAttachment |XmATTACH_NONE
+			|XmNleftAttachment |XmATTACH_WIDGET
+			|XmNleftWidget label
+			|XmNrightAttachment |XmATTACH_NONE
+			|XmNlabelString s2
+			|XmNmarginHeight 1
+			|XmNrecomputeSize #f)))
+	 (scroll (|XtCreateManagedWidget "amp" |xmScrollBarWidgetClass parent
+	 	  (list |XmNbackground (|Pixel (snd-pixel (position-color)))
+			|XmNtopAttachment |XmATTACH_OPPOSITE_WIDGET
+			|XmNtopWidget label
+			|XmNbottomAttachment |XmATTACH_NONE
+			|XmNheight 16
+			|XmNleftAttachment |XmATTACH_WIDGET
+			|XmNleftWidget number
+			|XmNrightAttachment |XmATTACH_FORM
+			|XmNorientation |XmHORIZONTAL
+			|XmNmaximum 100
+			|XmNvalue 50
+			|XmNdragCallback (list amp-callback number)
+			|XmNvalueChangedCallback (list amp-callback number)))))
+	 (|XmStringFree s1)
+	 (|XmStringFree s2)
+	 label
+	 ))
+
+(define (add-amp-control)
+  (let* ((wids (sound-widgets))
+	 (ctrls (|Widget (list-ref wids 2)))
+	 (snd-amp (find-child ctrls "snd-amp"))
+	 (amplabel (find-child snd-amp "amp-label")))
+    (if (|Widget? amplabel)
+	(begin
+	  (|XtUnmanageChild ctrls)
+	  
+	  (let ((new-amp (make-amp-package snd-amp)))
+	    (|XtSetValues amplabel (list |XmNtopAttachment |XmATTACH_WIDGET
+					 |XmNtopWidget new-amp))
+	    (|XtManageChild ctrls))))))
+
+
+
+;;; -------- add-very-useful-icons adds some very useful icons
+
+(define (add-very-useful-icons)
+  (let ((tools (add-main-pane "tools" |xmRowColumnWidgetClass
+		  (list |XmNbackground (black-pixel)
+			|XmNpaneMinimum 48
+			|XmNpaneMaximum 48
+			|XmNorientation |XmHORIZONTAL))))
+    (load "icons.scm")
+    (for-each 
+     (lambda (icon)
+       (let ((button
+	      (|XtCreateManagedWidget "button" |xmPushButtonWidgetClass tools
+		(list |XmNlabelPixmap (make-pixmap tools icon)
+		      |XmNlabelType   |XmPIXMAP
+		      |XmNwidth       32
+		      |XmNheight      32))))
+	 (|XtAddCallback button |XmNactivateCallback (lambda (w c i) (snd-print "aren't icons grand?")))))
+     (list burger syringe media tut fortune bob1 caesar xmas1 umbrela chess3 compress xdbx icl8))))
+
+
+
 ;;; drawnbutton+workproc sound-button example
-;;; spectral editing in new window
-;;; panel of effects-buttons[icons] on right? (normalize, reverse, etc)
-;;; panel of icons at top (cut/paste/undo/redo/save/play/play-selection
 ;;; bess-translations
-;;; separate chan amp controls (from snd-gtk.scm)
-;;; cue-list as mix set?
 ;;; midi trigger
 ;;; save/restore -separate window details
-;;; chan-grf, enved
+;;; chan-grf
 ;;; marks menu

@@ -130,7 +130,10 @@ static char *snd_gtk_get_filename(GtkWidget *dialog)
   gchar *path;
   gchar *file;
   path = gtk_file_list_get_path(GTK_FILE_LIST(GTK_ICON_FILESEL(dialog)->file_list));
-  file = gtk_file_list_get_filename(GTK_FILE_LIST(GTK_ICON_FILESEL(dialog)->file_list));
+  /* file = gtk_file_list_get_filename(GTK_FILE_LIST(GTK_ICON_FILESEL(dialog)->file_list)); */
+  /* can't use this form because it ignores possible user-typing in file text widget */
+  file = gtk_entry_get_text(GTK_ENTRY(GTK_ICON_FILESEL(dialog)->file_entry));
+
   if (file == NULL) return(NULL);
   if (last_filename == NULL) last_filename = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
   mus_snprintf(last_filename, PRINT_BUFFER_SIZE, "%s%s", path, file);

@@ -246,6 +246,7 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
+24-Aug:  add-amp-control in snd-motif.scm, add-notes in examp.scm.\n\
 21-Aug:  added explicit FIR/FFT choice to envelope editor (enved-filter).\n\
          fft-squelch in examp.scm.\n\
 20-Aug:  add-listener-popup, fft-popup in popup.scm.\n\

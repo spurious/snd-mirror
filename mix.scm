@@ -132,24 +132,24 @@
     (if (not (= change 0.0))
 	(as-one-edit
 	 (lambda ()
-	   (map (lambda (a) 
-		  (if (mix? a)
-		      (do ((i 0 (1+ i)))
-			  ((= i (mix-chans a)))
-			(set! (mix-amp a i) (max 0.0 (+ (mix-amp a i) change))))))
-		track))))))
+	   (for-each (lambda (a) 
+		       (if (mix? a)
+			   (do ((i 0 (1+ i)))
+			       ((= i (mix-chans a)))
+			     (set! (mix-amp a i) (max 0.0 (+ (mix-amp a i) change))))))
+		     track))))))
 
 (define set-track-amp 
   (lambda (track new-amp)
     "(set-track-amp track new-amp) sets the amp of each mix in track to new-amp"
     (as-one-edit
      (lambda ()
-       (map (lambda (a) 
-	      (if (mix? a)
-		  (do ((i 0 (1+ i)))
-		      ((= i (mix-chans a)))
-		    (set! (mix-amp a i) new-amp))))
-	    track)))))
+       (for-each (lambda (a) 
+		   (if (mix? a)
+		       (do ((i 0 (1+ i)))
+			   ((= i (mix-chans a)))
+			 (set! (mix-amp a i) new-amp))))
+		 track)))))
 
 ;;; (set-track-amp '(0 1) .5)
 
@@ -161,10 +161,10 @@
     (if (not (= new-speed 0.0))
 	(as-one-edit
 	 (lambda ()
-	   (map (lambda (a) 
-		  (if (mix? a)
-		      (set! (mix-speed a) new-speed)))
-		track))))))
+	   (for-each (lambda (a) 
+		       (if (mix? a)
+			   (set! (mix-speed a) new-speed)))
+		     track))))))
 
 (define transpose-track
   (lambda (track semitones)
@@ -172,10 +172,10 @@
     (let ((mult (expt 2.0 (/ semitones 12.0))))
       (as-one-edit
        (lambda ()
-	 (map (lambda (a)
-		(if (mix? a)
-		    (set! (mix-speed a) (* mult (mix-speed a)))))
-	      track))))))
+	 (for-each (lambda (a)
+		     (if (mix? a)
+			 (set! (mix-speed a) (* mult (mix-speed a)))))
+		   track))))))
 
 ;;; (transpose-track '(0 1) 5)
 
@@ -205,10 +205,10 @@
       (if track-beg
 	  (as-one-edit 
 	   (lambda ()
-	     (map (lambda (a) 
-		    (if (mix? a)
-			(set! (mix-position a) (+ change (mix-position a)))))
-		  track)))))))
+	     (for-each (lambda (a) 
+			 (if (mix? a)
+			     (set! (mix-position a) (+ change (mix-position a)))))
+		       track)))))))
 
 (define track-end
   (lambda (track)
@@ -246,22 +246,22 @@
 	  (if track-beg
 	      (as-one-edit 
 	       (lambda ()
-		 (map (lambda (a) 
-			(if (mix? a)
-			    (set! (mix-position a) (+ track-beg 
-						      (inexact->exact (* new-tempo 
-									 (- (mix-position a) track-beg)))))))
-		      track))))))))
+		 (for-each (lambda (a) 
+			     (if (mix? a)
+				 (set! (mix-position a) (+ track-beg 
+							   (inexact->exact (* new-tempo 
+									      (- (mix-position a) track-beg)))))))
+			   track))))))))
 
 ;;; (set-track-tempo '(0 1) 2.0)
 
 (define set-track-color 
   (lambda (track new-color)
     "(set-track-color track color) changes the associated mix colors to color"
-    (map (lambda (a) 
-	   (if (mix? a)
-	       (set! (mix-color a) new-color)))
-	 track)))
+    (for-each (lambda (a) 
+		(if (mix? a)
+		    (set! (mix-color a) new-color)))
+	      track)))
 
 ;;; (set-track-color '(0 1) (make-color 0 0 1))
 
@@ -302,14 +302,14 @@
 	  (len (track-length track)))
       (as-one-edit
        (lambda ()
-	 (map (lambda (a) 
-		(if (and (mix? a) (< chan (mix-chans a)))
-		    (set! (mix-amp-env a chan) (multiply-envelopes 
-						(window-envelope (/ (- (mix-position a) beg) len)
-								 (/ (- (+ (mix-position a) (mix-length a)) beg) len)
-								 env)
-						(mix-amp-env a chan)))))
-	      track))))))
+	 (for-each (lambda (a) 
+		     (if (and (mix? a) (< chan (mix-chans a)))
+			 (set! (mix-amp-env a chan) (multiply-envelopes 
+						     (window-envelope (/ (- (mix-position a) beg) len)
+								      (/ (- (+ (mix-position a) (mix-length a)) beg) len)
+								      env)
+						     (mix-amp-env a chan)))))
+		   track))))))
 
 ; (set-track-amp-env (track 1) 0 '(0 0 1 1))
 
@@ -322,20 +322,20 @@
     (let ((order (length fir-filter-coeffs)))
       (as-one-edit
        (lambda ()
-	 (map (lambda (a)
-		(if (mix? a)
-		    (let ((chans (mix-chans a)))
-		      (do ((chan 0 (1+ chan)))
-			  ((= chan chans))
-			(let* ((flt (make-fir-filter order (list->vct fir-filter-coeffs)))
-			       (newlen(+ order (mix-length a)))
-			       (samps (make-vct newlen))
-			       (reader (make-sample-reader 0 (list a) chan)))
-			  (vct-map! samps (lambda ()
-					    (fir-filter flt (next-sample reader))))
-			  (free-sample-reader reader)
-			  (vct->samples 0 newlen samps (list a) chan))))))
-	      track))))))
+	 (for-each (lambda (a)
+		     (if (mix? a)
+			 (let ((chans (mix-chans a)))
+			   (do ((chan 0 (1+ chan)))
+			       ((= chan chans))
+			     (let* ((flt (make-fir-filter order (list->vct fir-filter-coeffs)))
+				    (newlen(+ order (mix-length a)))
+				    (samps (make-vct newlen))
+				    (reader (make-sample-reader 0 (list a) chan)))
+			       (vct-map! samps (lambda ()
+						 (fir-filter flt (next-sample reader))))
+			       (free-sample-reader reader)
+			       (vct->samples 0 newlen samps (list a) chan))))))
+		   track))))))
 
 ; (filter-track (track 1) '(.1 .2 .3 .3 .2 .1))
 
@@ -352,10 +352,10 @@
 	  (let ((track-mixes (track trk)))
 	    (as-one-edit
 	     (lambda ()
-	       (map (lambda (a) 
-		      (if (mix? a)
-			  (set! (mix-position a) (+ samps-moved (mix-position a)))))
-		    track-mixes)))
+	       (for-each (lambda (a) 
+			   (if (mix? a)
+			       (set! (mix-position a) (+ samps-moved (mix-position a)))))
+			 track-mixes)))
 	    #t)
 	  #f))))
 
@@ -384,7 +384,7 @@
 (define sync-multichannel-mixes
   (lambda (mix-ids)
     (let ((new-track (unused-track)))
-      (map (lambda (n) (set-mix-track n new-track)) mix-ids))))
+      (for-each (lambda (n) (set-mix-track n new-track)) mix-ids))))
 
 (add-hook! multichannel-mix-hook sync-multichannel-mixes)
 
@@ -402,3 +402,4 @@
 		     (set! (mix-position id) pos))
 		   ids-in-order
 		   (reverse (map mix-position ids-in-order))))))))
+

@@ -804,6 +804,8 @@ static void fir_button_pressed(GtkWidget *w, gpointer context)
   set_button_label(firB, (FIR_p) ? "fir" : "fft");
 }
 
+#define BB_MARGIN 2
+
 GtkWidget *create_envelope_editor (snd_state *ss)
 {
   GtkWidget *mainform, *helpB, *leftbox, *bottombox, *leftframe, *toprow, *bottomrow, *brkbox;
@@ -884,115 +886,115 @@ GtkWidget *create_envelope_editor (snd_state *ss)
 
       showB = gtk_button_new_with_label(STR_view_envs);
       set_backgrounds(showB, (ss->sgx)->highlight_color);
-      gtk_box_pack_start(GTK_BOX(leftbox), showB, FALSE, FALSE, 0);
+      gtk_box_pack_start(GTK_BOX(leftbox), showB, FALSE, FALSE, BB_MARGIN);
       gtk_signal_connect(GTK_OBJECT(showB), "clicked", GTK_SIGNAL_FUNC(show_button_pressed), (gpointer)ss);
       gtk_widget_show(showB);
 
-      saverow = gtk_hbox_new(FALSE, 0);
+      saverow = gtk_hbox_new(FALSE, BB_MARGIN);
       set_background(saverow, (ss->sgx)->highlight_color);
-      gtk_box_pack_start(GTK_BOX(leftbox), saverow, FALSE, FALSE, 0);
+      gtk_box_pack_start(GTK_BOX(leftbox), saverow, FALSE, FALSE, BB_MARGIN);
       gtk_widget_show(saverow);
 
       saveB = gtk_button_new_with_label(" save ");
       set_backgrounds(saveB, (ss->sgx)->highlight_color);
-      gtk_box_pack_start(GTK_BOX(saverow), saveB, FALSE, FALSE, 0);
+      gtk_box_pack_start(GTK_BOX(saverow), saveB, TRUE, TRUE, BB_MARGIN);
       gtk_signal_connect(GTK_OBJECT(saveB), "clicked", GTK_SIGNAL_FUNC(save_button_pressed), (gpointer)ss);
       gtk_widget_show(saveB);
 
       printB = gtk_button_new_with_label(" print  ");
       set_backgrounds(printB, (ss->sgx)->highlight_color);
-      gtk_box_pack_start(GTK_BOX(saverow), printB, FALSE, FALSE, 0);
+      gtk_box_pack_start(GTK_BOX(saverow), printB, TRUE, TRUE, BB_MARGIN);
       gtk_signal_connect(GTK_OBJECT(printB), "clicked", GTK_SIGNAL_FUNC(print_button_pressed), (gpointer)ss);
       gtk_widget_show(printB);
 
       revrow = gtk_hbox_new(FALSE, 0);
       set_background(revrow, (ss->sgx)->highlight_color);
-      gtk_box_pack_start(GTK_BOX(leftbox), revrow, FALSE, FALSE, 0);
+      gtk_box_pack_start(GTK_BOX(leftbox), revrow, FALSE, FALSE, BB_MARGIN);
       gtk_widget_show(revrow);
 
       revertB = gtk_button_new_with_label("revert ");
       set_backgrounds(revertB, (ss->sgx)->highlight_color);
-      gtk_box_pack_start(GTK_BOX(revrow), revertB, FALSE, FALSE, 0);
+      gtk_box_pack_start(GTK_BOX(revrow), revertB, TRUE, TRUE, BB_MARGIN);
       gtk_signal_connect(GTK_OBJECT(revertB), "clicked", GTK_SIGNAL_FUNC(revert_button_pressed), (gpointer)ss);
       gtk_widget_show(revertB);
 
       deleteB = gtk_button_new_with_label("delete");
       set_backgrounds(deleteB, (ss->sgx)->highlight_color);
-      gtk_box_pack_start(GTK_BOX(revrow), deleteB, FALSE, FALSE, 0);
+      gtk_box_pack_start(GTK_BOX(revrow), deleteB, TRUE, TRUE, BB_MARGIN);
       gtk_signal_connect(GTK_OBJECT(deleteB), "clicked", GTK_SIGNAL_FUNC(delete_button_pressed), (gpointer)ss);
       gtk_widget_show(deleteB);
 
       unrow = gtk_hbox_new(FALSE, 0);
       set_background(unrow, (ss->sgx)->highlight_color);
-      gtk_box_pack_start(GTK_BOX(leftbox), unrow, FALSE, FALSE, 0);
+      gtk_box_pack_start(GTK_BOX(leftbox), unrow, FALSE, FALSE, BB_MARGIN);
       gtk_widget_show(unrow);
 
       undoB = gtk_button_new_with_label(" undo ");
       set_backgrounds(undoB, (ss->sgx)->highlight_color);
-      gtk_box_pack_start(GTK_BOX(unrow), undoB, FALSE, FALSE, 0);
+      gtk_box_pack_start(GTK_BOX(unrow), undoB, TRUE, TRUE, BB_MARGIN);
       gtk_signal_connect(GTK_OBJECT(undoB), "clicked", GTK_SIGNAL_FUNC(undo_button_pressed), (gpointer)ss);
       gtk_widget_show(undoB);
 
       redoB = gtk_button_new_with_label(" redo ");
       set_backgrounds(redoB, (ss->sgx)->highlight_color);
-      gtk_box_pack_start(GTK_BOX(unrow), redoB, FALSE, FALSE, 0);
+      gtk_box_pack_start(GTK_BOX(unrow), redoB, TRUE, TRUE, BB_MARGIN);
       gtk_signal_connect(GTK_OBJECT(redoB), "clicked", GTK_SIGNAL_FUNC(redo_button_pressed), (gpointer)ss);
       gtk_widget_show(redoB);
 
       rbrow = gtk_hbox_new(FALSE, 0);
       set_background(rbrow, (ss->sgx)->highlight_color);
-      gtk_box_pack_start(GTK_BOX(leftbox), rbrow, FALSE, FALSE, 0);
+      gtk_box_pack_start(GTK_BOX(leftbox), rbrow, FALSE, FALSE, BB_MARGIN);
       gtk_widget_show(rbrow);
 
       ampB = gtk_button_new_with_label(STR_amp);
       set_backgrounds(ampB, (ss->sgx)->highlight_color);
-      gtk_box_pack_start(GTK_BOX(rbrow), ampB, TRUE, TRUE, 0);
+      gtk_box_pack_start(GTK_BOX(rbrow), ampB, TRUE, TRUE, BB_MARGIN);
       gtk_signal_connect(GTK_OBJECT(ampB), "clicked", GTK_SIGNAL_FUNC(amp_button_pressed), (gpointer)ss);
       gtk_widget_show(ampB);
 
       fltB = gtk_button_new_with_label(STR_flt);
       set_backgrounds(fltB, (ss->sgx)->highlight_color);
-      gtk_box_pack_start(GTK_BOX(rbrow), fltB, TRUE, TRUE, 0);
+      gtk_box_pack_start(GTK_BOX(rbrow), fltB, TRUE, TRUE, BB_MARGIN);
       gtk_signal_connect(GTK_OBJECT(fltB), "clicked", GTK_SIGNAL_FUNC(flt_button_pressed), (gpointer)ss);
       gtk_widget_show(fltB);
 
       srcB = gtk_button_new_with_label(STR_src);
       set_backgrounds(srcB, (ss->sgx)->highlight_color);
-      gtk_box_pack_start(GTK_BOX(rbrow), srcB, TRUE, TRUE, 0);
+      gtk_box_pack_start(GTK_BOX(rbrow), srcB, TRUE, TRUE, BB_MARGIN);
       gtk_signal_connect(GTK_OBJECT(srcB), "clicked", GTK_SIGNAL_FUNC(src_button_pressed), (gpointer)ss);
       gtk_widget_show(srcB);
 
       lerow = gtk_hbox_new(FALSE, 0);
       set_backgrounds(lerow, (ss->sgx)->highlight_color);
-      gtk_box_pack_start(GTK_BOX(leftbox), lerow, FALSE, FALSE, 0);
+      gtk_box_pack_start(GTK_BOX(leftbox), lerow, FALSE, FALSE, BB_MARGIN);
       gtk_widget_show(lerow);
 
       linB = gtk_button_new_with_label(STR_linear);
       set_backgrounds(linB, (ss->sgx)->highlight_color);
-      gtk_box_pack_start(GTK_BOX(lerow), linB, TRUE, TRUE, 0);
+      gtk_box_pack_start(GTK_BOX(lerow), linB, TRUE, TRUE, BB_MARGIN);
       gtk_signal_connect(GTK_OBJECT(linB), "clicked", GTK_SIGNAL_FUNC(lin_button_pressed), (gpointer)ss);
       gtk_widget_show(linB);
 
       expB = gtk_button_new_with_label(STR_exp);
       set_backgrounds(expB, (ss->sgx)->highlight_color);
-      gtk_box_pack_start(GTK_BOX(lerow), expB, TRUE, TRUE, 0);
+      gtk_box_pack_start(GTK_BOX(lerow), expB, TRUE, TRUE, BB_MARGIN);
       gtk_signal_connect(GTK_OBJECT(expB), "clicked", GTK_SIGNAL_FUNC(exp_button_pressed), (gpointer)ss);
       gtk_widget_show(expB);
 
       selrow = gtk_hbox_new(FALSE, 0);
       set_background(selrow, (ss->sgx)->highlight_color);
-      gtk_box_pack_start(GTK_BOX(leftbox), selrow, FALSE, FALSE, 0);
+      gtk_box_pack_start(GTK_BOX(leftbox), selrow, FALSE, FALSE, BB_MARGIN);
       gtk_widget_show(selrow);
 
       selectionB = gtk_button_new_with_label(STR_selection);
       set_backgrounds(selectionB, (ss->sgx)->highlight_color);
-      gtk_box_pack_start(GTK_BOX(selrow), selectionB, TRUE, TRUE, 0);
+      gtk_box_pack_start(GTK_BOX(selrow), selectionB, TRUE, TRUE, BB_MARGIN);
       gtk_signal_connect(GTK_OBJECT(selectionB), "clicked", GTK_SIGNAL_FUNC(selection_button_pressed), (gpointer)ss);
       gtk_widget_show(selectionB);
 
       mixB = gtk_button_new_with_label("mix");
       set_backgrounds(mixB, (ss->sgx)->highlight_color);
-      gtk_box_pack_start(GTK_BOX(selrow), mixB, TRUE, TRUE, 0);
+      gtk_box_pack_start(GTK_BOX(selrow), mixB, TRUE, TRUE, BB_MARGIN);
       gtk_signal_connect(GTK_OBJECT(mixB), "clicked", GTK_SIGNAL_FUNC(mix_button_pressed), (gpointer)ss);
       gtk_widget_show(mixB);
 

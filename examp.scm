@@ -62,6 +62,7 @@
 ;;; remove-clicks
 ;;; searching examples (zero+, next-peak, find-pitch)
 ;;; sound-data->list
+;;; file->vct and a sort of cue-list, I think
 
 ;;; TODO: decide how to handle the CLM examples
 ;;; TODO: robust pitch tracker
@@ -2727,4 +2728,42 @@ read, even if not playing.  'files' is a list of files to be played."
     (do ((i (1- (sound-data-chans sd)) (1- i)))
 	((< i 0) lst)
       (set! lst (cons (sound-data-channel->list sd i) lst)))))
+
+
+
+;;; -------- file->vct and a sort of cue-list, I think
+
+(define (file->vct file)
+  ;; should probably save these somewhere
+  (let* ((len (mus-sound-frames file))
+	 (reader (make-sample-reader 0 file))
+	 (data (make-vct len)))
+    (do ((i 0 (1+ i)))
+	((= i len))
+      (vct-set! data i (next-sample reader)))
+    (free-sample-reader reader)
+    data))
+
+(define (add-notes notes)
+  ;; adds (mixes) notes which is a list of lists of the form
+  ;;   file &optional (offset 0.0) (amp 1.0)
+  ;; starting at the cursor in the currently selected channel
+  (let* ((snd (selected-sound))
+	 (chn (selected-channel))
+	 (start (cursor snd chn)))
+    (as-one-edit
+     (lambda ()
+       (for-each 
+	(lambda (note)
+	  (let* ((file (car note))
+		 (offset (if (> (length note) 1) (cadr note) 0.0))
+		 (amp (if (> (length note) 2) (caddr note) #f))
+		 (beg (+ start (inexact->exact (* (srate snd) offset)))))
+	    (if (and (number? amp)
+		     (not (= amp 1.0)))
+		(mix-vct (vct-scale! (file->vct file) amp) beg snd chn #f "add-notes")
+		(mix file beg 0 snd chn #f))))
+	notes)))))
+
+;(add-notes '(("oboe.snd") ("pistol.snd" 1.0 2.0)))
 

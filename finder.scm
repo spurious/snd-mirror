@@ -106,3 +106,4 @@
 
 (exit)
 
+;;; TODO: scm locations and color names 

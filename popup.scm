@@ -679,6 +679,3 @@
 
 
 
-;;; TODO: lisp graph, possibly some of the dialogs
-
-

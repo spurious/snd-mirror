@@ -79,7 +79,7 @@
   #define XEN_OBJECT_TYPE_P(Obj, Type) ((SCM_NIMP(Obj)) && (SCM_SMOB_PREDICATE(Type, Obj)))
 #else
   #define XEN_OBJECT_TYPE              long
-  #define XEN_OBJECT_TYPE_P(Obj, Type) ((SCM_NIMP(Obj)) &&  (SCM_TYP16(Obj) == (XEN)Type))
+  #define XEN_OBJECT_TYPE_P(Obj, Type) ((SCM_NIMP(Obj)) &&  ((XEN)(SCM_TYP16(Obj)) == (XEN)Type))
 #endif
 #define XEN_MAKE_OBJECT_TYPE(Typ, Siz) scm_make_smob_type(Typ, Siz)
 #define XEN_MARK_OBJECT_TYPE           SCM
