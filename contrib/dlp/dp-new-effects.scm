@@ -641,7 +641,7 @@
                       (XtCreateManagedWidget "Omit silence" xmToggleButtonWidgetClass (XtParent (car sliders))
                         (list XmNselectColor  (pushed-button-color)
                               XmNbackground   (basic-color)
-                              XmNvalue        omit-silence
+                              XmNvalue        (if omit-silence 1 0)
                               ;XmNborderWidth  1
                               XmNlabelString  s1))))
                 (XmStringFree s1)
