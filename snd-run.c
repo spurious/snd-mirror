@@ -8118,6 +8118,7 @@ static xen_value *file_to_frame_1(ptree *prog, xen_value **args, int num_args)
 
 
 /* ---------------- outa ---------------- */
+/* if *output* is null these become no-ops (there is no error message as there would be in the standard case) */
 
 #define OUT_GEN(CName, SName) \
 static char *descr_ ## CName ## _3(int *args, ptree *pt) \
@@ -10339,7 +10340,7 @@ static XEN g_run_eval(XEN code, XEN arg, XEN arg1, XEN arg2)
       return(result);
     }
   if (pt) free_ptree((void *)pt);
-  XEN_ERROR(XEN_ERROR_TYPE("cannot-parse"),
+  XEN_ERROR(CANNOT_PARSE,
 	    code);
   return(XEN_FALSE);
 }

@@ -1984,7 +1984,7 @@ and its value is returned."
       help_text = C_TO_XEN_STRING(str);
       if (str) FREE(str);
     }
-  return(help_text);
+  return(xen_return_first(help_text, text));
 }
 
 static XEN g_listener_help(XEN arg, XEN formatted)
@@ -2086,7 +2086,7 @@ static XEN g_help_dialog(XEN subject, XEN msg, XEN xrefs, XEN xurls)
   else w = snd_help(XEN_TO_C_STRING(subject), 
 		    XEN_TO_C_STRING(msg), 
 		    WITH_WORD_WRAP);
-  return(XEN_WRAP_WIDGET(w));
+  return(xen_return_first(XEN_WRAP_WIDGET(w), xrefs, xurls));
 }
 
 

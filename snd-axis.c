@@ -1198,7 +1198,7 @@ Returns actual (pixel) axis bounds -- a list (x0 y0 x1 y1)."
 	   XEN_CONS(C_TO_XEN_INT(ap->y_axis_y1),
 	    XEN_EMPTY_LIST))));
   free_axis_info(ap);
-  return(val);
+  return(xen_return_first(val, args));
 }
 
 static XEN g_x_axis_label(XEN snd, XEN chn, XEN ax)

@@ -1,7 +1,5 @@
 #include "snd.h"
 
-#define NO_SUCH_MENU XEN_ERROR_TYPE("no-such-menu")
-
 void reflect_file_open_in_menu (void)
 {
   set_sensitive(file_close_menu(), true);
@@ -655,6 +653,10 @@ func (a function of no args) when the new menu is activated. Returns the new men
 #endif
 			     slot,
 			     position);
+#if (!USE_NO_GUI)
+      if (result == NULL)
+	return(snd_no_such_menu_error(S_add_to_menu, menu));
+#endif
       if (XEN_PROCEDURE_P(callback)) add_callback(slot, callback);
     }
   else 

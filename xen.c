@@ -57,10 +57,16 @@ off_t xen_to_c_off_t_or_else(XEN obj, off_t fallback, const char *origin)
 
 off_t xen_to_c_off_t(XEN obj)
 {
+#if HAVE_GUILE
+  if (XEN_EXACT_P(obj))
+#endif
 #if (defined(SIZEOF_OFF_T) && (SIZEOF_OFF_T > 4)) || (defined(_FILE_OFFSET_BITS) && (_FILE_OFFSET_BITS == 64))
     return(XEN_TO_C_LONG_LONG(obj));
 #else
     return(XEN_TO_C_INT(obj));
+#endif
+#if HAVE_GUILE
+    return((off_t)XEN_TO_C_DOUBLE(obj)); /* inexact integer squeezed through somewhere */
 #endif
 }
 

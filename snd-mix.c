@@ -4632,7 +4632,7 @@ mix data (a vct) into snd's channel chn starting at beg; return the new mix id"
   update_graph(cp);
   FREE(data);
   cp->edit_hook_checked = false;
-  return(xen_return_first(C_TO_XEN_INT(mix_id), obj));
+  return(xen_return_first(C_TO_XEN_INT(mix_id), obj, origin));
 }
 
 static XEN g_set_mix_color (XEN arg1, XEN arg2)

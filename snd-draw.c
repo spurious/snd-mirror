@@ -2,12 +2,8 @@
 
 #if (!USE_NO_GUI)
 
-#define NO_SUCH_AXIS_INFO    XEN_ERROR_TYPE("no-such-axis")
-#define NO_SUCH_WIDGET       XEN_ERROR_TYPE("no-such-widget")
-#define NO_SUCH_AXIS_CONTEXT XEN_ERROR_TYPE("no-such-graphics-context")
 #define AXIS_CONTEXT_ID_OK(Id) ((Id >= CHAN_GC) && (Id <= CHAN_TMPGC))
 #define AXIS_INFO_ID_OK(Id)    ((Id >= (int)TIME_AXIS_INFO) && ((Id <= (int)LISP_AXIS_INFO)))
-
 
 static axis_context *get_ax(chan_info *cp, int ax_id, const char *caller)
 {

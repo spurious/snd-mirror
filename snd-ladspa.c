@@ -25,10 +25,6 @@
  * bil: 20-Sep-01 changed location of pfInputBuffer to avoid glomming up the stack with a huge array.
  */
 
-#define NO_SUCH_PLUGIN XEN_ERROR_TYPE("no-such-plugin")
-#define PLUGIN_ERROR   XEN_ERROR_TYPE("plugin-error")
-
-
 /*****************************************************************************/
 
 /* FIXME: Repository is not threadsafe. */
@@ -513,7 +509,7 @@ a user interface edit the parameter in a useful way."
 		     XEN_CONS(C_TO_XEN_STRING((char *)psDescriptor->Maker),
 			      XEN_CONS(C_TO_XEN_STRING((char *)psDescriptor->Copyright),
 				       XEN_CONS(xenList, XEN_EMPTY_LIST))));
-  return xenList;
+  return(xen_return_first(xenList, ladspa_plugin_filename, ladspa_plugin_label));
 }
 
 /*****************************************************************************/
@@ -821,7 +817,7 @@ Information about about parameters can be acquired using " S_analyse_ladspa "."
   FREE(data);
   FREE(pfInputBuffer);
   FREE(pfOutputBuffer);
-  return(XEN_FALSE);
+  return(xen_return_first(XEN_FALSE, ladspa_plugin_configuration, origin));
 }
 
 #if HAVE_EXTENSION_LANGUAGE

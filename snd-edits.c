@@ -1,7 +1,5 @@
 #include "snd.h"
 
-#define NO_SUCH_DIRECTION XEN_ERROR_TYPE("no-such-direction")
-
 /* these are used internally by the save-state process */
 #define S_delete_samples_with_origin    "delete-samples-with-origin"
 #define S_change_samples_with_origin    "change-samples-with-origin"
@@ -8007,7 +8005,7 @@ the new data's end."
 	}
     }
   update_graph(cp);
-  return(vect);
+  return(xen_return_first(vect, edname));
 }
 
 static XEN g_override_samples_with_origin(XEN filename, XEN samps, XEN snd_n, XEN chn_n, XEN origin)
@@ -8432,7 +8430,7 @@ static XEN g_insert_samples_with_origin(XEN samp, XEN samps, XEN origin, XEN vec
     }
   else file_insert_samples(beg, len, XEN_TO_C_STRING(vect), cp, 0, DONT_DELETE_ME, XEN_TO_C_STRING(origin), pos);
   update_graph(cp);
-  return(C_TO_XEN_OFF_T(len));
+  return(xen_return_first(C_TO_XEN_OFF_T(len), vect));
 }
 
 

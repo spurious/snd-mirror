@@ -2658,7 +2658,7 @@ static XEN g_map_chan_1(XEN proc_and_list, XEN s_beg, XEN s_end, XEN org, XEN sn
       FREE(filename);
     }
   cp->edit_hook_checked = false;
-  return(res);
+  return(xen_return_first(res, org));
 }
 
 static XEN g_map_chan_ptree_fallback(XEN proc, XEN init_func, chan_info *cp, off_t beg, off_t num, int pos)
@@ -3906,7 +3906,7 @@ static XEN g_fft_1(XEN reals, XEN imag, XEN sign, bool use_fft)
       FREE(rl);
       FREE(im);
     }
-  return(reals);
+  return(xen_return_first(reals, imag));
 }
 
 static XEN g_fft(XEN reals, XEN imag, XEN sign)

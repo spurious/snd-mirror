@@ -1,7 +1,5 @@
 #include "snd.h"
 
-#define NO_SUCH_COLOR XEN_ERROR_TYPE("no-such-color")
-
 static void timed_eval(XtPointer in_code, XtIntervalId *id)
 {
   XEN_CALL_0((XEN)in_code, "timed callback func");

@@ -1000,7 +1000,7 @@ static XEN g_mus_bank(XEN gens, XEN amps, XEN inp, XEN inp2)
   if (invals) FREE(invals);
   if (invals2) FREE(invals2);
   if (gs) FREE(gs);
-  return(C_TO_XEN_DOUBLE(outval));
+  return(xen_return_first(C_TO_XEN_DOUBLE(outval), gens));
 }
 
 
@@ -3748,7 +3748,7 @@ at frame 'start' and reading 'samples' samples altogether."
 		    XEN_TO_C_OFF_T_OR_ELSE(start, 0),
 		    samps,
 		    v->data);
-  return(data);
+  return(xen_return_first(data, filename));
 }
 
 static XEN g_mus_file_buffer_size(void)
@@ -4760,7 +4760,7 @@ it in conjunction with mixer to scale/envelope all the various ins and outs. \
       for (i = 0; i < in_size; i++) if (envs1[i]) FREE(envs1[i]);
       FREE(envs1);
     }
-  return(XEN_TRUE);
+  return(xen_return_first(XEN_TRUE, envs, in, out));
 }
 
 

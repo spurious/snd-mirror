@@ -2588,7 +2588,7 @@ static XEN g_sound_files_in_directory(XEN dirname)
 	  free_dir(dp);
 	}
     }
-  return(res);
+  return(xen_return_first(res, dirname));
 }
 
 #define S_disk_kspace "disk-kspace"

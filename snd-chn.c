@@ -6571,7 +6571,7 @@ If 'data' is a list of numbers, it is treated as an envelope."
 	update_graph(cp);
       else display_channel_lisp_data(cp);
     }
-  return(xen_return_first(XEN_FALSE, data));
+  return(xen_return_first(XEN_FALSE, data, ldata, xlabel));
 }
 
 #define S_colormap_ref "colormap-ref"

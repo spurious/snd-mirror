@@ -2,8 +2,6 @@
 #include "clm2xen.h"
 #include "sndlib-strings.h"
 
-#define NO_ACTIVE_SELECTION XEN_ERROR_TYPE("no-active-selection")
-
 /* Snd defines its own exit, delay, and frame? clobbering (presumably) the Guile versions,
  *   delay is protected in clm2xen.c as %delay, frame? as %frame?
  *   In Ruby, rand is protected as kernel_rand.
@@ -294,7 +292,7 @@ static XEN snd_format_if_needed(XEN args)
   result = C_TO_XEN_STRING(errmsg);
 #endif
   FREE(errmsg);
-  return(result);
+  return(xen_return_first(result, args));
 }
 
 /* ---------------- GUILE error handler ---------------- */
@@ -647,7 +645,7 @@ XEN snd_no_active_selection_error(const char *caller)
 
 XEN snd_bad_arity_error(const char *caller, XEN errstr, XEN proc)
 {
-  XEN_ERROR(XEN_ERROR_TYPE("bad-arity"),
+  XEN_ERROR(BAD_ARITY,
             XEN_LIST_3(C_TO_XEN_STRING(caller),
                        errstr,
 		       proc));
@@ -874,18 +872,13 @@ XEN snd_report_listener_result(XEN form)
 {
   char *str = NULL;
   XEN result;
-#if (!HAVE_RUBY)
-  int loc;
-#endif
   listener_append("\n");
 #if HAVE_RUBY
   str = gl_print(form);
   result = form;
 #else
   result = snd_catch_any(eval_form_wrapper, (void *)form, NULL);
-  loc = snd_protect(result);
   str = gl_print(result);
-  snd_unprotect_at(loc);
 #endif
   if (listener_height() > 5)
     listener_append_and_prompt(str);
@@ -1082,29 +1075,6 @@ static XEN g_snd_print(XEN msg)
 #endif
   return(msg);
 }
-
-#if 0
-static XEN format_func = XEN_UNDEFINED;
-static XEN g_clm_print(XEN args)
-{
-  #define H_clm_print "(" S_clm_print " args...): apply format to args and append the result in the listener."
-  XEN str, format_var;
-  if (XEN_NOT_BOUND_P(format_func))
-    {
-      format_var = XEN_VAR_NAME_TO_VAR("format");
-      if ((!(XEN_FALSE_P(format_var))) &&
-	  (XEN_PROCEDURE_P(XEN_VARIABLE_REF(format_var))))
-	format_func = XEN_VARIABLE_REF(format_var);
-      else XEN_ERROR(XEN_ERROR_TYPE("no-such-function"),
-		     XEN_LIST_2(C_TO_XEN_STRING("format"),
-				C_TO_XEN_STRING(S_clm_print)));
-    }
-  str = XEN_APPLY(format_func, args);
-  if (XEN_STRING_P(str))
-    listener_append(XEN_TO_C_STRING(str));
-  return(str);
-}
-#endif
 
 static XEN print_hook;
 static int print_depth = 0;
@@ -3373,6 +3343,39 @@ If it returns some non-false result, Snd assumes you've sent the text out yourse
 #endif
 
   XEN_YES_WE_HAVE("snd");
+
+#if HAVE_SCM_MAKE_RATIO
+  XEN_PROTECT_FROM_GC(BAD_ARITY);
+  XEN_PROTECT_FROM_GC(BAD_HEADER);
+  XEN_PROTECT_FROM_GC(BAD_TYPE);
+  XEN_PROTECT_FROM_GC(CANNOT_PARSE);
+  XEN_PROTECT_FROM_GC(CANNOT_PRINT);
+  XEN_PROTECT_FROM_GC(CANNOT_SAVE);
+  XEN_PROTECT_FROM_GC(MUS_MISC_ERROR);
+  XEN_PROTECT_FROM_GC(NO_ACTIVE_SELECTION);
+  XEN_PROTECT_FROM_GC(NO_DATA);
+  XEN_PROTECT_FROM_GC(NO_SUCH_AXIS_CONTEXT);
+  XEN_PROTECT_FROM_GC(NO_SUCH_AXIS_INFO);
+  XEN_PROTECT_FROM_GC(NO_SUCH_CHANNEL);
+  XEN_PROTECT_FROM_GC(NO_SUCH_COLOR);
+  XEN_PROTECT_FROM_GC(NO_SUCH_DIRECTION);
+  XEN_PROTECT_FROM_GC(NO_SUCH_EDIT);
+  XEN_PROTECT_FROM_GC(NO_SUCH_ENVELOPE);
+  XEN_PROTECT_FROM_GC(NO_SUCH_FILE);
+  XEN_PROTECT_FROM_GC(NO_SUCH_KEY);
+  XEN_PROTECT_FROM_GC(NO_SUCH_MARK);
+  XEN_PROTECT_FROM_GC(NO_SUCH_MENU);
+  XEN_PROTECT_FROM_GC(NO_SUCH_MIX);
+  XEN_PROTECT_FROM_GC(NO_SUCH_PLAYER);
+  XEN_PROTECT_FROM_GC(NO_SUCH_PLUGIN);
+  XEN_PROTECT_FROM_GC(NO_SUCH_REGION);
+  XEN_PROTECT_FROM_GC(NO_SUCH_SAMPLE);
+  XEN_PROTECT_FROM_GC(NO_SUCH_SOUND);
+  XEN_PROTECT_FROM_GC(NO_SUCH_TRACK);
+  XEN_PROTECT_FROM_GC(NO_SUCH_WIDGET);
+  XEN_PROTECT_FROM_GC(PLUGIN_ERROR);
+  XEN_PROTECT_FROM_GC(SND_GSL_ERROR);
+#endif
 
 #if WITH_MODULES
   scm_c_use_module("snd sndlib");

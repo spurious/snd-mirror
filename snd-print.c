@@ -2,8 +2,6 @@
 
 /* create Postscript version of graph */
 
-#define CANNOT_PRINT XEN_ERROR_TYPE("cannot-print")
-
 static char *pbuf = NULL;
 static int bbx = 0, bby = 0, bx0 = 0, by0 = 0;
 static int ps_fd;
@@ -569,7 +567,7 @@ static XEN g_graph_to_ps(XEN filename)
 			   C_TO_XEN_STRING(file),
 			   result));
     }
-  return(C_TO_XEN_STRING(file));
+  return(xen_return_first(C_TO_XEN_STRING(file), filename));
 }
 
 static XEN g_eps_file(void) {return(C_TO_XEN_STRING(eps_file(ss)));}

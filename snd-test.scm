@@ -117,11 +117,13 @@
 	   "storm.snd" "z.snd" "1.snd" "cardinal.snd" "now.snd.scm" "2a.snd" "4a.snd" "zero.snd"
 	   "loop.scm" "cmn-glyphs.lisp" "bullet.xpm")))
 
+(define (real-time) (exact->inexact (/ (get-internal-real-time) internal-time-units-per-second)))
+(define (hundred n) (inexact->exact (round (* 100 n))))
 (define times '())
 (defmacro time (a) 
-  `(let ((start (get-internal-real-time))) 
+  `(let ((start (real-time))) 
      ,a 
-     (let ((val (exact->inexact (/ (- (get-internal-real-time) start) 100))))
+     (let ((val (hundred (- (real-time) start))))
        (set! times (cons (list ',a val) times)))))
 
 ;(show-ptree #t)
@@ -218,7 +220,7 @@
 ;(define rs (lambda (n) (< (my-random 1.0) n)))
 (define rs (lambda (n) #t))
 
-(define timings (make-vector (+ total-tests 1)))
+(define timings (make-vector (+ total-tests 1) 0))
 
 (snd-display ";;~A" (snd-version))
 (define test-number -1)
@@ -227,8 +229,8 @@
 (add-hook! before-test-hook (lambda (n)
 			      (set! test-number n)
 			      (if (and (> n 0) (number? (vector-ref timings (- n 1))))
-				  (vector-set! timings (- n 1) (- (get-internal-real-time) (vector-ref timings (- n 1)))))
-			      (vector-set! timings n (get-internal-real-time))
+				  (vector-set! timings (- n 1) (hundred (- (real-time) (vector-ref timings (- n 1))))))
+			      (vector-set! timings n (real-time))
 			      (snd-display ";test ~D" n)
 			      (gc)
 			      (set! (show-backtrace) #f)
@@ -241,11 +243,12 @@
 ;(add-hook! after-test-hook (lambda (n) (snd-display ";...~D" n)))
 (add-hook! after-test-hook
 	   (lambda (n)
+	     (gc)
 	     (if (not (null? (sounds))) 
 		 (snd-display ";test ~D: open sounds: ~A" n (map short-file-name (sounds))))))
 
 
-(define overall-start-time (get-internal-real-time))
+(define overall-start-time (real-time))
 (snd-display ";~%~A~%" (strftime "%d-%b %H:%M %Z" (localtime (current-time))))
 
 (define (log-mem tst) 
@@ -10438,8 +10441,9 @@ EDITS: 5
 	    (sine-ramp 1.0 0.0)
 	    (if (not (vequal (channel->vct) (vct 1.000 0.976 0.905 0.794 0.655 0.500 0.345 0.206 0.095 0.024)))
 		(snd-display ";sine-ramp 1 0: ~A" (channel->vct)))
-	    (if (not (string=? (edit-fragment-type-name (list-ref (car (edit-tree)) 7)) "ed_ptree2_zero"))
-		(snd-display ";sine-ramp tree op: ~A ~A" (edit-fragment-type-name (list-ref (car (edit-tree)) 7)) (edit-tree)))
+	    (if (> (optimization) 0)
+		(if (not (string=? (edit-fragment-type-name (list-ref (car (edit-tree)) 7)) "ed_ptree2_zero"))
+		    (snd-display ";sine-ramp tree op: ~A ~A" (edit-fragment-type-name (list-ref (car (edit-tree)) 7)) (edit-tree))))
 	    (revert-sound ind)
 	    (as-one-edit
 	     (lambda ()
@@ -15030,9 +15034,13 @@ EDITS: 5
 	      (snd-display ";save-sound ~A: ~A ~A ~A?" i (sample 0) (sample 1) (sample i))))
 	(close-sound ind))
       
+      (if *output* 
+	  (begin
+	    (snd-display ";*output* ~A" *output*)
+	    (set! *output* #f)))
+
       (let ((nind (new-sound "fmv.snd" mus-aifc mus-bshort 22050 1 "this is a comment")))
 	(time (fm-violin 0 1 440 .1))
-	(scissor 2.0) 
 	(play-and-wait 0 nind)
 	(save-sound nind)
 	(if (not (sound? nind)) (snd-display ";save sound clobbered ~A?" nind))
@@ -26557,10 +26565,10 @@ EDITS: 3
 			     (gc)
 			     (let ((times (map
 					   (lambda (function)
-					     (let ((start (get-internal-real-time)))
+					     (let ((start (real-time)))
 					       (function)
 					       (revert-sound)
-					       (* (- (get-internal-real-time) start) .01)))
+					       (- (real-time) start)))
 					   (list (lambda () (scale-channel 2.0))
 						 (lambda () (reverse-channel))
 						 (lambda () (env-channel '(0 0 1 1)))
@@ -26579,11 +26587,11 @@ EDITS: 3
 			       times))))
 		     (list "1a.snd" "oboe.snd" "storm.snd" (string-append home-dir "/test/sound/away.snd")))))
 	  (snd-display ";         scl   rev   env   map   ptree  scn  pad   wrt   clm   mix   src   del")
-	  (snd-display ";1a:   ~{~6,F~}" (car data))  
-	  (snd-display ";oboe: ~{~6,F~}" (cadr data))  
-	  (snd-display ";storm:~{~6,F~}" (caddr data))
+	  (snd-display ";1a:   ~{~6,2F~}" (car data))  
+	  (snd-display ";oboe: ~{~6,2F~}" (cadr data))  
+	  (snd-display ";storm:~{~6,2F~}" (caddr data))
 	  (if (list-p (cadddr data))
-	      (snd-display ";away: ~{~6,F~}" (cadddr data))))
+	      (snd-display ";away: ~{~6,2F~}" (cadddr data))))
 
 	(if (and all-args with-big-file)
 	    (let ((big-file-name "/home/bil/zap/sounds/bigger.snd"))
@@ -26597,11 +26605,11 @@ EDITS: 3
 			     (set! (selection-creates-region) #f)
 			     (let ((times (map
 					   (lambda (function)
-					     (let ((start (get-internal-real-time)))
+					     (let ((start (real-time)))
 					       (function)
 					       (update-time-graph)
 					       (revert-sound)
-					       (* (- (get-internal-real-time) start) .01)))
+					       (- (real-time) start)))
 					   (list (lambda () 
 						   (let ((ma (maxamp)))
 						     (scale-channel 2.0)
@@ -27304,11 +27312,11 @@ EDITS: 6
 	  (close-sound ind))
 	
 	(let* ((ind (open-sound (string-append home-dir "/test/sound/away.snd")))
-	       (start (get-internal-real-time))
+	       (start (real-time))
 	       (mxs (maxamp ind #t)))
 	  (swap-channels)
 	  (update-time-graph)
-	  (let ((tm (/ (- (get-internal-real-time) start) 100)))
+	  (let ((tm (- (real-time) start)))
 	    (if (> tm .1) (snd-display ";swap-channels not optimized? ~A" tm)))
 	  (let ((new-mxs (maxamp ind #t)))
 	    (if (or (fneq (car mxs) (cadr new-mxs))
@@ -29550,9 +29558,9 @@ EDITS: 2
 		     (size (vct-length low-data))
 		     (samps (- right left))
 		     (left-offset (max 0 (- 1000 left)))
-		     (left-bin (inexact->exact (/ (* size left-offset) samps)))
+		     (left-bin (inexact->exact (round (/ (* size left-offset) samps))))
 		     (right-offset (- (min 2000 right) left))
-		     (right-bin (inexact->exact (/ (* size right-offset) samps)))
+		     (right-bin (inexact->exact (round (/ (* size right-offset) samps))))
 		     (new-low-data (vct-subseq low-data left-bin right-bin))
 		     (new-high-data (vct-subseq high-data left-bin right-bin)))
 		(set! (foreground-color snd chn) red)
@@ -30099,11 +30107,15 @@ EDITS: 2
 	(close-sound ind))
       (reset-almost-all-hooks)
 
-      (let ((help (snd-apropos "close-sound"))
-	    (help1 (snd-apropos 'close-sound)))
-        (if (or (not (string=? help help1))
-                (not (string=? help1 apropos-cs)))
-            (snd-display ";snd-apropos: ~A ~A" help help1)))
+      (catch #t
+	     (lambda ()
+	       (let ((help (snd-apropos "close-sound"))
+		     (help1 (snd-apropos 'close-sound)))
+		 (if (or (not (string=? help help1))
+			 (not (string=? help1 apropos-cs)))
+		     (snd-display ";snd-apropos: ~A ~A" help help1))))
+	     (lambda args 
+	       (snd-display ";snd-apropos: ~A" args)))
 
       (map-sound-files (lambda (n) (if (> (mus-sound-duration n) 1000.0) (snd-display ";~A is pretty long! ~A" n (mus-sound-duration n)))))
       (if (string? sf-dir)
@@ -30125,9 +30137,9 @@ EDITS: 2
 ;;; ---------------- test 22: run ----------------
 
 (defmacro time-it (a) 
-  `(let ((start (get-internal-real-time))) 
+  `(let ((start (real-time))) 
      ,a 
-     (- (get-internal-real-time) start)))
+     (- (real-time) start)))
 
 (define fm-violin-opt
   (lambda* (startime dur frequency amplitude #:key
@@ -33991,35 +34003,35 @@ EDITS: 2
 	      (set! t1 (time-it (map-channel (lambda (y) (* y 2)) 0 1000000 ind1)))
 	      (if (not (vequal (channel->vct 0 1000000 ind0) (channel->vct 0 1000000 ind1))) 
 		  (snd-display ";y * 2 run: ~A ~A" (channel->vct 0 1000000 ind0) (channel->vct 0 1000000 ind1)))
-	      (set! ts (cons (list "*2     " t0 t1 (inexact->exact (round (/ t0 t1)))) ts))
+	      (set! ts (cons (list "*2     " (hundred t0) (hundred t1) (inexact->exact (round (/ t0 t1)))) ts))
 	      (set! (optimization) 0) 
 	      (set! t0 (time-it (map-channel (lambda (y) (- y 1.0)) 0 1000000 ind0)))
 	      (set! (optimization) max-optimization)
 	      (set! t1 (time-it (map-channel (lambda (y) (- y 1.0)) 0 1000000 ind1)))
 	      (if (not (vequal (channel->vct 0 1000000 ind0) (channel->vct 0 1000000 ind1))) 
 		  (snd-display ";y - 1 run: ~A ~A" (channel->vct 0 1000000 ind0) (channel->vct 0 1000000 ind1)))
-	      (set! ts (cons (list "-1     " t0 t1 (inexact->exact (round (/ t0 t1)))) ts))
+	      (set! ts (cons (list "-1     " (hundred t0) (hundred t1) (inexact->exact (round (/ t0 t1)))) ts))
 	      (set! (optimization) 0) 
 	      (set! t0 (time-it (map-channel (lambda (y) (abs (sin y))) 0 1000000 ind0)))
 	      (set! (optimization) max-optimization) 
 	      (set! t1 (time-it (map-channel (lambda (y) (abs (sin y))) 0 1000000 ind1)))
 	      (if (not (vequal (channel->vct 0 1000000 ind0) (channel->vct 0 1000000 ind1))) 
 		  (snd-display ";abs sin run: ~A ~A" (channel->vct 0 1000000 ind0) (channel->vct 0 1000000 ind1)))
-	      (set! ts (cons (list "abs sin" t0 t1 (inexact->exact (round (/ t0 t1)))) ts))
+	      (set! ts (cons (list "abs sin" (hundred t0) (hundred t1) (inexact->exact (round (/ t0 t1)))) ts))
 	      (set! (optimization) 0) 
 	      (set! t0 (time-it (map-channel (lambda (y) (let ((a (* y 2))) (if (> y 1.0) 1.0 y))) 0 1000000 ind0)))
 	      (set! (optimization) max-optimization) 
 	      (set! t1 (time-it (map-channel (lambda (y) (let ((a (* y 2))) (if (> y 1.0) 1.0 y))) 0 1000000 ind1)))
 	      (if (not (vequal (channel->vct 0 1000000 ind0) (channel->vct 0 1000000 ind1))) 
 		  (snd-display ";let y run: ~A ~A" (channel->vct 0 1000000 ind0) (channel->vct 0 1000000 ind1)))
-	      (set! ts (cons (list "let if " t0 t1 (inexact->exact (round (/ t0 t1)))) ts))
+	      (set! ts (cons (list "let if " (hundred t0) (hundred t1) (inexact->exact (round (/ t0 t1)))) ts))
 	      (set! (optimization) 0) 
 	      (set! t0 (time-it (map-channel (let ((v (make-vct 3))) (lambda (y) (vct-set! v 1 .5) (* y (vct-ref v 1)))) 0 1000000 ind0)))
 	      (set! (optimization) max-optimization) 
 	      (set! t1 (time-it (map-channel (let ((v (make-vct 3))) (lambda (y) (vct-set! v 1 .5) (* y (vct-ref v 1)))) 0 1000000 ind1)))
 	      (if (not (vequal (channel->vct 0 1000000 ind0) (channel->vct 0 1000000 ind1))) 
 		  (snd-display ";let y run: ~A ~A" (channel->vct 0 1000000 ind0) (channel->vct 0 1000000 ind1)))
-	      (set! ts (cons (list "vct-ref" t0 t1 (inexact->exact (round (/ t0 t1)))) ts))
+	      (set! ts (cons (list "vct-ref" (hundred t0) (hundred t1) (inexact->exact (round (/ t0 t1)))) ts))
 	      
 	      (set! (optimization) 0) 
 	      (set! t0 (time-it (let ((osc (make-oscil :frequency 440))
@@ -34031,7 +34043,7 @@ EDITS: 2
 				  (map-channel (lambda (y) (* (env e1) (oscil osc y))) 0 1000000 ind1))))
 	      (if (not (vequal (channel->vct 0 1000000 ind0) (channel->vct 0 1000000 ind1))) 
 		  (snd-display ";let y run: ~A ~A" (channel->vct 0 1000000 ind0) (channel->vct 0 1000000 ind1)))
-	      (set! ts (cons (list "osc+env" t0 t1 (inexact->exact (round (/ t0 t1)))) ts))
+	      (set! ts (cons (list "osc+env" (hundred t0) (hundred t1) (inexact->exact (round (/ t0 t1)))) ts))
 	      
 	      (close-sound ind0)
 	      (close-sound ind1)
@@ -34074,7 +34086,7 @@ EDITS: 2
 	      (set! t0 (time-it (fm-violin-opt 0 5 440 .1)))
 	      (set! (optimization) max-optimization) 
 	      (set! t1 (time-it (fm-violin-opt 0 5 440 .1)))
-	      (set! ts (cons (list "fm vln " t0 t1 (inexact->exact (round (/ t0 t1)))) ts))
+	      (set! ts (cons (list "fm vln " (hundred t0) (hundred t1) (inexact->exact (round (/ t0 t1)))) ts))
 	      
 	      (let ((ind (open-sound "1.snd"))
 		    (v0 #f)
@@ -34087,7 +34099,7 @@ EDITS: 2
 		(set! t1 (time-it (expsnd '(0 1 2 .4))))
 		(set! v1 (channel->vct 1000 100))
 		(if (not (vequal v0 v1)) (snd-display ";expsnd: opt: ~A ~A" v0 v1))
-		(set! ts (cons (list "expsnd " t0 t1 (inexact->exact (round (/ t0 t1)))) ts))
+		(set! ts (cons (list "expsnd " (hundred t0) (hundred t1) (inexact->exact (round (/ t0 t1)))) ts))
 		(undo 1 ind)
 		(set! (optimization) 0) 
 		(set! t0 (time-it (jc-reverb 1.0 #f 1.0 #f)))
@@ -34097,7 +34109,7 @@ EDITS: 2
 		(set! t1 (time-it (jc-reverb 1.0 #f 1.0 #f)))
 		(set! v1 (channel->vct 1000 100))
 		(if (not (vequal v0 v1)) (snd-display ";jcrev: opt: ~A ~A" v0 v1))
-		(set! ts (cons (list "jcrev  " t0 t1 (inexact->exact (round (/ t0 t1)))) ts))
+		(set! ts (cons (list "jcrev  " (hundred t0) (hundred t1) (inexact->exact (round (/ t0 t1)))) ts))
 		(close-sound ind))
 	      (snd-display "~{       ~A~%~}~%" ts))
 	    
@@ -34764,6 +34776,7 @@ EDITS: 2
 		  (vox 4 2 170 .4 '(0 0 25 1 75 1 100 0) '(0 0 5 .5 10 0 100 1) .1 '(0 E 25 AE 35 ER 65 ER 75 I 100 UH) .05 .1)
 		  (p 5.0 :duration .5 :keyNum 36 :strike-velocity .5 :amp .4 :DryPedalResonanceFactor .25)
 		  (bobwhite 5.5)
+		  (scissor 2.0) 
 		  (plucky 3.25 .3 440 .2 1.0)
 		  (bowstr 3.75 .3 220 .2 1.0)
 		  (brass 4.2 .3 440 .2 1.0)
@@ -38334,7 +38347,6 @@ EDITS: 2
 (define (XM_DRAG_CALLBACK val) (or (procedure? val) (eq? val #f) (integer? val)))
 (define (XM_PARSE_CALLBACK val) (or (procedure? val) (eq? val #f) (integer? val)))
 
-
 (if (or full-test (= snd-test 25) (and keep-going (<= snd-test 25)))
     (begin
       (run-hook before-test-hook 25)
@@ -38554,14 +38566,17 @@ EDITS: 2
 	      (if (not (= (XDisplayMotionBufferSize dpy) 256))
 		  (snd-display ";XDisplayMotionBufferSize: ~A" (XDisplayMotionBufferSize dpy)))
 	      (XGetMotionEvents dpy win (list 'Time 100) (list 'Time CurrentTime))
-	      (let ((lmapk (XNewModifiermap 2)))
+
+	      (let ((lmapk (XNewModifiermap 2))
+		    (kcd (list 'KeyCode 50)))
 		(if (not (XModifierKeymap? lmapk))
 		    (snd-display ";xNewModifiermap: ~A" lmapk)
 		    (begin
-		      (set! lmapk (XInsertModifiermapEntry lmapk (list 'KeyCode 50) ShiftMapIndex))
-		      (set! lmapk (XDeleteModifiermapEntry lmapk (list 'KeyCode 50) ShiftMapIndex))
+		      (set! lmapk (XInsertModifiermapEntry lmapk kcd ShiftMapIndex))
+		      (set! lmapk (XDeleteModifiermapEntry lmapk kcd ShiftMapIndex))
 ;		      (XFreeModifiermap lmapk) ;prone to segfault in X
 		      )))
+
 	      (if (not (= (XExtendedMaxRequestSize dpy) 1048575))
 		  (snd-display ";XExtendedMaxRequestSize ~A" (XExtendedMaxRequestSize dpy)))
 	      (if (not (= (XMaxRequestSize dpy) 65535))
@@ -46957,11 +46972,11 @@ EDITS: 2
 						 (not (string=? (cadr args) name)))
 					    (begin
 					      (if (eq? (car args) 'wrong-type-arg)
-						  (snd-display ";procs1: ~A ~A" (cadr args) name))
+						  (snd-display ";procs1 wta: ~A ~A ~A" args name arg))
 					      (set! already-warned (cons name already-warned)))))
 				      (car args)))))
 		    (if (eq? err 'wrong-number-of-args)
-			(snd-display ";procs1: ~A ~A" err (procedure-property n 'documentation)))))
+			(snd-display ";procs1 wna: ~A ~A" err (procedure-property n 'documentation)))))
 		procs1))
 	     (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color .95 .95 .95)  '#(0 1) 3/4 'mus-error (sqrt -1.0) (make-delay 32)
 		   (lambda () #t) (current-module) (make-sound-data 2 3) :order 0 1 -1 (make-hook 2) #f #t #\c 0.0 1.0 -1.0 
@@ -47357,29 +47372,31 @@ EDITS: 2
 
 (display (format #f ";all done!~%~A" original-prompt))
 
+#!
 (display (format #f ";gc: ~A~%" (gc-stats)))
 
 (let ((gc-lst (gc-stats)))
   (display (format #f ";timings:~%  ~A: total~%  GC: ~A~%~{    ~A~%~})" 
-	       (exact->inexact (/ (- (get-internal-real-time) overall-start-time) internal-time-units-per-second))
-	       (exact->inexact (/ (cdr (list-ref gc-lst 0)) internal-time-units-per-second))
+	       (- (real-time) overall-start-time)
+	       (inexact->exact (round (* 100 (/ (cdr (list-ref gc-lst 0)) internal-time-units-per-second))))
 	       (list (list-ref gc-lst 1) 
 		     (list-ref gc-lst 5)
 		     (if (> (length gc-lst) 9)
 			 (list-ref gc-lst 8)
 			 #f)))))
-
+!#
+#!
 (if (not (null? times))
     (for-each (lambda (n)
- 		(display (format #f ";  ~A: ~A" (cadr n) (car n))))
+ 		(display (format #f ";  ~A: ~A~%" (car n) (cadr n))))
  	      times))
-
+!#
 (if (number? (vector-ref timings total-tests)) 
-    (vector-set! timings total-tests (- (get-internal-real-time) (vector-ref timings total-tests))))
-(do ((i 0 (1+ i)))
-    ((= i (+ total-tests 1)))
-  (if (number? (vector-ref timings i))
-      (display (format #f " [~D: ~A]" i (exact->inexact (/ (vector-ref timings i) internal-time-units-per-second))))))
+    (vector-set! timings total-tests (hundred (- (real-time) (vector-ref timings total-tests)))))
+
+(set! (print-length) 64)
+(display (format "~%;times: ~A~%;total: ~A~%~%" timings (inexact->exact (round (- (real-time) overall-start-time)))))
+
 
 (if (and (string? test14-file)
 	 (file-exists? test14-file))

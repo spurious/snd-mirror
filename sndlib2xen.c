@@ -678,7 +678,7 @@ header-type is a sndlib type indicator such as " S_mus_aiff "; sndlib currently 
       else XEN_OUT_OF_RANGE_ERROR(S_mus_sound_open_output, 5, header_type, "~A: invalid header type");
     }
   else XEN_OUT_OF_RANGE_ERROR(S_mus_sound_open_output, 4, data_format, "~A: invalid data format");
-  return(C_TO_XEN_INT(fd));
+  return(xen_return_first(C_TO_XEN_INT(fd), comment));
 }
 
 static XEN g_mus_sound_reopen_output(XEN file, XEN chans, XEN data_format, XEN header_type, XEN data_loc)
@@ -1018,7 +1018,7 @@ static XEN g_mus_audio_mixer_read(XEN dev, XEN field, XEN chan, XEN vals)
   for (i = 0; i < len; i++) 
     vdata[i] = C_TO_XEN_DOUBLE(fvals[i]);
   FREE(fvals);
-  return(C_TO_XEN_INT(val));
+  return(xen_return_first(C_TO_XEN_INT(val), vals));
 }
 
 static XEN g_mus_audio_mixer_write(XEN dev, XEN field, XEN chan, XEN vals)
@@ -1050,7 +1050,7 @@ static XEN g_mus_audio_mixer_write(XEN dev, XEN field, XEN chan, XEN vals)
 			      XEN_TO_C_INT(chan),
 			      fvals);
   FREE(fvals);
-  return(C_TO_XEN_INT(res));
+  return(xen_return_first(C_TO_XEN_INT(res), vals));
 }
 
 static XEN g_mus_file_data_clipped(XEN fd)

@@ -1912,8 +1912,8 @@ Reverb-feedback sets the scaler on the feedback.
 	  "disk full!"
 	  (if (> num 1024)
 	      (if (> num (* 1024 1024))
-		  (format #f "space: ~6,3FG" (/ num (* 1024 1024)))
-		  (format #f "space: ~6,3FM" (/ num 1024.0)))
+		  (format #f "space: ~6,3FG" (round (/ num (* 1024 1024))))
+		  (format #f "space: ~6,3FM" (round (/ num 1024.0))))
 	      (format #f "space: ~10DK" num))))
     (define (show-label data id)
       (if (sound? (car data))
@@ -2475,7 +2475,7 @@ Reverb-feedback sets the scaler on the feedback.
   "(show-font-name font-list) shows the Snd-related name and the X-related name of each font in a font list"
   (define (show-next-font context)
     (let ((next-font (XmFontListGetNextFont context)))
-      (if (car next-font)
+      (if (and next-font (car next-font))
 	  (begin
 	    (if (XFontStruct? (caddr next-font))
 		(let ((name (XGetFontProperty (caddr next-font) XA_FULL_NAME)))

@@ -1872,8 +1872,6 @@ void remove_apply(snd_info *sp)
     }
 }
 
-#define NO_SUCH_SOUND    XEN_ERROR_TYPE("no-such-sound")
-
 XEN snd_no_such_sound_error(const char *caller, XEN n)
 {
   XEN_ERROR(NO_SUCH_SOUND,

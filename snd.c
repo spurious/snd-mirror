@@ -89,7 +89,7 @@ static void mus_print2snd(char *msg)
 #include <gsl/gsl_ieee_utils.h>
 #include <gsl/gsl_errno.h>
 /* default gsl error handler apparently aborts main program! */
-#define SND_GSL_ERROR XEN_ERROR_TYPE("gsl-error")
+
 static void snd_gsl_error(const char *reason, const char *file, int line, int gsl_errno)
 {
   XEN_ERROR(SND_GSL_ERROR,

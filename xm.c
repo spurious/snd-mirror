@@ -9,7 +9,7 @@
 
 /* TODO: tests for Motif 2.4 additions */
 
-#define XM_DATE "21-Apr-04"
+#define XM_DATE "26-Apr-04"
 
 /* HISTORY: 
  *
@@ -2284,6 +2284,9 @@ static XEN C_TO_XEN_ANY(Widget w, Arg arg)
 #if (!XM_DISABLE_DEPRECATED)
     case XM_FONTLIST:	      return(C_TO_XEN_XmFontList((XmFontList)(*((XmFontList *)(arg.value)))));
 #endif
+#if HAVE_XmCreateMultiList
+    case XM_ROW_INFO:         return(C_TO_XEN_XmMultiListRowInfo((XmMultiListRowInfo *)(*((XmMultiListRowInfo **)(arg.value)))));
+#endif
     case XM_COLORMAP:	      return(C_TO_XEN_Colormap((*((Colormap *)(arg.value)))));
     case XM_KEYSYM:	      return(C_TO_XEN_KeySym((*((KeySym *)(arg.value)))));
     case XM_KEYSYM_TABLE:     
@@ -2320,7 +2323,6 @@ static XEN C_TO_XEN_ANY(Widget w, Arg arg)
 	return(C_TO_XEN_STRING((char *)(*((char **)(arg.value)))));
       else return(C_TO_XEN_INT((int)(*((int *)(arg.value)))));
       break;
-      /* TODO: get resource XM_ROW_INFO? */
     default:
       break;
     }
@@ -2370,7 +2372,7 @@ static XEN gxm_XtGetValues_1(XEN arg1, XEN larg2, int len)
   FREE(args);
   FREE(locs);
   xm_unprotect_at(gcloc);
-  return(val);
+  return(xen_return_first(val, larg2));
 }
 
 #endif
@@ -2697,7 +2699,7 @@ removes renditions"
   if (XEN_BOUND_P(arg2)) tags = (XmStringTag *)XEN_TO_C_Strings(arg2, len);
   rt = XmRenderTableRemoveRenditions(XEN_TO_C_XmRenderTable(arg1), tags, len);
   if (tags) FREE(tags);
-  return(C_TO_XEN_XmRenderTable(rt));
+  return(xen_return_first(C_TO_XEN_XmRenderTable(rt), arg2));
 }
 
 static XEN gxm_XmRenderTableCopy(XEN arg1, XEN arg2, XEN arg3)
@@ -2725,7 +2727,7 @@ static XEN gxm_XmRenderTableCopy(XEN arg1, XEN arg2, XEN arg3)
   if (XEN_BOUND_P(arg2)) tags = (XmStringTag *)XEN_TO_C_Strings(arg2, len);
   rt = XmRenderTableCopy(XEN_TO_C_XmRenderTable(arg1), tags, len);
   if (tags) FREE(tags);
-  return(C_TO_XEN_XmRenderTable(rt));
+  return(xen_return_first(C_TO_XEN_XmRenderTable(rt), arg2));
 }
 
 static XEN gxm_XmRenderTableFree(XEN arg1)
@@ -2795,7 +2797,7 @@ matches rendition tags"
     lst = XEN_CONS(C_TO_XEN_XmRendition(rs[i]), lst);
   free(rs);
   xm_unprotect_at(loc);
-  return(lst);
+  return(xen_return_first(lst, arg2));
 }
 
 static XEN gxm_XmRenditionCreate(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
@@ -2862,7 +2864,7 @@ retrieves rendition resources"
     FREE(args);
     FREE(locs);
     xm_unprotect_at(gcloc);
-    return(val);
+    return(xen_return_first(val, larg2));
   }
 }
 
@@ -3159,7 +3161,7 @@ retrieves attributes of a parse mapping"
     FREE(args);
     FREE(locs);
     xm_unprotect_at(gcloc);
-    return(val);
+    return(xen_return_first(val, larg2));
   }
 }
 
@@ -3301,7 +3303,7 @@ to a compound string table"
   FREE(strs);
   lst = C_TO_XEN_XmStringTable(val, len);
   free(val);
-  return(lst);
+  return(xen_return_first(lst, arg1));
 }
 
 static XEN gxm_XmStringTableUnparse(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6, XEN arg7, XEN arg8)
@@ -3423,7 +3425,7 @@ XmParseTable parse_table, Cardinal parse_count, XtPointer call_data) converts a 
   if (XEN_XmParseTable_P(arg5)) pt = XEN_TO_C_XmParseTable(arg5, len);
   rtn = C_TO_XEN_XmString(XmStringParseText(str, intext, tag, type, pt, len, (XtPointer)arg7));
   free(pt);
-  return(xen_return_first(rtn, arg2));
+  return(xen_return_first(rtn, arg1, arg2));
 }
 
 static XEN gxm_XmStringUnparse(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6, XEN arg7)
@@ -3793,9 +3795,11 @@ allows applications to access the fonts and character sets in a font list"
   int b;
   XEN_ASSERT_TYPE(XEN_XmFontContext_P(arg1), arg1, 1, "XmFontListGetNextFont", "XmFontContext");
   b = XmFontListGetNextFont(XEN_TO_C_XmFontContext(arg1), &s, &f);
-  return(XEN_LIST_3(C_TO_XEN_BOOLEAN(b),
-		    C_TO_XEN_STRING(s),
-		    C_TO_XEN_XFontStruct(f)));
+  if (b) /* else "s" may be garbage */
+    return(XEN_LIST_3(C_TO_XEN_BOOLEAN(b),
+		      C_TO_XEN_STRING(s),
+		      C_TO_XEN_XFontStruct(f)));
+  return(XEN_FALSE);
 }
 
 static XEN gxm_XmFontListInitFontContext(XEN arg1)
@@ -3808,9 +3812,9 @@ allows applications to access the entries in a font list"
   Boolean b;
   XEN_ASSERT_TYPE(XEN_XmFontList_or_XmRenderTable_P(arg1), arg1, 1, "XmFontListInitFontContext", "XmFontList");
   b = XmFontListInitFontContext(&fc, XEN_TO_C_XmFontList(arg1));
-  if (!b)
-    return(XEN_FALSE);
-  return(C_TO_XEN_XmFontContext(fc));
+  if (b)
+    return(C_TO_XEN_XmFontContext(fc));
+  return(XEN_FALSE);
 }
 
 static XEN gxm_XmFontListCopy(XEN arg1)
@@ -6655,7 +6659,7 @@ retrieves resource values set on a drop site"
   FREE(args);
   FREE(locs);
   xm_unprotect_at(gcloc);
-  return(val);
+  return(xen_return_first(val, larg2));
 }
 
 static XEN gxm_XmDropSiteEndUpdate(XEN arg1)
@@ -8524,7 +8528,7 @@ static XEN gxm_XSetStandardProperties(XEN dpy, XEN win, XEN win_name, XEN icon_n
 			 c_argc,
 			 (XEN_XSizeHints_P(hints)) ? XEN_TO_C_XSizeHints(hints) : NULL);
   if (c_argv) FREE(c_argv);
-  return(XEN_FALSE);
+  return(xen_return_first(XEN_FALSE, argv));
 }
 #endif
 static XEN gxm_XSetWMProperties(XEN dpy, XEN win, XEN win_name, XEN icon_name, XEN argv, XEN argc, XEN normal_hints, XEN wm_hints)
@@ -8569,7 +8573,7 @@ static XEN gxm_XSetWMProperties(XEN dpy, XEN win, XEN win_name, XEN icon_name, X
 		   XEN_TO_C_XWMHints(wm_hints),
 		   NULL);
   if (c_argv) FREE(c_argv);
-  return(XEN_FALSE);
+  return(xen_return_first(XEN_FALSE, win_name, icon_name, argv));
 }
 
 static XEN gxm_XSetRegion(XEN arg1, XEN arg2, XEN arg3)
@@ -9595,7 +9599,7 @@ static XEN gxm_XSetFontPath(XEN arg1, XEN arg2, XEN arg3)
   else paths = NULL;
   rtn = XSetFontPath(XEN_TO_C_Display(arg1), paths, len);
   if (paths) FREE(paths);
-  return(C_TO_XEN_INT(rtn));
+  return(xen_return_first(C_TO_XEN_INT(rtn), arg2));
 }
 
 static XEN gxm_XSetFont(XEN arg1, XEN arg2, XEN arg3)
@@ -9664,7 +9668,7 @@ static XEN gxm_XSetCommand(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
   str = XEN_TO_C_Strings(arg3, len);
   val = XSetCommand(XEN_TO_C_Display(arg1), XEN_TO_C_Window(arg2), str, len);
   FREE(str);
-  return(C_TO_XEN_INT(val));
+  return(xen_return_first(C_TO_XEN_INT(val), arg3));
 }
 
 static XEN gxm_XSetCloseDownMode(XEN arg1, XEN arg2)
@@ -14955,7 +14959,7 @@ static XEN gxm_XtWarningMsg(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XE
   csize = (Cardinal)size;
   XtWarningMsg(XEN_TO_C_STRING(arg1), XEN_TO_C_STRING(arg2), XEN_TO_C_STRING(arg3), XEN_TO_C_STRING(arg4), pars, &csize);
   FREE(pars);
-  return(XEN_FALSE);
+  return(xen_return_first(XEN_FALSE, arg5));
 }
 #endif
 
@@ -14983,7 +14987,7 @@ handler and passes the specified information."
 		  XEN_TO_C_STRING(arg3), XEN_TO_C_STRING(arg4), XEN_TO_C_STRING(arg5), 
 		  pars, &csize);
   FREE(pars);
-  return(XEN_FALSE);
+  return(xen_return_first(XEN_FALSE, arg6));
 }
 
 #if (!XM_DISABLE_DEPRECATED)
@@ -15007,7 +15011,7 @@ static XEN gxm_XtErrorMsg(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN 
   csize = (Cardinal)size;
   XtErrorMsg(XEN_TO_C_STRING(arg1), XEN_TO_C_STRING(arg2), XEN_TO_C_STRING(arg3), XEN_TO_C_STRING(arg4), pars, &csize);
   FREE(pars);
-  return(XEN_FALSE);
+  return(xen_return_first(XEN_FALSE, arg5));
 }
 #endif
 
@@ -15035,7 +15039,7 @@ handler and passes the specified information."
 		XEN_TO_C_STRING(arg3), XEN_TO_C_STRING(arg4), 
 		XEN_TO_C_STRING(arg5), pars, &csize);
   FREE(pars);
-  return(XEN_FALSE);
+  return(xen_return_first(XEN_FALSE, arg6));
 }
 
 static XEN xm_XtErrorMsgHandler = XEN_FALSE;
@@ -15344,7 +15348,7 @@ from the list of strings"
     fallbacks[i] = XEN_TO_C_STRING(XEN_CAR(lst));
   XtAppSetFallbackResources(XEN_TO_C_XtAppContext(app), fallbacks);
   FREE(fallbacks);
-  return(app);
+  return(xen_return_first(app, specs));
 }
 
 static XEN gxm_XtVaAppInitialize(XEN arg2, XEN arg5, XEN arg6, XEN arg8, XEN specs)
@@ -17073,7 +17077,7 @@ and parameters."
 	if (params[i]) free(params[i]);
       FREE(params);
     }
-  return(XEN_FALSE);
+  return(xen_return_first(XEN_FALSE, arg4));
 }
 
 static XEN gxm_XtGetActionList(XEN arg1)
@@ -26904,6 +26908,10 @@ static bool xm_already_inited = false;
 #if (!WITH_GTK_AND_X11)
 #if HAVE_GUILE
       XEN_EVAL_C_STRING("(define xm-version \"" XM_DATE "\")");
+#if HAVE_SCM_MAKE_RATIO
+      XEN_PROTECT_FROM_GC(C_STRING_TO_XEN_SYMBOL("KeyCode"));
+      XEN_PROTECT_FROM_GC(C_STRING_TO_XEN_SYMBOL("XmString"));
+#endif
 #endif
 #if HAVE_RUBY
       rb_define_global_const("Xm_Version", C_TO_XEN_STRING(XM_DATE));
