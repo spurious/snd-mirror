@@ -631,39 +631,42 @@ static XEN g_vct_to_sound_data(XEN vobj, XEN sdobj, XEN chan)
 }
 
 #define S_sound_data_to_sound_data "sound-data->sound-data"
-static XEN g_sound_data_to_sound_data(XEN sd_in, XEN sd_out, XEN start, XEN frames, XEN cycle_length)
+static XEN g_sound_data_to_sound_data(XEN sd_in, XEN sd_out, XEN start, XEN frames, XEN cycle_length, XEN chan_offset)
 {
   #define H_sound_data_to_sound_data "(" S_sound_data_to_sound_data " sd-in sd-out start frames): copies sound-data sd-in's \
 data from 0 for 'frames' frames into 'sd-out' starting at 'start', wrapping around if sd-out's end is reached."
   sound_data *sdi, *sdo;
-  int len, beg, i, j = 0, ilen, olen, cycle, chans;
+  int len, beg, i, j = 0, ilen, olen, cycle, chans, offset = 0;
   XEN_ASSERT_TYPE(SOUND_DATA_P(sd_in), sd_in, XEN_ARG_1, S_sound_data_to_sound_data, "a sound-data object");
   XEN_ASSERT_TYPE(SOUND_DATA_P(sd_out), sd_out, XEN_ARG_2, S_sound_data_to_sound_data, "a sound-data object");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(start), start, XEN_ARG_3, S_sound_data_to_sound_data, "an integer");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(frames), frames, XEN_ARG_4, S_sound_data_to_sound_data, "an integer");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(cycle_length), cycle_length, XEN_ARG_5, S_sound_data_to_sound_data, "an integer");
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(chan_offset), chan_offset, XEN_ARG_6, S_sound_data_to_sound_data, "an integer");
   sdi = (sound_data *)XEN_OBJECT_REF(sd_in);
   sdo = (sound_data *)XEN_OBJECT_REF(sd_out);
   beg = XEN_TO_C_INT(start);
   len = XEN_TO_C_INT(frames);
   cycle = XEN_TO_C_INT(cycle_length);
+  if (XEN_INTEGER_P(chan_offset)) offset = XEN_TO_C_INT(chan_offset);
+  if (beg >= cycle) beg = 0;
   ilen = sdi->length;
   if (len > ilen) len = ilen;
   olen = sdo->length;
   if (beg >= olen) beg = 0;
   if (cycle > olen) cycle = olen;
   chans = sdo->chans;
-  if (sdi->chans < chans) chans = sdi->chans;
+  if ((sdi->chans - offset) < chans) chans = sdi->chans - offset;
   if ((beg + len) < cycle)
     {
       for (i = 0; i < chans; i++)
-	memmove((void *)(sdo->data[i] + beg), (void *)(sdi->data[i]), (len * sizeof(mus_sample_t)));
+	memmove((void *)(sdo->data[i] + beg), (void *)(sdi->data[i + offset]), (len * sizeof(mus_sample_t)));
       j = beg + len;
     }
   else
     {
       int k;
-      for (i = 0; i < chans; i++)
+      for (i = offset; i < chans; i++)
 	{
 	  j = beg;
 	  for (k = 0; k < len; k++)
@@ -1212,7 +1215,7 @@ XEN_NARGIFY_2(g_make_sound_data_w, g_make_sound_data)
 XEN_NARGIFY_1(g_mus_sound_data_p_w, g_mus_sound_data_p)
 XEN_NARGIFY_1(g_mus_sound_data_maxamp_w, g_mus_sound_data_maxamp)
 XEN_ARGIFY_3(g_sound_data_to_vct_w, g_sound_data_to_vct)
-XEN_NARGIFY_5(g_sound_data_to_sound_data_w, g_sound_data_to_sound_data)
+XEN_ARGIFY_6(g_sound_data_to_sound_data_w, g_sound_data_to_sound_data)
 XEN_ARGIFY_3(g_vct_to_sound_data_w, g_vct_to_sound_data)
 XEN_NARGIFY_1(g_mus_sound_samples_w, g_mus_sound_samples)
 XEN_NARGIFY_2(g_mus_sound_set_samples_w, g_mus_sound_set_samples)
@@ -1613,7 +1616,7 @@ void mus_sndlib_xen_initialize(void)
   XEN_DEFINE_PROCEDURE(S_sound_data_maxamp,        g_mus_sound_data_maxamp_w,      1, 0, 0, H_sound_data_maxamp);
   XEN_DEFINE_PROCEDURE(S_sound_data_setB,          g_sound_data_set_w,             4, 0, 0, H_sound_data_setB);
   XEN_DEFINE_PROCEDURE(S_sound_data_to_vct,        g_sound_data_to_vct_w,          1, 2, 0, H_sound_data_to_vct);
-  XEN_DEFINE_PROCEDURE(S_sound_data_to_sound_data, g_sound_data_to_sound_data_w,   5, 0, 0, H_sound_data_to_sound_data);
+  XEN_DEFINE_PROCEDURE(S_sound_data_to_sound_data, g_sound_data_to_sound_data_w,   5, 1, 0, H_sound_data_to_sound_data);
   XEN_DEFINE_PROCEDURE(S_vct_to_sound_data,        g_vct_to_sound_data_w,          1, 2, 0, H_vct_to_sound_data);
   XEN_DEFINE_PROCEDURE(S_mus_sound_frames,         g_mus_sound_frames_w,           1, 0, 0, H_mus_sound_frames);
   XEN_DEFINE_PROCEDURE(S_mus_sound_duration,       g_mus_sound_duration_w,         1, 0, 0, H_mus_sound_duration);
@@ -1822,6 +1825,7 @@ void mus_sndlib_xen_initialize(void)
 	       S_sound_data_p,
 	       S_sound_data_ref,
 	       S_sound_data_setB,
+	       S_sound_data_to_sound_data,
 	       S_vct_to_sound_data,
 	       NULL);
 #endif

@@ -92,22 +92,29 @@
 		    (off-func)
 		    (set! oscope-power #f)))
 	      (mus-audio-close oscope-input-port))
-	    (snd-print ";can't open audio input?")))))
+	    (snd-print ";can't open audio input?"))))
+  #f)
 
 (define (freeze-func)
   (set! oscope-frozen (not oscope-frozen))
   (if oscope-frozen
       (begin
 	(if (time-graph? oscope-graph 0) (update-time-graph oscope-graph 0))
-	(if (transform-graph? oscope-graph 0) (update-transform-graph oscope-graph 0)))))
+	(if (transform-graph? oscope-graph 0) (update-transform-graph oscope-graph 0))))
+  #f)
 
 (define (cycle-func size)
-  (let ((old-length cycle-length))
+  (let ((old-length cycle-length)
+	(old-frozen oscope-frozen))
+    (set! oscope-frozen #t)
     (set! cycle-length size)
+    (set! cycle-start 0)
     (if (< cycle-length old-length)
 	(do ((i cycle-length (1+ i)))
-	    ((= i old-length))
-	  (sound-data-set! oscope-graph-data 0 i 0.0)))))
+	    ((>= i old-length))
+	  (sound-data-set! oscope-graph-data 0 i 0.0)))
+    (set! oscope-frozen old-frozen)
+    #f))
 
 
 (if (provided? 'snd-motif)

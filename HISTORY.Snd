@@ -4,11 +4,11 @@ Snd change log
   15-Oct:    normalize-channel.
   11-Oct:    vct->string
              moved scale-sound-by and scale-sound-to to snd7.scm.
-	     added sndins and gfm directories (Mike Scholz sndlib/clm code)
+	     sndins and gfm directories (Mike Scholz sndlib/clm code)
              controls->channel
   5-Oct:     snd 7.7.
   4-Oct:     moved vct->samples and samples->vct to snd7.scm.
-             added edit-list->function
+             edit-list->function
              changed transform-samples->vct to transform->vct, region-samples->vct to region->vct,
 	       transform-samples-size to transform-frames. (Old forms are in snd7.scm).
   1-Oct:     grid-density (controls axis tick spacing)
