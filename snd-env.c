@@ -35,6 +35,12 @@ env *free_env(env *e)
   if (e)
     {
       if (e->data) {FREE(e->data); e->data = NULL;}
+      if ((e->type == ENVELOPE_LAMBDA) && (e->gc_loc >= 0))
+	{
+	  snd_unprotect_at(e->gc_loc);
+	  e->procs = XEN_FALSE;
+	  e->gc_loc = -1;
+	}
       FREE(e);
     }
   return(NULL);
@@ -52,6 +58,12 @@ env *copy_env(env *e)
       memcpy((void *)(ne->data), (void *)(e->data), ne->data_size * sizeof(Float));
       ne->base = e->base;
       ne->type = e->type;
+      if (e->type == ENVELOPE_LAMBDA)
+	{
+	  ne->procs = e->procs;
+	  ne->gc_loc = snd_protect(ne->procs);
+	}
+      else ne->gc_loc = -1;
       return(ne);
     }
   return(NULL);
@@ -68,6 +80,7 @@ bool envs_equal(env *e1, env *e2)
       return(false);
   if (e1->type != e2->type) return(false);
   if (e1->base != e2->base) return(false); /* 1 and 0 are possibilities here */
+  if ((e1->type == ENVELOPE_LAMBDA) && (!(XEN_EQ_P(e1->procs, e2->procs)))) return(false);
   return(true);
 }
 

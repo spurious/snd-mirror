@@ -311,7 +311,8 @@ static int li_loc = 0;
 static Float *li_e = NULL;
 static Float li_x = -1.0;
 
-Float list_interp(Float x, Float *e, int size)
+/* TODO: shouldn't list_interp be replaced by mus_env_interp? (used only for filter coeffs) */
+static Float list_interp(Float x, Float *e, int size)
 {
   int loc, lim;
   if ((li_e == e) && (x >= li_x))

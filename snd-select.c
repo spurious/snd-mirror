@@ -351,21 +351,28 @@ static int insert_selection(chan_info *cp, off_t beg, const char *origin)
     {
       si_out = sync_to_chan(cp);
       si_in = selection_sync();
-      if (si_in->chans > 1) 
-	remember_temp(tempfile, si_in->chans);
-      for (i = 0; ((i < si_in->chans) && (i < si_out->chans)); i++)
+      if (si_in == NULL) /* C-g just after save? */
 	{
-	  cp_out = si_out->cps[i]; /* currently syncd chan that we might paste to */
-	  cp_in = si_in->cps[i];   /* selection chan to paste in (no wrap-around here) */
-	  len = cp_selection_len(cp_in, NULL);
-	  if (file_insert_samples(beg, len,
-				  tempfile, cp_out, i,
-				  (si_in->chans > 1) ? MULTICHANNEL_DELETION : DELETE_ME,
-				  origin, cp_out->edit_ctr))
-	    update_graph(cp_out);
+	  free_sync_info(si_out);
 	}
-      free_sync_info(si_in);
-      free_sync_info(si_out);
+      else
+	{
+	  if (si_in->chans > 1) 
+	    remember_temp(tempfile, si_in->chans);
+	  for (i = 0; ((i < si_in->chans) && (i < si_out->chans)); i++)
+	    {
+	      cp_out = si_out->cps[i]; /* currently syncd chan that we might paste to */
+	      cp_in = si_in->cps[i];   /* selection chan to paste in (no wrap-around here) */
+	      len = cp_selection_len(cp_in, NULL);
+	      if (file_insert_samples(beg, len,
+				      tempfile, cp_out, i,
+				      (si_in->chans > 1) ? MULTICHANNEL_DELETION : DELETE_ME,
+				      origin, cp_out->edit_ctr))
+		update_graph(cp_out);
+	    }
+	  free_sync_info(si_in);
+	  free_sync_info(si_out);
+	}
     }
   if (tempfile) FREE(tempfile);
   cp->edit_hook_checked = false;
@@ -708,6 +715,7 @@ int save_selection(char *ofile, int type, int format, int srate, const char *com
 	    {
 	      ss->stopped_explicitly = false;
 	      snd_warning(_("save selection stopped"));
+	      err = MUS_ERROR;
 	      break;
 	    }
 	}

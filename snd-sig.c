@@ -1031,35 +1031,13 @@ void src_env_or_num(chan_info *cp, env *e, Float ratio, bool just_num,
 
 /* FIR filtering */
 
-static Float *env2array(int order, env *e)
-{
-  Float *fdata = NULL;
-  Float x;
-  int i, j, lim, size;
-  Float last_x, step;
-  if (!e) return(NULL);
-  /* get the frequency envelope and design the FIR filter */
-  fdata = (Float *)CALLOC(order, sizeof(Float));
-  last_x = e->data[(e->pts - 1) * 2];
-  step = 2.0 * last_x / (Float)(order - 1);
-  lim = order / 2;
-  size = e->pts * 2;
-  for (i = 0, x = 0.0; i < lim; i++, x += step) 
-    fdata[i] = list_interp(x, e->data, size); /* not mus_env here since it's likely the points fall between the order-related samples */
-  for (j = order / 2 - 1, i = order / 2; 
-       (i < order) && (j >= 0); 
-       i++, j--) 
-    fdata[i] = fdata[j];
-  return(fdata);
-}
-
 static Float *get_filter_coeffs(int order, env *e)
 {
   /* interpret e as frequency response */
   Float *a = NULL, *fdata;
   if (!e) return(NULL);
   /* get the frequency envelope and design the FIR filter */
-  fdata = env2array(order, e);
+  fdata = sample_linear_env(e, order);
   if (!fdata) return(NULL);
   a = (Float *)CALLOC(order, sizeof(Float));
   mus_make_fir_coeffs(order, fdata, a);
@@ -1283,7 +1261,7 @@ static char *apply_filter_or_error(chan_info *ncp, int order, env *e, enved_prog
 	  dur += order;
 	  fsize = snd_2pow2(dur);
 	  sndrdat = (Float *)CALLOC(fsize, sizeof(Float));
-	  fltdat = env2array(fsize, e);
+	  fltdat = sample_linear_env(e, fsize);
 
 	  sf = sfs[i];                                 /* init_sample_read(0, cp, READ_FORWARD); */
 	  for (k = 0; k < dur; k++) 
@@ -1303,7 +1281,7 @@ static char *apply_filter_or_error(chan_info *ncp, int order, env *e, enved_prog
 	    }
 	  scale = 1.0 / (Float)fsize;
 	  for (k = 0; k < fsize; k++)
-	    sndrdat[k] *= (scale * fltdat[k]);         /* fltdat (via env2array) is already reflected around midpoint */
+	    sndrdat[k] *= (scale * fltdat[k]);         /* fltdat is already reflected around midpoint */
 	  mus_fftw(sndrdat, fsize, -1);
 
 	  ofile = snd_tempnam();
@@ -1665,12 +1643,6 @@ static void reverse_sound(chan_info *ncp, bool over_selection, XEN edpos, int ar
 void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, bool regexpr, 
 	       enved_progress_t from_enved, const char *origin, mus_any *gen, XEN edpos, int arg_pos)
 {
-  /* four cases here: 
-   *    if only one Y value in env, use scale_channel
-   *    if step env (base=0), use sequence of scale_channels
-   *    if linear segments and no underlying ramps, use sequence of (x)ramp_channels and scale_channels to mimic env
-   *    else use mus_env and multiply every sample
-   */
   snd_info *sp;
   sync_info *si;
   sync_state *sc = NULL;
@@ -1738,7 +1710,16 @@ void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, bool regexpr,
     }
 
   if (e)
-    egen = mus_make_env(e->data, e->pts, 1.0, 0.0, e->base, 0.0, 0, dur - 1, NULL); /* dur - 1 = end sample number */
+    {
+      if (e->type == ENVELOPE_LAMBDA)
+	{
+	  /* handle as map|ptree-channel call, if possible */
+	  
+	  /* need any-env-channel equivalent; also would be nice to save ptree rather than reparse */
+
+	}
+      egen = mus_make_env(e->data, e->pts, 1.0, 0.0, e->base, 0.0, 0, dur - 1, NULL); /* dur - 1 = end sample number */
+    }
   else egen = gen;
   /* must take into account possible egen scaler/offset/base and funny lengths from here on */
 
@@ -1824,7 +1805,7 @@ void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, bool regexpr,
       }
   si = free_sync_info(si);
 
-  if (!rampable) /* must have envs already in section to be ramped */
+  if (!rampable)
     {
       off_t ioff;
       mus_sample_t **data;

@@ -378,6 +378,7 @@ void about_snd_help(void)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+8-Jan:   extensions.rb thanks to Michael Scholz.\n\
 5-Jan:   envelopes can now have the properties 'envelope-base, 'envelope-type, and\n\
            'envelope-lambda.  The envelope editor manages these, and define-envelope\n\
            provides an optional base argument.  The rest of Snd knows about the\n\

@@ -144,7 +144,7 @@ Extensions to Snd can be found in:
 <tr><td><a href="sndscm.html#envdoc">env.scm, env.rb</a></td>        <td>various envelope functions from CLM</td></tr>
 <tr><td><a href="sndscm.html#enveddoc">enved.scm</a></td>            <td>envelope editor in lisp graph section</td></tr>
 <tr><td><a href="sndscm.html#eventdoc">event.scm</a></td>            <td>xm module stuff for automatic user-interface tests</td></tr>
-<tr><td><a href="sndscm.html#extensionsdoc">extensions.scm</a></td>  <td>extensions of Snd</td></tr>
+<tr><td><a href="sndscm.html#extensionsdoc">extensions.scm, extensions.rb</a></td><td>extensions of Snd</td></tr>
 <tr><td><a href="sndscm.html#fadedoc">fade.scm</a></td>              <td>frequency-domain cross-fades</td></tr>
 <tr><td><a href="sndscm.html#fmvdoc">fmv.scm</a></td>                <td>the fm-violin tied to real-time stuff</td></tr>
 <tr><td><a href="sndscm.html#freeverbdoc">freverb.scm, freeverb.rb</a></td><td>a reverb</td></tr>
@@ -8284,7 +8284,6 @@ sinusoid:
      (let ((incr (/ pi frag-dur)))
        (vct (+ (* -1.0 pi) (* frag-beg incr)) incr rmp0 (- rmp1 rmp0)))))
 </pre></td></tr></table></td></tr>
-</td></tr>
 
 <!-- enved-filter -->
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="filterenv">enved-filter</a></em> ()</code></span></td></tr>

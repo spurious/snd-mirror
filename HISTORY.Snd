@@ -2,6 +2,7 @@ Snd change log
 
 2004 ----------------------------------------------------------------
 
+  8-Jan:     extensions.rb thanks to Michael Scholz.
   5-Jan:     envelopes can now have the properties 'envelope-base, 'envelope-type, and
                'envelope-lambda.  The envelope editor manages these, and define-envelope
                provides an optional base argument.  The rest of Snd knows about the

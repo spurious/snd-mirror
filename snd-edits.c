@@ -8992,4 +8992,7 @@ append the rest?
       SOMEDAY: change over to an array of functions: ramp_start_number, xramp+scale, ptree(zero), etc
         the basic accessor sequence can be (*(arr[1]))(sf, ((*(arr[0]))(sf, sf->data[loc...]))) --
         means changing function type slightly, and ptree_zero case is sticky, and scalers are tricky 
+
+      could ptree-channel have an only-forward version?
+      cleaner ptree-channel interface: split "dir" into read-forward and read-backward funcs?
 */

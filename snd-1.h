@@ -153,6 +153,8 @@ typedef struct {
   int pts, data_size; /* data_size is independent of actual number of points of data (can be much larger) */
   env_type_t type;
   Float base;
+  XEN procs;
+  int gc_loc;
 } env;
 
 typedef struct {
@@ -997,7 +999,6 @@ void g_init_env(void);
 /* -------- snd-dac.c -------- */
 
 void cleanup_dac(void);
-Float list_interp(Float x, Float *e, int pts);
 void stop_playing_sound(snd_info *sp);
 void stop_playing_sound_no_toggle(snd_info *sp);
 void stop_playing_all_sounds(void);

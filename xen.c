@@ -644,7 +644,11 @@ static VALUE xen_rb_hook_initialize(int argc, VALUE *argv, VALUE hook)
  */
 VALUE xen_rb_hook_c_new(char *name, int arity, char *help)
 {
-  VALUE args[] = {C_TO_XEN_STRING(name), C_TO_XEN_INT(arity), C_TO_XEN_STRING(help)};
+  VALUE args[3];
+  args[0] = C_TO_XEN_STRING(name);
+  args[1] = C_TO_XEN_INT(arity);
+  args[2] = C_TO_XEN_STRING(help);
+  /* VALUE args[] = {C_TO_XEN_STRING(name), C_TO_XEN_INT(arity), C_TO_XEN_STRING(help)}; */
   return xen_rb_hook_initialize(3, args, hook_alloc(xen_rb_cHook));
 }
 
@@ -761,6 +765,7 @@ static VALUE xen_rb_hook_inspect(VALUE hook)
   rb_str_cat2(str, "]: ");
   rb_str_append(str, rb_inspect(xen_rb_hook_names(hook)));
   rb_str_cat2(str, ">");
+  return(XEN_FALSE); /* or str? */
 }    
 
 /*
