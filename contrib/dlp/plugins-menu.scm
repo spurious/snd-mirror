@@ -1,5 +1,7 @@
 (use-modules (ice-9 format))
 
+(load "new-effects.scm")
+
 (define plugins-list '()) ; menu labels are updated to show current default settings
 
 (define plugins-menu (add-to-main-menu "LADSPA Plugins" (lambda ()
@@ -1971,15 +1973,15 @@
                                          (help-dialog "Pitch scaler"
                                                       "A pitch shifter implementation that scales the harmonics appropriately with the base frequencies.\n\ It is an implementation of Stephen M. Sprengler's pitch scaler design. It gives reasonable, general purpose results for small changes, but won't give Antares or Eventide anything to worry about.\n\ The FFT block size and oversampling has been kept at reasonable levels to keep the CPU usage low.\n\ Pitch coefficient: The pitch scaling factor, a value of 2.0 will increase the pitch by one octave, etc."))
                                        (lambda (w c i)
-                                         (set! pitch-coefficient .5)
+                                         (set! pitch-coefficient 1.0)
                                          (|XtSetValues (car sliders)
-                                            (list |XmNvalue (inexact->exact (* pitch-coefficient 100)))))))
+                                            (list |XmNvalue semi-range)))))
              (set! sliders
                    (add-sliders pitch-scale-dialog
-                                (list (list "pitch coefficient" 0.5 1.0 2.0
+                                (list (list "pitch coefficient" 0.25 1.0 4.0
                                             (lambda (w context info)
-                                              (set! pitch-coefficient (/ (|value info) 100.0)))
-                                            100))))))
+                                              (set! pitch-coefficient (semitones->ratio (- (|value info) semi-range))))
+                                            100 'semi))))))
        (activate-dialog pitch-scale-dialog))))
 
       (let ((child (|XtCreateManagedWidget "Pitch scaler" |xmPushButtonWidgetClass ladspa-freq-menu
