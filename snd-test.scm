@@ -2777,6 +2777,12 @@
 (load "edit-menu.scm")
 (define g-init-val 0)
 
+(define* (make-bandstop-2 flo1 fhi1 flo2 fhi2 #:optional (len 30))
+  (let* ((f1 (make-bandstop flo1 fhi1 len))
+	 (f2 (make-bandstop flo2 fhi2 len)))
+    (vct-add! (mus-xcoeffs f1) (mus-xcoeffs f2))
+    f1))
+
 (define* (cosine-channel-via-ptree #:optional (beg 0) (dur #f) (snd #f) (chn #f) (edpos #f))
   ;; vct: angle increment
   (ptree-channel
@@ -7429,6 +7435,24 @@ EDITS: 5
 	    (if (fneq (maxamp ind 0) 0.0)
 		(snd-display ";bandpass+bandstop sidelobes: ~A" (maxamp ind 0))))
 	  (close-sound ind))
+
+	(let ((ind (new-sound "test.snd")))
+	  (map-channel (lambda (y) (- 1.0 (random 2.0))) 0 10000)
+	  (let ((f2 (make-bandpass-2 (* .12 pi) (* .15 pi) (* .22 pi) (* .25 pi) 100)))
+	    (map-channel (lambda (y) (fir-filter f2 y)))
+	    (let ((data (channel->vct)))
+	      (undo)
+	      (let* ((f1 (make-bandpass (* .12 pi) (* .15 pi) 100))
+		     (f2 (make-bandpass (* .22 pi) (* .25 pi) 100)))
+		(map-channel (lambda (y) (+ (fir-filter f1 y) (fir-filter f2 y))))
+		(let ((data1 (channel->vct)))
+		  (vct-subtract! data data1)
+		  (if (> (vct-peak data) .00001)
+		      (snd-display ";fir-filter 2: ~A" (vct-peak data))))
+		(undo))))
+	  (close-sound ind))
+
+
         ))))
 
 

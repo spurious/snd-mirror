@@ -669,6 +669,11 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 (define (hilbert-transform f in)
   (fir-filter f in))
 
+;;; it's much faster to use fir-filter directly in map-channel --
+;;;   fir-filter can be highly optimized via run, whereas currently
+;;;   a function like hilbert-transform which calls fir-filter
+;;;   is not optimized (this is do-able...)
+
 #!
   (let ((h (make-hilbert-transform 15)))
     (map-channel (lambda (y)
@@ -749,6 +754,21 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
   (let ((hp (make-bandpass (* .1 pi) (* .2 pi))))
     (map-channel (lambda (y)
 		   (bandpass hp y))))
+
+;; for more bands, you can add the coeffs:
+
+(define* (make-bandpass-2 flo1 fhi1 flo2 fhi2 #:optional (len 30))
+  (let* ((f1 (make-bandpass flo1 fhi1 len))
+	 (f2 (make-bandpass flo2 fhi2 len)))
+    (vct-add! (mus-xcoeffs f1) (mus-xcoeffs f2))
+    f1))
+
+(let ((ind (new-sound "test.snd")))
+  (map-channel (lambda (y) (- 1.0 (random 2.0))) 0 10000)
+  (let ((f2 (make-bandpass-2 (* .12 pi) (* .15 pi) (* .22 pi) (* .25 pi) 100)))
+    (map-channel (lambda (y) (fir-filter f2 y)))
+    ))
+
 !#
 
 ;;; -------- bandstop filter

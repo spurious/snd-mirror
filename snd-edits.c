@@ -3930,13 +3930,6 @@ mus_sample_t next_sound (snd_fd *sf)
 	}
       else
 	{
-#if DEBUGGING
-	  if (READER_SOUND(sf) < 0)
-	    {
-	      fprintf(stderr,"sf->cb->snd: %d\n", READER_SOUND(sf));
-	      abort();
-	    }
-#endif
 	  nxt_snd = sf->cp->sounds[READER_SOUND(sf)];
 	  if (nxt_snd->type == SND_DATA_FILE)
 	    {

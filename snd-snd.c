@@ -101,10 +101,6 @@ static env_state *make_env_state(chan_info *cp, off_t samples)
   env_info *ep, *old_ep = NULL;
   env_state *es;
   if (samples <= 0) return(NULL);
-#if DEBUGGING
-  if ((cp == NULL) || (cp->active == FALSE) || (cp->sound == NULL))
-    abort();
-#endif
   stop_amp_env(cp);
   pos = cp->edit_ctr;
   es = (env_state *)CALLOC(1, sizeof(env_state));
@@ -339,9 +335,6 @@ int amp_env_usable(chan_info *cp, Float samples_per_pixel, off_t hisamp, int sta
   env_info *ep;
   int bin;
   chan_context *cgx;
-#if DEBUGGING
-  if ((cp == NULL) || (cp->active == FALSE) || (cp->sound == NULL)) abort();
-#endif
   cgx = cp->cgx;
   if ((!cgx) || 
       (!(cp->amp_envs))) 
@@ -1605,7 +1598,7 @@ Cessate apply_controls(Indicium ptr)
 		    curchan = sp->selected_channel;
 		  if (apply_beg > 0)
 		    file_change_samples(apply_beg, apply_dur, ap->ofile, sp->chans[curchan], 0, 
-					  DELETE_ME, LOCK_MIXES, "Apply to channel", sp->chans[curchan]->edit_ctr);
+					DELETE_ME, LOCK_MIXES, "Apply to channel", sp->chans[curchan]->edit_ctr);
 		  else file_override_samples(apply_dur, ap->ofile, sp->chans[curchan], 0, 
 					     DELETE_ME, LOCK_MIXES, "Apply to channel");
 		  update_graph(sp->chans[curchan]);
@@ -3160,7 +3153,7 @@ static XEN g_peak_env_info(XEN snd, XEN chn, XEN pos)
 
 static int pack_mus_sample_type(void)
 {
-  /* put mus_sample_t decription in peak-env info file (in case user opens it on from incompatible machine) */
+  /* put mus_sample_t description in peak-env info file (in case user opens it from incompatible machine) */
   int val = MUS_SAMPLE_BITS;
 #if MUS_LITTLE_ENDIAN
   val |= (1 << 8);

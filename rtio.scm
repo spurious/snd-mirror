@@ -1,7 +1,5 @@
 ;;; various low-level IO and "real-time" functions/examples
 
-;;; TODO: check this (mus-audio-open) in ALSA
-
 (define (card+device card device)
   ;; sndlib (for dubious historical reasons) packs the sound card number into the same parameter as the device number
   (logior (ash card 16) device))
