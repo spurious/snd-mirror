@@ -872,7 +872,7 @@ void make_file_save_as_dialog(snd_state *ss)
   load_header_and_data_lists(save_as_file_data,
 			     save_as_file_data->current_type,
 			     save_as_file_data->current_format,
-			     (hdr) ? hdr->srate : region_srate(0), 
+			     (hdr) ? hdr->srate : selection_srate(), 
 			     0, -1, 
 			     output_comment(hdr));
   if (!XtIsManaged(save_as_dialog)) XtManageChild(save_as_dialog);
@@ -887,7 +887,7 @@ void make_edit_save_as_dialog(snd_state *ss)
   load_header_and_data_lists(save_as_file_data,
 			     save_as_file_data->current_type,
 			     save_as_file_data->current_format,
-			     region_srate(0), 
+			     selection_srate(), 
 			     0, -1, NULL);
   if (!XtIsManaged(save_as_dialog)) XtManageChild(save_as_dialog);
 }

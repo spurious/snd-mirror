@@ -267,6 +267,20 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
+1-June:  add-to-menu and remove-from-menu can affect the popup menu.\n\
+         region handling changed to use the region \"id\", not its current stack position.\n\
+           many related changes: \n\
+             region-* procedures take the id as the region number argument.\n\
+             removed: select-region, select-region-hook, id-region, region-id\n\
+             renamed: delete-region -> forget-region.\n\
+         (Snd version 5.0 due to this change)\n\
+         added selection-chans, selection-srate (since regions may be disassociated from the selection).\n\
+         with-big-colormap is now the default.\n\
+         removed all the map and scan functions except map-chan and scan-chan\n\
+           (the rest can be easily re-implemented using loops, sample-readers, set-samples, and sync).\n\
+         removed all the temp-to-sound|selection (and vice versa) functions, and temp-filenames\n\
+           (these were redundant since set-samples can take a filename)\n\
+         added channel arg to save-selection (for multi-file selection saves)\n\
 29-May:  combined channel-style and uniting under the name channel-style (uniting removed).\n\
          dac-folding -> dac-combines-channels (not sure about this name change).\n\
          C-x x|n|x_x|n key support (\"eval expression\") removed (was useless and broken).\n\
@@ -1132,7 +1146,6 @@ user-interface manipulations.\n\
   " S_save_hook " (snd name)\n\
   " S_select_channel_hook " (snd chn)\n\
   " S_select_mix_hook " (id)\n\
-  " S_select_region_hook " (reg)\n\
   " S_select_sound_hook " (snd)\n\
   " S_snd_error_hook " (msg)\n\
   " S_snd_warning_hook " (msg)\n\
@@ -1199,7 +1212,6 @@ all refer to the same thing.\n\
   " S_data_location "     (snd)\n\
   " S_delete_mark "       (id snd chn)\n\
   " S_delete_marks "      (snd chn)\n\
-  " S_delete_region "     (reg)\n\
   " S_delete_sample "     (samp snd chn)\n\
   " S_delete_samples "    (samp samps snd chn)\n\
   " S_delete_selection "  ()\n\
@@ -1230,6 +1242,7 @@ all refer to the same thing.\n\
   " S_find "              (c-expr start snd chn)\n\
   " S_find_mark "         (samp snd chn)\n\
   " S_find_sound "        (filename)\n\
+  " S_forget_region "     (reg)\n\
   " S_forward_graph "     (count)\n\
   " S_forward_mark "      (count)\n\
   " S_forward_mix "       (count)\n\
@@ -1240,7 +1253,6 @@ all refer to the same thing.\n\
   " S_graph2ps "         ()\n\
   " S_header_type "       (snd)\n\
   " S_help_dialog "       (subject help)\n\
-  " S_id_region "         (id)\n\
   " S_in "                (ms code)\n\
   " S_insert_region "     (beg reg snd chn)\n\
   " S_insert_sample "     (samp value snd chn)\n\
@@ -1317,7 +1329,6 @@ all refer to the same thing.\n\
   " S_redo "              (edits snd chn)\n\
   " S_region_chans "      (reg)\n\
   " S_region_dialog "     ()\n\
-  " S_region_id "         (reg)\n\
   " S_region_length "     (reg)\n\
   " S_region_maxamp "     (reg)\n\
   " S_region_sample "     (samp reg chn)\n\
@@ -1351,7 +1362,7 @@ all refer to the same thing.\n\
   " S_save_macros "       ()\n\
   " S_save_marks "        (snd)\n\
   " S_save_region "       (reg filename format)\n\
-  " S_save_selection "    (file)\n\
+  " S_save_selection "    (file chan)\n\
   " S_save_sound "        (snd)\n\
   " S_save_sound_as "     (filename snd type format srate)\n\
   " S_save_state "        (filename)\n\
@@ -1360,15 +1371,14 @@ all refer to the same thing.\n\
   " S_scale_selection_to "(scalers)\n\
   " S_scale_to "          (scalers snd chn)\n\
   " S_search_procedure "  (snd)\n\
-  " S_select_region "     (reg)\n\
   " S_selected_channel "  (snd)\n\
   " S_selected_mix "      ()\n\
   " S_selected_sound "    ()\n\
+  " S_selection_chans "   ()\n\
   " S_selection_length "  ()\n\
   " S_selection_member "  (snd chn)\n\
   " S_selection_position "()\n\
-  " S_selection_to_temp " (type format)\n\
-  " S_selection_to_temps "(type format)\n\
+  " S_selection_srate "   ()\n\
   " S_selection_p "       ()\n\
   " S_short_file_name "   (snd)\n\
   " S_show_controls "     (snd)\n\
@@ -1376,8 +1386,6 @@ all refer to the same thing.\n\
   " S_smooth_selection "  ()\n\
   " S_smooth_sound "      (beg num snd chn)\n\
   " S_sound_files_in_directory "(dir)\n\
-  " S_sound_to_temp "     (type format)\n\
-  " S_sound_to_temps "    (type format)\n\
   " S_sound_p "           (snd)\n\
   " S_sounds "            ()\n\
   " S_snd_apropos "       (name)\n\
@@ -1400,11 +1408,6 @@ all refer to the same thing.\n\
   " S_swap_channels "     (snd1 chn1 snd2 chn2 beg dur)\n\
   " S_syncd_marks "       (sync)\n\
   " S_sync "              (snd)\n\
-  " S_temp_filenames "    (data)\n\
-  " S_temp_to_selection " ()\n\
-  " S_temp_to_sound "     ()\n\
-  " S_temps_to_selection "()\n\
-  " S_temps_to_sound "    ()\n\
   " S_transform_dialog "  ()\n\
   " S_transform_sample "  (bin slice snd chn)\n\
   " S_transform_samples " (snd chn()\n\
@@ -2292,12 +2295,8 @@ is displayed in the graph window.  The up and\n\
 down arrows move up or down in the region's\n\
 list of channels.  If you click a region's\n\
 title, the text is highlighted, and that region\n\
-is displayed in the graph area.  You can cause\n\
-that region to become the current 'selection'\n\
-by clicking the 'Select' button (this merely\n\
-moves the region to the top slot in the region\n\
-list).  You can delete the selected region by\n\
-clicking the 'Delete' button.  To dismiss the\n\
+is displayed in the graph area.  You can delete the\n\
+region by clicking the 'Delete' button.  To dismiss the\n\
 browser, click 'Ok'.  The 'edit' button\n\
 loads the region into the main editor as a temporary\n\
 file.  It can be edited or renamed, etc.  If you save\n\

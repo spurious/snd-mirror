@@ -7,12 +7,14 @@ static regrow **region_rows = NULL;
 static int region_rows_size = 0;
 static snd_info *reg_sp = NULL;
 static int current_region = -1;
-static GtkWidget *select_button, *srate_text, *length_text, *chans_text, *maxamp_text;
+static GtkWidget *srate_text, *length_text, *chans_text, *maxamp_text;
 static regrow *region_row(int n);
 
 static void region_update_graph(chan_info *cp)
 {
-  reg_sp->nchans = region_chans(current_region);
+  if (current_region == -1) return;
+  reg_sp->nchans = region_chans(stack_position_to_id(current_region));
+  if (reg_sp->nchans == 0) return;
   update_graph(cp, NULL);
   reg_sp->nchans = 1;
 }
@@ -68,7 +70,7 @@ static void make_region_labels(file_info *hdr)
   set_label(chans_text, str);
   mus_snprintf(str, PRINT_BUFFER_SIZE, STR_length, (float)(hdr->samples) / (float)(hdr->chans * hdr->srate));
   set_label(length_text, str);
-  mus_snprintf(str, PRINT_BUFFER_SIZE, STR_maxamp, region_maxamp(current_region));
+  mus_snprintf(str, PRINT_BUFFER_SIZE, STR_maxamp, region_maxamp(stack_position_to_id(current_region)));
   set_label(maxamp_text, str);
   FREE(str);
 }
@@ -98,8 +100,8 @@ void update_region_browser(snd_state *ss, int grf_too)
 	{
 	  cp->chan = 0;
 	  set_sensitive(channel_f(cp), FALSE);
-	  set_sensitive(channel_w(cp), (region_chans(0) > 1));
-	  if (region_ok(0)) 
+	  set_sensitive(channel_w(cp), (region_chans(stack_position_to_id(0)) > 1));
+	  if (region_ok(stack_position_to_id(0))) 
 	    {
 	      reg_sp->hdr = fixup_region_data(cp, 0, 0);
 	      make_region_labels(reg_sp->hdr);
@@ -136,10 +138,10 @@ static void region_expose_Callback(GtkWidget *w, GdkEventExpose *ev, gpointer da
   region_update_graph((chan_info *)data);
 }
 
-void delete_region_and_update_browser(snd_state *ss, int n)
+void delete_region_and_update_browser(snd_state *ss, int pos)
 {
   int act;
-  act = delete_region(n);
+  act = remove_region_from_stack(pos);
   if (act == INVALID_REGION) return;
   if (region_dialog)
     {
@@ -170,28 +172,6 @@ static void region_help_Callback(GtkWidget *w, gpointer context)
   region_dialog_help((snd_state *)context);
 }
 
-void select_region_and_update_browser(snd_state *ss, int n)
-{
-  deactivate_selection();  /* just in case there's a region being highlighted */
-  if (region_dialog)
-    {
-      unhighlight_region(ss);
-      select_region(n);
-      current_region = 0;
-      highlight_region(ss);
-      goto_window(region_rows[0]->nm);
-      set_sensitive(select_button, FALSE);
-      update_region_browser(ss, 0);
-    }
-}
-
-static void region_select_Callback(GtkWidget *w, gpointer context)
-{
-  snd_state *ss = (snd_state *)context;
-  if (current_region != -1)
-    select_region_and_update_browser(ss, current_region);
-}
-
 static void region_up_arrow_Callback(GtkWidget *w, GdkEventButton *ev, gpointer data)
 {
   chan_info *cp;
@@ -210,11 +190,11 @@ static void region_down_arrow_Callback(GtkWidget *w, GdkEventButton *ev, gpointe
 {
   chan_info *cp;
   cp = reg_sp->chans[0];
-  if ((cp->chan + 1) < region_chans(current_region))
+  if ((cp->chan + 1) < region_chans(stack_position_to_id(current_region)))
     {
       cp->chan++;
       set_sensitive(channel_f(cp), TRUE);
-      set_sensitive(channel_w(cp), (region_chans(current_region) > (cp->chan + 1)));
+      set_sensitive(channel_w(cp), (region_chans(stack_position_to_id(current_region)) > (cp->chan + 1)));
       fixup_region_data(cp, cp->chan, current_region);
       region_update_graph(cp);
     }
@@ -227,13 +207,13 @@ static void region_focus_Callback(GtkWidget *w, gpointer context) /* button clic
   regrow *r = (regrow *)context;
   ss = r->ss;
   unhighlight_region(ss);
+  if (stack_position_to_id(r->pos) == INVALID_REGION) return; /* needed by auto-tester */
   current_region = r->pos;
   cp = reg_sp->chans[0];
   cp->chan  = 0;
   highlight_region(ss);
   set_sensitive(channel_f(cp), FALSE);
-  set_sensitive(channel_w(cp), (region_chans(current_region) > 1));
-  set_sensitive(select_button, (current_region != 0));
+  set_sensitive(channel_w(cp), (region_chans(stack_position_to_id(current_region)) > 1));
   reg_sp->hdr = fixup_region_data(cp, 0, current_region);
   make_region_labels(reg_sp->hdr);
   region_update_graph(cp);
@@ -244,7 +224,7 @@ void reflect_play_region_stop(int n)
   regrow *rg;
   if (region_rows)
     {
-      rg = region_row(n);
+      rg = region_row(id_to_stack_position(n));
       if (rg) set_toggle_button(rg->pl, FALSE, FALSE, (void *)rg);
     }
 }
@@ -253,8 +233,8 @@ static void region_play_Callback(GtkWidget *w, gpointer context)
 {
   regrow *r = (regrow *)context;
   if (GTK_TOGGLE_BUTTON(r->pl)->active)
-    play_region(r->ss, r->pos, IN_BACKGROUND);
-  else stop_playing_region(r->pos);
+    play_region(r->ss, stack_position_to_id(r->pos), IN_BACKGROUND);
+  else stop_playing_region(stack_position_to_id(r->pos));
 }
 
 static void region_save_Callback(GtkWidget *w, gpointer context)
@@ -263,13 +243,13 @@ static void region_save_Callback(GtkWidget *w, gpointer context)
   protect_region(r->pos, GTK_TOGGLE_BUTTON(r->sv)->active);
 }
 
-void set_region_protect(int reg, int protect)
+void set_region_protect(int id, int protect)
 {
   regrow *r;
-  protect_region(reg, protect);
+  protect_region(id, protect);
   if (region_rows)
     {
-      r = region_row(reg);
+      r = region_row(id_to_stack_position(id));
       if ((r) && (r->sv)) set_toggle_button(r->sv, protect, FALSE, (void *)r);
     }
 }
@@ -294,7 +274,7 @@ static void region_labels_mouse_enter(GtkWidget *w, GdkEventCrossing *ev, gpoint
 
 static void make_region_dialog(snd_state *ss)
 {
-  int i;
+  int i, id;
   GtkWidget *print_button, *edit_button;
   regrow *r;
   chan_info *cp;
@@ -314,27 +294,22 @@ static void make_region_dialog(snd_state *ss)
   add_dialog(ss, region_dialog);
 
   help_button = gtk_button_new_with_label(STR_Help);
-  select_button = gtk_button_new_with_label(STR_Select);
   dismiss_button = gtk_button_new_with_label(STR_Dismiss);
   delete_button = gtk_button_new_with_label(STR_Delete);
 
   gtk_box_pack_start(GTK_BOX(GTK_DIALOG(region_dialog)->action_area), dismiss_button, TRUE, TRUE, 4);
-  gtk_box_pack_start(GTK_BOX(GTK_DIALOG(region_dialog)->action_area), select_button, TRUE, TRUE, 4);
   gtk_box_pack_end(GTK_BOX(GTK_DIALOG(region_dialog)->action_area), help_button, TRUE, TRUE, 4);
   gtk_box_pack_start(GTK_BOX(GTK_DIALOG(region_dialog)->action_area), delete_button, TRUE, TRUE, 4);
 
   gtk_signal_connect(GTK_OBJECT(delete_button), "clicked", GTK_SIGNAL_FUNC(region_delete_Callback), (gpointer)ss);
   gtk_signal_connect(GTK_OBJECT(help_button), "clicked", GTK_SIGNAL_FUNC(region_help_Callback), (gpointer)ss);
   gtk_signal_connect(GTK_OBJECT(dismiss_button), "clicked", GTK_SIGNAL_FUNC(region_ok_Callback), (gpointer)ss);
-  gtk_signal_connect(GTK_OBJECT(select_button), "clicked", GTK_SIGNAL_FUNC(region_select_Callback), (gpointer)ss);
 
   set_pushed_button_colors(help_button, ss);
   set_pushed_button_colors(delete_button, ss);
   set_pushed_button_colors(dismiss_button, ss);
-  set_pushed_button_colors(select_button, ss);
 
   gtk_widget_show(delete_button);
-  gtk_widget_show(select_button);
   gtk_widget_show(help_button);
   gtk_widget_show(dismiss_button);
 
@@ -416,6 +391,7 @@ static void make_region_dialog(snd_state *ss)
 
   if (!reg_sp) 
     { /* just a place holder, I think -- see make_region_readable in snd-clip.c */
+      id = stack_position_to_id(0);
       reg_sp = (snd_info *)CALLOC(1, sizeof(snd_info));
       reg_sp->nchans = 1;
       reg_sp->allocated_chans = 1;
@@ -425,8 +401,8 @@ static void make_region_dialog(snd_state *ss)
       reg_sp->search_proc = SCM_UNDEFINED;
       reg_sp->prompt_callback = SCM_UNDEFINED;
       hdr = reg_sp->hdr;
-      hdr->samples = region_len(0);
-      hdr->srate = region_srate(0);
+      hdr->samples = region_len(id);
+      hdr->srate = region_srate(id);
       hdr->comment = NULL;
       hdr->chans = 1;
       current_region = 0;
@@ -439,7 +415,7 @@ static void make_region_dialog(snd_state *ss)
       cp->sound_size = 1;
       cp->sound_ctr = 0;
       cp->sounds = (snd_data **)CALLOC(cp->sound_size, sizeof(snd_data *));
-      cp->samples[0] = region_len(0);
+      cp->samples[0] = region_len(id);
     }
   else 
     {
@@ -457,7 +433,7 @@ static void make_region_dialog(snd_state *ss)
   gtk_signal_connect(GTK_OBJECT(channel_down_arrow(cp)), "button_press_event", GTK_SIGNAL_FUNC(region_down_arrow_Callback), (gpointer)ss);
 
   set_sensitive(channel_f(cp), FALSE);
-  if (region_chans(0) > 1) set_sensitive(channel_w(cp), TRUE);
+  if (region_chans(stack_position_to_id(0)) > 1) set_sensitive(channel_w(cp), TRUE);
   cp->chan = 0;
   reg_sp->hdr = fixup_region_data(cp, 0, 0);
   make_region_labels(reg_sp->hdr);
@@ -482,13 +458,15 @@ void View_Region_Callback(GtkWidget *w, gpointer context)
 
 int region_dialog_is_active(void)
 {
-  return((region_dialog != NULL) && (GTK_WIDGET_VISIBLE(region_dialog)));
+  return((region_dialog != NULL) && 
+	 (GTK_WIDGET_VISIBLE(region_dialog)));
 }
 
 void allocate_region_rows(snd_state *ss, int n)
 {
   int i;
-  if ((region_dialog) && (n > region_rows_size))
+  if ((region_dialog) && 
+      (n > region_rows_size))
     {
       region_rows = (regrow **)REALLOC(region_rows, n * sizeof(regrow *));
       for (i = region_rows_size; i < n; i++) region_rows[i] = NULL;

@@ -8,13 +8,19 @@ static snd_state *state = NULL;
 
 /* -------- documentation for hooks -------- */
 
-SCM snd_set_object_property(SCM obj, SCM key, SCM val)
+SCM snd_create_hook(const char *name, int args, const char *help, SCM local_doc)
 {
-  /* a convenience in creating hooks -- return obj, not val */
+  SCM hook;
 #if HAVE_GUILE
-  scm_set_object_property_x(obj, key, val);
+  hook = scm_permanent_object(scm_make_hook(TO_SMALL_SCM_INT(args)));
+  scm_set_object_property_x(hook, local_doc, TO_SCM_STRING(help));
+#if HAVE_SCM_C_DEFINE
+  scm_c_define(name, hook);
+#else
+  gh_define(name, hook);
 #endif
-  return(obj);
+#endif
+  return(hook);
 }
 
 
@@ -1729,7 +1735,7 @@ reading edit version edit-position (defaulting to the current version)"
   ASSERT_TYPE(NUMBER_IF_BOUND_P(samps), samps, SCM_ARG2, S_samples2vct, "a number");
   SND_ASSERT_CHAN(S_samples2vct, snd_n, chn_n, 3);
   cp = get_cp(snd_n, chn_n, S_samples2vct);
-  pos = to_c_edit_position(cp, edpos, S_samples2vct);
+  pos = to_c_edit_position(cp, edpos, S_samples2vct, 6);
   beg = TO_C_INT_OR_ELSE(samp_0, 0);
   len = TO_C_INT_OR_ELSE(samps, cp->samples[pos] - beg);
   if (v1)
@@ -1774,7 +1780,7 @@ reading edit version edit-position (defaulting to the current version)"
   SND_ASSERT_CHAN(S_samples2sound_data, snd_n, chn_n, 3);
   ASSERT_TYPE(INTEGER_IF_BOUND_P(sdchan), sdchan, SCM_ARG7, S_samples2sound_data, "an integer");
   cp = get_cp(snd_n, chn_n, S_samples2sound_data);
-  pos = to_c_edit_position(cp, edpos, S_samples2sound_data);
+  pos = to_c_edit_position(cp, edpos, S_samples2sound_data, 6);
   beg = TO_C_INT_OR_ELSE(samp_0, 0);
   len = TO_C_INT_OR_ELSE(samps, cp->samples[pos] - beg);
   if (len > 0)

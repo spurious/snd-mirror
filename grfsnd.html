@@ -725,17 +725,14 @@ example).</p>
 <p>Any external program that knows about sound files can be used to perform editing operations
 from Snd.  You thereby get Snd's display, analysis, header and format conversion, and edit-tree support,
 and can concentrate on the actual sound effect you're developing.
-The original
-impetus for Snd came from CLM, a large lisp-listener based program
-which normally runs 
-without a graphical
+The original impetus for Snd came from CLM, a large lisp-listener based program
+which normally runs without a graphical
 user interface, and without any simple way to move around
 in what Snd calls the edit history.  Since interprocess
 communication proved problematic in this case,
 the communication path was simplified to
 consist of little more than shared files, with CLM treated
-as a batch program. 
-A nice side-effect of this is that any other program can fit
+as a batch program. A nice side-effect of this is that any other program can fit
 the same mold.</p>
 
 <p>
@@ -744,35 +741,15 @@ two sound file names as its arguments, reading the first and writing the second.
 In Snd we write the current edited state to a temporary file, start CLM, call the instrument 
 passing it the input and output filenames, then pass its output back
 to Snd.  Snd then replaces the current data with the data our instrument wrote, as if it had incorporated that
-instrument as an editing operation from the beginning.</p>
-
-<p>There are two choices as to what is being edited: either the full sound, or the current active selection
-of it.  And two choices as to how this data should be presented to the external program:
-either as one, possibly multi-channel file, or as a set of mono files.  So we have eight
-functions (four to write, then four to read), as well as one function to get the
-current temporary file names (as written by Snd, to be read by the external program):</p>
-
-<pre>
-  <b>sound-to-temp</b>     (<i>type format</i>)       write out sync'd edit state as a temp file
-  <b>sound-to-temps</b>    (<i>type format</i>)       write out sync'd edit state as temp files
-  <b>selection-to-temp</b> (<i>type format</i>)       write out selected data as a temp file
-  <b>selection-to-temps</b>(<i>type format</i>)       write out selected data as temp files
-
-  <b>temp-filenames</b>    (data)              return vector of temp file names
-  <b>temp-to-selection</b> (data name origin)  read selected data from temp file
-  <b>temps-to-selection</b>(data names origin) read selected data from temp files
-  <b>temp-to-sound</b>     (data name origin)  read sync'd edit state from temp file
-  <b>temps-to-sound</b>    (data names origin) read sync'd edit state from temp files
-</pre>
-
-<p>Everything else is handled by scheme code.  The <i>type</i> and <i>format</i>
-arguments default to the currently selected sound's header type and data format,
-but if your external program can only read a particular kind of file or data,
-you can specify them here.  The external program should not delete either input
-or output files, and should not overwrite existing output files (Snd handles this
-bookkeeping). 
-</p>
+instrument as an editing operation from the beginning.
+<p>To write out the current data, we use either save-sound-as or save-selection.  Our
+program then writes its changes, and Snd reads these back in as edits using
+set! samples.  We can delete the Snd output at that point, though the
+input (changed) files should be left for Snd to handle.  Here are some examples.
 <br>
+
+<!-- TODO: rewrite temp-to etc from here -->
+
 <span class=cbox><h4><A NAME="stk">STK</a></h4></span>
 
 <p><b><a href="www-ccrma.stanford.edu/CCRMA/Software/STK/">STK</a></b>

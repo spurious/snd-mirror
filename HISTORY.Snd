@@ -1,5 +1,19 @@
 snd change log
 
+  1-June:    add-to-menu and remove-from-menu can affect the popup menu.
+             region handling changed to use the region "id", not its current stack position.
+               many related changes: 
+                 region-* procedures take the id as the region number argument.
+                 removed: select-region, select-region-hook, id-region, region-id
+                 renamed: delete-region -> forget-region.
+             (Snd version 5.0 due to this change)
+             added selection-chans, selection-srate (since regions may be disassociated from the selection).
+             with-big-colormap is now the default.
+             removed all the map and scan functions except map-chan and scan-chan
+               (the rest can be easily re-implemented using loops, sample-readers, set-samples, and sync).
+             removed all the temp-to-sound|selection (and vice versa) functions (and temp-filenames)
+               (these were redundant since set-samples can take a filename)
+             added channel arg to save-selection (for multi-file selection saves)
   29-May:    combined channel-style and uniting under the name channel-style (uniting removed).
              dac-folding -> dac-combines-channels (not sure about this name change).
              C-x x|n|x_x|n key support ("eval expression") removed (was useless and broken).

@@ -498,7 +498,7 @@
   (add-hook! stop-playing-region-hook play-region-again)
   (play-region reg))
 
-(bind-key (char->integer #\p) 0 (lambda (n) (play-region-forever (max 0 n))))
+(bind-key (char->integer #\p) 0 (lambda (n) (play-region-forever (list-ref (regions) (max 0 n)))))
 
 
 
@@ -976,58 +976,26 @@
 
 ;;; -------- mix mono sound into stereo sound panning according to env
 
-(define pan-mono-to-stereo
-  ;; this function assumes we've currently syncd together one mono and one stereo sound,
-  ;; then mixes the mono into the stereo following the panning envelope;
-  ;; the latter is 0 when we want all the mono in chan 0, 1 for all in chan 1.
-  ;; We'll assume for simplicity that the envelope goes from 0 to 1 along the x axis.
-  (lambda (panning-envelope)
-    (letrec ((find-nchannel-sound (lambda (ind chans) 
-				      (if (< ind (max-sounds))
-					  (if (and (sound? ind) (> (sync ind) 0) (= (channels ind) chans)) 
-					      ind 
-					      (find-nchannel-sound (1+ ind) chans))
-					  (begin
-					    (report-in-minibuffer 
-					     (string-append "can't find any syncd " 
-							    (number->string chans) 
-							    " channel sound!"))
-					    #f)))))
-      (let* ((mono-sound (find-nchannel-sound 0 1))
-	     (stereo-sound (and mono-sound (find-nchannel-sound 0 2))))
-	(if stereo-sound
-	    (let ((samps (max (frames stereo-sound) (frames mono-sound)))
-		  (current-samp 0)
-		  (mono (if (> stereo-sound mono-sound) 0 2))
-		  (stereo (if (> stereo-sound mono-sound) 1 0)))
-	      (map-across-chans
-	       (lambda (data chans)
-		 (let ((samp (vector-ref data mono))
-		       (y (envelope-interp (/ current-samp samps) panning-envelope)))
-		   (set! current-samp (1+ current-samp))
-		   (vector-set! data mono #f) ;don't edit the mono file
-		   (vector-set! data stereo (+ (vector-ref data stereo) (* (- 1.0 y) samp)))
-		   (vector-set! data (1+ stereo) (+ (vector-ref data (1+ stereo)) (* y samp)))
-		   data)))))))))
-
-;;; a similar function using the CLM module:
+;;; TODO: test this thing! (and check docs for arg change)
 (define place
-  (lambda (mono-snd stereo-snd deg)
+  (lambda (mono-snd stereo-snd pan-env)
     (let* ((len (frames mono-snd))
 	   (msf (make-sample-reader 0 mono-snd 0))
-	   (loc (make-locsig :degree deg :channels 2))
 	   (out-data0 (make-vct len))
-	   (out-data1 (make-vct len)))
+	   (out-data1 (make-vct len))
+	   (e (make-envelope pan-env :end (1- len))))
       (vcts-do! out-data0 out-data1
 		 (lambda (num i)
-		   (frame->list (locsig loc i (next-sample msf)))))
+		   (let ((panval (env pan-env))
+			 (val (next-sample msf)))
+		     (list (* msf panval) (* msf (- 1.0 panval))))))
       (free-sample-reader msf)
       (vct-add! out-data0 (samples->vct 0 len stereo-snd 0))
       (vct-add! out-data1 (samples->vct 0 len stereo-snd 1))
       (vct->samples 0 len out-data0 stereo-snd 0)
       (vct->samples 0 len out-data1 stereo-snd 1))))
 
-;;; of course, in a simple situation like this, it's much faster to do it directly:
+;;; if there's no envelope (just a position):
 (define place1
   (lambda (mono-snd stereo-snd deg)
     (let* ((len (frames mono-snd))
@@ -1254,32 +1222,6 @@
 	(+ inval (delay del (* scaler (+ (tap del) inval))))))))
 
 ; (map-chan (echo .5 .5) 0 44100)
-
-;;; here is a multi-channel version:
-
-(define echoes
-  ;; since map-across-sound-chans is expected here as the caller, I'll embed it
-  (lambda (scaler secs decay-time)
-    (let* ((len (channels))
-	   (dels (make-vector len))
-	   (total-len (+ (frames) (round (* (srate) decay-time)))))
-      (do ((i 0 (1+ i)))
-	  ((= i len))
-	(vector-set! dels i (make-delay (round (* secs (srate))))))
-      (map-across-sound-chans
-       (lambda (invals chans)
-	 (do ((i 0 (1+ i)))
-	     ((= i chans) invals)
-	   (let ((inval (vector-ref invals i))
-		 (del (vector-ref dels i)))
-	     (vector-set! invals i (+ inval (delay del (* scaler (+ (tap del) inval))))))))
-       0 total-len
-       (string-append "(echoes "
-		      (number->string scaler) " "
-		      (number->string secs) " "
-		      (number->string decay-time) ")")))))
-
-; (echoes .5 .75 2.0)
 
 ;;; here is a version that modulates the echos:
 
@@ -2183,7 +2125,7 @@
 		  (all-chans)))
 	  (lambda (tag val) val))))
     (if (selection?)
-	(if (= (region-chans 0) 2)
+	(if (= (selection-chans) 2)
 	    (let* ((beg (selection-position))
 		   (len (selection-length))
 		   (snd-chn0 (find-selection-sound '()))

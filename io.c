@@ -1352,6 +1352,7 @@ static int mus_write_1(int tfd, int beg, int end, int chans, MUS_SAMPLE_TYPE **b
   char *charbuf = NULL;
   int to_buffer = 0;
   MUS_SAMPLE_TYPE *buffer;
+  if (chans <= 0) return(0);
   if (inbuf) to_buffer = 1;
   if (!to_buffer)
     {
@@ -1593,7 +1594,7 @@ char *mus_file_full_name(char *utok)
   else return(NULL);
   file_name_buf = (char *)CALLOC(MUS_MAX_FILE_NAME, sizeof(char));
   j = 0;
-  for (i = 0; i < len-1; i++)
+  for (i = 0; i < len - 1; i++)
     {
       if ((tok[i] == '/') && 
 	  (tok[i + 1] == '/')) 

@@ -56,7 +56,7 @@ using <a href="http://www.gnu.org/software/guile/guile.html">guile</a>
 and <a
 href="http://www.ping.de/sites/zagadka/guile-gtk/">guile-gtk</a>. 
 Snd is free (LGPL); the code is available via anonymous ftp as <a
-href="ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-4.tar.gz">snd-4.tar.gz</a>.
+href="ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-5.tar.gz">snd-5.tar.gz</a>.
 Snd has a <a href="http://www-ccrma.stanford.edu/software/snd/">home page</a>
 and a CVS <a href="http://snd.sourceforge.net">repository</a>.
 </p>
@@ -132,7 +132,6 @@ and a CVS <a href="http://snd.sourceforge.net">repository</a>.
       <li><a href="extsnd.html#sndregions">Regions</a>
       <li><a href="extsnd.html#sndsounds">Sounds and Channels</a>
       <li><a href="extsnd.html#editlists">Edit Lists</a>
-      <li><a href="extsnd.html#scanning">Scanning Data</a>
       <li><a href="extsnd.html#sndtransforms">Transforms</a>
       <li><a href="extsnd.html#snddialogs">Dialogs</a>
       <li><a href="extsnd.html#snderrors">Errors</a>
@@ -1103,13 +1102,13 @@ the word "selection" is used to refer to the currently selected
 filter-selection affects the underlying data.  A "region" on
 the other hand, refers to the saved (copied) version of (the original form of) that
 data that can be inserted or mixed elsewhere.
-That is, when a portion is initially selected, it is saved as the new
-region 0; subsequent edits may not disable the notion that there's
-an active selection, but the region 0 data still reflects the initial
-data.  You can disable the region creation by setting the variable
+That is, when a portion is selected, it is saved as the new
+region; subsequent edits 
+will not affect the region data.
+You can disable the region creation by setting the variable
 <a href="extsnd.html#selectioncreatesregion">selection-creates-region</a>
 to #f (its default is #t, but in this can slow down editing of very large sounds).
-<A NAME="mousedefsect">Regions</a> can be defined by dragging the mouse
+<A NAME="mousedefsect">Regions</a> can be defined by <a href="extsnd.html#sndmakeregion">make-region</a> or by dragging the mouse
 through a portion of the data.  If the mouse drags off
 the end of the graph, the x axis moves, in a sense dragging
 the data along to try to keep up with the mouse; the further
@@ -1126,17 +1125,14 @@ commands continue the definition.</p>
         <!-- I(define selection):O(mouse drag)(mousedefsect) --><!-- I(define selection):A(mousedefsect) -->
 	<!-- I(define selection):M(Edit: Select All)(selectall) -->
 
-<A NAME="regionbrowser"></a><p>Once defined, the copied selection
+<A NAME="regionbrowser"></a><p>Once defined, the copied region
 is added to a stack of currently
 available regions (the stack size is normally 16 -- see <a href="extsnd.html#maxregions">max-regions</a>).
-In many cases, the numeric argument to the command below
-chooses which region in that stack to use in the command.
-Since it can be hard to remember which region is which,
-especially since they are constantly on the move as the
-stack changes, there is a region browser, similar to the File browser, invoked from
-the View menu's Regions option:</p>
+The currently available regions can be view from the
+View menu's Region browser:</p>
 
 <img src="regions.png" alt="picture of region browser" align=left hspace=20>
+
 <p>The 'save' button here protects the region from deletion
 as the region stack grows.  'Print' produces a Postscript
 rendition of the current graph contents, using the default
@@ -1164,12 +1160,12 @@ return to this state later via the region browser.
 <p>The keyboard commands that apply to regions are:</p>
 <pre>
   <A NAME="cy">C-y</a>         paste in current selection at cursor
-  C-[space]   start keyboard-based region definition
+  C-[space]   start keyboard-based selection definition
   C-x a       apply amplitude envelope to selection
   <A NAME="cxc">C-x c</a>       define selection from cursor to nth mark
   <A NAME="cxi">C-x i</a>       insert selection
   C-x p       play selection or region (numeric arg selects region)
-  <A NAME="cxq">C-x q</a>       mix in region
+  <A NAME="cxq">C-x q</a>       mix in selection
   <A NAME="cxw">C-x w</a>       save selection as file 
 
   C-x l       position selection in mid-view
@@ -1178,8 +1174,7 @@ return to this state later via the region browser.
 
 <p>If the current selection is active (displayed somewhere in the
 current time domain displays), there are several functions that
-can edit that portion of the current sounds (without affecting whatever
-was saved in region 0).
+can edit that portion of the current sounds.
 </p>
 <pre>
   <a href="extsnd.html#sndscaleselectionby">scale-selection-by</a> args
@@ -1419,8 +1414,7 @@ commands, much as in Emacs.
   <A NAME="cr">C-r</a>   find backwards
   <A NAME="cs">C-s</a>   find forwards
 </pre>
-<p>See also the functions <a href="extsnd.html#lfind">find</a> and <a href="extsnd.html#lcountmatches">count-matches</a>,
-and the scanning and mapping functions (<a href="extsnd.html#scanning">Scanning Data</a>).</p>
+<p>See also the functions <a href="extsnd.html#lfind">find</a> and <a href="extsnd.html#lcountmatches">count-matches</a>.
 
 
 <h4><A NAME="changesamples">Change samples</a></h4>
@@ -1433,7 +1427,7 @@ and the scanning and mapping functions (<a href="extsnd.html#scanning">Scanning 
 
 <p>M-x (set! (sample (cursor)) .1) sets the sample
 at the cursor to .1.  To set several samples to zero, use C-u <number> C-z.
-For much fancier stuff, see the scanning and mapping functions (<a href="extsnd.html#scanning">Scanning Data</a>).
+For much fancier stuff, see <a href="extsnd.html#scanchan">scan-chan</a> and <a href="extsnd.html#mapchan">map-chan</a>.
 </p>
 
         <!-- I(change samples):A(changesamples) --><!-- I(change samples):K(C-z, C-x C-z)(cz) -->
@@ -2204,7 +2198,7 @@ panel are:</p>
 <center>
 <table border rows=120>
   <caption>Index</caption>
-  <!-- created 28-May-01 -->
+  <!-- created 30-May-01 -->
   <tr><th>Action<th>Menu<th>Keyboard<th>Lisp<th>Other</tr>
   <tr><td><a href="#kgc">abort command</a></td><td><br></td><td><a href="#kgc"><small>Cg</small></a></td><td><a href="extsnd.html#sndabort"><small>c-g?</small></a></td><td><small>mouse click</small></td></tr>
   <tr><td><a href="#ampenvs">amp env</a></td><td><small>Edit: <a href="#editenvelope">Edit Env</a></small></td><td><a href="#cxca"><small>Cx Ca, Cx a</small></a></td><td><a href="extsnd.html#sndenv"><small>env-sound</small></a></td><td><a href="extsnd.html#sndscaleto"><small>scale-to, scale-by</small></a></td></tr>

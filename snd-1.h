@@ -678,9 +678,9 @@ void undo_edit_with_sync(chan_info *cp, int count);
 void redo_edit_with_sync(chan_info *cp, int count);
 void undo_edit(chan_info *cp, int count);
 void redo_edit(chan_info *cp, int count);
-int save_channel_edits(chan_info *cp, char *ofile, SCM edpos, const char *caller);
+int save_channel_edits(chan_info *cp, char *ofile, SCM edpos, const char *caller, int arg_pos);
 void save_edits(snd_info *sp, void *ptr);
-int save_edits_without_display(snd_info *sp, char *new_name, int type, int format, int srate, char *comment, SCM edpos, const char *caller);
+int save_edits_without_display(snd_info *sp, char *new_name, int type, int format, int srate, char *comment, SCM edpos, const char *caller, int arg_pos);
 void revert_edits(chan_info *cp, void *ptr);
 int open_temp_file(char *ofile, int chans, file_info *hdr, snd_state *ss);
 int close_temp_file(int ofd, file_info *hdr, long bytes, snd_info *sp);
@@ -728,7 +728,7 @@ void g_init_fft(SCM local_doc);
 /* -------- snd-scm.c -------- */
 
 SCM snd_catch_any(scm_catch_body_t body, void *body_data, const char *caller);
-SCM snd_set_object_property(SCM obj, SCM key, SCM val);
+SCM snd_create_hook(const char *name, int args, const char *help, SCM local_doc);
 int ignore_mus_error(int type, char *msg);
 SCM snd_no_such_file_error(const char *caller, SCM filename);
 SCM snd_no_such_channel_error(const char *caller, SCM snd, SCM chn);
@@ -795,18 +795,19 @@ int selection_beg(chan_info *cp);
 int selection_end(chan_info *cp);
 int selection_len(void);
 int selection_chans(void);
+int selection_srate(void);
 void deactivate_selection(void);
 void reactivate_selection(chan_info *cp, int beg, int end);
 void ripple_selection(ed_list *new_ed, int beg, int num);
 sync_info *selection_sync(void);
 void start_selection_creation(chan_info *cp, int samp);
 void update_possible_selection_in_progress(int samp);
-void make_region_from_selection(void);
+int make_region_from_selection(void);
 void display_selection(chan_info *cp);
 int delete_selection(const char *origin, int regraph);
 void move_selection(chan_info *cp, int x);
 void finish_selection_creation(void);
-void select_all(chan_info *cp);
+int select_all(chan_info *cp);
 int save_selection(snd_state *ss, char *ofile, int type, int format, int srate, char *comment);
 int selection_creation_in_progress(void);
 void cancel_selection_watch(void);
@@ -825,19 +826,19 @@ int region_ok(int n);
 int region_len(int n);
 int region_chans(int n);
 int region_srate(int n);
-int region_id(int n);
 Float region_maxamp(int n);
+int stack_position_to_id(int n);
+int id_to_stack_position(int id);
 file_info *fixup_region_data(chan_info *cp, int chan, int n);
 region_state *region_report(void);
 void free_region_state (region_state *r);
-void select_region(int n);
-int delete_region(int n);
+int remove_region_from_stack(int pos);
 void protect_region(int n, int protect);
 int save_region(snd_state *ss, int n, char *ofile, int data_format);
 void paste_region(int n, chan_info *cp, const char *origin);
 void add_region(int n, chan_info *cp, const char *origin);
 void region_stats(int *vals);
-void define_region(sync_info *si, int *ends);
+int define_region(sync_info *si, int *ends);
 snd_fd *init_region_read (snd_state *ss, int beg, int n, int chan, int direction);
 void cleanup_region_temp_files(void);
 int snd_regions(void);
@@ -911,10 +912,10 @@ void stop_playing_sound_no_toggle(snd_info *sp);
 void stop_playing_all_sounds(void);
 void stop_playing_region(int n);
 void play_region(snd_state *ss, int n, int background);
-void play_channel(chan_info *cp, int start, int end, int background, SCM edpos, const char *caller);
-void play_sound(snd_info *sp, int start, int end, int background, SCM edpos, const char *caller);
-void play_channels(chan_info **cps, int chans, int *starts, int *ends, int background, SCM edpos, const char *caller);
-void play_selection(int background, SCM edpos, const char *caller);
+void play_channel(chan_info *cp, int start, int end, int background, SCM edpos, const char *caller, int arg_pos);
+void play_sound(snd_info *sp, int start, int end, int background, SCM edpos, const char *caller, int arg_pos);
+void play_channels(chan_info **cps, int chans, int *starts, int *ends, int background, SCM edpos, const char *caller, int arg_pos);
+void play_selection(int background, SCM edpos, const char *caller, int arg_pos);
 void toggle_dac_pausing(snd_state *ss); /* snd-dac.c */
 int play_in_progress(void);
 void initialize_apply(snd_info *sp, int chans, int frames);
@@ -1303,11 +1304,11 @@ src_state *make_src(snd_state *ss, Float srate, snd_fd *sf);
 Float run_src(src_state *sr, Float sr_change);
 src_state *free_src(src_state *sr);
 void src_env_or_num(snd_state *ss, chan_info *cp, env *e, Float ratio, int just_num, 
-		    int from_enved, const char *origin, int over_selection, mus_any *gen, SCM edpos);
+		    int from_enved, const char *origin, int over_selection, mus_any *gen, SCM edpos, int arg_pos);
 void apply_filter(chan_info *ncp, int order, env *e, int from_enved, const char *origin, 
-		  int over_selection, Float *ur_a, mus_any *gen, SCM edpos);
+		  int over_selection, Float *ur_a, mus_any *gen, SCM edpos, int arg_pos);
 void apply_env(chan_info *cp, env *e, int beg, int dur, Float scaler, int regexpr, 
-	       int from_enved, const char *origin, mus_any *gen, SCM edpos);
+	       int from_enved, const char *origin, mus_any *gen, SCM edpos, int arg_pos);
 void cos_smooth(chan_info *cp, int beg, int num, int regexpr, const char *origin);
 void display_frequency_response(snd_state *ss, env *e, axis_info *ap, axis_context *gax, int order, int dBing);
 int cursor_delete(chan_info *cp, int count, const char *origin);
@@ -1317,8 +1318,8 @@ int cursor_insert(chan_info *cp, int beg, int count, const char *origin);
 void fht(int powerOfFour, Float *array);
 
 void g_init_sig(SCM local_doc);
-int to_c_edit_position(chan_info *cp, SCM edpos, const char *caller);
-int to_c_edit_samples(chan_info *cp, SCM edpos, const char *caller);
+int to_c_edit_position(chan_info *cp, SCM edpos, const char *caller, int arg_pos);
+int to_c_edit_samples(chan_info *cp, SCM edpos, const char *caller, int arg_pos);
 
 
 

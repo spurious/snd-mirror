@@ -1,5 +1,7 @@
 #include "snd.h" 
 
+/* changed 29-May to use the region id, not its stack position throughout */
+
 #define REGION_ARRAY 0
 #define REGION_FILE 1
 /* region data can be stored either in-core (if less than MAX_BUFFER_SIZE ints), else in a temp file that */
@@ -7,7 +9,6 @@
 
 #define CLEAR_REGION_DATA 0
 #define COMPLETE_DELETION 1
-
 
 static int region_id_ctr = 0;
 
@@ -70,7 +71,7 @@ static void free_region(region *r, int complete)
     }
 }
 
-static region **regions = NULL; /* regions[0] => current global selection from X viewpoint */
+static region **regions = NULL;
 static int regions_size = 0;
 
 void allocate_regions(snd_state *ss, int numreg)
@@ -111,20 +112,76 @@ static void set_max_regions(snd_state *ss, int n)
     }
 }
 
-int region_ok(int n) {return((n >= 0) && (n < regions_size) && (regions[n]));}
-int region_len(int n) {if (region_ok(n)) return(regions[n]->frames); else return(0);}
-int region_chans(int n) {if (region_ok(n)) return(regions[n]->chans); else return(0);}
-int region_srate(int n) {if (region_ok(n)) return(regions[n]->srate); else return(0);}
-Float region_maxamp(int n) {if (region_ok(n)) return(regions[n]->maxamp); else return(0.0);}
-int region_id(int n) {if (region_ok(n)) return(regions[n]->id); else return(-1);}
-
-static int id_region(int id)
+int id_to_stack_position(int id)
 {
   int i;
-  for (i = 0; i < regions_size; i++)
-    if ((regions[i]) && (regions[i]->id == id))
-      return(i);
-  return(-1);
+  if ((id >= 0) && (id < region_id_ctr))
+    for (i = 0; i < regions_size; i++)
+      if ((regions[i]) && 
+	  (regions[i]->id == id))
+	return(i);
+  return(INVALID_REGION);
+}
+
+int stack_position_to_id(int n) 
+{
+  if ((n >= 0) && 
+      (n < regions_size) &&
+      (regions[n]))
+    return(regions[n]->id);
+  return(INVALID_REGION);
+}
+
+static region *id_to_region(int id)
+{
+  int i;
+  if ((id >= 0) && (id < region_id_ctr))
+    for (i = 0; i < regions_size; i++)
+      if ((regions[i]) && 
+	  (regions[i]->id == id))
+	return(regions[i]);
+  return(NULL);
+}
+
+int region_ok(int id) 
+{
+  return(id_to_region(id) != NULL);
+}
+
+int region_len(int n) 
+{
+  region *r;
+  r = id_to_region(n);
+  if (r) 
+    return(r->frames); 
+  return(0);
+}
+
+int region_chans(int n) 
+{  
+  region *r;
+  r = id_to_region(n);
+  if (r) 
+    return(r->chans); 
+  return(0);
+}
+
+int region_srate(int n) 
+{  
+  region *r;
+  r = id_to_region(n);
+  if (r) 
+    return(r->srate); 
+  return(0);
+}
+
+Float region_maxamp(int n) 
+{
+  region *r;
+  r = id_to_region(n);
+  if (r) 
+    return(r->maxamp); 
+  return(0.0);
 }
 
 static Float region_sample(int reg, int chn, int samp)
@@ -132,9 +189,9 @@ static Float region_sample(int reg, int chn, int samp)
   region *r;
   snd_fd *sf;
   Float val;
-  if (region_ok(reg))
+  r = id_to_region(reg);
+  if (r)
     {
-      r = regions[reg];
       if ((samp < r->frames) && (chn < r->chans)) 
 	{
 	  if (r->use_temp_file == REGION_ARRAY)
@@ -156,9 +213,9 @@ static void region_samples(int reg, int chn, int beg, int num, Float *data)
   region *r;
   snd_fd *sf;
   int i, j;
-  if (region_ok(reg))
+  r = id_to_region(reg);
+  if (r)
     {
-      r = regions[reg];
       if ((beg < r->frames) && (chn < r->chans))
 	{
 	  if (r->use_temp_file == REGION_ARRAY)
@@ -251,14 +308,17 @@ static void make_region_readable(region *r, snd_state *ss)
   r->rsp = regsp;
 }
 
-file_info *fixup_region_data(chan_info *cp, int chan, int n)
+file_info *fixup_region_data(chan_info *cp, int chan, int pos)
 {
+  /* for region browser labels */
   region *r;
   snd_info *nsp;
   chan_info *ncp;
-  if (region_ok(n))
+  if ((pos >= 0) && 
+      (pos < regions_size) &&
+      (regions[pos]))
     {
-      r = regions[n];
+      r = regions[pos];
       if (chan < r->chans)
 	{
 	  make_region_readable(r, cp->state);
@@ -301,7 +361,7 @@ region_state *region_report(void)
       r = regions[i];
       rs->save[i] = r->save;
       reg_buf = (char *)CALLOC(LABEL_BUFFER_SIZE, sizeof(char));
-      mus_snprintf(reg_buf, LABEL_BUFFER_SIZE, "%d: %s (%s:%s)", i, r->name, r->start, r->end);
+      mus_snprintf(reg_buf, LABEL_BUFFER_SIZE, "%d: %s (%s:%s)", r->id, r->name, r->start, r->end);
       rs->name[i] = reg_buf;
     }
   return(rs);
@@ -321,49 +381,25 @@ void free_region_state (region_state *r)
     }
 }
 
-static SCM select_region_hook;
-
-void select_region(int n) /* region browser and others indirectly */
+int remove_region_from_stack(int pos) /* region browser */
 {
-  int i;
-  region *r;
-  if (region_ok(n))
-    {
-      r = regions[n];
-      for (i = n; i > 0; i--) 
-	regions[i] = regions[i - 1]; 
-      regions[0] = r;
-      if (HOOKED(select_region_hook))
-	g_c_run_progn_hook(select_region_hook,
-			   SCM_LIST1(TO_SCM_INT(r->id)),
-			   S_select_region_hook);
-    }
-}
-
-int delete_region(int n) /* region browser */
-{
-  int i;
-  /* delete-region-hook? (passes region-id to hook, if #t, don't delete?) -- restack uses free_region instead */
-  if (n >= regions_size) return(INVALID_REGION);
-  if (region_ok(n)) 
-    {
-      stop_playing_region(n);
-      free_region(regions[n], COMPLETE_DELETION);
-    }
-  for (i = n; i < regions_size - 1; i++) 
+  int i, id;
+  id = stack_position_to_id(pos);
+  if (id == INVALID_REGION) return(INVALID_REGION);
+  stop_playing_region(id);
+  free_region(id_to_region(id), COMPLETE_DELETION);
+  for (i = pos; i < regions_size - 1; i++) 
     regions[i] = regions[i + 1]; 
   regions[regions_size - 1] = NULL;
   return(check_regions());
 }
 
-void protect_region(int n, int protect) /* region browser */
+void protect_region(int pos, int protect) /* region browser */
 {
-  region *r;
-  if (region_ok(n))
-    {
-      r = regions[n];
-      if (r) r->save = protect;
-    }
+  if ((pos >= 0) && 
+      (pos < regions_size) &&
+      (regions[pos]))
+    regions[pos]->save = protect;
 }
 
 static void stack_region(snd_state *ss, region *r) 
@@ -387,7 +423,7 @@ static void stack_region(snd_state *ss, region *r)
     }
   if (regions[okr]) 
     {
-      stop_playing_region(okr);
+      stop_playing_region(regions[okr]->id);
       free_region(regions[okr], COMPLETE_DELETION);
     }
   for (i = okr; i > 0; i--) 
@@ -402,7 +438,7 @@ static int save_region_1(snd_state *ss, char *ofile, int type, int format, int s
   MUS_SAMPLE_TYPE **bufs;
   region *r;
   comlen = snd_strlen(comment);
-  if (region_ok(reg)) r = regions[reg]; else r = NULL;
+  r = id_to_region(reg);
   if (r)
     {
       if ((snd_write_header(ss, ofile, type, srate, r->chans, 28, r->chans * r->frames, format, comment, comlen, NULL)) == -1)
@@ -483,22 +519,24 @@ static int save_region_1(snd_state *ss, char *ofile, int type, int format, int s
 int save_region(snd_state *ss, int n, char *ofile, int data_format)
 {
   region *r;
-  r = regions[n];
-  if (data_format == MUS_UNKNOWN) data_format = MUS_OUT_FORMAT;
-  if (!(mus_header_writable(r->header_type, data_format))) 
+  r = id_to_region(n);
+  if (r)
     {
-      if (mus_header_writable(MUS_NEXT, data_format))
-	r->header_type = MUS_NEXT;
-      else
+      if (data_format == MUS_UNKNOWN) data_format = MUS_OUT_FORMAT;
+      if (!(mus_header_writable(r->header_type, data_format))) 
 	{
-	  if (mus_header_writable(MUS_RIFF, data_format))
-	    r->header_type = MUS_RIFF;
-	  else r->header_type = MUS_RAW;
+	  if (mus_header_writable(MUS_NEXT, data_format))
+	    r->header_type = MUS_NEXT;
+	  else
+	    {
+	      if (mus_header_writable(MUS_RIFF, data_format))
+		r->header_type = MUS_RIFF;
+	      else r->header_type = MUS_RAW;
+	    }
 	}
+      return(save_region_1(ss, ofile, r->header_type, data_format, r->srate, n, "created by save-region in Snd"));
     }
-  if (r) 
-    return(save_region_1(ss, ofile, r->header_type, data_format, r->srate, n, "created by save-region in Snd"));
-  return(0);
+  return(INVALID_REGION);
 }
 
 static int paste_region_1(int n, chan_info *cp, int add, int beg, const char *origin)
@@ -514,7 +552,8 @@ static int paste_region_1(int n, chan_info *cp, int add, int beg, const char *or
   ss = cp->state;
   sp = cp->sound;
   si = NULL;
-  if (region_ok(n)) r = regions[n]; else return(-1);
+  r = id_to_region(n);
+  if (r == NULL) return(INVALID_REGION);
   si = sync_to_chan(cp);
   if (add)
     {
@@ -582,7 +621,7 @@ void region_stats(int *vals)
   vals[1] = fil;
 }
 
-void define_region(sync_info *si, int *ends)
+int define_region(sync_info *si, int *ends)
 {
   /* now look at all sync'd channels, collect them into the current region */
   /* we created the necessary pointers in create_selection above */
@@ -599,7 +638,7 @@ void define_region(sync_info *si, int *ends)
     if (len < (ends[i] - si->begs[i]))
       len = ends[i] - si->begs[i];
   len += 1;
-  if (len <= 0) return;
+  if (len <= 0) return(INVALID_REGION);
   r = (region *)CALLOC(1, sizeof(region));
   r->id = region_id_ctr++;
   cp0 = si->cps[0];
@@ -677,6 +716,7 @@ void define_region(sync_info *si, int *ends)
   FREE(sfs);
   reflect_regions_in_menu();
   if (region_browser_is_active()) update_region_browser(ss, 1);
+  return(r->id);
 }
 
 
@@ -685,9 +725,9 @@ snd_fd *init_region_read (snd_state *ss, int beg, int n, int chan, int direction
   /* conjure up a reasonable looking ed list and sound list */
   region *r;
   snd_info *rsp;
-  if (region_ok(n))
+  r = id_to_region(n);
+  if (r)
     {
-      r = regions[n];
       make_region_readable(r, ss);
       if ((r) && (chan < r->chans))
 	{
@@ -805,7 +845,7 @@ void save_regions(snd_state *ss, FILE *fd)
     }
 }
 
-void region_edit(snd_state *ss, int reg)
+void region_edit(snd_state *ss, int pos)
 {
   /* from region browser:
    *   load region into temp file, load that into snd editor,
@@ -815,18 +855,21 @@ void region_edit(snd_state *ss, int reg)
   char *temp_region_name;
   snd_info *sp;
   int err;
-  region *r;
-  if (region_ok(reg)) 
+  region *r = NULL;
+  if ((pos >= 0) && 
+      (pos < regions_size) &&
+      (regions[pos]))
+    r = regions[pos];
+  if (r) 
     {
-      r = regions[reg];
       if (r->editor_copy)
-	snd_error("region %d already being edited", reg);
+	snd_error("region %d already being edited", r->id);
       else
 	{
 	  temp_region_name = shorter_tempnam(temp_dir(ss), "region-");
 	  if (r->use_temp_file == REGION_FILE)
 	    err = copy_file(r->filename, temp_region_name);
-	  else err = save_region(ss, reg, temp_region_name, MUS_OUT_FORMAT);
+	  else err = save_region(ss, r->id, temp_region_name, MUS_OUT_FORMAT);
 	  if (err == MUS_NO_ERROR)
 	    {
 	      sp = snd_open_file(temp_region_name, ss, FALSE);
@@ -839,15 +882,15 @@ void region_edit(snd_state *ss, int reg)
 		  /* also, since it's a temp file, if closed, delete temp */
 		}
 	      else snd_error("edit region: can't open region %d temp sound %s: %s!",
-			     reg, temp_region_name, strerror(errno));
+			     r->id, temp_region_name, strerror(errno));
 	    }
 	  else 
 	    snd_error("edit region: can't save region %d in temp file (%s: %s)",
-		      reg, temp_region_name, strerror(errno));
+		      r->id, temp_region_name, strerror(errno));
 	  FREE(temp_region_name);
 	}
     }
-  else snd_error("edit region: no region %d!", reg);
+  else snd_error("edit region: no region at position %d!", pos);
 }
 
 void clear_region_backpointer(snd_info *sp)
@@ -913,13 +956,13 @@ static SCM snd_no_such_region_error(const char *caller, SCM n)
   return(SCM_BOOL_F);
 }
 
-static SCM g_restore_region(SCM n, SCM chans, SCM len, SCM srate, SCM maxamp, SCM name, SCM start, SCM end, SCM data)
+static SCM g_restore_region(SCM pos, SCM chans, SCM len, SCM srate, SCM maxamp, SCM name, SCM start, SCM end, SCM data)
 {
   region *r;
   int i, j, k, regn;
   SCM *vdata;
   r = (region *)CALLOC(1, sizeof(region));
-  regn = TO_SMALL_C_INT(n);
+  regn = TO_SMALL_C_INT(pos);
   regions[regn] = r;
   r->id = region_id_ctr++;
   r->maxamp = TO_C_DOUBLE(maxamp);
@@ -958,12 +1001,12 @@ static SCM g_restore_region(SCM n, SCM chans, SCM len, SCM srate, SCM maxamp, SC
 	}
     }
   reflect_regions_in_menu();
-  return(TO_SCM_INT(region_id(regn)));
+  return(TO_SCM_INT(r->id));
 }
 
 static SCM g_insert_region(SCM samp_n, SCM reg_n, SCM snd_n, SCM chn_n) /* opt reg_n */
 {
-  #define H_insert_region "("  S_insert_region " &optional (start-samp 0) (region 0) snd chn)\n\
+  #define H_insert_region "("  S_insert_region " &optional (start-samp 0) (region-id 0) snd chn)\n\
 inserts region data into snd's channel chn starting at 'start-samp'"
 
   chan_info *cp;
@@ -972,13 +1015,13 @@ inserts region data into snd's channel chn starting at 'start-samp'"
   ASSERT_TYPE(INTEGER_IF_BOUND_P(reg_n), reg_n, SCM_ARG2, S_insert_region, "an integer");
   SND_ASSERT_CHAN(S_insert_region, snd_n, chn_n, 3);
   cp = get_cp(snd_n, chn_n, S_insert_region);
-  rg = TO_C_INT_OR_ELSE(reg_n, 0);
+  rg = TO_C_INT_OR_ELSE(reg_n, stack_position_to_id(0));
   if (!(region_ok(rg)))
     return(snd_no_such_region_error(S_insert_region, reg_n));
   samp = TO_C_INT_OR_ELSE(samp_n, 0);
   paste_region_1(rg, cp, FALSE, samp, S_insert_region);
   update_graph(cp, NULL);
-  return(TO_SCM_INT(region_id(rg)));
+  return(reg_n);
 }
 
 static SCM g_max_regions(void) 
@@ -1002,35 +1045,21 @@ static SCM g_set_max_regions(SCM n)
   return(TO_SCM_INT(max_regions(ss)));
 }
 
-enum {REGION_LENGTH, REGION_SRATE, REGION_CHANS, REGION_MAXAMP, REGION_SELECT, REGION_DELETE, REGION_PLAY, REGION_ID};
+enum {REGION_LENGTH, REGION_SRATE, REGION_CHANS, REGION_MAXAMP, REGION_FORGET, REGION_PLAY};
 
 static SCM region_read(int field, SCM n, char *caller)
 {
   int rg;
-  int i;
-  SCM res = SCM_EOL;
-  if (SCM_EQ_P(n, SCM_BOOL_T)) /* can this happen? all callers appear to check for int_if_bound */
+  rg = TO_C_INT_OR_ELSE_WITH_ORIGIN(n, stack_position_to_id(0), caller);
+  if (!(region_ok(rg)))
+    return(snd_no_such_region_error(caller, n));
+  switch (field)
     {
-      for (i = 0; i < regions_size; i++)
-	if (regions[i])
-	  res = CONS(region_read(field, TO_SCM_INT(i), caller), res);
-      return(REVERSE_LIST(res));
-    }
-  else
-    {
-      rg = TO_C_INT_OR_ELSE_WITH_ORIGIN(n, 0, caller);
-      if (!(region_ok(rg)))
-	return(snd_no_such_region_error(caller, n));
-      switch (field)
-	{
-	case REGION_LENGTH: return(TO_SCM_INT(region_len(rg))); break;
-	case REGION_SRATE:  return(TO_SCM_INT(region_srate(rg))); break;
-	case REGION_CHANS:  return(TO_SCM_INT(region_chans(rg))); break;
-	case REGION_MAXAMP: return(TO_SCM_DOUBLE(region_maxamp(rg))); break;
-	case REGION_SELECT: select_region_and_update_browser(get_global_state(), rg); return(n); break;
-	case REGION_DELETE: delete_region_and_update_browser(get_global_state(), rg); return(n); break;
-	case REGION_ID:     return(TO_SCM_INT(region_id(rg))); break;
-	}
+    case REGION_LENGTH: return(TO_SCM_INT(region_len(rg))); break;
+    case REGION_SRATE:  return(TO_SCM_INT(region_srate(rg))); break;
+    case REGION_CHANS:  return(TO_SCM_INT(region_chans(rg))); break;
+    case REGION_MAXAMP: return(TO_SCM_DOUBLE(region_maxamp(rg))); break;
+    case REGION_FORGET: delete_region_and_update_browser(get_global_state(), id_to_stack_position(rg)); return(n); break;
     }
   return(TO_SCM_INT(0));
 }
@@ -1063,25 +1092,6 @@ static SCM g_region_chans (SCM n)
   return(region_read(REGION_CHANS, n, S_region_chans));
 }
 
-static SCM g_region_id (SCM n) 
-{
-  #define H_region_id "(" S_region_id " &optional (n 0) -> unique id of region n"
-  ASSERT_TYPE(INTEGER_IF_BOUND_P(n), n, SCM_ARGn, S_region_id, "an integer");
-  return(region_read(REGION_ID, n, S_region_id));
-}
-
-/* TODO: should id-region be id->region?? */
-static SCM g_id_region (SCM n) 
-{
-  #define H_id_region "(" S_id_region " &optional (id 0) -> stack location of region with id"
-  int sn;
-  ASSERT_TYPE(INTEGER_IF_BOUND_P(n), n, SCM_ARGn, S_id_region, "an integer");
-  sn = id_region(TO_C_INT_OR_ELSE(n, 0));
-  if (sn == -1) 
-    snd_no_such_region_error(S_id_region, n);
-  return(TO_SCM_INT(sn));
-}
-
 static SCM g_region_maxamp (SCM n) 
 {
   #define H_region_maxamp "(" S_region_maxamp " &optional (n 0)) -> max amp of region n"
@@ -1089,18 +1099,11 @@ static SCM g_region_maxamp (SCM n)
   return(region_read(REGION_MAXAMP, n, S_region_maxamp));
 }
 
-static SCM g_select_region (SCM n) 
+static SCM g_forget_region (SCM n) 
 {
-  #define H_select_region "(" S_select_region " &optional (n 0)) selects region n (moves it to the top of the region list)"
-  ASSERT_TYPE(INTEGER_IF_BOUND_P(n), n, SCM_ARGn, S_select_region, "an integer");
-  return(region_read(REGION_SELECT, n, S_select_region));
-}
-
-static SCM g_delete_region (SCM n) 
-{
-  #define H_delete_region "(" S_delete_region " &optional (n 0)) remove region n from the region list"
-  ASSERT_TYPE(INTEGER_IF_BOUND_P(n), n, SCM_ARGn, S_delete_region, "an integer");
-  return(region_read(REGION_DELETE, n, S_delete_region));
+  #define H_forget_region "(" S_forget_region " &optional (n 0)) remove region n from the region list"
+  ASSERT_TYPE(INTEGER_IF_BOUND_P(n), n, SCM_ARGn, S_forget_region, "an integer");
+  return(region_read(REGION_FORGET, n, S_forget_region));
 }
 
 static SCM g_play_region (SCM n, SCM wait) 
@@ -1110,7 +1113,7 @@ static SCM g_play_region (SCM n, SCM wait)
   ASSERT_TYPE(INTEGER_IF_BOUND_P(n), n, SCM_ARG1, S_play_region, "an integer");
   ASSERT_TYPE(BOOLEAN_IF_BOUND_P(wait), wait, SCM_ARG2, S_play_region, "a boolean");
   if (TRUE_P(wait)) wt = 1;
-  rg = TO_C_INT_OR_ELSE(n, 0);
+  rg = TO_C_INT_OR_ELSE(n, stack_position_to_id(0));
   if (!(region_ok(rg)))
     return(snd_no_such_region_error(S_play_region, n));
   play_region(get_global_state(), rg, !wt);
@@ -1125,7 +1128,7 @@ if val is #t protects region n from being pushed off the end of the region list"
   int rg;
   ASSERT_TYPE(INTEGER_P(n), n, SCM_ARG1, S_protect_region, "an integer");
   ASSERT_TYPE(BOOLEAN_IF_BOUND_P(protect), protect, SCM_ARG2, S_protect_region, "a boolean");
-  rg = TO_C_INT(n);
+  rg = TO_C_INT_OR_ELSE(n, stack_position_to_id(0));
   if (!(region_ok(rg)))
     return(snd_no_such_region_error(S_protect_region, n));
   set_region_protect(rg, TO_C_BOOLEAN_OR_T(protect)); 
@@ -1134,11 +1137,11 @@ if val is #t protects region n from being pushed off the end of the region list"
 
 static SCM g_regions(void) 
 {
-  #define H_regions "(" S_regions ") -> list of ids of regions currently in the region list"
+  #define H_regions "(" S_regions ") -> current stack of regions (by id)"
   int i;
   SCM result;
   result = SCM_EOL;
-  for (i=(regions_size-1); i >= 0; i--)
+  for (i = (regions_size - 1); i >= 0; i--)
     if (regions[i])
       result = CONS(TO_SCM_INT(regions[i]->id), result);
   return(result);
@@ -1146,11 +1149,11 @@ static SCM g_regions(void)
 
 static SCM g_make_region (SCM beg, SCM end, SCM snd_n, SCM chn_n)
 {
-  #define H_make_region "(" S_make_region " beg end &optional snd chn) makes a new region between beg and end in snd"
+  #define H_make_region "(" S_make_region " beg end &optional snd chn) makes a new region between beg and end in snd, returning its id"
   chan_info *cp;
   sync_info *si;
   int ends[1];
-  int ibeg;
+  int ibeg, id;
   if (NOT_BOUND_P(beg))
     make_region_from_selection();
   else
@@ -1168,11 +1171,12 @@ static SCM g_make_region (SCM beg, SCM end, SCM snd_n, SCM chn_n)
 			beg, end,
 			snd_n, chn_n));
       si = make_simple_sync(cp, ibeg);
-      define_region(si, ends);
-      reactivate_selection(si->cps[0], si->begs[0], ends[0]); /* ??? */
+      id = define_region(si, ends);
+      if (selection_creates_region(get_global_state()))
+	reactivate_selection(si->cps[0], si->begs[0], ends[0]);
       si = free_sync_info(si);
     }
-  return(TO_SCM_INT(region_id(0)));
+  return(TO_SCM_INT(id));
 }
 
 static mus_error_handler_t *old_mus_error;
@@ -1193,7 +1197,7 @@ static SCM g_save_region (SCM n, SCM filename, SCM format)
   ASSERT_TYPE(INTEGER_P(n), n, SCM_ARG1, S_save_region, "an integer");
   ASSERT_TYPE(STRING_P(filename), filename, SCM_ARG2, S_save_region, "a string");
   ASSERT_TYPE(INTEGER_IF_BOUND_P(format), format, SCM_ARG3, S_save_region, "an integer");
-  rg = TO_C_INT(n);
+  rg = TO_C_INT_OR_ELSE(n, stack_position_to_id(0));
   if (!(region_ok(rg)))
     return(snd_no_such_region_error(S_save_region, n));
   name = mus_expand_filename(TO_C_STRING(filename));
@@ -1217,7 +1221,7 @@ mixes region into snd's channel chn starting at chn-samp; returns new mix id."
   ASSERT_TYPE(NUMBER_IF_BOUND_P(chn_samp_n), chn_samp_n, SCM_ARG1, S_mix_region, "a number");
   ASSERT_TYPE(INTEGER_IF_BOUND_P(reg_n), reg_n, SCM_ARG2, S_mix_region, "an integer");
   SND_ASSERT_CHAN(S_mix_region, snd_n, chn_n, 3);
-  rg = TO_C_INT_OR_ELSE(reg_n, 0);
+  rg = TO_C_INT_OR_ELSE(reg_n, stack_position_to_id(0));
   if (!(region_ok(rg)))
     return(snd_no_such_region_error(S_mix_region, reg_n));
   cp = get_cp(snd_n, chn_n, S_mix_region);
@@ -1235,7 +1239,7 @@ static SCM g_region_sample(SCM samp_n, SCM reg_n, SCM chn_n)
   ASSERT_TYPE(INTEGER_IF_BOUND_P(reg_n), reg_n, SCM_ARG2, S_region_sample, "an integer");
   ASSERT_TYPE(INTEGER_IF_BOUND_P(chn_n), chn_n, SCM_ARG3, S_region_sample, "an integer");
   chan = TO_C_INT_OR_ELSE(chn_n, 0);
-  rg = TO_C_INT_OR_ELSE(reg_n, 0);
+  rg = TO_C_INT_OR_ELSE(reg_n, stack_position_to_id(0));
   if (!(region_ok(rg)))
     return(snd_no_such_region_error(S_region_sample, reg_n));
   if (chan < region_chans(rg))
@@ -1257,7 +1261,7 @@ returns a vector with region's samples starting at samp for samps from channel c
   ASSERT_TYPE(NUMBER_IF_BOUND_P(num), num, SCM_ARG2, S_region_samples, "a number");
   ASSERT_TYPE(INTEGER_IF_BOUND_P(reg_n), reg_n, SCM_ARG3, S_region_samples, "an integer");
   ASSERT_TYPE(INTEGER_IF_BOUND_P(chn_n), chn_n, SCM_ARG4, S_region_samples, "an integer");
-  reg = TO_C_INT_OR_ELSE(reg_n, 0);
+  reg = TO_C_INT_OR_ELSE(reg_n, stack_position_to_id(0));
   if (!(region_ok(reg))) 
     return(snd_no_such_region_error(S_region_samples, reg_n));
   chn = TO_C_INT_OR_ELSE(chn_n, 0);
@@ -1298,7 +1302,7 @@ writes region's samples starting at beg for samps in channel chan to vct obj, re
   ASSERT_TYPE(NUMBER_IF_BOUND_P(num), num, SCM_ARG2, S_region_samples2vct, "a number");
   ASSERT_TYPE(INTEGER_IF_BOUND_P(reg_n), reg_n, SCM_ARG3, S_region_samples2vct, "an integer");
   ASSERT_TYPE(INTEGER_IF_BOUND_P(chn_n), chn_n, SCM_ARG4, S_region_samples2vct, "an integer");
-  reg = TO_C_INT_OR_ELSE(reg_n, 0);
+  reg = TO_C_INT_OR_ELSE(reg_n, stack_position_to_id(0));
   if (!(region_ok(reg)))
     return(snd_no_such_region_error(S_region_samples2vct, reg_n));
   chn = TO_C_INT_OR_ELSE(chn_n, 0);
@@ -1331,12 +1335,9 @@ void g_init_regions(SCM local_doc)
   DEFINE_PROC(S_region_length,      g_region_length, 0, 1, 0,      H_region_length);
   DEFINE_PROC(S_region_srate,       g_region_srate, 0, 1, 0,       H_region_srate);
   DEFINE_PROC(S_region_chans,       g_region_chans, 0, 1, 0,       H_region_chans);
-  DEFINE_PROC(S_region_id,          g_region_id, 0, 1, 0,          H_region_id);
-  DEFINE_PROC(S_id_region,          g_id_region, 0, 1, 0,          H_id_region);
   DEFINE_PROC(S_region_maxamp,      g_region_maxamp, 0, 1, 0,      H_region_maxamp);
   DEFINE_PROC(S_save_region,        g_save_region, 2, 1, 0,        H_save_region);
-  DEFINE_PROC(S_select_region,      g_select_region, 0, 1, 0,      H_select_region);
-  DEFINE_PROC(S_delete_region,      g_delete_region, 0, 1, 0,      H_delete_region);
+  DEFINE_PROC(S_forget_region,      g_forget_region, 0, 1, 0,      H_forget_region);
   DEFINE_PROC(S_protect_region,     g_protect_region, 2, 0, 0,     H_protect_region);
   DEFINE_PROC(S_play_region,        g_play_region, 0, 2, 0,        H_play_region);
   DEFINE_PROC(S_make_region,        g_make_region, 0, 4, 0,        H_make_region);
@@ -1349,10 +1350,5 @@ void g_init_regions(SCM local_doc)
   define_procedure_with_setter(S_max_regions, SCM_FNC g_max_regions, H_max_regions,
 			       "set-" S_max_regions, SCM_FNC g_set_max_regions,
 			       local_doc, 0, 0, 1, 0);
-
-  #define H_select_region_hook S_select_region_hook " (id) is called when a region is selected. \
-The hook function argument 'id' is the newly selected region's id."
-
-  select_region_hook = MAKE_HOOK(S_select_region_hook, 1, H_select_region_hook); /* arg = newly selected region id */
 }
 

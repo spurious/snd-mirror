@@ -102,7 +102,6 @@
 #endif
 
 /* (need a way to pass an uninterpreted pointer from C to SCM then back to C) */
-/* TODO: use SND_VOID_T */
 #define SND_WRAP(a) ((SCM)(gh_ulong2scm((unsigned long)a)))
 #define SND_UNWRAP(a) gh_scm2ulong(a)
 #define SND_WRAPPED(a) gh_number_p(a)
@@ -236,7 +235,7 @@ static SCM name_reversed(SCM arg1, SCM arg2, SCM arg3) \
 #define DOCUMENTATION             scm_string_to_symbol(TO_SCM_STRING("documentation"))
 #define MAKE_PERMANENT(Obj)       scm_permanent_object(Obj)
 #define LOAD_SCM_FILE(File)       gh_eval_file(File)
-#define MAKE_HOOK(Name, Args, Help) snd_set_object_property(scm_create_hook(Name, Args), local_doc, TO_SCM_STRING(Help))
+#define MAKE_HOOK(Name, Args, Help) snd_create_hook(Name, Args, Help, local_doc)
 #define MAKE_HELPLESS_HOOK(Args)  scm_make_hook(TO_SMALL_SCM_INT(Args))
 #define CLEAR_HOOK(Arg)           scm_reset_hook_x(Arg)
 

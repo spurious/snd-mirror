@@ -7,13 +7,15 @@ static regrow **region_rows = NULL;
 static int region_rows_size = 0;
 static snd_info *reg_sp = NULL;
 static int current_region = -1;
-static Widget selectw, reg_srtxt, reg_lentxt, reg_chntxt, reg_maxtxt;
+static Widget reg_srtxt, reg_lentxt, reg_chntxt, reg_maxtxt;
 static Widget region_ww = NULL;
 static regrow *region_row(int n);
 
 static void region_update_graph(chan_info *cp)
 {
-  reg_sp->nchans = region_chans(current_region);
+  if (current_region == -1) return;
+  reg_sp->nchans = region_chans(stack_position_to_id(current_region));
+  if (reg_sp->nchans == 0) return;
   update_graph(cp, NULL);
   reg_sp->nchans = 1;
 }
@@ -75,7 +77,7 @@ static void make_region_labels(file_info *hdr)
   set_button_label_bold(reg_chntxt, str);
   mus_snprintf(str, PRINT_BUFFER_SIZE, STR_length, (float)(hdr->samples) / (float)(hdr->chans * hdr->srate));
   set_button_label_bold(reg_lentxt, str);
-  mus_snprintf(str, PRINT_BUFFER_SIZE, STR_maxamp, region_maxamp(current_region));
+  mus_snprintf(str, PRINT_BUFFER_SIZE, STR_maxamp, region_maxamp(stack_position_to_id(current_region)));
   set_button_label_bold(reg_maxtxt, str);
   FREE(str);
 }
@@ -105,8 +107,8 @@ void update_region_browser(snd_state *ss, int grf_too)
 	{
 	  cp->chan = 0;
 	  set_sensitive(channel_f(cp), FALSE);
-	  set_sensitive(channel_w(cp), (region_chans(0) > 1));
-	  if (region_ok(0)) 
+	  set_sensitive(channel_w(cp), (region_chans(stack_position_to_id(0)) > 1));
+	  if (region_ok(stack_position_to_id(0))) 
 	    {
 	      reg_sp->hdr = fixup_region_data(cp, 0, 0);
 	      make_region_labels(reg_sp->hdr);
@@ -132,10 +134,10 @@ static void region_resize_Callback(Widget w, XtPointer context, XtPointer info)
   region_update_graph((chan_info *)context);
 }
 
-void delete_region_and_update_browser(snd_state *ss, int n)
+void delete_region_and_update_browser(snd_state *ss, int pos)
 {
   int act;
-  act = delete_region(n);
+  act = remove_region_from_stack(pos);
   if (act == INVALID_REGION) return;
   if (region_dialog)
     {
@@ -166,28 +168,6 @@ static void region_help_Callback(Widget w, XtPointer context, XtPointer info)
   region_dialog_help((snd_state *)context);
 }
 
-void select_region_and_update_browser(snd_state *ss, int n)
-{
-  deactivate_selection();  /* just in case there's a region being highlighted */
-  if (region_dialog)
-    {
-      unhighlight_region(ss);
-      select_region(n);
-      current_region = 0;
-      highlight_region(ss);
-      goto_window(region_rows[0]->nm);
-      set_sensitive(selectw, FALSE);
-      update_region_browser(ss, 0);
-    }
-}
-
-static void region_select_Callback(Widget w, XtPointer context, XtPointer info) 
-{
-  snd_state *ss = (snd_state *)context;
-  if (current_region != -1)
-    select_region_and_update_browser(ss, current_region);
-}
-
 static void region_up_arrow_Callback(Widget w, XtPointer context, XtPointer info) 
 {
   chan_info *cp;
@@ -206,11 +186,11 @@ static void region_down_arrow_Callback(Widget w, XtPointer context, XtPointer in
 {
   chan_info *cp;
   cp = reg_sp->chans[0];
-  if ((cp->chan + 1) < region_chans(current_region))
+  if ((cp->chan + 1) < region_chans(stack_position_to_id(current_region)))
     {
       cp->chan++;
       set_sensitive(channel_f(cp), TRUE);
-      set_sensitive(channel_w(cp), (region_chans(current_region) > (cp->chan + 1)));
+      set_sensitive(channel_w(cp), (region_chans(stack_position_to_id(current_region)) > (cp->chan + 1)));
       fixup_region_data(cp, cp->chan, current_region);
       region_update_graph(cp);
     }
@@ -223,14 +203,13 @@ static void region_focus_Callback(Widget w, XtPointer context, XtPointer info)
   regrow *r = (regrow *)context;
   ss = r->ss;
   unhighlight_region(ss);
-  if (!(region_ok(r->pos))) return; /* needed by auto-tester */
+  if (stack_position_to_id(r->pos) == INVALID_REGION) return; /* needed by auto-tester */
   current_region = r->pos;
   cp = reg_sp->chans[0];
   cp->chan  = 0;
   highlight_region(ss);
   set_sensitive(channel_f(cp), FALSE);
-  set_sensitive(channel_w(cp), (region_chans(current_region) > 1));
-  set_sensitive(selectw, (current_region != 0));
+  set_sensitive(channel_w(cp), (region_chans(stack_position_to_id(current_region)) > 1));
   reg_sp->hdr = fixup_region_data(cp, 0, current_region);
   if (reg_sp->hdr == NULL) return;
   make_region_labels(reg_sp->hdr);
@@ -243,7 +222,7 @@ void reflect_play_region_stop(int n)
   regrow *rg;
   if (region_rows)
     {
-      rg = region_row(n);
+      rg = region_row(id_to_stack_position(n));
       if (rg) XmToggleButtonSetState(rg->pl, FALSE, FALSE);
     }
 }
@@ -252,24 +231,24 @@ static void region_play_Callback(Widget w, XtPointer context, XtPointer info)
 {
   regrow *r = (regrow *)context;
   if (XmToggleButtonGetState(r->pl))
-    play_region(r->ss, r->pos, IN_BACKGROUND);
-  else stop_playing_region(r->pos);
+    play_region(r->ss, stack_position_to_id(r->pos), IN_BACKGROUND);
+  else stop_playing_region(stack_position_to_id(r->pos));
 }
 
 static void region_save_Callback(Widget w, XtPointer context, XtPointer info) 
 {
   regrow *r = (regrow *)context;
   XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)info;
-  protect_region(r->pos, cb->set);
+  protect_region(stack_position_to_id(r->pos), cb->set);
 }
 
-void set_region_protect(int reg, int protect)
+void set_region_protect(int id, int protect)
 {
   regrow *r;
-  protect_region(reg, protect);
+  protect_region(id, protect);
   if (region_rows)
     {
-      r = region_row(reg);
+      r = region_row(id_to_stack_position(id));
       if ((r) && (r->sv)) XmToggleButtonSetState(r->sv, protect, FALSE);
     }
 }
@@ -289,7 +268,7 @@ static void region_edit_Callback(Widget w, XtPointer context, XtPointer info)
 
 static void make_region_dialog(snd_state *ss)
 {
-  int n, i;
+  int n, i, id;
   Arg args[32];
   Widget formw, last_row, ww, infosep, prtb, editb;
   XmString xok, xdelete, xhelp, titlestr;
@@ -334,12 +313,6 @@ static void make_region_dialog(snd_state *ss)
       XtVaSetValues(XmMessageBoxGetChild(region_dialog, XmDIALOG_CANCEL_BUTTON), XmNarmColor, (ss->sgx)->pushed_button_color, NULL);
       XtVaSetValues(XmMessageBoxGetChild(region_dialog, XmDIALOG_HELP_BUTTON), XmNarmColor, (ss->sgx)->pushed_button_color, NULL);
     }
-
-  n = 0;
-  if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
-  selectw = XtCreateManagedWidget(STR_Select, xmPushButtonWidgetClass, region_dialog, args, n);
-  XtAddCallback(selectw, XmNactivateCallback, region_select_Callback, ss);
-  set_sensitive(selectw, FALSE);
 
   n = 0;
   if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
@@ -476,6 +449,7 @@ static void make_region_dialog(snd_state *ss)
 
   if (!reg_sp) 
     { /* just a place holder, I think -- see make_region_readable in snd-clip.c */
+      id = stack_position_to_id(0);
       reg_sp = (snd_info *)CALLOC(1, sizeof(snd_info));
       reg_sp->nchans = 1;
       reg_sp->allocated_chans = 1;
@@ -485,8 +459,8 @@ static void make_region_dialog(snd_state *ss)
       reg_sp->search_proc = SCM_UNDEFINED;
       reg_sp->prompt_callback = SCM_UNDEFINED;
       hdr = reg_sp->hdr;
-      hdr->samples = region_len(0);
-      hdr->srate = region_srate(0);
+      hdr->samples = region_len(id);
+      hdr->srate = region_srate(id);
       hdr->comment = NULL;
       hdr->chans = 1;
       current_region = 0;
@@ -499,7 +473,7 @@ static void make_region_dialog(snd_state *ss)
       cp->sound_size = 1;
       cp->sound_ctr = 0;
       cp->sounds = (snd_data **)CALLOC(cp->sound_size, sizeof(snd_data *));
-      cp->samples[0] = region_len(0);
+      cp->samples[0] = region_len(id);
     }
   else 
     {
@@ -523,7 +497,7 @@ static void make_region_dialog(snd_state *ss)
   XtAddCallback(channel_f(cp), XmNactivateCallback, region_up_arrow_Callback, (XtPointer)ss);
   XtAddCallback(channel_w(cp), XmNactivateCallback, region_down_arrow_Callback, (XtPointer)ss);
   set_sensitive(channel_f(cp), FALSE);
-  if (region_chans(0) > 1) set_sensitive(channel_w(cp), TRUE);
+  if (region_chans(stack_position_to_id(0)) > 1) set_sensitive(channel_w(cp), TRUE);
   cp->chan = 0;
   reg_sp->hdr = fixup_region_data(cp, 0, 0);
   make_region_labels(reg_sp->hdr);
@@ -549,13 +523,15 @@ void View_Region_Callback(Widget w, XtPointer context, XtPointer info)
 
 int region_dialog_is_active(void)
 {
-  return((region_dialog != NULL) && (XtIsManaged(region_dialog)));
+  return((region_dialog != NULL) && 
+	 (XtIsManaged(region_dialog)));
 }
 
 void allocate_region_rows(snd_state *ss, int n)
 {
   int i;
-  if ((region_dialog) && (n > region_rows_size))
+  if ((region_dialog) && 
+      (n > region_rows_size))
     {
       region_rows = (regrow **)REALLOC(region_rows, n * sizeof(regrow *));
       for (i = region_rows_size; i < n; i++) region_rows[i] = NULL;
@@ -572,7 +548,9 @@ static regrow *region_row(int n)
       if (region_rows[n] == NULL)
 	{
 	  ss = get_global_state();
-	  r = make_regrow(ss, region_ww, (n > 0) ? (region_rows[n - 1]->rw) : NULL, region_save_Callback, region_play_Callback, region_focus_Callback);
+	  r = make_regrow(ss, region_ww, 
+			  (n > 0) ? (region_rows[n - 1]->rw) : NULL, 
+			  region_save_Callback, region_play_Callback, region_focus_Callback);
 	  region_rows[n] = r;
 	  r->pos = n;
 	  r->ss = ss;

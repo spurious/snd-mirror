@@ -58,6 +58,7 @@
  *                 if your video setup can handle 16 or more bits of color, define
  *                 this flag (via -DWITH_BIG_COLORMAP in CFLAGS for example), and
  *                 the sonogram colormaps will involve 512 colors, rather than 64.
+ *                 (In Snd-5 this switch defaults to 1).
  *
  *   HAVE_FPU_CONTROL_H
  *                 In Linux, we sometimes get NaNs which we would rather just set
@@ -192,10 +193,10 @@
 
 #include "snd-strings.h"
 
-#define SND_VERSION "29-May-01"
-#define SND_RPM_VERSION "4.14"
-#define SND_MAJOR_VERSION 4
-#define SND_MINOR_VERSION 14
+#define SND_VERSION "31-May-01"
+#define SND_RPM_VERSION "5.0"
+#define SND_MAJOR_VERSION 5
+#define SND_MINOR_VERSION 0
 
 #endif
 

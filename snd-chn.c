@@ -2951,7 +2951,11 @@ void f_button_callback(chan_info *cp, int on, int with_control)
 	      if (cp != ncp)
 		{
 		  ncp->ffting = on;
+#if USE_GTK
+		  set_toggle_button(channel_f(ncp), (on) ? TRUE : FALSE, TRUE, (void *)cp);
+#else
 		  set_toggle_button(channel_f(ncp), (on) ? TRUE : FALSE, FALSE, (void *)cp);
+#endif
 		  update_graph(ncp, NULL);
 		}
 	    }
@@ -2980,7 +2984,11 @@ void w_button_callback(chan_info *cp, int on, int with_control)
 	      if (cp != ncp)
 		{
 		  ncp->waving = on;
+#if USE_GTK
+		  set_toggle_button(channel_w(ncp), (on) ? TRUE : FALSE, TRUE, (void *)cp);
+#else
 		  set_toggle_button(channel_w(ncp), (on) ? TRUE : FALSE, FALSE, (void *)cp);
+#endif
 		  update_graph(ncp, NULL);
 		}
 	    }
@@ -3165,7 +3173,7 @@ void graph_button_release_callback(chan_info *cp, int x, int y, int key_state, i
 	    {
 	      if (play_mark->sync)
 		play_syncd_mark(cp, play_mark);
-	      else play_channel(cp, play_mark->samp, NO_END_SPECIFIED, TRUE, TO_SCM_INT(AT_CURRENT_EDIT_POSITION), "play button");
+	      else play_channel(cp, play_mark->samp, NO_END_SPECIFIED, TRUE, TO_SCM_INT(AT_CURRENT_EDIT_POSITION), "play button", 0);
 	      sp->playing_mark = play_mark;
 	      set_play_button(sp, 1);
 	    }
@@ -3331,7 +3339,7 @@ void graph_button_motion_callback(chan_info *cp, int x, int y, TIME_TYPE time, T
 	      dragged = 1;
 	      sp->speed_control = 0.0;
 	      mouse_cursor = cp->cursor;
-	      play_channel(cp, play_mark->samp, NO_END_SPECIFIED, TRUE, TO_SCM_INT(AT_CURRENT_EDIT_POSITION), "drag playing mark");
+	      play_channel(cp, play_mark->samp, NO_END_SPECIFIED, TRUE, TO_SCM_INT(AT_CURRENT_EDIT_POSITION), "drag playing mark", 0);
 	      set_play_button(sp, 1);
 	    }
 	  else
@@ -3566,7 +3574,7 @@ static SCM cp_iread(SCM snd_n, SCM chn_n, int fld, char *caller)
 	    case CP_GRAPHS_HORIZONTAL:  return(TO_SCM_BOOLEAN(cp->graphs_horizontal));             break;
 	    case CP_SYNC:               return(TO_SCM_INT(cp->sync));                              break;
 	    case CP_CURSOR_POSITION:    return(SCM_LIST2(TO_SCM_INT(cp->cx), TO_SCM_INT(cp->cy))); break;
-	    case CP_EDPOS_FRAMES:       return(TO_SCM_INT(to_c_edit_samples(cp, cp_edpos, caller))); break;
+	    case CP_EDPOS_FRAMES:       return(TO_SCM_INT(to_c_edit_samples(cp, cp_edpos, caller, 3))); break;
 	    }
 	}
     }
@@ -3900,7 +3908,7 @@ static SCM cp_fread(SCM snd_n, SCM chn_n, int fld, char *caller)
     case CP_SPECTRO_START:   return(TO_SCM_DOUBLE(cp->spectro_start));                break;
     case CP_FFT_BETA:        return(TO_SCM_DOUBLE(cp->fft_beta));                     break;
     case CP_MAXAMP:          return(TO_SCM_DOUBLE(get_maxamp(cp->sound, cp, AT_CURRENT_EDIT_POSITION)));        break;
-    case CP_EDPOS_MAXAMP:    return(TO_SCM_DOUBLE(get_maxamp(cp->sound, cp, to_c_edit_position(cp, cp_edpos, S_maxamp)))); break;
+    case CP_EDPOS_MAXAMP:    return(TO_SCM_DOUBLE(get_maxamp(cp->sound, cp, to_c_edit_position(cp, cp_edpos, S_maxamp, 3)))); break;
     }
   return(SCM_BOOL_F);
 }

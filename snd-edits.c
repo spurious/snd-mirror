@@ -2332,7 +2332,7 @@ static int save_edits_and_update_display(snd_info *sp)
   return(MUS_NO_ERROR); /* don't erase our error message for the special write-permission problem */
 }
 
-int save_edits_without_display(snd_info *sp, char *new_name, int type, int format, int srate, char *comment, SCM edpos, const char *caller)
+int save_edits_without_display(snd_info *sp, char *new_name, int type, int format, int srate, char *comment, SCM edpos, const char *caller, int arg_pos)
 { 
   /* file save as menu option -- changed 19-June-97 to retain current state after writing */
   file_info *hdr, *ohdr;
@@ -2359,7 +2359,7 @@ int save_edits_without_display(snd_info *sp, char *new_name, int type, int forma
 	  for (i = 0; i < sp->nchans; i++) 
 	    {
 	      cp = sp->chans[i];
-	      pos = to_c_edit_position(cp, edpos, caller);
+	      pos = to_c_edit_position(cp, edpos, caller, arg_pos);
 	      sf[i] = init_sample_read_any(0, cp, READ_FORWARD, pos);
 	      if (frames < cp->samples[pos]) frames = cp->samples[pos];
 	      if (sf[i] == NULL) err = MUS_ERROR;
@@ -2385,7 +2385,7 @@ int save_edits_without_display(snd_info *sp, char *new_name, int type, int forma
   return(MUS_UNSUPPORTED_DATA_FORMAT);
 }
 
-int save_channel_edits(chan_info *cp, char *ofile, SCM edpos, const char *caller)
+int save_channel_edits(chan_info *cp, char *ofile, SCM edpos, const char *caller, int arg_pos)
 {
   /* channel extraction -- does not (normally) cause reversion of edits, or change of in-window file, etc */
   snd_info *sp;
@@ -2397,7 +2397,7 @@ int save_channel_edits(chan_info *cp, char *ofile, SCM edpos, const char *caller
   sp = cp->sound;
   err = MUS_NO_ERROR;
   if (!(snd_overwrite_ok(ss, ofile))) return(MUS_NO_ERROR); /* no error because decision was explicit */
-  pos = to_c_edit_position(cp, edpos, caller);
+  pos = to_c_edit_position(cp, edpos, caller, arg_pos);
   if (strcmp(ofile, sp->fullname) == 0)
     {
       if (sp->read_only)
@@ -2445,6 +2445,7 @@ void save_edits(snd_info *sp, void *ptr)
   int i, need_save, err;
   time_t current_write_date;
   chan_info *cp;
+  if (sp == NULL) return;
   if (!sp->read_only)
     {
       need_save = 0;
@@ -3265,7 +3266,7 @@ history position to read (defaults to current position)."
   ASSERT_TYPE(NUMBER_IF_BOUND_P(samps), samps, SCM_ARG2, S_samples, "a number");
   SND_ASSERT_CHAN(S_samples, snd_n, chn_n, 3);
   cp = get_cp(snd_n, chn_n, S_samples);
-  pos = to_c_edit_position(cp, edpos, S_samples);
+  pos = to_c_edit_position(cp, edpos, S_samples, 5);
   beg = TO_C_INT_OR_ELSE(samp_0, 0);
   len = TO_C_INT_OR_ELSE(samps, cp->samples[pos] - beg);
   new_vect = MAKE_VECTOR(len, TO_SCM_DOUBLE(0.0));

@@ -1017,7 +1017,7 @@ void enved_show_background_waveform(snd_state *ss, chan_info *axis_cp, axis_info
 	  if (!(selection_is_active())) return;
 	  /* show current channel overall view in gray scale */
 	  samps = selection_len();
-	  srate = region_srate(0);
+	  srate = selection_srate();
 	  gray_ap->losamp = selection_beg(NULL);
 	  gray_ap->hisamp = gray_ap->losamp + samps - 1;
 	  gray_ap->x0 = (Float)(gray_ap->losamp) / (Float)srate;

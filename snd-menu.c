@@ -1,9 +1,5 @@
 #include "snd.h"
 
-/* TODO  if all popup choices are insensitive what should button-2 do?
- * TODO  user-add to popup menu
- */
-
 void reflect_file_open_in_menu (void)
 {
   set_sensitive(file_close_menu(), TRUE);
@@ -156,7 +152,9 @@ void reflect_edit_without_selection_in_menu (void)
   set_sensitive(edit_cut_menu(), FALSE);
   set_sensitive(edit_paste_menu(), FALSE);
   set_sensitive(edit_mix_menu(), FALSE);
-  if ((!(selection_is_active())) && (!(region_ok(0)))) set_sensitive(edit_paste_menu(), FALSE);
+  if ((!(selection_is_active())) && 
+      (!(region_ok(stack_position_to_id(0))))) 
+    set_sensitive(edit_paste_menu(), FALSE);
   set_sensitive(edit_play_menu(), FALSE);
   set_sensitive(edit_save_as_menu(), FALSE);
   enved_reflect_selection(FALSE);
@@ -295,7 +293,8 @@ void revert_file_from_menu(snd_state *ss)
   sp = any_selected_sound(ss);
   if (sp)
     {
-      for (i = 0; i < sp->nchans; i++) revert_edits(sp->chans[i], NULL);
+      for (i = 0; i < sp->nchans; i++) 
+	revert_edits(sp->chans[i], NULL);
       reflect_file_revert_in_label(sp);
       reflect_file_revert_in_menu(ss);
     }
@@ -309,23 +308,17 @@ void exit_from_menu(snd_state *ss)
 
 void save_options_from_menu(snd_state *ss)
 {
-  if (save_options(ss) == 0)
-    {
-      if (any_selected_sound(ss))
-	report_in_minibuffer(any_selected_sound(ss), "saved options in %s", ss->init_file);
-    }
+  if ((save_options(ss) == 0) && 
+      (any_selected_sound(ss)))
+    report_in_minibuffer(any_selected_sound(ss), "saved options in %s", ss->init_file);
 }
 
 void save_state_from_menu(snd_state *ss)
 {
-  if (save_state_file(ss))
-    {
-      if (save_state(ss, save_state_file(ss)) == 0)
-	{
-	  if (any_selected_sound(ss))
-	    report_in_minibuffer(any_selected_sound(ss), "saved state in %s", save_state_file(ss));
-	}
-    }
+  if ((save_state_file(ss)) && 
+      (save_state(ss, save_state_file(ss)) == 0) && 
+      (any_selected_sound(ss)))
+    report_in_minibuffer(any_selected_sound(ss), "saved state in %s", save_state_file(ss));
 }
 
 static int map_chans_graph_style(chan_info *cp, void *ptr) {cp->graph_style = (*((int *)ptr)); update_graph(cp, NULL); return(0);}

@@ -2,6 +2,8 @@
 
 /* selection support changed 11-Sep-00 to handle edit list movements */
 
+/* do we need selection_samples or selection_to_vct? */
+
 static int cp_has_selection(chan_info *cp, void *ignore)
 {
   ed_list *ed;
@@ -131,6 +133,20 @@ int selection_chans(void)
   count[0] = 0;
   map_over_chans(get_global_state(), selection_chans_1, (void *)count);
   return(count[0]);
+}
+
+static int selection_srate_1(chan_info *cp, void *ignored)
+{
+  if (cp_has_selection(cp, NULL)) 
+    return(SND_SRATE(cp->sound));
+  return(0);
+}
+
+int selection_srate(void)
+{
+  if (selection_is_active())
+    return(map_over_chans(get_global_state(), selection_srate_1, NULL));
+  return(0);
 }
 
 static int cp_delete_selection(chan_info *cp, void *origin)
@@ -445,12 +461,12 @@ void display_selection(chan_info *cp)
   cp_redraw_selection(cp, NULL);
 }
 
-void make_region_from_selection(void)
+int make_region_from_selection(void)
 {
   int *ends = NULL;
-  int i, happy = 0;
+  int i, happy = 0, id = -1;
   sync_info *si;
-  if (!(selection_is_active())) return;
+  if (!(selection_is_active())) return(-1);
   si = selection_sync();
   ends = (int *)CALLOC(si->chans, sizeof(int));
   for (i = 0; i < si->chans; i++) 
@@ -463,15 +479,16 @@ void make_region_from_selection(void)
     {
       if (selection_len() > 10000000)
 	report_in_minibuffer(si->cps[0]->sound, "making region...");
-      define_region(si, ends);
+      id = define_region(si, ends);
       if (selection_len() > 10000000) 
 	report_in_minibuffer(si->cps[0]->sound, " ");
     }
   si = free_sync_info(si);
   if (ends) FREE(ends);
+  return(id);
 }
 
-void select_all(chan_info *cp)
+int select_all(chan_info *cp)
 {
   sync_info *si;
   int i;
@@ -486,8 +503,9 @@ void select_all(chan_info *cp)
 	}
       si = free_sync_info(si);
       if (selection_creates_region(cp->state)) 
-	make_region_from_selection();
+	return(make_region_from_selection());
     }
+  return(-1);
 }
 
 
@@ -878,10 +896,13 @@ static SCM g_select_all (SCM snd_n, SCM chn_n)
 {
   #define H_select_all "(" S_select_all " &optional snd chn) makes a new selection containing all of snd's channel chn"
   chan_info *cp;
+  int id;
   SND_ASSERT_CHAN(S_select_all, snd_n, chn_n, 1);
   cp = get_cp(snd_n, chn_n, S_select_all);
-  select_all(cp);
-  return(TO_SCM_INT(region_id(0)));
+  id = select_all(cp);
+  if (selection_creates_region(cp->state)) 
+    return(TO_SCM_INT(id));
+  else return(SCM_BOOL_T);
 }
 
 static mus_error_handler_t *old_mus_error;
@@ -917,7 +938,7 @@ saves the current selection in filename using the indicated file attributes"
   else type = MUS_NEXT;
 #endif
   format = TO_C_INT_OR_ELSE(data_format, MUS_OUT_FORMAT);
-  sr = TO_C_INT_OR_ELSE(srate, region_srate(0));
+  sr = TO_C_INT_OR_ELSE(srate, selection_srate());
   if (STRING_P(comment)) 
     com = TO_C_STRING(comment); 
   else com = NULL;
@@ -928,6 +949,18 @@ saves the current selection in filename using the indicated file attributes"
   if (fname) FREE(fname);
   if (err == MUS_NO_ERROR) return(filename);
   return(TO_SCM_INT(err));
+}
+
+static SCM g_selection_chans(void)
+{
+  #define H_selection_chans "(" S_selection_chans ") -> chans in active selection"
+  return(TO_SCM_INT(selection_chans()));
+}
+
+static SCM g_selection_srate(void)
+{
+  #define H_selection_srate "(" S_selection_srate ") -> selection srate"
+  return(TO_SCM_INT(selection_srate()));
 }
 
 void g_init_selection(SCM local_doc)
@@ -944,7 +977,9 @@ void g_init_selection(SCM local_doc)
 					"set-" S_selection_member, SCM_FNC g_set_selection_member, SCM_FNC g_set_selection_member_reversed,
 					local_doc, 0, 2, 1, 2);
 
-  DEFINE_PROC(S_selection_p,      g_selection_p, 0, 0, 0,       H_selection_p);
+  DEFINE_PROC(S_selection_p,      g_selection_p, 0, 0, 0,      H_selection_p);
+  DEFINE_PROC(S_selection_chans,  g_selection_chans, 0, 0, 0,  H_selection_chans);
+  DEFINE_PROC(S_selection_srate,  g_selection_srate, 0, 0, 0,  H_selection_srate);
   DEFINE_PROC(S_delete_selection, g_delete_selection, 0, 0, 0, H_delete_selection);
   DEFINE_PROC(S_insert_selection, g_insert_selection, 0, 3, 0, H_insert_selection);
   DEFINE_PROC(S_mix_selection,    g_mix_selection, 0, 3, 0,    H_mix_selection);
@@ -952,4 +987,5 @@ void g_init_selection(SCM local_doc)
   DEFINE_PROC(S_save_selection,   g_save_selection, 1, 4, 0,   H_save_selection);
 
   /* should save-selection (and others like it) be selection->file? */
+  /* TODO add chan arg to save-selection */
 }

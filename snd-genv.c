@@ -166,14 +166,14 @@ static void apply_enved(snd_state *ss)
 			     current_ed_samples(active_channel), 1.0, 
 			     apply_to_selection, FROM_ENVED, 
 			     "Enved: amp", NULL,
-			     TO_SCM_INT(AT_CURRENT_EDIT_POSITION)); 
+			     TO_SCM_INT(AT_CURRENT_EDIT_POSITION), 0); 
 	      /* calls update_graph, I think, but in short files that doesn't update the amp-env */
 	      if (enved_wave_p(ss)) env_redisplay(ss);
 	      break;
 	    case ENVED_SPECTRUM: 
 	      apply_filter(active_channel, enved_filter_order(ss), active_env, 
 			   FROM_ENVED, "Enved: flt", apply_to_selection, NULL, NULL,
-			   TO_SCM_INT(AT_CURRENT_EDIT_POSITION));
+			   TO_SCM_INT(AT_CURRENT_EDIT_POSITION), 0);
 	      break;
 	    case ENVED_SRATE:
 	      max_env = copy_env(active_env);
@@ -182,7 +182,7 @@ static void apply_enved(snd_state *ss)
 	      within_selection_src = 1;
 	      src_env_or_num(ss, active_channel, max_env, 0.0, 
 			     FALSE, FROM_ENVED, "Enved: src", apply_to_selection, NULL,
-			     TO_SCM_INT(AT_CURRENT_EDIT_POSITION));
+			     TO_SCM_INT(AT_CURRENT_EDIT_POSITION), 0);
 	      within_selection_src = 0;
 	      max_env = free_env(max_env);
 	      if (enved_wave_p(ss)) env_redisplay(ss);

@@ -101,7 +101,6 @@ function example()
     <li><a href="#sndsounds">Sounds and channels</a>
       <ul><li><a href="#customcontrols">the control panel</a></li></ul>
     <li><a href="#editlists">Edit Lists</a>
-    <li><a href="#scanning">Scanning Data</a>
     <li><a href="#sndtransforms">Transforms</a>
     <li><a href="#snddialogs">Dialogs and Menus</a>
     <li><a href="#snderrors">Errors</a>
@@ -1153,13 +1152,6 @@ when you save a sound via the "save" dialog.</p>
 <!-- --></td></tr>
 <!-- --><tr><td colspan=3></td></tr>
 <!-- -->
-<!-- temp-filenames -->
-<!-- --><tr><td><code><em class=def><a name="sndtempfilenames">temp-filenames</a></em></code></td>
-<!-- --><td><br></td>
-<!-- --><td>return vector of temp file names (see <a href="grfsnd.html#programs">external programs</a>).
-<!-- --></td></tr>
-<!-- --><tr><td colspan=3></td></tr>
-<!-- -->
 <!-- trap-segfault -->
 <!-- --><tr><td><code><em class=def><a name="trapsegfault">trap-segfault</a></em></code></td>
 <!-- --><td><code>#t</code></td>
@@ -1956,15 +1948,6 @@ the hook.
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
 <!-- -->called when a mix is selected. The argument is the newly selected mix's id.
-<!-- --></td></tr>
-<!-- --><tr><td colspan=2></td></tr>
-<!-- -->
-<!-- select-region-hook -->
-<!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="selectregionhook">select-region-hook</a></em> (id)</code></span>
-<!-- --></td></tr>
-<!-- --><tr><td></td><td>
-<!-- -->called when a region is selected. The argument is the newly selected region's id.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -3302,29 +3285,20 @@ it to its original state.
 a notion of a stack of regions.  As regions are added, old ones get pushed off the
 stack and deleted.  The current selection is usually based on region 0,
 although in fact there's no necessary connection between them.
-The region number (e.g. 0) refers to its position in the region stack; each region also
-has a unique identifier called its <i>id</i>.
-Some of the <i>reg</i> arguments can be #t, referring to all current regions; 
-these are indicated as <em class=targ>reg</em> below.
+Each region has a unique id returned by make-region and shown beside the region name in the Region Browser.
+Most of the region number arguments default to the current region (the first in the regions list).
 </p>
 
 <!-- -------------------------------- REGION TABLE -------------------------------- -->
 <!-- -->
 <!-- --><table border=0 cellspacing=8>
 <!-- -->
-<!-- delete-region -->
+<!-- forget-region -->
 <!-- -->
-<!-- --><tr><td valign=top><span class=defbox><code><em class=def><a name="snddeleteregion">delete-region</a></em> (<i>reg</i>)</code></span></td>
+<!-- --><tr><td valign=top><span class=defbox><code><em class=def><a name="snddeleteregion">forget-region</a></em> (<i>reg</i>)</code></span></td>
 <!-- --><td>
-<!-- -->delete region number <i>reg</i> (which defaults to 0).  This removes the
-<!-- -->region from the region stack; it doesn't edit the corresponding file(s).
-<!-- --></td></tr>
-<!-- -->
-<!-- id-region -->
-<!-- -->
-<!-- --><tr><td><span class=defbox><code><em class=def><a name="sndidregion">id-region</a></em> (<i>id</i>)</code></span></td>
-<!-- --><td>
-<!-- -->map from region-id <i>id</i> to its current region stack location.
+<!-- -->"forget" region number <i>reg</i>, removing it 
+<!-- -->from the region stack.  Once forgotten, the region's data no longer exists.
 <!-- --></td></tr>
 <!-- -->
 <!-- insert-region -->
@@ -3348,6 +3322,10 @@ these are indicated as <em class=targ>reg</em> below.
 <!-- -->create a <a href="#samplereaders">sample-reader</a> object reading region <i>reg</i>'s channel <i>chn</i>
 <!-- --></td></tr>
 <!-- -->
+<!-- mix-region --><td><span class=defbox><code><em class=def>mix-region</em> (<i>samp reg snd chn</i>)</code></span></td></tr>
+<!-- --><td> see <a href="#sndmixregion">above</a>.
+<!-- --></td></tr>
+<!-- -->
 <!-- play-region -->
 <!-- -->
 <!-- --><tr><td><span class=defbox><code><em class=def><a name="sndplayregion">play-region</a></em> (<i>reg wait</i>)</code></span></td>
@@ -3358,33 +3336,26 @@ these are indicated as <em class=targ>reg</em> below.
 <!-- protect-region -->
 <!-- -->
 <!-- --><tr><td><span class=defbox><code><em class=def><a name="sndprotectregion">protect-region</a></em> (reg protect)</code></span></td>
-<!-- --><td>protect/unprotect region <i>reg</i> from deletion in the <a href="snd.html#regionbrowser">region browser</a>.
+<!-- --><td>protect/unprotect region <i>reg</i> from deletion (removal from the region stack).
 <!-- --></td></tr>
 <!-- -->
 <!-- region-chans -->
 <!-- -->
-<!-- --><tr><td><span class=defbox><code><em class=def><a name="sndregionchans">region-chans</a></em> (<em class=targ>reg</em>)</code></span></td>
+<!-- --><tr><td><span class=defbox><code><em class=def><a name="sndregionchans">region-chans</a></em> (<i>reg</i>)</code></span></td>
 <!-- --><td>
 <!-- -->number of channels in region <i>reg</i>.
 <!-- --></td></tr>
 <!-- -->
-<!-- region-id -->
-<!-- -->
-<!-- --><tr><td><span class=defbox><code><em class=def><a name="sndregionid">region-id</a></em> (<em class=targ>reg</em>)</code></span></td>
-<!-- --><td>
-<!-- -->unique identifier attached to region <i>reg</i>.
-<!-- --></td></tr>
-<!-- -->
 <!-- region-length -->
 <!-- -->
-<!-- --><tr><td><span class=defbox><code><em class=def><a name="sndregionlength">region-length</a></em> (<em class=targ>reg</em>)</code></span></td>
+<!-- --><tr><td><span class=defbox><code><em class=def><a name="sndregionlength">region-length</a></em> (<i>reg</i>)</code></span></td>
 <!-- --><td>
 <!-- -->number of samples (per channel) in region <i>reg</i>.
 <!-- --></td></tr>
 <!-- -->
 <!-- region-maxamp -->
 <!-- -->
-<!-- --><tr><td><span class=defbox><code><em class=def><a name="sndregionmaxamp">region-maxamp</a></em> (<em class=targ>reg</em>)</code></span></td>
+<!-- --><tr><td><span class=defbox><code><em class=def><a name="sndregionmaxamp">region-maxamp</a></em> (<i>reg</i>)</code></span></td>
 <!-- --><td>
 <!-- -->maximum amplitude of region <i>reg</i>.
 <!-- --></td></tr>
@@ -3416,7 +3387,7 @@ these are indicated as <em class=targ>reg</em> below.
 <!-- -->
 <!-- region-srate -->
 <!-- -->
-<!-- --><tr><td><span class=defbox><code><em class=def><a name="sndregionsrate">region-srate</a></em> (<em class=targ>reg</em>)</code></span></td>
+<!-- --><tr><td><span class=defbox><code><em class=def><a name="sndregionsrate">region-srate</a></em> (<i>reg</i>)</code></span></td>
 <!-- --><td>
 <!-- -->original (nominal) sampling rate of region <i>reg</i>.
 <!-- --></td></tr>
@@ -3425,14 +3396,15 @@ these are indicated as <em class=targ>reg</em> below.
 <!-- -->
 <!-- --><tr><td><span class=defbox><code><em class=def><a name="eregions">regions</a></em> ()</code></span></td>
 <!-- --><td>
-<!-- -->list of ids of regions currently active.
+<!-- -->list of ids of regions currently active.  The most recently created region is <code>(car (regions))</code>.
+<!-- --><code>(map region-length (regions))</code> returns a list of region lengths.
 <!-- --></td></tr>
 <!-- -->
 <!-- region? -->
 <!-- -->
 <!-- --><tr><td><span class=defbox><code><em class=def><a name="regionok">region?</a></em> (<i>reg</i>)</code></span></td>
 <!-- --><td>
-<!-- -->#t if region <i>reg</i> has data.
+<!-- -->#t if region <i>reg</i> exists (has not yet been forgotten).
 <!-- --></td></tr>
 <!-- -->
 <!-- save-region -->
@@ -3441,20 +3413,6 @@ these are indicated as <em class=targ>reg</em> below.
 <!-- --><tr><td></td><td>
 <!-- -->save region <i>reg</i> in <i>filename</i> in data format <i>format</i> (default mus-bshort) 
 <!-- -->[<em class=error>cannot-save</em>].
-<!-- --></td></tr>
-<!-- -->
-<!-- select-all -->
-<!-- -->
-<!-- --><tr><td><span class=defbox><code><em class=def><a name="sndselectall">select-all</a></em> (<i>snd chn</i>)</code></span></td>
-<!-- --><td>
-<!-- -->create a new region spanning all samples in <i>snd</i>'s channel <i>chn</i>.
-<!-- -->returns region's id.
-<!-- --></td></tr>
-<!-- -->
-<!-- select-region -->
-<!-- -->
-<!-- --><tr><td><span class=defbox><code><em class=def><a name="sndselectregion">select-region</a></em> (<i>reg</i>)</code></span></td>
-<!-- --><td>select region <i>reg</i> (i.e make it region 0).
 <!-- --></td></tr>
 <!-- -->
 <!-- --></table>
@@ -3549,6 +3507,21 @@ these are indicated as <em class=targ>reg</em> below.
 <!-- -->or a vector of floats 
 <!-- --></td></tr>
 <!-- -->
+<!-- select-all -->
+<!-- -->
+<!-- --><tr><td><span class=defbox><code><em class=def><a name="sndselectall">select-all</a></em> (<i>snd chn</i>)</code></span></td>
+<!-- --><td>
+<!-- -->selects all samples in <i>snd</i>'s channel <i>chn</i>.
+<!-- -->If a region is created, it returns the region's id.
+<!-- --></td></tr>
+<!-- -->
+<!-- selection-chans -->
+<!-- -->
+<!-- --><tr><td><span class=defbox><code><em class=def><a name="selectionchans">selection-chans</a></em> ()</code></span></td>
+<!-- --><td>
+<!-- -->selection channels
+<!-- --></td></tr>
+<!-- -->
 <!-- selection-length -->
 <!-- -->
 <!-- --><tr><td><span class=defbox><code><em class=def><a name="selectionlength">selection-length</a></em> ()</code></span></td>
@@ -3570,18 +3543,11 @@ these are indicated as <em class=targ>reg</em> below.
 <!-- -->selection begin sample number (used to be called selection-beg).
 <!-- --></td></tr>
 <!-- -->
-<!-- selection-to-temp -->
+<!-- selection-srate -->
 <!-- -->
-<!-- --><tr><td><span class=defbox><code><em class=def><a name="selectiontotemp">selection-to-temp</a></em> (<i>type format</i>)</code></span></td>
+<!-- --><tr><td><span class=defbox><code><em class=def><a name="selectionsrate">selection-srate</a></em> ()</code></span></td>
 <!-- --><td>
-<!-- -->write out selected data as a temp file (see <a href="grfsnd.html#programs">external programs</a>) 
-<!-- --></td></tr>
-<!-- -->
-<!-- selection-to-temps -->
-<!-- -->
-<!-- --><tr><td><span class=defbox><code><em class=def><a name="selectiontotemps">selection-to-temps</a></em> (<i>type format</i>)</code></span></td>
-<!-- --><td>
-<!-- -->write out selected data as temp files (see <a href="grfsnd.html#programs">external programs</a>) 
+<!-- -->selection srate
 <!-- --></td></tr>
 <!-- -->
 <!-- selection? -->
@@ -3603,19 +3569,6 @@ these are indicated as <em class=targ>reg</em> below.
 <!-- --><tr><td colspan=2><span class=defbox><code><em class=def><a name="sndsrcselection">src-selection</a></em> (num-or-env <i>base</i>) </code></span></td>
 <!-- --></tr><tr><td></td><td>
 <!-- -->same as <i>src-sound</i> but applied to current selection.
-<!-- --></td></tr>
-<!-- -->
-<!-- temp-to-selection -->
-<!-- -->
-<!-- --><tr><td colspan=2><span class=defbox><code><em class=def><a name="temptoselection">temp-to-selection</a></em> (data name origin) </code></span></td>
-<!-- --></tr><tr><td></td><td>
-<!-- -->read selected data from temp file (see <a href="grfsnd.html#programs">external programs</a>).
-<!-- --></td></tr>
-<!-- -->
-<!-- temps-to-selection -->
-<!-- -->
-<!-- --><tr><td colspan=2><span class=defbox><code><em class=def><a name="tempstoselection">temps-to-selection</a></em> (data names origin) </code></span></td>
-<!-- --></tr><tr><td></td><td>read selected data from temp files (see <a href="grfsnd.html#programs">external programs</a>).
 <!-- --></td></tr>
 <!-- -->
 <!-- --></table>
@@ -3728,12 +3681,14 @@ desired edit history position.
 <!-- -->
 <!-- -->
 <!-- channel-style -->
-<!-- --><tr><td><code><em class=def><a name="channelstyle">channel-style</a></em>(<i>snd</i>)</code></td>
-<!-- --><td colspan=2><code>channels-separate</code></td></tr>
-<!-- --><tr><td colspan=2></td><td>The state of the '<a href="snd.html#unitebutton">unite</a>' button in multi-channel files.  
-<!-- -->Other values are <i>channels-combined</i> and <i>channels-superimposed</i>.  
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="channelstyle">channel-style</a></em> (<i>snd</i>)</code></span>
 <!-- --></td></tr>
-<!-- --><tr><td colspan=3></td></tr>
+<!-- --><tr><td></td><td>
+<!-- -->The state of the '<a href="snd.html#unitebutton">unite</a>' button in multi-channel files.  
+<!-- -->Values are <i>channels-separate</i>, <i>channels-combined</i>, and <i>channels-superimposed</i>.  
+<!-- --></td></tr>
+<!-- --><tr><td colspan=2></td></tr>
 <!-- -->
 <!-- -->
 <!-- channel-sync -->
@@ -4368,72 +4323,112 @@ desired edit history position.
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
 <!-- -->
-<!-- map-across-all-chans -->
-<!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="mapacrossallchans">map-across-all-chans</a></em> (func <i>start end edname edpos</i>)</code></span>
-<!-- --></td></tr>
-<!-- --><tr><td></td><td>
-<!-- -->apply func to all open channels in parallel (see <a href="#scanning">Scanning Data</a>).
-<!-- --></td></tr>
-<!-- --><tr><td colspan=2></td></tr>
-<!-- -->
-<!-- -->
-<!-- map-across-chans -->
-<!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="mapacrosschans">map-across-chans</a></em> (func <i>start end edname edpos</i>)</code></span>
-<!-- --></td></tr>
-<!-- --><tr><td></td><td>
-<!-- -->apply func to currently syncd channels in parallel
-<!-- --></td></tr>
-<!-- --><tr><td colspan=2></td></tr>
-<!-- -->
-<!-- -->
-<!-- map-across-sound-chans -->
-<!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="mapacrosssoundchans">map-across-sound-chans</a></em> (func <i>start end edname snd edpos</i>)</code></span>
-<!-- --></td></tr>
-<!-- --><tr><td></td><td>
-<!-- -->apply func to sound's channels in parallel
-<!-- --></td></tr>
-<!-- --><tr><td colspan=2></td></tr>
-<!-- -->
-<!-- -->
-<!-- map-all-chans -->
-<!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="mapallchans">map-all-chans</a></em> (func <i>start end edname edpos</i>)</code></span>
-<!-- --></td></tr>
-<!-- --><tr><td></td><td>
-<!-- -->apply func to all open channels
-<!-- --></td></tr>
-<!-- --><tr><td colspan=2></td></tr>
-<!-- -->
-<!-- -->
 <!-- map-chan -->
 <!-- --><tr><td colspan=2>
 <!-- --><span class=defbox><code><em class=def><a name="mapchan">map-chan</a></em> (func <i>start end edname snd chn edpos</i>)</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
-<!-- -->apply func to samples in current channel 
-<!-- --></td></tr>
-<!-- --><tr><td colspan=2></td></tr>
+<!-- -->apply <i>func</i> to samples in the specified channel.
+<!-- -->The "map" functions can change data, if they wish; the entire mapping call
+<!-- -->becomes one large editing operation from the editor's point of view.
+<!-- -->An optional subsequence of the data can be requested via
+<!-- -->'start' and 'end' points.  If beg is #f, it defaults to 0; if end is #f,
+<!-- -->it defaults to the end of the channel.
+<!-- -->The fourth argument <i>edname</i> is the
+<!-- -->name of the editing operation that will be reported by the
+<!-- -->edit history mechanism. 
+<!-- --><i>func</i>
+<!-- -->can return #f, which means that the data passed in is
+<!-- -->deleted (replaced by nothing), or a number which replaces the
+<!-- -->current sample,
+<!-- -->or #t which halts the mapping operation, leaving trailing samples
+<!-- -->unaffected, or a list, vct object, or vector of numbers;
+<!-- -->the numbers are spliced into the edited version, effectively
+<!-- -->replacing the current sample with any number of samples. This sounds
+<!-- -->more complicated than it is!  Basically, a map receives
+<!-- -->each sample and returns either #f (no corresponding output), a number
+<!-- -->(the new output), or a list of numbers.
+<!-- -->If every value returned for a given channel is #f, the data is not edited.
+<!-- --><br>
+<!-- --><pre>
+<!-- -->&gt;<em class=typing>(map-chan (lambda (y) (+ y .2)))</em>
+<!-- --><em class=listener>#f</em>
 <!-- -->
+<!-- -->&gt;<em class=typing>(map-chan (lambda (y) (cos y)) #f #f "(cos y)")</em>
+<!-- --><em class=listener>#f</em>
 <!-- -->
-<!-- map-chans -->
-<!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="mapchans">map-chans</a></em> (func <i>start end edname edpos</i>)</code></span>
-<!-- --></td></tr>
-<!-- --><tr><td></td><td>
-<!-- -->apply func to currently syncd channels
-<!-- --></td></tr>
-<!-- --><tr><td colspan=2></td></tr>
+<!-- -->&gt;<em class=typing>(map-chan (lambda (y) (if (&gt; y .1) (list .1 .2 .3) y))) </em>
+<!-- --><em class=listener>#f</em>
+<!-- --></pre>
+<!-- -->The edit history may show multiple entries for one call on map-chan;
+<!-- -->if the new and old lengths are different, Snd has to delete the old samples before
+<!-- -->inserting the new samples.  This means that you may have to repeat 'undo'
+<!-- -->once or twice to get back to the state before the map operation. 
+<!-- -->Wrap the call up in <a href="#asoneedit">as-one-edit</a> to get around this.
+<!-- -->Here's a slightly more involved example;
+<!-- -->we define a function that finds silences and replaces them with
+<!-- -->something:<br><br>
 <!-- -->
-<!-- -->
-<!-- map-sound-chans -->
-<!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="mapsoundchan">map-sound-chans</a></em> (func <i>start end edname snd edpos</i>)</code></span>
-<!-- --></td></tr>
-<!-- --><tr><td></td><td>
-<!-- -->apply func to current sound's channels
+<!-- --><table border=1 cellpadding=5><tr><td bgcolor="#FCFCF0"><pre>
+(define map-silence
+  ;; see squelch in <a href="sndscm.html#effectsdoc">effects.scm</a> for a better version
+  (lambda (silence replacement)
+    (let ((sum-of-squares 0.0)
+	  (buffer (make-vector 128 0.0))
+	  (position 0)
+	  (current-sample 0)
+	  (chan-samples (frames)))
+      (lambda (y)
+        (let ((old-y (vector-ref buffer position)))
+	  (set! sum-of-squares (- (+ sum-of-squares (* y y)) (* old-y old-y)))
+	  (vector-set! buffer position y)
+	  (set! position (1+ position))
+	  (if (= position 128) (set! position 0))
+	  (set! current-sample (1+ current-sample))
+	  (if (&gt; sum-of-squares silence)
+	      (if (= current-sample chan-samples)
+		  ;; at end return trailing samples as long as it looks like sound
+		  (let ((temp-buffer (make-vector 128 0.0)))
+		    (do ((i 0 (1+ i)))
+			((= i 128) temp-buffer)
+		      (let ((final-y (vector-ref buffer position)))
+			(vector-set! temp-buffer i (if (&gt; sum-of-squares silence) final-y 0.0))
+			(set! sum-of-squares (- sum-of-squares (* final-y final-y)))
+			(set! position (1+ position))
+			(if (= position 128) (set! position 0)))))
+		  old-y)
+	    replacement))))))
+
+(map-chan (map-silence .01 0.0))  ; squelch background noise
+(map-chan (map-silence .001 #f))   ; remove silences altogether
+<!-- --></pre></td></tr></table>
+<!-- --><br>
+<!-- -->In case it isn't obvious, we're using <i>buffer</i> to hold a running
+<!-- -->portion of the sound, and <i>sum-of-squares</i> to hold the sum of the squares
+<!-- -->of all the samples in that portion.  When the portion's sum falls below
+<!-- -->the argument <i>silence</i>, we replace the current sample with <i>replacement</i>.
+<!-- -->At the end, we flush out all the remaining samples awaiting output in <i>buffer</i>.
+<!-- --><br>
+<!-- -->It is possible to break out of a map, flushing any edits, via call-with-current-continuation:
+<!-- --><br><br>
+<!-- --><table border=1 cellpadding=5><tr><td bgcolor="#FCFCF0"><pre>
+(define ctr 0)
+(call-with-current-continuation 
+  (lambda (return)
+    (map-chan (lambda (val)
+                (set! ctr (1+ ctr)) 
+                (if (&gt; ctr 100) 
+                  (return "quitting!") 
+                  val)))))
+<!-- --></pre></td></tr></table>
+<!-- --><br>
+<!-- -->If the editing action is not mapping something over the current sound, it is
+<!-- -->safest to write a temp file with the new data, then pass that to set-samples
+<!-- -->with the trunc argument set to #t.  This way you don't assume the new sound
+<!-- -->will fit in memory (as in using vct-&gt;samples for example).
+<!-- -->Use snd-tempnam to get a temporary filename that reflects the current
+<!-- -->temp-dir setting (if any).  The env-sound-interp function in <a href="sndscm.html#exenvsoundinterp">examp.scm</a>
+<!-- -->is an example of this.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -4863,72 +4858,57 @@ desired edit history position.
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
 <!-- -->
-<!-- scan-across-all-chans -->
-<!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="scanacrossallchans">scan-across-all-chans</a></em> (func <i>start end edpos</i>)</code></span>
-<!-- --></td></tr>
-<!-- --><tr><td></td><td>
-<!-- -->apply func to all open channels in parallel (see <a href="#scanning">Scanning Data</a>).
-<!-- --></td></tr>
-<!-- --><tr><td colspan=2></td></tr>
-<!-- -->
-<!-- -->
-<!-- scan-across-chans -->
-<!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="scanacrosschans">scan-across-chans</a></em> (func <i>start end edpos</i>)</code></span>
-<!-- --></td></tr>
-<!-- --><tr><td></td><td>
-<!-- -->apply func to currently syncd channels in parallel
-<!-- --></td></tr>
-<!-- --><tr><td colspan=2></td></tr>
-<!-- -->
-<!-- -->
-<!-- scan-across-sound-chans -->
-<!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="scanacrosssoundchans">scan-across-sound-chans</a></em> (func <i>start end snd edpos</i>)</code></span>
-<!-- --></td></tr>
-<!-- --><tr><td></td><td>
-<!-- -->apply func to sound's channels in parallel
-<!-- --></td></tr>
-<!-- --><tr><td colspan=2></td></tr>
-<!-- -->
-<!-- -->
-<!-- scan-all-chans -->
-<!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="scanallchans">scan-all-chans</a></em> (func <i>start end edpos</i>)</code></span>
-<!-- --></td></tr>
-<!-- --><tr><td></td><td>
-<!-- -->apply func to all open channels
-<!-- --></td></tr>
-<!-- --><tr><td colspan=2></td></tr>
-<!-- -->
-<!-- -->
 <!-- scan-chan -->
 <!-- --><tr><td colspan=2>
 <!-- --><span class=defbox><code><em class=def><a name="scanchan">scan-chan</a></em> (func <i>start end snd chn edpos</i>)</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
-<!-- -->apply func to samples in current channel (see <a href="#scanning">Scanning Data</a>).
-<!-- --></td></tr>
-<!-- --><tr><td colspan=2></td></tr>
+<!-- -->apply <i>func</i> to samples in the specified channel.
+<!-- -->An optional subsequence of the data can be requested via
+<!-- -->'start' and 'end' points.  If beg is #f, it defaults to 0; if end is #f,
+<!-- -->it defaults to the end of the channel.
+<!-- -->The function is passed the current sample as its argument.
+<!-- -->If it returns something other than #f, the scan is stopped and a list is returned
+<!-- -->containing the non-#f value returned and the current sample position of the
+<!-- -->scan. The following call scans the
+<!-- -->current channel from sample 0 to the end looking for any sample greater than
+<!-- -->.1:<br>
+<!-- --><pre>
+<!-- -->&gt;<em class=typing>(scan-chan (lambda (y) (&gt; y .1)))</em>
+<!-- --><em class=listener>(#t 4423)</em>
+<!-- --></pre>
+<!-- -->In this case, we found such a sample at position 4423.<br>
+<!-- --><pre>
+<!-- -->(define every-sample?
+<!-- -->  (lambda (proc)
+<!-- -->    (let ((baddy (scan-chan (lambda (y) 
+<!-- -->			      (not (proc y))))))
+<!-- -->      (if baddy (set! (cursor) (cadr baddy)))
+<!-- -->      (not baddy))))
 <!-- -->
-<!-- -->
-<!-- scan-chans -->
-<!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="scanchans">scan-chans</a></em> (func <i>start end edpos</i>)</code></span>
-<!-- --></td></tr>
-<!-- --><tr><td></td><td>
-<!-- -->apply func to currently syncd channels
-<!-- --></td></tr>
-<!-- --><tr><td colspan=2></td></tr>
-<!-- -->
-<!-- -->
-<!-- scan-sound-chans -->
-<!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="scansoundchan">scan-sound-chans</a></em> (func <i>start end snd edpos</i>)</code></span>
-<!-- --></td></tr>
-<!-- --><tr><td></td><td>
-<!-- -->apply func to current sound's channels
+<!-- -->&gt;<em class=typing>(every-sample? (lambda (y) (&lt; y .5)))</em>
+<!-- --><em class=listener>#t</em>
+<!-- --></pre>
+<!-- --><i>scan-chan</i> could be defined in terms of make-sample-reader:<br><br>
+<!-- --><table border=1 cellpadding=5><tr><td bgcolor="#FCFCF0"><pre>
+(define (scan-chan . args)
+  (let* ((func (car args))
+	 (len (length args))
+	 (start (if (&gt; len 1) (cadr args) 0))
+	 (snd (if (&gt; len 3) (cadddr args) (selected-sound)))
+	 (chn (if (&gt; len 4) (caddddr args) (selected-channel snd)))
+	 (end (if (&gt; len 2) (caddr args) (frames snd chn)))
+	 (reader (make-sample-reader start snd chn))
+	 (result #f))
+    (do ((i start (1+ i)))
+	((or result (= i end))
+	 (let ((val (if result 
+			(list result (- i 1))
+			#f)))
+	   (free-sample-reader reader)
+	   val))
+      (set! result (func (next-sample reader))))))
+<!-- --></pre></td></tr></table>
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -5161,26 +5141,6 @@ desired edit history position.
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
 <!-- -->
-<!-- sound-to-temp -->
-<!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="soundtotemp">sound-to-temp</a></em> (<i>type format edpos</i>)</code></span>
-<!-- --></td></tr>
-<!-- --><tr><td></td><td>
-<!-- -->write out sync'd edit state as a temp file (see <a href="grfsnd.html#programs">external programs</a>).
-<!-- --></td></tr>
-<!-- --><tr><td colspan=2></td></tr>
-<!-- -->
-<!-- -->
-<!-- sound-to-temps -->
-<!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="soundtotemps">sound-to-temps</a></em> (<i>type format edpos</i>)</code></span>
-<!-- --></td></tr>
-<!-- --><tr><td></td><td>
-<!-- -->write out sync'd edit state as temp files (see <a href="grfsnd.html#programs">external programs</a>).
-<!-- --></td></tr>
-<!-- --><tr><td colspan=2></td></tr>
-<!-- -->
-<!-- -->
 <!-- spectro-cutoff -->
 <!-- --><tr><td colspan=2>
 <!-- --><span class=defbox><code><em class=def><a name="spectrocutoff">spectro-cutoff</a></em> (<em class=narg>snd chn</em>)</code></span>
@@ -5371,26 +5331,6 @@ desired edit history position.
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
 <!-- --><i>snd</i>'s 'sync' value (an integer, 0=off).
-<!-- --></td></tr>
-<!-- --><tr><td colspan=2></td></tr>
-<!-- -->
-<!-- -->
-<!-- temp-to-sound -->
-<!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="temptosound">temp-to-sound</a></em> (data name origin)</code></span>
-<!-- --></td></tr>
-<!-- --><tr><td></td><td>
-<!-- -->read sync'd edit state from temp file (see <a href="grfsnd.html#programs">external programs</a>).
-<!-- --></td></tr>
-<!-- --><tr><td colspan=2></td></tr>
-<!-- -->
-<!-- -->
-<!-- temps-to-sound -->
-<!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="tempstosound">temps-to-sound</a></em> (data names origin)</code></span>
-<!-- --></td></tr>
-<!-- --><tr><td></td><td>
-<!-- -->read sync'd edit state from temp files (see <a href="grfsnd.html#programs">external programs</a>).
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -6319,239 +6259,6 @@ sound).  I'm toying with extending this part of Snd to more complex
 operations.
 </p>
 
-<!-- Scanning Data -->
-<br>
-<span class=bbox><h3><A NAME="scanning">Scanning Data</a></h3></span>
-
-<p>Sound files can be enormous, far larger than available memory, so vector access to
-sample data (as in <a href="#sndsetsamples">set-samples</a>) is not always very useful.
-(Each sample setting call is treated as a separate edit by Snd, but we would normally
-want the entire operation to be handled as one edit; we could wrap up all the sample setting
-calls in <a href="#asoneedit">as-one-edit</a>, but it's a bit wasteful).
-In addition, the collection of available channels of data in the editor can present
-a complicated access problem.  The 14 scanning and mapping functions provide what
-I hope is a straightforward answer to these problems.  The "scan" functions do
-not change any data; they simply run through data presenting it to the caller.
-The "map" functions can change data, if they wish; the entire mapping call
-becomes one large editing operation from the editor's point of view.
-There are four ways to get at the editor's data: one channel, a sound's
-channels, all currently open channels, and all currently sync'd channels.
-There are two ways to march through this collection of channels: in series
-(that is, one channel at a time), and in parallel (all channels at once);
-the former is the default, and for the latter, I use the word "across".
-So map-chan maps a function over a single channel; map-chans affects
-the currently syncd channels (in series); map-across-chans affects the
-same set of channels, but they are presented to the caller's function
-as an array, each element of the array being a channel's sample at the
-current location in the map; map-all-chans affects all currently open
-channels; and finally, map-sound-chans affects all of a sound's channels,
-independent of the 'sync' button.  The 'scan' functions behave similarly.
-In each case, an optional subsequence of the data can be requested via
-'start' and 'end' points.  If beg is #f, it defaults to 0; if end is #f,
-it defaults to the end of the channel.
-</p>
-
-<table cellpadding=0 cellspacing=0>
-<tr><td width=450><b>map-across-all-chans</b> (func <i>start end edname edpos</i>)</td><td>apply func to all open channels in parallel</td></tr>
-<tr><td><b>map-across-chans</b> (func <i>start end edname edpos</i>)</td><td>apply func to currently syncd channels in parallel</td></tr>
-<tr><td><b>map-across-sound-chans</b> (func <i>start end edname snd edpos</i>)</td><td>apply func to sound's channels in parallel</td></tr>
-<tr><td><b>map-all-chans</b> (func <i>start end edname edpos</i>)</td><td>apply func to all open channels</td></tr>
-<tr><td><b>map-chan</b> (func <i>start end edname snd chn edpos</i>)</td><td>apply func to samples in current channel</td></tr>
-<tr><td><b>map-chans</b> (func <i>start end edname edpos</i>)</td><td>apply func to currently syncd channels</td></tr>
-<tr><td><b>map-sound-chans</b> (func <i>start end edname snd edpos</i>)</td><td>apply func to current sound's channels</td></tr>
-<tr><td><br></td><td><br></td></tr>
-<tr><td><b>scan-across-all-chans</b> (func <i>start end edpos</i>)</td><td>apply func to all open channels in parallel</td></tr>
-<tr><td><b>scan-across-chans</b> (func <i>start end edpos</i>)</td><td>apply func to currently syncd channels in parallel</td></tr>
-<tr><td><b>scan-across-sound-chans</b> (func <i>start end snd edpos</i>)</td><td>apply func to sound's channels in parallel</td></tr>
-<tr><td><b>scan-all-chans</b> (func <i>start end edpos</i>)</td><td>apply func to all open channels</td></tr>
-<tr><td><b>scan-chan</b> (func <i>start end snd chn edpos</i>)</td><td>apply func to samples in current channel</td></tr>
-<tr><td><b>scan-chans</b> (func <i>start end edpos</i>)</td><td>apply func to currently syncd channels</td></tr>
-<tr><td><b>scan-sound-chans</b> (func <i>start end snd edpos</i>)</td><td>apply func to current sound's channels</td></tr>
-</table>
-
-<p>In the case of the scanning operations, the function passed as the first argument takes
-either the current sample (when scanning in series), or two arguments, the current
-array of samples, and the array's length (when scanning in parallel).  If the function
-returns something other than #f, the scan is stopped and (in the series case) a list is returned to
-the caller containing the non-#f value returned, the current sample position of the
-scan, the current channel number, and the current sound index; in the parallel case, the current
-sample position is returned.  So, for example, the following call scans the
-current channel from sample 0 to the end looking for any sample greater than
-.1:</p>
-<pre>
-&gt;<em class=typing>(scan-chan (lambda (y) (&gt; y .1)))</em>
-<em class=listener>(#t 4423 0 0)</em>
-</pre>
-<p>In this case, we found such a sample at position 4423 of the first channel of the
-sound whose index is 0.  
-Here's an example of scanning across all channels,
-returning the maximum sample value found:</p>
-<pre>
-(define data-max 
-  (lambda ()
-    (let ((maxval 0.0))
-      (scan-across-all-chans
-        (lambda (data len)
-	  (do ((i 0 (1+ i)))
-	      ((= i len) #f)
-	    (let ((curval (abs (vector-ref data i))))
-	      (if (&gt; curval maxval) (set! maxval curval))))))
-      maxval)))
-
-&gt;<em class=typing>(data-max)</em>
-<em class=listener>0.492675779232</em>
-
-(define every-sample?
-  (lambda (proc)
-    (let ((baddy (scan-chan (lambda (y) (not (proc y))))))
-      (if baddy (set! (cursor) (cadr baddy)))
-      (not baddy))))
-
-&gt;<em class=typing>(every-sample? (lambda (y) (&lt; y .5)))</em>
-<em class=listener>#t</em>
-</pre>
-<p>The mapping operations are slightly more complicated because they
-can edit the data.  The fourth argument <i>edname</i> is the
-name of the editing operation that will be reported by the
-edit history mechanism.  If none is given, it will default to
-the name of the calling map function (which has little
-to do with the actual edit).  The other arguments to the mapping
-calls are the same as corresponding scanning calls.  The function
-passed (and applied to the data) also takes the same arguments;
-its return value is interpreted differently however.  The applied
-function can return #f, which means that the data passed in is
-deleted (replaced by nothing), or a number which replaces the
-current sample (in the parallel case this is an array of numbers),
-or #t which halts the mapping operation, leaving trailing samples
-unaffected, or a list, vct object, or vector of numbers (in the parallel case,
-an embedded array as an element of the outer array); in this
-case, the numbers are spliced into the edited version, effectively
-replacing the current sample with any number of samples. This sounds
-more complicated than it is!  Basically, a map in series receives
-each sample and returns either #f (no corresponding output), a number
-(the new output), or a list of numbers; a map in parallel does the
-same for each sample in the array passed to it. 
-If every value returned for a given channel is #f, the data is not edited.
-This makes it possible to run through all current channels in parallel,
-changing only one channel (or a subset of them).
-</p>
-<pre>
-&gt;<em class=typing>(map-chan (lambda (y) (+ y .2)))</em>
-<em class=listener>#f</em>
-
-&gt;<em class=typing>(map-chan (lambda (y) (cos y)) #f #f "(cos y)")</em>
-<em class=listener>#f</em>
-
-&gt;<em class=typing>(map-chan (lambda (y) (if (&gt; y .1) (list .1 .2 .3) y))) </em>
-<em class=listener>#f</em>
-
-(define swap-channels
-  (lambda ()
-    (if (= (channels) 2)
-	(map-across-sound-chans
-	 (lambda (data chans)
-	   (let ((chan0-sample (vector-ref data 0)))
-	     (vector-set! data 0 (vector-ref data 1))
-	     (vector-set! data 1 chan0-sample)
-	     data))
-	 #f #f "swap-channels")
-	(string-append (short-file-name) " is not stereo!"))))
-
-</pre>
-<p>The edit history may show multiple entries for a given map application;
-it may have to delete the old samples before
-inserting the new samples.  This means that you may have to repeat 'undo'
-once or twice to get back to the state before the map operation. 
-Wrap the call up in <a href="#asoneedit">as-one-edit</a> to get around this.
-Here's a slightly more involved example;
-we define a function that finds silences and replaces them with
-something:<p>
-
-<table border=1 cellpadding=5><tr><td bgcolor="#FCFCF0"><pre>
-(define map-silence
-  ;; see squelch in <a href="sndscm.html#effectsdoc">effects.scm</a> for a better version
-  (lambda (silence replacement)
-    (let ((sum-of-squares 0.0)
-	  (buffer (make-vector 128 0.0))
-	  (position 0)
-	  (current-sample 0)
-	  (chan-samples (frames)))
-      (lambda (y)
-        (let ((old-y (vector-ref buffer position)))
-	  (set! sum-of-squares (- (+ sum-of-squares (* y y)) (* old-y old-y)))
-	  (vector-set! buffer position y)
-	  (set! position (1+ position))
-	  (if (= position 128) (set! position 0))
-	  (set! current-sample (1+ current-sample))
-	  (if (&gt; sum-of-squares silence)
-	      (if (= current-sample chan-samples)
-		  ;; at end return trailing samples as long as it looks like sound
-		  (let ((temp-buffer (make-vector 128 0.0)))
-		    (do ((i 0 (1+ i)))
-			((= i 128) temp-buffer)
-		      (let ((final-y (vector-ref buffer position)))
-			(vector-set! temp-buffer i (if (&gt; sum-of-squares silence) final-y 0.0))
-			(set! sum-of-squares (- sum-of-squares (* final-y final-y)))
-			(set! position (1+ position))
-			(if (= position 128) (set! position 0)))))
-		  old-y)
-	    replacement))))))
-
-(map-chan (map-silence .01 0.0))  ; squelch background noise
-(map-chan (map-silence .001 #f))   ; remove silences altogether
-</pre></td></tr></table>
-
-<p>In case it isn't obvious, we're using <i>buffer</i> to hold a running
-portion of the sound, and <i>sum-of-squares</i> to hold the sum of the squares
-of all the samples in that portion.  When the portion's sum falls below
-the argument <i>silence</i>, we replace the current sample with <i>replacement</i>.
-At the end, we flush out all the remaining samples awaiting output in <i>buffer</i>.</p>
-
-<p>It is possible to break out of a map, flushing any edits, via call-with-current-continuation:</p>
-
-<table border=1 cellpadding=5><tr><td bgcolor="#FCFCF0"><pre>
-(define ctr 0)
-(call-with-current-continuation 
-  (lambda (return)
-    (map-chan (lambda (val)
-                (set! ctr (1+ ctr)) 
-                (if (&gt; ctr 100) 
-                  (return "quitting!") 
-                  val)))))
-</pre></td></tr></table>
-
-<p>If the editing action is not mapping something over the current sound, it is
-safest to write a temp file with the new data, then pass that to set-samples
-with the trunc argument set to #t.  This way you don't assume the new sound
-will fit in memory (as in using vct-&gt;samples for example), nor that the
-lengths will be more or less the same (as in the mapping operations).
-Use snd-tempnam to get a temporary filename that reflects the current
-temp-dir setting (if any).  The env-sound-interp function in <a href="sndscm.html#exenvsoundinterp">examp.scm</a>
-is an example of this.</p>
-
-<p>The sample-reader functions have made these scanning functions largely redundant.
-I may remove them, or move them into Scheme.
-<i>scan-chan</i> could be:
-</p>
-<table border=1 cellpadding=5><tr><td bgcolor="#FCFCF0"><pre>
-(define (scan-chan . args)
-  (let* ((func (car args))
-	 (len (length args))
-	 (start (if (&gt; len 1) (cadr args) 0))
-	 (snd (if (&gt; len 3) (cadddr args) (selected-sound)))
-	 (chn (if (&gt; len 4) (caddddr args) (selected-channel snd)))
-	 (end (if (&gt; len 2) (caddr args) (frames snd chn)))
-	 (reader (make-sample-reader start snd chn))
-	 (result #f))
-    (do ((i start (1+ i)))
-	((or result (= i end))
-	 (let ((val (if result 
-			(list result (- i 1) snd chn)
-			#f)))
-	   (free-sample-reader reader)
-	   val))
-      (set! result (func (next-sample reader))))))
-</pre></td></tr></table>
 
 
 <!-- Transforms -->
@@ -6962,7 +6669,7 @@ And an example that lets us see the result of filtering the waveform:
 <!-- --><tr><td></td><td>
 <!-- -->add menu <i>menu-label</i> to top-level menu whose index is 
 <!-- --><i>top-menu</i> with the callback function <i>callback</i>.  The built-in
-<!-- -->Snd menus are numbered from 0 ('File') to 4 ('Help').  [<em class=error>no-such-menu</em>]
+<!-- -->Snd menus are numbered from 0 ('File') to 5 ('Popup') ('Help' is 4).  [<em class=error>no-such-menu</em>]
 <!-- --><br><br><pre>
 <!-- -->  (<em class=red>add-to-menu</em> 5 "Denoise" 
 <!-- -->    (lambda () (report-in-minibuffer "denoise")))

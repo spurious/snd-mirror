@@ -1112,7 +1112,8 @@ BACKGROUND_TYPE apply_controls(GUI_POINTER ptr)
 	      apply_dur = current_ed_samples(sp->chans[0]); 
 	      break;
 	    case APPLY_TO_SELECTION: 
-	      ap->hdr->chans = region_chans(0); 
+	      ap->hdr->chans = selection_chans();
+	      if (ap->hdr->chans <= 0) return(BACKGROUND_QUIT);
 	      apply_dur = selection_len(); 
 	      break;
 	    }
@@ -1282,7 +1283,8 @@ static void run_apply_to_completion(snd_info *sp)
     {
       sp->applying = 1;
       ap = (apply_state *)make_apply_state((void *)sp);
-      while (apply_controls((GUI_POINTER)ap) == BACKGROUND_CONTINUE);
+      if (ap)
+	while (apply_controls((GUI_POINTER)ap) == BACKGROUND_CONTINUE);
     }
 }
 
@@ -2121,10 +2123,10 @@ Any argument can be #f which causes its value to be taken from the sound being s
       else 
 	{
 	  cp = sp->chans[chan];
-	  save_channel_edits(cp, fname, edpos, S_save_sound_as);
+	  save_channel_edits(cp, fname, edpos, S_save_sound_as, 7);
 	}
     }
-  else save_edits_without_display(sp, fname, ht, df, sr, NULL, edpos, S_save_sound_as);
+  else save_edits_without_display(sp, fname, ht, df, sr, NULL, edpos, S_save_sound_as, 7);
   mus_error_set_handler(old_mus_error);
 
   if (fname) FREE(fname);

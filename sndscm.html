@@ -965,8 +965,7 @@ to each sample in the selection.
 </p>
 <pre>
   <em class=def><a name="exnormalizedmix">normalized-mix</a></em> filename beg in-chan snd chn
-  <em class=def><a name="expanmonomixtostereo">pan-mono-mix-to-stereo</a></em> panning-envelope)
-  <em class=def><A NAME="explace">place</a></em> mono-snd stereo-snd degree
+  <em class=def><A NAME="explace">place</a></em> mono-snd stereo-snd panning-envelope
   <em class=def><A NAME="explace1">place1</a></em> mono-snd stereo-snd degree
   <em class=def><a name="exenvelopedmix">enveloped-mix</a></em> filename beg env
   <em class=def><A NAME="exenvelopedmix1">enveloped-mix-1</a></em> filename beg env
@@ -978,12 +977,12 @@ amplitude envelope over the mixed-in data.
 <pre>
 (enveloped-mix "pistol.snd" 0 '(0 0 1 1 2 0))
 </pre>
-<p>The <i>place</i> and <i>place1</i> functions have the same effect as using
-CLM's locate generator; they mix a mono sound into a stereo sound, splitting 
+<p>The <i>place1</i> function has the same effect as using
+CLM's locate generator; it mixes a mono sound into a stereo sound, splitting 
 it into two copies whose amplitudes depend on the desired <i>degree</i>.
-0 degrees: all in channel 0, 90: all in channel 1. A slightly more complex
-function along the same lines is <i>pan-mono-mix-to-stereo</i> which
-replaces the <i>degree</i> argument with an envelope.
+0 degrees: all in channel 0, 90: all in channel 1.
+The <i>place</i> function does the same thing, but the split depends on
+a panning envelope.
 </p>
 
 <!-- -------------------------------- SOUND EFFECTS -------------------------------- -->
@@ -993,7 +992,6 @@ replaces the <i>degree</i> argument with an envelope.
 </p>
 <pre>
   <em class=def><A NAME="execho">echo</a></em> scaler secs
-  <em class=def><A NAME="exechoes">echoes</a></em> scaler secs decay-time
   <em class=def><A NAME="exzecho">zecho</a></em> scaler secs frq amp      ; modulated echo
   <em class=def><A NAME="exflecho">flecho</a></em> scaler secs             ; filtered echo
   <em class=def><A NAME="exringmod">ring-mod</a></em> freq gliss-env        ; ring-modulation
@@ -1029,7 +1027,6 @@ Here are some sample calls:
 </p>
 <pre>
 (map-chan (echo .5 .5) 0 44100)
-(echoes .5 .75 2.0)
 (map-chan (zecho .5 .75 6 10.0) 0 65000)
 (map-chan (flecho .5 .9) 0 75000)
 (map-chan (ring-mod 100 '(0 0 1 0)))

@@ -25,6 +25,8 @@
 ;;; test 22: goops
 
 
+;;; backups for map|scan|temp funcs
+
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 popen) (ice-9 optargs))
 
 (define tests 1)
@@ -1633,39 +1635,42 @@
       (play-and-wait 0 index 0)
       (bomb index #f)
       (select-all index 0) 
-      (if (not (selection?)) (snd-display "selection?"))
-      (if (not (region? 0)) (snd-display "region?"))
-      (save-region 0 "temp.dat")
-      (if (file-exists? "temp.dat")
-	  (delete-file "temp.dat")
-	  (snd-display ";save-region file disappeared?"))
-      (play-region 0 #t) ;needs to be #t here or it never gets run
-      (if (not (= (length (regions)) 1)) (snd-display (format #f ";regions: ~A?" (regions))))
-      (if (not (selection-member? index)) (snd-display (format #f ";selection-member?: ~A" (selection-member? index))))
-      (if (not (= (region-srate 0) 22050)) (snd-display (format #f ";region-srate: ~A?" (region-srate 0))))
-      (if (not (= (region-chans 0) 1)) (snd-display (format #f ";region-chans: ~A?" (region-chans 0))))
-      (if (not (= (region-length 0) 50828)) (snd-display (format #f ";region-length: ~A?" (region-length 0))))
-      (if (not (= (selection-length) 50828)) (snd-display (format #f ";selection-length: ~A?" (selection-length 0))))
-      (if (not (= (selection-position) 0)) (snd-display (format #f ";selection-position: ~A?" (selection-position))))
-      (if (fneq (region-maxamp 0) (maxamp index)) (snd-display (format #f ";region-maxamp: ~A?" (region-maxamp 0))))
-      (let ((samps1 (samples->vct 0 50827 index 0))
-	    (samps2 (region-samples->vct 0 50827 0 0))
-	    (vr (make-sample-reader 0 index 0 1)))
-	(if (not (sample-reader? vr)) (snd-display (format #f ";~A not sample-reader?" vr)))
-	(if (not (equal? (sample-reader-home vr) (list index 0))) 
-	    (snd-display (format #f ";sample-reader-home: ~A ~A?" (sample-reader-home vr) (list index 0))))
-	(let ((reader-string (format #f "~A" vr)))
-	  (if (not (string=? (substring reader-string 0 18) "#<sample-reader 0x"))
-	      (snd-display (format #f ";sample reader actually got: [~S]" (substring reader-string 0 18))))
-	  (if (not (string=? (substring reader-string 25) ": oboe.snd from 0, at 0>"))
-	      (snd-display (format #f ";sample reader actually got: [~S]" (substring reader-string 25)))))
-	(let ((evr vr))
-	  (if (not (equal? evr vr)) (snd-display (format #f ";sample-reader equal? ~A ~A" vr evr))))
-	(do ((i 0 (1+ i)))
-	    ((= i 50827))
-	  (if (not (= (next-sample vr) (vct-ref samps1 i) (vct-ref samps2 i)))
-	      (snd-display (format #f ";readers disagree at ~D" i))))
-	(free-sample-reader vr))
+      (let ((r0 (car (regions))))
+	(if (not (selection?)) (snd-display "selection?"))
+	(if (not (region? r0)) (snd-display "region?"))
+	(if (not (= (selection-chans) 1)) (snd-display (format #f ";selection-chans(1): ~A" (selection-chans))))
+	(if (not (= (selection-srate) (srate index))) (snd-display (format #f ";selection-srate: ~A ~A" (selection-srate) (srate index))))
+	(save-region r0 "temp.dat")
+	(if (file-exists? "temp.dat")
+	    (delete-file "temp.dat")
+	    (snd-display ";save-region file disappeared?"))
+	(play-region r0 #t) ;needs to be #t here or it never gets run
+	(if (not (= (length (regions)) 1)) (snd-display (format #f ";regions: ~A?" (regions))))
+	(if (not (selection-member? index)) (snd-display (format #f ";selection-member?: ~A" (selection-member? index))))
+	(if (not (= (region-srate r0) 22050)) (snd-display (format #f ";region-srate: ~A?" (region-srate r0))))
+	(if (not (= (region-chans r0) 1)) (snd-display (format #f ";region-chans: ~A?" (region-chans r0))))
+	(if (not (= (region-length r0) 50828)) (snd-display (format #f ";region-length: ~A?" (region-length r0))))
+	(if (not (= (selection-length) 50828)) (snd-display (format #f ";selection-length: ~A?" (selection-length 0))))
+	(if (not (= (selection-position) 0)) (snd-display (format #f ";selection-position: ~A?" (selection-position))))
+	(if (fneq (region-maxamp r0) (maxamp index)) (snd-display (format #f ";region-maxamp: ~A?" (region-maxamp r0))))
+	(let ((samps1 (samples->vct 0 50827 index 0))
+	      (samps2 (region-samples->vct r0 50827 0 0))
+	      (vr (make-sample-reader 0 index 0 1)))
+	  (if (not (sample-reader? vr)) (snd-display (format #f ";~A not sample-reader?" vr)))
+	  (if (not (equal? (sample-reader-home vr) (list index 0))) 
+	      (snd-display (format #f ";sample-reader-home: ~A ~A?" (sample-reader-home vr) (list index 0))))
+	  (let ((reader-string (format #f "~A" vr)))
+	    (if (not (string=? (substring reader-string 0 18) "#<sample-reader 0x"))
+		(snd-display (format #f ";sample reader actually got: [~S]" (substring reader-string 0 18))))
+	    (if (not (string=? (substring reader-string 25) ": oboe.snd from 0, at 0>"))
+		(snd-display (format #f ";sample reader actually got: [~S]" (substring reader-string 25)))))
+	  (let ((evr vr))
+	    (if (not (equal? evr vr)) (snd-display (format #f ";sample-reader equal? ~A ~A" vr evr))))
+	  (do ((i 0 (1+ i)))
+	      ((= i 50827))
+	    (if (not (= (next-sample vr) (vct-ref samps1 i) (vct-ref samps2 i)))
+		(snd-display (format #f ";readers disagree at ~D" i))))
+	  (free-sample-reader vr)))
       
       (revert-sound index)
       (insert-sample 100 .5 index) 
@@ -1725,12 +1730,12 @@
 	  (if (fneq newmaxa (* 2.0 maxa)) (snd-display (format #f ";scale-selection-by: ~A?" newmaxa)))
 	  (revert-sound index)
 	  (select-all index) 
-	  (let ((rread (make-region-sample-reader 0 0))
+	  (let ((rread (make-region-sample-reader 0 (car (regions))))
 		(sread (make-sample-reader 0 index))
-		(rvect (region-samples 0 100 0))
+		(rvect (region-samples 0 100 (car (regions))))
 		(svect (samples 0 100 index)))
-	    (if (fneq (vector-ref rvect 1) (region-sample 1 0)) 
-		(snd-display (format #f ";region-sample: ~A ~A?" (region-sample 1 0) (vector-ref rvect 1))))
+	    (if (fneq (vector-ref rvect 1) (region-sample 1 (car (regions))))
+		(snd-display (format #f ";region-sample: ~A ~A?" (region-sample 1 (car (regions))) (vector-ref rvect 1))))
 	    (do ((i 0 (1+ i)))
 		((= i 100))
 	      (let ((rval (next-sample rread))
@@ -1764,10 +1769,10 @@
 	    (snd-display (format #f ";insert-sound: ~A?" (sample 100))))
 	(if (not (= (frames) (+ len addlen))) (snd-display (format #f ";insert-sound len: ~A?" (frames))))
 	(revert-sound)
-	(make-region 0 99) 
-	(insert-region 60 0 index) 
-	(if (not (= (frames) (+ len 100))) (snd-display (format #f ";insert-region len: ~A?" (frames))))
-	(if (fneq (sample 100) s40) (snd-display (format #f ";insert-region: ~A ~A?" (sample 100) s40))))
+	(let ((id (make-region 0 99)))
+	  (insert-region 60 id index) 
+	  (if (not (= (frames) (+ len 100))) (snd-display (format #f ";insert-region len: ~A?" (frames))))
+	  (if (fneq (sample 100) s40) (snd-display (format #f ";insert-region: ~A ~A?" (sample 100) s40)))))
       (close-sound index)
       (set! index (new-sound "fmv.snd" mus-ircam mus-bshort 22050 1 "this is a comment"))
       (let ((v0 (make-vct 128)))
@@ -2227,60 +2232,6 @@
 		(snd-display (format #f ";2[0] scan-chan: ~A ~A?" ups1 ups3)))
 	    (if (not (= ups2 ups4))
 		(snd-display (format #f ";2[1] scan-chan: ~A ~A?" ups2 ups4))))
-	  (set! (sync ind2) #t)
-	  (let ((total
-		 (let ((count 0)) 
-		   (scan-chans (lambda (n) 
-				 (if (> n .03) 
-				     (set! count (+ count 1))) 
-				 #f))
-		   count)))
-	    (if (not (= total (+ ups1 ups2)))
-		(snd-display (format #f ";scan-chans: ~A ~A?" total (+ ups1 ups2)))))
-	  (set! (sync ind2) #f)
-	  (let ((total
-		 (let ((count 0)) 
-		   (scan-sound-chans (lambda (n) 
-				       (if (> n .03) 
-					   (set! count (+ count 1))) 
-				       #f)
-				     0 (frames ind2) ind2)
-		   count)))
-	    (if (not (= total (+ ups1 ups2)))
-		(snd-display (format #f ";scan-sound-chans: ~A ~A?" total (+ ups1 ups2)))))
-	  (set! (sync ind2) #t)
-	  (let ((total
-		 (let ((count 0)) 
-		   (scan-across-chans (lambda (nd len) 
-					(do ((i 0 (1+ i)))
-					    ((= i len) #f) 
-					  (if (> (vector-ref nd i) .03) 
-					      (set! count (+ count 1))))))
-		   count)))
-	    (if (not (= total (+ ups1 ups2)))
-		(snd-display (format #f ";scan-across-chans: ~A ~A?" total (+ ups1 ups2)))))
-	  (set! (sync ind2) #f)
-	  (let ((total
-		 (let ((count 0)) 
-		   (scan-across-all-chans (lambda (nd len) 
-					    (do ((i 0 (1+ i)))
-						((= i len) #f) 
-					      (if (> (vector-ref nd i) .03) 
-						  (set! count (+ count 1))))))
-		   count))
-		(ups3 (count-matches (lambda (n) (> n .03)) 0 ind1 0)))
-	    (if (not (= total (+ ups1 ups2 ups3)))
-		(snd-display (format #f ";scan-across-all-chans: ~A ~A?" total (+ ups1 ups2 ups3)))))
-	  (let ((total
-		 (let ((count 0)) 
-		   (scan-all-chans (lambda (n) 
-				     (if (> n .03)
-					 (set! count (+ count 1)))
-				     #f))
-		   count))
-		(ups3 (count-matches (lambda (n) (> n .03)) 0 ind1 0)))
-	    (if (not (= total (+ ups1 ups2 ups3)))
-		(snd-display (format #f ";scan-all-chans: ~A ~A?" total (+ ups1 ups2 ups3))))))
 	
 	(select-sound ind1)
 	(forward-graph)
@@ -2313,89 +2264,7 @@
 	    (snd-display (format #f ";backward 2 from ~A 0 to ~A ~A?" ind1 (selected-sound) (selected-channel))))
 
 	(close-sound ind1)
-	(close-sound ind2))
-
-      (let ((ind1 (open-sound "oboe.snd"))
-	    (ind2 (open-sound "2.snd")))
-	(let ((ups1 (maxamp ind1 0))
-	      (ups2 (maxamp ind2 #t)))
-	  (map-chan (lambda (n)
-		      (* n 2.0))
-		    0 (frames ind1) "times 2" ind1 0)
-	  (map-sound-chans (lambda (n)
-			     (* n 2.0))
-			   0 (frames ind2) "times 2" ind2)
-	  (let ((ups3 (maxamp ind1 0))
-		(ups4 (maxamp ind2 #t)))
-	    (if (fneq ups3 (* ups1 2.0))
-		(snd-display (format #f ";map-chan: ~A ~A?" ups3 (* ups1 2.0))))
-	    (if (or (fneq (car ups4) (* (car ups2) 2.0))
-		    (fneq (cadr ups4) (* (cadr ups2) 2.0)))
-		(snd-display (format #f ";map-sound-chans: ~A ~A?" (map (lambda (n) (* 2 n)) ups2) ups4))))
-	  
-	  (set! (sync ind2) #t)
-	  (set! (sync ind1) #t)
-	  (map-chans (lambda (n) (* n 0.5)))
-	  (let ((ups3 (maxamp ind1 0))
-		(ups4 (maxamp ind2 #t)))
-	    (if (fneq ups3 ups1)
-		(snd-display (format #f ";map-chans: ~A ~A?" ups3 ups1)))
-	    (if (or (fneq (car ups4) (car ups2))
-		    (fneq (cadr ups4) (cadr ups2)))
-		(snd-display (format #f ";map-chans: ~A ~A?" ups2 ups4))))
-	  (set! (sync ind1) #f)
-	  
-	  (let ((len-err #f))
-	    (map-across-chans (lambda (data len)
-				(if (not (= len 2))
-				    (set! len-err len))
-				(let ((chan0-sample (vector-ref data 0)))
-				  (vector-set! data 0 (vector-ref data 1))
-				  (vector-set! data 1 chan0-sample)
-				  data)))
-	    (if (number? len-err)
-		(snd-display (format #f ";map-across-chans sync: ~A?" len-err)))
-	    (let ((ups3 (maxamp ind1 0))
-		  (ups4 (maxamp ind2 #t)))
-	      (if (fneq ups3 ups1)
-		  (snd-display (format #f ";map-across-chans: ~A ~A?" ups3 ups1)))
-	      (if (or (fneq (car ups4) (cadr ups2))
-		      (fneq (cadr ups4) (car ups2)))
-		  (snd-display (format #f ";map-across-chans: ~A ~A?" ups2 ups4)))))
-  
-	  (let ((len-err #f))
-	    (map-across-all-chans (lambda (data len)
-				    (if (not (= len 3))
-					(set! len-err len))
-				    (vector-set! data 0 (* (vector-ref data 0) 4.0))
-				    (let ((chan0-sample (vector-ref data 1)))
-				      (vector-set! data 1 (vector-ref data 2))
-				      (vector-set! data 2 chan0-sample)
-				      data)))
-	    (if (number? len-err)
-		(snd-display (format #f ";map-across-all-chans len: ~A?" len-err)))
-	    (let ((ups3 (maxamp ind1 0))
-		  (ups4 (maxamp ind2 #t)))
-	      (if (fneq ups3 (* 4 ups1))
-		  (snd-display (format #f ";map-across-all-chans: ~A ~A?" ups3 ups1)))
-	      (if (or (fneq (car ups4) (car ups2))
-		      (fneq (cadr ups4) (cadr ups2)))
-		  (snd-display (format #f ";map-across-all-chans: ~A ~A?" ups2 ups4)))))
-  
-	  (revert-sound ind1)
-	  (revert-sound ind2)
-	  (map-all-chans (lambda (n) (* n 4.0)))
-	  (let ((ups3 (maxamp ind1 0))
-		(ups4 (maxamp ind2 0))
-		(ups5 (maxamp ind1 0 0))
-		(ups6 (maxamp ind2 0 0)))
-	    (if (fneq ups3 (* 4 ups5))
-		(snd-display (format #f ";map-all-chans: ~A ~A?" ups3 ups5)))
-	    (if (fneq ups4 (* 4 ups6))
-		(snd-display (format #f ";map-all-chans(2): ~A ~A?" ups4 ups6))))
-  
-	  (close-sound ind1)
-	  (close-sound ind2)))
+	(close-sound ind2)))
 
       (let* ((ind1 (open-sound "oboe.snd"))
 	     (len (frames ind1))
@@ -4573,8 +4442,7 @@
 	(select-sound ind)
 	(map-chan (lambda (val)
  		    (phase-vocoder pv (lambda (dir) 
-					(next-sample reader)))
-		    #f))
+					(next-sample reader)))))
 	(if (fneq (pv-ampinc pv 0) (vct-ref (pv-ampinc-1 pv) 0))
 	    (snd-display (format #f ";pvoc ampinc: ~A ~A?" (pv-ampinc pv 0) (vct-ref (pv-ampinc-1 pv) 0))))
 	(set-pv-ampinc pv 0 .1)
@@ -4632,8 +4500,7 @@
 	(set! reader (make-sample-reader 0))
 	(map-chan (lambda (val)
 		    (phase-vocoder pv (lambda (dir) 
-					(reader)))
-		    #f))
+					(reader)))))
 	(undo 1)
 	(free-sample-reader reader)
 	(set! pv (make-phase-vocoder #f
@@ -4734,9 +4601,9 @@
 	      (set! (selected-mix) -1)
 	      (select-mix mix-id)
 	      (if (not (= mix-id (selected-mix))) (snd-display (format #f ";select-mix: ~A ~A?" mix-id (selected-mix)))))
-	    (make-region 0 100) 
-	    (mix-region 100 0) 
-	    (mix-region 200 0) 
+	    (let ((id (make-region 0 100)))
+	      (mix-region 100 id) 
+	      (mix-region 200 id))
 	    (if (not (= (mix-name->id "asdf") mix-id)) (snd-display (format #f ";mix-name->id: ~A?" (mix-name->id "asdf"))))))
 	(let ((mix-id (mix "oboe.snd" 100)))
 	  (if (not (sound? (list mix-id))) (snd-display (format #f ";mix oboe: ~D not ok?" mix-id)))
@@ -4887,31 +4754,26 @@
 
 (clear-sincs)
 
+;;; TODO: add some form of these to the scan-chan doc
 (define data-max
   (lambda (beg end)
-    (let ((maxval 0.0))
-      (scan-across-all-chans
-       (lambda (data len)
-	 (do ((i 0 (1+ i)))
-	     ((= i len) #f)
-	   (let ((curval (abs (vector-ref data i))))
-	     (if (> curval maxval) (set! maxval curval))))
-	 #f)
-       beg end)
+    (let ((maxval 0.0)
+	  (chans (all-chans)))
+      (for-each (lambda (snd-chn)
+		  (scan-chan (lambda (n)
+			       (set! maxval (max maxval (abs n))))
+			     0 #f (car snd-chn) (cadr snd-chn)))
+		chans)
       maxval)))
 
 (define data-max2
   (lambda (beg end snd)
     (let ((maxval 0.0))
-      (scan-across-sound-chans
-       (lambda (data len)
-	 (do ((i 0 (1+ i)))
-	     ((= i len) #f)
-	   (let ((curval (abs (vector-ref data i))))
-	     (if (> curval maxval) (set! maxval curval))))
-	 #f)
-       beg end snd)
-      maxval)))
+      (do ((i 0 (1+ i)))
+	  ((= i (chans snd)) maxval)
+	(scan-chan (lambda (n)
+		     (set! maxval (max maxval (abs n))))
+		   0 #f snd i)))))
 
 (define data-max1
   (lambda (beg end snd chn)
@@ -5547,7 +5409,6 @@
   (reset-hook! mouse-leave-listener-hook) (add-hook! mouse-leave-listener-hook arg1) (carg1 mouse-leave-listener-hook) (reset-hook! mouse-leave-listener-hook)
   (reset-hook! property-changed-hook) (add-hook! property-changed-hook arg1) (carg1 property-changed-hook) (reset-hook! property-changed-hook)
   (reset-hook! select-sound-hook) (add-hook! select-sound-hook arg1) (carg1 select-sound-hook) (reset-hook! select-sound-hook)
-  (reset-hook! select-region-hook) (add-hook! select-region-hook arg1) (carg1 select-region-hook) (reset-hook! select-region-hook)
   (reset-hook! select-mix-hook) (add-hook! select-mix-hook arg1) (carg1 select-mix-hook) (reset-hook! select-mix-hook)
 
   (reset-hook! exit-hook) (add-hook! exit-hook arg0) (carg0 exit-hook) (reset-hook! exit-hook)
@@ -6324,7 +6185,7 @@
 	    (safe-make-region 1000 2000 (choose-fd))
 	    (if (selection?) (delete-selection))
 	    (set! (cursor (choose-fd)) 0)
-	    (insert-region (cursor) 0 (choose-fd))
+	    (insert-region (cursor) (car (regions)) (choose-fd))
 	    (revert-sound (choose-fd))
 	    (key (char->integer #\m) 4 (choose-fd))
 	    (key (char->integer #\v) 4 (choose-fd))
@@ -6353,10 +6214,10 @@
 	    (without-errors
 	     (if (and (region? 0) (selection?))
 		 ;; these are not necessarily coupled any more
-		 (let ((r1 (region-rms 0))
+		 (let ((r1 (region-rms (car (regions))))
 		       (r2 (selection-rms))
 		       (r3 (selection-rms-1))
-		       (r4 (region-rms-1 0)))
+		       (r4 (region-rms-1 (car (regions)))))
 		   (if (fneq r1 r4)
 		       (snd-display (format #f ";region rms: ~A ~A?" r1 r4)))
 		   (if (fneq r2 r3)
@@ -6367,9 +6228,8 @@
 	    (forward-mix (choose-fd))
 	    (backward-mix (choose-fd))
 
-	    (without-errors (select-region 2))
-	    (without-errors (protect-region 2 #t))
-	    (without-errors (play-region 2 #t))
+	    (without-errors (protect-region (list-ref (regions) 2) #t))
+	    (without-errors (play-region (list-ref (regions) 2) #t))
 	    (without-errors (mix-region))
 	    (set! (use-sinc-interp) #t)
 	    (play-and-wait)
@@ -6407,8 +6267,7 @@
 		 (scale-selection-to .5)
 		 (reverse-selection)
 		 (undo 2 cfd))
-	       (if (> (length (regions)) 2) (delete-region 2))
-	       (if (> (length (regions)) 2) (select-region 2))))
+	       (if (> (length (regions)) 2) (forget-region (list-ref (regions) 2)))))
 	    (map revert-sound open-files)
 
 	    (without-errors
@@ -7143,24 +7002,18 @@
 	       (o1 (sample half-way obi 0))
 	       (s1 (sample half-way s2i 0))
 	       (s2 (sample half-way s2i 1)))
-	  (pan-mono-to-stereo '(0 0 1 1))
-	  (let ((s11 (sample half-way s2i 0))
-		(s12 (sample half-way s2i 1)))
+	  (place obi s2i 45.0)
+	  (let ((s21 (sample half-way s2i 0))
+		(s22 (sample half-way s2i 1)))
 	    (revert-sound s2i)
-	    (place obi s2i 45.0)
-	    (let ((s21 (sample half-way s2i 0))
-		  (s22 (sample half-way s2i 1)))
-	      (revert-sound s2i)
-	      (place1 obi s2i 45.0)
-	      (let ((s31 (sample half-way s2i 0))
-		    (s32 (sample half-way s2i 1)))
-		(if (or (fneq (+ s1 (* 0.5 o1)) s11)
-			(fneq (+ s2 (* 0.5 o1)) s12)
-			(fneq s11 s21)
-			(fneq s11 s31)
-			(fneq s12 s22)
-			(fneq s12 s32))
-		    (snd-display (format #f ";place: ~A " (list o1 s1 s2 s11 s12 s21 s22 s31 s32))))))))
+	    (place1 obi s2i 45.0)
+	    (let ((s31 (sample half-way s2i 0))
+		  (s32 (sample half-way s2i 1)))
+	      (if (or (fneq (+ s1 (* 0.5 o1)) s21)
+			(fneq (+ s2 (* 0.5 o1)) s22)
+			(fneq s21 s31)
+			(fneq s22 s32))
+		    (snd-display (format #f ";place: ~A " (list o1 s1 s2 s21 s22 s31 s32))))))))
 	(revert-sound s2i)
 	(revert-sound obi)
 	(set! (sync obi) 0)
@@ -7179,6 +7032,8 @@
 	      (s2 (sample 1000 s2i 1)))
 	  (set! (sync s2i) 4)
 	  (select-all)
+	  (if (not (= (selection-chans) 2)) (snd-display (format #f ";selection-chans(2): ~A?" (selection-chans))))
+	  (if (not (= (selection-srate) (srate s2i))) (snd-display (format #f ";selection-srate: ~A ~A?" (selection-srate) (srate s2i))))
 	  (swap-selection-channels)
 	  (if (or (fneq s1 (sample 1000 s2i 1))
 		  (fneq s2 (sample 1000 s2i 0)))
@@ -7187,20 +7042,8 @@
 	(close-sound s2i)
 
 	(set! obi (open-sound "oboe.snd"))
-	(let ((id (select-all)))
-	  (if (not (= (id-region (region-id 0)) 0)) (snd-display (format #f ";region-id: ~A ~A?" (region-id 0) (id-region (region-id 0)))))
-	  (if (not (= id (region-id 0))) (snd-display (format #f ";region-id(0): ~A ~A?" (region-id 0) id))))
-	(let ((tag
-	       (catch #t
-		      (lambda ()
-			(id-region 123456))
-		      (lambda args (car args)))))
-	  (if (not (eq? tag 'no-such-region))
-	      (snd-display (format #f ";id-region of non-region: ~A?" (id-region 123456)))))
-	(do ((i (1- (max-regions)) (1- i)))
-	    ((< i 0))
-	  (if (region? i)
-	      (delete-region i)))
+	(select-all)
+	(for-each forget-region (regions))
 	(if (not (equal? (regions) '())) (snd-display (format #f ";no regions? ~A" (regions))))
 	(let ((id (make-region 100 200 obi 0)))
 	  (if (not (equal? (regions) (list id))) (snd-display (format #f ";make-region regions: ~A?" (regions)))))
@@ -7580,21 +7423,21 @@
 	(if (fneq (sample 1200 ind 0) 1.0) (snd-display (format #f ";scale 1 samp selection: ~A?" (sample 1200 ind 0))))
 
 	(revert-sound ind)
-	(make-region 500 1000)
-	(src-selection .5)
-	(if (> (abs (- (region-length 0) 500)) 1) (snd-display (format #f ";region-length after src-selection: ~A?" (region-length 0))))
-	(let ((reg-mix-id (mix-region 1500 0 ind 0)))
-	  (if (not (= (mix-length reg-mix-id) (region-length 0)))
-	      (snd-display (format #f ";mix-region: ~A != ~A?" (region-length 0) (mix-length reg-mix-id))))
-	  (let ((sel-mix-id (mix-selection 2500 ind 0)))
-	    (if (not (= (selection-length) (mix-length sel-mix-id)))
-		(snd-display (format #f ";mix-selection: ~A != ~A?" (selection-length) (mix-length sel-mix-id))))
-	    (if (> (abs (- (* 2 (mix-length reg-mix-id)) (mix-length sel-mix-id))) 3)
-		(snd-display (format #f ";mix selection and region: ~A ~A (~A ~A)?" 
-				   (mix-length reg-mix-id) (mix-length sel-mix-id) (region-length 0) (selection-length))))
-	    (insert-selection 3000 ind 0)
-	    (delete-selection)
-	    (revert-sound ind)))
+	(let ((id (make-region 500 1000)))
+	  (src-selection .5)
+	  (if (> (abs (- (region-length id) 500)) 1) (snd-display (format #f ";region-length after src-selection: ~A?" (region-length id))))
+	  (let ((reg-mix-id (mix-region 1500 id ind 0)))
+	    (if (not (= (mix-length reg-mix-id) (region-length id)))
+		(snd-display (format #f ";mix-region: ~A != ~A?" (region-length id) (mix-length reg-mix-id))))
+	    (let ((sel-mix-id (mix-selection 2500 ind 0)))
+	      (if (not (= (selection-length) (mix-length sel-mix-id)))
+		  (snd-display (format #f ";mix-selection: ~A != ~A?" (selection-length) (mix-length sel-mix-id))))
+	      (if (> (abs (- (* 2 (mix-length reg-mix-id)) (mix-length sel-mix-id))) 3)
+		  (snd-display (format #f ";mix selection and region: ~A ~A (~A ~A)?" 
+				       (mix-length reg-mix-id) (mix-length sel-mix-id) (region-length id) (selection-length))))
+	      (insert-selection 3000 ind 0)
+	      (delete-selection)
+	      (revert-sound ind))))
 	(close-sound ind)
 	)
 
@@ -7888,7 +7731,7 @@ EDITS: 3
 	       convolve-selection-with convolve-with corruption-time
 	       count-matches current-font cursor cursor-color cursor-follows-play cursor-size cursor-style dac-combines-channels dac-size data-clipped
 	       data-color data-format data-location default-output-chans default-output-format default-output-srate default-output-type define-envelope
-	       delete-mark delete-marks delete-region delete-sample delete-samples delete-samples-with-origin delete-selection dialog-widgets
+	       delete-mark delete-marks forget-region delete-sample delete-samples delete-samples-with-origin delete-selection dialog-widgets
 	       dismiss-all-dialogs display-edits dot-size draw-dot draw-dots draw-line draw-lines draw-string edit-header-dialog edit-fragment edit-position
 	       edit-tree edits env-base env-selection env-sound enved-active-env enved-base enved-clip? enved-in-dB enved-dialog enved-exp? enved-power
 	       enved-selected-env enved-target enved-waveform-color enved-wave? eps-file eps-left-margin eps-bottom-margin expand-control
@@ -7899,28 +7742,28 @@ EDITS: 3
 	       filter-selection filter-waveform-color filter-control? find find-mark find-sound finish-progress-report foreground-color
 	       forward-graph forward-mark forward-mix forward-sample frames free-mix-sample-reader free-sample-reader free-track-sample-reader graph
 	       graph-color graph-cursor graph-data graph->ps graph-style graphing graphs-horizontal header-type help-dialog help-text-font
-	       highlight-color id-region in insert-region insert-sample insert-samples insert-samples-with-origin insert-selection insert-silence
+	       highlight-color in insert-region insert-sample insert-samples insert-samples-with-origin insert-selection insert-silence
 	       insert-sound just-sounds key key-binding left-sample listener-color listener-font listener-prompt listener-selection listener-text-color
 	       load-colormap load-font loop-samples main-widgets make-color make-graph-data make-mix-sample-reader make-player make-region
-	       make-region-sample-reader make-sample-reader make-track-sample-reader map-across-all-chans map-across-chans map-across-sound-chans
-	       map-chan map-chans map-sound-chans map-all-chans mark-color mark-name mark-sample mark-sync mark-sync-max mark-home marks mark?
+	       make-region-sample-reader make-sample-reader make-track-sample-reader 
+	       map-chan mark-color mark-name mark-sample mark-sync mark-sync-max mark-home marks mark?
 	       max-fft-peaks max-regions max-sounds maxamp menu-sensitive menu-widgets minibuffer-history-length min-dB mix mixes mix-amp mix-amp-env
 	       mix-anchor mix-chans mix-color mix-track mix-length mix-locked mix-name mix? mix-panel mix-position mix-region mix-sample-reader?
 	       mix-selection mix-sound mix-home mix-speed mix-tag-height mix-tag-width mix-tag-y mix-vct mix-waveform-height
 	       movies new-sound next-mix-sample next-sample next-track-sample normalize-fft equalize-panes
 	       open-raw-sound open-sound open-sound-file orientation-dialog peak-env-info peaks play play-and-wait play-mix play-region play-selection
 	       play-track player? position-color position->x position->y preload-directory preload-file previous-files-sort previous-sample 
-	       print-length progress-report prompt-in-minibuffer  protect-region pushed-button-color read-only
+	       print-length progress-report prompt-in-minibuffer protect-region pushed-button-color read-only
 	       read-peak-env-info-file recorder-autoload recorder-buffer-size recorder-dialog recorder-file recorder-gain recorder-in-amp recorder-in-format
 	       recorder-max-duration recorder-out-amp recorder-out-chans recorder-out-format recorder-srate recorder-trigger redo region-chans region-dialog
-	       region-id region-length region-maxamp region-sample region-samples region-samples->vct region-srate regions region? remove-from-menu
+	       region-length region-maxamp region-sample region-samples region-samples->vct region-srate regions region? remove-from-menu
 	       report-in-minibuffer reset-controls restore-controls restore-marks restore-region reverb-control-decay reverb-control-feedback 
 	       reverb-control-procedures reverb-control-length reverb-control-lowpass reverb-control-scale reverb-control? 
 	       reverse-sound reverse-selection revert-sound right-sample sample sample-reader-at-end?
 	       sample-reader? samples samples->vct samples->sound-data sash-color save-controls save-dir save-edit-history save-envelopes
 	       save-listener save-macros save-marks save-options save-region save-selection save-sound save-sound-as save-state save-state-file
-	       scale-by scale-selection-by scale-selection-to scale-to scan-across-all-chans scan-across-chans scan-across-sound-chans
-	       scan-chan scan-chans scan-sound-chans scan-all-chans search-procedure select-all select-channel select-mix select-region select-sound
+	       scale-by scale-selection-by scale-selection-to scale-to 
+	       scan-chan search-procedure select-all select-channel select-mix select-sound
 	       selected-channel selected-data-color selected-graph-color selected-mix selected-mix-color selected-sound selection-position selection-color
 	       selection-creates-region selection-length selection-member? selection? short-file-name show-axes show-backtrace show-controls show-fft-peaks
 	       show-indices show-listener show-marks show-mix-waveforms show-selection-transform show-usage-stats show-y-zero sinc-width smooth-sound
@@ -8170,7 +8013,7 @@ EDITS: 3
 				  (lambda args (car args)))))
 		      (if (not (eq? tag 'no-active-selection))
 			  (snd-display (format #f ";selection ~A: ~A" n tag)))))
-		  (list reverse-selection selection-position selection-length selection-to-temp selection-to-temps smooth-selection
+		  (list reverse-selection selection-position selection-length smooth-selection
 			scale-selection-by scale-selection-to play-selection insert-selection delete-selection mix-selection))
 
 	(for-each (lambda (n)
@@ -8289,11 +8132,11 @@ EDITS: 3
 		    (list backward-graph backward-sample channel-sync channel-widgets convolve-with count-matches cursor cursor-follows-play cursor-position 
 			  cursor-size cursor-style delete-sample display-edits dot-size draw-dots draw-lines edit-fragment edit-position edit-tree edits 
 			  fft-beta fft-log-frequency fft-log-magnitude fft-size fft-style fft-window ffting find forward-graph forward-mark forward-mix 
-			  forward-sample graph graph-style graphing insert-region insert-sound left-sample make-graph-data map-across-all-chans 
-			  map-across-chans map-across-sound-chans map-chan map-chans map-sound-chans map-all-chans max-fft-peaks maxamp min-dB mix-region 
+			  forward-sample graph graph-style graphing insert-region insert-sound left-sample make-graph-data 
+			  map-chan max-fft-peaks maxamp min-dB mix-region 
 			  normalize-fft peak-env-info peaks play play-and-wait position->x position->y reverse-sound revert-sound right-sample sample 
-			  samples->vct samples->sound-data save-sound save-sound-as scan-across-all-chans scan-across-chans scan-across-sound-chans 
-			  scan-chan scan-chans scan-sound-chans scan-all-chans select-channel show-axes show-fft-peaks show-marks show-mix-waveforms 
+			  samples->vct samples->sound-data save-sound save-sound-as 
+			  scan-chan select-channel show-axes show-fft-peaks show-marks show-mix-waveforms 
 			  show-y-zero spectro-cutoff spectro-hop spectro-start spectro-x-angle spectro-x-scale spectro-y-angle spectro-y-scale 
 			  spectro-z-angle spectro-z-scale squelch-update transform-sample transform-samples transform-samples->vct transform-size 
 			  transform-type update-fft update-graph update-lisp-graph update-sound wavelet-type waving wavo wavo-hop wavo-trace x-bounds 
@@ -8313,11 +8156,11 @@ EDITS: 3
 		    (list backward-graph backward-sample channel-sync channel-widgets convolve-with count-matches cursor cursor-position 
 			  cursor-size cursor-style delete-sample display-edits dot-size draw-dots draw-lines edit-fragment edit-position edit-tree edits 
 			  fft-beta fft-log-frequency fft-log-magnitude fft-size fft-style fft-window ffting find forward-graph forward-mark forward-mix 
-			  forward-sample graph graph-style graphing insert-region insert-sound left-sample make-graph-data map-across-all-chans 
-			  map-across-chans map-across-sound-chans map-chan map-chans map-sound-chans map-all-chans max-fft-peaks maxamp min-dB mix-region 
+			  forward-sample graph graph-style graphing insert-region insert-sound left-sample make-graph-data
+			  map-chan max-fft-peaks maxamp min-dB mix-region 
 			  normalize-fft peak-env-info peaks play play-and-wait position->x position->y reverse-sound right-sample sample 
-			  samples->vct samples->sound-data save-sound-as scan-across-all-chans scan-across-chans scan-across-sound-chans 
-			  scan-chan scan-chans scan-sound-chans scan-all-chans show-axes show-fft-peaks show-marks show-mix-waveforms 
+			  samples->vct samples->sound-data save-sound-as 
+			  scan-chan show-axes show-fft-peaks show-marks show-mix-waveforms 
 			  show-y-zero spectro-cutoff spectro-hop spectro-start spectro-x-angle spectro-x-scale spectro-y-angle spectro-y-scale 
 			  spectro-z-angle spectro-z-scale squelch-update transform-sample transform-samples transform-samples->vct transform-size 
 			  transform-type update-fft update-graph update-lisp-graph wavelet-type waving wavo wavo-hop wavo-trace x-bounds 
@@ -8523,8 +8366,8 @@ EDITS: 3
 				    (if (not (eq? tag 'wrong-type-arg))
 					(snd-display (format #f ";~D: region procs ~A: ~A ~A" ctr n tag arg)))
 				    (set! ctr (+ ctr 1))))
-				(list select-region play-region id-region region-chans region-id region-length region-maxamp region-sample 
-				      region-samples region-samples->vct region-srate region? delete-region))))
+				(list play-region region-chans region-length region-maxamp region-sample 
+				      region-samples region-samples->vct region-srate region? forget-region))))
 		  (list (current-module) #(0 1) (sqrt -1.0) "hiho" (list 0 1)))
 
         (let ((ctr 0))
@@ -8537,7 +8380,7 @@ EDITS: 3
 			(if (not (eq? tag 'no-such-region))
 			    (snd-display (format #f ";~D: (no) region procs ~A: ~A" ctr n tag)))
 			(set! ctr (+ ctr 1))))
-		    (list select-region play-region id-region region-chans region-id region-length region-maxamp region-srate delete-region))) 
+		    (list play-region region-chans region-length region-maxamp region-srate forget-region))) 
 
         (let ((ctr 0))
 	  (for-each (lambda (n)
@@ -8607,7 +8450,6 @@ EDITS: 3
 			(list mouse-leave-listener-hook 'mouse-leave-listener-hook)
 			(list property-changed-hook 'property-changed-hook)
 			(list select-sound-hook 'select-sound-hook)
-			(list select-region-hook 'select-region-hook)
 			(list select-mix-hook 'select-mix-hook)
 			(list during-open-hook 'during-open-hook)
 			(list fft-hook 'fft-hook)
@@ -8667,7 +8509,7 @@ EDITS: 3
 	  (check-error-tag 'no-such-region (lambda () (save-region 1234 "/bad/baddy.snd")))
 	  (make-region 0 100 ind 0)
 	  (check-error-tag 'cannot-save (lambda () (save-selection "/bad/baddy.snd")))
-	  (check-error-tag 'cannot-save (lambda () (save-region 0 "/bad/baddy.snd")))
+	  (check-error-tag 'cannot-save (lambda () (save-region (car (regions)) "/bad/baddy.snd")))
 	  (check-error-tag 'no-such-sound (lambda () (make-track-sample-reader 0 0 1234 0)))
 	  (check-error-tag 'no-such-track (lambda () (make-track-sample-reader 0 0 ind 0)))
 	  (check-error-tag 'no-such-mix (lambda () (make-mix-sample-reader 1234)))
@@ -9524,7 +9366,6 @@ EDITS: 3
 (if (= snd-test -1) (exit))
 
 ;;; these need further testing
-;;;   map-across-all-chans map-chans scan-across-chans map-sound-chans scan-sound-chans scan-chans scan-across-sound-chans 
 ;;;   forward-mix save-state mus-sound-reopen-output close-sound-file vct->sound-file
 ;;;   save-marks save-region vcts-map! update-sound make-track-sample-reader free-track-sample-reader 
 ;;;   backward-mix peaks cursor-position y->position position->y mix-home
@@ -9535,8 +9376,7 @@ EDITS: 3
 ;;;   (bind-key (char->integer #\p) 0 (lambda () cursor-on-left)) ;now (cursor) == (left-sample)
 ;;;    unbind-key, new extended args to bind-key, key-binding, unbind-key
 
-;; TODO: selection|sound-to-temp should use "->" and maybe "file" not "temp"
-;; TODO: the spectro-<mumble> names are no good (and the whole thing is a mess)
+;; TODO: the spectro-<mumble> names are no good (and the whole thing is a mess) -- spectrogram-orientation (a list)?
 ;; also we have mus-sound-srate in sndlib, mus-srate in clm.c, sound-srate and *clm-srate* in clm, mus-sound-srate and srate in snd
 ;;  perhaps a mus module, giving mus:sound-srate in scm, mus:sound-srate in clm, mus_sound_srate in C?
 ;; TODO: equalize-panes with index is almost a no-op
@@ -9549,3 +9389,4 @@ EDITS: 3
 ;;; (dlinit handle "init_gsl_j0")
 ;;; (fneq (j0 1.0) 0.765)
 
+;;;

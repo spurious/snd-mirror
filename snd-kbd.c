@@ -684,7 +684,7 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, int with_meta)
 	      FREE(str1);
 	      break;
 	    case CHANNEL_FILING:
-	      save_channel_edits(active_chan, mcf = mus_expand_filename(str), TO_SCM_INT(AT_CURRENT_EDIT_POSITION), "C-x C-w");
+	      save_channel_edits(active_chan, mcf = mus_expand_filename(str), TO_SCM_INT(AT_CURRENT_EDIT_POSITION), "C-x C-w", 0);
 	      if (mcf) FREE(mcf);
 	      clear_minibuffer(sp);
 	      break;
@@ -747,11 +747,11 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, int with_meta)
 		apply_env(active_chan, e, active_chan->cursor, 
 			  sp->amping, 1.0, sp->reging, NOT_FROM_ENVED,
 			  (char *)((sp->reging) ? "C-x a" : "C-x C-a"), NULL,
-			  TO_SCM_INT(AT_CURRENT_EDIT_POSITION));
+			  TO_SCM_INT(AT_CURRENT_EDIT_POSITION), 0);
 	      else apply_env(active_chan, e, 0, current_ed_samples(active_chan), 1.0, 
 			     sp->reging, NOT_FROM_ENVED,
 			     (char *)((sp->reging) ? "C-x a" : "C-x C-a"), NULL,
-			     TO_SCM_INT(AT_CURRENT_EDIT_POSITION));
+			     TO_SCM_INT(AT_CURRENT_EDIT_POSITION), 0);
 	      e = free_env(e);
 	    }
 	  sp->reging = 0;
@@ -1135,7 +1135,7 @@ int keyboard_command (chan_info *cp, int keysym, int state)
 	      redisplay = cursor_move(cp, -count * 128); 
 	      break;
 	    case snd_K_Q: case snd_K_q: 
-	      play_channel(cp, cp->cursor, NO_END_SPECIFIED, TRUE, TO_SCM_INT(AT_CURRENT_EDIT_POSITION), "C-q");
+	      play_channel(cp, cp->cursor, NO_END_SPECIFIED, TRUE, TO_SCM_INT(AT_CURRENT_EDIT_POSITION), "C-q", 0);
 	      set_play_button(sp, 1); 
 	      redisplay = NO_ACTION; 
 	      break;
@@ -1692,7 +1692,7 @@ int keyboard_command (chan_info *cp, int keysym, int state)
 	      break;
 	    case snd_K_P: case snd_K_p: 
 	      if (ext_count == NO_CX_ARG_SPECIFIED)
-		play_selection(IN_BACKGROUND, TO_SCM_INT(AT_CURRENT_EDIT_POSITION), "C-x p");
+		play_selection(IN_BACKGROUND, TO_SCM_INT(AT_CURRENT_EDIT_POSITION), "C-x p", 0);
 	      else play_region(ss, ext_count, IN_BACKGROUND);
 	      redisplay = NO_ACTION;
 	      break;

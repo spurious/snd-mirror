@@ -1,16 +1,5 @@
 #include "snd.h"
 
-/* TODO:  map|scan-any-chans = (for-each (map|scan-chan ... ) chans)
- *        map|scan-across-any-chans the same
- *        so all the map|scan funcs are specialized calls of these two
- * TODO: shouldn't temp(s)-to-sound etc use "->"?
- *         or perhaps file->sound, sound->file, selection->sound, etc? (isn't this set-samples from a file?)
- *         so the entire set is unneeded?
- *   isn't temp->selection|temp->sound actually separable from the preceding -- user could
- *      create such files at any time and use as an edit. 
- * have vct->sound-file region-samples->vct settable samples and region-samples samples->vct vct->samples array<->file(clm2scm.c)
- */
-
 /* collect syncd chans */
 typedef struct {
   sync_info *si;
@@ -30,15 +19,16 @@ static void free_sync_state(sync_state *sc)
     }
 }
 
-int to_c_edit_position(chan_info *cp, SCM edpos, const char *caller)
+int to_c_edit_position(chan_info *cp, SCM edpos, const char *caller, int arg_pos)
 {
   int pos;
   SCM errstr;
   char *errmsg = NULL;
-  ASSERT_TYPE(NOT_BOUND_P(edpos) || INTEGER_P(edpos) || PROCEDURE_P(edpos), edpos, SCM_ARGn, caller, "an integer or a procedure");
+  /* need to allow #f here for optargs */
+  ASSERT_TYPE(NOT_BOUND_P(edpos) || INTEGER_P(edpos) || PROCEDURE_P(edpos) || BOOLEAN_P(edpos), edpos, arg_pos, caller, "an integer or a procedure");
   if (PROCEDURE_P(edpos))
     {
-      errmsg = procedure_ok(edpos, 2, caller, "edit position", 0);
+      errmsg = procedure_ok(edpos, 2, caller, "edit position", arg_pos);
       if (errmsg)
 	{
 	  errstr = TO_SCM_STRING(errmsg);
@@ -58,12 +48,13 @@ int to_c_edit_position(chan_info *cp, SCM edpos, const char *caller)
   return(pos);
 }
 
-int to_c_edit_samples(chan_info *cp, SCM edpos, const char *caller)
+int to_c_edit_samples(chan_info *cp, SCM edpos, const char *caller, int arg_pos)
 {
-  return(cp->samples[to_c_edit_position(cp, edpos, caller)]);
+  return(cp->samples[to_c_edit_position(cp, edpos, caller, arg_pos)]);
 }
 
-static sync_state *get_sync_state_1(snd_state *ss, snd_info *sp, chan_info *cp, int beg, int regexpr, int forwards, int prebeg, SCM edpos, const char *caller)
+static sync_state *get_sync_state_1(snd_state *ss, snd_info *sp, chan_info *cp, int beg, int regexpr, 
+				    int forwards, int prebeg, SCM edpos, const char *caller, int arg_pos)
 {
   /* can return NULL if regexpr and no current selection */
   sync_info *si = NULL;
@@ -81,7 +72,7 @@ static sync_state *get_sync_state_1(snd_state *ss, snd_info *sp, chan_info *cp, 
 	{
 	  ncp = si->cps[i];
 	  si->begs[i] = beg;
-	  pos = to_c_edit_position(ncp, edpos, caller);
+	  pos = to_c_edit_position(ncp, edpos, caller, arg_pos);
 	  if (forwards == READ_FORWARD)
 	    sfs[i] = init_sample_read_any(beg, ncp, READ_FORWARD, pos);
 	  else sfs[i] = init_sample_read_any(cp->samples[pos] - 1, ncp, READ_BACKWARD, pos);
@@ -99,7 +90,7 @@ static sync_state *get_sync_state_1(snd_state *ss, snd_info *sp, chan_info *cp, 
 	      for (i = 0; i < si->chans; i++) 
 		{
 		  ncp = si->cps[i];
-		  pos = to_c_edit_position(ncp, edpos, caller);
+		  pos = to_c_edit_position(ncp, edpos, caller, arg_pos);
 		  if (forwards == READ_FORWARD)
 		    {
 		      pbeg = si->begs[i] - prebeg;
@@ -120,7 +111,7 @@ static sync_state *get_sync_state_1(snd_state *ss, snd_info *sp, chan_info *cp, 
     {
       si = make_simple_sync(cp, beg);
       sfs = (snd_fd **)MALLOC(sizeof(snd_fd *));
-      pos = to_c_edit_position(cp, edpos, caller);
+      pos = to_c_edit_position(cp, edpos, caller, arg_pos);
       if (forwards == READ_FORWARD)
 	sfs[0] = init_sample_read_any(beg, cp, READ_FORWARD, pos);
       else sfs[0] = init_sample_read_any(cp->samples[pos] - 1, cp, READ_BACKWARD, pos);
@@ -132,9 +123,9 @@ static sync_state *get_sync_state_1(snd_state *ss, snd_info *sp, chan_info *cp, 
   return(sc);
 }
 
-static sync_state *get_sync_state(snd_state *ss, snd_info *sp, chan_info *cp, int beg, int regexpr, int forwards, SCM edpos, const char *caller)
+static sync_state *get_sync_state(snd_state *ss, snd_info *sp, chan_info *cp, int beg, int regexpr, int forwards, SCM edpos, const char *caller, int arg_pos)
 {
-  return(get_sync_state_1(ss, sp, cp, beg, regexpr, forwards, 0, edpos, caller));
+  return(get_sync_state_1(ss, sp, cp, beg, regexpr, forwards, 0, edpos, caller, arg_pos));
 }
 
 static sync_state *get_sync_state_without_snd_fds(snd_state *ss, snd_info *sp, chan_info *cp, int beg, int regexpr)
@@ -174,676 +165,7 @@ static sync_state *get_sync_state_without_snd_fds(snd_state *ss, snd_info *sp, c
   return(sc);
 }
 
-/* support for scan and map functions */
-
-static sync_state *get_chan_sync_state(chan_info *cp, int beg, SCM edpos, const char *caller)
-{
-  sync_info *si;
-  snd_fd **sfs;
-  sync_state *sc;
-  si = make_simple_sync(cp, beg);
-  sfs = (snd_fd **)MALLOC(sizeof(snd_fd *));
-  sfs[0] = init_sample_read_any(beg, cp, READ_FORWARD, to_c_edit_position(cp, edpos, caller));
-  sc = (sync_state *)CALLOC(1, sizeof(sync_state));
-  sc->sfs = sfs;
-  sc->si = si;
-  return(sc);
-}
-
-static sync_state *get_sound_chans_sync_state(chan_info *cp, int beg, SCM edpos, const char *caller)
-{
-  sync_info *si;
-  snd_fd **sfs;
-  sync_state *sc;
-  snd_info *sp;
-  chan_info *ncp;
-  int i;
-  sp = cp->sound;
-  si = (sync_info *)CALLOC(1, sizeof(sync_info));
-  si->chans = sp->nchans;
-  si->cps = (chan_info **)MALLOC(sp->nchans * sizeof(chan_info *));
-  si->begs = (int *)CALLOC(sp->nchans, sizeof(int));
-  sfs = (snd_fd **)MALLOC(sp->nchans * sizeof(snd_fd *));
-  for (i = 0; i < sp->nchans; i++) 
-    {
-      si->cps[i] = sp->chans[i];
-      ncp = si->cps[i];
-      si->begs[i] = beg;
-      sfs[i] = init_sample_read_any(beg, ncp, READ_FORWARD, to_c_edit_position(ncp, edpos, caller));
-    }
-  sc = (sync_state *)CALLOC(1, sizeof(sync_state));
-  sc->sfs = sfs;
-  sc->si = si;
-  return(sc);
-}
-
-static sync_state *get_active_chans_sync_state(snd_state *ss, int beg, SCM edpos, const char *caller)
-{
-  sync_info *si;
-  snd_fd **sfs;
-  sync_state *sc;
-  snd_info *sp;
-  chan_info *ncp;
-  int snd, chn, i;
-  si = (sync_info *)CALLOC(1, sizeof(sync_info));
-  si->chans = active_channels(ss, WITH_VIRTUAL_CHANNELS);
-  si->cps = (chan_info **)CALLOC(si->chans, sizeof(chan_info *));
-  si->begs = (int *)CALLOC(si->chans, sizeof(int));
-  sfs = (snd_fd **)CALLOC(si->chans, sizeof(snd_fd *));
-  chn = 0;
-  for (snd = 0; snd < ss->max_sounds; snd++)
-    {
-      sp = (ss->sounds[snd]);
-      if (snd_ok(sp))
-	for (i = 0; i < sp->nchans; i++)
-	  {
-	    si->cps[chn] = sp->chans[i];
-	    ncp = si->cps[chn];
-	    si->begs[chn] = beg;
-	    sfs[chn] = init_sample_read_any(beg, ncp, READ_FORWARD, to_c_edit_position(ncp, edpos, caller));
-	    chn++;
-	  }
-    }
-  sc = (sync_state *)CALLOC(1, sizeof(sync_state));
-  sc->sfs = sfs;
-  sc->si = si;
-  return(sc);
-}
-
-/* TODO: move all but the basics into scheme here (i.e. map-chan, and (map-any-chans...) with list of parallel chans
- *         the collected series cases can be handled in scheme
- */
-
-enum {SCAN_CURRENT_CHAN, SCAN_SOUND_CHANS, SCAN_SYNCD_CHANS, SCAN_ALL_CHANS};
-
-static SCM series_scan(snd_state *ss, chan_info *cp, SCM proc, int chan_choice, int beg, int end, 
-		       const char *origin, const char *procname, int procn, int counting, SCM edpos)
-{
-  sync_state *sc = NULL;
-  sync_info *si;
-  snd_info *sp;
-  snd_fd **sfs;
-  snd_fd *sf;
-  SCM errstr;
-  int kp, j, ip, len, num, reporting = 0, rpt = 0, rpt4, counts = 0;
-  SCM res;
-  char *errmsg;
-  errmsg = procedure_ok(proc, 1, origin, procname, procn);
-  if (errmsg)
-    {
-      errstr = TO_SCM_STRING(errmsg);
-      FREE(errmsg);
-      return(snd_bad_arity_error(origin, errstr, proc));
-    }
-  sp = cp->sound;
-  switch (chan_choice)
-    {
-    case SCAN_SYNCD_CHANS: 
-      sc = get_sync_state(ss, sp, cp, beg, FALSE, READ_FORWARD, edpos, origin); 
-      break;
-    case SCAN_ALL_CHANS: 
-      sc = get_active_chans_sync_state(ss, beg, edpos, origin); 
-      break;
-    case SCAN_SOUND_CHANS: 
-      sc = get_sound_chans_sync_state(cp, beg, edpos, origin); 
-      break;
-    case SCAN_CURRENT_CHAN: 
-      sc = get_chan_sync_state(cp, beg, edpos, origin); 
-      break;
-    }
-  if (sc == NULL) return(SCM_BOOL_T);
-  si = sc->si;
-  sfs = sc->sfs;
-  rpt4 = MAX_BUFFER_SIZE / 4;
-  for (ip = 0; ip < si->chans; ip++)
-    {
-      cp = si->cps[ip];
-      sp = cp->sound;
-      sf = sfs[ip];
-      /* since each channel can be of arbitrary length, it is unreasonable to
-       * expect the caller to deal with that unless a specific subsequence is
-       * known in advance; so here if end is 0, that means it was not set
-       * by the caller, meaning go from beg to whatever the current end is.
-       * if beg > len, omit this chaneel,
-       * if beg > end after fixup, omit.
-       */
-      len = to_c_edit_samples(cp, edpos, origin);
-      if (end >= len) end = len - 1;
-      if (end == 0) end = len - 1;
-      num = end - beg + 1;
-      if (num > 0)
-	{
-	  reporting = (num > MAX_BUFFER_SIZE);
-	  if (reporting) start_progress_report(sp, NOT_FROM_ENVED);
-	  for (kp = 0; kp < num; kp++)
-	    {
-	      res = CALL1(proc,
-			  TO_SCM_DOUBLE((double)next_sample_to_float(sf)),
-			  origin);
-	      if (NOT_FALSE_P(res))
-		{
-		  if ((counting) &&
-		      (TRUE_P(res)))
-		    counts++;
-		  else
-		    {
-		      for (j = ip; j < si->chans; j++) 
-			free_snd_fd(sfs[j]);
-		      free_sync_state(sc); 
-		      if (reporting) 
-			finish_progress_report(sp, NOT_FROM_ENVED);
-		      return(SCM_LIST4(res,
-				       TO_SCM_INT(kp + beg),
-				       TO_SMALL_SCM_INT(cp->chan),
-				       TO_SMALL_SCM_INT(sp->index)));
-		      /* why was this including SCM_UNDEFINED as the 5th element? */
-		    }
-		}
-	      if (reporting) 
-		{
-		  rpt++;
-		  if (rpt > rpt4)
-		    {
-		      progress_report(sp, origin, ip + 1, si->chans, (Float)kp / (Float)num, NOT_FROM_ENVED);
-		      rpt = 0;
-		    }
-		}
-	      if (ss->stopped_explicitly)
-		{
-		  ss->stopped_explicitly = 0;
-		  if (reporting) finish_progress_report(sp, NOT_FROM_ENVED);
-		  if (si->chans == 1)
-		    report_in_minibuffer(sp, "C-G stopped %s at sample %d", 
-					 origin, kp + beg);
-		  else report_in_minibuffer(sp, "C-G stopped %s in %s chan %d at sample %d",
-					    origin, sp->shortname, cp->chan + 1, kp + beg);
-		  for (j = ip; j < si->chans; j++) 
-		    free_snd_fd(sfs[j]);
-		  free_sync_state(sc); 
-		  if (counting)
-		    return(TO_SCM_INT(counts));
-		  return(SCM_BOOL_F);
-		}
-	    }
-	  if (reporting) finish_progress_report(sp, NOT_FROM_ENVED);
-	}
-      sfs[ip] = free_snd_fd(sfs[ip]);
-    }
-  free_sync_state(sc);
-  if (counting)
-    return(TO_SCM_INT(counts));
-  return(SCM_BOOL_F);
-}
-
-static SCM parallel_scan(snd_state *ss, chan_info *cp, SCM proc, int chan_choice, int beg, int end, 
-			 const char *origin, const char *procname, int procn, SCM edpos)
-{
-  /* here we need to load the arglist in order */
-  sync_state *sc = NULL;
-  sync_info *si;
-  snd_info *sp;
-  snd_fd **sfs;
-  SCM *vdata;
-  SCM errstr;
-  int kp, ip, pos = 0, len, num, reporting = 0, rpt = 0, rpt4;
-  SCM res = SCM_UNDEFINED, args, g_chns;
-  char *errmsg;
-  errmsg = procedure_ok(proc, 2, origin, procname, procn);
-  if (errmsg)
-    {
-      errstr = TO_SCM_STRING(errmsg);
-      FREE(errmsg);
-      return(snd_bad_arity_error(origin, errstr, proc));
-    }
-  sp = cp->sound;
-  switch (chan_choice)
-    {
-    case SCAN_SYNCD_CHANS: 
-      sc = get_sync_state(ss, sp, cp, beg, FALSE, READ_FORWARD, edpos, origin); 
-      break;
-    case SCAN_ALL_CHANS: 
-      sc = get_active_chans_sync_state(ss, beg, edpos, origin); 
-      break;
-    case SCAN_SOUND_CHANS: 
-      sc = get_sound_chans_sync_state(cp, beg, edpos, origin); 
-      break;
-    case SCAN_CURRENT_CHAN: 
-      sc = get_chan_sync_state(cp, beg, edpos, origin); 
-      break;
-    }
-  if (sc == NULL) return(SCM_BOOL_T);
-  si = sc->si;
-  sfs = sc->sfs;
-  rpt4 = MAX_BUFFER_SIZE / 4;
-  g_chns = TO_SMALL_SCM_INT(si->chans);
-  args = MAKE_VECTOR(si->chans, SCM_BOOL_F);
-  vdata = SCM_VELTS(args);
-  /* fixup for different length chans as above, but in this case
-   * we need to capture the longest of the channels, padding the
-   * others with zero.
-   */
-  len = to_c_edit_samples(si->cps[0], edpos, origin);
-  for (ip = 1; ip < si->chans; ip++)
-    {
-      num = to_c_edit_samples(si->cps[ip], edpos, origin);
-      if (num > len) len = num;
-    }
-  if (end >= len) end = len - 1;
-  if (end == 0) end = len - 1;
-  num = end - beg + 1;
-  reporting = (num > MAX_BUFFER_SIZE);
-  if (reporting) start_progress_report(sp, NOT_FROM_ENVED);
-  if (si->chans == 1)
-    { /* optimize common special case */
-      for (kp = 0; kp < num; kp++)
-	{
-	  vdata[0] = TO_SCM_DOUBLE((double)next_sample_to_float(sfs[0]));
-	  res = CALL2(proc, args, g_chns, origin);
-	  if (NOT_FALSE_P(res))
-	    {
-	      pos = kp + beg; 
-	      break;
-	    }
-	  if (reporting) 
-	    {
-	      rpt++;
-	      if (rpt > rpt4)
-		{
-		  progress_report(sp, origin, 1, 1, (Float)kp / (Float)num, NOT_FROM_ENVED);
-		  rpt = 0;
-		}
-	    }
-	  if ((ss->stopped_explicitly) || (!(cp->active))) break;
-	}
-    }
-  else
-    {
-      for (kp = 0; kp < num; kp++)
-	{
-	  for (ip = 0; ip < si->chans; ip++)
-	    vdata[ip] = TO_SCM_DOUBLE((double)next_sample_to_float(sfs[ip]));
-	  res = CALL2(proc, args, g_chns, origin);
-	  if (NOT_FALSE_P(res))
-	    {
-	      pos = kp + beg; 
-	      break;
-	    }
-	  if (reporting) 
-	    {
-	      rpt++;
-	      if (rpt > rpt4)
-		{
-		  progress_report(sp, origin, 1, 1, (Float)kp / (Float)num, NOT_FROM_ENVED);
-		  rpt = 0;
-		}
-	    }
-	  if (ss->stopped_explicitly) break;
-	}
-    }
-  if (reporting) finish_progress_report(sp, NOT_FROM_ENVED);
-  for (ip = 0; ip < si->chans; ip++) 
-    free_snd_fd(sfs[ip]);
-  free_sync_state(sc); 
-  if (ss->stopped_explicitly)
-    {
-      report_in_minibuffer(sp, "C-G stopped %s at sample %d", origin, kp + beg);
-      ss->stopped_explicitly = 0;
-    }
-  else
-    {
-      if (SYMBOL_P(res))
-	ERROR(res,
-	      SCM_LIST1(TO_SCM_STRING(origin)));
-      else
-	{
-	  if (NOT_FALSE_P(res))
-	    return(TO_SCM_INT(pos));
-	}
-    }
-  return(SCM_BOOL_F);
-}
-
-/* someday it might be good to tie this into the rest of this file */
-typedef struct {
-  int buffer_size, data_size, datumb, loc, fd, filing, orig_size;
-  char *filename;
-  MUS_SAMPLE_TYPE *buffer;
-  MUS_SAMPLE_TYPE **mus_data;
-  file_info *hdr, *sp_hdr;
-} output_state;
-
-static output_state *start_output(int bufsize, file_info *default_hdr, int orig_size)
-{
-  output_state *os;
-  os = (output_state *)CALLOC(1, sizeof(output_state));
-  os->buffer_size = bufsize;
-  os->buffer = (MUS_SAMPLE_TYPE *)CALLOC(bufsize, sizeof(MUS_SAMPLE_TYPE));
-  os->filing = 0;
-  os->sp_hdr = default_hdr;
-  os->loc = 0;
-  os->data_size = 0;
-  os->orig_size = orig_size;
-  os->hdr = NULL;
-  return(os);
-}
-
-static void output_sample(snd_state *ss, output_state *os, int srate, MUS_SAMPLE_TYPE sample)
-{
-  os->buffer[os->loc++] = sample;
-  if (os->loc == os->buffer_size)
-    {
-      os->data_size += os->loc;
-      if (os->filing == 0)
-	{
-	  os->filename = snd_tempnam(ss);
-	  os->filing = 1;
-	  os->hdr = make_temp_header(os->filename, srate, 1, 0);
-	  os->fd = open_temp_file(os->filename, 1, os->hdr, ss);
-	  os->datumb = mus_data_format_to_bytes_per_sample((os->hdr)->format);
-	  os->mus_data = (MUS_SAMPLE_TYPE **)MALLOC(sizeof(MUS_SAMPLE_TYPE *));
-	  os->mus_data[0] = os->buffer;
-	}
-      mus_file_write(os->fd, 0, os->loc - 1, 1, os->mus_data);
-      os->loc = 0;
-    }
-}
-
-static output_state *end_output(output_state *os, int beg, chan_info *cp, const char *origin)
-{
-  int cured;
-  os->data_size += os->loc;
-  if (os->data_size > 0)
-    {
-      if (os->filing)
-	{
-	  if (os->loc > 0) mus_file_write(os->fd, 0, os->loc - 1, 1, os->mus_data);
-	  close_temp_file(os->fd, os->hdr, os->data_size * os->datumb, cp->sound);
-	  if (os->data_size == os->orig_size)
-	    file_change_samples(beg, os->data_size, os->filename, cp, 0, DELETE_ME, LOCK_MIXES, origin);
-	  else
-	    {
-	      cured = cp->edit_ctr;
-	      delete_samples(beg, os->orig_size, cp, origin);
-	      file_insert_samples(beg, os->data_size, os->filename, cp, 0, DELETE_ME, origin);
-	      backup_edit_list(cp);
-	      if (cp->edit_ctr > cured)
-		backup_edit_list(cp);
-	      if (cp->marks) 
-		ripple_trailing_marks(cp, beg, os->orig_size, os->data_size);
-	    }
-	  FREE(os->filename);
-	  FREE(os->mus_data);
-	  if (os->hdr) os->hdr = free_file_info(os->hdr);
-	}
-      else 
-	{
-	  if (os->orig_size == os->data_size)
-	    change_samples(beg, os->data_size, os->buffer, cp, LOCK_MIXES, origin);
-	  else
-	    {
-	      cured = cp->edit_ctr;
-	      delete_samples(beg, os->orig_size, cp, origin);
-	      insert_samples(beg, os->data_size, os->buffer, cp, origin);
-	      backup_edit_list(cp);
-	      if (cp->edit_ctr > cured) 
-		backup_edit_list(cp);
-	      if (cp->marks) 
-		ripple_trailing_marks(cp, beg, os->orig_size, os->data_size);
-	    }
-	}
-      update_graph(cp, NULL);
-    }
-  FREE(os->buffer);
-  FREE(os);
-  return(NULL);
-}
-
-static SCM series_map(snd_state *ss, chan_info *cp, SCM proc, int chan_choice, int beg, int end, 
-		      const char *origin, const char *procname, int procn, SCM edpos)
-{
-  sync_state *sc = NULL;
-  sync_info *si;
-  snd_info *sp;
-  snd_fd **sfs;
-  snd_fd *sf;
-  output_state *os = NULL;
-  int kp, j, k, ip, num, val_size, reporting = 0, rpt = 0, rpt4;
-  MUS_SAMPLE_TYPE *vals;
-  SCM res;
-  SCM errstr;
-  char *errmsg;
-  errmsg = procedure_ok(proc, 1, origin, procname, procn);
-  if (errmsg)
-    {
-      errstr = TO_SCM_STRING(errmsg);
-      FREE(errmsg);
-      return(snd_bad_arity_error(origin, errstr, proc));
-    }
-  sp = cp->sound;
-  switch (chan_choice)
-    {
-    case SCAN_SYNCD_CHANS: 
-      sc = get_sync_state(ss, sp, cp, beg, FALSE, READ_FORWARD, edpos, origin); 
-      break;
-    case SCAN_ALL_CHANS: 
-      sc = get_active_chans_sync_state(ss, beg, edpos, origin); 
-      break;
-    case SCAN_SOUND_CHANS: 
-      sc = get_sound_chans_sync_state(cp, beg, edpos, origin); 
-      break;
-    case SCAN_CURRENT_CHAN: 
-      sc = get_chan_sync_state(cp, beg, edpos, origin); 
-      break;
-    }
-  if (sc == NULL) return(SCM_BOOL_T);
-  si = sc->si;
-  sfs = sc->sfs;
-  rpt4 = MAX_BUFFER_SIZE / 4;
-  for (ip = 0; ip < si->chans; ip++)
-    {
-      cp = si->cps[ip];
-      sp = cp->sound;
-      sf = sfs[ip];
-      if (end == 0) end = to_c_edit_samples(cp, edpos, origin) - 1;
-      num = end - beg + 1;
-      if (num > 0)
-	{
-	  reporting = (num > MAX_BUFFER_SIZE);
-	  if (reporting) start_progress_report(sp, NOT_FROM_ENVED);
-	  os = start_output(MAX_BUFFER_SIZE, sp->hdr, num);
-	  for (kp = 0; kp < num; kp++)
-	    {
-	      res = CALL1(proc, 
-			  TO_SCM_DOUBLE((double)next_sample_to_float(sf)),
-			  origin);
-	      if (NUMBER_P(res))                         /* one number -> replace current sample */
-		output_sample(ss, os, SND_SRATE(sp), MUS_FLOAT_TO_SAMPLE(TO_C_DOUBLE(res)));
-	      else
-		{
-		  if (NOT_FALSE_P(res))                      /* if #f, no output on this pass */
-		    {
-		      if (TRUE_P(res))                       /* if #t we halt the entire map */
-			{
-			  os = end_output(os, beg, cp, origin);
-			  for (j = ip; j < si->chans; j++) 
-			    free_snd_fd(sfs[j]);    
-			  free_sync_state(sc); 
-			  if (reporting) finish_progress_report(sp, NOT_FROM_ENVED);
-			  return(res);
-			}
-		      else
-			{
-			  val_size = 0;
-			  vals = g_floats_to_samples(res, &val_size, origin, 1);
-			  if (vals)
-			    {
-			      for (k = 0; k < val_size; k++) 
-				output_sample(ss, os, SND_SRATE(sp), vals[k]);
-			      FREE(vals);
-			    }
-			}
-		    }
-		}
-	      if (reporting) 
-		{
-		  rpt++;
-		  if (rpt > rpt4)
-		    {
-		      progress_report(sp, origin, ip + 1, si->chans, (Float)kp / (Float)num, NOT_FROM_ENVED);
-		      rpt = 0;
-		    }
-		}
-	      if (ss->stopped_explicitly) 
-		{
-		  os = end_output(os, beg, cp, origin);
-		  for (j = ip; j < si->chans; j++) 
-		    free_snd_fd(sfs[j]);    
-		  free_sync_state(sc); 
-		  if (reporting) finish_progress_report(sp, NOT_FROM_ENVED);
-		  ss->stopped_explicitly = 0;
-		  return(SCM_BOOL_F);
-		}
-	    }
-	  if (reporting) finish_progress_report(sp, NOT_FROM_ENVED);
-	  os = end_output(os, beg, cp, origin);
-	}
-      sfs[ip] = free_snd_fd(sfs[ip]);
-    }
-  free_sync_state(sc);
-  return(SCM_BOOL_F);
-}
-
-
-static SCM parallel_map(snd_state *ss, chan_info *cp, SCM proc, int chan_choice, int beg, int end, 
-			const char *origin, const char *procname, int procn, SCM edpos)
-{
-  sync_state *sc = NULL;
-  sync_info *si;
-  snd_info *sp;
-  snd_fd **sfs;
-  SCM *vdata, *vargs;
-  output_state **os_arr;
-  int kp, k, n, ip, len, num, val_size, res_size, reporting = 0, rpt = 0, rpt4;
-  MUS_SAMPLE_TYPE *vals;
-  SCM res = SCM_UNDEFINED, args, g_chns, resval, errstr;
-  char *errmsg;
-  errmsg = procedure_ok(proc, 2, origin, procname, procn);
-  if (errmsg)
-    {
-      errstr = TO_SCM_STRING(errmsg);
-      FREE(errmsg);
-      return(snd_bad_arity_error(origin, errstr, proc));
-    }
-  sp = cp->sound;
-  switch (chan_choice)
-    {
-    case SCAN_SYNCD_CHANS: 
-      sc = get_sync_state(ss, sp, cp, beg, FALSE, READ_FORWARD, edpos, origin); 
-      break;
-    case SCAN_ALL_CHANS: 
-      sc = get_active_chans_sync_state(ss, beg, edpos, origin);
-      break;
-    case SCAN_SOUND_CHANS: 
-      sc = get_sound_chans_sync_state(cp, beg, edpos, origin); 
-      break;
-    case SCAN_CURRENT_CHAN: 
-      sc = get_chan_sync_state(cp, beg, edpos, origin); 
-      break;
-    }
-  if (sc == NULL) return(SCM_BOOL_T);
-  si = sc->si;
-  sfs = sc->sfs;
-  rpt4 = MAX_BUFFER_SIZE / 4;
-  len = to_c_edit_samples(si->cps[0], edpos, origin);
-  for (ip = 1; ip < si->chans; ip++)
-    {
-      num = to_c_edit_samples(si->cps[ip], edpos, origin);
-      if (num > len) len = num;
-    }
-  if (end == 0) end = len - 1;
-  num = end - beg + 1;
-  reporting = (num > MAX_BUFFER_SIZE);
-  if (reporting) start_progress_report(sp, NOT_FROM_ENVED);
-  os_arr = (output_state **)MALLOC(si->chans * sizeof(output_state *)); 
-  for (ip = 0; ip < si->chans; ip++)
-    os_arr[ip] = start_output(MAX_BUFFER_SIZE, sp->hdr, num);
-  g_chns = TO_SMALL_SCM_INT(si->chans);
-  args = MAKE_VECTOR(si->chans, SCM_BOOL_F);
-  vargs = SCM_VELTS(args);
-  for (kp = 0; kp < num; kp++)
-    {
-      for (ip = 0; ip < si->chans; ip++)
-	vargs[ip] = TO_SCM_DOUBLE((double)next_sample_to_float(sfs[ip]));
-      res = CALL2(proc, args, g_chns, origin);
-                                                      /* #f -> no output in any channel, #t -> halt */
-      if (NOT_FALSE_P(res))                           /* if #f, no output on this pass */
-	{
-	  if (TRUE_P(res))                            /* if #t we halt the entire map */
-	    break;
-	  else
-	    {
-	      if (VECTOR_P(res))
-		{
-		  res_size = VECTOR_LENGTH(res);
-		  vdata = SCM_VELTS(res);
-		  for (n = 0; n < res_size; n++)
-		    {
-		      resval = vdata[n];
-		      if (NOT_FALSE_P(resval))
-			{
-			  if (NUMBER_P(resval))    /* one number -> replace current sample */
-			    output_sample(ss, os_arr[n], 
-					  SND_SRATE(sp), 
-					  MUS_FLOAT_TO_SAMPLE(TO_C_DOUBLE(resval)));
-			  else                        /* list or vector or vct, splice in data */
-			    {
-			      val_size = 0;
-			      vals = g_floats_to_samples(resval, &val_size, origin, 1);
-			      if (vals)
-				{
-				  for (k = 0; k < val_size; k++) 
-				    output_sample(ss, os_arr[n], SND_SRATE(sp), vals[k]);
-				  FREE(vals);
-				}
-			    }
-			}
-		    }
-		}
-	    }
-	}
-      if (reporting) 
-	{
-	  rpt++;
-	  if (rpt > rpt4)
-	    {
-	      progress_report(sp, origin, ip + 1, si->chans, (Float)kp / (Float)num, NOT_FROM_ENVED);
-	      rpt = 0;
-	    }
-	}
-      if (ss->stopped_explicitly) break;
-    }
-  if (reporting) finish_progress_report(sp, NOT_FROM_ENVED);
-  for (ip = 0; ip < si->chans; ip++) 
-    {
-      os_arr[ip] = end_output(os_arr[ip], beg, si->cps[ip], origin);
-      sfs[ip] = free_snd_fd(sfs[ip]);
-    }
-  FREE(os_arr);
-  free_sync_state(sc);
-  if (ss->stopped_explicitly)
-    {
-      ss->stopped_explicitly = 0;
-      report_in_minibuffer(sp, "C-G stopped map at sample %d", kp + beg);
-    }
-  else
-    {
-      if (NOT_FALSE_P(res))
-	return(TO_SCM_INT(kp + beg));
-    }
-  return(SCM_BOOL_F);
-}
-
-static char *convolve_with_or_error(char *filename, Float amp, chan_info *cp, SCM edpos)
+static char *convolve_with_or_error(char *filename, Float amp, chan_info *cp, SCM edpos, int arg_pos)
 {
   /* if string returned, needs to be freed */
   /* amp == 0.0 means unnormalized, cp == NULL means current selection */
@@ -903,7 +225,7 @@ static char *convolve_with_or_error(char *filename, Float amp, chan_info *cp, SC
 	  ofile = snd_tempnam(ss);
 
 	  saved_chan_file = snd_tempnam(ss);
-	  err = save_channel_edits(ucp, saved_chan_file, edpos, S_convolve_with);
+	  err = save_channel_edits(ucp, saved_chan_file, edpos, S_convolve_with, arg_pos);
 	  if (err != MUS_NO_ERROR)
 	    {
 	      FREE(ofile);
@@ -942,7 +264,7 @@ static char *convolve_with_or_error(char *filename, Float amp, chan_info *cp, SC
 					       mus_sound_header_type(filename));
 		      if (cp == NULL)
 			filesize = selection_len();
-		      else filesize = to_c_edit_samples(ucp, edpos, S_convolve_with);
+		      else filesize = to_c_edit_samples(ucp, edpos, S_convolve_with, arg_pos);
 		      if (filesize > 0)
 			{
 			  ipow = (int)(ceil(log(filtersize + filesize) / log(2.0))) + 1;
@@ -1300,241 +622,6 @@ static void swap_channels(snd_state *ss, int beg, int dur, snd_fd *c0, snd_fd *c
   FREE(data1);
 }
 
-typedef struct {int selection; int files; char **old_filenames; char **new_filenames; void *sc;} snd_exf;
-
-static snd_exf *snd_to_temp(chan_info *cp, int selection, int one_file, int header_type, int data_format, SCM edpos, const char *caller)
-{
-  /* save current state starting at cp and following sync buttons
-   *   just current selection if selection, else entire channel
-   *   in one file is one_file, else separate files.
-   *   return array of temp file names
-   * this is intended as the first third of the editor interface to an arbitrary external program.
-   *   the next stage calls the external program passing the temp file names and getting new temps.
-   *   the third step is temp_to_snd -- snd assumes it is deciding when these temps can be deleted.
-   *   if a name is null in the returned array (third step input) no edit is performed on the corresponding channel
-   */
-  snd_state *ss;
-  snd_info *sp;
-  sync_state *sc;
-  sync_info *si;
-  int i, chans, len;
-  file_info *nhdr;
-  snd_fd **temp_sfs;
-  snd_exf *data = NULL;
-  if (!cp) return(NULL);
-  ss = cp->state;
-  sp = cp->sound;
-  if (!sp->inuse) return(NULL);
-  sc = get_sync_state(ss, sp, cp, 0, selection, READ_FORWARD, edpos, S_sound_to_temp);
-  if (sc == NULL) return(NULL);
-  si = sc->si;
-  chans = si->chans;
-  data = (snd_exf *)CALLOC(1, sizeof(snd_exf));
-  data->selection = selection;
-  if (one_file) 
-    data->files = 1; 
-  else data->files = chans;
-  data->old_filenames = (char **)MALLOC(data->files * sizeof(char *));
-  data->new_filenames = (char **)MALLOC(data->files * sizeof(char *));
-  for (i = 0; i < data->files; i++)
-    {
-      data->old_filenames[i] = snd_tempnam(ss);
-      data->new_filenames[i] = NULL;
-    }
-  data->sc = (void *)sc;
-  if (one_file)
-    {
-      if (selection) 
-	len = sc->dur; 
-      else len = to_c_edit_samples(cp, edpos, caller);
-      nhdr = copy_header(data->old_filenames[0], sp->hdr);
-      /* we have to set universally recognizable defaults here (make_snd_file will use MUS_OUT_FORMAT/MUS_NEXT which can be trouble) */
-      if (header_type != MUS_UNSUPPORTED) nhdr->type = header_type; else nhdr->type = MUS_NEXT;
-      if (data_format != MUS_UNSUPPORTED) nhdr->format = data_format; else nhdr->format = MUS_BSHORT;
-      snd_make_file(data->old_filenames[0], chans, nhdr, sc->sfs, len, ss);
-      free_file_info(nhdr);
-    }
-  else
-    {
-      temp_sfs = (snd_fd **)MALLOC(sizeof(snd_fd *));
-      for (i = 0; i < chans; i++)
-	{
-	  if (selection) 
-	    len = sc->dur; 
-	  else len = to_c_edit_samples(si->cps[i], edpos, caller);
-	  nhdr = copy_header(data->old_filenames[i], sp->hdr);
-	  if (header_type != MUS_UNSUPPORTED) nhdr->type = header_type; else nhdr->type = MUS_NEXT;
-	  if (data_format != MUS_UNSUPPORTED) nhdr->format = data_format; else nhdr->format = MUS_BSHORT;
-	  temp_sfs[0] = sc->sfs[i];
-	  snd_make_file(data->old_filenames[i], 1, nhdr, temp_sfs, len, ss);
-	  nhdr = free_file_info(nhdr);
-	}
-      FREE(temp_sfs);
-    }
-  for (i = 0; i < chans; i++) 
-    sc->sfs[i] = free_snd_fd(sc->sfs[i]);
-  return(data);
-}
-
-/* TODO: example of sound->temp->sound needs timeout or something similar */
-
-static int temp_to_snd(snd_exf *data, const char *origin)
-{
-  sync_state *sc;
-  sync_info *si;
-  char *errstr;
-  SCM errmsg;
-  int i, k, chans, new_len, old_len, new_chans, ok, orig_chans;
-  if (!data) return(-1);
-  sc = (sync_state *)(data->sc);
-  si = sc->si;
-  chans = si->chans;
-  orig_chans = chans;
-  for (i = 0; i < data->files; i++)
-    if (data->old_filenames[i])
-      {
-	/* if user didn't re-use the temp file for his output, delete it */
-	if ((data->new_filenames[i] == NULL) || 
-	    (strcmp(data->new_filenames[i], data->old_filenames[i]) != 0))
-	  {
-	    errstr = snd_remove_with_error(data->old_filenames[i]);
-	    if (errstr)
-	      {
-		errmsg = TO_SCM_STRING(errstr);
-		FREE(errstr);
-		ERROR(MUS_MISC_ERROR,
-		      SCM_LIST2(TO_SCM_STRING(origin),
-				errmsg));
-	      }
-	  }
-	FREE(data->old_filenames[i]);
-      }
-  if (data->selection)
-    {
-      old_len = selection_len();
-      if ((data->files == 1) && 
-	  (snd_strlen(data->new_filenames[0]) > 0))
-	{
-	  new_len = mus_sound_frames(data->new_filenames[0]);
-	  if (new_len != -1)
-	    {
-	      new_chans = mus_sound_chans(data->new_filenames[0]);
-	      if (chans != new_chans)
-		{
-		  snd_warning("temp-to-selection: original chans: %d, new chans: %d", chans, new_chans);
-		  if (chans > new_chans) 
-		    chans = new_chans;
-		}
-	      if (chans > 1)
-		remember_temp(data->new_filenames[0], chans);
-
-	      if (old_len == new_len)
-		{
-		  for (k = 0; k < chans; k++)
-		    file_change_samples(si->begs[k], old_len, 
-					data->new_filenames[0], si->cps[k], k, 
-					(chans > 1) ? MULTICHANNEL_DELETION : DELETE_ME, 
-					LOCK_MIXES, origin);
-		}
-	      else
-		{
-		  ok = delete_selection(origin, DONT_UPDATE_DISPLAY);
-		  if (!ok) 
-		    snd_warning("temp-to-selection: no active selection? (inserting at sample %d...)", si->begs[0]);
-		  for (k = 0; k < chans; k++)
-		    {
-		      file_insert_samples(si->begs[k], new_len, 
-					  data->new_filenames[0], si->cps[k], k,
-					  (chans > 1) ? MULTICHANNEL_DELETION : DELETE_ME, 
-					  origin);
-		      reactivate_selection(si->cps[k], si->begs[k], si->begs[k] + new_len);
-		      if (ok) 
-			backup_edit_list(si->cps[k]);
-		      if ((si->cps[k])->marks) 
-			ripple_trailing_marks(si->cps[k], si->begs[k], old_len, new_len);
-		    }
-		}
-	    }
-	  else snd_warning("temp-to-selection: %s not readable?", data->new_filenames[0]);
-	}
-      else
-	{
-	  ok = delete_selection(origin, DONT_UPDATE_DISPLAY);        /* "ok" means there was a selection that was deleted */
-	  if (!ok) 
-	    snd_warning("temps-to-selection: no active selection? (inserting at sample %d...)", si->begs[0]);
-	  for (k = 0; k < data->files; k++)
-	    if (snd_strlen(data->new_filenames[k]) > 0)
-	      {
-		new_len = mus_sound_samples(data->new_filenames[k]);
-		if (new_len != -1)
-		  {
-		    file_insert_samples(si->begs[k], new_len, 
-					data->new_filenames[k], si->cps[k], 0, 
-					DELETE_ME, origin);
-		    reactivate_selection(si->cps[k], si->begs[k], si->begs[k] + new_len);
-		    if (ok) 
-		      backup_edit_list(si->cps[k]);
-		    if ((si->cps[k])->marks) 
-		      ripple_trailing_marks(si->cps[k], si->begs[k], old_len, new_len);
-		  }
-		else snd_warning("temps-to-selection: %s not readable?", data->new_filenames[k]);
-	      }
-	}
-    }
-  else
-    {
-      if ((data->files == 1) && (snd_strlen(data->new_filenames[0]) > 0))
-	{
-	  new_len = mus_sound_samples(data->new_filenames[0]) / chans;
-	  if (new_len != -1)
-	    {
-	      new_chans = mus_sound_chans(data->new_filenames[0]);
-	      if (chans != new_chans)
-		{
-		  snd_warning("temp-to-sound: original chans: %d, new chans: %d", chans, new_chans);
-		  if (chans > new_chans) 
-		    chans = new_chans;
-		}
-	      if (chans > 1)
-		remember_temp(data->new_filenames[0], chans);
-	      for (k = 0; k < chans; k++)
-		file_override_samples(new_len, 
-				      data->new_filenames[0], si->cps[k], k, 
-				      (chans > 1) ? MULTICHANNEL_DELETION : DELETE_ME, 
-				      LOCK_MIXES, origin);
-	    }
-	  else snd_warning("temp-to-sound: %s not readable?", data->new_filenames[0]);
-	}
-      else
-	{
-	  for (k = 0; k < data->files; k++)
-	    if (snd_strlen(data->new_filenames[k]) > 0)
-	      {
-		new_len = mus_sound_samples(data->new_filenames[k]);
-		if (new_len != -1)
-		  file_override_samples(new_len, 
-					data->new_filenames[k], si->cps[k], 0, 
-					DELETE_ME, LOCK_MIXES, origin);
-		else snd_warning("temps-to-sound: %s not readable?", data->new_filenames[k]);
-	      }
-	}
-    }
-  for (i = 0; i < orig_chans; i++)
-    {
-      update_graph(si->cps[i], NULL); 
-      sc->sfs[i] = free_snd_fd(sc->sfs[i]);
-    }
-  for (i = 0; i < data->files; i++)
-    if (data->new_filenames[i]) 
-      free(data->new_filenames[i]); /* from tempnam */
-  FREE(data->new_filenames);
-  FREE(data->old_filenames);
-  free_sync_state(sc);
-  FREE(data);
-  return(0);
-}
-
-
 /* -------- src -------- */
 
 static Float input_as_needed(void *arg, int dir) 
@@ -1571,7 +658,7 @@ src_state *free_src(src_state *sr)
 }
 
 void src_env_or_num(snd_state *ss, chan_info *cp, env *e, Float ratio, int just_num, 
-		    int from_enved, const char *origin, int over_selection, mus_any *gen, SCM edpos)
+		    int from_enved, const char *origin, int over_selection, mus_any *gen, SCM edpos, int arg_pos)
 {
   snd_info *sp = NULL;
   int reporting = 0;
@@ -1612,7 +699,7 @@ void src_env_or_num(snd_state *ss, chan_info *cp, env *e, Float ratio, int just_
   sc = get_sync_state(ss, sp, cp, 0, over_selection, 
 		      (ratio < 0.0) ? READ_BACKWARD : READ_FORWARD, /* 0->beg, 0->regexpr (ratio = 0.0 if from_enved) */
 		      edpos,
-		      origin);      
+		      origin, arg_pos);      
   if (sc == NULL) return;
   si = sc->si;
   sfs = sc->sfs;
@@ -1629,7 +716,7 @@ void src_env_or_num(snd_state *ss, chan_info *cp, env *e, Float ratio, int just_
 	  cur_marks = 0;
 	  new_marks = NULL;
 	  if (scdur == 0) 
-	    dur = to_c_edit_samples(cp, edpos, origin); 
+	    dur = to_c_edit_samples(cp, edpos, origin, arg_pos); 
 	  else dur = scdur;
 	  if (dur == 0) 
 	    {
@@ -2071,7 +1158,7 @@ void fht(int powerOfFour, Float *array)
 /* TODO: non-fht(fft) case is centered but straight case is not! */
 
 static char *apply_filter_or_error(chan_info *ncp, int order, env *e, int from_enved, 
-				   const char *origin, int over_selection, Float *ur_a, mus_any *gen, SCM edpos)
+				   const char *origin, int over_selection, Float *ur_a, mus_any *gen, SCM edpos, int arg_pos)
 {
   /* if string returned, needs to be freed */
   /* interpret e as frequency response and apply as filter to all sync'd chans */
@@ -2108,7 +1195,7 @@ static char *apply_filter_or_error(chan_info *ncp, int order, env *e, int from_e
   sc = get_sync_state_1(ss, sp, ncp, 0, over_selection, 
 			READ_FORWARD, (over_selection) ? (order - 1) : 0, 
 			edpos,
-			origin);
+			origin, arg_pos);
   if (sc == NULL) return(NULL);
   si = sc->si;
   sfs = sc->sfs;
@@ -2118,7 +1205,7 @@ static char *apply_filter_or_error(chan_info *ncp, int order, env *e, int from_e
       (!gen) && 
       (!over_selection) && 
       (order >= 256) && 
-      ((int)((to_c_edit_samples(ncp, edpos, origin) + order) / 128) < ss->memory_available))
+      ((int)((to_c_edit_samples(ncp, edpos, origin, arg_pos) + order) / 128) < ss->memory_available))
     {
       /* use convolution if order is large and there's memory available (and not over_selection) */
       /*   probably faster here would be overlap-add */
@@ -2128,7 +1215,7 @@ static char *apply_filter_or_error(chan_info *ncp, int order, env *e, int from_e
 	  cp = si->cps[i];
 	  sp = cp->sound;
 	  if (scdur == 0) 
-	    dur = to_c_edit_samples(cp, edpos, origin);
+	    dur = to_c_edit_samples(cp, edpos, origin, arg_pos);
 	  else dur = scdur;
 	  if (dur == 0) 
 	    {
@@ -2217,7 +1304,7 @@ static char *apply_filter_or_error(chan_info *ncp, int order, env *e, int from_e
 	      cp = si->cps[i];
 	      sp = cp->sound;
 	      if (scdur == 0) 
-		dur = to_c_edit_samples(cp, edpos, origin);
+		dur = to_c_edit_samples(cp, edpos, origin, arg_pos);
 	      else dur = scdur;
 	      if (dur == 0) 
 		{
@@ -2325,10 +1412,10 @@ static char *apply_filter_or_error(chan_info *ncp, int order, env *e, int from_e
 }
 
 void apply_filter(chan_info *ncp, int order, env *e, int from_enved, 
-		  const char *origin, int over_selection, Float *ur_a, mus_any *gen, SCM edpos)
+		  const char *origin, int over_selection, Float *ur_a, mus_any *gen, SCM edpos, int arg_pos)
 {
   char *error;
-  error = apply_filter_or_error(ncp, order, e, from_enved, origin, over_selection, ur_a, gen, edpos);
+  error = apply_filter_or_error(ncp, order, e, from_enved, origin, over_selection, ur_a, gen, edpos, arg_pos);
   if (error)
     {
       snd_error(error);
@@ -2343,7 +1430,7 @@ static MUS_SAMPLE_TYPE previous_sample_unscaled(snd_fd *sf)
   else return(*sf->view_buffered_data--);
 }
 
-static void reverse_sound(chan_info *ncp, int over_selection, SCM edpos)
+static void reverse_sound(chan_info *ncp, int over_selection, SCM edpos, int arg_pos)
 {
   sync_state *sc;
   sync_info *si;
@@ -2365,7 +1452,7 @@ static void reverse_sound(chan_info *ncp, int over_selection, SCM edpos)
   caller = (char *)((over_selection) ? S_reverse_selection : S_reverse_sound);
   sc = get_sync_state(ss, sp, ncp, 0, over_selection, READ_BACKWARD, 
 		      edpos,
-		      (const char *)caller);
+		      (const char *)caller, arg_pos);
   if (sc == NULL) return;
   si = sc->si;
   sfs = sc->sfs;
@@ -2382,8 +1469,8 @@ static void reverse_sound(chan_info *ncp, int over_selection, SCM edpos)
 	    dur = sc->dur;
 	  else 
 	    {
-	      dur = to_c_edit_samples(cp, edpos, caller);
-	      ep = amp_env_copy(cp, TRUE, to_c_edit_position(cp, edpos, caller));
+	      dur = to_c_edit_samples(cp, edpos, caller, arg_pos);
+	      ep = amp_env_copy(cp, TRUE, to_c_edit_position(cp, edpos, caller, arg_pos));
 	    }
 	  if (dur == 0) 
 	    {
@@ -2477,7 +1564,7 @@ static void reverse_sound(chan_info *ncp, int over_selection, SCM edpos)
 /*   changed to use mus_env 20-Dec-00 */
 
 void apply_env(chan_info *cp, env *e, int beg, int dur, Float scaler, int regexpr, 
-	       int from_enved, const char *origin, mus_any *gen, SCM edpos)
+	       int from_enved, const char *origin, mus_any *gen, SCM edpos, int arg_pos)
 {
   snd_fd *sf = NULL;
   snd_info *sp;
@@ -2516,7 +1603,7 @@ void apply_env(chan_info *cp, env *e, int beg, int dur, Float scaler, int regexp
   si = NULL;
   sp = cp->sound;
   ss = cp->state;
-  sc = get_sync_state(ss, sp, cp, beg, regexpr, READ_FORWARD, edpos, origin);
+  sc = get_sync_state(ss, sp, cp, beg, regexpr, READ_FORWARD, edpos, origin, arg_pos);
   if (sc == NULL) return;
   si = sc->si;
   sfs = sc->sfs;
@@ -2641,9 +1728,6 @@ void apply_env(chan_info *cp, env *e, int beg, int dur, Float scaler, int regexp
   if (e) mus_free(egen);
   free_sync_state(sc);
 }
-
-
-/* various simple editing ops */
 
 int cursor_delete(chan_info *cp, int count, const char *origin)
 {
@@ -2827,125 +1911,153 @@ void cos_smooth(chan_info *cp, int beg, int num, int regexpr, const char *origin
 #include "vct.h"
 #include "clm2scm.h"
 
-#define USE_FULL_FILE 0
-#define USE_SELECTION 1
-#define USE_ONE_FILE 1
-#define USE_MANY_FILES 0
+static SCM g_map_chan(SCM proc, SCM s_beg, SCM s_end, SCM org, SCM snd, SCM chn, SCM edpos) 
+{ 
+  #define H_map_chan "(" S_map_chan " func &optional (start 0) end edname snd chn edpos)\n\
+apply func to samples in current channel, edname is the edit history name for this editing operation.\n\
+  (map-chan abs)"
 
-static SCM g_temp_filenames(SCM data)
-{
-  #define H_temp_filenames "(" S_temp_filenames " data) -> vector of temp filenames (used by sound-to-temp et al)"
-  snd_exf *program_data;
-  int i;
-  SCM *vlst;
-  SCM lst;
-  ASSERT_TYPE(SND_WRAPPED(data), data, SCM_ARG1, S_temp_filenames, "a wrapped object");
-  program_data = (snd_exf *)(SND_UNWRAP(data));
-  lst = MAKE_VECTOR(program_data->files, SCM_BOOL_F);
-  vlst = SCM_VELTS(lst);
-  for (i = 0; i < program_data->files; i++)
-    vlst[i] = TO_SCM_STRING(program_data->old_filenames[i]);
-  return(lst);
-}
-
-static SCM g_sound_to_temp_1(SCM ht, SCM df, int selection, int one_file, const char *caller, SCM edpos)
-{
-  snd_exf *program_data;
-  chan_info *cp;
-  int type, format;
   snd_state *ss;
-  ASSERT_TYPE(INTEGER_IF_BOUND_P(ht), ht, SCM_ARG1, caller, "an integer (a header type id)");
-  ASSERT_TYPE(INTEGER_IF_BOUND_P(df), df, SCM_ARG2, caller, "an integer (a data format id)");
-  if ((selection) && (selection_is_active() == 0)) 
-    return(snd_no_active_selection_error(caller));
+  chan_info *cp;
+  char *caller;
+  int beg, end;
+  snd_info *sp;
+  snd_fd *sf = NULL;
+  SCM errstr;
+  int kp, len, num, reporting = 0, rpt = 0, rpt4, i, j, cured;
+  SCM res = SCM_BOOL_F;
+  char *errmsg;
+  char *filename;
+  mus_any *outgen = NULL;
+  SCM *data;
+  vct *v;
+
+  SND_ASSERT_CHAN(S_map_chan, snd, chn, 5); 
+  if (STRING_P(org)) 
+    caller = TO_C_STRING(org);
+  else caller = S_map_chan;
+  ASSERT_TYPE(NUMBER_OR_BOOLEAN_IF_BOUND_P(s_beg), s_beg, SCM_ARG2, caller, "a number");
+  ASSERT_TYPE(NUMBER_OR_BOOLEAN_IF_BOUND_P(s_end), s_end, SCM_ARG3, caller, "a number");
   ss = get_global_state();
-  cp = current_channel(ss);
-  if (cp)
+  cp = get_cp(snd, chn, caller);
+  beg = TO_C_INT_OR_ELSE_WITH_ORIGIN(s_beg, 0, caller);
+  end = TO_C_INT_OR_ELSE_WITH_ORIGIN(s_end, 0, caller);
+  if (end == 0) end = to_c_edit_samples(cp, edpos, caller, 7) - 1;
+  num = end - beg + 1;
+  if (num > 0)
     {
-      type = TO_C_INT_OR_ELSE_WITH_ORIGIN(ht, MUS_UNSUPPORTED, caller);  
-      /* mus-next? hmmm --this needs to be readable by external programs that don't know about our secret next-header formats */
-      format = TO_C_INT_OR_ELSE_WITH_ORIGIN(df, MUS_UNSUPPORTED, caller); 
-      program_data = snd_to_temp(cp, selection, one_file, type, format, edpos, caller);
-      if (program_data)
-	return(SND_WRAP(program_data));
+      errmsg = procedure_ok(proc, 1, caller, "", 1);
+      if (errmsg)
+	{
+	  errstr = TO_SCM_STRING(errmsg);
+	  FREE(errmsg);
+	  return(snd_bad_arity_error(caller, errstr, proc));
+	}
+      sp = cp->sound;
+      reporting = (num > MAX_BUFFER_SIZE);
+      if (reporting) start_progress_report(sp, NOT_FROM_ENVED);
+      sf = init_sample_read_any(beg, cp, READ_FORWARD, to_c_edit_position(cp, edpos, caller, 7));
+      if (sf == NULL) return(SCM_BOOL_T);
+      rpt4 = MAX_BUFFER_SIZE / 4;
+      filename = snd_tempnam(ss);
+      outgen = mus_make_sample2file(filename, 1, MUS_OUT_FORMAT, MUS_NEXT);
+      j = 0;
+      for (kp = 0; kp < num; kp++)
+	{
+	  res = CALL1(proc, 
+		      TO_SCM_DOUBLE((double)next_sample_to_float(sf)),
+		      caller);
+	  if (NUMBER_P(res))                         /* one number -> replace current sample */
+	    mus_outa(j++, TO_C_DOUBLE(res), (mus_output *)outgen);
+	  else
+	    {
+	      if (NOT_FALSE_P(res))                  /* if #f, no output on this pass */
+		{
+		  if (TRUE_P(res))                   /* if #t we halt the entire map */
+		    break;
+		  else
+		    {
+		      if (VECTOR_P(res))
+			{
+			  len = VECTOR_LENGTH(res);
+			  data = SCM_VELTS(res);
+			  for (i = 0; i < len; i++) 
+			    mus_outa(j++, TO_C_DOUBLE(data[i]), (mus_output *)outgen);
+			}
+		      else
+			{
+			  if (VCT_P(res))
+			    {
+			      v = TO_VCT(res);
+			      for (i = 0; i < v->length; i++) 
+				mus_outa(j++, v->data[i], (mus_output *)outgen);
+			    }
+			  else
+			    {
+			      if (LIST_P(res))
+				{
+				  len = LIST_LENGTH(res);
+				  for (i = 0; i < len; i++, res = SCM_CDR(res)) 
+				    mus_outa(j++, TO_C_DOUBLE(SCM_CAR(res)), (mus_output *)outgen);
+				}
+			    }
+			}
+		    }
+		}
+	    }
+	  if (reporting) 
+	    {
+	      rpt++;
+	      if (rpt > rpt4)
+		{
+		  progress_report(sp, caller, 1, 1, (Float)kp / (Float)num, NOT_FROM_ENVED);
+		  rpt = 0;		    
+		}
+	    }
+	  if (ss->stopped_explicitly) 
+	    break;
+	}
+      /* mus_close_file(outgen); */
+      if (outgen) mus_free(outgen);
+      if (sf) sf = free_snd_fd(sf);
+      if (reporting) finish_progress_report(sp, NOT_FROM_ENVED);
+      if (ss->stopped_explicitly) 
+	ss->stopped_explicitly = 0;
+      else
+	{
+	  if (j == num)
+	    file_change_samples(beg, j, filename, cp, 0, DELETE_ME, LOCK_MIXES, caller);
+	  else
+	    {
+	      cured = cp->edit_ctr;
+	      delete_samples(beg, num, cp, caller);
+	      file_insert_samples(beg, j, filename, cp, 0, DELETE_ME, caller);
+	      backup_edit_list(cp);
+	      if (cp->edit_ctr > cured)
+		backup_edit_list(cp);
+	      if (cp->marks) 
+		ripple_trailing_marks(cp, beg, num, j);
+	    }
+	  update_graph(cp, NULL);
+	}
+      FREE(filename);
     }
-  return(SCM_BOOL_F);
+  return(res);
 }
 
-static SCM g_sound_to_temp(SCM ht, SCM df, SCM edpos) 
-{
-  #define H_sound_to_temp "(" S_sound_to_temp " &optional header-type data-format edpos) writes the syncd data to a temp file \
-with the indicated header type and data format; returns temp file name"
-
-  return(g_sound_to_temp_1(ht, df, USE_FULL_FILE, USE_ONE_FILE, S_sound_to_temp, edpos));
-}
-
-static SCM g_sound_to_temps(SCM ht, SCM df, SCM edpos) 
-{
-  #define H_sound_to_temps "(" S_sound_to_temps " &optional header-type data-format edpos) writes the syncd data to mono temp files \
-with the indicated header type and data format; returns temp file names"
-
-  return(g_sound_to_temp_1(ht, df, USE_FULL_FILE, USE_MANY_FILES, S_sound_to_temps, edpos));
-}
-
-static SCM g_selection_to_temp(SCM ht, SCM df) 
-{
-  #define H_selection_to_temp "(" S_selection_to_temp " &optional header-type data-format) writes the selected data to a temp file \
-with the indicated header type and data format; returns temp file name"
-
-  return(g_sound_to_temp_1(ht, df, USE_SELECTION, USE_ONE_FILE, S_selection_to_temp, TO_SCM_INT(AT_CURRENT_EDIT_POSITION)));
-}
-
-static SCM g_selection_to_temps(SCM ht, SCM df) 
-{
-  #define H_selection_to_temps "(" S_selection_to_temps " &optional header-type data-format) writes the selected data to mono temp files \
-with the indicated header type and data format; returns temp file names"
-
-  return(g_sound_to_temp_1(ht, df, USE_SELECTION, USE_MANY_FILES, S_selection_to_temps, TO_SCM_INT(AT_CURRENT_EDIT_POSITION)));
-}
-
-static SCM g_temp_to_sound(SCM data, SCM new_name, SCM origin)
-{
-  #define H_temp_to_sound "(" S_temp_to_sound " data new-name origin) reads new-name to complete the edit begun by " S_sound_to_temp " \
-using data returned by the latter and origin as the edit history entry for the edit"
-
-  snd_exf *program_data;
-  ASSERT_TYPE(STRING_P(new_name), new_name, SCM_ARG2, S_temp_to_sound, "a string");
-  ASSERT_TYPE(STRING_P(origin), origin, SCM_ARG3, S_temp_to_sound, "a string");
-  ASSERT_TYPE(SND_WRAPPED(data), data, SCM_ARG1, S_temp_to_sound, "a wrapped object");
-  program_data = (snd_exf *)(SND_UNWRAP(data));
-  program_data->new_filenames[0] = TO_NEW_C_STRING(new_name);
-  temp_to_snd(program_data, TO_C_STRING(origin));
-  /* TODO if ^ returned -1, something went awry (?) */
-  return(new_name);
-}
-
-static SCM g_temps_to_sound(SCM data, SCM new_names, SCM origin)
-{
-  #define H_temps_to_sound "(" S_temps_to_sound " data new-names origin) reads new-names to complete the edit begun by " S_sound_to_temps " \
-using data returned by the latter and origin as the edit history entry for the edit"
-
-  snd_exf *program_data;
-  int i, len;
-  SCM *vdata;
-  ASSERT_TYPE(SND_WRAPPED(data), data, SCM_ARG1, S_temps_to_sound, "a wrapped object");
-  ASSERT_TYPE((VECTOR_P(new_names)), new_names, SCM_ARG2, S_temps_to_sound, "a vector");
-  ASSERT_TYPE(STRING_P(origin), origin, SCM_ARG3, S_temps_to_sound, "a string");
-  program_data = (snd_exf *)(SND_UNWRAP(data));
-  len = (int)VECTOR_LENGTH(new_names);
-  vdata = SCM_VELTS(new_names);
-  for (i = 0; i < len; i++)
-    program_data->new_filenames[i] = TO_NEW_C_STRING(vdata[i]);
-  temp_to_snd(program_data, TO_C_STRING(origin));
-  return(new_names);
-}
-
-static SCM g_sp_scan(SCM proc, int chan_choice, SCM s_beg, SCM s_end, int series, int scan, SCM snd, SCM chn, 
-		     const char *caller, const char *procname, int procn, int counting, SCM edpos)
+static SCM g_sp_scan(SCM proc, SCM s_beg, SCM s_end, SCM snd, SCM chn, 
+		     const char *caller, int counting, SCM edpos, int arg_pos)
 {
   snd_state *ss;
   chan_info *cp;
   int beg, end;
+  snd_info *sp;
+  snd_fd *sf;
+  SCM errstr;
+  int kp, len, num, reporting = 0, rpt = 0, rpt4, counts = 0;
+  SCM res;
+  char *errmsg;
+
   ASSERT_TYPE((PROCEDURE_P(proc)), proc, SCM_ARG1, caller, "a procedure");
   ASSERT_TYPE(NUMBER_OR_BOOLEAN_IF_BOUND_P(s_beg), s_beg, SCM_ARG2, caller, "a number");
   ASSERT_TYPE(NUMBER_OR_BOOLEAN_IF_BOUND_P(s_end), s_end, SCM_ARG3, caller, "a number");
@@ -2953,18 +2065,72 @@ static SCM g_sp_scan(SCM proc, int chan_choice, SCM s_beg, SCM s_end, int series
   cp = get_cp(snd, chn, caller);
   beg = TO_C_INT_OR_ELSE_WITH_ORIGIN(s_beg, 0, caller);
   end = TO_C_INT_OR_ELSE_WITH_ORIGIN(s_end, 0, caller);
-  if (scan)
+
+  errmsg = procedure_ok(proc, 1, caller, "", 1);
+  if (errmsg)
     {
-      if (series)
-	return(series_scan(ss, cp, proc, chan_choice, beg, end, caller, procname, procn, counting, edpos));
-      else return(parallel_scan(ss, cp, proc, chan_choice, beg, end, caller, procname, procn, edpos));
+      errstr = TO_SCM_STRING(errmsg);
+      FREE(errmsg);
+      return(snd_bad_arity_error(caller, errstr, proc));
     }
-  else
+  sp = cp->sound;
+  sf = init_sample_read_any(beg, cp, READ_FORWARD, to_c_edit_position(cp, edpos, caller, arg_pos));
+  if (sf == NULL) return(SCM_BOOL_T);
+  rpt4 = MAX_BUFFER_SIZE / 4;
+  len = to_c_edit_samples(cp, edpos, caller, arg_pos);
+  if (end >= len) end = len - 1;
+  if (end == 0) end = len - 1;
+  num = end - beg + 1;
+  if (num > 0)
     {
-      if (series)
-	return(series_map(ss, cp, proc, chan_choice, beg, end, caller, procname, procn, edpos));
-      return(parallel_map(ss, cp, proc, chan_choice, beg, end, caller, procname, procn, edpos));
+      reporting = (num > MAX_BUFFER_SIZE);
+      if (reporting) start_progress_report(sp, NOT_FROM_ENVED);
+      for (kp = 0; kp < num; kp++)
+	{
+	  res = CALL1(proc,
+		      TO_SCM_DOUBLE((double)next_sample_to_float(sf)),
+		      caller);
+	  if (NOT_FALSE_P(res))
+	    {
+	      if ((counting) &&
+		  (TRUE_P(res)))
+		counts++;
+	      else
+		{
+		  sf = free_snd_fd(sf);
+		  if (reporting) 
+		    finish_progress_report(sp, NOT_FROM_ENVED);
+		  return(SCM_LIST2(res,
+				   TO_SCM_INT(kp + beg)));
+		}
+	    }
+	  if (reporting) 
+	    {
+	      rpt++;
+	      if (rpt > rpt4)
+		{
+		  progress_report(sp, caller, 1, 1, (Float)kp / (Float)num, NOT_FROM_ENVED);
+		  rpt = 0;
+		}
+	    }
+	  if (ss->stopped_explicitly)
+	    {
+	      ss->stopped_explicitly = 0;
+	      if (reporting) finish_progress_report(sp, NOT_FROM_ENVED);
+	      report_in_minibuffer(sp, "C-G stopped %s at sample %d", 
+				   caller, kp + beg);
+	      sf = free_snd_fd(sf);
+	      if (counting)
+		return(TO_SCM_INT(counts));
+	      return(SCM_BOOL_F);
+	    }
+	}
+      if (reporting) finish_progress_report(sp, NOT_FROM_ENVED);
     }
+  if (sf) sf = free_snd_fd(sf);
+  if (counting)
+    return(TO_SCM_INT(counts));
+  return(SCM_BOOL_F);
 }
 
 static SCM g_scan_chan(SCM proc, SCM beg, SCM end, SCM snd, SCM chn, SCM edpos) 
@@ -2976,172 +2142,7 @@ if func returns non-#f, the scan stops, and the value is returned to the caller 
   (scan-chan (lambda (x) (> x .1)))"
 
   SND_ASSERT_CHAN(S_scan_chan, snd, chn, 4); 
-  return(g_sp_scan(proc, SCAN_CURRENT_CHAN, beg, end, TRUE, TRUE, snd, chn, S_scan_chan, "", 1, FALSE, edpos));
-}
-
-static SCM g_scan_chans(SCM proc, SCM beg, SCM end, SCM edpos) 
-{ 
-  #define H_scan_chans "(" S_scan_chans " func &optional (start 0) end edpos)\n\
-apply func to samples in all sync'd channels, one channel after another.\
-if func returns non-#f, the scan stops, and the value is returned to the caller with the sample number. \n\
-  (scan-chans (lambda (x) (> x .1)))"
-   
-  return(g_sp_scan(proc, SCAN_SYNCD_CHANS, beg, end, TRUE, TRUE, SCM_BOOL_F, SCM_BOOL_F, S_scan_chans, "", 1, FALSE, edpos));
-}
-
-static SCM g_scan_all_chans(SCM proc, SCM beg, SCM end, SCM edpos) 
-{ 
-  #define H_scan_all_chans "(" S_scan_all_chans " func &optional (start 0) end edpos)\n\
-apply func to samples in all channels, one after the other.\
-if func returns non-#f, the scan stops, and the value is returned to the caller with the sample number. \n\
-  (scan-all-chans (lambda (x) (> x .1)))"
-
-  return(g_sp_scan(proc, SCAN_ALL_CHANS, beg, end, TRUE, TRUE, SCM_BOOL_F, SCM_BOOL_F, S_scan_all_chans, "", 1, FALSE, edpos));
-}
-
-static SCM g_scan_sound_chans(SCM proc, SCM beg, SCM end, SCM snd, SCM edpos) 
-{ 
-  #define H_scan_sound_chans "(" S_scan_sound_chans " func &optional (start 0) end snd edpos)\n\
-apply func to samples in all of sound snd's channels.\
-if func returns non-#f, the scan stops, and the value is returned to the caller with the sample number. \n\
-  (scan-sound-chans (lambda (x) (> x .1)))"
-
-  SND_ASSERT_SND(S_scan_sound_chans, snd, 4); 
-  return(g_sp_scan(proc, SCAN_SOUND_CHANS, beg, end, TRUE, TRUE, snd, SCM_BOOL_F, S_scan_sound_chans, "", 1, FALSE, edpos));
-}
-
-static SCM g_scan_across_chans(SCM proc, SCM beg, SCM end, SCM edpos) 
-{ 
-  #define H_scan_across_chans "(" S_scan_across_chans " func &optional (start 0) end edpos)\n\
-apply func to samples in all sync'd channels in parallel.\
-if func returns non-#f, the scan stops, and the value is returned to the caller with the sample number. \n\
-  (scan-across-chans (lambda (data chans) (> (vector-ref data 0) .1)))"
-
-  return(g_sp_scan(proc, SCAN_SYNCD_CHANS, beg, end, FALSE, TRUE, SCM_BOOL_F, SCM_BOOL_F, S_scan_across_chans, "", 1, FALSE, edpos));
-}
-
-static SCM g_scan_across_all_chans(SCM proc, SCM beg, SCM end, SCM edpos) 
-{ 
-  #define H_scan_across_all_chans "(" S_scan_across_all_chans " func &optional (start 0) end edpos)\n\
-apply func to samples in all channels in parallel.\
-if func returns non-#f, the scan stops, and the value is returned to the caller with the sample number. \n\
-  (scan-across-chans (lambda (data chans) (> (vector-ref data 0) .1)))"
-
-  return(g_sp_scan(proc, SCAN_ALL_CHANS, beg, end, FALSE, TRUE, SCM_BOOL_F, SCM_BOOL_F, S_scan_across_all_chans, "", 1, FALSE, edpos));
-}
-
-static SCM g_scan_across_sound_chans(SCM proc, SCM beg, SCM end, SCM snd, SCM edpos) 
-{ 
-  #define H_scan_across_sound_chans "(" S_scan_across_sound_chans " func &optional (start 0) end snd edpos)\n\
-apply func to samples in sound snd's channels in parallel.\
-if func returns non-#f, the scan stops, and the value is returned to the caller with the sample number. \n\
-  (scan-across-sound-chans (lambda (data chans) (> (vector-ref data 0) .1)))"
-
-  SND_ASSERT_SND(S_scan_across_sound_chans, snd, 4); 
-  return(g_sp_scan(proc, SCAN_SOUND_CHANS, beg, end, FALSE, TRUE, snd, SCM_BOOL_F, S_scan_across_sound_chans, "", 1, FALSE, edpos));
-}
-
-static SCM g_map_chan(SCM proc, SCM beg, SCM end, SCM org, SCM snd, SCM chn, SCM edpos) 
-{ 
-  #define H_map_chan "(" S_map_chan " func &optional (start 0) end edname snd chn edpos)\n\
-apply func to samples in current channel, edname is the edit history name for this editing operation.\n\
-  (map-chan abs)"
-
-  char *caller;
-  if (STRING_P(org)) 
-    caller = TO_C_STRING(org);
-  else caller = S_map_chan;
-  SND_ASSERT_CHAN(S_map_chan, snd, chn, 5); 
-  return(g_sp_scan(proc, SCAN_CURRENT_CHAN, beg, end, TRUE, FALSE, snd, chn, caller, "", 1, FALSE, edpos));
-}
-
-static SCM g_map_chans(SCM proc, SCM beg, SCM end, SCM org, SCM edpos) 
-{ 
-  #define H_map_chans "(" S_map_chans " func &optional (start 0) end edname edpos)\n\
-apply func to currently sync'd channels, edname is the edit history name for this editing operation.\n\
-  (map-chans abs)"
-
-  char *caller;
-  if (STRING_P(org)) 
-    caller = TO_C_STRING(org);
-  else caller = S_map_chans;
-  return(g_sp_scan(proc, SCAN_SYNCD_CHANS, beg, end, TRUE, FALSE, SCM_BOOL_F, SCM_BOOL_F, caller, "", 1, FALSE, edpos));
-}
-
-static SCM g_map_all_chans(SCM proc, SCM beg, SCM end, SCM org, SCM edpos) 
-{ 
-  #define H_map_all_chans "(" S_map_all_chans " func &optional (start 0) end edname edpos)\n\
-apply func to all channels, edname is the edit history name for this editing operation.\n\
-  (map-all-chans abs)"
-
-  char *caller;
-  if (STRING_P(org)) 
-    caller = TO_C_STRING(org);
-  else caller = S_map_all_chans;
-  return(g_sp_scan(proc, SCAN_ALL_CHANS, beg, end, TRUE, FALSE, SCM_BOOL_F, SCM_BOOL_F, caller, "", 1, FALSE, edpos));
-}
-
-static SCM g_map_sound_chans(SCM proc, SCM beg, SCM end, SCM org, SCM snd, SCM edpos) 
-{
-  #define H_map_sound_chans "(" S_map_sound_chans " func &optional (start 0) end edname snd edpos)\n\
-apply func to sound snd's channels, edname is the edit history name for this editing operation.\n\
-  (map-sound-chans abs)"
-
-  char *caller;
-  if (STRING_P(org)) 
-    caller = TO_C_STRING(org);
-  else caller = S_map_sound_chans;
-  SND_ASSERT_SND(S_map_sound_chans, snd, 5); 
-  return(g_sp_scan(proc, SCAN_SOUND_CHANS, beg, end, TRUE, FALSE, snd, SCM_BOOL_F, caller, "", 1, FALSE, edpos));
-}
-
-static SCM g_map_across_chans(SCM proc, SCM beg, SCM end, SCM org, SCM edpos) 
-{
-  #define H_map_across_chans "(" S_map_across_chans " func &optional (start 0) end edname edpos)\n\
-apply func to currently sync'd channels in parallel, edname is the edit history name for this editing operation.\n\
-  (map-across-chans \n\
-    (lambda (data chans)\n\
-      (vector-set! data 0 (* 2.0 (vector-ref data 0)))\n\
-       data))"
-
-  char *caller;
-  if (STRING_P(org)) 
-    caller = TO_C_STRING(org);
-  else caller = S_map_across_chans;
-  return(g_sp_scan(proc, SCAN_SYNCD_CHANS, beg, end, FALSE, FALSE, SCM_BOOL_F, SCM_BOOL_F, caller, "", 1, FALSE, edpos));
-}
-
-static SCM g_map_across_all_chans(SCM proc, SCM beg, SCM end, SCM org, SCM edpos) 
-{
-  #define H_map_across_all_chans "(" S_map_across_all_chans " func &optional (start 0) end edname edpos)\n\
-apply func to all channels in parallel, edname is the edit history name for this editing operation.\n\
-  (map-across-all-chans \n\
-    (lambda (data chans)\n\
-      (vector-set! data 0 (* 2.0 (vector-ref data 0)))\n\
-       data))"
-
-  char *caller;
-  if (STRING_P(org)) 
-    caller = TO_C_STRING(org);
-  else caller = S_map_across_all_chans;
-  return(g_sp_scan(proc, SCAN_ALL_CHANS, beg, end, FALSE, FALSE, SCM_BOOL_F, SCM_BOOL_F, caller, "", 1, FALSE, edpos));
-}
-
-static SCM g_map_across_sound_chans(SCM proc, SCM beg, SCM end, SCM org, SCM snd, SCM edpos) 
-{
-  #define H_map_across_sound_chans "(" S_map_across_sound_chans " func &optional (start 0) end edname snd edpos)\n\
-apply func to sound snd's channels in parallel, edname is the edit history name for this editing operation.\n\
-  (map-across-all-chans \n\
-    (lambda (data chans)\n\
-      (vector-set! data 0 (* 2.0 (vector-ref data 0)))\n\
-       data))"
-
-  char *caller;
-  if (STRING_P(org)) 
-    caller = TO_C_STRING(org);
-  else caller = S_map_across_sound_chans;
-  SND_ASSERT_SND(S_map_across_sound_chans, snd, 5); 
-  return(g_sp_scan(proc, SCAN_SOUND_CHANS, beg, end, FALSE, FALSE, snd, SCM_BOOL_F, caller, "", 1, FALSE, edpos));
+  return(g_sp_scan(proc, beg, end, snd, chn, S_scan_chan, FALSE, edpos, 6));
 }
 
 static SCM g_find(SCM expr, SCM sample, SCM snd_n, SCM chn_n, SCM edpos)
@@ -3150,10 +2151,8 @@ static SCM g_find(SCM expr, SCM sample, SCM snd_n, SCM chn_n, SCM edpos)
 the current sample, to each sample in snd's channel chn, starting at 'start-samp' until func returns #t"
 
   /* no free here -- it's handled as ss->search_expr in snd-find.c */
-  ASSERT_TYPE(PROCEDURE_P(expr), expr, SCM_ARG1, S_find, "a procedure");
-  ASSERT_TYPE(NUMBER_IF_BOUND_P(sample), sample, SCM_ARG2, S_find, "a number");
   SND_ASSERT_CHAN(S_find, snd_n, chn_n, 3);
-  return(g_sp_scan(expr, SCAN_CURRENT_CHAN, sample, SCM_BOOL_F, TRUE, TRUE, snd_n, chn_n, S_find, "", 1, FALSE, edpos));
+  return(g_sp_scan(expr, sample, SCM_BOOL_F, snd_n, chn_n, S_find, FALSE, edpos, 5));
 }
 
 static SCM g_count_matches(SCM expr, SCM sample, SCM snd_n, SCM chn_n, SCM edpos)
@@ -3161,15 +2160,8 @@ static SCM g_count_matches(SCM expr, SCM sample, SCM snd_n, SCM chn_n, SCM edpos
   #define H_count_matches "(" S_count_matches " func &optional (start-samp 0) snd chn edpos) returns how many \
 samples satisfy func (a function of one argument, the current sample, returning #t upon match)"
 
-  ASSERT_TYPE(PROCEDURE_P(expr), expr, SCM_ARG1, S_count_matches, "a procedure");
-  ASSERT_TYPE(NUMBER_IF_BOUND_P(sample), sample, SCM_ARG2, S_count_matches, "a number");
   SND_ASSERT_CHAN(S_count_matches, snd_n, chn_n, 3);
-  return(g_sp_scan(expr, SCAN_CURRENT_CHAN, 
-		   sample, SCM_BOOL_F, 
-		   TRUE, TRUE, 
-		   snd_n, chn_n, 
-		   S_count_matches, "", 1, 
-		   TRUE, edpos));
+  return(g_sp_scan(expr, sample, SCM_BOOL_F, snd_n, chn_n, S_count_matches, TRUE, edpos, 5));
 }
 
 static SCM g_smooth_sound(SCM beg, SCM num, SCM snd_n, SCM chn_n)
@@ -3205,7 +2197,7 @@ static SCM g_reverse_sound(SCM snd_n, SCM chn_n, SCM edpos)
   chan_info *cp;
   SND_ASSERT_CHAN(S_reverse_sound, snd_n, chn_n, 1);
   cp = get_cp(snd_n, chn_n, S_reverse_sound);
-  reverse_sound(cp, FALSE, edpos);
+  reverse_sound(cp, FALSE, edpos, 3);
   return(SCM_BOOL_F);
 }
 
@@ -3216,7 +2208,7 @@ static SCM g_reverse_selection(void)
   if (selection_is_active() == 0) 
     return(snd_no_active_selection_error(S_reverse_selection));
   cp = get_cp(SCM_BOOL_F, SCM_BOOL_F, S_reverse_selection);
-  reverse_sound(cp, TRUE, TO_SCM_INT(AT_CURRENT_EDIT_POSITION));
+  reverse_sound(cp, TRUE, TO_SCM_INT(AT_CURRENT_EDIT_POSITION), 0);
   return(SCM_BOOL_F);
 }
 
@@ -3445,7 +2437,7 @@ applies envelope 'env' to the currently selected portion of snd's channel chn us
       e = get_env(edata, base, S_env_selection);
       if (e)
 	{
-	  apply_env(cp, e, 0, 0, 1.0, TRUE, NOT_FROM_ENVED, S_env_selection, NULL, TO_SCM_INT(AT_CURRENT_EDIT_POSITION));
+	  apply_env(cp, e, 0, 0, 1.0, TRUE, NOT_FROM_ENVED, S_env_selection, NULL, TO_SCM_INT(AT_CURRENT_EDIT_POSITION), 0);
 	  free_env(e);
 	  return(edata);
 	}
@@ -3453,7 +2445,7 @@ applies envelope 'env' to the currently selected portion of snd's channel chn us
   else
     {
       ASSERT_TYPE((mus_scm_p(edata)) && (mus_env_p(egen = mus_scm_to_clm(edata))), edata, SCM_ARG1, S_env_selection, "an env generator or a list");
-      apply_env(cp, NULL, 0, 0, 1.0, TRUE, NOT_FROM_ENVED, S_env_selection, egen, TO_SCM_INT(AT_CURRENT_EDIT_POSITION));
+      apply_env(cp, NULL, 0, 0, 1.0, TRUE, NOT_FROM_ENVED, S_env_selection, egen, TO_SCM_INT(AT_CURRENT_EDIT_POSITION), 0);
       return(edata);
     }
   return(SCM_BOOL_F);
@@ -3475,13 +2467,13 @@ either to the end of the sound or for 'samps' samples, with segments interpolati
   cp = get_cp(snd_n, chn_n, S_env_sound);
   beg = TO_C_INT_OR_ELSE(samp_n, 0);
   dur = TO_C_INT_OR_ELSE(samps, 0);
-  if (dur == 0) dur = to_c_edit_samples(cp, edpos, S_env_sound);
+  if (dur == 0) dur = to_c_edit_samples(cp, edpos, S_env_sound, 7);
   if (LIST_P(edata))
     {
       e = get_env(edata, base, S_env_sound);
       if (e)
 	{
-	  apply_env(cp, e, beg, dur, 1.0, FALSE, NOT_FROM_ENVED, S_env_sound, NULL, edpos);
+	  apply_env(cp, e, beg, dur, 1.0, FALSE, NOT_FROM_ENVED, S_env_sound, NULL, edpos, 7);
 	  free_env(e);
 	  return(edata);
 	}
@@ -3489,7 +2481,7 @@ either to the end of the sound or for 'samps' samples, with segments interpolati
   else
     {
       ASSERT_TYPE((mus_scm_p(edata)) && (mus_env_p(egen = mus_scm_to_clm(edata))), edata, SCM_ARG1, S_env_sound, "an env generator or a list");
-      apply_env(cp, NULL, beg, dur, 1.0, FALSE, NOT_FROM_ENVED, S_env_sound, egen, edpos);
+      apply_env(cp, NULL, beg, dur, 1.0, FALSE, NOT_FROM_ENVED, S_env_sound, egen, edpos, 7);
       return(edata);
     }
   return(SCM_BOOL_F);
@@ -3635,7 +2627,7 @@ convolves file with snd's channel chn (or the currently sync'd channels), amp is
   fname = mus_expand_filename(TO_C_STRING(file));
   if (mus_file_probe(fname))
     {
-      error = convolve_with_or_error(fname, amp, cp, edpos);
+      error = convolve_with_or_error(fname, amp, cp, edpos, 5);
       if (error)
 	{
 	  if (fname) FREE(fname);
@@ -3762,7 +2754,7 @@ convolves the current selection with file; amp is the resultant peak amp"
   fname = mus_expand_filename(TO_C_STRING(file));
   if (mus_file_probe(fname))
     {
-      error = convolve_with_or_error(fname, amp, NULL, TO_SCM_INT(AT_CURRENT_EDIT_POSITION));
+      error = convolve_with_or_error(fname, amp, NULL, TO_SCM_INT(AT_CURRENT_EDIT_POSITION), 0);
       if (error)
 	{
 	  if (fname) FREE(fname);
@@ -3833,7 +2825,7 @@ sampling-rate converts snd's channel chn by ratio, or following an envelope. Neg
   if (NUMBER_P(ratio_or_env))
     src_env_or_num(cp->state, cp, NULL, TO_C_DOUBLE(ratio_or_env), 
 		   TRUE, NOT_FROM_ENVED, S_src_sound,
-		   FALSE, NULL, edpos);
+		   FALSE, NULL, edpos, 5);
   else 
     {
       if (LIST_P(ratio_or_env))
@@ -3843,7 +2835,7 @@ sampling-rate converts snd's channel chn by ratio, or following an envelope. Neg
 	  src_env_or_num(cp->state, cp,
 			 e, e_ratio,
 			 FALSE, NOT_FROM_ENVED, S_src_sound, 
-			 FALSE, NULL, edpos);
+			 FALSE, NULL, edpos, 5);
 	  if (e) free_env(e);
 	}
       else
@@ -3853,7 +2845,7 @@ sampling-rate converts snd's channel chn by ratio, or following an envelope. Neg
 	  src_env_or_num(cp->state, cp, NULL, 
 			 (mus_phase(egen) >= 0.0) ? 1.0 : -1.0,
 			 FALSE, NOT_FROM_ENVED, S_src_sound, 
-			 FALSE, egen, edpos);
+			 FALSE, egen, edpos, 5);
 	}
     }
   return(scm_return_first(ratio_or_env, base));
@@ -3874,7 +2866,8 @@ sampling-rate converts the currently selected data by ratio (which can be an env
     src_env_or_num(cp->state, cp, 
 		   NULL, 
 		   TO_C_DOUBLE(ratio_or_env), 
-		   TRUE, NOT_FROM_ENVED, S_src_selection, TRUE, NULL, TO_SCM_INT(AT_CURRENT_EDIT_POSITION));
+		   TRUE, NOT_FROM_ENVED, S_src_selection, TRUE, NULL, 
+		   TO_SCM_INT(AT_CURRENT_EDIT_POSITION), 0);
   else 
     {
       if (LIST_P(ratio_or_env))
@@ -3883,7 +2876,8 @@ sampling-rate converts the currently selected data by ratio (which can be an env
 	  e_ratio = check_src_envelope(e, S_src_selection);
 	  src_env_or_num(cp->state, cp,
 			 e, e_ratio, FALSE, NOT_FROM_ENVED, S_src_selection, 
-			 TRUE, NULL, TO_SCM_INT(AT_CURRENT_EDIT_POSITION));
+			 TRUE, NULL, 
+			 TO_SCM_INT(AT_CURRENT_EDIT_POSITION), 0);
 	  if (e) free_env(e);
 	}
       else
@@ -3893,7 +2887,8 @@ sampling-rate converts the currently selected data by ratio (which can be an env
 	  src_env_or_num(cp->state, cp, NULL,
 			 (mus_phase(egen) >= 0.0) ? 1.0 : -1.0,
 			 FALSE, NOT_FROM_ENVED, S_src_selection, 
-			 TRUE, egen, TO_SCM_INT(AT_CURRENT_EDIT_POSITION));
+			 TRUE, egen, 
+			 TO_SCM_INT(AT_CURRENT_EDIT_POSITION), 0);
 	}
     }
   return(scm_return_first(ratio_or_env, base));
@@ -3915,7 +2910,7 @@ applies FIR filter to snd's channel chn. 'filter' is either the frequency respon
   ASSERT_TYPE(INTEGER_IF_BOUND_P(order), order, SCM_ARG2, S_filter_sound, "an integer");
   if (mus_scm_p(e))
     {
-      error = apply_filter_or_error(cp, 0, NULL, NOT_FROM_ENVED, S_filter_sound, FALSE, NULL, mus_scm_to_clm(e), edpos);
+      error = apply_filter_or_error(cp, 0, NULL, NOT_FROM_ENVED, S_filter_sound, FALSE, NULL, mus_scm_to_clm(e), edpos, 5);
       if (error)
 	{
 	  errstr = TO_SCM_STRING(error);
@@ -3933,14 +2928,14 @@ applies FIR filter to snd's channel chn. 'filter' is either the frequency respon
 	  v = TO_VCT(e);
 	  if (len > v->length) 
 	    mus_misc_error(S_filter_sound, "order > length coeffs?", SCM_LIST2(order, e));
-	  apply_filter(cp, len, NULL, NOT_FROM_ENVED, S_filter_sound, FALSE, v->data, NULL, edpos);
+	  apply_filter(cp, len, NULL, NOT_FROM_ENVED, S_filter_sound, FALSE, v->data, NULL, edpos, 5);
 	}
       else 
 	{
 	  ASSERT_TYPE((VECTOR_P(e) || (LIST_P(e))), e, SCM_ARG1, S_filter_sound, "a list, vector, vct, or env generator");
 	  apply_filter(cp, len,
 		       ne = get_env(e, TO_SCM_DOUBLE(1.0), S_filter_sound),
-		       NOT_FROM_ENVED, S_filter_sound, FALSE, NULL, NULL, edpos);
+		       NOT_FROM_ENVED, S_filter_sound, FALSE, NULL, NULL, edpos, 5);
 	  if (ne) free_env(ne); 
 	}
     }
@@ -3963,7 +2958,8 @@ static SCM g_filter_selection(SCM e, SCM order)
   if (mus_scm_p(e))
     {
       error = apply_filter_or_error(cp, 0, NULL, NOT_FROM_ENVED, S_filter_selection, 
-				    TRUE, NULL, mus_scm_to_clm(e), TO_SCM_INT(AT_CURRENT_EDIT_POSITION));
+				    TRUE, NULL, mus_scm_to_clm(e), 
+				    TO_SCM_INT(AT_CURRENT_EDIT_POSITION) ,0);
       if (error)
 	{
 	  errstr = TO_SCM_STRING(error);
@@ -3981,7 +2977,8 @@ static SCM g_filter_selection(SCM e, SCM order)
 	  v = TO_VCT(e);
 	  if (len > v->length) 
 	    mus_misc_error(S_filter_selection, "order > length coeffs?", SCM_LIST2(order, e));
-	  apply_filter(cp, len, NULL, NOT_FROM_ENVED, S_filter_selection, TRUE, v->data, NULL, TO_SCM_INT(AT_CURRENT_EDIT_POSITION));
+	  apply_filter(cp, len, NULL, NOT_FROM_ENVED, S_filter_selection, TRUE, v->data, NULL, 
+		       TO_SCM_INT(AT_CURRENT_EDIT_POSITION), 0);
 	}
       else 
 	{
@@ -3989,7 +2986,7 @@ static SCM g_filter_selection(SCM e, SCM order)
 	  apply_filter(cp, len,
 		       ne = get_env(e, TO_SCM_DOUBLE(1.0), S_filter_selection),
 		       NOT_FROM_ENVED, S_filter_selection, TRUE, NULL, NULL, 
-		       TO_SCM_INT(AT_CURRENT_EDIT_POSITION)); 
+		       TO_SCM_INT(AT_CURRENT_EDIT_POSITION), 0); 
 	  if (ne) free_env(ne);
 	}
     }
@@ -3999,29 +2996,8 @@ static SCM g_filter_selection(SCM e, SCM order)
 
 void g_init_sig(SCM local_doc)
 {
-  DEFINE_PROC(S_temp_filenames,          g_temp_filenames, 1, 0, 0,          H_temp_filenames);
-  DEFINE_PROC(S_sound_to_temp,           g_sound_to_temp, 0, 3, 0,           H_sound_to_temp);
-  DEFINE_PROC(S_sound_to_temps,          g_sound_to_temps, 0, 3, 0,          H_sound_to_temps);
-  DEFINE_PROC(S_selection_to_temp,       g_selection_to_temp, 0, 2, 0,       H_selection_to_temp);
-  DEFINE_PROC(S_selection_to_temps,      g_selection_to_temps, 0, 2, 0,      H_selection_to_temps);
-  DEFINE_PROC(S_temp_to_sound,           g_temp_to_sound, 3, 0, 0,           H_temp_to_sound);
-  DEFINE_PROC(S_temps_to_sound,          g_temps_to_sound, 3, 0, 0,          H_temps_to_sound);
-  DEFINE_PROC(S_temp_to_selection,       g_temp_to_sound, 3, 0, 0,           H_temp_to_sound);
-  DEFINE_PROC(S_temps_to_selection,      g_temps_to_sound, 3, 0, 0,          H_temps_to_sound);
   DEFINE_PROC(S_scan_chan,               g_scan_chan, 1, 5, 0,               H_scan_chan);
-  DEFINE_PROC(S_scan_chans,              g_scan_chans, 1, 3, 0,              H_scan_chans);
-  DEFINE_PROC(S_scan_all_chans,          g_scan_all_chans, 1, 3, 0,          H_scan_all_chans);
-  DEFINE_PROC(S_scan_sound_chans,        g_scan_sound_chans, 1, 4, 0,        H_scan_sound_chans);
-  DEFINE_PROC(S_scan_across_chans,       g_scan_across_chans, 1, 3, 0,       H_scan_across_chans);
-  DEFINE_PROC(S_scan_across_all_chans,   g_scan_across_all_chans, 1, 3, 0,   H_scan_across_all_chans);
-  DEFINE_PROC(S_scan_across_sound_chans, g_scan_across_sound_chans, 1, 4, 0, H_scan_across_sound_chans);
   DEFINE_PROC(S_map_chan,                g_map_chan, 1, 6, 0,                H_map_chan);
-  DEFINE_PROC(S_map_chans,               g_map_chans, 1, 4, 0,               H_map_chans);
-  DEFINE_PROC(S_map_all_chans,           g_map_all_chans, 1, 4, 0,           H_map_all_chans);
-  DEFINE_PROC(S_map_sound_chans,         g_map_sound_chans, 1, 5, 0,         H_map_sound_chans);
-  DEFINE_PROC(S_map_across_chans,        g_map_across_chans, 1, 4, 0,        H_map_across_chans);
-  DEFINE_PROC(S_map_across_all_chans,    g_map_across_all_chans, 1, 4, 0,    H_map_across_all_chans);
-  DEFINE_PROC(S_map_across_sound_chans,  g_map_across_sound_chans, 1, 5, 0,  H_map_across_sound_chans);
   DEFINE_PROC(S_find,                    g_find, 1, 4, 0,                    H_find);
   DEFINE_PROC(S_count_matches,           g_count_matches, 1, 4, 0,           H_count_matches);
 

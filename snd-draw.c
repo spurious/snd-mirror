@@ -544,7 +544,7 @@ list of two vcts (the two sides of the envelope graph). \
   ASSERT_TYPE(NUMBER_IF_BOUND_P(lo), lo, SCM_ARG4, S_make_graph_data, "a number");
   ASSERT_TYPE(NUMBER_IF_BOUND_P(hi), hi, SCM_ARG5, S_make_graph_data, "a number");
   return(make_graph_data(cp,
-			 to_c_edit_position(cp, edpos, S_make_graph_data),
+			 to_c_edit_position(cp, edpos, S_make_graph_data, 3),
 			 TO_C_INT_OR_ELSE(lo, -1),
 			 TO_C_INT_OR_ELSE(hi, -1)));
 }
