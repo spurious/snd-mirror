@@ -5,7 +5,8 @@
 
 (use-modules (ice-9 common-list) (ice-9 format))
 
-(if (not (provided? 'xm))
+(if (and (not (provided? 'xm))
+	 (not (provided? 'xg)))
     (let ((hxm (dlopen "xm.so")))
       (if (string? hxm)
 	  (snd-error (format #f "xe-enved.scm needs the xm module: ~A" hxm))
@@ -159,48 +160,114 @@
       (xe-redraw drawer)
       (set! xe-mouse-new #f)))
 
+  (if (provided? 'snd-motif)
+      (begin
+	(if (not (member XmNbackground args))
+	    (set! args (append args (list XmNbackground (graph-color)))))
+	(if (not (member XmNforeground args))
+	    (set! args (append args (list XmNforeground (data-color)))))
+	(let* ((drawer (XtCreateManagedWidget name xmDrawingAreaWidgetClass parent args))
+	       (gc (car (snd-gcs)))
+	       (egc (list-ref (snd-gcs) 7))
+	       (x0 (car axis-bounds))
+	       (x1 (cadr axis-bounds)) ; too confusing! -- change internally below
+	       (y0 (caddr axis-bounds))
+	       (y1 (cadddr axis-bounds))
+	       (editor (list (list x0 y0 x1 y0) ; needs to be in user-coordinates (graph size can change)
+			     drawer 
+			     #f  ; axis pixel locs filled in when drawn
+			     (list x0 y0 x1 y1)
+			     (list gc egc) 
+			     name)))
+	  (XtAddCallback drawer XmNresizeCallback 
+			 (lambda (w context info) 
+			   (list-set! editor 2 (apply draw-axes drawer gc name axis-bounds))
+			   (xe-redraw editor)))
+	  (XtAddCallback drawer XmNexposeCallback 
+			 (lambda (w context info) 
+			   (list-set! editor 2 (apply draw-axes drawer gc name axis-bounds))
+			   (xe-redraw editor)))
+	  (XtAddEventHandler drawer ButtonPressMask #f 
+			     (lambda (w context ev flag) 
+			       (xe-mouse-press editor (.x ev) (.y ev))))
+	  (XtAddEventHandler drawer ButtonMotionMask #f 
+			     (lambda (w context ev flag)
+			       (xe-mouse-drag editor (.x ev) (.y ev))))
+	  (XtAddEventHandler drawer ButtonReleaseMask #f 
+			     (lambda (w context ev flag)
+			       (xe-mouse-release editor (.x ev) (.y ev))))
+	  editor))
+      (let* ((drawer (gtk_drawing_area_new))
+	     (gc (car (snd-gcs)))
+	     (egc (list-ref (snd-gcs) 7))
+	     (x0 (car axis-bounds))
+	     (x1 (cadr axis-bounds))
+	     (y0 (caddr axis-bounds))
+	     (y1 (cadddr axis-bounds))
+	     (editor (list (list x0 y0 x1 y0) ; needs to be in user-coordinates (graph size can change)
+			   drawer 
+			   #f  ; axis pixel locs filled in when drawn
+			   (list x0 y0 x1 y1)
+			   (list gc egc) 
+			   name)))
+	(gtk_widget_set_events drawer GDK_ALL_EVENTS_MASK)
+	(gtk_box_pack_start (GTK_BOX parent) drawer #t #t 10)
+	(gtk_widget_show drawer)
+	(gdk_window_set_background (.window drawer) (graph-color))
+	(gtk_widget_set_size_request drawer -1 200)
 
-  (if (not (member XmNbackground args))
-      (set! args (append args (list XmNbackground (graph-color)))))
-  (if (not (member XmNforeground args))
-      (set! args (append args (list XmNforeground (data-color)))))
-  (let* ((drawer (XtCreateManagedWidget name xmDrawingAreaWidgetClass parent args))
-	 (gc (car (snd-gcs)))
-	 (egc (list-ref (snd-gcs) 7))
-	 (x0 (car axis-bounds))
-	 (x1 (cadr axis-bounds)) ; too confusing! -- change internally below
-	 (y0 (caddr axis-bounds))
-	 (y1 (cadddr axis-bounds))
-	 (editor (list (list x0 y0 x1 y0) ; needs to be in user-coordinates (graph size can change)
-		       drawer 
-		       #f  ; axis pixel locs filled in when drawn
-		       (list x0 y0 x1 y1)
-		       (list gc egc) 
-		       name)))
-    (XtAddCallback drawer XmNresizeCallback 
-		    (lambda (w context info) 
-		      (list-set! editor 2 (apply draw-axes drawer gc name axis-bounds))
-		      (xe-redraw editor)))
-    (XtAddCallback drawer XmNexposeCallback 
-		    (lambda (w context info) 
-		      (list-set! editor 2 (apply draw-axes drawer gc name axis-bounds))
-		      (xe-redraw editor)))
-    (XtAddEventHandler drawer ButtonPressMask #f 
-			(lambda (w context ev flag) 
-			  (xe-mouse-press editor (.x ev) (.y ev))))
-    (XtAddEventHandler drawer ButtonMotionMask #f 
-			(lambda (w context ev flag)
-			  (xe-mouse-drag editor (.x ev) (.y ev))))
-    (XtAddEventHandler drawer ButtonReleaseMask #f 
-			(lambda (w context ev flag)
-			  (xe-mouse-release editor (.x ev) (.y ev))))
-    editor))
+	(g_signal_connect_closure_by_id (list 'gpointer (cadr drawer))
+					(g_signal_lookup "expose_event" (G_OBJECT_TYPE (GTK_OBJECT drawer)))
+					0 (g_cclosure_new (lambda (w e d)
+							    (list-set! editor 2 (apply draw-axes drawer gc name axis-bounds))
+							    (xe-redraw editor)
+							    #f)
+							  #f #f)
+					#f)
+	(g_signal_connect_closure_by_id (list 'gpointer (cadr drawer))
+					(g_signal_lookup "configure_event" (G_OBJECT_TYPE (GTK_OBJECT drawer)))
+					0 (g_cclosure_new (lambda (w e d)
+							    (list-set! editor 2 (apply draw-axes drawer gc name axis-bounds))
+							    (xe-redraw editor)
+							    #f)
+							  #f #f) 
+					#f)
+	(g_signal_connect_closure_by_id (list 'gpointer (cadr drawer))
+					(g_signal_lookup "button_press_event" (G_OBJECT_TYPE (GTK_OBJECT drawer)))
+					0 (g_cclosure_new (lambda (w e d) 
+							    (let ((ev (list 'GdkEventButton_ (cadr e))))
+							      (xe-mouse-press editor (.x ev) (.y ev)))
+							    #f)
+							  #f #f) 
+					#f)
+	(g_signal_connect_closure_by_id (list 'gpointer (cadr drawer))
+					(g_signal_lookup "button_release_event" (G_OBJECT_TYPE (GTK_OBJECT drawer)))
+					0 (g_cclosure_new (lambda (w e d) 
+							    (let ((ev (list 'GdkEventButton_ (cadr e))))
+							      (xe-mouse-release editor (.x ev) (.y ev)))
+							    #f)
+							  #f #f)
+					#f)
+	(g_signal_connect_closure_by_id (list 'gpointer (cadr drawer))
+					(g_signal_lookup "motion_notify_event" (G_OBJECT_TYPE (GTK_OBJECT drawer)))
+					0 (g_cclosure_new (lambda (w e d) 
+							    (let ((ev (list 'GdkEventMotion_ (cadr e))))
+							      (if (= (.is_hint ev) 1)
+								  (let ((xy (gdk_window_get_pointer (.window ev))))
+								    (if (not (= (logand (cadddr xy) GDK_BUTTON1_MASK) 0))
+									(xe-mouse-drag editor (cadr xy) (caddr xy))))
+								  (if (not (= (logand (.state ev) GDK_BUTTON1_MASK) 0))
+								      (xe-mouse-drag editor (.x ev) (.y ev)))))
+							    #f)
+							  #f #f)
+					#f)
+	  editor)))
 
 (define (xe-redraw drawer)
   (let* ((cur-env (xe-envelope drawer))
 	 (widget (list-ref drawer 1))
-	 (dpy (XtDisplay widget))
-	 (wn (XtWindow widget))
+	 (dpy (and (provided? 'snd-motif) (XtDisplay widget)))
+	 (wn (if (provided? 'snd-motif) (XtWindow widget) (.window widget)))
 	 (ax-pix (list-ref drawer 2))
 	 (ax-inf (list-ref drawer 3))
 	 (gc (car (list-ref drawer 4)))
@@ -209,7 +276,9 @@
 	 (len (and (list? cur-env) (length cur-env))))
     (if (and (list? ax-pix)
 	     (list? cur-env)
-	     (XtIsManaged widget))
+	     (if (provided? 'snd-motif)
+		 (XtIsManaged widget)
+		 (GTK_WIDGET_REALIZED widget))) ; TODO: fix this
 	(let* ((px0 (list-ref ax-pix 0))
 	       (px1 (list-ref ax-pix 2))
 	       (py0 (list-ref ax-pix 1))
@@ -243,25 +312,43 @@
 
 	  (if (> py0 py1)
 	      (begin
-		(XClearWindow dpy wn)
+		(if (provided? 'snd-motif)
+		    (XClearWindow dpy wn)
+		    (gdk_window_clear wn))
 		(draw-axes widget gc name ix0 ix1 iy0 iy1)
-		(let ((lx #f)
-		      (ly #f))
-		  (do ((i 0 (+ i 2)))
-		      ((= i len))
-		    (let ((cx (xe-grfx drawer (list-ref cur-env i)))
-			  (cy (xe-grfy drawer (list-ref cur-env (+ i 1)))))
-		      (XFillArc dpy wn gc 
-				 (- cx mouse-r)
-				 (- cy mouse-r)
-				 mouse-d mouse-d
-				 0 (* 360 64))
-		      (if lx
-			  (XDrawLine dpy wn gc lx ly cx cy))
-		      (set! lx cx)
-		      (set! ly cy))))))))))
-
-(if #f (begin
+		(if (provided? 'snd-motif)
+		    (let ((lx #f)
+			  (ly #f))
+		      (do ((i 0 (+ i 2)))
+			  ((= i len))
+			(let ((cx (xe-grfx drawer (list-ref cur-env i)))
+			      (cy (xe-grfy drawer (list-ref cur-env (+ i 1)))))
+			  (XFillArc dpy wn gc 
+				    (- cx mouse-r)
+				    (- cy mouse-r)
+				    mouse-d mouse-d
+				    0 (* 360 64))
+			  (if lx
+			      (XDrawLine dpy wn gc lx ly cx cy))
+			  (set! lx cx)
+			  (set! ly cy))))
+		    (let ((lx #f)
+			  (ly #f))
+		      (do ((i 0 (+ i 2)))
+			  ((= i len))
+			(let ((cx (xe-grfx drawer (list-ref cur-env i)))
+			      (cy (xe-grfy drawer (list-ref cur-env (+ i 1)))))
+			  (gdk_draw_arc (GDK_DRAWABLE wn) gc #t
+				    (- cx mouse-r)
+				    (- cy mouse-r)
+				    mouse-d mouse-d
+				    0 (* 360 64))
+			  (if lx
+			      (gdk_draw_line (GDK_DRAWABLE wn) gc lx ly cx cy))
+			  (set! lx cx)
+			  (set! ly cy)))))))))))
+  
+#!
 (define outer (add-main-pane "hiho" xmFormWidgetClass '()))
 
 (define editor (xe-create-enved "a name" outer 
@@ -270,5 +357,5 @@
 				   XmNbottomAttachment XmATTACH_FORM
 				   XmNrightAttachment  XmATTACH_FORM)
 			     '(0.0 1.0 0.0 1.0)))
-))
+!#
 

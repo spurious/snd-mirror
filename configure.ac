@@ -120,9 +120,10 @@ AC_ARG_WITH(ruby,
 	      GUILE_CFLAGS=`$RUBY -e [['\$:.each {|path| print "-I", path, " "}']]`
 	      GUILE_LIBS=`$RUBY -e [['\$:.each {|path| print "-L", path, " "}']]`
 	      RUBY_SEARCH_PATH=`$RUBY -e [['\$:.each {|path| print path, ":"}']]`
+	      RUBY_LIBS=`$RUBY -e [['require "rbconfig"; include Config; print CONFIG["LIBS"]']]`
 
 	      AC_DEFINE_UNQUOTED(RUBY_SEARCH_PATH,"${RUBY_SEARCH_PATH}")
-              GUILE_LIBS="$GUILE_LIBS -lruby -ldl -lcrypt"
+              GUILE_LIBS="$GUILE_LIBS -lruby $RUBY_LIBS"
 	      AC_CHECK_LIB(readline, readline, 
 			   [AC_DEFINE(HAVE_READLINE)
 			    GUILE_LIBS="$GUILE_LIBS -lreadline -lncurses"], ,"-lncurses")

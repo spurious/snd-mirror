@@ -1,5 +1,6 @@
 Snd change log
 
+  8-Nov:     gtk-effects.scm.
   1-Nov:     snd-gtk.scm.
   31-Oct:    gtk-popup.scm.
   28-Oct:    added peaks-font and bold-peaks-font.

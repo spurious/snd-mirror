@@ -268,6 +268,7 @@ void news_help(snd_state *ss)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+8-Nov:   gtk-effects.scm.\n\
 1-Nov:   snd-gtk.scm.\n\
 31-Oct:  gtk-popup.scm.\n\
 28-Oct:  added peaks-font and bold-peaks-font.\n\

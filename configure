@@ -2746,12 +2746,13 @@ _ACEOF
 	      GUILE_CFLAGS=`$RUBY -e '\$:.each {|path| print "-I", path, " "}'`
 	      GUILE_LIBS=`$RUBY -e '\$:.each {|path| print "-L", path, " "}'`
 	      RUBY_SEARCH_PATH=`$RUBY -e '\$:.each {|path| print path, ":"}'`
+	      RUBY_LIBS=`$RUBY -e 'require "rbconfig"; include Config; print CONFIG["LIBS"]'`
 
 	      cat >>confdefs.h <<_ACEOF
 #define RUBY_SEARCH_PATH "${RUBY_SEARCH_PATH}"
 _ACEOF
 
-              GUILE_LIBS="$GUILE_LIBS -lruby -ldl -lcrypt"
+              GUILE_LIBS="$GUILE_LIBS -lruby $RUBY_LIBS"
 	      echo "$as_me:$LINENO: checking for readline in -lreadline" >&5
 echo $ECHO_N "checking for readline in -lreadline... $ECHO_C" >&6
 if test "${ac_cv_lib_readline_readline+set}" = set; then
