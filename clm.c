@@ -625,9 +625,9 @@ void mus_multiply_arrays(Float *data, Float *window, int len)
 void mus_rectangular_to_polar(Float *rl, Float *im, int size) 
 {
   int i; 
-  Float temp; /* apparently floating underflows in sqrt are bringing us to a halt */
   for (i = 0; i < size; i++)
     {
+      Float temp; /* apparently floating underflows in sqrt are bringing us to a halt */
       temp = rl[i] * rl[i] + im[i] * im[i];
       im[i] = -atan2(im[i], rl[i]); /* "-" here so that clockwise is positive? */
       if (temp < .00000001) 
@@ -639,9 +639,9 @@ void mus_rectangular_to_polar(Float *rl, Float *im, int size)
 void mus_polar_to_rectangular(Float *rl, Float *im, int size) 
 {
   int i; 
-  Float temp;
   for (i = 0; i < size; i++)
     {
+      Float temp;
       temp = rl[i] * sin(-im[i]); /* minus to match sense of above */
       rl[i] *= cos(-im[i]);
       im[i] = temp;
@@ -664,7 +664,7 @@ static Float *array_normalize(Float *table, int table_size)
 Float mus_array_interp(Float *wave, Float phase, int size)
 {
   /* changed 26-Sep-00 to be closer to mus.lisp */
-  int int_part, inx;
+  int int_part;
   Float frac_part;
   if ((phase < 0.0) || (phase > size))
     {
@@ -679,6 +679,7 @@ Float mus_array_interp(Float *wave, Float phase, int size)
     return(wave[int_part]);
   else
     {
+      int inx;
       inx = int_part + 1;
       if (inx >= size) inx = 0;
       return(wave[int_part] + (frac_part * (wave[inx] - wave[int_part])));
@@ -1614,14 +1615,16 @@ typedef struct {
 
 Float *mus_partials_to_wave(Float *partial_data, int partials, Float *table, int table_size, bool normalize)
 {
-  int partial, i, k;
-  Float amp, freq, angle;
+  int partial, k;
   memset((void *)table, 0, table_size * sizeof(Float));
   for (partial = 0, k = 1; partial < partials; partial++, k += 2)
     {
+      Float amp;
       amp = partial_data[k];
       if (amp != 0.0)
 	{
+	  int i;
+	  Float freq, angle;
 	  freq = (partial_data[partial * 2] * TWO_PI) / (Float)table_size;
 	  for (i = 0, angle = 0.0; i < table_size; i++, angle += freq) 
 	    table[i] += amp * sin(angle);
@@ -1634,14 +1637,16 @@ Float *mus_partials_to_wave(Float *partial_data, int partials, Float *table, int
 
 Float *mus_phase_partials_to_wave(Float *partial_data, int partials, Float *table, int table_size, bool normalize)
 {
-  int partial, i, k, n;
-  Float amp, freq, angle; 
+  int partial, k, n;
   memset((void *)table, 0, table_size * sizeof(Float));
   for (partial = 0, k = 1, n = 2; partial < partials; partial++, k += 3, n += 3)
     {
+      Float amp;
       amp = partial_data[k];
       if (amp != 0.0)
 	{
+	  int i;
+	  Float freq, angle;
 	  freq = (partial_data[partial * 3] * TWO_PI) / (Float)table_size;
 	  for (i = 0, angle = partial_data[n]; i < table_size; i++, angle += freq) 
 	    table[i] += amp * sin(angle);
@@ -1654,13 +1659,15 @@ Float *mus_phase_partials_to_wave(Float *partial_data, int partials, Float *tabl
 
 static Float table_lookup_interp(mus_interp_t type, Float x, Float *table, int table_size)
 {
-  int x0;
   switch (type)
     {
     case MUS_INTERP_NONE:
-      x0 = ((int)x) % table_size;
-      if (x0 < 0) x0 += table_size;
-      return(table[x0]);
+      {
+	int x0;
+	x0 = ((int)x) % table_size;
+	if (x0 < 0) x0 += table_size;
+	return(table[x0]);
+      }
       break;
     case MUS_INTERP_LAGRANGE:
       return(mus_array_lagrange_interp(table, x, table_size));
@@ -2844,7 +2851,6 @@ static mus_any_class TWO_POLE_CLASS = {
 
 mus_any *mus_make_two_pole(Float a0, Float b1, Float b2)
 {
- smpflt *gen;
  if (fabs(b1) >= 2.0) 
    mus_error(MUS_UNSTABLE_TWO_POLE_ERROR, S_make_two_pole ": b1 = %.3f", b1);
  else
@@ -2859,6 +2865,7 @@ mus_any *mus_make_two_pole(Float a0, Float b1, Float b2)
 	   mus_error(MUS_UNSTABLE_TWO_POLE_ERROR, S_make_two_pole ": b1 = %.3f, b2 = %.3f", b1, b2);
 	 else
 	   {
+	     smpflt *gen;
 	     gen = (smpflt *)clm_calloc(1, sizeof(smpflt), S_make_two_pole);
 	     gen->core = &TWO_POLE_CLASS;
 	     gen->xs[0] = a0;
@@ -3007,9 +3014,8 @@ typedef struct {
 Float mus_filter(mus_any *ptr, Float input)
 {
   flt *gen = (flt *)ptr;
-  Float xout;
+  Float xout = 0.0;
   int j;
-  xout = 0.0;
   if (!(gen->y)) return(mus_fir_filter(ptr, input));  
   if (!(gen->x)) return(mus_iir_filter(ptr, input));
   gen->state[0] = input;
@@ -3033,10 +3039,9 @@ Float mus_filter(mus_any *ptr, Float input)
 */
 Float mus_fir_filter(mus_any *ptr, Float input)
 {
-  Float xout;
+  Float xout = 0.0;
   int j;
   flt *gen = (flt *)ptr;
-  xout = 0.0;
   gen->state[0] = input;
   for (j = gen->order - 1; j >= 1; j--) 
     {
@@ -3134,15 +3139,15 @@ static int free_filter(mus_any *ptr)
 
 static bool filter_equalp(mus_any *p1, mus_any *p2) 
 {
-  flt *f1, *f2;
-  int i;
   if (((p1->core)->type == (p2->core)->type) &&
       ((mus_filter_p(p1)) || (mus_fir_filter_p(p1)) || (mus_iir_filter_p(p1))))
     {
+      flt *f1, *f2;
       f1 = (flt *)p1;
       f2 = (flt *)p2;
       if (f1->order == f2->order)
 	{
+	  int i;
 	  for (i = 0; i < f1->order; i++)
 	    {
 	      if ((f1->x) && (f2->x) && (f1->x[i] != f2->x[i])) return(false);
@@ -3233,11 +3238,11 @@ static mus_any_class IIR_FILTER_CLASS = {
 
 static mus_any *make_filter(mus_any_class *cls, const char *name, int order, Float *xcoeffs, Float *ycoeffs, Float *state) /* if state null, allocated locally */
 {
-  flt *gen;
   if (order <= 0)
     mus_error(MUS_ARG_OUT_OF_RANGE, "%s order = %d?", name, order);
   else
     {
+      flt *gen;
       gen = (flt *)clm_calloc(1, sizeof(flt), name);
       if (state)
 	gen->state = state;
@@ -3273,8 +3278,8 @@ mus_any *mus_make_iir_filter(int order, Float *ycoeffs, Float *state)
 Float *mus_make_fir_coeffs(int order, Float *envl, Float *aa)
 {
   /* envl = evenly sampled freq response, has order samples */
-  int n, m, i, j, jj;
-  Float am, q, xt = 0.0, xt0, scl, qj, x;
+  int n, i, j, jj;
+  Float scl;
   Float *a;
   n = order;
   if (n <= 0) return(aa);
@@ -3284,6 +3289,8 @@ Float *mus_make_fir_coeffs(int order, Float *envl, Float *aa)
   if (!a) return(NULL);
   if (!(POWER_OF_2_P(order)))
     {
+      int m;
+      Float am, q, xt = 0.0, xt0, qj, x;
       m = (n + 1) / 2;
       am = 0.5 * (n + 1);
       scl = 2.0 / (Float)n;
@@ -3488,8 +3495,8 @@ Float *mus_partials_to_waveshape(int npartials, Float *partials, int size, Float
 {
   /* partials incoming is a list of partials amps indexed by partial number */
   /* #<0.0, 1.0, 0.0> = 2nd partial 1.0, rest 0. */
-  int i, hnum;
-  Float sum = 0.0, maxI2, temp, x, Tn, Tn1;
+  int i;
+  Float maxI2, x, sum = 0.0;
   Float *data;
   if (partials == NULL) return(NULL);
   for (i = 0; i < npartials; i++) sum += partials[i];
@@ -3506,6 +3513,8 @@ Float *mus_partials_to_waveshape(int npartials, Float *partials, int size, Float
   maxI2 = 2.0 / (Float)(size - 1); /* was size, but mus.lisp was correct?!? */
   for (i = 0, x = -1.0; i < size; i++, x += maxI2)
     {
+      Float temp, Tn, Tn1;
+      int hnum;
       sum = 0.0;
       temp = 0.0;
       Tn = 1.0;
@@ -3525,8 +3534,7 @@ Float *mus_partials_to_waveshape(int npartials, Float *partials, int size, Float
 Float *mus_partials_to_polynomial(int npartials, Float *partials, int kind)
 {
   /* coeffs returned in partials */
-  int i, k;
-  Float amp = 0.0;
+  int i;
   int *T0, *T1, *Tn;
   Float *Cc1;
   T0 = (int *)clm_calloc(npartials + 1, sizeof(int), "partials_to_polynomial t0");
@@ -3538,6 +3546,8 @@ Float *mus_partials_to_polynomial(int npartials, Float *partials, int kind)
   T1[1] = 1;
   for (i = 1; i < npartials; i++)
     {
+      int k;
+      Float amp;
       amp = partials[i];
       if (amp != 0.0)
 	{
@@ -3912,7 +3922,7 @@ static void set_env_location(mus_any *ptr, off_t val)
 {
   /* doesn't this ignore the original notion of a "start" time? */
   seg *gen = (seg *)ptr;
-  off_t passes, ctr = 0;
+  off_t ctr = 0;
   if (gen->pass == val) return;
   if (gen->pass > val)
     mus_restart_env(ptr);
@@ -3921,6 +3931,7 @@ static void set_env_location(mus_any *ptr, off_t val)
   while ((gen->index < gen->size) && 
 	 (ctr < val))
     {
+      off_t passes;
       if (val > gen->passes[gen->index])
 	passes = gen->passes[gen->index] - ctr;
       else passes = val - ctr;
@@ -4063,16 +4074,16 @@ mus_any *mus_make_frame_with_data(int chans, Float *data)
 
 mus_any *mus_make_frame(int chans, ...)
 {
-  mus_frame *nf = NULL;
-  va_list ap;
-  int i;
   if (chans <= 0)
     mus_error(MUS_ARG_OUT_OF_RANGE, S_make_frame ": chans: %d", chans);
   else
     {
+      mus_frame *nf = NULL;
       nf = (mus_frame *)mus_make_empty_frame(chans);
       if (nf)
 	{
+	  int i;
+	  va_list ap;
 	  va_start(ap, chans);
 	  for (i = 0; i < chans; i++)
 	    nf->vals[i] = (Float)(va_arg(ap, double)); /* float not safe here apparently */
@@ -4167,12 +4178,12 @@ typedef struct {
 
 static int free_mixer(mus_any *pt)
 {
-  int i;
   mus_mixer *ptr = (mus_mixer *)pt;
   if (ptr)
     {
       if (ptr->vals)
 	{
+	  int i;
 	  if (ptr->data_allocated)
 	    for (i = 0; i < ptr->chans; i++) 
 	      FREE(ptr->vals[i]);
@@ -4288,11 +4299,11 @@ mus_any *mus_make_empty_mixer(int chans)
 mus_any *mus_make_scalar_mixer(int chans, Float scalar)
 {
   mus_mixer *mx = NULL;
-  int i;
   if (chans <= 0)
     mus_error(MUS_ARG_OUT_OF_RANGE, S_make_scalar_mixer ": chans: %d", chans);
   else
     {
+      int i;
       mx = (mus_mixer *)mus_make_empty_mixer(chans);
       if (mx) for (i = 0; i < chans; i++) mx->vals[i][i] = scalar;
     }
@@ -4307,8 +4318,6 @@ mus_any *mus_make_identity_mixer(int chans)
 mus_any *mus_make_mixer(int chans, ...)
 {
   mus_mixer *mx = NULL;
-  int i, j;
-  va_list ap;
   if (chans <= 0) 
     mus_error(MUS_ARG_OUT_OF_RANGE, S_make_scalar_mixer ": chans: %d", chans);
   else
@@ -4316,6 +4325,8 @@ mus_any *mus_make_mixer(int chans, ...)
       mx = (mus_mixer *)mus_make_empty_mixer(chans);
       if (mx) 
 	{
+	  int i, j;
+	  va_list ap;
 	  va_start(ap, chans);
 	  for (i = 0; i < chans; i++)
 	    for (j = 0; j < chans; j++)
@@ -4363,7 +4374,7 @@ mus_any *mus_frame_to_frame(mus_any *uf, mus_any *uin, mus_any *uout)
   mus_mixer *f = (mus_mixer *)uf;
   mus_frame *in = (mus_frame *)uin;
   mus_frame *out = (mus_frame *)uout;
-  int i, j, in_chans, out_chans;
+  int i, in_chans, out_chans;
   in_chans = in->chans;
   if (in_chans > f->chans) in_chans = f->chans;
   out_chans = f->chans;
@@ -4374,6 +4385,7 @@ mus_any *mus_frame_to_frame(mus_any *uf, mus_any *uin, mus_any *uout)
   else out = (mus_frame *)mus_make_empty_frame(out_chans);
   for (i = 0; i < out_chans; i++)
     {
+      int j;
       out->vals[i] = 0.0;
       for (j = 0; j < in_chans; j++)
 	out->vals[i] += (in->vals[j] * f->vals[j][i]);
@@ -4384,11 +4396,10 @@ mus_any *mus_frame_to_frame(mus_any *uf, mus_any *uin, mus_any *uout)
 mus_any *mus_sample_to_frame(mus_any *f, Float in, mus_any *uout)
 {
   int i, chans;
-  mus_mixer *mx;
-  mus_frame *fr;
   mus_frame *out = (mus_frame *)uout;
   if (mus_frame_p(f))
     {
+      mus_frame *fr;
       fr = (mus_frame *)f;
       chans = fr->chans;
       if (out)
@@ -4404,6 +4415,7 @@ mus_any *mus_sample_to_frame(mus_any *f, Float in, mus_any *uout)
     {
       if (mus_mixer_p(f))
 	{
+	  mus_mixer *mx;
 	  mx = (mus_mixer *)f;
 	  chans = mx->chans;
 	  if (out)
@@ -4424,10 +4436,9 @@ Float mus_frame_to_sample(mus_any *f, mus_any *uin)
   int i, chans;
   mus_frame *in = (mus_frame *)uin;
   Float val = 0.0;
-  mus_mixer *mx;
-  mus_frame *fr;
   if (mus_frame_p(f))
     {
+      mus_frame *fr;
       fr = (mus_frame *)f;
       chans = in->chans;
       if (fr->chans < chans) chans = fr->chans;
@@ -4438,6 +4449,7 @@ Float mus_frame_to_sample(mus_any *f, mus_any *uin)
     {
       if (mus_mixer_p(f))
 	{
+	  mus_mixer *mx;
 	  mx = (mus_mixer *)f;
 	  chans = in->chans;
 	  if (mx->chans < chans) chans = mx->chans;
@@ -4574,13 +4586,13 @@ static char *describe_wt(mus_any *ptr)
 static Float mus_wave_train_any(mus_any *ptr, Float fm) 
 {
   wt *gen = (wt *)ptr;
-  int i;
   Float result = 0.0;
   if (gen->out_pos < gen->out_data_size)
     result = gen->out_data[gen->out_pos];
   gen->out_pos++;
   if (gen->out_pos >= gen->next_wave_time)
     {
+      int i;
       if (gen->out_pos < gen->out_data_size)
 	{
 	  int good_samps;
@@ -4809,14 +4821,16 @@ static Float file_sample(mus_any *ptr, off_t samp, int chan)
    * return Float at samp (frame) 
    */
   rdin *gen = (rdin *)ptr;
-  int fd, i;
-  off_t newloc;
   if ((samp < 0) || (samp > gen->file_end)) return(0.0);
   if ((samp > gen->data_end) || 
       (samp < gen->data_start))
     {
+      int fd, i;
+      off_t newloc;
       /* read in first buffer start either at samp (dir > 0) or samp-bufsize (dir < 0) */
-      if (gen->dir >= 0) newloc = samp; else newloc = (int)(samp - (clm_file_buffer_size * .75));
+      if (gen->dir >= 0) 
+	newloc = samp; 
+      else newloc = (int)(samp - (clm_file_buffer_size * .75));
       /* The .75 in the backwards read is trying to avoid reading the full buffer on 
        * nearly every sample when we're oscillating around the
        * nominal buffer start/end (in src driven by an oscil for example)
@@ -4849,11 +4863,11 @@ static Float file_sample(mus_any *ptr, off_t samp, int chan)
 static int file_to_sample_end(mus_any *ptr)
 {
   rdin *gen = (rdin *)ptr;
-  int i;
   if (gen)
     {
       if (gen->ibufs)
 	{
+	  int i;
 	  for (i = 0; i < gen->chans; i++)
 	    if (gen->ibufs[i]) 
 	      FREE(gen->ibufs[i]);
@@ -5147,9 +5161,7 @@ static mus_any_class SAMPLE_TO_FILE_CLASS = {
 
 static void flush_buffers(rdout *gen)
 {
-  int fd, i, j, hdrfrm, hdrtyp;
-  off_t size, hdrend, num, last;
-  mus_sample_t **addbufs;
+  int fd;
   if ((gen->obufs == NULL) || (mus_file_probe(gen->file_name) == 0))
     return; /* can happen if output abandoned, then later mus_free called via GC sweep */
   fd = mus_sound_open_input(gen->file_name);
@@ -5176,6 +5188,9 @@ static void flush_buffers(rdout *gen)
     }
   else
     {
+      mus_sample_t **addbufs;
+      int i, j, hdrfrm, hdrtyp;
+      off_t size, hdrend, num, last;
       hdrend = mus_sound_data_location(gen->file_name);
       hdrfrm = mus_sound_data_format(gen->file_name);
       hdrtyp = mus_sound_header_type(gen->file_name);
@@ -5206,12 +5221,12 @@ static void flush_buffers(rdout *gen)
 static Float sample_file(mus_any *ptr, off_t samp, int chan, Float val)
 {
   rdout *gen = (rdout *)ptr;
-  int j;
   if (chan < gen->chans)
     {
       if ((samp > gen->data_end) || 
 	  (samp < gen->data_start))
 	{
+	  int j;
 	  flush_buffers(gen);
 	  for (j = 0; j < gen->chans; j++)
 	    memset((void *)(gen->obufs[j]), 0, clm_file_buffer_size * sizeof(mus_sample_t));
@@ -5238,9 +5253,9 @@ Float mus_sample_to_file_current_value(mus_any *ptr, off_t samp, int chan)
 static int sample_to_file_end(mus_any *ptr)
 {
   rdout *gen = (rdout *)ptr;
-  int i;
   if ((gen) && (gen->obufs))
     {
+      int i;
       flush_buffers(gen);
       for (i = 0; i < gen->chans; i++)
 	if (gen->obufs[i]) 
@@ -5255,8 +5270,7 @@ bool mus_sample_to_file_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == M
 
 static mus_any *mus_make_sample_to_file_with_comment_1(const char *filename, int out_chans, int out_format, int out_type, const char *comment, bool reopen)
 {
-  rdout *gen;
-  int i, fd;
+  int fd;
   if (filename == NULL)
     mus_error(MUS_NO_FILE_NAME_PROVIDED, S_make_sample_to_file " requires a file name");
   else
@@ -5279,6 +5293,8 @@ static mus_any *mus_make_sample_to_file_with_comment_1(const char *filename, int
 		  filename, strerror(errno));
       else
 	{
+	  rdout *gen;
+	  int i;
 	  gen = (rdout *)clm_calloc(1, sizeof(rdout), "output");
 	  gen->core = &SAMPLE_TO_FILE_CLASS;
 	  gen->file_name = (char *)clm_calloc(strlen(filename) + 1, sizeof(char), "output filename");
@@ -5408,13 +5424,13 @@ mus_any *mus_frame_to_file(mus_any *ptr, off_t samp, mus_any *udata)
 {
   rdout *gen = (rdout *)ptr;
   mus_frame *data = (mus_frame *)udata;
-  int i, chans;
   if (data) 
     {
       if (data->chans == 1)
 	mus_sample_to_file(ptr, samp, 0, data->vals[0]);
       else
 	{
+	  int i, chans;
 	  chans = data->chans;
 	  if (gen->chans < chans) chans = gen->chans;
 	  for (i = 0; i < chans; i++) 
@@ -5453,12 +5469,12 @@ static bool locsig_equalp(mus_any *p1, mus_any *p2)
 {
   locs *g1 = (locs *)p1;
   locs *g2 = (locs *)p2;
-  int i;
   if (p1 == p2) return(true);
   if ((g1) && (g2) &&
       (g1->core->type == g2->core->type) &&
       (g1->chans == g2->chans))
     {
+      int i;
       for (i = 0; i < g1->chans; i++) 
 	if (g1->outn[i] != g2->outn[i]) 
 	  return(false);
@@ -5642,12 +5658,12 @@ bool mus_locsig_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_LOCSI
 
 void mus_fill_locsig(Float *arr, int chans, Float degree, Float scaler, mus_interp_t type)
 {
-  Float deg, pos, frac, degs_per_chan, ldeg, c, s;
-  int left, right;
   if (chans == 1)
     arr[0] = scaler;
   else
     {
+      Float deg, pos, frac, degs_per_chan, ldeg, c, s;
+      int left, right;
       if (degree < 0.0)
 	{
 	  /* sigh -- hope for the best... */
@@ -5801,9 +5817,9 @@ static int sincs = 0;
 
 void mus_clear_sinc_tables(void)
 {
-  int i;
   if (sincs)
     {
+      int i;
       for (i = 0; i < sincs; i++) 
 	if (sinc_tables[i]) 
 	  FREE(sinc_tables[i]);
@@ -5918,8 +5934,6 @@ static mus_any_class SRC_CLASS = {
 
 mus_any *mus_make_src(Float (*input)(void *arg, int direction), Float srate, int width, void *closure)
 {
-  sr *srp;
-  int i, wid;
   if (fabs(srate) > (Float)(1 << 16))
     mus_error(MUS_ARG_OUT_OF_RANGE, S_make_src " srate arg invalid: %f", srate);
   else
@@ -5928,6 +5942,8 @@ mus_any *mus_make_src(Float (*input)(void *arg, int direction), Float srate, int
 	mus_error(MUS_ARG_OUT_OF_RANGE, S_make_src " width arg invalid: %d", width);
       else
 	{
+	  sr *srp;
+	  int i, wid;
 	  srp = (sr *)clm_calloc(1, sizeof(sr), S_make_src);
 	  if (width == 0) width = SRC_SINC_WIDTH;
 	  if (width < (int)(fabs(srate) * 2))
@@ -6553,10 +6569,10 @@ static double mus_bessi0(Float x)
 #else
 static double mus_bessi0(Float x)
 { 
-  Float z, denominator, numerator;
   if (x == 0.0) return(1.0);
   if (fabs(x) <= 15.0) 
     {
+      Float z, denominator, numerator;
       z = x*x;
       numerator=(z * (z * (z * (z * (z * (z * (z * (z * (z * (z * (z * (z * (z * (z * 
 										  0.210580722890567e-22 + 0.380715242345326e-19) +
@@ -6849,8 +6865,8 @@ Float *mus_convolution (Float* rl1, Float* rl2, int n)
   /* the split, scaling, and (complex) spectral multiply in one step.     */
   /* result in rl1                                                        */
 
-  int j, n2, nn2;
-  Float rem, rep, aim, aip, invn;
+  int j, n2;
+  Float invn;
 
   mus_fft(rl1, rl2, n, 1);
   
@@ -6861,6 +6877,8 @@ Float *mus_convolution (Float* rl1, Float* rl2, int n)
 
   for (j = 1; j <= n2; j++)
     {
+      int nn2;
+      Float rem, rep, aim, aip;
       nn2 = n - j;
       rep = (rl1[j] + rl1[nn2]);
       rem = (rl1[j] - rl1[nn2]);
@@ -6940,9 +6958,9 @@ Float mus_convolve(mus_any *ptr, Float (*input)(void *arg, int direction))
 {
   conv *gen = (conv *)ptr;
   Float result;
-  int i, j;
   if (gen->ctr >= gen->fftsize2)
     {
+      int i, j;
       Float (*conv_input)(void *arg, int direction) = input;
       if (conv_input == NULL) conv_input = gen->feeder;
       for (i = 0, j = gen->fftsize2; i < gen->fftsize2; i++, j++) 
@@ -7002,26 +7020,26 @@ mus_any *mus_make_convolve(Float (*input)(void *arg, int direction), Float *filt
   return((mus_any *)gen);
 }
 
-void mus_convolve_files(const char *file1, const char *file_to_, Float maxamp, const char *output_file)
+void mus_convolve_files(const char *file1, const char *file2, Float maxamp, const char *output_file)
 {
-  off_t file1_len, file_to__len, outlen, totallen;
-  int fftlen, file1_chans, file_to__chans, output_chans, c1, c2;
-  Float *data1, *data2, *outdat;
+  off_t file1_len, file2_len, outlen, totallen;
+  int fftlen, file1_chans, file2_chans, output_chans;
+  Float *data1, *data2;
   mus_sample_t *samps;
   char *errmsg = NULL;
   Float maxval = 0.0;
-  int i, j, k;
+  int i;
   file1_len = mus_sound_frames(file1);
-  file_to__len = mus_sound_frames(file_to_);
-  if ((file1_len <= 0) || (file_to__len <= 0)) return;
+  file2_len = mus_sound_frames(file2);
+  if ((file1_len <= 0) || (file2_len <= 0)) return;
   file1_chans = mus_sound_chans(file1);
   if (file1_chans <= 0) mus_error(MUS_NO_CHANNELS, "%s chans: %d", file1, file1_chans);
-  file_to__chans = mus_sound_chans(file_to_);
-  if (file_to__chans <= 0) mus_error(MUS_NO_CHANNELS, "%s chans: %d", file_to_, file_to__chans);
+  file2_chans = mus_sound_chans(file2);
+  if (file2_chans <= 0) mus_error(MUS_NO_CHANNELS, "%s chans: %d", file2, file2_chans);
   output_chans = file1_chans; 
-  if (file_to__chans > output_chans) output_chans = file_to__chans;
-  fftlen = (int)(pow(2.0, (int)ceil(log(file1_len + file_to__len + 1) / log(2.0))));
-  outlen = file1_len + file_to__len + 1;
+  if (file2_chans > output_chans) output_chans = file2_chans;
+  fftlen = (int)(pow(2.0, (int)ceil(log(file1_len + file2_len + 1) / log(2.0))));
+  outlen = file1_len + file2_len + 1;
   totallen = outlen * output_chans;
   data1 = (Float *)clm_calloc(fftlen, sizeof(Float), "convolve_files data");
   data2 = (Float *)clm_calloc(fftlen, sizeof(Float), "convolve_files data");
@@ -7030,8 +7048,8 @@ void mus_convolve_files(const char *file1, const char *file_to_, Float maxamp, c
       samps = (mus_sample_t *)clm_calloc(fftlen, sizeof(mus_sample_t), "convolve_files data");
       mus_file_to_array(file1, 0, 0, file1_len, samps); 
       for (i = 0; i < file1_len; i++) data1[i] = MUS_SAMPLE_TO_DOUBLE(samps[i]);
-      mus_file_to_array(file_to_, 0, 0, file_to__len, samps);
-      for (i = 0; i < file_to__len; i++) data2[i] = MUS_SAMPLE_TO_DOUBLE(samps[i]);
+      mus_file_to_array(file2, 0, 0, file2_len, samps);
+      for (i = 0; i < file2_len; i++) data2[i] = MUS_SAMPLE_TO_DOUBLE(samps[i]);
       mus_convolution(data1, data2, fftlen);
       for (i = 0; i < outlen; i++) 
 	if (maxval < fabs(data1[i])) 
@@ -7047,22 +7065,25 @@ void mus_convolve_files(const char *file1, const char *file_to_, Float maxamp, c
     }
   else
     {
+      Float *outdat;
+      int c1, c2;
       samps = (mus_sample_t *)clm_calloc(totallen, sizeof(mus_sample_t), "convolve_files data");
       outdat = (Float *)clm_calloc(totallen, sizeof(Float), "convolve_files data");
       c1 = 0; 
       c2 = 0;
       for (i = 0; i < output_chans; i++)
 	{
+	  int j, k;
 	  mus_file_to_array(file1, c1, 0, file1_len, samps);
 	  for (i = 0; i < file1_len; i++) data1[i] = MUS_SAMPLE_TO_DOUBLE(samps[i]);
-	  mus_file_to_array(file_to_, c2, 0, file_to__len, samps);
-	  for (i = 0; i < file_to__len; i++) data2[i] = MUS_SAMPLE_TO_DOUBLE(samps[i]);
+	  mus_file_to_array(file2, c2, 0, file2_len, samps);
+	  for (i = 0; i < file2_len; i++) data2[i] = MUS_SAMPLE_TO_DOUBLE(samps[i]);
 	  mus_convolution(data1, data2, fftlen);
 	  for (j = i, k = 0; j < totallen; j += output_chans, k++) outdat[j] = data1[k];
 	  c1++; 
 	  if (c1 >= file1_chans) c1 = 0;
 	  c2++; 
-	  if (c2 >= file_to__chans) c2 = 0;
+	  if (c2 >= file2_chans) c2 = 0;
 	  memset((void *)data1, 0, fftlen * sizeof(Float));
 	  memset((void *)data2, 0, fftlen * sizeof(Float));
 	}
@@ -7102,7 +7123,6 @@ void mus_convolve_files(const char *file1, const char *file_to_, Float maxamp, c
 
 static int mix_type(int out_chans, int in_chans, mus_any *umx, mus_any ***envs)
 {
-  int i, j;
   mus_mixer *mx = (mus_mixer *)umx;
   if (envs)
     {
@@ -7117,6 +7137,7 @@ static int mix_type(int out_chans, int in_chans, mus_any *umx, mus_any ***envs)
     }
   if (mx)
     {
+      int i, j;
       if ((in_chans == 1) && (out_chans == 1)) 
 	{
 	  if (mx->vals[0][0] == 1.0)
@@ -7136,7 +7157,7 @@ static int mix_type(int out_chans, int in_chans, mus_any *umx, mus_any ***envs)
 
 void mus_mix_with_reader_and_writer(mus_any *outf, mus_any *inf, off_t out_start, off_t out_frames, off_t in_start, mus_any *umx, mus_any ***envs)
 {
-  int j = 0, k, in_chans, out_chans, mix_chans, mixtype;
+  int in_chans, out_chans, mix_chans, mixtype;
   mus_mixer *mx = (mus_mixer *)umx;
   off_t inc, outc, offi;
   mus_frame *frin, *frthru = NULL;
@@ -7157,6 +7178,7 @@ void mus_mix_with_reader_and_writer(mus_any *outf, mus_any *inf, off_t out_start
       /* the general case -- possible envs/scalers on every mixer cell */
       for (offi = 0, inc = in_start, outc = out_start; offi < out_frames; offi++, inc++, outc++)
 	{
+	  int j, k;
 	  for (j = 0; j < in_chans; j++)
 	    for (k = 0; k < out_chans; k++)
 	      if (envs[j][k])
@@ -7192,13 +7214,7 @@ void mus_mix_with_reader_and_writer(mus_any *outf, mus_any *inf, off_t out_start
 
 void mus_mix(const char *outfile, const char *infile, off_t out_start, off_t out_frames, off_t in_start, mus_any *umx, mus_any ***envs)
 {
-  int i, j = 0, m, ofd, ifd, in_chans, out_chans, min_chans, mixtype;
-  mus_sample_t **obufs, **ibufs;
-  mus_mixer *mx = (mus_mixer *)umx;
-  off_t offk, curoutframes;
-  mus_any *inf, *outf;
-  Float scaler;
-  mus_any *e;
+  int in_chans, out_chans, min_chans, mixtype;
   out_chans = mus_sound_chans(outfile);
   if (out_chans <= 0) mus_error(MUS_NO_CHANNELS, "%s chans: %d", outfile, out_chans);
   in_chans = mus_sound_chans(infile);
@@ -7207,6 +7223,7 @@ void mus_mix(const char *outfile, const char *infile, off_t out_start, off_t out
   mixtype = mix_type(out_chans, in_chans, umx, envs);
   if (mixtype == ALL_MIX)
     {
+      mus_any *inf, *outf;
       /* the general case -- possible envs/scalers on every mixer cell */
       outf = mus_continue_sample_to_file(outfile);
       inf = mus_make_file_to_frame(infile);
@@ -7216,6 +7233,12 @@ void mus_mix(const char *outfile, const char *infile, off_t out_start, off_t out
     }
   else
     {
+      mus_mixer *mx = (mus_mixer *)umx;
+      int i, j = 0, m, ofd, ifd;
+      Float scaler;
+      mus_any *e;
+      mus_sample_t **obufs, **ibufs;
+      off_t offk, curoutframes;
       /* highly optimizable cases */
       obufs = (mus_sample_t **)clm_calloc(out_chans, sizeof(mus_sample_t *), "mix output");
       for (i = 0; i < out_chans; i++) 
@@ -7383,10 +7406,10 @@ Float mus_apply(mus_any *gen, ...)
 {
   /* what about non-gen funcs such as polynomial, ring_modulate etc? */
   #define NEXT_ARG (Float)(va_arg(ap, double))
-  va_list ap;
-  Float f1 = 0.0, f2 = 0.0; /* force order of evaluation */
   if ((gen) && (MUS_RUN_P(gen)))
     {
+      va_list ap;
+      Float f1 = 0.0, f2 = 0.0; /* force order of evaluation */
       va_start(ap, gen);
       /* might want a run_args field */
       switch ((gen->core)->type)

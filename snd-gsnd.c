@@ -79,9 +79,9 @@ static GdkPixmap *mini_glasses[NUM_GLASSES];
 
 void snd_file_lock_icon(snd_info *sp, bool on)
 {
-  snd_context *sx;
   if (mini_lock) 
     {
+      snd_context *sx;
       sx = sp->sgx;
       if (on)
 	sx->file_pix = mini_lock;
@@ -95,10 +95,10 @@ void snd_file_lock_icon(snd_info *sp, bool on)
 
 static void show_bomb_icon(snd_info *sp, bool on)
 {
-  snd_context *sx;
   if (sp->bomb_ctr >= NUM_BOMBS) sp->bomb_ctr = 0;
   if (mini_bombs[sp->bomb_ctr]) 
     {
+      snd_context *sx;
       sx = sp->sgx;
       if (on)
 	sx->file_pix = mini_bombs[sp->bomb_ctr];
@@ -115,9 +115,9 @@ void x_bomb(snd_info *sp, bool on)
 
 static void inc_bomb(snd_info *sp, void *ptr)
 {
-  int *buf;
   if (sp->need_update)
     {
+      int *buf;
       buf = (int *)ptr;
       buf[0]++;
       show_bomb_icon(sp, sp->bomb_ctr);
@@ -160,10 +160,10 @@ static void snd_file_glasses_icon(snd_info *sp, bool on, int glass)
 
 static void make_pixmaps(void)
 {
-  GdkWindow *wn;
-  int k;
   if (!mini_lock_allocated)
     { 
+      GdkWindow *wn;
+      int k;
       wn = MAIN_WINDOW(ss);
       mini_lock = gdk_pixmap_create_from_xpm_d(wn, NULL, NULL, mini_lock_bits());
       blank = gdk_pixmap_create_from_xpm_d(wn, NULL, NULL, blank_bits());
@@ -233,12 +233,12 @@ static gboolean minibuffer_key_callback(GtkWidget *w, GdkEventKey *event, gpoint
 {
   /* can't use M-p in gtk version because it's trapped by a menu accelerator (File:Print) -- M-n is File:New */
   snd_info *sp = (snd_info *)data;
-  chan_info *cp;
   if (((!(sp->sgx)->mini_active)) || 
       (((event->keyval == snd_K_s) || 
 	(event->keyval == snd_K_r)) && 
        (event->state & snd_ControlMask)))
     {
+      chan_info *cp;
       cp = current_channel();
       if (cp) graph_key_press(channel_graph(cp), event, (gpointer)cp); 
       g_signal_stop_emission(GTK_OBJECT(w), g_signal_lookup("key_press_event", G_OBJECT_TYPE(GTK_OBJECT(w))), 0);
@@ -337,10 +337,10 @@ typedef struct {bool pausing; } pause_data;
 
 static void set_play_button_pause(snd_info *sp, void *ptr)
 {
-  pause_data *pd = (pause_data *)ptr;
-  GtkWidget *w;
   if (sp->playing)
     {
+      pause_data *pd = (pause_data *)ptr;
+      GtkWidget *w;
       w = PLAY_BUTTON(sp);
       if (pd->pausing)
 	set_button_base(w, ss->sgx->red);
@@ -396,7 +396,6 @@ static gboolean sync_button_callback(GtkWidget *w, GdkEventButton *ev, gpointer 
 static void sync_button_click(GtkWidget *w, gpointer data)
 {
   snd_info *sp = (snd_info *)data;
-  chan_info *cp;
   bool on;
   on = (bool)(GTK_TOGGLE_BUTTON(w)->active);
   if (on)
@@ -411,6 +410,7 @@ static void sync_button_click(GtkWidget *w, gpointer data)
   set_sync_color(sp);
   if (sp->sync != 0) 
     {
+      chan_info *cp;
       cp = sp->lacp;
       if (cp == NULL) cp = any_selected_channel(sp);
       goto_graph(cp);
@@ -548,11 +548,11 @@ static Float scroll_to_speed(snd_info *sp, Float ival)
 static bool ignore_callback = false;
 void set_speed(snd_info *sp, Float val)
 {
-  GtkObject *adj;
   if (IS_PLAYER(sp))
     sp->speed_control = val;
   else
     {
+      GtkObject *adj;
       adj = SPEED_ADJUSTMENT(sp);
       ignore_callback = true;
       GTK_ADJUSTMENT(adj)->value = scroll_to_speed(sp, speed_to_scroll(sp->speed_control_min, val, sp->speed_control_max));
@@ -654,11 +654,11 @@ static Float scroll_to_expand(snd_info *sp, Float val)
 
 void set_expand(snd_info *sp, Float val) 
 {
-  GtkObject *adj;
   if (IS_PLAYER(sp))
     sp->expand_control = val;
   else
     {
+      GtkObject *adj;
       adj = EXPAND_ADJUSTMENT(sp);
       ignore_callback = true;
       GTK_ADJUSTMENT(adj)->value = scroll_to_expand(sp, expand_to_scroll(sp->expand_control_min, val, sp->expand_control_max));
@@ -728,11 +728,11 @@ static Float scroll_to_contrast(snd_info *sp, Float val)
 
 void set_contrast(snd_info *sp, Float val) 
 {
-  GtkObject *adj;
   if (IS_PLAYER(sp))
     sp->contrast_control = val;
   else
     {
+      GtkObject *adj;
       adj = CONTRAST_ADJUSTMENT(sp);
       ignore_callback = true;
       GTK_ADJUSTMENT(adj)->value = scroll_to_contrast(sp, contrast_to_scroll(sp->contrast_control_min, val, sp->contrast_control_max));
@@ -812,11 +812,11 @@ static Float scroll_to_revscl(snd_info *sp, Float val)
 
 void set_revscl(snd_info *sp, Float val) 
 {
-  GtkObject *adj;
   if (IS_PLAYER(sp))
     sp->reverb_control_scale = val;
   else
     {
+      GtkObject *adj;
       adj = REVSCL_ADJUSTMENT(sp);
       ignore_callback = true;
       GTK_ADJUSTMENT(adj)->value = scroll_to_revscl(sp, revscl_to_scroll(sp->reverb_control_scale_min, val, sp->reverb_control_scale_max));
@@ -870,11 +870,11 @@ static Float scroll_to_revlen(snd_info *sp, Float val)
 
 void set_revlen(snd_info *sp, Float val)
 {
-  GtkObject *adj;
   if (IS_PLAYER(sp))
     sp->reverb_control_length = val;
   else
     {
+      GtkObject *adj;
       adj = REVLEN_ADJUSTMENT(sp);
       ignore_callback = true;
       GTK_ADJUSTMENT(adj)->value = scroll_to_revlen(sp, revlen_to_scroll(sp->reverb_control_length_min, val, sp->reverb_control_length_max));
@@ -960,12 +960,12 @@ void display_filter_env(snd_info *sp)
 
 static gboolean filter_drawer_button_motion(GtkWidget *w, GdkEventMotion *ev, gpointer data)
 {
-  snd_info *sp = (snd_info *)data;
-  int evx, evy;
-  GdkModifierType state;
-  env_editor *edp;
   if (ev->state & GDK_BUTTON1_MASK)
     {
+      snd_info *sp = (snd_info *)data;
+      int evx, evy;
+      GdkModifierType state;
+      env_editor *edp;
       if (ev->is_hint)
 	gdk_window_get_pointer(ev->window, &evx, &evy, &state);
       else
@@ -1131,9 +1131,9 @@ static void filter_activate_callback(GtkWidget *w, gpointer context)
 void filter_env_changed(snd_info *sp, env *e)
 {
   /* turn e back into a string for textfield widget */
-  char *tmpstr;
   if (!(IS_PLAYER(sp)))
     {
+      char *tmpstr;
       tmpstr = env_to_string(e);
       if (tmpstr)
 	{
@@ -1151,11 +1151,11 @@ void filter_env_changed(snd_info *sp, env *e)
 void color_filter_waveform(GdkColor *color)
 {
   int i;
-  snd_info *sp;
   gdk_gc_set_foreground((ss->sgx)->fltenv_data_gc, color);
   (ss->sgx)->filter_control_waveform_color = color;
   for (i = 0; i < ss->max_sounds; i++)
     {
+      snd_info *sp;
       sp = ss->sounds[i];
       if ((sp) && (sp->inuse == SOUND_NORMAL))
 	display_filter_env(sp);
@@ -1242,13 +1242,13 @@ static int cant_write(char *name)
 
 void reflect_amp_env_completion(snd_info *sp)
 {
-  chan_info *cp;
-  env_info *ep;
   int i;
   GtkWidget *info_sep;
   /* a channel completed an amp env, check to see if all are complete */
   for (i = 0; i < sp->nchans; i++)
     {
+      chan_info *cp;
+      env_info *ep;
       cp = sp->chans[i];
       if (!(cp->amp_envs)) return;
       ep = cp->amp_envs[cp->edit_ctr];
@@ -1262,9 +1262,9 @@ void reflect_amp_env_completion(snd_info *sp)
 
 void reflect_amp_env_in_progress(snd_info *sp)
 {
-  GtkWidget *info_sep;
   if ((sp) && (sp->sgx))
     {
+      GtkWidget *info_sep;
       info_sep = MINIBUFFER_SEPARATOR(sp);
       if (info_sep) gtk_widget_hide(info_sep);
     }
@@ -1289,13 +1289,11 @@ snd_info *add_sound_window(char *filename, bool read_only)
   file_info *hdr;
   GtkWidget **sw;
   GtkObject **adjs;
-  GtkWidget *tablab;
   int snd_slot, nchans, i, k, old_chans;
   bool free_filename = false, make_widgets;
   char *old_name = NULL, *title;
   int app_y, app_dy, screen_y, chan_min_y;
   /* these dimensions are used to try to get a reasonable channel graph size without falling off the screen bottom */
-  off_t samples_per_channel;
   snd_context *sx;
   errno = 0;
   hdr = make_file_info(filename);
@@ -1309,7 +1307,6 @@ snd_info *add_sound_window(char *filename, bool read_only)
     }
   nchans = hdr->chans;
   if (nchans <= 0) nchans = 1;
-  samples_per_channel = hdr->samples / nchans;
   app_y = widget_y(MAIN_SHELL(ss));
   app_dy = widget_height(MAIN_SHELL(ss));
   if (auto_resize(ss))
@@ -1376,6 +1373,7 @@ snd_info *add_sound_window(char *filename, bool read_only)
 	{
 	  if (sound_style(ss) == SOUNDS_IN_NOTEBOOK)
 	    {
+	      GtkWidget *tablab;
 	      tablab = gtk_label_new(sp->short_filename);
 	      gtk_widget_show(tablab);
 	      gtk_notebook_append_page(GTK_NOTEBOOK(SOUND_PANE_BOX(ss)), sw[W_pane], tablab);
@@ -1797,11 +1795,10 @@ void set_sound_pane_file_label(snd_info *sp, char *str)
 
 void snd_info_cleanup(snd_info *sp)
 {
-  snd_context *sx;
   if ((sp) && (sp->sgx))
     {
+      snd_context *sx;
       sx = sp->sgx;
-
       if (SYNC_BUTTON(sp))
 	{
 	  set_toggle_button(SYNC_BUTTON(sp), false, false, (void *)sp);
@@ -1846,12 +1843,12 @@ bool control_panel_open(snd_info *sp)
 
 void show_controls(void)
 {
-  snd_info *sp;
   int i;
   showing_controls = true;
   set_view_ctrls_label(_("Hide controls"));
   for (i = 0; i < ss->max_sounds; i++)
     {
+      snd_info *sp;
       sp = ss->sounds[i];
       if ((sp) && (sp->inuse == SOUND_NORMAL))
 	sound_show_ctrls(sp);
@@ -1860,12 +1857,12 @@ void show_controls(void)
 
 void hide_controls(void)
 {
-  snd_info *sp;
   int i;
   showing_controls = false;
   set_view_ctrls_label(_("Show controls"));
   for (i = 0; i < ss->max_sounds; i++)
     {
+      snd_info *sp;
       sp = ss->sounds[i];
       if ((sp) && (sp->inuse == SOUND_NORMAL))
 	sound_hide_ctrls(sp);

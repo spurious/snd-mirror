@@ -115,8 +115,8 @@ bool set_axis_numbers_font(char *font)
 
 int sg_text_width(char *txt, PangoFontDescription *font)
 {
-  PangoLayout *layout = NULL;
   int wid = 0;
+  PangoLayout *layout = NULL;
   if (txt == NULL) return(0);
   if (strlen(txt) == 0) return(0);
   layout = pango_layout_new(gdk_pango_context_get());
@@ -153,8 +153,8 @@ int number_width(char *num)
 
 static int sg_font2width(PangoFontDescription *font)
 {
-  PangoLayout *layout = NULL;
   int wid = 0;
+  PangoLayout *layout = NULL;
   layout = pango_layout_new(gdk_pango_context_get());
   if (layout)
     {
@@ -168,8 +168,8 @@ static int sg_font2width(PangoFontDescription *font)
 
 static int sg_font2height(PangoFontDescription *font)
 {
-  PangoLayout *layout = NULL;
   int wid = 0;
+  PangoLayout *layout = NULL;
   layout = pango_layout_new(gdk_pango_context_get());
   if (layout)
     {
@@ -278,7 +278,6 @@ void gc_set_foreground_xor(GdkGC *gc, GdkColor *col1, GdkColor *col2)
   newcol.blue = XOR(col1->blue, col2->blue);
   gdk_gc_set_foreground(gc, gdk_color_copy(&newcol)); /* memleak? */
 }
-
 
 void color_cursor(GdkColor *color)
 {
@@ -503,10 +502,10 @@ void sg_text_delete(GtkWidget *w, int start, int end)
 
 void sg_text_insert(GtkWidget *w, char *text)
 {
-  GtkTextIter pos;
-  GtkTextBuffer *buf;
   if (text)
     {
+      GtkTextIter pos;
+      GtkTextBuffer *buf;
       buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(w));
       gtk_text_buffer_get_end_iter(buf, &pos);
       gtk_text_buffer_insert(buf, &pos, text, strlen(text));

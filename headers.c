@@ -667,12 +667,12 @@ static int sndlib_format_to_next(int format)
 
 static void write_next_comment(int fd, const char *comment, int len, int loc)
 {
-  unsigned char *combuf;
   if (len > 0)
     write(fd, (unsigned char *)comment, len);
   len = loc - (len + 24);
   if (len > 0)
     {
+      unsigned char *combuf;
       combuf = (unsigned char *)CALLOC(len, sizeof(char));
       write(fd, combuf, len);
       FREE(combuf);
@@ -779,7 +779,6 @@ static double ieee_80_to_double(unsigned char *p)
   short lexp = 0;
   unsigned int mant1 = 0;
   unsigned int mant0 = 0;
-  double val;
   lexp = *p++;  lexp <<= 8;  lexp |= *p++;  sign = (lexp & 0x8000) ? 1 : 0;  lexp &= 0x7FFF;
   mant1 = *p++;  mant1 <<= 8;  mant1 |= *p++;  mant1 <<= 8;  mant1 |= *p++;  mant1 <<= 8;  mant1 |= *p++;
   mant0 = *p++;  mant0 <<= 8;  mant0 |= *p++;  mant0 <<= 8;  mant0 |= *p++;  mant0 <<= 8;  mant0 |= *p++;
@@ -787,6 +786,7 @@ static double ieee_80_to_double(unsigned char *p)
     return 0.0;
   else
     {
+      double val;
       val = myUlongToDouble(mant0) * pow(2.0, -63.0);
       val += myUlongToDouble(mant1) * pow(2.0, -31.0);
       val *= pow(2.0, ((double) lexp) - 16383.0);
@@ -796,8 +796,8 @@ static double ieee_80_to_double(unsigned char *p)
 
 static void double_to_ieee_80(double val, unsigned char *p)
 {
-  unsigned char sign = 0;
   short lexp = 0;
+  unsigned char sign = 0;
   unsigned int mant1 = 0;
   unsigned int mant0 = 0;
   if(val < 0.0)	{  sign = 1;  val = -val; }
@@ -843,7 +843,7 @@ static int read_aiff_header(const char *filename, int chan, int overall_offset)
 {
   /* we know we have checked for FORM xxxx AIFF|AIFC when we arrive here */
   /* as far as I can tell, the COMM block has the header data we seek, and the SSND block has the sound data */
-  int chunksize, frames, chunkloc, i, j, num_marks, m, moff, msize, ssnd_bytes = 0;
+  int chunksize, chunkloc, i, j, ssnd_bytes = 0;
   bool happy, got_comm = false;
   off_t offset;
   type_specifier = mus_char_to_uninterpreted_int((unsigned char *)(hdrbuf + 8 + overall_offset));
@@ -868,6 +868,7 @@ static int read_aiff_header(const char *filename, int chan, int overall_offset)
 	break;
       if (match_four_chars((unsigned char *)hdrbuf, I_COMM))
 	{
+	  int frames;
 	  got_comm = true;
 	  chans = mus_char_to_bshort((unsigned char *)(hdrbuf + 8));
 	  frames = mus_char_to_ubint((unsigned char *)(hdrbuf + 10)); /* was bint 27-Jul-01 */
@@ -1057,6 +1058,7 @@ static int read_aiff_header(const char *filename, int chan, int overall_offset)
 			{
 			  if (match_four_chars((unsigned char *)hdrbuf, I_MARK))
 			    {
+			      int num_marks, m, moff, msize;
 			      /* unsigned short #marks, each mark: id pos name (pstring damn it) */
 			      num_marks = mus_char_to_ubshort((unsigned char *)(hdrbuf + 8));
 			      if (num_marks > markers)
@@ -1298,11 +1300,11 @@ static int write_aif_header (int chan, int wsrate, int wchans, int siz, int form
 char *mus_header_aiff_aux_comment(const char *name, off_t *starts, off_t *ends)
 {
   /* AIFC: look for aux comments (ANNO chunks) */
-  off_t start, end, len, full_len, sc_len;
-  int fd, i, j;
   char *sc = NULL;
   if ((starts) && (starts[0] != 0))
     {
+      off_t full_len;
+      int fd, i;
       fd = mus_file_open_read(name);
       if (fd == -1) return(NULL);
       full_len = 0;
@@ -1312,14 +1314,17 @@ char *mus_header_aiff_aux_comment(const char *name, off_t *starts, off_t *ends)
 	  full_len += (ends[i] - starts[i] + 3);
       if (full_len > 0)
 	{
+	  off_t sc_len;
 	  sc = (char *)CALLOC(full_len, sizeof(char));
 	  sc_len = 0;
 	  for (i = 0; i < AUX_COMMENTS; i++) 
 	    {
+	      off_t start, end, len;
 	      start = starts[i];
 	      end = ends[i];
 	      if ((start > 0) && (start < end))
 		{
+		  int j;
 		  len = end - start + 1;
 		  lseek(fd, start, SEEK_SET);
 		  read(fd, (char *)(sc + sc_len), len);
@@ -1668,11 +1673,11 @@ static int write_riff_header (int chan, int wsrate, int wchans, int siz, int for
 
 char *mus_header_riff_aux_comment(const char *name, off_t *starts, off_t *ends)
 {
-  int len, j, fd, k, m;
-  off_t i, end;
   char *sc = NULL, *auxcom;
   if ((starts) && (starts[0] != 0))
     {
+      int len, j, fd, k, m;
+      off_t i, end;
       /* found a LIST+INFO chunk (and no other comment) */
       fd = mus_file_open_read(name);
       if (fd == -1) return(NULL);
@@ -1803,7 +1808,6 @@ static int read_avi_header(const char *filename, int chan)
   int chunksize, chunkloc, cksize, bits;
   bool happy;
   off_t ckoff, cktotal, offset;
-  off_t cksizer, ckoffr, cktotalr, rdsize;
   type_specifier = mus_char_to_uninterpreted_int((unsigned char *)(hdrbuf + 8));
   chunkloc = 12;
   offset = 0;
@@ -1853,6 +1857,7 @@ static int read_avi_header(const char *filename, int chan)
 		  cktotal += (8 + cksize);
 		  if (match_four_chars((unsigned char *)hdrbuf, I_LIST))
 		    {
+		      off_t cksizer, ckoffr, cktotalr, rdsize;
 		      ckoffr = ckoff + 12;
 		      cktotalr = 12;
 		      while (cktotalr < cksize)
@@ -1919,9 +1924,9 @@ static char **soundfont_names = NULL;
 
 static void soundfont_entry(const char *name, int start, int end, int loop_start, int loop_end)
 {
-  int i;
   if (soundfont_entries == soundfont_size)
     {
+      int i;
       if (soundfont_size == 0)
 	{
 	  soundfont_size = 8;
@@ -2131,7 +2136,7 @@ static int read_nist_header(const char *filename, int chan)
   char str[MAX_FIELD_LENGTH], name[MAX_FIELD_LENGTH];
   bool happy = true;
   off_t curbase;
-  int k, hend, j, n, nm, samples, bytes, read_bytes, byte_format, idata_location;
+  int k, hend, j, n, nm, samples, bytes, byte_format, idata_location;
   type_specifier = mus_char_to_uninterpreted_int((unsigned char *)hdrbuf); /* the actual id is "NIST_1A" */
   for (k = 8; k < 16; k++) 
     str[k - 8] = hdrbuf[k];
@@ -2190,6 +2195,7 @@ static int read_nist_header(const char *filename, int chan)
       n++;
       if (n >= hend)
 	{
+	  int read_bytes;
 	  curbase += hend;
 	  n = 0;
 	  read_bytes = read(chan, hdrbuf, HDRBUFSIZ);
@@ -2446,7 +2452,6 @@ static int sndlib_format_to_ircam(int format)
 
 static void write_ircam_comment(int fd, const char *comment, int len)
 {
-  unsigned char *combuf;
   if (len > 0)
     {
       mus_bshort_to_char((unsigned char *)hdrbuf, 2);
@@ -2462,6 +2467,7 @@ static void write_ircam_comment(int fd, const char *comment, int len)
   len = 1024 - (len + 20);
   if (len > 0)
     {
+      unsigned char *combuf;
       combuf = (unsigned char *)CALLOC(len, sizeof(char));
       write(fd, combuf, len);
       FREE(combuf);
@@ -2994,7 +3000,6 @@ static int read_smp_header(const char *filename, int chan)
 static int read_sppack_header(const char *filename, int chan)
 {
   int typ, bits;
-  float sr;
   data_location = 512;
   chans = 1;
   lseek(chan, 240, SEEK_SET);
@@ -3005,6 +3010,7 @@ static int read_sppack_header(const char *filename, int chan)
     {
       if (((hdrbuf[254]) == 252) && ((hdrbuf[255]) == 14)) /* #xfc and #x0e */
 	{
+	  float sr;
 	  typ = mus_char_to_bshort((unsigned char *)(hdrbuf + 18));
 	  bits = mus_char_to_bshort((unsigned char *)(hdrbuf + 16));
 	  sr = mus_char_to_bfloat((unsigned char *)(hdrbuf + 4));
@@ -3211,7 +3217,7 @@ static int read_inrs_header (const char *filename, int chan, int loc)
 
 static int read_maud_header(const char *filename, int chan)
 {
-  int chunksize, offset, chunkloc, num, den;
+  int chunksize, offset, chunkloc;
   bool happy;
   type_specifier = mus_char_to_uninterpreted_int((unsigned char *)hdrbuf);
   chunkloc = 12;
@@ -3232,6 +3238,7 @@ static int read_maud_header(const char *filename, int chan)
 	break;
       if (match_four_chars((unsigned char *)hdrbuf, I_MHDR))
 	{
+	  int num, den;
 	  data_size = mus_char_to_bint((unsigned char *)(hdrbuf + 8));
 	  num = mus_char_to_bint((unsigned char *)(hdrbuf + 16));
 	  den = mus_char_to_bshort((unsigned char *)(hdrbuf + 20));
@@ -4346,8 +4353,6 @@ static int read_comdisco_header(const char *filename, int chan)
 {
   /* need to grab a line at a time, call strcmp over and over.  This is very tedious. */
   char *line = NULL;
-  char portion[32];
-  char value[32];
   int i, j, k, m, n, curend, offset, len, type, d_size = 0;
   bool happy = true, little, commenting;
   k = 15;
@@ -4405,6 +4410,8 @@ static int read_comdisco_header(const char *filename, int chan)
 	}
       if (line[0] != '$')
 	{
+	  char portion[32];
+	  char value[32];
 	  len = strlen(line);
 	  for (j = 0; j < 8; j++) 
 	    portion[j] = line[j];
@@ -5234,15 +5241,15 @@ int mus_header_change_type(const char *filename, int new_type, int new_format)
 {
   int err = MUS_NO_ERROR;
   /* open temp, write header, copy data, replace original with temp */
-  char *new_file, *comment = NULL;
-  int ofd, ifd, nbytes;
-  off_t loc, len = 0;
-  char *buf = NULL;
   err = mus_header_read(filename);
   if (err == MUS_NO_ERROR)
     {
       if (header_type != new_type)
 	{
+	  int ofd, ifd, nbytes;
+	  off_t loc, len = 0;
+	  char *buf = NULL;
+	  char *new_file, *comment = NULL;
 	  new_file = (char *)CALLOC(strlen(filename) + 5, sizeof(char));
 	  sprintf(new_file, "%s.tmp", filename);
 	  loc = mus_header_data_location();

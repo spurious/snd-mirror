@@ -24,10 +24,10 @@ static int max_gc_index = 0;
 void dump_protection(FILE *Fp);
 void dump_protection(FILE *Fp)
 {
-  XEN *gcdata;
-  int i;
   if (XEN_VECTOR_P(gc_protection))
     {
+      XEN *gcdata;
+      int i;
       gcdata = XEN_VECTOR_ELEMENTS(gc_protection);
       fprintf(Fp, "\n\nsnd_protect (%d table size, used: %d):\n", gc_protection_size, max_gc_index);
       for (i = 0; i < gc_protection_size; i++)
@@ -919,11 +919,11 @@ XEN snd_eval_str(char *buf)
 
 XEN snd_report_result(XEN result, char *buf)
 {
-  snd_info *sp = NULL;
   char *str = NULL;
   str = gl_print(result);
   if (ss->mx_sp)
     {
+      snd_info *sp = NULL;
       sp = ss->mx_sp;
       clear_minibuffer_prompt(sp);
       report_in_minibuffer(sp, str);
@@ -979,12 +979,12 @@ void clear_stdin(void)
 
 static char *stdin_check_for_full_expression(char *newstr)
 {
-  char *str;
 #if HAVE_GUILE
   int end_of_text;
 #endif
   if (stdin_str)
     {
+      char *str;
       str = stdin_str;
       stdin_str = (char *)CALLOC(snd_strlen(str) + snd_strlen(newstr) + 2, sizeof(char));
       strcat(stdin_str, str);
@@ -1010,13 +1010,13 @@ void snd_eval_stdin_str(char *buf)
 {
   /* we may get incomplete expressions here */
   /*   (Ilisp always sends a complete expression, but it may be broken into two or more pieces from read's point of view) */
-  XEN result;
-  int loc;
   char *str = NULL;
   if (snd_strlen(buf) == 0) return;
   str = stdin_check_for_full_expression(buf);
   if (str)
     {
+      XEN result;
+      int loc;
       send_error_output_to_stdout = true;
       result = snd_catch_any(eval_str_wrapper, (void *)str, str);
       loc = snd_protect(result);
@@ -1400,11 +1400,11 @@ static int snd_access(char *dir, char *caller)
 {
   int err;
   char *temp;
-  XEN res;
   temp = shorter_tempnam(dir, "snd_");
   err = mus_file_create(temp);
   if (err == -1)
     {
+      XEN res;
       FREE(temp);
       temp = mus_format(_("%s: directory %s is not writable: %s"), caller, dir, strerror(errno));
       res = C_TO_XEN_STRING(temp);
@@ -1589,11 +1589,11 @@ static XEN g_sounds(void)
 {
   #define H_sounds "(" S_sounds "): list of active sounds (a list of indices)"
   int i;
-  snd_info *sp;
   XEN result;
   result = XEN_EMPTY_LIST;
   for (i = 0; i < ss->max_sounds; i++)
     {
+      snd_info *sp;
       sp = ss->sounds[i];
       if ((sp) && (sp->inuse == SOUND_NORMAL))
 	result = XEN_CONS(C_TO_XEN_INT(i),
@@ -1785,10 +1785,10 @@ static XEN g_abortq(void)
 
 snd_info *get_sp(XEN x_snd_n, sp_sound_t accept_player)
 {
-  int snd_n;
   /* if x_snd_n is a number, it is sp->index */
   if (XEN_INTEGER_P(x_snd_n))
     {
+      int snd_n;
       snd_n = XEN_TO_C_INT(x_snd_n);
       if (snd_n >= 0)
 	{
@@ -1838,10 +1838,8 @@ return a sound-data object (sdobj if given) containing snd channel chn's data st
 reading edit version edpos"
 
   chan_info *cp;
-  snd_fd *sf;
-  sound_data *sd;
   XEN newsd = XEN_FALSE;
-  int i, len, chn = 0, pos, maxlen = 0, loc = -1;
+  int i, len, pos, maxlen = 0, loc = -1;
   off_t beg;
   XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(samp_0), samp_0, XEN_ARG_1, S_samples_to_sound_data, "a number");
   XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(samps), samps, XEN_ARG_2, S_samples_to_sound_data, "a number");
@@ -1855,6 +1853,8 @@ reading edit version edpos"
   if (len > maxlen) len = maxlen;
   if (len > 0)
     {
+      int chn = 0;
+      sound_data *sd;
       chn = XEN_TO_C_INT_OR_ELSE(sdchan, 0);
       if (chn < 0)
 	XEN_OUT_OF_RANGE_ERROR(S_samples_to_sound_data, 7, sdchan, "sound-data channel ~A < 0?");
@@ -1870,6 +1870,7 @@ reading edit version edpos"
 	}
       if (chn < sd->chans)
 	{
+	  snd_fd *sf;
 	  if (len > sd->length) len = sd->length;
 	  sf = init_sample_read_any(beg, cp, READ_FORWARD, pos);
 	  if (sf)
@@ -2510,12 +2511,13 @@ static XEN g_set_just_sounds(XEN on)
 static XEN g_dlopen(XEN name)
 {
   void *handle;
-  char *cname, *longname;
+  char *cname;
   XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ONLY_ARG, "dlopen", "a string (filename)");
   cname = XEN_TO_C_STRING(name);
   handle = dlopen(cname, RTLD_LAZY);
   if (handle == NULL)
     {
+      char *longname;
       longname = mus_expand_filename(cname);
       handle = dlopen(longname, RTLD_LAZY);
       FREE(longname);

@@ -15,7 +15,6 @@ static XEN drop_hook;
 static void drag_data_received (GtkWidget *widget, GdkDragContext *context, gint x, gint y, 
 				GtkSelectionData *data, guint info, guint time)
 {
-  snd_info *sp = NULL;
   /* data->target */
   if ((data->length >= 0) && 
       (data->format == 8))
@@ -35,6 +34,7 @@ static void drag_data_received (GtkWidget *widget, GdkDragContext *context, gint
 	    mix_at_x_y(get_user_int_data(G_OBJECT(widget)), filename, x, y);
 	  else
 	    {
+	      snd_info *sp = NULL;
 	      sp = snd_open_file(filename, false);
 	      if (sp) select_channel(sp, 0);
 	    }

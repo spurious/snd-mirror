@@ -81,10 +81,8 @@ int mus_optkey_unscramble(const char *caller, int nkeys, XEN *keys, XEN *args, i
    * "orig" should be of size nkeys, and will contain upon return the 1-based location of the original keyword value argument
    *  (it is intended for error reports)
    */
-  int arg_ctr = 0, key_start = 0, rtn_ctr = 0, i, nargs;
+  int arg_ctr = 0, key_start = 0, rtn_ctr = 0, nargs;
   bool keying = false, key_found = false;
-  XEN key;
-  arg_ctr = 0;
   nargs = nkeys * 2;
   while ((arg_ctr < nargs) && 
 	 (XEN_BOUND_P(args[arg_ctr])))
@@ -104,6 +102,8 @@ int mus_optkey_unscramble(const char *caller, int nkeys, XEN *keys, XEN *args, i
 	}
       else
 	{
+	  XEN key;
+	  int i;
 	  if ((arg_ctr == (nargs - 1)) ||
 	      (!(XEN_BOUND_P(args[arg_ctr + 1]))))
 	    mus_misc_error(caller, "keyword without value?", args[arg_ctr]);
@@ -640,8 +640,7 @@ and type determines how the spectral data is scaled:\n\
   1 (default) = linear and normalized\n\
   2 = linear and un-normalized."
 
-  int n, type, np;
-  Float nf;
+  int n, type;
   vct *v1, *v2, *v3 = NULL;
   XEN_ASSERT_TYPE((VCT_P(url)), url, XEN_ARG_1, S_spectrum, "a vct");
   XEN_ASSERT_TYPE((VCT_P(uim)), uim, XEN_ARG_2, S_spectrum, "a vct");
@@ -652,6 +651,8 @@ and type determines how the spectral data is scaled:\n\
   n = v1->length;
   if (!(POWER_OF_2_P(n)))
     {
+      Float nf;
+      int np;
       nf = (log(n) / log(2.0));
       np = (int)nf;
       n = (int)pow(2.0, np);
@@ -668,8 +669,7 @@ static XEN g_convolution(XEN url1, XEN url2, XEN un)
   #define H_mus_convolution "(" S_convolution " v1 v2 (len)): convolution \
 of (vcts) v1 with v2, using fft of size len (a power of 2), result in v1"
 
-  int n, np;
-  Float nf;
+  int n;
   vct *v1, *v2;
   XEN_ASSERT_TYPE((VCT_P(url1)), url1, XEN_ARG_1, S_convolution, "a vct");
   XEN_ASSERT_TYPE((VCT_P(url2)), url2, XEN_ARG_2, S_convolution, "a vct");
@@ -688,6 +688,8 @@ of (vcts) v1 with v2, using fft of size len (a power of 2), result in v1"
   else n = v1->length;
   if (!(POWER_OF_2_P(n)))
     {
+      Float nf;
+      int np;
       nf = (log(n) / log(2.0));
       np = (int)nf;
       n = (int)pow(2.0, np);
@@ -759,7 +761,6 @@ static XEN *make_vcts(int size)
 
 static XEN_MARK_OBJECT_TYPE mark_mus_xen(XEN obj) 
 {
-  int i;
   mus_xen *ms;
 #if HAVE_RUBY
   /* rb_gc_mark passes us the actual value, not the XEN wrapper! */
@@ -769,6 +770,7 @@ static XEN_MARK_OBJECT_TYPE mark_mus_xen(XEN obj)
 #endif
   if (ms->vcts) 
     {
+      int i;
       for (i = 0; i < ms->nvcts; i++) 
 	if ((i != MUS_SELF_WRAPPER) && (XEN_BOUND_P(ms->vcts[i])))
 	  xen_gc_mark(ms->vcts[i]);
@@ -973,13 +975,13 @@ static XEN g_mus_data(XEN gen)
 static XEN g_mus_set_data(XEN gen, XEN val) 
 {
   mus_xen *ms;
-  mus_any *ma;
-  vct *v;
   XEN_ASSERT_TYPE(MUS_XEN_P(gen), gen, XEN_ARG_1, S_setB S_mus_data, "a generator");
   XEN_ASSERT_TYPE((VCT_P(val)), val, XEN_ARG_2, S_setB S_mus_data, "a vct");
   ms = XEN_TO_MUS_XEN(gen);
   if (ms->vcts)
     {
+      vct *v;
+      mus_any *ma;
       v = (vct *)XEN_OBJECT_REF(val);
       ma = ms->gen;
       mus_set_data(ma, v->data);  /* TO REMEMBER: if allocated, should have freed, and set to not allocated */
@@ -1846,7 +1848,7 @@ a new one is created.  If normalize is #t, the resulting waveform goes between -
   vct *f;
   XEN table; 
   XEN lst;
-  Float *partial_data, *wave;
+  Float *partial_data;
   int len = 0, i;
   XEN_ASSERT_TYPE(XEN_LIST_P_WITH_LENGTH(partials, len), partials, XEN_ARG_1, S_partials_to_wave, "a list");
   XEN_ASSERT_TYPE(VCT_P(utable) || XEN_FALSE_P(utable) || (!(XEN_BOUND_P(utable))), utable, XEN_ARG_2, S_partials_to_wave, "a vct or #f");
@@ -1858,6 +1860,7 @@ a new one is created.  If normalize is #t, the resulting waveform goes between -
 			 partials));
   if ((XEN_NOT_BOUND_P(utable)) || (!(VCT_P(utable))))
     {
+      Float *wave;
       wave = (Float *)CALLOC(clm_table_size, sizeof(Float));
       if (wave == NULL)
 	return(clm_mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate wave table"));
@@ -2765,9 +2768,8 @@ with chans inputs and outputs, initializing the scalars from the rest of the arg
   /* make_empty_mixer from first of arglist, then if more args, load vals */
 
   mus_any *ge;
-  Float **vals;
-  XEN cararg, lst;
-  int size = 0, i, j, k, len = 0;
+  XEN cararg;
+  int size = 0, len = 0;
   XEN_ASSERT_TYPE(XEN_LIST_P_WITH_LENGTH(arglist, len), arglist, XEN_ARG_1, S_make_mixer, "a list");
   if (len == 0) mus_misc_error(S_make_mixer, "need at least 1 arg", arglist);
   cararg = XEN_CAR(arglist);
@@ -2783,6 +2785,9 @@ with chans inputs and outputs, initializing the scalars from the rest of the arg
     {
       if (len > 1)
 	{
+	  XEN lst;
+	  int i, j, k;
+	  Float **vals;
 	  vals = (Float **)mus_data(ge);
 	  j = 0;
 	  k = 0;
@@ -3599,8 +3604,7 @@ return an output generator writing the sound file 'filename' which is set up to 
 should be sndlib identifiers:\n\
    (make-sample->file \"test.snd\" 2 mus-lshort mus-riff)"
 
-  mus_any *rgen = NULL;
-  int df, ht, chns;
+  int df;
   XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ARG_1, S_make_sample_to_file, "a string");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(chans), chans, XEN_ARG_2, S_make_sample_to_file, "an integer");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(out_format), out_format, XEN_ARG_3, S_make_sample_to_file, "an integer (data format id)");
@@ -3608,12 +3612,15 @@ should be sndlib identifiers:\n\
   df = XEN_TO_C_INT(out_format);
   if (MUS_DATA_FORMAT_OK(df))
     {
+      int ht;
       ht = XEN_TO_C_INT(out_type);
       if (MUS_HEADER_TYPE_OK(ht))
 	{
+	  int chns;
 	  chns = XEN_TO_C_INT(chans);
 	  if (chns > 0)
 	    {
+	      mus_any *rgen;
 	      rgen = mus_make_sample_to_file_with_comment(XEN_TO_C_STRING(name),
 							  chns,
 							  df,
@@ -4787,10 +4794,10 @@ it in conjunction with mixer to scale/envelope all the various ins and outs. \
   mus_any *mx1 = NULL;
   mus_any ***envs1 = NULL;
   char *outfile = NULL, *infile = NULL;
-  int in_len = 0, out_len, i, j;
+  int i;
   off_t ostart = 0, istart = 0, osamps = 0;
   int in_chans = 0, out_chans = 0, in_size = 0, out_size;  /* mus_mix in clm.c assumes the envs array is large enough */
-  XEN *vdata0, *vdata1;
+
   XEN_ASSERT_TYPE(XEN_STRING_P(out) || ((MUS_XEN_P(out)) && (mus_output_p(XEN_TO_MUS_ANY(out)))), 
 		  out, XEN_ARG_1, S_mus_mix, "a filename or a frame->file generator");
   XEN_ASSERT_TYPE(XEN_STRING_P(in) || ((MUS_XEN_P(in)) && (mus_input_p(XEN_TO_MUS_ANY(in)))), 
@@ -4805,6 +4812,7 @@ it in conjunction with mixer to scale/envelope all the various ins and outs. \
   if ((XEN_BOUND_P(mx)) && (MUS_XEN_P(mx))) mx1 = (mus_any *)XEN_TO_MUS_ANY(mx);
   if (XEN_STRING_P(out)) outfile = strdup(XEN_TO_C_STRING(out)); else outf = XEN_TO_MUS_ANY(out);
   if (XEN_STRING_P(in)) infile = strdup(XEN_TO_C_STRING(in)); else inf = XEN_TO_MUS_ANY(in);
+
   if (XEN_BOUND_P(olen)) 
     osamps = XEN_TO_C_OFF_T_OR_ELSE(olen, 0); 
   else 
@@ -4836,6 +4844,8 @@ it in conjunction with mixer to scale/envelope all the various ins and outs. \
 			 C_TO_XEN_STRING("output chans <= 0")));
   if ((XEN_BOUND_P(envs)) && (!(XEN_FALSE_P(envs))))
     {
+      XEN *vdata0, *vdata1;
+      int in_len = 0, out_len, j;
       /* pack into a C-style array of arrays of env pointers */
       in_len = XEN_VECTOR_LENGTH(envs);
       if (in_len == 0)

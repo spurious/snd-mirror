@@ -95,11 +95,11 @@ void set_enved_show_sensitive(bool val) {set_sensitive(showB, val);}
 void make_scrolled_env_list (void)
 {
   int n, size;
-  char *str;
   size = enved_all_envs_top();
   gtk_list_store_clear(GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(env_list))));
   for (n = 0; n < size; n++) 
     {
+      char *str;
       str = enved_all_names(n);
       sg_list_append(env_list, str);
     }
@@ -144,8 +144,6 @@ static bool within_selection_src = false;
 
 static void apply_enved(void)
 {
-  int i, j;
-  env *max_env = NULL;
   if (active_env)
     {
       active_channel = current_channel();
@@ -175,16 +173,20 @@ static void apply_enved(void)
 			   C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), 0, false);
 	      break;
 	    case ENVED_SRATE:
-	      max_env = copy_env(active_env);
-	      for (i = 0, j = 1; i < max_env->pts; i++, j += 2)
-		if (max_env->data[j] < .01) max_env->data[j] = .01;
-	      within_selection_src = true;
-	      src_env_or_num(active_channel, max_env, 0.0, 
-			     false, FROM_ENVED, "Enved: src", apply_to_selection, NULL,
-			     C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), 0);
-	      within_selection_src = false;
-	      max_env = free_env(max_env);
-	      if (enved_wave_p(ss)) env_redisplay();
+	      {
+		int i, j;
+		env *max_env = NULL;
+		max_env = copy_env(active_env);
+		for (i = 0, j = 1; i < max_env->pts; i++, j += 2)
+		  if (max_env->data[j] < .01) max_env->data[j] = .01;
+		within_selection_src = true;
+		src_env_or_num(active_channel, max_env, 0.0, 
+			       false, FROM_ENVED, "Enved: src", apply_to_selection, NULL,
+			       C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), 0);
+		within_selection_src = false;
+		max_env = free_env(max_env);
+		if (enved_wave_p(ss)) env_redisplay();
+	      }
 	      break;
 	    }
 	  set_sensitive(applyB, true);
@@ -196,7 +198,6 @@ static void apply_enved(void)
 
 static void env_redisplay_1(printing_t printing)
 {
-  char *name = NULL;
   if (enved_dialog_is_active())
     {
       gdk_window_clear(drawer->window);
@@ -204,6 +205,7 @@ static void env_redisplay_1(printing_t printing)
 	view_envs(env_window_width, env_window_height, printing);
       else 
 	{
+	  char *name = NULL;
 	  name = (char *)gtk_entry_get_text(GTK_ENTRY(textL));
 	  if (!name) name = _("noname");
 	  display_env(active_env, name, gc, 0, 0, env_window_width, env_window_height, true, printing);
@@ -229,10 +231,10 @@ static void enved_filter_order_callback(GtkWidget *w, gpointer data)
 static void text_field_activated(GtkWidget *w, gpointer context)
 { /* might be breakpoints to load or an envelope name (<cr> in enved text field) */
   char *str = NULL;
-  env *e = NULL;
   str = (char *)gtk_entry_get_text(GTK_ENTRY(w));
   if ((str) && (*str))
     {
+      env *e = NULL;
       while (isspace((int)(*str))) str++;
       e = name_to_env(str);
       if (!e)
@@ -386,11 +388,11 @@ static gboolean drawer_button_motion(GtkWidget *w, GdkEventMotion *ev, gpointer 
 
 static gboolean drawer_button_press(GtkWidget *w, GdkEventButton *ev, gpointer data)
 {
-  int pos;
   ss->enved->down_time = ev->time;
   ss->enved->env_dragged = false;
   if (showing_all_envs)
     {
+      int pos;
       pos = hit_env((int)(ev->x), (int)(ev->y), env_window_width, env_window_height);
       sg_list_select(env_list, pos);
       if ((pos >= 0) && 
@@ -470,9 +472,9 @@ static void selection_button_pressed(GtkWidget *w, gpointer context)
 
 static void delete_button_pressed(GtkWidget *w, gpointer context)
 {
-  int i, len;
   if (selected_env)
     {
+      int i, len;
       len = enved_all_envs_top();
       for (i = 0; i < len; i++)
 	if (selected_env == enved_all_envs(i))
@@ -591,13 +593,13 @@ static void env_browse_callback(GtkTreeSelection *selection, gpointer *gp)
   GtkTreeIter iter;
   gchar *value = NULL;
   int size, n;
-  char *str;
   GtkTreeModel *model;
   if (!(gtk_tree_selection_get_selected(selection, &model, &iter))) return;
   gtk_tree_model_get(model, &iter, 0, &value, -1);
   size = enved_all_envs_top();
   for (n = 0; n < size; n++) 
     {
+      char *str;
       str = enved_all_names(n);
       if (strcmp(str, value) == 0)
 	{
@@ -735,9 +737,10 @@ static void fir_button_pressed(GtkWidget *w, gpointer context)
 
 GtkWidget *create_envelope_editor (void)
 {
-  GtkWidget *mainform, *helpB, *leftbox, *bottombox, *leftframe, *toprow, *bottomrow;
   if (!enved_dialog)
     {
+      GtkWidget *mainform, *helpB, *leftbox, *bottombox, *leftframe, *toprow, *bottomrow;
+
       enved_dialog = gtk_dialog_new();
       SG_SIGNAL_CONNECT(enved_dialog, "delete_event", delete_enved_dialog, NULL);
       gtk_window_set_title(GTK_WINDOW(enved_dialog), _("Edit Envelope"));
@@ -1176,9 +1179,9 @@ static XEN g_enved_dialog_widgets(void)
 
 static XEN g_enved_axis_info(void)
 {
-  axis_info *ap;
   if (enved_dialog)
     {
+      axis_info *ap;
       if (axis == NULL)
 	enved_reset();
       ap = axis;

@@ -124,9 +124,9 @@ void reflect_file_save_in_menu (void)
 
 void reflect_file_revert_in_label (snd_info *sp)
 {
-  bool editing;
   if (sp->sgx)
     {
+      bool editing;
       editing = map_over_sound_chans(sp, find_any_edits, NULL);
       if (!editing)
 	set_sound_pane_file_label(sp, shortname_indexed(sp));
@@ -183,9 +183,9 @@ void reflect_undo_ok_in_menu(void)
 
 void reflect_undo_or_redo_in_menu(chan_info *cp)
 {
-  bool undoable, redoable;
   if ((cp) && (cp->cgx))
     {
+      bool undoable, redoable;
       undoable = (cp->edit_ctr > 0);
       redoable = (!(((cp->edit_ctr + 1) == cp->edit_size) || 
 		    (!(cp->edits[cp->edit_ctr + 1]))));
@@ -283,10 +283,10 @@ snd_info *new_file_from_menu(void)
 void revert_file_from_menu(void)
 {
   snd_info *sp;
-  int i;
   sp = any_selected_sound();
   if (sp)
     {
+      int i;
       for (i = 0; i < sp->nchans; i++) 
 	revert_edits(sp->chans[i], NULL);
       reflect_file_revert_in_label(sp);
@@ -604,17 +604,17 @@ static XEN gl_add_to_main_menu(XEN label, XEN callback)
 {
   #define H_add_to_main_menu "(" S_add_to_main_menu " label (callback #f)): adds label to the main (top-level) menu, returning its index"
   int slot = -1;
-  char *err;
-  XEN errm;
   XEN_ASSERT_TYPE(XEN_STRING_P(label), label, XEN_ARG_1, S_add_to_main_menu, "a string");
   slot = make_callback_slot();
   if (XEN_BOUND_P(callback))
     {
+      char *err;
       err = procedure_ok(callback, 0, S_add_to_main_menu, "menu callback", 2);
       if (err == NULL)
 	add_callback(slot, callback);
       else 
 	{
+	  XEN errm;
 	  errm = C_TO_XEN_STRING(err);
 	  FREE(err);
 	  return(snd_bad_arity_error(S_add_to_main_menu, errm, callback));
@@ -629,10 +629,8 @@ static XEN gl_add_to_menu(XEN menu, XEN label, XEN callback, XEN gpos)
   #define H_add_to_menu "(" S_add_to_menu " menu label func (position #f): adds label to menu (a main menu index), invokes \
 func (a function of no args) when the new menu is activated. Returns the new menu label widget."
 
-  int slot = -1, m, position = -1;
-  char *errmsg = NULL;
-  XEN errm;
   widget_t result;
+  char *errmsg = NULL;
   XEN_ASSERT_TYPE(XEN_STRING_P(label) || XEN_FALSE_P(label), label, XEN_ARG_2, S_add_to_menu, "a string");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(menu), menu, XEN_ARG_1, S_add_to_menu, "an integer");
   XEN_ASSERT_TYPE(XEN_PROCEDURE_P(callback) || XEN_FALSE_P(callback), callback, XEN_ARG_3, S_add_to_menu, "a procedure");
@@ -641,6 +639,7 @@ func (a function of no args) when the new menu is activated. Returns the new men
     errmsg = procedure_ok(callback, 0, S_add_to_menu, "menu callback", 3);
   if (errmsg == NULL)
     {
+      int slot = -1, m, position = -1;
       m = XEN_TO_C_INT(menu);
       if (m < 0)
 	return(snd_no_such_menu_error(S_add_to_menu, menu));
@@ -663,6 +662,7 @@ func (a function of no args) when the new menu is activated. Returns the new men
     }
   else 
     {
+      XEN errm;
       errm = C_TO_XEN_STRING(errmsg);
       FREE(errmsg);
       return(snd_bad_arity_error(S_add_to_menu, errm, callback));

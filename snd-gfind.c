@@ -25,10 +25,10 @@ static void edit_find_help(GtkWidget *w, gpointer context)
 static void edit_find_find(read_direction_t direction, GtkWidget *w, gpointer context) 
 { /* "Find" is the label here */
   char *str, *buf = NULL;
-  XEN proc;
   str = (char *)gtk_entry_get_text(GTK_ENTRY(edit_find_text));
   if ((str) && (*str))
     {
+      XEN proc;
       ss->search_expr = copy_string(str);
       if (XEN_PROCEDURE_P(ss->search_proc)) snd_unprotect(ss->search_proc);
       ss->search_proc = XEN_UNDEFINED;
@@ -75,10 +75,10 @@ static void edit_find_previous(GtkWidget *w, gpointer context) {edit_find_find(R
 
 static void make_edit_find_dialog(bool managed)
 {
-  GtkWidget *dl, *rc;
-  GtkWidget *help_button;
   if (!edit_find_dialog)
     {
+      GtkWidget *dl, *rc;
+      GtkWidget *help_button;
       edit_find_dialog = snd_gtk_dialog_new();
       SG_SIGNAL_CONNECT(edit_find_dialog, "delete_event", edit_find_delete, NULL);
       gtk_window_set_title(GTK_WINDOW(edit_find_dialog), _("Find"));

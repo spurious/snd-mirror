@@ -92,9 +92,9 @@ char *get_minibuffer_string(snd_info *sp)
 
 void make_minibuffer_label(snd_info *sp , char *str)
 {
-  XmString s1;
   if ((sp->sgx) && (MINIBUFFER_LABEL(sp)))
     {
+      XmString s1;
       s1 = XmStringCreate(str, XmFONTLIST_DEFAULT_TAG);
       XtVaSetValues(MINIBUFFER_LABEL(sp), XmNlabelString, s1, NULL);
       XmStringFree(s1);
@@ -611,10 +611,10 @@ void toggle_filter_button(snd_info *sp, bool state)
 static void filter_textfield_deactivate(snd_info *sp)
 {
   chan_info *active_chan;
-  Widget graph;
   active_chan = any_selected_channel(sp);
   if (active_chan)
     {
+      Widget graph;
       graph = channel_graph(active_chan);
       if ((XmIsTraversable(graph)) && 
 	  (XmGetVisibility(graph) != XmVISIBILITY_FULLY_OBSCURED))
@@ -794,7 +794,6 @@ static void filter_activate_callback(Widget w, XtPointer context, XtPointer info
   /* make an envelope out of the data */
   snd_info *sp = (snd_info *)context;
   char *str = NULL;
-  int order;
   XmAnyCallbackStruct *cb = (XmAnyCallbackStruct *)info;
   XKeyEvent *ev;
   KeySym keysym;
@@ -820,6 +819,7 @@ static void filter_activate_callback(Widget w, XtPointer context, XtPointer info
   str = XmTextGetString(FILTER_ORDER_TEXT(sp));
   if ((str) && (*str))
     {
+      int order;
       order = string_to_int(str);
       if (order & 1) order++;
       if (order <= 0) order = 2;
@@ -835,11 +835,11 @@ static void filter_activate_callback(Widget w, XtPointer context, XtPointer info
 static void filter_order_activate_callback(Widget w, XtPointer context, XtPointer info)
 {
   char *str;
-  int order;
   snd_info *sp = (snd_info *)context;
   str = XmTextGetString(w);
   if ((str) && (*str))
     {
+      int order;
       order = string_to_int(str);
       if (order & 1) order++;
       if (order <= 0) order = 2;
@@ -854,9 +854,9 @@ static void filter_order_activate_callback(Widget w, XtPointer context, XtPointe
 void filter_env_changed(snd_info *sp, env *e)
 {
   /* turn e back into a string for textfield widget */
-  char *tmpstr = NULL;
   if (!(IS_PLAYER(sp)))
     {
+      char *tmpstr = NULL;
       XmTextSetString(FILTER_COEFFS_TEXT(sp), tmpstr = env_to_string(e));
       if (tmpstr) FREE(tmpstr);
       (SOUND_ENV_EDITOR(sp))->edited = true;
@@ -908,10 +908,10 @@ typedef struct {bool pausing; } pause_data;
 
 static void set_play_button_pause(snd_info *sp, void *ptr)
 {
-  pause_data *pd = (pause_data *)ptr;
-  Widget w;
   if ((sp->playing) && (!(IS_PLAYER(sp))))
     {
+      pause_data *pd = (pause_data *)ptr;
+      Widget w;
       w = PLAY_BUTTON(sp);
       if (pd->pausing)
 	XtVaSetValues(w, XmNselectColor, (ss->sgx)->red, NULL);
@@ -980,7 +980,6 @@ static void sync_button_callback(Widget w, XtPointer context, XtPointer info)
 {
   snd_info *sp = (snd_info *)context;
   XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)info;
-  chan_info *cp;
   XButtonEvent *ev;
   ASSERT_WIDGET_TYPE(XmIsToggleButton(w), w);
   ev = (XButtonEvent *)(cb->event);
@@ -995,6 +994,7 @@ static void sync_button_callback(Widget w, XtPointer context, XtPointer info)
   else sp->sync = 0;
   if (sp->sync != 0) 
     {
+      chan_info *cp;
       set_sync_color(sp);
       cp = sp->lacp;
       if (cp == NULL) cp = any_selected_channel(sp);
@@ -1130,15 +1130,14 @@ static int **inner_sizes = NULL;
 static void watch_sash(Widget w, XtPointer closure, XtPointer info)
 {
   SashCallData call_data = (SashCallData)info;
-  int i, k;
-  Widget child;
-  snd_info *sp;
   /* call_data->params[0]: Commit, Move, Key, Start (as strings) */
   if ((call_data->params) && 
       (call_data->params[0]) && 
       (with_relative_panes(ss)) &&
       (sound_style(ss) == SOUNDS_VERTICAL))
     {
+      int i, k;
+      snd_info *sp;
       if (strcmp(call_data->params[0], "Start") == 0)
 	{
 	  int outer_ctr = 0;
@@ -1165,6 +1164,7 @@ static void watch_sash(Widget w, XtPointer closure, XtPointer info)
 		      (sp->nchans > 1) &&
 		      (sp->channel_style == CHANNELS_SEPARATE))
 		    {
+		      Widget child;
 		      child = w_snd_pane(sp);
 		      inner_panes[outer_ctr] = sp->nchans;
 		      inner_sizes[outer_ctr] = (int *)CALLOC(sp->nchans, sizeof(int));
@@ -1243,7 +1243,7 @@ static int sashes_size = 0;
 static void remember_sash(Widget w)
 {
   /* add callback only once (means remembering which widgets already have our callback */
-  int i, loc = -1;
+  int loc = -1;
   if (sashes_size == 0)
     {
       sashes = (Widget *)CALLOC(16, sizeof(Widget));
@@ -1252,6 +1252,7 @@ static void remember_sash(Widget w)
     }
   else
     {
+      int i;
       for (i = 0; i < sashes_size; i++)
 	{
 	  if (sashes[i] == w) return;
@@ -1276,10 +1277,10 @@ static void remember_sash(Widget w)
 static void add_watchers(Widget w)
 {
   unsigned int i;
-  Widget child;
   CompositeWidget cw = (CompositeWidget)w;
   for (i = 0; i < cw->composite.num_children; i++) /* only outermost sashes count here */
     {
+      Widget child;
       child = cw->composite.children[i];
       if ((XtIsWidget(child)) && 
 	  (XtIsManaged(child)) && 
@@ -1321,9 +1322,9 @@ static Pixmap mini_glasses[NUM_GLASSES];
 
 void snd_file_lock_icon(snd_info *sp, bool on)
 {
-  snd_context *sx;
   if (mini_lock) 
     {
+      snd_context *sx;
       sx = sp->sgx;
       if (on)
 	sx->file_pix = mini_lock;
@@ -1337,10 +1338,10 @@ void snd_file_lock_icon(snd_info *sp, bool on)
 
 static void show_bomb_icon(snd_info *sp, bool on)
 {
-  snd_context *sx;
   if (sp->bomb_ctr >= NUM_BOMBS) sp->bomb_ctr = 0;
   if (mini_bombs[sp->bomb_ctr]) 
     {
+      snd_context *sx;
       sx = sp->sgx;
       if (sx)
 	{
@@ -1362,11 +1363,11 @@ void x_bomb(snd_info *sp, bool on)
 
 static void inc_bomb(snd_info *sp, void *ptr)
 {
-  int *buf;
   if (sp)
     {
       if (sp->need_update)
 	{
+	  int *buf;
 	  buf = (int *)ptr;
 	  buf[0]++;
 	  show_bomb_icon(sp, sp->bomb_ctr);
@@ -1440,7 +1441,7 @@ static void allocate_icons(Widget w)
   Pixmap shape1, shape2, shape3; 
   XpmAttributes attributes; 
   XpmColorSymbol symbols[1];
-  int scr, pixerr = XpmSuccess, k;
+  int scr, pixerr = XpmSuccess;
   Display *dp;
   Drawable wn;
   dp = XtDisplay(w);
@@ -1470,6 +1471,7 @@ static void allocate_icons(Widget w)
 	snd_error("blank pixmap trouble: %s from %s\n", XpmGetErrorString(pixerr), bits_to_string(blank_bits()));
       else
 	{
+	  int k;
 	  for (k = 0; k < NUM_BOMBS; k++)
 	    {
 	      pixerr = XpmCreatePixmapFromData(dp, wn, mini_bomb_bits(k), &(mini_bombs[k]), &shape2, &attributes);
@@ -2682,9 +2684,9 @@ snd_info *add_sound_window(char *filename, bool read_only)
 
 void snd_info_cleanup(snd_info *sp)
 {
-  snd_context *sx;
   if ((sp) && (sp->sgx))
     {
+      snd_context *sx;
       sx = sp->sgx;
       if (SYNC_BUTTON(sp))
 	{
@@ -2731,16 +2733,17 @@ void set_apply_button(snd_info *sp, bool val)
 
 static void even_channels(snd_info *sp, void *ptr)
 {
-  int val, height, chans, i;
-  chan_info *cp;
+  int chans;
   chans = sp->nchans;
   if (chans > 1)
     {
+      int val, height, i;
       height = (*((int *)ptr));
       val = height / chans - 16;
       if (val < 6) val = 6;
       for (i = 0; i < chans; i++)
 	{
+	  chan_info *cp;
 	  cp = sp->chans[i];
 	  XtUnmanageChild(channel_main_pane(cp));
 	  XtVaSetValues(channel_main_pane(cp),
@@ -2785,7 +2788,6 @@ void equalize_sound_panes(snd_info *sp, chan_info *ncp, bool all_panes)
   /* make sp look ok, squeezing others if needed */
   /* if there's already enough (i.e. ss->channel_min_height), just return */
   /* this is used in goto_next_graph and goto_previous_graph (snd-chn.c) to open windows that are currently squeezed shut */
-  Float low, high;
   Dimension chan_y, total = 0;
   int *wid;
   int i;
@@ -2851,6 +2853,7 @@ void equalize_sound_panes(snd_info *sp, chan_info *ncp, bool all_panes)
     }
   if (sp->channel_style == CHANNELS_COMBINED)
     {
+      Float low, high;
       cp = any_selected_channel(sp);
       high = (Float)(sp->nchans - cp->chan) / (Float)sp->nchans;
       low = high - 1.0 / (Float)sp->nchans;
@@ -2863,11 +2866,11 @@ void equalize_sound_panes(snd_info *sp, chan_info *ncp, bool all_panes)
 void color_filter_waveform(Pixel color)
 {
   int i;
-  snd_info *sp;
   XSetForeground(MAIN_DISPLAY(ss), (ss->sgx)->fltenv_data_gc, color);
   (ss->sgx)->filter_control_waveform_color = color;
   for (i = 0; i < ss->max_sounds; i++)
     {
+      snd_info *sp;
       sp = ss->sounds[i];
       if ((sp) && (sp->inuse == SOUND_NORMAL))
 	display_filter_env(sp);
@@ -2876,12 +2879,12 @@ void color_filter_waveform(Pixel color)
 
 void reflect_amp_env_completion(snd_info *sp)
 {
-  chan_info *cp;
-  env_info *ep;
   int i;
   /* a channel completed an amp env, check to see if all are complete */
   for (i = 0; i < sp->nchans; i++)
     {
+      chan_info *cp;
+      env_info *ep;
       cp = sp->chans[i];
       if (!(cp->amp_envs)) return;
       ep = cp->amp_envs[cp->edit_ctr];
@@ -3014,12 +3017,12 @@ bool control_panel_open(snd_info *sp)
 
 void show_controls(void)
 {
-  snd_info *sp;
   int i;
   ctrls_height = open_ctrls_height;
   set_view_ctrls_label(_("Hide controls"));
   for (i = 0; i < ss->max_sounds; i++)
     {
+      snd_info *sp;
       sp = ss->sounds[i];
       if ((sp) && (sp->inuse == SOUND_NORMAL))
 	sound_show_ctrls(sp);
@@ -3028,12 +3031,12 @@ void show_controls(void)
 
 void hide_controls(void)
 {
-  snd_info *sp;
   int i;
   ctrls_height = CLOSED_CTRLS_HEIGHT;
   set_view_ctrls_label(_("Show controls"));
   for (i = 0; i < ss->max_sounds; i++)
     {
+      snd_info *sp;
       sp = ss->sounds[i];
       if ((sp) && (sp->inuse == SOUND_NORMAL))
 	sound_hide_ctrls(sp);

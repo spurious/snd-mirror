@@ -90,11 +90,11 @@ static gboolean who_called(GtkWidget *w, GdkEvent *event, gpointer context)
 {
   /* watch for communication from some other program via the SND_COMMAND property */
   GdkEventProperty *ev = (GdkEventProperty *)event;
-  GdkAtom type;
-  gint format, nitems;
-  guchar *version[1];
   if (ev->atom == snd_c)
     {
+      GdkAtom type;
+      gint format, nitems;
+      guchar *version[1];
       if (gdk_property_get(MAIN_WINDOW(ss), snd_c, 
 			   GDK_TARGET_STRING, 0L, (long)BUFSIZ, false,
 			   &type, &format, &nitems, (guchar **)version))
@@ -259,7 +259,6 @@ static int tm_slice = 0;
 
 static Cessate startup_funcs(gpointer context)
 {
-  snd_info *sp;
   static int auto_open_ctr = 0;
   switch (tm_slice)
     {
@@ -333,6 +332,7 @@ static Cessate startup_funcs(gpointer context)
       if ((ss->sounds) &&
 	  (ss->selected_sound == NO_SELECTION))
 	{
+	  snd_info *sp;
 	  sp = ss->sounds[0];
 	  if ((sp) && 
 	      (sp->inuse == SOUND_NORMAL) &&
@@ -398,16 +398,16 @@ static void notebook_switch_page(GtkNotebook *w, GtkNotebookPage *page_widget, g
   /* as far as I can tell there's nothing that a user can do with the idiotic page_widget argument --
    *   the GtkNotebookPage structure is hidden, and not one public function gives any access to it.
    */
-  int index = 0;
-  snd_info *sp;
   GtkWidget *pw;
   pw = gtk_notebook_get_nth_page(w, page_num);
   if (pw)
     {
+      int index = 0;
       index = get_user_int_data(G_OBJECT(pw));
       if ((index < ss->max_sounds) && 
 	  (snd_ok(ss->sounds[index])))
 	{
+	  snd_info *sp;
 	  sp = ss->sounds[index];
 	  if (sp->selected_channel == NO_SELECTION)
 	    select_channel(ss->sounds[index], 0);

@@ -11,11 +11,11 @@ static void list_completions_callback(GtkTreeSelection *selection, gpointer *gp)
   GtkTreeIter iter;
   gchar *value = NULL;
   GtkTreeModel *model;
-  GtkTreeSelection *tree;
   int beg, end, i, j, old_len, new_len;
   char *old_text;
   if (first_time)
     {
+      GtkTreeSelection *tree;
       first_time = false;
       tree = gtk_tree_view_get_selection(GTK_TREE_VIEW(completion_list));
       gtk_tree_selection_unselect_all(tree);
@@ -61,10 +61,10 @@ static gint delete_completion_dialog(GtkWidget *w, GdkEvent *event, gpointer con
 
 static void start_completion_dialog(int num_items, char **items)
 {
-  GtkWidget *help_button, *dismiss_button;
   GtkTreeSelection *tree;
   if (!completion_dialog)
     {
+      GtkWidget *help_button, *dismiss_button;
       completion_dialog = snd_gtk_dialog_new();
       SG_SIGNAL_CONNECT(completion_dialog, "delete_event", delete_completion_dialog, NULL);
       gtk_window_set_title(GTK_WINDOW(completion_dialog), _("Completions"));
@@ -117,9 +117,9 @@ static void start_completion_dialog(int num_items, char **items)
 
 void save_listener_text(FILE *fp)
 {
-  char *str = NULL;
   if (listener_text)
     {
+      char *str = NULL;
       str = sg_get_text(listener_text, 0, -1);
       if (str)
 	{
@@ -132,9 +132,9 @@ void save_listener_text(FILE *fp)
 void append_listener_text(int end, char *msg)
 {
   /* "end" arg needed in Motif */
-  int chars;
   if ((listener_print_p(msg)) && (listener_text))
     {
+      int chars;
       chars = gtk_text_buffer_get_char_count(LISTENER_BUFFER);
       if (chars > 0) sg_set_cursor(listener_text, chars + 1);
       sg_text_insert(listener_text, msg);
@@ -143,15 +143,17 @@ void append_listener_text(int end, char *msg)
 
 static void listener_completion(int end)
 {
-  int beg, matches = 0;
-  char *old_text, *new_text = NULL, *file_text = NULL;
-  bool try_completion = true;
+  int beg;
+  char *old_text;
   beg = printout_end + 1;
   if (end <= beg) return;
   old_text = sg_get_text(listener_text, beg, end);
   /* now old_text is the stuff typed since the last prompt */
   if (old_text)
     {
+      char *new_text = NULL, *file_text = NULL;
+      int matches = 0;
+      bool try_completion = true;
       new_text = complete_listener_text(old_text, end, &try_completion, &file_text);
       if (!try_completion)
 	{
@@ -210,9 +212,9 @@ void listener_append(char *msg)
 
 void listener_append_and_prompt(char *msg)
 {
-  int cmd_eot;
   if (listener_text)
     {
+      int cmd_eot;
       if (msg)
 	append_listener_text(0, msg);
       append_listener_text(0, listener_prompt_with_cr());
@@ -230,12 +232,13 @@ static void command_return_callback(void)
 static void back_to_start(void)
 {
   char *full_str = NULL, *prompt;
-  int i, start_of_text;
+  int start_of_text;
   full_str = sg_get_text(listener_text, 0, -1);
   start_of_text = sg_cursor_position(listener_text);
   prompt = listener_prompt(ss);
   if (start_of_text > 0)
     {
+      int i;
       for (i = start_of_text; i >= 0; i--)
 	if ((full_str[i] == prompt[0]) && 
 	    ((i == 0) || (full_str[i - 1] == '\n')))
@@ -281,11 +284,11 @@ static void sg_text_replace(GtkWidget *w, int beg, int end, char *text)
 static void text_transpose(GtkWidget *w)
 {
   int curpos;
-  char *buf = NULL;
-  char tmp;
   curpos = sg_cursor_position(w);
   if (curpos > 1)
     {
+      char *buf = NULL;
+      char tmp;
       buf = sg_get_text(w, curpos - 1, curpos + 1);
       tmp = buf[0];
       buf[0] = buf[1];
@@ -297,13 +300,13 @@ static void text_transpose(GtkWidget *w)
 
 static void word_upper(GtkWidget *w, int cap, int up)
 {
-  int i, j, length, wstart, wend;
   int curpos, endpos;
-  char *buf = NULL;
   curpos = sg_cursor_position(w);
   endpos = gtk_text_buffer_get_char_count(gtk_text_view_get_buffer(GTK_TEXT_VIEW(w)));
   if (curpos < endpos)
     {
+      int i, length, wstart, wend;
+      char *buf = NULL;
       length = endpos - curpos;
       buf = sg_get_text(w, curpos, endpos);
       wstart = 0;
@@ -328,6 +331,7 @@ static void word_upper(GtkWidget *w, int cap, int up)
 	}
       else
 	{
+	  int j;
 	  for (i = wstart, j = 0; i < wend; i++, j++)
 	    if (up) 
 	      buf[j] = toupper(buf[i]);
@@ -398,10 +402,10 @@ bool highlight_unbalanced_paren(void)
   /* if cursor is positioned at close paren, try to find reason for unbalanced expr and highlight it */
   int pos;
   bool success = true;
-  char *str = NULL;
   pos = sg_cursor_position(listener_text);
   if (pos > 2)
     {
+      char *str = NULL;
       str = sg_get_text(listener_text, 0, pos);
       if ((str[pos - 1] == ')') &&
 	  ((str[pos - 2] != '\\') || (str[pos - 3] != '#')))
@@ -450,7 +454,6 @@ static void remove_underline(int pos)
 static gboolean listener_key_release(GtkWidget *w, GdkEventKey *event, gpointer data)
 {
   int current_position, parens, pos;
-  char *fstr;
   if (old_pos != -1)
     {
       remove_underline(old_pos);
@@ -459,6 +462,7 @@ static gboolean listener_key_release(GtkWidget *w, GdkEventKey *event, gpointer 
   current_position = sg_cursor_position(listener_text);
   if (current_position > 2)
     {
+      char *fstr = NULL;
       fstr = sg_get_text(listener_text, 0, current_position);
       if (fstr[current_position - 1] == ')')
 	{
@@ -476,10 +480,9 @@ static gboolean listener_key_release(GtkWidget *w, GdkEventKey *event, gpointer 
 
 static gboolean listener_key_press(GtkWidget *w, GdkEventKey *event, gpointer data)
 {
-  chan_info *cp;
-  int end;
   if ((ss->sgx)->graph_is_active) 
     {
+      chan_info *cp;
       cp = current_channel();
       graph_key_press(channel_graph(cp), event, (gpointer)cp); 
       return(false);
@@ -534,6 +537,7 @@ static gboolean listener_key_press(GtkWidget *w, GdkEventKey *event, gpointer da
 			{
 			  if ((event->keyval == snd_K_greater) && (event->state & snd_MetaMask))
 			    {
+			      int end;
 			      end = gtk_text_buffer_get_char_count(LISTENER_BUFFER);
 			      sg_set_cursor(listener_text, end + 1);
 			    }
@@ -700,9 +704,9 @@ GtkWidget *snd_entry_new(GtkWidget *container, bool with_white_background)
 
 static void make_command_widget(int height)
 {
-  GtkWidget *frame;
   if (!listener_text)
     {
+      GtkWidget *frame;
       frame = gtk_frame_new(NULL);
       gtk_frame_set_shadow_type(GTK_FRAME(frame), GTK_SHADOW_ETCHED_IN);
       gtk_widget_show(frame);
@@ -890,13 +894,13 @@ int listener_width(void)
 static XEN g_listener_selected_text(void)
 {
   #define H_listener_selection "(" S_listener_selection "): currently selected text in listener or #f"
-  char *txt;
   XEN res = XEN_FALSE;
   if (listener_text)
     {
       GtkTextIter start, end;
       if (gtk_text_buffer_get_selection_bounds(LISTENER_BUFFER, &start, &end))
 	{
+	  char *txt;
 	  txt = gtk_text_buffer_get_text(LISTENER_BUFFER, &start, &end, true);
 	  if (txt) 
 	    {
@@ -931,9 +935,9 @@ void clear_listener(void)
 static XEN g_goto_listener_end(void)
 {
   #define H_goto_listener_end "(" S_goto_listener_end "): move cursor and scroll to bottom of listener pane"
-  int chars;
   if (listener_text)
     {
+      int chars;
       chars = gtk_text_buffer_get_char_count(LISTENER_BUFFER);
       if (chars > 0) sg_set_cursor(listener_text, chars + 1);
       return(C_TO_XEN_INT(chars));

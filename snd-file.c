@@ -170,9 +170,9 @@ file_info *copy_header(const char *fullname, file_info *ohdr)
 
 static file_info *translate_file(const char *filename, int type)
 {
-  char *newname, *tempname;
-  int *loops = NULL;
   file_info *hdr = NULL;
+  char *newname;
+  int *loops = NULL;
   int err, len, fd;
   len = strlen(filename);
   loops = mus_sound_loop_info(filename);
@@ -187,6 +187,7 @@ static file_info *translate_file(const char *filename, int type)
   fd = CREAT(newname, 0666);
   if (fd == -1)
     {
+      char *tempname;
       tempname = snd_tempnam();
       fd = CREAT(tempname, 0666);
       if (fd == -1)
@@ -228,9 +229,9 @@ static char *raw_data_explanation(const char *filename, file_info *hdr);
 file_info *make_file_info(const char *fullname)
 {
   file_info *hdr = NULL;
-  int type = MUS_UNSUPPORTED, format = MUS_UNKNOWN;
   if (mus_file_probe(fullname))
     {
+      int type = MUS_UNSUPPORTED, format = MUS_UNKNOWN;
       type = mus_sound_header_type(fullname);
       if (type == MUS_ERROR) 
 	type = mus_header_type();
@@ -416,10 +417,10 @@ static dir *make_dir(const char *name)
 
 dir *free_dir (dir *dp)
 {
-  int i;
   if (dp->name) FREE(dp->name);
   if (dp->files)
     {
+      int i;
       for (i = 0; i < dp->len; i++) 
 	if (dp->files[i]) 
 	  FREE(dp->files[i]);
@@ -431,11 +432,11 @@ dir *free_dir (dir *dp)
   
 static void add_snd_file_to_dir_list(dir *dp, const char *name)
 {
-  int i;
   dp->files[dp->len] = copy_string(name);
   dp->len++;
   if (dp->len == dp->size) 
     {
+      int i;
       dp->size += 32;
       dp->files = (char **)REALLOC(dp->files, dp->size * sizeof(char *));
       for (i = dp->size - 32; i < dp->size; i++) dp->files[i] = NULL;
@@ -506,17 +507,17 @@ dir *find_sound_files_in_dir(const char *name)
 #if (!HAVE_OPENDIR)
   return(NULL);
 #else
-  struct dirent *dirp;
   DIR *dpos;
-  char *dot, *sp;
   dir *dp = NULL;
-  int i;
   if ((dpos = opendir(name)) != NULL)
     {
+      struct dirent *dirp;
       dp = make_dir(name);
       while ((dirp = readdir(dpos)) != NULL)
 	if (dirp->d_name[0] != '.')
 	  {
+	    int i;
+	    char *dot, *sp;
 	    dot = NULL;
 	    for (sp = dirp->d_name; (*sp) != '\0'; sp++) 
 	      if ((*sp) == '.') 
@@ -699,10 +700,11 @@ static snd_info *snd_open_file_1 (const char *filename, bool select, bool read_o
   snd_info *sp;
   char *mcf = NULL;
   int files;
-  XEN res = XEN_FALSE, fstr;
+  XEN res = XEN_FALSE;
   mcf = mus_expand_filename(filename);
   if (XEN_HOOKED(open_hook))
     {
+      XEN fstr;
       fstr = C_TO_XEN_STRING(mcf);
       res = run_or_hook(open_hook,
 			XEN_LIST_1(fstr),
@@ -874,8 +876,7 @@ int copy_file(const char *oldname, const char *newname)
 
 int move_file(const char *oldfile, const char *newfile)
 {
-  int err;
-  err = 0;
+  int err = 0;
   if ((err = (rename(oldfile, newfile))))
     {
       if (errno == EXDEV)
@@ -900,7 +901,6 @@ snd_info *make_sound_readable(const char *filename, bool post_close)
   chan_info *cp;
   file_info *hdr = NULL;
   snd_data *sd;
-  snd_io *io;
   int i, fd;
   off_t len;
   /* we've already checked that filename exists */
@@ -929,6 +929,7 @@ snd_info *make_sound_readable(const char *filename, bool post_close)
       fd = snd_open_read(filename); /* sends the error if any */
       if (fd != -1)
 	{
+	  snd_io *io;
 	  mus_file_open_descriptors(fd,
 				    filename,
 				    hdr->format,
@@ -982,9 +983,7 @@ enum {SA_X0, SA_X1, SA_Y0, SA_Y1, SA_XMIN, SA_XMAX, SA_YMIN, SA_YMAX};
 void *make_axes_data(snd_info *sp)
 {
   axes_data *sa;
-  chan_info *cp;
-  axis_info *ap;
-  int i, loc;
+  int i;
   sa = (axes_data *)CALLOC(1, sizeof(axes_data));
   sa->chans = sp->nchans;
   sa->fields = 8;
@@ -993,6 +992,9 @@ void *make_axes_data(snd_info *sp)
   sa->wavep = (bool *)CALLOC(sa->chans, sizeof(bool));
   for (i = 0; i < sa->chans; i++)
     {
+      chan_info *cp;
+      axis_info *ap;
+      int loc;
       cp = sp->chans[i];
       ap = cp->axis;
       loc = i * sa->fields;
@@ -1013,13 +1015,14 @@ void *make_axes_data(snd_info *sp)
 bool restore_axes_data(snd_info *sp, void *usa, Float new_duration, bool need_edit_history_update)
 {
   axes_data *sa = (axes_data *)usa;
-  int i, j, loc;
+  int i, j;
   bool need_update = false;
-  Float old_duration;
-  chan_info *cp;
-  axis_info *ap;
   for (i = 0, j = 0; i < sp->nchans; i++)
     {
+      Float old_duration;
+      chan_info *cp;
+      axis_info *ap;
+      int loc;
       cp = sp->chans[i];
       loc = j * sa->fields;
       old_duration = sa->axis_data[loc + SA_X1] - sa->axis_data[loc + SA_X0];  /* old duration is x1 - x0 */
@@ -1418,7 +1421,6 @@ static XEN previous_files_select_hook;
 
 void view_prevfiles_select(int pos)
 {
-  snd_info *sp;
   XEN res = XEN_FALSE;
   if (XEN_HOOKED(previous_files_select_hook))
     res = run_or_hook(previous_files_select_hook,
@@ -1426,6 +1428,7 @@ void view_prevfiles_select(int pos)
 		      S_previous_files_select_hook);
   if (XEN_NOT_TRUE_P(res))
     {
+      snd_info *sp;
       sp = snd_open_file(prevfullnames[pos], false);
       if (sp) select_channel(sp, 0); 
     }
@@ -1469,10 +1472,11 @@ bool view_prevfiles_play(int pos, bool play)
 
 static void file_unprevlist(const char *filename)
 {
-  int i, j;
+  int i;
   i = find_prevfile_regrow(filename);
   if (i != -1)
     {
+      int j;
       FREE(prevnames[i]);
       prevnames[i] = NULL;
       FREE(prevfullnames[i]);
@@ -1491,11 +1495,12 @@ static void file_unprevlist(const char *filename)
 
 static void file_prevlist(const char *filename, const char *fullname)
 {
-  int k, i, new_size;
+  int k;
   if (find_prevfile_regrow(filename) != -1) return;
   prevfile_end++;
   if (prevfile_end == prevfile_size)
     {
+      int new_size;
       new_size = prevfile_size + 32;
       if (prevfile_size == 0)
 	{
@@ -1505,6 +1510,7 @@ static void file_prevlist(const char *filename, const char *fullname)
 	}
       else
 	{
+	  int i;
 	  prevnames = (char **)REALLOC(prevnames, new_size * sizeof(char *));
 	  prevfullnames = (char **)REALLOC(prevfullnames, new_size * sizeof(char *));
 	  prevtimes = (int *)REALLOC(prevtimes, new_size * sizeof(int));
@@ -1534,12 +1540,12 @@ static void file_prevlist(const char *filename, const char *fullname)
 void add_directory_to_prevlist(const char *dirname)
 {
   dir *sound_files = NULL;
-  char *fullpathname = NULL;
-  char **fullnames;
-  int i, end;
   sound_files = find_sound_files_in_dir(dirname);
   if ((sound_files) && (sound_files->len > 0))
     {
+      char *fullpathname = NULL;
+      char **fullnames;
+      int i, end;
       fullpathname = (char *)CALLOC(FILENAME_MAX, sizeof(char));
       strcpy(fullpathname, dirname);
       if (dirname[strlen(dirname) - 1] != '/') 
@@ -1566,11 +1572,12 @@ void add_directory_to_prevlist(const char *dirname)
 
 static void add_to_previous_files(const char *shortname, const char *fullname)
 {
-  int i, j;
+  int i;
   file_prevlist(shortname, fullname);
   i = find_curfile_regrow(shortname);
   if (i != -1)
     {
+      int j;
       if (curnames[i]) FREE(curnames[i]);
       curnames[i] = NULL;
       for (j = i; j < curfile_end - 1; j++)
@@ -1596,9 +1603,9 @@ void init_curfiles(int size)
 
 static void add_to_current_files(const char *shortname)
 {
-  int i, new_size;
   if (curfile_end == curfile_size)
     {
+      int i, new_size;
       new_size = curfile_size + 32;
       if (curfile_size == 0)
 	curnames = (char **)CALLOC(new_size, sizeof(char *));
@@ -1690,12 +1697,13 @@ void clear_prevlist(void)
 void update_prevlist(void)
 {
   /* here we need the file's full name */
-  int i, j, fd;
   if (prevnames)
     {
+      int i, j;
       for (i = 0; i <= prevfile_end; i++)
 	if (prevnames[i]) 
 	  {
+	    int fd;
 	    fd = OPEN(prevfullnames[i], O_RDONLY, 0);
 	    if (fd == -1) 
 	      {
@@ -1769,11 +1777,11 @@ static int less_compare(const void *a, const void *b)
 
 void make_prevfiles_list_1(void)
 {
-  heapdata **data;
-  int i, len;
   update_prevlist();
   if (prevfile_end >= 0)
     {
+      heapdata **data;
+      int i, len;
       len = prevfile_end + 1;
       data = (heapdata **)CALLOC(len, sizeof(heapdata *));
       for (i = 0; i < len; i++)
@@ -1859,7 +1867,6 @@ static XEN g_previous_files_sort_procedure(void)
 static XEN g_set_previous_files_sort_procedure(XEN proc)
 {
   char *error = NULL;
-  XEN errstr;
   if (XEN_PROCEDURE_P(ss->file_sort_proc))
     snd_unprotect(ss->file_sort_proc);
   ss->file_sort_proc = XEN_UNDEFINED;
@@ -1876,6 +1883,7 @@ static XEN g_set_previous_files_sort_procedure(XEN proc)
     }
   else 
     {
+      XEN errstr;
       set_file_sort_sensitive(false);
       errstr = C_TO_XEN_STRING(error);
       FREE(error);
@@ -2108,14 +2116,14 @@ typedef struct {
 
 static bool check_for_same_name(snd_info *sp1, void *ur_info)
 {
-  int i;
-  chan_info *cp;
   same_name_info *info = (same_name_info *)ur_info;
   if ((sp1) && (strcmp(sp1->filename, info->filename) == 0))
     {
+      int i;
       info->sp = sp1;
       for (i = 0; i < sp1->nchans; i++) 
 	{
+	  chan_info *cp;
 	  cp = sp1->chans[i];
 	  if (info->edits < cp->edit_ctr) 
 	    info->edits = cp->edit_ctr;
@@ -2130,7 +2138,7 @@ bool saved_file_needs_update(snd_info *sp, char *str, save_dialog_t save_type, i
   /* only from save-as dialog where type/format are known to be writable */
   /* returns true if new file not yet opened, false if opened (same name as old) or if cancelled by error of some sort */
   same_name_info *collision = NULL;
-  char *fullname, *ofile;
+  char *fullname;
   int result = 0;
   bool needs_update = true;
   if (sp) clear_minibuffer(sp);
@@ -2145,6 +2153,7 @@ bool saved_file_needs_update(snd_info *sp, char *str, save_dialog_t save_type, i
     }
   if (strcmp(fullname, sp->filename) == 0)
     {
+      char *ofile;
       /* normally save-as saves the current edit tree, merely saving the current state
        * in a separate, presumably inactive file; here we're being asked to overwrite
        * the current file in save-as; we can't have it both ways -- we'll save the edits 
@@ -2220,10 +2229,7 @@ bool saved_file_needs_update(snd_info *sp, char *str, save_dialog_t save_type, i
 void edit_header_callback(snd_info *sp, file_data *edit_header_data)
 {
   /* this blindly changes the header info -- it does not actually reformat the data or whatever */
-  int err, chans, srate, type, format;
-  off_t loc, samples;
-  char *comment, *original_comment = NULL;
-  file_info *hdr;
+  int err;
   if (sp->read_only)
     {
       snd_error(_("%s is write-protected"), sp->filename);
@@ -2236,6 +2242,10 @@ void edit_header_callback(snd_info *sp, file_data *edit_header_data)
 #endif
   if (err == 0)
     {
+      off_t loc, samples;
+      char *comment, *original_comment = NULL;
+      file_info *hdr;
+      int chans, srate, type, format;
       hdr = sp->hdr;
       original_comment = mus_sound_comment(sp->filename);
       if ((hdr->type == MUS_AIFF) || (hdr->type == MUS_AIFC)) mus_header_set_full_aiff_loop_info(mus_sound_loop_info(sp->filename));
@@ -2541,7 +2551,6 @@ static XEN g_soundfont_info(XEN snd)
 each inner list has the form: (name start loopstart loopend)"
 
   XEN inlist = XEN_EMPTY_LIST, outlist = XEN_EMPTY_LIST;
-  int i, lim;
   snd_info *sp;
   ASSERT_SOUND(S_soundfont_info, snd, 1);
   sp = get_sp(snd, NO_PLAYERS);
@@ -2550,6 +2559,7 @@ each inner list has the form: (name start loopstart loopend)"
   mus_header_read(sp->filename);
   if (mus_header_type() == MUS_SOUNDFONT)
     {
+      int i, lim;
       lim = mus_header_sf2_entries();
       if (lim > 0)
 	for (i = lim - 1; i >= 0; i--)
@@ -2587,9 +2597,7 @@ static XEN g_preload_file(XEN file)
 static XEN g_sound_files_in_directory(XEN dirname)
 {
   #define H_sound_files_in_directory "(" S_sound_files_in_directory " (directory \".\")): return a list of the sound files in 'directory'"
-  dir *dp = NULL;
   char *name = NULL;
-  int i;
   XEN res = XEN_EMPTY_LIST;
   XEN_ASSERT_TYPE(XEN_STRING_IF_BOUND_P(dirname), dirname, XEN_ONLY_ARG, S_sound_files_in_directory, "a string");
   if (XEN_STRING_P(dirname))
@@ -2597,9 +2605,11 @@ static XEN g_sound_files_in_directory(XEN dirname)
   else name = ".";
   if (name)
     {
+      dir *dp = NULL;
       dp = find_sound_files_in_dir(name);
       if (dp)
 	{
+	  int i;
 	  for (i = dp->len - 1; i >= 0; i--)
 	    res = XEN_CONS(C_TO_XEN_STRING(dp->files[i]), res);
 	  free_dir(dp);

@@ -37,9 +37,9 @@ int num_colormaps(void)
 
 static cmap *delete_cmap(int index)
 {
-  cmap *c;
   if (is_colormap(index))
     {
+      cmap *c;
       c = cmaps[index];
       if (c->r) FREE(c->r);
       if (c->g) FREE(c->g);
@@ -65,9 +65,9 @@ static unsigned short *Floats_to_ushorts(int size, Float *data)
 
 void get_current_color(int index, int n, unsigned short *r, unsigned short *g, unsigned short *b)
 {
-  cmap *c;
   if (is_colormap(index))
     {
+      cmap *c;
       c = cmaps[index];
       if (color_map_size(ss) != c->size)
 	{
@@ -110,11 +110,11 @@ static cmap *new_cmap(const char *name, int size, Float **rgb)
 static cmap *make_builtin_cmap(int size, const char *name, Float** (*make_rgb)(int size, XEN ignored))
 {
   Float **rgb;
-  int i;
   cmap *c = NULL;
   rgb = make_rgb(size, XEN_FALSE);
   if (rgb)
     {
+      int i;
       c = new_cmap(name, size, rgb);
       c->make_rgb = make_rgb;
       c->lambda = XEN_FALSE;
@@ -136,15 +136,15 @@ static Float **make_base_rgb(int size)
 
 static Float **make_xen_colormap(int size, XEN lambda)
 {
-  Float **rgb = NULL;
   XEN xrgb;
-  vct *xr, *xg, *xb;
-  int i, gc_loc;
+  Float **rgb = NULL;
   xrgb = XEN_CALL_1(lambda,
 		    C_TO_XEN_INT(size),
 		    "colormap maker");
   if (XEN_LIST_P(xrgb))
     {
+      vct *xr, *xg, *xb;
+      int i, gc_loc;
       /* user-defined colormap func returns a list of 3 vcts (r g b) */
       gc_loc = snd_protect(xrgb);
       if (!(vct_p(XEN_LIST_REF(xrgb, 0)))) 

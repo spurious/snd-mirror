@@ -76,12 +76,12 @@ void draw_lines (axis_context *ax, GdkPoint *points, int num)
 
 void draw_points (axis_context *ax, GdkPoint *points, int num, int size)
 {
-  int i, size2;
   if (num == 0) return;
   if (size == 1)
     gdk_draw_points(ax->wn, ax->gc, points, num);
   else
     {
+      int i, size2;
       size2 = size / 2;
       for (i = 0; i < num; i++) 
 	gdk_draw_arc(ax->wn, ax->gc, true, points[i].x - size2, points[i].y - size2, size, size, 0, 360 * 64);
@@ -156,7 +156,7 @@ void set_grf_point(Locus xi, int j, Locus yi)
 
 void draw_both_grf_points(int dot_size, axis_context *ax, int j, graph_style_t graph_style)
 {
-  int i, size8, size4;
+  int i;
   switch (graph_style)
     {
     case GRAPH_LINES:
@@ -187,6 +187,7 @@ void draw_both_grf_points(int dot_size, axis_context *ax, int j, graph_style_t g
 	}
       else
 	{
+	  int size8, size4;
 	  size8 = dot_size / 8;
 	  size4 = dot_size / 4;
 	  if (size4 < 1) size4 = 1;
@@ -200,7 +201,7 @@ void draw_both_grf_points(int dot_size, axis_context *ax, int j, graph_style_t g
 
 void draw_grf_points(int dot_size, axis_context *ax, int j, axis_info *ap, Float y0, graph_style_t graph_style)
 {
-  int i, gy0, size8, size4;
+  int i, gy0;
   switch (graph_style)
     {
     case GRAPH_LINES: draw_lines(ax, points, j); break;
@@ -219,6 +220,7 @@ void draw_grf_points(int dot_size, axis_context *ax, int j, axis_info *ap, Float
 	}
       else
 	{
+	  int size8, size4;
 	  size8 = dot_size / 8;
 	  size4 = dot_size / 4;
 	  if (size4 < 1) size4 = 1;
@@ -488,9 +490,9 @@ void set_sono_rectangle(int j, int color, Locus x, Locus y, Latus width, Latus h
 
 void allocate_sono_rects(int size)
 {
-  int i;
   if (size != sono_bins)
     {
+      int i;
       for (i = 0; i < sono_colors; i++)
 	{
 	  if ((sono_bins > 0) && (sono_data[i])) 
@@ -503,11 +505,11 @@ void allocate_sono_rects(int size)
 
 void allocate_color_map(int colormap)
 {
-  int i;
-  GdkColormap *cmap;
-  GdkColor tmp_color;
   if (grays_allocated != colormap)
     {
+      int i;
+      GdkColormap *cmap;
+      GdkColor tmp_color;
       cmap = gdk_colormap_get_system();
       if (grays_allocated != -1) 
 	for (i = 0; i < grays_size; i++) 
@@ -604,14 +606,12 @@ static void list_color_callback(GtkTreeSelection *selection, gpointer *gp)
 {
   GtkTreeIter iter;
   gchar *value = NULL;
-  int i, size;
-
   GtkTreeModel *model;
   if (!(gtk_tree_selection_get_selected(selection, &model, &iter))) return;
   gtk_tree_model_get(model, &iter, 0, &value, -1);
-
   if (value)
     {
+      int i, size;
       size = num_colormaps();
       for (i = 0; i < size; i++)
 	if ((colormap_name(i)) &&
@@ -669,11 +669,11 @@ static gint delete_color_dialog(GtkWidget *w, GdkEvent *event, gpointer context)
 
 void reflect_color_list(bool setup_time)
 {
-  int i, size;
-  GtkTreeIter iter;
-  GtkListStore *model;
   if ((ccd) && (ccd->list))
     {
+      int i, size;
+      GtkTreeIter iter;
+      GtkListStore *model;
       size = num_colormaps();
       model = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(ccd->list)));
       gtk_list_store_clear(model);
@@ -687,11 +687,11 @@ void reflect_color_list(bool setup_time)
 
 static void start_view_color_dialog(bool managed)
 {
-  GtkWidget *light_label, *dark_label, *help_button, *dismiss_button;
-  GtkWidget *outer_table, *scale_box, *cutoff_box, *cutoff_label, *colormap_box;
-
   if (!ccd)
     {
+      GtkWidget *light_label, *dark_label, *help_button, *dismiss_button;
+      GtkWidget *outer_table, *scale_box, *cutoff_box, *cutoff_label, *colormap_box;
+
       /* create color chooser dialog window */
       ccd = (color_chooser_info *)CALLOC(1, sizeof(color_chooser_info));
       ccd->dialog = snd_gtk_dialog_new();
@@ -1053,12 +1053,13 @@ static void start_view_orientation_dialog(bool managed)
   #define XX_PAD 0
   #define YY_PAD 0
 
-  GtkWidget *outer_table, *dismiss_button, *help_button, *reset_button;
-  GtkWidget *ax_box, *ay_box, *az_box, *sx_box, *sy_box, *sz_box, *hop_box, *cut_box;
-  GtkWidget *ax_label, *ay_label, *az_label, *sx_label, *sy_label, *sz_label, *hop_label, *cut_label;
   /* set up dialog with table 8 by 2 */
   if (!oid)
     {
+      GtkWidget *outer_table, *dismiss_button, *help_button, *reset_button;
+      GtkWidget *ax_box, *ay_box, *az_box, *sx_box, *sy_box, *sz_box, *hop_box, *cut_box;
+      GtkWidget *ax_label, *ay_label, *az_label, *sx_label, *sy_label, *sz_label, *hop_label, *cut_label;
+
       /* create orientation window */
       oid = (orientation_info *)CALLOC(1, sizeof(orientation_info));
       oid->dialog = snd_gtk_dialog_new();

@@ -31,9 +31,9 @@ env *free_env(env *e)
 
 env *copy_env(env *e)
 {
-  env *ne;
   if (e)
     {
+      env *ne;
       ne = (env *)CALLOC(1, sizeof(env));
       ne->pts = e->pts;
       ne->data_size = e->pts * 2;
@@ -60,12 +60,12 @@ bool envs_equal(env *e1, env *e2)
 
 char *env_to_string(env *e)
 {
-  int i, j, len;
-  bool first = true;
-  char *expr_buf;
   char *news = NULL;
   if (e)
     {
+      int i, j, len;
+      bool first = true;
+      char *expr_buf;
       len = 4 + (e->pts * 2 * 16);
       news = (char *)CALLOC(len, sizeof(char));
 #if HAVE_RUBY
@@ -502,7 +502,6 @@ void env_editor_display_env(env_editor *edp, env *e, axis_context *ax, const cha
   Float ex0, ey0, ex1, ey1, val;
   int ix0, ix1, iy0, iy1, size = 0, lx0, lx1, ly0, ly1, index = 0;
   Float env_val, curx, xincr;
-  mus_any *ce;
   int dur;
   axis_info *ap;
   if (e)
@@ -652,6 +651,7 @@ void env_editor_display_env(env_editor *edp, env *e, axis_context *ax, const cha
 		  env_editor_set_current_point(edp, j, grf_x(e->data[i], ap), grf_y(e->data[i + 1], ap));
 
 	      /* exponential case */
+	      mus_any *ce;
 	      dur = width / EXP_SEGLEN;
 	      old_error_handler = mus_error_set_handler(local_mus_error);
 	      ce = mus_make_env(e->data, e->pts, 1.0, 0.0, e->base, 0.0, 0, dur - 1, NULL);
@@ -858,7 +858,6 @@ void view_envs(int env_window_width, int env_window_height, printing_t printing)
 
 int hit_env(int xe, int ye, int env_window_width, int env_window_height)
 {
-  int cols, rows, i, j, width, height, x, y, k;
   if (all_envs_top == 0)
     return(-1);
   else
@@ -867,6 +866,7 @@ int hit_env(int xe, int ye, int env_window_width, int env_window_height)
 	return(0);
       else
 	{
+	  int cols, rows, i, j, width, height, x, y, k;
 	  cols = snd_round(sqrt((Float)(all_envs_top * env_window_width) / (Float)env_window_height));
 	  rows = snd_round((Float)all_envs_top / (Float)cols);
 	  if ((rows * cols) < all_envs_top) rows++;
@@ -978,12 +978,12 @@ env *enved_all_envs(int pos) {return(all_envs[pos]);}
 
 static void add_envelope(char *name, env *val)
 {
-  int i;
   if (all_envs_top == all_envs_size)
     {
       all_envs_size += 16;
       if (all_envs)
 	{
+	  int i;
 	  all_envs = (env **)REALLOC(all_envs, all_envs_size * sizeof(env *));
 	  all_names = (char **)REALLOC(all_names, all_envs_size * sizeof(char *));
 	  for (i = all_envs_size - 16; i < all_envs_size; i++) {all_names[i] = NULL; all_envs[i] = NULL;}
@@ -1007,10 +1007,11 @@ static void add_envelope(char *name, env *val)
 
 void delete_envelope(char *name)
 {
-  int i, pos;
+  int pos;
   pos = find_env(name);
   if (pos != -1)
     {
+      int i;
       if (all_names[pos]) FREE(all_names[pos]);
       for (i = pos; i < all_envs_size - 1; i++)
 	{
@@ -1288,10 +1289,11 @@ env *enved_next_env(void)
 
 char *env_name_completer(char *text)
 {
-  int i, j, len, curlen, matches = 0;
+  int matches = 0;
   char *current_match = NULL;
   if ((all_envs) && (text) && (*text))
     {
+      int i, j, len, curlen;
       len = strlen(text);
       for (i = 0; i < all_envs_top; i++)
 	if (strncmp(text, all_names[i], len) == 0)
@@ -1320,10 +1322,10 @@ char *env_name_completer(char *text)
 
 void save_envelope_editor_state(FILE *fd)
 {
-  char *estr;
   int i;
   for (i = 0; i < all_envs_top; i++)
     {
+      char *estr;
       estr = env_to_string(all_envs[i]);
       if (estr)
 	{
@@ -1340,18 +1342,20 @@ void save_envelope_editor_state(FILE *fd)
 
 env *xen_to_env(XEN res)
 {
-  XEN el, lst;
-  int i, len = 0;
-  Float *data;
   env *rtn = NULL;
   if (XEN_LIST_P(res))
     {
+      int len = 0;
       len = XEN_LIST_LENGTH(res);
       if (len > 0)
 	{
+	  int i;
+	  Float *data;
+	  XEN lst;
 	  data = (Float *)CALLOC(len, sizeof(Float));
 	  for (i = 0, lst = XEN_COPY_ARG(res); i < len; i++, lst = XEN_CDR(lst))
 	    {
+	      XEN el;
 	      el = XEN_CAR(lst);
 	      if (XEN_NUMBER_P(el))
 		data[i] = XEN_TO_C_DOUBLE(el);
@@ -1370,11 +1374,12 @@ static bool x_increases(XEN res)
 {
   int i, len;
   XEN lst;
-  Float x, nx;
+  Float x;
   len = XEN_LIST_LENGTH(res);
   x = XEN_TO_C_DOUBLE(XEN_CAR(res));
   for (i = 2, lst = XEN_CDDR(XEN_COPY_ARG(res)); i < len; i += 2, lst = XEN_CDDR(lst))
     {
+      Float nx;
       nx = XEN_TO_C_DOUBLE(XEN_CAR(lst));
       if (x >= nx) return(false);
       x = nx;
@@ -1595,12 +1600,12 @@ static XEN enved_hook;
 
 static bool check_enved_hook(env *e, int pos, Float x, Float y, enved_point_t reason)
 {
-  XEN result = XEN_FALSE;
-  XEN procs, env_list;
   bool env_changed = false;
-  int len = 0;
   if (XEN_HOOKED(enved_hook))
     {
+      int len = 0;
+      XEN result = XEN_FALSE;
+      XEN procs, env_list;
       /* if hook procedure returns a list, that is the new contents of the
        * envelope -- if its length doesn't match current, we need to remake
        * current. Otherwise return 0, and assume the caller will handle default

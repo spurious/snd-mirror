@@ -937,7 +937,6 @@ GtkWidget *menu_widget(int which_menu)
 
 static void add_option(GtkWidget *w, int which_menu, char *label, int callb)
 {
-  int i;
   if (added_options_pos == added_options_size)
     {
       added_options_size += 8;
@@ -950,6 +949,7 @@ static void add_option(GtkWidget *w, int which_menu, char *label, int callb)
 	}
       else
 	{
+	  int i;
 	  added_options = (GtkWidget **)REALLOC(added_options, added_options_size * sizeof(GtkWidget *));
 	  added_options_names = (char **)REALLOC(added_options_names, added_options_size * sizeof(char *));
 	  added_options_menus = (int *)REALLOC(added_options_menus, added_options_size * sizeof(int));
@@ -1073,23 +1073,21 @@ static bool stopping = false;
 static void popup_play_callback(GtkWidget *w, gpointer info) 
 {
   snd_info *sp;
-      {
-      sp = any_selected_sound();
-      if (stopping)
+  sp = any_selected_sound();
+  if (stopping)
+    {
+      stop_playing_all_sounds(PLAY_BUTTON_UNSET);
+      stopping = false;
+      set_button_label(w, _("Play"));
+      if (sp) set_play_button(sp, false);
+    }
+  else
+    {
+      if (sp)
 	{
-	  stop_playing_all_sounds(PLAY_BUTTON_UNSET);
-	  stopping = false;
-	  set_button_label(w, _("Play"));
-	  if (sp) set_play_button(sp, false);
-	}
-      else
-	{
-	  if (sp)
-	    {
-	      play_sound(sp, 0, NO_END_SPECIFIED, IN_BACKGROUND, C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), "popup play", 0);
-	      stopping = true;
-	      set_button_label(w, _("Stop playing"));
-	    }
+	  play_sound(sp, 0, NO_END_SPECIFIED, IN_BACKGROUND, C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), "popup play", 0);
+	  stopping = true;
+	  set_button_label(w, _("Stop playing"));
 	}
     }
   gtk_widget_hide(popup_menu);
@@ -1123,19 +1121,17 @@ static void popup_redo_callback(GtkWidget *w, gpointer info)
 static void popup_info_callback(GtkWidget *w, gpointer info) 
 {
   snd_info *sp;
-      {
-      sp = any_selected_sound();
-      if (sp) display_info(sp);
-    }
+  sp = any_selected_sound();
+  if (sp) display_info(sp);
   gtk_widget_hide(popup_menu);
 }
 
 static void create_popup_menu(guint button, Tempus time)
 {
-  bool undo_possible = false, redo_possible = false;
-  chan_info *selcp = NULL;
   if (!popup_menu)
     {
+      bool undo_possible = false, redo_possible = false;
+      chan_info *selcp = NULL;
       selcp = selected_channel();
       if (selcp)
 	{

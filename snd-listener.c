@@ -225,10 +225,10 @@ static XEN provide_listener_help_1(char *source, int start, int end)
 
 XEN provide_listener_help(char *source)
 {
-  int i, len, j, start_of_name = -1;
-  char *prompt;
   if (source)
     {
+      int i, len;
+      char *prompt;
       len = snd_strlen(source);
       /* look for "(name...)" or "\n>name" */
       prompt = listener_prompt(ss);
@@ -237,6 +237,7 @@ XEN provide_listener_help(char *source)
 	  if ((source[i] == '(') || 
 	      ((source[i] == prompt[0]) && ((i == 0) || (source[i - 1] == '\n'))))
 	    {
+	      int j, start_of_name = -1;
 	      start_of_name = i + 1;
 	      /* look forward for a name */
 	      for (j = i + 2; j < len; j++)
@@ -287,7 +288,6 @@ static int *listener_positions = NULL;
 
 static void add_listener_position(int pos)
 {
-  int i;
   if (listener_positions_size == 0)
     {
       listener_positions_size = 32;
@@ -296,6 +296,7 @@ static void add_listener_position(int pos)
     }
   else
     {
+      int i;
       if (pos > listener_positions[current_listener_position])
 	{
 	  current_listener_position++;

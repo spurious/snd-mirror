@@ -55,14 +55,13 @@ static void deferred_region_to_temp_file(region *r);
 
 static void free_region(region *r, int complete)
 {
-  snd_info *sp;
-  int i;
   /* if not complete, just clear out old data (edited region being saved) */
   if (r)
     {
       release_region_readers(r->id);
       if ((complete == COMPLETE_DELETION) && (r->editor_copy))
 	{
+	  snd_info *sp;
 	  sp = r->editor_copy; 
 	  sp->edited_region = NULL;
 	  r->editor_copy = NULL;
@@ -76,6 +75,7 @@ static void free_region(region *r, int complete)
 	  if (r->lens) FREE(r->lens);
 	  if (r->amp_envs)
 	    {
+	      int i;
 	      for (i = 0; i < r->chans; i++)
 		if (r->amp_envs[i]) 
 		  r->amp_envs[i] = free_env_info(r->amp_envs[i]);
@@ -220,14 +220,14 @@ Float region_maxamp(int n)
 static Float region_sample(int reg, int chn, off_t samp)
 {
   region *r;
-  snd_fd *sf;
-  Float val;
-  deferred_region *drp;
   r = id_to_region(reg);
   if (r)
     {
       if ((samp < r->frames) && (chn < r->chans)) 
 	{
+	  snd_fd *sf;
+	  Float val;
+	  deferred_region *drp;
 	  switch (r->use_temp_file)
 	    {
 	    case REGION_FILE:
@@ -264,14 +264,14 @@ off_t region_current_location(snd_fd *fd)
 static void region_samples(int reg, int chn, off_t beg, off_t num, Float *data)
 {
   region *r;
-  snd_fd *sf;
-  off_t i, j = 0;
-  deferred_region *drp;
   r = id_to_region(reg);
   if (r)
     {
       if ((beg < r->frames) && (chn < r->chans))
 	{
+	  snd_fd *sf;
+	  off_t i, j = 0;
+	  deferred_region *drp;
 	  switch (r->use_temp_file)
 	    {
 	    case REGION_FILE:
@@ -321,10 +321,8 @@ static int check_regions(void)
 static void make_region_readable(region *r)
 {
   snd_info *regsp;
-  chan_info *cp;
   file_info *hdr;
-  snd_io *io;
-  int i, fd;
+  int i;
   if (r->use_temp_file == REGION_DEFERRED) 
     deferred_region_to_temp_file(r);
   if (r->rsp) return;
@@ -341,6 +339,7 @@ static void make_region_readable(region *r)
   hdr->comment = NULL;
   for (i = 0; i < r->chans; i++)
     {
+      chan_info *cp;
       cp = make_chan_info(NULL, i, regsp);
       regsp->chans[i] = cp;
       add_channel_data_1(cp, r->srate, r->frames, WITHOUT_GRAPH);
@@ -352,6 +351,8 @@ static void make_region_readable(region *r)
       hdr = make_file_info(r->filename);
       if (hdr)
 	{
+	  snd_io *io;
+	  int fd;
 	  fd = snd_open_read(r->filename);
 	  mus_file_open_descriptors(fd,
 				    r->filename,
@@ -376,16 +377,16 @@ static void make_region_readable(region *r)
 file_info *fixup_region_data(chan_info *cp, int chan, int pos)
 {
   /* for region browser labels */
-  region *r;
-  snd_info *nsp;
-  chan_info *ncp;
   if ((pos >= 0) && 
       (pos < regions_size) &&
       (regions[pos]))
     {
+      region *r;
       r = regions[pos];
       if (chan < r->chans)
 	{
+	  snd_info *nsp;
+	  chan_info *ncp;
 	  make_region_readable(r);
 	  nsp = r->rsp;
 	  ncp = nsp->chans[chan];
@@ -417,15 +418,16 @@ file_info *fixup_region_data(chan_info *cp, int chan, int pos)
 void for_each_region_chan(void (*func)(chan_info *, void *), void *userptr)
 {
   /* used only in snd-io.c to remove dangling temp files (probably can't actually happen) */
-  int i, chn;
-  region *r;
-  chan_info *cp;
+  int i;
   for (i = 0; i < regions_size; i++)
     {
+      int chn;
+      region *r;
       r = regions[i];
       if ((r) && (r->rsp) && (r->use_temp_file == REGION_FILE))
 	for (chn = 0; chn < r->chans; chn++)
 	  {
+	    chan_info *cp;
 	    cp = r->rsp->chans[chn];
 	    (*func)(cp, userptr);
 	  }
@@ -436,8 +438,6 @@ region_state *region_report(void)
 {
   region_state *rs;
   int i, len;
-  char *reg_buf;
-  region *r;
   rs = (region_state *)CALLOC(1, sizeof(region_state));
   len = regions_size;
   for (i = 0; i < regions_size; i++) 
@@ -451,6 +451,8 @@ region_state *region_report(void)
   rs->name = (char **)CALLOC(len, sizeof(char *));
   for (i = 0; i < len; i++)
     {
+      region *r;
+      char *reg_buf;
       r = regions[i];
       reg_buf = (char *)CALLOC(LABEL_BUFFER_SIZE, sizeof(char));
       mus_snprintf(reg_buf, LABEL_BUFFER_SIZE, "%d: %s (%s:%s)", r->id, r->name, r->start, r->end);
@@ -461,9 +463,9 @@ region_state *region_report(void)
 
 void free_region_state (region_state *r)
 {
-  int i;
   if (r)
     {
+      int i;
       for (i = 0; i < r->len; i++)
 	if (r->name[i]) 
 	  FREE(r->name[i]);
@@ -511,16 +513,16 @@ static void add_to_region_list(region *r)
 
 static int save_region_1(char *ofile, int type, int format, int srate, int reg, char *comment)
 {
-  int ofd, ifd, chans, i, comlen, err = 0;
-  off_t oloc, iloc, ioff, frames, cursamples;
-  mus_sample_t **bufs;
   region *r;
-  comlen = snd_strlen(comment);
   r = id_to_region(reg);
   if (r)
     {
+      off_t oloc, iloc, ioff, frames, cursamples;
+      int ofd, ifd, chans, i, comlen, err = 0;
+      mus_sample_t **bufs;
       if (r->use_temp_file == REGION_DEFERRED) 
 	deferred_region_to_temp_file(r);
+      comlen = snd_strlen(comment);
       if ((snd_write_header(ofile, type, srate, r->chans, 28, r->chans * r->frames, format, comment, comlen, NULL)) == -1)
 	return(MUS_HEADER_WRITE_FAILED);
       oloc = mus_header_data_location();
@@ -604,10 +606,7 @@ static int paste_region_1(int n, chan_info *cp, bool add, off_t beg, const char 
 {
   region *r;
   int i, err = MUS_NO_ERROR, id = -1;
-  sync_info *si;
-  chan_info *ncp;
-  char *tempfile = NULL;
-  si = NULL;
+  sync_info *si = NULL;
   r = id_to_region(n);
   if ((r == NULL) || (r->frames == 0)) return(INVALID_REGION);
   if (!(editable_p(cp))) return(NOT_EDITABLE);
@@ -629,6 +628,7 @@ static int paste_region_1(int n, chan_info *cp, bool add, off_t beg, const char 
     }
   else
     {
+      char *tempfile = NULL;
       if (r->use_temp_file == REGION_FILE)
 	{
 	  tempfile = snd_tempnam();
@@ -646,6 +646,7 @@ static int paste_region_1(int n, chan_info *cp, bool add, off_t beg, const char 
 	}
       for (i = 0; ((i < r->chans) && (i < si->chans)); i++)
 	{
+	  chan_info *ncp;
 	  ncp = si->cps[i];                       /* currently syncd chan that we might paste to */
 	  if (file_insert_samples(beg, r->frames, tempfile, ncp, i,
 				  (r->chans > 1) ? MULTICHANNEL_DELETION : DELETE_ME,
@@ -671,7 +672,6 @@ int define_region(sync_info *si, off_t *ends)
   chan_info *cp0;
   snd_info *sp0;
   region *r;
-  env_info *ep;
   deferred_region *drp;
   len = 0;
   for (i = 0; i < si->chans; i++)
@@ -714,6 +714,7 @@ int define_region(sync_info *si, off_t *ends)
       if ((r->lens[i] > AMP_ENV_CUTOFF) &&
 	  (drp->cps[i]->amp_envs))
 	{
+	  env_info *ep;
 	  ep = drp->cps[i]->amp_envs[drp->edpos[i]];
 	  if ((ep) && (ep->completed))
 	    {
@@ -866,12 +867,13 @@ void sequester_deferred_regions(chan_info *cp, int edit_top)
 {
   region *r;
   deferred_region *drp;
-  int i, j;
+  int i;
   for (i = 0; i < regions_size; i++)
     {
       r = regions[i];
       if ((r) && (r->use_temp_file == REGION_DEFERRED))
 	{
+	  int j;
 	  drp = r->dr;
 	  for (j = 0; j < drp->chans; j++)
 	    if ((drp->cps[j] == cp) &&
@@ -892,7 +894,6 @@ snd_fd *init_region_read (off_t beg, int n, int chan, read_direction_t direction
 {
   /* conjure up a reasonable looking ed list and sound list */
   region *r;
-  deferred_region *drp;
   r = id_to_region(n);
   if ((r) && (chan < r->chans))
     {
@@ -901,6 +902,7 @@ snd_fd *init_region_read (off_t beg, int n, int chan, read_direction_t direction
 	beg = r->frames - 1;
       if (r->use_temp_file == REGION_DEFERRED)
 	{
+	  deferred_region *drp;
 	  drp = r->dr;
 	  return(init_sample_read_any(r->begs[chan] + beg, drp->cps[chan], direction, drp->edpos[chan]));
 	}
@@ -916,9 +918,9 @@ snd_fd *init_region_read (off_t beg, int n, int chan, read_direction_t direction
 void cleanup_region_temp_files(void)
 { /* called upon exit to get rid of lingering region-related temp files */
   int i;
-  region *r;
   for (i = 0; i < regions_size; i++)
     {
+      region *r;
       r = regions[i];
       if ((r) && 
 	  (r->use_temp_file == REGION_FILE) && 
@@ -945,13 +947,13 @@ int snd_regions(void)
 void save_regions(FILE *fd)
 {
   int i;
-  region *r;
-  char *newname;
   for (i = 0; i < regions_size; i++)
     {
+      region *r;
       r = regions[i];
       if (r)
 	{
+	  char *newname;
 	  char *ofile = NULL;
 #if HAVE_RUBY
 	  fprintf(fd, "%s(%d, %d, " OFF_TD ", %d, %.4f, \"%s\", \"%s\", \"%s\", ",
@@ -979,9 +981,6 @@ void region_edit(int pos)
    *   if 'save', save temp file and update region (browser also) (cancelling active display if any)
    *   while editing, if delete in browser, cut backpointer in editor and signal it
    */
-  char *temp_region_name;
-  snd_info *sp;
-  int err;
   region *r = NULL;
   if ((pos >= 0) && 
       (pos < regions_size) &&
@@ -993,12 +992,15 @@ void region_edit(int pos)
 	snd_error(_("region %d already being edited"), r->id);
       else
 	{
+	  int err;
+	  char *temp_region_name;
 	  if (r->use_temp_file == REGION_DEFERRED) 
 	    deferred_region_to_temp_file(r);
 	  temp_region_name = shorter_tempnam(temp_dir(ss), "region-");
 	  err = copy_file(r->filename, temp_region_name);
 	  if (err == MUS_NO_ERROR)
 	    {
+	      snd_info *sp;
 	      sp = snd_open_file(temp_region_name, false);
 	      if (sp)
 		{
@@ -1022,9 +1024,9 @@ void region_edit(int pos)
 
 void clear_region_backpointer(snd_info *sp)
 {
-  region *r;
   if (sp->edited_region)
     {
+      region *r;
       r = (region *)(sp->edited_region);
       if (r)
 	{
@@ -1042,7 +1044,6 @@ void save_region_backpointer(snd_info *sp)
   /* region being edited, user chose 'save' */
   region *r;
   int i, err;
-  Float val;
   r = (region *)(sp->edited_region);
   /* update r's data in file, deleting old, redisplay if browser active etc */
   if (r == regions[0]) deactivate_selection();
@@ -1052,6 +1053,7 @@ void save_region_backpointer(snd_info *sp)
   r->frames = CURRENT_SAMPLES(sp->chans[0]);
   for (i = 0; i < sp->nchans; i++)
     {
+      Float val;
       val = get_maxamp(sp, sp->chans[i], AT_CURRENT_EDIT_POSITION);
       if (val > r->maxamp) r->maxamp = val;
     }
@@ -1289,17 +1291,17 @@ static XEN g_make_region(XEN beg, XEN end, XEN snd_n, XEN chn_n)
   #define H_make_region "(" S_make_region " (beg) (end) (snd #f) (chn #f)): make a new region between beg and end in snd, returning its id. \
 If chn is #t, all chans are included, taking the snd sync field into account if it's not 0.  If no args are passed, the current \
 selection is used."
-  chan_info *cp;
-  sync_info *si = NULL;
-  snd_info *sp;
-  off_t *ends = NULL;
-  off_t ibeg, iend;
   int id = INVALID_REGION, new_sync, old_sync, i;
   if (max_regions(ss) <= 0) return(XEN_FALSE);
   if (XEN_NOT_BOUND_P(beg))
     id = make_region_from_selection();
   else
     {
+      chan_info *cp;
+      sync_info *si = NULL;
+      snd_info *sp;
+      off_t ibeg, iend;
+      off_t *ends = NULL;
       XEN_ASSERT_TYPE(XEN_NUMBER_P(beg), beg, XEN_ARG_1, S_make_region, "a number");
       XEN_ASSERT_TYPE(XEN_NUMBER_P(end), end, XEN_ARG_2, S_make_region, "a number");
       ibeg = beg_to_sample(beg, S_make_region);
@@ -1480,7 +1482,7 @@ write region's samples starting at beg for samps in channel chan to vct v; retur
 
   Float *data;
   int reg, chn;
-  off_t len, beg;
+  off_t len;
   vct *v1 = get_vct(v);
   XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(beg_n), beg_n, XEN_ARG_1, S_region_samples_to_vct, "a number");
   XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(num), num, XEN_ARG_2, S_region_samples_to_vct, "a number");
@@ -1496,6 +1498,7 @@ write region's samples starting at beg for samps in channel chan to vct v; retur
   if (len == 0) len = region_len(reg);
   if (len > 0)
     {
+      off_t beg;
       beg = beg_to_sample(beg_n, S_region_samples_to_vct);
       if (beg >= region_len(reg)) 
 	return(XEN_FALSE);

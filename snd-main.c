@@ -548,10 +548,10 @@ static void save_property_list(FILE *fd, XEN property_list, int chan)
 
 static int find_sound_nth(snd_info *nsp)
 {
-  snd_info *sp;
   int i, which = 0;
   for (i = 0; i < nsp->index; i++)
     {
+      snd_info *sp;
       sp = ss->sounds[i];
       if ((sp) && (sp->inuse == SOUND_NORMAL))
 	if ((strcmp(nsp->short_filename, sp->short_filename) == 0) || 
@@ -1018,11 +1018,11 @@ static XEN g_save_state(XEN filename)
 {
   #define H_save_state "(" S_save_state " filename): save the current Snd state in filename; (load filename) restores it)"
   char *error;
-  XEN result;
   XEN_ASSERT_TYPE(XEN_STRING_P(filename), filename, XEN_ONLY_ARG, S_save_state, "a string");
   error = save_state_or_error(XEN_TO_C_STRING(filename));
   if (error)
     {
+      XEN result;
       result = C_TO_XEN_STRING(error);
       FREE(error);
       XEN_ERROR(CANNOT_SAVE,

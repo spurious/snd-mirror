@@ -70,14 +70,15 @@ static void continue_macro (int keysym, int state)
 static named_macro *name_macro(char *name)
 {
   named_macro *nm;
-  int i, old_size;
   if (named_macro_ctr == named_macro_size)
     {
+      int old_size;
       old_size = named_macro_size;
       named_macro_size += 16;
       if (!named_macros) named_macros = (named_macro **)CALLOC(named_macro_size, sizeof(named_macro *));
       else 
 	{
+	  int i;
 	  named_macros = (named_macro **)REALLOC(named_macros, named_macro_size * sizeof(named_macro *));
 	  for (i = old_size; i < named_macro_size; i++) named_macros[i] = NULL;
 	}
@@ -93,13 +94,13 @@ static named_macro *name_macro(char *name)
 static void name_last_macro (char *name)
 {
   named_macro *nm;
-  macro_cmd *mc;
   int i;
   nm = name_macro(name);
   nm->macro_size = macro_size;
   nm->cmds = (macro_cmd **)CALLOC(macro_size, sizeof(macro_cmd *));
   for (i = 0; i < macro_size; i++)
     {
+      macro_cmd *mc;
       nm->cmds[i] = (macro_cmd *)CALLOC(1, sizeof(macro_cmd));
       mc = nm->cmds[i];
       mc->keysym = macro_cmds[i]->keysym;
@@ -136,21 +137,22 @@ static void save_macro_1(named_macro *nm, FILE *fd)
 #endif
 }
 
-static int execute_named_macro_1(chan_info *cp, char *name, off_t count)
+static bool execute_named_macro_1(chan_info *cp, char *name, off_t count)
 {
-  int i, k;
-  off_t j;
-  named_macro *nm;
-  macro_cmd *mc;
+  int k;
   for (k = 0; k < named_macro_ctr; k++)
     {
       if ((named_macros[k]->name) && 
 	  (strcmp(name, named_macros[k]->name) == 0))
 	{
+	  int i;
+	  off_t j;
+	  named_macro *nm;
 	  nm = named_macros[k];
 	  for (j = 0; j < count; j++)
 	    for (i = 0; i < nm->macro_size; i++) 
 	      {
+		macro_cmd *mc;
 		mc = nm->cmds[i];
 		if (mc->keysym != 0)
 		  {
@@ -159,20 +161,20 @@ static int execute_named_macro_1(chan_info *cp, char *name, off_t count)
 		    keyboard_command(cp, mc->keysym, mc->state);
 		  }
 	      }
-	  return(1);
+	  return(true);
 	}
     }
-  return(0);
+  return(false);
 }
 
 static void execute_named_macro(chan_info *cp, char *name, off_t count)
 {
-  int one_edit, i, loc, form_loc;
-  XEN form, result = XEN_UNDEFINED;
   if (!(execute_named_macro_1(cp, name, count)))
     /* not a macro...*/
     {
 #if HAVE_EXTENSION_LANGUAGE
+      int one_edit, i, loc, form_loc;
+      XEN form, result = XEN_UNDEFINED;
       one_edit = cp->edit_ctr + 1;
       form = string_to_form(name);
       form_loc = snd_protect(form);
@@ -320,9 +322,6 @@ static key_entry built_in_key_bindings[NUM_BUILT_IN_KEY_BINDINGS] = {
 
 char *key_binding_description(int key, int state, bool cx_extended)
 {
-#if HAVE_GUILE
-  XEN value, help_text = XEN_FALSE;
-#endif
   int pos;
   if ((key < MIN_KEY_CODE) || (key > MAX_KEY_CODE) ||
       (state < MIN_KEY_STATE) || (state > MAX_KEY_STATE))
@@ -332,6 +331,7 @@ char *key_binding_description(int key, int state, bool cx_extended)
   if (pos >= 0)
     {
 #if HAVE_GUILE
+      XEN value, help_text = XEN_FALSE;
       value = user_keymap[pos].func;
       help_text = XEN_PROCEDURE_HELP(value);            /* (procedure-property ...) */
       if (XEN_FALSE_P(help_text))
@@ -697,19 +697,11 @@ static chan_info *goto_next_graph (chan_info *cp, int count)
 
 void snd_minibuffer_activate(snd_info *sp, int keysym, bool with_meta)
 {
-  snd_info *nsp;
   bool s_or_r = false;
-  int nc, i, j, err;
-  off_t len;
+  int err;
   chan_info *active_chan;
-  char *str = NULL, *mcf = NULL;
-  char *newdir, *str1;
-  env *e;
-  mark *m;
-#if HAVE_OPENDIR
-  DIR *dp;
-#endif
-  XEN proc;
+  char *str = NULL;
+  char *str1;
   if ((keysym == snd_K_s) || (keysym == snd_K_r)) s_or_r = true;
   if (sp != selected_sound()) select_channel(sp, 0);
   active_chan = any_selected_channel(sp);
@@ -744,6 +736,7 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, bool with_meta)
 	  /* str = get_minibuffer_string(sp); */
 	  if ((str) && (*str))
 	    {
+	      XEN proc;
 	      /* check for procedure as arg, or lambda form:
 	       * (lambda (y) (> y .1)) 
 	       * if returns #t, search stops
@@ -774,6 +767,7 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, bool with_meta)
     {
       if (sp->marking) 
 	{
+	  mark *m;
 	  m = add_mark(sp->marking - 1, str, active_chan);
 	  if (m)
 	    {
@@ -815,12 +809,15 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, bool with_meta)
 	    {
 	      /* don't free(str) locally in this switch statement without setting it to null as well */
 	    case INPUT_FILING:
-	      nsp = snd_open_file(str, false); /* will post error if any */
-	      if (nsp) 
-		{
-		  select_channel(nsp, 0);
-		  clear_minibuffer(sp);
-		}
+	      {
+		snd_info *nsp;
+		nsp = snd_open_file(str, false); /* will post error if any */
+		if (nsp) 
+		  {
+		    select_channel(nsp, 0);
+		    clear_minibuffer(sp);
+		  }
+	      }
 	      break;
 	    case REGION_FILING:
 	      str1 = mus_expand_filename(str);
@@ -843,31 +840,38 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, bool with_meta)
 	      FREE(str1);
 	      break;
 	    case CHANNEL_FILING:
-	      err = save_channel_edits(active_chan, mcf = mus_expand_filename(str), C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), "C-x C-w", 0);
-	      if (err == MUS_NO_ERROR)
-		{
-		  clear_minibuffer(sp);
-		  report_in_minibuffer(sp, _("channel %d saved as %s"), 
-				       active_chan->chan,
-				       mcf);
-		}
-	      if (mcf) FREE(mcf);
+	      {
+		char *mcf;
+		err = save_channel_edits(active_chan, mcf = mus_expand_filename(str), C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), "C-x C-w", 0);
+		if (err == MUS_NO_ERROR)
+		  {
+		    clear_minibuffer(sp);
+		    report_in_minibuffer(sp, _("channel %d saved as %s"), 
+					 active_chan->chan,
+					 mcf);
+		  }
+		if (mcf) FREE(mcf);
+	      }
 	      break;
 #if HAVE_OPENDIR
 	    case TEMP_FILING:
-	      newdir = copy_string(str);
-	      clear_minibuffer(sp);
-	      dp = opendir(newdir);
-	      if (dp) 
-		{
-		  closedir(dp);
-		  set_temp_dir(newdir);
-		}
-	      else 
-		{
-		  report_in_minibuffer_and_save(sp, _("can't access %s! temp dir is unchanged"), newdir);
-		  if (newdir) FREE(newdir);
-		}
+	      {
+		DIR *dp;
+		char *newdir;
+		newdir = copy_string(str);
+		clear_minibuffer(sp);
+		dp = opendir(newdir);
+		if (dp) 
+		  {
+		    closedir(dp);
+		    set_temp_dir(newdir);
+		  }
+		else 
+		  {
+		    report_in_minibuffer_and_save(sp, _("can't access %s! temp dir is unchanged"), newdir);
+		    if (newdir) FREE(newdir);
+		  }
+	      }
 	      break;
 #endif
 	    case CHANGE_FILING:
@@ -875,26 +879,31 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, bool with_meta)
 	      mix_complete_file_at_cursor(sp, str, "C-x C-q", with_mix_tags(ss), 0);
 	      break;
 	    case INSERT_FILING:
-	      str1 = mus_expand_filename(str);
-	      nc = mus_sound_chans(str1);
-	      if (nc > 0)
-		{
-		  len = mus_sound_frames(str1);
-		  if (len == 0)
-		    report_in_minibuffer(sp, _("file %s has no data"), str);
-		  else
-		    {
-		      if (!active_chan) active_chan = sp->chans[0];
-		      for (i = active_chan->chan, j = 0; (j < nc) && (i < sp->nchans); i++, j++)
-			{
-			  if (file_insert_samples(CURSOR(active_chan), len, str1, sp->chans[i], j, DONT_DELETE_ME, "C-x C-i", sp->chans[i]->edit_ctr))
-			    update_graph(sp->chans[i]);
-			}
-		      clear_minibuffer(sp);
-		    }
-		}
-	      else report_in_minibuffer_and_save(sp, _("can't read %s's header"), str);
-	      FREE(str1);
+	      {
+		int nc;
+		str1 = mus_expand_filename(str);
+		nc = mus_sound_chans(str1);
+		if (nc > 0)
+		  {
+		    off_t len;
+		    len = mus_sound_frames(str1);
+		    if (len == 0)
+		      report_in_minibuffer(sp, _("file %s has no data"), str);
+		    else
+		      {
+			int i, j;
+			if (!active_chan) active_chan = sp->chans[0];
+			for (i = active_chan->chan, j = 0; (j < nc) && (i < sp->nchans); i++, j++)
+			  {
+			    if (file_insert_samples(CURSOR(active_chan), len, str1, sp->chans[i], j, DONT_DELETE_ME, "C-x C-i", sp->chans[i]->edit_ctr))
+			      update_graph(sp->chans[i]);
+			  }
+			clear_minibuffer(sp);
+		      }
+		  }
+		else report_in_minibuffer_and_save(sp, _("can't read %s's header"), str);
+		FREE(str1);
+	      }
 	      break;
 	    case MACRO_FILING: 
 	      if ((macro_cmds) && (macro_size > 0))
@@ -913,6 +922,7 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, bool with_meta)
 	}
       if (sp->amping)
 	{
+	  env *e;
 	  if (!active_chan) active_chan = sp->chans[0];
 	  e = string_to_env(str);
 	  if (e)
@@ -937,6 +947,7 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, bool with_meta)
 #if HAVE_EXTENSION_LANGUAGE
       if (sp->macroing)
 	{
+	  off_t len;
 	  len = CURSOR(active_chan);
 	  execute_named_macro(active_chan, str, sp->macroing);
 	  /* if this is a close command from the current minibuffer, the sound may not exist when we return */
@@ -955,6 +966,7 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, bool with_meta)
       int loc;
       if (snd_strlen(str) > 0)
 	{
+	  XEN proc;
 	  if (sp->raw_prompt)
 	    proc = C_TO_XEN_STRING(str);
 	  else proc = snd_catch_any(eval_str_wrapper, str, str);
@@ -981,9 +993,9 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, bool with_meta)
 
 static void stop_fft_in_progress(chan_info *cp)
 {
-  chan_context *cx;
   if ((cp) && (cp->cgx))
     {
+      chan_context *cx;
       cx = cp->cgx;
       if (cx->fft_in_progress) 
 	{
@@ -1003,10 +1015,10 @@ static void set_window_bounds(chan_info *cp, int count)
 {
   /* count = sample number to start at */
   axis_info *ap;
-  double sx;
   ap = cp->axis;
   if (ap->x_ambit != 0.0)
     {
+      double sx;
       sx = (((double)count / (double)SND_SRATE(cp->sound)) - ap->xmin) / ap->x_ambit;
       reset_x_display(cp, sx, ap->zx);
     }
@@ -1016,10 +1028,10 @@ static void set_window_size(chan_info *cp, int count)
 {
   /* set samples within window */
   axis_info *ap;
-  double zx;
   ap = cp->axis;
   if (ap->x_ambit != 0.0)
     {
+      double zx;
       zx = ((double)count / (((double)SND_SRATE(cp->sound)) * ap->x_ambit));
       reset_x_display(cp, ap->sx, zx);
     }
@@ -1039,12 +1051,12 @@ static void window_frames_selection(chan_info *cp)
 {
   double x0, x1;
   int i;
-  snd_info *sp;
   x0 = (((double)(selection_beg(cp))) / ((double)SND_SRATE(cp->sound)));
   x1 = x0 + ((double)(selection_len())) / ((double)(SND_SRATE(cp->sound)));
   set_x_axis_x0x1(cp, x0, x1);
   for (i = 0; i < ss->max_sounds; i++)
     {
+      snd_info *sp;
       sp = ss->sounds[i];
       if ((sp) && 
 	  (sp->inuse == SOUND_NORMAL) && 
@@ -1059,7 +1071,6 @@ static void window_frames_selection(chan_info *cp)
 static off_t get_count_1(char *number_buffer, int number_ctr, bool dot_seen, chan_info *cp)
 {
   /* allow floats here = secs */
-  float f;
   int i;
   if (number_ctr == 0) return(1); /* c-u followed by nothing = 1 */
   number_buffer[number_ctr] = '\0';
@@ -1071,6 +1082,7 @@ static off_t get_count_1(char *number_buffer, int number_ctr, bool dot_seen, cha
     }
   if (dot_seen)
     {
+      float f;
       sscanf(number_buffer, "%f", &f);
       return((off_t)(f * SND_SRATE(cp->sound)));
     }
@@ -1159,14 +1171,12 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
   static bool got_count = false;
   static bool m = false;
   bool searching = false, cursor_searching = false, clear_search = true;
-  int hashloc, sync_num, i, state;
+  int hashloc, i, state;
   off_t loc;
   static off_t ext_count = 1;
   static bool got_ext_count = false;
   snd_info *sp;
   axis_info *ap;
-  sync_info *si;
-  mark *mk = NULL;
   /* fprintf(stderr, "(%s %d%s) ", KEY_TO_NAME(keysym), unmasked_state, (extended_mode) ? " (c-x)" : ""); */
   if ((!cp) || (!(cp->sound)) || (!(cp->active))) return;
   sp = cp->sound;
@@ -1280,36 +1290,41 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 	      handle_cursor_with_sync(cp, CURSOR_IN_MIDDLE);
 	      break;
 	    case snd_K_M: case snd_K_m:
-	      if (count > 0) 
-		{
-		  cp->cursor_on = true;
-		  set_show_marks(true);
-		  mk = add_mark(CURSOR(cp), NULL, cp);
-		  display_channel_marks(cp);
-		}
-	      else delete_mark_samp(CURSOR(cp), cp);
-	      if ((keysym == snd_K_M) && 
-		  ((cp->sound)->sync != 0))
-		{
-		  sync_num = mark_sync_max() + 1; 
-		  if (mk) set_mark_sync(mk, sync_num);
-		  si = snd_sync((cp->sound)->sync);
-		  for (i = 0; i < si->chans; i++) 
-		    if (cp != si->cps[i])
-		      {
-			if (count > 0)
-			  {
-			    mk = add_mark(CURSOR(cp), NULL, si->cps[i]);
-			    if (mk)
-			      {
-				set_mark_sync(mk, sync_num);
-				display_channel_marks(si->cps[i]);
-			      }
-			  }
-			else delete_mark_samp(CURSOR(cp), si->cps[i]);
-		      }
-		  si = free_sync_info(si);
-		}
+	      {
+		mark *mk = NULL;
+		if (count > 0) 
+		  {
+		    cp->cursor_on = true;
+		    set_show_marks(true);
+		    mk = add_mark(CURSOR(cp), NULL, cp);
+		    display_channel_marks(cp);
+		  }
+		else delete_mark_samp(CURSOR(cp), cp);
+		if ((keysym == snd_K_M) && 
+		    ((cp->sound)->sync != 0))
+		  {
+		    sync_info *si;
+		    int sync_num;
+		    sync_num = mark_sync_max() + 1; 
+		    if (mk) set_mark_sync(mk, sync_num);
+		    si = snd_sync((cp->sound)->sync);
+		    for (i = 0; i < si->chans; i++) 
+		      if (cp != si->cps[i])
+			{
+			  if (count > 0)
+			    {
+			      mk = add_mark(CURSOR(cp), NULL, si->cps[i]);
+			      if (mk)
+				{
+				  set_mark_sync(mk, sync_num);
+				  display_channel_marks(si->cps[i]);
+				}
+			    }
+			  else delete_mark_samp(CURSOR(cp), si->cps[i]);
+			}
+		    si = free_sync_info(si);
+		  }
+	      }
 	      break;
 	    case snd_K_N: case snd_K_n: 
 	      cp->cursor_on = true; 
@@ -1915,8 +1930,6 @@ static XEN g_bind_key_1(XEN key, XEN state, XEN code, XEN cx_extended, XEN origi
 {
   int args, k, s;
   bool e;
-  char *errstr;
-  XEN errmsg;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(key), key, XEN_ARG_1, caller, "an integer");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(state), state, XEN_ARG_2, caller, "an integer");
   XEN_ASSERT_TYPE((XEN_FALSE_P(code) || XEN_PROCEDURE_P(code)), code, XEN_ARG_3, caller, "#f or a procedure");
@@ -1940,6 +1953,8 @@ static XEN g_bind_key_1(XEN key, XEN state, XEN code, XEN cx_extended, XEN origi
       args = XEN_REQUIRED_ARGS(code);
       if (args > 1)
 	{
+	  XEN errmsg;
+	  char *errstr;
 	  errstr = mus_format(_(S_bind_key " function arg should take either zero or one args, not %d"), args);
 	  errmsg = C_TO_XEN_STRING(errstr);
 	  FREE(errstr);
@@ -2014,8 +2029,6 @@ then when the user eventually responds, invoke the function callback, if any, wi
 returned as a string; otherwise it is evaluated first as Scheme code"
 
   snd_info *sp;
-  char *errstr;
-  XEN errmsg;
   XEN_ASSERT_TYPE(XEN_STRING_P(msg), msg, XEN_ARG_1, S_prompt_in_minibuffer, "a string");
   XEN_ASSERT_TYPE((XEN_NOT_BOUND_P(callback)) || (XEN_BOOLEAN_P(callback)) || XEN_PROCEDURE_P(callback), 
 		  callback, XEN_ARG_2, S_prompt_in_minibuffer, "#f or a procedure");
@@ -2030,6 +2043,8 @@ returned as a string; otherwise it is evaluated first as Scheme code"
   if (XEN_BOUND_P(raw)) sp->raw_prompt = XEN_TO_C_BOOLEAN(raw); else sp->raw_prompt = false;
   if (XEN_PROCEDURE_P(callback))
     {
+      char *errstr;
+      XEN errmsg;
       errstr = procedure_ok(callback, 1, S_prompt_in_minibuffer, "callback", 2);
       if (errstr)
 	{

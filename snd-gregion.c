@@ -12,9 +12,9 @@ static regrow *region_row(int n);
 
 void reflect_regions_in_region_browser(void)
 {
-  int i;
   if (rsp)
     {
+      int i;
       rsp->active = true;
       if (rsp->chans)
 	for (i = 0; i < rsp->nchans; i++)
@@ -24,9 +24,9 @@ void reflect_regions_in_region_browser(void)
 
 void reflect_no_regions_in_region_browser(void)
 {
-  int i;
   if (rsp)
     {
+      int i;
       rsp->active = false;
       if (rsp->chans)
 	for (i = 0; i < rsp->nchans; i++)
@@ -60,9 +60,9 @@ void reflect_region_graph_style(void)
 
 static void unhighlight_region(void)
 {
-  regrow *oldr;
   if (current_region != -1)
     {
+      regrow *oldr;
       oldr = region_row(current_region);
       gtk_widget_modify_bg(oldr->nm, GTK_STATE_NORMAL, ss->sgx->basic_color);
       gtk_widget_modify_base(oldr->nm, GTK_STATE_NORMAL, ss->sgx->basic_color);
@@ -73,9 +73,9 @@ static void unhighlight_region(void)
 
 static void highlight_region(void)
 {
-  regrow *oldr;
   if (current_region != -1)
     {
+      regrow *oldr;
       oldr = region_row(current_region);
       gtk_widget_modify_bg(oldr->nm, GTK_STATE_NORMAL, ss->sgx->zoom_color);
       gtk_widget_modify_base(oldr->nm, GTK_STATE_NORMAL, ss->sgx->zoom_color);
@@ -104,7 +104,6 @@ void update_region_browser(bool grf_too)
 {
   int i, len;
   region_state *rs;
-  chan_info *cp;
   rs = region_report();
   len = rs->len;
   for (i = 0; i < len; i++) 
@@ -123,6 +122,7 @@ void update_region_browser(bool grf_too)
   gtk_widget_show(region_list);
   if (grf_too)
     {
+      chan_info *cp;
       unhighlight_region();
       current_region = 0;
       highlight_region();
@@ -253,9 +253,9 @@ static void region_focus_callback(GtkWidget *w, gpointer context) /* button clic
 
 void reflect_play_region_stop(int n)
 {
-  regrow *rg;
   if (region_rows)
     {
+      regrow *rg;
       rg = region_row(region_id_to_list_position(n));
       if (rg) set_toggle_button(rg->pl, false, false, (void *)rg);
     }
@@ -443,10 +443,10 @@ bool region_dialog_is_active(void)
 
 void allocate_region_rows(int n)
 {
-  int i;
   if ((region_dialog) && 
       (n > region_rows_size))
     {
+      int i;
       region_rows = (regrow **)REALLOC(region_rows, n * sizeof(regrow *));
       for (i = region_rows_size; i < n; i++) region_rows[i] = NULL;
       region_rows_size = n;
@@ -455,11 +455,11 @@ void allocate_region_rows(int n)
 
 static regrow *region_row(int n)
 {
-  regrow *r;
   if (n < region_rows_size)
     {
       if (region_rows[n] == NULL)
 	{
+	  regrow *r;
 	  r = make_regrow(region_list, (void (*)())region_play_callback, (void (*)())region_focus_callback);
 	  region_rows[n] = r;
 	  r->pos = n;

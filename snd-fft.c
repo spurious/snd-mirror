@@ -502,7 +502,6 @@ static int added_transforms_top = 0;
 
 static added_transform *new_added_transform(void)
 {
-  int i;
   if (added_transforms == NULL)
     {
       added_transforms_size = 4;
@@ -512,6 +511,7 @@ static added_transform *new_added_transform(void)
     {
       if (added_transforms_top == added_transforms_size)
 	{
+	  int i;
 	  added_transforms_size += 4;
 	  added_transforms = (added_transform **)REALLOC(added_transforms, added_transforms_size * sizeof(added_transform *));
 	  for (i = added_transforms_top; i < added_transforms_size; i++) added_transforms[i] = NULL;
@@ -609,12 +609,12 @@ static char *spectro_xlabel(chan_info *cp)
 static void make_sonogram_axes(chan_info *cp)
 {
   fft_info *fp;
-  axis_info *ap;
-  Float max_freq, min_freq, yang;
-  char *xlabel;
   fp = cp->fft;
   if (fp)
     {
+      axis_info *ap;
+      Float max_freq, min_freq, yang;
+      char *xlabel;
       ap = cp->axis;
       if (cp->transform_type == FOURIER)
 	{
@@ -1226,15 +1226,15 @@ typedef struct {
 
 void clear_transform_edit_ctrs(chan_info *cp)
 {
-  fft_state *fs;
-  sonogram_state *lsg;
   if (cp->fft_data)
     {
+      fft_state *fs;
       fs = (fft_state *)(cp->fft_data);
       fs->edit_ctr = -1;
     }
   if (cp->last_sonogram)
     {
+      sonogram_state *lsg;
       lsg = (sonogram_state *)(cp->last_sonogram);
       lsg->edit_ctr = -1;
     }
@@ -1242,7 +1242,7 @@ void clear_transform_edit_ctrs(chan_info *cp)
 
 void *make_sonogram_state(chan_info *cp)
 {
-  sonogram_state *sg, *temp_sg;
+  sonogram_state *sg;
   fft_state *fs;
   sg = (sonogram_state *)CALLOC(1, sizeof(sonogram_state));
   sg->cp = cp;
@@ -1255,6 +1255,7 @@ void *make_sonogram_state(chan_info *cp)
   sg->minibuffer_needs_to_be_cleared = false;
   if (cp->temp_sonogram)
     {
+      sonogram_state *temp_sg;
       /* we must have restarted fft process without letting the previous run at all */
       temp_sg = (sonogram_state *)(cp->temp_sonogram);
       if (temp_sg->fs) temp_sg->fs = free_fft_state(temp_sg->fs);
@@ -1274,7 +1275,6 @@ void free_sonogram_fft_state(void *ptr)
 
 void free_sono_info(chan_info *cp)
 {
-  int i;
   sono_info *si;
   si = (sono_info *)(cp->sonogram_data);
   if (si)
@@ -1282,6 +1282,7 @@ void free_sono_info(chan_info *cp)
       if (si->begs) FREE(si->begs);
       if (si->data)
 	{
+	  int i;
 	  for (i = 0; i < si->total_slices; i++)
 	    if (si->data[i]) 
 	      FREE(si->data[i]);
@@ -1459,9 +1460,9 @@ static int run_all_ffts(sonogram_state *sg)
 
 static int cleanup_sonogram(sonogram_state *sg)
 {
-  chan_info *cp;
   if (sg)
     {
+      chan_info *cp;
       cp = sg->cp;
       if (!(cp->graph_transform_p))
 	{
@@ -1532,14 +1533,16 @@ void set_spectro_cutoff_and_redisplay(Float val)
 
 static void spectral_multiply (Float* rl1, Float* rl2, int n)
 {
-  int j, n2, nn2;
-  Float rem, rep, aim, aip, invn;
+  int j, n2;
+  Float invn;
   n2 = (int)(n * 0.5);
   invn = 0.25 / n;
   rl1[0] = ((rl1[0] * rl2[0]) / n);
   rl2[0] = 0.0;
   for (j = 1; j <= n2; j++)
     {
+      int nn2;
+      Float rem, rep, aim, aip;
       nn2 = n - j;
       rep = (rl1[j] + rl1[nn2]);
       rem = (rl1[j] - rl1[nn2]);
@@ -1555,16 +1558,16 @@ static void spectral_multiply (Float* rl1, Float* rl2, int n)
 void c_convolve(char *fname, Float amp, int filec, off_t filehdr, int filterc, off_t filterhdr, int filtersize,
 		int fftsize, int filter_chans, int filter_chan, int data_size, snd_info *gsp, enved_progress_t from_enved, int ip, int total_chans)
 {
-  Float *rl0 = NULL, *rl1 = NULL, *rl2 = NULL;
-  mus_sample_t **pbuffer = NULL, **fbuffer = NULL;
-  mus_sample_t *cm = NULL, *fcm = NULL, *pbuf = NULL;
-  int i;
-  Float scl;
   int tempfile;
   /* need file to hold convolution output */
   tempfile = mus_file_create(fname);
   if (tempfile != -1)
     {
+      Float *rl0 = NULL, *rl1 = NULL, *rl2 = NULL;
+      mus_sample_t **pbuffer = NULL, **fbuffer = NULL;
+      mus_sample_t *cm = NULL, *fcm = NULL, *pbuf = NULL;
+      int i;
+      Float scl;
       /* get to start point in the two sound files */
       lseek(filec, filehdr, SEEK_SET);
       lseek(filterc, filterhdr, SEEK_SET);
@@ -1672,10 +1675,10 @@ name is the transform's name, x-label is its x-axis label, and the relevant retu
 to be displayed goes from low to high (normally 0.0 to 1.0)"
 
   char *errmsg;
-  XEN errstr;
   errmsg = procedure_ok(proc, 2, S_add_transform, "transform", 5);
   if (errmsg)
     {
+      XEN errstr;
       errstr = C_TO_XEN_STRING(errmsg);
       FREE(errmsg);
       return(snd_bad_arity_error(S_add_transform, errstr, proc));
@@ -1720,15 +1723,14 @@ static XEN g_transform_sample(XEN bin, XEN slice, XEN snd_n, XEN chn_n)
 return the current transform sample at bin and slice in snd channel chn (assuming sonogram or spectrogram)"
 
   chan_info *cp;
-  fft_info *fp;
-  sono_info *si;
-  int fbin, fslice;
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(bin), bin, XEN_ARG_1, S_transform_sample, "an integer");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(slice), slice, XEN_ARG_2, S_transform_sample, "an integer");
   ASSERT_CHANNEL(S_transform_sample, snd_n, chn_n, 3);
   cp = get_cp(snd_n, chn_n, S_transform_sample);
   if (cp->graph_transform_p)
     {
+      fft_info *fp;
+      int fbin;
       fbin = XEN_TO_C_INT_OR_ELSE(bin, 0);
       fp = cp->fft;
       if (fp)
@@ -1739,6 +1741,8 @@ return the current transform sample at bin and slice in snd channel chn (assumin
 		return(C_TO_XEN_DOUBLE(fp->data[fbin]));
 	      else 
 		{
+		  int fslice;
+		  sono_info *si;
 		  fslice = XEN_TO_C_INT_OR_ELSE(slice, 0);
 		  si = (sono_info *)(cp->sonogram_data);
 		  if ((si) && 
@@ -1776,17 +1780,16 @@ static XEN g_transform_samples_to_vct(XEN snd_n, XEN chn_n, XEN v)
 return a vct (obj if it's passed), with the current transform data from snd's channel chn"
 
   chan_info *cp;
-  fft_info *fp;
-  sono_info *si;
-  int i, j, k, len, bins, slices;
-  Float *fvals;
   vct *v1 = get_vct(v);
   ASSERT_CHANNEL(S_transform_samples_to_vct, snd_n, chn_n, 1);
   cp = get_cp(snd_n, chn_n, S_transform_samples_to_vct);
   if ((cp->graph_transform_p) && (cp->fft))
     {
+      int len;
+      Float *fvals;
       if (cp->transform_graph_type == GRAPH_ONCE)
 	{
+	  fft_info *fp;
 	  fp = cp->fft;
 	  len = fp->current_size;
 	  if (v1)
@@ -1799,9 +1802,11 @@ return a vct (obj if it's passed), with the current transform data from snd's ch
 	}
       else
 	{
+	  sono_info *si;
 	  si = (sono_info *)(cp->sonogram_data);
 	  if (si)
 	    {
+	      int i, j, k, bins, slices;
 	      slices = si->active_slices;
 	      bins = si->target_bins;
 	      len = bins * slices;
@@ -1824,7 +1829,6 @@ static XEN g_snd_transform(XEN type, XEN data, XEN hint)
 {
   int trf, i, j, hnt, n2;
   vct *v;
-  Float *dat;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(type), type, XEN_ARG_1, "snd-transform", "an integer");
   XEN_ASSERT_TYPE(VCT_P(data), data, XEN_ARG_2, "snd-transform", "a vct");
   trf = XEN_TO_C_INT(type);
@@ -1847,6 +1851,7 @@ static XEN g_snd_transform(XEN type, XEN data, XEN hint)
       else
 	{
 #endif
+	  Float *dat;
 	  dat = (Float *)CALLOC(v->length, sizeof(Float));
 	  mus_fft(v->data, dat, v->length, 1);
 	  v->data[0] *= v->data[0];

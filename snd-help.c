@@ -137,7 +137,6 @@ static void main_snd_help(const char *subject, ...)
 
 static char *xm_version(void)
 {
-  char *version = NULL;
   XEN xm_val = XEN_FALSE;
 #if HAVE_GUILE
   xm_val = XEN_EVAL_C_STRING("(and (or (provided? 'xm) (provided? 'xg)) xm-version)");
@@ -149,6 +148,7 @@ static char *xm_version(void)
 #endif
   if (XEN_STRING_P(xm_val))
     {
+      char *version = NULL;
       version = (char *)CALLOC(32, sizeof(char));
       mus_snprintf(version, 32, "\n    %s: %s", 
 #if USE_MOTIF
@@ -166,7 +166,6 @@ static char *xm_version(void)
 #if HAVE_GL
 static char *gl_version(void)
 {
-  char *version = NULL;
   XEN gl_val = XEN_FALSE;
 #if HAVE_GUILE
   gl_val = XEN_EVAL_C_STRING("(and (provided? 'gl) gl-version)");
@@ -178,6 +177,7 @@ static char *gl_version(void)
 #endif
   if (XEN_STRING_P(gl_val))
     {
+      char *version = NULL;
       version = (char *)CALLOC(32, sizeof(char));
       mus_snprintf(version, 32, "\n    gl: %s", XEN_TO_C_STRING(gl_val));
       if (snd_itoa_ctr < snd_itoa_size) snd_itoa_strs[snd_itoa_ctr++] = version;
@@ -828,10 +828,10 @@ static char *key_xrefs[4] = {
 
 static void show_key_help(int key, int state, bool cx, char *help)
 {
-  char buf[1024];
-  char cbuf[256];
   if (help)
     {
+      char buf[1024];
+      char cbuf[256];
       make_key_name(cbuf, 256, key, state, cx);
       mus_snprintf(buf, 1024, "\n%s: %s", cbuf, help);
       snd_help_append(buf);
@@ -1701,11 +1701,12 @@ static bool strings_might_match(const char *a, const char *b, int len)
 char **help_name_to_xrefs(const char *name)
 {
   char **xrefs = NULL;
-  int i, xref_ctr = 0, xrefs_size = 0, name_len, cur_len;
+  int i, xref_ctr = 0, xrefs_size = 0, name_len;
   name_len = strlen(name);
   for (i = 0; i < HELP_NAMES_SIZE; i++)
     if (name[0] == help_names[i][0])
       {
+	int cur_len;
 	cur_len = strlen(help_names[i]);
 	if (strings_might_match(name, help_names[i], (name_len < cur_len) ? name_len : cur_len))
 	  {
@@ -1868,7 +1869,6 @@ static char *doc_files[DOC_DIRECTORIES] = {
   
 static char *html_directory(void)
 {
-  char *hd = NULL;
   int i;
   if (mus_file_probe("snd.html"))
     {
@@ -1880,6 +1880,7 @@ static char *html_directory(void)
   if (html_dir(ss))
     {
       bool happy;
+      char *hd = NULL;
       hd = (char *)CALLOC(snd_strlen(html_dir(ss)) + 16, sizeof(char));
       sprintf(hd, html_dir(ss), "/snd.html");
       happy = mus_file_probe(hd);
@@ -1897,7 +1898,7 @@ static char *html_directory(void)
 
 void url_to_html_viewer(char *url)
 {
-  char *path, *dir_path;
+  char *dir_path;
   dir_path = html_directory();
   if (dir_path)
     {
@@ -1905,6 +1906,7 @@ void url_to_html_viewer(char *url)
       program = html_program(ss);
       if (program)
 	{
+	  char *path;
 	  path = (char *)CALLOC(strlen(dir_path) + strlen(url) + 256, sizeof(char));
 	  if ((strcmp(program, "netscape") == 0) ||
 	      (strcmp(program, "mozilla") == 0))

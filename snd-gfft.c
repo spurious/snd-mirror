@@ -139,12 +139,12 @@ static void get_fft_window_data(void)
 
 static void chans_transform_size(chan_info *cp, void *ptr) 
 {
-  fft_info *fp;
   int size;
   size = (*((int *)ptr)); 
   cp->transform_size = size;
   if (cp->fft) 
     {
+      fft_info *fp;
       fp = cp->fft;
       if (fp->size < size) fp->ok = false; /* "dirty" flag for fft data array = needs reallocation */
       fp->size = size;
@@ -454,14 +454,14 @@ void reflect_min_db_in_transform_dialog(void)
 
 GtkWidget *fire_up_transform_dialog(bool managed)
 {
-  GtkWidget *outer_table, *buttons;
-  int i;
   bool need_callback = false;
-  GtkWidget *display_frame, *help_button, *dismiss_button;
-  GtkWidget *window_box, *orient_button, *color_button;
-
   if (!transform_dialog)
     {
+      GtkWidget *outer_table, *buttons;
+      int i;
+      GtkWidget *display_frame, *help_button, *dismiss_button;
+      GtkWidget *window_box, *orient_button, *color_button;
+
       transform_dialog = snd_gtk_dialog_new();
       SG_SIGNAL_CONNECT(transform_dialog, "delete_event", delete_transform_dialog, NULL);
       gtk_window_set_title(GTK_WINDOW(transform_dialog), _("Transform Options"));
@@ -732,12 +732,12 @@ void set_fft_window_beta(Float val)
 
 void set_transform_size(int val)
 {
-  int i;
   for_each_chan(force_fft_clear);
   in_set_transform_size(val);
   for_each_chan_1(chans_transform_size, (void *)(&val));
   if (transform_dialog)
     {
+      int i;
       for (i = 0; i < NUM_TRANSFORM_SIZES; i++)
 	if (transform_sizes[i] == val)
 	  {

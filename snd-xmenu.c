@@ -714,7 +714,7 @@ static void GHC_callback(Widget w, XtPointer info, XtPointer context)
 Widget menu_widget(int which_menu)
 {
   unsigned int i;
-  Widget w, subw;
+  Widget w;
   CompositeWidget cw;
   int menu;
   if (which_menu == 5) return(popup_menu); /* special case -- not in main menuBar, presumably */
@@ -729,6 +729,7 @@ Widget menu_widget(int which_menu)
 	  /* fprintf(stderr,"%s: menu: %d, slot: %d (%x)\n", XtName(w), MENU_INDEX(menu), CALL_INDEX(menu), menu); */
 	  if (which_menu == MENU_INDEX(menu))
 	    {
+	      Widget subw;
 	      XtVaGetValues(w, XmNsubMenuId, &subw, NULL);
 	      return(subw);
 	    }
@@ -739,12 +740,12 @@ Widget menu_widget(int which_menu)
 
 static bool or_over_children(Widget w, bool (*func)(Widget, void *), void *userptr)
 {
-  unsigned int i;
   if (w)
     {
       if ((*func)(w, userptr)) return(true);
       if (XtIsComposite(w))
 	{
+	  unsigned int i;
 	  CompositeWidget cw = (CompositeWidget)w;
 	  for (i = 0; i < cw->composite.num_children; i++)
 	    if (or_over_children(cw->composite.children[i], func, userptr))
@@ -918,11 +919,12 @@ static void post_popup_menu(Widget w, XtPointer info, XEvent *event, Boolean *fl
 void create_popup_menu(void)
 {
   /* make it a child of the main window */
-  Widget mainp;
-  Arg args[20];
-  int n;
   if (!popup_menu)
     {
+      Widget mainp;
+      Arg args[20];
+      int n;
+
       n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->highlight_color); n++;}
       mainp = MAIN_PANE(ss);
