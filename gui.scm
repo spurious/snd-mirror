@@ -66,6 +66,10 @@
 	   (>= (string->number (minor-version)) 7))))
 
 (define (c-integer somekindofnumberorsomething)
+;;    somekindofnumberorsomething)
+  (inexact->exact (floor somekindofnumberorsomething)))
+
+(define (c-integer2 somekindofnumberorsomething)
   (inexact->exact (floor somekindofnumberorsomething)))
 
 (define (c-editor-widget snd)
@@ -2040,21 +2044,32 @@ void das_init(){
 			 scaler
 			 #:optional autofunc use-log)
 
+  (define hbox #f)
+  (define label #f)
+  (define scale #f)
   (define slider #f)
+
+  (define-method (delete!)
+    (gtk_widget_destroy (GTK_WIDGET scale))
+    (gtk_widget_destroy (GTK_WIDGET label))
+    (gtk_widget_destroy (GTK_WIDGET hbox)))
 
   (define-method (set! val)
     (gtk_adjustment_set_value (GTK_ADJUSTMENT slider) val))
 			     
   (if use-gtk
       (let* ((vbox (if (isdialog? parent) (-> parent getbox1) parent))
-	     (label (gtk_label_new (if use-log
-				       (format #f "~A (~,2F)" title initial)
-				       (format #f "~A" title))))
 	     (adj (if use-log 
 		      (gtk_adjustment_new (scale-log->linear low initial high) 0 log-scale-ticks 1 10 1)
-		      (gtk_adjustment_new initial low high 0.0 0.0 0.0)))
-	     (hbox (gtk_hbox_new #f 0))
-	     (scale (gtk_hscale_new (GTK_ADJUSTMENT adj))))
+		      (gtk_adjustment_new initial low high 0.0 0.0 0.0))))
+
+	(set! label (gtk_label_new (if use-log
+				       (format #f "~A (~,2F)" title initial)
+				       (format #f "~A" title))))
+
+	(set! hbox (gtk_hbox_new #f 0))
+
+	(set! scale (gtk_hscale_new (GTK_ADJUSTMENT adj)))
 
 	(if autofunc
 	    (<checkbutton> hbox #f autofunc))

@@ -529,6 +529,23 @@
 
 
 
+
+;;##############################################################
+;; New play code: (the old play code is horrible)
+;;##############################################################
+
+(define-class (<play>)
+  (define-method (play)
+    #t)
+  (define-method (stop-play)
+    #t)
+  (define-method (pause)
+    #t)
+  (define-method (stop-pause)
+    #t)
+  )
+
+
 ;;##############################################################
 ;; Playing (Lots of chaotic code)
 ;;##############################################################
@@ -587,7 +604,7 @@
 
     (c-set-cursor-pos startpos)
 
-    (add-hook! play-hook dashook)
+    ;;(add-hook! play-hook dashook)
     (in 1
 	(lambda ()
 	  (set! (cursor-follows-play) #t)))
@@ -597,11 +614,8 @@
 		(c-play-do (if (not replaypos) start replaypos) end replaypos))))))
 
 
-(define c-playtype 'all)
-
 (define* (c-play-selection #:optional pos)
   (c-put (selected-sound) 'playtype 'selection)
-  (set! c-playtype 'selection)
   (set! c-playstartpos (if (< (speed-control) 0) (+ (c-selection-position) (c-selection-frames)) (c-selection-position)))
   (if pos
       (c-play-do pos #f c-playstartpos)
@@ -618,7 +632,6 @@
 
 (define* (c-play pos #:optional dontsetstartpos)
   (c-put (selected-sound) 'playtype 'all)
-  (set! c-playtype 'all)
   (if (not dontsetstartpos)
       (set! c-playstartpos pos))
   (if (< (speed-control) 0)
@@ -635,7 +648,6 @@
 
 (define* (c-stop-pause #:optional pausepos)
   (if (eq? 'all (c-get (selected-sound) 'playtype 'all))
-;  (if (eq? 'all c-playtype)
       (c-play (if pausepos pausepos c-pause-pos) #t)
       (if pausepos
 	  (c-play-selection pausepos)
@@ -1464,14 +1476,17 @@ Does not work.
 	  (lambda ()
 	    (c-apply-envelope (selected-sound))))
 
+(add-hook! close-hook
+	   (lambda (snd)
+	     (checkbutton-remove (-> (c-get snd 'envbutton) button))))
 
 (add-hook! after-open-hook
 	   (lambda (snd)
-	     (let ((button (<button> (c-get-nameform snd)
-				     "Env"
-				     (lambda ()
-				       (c-apply-envelope snd)))))
-	       (gtk_widget_set_name (-> button button) "doit_button"))
+	     (c-put snd 'envbutton (<button> (c-get-nameform snd)
+					     "Env"
+					     (lambda ()
+					       (c-apply-envelope snd))))
+	     (gtk_widget_set_name (-> (c-get snd 'envbutton) button) "doit_button")
 	     (c-put snd 'nodelines
 		    (<array/map> (channels snd)
 				 (lambda (ch)
@@ -1543,6 +1558,7 @@ Does not work.
 					     (fixit w)))))))
 	       (fixit (caddr (sound-widgets snd))))))
 
+
 	   
 ;;##############################################################
 ;; dac-size slider in the control-panel
@@ -1563,20 +1579,26 @@ Does not work.
 			   (begin
 			     (c-stop-pause)
 			     (set! iswaiting #f))))))
-	       (<slider> control-panel "dac-size" 1 (dac-size) 8192
-			 (lambda (val)
-			   (let ((isplaying (dac-is-running)))
-			     (if isplaying
-				 (c-pause))
-			     (set! (dac-size) (c-integer val))
-			     (focus-widget (c-editor-widget snd))
-			     (if isplaying
-				 (if iswaiting
-				     (set! must-wait-more #t)
-				     (begin
-				       (set! iswaiting #t)
-				       (waitfunc))))))
-			 1))))
+	       (c-put snd 'dac-slider
+		      (<slider> control-panel "dac-size" 1 (dac-size) 8192
+				(lambda (val)
+				  (let ((isplaying (dac-is-running)))
+				    (if isplaying
+					(c-pause))
+				    (set! (dac-size) (c-integer val))
+				    (focus-widget (c-editor-widget snd))
+				    (if isplaying
+					(if iswaiting
+					    (set! must-wait-more #t)
+					    (begin
+					      (set! iswaiting #t)
+					      (waitfunc))))))
+				1)))))
+
+
+(add-hook! close-hook
+	   (lambda (snd)
+	     (-> (c-get snd 'dac-slider) delete!)))
 
 
 
