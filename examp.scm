@@ -73,7 +73,7 @@
 ;;; Butterworth filters
 ;;; locsig using fancier placement choice (Michael Edwards)
 ;;; lisp graph with draggable x axis
-
+;;; describe-hook
 
 ;;; TODO: pitch tracker
 ;;; TODO: adaptive notch filter
@@ -3012,3 +3012,10 @@
 ;(add-hook! mouse-press-hook mouse-press)
 
 
+;;; -------- describe-hook
+
+(define (describe-hook hook)
+  (for-each 
+    (lambda (n) 
+      (snd-print (format #f "~A" (procedure->string n))))
+    (reverse (hook->list hook))))

@@ -250,6 +250,7 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
+13-Feb:  added search-procedure, key-binding, procedure->string.\n\
 12-Feb:  added Wakefield's freeverb, changed user-defined reverb handlers.\n\
 6-Feb:   removed expand-funcs: it could not have worked given the \"hidden controls\" exposure.\n\
 30-Jan:  rtio.scm.\n\
@@ -1178,6 +1179,7 @@ all refer to the same thing.\n\
   " S_insert_silence "    (beg num snd chn)\n\
   " S_insert_sound "      (file beg in_chan snd chn)\n\
   " S_key "               (key state)\n\
+  " S_key_binding "       (key state)\n\
   " S_left_sample "       (snd chn)\n\
   " S_list2vct "         (lst)\n\
   " S_loop_samples "      (reader function calls origin environ)\n\
@@ -1234,6 +1236,7 @@ all refer to the same thing.\n\
   " S_preload_directory " (dir)\n\
   " S_preload_file "      (file)\n\
   " S_previous_sample "   (rd)\n\
+  " S_procedure2string "  (proc)\n\
   " S_prompt_in_minibuffer "(prompt callback snd)\n\
   " S_protect_region "    (reg protect)\n\
   " S_read_only "         (snd)\n\
@@ -1283,6 +1286,7 @@ all refer to the same thing.\n\
   " S_scale_selection_by "(scalers)\n\
   " S_scale_selection_to "(scalers)\n\
   " S_scale_to "          (scalers snd chn)\n\
+  " S_search_procedure "  (snd)\n\
   " S_select_region "     (reg)\n\
   " S_selected_channel "  (snd)\n\
   " S_selected_mix "      ()\n\

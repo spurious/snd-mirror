@@ -433,6 +433,14 @@ static int save_sound_state (snd_info *sp, void *ptr)
       if (tmpstr) FREE(tmpstr);
     }
   if (sp->cursor_follows_play) psp_ss(fd,S_cursor_follows_play,b2s(sp->cursor_follows_play));
+#if HAVE_HOOKS
+  if (gh_procedure_p(sp->search_proc))
+    {
+      fprintf(fd,"      ;;; currently not trying to restore the local search procedure\n");
+      fprintf(fd,"      (if (and #f (not (procedure? (search-procedure))))\n        (set! (search-procedure sfile) %s))\n",
+	      gh_scm2newstr(g_procedure2string(sp->search_proc,SCM_UNDEFINED),NULL));
+    }
+#endif
   for (chan=0;chan<sp->nchans;chan++)
     {
       cp = sp->chans[chan];
@@ -521,37 +529,14 @@ int save_state (snd_state *ss, char *save_state_name)
       if (region_dialog_is_active()) fprintf(save_fd,"(%s)\n",S_region_dialog);
       if (record_dialog_is_active()) fprintf(save_fd,"(%s)\n",S_recorder_dialog);
 
+#if DEBUGGING
       /* TODO save mix? */
-      /* TODO save hooks? if empty? -- see below for code that almost works
-       * hooks are:
-       *   fft_hook graph_hook after_graph_hook mouse_press_hook mouse_release_hook mouse_drag_hook key_press_hook
-       *   mark_click_hook stop_playing_hook stop_playing_channel_hook stop_playing_region_hook start_playing_hook
-       *   play_hook save_hook mus_error_hook snd_error_hook snd_warning_hook before_fft_hook open_hook close_hook
-       *   just_sounds_hook menu_hook mark_drag_hook output_name_hook multichannel_mix_hook mix_speed_changed_hook
-       *   mix_amp_changed_hook mix_position_changed_hook during_open_hook after_open_hook exit_hook
-       *   start_hook output_comment_hook name_click_hook edit_hook? undo_hook?
-       */
-      /* TODO save search proc:
-       *   SP SCM search_proc; SCM eval_proc,prompt_callback;
-       *   SS SCM search_proc;
-       */          
+
       /* TODO save added menus? (menu_functions) 
        *           added transforms? (proc in added transform)
-       *           added key bindings? (func in keymaps) 
        */
-      /* TODO save and restore listener text?? loaded files + possibly changed state?? */
-      /*      => needs the "dump" facility that appears to be underway right now */
-      /*         i.e. (binary-write port menu-hook)
-       *         then (set! menu-hook (binary-read port menu-hook)) or something
-       * :ho
-       * 32
-       * :(with-output-to-file "test" (lambda () (binary-write ho)))
-       * #<unspecified>
-       * :(with-input-from-file "test" (lambda () (binary-read)))
-       * 32
-       *
-       * but this doesn't yet work for hooks, procedures
-       *
+
+      /* TODO save and restore listener text?? loaded files + possibly changed state??
        * and if we can figure out how to get the current environment:
        *  (define (environment->alist env)
        *    (environment-fold env
@@ -559,103 +544,83 @@ int save_state (snd_state *ss, char *save_state_name)
        *        (cons (cons sym val) tail))
        *        '()))
        * or maybe (the-environment)
+       *
+       * or (from boot-9.scm) 
+       *  (module-for-each (lambda (sym var) ...) (current-module))
+       *  where sym var: mus-lfloat #<variable 405b3f80 name: mus-lfloat binding: 12>
+       *  but need a way to see just the user's additions
+       * this may require that we finally create modules: sndlib clm snd and export everything
+       *   or set module-binder to do the recording
        */
-#if 0
+#if HAVE_HOOKS
 	{
-	  SCM val;
-	  val = gh_eval_str("(hook->list name-click-hook)");
-	  if (gh_length(val) > 0)
-	    {
-	      int i,len;
-	      SCM e,f,n,h;
-	      len = gh_length(val);
-	      for (i=len-1;i>=0;i--)
-		{
-		  h = gh_list_ref(val,gh_int2scm(i));
-		  e = scm_procedure_environment(h);
-		  n = scm_procedure_name(h);
-		  f = scm_procedure_source(h);
-		  if (SCM_FALSEP(f)) /* it has no known source (i.e. a built-in?) */
-		    {
-		      if (gh_length(e) < 2) /* it has no local env */
-			{
-			  if (SCM_NFALSEP(n))
-			    fprintf(stderr,"(add-hook! name-click-hook %s)\n",gh_print_1(n));
-			  else fprintf(stderr,"lost that one\n");
-			}
-		      else /* local env */
-			{
-			  if (gh_list_p(gh_list_ref(e,gh_int2scm(0))))
-			    {
-			      fprintf(stderr,"(add-hook! name-click-hook ((lambda %s %s) %s))\n",
-				      gh_print_1(gh_caar(e)),
-				      gh_print_1(n),
-				      gh_print_1(gh_cdar(e)));
-			    }
-			  else
-			    fprintf(stderr,"(add-hook! name-click-hook (let ((%s %s)) %s))\n",
-				    gh_print_1(gh_caar(e)),gh_print_1(gh_cadr(e)),gh_print_1(n));
-			}
-		    }
-		  else /* has source */
-		    {
-		      if (gh_length(e) < 2) /* it has no local env */
-			{
-			  if (SCM_FALSEP(n)) /* no name */
-			    {
-			      fprintf(stderr,"(add-hook! name-click-hook %s)\n",gh_print_1(f));
-			    }
-			  else
-			    {
-			      fprintf(stderr,"(define %s %s)\n(add-hook! name-click-hook %s)\n",
-				      gh_print_1(n),gh_print_1(f),gh_print_1(n));
-			    }
-			}
-		      else
-			{
-			  if (gh_list_p(gh_list_ref(e,gh_int2scm(0))))
-			    {
-			      fprintf(stderr,"(add-hook! name-click-hook ((lambda %s %s) %s))\n",
-				      gh_print_1(gh_caar(e)),
-				      gh_print_1(f),
-				      gh_print_1(gh_cdar(e)));
-			    }
-			  else
-			    fprintf(stderr,"(add-hook! name-click-hook (let ((%s %s)) %s))\n",
-				    gh_print_1(gh_caar(e)),gh_print_1(gh_cdar(e)),gh_print_1(f));
-			}
-		    }
+	  #define NUM_HOOKS 34
+	  SCM hook,procs,con;
+	  int i,sent_comment = 0;
+	  char *context = NULL;
+	  static char *hook_names[NUM_HOOKS] = {
+	    "fft-hook", "graph-hook", "after-graph-hook", "mouse-press-hook", "mouse-release-hook", "mouse-drag-hook", 
+	    "key-press-hook", "mark-click-hook", "stop-playing-hook", "stop-playing-channel-hook", "stop-playing-region-hook", 
+	    "start-playing-hook", "play-hook", "save-hook", "mus-error-hook", "snd-error-hook", "snd-warning-hook", "before-fft-hook", 
+	    "open-hook", "close-hook", "just-sounds-hook", "menu-hook", "mark-drag-hook", "output-name-hook", "multichannel-mix-hook", 
+	    "mix-speed-changed-hook", "mix-amp-changed-hook", "mix-position-changed-hook", "during-open-hook", "after-open-hook",
+	    "exit-hook", "start-hook", "output-comment-hook", "name-click-hook"};
 
-		  /*
-		   * (define hiho (lambda (n) (display n)))
-		   * (add-hook! name-click-hook snd-print)
-		   * (add-hook! name-click-hook (lambda (n) (snd-print n)))
-		   * (add-hook! name-click-hook hiho)
-		   * (add-hook! name-click-hook (let ((hi 32) (two 2.0) (this "this")) (lambda (n) hi)))
-		   * (add-hook! name-click-hook (let ((ha 32)) (lambda (n) hi)))
-		   * 
-		   * =>
-		   * 
-		   * (add-hook! name-click-hook snd-print)
-		   * (add-hook! name-click-hook (lambda (n) (snd-print n)))
-		   * (define hiho (lambda (n) (display n)))
-		   * (add-hook! name-click-hook hiho)
-		   * (add-hook! name-click-hook ((lambda (this two hi) (lambda (n) hi)) ("this" 2.0 32))) ;extra parens here! -- apply?
-		   * (add-hook! name-click-hook (let ((ha 32)) (lambda (n) hi)))
-		   * 
-		   * this still loses on cases like:
-		   * (define (e1)
-		   * (let ((ho 321))
-		   * (define (abc n) (+ ho 1))
-		   * (add-hook! name-click-hook abc)))
-		   * (e1)
-		   * =>
-		   * (add-hook! name-click-hook ((lambda (abc) (lambda (n) (+ ho 1))) (#<procedure abc (n)>)))
-		   */
+	  /* TODO: save edit_hook undo_hook */
+
+	  for (i=0;i<NUM_HOOKS;i++)
+	    {
+	      hook = SND_LOOKUP(hook_names[i]);
+	      if (HOOKED(hook))
+		{
+		  if (!sent_comment)
+		    {
+		      fprintf(save_fd,"\n;;; hook values follow but are commented out since I'm not sure they should be saved");
+		      fprintf(save_fd,"\n;;;   (they can depend on things that I'm not yet saving for example)");
+		      fprintf(save_fd,"\n(if #f\n  (begin\n");
+		      sent_comment = 1;
+		    }
+		  fprintf(save_fd,"    (if (hook-empty? %s)\n        (begin\n",hook_names[i]);
+		  context = (char *)CALLOC(snd_strlen(hook_names[i])+32,sizeof(char));
+		  sprintf(context,"(add-hook! %s ",hook_names[i]);
+		  con = gh_str02scm(context);
+		  FREE(context);
+		  procs = SCM_HOOK_PROCEDURES(hook);
+		  while (SCM_NIMP (procs))
+		    {
+		      context = gh_scm2newstr(g_procedure2string(SCM_CAR(procs),con),NULL);
+		      fprintf(save_fd,"          %s\n",context);
+		      free(context);
+		      procs = SCM_CDR (procs);
+		    }
+		  fprintf(save_fd,"        ))\n");
 		}
+	    }
+
+	  if (!sent_comment)
+	    {
+	      fprintf(save_fd,"\n;;; these bindings are commented out since I'm not sure they should be saved");
+	      fprintf(save_fd,"\n;;;   (they can depend on things that I'm not yet saving for example)");
+	      fprintf(save_fd,"\n(if #f\n  (begin\n");
+	      sent_comment = 1;
+	    }
+
+	  if (gh_procedure_p(ss->search_proc))
+	    {
+	      fprintf(save_fd,"    (if (not (procedure? (search-procedure)))\n  (set! (search-procedure) %s))\n\n",
+		      gh_scm2newstr(g_procedure2string(ss->search_proc,SCM_UNDEFINED),NULL));
+	    }
+
+	  save_user_key_bindings(save_fd);
+
+	  if (sent_comment)
+	    {
+	      fprintf(save_fd,"  ))\n");
 	    }
 	}
 #endif
+#endif
+
       if (fclose(save_fd) != 0)
 	snd_error("can't close %s: %s [%s[%d] %s]",save_state_name,strerror(errno),__FILE__,__LINE__,__FUNCTION__);
 
@@ -777,10 +742,88 @@ static SCM g_mem_report(void)
   return(SCM_BOOL_F);
 }
 
+#if HAVE_HOOKS
+/* TODO: this needs a pretty-printer, can be fooled by some closures */
+
+SCM g_procedure2string(SCM proc, SCM context)
+{
+  #define H_procedure2string "(" S_procedure2string " proc) -> string representation of proc"
+  SCM e,f,n,en;
+  int lcase = 0,e_len;
+  char *res = NULL,*e_str = NULL,*n_str = NULL,*f_str = NULL,*a_str = NULL,*tmp,*c_str = NULL;
+
+  e = scm_procedure_environment(proc);
+  n = scm_procedure_name(proc);
+  f = scm_procedure_source(proc);
+
+  e_len = gh_length(e);
+  if (gh_string_p(context)) c_str = gh_scm2newstr(context,NULL);
+  if (SCM_NFALSEP(f)) f_str = gh_print_1(f);
+  if (SCM_NFALSEP(n)) n_str = gh_print_1(n);
+  if (e_len >= 2) 
+    {
+      if (n_str)
+	en = gh_cadr(e);
+      else en = gh_car(e);
+      lcase = gh_list_p(en);
+      e_str = gh_print_1(gh_car(en));
+      if (lcase)
+	{
+	  if (!f_str)
+	    a_str = gh_print_1(gh_cdar(e)); 
+	  else a_str = gh_print_1(gh_cdr(en));
+	  tmp = (char *)(a_str+1);
+	  tmp[strlen(tmp)-1]='\0';
+	}
+      else 
+	{
+	  tmp = (char *)calloc(snd_strlen(e_str)+3,sizeof(char));
+	  sprintf(tmp,"(%s)",e_str);
+	  free(e_str);
+	  e_str = tmp;
+	  a_str = gh_print_1(gh_cdr(en)); 
+	  tmp = a_str;
+	}
+      res = (char *)CALLOC(snd_strlen(f_str) + snd_strlen(a_str) + snd_strlen(e_str) + snd_strlen(n_str) + snd_strlen(c_str) + 64,sizeof(char));
+      if ((f_str) && (n_str))
+	sprintf(res,"((lambda %s (define %s %s) %s%s%s) %s)",
+		e_str,n_str,f_str,(c_str) ? c_str : "",(c_str) ? n_str : "",(c_str) ? ")" : "",tmp);
+      else
+	sprintf(res,"%s((lambda %s %s) %s) %s",
+		(c_str) ? c_str : "",e_str,(f_str) ? f_str : n_str,tmp,(c_str) ? ")" : "");
+    }
+  else 
+    {
+      res = (char *)CALLOC(snd_strlen(n_str)*2+snd_strlen(f_str)+snd_strlen(c_str)+64,sizeof(char));
+      if ((n_str) && (f_str))
+	sprintf(res,"(define %s %s) %s%s%s",
+		n_str,f_str,(c_str) ? c_str : "",(c_str) ? n_str : "",(c_str) ? ")" : "");
+      else
+	sprintf(res,"%s%s%s",
+		(c_str) ? c_str : "",(n_str) ? n_str : f_str,(c_str) ? ")" : "");
+    }
+  if (e_str) free(e_str);
+  if (f_str) free(f_str);
+  if (a_str) free(a_str);
+  if (n_str) free(n_str);
+  if (c_str) free(c_str);
+  if (res)
+    {
+      en = gh_str02scm(res);
+      FREE(res);
+      return(en);
+    }
+  return(SCM_BOOL_F);
+}
+#endif
+
 void g_init_main(SCM local_doc)
 {
   DEFINE_PROC(gh_new_procedure(S_save_options,SCM_FNC g_save_options,1,0,0),H_save_options);
   gh_new_procedure("mem-report",SCM_FNC g_mem_report,0,0,0);
+#if HAVE_HOOKS
+  DEFINE_PROC(gh_new_procedure(S_procedure2string,SCM_FNC g_procedure2string,1,1,0),H_procedure2string);
+#endif
 }
 
 #endif

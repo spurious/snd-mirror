@@ -518,6 +518,7 @@ between these examples, other .scm files, and discussions in other documents.
     <li>vct func like list
     <li>map-sound-files, match-sound-files
     <li>sound-interp, env-sound-interp
+    <li>describe-hook
   </ul>
 </small>
 </ul>
@@ -1014,6 +1015,7 @@ then <code>(testunif 1.0 0.1 0.0)</code> or whatever.
   <b><A NAME="exfinfo">finfo</a></b> filename
   <b><A NAME="exshell">shell</a></b> cmd
   <b><a name="exmpg">mpg</a></b> rawfile chans
+  <b><a name="exdescribehook">describe-hook</a></b> hook
 </pre>
 <p><i>finfo</i> returns a description of the file <i>filename</i>. <i>shell</i> is similar
 to Guile's <i>system</i> function, but output is sent to Snd's listener, rather than stdout.
@@ -1027,7 +1029,7 @@ format sound file to a headerless ("raw") file containing 16-bit samples.
 <p>
 Presumably a similar function could be written to call TiMidity to translate
 MIDI files to something Snd can read, but I'm not having any luck getting it
-to work.
+to work.  <i>describe-hook</i> tries to decipher the functions on the hook list.
 </p>
 <p>
 Several of the functions in this section are slight robustifications of the
@@ -1587,7 +1589,7 @@ color objects.
 than an integer between 0 and 255) mimics PostScript;
 as video hardware has improved over the years, there's
 less and less need for these elaborate color names, and less
-reason to limit these numbers to bytes.
+reason (except perhaps psychophysical) to limit these numbers to bytes.
 </p>
 
 <A NAME="rtiodoc"></a><span class=box><h2>rtio.scm</h2></span>

@@ -722,7 +722,35 @@ the hook.
 </small>
 </pre>
 <p><a href="sndscm.html#enveddoc">enved.scm</a> uses several of these hooks to implement an envelope editor in lisp.
-See also <a href="#menuhook">menu-hook</a> below.</p>
+See also <a href="#menuhook">menu-hook</a> below.
+You can find out what's on a given hook with the following:
+</p>
+<pre>
+(define (describe-hook hook)
+  (for-each 
+    (lambda (n) 
+      (snd-print (format #f "~A" (procedure-&gt;string n))))
+    (reverse (hook-&gt;list hook))))
+</pre>
+<p>For example, say we pile up some random stuff on name-click-hook:
+</p>
+<pre>
+(add-hook! name-click-hook snd-print)
+(add-hook! name-click-hook (lambda (n) (snd-print n)))
+(add-hook! name-click-hook (let ((ha 32)) (lambda (n) ha)))
+</pre>
+<p>Then we go skiing for a week, get home, and can't remember where
+we were.  Do we panic and dial 911? No!  We simply type:
+</p>
+<pre>
+<em class=listener>:</em><em class=typing>(describe-hook name-click-hook)</em>
+<em class=listener>snd-print
+(lambda (n) (snd-print n))
+((lambda (ha) (lambda (n) ha)) 32) 
+#&lt;unspecified&gt;
+:</em>
+</pre>
+
 
 <br>
 <span class=bbox><h3><A NAME="sndobjects">Snd's objects</a></h3></span>
@@ -2003,6 +2031,8 @@ sets its value to val.
   <b><a name="scansoundchan">scan-sound-chans</a></b>  (func <i>start end snd</i>) 
                                   apply func to current sound's channels
 
+  <b><a name="searchprocedure">search-procedure</a></b>  (<i>snd</i>)         the current global or sound-local (if <i>snd</i> is specified) search procedure.
+
   <b><a name="sndselectedchannel">selected-channel</a></b>  (<i>snd</i>)         selected channel in <i>snd</i> (set to select channel).
 
   <b><a name="sndselectedsound">selected-sound</a></b>    ()            selected sound (index) (set to select sound).
@@ -3066,11 +3096,20 @@ Axis choice:
                                   execute the keyboard command <i>key</i> with modifier keys <i>state</i>.
                                   shift: 1, control: 4, meta: 8
 
+  <b><a name="keybinding">key-binding</a></b>       (key state)   the (user-defined, not built-in) procedure currently bound to key+state.
+
   <b><a name="sndnormalizeview">normalize-view</a></b>    ()            normalize Snd display as in View menu <a href="snd.html#viewnormalize">Normalize</a> option.
 
   <b><a name="sndpreloaddirectory">preload-directory</a></b> (dir)         preload sound files from directory <i>dir</i> (see -<a href="snd.html#minusp">p</a>).
 
   <b><a name="sndpreloadfile">preload-file</a></b>      (file)        preload <i>file</i> (see View menu's <a href="snd.html#prevfiles">View Files</a> option).
+
+  <b><a name="sndprocedure2string">procedure-&gt;string</a></b> (proc)        return procedure's definition as a string
+
+                                  <em class=listener>:</em><em class=typing>(set! (search-procedure) (lambda (n) (> n .1)))</em>
+                                  <em class=listener>#&lt;procedure (n)&gt;</em>
+                                  <em class=listener>:</em><em class=typing>(procedure-&gt;string (search-procedure))</em>
+                                  <em class=listener>"(lambda (n) (&gt; n 0.1))"</em>
 
   <b><a name="sndsaveenvelopes">save-envelopes</a></b>    (filename)    save envelope editor contents in <i>filename</i> [<em class=error>cannot-save</em>].
 

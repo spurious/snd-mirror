@@ -1,5 +1,6 @@
 snd change log
 
+  13-Feb:    added search-procedure, key-binding, procedure->string.
   12-Feb:    added Wakefield's freeverb, changed user-defined reverb handlers.
   6-Feb:     removed expand-funcs: it could not have worked given the "hidden controls" exposure.
   30-Jan:    rtio.scm.

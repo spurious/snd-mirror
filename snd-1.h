@@ -494,6 +494,7 @@ FILE *open_snd_init_file (snd_state *ss);
 int save_state (snd_state *ss, char *save_state_name);
 int handle_next_startup_arg(snd_state *ss, int auto_open_ctr, char **auto_open_file_names, int with_title);
 #if HAVE_GUILE
+  SCM g_procedure2string(SCM proc, SCM context);
   void g_init_main(SCM local_doc);
 #endif
 
@@ -997,7 +998,7 @@ axis_context *mark_context (chan_info *cp);
 axis_context *mix_waveform_context (chan_info *cp);
 axis_context *selected_mix_waveform_context (chan_info *cp);
 int calculate_fft(chan_info *cp, void *ptr);
-
+void save_user_key_bindings(FILE *fd);
 
 
 /* -------- snd-axis.c -------- */

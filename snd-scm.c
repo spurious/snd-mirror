@@ -447,7 +447,7 @@ static char *gh_print(SCM result)
 	  slen = strlen(str);
 	  if ((slen+savectr+1) >= savelen)
 	    {
-	      savelen += 128;
+	      savelen += (slen+128);
 	      newbuf = (char *)realloc(newbuf,savelen * sizeof(char));
 	    }
 	  if (i != 0) {strcat(newbuf," "); savectr++;}
@@ -1498,6 +1498,63 @@ static SCM g_set_window_y(SCM val)
   set_widget_y(MAIN_SHELL(state),g_scm2int(val)); 
   state->init_window_y = g_scm2int(val); 
   return(val);
+}
+
+static SCM g_search_procedure(SCM snd)
+{
+  #define H_search_procedure "(" S_search_procedure " &optional index) -> global or sound-local search function"
+  int snd_n;
+  snd_state *ss;
+  ss = get_global_state();
+  if (gh_number_p(snd))
+    {
+      snd_n = g_scm2int(snd);
+      if ((snd_n < ss->max_sounds) && (snd_ok(ss->sounds[snd_n])))
+	return(ss->sounds[snd_n]->search_proc);
+    }
+  return(ss->search_proc);
+}
+
+static SCM g_set_search_procedure(SCM snd, SCM proc)
+{
+  int snd_n;
+  snd_state *ss;
+  snd_info *sp;
+  ss = get_global_state();
+  if (gh_number_p(snd))
+    {
+      snd_n = g_scm2int(snd);
+      if (snd_n < ss->max_sounds)
+	{
+	  sp = ss->sounds[snd_n];
+	  if (snd_ok(sp))
+	    {
+	      if ((sp->search_proc) && (gh_procedure_p(sp->search_proc))) snd_unprotect(sp->search_proc);
+	      sp->search_proc = SCM_UNDEFINED;
+	      if (procedure_ok(proc,1,0,"find","find procedure",1))
+		{
+		  sp->search_proc = proc;
+		  snd_protect(proc);
+		  if (sp->search_expr) free(sp->search_expr);
+		  sp->search_expr = gh_scm2newstr(g_procedure2string(proc,SCM_UNDEFINED),NULL);
+		  return(proc);
+ 		}
+	    }
+	}
+    }
+  else 
+    {
+      if ((ss->search_proc) && (gh_procedure_p(ss->search_proc))) snd_unprotect(ss->search_proc);
+      ss->search_proc = SCM_UNDEFINED;
+      if (procedure_ok(snd,1,0,"find","find procedure",1))
+	{
+	  ss->search_proc = snd;
+	  snd_protect(snd);
+	  if (ss->search_expr) free(ss->search_expr);
+	  ss->search_expr = gh_scm2newstr(g_procedure2string(snd,SCM_UNDEFINED),NULL);
+	}
+    }
+  return(snd);
 }
 
 static SCM g_exit(void) 
@@ -3667,6 +3724,9 @@ void g_initialize_gh(snd_state *ss)
 
   define_procedure_with_setter(S_window_height,SCM_FNC g_window_height,H_window_height,
 			       "set-" S_window_height,SCM_FNC g_set_window_height,local_doc,0,0,0,1);
+
+  define_procedure_with_setter(S_search_procedure,SCM_FNC g_search_procedure,H_search_procedure,
+			       "set-" S_search_procedure,SCM_FNC g_set_search_procedure,local_doc,0,1,1,1);
 
 
 

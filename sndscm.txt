@@ -44,13 +44,13 @@ bell.scm
 The FM bell was developed by Michael McNabb in Mus10 in the late '70s. It is
 intended for low bell sounds (say middle C or so). The lines
 
-           (mod1 (make-oscil :frequency (* frequency 2)))
-           (mod2 (make-oscil :frequency (* frequency 1.41)))
-           (mod3 (make-oscil :frequency (* frequency 2.82)))
-           (mod4 (make-oscil :frequency (* frequency 2.4)))
-           (car1 (make-oscil :frequency frequency))
-           (car2 (make-oscil :frequency frequency))
-           (car3 (make-oscil :frequency (* frequency 2.4)))
+           (mod1 (make-oscil (* frequency 2)))
+           (mod2 (make-oscil (* frequency 1.41)))
+           (mod3 (make-oscil (* frequency 2.82)))
+           (mod4 (make-oscil (* frequency 2.4)))
+           (car1 (make-oscil frequency))
+           (car2 (make-oscil frequency))
+           (car3 (make-oscil (* frequency 2.4)))
 
 set up three FM pairs, car1+mod1 handling the basic harmonic spectra,
 car2+mod2 creating inharmonic spectra (using the square root of 2 more or
@@ -428,6 +428,7 @@ documents.
         o vct func like list
         o map-sound-files, match-sound-files
         o sound-interp, env-sound-interp
+        o describe-hook
 
 play
 
@@ -874,6 +875,7 @@ miscellaneous extensions
   finfo filename
   shell cmd
   mpg rawfile chans
+  describe-hook hook
 
 finfo returns a description of the file filename. shell is similar to
 Guile's system function, but output is sent to Snd's listener, rather than
@@ -887,7 +889,7 @@ samples.
 
 Presumably a similar function could be written to call TiMidity to translate
 MIDI files to something Snd can read, but I'm not having any luck getting it
-to work.
+to work. describe-hook tries to decipher the functions on the hook list.
 
 Several of the functions in this section are slight robustifications of the
 corresponding code in extsnd.html. These include:
@@ -1423,7 +1425,8 @@ is taken from the line
 /usr/lib/X11/rgb.txt. The choice of a float between 0.0 and 1.0 (rather than
 an integer between 0 and 255) mimics PostScript; as video hardware has
 improved over the years, there's less and less need for these elaborate
-color names, and less reason to limit these numbers to bytes.
+color names, and less reason (except perhaps psychophysical) to limit these
+numbers to bytes.
 
 rtio.scm
 

@@ -5494,7 +5494,7 @@ static void save_macro_1(named_macro *nm, FILE *fd)
    */
   int i;
   macro_cmd *mc;
-  fprintf(fd,"(defmacro %s ()\n",nm->name);
+  fprintf(fd,"(define (%s)\n",nm->name);
   for (i=0;i<nm->macro_size;i++)
     {
       mc = nm->cmds[i];
@@ -5563,6 +5563,43 @@ static int in_user_keymap(int key, int state)
 	return(i);
     }
   return(-1);
+}
+
+void save_user_key_bindings(FILE *fd)
+{
+  int i,sent_begin = 0;
+  char binder[64];
+  SCM con;
+  for (i=0;i<keymap_top;i++)
+    {
+      if (user_keymap[i].func != SCM_UNDEFINED)
+	{
+	  if (!sent_begin)
+	    {
+	      fprintf(fd,"(if #f (begin\n");
+	      sent_begin = 1;
+	    }
+	  sprintf(binder,
+		  "(bind-key (char->integer #\\%c) %d ",
+		  (unsigned char)(user_keymap[i].key),
+		  user_keymap[i].state);
+	  con = gh_str02scm(binder);
+	  fprintf(fd,"    %s\n",gh_scm2newstr(g_procedure2string(user_keymap[i].func,con),NULL));
+	}
+    }
+  if (sent_begin)
+    fprintf(fd,"))\n");
+}
+
+static SCM g_key_binding(SCM key, SCM state)
+{
+  #define H_key_binding "(" S_key_binding " key state) -> function bound to this key"
+  int i;
+  SCM_ASSERT(gh_number_p(key),key,SCM_ARG1,S_key_binding);
+  SCM_ASSERT(gh_number_p(state),state,SCM_ARG2,S_key_binding);
+  i = in_user_keymap(gh_scm2int(key),gh_scm2int(state));
+  if (i >= 0) return(user_keymap[i].func);
+  return(SCM_UNDEFINED);
 }
 
 static void set_keymap_entry(int key, int state, int ignore, SCM func)
@@ -10084,6 +10121,8 @@ void g_init_chn(SCM local_doc)
   define_procedure_with_reversed_setter(S_y_bounds,SCM_FNC g_y_bounds,H_y_bounds,
 					"set-" S_y_bounds,SCM_FNC g_set_y_bounds, SCM_FNC g_set_y_bounds_reversed,
 					local_doc,0,2,1,2);
+
+  DEFINE_PROC(gh_new_procedure(S_key_binding,SCM_FNC g_key_binding,2,0,0),H_key_binding);
 
 #if HAVE_HOOKS
   fft_hook = scm_create_hook(S_fft_hook,3);                       /* args = sound channel scaler */
