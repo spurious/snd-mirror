@@ -39,10 +39,10 @@ typedef struct {
 
 /*****************************************************************************/
 
-char g_bLADSPAInitialised = 0;
-LADSPAPluginInfo ** g_psLADSPARepository;
-long g_lLADSPARepositoryCapacity;
-long g_lLADSPARepositoryCount;
+static char g_bLADSPAInitialised = 0;
+static LADSPAPluginInfo ** g_psLADSPARepository;
+static long g_lLADSPARepositoryCapacity;
+static long g_lLADSPARepositoryCount;
 
 #define LADSPA_REPOSITORY_CAPACITY_STEP 100
 

@@ -829,16 +829,16 @@ static void double_to_ieee_80(double val, unsigned char *p)
   if(val < 0.0)	{  sign = 1;  val = -val; }
   if(val != 0.0)	/* val identically zero -> all elements zero */
     {
-      lexp = (short)(log(val)/log(2.0) + 16383.0);
+      lexp = (short)(log(val) / log(2.0) + 16383.0);
       val *= pow(2.0, 31.0 + 16383.0 - (double)lexp);
       mant1 = myDoubleToUlong(val);
       val -= myUlongToDouble(mant1);
       val *= pow(2.0, 32.0);
       mant0 = myDoubleToUlong(val);
     }
-  *p++ = ((sign<<7)|(lexp>>8));  *p++ = 0xFF & lexp;  
-  *p++ = 0xFF & (mant1>>24);  *p++ = 0xFF & (mant1>>16);  *p++ = 0xFF & (mant1>> 8);  *p++ = 0xFF & (mant1);
-  *p++ = 0xFF & (mant0>>24);  *p++ = 0xFF & (mant0>>16);  *p++ = 0xFF & (mant0>> 8);  *p++ = 0xFF & (mant0);
+  *p++ = ((sign << 7) | (lexp >> 8));  *p++ = 0xFF & lexp;  
+  *p++ = 0xFF & (mant1 >> 24);  *p++ = 0xFF & (mant1 >> 16);  *p++ = 0xFF & (mant1 >> 8);  *p++ = 0xFF & (mant1);
+  *p++ = 0xFF & (mant0 >> 24);  *p++ = 0xFF & (mant0 >> 16);  *p++ = 0xFF & (mant0 >> 8);  *p++ = 0xFF & (mant0);
 }
 
 

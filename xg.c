@@ -31919,7 +31919,6 @@ static XEN c_array_to_xen_list(XEN val, XEN clen)
   if (strcmp(ctype, "GList*") == 0)
     { /* tagging these pointers is currently up to the caller */
       GList* lst;
-      int i, len;
       lst = (GList*)XEN_CADR(val);
       len = g_list_length(lst);
       for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_ULONG(g_list_nth_data(lst, i)), result);
@@ -39622,7 +39621,7 @@ static int xg_already_inited = 0;
       define_strings();
       XEN_YES_WE_HAVE("xg");
 #if HAVE_GUILE
-      XEN_EVAL_C_STRING("(define xm-version \"03-Mar-02\")");
+      XEN_EVAL_C_STRING("(define xm-version \"07-Mar-02\")");
 #endif
       xg_already_inited = 1;
     }

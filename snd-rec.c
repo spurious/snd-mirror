@@ -1129,7 +1129,7 @@ void recorder_characterize_devices(int devs, int output_devices)
 	  cur_devices = (int)(audval[0]);
 	  for (i = 0; i < cur_devices; i++)
 	    {
-	      float direction = 0.0;
+	      direction = 0.0;
 	      device = (int)audval[i + 1];
 	      if ((err = mus_audio_mixer_read(MUS_AUDIO_PACK_SYSTEM(system)|device, MUS_AUDIO_DIRECTION, 0, &direction)) == 0) 
 		{

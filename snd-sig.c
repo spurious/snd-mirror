@@ -1580,7 +1580,7 @@ static char *reverse_channel(chan_info *cp, snd_fd *sf, int beg, int dur, XEN ed
   snd_info *sp;
   env_info *ep = NULL;
   file_info *hdr = NULL;
-  int j, k, ofd = 0, datumb = 0, temp_file, err = 0, section = 0, edpos = 0;
+  int i, j, k, ofd = 0, datumb = 0, temp_file, err = 0, section = 0, edpos = 0;
   MUS_SAMPLE_TYPE **data;
   MUS_SAMPLE_TYPE *idata;
   char *ofile = NULL;
@@ -1603,7 +1603,7 @@ static char *reverse_channel(chan_info *cp, snd_fd *sf, int beg, int dur, XEN ed
     ep = amp_env_copy(cp, TRUE, edpos); /* TRUE -> reversed */
   else 
     {
-      int sbin, ebin, i, j;
+      int sbin, ebin;
       MUS_SAMPLE_TYPE min1, max1;
       ep = amp_env_copy(cp, FALSE, edpos);
       if (ep) 

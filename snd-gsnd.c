@@ -1858,9 +1858,9 @@ void snd_info_cleanup(snd_info *sp)
 {
   snd_context *sx;
   snd_state *ss;
-  if (w_snd_pane(sp)) gtk_widget_hide(w_snd_pane(sp));
   if ((sp) && (sp->sgx))
     {
+      if (w_snd_pane(sp)) gtk_widget_hide(w_snd_pane(sp));
       ss = sp->state;
       sx = sp->sgx;
       if (SYNC_BUTTON(sp))

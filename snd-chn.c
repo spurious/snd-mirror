@@ -250,6 +250,7 @@ chan_info *virtual_selected_channel(chan_info *cp)
 int calculate_fft(chan_info *cp, void *ptr)
 {
   snd_state *ss;
+  /* TODO: the graph_transform_p flags (et al) could be removed if (DONT_)GRAPH_TRANSFORM(_NONE) added as transform_graph_type */
   if ((cp->graph_transform_p) &&
       (!(chan_fft_in_progress(cp))))
     {
@@ -2443,7 +2444,8 @@ static void display_channel_data_with_size (chan_info *cp, snd_info *sp, snd_sta
       if (with_fft)
 	{
 	  make_axes(cp, fap,
-		    ((cp->x_axis_style == X_AXIS_IN_SAMPLES) || (cp->x_axis_style == X_AXIS_IN_BEATS)) ? X_AXIS_IN_SECONDS : (cp->x_axis_style),
+		    ((cp->x_axis_style == X_AXIS_IN_SAMPLES) || 
+		     (cp->x_axis_style == X_AXIS_IN_BEATS)) ? X_AXIS_IN_SECONDS : (cp->x_axis_style),
 #if USE_MOTIF
 		    ((cp->chan == (sp->nchans - 1)) || (sp->channel_style != CHANNELS_SUPERIMPOSED)));
 	            /* Xt documentation says the most recently added work proc runs first, but we're
@@ -2534,8 +2536,8 @@ static void display_channel_data_with_size (chan_info *cp, snd_info *sp, snd_sta
 
 static void display_channel_data_1 (chan_info *cp, snd_info *sp, snd_state *ss, int just_fft, int just_lisp)
 {
-  int width, height, offset, full_height, chan_height, y0, y1, bottom, top;
-  Float val, size;
+  int width, height, offset, full_height, y0, y1, bottom, top;
+  Float val, size, chan_height;
   axis_info *ap;
   if ((sp->inuse == 0) ||
       (cp->active == 0) ||
@@ -2554,6 +2556,7 @@ static void display_channel_data_1 (chan_info *cp, snd_info *sp, snd_state *ss, 
       /* updates are asynchronous (dependent on background ffts etc), so we can't do the whole window at once */
       /* complication here is that we're growing down from the top, causing endless confusion */
       width = widget_width(channel_graph(sp->chans[0])) - (2 * ss->position_slider_width);
+      if (width <= 0) return;
       height = widget_height(channel_graph(sp->chans[0]));
       cp->height = height;
       if (sp->channel_style == CHANNELS_SUPERIMPOSED)
@@ -2563,11 +2566,11 @@ static void display_channel_data_1 (chan_info *cp, snd_info *sp, snd_state *ss, 
 	  val = gsy_value(sp->chans[0]);
 	  size = gsy_size(sp->chans[0]);
 	  full_height = (int)((Float)height / size);
-	  chan_height = full_height / sp->nchans;
+	  chan_height = (Float)full_height / (Float)(sp->nchans);
 	  bottom = (int)(full_height * val);
 	  top = (int)(full_height * (val + size));
-	  y1 = (sp->nchans - cp->chan) * chan_height;
-	  y0 = y1 - chan_height;
+	  y1 = (int)((sp->nchans - cp->chan) * chan_height);
+	  y0 = y1 - (int)chan_height;
 	  offset = top - y1;
 	  if ((cp->chan == 0) && 
 	      (offset > 0))
@@ -2581,7 +2584,7 @@ static void display_channel_data_1 (chan_info *cp, snd_info *sp, snd_state *ss, 
 	    chan_height = height - offset;
 	  if (((y0 < top) && (y0 >= bottom)) || 
 	      ((y1 > bottom) && (y1 <= top)))
-	    display_channel_data_with_size(cp, sp, ss, width, chan_height, offset, just_fft, just_lisp);
+	    display_channel_data_with_size(cp, sp, ss, width, (int)chan_height, offset, just_fft, just_lisp);
 	  else 
 	    {
 	      ap = cp->axis;

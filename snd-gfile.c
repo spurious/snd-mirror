@@ -84,18 +84,18 @@ static void load_header_and_data_lists(file_data *fdat, int type, int format, in
   fdat->current_type = type;
   fdat->current_format = format;
   fl = set_header_and_data_positions(fdat, type, format); 
-  SG_SIGNAL_HANDLER_BLOCK_BY_DATA(GTK_OBJECT(fdat->header_list), (gpointer)ss);
+  SG_SIGNAL_HANDLER_BLOCK_BY_DATA(GTK_OBJECT(fdat->header_list), (gpointer)fdat);
   SG_LIST_SELECT_ROW(fdat->header_list, fdat->header_pos);
-  SG_SIGNAL_HANDLER_UNBLOCK_BY_DATA(GTK_OBJECT(fdat->header_list), (gpointer)ss);
+  SG_SIGNAL_HANDLER_UNBLOCK_BY_DATA(GTK_OBJECT(fdat->header_list), (gpointer)fdat);
   SG_LIST_CLEAR(fdat->format_list);
   for (i = 0; i < fdat->formats; i++) 
     {
       str = fl[i];
       SG_LIST_INSERT(fdat->format_list, i, str);
     }
-  SG_SIGNAL_HANDLER_BLOCK_BY_DATA(GTK_OBJECT(fdat->format_list), (gpointer)ss);
+  SG_SIGNAL_HANDLER_BLOCK_BY_DATA(GTK_OBJECT(fdat->format_list), (gpointer)fdat);
   SG_LIST_SELECT_ROW(fdat->format_list, fdat->format_pos);
-  SG_SIGNAL_HANDLER_UNBLOCK_BY_DATA(GTK_OBJECT(fdat->format_list), (gpointer)ss);
+  SG_SIGNAL_HANDLER_UNBLOCK_BY_DATA(GTK_OBJECT(fdat->format_list), (gpointer)fdat);
   if ((srate > 0) && (fdat->srate_text))
     {
       str = (char *)CALLOC(LABEL_BUFFER_SIZE, sizeof(char));

@@ -220,7 +220,7 @@ int region_browser_is_active(void);
 void delete_region_and_update_browser(snd_state *ss, int n);
 void set_region_protect(int reg, int protect);
 void view_region_callback(GtkWidget *w, gpointer clientData);
-void allocate_region_rows(snd_state *ss, int n);
+void allocate_region_rows(int n);
 int region_dialog_is_active(void);
 void reflect_regions_in_region_browser(void);
 void reflect_no_regions_in_region_browser(void);

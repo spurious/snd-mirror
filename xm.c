@@ -6238,7 +6238,7 @@ returns a specified format name"
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XmClipboardInquireFormat", "int");
   XEN_ASSERT_TYPE(XEN_ULONG_P(arg4), arg4, 4, "XmClipboardInquireFormat", "ulong");
   len = XEN_TO_C_ULONG(arg4);
-  if (len <= 0) return(XEN_FALSE);
+  if (len == 0) return(XEN_FALSE);
   buf = (XtPointer)MALLOC(len);
   val = XmClipboardInquireFormat(XEN_TO_C_Display(arg1), 
 				 XEN_TO_C_Window(arg2), 
@@ -18553,7 +18553,7 @@ static char *XColor_to_string(XEN obj)
   r = XEN_TO_C_XColor(obj);
   sprintf(xm_print_buf, 
 	  "pixel: %d, rgb: %d %d %d, flags: %x", 
-	  (int)(r->pixel), r->red, r->green, r->blue, r->flags);
+	  (int)(r->pixel), r->red, r->green, r->blue, (int)(r->flags));
   return(xm_print_buf);
 }
 

@@ -1740,7 +1740,6 @@
 (hey "  if (strcmp(ctype, \"GList*\") == 0)~%")
 (hey "    { /* tagging these pointers is currently up to the caller */~%")
 (hey "      GList* lst;~%")
-(hey "      int i, len;~%")
 (hey "      lst = (GList*)XEN_CADR(val);~%")
 (hey "      len = g_list_length(lst);~%")
 (hey "      for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_ULONG(g_list_nth_data(lst, i)), result);~%")

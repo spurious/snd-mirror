@@ -526,7 +526,7 @@ static void w_toggle_callback(Widget w, XtPointer context, XtPointer info)
 
 static void channel_expose_callback(Widget w, XtPointer context, XtPointer info)
 {
-  TIME_TYPE last_expose_event_time = 0;
+  static TIME_TYPE last_expose_event_time = 0;
   snd_info *sp;
   chan_info *cp = (chan_info *)context;
   XmDrawingAreaCallbackStruct *cb = (XmDrawingAreaCallbackStruct *)info;
@@ -537,13 +537,14 @@ static void channel_expose_callback(Widget w, XtPointer context, XtPointer info)
   ev = (XExposeEvent *)(cb->event);
   if (ev->count > 0) return;
   curtime = GUI_CURRENT_TIME(cp->state);
-  if ((ev->width < 15) && 
-      (last_expose_event_time == curtime)) 
-    return; /* bogus events but count = 0? */
+  if ((ev->width < 15) && (last_expose_event_time == curtime)) return;
   last_expose_event_time = curtime;
   sp = cp->sound;
   if (sp->channel_style != CHANNELS_SEPARATE)
-    map_over_sound_chans(sp, update_graph, NULL);
+    {
+      if ((cp->chan == 0) && (ev->width > 10) && (ev->height > 10))
+	map_over_sound_chans(sp, update_graph, NULL);
+    }
   else update_graph(cp, NULL);
 }
 
@@ -554,7 +555,10 @@ static void channel_resize_callback(Widget w, XtPointer context, XtPointer info)
   if ((cp == NULL) || (cp->active != 1) || (cp->sound == NULL)) return;
   sp = cp->sound;
   if (sp->channel_style != CHANNELS_SEPARATE)
-    map_over_sound_chans(sp, update_graph, NULL);
+    {
+      if (cp->chan == 0)
+	map_over_sound_chans(sp, update_graph, NULL);
+    }
   else update_graph(cp, NULL);
 }
 
@@ -823,14 +827,12 @@ void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, in
   if (cx->chan_widgets == NULL) 
     cx->chan_widgets = (Widget *)CALLOC(NUM_CHAN_WIDGETS, sizeof(Widget));
   cw = cx->chan_widgets;
-  
   sx = ss->sgx;
   need_extra_scrollbars = ((!main) && (channel == 0));
 
   if (make_widgets)
     {
       /* allocate the entire widget apparatus for this channel of this sound */
-
       need_colors = (!(ss->using_schemes));
 
       if (!main)

@@ -1,8 +1,5 @@
 #include "snd.h"
 
-/* paned windows should use ratios (not doable currently -- need own panedwindow widget)
- */
-
 #if HAVE_XPM
   #include <X11/xpm.h>
 #endif
@@ -455,7 +452,7 @@ static void srate_click_callback(Widget w, XtPointer context, XtPointer info)
   ev = (XButtonEvent *)(cb->event);
   if (ev->state & (snd_ControlMask | snd_MetaMask)) 
     val = snd_srate_to_int(sp->last_speed_control); 
-  else val = SPEED_SCROLLBAR_MID;
+  else val = (int)SPEED_SCROLLBAR_MID;
   snd_srate_changed(sp, val);
   XtVaSetValues(SRATE_SCROLLBAR(sp), XmNvalue, val, NULL);
 }
@@ -535,7 +532,7 @@ static void expand_click_callback(Widget w, XtPointer context, XtPointer info)
   ev = (XButtonEvent *)(cb->event);
   if (ev->state & (snd_ControlMask | snd_MetaMask)) 
     val = snd_expand_to_int(sp->last_expand_control); 
-  else val = EXPAND_SCROLLBAR_MID;
+  else val = (int)EXPAND_SCROLLBAR_MID;
   snd_expand_changed(sp, val);
   XtVaSetValues(EXPAND_SCROLLBAR(sp), XmNvalue, val, NULL);
 }
@@ -777,7 +774,7 @@ static void revlen_click_callback(Widget w, XtPointer context, XtPointer info)
   ev = (XButtonEvent *)(cb->event);
   if (ev->state & (snd_ControlMask | snd_MetaMask)) 
     val = snd_revlen_to_int(sp->last_reverb_control_length); 
-  else val = REVLEN_SCROLLBAR_MULT;
+  else val = (int)REVLEN_SCROLLBAR_MULT;
   snd_revlen_changed(sp, val);
   XtVaSetValues(REVLEN_SCROLLBAR(sp), XmNvalue, val, NULL);
 }
@@ -883,8 +880,7 @@ static void filter_drawer_help_callback(Widget w, XtPointer context, XtPointer i
 {
   snd_help_with_wrap((snd_state *)context, 
 		     "Filter Frequency Response",
-"This graph shows the current filter frequency response envelope,  \
-and the actual response (dependent on the filter order). \
+"This graph shows the current filter frequency response envelope, and the actual response (dependent on the filter order). \
 See the envelope editor documentation for editing directions.");
 }
 

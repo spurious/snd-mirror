@@ -1565,7 +1565,7 @@ static int apply_fft_window(fft_state *fs)
       {
 	XEN res; XEN sfd;
 	vct *v;
-	int len, i;
+	int len;
 	sfd = g_c_make_sample_reader(sf);
 	snd_protect(sfd);
 	res = XEN_CALL_2(added_transform_proc(cp->transform_type), 

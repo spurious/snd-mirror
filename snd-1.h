@@ -729,7 +729,7 @@ XEN snd_no_active_selection_error(const char *caller);
 void g_initialize_gh(snd_state *ss);
 XEN eval_str_wrapper(void *data);
 XEN eval_form_wrapper(void *data);
-char *g_print_1(XEN obj, const char *caller);
+char *g_print_1(XEN obj);
 chan_info *get_cp(XEN snd_n, XEN chn_n, const char *caller);
 snd_info *get_sp(XEN snd_n);
 XEN g_c_make_sample_reader(snd_fd *fd);
@@ -825,7 +825,7 @@ void clear_region_backpointer(snd_info *sp);
 void save_region_backpointer(snd_info *sp);
 void sequester_deferred_regions(chan_info *cp, int edit_top);
 void g_init_regions(void);
-int map_over_region_chans(snd_state *ss, int (*func)(chan_info *, void *), void *userptr);
+int map_over_region_chans(int (*func)(chan_info *, void *), void *userptr);
 
 
 /* -------- snd-env.c -------- */

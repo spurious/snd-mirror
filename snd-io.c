@@ -318,7 +318,7 @@ static int too_many_files_cleanup(snd_state *ss)
   (*closed) = 0;
   map_over_chans(ss, close_temp_files, (void *)closed);
   if ((*closed) == 0) 
-    map_over_region_chans(ss, close_temp_files, (void *)closed);
+    map_over_region_chans(close_temp_files, (void *)closed);
   if ((*closed) == 0)
     rtn = -1;
   else rtn = (*closed);

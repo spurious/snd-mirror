@@ -135,7 +135,7 @@ static void set_max_regions(snd_state *ss, int n)
   if (n >= 0)
     {
       allocate_regions(ss, n);
-      allocate_region_rows(ss, n);
+      allocate_region_rows(n);
       in_set_max_regions(ss, n);
     }
 }
@@ -435,7 +435,7 @@ file_info *fixup_region_data(chan_info *cp, int chan, int pos)
   return(NULL);
 }
 
-int map_over_region_chans(snd_state *ss, int (*func)(chan_info *, void *), void *userptr)
+int map_over_region_chans(int (*func)(chan_info *, void *), void *userptr)
 {
   int i, chn, val = 0;
   region *r;

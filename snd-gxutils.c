@@ -118,7 +118,7 @@ static XEN g_change_property(XEN winat, XEN name, XEN command)
   XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ARG_2, S_change_property, "a string");
   if (XEN_STRING_P(command))
     c = XEN_TO_C_STRING(command);
-  else c = g_print_1(command, S_change_property);
+  else c = g_print_1(command);
   change_property(get_global_state(), 
 		  XEN_TO_C_STRING(winat), 
 		  XEN_TO_C_STRING(name), c);

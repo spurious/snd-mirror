@@ -698,14 +698,14 @@ static XEN mus_xen_apply(XEN gen, XEN arg1, XEN arg2)
 }
 #endif
 
-XEN mus_xen_to_object(mus_xen *gn)
+static XEN mus_xen_to_object(mus_xen *gn)
 {
   XEN_MAKE_AND_RETURN_OBJECT(mus_xen_tag, gn, mark_mus_xen, free_mus_xen);
 }
 
 #define MUS_DATA_POSITION 0
 
-XEN mus_xen_to_object_with_vct(mus_xen *gn, XEN v)
+static XEN mus_xen_to_object_with_vct(mus_xen *gn, XEN v)
 {
   XEN new_dly = XEN_FALSE;
   XEN_MAKE_OBJECT(new_dly, mus_xen_tag, gn, mark_mus_xen, free_mus_xen);
@@ -1789,7 +1789,7 @@ returns a new " S_asymmetric_fm " generator."
 
   mus_xen *gn;
   XEN args[8]; XEN keys[4];
-  int orig_arg[4] = {0, 0, 0};
+  int orig_arg[4] = {0, 0, 0, 0};
   int vals;
   Float freq = 440.0;
   Float phase = 0.0;

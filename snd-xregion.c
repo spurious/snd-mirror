@@ -539,7 +539,7 @@ int region_dialog_is_active(void)
 	 (XtIsManaged(region_dialog)));
 }
 
-void allocate_region_rows(snd_state *ss, int n)
+void allocate_region_rows(int n)
 {
   int i;
   if ((region_dialog) && 

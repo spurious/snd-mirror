@@ -513,7 +513,7 @@ XEN g_call3(XEN proc, XEN arg1, XEN arg2, XEN arg3, const char *caller)
 #endif
 }
 
-char *g_print_1(XEN obj, const char *caller) /* don't free return val */
+char *g_print_1(XEN obj) /* don't free return val */
 {
   char *str1 = NULL;
 #if HAVE_GUILE
@@ -538,14 +538,14 @@ char *g_print_1(XEN obj, const char *caller) /* don't free return val */
   return(str1);
 }
 
-static char *gl_print(XEN result, const char *caller)
+static char *gl_print(XEN result)
 {
   char *newbuf = NULL, *str = NULL;
   int i, ilen, savelen, savectr, slen;
   /* specialize vectors which can be enormous in this context */
   if ((!(XEN_VECTOR_P(result))) || 
       ((int)(XEN_VECTOR_LENGTH(result)) <= print_length(state)))
-    return(copy_string(g_print_1(result, caller)));
+    return(copy_string(g_print_1(result)));
   ilen = print_length(state); 
   newbuf = (char *)CALLOC(128, sizeof(char));
   savelen = 128;
@@ -553,7 +553,7 @@ static char *gl_print(XEN result, const char *caller)
   sprintf(newbuf, "#("); 
   for (i = 0; i < ilen; i++)
     {
-      str = g_print_1(XEN_VECTOR_REF(result, i), caller);
+      str = g_print_1(XEN_VECTOR_REF(result, i));
       if ((str) && (*str)) 
 	{
 	  slen = strlen(str);
@@ -589,7 +589,7 @@ XEN snd_report_result(snd_state *ss, XEN result, char *buf)
   snd_info *sp = NULL;
   char *str = NULL;
   XEN res = XEN_FALSE;
-  str = gl_print(result, "eval-str");
+  str = gl_print(result);
   if (ss->mx_sp)
     {
       sp = ss->mx_sp;
@@ -616,11 +616,11 @@ XEN snd_report_listener_result(snd_state *ss, XEN form)
   XEN res = XEN_FALSE; XEN result;
   listener_append(ss, "\n");
 #if HAVE_RUBY
-  str = gl_print(form, "repl");
+  str = gl_print(form);
   result = form;
 #else
   result = snd_catch_any(eval_form_wrapper, (void *)form, NULL);
-  str = gl_print(result, "eval");
+  str = gl_print(result);
 #endif
   if (ss->listening)
     {
@@ -641,7 +641,7 @@ void snd_eval_property_str(snd_state *ss, char *buf)
   char *str;
   if ((snd_strlen(buf) == 0) || ((snd_strlen(buf) == 1) && (buf[0] == '\n'))) return;
   result = snd_catch_any(eval_str_wrapper, (void *)buf, buf);
-  str = gl_print(result, "eval-listener-str");
+  str = gl_print(result);
   listener_append_and_prompt(ss, str);
   if (str) FREE(str);
 }
@@ -695,7 +695,7 @@ void snd_eval_stdin_str(snd_state *ss, char *buf)
       send_error_output_to_stdout = 0;
       FREE(stdin_str); /* same as str in this case */
       stdin_str = NULL;
-      str = gl_print(result, "eval-stdin-str");
+      str = gl_print(result);
       string_to_stdout(ss, str);
       if (str) FREE(str);
     }
@@ -769,7 +769,7 @@ static XEN g_snd_print(XEN msg)
 	  str = (char *)CALLOC(2, sizeof(char));
 	  str[0] = XEN_TO_C_CHAR(msg);
 	}
-      else str = gl_print(msg, S_snd_print);
+      else str = gl_print(msg);
     }
   listener_append(ss, str);
   if (str) FREE(str);

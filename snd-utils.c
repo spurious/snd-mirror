@@ -472,7 +472,7 @@ static void remember_pointer(void *ptr, size_t len, const char *func, const char
 void *mem_calloc(size_t len, size_t size, const char *func, const char *file, int line)
 {
   void *ptr;
-  if ((len <= 0) || (len > MAX_MALLOC))
+  if ((len == 0) || (len > MAX_MALLOC))
     {
       fprintf(stderr, "%s:%s[%d] attempt to calloc %d bytes", func, file, line, len*size);
       mem_report(); abort();
@@ -485,7 +485,7 @@ void *mem_calloc(size_t len, size_t size, const char *func, const char *file, in
 void *mem_malloc(size_t len, const char *func, const char *file, int line)
 {
   void *ptr;
-  if ((len <= 0) || (len > MAX_MALLOC))
+  if ((len == 0) || (len > MAX_MALLOC))
     {
       fprintf(stderr, "%s:%s[%d] attempt to malloc %d bytes", func, file, line, len);
       mem_report(); abort();
@@ -504,7 +504,7 @@ void mem_free(void *ptr, const char *func, const char *file, int line)
 void *mem_realloc(void *ptr, size_t size, const char *func, const char *file, int line)
 {
   void *new_ptr;
-  if ((size <= 0) || (size > MAX_MALLOC))
+  if ((size == 0) || (size > MAX_MALLOC))
     {
       fprintf(stderr, "%s:%s[%d] attempt to realloc %d bytes", func, file, line, size);
       mem_report(); abort();
@@ -515,8 +515,7 @@ void *mem_realloc(void *ptr, size_t size, const char *func, const char *file, in
   return(new_ptr);
 }
 
-char *mem_stats(snd_state *ss, int ub);
-char *mem_stats(snd_state *ss, int ub)
+static char *mem_stats(snd_state *ss, int ub)
 {
   int i, ptrs = 0, sum = 0, snds = 0, chns = 0;
   snd_info *sp;
