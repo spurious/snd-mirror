@@ -327,6 +327,8 @@ static void edit_data_to_file(FILE *fd, ed_list *ed, chan_info *cp)
 			}
 		    }
 		}
+	      FREE(ibufs[0]);
+	      FREE(ibufs);
 	      fprintf(fd, ")");
 	      if (mus_file_close(ifd) != 0)
 		snd_error("can't close %d (%s): %s! [%s[%d] %s]",
@@ -2384,6 +2386,7 @@ static int save_edits_and_update_display(snd_info *sp)
   /* very weird -- in Linux we can write a write-protected file?? */
   if (err == 0)
     {
+      mus_sound_forget(sp->filename);
       err = move_file(ofile, sp->filename);
       if (err) saved_errno = errno;
     }

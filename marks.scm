@@ -26,7 +26,7 @@
 	     (do ((j 0 (1+ j)))
 		 ((= j (channels i)))
 	       (let ((mark (find-mark name i j)))
-		 (if (number? mark) (return-early mark))))))))))
+		 (if (mark? mark) (return-early mark))))))))))
 
 
 ;;; -------- move-syncd-marks moves all syncd marks together

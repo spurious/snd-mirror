@@ -1999,10 +1999,10 @@ the hook.
 <!-- --><table border=1 cellpadding=5><tr><td bgcolor="#FCFCF0"><pre>
 (define (read-listener-line prompt)
   (let ((res #f))
-    (add-hook! read-hook (lambda (str) (set! res str) #t))
+    (add-hook! <em class=red>read-hook</em> (lambda (str) (set! res str) #t))
     (snd-print prompt)
     (do () ((or (c-g?) res)))
-    (reset-hook! read-hook)
+    (reset-hook! <em class=red>read-hook</em>)
     res))
 <!-- --></pre></td></tr></table></td></tr>
 <!-- --><tr><td colspan=3>See also snd-debug in extensions.scm.</td></tr>
@@ -3072,7 +3072,7 @@ a globally unique id number (returned by <b>find-mark</b> or <b>add-mark</b>, fo
 <!-- backward-mark -->
 <!-- -->
 <!-- --><tr><td><span class=defbox><code><em class=def><a name="sndbackwardmark">backward-mark</a></em> (<i>count snd chn</i>)</code></span></td>
-<!-- --><td>move back <i>count</i> marks (C-j).
+<!-- --><td>move back <i>count</i> marks (C-j), returning mark id, or #f if none.
 <!-- --></td></tr>
 <!-- -->
 <!-- delete-mark -->
@@ -3100,7 +3100,7 @@ a globally unique id number (returned by <b>find-mark</b> or <b>add-mark</b>, fo
 <!-- forward-mark -->
 <!-- -->
 <!-- --><tr><td><span class=defbox><code><em class=def><a name="sndforwardmark">forward-mark</a></em> (<i>count snd chn</i>)</code></span></td>
-<!-- --><td>move forward <i>count</i> marks (C-j).
+<!-- --><td>move forward <i>count</i> marks (C-j), returning mark id, or #f if none.
 <!-- --></td></tr>
 <!-- -->
 <!-- --><tr><td><span class=defbox><code><em class=def><a href="#markclickhook">mark-click-hook</a></em> (id)</code></span></td>
@@ -3116,7 +3116,9 @@ a globally unique id number (returned by <b>find-mark</b> or <b>add-mark</b>, fo
 <!-- mark-sample -->
 <!-- -->
 <!-- --><tr><td><span class=defbox><code><em class=def><a name="sndmarksample">mark-sample</a></em> (<i>id pos</i>)</code></span></td>
-<!-- --><td>position of mark <i>id</i> at edit history position <i>pos</i>; also (set! (mark-sample id) samp)
+<!-- --><td>sample (number) marked by mark <i>id</i> at edit history position <i>pos</i>; also <code>(set! (mark-sample id) samp)</code>.
+<!-- -->It might be more consistent with other Snd names to call this mark-position, but I wanted to emphasize
+<!-- -->that a mark follows its sample around as a sound is edited; that is, it marks a sample, not a position in the sound.
 <!-- --></td></tr>
 <!-- -->
 <!-- mark-sync -->
@@ -4245,9 +4247,10 @@ desired edit history position.
 <!-- --><span class=defbox><code><em class=def><a name="lfind">find</a></em> (expr <i>sample snd chn edpos</i>) </code></span></td></tr>
 <!-- --><tr><td></td><td>
 <!-- -->find the sample that satisfies the Scheme function <i>expr</i>. <i>sample</i>
-<!-- -->determines where to start the search. <br><br>
+<!-- -->determines where to start the search. 
+<!-- -->If the function returns an integer, it represents how many samples to offset the cursor from the "find" location.<br><br>
 <!-- -->
-<!-- --><code>(find (lambda (y) (&gt; y .1)))</code>
+<!-- --><code>(find (lambda (y) (&gt; y .1)))</code><br><code>(find (lambda (y) (and (&gt; y .1) -2)))</code><br>
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->

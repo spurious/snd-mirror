@@ -63,7 +63,9 @@
   (let ((str (apply format #f args)))
     (display str)
     (if (not (provided? 'snd-nogui))
-        (snd-print str))))
+	(begin
+	  (snd-print "\n")
+	  (snd-print str)))))
 
 (define test14-file #f)
 (define fneq (lambda (a b) (> (abs (- a b)) .001)))
@@ -144,7 +146,7 @@
 	    (car args))))
 ;(defmacro without-errors (func) `(begin ,func))
 (load "hooks.scm")
-(reset-all-hooks)
+;(reset-all-hooks)
 
 (if (> (length (script-args)) 0)
     (let ((arg (script-arg))
@@ -4877,6 +4879,34 @@
 	  (mus-sound-close-input fd)
 	  (if (fneq val 0.02893066) (snd-display ";mus-sound-read: ~F?" val))))
 
+      (let ((ind (new-sound "fmv.snd")))
+	(set! (sample 1) .1)
+	(save-sound ind)
+	(if (not (equal? (edits ind 0) (list 0 0)))
+	    (snd-display ";weird: edits not cleared after save-sound?: ~A" (edits ind 0)))
+	(close-sound ind)
+	(set! ind (open-sound "fmv.snd"))
+	(if (not (= (frames ind 0) 2))
+	    (snd-display ";save-sound 2 samps: ~A?" (frames ind 0)))
+	(if (or (fneq (sample 0) 0.0)
+		(fneq (sample 1) 0.1))
+	    (snd-display ";save-sound: ~A ~A?" (sample 0) (sample 1)))
+	(do ((i 3 (1+ i)))
+	    ((= i 6))
+	  (set! (sample i) (* i .1))
+	  (save-sound ind)
+	  (if (not (equal? (edits ind 0) (list 0 0)))
+	      (snd-display ";weird: edits not cleared after save-sound ~A?: ~A" i (edits ind 0)))
+	  (close-sound ind)
+	  (set! ind (open-sound "fmv.snd"))
+	  (if (not (= (frames ind 0) (+ i 1)))
+	      (snd-display ";save-sound ~A samps: ~A?" (+ i 1) (frames ind 0)))
+	  (if (or (fneq (sample 0) 0.0)
+		  (fneq (sample 1) 0.1)
+		  (fneq (sample i) (* i 0.1)))
+	      (snd-display ";save-sound ~A: ~A ~A ~A?" i (sample 0) (sample 1) (sample i))))
+	(close-sound ind))
+
       (let ((nind (new-sound "fmv.snd" mus-aifc mus-bshort 22050 1 "this is a comment")))
 	(time (fm-violin 0 1 440 .1))
 	(fofins 1 1 270 .2 .001 730 .6 1090 .3 2440 .1) 
@@ -8516,7 +8546,74 @@ EDITS: 3
 	    (snd-display ";display-edits: ~A?" str)))
       (revert-sound nind)
       (close-sound nind)
+
+      (let ((ind (new-sound "fmv.snd")))
+	(set! (sample 10) .1)
+	(save-sound ind)
+	(set! (sample 1) .1)
+	(let ((eds (display-edits ind)))
+	  (save-state "t1.scm")
+	  (close-sound ind)
+	  (load "t1.scm")
+	  (set! ind (find-sound "fmv.snd"))
+	  (if (not (sound? ind))
+	      (snd-display ";save-state restored but no sound?"))
+	  (let ((new-eds (display-edits ind)))
+	    (if (not (string=? eds new-eds))
+		(snd-display ";save-state from ~A to ~A?" eds new-eds)))
+	  (do ((i 3 (1+ i)))
+	      ((= i 6))
+	    (set! (sample i) (* i .1))
+	    (set! eds (display-edits ind))
+	    (save-state "t1.scm")
+	    (close-sound ind)
+	    (load "t1.scm")
+	    (set! ind (find-sound "fmv.snd"))
+	    (if (not (sound? ind))
+		(snd-display ";save-state ~A restored but no sound?" i))
+	    (let ((new-eds (display-edits ind)))
+	      (if (not (string=? eds new-eds))
+		  (snd-display ";save-state ~A from ~A to ~A?" i eds new-eds)))))
+	(close-sound ind)
+	(delete-file "t1.scm"))
       
+      (let ((ind (new-sound "fmv.snd" mus-next mus-bshort 22050 8 "this is an 8-channel save-state test"))
+	    (ind1 (new-sound "fmv1.snd" mus-next mus-bshort 22050 2 "this is a 2-channel save-state test")))
+	(set! (sample 10 ind 0) .1)
+	(set! (sample 10 ind 1) .2)
+	(set! (sample 10 ind 2) .3)
+	(set! (sample 10 ind 3) .4)
+	(set! (sample 10 ind1 0) -.1)
+	(set! (sample 10 ind1 1) -.2)
+	(save-sound ind)
+	(save-sound ind1)
+	(set! (sample 1 ind 0) .1)
+	(set! (sample 1 ind 1) .2)
+	(set! (sample 1 ind 2) .3)
+	(set! (sample 1 ind 3) .4)
+	(set! (sample 1 ind1 0) -.1)
+	(set! (sample 1 ind1 1) -.2)
+	(let ((eds (display-edits ind))
+	      (eds1 (display-edits ind1)))
+	  (save-state "t1.scm")
+	  (close-sound ind)
+	  (close-sound ind1)
+	  (load "t1.scm")
+	  (set! ind (find-sound "fmv.snd"))
+	  (set! ind1 (find-sound "fmv1.snd"))
+	  (if (or (not (sound? ind))
+		  (not (sound? ind1)))
+	      (snd-display ";save-state(2) restored but no sound? ~A ~A" ind ind1))
+	  (let ((new-eds (display-edits ind))
+		(new-eds1 (display-edits ind1)))
+	    (if (not (string=? eds new-eds))
+		(snd-display ";save-state(1) from ~A to ~A?" eds new-eds))
+	    (if (not (string=? eds1 new-eds1))
+		(snd-display ";save-state(2) from ~A to ~A?" eds1 new-eds1))))
+	(close-sound ind)
+	(close-sound ind1)
+	(delete-file "t1.scm"))
+
       ))
 
 
@@ -10055,7 +10152,7 @@ EDITS: 3
 	       selection-creates-region selection-length selection-member? selection? short-file-name 
 	       show-axes show-backtrace show-controls show-transform-peaks
 	       show-indices show-listener show-marks show-mix-waveforms show-selection-transform show-usage-stats show-y-zero sinc-width smooth-sound
-	       smooth-selection snd-apropos snd-print snd-spectrum snd-tempnam snd-version sound-files-in-directory sound-loop-info sound-widgets
+	       smooth-selection snd-print snd-spectrum snd-tempnam snd-version sound-files-in-directory sound-loop-info sound-widgets
 	       soundfont-info sound? sounds spectro-cutoff spectro-hop spectro-start spectro-x-angle spectro-x-scale spectro-y-angle spectro-y-scale
 	       spectro-z-angle spectro-z-scale speed-control speed-control-style speed-control-tones 
 	       squelch-update srate src-sound src-selection start-playing start-progress-report
@@ -10123,6 +10220,8 @@ EDITS: 3
 		   squelch-update sync temp-dir text-focus-color tiny-font transform-type trap-segfault use-sinc-interp verbose-cursor
 		   vu-font vu-font-size vu-size wavelet-type graph-time? wavo-hop wavo-trace 
 		   with-mix-tags x-axis-style zero-pad zoom-color zoom-focus-style ))
+
+(reset-all-hooks)
 
 (if (or full-test (= snd-test 23) (and keep-going (<= snd-test 23)))
     (begin
@@ -11035,8 +11134,8 @@ EDITS: 3
 (snd-display ";all done!~%~A" original-prompt)
 (let ((gc-lst (gc-stats)))
   (snd-display "timings:~%  ~A: total~%  GC: ~A~%~{    ~A~%~})~%" 
-		       (/ (- (get-internal-real-time) overall-start-time) 100) 
-		       (* (cdr (list-ref gc-lst 0)) .001)
+		       (/ (- (get-internal-real-time) overall-start-time) internal-time-units-per-second) 
+		       (/ (cdr (list-ref gc-lst 0)) 1000)
 		       (list (list-ref gc-lst 1) 
 			     (list-ref gc-lst 5) 
 			     (list-ref gc-lst 9))))
@@ -11050,7 +11149,7 @@ EDITS: 3
 (do ((i 0 (1+ i)))
     ((= i (+ total-tests 1)))
   (if (number? (vector-ref timings i))
-      (snd-display "  [~D: ~A]" i (/ (vector-ref timings i) 100))))
+      (snd-display "  [~D: ~A]" i (/ (vector-ref timings i) internal-time-units-per-second))))
 	
 (if (string? test14-file)
     (snd-display "~%~A(~D)" test14-file (mus-sound-samples test14-file)))
@@ -11058,16 +11157,11 @@ EDITS: 3
 (if with-exit (exit))
 
 ;;; these need further testing
-;;; TODO:  save-state mus-sound-reopen-output play-track? equalize-panes
-;;; TODO:  edpos in sound->temp graph-data, apply from mark etc
+;;; TODO:  snd-apropos mus-sound-reopen-output play-track? equalize-panes edpos in sound->temp graph-data, apply from mark etc
 ;;; TODO:  run overall (14 etc) with various hooks set (current-window-location etc)
 
 ;; we have mus-sound-srate in sndlib, mus-srate in clm.c, sound-srate and *clm-srate* in clm, mus-sound-srate and srate in snd
 ;;    perhaps a mus module, giving mus:sound-srate in scm, mus:sound-srate in clm, mus_sound_srate in C?
-;; TODO: control-changed-hook (lambda (snd control-func val) ...) (for auto-set etc)
-;;        or amp|speed|contrast|expand|reverb[-scale|length]|filter[-text?]-control-hook -> return value given raw slider position (0..1)
-;;        or hooks on all sliders (chan-sx etc)
-;;   and cursor-position (widget-position, x->position) is a different thing from selection|mix-position -> origin? (mark-sample, left|right-sample)
 
 ;;; need to know before calling this if libguile.so was loaded
 ;;; (system "cc gsl-ex.c -c")

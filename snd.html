@@ -1400,13 +1400,16 @@ The expression is a
 Scheme function that takes one argument, the current
 sample value, and returns #t when it finds a match.  For example,
 to look for the next sample that is greater than
-.1, (lambda (y) (&gt; y .1)).  The
+.1, <code>(lambda (y) (&gt; y .1))</code>.  The
 cursor then moves
 to the next such sample, if any.
 Successive C-s's
 or C-r's repeat the search.  C-x C-s can redefine the
 search pattern, which is also cleared by various other
-commands, much as in Emacs. 
+commands, much as in Emacs. To place the cursor offset from the
+location that would have stopped the search, return an integer
+representing that offset.  For example <code>(lambda (y) (and (&gt; y .1) -2))</code>
+finds the next sample greater than .1, and places the cursor two samples before it.
 </p>
 
 <p>The search commands are:</p>

@@ -12,14 +12,14 @@ static int scan_tab(SCM tab, char *text, int len, int matches)
 {
   int i, j, n, curlen;
   char *sym;
-  n = SCM_VECTOR_LENGTH(tab);
+  n = VECTOR_LENGTH(tab);
   for (i = 0; i < n; ++i)
     {
       SCM ls = SCM_VELTS(tab)[i], handle;
       while (NOT_NULL_P(ls))
 	{
 	  handle = SCM_CAR(ls);
-	  sym = SCM_SYMBOL_CHARS(SCM_CAR(handle));
+	  sym = SYMBOL_TO_C_STRING(SCM_CAR(handle));
 	  if (strncmp(text, sym, len) == 0)
 	    {
 	      matches++;

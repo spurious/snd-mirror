@@ -486,7 +486,7 @@ void update_stats_with_widget(snd_state *ss, GUI_WIDGET stats_form)
 	gc_heap = scm_num2long_long(SCM_CDR(LIST_REF(stats, 2)), (char *)SCM_ARG1, __FUNCTION__);
 	gc_cells = scm_num2long_long(SCM_CDR(LIST_REF(stats, 1)), (char *)SCM_ARG1, __FUNCTION__);
 #endif
-	gc_time = (float)(TO_C_INT(SCM_CDR(LIST_REF(stats, 0)))) * (1000.0 / (float)CLOCKS_PER_SEC);
+	gc_time = (float)(TO_C_INT(SCM_CDR(LIST_REF(stats, 0)))) / 1000.0;
 	str = (char *)CALLOC(STATS_BUFFER_SIZE,sizeof(char));
 	if (len > 7)
 	  mus_snprintf(str, STATS_BUFFER_SIZE,
@@ -530,8 +530,15 @@ void g_init_listener(SCM local_doc)
 {
   DEFINE_PROC(S_save_listener, g_save_listener, 1, 0, 0, H_save_listener);
 
-  read_hook = MAKE_HOOK(S_read_hook, 1, "hook into typed input in listener, hook func gets the typing");
+  #define H_read_hook S_read_hook " (text) is called each time a line is typed into the listener (triggered by the carriage return). \
+If it returns #t, Snd assumes you've dealt the text yourself, and does not try to evaluate it. \n\
+(define (read-listener-line prompt) \n\
+  (let ((res #f)) \n\
+    (add-hook! read-hook (lambda (str) (set! res str) #t)) \n\
+    (snd-print prompt) \n\
+    (do () ((or (c-g?) res))) \n\
+    (reset-hook! read-hook) \n\
+    res))"
 
+  read_hook = MAKE_HOOK(S_read_hook, 1, H_read_hook);
 }
-
-/* (add-hook! read-hook (lambda (str) (snd-print (format #f "got ~A" str)) #f)) */

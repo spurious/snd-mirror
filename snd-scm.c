@@ -3184,10 +3184,18 @@ void g_initialize_gh(snd_state *ss)
   DEFINE_PROC("gc-on",               g_gc_on, 0, 0, 0,               "turn on GC");
 #endif
 
-  #define H_during_open_hook S_during_open_hook " (fd name reason) is called after file is opened, but before data has been read."
+  #define H_during_open_hook S_during_open_hook " (fd name reason) is called after file is opened, but before data has been read. \n\
+(add-hook! during-open-hook \n\
+  (lambda (fd name reason) \n\
+    (if (= (mus-sound-header-type name) mus-raw) \n\
+        (mus-file-set-prescaler fd 500.0))))"
 
   #define H_after_open_hook S_after_open_hook " (snd) is called just before the new file's window is displayed. \
-This provides a way to set various sound-specific defaults."
+This provides a way to set various sound-specific defaults. \n\
+(add-hook! after-open-hook \n\
+  (lambda (snd) \n\
+    (if (> (channels snd) 1) \n\
+        (set! (channel-style snd) channels-combined))))"
 
   #define H_output_comment_hook S_output_comment_hook " (str) is called in Save-As dialog, passed current sound's comment, if any. \
 If more than one hook function, results are concatenated. If none, the current comment is used.\n\
@@ -3197,11 +3205,21 @@ If more than one hook function, results are concatenated. If none, the current c
         (strftime \"%a %d-%b-%Y %H:%M %Z\"\n\
           (localtime (current-time))))))"
 
+  #define H_print_hook S_print_hook " (text) is called each time some Snd-generated response (text) is about to be appended to the listener. \
+If it returns some non-#f result, Snd assumes you've sent the text out yourself, as well as any needed prompt. \n\
+(add-hook! print-hook \n\
+  (lambda (msg) \n\
+    (snd-print 
+      (format #f \"~A~%[~A]~%~A\" \n\
+              msg \n\
+              (strftime \"%d-%b %H:%M %Z\" \n\
+                         (localtime (current-time))) \n\
+              (listener-prompt)))))"
+
   during_open_hook =    MAKE_HOOK(S_during_open_hook, 3,    H_during_open_hook);    /* args = fd filename reason */
   after_open_hook =     MAKE_HOOK(S_after_open_hook, 1,     H_after_open_hook);     /* args = sound */
   output_comment_hook = MAKE_HOOK(S_output_comment_hook, 1, H_output_comment_hook); /* arg = current mus_sound_comment(hdr) if any */
-
-  print_hook = MAKE_HOOK(S_print_hook, 1, "hook into printout in listener");
+  print_hook =          MAKE_HOOK(S_print_hook, 1,          H_print_hook);          /* arg = text */
 
   g_init_marks(local_doc);
   g_init_regions(local_doc);
@@ -3258,7 +3276,7 @@ If more than one hook function, results are concatenated. If none, the current c
                     (define-envelope (symbol->string ', a) , b)))");
   /* this is trying to keep track of envelopes for the envelope editor */
 
-  EVAL_STRING("(define (" S_snd_apropos " val) (snd-print (with-output-to-string (lambda () (apropos val)))))");
+  EVAL_STRING("(define (" S_snd_apropos " val) (snd-print (with-output-to-string (lambda () (apropos (if (string? val) val (object->string val)))))))");
   EVAL_STRING("(read-set! keywords 'prefix)");
   EVAL_STRING("(print-enable 'source)");  /* added 13-Feb-01 */
 

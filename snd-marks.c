@@ -5,6 +5,10 @@
  * TODO  reverse (or any fixup) if syncd mark, but unsyncd chans -- should other marks move or break sync chain?
  */
 
+/* if mark is handled as an smob, rather than a bare integer, we get better
+ *   type-checking, but (for example) searching for a gven mark becomes messy
+ */
+
 #include "snd.h"
 
 /* to handle undo/redo cleanly, we keep the mark list as an array (indexed to edit_ctr)
@@ -1863,12 +1867,18 @@ static SCM g_forward_mark(SCM count, SCM snd, SCM chn)
   #define H_forward_mark "(" S_forward_mark " &optional (count 1) snd chn) moves the cursor forward by count marks"
   int val; 
   chan_info *cp;
+  mark *mp = NULL;
   ASSERT_TYPE(INTEGER_IF_BOUND_P(count), count, SCM_ARG1, S_forward_mark, "an integer");
   SND_ASSERT_CHAN(S_forward_mark, snd, chn, 2);
   cp = get_cp(snd, chn, S_forward_mark);
   val = TO_C_INT_OR_ELSE(count, 1); 
-  handle_cursor(cp, goto_mark(cp, val));
-  return(TO_SCM_INT(val));
+  if (cp->marks) mp = find_nth_mark(cp, val);
+  if (mp)
+    {
+      handle_cursor(cp, cursor_moveto(cp, mp->samp));
+      return(TO_SCM_INT(mark_id(mp)));
+    }
+  return(SCM_BOOL_F);
 }
 
 static SCM g_backward_mark(SCM count, SCM snd, SCM chn) 
@@ -1876,12 +1886,18 @@ static SCM g_backward_mark(SCM count, SCM snd, SCM chn)
   #define H_backward_mark "(" S_backward_mark " &optional (count 1) snd chn) moves the cursor back by count marks"
   int val; 
   chan_info *cp;
+  mark *mp = NULL;
   ASSERT_TYPE(INTEGER_IF_BOUND_P(count), count, SCM_ARG1, S_backward_mark, "an integer");
   SND_ASSERT_CHAN(S_backward_mark, snd, chn, 2);
   cp = get_cp(snd, chn, S_backward_mark);
   val = -(TO_C_INT_OR_ELSE(count, 1)); 
-  handle_cursor(cp, goto_mark(cp, val));
-  return(TO_SCM_INT(val));
+  if (cp->marks) mp = find_nth_mark(cp, val);
+  if (mp)
+    {
+      handle_cursor(cp, cursor_moveto(cp, mp->samp));
+      return(TO_SCM_INT(mark_id(mp)));
+    }
+  return(SCM_BOOL_F);
 }
 
 static char *mark_file_name(snd_info *sp)

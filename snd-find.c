@@ -1,5 +1,9 @@
 #include "snd.h"
 
+/* TODO: doc that closure is not re-evaluated upon C-s so the ctr is never cleared in
+ *       (define (hiho) (let ((ctr 0)) (lambda (n) (if (> n .1) (begin (snd-print ctr) (- ctr 10)) (begin (set! ctr (+ ctr 1)) #f)))))
+ */
+
 typedef struct {int n; int direction; int chans; int inc; chan_info **cps; snd_fd **fds;} gfd;
 
 static int prepare_global_search (chan_info *cp, void *g0)
@@ -37,6 +41,15 @@ static int run_global_search (snd_state *ss, gfd *g)
 		{
 		  g->n = i;
 		  return(1);
+		}
+	      else
+		{
+		  if (INTEGER_P(res))
+		    {
+		      g->n = i; /* channel number */
+		      g->inc += TO_C_INT(res);
+		      return(1);
+		    }
 		}
 	      if (read_sample_eof(sf))
 		{
@@ -183,6 +196,8 @@ static int cursor_find_forward(snd_info *sp, chan_info *cp, int count)
   free_snd_fd(sf);
   ss->search_in_progress = 0;
   if (count != 0) return(-1); /* impossible sample number, so => failure */
+  if (INTEGER_P(res))
+    return(i + TO_C_INT(res));
   return(i);
 }
 
@@ -229,6 +244,8 @@ static int cursor_find_backward(snd_info *sp, chan_info *cp, int count)
   free_snd_fd(sf);
   ss->search_in_progress = 0;
   if (count != 0) return(-1); /* impossible sample number, so => failure */
+  if (INTEGER_P(res))
+    return(i + TO_C_INT(res));
   return(i);
 }
 

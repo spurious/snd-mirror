@@ -65,9 +65,7 @@
 ;;; TODO: adaptive notch filter
 ;;; TODO: ins: singer piano flute fade
 ;;; TODO: data-file rw case for pvoc.scm
-;;; TODO: C-s to next same-sense zero-crossing or next peak or click
-;;;       would need to make C-s/r accept proc of 2 args: start dir, returning loc
-;;;       or accept list return = loc found (i.e. bypassing current sample-readers)
+;;; TODO: C-s to next same-sense zero-crossing or next peak or click (using the int rtn inc case)
 ;;; TODO: C-s wrap-around (as in Emacs)
 ;;; TODO: triggered record
 ;;; TODO: notation following location (as in display-current-window-location)

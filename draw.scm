@@ -1,5 +1,7 @@
 ;;; examples of extensions to Snd's graphics
 
+;;; TODO: lisp|time-graph colormap usage
+
 (define red (make-color 1 0 0))
 
 ;;; this version uses draw-lines which is unnecessary
@@ -201,49 +203,66 @@
 		      (set! data1 (list-ref old-env 4)))
 		    (let* ((data (make-graph-data snd chn current-edit-position 0 (frames snd chn)))
 			   (data-max (if (vct? data) (vct-peak data) (vct-peak (car data))))
-			   (data-scaler (/ height (* 2 data-max)))
+			   (data-scaler (if (> data-max 0.0) (/ height (* 2 data-max)) 0.0))
 			   (new-len (* width 2))
 			   (data-len (if (vct? data) (vct-length data) (vct-length (car data))))
 			   (step (/ data-len width)))
 		      
-		      (set! data0 (make-vector new-len))
-		      (set! data1 (and (not (vct? data)) (make-vector new-len)))
+		      (if (> data-len width)
+			  (begin ; the normal case -- more samples to display than pixels available
+			    (set! data0 (make-vector new-len))
+			    (set! data1 (and (not (vct? data)) (make-vector new-len)))
 		      
-		      ;; now subsample the data to fit the number of pixels available
-		      (let ((j 0)
-			    (max-y (- data-max))
-			    (min-y data-max)
-			    (stepper 0.0))
-			(do ((i 0 (1+ i)))
-			    ((or (= j new-len) (= i data-len)))
-			  (if data1
-			      (begin
-				(set! max-y (max max-y (vct-ref (car data) i)))
-				(set! min-y (min min-y (vct-ref (cadr data) i))))
-			      (set! max-y (max max-y (vct-ref data i))))
-			  (set! stepper (+ stepper 1.0))
-			  (if (>= stepper step)
-			      (begin
-				(vector-set! data0 j x-offset) 
-				(vector-set! data0 (+ j 1) (inexact->exact (- y-offset (* max-y data-scaler))))
-				(set! max-y (- data-max))
+			    ;; now subsample the data to fit the number of pixels available
+			    (let ((j 0)
+				  (max-y (- data-max))
+				  (min-y data-max)
+				  (stepper 0.0))
+			      (do ((i 0 (1+ i)))
+				  ((or (= j new-len) (= i data-len)))
 				(if data1
 				    (begin
-				      (vector-set! data1 j x-offset) 
-				      (vector-set! data1 (+ j 1) (inexact->exact (- y-offset (* min-y data-scaler))))
-				      (set! min-y data-max)))
-				(set! x-offset (+ x-offset 1))
-				(set! stepper (- stepper step))
-				(set! j (+ j 2)))))
-			
-			(while (< j new-len)
-			       (vector-set! data0 j (vector-ref data0 (- j 2)))
-			       (vector-set! data0 (+ j 1) (vector-ref data0 (- j 1)))
-			       (if data1
-				   (begin
-				     (vector-set! data1 j (vector-ref data1 (- j 2)))
-				     (vector-set! data1 (+ j 1) (vector-ref data1 (- j 1)))))
-			       (set! j (+ j 2))))
+				      (set! max-y (max max-y (vct-ref (car data) i)))
+				      (set! min-y (min min-y (vct-ref (cadr data) i))))
+				    (set! max-y (max max-y (vct-ref data i))))
+				(set! stepper (+ stepper 1.0))
+				(if (>= stepper step)
+				    (begin
+				      (vector-set! data0 j x-offset) 
+				      (vector-set! data0 (+ j 1) (inexact->exact (- y-offset (* max-y data-scaler))))
+				      (set! max-y (- data-max))
+				      (if data1
+					  (begin
+					    (vector-set! data1 j x-offset) 
+					    (vector-set! data1 (+ j 1) (inexact->exact (- y-offset (* min-y data-scaler))))
+					    (set! min-y data-max)))
+				      (set! x-offset (+ x-offset 1))
+				      (set! stepper (- stepper step))
+				      (set! j (+ j 2)))))
+			      
+			      (while (< j new-len)
+				     (vector-set! data0 j (vector-ref data0 (- j 2)))
+				     (vector-set! data0 (+ j 1) (vector-ref data0 (- j 1)))
+				     (if data1
+					 (begin
+					   (vector-set! data1 j (vector-ref data1 (- j 2)))
+					   (vector-set! data1 (+ j 1) (vector-ref data1 (- j 1)))))
+				     (set! j (+ j 2)))))
+			  (let ((xstep (/ width data-len)))
+			    ;; more pixels than samples
+			    (set! data0 (make-vector (* data-len 2)))
+			    (set! data1 (and (not (vct? data)) (make-vector (* data-len 2))))
+			    (do ((i 0 (1+ i))
+				 (j 0 (+ j 2))
+				 (xj x-offset (+ xj xstep)))
+				((= i data-len))
+			      (vector-set! data0 j (inexact->exact xj))
+			      (if (not data1)
+				  (vector-set! data0 (+ j 1) (inexact->exact (- y-offset (* (vct-ref data i) data-scaler))))
+				  (begin
+				    (vector-set! data0 (+ j 1) (inexact->exact (- y-offset (* (vct-ref (car data) i) data-scaler))))
+				    (vector-set! data1 j (inexact->exact xj))
+				    (vector-set! data1 (+ j 1) (inexact->exact (- y-offset (* (vct-ref (cadr data) i) data-scaler)))))))))
 		      (set! (channel-envelope snd chn) (list width height (edit-position snd chn) data0 data1)))))
 	      
 	      (draw-lines data0 snd chn)
