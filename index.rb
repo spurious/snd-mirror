@@ -7,13 +7,12 @@ $html_dir = nil
 # html(/^play$/)             ==> regexp search
 
 def html(str)
-#  url = if str.class == Regexp
-#          Snd_names_and_urls.detect do |x| x[0] =~ /#{str}/ end
-#        else
-#          snd_url(str.to_s)
-#        end
-# regexp arg not implemented yet
-  url = snd_url(str.to_s)
+  url = if str.class == Regexp
+          pair = snd_urls().detect do |x| x[0] =~ /#{str}/ end
+          pair[1]
+        else
+          snd_url(str.to_s)
+        end
   if url
     goto_html(url)
     url

@@ -10,7 +10,7 @@ Widget snd_help(const char *subject, const char *helpstr, bool with_wrap)
   return(NULL);
 }
 
-Widget snd_help_with_xrefs(const char *subject, const char *helpstr, bool with_wrap, char **xrefs)
+Widget snd_help_with_xrefs(const char *subject, const char *helpstr, bool with_wrap, char **xrefs, char **urls)
 {
   post_it(subject, helpstr);
   return(NULL);
@@ -35,6 +35,7 @@ static Widget help_text = NULL;
 static char *original_help_text = NULL;
 static int old_help_text_width = 0; 
 static bool outer_with_wrap = false;
+static char **help_urls = NULL;
 
 static void help_expose(Widget w, XtPointer context, XEvent *event, Boolean *cont) 
 {
@@ -159,7 +160,7 @@ static bool new_help(const char *pattern)
       if (XEN_STRING_P(xstr))
 	{
 	  xrefs = help_name_to_xrefs(pattern);
-	  snd_help_with_xrefs(pattern, XEN_TO_C_STRING(xstr), true, xrefs);
+	  snd_help_with_xrefs(pattern, XEN_TO_C_STRING(xstr), true, xrefs, NULL);
 	  if (xrefs) FREE(xrefs);
 	  return(true);
 	}
@@ -169,7 +170,7 @@ static bool new_help(const char *pattern)
       xrefs = help_name_to_xrefs(pattern);
       if (xrefs)
 	{
-	  snd_help_with_xrefs(pattern, "(no help found)", true, xrefs);
+	  snd_help_with_xrefs(pattern, "(no help found)", true, xrefs, NULL);
 	  FREE(xrefs);
 	  return(true);
 	}
@@ -183,19 +184,24 @@ static void help_browse_callback(Widget w, XtPointer context, XtPointer info)
   char *red_text = NULL;
   XmListCallbackStruct *cbs = (XmListCallbackStruct *)info;
   ASSERT_WIDGET_TYPE(XmIsList(w), w);
-  red_text = find_highlighted_text(cbs->item);
-  if (red_text)
-    {
-      name_to_html_viewer(red_text);
-      FREE(red_text);
-    }
+  if ((help_urls) && (help_urls[cbs->item_position - 1]))
+    url_to_html_viewer(help_urls[cbs->item_position - 1]);
   else
     {
-      red_text = (char *)XmStringUnparse(cbs->item, NULL, XmCHARSET_TEXT, XmCHARSET_TEXT, NULL, 0, XmOUTPUT_ALL);
-      if (red_text) 
+      red_text = find_highlighted_text(cbs->item);
+      if (red_text)
 	{
-	  new_help(red_text);
-	  XtFree(red_text);
+	  name_to_html_viewer(red_text);
+	  FREE(red_text);
+	}
+      else
+	{
+	  red_text = (char *)XmStringUnparse(cbs->item, NULL, XmCHARSET_TEXT, XmCHARSET_TEXT, NULL, 0, XmOUTPUT_ALL);
+	  if (red_text) 
+	    {
+	      new_help(red_text);
+	      XtFree(red_text);
+	    }
 	}
     }
 }
@@ -206,19 +212,24 @@ static void help_double_click_callback(Widget w, XtPointer context, XtPointer in
   char *red_text = NULL;
   XmListCallbackStruct *cbs = (XmListCallbackStruct *)info;
   ASSERT_WIDGET_TYPE(XmIsList(w), w);
-  red_text = find_highlighted_text(cbs->selected_items[0]);
-  if (red_text)
-    {
-      name_to_html_viewer(red_text);
-      FREE(red_text);
-    }
+  if ((help_urls) && (help_urls[cbs->item_position - 1]))
+    url_to_html_viewer(help_urls[cbs->item_position - 1]);
   else
     {
-      red_text = (char *)XmStringUnparse(cbs->selected_items[0], NULL, XmCHARSET_TEXT, XmCHARSET_TEXT, NULL, 0, XmOUTPUT_ALL);
+      red_text = find_highlighted_text(cbs->selected_items[0]);
       if (red_text)
 	{
 	  name_to_html_viewer(red_text);
-	  XtFree(red_text);
+	  FREE(red_text);
+	}
+      else
+	{
+	  red_text = (char *)XmStringUnparse(cbs->selected_items[0], NULL, XmCHARSET_TEXT, XmCHARSET_TEXT, NULL, 0, XmOUTPUT_ALL);
+	  if (red_text)
+	    {
+	      name_to_html_viewer(red_text);
+	      XtFree(red_text);
+	    }
 	}
     }
 }
@@ -494,10 +505,11 @@ Widget snd_help(const char *subject, const char *helpstr, bool with_wrap)
   return(help_dialog);
 }
 
-Widget snd_help_with_xrefs(const char *subject, const char *helpstr, bool with_wrap, char **xrefs)
+Widget snd_help_with_xrefs(const char *subject, const char *helpstr, bool with_wrap, char **xrefs, char **urls)
 {
   Widget w;
   w = snd_help(subject, helpstr, with_wrap);
+  help_urls = urls; /* can't associated the url with the help item in any "natural" way in Motif (no user-data per item) */
   if (xrefs)
     {
       XmString *strs;

@@ -539,6 +539,7 @@
 #define S_snd_spectrum                  "snd-spectrum"
 #define S_snd_tempnam                   "snd-tempnam"
 #define S_snd_url                       "snd-url"
+#define S_snd_urls                      "snd-urls"
 #define S_snd_version                   "snd-version"
 #define S_snd_warning                   "snd-warning"
 #define S_snd_warning_hook              "snd-warning-hook"

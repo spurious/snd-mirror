@@ -1,4 +1,5 @@
 /* TODO  buttons that choose which devices to display are no-ops
+ * TODO: control-drag output slider drags all
  */
 
 #include "snd.h"

@@ -499,7 +499,6 @@ void g_init_help(void);
 XEN g_snd_help(XEN text, int widget_wid);
 char *snd_url(const char *name);
 void set_html_dir(char *new_dir);
-char **snd_xrefs(const char *topic);
 void key_binding_help(void);
 void play_help(void);
 void save_help(void);
@@ -509,6 +508,7 @@ void filter_help(void);
 void insert_help(void);
 void delete_help(void);
 void name_to_html_viewer(char *red_text);
+void url_to_html_viewer(char *url);
 bool snd_topic_help(const char *topic);
 char **help_name_to_xrefs(const char *name);
 

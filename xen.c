@@ -250,7 +250,9 @@ XEN xen_rb_cons(XEN arg1, XEN arg2)
 {
   if (XEN_NULL_P(arg2))
     return(rb_ary_new3(1, arg1));
-  return(rb_ary_unshift(arg2, arg1));
+  if (!(XEN_LIST_P(arg2)))
+    return(rb_ary_new3(2, arg1, arg2));
+  return(rb_ary_unshift(arg2, arg1)); /* arg2 assumed to be array here in Ruby */
 }
 
 XEN xen_rb_cons2(XEN arg1, XEN arg2, XEN arg3)

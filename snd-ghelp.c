@@ -1,6 +1,18 @@
 #include "snd.h"
 
-/* SOMEDAY: highlight bracketed help text in red fg (via pango layouts?) */
+/* 
+   SOMEDAY: highlight bracketed help text in red fg
+
+   pango_parse_markup("some text <span foreground=\"red\">url</span> more text", -1, 0, **PangoAttrList, NULL, NULL, NULL);
+   layout = pango_layout_new(pango_context_new());
+   pango_layout_set_attributes(layout, *PangoAttrList);
+   now how to use this in list?
+   presumably at end: g_object_unref(G_OBJECT(layout));
+
+   or:
+   cell = gtk_cell_renderer_text_new()
+   gtk_cell_renderer_text_set_property(cell, PROP_MARKUP, wrapped str, NULL); but this is internal
+ */
 
 static GtkWidget *help_dialog = NULL;
 static void dismiss_help_dialog(GtkWidget *w, gpointer context) {gtk_widget_hide(help_dialog);}
@@ -80,7 +92,7 @@ static bool new_help(const char *pattern)
       if (XEN_STRING_P(xstr))
 	{
 	  xrefs = help_name_to_xrefs(pattern);
-	  snd_help_with_xrefs(pattern, XEN_TO_C_STRING(xstr), true, xrefs);
+	  snd_help_with_xrefs(pattern, XEN_TO_C_STRING(xstr), true, xrefs, NULL);
 	  if (xrefs) FREE(xrefs);
 	  return(true);
 	}
@@ -90,7 +102,7 @@ static bool new_help(const char *pattern)
       xrefs = help_name_to_xrefs(pattern);
       if (xrefs)
 	{
-	  snd_help_with_xrefs(pattern, "(no help found)", true, xrefs);
+	  snd_help_with_xrefs(pattern, "(no help found)", true, xrefs, NULL);
 	  FREE(xrefs);
 	  return(true);
 	}
@@ -292,7 +304,7 @@ GtkWidget *snd_help(const char *subject, const char *helpstr, bool with_wrap)
   return(help_dialog);
 }
 
-GtkWidget *snd_help_with_xrefs(const char *subject, const char *helpstr, bool with_wrap, char **xrefs)
+GtkWidget *snd_help_with_xrefs(const char *subject, const char *helpstr, bool with_wrap, char **xrefs, char **urls)
 {
   GtkWidget *w;
   w = snd_help(subject, helpstr, with_wrap);

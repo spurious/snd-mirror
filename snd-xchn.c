@@ -653,7 +653,7 @@ void reflect_edit_history_change(chan_info *cp)
   if ((cp->in_as_one_edit) || (cp->cgx == NULL)) return;
   sp = cp->sound;
   lst = EDIT_HISTORY_LIST(cp);
-#if WITH_RELATIVE_PANES
+#if WITH_RELATIVE_PANES && (XmVERSION > 1)
   if ((lst) && (widget_width(lst) > 1))
     remake_edit_history(lst, cp, true);
   else
@@ -828,7 +828,7 @@ int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Wid
 	  n = attach_all_sides(args, n);
 	  XtSetArg(args[n], XmNsashIndent, 2); n++;
 	  XtSetArg(args[n], XmNorientation, XmHORIZONTAL); n++;
-	  cw[W_top] = XtCreateManagedWidget("chn-main-window", xmPanedWindowWidgetClass, cw[W_form], args, n);
+	  cw[W_top] = XtCreateManagedWidget("chn-top", xmPanedWindowWidgetClass, cw[W_form], args, n);
 	  XtAddEventHandler(cw[W_top], KeyPressMask, false, graph_key_press, (XtPointer)sp);
 
 	  n = 0;
@@ -836,17 +836,18 @@ int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Wid
 	  XtSetArg(args[n], XmNpaneMaximum, DEFAULT_EDIT_HISTORY_WIDTH); n++;
 	  XtSetArg(args[n], XmNlistSizePolicy, XmCONSTANT); n++;
 	  cw[W_edhist] = XmCreateScrolledList(cw[W_top], "chn-edhist", args, n);
+	  XtManageChild(cw[W_edhist]);
+
+	  XtAddCallback(cw[W_edhist], XmNbrowseSelectionCallback, history_select_callback, cp);
+	  XtAddEventHandler(cw[W_edhist], KeyPressMask, false, graph_key_press, (XtPointer)sp);
+	  XtAddEventHandler(XtParent(cw[W_edhist]), KeyPressMask, false, graph_key_press, (XtPointer)sp);
 
 	  n = 0;
 	  if (need_colors) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
 	  XtSetArg(args[n], XmNpaneMaximum, LOTSA_PIXELS); n++;
 	  cw[W_main_window] = XtCreateManagedWidget("chn-main-window", xmFormWidgetClass, cw[W_top], args, n);
 	  XtAddEventHandler(cw[W_main_window], KeyPressMask, false, graph_key_press, (XtPointer)sp);
-	  XtManageChild(cw[W_edhist]);
 
-	  XtAddCallback(cw[W_edhist], XmNbrowseSelectionCallback, history_select_callback, cp);
-	  XtAddEventHandler(cw[W_edhist], KeyPressMask, false, graph_key_press, (XtPointer)sp);
-	  XtAddEventHandler(XtParent(cw[W_edhist]), KeyPressMask, false, graph_key_press, (XtPointer)sp);
 #if WITH_RELATIVE_PANES
 	{
 	  int i;
@@ -1225,6 +1226,7 @@ void change_channel_style(snd_info *sp, channel_style_t new_style)
       if (new_style != old_style)
 	{
 	  sp->channel_style = new_style;
+#if WITH_RELATIVE_PANES
 	  if ((new_style == CHANNELS_SEPARATE) || (old_style == CHANNELS_SEPARATE))
 	    {
 	      Widget lst;
@@ -1232,6 +1234,7 @@ void change_channel_style(snd_info *sp, channel_style_t new_style)
 	      if ((lst) && (widget_width(lst) > 1))
 		remake_edit_history(lst, sp->chans[0], true);
 	    }
+#endif
 	  if (old_style == CHANNELS_COMBINED)
 	    {
 	      hide_gz_scrollbars(sp);

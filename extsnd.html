@@ -3330,12 +3330,12 @@ See mix.scm for more mix-related (and track-related) functions including:
 <blockquote><small>
 <br>
 mix sound file: <a href="#sndmix">mix</a> or drag-and-drop it where you want it mixed.<br>
-mix channel: see <i>mix-channel</i> in extensions.scm<br>
+mix channel: see <a href="sndscm.html#mixchannel">mix-channel</a> in extensions.scm<br>
 mix region: <a href="#sndmixregion">mix-region</a><br>
 mix selection: <a href="#sndmixselection">mix-selection</a><br>
 mix vct: <a href="#sndmixvct">mix-vct</a><br>
-enveloped mix: see <i>enveloped-mix</i> in extensions.scm<br>
-pan mono into stereo: see <i>place-sound</i> in examp.scm<br>
+enveloped mix: see <a href="sndscm.html#exenvelopedmix">enveloped-mix</a> in extensions.scm<br>
+pan mono into stereo: see <a href="sndscm.html#placesound">place-sound</a> in examp.scm<br>
 the mix dialog: <a href="snd.html#mixpanel">Mix Panel</a><br>
 mix menu: see dlp/mix-menu.scm<br>
 filter mix (or any other such operation): use list with mix id as 'snd' arg.<br>
@@ -8839,6 +8839,13 @@ return a new temp file name using Snd's <a href="#tempdir">temp-dir</a>.
 <span class=defbox><code><em class=def><a name="sndurl">snd-url</a></em> (name)</code></span></td></tr>
 <tr><td></td><td>
 return the url (in the Snd documentation) corresponding to <i>name</i> which can be a string or a symbol.
+</td></tr>
+
+<!-- snd-urls -->
+<tr><td colspan=2>
+<span class=defbox><code><em class=def><a name="sndurls">snd-urls</a></em> ()</code></span></td></tr>
+<tr><td></td><td>
+return a list of lists each inner list containing an Snd name and its associated url in the Snd documentation.
 </td></tr>
 
 <!-- snd-version -->

@@ -229,7 +229,18 @@ void set_main_color_of_widget (Widget w, void *userptr)
     {
       if (XmIsScrollBar(w)) 
 	XmChangeColor(w, (Pixel)(ss->sgx)->position_color);
-      else XmChangeColor(w, (Pixel)(ss->sgx)->basic_color);
+      else 
+	{
+	  Pixel cur_color;
+	  XtVaGetValues(w, XmNbackground, &cur_color, NULL);
+	  if ((cur_color != ss->sgx->quit_button_color) &&
+	      (cur_color != ss->sgx->help_button_color) &&
+	      (cur_color != ss->sgx->doit_button_color) &&
+	      (cur_color != ss->sgx->doit_again_button_color) &&
+	      (cur_color != ss->sgx->reset_button_color) &&
+	      (cur_color != ss->sgx->highlight_color))
+	    XmChangeColor(w, (Pixel)(ss->sgx)->basic_color);
+	}
     }
 }
 

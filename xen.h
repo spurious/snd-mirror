@@ -24,6 +24,7 @@
 
 /* HISTORY:
  *  
+ *   29-Sep-03: fixed incorrect assumption in xen_rb_cons (xen.c) that arg2 was list.
  *   8-Sep-03:  removed xen_malloc -- can't remember now why this existed.
  *   19-Aug-03: xen_rb_str_new2 to avoid unwanted side-effects.
  *   12-Aug-03: various changes for ISO C99.

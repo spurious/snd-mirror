@@ -26,6 +26,9 @@
   #endif
 #endif
 
+static char **snd_xrefs(const char *topic);
+static char **snd_xref_urls(const char *topic);
+
 static char **snd_itoa_strs = NULL;
 static int snd_itoa_ctr = 0, snd_itoa_size = 0;
 static char *snd_itoa(int n)
@@ -133,7 +136,7 @@ static void main_snd_help(const char *subject, ...)
   va_start(ap, subject);
   while ((helpstr = va_arg(ap, char *))) strcat(newstr, helpstr);
   va_end(ap);
-  snd_help_with_xrefs(subject, newstr, false, main_snd_xrefs);
+  snd_help_with_xrefs(subject, newstr, false, main_snd_xrefs, NULL);
   FREE(newstr);
 }  
 
@@ -414,7 +417,8 @@ search pattern, which is also cleared by various other commands, much as in Emac
 \n\n\
 Normally, the search applies only to the current channel. To search all current files at once, use the Edit:Find dialog.",
 		      true,
-		      snd_xrefs("Search"));
+		      snd_xrefs("Search"),
+		      snd_xref_urls("Search"));
 }
 
 void undo_help(void) 
@@ -433,7 +437,8 @@ un-done edits.  Besides the Edit and Popup menu options, there are these keyboar
 \n\n\
 Revert is the same as undoing all edits.",
 		      true,
-		      snd_xrefs("Undo"));
+		      snd_xrefs("Undo"),
+		      snd_xref_urls("Undo"));
 }
 
 static char *sync_xrefs[4] = {
@@ -450,7 +455,8 @@ For example, to get a multi-channel selection, set the sync button, then define 
 the mouse) in one channel, and the parallel portions of the other channels will also be selected. \
 Marks and mixes can also be sync'd together.",
 		      true,
-		      sync_xrefs);
+		      sync_xrefs,
+		      NULL);
 }
 
 void env_help(void) 
@@ -467,7 +473,8 @@ applied to the entire file. \
   C-x a     apply amplitude envelope to selection\n\
   C-x C-a   apply amplitude envelope to channel",
 		      true,
-		      snd_xrefs("Envelope"));
+		      snd_xrefs("Envelope"),
+		      snd_xref_urls("Envelope"));
 }
 
 void fft_help(void)
@@ -497,7 +504,8 @@ The spectrum data is usually normalized to fit between 0.0 to 1.0; if you'd rath
 data (the y-axis in this case changes to reflect the data values, to some extent), set the variable \
 transform-normalization to dont-normalize.",
 		      true,
-		      snd_xrefs("FFT"));
+		      snd_xrefs("FFT"),
+		      snd_xref_urls("FFT"));
 }
 
 static char *control_xrefs[8] = {
@@ -558,7 +566,8 @@ The keyboard commands associated with the control panel are: \
   C-x C-o   show control panel\n\
   C-x C-c   hide control panel",
 		      true,
-		      control_xrefs);
+		      control_xrefs,
+		      NULL);
 }
 
 void marks_help(void) 
@@ -586,7 +595,8 @@ than 0) will move together when one is moved, and so on.  The following keyboard
   C-j       go to mark\n\
   C-x j     go to named mark",
 		      true, 
-		      snd_xrefs("Mark"));
+		      snd_xrefs("Mark"),
+		      snd_xref_urls("Mark"));
 }
 
 void mix_help(void) 
@@ -615,7 +625,8 @@ To move the cursor from one mix to the next, in the same manner as C-j moves thr
 \n\n\
 It is often handy to collect several mixes into a 'track'; mix.scm implements a variety of track-related operations.",
 		      true, 
-		      snd_xrefs("Mix"));
+		      snd_xrefs("Mix"),
+		      snd_xref_urls("Mix"));
 }
 
 static char *record_xrefs[4] = {
@@ -665,7 +676,8 @@ Digital input is slightly tricky -- you need to set the sampling rate before you
 click the 'digital input' button; otherwise you'll get a stuttering effect because the output \
 (monitor) rate doesn't match the input rate.",
 		      true,
-		      record_xrefs);
+		      record_xrefs,
+		      NULL);
 }
 
 static char *header_and_data_xrefs[8] = {
@@ -710,7 +722,8 @@ decoded upon being opened, translated to some format Snd can read and write, \
 and rewritten as a new file with an added (possibly redundant) extension .snd, \
 and that file is the one the editor sees from then on.",
 		      true,
-		      header_and_data_xrefs);
+		      header_and_data_xrefs,
+		      NULL);
 }
 
 static char *init_file_xrefs[5] = {
@@ -729,7 +742,8 @@ dealt with from the lisp listener panel. I've tried to bring out to lisp nearly 
 both the signal-processing functions, and much of the user interface. You can, for example, add your own menu choices, \
 editing operations, or graphing alternatives. These extensions can be loaded at any time.",
 		      true,
-		      init_file_xrefs);
+		      init_file_xrefs,
+		      NULL);
 }
 
 static char *key_xrefs[3] = {
@@ -823,7 +837,8 @@ C-x C-v: set window size as percentage of total\n\
 C-x C-w: save current channel in file\n\
 C-x C-z: smooth using cosine",
 		      false,
-		      key_xrefs);
+		      key_xrefs,
+		      NULL);
 }
 
 void play_help(void)
@@ -844,7 +859,8 @@ In a multi-channel file, C-q plays all channels from the current channel's \
 cursor if the sync button is on, and otherwise plays only the current channel. \
 Except in the browsers, what is actually played depends on the control panel.",
 		      true,
-		      snd_xrefs("Play"));
+		      snd_xrefs("Play"),
+		      snd_xref_urls("Play"));
 }
 
 void reverb_help(void)
@@ -853,7 +869,8 @@ void reverb_help(void)
 "The reverb in the control panel is a version of Michael McNabb's Nrev.  There are other \
 reverbs mentioned in the related topics list.",
 		      true,
-		      snd_xrefs("Reverb"));
+		      snd_xrefs("Reverb"),
+		      snd_xref_urls("Reverb"));
 }
 
 void save_help(void)
@@ -868,7 +885,8 @@ that file has active edits in a different Snd window, you'll be asked for confir
 If you want Snd to ask before overwriting a file in any case, set the resource overwriteCheck to 1, \
 or include the expression (set! (ask-before-overwrite) #t) in your Snd initialization file.",
 		      true,
-		      snd_xrefs("Save"));
+		      snd_xrefs("Save"),
+		      snd_xref_urls("Save"));
 }
 
 void filter_help(void)
@@ -877,7 +895,8 @@ void filter_help(void)
 "There is an FIR Filter in the control panel, and a variety of other filters scattered around; \
 see dsp.scm in particular.",
 		      true,
-		      snd_xrefs("Filter"));
+		      snd_xrefs("Filter"),
+		      snd_xref_urls("Filter"));
 }
 
 void resample_help(void)
@@ -885,7 +904,8 @@ void resample_help(void)
   snd_help_with_xrefs("Resample",
 "There is a sampling rate changer in the control panel; see the related topics list below.",
 		      true,
-		      snd_xrefs("Resample"));
+		      snd_xrefs("Resample"),
+		      snd_xref_urls("Resample"));
 }
 
 void insert_help(void)
@@ -894,7 +914,8 @@ void insert_help(void)
 "To insert a file, use C-x C-i, and to insert the selection C-x i.  C-o inserts a \
 zero sample at the cursor",
 		      true,
-		      snd_xrefs("Insert"));
+		      snd_xrefs("Insert"),
+		      snd_xref_urls("Insert"));
 }
 
 void delete_help(void)
@@ -902,7 +923,8 @@ void delete_help(void)
   snd_help_with_xrefs("Delete",
 "To delete a sample, use C-d; to delete the selection, C-w",
 		      true,
-		      snd_xrefs("Delete"));
+		      snd_xrefs("Delete"),
+		      snd_xref_urls("Delete"));
 }
 
 
@@ -951,7 +973,8 @@ is selected), the 'wave' button shows the actual frequency response of the filte
 by the 'apply' buttons.  Increase the enved-filter-order to \
 improve the fit.  In this case, the X axis goes from 0 Hz to half the sampling rate, labelled as 1.0.",
 		      true,
-		      snd_xrefs("Envelope"));
+		      snd_xrefs("Envelope"),
+		      snd_xref_urls("Envelope"));
 }
 
 void transform_dialog_help(void)
@@ -983,7 +1006,8 @@ spectrogram. The 'peaks' button affects whether peak info is displayed alongside
 spectrum. The 'dB' button selects between a linear and logarithmic Y (magnitude) axis. The 'log freq' \
 button makes a similar choice along the frequency axis.",
 		      true,
-		      snd_xrefs("FFT"));
+		      snd_xrefs("FFT"),
+		      snd_xref_urls("FFT"));
 }
 
 static char *color_dialog_xrefs[7] = {
@@ -1001,7 +1025,8 @@ void color_dialog_help(void)
 "This dialog sets the colormap and associated variables used during sonogram, spectrogram,  \
 and perhaps wavogram display. The cutoff scale refers to the minimum data value to be displayed.",
 		      true,
-		      color_dialog_xrefs);
+		      color_dialog_xrefs,
+		      NULL);
 }
 
 static char *orientation_dialog_xrefs[4] = {
@@ -1020,7 +1045,8 @@ ffts), and 'percent of spectrum' is equivalent to dragging the fft frequency axi
 the amount of the spectrum that is displayed.  If the 'use openGL' button is set, the \
 spectrogram is drawn by openGL.",
 		      true,
-		      orientation_dialog_xrefs);
+		      orientation_dialog_xrefs,
+		      NULL);
 }
 
 void region_dialog_help(void)
@@ -1035,7 +1061,8 @@ rendition of the current graph contents, using the default eps output name. 'pla
 The 'edit' button loads the region into the main editor as a temporary file.  It can be edited or renamed, etc.  If you save \
 the file, the region is updated to reflect any edits you made.",
 		      true,
-		      snd_xrefs("Region"));
+		      snd_xrefs("Region"),
+		      snd_xref_urls("Region"));
 }
 
 static char *raw_xrefs[5] = {
@@ -1053,7 +1080,8 @@ of channels, and numerical format.  This dialog gives you a chance to set those 
 To make the current settings the default for any future headerless files, click the \
 'Default' button.",
 		      true,
-		      raw_xrefs);
+		      raw_xrefs,
+		      NULL);
 }
 
 void completion_dialog_help(void)
@@ -1076,7 +1104,8 @@ If you give the current file name to Save As,  \
 any current edits will be saved and the current version in Snd will be updated (that is, in this \
 case, the edit tree is not preserved).",
 		      true,
-		      snd_xrefs("Save"));
+		      snd_xrefs("Save"),
+		      snd_xref_urls("Save"));
 }
 
 static char *open_file_xrefs[7] = {
@@ -1093,7 +1122,8 @@ void open_file_dialog_help(void)
   snd_help_with_xrefs("File",
 "If you click the 'Sound Files Only' button, only those files in the current directory that look vaguely like sound files will be displayed.",
 		      true,
-		      open_file_xrefs);
+		      open_file_xrefs,
+		      NULL);
 }
 
 void find_dialog_help(void)
@@ -1103,7 +1133,8 @@ void find_dialog_help(void)
 expression is a function of one argument,  the current sample value.  It should return #t when the \
 search is satisified.  For example, (lambda (n) (> n .1)) looks for the next sample that is greater than .1.",
 		      true,
-		      snd_xrefs("Find"));
+		      snd_xrefs("Find"),
+		      snd_xref_urls("Find"));
 }
 
 void mix_dialog_help(void)
@@ -1118,7 +1149,8 @@ The current mix amp env is not actually changed until you click 'Apply Env'.\
 The editor envelope is drawn in black with dots whereas the current \
 mix amp env (if any) is drawn in blue.",
 		      true,
-		      snd_xrefs("Mix"));
+		      snd_xrefs("Mix"),
+		      snd_xref_urls("Mix"));
 }
 
 static char *new_file_xrefs[5] = {
@@ -1133,7 +1165,8 @@ void new_file_dialog_help(void)
   snd_help_with_xrefs("New File",
 "This dialog sets the new file's output header type, data format, srate, chans, and comment if any.",
 		      true,
-		      new_file_xrefs);
+		      new_file_xrefs,
+		      NULL);
 }
 
 void edit_header_dialog_help(void)
@@ -1159,7 +1192,8 @@ an eps file.  In the latter case, the file name is set either by the dialog, or 
 resource epsFile (normally snd.eps).  Currently the openGL graphics can't be printed by Snd, \
 but you can use Gimp or some such program to get a screenshot, and print that.",
 		      true,
-		      print_xrefs);
+		      print_xrefs,
+		      NULL);
 }
 
 static char *view_files_xrefs[6] = {
@@ -1189,7 +1223,8 @@ previous files list alphabetically, 'date' sorts by date written, 'size' sorts b
 number of samples in the sound, and 'entry' sorts by the order the sound appears in the \
 absence of explicit sorting.  The variable previous-files-sort refers to this menu.",
 		      true,
-		      view_files_xrefs);
+		      view_files_xrefs,
+		      NULL);
 }
 
 #include "snd-xref.c"
@@ -1254,6 +1289,13 @@ static char **xref_tables[NUM_XREFS] = {
   Resampling_xrefs, Searching_xrefs, Undo_and_Redo_xrefs, Undo_and_Redo_xrefs, 
   sync_xrefs, control_xrefs, record_xrefs, header_and_data_xrefs, key_xrefs};
 
+static char **xref_url_tables[NUM_XREFS] = {
+  Marking_urls, Mixing_urls, Regions_urls, Selections_urls, Cursors_urls, Tracking_cursors_urls,
+  Deletions_urls, Envelopes_urls, Filters_urls, Searching_urls, Insertions_urls, Maxamps_urls,
+  Playing_urls, Reversing_urls, Saving_urls, Smoothing_urls, Resampling_urls, FFTs_urls, Reverb_urls,
+  Resampling_urls, Searching_urls, Undo_and_Redo_urls, Undo_and_Redo_urls, 
+  NULL, NULL, NULL, NULL, NULL};
+
 typedef void (*help_func)(void);
 static help_func help_funcs[NUM_XREFS] = {
   &marks_help, &mix_help, NULL, NULL, NULL, NULL,
@@ -1262,12 +1304,21 @@ static help_func help_funcs[NUM_XREFS] = {
   &resample_help, &find_help, &undo_help, &undo_help,
   &sync_help, &controls_help, recording_help, &sound_files_help, &key_binding_help};
 
-char **snd_xrefs(const char *topic)
+static char **snd_xrefs(const char *topic)
 {
   int i;
   for (i = 0; i < NUM_XREFS; i++)
     if (STRCMP(topic, xrefs[i]) == 0)
       return(xref_tables[i]);
+  return(NULL);
+}
+
+static char **snd_xref_urls(const char *topic)
+{
+  int i;
+  for (i = 0; i < NUM_XREFS; i++)
+    if (STRCMP(topic, xrefs[i]) == 0)
+      return(xref_url_tables[i]);
   return(NULL);
 }
 
@@ -1283,10 +1334,8 @@ bool snd_topic_help(const char *topic)
   return(false);
 }
 
-/* TODO: for many related items, need url (sndscm) or save original */
-/* TODO: perhaps pass out the url lists as well? */
-/* TODO: regexp access to help lists, tables */
-/* TODO: regexp to g_snd_url (for index.rb) */
+/* TODO: for some related item lists, need associated url table */
+/* SOMEDAY: for xen level snd-help, add url table arg? */
 
 char *snd_url(const char *name)
 {
@@ -1468,40 +1517,43 @@ static char *html_directory(void)
   return(NULL);
 }
 
-void name_to_html_viewer(char *red_text)
+void url_to_html_viewer(char *url)
 {
-  char *path, *dir_path, *url;
+  char *path, *dir_path;
   dir_path = html_directory();
   if (dir_path)
     {
-      url = snd_url(red_text);
-      if (url == NULL) url = topic_url(red_text);
-      if (url)
+      char *program;
+      program = html_program(ss);
+      if (program)
 	{
-	  char *program;
-	  program = html_program(ss);
-	  if (program)
+	  path = (char *)CALLOC(strlen(dir_path) + strlen(url) + 256, sizeof(char));
+	  if ((strcmp(program, "netscape") == 0) ||
+	      (strcmp(program, "mozilla") == 0))
 	    {
-	      path = (char *)CALLOC(strlen(dir_path) + strlen(url) + 256, sizeof(char));
-	      if ((strcmp(program, "netscape") == 0) ||
-		  (strcmp(program, "mozilla") == 0))
-		{
-		  sprintf(path, "%s/%s", dir_path, url);
-		  send_netscape(program, path);
-		}
-	      else
-		{
-		  sprintf(path, "%s file:%s/%s", program, dir_path, url);
-		  system(path);
-		}
-	      FREE(path);
+	      sprintf(path, "%s/%s", dir_path, url);
+	      send_netscape(program, path);
 	    }
+	  else
+	    {
+	      sprintf(path, "%s file:%s/%s", program, dir_path, url);
+	      system(path);
+	    }
+	  FREE(path);
 	}
       FREE(dir_path);
     }
 }
 
 
+void name_to_html_viewer(char *red_text)
+{
+  char *url;
+  url = snd_url(red_text);
+  if (url == NULL) url = topic_url(red_text);
+  if (url)
+    url_to_html_viewer(url);
+}
 
 static XEN help_hook = XEN_FALSE;
 static XEN output_comment_hook = XEN_FALSE;
@@ -1696,6 +1748,16 @@ static XEN g_snd_url(XEN name)
   return(C_TO_XEN_STRING(snd_url(XEN_SYMBOL_TO_C_STRING(name))));
 }
 
+static XEN g_snd_urls(void)
+{
+  #define H_snd_urls "(" S_snd_urls ") -> list of all snd names with the associated url (a list of lists)"
+  XEN lst = XEN_EMPTY_LIST;
+  int i;
+  for (i = 0; i < HELP_NAMES_SIZE; i++)
+    lst = XEN_CONS(XEN_CONS(C_TO_XEN_STRING(help_names[i]), C_TO_XEN_STRING(help_urls[i])), lst);
+  return(lst);
+}
+
 static XEN g_help_dialog(XEN subject, XEN msg, XEN xrefs)
 {
   #define H_help_dialog "(" S_help_dialog " subject message xrefs): start the Help window with subject and message"
@@ -1715,7 +1777,8 @@ static XEN g_help_dialog(XEN subject, XEN msg, XEN xrefs)
       w = snd_help_with_xrefs(XEN_TO_C_STRING(subject),
 			      XEN_TO_C_STRING(msg), 
 			      true,
-			      refs);
+			      refs,
+			      NULL);
       FREE(refs);
     }
   else w = snd_help(XEN_TO_C_STRING(subject), 
@@ -1732,6 +1795,7 @@ XEN_NARGIFY_1(g_set_html_dir_w, g_set_html_dir)
 XEN_NARGIFY_0(g_html_program_w, g_html_program)
 XEN_NARGIFY_1(g_set_html_program_w, g_set_html_program)
 XEN_NARGIFY_1(g_snd_url_w, g_snd_url)
+XEN_NARGIFY_0(g_snd_urls_w, g_snd_urls)
 XEN_ARGIFY_3(g_help_dialog_w, g_help_dialog)
 #else
 #define g_listener_help_w g_listener_help
@@ -1740,6 +1804,7 @@ XEN_ARGIFY_3(g_help_dialog_w, g_help_dialog)
 #define g_html_program_w g_html_program
 #define g_set_html_program_w g_set_html_program
 #define g_snd_url_w g_snd_url
+#define g_snd_urls_w g_snd_urls
 #define g_help_dialog_w g_help_dialog
 #endif
 
@@ -1747,6 +1812,7 @@ void g_init_help(void)
 {
   XEN_DEFINE_PROCEDURE(S_snd_help, g_listener_help_w, 0, 2, 0, H_snd_help);
   XEN_DEFINE_PROCEDURE(S_snd_url, g_snd_url_w, 1, 0, 0, H_snd_url);
+  XEN_DEFINE_PROCEDURE(S_snd_urls, g_snd_urls_w, 0, 0, 0, H_snd_urls);
   XEN_DEFINE_PROCEDURE(S_help_dialog, g_help_dialog_w, 2, 1, 0, H_help_dialog);
 
   #define H_help_hook S_help_hook "(subject help-string): called from snd-help.  If \
