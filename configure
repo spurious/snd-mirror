@@ -11090,6 +11090,68 @@ fi
 _ACEOF
 
           fi
+   	  echo "$as_me:$LINENO: checking for XmToolTipGetLabel in -lXm" >&5
+echo $ECHO_N "checking for XmToolTipGetLabel in -lXm... $ECHO_C" >&6
+if test "${ac_cv_lib_Xm_XmToolTipGetLabel+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lXm $TEST_LIBS $LIBS"
+cat >conftest.$ac_ext <<_ACEOF
+#line $LINENO "configure"
+#include "confdefs.h"
+
+/* Override any gcc2 internal prototype to avoid an error.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+/* We use char because int might match the return type of a gcc2
+   builtin and then its argument prototype would still apply.  */
+char XmToolTipGetLabel ();
+#ifdef F77_DUMMY_MAIN
+#  ifdef __cplusplus
+     extern "C"
+#  endif
+   int F77_DUMMY_MAIN() { return 1; }
+#endif
+int
+main ()
+{
+XmToolTipGetLabel ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+         { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_lib_Xm_XmToolTipGetLabel=yes
+else
+  echo "$as_me: failed program was:" >&5
+cat conftest.$ac_ext >&5
+ac_cv_lib_Xm_XmToolTipGetLabel=no
+fi
+rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+echo "$as_me:$LINENO: result: $ac_cv_lib_Xm_XmToolTipGetLabel" >&5
+echo "${ECHO_T}$ac_cv_lib_Xm_XmToolTipGetLabel" >&6
+if test $ac_cv_lib_Xm_XmToolTipGetLabel = yes; then
+  cat >>confdefs.h <<\_ACEOF
+#define HAVE_XmToolTipGetLabel 1
+_ACEOF
+
+fi
+
 	  echo "$as_me:$LINENO: checking sash support for relative panes" >&5
 echo $ECHO_N "checking sash support for relative panes... $ECHO_C" >&6
 	  cat >conftest.$ac_ext <<_ACEOF
@@ -11481,23 +11543,29 @@ fi
 if test $ac_cv_header_GL_gl_h = yes; then
   have_gl=yes
 else
-  if test "${ac_cv_header__usr_X11R6_include_GL_gh_h+set}" = set; then
-  echo "$as_me:$LINENO: checking for /usr/X11R6/include/GL/gh.h" >&5
-echo $ECHO_N "checking for /usr/X11R6/include/GL/gh.h... $ECHO_C" >&6
-if test "${ac_cv_header__usr_X11R6_include_GL_gh_h+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-fi
-echo "$as_me:$LINENO: result: $ac_cv_header__usr_X11R6_include_GL_gh_h" >&5
-echo "${ECHO_T}$ac_cv_header__usr_X11R6_include_GL_gh_h" >&6
-else
-  # Is the header compilable?
-echo "$as_me:$LINENO: checking /usr/X11R6/include/GL/gh.h usability" >&5
-echo $ECHO_N "checking /usr/X11R6/include/GL/gh.h usability... $ECHO_C" >&6
-cat >conftest.$ac_ext <<_ACEOF
+
+    	   OLD_CFLAGS="$CFLAGS"
+           CFLAGS="-I/usr/X11R6/include $CFLAGS"
+# can't use AC_CHECK_HEADER here (GL/gl.h includes GL/glext.h, so the -I business has to be set up first)
+	   echo "$as_me:$LINENO: checking for /usr/X11R6/include/GL/gl.h" >&5
+echo $ECHO_N "checking for /usr/X11R6/include/GL/gl.h... $ECHO_C" >&6
+	   cat >conftest.$ac_ext <<_ACEOF
 #line $LINENO "configure"
 #include "confdefs.h"
-$ac_includes_default
-#include </usr/X11R6/include/GL/gh.h>
+#include <GL/gl.h>
+#ifdef F77_DUMMY_MAIN
+#  ifdef __cplusplus
+     extern "C"
+#  endif
+   int F77_DUMMY_MAIN() { return 1; }
+#endif
+int
+main ()
+{
+int i; i = GL_TRUE
+  ;
+  return 0;
+}
 _ACEOF
 rm -f conftest.$ac_objext
 if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
@@ -11511,92 +11579,34 @@ if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  ac_header_compiler=yes
+  have_gl=yes
+			   GL_FLAGS="-I/usr/X11R6/include"
+			   CFLAGS="$OLD_CFLAGS"
+			   echo "$as_me:$LINENO: result: yes" >&5
+echo "${ECHO_T}yes" >&6
+
 else
   echo "$as_me: failed program was:" >&5
 cat conftest.$ac_ext >&5
-ac_header_compiler=no
-fi
-rm -f conftest.$ac_objext conftest.$ac_ext
-echo "$as_me:$LINENO: result: $ac_header_compiler" >&5
-echo "${ECHO_T}$ac_header_compiler" >&6
-
-# Is the header present?
-echo "$as_me:$LINENO: checking /usr/X11R6/include/GL/gh.h presence" >&5
-echo $ECHO_N "checking /usr/X11R6/include/GL/gh.h presence... $ECHO_C" >&6
-cat >conftest.$ac_ext <<_ACEOF
-#line $LINENO "configure"
-#include "confdefs.h"
-#include </usr/X11R6/include/GL/gh.h>
-_ACEOF
-if { (eval echo "$as_me:$LINENO: \"$ac_cpp conftest.$ac_ext\"") >&5
-  (eval $ac_cpp conftest.$ac_ext) 2>conftest.er1
-  ac_status=$?
-  egrep -v '^ *\+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } >/dev/null; then
-  if test -s conftest.err; then
-    ac_cpp_err=$ac_c_preproc_warn_flag
-  else
-    ac_cpp_err=
-  fi
-else
-  ac_cpp_err=yes
-fi
-if test -z "$ac_cpp_err"; then
-  ac_header_preproc=yes
-else
-  echo "$as_me: failed program was:" >&5
-  cat conftest.$ac_ext >&5
-  ac_header_preproc=no
-fi
-rm -f conftest.err conftest.$ac_ext
-echo "$as_me:$LINENO: result: $ac_header_preproc" >&5
-echo "${ECHO_T}$ac_header_preproc" >&6
-
-# So?  What about this header?
-case $ac_header_compiler:$ac_header_preproc in
-  yes:no )
-    { echo "$as_me:$LINENO: WARNING: /usr/X11R6/include/GL/gh.h: accepted by the compiler, rejected by the preprocessor!" >&5
-echo "$as_me: WARNING: /usr/X11R6/include/GL/gh.h: accepted by the compiler, rejected by the preprocessor!" >&2;}
-    { echo "$as_me:$LINENO: WARNING: /usr/X11R6/include/GL/gh.h: proceeding with the preprocessor's result" >&5
-echo "$as_me: WARNING: /usr/X11R6/include/GL/gh.h: proceeding with the preprocessor's result" >&2;};;
-  no:yes )
-    { echo "$as_me:$LINENO: WARNING: /usr/X11R6/include/GL/gh.h: present but cannot be compiled" >&5
-echo "$as_me: WARNING: /usr/X11R6/include/GL/gh.h: present but cannot be compiled" >&2;}
-    { echo "$as_me:$LINENO: WARNING: /usr/X11R6/include/GL/gh.h: check for missing prerequisite headers?" >&5
-echo "$as_me: WARNING: /usr/X11R6/include/GL/gh.h: check for missing prerequisite headers?" >&2;}
-    { echo "$as_me:$LINENO: WARNING: /usr/X11R6/include/GL/gh.h: proceeding with the preprocessor's result" >&5
-echo "$as_me: WARNING: /usr/X11R6/include/GL/gh.h: proceeding with the preprocessor's result" >&2;};;
-esac
-echo "$as_me:$LINENO: checking for /usr/X11R6/include/GL/gh.h" >&5
-echo $ECHO_N "checking for /usr/X11R6/include/GL/gh.h... $ECHO_C" >&6
-if test "${ac_cv_header__usr_X11R6_include_GL_gh_h+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  ac_cv_header__usr_X11R6_include_GL_gh_h=$ac_header_preproc
-fi
-echo "$as_me:$LINENO: result: $ac_cv_header__usr_X11R6_include_GL_gh_h" >&5
-echo "${ECHO_T}$ac_cv_header__usr_X11R6_include_GL_gh_h" >&6
-
-fi
-if test $ac_cv_header__usr_X11R6_include_GL_gh_h = yes; then
-  have_gl=yes
-		   GL_FLAGS="-I/usr/X11R6/include"
-
-else
-  { echo "$as_me:$LINENO: WARNING: can't find GL headers" >&5
+{ echo "$as_me:$LINENO: WARNING: can't find GL headers" >&5
 echo "$as_me: WARNING: can't find GL headers" >&2;}
 fi
-
-
+rm -f conftest.$ac_objext conftest.$ac_ext
 fi
 
 
     if test "$have_gl" = yes ; then
-      cat >conftest.$ac_ext <<_ACEOF
+      cat >>confdefs.h <<\_ACEOF
+#define HAVE_GL 1
+_ACEOF
+
+      if test "$with_just_gl" = yes ; then
+        cat >>confdefs.h <<\_ACEOF
+#define JUST_GL 1
+_ACEOF
+
+      else
+        cat >conftest.$ac_ext <<_ACEOF
 #line $LINENO "configure"
 #include "confdefs.h"
 #include <GL/gl.h>
@@ -11626,10 +11636,7 @@ if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  cat >>confdefs.h <<\_ACEOF
-#define HAVE_GL 1
-_ACEOF
-
+  GL_FILES="gl.o"
 else
   echo "$as_me: failed program was:" >&5
 cat conftest.$ac_ext >&5
@@ -11637,17 +11644,9 @@ cat >>confdefs.h <<\_ACEOF
 #define JUST_GL 1
 _ACEOF
 
-		      with_just_gl=yes
-		      have_gl=no
 fi
 rm -f conftest.$ac_objext conftest.$ac_ext
-      if test "$with_just_gl" = yes ; then
-        cat >>confdefs.h <<\_ACEOF
-#define JUST_GL 1
-_ACEOF
 
-      else
-        GL_FILES="gl.o"
       fi
       GL_LIBS="-lGLU -lGL"
       if test "$with_gtk" = yes; then
@@ -11904,7 +11903,7 @@ fi
       fi
     fi
   else
-	{ echo "$as_me:$LINENO: WARNING: GL only works with Motif or Gtk2" >&5
+    { echo "$as_me:$LINENO: WARNING: GL only works with Motif or Gtk2" >&5
 echo "$as_me: WARNING: GL only works with Motif or Gtk2" >&2;}
   fi
 fi

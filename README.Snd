@@ -1,7 +1,7 @@
 Snd
 
 Snd is a sound editor.  It currently runs on the SGI, Sun, UnixWare,
-OpenServer, HPUX, DEC Alpha, Linux, LinuxPPC, FreeBSD, Mac OS-X (XDarwin),
+OpenServer, HPUX, DEC Alpha, Linux, LinuxPPC, FreeBSD, Mac OSX (XDarwin),
 and BSD (BSDI 4.2).  And Stefan Schwandter says, "Snd now compiles on mips, 
 mipsel, hppa, ia64, arm, sparc, s390, and m68k."
 
@@ -511,23 +511,23 @@ switches are not recommended on the Sun, though they work; the
 colormap of the entire system is hijacked while Snd is running.
 
 
----- Mac OS-X: ---- 
+---- Mac OSX: ---- 
 
 Currently you need to install Guile 1.4 (at least, I haven't managed
-to compile 1.5), GSL 1.2 (using --disable-shared), and the prebuilt
-Glib/Gtk or Motif 2.1 tarballs that contain the headers (the package
+to compile 1.6), GSL 1.2 (using --disable-shared), and the prebuilt
+Glib/Gtk or Motif 2.2 tarballs that contain the headers (the package
 at osxgnu is just the libraries -- I think I got my version from
 motifzone).  The Snd configure process is confused by the lack of
 gtk-config (in the Gtk case), and (in the Motif case) by a problem
 with dynamic loading, so you need to run configure, then compare
 config.h and makefile with the versions config.motif.osx (gtk) and
 makefile.motif.osx (gtk).  The main thing that needs to be fixed by
-hand is that libXm.a, libXt.a and libXp.a must be used, not the shared
-object versions of those libraries.  The "native" Mac audio hardware
-supports only stereo 44100Hz; sndplay tries to fix up 22050 and mono,
-but Snd only fixes up mono cases.  Anything else will be played
-incorrectly, though you can use the speed control to correct it by
-hand.  If C-f (and others like it) doesn't work, either try toggling
+hand is that libXt.a and libXp.a must be used, not the shared
+object versions of those libraries.  You may also need to add -ldl (if
+the loader complains about things like dlopen).  And see below for
+libXm.
+
+If C-f (and others like it) doesn't work, either try toggling
 the "w" button, or add the focus-widget related hooks from grfsnd.html
 to your initialization file:
 
@@ -551,6 +551,42 @@ error messages.
 If the openmotif package forgot to include libXm.a, a version is
 at ccrma-ftp.  If the Mac loader complains that it it out of date,
 run ranlib: ranlib libXm.a (you may need to be root to do this).
+
+
+On a Mac running 10.2 with the developers environment (i.e. gcc),
+I installed these programs:
+
+from osxgnu:
+  DLcompat
+  XFree86-complete
+  OroboroSX (a minimal window manager for "rootless" operation)
+  XEmacs (but its load-path is screwed up)
+
+from motifzone:
+  openMotif-2.2
+
+from the sources:
+  GSL (using --disable-shared)
+  fftw (using --disable-shared, new config.guess and config.sub)
+  Guile 1.4 (--disable-shared)
+  snd (using --with-just-gl)
+  
+from ccrma-ftp:
+  libXm.a (omitted from motifzone package, but sometimes needed by Snd)
+
+My impression is that the new Mac OS is no more stable than the
+old -- I could crash it simply by trying to run two programs
+at once (and of course the power buttons are locked out, so
+you pull the power cord...).  If you get a Bus error while
+compiling Snd, just type "make" again.
+
+Loading xm.c (--with-static-xm etc) is problematic on Mac.
+If you use the libXm.dylib from openMotif, you'll probably
+need the langinfo library as well (motifzone has this in
+the package "darwin-extras"); you need to add -llanginfo 
+to the makefile (but -lXm will work in this case).  If you
+use libXm.a from ccrma-ftp, you'll need to go to config.h
+and set the macro HAVE_XmToolTipGetLabel to 0.
 
 
 

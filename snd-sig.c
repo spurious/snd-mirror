@@ -3043,6 +3043,7 @@ static XEN g_pad_channel(XEN beg, XEN num, XEN snd, XEN chn, XEN edpos)
 		    XEN_TO_C_OFF_T_OR_ELSE(num, cp->samples[pos] - bg),
 		    S_pad_channel,
 		    pos);
+  update_graph(cp);
   return(beg);
 }
 

@@ -36,6 +36,17 @@
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 popen) (ice-9 optargs) (ice-9 syncase))
 ;should this be (use-syntax (ice-9 syncase))?
 
+(define (snd-display . args)
+  (let ((str (if (null? (cdr args))
+		 (car args)
+		 (apply format #f args))))
+    (newline) 
+    (display str)
+    (if (not (provided? 'snd-nogui))
+	(begin
+	  (snd-print "\n")
+	  (snd-print str)))))
+
 ;;; redefine 'if' for tracing and so on (backtrace is sometimes very confused)
 ;(define-syntax IF
 ;  (syntax-rules ()
@@ -71,10 +82,12 @@
 (define pi 3.141592653589793)
 (define mus-position mus-channels)
 
-(define home-dir "/home")
+(define home-dir "/home/bil")
 (if (file-exists? "/export/home/bil/cl/oboe.snd")
-    (set! home-dir "/export/home"))
-(system (string-append "cp " home-dir "/bil/.snd " home-dir "/bil/dot-snd"))
+    (set! home-dir "/export/home/bil")
+    (if (file-exists? "/Users/bill/cl/oboe.snd")
+	(set! home-dir "/Users/bill")))
+(system (string-append "cp " home-dir "/.snd " home-dir "/dot-snd"))
 (define sf-dir "/sf1")
 (define sample-reader-tests 300)
 (define original-save-dir (or (save-dir) "/zap/snd"))
@@ -94,29 +107,26 @@
 	     (display msg optimizer-log)
 	     (newline optimizer-log)))
 
-(define sf-dir1 (string-append home-dir "/bil" sf-dir "/"))
+(define sf-dir1 (string-append home-dir sf-dir "/"))
 (if (not (file-exists? (string-append sf-dir1 "alaw.wav")))
     (begin
       (set! sf-dir "/sf")
-      (set! sf-dir1 (string-append home-dir "/bil" sf-dir "/"))
+      (set! sf-dir1 (string-append home-dir sf-dir "/"))
       (if (not (file-exists? (string-append sf-dir1 "alaw.wav")))
 	  (begin
-	    (snd-print "can't find sf directory!")
+	    (snd-display ";;;can't find sf directory!")
 	    (set! sf-dir1 #f)))))
 (set! sf-dir sf-dir1)
 
 (if (and (not (file-exists? "4.aiff"))
-	 (not (string=? (getcwd) (string-append home-dir "/bil/cl"))))
-    (copy-file (string-append home-dir "/bil/cl/4.aiff") (string-append (getcwd) "/4.aiff")))
+	 (not (string=? (getcwd) (string-append home-dir "/cl"))))
+    (copy-file (string-append home-dir "/cl/4.aiff") (string-append (getcwd) "/4.aiff")))
 (if (and (not (file-exists? "2.snd"))
-	 (not (string=? (getcwd) (string-append home-dir "/bil/cl"))))
-    (copy-file (string-append home-dir "/bil/cl/2.snd") (string-append (getcwd) "/2.snd")))
+	 (not (string=? (getcwd) (string-append home-dir "/cl"))))
+    (copy-file (string-append home-dir "/cl/2.snd") (string-append (getcwd) "/2.snd")))
 (if (and (not (file-exists? "obtest.snd"))
-	 (not (string=? (getcwd) (string-append home-dir "/bil/cl"))))
-    (copy-file (string-append home-dir "/bil/cl/oboe.snd") (string-append (getcwd) "/obtest.snd")))
-(if (and (not (file-exists? "sndxtest"))
-	 (not (string=? (getcwd) (string-append home-dir "/bil/cl"))))
-    (copy-file (string-append home-dir "/bil/cl/sndxtest") (string-append (getcwd) "/sndxtest")))
+	 (not (string=? (getcwd) (string-append home-dir "/cl"))))
+    (copy-file (string-append home-dir "/cl/oboe.snd") (string-append (getcwd) "/obtest.snd")))
 
 (define times '())
 (defmacro time (a) 
@@ -130,17 +140,6 @@
 (show-listener)
 (set! (window-x) 600)
 (set! (window-y) 10)
-
-(define (snd-display . args)
-  (let ((str (if (null? (cdr args))
-		 (car args)
-		 (apply format #f args))))
-    (newline) 
-    (display str)
-    (if (not (provided? 'snd-nogui))
-	(begin
-	  (snd-print "\n")
-	  (snd-print str)))))
 
 (define test14-file #f)
 (define fneq (lambda (a b) (> (abs (- a b)) .001)))
@@ -1203,8 +1202,8 @@
       (let ((td (temp-dir)))
 	(catch #t
 	       (lambda ()
-		 (set! (temp-dir) (string-append home-dir "/bil/test"))
-		 (IF (not (string=? (temp-dir) (string-append home-dir "/bil/test")))
+		 (set! (temp-dir) (string-append home-dir "/test"))
+		 (IF (not (string=? (temp-dir) (string-append home-dir "/test")))
 		     (snd-display ";set temp-dir: ~A?" (temp-dir))))
 	       (lambda args args))
 	(if td 
@@ -1615,28 +1614,29 @@
 	       (snd-display ";mus-data-format-bytes-per-sample ~A: ~A" (mus-data-format-name frm) siz)))
 	 formats
 	 sizes))
-      (for-each
-       (lambda (format type name)
-	 (if (not (string=? name (mus-header-original-format-name format type)))
-	     (snd-display ";original name: ~A ~A" name (mus-header-original-format-name format type))))
-       (list 29 13 17 10 8 23 20
-	     (logior (ash (char->integer #\M) 24) (ash (char->integer #\A) 16) (ash (char->integer #\C) 8) (char->integer #\!))
-	     2 #x10 #x13 #x16 #x19 #x22 #x25 #x28 #x32
-	     #x35 #x38 #x3b #x40 #x50 #x55 #x61 #x64 #x67
-	     #x71 #x74 #x77 #x80 #x83 #x86 #x91 #x98 #x101
-	     #x111 #x200 #x203 #x220 #x680 #x1002 #x1100 #x1500)
-       (list mus-next mus-next mus-next mus-next mus-next mus-next mus-next
-	     mus-aifc
-	     mus-riff mus-riff mus-riff mus-riff mus-riff mus-riff mus-riff mus-riff mus-riff
-	     mus-riff mus-riff mus-riff mus-riff mus-riff mus-riff mus-riff mus-riff mus-riff
-	     mus-riff mus-riff mus-riff mus-riff mus-riff mus-riff mus-riff mus-riff mus-riff 
-	     mus-riff mus-riff mus-riff mus-riff mus-riff mus-riff mus-riff mus-riff)
-       (list "delat_mulaw_8" "dsp_data_24" "mulaw_squelch" "dsp_core" "indirect" "adpcm_g721" "compressed_emphasized"
-	     "!CAM"
-	     "ADPCM" "OKI_ADPCM" "Sierra_ADPCM" "DIGIFIX" "HP cu codec" "DSPGroup_TrueSpeech" "APTX" "lrc" "MSN audio codec"
-	     "DIGIREAL" "NMS_VBXADPCM" "Rockwell adpcm" "G721_ADPCM" "MPEG" "Mpeg layer 3" "ESS Tech pcm" "G726" "DSAT display"
-	     "voxware ac10 " "voxware rt24" "voxware vr12 " "softsound" "G729A" "DF GSM610" "sbc24" "philips lpcbb" "Irat"
-	     "vivo G723" "Creative_ADPCM" "Creative fastspeech 10" "quarterdeck" "VME vmpcm" "OLICELP" "LH codec" "Soundspace musicompression"))
+      (if (provided? 'snd-debug)
+	  (for-each
+	   (lambda (format type name)
+	     (if (not (string=? name (mus-header-original-format-name format type)))
+		 (snd-display ";original name: ~A ~A" name (mus-header-original-format-name format type))))
+	   (list 29 13 17 10 8 23 20
+		 (logior (ash (char->integer #\M) 24) (ash (char->integer #\A) 16) (ash (char->integer #\C) 8) (char->integer #\!))
+		 2 #x10 #x13 #x16 #x19 #x22 #x25 #x28 #x32
+		 #x35 #x38 #x3b #x40 #x50 #x55 #x61 #x64 #x67
+		 #x71 #x74 #x77 #x80 #x83 #x86 #x91 #x98 #x101
+		 #x111 #x200 #x203 #x220 #x680 #x1002 #x1100 #x1500)
+	   (list mus-next mus-next mus-next mus-next mus-next mus-next mus-next
+		 mus-aifc
+		 mus-riff mus-riff mus-riff mus-riff mus-riff mus-riff mus-riff mus-riff mus-riff
+		 mus-riff mus-riff mus-riff mus-riff mus-riff mus-riff mus-riff mus-riff mus-riff
+		 mus-riff mus-riff mus-riff mus-riff mus-riff mus-riff mus-riff mus-riff mus-riff 
+		 mus-riff mus-riff mus-riff mus-riff mus-riff mus-riff mus-riff mus-riff)
+	   (list "delat_mulaw_8" "dsp_data_24" "mulaw_squelch" "dsp_core" "indirect" "adpcm_g721" "compressed_emphasized"
+		 "!CAM"
+		 "ADPCM" "OKI_ADPCM" "Sierra_ADPCM" "DIGIFIX" "HP cu codec" "DSPGroup_TrueSpeech" "APTX" "lrc" "MSN audio codec"
+		 "DIGIREAL" "NMS_VBXADPCM" "Rockwell adpcm" "G721_ADPCM" "MPEG" "Mpeg layer 3" "ESS Tech pcm" "G726" "DSAT display"
+		 "voxware ac10 " "voxware rt24" "voxware vr12 " "softsound" "G729A" "DF GSM610" "sbc24" "philips lpcbb" "Irat"
+		 "vivo G723" "Creative_ADPCM" "Creative fastspeech 10" "quarterdeck" "VME vmpcm" "OLICELP" "LH codec" "Soundspace musicompression")))
       (mus-sound-report-cache "hiho.tmp")
       (if (defined? 'read-line)
 	  (let ((p (open-input-file "hiho.tmp")))
@@ -4236,7 +4236,9 @@
 		  (snd-display ";loop-samples ~A -> ~A" s1000 (sample 1000 ind4 0)))
 	      (IF (fneq (maxamp) (* 2 max1)) 
 		  (snd-display ";loop-samples test-a2 max: ~A ~A" max1 (maxamp)))
-	      (loop-samples (make-sample-reader 0 ind4 0) (get-flange) (frames) "flange" (make-flange 2.0 5.0 0.001))
+	      (let ((fl (make-flange 2.0 5.0 0.001)))
+		(loop-samples (make-sample-reader 0 ind4 0) (get-flange) (frames) "flange" fl)
+		(free-flange fl))
 	      (close-sound ind4)
 	      (set! ind4 (open-sound "storm.snd"))
 	      (set! max1 (maxamp))
@@ -4313,7 +4315,7 @@
 
       (with-output-to-file "sndtst" 
 	(lambda ()
-	  (display (string-append "#!" home-dir "/bil/cl/snd -b
+	  (display (string-append "#!" home-dir "/cl/snd -b
 !#
  (use-modules (ice-9 format))
  (if (= (length (script-args)) 2) ;i.e. (\"-l\" \"script\")
@@ -8388,7 +8390,7 @@
 	    (let ((reader-string (format #f "~A" mr)))
 	      (IF (not (string=? (substring reader-string 0 22) "#<mix-sample-reader 0x"))
 		  (snd-display ";mix sample reader actually got: [~S]" (substring reader-string 0 22)))
-	      (IF (not (string=? (substring reader-string 29 62) (string-append ": " home-dir "/bil/cl/pistol.snd via mix")))
+	      (IF (not (string=? (substring reader-string 29 62) (string-append ": " home-dir "/cl/pistol.snd via mix")))
 		  (snd-display ";mix sample reader actually got: [~S]" (substring reader-string 29 62))))
 	    (let ((var (catch #t (lambda () (mix-amp mix-id 1234)) (lambda args args))))
 	      (IF (not (eq? (car var) 'no-such-channel))
@@ -8576,7 +8578,7 @@
 		 (reader-string (format #f "~A" mr)))
 	      (IF (not (string=? (substring reader-string 0 24) "#<track-sample-reader 0x"))
 		  (snd-display ";track sample reader actually got: [~S]" (substring reader-string 0 24)))
-	      (IF (not (string=? (substring reader-string 31) (string-append ": " home-dir "/bil/cl/oboe.snd chan 0 via mixes '(10 12 14)>")))
+	      (IF (not (string=? (substring reader-string 31) (string-append ": " home-dir "/cl/oboe.snd chan 0 via mixes '(10 12 14)>")))
 		  (snd-display ";track sample reader actually got (2): [~S]" (substring reader-string 31)))
 	      (free-track-sample-reader mr))
 	  (let ((curend (track-end (track 1))))
@@ -9312,7 +9314,7 @@
 		  (close-sound sd))
 		(let ((file (save-marks fd)))
 		  (IF (or (not file)
-			  (not (string=? file (string-append home-dir "/bil/cl/oboe.marks"))))
+			  (not (string=? file (string-append home-dir "/cl/oboe.marks"))))
 		      (snd-display ";save-marks -> ~A?" file)))
 		(close-sound fd)
 		(let ((fd (open-sound "pistol.snd")))
@@ -14775,7 +14777,7 @@
 			       (set! (optimization) old-opt)
 			       (close-sound ind)
 			       times))))
-		     (list "1a.snd" "oboe.snd" "storm.snd" (string-append home-dir "/bil/test/sound/away.snd")))))
+		     (list "1a.snd" "oboe.snd" "storm.snd" (string-append home-dir "/test/sound/away.snd")))))
 	  (snd-display "         scl   rev   env   map   ptree  scn  pad   wrt   clm   mix   src   del")
 	  (snd-display "1a:   ~{~6,F~}" (car data))  
 	  (snd-display "oboe: ~{~6,F~}" (cadr data))  
@@ -15471,7 +15473,7 @@ EDITS: 6
     (begin
       (if (procedure? test-hook) (test-hook 17))
       (if (not (file-exists? "cmn-glyphs.lisp"))
-	  (copy-file (string-append home-dir "/bil/cl/cmn-glyphs.lisp") (string-append (getcwd) "/cmn-glyphs.lisp")))
+	  (copy-file (string-append home-dir "/cl/cmn-glyphs.lisp") (string-append (getcwd) "/cmn-glyphs.lisp")))
       (load "musglyphs.scm")
       (load "draw.scm")
       (add-hook! after-graph-hook display-previous-edits)
@@ -16558,7 +16560,7 @@ EDITS: 5
 	  (begin
 	    (system "cc gsl-ex.c -c")
 	    (system "ld -shared gsl-ex.o -o gsl-ex.so -lguile")
-	    (let ((handle (dlopen (string-append home-dir "/bil/cl/gsl-ex.so"))))
+	    (let ((handle (dlopen (string-append home-dir "/cl/gsl-ex.so"))))
 	      (dlinit handle "init_gsl_j0")
 	      (IF (fneq (j0 1.0) 0.765) (snd-display ";gsl loader test: ~A" (j0 1.0))))))
 
@@ -16655,6 +16657,7 @@ EDITS: 5
 	  (set! (window-height) 800)
 	  (set! (lisp-graph? ind 0) #t)
 	  (graph v "biggy" 0.0 1.0 0.0 1.0 ind 0)
+	  (set! (transform-graph-type ind 0) graph-once)
 	  (set! (show-transform-peaks ind 0) #t)
 	  (set! (fft-log-magnitude ind 0) #t)
 	  (set! (fft-log-frequency ind 0) #f)
@@ -16662,6 +16665,10 @@ EDITS: 5
 	  (graph->ps "aaa.eps")
 	  (set! (x-bounds) (list 0.0 1.0))
 	  (update-time-graph)
+	  (scale-by 0.0)
+	  (update-time-graph)
+	  (update-transform-graph)
+	  (undo)
 	  (set! (transform-graph-type ind 0) graph-as-sonogram)
 	  (set! (fft-log-magnitude ind 0) #f)
 	  (update-transform-graph)
@@ -20823,10 +20830,10 @@ EDITS: 5
 		(let ((tmp (temp-dir)))
 		  (key-event name-button (char->integer #\x) 4) (force-event)
 		  (key-event name-button (char->integer #\d) 0) (force-event)
-		  (widget-string minibuffer (string-append home-dir "/bil/test/snd-6"))
+		  (widget-string minibuffer (string-append home-dir "/test/snd-6"))
 		  (key-event minibuffer snd-return-key 0) (force-event)
 		  (IF (or (not (string? (temp-dir)))
-			  (not (string=? (temp-dir) (string-append home-dir "/bil/test/snd-6"))))
+			  (not (string=? (temp-dir) (string-append home-dir "/test/snd-6"))))
 		      (snd-display ";temp-dir via prompt: ~A?" (temp-dir)))
 		  (set! (temp-dir) tmp)
 		  (IF (not (equal? (temp-dir) tmp))
@@ -21809,10 +21816,10 @@ EDITS: 5
 		       (sounds (find-child filed "sound files only")))
 		  (XmToggleButtonSetState sounds #t #t)
 		  (XmToggleButtonSetState sounds #f #t)
-		  (XmTextSetString pattern (string-append home-dir "/bil/cl/*.snd"))
+		  (XmTextSetString pattern (string-append home-dir "/cl/*.snd"))
 		  (XmToggleButtonSetState sounds #t #t)
 		  (XmToggleButtonSetState sounds #f #t)
-		  (XmTextSetString pattern (string-append home-dir "/bil/cl/*.wav"))
+		  (XmTextSetString pattern (string-append home-dir "/cl/*.wav"))
 		  (XmToggleButtonSetState sounds #t #t)
 		  (click-button (XmFileSelectionBoxGetChild filed XmDIALOG_CANCEL_BUTTON)) (force-event))
                 (open-file-dialog)
@@ -22063,8 +22070,8 @@ EDITS: 5
 			(let ((rd (list-ref (dialog-widgets) 9)))
 			  (click-button (XmMessageBoxGetChild rd XmDIALOG_CANCEL_BUTTON)) (force-event))))
 		  (reset-hook! bad-header-hook)
-		  (if (file-exists? (string-append home-dir "/bil/sf1/bogus.snd"))
-		      (let ((ind (open-sound (string-append home-dir "/bil/sf1/bogus.snd"))))
+		  (if (file-exists? (string-append home-dir "/sf1/bogus.snd"))
+		      (let ((ind (open-sound (string-append home-dir "/sf1/bogus.snd"))))
 			(let ((rd (list-ref (dialog-widgets) 9)))
 			  (if (XtIsManaged rd)
 			      (begin
@@ -22495,6 +22502,49 @@ EDITS: 5
 		  (IF (XtIsManaged regd)
 		      (snd-display ";region dialog is still active?")))
 		(c-g!)
+
+		(let* ((ind (open-sound "oboe.snd"))
+		       (grf (car (channel-widgets ind 0)))
+		       (xs (x-bounds))
+		       (ax (axis-info ind 0 time-graph))
+		       (x0 (list-ref ax 10))
+		       (y0 (list-ref ax 11))
+		       (x1 (list-ref ax 12))
+		       (y1 (list-ref ax 13))
+		       (midx (inexact->exact (* 0.5 (+ x0 x1))))
+		       (midy (inexact->exact (* 0.5 (+ y0 y1)))))
+		  (set! (cursor) 500)
+		  (click-event grf 0 4 midx midy) (force-event)
+		  (update-time-graph)
+		  (let ((new-xs (x-bounds)))
+		    (if (> (abs (- (* 2 (- (cadr new-xs) (car new-xs))) (- (cadr xs) (car xs)))) (/ (- (cadr xs) (car xs)) 3))
+			(snd-display ";4 xs: ~A -> ~A" xs (x-bounds))))
+		  (set! xs (x-bounds))
+		  (click-event grf 0 8 midx midy) (force-event)
+		  (update-time-graph)
+		  (let ((new-xs (x-bounds)))
+		    (if (> (abs (- (* 2 (- (cadr new-xs) (car new-xs))) (- (cadr xs) (car xs)))) (/ (- (cadr xs) (car xs)) 3))
+			(snd-display ";8 xs: ~A -> ~A" xs (x-bounds))))
+		  (set! xs (x-bounds))
+		  (click-event grf 0 1 midx midy) (force-event)
+		  (update-time-graph)
+		  (let ((new-xs (x-bounds)))
+		    (if (> (abs (- (* 2 (- (cadr new-xs) (car new-xs))) (- (cadr xs) (car xs)))) (/ (- (cadr xs) (car xs)) 3))
+			(snd-display ";1 xs: ~A -> ~A" xs (x-bounds))))
+		  (set! xs (x-bounds))
+		  (click-event grf 0 5 midx midy) (force-event)
+		  (update-time-graph)
+		  (let ((new-xs (x-bounds)))
+		    (if (> (abs (- (* 4 (- (cadr new-xs) (car new-xs))) (- (cadr xs) (car xs)))) (/ (- (cadr xs) (car xs)) 3))
+			(snd-display ";5 xs: ~A -> ~A" xs (x-bounds))))
+		  (set! xs (x-bounds))
+		  (click-event grf 0 (+ 1 4 8) midx midy) (force-event)
+		  (update-time-graph)
+		  (let ((new-xs (x-bounds)))
+		    (if (> (abs (- (* 8 (- (cadr new-xs) (car new-xs))) (- (cadr xs) (car xs)))) (/ (- (cadr xs) (car xs)) 3))
+			(snd-display ";13 xs: ~A -> ~A" xs (x-bounds))))
+		  (close-sound ind))
+
 		))))))
     
 
@@ -27161,6 +27211,12 @@ EDITS: 5
 	  (check-error-tag 'no-such-channel (lambda () (insert-selection 0 ind 123)))
 	  (check-error-tag 'cannot-save (lambda () (save-sound-as "hiho.snd" ind -1)))
 	  (check-error-tag 'cannot-save (lambda () (save-sound-as "hiho.snd" ind mus-next -1)))
+	  (check-error-tag 'cannot-save (lambda () (save-sound-as "test.snd" ind mus-nist mus-bdouble)))
+	  (check-error-tag 'cannot-save (lambda () (save-sound-as "test.snd" ind mus-aifc mus-lfloat)))
+	  (check-error-tag 'cannot-save (lambda () (save-sound-as "test.snd" ind mus-riff mus-bshort)))
+	  (check-error-tag 'cannot-save (lambda () (save-sound-as "test.snd" ind mus-voc mus-bshort)))
+	  (check-error-tag 'cannot-save (lambda () (save-selection "test.snd" mus-riff mus-bshort)))
+	  (check-error-tag 'cannot-save (lambda () (save-selection "test.snd" mus-voc mus-bshort)))
 	  (check-error-tag 'mus-error (lambda () (draw-lines '#())))
 	  (check-error-tag 'mus-error (lambda () (src-channel (make-env '(0 0 1 1) :end 10))))
 	  (check-error-tag 'mus-error (lambda () (src-channel (make-env '(0 1 1 0) :end 10))))
@@ -27179,9 +27235,8 @@ EDITS: 5
 	  (check-error-tag 'mus-error (lambda () (mix-vct (vct 0.1 0.2 0.3) -1 ind 0 #t)))
 	  (check-error-tag 'mus-error (lambda () (snd-spectrum (make-vct 8) 0 -123)))
 	  (check-error-tag 'mus-error (lambda () (snd-spectrum (make-vct 8) 0 0)))
-	  (check-error-tag 'mus-error (lambda () (insert-sound (string-append sf-dir "mus10.snd"))))
+	  (check-error-tag 'mus-error (lambda () (insert-sound (string-append sf-dir "nist-shortpack.wav"))))
 	  (check-error-tag 'no-such-file (lambda () (play "/baddy/hiho")))
-	  (check-error-tag 'mus-error (lambda () (play (string-append sf-dir "mus10.snd"))))
 	  (check-error-tag 'mus-error (lambda () (play (string-append sf-dir "nist-shortpack.wav"))))
 	  (check-error-tag 'no-such-file (lambda () (mix "/baddy/hiho")))
 	  (check-error-tag 'no-such-file (lambda () (mix-sound "/baddy/hiho" 0)))
@@ -27812,8 +27867,8 @@ EDITS: 5
 (mem-report)
 (system "fgrep -H -n 'snd-run' memlog >> optimizer.log")
 
-(if (file-exists? (string-append home-dir "/bil/dot-snd"))
-    (system (string-append "cp " home-dir "/bil/dot-snd " home-dir "/bil/.snd")))
+(if (file-exists? (string-append home-dir "/dot-snd"))
+    (system (string-append "cp " home-dir "/dot-snd " home-dir "/.snd")))
 
 (if with-exit (exit))
 

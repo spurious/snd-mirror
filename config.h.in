@@ -118,6 +118,7 @@
 #undef USE_MOTIF
 #undef USE_NO_GUI
 #undef HAVE_MOTIF
+#undef HAVE_XmToolTipGetLabel
 #undef HAVE_XPM_GET_ERROR_STRING
 #undef HAVE_XPM_CREATE_XPM_IMAGE_FROM_PIXMAP
 #undef HAVE_GSL

@@ -11,7 +11,7 @@
  *    HPUX
  *    W95/98
  *    NetBSD etc -- untested and incomplete
- *    Mac OSX
+ *    OSX
  *    ESD
  *    audio describers
  */
@@ -8364,9 +8364,7 @@ char *mus_audio_moniker(void) {return("AudioFile audio");}
 #endif
 
 
-/* ------------------------------- MAC_OSX ----------------------------------------- */
-
-/* TODO: sndplay is broken in Darwin 5.5? */
+/* ------------------------------- OSX ----------------------------------------- */
 
 /* this code based on coreaudio.pdf, HAL/Daisy examples, portaudio pa_mac_core.c */
 
@@ -8759,9 +8757,9 @@ void mus_audio_save(void) {}
 void mus_audio_restore(void) {}
 int mus_audio_initialize(void) {return(MUS_NO_ERROR);}
 int mus_audio_systems(void) {return(1);}
-char *mus_audio_system_name(int system) {return("Mac OS-X");}
+char *mus_audio_system_name(int system) {return("Mac OSX");}
 
-char *mus_audio_moniker(void) {return("Mac OS-X audio");}
+char *mus_audio_moniker(void) {return("Mac OSX audio");}
 #endif
 
 

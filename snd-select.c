@@ -954,12 +954,21 @@ saves the current selection in filename using the indicated file attributes.  If
   ss = get_global_state();
   if (XEN_INTEGER_P(header_type)) 
     type = XEN_TO_C_INT(header_type); 
-#if MUS_LITTLE_ENDIAN
-  else type = MUS_RIFF;
-#else
   else type = MUS_NEXT;
-#endif
   format = XEN_TO_C_INT_OR_ELSE(data_format, MUS_OUT_FORMAT);
+
+  if (!(mus_header_writable(type, -2)))
+    XEN_ERROR(CANNOT_SAVE,
+	      XEN_LIST_3(C_TO_XEN_STRING(S_save_selection),
+			 C_TO_XEN_STRING("can't write this header type:"),
+			 C_TO_XEN_STRING(mus_header_type_name(type))));
+  if (!(mus_header_writable(type, format)))
+    XEN_ERROR(CANNOT_SAVE,
+	      XEN_LIST_4(C_TO_XEN_STRING(S_save_selection),
+			 C_TO_XEN_STRING("can't write this combination of header type and data format:"),
+			 C_TO_XEN_STRING(mus_header_type_name(type)),
+			 C_TO_XEN_STRING(mus_data_format_name(format))));
+
   sr = XEN_TO_C_INT_OR_ELSE(srate, selection_srate());
   if (XEN_STRING_P(comment)) 
     com = XEN_TO_C_STRING(comment); 

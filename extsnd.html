@@ -504,9 +504,11 @@ function.  </p>
 <!-- --><tr><td colspan=3></td></tr>
 <!-- -->
 <!-- selection-creates-region -->
-<!-- --><tr><td><code><em class=def><a name="selectioncreatesregion">selection-creates-region</a></em></code></td>
-<!-- --><td><code>#t</code></td>
-<!-- --><td>If #t, a region is created whenever a selection is made.
+<!-- --><tr><td valign=top><code><em class=def><a name="selectioncreatesregion">selection-creates-region</a></em></code></td>
+<!-- --><td valign=top><code>#t</code></td>
+<!-- --><td>If #t, a region is created whenever a selection is made.  If you're editing very large sounds
+<!-- -->and using selections, the region temp files can use up a lot of disk space (and the time to write
+<!-- -->them); if you're not using regions anyway, this switch can turn them off.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=3></td></tr>
 <!-- -->

@@ -1099,6 +1099,13 @@ static int fill_dac_buffers(dac_state *dacp, int write_ok)
 #endif
 
   frames = dacp->frames;
+#if MAC_OSX
+  if (dacp->srate == 22050)
+    {
+      /* double samples for cheap srate conversion */
+      frames /= 2;
+    }
+#endif
   ss = dacp->ss;
   clear_dac_buffers(dacp);
 
@@ -1361,6 +1368,23 @@ static int fill_dac_buffers(dac_state *dacp, int write_ok)
 #else
   if (write_ok == WRITE_TO_DAC) 
     {
+  #if MAC_OSX
+      {
+	int i, j, k;
+	if (dacp->srate == 22050)
+	  {
+	    for (i = 0; i < 2; i++)
+	      {
+		for (j = frames - 1, k = frames * 2 - 2; j >= 0; j--, k -= 2)
+		  {
+		    dac_buffers[i][k] = dac_buffers[i][j];
+		    dac_buffers[i][k + 1] = dac_buffers[i][j];
+		  }
+	      }
+	  }
+	frames *= 2;
+      }
+  #endif
       mus_file_write_buffer(dacp->out_format, 0, frames - 1, dacp->channels, dac_buffers, (char *)(audio_bytes[0]), data_clipped(ss));
       bytes = dacp->channels * frames * mus_bytes_per_sample(dacp->out_format);
       mus_audio_write(dev_fd[0], (char *)(audio_bytes[0]), bytes);

@@ -433,6 +433,7 @@ else
   	    GX_FILES="XM_O_FILES"
 	    AC_DEFINE(HAVE_STATIC_XM)
           fi
+   	  AC_CHECK_LIB(Xm, XmToolTipGetLabel, [AC_DEFINE(HAVE_XmToolTipGetLabel)], , $TEST_LIBS)
 	  AC_MSG_CHECKING([sash support for relative panes])
 	  AC_TRY_COMPILE([#include <Xm/SashP.h>],
 			 [ Widget w; SashCallData call_data;
@@ -530,22 +531,29 @@ if test "$with_gl" = yes || test "$with_just_gl" = yes ; then
   if test "$with_motif" = yes || test "$with_gtk" = yes ; then
     AC_CHECK_HEADER(GL/gl.h,
 	  [have_gl=yes],
-	  [AC_CHECK_HEADER(/usr/X11R6/include/GL/gh.h,
-	 	  [have_gl=yes
-		   GL_FLAGS="-I/usr/X11R6/include"
-		  ],
-		  [AC_MSG_WARN(can't find GL headers)])])
+	  [
+    	   OLD_CFLAGS="$CFLAGS"
+           CFLAGS="-I/usr/X11R6/include $CFLAGS"
+# can't use AC_CHECK_HEADER here (GL/gl.h includes GL/glext.h, so the -I business has to be set up first)
+	   AC_MSG_CHECKING([for /usr/X11R6/include/GL/gl.h])
+	   AC_TRY_COMPILE([#include <GL/gl.h>],
+			  [int i; i = GL_TRUE],
+	 		  [have_gl=yes
+			   GL_FLAGS="-I/usr/X11R6/include"
+			   CFLAGS="$OLD_CFLAGS"
+			   AC_MSG_RESULT(yes)
+			  ],
+		  	  [AC_MSG_WARN(can't find GL headers)])])
     if test "$have_gl" = yes ; then
-      AC_TRY_COMPILE([#include <GL/gl.h>], 
-	 	     [int i; i = GL_TEXTURE_BINDING_3D;],
-		     [AC_DEFINE(HAVE_GL)], 
-		     [AC_DEFINE(JUST_GL)
-		      with_just_gl=yes
-		      have_gl=no])
+      AC_DEFINE(HAVE_GL)
       if test "$with_just_gl" = yes ; then
         AC_DEFINE(JUST_GL)
       else
-        GL_FILES="gl.o"
+        AC_TRY_COMPILE([#include <GL/gl.h>], 
+	 	       [int i; i = GL_TEXTURE_BINDING_3D;],
+		       [GL_FILES="gl.o"],
+		       [AC_DEFINE(JUST_GL)])
+
       fi   
       GL_LIBS="-lGLU -lGL"
       if test "$with_gtk" = yes; then
@@ -558,7 +566,7 @@ if test "$with_gl" = yes || test "$with_just_gl" = yes ; then
       fi
     fi
   else
-	AC_MSG_WARN([GL only works with Motif or Gtk2])
+    AC_MSG_WARN([GL only works with Motif or Gtk2])
   fi
 fi
 AC_SUBST(GL_LIBS)

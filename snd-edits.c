@@ -4695,9 +4695,9 @@ keep track of which files are in a given saved state batch, and a way to rename 
 
 #if DEBUGGING && HAVE_GUILE
   XEN_DEFINE_PROCEDURE("get-test-a2", g_get_test_a2, 0, 0, 0, "internal test function");
-  scm_c_define_gsubr("free-flange", 1, 0, 0, g_free_flange);
-  scm_c_define_gsubr("get-flange", 0, 0, 0, g_get_flange);
-  scm_c_define_gsubr("make-flange", 3, 0, 0, g_make_flange);
+  XEN_DEFINE_PROCEDURE("free-flange", g_free_flange, 1, 0, 0, "internal test function");
+  XEN_DEFINE_PROCEDURE("get-flange", g_get_flange, 0, 0, 0, "internal test function");
+  XEN_DEFINE_PROCEDURE("make-flange", g_make_flange, 3, 0, 0, "internal test function");
   init_fcomb();
 #endif
 }

@@ -1761,32 +1761,6 @@ static int read_soundforge_header (int chan, int loc)
 		{
 		  fact_samples = mus_char_to_lint((unsigned char *)(hdrbuf + 8));
 		}
-	      else
-		{
-		  if (match_four_chars((unsigned char *)hdrbuf, I_inst))
-		    {
-		      base_note = hdrbuf[8];
-		      base_detune = hdrbuf[9];
-		      /* rest is gain low-note high-note low-velocity high-velocity */
-		    }
-		  else
-		    {
-		      if (match_four_chars((unsigned char *)hdrbuf, I_clm_))
-			{
-			  comment_start = offset + 8;
-			  comment_end = comment_start + chunksize - 1; /* end of comment not start of next chunk */
-			}
-		      else
-			{
-			  if ((match_four_chars((unsigned char *)hdrbuf, I_LIST)) &&
-			      (match_four_chars((unsigned char *)(hdrbuf + 8), I_INFO)))
-			    {
-			      aux_comment_start[0] = offset + 8;
-			      aux_comment_end[0] = offset + 8 + chunksize - 1;
-			    }
-			}
-		    }
-		}
 	    }
 	}
       chunkloc = (8 + chunksize);
@@ -4571,7 +4545,7 @@ static int mus_header_read_with_fd_and_name(int chan, const char *filename)
       (match_four_chars((unsigned char *)(hdrbuf + 128), I_HCOM)))
     {
       header_type = MUS_HCOM;
-      return(MUS_ERROR);
+      return(MUS_NO_ERROR);
     }
   happy = 0;
   for (i = 0; i < NINRS; i++) 
@@ -4590,13 +4564,13 @@ static int mus_header_read_with_fd_and_name(int chan, const char *filename)
   if (mus_char_to_ubint((unsigned char *)hdrbuf) == 0xAAAAAAAA)
     {
       header_type = MUS_MUS10;
-      return(MUS_ERROR);
+      return(MUS_NO_ERROR);
     }
   if ((match_four_chars((unsigned char *)hdrbuf, I_SPIB)) || 
       (match_four_chars((unsigned char *)hdrbuf, I_S___)))
     {
       header_type = MUS_IEEE;
-      return(MUS_ERROR);
+      return(MUS_NO_ERROR);
     }
   if (match_four_chars((unsigned char *)hdrbuf, I_DVSM))
     {
@@ -4752,8 +4726,10 @@ static mus_error_handler_t *old_error_handler;
 static void local_mus_error(int type, char *msg)
 {
   local_error_type = type;
-  if (local_error_msg) FREE(local_error_msg);
-  local_error_msg = copy_string(msg);
+  if (local_error_msg) free(local_error_msg);
+  if (msg)
+    local_error_msg = strdup(msg);
+  else local_error_msg = NULL;
 }
 
 int mus_header_read(const char *name)

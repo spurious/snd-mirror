@@ -106,9 +106,6 @@
 #if HAVE_MOTIF
   #define MOTIF_2 (XmVERSION >= 2)
   /* 2.1 really -- I don't have a test system for 2.0 -- I'm using LessTif's headers to check 1.2 */
-  #ifdef XmNtoolTipString
-    #define MOTIF_2_2 1
-  #endif
 #endif
 
 #define XtIsSubClass XtIsSubclass
@@ -4858,7 +4855,7 @@ static XEN gxm_XmCreateLabelGadget(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
   return(gxm_new_widget("XmCreateLabelGadget", XmCreateLabelGadget, arg1, arg2, arg3, arg4));
 }
 
-#if MOTIF_2_2
+#if HAVE_XmToolTipGetLabel
 static XEN gxm_XmToolTipGetLabel(XEN arg1)
 {
   #define H_XmToolTipGetLabel "Widget XmToolTipGetLabel(Widget wid) apparently returns the tooltip label associated with its argument"
@@ -18109,7 +18106,7 @@ static void define_procedures(void)
   XM_DEFINE_PROCEDURE(XmCreateLabelGadget, gxm_XmCreateLabelGadget, 3, 1, 0, H_XmCreateLabelGadget);
   XM_DEFINE_PROCEDURE(XmCreateLabel, gxm_XmCreateLabel, 3, 1, 0, H_XmCreateLabel);
   XM_DEFINE_PROCEDURE(XmIsMotifWMRunning, gxm_XmIsMotifWMRunning, 1, 0, 0, H_XmIsMotifWMRunning);
-#if MOTIF_2_2
+#if HAVE_XmToolTipGetLabel
   XM_DEFINE_PROCEDURE(XmToolTipGetLabel, gxm_XmToolTipGetLabel, 1, 0, 0, H_XmToolTipGetLabel);
 #endif
   XM_DEFINE_PROCEDURE(XmListAddItem, gxm_XmListAddItem, 3, 0, 0, H_XmListAddItem);
@@ -22480,7 +22477,7 @@ static void define_strings(void)
   DEFINE_RESOURCE(XmNtitle, XM_STRING);
   DEFINE_RESOURCE(XmNtitleEncoding, XM_ATOM);
   DEFINE_RESOURCE(XmNtitleString, XM_XMSTRING);
-#if MOTIF_2_2
+#ifdef XmNtoolTipString
   DEFINE_RESOURCE(XmNtoolTipString, XM_XMSTRING);
   DEFINE_RESOURCE(XmNtoolTipPostDelay, XM_INT);
   DEFINE_RESOURCE(XmNtoolTipPostDuration, XM_INT);
@@ -22644,7 +22641,9 @@ static void define_strings(void)
   DEFINE_RESOURCE(XmNpathMode, XM_INT);
   DEFINE_RESOURCE(XmNpatternType, XM_UCHAR);
   DEFINE_RESOURCE(XmNpdmNotificationCallback, XM_CALLBACK);
+#if MOTIF_2
   DEFINE_RESOURCE(XmNpopupHandlerCallback, XM_CALLBACK);
+#endif
   DEFINE_RESOURCE(XmNposition, XM_INT);
   DEFINE_RESOURCE(XmNpositionMode, XM_INT);
   DEFINE_RESOURCE(XmNpositionType, XM_UCHAR);

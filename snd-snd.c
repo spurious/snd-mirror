@@ -2595,6 +2595,17 @@ Any argument can be #f which causes its value to be taken from the sound being s
 	df = hdr->format;
       else df = MUS_OUT_FORMAT;
     }
+  if (!(mus_header_writable(ht, -2)))
+    XEN_ERROR(CANNOT_SAVE,
+	      XEN_LIST_3(C_TO_XEN_STRING(S_save_sound_as),
+			 C_TO_XEN_STRING("can't write this header type:"),
+			 C_TO_XEN_STRING(mus_header_type_name(ht))));
+  if (!(mus_header_writable(ht, df)))
+    XEN_ERROR(CANNOT_SAVE,
+	      XEN_LIST_4(C_TO_XEN_STRING(S_save_sound_as),
+			 C_TO_XEN_STRING("can't write this combination of header type and data format:"),
+			 C_TO_XEN_STRING(mus_header_type_name(ht)),
+			 C_TO_XEN_STRING(mus_data_format_name(df))));
   if (XEN_INTEGER_P(channel))
     {
       chan = XEN_TO_C_INT(channel);

@@ -50,7 +50,7 @@
 
 <p>The sound library is a collection of sound file and audio hardware
 handlers written in C and running currently on SGI (either
-audio library), Sun, OSS or ALSA (Linux and others), Mac, Mac OS-X, HPUX, LinuxPPC, and Windoze systems.  
+audio library), Sun, OSS or ALSA (Linux and others), Mac, Mac OSX, HPUX, LinuxPPC, and Windoze systems.  
 It provides relatively straightforward access to many sound file headers and data
 types, and most of the features of the audio hardware. </p>
 
@@ -974,16 +974,15 @@ ld -shared io.o headers.o audio.o sound.o clm.o -o sndlib.so
   <tr><td>Windoze</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>not written</td><td align=middle>ok</td><td>not written</td></tr>
   <tr><td>Sun</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>ok</td><td>not written</td></tr>
   <tr><td>HPUX</td><td align=middle>untested</td><td align=middle>untested</td><td align=middle>untested</td><td align=middle>untested</td><td align=middle>untested</td><td align=middle>untried</td><td>not written</td></tr>
-  <tr><td>LinuxPPC</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>untested (**)</td><td align=middle>ok</td><td>untested</td></tr>
+  <tr><td>LinuxPPC</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>untested (*)</td><td align=middle>ok</td><td>untested</td></tr>
   <tr><td>ALSA</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>ok</td><td>partly tested</td></tr>
-  <tr><td>Mac OS-X</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>not written</td><td align=middle>ok</td><td>untested</td></tr>
+  <tr><td>Mac OSX</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>not written</td><td align=middle>ok</td><td>untested</td></tr>
 </table>
 
 <br>
 <pre>
 <small>
-(*) I can't find a microphone.
-(**) Last I looked, recording was still not supported in this OS.
+(*) Last I looked, recording was still not supported in this OS.
 </small>
 </pre>
 <br>
@@ -1016,7 +1015,7 @@ ld -shared io.o headers.o audio.o sound.o clm.o -o sndlib.so
 
 <pre>
 <small>
-Incomplete: OMF, AVI, ASF, QuickTime, SoundFont 2.0.
+Incomplete: OMF, AVI, ASF, QuickTime, SoundFont 2.0, TwinVQ.
 Not handled: Esignal, ILS, HTK, DVSM, SoundEdit.
 Handled by Snd: Mus10, IEEE text, HCOM, various compression schemes.
 </small>
@@ -1293,7 +1292,7 @@ guile&gt; (oscil osc)
 </pre>
 <p>The first dynamic-call (mus_sndlib2xen_initialize) ties sndlib2xen.c into
 Guile, and the second (mus_xen_init) ties clm2xen.c into Guile.  See bess.scm
-in the Snd tarball for an example.
+and contrib/bess.rb in the Snd tarball for examples.
 </p>
 
 <br>
