@@ -2278,20 +2278,20 @@ an oscil or a sawtooth-wave:
 <tr><td></td><td>length of each channel of data in <i>obj</i></td></tr>
 
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="sounddatamaxamp">sound-data-maxamp</a></em> (obj)</code></span></td></tr>
-<tr><td></td><td>list of maxamps of data in <i>obj</i></td></tr>
+<tr><td></td><td>list of maxamps (one for each channel) of data in <i>obj</i></td></tr>
 
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="sounddatachans">sound-data-chans</a></em> (obj)</code></span></td></tr>
 <tr><td></td><td>number of channels of data in <i>obj</i></td></tr>
 
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="sounddata2vct">sound-data-&gt;vct</a></em> (sdobj chan vobj)</code></span></td></tr>
-<tr><td></td><td>place sound-data channel data in vct </td></tr>
+<tr><td></td><td>copy sound-data channel data into vct </td></tr>
 
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="vct2sounddata">vct-&gt;sound-data</a></em> (vobj sdobj chan)</code></span></td></tr>
-<tr><td></td><td>place vct data in sound-data</td></tr>
+<tr><td></td><td>copy vct data into sound-data</td></tr>
 </table>
 
-<p>In fact, all of the underlying sound library (<a href="sndlib.html">Sndlib</a>)
-functions are available, as well as all of (<a href="grfsnd.html#clmfuncs">CLM</a>).
+<p>All of the underlying sound library (<a href="sndlib.html">Sndlib</a>)
+functions are available, as well as most of (<a href="grfsnd.html#clmfuncs">CLM</a>).
 See play.scm and rtio.scm for example code. The most important Sndlib functions for Snd are:</p>
 
 <!-- -------------------------------- SNDLIB TABLE -------------------------------- -->
@@ -2309,11 +2309,11 @@ See play.scm and rtio.scm for example code. The most important Sndlib functions 
 
 <!-- mus-audio-error -->
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="audioerror">mus-audio-error</a></em> ()</code></span></td></tr>
-<tr><td></td><td>returns error code indicated by preceding audio call</td></tr>
+<tr><td></td><td>return error code raised by preceding audio call (much like "errno" in C)</td></tr>
 
 <!-- mus-audio-error-name -->
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="audioerror-name">mus-audio-error-name</a></em> (er)r</code></span></td></tr>
-<tr><td></td><td>string decription of error code</td></tr>
+<tr><td></td><td>string description of error <i>code</i></td></tr>
 
 <!-- mus-audio-mixer-read -->
 <tr><td colspan=2><span class=defbox><code><em class=def>
@@ -2351,7 +2351,7 @@ See play.scm and rtio.scm for example code. The most important Sndlib functions 
 <!-- mus-audio-open-input -->
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="musaudioopeninput">mus-audio-open-input</a></em> (device srate chans format bufsize)</code></span></td></tr>
 <tr><td></td>
-<td>open audio port <i>device</i> ready for input. Returns -1 if the open failed.  <i>device</i> is one of:
+<td>open audio port <i>device</i> ready for input. Return -1 if the open failed.  <i>device</i> is one of:
 </td></tr>
 <tr><td></td><td>
 <pre>
@@ -2370,13 +2370,7 @@ See play.scm and rtio.scm for example code. The most important Sndlib functions 
 <tr><td colspan=2><span class=defbox><code><em class=def>
 <a name="musaudioopenoutput">mus-audio-open-output</a></em> (device srate chans format bufsize)</code></span></td></tr>
 <tr><td></td>
-<td>open audio port <i>device</i> ready for output.  Returns -1 if the open failed. </td></tr>
-
-<!-- mus-audio-outputs -->
-<tr><td colspan=2><span class=defbox><code><em class=def>
-<a name="sndaudiooutputs">mus-audio-outputs</a></em> (speakers headphones line-out)</code></span></td></tr>
-<tr><td></td>
-<td>(Sun only) set active outputs</td></tr>
+<td>open audio port <i>device</i> ready for output.  Return -1 if the open failed. </td></tr>
 
 <!-- mus-audio-read -->
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="musaudioread">mus-audio-read</a></em> (line sdata frames)</code></span></td></tr>
@@ -2386,21 +2380,30 @@ mus_sample_t) by mus-audio-read.</td></tr>
 
 <!-- mus-audio-restore -->
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="musaudiorestore">mus-audio-restore</a></em> ()</code></span></td></tr>
-<tr><td></td><td>tries to restore a previously saved audio hardware state</td></tr>
+<tr><td></td><td>restore a previously saved audio hardware state (unimplemented in many cases)</td></tr>
 
 <!-- mus-audio-save -->
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="musaudiosave">mus-audio-save</a></em> ()</code></span></td></tr>
-<tr><td></td><td>tries to save the current audio hardware state</td></tr>
+<tr><td></td><td>save the current audio hardware state (unimplemented in many cases)</td></tr>
+
+<!-- mus-audio-sun-outputs -->
+<tr><td colspan=2><span class=defbox><code><em class=def>
+<a name="musaudiosunoutputs">mus-audio-sun-outputs</a></em> (speakers headphones line-out)</code></span></td></tr>
+<tr><td></td>
+<td>(Sun only)
+set the current Sun audio outputs.
+Each entry should be either 0 (turn off device) or 1 (turn it on).
+</td></tr>
 
 <!-- mus-audio-write -->
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="musaudiowrite">mus-audio-write</a></em> (line sdata frames)</code></span></td></tr>
-<tr><td></td><td>write <i>frames</i> of data from sound-data object <i>sdata</i> to port <i>line</i>.  As with mus-audio-read,
-the out-going data format is set by mus-audio-open-output, and the sound-data object's data is translated to that
+<tr><td></td><td>write <i>frames</i> of data from sound-data <i>sdata</i> to audio port <i>line</i>.  As with mus-audio-read,
+the out-going data format is set by mus-audio-open-output, and the sound-data's data is translated to that
 format by mus-audio-write.</td></tr>
 
 <!-- mus-data-format-name -->
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="soundformatname">mus-data-format-name</a></em> (format)</code></span></td></tr>
-<tr><td></td><td>e.g. "16-bit big endian linear", <i>format</i> is an integer (mus-out-format is the fastest):</td></tr>
+<tr><td></td><td>convert <i>format</i> from an integer to a string, e.g. "16-bit big endian linear".  The sndlib data formats are:</td></tr>
 <tr><td></td><td>
 <pre>
   mus-bshort   mus-lshort   mus-mulaw   mus-alaw   mus-byte  
@@ -2411,7 +2414,7 @@ format by mus-audio-write.</td></tr>
 
 <!-- mus-expand-filename -->
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="musexpandfilename">mus-expand-filename</a></em> (name)</code></span></td></tr>
-<tr><td></td><td>expands <i>name</i> into its 'absolute' pathname; that is, it replaces '~' with the current home directory,
+<tr><td></td><td>expand <i>name</i> into its 'absolute' pathname; that is, replace '~' with the current home directory,
 and whatever else seems appropriate.</td></tr>
 
 <!-- mus-file-prescaler -->
@@ -2428,14 +2431,14 @@ A similar low-level sndlib function is <em class=def><a name="musfilesetdataclip
 
 <!-- mus-header-type-name -->
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="soundtypename">mus-header-type-name</a></em> (type)</code></span></td></tr>
-<tr><td></td><td>e.g. "AIFF", <i>type</i> is an integer, some of which have names:</td></tr>
+<tr><td></td><td>convert <i>type</i>, an integer, to a string, e.g. "AIFF".  Some of the sndlib header types are:</td></tr>
 <tr><td colspan=2><pre>
   mus-next  mus-aifc  mus-riff  mus-nist  mus-raw  mus-ircam  mus-aiff mus-bicsf mus-soundfont mus-voc mus-svx
 </pre></td></tr>
 
 <!-- mus-sound-chans -->
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="soundchans">mus-sound-chans</a></em> (filename)</code></span></td></tr>
-<tr><td></td><td>number of channels (samples are interleaved) (settable)</td></tr>
+<tr><td></td><td>number of channels in <i>filename</i> (settable)</td></tr>
 
 <!-- mus-sound-close-input -->
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="mussoundcloseinput">mus-sound-close-input</a></em> (fd)</code></span></td></tr>
@@ -2483,12 +2486,14 @@ A similar low-level sndlib function is <em class=def><a name="musfilesetdataclip
 
 <!-- mus-sound-maxamp -->
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="mussoundmaxamp">mus-sound-maxamp</a></em> (filename)</code></span></td></tr>
-<tr><td></td><td>returns a list of max amps and locations thereof.  The corresponding set! procedure is mus-sound-set-maxamp (this
+<tr><td></td><td>a list of max amps and locations thereof.  The corresponding set! procedure is mus-sound-set-maxamp (this
 affects only the sndlib table of sound file info, not the sound file itself).</td></tr>
 
 <!-- mus-sound-maxamp-exists? -->
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="mussoundmaxampexists">mus-sound-maxamp-exists?</a></em> (filename)</code></span></td></tr>
-<tr><td></td><td>returns #t if the sound's max amps are already available.</td></tr>
+<tr><td></td><td>#t if the sound's maxamp data is available
+in the sound cache; if it isn't, a call on mus-sound-maxamp has to open and read the data to get the maxamp.
+</td></tr>
 
 <!-- mus-sound-open-input -->
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="mussoundopeninput">mus-sound-open-input</a></em> (filename)</code></span></td></tr>
@@ -2515,19 +2520,15 @@ accommodate the read</td></tr>
 <tr><td colspan=2><span class=defbox><code><em class=def>
 <a name="mussoundreopenoutput">mus-sound-reopen-output</a></em> (filename chans data-format header-type data-location)</code></span></td></tr>
 <tr><td></td>
-<td>reopen (without disturbing) filename, ready to be written</td></tr>
+<td>reopen filename, ready to continue output.</td></tr>
 
 <!-- mus-sound-report-cache -->
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="mussoundreportcache">mus-sound-report-cache</a></em> (file)</code></span></td></tr>
-<tr><td></td><td>prints the current sound header data table to the file given or stdout if none is specified.</td></tr>
+<tr><td></td><td>print the current sound header data table to the file given or stdout if none is specified.</td></tr>
 
 <!-- mus-sound-samples -->
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="soundsamples">mus-sound-samples</a></em> (filename)</code></span></td></tr>
 <tr><td></td><td>number of samples in sound according to header (can be incorrect) (settable)</td></tr>
-
-<!-- mus-sound-seek -->
-<tr><td colspan=2><span class=defbox><code><em class=def><a name="mussoundseek">mus-sound-seek</a></em> (fd offset origin)</code></span></td></tr>
-<tr><td></td><td>complicated -- see mus_sound_seek in sndlib.html</td></tr>
 
 <!-- mus-sound-seek-frame -->
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="mussoundseekframe">mus-sound-seek-frame</a></em> (fd frame)</code></span></td></tr>
@@ -2748,7 +2749,7 @@ See <a href="#scanagain">scan-again</a> and <a href="newcp">find-zero</a> for ex
 
 <!-- sample-reader-home -->
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="samplereaderhome">sample-reader-home</a></em> (obj)</code></span></td></tr>
-<tr><td></td><td>returns a list with the sound index and channel number associated with <i>obj</i>.</td></tr>
+<tr><td></td><td>return a list with the sound index and channel number associated with <i>obj</i>.</td></tr>
 
 <!-- sample-reader-position -->
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="samplereaderposition">sample-reader-position</a></em> (obj)</code></span></td></tr>
@@ -2973,7 +2974,7 @@ editing a channel, each list entry being the mark sample at that time or #f if t
 
 <!-- save-marks -->
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="sndsavemarks">save-marks</a></em> (<i>snd</i>)</code></span></td></tr>
-<tr><td></td><td>save <i>snd</i>'s marks, writing a file &lt;name&gt;.marks (returns file name or #f if no marks).
+<tr><td></td><td>save <i>snd</i>'s marks, writing a file &lt;name&gt;.marks (return file name or #f if no marks).
 </td></tr>
 
 <tr><td colspan=2><span class=defbox><code><em class=def><a href="#showmarks">show-marks</a></em></code></span></td></tr>
@@ -3193,7 +3194,7 @@ mix <i>file</i> (all chans) into selected sound at <i>start</i>.
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="sndmixvct">mix-vct</a></em> (vct <i>beg snd chn with-mix-tags</i> origin)</code></span></td></tr>
 <tr><td></td><td>
 mix the contents of <i>vct</i> into <i>snd</i>'s channel <i>chn</i> starting at frame <i>beg</i>.
-Returns the id of the new mix, or -1 if some error occurred.
+Return the id of the new mix, or -1 if some error occurred.
 If <i>with-mix-tags</i> is #f (default is #t), the data is simply
 mixed without creating any mix tags, and without returning a mix id.
 </td></tr>
@@ -3240,10 +3241,10 @@ mix so that it can be easily moved around.
 See mix.scm for more mix-related (and track-related) functions including:
 </p>
 <table border=0>
-<tr><td width=240><em class=def><a href="sndscm.html#mixname2id">mix-name-&gt;id</a></em></td><td>returns id of named mix</td></tr>
-<tr><td><em class=def><a href="sndscm.html#mix2vct">mix-&gt;vct</a></em></td><td>places samples of mix in vct</td></tr>
-<tr><td><em class=def><a href="sndscm.html#panmix">pan-mix</a></em></td><td>pans mix samples via envelope</td></tr>
-<tr><td><em class=def><a href="sndscm.html#snapmixtobeat">snap-mix-to-beat</a></em></td><td>forces dragged mix to land on a beat</td></tr>
+<tr><td width=240><em class=def><a href="sndscm.html#mixname2id">mix-name-&gt;id</a></em></td><td>return id of named mix</td></tr>
+<tr><td><em class=def><a href="sndscm.html#mix2vct">mix-&gt;vct</a></em></td><td>place samples of mix in vct</td></tr>
+<tr><td><em class=def><a href="sndscm.html#panmix">pan-mix</a></em></td><td>pan mix samples via envelope</td></tr>
+<tr><td><em class=def><a href="sndscm.html#snapmixtobeat">snap-mix-to-beat</a></em></td><td>force dragged mix to land on a beat</td></tr>
 <tr><td><em class=def><a href="sndscm.html#deletemix">delete-mix</a></em></td><td>delete mix (set amps to 0 and lock)</td></tr>
 <tr><td><em class=def><a href="sndscm.html#deleteallmixes">delete-all-mixes</a></em></td><td>delete all mixes</td></tr>
 </table>
@@ -3294,7 +3295,7 @@ insert region <i>reg</i> at sample <i>beg</i> in <i>snd</i>'s channel <i>chn</i>
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="sndmakeregion">make-region</a></em> (<i>beg end snd chn</i>)</code></span></td></tr>
 <tr><td></td><td>
 create a new region spanning samples <i>beg</i> to <i>end</i> in <i>snd</i>'s channel <i>chn</i>.
-returns region's id.  If no arguments are given, the 
+return region's id.  If no arguments are given, the 
 selection is used. If <i>chn</i> is #t, all chans are included, taking the <i>snd</i> sync field into account if it's not 0.
 </td></tr>
 
@@ -4392,7 +4393,7 @@ see also <a href="#lcountmatches">count-matches</a> and <a href="#scanchannel">s
 <span class=defbox><code><em class=def><a name="sndfindsound">find-sound</a></em> (filename)</code></span>
 </td></tr>
 <tr><td></td><td>
-returns the index of <i>filename</i> or
+return the index of <i>filename</i> or
 #f if no sound is found that matches <i>filename</i>.  find-sound could be defined as:
 </td></tr>
 <tr><td></td><td>
@@ -5005,7 +5006,7 @@ no disk space or memory is needed.
 <span class=defbox><code><em class=def><a name="peakenvinfo">peak-env-info</a></em> (<i>snd chn pos</i>)</code></span>
 </td></tr>
 <tr><td></td><td>
-returns some of the overall amplitude envelope data for the given channel
+return some of the overall amplitude envelope data for the given channel
 at the given edit list position.  The data currently returned are whether
 the envelopes are complete (they are the result of a background process), and the min and max data values.
 </td></tr>
@@ -5110,7 +5111,7 @@ return a list of the sound index and channel number associated with <a href="#ma
 <span class=defbox><code><em class=def><a name="position2x">position-&gt;x</a></em> (xpos snd chn axis)</code></span>
 </td></tr>
 <tr><td></td><td>
-returns the X axis value that corresponds to the graph position <i>xpos</i>.
+return the X axis value that corresponds to the graph position <i>xpos</i>.
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -5120,7 +5121,7 @@ returns the X axis value that corresponds to the graph position <i>xpos</i>.
 <span class=defbox><code><em class=def><a name="position2y">position-&gt;y</a></em> (ypos snd chn axis)</code></span>
 </td></tr>
 <tr><td></td><td>
-returns the Y axis value that corresponds to the graph position <i>ypos</i>.
+return the Y axis value that corresponds to the graph position <i>ypos</i>.
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -5395,7 +5396,7 @@ depend on the run macro) will work only in Guile.  We could define xen-channel:
 (define* (ptree-xramp r0 r1 ubase #:optional (beg 0) (dur #f) (snd #f) (chn #f) (edpos #f))
   "exponential version of ramp-channel"
   ;; this is essentially what CLM's exponential envelope generator is doing
-  ;;   to accomodate C, it uses (exp (* power (log base))) prescaling power by (log base)
+  ;;   to accommodate C, it uses (exp (* power (log base))) prescaling power by (log base)
   (let* ((base (if (&gt; r0 r1) (/ 1.0 ubase) ubase)))
     (<em class=red>ptree-channel</em>
      (lambda (y data forward)
@@ -5794,7 +5795,7 @@ A subsequence of the data can be requested via
 defaults to the end of the channel.
 The function is passed the current sample as its argument.
 If it returns something other than #f, the scan is stopped and a list is returned
-containing the non-#f value returned and the current sample position of the
+containing that value and the current sample position of the
 scan. The following call scans the
 current channel from sample 0 to the end looking for any sample greater than
 .1:<br>
@@ -5906,7 +5907,7 @@ the current global or sound-local (if <i>snd</i> is specified) search procedure.
 <span class=defbox><code><em class=def><a name="sndselectedchannel">selected-channel</a></em> (<i>snd</i>)</code></span>
 </td></tr>
 <tr><td></td><td>
-selected channel in <i>snd</i> (set it to select a channel).  Returns #f is no channel is selected in snd. 
+selected channel in <i>snd</i> (set it to select a channel).  Return #f is no channel is selected in snd. 
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -5916,7 +5917,7 @@ selected channel in <i>snd</i> (set it to select a channel).  Returns #f is no c
 <span class=defbox><code><em class=def><a name="sndselectedsound">selected-sound</a></em> ()</code></span>
 </td></tr>
 <tr><td></td><td>
-selected sound (index) (set it to select a sound). Returns #f is there is no selected sound. 
+selected sound (index) (set it to select a sound). Return #f is there is no selected sound. 
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -6098,7 +6099,7 @@ at the loop points:
 <!-- sound-loop-info -->
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="sndsoundloopinfo">sound-loop-info</a></em> (<i>snd</i>)</code></span></td>
 </tr><tr><td></td>
-<td>returns or sets loop points in header.  In each case, the loop info is a list of
+<td>return or set loop points in header.  In each case, the loop info is a list of
 up to 4 points, the first two (start, end) refer to the sustain loop,
 the second two to the release.  The 5th and 6th list entries are the base note and detune values.
 For historical reasons, the 7th and 8th entries are the sustain and release modes.
@@ -6478,7 +6479,7 @@ If v (a vct) is provided, it is filled, rather than creating a new vct.
 <span class=defbox><code><em class=def><a name="transformgraphsize">transform-samples-size</a></em> (<i>snd chn</i>)</code></span>
 </td></tr>
 <tr><td></td><td>
-returns either 0 if no transform, transform-size if graph-once,
+return either 0 if no transform, transform-size if graph-once,
 or (list full-size bins slices) if sonogram or spectrogram.
 </td></tr>
 <tr><td colspan=2></td></tr>
@@ -6664,7 +6665,7 @@ return (list x0 x1) -- current x axis time domain bounds in seconds.
 <span class=defbox><code><em class=def><a name="x2position">x-&gt;position</a></em> (x snd chn axis)</code></span>
 </td></tr>
 <tr><td></td><td>
-returns the graph position that corresponds to the X axis value <i>x</i>. <i>axis</i> is one of time-graph, lisp-graph, or transform-graph.
+return the graph position that corresponds to the X axis value <i>x</i>. <i>axis</i> is one of time-graph, lisp-graph, or transform-graph.
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -6739,7 +6740,7 @@ Or to set each channel to its own maxamp:
 <span class=defbox><code><em class=def><a name="y2position">y-&gt;position</a></em> (y snd chn axis)</code></span>
 </td></tr>
 <tr><td></td><td>
-returns the graph position that corresponds to the Y axis value <i>y</i>. <i>axis</i> is one of time-graph, lisp-graph, or transform-graph.
+return the graph position that corresponds to the Y axis value <i>y</i>. <i>axis</i> is one of time-graph, lisp-graph, or transform-graph.
 This is used in <i>samples-via-colormap</i> in draw.scm to draw the time domain samples in many colors.
 </td></tr>
 <tr><td colspan=2></td></tr>
@@ -7085,7 +7086,7 @@ The control panel '<a href="snd.html#savcontrols">s</a>' button.
 <tr><td colspan=2>
 <span class=defbox><code><em class=def><a name="sndshowcontrols">show-controls</a></em> (<em class=targ>snd</em>)</code></span>
 </td></tr>
-<tr><td></td><td>Returns #t if <i>snd</i>'s control panel is currently open.
+<tr><td></td><td>#t if <i>snd</i>'s control panel is currently open.
 If set to #t, <i>snd</i>'s control panel is opened, else it is closed. 
 </td></tr>
 <tr><td colspan=2></td></tr>
@@ -7174,7 +7175,7 @@ to copy the last edit history string and use its associated bounds -- unlikely t
 <span class=defbox><code><em class=def><a name="snddisplayedits">display-edits</a></em> (<i>snd chn edpos with-source</i>)</code></span>
 </td></tr>
 <tr><td></td><td>
-returns the current edit list contents as a string.  If <i>edpos</i> is specified, only that position is described.
+return the current edit list contents as a string.  If <i>edpos</i> is specified, only that position is described.
 <i>with-source</i> (default #t) determines whether ptree source code is included in the output.
 </td></tr>
 <tr><td></td><td></td></tr>
@@ -7434,7 +7435,7 @@ input data). <i>sgn</i> is 1 for an FFT, -1 for an inverse FFT; (default 1).
 <tr><td colspan=2>
 <span class=defbox><code><em class=def><a name="vctconvolve">vct-convolve!</a></em> (rl1 rl2)</code></span></td></tr>
 <tr><td></td><td>
-convolve vct <i>rl1</i> with <i>rl2</i>.  Result returned in rl1.
+convolve vct <i>rl1</i> with <i>rl2</i>.  Result in rl1.
 rl1 should be large enough to hold the full convolution result.
 This function is the same as <a href="clm.html#convolution">convolution</a>.
 </td></tr>
@@ -8075,7 +8076,7 @@ In /home/bil/cl/rubber.scm:
 </pre>
 <p>So I'm at line 10167 of snd-test.scm where there is a call on
 rubber-sound from rubber.scm.  And in rubber.scm I'm at line 70,
-which is actually all I need to know, but just out of curiousity:
+which is actually all I need to know, but just out of curiosity:
 </p>
 <pre>
 debug&gt; <em class=typing>help</em>
@@ -8604,7 +8605,9 @@ starts the help dialog with help related to the selection if "h" is typed in the
 	(if subject
             (help-dialog subject (snd-help subject))))))
 </pre>
-
+<p>But it's probably more convenient to use the <a href="#listenerclickhook">listener-click-hook</a>
+and click-for-listener-help (draw.scm).
+</p>
 </td></tr>
 
 <!-- memo-sound -->
@@ -8737,7 +8740,7 @@ and returns <i>str</i>.  See also <a href="#muserrorhook">mus-error-hook</a> and
 <tr><td colspan=2>
 <span class=defbox><code><em class=def><a name="sndhelp">snd-help</a></em> (obj)</code></span></td></tr>
 <tr><td></td><td>
-returns (as a string) the help text associated with <i>obj</i>,
+return (as a string) the help text associated with <i>obj</i>,
 for example: <br><br>
 <pre>
 :<em class=typing>(snd-help 'open-sound)</em>
@@ -8772,19 +8775,19 @@ use load-from-path inside a Scheme file when you don't know in advance where tha
 <tr><td colspan=2>
 <span class=defbox><code><em class=def><a name="sndspectrum">snd-spectrum</a></em> (data window length <i>linear beta in-place normalized</i>)</code></span></td></tr>
 <tr><td></td><td>
-returns the spectrum (as a vct) of <i>data</i> (also a vct) using fft-window <i>win</i>.
+return the spectrum (as a vct) of <i>data</i> (also a vct) using fft-window <i>win</i>.
 <i>length</i> is the number of samples 
 of data. <code>(let ((spectr (snd-spectrum data rectangular-window (transform-size)))) ...)</code>
-If <i>linear</i> is #f (its default is #t), the spectrum is returned in dB.
+If <i>linear</i> is #f (its default is #t), the spectrum is in dB.
 <i>beta</i> is the fft data window family parameter; it is scaled internally so here it should be between 0.0 and 1.0.
-If <i>in-place</i> is #t, the spectrum is returned in <i>data</i>, otherwise snd-spectrum returns a new vct.
+If <i>in-place</i> is #t, the spectrum is in <i>data</i>, otherwise snd-spectrum returns a new vct.
 </td></tr>
 
 <!-- snd-tempnam -->
 <tr><td colspan=2>
 <span class=defbox><code><em class=def><a name="sndtempnam">snd-tempnam</a></em> ()</code></span></td></tr>
 <tr><td></td><td>
-returns a new temp file name using Snd's <a href="#tempdir">temp-dir</a>.
+return a new temp file name using Snd's <a href="#tempdir">temp-dir</a>.
 </td></tr>
 
 <!-- snd-version -->
@@ -8798,7 +8801,7 @@ Snd version: a string, normally a date. <b>version</b> is a Guile function.
 <tr><td colspan=2>
 <span class=defbox><code><em class=def><a name="sndwarning">snd-warning</a></em> (str)</code></span></td></tr>
 <tr><td></td><td>
-posts a warning message, <i>str</i>, in the minibuffer, and returns <i>str</i>.
+post a warning message, <i>str</i>, in the minibuffer, and return <i>str</i>.
 See also <a href="#sndwarninghook">snd-warning-hook</a>.
 </td></tr>
 
@@ -8806,7 +8809,7 @@ See also <a href="#sndwarninghook">snd-warning-hook</a>.
 <tr><td colspan=2>
 <span class=defbox><code><em class=def><a name="soundfilesindirectory">sound-files-in-directory</a></em> (<i>dir</i>)</code></span></td></tr>
 <tr><td></td><td>
-returns a list of sound file names.  A file is considered a sound if it has data and
+return a list of sound file names.  A file is considered a sound if it has data and
 its extension is on the sound file extension list (see <a href="#addsoundfileextension">add-sound-file-extension</a>).
 The directory name defaults to the current directory.
 This is useful for batch processing of sounds.  The following,
@@ -8832,14 +8835,14 @@ See also map-sound-files in <a href="sndscm.html#snd4doc">snd4.scm</a>, and
 <tr><td colspan=2>
 <span class=defbox><code><em class=def><a name="sndunbindkey">unbind-key</a></em> (key state extended)</code></span></td></tr>
 <tr><td></td><td>
-causes <i>key</i> with modifiers <i>state</i> to be a no-op.
+cause <i>key</i> with modifiers <i>state</i> to be a no-op.
 </td></tr>
 
 <!-- widget-position -->
 <tr><td colspan=2>
 <span class=defbox><code><em class=def><a name="widgetposition">widget-position</a></em> (widget)</code></span></td></tr>
 <tr><td></td><td>
-returns a list giving the widget x and y coordinates (pixels).  Can be set.  See <a href="#sndwidgets">Snd widgets</a> below,
+return a list giving the widget x and y coordinates (pixels).  Can be set.  See <a href="#sndwidgets">Snd widgets</a> below,
 and nb.scm where it uses the current window position to try to find a convenient place for the help dialog.
 </td></tr>
 
@@ -8847,7 +8850,7 @@ and nb.scm where it uses the current window position to try to find a convenient
 <tr><td colspan=2>
 <span class=defbox><code><em class=def><a name="widgetsize">widget-size</a></em> (widget) </code></span></td></tr>
 <tr><td></td><td>
-returns a list giving the widget width and height (pixels).  Can be set. See nb.scm and examp.scm.
+return a list giving the widget width and height (pixels).  Can be set. See nb.scm and examp.scm.
 </td></tr>
 
 </table>
@@ -9111,7 +9114,7 @@ The lowest level procedures are:
 <span class=defbox><code><em class=def><a name="axisinfo">axis-info</a></em> (snd chn <i>grf</i>)</code></span></td></tr>
 
 <tr><td><spacer type=horizontal size=40><br></td><td>
-returns a list describing the specified axis:
+return a list describing the specified axis:
 <code>'(left-sample right-sample x0 y0 x1 y1 x-min y-min x-max y-max 
 x0-position y0-position x1-position y1-position y-offset)</code>.  This might be
 useful if you're drawing arbitrary figures in a graph.  <i>grf</i> defaults to
@@ -9156,7 +9159,7 @@ See <i>samples-via-colormap</i> in draw.scm.
 the graphics mode to use to draw over whatever is currently in a graph.
 The "contexts" refer to graphics contexts used throughout Snd; the <i>copy-context</i>
 copies into the current graph, whereas the <i>cursor-context</i> uses XOR.
-The error returned for an unimplemented 'context' is 'no-such-graphics-context.
+The error thrown for an unimplemented 'context' is 'no-such-graphics-context.
 See draw.scm or <a href="#displaysampsinred">display-samps-in-red</a> 
 for examples.
 </td></tr>
@@ -9167,7 +9170,7 @@ for examples.
 <span class=defbox><code><em class=def><a name="currentfont">current-font</a></em> (snd chn context)</code></span></td></tr>
 
 <tr><td></td><td>
-returns the current font (also settable).</td></tr>
+return the current font (also settable).</td></tr>
 <tr><td colspan=2></td></tr>
 
 <!-- cursor-context -->
@@ -9186,10 +9189,10 @@ See <a href="#xcursor">x-cursor</a> for example, or
 <span class=defbox><code><em class=def><a name="drawaxes">draw-axes</a></em> (wid gc <i>label x0 x1 y0 y1 style axes</i>)</code></span></td></tr>
 
 <tr><td width=50></td><td>
-draws axes in the widget <i>wid</i>, using the graphics context <i>gc</i>, with the x-axis label <i>label</i>
+draw axes in the widget <i>wid</i>, using the graphics context <i>gc</i>, with the x-axis label <i>label</i>
 going from <i>x0</i> to <i>x1</i> (floats) along the x axis, <i>y0</i> to <i>y1</i> along the y axis, with x-axis-style
 <i>style</i> (x-axis-in-seconds etc); whether the axes are actually displayed or just implied
-depends on <i>axes</i>. Returns a list of the actual (pixel) axis bounds.  See, for example,  the scanned-synthesis display code in snd-motif.scm,
+depends on <i>axes</i>. Return a list of the actual (pixel) axis bounds.  See, for example,  the scanned-synthesis display code in snd-motif.scm,
 or the local envelope editor code in xm-enved.scm.
 </td></tr><tr><td colspan=2></td></tr>
 
@@ -9198,7 +9201,7 @@ or the local envelope editor code in xm-enved.scm.
 <span class=defbox><code><em class=def><a name="drawdot">draw-dot</a></em> (x0 y0 dot-size snd chn context)</code></span></td></tr>
 
 <tr><td width=50></td><td>
-draws a dot at (x0 y0) of <i>dot-size</i> pixels diameter in the given graph.  See musglyphs.scm.</td></tr>
+draw a dot at (x0 y0) of <i>dot-size</i> pixels diameter in the given graph.  See musglyphs.scm.</td></tr>
 <tr><td colspan=2></td></tr>
 
 <!-- draw-dots -->
@@ -9206,7 +9209,7 @@ draws a dot at (x0 y0) of <i>dot-size</i> pixels diameter in the given graph.  S
 <span class=defbox><code><em class=def><a name="drawdots">draw-dots</a></em> (positions dot-size snd chn context)</code></span></td></tr>
 
 <tr><td></td><td>
-draws dots of size <i>dot-size</i> from the (x y) pairs in the vector <i>positions</i> in the given context.
+draw dots of size <i>dot-size</i> from the (x y) pairs in the vector <i>positions</i> in the given context.
 draw-dots, draw-lines, and fill-polygon take vectors, rather than vcts (which would be more consistent
 with the rest of Snd) because the values passed are supposed to be short ints.  The xm and xg modules
 have made these functions obsolete.
@@ -9218,7 +9221,7 @@ have made these functions obsolete.
 <span class=defbox><code><em class=def><a name="drawline">draw-line</a></em> (x0 y0 x1 y1 snd chn context)</code></span></td></tr>
 
 <tr><td></td><td>
-draws a line from (x0 y0) to (x1 y1) in the given context.
+draw a line from (x0 y0) to (x1 y1) in the given context.
 See <i>show-hiho</i> below.
 </td></tr>
 <tr><td colspan=2></td></tr>
@@ -9228,7 +9231,7 @@ See <i>show-hiho</i> below.
 <span class=defbox><code><em class=def><a name="drawlines">draw-lines</a></em> (lines size snd chn context)</code></span></td></tr>
 
 <tr><td></td><td>
-draws lines following the (x y) pairs in the vector <i>lines</i> in the given graphics context (copy-context is the default).
+draw lines following the (x y) pairs in the vector <i>lines</i> in the given graphics context (copy-context is the default).
 See <i>make-current-window-display</i> in draw.scm.
 <i>make-bezier-1</i> in <a href="sndscm.html#musglyphs">musglyphs.scm</a> can be used to draw Bezier curves.
 </td></tr>
@@ -9239,7 +9242,7 @@ See <i>make-current-window-display</i> in draw.scm.
 <span class=defbox><code><em class=def><a name="drawstring">draw-string</a></em> (text x0 y0 snd chn context)</code></span></td></tr>
 
 <tr><td></td><td>
-draws a string (<i>text</i>) in the current font and foreground color starting at (x0 y0) in the given graphics context.
+draw a string (<i>text</i>) in the current font and foreground color starting at (x0 y0) in the given graphics context.
 The next procedures use the channel-property list (extensions.scm) to maintain a list
 of sample-oriented comments, displaying a given comment if its associated sample is
 currently in the time-domain graph:
@@ -9323,7 +9326,7 @@ musglyphs.scm has some elaborate examples that use fill-polygon to draw music no
 <span class=defbox><code><em class=def><a name="foregroundcolor">foreground-color</a></em> (snd chn context)</code></span></td></tr>
 
 <tr><td></td><td>
-returns the current foreground color (also settable).
+return the current foreground color (also settable).
 The following gives us a green cursor:
 <pre>
   (set! (<em class=red>foreground-color</em> 0 0 cursor-context) (make-color 1 0 1))
@@ -9424,7 +9427,7 @@ sound over another at an arbitrary point, and so on (see draw.scm):
 <span class=defbox><code><em class=def><a name="loadfont">load-font</a></em> (font-name)</code></span></td></tr>
 
 <tr><td></td><td>
-loads the font <i>font-name</i> (an X-style font spec), and returns a handle for it (for <a href="#currentfont">current-font</a>).
+load the font <i>font-name</i> (an X-style font spec), and return a handle for it (for <a href="#currentfont">current-font</a>).
 <pre>
   (define new-font (<em class=red>load-font</em> "-adobe-helvetica-bold-r-*-*-14-*-*-*-*-*-*-*"))
 </pre>

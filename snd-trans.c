@@ -1,6 +1,6 @@
 /* translate various special case sound files to something we can edit 
  * 
- * I'm ignoring propietary or licensed schemes even where the code is publicly available (Rockwell ADPCM, shorten, etc)
+ * I'm ignoring proprietary or licensed schemes even where the code is publicly available (Rockwell ADPCM, shorten, etc)
  *
  * currently supported:
  *   IEEE text

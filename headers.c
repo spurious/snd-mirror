@@ -2675,7 +2675,7 @@ static int read_voc_header(int chan)
 /* ------------------------------------ TwinVQ ------------------------------------ 
  *
  * from Audio Tools Library (atl.zip) at http://jfaul.de/atl.
- * a chunked header for propietary (and apparently obsolete?) compressed data
+ * a chunked header for proprietary (and apparently obsolete?) compressed data
  *
  * 0: "TWIN"
  * 4: version id (string)

@@ -384,10 +384,10 @@ open a given device (its name can be found by calling <b>mus_midi_device_name</b
 with an argument of 0), returning an integer that refers to that port
 in subsequent calls on <b>mus_midi_read</b>, <b>mus_midi_write</b>, and
 <b>mus_midi_close</b>.  No attempt is made to interpret the data, or
-time its output, etc.  <b>mus_midi_describe</b> returns a decription
+time its output, etc.  <b>mus_midi_describe</b> returns a description
 of the available MIDI hardware (its result should be freed, whereas
 the result of <b>mus_midi_device_name</b> should not be freed).
-The "int" result of each of the functions is -1 if some error ocurred (from
+The "int" result of each of the functions is -1 if some error occurred (from
 Guile, they throw 'mus-error).
 The <i>sysdev</i> argument to <b>mus_midi_device_name</b> is a sndlib-style
 integer packing the card number ("system" in the left half, and the
@@ -415,7 +415,7 @@ went wrong.
 <span class=box><h2><A NAME="music5">MusicV</a></h2></span>
 
 <p>clm.c and friends implement all the generators found in CLM, a common lisp
-music V implementation, and clm2xen.c ties these into the lanaguages supported by the
+music V implementation, and clm2xen.c ties these into the languages supported by the
 xen package (currently Guile and Ruby).  The
 primary clm documentation (which describes both the Scheme and Common Lisp implementations)
 is clm.html found in clm-2.tar.gz alongside sndlib at ccrma-ftp.

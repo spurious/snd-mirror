@@ -1043,46 +1043,6 @@ end
 vct_move!(v2, 3, 2, true)
 if fneq(vct_ref( v2, 3), 2.0) || fneq(vct_ref(v2, 2), 1.0) then snd_display sprintf("\n# vct_move! back: %s?", v2) end
 v0 = make_vct 3
-begin
-vct_ref(v0, 10)
-rescue
-  if $!.message[0..8] != "Mus_error" then snd_display sprintf("\n# vct_ref high index: %s", $!) end
-end
-begin
-vct_ref(v0, -1)
-rescue
-  if $!.message[0..8] != "Mus_error" then snd_display sprintf("\n# vct_ref low index: %s", $!) end
-end
-begin
-vct_set!(v0, 10, 1.0)
-rescue
-  if $!.message[0..8] != "Mus_error" then snd_display sprintf("\n# vct_set! high index: %s", $!) end
-end
-begin
-vct_set!(v0, -1, 1.0)
-rescue
-  if $!.message[0..8] != "Mus_error" then snd_display sprintf("\n# vct_set! low index: %s", $!) end
-end
-begin
-vct_move!(v0, 10, 0, true)
-rescue
-  if $!.message[0..8] != "Mus_error" then snd_display sprintf("\n# vct_move! high index: %s", $!) end
-end
-begin
-vct_move!(v0, 0, 10, true)
-rescue
-  if $!.message[0..8] != "Mus_error" then snd_display sprintf("\n# vct_move! high 2 index: %s", $!) end
-end
-begin
-vct_move!(v0, -10, 0, false)
-rescue
-  if $!.message[0..8] != "Mus_error" then snd_display sprintf("\n# vct_move! back high index: %s", $!) end
-end
-begin
-vct_move!(v0, 0, -10, false)
-rescue
-  if $!.message[0..8] != "Mus_error" then snd_display sprintf("\n# vct_move! back high 2 index: %s", $!) end
-end
 v = make_vct 4
 vv = make_vct 4
 ctr = 0

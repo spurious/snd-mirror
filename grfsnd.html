@@ -331,7 +331,7 @@ Here's a more extended example:
       (set! (axis-label-font) "-adobe-times-medium-r-normal-*-18-*-*-*-*-*-*-*")
       (set! (axis-numbers-font) "9x15")))
 
-(set! (listener-prompt) ":")        ;default prompt is ">"
+(set! (listener-prompt) ":")        ;default prompt is "&gt;"
 (show-listener)                     ;include the listener window initially
 (set! (show-indices) #t)            ;include sound index values with the sound name
 
@@ -369,7 +369,7 @@ Here's a more extended example:
 
 (add-hook! after-open-hook          ;if sound has many chans, use just one pane for all
   (lambda (snd)
-    (if (> (chans snd) 4)
+    (if (&gt; (chans snd) 4)
         (set! (channel-style snd) channels-combined))))
 
 (set! (optimization) 6)             ;turn on full optimization
