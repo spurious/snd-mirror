@@ -28,6 +28,8 @@ The configure program has several Snd-related arguments:
    --with-alsa           use ALSA if possible (default is OSS in Linux)
      --with-static-alsa  use ALSA statically loaded (for RPM generation)
    --with-esd            use the enlightened sound daemon, if possible
+   --with-jack           use the Jack library (can be used in conjunction
+                           with --with-alsa)
 
    --with-doubles        use doubles throughout (default is floats)
    --with-float-samples  represent samples internally as floats (default: ints)

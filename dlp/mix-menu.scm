@@ -1,5 +1,7 @@
 (use-modules (ice-9 format))
 
+(if (not (defined? 'retempo-track)) (load-from-path "mix.scm"))
+
 (define mix-list '()) ; menu labels are updated to show current default settings
 
 (define mix-menu (add-to-main-menu "Mix/Track" (lambda ()
@@ -39,7 +41,7 @@
 (define delete-mix-dialog #f)
 
 (define (cp-delete-mix)
- (delete-mix delete-mix-number))
+  (delete-mix delete-mix-number))
 
 (if (provided? 'xm) ; if xm module is loaded, popup a dialog here
     (begin
@@ -93,7 +95,7 @@
 (define (unsnap!)
   (set! snapping #f)
   (change-menu-label mix-menu no-snap-label snap-label)
-  (reset-hook! mix-dragged-hook))
+  (reset-hook! mix-release-hook))
 
 (add-to-menu mix-menu snap-label
   (lambda ()
@@ -118,7 +120,7 @@
     (mixes)))
 
 (define (cp-renumber-tracks)
- (set-all-tracks renumber-tracks-number))
+  (set-all-tracks renumber-tracks-number))
 
 (if (provided? 'xm) ; if xm module is loaded, popup a dialog here
     (begin
@@ -162,20 +164,12 @@
 ;;;
 ;;;
 
-(define (delete-track track)
-  (as-one-edit
-    (lambda ()
-      (for-each
-        (lambda (a)
-          (delete-mix a))
-        track))))
-
 (define delete-track-number 0)
 (define delete-track-label "Delete track")
 (define delete-track-dialog #f)
 
 (define (cp-delete-track)
- (delete-track (track delete-track-number)))
+  (delete-track delete-track-number))
 
 (if (provided? 'xm) ; if xm module is loaded, popup a dialog here
     (begin
@@ -224,7 +218,7 @@
 (define play-track-dialog #f)
 
 (define (cp-play-track)
- (play-track play-track-number))
+  (play-track play-track-number))
 
 (if (provided? 'xm) ; if xm module is loaded, popup a dialog here
     (begin
@@ -271,7 +265,7 @@
 (define reverse-track-dialog #f)
 
 (define (cp-reverse-track)
- (reverse-track (track reverse-track-number)))
+  (reverse-track reverse-track-number))
 
 (if (provided? 'xm) ; if xm module is loaded, popup a dialog here
     (begin
@@ -319,7 +313,7 @@
 (define set-track-amp-dialog #f)
 
 (define (cp-set-track-amp)
-  (set-track-amp (track set-track-amp-tracknum) set-track-amp-scaler))
+  (set! (track-amp set-track-amp-tracknum) set-track-amp-scaler))
 
 (if (provided? 'xm) ; if xm module is loaded, popup a dialog here
     (begin
@@ -373,7 +367,7 @@
 (define set-track-speed-dialog #f)
 
 (define (cp-set-track-speed)
-  (set-track-speed (track set-track-speed-tracknum) set-track-speed-scaler))
+  (set! (track-speed set-track-speed-tracknum) set-track-speed-scaler))
 
 (if (provided? 'xm) ; if xm module is loaded, popup a dialog here
     (begin
@@ -427,7 +421,7 @@
 (define set-track-tempo-dialog #f)
 
 (define (cp-set-track-tempo)
-  (set-track-tempo (track set-track-tempo-tracknum) set-track-tempo-value))
+  (retempo-track set-track-tempo-tracknum set-track-tempo-value))
 
 (if (provided? 'xm) ; if xm module is loaded, popup a dialog here
     (begin
@@ -481,7 +475,7 @@
 (define transpose-track-dialog #f)
 
 (define (cp-transpose-track)
-  (transpose-track (track transpose-track-number) transpose-track-semitones))
+  (transpose-track transpose-track-number transpose-track-semitones))
 
 (if (provided? 'xm) ; if xm module is loaded, popup a dialog here
     (begin
@@ -534,7 +528,7 @@
 (define save-track-dialog #f)
 
 (define (cp-save-track)
- (save-track (track save-track-number) (format #f "track-~A.snd" save-track-number)))
+  (save-track save-track-number (format #f "track-~A.snd" save-track-number)))
 
 (if (provided? 'xm) ; if xm module is loaded, popup a dialog here
     (begin
@@ -575,17 +569,6 @@
 (add-to-menu mix-menu #f #f)
 
 (add-to-menu mix-menu "Colorize tracks" (lambda () (load-from-path "track-colors.scm")))
-
-(define (delete-all-mixes)
-  (as-one-edit
-    (lambda ()
-      (tree-for-each
-        (lambda (id)
-          (delete-mix id))
-        (mixes)))))
-
-(define (delete-all-tracks)
-  (delete-all-mixes))
 
 (add-to-menu mix-menu "Delete all mixes & tracks" (lambda () (delete-all-tracks)))
 

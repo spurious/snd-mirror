@@ -83,6 +83,7 @@ static void reset_position(mix_info *md, void *val);
 static bool found_track_amp_env(int trk);
 static off_t track_position(int id, int chan);
 static off_t track_frames(int id, int chan);
+static int track_members(int track_id);
 
 static XEN mix_release_hook;
 static XEN mix_drag_hook;
@@ -1358,7 +1359,7 @@ static int backup_mix(mix_info *md, void *ptr)
   one_edit = (*((int *)ptr));
   current_state = md->current_state;
   curcs = md->states[current_state];
-  while ((md->current_state > 1) && 
+  while ((md->current_state > 0) && 
 	 ((md->states[md->current_state - 1])->edit_ctr >= one_edit))
     {
       md->current_state--; 
@@ -1370,6 +1371,10 @@ static int backup_mix(mix_info *md, void *ptr)
       md->states[current_state] = NULL;
       md->states[md->current_state] = curcs;
     }
+  /*
+  fprintf(stderr,"reset %d ctr to %d at %d\n", md->id, one_edit, md->current_state);
+  if (md->current_state > 0) fprintf(stderr,"at 0 ctr is %d\n", md->states[0]->edit_ctr);
+  */
   curcs->edit_ctr = one_edit;
   return(0);
 }
@@ -3236,7 +3241,8 @@ static int set_mix_speed(int mix_id, Float val, bool from_gui, bool remix)
 	      (cs->speed == new_speed) && /* drag sets speed, so we can't optimize that case without some difficulties */
 	      (md->cp->sound->sync == 0))
 	    return(mix_id);
-	  if (found_track_amp_env(md->track)) /* amp-env needs bounds check; if bounds are changed by mix speed change, re-calc entire track */
+	  if ((found_track_amp_env(md->track)) && /* amp-env needs bounds check; if bounds are changed by mix speed change, re-calc entire track */
+	      (track_members(md->track) > 1))
 	    {
 	      off_t trk_beg, trk_len, trk_end, new_len, new_end, old_len, new_trk_end;
 	      trk_beg = track_position(md->track, -1);
@@ -3350,7 +3356,8 @@ int set_mix_position(int mix_id, off_t val)
 	    return(mix_id);
 	  if (val < 0) val = 0;
 
-	  if (found_track_amp_env(md->track)) /* amp-env needs bounds check; if bounds are changed by mix position change, re-calc entire track */
+	  if ((found_track_amp_env(md->track)) && /* amp-env needs bounds check; if bounds are changed by mix position change, re-calc entire track */
+	      (track_members(md->track) > 1))
 	    {
 	      off_t trk_beg, trk_len, trk_end, new_trk_beg, new_trk_end, new_trk_len, old_beg;
 	      trk_beg = track_position(md->track, -1);
@@ -5321,6 +5328,41 @@ static color_t set_active_track_color(int id, color_t c)
   return(c);
 }
 
+typedef struct {int id; int mixes;} track_members_t;
+
+static int track_members_1(mix_info *md, void *ptr)
+{
+  track_members_t *tm = (track_members_t *)ptr;
+  int tid;
+  if (mix_ok_and_unlocked(md->id))
+    {
+      tid = md->track;
+      while (track_p(tid))
+	{
+	  if (tid == tm->id)
+	    {
+	      tm->mixes++;
+	      return(0);
+	    }
+	  tid = active_track_track(tid);
+	}
+    }
+  return(0);
+}
+
+static int track_members(int track_id)
+{
+  track_members_t *tm;
+  int mixes = 0;
+  tm = (track_members_t *)CALLOC(1, sizeof(track_members_t));
+  tm->id = track_id;
+  tm->mixes = 0;
+  map_over_mixes(track_members_1, (void *)tm);
+  mixes = tm->mixes;
+  FREE(tm);
+  return(mixes);
+}
+
 
 /* -------- track chain -------- */
 
@@ -6007,7 +6049,8 @@ static void set_track_position(int id, off_t pos)
     {
       off_t change;
       change = pos - curpos;
-      if (found_track_amp_env(id))
+      if ((found_track_amp_env(id)) &&
+	  (track_members(id) > 1))
 	{
 	  off_t cur_frames;
 	  cur_frames = track_frames(id, -1);
@@ -6020,15 +6063,57 @@ static void set_track_position(int id, off_t pos)
     }
 }
 
+typedef struct {off_t change; chan_info *cp;} track_channel_position_t;
+
+static void set_track_channel_position_1(mix_info *md, void *val)
+{
+  track_channel_position_t *tc = (track_channel_position_t *)val;
+  mix_state *cs;
+  if (md->cp == tc->cp)
+    {
+      cs = md->active_mix_state;
+      cs->beg += tc->change;
+      if (cs->beg < 0) cs->beg = 0;
+    }
+  remix_file(md, S_setB S_track_position, false);
+}
+
 static void set_track_channel_position(int id, int chan, off_t pos)
 {
-  /* TODO: amp_env check -> remix_track_channel_with_preset_times (this will force others to change in worst case!) */
   off_t curpos, change;
   curpos = track_position(id, -1);
   if ((track_p(id)) && (curpos != pos))
     {
       change = pos - curpos;
-      remix_track_channel(id, chan, set_track_position_1, (void *)(&change));
+      if ((track_chans(id) > 1) && 
+	  (found_track_amp_env(id)))  /* if amp-env and bounds change, need preset bounds during remix */
+	{
+	  off_t trk_beg, trk_len, trk_end, chn_len;
+	  trk_len = track_frames(id, -1);
+	  chn_len = track_frames(id, chan);
+	  trk_beg = track_position(id, -1);
+	  trk_end = trk_beg + trk_len;
+	  if ((trk_beg > pos) || 
+	      (trk_end < (pos + chn_len)))
+	    {
+	      track_channel_position_t *tc;
+	      if (trk_beg > pos) trk_beg = pos;
+	      if (trk_end < (pos + chn_len)) trk_len = (pos + chn_len - trk_beg);
+	      tc = (track_channel_position_t *)CALLOC(1, sizeof(track_channel_position_t));
+	      tc->change = change;
+	      tc->cp = track_channel(id, chan);
+	      remix_track_with_preset_times(id, trk_beg, trk_len, reset_position, 1.0, set_track_channel_position_1, (void *)tc);
+	      FREE(tc);
+	    }
+	  else
+	    {
+	      remix_track_channel(id, chan, set_track_position_1, (void *)(&change));
+	    }
+	}
+      else
+	{
+	  remix_track_channel(id, chan, set_track_position_1, (void *)(&change));
+	}
     }
 }
 
@@ -6080,7 +6165,8 @@ static void set_track_speed(int id, Float speed)
 {
   if ((track_p(id)) && (active_track_speed(id) != speed))
     {
-      if (found_track_amp_env(id))
+      if ((found_track_amp_env(id)) &&
+	  (track_members(id) > 1))
 	{
 	  off_t beg, dur;
 	  Float change;
@@ -6535,35 +6621,147 @@ static int copy_mix(int id, off_t beg)
   return(new_id);
 }
 
+static int copy_track_state(int id)
+{
+  track_state *old_ts, *new_ts;
+  int new_id;
+  new_id = new_track();
+  new_ts = active_track_state(new_id);
+  old_ts = active_track_state(id);
+  new_ts->amp = old_ts->amp;
+  new_ts->speed = old_ts->speed;
+  new_ts->track = 0;
+  new_ts->amp_env = copy_env(old_ts->amp_env);
+  new_ts->color = old_ts->color;
+  return(new_id);
+}
+
+static void copy_track_1(mix_info *md, void *val)
+{
+  remix_file(md, S_copy_track, false);
+}
+
 static int copy_track(int id, off_t beg)
 {
-  int new_id = INVALID_TRACK_ID;
+  int new_id = INVALID_TRACK_ID, i, trk_ctr = 0, trk_size = 0, j, k, tid;
+  int *old_tracks = NULL, *new_mixes = NULL, *new_tracks = NULL, *edpos = NULL;
+  track_mix_list_t *trk;
   track_state *ts;
-  /* remember possible embedded tracks which will also need to be copied */
-  /* so... copy each mix individually and save ids + backpointers,                      -> copy_mix + bkptr array
-   *   copy each local track, embedding corresponding mixes, then setting all fields    -> make_track + settings + its track
-   *   copy top track, its track=0, set all 2nd level tracks to it,                     -> make_track + settings (assuming previous track->track)
-   *   backup all edits to 1+ original and reset origin                                 -> backup_edit_list etc
-   */
-  new_id = make_track(NULL, 0);
+  mix_info *md, *old_md, *new_md;
+  mix_state *cs;
+  off_t old_beg, change;
+  bool found_track = false;
+  if (!(track_p(id))) return(INVALID_TRACK_ID);
+  trk = track_mixes(id);
+  if (trk->lst_ctr > 0)
+    {
+      edpos = (int *)CALLOC(trk->cps_ctr, sizeof(int));
+      for (i = 0; i < trk->cps_ctr; i++)
+	edpos[i] = trk->cps[i]->edit_ctr + 1; /* prepare global as_one_edit */
+      old_beg = track_position(id, -1);
+      change = beg - old_beg;
+      new_mixes = (int *)CALLOC(trk->lst_ctr, sizeof(int));
+      trk_size = 4;
+      old_tracks = (int *)CALLOC(trk_size, sizeof(int));
+      for (i = 0; i < trk->lst_ctr; i++)
+	{
+	  md = md_from_id(trk->lst[i]);
+	  cs = md->states[md->current_state];
+	  new_mixes[i] = copy_mix(trk->lst[i], cs->beg + change);
+	  if (md->track != id)
+	    {
+	      tid = md->track;
+	      while ((track_p(tid)) && (tid != id))
+		{
+		  found_track = false;
+		  for (k = 0; k < trk_ctr; k++)
+		    if (old_tracks[k] == tid)
+		      {
+			found_track = true;
+			break;
+		      }
+		  if (!found_track)
+		    {
+		      old_tracks[trk_ctr++] = tid;
+		      if (trk_ctr >= trk_size)
+			{
+			  trk_size += 4;
+			  old_tracks = (int *)REALLOC(old_tracks, trk_size * sizeof(int));
+			  for (j = trk_size - 4; j < trk_size; j++) old_tracks[j] = 0;
+			}
+		    }
+		  tid = active_track_track(tid);
+		}
+	    }
+	}
+    }
+  /* now we have copied all the constiuent mixes and placed them at their new position */
+  /* new_mixes[i] corresponds to trk->lst[i] */
+  /* and we have all the non-top-level tracks that will intervene */
+  if (trk_ctr > 0)
+    {
+      new_tracks = (int *)CALLOC(trk_ctr, sizeof(int));
+      for (i = 0; i < trk_ctr; i++)
+	new_tracks[i] = copy_track_state(old_tracks[i]);
+    }
+  new_id = copy_track_state(id);
+  
+  if (trk->lst_ctr > 0)
+    {
+      /* now all the embedded tracks have been copied */
+      /* next step is to run through the mixes in parallel, setting all the track->track and mix->track fields */
+      for (i = 0; i < trk_ctr; i++)
+	{
+	  /* old_tracks[i] -> track sets new_tracks[i] -> track to corresponding value */
+	  tid = active_track_track(old_tracks[i]);
+	  ts = active_track_state(new_tracks[i]);
+	  if (tid == id)
+	    ts->track = new_id;
+	  else
+	    {
+	      for (j = 0; j < trk_ctr; j++)
+		if (old_tracks[j] == tid)
+		  {
+		    ts->track = new_tracks[j];
+		    break;
+		  }
+	    }
+	}
+      for (i = 0; i < trk->lst_ctr; i++)
+	{
+	  old_md = md_from_id(trk->lst[i]);
+	  new_md = md_from_id(new_mixes[i]);
+	  if (old_md->track == id)
+	    new_md->track = new_id;
+	  else
+	    {
+	      for (j = 0; j < trk_ctr; j++)
+		if (old_tracks[j] == old_md->track)
+		  {
+		    new_md->track = new_tracks[j];
+		    break;
+		  }
+	    }
+	}
+      /* now all the track pointers have been set */
+      remix_track(new_id, copy_track_1, NULL);
+      /* that's locally backed-up, but we also copied all the mixes above */
+      for (i = 0; i < trk->cps_ctr; i++)
+	{
+	  chan_info *cp;
+	  cp = trk->cps[i];
+	  while (cp->edit_ctr > edpos[i]) backup_edit_list(cp);
+	  backup_mix_list(cp, edpos[i]);
+	}
+      FREE(edpos);
+      for (i = 0; i < trk->cps_ctr; i++)
+	update_graph(trk->cps[i]);
 
-  /*
-    all this if (amp != 1.0) || (speed != 1.0) || (amp_env)
-      ts= copy_track_state(old_ts, true)
-      ts = extend_track_list(id, false);
-      ts->amp = old_ts->amp;
-      ts->speed = old_ts->speed;
-      ts->track = 0;
-      ts->amp_env = copy_env(old_ts->amp_env);
-      ts->color = old_ts->color;
-      static void copy_track_1(mix_info *md, void *val){remix_file(md, S_copy_track, false);}
-      remix_track(id, copy_track_1, NULL);
-    then
-      set_track_position(id, beg);
-      backup lists
-  */
-
-  /* TODO: implement/test copy_track */
+    }
+  free_track_mix_list(trk);
+  if (new_mixes) FREE(new_mixes);
+  if (old_tracks) FREE(old_tracks);
+  if (new_tracks) FREE(new_tracks);
   return(new_id);
 }
 
@@ -6710,9 +6908,8 @@ void g_init_track(void)
 }
 
 /* SOMEDAY: how to save-(mix|track)-state? -- mixes are not currently saved, but the track states could be
-   TODO: check dlp/mix-menu etc
+   TODO: check dlp/mix-menu etc (need make-track for "assign" case), need 'no-such-track catch in other cases
    TODO: test lock-track and make it work with undo/redo somehow (similarly for mix-locked?)
-   TODO: if set mix-track, check amp-env if bounds change
    TODO: view:track-panel dialog to automate track edits (tempo slider)
    TODO: pan choices with linear, sinusoidal, exponential envs
    TODO: synchronization across mixes ("snap")
@@ -6720,5 +6917,5 @@ void g_init_track(void)
    SOMEDAY: timing grid
    TODO: if mix-waveform-height 50 top of mix waveform can be pushed off top of graph
    TODO: first and last samples of mix-peak-amp-waveform don't cancel
-   TODO: change mix process to use amp=0 as "previous", then just one reader elsewhere
+   PERHAPS: change mix process to use amp=0 as "previous", then just one reader elsewhere (can this work?)
 */

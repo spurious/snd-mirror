@@ -235,6 +235,9 @@ char *version_info(void)
 	  SND_VERSION,
 	  ":\n    ", xen_version(),
 	  "\n    ", mus_audio_moniker(),
+#if HAVE_JACK
+	  ", with Jack"
+#endif
 	  "\n    Sndlib ", snd_itoa(SNDLIB_VERSION), ".", 
                            snd_itoa(SNDLIB_REVISION), 
                            " (", SNDLIB_DATE,
