@@ -4665,6 +4665,10 @@ mus_any *mus_frame_add(mus_any *uf1, mus_any *uf2, mus_any *ures)
   return((mus_any *)res);
 }
 
+/* PERHAPS: dot-product accepting frames/vcts, also multiply-arrays, clear-array? */
+/*          or better, make vct linkage automatic? (and apply to mixers?) */
+/*          or make frame a wrapper for vct throughout */
+
 mus_any *mus_frame_multiply(mus_any *uf1, mus_any *uf2, mus_any *ures)
 {
   int chans, i;

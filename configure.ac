@@ -1139,19 +1139,19 @@ case "$host" in
 	AC_DEFINE(LINUX)
         LDSO_FLAGS="-shared"
         LIBS="-lm"
-#     This ^ used to be "" but in redhat 7 the -lm needs it to be explicit
+#     This ^ used to be "" but redhat 7 the -lm needs to be explicit
 #     it was "" to cancel -lXpm without the needed -L<dir> for the same case
 
         audio_system=OSS
 
-	if test "$with_alsa" = yes || test "$with_static_alsa" = yes ; then 
-          AC_CHECK_LIB(asound,main,[ 
-	    AC_CHECK_HEADER(sys/asoundlib.h,
-                [audio_system=ALSA],
-		[AC_CHECK_HEADER(alsa/asoundlib.h,
-                    [audio_system=ALSA],
-   	            [AC_MSG_WARN(can't find the ALSA header files)])])],
-          [AC_MSG_WARN(can't find the ALSA library)])
+	if test "$with_alsa" = yes || test "$with_static_alsa" = yes ; then
+          if test "$ac_cv_header_alsa_asoundlib_h" = yes ; then
+            AC_CHECK_LIB(asound, main,
+               audio_system=ALSA,
+               [AC_MSG_WARN(can't find the ALSA library)])
+          else
+            AC_MSG_WARN(can't find the ALSA header files)
+          fi
 	fi
 
 	if test "$with_jack" = yes ; then 
@@ -1191,7 +1191,7 @@ case "$host" in
 				    #endif
 				   ])],
 		  alsa_ok=yes,
-		  alsa_ok=no)
+	          alsa_ok=no)
 		AC_MSG_RESULT($alsa_ok)
 		if test "$alsa_ok" = yes ; then
 	    	    AC_DEFINE(HAVE_ALSA)

@@ -89,6 +89,7 @@
  *            complex.h: ccos csin ctan cacos casin catan ccosh csinh ctanh cacosh casinh catanh cexp clog cabs cpow csqrt
  *                       carg[angle] creal cimag, complex double _Complex_I
  *            all arithmetic needs extra complex checks etc
+ * PERHAPS: let gen/vct/etc binding? (this can't screw up allocs can it? -- just set as no-free)
  */
 
 #include "snd.h"
