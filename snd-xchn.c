@@ -16,6 +16,9 @@ enum {
 #define NUM_CHAN_WIDGETS 16
 #define DEFAULT_EDIT_HISTORY_WIDTH 1
 
+#define START_JUST_TIME(cp) (cp->state)->just_time = TRUE
+#define END_JUST_TIME(cp) (cp->state)->just_time = FALSE
+
 Widget channel_main_pane(chan_info *cp)
 {
 #if (XmVERSION > 1)

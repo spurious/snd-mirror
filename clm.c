@@ -3890,8 +3890,6 @@ mus_mixer *mus_mixer_multiply(mus_mixer *f1, mus_mixer *f2, mus_mixer *res)
 
 /* ---------------- buffer ---------------- */
 
-/* is it worthwhile to extend this to be a queue of anything (i.e. mus_any **buffer)? */
-
 typedef struct {
   mus_any_class *core;
   Float *buf;
@@ -6915,13 +6913,12 @@ static Float pv_frequency(void *ptr) {return(((pv_info *)ptr)->pitch);}
 static Float pv_set_frequency(void *ptr, Float val) {((pv_info *)ptr)->pitch = val; return(val);}
 static void *pv_environ(mus_any *rd) {return(((pv_info *)rd)->environ);}
 
-/* stop-gaps -- until I decide how to handle these, I'll kludge up some special names */
-Float *mus_phase_vocoder_ampinc(void *ptr) {return(((pv_info *)ptr)->ampinc);}
+Float *mus_phase_vocoder_amp_increments(void *ptr) {return(((pv_info *)ptr)->ampinc);}
 Float *mus_phase_vocoder_amps(void *ptr) {return(((pv_info *)ptr)->amps);}
 Float *mus_phase_vocoder_freqs(void *ptr) {return(((pv_info *)ptr)->freqs);}
 Float *mus_phase_vocoder_phases(void *ptr) {return(((pv_info *)ptr)->phases);}
-Float *mus_phase_vocoder_phaseinc(void *ptr) {return(((pv_info *)ptr)->phaseinc);}
-Float *mus_phase_vocoder_lastphase(void *ptr) {return(((pv_info *)ptr)->lastphase);}
+Float *mus_phase_vocoder_phase_increments(void *ptr) {return(((pv_info *)ptr)->phaseinc);}
+Float *mus_phase_vocoder_previous_phases(void *ptr) {return(((pv_info *)ptr)->lastphase);}
 int mus_phase_vocoder_outctr(void *ptr) {return(((pv_info *)ptr)->outctr);}
 int mus_phase_vocoder_set_outctr(void *ptr, int val) {((pv_info *)ptr)->outctr = val; return(val);}
 

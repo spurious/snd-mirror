@@ -848,7 +848,7 @@ static void check_env(chan_info *cp, env_info *new_ep)
   int bin, j, loc = -1;
   off_t i, samps;
   mus_sample_t samp, maxdiff = 0, diff, fmin, fmax;
-  samps = cp->samples[cp->edit_ctr];
+  samps = CURRENT_SAMPLES(cp);
   sf = init_sample_read(0, cp, READ_FORWARD);
   bin = 0;
   fmin = MUS_SAMPLE_MAX;

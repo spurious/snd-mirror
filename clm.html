@@ -1573,40 +1573,8 @@ the input function passed to phase-vocoder at run-time (if any). The default is 
 input source as in src or granulate), take the fft, get the new amplitudes and phases (as the edit
 function default), then resynthesize using sum-of-sines (the synthesize function default); so, the
 default case simply returns a resynthesis of the original input.  <i>interp</i> sets the time between
-ffts (for time stretching etc).  Here's an example that changes the edit function to provide
-control over the resynthesis pitch:
+ffts (for time stretching etc). 
 </p>
-<pre>
-<small>
-(defun test-pv (freq)
-  (with-sound ()
-    (let ((pv (<em class=red>make-phase-vocoder</em>
-	        nil
-                512 4 (/ 512 4) 1.0
-                nil ;no change to analysis
-                (lambda (v)
-                  ; new editing func changes pitch (we could simply pass :pitch freq instead)
-                  (let* ((N (mus-length v))
-                         (D (mus-hop v)))
-                    (do ((k 0 (1+ k))
-                         (pscl (/ 1.0 D))
-                         (kscl (/ (* 2.0 pi) N)))
-                        ((= k (floor N 2)))
-                     (let ((phasediff (- (clm::pv-freqs v k) (clm::pv-lastphase v k))))
-                       (clm::set-pv-lastphase v k (clm::pv-freqs v k))
-                       (if (&gt; phasediff pi) (do () ((&lt;= phasediff pi)) (setf phasediff (- phasediff (* 2 pi)))))
-                       (if (&lt; phasediff (- pi)) (do () ((&gt;= phasediff (- pi))) (setf phasediff (+ phasediff (* 2 pi)))))
-                       (clm::set-pv-freqs v k (* freq (+ (* pscl phasediff) (* k kscl))))))
-                     nil))
-                nil)) ; no change to synthesis
-          (fil (open-input "oboe.snd")))
-      (let ((ctr 0))
-        (dotimes (i (* 22050 2.3))
-          (outa i (<em class=red>phase-vocoder</em> pv (lambda (dir) (let ((val (ina ctr fil))) (incf ctr) val)))))))))
-
-(test-pv 0.5)
-</small>
-</pre>
 <br>
 
 <!-- TOPIC buffer -->

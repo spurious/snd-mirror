@@ -2997,7 +2997,7 @@ void reflect_mix_edit(chan_info *input_cp, const char *origin)
   md = (mix_info *)(input_cp->mix_md);
   cs = md->current_cs;
   cs->mix_edit_ctr[input_cp->chan] = input_cp->edit_ctr;
-  cs->len = input_cp->samples[input_cp->edit_ctr];
+  cs->len = CURRENT_SAMPLES(input_cp);
   remix_file(md, origin);
 }
 

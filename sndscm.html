@@ -1985,8 +1985,8 @@ For example:
 				    (let ((N (mus-length v)))
 				      (do ((i 0 (1+ i)))
 					  ((= i N))
-					(if (&lt; (pv-ampinc v i) gate)
-					    (set-pv-ampinc v i 0.0)))
+					(if (&lt; (vct-ref (pv-amp-increments v) i) gate)
+					    (vct-set! (pv-amp-increments v) i 0.0)))
 				      #t))
 				  #f ;no change to synthesis))
 	  (reader (make-sample-reader 0)))
@@ -1997,8 +1997,7 @@ For example:
 </pre>
 <p>sets up a phase-vocoder generator whose edit function is squelching soft partials.
 In this case, the input function is reading the currently selected channel.  The fastest
-way to try out this generator is to use it as the argument to filter-sound.  I can't think
-of good names for the internal arrays (such as <i>pv-ampinc</i> above).
+way to try out this generator is to use it as the argument to filter-sound.
 <i>pvoc</i> is yet another a phase-vocoder;
 it applies the phase-vocoder (i.e. fft analysis, oscil bank resynthesis)
 to the current sound; <i>pitch</i> specifies the pitch transposition ratio, 

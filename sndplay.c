@@ -544,7 +544,7 @@ int main(int argc, char *argv[])
 	    }
 	}
       srate = mus_sound_srate(name);
-      frames = mus_sound_samples(name)/chans;
+      frames = mus_sound_samples(name) / chans;
       base = 0;
       /* allocate the list of read buffers, each buffer will hold one channel
 	 of the input soundfile, each sample is going to be mus_sample_t

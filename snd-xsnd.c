@@ -3096,7 +3096,7 @@ void equalize_all_panes(snd_state *ss)
       if (chans > 1)
 	{
 	  /* now we try to make room for the sound ctrl bar, each channel, perhaps the menu */
-	  chan_y = (height-(sounds * ss->ctrls_height))/chans - 16;
+	  chan_y = (height - (sounds * ss->ctrls_height)) / chans - 16;
 	  /* probably can be 14 or 12 -- seems to be margin related or something */
 	  wid[0] = chan_y;
 	  for_each_sound(ss, sound_lock_control_panel, NULL);

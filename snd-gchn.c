@@ -20,6 +20,9 @@ enum {W_zy_adj, W_zx_adj, W_sy_adj, W_sx_adj, W_gzy_adj, W_gsy_adj};
 #define NUM_CHAN_ADJS 6
 #define DEFAULT_EDIT_HISTORY_WIDTH 1
 
+#define START_JUST_TIME(cp) (cp->state)->just_time = TRUE
+#define END_JUST_TIME(cp) (cp->state)->just_time = FALSE
+
 GtkWidget *channel_graph(chan_info *cp)      {return((cp->cgx)->chan_widgets[W_graph]);}
 GtkWidget *channel_sx(chan_info *cp)         {return((cp->cgx)->chan_widgets[W_sx]);}
 GtkWidget *channel_sy(chan_info *cp)         {return((cp->cgx)->chan_widgets[W_sy]);}

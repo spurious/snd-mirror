@@ -210,8 +210,8 @@
 				    (let ((N (mus-length v)))
 				      (do ((i 0 (1+ i)))
 					  ((= i N))
-					(if (< (pv-ampinc v i) gate)
-					    (set-pv-ampinc v i 0.0)))
+					(if (< (vct-ref (pv-amp-increments v) i) gate)
+					    (vct-set! (pv-amp-increments v) i 0.0)))
 				      #t))
 				  #f ;no change to synthesis
 				  ))

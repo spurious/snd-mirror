@@ -267,7 +267,7 @@ static off_t cursor_find_backward(snd_info *sp, chan_info *cp, int count)
   search_in_progress = 1;
   if (cp->last_search_result == SEARCH_OK)
     start = cp->cursor - 1;
-  else start = cp->samples[cp->edit_ctr] - 1;
+  else start = CURRENT_SAMPLES(cp) - 1;
   sf = init_sample_read(start, cp, READ_BACKWARD);
   if (!sf)
     {

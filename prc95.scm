@@ -1,6 +1,5 @@
 ;;; this is a translation to Snd (from CLM's prc-toolkit95.lisp)
 ;;;  of Perry Cook's Physical Modelling Toolkit.
-;;;  substantially cleaned up 29-Mar-02 (6 years later...)
 
 (use-modules (ice-9 optargs))
 (use-modules (ice-9 format))

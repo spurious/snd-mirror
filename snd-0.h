@@ -205,9 +205,6 @@ enum {FCP_X_ANGLE, FCP_X_SCALE, FCP_Y_ANGLE, FCP_Y_SCALE, FCP_Z_ANGLE, FCP_Z_SCA
 
 #define DEFAULT_AUDIO_STATE_FILE ".snd-mixer"
 
-#define START_JUST_TIME(cp) (cp->state)->just_time = 1
-#define END_JUST_TIME(cp) (cp->state)->just_time = 0
-
 enum {TIME_AXIS_INFO, TRANSFORM_AXIS_INFO, LISP_AXIS_INFO};
 #define AXIS_INFO_ID_OK(Id) ((Id >= TIME_AXIS_INFO) && ((Id <= LISP_AXIS_INFO)))
 

@@ -871,7 +871,7 @@ static char *src_channel_with_error(chan_info *cp, snd_fd *sf, off_t beg, off_t 
   if ((ratio == 1.0) && (egen == NULL)) return(NULL);
   sp = cp->sound;
   ss = cp->state;
-  full_chan = ((beg == 0) && (dur == cp->samples[cp->edit_ctr]));
+  full_chan = ((beg == 0) && (dur == CURRENT_SAMPLES(cp)));
   cur_marks = 0;
   new_marks = NULL;
   reporting = ((sp) && (dur > (MAX_BUFFER_SIZE * 4)));
@@ -2757,20 +2757,18 @@ static XEN g_sp_scan(XEN proc_and_list, XEN s_beg, XEN s_end, XEN snd, XEN chn,
       if (pt)
 	{
 	  for (kp = 0; kp < num; kp++)
-	    {
-	      if (evaluate_ptree_1f2b(pt, read_sample_to_float(sf)))
-		{
-		  if (counting)
-		    counts++;
-		  else
-		    {
-		      sf = free_snd_fd(sf);
-		      free_ptree(pt);
-		      return(XEN_LIST_2(XEN_TRUE,
-					C_TO_XEN_OFF_T(kp + beg)));
-		    }
-		}
-	    }
+	    if (evaluate_ptree_1f2b(pt, read_sample_to_float(sf)))
+	      {
+		if (counting)
+		  counts++;
+		else
+		  {
+		    sf = free_snd_fd(sf);
+		    free_ptree(pt);
+		    return(XEN_LIST_2(XEN_TRUE,
+				      C_TO_XEN_OFF_T(kp + beg)));
+		  }
+	      }
 	  sf = free_snd_fd(sf);
 	  free_ptree(pt);
 	  if (counting)

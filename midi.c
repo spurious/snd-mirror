@@ -230,9 +230,7 @@ char *mus_midi_describe(void)
   buf = (char *)CALLOC(1024, sizeof(char));
   for (i = 0; i < 8; i++)
     {
-
-      /* TODO: presumably this should use the card|device from the info struct, not a blind loop */
-
+      /* presumably this should use the card|device from the info struct, not a blind loop */
       err = snd_rawmidi_open(&line, NULL, mus_midi_device_name(i << 16), SND_RAWMIDI_NONBLOCK); /* do the "devices" matter here? */
       if (err < 0) continue;
       err = snd_rawmidi_info(line, info);
