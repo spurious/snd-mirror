@@ -7624,7 +7624,7 @@ int mus_audio_mixer_write(int ur_dev, int field, int chan, float *val)
  *   and to a much lesser extent, coreaudio.pdf and the HAL/Daisy examples.
  */
 
-/* TODO: make bigger buffers work right */
+/* TODO: make bigger buffers work right -- is it possible to set the audio device buffer size? */
 
 #ifdef MAC_OSX
 #define AUDIO_OK 1
@@ -7972,7 +7972,7 @@ static float conversion_multiplier = 1.0;
 static int dac_out_chans, dac_out_srate;
 static int incoming_out_chans = 1, incoming_out_srate = 44100;
 static int fill_point = 0;
-static unsigned int bufsize;
+static unsigned int bufsize = 0, current_bufsize = 0;
 
 /* I'm getting bogus buffer sizes from the audio conversion stuff from Apple,
  *   and I think AudioConvert doesn't handle cases like 4->6 chans correctly
@@ -8063,12 +8063,18 @@ int mus_audio_open_output(int dev, int srate, int chans, int format, int size)
   dac_out_chans = device_desc.mChannelsPerFrame; /* use better variable names */
   dac_out_srate = (int)(device_desc.mSampleRate);
   open_for_input = false;
-  if (bufs == NULL)
+  if ((bufs == NULL) || (bufsize > current_bufsize))
     {
       int i;
+      if (bufs)
+	{
+	  for (i = 0; i < MAX_BUFS; i++) FREE(bufs[i]);
+	  FREE(bufs);
+	}
       bufs = (char **)CALLOC(MAX_BUFS, sizeof(char *));
       for (i = 0; i < MAX_BUFS; i++)
 	bufs[i] = (char *)CALLOC(bufsize, sizeof(char));
+      current_bufsize = bufsize;
     }
   in_buf = 0;
   out_buf = 0;
@@ -8269,12 +8275,18 @@ int mus_audio_open_input(int dev, int srate, int chans, int format, int size)
     }
   open_for_input = true;
   /* assume for now that recorder (higher level) will enforce match */
-  if (bufs == NULL)
+  if ((bufs == NULL) || (bufsize > current_bufsize))
     {
       int i;
+      if (bufs)
+	{
+	  for (i = 0; i < MAX_BUFS; i++) FREE(bufs[i]);
+	  FREE(bufs);
+	}
       bufs = (char **)CALLOC(MAX_BUFS, sizeof(char *));
       for (i = 0; i < MAX_BUFS; i++)
 	bufs[i] = (char *)CALLOC(bufsize, sizeof(char));
+      current_bufsize = bufsize;
     }
   in_buf = 0;
   out_buf = 0;

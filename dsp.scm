@@ -1485,8 +1485,19 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 	(norm1 (channel-norm s1 c1)))
     (/ inprod (* norm1 norm1))))
 
-;;; the projection is now (scale-by coeff 0 (frames) s1 c1)
-;;; end of JOS stuff
+;;; -------- end of JOS stuff --------
+
+
+(define (channel-distance s1 c1 s2 c2)
+  (let* ((r1 (make-sample-reader 0 s1 c1))
+	 (r2 (make-sample-reader 0 s2 c2))
+	 (sum 0.0)
+	 (N (min (frames s1 c1) (frames s2 c2))))
+    (do ((i 0 (1+ i)))
+	((= i N))
+      (let ((diff (- (r1) (r2))))
+	(set! sum (+ sum (* diff diff)))))
+    (sqrt sum)))
 
 
 (define (periodogram N)

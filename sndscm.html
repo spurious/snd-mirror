@@ -539,6 +539,7 @@ the listener?
   <tr><td><em class=emdef>make-spencer-filter</em></td><td>return FIR filter with Spencer coefficients</td></tr>
   <tr><td><A class=def NAME="anyrandom">any-random</A></td><td>random numbers of arbitrary distribution using rejection method</td></tr>
   <tr><td><em class=emdef>channel-variance</em> etc</td><td> miscellaneous funcs from Julius Smith, Mathematics of the DFT</td></tr>
+  <tr><td><em class=emdef>channel-distance</em> s0 c0 s1 c1</td><td> a measure of the difference between two sounds (Euclidean distance)</td></tr>
   <tr><td><em class=emdef>shift-channel-pitch</em></td><td>shift all components by some frequency ("single-sideband amplitude modulation")</td></tr>
   <tr><td><a class=def name="ssbbank">ssb-bank</a></td><td>time/pitch changes using ssb-am gens</td></tr>
   <tr><td><a class=def name="ssbbankenv">ssb-bank-env</a></td><td>time/pitch changes using ssb-am gens and a frequency envelope</td></tr>
@@ -553,7 +554,8 @@ taken from Perry Cook's SignalProcessor.m.
 The Hartley transform is a kind of Fourier transform.
 A similar function, using the DFT, is <b>find-sine</b>.
 It returns the amplitude and initial-phase (for sin) at freq between beg and dur.
-A faster version is <b>goertzel</b>.
+A faster version is <b>goertzel</b>.  <code>(car (<em class=red>find-sine</em> 440.0 0 (frames)))</code>
+is the same as <code>(* 2 (/ (<em class=red>goertzel</em> 440.0 0 (frames)) (frames)))</code>.
 </p><p>The simple Butterworth filters are taken from Sam Heisz's CLM version
 of Paris Smaragdis's Csound version of Charles Dodge's code from "Computer Music: synthesis, composition, and performance".
 The second set (make-butter-lp et al) provide arbitrary order Butterworths.
@@ -570,12 +572,8 @@ It returns the FIR filter coefficients given the filter order and desired spectr
 then inverse ffting.  A more general version of this is stretch-sound-via-dft, but it's
 extremely slow.
 <b>freqdiv</b> implements
-"frequency division", taken from an effects package of sed_sed@my-dejanews.com.
-</p>
-<pre>
-(freqdiv 8)
-</pre>
-<p>
+"frequency division", taken from an effects package of sed_sed@my-dejanews.com: 
+<code>(freqdiv 8)</code>.
 Also from that package is <b>adsat</b>, "adaptive saturation".  </p><p><b>spike</b> performs 
 a product of samples (as opposed to the more common sum); that is, it multiplies
 together several successive samples, causing a more spikey output.
@@ -671,6 +669,7 @@ also lose more of the original signal.
 Some of the functions from Julius Smith's "Mathematics of the
 DFT" are included:
 <b>channel-mean</b>, <b>channel-rms</b>, <b>channel-variance</b>, etc.
+A similar function is <b>channel-distance</b> that returns the Euclidean distance between two sounds.
 </p>
 
 <p>The ssb-* functions provide single-sideband amplitude modulation, and pitch/time changes

@@ -2,8 +2,6 @@
 ;;; || for ref arg list, {} for ref arg int as list len
 ;;; & in struct for settable field
 
-;;; gtk 2.5 TODO: tests for new widgets: GtkIconView, GtkCellView, new funcs re GtkComboBox, GtkComboBoxEntry
-
 (CFNC "gchar* g_type_name GType type")
 (CFNC "GQuark g_type_qname GType type")
 (CFNC "GType g_type_from_name gchar* name")
@@ -5229,7 +5227,7 @@
 (CFNC-251 "PangoAttrList* pango_attr_list_filter PangoAttrList* list PangoAttrFilterFunc func gpointer data")
 (CFNC-251 "GSList* pango_attr_iterator_get_attrs PangoAttrIterator* iterator")
 ;; (CFNC-251 "PangoFontMap* pango_context_get_font_map PangoContext* context")
-(CFNC-251 "void pango_context_set_matrix PangoContext* context PangoMatrix* matrix")
+;;; see below (CFNC-251 "void pango_context_set_matrix PangoContext* context PangoMatrix* matrix")
 ;;; -- needs const on return I think (CFNC-251 "PangoMatrix* pango_context_get_matrix PangoContext* context")
 (CFNC-251 "int pango_font_metrics_get_underline_position PangoFontMetrics* metrics")
 (CFNC-251 "int pango_font_metrics_get_underline_thickness PangoFontMetrics* metrics")
@@ -5240,19 +5238,20 @@
 ;; (CFNC-251 "void pango_fontset_foreach PangoFontset* fontset PangoFontsetForeachFunc func gpointer data")
 (CFNC-251 "void pango_layout_set_auto_dir PangoLayout* layout gboolean auto_dir")
 (CFNC-251 "gboolean pango_layout_get_auto_dir PangoLayout* layout")
-(CFNC-251 "GType pango_matrix_get_type void")
-(CFNC-251 "PangoMatrix* pango_matrix_copy PangoMatrix* matrix")
-(CFNC-251 "void pango_matrix_free PangoMatrix* matrix")
-(CFNC-251 "void pango_matrix_translate PangoMatrix* matrix double tx double ty")
-(CFNC-251 "void pango_matrix_scale PangoMatrix* matrix double scale_x double scale_y")
-(CFNC-251 "void pango_matrix_rotate PangoMatrix* matrix double degrees")
-(CFNC-251 "void pango_matrix_concat PangoMatrix* matrix PangoMatrix* new_matrix")
+;;; (CFNC-251 "GType pango_matrix_get_type void")
+;;; changed my mind -- these matrix functions appear to be internal (pango-utils.h) (need PANGO_MATRIX_INIT to get new (static) struct)
+;;;(CFNC-251 "PangoMatrix* pango_matrix_copy PangoMatrix* matrix")
+;;;(CFNC-251 "void pango_matrix_free PangoMatrix* matrix")
+;;;(CFNC-251 "void pango_matrix_translate PangoMatrix* matrix double tx double ty")
+;;;(CFNC-251 "void pango_matrix_scale PangoMatrix* matrix double scale_x double scale_y")
+;;;(CFNC-251 "void pango_matrix_rotate PangoMatrix* matrix double degrees")
+;;;(CFNC-251 "void pango_matrix_concat PangoMatrix* matrix PangoMatrix* new_matrix")
 (CFNC-251 "PangoScript pango_script_for_unichar gunichar ch")
 (CFNC-251 "PangoScriptIter* pango_script_iter_new char* text int length")
-(CFNC-251 "void pango_script_iter_get_range PangoScriptIter* iter char** [start] char** [end] PangoScript* script" 'const)
+(CFNC-251 "void pango_script_iter_get_range PangoScriptIter* iter char** [start] char** [end] PangoScript* [script]" 'const)
 (CFNC-251 "gboolean pango_script_iter_next PangoScriptIter* iter")
 (CFNC-251 "void pango_script_iter_free PangoScriptIter* iter")
-(CFNC-251 "PangoLanguage* pango_script_get_sample_language PangoScript script")
-(CFNC-251 "gboolean pango_language_includes_script PangoLanguage* language PangoScript script")
+;;; (CFNC-251 "PangoLanguage* pango_script_get_sample_language PangoScript script")
+;;; (CFNC-251 "gboolean pango_language_includes_script PangoLanguage* language PangoScript script")
 
 (CINT-251 "GTK_TREE_SORTABLE_DEFAULT_SORT_COLUMN_ID" "void")

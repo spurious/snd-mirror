@@ -1,35 +1,35 @@
 ;;; Snd tests
 ;;;
-;;;  test 0: constants                          [334]
-;;;  test 1: defaults                           [869]
-;;;  test 2: headers                            [1037]
-;;;  test 3: variables                          [1336]
-;;;  test 4: sndlib                             [1720]
-;;;  test 5: simple overall checks              [3519]
-;;;  test 6: vcts                               [10748]
-;;;  test 7: colors                             [10986]
-;;;  test 8: clm                                [11482]
-;;;  test 9: mix                                [17303]
-;;;  test 10: marks                             [20299]
-;;;  test 11: dialogs                           [20997]
-;;;  test 12: extensions                        [21307]
-;;;  test 13: menus, edit lists, hooks, etc     [21721]
-;;;  test 14: all together now                  [22981]
-;;;  test 15: chan-local vars                   [24029]
-;;;  test 16: regularized funcs                 [25288]
-;;;  test 17: dialogs and graphics              [29662]
-;;;  test 18: enved                             [29736]
-;;;  test 19: save and restore                  [29756]
-;;;  test 20: transforms                        [30352]
-;;;  test 21: new stuff                         [31408]
-;;;  test 22: run                               [32154]
-;;;  test 23: with-sound                        [37252]
-;;;  test 24: user-interface                    [38136]
-;;;  test 25: X/Xt/Xm                           [41308]
-;;;  test 26: Gtk                               [45827]
-;;;  test 27: GL                                [48810]
-;;;  test 28: errors                            [48914]
-;;;  test all done                              [50802]
+;;;  test 0: constants                          [355]
+;;;  test 1: defaults                           [896]
+;;;  test 2: headers                            [1066]
+;;;  test 3: variables                          [1365]
+;;;  test 4: sndlib                             [1749]
+;;;  test 5: simple overall checks              [3540]
+;;;  test 6: vcts                               [10769]
+;;;  test 7: colors                             [11007]
+;;;  test 8: clm                                [11503]
+;;;  test 9: mix                                [17361]
+;;;  test 10: marks                             [20357]
+;;;  test 11: dialogs                           [21055]
+;;;  test 12: extensions                        [21365]
+;;;  test 13: menus, edit lists, hooks, etc     [21779]
+;;;  test 14: all together now                  [23048]
+;;;  test 15: chan-local vars                   [24096]
+;;;  test 16: regularized funcs                 [25356]
+;;;  test 17: dialogs and graphics              [29730]
+;;;  test 18: enved                             [29804]
+;;;  test 19: save and restore                  [29824]
+;;;  test 20: transforms                        [30420]
+;;;  test 21: new stuff                         [31476]
+;;;  test 22: run                               [32222]
+;;;  test 23: with-sound                        [37347]
+;;;  test 24: user-interface                    [38304]
+;;;  test 25: X/Xt/Xm                           [41476]
+;;;  test 26: Gtk                               [45995]
+;;;  test 27: GL                                [49086]
+;;;  test 28: errors                            [49190]
+;;;  test all done                              [51097]
 
 ;;; how to send ourselves a drop?  (button2 on menu is only the first half -- how to force 2nd?)
 ;;; need all html example code in autotests
@@ -83,7 +83,6 @@
        val))))
 
 (define playback-amp 0.0)
-(define old-playback-amp (mus-audio-playback-amp))
 (set! (mus-audio-playback-amp) playback-amp)
 
 (define home-dir "/home/bil")
@@ -32130,6 +32129,11 @@ EDITS: 2
 	(let ((val (channel2-coefficient-of-projection ind1 0 ind2 0)))
 	  (if (fneq val 0.0301470932351876) (snd-display ";channel2-coefficient-of-projection: ~A" val)))
 	(close-sound ind1)
+	(set! ind1 (open-sound "oboe.snd"))
+	(scale-by .99 ind1 0)
+	(let ((dist (channel-distance ind1 0 ind2 0)))
+	  (if (fneq dist .1346) (snd-display ";channel-distance: ~A" dist)))
+	(close-sound ind1)
 	(close-sound ind2))
 
       (copy-file (string-append (getcwd) "/oboe.snd") (string-append (getcwd) "/test.snd"))
@@ -48972,6 +48976,114 @@ EDITS: 2
 	      (gtk_widget_show dialog)
 	      (gtk_widget_hide dialog))
 
+	    (let* ((_GtkListStore_ (gtk_list_store_new 1 (list G_TYPE_STRING)))
+		   (_GtkTreeModelc_ (GTK_TREE_MODEL _GtkListStore_))
+		   (_GtkComboBox_ (GTK_COMBO_BOX (gtk_combo_box_new_with_model _GtkTreeModelc_))))
+	      (gtk_combo_box_set_add_tearoffs _GtkComboBox_ #t)
+	      (if (not (gtk_combo_box_get_add_tearoffs _GtkComboBox_)) (snd-display ";combo tear offs?"))
+	      (let ((gint0 (gtk_combo_box_get_wrap_width _GtkComboBox_))
+		    (gint1 (gtk_combo_box_get_row_span_column _GtkComboBox_))
+		    (gint2 (gtk_combo_box_get_column_span_column _GtkComboBox_))
+		    (gchar (gtk_combo_box_get_active_text _GtkComboBox_)))
+		(if (or (not (= gint0 0)) (not (= gint1 -1))  (not (= gint2 -1)))
+		    (snd-display ";combo gints: ~A ~A ~A" gint0 gint1 gint2))))
+	    
+	    ;; taken from gtk demo dir
+	    (let ((vbox (gtk_vbox_new #f 0)))
+	      (let ((tool_bar (gtk_toolbar_new)))
+		(gtk_box_pack_start (GTK_BOX vbox) tool_bar #f #f 0)
+		(let ((up_button (gtk_tool_button_new_from_stock GTK_STOCK_GO_UP)))
+		  (gtk_tool_item_set_is_important up_button #t)
+		  (gtk_widget_set_sensitive (GTK_WIDGET up_button) #f)
+		  (gtk_toolbar_insert (GTK_TOOLBAR tool_bar) up_button -1)
+		  (let ((home_button (gtk_tool_button_new_from_stock GTK_STOCK_HOME)))
+		    (gtk_tool_item_set_is_important home_button #t)
+		    (gtk_toolbar_insert (GTK_TOOLBAR tool_bar) home_button -1)
+		    (let ((sw (gtk_scrolled_window_new #f #f)))
+		      (gtk_scrolled_window_set_shadow_type (GTK_SCROLLED_WINDOW sw) GTK_SHADOW_ETCHED_IN)
+		      (gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW sw) GTK_POLICY_AUTOMATIC GTK_POLICY_AUTOMATIC)
+		      (gtk_box_pack_start (GTK_BOX vbox) sw #t #t 0)
+		      (let ((store (gtk_list_store_new 2 (list G_TYPE_STRING GDK_TYPE_PIXBUF))))
+			(gtk_list_store_clear store)
+			(let ((iter (GtkTreeIter)))
+			  (for-each
+			   (lambda (path)
+			     (gtk_list_store_append store iter)
+			     (gtk_list_store_set store iter
+						 (list 0 path
+						       1 #f)))
+			   (sounds))
+			  (let ((icon_view (gtk_icon_view_new_with_model (GTK_TREE_MODEL store))))
+			    (gtk_icon_view_set_selection_mode (GTK_ICON_VIEW icon_view) GTK_SELECTION_SINGLE)
+			    ;; just calls
+			    (if (not (GTK_IS_ICON_VIEW icon_view)) (snd-display ";not icon view?"))
+			    (let ((gint0 (gtk_icon_view_get_text_column (GTK_ICON_VIEW icon_view)))
+				  (gint1 (gtk_icon_view_get_pixbuf_column (GTK_ICON_VIEW icon_view))))
+			      (if (or (not (= gint0 -1)) (not (= gint1 -1))) (snd-display ";icon view cols: ~A ~A" gint0 gint1)))
+			    (let ((ic (gtk_icon_view_new)))
+			      (if (not (GTK_IS_ICON_VIEW ic)) (snd-display ";icon view2?"))
+			      (gtk_icon_view_set_orientation (GTK_ICON_VIEW ic) GTK_ORIENTATION_VERTICAL)
+			      (if (not (= (gtk_icon_view_get_orientation (GTK_ICON_VIEW ic)) GTK_ORIENTATION_VERTICAL))
+				  (snd-display ";icon view orientation")))
+			    (let ((model (gtk_icon_view_get_model (GTK_ICON_VIEW icon_view))))
+			      (if (not (GTK_TREE_MODEL model)) (snd-display ";icon view model: ~A (~A)" model store))
+			      (gtk_icon_view_set_model (GTK_ICON_VIEW icon_view) (GTK_TREE_MODEL store)))
+			    (let ((type (gtk_icon_view_get_type)))
+			      (if (not (number? type)) (snd-display ";icon view type: ~A" type)))
+			    (let ((gint0 (gtk_icon_view_get_markup_column (GTK_ICON_VIEW icon_view))))
+			      (if (not (= gint0 -1)) (snd-display ";icon view markup: ~A" gint0)))
+			    (let ((gint0 (gtk_icon_view_get_selection_mode (GTK_ICON_VIEW icon_view))))
+			      (if (not (= gint0 GTK_SELECTION_SINGLE)) (snd-display ";icon view selection mode")))
+			    (gtk_icon_view_set_markup_column (GTK_ICON_VIEW icon_view) -1)
+			    (gtk_icon_view_select_all (GTK_ICON_VIEW icon_view))
+			    (gtk_icon_view_unselect_all (GTK_ICON_VIEW icon_view))
+			    ;; end just calls
+			    (g_signal_connect up_button "clicked" (lambda (item data) #f) store)
+			    (g_signal_connect home_button "clicked" (lambda (item data) #f) store)
+			    (gtk_icon_view_set_text_column (GTK_ICON_VIEW icon_view) 0)
+			    (gtk_icon_view_set_pixbuf_column (GTK_ICON_VIEW icon_view) 1)
+			    (g_signal_connect icon_view "item_activated" 
+					      (lambda (iconview treepath data) 
+						#f)
+					      store)
+			    (gtk_container_add (GTK_CONTAINER sw) icon_view)
+			    (gtk_widget_grab_focus icon_view)))))))))
+	    
+	    (let ((store (gtk_list_store_new 2 (list G_TYPE_STRING G_TYPE_BOOLEAN))))
+	      (let ((cell0 (gtk_cell_view_new))
+		    (cell1 (gtk_cell_view_new_with_text "hiho")))
+		(if (not (number? (gtk_cell_view_get_type))) (snd-display ";cell view type"))
+		(if (not (GTK_IS_CELL_VIEW cell1)) (snd-display ";not cell view? ~A" cell1))
+		(gtk_cell_view_set_model (GTK_CELL_VIEW cell1) (GTK_TREE_MODEL store))
+		(gtk_cell_view_set_background_color (GTK_CELL_VIEW cell1) (basic-color))
+					;(gtk_cell_view_set_cell_data (GTK_CELL_VIEW cell1)) ; what the hell?
+		(gtk_cell_view_get_cell_renderers (GTK_CELL_VIEW cell1))))
+
+	    (let* ((_PangoLanguage_ (pango_language_from_string "de"))
+		   (_PangoContext_ (gdk_pango_context_get))
+		   (_PangoFontDescription_ (pango_font_description_from_string "Monospace 10"))
+		   (_PangoFont_ (pango_context_load_font _PangoContext_ _PangoFontDescription_))
+		   (_PangoFontMetrics_ (pango_font_get_metrics _PangoFont_ _PangoLanguage_))
+		   (_PangoScript (pango_script_for_unichar 12345))
+		   (_PangoScriptIter_ (pango_script_iter_new "hi" 2)))
+	      (let ((int0 (pango_font_metrics_get_underline_position _PangoFontMetrics_))
+		    (int1 (pango_font_metrics_get_underline_thickness _PangoFontMetrics_))
+		    (int2 (pango_font_metrics_get_strikethrough_position _PangoFontMetrics_))
+		    (int3 (pango_font_metrics_get_strikethrough_thickness _PangoFontMetrics_)))
+		(if (or (not (= int0 -1024)) (not (= int1 1024)) (not (= int2 3072)) (not (= int3 1024)))
+		    (snd-display ";pango underlines: ~A ~A ~A ~A" int0 int1 int2 int3)))
+	      (if (not _PangoScript) (snd-display ";pango script: ~A" _PangoScript))
+	      (pango_script_iter_get_range _PangoScriptIter_)
+	      (pango_script_iter_next _PangoScriptIter_)
+	      (pango_script_iter_free _PangoScriptIter_))
+
+	    (let ((cell0 (gtk_cell_renderer_combo_new))
+		  (cell1 (gtk_cell_renderer_progress_new)))
+	      (if (not (GTK_IS_CELL_RENDERER_COMBO cell0)) (snd-display ";not cell renderer combo?"))
+	      (if (not (GTK_IS_CELL_RENDERER_PROGRESS cell1)) (snd-display ";not cell renderer progress?"))
+	      (if (not (number? (gtk_cell_renderer_combo_get_type))) (snd-display ";cell renderer combo type?"))  
+	      (if (not (number? (gtk_cell_renderer_progress_get_type))) (snd-display ";cell renderer progress type?")))	    
+
 	    ))
       (run-hook after-test-hook 26)
       ))
@@ -51127,5 +51239,5 @@ EDITS: 2
       (system (string-append "rm ../peaks/_home_bil_cl_hiho*"))
       (system (string-append "rm ../peaks/_home_bil_cl_new*"))))
 
-(set! (mus-audio-playback-amp) old-playback-amp)
+(set! (mus-audio-playback-amp) 1.0)
 (if with-exit (exit))

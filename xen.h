@@ -72,16 +72,6 @@
 #endif
 #endif
 
-/* TODO: property lists, dynamic-wind?, procedure-source in ruby? */
-/*   currently using scm_internal_dynamic_wind, scm_current_module,
- *   scm_procedure_source, scm_set_smob*, scm_object_property, scm_set_object_property,
- *   scm_c_define, scm_hook_to_list, scm_mkstrport, scm_make_string, scm_current_error_port, scm_fluid_ref, scm_frame_source,
- *   scm_stack_ref, scm_source_property, scm_internal_stack_catch,
- *   scm_display_backtrace, scm_the_last_fluid_var, scm_prin1, scm_c_use_module, scm_c_export,
- *   SCM_OPB, SCM_WRTNG, SCM_HASHTABLE_BUCKETS, SCM_MODULE_USES, SCM_MODULE_OBARRAY, SCM_HASHTABLE_N_BUCKETS, 
- *   and all the snd-run cases.  
- */
-
 #ifndef c__FUNCTION__
 #if defined(__STDC__) && defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 199901L)
   #define c__FUNCTION__ __func__
@@ -129,22 +119,20 @@
       /* this is probably not the right thing -- the 3rd arg should be XEN_FALSE, else we're defining a new variable in the current module */
   #define XEN_NAME_AS_C_STRING_TO_VARIABLE(a) scm_sym2var(scm_str2symbol(a), scm_current_module_lookup_closure(), XEN_FALSE)
   #define XEN_SYMBOL_TO_VARIABLE(a)           scm_sym2var(a, scm_current_module_lookup_closure(), XEN_FALSE)
+
+  #if HAVE_SCM_DEFINED_P
+    #define XEN_DEFINED_P(Name)               XEN_TRUE_P(scm_defined_p(C_STRING_TO_XEN_SYMBOL(Name), XEN_UNDEFINED))
+  #else
+    #define XEN_DEFINED_P(Name)               XEN_TRUE_P(scm_definedp(C_STRING_TO_XEN_SYMBOL(Name), XEN_UNDEFINED))
+  #endif
+
 #else
   #define XEN_VARIABLE_REF(Var)               SCM_CDR(Var)
   #define XEN_VARIABLE_SET(Var, Val)          SCM_SETCDR(Var, Val)
   #define XEN_NAME_AS_C_STRING_TO_VALUE(a)    scm_symbol_value0(a)
   #define XEN_NAME_AS_C_STRING_TO_VARIABLE(a) XEN_FALSE
   #define XEN_SYMBOL_TO_VARIABLE(a)           XEN_FALSE
-#endif
-
-#if HAVE_SCM_C_DEFINE
-#if HAVE_SCM_DEFINED_P
-  #define XEN_DEFINED_P(Name) XEN_TRUE_P(scm_defined_p(C_STRING_TO_XEN_SYMBOL(Name), XEN_UNDEFINED))
-#else
-  #define XEN_DEFINED_P(Name) XEN_TRUE_P(scm_definedp(C_STRING_TO_XEN_SYMBOL(Name), XEN_UNDEFINED))
-#endif
-#else
-  #define XEN_DEFINED_P(Name) false
+  #define XEN_DEFINED_P(Name)                 false
 #endif
 
 #if (SCM_DEBUG_TYPING_STRICTNESS == 2)

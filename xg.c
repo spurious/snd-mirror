@@ -953,11 +953,9 @@ XM_TYPE_PTR_1(GtkAboutDialog_, GtkAboutDialog*)
 #define XEN_TO_C_PangoEllipsizeMode(Arg) (PangoEllipsizeMode)(XEN_TO_C_INT(Arg))
 #define XEN_PangoEllipsizeMode_P(Arg) XEN_INTEGER_P(Arg)
 XM_TYPE_1(PangoAttrFilterFunc, PangoAttrFilterFunc)
-XM_TYPE_PTR(PangoMatrix_, PangoMatrix*)
 XM_TYPE_PTR_1(PangoFontFamily_, PangoFontFamily*)
 XM_TYPE(PangoScript, PangoScript)
 XM_TYPE_PTR(PangoScriptIter_, PangoScriptIter*)
-XM_TYPE_PTR_1(PangoScript_, PangoScript*)
 #endif
 
 #define XLS(a, b) XEN_TO_C_gchar_(XEN_LIST_REF(a, b))
@@ -23721,14 +23719,6 @@ static XEN gxg_pango_attr_iterator_get_attrs(XEN iterator)
   XEN_ASSERT_TYPE(XEN_PangoAttrIterator__P(iterator), iterator, 1, "pango_attr_iterator_get_attrs", "PangoAttrIterator*");
   return(C_TO_XEN_GSList_(pango_attr_iterator_get_attrs(XEN_TO_C_PangoAttrIterator_(iterator))));
 }
-static XEN gxg_pango_context_set_matrix(XEN context, XEN matrix)
-{
-  #define H_pango_context_set_matrix "void pango_context_set_matrix(PangoContext* context, PangoMatrix* matrix)"
-  XEN_ASSERT_TYPE(XEN_PangoContext__P(context), context, 1, "pango_context_set_matrix", "PangoContext*");
-  XEN_ASSERT_TYPE(XEN_PangoMatrix__P(matrix), matrix, 2, "pango_context_set_matrix", "PangoMatrix*");
-  pango_context_set_matrix(XEN_TO_C_PangoContext_(context), XEN_TO_C_PangoMatrix_(matrix));
-  return(XEN_FALSE);
-}
 static XEN gxg_pango_font_metrics_get_underline_position(XEN metrics)
 {
   #define H_pango_font_metrics_get_underline_position "int pango_font_metrics_get_underline_position(PangoFontMetrics* metrics)"
@@ -23783,58 +23773,6 @@ static XEN gxg_pango_layout_get_auto_dir(XEN layout)
   XEN_ASSERT_TYPE(XEN_PangoLayout__P(layout), layout, 1, "pango_layout_get_auto_dir", "PangoLayout*");
   return(C_TO_XEN_gboolean(pango_layout_get_auto_dir(XEN_TO_C_PangoLayout_(layout))));
 }
-static XEN gxg_pango_matrix_get_type(void)
-{
-  #define H_pango_matrix_get_type "GType pango_matrix_get_type( void)"
-  return(C_TO_XEN_GType(pango_matrix_get_type()));
-}
-static XEN gxg_pango_matrix_copy(XEN matrix)
-{
-  #define H_pango_matrix_copy "PangoMatrix* pango_matrix_copy(PangoMatrix* matrix)"
-  XEN_ASSERT_TYPE(XEN_PangoMatrix__P(matrix), matrix, 1, "pango_matrix_copy", "PangoMatrix*");
-  return(C_TO_XEN_PangoMatrix_(pango_matrix_copy(XEN_TO_C_PangoMatrix_(matrix))));
-}
-static XEN gxg_pango_matrix_free(XEN matrix)
-{
-  #define H_pango_matrix_free "void pango_matrix_free(PangoMatrix* matrix)"
-  XEN_ASSERT_TYPE(XEN_PangoMatrix__P(matrix), matrix, 1, "pango_matrix_free", "PangoMatrix*");
-  pango_matrix_free(XEN_TO_C_PangoMatrix_(matrix));
-  return(XEN_FALSE);
-}
-static XEN gxg_pango_matrix_translate(XEN matrix, XEN tx, XEN ty)
-{
-  #define H_pango_matrix_translate "void pango_matrix_translate(PangoMatrix* matrix, double tx, double ty)"
-  XEN_ASSERT_TYPE(XEN_PangoMatrix__P(matrix), matrix, 1, "pango_matrix_translate", "PangoMatrix*");
-  XEN_ASSERT_TYPE(XEN_double_P(tx), tx, 2, "pango_matrix_translate", "double");
-  XEN_ASSERT_TYPE(XEN_double_P(ty), ty, 3, "pango_matrix_translate", "double");
-  pango_matrix_translate(XEN_TO_C_PangoMatrix_(matrix), XEN_TO_C_double(tx), XEN_TO_C_double(ty));
-  return(XEN_FALSE);
-}
-static XEN gxg_pango_matrix_scale(XEN matrix, XEN scale_x, XEN scale_y)
-{
-  #define H_pango_matrix_scale "void pango_matrix_scale(PangoMatrix* matrix, double scale_x, double scale_y)"
-  XEN_ASSERT_TYPE(XEN_PangoMatrix__P(matrix), matrix, 1, "pango_matrix_scale", "PangoMatrix*");
-  XEN_ASSERT_TYPE(XEN_double_P(scale_x), scale_x, 2, "pango_matrix_scale", "double");
-  XEN_ASSERT_TYPE(XEN_double_P(scale_y), scale_y, 3, "pango_matrix_scale", "double");
-  pango_matrix_scale(XEN_TO_C_PangoMatrix_(matrix), XEN_TO_C_double(scale_x), XEN_TO_C_double(scale_y));
-  return(XEN_FALSE);
-}
-static XEN gxg_pango_matrix_rotate(XEN matrix, XEN degrees)
-{
-  #define H_pango_matrix_rotate "void pango_matrix_rotate(PangoMatrix* matrix, double degrees)"
-  XEN_ASSERT_TYPE(XEN_PangoMatrix__P(matrix), matrix, 1, "pango_matrix_rotate", "PangoMatrix*");
-  XEN_ASSERT_TYPE(XEN_double_P(degrees), degrees, 2, "pango_matrix_rotate", "double");
-  pango_matrix_rotate(XEN_TO_C_PangoMatrix_(matrix), XEN_TO_C_double(degrees));
-  return(XEN_FALSE);
-}
-static XEN gxg_pango_matrix_concat(XEN matrix, XEN new_matrix)
-{
-  #define H_pango_matrix_concat "void pango_matrix_concat(PangoMatrix* matrix, PangoMatrix* new_matrix)"
-  XEN_ASSERT_TYPE(XEN_PangoMatrix__P(matrix), matrix, 1, "pango_matrix_concat", "PangoMatrix*");
-  XEN_ASSERT_TYPE(XEN_PangoMatrix__P(new_matrix), new_matrix, 2, "pango_matrix_concat", "PangoMatrix*");
-  pango_matrix_concat(XEN_TO_C_PangoMatrix_(matrix), XEN_TO_C_PangoMatrix_(new_matrix));
-  return(XEN_FALSE);
-}
 static XEN gxg_pango_script_for_unichar(XEN ch)
 {
   #define H_pango_script_for_unichar "PangoScript pango_script_for_unichar(gunichar ch)"
@@ -23851,13 +23789,13 @@ static XEN gxg_pango_script_iter_new(XEN text, XEN length)
 static XEN gxg_pango_script_iter_get_range(XEN iter, XEN start, XEN end, XEN script)
 {
   #define H_pango_script_iter_get_range "void pango_script_iter_get_range(PangoScriptIter* iter, char** [start], \
-char** [end], PangoScript* script)"
+char** [end], PangoScript* [script])"
   char* ref_start = NULL;
   char* ref_end = NULL;
+  PangoScript ref_script;
   XEN_ASSERT_TYPE(XEN_PangoScriptIter__P(iter), iter, 1, "pango_script_iter_get_range", "PangoScriptIter*");
-  XEN_ASSERT_TYPE(XEN_PangoScript__P(script), script, 4, "pango_script_iter_get_range", "PangoScript*");
-  pango_script_iter_get_range(XEN_TO_C_PangoScriptIter_(iter), (const char**)&ref_start, (const char**)&ref_end, XEN_TO_C_PangoScript_(script));
-  return(XEN_LIST_2(C_TO_XEN_char_(ref_start), C_TO_XEN_char_(ref_end)));
+  pango_script_iter_get_range(XEN_TO_C_PangoScriptIter_(iter), (const char**)&ref_start, (const char**)&ref_end, &ref_script);
+  return(XEN_LIST_3(C_TO_XEN_char_(ref_start), C_TO_XEN_char_(ref_end), C_TO_XEN_PangoScript(ref_script)));
 }
 static XEN gxg_pango_script_iter_next(XEN iter)
 {
@@ -23871,20 +23809,6 @@ static XEN gxg_pango_script_iter_free(XEN iter)
   XEN_ASSERT_TYPE(XEN_PangoScriptIter__P(iter), iter, 1, "pango_script_iter_free", "PangoScriptIter*");
   pango_script_iter_free(XEN_TO_C_PangoScriptIter_(iter));
   return(XEN_FALSE);
-}
-static XEN gxg_pango_script_get_sample_language(XEN script)
-{
-  #define H_pango_script_get_sample_language "PangoLanguage* pango_script_get_sample_language(PangoScript script)"
-  XEN_ASSERT_TYPE(XEN_PangoScript_P(script), script, 1, "pango_script_get_sample_language", "PangoScript");
-  return(C_TO_XEN_PangoLanguage_(pango_script_get_sample_language(XEN_TO_C_PangoScript(script))));
-}
-static XEN gxg_pango_language_includes_script(XEN language, XEN script)
-{
-  #define H_pango_language_includes_script "gboolean pango_language_includes_script(PangoLanguage* language, \
-PangoScript script)"
-  XEN_ASSERT_TYPE(XEN_PangoLanguage__P(language), language, 1, "pango_language_includes_script", "PangoLanguage*");
-  XEN_ASSERT_TYPE(XEN_PangoScript_P(script), script, 2, "pango_language_includes_script", "PangoScript");
-  return(C_TO_XEN_gboolean(pango_language_includes_script(XEN_TO_C_PangoLanguage_(language), XEN_TO_C_PangoScript(script))));
 }
 #endif
 
@@ -27097,7 +27021,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(pango_attr_letter_spacing_new, gxg_pango_attr_letter_spacing_new, 1, 0, 0, H_pango_attr_letter_spacing_new);
   XG_DEFINE_PROCEDURE(pango_attr_list_filter, gxg_pango_attr_list_filter, 3, 0, 0, H_pango_attr_list_filter);
   XG_DEFINE_PROCEDURE(pango_attr_iterator_get_attrs, gxg_pango_attr_iterator_get_attrs, 1, 0, 0, H_pango_attr_iterator_get_attrs);
-  XG_DEFINE_PROCEDURE(pango_context_set_matrix, gxg_pango_context_set_matrix, 2, 0, 0, H_pango_context_set_matrix);
   XG_DEFINE_PROCEDURE(pango_font_metrics_get_underline_position, gxg_pango_font_metrics_get_underline_position, 1, 0, 0, H_pango_font_metrics_get_underline_position);
   XG_DEFINE_PROCEDURE(pango_font_metrics_get_underline_thickness, gxg_pango_font_metrics_get_underline_thickness, 1, 0, 0, H_pango_font_metrics_get_underline_thickness);
   XG_DEFINE_PROCEDURE(pango_font_metrics_get_strikethrough_position, gxg_pango_font_metrics_get_strikethrough_position, 1, 0, 0, H_pango_font_metrics_get_strikethrough_position);
@@ -27106,20 +27029,11 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(pango_font_face_list_sizes, gxg_pango_font_face_list_sizes, 1, 2, 0, H_pango_font_face_list_sizes);
   XG_DEFINE_PROCEDURE(pango_layout_set_auto_dir, gxg_pango_layout_set_auto_dir, 2, 0, 0, H_pango_layout_set_auto_dir);
   XG_DEFINE_PROCEDURE(pango_layout_get_auto_dir, gxg_pango_layout_get_auto_dir, 1, 0, 0, H_pango_layout_get_auto_dir);
-  XG_DEFINE_PROCEDURE(pango_matrix_get_type, gxg_pango_matrix_get_type, 0, 0, 0, H_pango_matrix_get_type);
-  XG_DEFINE_PROCEDURE(pango_matrix_copy, gxg_pango_matrix_copy, 1, 0, 0, H_pango_matrix_copy);
-  XG_DEFINE_PROCEDURE(pango_matrix_free, gxg_pango_matrix_free, 1, 0, 0, H_pango_matrix_free);
-  XG_DEFINE_PROCEDURE(pango_matrix_translate, gxg_pango_matrix_translate, 3, 0, 0, H_pango_matrix_translate);
-  XG_DEFINE_PROCEDURE(pango_matrix_scale, gxg_pango_matrix_scale, 3, 0, 0, H_pango_matrix_scale);
-  XG_DEFINE_PROCEDURE(pango_matrix_rotate, gxg_pango_matrix_rotate, 2, 0, 0, H_pango_matrix_rotate);
-  XG_DEFINE_PROCEDURE(pango_matrix_concat, gxg_pango_matrix_concat, 2, 0, 0, H_pango_matrix_concat);
   XG_DEFINE_PROCEDURE(pango_script_for_unichar, gxg_pango_script_for_unichar, 1, 0, 0, H_pango_script_for_unichar);
   XG_DEFINE_PROCEDURE(pango_script_iter_new, gxg_pango_script_iter_new, 2, 0, 0, H_pango_script_iter_new);
-  XG_DEFINE_PROCEDURE(pango_script_iter_get_range, gxg_pango_script_iter_get_range, 2, 2, 0, H_pango_script_iter_get_range);
+  XG_DEFINE_PROCEDURE(pango_script_iter_get_range, gxg_pango_script_iter_get_range, 1, 3, 0, H_pango_script_iter_get_range);
   XG_DEFINE_PROCEDURE(pango_script_iter_next, gxg_pango_script_iter_next, 1, 0, 0, H_pango_script_iter_next);
   XG_DEFINE_PROCEDURE(pango_script_iter_free, gxg_pango_script_iter_free, 1, 0, 0, H_pango_script_iter_free);
-  XG_DEFINE_PROCEDURE(pango_script_get_sample_language, gxg_pango_script_get_sample_language, 1, 0, 0, H_pango_script_get_sample_language);
-  XG_DEFINE_PROCEDURE(pango_language_includes_script, gxg_pango_language_includes_script, 2, 0, 0, H_pango_language_includes_script);
 #endif
 
   XG_DEFINE_PROCEDURE(GDK_COLORMAP, gxg_GDK_COLORMAP, 1, 0, 0, NULL);
@@ -31070,10 +30984,10 @@ static bool xg_already_inited = false;
       define_strings();
       XEN_YES_WE_HAVE("xg");
 #if HAVE_GUILE
-      XEN_EVAL_C_STRING("(define xm-version \"08-Aug-04\")");
+      XEN_EVAL_C_STRING("(define xm-version \"10-Aug-04\")");
 #endif
 #if HAVE_RUBY
-      rb_define_global_const("Xm_Version", C_TO_XEN_STRING("08-Aug-04"));
+      rb_define_global_const("Xm_Version", C_TO_XEN_STRING("10-Aug-04"));
 #endif
       xg_already_inited = true;
 #if WITH_GTK_AND_X11

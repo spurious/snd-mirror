@@ -208,13 +208,14 @@ returning you to the true top-level."
 				  (scaled-to #f)
 				  (play *clm-play*)
 				  (to-snd *to-snd*)
-				  (clipped *clm-clipped*)
+				  (clipped 'unset)
 				  (scaled-by #f))
   (let ((old-srate (mus-srate))
 	(old-*output* *output*)
 	(old-*reverb* *reverb*)
 	(in-debugger #f)
 	(old-verbose *clm-verbose*)
+	(old-auto-update (auto-update))
 	(output-1 output)) ; protect during nesting
     (dynamic-wind 
 
@@ -224,7 +225,13 @@ returning you to the true top-level."
        (set! (mus-file-buffer-size) *clm-file-buffer-size*)
        (set! (locsig-type) *clm-locsig-type*)
        (set! (mus-array-print-length) *clm-array-print-length*)
-       (set! (mus-file-data-clipped) clipped)
+       (set! (auto-update) #f)
+       (if (equal? clipped 'unset)
+	   (if (and (or scaled-by scaled-to)
+		    (member data-format (list mus-bfloat mus-lfloat mus-bdouble mus-ldouble)))
+	       (set! (mus-file-data-clipped) #f)
+	       (set! (mus-file-data-clipped) *clm-clipped*))
+	   (set! (mus-file-data-clipped) clipped))
        (set! (mus-srate) srate))
 
      (lambda ()
@@ -314,7 +321,7 @@ returning you to the true top-level."
 								     revmax)) 
 				  "")
 			      cycles)))
-		 (if (or scaled-to scale-by)
+		 (if (or scaled-to scaled-by)
 		     (begin
 		       (if scaled-to
 			   (scale-to scaled-to snd-output)
@@ -331,6 +338,7 @@ returning you to the true top-level."
 
      (lambda () 
        (set! *clm-verbose* old-verbose)
+       (set! (auto-update) old-auto-update)
        (if (not in-debugger)
 	   (begin
 	     (if *reverb*
@@ -513,10 +521,13 @@ returning you to the true top-level."
 			   output
 			   (maxamp snd-output #t)
 			   cycles)))
-	      (if scaled-to
-		  (scale-to scaled-to snd-output)
-		  (if scaled-by
-		      (scale-by scaled-by snd-output)))
+		 (if (or scaled-to scaled-by)
+		     (begin
+		       (if scaled-to
+			   (scale-to scaled-to snd-output)
+			   (if scaled-by
+			       (scale-by scaled-by snd-output)))
+		       (save-sound snd-output)))
 	      (if play (play-and-wait 0 snd-output))
 	      (update-time-graph snd-output)))
 	(set! (mus-srate) old-srate)
