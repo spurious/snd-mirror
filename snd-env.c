@@ -1270,9 +1270,16 @@ static int x_increases(XEN res)
   return(1);
 }
 
-/* these make it possible for the user to type names or expressions wherever a value is possible */
+#if (!HAVE_EXTENSION_LANGUAGE)
+  #define ENV_BUFFER_SIZE 128
+  static int env_buffer_size = 0;
+  static Float *env_buffer = NULL;
+  static char env_white_space[5] ={' ','(', ')','\t','\''};
+#endif
+
 env *string2env(char *str) 
 {
+#if HAVE_EXTENSION_LANGUAGE
   XEN res;
   int len;
   res = snd_catch_any(eval_str_wrapper, str, "string->env");
@@ -1288,6 +1295,39 @@ env *string2env(char *str)
     }
   else snd_error("%s is not a list", str);
   return(NULL);
+#else
+  char *tok;
+  int i;
+  float f;
+  if ((str) && (*str))
+    {
+      i = 0;
+      if (env_buffer_size == 0)
+	{
+	  env_buffer_size = ENV_BUFFER_SIZE;
+	  env_buffer = (Float *)CALLOC(ENV_BUFFER_SIZE, sizeof(Float));
+	}
+      if ((*str) == '\'') str++;
+      if ((*str) == '(') str++;
+      tok = strtok(str, env_white_space);
+      while (tok)
+	{
+	  sscanf(tok, "%f", &f);
+	  env_buffer[i] =(Float)f;
+	  i++;
+	  if (i == env_buffer_size)
+	    {
+	      env_buffer_size *= 2;
+	      env_buffer = (Float *)REALLOC(env_buffer, env_buffer_size * sizeof(Float));
+	    }
+	  tok = strtok(NULL, env_white_space);
+	}
+      if ((i == 0) || (i & 1)) 
+	snd_error("odd length envelope? %s", str);
+      return(make_envelope(env_buffer, i));
+    }
+  return(NULL);
+#endif
 }
 
 env *name_to_env(char *str)

@@ -1835,35 +1835,35 @@ static XEN vct2soundfile(XEN g_fd, XEN obj, XEN g_nums)
 
 Float string2Float(char *str) 
 {
+#if HAVE_EXTENSION_LANGUAGE
   XEN res;
   res = snd_catch_any(eval_str_wrapper, (void *)str, "string->float");
   if (XEN_NUMBER_P(res))
     return(XEN_TO_C_DOUBLE(res));
   else snd_error("%s is not a number", str);
   return(0.0);
+#else
+  Float res = 0.0;
+  if (str) sscanf(str, "%f", &res);
+  return(res);
+#endif
 }
 
 int string2int(char *str) 
 {
+#if HAVE_EXTENSION_LANGUAGE
   XEN res;
   res = snd_catch_any(eval_str_wrapper, (void *)str, "string->int");
   if (XEN_NUMBER_P(res))
     return(XEN_TO_C_INT_OR_ELSE(res, 0));
   else snd_error("%s is not a number", str);
   return(0);
-}
-
-#if 0
-char *string2string(char *str) 
-{
-  XEN res;
-  res = snd_catch_any(eval_str_wrapper, (void *)str, "string->string");
-  if (XEN_STRING_P(res))
-    return(XEN_TO_NEW_C_STRING(res));
-  else snd_error("%s is not a string", str);
-  return(str);
-}
+#else
+  int res = 0;
+  if (str) sscanf(str, "%d", &res);
+  return(res);
 #endif
+}
 
 static XEN g_help_dialog(XEN subject, XEN msg)
 {

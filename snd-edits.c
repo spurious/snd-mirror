@@ -843,7 +843,13 @@ snd_data *copy_snd_data(snd_data *sd, chan_info *cp, int bufsize)
     }
   hdr = sd->hdr;
   fd = snd_open_read(cp->state, sd->filename);
-  if (fd == -1) return(NULL);
+  if (fd == -1) 
+    {
+#if DEBUGGING
+      fprintf(stderr,"snd_data copy failed: %s\n", strerror(errno));
+#endif
+      return(NULL);
+    }
   mus_file_open_descriptors(fd,
 			   sd->filename,
 			   hdr->format,
@@ -1899,6 +1905,18 @@ snd_fd *free_snd_fd(snd_fd *sf)
   }
 #endif
 
+static snd_fd *cancel_reader(snd_fd *sf)
+{
+  sf->eof = 1;
+  sf->view_buffered_data = (MUS_SAMPLE_TYPE *)1;
+  sf->last = (MUS_SAMPLE_TYPE *)0; /* can I get away with this?? -- we're trying to do something with an empty file here */
+  sf->first = (MUS_SAMPLE_TYPE *)2;
+  /* data > last and data < first are triggers to ignore data and try to move in the fragment list */
+  sf->current_sound = NULL;
+  sf->cbi = 0;
+  return(sf);
+}
+
 snd_fd *init_sample_read_any(int samp, chan_info *cp, int direction, int edit_position)
 {
   snd_fd *sf;
@@ -1929,16 +1947,7 @@ snd_fd *init_sample_read_any(int samp, chan_info *cp, int direction, int edit_po
   if ((curlen <= 0) ||    /* no samples, not ed->len (delete->len = #deleted samps) */
       (samp < 0) ||       /* this should never happen */
       ((samp >= curlen) && (direction == READ_FORWARD)))
-    {
-      sf->eof = 1;
-      sf->view_buffered_data = (MUS_SAMPLE_TYPE *)1;
-      sf->last = (MUS_SAMPLE_TYPE *)0; /* can I get away with this?? -- we're trying to do something with an empty file here */
-      sf->first = (MUS_SAMPLE_TYPE *)2;
-      /* data > last and data < first are triggers to ignore data and try to move in the fragment list */
-      sf->current_sound = NULL;
-      sf->cbi = 0;
-      return(sf);
-    }
+    return(cancel_reader(sf));
   if (samp >= curlen) samp = curlen - 1;
   len = ed->size;
   for (i = 0, k = 0; i < len; i++, k += ED_SIZE)
@@ -1966,8 +1975,12 @@ snd_fd *init_sample_read_any(int samp, chan_info *cp, int direction, int edit_po
 	       * small data buffer, and then free all the copied snd_data stuff as soon as
 	       * the current reader is done.
 	       */
-	      if (first_snd->inuse) 
-		first_snd = copy_snd_data(first_snd, cp, MIX_FILE_BUFFER_SIZE);
+	      if (first_snd->inuse)
+		{
+		  first_snd = copy_snd_data(first_snd, cp, MIX_FILE_BUFFER_SIZE);
+		  if (first_snd == NULL)
+		    return(cancel_reader(sf));
+		}
 	      first_snd->inuse = TRUE;
 	      sf->current_sound = first_snd;
 	      if (direction == READ_FORWARD)

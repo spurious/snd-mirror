@@ -21,8 +21,6 @@ loop syntax filled in (loop.scm).
 Translate more CLM instruments to Scheme: 
   singer piano flute fade maraca
 
-More effects (see list of suggestions in effects.scm)
-
 Add Gnome tie-ins.  (The main useful one, I think, is the "save-yourself"
   signal (no one can save himself...)).
 #include <gnome.h>

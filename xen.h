@@ -136,7 +136,11 @@
 #endif
 
 #if HAVE_SCM_NUM2INT
-  #define XEN_TO_C_INT(a)             ((int)scm_num2int(a, 0, __FUNCTION__))
+  #ifdef SCM_GUILE_MAJOR_VERSION
+    #define XEN_TO_C_INT(a)           ((XEN_TRUE_P(scm_exact_p(a))) ? (int)scm_num2int(a, 0, __FUNCTION__) : ((int)scm_num2dbl(a, __FUNCTION__)))
+  #else
+    #define XEN_TO_C_INT(a)           ((int)scm_num2int(a, 0, __FUNCTION__))
+  #endif
 #else
   #define XEN_TO_C_INT(a)             ((int)gh_scm2int(a))
 #endif
@@ -511,9 +515,9 @@ void xen_guile_define_procedure_with_reversed_setter(char *get_name, XEN (*get_f
 #define C_TO_SMALL_XEN_INT(a)             INT2FIX(a)
 #define XEN_TO_SMALL_C_INT(a)             FIX2INT(a)
 #define XEN_TO_C_UNSIGNED_LONG(a)         NUM2ULONG(a)
-#define C_TO_XEN_UNSIGNED_LONG(a)         UINT2NUM(a)
+#define C_TO_XEN_UNSIGNED_LONG(a)         UINT2NUM((unsigned long)a)
 #define XEN_TO_C_ULONG(a)                 NUM2ULONG(a)
-#define C_TO_XEN_ULONG(a)                 UINT2NUM(a)
+#define C_TO_XEN_ULONG(a)                 UINT2NUM((unsigned long)a)
 
 #define C_TO_XEN_STRING(a)                rb_str_new2(a)
 #define XEN_TO_C_STRING(Str)              RSTRING(Str)->ptr

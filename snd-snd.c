@@ -12,7 +12,7 @@ snd_info *snd_new_file(snd_state *ss, char *newname, int header_type, int data_f
 				 chans * 2, data_format, new_comment, 
 				 snd_strlen(new_comment), NULL);
 	  if (err == -1)
-	    snd_error("can't write %s: %s",newname, strerror(errno));
+	    snd_error("can't write %s",newname);
 	  else
 	    {
 	      chan = snd_reopen_write(ss, newname);

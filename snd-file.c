@@ -496,12 +496,14 @@ dir *find_sound_files_in_dir (char *name)
 		if ((strcmp(dot, sound_file_extensions[i]) == 0) && 
 		    (!(is_empty_file(dirp->d_name))))
 		  {
+#if HAVE_EXTENSION_LANGUAGE
 		    XEN res = XEN_TRUE;
 		    if (XEN_HOOKED(just_sounds_hook))
 		      res = g_c_run_or_hook(just_sounds_hook,
 					    XEN_LIST_1(C_TO_XEN_STRING(dirp->d_name)),
 					    S_just_sounds_hook);
 		    if (XEN_TRUE_P(res))
+#endif
 		      add_snd_file_to_dir_list(dp, dirp->d_name);
 		    break;
 		  }
@@ -2172,9 +2174,9 @@ char *raw_data_explanation(char *filename, snd_state *ss, file_info *hdr)
       strcat(reason_str, tmp_str);
     }
   mus_snprintf(tmp_str, LABEL_BUFFER_SIZE, "\nlength: %.3f (%d samples, %d bytes total)",
-	  (float)(hdr->samples) / (float)(hdr->chans * hdr->srate),
-	  hdr->samples,
-	  mus_sound_length(filename));
+	       (float)(hdr->samples) / (float)(hdr->chans * hdr->srate),
+	       hdr->samples,
+	       mus_sound_length(filename));
   strcat(reason_str, tmp_str);
   ns = swap_int(hdr->samples);
   if (ns < mus_sound_length(filename))
@@ -2448,7 +2450,7 @@ void g_init_file(void)
   XEN_DEFINE_PROCEDURE(S_mix_file_dialog, g_mix_file_dialog_w, 0, 1, 0, H_mix_file_dialog);
   XEN_DEFINE_PROCEDURE(S_disk_kspace,                 g_disk_kspace_w, 1, 0, 0,               H_disk_kspace);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_sound_loop_info, g_sound_loop_info_w, H_sound_loop_info,
-			       "set-" S_sound_loop_info, g_set_sound_loop_info_w,  0, 1, 1, 1);
+				   "set-" S_sound_loop_info, g_set_sound_loop_info_w,  0, 1, 1, 1);
 
   XEN_DEFINE_VARIABLE(S_memo_sound, memo_sound, XEN_FALSE);
 
@@ -2474,7 +2476,7 @@ be omitted (location defaults to 0, and length defaults to the file length in by
   XEN_DEFINE_HOOK(open_raw_sound_hook, S_open_raw_sound_hook, 2, H_open_raw_sound_hook);    /* args = filename current-result */
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_previous_files_sort_procedure, g_previous_files_sort_procedure_w, H_previous_files_sort_procedure,
-			       "set-" S_previous_files_sort_procedure, g_set_previous_files_sort_procedure_w,  0, 0, 1, 0);
+                                   "set-" S_previous_files_sort_procedure, g_set_previous_files_sort_procedure_w,  0, 0, 1, 0);
 
   #define H_previous_files_select_hook S_previous_files_select_hook "(filename) called when a file is selected in the \
 previous files list of the View Files dialog.  If it returns #t, the default action, opening the file, is omitted."

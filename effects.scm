@@ -585,6 +585,117 @@
                              (set! am-label new-label)))
                          effects-list))
 
+;;; -------- Ring modulation
+;;;
+
+(define ring-mod-frequency 100)
+(define ring-mod-radians 100)
+(define ring-mod-label "Ring modulation")
+(define ring-mod-dialog #f)
+(define ring-mod-target 'sound)
+
+(define (cp-ring-mod)
+  (map-chan (ring-mod ring-mod-frequency (list 0 0 1 (hz->radians ring-mod-radians)))))
+
+(if (provided? 'xm) ; if xm module is loaded, popup a dialog here
+    (begin
+
+      (define (post-ring-mod-dialog)
+        (if (not (|Widget? ring-mod-dialog))
+            ;; if ring-mod-dialog doesn't exist, create it
+            (let ((initial-ring-mod-frequency 100)
+                  (initial-ring-mod-radians 100)
+                  (sliders '()))
+              (set! ring-mod-dialog
+                    (make-effect-dialog ring-mod-label
+                                        (lambda (w context info) (cp-ring-mod))
+                                        (lambda (w context info) (|XtUnmanageChild ring-mod-dialog))
+                                        (lambda (w context info)
+                                          (help-dialog "Ring modulation"
+                                                       "Move the sliders to set the modulation frequency and envelope radians."))
+                                        (lambda (w c i)
+                                          (set! ring-mod-frequency initial-ring-mod-frequency)
+                                          (|XtSetValues (car sliders) (list |XmNvalue (inexact->exact (* ring-mod-frequency 1))))
+                                          (set! ring-mod-radians initial-ring-mod-radians)
+                                          (|XtSetValues (cadr sliders) (list |XmNvalue (inexact->exact (* ring-mod-radians 1)))))))
+              (set! sliders
+                    (add-sliders ring-mod-dialog
+                                 (list (list "modulation frequency" 0 initial-ring-mod-frequency 1000
+                                             (lambda (w context info)
+                                               (set! ring-mod-frequency (/ (|value info) 1)))
+                                             1)
+                                       (list "envelope radians" 0 initial-ring-mod-radians 360
+                                             (lambda (w context info)
+                                               (set! ring-mod-radians (/ (|value info) 1)))
+                                             1))))))
+        (activate-dialog ring-mod-dialog))
+
+      (add-to-menu effects-menu "Ring modulation" (lambda () (post-ring-mod-dialog))))
+    (add-to-menu effects-menu ring-mod-label cp-ring-mod))
+
+(set! effects-list (cons (lambda ()
+                           (let ((new-label (format #f "Ring modulation (~1,2D ~1,2D)"  ring-mod-frequency ring-mod-radians)))
+                             (change-menu-label effects-menu ring-mod-label new-label)
+                             (set! ring-mod-label new-label)))
+                         effects-list))
+
+
+;;; -------- Sample rate conversion (resample)
+;;;
+
+(define src-amount 0.0)
+(define src-label "Sample rate conversion")
+(define src-dialog #f)
+(define src-target 'sound)
+
+(define (cp-src)
+  (if (eq? src-target 'sound)
+      (src-sound src-amount)
+      (if (eq? src-target 'selection)
+          (if (selection?)
+              (src-selection src-amount)
+              (snd-print "no selection"))
+          (snd-print "can't apply src between marks yet"))))
+
+
+(if (provided? 'xm) ; if xm module is loaded, popup a dialog here
+    (begin
+
+      (define (post-src-dialog)
+        (if (not (|Widget? src-dialog))
+            ;; if src-dialog doesn't exist, create it
+            (let ((initial-src-amount 0.0)
+                  (sliders '()))
+              (set! src-dialog
+                    (make-effect-dialog src-label
+                                        (lambda (w context info) (cp-src))
+                                        (lambda (w context info) (|XtUnmanageChild src-dialog))
+                                        (lambda (w context info)
+                                          (help-dialog "Sample rate conversion"
+                                                       "Move the slider to change the sample rate.\n\ Values greater than 1.0 speed up file play,\n\ negative values reverse it."))
+                                        (lambda (w c i)
+                                          (set! src-amount initial-src-amount)
+                                          (|XtSetValues (car sliders) (list |XmNvalue (inexact->exact (* src-amount 100)))))))
+              (set! sliders
+                    (add-sliders src-dialog
+                                 (list (list "sample rate" -2.0 initial-src-amount 2.0
+                                             (lambda (w context info)
+                                               (set! src-amount (/ (|value info) 100.0)))
+                                             100))))
+              (add-target (|XtParent (car sliders))
+                          (lambda (target)
+                            (set! src-target target)))))
+        (activate-dialog src-dialog))
+
+      (add-to-menu effects-menu "Sample rate conversion" (lambda () (post-src-dialog))))
+
+    (add-to-menu effects-menu src-label cp-src))
+
+(set! effects-list (cons (lambda ()
+                           (let ((new-label (format #f "Sample rate conversion (~1,2F)"  src-amount)))
+                             (change-menu-label effects-menu src-label new-label)
+                             (set! src-label new-label)))
+                         effects-list))
 
 ;;; -------- Time and pitch scaling by granular synthesis and sampling rate conversion
 ;;;
@@ -1599,7 +1710,7 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
 	(activate-dialog comb-dialog))
       (add-to-menu effects-menu "Comb filter" (lambda () (post-comb-dialog))))
 
-    (add-to-menu effects-menu comb-label comb-filter))
+    (add-to-menu effects-menu comb-label (lambda () (comb-filter comb-scaler comb-size))))
 
 (set! effects-list (cons (lambda ()
                            (let ((new-label (format #f "Comb filter (~1,2F ~1D)" comb-scaler comb-size)))
@@ -1713,7 +1824,7 @@ Move the sliders to set the comb-chord parameters."))
 ;;; -------- Moog filter
 ;;;
 
-(define cutoff-frequency 10000.0)
+(define cutoff-frequency 10000)
 (define resonance 0.5)
 (define moog-label "Moog filter")
 (define moog-dialog #f)
@@ -1735,7 +1846,7 @@ Move the sliders to set the comb-chord parameters."))
       (define (post-moog-dialog)
         (if (not (|Widget? moog-dialog))
             ;; if moog-dialog doesn't exist, create it
-            (let ((initial-cutoff-frequency 10000.0)
+            (let ((initial-cutoff-frequency 10000)
                   (initial-resonance 0.5)
                   (sliders '()))
               (set! moog-dialog 
@@ -1746,8 +1857,7 @@ Move the sliders to set the comb-chord parameters."))
 					  (|XtUnmanageChild moog-dialog))
 					(lambda (w context info)
 					  (help-dialog "Moog filter Help"
- 						"Moog-style 4-pole lowpass filter with 24db/oct rolloff and variable resonance. \
-Move the sliders to set the filter cutoff frequency and resonance."))
+ 						"Moog-style 4-pole lowpass filter with 24db/oct rolloff and variable resonance.\n\ Move the sliders to set the filter cutoff frequency and resonance."))
 					(lambda (w c i)
 					  (set! cutoff-frequency initial-cutoff-frequency)
 					  (|XtSetValues (car sliders) (list |XmNvalue (inexact->exact (* cutoff-frequency 100))))
@@ -1755,9 +1865,9 @@ Move the sliders to set the filter cutoff frequency and resonance."))
 					  (|XtSetValues (cadr sliders) (list |XmNvalue (inexact->exact (* resonance 100)))))))
 	      (set! sliders
 		    (add-sliders moog-dialog
-				 (list (list "cutoff frequency" 0.0 initial-cutoff-frequency 96000.0
+				 (list (list "cutoff frequency" 0 initial-cutoff-frequency 96000
 					     (lambda (w context info)
-					       (set! cutoff-frequency (/ (|value info) 100.0)))
+					       (set! cutoff-frequency (/ (|value info) 1)))
 					     1)
 				       (list "resonance" 0.0 initial-resonance 1.0
 					     (lambda (w context info)
@@ -1770,7 +1880,7 @@ Move the sliders to set the filter cutoff frequency and resonance."))
     (add-to-menu effects-menu moog-label cp-moog))
 
 (set! effects-list (cons (lambda ()
-                           (let ((new-label (format #f "Moog filter (~1,2F ~1,2F)" cutoff-frequency resonance)))
+                           (let ((new-label (format #f "Moog filter (~1,2D ~1,2F)" cutoff-frequency resonance)))
                              (change-menu-label effects-menu moog-label new-label)
                              (set! moog-label new-label)))
                          effects-list))
@@ -2186,6 +2296,52 @@ to be cross-synthesized, the synthesis amplitude, the FFT size, and the radius v
                          effects-list))
 
 
+;;; -------- Randomize phase
+;;;
+
+(define random-phase-amp-scaler 3.14)
+(define random-phase-label "Randomize phase")
+(define random-phase-dialog #f)
+
+(define (cp-random-phase)
+ (rotate-phase (lambda (x) (random random-phase-amp-scaler))))
+
+(if (provided? 'xm) ; if xm module is loaded, popup a dialog here
+    (begin
+
+      (define (post-random-phase-dialog)
+        (if (not (|Widget? random-phase-dialog))
+            ;; if random-phase-dialog doesn't exist, create it
+            (let ((initial-random-phase-amp-scaler 3.14)
+                  (sliders '()))
+              (set! random-phase-dialog
+                    (make-effect-dialog random-phase-label
+                                        (lambda (w context info) (cp-random-phase))
+                                        (lambda (w context info) (|XtUnmanageChild random-phase-dialog))
+                                        (lambda (w context info)
+                                          (help-dialog "Randomize phase"
+                                                       "Move the slider to change the randomization amp-scaler."))
+                                        (lambda (w c i)
+                                          (set! random-phase-amp-scaler initial-random-phase-amp-scaler)
+                                          (|XtSetValues (car sliders) (list |XmNvalue (inexact->exact (* random-phase-amp-scaler 100)))))))
+              (set! sliders
+                    (add-sliders random-phase-dialog
+                                 (list (list "amplitude scaler" 0.0 initial-random-phase-amp-scaler 100.0
+                                             (lambda (w context info)
+                                               (set! random-phase-amp-scaler (/ (|value info) 100.0)))
+                                             100))))))
+        (activate-dialog random-phase-dialog))
+
+      (add-to-menu effects-menu "Randomize phase" (lambda () (post-random-phase-dialog))))
+
+    (add-to-menu effects-menu random-phase-label cp-random-phase))
+
+(set! effects-list (cons (lambda ()
+                           (let ((new-label (format #f "Randomize phase (~1,2F)"  random-phase-amp-scaler)))
+                             (change-menu-label effects-menu random-phase-label new-label)
+                             (set! random-phase-label new-label)))
+                         effects-list))
+
 
 ;;; -------- Compander
 ;;;
@@ -2307,6 +2463,8 @@ to be cross-synthesized, the synthesis amplitude, the FFT size, and the radius v
 (add-to-menu effects-menu "Compand" (lambda () (map-chan-with-sync (lambda () (compand)) "compand")))
 (add-to-menu effects-menu "Invert" (lambda () (scale-by -1)))
 (add-to-menu effects-menu "Reverse" (lambda () (reverse-sound)))
+(add-to-menu effects-menu "Null phase" (lambda () (zero-phase)))
+;;;(add-to-menu effects-menu "Randomize phase" (lambda () (rotate-phase (lambda (x) (random 3.1415)))))
 
 
 

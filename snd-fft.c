@@ -638,7 +638,7 @@ static void walsh_transform(Float *data, int n)
   int i, j, m, ipow;
   int r, t1, t2, mh;
   Float u, v;
-  ipow = (int)(log(n) / log(2));
+  ipow = (int)((log(n) / log(2)) + .0001); /* added fudge factor 21-Sep-01 -- (int)3.0000 = 2 on PC */
   for (i = ipow; i >= 1; --i)
     {
       m = (1 << i);
@@ -1967,7 +1967,7 @@ void *make_sonogram_state(chan_info *cp)
       temp_sg = (sonogram_state *)(cp->temp_sonogram);
       if (temp_sg->fs) free_fft_state(temp_sg->fs);
       FREE(temp_sg);
-      cp->last_sonogram = NULL;
+      /* cp->last_sonogram = NULL; */
     }
   cp->temp_sonogram = sg; /* background process may never run, so we need a way to find this pointer at cleanup time */
   return((void *)sg);

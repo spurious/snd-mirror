@@ -401,7 +401,7 @@ int snd_write_header(snd_state *ss, const char *name, int type, int srate, int c
 	    fd = mus_header_write(name, type, srate, chans, loc, size, format, comment, len);
 	}
       if (fd == -1) 
-	mus_error(MUS_CANT_OPEN_FILE, "%s: %s", name, strerror(errno));
+	mus_error(MUS_CANT_OPEN_FILE, "%s", name);
     }
   mus_header_set_aiff_loop_info(NULL);
   return(fd);
