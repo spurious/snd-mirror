@@ -480,7 +480,7 @@ char *mus_midi_describe(void)
  *
  * forced to go through callbacks here, so we'll have to buffer junk ourselves (read side)
  */
-#if 0
+
 #ifdef MAC_OSX
 #define MIDI_OK
 #include <CoreMIDI/MIDIServices.h>
@@ -495,20 +495,25 @@ char *mus_midi_describe(void)
   char *buf;
   n = MIDIGetNumberOfDevices();
   buf = (char *)CALLOC(n * 192, sizeof(char));
-  for (i = 0; i < n; i++) 
+  if (n <= 0)
+    sprintf(buf, "no midi");
+  else
     {
-      dev = MIDIGetDevice(i);
-      MIDIObjectGetStringProperty(dev, kMIDIPropertyName, &cs1);
-      MIDIObjectGetStringProperty(dev, kMIDIPropertyMfgacturer, &cs2);
-      MIDIObjectGetStringProperty(dev, kMIDIPropertyModel, &cs3);
-      CFStringGetCString(cs1, name, sizeof(name), 0);
-      CFStringGetCString(cs2, mfg, sizeof(mfg), 0);
-      CFStringGetCString(cs3, model, sizeof(model), 0);
-      CFRelease(cs1);
-      CFRelease(cs2);
-      CFRelease(cs3);
-      sprintf(all, "%s (%s): %s\n", name, mfg, model);
-      strcat(buf, all);
+      for (i = 0; i < n; i++) 
+	{
+	  dev = MIDIGetDevice(i);
+	  MIDIObjectGetStringProperty(dev, kMIDIPropertyName, &cs1);
+	  MIDIObjectGetStringProperty(dev, kMIDIPropertyManufacturer, &cs2);
+	  MIDIObjectGetStringProperty(dev, kMIDIPropertyModel, &cs3);
+	  CFStringGetCString(cs1, name, sizeof(name), 0);
+	  CFStringGetCString(cs2, mfg, sizeof(mfg), 0);
+	  CFStringGetCString(cs3, model, sizeof(model), 0);
+	  CFRelease(cs1);
+	  CFRelease(cs2);
+	  CFRelease(cs3);
+	  sprintf(all, "%s (%s): %s\n", name, mfg, model);
+	  strcat(buf, all);
+	}
     }
   return(buf);
 }
@@ -520,7 +525,6 @@ int mus_midi_read(int line, unsigned char *buffer, int bytes) {return(-1);}
 int mus_midi_write(int line, unsigned char *buffer, int bytes) {return(-1);}
 char *mus_midi_device_name(int sysdev) {return("none");}
 
-#endif
 #endif
 
 
