@@ -1634,7 +1634,7 @@ Cessate apply_controls(Indicium ptr)
 		      if (apply_tick > APPLY_TICKS)
 			{
 			  apply_tick = 0;
-			  progress_report(sp, "apply", 1, 1, (double)(ap->i) / (double)apply_dur, NOT_FROM_ENVED);
+			  progress_report(sp, "apply-controls", 1, 1, (double)(ap->i) / (double)apply_dur, NOT_FROM_ENVED);
 			}
 		    }
 		}
@@ -1664,7 +1664,7 @@ Cessate apply_controls(Indicium ptr)
 			{
 			  file_change_samples(apply_beg, apply_dur, ap->ofile, sp->chans[i], i,
 					      (sp->nchans > 1) ? MULTICHANNEL_DELETION : DELETE_ME,
-					      LOCK_MIXES, "Apply", sp->chans[i]->edit_ctr);
+					      LOCK_MIXES, "Apply to sound", sp->chans[i]->edit_ctr);
 			  update_graph(sp->chans[i]);
 			}
 		    }
@@ -1674,7 +1674,7 @@ Cessate apply_controls(Indicium ptr)
 			{
 			  file_override_samples(apply_dur, ap->ofile, sp->chans[i], i,
 						(sp->nchans > 1) ? MULTICHANNEL_DELETION : DELETE_ME,
-						LOCK_MIXES, "Apply");
+						LOCK_MIXES, "Apply to sound");
 			  update_graph(sp->chans[i]);
 			}
 		    }

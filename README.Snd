@@ -200,8 +200,8 @@ that it can't play big-endian shorts.
 
 
 ---- Recording: ----
-The Record dialog only works in Linux (OSS, perhaps ALSA), Sun, and on some
-SGI systems. 
+The Record dialog only works in Linux (OSS, perhaps ALSA), Sun, some
+SGI systems, and perhaps Mac OSX.
 
 
 ---- Colors: ----
@@ -299,7 +299,7 @@ string using "*" -- the just-sounds button of Motif, and the associated
 sound file extension list are omitted.  4) Emacs bindings are only partially
 competed in the listener, and help/completion is probably broken.
 
-(I've tried snd+gtk in Linux, Sun, and SGI).
+(I've tried snd+gtk in Linux, Sun, SGI, and OSX).
 
 If you get an error like:
 
@@ -343,44 +343,6 @@ about missing gsl_complex_cos (or whatever), you need to get the
 GSL sources and build it again; apparently the version of libgsl.a
 that comes with Redhat 7.0 doesn't include any of the complex
 trig package?  Snd needs GSL 0.8 or later.
-
-
----- RPM: ----
-If you try to install the rpm package and get this:
-
-rpm --install snd-3-1.ppc.rpm 
-error: failed dependencies:
-	libMrm.so.1 is needed by snd-3-1
-	libXm.so.1 is needed by snd-3-1
-
-it means you don't have Motif installed; either get Motif, or use
-build Snd using Gtk+.
-
-If Snd then refuses to run with the error:
-
-./snd: error in loading shared libraries: lib<whatever>: cannot open shared
-object file: No such file or directory
-
-you need to add the relevant path to the loader's list of
-paths (thanks to Juan Pampin for this info): add the path to
-/etc/ld.so.conf and then 'ldconfig -v'.  Or place the actual
-path in the relevant makefile.
- 
-If you run Snd and get some error about qt_error, I think this
-means you built Guile with the configure switch --with-threads,
-whereas I'm building the images and RPM versions with a completely
-vanilla Guile (i.e. without threads).  You'll need to make a
-version of the guile library that doesn't require libqt, or
-build Snd from the sources and include -lqt in the LIBS statement.
-(This advice may be out-of-date now).
-
-If you get some complaint along these lines:
-
-> only packages with major numbers <= 3 are supported by this version of RPM
-> error: snd-4-8.i386.rpm cannot be installed
-
-it means you need to upgrade your version of RPM; apparently
-version 3.0.5 is good enough.
 
 
 ---- Guile: ----
@@ -468,20 +430,6 @@ similar problems involving "applicable smobs" and the tab-completion
 system; if possible, get the latest Guile.
 
 
-About 1/4 to 1/3 of Guile's time is spent in the garbage collector.
-You can usually speed up Snd by (say) 15% by making the GC heap as
-big as possible.  For example, to set it to 32Mwords (128 Mbytes of
-memory),
-
-setenv GUILE_INIT_SEGMENT_SIZE_1 33554432
-
-before running Snd.  Guile may allocate more heaps of this size
-as it goes, so you need to make sure you have enough memory.  I
-think the default heap size is 45Kwords which means Snd starts
-faster, but runs slightly slower.  I can't decide if it's worth
-fooling with this variable or not.
-
-
 If you're using the CVS Guile (1.7.0) and get some complaint about
 lt_dlopen (or some name like that), you need to add -lltdl to the
 library list.  If that doesn't fix it, add -lguile-ltdl -- this part
@@ -526,16 +474,30 @@ colormap of the entire system is hijacked while Snd is running.
 
 ---- Mac OSX: ---- 
 
-The Snd configure process is confused by the lack of gtk-config (if
+The Snd configure process is confused by the lack of pkg-config (if
 Gtk requested), and for Motif, by a problem with dynamic loading, so
-you need to run configure, then compare config.h and makefile with the
-versions config.motif.osx (gtk) and makefile.motif.osx (gtk).  The
-main thing that needs to be fixed by hand is that libXt.a and possibly
-libXp.a must be used, not the shared object versions of those
-libraries.  You may also need to add -ldl (if the loader complains
-about things like dlopen).  In Guile 1.7.0 add -lguile-ltdl. And see
-below for libXm.
+you need to run configure, then fixup some portions of the makefile
+before running make.  In Motif, you need to make sure libXt.a is
+loaded:
 
+MOTIF_LIBS =  -L/usr/X11R6/lib  -lSM -lICE /usr/local/lib/libXm.a /usr/X11R6/lib/libXp.a /usr/X11R6/lib/libXt.a -lXext -lXpm -lX11
+# MOTIF_LIBS =  -L/usr/X11R6/lib  -lSM -lICE -lXm -lXt -lX11  -lXext -lXp -lXpm
+
+and you'll probably need to add some things to the GUILE library list:
+
+GUILE_LIBS = -L/usr/local/lib -lguile -lm -lguile-ltdl -ldl
+# GUILE_LIBS = -L/usr/local/lib -lguile -lm
+
+If the openmotif package forgot to include libXm.a, a version is
+at ccrma-ftp.  If the Mac loader complains that it it out of date,
+run ranlib: ranlib libXm.a (you may need to be root to do this).
+
+I haven't tried Gtk+ in OSX for maybe a year, but back then I made
+these changes:
+
+GTK_LIBS = /usr/local/lib/libgmodule.a /usr/local/lib/libglib.a /usr/local/lib/libgdk.a /usr/local/lib/libgtk.a -L/usr/X11R6/lib -lXext -lX11 -lm
+
+	
 If C-f (and other such commands) doesn't work, either try toggling
 the "w" button, or add the focus-widget related hooks from grfsnd.html
 to your initialization file:
@@ -557,11 +519,6 @@ and config.guess to the main fftw directory (clobbering its ancient
 versions), then configure --disable-shared, and ignore the (bogus)
 error messages.
 
-If the openmotif package forgot to include libXm.a, a version is
-at ccrma-ftp.  If the Mac loader complains that it it out of date,
-run ranlib: ranlib libXm.a (you may need to be root to do this).
-
-
 On a Mac running 10.2 with the developers environment (i.e. gcc),
 I installed these programs:
 
@@ -569,6 +526,7 @@ from osxgnu:
   DLcompat
   XFree86-complete
   OroboroSX (a minimal window manager for "rootless" operation)
+     (both of these may have been rendered obsolete by Apple's X11)
   XEmacs (but its load-path is screwed up)
 
 from motifzone:

@@ -946,7 +946,6 @@
 (hey " *     all *_CLASS, *_IFACE macros~%")
 (hey " *     win32-specific functions~%")
 (hey " *~%")
-(hey " * ~A: struct print, more struct instance creators(?)~%" (string-append "T" "ODO"))
 (hey " * ~A: test suite (snd-test 24)~%" (string-append "T" "ODO"))
 (hey " *~%")
 (hey " * HISTORY:~%")

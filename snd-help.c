@@ -309,6 +309,7 @@ void news_help(snd_state *ss)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+15-Apr:  removed fix-bar, makefile.motif.osx, and makefile.gtk.osx\n\
 11-Apr:  moved dismiss-all-dialogs to snd6.scm.\n\
          change-property -> change-window-property (old form in snd6.scm)\n\
 9-Apr:   nb.rb, ws.rb, dlocsig.rb from Michael Scholz.\n\

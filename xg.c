@@ -32,7 +32,6 @@
  *     all *_CLASS, *_IFACE macros
  *     win32-specific functions
  *
- * TODO: struct print, more struct instance creators(?)
  * TODO: test suite (snd-test 24)
  *
  * HISTORY:
@@ -30564,10 +30563,10 @@ static int xg_already_inited = FALSE;
       define_strings();
       XEN_YES_WE_HAVE("xg");
 #if HAVE_GUILE
-      XEN_EVAL_C_STRING("(define xm-version \"05-Apr-03\")");
+      XEN_EVAL_C_STRING("(define xm-version \"14-Apr-03\")");
 #endif
 #if HAVE_RUBY
-      rb_define_global_const("Xm_Version", C_TO_XEN_STRING("05-Apr-03"));
+      rb_define_global_const("Xm_Version", C_TO_XEN_STRING("14-Apr-03"));
 #endif
       xg_already_inited = TRUE;
 #if WITH_GTK_AND_X11

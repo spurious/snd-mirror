@@ -1,4 +1,4 @@
-<html>
+	<html>
 <head>
 <title>Snd</title>
 <style type="text/css">
@@ -512,7 +512,7 @@ next to the file name.  <A NAME="updatefile"></a>Similarly, if Snd notices that
 the file on the disk no longer matches the original,
 a bomb appears.  This can happen if some other program
 writes a sound while you are editing an earlier version
-of it; see also <a href="#overwrite">ask-before-overwrite</a> and <a href="extsnd.html#corruptiontime">auto-update-interval</a>).
+of it; see also <a href="#overwrite">ask-before-overwrite</a> and <a href="extsnd.html#corruptiontime">auto-update-interval</a>.
 If the variable <a href="extsnd.html#autoupdate">auto-update</a> is #t (the default is #f), Snd
 automatically updates any such file. 
 </p>
@@ -738,7 +738,7 @@ printer characteristics.
 to reflect the currently active sound.  The same information is displayed in the
 minibuffer when you click the file name.</p>
 
-<p>The <a href="#prevfiles">Files</a> option fires up the file browser:</p>
+<p>The <a href="#prevfiles">Files</a> option starts the file browser:</p>
 <img src="files.png" alt="picture of file browser" align=left hspace=20>
 <p>The file browser window shown here provides two lists, one of
 the currently active files in Snd, and
@@ -1748,7 +1748,7 @@ the corner to return to the default settings.
 
 <img src="env.png" alt="picture of envelope editor" align=right>
 
-<p>The Edit Envelope dialog (under the Edit menu) fires up a window
+<p>The Edit Envelope dialog (under the Edit menu) opens a window
 for viewing and editing envelopes.  
 The dialog
 has a display showing either the envelope currently being edited or
@@ -1773,7 +1773,7 @@ the file:</p>
 <p>defines two envelopes that can be used in Snd wherever an
 envelope is needed (e.g. C-x C-a).  You can also define
 a new envelope in the dialog's text field;
-'(0 0 1 1) followed by return fires up a ramp as a new envelope.</p>
+'(0 0 1 1) followed by return creates a ramp as a new envelope.</p>
 
 <p>In the overall view of envelopes,
 click an envelope, or click its name in the scrolled
@@ -1787,8 +1787,8 @@ either push return or the 'save' button.
 </p>
 
 <p>Once you have an envelope in the
-editor, it can be applied to the currently active sounds
-via the 'Apply' or 'Undo&amp;Apply' buttons; the latter
+editor, you can apply it to the current sounds
+with the 'Apply' or 'Undo&amp;Apply' buttons; the latter
 first tries to undo the previous edit, then applies
 the envelope.
 The envelope can be applied to
@@ -1801,8 +1801,8 @@ instead, click the "fir" button, changing its label to "fft".
 If you are displaying the fft graph of the current channel,
 and the fft is large enough to include the entire sound,
 and the 'wave' button is set, 
-the spectrum will also be displayed in the envelope
-editor, making it easier to perform very accurate filtering
+the spectrum is also displayed in the envelope
+editor, making it easier to perform accurate (fussy?) filtering
 operations.
 </p>
 
@@ -1838,7 +1838,7 @@ improve the fit.  In this case, the X axis goes from 0 Hz to half the sampling r
 
 <h4><A NAME="editheader">Edit, add, or remove the header</a></h4>
 
-<p>The Edit menu's Edit Header option fires up a dialog to edit, add, or
+<p>The Edit menu's Edit Header option starts a dialog to edit, add, or
 remove the sound's header.  No change is made to the actual sound
 data; the new header is blindly written out; any unsaved edits are
 ignored. If you specify 'raw' as the type, any existing header is
@@ -2003,7 +2003,7 @@ all the samples between the cursor and the next mark.</p>
 <tr><td>C-s</td><td>search forwards</td><td><code><small>(lambda () (prompt "find:" find))</small></code></td></tr>
 <tr><td>C-t</td><td>stop playing</td><td><code><small>stop-playing</small></code></td></tr>
 <tr><td>C-u</td><td>start numerical argument</td><td></td></tr>
-<tr><td>C-v</td><td>move cursor to mid-window</td><td><code><small>(lambda () (set! (cursor) (* 0.5 (+ (left-sample) (right-sample))))</small></code></td></tr>
+<tr><td>C-v</td><td>move cursor to mid-window</td><td><code><small>(lambda () (set! (cursor) (* 0.5 (+ (left-sample) (right-sample)))))</small></code></td></tr>
 <tr><td>C-w</td><td>delete current selection</td><td><code><small>delete-selection</small></code></td></tr>
 <tr><td>C-x</td><td>start extended command</td><td></td></tr>
 <tr><td>C-y</td><td>paste in selection</td><td><code><small>(lambda (arg) (insert-selection (cursor)))</small></code></td></tr>

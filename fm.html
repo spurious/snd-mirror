@@ -343,7 +343,7 @@ clm instrument that shows this effect:</p>
 </pre>
 <p>One subtle pitfall here, pointed out by Holm (1992), involves the constant offset caused by the integration.  If we 
 integrate f(x) we get some F(x) + F(a) where a is the starting point of the integration.  In the case of sin(B*sin), a is 0, 
-and F(x) is -cos(x), so the constant term is B (i.e. -B*(-cos(0)).  That is, we get a phase offset in the outer sin calculation 
+and F(x) is -cos(x), so the constant term is B (i.e. -B*(-cos(0))).  That is, we get a phase offset in the outer sin calculation 
 equal (in this case) to the modulation index!   So the true carrier initial phase is a combination of the initial phase we 
 specify and the modulation index times the initial value of the integrated wave.</p>
 
@@ -375,7 +375,7 @@ example:</p>
 (with-sound () (fm 0 10000 1000 .25 .1 1.0 0 (* .5 pi) (* .5 pi) (* .5 pi)))
 </pre>
 <p>(cr0p = 0 for sin in sin(sin), cr1p=(* .5 pi) for cos in cos(sin), md0p and md1p=(* .5 pi) so that both 
-will be sin upon integration) -- we use cos*cos(sin)+sin*sin(sin) to cancel the upper sideband).
+will be sin upon integration -- we use cos*cos(sin)+sin*sin(sin) to cancel the upper sideband).
 The cancellation is nearly perfect in:</p>
 <pre>
 (with-sound () (fm 0 10000 1000 .25 .1 .1 0 (* .5 pi) (* .5 pi) (* .5 pi)))

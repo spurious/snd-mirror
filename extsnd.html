@@ -1912,7 +1912,7 @@ up protected portions of the edit history:
 <br>
 <center><table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
 (define protect
-  "(protect &amp;optional snd chn) disallows any edits before the current one"
+  "(protect #:optional snd chn) disallows any edits before the current one"
   (lambda args
     (let* ((edit-pos (apply edit-position args))
            (hook (apply <em class=red>edit-hook</em> args)))
@@ -1924,7 +1924,7 @@ up protected portions of the edit history:
             val))))))
 
 (define unprotect 
-  "(unprotect &amp;optional snd chn) allows edits at any edit history position"
+  "(unprotect #:optional snd chn) allows edits at any edit history position"
   (lambda args 
     (reset-hook! (apply <em class=red>edit-hook</em> args))))
 </pre></td></tr></table></center>
@@ -2130,7 +2130,7 @@ is the same as <code>(vct-fill! v 3.0)</code>.
 
 <!-- vct-set! -->
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="vctset">vct-set!</a></em> (v pos val)</code></span></td></tr>
-<tr><td></td><td>set element <i>pos</i> of <i>v</i> to <i>val</i>: <code>v[pos] = val</code>. same as <code>(set! (vct-ref v pos) val)</code>).</td></tr>
+<tr><td></td><td>set element <i>pos</i> of <i>v</i> to <i>val</i>: <code>v[pos] = val</code>. same as <code>(set! (vct-ref v pos) val)</code>.</td></tr>
 
 <!-- vct-subtract! -->
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="vctsubtract">vct-subtract!</a></em> (v1 v2)</code></span></td></tr>
@@ -2269,7 +2269,7 @@ an oscil or a sawtooth-wave:
 <tr><td></td><td>#t if <i>obj</i> is of type sound-data</td></tr>
 
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="sounddatalength">sound-data-length</a></em> (obj)</code></span></td></tr>
-<tr><td></td><td>length of each channel of data in <i>obj</i></td></tr>
+<tr><td></td><td>length (in samples) of each channel of data in <i>obj</i></td></tr>
 
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="sounddatamaxamp">sound-data-maxamp</a></em> (obj)</code></span></td></tr>
 <tr><td></td><td>list of maxamps (one for each channel) of data in <i>obj</i></td></tr>
@@ -3064,9 +3064,9 @@ mix sound, call undo or redo on the outer (resultant, mixed-into) sound.
 <tr><td></td><td>move the cursor forward <i>count</i> mix tags (C-x C-j), returning the mix id.
 </td></tr>
 
-<tr><td colspan=2><span class=defbox><code><em class=def><a name="sndmix">mix</a></em> (file <i>samp in_chan snd chn with-mix-tags</i>)</code></span></td></tr>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="sndmix">mix</a></em> (file <i>samp in-chan snd chn with-mix-tags</i>)</code></span></td></tr>
 <tr><td></td><td>
-mix <i>file</i>'s channel <i>in_chan</i> starting at <i>samp</i> in <i>snd</i>'s channel <i>chn</i>.
+mix <i>file</i>'s channel <i>in-chan</i> starting at <i>samp</i> in <i>snd</i>'s channel <i>chn</i>.
 if only the <i>file</i> argument is given, this is equivalent to the File menu's 
 Mix option; the mix start sample in this case depends on the cursor location.
 mix returns the id of the first channel's mix (subsequent channels simply 
@@ -3793,7 +3793,7 @@ The function <b>assoc</b> can be used to search the list for a given key's value
 added with:<br><br>
   <code>(cons (cons key value) a-list)</code>
 <br><br>In Common Lisp, property lists have other properties, so to speak, but <b>channel-properties</b> (and
-<a href="#sndsoundproperties">sound-properties</a> can be handled in any way you like.
+<a href="#sndsoundproperties">sound-properties</a>) can be handled in any way you like.
 
 </td></tr>
 <tr><td colspan=2></td></tr>
@@ -4593,11 +4593,11 @@ with one small change: insert-silence forces <i>beg</i> to be within the current
 
 <!-- insert-sound -->
 <tr><td colspan=2>
-<span class=defbox><code><em class=def><a name="sndinsertfile">insert-sound</a></em> (file <i>beg in_chan snd chn edpos</i>)</code></span>
+<span class=defbox><code><em class=def><a name="sndinsertfile">insert-sound</a></em> (file <i>beg in-chan snd chn edpos</i>)</code></span>
 </td></tr>
 <tr><td></td><td>
-insert channel <i>in_chan</i> of <i>file</i> at sample <i>beg</i> in <i>snd</i>'s channel <i>chn</i>.
-beg defaults to the cursor position; if <i>in_chan</i> is not given, all 
+insert channel <i>in-chan</i> of <i>file</i> at sample <i>beg</i> in <i>snd</i>'s channel <i>chn</i>.
+beg defaults to the cursor position; if <i>in-chan</i> is not given, all 
 channels are inserted. 
 </td></tr>
 <tr><td colspan=2></td></tr>
@@ -6128,7 +6128,7 @@ A common Snd trope is (map func (sounds)): <code>(map maxamp (<em class=red>soun
 the return value is not needed: <code>(for-each (lambda (snd) (display (short-file-name snd))) (<em class=red>sounds</em>))</code>.
 This can be
 extended to provide a complete list of sounds and channels (since many Snd functions
-take the "snd chn" arguments:
+take the "snd chn" arguments):
 </td></tr>
 
 <tr><td></td><td>
@@ -7276,7 +7276,7 @@ The following function makes an
 exact copy of the state (edit lists and all) of the given sound,
 providing a way to fork an edit path (geez, what jargon!).  The idea here
 is to copy the complete edit state into a new sound so that two or more
-edit sequences can be compared).
+edit sequences can be compared.
 </td></tr>
 <tr><td></td><td>
 <table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
@@ -7325,7 +7325,7 @@ put in it something like:</p>
   )
 </pre></td></tr></table>
 
-<p>Now fire up Snd: <code>snd -l myfile.scm</code> and voila!
+<p>Now start Snd: <code>snd -l myfile.scm</code> and voila!
 Files like this can contain any arbitrary code, calling
 anything in Snd or anywhere else for that matter; you
 have a CLM-like notelist reader to describe sound file edits.
@@ -7534,11 +7534,11 @@ should return that list, sorted as it pleases.  For example, the following sorts
 
 <!-- edit-header-dialog -->
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="sndeditheaderdialog">edit-header-dialog</a></em> (snd) </code></span></td></tr>
-<tr><td></td><td>fire up Edit Header dialog on <i>snd</i>.</td></tr>
+<tr><td></td><td>start the Edit Header dialog on <i>snd</i>.</td></tr>
 
 <!-- edit-save-as-dialog -->
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="sndeditsaveasdialog">edit-save-as-dialog</a></em> () </code></span></td></tr>
-<tr><td></td><td>fire up Edit Save-as dialog (to save the selection).</td></tr>
+<tr><td></td><td>start the Edit Save-as dialog (to save the selection).</td></tr>
 
 <!-- enved-active-env -->
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="envedactiveenv">enved-active-env</a></em> ()</code></span></td></tr>
@@ -7613,7 +7613,7 @@ The wave shown is the time domain display, even when filtering.
 
 <!-- file-save-as-dialog -->
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="sndfilesaveasdialog">file-save-as-dialog</a></em> () </code></span></td></tr>
-<tr><td></td><td>fire up File Save-as dialog (to save the currently selected sound).</td></tr>
+<tr><td></td><td>start the File Save-as dialog (to save the currently selected sound).</td></tr>
 
 <!-- help-dialog -->
 <tr><td colspan=2 valign=top><span class=defbox><code><em class=def><a name="sndhelpdialog">help-dialog</a></em> (subject help-string) </code></span></td></tr>
@@ -7715,7 +7715,7 @@ between responsiveness and clicks in some cases). (4096)
 
 <!-- recorder-dialog -->
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="sndrecorderdialog">recorder-dialog</a></em> ()</code></span></td></tr>
-<tr><td></td><td>fire up <a href="snd.html#recordfile">recorder</a> window.</td></tr>
+<tr><td></td><td>start the <a href="snd.html#recordfile">recorder</a> window.</td></tr>
 
 <!-- recorder-file -->
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="recorderfile">recorder-file</a></em> ()</code></span></td></tr>
@@ -7784,7 +7784,7 @@ between responsiveness and clicks in some cases). (4096)
 
 <!-- region-dialog -->
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="sndregiondialog">region-dialog</a></em> ()</code></span></td></tr>
-<tr><td></td><td>fire up <a href="snd.html#regionbrowser">region browser</a> (a no-op if no regions).</td></tr>
+<tr><td></td><td>start the <a href="snd.html#regionbrowser">region browser</a> (a no-op if no regions).</td></tr>
 
 <!-- transform-dialog -->
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="sndtransformdialog">transform-dialog</a></em> (<i>managed</i>)</code></span></td></tr>

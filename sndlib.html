@@ -390,7 +390,7 @@ The "int" result of each of the functions is -1 if some error occurred (from
 Guile, they throw 'mus-error).
 The <i>sysdev</i> argument to <b>mus_midi_device_name</b> is a sndlib-style
 integer packing the card number ("system" in the left half, and the
-device number in the right. On the ALSA system I'm testing at the moment,
+device number in the right). On the ALSA system I'm testing at the moment,
 the MIDI device is apparently "hw:1,0" or "/dev/snd/midiC1D0"; this
 maps into sndlib as card 1, device 0; the corresponding "sysdev" number
 is 1 &lt;&lt; 16. 

@@ -1,5 +1,6 @@
 Snd change log
 
+  15-Apr:    removed fix-bar, makefile.motif.osx, and makefile.gtk.osx.
   11-Apr:    moved dismiss-all-dialogs to snd6.scm.
              change-property -> change-window-property (old form in snd6.scm)
   9-Apr:     nb.rb, ws.rb, dlocsig.rb from Michael Scholz.

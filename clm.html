@@ -2977,7 +2977,7 @@ output device (sndplay will also someday).
     (<i>channels</i> *clm-channels*) 
     (<i>rec-chans</i> 0) (<i>rec-line</i> 0)
     <i>reverb</i> <i>reverb-duration</i>
-    <i>bufsize</i> *clm-rt-bufsize*)
+    (<i>bufsize</i> *clm-rt-bufsize*)
     (<i>data-format</i> mus-bshort)) &amp;body <i>body</i>
 </pre>
 <p><b>With-psound</b> runs its body in
@@ -3647,7 +3647,7 @@ appropriate Snd code through the function <b>send-snd</b> and friends.
   (snd-edit () (with-sound () (mix (snd-sound)) (fm-violin .1 .1 660 .1)))
   (send-and-receive-snd "(save-sound 0)")
 </pre>
-<p>fires up Snd, opens "oboe.snd", edits it by adding a fm-violin note, and
+<p>starts Snd, opens "oboe.snd", edits it by adding a fm-violin note, and
 saves the result under the same name, exiting Snd.  All of this is
 compatible with the debugging and display uses of Snd.  For example,
 'display' starts Snd itself if one isn't started yet,

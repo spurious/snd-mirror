@@ -1536,6 +1536,14 @@
       (IF (not (feql (enved-active-env) mod_down)) (snd-display ";set string enved-active-env: ~A ~A" (enved-active-env) mod_down))
       (close-sound 0) 
       (dismiss-all-dialogs)
+
+      (if (provided? 'snd-debug)
+	  (begin
+	    (snd-stdin-test "(set! (enved-filter-order) 12)")
+	    (IF (not (= (enved-filter-order) 12)) (snd-display ";set enved-filter-order 12 via stdin: ~A" (enved-filter-order)))
+	    (snd-stdin-test "(set! (enved-filter")
+	    (snd-stdin-test "-order) 10)")
+	    (IF (not (= (enved-filter-order) 10)) (snd-display ";set enved-filter-order 12 via 2 stdin: ~A" (enved-filter-order)))))
       ))
 
 (define play-sound
@@ -21056,6 +21064,13 @@ EDITS: 6
 	  (ptree-channel (lambda (y) (if (current-input-port) 1.0 0.0)))
 	  (if (fneq (maxamp ind) 1.0)
 	      (snd-display ";ptree fallback: ~A" (maxamp ind)))
+	  (undo)
+	  (ptree-channel (lambda (y data dir)
+			   (declare (y real) (data vct) (dir boolean))
+			   (if (current-input-port) (* y 0.5) (* y (vct-ref data 0))))
+			 0 #f ind 0 #f #f
+			 (lambda (pos dur)
+			   (vct 1.0)))
 	  (close-sound ind))
 
 	(let ((ind0 (open-sound "oboe.snd"))
@@ -24861,8 +24876,8 @@ EDITS: 2
       (ftst '(let ((v (make-vct 3))) (vct-set! v 1 3.0) (vct-add! v v) (vct-ref v 1)) 6.0)
       (ftst '(let ((v (make-vct 3))) (vct-set! v 1 3.0) (vct-multiply! v v) (vct-ref v 1)) 9.0)
       (ftst '(let ((v (make-vct 3))) (vct-set! v 1 3.0) (vct-subtract! v v) (vct-ref v 1)) 0.0)
-      (ftst '(let ((v (make-vct 3))) (vct-set! v 1 3.0) (vct-offset! v 17) (vct-ref v 1)) 20.0)
-      (ftst '(let ((v (make-vct 3))) (vct-set! v 1 3.0) (vct-fill! v 7) (vct-ref v 1)) 7.0)
+      (ftst '(let ((v (make-vct 3))) (set! (vct-ref v 2) 3.0) (vct-offset! v 17) (vct-ref v 2)) 20.0)
+      (ftst '(let ((v (make-vct 3))) (set! (vct-ref v 0) 3.0) (vct-fill! v 7) (vct-ref v 0)) 7.0)
       (ftst '(let ((v (make-vct 3))) (vct-fill! v 3.14) (let ((v1 (vct-copy v))) (vct-ref v1 2))) 3.14)
       (ftst '(let ((v (make-vct 3))) (vct-fill! v 1.0) (vct-ref (vct-scale! v 2.0) 1)) 2.0)
       (ftst '(let ((v (make-vct 3))) (vct-fill! v 1.0) (vct-ref (vct-scale! (vct-add! v v) 2.0) 1)) 4.0)
@@ -29598,10 +29613,10 @@ EDITS: 2
 		     (for-each 
 		      (lambda (snd)
 			(if (not (member snd snds)) 
-			    (progn
-			     (save-sound-as "reg.snd" snd)
-			     (delete-file "reg.snd")
-			     (close-sound snd))))
+			    (begin
+			      (save-sound-as "reg.snd" snd)
+			      (delete-file "reg.snd")
+			      (close-sound snd))))
 		      new-snds)))
 		  (let ((regs (length (regions))))
 		    (do ((i 0 (1+ i)))

@@ -155,7 +155,7 @@ bess.rb.
   <em class=def>bird</em> start dur frequency freqskew amplitude freq-envelope amp-envelope
   <em class=def>bigbird</em> start dur frequency freqskew amplitude freq-envelope amp-envelope partials
   <em class=def>one-bird</em> beg maxdur func birdname
-  <em class=def>make-birds</em> &amp;optional (output-file "test.snd")
+  <em class=def>make-birds</em> #:optional (output-file "test.snd")
 </pre>
 <p>
 bird.scm is a translation of the Sambox/CLM bird songs.  The two instruments set
@@ -306,7 +306,7 @@ y axis.  The other procedures in draw.scm are intended for use with the
 after-graph-hook.  
 <b>display-colored-samples</b> (color beg dur snd chn) displays samples from beg for dur in color
 whenever they're in the current view. This is intended for use with <b>color-samples</b>. 
-(<a name="colorsamples">color-samples</a> color &amp;optional beg dur snd chn) causes samples from beg to beg+dur to be displayed in color;
+(<a name="colorsamples">color-samples</a> color #:optional beg dur snd chn) causes samples from beg to beg+dur to be displayed in color;
 to undo this, use <b>uncolor-samples</b>.
 <b>display-previous-edits</b> displays all edits of the current sound, with older versions gradually fading away.
 <b>overlay-sounds</b> overlays onto its first argument all subsequent arguments: (overlay-sounds 1 0 3).
@@ -318,7 +318,7 @@ the cursor is moved to the clicked point.
 <center><img src="uppergrf.png" alt="make-current-window-display"></center>
 <br>
 <p>
-<b>click-for-listener-help</b> is intended as a <a href="extsnd.html#listenerclickhook">listener-click-hook entry</a>.  It posts help about
+<b>click-for-listener-help</b> is intended as a <a href="extsnd.html#listenerclickhook">listener-click-hook</a> entry.  It posts help about
 the closest entity it can find whenever you double click in the listener.  Unfortunately, the help
 dialog is a bit clunky for a use like this, but the minibuffer has only one line, and
 tooltips are irritating in their own way; perhaps it should post the help at the bottom of
@@ -750,7 +750,7 @@ also Scheme implementations of some of the built-in functions (change-window-pro
 <A NAME="exampdoc"></a><span class=box><h2>examp.scm</h2></span>
 
 <p>examp.scm has become a bit of a grab-bag; rather than get organized, I just
-appended new stuff as it came to mind.  The following documentation is mostly 
+appended new stuff as it came to mind.  The following documentation is
 a quick overview of the code; most of the examples are very simple, so (as
 the saying goes) "the code is the documentation".  Also, there's some overlap
 between these examples, other .scm files, and discussions in other documents.
@@ -840,8 +840,8 @@ I'm slowly dividing out related groups of procedures to separate files.
 <small>
   <ul>
     <li>scissor-tailed flycatcher (waveshaping)
-    <li>fm-violin (FM and various other generators, #&amp;key args)
-    <li>FOF voice synthesis (wave-train, #&amp;optional args)
+    <li>fm-violin (FM and various other generators, #:key args)
+    <li>FOF voice synthesis (wave-train, #:optional args)
     <li>pluck instrument (physical modelling)
     <li>voice instrument (formants via FM)
     <li>chain-dsps
@@ -1226,7 +1226,7 @@ happens to be on the chosen one, with fade-ins and fade-outs to avoid clicks.
   <em class=def>fofins</em> ...many args...
   <em class=def>pluck</em> start dur freq amp weighting lossfact
   <em class=def>vox</em> beg dur freq amp ampfun freqfun freqscl voxfun index vibscl
-  <em class=def>chained-dsps</em> beg dur &amp;rest dsps
+  <em class=def>chained-dsps</em> beg dur #:rest dsps
 </pre>
 <p><i>scissor</i> synthesizes the squawk of the scissor-tailed flycatcher (state bird of Oklahoma, <i>Tyrannus forficatus</i>);
 see <a href="#birddoc">bird.scm</a> for more birds.  The fm-violin is discussed in <a href="#vdoc">v.scm</a>.
@@ -1308,9 +1308,9 @@ displayed in the current window for <i>snd</i>'s channel <i>chn</i>.
 and moves the cursor to that sample. It can be interrupted by C-g.
 </p>
 <pre>
-  <em class=def><a name="exmakesoundinterp">make-sound-interp</a></em> start &amp;optional snd chn
+  <em class=def><a name="exmakesoundinterp">make-sound-interp</a></em> start #:optional snd chn
   <em class=def><a name="exsoundinterp">sound-interp</a></em> reader loc
-  <em class=def><a name="exenvsoundinterp">env-sound-interp</a></em> envelope &amp;optional (time-scale 1.0) snd chn) 
+  <em class=def><a name="exenvsoundinterp">env-sound-interp</a></em> envelope #:optional (time-scale 1.0) snd chn) 
 </pre>
 <p><i>make-sound-interp</i> returns an interpolating reader for <i>snd</i>'s channel <i>chn</i>.
 The interpolating reader reads a channel at an arbitary location,
@@ -1347,7 +1347,7 @@ place where the given pitch is predominate.
 holding the samples of one channel.
 </p>
 <pre>
-  <em class=def>smooth-channel-via-ptree</em> &amp;optional beg dur snd chn edpos
+  <em class=def>smooth-channel-via-ptree</em> #:optional beg dur snd chn edpos
 </pre>
 <p>This is <a href="extsnd.html#smoothchannel">smooth-channel</a> as a virtual op.
 </p>
@@ -1367,14 +1367,14 @@ convenient if they were in one file.
   <em class=def><a name="readlistenerline">read-listener-line</a></em> prompt
   <em class=def><a name="exsndtrace">snd-trace</a></em>
 
-  <em class=def><a name="exmakeselection">make-selection</a></em> &amp;optional beg end snd chn
+  <em class=def><a name="exmakeselection">make-selection</a></em> #:optional beg end snd chn
   <em class=def><a name="exdeleteselectionandsmooth">delete-selection-and-smooth</a></em>
   <em class=def><a name="exevaloverselection">eval-over-selection</a></em> func snd
   <em class=def><a name="exselectionmembers">selection-members</a></em>
 
-  <em class=def><a name="exmapsoundfiles">map-sound-files</a></em> func &amp;optional dir
-  <em class=def><a name="exforeachsoundfile">for-each-sound-file</a></em> func &amp;optional dir
-  <em class=def><a name="exmatchsoundfiles">match-sound-files</a></em> func &amp;optional dir
+  <em class=def><a name="exmapsoundfiles">map-sound-files</a></em> func #:optional dir
+  <em class=def><a name="exforeachsoundfile">for-each-sound-file</a></em> func #:optional dir
+  <em class=def><a name="exmatchsoundfiles">match-sound-files</a></em> func #:optional dir
 
   <em class=def><a name="exnormalizedmix">normalized-mix</a></em> filename beg in-chan snd chn
   <em class=def><a name="exenvelopedmix">enveloped-mix</a></em> filename beg env
@@ -1616,22 +1616,14 @@ returns all hooks to the empty state.
   <em class=def>html</em> obj
   <em class=def>?</em> obj
 </pre>
-<p>index.scm provides a connection between an HTML reader (default: netscape, determined
-by the value of <i>*html-reader*</i>) and the Snd documentation.  The index itself is
+<p>index.scm provides a connection between netscape
+and the Snd documentation.  The index itself is
 built by index.cl, then accessed through the <i>html</i> and <i>?</i> functions.
-<code>(html arg)</code> where arg can be a string, symbol, or procedure looks for a corresponding url
-in the various Snd documents, 
-and if one is found, calls *html-reader* with it.
+<code>(html arg)</code> where arg can be a string, symbol, or procedure sends netscape to the corresponding url
+in the Snd documents.
 <code>(? obj)</code> prints out any help it can find for obj, and tries to find obj in the documentation.
 The function that actually passes the url to the reader is <a href="extsnd.html#sendnetscape">send-netscape</a>.
-Since it uses X window properties specific to netscape, it's not obvious how any other HTML
-reader can work.  All the following forms are acceptable:
 </p>
-<pre>
-  (html "open-sound")
-  (html 'open-sound)
-  (html open-sound)
-</pre>
 
 <A NAME="maracadoc"></a><span class=box><h2>maraca.scm</h2></span>
 
@@ -1878,7 +1870,7 @@ faster.
 <p>musglyphs.scm provides Scheme/Snd wrappers to load CMN's cmn-glyphs.lisp (directly!),
 thereby defining most of the standard music notation symbols.  Each of the original
 functions (e.g. draw-bass-clef) becomes a Snd/Scheme procedure of the form
-<code>(name &amp;optional x y size style snd chn context)</code>.  For example,
+<code>(name #:optional x y size style snd chn context)</code>.  For example,
 <code>(draw-bass-clef 100 100 50)</code> draws a bass clef in the current graph
 at position (100 100) of size 50; since the <i>style</i> argument defaults to
 #f, the clef is displayed as a filled polygon; use #t to get an outline of
@@ -2144,9 +2136,9 @@ this color is named "tawny" in rgb.scm.
 "real-time" operations.
 </p>
 <pre>
-  <em class=def>show-input</em> &amp;optional (in-sys 0)
-  <em class=def><A NAME="exshowinputfft">show-input-fft</a></em> &amp;optional (in-sys 0)
-  <em class=def><A NAME="exshowdraggableinputfft">show-draggable-input-fft</a></em> &amp;optional (in-sys 0)
+  <em class=def>show-input</em> #:optional (in-sys 0)
+  <em class=def><A NAME="exshowinputfft">show-input-fft</a></em> #:optional (in-sys 0)
+  <em class=def><A NAME="exshowdraggableinputfft">show-draggable-input-fft</a></em> #:optional (in-sys 0)
   <em class=def>in-out</em> func in-sys out-sys
 </pre>
 <p>These three functions show how to read incoming data (from the adc),
@@ -2303,7 +2295,7 @@ appends <i>msg</i> to whatever is in <i>snd</i>'s minibuffer.
 </p>
 <pre>
   <em class=def>gl-info</em>
-  <em class=def><a name="startwaterfall">start-waterfall</a></em> &amp;optional (scl 1.0) (pc-spectrum 0.2) (fft-size 512)
+  <em class=def><a name="startwaterfall">start-waterfall</a></em> #:optional (scl 1.0) (pc-spectrum 0.2) (fft-size 512)
   <em class=def>stop-waterfall</em>
   <em class=def>gl-dump-state</em>
 </pre>
@@ -2678,7 +2670,7 @@ taken from SAMBOX.BIL, November 1984):</p>
 <p>The CLM version of this is:</p>
 <pre>
 (definstrument simp (start-time duration frequency amplitude
-                      &amp;optional (amp-env '(0 0 50 1 100 0)))
+                     &amp;optional (amp-env '(0 0 50 1 100 0)))
   (multiple-value-bind (beg end) (times-&gt;samples start-time duration)
     (let ((s (make-oscil frequency))
           (amp (make-env amp-env :scaler amplitude :duration duration)))
@@ -2716,7 +2708,7 @@ In CLM, the fm-violin became (fm.html, 1989):</p>
                             (* (env indf2) (oscil fmosc2 (* 3.0 vib)))
                             (* (env indf3) (oscil fmosc3 (* 4.0 vib))))))))))))
 </pre>
-<p>or in its actual (non-simplified) form):
+<p>or in its actual (non-simplified) form:
 </p>
 <pre>
 (defun bit20 (x)			;Samson box modifier got 2's complement 20 bit interpreted as fraction 
@@ -3118,7 +3110,7 @@ In Common Lisp it's defined as:</p>
 Kalle Olavi Niemitalo came up with this Scheme/Guile replacement:
 </p>
 <pre>
-(define* (with-sound-helper thunk #&amp;key (srate 22050) (explode #f))
+(define* (with-sound-helper thunk #:key (srate 22050) (explode #f))
   (let ((old-srate (mus-srate)))
     (dynamic-wind 
       (lambda () 
@@ -3177,7 +3169,7 @@ opened (corresponding to CLM's *reverb*).  So the cooperating instrument code sh
             ((= i end))
           (outa i ... *output*))))))
 </pre>
-<p>which is the same as in the standard CLM (change the loop statement to a do statement,
+<p>which is the same as in the standard CLM (change the loop statement to a do statement),
 add the lambda wrapper (needed by the run macro unfortunately),
 and you're ready to go!  If the run macro can handle the instrument code (and
 it can handle anything the CL version can handle, I think), then the Snd with-sound
@@ -3210,7 +3202,7 @@ be int (so it can be used without restriction in run), and so on.
 </pre>
 <p>defines a variable named hi whose value is a hiho structure (a list) with
 all the fields taking their default value except "xx" which is set to 3.14.
-So, hi's value is <code>(list 'hiho #f #f "hiho" 3 3.14))</code>.
+So, hi's value is <code>(list 'hiho #f #f "hiho" 3 3.14)</code>.
 </p>
 <p><b>init-with-sound</b> and <b>finish-with-sound</b>
 split with-sound into two pieces, primarily for Common Music's benefit.

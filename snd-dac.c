@@ -2058,9 +2058,7 @@ static XEN g_play_1(XEN samp_n, XEN snd_n, XEN chn_n, int background, int syncd,
 	  else 
 	    {
 	      cp = get_cp(snd_n, chn_n, caller);
-	      if (cp) 
-		play_channel(cp, samp, end, background, edpos, caller, arg_pos);
-	      else return(snd_no_such_channel_error(caller, snd_n, chn_n));
+	      if (cp) play_channel(cp, samp, end, background, edpos, caller, arg_pos);
 	    }
 	}
     }
@@ -2245,15 +2243,12 @@ to be played (via " S_start_playing ")."
   if (true_sp == NULL) 
     return(snd_no_such_sound_error(S_make_player, snd));
   cp = get_cp(snd, chn, S_make_player);
-  if (cp)
-    {
-      new_sp = make_snd_info(NULL, get_global_state(), "wrapper", true_sp->hdr, new_player_index(), TRUE);
-      FREE(new_sp->sgx); /* no built-in GUI */
-      new_sp->sgx = NULL;
-      new_sp->chans[cp->chan] = cp;
-      return(C_TO_XEN_INT(make_player(new_sp, cp)));
-    }
-  return(snd_no_such_channel_error(S_make_player, snd, chn));  
+  if (cp == NULL) return(XEN_FALSE); /* won't happen */
+  new_sp = make_snd_info(NULL, get_global_state(), "wrapper", true_sp->hdr, new_player_index(), TRUE);
+  FREE(new_sp->sgx); /* no built-in GUI */
+  new_sp->sgx = NULL;
+  new_sp->chans[cp->chan] = cp;
+  return(C_TO_XEN_INT(make_player(new_sp, cp)));
 }
 
 static XEN g_player_home(XEN snd_chn)
