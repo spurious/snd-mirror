@@ -2643,7 +2643,23 @@ void normalize_all_sounds(snd_state *ss)
   /* normalize: get size, #chans, #snds, set pane minima, force remanage(?), unlock */
   int sounds = 0,chans,chan_y,height,width,screen_y,i;
   int wid[1];
-  if (sound_style(ss) == SOUNDS_IN_SEPARATE_WINDOWS) return;
+  snd_info *nsp;
+  if (sound_style(ss) == SOUNDS_IN_SEPARATE_WINDOWS)
+    {
+      for (i=0;i<ss->max_sounds;i++)
+	if (snd_ok(ss->sounds[i]))
+	  {
+	    nsp = ss->sounds[i];
+	    if (nsp->nchans > 1)
+	      {
+		height = widget_height(w_snd_pane(nsp));
+		even_channels(nsp,(void *)height);
+		map_over_sound_chans(nsp,channel_open_pane,NULL);
+		map_over_sound_chans(nsp,channel_unlock_pane,NULL);
+	      }
+	  }
+      return;
+    }
   for (i=0;i<ss->max_sounds;i++) if (snd_ok(ss->sounds[i])) sounds++;
   if (sound_style(ss) == SOUNDS_VERTICAL)
     {

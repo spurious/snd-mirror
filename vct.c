@@ -41,7 +41,7 @@
  */
 
 /* TODO  offsets for vct-*?
- * TODO  set! for (v i) form?
+ * TODO  set! for (v i) form? (could this use the apply_2 stuff?)
  */
 
 #if defined(HAVE_CONFIG_H)
@@ -593,6 +593,7 @@ static SCM vector2vct(SCM vect)
 static SCM vct_apply(SCM vobj, SCM arg)
 {
   /* so if vct obj v (v 3) is the same as (vct-ref v 3) -- just an experiment for now */
+  /*   7-Dec-00 guile has SCM_SMOB_APPLICABLE_P */
   return(vct_ref(vobj,arg));
 }
 #endif

@@ -627,7 +627,9 @@ void select_channel(snd_info *sp, int chan)
 chan_info *current_channel(snd_state *ss)
 {
   snd_info *sp = NULL;
-  if (!ss) return(NULL); /* can be null when Snd has only the menu bar ?? really?? */
+#if DEBUGGING
+  if (!ss) {fprintf(stderr,"state null??"); abort();}
+#endif
   if (ss->selected_sound != NO_SELECTION)
     sp = ss->sounds[ss->selected_sound];
   else sp = any_active_sound(ss);

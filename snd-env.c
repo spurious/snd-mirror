@@ -1,7 +1,6 @@
 #include "snd.h"
 
-/* TODO  if enved wave button set and associated chan has wavo set, graph goes to wrong window
- * TODO  enved mix flt and src undo&apply cases need more testing (also clean undo of selection src)
+/* TODO  enved mix flt and src undo&apply cases need more testing (also clean undo of selection src)
  * TODO  edit of mix sound doesn't follow undo chains?
  */
 
@@ -1069,7 +1068,7 @@ void alert_envelope_editor(snd_state *ss, char *name, env *val)
 
 void enved_show_background_waveform(snd_state *ss, chan_info *axis_cp, axis_info *gray_ap, int apply_to_mix, int apply_to_selection)
 {
-  int samps,srate,pts=0,id;
+  int samps,srate,pts=0,id,old_wavo=0;
   axis_info *ap,*active_ap;
   chan_info *active_channel,*ncp;
 
@@ -1132,15 +1131,26 @@ void enved_show_background_waveform(snd_state *ss, chan_info *axis_cp, axis_info
 	  srate = SND_SRATE(active_channel->sound);
 	  gray_ap->losamp = 0;
 	  gray_ap->hisamp = samps-1;
-	  gray_ap->y0 = active_ap->y0;
-	  gray_ap->y1 = active_ap->y1;
+	  if (active_channel->wavo)
+	    {
+	      gray_ap->y0 = -1.0;
+	      gray_ap->y1 = 1.0;
+	    }
+	  else
+	    {
+	      gray_ap->y0 = active_ap->y0;
+	      gray_ap->y1 = active_ap->y1;
+	    }
 	  gray_ap->x0 = 0.0;
 	  gray_ap->x1 = (Float)samps / (Float)srate;
 	}
       gray_ap->x_scale = ((double)(gray_ap->x_axis_x1 - gray_ap->x_axis_x0))/((double)(gray_ap->x1 - gray_ap->x0));
       gray_ap->y_scale = (gray_ap->y_axis_y1 - gray_ap->y_axis_y0)/(gray_ap->y1 - gray_ap->y0);
       active_channel->axis = gray_ap;
+      old_wavo = active_channel->wavo;
+      active_channel->wavo = 0;
       pts = make_graph(active_channel,NULL,ss);
+      active_channel->wavo = old_wavo;
       active_channel->axis = active_ap;
     }
   if (pts > 0) draw_both_grfs(gray_ap->ax,pts);

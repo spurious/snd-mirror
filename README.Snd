@@ -127,8 +127,10 @@ define WITH_BIG_COLORMAP (see snd.h).
 There are precompiled binaries available at the ccrma-ftp site
 mentioned above: linux-snd (or linux-snd.gz) and xlinux-snd for Linux
 on a PC; sun-snd for the Sun; also RPM (Redhat package management)
-files that contain the Linux/PC version, (snd-4-8.i386.rpm), the
-sources (snd-4-8.src.rpm), and the LinuxPPC version (snd-4-8.ppc.rpm).
+files that contain the Linux/PC version, (snd-4-9.i386.rpm), the
+sources (snd-4-9.src.rpm), and the LinuxPPC version (snd-4-9.ppc.rpm).
+These RPM files have been superseded by Fernando Lopez-Lezcano's
+set available at http://www-ccrma.stanford.edu/software/snd/.
 These pre-built images require Guile 1.4; if you are running 1.3,
 you'll need to build from sources.  The linuxppc version requires
 libXm.so.2.1 available from openmotif.

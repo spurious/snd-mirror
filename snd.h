@@ -77,7 +77,8 @@
  *   HAVE_GSL      use GSL (Gnu Scientific Library) where possible.
  *                 The intention is to use GSL for most of the standard math stuff that
  *                 isn't in the math library.  Currently this means the Bessel I0 function
- *                 (for the Kaiser window), the Hankel transform, etc.
+ *                 (for the Kaiser window), the Hankel transform, the complex trig support
+ *                 (for the Dolph-Chebyshev window), etc.
  *
  *   HAVE_GTKEXTRA If USE_GTK is set, and you want the Gtk+extra version of the file
  *                 selection widget, set this flag (it requires libgtkextra).
@@ -175,10 +176,10 @@
 #endif
 #include "snd-strings.h"
 
-#define SND_VERSION "7-Dec-00"
-#define SND_RPM_VERSION "4.8"
+#define SND_VERSION "8-Dec-00"
+#define SND_RPM_VERSION "4.9"
 #define SND_MAJOR_VERSION 4
-#define SND_MINOR_VERSION 8
+#define SND_MINOR_VERSION 9
 
 #endif
 

@@ -241,6 +241,9 @@ char *ps_rgb(snd_state *ss, int pchan)
   tmp_color.pixel = color;
   XQueryColor(dpy,cmap,&tmp_color);
   buf = (char *)CALLOC(128,sizeof(char));
-  sprintf(buf," %.2f %.2f %.2f RG\n",(float)tmp_color.red / 65535.0,(float)tmp_color.green / 65535.0,(float)tmp_color.blue / 65535.0);
+  sprintf(buf," %.2f %.2f %.2f RG\n",
+	  (float)tmp_color.red / 65535.0,
+	  (float)tmp_color.green / 65535.0,
+	  (float)tmp_color.blue / 65535.0);
   return(buf);
 }

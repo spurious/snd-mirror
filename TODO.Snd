@@ -17,7 +17,8 @@ gcc printout during compilation.
 
 Libool-ize sndlib.  Parallel support in Snd's configuration process.
 
-Snd name completion tied into the Emacs-Snd subjob connection.
+Snd name completion tied into the Emacs-Snd subjob connection (this
+apparently will require "raw" mode in ilisp).
 
 Snd's help and apropos merged with Guile's.
 

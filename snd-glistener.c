@@ -139,7 +139,7 @@ static void Command_Return_Callback(snd_state *ss)
   int i,j,slen;
   int end_of_text,start_of_text,last_position,current_position,parens;
   full_str = gtk_editable_get_chars(GTK_EDITABLE(listener_text),0,-1);
-  current_position = (GTK_EDITABLE(listener_text))->current_pos; /* is this gtk_editable_get_position? */
+  current_position = gtk_editable_get_position(GTK_EDITABLE(listener_text));
   start_of_text = current_position;
   end_of_text = current_position;
   last_position = gtk_text_get_length(GTK_TEXT(listener_text));
@@ -229,7 +229,7 @@ static void grab_line(snd_state *ss)
   char *full_str;
   int current_position,last_position,i,j,k;
   full_str = gtk_editable_get_chars(GTK_EDITABLE(listener_text),0,-1);
-  current_position = (GTK_EDITABLE(listener_text))->current_pos; /* is this gtk_editable_get_position? */
+  current_position = gtk_editable_get_position(GTK_EDITABLE(listener_text));
   last_position = gtk_text_get_length(GTK_TEXT(listener_text));
   for (i=current_position;i<last_position;i++)
     if (full_str[i] == '\n')
@@ -255,7 +255,7 @@ static void back_to_start(snd_state *ss)
   char *full_str = NULL,*prompt;
   int i,start_of_text;
   full_str = gtk_editable_get_chars(GTK_EDITABLE(listener_text),0,-1);
-  start_of_text = (GTK_EDITABLE(listener_text))->current_pos; /* is this gtk_editable_get_position? */
+  start_of_text = gtk_editable_get_position(GTK_EDITABLE(listener_text));
   prompt = listener_prompt(ss);
   if (start_of_text > 0)
     {
@@ -317,7 +317,7 @@ static gint listener_key_press(GtkWidget *w, GdkEventKey *event, gpointer data)
 				{
 				  int current_position;
 				  char *fstr;
-				  current_position = (GTK_EDITABLE(listener_text))->current_pos;
+				  current_position = gtk_editable_get_position(GTK_EDITABLE(listener_text));
 				  if (current_position > 1)
 				    {
 				      fstr = gtk_editable_get_chars(GTK_EDITABLE(listener_text),current_position-2,current_position);

@@ -27,7 +27,7 @@
 (define snd-test -1)
 (define full-test #t)
 
-(define include-clm #t)
+(define include-clm #f)
 (define original-prompt (listener-prompt))
 (show-listener)
 (set! (window-x) 600)

@@ -135,15 +135,15 @@ void map_chans_field(snd_state *ss, int field, Float val)
 	    {
 	      switch (field)
 		{
-		case FCP_X_ANGLE: sp->chans[j]->spectro_x_angle = val; break;
-		case FCP_X_SCALE: sp->chans[j]->spectro_x_scale = val; break;
-		case FCP_Y_ANGLE: sp->chans[j]->spectro_y_angle = val; break;
-		case FCP_Y_SCALE: sp->chans[j]->spectro_y_scale = val; break;
-		case FCP_Z_ANGLE: sp->chans[j]->spectro_z_angle = val; break;
-		case FCP_Z_SCALE: sp->chans[j]->spectro_z_scale = val; break;
-		case FCP_START:   sp->chans[j]->spectro_start = val;   break;
-		case FCP_CUTOFF:  sp->chans[j]->spectro_cutoff = val;  break;
-		case FCP_BETA:    sp->chans[j]->fft_beta = val;        break;
+		case FCP_X_ANGLE: sp->chans[j]->spectro_x_angle = val;                 break;
+		case FCP_X_SCALE: sp->chans[j]->spectro_x_scale = val;                 break;
+		case FCP_Y_ANGLE: sp->chans[j]->spectro_y_angle = val;                 break;
+		case FCP_Y_SCALE: sp->chans[j]->spectro_y_scale = val;                 break;
+		case FCP_Z_ANGLE: sp->chans[j]->spectro_z_angle = val;                 break;
+		case FCP_Z_SCALE: sp->chans[j]->spectro_z_scale = val;                 break;
+		case FCP_START:   sp->chans[j]->spectro_start = fclamp(0.0,val,1.0);   break;
+		case FCP_CUTOFF:  sp->chans[j]->spectro_cutoff = fclamp(0.0,val,1.0);  break;
+		case FCP_BETA:    sp->chans[j]->fft_beta = fclamp(0.0,val,1.0);        break;
 		}
 	    }
 	}
@@ -1104,10 +1104,10 @@ int make_graph(chan_info *cp, snd_info *sp, snd_state *ss)
   axis_context *ax=NULL;
   chan_context *cgx;
   env_info *ep;
-  if (cp->wavo) {make_wavogram(cp,sp,ss); return(0);}
   ap = cp->axis;
   /* check for no graph */
   if ((!ap) || (!(ap->graph_active)) || (ap->x0 == ap->x1)) return(0);
+  if (cp->wavo) {make_wavogram(cp,sp,ss); return(0);}
   if (sp)
     {
       cur_srate = (double)SND_SRATE(sp);
@@ -8248,11 +8248,7 @@ static SCM cp_iwrite(SCM snd_n, SCM chn_n, SCM on, int fld, char *caller)
     case CP_FFTING:             fftb(cp,val = bool_int_or_one(on)); update_graph(cp,NULL);                                                               break;
     case CP_WAVING:             waveb(cp,val = bool_int_or_one(on)); update_graph(cp,NULL);                                                              break;
     case CP_CURSOR:             cp->cursor_on = 1; handle_cursor(cp,cursor_moveto(cp,val = g_scm2intdef(on,1)));                                         break;
-    case CP_LISP_GRAPHING: 
-      cp->lisp_graphing = bool_int_or_one(on); 
-      val = cp->lisp_graphing;
-      update_graph(cp,NULL); 
-      break;
+    case CP_LISP_GRAPHING:      cp->lisp_graphing = bool_int_or_one(on); val = cp->lisp_graphing; update_graph(cp,NULL);                                 break;
     case CP_AP_LOSAMP:          set_x_axis_x0(cp,val = g_scm2intdef(on,0)); return(on);                                                                  break;
     case CP_AP_HISAMP:          set_x_axis_x1(cp,val = g_scm2intdef(on,1)); return(on);                                                                  break;
     case CP_SQUELCH_UPDATE:     cp->squelch_update = bool_int_or_one(on);                                                                                break;
@@ -8395,10 +8391,10 @@ static SCM cp_fwrite(SCM snd_n, SCM chn_n, SCM on, int fld, char *caller)
   cp = get_cp(snd_n,chn_n,caller);
   switch (fld)
     {
-    case CP_AP_SX:           reset_x_display(cp, gh_scm2double(on), cp->axis->zx);                                             break;
-    case CP_AP_ZX:           reset_x_display(cp, cp->axis->sx, gh_scm2double(on));                                             break;
-    case CP_AP_SY:           reset_y_display(cp, gh_scm2double(on), cp->axis->zy);                                             break;
-    case CP_AP_ZY:           reset_y_display(cp, cp->axis->sy, gh_scm2double(on));                                             break;
+    case CP_AP_SX:           reset_x_display(cp, fclamp(0.0,gh_scm2double(on),1.0), cp->axis->zx);                             break;
+    case CP_AP_ZX:           reset_x_display(cp, cp->axis->sx, fclamp(0.0,gh_scm2double(on),1.0));                             break;
+    case CP_AP_SY:           reset_y_display(cp, fclamp(0.0,gh_scm2double(on),1.0), cp->axis->zy);                             break;
+    case CP_AP_ZY:           reset_y_display(cp, cp->axis->sy, fclamp(0.0,gh_scm2double(on),1.0));                             break;
     case CP_MIN_DB:          cp->min_dB = gh_scm2double(on); cp->lin_dB = pow(10.0,cp->min_dB * 0.05); calculate_fft(cp,NULL); break;
     case CP_SPECTRO_X_ANGLE: cp->spectro_x_angle = gh_scm2double(on); calculate_fft(cp,NULL);                                  break;
     case CP_SPECTRO_Y_ANGLE: cp->spectro_y_angle = gh_scm2double(on); calculate_fft(cp,NULL);                                  break;
@@ -8406,9 +8402,9 @@ static SCM cp_fwrite(SCM snd_n, SCM chn_n, SCM on, int fld, char *caller)
     case CP_SPECTRO_X_SCALE: cp->spectro_x_scale = gh_scm2double(on); calculate_fft(cp,NULL);                                  break;
     case CP_SPECTRO_Y_SCALE: cp->spectro_y_scale = gh_scm2double(on); calculate_fft(cp,NULL);                                  break;
     case CP_SPECTRO_Z_SCALE: cp->spectro_z_scale = gh_scm2double(on); calculate_fft(cp,NULL);                                  break;
-    case CP_SPECTRO_CUTOFF:  cp->spectro_cutoff = gh_scm2double(on); calculate_fft(cp,NULL);                                   break;
-    case CP_SPECTRO_START:   cp->spectro_start = gh_scm2double(on); calculate_fft(cp,NULL);                                    break;
-    case CP_FFT_BETA:        cp->fft_beta = gh_scm2double(on); calculate_fft(cp,NULL);                                         break;
+    case CP_SPECTRO_CUTOFF:  cp->spectro_cutoff = fclamp(0.0,gh_scm2double(on),1.0); calculate_fft(cp,NULL); return(gh_double2scm(cp->spectro_cutoff)); break;
+    case CP_SPECTRO_START:   cp->spectro_start = fclamp(0.0,gh_scm2double(on),1.0); calculate_fft(cp,NULL); return(gh_double2scm(cp->spectro_start));   break;
+    case CP_FFT_BETA:        cp->fft_beta = fclamp(0.0,gh_scm2double(on),1.0); calculate_fft(cp,NULL); return(gh_double2scm(cp->fft_beta));             break;
     case CP_MAXAMP:
       curamp = get_maxamp(cp->sound,cp);
       newamp[0] = gh_scm2double(on);

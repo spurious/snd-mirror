@@ -209,7 +209,11 @@ void ps_draw_grf_points(chan_info *cp, axis_info *ap, int j, Float y0)
       if (size4 < 1) size4 = 1;
       for (i=0;i<j;i++)
 	{
-	  sprintf(pbuf," %.2f %.2f %.2f %.2f RF\n",ps_grf_x(ap,xpts[i])-size8,(float)gy0,(float)size4,ps_grf_y(ap,ypts[i])-gy0);
+	  sprintf(pbuf," %.2f %.2f %.2f %.2f RF\n",
+		  ps_grf_x(ap,xpts[i])-size8,
+		  (float)gy0,
+		  (float)size4,
+		  ps_grf_y(ap,ypts[i])-gy0);
 	  ps_write(cp->ps_fd,pbuf);
 	}
       break;
@@ -264,7 +268,11 @@ void ps_draw_both_grf_points(chan_info *cp, axis_info *ap, int j)
       if (size4 < 1) size4 = 1;
       for (i=0;i<j;i++)
 	{
-	  sprintf(pbuf," %.2f %.2f %.2f %.2f RF\n",ps_grf_x(ap,xpts[i])-size8,ps_grf_y(ap,ypts[i]),(float)size4,ps_grf_y(ap,ypts1[i])-ps_grf_y(ap,ypts[i]));
+	  sprintf(pbuf," %.2f %.2f %.2f %.2f RF\n",
+		  ps_grf_x(ap,xpts[i])-size8,
+		  ps_grf_y(ap,ypts[i]),
+		  (float)size4,
+		  ps_grf_y(ap,ypts1[i])-ps_grf_y(ap,ypts[i]));
 	  ps_write(cp->ps_fd,pbuf);
 	}
 
@@ -402,9 +410,16 @@ void snd_print(snd_state *ss, char *output)
   int *offsets = NULL;
   snd_info *sp;
   sync_info *si;
+  chan_info *ccp;
   if ((output) && (*output))
     {
-      si = sync_to_chan(current_channel(ss));
+      ccp = current_channel(ss);
+      if (ccp == NULL) 
+	{
+	  snd_error("nothing to print?");
+	  return;
+	}
+      si = sync_to_chan(ccp);
       offsets = (int *)CALLOC(si->chans,sizeof(int));
       for (j=0,i=(si->chans-1);i>=0;i--)
 	{

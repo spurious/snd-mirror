@@ -1285,10 +1285,12 @@ static SCM g_set_zoom_focus_style(SCM focus)
   RTNINT(zoom_focus_style(state));
 }
 
+/* TODO: a lot of these should throw an error indication, not call snd_error or return #f */
+
 static SCM g_graph2ps(void) 
 {
   #define H_graph2ps "(" S_graph_ps ") writes the current Snd displays to an EPS file"
-  snd_print(state,eps_file(state)); 
+  snd_print(state,eps_file(state));  /* if error THROW NO_SUCH_CHANNEL or something */
   RTNSTR(eps_file(state));
 }
 
@@ -1302,7 +1304,7 @@ static SCM g_save_state(SCM filename)
 {
   #define H_save_state "(" S_save_state " filename) saves the current Snd state in filename; (load filename) restores it)"
   if (save_state(state,gh_scm2newstr(filename,NULL)) == -1) 
-    return(SCM_BOOL_F); 
+    return(SCM_BOOL_F);  /* THROW CANNOT_SAVE */
   else return(filename);
 }
 

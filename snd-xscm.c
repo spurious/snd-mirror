@@ -29,7 +29,7 @@ static SCM g_set_html_dir(SCM val)
 static SCM g_region_dialog(void) 
 {
   #define H_region_dialog "(" S_region_dialog ") starts the region dialog"
-  if (snd_regions() > 0) View_Region_Callback(MAIN_PANE(state),(XtPointer)state,NULL);  /* needs to be here (not in snd-scm.c) due to XtPointer */
+  if (snd_regions() > 0) View_Region_Callback(MAIN_PANE(state),(XtPointer)state,NULL);
   return(SCM_BOOL_F);
 }
 
@@ -104,7 +104,9 @@ static int print_snd_color(SCM obj, SCM port, scm_print_state *pstate)
   tmp_color.pixel = v->color;
   XQueryColor(dpy,cmap,&tmp_color);
   sprintf(buf,"#<col" STR_OR ": (%.2f %.2f %.2f)>",
-	  (float)tmp_color.red / 65535.0,(float)tmp_color.green / 65535.0,(float)tmp_color.blue / 65535.0);
+	  (float)tmp_color.red / 65535.0,
+	  (float)tmp_color.green / 65535.0,
+	  (float)tmp_color.blue / 65535.0);
   scm_puts(buf,port);
   FREE(buf);
   return(scm_return_first(1,obj));

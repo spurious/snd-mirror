@@ -276,7 +276,7 @@ static gint minibuffer_key_callback(GtkWidget *w, GdkEventKey *event, gpointer d
       (((event->keyval == snd_K_s) || (event->keyval == snd_K_r)) && (event->state & snd_ControlMask)))
     {
       cp = current_channel(ss);
-      graph_key_press(channel_graph(cp),event,(gpointer)cp); 
+      if (cp) graph_key_press(channel_graph(cp),event,(gpointer)cp); 
       gtk_signal_emit_stop_by_name(GTK_OBJECT(w),"key_press_event");
       return(TRUE);
     }
