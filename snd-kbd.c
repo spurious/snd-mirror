@@ -123,7 +123,7 @@ static void save_macro_1(named_macro *nm, FILE *fd)
     }
   fprintf(fd, "end\n");
 #else
-  fprintf(fd, "(define (%s)\n", nm->name);
+  fprintf(fd, "(define (%s)\n", nm->name);/* TODO: add test */
   for (i = 0; i < nm->macro_size; i++)
     {
       mc = nm->cmds[i];
@@ -690,7 +690,7 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, int with_meta)
 	  switch (sp->filing)
 	    {
 	      /* don't free(str) locally in this switch statement without setting it to null as well */
-	    case INPUT_FILING:
+	    case INPUT_FILING: /* TODO: add test */
 	      nsp = snd_open_file(str, ss, FALSE); /* will post error if any */
 	      if (nsp) 
 		{
@@ -1805,7 +1805,7 @@ static XEN g_key(XEN kbd, XEN buckybits, XEN snd, XEN chn)
   return(kbd);
 }
 
-static XEN g_save_macros(void) 
+static XEN g_save_macros(void) /* TODO: add test */
 {
   #define H_save_macros "(" S_save_macros "): save keyboard macros in Snd's init file (~/.snd)"
   FILE *fd = NULL;

@@ -185,3 +185,7 @@
 		       old-hook-list))
 	 val))))                                      ; return body result
 
+
+;;; TODO: init-with-sound and friends for cm
+;;; TODO: check out formals->defobject and clm2.lisp for definstrument equivalent
+;;; TODO: check out *clm-with-sound-depth* *clm-channels* *clm-srate* for cm

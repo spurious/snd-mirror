@@ -2117,7 +2117,7 @@ and waiting for the play to complete before returning.  'start' can also be a fi
   return(g_play_1(samp_n, snd_n, chn_n, FALSE, TO_C_BOOLEAN_OR_F(syncd), end_n, edpos, S_play_and_wait, 6));
 }
 
-static XEN g_stop_playing(XEN snd_n)
+static XEN g_stop_playing(XEN snd_n) /* TODO: add test */
 {
   #define H_stop_playing "(" S_stop_playing " (snd #f)): stop play in progress"
   snd_info *sp = NULL;
@@ -2336,7 +2336,7 @@ If a play-list is waiting, start it."
   return(XEN_FALSE);
 }
 
-static XEN g_stop_player(XEN snd_chn)
+static XEN g_stop_player(XEN snd_chn) /* TODO: add test */
 {
   #define H_stop_player "(" S_stop_player " player): stop player"
   int index;

@@ -50,12 +50,16 @@ chan_info *make_chan_info(chan_info *cip, int chan, snd_info *sound, snd_state *
 #if HAVE_GL
       cp->gl_fft_list = NO_LIST;
 #endif
+      /* these hooks are never unprotected, so they might as well use the permanent protection mechanism */
       XEN_DEFINE_SIMPLE_HOOK(cp->edit_hook, 0);
-      snd_protect(cp->edit_hook);
+      XEN_PROTECT_FROM_GC(cp->edit_hook);
+      /* snd_protect(cp->edit_hook); */
       XEN_DEFINE_SIMPLE_HOOK(cp->after_edit_hook, 0);
-      snd_protect(cp->after_edit_hook);
+      XEN_PROTECT_FROM_GC(cp->after_edit_hook);
+      /* snd_protect(cp->after_edit_hook); */
       XEN_DEFINE_SIMPLE_HOOK(cp->undo_hook, 0);
-      snd_protect(cp->undo_hook);
+      XEN_PROTECT_FROM_GC(cp->undo_hook);
+      /* snd_protect(cp->undo_hook); */
       cp->properties = XEN_FALSE; /* will be a vector of 1 element (permanently protected) if it's ever used */
     }
   else cp = cip;

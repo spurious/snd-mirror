@@ -2131,9 +2131,16 @@ static char *declare_args(ptree *prog, XEN form, int default_arg_type, int separ
 		  type = XEN_SYMBOL_TO_C_STRING(XEN_CADR(declaration));
 		  arg_type = name_to_type(type);
 		  if (arg_type == R_UNSPECIFIED)
-		    if (strcmp(type, "integer") == 0) arg_type = R_INT; else
-		      if (strcmp(type, "real") == 0) arg_type = R_FLOAT; else
-			arg_type = default_arg_type;
+		    {
+		      if (strcmp(type, "integer") == 0) 
+			arg_type = R_INT; 
+		      else
+			{
+			  if (strcmp(type, "real") == 0) 
+			    arg_type = R_FLOAT; 
+			  else arg_type = default_arg_type;
+			}
+		    }
 		}
 	    }
 	  else

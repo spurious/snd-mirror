@@ -1076,7 +1076,7 @@ void src_marks(chan_info *cp, Float ratio, off_t old_samps, off_t new_samps, off
 		  m = mps[i];
 		  if (ratio > 0.0)
 		    m->samp = (off_t)(m->samp / ratio);
-		  else m->samp = (off_t)((old_samps - 1 - m->samp) / (-ratio)); /* ratio < 0 here */
+		  else m->samp = (off_t)((old_samps - 1 - m->samp) / (-ratio)); /* ratio < 0 here */ /* TODO: add test */
 		}
 	    }
 	  else
@@ -2101,7 +2101,7 @@ mark list is: channel given: (id id ...), snd given: ((id id) (id id ...)), neit
       }
   else
     {
-      /* all marks */
+      /* all marks */ /* TODO: add test */
       ss = get_global_state();
       for (j = ss->max_sounds - 1; j >= 0; j--)
 	{

@@ -1099,7 +1099,7 @@ static XEN g_make_delay_1(int choice, XEN arglist)
       if (!(XEN_KEYWORD_P(keys[keyn])))
 	{
 	  initial_contents = keys[keyn];
-	  if (VCT_P(initial_contents))
+	  if (VCT_P(initial_contents)) /* TODO: add test */
 	    line = copy_vct_data(TO_VCT(initial_contents));
 	  else
 	    {
@@ -1512,7 +1512,7 @@ a new one is created.  If normalize is #t, the resulting waveform goes between -
 	mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate wave table");
       table = make_vct(DEFAULT_TABLE_SIZE, wave);
     }
-  else table = utable;
+  else table = utable; /* TODO: add test */
   f = TO_VCT(table);
   partial_data = (Float *)CALLOC(len, sizeof(Float));
   if (partial_data == NULL)
@@ -3029,7 +3029,7 @@ static XEN g_make_filter_1(int choice, XEN arg1, XEN arg2, XEN arg3, XEN arg4, X
       else 
 	{
 	  if (x == NULL)
-	    choice = G_IIR_FILTER;
+	    choice = G_IIR_FILTER; /* TODO: add test */
 	}
     }
   if (((x == NULL) && (choice != G_IIR_FILTER)) ||

@@ -1752,7 +1752,7 @@ void make_prevfiles_list_1(snd_state *ss)
     }
 }
 
-static XEN g_previous_files_sort_procedure(void)
+static XEN g_previous_files_sort_procedure(void)/* TODO: add test */
 {
   #define H_previous_files_sort_procedure "(" S_previous_files_sort_procedure "): sort procedure for the current files viewer"
   snd_state *ss;
@@ -1782,7 +1782,7 @@ static XEN g_set_previous_files_sort_procedure(XEN proc)
     }
   else 
     {
-      set_file_sort_sensitive(FALSE);
+      set_file_sort_sensitive(FALSE);/* TODO: add test */
       errstr = C_TO_XEN_STRING(error);
       FREE(error);
       return(snd_bad_arity_error(S_setB S_previous_files_sort_procedure, errstr, proc));
@@ -2342,7 +2342,7 @@ static XEN g_set_sound_loop_info(XEN snd, XEN vals)
   XEN note = XEN_UNDEFINED; XEN detune = XEN_UNDEFINED;
   ASSERT_SOUND(S_setB S_sound_loop_info, snd, 1);
   XEN_ASSERT_TYPE(XEN_NOT_BOUND_P(vals) || XEN_LIST_P_WITH_LENGTH(vals, len), vals, XEN_ARG_2, S_setB S_sound_loop_info, "a list");
-  if (XEN_NOT_BOUND_P(vals))
+  if (XEN_NOT_BOUND_P(vals))/* TODO: add test */
     {
       vals = snd;
       len = XEN_LIST_LENGTH(vals); 

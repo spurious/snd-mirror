@@ -3728,7 +3728,7 @@ static XEN g_fft_1(XEN reals, XEN imag, XEN sign, int use_fft)
   else
     {
       n = XEN_VECTOR_LENGTH(reals);
-      if (XEN_VECTOR_LENGTH(imag) < n)
+      if (XEN_VECTOR_LENGTH(imag) < n) /* TODO: add test */
 	n = XEN_VECTOR_LENGTH(imag);
       use_vectors = TRUE;
     }
@@ -3737,7 +3737,7 @@ static XEN g_fft_1(XEN reals, XEN imag, XEN sign, int use_fft)
     n2 = n;
   else
     {
-      ipow = (int)ceil(log(n + 1) / log(2.0)); /* ceil because we're assuming below that n2 >= n */
+      ipow = (int)ceil(log(n + 1) / log(2.0)); /* ceil because we're assuming below that n2 >= n */ /* TODO: add test */
       n2 = snd_ipow2(ipow);
 #if DEBUGGING
       if (n2 < n) {fprintf(stderr,"n2: %d, n: %d\n", n2, n); abort();}
@@ -3768,7 +3768,7 @@ static XEN g_fft_1(XEN reals, XEN imag, XEN sign, int use_fft)
     {
       if (need_free)
 	{
-	  for (i = 0; i < n; i++)
+	  for (i = 0; i < n; i++) /* TODO: add test */
 	    {
 	      rl[i] = v1->data[i];
 	      im[i] = v2->data[i];
@@ -3806,7 +3806,7 @@ static XEN g_fft_1(XEN reals, XEN imag, XEN sign, int use_fft)
       mus_convolution(rl, im, n2);
       if (use_vectors)
 	{
-	  rvdata = XEN_VECTOR_ELEMENTS(reals);
+	  rvdata = XEN_VECTOR_ELEMENTS(reals); /* TODO: add test */
 	  for (i = 0; i < n; i++)
 	    rvdata[i] = C_TO_XEN_DOUBLE(rl[i]);
 	}

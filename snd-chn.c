@@ -1680,7 +1680,7 @@ void make_fft_graph(chan_info *cp, snd_info *sp, axis_info *fap, axis_context *a
     }
   if (sp->channel_style == CHANNELS_SUPERIMPOSED)
     {
-      copy_context(cp); /* reset for axes etc */
+      copy_context(cp); /* reset for axes etc */ /* TODO: add test */
       if (cp->printing) ps_reset_color();
     }
   if (cp->show_transform_peaks) 
@@ -4237,7 +4237,8 @@ static XEN channel_get(XEN snd_n, XEN chn_n, int fld, char *caller)
 	      if (!(XEN_VECTOR_P(cp->properties)))
 		{
 		  cp->properties = XEN_MAKE_VECTOR(1, XEN_EMPTY_LIST);
-		  snd_protect(cp->properties);
+		  /* snd_protect(cp->properties); */
+		  XEN_PROTECT_FROM_GC(cp->properties); /* permanent */
 		}
 	      return(XEN_VECTOR_REF(cp->properties, 0));
 	      break;
@@ -4592,7 +4593,8 @@ static XEN channel_set(XEN snd_n, XEN chn_n, XEN on, int fld, char *caller)
       if (!(XEN_VECTOR_P(cp->properties)))
 	{
 	  cp->properties = XEN_MAKE_VECTOR(1, XEN_EMPTY_LIST);
-	  snd_protect(cp->properties);
+	  /* snd_protect(cp->properties); */
+	  XEN_PROTECT_FROM_GC(cp->properties); /* permanent */
 	}
       XEN_VECTOR_SET(cp->properties, 0, on);
       return(XEN_VECTOR_REF(cp->properties, 0));

@@ -8940,7 +8940,7 @@ the new data's end.  start-samp can also be a vct, as can samps."
   vct *v;
   if (VCT_P(samp_0))
     {
-      v = TO_VCT(samp_0);
+      v = TO_VCT(samp_0);/* TODO: add test */
       if (XEN_INTEGER_P(samps))
 	return(g_set_samples(XEN_ZERO, samps, samp_0, 
 			     XEN_UNDEFINED, XEN_UNDEFINED, XEN_UNDEFINED, XEN_UNDEFINED, XEN_UNDEFINED, XEN_UNDEFINED));
@@ -8951,7 +8951,7 @@ the new data's end.  start-samp can also be a vct, as can samps."
     {
       if ((XEN_INTEGER_P(samp_0)) && (VCT_P(samps)))
 	{
-	  v = TO_VCT(samps);
+	  v = TO_VCT(samps);/* TODO: add test */
 	  return(g_set_samples(samp_0, C_TO_XEN_INT(v->length), samps, 
 			       XEN_UNDEFINED, XEN_UNDEFINED, XEN_UNDEFINED, XEN_UNDEFINED, XEN_UNDEFINED, XEN_UNDEFINED));
 	}

@@ -26,11 +26,12 @@ void dump_protection(FILE *Fp)
   for (i = 0; i < gc_protection_size; i++)
     if (!(XEN_EQ_P(gcdata[i], DEFAULT_GC_VALUE)))
       {
-	fprintf(Fp,"  %d %p %s\n", i, gcdata[i], XEN_AS_STRING(gcdata[i]));
+	fprintf(Fp,"  %d %p %s", i, gcdata[i], XEN_AS_STRING(gcdata[i]));
 #if HAVE_GUILE
 	if (XEN_HOOK_P(gcdata[i]))
-	  fprintf(Fp, "    -> %s\n", XEN_AS_STRING(scm_hook_to_list(gcdata[i])));
+	  fprintf(Fp, " -> %s", XEN_AS_STRING(scm_hook_to_list(gcdata[i])));
 #endif
+	fprintf(Fp, "\n");
       }
 }
 #endif
@@ -40,6 +41,7 @@ int snd_protect(XEN obj)
   int i, old_size;
   XEN tmp;
   XEN *gcdata;
+  if (XEN_EQ_P(obj, XEN_EMPTY_LIST)) return(-1);
   if (gc_protection_size == 0)
     {
       gc_protection_size = 128;
@@ -87,6 +89,7 @@ void snd_unprotect(XEN obj)
 {
   int i;
   XEN *gcdata;
+  if (XEN_EQ_P(obj, XEN_EMPTY_LIST)) return;
   gcdata = XEN_VECTOR_ELEMENTS(gc_protection);
   if ((gc_last_set >= 0) && 
       (XEN_EQ_P(gcdata[gc_last_set], obj)))
@@ -108,9 +111,12 @@ void snd_unprotect(XEN obj)
 void snd_unprotect_at(int loc)
 {
   XEN *gcdata;
-  gcdata = XEN_VECTOR_ELEMENTS(gc_protection);
-  XEN_VECTOR_SET(gc_protection, loc, DEFAULT_GC_VALUE);
-  gc_last_cleared = loc;
+  if (loc >= 0)
+    {
+      gcdata = XEN_VECTOR_ELEMENTS(gc_protection);
+      XEN_VECTOR_SET(gc_protection, loc, DEFAULT_GC_VALUE);
+      gc_last_cleared = loc;
+    }
 }
 
 
@@ -907,7 +913,7 @@ static XEN g_snd_print(XEN msg)
     str = copy_string(XEN_TO_C_STRING(msg));
   else
     {
-      if (XEN_CHAR_P(msg))
+      if (XEN_CHAR_P(msg)) /* TODO: add test */
 	{
 	  str = (char *)CALLOC(2, sizeof(char));
 	  str[0] = XEN_TO_C_CHAR(msg);

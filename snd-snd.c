@@ -1976,7 +1976,8 @@ static XEN sound_get(XEN snd_n, int fld, char *caller)
 	  if (!(XEN_VECTOR_P(sp->properties)))
 	    {
 	      sp->properties = XEN_MAKE_VECTOR(1, XEN_EMPTY_LIST);
-	      snd_protect(sp->properties);
+	      /* snd_protect(sp->properties); */
+	      XEN_PROTECT_FROM_GC(sp->properties);
 	    }
 	  return(XEN_VECTOR_REF(sp->properties, 0));
 	}
@@ -2168,7 +2169,8 @@ static XEN sound_set(XEN snd_n, XEN val, int fld, char *caller)
 	  if (!(XEN_VECTOR_P(sp->properties)))
 	    {
 	      sp->properties = XEN_MAKE_VECTOR(1, XEN_EMPTY_LIST);
-	      snd_protect(sp->properties);
+	      /* snd_protect(sp->properties); */
+	      XEN_PROTECT_FROM_GC(sp->properties); /* permanent */
 	    }
 	  XEN_VECTOR_SET(sp->properties, 0, val);
 	  return(XEN_VECTOR_REF(sp->properties, 0));
