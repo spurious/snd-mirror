@@ -1,8 +1,8 @@
 #include "snd.h"
 
-/* TODO: blank slate (also new-sound orig dur etc) */
 /* TODO: drag axes if past end etc (also auto-extend in normal mix case) */
-/* TODO: check superimposed chan cases of selection, mark, cursor, mix */
+/* TODO: multichan mix/target: autosync, autoscale, etc */
+/* SOMEDAY: figure out how to include the incoming filename in the drag report */
 
 static Atom FILE_NAME;               /* Sun uses this, SGI uses STRING */
 static Atom COMPOUND_TEXT;           /* various Motif widgets use this and the next */
@@ -10,7 +10,16 @@ static Atom _MOTIF_COMPOUND_STRING;
 static Atom text_plain;              /* gtk uses this */
 
 /* another is _NETSCAPE_URL -- would be worth a look */
-/* TODO: from gtk we might see UTF8_STRING -- X has conversions for this, but not Motif */
+/* TODO: from gtk we might see UTF8_STRING -- glib has conversions for this, but not Motif */
+/* API mentioning "UTF8" or "utf8" is an XFree86 extension, introduced in
+   November 2000. Its presence is indicated through the following macro.
+   #define X_HAVE_UTF8_STRING 1
+   gchar* g_locale_from_utf8 (const gchar  *utf8string,
+			   gssize        len,            
+			   gsize        *bytes_read,     
+			   gsize        *bytes_written,  
+			   GError      **error);
+*/
 
 static XEN drop_hook;
 

@@ -7,10 +7,12 @@
   #include <config.h>
 #endif
 
-#define XM_DATE "20-May-03"
+#define XM_DATE "10-June-03"
 
 
 /* HISTORY: 
+ *   10-June:   added XmCvtByteStreamToXmString, XmCvtXmStringToByteStream, XmStringByteStreamLength.
+                removed XFreeStringList (a no-op).
  *   20-May:    showValue resource is int (enumeration) in Motif 2.  resizeWidth|Height are booleans, not ints.
  *   9-May:     Ruby fixups (some functions accidentally omitted earlier).
  *   8-Apr:     XSetErrorHandler proc takes XErrorEvent, not XEvent 2nd arg (thanks Friedrich Delgado Friedrichs)
@@ -218,7 +220,7 @@
  *    XtSetEventDispatcher (undoc), XtSignal stuff (undoc), XtGetErrorDatabaseText
  *    XtBlockHook stuff (undoc), XtRegisterExtensionSelector (undoc)
  *    XmResolvePartOffsets, XmResolveAllPartOffsets
- *    XpSet|GetLocaleHinter
+ *    XpSet|GetLocaleHinter, XFreeStringList
  *    XtHooksOfDisplay, XtRegiserDrawable, XtUnregisterDrawable
  *
  * added:
@@ -3000,6 +3002,34 @@ static XEN gxm_XmParseMappingCreate(XEN arg1, XEN arg2)
   return(C_TO_XEN_XmParseMapping(w));
 }
 
+static XEN gxm_XmCvtXmStringToByteStream(XEN str)
+{
+  #define H_XmCvtXmStringToByteStream "int XmCvtXmStringToByteStream(XmString str) converts an XmString into a byte stream."
+  unsigned char *prop = NULL;
+  int res;
+  XEN_ASSERT_TYPE(XEN_XmString_P(str), str, XEN_ONLY_ARG, "XmCvtXmStringToByteStream", "XmString");
+  res = XmCvtXmStringToByteStream(XEN_TO_C_XmString(str), &prop);
+  return(XEN_LIST_2(C_TO_XEN_INT(res), C_TO_XEN_STRING(prop)));
+}
+
+static XEN gxm_XmCvtByteStreamToXmString(XEN str)
+{
+  #define H_XmCvtByteStreamToXmString "XmString XmCvtByteStreamToXmString(char *str) converts a byte stream into an XmString."
+  XmString res;
+  XEN_ASSERT_TYPE(XEN_STRING_P(str), str, XEN_ONLY_ARG, "XmCvtByteStreamToXmString", "char *");
+  res = XmCvtByteStreamToXmString((unsigned char *)(XEN_TO_C_STRING(str)));
+  return(C_TO_XEN_XmString(res));
+}
+
+static XEN gxm_XmStringByteStreamLength(XEN str)
+{
+  #define H_XmStringByteStreamLength "int XmStringByteStreamLength(char *str) returns the length of the byte stream."
+  int res;
+  XEN_ASSERT_TYPE(XEN_STRING_P(str), str, XEN_ONLY_ARG, "XmStringByteStreamLength", "char *");
+  res = (int)XmStringByteStreamLength((unsigned char *)(XEN_TO_C_STRING(str)));
+  return(C_TO_XEN_INT(res));
+}
+
 static XEN gxm_XmStringPutRendition(XEN arg1, XEN arg2)
 {
   #define H_XmStringPutRendition "XmString XmStringPutRendition(XmString string, XmStringTag rendition) places \
@@ -3210,7 +3240,7 @@ XmParseTable parse_table, Cardinal parse_count, XmParseModel parse_model) unpars
   XmParseTable pt = NULL;
   int len;
   XEN_ASSERT_TYPE(XEN_XmString_P(arg1), arg1, 1, "XmStringUnparse", "XmString");
-  XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmStringUnparse", "XmStringTag");
+  XEN_ASSERT_TYPE(XEN_STRING_P(arg2) || XEN_FALSE_P(arg2), arg2, 2, "XmStringUnparse", "XmStringTag or #f");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XmStringUnparse", "XmTextType");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg4), arg4, 4, "XmStringUnparse", "XmTextType");
   XEN_ASSERT_TYPE(XEN_XmParseTable_P(arg5) || XEN_FALSE_P(arg5), arg5, 5, "XmStringUnparse", "XmParseTable");
@@ -3223,7 +3253,7 @@ XmParseTable parse_table, Cardinal parse_count, XmParseModel parse_model) unpars
   len = XEN_TO_C_INT(arg6);
   if (XEN_XmParseTable_P(arg5)) pt = XEN_TO_C_XmParseTable(arg5, len);
   rtn = C_TO_XEN_STRING((const char *)XmStringUnparse(XEN_TO_C_XmString(arg1), 
-						      XEN_TO_C_STRING(arg2), 
+						      (XEN_STRING_P(arg2)) ? XEN_TO_C_STRING(arg2) : NULL,
 						      type1, type2, pt, len,
 						      (XmParseModel)XEN_TO_C_INT(arg7)));
   free(pt);
@@ -11611,15 +11641,6 @@ window to the specified prop_window."
   return(C_TO_XEN_INT(XSetTransientForHint(XEN_TO_C_Display(arg1), XEN_TO_C_Window(arg2), XEN_TO_C_Window(arg3))));
 }
 
-static XEN gxm_XFreeStringList(XEN arg1)
-{
-  #define H_XFreeStringList "void XFreeStringList(list) releases memory allocated by  XTextPropertyToStringList and the missing charset \
-list allocated by  XCreateFontSet (a no-op in xm)."
-  /* DIFF: XFreeStringList is a no-op
-   */
-  return(XEN_FALSE);
-}
-
 static XEN gxm_XSetWMColormapWindows(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   #define H_XSetWMColormapWindows "Status XSetWMColormapWindows(display, w, colormap_windows, count) replaces the WM_COLORMAP_WINDOWS property \
@@ -17841,7 +17862,6 @@ static void define_procedures(void)
   XM_DEFINE_PROCEDURE(XGetCommand, gxm_XGetCommand, 2, 0, 0, H_XGetCommand);
   XM_DEFINE_PROCEDURE(XGetWMColormapWindows, gxm_XGetWMColormapWindows, 2, 0, 0, H_XGetWMColormapWindows);
   XM_DEFINE_PROCEDURE(XSetWMColormapWindows, gxm_XSetWMColormapWindows, 4, 0, 0, H_XSetWMColormapWindows);
-  XM_DEFINE_PROCEDURE(XFreeStringList, gxm_XFreeStringList, 1, 0, 0, H_XFreeStringList);
   XM_DEFINE_PROCEDURE(XSetTransientForHint, gxm_XSetTransientForHint, 3, 0, 0, H_XSetTransientForHint);
   XM_DEFINE_PROCEDURE(XActivateScreenSaver, gxm_XActivateScreenSaver, 1, 0, 0, H_XActivateScreenSaver);
   XM_DEFINE_PROCEDURE(XAllocColor, gxm_XAllocColor, 3, 0, 0, H_XAllocColor);
@@ -18582,6 +18602,10 @@ static void define_procedures(void)
   XM_DEFINE_PROCEDURE(XmGetFocusWidget, gxm_XmGetFocusWidget, 1, 0, 0, H_XmGetFocusWidget);
   XM_DEFINE_PROCEDURE(XmProcessTraversal, gxm_XmProcessTraversal, 2, 0, 0, H_XmProcessTraversal);
   XM_DEFINE_PROCEDURE(XmCreateMenuShell, gxm_XmCreateMenuShell, 3, 1, 0, H_XmCreateMenuShell);
+
+  XM_DEFINE_PROCEDURE(XmCvtXmStringToByteStream, gxm_XmCvtXmStringToByteStream, 1, 0, 0, H_XmCvtXmStringToByteStream);
+  XM_DEFINE_PROCEDURE(XmCvtByteStreamToXmString, gxm_XmCvtByteStreamToXmString, 1, 0, 0, H_XmCvtByteStreamToXmString);
+  XM_DEFINE_PROCEDURE(XmStringByteStreamLength, gxm_XmStringByteStreamLength, 1, 0, 0, H_XmStringByteStreamLength);
 
   XM_DEFINE_PROCEDURE(XmIsMessageBox, gxm_XmIsMessageBox, 1, 0, 0, NULL);
   XM_DEFINE_PROCEDURE(XmIsArrowButtonGadget, gxm_XmIsArrowButtonGadget, 1, 0, 0, NULL);
@@ -25395,9 +25419,6 @@ XmeToHorizontalPixels
 XmeToVerticalPixels
 
 The only useful-looking Xmu function is XmuReshapeWidget
-
-TODO: XmCvtByteStream...(2)
-      XmCvtTextProp...(2)
 
 */
 

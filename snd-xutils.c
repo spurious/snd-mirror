@@ -396,6 +396,10 @@ void check_for_event(snd_state *ss)
 	{
 	  XtAppNextEvent(app, &event);
 	  XtDispatchEvent(&event);
+	  /* widget = XtWindowToWidget(event.xany.display, event.xany.window); */
+	  /* TODO: we really need some way to ask which widget currently has keyboard focus! */
+	  /*       XGetInputFocus always returns the main shell's window */
+	  /*       I can't find a hook into the Xt dispatch mechanism, but they use the above code to choose the widget */
 	}
       else break;
     }

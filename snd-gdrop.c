@@ -97,11 +97,16 @@ static void clear_minibuffer_of(GtkWidget *w)
   clear_minibuffer(ss->sounds[snd]);
 }
 
+static int have_drag_title = FALSE;
 void drag_leave(GtkWidget *widget, GdkDragContext *context, guint time)
 {
   if (GTK_IS_DRAWING_AREA(widget))
     clear_minibuffer_of(widget);
-  else reflect_file_change_in_title(get_global_state());
+  else 
+    {
+      reflect_file_change_in_title(get_global_state());
+      have_drag_title = FALSE;
+    }
 }
 
 gboolean drag_motion(GtkWidget *widget, GdkDragContext *context, gint x, gint y, guint time)
@@ -110,20 +115,25 @@ gboolean drag_motion(GtkWidget *widget, GdkDragContext *context, gint x, gint y,
     report_mouse_position_as_seconds(widget, x);
   else
     {
-      snd_state *ss;
-      char *new_title;
-      ss = get_global_state();
-      new_title = (char *)CALLOC(64, sizeof(char));
-      sprintf(new_title, "%s: drop to open file", ss->startup_title);
-      gtk_window_set_title(GTK_WINDOW(MAIN_SHELL(ss)), new_title);
-      FREE(new_title);
+      if (!have_drag_title)
+	{
+	  snd_state *ss;
+	  char *new_title;
+	  ss = get_global_state();
+	  new_title = (char *)CALLOC(64, sizeof(char));
+	  sprintf(new_title, "%s: drop to open file", ss->startup_title);
+	  gtk_window_set_title(GTK_WINDOW(MAIN_SHELL(ss)), new_title);
+	  have_drag_title = TRUE;
+	  FREE(new_title);
+	}
     }
-  return(FALSE); /* TODO: or what?? */
+  return(TRUE); /* this is what the examples return in gtk/tests/testdnd.c -- don't know what it means, if anything */
 }
 
 void add_drop(snd_state *ss, GtkWidget *w)
 {
   gtk_drag_dest_set(w, GTK_DEST_DEFAULT_ALL, target_table, 4, (GdkDragAction)(GDK_ACTION_COPY | GDK_ACTION_MOVE));
+  /* this (the cast to GdkDragAction) is actually a bug in gtk -- they are OR'ing these together so the correct type is some flavor of int */
   g_signal_connect_closure_by_id(GTK_OBJECT(w),
 				 g_signal_lookup("drag_data_received", G_OBJECT_TYPE(GTK_OBJECT(w))),
 				 0,

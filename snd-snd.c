@@ -1,7 +1,7 @@
 #include "snd.h"
 #include "sndlib-strings.h"
 
-snd_info *snd_new_file(snd_state *ss, char *newname, int header_type, int data_format, int srate, int chans, char *new_comment)
+snd_info *snd_new_file(snd_state *ss, char *newname, int header_type, int data_format, int srate, int chans, char *new_comment, off_t samples)
 {
   int chan, err;
   off_t size;
@@ -20,7 +20,7 @@ snd_info *snd_new_file(snd_state *ss, char *newname, int header_type, int data_f
 	    {
 	      chan = snd_reopen_write(ss, newname);
 	      lseek(chan, mus_header_data_location(), SEEK_SET);
-	      size = chans * mus_samples_to_bytes(data_format, 1);
+	      size = chans * mus_samples_to_bytes(data_format, samples);
 	      buf = (unsigned char *)CALLOC(size, sizeof(unsigned char));
 	      write(chan, buf, size);
 	      snd_close(chan, newname);
@@ -2907,16 +2907,18 @@ Any argument can be #f which causes its value to be taken from the sound being s
   return(newfile);
 }
 
-static XEN g_new_sound(XEN name, XEN type, XEN format, XEN srate, XEN chans, XEN comment) 
+static XEN g_new_sound(XEN name, XEN type, XEN format, XEN srate, XEN chans, XEN comment, XEN initial_length) 
 {
-  #define H_new_sound "(" S_new_sound " (name #f) (type #f) (format #f) (srate #f) (chans #f) (comment #f)): \
-create a new sound file with the indicated attributes; if any are omitted, the corresponding default-output variable is used"
+  #define H_new_sound "(" S_new_sound " (name #f) (type #f) (format #f) (srate #f) (chans #f) (comment #f) (initial-length #f)): \
+create a new sound file with the indicated attributes; if any are omitted, the corresponding default-output variable is used. \
+The 'initial-length' argument sets the number of samples (zeros) in the newly created sound. \n\
+  (new-sound \"test.snd\" mus-next mus-bshort 22050 1 \"no comment\" 22050)"
 
   snd_info *sp = NULL; 
   int ht, df, sr, ch, err;
   snd_state *ss;
   int chan;
-  off_t size;
+  off_t size, len = 1;
   unsigned char* buf;
   char *str = NULL, *com = NULL;
   XEN_ASSERT_TYPE(XEN_STRING_IF_BOUND_P(name), name, XEN_ARG_1, S_new_sound, "a string");
@@ -2925,6 +2927,7 @@ create a new sound file with the indicated attributes; if any are omitted, the c
   XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(srate), srate, XEN_ARG_4, S_new_sound, "a number");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(chans), chans, XEN_ARG_5, S_new_sound, "an integer");
   XEN_ASSERT_TYPE(XEN_STRING_IF_BOUND_P(comment), comment, XEN_ARG_6, S_new_sound, "a string");
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(initial_length), initial_length, XEN_ARG_7, S_new_sound, "an integer");
   ss = get_global_state();
   if (XEN_STRING_P(name))
     str = mus_expand_filename(XEN_TO_C_STRING(name));
@@ -2950,7 +2953,8 @@ create a new sound file with the indicated attributes; if any are omitted, the c
 		  if (XEN_STRING_P(comment))
 		    com = XEN_TO_C_STRING(comment);
 		  ss->catch_message = NULL;
-		  err = snd_write_header(ss, str, ht, sr, ch, 0, ch, df, com, snd_strlen(com), NULL);
+		  if (XEN_INTEGER_P(initial_length)) len = XEN_TO_C_OFF_T(initial_length);
+		  err = snd_write_header(ss, str, ht, sr, ch, 0, len * ch, df, com, snd_strlen(com), NULL);
 		  if (err == -1)
 		    {
 		      if (str) FREE(str);
@@ -2960,7 +2964,7 @@ create a new sound file with the indicated attributes; if any are omitted, the c
 		    }
 		  chan = snd_reopen_write(ss, str);
 		  lseek(chan, mus_header_data_location(), SEEK_SET);
-		  size = ch * mus_samples_to_bytes(df, 1); /* was 2 samples? 22-Mar-02 */
+		  size = ch * mus_samples_to_bytes(df, len);
 		  buf = (unsigned char *)CALLOC(size, sizeof(unsigned char));
 		  write(chan, buf, size);
 		  snd_close(chan, str);
@@ -3818,7 +3822,7 @@ XEN_ARGIFY_1(g_save_sound_w, g_save_sound)
 XEN_NARGIFY_1(g_open_sound_w, g_open_sound)
 XEN_NARGIFY_4(g_open_raw_sound_w, g_open_raw_sound)
 XEN_NARGIFY_1(g_view_sound_w, g_view_sound)
-XEN_ARGIFY_6(g_new_sound_w, g_new_sound)
+XEN_ARGIFY_7(g_new_sound_w, g_new_sound)
 XEN_ARGIFY_1(g_revert_sound_w, g_revert_sound)
 XEN_ARGIFY_7(g_save_sound_as_w, g_save_sound_as)
 XEN_ARGIFY_4(g_apply_controls_w, g_apply_controls)
@@ -4047,7 +4051,7 @@ If it returns #t, the apply is aborted."
   XEN_DEFINE_PROCEDURE(S_open_sound,           g_open_sound_w, 1, 0, 0,           H_open_sound);
   XEN_DEFINE_PROCEDURE(S_open_raw_sound,       g_open_raw_sound_w, 4, 0, 0,       H_open_raw_sound);
   XEN_DEFINE_PROCEDURE(S_view_sound,           g_view_sound_w, 1, 0, 0,           H_view_sound);
-  XEN_DEFINE_PROCEDURE(S_new_sound,            g_new_sound_w, 0, 6, 0,            H_new_sound);
+  XEN_DEFINE_PROCEDURE(S_new_sound,            g_new_sound_w, 0, 7, 0,            H_new_sound);
   XEN_DEFINE_PROCEDURE(S_revert_sound,         g_revert_sound_w, 0, 1, 0,         H_revert_sound);
   XEN_DEFINE_PROCEDURE(S_save_sound_as,        g_save_sound_as_w, 1, 6, 0,        H_save_sound_as);
   XEN_DEFINE_PROCEDURE(S_apply_controls,       g_apply_controls_w, 0, 4, 0,       H_apply_controls);

@@ -13117,7 +13117,8 @@ EDITS: 5
 	    (snd-display ";src-sound: ~A ~A ~A?" (sample 1000) (sample 1024) (sample 1010)))
 	(revert-sound)
 	(close-sound nind))
-      (let ((nind (new-sound "fmv.snd" mus-riff mus-lshort 22050 1 "this is a comment")))
+      (let ((nind (new-sound "fmv.snd" mus-riff mus-lshort 22050 1 "this is a comment" 22050)))
+	(if (not (= (frames nind) 22050)) (snd-display "; new-sound initial-length: ~A" (frames nind)))
 	(mix "pistol.snd") 
 	(map-chan (expsrc 2.0 nind)) 
 	(play-and-wait 0 nind)
@@ -33155,7 +33156,15 @@ EDITS: 2
 		    (if (not (XmString? str)) (snd-display ";XmStringTableToXmString: ~A" str))
 		    (XmStringToXmStringTable str #f)
 		    (let ((val (XmStringUnparse str "hiho" XmCHARSET_TEXT XmCHARSET_TEXT #f 0 XmOUTPUT_ALL)))
-		      (if (not (string=? val "hiho")) (snd-display ";XmStringUnparse: ~A" val)))
+		      (if (not (string=? val "hiho")) (snd-display ";XmStringUnparse: ~A" val))
+		      (set! val (XmStringUnparse (XmStringCreateLocalized "hi") #f XmCHARSET_TEXT XmCHARSET_TEXT #f 0 XmOUTPUT_ALL))
+		      (if (not (string=? val "hi")) (snd-display ";XmStringUnparse null tag: ~A" val))
+		      (let* ((hi (XmStringCreateLocalized "hiho"))
+			     (ho (XmCvtXmStringToByteStream hi)))
+			(if (not (= (XmStringByteStreamLength (cadr ho)) 39)) 
+			    (snd-display ";XmStringByteStreamLength: ~A" (XmStringByteStreamLength (cadr ho))))
+			(set! val (XmStringUnparse (XmCvtByteStreamToXmString (cadr ho)) #f XmCHARSET_TEXT XmCHARSET_TEXT #f 0 XmOUTPUT_ALL))
+			(if (not (string=? val "hiho")) (snd-display ";XmStringUnparse null tag of bytestream: ~A" val))))			
 		    (let* ((ind (open-sound "oboe.snd"))
 			   (grf (car (channel-widgets)))
 			   (dpy (XtDisplay grf))
@@ -35085,7 +35094,7 @@ EDITS: 2
 		     XScreenOfDisplay XDefaultScreenOfDisplay XEventMaskOfScreen XScreenNumberOfScreen
 		     XSetErrorHandler XSetIOErrorHandler XListPixmapFormats XListDepths XReconfigureWMWindow
 		     XGetWMProtocols XSetWMProtocols XIconifyWindow XWithdrawWindow XGetCommand XGetWMColormapWindows
-		     XFreeStringList XSetTransientForHint XActivateScreenSaver
+		     XSetTransientForHint XActivateScreenSaver
 		     XAllocColor XAllocColorCells XAllocColorPlanes XAllocNamedColor
 		     XAllowEvents XAutoRepeatOff XAutoRepeatOn XBell XBitmapBitOrder XBitmapPad XBitmapUnit
 		     XCellsOfScreen XChangeActivePointerGrab XChangeGC XChangeKeyboardControl XChangeKeyboardMapping

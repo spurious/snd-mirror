@@ -1,5 +1,6 @@
 Snd change log
 
+  10-Jun:    added initial-length arg to new-sound.
   2-June:    debug.scm and with-sound debugger in ws.scm.
   28-May:    snd 6.9.
   26-May:    x-axis-label.

@@ -2141,6 +2141,7 @@ static int new_file_cancelled = FALSE;
 static Widget new_dialog = NULL;
 static file_data *new_dialog_data = NULL;
 static Widget new_file_name = NULL;
+static off_t initial_samples = 1;
 
 static void new_file_ok_callback(Widget w, XtPointer context, XtPointer info) {new_file_cancelled = FALSE;}
 static void new_file_cancel_callback(Widget w, XtPointer context, XtPointer info) {new_file_cancelled = TRUE;}
@@ -2154,7 +2155,7 @@ snd_info *make_new_file_dialog(snd_state *ss, char *newname, int header_type, in
 {
   Arg args[20];
   int n;
-  off_t loc, samples;
+  off_t loc;
   XmString titlestr, xok, xcancel, xhelp;
   char *tmpstr, *title, *newer_name = NULL;
   snd_info *sp = NULL;
@@ -2214,7 +2215,7 @@ snd_info *make_new_file_dialog(snd_state *ss, char *newname, int header_type, in
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
-      new_dialog_data = make_file_data_panel(ss, form, "data-form", args, n, TRUE, default_output_type(ss), default_output_format(ss), FALSE, TRUE, FALSE);
+      new_dialog_data = make_file_data_panel(ss, form, "data-form", args, n, TRUE, default_output_type(ss), default_output_format(ss), FALSE, TRUE, TRUE);
 
       XtManageChild(new_dialog);
       if (!(ss->using_schemes))	
@@ -2239,7 +2240,7 @@ snd_info *make_new_file_dialog(snd_state *ss, char *newname, int header_type, in
       XmTextSetString(new_file_name, newname);
     }
 
-  load_header_and_data_lists(new_dialog_data, header_type, data_format, srate, chans, -1, -1, comment);
+  load_header_and_data_lists(new_dialog_data, header_type, data_format, srate, chans, -1, initial_samples, comment);
   if (!(XtIsManaged(new_dialog))) XtManageChild(new_dialog);
   if (with_background_processes(ss) != DISABLE_BACKGROUND_PROCESSES)
     {
@@ -2252,8 +2253,8 @@ snd_info *make_new_file_dialog(snd_state *ss, char *newname, int header_type, in
     {
       newer_name = XmTextGetString(new_file_name);
       if (newer_name == NULL) return(NULL);
-      tmpstr = read_file_data_choices(new_dialog_data, &srate, &chans, &header_type, &data_format, &loc, &samples);
-      sp = snd_new_file(ss, newer_name, header_type, data_format, srate, chans, tmpstr);
+      tmpstr = read_file_data_choices(new_dialog_data, &srate, &chans, &header_type, &data_format, &loc, &initial_samples);
+      sp = snd_new_file(ss, newer_name, header_type, data_format, srate, chans, tmpstr, initial_samples);
       XtFree(newer_name);
       if (tmpstr) FREE(tmpstr);
     }

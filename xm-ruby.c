@@ -332,7 +332,6 @@
   XEN_NARGIFY_2(gxm_XGetCommand_w, gxm_XGetCommand)
   XEN_NARGIFY_2(gxm_XGetWMColormapWindows_w, gxm_XGetWMColormapWindows)
   XEN_NARGIFY_4(gxm_XSetWMColormapWindows_w, gxm_XSetWMColormapWindows)
-  XEN_NARGIFY_1(gxm_XFreeStringList_w, gxm_XFreeStringList)
   XEN_NARGIFY_3(gxm_XSetTransientForHint_w, gxm_XSetTransientForHint)
   XEN_NARGIFY_1(gxm_XActivateScreenSaver_w, gxm_XActivateScreenSaver)
   XEN_NARGIFY_3(gxm_XAllocColor_w, gxm_XAllocColor)
@@ -1088,6 +1087,11 @@
   XEN_VARGIFY(gxm_XmStringDraw_w, gxm_XmStringDraw)
   XEN_VARGIFY(gxm_XmStringDrawImage_w, gxm_XmStringDrawImage)
   XEN_VARGIFY(gxm_XmStringDrawUnderline_w, gxm_XmStringDrawUnderline)
+
+  XEN_NARGIFY_1(gxm_XmCvtXmStringToByteStream_w, gxm_XmCvtXmStringToByteStream)
+  XEN_NARGIFY_1(gxm_XmCvtByteStreamToXmString_w, gxm_XmCvtByteStreamToXmString)
+  XEN_NARGIFY_1(gxm_XmStringByteStreamLength_w, gxm_XmStringByteStreamLength)
+
   XEN_NARGIFY_1(gxm_XmGetDestination_w, gxm_XmGetDestination)
   XEN_NARGIFY_1(gxm_XmIsTraversable_w, gxm_XmIsTraversable)
   XEN_NARGIFY_1(gxm_XmGetVisibility_w, gxm_XmGetVisibility)
@@ -1609,7 +1613,6 @@ static void define_procedures(void)
   XM_DEFINE_PROCEDURE(XGetCommand, gxm_XGetCommand_w, 2, 0, 0, H_XGetCommand);
   XM_DEFINE_PROCEDURE(XGetWMColormapWindows, gxm_XGetWMColormapWindows_w, 2, 0, 0, H_XGetWMColormapWindows);
   XM_DEFINE_PROCEDURE(XSetWMColormapWindows, gxm_XSetWMColormapWindows_w, 4, 0, 0, H_XSetWMColormapWindows);
-  XM_DEFINE_PROCEDURE(XFreeStringList, gxm_XFreeStringList_w, 1, 0, 0, H_XFreeStringList);
   XM_DEFINE_PROCEDURE(XSetTransientForHint, gxm_XSetTransientForHint_w, 3, 0, 0, H_XSetTransientForHint);
   XM_DEFINE_PROCEDURE(XActivateScreenSaver, gxm_XActivateScreenSaver_w, 1, 0, 0, H_XActivateScreenSaver);
   XM_DEFINE_PROCEDURE(XAllocColor, gxm_XAllocColor_w, 3, 0, 0, H_XAllocColor);
@@ -2302,6 +2305,11 @@ static void define_procedures(void)
   XM_DEFINE_PROCEDURE(XmStringSeparatorCreate, gxm_XmStringSeparatorCreate_w, 0, 0, 0, H_XmStringSeparatorCreate);
   XM_DEFINE_PROCEDURE(XmStringInitContext, gxm_XmStringInitContext_w, 1, 0, 0, H_XmStringInitContext);
   XM_DEFINE_PROCEDURE(XmStringFreeContext, gxm_XmStringFreeContext_w, 1, 0, 0, H_XmStringFreeContext);
+
+  XM_DEFINE_PROCEDURE(XmCvtXmStringToByteStream, gxm_XmCvtXmStringToByteStream_w, 1, 0, 0, H_XmCvtXmStringToByteStream);
+  XM_DEFINE_PROCEDURE(XmCvtByteStreamToXmString, gxm_XmCvtByteStreamToXmString_w, 1, 0, 0, H_XmCvtByteStreamToXmString);
+  XM_DEFINE_PROCEDURE(XmStringByteStreamLength, gxm_XmStringByteStreamLength_w, 1, 0, 0, H_XmStringByteStreamLength);
+
 #if MOTIF_2
   XM_DEFINE_PROCEDURE(XmStringConcatAndFree, gxm_XmStringConcatAndFree_w, 2, 0, 0, H_XmStringConcatAndFree);
   XM_DEFINE_PROCEDURE(XmStringIsVoid, gxm_XmStringIsVoid_w, 1, 0, 0, H_XmStringIsVoid);

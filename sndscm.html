@@ -2416,6 +2416,7 @@ waterfall spectrum display of the incoming audio data.  <b>stop-waterfall</b> tu
   <em class=def><a name="selectfile">select-file</a></em> func <i>title dir filter help</i>
   <em class=def><a name="sndclockicon">snd-clock-icon</a></em> snd hour
   <em class=def><a name="makesoundbox">make-sound-box</a></em> name parent select-func peak-func sounds args
+  <em class=def>show-sounds-in-directory</em> (dir ".")
   <em class=def><a name="showsmptelabel">show-smpte-label</a></em> on-or-off
   <em class=def><a name="makelevelmeter">make-level-meter</a></em> parent width height
   <em class=def><a name="showdiskspace">show-disk-space</a></em>
@@ -2489,6 +2490,10 @@ mouse location in that channel.
 		(list "oboe.snd" "pistol.snd" "cardinal.snd" "storm.snd")
 		'())
 </pre>
+<p><b>show-sounds-in-directory</b> calls make-sound-box, filling it with
+any sounds found in the directory passed as its argument, defaulting to 
+the current directory.
+</p>
 <p><b>show-smpte-label</b> shows the current SMPTE frame number in a box
 in the upper left corner of the graph.
 </p><p><b>make-level-meter</b> creates A VU meter of any width and height, returning

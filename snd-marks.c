@@ -8,6 +8,8 @@
  * "current" can change at any time.
  */
 
+/* TODO: in gtk if mark is at far left, drag can leave the original unerased */
+
 #define NO_SUCH_MARK XEN_ERROR_TYPE("no-such-mark")
 
 typedef mark *mark_map_func(chan_info *cp, mark *mp, void *m);
@@ -341,10 +343,8 @@ static Cessate WatchMouse(Indicium cp)
 
 static void start_mark_watching(chan_info *cp, mark *mp)
 {
-  snd_state *ss;
   moving_mark = mp;
-  ss = cp->state;
-  watch_mouse_button = BACKGROUND_ADD(ss, WatchMouse, cp);
+  watch_mouse_button = BACKGROUND_ADD(cp->state, WatchMouse, cp);
   watching_mouse = TRUE;
 }
 

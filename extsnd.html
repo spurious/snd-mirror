@@ -5001,7 +5001,7 @@ actual dB value calculated to -140.0 or -180.0 (depending on which function is c
 
 <!-- new-sound -->
 <tr><td colspan=2>
-<span class=defbox><code><em class=def><a name="sndnew">new-sound</a></em> (<i>name header-type data-format srate chans comment</i>)</code></span>
+<span class=defbox><code><em class=def><a name="sndnew">new-sound</a></em> (<i>name header-type data-format srate chans comment initial-length</i>)</code></span>
 </td></tr>
 <tr><td></td><td>
 create a new (empty) sound named <i>name</i>.  The following function opens a new (blank) sound,
@@ -8134,7 +8134,9 @@ A Scheme implementation: <a href="sndscm.html#addsoundextension1">add-sound-file
 <tr><td colspan=2>
 <span class=defbox><code><em class=def><a name="sndbindkey">bind-key</a></em> (key state func extended origin) </code></span></td></tr>
 <tr><td></td><td>
-Cause <i>key</i> (an integer) with modifiers <i>state</i> (and preceding C-x if <i>extended</i>) to evaluate <i>func</i>.
+Cause <i>key</i> (an integer) with modifiers <i>state</i> (and preceding C-x if <i>extended</i>) to evaluate <i>func</i>
+when the graph widget has keyboard "focus".  If bind-key seems to be a no-op, try clicking in the graph to
+force it to take the focus.
 If <i>origin</i> is included, it is the name reported if an error occurs.  The ugly default is "user key func".
 
 </td></tr><tr><td></td><td>

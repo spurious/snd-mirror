@@ -1146,7 +1146,7 @@ void make_prevfiles_list_1(snd_state *ss);
 char **set_header_and_data_positions(file_data *fdat, int type, int format);
 int check_for_filename_collisions_and_save(snd_state *ss, snd_info *sp, char *str, int save_type, int srate, int type, int format, char *comment);
 void edit_header_callback(snd_state *ss, snd_info *sp, file_data *edit_header_data);
-snd_info *snd_new_file(snd_state *ss, char *newname, int header_type, int data_format, int srate, int chans, char *new_comment);
+snd_info *snd_new_file(snd_state *ss, char *newname, int header_type, int data_format, int srate, int chans, char *new_comment, off_t samples);
 void reflect_file_change_in_title(snd_state *ss);
 
 int header_type_from_position(int pos);

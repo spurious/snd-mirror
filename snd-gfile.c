@@ -1516,9 +1516,11 @@ static void new_file_help_callback(GtkWidget *w, gpointer context)
   new_file_dialog_help((snd_state *)context);
 }
 
+static off_t initial_samples = 1;
+
 snd_info *make_new_file_dialog(snd_state *ss, char *newname, int header_type, int data_format, int srate, int chans, char *comment)
 {
-  off_t loc, samples;
+  off_t loc;
   char *tmpstr, *title, *newer_name = NULL;
   snd_info *sp = NULL;
   GtkWidget *name_label, *hform;
@@ -1578,7 +1580,7 @@ snd_info *make_new_file_dialog(snd_state *ss, char *newname, int header_type, in
       gtk_entry_set_text(GTK_ENTRY(new_file_name), newname);
 
       new_dialog_data = make_file_data_panel(ss, GTK_DIALOG(new_dialog)->vbox, "data-form", TRUE, 
-					     default_output_type(ss), default_output_format(ss), FALSE, FALSE, FALSE);
+					     default_output_type(ss), default_output_format(ss), FALSE, FALSE, TRUE);
       set_dialog_widget(ss, NEW_FILE_DIALOG, new_dialog);
     }
   else
@@ -1586,7 +1588,7 @@ snd_info *make_new_file_dialog(snd_state *ss, char *newname, int header_type, in
       gtk_window_set_title(GTK_WINDOW(new_dialog), title);
       gtk_entry_set_text(GTK_ENTRY(new_file_name), newname);
     }
-  load_header_and_data_lists(new_dialog_data, header_type, data_format, srate, chans, -1, -1, comment);
+  load_header_and_data_lists(new_dialog_data, header_type, data_format, srate, chans, -1, initial_samples, comment);
   new_file_done = FALSE;
   gtk_widget_show(new_dialog);
   while (!new_file_done) gtk_main_iteration();
@@ -1597,8 +1599,8 @@ snd_info *make_new_file_dialog(snd_state *ss, char *newname, int header_type, in
     {
       newer_name = (char *)gtk_entry_get_text(GTK_ENTRY(new_file_name));
       if (newer_name == NULL) return(NULL);
-      tmpstr = read_file_data_choices(new_dialog_data, &srate, &chans, &header_type, &data_format, &loc, &samples);
-      sp = snd_new_file(ss, newer_name, header_type, data_format, srate, chans, tmpstr);
+      tmpstr = read_file_data_choices(new_dialog_data, &srate, &chans, &header_type, &data_format, &loc, &initial_samples);
+      sp = snd_new_file(ss, newer_name, header_type, data_format, srate, chans, tmpstr, initial_samples);
       if (tmpstr) FREE(tmpstr);
     }
   return(sp);
