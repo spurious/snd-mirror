@@ -21,6 +21,7 @@
 #define S_list2vct       "list->vct"
 #define S_vct2list       "vct->list"
 #define S_vector2vct     "vector->vct"
+#define S_vct2vector     "vct->vector"
 #define S_vct_moveB      "vct-move!"
 #define S_vct_subseq     "vct-subseq"
 #define S_vct            "vct"
@@ -41,6 +42,7 @@ XEN make_vct(int len, Float *data);
 XEN make_vct_wrapper(int len, Float *data);
 vct *get_vct(XEN arg);
 void set_vct_print_length(int len);
+XEN vct2vector(XEN vobj);
 
 #define TO_VCT(arg) ((vct *)XEN_OBJECT_REF(arg))
 #define VCT_P(arg) vct_p(arg)

@@ -5382,8 +5382,162 @@ static XEN g_backward_sample(XEN count, XEN snd, XEN chn)
   return(C_TO_XEN_INT(cp->cursor));
 }
 
+static XEN g_graph(XEN ldata, XEN xlabel, XEN x0, XEN x1, XEN y0, XEN y1, XEN snd_n, XEN chn_n, XEN force_display)
+{
+  #define H_graph "(" S_graph " data &optional xlabel x0 x1 y0 y1 snd chn force-display)\n\
+displays 'data' as a graph with x axis label 'xlabel', axis units going from x0 to x1 and y0 to y1; 'data' can be a list, vct, or vector. \
+If 'data' is a list of numbers, it is treated as an envelope."
+
+  chan_info *cp;
+  lisp_grf *lg;
+  XEN data = XEN_UNDEFINED; XEN lst;
+  char *label = NULL;
+  vct *v = NULL;
+  XEN *vdata;
+  int i, len, graph, graphs, need_update = 0;
+  Float ymin, ymax, val;
+  double nominal_x0, nominal_x1;
+  lisp_grf *old_lp = NULL;
+  Latus h = 0, w = 0, ww = 0;
+  Locus o = 0, gx0 = 0;
+  axis_info *uap = NULL;
+  /* ldata can be a vct object, a vector, or a list of either */
+  XEN_ASSERT_TYPE(((VCT_P(ldata)) || 
+		   (XEN_VECTOR_P(ldata)) || 
+		   ((XEN_LIST_P(ldata)) && (XEN_LIST_LENGTH(ldata) > 0))),
+		  ldata, XEN_ARG_1, S_graph, "a vct, vector, or list");
+  ASSERT_CHANNEL(S_graph, snd_n, chn_n, 7);
+  cp = get_cp(snd_n, chn_n, S_graph);
+  ymin = 32768.0;
+  ymax = -32768.0;
+  if ((cp->sound_ctr == -1) || 
+      (cp->sounds == NULL) || 
+      (cp->sounds[cp->sound_ctr] == NULL) ||
+      (cp->axis == NULL))
+    return(XEN_FALSE);
+  if (XEN_STRING_P(xlabel)) label = XEN_TO_C_STRING(xlabel); 
+  if (XEN_NUMBER_P(x0)) nominal_x0 = XEN_TO_C_DOUBLE(x0); else nominal_x0 = 0.0;
+  if (XEN_NUMBER_P(x1)) nominal_x1 = XEN_TO_C_DOUBLE(x1); else nominal_x1 = 1.0;
+  if (XEN_NUMBER_P(y0)) ymin = XEN_TO_C_DOUBLE(y0);
+  if (XEN_NUMBER_P(y1)) ymax = XEN_TO_C_DOUBLE(y1);
+  if ((!(XEN_LIST_P(ldata))) || 
+      (XEN_NUMBER_P(XEN_CAR(ldata))))
+    graphs = 1; 
+  else graphs = XEN_LIST_LENGTH(ldata);
+  if (graphs == 0) return(XEN_FALSE);
+  lg = cp->lisp_info;
+  if ((lg) && (graphs != lg->graphs)) 
+    {
+      old_lp = (lisp_grf *)(cp->lisp_info);
+      uap = old_lp->axis;
+      h = uap->height;
+      w = uap->width;
+      ww = uap->window_width;
+      o = uap->y_offset;
+      gx0 = uap->graph_x0;
+      cp->lisp_info = free_lisp_info(cp);
+    }
+  if (!(cp->lisp_info))
+    {
+      cp->lisp_info = (lisp_grf *)CALLOC(graphs, sizeof(lisp_grf));
+      lg = cp->lisp_info;
+      lg->len = (int *)CALLOC(graphs, sizeof(int));
+      lg->graphs = graphs;
+      lg->data = (Float **)CALLOC(graphs, sizeof(Float *));
+      need_update = 1;
+    }
+  if ((XEN_LIST_P_WITH_LENGTH(ldata, len)) && 
+      (XEN_NUMBER_P(XEN_CAR(ldata))))
+    {
+      lg = cp->lisp_info;
+      lg->env_data = 1;
+      if (lg->len[0] != len)
+	{
+	  if (lg->data[0]) FREE(lg->data[0]);
+	  lg->data[0] = (Float *)CALLOC(len, sizeof(Float));
+	  lg->len[0] = len;
+	}
+      for (i = 0, lst = XEN_COPY_ARG(ldata); i < len; i++, lst = XEN_CDR(lst))
+	lg->data[0][i] = XEN_TO_C_DOUBLE(XEN_CAR(lst));
+      if ((!XEN_NUMBER_P(y0)) || 
+	  (!XEN_NUMBER_P(y1)))
+	{
+	  for (i = 1; i < len; i += 2)
+	    {
+	      val = lg->data[0][i];
+	      if (ymin > val) ymin = val;
+	      if (ymax < val) ymax = val;
+	    }
+	}
+      if (!XEN_NUMBER_P(x0)) nominal_x0 = lg->data[0][0];
+      if (!XEN_NUMBER_P(x1)) nominal_x1 = lg->data[0][len - 2];
+    }
+  else
+    {
+      lg = cp->lisp_info;
+      lg->env_data = 0;
+      for (graph = 0; graph < graphs; graph++)
+	{
+	  if (XEN_LIST_P(ldata))
+	    data = XEN_LIST_REF(ldata, graph);
+	  else data = ldata;
+	  if (VCT_P(data))
+	    {
+	      v = (vct *)XEN_OBJECT_REF(data);
+	      len = v->length;
+	    }
+	  else len = XEN_VECTOR_LENGTH(data);
+	  if (lg->len[graph] != len)
+	    {
+	      if (lg->data[graph]) FREE(lg->data[graph]);
+	      lg->data[graph] = (Float *)CALLOC(len, sizeof(Float));
+	      lg->len[graph] = len;
+	    }
+	  if (v)
+	    memcpy((void *)(lg->data[graph]), (void *)(v->data), len * sizeof(Float));
+	  else 
+	    {
+	      vdata = XEN_VECTOR_ELEMENTS(data);
+	      for (i = 0; i < len; i++) 
+		lg->data[graph][i] = XEN_TO_C_DOUBLE(vdata[i]);
+	    }
+	  if ((!XEN_NUMBER_P(y0)) || 
+	      (!XEN_NUMBER_P(y1)))
+	    {
+	      for (i = 0; i < len; i++)
+		{
+		  val = lg->data[graph][i];
+		  if (ymin > val) ymin = val;
+		  if (ymax < val) ymax = val;
+		}
+	    }
+	}
+    }
+  lg->axis = make_axis_info(cp, nominal_x0, nominal_x1, ymin, ymax, label, nominal_x0, nominal_x1, ymin, ymax, lg->axis);
+  if (need_update)
+    {
+      uap = lg->axis;
+      uap->height = h;
+      uap->window_width = ww;
+      uap->y_offset = o;
+      uap->width = w;
+      uap->graph_x0 = gx0;
+    }
+  cp->graph_lisp_p = 1;
+  if ((XEN_NOT_BOUND_P(force_display)) || 
+      (XEN_NOT_FALSE_P(force_display)))
+    {
+      if (need_update)
+	update_graph(cp, NULL);
+      else display_channel_lisp_data(cp, cp->sound, cp->state);
+    }
+  return(xen_return_first(XEN_FALSE, data));
+}
+
+
 
 #ifdef XEN_ARGIFY_1
+XEN_ARGIFY_9(g_graph_w, g_graph)
 XEN_ARGIFY_2(g_edits_w, g_edits)
 XEN_ARGIFY_3(g_peaks_w, g_peaks)
 XEN_ARGIFY_2(g_edit_hook_w, g_edit_hook)
@@ -5504,6 +5658,7 @@ XEN_ARGIFY_2(g_update_time_graph_w, g_update_time_graph)
 XEN_ARGIFY_2(g_update_lisp_graph_w, g_update_lisp_graph)
 XEN_ARGIFY_2(g_update_transform_w, g_update_transform)
 #else
+#define g_graph_w g_graph
 #define g_edits_w g_edits
 #define g_peaks_w g_peaks
 #define g_edit_hook_w g_edit_hook
@@ -5629,6 +5784,7 @@ void g_init_chn(void)
 {
   cp_edpos = XEN_UNDEFINED;
 
+  XEN_DEFINE_PROCEDURE(S_graph,                   g_graph_w, 1, 8, 0,                   H_graph);
   XEN_DEFINE_PROCEDURE(S_edits,                   g_edits_w, 0, 2, 0,                   H_edits);
   XEN_DEFINE_PROCEDURE(S_peaks,                   g_peaks_w, 0, 3, 0,                   H_peaks);
   XEN_DEFINE_PROCEDURE(S_edit_hook,               g_edit_hook_w, 0, 2, 0,               H_edit_hook);

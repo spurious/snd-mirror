@@ -983,7 +983,7 @@ static void command_help_callback(Widget w, XtPointer context, XtPointer info)
   snd_help_with_url_and_wrap((snd_state *)context,
 			     "Lisp Listener",
 			     "#customization",
-"This is the lisp listener pane; it is one way to access the Guile Scheme interpreter.");
+"This is the lisp listener pane; it is one way to access the interpreter.");
 }
 
 static XEN mouse_enter_listener_hook;

@@ -656,7 +656,9 @@ static XEN_MARK_OBJECT_TYPE mark_mus_xen(XEN obj)
 static void mus_xen_free(mus_xen *ms)
 {
   if (ms->nvcts != DONT_FREE_FRAME) mus_free(ms->gen);
-  if (ms->vcts) FREE(ms->vcts);  
+  ms->gen = NULL;
+  if (ms->vcts) FREE(ms->vcts); 
+  ms->vcts = NULL;
   FREE(ms);
 }
 

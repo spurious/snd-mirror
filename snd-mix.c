@@ -3777,10 +3777,10 @@ static XEN g_set_mix_amp_env(XEN n, XEN chan, XEN val)
   int res;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(n), n, XEN_ARG_1, "set-" S_mix_amp_env, "an integer");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(chan), chan, XEN_ARG_2, "set-" S_mix_amp_env, "an integer");
+  XEN_ASSERT_TYPE(XEN_LIST_P(val), val, XEN_ARG_3, "set-" S_mix_amp_env, "a list");
   res = set_mix_amp_env(XEN_TO_C_INT(n), 
 			XEN_TO_C_INT(chan), 
-			e = get_env(val, 
-				    "set-" S_mix_amp_env));
+			e = get_env(val, "set-" S_mix_amp_env));
   if (e) free_env(e);
   if (res == INVALID_MIX_ID)
     snd_no_such_mix_error("set-" S_mix_amp_env, n);

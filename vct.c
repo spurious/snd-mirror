@@ -11,6 +11,7 @@
  *   XEN make_vct_wrapper(int len, Float *data) make a new vct that doesn't free data when garbage collector strikes
  *   vct *get_vct(XEN arg)                 given XEN arg, return vct object
  *   void set_vct_print_length(int val)    set vct print length (default 10)
+ *   XEN vct_to_vector(XEN vct)            return vector of vct contents
  *
  * Scheme side:
  *   (make-vct len)                        make new vct
@@ -33,6 +34,7 @@
  *   (list->vct lst)                       return vct with elements of list lst
  *   (vct->list v1)                        return list with elements of vct v1
  *   (vector->vct vect)                    return vct with elements of vector vect
+ *   (vct->vector v)                       return vector of vct contents
  *   (vct-move! v new old)                 v[new++] = v[old++] -> v
  *   (vct-subseq v start end &opt vnew)    vnew = v[start..end]
  *
@@ -562,6 +564,33 @@ static XEN vct_peak(XEN obj)
   return(xen_return_first(C_TO_XEN_DOUBLE(val), obj));
 }
 
+static XEN vct_subseq(XEN vobj, XEN start, XEN end, XEN newv)
+{
+  #define H_vct_subseq "(" S_vct_subseq " v start end &optional vnew) -> vnew with vals v[start..end]"
+  vct *vold, *vnew;
+  XEN res;
+  int i, old_len, new_len, j;
+  XEN_ASSERT_TYPE(VCT_P(vobj), vobj, XEN_ARG_1, S_vct_subseq, "a vct");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(start), start, XEN_ARG_2, S_vct_subseq, "an integer");
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(end), end, XEN_ARG_3, S_vct_subseq, "an integer");
+  vold = TO_VCT(vobj);
+  old_len = vold->length;
+  if (XEN_INTEGER_P(end))
+    new_len = XEN_TO_C_INT(end) - XEN_TO_C_INT(start) + 1;
+  else new_len = old_len - XEN_TO_C_INT(start);
+  if (new_len <= 0) 
+    return(XEN_FALSE);
+  if (VCT_P(newv))
+    res = newv;
+  else res = make_vct(new_len, (Float *)CALLOC(new_len, sizeof(Float)));
+  vnew = TO_VCT(res);
+  if (new_len > vnew->length) 
+    new_len = vnew->length;
+  for (i = XEN_TO_C_INT(start), j = 0; (j < new_len) && (i < old_len); i++, j++)
+    vnew->data[j] = vold->data[i];
+  return(xen_return_first(res, vobj, vnew));
+}
+
 static XEN list2vct(XEN lst)
 {
   #define H_list2vct "(" S_list2vct " lst) -> a new vct object filled with elements of list lst"
@@ -619,31 +648,21 @@ static XEN vector2vct(XEN vect)
   return(xen_return_first(scv, vect));
 }
 
-static XEN vct_subseq(XEN vobj, XEN start, XEN end, XEN newv)
+XEN vct2vector(XEN vobj)
 {
-  #define H_vct_subseq "(" S_vct_subseq " v start end &optional vnew) -> vnew with vals v[start..end]"
-  vct *vold, *vnew;
-  XEN res;
-  int i, old_len, new_len, j;
-  XEN_ASSERT_TYPE(VCT_P(vobj), vobj, XEN_ARG_1, S_vct_subseq, "a vct");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(start), start, XEN_ARG_2, S_vct_subseq, "an integer");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(end), end, XEN_ARG_3, S_vct_subseq, "an integer");
-  vold = TO_VCT(vobj);
-  old_len = vold->length;
-  if (XEN_INTEGER_P(end))
-    new_len = XEN_TO_C_INT(end) - XEN_TO_C_INT(start) + 1;
-  else new_len = old_len - XEN_TO_C_INT(start);
-  if (new_len <= 0) 
-    return(XEN_FALSE);
-  if (VCT_P(newv))
-    res = newv;
-  else res = make_vct(new_len, (Float *)CALLOC(new_len, sizeof(Float)));
-  vnew = TO_VCT(res);
-  if (new_len > vnew->length) 
-    new_len = vnew->length;
-  for (i = XEN_TO_C_INT(start), j = 0; (j < new_len) && (i < old_len); i++, j++)
-    vnew->data[j] = vold->data[i];
-  return(xen_return_first(res, vobj, vnew));
+  #define H_vct2vector "(" S_vct2vector " vct) -> a new vector with the elements of vct"
+  vct *v;
+  int i, len;
+  XEN new_vect;
+  XEN *vdata;
+  XEN_ASSERT_TYPE(VCT_P(vobj), vobj, XEN_ONLY_ARG, S_vct2vector, "a vct");
+  v = TO_VCT(vobj);
+  len = v->length;
+  new_vect = XEN_MAKE_VECTOR(len, C_TO_XEN_DOUBLE(0.0));
+  vdata = XEN_VECTOR_ELEMENTS(new_vect);
+  for (i = 0; i < len; i++) 
+    vdata[i] = C_TO_XEN_DOUBLE(v->data[i]);
+  return(xen_return_first(new_vect, vobj));
 }
 
 #ifdef XEN_ARGIFY_1
@@ -653,6 +672,7 @@ XEN_NARGIFY_1(g_vct_p_w, g_vct_p)
 XEN_NARGIFY_1(list2vct_w, list2vct)
 XEN_NARGIFY_1(vct2list_w, vct2list)
 XEN_NARGIFY_1(vector2vct_w, vector2vct)
+XEN_NARGIFY_1(vct2vector_w, vct2vector)
 XEN_NARGIFY_1(vct_length_w, vct_length)
 XEN_NARGIFY_2(vct_ref_w, vct_ref)
 XEN_NARGIFY_3(vct_set_w, vct_set)
@@ -677,6 +697,7 @@ XEN_VARGIFY(g_vct_w, g_vct)
 #define list2vct_w list2vct
 #define vct2list_w vct2list
 #define vector2vct_w vector2vct
+#define vct2vector_w vct2vector
 #define vct_length_w vct_length
 #define vct_ref_w vct_ref
 #define vct_set_w vct_set
@@ -763,6 +784,7 @@ void init_vct(void)
   XEN_DEFINE_PROCEDURE(S_list2vct,      list2vct_w, 1, 0, 0,      H_list2vct);
   XEN_DEFINE_PROCEDURE(S_vct2list,      vct2list_w, 1, 0, 0,      H_vct2list);
   XEN_DEFINE_PROCEDURE(S_vector2vct,    vector2vct_w, 1, 0, 0,    H_vector2vct);
+  XEN_DEFINE_PROCEDURE(S_vct2vector,    vct2vector_w, 1, 0, 0,    H_vct2vector);
   XEN_DEFINE_PROCEDURE(S_vct_length,    vct_length_w, 1, 0, 0,    H_vct_length);
   XEN_DEFINE_PROCEDURE(S_vct_ref,       vct_ref_w, 2, 0, 0,       H_vct_ref);
   XEN_DEFINE_PROCEDURE(S_vct_setB,      vct_set_w, 3, 0, 0,       H_vct_setB);

@@ -1846,62 +1846,6 @@ static XEN g_close_sound_file(XEN g_fd, XEN g_bytes)
   return(C_TO_XEN_INT(result));
 }
 
-static XEN samples2vct_1(XEN samp_0, XEN samps, XEN snd_n, XEN chn_n, XEN v, XEN edpos, const char *caller)
-{
-  chan_info *cp;
-  snd_fd *sf;
-  Float *fvals;
-  int i, len, beg, pos;
-  vct *v1 = get_vct(v);
-  XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(samp_0), samp_0, XEN_ARG_1, caller, "a number");
-  XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(samps), samps, XEN_ARG_2, caller, "a number");
-  ASSERT_CHANNEL(caller, snd_n, chn_n, 3);
-  cp = get_cp(snd_n, chn_n, caller);
-  pos = to_c_edit_position(cp, edpos, caller, 6);
-  beg = XEN_TO_C_INT_OR_ELSE(samp_0, 0);
-  len = XEN_TO_C_INT_OR_ELSE(samps, cp->samples[pos] - beg);
-  if ((beg == 0) && (len == 0)) return(XEN_FALSE); /* empty file (channel) possibility */
-  if (len <= 0) 
-    XEN_ERROR(IMPOSSIBLE_BOUNDS,
-	      XEN_LIST_3(C_TO_XEN_STRING(caller),
-			 C_TO_XEN_INT(beg),
-			 C_TO_XEN_INT(len)));
-  if (v1)
-    {
-      fvals = v1->data;
-      if (len > v1->length)
-	len = v1->length;
-    }
-  else fvals = (Float *)MALLOC(len * sizeof(Float));
-  sf = init_sample_read_any(beg, cp, READ_FORWARD, pos);
-  if (sf)
-    {
-      for (i = 0; i < len; i++) 
-	fvals[i] = next_sample_to_float(sf);
-      free_snd_fd(sf);
-    }
-  if (v1)
-    return(v);
-  else return(make_vct(len, fvals));
-}
-
-static XEN samples2vct(XEN samp_0, XEN samps, XEN snd_n, XEN chn_n, XEN v, XEN edpos)
-{
-  #define H_samples2vct "(" S_samples2vct " &optional (start-samp 0)\n    samps snd chn vct-obj edit-position)\n\
-returns a vct object (vct-obj if given) containing snd channel chn's data starting at start-samp for samps, \
-reading edit version edit-position (defaulting to the current version)"
-  return(samples2vct_1(samp_0, samps, snd_n, chn_n, v, edpos, S_samples2vct));
-}
-
-static XEN channel2vct(XEN samp_0, XEN samps, XEN snd_n, XEN chn_n, XEN edpos)
-{
-  #define H_channel2vct "(" S_channel2vct " &optional beg dur snd chn edpos)\n\
-returns a vct object (vct-obj if given) containing snd channel chn's data starting at beg for dur samps, \
-reading edit version edpos (defaulting to the current version)"
-  return(samples2vct_1(samp_0, samps, snd_n, chn_n, XEN_FALSE, edpos, S_channel2vct));
-}
-
-
 static MUS_SAMPLE_TYPE local_next_sample_unscaled(snd_fd *sf)
 {
   if (sf->view_buffered_data > sf->last)
@@ -2089,159 +2033,6 @@ static XEN g_yes_or_no_p(XEN msg)
   XEN_ASSERT_TYPE(XEN_STRING_P(msg), msg, XEN_ONLY_ARG, S_yes_or_no_p, "a string");
   return(C_TO_XEN_BOOLEAN(snd_yes_or_no_p(get_global_state(), XEN_TO_C_STRING(msg))));
 }
-
-static XEN g_graph(XEN ldata, XEN xlabel, XEN x0, XEN x1, XEN y0, XEN y1, XEN snd_n, XEN chn_n, XEN force_display)
-{
-  #define H_graph "(" S_graph " data &optional xlabel x0 x1 y0 y1 snd chn force-display)\n\
-displays 'data' as a graph with x axis label 'xlabel', axis units going from x0 to x1 and y0 to y1; 'data' can be a list, vct, or vector. \
-If 'data' is a list of numbers, it is treated as an envelope."
-
-  chan_info *cp;
-  lisp_grf *lg;
-  XEN data = XEN_UNDEFINED; XEN lst;
-  char *label = NULL;
-  vct *v = NULL;
-  XEN *vdata;
-  int i, len, graph, graphs, need_update = 0;
-  Float ymin, ymax, val;
-  double nominal_x0, nominal_x1;
-  lisp_grf *old_lp = NULL;
-  Latus h = 0, w = 0, ww = 0;
-  Locus o = 0, gx0 = 0;
-  axis_info *uap = NULL;
-  /* ldata can be a vct object, a vector, or a list of either */
-  XEN_ASSERT_TYPE(((VCT_P(ldata)) || 
-		   (XEN_VECTOR_P(ldata)) || 
-		   ((XEN_LIST_P(ldata)) && (XEN_LIST_LENGTH(ldata) > 0))),
-		  ldata, XEN_ARG_1, S_graph, "a vct, vector, or list");
-  ASSERT_CHANNEL(S_graph, snd_n, chn_n, 7);
-  cp = get_cp(snd_n, chn_n, S_graph);
-  ymin = 32768.0;
-  ymax = -32768.0;
-  if ((cp->sound_ctr == -1) || 
-      (cp->sounds == NULL) || 
-      (cp->sounds[cp->sound_ctr] == NULL) ||
-      (cp->axis == NULL))
-    return(XEN_FALSE);
-  if (XEN_STRING_P(xlabel)) label = XEN_TO_C_STRING(xlabel); 
-  if (XEN_NUMBER_P(x0)) nominal_x0 = XEN_TO_C_DOUBLE(x0); else nominal_x0 = 0.0;
-  if (XEN_NUMBER_P(x1)) nominal_x1 = XEN_TO_C_DOUBLE(x1); else nominal_x1 = 1.0;
-  if (XEN_NUMBER_P(y0)) ymin = XEN_TO_C_DOUBLE(y0);
-  if (XEN_NUMBER_P(y1)) ymax = XEN_TO_C_DOUBLE(y1);
-  if ((!(XEN_LIST_P(ldata))) || 
-      (XEN_NUMBER_P(XEN_CAR(ldata))))
-    graphs = 1; 
-  else graphs = XEN_LIST_LENGTH(ldata);
-  if (graphs == 0) return(XEN_FALSE);
-  lg = cp->lisp_info;
-  if ((lg) && (graphs != lg->graphs)) 
-    {
-      old_lp = (lisp_grf *)(cp->lisp_info);
-      uap = old_lp->axis;
-      h = uap->height;
-      w = uap->width;
-      ww = uap->window_width;
-      o = uap->y_offset;
-      gx0 = uap->graph_x0;
-      cp->lisp_info = free_lisp_info(cp);
-    }
-  if (!(cp->lisp_info))
-    {
-      cp->lisp_info = (lisp_grf *)CALLOC(graphs, sizeof(lisp_grf));
-      lg = cp->lisp_info;
-      lg->len = (int *)CALLOC(graphs, sizeof(int));
-      lg->graphs = graphs;
-      lg->data = (Float **)CALLOC(graphs, sizeof(Float *));
-      need_update = 1;
-    }
-  if ((XEN_LIST_P_WITH_LENGTH(ldata, len)) && 
-      (XEN_NUMBER_P(XEN_CAR(ldata))))
-    {
-      lg = cp->lisp_info;
-      lg->env_data = 1;
-      if (lg->len[0] != len)
-	{
-	  if (lg->data[0]) FREE(lg->data[0]);
-	  lg->data[0] = (Float *)CALLOC(len, sizeof(Float));
-	  lg->len[0] = len;
-	}
-      for (i = 0, lst = XEN_COPY_ARG(ldata); i < len; i++, lst = XEN_CDR(lst))
-	lg->data[0][i] = XEN_TO_C_DOUBLE(XEN_CAR(lst));
-      if ((!XEN_NUMBER_P(y0)) || 
-	  (!XEN_NUMBER_P(y1)))
-	{
-	  for (i = 1; i < len; i += 2)
-	    {
-	      val = lg->data[0][i];
-	      if (ymin > val) ymin = val;
-	      if (ymax < val) ymax = val;
-	    }
-	}
-      if (!XEN_NUMBER_P(x0)) nominal_x0 = lg->data[0][0];
-      if (!XEN_NUMBER_P(x1)) nominal_x1 = lg->data[0][len - 2];
-    }
-  else
-    {
-      lg = cp->lisp_info;
-      lg->env_data = 0;
-      for (graph = 0; graph < graphs; graph++)
-	{
-	  if (XEN_LIST_P(ldata))
-	    data = XEN_LIST_REF(ldata, graph);
-	  else data = ldata;
-	  if (VCT_P(data))
-	    {
-	      v = (vct *)XEN_OBJECT_REF(data);
-	      len = v->length;
-	    }
-	  else len = XEN_VECTOR_LENGTH(data);
-	  if (lg->len[graph] != len)
-	    {
-	      if (lg->data[graph]) FREE(lg->data[graph]);
-	      lg->data[graph] = (Float *)CALLOC(len, sizeof(Float));
-	      lg->len[graph] = len;
-	    }
-	  if (v)
-	    memcpy((void *)(lg->data[graph]), (void *)(v->data), len * sizeof(Float));
-	  else 
-	    {
-	      vdata = XEN_VECTOR_ELEMENTS(data);
-	      for (i = 0; i < len; i++) 
-		lg->data[graph][i] = XEN_TO_C_DOUBLE(vdata[i]);
-	    }
-	  if ((!XEN_NUMBER_P(y0)) || 
-	      (!XEN_NUMBER_P(y1)))
-	    {
-	      for (i = 0; i < len; i++)
-		{
-		  val = lg->data[graph][i];
-		  if (ymin > val) ymin = val;
-		  if (ymax < val) ymax = val;
-		}
-	    }
-	}
-    }
-  lg->axis = make_axis_info(cp, nominal_x0, nominal_x1, ymin, ymax, label, nominal_x0, nominal_x1, ymin, ymax, lg->axis);
-  if (need_update)
-    {
-      uap = lg->axis;
-      uap->height = h;
-      uap->window_width = ww;
-      uap->y_offset = o;
-      uap->width = w;
-      uap->graph_x0 = gx0;
-    }
-  cp->graph_lisp_p = 1;
-  if ((XEN_NOT_BOUND_P(force_display)) || 
-      (XEN_NOT_FALSE_P(force_display)))
-    {
-      if (need_update)
-	update_graph(cp, NULL);
-      else display_channel_lisp_data(cp, cp->sound, cp->state);
-    }
-  return(xen_return_first(XEN_FALSE, data));
-}
-
 
 static XEN g_clear_audio_inputs (void) 
 {
@@ -2837,7 +2628,7 @@ char *g_c_run_concat_hook(XEN hook, const char *caller, char *initial_string, ch
     {
       XEN result;
       XEN procs = XEN_HOOK_PROCEDURES(hook);
-      int size = 0, args = 1;
+      int size = 0;
 #if HAVE_GUILE
       while (XEN_NOT_NULL_P(procs))
 	{
@@ -2881,7 +2672,7 @@ char *g_c_run_concat_hook(XEN hook, const char *caller, char *initial_string, ch
 
 char *output_comment(file_info *hdr)
 {
-  return(g_c_run_concat_hook(output_comment_hook, S_output_comment_hook, hdr->comment, NULL));
+  return(g_c_run_concat_hook(output_comment_hook, S_output_comment_hook, (hdr) ? hdr->comment : NULL, NULL));
 }
 
 #if HAVE_LADSPA
@@ -3131,9 +2922,6 @@ XEN_ARGIFY_1(g_equalize_panes_w, g_equalize_panes)
 XEN_ARGIFY_4(g_open_sound_file_w, g_open_sound_file)
 XEN_NARGIFY_2(g_close_sound_file_w, g_close_sound_file)
 XEN_NARGIFY_3(vct2soundfile_w, vct2soundfile)
-XEN_ARGIFY_9(g_graph_w, g_graph)
-XEN_ARGIFY_6(samples2vct_w, samples2vct)
-XEN_ARGIFY_5(channel2vct_w, channel2vct)
 XEN_ARGIFY_7(samples2sound_data_w, samples2sound_data)
 XEN_ARGIFY_1(g_start_progress_report_w, g_start_progress_report)
 XEN_ARGIFY_1(g_finish_progress_report_w, g_finish_progress_report)
@@ -3336,9 +3124,6 @@ XEN_NARGIFY_1(g_snd_completion_w, g_snd_completion)
 #define g_open_sound_file_w g_open_sound_file
 #define g_close_sound_file_w g_close_sound_file
 #define vct2soundfile_w vct2soundfile
-#define g_graph_w g_graph
-#define samples2vct_w samples2vct
-#define channel2vct_w channel2vct
 #define samples2sound_data_w samples2sound_data
 #define g_start_progress_report_w g_start_progress_report
 #define g_finish_progress_report_w g_finish_progress_report
@@ -3692,9 +3477,6 @@ void g_initialize_gh(snd_state *ss)
   XEN_DEFINE_PROCEDURE(S_open_sound_file,     g_open_sound_file_w, 0, 4, 0,     H_open_sound_file);
   XEN_DEFINE_PROCEDURE(S_close_sound_file,    g_close_sound_file_w, 2, 0, 0,    H_close_sound_file);
   XEN_DEFINE_PROCEDURE(S_vct2sound_file,      vct2soundfile_w, 3, 0, 0,         H_vct2sound_file);
-  XEN_DEFINE_PROCEDURE(S_graph,               g_graph_w, 1, 8, 0,               H_graph);
-  XEN_DEFINE_PROCEDURE(S_samples2vct,         samples2vct_w, 0, 6, 0,           H_samples2vct);
-  XEN_DEFINE_PROCEDURE(S_channel2vct,         channel2vct_w, 0, 5, 0,           H_channel2vct);
   XEN_DEFINE_PROCEDURE(S_samples2sound_data,  samples2sound_data_w, 0, 7, 0,    H_samples2sound_data);
   XEN_DEFINE_PROCEDURE(S_start_progress_report, g_start_progress_report_w, 0, 1, 0, H_start_progress_report);
   XEN_DEFINE_PROCEDURE(S_finish_progress_report, g_finish_progress_report_w, 0, 1, 0, H_finish_progress_report);

@@ -2386,33 +2386,12 @@ void c_convolve (char *fname, Float amp, int filec, int filehdr, int filterc, in
 
 static XEN g_autocorrelate(XEN reals)
 {
-  #define H_autocorrelate "(" S_autocorrelate " data) returns (in place) the autocorrelation of data (vector or vct)"
+  #define H_autocorrelate "(" S_autocorrelate " data) returns (in place) the autocorrelation of data (vct)"
   /* assumes length is power of 2 */
   vct *v1 = NULL;
-  int n, i;
-  XEN *vdata;
-  Float *rl;
-  XEN_ASSERT_TYPE(((VCT_P(reals)) || (XEN_VECTOR_P(reals))), reals, XEN_ONLY_ARG, S_autocorrelate, "a vct or vector");
-  if (VCT_P(reals))
-    {
-      v1 = (vct *)XEN_OBJECT_REF(reals);
-      rl = v1->data;
-      n = v1->length;
-    }
-  else
-    {
-      n = XEN_VECTOR_LENGTH(reals);
-      rl = (Float *)MALLOC(n * sizeof(Float));
-      vdata = XEN_VECTOR_ELEMENTS(reals);
-      for (i = 0; i < n; i++) rl[i] = XEN_TO_C_DOUBLE(vdata[i]);
-    }
-  autocorrelation(rl, n);
-  if (v1 == NULL) 
-    {
-      vdata = XEN_VECTOR_ELEMENTS(reals);
-      for (i = 0; i < n; i++) vdata[i] = C_TO_XEN_DOUBLE(rl[i]);
-      FREE(rl);
-    }
+  XEN_ASSERT_TYPE(VCT_P(reals), reals, XEN_ONLY_ARG, S_autocorrelate, "a vct");
+  v1 = (vct *)XEN_OBJECT_REF(reals);
+  autocorrelation(v1->data, v1->length);
   return(reals);
 }
 
@@ -2508,58 +2487,6 @@ returns the current transform sample at bin and slice in snd channel chn (assumi
   return(XEN_FALSE);
 }  
 
-static XEN g_transform_samples(XEN snd_n, XEN chn_n)
-{
-  #define H_transform_samples "(" S_transform_samples " &optional snd chn) -> current transform data for snd channel chn"
-  chan_info *cp;
-  fft_info *fp;
-  sono_info *si;
-  int bins, slices, i, j, len;
-  XEN new_vect; XEN tmp_vect;
-  XEN *vdata; XEN *tdata;
-  ASSERT_CHANNEL(S_transform_samples, snd_n, chn_n, 1);
-  cp = get_cp(snd_n, chn_n, S_transform_samples);
-  if (cp->graph_transform_p)
-    {
-      /* BACK */
-      fp = cp->fft;
-      if (fp)
-	{
-	  bins = fp->current_size;
-	  if (cp->transform_graph_type == GRAPH_TRANSFORM_ONCE)
-	    {
-	      len = fp->current_size;
-	      new_vect = XEN_MAKE_VECTOR(len, C_TO_XEN_DOUBLE(0.0));
-	      vdata = XEN_VECTOR_ELEMENTS(new_vect);
-	      for (i = 0; i < len; i++) 
-		vdata[i] = C_TO_XEN_DOUBLE(fp->data[i]);
-	      return(new_vect);
-	    }
-	  else 
-	    {
-	      si = (sono_info *)(cp->sonogram_data);
-	      if (si)
-		{
-		  slices = si->active_slices;
-		  bins = si->target_bins;
-		  new_vect = XEN_MAKE_VECTOR(slices, C_TO_XEN_DOUBLE(0.0));
-		  vdata = XEN_VECTOR_ELEMENTS(new_vect);
-		  for (i = 0; i < slices; i++)
-		    {
-		      tmp_vect = XEN_MAKE_VECTOR(bins, C_TO_XEN_DOUBLE(0.0));
-		      tdata = XEN_VECTOR_ELEMENTS(tmp_vect);
-		      vdata[i] = tmp_vect;
-		      for (j = 0; j < bins; j++)
-			tdata[j] = C_TO_XEN_DOUBLE(si->data[i][j]);
-		    }
-		  return(new_vect);
-		}
-	    }
-	}
-    }
-  return(XEN_FALSE);
-}  
-
 static XEN transform_samples2vct(XEN snd_n, XEN chn_n, XEN v)
 {
   #define H_transform_samples2vct "(" S_transform_samples2vct " &optional snd chn vct-obj)\n\
@@ -2610,6 +2537,16 @@ returns a vct object (vct-obj if passed), with the current transform data from s
     }
   return(XEN_FALSE);
 }  
+
+static XEN g_transform_samples(XEN snd_n, XEN chn_n)
+{
+  #define H_transform_samples "(" S_transform_samples " &optional snd chn) -> current transform data for snd channel chn"
+  XEN val;
+  val = transform_samples2vct(snd_n, chn_n, XEN_FALSE);
+  if (VCT_P(val))
+    return(vct2vector(val));
+  return(XEN_FALSE);
+}
 
 static XEN g_snd_transform(XEN type, XEN data, XEN hint)
 {

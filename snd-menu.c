@@ -251,10 +251,11 @@ void update_file_from_menu(snd_state *ss)
 static char *output_name(void);
 static int new_ctr = 0;
 
-void new_file_from_menu(snd_state *ss)
+snd_info *new_file_from_menu(snd_state *ss)
 {
   char *new_file_name = NULL, *extension = NULL, *new_comment = NULL;
   int header_type, data_format, chans, srate;
+  snd_info *sp = NULL;
   new_file_name = output_name();
   header_type = default_output_type(ss);
   if (new_file_name == NULL)
@@ -273,9 +274,10 @@ void new_file_from_menu(snd_state *ss)
   srate = default_output_srate(ss);
   new_comment = output_comment(NULL);
   mus_sound_forget(new_file_name);
-  make_new_file_dialog(ss, new_file_name, header_type, data_format, srate, chans, new_comment);
+  sp = make_new_file_dialog(ss, new_file_name, header_type, data_format, srate, chans, new_comment);
   if (new_comment) FREE(new_comment);
   if (new_file_name) FREE(new_file_name);
+  return(sp);
 }
 
 void revert_file_from_menu(snd_state *ss)

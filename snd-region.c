@@ -1432,46 +1432,6 @@ static XEN g_region_sample(XEN samp_n, XEN reg_n, XEN chn_n)
   return(samp_n);
 }
 
-static XEN g_region_samples(XEN beg_n, XEN num, XEN reg_n, XEN chn_n)
-{
-  #define H_region_samples "(" S_region_samples " &optional (beg 0) samps (region 0) (chan 0))\n\
-returns a vector with region's samples starting at samp for samps from channel chan"
-
-  XEN new_vect;
-  XEN *vdata;
-  Float *data;
-  int len, reg, i, chn, beg;
-  XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(beg_n), beg_n, XEN_ARG_1, S_region_samples, "a number");
-  XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(num), num, XEN_ARG_2, S_region_samples, "a number");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(reg_n), reg_n, XEN_ARG_3, S_region_samples, "an integer");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(chn_n), chn_n, XEN_ARG_4, S_region_samples, "an integer");
-  reg = XEN_TO_C_INT_OR_ELSE(reg_n, stack_position_to_id(0));
-  if (!(region_ok(reg))) 
-    return(snd_no_such_region_error(S_region_samples, reg_n));
-  chn = XEN_TO_C_INT_OR_ELSE(chn_n, 0);
-  if (chn < region_chans(reg))
-    {
-      len = XEN_TO_C_INT_OR_ELSE(num, 0);
-      if (len == 0) len = region_len(reg);
-      if (len > 0)
-	{
-	  beg = XEN_TO_C_INT_OR_ELSE(beg_n, 0);
-	  if ((beg < 0) || (beg >= region_len(reg))) 
-	    return(XEN_FALSE);
-	  new_vect = XEN_MAKE_VECTOR(len, C_TO_XEN_DOUBLE(0.0));
-	  vdata = XEN_VECTOR_ELEMENTS(new_vect);
-	  data = (Float *)CALLOC(len, sizeof(Float));
-	  region_samples(reg, chn, beg, len, data);
-	  for (i = 0; i < len; i++) 
-	    vdata[i] = C_TO_XEN_DOUBLE(data[i]);
-	  FREE(data);
-	  return(new_vect);
-	}
-    }
-  else snd_no_such_channel_error(S_region_samples, XEN_LIST_1(reg_n), chn_n);
-  return(XEN_FALSE);
-}
-
 #include "vct.h"
 
 static XEN g_region_samples2vct(XEN beg_n, XEN num, XEN reg_n, XEN chn_n, XEN v)
@@ -1507,6 +1467,18 @@ writes region's samples starting at beg for samps in channel chan to vct obj, re
 	return(v);
       else return(make_vct(len, data));
     }
+  return(XEN_FALSE);
+}
+
+static XEN g_region_samples(XEN beg_n, XEN num, XEN reg_n, XEN chn_n)
+{
+  #define H_region_samples "(" S_region_samples " &optional (beg 0) samps (region 0) (chan 0))\n\
+returns a vector with region's samples starting at samp for samps from channel chan"
+
+  XEN val;
+  val = g_region_samples2vct(beg_n, num, reg_n, chn_n, XEN_FALSE);
+  if (VCT_P(val))
+    return(vct2vector(val));
   return(XEN_FALSE);
 }
 

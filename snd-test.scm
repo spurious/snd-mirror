@@ -30,7 +30,7 @@
 ;;; TODO: gtk tests
 ;;; TODO: Xt selection tests?
 ;;; TODO: rest of Snd callbacks triggered
-;;; TODO: mix|mark-drag with large files (amp env case)
+;;; TODO: control-mark-drag with large files (amp env case)
 ;;; TODO: mix play with various amp/speed settings
 
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 popen) (ice-9 optargs) (ice-9 syncase))
@@ -60,7 +60,7 @@
 (define total-tests 25)
 (define with-exit (< snd-test 0))
 (set! (with-background-processes) #f)
-(define all-args #f) ; huge arg testing
+(define all-args #t) ; huge arg testing
 
 (define home-dir "/home")
 (define sf-dir "/sf1")
@@ -296,7 +296,7 @@
 	'hankel-transform hankel-transform 2 
 	'hanning-window hanning-window 1
 	'kaiser-window kaiser-window 11 
-	'keyboard-no-action keyboard-no-action 6
+	'keyboard-no-action keyboard-no-action 4
 	'cepstrum cepstrum 6
 	'graph-transform-once graph-transform-once 0 
 	'parzen-window parzen-window 3
@@ -565,9 +565,6 @@
       (set! (min-dB) (min-dB))
       (IF (fneq (min-dB)  -60.0 )
 	  (snd-display ";min-dB set def: ~A" (min-dB)))
-      (set! (movies) (movies))
-      (IF (not (equal? (movies)  #t )) 
-	  (snd-display ";movies set def: ~A" (movies)))
       (set! (selection-creates-region) (selection-creates-region))
       (IF (not (equal? (selection-creates-region)  #t )) 
 	  (snd-display ";selection-creates-region set def: ~A" (selection-creates-region)))
@@ -824,7 +821,6 @@
 	'max-transform-peaks (max-transform-peaks) 100
 	'max-regions (max-regions) 16 
 	'min-dB (min-dB) -60.0 
-	'movies (movies) #t 
 	'selection-creates-region (selection-creates-region) #t 
 	'transform-normalization (transform-normalization) normalize-transform-by-channel
 	'previous-files-sort (previous-files-sort) 0 
@@ -1328,7 +1324,6 @@
 	  (list 'mix-waveform-height mix-waveform-height 20 set-mix-waveform-height 40)
 	  (list 'mix-tag-height mix-tag-height 14 set-mix-tag-height 20)
 	  (list 'mix-tag-width mix-tag-width 6 set-mix-tag-width 20)
-	  (list 'movies movies #t set-movies #f)
 	  (list 'selection-creates-region selection-creates-region #t set-selection-creates-region #f)
 	  (list 'transform-normalization transform-normalization normalize-transform-by-channel set-transform-normalization dont-normalize-transform)
 	  (list 'previous-files-sort previous-files-sort 0 set-previous-files-sort 1)
@@ -1792,7 +1787,7 @@
 	  (close-sound ab))
 	(add-hook! output-comment-hook
 		   (lambda (str) 
-		     (string-append "written " (strftime "%a %d-%b-%Y %H:%M %Z" (localtime (current-time))))))
+		     " [written by me]"))
 	(save-sound-as "test.snd" ob mus-riff mus-lfloat)
 	(reset-hook! output-comment-hook)
 	(let ((ab (open-sound "test.snd")))
@@ -1806,11 +1801,12 @@
 	  (IF (not (= (mus-sound-data-format "test.snd") mus-lfloat)) 
 	      (snd-display ";saved-as float -> ~A?" (mus-data-format-name (mus-sound-data-format "test.snd"))))
 	  (IF (fneq (sample 1000 ab) samp) (snd-display ";riff[1000] = ~A?" (sample 1000 ab)))
-	  (IF (not (string=? (mus-sound-comment "test.snd") str))
-	      (snd-display ";output-comment 2: ~A ~A" (mus-sound-comment "test.snd") str))
 	  (IF (or (not (string? (comment ab)))
-		  (not (string=? (comment ab) (string-append "written " (strftime "%a %d-%b-%Y %H:%M %Z" (localtime (current-time)))))))
-	      (snd-display ";output-comment-hook: ~A" (comment ab)))
+		  (not (string=? (comment ab) 
+				 (string-append "written " 
+						(strftime "%a %d-%b-%Y %H:%M %Z" (localtime (current-time)))
+						" [written by me]"))))
+	      (snd-display ";output-comment-hook: ~A~%(~A)" (comment ab) (mus-sound-comment "test.snd")))
 	  (close-sound ab))
 	(save-sound-as "test.snd" ob mus-aiff mus-b24int)
 	(let ((ab (open-sound "test.snd")))
@@ -8853,6 +8849,9 @@
 
   (add-hook! enved-hook arg5) (carg5 enved-hook)
   (reset-all-hooks)
+  (for-each 
+   (lambda (n) (if (not (hook-empty? n)) (snd-display ";~A not empty?" n)))
+   (snd-hooks))
   )
   
 ;;; ---------------- test 13: menus, edit lists, hooks, seach/key funcs ----------------
@@ -8942,8 +8941,6 @@
 	       (val (transform-sample 50 0 fd 0)))
 	   (IF (and v0 vc)
 	       (begin
-		 (if (vector? (vector-ref vc 0))
-		     (set! vc (vector-ref vc 0)))
 		 (IF (fneq val (vector-ref vc 50)) 
 		     (snd-display ";~A ~A transform-sample: ~A ~A?" dpy-type fft-type val (vector-ref vc 50)))
 		 (do ((i 0 (1+ i))) ((= i 100)) 
@@ -10372,7 +10369,6 @@
 		    (list 'max-transform-peaks #f 1 set-max-transform-peaks 100)
 		    (list 'max-regions #f 1 set-max-regions 32)
 		    (list 'min-dB #f -120.0 set-min-dB -30.0)
-		    (list 'movies #f #f set-movies #t)
 		    (list 'selection-creates-region #f #f set-selection-creates-region #t)
 		    (list 'transform-normalization #f dont-normalize-transform set-transform-normalization normalize-transform-globally)
 		    (list 'previous-files-sort #f 0 set-previous-files-sort 5)
@@ -12668,16 +12664,14 @@ EDITS: 4
       ))
       ))
 
-#!
-(if (or full-test (= snd-test 20) (and keep-going (<= snd-test 20)))
-    (begin
-      (load "gm.scm")
-      (load "/home/bil/test/gmeteor-0.91/examples/example-1.scm")
-      (let ((v1 (vector->vct *coefficients*))
-	    (v2 (vct 0.0197 -0.0406 -0.0739 0.1340 0.4479 0.4479 0.13403 -0.0739 -0.0406 0.0197)))
-	(IF (not (vfequal v1 v2))
-	    (snd-display ";gm ~A ~A?" v1 v2)))))
-!#
+;(if (or full-test (= snd-test 20) (and keep-going (<= snd-test 20)))
+;    (begin
+;      (load "gm.scm")
+;      (load "/home/bil/test/gmeteor-0.91/examples/example-1.scm")
+;      (let ((v1 (vector->vct *coefficients*))
+;	    (v2 (vct 0.0197 -0.0406 -0.0739 0.1340 0.4479 0.4479 0.13403 -0.0739 -0.0406 0.0197)))
+;	(IF (not (vfequal v1 v2))
+;	    (snd-display ";gm ~A ~A?" v1 v2)))))
 
 
 
@@ -13067,6 +13061,14 @@ EDITS: 4
 			(snd-display ";divide transform-size: ~A -> ~A?" ds (transform-size))))
 		  (set! (graph-transform?) #f)
 
+		  (set! (time-graph-type) graph-time-as-wavogram)
+		  (let ((hop (wavo-trace)))
+		    (key-event cwid snd-kp-add-key 0) (force-event)
+		    (IF (not (= (1+ hop) (wavo-trace))) (snd-display ";add wavo-trace ~A -> ~A" hop (wavo-trace)))
+		    (key-event cwid snd-kp-add-subtract 0) (force-event)
+		    (IF (not (= hop (wavo-trace))) (snd-display ";subtract wavo-trace ~A -> ~A" hop (wavo-trace))))
+		  (set! (time-graph-type) graph-time-once)
+
 		  (take-keyboard-focus (car (channel-widgets)))
 		  (key-event cwid (char->integer #\a) 4) (force-event)
 		  (IF (not (= (cursor) (left-sample)))
@@ -13311,6 +13313,10 @@ EDITS: 4
 		      (snd-display ";C-space for selection failed?"))
 		  (IF (not (= (selection-length) 10))
 		      (snd-display ";C-space for selection len: ~A?" (selection-length)))
+		  (key-event cwid (char->integer #\x) 4) (force-event)
+		  (key-event cwid (char->integer #\l) 0) (force-event)
+		  (IF (not (= (cursor) (+ (selection-position) (inexact->exact (* 0.5 (selection-len))))))
+		      (snd-display ";C-x L: ~A ~A" (cursor) (+ (selection-position) (inexact->exact (* 0.5 (selection-len))))))
 
 		  (key-event cwid (char->integer #\x) 8) (force-event)
 		  (widget-string minibuffer "(set! mxa 3)")
@@ -13612,6 +13618,28 @@ EDITS: 4
 		(key-event cwid (char->integer #\g) 4) (force-event)		
 		(close-sound (car (sounds)))
 	      ))
+
+	    (let* ((ind0 (open-sound "oboe.snd"))
+		   (ind1 (open-sound "pistol.snd"))
+		   (cwid (car (channel-widgets ind0 0))))
+	      (set! (sync ind1) 1)
+	      (set! (sync ind0) 1)
+	      (set! (cursor) 100)
+	      (key-event cwid (char->integer #\m) 4) (force-event)
+	      (let ((m0 (marks ind0 0))
+		    (m1 (marks ind1 0)))
+		(IF (or (not (= (length m0) (length m1)))
+			(not (= (length m0) 1)))
+		    (snd-display ";sync'd C-m: ~A ~A" m0 m1))
+		(IF (not (= (mark-sample (car m0)) (mark-sample (car m1))))
+		    (snd-display ";sync'd C-m: ~A ~A" (mark-sample (car m0)) (mark-sample (car m1))))
+		(close-sound ind1)
+		(let ((tag (catch #t (lambda () 
+				       (key-event cwid (char->integer #\x) 4) (force-event)
+				       (key-event cwid (char->integer #\a) 0) (force-event)))))
+		  (IF (not (eq? tag 'no-active-selection))
+		      (snd-display ";C-x a w/o selection: ~A" tag)))
+		(close-sound ind0)))
 	    
 	    (let* ((ind (open-sound "2.snd"))
 		   (c0 (frames ind 0))
@@ -15726,7 +15754,13 @@ EDITS: 4
 	      (|XRaiseWindow dpy win)
 	      (|XRotateBuffers dpy 1)
 	      (|XSetWindowBorderWidth dpy win 10)
+	      (|XSetWindowBorder dpy win (cadr (black-pixel)))
 	      (|XSetWindowBackground dpy win (cadr (snd-pixel (basic-color))))
+	      (let ((depth (|depth (car (|XGetVisualInfo dpy 0 (list 'XVisualInfo 0))))))
+		(|XSetWindowBorderPixmap dpy win (|XCreatePixmap dpy win 10 10 depth))
+		(|XSetWindowBackgroundPixmap dpy win (|XCreatePixmap dpy win 10 10 depth))
+		(|XSetWindowBorderPixmap dpy win |CopyFromParent)
+		(|XSetWindowBackgroundPixmap dpy win |ParentRelative))
 	      (let ((hints (|XGetWMHints dpy win)))
 		(IF (or (not hints) (not (|XWMHints? hints))) (snd-display ";XGetWMHints?"))
 		(IF (not (= (|flags hints) 7)) (snd-display ";flags wmhints: ~A" (|flags hints)))
@@ -16249,6 +16283,7 @@ EDITS: 4
 		   (wid (|XtCreateWidget "wid" |xmFormWidgetClass shell '()))
 		   (wid1 (|XtCreateWidget "wid1" |xmPushButtonWidgetClass wid '()))
 		   (wid2 (|XtVaCreateWidget "wid" |xmFormWidgetClass shell '())))
+	      (|XtSetWMColormapWindows shell '() 0)
 	      (IF (|XtIsApplicationShell wid) (snd-display ";XtIsApplicationShell"))
 	      (IF (not (|XtIsApplicationShell shell)) (snd-display ";XtIsApplicationShell of appshell"))
 	      (IF (not (|XtIsComposite wid)) (snd-display ";XtIsComposite"))
@@ -16574,6 +16609,8 @@ EDITS: 4
 			(|XmStringDrawUnderline dpy win rendertable str2 gc 10 10 100 
 						|XmALIGNMENT_END |XmSTRING_DIRECTION_L_TO_R (|XRectangle 0 0 100 100) str2)
 			(|XtGetGC (cadr (main-widgets)) |GCForeground gv)
+			(|XCopyGC dpy gc |GCFunction gc)
+			(|XCopyArea dpy win win gc 0 0 100 100 0 0)
 			(|XtReleaseGC grf gc))
 		      (close-sound ind))
 		    (let ((lc (|XmStringLineCount (|XmStringCreateLocalized "hiho"))))
@@ -16703,9 +16740,12 @@ EDITS: 4
 		    (rb (list
 			 #x00 #x04 #x10 #x08 #x00 #x10 #x04 #x20 #x00 #x40 #xa5 #xbf
 			 #x00 #x40 #x04 #x20 #x00 #x10 #x10 #x08 #x00 #x04 #x00 #x00))
-		    (iconw (list-ref (sound-widgets) 8)))
-	      (|XCreateBitmapFromData (|XtDisplay iconw) (|XtWindow iconw) rb 16 12)
-	      (|XCreateBitmapFromData (|XtDisplay iconw) (|XtWindow iconw) mouse_bits mouse_width mouse_height))
+		    (iconw (list-ref (sound-widgets) 8))
+		    (dpy (|XtDisplay iconw))
+		    (win (|XtWindow iconw)))
+	      (|XCreateBitmapFromData dpy win rb 16 12)
+	      (|XCreateBitmapFromData dpy win mouse_bits mouse_width mouse_height)
+	      (|XCreatePixmapFromBitmapData dpy win mouse_bits 32 32 (cadr (white-pixel)) (cadr (black-pixel)) 8))
 
 	    (let* ((grf (car (channel-widgets)))
 		   (dpy (|XtDisplay grf))
@@ -16720,6 +16760,7 @@ EDITS: 4
 	      (let ((cmap (|XCreateColormap dpy win vis |AllocNone)))
 		(set! cmap (|XCopyColormapAndFree dpy cmap))
 		(|XFreeColormap dpy cmap)
+		(|XSetWMColormapWindows dpy win '() 0)
 		(IF (|XGetWMColormapWindows dpy win) (snd-display ";XGetWMColormapWindows: ~A" (|XGetWMColormapWindows dpy win)))
 		(IF (|XCheckTypedWindowEvent dpy win |ExposureMask) 
 		    (snd-display ";XCheckTypedWindowEvent: ~A" (|XCheckTypedWindowEvent dpy win |ExposureMask)))
@@ -16831,7 +16872,6 @@ EDITS: 4
 						  |XmNlabelPixmap pixmap))
 		    (|XpmWriteFileFromPixmap dpy "test.xpm" pixmap pixmap1 #f)
 		    (|XpmCreateDataFromPixmap dpy pixmap pixmap1 #f)
-		    ;(|XpmCreateBufferFromPixmap dpy pixmap pixmap1 #f)
 		    (let* ((status (|XpmReadFileToXpmImage "bullet.xpm"))
 			   (symb (|XpmColorSymbol "Foreground" "green" (snd-pixel (basic-color))))
 			   (attr (|XpmAttributes)))
@@ -18015,8 +18055,7 @@ EDITS: 4
 		         |XmIsFileSelectionBox |XmIsText |XmIsForm |XmIsFrame |XmIsGadget |XmIsToggleButtonGadget
 		         |XmIsToggleButton |XmIsLabelGadget |XmIsLabel |XmIsVendorShell |XmIsList |XmIsMainWindow |XmIsManager
 		         |XmIsMenuShell |XpmCreatePixmapFromData |XpmCreateDataFromPixmap |XpmReadFileToPixmap
-		         |XpmReadPixmapFile |XpmWriteFileFromPixmap |XpmWritePixmapFile |XpmCreatePixmapFromBuffer
-		         |XpmCreateBufferFromImage |XpmCreateBufferFromPixmap |XpmCreatePixmapFromXpmImage
+		         |XpmReadPixmapFile |XpmWriteFileFromPixmap |XpmWritePixmapFile |XpmCreatePixmapFromXpmImage
 		         |XpmCreateXpmImageFromPixmap |XGetPixel |XDestroyImage |XPutPixel |XSubImage |XAddPixel
 		         |XtAppContext? |XtRequestId?  |XtWorkProcId? |XtInputId?  |XtIntervalId? |Screen?  |XEvent?
 		         |XRectangle? |XArc? |XPoint?  |XSegment?  |XColor? |Atom? |Colormap?
@@ -18288,7 +18327,7 @@ EDITS: 4
 	       maxamp menu-sensitive menu-widgets minibuffer-history-length min-dB mix mixes mix-amp mix-amp-env
 	       mix-anchor mix-chans mix-color mix-track mix-length mix-locked mix-name mix? mix-panel mix-position
 	       mix-region mix-sample-reader?  mix-selection mix-sound mix-home mix-speed mix-tag-height mix-tag-width
-	       mix-tag-y mix-vct mix-waveform-height movies new-sound next-mix-sample next-sample next-track-sample
+	       mix-tag-y mix-vct mix-waveform-height new-sound next-mix-sample next-sample next-track-sample
 	       transform-normalization equalize-panes open-raw-sound open-sound open-sound-file orientation-dialog
 	       peak-env-info peaks play play-and-wait play-mix play-region play-selection play-track player?
 	       position-color position->x position->y preload-directory preload-file previous-files-sort previous-sample
@@ -18378,7 +18417,7 @@ EDITS: 4
 		   just-sounds left-sample listener-color listener-font listener-prompt listener-text-color mark-color
 		   mark-name mark-sample mark-sync max-transform-peaks max-regions menu-sensitive min-dB mix-amp
 		   mix-amp-env mix-anchor mix-chans mix-color mix-track mix-length mix-locked mix-name mix-position
-		   mix-speed mix-tag-height mix-tag-width mix-tag-y mix-waveform-height movies transform-normalization
+		   mix-speed mix-tag-height mix-tag-width mix-tag-y mix-waveform-height transform-normalization
 		   equalize-panes position-color recorder-in-device previous-files-sort print-length pushed-button-color
 		   recorder-autoload recorder-buffer-size recorder-dialog recorder-file recorder-gain recorder-in-amp
 		   recorder-in-format recorder-max-duration recorder-out-amp recorder-out-chans recorder-out-format
@@ -19029,7 +19068,7 @@ EDITS: 4
 			  enved-waveform-color enved-wave? eps-file eps-left-margin eps-bottom-margin eps-size
 			  foreground-color graph-color graph-cursor help-text-font highlight-color just-sounds key-binding
 			  listener-color listener-font listener-prompt listener-text-color max-regions max-sounds
-			  minibuffer-history-length mix-waveform-height region-graph-style movies position-color
+			  minibuffer-history-length mix-waveform-height region-graph-style position-color
 			  previous-files-sort print-length pushed-button-color recorder-in-device recorder-autoload
 			  recorder-buffer-size recorder-file recorder-in-format recorder-max-duration recorder-out-chans
 			  recorder-out-format recorder-srate recorder-trigger sash-color ladspa-dir save-dir save-state-file

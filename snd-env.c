@@ -1368,32 +1368,18 @@ void add_or_edit_symbol(char *name, env *val)
   if (tmpstr) FREE(tmpstr);
 }
 
-env *get_env(XEN e, char *origin) /* list or vector in e */
+env *get_env(XEN e, char *origin) /* list in e */
 {
   Float *buf = NULL;
   int i, len = 0;
   env *newenv = NULL;
-  XEN *vdata;
   XEN lst;
-  XEN_ASSERT_TYPE(((XEN_VECTOR_P(e)) || (XEN_LIST_P_WITH_LENGTH(e, len))), e, XEN_ARG_1, origin, "a vector or a list");
-  if (XEN_VECTOR_P(e))
-    {
-      len = XEN_VECTOR_LENGTH(e);
-      if (len == 0)
-	mus_misc_error(origin, "null env", e);
-      buf = (Float *)CALLOC(len, sizeof(Float));
-      vdata = XEN_VECTOR_ELEMENTS(e);
-      for (i = 0; i < len; i++) 
-	buf[i] = XEN_TO_C_DOUBLE(vdata[i]);
-    }
-  else
-    {
-      if (len == 0)
-	mus_misc_error(origin, "null env", e);
-      buf = (Float *)CALLOC(len, sizeof(Float));
-      for (i = 0, lst = XEN_COPY_ARG(e); i < len; i++, lst = XEN_CDR(lst)) 
-	buf[i] = XEN_TO_C_DOUBLE(XEN_CAR(lst));
-    }
+  XEN_ASSERT_TYPE(XEN_LIST_P_WITH_LENGTH(e, len), e, XEN_ARG_1, origin, "a list");
+  if (len == 0)
+    mus_misc_error(origin, "null env", e);
+  buf = (Float *)CALLOC(len, sizeof(Float));
+  for (i = 0, lst = XEN_COPY_ARG(e); i < len; i++, lst = XEN_CDR(lst)) 
+    buf[i] = XEN_TO_C_DOUBLE(XEN_CAR(lst));
   newenv = make_envelope(buf, len);
   if (buf) FREE(buf);
   return(newenv);

@@ -674,11 +674,14 @@ char *sg_label_text(GtkLabel *w) {char *text; gtk_label_get(w, &text); return(te
 
 void sg_text_delete(GtkWidget *w, int start, int end)
 {
-  int pos;
-  pos = gtk_editable_get_position(GTK_EDITABLE(w));
-  gtk_editable_set_position(GTK_EDITABLE(w), start);
-  gtk_text_forward_delete(GTK_TEXT(w), end - start);
-  gtk_editable_set_position(GTK_EDITABLE(w), start);
+  int res, len;
+  gtk_text_set_point(GTK_TEXT(w), start);
+  len = gtk_text_get_length(GTK_TEXT(w));
+  if (end > len) end = len;
+  res = gtk_text_forward_delete(GTK_TEXT(w), end - start);
+#if DEBUGGING
+  if (!res) fprintf(stderr,"goddam gtk did not delete!");
+#endif
 }
 
 #endif

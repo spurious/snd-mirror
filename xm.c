@@ -8446,8 +8446,10 @@ static XEN gxm_XSetWindowBorderPixmap(XEN arg1, XEN arg2, XEN arg3)
   #define H_XSetWindowBorderPixmap "XSetWindowBorderPixmap(display, w, border_pixmap) sets the border pixmap of the window to the pixmap you specify."
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XSetWindowBorderPixmap", "Display*");
   XEN_ASSERT_TYPE(XEN_Window_P(arg2), arg2, 2, "XSetWindowBorderPixmap", "Window");
-  XEN_ASSERT_TYPE(XEN_Pixmap_P(arg3), arg3, 3, "XSetWindowBorderPixmap", "Pixmap");
-  return(C_TO_XEN_INT(XSetWindowBorderPixmap(XEN_TO_C_Display(arg1), XEN_TO_C_Window(arg2), XEN_TO_C_Pixmap(arg3))));
+  XEN_ASSERT_TYPE(XEN_Pixmap_P(arg3) || XEN_INTEGER_P(arg3), arg3, 3, "XSetWindowBorderPixmap", "Pixmap");
+  return(C_TO_XEN_INT(XSetWindowBorderPixmap(XEN_TO_C_Display(arg1), 
+					     XEN_TO_C_Window(arg2),
+					     (XEN_Pixmap_P(arg3)) ? XEN_TO_C_Pixmap(arg3) : CopyFromParent)));
 }
 
 static XEN gxm_XSetWindowBorder(XEN arg1, XEN arg2, XEN arg3)
@@ -8465,8 +8467,10 @@ static XEN gxm_XSetWindowBackgroundPixmap(XEN arg1, XEN arg2, XEN arg3)
 the specified pixmap."
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XSetWindowBackgroundPixmap", "Display*");
   XEN_ASSERT_TYPE(XEN_Window_P(arg2), arg2, 2, "XSetWindowBackgroundPixmap", "Window");
-  XEN_ASSERT_TYPE(XEN_Pixmap_P(arg3), arg3, 3, "XSetWindowBackgroundPixmap", "Pixmap");
-  return(C_TO_XEN_INT(XSetWindowBackgroundPixmap(XEN_TO_C_Display(arg1), XEN_TO_C_Window(arg2), XEN_TO_C_Pixmap(arg3))));
+  XEN_ASSERT_TYPE(XEN_Pixmap_P(arg3) || XEN_INTEGER_P(arg3), arg3, 3, "XSetWindowBackgroundPixmap", "Pixmap");
+  return(C_TO_XEN_INT(XSetWindowBackgroundPixmap(XEN_TO_C_Display(arg1), 
+						 XEN_TO_C_Window(arg2), 
+						 (XEN_Pixmap_P(arg3)) ? XEN_TO_C_Pixmap(arg3) : XEN_TO_C_INT(arg3))));
 }
 
 static XEN gxm_XSetWindowBackground(XEN arg1, XEN arg2, XEN arg3)
@@ -13374,16 +13378,18 @@ static XEN gxm_XtSetWMColormapWindows(XEN arg1, XEN arg2, XEN arg3)
 {
   #define H_XtSetWMColormapWindows "void XtSetWMColormapWindows(widget, list, count)"
   /* minor diff: arg2 is a true lisp list */
-  Widget *ws;
+  Widget *ws = NULL;
   int i, len;
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XtSetWMColormapWindows", "Widget");
   XEN_ASSERT_TYPE(XEN_LIST_P(arg2), arg2, 2, "XtSetWMColormapWindows", "Widget list");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XtSetWMColormapWindows", "int");
   len = XEN_LIST_LENGTH(arg2);
-  if (len <= 0) XEN_ASSERT_TYPE(0, arg2, 2, "XtSetWMColormapWindows", "positive integer");
-  ws = (Widget *)CALLOC(len, sizeof(Widget *));
-  for (i = 0; i < len; i++, arg2 = XEN_CDR(arg2)) 
-    ws[i] = XEN_TO_C_Widget(XEN_CAR(arg2));
+  if (len > 0)
+    {
+      ws = (Widget *)CALLOC(len, sizeof(Widget *));
+      for (i = 0; i < len; i++, arg2 = XEN_CDR(arg2)) 
+	ws[i] = XEN_TO_C_Widget(XEN_CAR(arg2));
+    }
   XtSetWMColormapWindows(XEN_TO_C_Widget(arg1), ws, XEN_TO_C_INT(arg3));
   return(XEN_FALSE);
 }
@@ -16755,26 +16761,6 @@ static XEN gxm_XpmCreatePixmapFromXpmImage(XEN arg1, XEN arg2, XEN arg3, XEN arg
 }
 #endif
 
-static XEN gxm_XpmCreatePixmapFromBuffer(XEN arg1, XEN arg2, XEN arg3, XEN arg6)
-{
-  /* DIFF: XpmCreatePixmapFromBuffer omits and returns pixmap args
-   */
-  Pixmap p1, p2;
-  int val;
-  XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XpmCreatePixmapFromBuffer", "Display*");
-  XEN_ASSERT_TYPE(XEN_Window_P(arg2), arg2, 2, "XpmCreatePixmapFromBuffer", "Drawable");
-  XEN_ASSERT_TYPE(XEN_STRING_P(arg3), arg3, 3, "XpmCreatePixmapFromBuffer", "char*");
-  XEN_ASSERT_TYPE(XEN_XpmAttributes_P(arg6) || XEN_FALSE_P(arg6), arg6, 6, "XpmCreatePixmapFromBuffer", "XpmAttributes*");
-  val = XpmCreatePixmapFromBuffer(XEN_TO_C_Display(arg1), 
-				  XEN_TO_C_Window(arg2), 
-				  XEN_TO_C_STRING(arg3),
-				  &p1, &p2,
-				  (XEN_FALSE_P(arg6)) ? NULL : XEN_TO_C_XpmAttributes(arg6));
-  return(XEN_LIST_3(C_TO_XEN_INT(val),
-		    C_TO_XEN_Pixmap(p1),
-		    C_TO_XEN_Pixmap(p2)));
-}
-
 static XEN gxm_XpmReadFileToPixmap(XEN arg1, XEN arg2, XEN arg3, XEN arg6)
 {
   /* DIFF: XpmReadFileToPixmap omits and returns pixmap args
@@ -16835,50 +16821,6 @@ static XEN gxm_XpmCreatePixmapFromData(XEN arg1, XEN arg2, XEN larg3, XEN arg6)
   return(XEN_LIST_3(C_TO_XEN_INT(val),
 		    C_TO_XEN_Pixmap(p1),
 		    C_TO_XEN_Pixmap(p2)));
-}
-
-static XEN gxm_XpmCreateBufferFromPixmap(XEN arg1, XEN arg3, XEN arg4, XEN arg5)
-{
-  /* DIFF: XpmCreateBufferFromPixmap omits arg2
-   */
-  char **buf = NULL;
-  int val, i;
-  XpmAttributes *attr = NULL;
-  XEN lst = XEN_EMPTY_LIST;
-  XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XpmCreateBufferFromPixmap", "Display*");
-  XEN_ASSERT_TYPE(XEN_Pixmap_P(arg3), arg3, 3, "XpmCreateBufferFromPixmap", "Pixmap");
-  XEN_ASSERT_TYPE(XEN_Pixmap_P(arg4), arg4, 4, "XpmCreateBufferFromPixmap", "Pixmap");
-  XEN_ASSERT_TYPE(XEN_XpmAttributes_P(arg5) || XEN_FALSE_P(arg5), arg5, 5, "XpmCreateBufferFromPixmap", "XpmAttributes*");
-  if (!(XEN_FALSE_P(arg5))) attr = XEN_TO_C_XpmAttributes(arg5);
-  val = XpmCreateBufferFromPixmap(XEN_TO_C_Display(arg1), 
-				  buf,
-				  XEN_TO_C_Pixmap(arg3), 
-				  XEN_TO_C_Pixmap(arg4), 
-				  attr);
-  /* assume here that width and height of XpmAtrributes give size of buffer */
-  for (i = attr->height - 1; i >= 0; i--)
-    lst = XEN_CONS(C_TO_XEN_STRING(buf[i]), lst);
-  return(XEN_LIST_2(C_TO_XEN_INT(val),
-		    lst));
-}
-
-static XEN gxm_XpmCreateBufferFromImage(XEN arg1, XEN arg3, XEN arg4, XEN arg5)
-{
-  /* DIFF: XpmCreateBufferFromImage omits arg2
-   */
-  char **buf = NULL;
-  int val;
-  XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XpmCreateBufferFromImage", "Display*");
-  XEN_ASSERT_TYPE(XEN_XImage_P(arg3), arg3, 3, "XpmCreateBufferFromImage", "XImage*");
-  XEN_ASSERT_TYPE(XEN_XImage_P(arg4), arg4, 4, "XpmCreateBufferFromImage", "XImage*");
-  XEN_ASSERT_TYPE(XEN_XpmAttributes_P(arg5) || XEN_FALSE_P(arg5), arg5, 5, "XpmCreateBufferFromImage", "XpmAttributes*");
-  val = XpmCreateBufferFromImage(XEN_TO_C_Display(arg1), 
-				 buf,
-				 XEN_TO_C_XImage(arg3), 
-				 XEN_TO_C_XImage(arg4), 
-				 (XEN_FALSE_P(arg5)) ? NULL : XEN_TO_C_XpmAttributes(arg5));
-  return(XEN_LIST_2(C_TO_XEN_INT(val),
-		    C_TO_XEN_ULONG(buf)));
 }
 
 static XEN gxm_XpmWriteFileFromPixmap(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5)
@@ -18266,9 +18208,6 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XpmReadPixmapFile" XM_POSTFIX, gxm_XpmReadFileToPixmap, 4, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XpmWriteFileFromPixmap" XM_POSTFIX, gxm_XpmWriteFileFromPixmap, 5, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XpmWritePixmapFile" XM_POSTFIX, gxm_XpmWriteFileFromPixmap, 5, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XpmCreatePixmapFromBuffer" XM_POSTFIX, gxm_XpmCreatePixmapFromBuffer, 4, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XpmCreateBufferFromImage" XM_POSTFIX, gxm_XpmCreateBufferFromImage, 4, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XpmCreateBufferFromPixmap" XM_POSTFIX, gxm_XpmCreateBufferFromPixmap, 4, 0, 0, NULL);
 #if HAVE_XPM_GET_ERROR_STRING
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XpmGetErrorString" XM_POSTFIX, gxm_XpmGetErrorString, 1, 0, 0, H_XpmGetErrorString);
 #endif
@@ -24536,7 +24475,7 @@ static int xm_already_inited = 0;
       define_structs();
       XEN_YES_WE_HAVE("xm");
 #if HAVE_GUILE
-      XEN_EVAL_C_STRING("(define xm-version \"11-Mar-02\")");
+      XEN_EVAL_C_STRING("(define xm-version \"26-Mar-02\")");
 #endif
       xm_already_inited = 1;
     }

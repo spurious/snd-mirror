@@ -1,6 +1,9 @@
 #include "snd.h"
 #include <X11/cursorfont.h>
 
+/* TODO: if popup.scm loaded "accelerators" seem to be broken -- all Meta keys call the popup menu
+ */
+
 enum {menu_menu,
         file_menu, f_cascade_menu,
           f_open_menu, f_close_menu, f_save_menu, f_save_as_menu, f_revert_menu, f_exit_menu, f_new_menu,
@@ -567,6 +570,7 @@ Widget add_menu(snd_state *ss)
   XtSetArg(high_args[high_n], XmNmnemonic, 'F'); high_n++;
   mw[f_cascade_menu] = XtCreateManagedWidget(STR_File, xmCascadeButtonWidgetClass, mw[menu_menu], high_args, high_n);
 
+  /* TODO: if user unbinds (e.g.) C-x C-f, remove it from the File menu Open label */
   mw[f_open_menu] = XtCreateManagedWidget(STR_Open "   C-x C-f", xmPushButtonWidgetClass, mw[file_menu], main_args, main_n);
   XtAddCallback(mw[f_open_menu], XmNactivateCallback, file_open_callback, ss);
   XtVaSetValues(mw[f_open_menu], XmNmnemonic, 'O', NULL);

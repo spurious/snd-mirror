@@ -470,7 +470,7 @@ void revert_file_from_menu(snd_state *ss);
 void exit_from_menu(snd_state *ss);
 void save_options_from_menu(snd_state *ss);
 void save_state_from_menu(snd_state *ss);
-void new_file_from_menu(snd_state *ss);
+snd_info *new_file_from_menu(snd_state *ss);
 
 void set_graph_style(snd_state *ss, int val);
 void set_show_marks(snd_state *ss, int val);

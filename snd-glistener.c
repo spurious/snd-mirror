@@ -2,8 +2,7 @@
 
 /* TODO: make completions list mouse sensitive as in Motif version (requires dialog etc)
  *        -> use click(select) callback!
- * TODO: C-? for help, C-M-g for text deletion (checked)
- * TODO: M-p and M-n for listener
+ * TODO: C-? for help
  */
 
 static GtkWidget *listener_text = NULL;
@@ -37,18 +36,6 @@ void append_listener_text(int end, char *msg)
 		     msg,
 		     -1);
     }
-}
-
-static void activate_channel (snd_state *ss)
-{
-  /* make the current channel active and abort if anything in progress */
-  chan_info *cp;
-  clear_listener();
-  ss->error_lock = 0;
-  if (ss->checking_explicitly) ss->stopped_explicitly = 1; 
-  cp = current_channel(ss);
-  if (cp) goto_graph(cp);
-  (ss->sgx)->graph_is_active = 1;
 }
 
 static void listener_completion(snd_state *ss)
@@ -215,6 +202,16 @@ static void back_to_start(snd_state *ss)
   if (full_str) g_free(full_str);
 }
 
+static void clear_back_to_prompt(GtkWidget *w)
+{
+  int beg, end;
+  end = SG_TEXT_GET_POINT(w);
+  back_to_start(get_global_state());
+  beg = SG_TEXT_GET_POINT(w);
+  if (end <= beg) return;
+  SG_TEXT_DELETE(w, beg, end);
+}
+
 static int last_highlight_position = -1;
 
 static gboolean listener_key_press(GtkWidget *w, GdkEventKey *event, gpointer data)
@@ -247,7 +244,11 @@ static gboolean listener_key_press(GtkWidget *w, GdkEventKey *event, gpointer da
 	    {
 	      if (((event->keyval == snd_K_g) || (event->keyval == snd_K_G)) && 
 		  (event->state & snd_ControlMask))
-		activate_channel(ss);
+		{
+		  if (event->state & snd_MetaMask)
+		    clear_listener();
+		  else control_g(ss, any_selected_sound(ss));
+		}
 	      else
 		{
 		  if (((event->keyval == snd_K_k) || (event->keyval == snd_K_K)) && 
@@ -304,17 +305,22 @@ static gboolean listener_key_press(GtkWidget *w, GdkEventKey *event, gpointer da
 					}
 				      else 
 					{
-					  return(FALSE);
-					}
-				    }
-				}
-			    }
-			}
-		    }
-		}
-	    }
-	}
-    }
+					  if (((event->keyval == snd_K_p) || (event->keyval == snd_K_P)) && (event->state & snd_MetaMask))
+					    {
+					      clear_back_to_prompt(listener_text);
+					      restore_listener_string(TRUE);
+					    }
+					  else 
+					    {
+					      if (((event->keyval == snd_K_n) || (event->keyval == snd_K_N)) && (event->state & snd_MetaMask))
+						{
+						  clear_back_to_prompt(listener_text);
+						  restore_listener_string(FALSE);
+						}
+					      else 
+						{
+						  return(FALSE);
+						}}}}}}}}}}}}
   SG_SIGNAL_EMIT_STOP_BY_NAME(GTK_OBJECT(w), "key_press_event");
   return(FALSE);
 }
@@ -556,7 +562,7 @@ static XEN g_reset_listener_cursor(void)
 
 void clear_listener(void)
 {
-  sg_text_delete(listener_text, 1, SG_TEXT_GET_POINT(listener_text));
+  SG_TEXT_DELETE(listener_text, 1, SG_TEXT_GET_POINT(listener_text));
 }
 
 #ifdef XEN_ARGIFY_1

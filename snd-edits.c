@@ -1,8 +1,5 @@
 #include "snd.h"
 
-/* TODO: samples should return vct, not vector -- all vectors probably should be removed 
- */
-
 /* from snd-io.c */
 MUS_SAMPLE_TYPE *file_state_channel_array(int *io, int chan);
 int file_state_buffer_size(int *io);
@@ -3388,37 +3385,6 @@ static XEN g_set_sample_reversed(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg
     }
 }
 
-static XEN g_samples(XEN samp_0, XEN samps, XEN snd_n, XEN chn_n, XEN edpos)
-{
-  #define H_samples "(" S_samples " &optional (start-samp 0) samps snd chn edit-position)\n\
-returns a vector containing snd channel chn's samples starting a start-samp for samps samples; edit-position is the edit \
-history position to read (defaults to current position)."
-
-  chan_info *cp;
-  snd_fd *sf;
-  int i, len, beg, pos;
-  XEN new_vect;
-  XEN *vdata;
-  ASSERT_SAMPLE_TYPE(S_samples, samp_0, XEN_ARG_1);
-  ASSERT_SAMPLE_TYPE(S_samples, samps, XEN_ARG_2);
-  ASSERT_CHANNEL(S_samples, snd_n, chn_n, 3);
-  cp = get_cp(snd_n, chn_n, S_samples);
-  pos = to_c_edit_position(cp, edpos, S_samples, 5);
-  beg = beg_to_sample(samp_0, S_samples);
-  len = dur_to_samples(samps, beg, cp, pos, 2, S_samples);
-  if (len == 0) return(XEN_FALSE);
-  new_vect = XEN_MAKE_VECTOR(len, C_TO_XEN_DOUBLE(0.0));
-  sf = init_sample_read_any(beg, cp, READ_FORWARD, pos);
-  if (sf)
-    {
-      vdata = XEN_VECTOR_ELEMENTS(new_vect);
-      for (i = 0; i < len; i++) 
-	vdata[i] = C_TO_XEN_DOUBLE(next_sample_to_float(sf));
-      free_snd_fd(sf);
-    }
-  return(new_vect);
-}
-
 static XEN g_set_samples(XEN samp_0, XEN samps, XEN vect, XEN snd_n, XEN chn_n, XEN truncate, XEN edname, XEN infile_chan, XEN edpos)
 {
   #define H_set_samples "(" "set-" S_samples " start-samp samps data &optional snd chn truncate edname infile-chan edpos)\n\
@@ -3515,6 +3481,75 @@ sets snd's channel chn's samples starting at beg for dur samps from vct data"
       dur = C_TO_XEN_INT(v1->length);
     }
   return(g_set_samples(beg, dur, v, snd_n, chn_n, XEN_FALSE, C_TO_XEN_STRING(S_vct2channel), XEN_FALSE, edpos));
+}
+
+
+static XEN samples2vct_1(XEN samp_0, XEN samps, XEN snd_n, XEN chn_n, XEN v, XEN edpos, const char *caller)
+{
+  chan_info *cp;
+  snd_fd *sf;
+  Float *fvals;
+  int i, len, beg, pos;
+  vct *v1 = get_vct(v);
+  XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(samp_0), samp_0, XEN_ARG_1, caller, "a number");
+  XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(samps), samps, XEN_ARG_2, caller, "a number");
+  ASSERT_CHANNEL(caller, snd_n, chn_n, 3);
+  cp = get_cp(snd_n, chn_n, caller);
+  pos = to_c_edit_position(cp, edpos, caller, 6);
+  beg = XEN_TO_C_INT_OR_ELSE(samp_0, 0);
+  len = XEN_TO_C_INT_OR_ELSE(samps, cp->samples[pos] - beg);
+  if ((beg == 0) && (len == 0)) return(XEN_FALSE); /* empty file (channel) possibility */
+  if (len <= 0) 
+    XEN_ERROR(IMPOSSIBLE_BOUNDS,
+	      XEN_LIST_3(C_TO_XEN_STRING(caller),
+			 C_TO_XEN_INT(beg),
+			 C_TO_XEN_INT(len)));
+  if (v1)
+    {
+      fvals = v1->data;
+      if (len > v1->length)
+	len = v1->length;
+    }
+  else fvals = (Float *)MALLOC(len * sizeof(Float));
+  sf = init_sample_read_any(beg, cp, READ_FORWARD, pos);
+  if (sf)
+    {
+      for (i = 0; i < len; i++) 
+	fvals[i] = next_sample_to_float(sf);
+      free_snd_fd(sf);
+    }
+  if (v1)
+    return(v);
+  else return(make_vct(len, fvals));
+}
+
+static XEN g_samples2vct(XEN samp_0, XEN samps, XEN snd_n, XEN chn_n, XEN v, XEN edpos)
+{
+  #define H_samples2vct "(" S_samples2vct " &optional (start-samp 0)\n    samps snd chn vct-obj edit-position)\n\
+returns a vct object (vct-obj if given) containing snd channel chn's data starting at start-samp for samps, \
+reading edit version edit-position (defaulting to the current version)"
+  return(samples2vct_1(samp_0, samps, snd_n, chn_n, v, edpos, S_samples2vct));
+}
+
+static XEN g_channel2vct(XEN samp_0, XEN samps, XEN snd_n, XEN chn_n, XEN edpos)
+{
+  #define H_channel2vct "(" S_channel2vct " &optional beg dur snd chn edpos)\n\
+returns a vct object (vct-obj if given) containing snd channel chn's data starting at beg for dur samps, \
+reading edit version edpos (defaulting to the current version)"
+  return(samples2vct_1(samp_0, samps, snd_n, chn_n, XEN_FALSE, edpos, S_channel2vct));
+}
+
+static XEN g_samples(XEN samp_0, XEN samps, XEN snd_n, XEN chn_n, XEN edpos)
+{
+  #define H_samples "(" S_samples " &optional (start-samp 0) samps snd chn edit-position)\n\
+returns a vector containing snd channel chn's samples starting a start-samp for samps samples; edit-position is the edit \
+history position to read (defaults to current position)."
+
+  XEN val;
+  val = samples2vct_1(samp_0, samps, snd_n, chn_n, XEN_FALSE, edpos, S_samples);
+  if (VCT_P(val))
+    return(vct2vector(val));
+  return(XEN_FALSE);
 }
 
 static XEN g_set_samples_reversed(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6, XEN arg7, XEN arg8, XEN arg9)
@@ -3835,6 +3870,8 @@ XEN_ARGIFY_5(g_insert_sample_w, g_insert_sample)
 XEN_ARGIFY_6(g_insert_samples_w, g_insert_samples)
 XEN_ARGIFY_8(g_vct2samples_w, g_vct2samples)
 XEN_ARGIFY_6(g_vct2channel_w, g_vct2channel)
+XEN_ARGIFY_6(g_samples2vct_w, g_samples2vct)
+XEN_ARGIFY_5(g_channel2vct_w, g_channel2vct)
 XEN_ARGIFY_6(g_insert_sound_w, g_insert_sound)
 XEN_ARGIFY_6(g_scale_sound_by_w, g_scale_sound_by)
 XEN_ARGIFY_6(g_scale_channel_w, g_scale_channel)
@@ -3869,6 +3906,8 @@ XEN_ARGIFY_9(g_set_samples_w, g_set_samples)
 #define g_insert_samples_w g_insert_samples
 #define g_vct2samples_w g_vct2samples
 #define g_vct2channel_w g_vct2channel
+#define g_samples2vct_w g_samples2vct
+#define g_channel2vct_w g_channel2vct
 #define g_insert_sound_w g_insert_sound
 #define g_scale_sound_by_w g_scale_sound_by
 #define g_scale_channel_w g_scale_channel
@@ -3928,6 +3967,8 @@ void g_init_edits(void)
   XEN_DEFINE_PROCEDURE(S_insert_samples,            g_insert_samples_w, 3, 3, 0,            H_insert_samples);
   XEN_DEFINE_PROCEDURE(S_vct2samples,               g_vct2samples_w, 1, 7, 0,               H_vct2samples);
   XEN_DEFINE_PROCEDURE(S_vct2channel,               g_vct2channel_w, 1, 5, 0,               H_vct2channel);
+  XEN_DEFINE_PROCEDURE(S_samples2vct,               g_samples2vct_w, 0, 6, 0,               H_samples2vct);
+  XEN_DEFINE_PROCEDURE(S_channel2vct,               g_channel2vct_w, 0, 5, 0,               H_channel2vct);
   XEN_DEFINE_PROCEDURE(S_insert_sound,              g_insert_sound_w, 1, 5, 0,              H_insert_sound);
   XEN_DEFINE_PROCEDURE(S_scale_sound_by,            g_scale_sound_by_w, 1, 5, 0,            H_scale_sound_by);
   XEN_DEFINE_PROCEDURE(S_scale_channel,             g_scale_channel_w, 1, 5, 0,             H_scale_channel);

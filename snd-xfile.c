@@ -2430,7 +2430,7 @@ XEN_ARGIFY_1(g_set_just_sounds_w, g_set_just_sounds)
 static XEN g_new_file_dialog(void)
 {
   snd_info *sp;
-  sp = make_new_file_dialog(get_global_state(), "test.snd", MUS_NEXT, MUS_BSHORT, 22050, 1, " no comment");
+  sp = new_file_from_menu(get_global_state());
   if (sp)
     return(C_TO_XEN_INT(sp->index));
   return(XEN_FALSE);

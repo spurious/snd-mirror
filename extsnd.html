@@ -1042,14 +1042,6 @@ when you save a sound via the "save" dialog.</p>
 <!-- --></td></tr>
 <!-- --><tr><td colspan=3></td></tr>
 <!-- -->
-<!-- movies -->
-<!-- --><tr><td><code><em class=def><a name="movies">movies</a></em></code></td>
-<!-- --><td><code>#t</code></td>
-<!-- --><td>If #t, the mix graphs are updated constantly as the 
-<!-- -->mouse drags the mix tag.
-<!-- --></td></tr>
-<!-- --><tr><td colspan=3></td></tr>
-<!-- -->
 <!-- save-dir -->
 <!-- --><tr><td valign=top><code><em class=def><a name="savedir">save-dir</a></em></code></td>
 <!-- --><td valign=top><code>#f</code></td>
@@ -2595,6 +2587,10 @@ functions:</p>
 <!-- --><tr><td><span class=defbox><code><em class=def><a name="vct2soundfile">vct-&gt;sound-file</a></em> (fd vobj vals)</code></span></td>
 <!-- --><td>write <i>vals</i> floats from <i>vobj</i> to <i>fd</i>.</td></tr>
 <!-- -->
+<!-- vct-&gt;vector -->
+<!-- --><tr><td><span class=defbox><code><em class=def><a name="sndvct2vector">vct-&gt;vector</a></em> (vct)</code></span></td>
+<!-- --><td>return vector object with elements of vct <i>vct</i></td></tr>
+<!-- -->
 <!-- vcts-do! -->
 <!-- --><tr><td><span class=defbox><code><em class=def><a name="vctsdo">vcts-do!</a></em> (vobj... proc)</code></span></td>
 <!-- --><td><code>vobj[vi][i] = (nth vi (funcall proc num i))</code>.</td></tr>
@@ -3750,7 +3746,7 @@ Most of the region number arguments default to the current region (the first in 
 <!-- --><tr><td colspan=2><span class=defbox><code><em class=def><a name="sndregionsamples">region-samples</a></em> (<i>samp samps reg chn</i>)</code></span></td>
 <!-- --></tr><tr><td></td><td>
 <!-- -->return vector of <i>samps</i> samples starting at <i>samp</i> in region <i>reg</i>'s 
-<!-- -->channel <i>chn</i>.
+<!-- -->channel <i>chn</i>.  (This function calls region-samples-&gt;vct, then vct-&gt;vector; it may someday return the vct instead).
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2>
 <!-- --><center><table border=1 cellpadding=5><tr><td bgcolor="#FCFCF0"><pre>
@@ -5451,6 +5447,7 @@ the direction argument between the channel and edit-position.
 <!-- --><i>samp</i> defaults to 0.  <i>samps</i> defaults to frames - samp.
 <!-- --><i>pos</i> is the edit history position to read (defaults to current position).
 <!-- -->This is settable (as is <b>sample</b>) -- see <a href="#sndsetsamples">set-samples</a>.
+<!-- -->(This function calls channel-&gt;vct, then vct-&gt;vector; it may someday return the vct instead).
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -6178,6 +6175,7 @@ the direction argument between the channel and edit-position.
 <!-- --><tr><td></td><td>
 <!-- -->return the transform data currently in <i>snd</i>'s channel <i>chn</i>.
 <!-- -->Use <a href="#sndupdatefft">update-transform</a> to make sure the transform has run to completion.
+<!-- -->(This function calls transform-samples-&gt;vct, then vct-&gt;vector; it may someday return the vct instead).
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -7105,7 +7103,7 @@ And an example that lets us see the result of filtering the waveform:
 <!-- --><tr><td colspan=2>
 <!-- --><span class=defbox><code><em class=def><a name="sndautocorrelate">autocorrelate</a></em> (data)</code></span></td></tr>
 <!-- --><tr><td></td><td>
-<!-- -->return (in place) autocorrelation of <i>data</i>
+<!-- -->return (in place) autocorrelation of <i>data</i> (a vct).
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
