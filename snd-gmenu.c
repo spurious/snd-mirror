@@ -1145,7 +1145,7 @@ GtkWidget *add_menu(snd_state *ss)
   return(mw[menu_menu]);
 }
 
-#define MAX_MAIN_MENUS 12
+#define MAX_MAIN_MENUS 64
 static GtkWidget *added_menus[MAX_MAIN_MENUS];
 static int new_menu = 5;
 static GtkWidget **added_options = NULL;

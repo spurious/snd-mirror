@@ -962,7 +962,7 @@ Widget add_menu(snd_state *ss)
   return(mw[menu_menu]);
 }
 
-#define MAX_MAIN_MENUS 12
+#define MAX_MAIN_MENUS 64
 static Widget added_menus[MAX_MAIN_MENUS];
 static int new_menu = 5;
 static Widget *added_options = NULL;

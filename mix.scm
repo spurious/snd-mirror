@@ -436,7 +436,7 @@
 		   (reverse (map mix-position ids-in-order))))))))
 
 
-;;; untested... TODO: test mix funcs
+;;; untested... TODO: test these mix funcs
 (define (delete-track track)
   (as-one-edit
     (lambda ()

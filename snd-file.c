@@ -2274,6 +2274,8 @@ Equivalent to Guile (stat:mtime (stat file))"
 
 static XEN g_sound_loop_info(XEN snd)
 {
+  #define H_sound_loop_info "(" S_sound_loop_info " snd) returns the sound's loop points as a list: \
+(sustain-start sustain-end release-start release-end baseNote detune)"
   int *res;
   XEN sres = XEN_EMPTY_LIST;
   snd_info *sp;
@@ -2293,7 +2295,6 @@ static XEN g_sound_loop_info(XEN snd)
 
 static XEN g_set_sound_loop_info(XEN snd, XEN vals)
 {
-  #define H_sound_loop_info "(" "set-" S_sound_loop_info " snd vals) sets loop points"
   snd_info *sp;
   char *tmp_file;
   file_info *hdr;
