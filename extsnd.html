@@ -566,20 +566,6 @@ See <a href="#sndtempnam">snd-tempnam</a>, and autosave.scm.
 </td></tr>
 <tr><td colspan=3></td></tr>
 
-<!-- use-sinc-interp -->
-<tr><td valign=top><code><em class=def><a name="usesincinterp">use-sinc-interp</a></em></code></td>
-<td valign=top><code>#t</code></td>
-<td>If #t, use high quality sampling rate conversion (convolve with sinc), rather linear interpolation.
-<br><br>
-This can significantly increase the computational burden on the
-computer; if you're trying to play 8 channel 44Khz sounds on a slow
-machine, It may help to set use-sinc-interp to #f.  In fact, if you're
-running a machine in the 100 MHz range, even stereo 44.1kHz can be a
-problem -- if the sound has clicks or stutters or seems horribly distorted when
-the speed control is not at 1.0, try setting this variable to #f.
-</td></tr>
-<tr><td colspan=3></td></tr>
-
 <!-- window-height -->
 <tr><td valign=top><code><em class=def><a name="windowheight">window-height</a></em></code></td>
 <td valign=top><code>0</code></td>

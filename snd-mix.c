@@ -685,7 +685,7 @@ static mix_fd *init_mix_read_any(mix_info *md, int old, int type)
     }
   if (mf->calc == C_SPEED)
     {
-      if ((type == MIX_INPUT_SOUND) && (use_sinc_interp((md->ss))))
+      if (type == MIX_INPUT_SOUND)
 	{
 	  mf->srcs = (src_state **)CALLOC(chans, sizeof(src_state *));
 	  for (i = 0; i < chans; i++)

@@ -1,16 +1,6 @@
 #ifndef SNDLIB_H
 #define SNDLIB_H
 
-#undef BEGIN_DECLS
-#undef END_DECLS
-#ifdef __cplusplus
-# define BEGIN_DECLS extern "C" {
-# define END_DECLS }
-#else
-# define BEGIN_DECLS /* empty */
-# define END_DECLS /* empty */
-#endif
-
 #define SNDLIB_VERSION 17
 #define SNDLIB_REVISION 8
 #define SNDLIB_DATE "12-Mar-03"
@@ -23,7 +13,6 @@
      #define MUS_LITTLE_ENDIAN 1
   #endif
 #else
-  #define RETSIGTYPE void
   #ifdef __LITTLE_ENDIAN__
     #define MUS_LITTLE_ENDIAN 1
   #else
@@ -129,8 +118,6 @@
 #endif
 #endif
 #endif
-
-BEGIN_DECLS
 
 #if (!defined(M_PI))
   #define M_PI 3.14159265358979323846264338327
@@ -356,6 +343,10 @@ enum {MUS_NO_ERROR, MUS_NO_FREQUENCY, MUS_NO_PHASE, MUS_NO_GEN, MUS_NO_LENGTH,
 
 #ifndef Float
   #define Float float
+#endif
+
+#ifdef __cplusplus
+extern "C" {
 #endif
 
 /* -------- sound.c -------- */
@@ -654,6 +645,8 @@ char *mus_midi_describe(void);
 char *strdup(const char *str);
 #endif
 
-END_DECLS
+#ifdef __cplusplus
+}
+#endif
 
 #endif

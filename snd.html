@@ -2138,11 +2138,7 @@ reverb, and filter.</p>
 
 <p><A NAME="speed"></a>'Speed' here refers to the rate at which the
 sound data is consumed during playback.
-Another term might be 'srate'.  Snd normally uses
-sinc interpolation to perform the speed
-change, but slow machines may not be able to handle the computational
-burden; in that case, <code>(set! (<a href="extsnd.html#usesincinterp">use-sinc-interp</a>) #f)</code>; the
-fallback (lo-fi) method is linear interpolation.
+Another term might be 'srate'. 
 The arrow button on the right determines
 the direction Snd moves through the data.
 The scroll bar position is normally interpreted

@@ -23,6 +23,8 @@ maxf.ins and strad.ins -> scm
 
 A "master volume" control in the recorder.
 
+noise reduction.
+
 user-interface extension projects from snd-motif.scm:
     bess-translations (first case is bess.scm)
     radar scope style region cue list

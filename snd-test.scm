@@ -704,9 +704,6 @@
       (set! (optimization) (optimization))
       (IF (not (equal? (optimization) 0)) 
 	  (snd-display ";optimization set def: ~A" (optimization)))
-      (set! (use-sinc-interp) (use-sinc-interp))
-      (IF (not (equal? (use-sinc-interp)  #t )) 
-	  (snd-display ";use-sinc-interp set def: ~A" (use-sinc-interp)))
       (set! (verbose-cursor) (verbose-cursor))
       (IF (not (equal? (verbose-cursor)  #f)) 
 	  (snd-display ";verbose-cursor set def: ~A" (verbose-cursor)))
@@ -911,7 +908,6 @@
 	'tiny-font (tiny-font) "6x12"
 	'transform-type (transform-type) 0 
 	'optimization (optimization) 0
-	'use-sinc-interp (use-sinc-interp) #t 
 	'verbose-cursor (verbose-cursor) #f
 	'vu-font (vu-font) #f 
 	'vu-font-size (vu-font-size) 1.0 
@@ -1414,7 +1410,6 @@
 	  (list 'sync sync 0 1)
 	  (list 'tiny-font tiny-font "6x12" "9x15")
 	  (list 'transform-type transform-type 0 1)
-	  (list 'use-sinc-interp use-sinc-interp #t #f)
 	  (list 'verbose-cursor verbose-cursor #f #t)
 	  (list 'vu-size vu-size 1.0 2.0)
 	  (list 'vu-font-size vu-font-size 1.0 2.0)
@@ -6143,11 +6138,9 @@ EDITS: 5
 	(play-and-wait "oboe.snd" 12000)
 	(play-and-wait "oboe.snd" 12000 15000)
       (play-and-wait 0 #f #f #f #f (1- (edit-position)))
-      (let ((old-sinc (use-sinc-interp))
-	    (old-speed (speed-control index))
+      (let ((old-speed (speed-control index))
 	    (old-style (speed-control-style))
 	    (old-open (show-controls index)))
-	(set! (use-sinc-interp) #f)
 	(set! (show-controls index) #t)
 	(set! (speed-control index) -2.0)
 	(play-and-wait 12345 index)
@@ -6155,7 +6148,6 @@ EDITS: 5
 	(set! (speed-control index) 0.5)
 	(set! (speed-control-style) speed-control-as-ratio)
 	(set! (speed-control index) 0.25)
-	(set! (use-sinc-interp) old-sinc)
 	(set! (speed-control index) old-speed)
 	(set! (speed-control-style) old-style)
 	(set! (show-controls index) old-open))
@@ -8916,11 +8908,9 @@ EDITS: 5
       (let ((nind (new-sound "tmp.snd" mus-next mus-bshort 22050 1 "hiho a comment")))
 	(test-prc95)
 	(play-and-wait 0 nind)
-	(set! (use-sinc-interp) #f)
 	(set! (speed-control nind) .5)
 	(play-and-wait)
 	(apply-controls)
-	(set! (use-sinc-interp) #t)
 	(close-sound nind)
 	(delete-file "tmp.snd"))
       (let ((nind (new-sound "tmp.snd" mus-next mus-bshort 22050 2 "hiho a comment")))
@@ -12946,12 +12936,10 @@ EDITS: 5
       (if (fneq (/ (mix-frames md) (mus-sound-frames "1a.snd")) 0.5)
 	  (snd-display ";mix srate chan 2: ~A" (mix-frames md)))
       (update-time-graph)
-      (set! (use-sinc-interp) #f)
       (set! (mix-speed md) 0.5)
       (update-time-graph)
       (set! (mix-amp md 0) 1.0)
       (if (fneq (maxamp ind 1) .166) (snd-display ";non-sinc mix-speed: ~A" (maxamp ind 1)))
-      (set! (use-sinc-interp) #t)
       (set! (mix-amp-env md 0) '(0 0 1 1 2 0))
       (update-time-graph)
       (set! (mix-speed md) 1.0)
@@ -15388,9 +15376,7 @@ EDITS: 5
 	    (without-errors (protect-region (list-ref (regions) 2) #t))
 	    (without-errors (play-region (list-ref (regions) 2) #t))
 	    (without-errors (mix-region))
-	    (set! (use-sinc-interp) #t)
 	    (play-and-wait)
-	    (set! (use-sinc-interp) #f)
 	    (scale-to .1 (choose-fd))
 	    (scale-by 2.0 (choose-fd))
 	    (equalize-panes)
@@ -15675,7 +15661,6 @@ EDITS: 5
 	    (let ((cfd2 (open-sound "pistol.snd")))
 	      (select-sound cfd2)
 	      ;; now run apply a few times
-	      (if (rs 0.5) (set! (use-sinc-interp) #t))
 	      (set! (amp-control) .5) 
 	      (set! (speed-control) 2.0) 
 	      (test-panel speed-control 'speed-control)
@@ -15747,8 +15732,7 @@ EDITS: 5
 	      (delete-file "/tmp/cloned.snd")
 	      (mus-sound-forget "/tmp/cloned.snd")
 	      (close-sound cfd2)
-	      (close-sound cfd)
-	      (set! (use-sinc-interp) #f)))
+	      (close-sound cfd)))
 	  (add-hook! (edit-hook) (lambda () #f))
 	  (let ((editctr (edit-position)))
 	    (as-one-edit (lambda () (set! (sample 200) .2) (set! (sample 300) .3)))
@@ -16004,7 +15988,6 @@ EDITS: 5
 		    (list 'speed-control-tones speed-control-tones #f 2 100)
 		    (list 'sync sync #t 0 5)
 		    (list 'transform-type transform-type #f fourier-transform (if (<= tests 10) 6 3))
-		    (list 'use-sinc-interp use-sinc-interp #f #f #t)
 		    (list 'verbose-cursor verbose-cursor #f #f #t)
 		    (list 'wavelet-type wavelet-type #f 0 10)
 		    (list 'time-graph? time-graph? #t #f #t)
@@ -25903,7 +25886,9 @@ EDITS: 2
       (delete-file "fmv.snd")
 
       (let ((hi (make-power-env '(0 0 32.0 1 1 .0312 2 0 1) :duration 1.0)))
-	(itsta '(lambda (y) (declare (y penv)) (+ 1 2)) hi 3))
+	(itsta '(lambda (y) (declare (y penv)) (+ 1 2)) hi 3)
+	;(itsta '(lambda () (penv-total-envs hi)) 0 2)
+	)
 
       (let ((ind (open-sound "oboe.snd")))
 	(let ((r (make-sample-reader 2000))
@@ -33312,7 +33297,7 @@ EDITS: 2
 	       start-playing start-progress-report stop-player stop-playing swap-channels syncd-marks sync sound-properties temp-dir
 	       text-focus-color tiny-font track-sample-reader?  transform-dialog transform-sample
 	       transform-samples->vct transform-samples-size transform-type trap-segfault optimization unbind-key undo
-	       update-transform-graph update-time-graph update-lisp-graph update-sound use-sinc-interp
+	       update-transform-graph update-time-graph update-lisp-graph update-sound
 	       vct->samples vct->sound-file verbose-cursor view-sound vu-font vu-font-size vu-size wavelet-type
 	       time-graph?  time-graph-type wavo-hop wavo-trace window-height window-width window-x window-y
 	       with-mix-tags with-relative-panes with-gl write-peak-env-info-file x-axis-style 
@@ -33398,7 +33383,7 @@ EDITS: 2
 		   show-y-zero sinc-width spectro-cutoff spectro-hop spectro-start spectro-x-angle
 		   spectro-x-scale spectro-y-angle spectro-y-scale spectro-z-angle spectro-z-scale speed-control
 		   speed-control-style speed-control-tones squelch-update sync sound-properties temp-dir text-focus-color tiny-font y-bounds
-		   transform-type trap-segfault optimization use-sinc-interp verbose-cursor vu-font vu-font-size vu-size wavelet-type x-bounds
+		   transform-type trap-segfault optimization verbose-cursor vu-font vu-font-size vu-size wavelet-type x-bounds
 		   time-graph? wavo-hop wavo-trace with-gl with-mix-tags x-axis-style beats-per-minute zero-pad zoom-color zoom-focus-style 
 		   with-relative-panes  window-x window-y window-width window-height
 		   channels chans colormap comment data-format data-location edit-position frames header-type maxamp
@@ -34059,7 +34044,7 @@ EDITS: 2
 			  selected-channel selected-data-color selected-graph-color selected-mix selected-mix-color
 			  selected-sound selection-creates-region show-backtrace show-controls show-indices show-listener
 			  show-selection-transform sinc-width temp-dir text-focus-color tiny-font
-			  trap-segfault optimization unbind-key use-sinc-interp verbose-cursor vu-font vu-font-size vu-size window-height
+			  trap-segfault optimization unbind-key verbose-cursor vu-font vu-font-size vu-size window-height
 			  window-width window-x window-y with-gl with-mix-tags x-axis-style beats-per-minute zoom-color zoom-focus-style mix-tag-height
 			  mix-tag-width with-relative-panes))
 	  (gc))

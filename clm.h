@@ -113,16 +113,6 @@
  *  if 1, include mus_fftw which calls the fftw real fft
  */
 
-#undef BEGIN_DECLS
-#undef END_DECLS
-#ifdef __cplusplus
-# define BEGIN_DECLS extern "C" {
-# define END_DECLS }
-#else
-# define BEGIN_DECLS /* empty */
-# define END_DECLS /* empty */
-#endif
-
 #ifndef TRUE
   #define TRUE 1
 #endif
@@ -197,7 +187,9 @@ enum {MUS_RECTANGULAR_WINDOW, MUS_HANN_WINDOW, MUS_WELCH_WINDOW, MUS_PARZEN_WIND
 #define MUS_RUN_P(GEN) ((GEN->core)->run)
 
 
-BEGIN_DECLS
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 void init_mus_module(void);
 
@@ -563,6 +555,9 @@ int mus_phase_vocoder_set_outctr(mus_any *ptr, int val);
 
 void mus_clear_sinc_tables(void);
 void *mus_environ(mus_any *rd);
-END_DECLS
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

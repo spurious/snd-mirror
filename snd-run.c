@@ -847,6 +847,7 @@ static char *describe_xen_value(xen_value *v, int *ints, Float *dbls)
     case R_VCT_VECTOR:  return(mus_format("vct vector " PTR_PT , v->addr, (vct_vct *)(ints[v->addr])));                                      break;
     case R_CLM_VECTOR:  return(mus_format("clm vector " PTR_PT , v->addr, (clm_vct *)(ints[v->addr])));                                      break;
     case R_UNSPECIFIED: return(copy_string("#<unspecified>"));                                                                               break;
+      /* TODO: describe clm struct */
     default:            buf = (char *)CALLOC(32, sizeof(char)); mus_snprintf(buf, 32, "i%d(unknown type: %d)", v->addr, v->type);            break;
     }
   return(buf);
@@ -1084,9 +1085,9 @@ static xen_var *free_xen_var(ptree *prog, xen_var *var)
 		if (XEN_VECTOR_P(val))
 		  int_vct_into_vector((int_vct *)(prog->ints[var->v->addr]), val);
 		break;
-	      case R_LIST:
-		/* this can be "unclean" only if it represents a clm struct that had some field set */
-		clm_struct_restore(prog, var);
+	      default:
+		if (var->v->type > R_ANY)
+		  clm_struct_restore(prog, var);
 		break;
 	      }
 	}
@@ -1533,7 +1534,14 @@ static int xen_to_run_type(XEN val)
 			/* order matters here (list is subset of pair) */
 			if (XEN_LIST_P(val))
 			  {
-			    /* TODO: look for symbol as car, check for clm types */
+			    if ((!(XEN_NULL_P(val))) &&
+				(XEN_SYMBOL_P(XEN_CAR(val))))
+			      {
+				int type;
+				type = name_to_type(XEN_SYMBOL_TO_C_STRING(XEN_CAR(val)));
+				if (type > R_ANY)
+				  return(type);
+			      }
 			    return(R_LIST); 
 			  }
 			else
@@ -1546,7 +1554,7 @@ static xen_value *add_global_var_to_ptree(ptree *prog, XEN form, XEN *rtn)
 {
   XEN val = XEN_UNDEFINED;
   xen_var *var;
-  int var_loc = 0, local_var = FALSE;
+  int var_loc = 0, local_var = FALSE, type;
   xen_value *v = NULL;
   ptree *upper = NULL;
   char *varname;
@@ -1567,8 +1575,9 @@ static xen_value *add_global_var_to_ptree(ptree *prog, XEN form, XEN *rtn)
       if (XEN_NOT_BOUND_P(val))	
 	return(run_warn("can't find %s", varname));
     }
-  /* fprintf(stderr,"add global %s %s %s\n",varname, type_name(xen_to_run_type(val)), XEN_AS_STRING(val)); */
-  switch (xen_to_run_type(val))
+  type = xen_to_run_type(val);
+  /* fprintf(stderr,"add global %s %s %s\n",varname, type_name(type), XEN_AS_STRING(val)); */
+  switch (type)
     {
     case R_INT:    v = make_xen_value(R_INT, add_int_to_ptree(prog, XEN_TO_C_INT(val)), R_VARIABLE); break;
     case R_FLOAT:  v = make_xen_value(R_FLOAT, add_dbl_to_ptree(prog, XEN_TO_C_DOUBLE(val)), R_VARIABLE); break;
@@ -1620,6 +1629,10 @@ static xen_value *add_global_var_to_ptree(ptree *prog, XEN form, XEN *rtn)
 	v = make_xen_value(R_CLM_VECTOR, add_int_to_ptree(prog, (int)cv), R_VARIABLE);
 	if (v) add_obj_to_gcs(prog, R_CLM_VECTOR, v->addr);
       }
+      break;
+    default:
+      if (type > R_ANY)
+	v = make_xen_value(type, add_int_to_ptree(prog, (int)val), R_VARIABLE); 
       break;
     }
   if (v)
@@ -4926,6 +4939,7 @@ static xen_value *display_1(ptree *pt, xen_value **args, int num_args)
     case R_CLM_VECTOR: /* SOMEDAY: display clm_vector and vct_vector in some pretty manner */
     case R_VCT_VECTOR:
     case R_INT_VECTOR: return(package(pt, R_BOOL, display_int_vct, descr_display_int_vct, args, 1));   break;
+      /* TODO: clm struct display */
     }
   return(NULL);
 }
@@ -7520,6 +7534,7 @@ static int xenable(xen_value *v)
     {
     case R_FLOAT: case R_INT: case R_CHAR: case R_STRING: case R_BOOL:
     case R_LIST: case R_PAIR: case R_FLOAT_VECTOR: case R_VCT: case R_KEYWORD: case R_SYMBOL:
+      /* TODO: are clm types xenable? */
       return(TRUE);
       break;
     }
@@ -7546,6 +7561,7 @@ static XEN xen_value_to_xen(ptree *pt, xen_value *v)
       vc = (vct *)(pt->ints[v->addr]);
       val = make_vct_wrapper(vc->length, vc->data);
       break;
+      /* TODO: are clm types restorable to xen? */
     }
   if (XEN_BOUND_P(val))
     {
@@ -7890,6 +7906,10 @@ static int xen_to_addr(ptree *pt, XEN arg, int type, int addr)
     case R_CLM_VECTOR:
       pt->ints[addr] = (int)read_clm_vector(arg);
       add_obj_to_gcs(pt, R_CLM_VECTOR, addr);
+      break;
+    default:
+      if (type > R_ANY)
+	pt->ints[addr] = (int)arg;
       break;
     }
   return(addr);
@@ -8439,6 +8459,7 @@ static xen_value *walk(ptree *prog, XEN form, int need_result)
     case R_LIST:    return(make_xen_value(R_LIST, add_int_to_ptree(prog, (int)form), R_CONSTANT)); break;
     case R_PAIR:    return(make_xen_value(R_PAIR, add_int_to_ptree(prog, (int)form), R_CONSTANT)); break;
     case R_KEYWORD: return(make_xen_value(R_KEYWORD, add_int_to_ptree(prog, (int)form), R_CONSTANT)); break;
+      /* TODO: walk returns unannounced clm struct */
     }
   if (XEN_SYMBOL_P(form))
     {
@@ -8716,6 +8737,7 @@ static XEN eval_ptree_to_xen(ptree *pt)
       }
       break;
     case R_CLM:     run_warn("can't wrap gen?"); break;
+      /* TODO: ptree->clm struct? */
     }
   return(result);
 }

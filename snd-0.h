@@ -22,6 +22,7 @@
       #endif
     #endif
   #endif
+  #define RETSIGTYPE void
   #ifdef __CYGWIN__
     #define CLOSEDIR_VOID 1
     /* apparently we can't trust the return value */
@@ -126,7 +127,7 @@
 
 #define STR_decimal '.'
 /* defines the decimal point character used where I'm making float representations by hand */
-/* if nl_langinfo is available, it's decimal point will override this */
+/* if nl_langinfo is available, its decimal point will override this */
 
 #define XOR(a, b) ((~((a) & (b))) & ((a) | (b)))
 
@@ -697,16 +698,6 @@ enum {MINI_OFF, MINI_CURSOR, MINI_FIND, MINI_PROMPT, MINI_REPORT, MINI_USER};
 #define listener_prompt(ss) ss->Listener_Prompt
 #define set_listener_prompt(ss, a) ss->Listener_Prompt = a
 #define DEFAULT_LISTENER_PROMPT ">"
-
-#define use_sinc_interp(ss) ss->Use_Sinc_Interp
-#define set_use_sinc_interp(ss, a) ss->Use_Sinc_Interp = a
-#define DEFAULT_USE_SINC_INTERP TRUE
-/* linear interpolation is used by 
- *   mix amp env redisplay (optimized large mix)
- *   mix if sinc_interp #f (also dac)
- *   dac if srate not set to != 1.0 before play started
- * so don't try to remove this useless-looking thing without mature reflection...
- */
 
 #define print_length(ss) ss->Print_Length
 #define set_print_length(ss, a) ss->Print_Length = a

@@ -71,7 +71,7 @@ static Float speed(dac_info *dp, Float sr)
   Float result = 0.0;
   if (dp->never_sped)
     return(read_sample_to_float(dp->chn_fd));
-  if ((use_sinc_interp((dp->ss))) && (dp->src))
+  if (dp->src)
     result = mus_src(dp->src->gen, sr, &src_input_as_needed);
   else
     {
@@ -403,8 +403,7 @@ static dac_info *make_dac_info(chan_info *cp, snd_info *sp, snd_fd *fd)
       dp->filtering = ((sp->filter_control_p) && (sp->filter_control_order > 0));
       dp->reverbing = sp->reverb_control_p;
       dp->contrast_amp = sp->contrast_control_amp;
-      if ((use_sinc_interp(sp->state)) && 
-	  ((sp->speed_control * sp->speed_control_direction) != 1.0))
+      if ((sp->speed_control * sp->speed_control_direction) != 1.0)
 	dp->src = make_src(sp->state, 0.0, fd, sp->speed_control * sp->speed_control_direction);
       /* that is, if user wants fancy src, he needs to say so before we start */
       if (dp->expanding) 

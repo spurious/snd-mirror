@@ -302,6 +302,7 @@ void news_help(snd_state *ss)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+13-Mar:  removed use-sinc-interp.\n\
 12-Mar:  select-mix, clear-audio-inputs and append-to-minibuffer moved to snd6.scm.\n\
 10-Mar:  Ruby-related bugfixes thanks to Michael Scholz.\n\
 5-Mar:   contrib/popup.rb from Michael Scholz.\n\
@@ -1033,7 +1034,6 @@ new value via (set! (" S_auto_resize ") #t). \n\
   " S_transform_graph_type "  " S_graph_once " (snd #t) (chn #t)\n\
   " S_transform_type "        " S_fourier_transform " (snd #t) (chn #t)\n\
   " S_trap_segfault "         #t\n\
-  " S_use_sinc_interp "       #f\n\
   " S_verbose_cursor "        #f (snd #t) (chn #t)\n\
   " S_vu_font "               nil\n\
   " S_vu_font_size "          1.0\n\

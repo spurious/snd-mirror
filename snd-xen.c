@@ -1403,19 +1403,6 @@ static XEN g_set_with_background_processes(XEN val)
     }
 }
 
-static XEN g_use_sinc_interp(void) {return(C_TO_XEN_BOOLEAN(use_sinc_interp(get_global_state())));}
-static XEN g_set_use_sinc_interp(XEN val) 
-{
-  #define H_use_sinc_interp "(" S_use_sinc_interp ") -> #t if Snd should use convolution with sinc for sampling rate \
-conversion.  The other choice is (much faster) linear interpolation which can introduce distortion"
-
-  snd_state *ss;
-  ss = get_global_state();
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(val), val, XEN_ONLY_ARG, S_setB S_use_sinc_interp, "a boolean");
-  set_use_sinc_interp(ss, XEN_TO_C_BOOLEAN_OR_TRUE(val));
-  return(C_TO_XEN_BOOLEAN(use_sinc_interp(ss)));
-}
-
 /* data-clipped -> clip-data? -- this is from sndlib */
 static XEN g_data_clipped(void) {return(C_TO_XEN_BOOLEAN(data_clipped(get_global_state())));}
 static XEN g_set_data_clipped(XEN val) 
@@ -2783,8 +2770,6 @@ XEN_NARGIFY_0(g_with_relative_panes_w, g_with_relative_panes)
 XEN_ARGIFY_1(g_set_with_relative_panes_w, g_set_with_relative_panes)
 XEN_NARGIFY_0(g_with_background_processes_w, g_with_background_processes)
 XEN_ARGIFY_1(g_set_with_background_processes_w, g_set_with_background_processes)
-XEN_NARGIFY_0(g_use_sinc_interp_w, g_use_sinc_interp)
-XEN_ARGIFY_1(g_set_use_sinc_interp_w, g_set_use_sinc_interp)
 XEN_NARGIFY_0(g_data_clipped_w, g_data_clipped)
 XEN_ARGIFY_1(g_set_data_clipped_w, g_set_data_clipped)
 XEN_NARGIFY_0(g_window_x_w, g_window_x)
@@ -2952,8 +2937,6 @@ XEN_NARGIFY_0(g_snd_global_state_w, g_snd_global_state)
 #define g_set_with_relative_panes_w g_set_with_relative_panes
 #define g_with_background_processes_w g_with_background_processes
 #define g_set_with_background_processes_w g_set_with_background_processes
-#define g_use_sinc_interp_w g_use_sinc_interp
-#define g_set_use_sinc_interp_w g_set_use_sinc_interp
 #define g_data_clipped_w g_data_clipped
 #define g_set_data_clipped_w g_set_data_clipped
 #define g_window_x_w g_window_x
@@ -3212,9 +3195,6 @@ void g_initialize_gh(void)
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_with_background_processes, g_with_background_processes_w, H_with_background_processes,
 				   S_setB S_with_background_processes, g_set_with_background_processes_w,  0, 0, 0, 1);
-
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_use_sinc_interp, g_use_sinc_interp_w, H_use_sinc_interp,
-				   S_setB S_use_sinc_interp, g_set_use_sinc_interp_w,  0, 0, 0, 1);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_data_clipped, g_data_clipped_w, H_data_clipped,
 				   S_setB S_data_clipped, g_set_data_clipped_w,  0, 0, 0, 1);

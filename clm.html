@@ -2929,7 +2929,7 @@ along with the headers CLM knows about.</p>
 <p>You can make your own specialized versions of with-sound:
 </p>
 <pre>
-(defmacro with-my-sound ((&rest args) &body body)
+(defmacro with-my-sound ((&amp;rest args) &amp;body body)
   `(let ((filename (with-sound ,args ,.body)))
      ;; any post-processing you like here
      filename))
