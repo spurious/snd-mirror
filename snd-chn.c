@@ -2600,10 +2600,6 @@ static void make_wavogram(chan_info *cp, snd_info *sp, snd_state *ss)
 
 static void make_lisp_graph(chan_info *cp, snd_info *sp, snd_state *ss, XEN pixel_list)
 {
-  #define XEN_PIXEL_P(Value) (XEN_LIST_P(Value) && \
-                             (XEN_LIST_LENGTH(Value) >= 2) && \
-                             (XEN_SYMBOL_P(XEN_CAR(Value))) && \
-                             (strcmp("Pixel", XEN_SYMBOL_TO_C_STRING(XEN_CAR(Value))) == 0))
   lisp_grf *up;
   /* data can be evenly spaced data or an envelope (up->env_data) */
   axis_info *uap = NULL;

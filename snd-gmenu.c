@@ -1274,7 +1274,7 @@ static int callb2option(int callb)
 static void SND_callback(GtkWidget *w, gpointer cD) 
 {
   int callb, opt;
-  callb = (int)get_user_data(GTK_OBJECT(w));
+  callb = get_user_int_data(GTK_OBJECT(w));
   opt = callb2option(callb);
   if (opt != -1)
     {
@@ -1409,14 +1409,14 @@ int g_set_menu_sensitive(int which_menu, char *old_label, int on)
   return(INVALID_MENU);
 }
 
-int g_add_to_main_menu(snd_state *ss, char *label, long slot)
+int g_add_to_main_menu(snd_state *ss, char *label, int slot)
 {
   GtkWidget *m, *mc;
   m = gtk_menu_item_new_with_label(label);
   set_background(m, (ss->sgx)->highlight_color);
   SG_MENU_BAR_APPEND(mw[menu_menu], m);
   gtk_widget_show(m);
-  set_user_data(GTK_OBJECT(m), (gpointer)slot);
+  set_user_int_data(GTK_OBJECT(m), slot);
   if (slot >= 0) 
     {
       SG_SIGNAL_CONNECT(GTK_OBJECT(m), "activate", GTK_SIGNAL_FUNC(SND_callback), (gpointer)ss);

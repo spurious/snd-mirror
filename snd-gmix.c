@@ -153,7 +153,7 @@ static gboolean amp_click_callback(GtkWidget *w, GdkEventButton *ev, gpointer da
 {
   int chan;
   snd_state *ss = (snd_state *)data;
-  chan = (int)get_user_data(GTK_OBJECT(w));
+  chan = get_user_int_data(GTK_OBJECT(w));
   change_mix_amp(current_mix_id(ss), chan, 1.0);
   GTK_ADJUSTMENT(w_amp_adjs[chan])->value = 0.5;
   gtk_adjustment_value_changed(GTK_ADJUSTMENT(w_amp_adjs[chan]));
@@ -184,7 +184,7 @@ static void amp_changed_callback(GtkAdjustment *adj, gpointer data)
   int chan;
   Float scrollval;
   snd_state *ss = (snd_state *)data;
-  chan = (int)get_user_data(GTK_OBJECT(adj));
+  chan = get_user_int_data(GTK_OBJECT(adj));
   scrollval = GTK_ADJUSTMENT(w_amp_adjs[chan])->value;
   if (dragging == 0) start_mix_drag(current_mix_id(ss));
   dragging = 1;
@@ -196,7 +196,7 @@ static gboolean amp_release_callback(GtkWidget *w, GdkEventButton *ev, gpointer 
   int chan;
   Float scrollval;
   snd_state *ss = (snd_state *)data;
-  chan = (int)get_user_data(GTK_OBJECT(w));
+  chan = get_user_int_data(GTK_OBJECT(w));
   scrollval = GTK_ADJUSTMENT(w_amp_adjs[chan])->value;
   dragging = 0;
   change_mix_amp(current_mix_id(ss), chan, scroll_to_amp(scrollval));
@@ -582,7 +582,7 @@ GtkWidget *make_mix_panel(snd_state *ss)
 	  mus_snprintf(amplab, LABEL_BUFFER_SIZE, "amp %d:", i);
 	  w_amp_labels[i] = gtk_label_new(amplab);
 	  gtk_container_add(GTK_CONTAINER(w_amp_events[i]), w_amp_labels[i]);
-	  set_user_data(GTK_OBJECT(w_amp_events[i]), (gpointer)i);
+	  set_user_int_data(GTK_OBJECT(w_amp_events[i]), i);
 	  gtk_widget_show(w_amp_labels[i]);
       
 	  w_amp_numbers[i] = gtk_label_new(amp_number_buffer);
@@ -594,8 +594,8 @@ GtkWidget *make_mix_panel(snd_state *ss)
 	  gtk_box_pack_start(GTK_BOX(w_amp_forms[i]), w_amps[i], TRUE, TRUE, 4);
 	  SG_SIGNAL_CONNECT(GTK_OBJECT(w_amp_adjs[i]), "value_changed", GTK_SIGNAL_FUNC(amp_changed_callback), (gpointer)ss);
 	  SG_SIGNAL_CONNECT(GTK_OBJECT(w_amps[i]), "button_release_event", GTK_SIGNAL_FUNC(amp_release_callback), (gpointer)ss);
-	  set_user_data(GTK_OBJECT(w_amps[i]), (gpointer)i);	  
-	  set_user_data(GTK_OBJECT(w_amp_adjs[i]), (gpointer)i);
+	  set_user_int_data(GTK_OBJECT(w_amps[i]), i);	  
+	  set_user_int_data(GTK_OBJECT(w_amp_adjs[i]), i);
 	  gtk_widget_show(w_amps[i]);
       
 	  gtk_widget_show(w_amp_forms[i]);

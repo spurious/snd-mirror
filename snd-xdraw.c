@@ -902,6 +902,7 @@ static void ax_orientation_callback(Widget w, XtPointer context, XtPointer info)
 
 void set_spectro_x_angle(snd_state *ss, Float val)
 {
+  if (val < 0.0) val += 360.0; else if (val >= 360.0) val = fmod(val, 360.0);
   in_set_spectro_x_angle(ss, val);
   if (oid) XmScaleSetValue(oid->ax, (int)val);
   chans_field(ss, FCP_X_ANGLE, val);
@@ -930,6 +931,7 @@ static void ay_orientation_callback(Widget w, XtPointer context, XtPointer info)
 
 void set_spectro_y_angle(snd_state *ss, Float val)
 {
+  if (val < 0.0) val += 360.0; else if (val >= 360.0) val = fmod(val, 360.0);
   in_set_spectro_y_angle(ss, val);
   if (oid) XmScaleSetValue(oid->ay, (int)val);
   chans_field(ss, FCP_Y_ANGLE, val);
@@ -958,7 +960,7 @@ static void az_orientation_callback(Widget w, XtPointer context, XtPointer info)
 
 void set_spectro_z_angle(snd_state *ss, Float val)
 {
-  if (val < 0) val += 360;
+  if (val < 0.0) val += 360.0; else if (val >= 360.0) val = fmod(val, 360.0);
   in_set_spectro_z_angle(ss, val);
   if (oid) XmScaleSetValue(oid->az, (int)val);
   chans_field(ss, FCP_Z_ANGLE, val);

@@ -142,7 +142,7 @@ void check_menu_labels(int key, int state, int extended);
 int g_change_menu_label(int which_menu, char *old_label, char *new_label);
 int g_set_menu_sensitive(int which_menu, char *old_label, int on);
 int g_menu_is_sensitive(int which_menu, char *old_label);
-int g_add_to_main_menu(snd_state *ss, char *label, long slot);
+int g_add_to_main_menu(snd_state *ss, char *label, int slot);
 int g_add_to_menu(snd_state *ss, int which_menu, char *label, int callb, int position);
 int g_remove_from_menu(int which_menu, char *label);
 void reflect_play_stop_in_popup_menu(void);

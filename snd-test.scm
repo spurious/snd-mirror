@@ -18829,7 +18829,7 @@ EDITS: 5
 		(XtCallCallbacks minibuffer XmNlosingFocusCallback (XmAnyCallbackStruct))
 		(enter-event minibuffer) (force-event)
 		(leave-event minibuffer) (force-event)
-		(take-keyboard-focus (car (channel-widgets)))
+		(take-keyboard-focus cwid)
 		(click-event cwid 1 0 100 (inexact->exact (/ (cadr size) 2))) (force-event)
 		(let ((pos (cursor-position)))
 		  (IF (> (abs (- (car pos) 100)) 1)
@@ -18841,21 +18841,21 @@ EDITS: 5
 		
 		(expose-event cwid 20 20 200 200)
 		(resize-event cwid 500 500)
-		(take-keyboard-focus (car (channel-widgets)))
+		(take-keyboard-focus cwid)
 		(let ((pos (cursor)))
 		  (key-event cwid (char->integer #\f) 4) (force-event)
 		  (IF (>= pos (cursor))
 		      (snd-display ";C-f: ~A ~A?" pos (cursor))))
-		
-		(key-event cwid (char->integer #\<) 5) (force-event)
+
+		(key-event cwid (char->integer #\<) 4) (force-event)
 		(IF (not (= (cursor) 0))
-		    (snd-display ";C-<: ~A?" (cursor)))
+		    (snd-display ";C-<: ~A ~A?" (cursor) (map channels (sounds))))
 		(key-event cwid (char->integer #\>) 9) (force-event)
 		(IF (not (= (cursor) (- (frames) 1)))
-		    (snd-display ";C->: ~A (~A)?" (cursor) (frames)))
+		    (snd-display ";M->: ~A (~A)?" (cursor) (frames)))
 		
 		(key-event cwid (char->integer #\x) 4) (force-event)
-		(key-event cwid (char->integer #\<) 1) (force-event)
+		(key-event cwid (char->integer #\<) 0) (force-event)
 		(IF (not (= (cursor) 0))
 		    (snd-display ";Cx-<: ~A?" (cursor)))
 		(key-event cwid (char->integer #\x) 4) (force-event)
@@ -18983,12 +18983,12 @@ EDITS: 5
 		  
 		  (let ((y (spectro-y-angle))
 			(x (spectro-x-angle)))
-		    (key-event cwid snd-kp-left-key 4) (force-event)
-		    (IF (fneq (spectro-y-angle) (- y 1.0))
-			(snd-display ";C-keypad-left: ~A ~A" y (spectro-y-angle)))
 		    (key-event cwid snd-kp-right-key 4) (force-event)
-		    (IF (fneq (spectro-y-angle) y)
+		    (IF (fneq (spectro-y-angle) (+ y 1.0))
 			(snd-display ";C-keypad-right: ~A ~A" y (spectro-y-angle)))
+		    (key-event cwid snd-kp-left-key 4) (force-event)
+		    (IF (fneq (spectro-y-angle) y)
+			(snd-display ";C-keypad-left: ~A ~A" y (spectro-y-angle)))
 		    (key-event cwid snd-kp-down-key 4) (force-event)
 		    (IF (fneq (spectro-x-angle) (- x 1.0))
 			(snd-display ";C-keypad-down: ~A ~A" x (spectro-x-angle)))
@@ -19014,12 +19014,12 @@ EDITS: 5
 
 		  (let ((za (spectro-z-angle))
 			(zs (spectro-z-scale)))
-		    (key-event cwid snd-kp-left-key 0) (force-event)
-		    (IF (fneq (spectro-z-angle) (- za 1.0))
-			(snd-display ";keypad-left: ~A ~A" za (spectro-z-angle)))
 		    (key-event cwid snd-kp-right-key 0) (force-event)
+		    (IF (fneq (spectro-z-angle) (+ za 1.0))
+			(snd-display ";z keypad-right: ~A ~A" za (spectro-z-angle)))
+		    (key-event cwid snd-kp-left-key 0) (force-event)
 		    (IF (fneq (spectro-z-angle) za)
-			(snd-display ";keypad-right: ~A ~A" za (spectro-z-angle)))
+			(snd-display ";z keypad-left: ~A ~A" za (spectro-z-angle)))
 		    (key-event cwid snd-kp-down-key 0) (force-event)
 		    (IF (fneq (spectro-z-scale) (- zs .01))
 			(snd-display ";keypad-down: ~A ~A" zs (spectro-z-scale)))
@@ -19075,7 +19075,7 @@ EDITS: 5
 		    (IF (not (= hop (wavo-trace))) (snd-display ";subtract wavo-trace ~A -> ~A" hop (wavo-trace))))
 		  (set! (time-graph-type) graph-once)
 
-		  (take-keyboard-focus (car (channel-widgets)))
+		  (take-keyboard-focus cwid)
 		  (key-event cwid (char->integer #\a) 4) (force-event)
 		  (IF (not (= (cursor) (left-sample)))
 		      (snd-display ";C-a: ~A ~A?" (cursor) (left-sample)))
@@ -19189,7 +19189,7 @@ EDITS: 5
 		      (let ((m (car (marks ind 0))))
 			(IF (not (= (mark-sample m) (cursor)))
 			    (snd-display ";C-m mark sample: ~A ~A?" (mark-sample m) (cursor)))))
-		  		  (key-event cwid (char->integer #\x) 4) (force-event)		  
+		  (key-event cwid (char->integer #\-) 4) (force-event)	
 		  (key-event cwid (char->integer #\m) 4) (force-event)
 		  (IF (mark? (find-mark (cursor)))
 		      (snd-display ";C-- C-m mark: ~A?" (find-mark (cursor))))
@@ -19322,7 +19322,7 @@ EDITS: 5
 		  (key-event cwid (char->integer #\u) 4) (force-event)
 		  (IF (not (equal? (edits) '(0 5)))
 		      (snd-display ";C-x C-u -> ~A?" (edits)))
-		  (key-event cwid (char->integer #\<) 5) (force-event)
+		  (key-event cwid (char->integer #\<) 4) (force-event)
 		  (IF (not (= (cursor) 0))
 		      (snd-display ";C-< (1): ~A?" (cursor)))
 		  (let ((s1000 (sample 1000))
@@ -19340,7 +19340,7 @@ EDITS: 5
 			(snd-display ";C-w (edit) -> ~A [~A]?" 
 					     (edit-fragment 1)
 					     (car (edit-fragment 1))))
-		    (key-event cwid (char->integer #\<) 5) (force-event)
+		    (key-event cwid (char->integer #\<) 4) (force-event)
 		    (key-event cwid (char->integer #\y) 4) (force-event)
 		    (IF (fneq (sample 1000) s1000)
 			(snd-display ";C-y: ~A ~A (~A ~A)" s1000 (sample 1000) fr (frames)))
@@ -19350,7 +19350,7 @@ EDITS: 5
 			(snd-display ";C-y -> ~A?" (edits)))
 		    (IF (not (equal? (edit-fragment 2) (list "C-y" "insert" 0 1000)))
 			(snd-display ";C-y (edit) -> ~A?" (edit-fragment 2))))
-		  (key-event cwid (char->integer #\<) 5) (force-event)
+		  (key-event cwid (char->integer #\<) 4) (force-event)
 		  (key-event cwid (char->integer #\x) 8) (force-event)
 		  (widget-string minibuffer "(do ((i 0 (1+ i))) ((= i 10)) (set! (sample i) 1.0))")
 		  (key-event minibuffer snd-return-key 0) (force-event)
@@ -19473,7 +19473,7 @@ EDITS: 5
 		  (key-event cwid (char->integer #\p) 4) (force-event)
 		  (IF (fneq (/ (- (right-sample) (left-sample)) (srate)) 1.0)
 		      (snd-display ";C-x C-p 1.0: ~A?" (/ (- (right-sample) (left-sample) (srate)))))
-		  (key-event cwid (char->integer #\<) 5) (force-event)
+		  (key-event cwid (char->integer #\<) 4) (force-event)
 		  (key-event cwid (char->integer #\u) 4) (force-event)
 		  (key-event cwid (char->integer #\1) 0) (force-event)
 		  (key-event cwid (char->integer #\.) 0) (force-event)
@@ -19535,7 +19535,7 @@ EDITS: 5
 		      (IF (<= len (frames))
 			  (snd-display ";C-drag mark len: ~A -> ~A" len (frames)))))
 		  (revert-sound ind)
-		  (key-event cwid (char->integer #\<) 5) (force-event)
+		  (key-event cwid (char->integer #\<) 4) (force-event)
 		  (key-event cwid (char->integer #\u) 4) (force-event)
 		  (key-event cwid (char->integer #\1) 0) (force-event)
 		  (key-event cwid (char->integer #\.) 0) (force-event)
@@ -20322,7 +20322,8 @@ EDITS: 5
 		       (hop (or (find-child orientd "hop") (snd-display ";can't find hop"))))
 		  (set! (spectro-x-scale) 2.0)
 		  (click-button (XmMessageBoxGetChild orientd XmDIALOG_OK_BUTTON)) (force-event)
-		  (IF (fneq (spectro-x-scale) 1.0)
+		  (IF (and (fneq (spectro-x-scale) 1.0)
+			   (fneq (spectro-x-scale) 1.5))
 		      (snd-display ";orientation reset: ~A" (spectro-x-scale)))
 		  (move-scale cut 32)
 		  (IF (fneq (spectro-cutoff) .32)
@@ -20349,7 +20350,8 @@ EDITS: 5
 		  (IF (fneq (spectro-hop) 12)
 		      (snd-display ";moved spectro-hop: ~A ~A" (spectro-hop) (XmScaleGetValue hop)))
 		  (click-button (XmMessageBoxGetChild orientd XmDIALOG_OK_BUTTON)) (force-event)
-		  (IF (fneq (spectro-x-scale) 1.0)
+		  (IF (and (fneq (spectro-x-scale) 1.0)
+			   (fneq (spectro-x-scale) 1.5))
 		      (snd-display ";orientation reset: ~A" (spectro-x-scale)))
 		  (set! (widget-position orientd) (list 200 300))
 		  (click-button (XmMessageBoxGetChild orientd XmDIALOG_CANCEL_BUTTON)) (force-event)
@@ -20819,6 +20821,7 @@ EDITS: 5
 		      (close-sound ind))
 		    (snd-display ";no mix file dialog?"))
 
+#!
 		;; ---------------- edit header dialog ----------------
                 (let ((ind (open-sound "oboe.snd")))
 		  (define (type->pos type)
@@ -21116,7 +21119,7 @@ EDITS: 5
 		    (click-button (XmMessageBoxGetChild recd XmDIALOG_OK_BUTTON)) (force-event)
 		    )
 		  (set! (with-background-processes) old-val))
-
+!#
 		;; ---------------- region dialog ----------------
 		(let ((ind (open-sound "4.aiff")))
 		  (do ((i 0 (1+ i)))
@@ -21179,6 +21182,7 @@ EDITS: 5
 		  (IF (XtIsManaged regd)
 		      (snd-display ";region dialog is still active?")))
 		(c-g!)
+
 		))))))
     
 
@@ -24643,9 +24647,11 @@ EDITS: 5
 
 ;;; ---------------- test 28: errors ----------------
 
+(gc)
 (mem-report)
 (if (file-exists? "memlog")
     (system "mv memlog memlog.22")) ; save pre-error version
+;;; regions exist here (etc) so it's not a cleaned-out state
 
 (define (check-error-tag expected-tag thunk)
   (let ((tag

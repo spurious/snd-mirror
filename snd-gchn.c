@@ -365,7 +365,7 @@ static gboolean graph_mouse_enter(GtkWidget *w, GdkEventCrossing *ev, gpointer d
 {
   /* how many args does this thing take?  does it return an int?  what does the int mean? */
   int pdata;
-  pdata = (int)get_user_data(GTK_OBJECT(w));
+  pdata = get_user_int_data(GTK_OBJECT(w));
   if (XEN_HOOKED(mouse_enter_graph_hook))
     run_hook(mouse_enter_graph_hook,
 	     XEN_LIST_2(C_TO_SMALL_XEN_INT(UNPACK_SOUND(pdata)),
@@ -378,7 +378,7 @@ static gboolean graph_mouse_enter(GtkWidget *w, GdkEventCrossing *ev, gpointer d
 static gboolean graph_mouse_leave(GtkWidget *w, GdkEventCrossing *ev, gpointer data)
 {
   int pdata;
-  pdata = (int)get_user_data(GTK_OBJECT(w));
+  pdata = get_user_int_data(GTK_OBJECT(w));
   if (XEN_HOOKED(mouse_leave_graph_hook))
     run_hook(mouse_leave_graph_hook,
 	     XEN_LIST_2(C_TO_SMALL_XEN_INT(UNPACK_SOUND(pdata)),
@@ -685,7 +685,7 @@ void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, in
   #endif
 #endif
 #endif
-      set_user_data(GTK_OBJECT(cw[W_graph]), (gpointer)(PACK_SOUND_AND_CHANNEL(sp->index, cp->chan)));
+      set_user_int_data(GTK_OBJECT(cw[W_graph]), PACK_SOUND_AND_CHANNEL(sp->index, cp->chan));
       gtk_widget_set_events(cw[W_graph], GDK_ALL_EVENTS_MASK);
       gtk_table_attach(GTK_TABLE(cw[W_graph_window]), cw[W_graph], 2, 3, 0, 2, 
 		       (GtkAttachOptions)(GTK_FILL | GTK_EXPAND), 

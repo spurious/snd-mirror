@@ -659,6 +659,42 @@ gpointer get_user_data(GtkObject *obj)
   return(NULL);
 }
 
+static GtkObject **our_int_objects;
+static int *our_int_data;
+static int our_int_data_size = 0, our_int_data_ctr = 0;
+
+void set_user_int_data(GtkObject *obj, int data)
+{
+  if (our_int_data_ctr >= our_int_data_size)
+    {
+      if (our_int_data_size == 0)
+	{
+	  our_int_data_size = 256;
+	  our_int_data = (int *)CALLOC(our_int_data_size, sizeof(int));
+	  our_int_objects = (GtkObject **)CALLOC(our_int_data_size, sizeof(GtkObject *));
+	}
+      else
+	{
+	  int new_size;
+	  new_size = our_int_data_size + 256;
+	  our_int_data = (int *)REALLOC(our_int_data, new_size * sizeof(int));
+	  our_int_objects = (GtkObject **)REALLOC(our_int_objects, new_size * sizeof(GtkObject *));
+	  our_int_data_size = new_size;
+	}
+    }
+  our_int_data[our_int_data_ctr] = data;
+  our_int_objects[our_int_data_ctr++] = obj;
+}
+
+int get_user_int_data(GtkObject *obj)
+{
+  int i;
+  for (i = 0; i < our_int_data_size; i++)
+    if (our_int_objects[i] == obj)
+      return(our_int_data[i]);
+  return(NULL);
+}
+
 /* many changes between gtk 1.2 and 1.3, some of which are handled here, others in snd-g0.h */
 
 #if HAVE_GTK2
