@@ -188,8 +188,8 @@ two sounds open (indices 0 and 1 for example), and the second has two channels, 
 
 (define (fft-peak snd chn scale)
   "(fft-peak) returns the peak spectral magnitude"
-  (if (and (graph-transform?) 
-	   (= (transform-graph-type) graph-transform-once))
+  (if (and (transform-graph?) 
+	   (= (transform-graph-type) graph-once))
       (report-in-minibuffer 
        (number->string (/ (* 2.0 (vct-peak (transform-samples->vct snd chn))) 
 			  (transform-size)))
@@ -345,8 +345,8 @@ two sounds open (indices 0 and 1 for example), and the second has two channels, 
 
 (define (zoom-spectrum snd chn y0 y1)
   "(zoom-spectrum snd chn y0 y1) sets the transform size to correspond to the time-domain window size (use with graph-hook)"
-  (if (and (graph-transform? snd chn) 
-	   (= (transform-graph-type snd chn) graph-transform-once))
+  (if (and (transform-graph? snd chn) 
+	   (= (transform-graph-type snd chn) graph-once))
       (begin
 	(set! (transform-size snd chn)
 	      (expt 2 (ceiling 
@@ -361,9 +361,9 @@ two sounds open (indices 0 and 1 for example), and the second has two channels, 
   "(zoom-fft snd chn y0 y1) sets the transform size if the time domain is not displayed (use with graph-hook) \
 It also sets the spectrum display start point based on the x position slider -- \
 this can be confusing if fft normalization is on (the default)"
-  (if (and (graph-transform? snd chn)
-	   (not (graph-time? snd chn))
-	   (= (transform-graph-type snd chn) graph-transform-once))
+  (if (and (transform-graph? snd chn)
+	   (not (time-graph? snd chn))
+	   (= (transform-graph-type snd chn) graph-once))
       (begin
 	(set! (transform-size snd chn)
 	      (expt 2 (ceiling 

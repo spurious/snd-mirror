@@ -875,8 +875,8 @@ size.  The simpler one is:
 <pre>
 (add-hook! graph-hook 
 	   (lambda (snd chn y0 y1)
-	     (if (and (graph-transform? snd chn) 
-                      (= (transform-graph-type snd chn) graph-transform-once))
+	     (if (and (transform-graph? snd chn) 
+                      (= (transform-graph-type snd chn) graph-once))
 		 (begin
 		   (set! (transform-size snd chn)
 			 (expt 2 (ceiling 

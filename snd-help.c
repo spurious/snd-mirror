@@ -268,6 +268,7 @@ void news_help(snd_state *ss)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+14-Oct:  removed max-sounds.\n\
 11-Oct:  add-find-to-listener in snd-motif.scm.\n\
 18-Sep:  show-font-name et al in snd-motif.scm.\n\
 16-Sep:  snd 6.1.\n\
@@ -1272,7 +1273,6 @@ all refer to the same thing.\n\
   " S_mark_sync_max "     ()\n\
   " S_marks "             (snd chn pos)\n\
   " S_mark_p "             (id)\n\
-  " S_max_sounds "        ()\n\
   " S_maxamp "            (snd chn)\n\
   " S_mix "               (file samp in_chan snd chn)\n\
   " S_mix_panel "         ()\n\

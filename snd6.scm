@@ -1,7 +1,5 @@
 ;;; backwards compatibility for Snd-6
 
-
-;;; these are currently built-in (so this file does not need to be loaded)
 (define graph-lisp?                    lisp-graph?)
 (define graph-transform?               transform-graph?)
 (define graph-time?                    time-graph?)
@@ -18,3 +16,5 @@
 (define normalize-transform-globally   normalize-globally)
 
 (define set-oss-buffers mus-audio-set-oss-buffers)
+
+(define (max-sounds) (apply max (sounds)))

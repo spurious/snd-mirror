@@ -1406,7 +1406,7 @@ Reverb-feedback sets the scaler on the feedback.\n\
 	     (grf-height (- (list-ref axinf 11) y)))
 	(if (and (> grf-height (* 2 height))
 		 (> grf-width (* 1.5 width))
-		 (graph-time? snd chn))
+		 (time-graph? snd chn))
 	    (let* ((smpte (smpte-label (car axinf) (srate snd)))
 		   (samp (car axinf)))
 	      (fill-rectangle x y width 2 snd chn)

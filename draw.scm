@@ -186,7 +186,7 @@ the y-zoom-slider controls the graph amp"
 
   (define (display-current-window-location snd chn)
     "display in upper right corner the overall current sound and where the current window fits in it"
-    (if (graph-time? snd chn)
+    (if (time-graph? snd chn)
 	(let* ((axinf (axis-info snd chn))
 	       (grf-width (list-ref axinf 12))
 	       (width (inexact->exact (* inset-width grf-width)))

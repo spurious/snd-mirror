@@ -515,7 +515,7 @@ the filter to the underlying mixes: (filter-track (track 1) '(.1 .2 .3 .3 .2 .1)
 	       (let ((new-track (unused-track)))
 		 (for-each 
 		  (lambda (n) 
-		    (set-mix-track n new-track)) 
+		    (set! (mix-track n) new-track)) 
 		  mix-ids)))))
 
 

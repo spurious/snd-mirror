@@ -790,7 +790,7 @@ window size:</p>
 <pre>
 (add-hook! <a href="extsnd.html#graphhook">graph-hook</a>
 	   (lambda (snd chn y0 y1)
-	     (if (and (graph-transform?) (= (fft-style) normal-fft))
+	     (if (and (transform-graph?) (= (fft-style) normal-fft))
 		 (set! (<a href="extsnd.html#lfftsize">transform-size)</a>
 		   (expt 2 (ceiling (/ (log (- (right-sample) (left-sample))) 
 				       (log 2.0))))))))
@@ -2346,9 +2346,9 @@ panel are:</p>
   <tr><td><a href="#cxw">save selection</a></td><td><small>Edit: <a href="#cxw">Save selection</a></small></td><td><a href="#cxw"><small>Cx w</small></a></td><td><a href="extsnd.html#sndsaveregion"><small>save-region</small></a></td><td><a href="extsnd.html#sndsaveselection"><small>save-selection</small></a></td></tr>
   <tr><td><a href="#savedstate">save state</a></td><td><small>Options: <a href="#savedstate">Save State</a></small></td><td><br></td><td><a href="extsnd.html#sndsavestate"><small>save-state</small></a></td><td><br></td></tr>
   <tr><td><a href="#prevfiles">select sound</a></td><td><br></td><td><a href="#cxo"><small>Cx o</small></a></td><td><a href="extsnd.html#sndselectedsound"><small>selected-sound</small></a></td><td><small>File dialog: click file</small></td></tr>
-  <tr><td><a href="#fw">show freq domain</a></td><td><br></td><td><br></td><td><a href="extsnd.html#sndffting"><small>graph-transform?</small></a></td><td><a href="#fw"><small>'f' button</small></a></td></tr>
+  <tr><td><a href="#fw">show freq domain</a></td><td><br></td><td><br></td><td><a href="extsnd.html#sndffting"><small>transform-graph?</small></a></td><td><a href="#fw"><small>'f' button</small></a></td></tr>
   <tr><td><a href="extsnd.html#showmarks">show marks</a></td><td><br></td><td><br></td><td><a href="extsnd.html#showmarks"><small>show-marks</small></a></td><td><br></td></tr>
-  <tr><td><a href="#fw">show time domain</a></td><td><br></td><td><br></td><td><a href="extsnd.html#sndwaving"><small>graph-time?</small></a></td><td><a href="#fw"><small>'w' button</small></a></td></tr>
+  <tr><td><a href="#fw">show time domain</a></td><td><br></td><td><br></td><td><a href="extsnd.html#sndwaving"><small>time-graph?</small></a></td><td><a href="#fw"><small>'w' button</small></a></td></tr>
   <tr><td><a href="#cxcz">smooth samples</a></td><td><br></td><td><a href="#cxcz"><small>Cx Cz</small></a></td><td><a href="extsnd.html#smoothchannel"><small>smooth-channel</small></a></td><td><a href="extsnd.html#sndsmooth"><small>smooth</small></a></td></tr>
   <tr><td><a href="#cxz">smooth selection</a></td><td><br></td><td><a href="#cxz"><small>Cx z</small></a></td><td><a href="extsnd.html#sndsmoothselection"><small>smooth-selection</small></a></td><td><br></td></tr>
   <tr><td><a href="#fftstyle">sonogram</a></td><td><small>Options: <a href="#fftstyle">Transform</a></small></td><td><br></td><td><a href="extsnd.html#lfftstyle"><small>transform-graph-type</small></a></td><td><a href="extsnd.html#colormap"><small>colormap</small></a></td></tr>

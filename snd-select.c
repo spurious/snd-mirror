@@ -321,6 +321,12 @@ sync_info *selection_sync(void)
   return(si);
 }
 
+int mix_file_and_delete(off_t beg, off_t num, char *file, chan_info **cps, int out_chans, const char *origin, int with_tag)
+{
+  return(mix(beg, num, out_chans, cps, file, DELETE_ME, origin, with_tag));
+}
+
+
 static int mix_selection(snd_state *ss, chan_info *cp, off_t beg, const char *origin)
 {
   char *tempfile = NULL;
@@ -331,7 +337,7 @@ static int mix_selection(snd_state *ss, chan_info *cp, off_t beg, const char *or
   if (err == MUS_NO_ERROR)
     {
       si_out = sync_to_chan(cp);
-      id = mix_file_and_delete(beg, selection_len(), tempfile, si_out->cps, si_out->chans, origin, with_mix_tags(ss));
+      id = mix(beg, selection_len(), si_out->chans, si_out->cps, tempfile, DELETE_ME, origin, with_mix_tags(ss));
       free_sync_info(si_out);	      
     }
   if (tempfile) FREE(tempfile);

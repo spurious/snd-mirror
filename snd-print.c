@@ -475,8 +475,6 @@ static char *snd_print_or_error(snd_state *ss, char *output)
       if (ccp == NULL) 
 	return(copy_string("nothing to print?"));
       si = sync_to_chan(ccp);
-      if ((si == NULL) || (si->chans == 0))
-	return(copy_string("no graphs to print?"));
       offsets = (int *)CALLOC(si->chans, sizeof(int));
       for (j = 0, i = (si->chans - 1); i >= 0; i--)
 	{

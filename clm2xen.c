@@ -5231,6 +5231,7 @@ void mus_xen_init(void)
   rb_define_method(mus_xen_tag, "a2", XEN_PROCEDURE_CAST g_a2, 0);
   rb_define_method(mus_xen_tag, "b1", XEN_PROCEDURE_CAST g_increment, 0);
   rb_define_method(mus_xen_tag, "b2", XEN_PROCEDURE_CAST g_b2, 0);
+  /* TODO: protect Ruby's rand from clm's */
 #endif  
 
   init_keywords();

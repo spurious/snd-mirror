@@ -1,5 +1,6 @@
 Snd change log
 
+  14-Oct:    removed max-sounds.
   11-Oct:    add-find-to-listener in snd-motif.scm.
   18-Sep:    show-font-name et al in snd-motif.scm.
   16-Sep:    snd 6.1.

@@ -1330,14 +1330,6 @@ static XEN g_snd_version(void)
   return(C_TO_XEN_STRING(SND_VERSION));
 }
 
-static XEN g_max_sounds(void) 
-{
-  #define H_max_sounds "(" S_max_sounds ") -> max sound id currently possible (grows as necessary)"
-  snd_state *ss;
-  ss = get_global_state();
-  return(C_TO_XEN_INT(ss->max_sounds));
-}
-
 static XEN g_sounds(void)
 {
   #define H_sounds "(" S_sounds ") -> list of active sounds (ids)"
@@ -2679,7 +2671,6 @@ XEN_NARGIFY_0(g_edit_save_as_dialog_w, g_edit_save_as_dialog)
 XEN_NARGIFY_0(g_file_save_as_dialog_w, g_file_save_as_dialog)
 XEN_NARGIFY_2(g_help_dialog_w, g_help_dialog)
 XEN_NARGIFY_0(g_mix_panel_w, g_mix_panel)
-XEN_NARGIFY_0(g_max_sounds_w, g_max_sounds)
 XEN_NARGIFY_0(g_sounds_w, g_sounds)
 XEN_NARGIFY_1(g_yes_or_no_p_w, g_yes_or_no_p)
 XEN_NARGIFY_0(g_abort_w, g_abort)
@@ -2842,7 +2833,6 @@ XEN_NARGIFY_1(g_snd_completion_w, g_snd_completion)
 #define g_file_save_as_dialog_w g_file_save_as_dialog
 #define g_help_dialog_w g_help_dialog
 #define g_mix_panel_w g_mix_panel
-#define g_max_sounds_w g_max_sounds
 #define g_sounds_w g_sounds
 #define g_yes_or_no_p_w g_yes_or_no_p
 #define g_abort_w g_abort
@@ -3153,7 +3143,6 @@ void g_initialize_gh(void)
   XEN_DEFINE_PROCEDURE(S_file_save_as_dialog, g_file_save_as_dialog_w, 0, 0, 0, H_file_save_as_dialog);
   XEN_DEFINE_PROCEDURE(S_help_dialog,         g_help_dialog_w, 2, 0, 0,         H_help_dialog);
   XEN_DEFINE_PROCEDURE(S_mix_panel,           g_mix_panel_w, 0, 0, 0,           H_mix_panel);
-  XEN_DEFINE_PROCEDURE(S_max_sounds,          g_max_sounds_w, 0, 0, 0,          H_max_sounds);
   XEN_DEFINE_PROCEDURE(S_sounds,              g_sounds_w, 0, 0, 0,              H_sounds);
   XEN_DEFINE_PROCEDURE(S_yes_or_no_p,         g_yes_or_no_p_w, 1, 0, 0,         H_yes_or_no_p);
   XEN_DEFINE_PROCEDURE(S_abort,               g_abort_w, 0, 0, 0,               H_abort);
@@ -3267,21 +3256,6 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
                                       (apropos (if (string? val) val (object->string val)))))))");
   XEN_EVAL_C_STRING("(read-set! keywords 'prefix)");
   XEN_EVAL_C_STRING("(print-enable 'source)");  /* added 13-Feb-01 -- print closures with source  */
-
-  /* backwards compatibility */
-  XEN_EVAL_C_STRING("(define graph-lisp? lisp-graph?)");
-  XEN_EVAL_C_STRING("(define graph-transform? transform-graph?)");
-  XEN_EVAL_C_STRING("(define graph-time? time-graph?)");
-  XEN_EVAL_C_STRING("(define graph-time-once 0)");
-  XEN_EVAL_C_STRING("(define graph-transform-once 0)");
-  XEN_EVAL_C_STRING("(define graph-time-as-wavogram 3)");
-  XEN_EVAL_C_STRING("(define graph-transform-as-sonogram 1)");
-  XEN_EVAL_C_STRING("(define graph-transform-as-spectrogram 2)");
-  XEN_EVAL_C_STRING("(define dont-normalize-transform 0)");
-  XEN_EVAL_C_STRING("(define normalize-transform-by-channel 1)");
-  XEN_EVAL_C_STRING("(define normalize-transform-by-sound 2)");
-  XEN_EVAL_C_STRING("(define normalize-transform-globally 3)");
-  XEN_EVAL_C_STRING("(define set-oss-buffers mus-audio-set-oss-buffers)");
 
   /* from ice-9/r4rs.scm but with output to snd listener */
   XEN_EVAL_C_STRING("(define snd-remember-paths #f)");

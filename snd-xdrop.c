@@ -70,7 +70,7 @@ static void massage_selection(Widget w, XtPointer context, Atom *selection, Atom
 
 static void handle_drop(Widget w, XtPointer context, XtPointer info) 
 {
-  /* this is called (see initialize_drop) when a drop occurs */
+  /* this is called (see add_drop) when a drop occurs */
   XmDropProcCallbackStruct *cb = (XmDropProcCallbackStruct *)info;
   Arg args[12];
   int n, i, num_targets, k;

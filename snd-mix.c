@@ -841,7 +841,7 @@ int disk_space_p(snd_info *sp, off_t bytes, off_t other_bytes, char *filename)
   if (kfree < 0) 
     {
       report_in_minibuffer_and_save(sp, strerror(errno)); 
-      return(NO_PROBLEM);  /* what?? */
+      return(NO_PROBLEM);  /* what?? -- disk_kspace => -1 if no such disk, etc -- not really a disk *space* problem */
     }
   kneeded = bytes >> 10;
   if (kfree < kneeded)
@@ -1042,7 +1042,7 @@ static mix_info *file_mix_samples(off_t beg, off_t num, char *tempfile, chan_inf
  *                     a notion of initial scalers
  */
 
-static int mix(off_t beg, off_t num, int chans, chan_info **cps, char *mixinfile, int temp, const char *origin, int with_tag)
+int mix(off_t beg, off_t num, int chans, chan_info **cps, char *mixinfile, int temp, const char *origin, int with_tag)
 {
   /* loop through out_chans cps writing the new mixed temp files and fixing up the edit trees */
   int i, id = -1, j = 0;
@@ -1064,28 +1064,6 @@ static int mix(off_t beg, off_t num, int chans, chan_info **cps, char *mixinfile
   if (j > 1) call_multichannel_mix_hook(ids, j);
   FREE(ids);
   return(id);
-}
-
-int copy_file_and_mix(off_t beg, off_t num, char *file, chan_info **cps, int out_chans, const char *origin, int with_tag)
-{
-  /* always write to tempfile (protect section/lisp temps from possible overwrites) */
-  char *newname;
-  int err, id = -1;
-  snd_state *ss;
-  ss = cps[0]->state;
-  newname = shorter_tempnam(temp_dir(ss), "snd_");
-  err = copy_file(file, newname);
-  if (err != MUS_NO_ERROR)
-    snd_error("can't save mix temp file (%s: %s)", newname, strerror(errno));
-  else
-    id = mix(beg, num, out_chans, cps, newname, DELETE_ME, origin, with_tag);
-  if (newname) FREE(newname);
-  return(id);
-}
-
-int mix_file_and_delete(off_t beg, off_t num, char *file, chan_info **cps, int out_chans, const char *origin, int with_tag)
-{
-  return(mix(beg, num, out_chans, cps, file, DELETE_ME, origin, with_tag));
 }
 
 static int mix_complete_file(snd_info *sp, off_t beg, char *fullname, const char *origin, int with_tag)
@@ -2855,6 +2833,7 @@ static void play_track(snd_state *ss, chan_info **ucps, int chans, int track_num
   chan_info *locp;
   int playfd, i, j, k, n, samps, chan = 0, happy = 0, need_free = 0, format, datum_bytes, outchans, frames;
 #if MAC_OSX
+  /* TODO: does OSX play-track/mix handle mono/22050 correctly? */
   float *buf;
 #else
   #if HAVE_ALSA
@@ -3951,9 +3930,9 @@ static XEN g_backward_mix(XEN count, XEN snd, XEN chn)
 
 static XEN g_mix(XEN file, XEN chn_samp_n, XEN file_chn, XEN snd_n, XEN chn_n, XEN console)
 {
-  #define H_mix "(" S_mix " file &optional (chn-start 0) (file-chan 0) snd chn with-console))\n\
+  #define H_mix "(" S_mix " file &optional (chn-start 0) (file-chan 0) snd chn with-tag))\n\
 mixes file channel file-chan into snd's channel chn starting at chn-start (or at the cursor location if chn-start \
-is omitted), returning the new mix's id.  if with-console is #f, the data is mixed (no console is created). \
+is omitted), returning the new mix's id.  if with-tag is #f, the data is mixed (no draggable tag is created). \
 If file_chn is omitted, file's channels are mixed until snd runs out of channels."
 
   /* TODO: test all these cases!

@@ -1811,8 +1811,8 @@ the hook.
 <!-- --><table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
 (add-hook! <em class=red>transform-hook</em>
   (lambda (snd chn scale)
-    (if (and (graph-transform? snd chn) 
-             (= (transform-graph-type snd chn) graph-transform-once))
+    (if (and (transform-graph? snd chn) 
+             (= (transform-graph-type snd chn) graph-once))
 	(report-in-minibuffer 
 	 (number-&gt;string (/ (* 2.0 (vct-peak (transform-samples-&gt;vct snd chn))) 
                             (transform-size snd chn)))
@@ -1823,8 +1823,8 @@ the hook.
 <!-- --><table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
 (define fft-peak
   (lambda (snd chn scale)
-    (if (and (graph-transform?) 
-             (= (transform-graph-type) graph-transform-once))
+    (if (and (transform-graph?) 
+             (= (transform-graph-type) graph-once))
 	(let* ((samps (transform-samples snd chn))
 	       (len (vector-length samps))
 	       (mx (vector-ref samps 0))
@@ -2000,7 +2000,7 @@ can be #t (for backwards compatibility, a few of them default to #t).
 #t means "all" in this case; if <i>snd</i> is #t, all sounds are included,
 so, for example, <code>(expand-control #t)</code> returns a list of the current
 control panel expansion settings of all sounds, and
-<code>(set! (graph-transform? #t #t) #t)</code>
+<code>(set! (transform-graph? #t #t) #t)</code>
 turns on the fft display in all channels of all sounds.
 </p>
 
@@ -3339,7 +3339,7 @@ Most of the region number arguments default to the current region (the first in 
 <!-- --></table>
 
 <hr>
-<p>These are specific to the current selection (these can return the error 'no-active-selection):</p>
+<p>These are specific to the current selection (they can return the error 'no-active-selection):</p>
 
 <!-- -------------------------------- SELECTION TABLE -------------------------------- -->
 <!-- -->
@@ -4737,18 +4737,6 @@ the direction argument between the channel and edit-position:
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
 <!-- -->
-<!-- max-sounds -->
-<!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="sndmaxsounds">max-sounds</a></em> ()</code></span>
-<!-- --></td></tr>
-<!-- --><tr><td></td><td>
-<!-- -->current size of (internal) sound list.  This is unrelated to the list returned by <a href="#sounds">sounds</a>.
-<!-- -->Before I added <i>sounds</i>, the usual way to scan all open sounds was to use a loop going from 0 to <i>max-sounds</i>,
-<!-- -->checking each index with <a href="#sndok">sound?</a>.  This is now obsolete.
-<!-- --></td></tr>
-<!-- --><tr><td colspan=2></td></tr>
-<!-- -->
-<!-- -->
 <!-- max-transform-peaks -->
 <!-- --><tr><td colspan=2>
 <!-- --><span class=defbox><code><em class=def><a name="maxfftpeaks">max-transform-peaks</a></em> (<em class=narg>snd chn</em>)</code></span>
@@ -5656,10 +5644,8 @@ higher -- this is probably not what you want.
 <!-- --><span class=defbox><code><em class=def><a name="sndok">sound?</a></em> (<i>snd</i>)</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
-<!-- -->#t if <i>snd</i> (an index) points to an open sound.  As sounds are opened and closed, indices
-<!-- -->get re-used in no particular order; <a href="#sndmaxsounds">max-sounds</a> returns the maximum index used so far,
-<!-- -->so you can scan open sounds with a loop from 0 to that value checking each with <b>sound?</b>,
-<!-- -->but a better way is to use the list returned by <a href="#sounds">sounds</a>.
+<!-- -->#t if <i>snd</i> (an index) points to an open sound. (After update-sound, it is possible, though unlikely
+<!-- -->for the updated sound's index to change; a better way to deal with this problem is via <a href="#updatehook">update-hook</a>).
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -6082,7 +6068,7 @@ This can be
 <!-- --><span class=defbox><code><em class=def><a name="transformgraphsize">transform-samples-size</a></em> (<i>snd chn</i>)</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
-<!-- -->returns either 0 if no transform, transform-size if graph-transform-once,
+<!-- -->returns either 0 if no transform, transform-size if graph-once,
 <!-- -->or (list full-size bins slices) if sonogram or spectrogram.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
@@ -7042,7 +7028,7 @@ And an example that lets us see the result of filtering the waveform:
 <p>Other related variables and functions:</p>
 <table cellpadding=0 celspacing=10 border=0>
 
-<tr><td width=200><a href="#sndffting">graph-transform?</a></td><td><a href="#showfftpeaks">show-transform-peaks</a></td><td><a href="#sndtransformsample">transform-sample</a></td></tr>
+<tr><td width=200><a href="#sndffting">transform-graph?</a></td><td><a href="#showfftpeaks">show-transform-peaks</a></td><td><a href="#sndtransformsample">transform-sample</a></td></tr>
 <tr><td><a href="#fftbeta">fft-window-beta</a></td><td><a href="#lshowselectiontransform">show-selection-transform</a></td><td><a href="#sndtransformsamples">transform-samples</a></td></tr>
 <tr><td><a href="#ffthook">transform-hook</a></td><td><a href="#spectrocutoff">spectro-cutoff</a></td><td><a href="#transformsamples2vct">transform-samples-&gt;vct</a></td></tr>
 <tr><td><a href="#fftlogfrequency">fft-log-frequency</a></td><td><a href="#spectrohop">spectro-hop</a></td><td><a href="#transformgraphsize">transform-samples-size</a></td></tr>
@@ -9209,8 +9195,8 @@ The lowest level procedures are:
 	<!-- I(filter samples):L(filter-sound)(sndfilter) --><!-- I(filter samples):M(Edit: Edit Env)(editenvelope) -->
 	<!-- I(filter samples):O(filter-selection)(sndfilterselection) --><!-- I(filter samples):A(sndfilter) -->
 	<!-- I(save marks):L(save-marks)(sndsavemarks) -->
-        <!-- I(show freq domain):L(graph-transform?)(sndffting) -->
-	<!-- I(show time domain):L(graph-time?)(sndwaving) -->
+        <!-- I(show freq domain):L(transform-graph?)(sndffting) -->
+	<!-- I(show time domain):L(time-graph?)(sndwaving) -->
         <!-- I(keyboard macros):L(key)(sndkey) -->
         <!-- I(delete mark):L(delete-mark)(snddeletemark) --> <!-- I(delete mark):O(delete-marks)(snddeletemarks) -->
 	<!-- I(sonogram):L(transform-graph-type)(lfftstyle) -->

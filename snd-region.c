@@ -660,7 +660,7 @@ int save_region(snd_state *ss, int n, char *ofile, int data_format)
 static int paste_region_1(int n, chan_info *cp, int add, off_t beg, const char *origin)
 {
   region *r;
-  int i, err = MUS_NO_ERROR, id = -1, idtmp;
+  int i, err = MUS_NO_ERROR, id = -1;
   sync_info *si;
   chan_info *ncp;
   snd_state *ss;
@@ -676,8 +676,13 @@ static int paste_region_1(int n, chan_info *cp, int add, off_t beg, const char *
   si = sync_to_chan(cp);
   if (add)
     {
-      idtmp = copy_file_and_mix(beg, r->frames, r->filename, si->cps, si->chans, origin, with_mix_tags(ss));
-      if (id == -1) id = idtmp;
+      char *newname;
+      newname = shorter_tempnam(temp_dir(ss), "snd_");
+      err = copy_file(r->filename, newname);
+      if (err != MUS_NO_ERROR)
+	snd_error("can't save mix temp file (%s: %s)", newname, strerror(errno));
+      else id = mix(beg, r->frames, si->chans, si->cps, newname, DELETE_ME, origin, with_mix_tags(ss));
+      if (newname) FREE(newname);
     }
   else
     {
@@ -711,7 +716,6 @@ static int paste_region_1(int n, chan_info *cp, int add, off_t beg, const char *
 
 void paste_region(int n, chan_info *cp, const char *origin) {paste_region_1(n, cp, FALSE, cp->cursor, origin);}
 void add_region(int n, chan_info *cp, const char *origin) {paste_region_1(n, cp, TRUE, cp->cursor, origin);}
-static int mix_region(int n, chan_info *cp, off_t beg) {return(paste_region_1(n, cp, TRUE, beg, S_mix_region));}
 
 int define_region(sync_info *si, off_t *ends)
 {
@@ -1420,8 +1424,9 @@ mixes region into snd's channel chn starting at chn-samp; returns new mix id."
     return(snd_no_such_region_error(S_mix_region, reg_n));
   cp = get_cp(snd_n, chn_n, S_mix_region);
   cp->state->catch_message = NULL;
-  id = mix_region(rg, cp,
-		  XEN_TO_C_OFF_T_OR_ELSE(chn_samp_n, cp->cursor));
+  id = paste_region_1(rg, cp, TRUE,
+		      XEN_TO_C_OFF_T_OR_ELSE(chn_samp_n, cp->cursor),
+		      S_mix_region);
   if (id == INVALID_MIX_ID)
     XEN_ERROR(MUS_MISC_ERROR,
 	      XEN_LIST_2(C_TO_XEN_STRING(S_mix_region),

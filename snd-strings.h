@@ -285,7 +285,6 @@
 #define S_mark_sync_max                 "mark-sync-max"
 #define S_marks                         "marks"
 #define S_max_regions                   "max-regions"
-#define S_max_sounds                    "max-sounds"
 #define S_max_transform_peaks           "max-transform-peaks"
 #define S_maxamp                        "maxamp"
 #define S_memo_sound                    "memo-sound"

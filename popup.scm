@@ -594,8 +594,8 @@
 					      (break)))))
 				    (set! graph-popup-chn (- (chans snd) 1))))))
 			   
-			   (let ((fax (if (graph-transform? snd chn) (axis-info snd chn transform-graph) #f))
-				 (lax (if (graph-lisp? snd chn) (axis-info snd chn lisp-graph) #f)))
+			   (let ((fax (if (transform-graph? snd chn) (axis-info snd chn transform-graph) #f))
+				 (lax (if (lisp-graph? snd chn) (axis-info snd chn lisp-graph) #f)))
 			     (if (and fax
 				      (>= xe (list-ref fax 10))
 				      (<= xe (list-ref fax 12)))
