@@ -10539,7 +10539,7 @@ an event, which indicates an event in the queue matches."
   e = (XEvent *)CALLOC(1, sizeof(XEvent));
   val = XIfEvent(XEN_TO_C_Display(arg1), 
 		 e, 
-		 (Bool (*)(Display *d, XEvent *e, char *p))gxm_XPeekIfEventProc, 
+		 (Bool (*)(Display *d1, XEvent *e1, char *p1))gxm_XPeekIfEventProc, 
 		 (char *)arg3);
   return(XEN_LIST_2(C_TO_XEN_INT(val), C_TO_XEN_XEvent_OBJ(e)));
 }

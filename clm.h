@@ -8,6 +8,8 @@
 /*
  * 3-May:      envelope arg to make-rand and make-rand-interp to give any arbitrary random number distribution.
  *             added mus_make_rand_with_distribution and mus_make_rand_interp_with_distribution.
+ *             rand/rand-interp mus-data returns distribution (weight) function, mus-length its length.
+ *             locsig mus-data returns output scalers, mus-xcoeffs returns reverb scalers
  * 26-Apr:     mus_sum_of_sines changed to mus_sine_bank.
  *             new mus_sum_of_sines parallels mus_sum_of_cosines.
  *             deprecated mus_sin.

@@ -701,7 +701,7 @@ static void select_sound(snd_info *sp)
   if (ss->selected_sound != sp->index)
     {
 #if USE_MOTIF
-      if (!ss->using_schemes)
+      if (!(ss->using_schemes))
 	{
 	  snd_info *osp = NULL;
 	  if (ss->selected_sound != NO_SELECTION) osp = ss->sounds[ss->selected_sound];

@@ -33,7 +33,7 @@ typedef struct {
   bool dont_free;
 } vct;
 
-void init_vct(void);
+void vct_init(void);
 bool vct_p(XEN obj);
 XEN make_vct(int len, Float *data);
 XEN make_vct_wrapper(int len, Float *data);

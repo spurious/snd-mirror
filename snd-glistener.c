@@ -962,9 +962,14 @@ void clear_listener(void)
 
 static XEN g_goto_listener_end(void)
 {
+  #define H_goto_listener_end "(" S_goto_listener_end "): move cursor and scroll to bottom of listener pane"
   int chars;
-  chars = gtk_text_buffer_get_char_count(LISTENER_BUFFER);
-  if (chars > 0) sg_set_cursor(listener_text, chars + 1);
+  if (listener_text)
+    {
+      chars = gtk_text_buffer_get_char_count(LISTENER_BUFFER);
+      if (chars > 0) sg_set_cursor(listener_text, chars + 1);
+      return(C_TO_XEN_INT(chars));
+    }
   return(XEN_FALSE);
 }
 
@@ -1019,7 +1024,7 @@ $mouse_enter_text_hook.add_hook!(\"enter\") do |w|\n\
 
   XEN_DEFINE_PROCEDURE(S_listener_selection, g_listener_selected_text_w, 0, 0, 0, H_listener_selection);
   XEN_DEFINE_PROCEDURE(S_reset_listener_cursor, g_reset_listener_cursor_w, 0, 0, 0, H_reset_listener_cursor);
-  XEN_DEFINE_PROCEDURE("goto-listener-end", g_goto_listener_end_w, 0, 0, 0, "move cursor and scroll to bottom of listener pane");
+  XEN_DEFINE_PROCEDURE(S_goto_listener_end, g_goto_listener_end_w, 0, 0, 0, H_goto_listener_end);
 
   #define H_listener_click_hook S_listener_click_hook " (pos): called when listener clicked; pos is text pos of click in listener"
   XEN_DEFINE_HOOK(listener_click_hook,    S_listener_click_hook, 1,    H_listener_click_hook);    /* arg = pos */

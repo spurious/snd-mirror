@@ -190,7 +190,7 @@ static char *glx_version(void)
 {
   int major = 0, minor = 0;
   char *version;
-  if ((ss == NULL) || (ss->sgx == NULL)) return(""); /* snd --help for example */
+  if (ss->sgx == NULL) return(""); /* snd --help for example */
   version = (char *)CALLOC(128, sizeof(char));
 #if USE_MOTIF
   if (MAIN_DISPLAY(ss) != NULL)
@@ -373,16 +373,14 @@ void about_snd_help(void)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+6-May:   mono->stereo, mono-files->stereo, stereo->mono (extensions.scm).\n\
+5-May:   reverse-channels, scramble-channels, rotate-channel, scramble-channel (extsnd.html, examp.scm)\n\
 22-Apr:  complexify in snd-gl.scm.\n\
 19-Apr:  add-to-menu now returns the new menu label widget.\n\
 13-Apr:  removed forward|backward-graph|mix|mark -- see snd7.scm for Scheme versions.\n\
 12-Apr:  dither-channel.\n\
          goertzel in dsp.scm (faster version of find-sine)\n\
 5-Apr:   snd 7.3\n\
-24-Mar:  dialog function consistency changes: added find-dialog, print-dialog\n\
-           changed region-dialog to view-regions-dialog, edit-save-as-dialog -> save-selection-dialog\n\
-           file-dialog -> view-files-dialog, mix-dialog -> view-mixes-dialog, track-dialog -> view-tracks-dialog\n\
-           file-save-as-dialog -> save-sound-dialog\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*: \n'", features, "\n\n",
@@ -1411,6 +1409,15 @@ static void noise_reduction_help(void)
 		      snd_xref_urls("Noise Reduction"));
 }
 
+static void random_numbers_help(void)
+{
+  snd_help_with_xrefs("Random Numbers",
+		      "",
+		      WITH_WORD_WRAP,
+		      snd_xrefs("Random Numbers"),
+		      snd_xref_urls("Random Numbers"));
+}
+
 static void colors_help(void)
 {
   snd_help_with_xrefs("Colors",
@@ -1468,14 +1475,14 @@ static void window_size_help(void)
 
 #include "snd-xref.c"
 
-#define NUM_TOPICS 35
+#define NUM_TOPICS 36
 static char *topic_names[NUM_TOPICS] = {
   "Hook", "Vct", "Sample reader", "Mark", "Mix", "Region", "Edit list", "Transform", "Error",
   "Color", "Font", "Graphic", "Widget", "Emacs",
   "CLM", "Instrument", "CM", "CMN", "Libxm", "Sndlib", 
   "Motif", "Gtk", "Script", "Ruby", "LADSPA", "OpenGL", "Gdb", "Control panel",
   "X resources", "Invocation flags", "Initialization file", "Customization",
-  "Noise Reduction", "Window Size", "Color"
+  "Noise Reduction", "Window Size", "Color", "Random Number"
 };
 
 static char *topic_urls[NUM_TOPICS] = {
@@ -1488,7 +1495,7 @@ static char *topic_urls[NUM_TOPICS] = {
   "grfsnd.html#sndwithgtk", "grfsnd.html#sndwithnogui", "grfsnd.html#sndandruby", "grfsnd.html#sndandladspa", 
   "grfsnd.html#sndandgl", "grfsnd.html#sndandgdb", "extsnd.html#customcontrols",
   "grfsnd.html#sndresources", "grfsnd.html#sndswitches", "grfsnd.html#sndinitfile", "extsnd.html#extsndcontents",
-  "extsnd.html#noisystory", "extsnd.html#movingwindows", "extsnd.html#colors"
+  "extsnd.html#noisystory", "extsnd.html#movingwindows", "extsnd.html#colors", "sndscm.html#allrandomnumbers"
 };
 
 #if HAVE_STRCASECMP
@@ -1517,12 +1524,12 @@ static char *topic_url(const char *topic)
   return(NULL);
 }
 
-#define NUM_XREFS 34
+#define NUM_XREFS 35
 static char *xrefs[NUM_XREFS] = {
   "Mark", "Mix", "Region", "Selection", "Cursor", "Tracking cursor", "Delete", "Envelope", "Filter",
   "Search", "Insert", "Maxamp", "Play", "Reverse", "Save", "Smooth", "Resample", "FFT", "Reverb",
   "Src", "Find", "Undo", "Redo", "Sync", "Control panel", "Record", "Header", "Key", "Track", "Copy",
-  "Noise Reduction", "Window Size", "Color", "Control"
+  "Noise Reduction", "Window Size", "Color", "Control", "Random Numbers"
 };
 
 static char **xref_tables[NUM_XREFS] = {
@@ -1531,7 +1538,7 @@ static char **xref_tables[NUM_XREFS] = {
   Playing_xrefs, Reversing_xrefs, Saving_xrefs, Smoothing_xrefs, Resampling_xrefs, FFTs_xrefs, Reverb_xrefs,
   Resampling_xrefs, Searching_xrefs, Undo_and_Redo_xrefs, Undo_and_Redo_xrefs, 
   sync_xrefs, control_xrefs, record_xrefs, header_and_data_xrefs, key_xrefs, Tracks_xrefs, Vcts_xrefs,
-  Noise_Reduction_xrefs, Window_size_and_position_xrefs, Colors_xrefs, control_xrefs
+  Noise_Reduction_xrefs, Window_size_and_position_xrefs, Colors_xrefs, control_xrefs, Random_Numbers_xrefs
 };
 
 static char **xref_url_tables[NUM_XREFS] = {
@@ -1540,7 +1547,7 @@ static char **xref_url_tables[NUM_XREFS] = {
   Playing_urls, Reversing_urls, Saving_urls, Smoothing_urls, Resampling_urls, FFTs_urls, Reverb_urls,
   Resampling_urls, Searching_urls, Undo_and_Redo_urls, Undo_and_Redo_urls, 
   NULL, NULL, NULL, NULL, Tracks_urls, Vcts_urls, 
-  Noise_Reduction_urls, Window_size_and_position_urls, Colors_urls, NULL,
+  Noise_Reduction_urls, Window_size_and_position_urls, Colors_urls, NULL, Random_Numbers_urls,
 };
 
 typedef void (*help_func)(void);
@@ -1551,7 +1558,7 @@ static help_func help_funcs[NUM_XREFS] = {
   &play_help, &reverse_help, &save_help, &smooth_help, &resample_help, &fft_help, &reverb_help,
   &resample_help, &find_help, &undo_help, &undo_help,
   &sync_help, &controls_help, recording_help, &sound_files_help, &key_binding_help, &track_help, &copy_help,
-  &noise_reduction_help, &window_size_help, &colors_help, &controls_help
+  &noise_reduction_help, &window_size_help, &colors_help, &controls_help, &random_numbers_help
 };
 
 static char **snd_xrefs(const char *topic)
@@ -1570,6 +1577,35 @@ static char **snd_xref_urls(const char *topic)
     if (STRCMP(topic, xrefs[i]) == 0)
       return(xref_url_tables[i]);
   return(NULL);
+}
+
+static int levenstein(const char *s1, const char *s2)
+{
+  /* taken with bug fixes from "The Ruby Way" by Hal Fulton, SAMS Pubs */
+  int l1, l2, i, j, val, insert_cost = 2, delete_cost = 2, substitute_cost = 1;
+  int **distance;
+  l1 = snd_strlen(s1);
+  l2 = snd_strlen(s2);
+  if ((l1 == 0) || (l2 == 0)) return(1000);
+  distance = (int **)CALLOC(l2 + 1, sizeof(int *));
+  for (i = 0; i <= l2; i++) distance[i] = (int *)CALLOC(l1 + 1, sizeof(int));
+  for (j = 0; j <= l1; j++) distance[0][j] = j * insert_cost;
+  for (i = 0; i <= l2; i++) distance[i][0] = i * delete_cost;
+  for (i = 1; i <= l2; i++)
+    for (j = 1; j <= l1; j++)
+      {
+	int c1, c2, c3;
+	c1 = distance[i][j - 1] + insert_cost;
+	c2 = distance[i - 1][j] + delete_cost;
+	c3 = distance[i - 1][j - 1] + (((s2[i - 1] == s1[j - 1]) || (toupper(s2[i - 1]) == toupper(s1[j - 1]))) ? 0 : substitute_cost);
+	if (c1 > c2) c1 = c2;
+	if (c1 > c3) c1 = c3;
+	distance[i][j] = c1;
+      }
+  val = distance[l2][l1];
+  for (i = 0; i <= l2; i++) FREE(distance[i]);
+  FREE(distance);
+  return(val);
 }
 
 bool snd_topic_help(const char *topic)
@@ -1614,6 +1650,24 @@ bool snd_topic_help(const char *topic)
 	      }
 	  }
     }
+  {
+    int min_diff = 1000, min_loc = 0, this_diff;
+    for (i = 0; i < NUM_XREFS; i++)
+      if (help_funcs[i])
+	{
+	  this_diff = levenstein(topic, xrefs[i]);
+	  if (this_diff < min_diff)
+	    {
+	      min_diff = this_diff;
+	      min_loc = i;
+	    }
+	}
+    if (min_diff < (topic_len / 2))
+      {
+	(*help_funcs[min_loc])();
+	return(true);
+      }
+  }
   return(false);
 }
 

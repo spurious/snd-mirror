@@ -486,7 +486,7 @@ the listener?
 </p>
 <table border=1>
   <tr><td><A class=def NAME="exdolph">dolph</a> n gamma</td><td>Dolph-Chebyshev fft data window</td></tr>
-  <tr><td><A class=def NAME="exdownoct">down-oct</a></td><td>move sound down 8ve using fft</td></tr>
+  <tr><td><A class=def NAME="exdownoct">down-oct n</a></td><td>move sound down a factor of n (a power of 2) using fft</td></tr>
   <tr><td><em class=emdef>freqdiv</em> n</td><td>"frequency division" effect</td></tr>
   <tr><td><em class=emdef>adsat</em> size</td><td>"adaptive saturation" effect</td></tr>
   <tr><td><em class=emdef>spike</em></td><td>spikey sound effect</td></tr>
@@ -536,6 +536,7 @@ the listener?
   <tr><td><em class=emdef>goertzel</em> freq beg dur</td><td>same as find-sine but faster</td></tr>
   <tr><td><em class=emdef>make-spencer-filter</em></td><td>return FIR filter with Spencer coefficients</td></tr>
   <tr><td><A class=def NAME="anyrandom">any-random</A></td><td>random numbers of arbitrary distribution using rejection method</td></tr>
+  <tr><td><em class=emdef>channel-variance</em> etc</td><td> miscellaneous funcs from Julius Smith, Mathematics of the DFT</td></tr>
 </table>
 
 <p><b>dolph</b> is the Dolph-Chebyshev fft data window, taken
@@ -558,7 +559,7 @@ It returns the FIR filter coefficients given the filter order and desired spectr
 (<a class=quiet href="extsnd.html#mapchan">map-chan</a> (fltit-1 10 (<a class=quiet href="extsnd.html#vct">vct</a> 0 1.0 0 0 0 0 0 0 1.0 0)))
 </pre>
 <p>
-<b>down-oct</b> tries to move a sound down an octave by goofing with the fft data,
+<b>down-oct</b> tries to move a sound down n (a power of 2) by goofing with the fft data,
 then inverse ffting.  
 <b>freqdiv</b> implements
 "frequency division", taken from an effects package of sed_sed@my-dejanews.com.
@@ -652,7 +653,12 @@ also lose more of the original signal.
 </p>
 <p><b>fractional-fourier-transform</b> is the slow (dft) version of the fractional Fourier Transform.
 <b>z-transform</b> performs a z transform.
-<b>any-random</b> provides the same output as <a href="clm.html#rand">rand</a> if the latter's
+I've started working my way through Julius Smith's very fine "Mathematics of the
+DFT", and collecting functions that he says are useful.  These include
+<b>channel-mean</b>, <b>channel-rms</b>, <b>channel-variance</b>, etc.
+</p>
+
+<p><b>any-random</b> provides the same output as <a href="clm.html#rand">rand</a> if the latter's
 envelope (distribution function) argument is used, but using a slightly different method
 to generate the numbers.  Also included is <b>inverse-integrate</b>, a Scheme version of
 CLM's distribution-to-weighting function, and <b>gaussion-envelope</b> which makes
@@ -1075,6 +1081,8 @@ I'm slowly dividing out related groups of procedures to separate files.
     <li>sound-data-&gt;list
     <li>smooth-channel-via-ptree -- smooth-channel as virtual op
     <li>ring-modulate-channel -- ring-modulation as virtual op
+    <li>scramble-channels -- reorder chans
+    <li>scramble-channel -- randomly reorder segments of sound
   </ul>
 </small>
 </ul>
@@ -1560,6 +1568,10 @@ holding the samples of one channel.
 <p>The first is <a href="extsnd.html#smoothchannel">smooth-channel</a> as a virtual op,
 and the second applies ring-modulation (multiplication by a sine wave, similar to 
 Craig Sapp's ring-modulate.ins in CLM), also as a virtual op.
+<b>scramble-channels</b> uses <a href="extsnd.html#swapchannels">swap-channels</a>
+to return the current sound with the channels reordered arbitrarily.
+<b>scramble-channel</b>searches for silences, sets up a list of segments based on
+those silences, and randomly re-orders the segments.
 </p>
 <br>
 
@@ -1598,11 +1610,11 @@ convenient if they were in one file.
   <a class=def name="anyenvchannel">any-env-channel</a> env func #:optional beg dur snd chn edpos
   <a class=def name="sineramp">sine-ramp</a> a0 a1 #:optional beg dur snd chn edpos
   <a class=def name="sineenvchannel">sine-env-channel</a> env #:optional beg dur snd chn edpos
-  <A class=def NAME="blackman4ramp">blackman4-ramp</A> a0 a1 #:optional beg dur snd chn edpos
+  <em class=emdef>blackman4-ramp</em> a0 a1 #:optional beg dur snd chn edpos
   <A class=def NAME="blackman4envchannel">blackman4-env-channel</A> env #:optional beg dur snd chn edpos
-  <A class=def NAME="rampsquared">ramp-squared</A> a0 a1 #:optional (symmetric #t) beg dur snd chn edpos
+  <em class=emdef>ramp-squared</em> a0 a1 #:optional (symmetric #t) beg dur snd chn edpos
   <A class=def NAME="envsquaredchannel">env-squared-channel</A> env #:optional (symmetric #t) beg dur snd chn edpos
-  <A class=def NAME="rampexpt">ramp-expt</A> a0 a1 exponent #:optional (symmetric #t) beg dur snd chn edpos
+  <em class=emdef>ramp-expt</em> a0 a1 exponent #:optional (symmetric #t) beg dur snd chn edpos
   <a class=def name="envexptchannel">env-expt-channel</a> env exponent #:optional (symmetric #t) beg dur snd chn edpos
 
   <a class=def name="offsetchannel">offset-channel</a> amount #:optional beg dur snd chn edpos	
@@ -1610,6 +1622,10 @@ convenient if they were in one file.
   <a class=def name="contrastchannel">contrast-channel</a> index #:optional beg dur snd chn edpos
   <a class=def name="channelsequal">channels-equal?</a> snd1 chn1 snd2 chn2 allowable-difference	
   <a class=def name="channels=">channels=?</a> snd1 chn1 snd2 chn2 allowable-difference	
+
+  <a class=def name="monotostereo">mono-&gt;stereo</a> new-name snd1 chn1 snd2 chn2
+  <em class=emdef>mono-files-&gt;stereo</em> new-name chan1-file chan2-file
+  <em class=emdef>stereo-&gt;mono</em> orig-snd chan1-name chan2-name
 </pre>
 
 <p><b>channel-property</b> returns the value associated with <i>key</i> in the given channel's
@@ -1739,6 +1755,11 @@ equivalent to the control panel Contrast slider.
 given tolerance (which can be 0.0).  <b>channels-equal?</b> returns #t if channels=?
 and the channels are the same length.  In the "=" case, the trailing (extra) samples
 in one channel are checked against 0.0.
+<b>mono-&gt;stereo</b> combines two mono sounds (currently open in Snd) into one (new) stereo file. <b>mono-files-&gt;stereo</b>
+is the same, but the source sounds are files, not necessarily already open in Snd.
+<b>stereo-&gt;mono</b> takes a stereo sound and produces two new mono sounds.
+(The corresponding <b>stereo-&gt;mono-files</b> can be based on the existing
+<a href="extsnd.html#extractchannel">extract-channel</a> function).
 </p>
 <p>
 <b>any-env-channel</b> takes an envelope and a function to produce the connection between successive
@@ -2567,7 +2588,7 @@ move the selected channel back (up or left) <i>count</i> graphs (C-x C-o), retur
 
 <!-- backward-sample -->
 <tr><td colspan=2>
-<A class=def NAME="backwardsample">backward-sample</a> (<i>count snd chn</i>)
+<em class=emdef>backward-sample</em> (<i>count snd chn</i>)
 </td></tr>
 <tr><td></td><td>
 move back <i>count</i> samples (C-b), return new cursor position.
@@ -2597,7 +2618,7 @@ move the selected channel forward (down or right) <i>count</i> graphs (C-x C-o),
 
 <!-- forward-sample -->
 <tr><td colspan=2>
-<A class=def NAME="forwardsample">forward-sample</a> (<i>count snd chn</i>)
+<em class=emdef>forward-sample</em> (<i>count snd chn</i>)
 </td></tr>
 <tr><td></td><td>
 move forward <i>count</i> samples (C-f), return new cursor position.

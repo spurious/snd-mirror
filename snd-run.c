@@ -192,7 +192,7 @@ static XEN symbol_to_value(XEN code, XEN sym, bool *local)
     {
       /* scrounge around in the "eval" environment looking for local version of sym */
       code_env = XEN_ENV(code);
-      /* fprintf(stderr,"look for %s in %s\n", XEN_AS_STRING(sym), XEN_AS_STRING(code_env)); */
+      /* fprintf(stderr, "look for %s in %s\n", XEN_AS_STRING(sym), XEN_AS_STRING(code_env)); */
       if (XEN_LIST_P(code_env))
 	{
 	  (*local) = true;
@@ -236,7 +236,7 @@ static XEN symbol_set_value(XEN code, XEN sym, XEN new_val)
   XEN names, values;
   XEN var = XEN_FALSE;
   int i, len;
-  /* fprintf(stderr,"set %s to %s\n", XEN_AS_STRING(sym), XEN_AS_STRING(new_val)); */
+  /* fprintf(stderr, "set %s to %s\n", XEN_AS_STRING(sym), XEN_AS_STRING(new_val)); */
   if (XEN_PROCEDURE_P(code))
     {
       code_env = XEN_ENV(code);
@@ -1821,7 +1821,7 @@ static int add_var_to_ptree(ptree *pt, const char *name, xen_value *v)
 {
   int cur;
   /*
-  fprintf(stderr,"add var: %s %s\n", name, describe_xen_value(v, pt));
+  fprintf(stderr, "add var: %s %s\n", name, describe_xen_value(v, pt));
   */
   cur = pt->var_ctr;
   if (cur >= pt->vars_size)
@@ -2165,7 +2165,7 @@ static xen_value *add_global_var_to_ptree(ptree *prog, XEN form, XEN *rtn)
 	return(run_warn("can't find %s", varname));
     }
   type = xen_to_run_type(val);
-  /* fprintf(stderr,"add global %s %s %s\n",varname, type_name(type), XEN_AS_STRING(val)); */
+  /* fprintf(stderr, "add global %s %s %s\n",varname, type_name(type), XEN_AS_STRING(val)); */
   switch (type)
     {
     case R_INT:    v = make_xen_value(R_INT, add_int_to_ptree(prog, R_XEN_TO_C_INT(val)), R_VARIABLE);                     break;
@@ -3324,7 +3324,7 @@ static xen_value *do_form_1(ptree *prog, XEN form, walk_result_t need_result, bo
 		      if (((XEN_LIST_P(update)) && (tree_member(varlst, update))) ||
 			  ((XEN_SYMBOL_P(update)) && (list_member(update, varlst))))
 			{
-			  /* fprintf(stderr,"found seq ref %s\n", XEN_AS_STRING(vars)); */
+			  /* fprintf(stderr, "found seq ref %s\n", XEN_AS_STRING(vars)); */
 			  sequential = false;
 			  break;
 			}
@@ -6113,7 +6113,7 @@ static void funcall_nf(int *args, ptree *pt)
       case R_KEYWORD:
       case R_LIST:
       case R_PAIR:
-	/* fprintf(stderr,"func set arg %d to %s\n", args[i], XEN_AS_STRING(pt->xens[args[i + 2]])); */
+	/* fprintf(stderr, "func set arg %d to %s\n", args[i], XEN_AS_STRING(pt->xens[args[i + 2]])); */
  	pt->xens[func->args[i]] = pt->xens[args[i + 2]]; 
  	break;
       case R_READER: 
@@ -8789,7 +8789,7 @@ static xen_value *eq_1(ptree *prog, xen_value **args, int num_args) {return(numb
 
 static xen_value *unwrap_xen_object_1(ptree *prog, XEN form, const char *origin, bool constant)
 {
-  /* fprintf(stderr,"unwrap %s (%s) (%d)\n", XEN_AS_STRING(form), type_name(xen_to_run_type(form)), constant); */
+  /* fprintf(stderr, "unwrap %s (%s) (%d)\n", XEN_AS_STRING(form), type_name(xen_to_run_type(form)), constant); */
   int type;
   type = xen_to_run_type(form);
   switch (type)
@@ -9058,7 +9058,7 @@ static XEN format_func = XEN_FALSE;
 static void format_s(int *args, ptree *pt) 
 {
   if (STRING_RESULT) FREE(STRING_RESULT);
-  /* fprintf(stderr,"apply: %s\n", XEN_AS_STRING(xen_values_to_list(pt, args))); */
+  /* fprintf(stderr, "apply: %s\n", XEN_AS_STRING(xen_values_to_list(pt, args))); */
   STRING_RESULT = copy_string(XEN_TO_C_STRING(XEN_APPLY(format_func, xen_values_to_list(pt, args), "format")));
 }
 
@@ -9290,7 +9290,7 @@ static xen_value *make_fft_window_1(ptree *prog, xen_value **args, int num_args)
 static int xen_to_addr(ptree *pt, XEN arg, int type, int addr)
 {
   /*
-  fprintf(stderr,"xen to addr: %s %d %d\n", XEN_AS_STRING(arg), type, addr);
+  fprintf(stderr, "xen to addr: %s %d %d\n", XEN_AS_STRING(arg), type, addr);
   */
   switch (type)
     {
@@ -9481,7 +9481,7 @@ static int find_clm_var(ptree *prog, XEN lst, XEN lst_ref, int offset, int run_t
 	  clm_ref_types[i] = run_type;
 	  clm_ref_vars[i] = lst;
 	  clm_ref_addrs[i] = addr;
-	  /* fprintf(stderr,"%s: %d %s %s %d\n", XEN_AS_STRING(lst), offset, type_name(run_type), XEN_AS_STRING(lst), addr); */
+	  /* fprintf(stderr, "%s: %d %s %s %d\n", XEN_AS_STRING(lst), offset, type_name(run_type), XEN_AS_STRING(lst), addr); */
 	}
     }
   /* now set the (initial) value */
@@ -9679,7 +9679,7 @@ static xen_value *walk(ptree *prog, XEN form, walk_result_t walk_result)
 {
   /* walk form, storing vars, making program entries for operators etc */
   XEN rtnval = XEN_FALSE;
-  /* fprintf(stderr,"walk %s (needed: %d)\n", XEN_AS_STRING(form), (int)walk_result); */
+  /* fprintf(stderr, "walk %s (needed: %d)\n", XEN_AS_STRING(form), (int)walk_result); */
   if (current_optimization == DONT_OPTIMIZE) return(NULL);
 
   if (XEN_LIST_P(form))
@@ -9970,7 +9970,7 @@ static xen_value *walk(ptree *prog, XEN form, walk_result_t walk_result)
 	{
 	  XEN func_form;
 	  /*
-	  fprintf(stderr,"try to splice in %s ", funcname);
+	  fprintf(stderr, "try to splice in %s ", funcname);
 	  */
 	  func_form = XEN_PROCEDURE_SOURCE(rtnval);
 	  if ((XEN_LIST_P(func_form)) &&

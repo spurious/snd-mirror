@@ -35,10 +35,10 @@
     im))
 
 
-;;; -------- move sound down 8ve using fft
+;;; -------- move sound down by n (a power of 2)
 
-(define (down-oct)
-  "(down-oct) tries to move a sound down an octave"
+(define (down-oct n)
+  "(down-n n) moves a sound down by power of 2 n"
   (let* ((len (frames))
 	 (pow2 (ceiling (/ (log len) (log 2))))
 	 (fftlen (inexact->exact (expt 2 pow2)))
@@ -48,18 +48,18 @@
     (fft rl1 im1 1)
     (vct-scale! rl1 fftscale)
     (vct-scale! im1 fftscale)
-    (let ((rl2 (make-vct (* 2 fftlen)))
-	  (im2 (make-vct (* 2 fftlen))))
-      (do ((i 0 (+ i 1))
-	   (k (/ fftlen 2) (+ k 1))
-	   (j (+ fftlen (/ fftlen 2)) (+ j 1)))
+    (let ((rl2 (make-vct (* n fftlen)))
+	  (im2 (make-vct (* n fftlen))))
+      (do ((i 0 (+ i 1)) ; lower half
+	   (k (1- fftlen) (1- k))
+	   (j (1- (* n fftlen)) (1- j)))
 	  ((= i (/ fftlen 2)))
 	(vct-set! rl2 i (vct-ref rl1 i))
 	(vct-set! rl2 j (vct-ref rl1 k))
 	(vct-set! im2 i (vct-ref im1 i))
 	(vct-set! im2 j (vct-ref im1 k)))
       (fft rl2 im2 -1)
-      (vct->samples 0 (* 2 len) rl2))))
+      (vct->samples 0 (* n len) rl2))))
 
 
 ;;; -------- compute-uniform-circular-string
@@ -1313,3 +1313,74 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
     (reverse e)))
 
 ;;; (make-rand :envelope (gaussian-envelope 1.0))
+
+
+;;; ---------------- Julius Smith stuff ----------------
+;;;
+;;; these are from "Mathematics of the DFT", W3K Pubs
+
+(define* (channel-mean #:optional snd chn)
+  (let ((sum 0.0)
+	(N (frames snd chn)))
+    (scan-channel (lambda (y) (set! sum (+ sum y)) #f) 0 N snd chn)
+    (/ sum N)))
+
+(define* (channel-total-energy #:optional snd chn)
+  (let ((sum 0.0))
+    (scan-channel (lambda (y) (set! sum (+ sum (* y y))) #f) 0 (frames snd chn) snd chn)
+    sum))
+
+(define* (channel-average-power #:optional snd chn)
+  (/ (channel-total-energy snd chn) (frames snd chn)))
+
+(define* (channel-rms #:optional snd chn)
+  (sqrt (channel-average-power snd chn)))
+
+(define* (channel-variance #:optional snd chn) ; "sample-variance" might be better
+  (let* ((N (frames snd chn))
+	 (mu (* (/ N (- N 1)) (channel-mean snd chn))) ; avoid bias sez JOS
+	 (P (channel-total-energy snd chn)))
+    (- P (* mu mu))))
+
+(define* (channel-norm #:optional snd chn)
+  (sqrt (channel-total-energy snd chn)))
+
+(define* (channel-lp p #:optional snd chn)
+  (let ((sum 0.0)
+	(N (frames snd chn)))
+    (scan-channel (lambda (y) (set! sum (+ sum (expt (abs y) p))) #f) 0 N snd chn)
+    (expt sum (/ 1.0 p))))
+
+(define* (channel-lp-inf #:optional snd chn)
+  (let ((mx 0.0)
+	(N (frames snd chn)))
+    (scan-channel (lambda (y) (set! mx (max mx (abs y))) #f) 0 N snd chn)
+    mx))
+
+(define (channel2-inner-product s1 c1 s2 c2)
+  (let ((N (frames s1 c1))
+	(sum 0.0)
+	(r1 (make-sample-reader 0 s1 c1))
+	(r2 (make-sample-reader 0 s2 c2)))
+    (do ((i 0 (1+ i)))
+	((= i N))
+      (set! sum (+ sum (* (r1) (r2)))))
+    sum))
+
+(define (channel2-angle s1 c1 s2 c2)
+  (let ((inprod (channel2-inner-product s1 c1 s2 c2))
+	(norm1 (channel-norm s1 c1))
+	(norm2 (channel-norm s2 c2)))
+    (acos (/ inprod (* norm1 norm2)))))
+
+(define (channel2-orthogonal? s1 c1 s2 c2)
+  (= (channel2-inner-product s1 c1 s2 c2) 0.0))
+
+(define (channel2-coefficient-of-projection s1 c1 s2 c2) ; s1,c1 = x, s2,c2 = y
+  (let ((inprod (channel2-inner-product s1 c1 s2 c2))
+	(norm1 (channel-norm s1 c1)))
+    (/ inprod (* norm1 norm1))))
+
+;;; the projection is now (scale-by coeff 0 (frames) s1 c1)
+
+

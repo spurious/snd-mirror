@@ -1607,7 +1607,11 @@ static XEN g_make_noi(bool rand_case, XEN arg1, XEN arg2, XEN arg3, XEN arg4, XE
       base = mus_optkey_to_float(keys[1], (rand_case) ? S_make_rand : S_make_rand_interp, orig_arg[1], base);
       if (!(XEN_KEYWORD_P(keys[2]))) /* i.e. envelope arg was specified */
         {
+	  int len;
 	  XEN_ASSERT_TYPE(XEN_LIST_P(keys[2]), keys[2], orig_arg[2], (rand_case) ? S_make_rand : S_make_rand_interp, "an envelope");
+	  len = XEN_LIST_LENGTH(keys[2]);
+	  if ((len < 4) || (len & 1))
+	    mus_misc_error((rand_case) ? S_make_rand : S_make_rand_interp, "bad distribution envelope", keys[2]);
 	  distribution = inverse_integrate(keys[2], distribution_size);
 	}
     }
@@ -4141,7 +4145,6 @@ return a new generator for signal placement in n channels.  Channel 0 correspond
 	  if ((MUS_XEN_P(keys[3])) && (mus_output_p(XEN_TO_MUS_ANY(keys[3]))))
 	    {
 	      out_obj = keys[3];
-	      vlen++;
 	      outp = (mus_any *)XEN_TO_MUS_ANY(keys[3]);
 	      out_chans = mus_channels((mus_any *)outp);
 	    }
@@ -4168,6 +4171,7 @@ return a new generator for signal placement in n channels.  Channel 0 correspond
       out_chans = mus_optkey_to_int(keys[5], S_make_locsig, orig_arg[5], out_chans);
       if (out_chans < 0) XEN_OUT_OF_RANGE_ERROR(S_make_locsig, orig_arg[5], keys[5], "chans ~A < 0.0?");
       if (out_chans > MAX_TABLE_SIZE) XEN_OUT_OF_RANGE_ERROR(S_make_locsig, orig_arg[5], keys[5], "chans = ~A?");
+      if (out_chans > 0) vlen++;
       type = (mus_locsig_interp_t)mus_optkey_to_int(keys[6], S_make_locsig, orig_arg[6], type);
       if ((type != MUS_LINEAR) && (type != MUS_SINUSOIDAL))
 	XEN_OUT_OF_RANGE_ERROR(S_make_locsig, orig_arg[6], keys[6], "type ~A must be " S_mus_linear " or " S_mus_sinusoidal ".");
@@ -4178,12 +4182,16 @@ return a new generator for signal placement in n channels.  Channel 0 correspond
       gn = (mus_xen *)CALLOC(1, sizeof(mus_xen));
       if (vlen > 0)
 	{
-	  gn->nvcts = vlen;
+	  gn->nvcts = 2;
 	  gn->vcts = make_vcts(gn->nvcts);
-	  i = 0;
-	  if (XEN_BOUND_P(out_obj)) gn->vcts[i++] = out_obj;
-	  if (XEN_BOUND_P(rev_obj)) gn->vcts[i] = rev_obj;
+	  if (out_chans > 0)
+	    gn->vcts[MUS_DATA_WRAPPER] = make_vct_wrapper(out_chans, mus_data((mus_any *)ge)); /* G_FILTER_STATE = MUS_DATA WRAPPER */
+	  else gn->vcts[MUS_DATA_WRAPPER] = XEN_UNDEFINED;
+	  if ((revp) && (mus_channels(revp) > 0))
+	    gn->vcts[G_FILTER_XCOEFFS] = make_vct_wrapper(mus_channels(revp), mus_xcoeffs((mus_any *)ge));
+	  else gn->vcts[G_FILTER_XCOEFFS] = XEN_UNDEFINED;
 	}
+      else gn->nvcts = 0;
       gn->gen = ge;
       return(mus_xen_to_object(gn));
     }
@@ -6161,6 +6169,6 @@ void init_sndlib(void)
 #endif
 {
   mus_sndlib_xen_initialize();
-  init_vct();
+  vct_init();
   mus_xen_init();
 }

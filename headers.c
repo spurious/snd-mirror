@@ -868,7 +868,6 @@ static int read_aiff_header(const char *filename, int chan, int overall_offset)
       if ((chunksize == 0) && /* can be empty data chunk */
 	  (hdrbuf[0] == 0) && (hdrbuf[1] == 0) && (hdrbuf[2] == 0) && (hdrbuf[3] == 0))
 	break;
-      /* fprintf(stderr,"chunk %c%c%c%c at " OFF_TD ", size: %d\n", hdrbuf[0], hdrbuf[1], hdrbuf[2], hdrbuf[3], offset, chunksize); */
       if (match_four_chars((unsigned char *)hdrbuf, I_COMM))
 	{
 	  got_comm = true;
@@ -2643,7 +2642,7 @@ static int read_voc_header(const char *filename, int chan)
 			data_format = MUS_UBYTE;
 		      else 
 			{
-			  fprintf(stderr,"VOC 8 code: %d\n", code);
+			  fprintf(stderr, "VOC 8 code: %d\n", code);
 			  data_format = MUS_UNKNOWN; /* various ADPCM cases here? */
 			}
 #else
@@ -2657,7 +2656,7 @@ static int read_voc_header(const char *filename, int chan)
 		  {
 		    if (code != 4)
 		      {
-			fprintf(stderr,"VOC 16 code: %d\n", code);
+			fprintf(stderr, "VOC 16 code: %d\n", code);
 			data_format = MUS_UNKNOWN;
 		      }
 		    else data_format = MUS_LSHORT;

@@ -2853,7 +2853,7 @@ the synthesis amplitude, the FFT size, and the radius value."))
 ;;;
 
 (add-to-menu effects-menu #f #f)
-(add-to-menu effects-menu "Octave-down" down-oct)
+(add-to-menu effects-menu "Octave-down" (lambda () (down-oct 2)))
 (add-to-menu effects-menu "Remove clicks"
 	     (lambda ()
 	       (define (find-click loc)

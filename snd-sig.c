@@ -241,7 +241,7 @@ static char *convolve_with_or_error(char *filename, Float amp, chan_info *cp, XE
   else
     {
       sp = any_selected_sound();
-      if ((sp == NULL) || (ss == NULL)) return(NULL);
+      if (!sp) return(NULL);
       ncp = any_selected_channel(sp);
     }
   filter_chans = mus_sound_chans(filename);
@@ -1881,7 +1881,7 @@ void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, bool over_selection,
   if (base == 0.0) 
     {
       /* ---------------- step env -- handled as sequence of scalings ---------------- */
-      int local_edpos, k, pos;
+      int local_edpos, pos;
       off_t segbeg, segnum, segend;
       env *newe;
       char *new_origin; /* need a complete origin since this appears as a scaled-edit in 
@@ -2104,7 +2104,7 @@ void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, bool over_selection,
   else 
     {
       /* ---------------- optimizable -- treat env as a sequence of virtual (x)ramps and scalings (if slope=0) ---------------- */
-      int local_edpos, k, m, pos, env_pos;
+      int local_edpos, m, pos, env_pos;
       bool need_xramp = false;
       off_t segbeg, segnum, segend;
       env *newe;
@@ -3330,7 +3330,7 @@ swap the indicated channels"
   env_info *e0, *e1;
   ASSERT_CHANNEL(S_swap_channels, snd0, chn0, 1);
   cp0 = get_cp(snd0, chn0, S_swap_channels);
-  if (XEN_INTEGER_P(snd1) && XEN_INTEGER_P(chn1)) 
+  if (XEN_INTEGER_P(chn1))
     {
       ASSERT_CHANNEL(S_swap_channels, snd1, chn1, 3);
       cp1 = get_cp(snd1, chn1, S_swap_channels);

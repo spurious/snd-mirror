@@ -2472,8 +2472,9 @@ A similar low-level sndlib function is <em class=emdef>mus-file-data-clipped</em
 <!-- mus-header-type-name -->
 <tr><td colspan=2><code><a class=def name="soundtypename">mus-header-type-name</a> (type)</code></td></tr>
 <tr><td></td><td>convert <i>type</i>, an integer, to a string, e.g. "AIFF".  Some of the sndlib header types are:</td></tr>
-<tr><td colspan=2><pre>
-  mus-next  mus-aifc  mus-riff  mus-nist  mus-raw  mus-ircam  mus-aiff mus-bicsf mus-soundfont mus-voc mus-svx mus-unsupported
+<tr><td></td><td><pre>
+  mus-next  mus-aifc  mus-riff  mus-nist  mus-raw  mus-ircam  mus-aiff 
+  mus-bicsf mus-soundfont mus-voc mus-svx mus-unsupported
 </pre></td></tr>
 
 <!-- mus-make-error -->
@@ -2857,7 +2858,7 @@ If it is a mix reader, return the mix's id.  If it is a track reader, return a l
 
 <p>There are two Snd-specific CLM-style generators that redirect CLM instrument input (via in-any, ina, etc)
 to Snd data, snd-&gt;sample and xen-&gt;sample.  Instruments that use ina or file-&gt;sample to read *reverb*
-or some similar stream can be automatically redirected elsewhere by these two functions.
+or some similar stream can be redirected elsewhere by these two functions.
 After implementing these, I realized the CLM instruments could just as easily use temporary
 files; I'm not sure these have any real use after all.
 </p>
@@ -3197,8 +3198,8 @@ mixed without creating any mix tags.  <i>track</i> is the newly created mix's tr
 <tr><td></td><td>color of mix waveforms (defaults to dark-gray).
 The set form, <code>(set! (mix-color) ...)</code>, has an optional second argument; if you
 want to set just a particular mix's color, give the id of the mix
-as that argument: <code>(set! (mix-color) red)</code> sets all unselected mixes to
-red; but <code>(set! (mix-color 3) red)</code> sets only mix #3 to be red.
+as that argument: <code>(set! (mix-color) red)</code> sets all mix waveforms to
+red; but <code>(set! (mix-color 3) red)</code> sets only mix 3's waveform to red.
 </td></tr>
 
 <!-- mix-frames -->
@@ -3543,7 +3544,21 @@ Most of the region arguments default to the current region (the top of the regio
 <!-- insert-region -->
 <tr><td colspan=2><code><a class=def name="insertregion">insert-region</a> (<i>beg reg snd chn</i>)</code></td></tr>
 <tr><td></td><td>
-insert region <i>reg</i> at sample <i>beg</i> in <i>snd</i>'s channel <i>chn</i>.
+insert region <i>reg</i> at sample <i>beg</i> in <i>snd</i>'s channel <i>chn</i>.  The following
+function uses insert-region (and other region functions) to rotate the samples in a channel:
+</td></tr>
+<tr><td></td><td>
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
+(define* (<a name="rotatechannel">rotate-channel</a> #:optional (samps 1) snd chn)
+  (let* ((ind (or snd (<a class=quiet href="#selectedsound">selected-sound</a>) (car (<a class=quiet href="#sounds">sounds</a>))))
+	 (chan (or chn (<a class=quiet href="#selectedchannel">selected-channel</a>) 0)))
+    (let ((reg (<em class=red>make-region</em> 0 (1- samps) ind chan)))
+      (<a class=quiet href="#asoneedit">as-one-edit</a>
+       (lambda ()
+	 (<a class=quiet href="#deletesamples">delete-samples</a> 0 samps ind chan)
+	 (<em class=red>insert-region</em> (<a class=quiet href="#frames">frames</a> ind chan) reg)))
+      (<em class=red>forget-region</em> reg))))
+</pre></td></tr></table>
 </td></tr>
 
 <!-- make-region -->
@@ -4811,7 +4826,7 @@ Example find procedures: <a href="sndscm.html#exsearchforclick">search-for-click
 Search via continuation: <a href="#scanagain">scan-again</a><br>
 Explicit access to search procedures: <a href="#searchprocedure">search-procedure</a><br>
 The Find dialog: <a href="snd.html#editoperations">Find</a><br>
-find silence: <a href="#mapsilence">map-silence</a><br>
+find silence: <a href="#mapsilence">map-silence</a>, scramble-channel in examp.scm<br>
 find zero crossing: <a href="#newcp">find-zero</a><br>
 find any difference between two chans: <a href="sndscm.html#channelsequal">channels-equal</a><br>
 see also <a href="#lcountmatches">count-matches</a> and <a href="#scanchannel">scan-channel</a>.<br>
@@ -5206,44 +5221,21 @@ we define a function that finds silences and replaces them with
 something:<br><br>
 
 <table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
-(define <A NAME="mapsilence">map-silence</a>
-  ;; see squelch in <a href="sndscm.html#effectsdoc">new-effects.scm</a> for a better version
-  (lambda (silence replacement)
-    (let ((sum-of-squares 0.0)
-	  (buffer (make-vector 128 0.0))
-	  (position 0)
-	  (current-sample 0)
-	  (chan-samples (<a class=quiet href="#frames">frames</a>)))
-      (lambda (y)
-        (let ((old-y (vector-ref buffer position)))
-	  (set! sum-of-squares (- (+ sum-of-squares (* y y)) (* old-y old-y)))
-	  (vector-set! buffer position y)
-	  (set! position (1+ position))
-	  (if (= position 128) (set! position 0))
-	  (set! current-sample (1+ current-sample))
-	  (if (&gt; sum-of-squares silence)
-	      (if (= current-sample chan-samples)
-		  ;; at end return trailing samples as long as it looks like sound
-		  (let ((temp-buffer (make-vector 128 0.0)))
-		    (do ((i 0 (1+ i)))
-			((= i 128) temp-buffer)
-		      (let ((final-y (vector-ref buffer position)))
-			(vector-set! temp-buffer i (if (&gt; sum-of-squares silence) final-y 0.0))
-			(set! sum-of-squares (- sum-of-squares (* final-y final-y)))
-			(set! position (1+ position))
-			(if (= position 128) (set! position 0)))))
-		  old-y)
-	    replacement))))))
+(define (<A NAME="mapsilence">map-silence</a> in-silence replacement)
+  (let ((buffer (<a class=quiet href="clm.html#make-average">make-average</a> 128))
+        (silence (/ in-silence 128)))
+    (lambda (y)
+      (let ((sum-of-squares (<a class=quiet href="clm.html#average">average</a> buffer (* y y))))
+        (if (&gt; sum-of-squares silence) y replacement)))))
 
 (<em class=red>map-chan</em> (map-silence .01 0.0))  ; squelch background noise
 (<em class=red>map-chan</em> (map-silence .001 #f))   ; remove silences altogether
 </pre></td></tr></table>
 <br>
-In case it isn't obvious, we're using <i>buffer</i> to hold a running
-portion of the sound, and <i>sum-of-squares</i> to hold the sum of the squares
-of all the samples in that portion.  When the portion's sum falls below
+Here we're using <i>buffer</i>, a CLM average generator, to track the
+average of the sum of the squares of the last 128 input samples.
+When that average falls below
 the argument <i>silence</i>, we replace the current sample with <i>replacement</i>.
-At the end, we flush out all the remaining samples awaiting output in <i>buffer</i>.
 <br><br>
 It is possible to break out of a map, flushing any edits, via call-with-current-continuation:
 <br><br>
@@ -6151,12 +6143,12 @@ reverse a track: <a href="sndscm.html#reversetrack">reverse-track</a><br>
 reverse an envelope: <a href="sndscm.html#reverseenvelope">reverse-envelope</a><br>
 Virtual reverse-channel: <a href="#virtualreverse">xen-channel</a><br>
 reverse via FFT: <a href="#sillyreverse">silly-reverse</a><br>
+reverse order of channels: <a href="#reversechannels">reverse-channels</a><br>
 <br>
 </small></blockquote>
 </td></tr></TABLE>
 </td></tr>
 <tr><td colspan=2></td></tr>
-
 
 <!-- reverse-sound -->
 <tr><td colspan=2>
@@ -6165,7 +6157,8 @@ reverse via FFT: <a href="#sillyreverse">silly-reverse</a><br>
 <tr><td></td><td>
 reverse data.  There are some interesting non-causal effects you can get with this:
 take a voice sound, reverse it, reverberate it, reverse it again, and you get the original with
-reversed reverb.  As a hack, you can reverse a sound (modulo a one sample rotation) by doing two ffts:
+reversed reverb.  As a hack, you can reverse a sound (modulo a one sample rotation) by doing two ffts
+(DSP-ers call this a "flip"):
 <pre>
 (define* (<A NAME="sillyreverse">silly-reverse</a> #:optional snd)
   (let* ((len (<a class=quiet href="#frames">frames</a> snd 0))
@@ -7153,7 +7146,22 @@ If no argument is given, stop all sounds (channels) in progress.  See play.scm o
 </td></tr>
 <tr><td></td><td>
 Swap the indicated channels, between beg and beg+dur.  See <i>swap-selection-channels</i> in examp.scm.
-In simple cases, this is a virtual operation.
+In simple cases, this is a virtual operation.  swap-channels can be used to change channel order arbitrarily.
+For example, the following function reverses the channel order:
+<br>
+<pre>
+(define* (<a name="reversechannels">reverse-channels</a> #:optional snd)
+  (let* ((ind (or snd (<a class=quiet href="#selectedsound">selected-sound</a>) (car (<a class=quiet href="#sounds">sounds</a>))))
+	 (chns (<a class=quiet href="#channels">chans</a> ind)))
+    (let ((swaps (inexact-&gt;exact (floor (/ chns 2)))))
+      (<a class=quiet href="#asoneedit">as-one-edit</a>
+       (lambda ()
+	 (do ((i 0 (1+ i))
+	      (j (1- chns) (1- j)))
+	     ((= i swaps))
+	   (<em class=red>swap-channels</em> ind i ind j)))))))
+</pre>
+Channel rotation is similar, though slightly more work; see scramble-channels in examp.scm.
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -9420,6 +9428,14 @@ This function is specific to the Motif version of Snd.
 <code><a class=def name="exit">exit</a> (<i>exit-value</i>)</code></td></tr>
 <tr><td></td><td>
 exit Snd. 
+</td></tr>
+
+<!-- goto-listener-end -->
+<tr><td colspan=2>
+<code><a class=def name="gotolistenerend">goto-listener-end</a></code></td></tr>
+<tr><td></td><td>
+move the cursor to the end of the listener text, and scroll the window so that it is visible.
+See ws.scm for examples.
 </td></tr>
 
 <!-- graph->ps -->

@@ -6028,13 +6028,13 @@ static XEN g_set_graph_style(XEN style, XEN snd, XEN chn)
     XEN_OUT_OF_RANGE_ERROR(S_setB S_graph_style, 1, style, "~A: unknown graph-style");
   if (XEN_BOUND_P(snd))
     {
-      XEN val;
+      XEN xval;
       call_update_graph = false;
-      val = channel_set(snd, chn, style, CP_TIME_GRAPH_STYLE, S_setB S_graph_style);
+      xval = channel_set(snd, chn, style, CP_TIME_GRAPH_STYLE, S_setB S_graph_style);
       channel_set(snd, chn, style, CP_LISP_GRAPH_STYLE, S_setB S_graph_style);
       call_update_graph = true;
       channel_set(snd, chn, style, CP_TRANSFORM_GRAPH_STYLE, S_setB S_graph_style);
-      return(val);
+      return(xval);
     }
   set_graph_style(val);
   return(C_TO_XEN_INT((int)(graph_style(ss))));

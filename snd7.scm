@@ -142,3 +142,5 @@
 
 (define* (backward-mark #:optional (count 1) snd chn)
   (back-or-forth-mark (- count) (or snd (selected-sound) (car (sounds))) (or chn (selected-channel) 0)))
+
+(define mus-data-format-bytes-per-sample mus-bytes-per-sample)

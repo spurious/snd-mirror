@@ -933,7 +933,6 @@ void display_filter_env(snd_info *sp)
   GtkWidget *drawer;
   env_editor *edp;
   if (IS_PLAYER(sp)) return;
-  if (ss == NULL) return;
   edp = (env_editor *)(sp->sgx->flt);
   drawer = filter_graph(sp);
   height = widget_height(drawer);

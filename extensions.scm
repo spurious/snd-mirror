@@ -17,6 +17,8 @@
 ;;; ramp-expt, env-expt-channel
 ;;; offset-channel
 ;;; channels-equal
+;;; mono->stereo, mono-files->stereo, stereo->mono
+
 
 (use-modules (ice-9 common-list) (ice-9 optargs) (ice-9 format))
 
@@ -792,3 +794,37 @@ If 'check' is #f, the hooks are removed."
 	#f
 	(channels=? snd1 chn1 snd2 chn2 allowable-difference))))
 
+
+;;; -------- mono->stereo, mono-files->stereo
+
+(define (mono->stereo new-name snd1 chn1 snd2 chn2)
+  ;; (mono->stereo "test.snd" 0 0 1 0)
+  (let ((old-ed1 (edit-position snd1 chn1))
+	(old-ed2 (edit-position snd2 chn2))
+	(ind (new-sound new-name :channels 2 :srate (srate snd1))))
+    (swap-channels ind 0 snd1 chn1)
+    (swap-channels ind 1 snd2 chn2)
+    (set! (edit-position snd1 chn1) old-ed1)
+    (set! (edit-position snd2 chn2) old-ed2)
+    ind))
+
+(define (mono-files->stereo new-name chan1-name chan2-name)
+  ;; (mono-files->stereo "test.snd" "oboe.snd" "pistol.snd")
+  (let* ((ind1 (open-sound chan1-name))
+	 (ind2 (open-sound chan2-name))
+	 (ind3 (mono->stereo new-name ind1 0 ind2 0)))
+    (close-sound ind1)
+    (close-sound ind2)
+    ind3))
+
+(define (stereo->mono orig-snd chan1-name chan2-name)
+  ;; (stereo->mono 0 "hi1.snd" "hi2.snd")
+  (let ((old-ed0 (edit-position orig-snd 0))
+	(old-ed1 (edit-position orig-snd 1))
+	(chan1 (new-sound chan1-name :srate (srate orig-snd)))	
+	(chan2 (new-sound chan2-name :srate (srate orig-snd))))
+    (swap-channels orig-snd 0 chan1 0)
+    (swap-channels orig-snd 1 chan2 0)
+    (set! (edit-position orig-snd 0) old-ed0)
+    (set! (edit-position orig-snd 1) old-ed1)
+    (list chan1 chan2)))

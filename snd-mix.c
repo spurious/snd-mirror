@@ -641,15 +641,15 @@ static mix_fd *init_mix_read_any(mix_info *md, bool old, int type, off_t beg)
   else cs = md->active_mix_state;
   
   /*
-  fprintf(stderr,"\nremix %s: chans %d, speed %.3f, len: " OFF_TD "\n  scalers: ",
+  fprintf(stderr, "\nremix %s: chans %d, speed %.3f, len: " OFF_TD "\n  scalers: ",
 	  (old == PREVIOUS_MIX) ? "previous" : "current", cs->as_built->chans, cs->as_built->speed, cs->as_built->len);
-  for (i = 0; i < cs->as_built->chans; i++) fprintf(stderr,"%.3f ", cs->as_built->scalers[i]);
-  fprintf(stderr,"\n  envs: ");
+  for (i = 0; i < cs->as_built->chans; i++) fprintf(stderr, "%.3f ", cs->as_built->scalers[i]);
+  fprintf(stderr, "\n  envs: ");
   for (i = 0; i < cs->as_built->chans; i++) 
     if ((cs->as_built->amp_envs) && (cs->as_built->amp_envs[i]))
-      fprintf(stderr,"%s ", env_to_string(cs->as_built->amp_envs[i]));
-    else fprintf(stderr,"#f ");
-  fprintf(stderr,"\n");
+      fprintf(stderr, "%s ", env_to_string(cs->as_built->amp_envs[i]));
+    else fprintf(stderr, "#f ");
+  fprintf(stderr, "\n");
   */
 
   chans = md->in_chans;
@@ -806,7 +806,7 @@ static mix_fd *init_mix_read_any(mix_info *md, bool old, int type, off_t beg)
       mf->srcs = NULL;
     }
   /*
-  fprintf(stderr,"mf calc: %s\n", mix_calc_names[mf->calc]);
+  fprintf(stderr, "mf calc: %s\n", mix_calc_names[mf->calc]);
   */
   return(mf);
 }
@@ -1430,8 +1430,8 @@ static int backup_mix(mix_info *md, void *ptr)
       md->states[md->current_state] = curcs;
     }
   /*
-  fprintf(stderr,"reset %d ctr to %d at %d\n", md->id, one_edit, md->current_state);
-  if (md->current_state > 0) fprintf(stderr,"at 0 ctr is %d\n", md->states[0]->edit_ctr);
+  fprintf(stderr, "reset %d ctr to %d at %d\n", md->id, one_edit, md->current_state);
+  if (md->current_state > 0) fprintf(stderr, "at 0 ctr is %d\n", md->states[0]->edit_ctr);
   */
   curcs->edit_ctr = one_edit;
   return(0);
@@ -1496,7 +1496,7 @@ static void remix_file(mix_info *md, const char *origin, bool redisplay)
   mmin = MUS_SAMPLE_MAX;
 
   /*
-  fprintf(stderr,"remix %d: beg: " OFF_TD ", end: " OFF_TD ", old: " OFF_TD " to " OFF_TD ", new: " OFF_TD " to " OFF_TD "\n",
+  fprintf(stderr, "remix %d: beg: " OFF_TD ", end: " OFF_TD ", old: " OFF_TD " to " OFF_TD ", new: " OFF_TD " to " OFF_TD "\n",
 	  md->id, beg, end, old_beg, old_end, new_beg, new_end);
   */
   use_temp_file = (num >= MAX_BUFFER_SIZE);
@@ -4635,6 +4635,13 @@ mix data (a vct) into snd's channel chn starting at beg; return the new mix id"
   return(xen_return_first(C_TO_XEN_INT(mix_id), obj, origin));
 }
 
+static int set_existing_mix_color(mix_info *md, void *arg)
+{
+  color_t *pixel = (color_t *)arg;
+  if (md) md->wg->color = pixel[0];
+  return(0);
+}
+
 static XEN g_set_mix_color (XEN arg1, XEN arg2)
 {
   XEN color; 
@@ -4649,7 +4656,13 @@ static XEN g_set_mix_color (XEN arg1, XEN arg2)
   XEN_ASSERT_TYPE(XEN_PIXEL_P(color), color, XEN_ONLY_ARG, S_setB S_mix_color, "a color"); 
   if (XEN_INTEGER_P(mix_id))
     color_one_mix_from_id(XEN_TO_C_INT(mix_id), XEN_UNWRAP_PIXEL(color));
-  else set_mix_color(XEN_UNWRAP_PIXEL(color));
+  else 
+    {
+      color_t pixel[1];
+      pixel[0] = XEN_UNWRAP_PIXEL(color);
+      set_mix_color(pixel[0]);
+      map_over_mixes(set_existing_mix_color, (void *)pixel);
+    }
   for_each_chan(update_graph);
   return(color);
 }
@@ -4977,7 +4990,7 @@ static env *gather_track_amp_env(mix_state *cs)
       track_beg = track_position(id, -1);
       track_dur = track_frames(id, -1);
       /*
-      fprintf(stderr,"track amp env " OFF_TD " " OFF_TD " " OFF_TD " " OFF_TD " (inverted: %s): %s\n", 
+      fprintf(stderr, "track amp env " OFF_TD " " OFF_TD " " OFF_TD " " OFF_TD " (inverted: %s): %s\n", 
 	      mix_beg, mix_dur, track_beg, track_dur,
 	  (inverted) ? "#t" : "#f", env_to_string(active_track_amp_env(id)));
       */
@@ -5001,7 +5014,7 @@ static env *gather_track_amp_env(mix_state *cs)
 	      temp = e;
 	      e = invert_env(e);
 	      /*
-	      fprintf(stderr,"invert env ");
+	      fprintf(stderr, "invert env ");
 	      */
 	      temp = free_env(temp);
 	    }
@@ -5011,7 +5024,7 @@ static env *gather_track_amp_env(mix_state *cs)
       id = active_track_track(id);      
     }
   /*
-  fprintf(stderr,"-> %s\n", env_to_string(e));
+  fprintf(stderr, "-> %s\n", env_to_string(e));
   */
   return(e);
 }

@@ -5,6 +5,10 @@
  *   or add-to-existing would need access to current
  */
 
+/* TODO: fractional sample (0) zdelay: if type given assume 0-based?
+ * TODO: all-pass interpolation type for zdelay: MUS_ALL_PASS exists, but MUS_LINEAR [MUS_LAGRANGE, MUS_ALLPASS?, MUS_STEP?]
+ */
+
 #if defined(HAVE_CONFIG_H)
   #include <config.h>
 #endif
@@ -1045,7 +1049,7 @@ static char *describe_delay(mus_any *ptr)
 		 S_delay ": line[%d,%d]: %s", 
 		 gen->size, gen->zsize, str = print_array(gen->line, gen->size, gen->zloc));
   else mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, 
-		    "delay: line[%d]: %s", 
+		    S_delay ": line[%d]: %s", 
 		    gen->size, str = print_array(gen->line, gen->size, gen->loc));
   if (str) FREE(str);
   return(describe_buffer);
@@ -1061,7 +1065,7 @@ static char *describe_comb(mus_any *ptr)
 		 gen->yscl, gen->size, gen->zsize, 
 		 str = print_array(gen->line, gen->size, gen->zloc));
   else mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, 
-		    "comb: scaler: %.3f, line[%d]: %s", 
+		    S_comb ": scaler: %.3f, line[%d]: %s", 
 		    gen->yscl, gen->size, 
 		    str = print_array(gen->line, gen->size, gen->loc));
   if (str) FREE(str);
@@ -1078,7 +1082,7 @@ static char *describe_notch(mus_any *ptr)
 		 gen->xscl, gen->size, gen->zsize, 
 		 str = print_array(gen->line, gen->size, gen->zloc));
   else mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, 
-		    "notch: scaler: %.3f, line[%d]: %s", 
+		    S_notch ": scaler: %.3f, line[%d]: %s", 
 		    gen->xscl, gen->size, 
 		    str = print_array(gen->line, gen->size, gen->loc));
   if (str) FREE(str);
@@ -3066,28 +3070,6 @@ mus_any *mus_make_iir_filter(int order, Float *ycoeffs, Float *state)
   return(make_filter(&IIR_FILTER_CLASS, S_make_iir_filter, order, NULL, ycoeffs, state));
 }
 
-Float *mus_xcoeffs(mus_any *ptr)
-{
-  flt *gen = (flt *)ptr;
-  if (check_gen(ptr, S_mus_xcoeffs))
-    {
-      if (((gen->core)->type == MUS_FILTER) || ((gen->core)->type == MUS_FIR_FILTER))
-	return(gen->x);
-    }
-  return(NULL);
-}
-
-Float *mus_ycoeffs(mus_any *ptr)
-{
-  flt *gen = (flt *)ptr;
-  if (check_gen(ptr, S_mus_ycoeffs))
-    {
-      if (((gen->core)->type == MUS_FILTER) || ((gen->core)->type == MUS_IIR_FILTER))
-	return(gen->y);
-    }
-  return(NULL);
-}
-
 Float *mus_make_fir_coeffs(int order, Float *envl, Float *aa)
 {
   /* envl = evenly sampled freq response, has order samples */
@@ -3120,7 +3102,7 @@ Float *mus_make_fir_coeffs(int order, Float *envl, Float *aa)
     {
       Float *rl, *im;
       int fsize, lim;
-      Float scl, offset;
+      Float offset;
       fsize = 2 * order; /* checked power of 2 above */
       rl = (Float *)CALLOC(fsize, sizeof(Float));
       im = (Float *)CALLOC(fsize, sizeof(Float));
@@ -3762,7 +3744,7 @@ mus_any *mus_make_env(Float *brkpts, int npts, Float scaler, Float offset, Float
   for (i = 2; i < npts * 2; i += 2)
     if (brkpts[i - 2] > brkpts[i])
       {
-	mus_error(MUS_BAD_ENVELOPE, "mus_make_env: env at breakpoint %d: x axis value %f > %f", i / 2, brkpts[i - 2], brkpts[i]);
+	mus_error(MUS_BAD_ENVELOPE, S_make_env ": env at breakpoint %d: x axis value %f > %f", i / 2, brkpts[i - 2], brkpts[i]);
 	return(NULL);
       }
   e = (seg *)clm_calloc(1, sizeof(seg), S_make_env);
@@ -3899,12 +3881,13 @@ static int free_frame(mus_any *pt)
   return(0);
 }
 
+#define S_frame "frame"
 static char *describe_frame(mus_any *ptr)
 {
   mus_frame *gen = (mus_frame *)ptr;
   char *str = NULL;
   mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, 
-	       "frame[%d]: %s", 
+	       S_frame "[%d]: %s", 
 	       gen->chans,
 	       str = print_array(gen->vals, gen->chans, 0));
   if (str) FREE(str);
@@ -3938,7 +3921,6 @@ static off_t frame_length(mus_any *ptr) {return(((mus_frame *)ptr)->chans);}
 static off_t set_frame_length(mus_any *ptr, off_t new_len) {((mus_frame *)ptr)->chans = (int)new_len; return(new_len);}
 static int frame_channels(mus_any *ptr) {return(((mus_frame *)ptr)->chans);}
 
-#define S_frame "frame"
 static mus_any_class FRAME_CLASS = {
   MUS_FRAME,
   S_frame,
@@ -4054,13 +4036,14 @@ static int free_mixer(mus_any *pt)
   return(0);
 }
 
+#define S_mixer "mixer"
 static char *describe_mixer(mus_any *ptr)
 {
   mus_mixer *gen = (mus_mixer *)ptr;
   char *str;
   int i, j, lim = 8;
   mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE,
-	       "mixer: chans: %d, vals: [", gen->chans);
+	       S_mixer ": chans: %d, vals: [", gen->chans);
   str = (char *)CALLOC(64, sizeof(char));
   if (gen->chans < 8) lim = gen->chans;
   for (i = 0; i < lim; i++)
@@ -4106,7 +4089,6 @@ static off_t mixer_length(mus_any *ptr) {return(((mus_mixer *)ptr)->chans);}
 static Float *mixer_data(mus_any *ptr) {return((Float *)(((mus_mixer *)ptr)->vals));}
 static int mixer_channels(mus_any *ptr) {return(((mus_mixer *)ptr)->chans);}
 
-#define S_mixer "mixer"
 static mus_any_class MIXER_CLASS = {
   MUS_MIXER,
   S_mixer,
@@ -4227,7 +4209,7 @@ mus_any *mus_sample_to_frame(mus_any *f, Float in, mus_any *uout)
 	  for (i = 0; i < chans; i++)
 	    out->vals[i] += (in * mx->vals[0][i]);
 	}
-      else mus_error(MUS_ARG_OUT_OF_RANGE,"sample_to_frame: gen not frame or mixer");
+      else mus_error(MUS_ARG_OUT_OF_RANGE, S_sample_to_frame ": gen not frame or mixer");
     }
   return((mus_any *)out);
 }
@@ -4257,7 +4239,7 @@ Float mus_frame_to_sample(mus_any *f, mus_any *uin)
 	  for (i = 0; i < chans; i++)
 	    val += (in->vals[i] * mx->vals[i][0]);
 	}
-      else mus_error(MUS_ARG_OUT_OF_RANGE,"frame_to_sample: gen not frame or mixer");
+      else mus_error(MUS_ARG_OUT_OF_RANGE, S_frame_to_sample ": gen not frame or mixer");
     }
   return(val);
 }
@@ -4358,11 +4340,12 @@ static Float *rblk_set_data(mus_any *ptr, Float *new_data)
   return(new_data);
 }
 
+#define S_buffer "buffer"
 static char *describe_genbuffer(mus_any *ptr)
 {
   rblk *gen = (rblk *)ptr;
   mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE,
-	       "buffer: length: %d, loc: %d, fill: %.3f",
+	       S_buffer ": length: %d, loc: %d, fill: %.3f",
 	       gen->size, gen->loc, gen->fill_time);
   return(describe_buffer);
 }
@@ -4429,7 +4412,6 @@ static Float run_buffer (mus_any *ptr, Float unused1, Float unused2) {return(mus
 static Float buffer_increment(mus_any *rd) {return(((rblk *)rd)->fill_time);}
 static Float buffer_set_increment(mus_any *rd, Float val) {((rblk *)rd)->fill_time = val; ((rblk *)rd)->empty = (val == 0.0); return(val);}
 
-#define S_buffer "buffer"
 static mus_any_class BUFFER_CLASS = {
   MUS_BUFFER,
   S_buffer,
@@ -4689,7 +4671,7 @@ static Float mus_write_sample(mus_any *fd, off_t frame, int chan, Float samp)
 
 char *mus_file_name(mus_any *gen)
 {
-  if ((check_gen(gen, "mus-file-name")) &&
+  if ((check_gen(gen, S_mus_file_name)) &&
       ((gen->core)->file_name))
     return((*((gen->core)->file_name))(gen));
   else mus_error(MUS_NO_FILE_NAME, "can't get %s's file name", mus_name(gen));
@@ -5561,7 +5543,7 @@ Float mus_locsig_ref (mus_any *ptr, int chan)
 	  (chan < gen->chans))
 	return(gen->outn[chan]);
       else mus_error(MUS_NO_SUCH_CHANNEL, 
-		     "locsig_ref chan %d >= %d", 
+		     S_locsig_ref " chan %d >= %d", 
 		     chan, gen->chans);
     }
   return(0.0);
@@ -5576,7 +5558,7 @@ Float mus_locsig_set (mus_any *ptr, int chan, Float val)
 	  (chan < gen->chans))
 	gen->outn[chan] = val;
       else mus_error(MUS_NO_SUCH_CHANNEL, 
-		     "locsig_set chan %d >= %d", 
+		     S_locsig_set " chan %d >= %d", 
 		     chan, gen->chans);
     }
   return(val);
@@ -5591,7 +5573,7 @@ Float mus_locsig_reverb_ref (mus_any *ptr, int chan)
 	  (chan < gen->rev_chans))
 	return(gen->revn[chan]);
       else mus_error(MUS_NO_SUCH_CHANNEL, 
-		     "locsig_reverb_ref chan %d, but this locsig has %d reverb chans", 
+		     S_locsig_reverb_ref " chan %d, but this locsig has %d reverb chans", 
 		     chan, gen->rev_chans);
     }
   return(0.0);
@@ -5606,7 +5588,7 @@ Float mus_locsig_reverb_set (mus_any *ptr, int chan, Float val)
 	  (chan < gen->rev_chans))
 	gen->revn[chan] = val;
       else mus_error(MUS_NO_SUCH_CHANNEL, 
-		     "locsig_reverb_set chan %d >= %d", 
+		     S_locsig_reverb_set " chan %d >= %d", 
 		     chan, gen->rev_chans);
     }
   return(val);
@@ -5753,6 +5735,29 @@ void mus_move_locsig(mus_any *ptr, Float degree, Float distance)
     mus_fill_locsig(gen->revn, gen->rev_chans, degree, (gen->reverb * sqrt(dist)), gen->type);
   mus_fill_locsig(gen->outn, gen->chans, degree, dist, gen->type);
 }
+
+Float *mus_xcoeffs(mus_any *ptr)
+{
+  if (check_gen(ptr, S_mus_xcoeffs))
+    {
+      if (((ptr->core)->type == MUS_FILTER) || ((ptr->core)->type == MUS_FIR_FILTER))
+	return(((flt *)ptr)->x);
+    }
+  if ((ptr->core)->type == MUS_LOCSIG)
+    return(((locs *)ptr)->revn);
+  return(NULL);
+}
+
+Float *mus_ycoeffs(mus_any *ptr)
+{
+  if (check_gen(ptr, S_mus_ycoeffs))
+    {
+      if (((ptr->core)->type == MUS_FILTER) || ((ptr->core)->type == MUS_IIR_FILTER))
+	return(((flt *)ptr)->y);
+    }
+  return(NULL);
+}
+
 
 
 /* ---------------- src ---------------- */
@@ -6644,9 +6649,8 @@ Float *mus_make_fft_window_with_window(mus_fft_window_t type, int size, Float be
 	    window[j] = (window[i] = 1.0);
 	  else 
 	    {
-	      cx = sr1 * (midn - i); /* split out because NeXT C compiler can't handle the full expression */
-	      window[i] = sin(cx) / cx;
-	      window[j] = window[i];
+	      cx = sr1 * (midn - i);
+	      window[j] = (window[i] = sin(cx) / cx);
 	    }
 	}
       break;

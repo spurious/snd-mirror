@@ -853,12 +853,12 @@ int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Wid
 
 #if WITH_RELATIVE_PANES
 	{
-	  int i;
+	  int k;
 	  Widget child;
 	  CompositeWidget w = (CompositeWidget)(cw[W_top]);
-	  for (i = w->composite.num_children - 1; i >= 0; i--)
+	  for (k = w->composite.num_children - 1; k >= 0; k--)
 	    {
-	      child = w->composite.children[i];
+	      child = w->composite.children[k];
 	      if ((XtIsWidget(child)) && 
 		  (XtIsSubclass(child, xmSashWidgetClass)))
 		{

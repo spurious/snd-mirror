@@ -1,5 +1,7 @@
 Snd change log
 
+  6-May:     mono->stereo, mono-files->stereo, stereo->mono (extensions.scm).
+  5-May:     reverse-channels, scramble-channels, rotate-channel, scramble-channel (extsnd.html, examp.scm)
   22-Apr:    complexify in snd-gl.scm.
   19-Apr:    add-to-menu now returns the new menu label widget.
   13-Apr:    removed forward|backward-graph|mix|mark -- see snd7.scm for Scheme versions.

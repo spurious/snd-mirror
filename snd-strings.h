@@ -202,6 +202,7 @@
 #define S_frames                        "frames"
 #define S_free_sample_reader            "free-sample-reader"
 #define S_free_track                    "free-track"
+#define S_goto_listener_end             "goto-listener-end"
 #define S_graph                         "graph"
 #define S_graph_to_ps                   "graph->ps"
 #define S_graph_color                   "graph-color"

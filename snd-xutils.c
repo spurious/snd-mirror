@@ -422,12 +422,14 @@ void recolor_graph(chan_info *cp, bool selected)
 
 void set_mix_color(Pixel color)
 {
+  /* called only from g_set_mix_color -- docs imply it changes existing colors */
   Display *dpy;
   state_context *sx;
   dpy = MAIN_DISPLAY(ss);
   sx = ss->sgx;
   sx->mix_color = color;
   XSetForeground(dpy, sx->mix_gc, color);
+  
 }
 
 #if (!(HAVE_XPM_GET_ERROR_STRING))

@@ -263,9 +263,9 @@ static void minify_maxify_window(Widget w, XtPointer context, XEvent *event, Boo
   else
     {
       if ((ev->type == MapNotify) && (sx) && (sx->dialogs) && (live_dialogs))
-	  for (i = 0; i < NUM_DIALOGS; i++)
-	    if ((live_dialogs[i]) && (sx->dialogs[i]))
-	      XtManageChild(sx->dialogs[i]);
+	for (i = 0; i < NUM_DIALOGS; i++)
+	  if ((live_dialogs[i]) && (sx->dialogs[i]))
+	    XtManageChild(sx->dialogs[i]);
     }
 }
 #endif
@@ -504,7 +504,7 @@ static void muffle_warning(char *name, char *type, char *klass, char *defaultp, 
   int i;
   fprintf(stderr, "Xt warning: %s, %s: %s", type, name, defaultp);
   if (num_params) /* can be null! */
-    for (i = 0; i < (*num_params); i++)
+    for (i = 0; i < (int)(*num_params); i++)
       fprintf(stderr, " %s", params[i]);
   fprintf(stderr, "\n");
 #endif

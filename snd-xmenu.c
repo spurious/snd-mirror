@@ -924,7 +924,7 @@ void create_popup_menu(void)
   if (!popup_menu)
     {
       n = 0;
-      if (!ss->using_schemes) {XtSetArg(args[n], XmNbackground, (ss->sgx)->highlight_color); n++;}
+      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->highlight_color); n++;}
       mainp = MAIN_PANE(ss);
 #if (XmVERSION >= 2)
       XtSetArg(args[n], XmNpopupEnabled, XmPOPUP_AUTOMATIC_RECURSIVE); n++;

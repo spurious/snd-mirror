@@ -152,7 +152,7 @@ static int midi_open(const char *name, int input)
       snd_rawmidi_params_free(params);
       snd_rawmidi_close(line);
 #ifdef NO_SNDLIB
-      fprintf(stderr,"can't set %s buffer size to %d: %s\n", name, DEV_BUFSIZE, strerror(err));
+      fprintf(stderr, "can't set %s buffer size to %d: %s\n", name, DEV_BUFSIZE, strerror(err));
 #else
       return(mus_error(MUS_MIDI_MISC_ERROR, "can't set %s buffer size to %d: %s", name, DEV_BUFSIZE, strerror(err)));
 #endif
@@ -180,7 +180,7 @@ int mus_midi_close(int line)
   if (err)
     {
 #ifdef NO_SNDLIB
-      fprintf(stderr,"can't close %s: %s\n", midi_names[line], strerror(err));
+      fprintf(stderr, "can't close %s: %s\n", midi_names[line], strerror(err));
 #else
       return(mus_error(MUS_MIDI_CLOSE_ERROR, "can't close %s: %s", midi_names[line], strerror(err)));
 #endif
@@ -283,7 +283,7 @@ static void mus_midi_initialize(void)
       midi_ports = mdInit();
       if (midi_ports == -1)
 #ifdef NO_SNDLIB
-	fprintf(stderr,"startmidi not called?");
+	fprintf(stderr, "startmidi not called?");
 #else
       mus_error(MUS_MIDI_INIT_ERROR, "startmidi not called?");
 #endif
@@ -335,7 +335,7 @@ int midi_open(const char *name, int input)
   if (md == NULL)
     {
 #ifdef NO_SNDLIB
-      fprintf(stderr,"can't open %s\n", name);
+      fprintf(stderr, "can't open %s\n", name);
       return(-1);
 #else
       return(mus_error(MUS_MIDI_OPEN_ERROR, "can't open %s", name));

@@ -58,6 +58,8 @@
 ;;; cursor-follows-play and stays where it was when the play ended
 ;;; smooth-channel as virtual op
 ;;; ring-modulate-channel (ring-mod as virtual op)
+;;; scramble-channels -- reorder chans
+;;; scramble-channel -- randomly reorder segments within a sound
 
 
 ;;; SOMEDAY: robust pitch tracker
@@ -2230,3 +2232,93 @@ a sort of play list: (region-play-list (list (list 0.0 0) (list 0.5 1) (list 1.0
        (vct (fmod (* frag-beg incr) (* 2 pi)) incr)))))
 
 ;;; amplitude-modulate-channel could be (lambda (y data forward) (* y 0.5 (+ 1.0 (sin angle))) etc ...)
+
+
+;;; re-order channels 
+
+(define (scramble-channels . new-order)
+  ;; (scramble-channels 3 2 0 1)
+  (let ((len (length new-order)))
+    (letrec ((swap-once 
+	      (lambda (current desired n)
+		(if (not (= n len))
+		    (let ((cur-orig (car (list-ref current n))) ; car = original channel number, cadr = its current channel
+			  (cur-cur (cdr (list-ref current n)))
+			  (dst (list-ref desired n)))
+		      (if (not (= cur-orig dst))
+			  (begin
+			    (swap-channels #f cur-cur #f dst)
+			    (set-car! (list-ref current dst) cur-orig)))
+		      (swap-once current desired (1+ n)))))))
+      (swap-once (let ((lst '()))
+		   (do ((i 0 (1+ i)))
+		       ((= i len) (reverse lst))
+		     (set! lst (cons (cons i i) lst))))
+		 new-order 
+		 0))))
+
+
+(define (scramble-channel silence-1)
+  ;; (scramble-channel .01)
+  (let ((buffer (make-average 128))
+	(silence (/ silence-1 128))
+	(edges '())
+	(samp 0)
+	(in-silence #t)
+	(old-max (max-regions))
+	(old-tags (with-mix-tags)))
+    (dynamic-wind
+     (lambda ()
+       (set! (max-regions) 1024)
+       (set! (with-mix-tags) #f))
+     (lambda ()
+       (scan-channel
+	(lambda (y)
+	  (let* ((sum-of-squares (average buffer (* y y)))
+		 (now-silent (< sum-of-squares silence)))
+	    (if (not (eq? in-silence now-silent))
+		(set! edges (cons samp edges)))
+	    (set! in-silence now-silent)
+	    (set! samp (1+ samp))
+	    #f)))
+       (set! edges (append (reverse edges) (list (frames))))
+       (let* ((len (length edges))
+	      (pieces (make-vector len #f))
+	      (start 0)
+	      (ctr 0))
+	 (for-each
+	  (lambda (end)
+	    (vector-set! pieces ctr (make-region start end))
+	    (set! ctr (1+ ctr))
+	    (set! start end))
+	  edges)
+	 (set! start 0)
+	 (as-one-edit
+	  (lambda()
+	    (scale-by 0.0)
+	    (do ((i 0 (1+ i)))
+		((= i len))
+	      (let* ((this (random len))
+		     (reg (vector-ref pieces this)))
+		(vector-set! pieces this #f)
+		(if (not reg)
+		    (begin
+		      (do ((j (1+ this) (1+ j)))
+			  ((or (= j len)
+			       reg))
+			(set! reg (vector-ref pieces j))
+			(if reg (vector-set! pieces j #f)))
+		      (if (not reg)
+			  (do ((j (1- this) (1- j)))
+			      ((or (< j 0)
+				   reg))
+			    (set! reg (vector-ref pieces j))
+			    (if reg (vector-set! pieces j #f))))))
+		(mix-region start reg)
+		(set! start (+ start (region-frames reg)))
+		(forget-region reg)))))))
+     (lambda ()
+       (set! (with-mix-tags) old-tags)
+       (set! (max-regions) old-max)))))
+    
+    

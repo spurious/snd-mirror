@@ -3,7 +3,7 @@
 /* 
    SOMEDAY: highlight bracketed help text in red fg
 
-   gtk_label_set_markup(dialog->label,"<b>Pango Markuped string</b>");
+   gtk_label_set_markup(dialog->label, "<b>Pango Markuped string</b>");
 
    but that requires a list of labels rather than current list of strings
  */

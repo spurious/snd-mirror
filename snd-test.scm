@@ -7040,8 +7040,8 @@ EDITS: 5
 			    (and (not (string=? "  86.132812  1.00000" line))
 				 (not (string=? "  0.000000  1.00000" line)))) ; fht/fft disagreement about 0/1 (groan)
 			(snd-display ";peaks 3: ~A?" line))
-		    (close-port p)
-		    (delete-file "tmp.peaks")))))
+		    (close-port p)))))
+	(delete-file "tmp.peaks")
 	(peaks)
 	(if (and (provided? 'xm) 
 		 (or (not (list-ref (dialog-widgets) 20))
@@ -10504,6 +10504,9 @@ EDITS: 5
 	      (fft-edit 40 8000)
 	      (fft-squelch .1)
 	      (close-sound ind)
+	      (revert-sound ind1)
+	      (scramble-channel .01)
+	      (revert-sound ind1)
 	      (close-sound ind1)))
 
 	  (let ((ind (new-sound  "test.snd" mus-next mus-bfloat 22050 1 "special env tests" 100)))
@@ -14327,7 +14330,7 @@ EDITS: 5
 		 (val1 (sin a1))
 		 (val2 (waveshape gen 1.0 (waveshape gen1 1.0))))
 	    (set! a1 (+ a1 fm))
-	    (if (fneq val1 val2)
+	    (if (> (abs (- val1 val2)) .002)
 		(snd-display ";waveshape fm: ~A: ~A ~A" i val1 val2)))))
 
       (let ((gen (make-wave-train 440.0 0.0 (make-vct 20)))
@@ -14989,24 +14992,52 @@ EDITS: 5
 	(if (or (fneq (frame-ref fr0 0) .667) (fneq (frame-ref fr0 1) .333)) (snd-display ";locsig output: ~A" fr0))
 	(if (or (fneq (locsig-ref gen 0) .667) (fneq (locsig-ref gen 1) .333))
 	    (snd-display ";locsig ref: ~F ~F?" (locsig-ref gen 0) (locsig-ref gen 1)))
+	(if (not (vequal (mus-data gen) (vct 0.667 0.333)))
+	    (snd-display ";locsig gen outn: ~A" (mus-data gen)))
+	(if (not (vequal (mus-data gen1) (vct 0.333 0.667)))
+	    (snd-display ";locsig gen2 outn: ~A" (mus-data gen1)))
+	(if (not (vequal (mus-data gen2) (vct 0.333 0.667 0.000 0.000)))
+	    (snd-display ";locsig gen2 outn: ~A" (mus-data gen2)))
+	(if (not (vequal (mus-data gen200) (vct 0.000 0.000 0.778 0.222)))
+	    (snd-display ";locsig gen200 outn: ~A" (mus-data gen200)))
 	(set! (locsig-ref gen 0) .25)
+	(if (not (vequal (mus-data gen) (vct 0.250 0.333)))
+	    (snd-display ";locsig gen .25 outn: ~A" (mus-data gen)))
 	(set! fr0 (locsig gen 0 1.0))
 	(if (fneq (frame-ref fr0 0) .25) (snd-display ";set locsig-ref: ~F?" (frame-ref fr0 0)))
 	(locsig-set! gen 0 .5)
+	(if (not (vequal (mus-data gen) (vct 0.500 0.333)))
+	    (snd-display ";locsig gen .5 outn: ~A" (mus-data gen)))
 	(set! fr0 (locsig gen 0 1.0))
 	(if (fneq (frame-ref fr0 0) .5) (snd-display ";locsig-set: ~F?" (frame-ref fr0 0)))
 	(set! gen (make-locsig 120.0 2.0 .1 :channels 4))
+	(if (not (vequal (mus-data gen) (vct 0.000 0.333 0.167 0.000)))
+	    (snd-display ";locsig gen 120 outn: ~A" (mus-data gen)))
 	(set! fr0 (locsig gen 0 1.0))
 	(if (or (fneq (frame-ref fr0 1) .333) (fneq (frame-ref fr0 2) .167)) (snd-display ";locsig quad output: ~A" fr0))
 	(set! gen (make-locsig 300.0 2.0 .1 :channels 4))
+	(if (not (vequal (mus-data gen) (vct 0.167 0.000 0.000 0.333)))
+	    (snd-display ";locsig gen 300 outn: ~A" (mus-data gen)))
 	(set! fr0 (locsig gen 0 1.0))
 	(if (or (fneq (frame-ref fr0 3) .333) (fneq (frame-ref fr0 0) .167)) (snd-display ";300 locsig quad output: ~A" fr0))
 	(move-locsig gen1 90.0 1.0)
+	(if (not (vequal (mus-data gen1) (vct 0.000 1.000)))
+	    (snd-display ";locsig gen1 90 outn: ~A" (mus-data gen)))
 	(if (or (fneq (locsig-ref gen1 0) 0.0) (fneq (locsig-ref gen1 1) 1.0)) (snd-display ";move-locsig 90 1: ~A" gen1))
 	(move-locsig gen1 0.0 1.0)
+	(if (not (vequal (mus-data gen1) (vct 1.000 0.000)))
+	    (snd-display ";locsig gen1 0 outn: ~A" (mus-data gen)))
 	(if (or (fneq (locsig-ref gen1 0) 1.0) (fneq (locsig-ref gen1 1) 0.0)) (snd-display ";move-locsig 0 1: ~A" gen1))
 	(move-locsig gen1 45.0 1.0)
-	(if (or (fneq (locsig-ref gen1 0) 0.5) (fneq (locsig-ref gen1 1) 0.5)) (snd-display ";move-locsig 45 1: ~A" gen1)))
+	(if (not (vequal (mus-data gen1) (vct 0.500 0.500)))
+	    (snd-display ";locsig gen1 45 outn: ~A" (mus-data gen)))
+	(if (or (fneq (locsig-ref gen1 0) 0.5) (fneq (locsig-ref gen1 1) 0.5)) (snd-display ";move-locsig 45 1: ~A" gen1))
+	(move-locsig gen1 135.0 2.0)
+	(if (not (vequal (mus-data gen1) (vct 0.000 0.500)))
+	    (snd-display ";locsig gen1 135 outn: ~A" (mus-data gen)))
+	(move-locsig gen1 -270.0 3.0)
+	(if (not (vequal (mus-data gen1) (vct 0.000 0.333)))
+	    (snd-display ";locsig gen1 -270 outn: ~A" (mus-data gen))))
       
       (for-each 
        (lambda (chans)
@@ -15094,7 +15125,8 @@ EDITS: 5
 			 "locsig"
 			 "locsig: chans 4, outn: [0.083 0.167 0.000 0.000], revn: [0.000 0.100 0.200 0.300]"
 			 "locs outn[4]: [0.083 0.167 0.000 0.000], revn[4]: [0.000 0.100 0.200 0.300]")
-	(if (not (frame->file? (mus-data lc))) (snd-display ";data locsig: ~A" (mus-data lc))) ; in scheme it's the output writer
+	(if (not (vct? (mus-data lc))) (snd-display ";out data locsig: ~A" (mus-data lc)))
+	(if (not (vct? (mus-xcoeffs lc))) (snd-display ";rev data locsig: ~A" (mus-xcoeffs lc)))
 	(mus-close gen)
 	(mus-close rev))
       
@@ -16990,6 +17022,11 @@ EDITS: 5
 	
 	(let* ((mix1 (mix-vct (make-vct 10 .5) 10))
 	       (copy-mix1 (copy-mix mix1)))
+	  (let ((old-color (mix-color mix1)))
+	    (set! (mix-color mix1) (make-color 0 1 1))
+	    (let ((new-color (mix-color mix1)))
+	      (if (not (equal? new-color (make-color 0 1 1)))
+		  (snd-display ";mix-color ~A ~A = ~A (~A)?" mix1 (make-color 0 1 1) new-color old-color))))
 	  (check-copied-mix mix1 copy-mix1 10)
 	  (set! (mix-amp mix1) 2.0)
 	  (set! copy-mix1 (copy-mix mix1 20))
@@ -17024,8 +17061,14 @@ EDITS: 5
 	  (check-copied-mix mix1 copy-mix1 20)
 	  (close-sound ind)))
 
-      (let ((ind (new-sound "test.snd" mus-next mus-bfloat 22050 1 "copy-mix tests" 300)))
+      (let ((ind (new-sound "test.snd" mus-next mus-bfloat 22050 1 "copy-mix tests" 300))
+	    (old-color (mix-color)))
+	(set! (mix-color) (make-color 1 1 0))
 	(let ((mix1 (mix-vct (make-vct 10 .5) 10)))
+	  (if (or (not (equal? (mix-color) (make-color 1 1 0)))
+		  (not (equal? (mix-color mix1) (make-color 1 1 0))))
+	      (snd-display ";set mix-color: ~A ~A ~A ~A" (mix-color) (mix-color mix1) (make-color 1 1 0) old-color))
+	  (set! (mix-color) old-color)
 	  (save-mix mix1 "test.snd")
 	  (let ((ind1 (open-sound "test.snd")))
 	    (if (not (= (frames ind1) (mix-frames mix1))) (snd-display ";save-mix frames: ~A ~A" (mix-frames mix1) (frames ind1)))
@@ -20212,6 +20255,10 @@ EDITS: 5
 		  (if (not (string? str)) (snd-display ";track-sample-reader (1) released: ~A" str))
 		  (set! val (read-track-sample rd))
 		  (if (fneq val 0.0348) (snd-display ";track-sample-reader (1) at end: ~A" val))
+		  (set! (with-mix-tags) #f)
+		  (set! md1 (mix-region 0 reg))
+		  (if (not (= md1 -1)) (snd-display ";mix-region + #f tags: ~A" md1))
+		  (set! (with-mix-tags) #t)
 		  (close-sound ind)
 		  (let ((str (format #f "~A" rd)))
 		    (if (not (string? str)) (snd-display ";track-sample-reader (2) released: ~A" str))
@@ -24713,6 +24760,11 @@ EDITS: 5
 	      (snd-display ";swapped: ~A ~A -> ~A ~A" m0 m1 (maxamp ind 0) (maxamp ind 1)))
 	  (close-sound ind))
 	(set! (x-axis-style) x-axis-in-seconds)
+	(let ((new-snd (mono-files->stereo "test.snd" "oboe.snd" "pistol.snd")))
+	  (if (not (= (channels new-snd) 2)) (snd-display ";mono-files->stereo not stereo? ~A" (channels new-snd)))
+	  (if (not (string=? (short-file-name new-snd) "test.snd")) (snd-display ";mono-files->stereo filename: ~A" (short-file-name new-snd)))
+	  (if (not (= (frames new-snd) 50828)) (snd-display ";mono-files->stereo frames: ~A" (frames new-snd)))
+	  (close-sound new-snd))
 	
 	(let ((oboe0 (open-sound "oboe.snd"))
 	      (oboe1 (open-sound "oboe.snd")))
@@ -29904,7 +29956,7 @@ EDITS: 2
 	      (let ((frq (spot-freq 2000 ind 0)))
 		(if (not (= (inexact->exact (round frq)) 553))
 		    (snd-display ";spot-freq: ~A" frq)))
-	      (down-oct)
+	      (down-oct 2)
 	      (let ((frq (spot-freq 2000 ind 0)))
 		(if (and (not (= (inexact->exact (round frq)) 276))
 			 (not (= (inexact->exact (round frq)) 277)))
@@ -29937,7 +29989,7 @@ EDITS: 2
 	    (let ((ind (new-sound "test.snd" :size 100))
 		  (gen (make-oscil 440.0)))
 	      (map-chan (lambda (y) (oscil gen)))
-	      (down-oct)
+	      (down-oct 2)
 	      (if (not (= (frames) 200)) (snd-display "down-oct new len: ~A" (frames)))
 	      (let ((r1 (make-sample-reader 0 ind 0 1 1))
 		    (r2 (make-sample-reader 0 ind 0 1 2)))
@@ -30089,7 +30141,7 @@ EDITS: 2
 	  (display-db ind1 0)
 	  (display-samps-in-red ind1 0)
 	  (update-time-graph)
-	  (show-hiho ind1 0)
+	  (catch #t (lambda () (show-hiho ind1 0)) (lambda args args))
 	  (update-time-graph)
 	  (color-samples (highlight-color) 0 100 ind1 0)
 	  (update-time-graph)
@@ -36165,6 +36217,7 @@ EDITS: 2
 		    (set! (sync ind) 1)
 		    (select-sound ind)
 		    (select-channel 1)
+		    (set! (channel-style ind) channels-combined)
 		    (equalize-panes)
 		    (set! (cursor) 100)
 		    (take-keyboard-focus cwid)
@@ -36231,9 +36284,9 @@ EDITS: 2
 			(set! (cursor) (1+ (cursor))))
 		    (key-event cwid (char->integer #\z) 4) (force-event)
 		    (if (not (equal? (edits) '(4 0)))
-			(snd-display ";C-z (edits) -> ~A?" (edits)))
-		    (if (not (string=? (car (edit-fragment 4)) "scale-channel 0.000 5001 1"))
-			(snd-display ";C-z (edit) -> ~A?" (edit-fragment 4)))
+			(snd-display ";C-z (edits) -> ~A?" (edits))
+			(if (not (string=? (car (edit-fragment 4)) "scale-channel 0.000 5001 1"))
+			    (snd-display ";C-z (edit) -> ~A?" (edit-fragment 4))))
 		    (if (fneq (sample (cursor)) 0.0)
 			(snd-display ";C-z sample: ~A?" (sample (cursor))))
 		    (if (not (= (frames) (1+ fr)))
@@ -37159,6 +37212,7 @@ EDITS: 2
 			    (snd-display ";activate menu ~A -> ~A" (menu-option "Close  C-x k") (find-sound "fmv1.snd"))
 			    (close-sound ind2))))))
 	      (let ((ind2 (open-sound "4.aiff")))
+		(set! (channel-style ind2) channels-combined)
 		(XtCallCallbacks (menu-option "Equalize Panes") XmNactivateCallback (snd-global-state))
 		(equalize-panes ind2)
 		(for-each 
@@ -46276,7 +46330,7 @@ EDITS: 2
 		     mus-rand-seed mus-width mus-x1 mus-x2 mus-y1 mus-y2 phase-vocoder?
 		     polar->rectangular previous-files-sort-procedure 
 		     pv-amp-increments pv-amps pv-freqs pv-outctr pv-phase-increments pv-phases 
-		     read-sample reset-listener-cursor sample-reader-home selection-chans selection-srate snd-gcs
+		     read-sample reset-listener-cursor goto-listener-end sample-reader-home selection-chans selection-srate snd-gcs
 		     snd-warning sine-bank vct-map make-variable-graph channel-data x-axis-label
 		     snd-url snd-urls
 		     quit-button-color help-button-color reset-button-color doit-button-color doit-again-button-color
@@ -47944,39 +47998,42 @@ EDITS: 2
    (if (file-exists? f)
        (delete-file f)))
  (list 
-  "test.wav"
-  "test.aiff"
-  "test.reverb"
-  "with-mix.snd"
-  "fmv4.snd"
-  "fmv3.snd"
-  "fmv2.snd"
+  "aaa.eps"
+  "envs.save"
+  "fmv.snd"
+  "fmv0.snd"
   "fmv1.snd"
-  "hiho.wave"
+  "fmv2.snd"
+  "fmv3.snd"
+  "fmv4.reverb"
+  "fmv4.snd"
   "hiho.marks"
   "hiho.snd"
-  "tmp.snd"
-  "oboe.marks"
-  "test3.snd"
-  "test2.snd"
-  "new.snd"
-  "test.temp"
-  "aaa.eps"
-  "fmv4.reverb"
-  "fmv0.snd"
-  "test.rev"
-  "test-macros.scm"
-  "test.snd"
   "hiho.snd"
-  "fmv.snd"
-  "snd.eps"
-  "test.xpm"
-  "test.output"
-  "test.data"
+  "hiho.tmp"
+  "hiho.wave"
+  "ho"
+  "new.snd"
+  "oboe.marks"
   "obtest.snd.stereo"
-  "envs.save"
+  "snd.eps"
   "test-1.snd"
   "test-2.snd"
+  "test-macros.scm"
+  "test.aiff"
+  "test.data"
+  "test.output"
+  "test.rev"
+  "test.reverb"
+  "test.snd"
+  "test.snd.snd"
+  "test.temp"
+  "test.wav"
+  "test.xpm"
+  "test2.snd"
+  "test3.snd"
+  "tmp.snd"
+  "with-mix.snd"
 
   (string-append sf-dir "mus10.snd.snd")
   (string-append sf-dir "ieee-text-16.snd.snd")

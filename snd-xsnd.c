@@ -2792,7 +2792,7 @@ void equalize_sound_panes(snd_info *sp, chan_info *ncp, bool all_panes)
   int *wid;
   int i;
   chan_info *cp = NULL;
-  if ((!ss) || (!sp) || (sound_style(ss) == SOUNDS_IN_SEPARATE_WINDOWS)) return;
+  if ((!sp) || (sound_style(ss) == SOUNDS_IN_SEPARATE_WINDOWS)) return;
   if (sound_style(ss) != SOUNDS_HORIZONTAL)
     {
       if ((all_panes) && (sp->nchans > 1) && (sp->channel_style == CHANNELS_SEPARATE))

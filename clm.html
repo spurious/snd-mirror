@@ -803,7 +803,9 @@ of two-pi, so the <i>fm</i> argument should have an effect comparable to the
 same fm applied to the same waveform in <a href="#table-lookup">table-lookup</a>.
 These are not band-limited; if the frequency is too high, you can get foldover.
 David Lowenfels has provided band-limited versions based on the sum-of-cosines
-generator: good-sqr.ins, good-saw.ins, and good-tri.ins.
+generator: good-sqr.ins, good-saw.ins, and good-tri.ins.  However, as far as I
+know, no-one uses these as audio frequency tone generators -- who would want to
+listen to a square wave? 
 </p>
 
 <table border align=left hspace=40 cellpadding=4>
@@ -992,7 +994,7 @@ rand:
 <br clear=left>
 
 <p>There are a variety of ways to change <b>rand</b>'s uniform distribution to
-some other.  Exponential distribution could be:
+some other: <code>(random (random 1.0))</code> or <code>(sin (random 3.14159))</code> are simple examples. Exponential distribution could be:
 </p>
 <pre>
 (/ (log (max .01 (random 1.0))) (log .01))
@@ -1021,7 +1023,7 @@ The make-rand and make-rand-interp <i>envelope</i> arguments specify
 the desired distribution function; the generator takes the
 inverse of the integral of the envelope, loads that into an array, and uses
 <code>(array-interp (rand array-size))</code> at run time.  This gives
-random numbers of any aribtrary distribution at a computational cost
+random numbers of any arbitrary distribution at a computational cost
 equivalent to the waveshape generator (which is obviously very similar).
 The x axis sets the output range (before scaling by <i>amplitude</i>), and
 the y axis sets the relative weight of the corresponding x axis value.
@@ -1502,7 +1504,7 @@ average comb filter.  If both scale terms = 0, we get a pure delay line. </p>
 </pre>
 <p><b>average</b> or moving window average returns the average of the last 'size' values input to it.
 This is used both to track RMS values and to generate ramps between 0 and 1 in a "gate"
-effect in new-effects.scm (Snd). 
+effect in new-effects.scm (Snd).  
 </p>
 
 <table border hspace=20 cellpadding=4>
@@ -2216,6 +2218,15 @@ readin and <a href="#env">env</a> (see also the fullmix instrument in fullmix.in
  <a class=def name="locsig-reverb-set!">locsig-reverb-set!</a> <i>loc chan val</i>
  <a class=def name="move-locsig">move-locsig</a> loc degree distance
 </pre>
+
+<table border cellpadding=4>
+<tr><td colspan=2><center>locsig methods</center></td></tr>
+<tr><td><em class=gen>mus-data</em></td><td>output scalers (a vct)</td></tr>
+<tr><td><em class=gen>mus-xcoeffs</em></td><td>reverb scalers (a vct)</td></tr>
+<tr><td><em class=gen>mus-channels</em></td><td>output channels</td></tr>
+<tr><td><em class=gen>mus-length</em></td><td>output channels</td></tr>
+</table>
+
 <p><b>locsig</b> normally takes the place of <a href="#outa">outa</a> and <a href="#outb">outb</a> in an
 instrument.  It tries to place a signal between outa and outb in
 an extremely dumb manner, it just scales the respective amplitudes
@@ -3708,7 +3719,7 @@ In most cases, Netscape will be used to display
 the documentation; on the Mac, the variable
 <a class=def Name="*clm-help-browser*">*clm-help-browser*</a>
 can be set to :cyberdog to choose that browser instead of Netscape.
-Another possibility is <a NAME="linux-help">linux-help</a> with
+Another possibility is <b>linux-help</b> with
 the same arguments -- it is smarter about which browser is used.
 </p>
 

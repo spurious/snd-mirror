@@ -5,7 +5,7 @@
  * and Snd/CLM are applications where no user is willing to wait on a multiply.
  *
  * C side:
- *   void init_vct(void)                   called to declare the various functions and the vct type in Guile
+ *   void vct_init(void)                   called to declare the various functions and the vct type in Guile
  *   bool vct_p(XEN obj)                   is obj a vct
  *   XEN make_vct(int len, Float *data)    make a new vct
  *   XEN make_vct_wrapper(int len, Float *data) make a new vct that doesn't free data when garbage collector strikes
@@ -665,9 +665,9 @@ static XEN vct_compare(XEN vr1, XEN vr2)
 #endif
 
 #if WITH_MODULES
-static void vct_init(void *ignore)
+static void vct_init_1(void *ignore)
 #else
-void init_vct(void)
+void vct_init(void)
 #endif
 {
   vct_tag = XEN_MAKE_OBJECT_TYPE("Vct", sizeof(vct));
@@ -755,9 +755,9 @@ void init_vct(void)
 }
 
 #if WITH_MODULES
-void init_vct(void)
+void vct_init(void)
 {
-  scm_c_define_module("snd sndlib", vct_init, NULL);
+  scm_c_define_module("snd sndlib", vct_init_1, NULL);
 }
 #endif
 

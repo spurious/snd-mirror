@@ -1442,10 +1442,7 @@ mix region into snd's channel chn starting at chn-samp; return new mix id."
   buf = mus_format("%s %d at " OFF_TD, S_mix_region, rg, samp);
   id = paste_region_1(rg, cp, true, samp, buf, track_id);
   FREE(buf);
-  if (id == INVALID_MIX_ID)
-    XEN_ERROR(MUS_MISC_ERROR,
-	      XEN_LIST_2(C_TO_XEN_STRING(S_mix_region),
-			 C_TO_XEN_STRING(ss->catch_message)));
+  /* id might legitmately be invalid mix id if with_mix_tags is #f */
   return(C_TO_XEN_INT(id));
 }
 

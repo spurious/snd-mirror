@@ -774,7 +774,7 @@ void mem_report(void)
 	  fprintf(Fp, "%s[%d]:%s:  %d (%d)", files[ptr], lines[ptr], functions[ptr], sums[ptr], ptrs[ptr]);
 	  if (0)
 	    {
-	      int fd, i, line, bytes;
+	      int fd, k, line, bytes;
 	      bool happy = true;
 	      char buf[8192];
 	      fd = open(files[ptr], O_RDONLY, 0);
@@ -788,9 +788,9 @@ void mem_report(void)
 		      happy = false;
 		      break;
 		    }
-		  for (i = 0; i < bytes; i++)
+		  for (k = 0; k < bytes; k++)
 		    {
-		      if (buf[i] == '\n')
+		      if (buf[k] == '\n')
 			{
 			  line++;
 			  if (line == lines[ptr]) fprintf(Fp, ":   ");
@@ -803,7 +803,7 @@ void mem_report(void)
 			}
 		      else
 			{
-			  if (line == lines[ptr]) fprintf(Fp, "%c", buf[i]);
+			  if (line == lines[ptr]) fprintf(Fp, "%c", buf[k]);
 			}
 		    }
 		}
