@@ -1397,7 +1397,7 @@ void view_curfiles_play(int pos, bool play)
     {
       if (sp->playing) stop_playing_sound(sp, PLAY_BUTTON_UNSET);
       if (play)
-	play_sound(sp, 0, NO_END_SPECIFIED, IN_BACKGROUND, C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), "current files play", 0);
+	play_sound(sp, 0, NO_END_SPECIFIED, IN_BACKGROUND, AT_CURRENT_EDIT_POSITION);
       else set_play_button(sp, false);
     }
 }
@@ -1459,7 +1459,7 @@ bool view_prevfiles_play(int pos, bool play)
 	{
 	  play_sp->short_filename = prevnames[pos];
 	  play_sp->filename = NULL;
-	  play_sound(play_sp, 0, NO_END_SPECIFIED, IN_BACKGROUND, C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), "previous files play", 0);
+	  play_sound(play_sp, 0, NO_END_SPECIFIED, IN_BACKGROUND, AT_CURRENT_EDIT_POSITION);
 	}
       else return(true); /* can't find or setup file */
     }

@@ -1936,7 +1936,7 @@ Cessate apply_controls(Indicium ptr)
 		  else
 		    {
 		      bool ok;
-		      ok = delete_selection("Apply to selection", DONT_UPDATE_DISPLAY);
+		      ok = delete_selection(DONT_UPDATE_DISPLAY);
 		      if (apply_dur > 0)
 			{
 			  for (i = 0; i < si->chans; i++)

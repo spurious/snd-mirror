@@ -4617,7 +4617,7 @@ void edit_history_to_file(FILE *fd, chan_info *cp)
 			  TO_PROC_NAME(S_delete_samples_with_origin),
 			  ed->beg,
 			  ed->len,
-			  (ed->origin) ? ed->origin : "",
+			  "", /* no longer used in this context */
 			  cp->chan);
 		  break;
 		case CHANGE_EDIT:
@@ -5373,7 +5373,7 @@ static bool insert_samples(off_t beg, off_t num, mus_sample_t *vals, chan_info *
 
 /* -------------------------------- delete samples -------------------------------- */
 
-static ed_list *delete_section_from_list(off_t beg, off_t num, ed_list *current_state, const char *origin)
+static ed_list *delete_section_from_list(off_t beg, off_t num, ed_list *current_state)
 {
   int cur_len, cur_i, new_i;
   ed_fragment *cur_f, *new_f;
@@ -5438,16 +5438,16 @@ static ed_list *delete_section_from_list(off_t beg, off_t num, ed_list *current_
   new_state->size = new_i;
   new_state->beg = beg;
   new_state->len = num;
-  if (origin) new_state->origin = copy_string(origin);
+  new_state->origin = mus_format("%s " OFF_TD " " OFF_TD, S_delete_samples, beg, num);
   new_state->edit_type = DELETION_EDIT;
   new_state->sound_location = 0;
   return(new_state);
 }
 
-static ed_list *delete_samples_from_list(off_t beg, off_t num, int pos, chan_info *cp, const char *origin)
+static ed_list *delete_samples_from_list(off_t beg, off_t num, int pos, chan_info *cp)
 {
   ed_list *new_state;
-  new_state = delete_section_from_list(beg, num, cp->edits[pos], origin);
+  new_state = delete_section_from_list(beg, num, cp->edits[pos]);
   if ((cp->edits) && (cp->edit_ctr > 0))
     {
       ed_list *old_state;
@@ -5468,7 +5468,7 @@ static ed_list *delete_samples_from_list(off_t beg, off_t num, int pos, chan_inf
   return(new_state);
 }    
 
-bool delete_samples(off_t beg, off_t num, chan_info *cp, const char *origin, int edpos)
+bool delete_samples(off_t beg, off_t num, chan_info *cp, int edpos)
 {
   off_t len;
   if (num <= 0) return(true);
@@ -5476,8 +5476,8 @@ bool delete_samples(off_t beg, off_t num, chan_info *cp, const char *origin, int
   if ((beg < len) && (beg >= 0))
     {
       if ((beg + num) > len) num = len - beg;
-      if (!(prepare_edit_list(cp, len - num, edpos, origin))) return(false);
-      cp->edits[cp->edit_ctr] = delete_samples_from_list(beg, num, edpos, cp, origin);
+      if (!(prepare_edit_list(cp, len - num, edpos, S_delete_samples))) return(false);
+      cp->edits[cp->edit_ctr] = delete_samples_from_list(beg, num, edpos, cp);
       lock_affected_mixes(cp, beg, beg + num);
       reflect_mix_or_track_change(ANY_MIX_ID, ANY_TRACK_ID, false);
       after_edit(cp);
@@ -5510,7 +5510,7 @@ static ed_list *change_samples_in_list(off_t beg, off_t num, int pos, chan_info 
   cur_end = cp->samples[pos];
   del_num = cur_end - beg;
   if (num < del_num) del_num = num;
-  del_state = delete_section_from_list(beg, del_num, cp->edits[pos], NULL);
+  del_state = delete_section_from_list(beg, del_num, cp->edits[pos]);
   new_state = insert_section_into_list(beg, num, del_state, &changed_f, origin, 1.0);
   del_state = free_ed_list(del_state, cp);
   (*rtn) = changed_f;
@@ -6284,7 +6284,6 @@ snd_fd *free_snd_fd_almost(snd_fd *sf)
 	}
       sf->current_state = NULL;
       sf->current_sound = NULL;
-      /* FREE(sf); */
     }
   return(NULL);
 }
@@ -8504,25 +8503,7 @@ static XEN g_delete_sample(XEN samp_n, XEN snd_n, XEN chn_n, XEN edpos)
 	      XEN_LIST_4(C_TO_XEN_STRING(S_delete_sample),
 			 samp_n,
 			 snd_n, chn_n));
-  if (delete_samples(samp, 1, cp, S_delete_sample, pos))
-    update_graph(cp);
-  return(samp_n);
-}
-
-static XEN g_delete_samples_1(XEN samp_n, XEN samps, XEN snd_n, XEN chn_n, const char *origin, XEN edpos)
-{
-  chan_info *cp;
-  int pos;
-  off_t samp, len;
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(samp_n), samp_n, XEN_ARG_1, origin, "a number");
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(samps), samps, XEN_ARG_2, origin, "a number");
-  ASSERT_CHANNEL(origin, snd_n, chn_n, 3);
-  cp = get_cp(snd_n, chn_n, origin);
-  pos = to_c_edit_position(cp, edpos, S_delete_samples, 6);
-  samp = beg_to_sample(samp_n, origin);
-  len = XEN_TO_C_OFF_T_OR_ELSE(samps, 0);
-  if (len <= 0) return(XEN_FALSE);
-  if (delete_samples(samp, len, cp, origin, pos))
+  if (delete_samples(samp, 1, cp, pos))
     update_graph(cp);
   return(samp_n);
 }
@@ -8532,15 +8513,25 @@ static XEN g_delete_samples(XEN samp_n, XEN samps, XEN snd_n, XEN chn_n, XEN edp
   #define H_delete_samples "(" S_delete_samples " start-samp samps (snd #f) (chn #f) (edpos #f)): \
 delete 'samps' samples from snd's channel chn starting at 'start-samp'"
 
-  return(g_delete_samples_1(samp_n, samps, snd_n, chn_n, S_delete_samples, edpos));
+  chan_info *cp;
+  int pos;
+  off_t samp, len;
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(samp_n), samp_n, XEN_ARG_1, S_delete_samples, "a number");
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(samps), samps, XEN_ARG_2, S_delete_samples, "a number");
+  ASSERT_CHANNEL(S_delete_samples, snd_n, chn_n, 3);
+  cp = get_cp(snd_n, chn_n, S_delete_samples);
+  pos = to_c_edit_position(cp, edpos, S_delete_samples, 6);
+  samp = beg_to_sample(samp_n, S_delete_samples);
+  len = XEN_TO_C_OFF_T_OR_ELSE(samps, 0);
+  if (len <= 0) return(XEN_FALSE);
+  if (delete_samples(samp, len, cp, pos))
+    update_graph(cp);
+  return(samp_n);
 }
 
 static XEN g_delete_samples_with_origin(XEN samp_n, XEN samps, XEN origin, XEN snd_n, XEN chn_n, XEN edpos)
 {
-  XEN res;
-  XEN_ASSERT_TYPE(XEN_STRING_P(origin), origin, XEN_ARG_3, S_delete_samples_with_origin, "a string");
-  res = g_delete_samples_1(samp_n, samps, snd_n, chn_n, XEN_TO_C_STRING(origin), edpos);
-  return(xen_return_first(res, origin));
+  return(g_delete_samples(samp_n, samps, snd_n, chn_n, edpos));
 }
 
 static XEN g_insert_sample(XEN samp_n, XEN val, XEN snd_n, XEN chn_n, XEN edpos)

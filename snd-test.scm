@@ -3841,7 +3841,7 @@ EDITS: 1
 	    (snd-display ";new 5: ~A" (display-edits)))
 	(delete-samples 3 4)
 	(if (not (string-=? (display-edits ind 0 2) "
- (delete 3 4) ; delete-samples [2:3]:
+ (delete 3 4) ; delete-samples 3 4 [2:3]:
    (at 0, cp->sounds[1][0:2, 1.000]) [buf: 10] 
    (at 3, cp->sounds[1][7:9, 1.000]) [buf: 10] 
    (at 6, end_mark)
@@ -3907,7 +3907,7 @@ EDITS: 5
 	    (snd-display ";new 8: ~A" (display-edits)))
 	(delete-samples 2 1)
 	(if (not (string-=? (display-edits ind 0 6) "
- (delete 2 1) ; delete-samples [6:7]:
+ (delete 2 1) ; delete-samples 2 1 [6:7]:
    (at 0, cp->sounds[1][0:1, 1.000]) [buf: 10] 
    (at 2, cp->sounds[2][0:0, 1.000]) [buf: 3] 
    (at 3, cp->sounds[4][0:0, 1.000]) [buf: 1] 
@@ -3919,7 +3919,7 @@ EDITS: 5
 	    (snd-display ";new 9: ~A" (display-edits ind 0 6)))
 	(delete-samples 0 5)
 	(if (not (string-=? (display-edits ind 0 7) "
- (delete 0 5) ; delete-samples [7:4]:
+ (delete 0 5) ; delete-samples 0 5 [7:4]:
    (at 0, cp->sounds[2][2:2, 1.000]) [buf: 3] 
    (at 1, cp->sounds[1][2:9, 1.000]) [buf: 10] 
    (at 9, cp->sounds[5][0:0, 1.000]) [buf: 1] 
@@ -3928,7 +3928,7 @@ EDITS: 5
 	    (snd-display ";new 10: ~A" (display-edits ind 0 7)))
 	(delete-samples 6 4)
 	(if (not (string-=? (display-edits ind 0 8) "
- (delete 6 4) ; delete-samples [8:3]:
+ (delete 6 4) ; delete-samples 6 4 [8:3]:
    (at 0, cp->sounds[2][2:2, 1.000]) [buf: 3] 
    (at 1, cp->sounds[1][2:6, 1.000]) [buf: 10] 
    (at 6, end_mark)
@@ -3936,7 +3936,7 @@ EDITS: 5
 	    (snd-display ";new 11: ~A" (display-edits ind 0 8)))
 	(delete-samples 0 1)
 	(if (not (string-=? (display-edits ind 0 9) "
- (delete 0 1) ; delete-samples [9:2]:
+ (delete 0 1) ; delete-samples 0 1 [9:2]:
    (at 0, cp->sounds[1][2:6, 1.000]) [buf: 10] 
    (at 5, end_mark)
 "))
@@ -3944,7 +3944,7 @@ EDITS: 5
 	
 	(delete-samples 0 5)
 	(if (not (string-=? (display-edits ind 0 10) "
- (delete 0 5) ; delete-samples [10:1]:
+ (delete 0 5) ; delete-samples 0 5 [10:1]:
    (at 0, end_mark)
 "))
 	    (snd-display ";new 13: ~A" (display-edits ind 0 10)))
@@ -3960,7 +3960,7 @@ EDITS: 5
 	    (snd-display ";new 14: ~A" (display-edits ind 0 11)))
 	(delete-samples 2 1)
 	(if (not (string-=? (display-edits ind 0 12) "
- (delete 2 1) ; delete-samples [12:2]:
+ (delete 2 1) ; delete-samples 2 1 [12:2]:
    (at 0, cp->sounds[6][0:1, 1.000]) [buf: 3] 
    (at 2, end_mark)
 "))
@@ -4261,7 +4261,7 @@ EDITS: 5
 	(undo)
 	(delete-sample 4)
 	(if (not (string-=? (display-edits ind 0 3) "
- (delete 4 1) ; delete-sample [3:5]:
+ (delete 4 1) ; delete-samples 4 1 [3:5]:
    (at 0, cp->sounds[1][0:1, 1.000]) [buf: 10] 
    (at 2, cp->sounds[1][2:3, 1.000, [1]0.200 -> 0.280]) [buf: 10] 
    (at 4, cp->sounds[1][5:7, 1.000, [1]0.440 -> 0.600]) [buf: 10] 
@@ -4272,7 +4272,7 @@ EDITS: 5
 	(undo)
 	(delete-samples 4 2)
 	(if (not (string-=? (display-edits ind 0 3) "
- (delete 4 2) ; delete-samples [3:5]:
+ (delete 4 2) ; delete-samples 4 2 [3:5]:
    (at 0, cp->sounds[1][0:1, 1.000]) [buf: 10] 
    (at 2, cp->sounds[1][2:3, 1.000, [1]0.200 -> 0.280]) [buf: 10] 
    (at 4, cp->sounds[1][6:7, 1.000, [1]0.520 -> 0.600]) [buf: 10] 
@@ -4283,7 +4283,7 @@ EDITS: 5
 	(undo)
 	(delete-samples 4 3)
 	(if (not (string-=? (display-edits ind 0 3) "
- (delete 4 3) ; delete-samples [3:5]:
+ (delete 4 3) ; delete-samples 4 3 [3:5]:
    (at 0, cp->sounds[1][0:1, 1.000]) [buf: 10] 
    (at 2, cp->sounds[1][2:3, 1.000, [1]0.200 -> 0.280]) [buf: 10] 
    (at 4, cp->sounds[1][7:7, 1.000, [1]0.600 -> 0.600]) [buf: 10] 
@@ -4294,7 +4294,7 @@ EDITS: 5
 	(undo)
 	(delete-samples 4 4)
 	(if (not (string-=? (display-edits ind 0 3) "
- (delete 4 4) ; delete-samples [3:4]:
+ (delete 4 4) ; delete-samples 4 4 [3:4]:
    (at 0, cp->sounds[1][0:1, 1.000]) [buf: 10] 
    (at 2, cp->sounds[1][2:3, 1.000, [1]0.200 -> 0.280]) [buf: 10] 
    (at 4, cp->sounds[1][8:9, 1.000]) [buf: 10] 
@@ -4304,7 +4304,7 @@ EDITS: 5
 	(undo)
 	(delete-samples 4 5)
 	(if (not (string-=? (display-edits ind 0 3) "
- (delete 4 5) ; delete-samples [3:4]:
+ (delete 4 5) ; delete-samples 4 5 [3:4]:
    (at 0, cp->sounds[1][0:1, 1.000]) [buf: 10] 
    (at 2, cp->sounds[1][2:3, 1.000, [1]0.200 -> 0.280]) [buf: 10] 
    (at 4, cp->sounds[1][9:9, 1.000]) [buf: 10] 
@@ -4408,7 +4408,7 @@ EDITS: 5
 	  (undo)
 	  (delete-sample 0)
 	  (if (not (string-=? (display-edits ind 0 3) "
- (delete 0 1) ; delete-sample [3:2]:
+ (delete 0 1) ; delete-samples 0 1 [3:2]:
    (at 0, cp->sounds[1][1:9, 1.000, [4]0.385 -> 3.466, off: -0.032, scl: 0.032]) [buf: 10] 
    (at 9, end_mark)
 "))
@@ -4419,7 +4419,7 @@ EDITS: 5
 	  (undo)
 	  (delete-samples 0 2)
 	  (if (not (string-=? (display-edits ind 0 3) "
- (delete 0 2) ; delete-samples [3:2]:
+ (delete 0 2) ; delete-samples 0 2 [3:2]:
    (at 0, cp->sounds[1][2:9, 1.000, [4]0.770 -> 3.466, off: -0.032, scl: 0.032]) [buf: 10] 
    (at 8, end_mark)
 "))
@@ -4431,7 +4431,7 @@ EDITS: 5
 	  (delete-sample 0)
 	  (delete-sample 0)
 	  (if (not (string-=? (display-edits ind 0 4) "
- (delete 0 1) ; delete-sample [4:2]:
+ (delete 0 1) ; delete-samples 0 1 [4:2]:
    (at 0, cp->sounds[1][2:9, 1.000, [4]0.770 -> 3.466, off: -0.032, scl: 0.032]) [buf: 10] 
    (at 8, end_mark)
 "))
@@ -4439,7 +4439,7 @@ EDITS: 5
 	  (undo 2)
 	  (delete-sample 4)
 	  (if (not (string-=? (display-edits ind 0 3) "
- (delete 4 1) ; delete-sample [3:3]:
+ (delete 4 1) ; delete-samples 4 1 [3:3]:
    (at 0, cp->sounds[1][0:3, 1.000, [4]0.000 -> 1.155, off: -0.032, scl: 0.032]) [buf: 10] 
    (at 4, cp->sounds[1][5:9, 1.000, [4]1.925 -> 3.466, off: -0.032, scl: 0.032]) [buf: 10] 
    (at 9, end_mark)
@@ -4448,7 +4448,7 @@ EDITS: 5
 	  (undo)
 	  (delete-samples 4 2)
 	  (if (not (string-=? (display-edits ind 0 3) "
- (delete 4 2) ; delete-samples [3:3]:
+ (delete 4 2) ; delete-samples 4 2 [3:3]:
    (at 0, cp->sounds[1][0:3, 1.000, [4]0.000 -> 1.155, off: -0.032, scl: 0.032]) [buf: 10] 
    (at 4, cp->sounds[1][6:9, 1.000, [4]2.310 -> 3.466, off: -0.032, scl: 0.032]) [buf: 10] 
    (at 8, end_mark)
@@ -24641,11 +24641,11 @@ EDITS: 5
 	(safe-make-region 1000 2000 obi)
 	(delete-selection-and-smooth)
 	(if (not (equal? (edit-fragment 0 obi 0) '(#f "init" 0 50828))) 
-	    (snd-display ";edit-fragment(0): ~A?" (edit-fragment 0 obi 0)))
-	(if (not (equal? (edit-fragment 1 obi 0) '("delete-samples" "delete" 1000 1001))) 
-	    (snd-display ";edit-fragment(1): ~A?" (edit-fragment 1 obi 0)))
+	    (snd-display ";edit-fragment(0): ~S?" (edit-fragment 0 obi 0)))
+	(if (not (equal? (edit-fragment 1 obi 0) '("delete-samples 1000 1001" "delete" 1000 1001))) 
+	    (snd-display ";edit-fragment(1): ~S?" (edit-fragment 1 obi 0)))
 	(if (not (equal? (edit-fragment 2 obi 0) '("smooth-channel 984 32" "set" 984 32))) 
-	    (snd-display ";edit-fragment(2): ~A?" (edit-fragment 2 obi 0)))
+	    (snd-display ";edit-fragment(2): ~S?" (edit-fragment 2 obi 0)))
 	
 	(let ((samp100 (sample 1100 obi 0)))
 	  (safe-make-region 1000 2000 obi)
@@ -30270,7 +30270,7 @@ EDITS: 1
 	      (snd-display ";save mark: ~A?" (mark-sample (car (marks ind 0)))))
 	  (if (not (= (edit-position ind 0) 1))
 	      (snd-display ";save edit-position: ~A" (edit-position ind 0)))
-	  (if (not (equal? (edit-fragment 1 ind 0) (list "delete-sample" "delete" 12 1)))
+	  (if (not (equal? (edit-fragment 1 ind 0) (list "delete-samples 12 1" "delete" 12 1)))
 	      (snd-display ";save edits: ~A" (edit-fragment 1 ind 0)))
 	  (if (not (equal? (edit-tree ind 0) 
 			   (list (list 0 0 0 11 1.0 0.0 0.0 0) (list 12 0 13 50827 1.0 0.0 0.0 0) (list 50827 -2 0 0 0.0 0.0 0.0 0))))
@@ -30309,7 +30309,7 @@ EDITS: 1
       (set! sfile nind)
       (load "hiho.scm")
       (if (not (equal? (edit-fragment 1) '("set-sample 1 0.5000" "set" 1 1))) (snd-display ";save-edit-history 1: ~A?" (edit-fragment 1)))
-      (if (not (equal? (edit-fragment 2) '("delete-sample" "delete" 100 1))) (snd-display ";save-edit-history 2: ~A?" (edit-fragment 2)))
+      (if (not (equal? (edit-fragment 2) '("delete-samples 100 1" "delete" 100 1))) (snd-display ";save-edit-history 2: ~A?" (edit-fragment 2)))
       (if (not (equal? (edit-fragment 3) '("insert-sample 10 0.5000" "insert" 10 1))) (snd-display ";save-edit-history 3: ~A?" (edit-fragment 3)))
       (if (not (equal? (edit-fragment 4) '("scale-channel 2.000 0 #f" "scale" 0 50828))) (snd-display ";save-edit-history 4: ~A?" (edit-fragment 4)))
       (if (not (equal? (edit-fragment 5) '("pad-channel 100 20" "zero" 100 20))) (snd-display ";save-edit-history 5: ~A?" (edit-fragment 5)))
@@ -30327,7 +30327,7 @@ EDITS: 5
    (at 2, cp->sounds[0][2:50827, 1.000]) [file: " cwd "oboe.snd[0]]
    (at 50828, end_mark)
 
- (delete 100 1) ; delete-sample [2:5]:
+ (delete 100 1) ; delete-samples 100 1 [2:5]:
    (at 0, cp->sounds[0][0:0, 1.000]) [file: " cwd "oboe.snd[0]]
    (at 1, cp->sounds[1][0:0, 1.000]) [buf: 1] 
    (at 2, cp->sounds[0][2:99, 1.000]) [file: " cwd "oboe.snd[0]]
@@ -40104,7 +40104,7 @@ EDITS: 2
 		  (key-event cwid (char->integer #\d) 4) (force-event)
 		  (if (not (equal? (edits) '(1 0)))
 		      (snd-display ";C-d (edits) -> ~A?" (edits)))
-		  (if (not (equal? (edit-fragment 1) (list "C-d" "delete" 100 1)))
+		  (if (not (equal? (edit-fragment 1) (list "delete-samples 100 1" "delete" 100 1)))
 		      (snd-display ";C-d (edit) -> ~A?" (edit-fragment 1)))
 		  (key-event cwid (char->integer #\u) 4) (force-event)
 		  (key-event cwid (char->integer #\0) 4) (force-event)
@@ -40114,7 +40114,7 @@ EDITS: 2
 		  (key-event cwid (char->integer #\h) 4) (force-event)
 		  (if (not (equal? (edits) '(2 0)))
 		      (snd-display ";C-h (edits) -> ~A?" (edits)))
-		  (if (not (equal? (edit-fragment 2) (list "C-h" "delete" 99 1)))
+		  (if (not (equal? (edit-fragment 2) (list "delete-samples 99 1" "delete" 99 1)))
 		      (snd-display ";C-h (edit) -> ~A?" (edit-fragment 2)))
 		  
 		  (let* ((ind (open-sound "2.snd"))
@@ -40294,7 +40294,7 @@ EDITS: 2
 		    (key-event cwid (char->integer #\k) 4) (force-event)
 		    (if (not (equal? (edits) '(5 0)))
 			(snd-display ";C-k (edits) -> ~A?" (edits)))
-		    (if (not (equal? (edit-fragment 5) (list "C-k" "delete" 133 128)))
+		    (if (not (equal? (edit-fragment 5) (list "delete-samples 133 128" "delete" 133 128)))
 			(snd-display ";C-k (edit) -> ~A?" (edit-fragment 5)))
 		    (if (not (= (frames) (- fr 128)))
 			(snd-display ";frames after C-k: ~A ~A?" (frames) fr)))
@@ -40363,7 +40363,7 @@ EDITS: 2
 			(snd-display ";C-w len: ~A ~A" fr (frames)))
 		    (if (not (equal? (edits) '(1 0)))
 			(snd-display ";C-w -> ~A?" (edits)))
-		    (if (not (equal? (edit-fragment 1) (list "C-w" "delete" 0 1000)))
+		    (if (not (equal? (edit-fragment 1) (list "delete-samples 0 1000" "delete" 0 1000)))
 			(snd-display ";C-w (edit) -> ~A [~A]?" 
 				     (edit-fragment 1)
 				     (car (edit-fragment 1))))
@@ -40374,12 +40374,7 @@ EDITS: 2
 		    (if (not (= fr (frames)))
 			(snd-display ";C-y len: ~A ~A" fr (frames)))
 		    (if (not (equal? (edits) '(2 0)))
-			(snd-display ";C-y -> ~A?" (edits)))
-		    (catch #t
-			   (lambda ()
-			     (if (not (equal? (edit-fragment 2) (list "C-y" "insert" 0 1000)))
-				 (snd-display ";C-y (edit) -> ~A?" (edit-fragment 2))))
-			   (lambda args args)))
+			(snd-display ";C-y -> ~A?" (edits))))
 		  
 		  (key-event cwid (char->integer #\<) 4) (force-event)
 		  (key-event cwid (char->integer #\x) 8) (force-event)
@@ -41487,9 +41482,10 @@ EDITS: 2
 			  (snd-display ";apply flt: ~A?" (edits ind)))
 		      (catch 'no-such-edit
 			     (lambda ()
-			       (if (and (not (equal? (edit-fragment 2) (list "filter-channel" "set" 0 50868)))
-					(not (equal? (edit-fragment 2) (list "Enved: flt" "set" 0 50868))))
-				   (snd-display ";apply flt fragment: ~A?" (edit-fragment 2))))
+			       (if (not (equal? (edit-fragment 2)
+						(list "filter-channel '(0.000 0.000 0.247 1.000 0.500 1.000 1.000 0.000) 40 0 #f" 
+						      "set" 0 50868)))
+				   (snd-display ";apply flt fragment: ~S?" (edit-fragment 2))))
 			     (lambda args (snd-display ";click enved apply failed")))
 		      (click-button reset-button) (force-event)
 		      (widget-string text-widget "'(0 .5 1 .4)") (force-event)
@@ -51778,9 +51774,9 @@ EDITS: 2
 	      (check-error-tag 'cannot-save (lambda () (save-sound-as "test.snd" ind mus-voc mus-bshort)))
 	      (check-error-tag 'cannot-save (lambda () (save-selection "test.snd" mus-riff mus-bshort)))
 	      (check-error-tag 'cannot-save (lambda () (save-selection "test.snd" mus-voc mus-bshort)))
-	      (check-error-tag 'wrong-type-arg (lambda () (play-selection 0 #f (lambda () #f))))
-	      (check-error-tag 'wrong-type-arg (lambda () (play-selection 0 #f 0)))
-	      (check-error-tag 'wrong-type-arg (lambda () (play-selection 0 #f (lambda (a b) #f))))
+	      (check-error-tag 'wrong-type-arg (lambda () (play-selection 0 (lambda () #f))))
+	      (check-error-tag 'wrong-type-arg (lambda () (play-selection 0 0)))
+	      (check-error-tag 'wrong-type-arg (lambda () (play-selection 0 (lambda (a b) #f))))
 	      (check-error-tag 'no-data (lambda () (draw-lines '#())))
 	      (check-error-tag 'out-of-range (lambda () (src-channel (make-env '(0 0 1 1) :end 10))))
 	      (check-error-tag 'out-of-range (lambda () (src-channel (make-env '(0 1 1 0) :end 10))))

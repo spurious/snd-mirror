@@ -167,23 +167,23 @@ Float selection_maxamp(chan_info *cp)
   return(val);
 }
 
-static void cp_delete_selection(chan_info *cp, void *origin)
+static void cp_delete_selection(chan_info *cp)
 {
   ed_list *ed;
   ed = cp->edits[cp->edit_ctr];
   if ((ed) && (ed->selection_beg != NO_SELECTION))
     {
-      delete_samples(ed->selection_beg, cp_selection_len(cp, NULL), cp, (const char *)origin, cp->edit_ctr);
+      delete_samples(ed->selection_beg, cp_selection_len(cp, NULL), cp, cp->edit_ctr);
       ed = cp->edits[cp->edit_ctr];
       ed->selection_beg = NO_SELECTION;
     }
 }
 
-bool delete_selection(const char *origin, cut_selection_regraph_t regraph)
+bool delete_selection(cut_selection_regraph_t regraph)
 {
   if (selection_is_active())
     {
-      for_each_normal_chan_1(cp_delete_selection, (void *)origin);
+      for_each_normal_chan(cp_delete_selection);
       if (regraph == UPDATE_DISPLAY) for_each_normal_chan(update_graph);
       reflect_edit_without_selection_in_menu();
       if (XEN_HOOKED(selection_changed_hook)) run_hook(selection_changed_hook, XEN_EMPTY_LIST, S_selection_changed_hook);
@@ -752,7 +752,7 @@ static XEN g_delete_selection(void)
   #define H_delete_selection "(" S_delete_selection "): delete the currently selected portion"
   if (selection_is_active())
     {
-      delete_selection(S_delete_selection, UPDATE_DISPLAY);
+      delete_selection(UPDATE_DISPLAY);
       return(XEN_TRUE);
     }
   return(snd_no_active_selection_error(S_delete_selection));

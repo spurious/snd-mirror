@@ -1252,7 +1252,7 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 	      break;
 	    case snd_K_D: case snd_K_d: 
 	      cp->cursor_on = true; 
-	      cursor_delete(cp, count, "C-d"); 
+	      cursor_delete(cp, count); 
 	      break;
 	    case snd_K_E: case snd_K_e:
 	      cp->cursor_on = true; 
@@ -1271,7 +1271,7 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 	      break;
 	    case snd_K_H: case snd_K_h: 
 	      cp->cursor_on = true; 
-	      cursor_delete(cp, -count, "C-h"); 
+	      cursor_delete(cp, -count); 
 	      break; 
 	    case snd_K_I: case snd_K_i: 
 	      show_cursor_info(cp); 
@@ -1283,7 +1283,7 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 	      break;
 	    case snd_K_K: case snd_K_k: 
 	      cp->cursor_on = true; 
-	      cursor_delete(cp, count * 128, "C-k");
+	      cursor_delete(cp, count * 128);
 	      break;
 	    case snd_K_L: case snd_K_l: 
 	      cp->cursor_on = true; 
@@ -1339,7 +1339,7 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 	      cursor_move(cp, -count * 128); 
 	      break;
 	    case snd_K_Q: case snd_K_q: 
-	      play_channel(cp, CURSOR(cp), NO_END_SPECIFIED, IN_BACKGROUND, C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), "C-q", 0);
+	      play_channel(cp, CURSOR(cp), NO_END_SPECIFIED, IN_BACKGROUND, AT_CURRENT_EDIT_POSITION);
 	      break;
 #if HAVE_EXTENSION_LANGUAGE
 	    case snd_K_R: case snd_K_r: 
@@ -1371,7 +1371,7 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 	      cursor_moveto(cp, (off_t)((ap->losamp + ap->hisamp) / 2));
 	      break;
 	    case snd_K_W: case snd_K_w: 
-	      delete_selection("C-w", UPDATE_DISPLAY); 
+	      delete_selection(UPDATE_DISPLAY); 
 	      break;
 	    case snd_K_X: case snd_K_x: 
 	      extended_mode = true; 
@@ -1818,7 +1818,7 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 		  break;
 		case snd_K_P: case snd_K_p: 
 		  if (!got_ext_count)
-		    play_selection(IN_BACKGROUND, C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), "C-x p", 0);
+		    play_selection(IN_BACKGROUND, AT_CURRENT_EDIT_POSITION);
 		  else play_region(ext_count, IN_BACKGROUND);
 		  break;
 		case snd_K_Q: case snd_K_q: 

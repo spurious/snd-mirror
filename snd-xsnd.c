@@ -898,9 +898,7 @@ static void play_button_callback(Widget w, XtPointer context, XtPointer info)
   if (cb->set) 
     {
       XtVaSetValues(w, XmNselectColor, ((sp->cursor_follows_play != DONT_FOLLOW) ? ((ss->sgx)->green) : ((ss->sgx)->pushed_button_color)), NULL);
-      play_sound(sp, 0, NO_END_SPECIFIED, IN_BACKGROUND, 
-		 C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION),
-		 "play_button", 0);
+      play_sound(sp, 0, NO_END_SPECIFIED, IN_BACKGROUND, AT_CURRENT_EDIT_POSITION);
     }
 }
 

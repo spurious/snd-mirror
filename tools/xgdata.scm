@@ -5072,7 +5072,7 @@
 (CFNC-250 "gint gtk_entry_completion_get_text_column GtkEntryCompletion* completion")
 (CFNC-250 "gint* gtk_icon_theme_get_icon_sizes GtkIconTheme* icon_theme gchar* icon_name")
 (CFNC-250 "GList* gtk_menu_get_for_attach_widget GtkWidget* widget ")
-(CFNC-250 "void gtk_target_list_add_text_targets GtkTargetList* list")
+;;; (CFNC-250 "void gtk_target_list_add_text_targets GtkTargetList* list") -- added arg in 2.5.4
 (CFNC-250 "void gtk_tree_view_set_fixed_height_mode GtkTreeView* tree_view gboolean enable")
 (CFNC-250 "gboolean gtk_tree_view_get_fixed_height_mode GtkTreeView* tree_view")
 (CFNC-250 "void gtk_tree_view_set_hover_selection GtkTreeView* tree_view gboolean hover")
@@ -5282,9 +5282,55 @@
 (CFNC-252 "void gtk_tree_view_set_hover_expand GtkTreeView* tree_view gboolean expand")
 (CFNC-252 "gboolean gtk_tree_view_get_hover_expand GtkTreeView* tree_view")
 
-#!
-;;; do these with the next version -- not worth the bother by themselves
-(CFNC-253 "void gtk_tool_item_rebuild_menu GtkToolItem* tool_item")
-(CINT-253 "GTK_TREE_SORTABLE_UNSORTED_SORT_COLUMN_ID" "void")
-;;; there was also gtk_init_with_args, but it looks desperate to me
-!#
+
+;;; actually 2.5.3 here
+(CFNC-254 "void gtk_tool_item_rebuild_menu GtkToolItem* tool_item")
+(CINT-254 "GTK_TREE_SORTABLE_UNSORTED_SORT_COLUMN_ID" "void")
+;;; there was also gtk_init_with_args
+
+;;; 2.5.4
+(CINT-254 "GTK_IMAGE_ICON_NAME" "GtkImageType")
+(CLNG-254 "GTK_TYPE_MENU_TOOL_BUTTON")
+(CCAST-254 "GTK_MENU_TOOL_BUTTON(obj)" "GtkMenuToolButton*")
+(CCHK-254 "GTK_IS_MENU_TOOL_BUTTON(obj)" "GtkMenuToolButton*")
+
+(CFNC-254 "GType gtk_menu_tool_button_get_type void")
+(CFNC-254 "GtkToolItem* gtk_menu_tool_button_new GtkWidget* icon_widget gchar* label")
+(CFNC-254 "GtkToolItem* gtk_menu_tool_button_new_from_stock gchar* stock_id")
+(CFNC-254 "void gtk_menu_tool_button_set_menu GtkMenuToolButton* button GtkWidget* menu")
+(CFNC-254 "GtkWidget* gtk_menu_tool_button_get_menu GtkMenuToolButton* button")
+(CFNC-254 "void gtk_menu_tool_button_set_arrow_tooltip GtkMenuToolButton* button GtkTooltips* tooltips gchar* tip_text gchar* tip_private")
+(CFNC-254 "gboolean gdk_display_supports_clipboard_persistence GdkDisplay* display")
+;;; (CFNC-254 "void gdk_display_store_clipboard GdkDisplay* display GdkWindow* clipboard_window guint32 time_ GdkAtom* targets gint n_targets")
+(CFNC-254 "gchar* gtk_about_dialog_get_logo_icon_name GtkAboutDialog* about")
+(CFNC-254 "void gtk_about_dialog_set_logo_icon_name GtkAboutDialog* about gchar* icon_name")
+(CFNC-254 "gchar* gtk_accelerator_get_label guint accelerator_key GdkModifierType accelerator_mods")
+(CFNC-254 "gboolean gtk_clipboard_wait_is_target_available GtkClipboard* clipboard GdkAtom target")
+(CFNC-254 "void gtk_clipboard_set_can_store GtkClipboard* clipboard GtkTargetEntry* targets gint n_targets")
+(CFNC-254 "void gtk_clipboard_store GtkClipboard* clipboard")
+(CFNC-254 "gboolean gtk_alternative_dialog_button_order GdkScreen* screen")
+;;;(CFNC-254 "void gtk_dialog_set_alternative_button_order GtkDialog* dialog gint first_response_id ...")
+(CFNC-254 "void gtk_drag_dest_add_image_targets GtkWidget* widget")
+(CFNC-254 "void gtk_drag_dest_add_uri_targets GtkWidget* widget")
+(CFNC-254 "void gtk_drag_source_add_image_targets GtkWidget* widget")
+(CFNC-254 "void gtk_drag_source_add_uri_targets GtkWidget* widget")
+(CFNC-254 "gint gtk_file_chooser_button_get_width_chars GtkFileChooserButton* button")
+(CFNC-254 "void gtk_file_chooser_button_set_width_chars GtkFileChooserButton* button gint n_chars")
+(CFNC-254 "GtkWidget* gtk_image_new_from_icon_name gchar* icon_name GtkIconSize size")
+(CFNC-254 "void gtk_image_set_from_icon_name GtkImage* image gchar* icon_name GtkIconSize size")
+(CFNC-254 "void gtk_image_set_pixel_size GtkImage* image gint pixel_size")
+;;;(CFNC-254 "void gtk_image_get_icon_name GtkImage* image gchar** [icon_name] GtkIconSize* [size]" 'const) ;; no free here -- need const
+(CFNC-254 "gint gtk_image_get_pixel_size GtkImage* image")
+(CFNC-254 "void gtk_label_set_width_chars GtkLabel* label gint n_chars")
+(CFNC-254 "gint gtk_label_get_width_chars GtkLabel* label")
+;;;(CFNC-254 "void gtk_message_dialog_format_secondary_text GtkMessageDialog* message_dialog gchar* message_format ...")
+;;;(CFNC-254 "void gtk_message_dialog_format_secondary_markup GtkMessageDialog* message_dialog gchar* message_format ...")
+(CFNC-254 "void gtk_target_list_add_text_targets GtkTargetList* list guint info")
+(CFNC-254 "void gtk_target_list_add_image_targets GtkTargetList* list guint info gboolean writable")
+(CFNC-254 "void gtk_target_list_add_uri_targets GtkTargetList* list guint info")
+(CFNC-254 "gboolean gtk_selection_data_set_pixbuf GtkSelectionData* selection_data GdkPixbuf* pixbuf")
+(CFNC-254 "GdkPixbuf* gtk_selection_data_get_pixbuf GtkSelectionData* selection_data")
+(CFNC-254 "gboolean gtk_selection_data_set_uris GtkSelectionData* selection_data gchar** uris")
+(CFNC-254 "gchar** gtk_selection_data_get_uris GtkSelectionData* selection_data")
+(CFNC-254 "gboolean gtk_text_buffer_backspace GtkTextBuffer* buffer GtkTextIter* iter gboolean interactive gboolean default_editable")
+

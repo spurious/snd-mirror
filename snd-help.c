@@ -370,6 +370,7 @@ void about_snd_help(void)
 	    "\nRecent changes include:\n\
 \n\
 28-Oct:  rms-envelope in env.scm.\n\
+         removed edpos arg to play-selection.\n\
 18-Oct:  oscope.scm\n\
 15-Oct:  normalize-channel.\n\
 11-Oct:  vct->string\n\

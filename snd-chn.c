@@ -1649,7 +1649,7 @@ static void display_peaks(chan_info *cp, axis_info *fap, Float *data, int scaler
   if (peak_amps) FREE(peak_amps);
 }
 
-void make_fft_graph(chan_info *cp, axis_info *fap, axis_context *ax, with_hook_t with_hook)
+static void make_fft_graph(chan_info *cp, axis_info *fap, axis_context *ax, with_hook_t with_hook)
 {
   /* axes are already set, data is in the fft_info struct -- don't reset here! */
   /* since the fft size menu callback can occur while we are calculating the next fft, we have to lock the current size until the graph goes out */
@@ -4084,8 +4084,8 @@ void graph_button_release_callback(chan_info *cp, int x, int y, int key_state, i
 	      else 
 		{
 		  if (key_state & snd_ControlMask)
-		    play_sound(sp, play_mark->samp, NO_END_SPECIFIED, IN_BACKGROUND, C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), "play button", 0);
-		  else play_channel(cp, play_mark->samp, NO_END_SPECIFIED, IN_BACKGROUND, C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), "play button", 0);
+		    play_sound(sp, play_mark->samp, NO_END_SPECIFIED, IN_BACKGROUND, AT_CURRENT_EDIT_POSITION);
+		  else play_channel(cp, play_mark->samp, NO_END_SPECIFIED, IN_BACKGROUND, AT_CURRENT_EDIT_POSITION);
 		}
 	      sp->playing_mark = play_mark;
 	    }
@@ -4293,7 +4293,7 @@ void graph_button_motion_callback(chan_info *cp, int x, int y, Tempus time)
 	      if (!(XEN_TRUE_P(drag_res)))
 		{
 		  sp->speed_control = 0.0;
-		  play_channel(cp, play_mark->samp, NO_END_SPECIFIED, IN_BACKGROUND, C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), "drag playing mark", 0);
+		  play_channel(cp, play_mark->samp, NO_END_SPECIFIED, IN_BACKGROUND, AT_CURRENT_EDIT_POSITION);
 		}
 	    }
 	  else
@@ -4990,8 +4990,8 @@ static XEN channel_set(XEN snd_n, XEN chn_n, XEN on, cp_field_t fld, char *calle
       if (curlen > newlen)
 	{
 	  if (newlen > 0)
-	    delete_samples(newlen - 1, curlen - newlen, cp, "(set-frames)", cp->edit_ctr);
-	  else delete_samples(0, curlen, cp, "(set-frames)", cp->edit_ctr);
+	    delete_samples(newlen - 1, curlen - newlen, cp, cp->edit_ctr);
+	  else delete_samples(0, curlen, cp, cp->edit_ctr);
 	}
       else
 	{

@@ -384,7 +384,7 @@ static char *convolve_with_or_error(char *filename, Float amp, chan_info *cp, XE
 	    {
 	      if (cp == NULL)
 		{
-		  delete_samples(si->begs[ip], sc->dur, ucp, origin, ucp->edit_ctr);
+		  delete_samples(si->begs[ip], sc->dur, ucp, ucp->edit_ctr);
 		  if ((filtersize + filesize) > 0)
 		    {
 		      file_insert_samples(si->begs[ip], filtersize + filesize, ofile, ucp, 0, DELETE_ME, origin, ucp->edit_ctr);
@@ -962,7 +962,7 @@ static char *src_channel_with_error(chan_info *cp, snd_fd *sf, off_t beg, off_t 
 	    file_change_samples(beg, dur, ofile, cp, 0, DELETE_ME, LOCK_MIXES, new_origin, cp->edit_ctr);
 	  else
 	    {
-	      delete_samples(beg, dur, cp, origin, cp->edit_ctr);
+	      delete_samples(beg, dur, cp, cp->edit_ctr);
 	      file_insert_samples(beg, k, ofile, cp, 0, DELETE_ME, new_origin, cp->edit_ctr);
 	      if (over_selection)
 		reactivate_selection(cp, beg, beg + k); /* backwards compatibility */
@@ -2299,7 +2299,7 @@ void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, bool over_selection,
   free_sync_state(sc);
 }
 
-void cursor_delete(chan_info *cp, off_t count, const char *origin)
+void cursor_delete(chan_info *cp, off_t count)
 {
   off_t beg;
   snd_info *sp;
@@ -2327,7 +2327,7 @@ void cursor_delete(chan_info *cp, off_t count, const char *origin)
       cps = si->cps;
       for (i = 0; i < si->chans; i++)
 	{
-	  if (delete_samples(beg, count, cps[i], origin, cps[i]->edit_ctr))
+	  if (delete_samples(beg, count, cps[i], cps[i]->edit_ctr))
 	    {
 	      CURSOR(cps[i]) = beg;
 	      update_graph(si->cps[i]);
@@ -2337,7 +2337,7 @@ void cursor_delete(chan_info *cp, off_t count, const char *origin)
     }
   else
     {
-      if (delete_samples(beg, count, cp, origin, cp->edit_ctr))
+      if (delete_samples(beg, count, cp, cp->edit_ctr))
 	{
 	  CURSOR(cp) = beg;
 	  update_graph(cp);
@@ -2721,7 +2721,7 @@ static XEN g_map_chan_1(XEN proc_and_list, XEN s_beg, XEN s_end, XEN org, XEN sn
 	  else
 	    {
 	      int cured;
-	      delete_samples(beg, num, cp, caller, cp->edit_ctr);
+	      delete_samples(beg, num, cp, cp->edit_ctr);
 	      cured = cp->edit_ctr;
 	      if (j > 0)
 		{

@@ -616,7 +616,7 @@
 	      (if (defined? 'c-play-selection)
 		  (c-play-selection)
 		  (letrec ((das-play (lambda ()
-				       (play-selection #f #f
+				       (play-selection #f
 						       (lambda (x)
 							 (if (= x 0)
 							     (das-play)

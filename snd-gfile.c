@@ -372,10 +372,7 @@ static void play_selected_callback(GtkWidget *w, gpointer data)
 	  fd->file_play_sp = make_sound_readable(filename, false);
 	  fd->file_play_sp->delete_me = (void *)fd;
 	  if (fd->file_play_sp)
-	    play_sound(fd->file_play_sp, 0, 
-		       NO_END_SPECIFIED, IN_BACKGROUND, 
-		       C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), 
-		       "selected file play", 0);
+	    play_sound(fd->file_play_sp, 0, NO_END_SPECIFIED, IN_BACKGROUND, AT_CURRENT_EDIT_POSITION);
 	}
     }
   else file_dialog_stop_playing(fd);

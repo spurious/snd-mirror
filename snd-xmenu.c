@@ -123,7 +123,7 @@ static void file_print_callback_1(Widget w, XtPointer info, XtPointer context) {
 
 static void edit_mix_callback(Widget w, XtPointer info, XtPointer context) {add_selection_or_region(0, selected_channel());}
 static void edit_envelope_callback(Widget w, XtPointer info, XtPointer context) {create_envelope_editor();}
-static void edit_cut_callback(Widget w, XtPointer info, XtPointer context) {delete_selection("Edit: Cut", UPDATE_DISPLAY);}
+static void edit_cut_callback(Widget w, XtPointer info, XtPointer context) {delete_selection(UPDATE_DISPLAY);}
 static void edit_paste_callback(Widget w, XtPointer info, XtPointer context) {insert_selection_from_menu();}
 static void edit_save_as_callback(Widget w, XtPointer info, XtPointer context) {make_edit_save_as_dialog(true);}
 static void edit_select_all_callback(Widget w, XtPointer info, XtPointer context) {select_all(current_channel());}
@@ -141,7 +141,7 @@ static void edit_play_callback(Widget w, XtPointer info, XtPointer context)
     {
       set_menu_label(edit_play_menu(), _("Stop"));
       selection_play_stop = true;
-      play_selection(IN_BACKGROUND, C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), "play selection", 0);
+      play_selection(IN_BACKGROUND, AT_CURRENT_EDIT_POSITION);
     }
 }
 
@@ -877,7 +877,7 @@ static void popup_play_callback(Widget w, XtPointer info, XtPointer context)
     {
       if (sp)
 	{
-	  play_sound(sp, 0, NO_END_SPECIFIED, IN_BACKGROUND, C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), "popup play", 0);
+	  play_sound(sp, 0, NO_END_SPECIFIED, IN_BACKGROUND, AT_CURRENT_EDIT_POSITION);
 	  stopping = true;
 	  set_button_label(w, _("Stop playing"));
 	}

@@ -1531,7 +1531,7 @@ static void edit_dragged_mark(chan_info *cp, mark *m, off_t initial_sample)
       {
 	new_m = map_over_marks(cp, find_mark_id_1, (void *)(&id), READ_FORWARD);
 	new_m->samp = initial_sample;
-	delete_samples(mark_final_sample, -num, cp, "mark dragged", cp->edit_ctr);
+	delete_samples(mark_final_sample, -num, cp, cp->edit_ctr);
       }
   if (num != 0) 
     {
@@ -1591,9 +1591,7 @@ void play_syncd_mark(chan_info *cp, mark *m)
   syncdata *sd;
   sd = gather_syncd_marks(m->sync);
   if ((sd) && (sd->mark_ctr > 0))
-    play_channels(sd->chans, sd->mark_ctr, sd->initial_samples, NULL, IN_BACKGROUND, 
-		  C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), 
-		  "drag and play sync'd marks", 0, false);
+    play_channels(sd->chans, sd->mark_ctr, sd->initial_samples, NULL, IN_BACKGROUND, AT_CURRENT_EDIT_POSITION, false);
   if (sd) free_syncdata(sd);
 }
 

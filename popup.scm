@@ -106,7 +106,7 @@
 		(if (and (not (c-g?))
 			 (= reason 0)
 			 stopping1)
-		    (play-selection #f -1 play-selection-again)
+		    (play-selection #f play-selection-again)
 		    (stop-playing-selection)))
 	      (if stopping1
 		  (begin
@@ -116,7 +116,7 @@
 		    (change-label w "Stop!")
 		    (set! stop-widget1 w) ; needs to be separate from Play case since we're stopping/restarting deliberately
 		    (set! stopping1 #t)
-		    (play-selection #f -1 play-selection-again)))))
+		    (play-selection #f play-selection-again)))))
       (list "Delete"    xmPushButtonWidgetClass every-menu (lambda (w c i) (delete-selection)))
       (list "Zero"      xmPushButtonWidgetClass every-menu (lambda (w c i) (scale-selection-by 0.0)))
       (list "Crop"      xmPushButtonWidgetClass every-menu
