@@ -1,9 +1,4 @@
 /* CLM (Music V) implementation */
-/*
- *   to make global (gen-relative) method change, need way to set gen's class fields
- *   to make gen-local method change, need to copy class, reassign core, set desired field
- *   or add-to-existing would need access to current
- */
 
 #include <config.h>
 
@@ -1570,7 +1565,7 @@ static mus_any_class COMB_CLASS = {
   &_mus_wrap_one_vct_wrapped
 };
 
-mus_any *mus_make_comb (Float scaler, int size, Float *line, int line_size, mus_interp_t type)
+mus_any *mus_make_comb(Float scaler, int size, Float *line, int line_size, mus_interp_t type)
 {
   dly *gen;
   gen = (dly *)mus_make_delay(size, line, line_size, type);
@@ -8155,7 +8150,7 @@ typedef struct {
 
 bool mus_ssb_am_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_SSB_AM));}
 
-Float mus_ssb_am(mus_any *ptr, Float insig)
+Float mus_ssb_am_1(mus_any *ptr, Float insig)
 {
   ssbam *gen = (ssbam *)ptr;
   if (gen->shift_up)
@@ -8163,6 +8158,16 @@ Float mus_ssb_am(mus_any *ptr, Float insig)
 	   (mus_oscil_0(gen->sin_osc) * mus_fir_filter(gen->hilbert, insig)));
   return((mus_oscil_0(gen->cos_osc) * mus_delay_1(gen->dly, insig)) +
 	 (mus_oscil_0(gen->sin_osc) * mus_fir_filter(gen->hilbert, insig)));
+}
+
+Float mus_ssb_am(mus_any *ptr, Float insig, Float fm)
+{
+  ssbam *gen = (ssbam *)ptr;
+  if (gen->shift_up)
+    return((mus_oscil_1(gen->cos_osc, fm) * mus_delay_1(gen->dly, insig)) - 
+	   (mus_oscil_1(gen->sin_osc, fm) * mus_fir_filter(gen->hilbert, insig)));
+  return((mus_oscil_1(gen->cos_osc, fm) * mus_delay_1(gen->dly, insig)) +
+	 (mus_oscil_1(gen->sin_osc, fm) * mus_fir_filter(gen->hilbert, insig)));
 }
 
 static int free_ssb_am(mus_any *ptr) 
@@ -8212,7 +8217,7 @@ static off_t ssb_am_cosines(mus_any *ptr) {return(1);}
 static off_t ssb_am_order(mus_any *ptr) {return(mus_order(((ssbam *)ptr)->dly));}
 static int ssb_am_interp_type(mus_any *ptr) {return(delay_interp_type(((ssbam *)ptr)->dly));}
 static Float *ssb_am_data(mus_any *ptr) {return(filter_data(((ssbam *)ptr)->hilbert));}
-static Float ssb_am_run(mus_any *ptr, Float insig, Float ignore) {return(mus_ssb_am(ptr, insig));}
+static Float ssb_am_run(mus_any *ptr, Float insig, Float fm) {return(mus_ssb_am(ptr, insig, fm));}
 static Float *ssb_am_xcoeffs(mus_any *ptr) {return(mus_xcoeffs(((ssbam *)ptr)->hilbert));}
 static Float ssb_am_xcoeff(mus_any *ptr, int index) {return(mus_xcoeff(((ssbam *)ptr)->hilbert, index));}
 static Float ssb_am_set_xcoeff(mus_any *ptr, int index, Float val) {return(mus_set_xcoeff(((ssbam *)ptr)->hilbert, index, val));}
@@ -8329,3 +8334,12 @@ void init_mus_module(void)
 }
 
 
+/*
+ *   to make global (gen-relative) method change, need way to set gen's class fields
+ *   to make gen-local method change, need to copy class, reassign core, set desired field
+ *   or add-to-existing would need access to current
+ *   -> [local] copy_class(gen), mus_set_[x:describe|frequency...]_method(gen|class, func, [set func])
+ *      mus_defmethod(gen|class, name, func, [set func]) -- needs full decl
+ *   -> [local] mus_class(gen)? (=core)
+ *   will this need an added field in mus_any or perhaps mus_xen for the backpointer?
+ */

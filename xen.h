@@ -21,11 +21,12 @@
  */
 
 #define XEN_MAJOR_VERSION 1
-#define XEN_MINOR_VERSION 13
-#define XEN_VERSION "1.13"
+#define XEN_MINOR_VERSION 14
+#define XEN_VERSION "1.14"
 
 /* HISTORY:
  *
+ *  28-Jun-04: XEN_REQUIRED_ARGS_OK to make it easier to turn off this check.
  *  9-June-04: complex number conversions (Guile) -- I don't think Ruby has complex numbers.
  *  21-May-04: plug some memory leaks in Ruby cases.
  *  23-Feb-04: changed DEBUGGING to XEN_DEBUGGING, added redefinition checks under that switch.
@@ -496,6 +497,7 @@
 
 #define XEN_ARITY(Func)               scm_i_procedure_arity(Func)
 #define XEN_REQUIRED_ARGS(Func)       XEN_TO_SMALL_C_INT(XEN_CAR(XEN_ARITY(Func)))
+#define XEN_REQUIRED_ARGS_OK(Func, Args) (XEN_TO_SMALL_C_INT(XEN_CAR(XEN_ARITY(Func))) == Args)
 #ifdef SCM_CHARP
   #define XEN_KEYWORD_P(Obj)          (SCM_KEYWORDP(Obj))
 #else
@@ -898,6 +900,7 @@ XEN xen_guile_dbg_new_procedure(const char *name, XEN (*func)(), int req, int op
 
 #define XEN_ARITY(Func)                 rb_funcall(Func, rb_intern("arity"), 0)
 #define XEN_REQUIRED_ARGS(Func)         xen_rb_required_args(XEN_ARITY(Func))
+#define XEN_REQUIRED_ARGS_OK(Func, Args) (xen_rb_required_args(XEN_ARITY(Func)) == Args)
 #define XEN_KEYWORD_EQ_P(k1, k2)        ((k1) == (k2))
 #define XEN_MAKE_KEYWORD(Arg)           C_STRING_TO_XEN_SYMBOL(Arg)
 #define XEN_YES_WE_HAVE(a)              rb_provide(a)
@@ -1424,6 +1427,7 @@ typedef XEN (*XEN_CATCH_BODY_TYPE) (void *data);
 #define XEN_APPLY_NO_CATCH(Func, Args, Caller) 0
 #define XEN_ARITY(Func) 0
 #define XEN_REQUIRED_ARGS(Func) 0
+#define XEN_REQUIRED_ARGS_OK(Func, Args) false
 #define XEN_KEYWORD_P(Obj) 0
 #define XEN_KEYWORD_EQ_P(k1, k2) 0
 #define XEN_MAKE_KEYWORD(Arg) 0

@@ -602,7 +602,7 @@ static void stop_playing_with_toggle(dac_info *dp, dac_toggle_t toggle, with_hoo
     {
       if ((sp) && (IS_PLAYER(sp))) {free_player(sp); sp = NULL;}
     }
-  free_dac_info(dp, reason);
+  free_dac_info(dp, reason); /* this will call the stop-function, if any */
   if ((sp) && (sp_stopping) && (sp->delete_me)) 
     {
       if (sp->delete_me != (void *)1) clear_deleted_snd_info(sp->delete_me);
@@ -1198,6 +1198,7 @@ static void cleanup_dac_hook(void)
 
 static int fill_dac_buffers(dac_state *dacp, int write_ok)
 {
+  /* return value used only by Apply */
   int i, j;
   bool cursor_change = false;
   int bytes, frames;
@@ -1222,6 +1223,20 @@ static int fill_dac_buffers(dac_state *dacp, int write_ok)
 		 S_play_hook);
       cursor_time += frames;
       cursor_change = (cursor_time >= (int)(dacp->srate * cursor_update_interval(ss)));
+      /* the check for hooks and so on has to be separate from the fill loop to keep everything synchronized across stop-function replay requests etc */
+
+      /* first check for disasters (user closed sound while playing it or running Apply!) */
+      for (i = 0; i <= max_active_slot; i++)
+	{
+	  dp = play_list[i];
+	  if (dp)
+	    {
+	      sp = dp->sp; /* can be nil if region playing */
+	      if ((sp) && ((sp->inuse == SOUND_IDLE) || (sp->playing == 0)))
+		stop_playing(dp, WITHOUT_HOOK, PLAY_CLOSE); 
+	    }
+	}
+      /* now read currently active chans and update locations -- don't call any hooks or stop-functions! */
       for (i = 0; i <= max_active_slot; i++)
 	{
 	  dp = play_list[i];
@@ -1229,14 +1244,6 @@ static int fill_dac_buffers(dac_state *dacp, int write_ok)
 	    {
 	      /* check for moving cursor */
 	      sp = dp->sp; /* can be nil if region playing */
-	      if ((sp) && ((sp->inuse == SOUND_IDLE) || (sp->playing == 0)))
-		{
-		  stop_playing(dp, WITHOUT_HOOK, PLAY_CLOSE); 
-		  return(frames);
-		}
-	      /*
-	      fprintf(stderr,"%s[%d]: " OFF_TD "\n", sp->filename, dp->cp->chan, current_location(dp->chn_fd));
-	      */
 	      if ((sp) && 
 		  (cursor_change) && 
 		  (sp->cursor_follows_play != DONT_FOLLOW) &&
@@ -1252,10 +1259,15 @@ static int fill_dac_buffers(dac_state *dacp, int write_ok)
 		  cursor_moveto_without_verbosity(dp->cp, loc);
 		  dp->cp->just_zero = old_just_zero;
 		}
-
+	      /*
+	      fprintf(stderr,"fill %s[%d]: " OFF_TD "\n", sp->filename, dp->cp->chan, current_location(dp->chn_fd));
+	      */
 	      /* add a buffer's worth from the current source into dp->audio_chan */
 	      buf = dac_buffers[dp->audio_chan];
-	      if (buf == NULL) return(-1);
+#if DEBUGGING
+	      if (buf == NULL) {fprintf(stderr, "how did we lose dac channel %d?", dp->audio_chan); abort();}
+#endif
+	      if (buf == NULL) continue;
 	      revin = rev_ins[dp->audio_chan];
 	      switch (choose_dac_op(dp, sp))
 		{
@@ -1378,14 +1390,27 @@ static int fill_dac_buffers(dac_state *dacp, int write_ok)
 		  dp->cur_index = ind;
 		  break;
 		}
-
-	      /* check for EOF or specified end point */
 	      if (dp->end != NO_END_SPECIFIED)
 		{
 		  dp->end -= frames;
 		  if (dp->end < 0) dp->end = 0;
 		}
-	      if (write_ok == WRITE_TO_DAC)
+	    }
+	}/* fill-case loop through max_active_slot */
+
+      if (global_rev) 
+	for (i = 0; i < frames; i++)
+	  reverb(global_rev, rev_ins, dac_buffers, i);
+
+      /* now hooks, stop-function etc */
+      for (i = 0; i <= max_active_slot; i++)
+	{
+	  dp = play_list[i];
+	  if (dp)
+	    {
+	      sp = dp->sp; /* can be nil if region playing */
+	      /* check for EOF or specified end point */
+	      if (write_ok == WRITE_TO_DAC) /* not Apply */
 		{
 		  if (dp->end == 0)
 		    stop_playing(dp, WITH_HOOK, PLAY_COMPLETE);
@@ -1404,34 +1429,24 @@ static int fill_dac_buffers(dac_state *dacp, int write_ok)
 			}
 		    }
 		}
-	      else /* apply always sets the end point explicitly */
+	      else /* Apply, always sets the end point explicitly */
 		{
 		  if (dp->end == 0)
 		    {
 		      stop_playing_all_sounds_without_hook(PLAY_COMPLETE);
-#if DEBUGGING
-		      if (play_list_members > 0) fprintf(stderr, "apply still running? %d\n", play_list_members);
-#endif
 		      play_list_members = 0; 
 		      max_active_slot = -1;
 		    }
 		}
 	    }
-	} /* loop through max_active_slot */
-      if (global_rev) 
+	} /* stop-case loop through max_active_slot */
+
+      if ((global_rev) &&
+	  (play_list_members == 0))
 	{
-	  for (i = 0; i < frames; i++)
-	    {
-	      reverb(global_rev, rev_ins, dac_buffers, i);
-	    }
-	  if (play_list_members == 0)
-	    {
-	      dacp->reverb_ring_frames -= frames;
-	      if (dacp->reverb_ring_frames <= 0) 
-		{
-		  free_reverb();
-		}
-	    }
+	  dacp->reverb_ring_frames -= frames;
+	  if (dacp->reverb_ring_frames <= 0) 
+	    free_reverb();
 	}
     }
 
@@ -2368,7 +2383,7 @@ void clear_players(void)
 		    {
 		      play_list[k] = NULL;
 		      play_list_members--;
-		      free_dac_info(dp, PLAY_CLOSE); /* snd-data.c in free_snd_info */
+		      free_dac_info(dp, PLAY_CLOSE); /* calls stop-function, if any. used in snd-data.c in free_snd_info */
 		    }
 		}
 	      free_player(sp);
@@ -2541,7 +2556,9 @@ static XEN g_set_dac_size(XEN val)
 #if 0
 #if MAC_OSX
   if (len > 256) len = 256;
-  /* actual built-in buffer seems to be 4096, and with auto-conversions, that means 512 or greater can overflow. */
+  /* actual built-in buffer seems to be 4096, and with auto-conversions, that means 512 or greater can overflow. 
+     mulaw 22050 mono -> float 44100 stereo => 16:1 expansion
+   */
 #endif
 #endif
   if (len > 0)

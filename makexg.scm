@@ -1462,7 +1462,7 @@
 (hey "/* type checks for callback wrappers */~%")
 
 (define (callback-p func)
-  (hey "#define XEN_~A_P(Arg)  XEN_FALSE_P(Arg) || (XEN_PROCEDURE_P(Arg) && (XEN_REQUIRED_ARGS(Arg) == ~D))~%"
+  (hey "#define XEN_~A_P(Arg)  XEN_FALSE_P(Arg) || (XEN_PROCEDURE_P(Arg) && (XEN_REQUIRED_ARGS_OK(Arg, ~D)))~%"
        (symbol->string (callback-name func))
        (length (callback-args func))))
 
@@ -1470,7 +1470,7 @@
 (with-23 hey (lambda () (for-each callback-p callbacks-23)))
 
 (hey "#define XEN_lambda_P(Arg) XEN_PROCEDURE_P(Arg)~%")
-(hey "#define XEN_GCallback_P(Arg) XEN_PROCEDURE_P(Arg) && ((XEN_REQUIRED_ARGS(Arg) == 2) || (XEN_REQUIRED_ARGS(Arg) == 3))~%")
+(hey "#define XEN_GCallback_P(Arg) XEN_PROCEDURE_P(Arg) && ((XEN_REQUIRED_ARGS_OK(Arg, 2)) || (XEN_REQUIRED_ARGS_OK(Arg, 3)))~%")
 
 (define (xen-callback func)
   (hey "#define XEN_TO_C_~A(Arg) XEN_FALSE_P(Arg) ? NULL : gxg_~A~%"
@@ -1480,7 +1480,7 @@
 (for-each xen-callback callbacks)
 (with-23 hey (lambda () (for-each xen-callback callbacks-23)))
 
-(hey "#define XEN_TO_C_GCallback(Arg) ((XEN_REQUIRED_ARGS(Arg) == 3) ? (GCallback)gxg_func3 : (GCallback)gxg_func2)~%")
+(hey "#define XEN_TO_C_GCallback(Arg) ((XEN_REQUIRED_ARGS_OK(Arg, 3)) ? (GCallback)gxg_func3 : (GCallback)gxg_func2)~%")
 (hey "#define XEN_TO_C_lambda_data(Arg) (gpointer)gxg_ptr~%")
 (hey "#define XEN_lambda_data_P(Arg) 1~%")
 
@@ -2106,7 +2106,7 @@
 				       (hey "  return(xen_return_first(XEN_FALSE, arglist));~%")
 				       (hey "  return(XEN_FALSE);~%"))))))))
 		 (begin ; 'lambda (see line 1846)
-		   (hey "if (XEN_REQUIRED_ARGS(func) == 2)~%")
+		   (hey "if (XEN_REQUIRED_ARGS_OK(func, 2))~%")
 		   (hey-start)
 		   (if (not (string=? return-type "void"))
 		       (hey-on "       return(C_TO_XEN_~A(~A(" (no-stars return-type) name)

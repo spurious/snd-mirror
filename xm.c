@@ -1647,7 +1647,7 @@ static XtCallbackList XEN_TO_C_XtCallbackList(XEN call_list1)
       if (XEN_LIST_LENGTH(call_list) == 2)
 	data = XEN_CADR(call_list);
       else data = XEN_FALSE;
-      if ((XEN_PROCEDURE_P(func)) && (XEN_REQUIRED_ARGS(func) == 3))
+      if ((XEN_PROCEDURE_P(func)) && (XEN_REQUIRED_ARGS_OK(func, 3)))
 	{
 	  cl[call_i].callback = gxm_XtCallbackProc;
 	  descr = C_TO_XEN_XM_XtCallback(XEN_CAR(call_list), data);
@@ -1748,7 +1748,7 @@ static Arg *XEN_TO_C_Args(XEN inargl)
 	  break;
 #if MOTIF_2
 	case XM_PARSE_CALLBACK:
-	  if ((XEN_PROCEDURE_P(value)) && (XEN_REQUIRED_ARGS(value) == 8))
+	  if ((XEN_PROCEDURE_P(value)) && (XEN_REQUIRED_ARGS_OK(value, 8)))
 	    {
 	      XtSetArg(args[i], name, (unsigned long)gxm_Parse_Callback);
 	      descr = C_TO_XEN_XM_Parse_Callback(value);
@@ -1763,7 +1763,7 @@ static Arg *XEN_TO_C_Args(XEN inargl)
 	  break;
 #endif
 	case XM_DROP_CALLBACK:
-	  if ((XEN_PROCEDURE_P(value)) && (XEN_REQUIRED_ARGS(value) == 3))
+	  if ((XEN_PROCEDURE_P(value)) && (XEN_REQUIRED_ARGS_OK(value, 3)))
 	    {
 	      XtSetArg(args[i], name, (unsigned long)gxm_Drop_Callback);
 	      descr = C_TO_XEN_XM_Drop_Callback(value);
@@ -1777,7 +1777,7 @@ static Arg *XEN_TO_C_Args(XEN inargl)
 	    }
 	  break;
 	case XM_DRAG_CALLBACK:
-	  if ((XEN_PROCEDURE_P(value)) && (XEN_REQUIRED_ARGS(value) == 3))
+	  if ((XEN_PROCEDURE_P(value)) && (XEN_REQUIRED_ARGS_OK(value, 3)))
 	    {
 	      XtSetArg(args[i], name, (unsigned long)gxm_Drag_Callback);
 	      descr = C_TO_XEN_XM_Drag_Callback(value);
@@ -1791,7 +1791,7 @@ static Arg *XEN_TO_C_Args(XEN inargl)
 	    }
 	  break;
 	case XM_SEARCH_CALLBACK:    /* XmNfileSearchProc and XmNdirSearchProc, XmSearchProc XmFileSelectionBox 756 */
-	  if ((XEN_PROCEDURE_P(value)) && (XEN_REQUIRED_ARGS(value) == 2))
+	  if ((XEN_PROCEDURE_P(value)) && (XEN_REQUIRED_ARGS_OK(value, 2)))
 	    {
 	      XtSetArg(args[i], name, (unsigned long)gxm_XmSearchProc);
 	      descr = C_TO_XEN_XM_XmSearchProc(value);
@@ -1805,7 +1805,7 @@ static Arg *XEN_TO_C_Args(XEN inargl)
 	    }
 	  break;
 	case XM_QUALIFY_CALLBACK:   /* XmNqualifySearchDataProc, XmQualifyProc */
-	  if ((XEN_PROCEDURE_P(value)) && (XEN_REQUIRED_ARGS(value) == 3))
+	  if ((XEN_PROCEDURE_P(value)) && (XEN_REQUIRED_ARGS_OK(value, 3)))
 	    {
 	      XtSetArg(args[i], name, (unsigned long)gxm_XmQualifyProc);
 	      descr = C_TO_XEN_XM_XmQualifyProc(value);
@@ -1819,7 +1819,7 @@ static Arg *XEN_TO_C_Args(XEN inargl)
 	    }
 	  break;
 	case XM_ORDER_CALLBACK:
-	  if ((XEN_PROCEDURE_P(value)) && (XEN_REQUIRED_ARGS(value) == 1))
+	  if ((XEN_PROCEDURE_P(value)) && (XEN_REQUIRED_ARGS_OK(value, 1)))
 	    {
 	      XtSetArg(args[i], name, (unsigned long)gxm_XtOrderProc);
 	      descr = C_TO_XEN_XM_XtOrderProc(value);
@@ -1844,7 +1844,7 @@ static Arg *XEN_TO_C_Args(XEN inargl)
 	  XtSetArg(args[i], name, (unsigned long)gxm_XtConvertSelectionIncrProc);
 	  break;
 	case XM_ALLOC_COLOR_CALLBACK:     /* XmNcolorAllocationProc, XmAllocColorProc XmScreen 921 */
-	  if ((XEN_PROCEDURE_P(value)) && (XEN_REQUIRED_ARGS(value) == 3))
+	  if ((XEN_PROCEDURE_P(value)) && (XEN_REQUIRED_ARGS_OK(value, 3)))
 	    {
 	      XtSetArg(args[i], name, (unsigned long)gxm_XmAllocColorProc);
 	      if (XEN_PROCEDURE_P(xm_XmColorAllocationProc)) xm_unprotect(xm_XmColorAllocationProc);
@@ -1859,7 +1859,7 @@ static Arg *XEN_TO_C_Args(XEN inargl)
 	    }
 	  break;
 	case XM_SCREEN_COLOR_CALLBACK:     /* XmNcolorCalculationProc, XmScreen 921 */
-	  if ((XEN_PROCEDURE_P(value)) && (XEN_REQUIRED_ARGS(value) == 2))
+	  if ((XEN_PROCEDURE_P(value)) && (XEN_REQUIRED_ARGS_OK(value, 2)))
 	    {
 	      XtSetArg(args[i], name, (unsigned long)gxm_XmColorCalculationProc);
 	      if (XEN_PROCEDURE_P(xm_XmColorCalculationProc)) xm_unprotect(xm_XmColorCalculationProc);
@@ -1874,7 +1874,7 @@ static Arg *XEN_TO_C_Args(XEN inargl)
 	    }
 	  break;
 	case XM_POPUP_CALLBACK:     /* XmNcreatePopupChildProc, XtCreatePopupChildProc */
-	  if ((XEN_PROCEDURE_P(value)) && (XEN_REQUIRED_ARGS(value) == 1))
+	  if ((XEN_PROCEDURE_P(value)) && (XEN_REQUIRED_ARGS_OK(value, 1)))
 	    {
 	      XtSetArg(args[i], name, (unsigned long)gxm_XtPopupChild);
 	      descr = C_TO_XEN_XM_XtPopupChild(value);
@@ -2592,7 +2592,7 @@ static XEN gxm_XmTransferValue(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5)
 transfers data to a destination"
   XEN_ASSERT_TYPE(XEN_ULONG_P(arg1), arg1, 1, "XmTransferValue", "XtPointer");
   XEN_ASSERT_TYPE(XEN_Atom_P(arg2), arg2, 2, "XmTransferValue", "an Atom");
-  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg3) && (XEN_REQUIRED_ARGS(arg3) == 3), arg3, 3, "XmTransferValue", "XtCallbackProc (3 args)");
+  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg3) && (XEN_REQUIRED_ARGS_OK(arg3, 3)), arg3, 3, "XmTransferValue", "XtCallbackProc (3 args)");
   XEN_ASSERT_TYPE(XEN_Time_P(arg5), arg5, 5, "XmTransferValue", "Time");
   XmTransferValue((XtPointer)XEN_TO_C_ULONG(arg1), 
 		  XEN_TO_C_Atom(arg2), 
@@ -4216,7 +4216,7 @@ static XEN gxm_XmSetColorCalculation(XEN arg1)
     }
   else
     {
-      XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg1) && (XEN_REQUIRED_ARGS(arg1) == 1), arg1, 1, "XmSetColorCalculation", "(XmColorProc but 1 arg)");
+      XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg1) && (XEN_REQUIRED_ARGS_OK(arg1, 1)), arg1, 1, "XmSetColorCalculation", "(XmColorProc but 1 arg)");
       xm_protect(arg1);
       xm_XmColorProc = arg1;
       XmSetColorCalculation((XmColorProc)gxm_XmColorProc);
@@ -4286,7 +4286,7 @@ static XEN gxm_XmVaCreateSimpleCheckBox(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
   Widget w;
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmVaCreateSimpleCheckBox", "Widget");
   XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmVaCreateSimpleCheckBox", "String");
-  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg3) && (XEN_REQUIRED_ARGS(arg3) == 3), arg3, 3, "XmVaCreateSimpleCheckBox", "XtCallbackProc (3 args)");
+  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg3) && (XEN_REQUIRED_ARGS_OK(arg3, 3)), arg3, 3, "XmVaCreateSimpleCheckBox", "XtCallbackProc (3 args)");
   XEN_ASSERT_TYPE(XEN_LIST_P(arg4), arg4, 4, "XmVaCreateSimpleCheckBox", "List");
   arg4 = XEN_CONS_2(C_TO_XEN_STRING(XmNvalueChangedCallback),
 		    XEN_LIST_2(arg3, XEN_FALSE), /* XtCallbackList technically */
@@ -4316,7 +4316,7 @@ static XEN gxm_XmVaCreateSimpleRadioBox(XEN arg1, XEN arg2, XEN arg3, XEN arg4, 
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmVaCreateSimpleRadioBox", "Widget");
   XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmVaCreateSimpleRadioBox", "String");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XmVaCreateSimpleRadioBox", "int");
-  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg4) && (XEN_REQUIRED_ARGS(arg4) == 3), arg4, 4, "XmVaCreateSimpleRadioBox", "XtCallbackProc (3 args");
+  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg4) && (XEN_REQUIRED_ARGS_OK(arg4, 3)), arg4, 4, "XmVaCreateSimpleRadioBox", "XtCallbackProc (3 args");
   XEN_ASSERT_TYPE(XEN_LIST_P(arg5), arg5, 5, "XmVaCreateSimpleRadioBox", "List");
   arg5 = XEN_CONS_2(C_TO_XEN_STRING(XmNvalueChangedCallback),
 		    XEN_LIST_2(arg4, XEN_FALSE),
@@ -4349,7 +4349,7 @@ KeySym option_mnemonic, int button_set, XtCallbackProc callback, args)"
   XEN_ASSERT_TYPE(XEN_XmString_P(arg3), arg3, 3, "XmVaCreateSimpleOptionMenu", "XmString");
   XEN_ASSERT_TYPE(XEN_KeySym_P(arg4), arg4, 4, "XmVaCreateSimpleOptionMenu", "KeySym");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg5), arg5, 5, "XmVaCreateSimpleOptionMenu", "int");
-  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg6) && (XEN_REQUIRED_ARGS(arg6) == 3), arg6, 6, "XmVaCreateSimpleOptionMenu", "XtCallbackProc (3 args)");
+  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg6) && (XEN_REQUIRED_ARGS_OK(arg6, 3)), arg6, 6, "XmVaCreateSimpleOptionMenu", "XtCallbackProc (3 args)");
   XEN_ASSERT_TYPE(XEN_LIST_P(arg7), arg7, 7, "XmVaCreateSimpleOptionMenu", "List");
   arg7 = XEN_CONS_2(C_TO_XEN_STRING(XmNlabelString),
 		    arg3,
@@ -4382,7 +4382,7 @@ static XEN gxm_XmVaCreateSimplePulldownMenu(XEN arg1, XEN arg2, XEN arg3, XEN ar
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmVaCreateSimplePulldownMenu", "Widget");
   XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmVaCreateSimplePulldownMenu", "String");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XmVaCreateSimplePulldownMenu", "int");
-  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg4) && (XEN_REQUIRED_ARGS(arg4) == 3), arg4, 4, "XmVaCreateSimplePulldownMenu", "XtCallbackProc (3 args)");
+  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg4) && (XEN_REQUIRED_ARGS_OK(arg4, 3)), arg4, 4, "XmVaCreateSimplePulldownMenu", "XtCallbackProc (3 args)");
   XEN_ASSERT_TYPE(XEN_LIST_P(arg5), arg5, 5, "XmVaCreateSimplePulldownMenu", "List");
   arg5 = XEN_CONS_2(C_TO_XEN_STRING(XmNvalueChangedCallback),
 		    XEN_LIST_2(arg4, XEN_FALSE),
@@ -4410,7 +4410,7 @@ static XEN gxm_XmVaCreateSimplePopupMenu(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
   Widget w;
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmVaCreateSimplePopupMenu", "Widget");
   XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmVaCreateSimplePopupMenu", "String");
-  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg3) && (XEN_REQUIRED_ARGS(arg3) == 3), arg3, 3, "XmVaCreateSimplePopupMenu", "XtCallbackProc (3 args)");
+  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg3) && (XEN_REQUIRED_ARGS_OK(arg3, 3)), arg3, 3, "XmVaCreateSimplePopupMenu", "XtCallbackProc (3 args)");
   XEN_ASSERT_TYPE(XEN_LIST_P(arg4), arg4, 4, "XmVaCreateSimplePopupMenu", "List");
   arg4 = XEN_CONS_2(C_TO_XEN_STRING(XmNvalueChangedCallback),
 		    XEN_LIST_2(arg3, XEN_FALSE),
@@ -7370,7 +7370,7 @@ sets up a storage and data structure, returns id"
   XEN_ASSERT_TYPE(XEN_XmString_P(arg3), arg3, 3, "XmClipboardStartCopy", "XmString");
   XEN_ASSERT_TYPE(XEN_Time_P(arg4), arg4, 4, "XmClipboardStartCopy", "Time");
   XEN_ASSERT_TYPE(XEN_Widget_P(arg5), arg5, 5, "XmClipboardStartCopy", "Widget");
-  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg6) && (XEN_REQUIRED_ARGS(arg6) == 4), arg6, 6, "XmClipboardStartCopy", "(XmCutPasteProc widget data priv reason)");
+  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg6) && (XEN_REQUIRED_ARGS_OK(arg6, 4)), arg6, 6, "XmClipboardStartCopy", "(XmCutPasteProc widget data priv reason)");
   xm_protect(arg6);
   if (XEN_PROCEDURE_P(xm_XmCutPasteProc)) xm_unprotect(xm_XmCutPasteProc);
   xm_XmCutPasteProc = arg6;
@@ -7403,7 +7403,7 @@ static XEN gxm_XmClipboardBeginCopy(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN 
   XEN_ASSERT_TYPE(XEN_Window_P(arg2), arg2, 2, "XmClipboardBeginCopy", "Window");
   XEN_ASSERT_TYPE(XEN_XmString_P(arg3), arg3, 3, "XmClipboardBeginCopy", "XmString");
   XEN_ASSERT_TYPE(XEN_Widget_P(arg4), arg4, 4, "XmClipboardBeginCopy", "Widget");
-  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg5) && (XEN_REQUIRED_ARGS(arg5) == 4), arg5, 5, "XmClipboardBeginCopy", "(XmVoidProc widget data priv reason)");
+  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg5) && (XEN_REQUIRED_ARGS_OK(arg5, 4)), arg5, 5, "XmClipboardBeginCopy", "(XmVoidProc widget data priv reason)");
   xm_protect(arg5);
   if (XEN_PROCEDURE_P(xm_XmVoidProc)) xm_unprotect(xm_XmVoidProc);
   xm_XmVoidProc = arg5;
@@ -7848,8 +7848,8 @@ to be executed when a protocol message is received from MWM"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmSetProtocolHooks", "Widget");
   XEN_ASSERT_TYPE(XEN_Atom_P(arg2), arg2, 2, "XmSetProtocolHooks", "Atom");
   XEN_ASSERT_TYPE(XEN_Atom_P(arg3), arg3, 3, "XmSetProtocolHooks", "Atom");
-  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg4) && (XEN_REQUIRED_ARGS(arg4) == 3), arg4, 4, "XmSetProtocolHooks", "(XtCallbackProc widget data callb)");
-  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg6) && (XEN_REQUIRED_ARGS(arg6) == 3), arg6, 6, "XmSetProtocolHooks", "(XtCallbackProc widget data callb)");
+  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg4) && (XEN_REQUIRED_ARGS_OK(arg4, 3)), arg4, 4, "XmSetProtocolHooks", "(XtCallbackProc widget data callb)");
+  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg6) && (XEN_REQUIRED_ARGS_OK(arg6, 3)), arg6, 6, "XmSetProtocolHooks", "(XtCallbackProc widget data callb)");
   descr1 = C_TO_XEN_XM_ProtocolHook(arg4, arg5, arg2, arg3);
   descr2 = C_TO_XEN_XM_ProtocolHook(arg6, arg7, arg2, arg3);
   xm_protect(descr1);
@@ -7901,7 +7901,7 @@ XtPointer closure) removes a callback from the internal list"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmRemoveProtocolCallback", "Widget");
   XEN_ASSERT_TYPE(XEN_Atom_P(arg2), arg2, 2, "XmRemoveProtocolCallback", "Atom");
   XEN_ASSERT_TYPE(XEN_Atom_P(arg3), arg3, 3, "XmRemoveProtocolCallback", "Atom"); 
-  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg4) && (XEN_REQUIRED_ARGS(arg4) == 3), arg4, 4, "XmRemoveProtocolCallback", "XtCallbackProc (3 args)");
+  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg4) && (XEN_REQUIRED_ARGS_OK(arg4, 3)), arg4, 4, "XmRemoveProtocolCallback", "XtCallbackProc (3 args)");
   descr = C_TO_XEN_XM_ProtocolProc(arg4, arg5, arg2, arg3);
   xm_protect(descr);
   loc = map_over_protected_elements(unprotect_protocolproc, (unsigned long)descr);
@@ -7925,7 +7925,7 @@ XtPointer closure) adds client callbacks for a protocol"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmAddProtocolCallback", "Widget");
   XEN_ASSERT_TYPE(XEN_Atom_P(arg2), arg2, 2, "XmAddProtocolCallback", "Atom");
   XEN_ASSERT_TYPE(XEN_Atom_P(arg3), arg3, 3, "XmAddProtocolCallback", "Atom");
-  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg4) && (XEN_REQUIRED_ARGS(arg4) == 3), arg4, 4, "XmAddProtocolCallback", "(XtCallbackProc widget data callb)");
+  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg4) && (XEN_REQUIRED_ARGS_OK(arg4, 3)), arg4, 4, "XmAddProtocolCallback", "(XtCallbackProc widget data callb)");
   descr = C_TO_XEN_XM_ProtocolProc(arg4, arg5, arg2, arg3);
   xm_protect(descr);
   XmAddProtocolCallback(XEN_TO_C_Widget(arg1), 
@@ -8019,7 +8019,7 @@ retrieves and saves data that would normally be printed by the X Print Server"
   XEN descr;
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XmPrintToFile", "Display*");
   XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmPrintToFile", "char*");
-  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg3) && (XEN_REQUIRED_ARGS(arg3) == 4), arg3, 3, "XmPrintToFile", "XPFinishProc (4 args)");
+  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg3) && (XEN_REQUIRED_ARGS_OK(arg3, 4)), arg3, 3, "XmPrintToFile", "XPFinishProc (4 args)");
   descr = XEN_LIST_3(XEN_FALSE, arg3, arg4);
   xm_protect(descr);
   return(C_TO_XEN_INT(XmPrintToFile(XEN_TO_C_Display(arg1), 
@@ -10380,7 +10380,7 @@ static XEN gxm_XPeekIfEvent(XEN arg1, XEN arg2, XEN arg3)
   XEvent *e;
   int val;
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XPeekIfEvent", "Display*");
-  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg2) && (XEN_REQUIRED_ARGS(arg2) == 3), arg2, 2, "XPeekIfEvent", "(Bool_Proc dpy ev data)");
+  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg2) && (XEN_REQUIRED_ARGS_OK(arg2, 3)), arg2, 2, "XPeekIfEvent", "(Bool_Proc dpy ev data)");
   e = (XEvent *)CALLOC(1, sizeof(XEvent));
   val = XPeekIfEvent(XEN_TO_C_Display(arg1), 
 		     e, 
@@ -10593,7 +10593,7 @@ an event, which indicates an event in the queue matches."
   XEvent *e;
   int val;
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XIfEvent", "Display*");
-  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg2) && (XEN_REQUIRED_ARGS(arg2) == 3), arg2, 2, "XIfEvent", "(Bool_Proc dpy ev data)");
+  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg2) && (XEN_REQUIRED_ARGS_OK(arg2, 3)), arg2, 2, "XIfEvent", "(Bool_Proc dpy ev data)");
   e = (XEvent *)CALLOC(1, sizeof(XEvent));
   val = XIfEvent(XEN_TO_C_Display(arg1), 
 		 e, 
@@ -12093,7 +12093,7 @@ static XEN gxm_XCheckIfEvent(XEN arg1, XEN arg2, XEN arg3)
   XEvent *e;
   int val;
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XCheckIfEvent", "Display*");
-  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg2) && (XEN_REQUIRED_ARGS(arg2) == 3), arg2, 2, "XCheckIfEvent", "(Bool_Proc dpy ev data)");
+  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg2) && (XEN_REQUIRED_ARGS_OK(arg2, 3)), arg2, 2, "XCheckIfEvent", "(Bool_Proc dpy ev data)");
   e = (XEvent *)CALLOC(1, sizeof(XEvent));
   val = XCheckIfEvent(XEN_TO_C_Display(arg1), 
 		      e, 
@@ -14511,7 +14511,7 @@ value of the selection converted to each of the targets."
   XEN_ASSERT_TYPE(XEN_Atom_P(arg2), arg2, 2, "XtGetSelectionValuesIncremental", "Atom");
   XEN_ASSERT_TYPE(XEN_LIST_P(arg3), arg3, 3, "XtGetSelectionValuesIncremental", "list of Atom");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg4), arg4, 4, "XtGetSelectionValuesIncremental", "int");
-  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg5) && (XEN_REQUIRED_ARGS(arg5) == 7), arg5, 5, "XtGetSelectionValuesIncremental", "XtSelectionCallbackProc");
+  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg5) && (XEN_REQUIRED_ARGS_OK(arg5, 7)), arg5, 5, "XtGetSelectionValuesIncremental", "XtSelectionCallbackProc");
   XEN_ASSERT_TYPE(XEN_Time_P(arg7), arg7, 7, "XtGetSelectionValuesIncremental", "Time");
   len = XEN_TO_C_INT(arg4);
   if (len <= 0) return(XEN_FALSE);
@@ -14535,7 +14535,7 @@ to XtGetSelectionValue except that the selection_callback procedure will be call
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XtGetSelectionValueIncremental", "Widget");
   XEN_ASSERT_TYPE(XEN_Atom_P(arg2), arg2, 2, "XtGetSelectionValueIncremental", "Atom");
   XEN_ASSERT_TYPE(XEN_Atom_P(arg3), arg3, 3, "XtGetSelectionValueIncremental", "Atom");
-  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg4) && (XEN_REQUIRED_ARGS(arg4) == 7), arg4, 4, "XtGetSelectionValueIncremental", "XtSelectionCallbackProc");
+  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg4) && (XEN_REQUIRED_ARGS_OK(arg4, 7)), arg4, 4, "XtGetSelectionValueIncremental", "XtSelectionCallbackProc");
   XEN_ASSERT_TYPE(XEN_Time_P(arg6), arg6, 6, "XtGetSelectionValueIncremental", "Time");
   xm_XtSelectionCallback_Descr = XEN_LIST_2(arg4, arg5);
   loc = xm_protect(xm_XtSelectionCallback_Descr);
@@ -14601,7 +14601,7 @@ converted to each of the targets."
   XEN_ASSERT_TYPE(XEN_Atom_P(arg2), arg2, 2, "XtGetSelectionValues", "Atom");
   XEN_ASSERT_TYPE(XEN_LIST_P(arg3), arg3, 3, "XtGetSelectionValues", "list of Atom");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg4), arg4, 4, "XtGetSelectionValues", "int");
-  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg5) && (XEN_REQUIRED_ARGS(arg5) == 7), arg5, 5, "XtGetSelectionValues", "XtSelectionCallbackProc");
+  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg5) && (XEN_REQUIRED_ARGS_OK(arg5, 7)), arg5, 5, "XtGetSelectionValues", "XtSelectionCallbackProc");
   XEN_ASSERT_TYPE(XEN_Time_P(arg7), arg7, 7, "XtGetSelectionValues", "Time");
   len = XEN_TO_C_INT(arg4);
   if (len <= 0) return(XEN_FALSE);
@@ -14625,7 +14625,7 @@ selection that has been converted to the target type. "
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XtGetSelectionValue", "Widget");
   XEN_ASSERT_TYPE(XEN_Atom_P(arg2), arg2, 2, "XtGetSelectionValue", "Atom");
   XEN_ASSERT_TYPE(XEN_Atom_P(arg3), arg3, 3, "XtGetSelectionValue", "Atom");
-  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg4) && (XEN_REQUIRED_ARGS(arg4) == 7), arg4, 4, "XtGetSelectionValue", "XtSelectionCallbackProc");
+  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg4) && (XEN_REQUIRED_ARGS_OK(arg4, 7)), arg4, 4, "XtGetSelectionValue", "XtSelectionCallbackProc");
   XEN_ASSERT_TYPE(XEN_Time_P(arg6), arg6, 6, "XtGetSelectionValue", "Time");
   xm_XtSelectionCallback_Descr = XEN_LIST_2(arg4, arg5);
   loc = xm_protect(xm_XtSelectionCallback_Descr);
@@ -14707,7 +14707,7 @@ static XEN gxm_XtResolvePathname(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg
   XEN_ASSERT_TYPE(XEN_FALSE_P(arg6) || XEN_LIST_P(arg6), arg6, 6, "XtResolvePathname", "Substitution list");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg7), arg7, 7, "XtResolvePathname", "int");
   XEN_ASSERT_TYPE(XEN_FALSE_P(arg8) || 
-		  (XEN_PROCEDURE_P(arg8) && (XEN_REQUIRED_ARGS(arg8) == 1)), 
+		  (XEN_PROCEDURE_P(arg8) && (XEN_REQUIRED_ARGS_OK(arg8, 1))), 
 		  arg8, 8, "XtResolvePathname", "XtFilePredicate (takes 1 arg)");
   if (XEN_LIST_P(arg6)) 
     {
@@ -14752,7 +14752,7 @@ searches for a file using substitutions in the path list"
   XEN_ASSERT_TYPE(XEN_FALSE_P(arg2) || XEN_LIST_P(arg2), arg2, 2, "XtFindFile", "Substitution list");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XtFindFile", "int");
   XEN_ASSERT_TYPE(XEN_FALSE_P(arg4) || 
-		  (XEN_PROCEDURE_P(arg4) && (XEN_REQUIRED_ARGS(arg4) == 1)), 
+		  (XEN_PROCEDURE_P(arg4) && (XEN_REQUIRED_ARGS_OK(arg4, 1))), 
 		  arg4, 4, "XtFindFile", "XtFilePredicate (takes 1 arg)");
   if (XEN_LIST_P(arg2)) 
     {
@@ -14874,7 +14874,7 @@ application identified by app_context."
   int gc_loc;
   XEN descr;
   XEN_ASSERT_TYPE(XEN_XtAppContext_P(arg1), arg1, 1, "XtAppAddWorkProc", "XtAppContext");
-  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg2) && (XEN_REQUIRED_ARGS(arg2) == 1), arg2, 2, "XtAppAddWorkProc", "(XtWorkProc data)");
+  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg2) && (XEN_REQUIRED_ARGS_OK(arg2, 1)), arg2, 2, "XtAppAddWorkProc", "(XtWorkProc data)");
   
   descr = C_TO_XEN_XM_Background(arg2, (XEN_BOUND_P(arg3)) ? arg3 : XEN_FALSE);
   gc_loc = xm_protect(descr);
@@ -14893,7 +14893,7 @@ static XEN gxm_XtAddWorkProc(XEN arg1, XEN arg2)
   XtWorkProcId id;
   int gc_loc;
   XEN descr;
-  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg1) && (XEN_REQUIRED_ARGS(arg1) == 1), arg1, 1, "XtAddWorkProc", "(XtWorkProc data)");
+  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg1) && (XEN_REQUIRED_ARGS_OK(arg1, 1)), arg1, 1, "XtAddWorkProc", "(XtWorkProc data)");
   descr = C_TO_XEN_XM_Background(arg1, (XEN_BOUND_P(arg2)) ? arg2 : XEN_FALSE);
   gc_loc = xm_protect(descr);
   id = XtAddWorkProc(gxm_XtWorkProc, 
@@ -15759,7 +15759,7 @@ static XEN gxm_XtSetLanguageProc(XEN arg1, XEN arg2, XEN arg3)
    */
   XEN previous_proc = XEN_FALSE;
   XEN_ASSERT_TYPE(XEN_FALSE_P(arg1) || XEN_XtAppContext_P(arg1), arg1, 1, "XtSetLanguageProc", "XtAppContext");
-  XEN_ASSERT_TYPE(XEN_FALSE_P(arg2) || (XEN_PROCEDURE_P(arg2) && (XEN_REQUIRED_ARGS(arg2) == 3)), arg2, 2, "XtSetLanguageProc", "XtLanguageProc");
+  XEN_ASSERT_TYPE(XEN_FALSE_P(arg2) || (XEN_PROCEDURE_P(arg2) && (XEN_REQUIRED_ARGS_OK(arg2, 3))), arg2, 2, "XtSetLanguageProc", "XtLanguageProc");
   previous_proc = xm_language_proc;
   if (XEN_PROCEDURE_P(previous_proc))
     xm_unprotect(previous_proc);
@@ -16289,7 +16289,7 @@ the specified widget's callback list.  In xm, the client-data is optional, defau
   XEN call_descr = XEN_EMPTY_LIST;
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XtAddCallback", "Widget");
   XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XtAddCallback", "char*");
-  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg3) && (XEN_REQUIRED_ARGS(arg3) == 3), arg3, 3, "XtAddCallback", "(XtCallbackProc widget data callb)");
+  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg3) && (XEN_REQUIRED_ARGS_OK(arg3, 3)), arg3, 3, "XtAddCallback", "(XtCallbackProc widget data callb)");
   w = XEN_TO_C_Widget(arg1);
   name = XEN_TO_C_STRING(arg2);
   call_descr = C_TO_XEN_XM_XtCallback(arg3, (XEN_BOUND_P(arg4)) ? arg4 : XEN_FALSE);
@@ -16551,7 +16551,7 @@ new source of events, which is usually file input but can also be file output."
   XEN descr;
   XEN_ASSERT_TYPE(XEN_XtAppContext_P(arg1), arg1, 1, "XtAppAddInput", "XtAppContext");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 2, "XtAppAddInput", "int");
-  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg4) && (XEN_REQUIRED_ARGS(arg4) == 3), arg4, 4, "XtAppAddInput", "(XtInputCallbackProc data fileno id)");
+  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg4) && (XEN_REQUIRED_ARGS_OK(arg4, 3)), arg4, 4, "XtAppAddInput", "(XtInputCallbackProc data fileno id)");
   descr = C_TO_XEN_XM_Input(arg4, (XEN_BOUND_P(arg5)) ? arg5 : XEN_FALSE);
   gc_loc = xm_protect(descr);
   id = XtAppAddInput(XEN_TO_C_XtAppContext(arg1), 
@@ -16572,7 +16572,7 @@ static XEN gxm_XtAddInput(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
   int gc_loc;
   XEN descr;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg1), arg1, 1, "XtAddInput", "int");
-  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg3) && (XEN_REQUIRED_ARGS(arg3) == 3), arg3, 3, "XtAddInput", "(XtInputCallbackProc data fileno id)");
+  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg3) && (XEN_REQUIRED_ARGS_OK(arg3, 3)), arg3, 3, "XtAddInput", "(XtInputCallbackProc data fileno id)");
   descr = C_TO_XEN_XM_Input(arg3, (XEN_BOUND_P(arg4)) ? arg4 : XEN_FALSE);
   gc_loc = xm_protect(descr);
   id = XtAddInput(XEN_TO_C_INT(arg1), 
@@ -16635,7 +16635,7 @@ static XEN gxm_XtAppAddTimeOut(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
   XEN descr;
   XEN_ASSERT_TYPE(XEN_XtAppContext_P(arg1), arg1, 1, "XtAppAddTimeOut", "XtAppContext");
   XEN_ASSERT_TYPE(XEN_ULONG_P(arg2), arg2, 2, "XtAppAddTimeOut", "ulong");
-  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg3) && (XEN_REQUIRED_ARGS(arg3) == 2), arg3, 3, "XtAppAddTimeOut", "(XtTimerCallbackProc data id)");
+  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg3) && (XEN_REQUIRED_ARGS_OK(arg3, 2)), arg3, 3, "XtAppAddTimeOut", "(XtTimerCallbackProc data id)");
   descr = C_TO_XEN_XM_TimeOut(arg3, (XEN_BOUND_P(arg4)) ? arg4 : XEN_FALSE);
   gc_loc = xm_protect(descr);
   id = XtAppAddTimeOut(XEN_TO_C_XtAppContext(arg1), 
@@ -16655,7 +16655,7 @@ static XEN gxm_XtAddTimeOut(XEN arg1, XEN arg2, XEN arg3)
   int gc_loc;
   XEN descr;
   XEN_ASSERT_TYPE(XEN_ULONG_P(arg1), arg1, 1, "XtAddTimeOut", "ulong");
-  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg2) && (XEN_REQUIRED_ARGS(arg2) == 2), arg2, 2, "XtAddTimeOut", "(XtTimerCallbackProc data id)");
+  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg2) && (XEN_REQUIRED_ARGS_OK(arg2, 2)), arg2, 2, "XtAddTimeOut", "(XtTimerCallbackProc data id)");
   descr = C_TO_XEN_XM_TimeOut(arg2, (XEN_BOUND_P(arg3)) ? arg3 : XEN_FALSE);
   gc_loc = xm_protect(descr);
   id = XtAddTimeOut(XEN_TO_C_ULONG(arg1), 
@@ -16844,7 +16844,7 @@ XtInsertEventHandler except that it does not modify the widget's event mask and 
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XtInsertRawEventHandler", "Widget");
   XEN_ASSERT_TYPE(XEN_ULONG_P(arg2), arg2, 2, "XtInsertRawEventHandler", "EventMask");
   XEN_ASSERT_TYPE(XEN_BOOLEAN_P(arg3), arg3, 3, "XtInsertRawEventHandler", "boolean");
-  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg4) && (XEN_REQUIRED_ARGS(arg4) == 4), arg4, 4, "XtInsertRawEventHandler", "XtEventHandler");
+  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg4) && (XEN_REQUIRED_ARGS_OK(arg4, 4)), arg4, 4, "XtInsertRawEventHandler", "XtEventHandler");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg6), arg6, 6, "XtInsertRawEventHandler", "XtListPosition");
   call_descr = C_TO_XEN_XM_XtEventHandler(arg4, (XEN_BOUND_P(arg5)) ? arg5 : XEN_FALSE, arg1, arg2);
   XEN_LIST_SET(call_descr, EVENT_HANDLER_GC_LOC, C_TO_XEN_INT(xm_protect(call_descr)));
@@ -16865,7 +16865,7 @@ XtAddEventHandler with the additional position argument. "
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XtInsertEventHandler", "Widget");
   XEN_ASSERT_TYPE(XEN_ULONG_P(arg2), arg2, 2, "XtInsertEventHandler", "EventMask");
   XEN_ASSERT_TYPE(XEN_BOOLEAN_P(arg3), arg3, 3, "XtInsertEventHandler", "boolean");
-  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg4) && (XEN_REQUIRED_ARGS(arg4) == 4), arg4, 4, "XtInsertEventHandler", "XtEventHandler");
+  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg4) && (XEN_REQUIRED_ARGS_OK(arg4, 4)), arg4, 4, "XtInsertEventHandler", "XtEventHandler");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg6), arg6, 6, "XtInsertEventHandler", "XtListPosition");
   call_descr = C_TO_XEN_XM_XtEventHandler(arg4, (XEN_BOUND_P(arg5)) ? arg5 : XEN_FALSE, arg1, arg2);
   XEN_LIST_SET(call_descr, EVENT_HANDLER_GC_LOC, C_TO_XEN_INT(xm_protect(call_descr)));
@@ -16885,7 +16885,7 @@ procedure from receiving the specified events."
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XtRemoveRawEventHandler", "Widget");
   XEN_ASSERT_TYPE(XEN_ULONG_P(arg2), arg2, 2, "XtRemoveRawEventHandler", "EventMask");
   XEN_ASSERT_TYPE(XEN_BOOLEAN_P(arg3), arg3, 3, "XtRemoveRawEventHandler", "boolean");
-  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg4) && (XEN_REQUIRED_ARGS(arg4) == 4), arg4, 4, "XtRemoveRawEventHandler", "XtEventHandler");
+  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg4) && (XEN_REQUIRED_ARGS_OK(arg4, 4)), arg4, 4, "XtRemoveRawEventHandler", "XtEventHandler");
   XtRemoveRawEventHandler(XEN_TO_C_Widget(arg1), 
 			  XEN_TO_C_ULONG(arg2), 
 			  XEN_TO_C_BOOLEAN(arg3),
@@ -16902,7 +16902,7 @@ except that it does not affect the widget's mask and never causes an XSelectInpu
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XtAddRawEventHandler", "Widget");
   XEN_ASSERT_TYPE(XEN_ULONG_P(arg2), arg2, 2, "XtAddRawEventHandler", "EventMask");
   XEN_ASSERT_TYPE(XEN_BOOLEAN_P(arg3), arg3, 3, "XtAddRawEventHandler", "boolean");
-  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg4) && (XEN_REQUIRED_ARGS(arg4) == 4), arg4, 4, "XtAddRawEventHandler", "XtEventHandler");
+  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg4) && (XEN_REQUIRED_ARGS_OK(arg4, 4)), arg4, 4, "XtAddRawEventHandler", "XtEventHandler");
   call_descr = C_TO_XEN_XM_XtEventHandler(arg4, (XEN_BOUND_P(arg5)) ? arg5 : XEN_FALSE, arg1, arg2);
   XEN_LIST_SET(call_descr, EVENT_HANDLER_GC_LOC, C_TO_XEN_INT(xm_protect(call_descr)));
   XtAddRawEventHandler(XEN_TO_C_Widget(arg1), 
@@ -16919,7 +16919,7 @@ static XEN gxm_XtRemoveEventHandler(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN 
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XtRemoveEventHandler", "Widget");
   XEN_ASSERT_TYPE(XEN_ULONG_P(arg2), arg2, 2, "XtRemoveEventHandler", "EventMask");
   XEN_ASSERT_TYPE(XEN_BOOLEAN_P(arg3), arg3, 3, "XtRemoveEventHandler", "boolean");
-  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg4) && (XEN_REQUIRED_ARGS(arg4) == 4), arg4, 4, "XtRemoveEventHandler", "XtEventHandler");
+  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg4) && (XEN_REQUIRED_ARGS_OK(arg4, 4)), arg4, 4, "XtRemoveEventHandler", "XtEventHandler");
   XtRemoveEventHandler(XEN_TO_C_Widget(arg1), 
 		       XEN_TO_C_ULONG(arg2), 
 		       XEN_TO_C_BOOLEAN(arg3), 
@@ -16937,7 +16937,7 @@ flag to 'false', return the symbol 'done from the event handler."
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XtAddEventHandler", "Widget");
   XEN_ASSERT_TYPE(XEN_ULONG_P(arg2), arg2, 2, "XtAddEventHandler", "EventMask");
   XEN_ASSERT_TYPE(XEN_BOOLEAN_P(arg3), arg3, 3, "XtAddEventHandler", "boolean");
-  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg4) && (XEN_REQUIRED_ARGS(arg4) == 4), arg4, 4, "XtAddEventHandler", "XtEventHandler");
+  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg4) && (XEN_REQUIRED_ARGS_OK(arg4, 4)), arg4, 4, "XtAddEventHandler", "XtEventHandler");
   call_descr = C_TO_XEN_XM_XtEventHandler(arg4, (XEN_BOUND_P(arg5)) ? arg5 : XEN_FALSE, arg1, arg2);
   XEN_LIST_SET(call_descr, EVENT_HANDLER_GC_LOC, C_TO_XEN_INT(xm_protect(call_descr)));
   XtAddEventHandler(XEN_TO_C_Widget(arg1), 
@@ -16989,7 +16989,7 @@ static XEN gxm_XtRegisterCaseConverter(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
   /* DIFF: XtRegisterCaseConverter user XtCaseProc should return the new KeySyms as a list (not as ref args)
    */
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XtRegisterCaseConverter", "Display*");
-  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg2) && (XEN_REQUIRED_ARGS(arg2) == 2), arg2, 2, "XtRegisterCaseConverter", "(XtCaseProc dpy keysym)");
+  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg2) && (XEN_REQUIRED_ARGS_OK(arg2, 2)), arg2, 2, "XtRegisterCaseConverter", "(XtCaseProc dpy keysym)");
   XEN_ASSERT_TYPE(XEN_KeySym_P(arg3), arg3, 3, "XtRegisterCaseConverter", "KeySym");
   XEN_ASSERT_TYPE(XEN_KeySym_P(arg4), arg4, 4, "XtRegisterCaseConverter", "KeySym");
   if (XEN_PROCEDURE_P(xm_XtCaseProc)) xm_unprotect(xm_XtCaseProc);
@@ -17030,7 +17030,7 @@ static XEN gxm_XtSetKeyTranslator(XEN arg1, XEN arg2)
   /* DIFF: XtSetKeyTranslator user XtKeyProc should return the new Modifiers and KeySym as a list (not as ref arg), set arg2 #f to get default proc
    */
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XtSetKeyTranslator", "Display*");
-  XEN_ASSERT_TYPE(XEN_FALSE_P(arg2) || (XEN_PROCEDURE_P(arg2) && (XEN_REQUIRED_ARGS(arg2) == 3)), arg2, 2, "XtSetKeyTranslator", "(XtKeyProc dpy key mod)");
+  XEN_ASSERT_TYPE(XEN_FALSE_P(arg2) || (XEN_PROCEDURE_P(arg2) && (XEN_REQUIRED_ARGS_OK(arg2, 3))), arg2, 2, "XtSetKeyTranslator", "(XtKeyProc dpy key mod)");
   if (XEN_PROCEDURE_P(xm_XtKeyProc)) xm_unprotect(xm_XtKeyProc);
   xm_XtKeyProc = arg2;
   if (XEN_FALSE_P(arg2))
@@ -17144,7 +17144,7 @@ static XEN gxm_XtRegisterGrabAction(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN 
 {
   #define H_XtRegisterGrabAction "void XtRegisterGrabAction(action_proc, owner_events, event_mask, pointer_mode, keyboard_mode) adds the \
 specified action_proc to a list known to the translation manager."
-  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg1) && (XEN_REQUIRED_ARGS(arg1) == 3), arg1, 1, "XtRegisterGrabAction", "XtActionProc");
+  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg1) && (XEN_REQUIRED_ARGS_OK(arg1, 3)), arg1, 1, "XtRegisterGrabAction", "XtActionProc");
   XEN_ASSERT_TYPE(XEN_BOOLEAN_P(arg2), arg2, 2, "XtRegisterGrabAction", "boolean");
   XEN_ASSERT_TYPE(XEN_ULONG_P(arg3), arg3, 3, "XtRegisterGrabAction", "unsigned int");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg4), arg4, 4, "XtRegisterGrabAction", "int");
@@ -17263,7 +17263,7 @@ a list maintained in the application context."
   int gc_loc;
   XEN descr;
   XEN_ASSERT_TYPE(XEN_XtAppContext_P(arg1), arg1, 1, "XtAppAddActionHook", "XtAppContext");
-  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg2) && (XEN_REQUIRED_ARGS(arg2) == 5), arg2, 2, "XtAppAddActionHook", "XtActionHookProc");
+  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg2) && (XEN_REQUIRED_ARGS_OK(arg2, 5)), arg2, 2, "XtAppAddActionHook", "XtActionHookProc");
   descr = C_TO_XEN_XM_ActionHook(arg2, (XEN_BOUND_P(arg3)) ? arg3 : XEN_FALSE);
   gc_loc = xm_protect(descr);
   id = XtAppAddActionHook(XEN_TO_C_XtAppContext(arg1), gxm_XtActionHookProc, (XtPointer)descr);
@@ -17535,10 +17535,10 @@ done_callback, cancel_callback, client_data)"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XtOwnSelectionIncremental", "Widget");
   XEN_ASSERT_TYPE(XEN_Atom_P(arg2), arg2, 2, "XtOwnSelectionIncremental", "Atom");
   XEN_ASSERT_TYPE(XEN_Time_P(arg3), arg3, 3, "XtOwnSelectionIncremental", "Time");
-  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg4) && (XEN_REQUIRED_ARGS(arg4) == 10), arg4, 4, "XtOwnSelectionIncremental", "XtConvertSelectionIncrProc");
-  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg5) && (XEN_REQUIRED_ARGS(arg5) == 3), arg5, 5, "XtOwnSelectionIncremental", "XtLoseSelectionIncrProc");
-  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg6) && (XEN_REQUIRED_ARGS(arg6) == 5), arg6, 6, "XtOwnSelectionIncremental", "XtSelectionDoneIncrProc");
-  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg7) && (XEN_REQUIRED_ARGS(arg7) == 5), arg7, 7, "XtOwnSelectionIncremental", "XtCancelConvertSelectionProc");
+  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg4) && (XEN_REQUIRED_ARGS_OK(arg4, 10)), arg4, 4, "XtOwnSelectionIncremental", "XtConvertSelectionIncrProc");
+  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg5) && (XEN_REQUIRED_ARGS_OK(arg5, 3)), arg5, 5, "XtOwnSelectionIncremental", "XtLoseSelectionIncrProc");
+  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg6) && (XEN_REQUIRED_ARGS_OK(arg6, 5)), arg6, 6, "XtOwnSelectionIncremental", "XtSelectionDoneIncrProc");
+  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg7) && (XEN_REQUIRED_ARGS_OK(arg7, 5)), arg7, 7, "XtOwnSelectionIncremental", "XtCancelConvertSelectionProc");
   add_selmap(XEN_TO_C_Widget(arg1), CONVERT_INCR, arg4);
   add_selmap(XEN_TO_C_Widget(arg1), LOSE_INCR, arg5);
   add_selmap(XEN_TO_C_Widget(arg1), DONE_INCR, arg6);
@@ -17560,9 +17560,9 @@ mechanism that a widget believes it owns a selection."
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XtOwnSelection", "Widget");
   XEN_ASSERT_TYPE(XEN_Atom_P(arg2), arg2, 2, "XtOwnSelection", "Atom");
   XEN_ASSERT_TYPE(XEN_Time_P(arg3), arg3, 3, "XtOwnSelection", "Time");
-  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg4) && (XEN_REQUIRED_ARGS(arg4) == 7), arg4, 4, "XtOwnSelection", "XtConvertSelectionProc");
-  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg5) && (XEN_REQUIRED_ARGS(arg5) == 2), arg5, 5, "XtOwnSelection", "XtLoseSelectionProc");
-  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg6) && (XEN_REQUIRED_ARGS(arg6) == 3), arg6, 6, "XtOwnSelection", "XtSelectionDoneProc");
+  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg4) && (XEN_REQUIRED_ARGS_OK(arg4, 7)), arg4, 4, "XtOwnSelection", "XtConvertSelectionProc");
+  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg5) && (XEN_REQUIRED_ARGS_OK(arg5, 2)), arg5, 5, "XtOwnSelection", "XtLoseSelectionProc");
+  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg6) && (XEN_REQUIRED_ARGS_OK(arg6, 3)), arg6, 6, "XtOwnSelection", "XtSelectionDoneProc");
   add_selmap(XEN_TO_C_Widget(arg1), CONVERT, arg4);
   add_selmap(XEN_TO_C_Widget(arg1), LOSE, arg5);
   add_selmap(XEN_TO_C_Widget(arg1), DONE, arg6);	     
@@ -18255,8 +18255,8 @@ static XEN gxm_XpGetDocumentData(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg
   XEN descr;
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XpGetDocumentData", "Display*");
   XEN_ASSERT_TYPE(XEN_XPContext_P(arg2), arg2, 2, "XpGetDocumentData", "XPContext");
-  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg3) && (XEN_REQUIRED_ARGS(arg3) == 5), arg3, 3, "XpGetDocumentData", "XPSaveProc");
-  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg4) && (XEN_REQUIRED_ARGS(arg4) == 4), arg4, 4, "XpGetDocumentData", "XPFinishProc");
+  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg3) && (XEN_REQUIRED_ARGS_OK(arg3, 5)), arg3, 3, "XpGetDocumentData", "XPSaveProc");
+  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg4) && (XEN_REQUIRED_ARGS_OK(arg4, 4)), arg4, 4, "XpGetDocumentData", "XPFinishProc");
   descr = XEN_LIST_3(arg3, arg4, arg5);
   xm_protect(descr);
   return(C_TO_XEN_INT(XpGetDocumentData(XEN_TO_C_Display(arg1), XEN_TO_C_XPContext(arg2), 

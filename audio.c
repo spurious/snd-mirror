@@ -8037,6 +8037,8 @@ int mus_audio_mixer_write(int ur_dev, int field, int chan, float *val)
  *   and to a much lesser extent, coreaudio.pdf and the HAL/Daisy examples.
  */
 
+/* TODO: make bigger buffers work right */
+
 #ifdef MAC_OSX
 #define AUDIO_OK 1
 
@@ -8806,7 +8808,7 @@ int mus_audio_mixer_read(int dev1, int field, int chan, float *val)
       val[0] = 2;
       break;
     case MUS_AUDIO_SAMPLES_PER_CHANNEL: 
-      /* bufsize / 16 seems to safe max -- conversions can be by 8, and hmmm we're off by 2 somewhere I guess */
+      /* bufsize / 16: mulaw 22050 mono -> float 44100 stereo => 16:1 expansion */
       {
 	int bufsize = 4096;
 	UInt32 sizeof_bufsize;

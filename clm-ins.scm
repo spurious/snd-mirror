@@ -2686,9 +2686,7 @@ mjkoskin@sci.fi
 		       (vector-set! vect i (make-readin in-file i inloc)))
 		     vect)))
 	 (out-chans (mus-channels *output*))
-	 (mx (if matrix
-		 (make-mixer (max in-chans out-chans))
-		 #f))
+	 (mx (make-mixer (max in-chans out-chans)))
 	 (rev-mx (if (and *reverb* reverb-amount (> reverb-amount 0.0))
 		     (let ((rmx (make-mixer in-chans)))
 		       (do ((i 0 (1+ i)))
@@ -2726,7 +2724,10 @@ mjkoskin@sci.fi
 	      (do ((inp 0 (1+ inp))) ; matrix is a number (global scaler)
 		  ((= inp in-chans))
 		(if (< inp out-chans)
-		    (mixer-set! mx inp inp matrix)))))) ; this is different from CLM fullmix.ins which puts scaler in all entries??
+		    (mixer-set! mx inp inp matrix))))) ; this is different from CLM fullmix.ins which puts scaler in all entries??
+	(do ((inp 0 (1+ inp)))
+	    ((= inp in-chans))
+	  (mixer-set! mx inp inp 1.0)))
     (if (not srate)
 	(begin
 	  (mus-mix *output* file st samps inloc mx envs)

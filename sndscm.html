@@ -539,6 +539,7 @@ the listener?
   <tr><td><em class=emdef>channel-variance</em> etc</td><td> miscellaneous funcs from Julius Smith, Mathematics of the DFT</td></tr>
   <tr><td><em class=emdef>map-ssb-am</em></td><td>shift all components by some frequency ("single-sideband amplitude modulation")</td></tr>
   <tr><td><a class=def name="ssbbank">ssb-bank</a></td><td>time/pitch changes using ssb-am gens</td></tr>
+  <tr><td><a class=def name="ssbbankenv">ssb-bank-env</a></td><td>time/pitch changes using ssb-am gens and a frequency envelope</td></tr>
   <tr><td><a class=def name="ssbfm">make-ssb-fm, ssb-fm</a></td><td>quasi-single-sideband FM</td></tr>
   <tr><td><em class=emdef>periodogram</em> N</td><td>periodogram displayed in "lisp graph"</td></tr>
 </table>
@@ -695,6 +696,8 @@ followed by sampling rate conversion back to the original pitch:
 </pre>
 <p>A similar idea is used in <b>make-ssb-fm</b> and <b>ssb-fm</b> to implement
 a sort of asymmetric FM.
+<b>ssb-bank-env</b> is the same as ssb-bank, but includes a frequency envelope:
+<code>(ssb-bank-env 557 880 '(0 0 1 100.0) 7)</code>.
 </p>
 
 <p><b>any-random</b> provides the same output as <a href="clm.html#rand">rand</a> if the latter's

@@ -4296,7 +4296,6 @@ static void unset_temp_fd(int fd)
       }
 }
 
-/* TODO: test added header-type arg to open-sound-file */
 static XEN g_open_sound_file(XEN arglist)
 {
   #define H_open_sound_file "(" S_open_sound_file " (:file \"test.snd\") (:channels 1) :srate :comment :header-type): \

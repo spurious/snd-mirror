@@ -193,7 +193,7 @@ XEN mus_optkey_to_procedure(XEN key, const char *caller, int n, XEN def, int req
   if ((!(XEN_KEYWORD_P(key))) && (!(XEN_FALSE_P(key))))
     {
       XEN_ASSERT_TYPE(XEN_PROCEDURE_P(key), key, n, caller, "a procedure");
-      if (XEN_REQUIRED_ARGS(key) != required_args)
+      if (!(XEN_REQUIRED_ARGS_OK(key, required_args)))
 	XEN_BAD_ARITY_ERROR(caller, n, key, err);
       return(key);
     }
@@ -1049,7 +1049,7 @@ static Float *whatever_to_floats(XEN inp, int size, const char *caller)
 	    {
 	      if (XEN_PROCEDURE_P(inp))
 		{
-		  if (XEN_REQUIRED_ARGS(inp) == 1)
+		  if (XEN_REQUIRED_ARGS_OK(inp, 1))
 		    {
 		      invals = (Float *)MALLOC(size * sizeof(Float));
 		      for (i = 0; i < size; i++) 
@@ -4210,7 +4210,7 @@ included an 'input' argument, input-function is ignored."
   if (XEN_NUMBER_P(pm)) pm1 = XEN_TO_C_DOUBLE(pm); else XEN_ASSERT_TYPE(XEN_NOT_BOUND_P(pm), pm, XEN_ARG_2, S_src, "a number");
   if (XEN_PROCEDURE_P(func))
     {
-      if (XEN_REQUIRED_ARGS(func) == 1)
+      if (XEN_REQUIRED_ARGS_OK(func, 1))
 	gn->vcts[MUS_INPUT_FUNCTION] = func;
       else XEN_BAD_ARITY_ERROR(S_src, 3, func, "src input function wants 1 arg");
     }
@@ -4284,7 +4284,7 @@ static XEN g_granulate(XEN obj, XEN func)
   gn = XEN_TO_MUS_XEN(obj);
   if (XEN_PROCEDURE_P(func))
     {
-      if (XEN_REQUIRED_ARGS(func) == 1)
+      if (XEN_REQUIRED_ARGS_OK(func, 1))
 	gn->vcts[MUS_INPUT_FUNCTION] = func;
       else XEN_BAD_ARITY_ERROR(S_granulate, 2, func, "granulate input function wants 1 arg");
     }
@@ -4416,7 +4416,7 @@ static XEN g_convolve(XEN obj, XEN func)
   gn = XEN_TO_MUS_XEN(obj);
   if (XEN_PROCEDURE_P(func))
     {
-      if (XEN_REQUIRED_ARGS(func) == 1)
+      if (XEN_REQUIRED_ARGS_OK(func, 1))
 	gn->vcts[MUS_INPUT_FUNCTION] = func;
       else XEN_BAD_ARITY_ERROR(S_convolve, 2, func, "convolve input function wants 1 arg");
     }
@@ -4566,7 +4566,7 @@ static XEN g_phase_vocoder(XEN obj, XEN func)
   gn = XEN_TO_MUS_XEN(obj);
   if (XEN_PROCEDURE_P(func))
     {
-      if (XEN_REQUIRED_ARGS(func) == 1)
+      if (XEN_REQUIRED_ARGS_OK(func, 1))
 	gn->vcts[MUS_INPUT_FUNCTION] = func;
       else XEN_BAD_ARITY_ERROR(S_phase_vocoder, 2, func, "phase-vocoder input function wants 1 arg");
     }
@@ -4921,14 +4921,19 @@ return a new " S_ssb_am " generator."
   return(XEN_FALSE);
 }
 
-static XEN g_ssb_am(XEN obj, XEN insig)
+static XEN g_ssb_am(XEN obj, XEN insig, XEN fm)
 {
-  #define H_ssb_am "(" S_ssb_am " gen (insig 0.0)): get the next sample from " S_ssb_am " gen"
+  #define H_ssb_am "(" S_ssb_am " gen (insig 0.0) (fm 0.0)): get the next sample from " S_ssb_am " gen"
 
   Float insig1 = 0.0;
   XEN_ASSERT_TYPE((MUS_XEN_P(obj)) && (mus_ssb_am_p(XEN_TO_MUS_ANY(obj))), obj, XEN_ARG_1, S_ssb_am, "an ssb_am gen");
   if (XEN_NUMBER_P(insig)) insig1 = XEN_TO_C_DOUBLE(insig); else XEN_ASSERT_TYPE(XEN_NOT_BOUND_P(insig), insig, XEN_ARG_2, S_ssb_am, "a number");
-  return(C_TO_XEN_DOUBLE(mus_ssb_am(XEN_TO_MUS_ANY(obj), insig1)));
+  if (XEN_BOUND_P(fm))
+    {
+      XEN_ASSERT_TYPE(XEN_NUMBER_P(fm), fm, XEN_ARG_3, S_ssb_am, "a number");
+      return(C_TO_XEN_DOUBLE(mus_ssb_am(XEN_TO_MUS_ANY(obj), insig1, XEN_TO_C_DOUBLE(fm))));
+    }
+  return(C_TO_XEN_DOUBLE(mus_ssb_am_1(XEN_TO_MUS_ANY(obj), insig1)));
 }
 
 
@@ -5204,7 +5209,7 @@ XEN_NARGIFY_1(g_mus_hop_w, g_mus_hop)
 XEN_NARGIFY_2(g_mus_set_hop_w, g_mus_set_hop)
 XEN_ARGIFY_7(g_mus_mix_w, g_mus_mix)
 XEN_ARGIFY_4(g_make_ssb_am_w, g_make_ssb_am)
-XEN_ARGIFY_2(g_ssb_am_w, g_ssb_am)
+XEN_ARGIFY_3(g_ssb_am_w, g_ssb_am)
 XEN_NARGIFY_1(g_ssb_am_p_w, g_ssb_am_p)
 #else
 #define g_srate_w g_srate
@@ -5899,7 +5904,7 @@ the closer the radius is to 1.0, the narrower the resonance."
   XEN_DEFINE_PROCEDURE(S_mus_mix, g_mus_mix_w, 2, 5, 0, H_mus_mix);
 
   XEN_DEFINE_PROCEDURE(S_make_ssb_am,   g_make_ssb_am_w,   0, 4, 0, H_make_ssb_am); 
-  XEN_DEFINE_PROCEDURE(S_ssb_am,        g_ssb_am_w,        1, 1, 0, H_ssb_am);
+  XEN_DEFINE_PROCEDURE(S_ssb_am,        g_ssb_am_w,        1, 2, 0, H_ssb_am);
   XEN_DEFINE_PROCEDURE(S_ssb_am_p,      g_ssb_am_p_w,      1, 0, 0, H_ssb_am_p);
 
   XEN_YES_WE_HAVE("clm");

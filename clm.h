@@ -2,10 +2,11 @@
 #define CLM_H
 
 #define MUS_VERSION 2
-#define MUS_REVISION 54
-#define MUS_DATE "21-June-04"
+#define MUS_REVISION 55
+#define MUS_DATE "28-June-04"
 
 /*
+ * 28-June:    ssb_am + added fm arg (ssb_am_1 is the previous form).
  * 21-June:    wrapper method.
  * 14-June:    ssb_am generator.
  *             removed mus-a*|b*, replaced by mus-x|ycoeff.
@@ -609,7 +610,8 @@ int mus_phase_vocoder_set_outctr(mus_any *ptr, int val);
 
 mus_any *mus_make_ssb_am(Float freq, int order);
 bool mus_ssb_am_p(mus_any *ptr);
-Float mus_ssb_am(mus_any *ptr, Float insig);
+Float mus_ssb_am_1(mus_any *ptr, Float insig);
+Float mus_ssb_am(mus_any *ptr, Float insig, Float fm);
 
 void mus_clear_sinc_tables(void);
 void *mus_environ(mus_any *rd);

@@ -2797,7 +2797,7 @@ at run-time.  See extsnd.html for the gory details."
   if (XEN_LIST_P(proc_and_list))
     proc = XEN_CADR(proc_and_list);
 #endif
-  XEN_ASSERT_TYPE((XEN_PROCEDURE_P(proc)) && ((XEN_REQUIRED_ARGS(proc) == 1) || (XEN_REQUIRED_ARGS(proc) == 3)),
+  XEN_ASSERT_TYPE((XEN_PROCEDURE_P(proc)) && ((XEN_REQUIRED_ARGS_OK(proc, 1)) || (XEN_REQUIRED_ARGS_OK(proc, 3))),
 		  proc, XEN_ARG_1, S_ptree_channel, "a procedure of one or three args");
   ASSERT_SAMPLE_TYPE(S_ptree_channel, s_beg, XEN_ARG_2);
   ASSERT_SAMPLE_TYPE(S_ptree_channel, s_dur, XEN_ARG_3);
@@ -2828,9 +2828,9 @@ at run-time.  See extsnd.html for the gory details."
   ptrees_present = ptree_fragments_in_use(cp, beg, dur, pos, XEN_FALSE_P(use_map_channel_fallback));
   if (XEN_PROCEDURE_P(init_func))
     {
-      if (XEN_REQUIRED_ARGS(init_func) != 2)
+      if (!(XEN_REQUIRED_ARGS_OK(init_func, 2)))
 	XEN_BAD_ARITY_ERROR(S_ptree_channel, 8, init_func, "init-func must take 2 args");
-      if (XEN_REQUIRED_ARGS(proc) != 3)
+      if (!(XEN_REQUIRED_ARGS_OK(proc, 3)))
 	XEN_BAD_ARITY_ERROR(S_ptree_channel, 1, proc, "main func must take 3 args if the init-func is present");
       if (!ptrees_present)
 	{
@@ -2851,7 +2851,7 @@ at run-time.  See extsnd.html for the gory details."
       g_map_chan_ptree_fallback(proc, init_func, cp, beg, dur, pos);
       return(proc_and_list);
     }
-  if (XEN_REQUIRED_ARGS(proc) == 1)
+  if (XEN_REQUIRED_ARGS_OK(proc, 1))
     pt = form_to_ptree_1_f(proc_and_list);
   if (pt)
     {
@@ -2868,7 +2868,7 @@ at run-time.  See extsnd.html for the gory details."
 	{
 	  if (!(XEN_PROCEDURE_P(init_func)))
 	    {
-	      if (XEN_REQUIRED_ARGS(proc) != 3)
+	      if (!(XEN_REQUIRED_ARGS_OK(proc, 3)))
 		XEN_BAD_ARITY_ERROR(S_ptree_channel, 1, proc, "main func must take 3 args if it can't be optimized");
 	    }
 	  ptree_channel(cp, NULL, beg, dur, pos, XEN_TRUE_P(env_too), init_func, true, proc);

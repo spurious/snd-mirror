@@ -1239,7 +1239,7 @@ static snd_info *snd_update_1(snd_info *sp, const char *ur_filename)
       if (XEN_TRUE_P(update_hook_result)) return(sp);
       if (XEN_PROCEDURE_P(update_hook_result))
 	{
-	  if ((XEN_REQUIRED_ARGS(update_hook_result)) == 1)
+	  if (XEN_REQUIRED_ARGS_OK(update_hook_result, 1))
 	    snd_protect(update_hook_result);
 	  else XEN_BAD_ARITY_ERROR(S_update_hook, 0, update_hook_result, S_update_hook " function result should require 1 arg");
 	}

@@ -7636,7 +7636,7 @@ GEN2(rand)
 GEN2(rand_interp)
 GEN2(sum_of_cosines)
 GEN2(sum_of_sines)
-GEN2(ssb_am)
+GEN3(ssb_am)
 GEN2(sawtooth_wave)
 GEN2(pulse_train)
 GEN2(square_wave)
@@ -9067,7 +9067,7 @@ static XEN xen_value_to_xen(ptree *pt, xen_value *v)
       add_loc_to_protected_list(pt, snd_protect(val));
       return(val);
     }
-  /* TODO: add other types here (sound data and clm for example) */
+  /* TODO: add other types here (sound data for example -- would need to remove it from the gcs list somehow) */
   return(XEN_FALSE);
 }
 
@@ -10144,13 +10144,14 @@ static xen_value *walk(ptree *prog, XEN form, walk_result_t walk_result)
 	  /* case R_LIST:    can't happen */
 	case R_PAIR:    return(make_xen_value(R_PAIR, add_xen_to_ptree(prog, form), R_CONSTANT)); break;
 	case R_KEYWORD: return(make_xen_value(R_KEYWORD, add_xen_to_ptree(prog, form), R_CONSTANT)); break;
+
 #if HAVE_SCM_MAKE_RATIO
-	  /* TODO: need a way to distinguish newer Guiles (#@lambda) */
 	case R_UNSPECIFIED:
 	  if (strcmp(XEN_AS_STRING(form), "#@lambda") == 0)
 	    return(make_xen_value(R_INT, add_int_to_ptree(prog, 0), R_CONSTANT)); break;
 	  break;
 #endif
+
 	default:
 	  if (type > R_ANY)
 	    return(make_xen_value(type, add_xen_to_ptree(prog, form), R_CONSTANT));
@@ -10162,6 +10163,7 @@ static xen_value *walk(ptree *prog, XEN form, walk_result_t walk_result)
 	  prog->walk_result = walk_result;
 	  return(add_global_var_to_ptree(prog, form, &ignore));
 	}
+      /* things like complex numbers fall through here */
     }
   if (!run_warned)
     return(run_warn("can't handle: %s", XEN_AS_STRING(form)));
@@ -10560,7 +10562,7 @@ in multi-channel situations where you want the optimization that vct-map! provid
       proc = proc_and_code;
       code = proc_and_code;
     }
-  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(code) && (XEN_REQUIRED_ARGS(code) == 0), code, XEN_ARG_1, S_vct_map, "a thunk");
+  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(code) && (XEN_REQUIRED_ARGS_OK(code, 0)), code, XEN_ARG_1, S_vct_map, "a thunk");
   len = XEN_LIST_LENGTH(arglist);
   if (len == 0)
     mus_misc_error(S_vct_map, "no vcts passed to vct-map", arglist);
@@ -10640,7 +10642,7 @@ to Guile and is equivalent to (thunk)."
   XEN code, result = XEN_FALSE;
   ptree *pt = NULL;
   code = XEN_CADR(proc_and_code);
-  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(code) && (XEN_REQUIRED_ARGS(code) == 0), code, XEN_ONLY_ARG, S_run, "a thunk");
+  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(code) && (XEN_REQUIRED_ARGS_OK(code, 0)), code, XEN_ONLY_ARG, S_run, "a thunk");
   pt = (ptree *)form_to_ptree(proc_and_code);
   if (pt)
     {

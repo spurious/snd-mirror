@@ -1548,9 +1548,44 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 	      sum)))
 	 (scale-by (/ mx nmx)))))))
 
+(define* (ssb-bank-env old-freq new-freq freq-env pairs-1 #:optional (order 40) (bw 50.0))
+  ;; this version adds a frequency envelope
+  ;; (ssb-bank-env 557 880 '(0 0 1 100.0) 7)
+  (let* ((pairs pairs-1) ; for run's benefit
+	 (ssbs (make-vector pairs))
+	 (bands (make-vector pairs))
+	 (factor (/ (- new-freq old-freq) old-freq))
+	 (frenvs (make-vector pairs))
+	 (mx (maxamp)))
+    (do ((i 1 (1+ i)))
+	((> i pairs))
+      (let* ((aff (* i old-freq))
+	     (bwf (* bw (+ 1.0 (/ i (* 2 pairs))))))
+	(vector-set! ssbs (1- i) (make-ssb-am (* i factor old-freq)))
+	(vector-set! bands (1- i) (make-bandpass (hz->2pi (- aff bwf)) 
+						 (hz->2pi (+ aff bwf)) 
+						 order))
+	(vector-set! frenvs (1- i) (make-env freq-env 
+					     :scaler (hz->radians (exact->inexact i)) 
+					     :end (1- (frames))))))
+    (as-one-edit
+     (lambda ()
+       (let ((nmx 0.0))
+	 (map-channel
+	  (lambda (y)
+	    (let ((sum 0.0))
+	      (do ((i 0 (1+ i)))
+		  ((= i pairs))
+		(set! sum (+ sum (ssb-am (vector-ref ssbs i) 
+					 (bandpass (vector-ref bands i) 
+						   y)
+					 (env (vector-ref frenvs i))))))
+	      (set! nmx (max nmx (abs sum)))
+	      sum)))
+	 (scale-by (/ mx nmx)))))))
 
 ;;; TODO: auto-detect main freq so ssb-bank can work semi-automatically (bw/pairs choices also automated)
-;;; TODO: freq env to add (or remove) pitch fluctuations [if pitch follower, this could be automated]
+;;; TODO: if pitch follower, auto-remove gliss/vib (ssb-bank-env could be written to use oscil or triangle wave = add vib)
 ;;; TODO: hz->radians should be smart (or someone should) about srates
 ;;; TODO: a channel (regularized) version of ssb-bank -- repitch-channel? (+ retime or whatever)
 ;;; TODO: a realtime interface to this -- a slider for pitch/bw etc
