@@ -1990,18 +1990,16 @@ static XEN g_add_mark(XEN samp_n, XEN snd_n, XEN chn_n)
   ASSERT_CHANNEL(S_add_mark, snd_n, chn_n, 2);
   cp = get_cp(snd_n, chn_n, S_add_mark);
   loc = XEN_TO_C_OFF_T_OR_ELSE(samp_n, 0);
-  if ((loc >= 0) && (loc < CURRENT_SAMPLES(cp)))
+  if ((loc < 0) || (loc >= CURRENT_SAMPLES(cp)))
+    XEN_ERROR(NO_SUCH_SAMPLE,
+	      XEN_LIST_2(C_TO_XEN_STRING(S_add_mark),
+			 samp_n));
+  m = add_mark(loc, NULL, cp);
+  if (m)
     {
-      m = add_mark(loc, NULL, cp);
-      if (m)
-	{
-	  update_graph(cp);
-	  return(C_TO_XEN_INT(mark_id(m)));
-	}
+      update_graph(cp);
+      return(C_TO_XEN_INT(mark_id(m)));
     }
-  XEN_ERROR(NO_SUCH_SAMPLE,
-	    XEN_LIST_2(C_TO_XEN_STRING(S_add_mark),
-		       samp_n));
   return(XEN_FALSE);
 }
 

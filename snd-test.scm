@@ -6621,7 +6621,7 @@ EDITS: 5
 		    (sval (next-sample sread)))
 		(IF (fneq rval sval) (snd-display ";sample-read: ~A ~A?" rval sval))
 		(IF (fneq rval (vct-ref rvect i)) (snd-display ";region-samples: ~A ~A?" rval (vct-ref rvect i)))
-		(IF (fneq sval (vector-ref svect i)) (snd-display ";samples: ~A ~A?" sval (vector-ref svect i)))))
+		(IF (fneq sval (vct-ref svect i)) (snd-display ";samples: ~A ~A?" sval (vct-ref svect i)))))
 	    (free-sample-reader rread) 
 	    (let ((val0 (next-sample sread)))
 	      (IF (sample-reader-at-end? sread) (snd-display "premature end?"))
@@ -7800,14 +7800,14 @@ EDITS: 5
 			(> (mus-sound-duration a) (mus-sound-duration b))))))
 	(IF (not (procedure? (previous-files-sort-procedure)))
 	    (snd-display ";previous-files-sort-procedure: ~A" (previous-files-sort-procedure)))
+	(set! (previous-files-sort) 5)
+	(close-sound ind1)
 	(let ((val (catch #t
 			  (lambda ()
 			    (set! (previous-files-sort-procedure) (lambda (a b c) #f)))
 			  (lambda args (car args)))))
 	  (IF (not (eq? val 'bad-arity))
 	      (snd-display ";previous-files-sort-procedure arity error: ~A" val)))
-	(set! (previous-files-sort) 5)
-	(close-sound ind1)
 	(do ((i 0 (1+ i)))
 	    ((= i 5))
 	  (set! (previous-files-sort) i))
@@ -15083,7 +15083,8 @@ EDITS: 5
 		     (lambda (snd)
 		       (IF (not (= snd ind))
 			   (snd-display ";start-playing-hook: ~A not ~A?" snd ind))
-		       (set! spl #t)))
+		       (set! spl #t)
+		       #f))
 	  (add-hook! stop-playing-hook
 		     (lambda (snd)
 		       (IF (not (= snd ind))
@@ -15143,6 +15144,10 @@ EDITS: 5
 
 	  (play-and-wait 0 ind)
 	  (reset-hook! play-hook)
+
+	  (add-hook! start-playing-hook (lambda (sp) #t))
+	  (play "4.aiff")
+	  (reset-hook! start-playing-hook)
 
 	  (let ((sr -1)
 		(ss #f)
@@ -27999,7 +28004,6 @@ EDITS: 2
 	      (if (time-graph? ind 1) (snd-display ";time graphs: ~A ~A" (time-graph? ind 0) (time-graph? ind 1)))
 	      (if (not (transform-graph? ind 1)) (snd-display ";transform graphs: ~A ~A" (transform-graph? ind 0) (transform-graph? ind 1)))
 	      (let ((xy (widget-size grf)))
-		(snd-display ";xy: ~A" xy)
 		(click-event grf 1 0 (inexact->exact (* .65 (car xy))) (inexact->exact (* .35 (cadr xy))))
 		(click-event grf 1 0 (inexact->exact (* .15 (car xy))) (inexact->exact (* .65 (cadr xy)))))
 	      (set! (channel-style ind) channels-separate)
@@ -29163,6 +29167,20 @@ EDITS: 2
 			(snd-display ";cancelled edit save-as wrote a file?")))
 		  (close-sound ind))
 
+		(let* ((gotin #f)
+		       (gotout #f)
+		       (listener (list-ref (main-widgets) 4))
+		       (mlist (XtParent listener)))
+		  (add-hook! mouse-enter-listener-hook (lambda (w) (set! gotin #t)))
+		  (add-hook! mouse-leave-listener-hook (lambda (w) (set! gotout #t)))
+		  (enter-event mlist) (force-event)
+		  (leave-event mlist) (force-event)
+		  (if (not gotin) (snd-display ";no listener enter?"))
+		  (if (not gotout) (snd-display ";no listener leave?"))
+		  (reset-hook! mouse-enter-listener-hook)
+		  (reset-hook! mouse-leave-listener-hook))
+			     
+
 		;; ---------------- view files dialog ----------------
 		(if (not (defined? 'files-popup-info))
 		    (load "nb.scm"))
@@ -29186,9 +29204,17 @@ EDITS: 2
 			 (nm1 (find-child rw1 "nm"))
 			 (name (cadr (XmStringGetLtoR (cadr (XtVaGetValues nm1 (list XmNlabelString 0))) "bold_button_font")))
 			 (rw2 (find-child curform "rw"))
-			 (sv2 (find-child rw1 "sv"))
-			 (pl2 (find-child rw1 "pl"))
-			 (nm2 (find-child rw1 "nm")))
+			 (sv2 (find-child rw2 "sv"))
+			 (pl2 (find-child rw2 "pl"))
+			 (nm2 (find-child rw2 "nm")))
+		    ;(add-hook! mouse-enter-label-hook (lambda (a b c) (snd-display ";~A ~A ~A" a b c)))
+		    (enter-event nm1) (force-event)
+		    (leave-event nm1) (force-event)
+		    (enter-event nm2) (force-event)
+		    (leave-event nm2) (force-event)
+		    (click-button pl1) (force-event)
+		    (click-button pl2) (force-event)
+		    (click-button sv1) (force-event)
 		    (if (not (hook-empty? initial-graph-hook))
 			(begin
 			  (catch #t
@@ -29204,7 +29230,7 @@ EDITS: 2
 				   (XmToggleButtonSetState sv2 #f #t)
 				   (XmToggleButtonSetState pl2 #f #t))
 				 (lambda args args))
-			  (enter-event nm1)
+			  (enter-event nm1) (force-event)
 			  (set! name (cadr (XmStringGetLtoR (cadr (XtVaGetValues nm2 (list XmNlabelString 0))) "bold_button_font")))
 			  (close-sound (car (sounds)))
 			  (XmToggleButtonSetState sv1 #t #t)
@@ -29362,6 +29388,10 @@ EDITS: 2
 		    (if (not (= (data-location ind) 44))
 			(snd-display "edit header data location: ~A" (data-location ind)))
 		    (edit-header-dialog)
+		    
+		    (do ((i 0 (1+ i)))
+			((= i 7))
+		      (XmListSelectPos types i #t))
 
 		    (XmListSelectPos types (type->pos mus-riff) #t)
 		    (XmListSelectPos formats (format->pos mus-riff mus-lfloat) #t)
@@ -34827,6 +34857,7 @@ EDITS: 2
 	(check-error-tag 'bad-header (lambda () (mus-sound-maxamp (string-append sf-dir "bad_chans.snd"))))
 	(check-error-tag 'bad-header (lambda () (set! (mus-sound-maxamp (string-append sf-dir "bad_chans.snd")) '(0.0 0.0))))
 	(check-error-tag 'no-such-sound (lambda () (restore-marks 123 123 123 '())))
+	(check-error-tag 'mus-error (lambda () (play (string-append sf-dir "midi60.mid"))))
 	(if (provided? 'snd-motif)
 	    (begin
 	      (check-error-tag 'no-such-widget (lambda () (widget-position (list 'Widget 0)))) ; dubious -- not sure these should be supported

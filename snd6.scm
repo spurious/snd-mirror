@@ -91,3 +91,5 @@
    (dialog-widgets)))
 
 (define change-property change-window-property)
+
+;;; to get a vector from samples, use vct->vector

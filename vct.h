@@ -39,13 +39,10 @@ XEN make_vct(int len, Float *data);
 XEN make_vct_wrapper(int len, Float *data);
 vct *get_vct(XEN arg);
 void set_vct_print_length(int len);
-XEN vct2vector(XEN vobj);
 XEN mus_array_to_list(Float *arr, int i, int len);
 char *vct_to_string(vct *v);
 vct *c_make_vct(int len);
 vct *c_free_vct(vct *v);
-vct *vector_to_vct(XEN vect);
-void vct_into_vector(vct *v, XEN vect);
 vct *c_vct_copy(vct *vc);
 
 #define TO_VCT(arg) ((vct *)XEN_OBJECT_REF(arg))

@@ -444,7 +444,7 @@ cases, the "r" variable is accessible, so it's easy to experiment with
 the moving formant idea mentioned in the original article.
 </p>
 
-<p><i>cosine-summation</i> is a variation on J.A.Moorer's sine-summation;
+<p><i>cosine-summation</i> is a variation on Moorer's sine-summation;
 the generating formula is much simpler, but the result is the same.  This
 can also be viewed as a version of the sum-of-cosines generator, giving control
 on the ratio between successive cosines in the sum (i.e. the "r" parameter in
@@ -702,8 +702,8 @@ mechanism as an extension of env-channel.
   <em class=def>start-enveloping</em>
   <em class=def>stop-enveloping</em>
   <em class=def><a name="channelenvelope">channel-envelope</a></em> <i>snd chn</i>
-  <em class=def>play-with-envs</em> snd
-  <em class=def>play-panned</em> snd
+  <em class=def><A NAME="explaywithenvs">play-with-envs</A></em> snd
+  <em class=def><A NAME="explaypanned">play-panned</A></em> snd
 </pre>
 
 <p>enved.scm implements an independent envelope editor in each channel.  <code>(start-enveloping)</code>
@@ -1947,7 +1947,7 @@ model by Scott van Duyne.
 
 <p>These functions play sounds in various ways.</p>
 <pre>
-  <em class=def>playsound</em> <i>func</i>
+  <em class=def><A NAME="explaysound">play-sound</A></em> <i>func</i>
 </pre>
 <p><i>play-sound</i> plays the current sound, calling (func data) on each buffer if func is passed.
 It is also an example of calling the low level mus-audio functions, rather than calling
@@ -1962,8 +1962,8 @@ as a kind of extended piano, we could map keys to sounds:
 <p>The various play hooks can be used to play sounds over and over. 
 </p>
 <pre>
-  <em class=def>play-often</em> times
-  <em class=def>play-until-c-g</em>
+  <em class=def><A NAME="explayoften">play-often</A></em> times
+  <em class=def><A NAME="explayuntilcg">play-until-c-g</A></em>
   <em class=def><a name="explayregionforever">play-region-forever</a></em> region
 
 (bind-key (char-&gt;integer #\p) 0 (lambda (n) (play-often (max 1 n))))
@@ -1988,7 +1988,7 @@ The marks can be moved as the sound is played; C-g stops loop-between-marks.
 If you want the DAC to be held open in the background,
 </p>
 <pre>
-  <em class=def>start-dac</em>
+  <em class=def><A NAME="exstartdac">start-dac</A></em>
   <em class=def>stop-dac</em>
 </pre>
 <p>The vector-synthesis 

@@ -11,7 +11,6 @@
  *   XEN make_vct_wrapper(int len, Float *data) make a new vct that doesn't free data when garbage collector strikes
  *   vct *get_vct(XEN arg)                 given XEN arg, return vct
  *   void set_vct_print_length(int val)    set vct print length (default 10)
- *   XEN vct_to_vector(XEN vct)            return vector of vct contents
  *   vct *c_vct_copy(vct *vc)              return copy of vc
  *
  * Scheme side:
@@ -545,7 +544,7 @@ static XEN vector2vct(XEN vect)
   return(xen_return_first(scv, vect));
 }
 
-XEN vct2vector(XEN vobj)
+static XEN vct2vector(XEN vobj)
 {
   #define H_vct2vector "(" S_vct2vector " vct): returns a new vector with the elements of vct"
   vct *v;
@@ -571,37 +570,6 @@ XEN vct2vector(XEN vobj)
   rb_gc_enable();
 #endif
   return(xen_return_first(new_vect, vobj));
-}
-
-vct *vector_to_vct(XEN vect)
-{
-  int len, i;
-  vct *v;
-  XEN *vdata;
-  len = XEN_VECTOR_LENGTH(vect);
-  if (len == 0) return(NULL);
-  v = c_make_vct(len);
-  vdata = XEN_VECTOR_ELEMENTS(vect);
-  for (i = 0; i < len; i++) 
-    if (XEN_DOUBLE_P(vdata[i]))
-      v->data[i] = (Float)XEN_TO_C_DOUBLE(vdata[i]);
-    else
-      {
-	c_free_vct(v);
-	return(NULL);
-      }
-  return(v);
-}
-
-void vct_into_vector(vct *v, XEN vect)
-{
-  int len, i;
-  XEN *vdata;
-  len = XEN_VECTOR_LENGTH(vect);
-  vdata = XEN_VECTOR_ELEMENTS(vect);
-  /* VECTOR_SET here */
-  for (i = 0; i < len; i++) 
-    vdata[i] = C_TO_XEN_DOUBLE(v->data[i]);
 }
 
 

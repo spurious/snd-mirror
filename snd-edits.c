@@ -7841,7 +7841,7 @@ int save_channel_edits(chan_info *cp, char *ofile, XEN edpos, const char *caller
 	}
       FREE(sf);
       if (err != MUS_NO_ERROR)
-	report_in_minibuffer_and_save(sp, _("save channel as %s hit error: %s)"), nfile, strerror(errno));
+	report_in_minibuffer_and_save(sp, _("save channel as %s hit error: %s"), nfile, strerror(errno));
       else 
 	{
 	  err = move_file(nfile, ofile);
@@ -9036,19 +9036,11 @@ return a vct containing snd channel chn's data starting at beg for dur samps"
 
 static XEN g_samples(XEN samp_0, XEN samps, XEN snd_n, XEN chn_n, XEN edpos)
 {
-  /* this is now inconsistent with both the set form and the rest of Snd --
-   *   either the set form should be with ->vct, or this should return a vct
-   */
-
   #define H_samples "(" S_samples " (start-samp 0) (samps len) (snd #f) (chn #f) (edpos #f)): \
-return a vector containing snd channel chn's samples starting a start-samp for samps samples; edpos is the edit \
+return a vct containing snd channel chn's samples starting a start-samp for samps samples; edpos is the edit \
 history position to read (defaults to current position)."
 
-  XEN val;
-  val = samples2vct_1(samp_0, samps, snd_n, chn_n, XEN_FALSE, edpos, S_samples);
-  if (VCT_P(val))
-    return(vct2vector(val));
-  return(XEN_FALSE);
+  return(samples2vct_1(samp_0, samps, snd_n, chn_n, XEN_FALSE, edpos, S_samples));
 }
 
 static XEN g_set_samples_reversed(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6, XEN arg7, XEN arg8, XEN arg9)

@@ -4187,6 +4187,14 @@ See <a href="#deletetozero">delete-to-zero</a> or <i>delete-selection-and-smooth
 </td></tr>
 <tr><td></td><td>
 size in pixels of dots when graphing with dots (default: 1); this affects <a href="#graphstyle">graph-styles</a> such as <code>graph-lollipops</code>.  See <a href="#graphhook">graph-hook</a> or auto-dot in examp.scm.
+<!--
+<blockquote><small><pre>
+a dot: .
+three dots: ...
+VIP dot: !
+not a dot: +
+</pre></small></blockquote>
+-->
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -5061,7 +5069,31 @@ The following code plays from the cursor with a moving ("tracking") cursor:<br><
 	       (lambda (snd)
 		 (set! (cursor-follows-play) old-tracking)))
     (<em class=red>play</em> (cursor))))
-</pre></td></tr></table></td></tr>
+</pre></td></tr></table>
+<pre>
+<small><blockquote>
+To play one channel: <a href="#playchannel">play-channel</a>, play button in control panel or files dialog
+To play from cursor: C-q and example above
+To play from cursor with tracking cursor: <a href="#pfc">pfc</a> above
+To play the selection: <a href="#sndplayselection">play-selection</a>, <a href="snd.html#cxp">C-x p</a>
+To play a region: <a href="#sndplayregion">play-region</a>, <a href="snd.html#cxp">C-x p</a>, play button in Region dialog
+To play a mix: <a href="#sndplaymix">play-mix</a>, play button in Mix dialog
+To play a track: <a href="#sndplaytrack">play-track</a>
+To play from mark: click or drag triangle (control-click for all chans)
+To play continuously between two marks: <a href="sndscm.html#exloopbetweenmarks">loop-it</a>
+To stop playing: C-g, C-t, <a href="#sndstop">stop-playing</a>
+To pause or resume playback: space
+To play repeatedly: <a href="sndscm.html#explayoften">play-often</a>
+To play repeatedly until C-g: <a href="sndscm.html#explayuntilcg">play-until-c-g</a>
+To play region repeatedly: <a href="sndscm.html#explayregionforever">play-region-forever</a>
+To play a file upon a keystroke: <a href="#extendedpiano">bind-key</a>
+To play using an external program: (shell "sndplay wood16.wav")
+To play arbitrary mixtures of things: <a href="#makeplayer">make-player</a> and related functions, <a href="sndscm.html#playsyncdmarks">play-syncd-marks</a>
+To send arbitrary data to the DAC: <a href="#musaudiowrite">mus-audio-write</a>, <a href="sndscm.html#exstartdac">start-dac</a>
+To play after sending the data through some function: <a href="sndscm.html#explaysound">play-sound</a>
+To play with applied amplitude envelope: <a href="sndscm.html#explaywithenvs">play-with-envs</a>, <a href="sndscm.html#explaypanned">play-panned</a>
+To play an external file: (play "file")
+</blockquote></small></pre></td></tr>
 <tr><td colspan=2></td></tr>
 
 
@@ -5591,11 +5623,11 @@ or <a href="#samples2vct">samples-&gt;vct</a> instead.  <i>samp</i> defaults to 
 <span class=defbox><code><em class=def><a name="sndsamples">samples</a></em> (<i>samp samps snd chn edpos</i>)</code></span>
 </td></tr>
 <tr><td></td><td>
-return vector of <i>samps</i> samples starting at <i>samp</i> in <i>snd</i>'s channel <i>chn</i>.
+return vct of <i>samps</i> samples starting at <i>samp</i> in <i>snd</i>'s channel <i>chn</i>.
 <i>samp</i> defaults to 0.  <i>samps</i> defaults to frames - samp.
 <i>pos</i> is the edit history position to read (defaults to current position).
 This is settable (as is <b>sample</b>) -- see <a href="#sndsetsamples">set-samples</a>.
-(This function calls channel-&gt;vct, then vct-&gt;vector; it may someday return the vct instead).
+(<i>samples</i> is basically another name for channel-&gt;vct and samples-&gt;vct).
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -5657,6 +5689,7 @@ To save just the edit history: <a href="#sndsaveedithistory">save-edit-history</
 To save the peak-env data: <a href="sndscm.html#peakenvdoc">save-peak-env-info</a>
 To take some action upon a window manager save-yourself signal: <a href="sndscm.html#uponsaveyourself">upon-save-yourself</a>
 To save the current sound setup for a later reopen: <a href="sndscm.html#exremembersoundstate">remember-sound-state</a>
+To save the current fft peak info: <a href="#sndpeaks">peaks</a>
 </blockquote></small>
 </pre>
 </td></tr>
@@ -8343,7 +8376,7 @@ setting how how many samples to jump for the C-p and C-n keys.  We can implement
 </pre></td></tr></table></td></tr>
 
 <tr><td></td><td>
-We can use bind-key to turn the keyboard into a sort of extended piano:
+<A NAME="extendedpiano"></A>We can use bind-key to turn the keyboard into a sort of extended piano:
 </td></tr>
 
 <tr><td></td><td>
@@ -8699,7 +8732,7 @@ into Snd, recreates the state of Snd (as far as possible) at the point of the sa
 limitations to this process; the worst is that save-state does not try to save hook values or global variable values --
 see also <a href="#ptreechannel">ptree-channel</a> in this regard.
 If you call save-state with active regions, and have the region browser running all the time, and subsequently
-want to back up the the saved state, it's safer to delete all the regions first (via <a href="forgetregion">forget-region</a>, 
+want to back up the the saved state, it's safer to delete all the regions first (via <a href="forgetregion">forget-region</a>), 
 then load the saved-state file (see snd-test.scm for examples).
 </td></tr>
 

@@ -523,26 +523,6 @@ static void muffle_warning(char *name, char *type, char *klass, char *defaultp, 
 #endif
 }
 
-static void ss_graph_key_press(Widget w, XtPointer context, XEvent *event, Boolean *cont) 
-{
-  /* this is needed if user starts bare (no listener) Snd, then uses the menu accelerators
-   *   to access the menus
-   */
-  XKeyEvent *ev = (XKeyEvent *)event;
-  KeySym keysym;
-  int key_state;
-  snd_state *ss = (snd_state *)context;
-  snd_info *sp;
-  key_state = ev->state;
-  keysym = XKeycodeToKeysym(XtDisplay(w), 
-			    (int)(ev->keycode), 
-			    (key_state & ShiftMask) ? 1 : 0);
-  sp = any_selected_sound(ss);
-  if (sp)
-    key_press_callback(any_selected_channel(sp), ev->x, ev->y, ev->state, keysym);
-  else listener_append(XKeysymToString(keysym));
-}
-
 static Pixel get_color(Widget shell,
 		       char *rs_color, char *defined_color, char *fallback_color, char *second_fallback_color,
 		       int use_white)
@@ -876,7 +856,6 @@ void snd_doit(snd_state *ss, int argc, char **argv)
   n = attach_all_sides(args, n);
   XtSetArg(args[n], XmNallowResize, TRUE); n++;
   sx->mainpane = XtCreateManagedWidget("mainpane", xmFormWidgetClass, shell, args, n);
-  XtAddEventHandler(sx->mainpane, KeyPressMask, FALSE, ss_graph_key_press, (XtPointer)ss);
 #else
   sx->mainpane = XtCreateManagedWidget("mainpane", xmFormWidgetClass, parent, caller_args, caller_argn);
 #endif
@@ -927,7 +906,6 @@ void snd_doit(snd_state *ss, int argc, char **argv)
       break;
 #endif
     }
-  XtAddEventHandler(sx->soundpane, KeyPressMask, FALSE, ss_graph_key_press, (XtPointer)ss);
 
 #ifndef SND_AS_WIDGET
   #if ICON_TYPE

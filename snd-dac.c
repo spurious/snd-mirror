@@ -2270,8 +2270,7 @@ static XEN g_player_home(XEN snd_chn)
       if ((cp->sound) && (cp->sound->active))
 	return(XEN_LIST_2(C_TO_SMALL_XEN_INT(cp->sound->index),
 			  C_TO_SMALL_XEN_INT(cp->chan)));
-      else return(XEN_LIST_2(NO_SUCH_SOUND,
-			     C_TO_SMALL_XEN_INT(cp->chan)));
+      else return(XEN_FALSE); /* can this happen? */
     }
   return(snd_no_such_player_error(S_player_home, snd_chn));
 }

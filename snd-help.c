@@ -309,6 +309,7 @@ void news_help(snd_state *ss)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+22-Apr:  samples function returns a vct, not a vector.\n\
 15-Apr:  removed fix-bar, makefile.motif.osx, and makefile.gtk.osx\n\
 11-Apr:  moved dismiss-all-dialogs to snd6.scm.\n\
          change-property -> change-window-property (old form in snd6.scm)\n\

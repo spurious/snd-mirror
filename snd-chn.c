@@ -6314,12 +6314,7 @@ If 'data' is a list of numbers, it is treated as an envelope."
 	      v = (vct *)XEN_OBJECT_REF(data);
 	      len = v->length;
 	    }
-	  else 
-	    {
-	      if (XEN_VECTOR_P(data))
-		len = XEN_VECTOR_LENGTH(data);
-	      else XEN_WRONG_TYPE_ARG_ERROR(S_graph, 1, data, "data list element must be vector or vct?");
-	    }
+	  else len = XEN_VECTOR_LENGTH(data);
 	  if (lg->len[graph] != len)
 	    {
 	      if (lg->data[graph]) FREE(lg->data[graph]);

@@ -1015,6 +1015,37 @@ static void free_vct_vct(vct_vct *v)
 
 static void clm_struct_restore(ptree *prog, xen_var *var);
 
+static vct *vector_to_vct(XEN vect)
+{
+  int len, i;
+  vct *v;
+  XEN *vdata;
+  len = XEN_VECTOR_LENGTH(vect);
+  if (len == 0) return(NULL);
+  v = c_make_vct(len);
+  vdata = XEN_VECTOR_ELEMENTS(vect);
+  for (i = 0; i < len; i++) 
+    if (XEN_DOUBLE_P(vdata[i]))
+      v->data[i] = (Float)XEN_TO_C_DOUBLE(vdata[i]);
+    else
+      {
+	c_free_vct(v);
+	return(NULL);
+      }
+  return(v);
+}
+
+static void vct_into_vector(vct *v, XEN vect)
+{
+  int len, i;
+  XEN *vdata;
+  len = XEN_VECTOR_LENGTH(vect);
+  vdata = XEN_VECTOR_ELEMENTS(vect);
+  /* VECTOR_SET here */
+  for (i = 0; i < len; i++) 
+    vdata[i] = C_TO_XEN_DOUBLE(v->data[i]);
+}
+
 static xen_var *free_xen_var(ptree *prog, xen_var *var)
 {
   XEN val;
