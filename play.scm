@@ -180,9 +180,9 @@
 
 (define (vector-synthesis driver files read-even-when-not-playing)
 
-  "(vector-synthesis driver files read-even-when-not-playing) uses 'driver', a \
-function of two args (the number of files, and the number of samples between calls) to decide which file to play.  If \
-'read-even-when-not-playing' is #t (default is #f), the input files are constantly \
+  "(vector-synthesis driver files read-even-when-not-playing) uses 'driver', a 
+function of two args (the number of files, and the number of samples between calls) to decide which file to play.  If 
+'read-even-when-not-playing' is #t (default is #f), the input files are constantly 
 read, even if not playing.  'files' is a list of files to be played."
   
   (let ((files-len (length files)))
@@ -286,7 +286,7 @@ read, even if not playing.  'files' is a list of files to be played."
 
 (define play-with-amps
   (lambda (sound . amps)
-    "(play-with-amps snd #:rest amps) plays snd with each channel scaled by the corresponding \
+    "(play-with-amps snd #:rest amps) plays snd with each channel scaled by the corresponding 
 amp: (play-with-amps 0 1.0 0.5) plays channel 2 of stereo sound at half amplitude"
     (let ((chans (chans sound)))
       (do ((chan 0 (1+ chan)))

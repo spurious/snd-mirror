@@ -75,7 +75,7 @@
 
 (if (not (defined? 'all-chans))
     (define (all-chans)
-      "(all-chans) -> two parallel lists, the first snd indices, the second channel numbers.  If we have \
+      "(all-chans) -> two parallel lists, the first snd indices, the second channel numbers.  If we have 
 two sounds open (indices 0 and 1 for example), and the second has two channels, (all-chans) returns '((0 1 1) (0 0 1))"
       (let ((sndlist '())
 	    (chnlist '()))
@@ -358,8 +358,8 @@ two sounds open (indices 0 and 1 for example), and the second has two channels, 
 ;(add-hook! graph-hook zoom-spectrum)
 
 (define (zoom-fft snd chn y0 y1)
-  "(zoom-fft snd chn y0 y1) sets the transform size if the time domain is not displayed (use with graph-hook) \
-It also sets the spectrum display start point based on the x position slider -- \
+  "(zoom-fft snd chn y0 y1) sets the transform size if the time domain is not displayed (use with graph-hook) 
+It also sets the spectrum display start point based on the x position slider -- 
 this can be confusing if fft normalization is on (the default)"
   (if (and (transform-graph? snd chn)
 	   (not (time-graph? snd chn))
@@ -622,7 +622,7 @@ this can be confusing if fft normalization is on (the default)"
 ;;;
 
 (define (do-all-chans func origin)
-  "(do-all-chans func edhist) applies func to all active channels, using edhist as the edit history \
+  "(do-all-chans func edhist) applies func to all active channels, using edhist as the edit history 
 indication: (do-all-chans (lambda (val) (* 2.0 val)) \"double all samples\")"
   (apply map (lambda (snd chn)
 	       (map-chan func #f #f origin snd chn))
@@ -656,7 +656,7 @@ indication: (do-all-chans (lambda (val) (* 2.0 val)) \"double all samples\")"
 	(snd-warning "no selected sound"))))
 
 (define (every-sample? proc)
-  "(every-sample func) -> #t if func is not #f for all samples in the current channel, \
+  "(every-sample func) -> #t if func is not #f for all samples in the current channel, 
 otherwise it moves the cursor to the first offending sample"
   (let ((baddy (scan-chan 
 		(lambda (y) 
@@ -679,8 +679,8 @@ otherwise it moves the cursor to the first offending sample"
 ;;; -------- mix mono sound into stereo sound panning according to env
 
 (define (place-sound mono-snd stereo-snd pan-env)
-  "(place-sound mono-snd stereo-snd pan-env) mixes a mono sound into a stereo sound, splitting \
-it into two copies whose amplitudes depend on the envelope 'pan-env'.  If 'pan-env' is \
+  "(place-sound mono-snd stereo-snd pan-env) mixes a mono sound into a stereo sound, splitting 
+it into two copies whose amplitudes depend on the envelope 'pan-env'.  If 'pan-env' is 
 a number, the sound is split such that 0 is all in channel 0 and 90 is all in channel 1."
   (let ((len (frames mono-snd)))
     (if (number? pan-env)
@@ -710,7 +710,7 @@ a number, the sound is split such that 0 is all in channel 0 and 90 is all in ch
 ;;;
 
 (define (fft-edit bottom top)
-  "(fft-edit low-Hz high-Hz) ffts an entire sound, removes all energy below low-Hz and all above high-Hz, \
+  "(fft-edit low-Hz high-Hz) ffts an entire sound, removes all energy below low-Hz and all above high-Hz, 
 then inverse ffts."
   (let* ((sr (srate))
 	 (len (frames))
@@ -874,7 +874,7 @@ then inverse ffts."
   (vct->channel (fft-env-data fft-env) 0 (1- (frames))))
 
 (define (fft-env-interp env1 env2 interp)
-  "(fft-env-interp env1 env2 interp) interpolates between two fft-filtered versions (env1 and env2 are the \
+  "(fft-env-interp env1 env2 interp) interpolates between two fft-filtered versions (env1 and env2 are the 
 spectral envelopes) following interp (an env between 0 and 1)"
   (let* ((data1 (fft-env-data env1))
 	 (data2 (fft-env-data env2))
@@ -890,7 +890,7 @@ spectral envelopes) following interp (an env between 0 and 1)"
     (vct->channel new-data 0 (1- len))))
 
 (define (fft-smoother cutoff start samps snd chn)
-  "(fft-smoother cutoff start samps snd chn) uses fft-filtering to smooth a \
+  "(fft-smoother cutoff start samps snd chn) uses fft-filtering to smooth a 
 section: (vct->samples (cursor) 400 (fft-smoother .1 (cursor) 400 0 0))"
   (let* ((fftpts (inexact->exact (expt 2 (ceiling (/ (log (1+ samps)) (log 2.0))))))
 	 (rl (make-vct fftpts))
@@ -942,7 +942,7 @@ section: (vct->samples (cursor) 400 (fft-smoother .1 (cursor) 400 0 0))"
 ;;; the same thing using the CLM module is:
 
 (define (comb-filter scaler size)
-  "(comb-filter scaler size) returns a comb-filter ready for map-chan etc: (map-chan (comb-filter .8 32)).  If you're \
+  "(comb-filter scaler size) returns a comb-filter ready for map-chan etc: (map-chan (comb-filter .8 32)).  If you're 
 in a hurry use: (clm-channel (make-comb .8 32)) instead"
   (let ((cmb (make-comb scaler size)))
     (lambda (x) 
@@ -961,7 +961,7 @@ in a hurry use: (clm-channel (make-comb .8 32)) instead"
 ;;; or change the comb length via an envelope:
 
 (define (zcomb scaler size pm)
-  "(zcomb scaler size pm) returns a comb filter whose length varies according to an \
+  "(zcomb scaler size pm) returns a comb filter whose length varies according to an 
 envelope: (map-chan (zcomb .8 32 '(0 0 1 10)))"
   (define (max-envelope-1 e mx)
     (if (null? e)
@@ -980,7 +980,7 @@ envelope: (map-chan (zcomb .8 32 '(0 0 1 10)))"
       (notch cmb x))))
 
 (define (formant-filter radius frequency)
-  "(formant-filter radius frequency) returns a formant generator: (map-chan (formant-filter .99 2400)). Faster \
+  "(formant-filter radius frequency) returns a formant generator: (map-chan (formant-filter .99 2400)). Faster 
 is: (filter-sound (make-formant .99 2400))"
   (let ((frm (make-formant radius frequency)))
     (lambda (x) 
@@ -1008,7 +1008,7 @@ is: (filter-sound (make-formant .99 2400))"
 	val))))
 
 (define (osc-formants radius bases amounts freqs)
-  "(osc-formants radius bases amounts freqs) set up any number of independently oscillating \
+  "(osc-formants radius bases amounts freqs) set up any number of independently oscillating 
 formants: (map-chan (osc-formants .99 '(400 800 1200) '(400 800 1200) '(4 2 3)))"
   (let* ((len (length bases))
 	 (frms (make-vector len))
@@ -1164,7 +1164,7 @@ formants: (map-chan (osc-formants .99 '(400 800 1200) '(400 800 1200) '(4 2 3)))
 ;;; CLM version is in expsrc.ins
 
 (define* (expsrc rate #:optional snd chn)
-  "(expsrc rate #:optional snd chn) uses sampling-rate conversion and granular synthesis \
+  "(expsrc rate #:optional snd chn) uses sampling-rate conversion and granular synthesis 
 to produce a sound at a new pitch but at the original tempo.  It returns a function for map-chan."
   (let* ((gr (make-granulate :expansion rate))
 	 ;; this can be improved by messing with make-granulate's hop and length args
@@ -1224,7 +1224,7 @@ to produce a sound at a new pitch but at the original tempo.  It returns a funct
 ;;; CLM version is in clm.html
 
 (define (cross-synthesis cross-snd amp fftsize r)
-  "(cross-synthesis cross-snd amp fftsize r) does cross-synthesis between 'cross-snd' (a sound index) and the currently \
+  "(cross-synthesis cross-snd amp fftsize r) does cross-synthesis between 'cross-snd' (a sound index) and the currently 
 selected sound: (map-chan (cross-synthesis 1 .5 128 6.0))"
   (let* ((freq-inc (/ fftsize 2))
 	 (fdr (make-vct fftsize))
@@ -1486,7 +1486,7 @@ selected sound: (map-chan (cross-synthesis 1 .5 128 6.0))"
 (define retitle-time (* 60 1000)) ;once a minute
 
 (define (title-with-date)
-  "(title-with-date) causes Snd's main window to display the time of day.  To turn off \
+  "(title-with-date) causes Snd's main window to display the time of day.  To turn off 
 this clock, set retitle-time to 0"
   (let ((names (short-file-name #t)))
     (change-window-property "SND_VERSION" "WM_NAME"
@@ -1526,7 +1526,7 @@ this clock, set retitle-time to 0"
 ;;; -------- filtered-env 
 
 (define (filtered-env e)
-  "(filtered-env env) is a time-varying one-pole filter: when env is at 1.0, no filtering, \
+  "(filtered-env env) is a time-varying one-pole filter: when env is at 1.0, no filtering, 
 as env moves to 0.0, low-pass gets more intense; amplitude and low-pass amount move together"
   (let* ((samps (frames))
 	 (flt (make-one-pole 1.0 0.0))
@@ -1808,7 +1808,7 @@ as env moves to 0.0, low-pass gets more intense; amplitude and low-pass amount m
 	rtn))))
 
 (define (find-pitch pitch)
-  "(find-pitch pitch) finds the point in the current sound where 'pitch' (in Hz) predominates -- C-s (find-pitch 300) \
+  "(find-pitch pitch) finds the point in the current sound where 'pitch' (in Hz) predominates -- C-s (find-pitch 300) 
 In most cases, this will be slightly offset from the true beginning of the note"
   (define (interpolated-peak-offset la ca ra)
     (let* ((pk (+ .001 (max la ca ra)))
@@ -1884,7 +1884,7 @@ In most cases, this will be slightly offset from the true beginning of the note"
     data))
 
 (define (add-notes notes)
-  "(add-notes notes) adds (mixes) 'notes' which is a list of lists of the form: file #:optional (offset 0.0) (amp 1.0) \
+  "(add-notes notes) adds (mixes) 'notes' which is a list of lists of the form: file #:optional (offset 0.0) (amp 1.0) 
 starting at the cursor in the currently selected channel: (add-notes '(("oboe.snd") ("pistol.snd" 1.0 2.0)))"
   (let* ((snd (or (selected-sound) (car (sounds))))
 	 (chn (or (selected-channel) 0))
@@ -1904,7 +1904,7 @@ starting at the cursor in the currently selected channel: (add-notes '(("oboe.sn
 	notes)))))
 
 (define (region-play-list data)
-  "(region-play-list data): 'data' is list of lists (list (list time reg)...), time in secs, setting up \
+  "(region-play-list data): 'data' is list of lists (list (list time reg)...), time in secs, setting up 
 a sort of play list: (region-play-list (list (list 0.0 0) (list 0.5 1) (list 1.0 2) (list 1.0 0)))"
   (for-each
    (lambda (tone)

@@ -1502,23 +1502,17 @@ void add_or_edit_symbol(char *name, env *val)
   snd_catch_any(eval_str_wrapper, buf, buf);
   FREE(buf);
 #else
+#if HAVE_GUILE
   XEN e;
   if (!val) return;
-#if HAVE_SCM_C_DEFINE
-#if HAVE_SCM_DEFINED_P
-  if (XEN_TRUE_P(scm_defined_p(C_STRING_TO_XEN_SYMBOL(name), XEN_UNDEFINED)))
-#else
-  if (XEN_TRUE_P(scm_definedp(C_STRING_TO_XEN_SYMBOL(name), XEN_UNDEFINED)))
-#endif
+  if (XEN_DEFINED_P(name))
     {
-      e = scm_sym2var(scm_str2symbol(name), scm_current_module_lookup_closure(), XEN_FALSE);
+      e = XEN_NAME_AS_C_STRING_TO_VARIABLE(name);
       XEN_VARIABLE_SET(e, env_to_xen(val));
     }
   else XEN_DEFINE_VARIABLE(name, e, env_to_xen(val));
-#else
-  XEN_DEFINE_VARIABLE(name, e, env_to_xen(val));
-#endif
   set_envelope_base(e, C_TO_XEN_DOUBLE(val->base));
+#endif
 #endif
 }
 

@@ -13,9 +13,9 @@
 ;;;  translated from CLM's pluck.ins
 
 (definstrument (pluck start dur freq amp-1 #:optional (weighting .5) (lossfact .9))
-  "(pluck start dur freq amp weighting lossfact) implements the Jaffe-Smith plucked string physical model. \
-'weighting' is the ratio of the once-delayed to the twice-delayed samples.  It defaults to .5=shortest decay. \
-Anything other than .5 = longer decay.  Must be between 0 and less than 1.0. \
+  "(pluck start dur freq amp weighting lossfact) implements the Jaffe-Smith plucked string physical model. 
+'weighting' is the ratio of the once-delayed to the twice-delayed samples.  It defaults to .5=shortest decay. 
+Anything other than .5 = longer decay.  Must be between 0 and less than 1.0. 
 'lossfact' can be used to shorten decays.  Most useful values are between .8 and 1.0. (pluck 0 1 330 .3 .95 .95)"
 
   (let ((amp amp-1)) ; make new Guile happy
@@ -87,7 +87,7 @@ Anything other than .5 = longer decay.  Must be between 0 and less than 1.0. \
 ;;; this version translated (and simplified slightly) from CLM's mlbvoi.ins
 
 (definstrument (vox beg dur freq amp ampfun freqfun freqscl voxfun index vibscl)
-  "(vox beg dur freq amp ampfun freqfun freqscl voxfun index vibscl) is a version of the waveshaping \
+  "(vox beg dur freq amp ampfun freqfun freqscl voxfun index vibscl) is a version of the waveshaping 
 voice: (vox 0 2 110 .4 '(0 0 25 1 75 1 100 0) '(0 0 5 .5 10 0 100 1) .1 '(0 UH 25 UH 35 ER 65 ER 75 UH 100 UH) .025 .1)"
   
   (let ((formants
@@ -217,7 +217,7 @@ voice: (vox 0 2 110 .4 '(0 0 25 1 75 1 100 0) '(0 0 5 .5 10 0 100 1) .1 '(0 UH 2
 ;;; -------- FOF example
 
 (definstrument (fofins beg dur frq amp uvib f0 a0 f1 a1 f2 a2 #:optional (ae '(0 0 25 1 75 1 100 0)))
-  "(fofins beg dur frq amp vib f0 a0 f1 a1 f2 a2 #:optional (ae '(0 0 25 1 75 1 100 0))) produces FOF \
+  "(fofins beg dur frq amp vib f0 a0 f1 a1 f2 a2 #:optional (ae '(0 0 25 1 75 1 100 0))) produces FOF 
 synthesis: (fofins 0 1 270 .2 .001 730 .6 1090 .3 2440 .1)"
     (let* ((two-pi (* 2 3.141592653589793))
 	   (start (inexact->exact (floor (* beg (mus-srate)))))
@@ -395,7 +395,7 @@ synthesis: (fofins 0 1 270 .2 .001 730 .6 1090 .3 2440 .1)"
 ;;; translation of CLM pqwvox.ins (itself translated from MUS10 of MLB's waveshaping voice instrument (using phase quadrature waveshaping))
 
 (definstrument (pqw-vox beg dur freq spacing-freq amp ampfun freqfun freqscl phonemes formant-amps formant-shapes)
-  "(pqw-vox beg dur freq spacing-freq amp ampfun freqfun freqscl phonemes formant-amps formant-shapes) produces \
+  "(pqw-vox beg dur freq spacing-freq amp ampfun freqfun freqscl phonemes formant-amps formant-shapes) produces 
 vocal sounds using phase quadrature waveshaping"
 
   (define formants
@@ -531,12 +531,12 @@ vocal sounds using phase quadrature waveshaping"
 			     (vib-rate 5) (vib-amount 0.03)
 			     (ran-rate 5) (ran-amount 0.03))
   "(stereo-flute dur freq flow 
-     #:key (flow-envelope '(0  1 100 1)) (decay 0.01)\n\
-	   (noise 0.0356) (embouchure-size 0.5) (fbk-scl1 0.5)\n\
-	   (fbk-scl2 0.55) (offset-pos 0.764264) (out-scl 1.0)\n\
-	   (a0 0.7) (b1 -0.3) (vib-rate 5) (vib-amount 0.03)\n\
-           (ran-rate 5) (ran-amount 0.03))\n\
-is a physical model of a flute:\n\
+     #:key (flow-envelope '(0  1 100 1)) (decay 0.01)
+	   (noise 0.0356) (embouchure-size 0.5) (fbk-scl1 0.5)
+	   (fbk-scl2 0.55) (offset-pos 0.764264) (out-scl 1.0)
+	   (a0 0.7) (b1 -0.3) (vib-rate 5) (vib-amount 0.03)
+           (ran-rate 5) (ran-amount 0.03))
+is a physical model of a flute:
   (stereo-flute 0 1 440 .55 :flow-envelope '(0 0 1 1 2 1 3 0))"
 
   (let* ((current-excitation 0.0)

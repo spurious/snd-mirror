@@ -38,6 +38,7 @@
 </td></tr></table>
 </center>
 
+<table border=0><tr><td>
 <ul>
 <li><a href="#lisplistener">Introduction</a>
 <li><a href="#etc">Snd Programming</a>
@@ -75,6 +76,9 @@
   </ul>
 <li><a href="index.html">Index</a>
 </ul>
+</td><td>
+<img src="redsamps.png" alt="red samples" hspace=40>
+</td></tr></table>
 <br>
 <table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>Introduction</h2></td></tr></table>
 <A NAME="lisplistener"></a>
@@ -148,6 +152,7 @@ Extensions to Snd can be found in:
 <tr><td><a href="sndscm.html#drawdoc">draw.scm</a></td>              <td>graphics additions</td></tr>
 <tr><td><a href="sndscm.html#dspdoc">dsp.scm</a></td>                <td>various DSP-related procedures</td></tr>
 <tr><td><a href="sndscm.html#editmenudoc">edit-menu.scm</a></td>     <td>Edit menu additions</td></tr>
+<tr><td><a href="sndscm.html#dotsnd">edit123.scm, snd_conffile.scm</a></td><td>.snd examples (Tom Roth, Kjetil S. Matheussen)</td></tr>
 <tr><td><a href="sndscm.html#effectsdoc">new-effects.scm, gtk-effects.scm, effects.rb</a></td><td>an Effects menu</td></tr>
 <tr><td><a href="sndscm.html#envdoc">env.scm, env.rb</a></td>        <td>various envelope functions from CLM</td></tr>
 <tr><td><a href="sndscm.html#enveddoc">enved.scm</a></td>            <td>envelope editor in lisp graph section</td></tr>
@@ -156,9 +161,9 @@ Extensions to Snd can be found in:
 <tr><td><a href="sndscm.html#fadedoc">fade.scm</a></td>              <td>frequency-domain cross-fades</td></tr>
 <tr><td><a href="sndscm.html#fmvdoc">fmv.scm</a></td>                <td>the fm-violin tied to real-time stuff</td></tr>
 <tr><td><a href="sndscm.html#freeverbdoc">freverb.scm, freeverb.rb</a></td><td>a reverb</td></tr>
-<tr><td><a href="sndscm.html#goopsnddoc">goopsnd.scm</a></td>        <td>first look at Goops (Guile Object System) for Snd</td></tr>
 <tr><td><a href="sndscm.html#hooksdoc">hooks.scm, hooks.rb</a></td>  <td>functions related to hooks</td></tr>
 <tr><td><a href="sndscm.html#indexdoc">index.scm, index.rb</a></td>  <td>snd-help locators</td></tr>
+<tr><td><a href="sndscm.html#dotemacs">inf-snd.el, DotEmacs</a></td> <td>Emacs subjob support (Michael Scholz, Fernando Lopez-Lezcano)</td></tr>
 <tr><td><a href="sndscm.html#jcrevdoc">jcrev.scm</a></td>            <td>John Chowning's reverb</td></tr>
 <tr><td><a href="sndscm.html#ladspadoc">ladspa.scm</a></td>          <td>Kjetil S. Matheussen's LADSPA GUI-builder and previewer.</td></tr>
 <tr><td><a href="sndscm.html#maracadoc">maraca.scm</a></td>          <td>Perry Cook's maraca physical model</td></tr>
@@ -176,6 +181,7 @@ Extensions to Snd can be found in:
 <tr><td><a href="sndscm.html#prc95doc">prc95.scm</a></td>            <td>Perry Cook's physical model examples (from CLM)</td></tr>
 <tr><td><a href="sndscm.html#pvocdoc">pvoc.scm</a></td>              <td>phase-vocoder examples</td></tr>
 <tr><td><a href="sndscm.html#rgbdoc">rgb.scm, rgb.rb</a></td>        <td>color definitions</td></tr>
+<tr><td><a href="sndscm.html#rmsgaindoc">rmsgain.scm</a></td>        <td>RMS-based gain and balance (Fabio Furlanete)</td></tr>
 <tr><td><a href="sndscm.html#rtiodoc">rtio.scm, rtio.rb</a></td>     <td>real-time stuff</td></tr>
 <tr><td><a href="sndscm.html#rubberdoc">rubber.scm, rubber.rb</a></td><td>rubber-sound</td></tr>
 <tr><td><a href="sndscm.html#singerdoc">singer.scm</a></td>          <td>Perry Cook's vocal-tract physical model</td></tr>
@@ -207,7 +213,7 @@ Snd does not exit.</p>
 (define <A NAME="unsavededitsp">unsaved-edits?</A>
   (lambda (lst)
     (if (not (null? lst))
-	(if (&gt; (car (<a class=quiet href="#sndedits" onmouseout="window.status='';return true;" onmouseover="window.status='(edits snd chn) -> (list undoable-edits redoable-edits)';return true">edits</a> (car lst))) 0)
+	(if (&gt; (car (<a class=quiet href="#sndedits" onmouseout="window.status='';return true;" onmouseover="window.status='(edits snd chn): (list undoable-edits redoable-edits)';return true">edits</a> (car lst))) 0)
 	    (begin
 	      (<a class=quiet href="#sndreportinminibuffer">report-in-minibuffer</a> "there are unsaved edits")
 	      #t)
@@ -2161,7 +2167,7 @@ to the end of <i>v</i>.</td></tr>
 <tr><td colspan=2><code><a class=def name="vct2channel">vct-&gt;channel</a> (v (beg 0) (dur len) (snd #f) (chn #f) (edpos #f))</code></td></tr>
 <tr><td></td><td>
 set the samples from <i>beg</i> to <i>beg+dur</i> from the values in <i>v</i>.
-This is the <a href="#regularizedargs">regularized</a> version of <a href="#vct2samples">vct-&gt;samples</a>.
+This is the <a class=quiet href="#regularizedargs">regularized</a> version of <a href="#vct2samples">vct-&gt;samples</a>.
 </td></tr>
 
 <!-- vct->list -->
@@ -4083,7 +4089,7 @@ added with:<br><br>
   <code>(cons (cons key value) a-list)</code>
 <br><br>In Common Lisp, property lists have other properties, so to speak, but <b>channel-properties</b> (and
 <a href="#sndsoundproperties">sound-properties</a>) can be handled in any way you like.
-
+See <a href="sndscm.html#channelsync">channel-sync</a> in extensions.scm for a brief example.
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -4114,7 +4120,7 @@ The following code sets the 'unite' button if the current sound has more than 4 
 <code><a class=def name="channel2vct">channel-&gt;vct</a> (<i>beg dur snd chn edpos</i>)</code>
 </td></tr>
 <tr><td></td><td>
-<b>channel-&gt;vct</b> is the <a href="#regularizedargs">regularized</a> version of <a href="#samples2vct">samples-&gt;vct</a>.
+<b>channel-&gt;vct</b> is the <a class=quiet href="#regularizedargs">regularized</a> version of <a href="#samples2vct">samples-&gt;vct</a>.
 </td></tr>
 
 <tr><td></td><td>
@@ -4155,7 +4161,7 @@ number of channels in <i>snd</i>.
 <tr><td></td><td>
 apply <i>clm-gen</i> to <i>snd</i>'s channel <i>chn</i> starting
 at sample <i>beg</i> for <i>dur</i> samples, and <i>overlap</i> samples of 'ring time'.
-This is used by some of the <a href="#regularizedargs">regularized</a> functions, but it can also be used directly:
+This is used by some of the <a class=quiet href="#regularizedargs">regularized</a> functions, but it can also be used directly:
 </td></tr>
 
 <tr><td></td><td>
@@ -4527,7 +4533,7 @@ size in pixels of dots when graphing with dots (default: 1); this affects <a hre
 <code><a class=def name="envchannel">env-channel</a> (clm-env-gen <i>beg dur snd chn edpos</i>)</code>
 </td></tr>
 <tr><td></td><td>
-<b>env-channel</b> is the <a href="#regularizedargs">regularized</a> version of <a href="#sndenv">env-sound</a>.  <i>clm-env-gen</i>
+<b>env-channel</b> is the <a class=quiet href="#regularizedargs">regularized</a> version of <a href="#sndenv">env-sound</a>.  <i>clm-env-gen</i>
 can be either a CLM envelope generator or an envelope (a list of breakpoints). <code>(env-channel '(0 0 1 1 2 0))</code>
 <br><br>
 <A NAME="envexamples"></a>
@@ -4632,12 +4638,19 @@ spectrum magnitude axis is in decibels (#t) or linear (#f, the default).
 <tr><td></td><td>
 fft data window (default: <i>blackman2-window</i>)
 <pre>
-rectangular-window   hann(ing)-window     welch-window        parzen-window
+rectangular-window   hann-window          welch-window        parzen-window
 bartlett-window      hamming-window       blackman2-window    blackman3-window
 blackman4-window     exponential-window   riemann-window      kaiser-window
 cauchy-window        poisson-window       gaussian-window     tukey-window
 dolph-chebyshev-window (only if your C supports complex trig functions (cacos etc), or GSL is loaded)
 </pre>
+<p>The Hann window is sometimes called Hanning in the DSP literature, apparently
+as a sort of in-joke.  These windows matter less than you might think (this is true
+of a lot of things that DSP texts worry over at great length); for details see
+Fredric J. Harris, 'On the Use of Windows for Harmonic Analysis with the Discrete Fourier Transform', Proceedings of the
+IEEE, Vol. 66, No. 1, January 1978, with updates from: Albert H. Nuttall, 'Some Windows with Very Good Sidelobe Behaviour', IEEE Transactions
+of Acoustics, Speech, and Signal Processing, Vol. ASSP-29, 1, February 1981. 
+Briefly, the best one is the Dolph-Chebyshev window.
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -5224,7 +5237,7 @@ map-sound-chans, map-all-chans, etc.
 </pre></td></tr></table><br>
 An esoteric aside: map-chan sets up the sample reader before calling the procedure, so if that procedure edits
 the sound itself (independent of map-chan), the result will be all such edits after the current edit, then the map-chan result
-applied to the original (not the newly edited) data.  That is,<br><br><pre>
+applied to the original (not the newly edited) data.  That is,<br><pre>
 (let ((first #t)) 
   (<em class=red>map-chan</em> (lambda (y) 
               (if first (set! (<a class=quiet href="#sndsample">sample</a> 0) 1.0)) 
@@ -5242,7 +5255,7 @@ the preceding edit in the list will be the <code>(set! (<a class=quiet href="#sn
 <code><a class=def name="mapchannel">map-channel</a> (func <i>beg dur snd chn edpos edname</i>)</code>
 </td></tr>
 <tr><td></td><td>
-<b>map-channel</b> is the <a href="#regularizedargs">regularized</a> version of <a href="#mapchan">map-chan</a>.
+<b>map-channel</b> is the <a class=quiet href="#regularizedargs">regularized</a> version of <a href="#mapchan">map-chan</a>.
 <br><br>
 <table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
 (define* (<A NAME="cosinechannel">cosine-channel</a> #:optional (beg 0) (dur #f) (snd #f) (chn #f) (edpos #f))
@@ -5300,7 +5313,8 @@ Track maxamp: <a href="sndscm.html#trackmaxamp">track-maxamp</a><br>
 <code><a class=def name="maxfftpeaks">max-transform-peaks</a> (<em class=narg>snd chn</em>)</code>
 </td></tr>
 <tr><td></td><td>
-max number of transform peaks reported (default: 100).
+max number of transform peaks reported (default: 100).  This affects both the fft display
+and the <a href="#sndpeaks">peaks</a> function.
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -5396,7 +5410,7 @@ and there are a variety of CLM-based functions such as
 <code><a class=def name="padchannel">pad-channel</a> (beg dur <i>snd chn edpos</i>)</code>
 </td></tr>
 <tr><td></td><td>
-insert <i>dur</i> zeros at <i>beg</i> in <i>snd</i>'s channel <i>chn</i>. This is the <a href="#regularizedargs">regularized</a> 
+insert <i>dur</i> zeros at <i>beg</i> in <i>snd</i>'s channel <i>chn</i>. This is the <a class=quiet href="#regularizedargs">regularized</a> 
 version of <a href="#sndinsertsilence">insert-silence</a>.  To set a block of samples to zero, use 
 <a href="#scalechannel">scale-channel</a> with a scaler of 0.0.
 To insert a block of arbitrary-valued samples:
@@ -5435,7 +5449,8 @@ See <a href="#initialgraphhook">initial-graph-hook</a> and peak-env.scm.
 <tr><td></td><td>
 display fft peak information.  If <i>file</i> is not null, write 
 the information to that file, else post it in a help window 
-(where it can be selected and pasted elsewhere).
+(where it can be selected and pasted elsewhere).  The maximum number of peaks reported is set
+by <a href="#maxfftpeaks">max-transform-peaks</a>.
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -5526,7 +5541,7 @@ If <i>pos</i> is given, play at that edit position.
 <code><a class=def name="playchannel">play-channel</a> (<i>beg dur snd chn edpos</i>)</code>
 </td></tr>
 <tr><td></td><td>
-<b>play-channel</b> is the <a href="#regularizedargs">regularized</a> version of <a href="#sndplay">play</a>.
+<b>play-channel</b> is the <a class=quiet href="#regularizedargs">regularized</a> version of <a href="#sndplay">play</a>.
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -5546,7 +5561,7 @@ return a list of the sound index and channel number associated with <a href="#ma
 <code><a class=def name="playerQ">player?</a> (obj)</code>
 </td></tr>
 <tr><td></td><td>
-#t is <i>obj</i> is an active <a href="#makeplayer">player</a>.
+#t if <i>obj</i> is an active <a href="#makeplayer">player</a>.
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -6050,7 +6065,7 @@ temporary messages.  C-g clears it.
 <code><a class=def name="reversechannel">reverse-channel</a> (<i>beg dur snd chn edpos</i>)</code>
 </td></tr>
 <tr><td></td><td>
-<b>reverse-channel</b> is the <a href="#regularizedargs">regularized</a> version of <a href="#sndreverse">reverse-sound</a>.
+<b>reverse-channel</b> is the <a class=quiet href="#regularizedargs">regularized</a> version of <a href="#sndreverse">reverse-sound</a>.
 <!-- INDEX reverseexamples:Reversing -->
 <br><br>
 <A NAME="reverseexamples"></a>
@@ -6278,7 +6293,7 @@ is scaled (defaults to the currently selected channel).  <code>(scale-by 2.0)</c
 <code><a class=def name="scalechannel">scale-channel</a> (scl <i>beg dur snd chn edpos</i>)</code>
 </td></tr>
 <tr><td></td><td>
-<b>scale-channel</b> is the <a href="#regularizedargs">regularized</a> version of <a href="#sndscalesoundby">scale-sound-by</a>.
+<b>scale-channel</b> is the <a class=quiet href="#regularizedargs">regularized</a> version of <a href="#sndscalesoundby">scale-sound-by</a>.
 There are approximately a bazillion ways to scale samples in Snd; here's a potpourri of increasingly silly choices:<br><br>
 <table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
 (<a class=quiet href="#sndscaleby">scale-by</a> 2.0)
@@ -6439,7 +6454,7 @@ In this case, we found such a sample at position 4423.<br>
 <code><a class=def name="scanchannel">scan-channel</a> (func <i>beg dur snd chn edpos</i>)</code>
 </td></tr>
 <tr><td></td><td>
-<b>scan-channel</b> is the <a href="#regularizedargs">regularized</a> version of <a href="#scanchan">scan-chan</a>.
+<b>scan-channel</b> is the <a class=quiet href="#regularizedargs">regularized</a> version of <a href="#scanchan">scan-chan</a>.
 In scan-chan, scan-channel, find, and count-matches (all the same underlying procedure), an attempt to jump back
 into a previous call will not work.  That is,<br><br>
 <table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
@@ -6619,7 +6634,7 @@ If #t, the y=0 axis is displayed.  This is the '<a href="snd.html#viewy0">Show Y
 <code><a class=def name="smoothchannel">smooth-channel</a> (<i>beg dur snd chn edpos</i>)</code>
 </td></tr>
 <tr><td></td><td>
-<b>smooth-channel</b> is the <a href="#regularizedargs">regularized</a> version of <a href="#sndsmooth">smooth-sound</a>.
+<b>smooth-channel</b> is the <a class=quiet href="#regularizedargs">regularized</a> version of <a href="#sndsmooth">smooth-sound</a>.
 <i>smooth-channel-via-ptree</i> in examp.scm is the virtual form.
 
 <!-- INDEX smoothexamples:Smoothing -->
@@ -6648,6 +6663,8 @@ Smooth over click: Remove-click in examp.scm<br>
 apply a smoothing function to the indicated data.  This produces a sinusoid between
 the end points:</td></tr>
 <tr><td></td><td>
+<table border=0><tr><td>
+
 <table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
 (define (smoother y0 y1 num)
    "go sinusoidally from y0 to y1 over num samps"
@@ -6657,8 +6674,11 @@ the end points:</td></tr>
 	 (scale (* 0.5 (abs (- y1 y0)))))
      (do ((i 0 (1+ i)))
          ((= i num) v)
-       (<a class=quiet href="#vctset">vct-set!</a> v i (+ off (* scale (cos (+ angle (* i (/ pi num))))))))))
+       (<a class=quiet href="#vctset">vct-set!</a> v i 
+         (+ off (* scale (cos (+ angle (* i (/ pi num))))))))))
 </pre></td></tr></table>
+
+</td><td><img src="click.png"></td></tr></table>
 </td></tr>
 <tr><td></td><td>For a fancier version, see fft-smoother in examp.scm.  See also remove-clicks in examp.scm.</td></tr>
 
@@ -6716,7 +6736,8 @@ This is similar to <a href="#soundloopinfo">mus-sound-loop-info</a> (but it's se
 </td></tr>
 <tr><td></td><td>
 A property list associated with the given sound.  It is set to '() at the time a sound is opened.  The accessor
-<a href="sndscm.html#exsoundproperty">sound-property</a> is provided in extensions.scm.
+<a href="sndscm.html#exsoundproperty">sound-property</a> is provided in extensions.scm.  There are several
+examples of using it in snd-motif.scm and autosave.scm.
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -6882,7 +6903,7 @@ is the sampling rate of the ADC.
 <tr><td></td><td>
 sampling rate conversion using 'warped sinc interpolation'.  The
 argument <i>num-or-env-gen</i> can be either a number or an envelope generator.
-This is the <a href="#regularizedargs">regularized</a> version of <a href="#sndsrc">src-sound</a>.
+This is the <a class=quiet href="#regularizedargs">regularized</a> version of <a href="#sndsrc">src-sound</a>.
 
 <!-- INDEX resampleexamples:Resampling -->
 <br><br>
@@ -7381,7 +7402,7 @@ value of x axis zoom slider.
 <code><a class=def name="xrampchannel">xramp-channel</a> (rmp0 rmp1 base <i>beg dur snd chn edpos</i>)</code>
 </td></tr>
 <tr><td></td><td>
-<b>xramp-channel</b> is a slight extension of scale-channel. It scales samples in the given sound/channel
+<b>xramp-channel</b> is a slight extension of <a href="#rampchannel">ramp-channel</a>. It scales samples in the given sound/channel
 between beg and beg + dur by an exponential ramp going from rmp0 to rmp1 with the connecting segment curvature
 set by base. (<b>xramp-channel</b> underlies the virtual exponential envelope operations).
 </td></tr>
@@ -9257,14 +9278,14 @@ return a new temp file name using Snd's <a href="#tempdir">temp-dir</a>.
 <tr><td colspan=2>
 <code><a class=def name="sndurl">snd-url</a> (name)</code></td></tr>
 <tr><td></td><td>
-return the url (in the Snd documentation) corresponding to <i>name</i> which can be a string or a symbol.
+return the url (in the Snd documentation) corresponding to <i>name</i>; <i>name</i> can be a string or a symbol.
 </td></tr>
 
 <!-- snd-urls -->
 <tr><td colspan=2>
 <code><a class=def name="sndurls">snd-urls</a> ()</code></td></tr>
 <tr><td></td><td>
-return a list of lists each inner list containing an Snd name and its associated url in the Snd documentation.
+return a list of lists each inner list containing a Snd function name and its associated url in the Snd documentation.
 </td></tr>
 
 <!-- snd-version -->
@@ -10125,7 +10146,6 @@ sound over another at an arbitrary point, and so on (see draw.scm):
 (add-hook! after-graph-hook display-samps-in-red)
 </pre></td></tr></table></td></tr>
 <tr><td></td><td align=center>
-<img src="redsamps.png" alt="red samples">
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -10215,6 +10235,9 @@ the graphics context for XOR drawing in the selection color.</td></tr>
 <code><a class=def name="sendnetscape">send-netscape</a> (url)</code></td></tr>
 <tr><td></td><td>
 Start netscape, if necessary, and tell it to go to the location 'url'.
+The actual HTML reader invoked is determined by <a href="#htmlprogram">html-program</a>,
+but it's currently assumed that netscape/mozilla url syntax can be used to jump to
+the desired url.
 </td></tr><tr><td colspan=2></td></tr>
 
 <!-- snd-gcs -->

@@ -63,7 +63,7 @@
   (goto-listener-end))
 
 (define* (ws-go #:optional val)
-  "(ws-go (val #f)) tries to continue from the point at which with-sound was interrupted. 'val' is \
+  "(ws-go (val #f)) tries to continue from the point at which with-sound was interrupted. 'val' is 
 the value returned by the interrupt (ws-interrupt? normally)"
   (let ((current-continuation *ws-continue*))
     (pop-ws)
@@ -94,7 +94,7 @@ the value returned by the interrupt (ws-interrupt? normally)"
 	";no with-sound to stop")))
 
 (define (ws-stop!)
-  "(ws-quit!) exits all current with-sound contexts (running any reverbs on the way), \
+  "(ws-quit!) exits all current with-sound contexts (running any reverbs on the way), 
 returning you to the true top-level."
   (ws-stop)
   (if (not (null? *ws-continues*))
@@ -128,18 +128,18 @@ returning you to the true top-level."
       #f))
   
 (define (ws-help)
-  "\n\
-;The '?' prompt means you're in the with-sound debugger.\n\
-;This is the standard Snd listener, so anything is ok at this level, but\n\
-;there are also several additional functions:\n\
-;  (ws-go (val #f)) continues from the point of the interrupt.\n\
-;  (ws-quit) finishes with-sound, ignoring any reverb request.\n\
-;  (ws-stop) runs the reverb, then finishes with-sound.\n\
-;  (ws-quit!) and (ws-stop!) are similar, but if you're nested several\n\
-;     levels deep in the debugger, these two will pop you back to the top level.\n\
-;  (ws-locals) shows the local variables and their values.\n\
-;  (ws-local obj) shows the value of obj.\n\
-;  (ws-backtrace) shows the backtrace at the point of the interrupt.\n\
+  "
+;The '?' prompt means you're in the with-sound debugger.
+;This is the standard Snd listener, so anything is ok at this level, but
+;there are also several additional functions:
+;  (ws-go (val #f)) continues from the point of the interrupt.
+;  (ws-quit) finishes with-sound, ignoring any reverb request.
+;  (ws-stop) runs the reverb, then finishes with-sound.
+;  (ws-quit!) and (ws-stop!) are similar, but if you're nested several
+;     levels deep in the debugger, these two will pop you back to the top level.
+;  (ws-locals) shows the local variables and their values.
+;  (ws-local obj) shows the value of obj.
+;  (ws-backtrace) shows the backtrace at the point of the interrupt.
 ")
 
 ;;; ws-interrupt? checks for C-g within with-sound, setting up continuation etc

@@ -66,7 +66,7 @@
 ;;;       the cutoff frequency in terms of a number that goes between -1 and 1. 
 
 (define (make-moog-filter frequency Q)
-  "(make-moog-filter frequency Q) makes a new moog-filter generator. 'frequency' is the cutoff in Hz, \
+  "(make-moog-filter frequency Q) makes a new moog-filter generator. 'frequency' is the cutoff in Hz,
 'Q' sets the resonance: 0 = no resonance, 1: oscillates at 'frequency'"
   (list frequency Q (make-vct 4) 0.0 (envelope-interp (/ frequency (* (srate) 0.5)) moog-freqtable)))
 

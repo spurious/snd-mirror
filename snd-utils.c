@@ -894,7 +894,7 @@ static XEN g_file_to_string(XEN name)
   filename = XEN_TO_C_STRING(name);
   if ((file = fopen(filename, "r")) == NULL) return(XEN_FALSE);
   fseek(file, 0, SEEK_END);
-  size = ftell(file); /* safe because this is not a huge file */
+  size = ftell(file); /* safe because this is presumably not a huge file */
   rewind(file);
   content = (char *)CALLOC(size + 1, sizeof(char));
   fread(content, 1, size, file);

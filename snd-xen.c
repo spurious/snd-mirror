@@ -304,17 +304,10 @@ static XEN snd_catch_scm_error(void *data, XEN tag, XEN throw_args) /* error han
       (strcmp(XEN_SYMBOL_TO_C_STRING(tag), "snd-top-level") == 0))
     return(throw_args); /* not an error -- just a way to exit the current context */
 
-#ifdef SCM_MAKE_CHAR
   port = scm_mkstrport(XEN_ZERO, 
-		       scm_make_string(XEN_ZERO, SCM_MAKE_CHAR(0)),
+		       scm_make_string(XEN_ZERO, C_TO_XEN_CHAR(0)),
 		       SCM_OPN | SCM_WRTNG,
 		       "snd error handler");
-#else
-  port = scm_mkstrport(XEN_ZERO, 
-		       scm_make_string(XEN_ZERO, XEN_UNDEFINED),
-		       SCM_OPN | SCM_WRTNG,
-		       "snd error handler");
-#endif
   port_gc_loc = snd_protect(port);
 
   if ((DEBUGGING) || (ss->batch_mode))
@@ -376,7 +369,7 @@ static XEN snd_catch_scm_error(void *data, XEN tag, XEN throw_args) /* error han
       else
 	{
 	  XEN current_frame, source;
-	  current_frame = scm_stack_ref(stack, SCM_INUM0);
+	  current_frame = scm_stack_ref(stack, XEN_ZERO);
 	  if (XEN_NOT_FALSE_P(current_frame))
 	    {
 	      source = scm_frame_source(current_frame);
@@ -503,7 +496,7 @@ static XEN snd_internal_stack_catch (XEN tag,
 XEN snd_throw(XEN key, XEN args)
 {
   if (ss->catch_exists)
-    return(scm_throw(key, args));
+    return(XEN_THROW(key, args));
   else
     {
       snd_error("%s: %s", 

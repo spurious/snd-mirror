@@ -22,7 +22,7 @@
 
 (define envelope-interp                      ;env is list of x y breakpoint pairs, interpolate at x returning y
   (lambda args                          ;  (x env #:optional (base 1.0)
-    "(envelope-interp x env #:optional (base 1.0)) -> value of env at x; base controls connecting segment \
+    "(envelope-interp x env #:optional (base 1.0)) -> value of env at x; base controls connecting segment 
 type: (envelope-interp .3 '(0 0 .5 1 1 0) -> .6"
     (let ((x (car args))
 	  (env (cadr args))
@@ -52,7 +52,7 @@ type: (envelope-interp .3 '(0 0 .5 1 1 0) -> .6"
 ;;; -------- window-envelope (a kinda brute-force translation from the CL version in env.lisp)
 
 (define (window-envelope beg end env)
-  "(window-envelope beg end env) -> portion of env lying between x axis values beg and \
+  "(window-envelope beg end env) -> portion of env lying between x axis values beg and 
 end: (window-envelope 1.0 3.0 '(0.0 0.0 5.0 1.0)) -> '(1.0 0.2 3.0 0.6)"
   (let ((nenv '())
 	(lasty (if env (cadr env) 0.0))
@@ -124,7 +124,7 @@ end: (window-envelope 1.0 3.0 '(0.0 0.0 5.0 1.0)) -> '(1.0 0.2 3.0 0.6)"
 ;;; -------- multiply-envelopes, add-envelopes
 
 (define (multiply-envelopes e1 e2)
-  "(multiply-envelopes env1 env2) multiplies break-points of env1 and env2 returning a new \
+  "(multiply-envelopes env1 env2) multiplies break-points of env1 and env2 returning a new 
 envelope: (multiply-envelopes '(0 0 2 .5) '(0 0 1 2 2 1)) -> '(0 0 0.5 0.5 1.0 0.5)"
   (map-envelopes * e1 e2))
 
@@ -179,12 +179,12 @@ envelope: (multiply-envelopes '(0 0 2 .5) '(0 0 1 2 2 1)) -> '(0 0 0.5 0.5 1.0 0
 
 (define (stretch-envelope . args)
 
-  "(stretch-envelope env old-attack new-attack #:optional old-decay new-decay) takes 'env' and \
-returns a new envelope based on it but with the attack and optionally decay portions stretched \
-or squeezed; 'old-attack' is the original x axis attack end point, 'new-attack' is where that \
-section should end in the new envelope.  Similarly for 'old-decay' and 'new-decay'.  This mimics \
-divseg in early versions of CLM and its antecedents in Sambox and Mus10 (linen).\n\
-  (stretch-envelope '(0 0 1 1) .1 .2) -> (0 0 0.2 0.1 1.0 1) \n\
+  "(stretch-envelope env old-attack new-attack #:optional old-decay new-decay) takes 'env' and 
+returns a new envelope based on it but with the attack and optionally decay portions stretched 
+or squeezed; 'old-attack' is the original x axis attack end point, 'new-attack' is where that 
+section should end in the new envelope.  Similarly for 'old-decay' and 'new-decay'.  This mimics 
+divseg in early versions of CLM and its antecedents in Sambox and Mus10 (linen).
+  (stretch-envelope '(0 0 1 1) .1 .2) -> (0 0 0.2 0.1 1.0 1) 
   (stretch-envelope '(0 0 1 1 2 0) .1 .2 1.5 1.6) -> (0 0 0.2 0.1 1.1 1 1.6 0.5 2.0 0)"
 
   (let ((fn (list-ref args 0))
@@ -313,11 +313,11 @@ divseg in early versions of CLM and its antecedents in Sambox and Mus10 (linen).
 
 
 (define* (repeat-envelope ur-env repeats #:optional (reflected #f) (normalized #f))
-    "(repeat-envelope env repeats #:optional (reflected #f) (normalized #f)) repeats 'env' 'repeats' \
-times.  (repeat-envelope '(0 0 100 1) 2) -> (0 0 100 1 101 0 201 1). \
-If the final y value is different from the first y value, a quick ramp is \
-inserted between repeats. 'normalized' causes the new envelope's x axis \
-to have the same extent as the original's. 'reflected' causes every other \
+    "(repeat-envelope env repeats #:optional (reflected #f) (normalized #f)) repeats 'env' 'repeats' 
+times.  (repeat-envelope '(0 0 100 1) 2) -> (0 0 100 1 101 0 201 1). 
+If the final y value is different from the first y value, a quick ramp is 
+inserted between repeats. 'normalized' causes the new envelope's x axis 
+to have the same extent as the original's. 'reflected' causes every other 
 repetition to be in reverse."
   (let* ((times (if reflected (inexact->exact (floor (/ repeats 2))) repeats))
 	 (e (if reflected

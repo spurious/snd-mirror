@@ -123,7 +123,7 @@
 ;;;    (install-searcher (lambda (file) (= (mus-sound-chans file) 4)))
 
 (define (install-searcher proc)
-  "(install-searcher proc) replaces the current file search procedure in the File Selection \
+  "(install-searcher proc) replaces the current file search procedure in the File Selection 
 Box: (install-searcher (lambda (file) (= (mus-sound-srate file) 44100)))"
   (define match-sound-files
     (lambda args
@@ -471,12 +471,12 @@ Box: (install-searcher (lambda (file) (= (mus-sound-srate file) 44100)))"
 (define hidden-controls '())
 
 (define hidden-controls-help 
-"Expand-hop sets the time in seconds between successive grains.\n\
-Expand-length sets the length of each grain.\n\
-Expand-ramp sets the ramp-time in the grain envelope.\n\
-Contrast-amp sets the prescaler for contrast-enhancement.\n\
-Reverb-lowpass sets the feedback lowpass filter coeficient.\n\
-Reverb-feedback sets the scaler on the feedback.\n\
+"Expand-hop sets the time in seconds between successive grains.
+Expand-length sets the length of each grain.
+Expand-ramp sets the ramp-time in the grain envelope.
+Contrast-amp sets the prescaler for contrast-enhancement.
+Reverb-lowpass sets the feedback lowpass filter coeficient.
+Reverb-feedback sets the scaler on the feedback.
 ")
 
 (define (make-hidden-controls-dialog)
@@ -1956,9 +1956,9 @@ Reverb-feedback sets the scaler on the feedback.\n\
 						 XmNdragCallback     (list amp-callback (list number snd chan))
 						 XmNvalueChangedCallback (list amp-callback (list number snd chan))))))
       (XtOverrideTranslations scroll
-			      (XtParseTranslationTable "c<Btn1Down>: Select()\n\
-                                                        c<Btn1Motion>: Moved()\n\
-						        c<Btn1Up>:   Release()\n"))
+			      (XtParseTranslationTable "c<Btn1Down>: Select()
+                                                        c<Btn1Motion>: Moved()
+						        c<Btn1Up>:   Release()"))
 
       (XtAddCallback label XmNactivateCallback (lambda (w c i)
 						 (reset-to-one scroll number)))
@@ -1982,9 +1982,9 @@ Reverb-feedback sets the scaler on the feedback.\n\
 	    (if (not (sound-property 'amp-controls snd))
 		(let ((orig-amp (find-child snd-amp "amp")))
 		  (XtOverrideTranslations orig-amp
-					  (XtParseTranslationTable "c<Btn1Down>: Select()\n\
-                                                                    c<Btn1Motion>: Moved()\n\
-						                    c<Btn1Up>:   Release()\n"))
+					  (XtParseTranslationTable "c<Btn1Down>: Select()
+                                                                    c<Btn1Motion>: Moved()
+						                    c<Btn1Up>:   Release()"))
 		  (XtAddCallback orig-amp XmNdragCallback
 				 (lambda (w c info)
 				   (let ((amp (amp-scroller->amp (.value info))))
@@ -2484,8 +2484,8 @@ Reverb-feedback sets the scaler on the feedback.\n\
 				     (set! find-forward #f)
 				     (start-dialog)))))
       (XtOverrideTranslations listener-text
-			      (XtParseTranslationTable "Ctrl <Key>s: search-forward()\n\
-						        Ctrl <Key>r: search-backward()\n")))))
+			      (XtParseTranslationTable "Ctrl <Key>s: search-forward()
+						        Ctrl <Key>r: search-backward()")))))
   
   
 ;;; -------- add a function to be called when the window manager sends us a "save yourself" or "take focus" message

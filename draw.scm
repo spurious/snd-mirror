@@ -5,7 +5,7 @@
 (if (not (defined? 'channel-property)) (load-from-path "extensions.scm"))
 
 (define* (display-colored-samples color beg dur #:optional snd chn)
-  "(display-colored-samples color beg dur snd chn) displays samples from beg for dur in color \
+  "(display-colored-samples color beg dur snd chn) displays samples from beg for dur in color 
 whenever they're in the current view."
   (let ((left (left-sample snd chn))
 	(right (right-sample snd chn))
@@ -111,7 +111,7 @@ whenever they're in the current view."
 
 
 (define (display-energy snd chn)
-  "(display-energy snd chn) is a lisp-graph-hook function that displays the time domain data as energy in the lisp graph; \
+  "(display-energy snd chn) is a lisp-graph-hook function that displays the time domain data as energy in the lisp graph; 
 the y-zoom-slider controls the graph amp"
   (let* ((ls (left-sample))
 	 (rs (right-sample))

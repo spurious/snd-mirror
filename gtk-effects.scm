@@ -454,7 +454,7 @@
 		     (lambda (w data)
 		       (help-dialog 
 			"Normalize"
-			"Normalize scales amplitude to the normalize amount.\n Move the slider to change the scaling amount."))
+			"Normalize scales amplitude to the normalize amount. Move the slider to change the scaling amount."))
 		     (lambda (w data)
 		       (set! normalize-amount initial-normalize-amount)
 		       (set! (.value (GTK_ADJUSTMENT (car sliders))) normalize-amount)
@@ -794,7 +794,7 @@
 			     (* 4 zecho-delay))))
 		     (lambda (w data)
 		       (help-dialog "Modulated echo"
-				    "Move the sliders to set the echo scaler, the delay time in seconds, \
+				    "Move the sliders to set the echo scaler, the delay time in seconds, 
 the modulation frequency, and the echo amplitude."))
 		     (lambda (w data)
 		       (set! zecho-scaler initial-zecho-scaler)
@@ -887,7 +887,7 @@ the modulation frequency, and the echo amplitude."))
 			       (filter-selection (make-butter-band-pass band-pass-freq band-pass-bw)))))
 		     (lambda (w data)
 		       (help-dialog "Band-pass filter"
-				    "Butterworth band-pass filter.\n Move the sliders to change the center frequency and bandwidth."))
+				    "Butterworth band-pass filter. Move the sliders to change the center frequency and bandwidth."))
 		     (lambda (w data)
 		       (set! band-pass-freq initial-band-pass-freq)
 		       (set! (.value (GTK_ADJUSTMENT (list-ref sliders 0))) (scale-log->linear 20 band-pass-freq 22050))
@@ -945,7 +945,7 @@ the modulation frequency, and the echo amplitude."))
 			       (filter-selection (make-butter-band-reject notch-freq notch-bw)))))
 		     (lambda (w data)
 		       (help-dialog "Band-reject filter"
-				    "Butterworth band-reject filter.\n Move the sliders to change the center frequency and bandwidth."))
+				    "Butterworth band-reject filter. Move the sliders to change the center frequency and bandwidth."))
 		     (lambda (w data)
 		       (set! notch-freq initial-notch-freq)
 		       (set! (.value (GTK_ADJUSTMENT (list-ref sliders 0))) (scale-log->linear 20 notch-freq 22050))
@@ -1000,7 +1000,7 @@ the modulation frequency, and the echo amplitude."))
 			       (filter-selection (make-butter-high-pass high-pass-freq)))))
 		     (lambda (w data)
 		       (help-dialog "High-pass filter"
-				    "Butterworth high-pass filter.\n Move the slider to change the high-pass cutoff frequency."))
+				    "Butterworth high-pass filter. Move the slider to change the high-pass cutoff frequency."))
 		     (lambda (w data)
 		       (set! high-pass-freq initial-high-pass-freq)
 		       (set! (.value (GTK_ADJUSTMENT (list-ref sliders 0))) (scale-log->linear 20 high-pass-freq 22050))
@@ -1048,7 +1048,7 @@ the modulation frequency, and the echo amplitude."))
 			       (filter-selection (make-butter-low-pass low-pass-freq)))))
 		     (lambda (w data)
 		       (help-dialog "Low-pass filter"
-				    "Butterworth low-pass filter.\n Move the slider to change the low-pass cutoff frequency."))
+				    "Butterworth low-pass filter. Move the slider to change the low-pass cutoff frequency."))
 		     (lambda (w data)
 		       (set! low-pass-freq initial-low-pass-freq)
 		       (set! (.value (GTK_ADJUSTMENT (list-ref sliders 0))) (scale-log->linear 20 low-pass-freq 22050))
@@ -1173,7 +1173,7 @@ the modulation frequency, and the echo amplitude."))
 			"new-comb-chord" #f))
 		     (lambda (w data)
 		       (help-dialog "Comb chord filter"
-				    "Creates chords by using filters at harmonically related sizes.\n\
+				    "Creates chords by using filters at harmonically related sizes.
 Move the sliders to set the comb chord parameters."))
 		     (lambda (w data)
 		       (set! new-comb-chord-scaler initial-new-comb-chord-scaler)
@@ -1256,7 +1256,7 @@ Move the sliders to set the comb chord parameters."))
 			moog-target "moog-filter" #f))
 		     (lambda (w data)
 		       (help-dialog "Moog filter"
-				    "Moog-style 4-pole lowpass filter with 24db/oct rolloff and variable resonance.\n\
+				    "Moog-style 4-pole lowpass filter with 24db/oct rolloff and variable resonance.
 Move the sliders to set the filter cutoff frequency and resonance."))
 		     (lambda (w data)
 		       (set! moog-cutoff-frequency initial-moog-cutoff-frequency)
@@ -1402,8 +1402,8 @@ Move the sliders to set the filter cutoff frequency and resonance."))
 			       (snd-print "can't apply src between marks yet"))))
 		     (lambda (w data)
 		       (help-dialog "Sample rate conversion"
-				    "Move the slider to change the sample rate.\n\
-Values greater than 1.0 speed up file play,\n negative values reverse it."))
+				    "Move the slider to change the sample rate.
+Values greater than 1.0 speed up file play, negative values reverse it."))
 		     (lambda (w data)
 		       (set! src-amount initial-src-amount)
 		       (set! (.value (GTK_ADJUSTMENT (car sliders))) src-amount)
@@ -1810,7 +1810,7 @@ Values greater than 1.0 speed up file play,\n negative values reverse it."))
 		       (restore-controls))
 		     (lambda (w data)
 		       (help-dialog "McNabb reverb"
-				    "Reverberator from Michael McNabb. \
+				    "Reverberator from Michael McNabb.
 Adds reverberation scaled by reverb amount, lowpass filtering, and feedback. Move the sliders to change the reverb parameters."))
 		     (lambda (w data)
 		       (set! reverb-amount initial-reverb-amount)
@@ -1973,11 +1973,11 @@ Adds reverberation scaled by reverb amount, lowpass filtering, and feedback. Mov
 			   max-samp)))
 		     (lambda (w data)
 		       (help-dialog "Convolution"
-				    "Very simple convolution. Move the sliders to set the numbers of the soundfiles\
-to be convolved and the amount for the amplitude scaler.\n Output will be scaled to floating-point values, resulting\
-in very large (but not clipped) amplitudes. Use the Normalize amplitude effect to rescale the output.\n\
-The convolution data file typically defines a natural reverberation source, and the output from this effect\
-can provide very striking reverb effects. You can find convolution data files on sites listed at\
+				    "Very simple convolution. Move the sliders to set the numbers of the soundfiles
+to be convolved and the amount for the amplitude scaler.\n Output will be scaled to floating-point values, resulting
+in very large (but not clipped) amplitudes. Use the Normalize amplitude effect to rescale the output.
+The convolution data file typically defines a natural reverberation source, and the output from this effect
+can provide very striking reverb effects. You can find convolution data files on sites listed at
 http://www.bright.net/~dlphilp/linux_csound.html under Impulse Response Data."))
 		     (lambda (w data)
 		       (set! convolve-sound-one initial-convolve-sound-one)
@@ -2040,8 +2040,8 @@ http://www.bright.net/~dlphilp/linux_csound.html under Impulse Response Data."))
 	(place-sound-envelope #f))
 
     (define (place-sound mono-snd stereo-snd pan-env)
-      "(place-sound mono-snd stereo-snd pan-env) mixes a mono sound into a stereo sound, splitting \
-it into two copies whose amplitudes depend on the envelope 'pan-env'.  If 'pan-env' is \
+      "(place-sound mono-snd stereo-snd pan-env) mixes a mono sound into a stereo sound, splitting 
+it into two copies whose amplitudes depend on the envelope 'pan-env'.  If 'pan-env' is 
 a number, the sound is split such that 0 is all in channel 0 and 90 is all in channel 1."
       (let ((len (frames mono-snd)))
 	(if (number? pan-env)
@@ -2286,7 +2286,7 @@ a number, the sound is split such that 0 is all in channel 0 and 90 is all in ch
 			cross-synth-target "Cross synthesis" #f))
 		     (lambda (w data)
 		       (help-dialog "Cross synthesis"
-				    "The sliders set the number of the soundfile to be cross-synthesized, \
+				    "The sliders set the number of the soundfile to be cross-synthesized, 
 the synthesis amplitude, the FFT size, and the radius value."))
 		     (lambda (w data)
 		       (set! cross-synth-sound initial-cross-synth-sound)

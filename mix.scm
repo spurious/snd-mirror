@@ -80,11 +80,11 @@
 ;;; -------- pan-mix --------
 
 (define* (pan-mix name #:optional (beg 0) (envelope 1.0) snd (chn 0) (auto-delete #f))
-  "(pan-mix file (start 0) (envelope 1.0) snd (chn 0) (auto-delete #f)) mixes 'file' into the sound 'snd' \
-starting at start (in samples) using 'envelope' to pan (0: all chan 0, 1: all chan 1).\
-So, (pan-mix \"oboe.snd\" .1 '(0 0 1 1)) goes from all chan 0 to all chan 1.  If\
-the variable with-tags is #t, the resultant mixes are placed in their own track, and \
-the track envelope controls the panning. \
+  "(pan-mix file (start 0) (envelope 1.0) snd (chn 0) (auto-delete #f)) mixes 'file' into the sound 'snd'
+starting at start (in samples) using 'envelope' to pan (0: all chan 0, 1: all chan 1).
+So, (pan-mix \"oboe.snd\" .1 '(0 0 1 1)) goes from all chan 0 to all chan 1.  If
+the variable with-tags is #t, the resultant mixes are placed in their own track, and 
+the track envelope controls the panning. 
 If 'envelope' is a scaler, it is turned into an evelope at that value. 'auto-delete' determines
 whether the in-coming file should be treated as a temporary file and deleted when the mix
 is no longer accessible."
@@ -164,21 +164,21 @@ is no longer accessible."
       new-mix)))
 
 (define* (pan-mix-selection #:optional (beg 0) (envelope 1.0) snd (chn 0))
-  "(pan-mix-selection (start 0) (envelope 1.0) snd (chn 0)) mixes the current selection  into the sound 'snd' \
+  "(pan-mix-selection (start 0) (envelope 1.0) snd (chn 0)) mixes the current selection  into the sound 'snd'
 starting at 'start' (in samples) using 'envelope' to pan (0: all chan 0, 1: all chan 1)."
   (if (not (selection?))
       (throw 'no-active-selection (list "pan-mix-selection"))
       (pan-mix (save-selection (snd-tempnam)) beg envelope snd chn #t)))
 
 (define* (pan-mix-region reg #:optional (beg 0) (envelope 1.0) snd (chn 0))
-  "(pan-mix-region reg (start 0) (envelope 1.0) snd (chn 0)) mixes the given region into the sound 'snd' \
+  "(pan-mix-region reg (start 0) (envelope 1.0) snd (chn 0)) mixes the given region into the sound 'snd' 
 starting at 'start' (in samples) using 'envelope' to pan (0: all chan 0, 1: all chan 1)."
   (if (not (region? reg))
       (throw 'no-such-region (list "pan-mix-region" reg))
       (pan-mix (save-region reg (snd-tempnam)) beg envelope snd chn #t)))
 
 (define* (pan-mix-vct v #:optional (beg 0) (envelope 1.0) snd (chn 0))
-  "(pan-mix-vct v (start 0) (envelope 1.0) snd (chn 0)) mixes the vct data into the sound 'snd' \
+  "(pan-mix-vct v (start 0) (envelope 1.0) snd (chn 0)) mixes the vct data into the sound 'snd' 
 starting at 'start' (in samples) using 'envelope' to pan (0: all chan 0, 1: all chan 1)."
   (let* ((temp-file (snd-tempnam))
 	 (fd (open-sound-file temp-file 1 (srate snd) "")))
@@ -468,7 +468,7 @@ starting at 'start' (in samples) using 'envelope' to pan (0: all chan 0, 1: all 
 (define (mix-click-info n)
   "(mix-click-info n) is a mix-click-hook function that describes a mix and its properties"
   (help-dialog "Mix Help"
-	       (format #f "Mix ~D:~%  position: ~D = ~,3F secs~%  length: ~D (~,3F secs)\
+	       (format #f "Mix ~D:~%  position: ~D = ~,3F secs~%  length: ~D (~,3F secs)
 ~%  in: ~A[~D]~A~A~A~%  scalers: ~A~%  speed: ~A~%  envs: ~{~A~^~%    ~}~A~A"
 		       n 
 		       (mix-position n)

@@ -793,7 +793,7 @@ static XEN g_mix_selection(XEN beg, XEN snd, XEN chn, XEN id)
       if ((track_id > 0) && (!(track_p(track_id))))
 	XEN_ERROR(NO_SUCH_TRACK,
 		  XEN_LIST_2(C_TO_XEN_STRING(S_mix_selection),
-			     C_TO_XEN_INT(id)));
+			     id));
       if (track_id == 0)
 	buf = mus_format("%s at " OFF_TD, S_mix_selection, obeg);
       else buf = mus_format("%s at " OFF_TD " in track %d", S_mix_selection, obeg, track_id);

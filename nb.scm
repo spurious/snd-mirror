@@ -21,7 +21,7 @@
 	  (gdbm-store! ptr 
 		       file 
 		       (if (string? current-note)
-			   (string-append note "\n" current-note)
+			   (string-append note (string #\newline) current-note)
 			   note)
 		       'replace)
 	  (gdbm-close! ptr)))))
@@ -59,7 +59,7 @@
 
 
 (define (files-popup-info type position name)
-  "(files-popup-info type position name) is intended as a mouse-enter-label hook function. \
+  "(files-popup-info type position name) is intended as a mouse-enter-label hook function. 
 It causes a description of the file to popup when the mouse crosses the filename"
 
     (define file-info
@@ -113,7 +113,7 @@ It causes a description of the file to popup when the mouse crosses the filename
 		  (recolor-widget info-widget alert-color))))))))
 
 (define (files-popup-quit type position name)
-  "(files-popup-quit type position name) is intended as a mouse-leave-label hook function. \
+  "(files-popup-quit type position name) is intended as a mouse-leave-label hook function. 
 It unhighlights the popped-up info about a file as the mouse leaves the associated label"
   (let ((widget (list-ref (dialog-widgets) 14)))
     (if widget

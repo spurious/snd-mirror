@@ -273,6 +273,7 @@ AC_FUNC_STRFTIME
 AC_CHECK_FUNCS(getcwd strerror readlink setlocale access opendir sleep signal statfs statvfs clock vsnprintf snprintf memmove strdup lstat fileno strcasecmp)
 AC_FUNC_CLOSEDIR_VOID
 AC_FUNC_VPRINTF
+AC_FUNC_FSEEKO
 
 # having <complex.h> + a cacos declaration is not enough: C++ dies with a complaint about a "deprecated header"
 if test "$with_gsl" != yes; then

@@ -67,7 +67,7 @@
 
 (if (not (defined? 'all-chans))
     (define (all-chans)
-      "(all-chans) -> two parallel lists, the first snd indices, the second channel numbers.  If we have \
+      "(all-chans) -> two parallel lists, the first snd indices, the second channel numbers.  If we have
 two sounds open (indices 0 and 1 for example), and the second has two channels, (all-chans) returns '((0 1 1) (0 0 1))"
       (let ((sndlist '())
 	    (chnlist '()))
@@ -255,7 +255,7 @@ two sounds open (indices 0 and 1 for example), and the second has two channels, 
 ;;; the regularized form of this would use dur not end
 
 (define* (make-selection #:optional beg end snd chn)
-  "(make-selection #:optional beg end snd chn) makes a selection like make-region but without creating a region. \
+  "(make-selection #:optional beg end snd chn) makes a selection like make-region but without creating a region.
 make-selection follows snd's sync field, and applies to all snd's channels if chn is not specified. end defaults
 to end of channel, beg defaults to 0, snd defaults to the currently selected sound."
   (let ((current-sound (or snd (selected-sound) (car (sounds)))))
@@ -344,7 +344,7 @@ to end of channel, beg defaults to 0, snd defaults to the currently selected sou
 ;;;    edits on that sound.  if 'on' is #f, remove those hooks.
 
 (define* (check-for-unsaved-edits #:optional (check #t))
-  "(check-for-unsaved-edits #:optional (check #t)) -> sets up hooks to check for and ask about unsaved edits when a sound is closed. \
+  "(check-for-unsaved-edits #:optional (check #t)) -> sets up hooks to check for and ask about unsaved edits when a sound is closed.
 If 'check' is #f, the hooks are removed."
   (let ((dummy #f)) ; make new guile happy
     (define (unsaved-edits-at-close? ind)

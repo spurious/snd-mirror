@@ -12,7 +12,7 @@
 		    "w"))
 
 (define* (snd-backtrace stack #:optional all)
-  "(snd-backtrace stack (all #f)) displays a stack backtrace.  If 'all' is not #t, \
+  "(snd-backtrace stack (all #f)) displays a stack backtrace.  If 'all' is not #t, 
 it looks for the first procedure on the stack and centers around that."
   (if (stack? stack)
       (if all
@@ -33,7 +33,7 @@ it looks for the first procedure on the stack and centers around that."
 ;;; -------- local variables --------
 
 (define* (local-variables stack #:optional (index 0))
-  "(local-variables stack (index 0)) displays the local variables on the stack. 'index' sets \
+  "(local-variables stack (index 0)) displays the local variables on the stack. 'index' sets 
 the stack frame to use (0 is the current frame)"
   (if (stack? stack)
       (let ((vars (memoized-environment (frame-source (stack-ref stack index)))))
@@ -49,7 +49,7 @@ the stack frame to use (0 is the current frame)"
       ";no stack"))
 
 (define* (local-variable stack obj #:optional (index 0))
-  "(local-variable stack obj (index 0) shows the value of obj searching in the stack frame 'index' \
+  "(local-variable stack obj (index 0) shows the value of obj searching in the stack frame 'index' 
 where 0 is the current frame."
   (if (stack? stack)
       (let ((vars (memoized-environment (frame-source (stack-ref stack index))))
@@ -116,7 +116,7 @@ where 0 is the current frame."
   (goto-listener-end))
 
 (define* (break-go #:optional val)
-  "(break-go (val #f)) tries to continue from the point of the last snd-break call. 'val' is \
+  "(break-go (val #f)) tries to continue from the point of the last snd-break call. 'val' is 
 the value returned by the snd-break function."
   (let ((current-continuation *break-continue*))
     (pop-break)
@@ -125,8 +125,7 @@ the value returned by the snd-break function."
 	";nothing to go to")))
 
 (define* (break-locals #:optional (index 0))
-  "(break-locals (index 0)) shows the local variables at the index-th frame (0 is the \
-current frame) after a call to snd-break"
+  "(break-locals (index 0)) shows the local variables at the index-th frame (0 is the current frame) after a call to snd-break"
   (local-variables *break-stack* index))
 
 (define* (break-local obj #:optional (index 0)) 
@@ -148,20 +147,20 @@ current frame) after a call to snd-break"
       (break-quit!)))
 
 (define (break-help)
-  "\n\
-;The 'break' prompt means you're in the Snd debugger.\n\
-;This is the standard Snd listener, so anything is ok at this level, but\n\
-;there are also some additional functions:\n\
-;  (break-go (return-value #f)) continues from the point of the snd-break call.\n\
-;  (break-locals (index 0)) shows the local variables and their values.\n\
-;  (break-local obj) shows the value of obj.\n\
-;  (break-backtrace (full #f)) shows the backtrace at the point of the break.\n\
-;  (break-quit) exits the current break context.\n\
-;  (break-quit!) exits all break contexts.\n\
+  "
+;The 'break' prompt means you're in the Snd debugger.
+;This is the standard Snd listener, so anything is ok at this level, but
+;there are also some additional functions:
+;  (break-go (return-value #f)) continues from the point of the snd-break call.
+;  (break-locals (index 0)) shows the local variables and their values.
+;  (break-local obj) shows the value of obj.
+;  (break-backtrace (full #f)) shows the backtrace at the point of the break.
+;  (break-quit) exits the current break context.
+;  (break-quit!) exits all break contexts.
 ")
 
 (define* (snd-break #:optional message)
-  "(snd-break (message #f)) prints 'message' if any, then drops you into the debugger.  (break-help) at\
+  "(snd-break (message #f)) prints 'message' if any, then drops you into the debugger.  (break-help) at
 that point prints out the break-specific options."
   (let ((stack (make-stack #t)))
     (call-with-current-continuation
@@ -178,14 +177,14 @@ that point prints out the break-specific options."
 
 (define *stack* #f)
 (define (bt) 
-  "(bt) displays the stack backtrace at the point of the last throw (presumably an error indication). \
+  "(bt) displays the stack backtrace at the point of the last throw (presumably an error indication). 
 To set up the needed information, call snd-debug first."
   (if (not *stack*) (set! *stack* (fluid-ref the-last-stack)))
   (snd-backtrace *stack*))
 
 (define* (lv #:optional obj) 
-  "(lv (obj #f)) shows the values of either all local variables ('obj' omitted), or a given local \
-variable ('obj') from the point of the last throw (presumably an error indication). To set up the \
+  "(lv (obj #f)) shows the values of either all local variables ('obj' omitted), or a given local 
+variable ('obj') from the point of the last throw (presumably an error indication). To set up the 
 needed information, call snd-debug first (after receiving the error)."
   (if (not *stack*) (set! *stack* (fluid-ref the-last-stack)))
   (if obj (local-variable *stack* obj) (local-variables *stack*)))
@@ -198,13 +197,13 @@ needed information, call snd-debug first (after receiving the error)."
 ;;; -------- snd-trace --------
 
 (defmacro snd-trace body
-  "(snd-trace body) activates tracing and redirects its output to the Snd listener.  To get trace info, \
-first call trace with the function (not its name) you want to trace, then wrap snd-trace around the \
+  "(snd-trace body) activates tracing and redirects its output to the Snd listener.  To get trace info, 
+first call trace with the function (not its name) you want to trace, then wrap snd-trace around the 
 code that will invoke that function."
   `(let* ((stderr (current-error-port)))
      (dynamic-wind
       (lambda ()
-	(snd-print "\n")
+	(snd-print #\newline)
 	(set-current-error-port *snd-port*))
       (lambda ()
 	(with-traps 

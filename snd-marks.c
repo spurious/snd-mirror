@@ -2187,7 +2187,7 @@ mark list is: channel given: (id id ...), snd given: ((id id) (id id ...)), neit
 		if ((pos < -1) || (pos >= cp->edit_size) || (cp->edits[pos] == NULL))
 		  XEN_ERROR(NO_SUCH_EDIT,
 			    XEN_LIST_2(C_TO_XEN_STRING(S_marks),
-				       C_TO_XEN_INT(pos_n)));
+				       pos_n));
 		if (pos == -1) pos = cp->edit_ctr;
 	      }
 	    else pos = cp->edit_ctr;

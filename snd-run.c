@@ -107,7 +107,6 @@ static XEN optimization_hook = XEN_FALSE;
 #define GLOBAL_SET_OK 5
 #define SOURCE_OK 6
 
-#define C_TO_XEN_CHAR(c)                    SCM_MAKE_CHAR(c)
 #define XEN_CDDDR(a)                        SCM_CDDDR(a)
 #define XEN_CAAR(a)                         XEN_CAR(XEN_CAR(a))
 #define XEN_CDAR(a)                         XEN_CDR(XEN_CAR(a))
@@ -124,11 +123,8 @@ static XEN optimization_hook = XEN_FALSE;
 #define XEN_CADADR(a)                       SCM_CADADR(a)
 #define XEN_CADDAR(a)                       SCM_CADDAR(a)
 #define XEN_CADDDR(a)                       SCM_CADDDR(a)
-#define XEN_PAIR_P(a)                       XEN_TRUE_P(scm_pair_p(a))
 #define XEN_APPLICABLE_SMOB_P(a)            (SCM_TYP7(a) == scm_tc7_smob)
 #define XEN_ENV(a)                          SCM_ENV(a)
-#define XEN_VAR_NAME_TO_VAR(a)              scm_sym2var(scm_str2symbol(a), scm_current_module_lookup_closure(), XEN_FALSE)
-#define XEN_SYMBOL_TO_VAR(a)                scm_sym2var(a, scm_current_module_lookup_closure(), XEN_FALSE)
 #define XEN_SET_CDR(pair, new_val)          scm_set_cdr_x(pair, new_val)
 #if 0
 #define XEN_FRANDOM(a)                      (a * scm_c_uniform01(scm_c_default_rstate()))
@@ -150,9 +146,6 @@ static XEN optimization_hook = XEN_FALSE;
 #define XEN_SET_PROCEDURE_PROPERTY(Obj, Prop, Val) scm_set_procedure_property_x(Obj, Prop, Val)
 #define XEN_PROCEDURE_SOURCE(Proc)          scm_procedure_source(Proc)
 #define XEN_PROCEDURE_WITH_SETTER_P(Proc)   scm_procedure_with_setter_p(Proc)
-#define XEN_THROW(Tag, Arg)                 scm_throw(Tag, Arg)
-#define XEN_EQV_P(A, B)                     XEN_TO_C_BOOLEAN(scm_eqv_p(A, B))
-#define XEN_EQUAL_P(A, B)                   XEN_TO_C_BOOLEAN(scm_equal_p(A, B))
 #define XEN_LONG_INTEGER_P(Arg)             XEN_NOT_FALSE_P(scm_integer_p(Arg))
 
 
@@ -182,7 +175,7 @@ static XEN walk_sym = XEN_FALSE;
 static void xen_symbol_name_set_value(const char *a, XEN b)
 {
   XEN var = XEN_FALSE;
-  var = XEN_VAR_NAME_TO_VAR(a);
+  var = XEN_NAME_AS_C_STRING_TO_VARIABLE(a);
   if (!(XEN_FALSE_P(var)))
     XEN_VARIABLE_SET(var, b);
 }
@@ -226,7 +219,7 @@ static XEN symbol_to_value(XEN code, XEN sym, bool *local)
 	    }
 	}
     }
-  val = XEN_SYMBOL_TO_VAR(sym);
+  val = XEN_SYMBOL_TO_VARIABLE(sym);
   if (!(XEN_FALSE_P(val))) 
     {
       new_val = XEN_VARIABLE_REF(val);
@@ -273,7 +266,7 @@ static XEN symbol_set_value(XEN code, XEN sym, XEN new_val)
 	    }
 	}
     }
-  var = XEN_SYMBOL_TO_VAR(sym);
+  var = XEN_SYMBOL_TO_VARIABLE(sym);
   if (!(XEN_FALSE_P(var)))
     XEN_VARIABLE_SET(var, new_val);
   return(new_val);
@@ -857,7 +850,7 @@ static char *describe_xen_value_1(int type, int addr, ptree *pt)
     case R_PAIR:
     case R_SYMBOL:
     case R_KEYWORD: 
-      if ((pt->xens) && (pt->xens[addr]))
+      if ((pt->xens) && (XEN_BOUND_P(pt->xens[addr])))
 	return(mus_format("x%d(%s)", addr, XEN_AS_STRING(pt->xens[addr]))); 
       else return(mus_format("x(%d)=0", addr));
       break;
@@ -923,7 +916,7 @@ static char *describe_xen_value_1(int type, int addr, ptree *pt)
       else return(mus_format("c%d(null)", addr));
       break;
     case R_XCLM:
-      if ((pt->xens) && (pt->xens[addr]))
+      if ((pt->xens) && (XEN_BOUND_P(pt->xens[addr])))
 	return(mus_format("c%d(%s)", addr, mus_describe(XEN_TO_MUS_ANY(pt->xens[addr]))));
       else return(copy_string("null"));
       break;
@@ -1739,11 +1732,9 @@ static int add_xen_to_ptree(ptree *pt, XEN value)
     {
       pt->xens_size += 8;
       if (pt->xens)
-	{
-	  pt->xens = (XEN *)REALLOC(pt->xens, pt->xens_size * sizeof(XEN));
-	  for (i = cur; i < pt->xens_size; i++) pt->xens[i] = NULL;
-	}
+	pt->xens = (XEN *)REALLOC(pt->xens, pt->xens_size * sizeof(XEN));
       else pt->xens = (XEN *)CALLOC(pt->xens_size, sizeof(XEN));
+      for (i = cur; i < pt->xens_size; i++) pt->xens[i] = XEN_UNDEFINED;
     }
   pt->xens[cur] = value;
   return(cur);
@@ -6299,6 +6290,8 @@ char *r_mark_name(int n);
 
      error returns?
      set cases?
+
+  PERHAPS: optimize goops methods (rmsgain fcomb)
 */
 
 
@@ -9077,7 +9070,7 @@ static xen_value *format_1(ptree *prog, xen_value **args, int num_args)
 
 static char *descr_throw_s_1(int *args, ptree *pt) 
 {
-  return(mus_format("throw('%s)", (pt->xens[args[1]]) ? XEN_AS_STRING(pt->xens[args[1]]) : "#f"));
+  return(mus_format("throw('%s)", (XEN_BOUND_P(pt->xens[args[1]])) ? XEN_AS_STRING(pt->xens[args[1]]) : "#f"));
 }
 static void throw_s_1(int *args, ptree *pt) 
 {
@@ -9178,7 +9171,7 @@ static char *descr_clm_print_s(int *args, ptree *pt) {return(describe_xen_args("
 
 static xen_value *clm_print_1(ptree *prog, xen_value **args, int num_args)
 {
-  XEN_SET_OBJECT_PROPERTY(XEN_VAR_NAME_TO_VAR("clm-print"),
+  XEN_SET_OBJECT_PROPERTY(XEN_NAME_AS_C_STRING_TO_VARIABLE("clm-print"),
 			  walk_sym,
 			  C_TO_XEN_ULONG(make_walker(clm_print_1, NULL, NULL, 1, UNLIMITED_ARGS, R_STRING, false, 1, -R_XEN)));
   return(package_n_xen_args(prog, R_STRING, clm_print_s, descr_clm_print_s, args, num_args));
@@ -9188,7 +9181,7 @@ static xen_value *set_up_format(ptree *prog, xen_value **args, int num_args, boo
 {
   int i;
   XEN format_var = XEN_FALSE;
-  format_var = XEN_VAR_NAME_TO_VAR("format");
+  format_var = XEN_NAME_AS_C_STRING_TO_VARIABLE("format");
   if ((!(XEN_FALSE_P(format_var))) &&
       (XEN_PROCEDURE_P(XEN_VARIABLE_REF(format_var))))
     {
@@ -9221,7 +9214,7 @@ static xen_value *set_up_format(ptree *prog, xen_value **args, int num_args, boo
 static void make_ ## Name ## _0(int *args, ptree *pt) \
 { \
   XEN res; \
-  res = XEN_APPLY(XEN_VARIABLE_REF(XEN_VAR_NAME_TO_VAR(S_make_ ## Name)), xen_values_to_list(pt, args), S_make_ ## Name); \
+  res = XEN_APPLY(XEN_VARIABLE_REF(XEN_NAME_AS_C_STRING_TO_VARIABLE(S_make_ ## Name)), xen_values_to_list(pt, args), S_make_ ## Name); \
   if (mus_xen_p(res)) \
     { \
       add_loc_to_protected_list(pt, snd_protect(res)); \
@@ -9280,7 +9273,7 @@ CLM_MAKE_FUNC(zpolar)
 static void make_fft_window_0(int *args, ptree *pt)
 {
   XEN res;
-  res = XEN_APPLY(XEN_VARIABLE_REF(XEN_VAR_NAME_TO_VAR(S_make_fft_window)), xen_values_to_list(pt, args), S_make_fft_window);
+  res = XEN_APPLY(XEN_VARIABLE_REF(XEN_NAME_AS_C_STRING_TO_VARIABLE(S_make_fft_window)), xen_values_to_list(pt, args), S_make_fft_window);
   add_loc_to_protected_list(pt, snd_protect(res));
   VCT_RESULT = get_vct(res);
 }
@@ -9442,7 +9435,7 @@ static int find_clm_var(ptree *prog, XEN lst, XEN lst_ref, int offset, int run_t
 {
   int i, addr = -1;
   for (i = 0; i < clm_ref_top; i++)
-    if ((clm_ref_offsets[i] == offset) && (lst == clm_ref_vars[i]))
+    if ((clm_ref_offsets[i] == offset) && (XEN_EQ_P(lst, clm_ref_vars[i])))
       {
 	if (run_type != clm_ref_types[i]) return(-1);
 	addr = clm_ref_addrs[i];
@@ -9462,6 +9455,7 @@ static int find_clm_var(ptree *prog, XEN lst, XEN lst_ref, int offset, int run_t
 	      clm_ref_types = (int *)CALLOC(clm_ref_size, sizeof(int));
 	      clm_ref_addrs = (int *)CALLOC(clm_ref_size, sizeof(int));
 	      clm_ref_vars = (XEN *)CALLOC(clm_ref_size, sizeof(XEN));
+	      for (i = 0; i < clm_ref_size; i++) clm_ref_vars[i] = XEN_UNDEFINED;
 	    }
 	  else
 	    {
@@ -9470,6 +9464,7 @@ static int find_clm_var(ptree *prog, XEN lst, XEN lst_ref, int offset, int run_t
 	      clm_ref_types = (int *)REALLOC(clm_ref_types, clm_ref_size * sizeof(int));
 	      clm_ref_addrs = (int *)REALLOC(clm_ref_addrs, clm_ref_size * sizeof(int));
 	      clm_ref_vars = (XEN *)REALLOC(clm_ref_vars, clm_ref_size * sizeof(XEN));
+	      for (i = clm_ref_size - 8; i < clm_ref_size; i++) clm_ref_vars[i] = XEN_UNDEFINED;
 	    }
 	}
       /* first decide if we can handle this variable */
@@ -9504,7 +9499,7 @@ static void clm_struct_ref_r(int *args, ptree *pt)
 {
   XEN lst;
   lst = pt->xens[args[1]];
-  if ((lst != 0) && (XEN_LIST_P(lst)))
+  if ((XEN_BOUND_P(lst)) && (XEN_LIST_P(lst)))
     {
       xen_to_addr(pt, 
 		  XEN_LIST_REF(lst, 
@@ -9518,7 +9513,7 @@ static char *descr_clm_struct_set_r(int *args, ptree *pt)
 {
   return(mus_format("%s(%s) = %s",
 		    clm_struct_names[pt->ints[args[4]]],
-		    (pt->xens[args[1]] == 0) ? "null" : XEN_AS_STRING(pt->xens[args[1]]),
+		    (XEN_BOUND_P(pt->xens[args[1]])) ? XEN_AS_STRING(pt->xens[args[1]]) : "null",
 		    describe_xen_value_1(pt->ints[args[3]], pt->ints[args[5]], pt)));
 }
 
@@ -9527,7 +9522,7 @@ static void clm_struct_set_r(int *args, ptree *pt)
   XEN lst;
   xen_value *v;
   lst = pt->xens[args[1]];
-  if ((lst != 0) && (XEN_LIST_P(lst)))
+  if ((XEN_BOUND_P(lst)) && (XEN_LIST_P(lst)))
     {
       v = make_xen_value(pt->ints[args[3]], pt->ints[args[5]], R_CONSTANT);
       XEN_LIST_SET(lst, pt->ints[args[2]], xen_value_to_xen(pt, v));
@@ -9543,7 +9538,7 @@ static xen_value *clm_struct_ref(ptree *prog, xen_value *v, int struct_loc, xen_
   if (v == NULL) return(run_warn("clm-struct-ref confused"));
   offset = clm_struct_offsets[struct_loc];
   lst = prog->xens[v->addr];
-  if ((lst == 0) || (!(XEN_LIST_P(lst))))
+  if (!(XEN_LIST_P(lst)))
     {
       /* run-time list-ref here */
       run_type = clm_struct_types[struct_loc];
@@ -9596,7 +9591,7 @@ static void clm_struct_restore(ptree *prog, xen_var *var)
   int i, loc, addr, run_type;
   lst = prog->xens[var->v->addr];
   for (i = 0; i < clm_ref_top; i++)
-    if (clm_ref_vars[i] == lst)
+    if (XEN_EQ_P(clm_ref_vars[i], lst))
       {
 	/* restore this field */
 	loc = clm_ref_offsets[i];    /* list-set index */
@@ -9702,8 +9697,8 @@ static xen_value *walk(ptree *prog, XEN form, walk_result_t walk_result)
 	{
 	  walker = XEN_OBJECT_PROPERTY(function, walk_sym);
 #if WITH_PROCPROP
-	  if ((XEN_FALSE_P(walker)) && (XEN_PROCEDURE_P(XEN_VARIABLE_REF(XEN_SYMBOL_TO_VAR(function)))))
-	    walker = XEN_PROCEDURE_PROPERTY(XEN_VARIABLE_REF(XEN_SYMBOL_TO_VAR(function)), walk_sym);
+	  if ((XEN_FALSE_P(walker)) && (XEN_PROCEDURE_P(XEN_VARIABLE_REF(XEN_SYMBOL_TO_VARIABLE(function)))))
+	    walker = XEN_PROCEDURE_PROPERTY(XEN_VARIABLE_REF(XEN_SYMBOL_TO_VARIABLE(function)), walk_sym);
 #endif
 	  if (XEN_ULONG_P(walker))
 	    {
@@ -10529,7 +10524,7 @@ XEN_NARGIFY_2(g_vct_map_w, g_vct_map)
 #if WITH_PROCPROP
 #define INIT_WALKER(Name, Val) \
   XEN_SET_OBJECT_PROPERTY(C_STRING_TO_XEN_SYMBOL(Name), walk_sym, C_TO_XEN_ULONG(Val)); \
-  XEN_SET_PROCEDURE_PROPERTY(XEN_VARIABLE_REF(XEN_VAR_NAME_TO_VAR(Name)), walk_sym, C_TO_XEN_ULONG(Val))
+  XEN_SET_PROCEDURE_PROPERTY(XEN_VARIABLE_REF(XEN_NAME_AS_C_STRING_TO_VARIABLE(Name)), walk_sym, C_TO_XEN_ULONG(Val))
 #else
 #define INIT_WALKER(Name, Val) XEN_SET_OBJECT_PROPERTY(C_STRING_TO_XEN_SYMBOL(Name), walk_sym, C_TO_XEN_ULONG(Val))
 #endif

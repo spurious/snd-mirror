@@ -70,7 +70,7 @@ static int completions(char *text)
   matches = scan_tab(SCM_MODULE_OBARRAY(curmod), 
 		     text, len, 0);
   uses = SCM_MODULE_USES(curmod);
-  while (SCM_CONSP(uses))
+  while (XEN_CONS_P(uses))
     {
       matches = scan_tab(SCM_MODULE_OBARRAY(XEN_CAR(uses)), 
 			 text, len, matches);

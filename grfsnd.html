@@ -33,12 +33,13 @@
 </td></tr></table>
 </center>
 
+<table border=0><tr><td>
 <ul>
 <li><a href="#startup">Snd Startup</a>
   <ul>
-  <li><a href="#sndresources">Snd resources</a>
   <li><a href="#sndswitches">Snd invocation flags</a>
   <li><a href="#sndinitfile">The initialization file</a>
+  <li><a href="#sndresources">Snd resources</a>
   </ul>
 <li><a href="#snddynamic">Runtime modules and external programs</a>
   <ul>
@@ -62,168 +63,12 @@
   <li><a href="#sndandgdb">Snd and gdb</a>
   </ul>
 </ul>
-
+</td><td>
+<img src="note.png" alt="notebook" hspace=40>
+</td></tr></table>
 <br>
 
 <table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2><A NAME="startup">Snd Startup</a></h2></td></tr></table>
-<br>
-<table width="100%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="sndresources">Snd resources</a></h3></td></tr></table>
-
-<p>In the Motif version, there are a few X-style resources that Snd looks for (see Snd.ad); each has
-a built-in default value, so you can ignore any that are already acceptable:</p>
-
-<table cellspacing=0 cellpadding=0>
-<tr><td width=200>initFile</td>               <td>"~/.snd"</td></tr>
-<tr><td>autoResize</td>                       <td>1</td></tr>
-<tr><td>horizontalPanes</td>                  <td>0</td></tr>
-<tr><td><br></td><td><br></td></tr>
-<tr><td>peaksFont</td>                        <td>-*-times-medium-r-*-*-14-*-*-*-*-*-*-*</td></tr>
-<tr><td>boldpeaksFont</td>                    <td>-*-times-bold-r-*-*-14-*-*-*-*-*-*-*</td></tr>
-<tr><td>axisLabelFont</td>                    <td>-*-times-medium-r-normal-*-20-*-*-*-*-*-*-*</td></tr>
-<tr><td>axisNumbersFont</td>                  <td>-*-courier-medium-r-normal-*-14-*-*-*-*-*-*-*</td></tr>
-<tr><td>listenerFont</td>                     <td>default font (fixed 7x13, I think)</td></tr>
-<tr><td><br></td><td><br></td></tr>
-<tr><td>useSchemes</td>                       <td>none</td></tr>
-<tr><td>highlightcolor</td>                   <td>ivory1</td></tr>
-<tr><td>basiccolor</td>                       <td>ivory2</td></tr>
-<tr><td>positioncolor</td>                    <td>ivory3</td></tr>
-<tr><td>zoomcolor</td>                        <td>ivory4</td></tr>
-<tr><td>cursorcolor</td>                      <td>red</td></tr>
-<tr><td>selectioncolor</td>                   <td>lightsteelblue1</td></tr>
-<tr><td>mixcolor</td>                         <td>lightgreen</td></tr>
-<tr><td>mixfocuscolor</td>                    <td>yellow2</td></tr>
-<tr><td>listenercolor</td>                    <td>aliceblue</td></tr>
-<tr><td>envedwaveformcolor</td>               <td>blue</td></tr>
-<tr><td>filterwaveformcolor</td>              <td>blue</td></tr>
-<tr><td>mixwaveformcolor</td>                 <td>darkgray</td></tr>
-<tr><td>graphcolor</td>                       <td>white</td></tr>
-<tr><td>selectedgraphcolor</td>               <td>white</td></tr>
-<tr><td>datacolor</td>                        <td>black</td></tr>
-<tr><td>selecteddatacolor</td>                <td>black</td></tr>
-<tr><td>markcolor</td>                        <td>red</td></tr>
-<tr><td>pushedbuttoncolor</td>                <td>lightsteelblue1</td></tr>
-<tr><td>sashcolor</td>                        <td>lightgreen</td></tr>
-<tr><td>helpbuttoncolor</td>                  <td>lightsteelblue2</td></tr>
-<tr><td>quitbuttoncolor</td>                  <td>indianred</td></tr>
-<tr><td>resetbuttoncolor</td>                 <td>goldenrod1</td></tr>
-<tr><td>doitbuttoncolor</td>                  <td>palegreen2</td></tr>
-<tr><td>doitagainbuttoncolor</td>             <td>darkolivegreen1</td></tr>
-</table>
-
-<p>You can experiment with other choices by
-using the -xrm switch:</p>
-
-<pre>
-  snd -xrm '*Highlightcolor: Red' oboe.snd
-  snd -xrm '*AxisNumbersFont: 6x10' oboe.snd
-  snd -xrm '*useSchemes: all' -xrm '*scheme: Pacific'
-  snd -xrm '*fontList: 9x15' oboe.snd
-  snd -xrm '*listenerFont: 6x10' oboe.snd
-  snd -xrm '*mixwaveformcolor: red' oboe.snd -notebook
-  snd oboe.snd pistol.snd -xrm '*selectedgraphcolor: black' -xrm '*selecteddatacolor: white'
-  snd oboe.snd -title hiho -display hummer.hiho:0.0 -xrm '*chn-graph*backgroundPixmap: text.xpm'
-  snd -xrm '*fontList: -*-times-medium-r-*-*-14-*-*-*-*-*-*-*'
-  snd -xrm '*fontList: -*-symbol-*-*-*-*-18-*-*-*-*-*-*-*'
-</pre>
-<p>Perhaps this is most useful when your window manager assumes white text for labels (menus);
-since Snd defaults to an off-white background, this makes everything unreadable. You can get
-the black text back with:
-</p>
-<pre>
-./snd -xrm '*foreground: Black'
-</pre>
-<p>or put the equivalent line in your .Xdefaults file.  The listener text color can be set
-via <code>(set! (<a href="extsnd.html#listenertextcolor">listener-text-color</a>) (<a href="extsnd.html#makecolor">make-color</a> 0 0 0))</code> in ~/.snd.
-</p>
-
-<p>The colors are defined in <a href="sndscm.html#rgbdoc">rgb.scm</a>. 
-"useSchemes" refers to SGI color schemes.
-It's unfortunate that
-there is the language Scheme implemented by Guile, and the notion of an SGI color scheme -- there is
-no connection between the two. Other systems (Linux, Solaris) use the term "theme" instead.
-You can get Snd to honor your current window manager theme by setting useSchemes to all.  
-The last example above sets the window title to "hiho", rather than
-"snd", displays the window on the machine hummer.hiho (presumably accessible over the net),
-and tiles the graph backgrounds with the contents of text.xpm.  To get the -geometry argument
-to work, set the autoResize resource to 0:</p>
-<pre>
-  snd oboe.snd -geometry 800x200 -xrm '*autoResize: 0'
-</pre>
-
-<p>These resources can be set in Snd.ad or in your .Xdefaults file:</p>
-<pre>
-snd*axisLabelFont:      -*-times-medium-r-normal-*-18-*-*-*-*-*-*-*
-snd*axisNumbersFont:    9x15
-snd*fontList:           -*-times-bold-r-*-*-14-*-*-*-*-*-*-*
-</pre>
-
-<p>To find what fonts are available, and what they look like, I use xfontsel.
-I think other toolkits use helvetica where Motif defaults to a small fixed font --
-it looks like 7x13 on my machine.
-</p>
-
-<p>
-The <A class=def NAME="xautoresize">autoResize resource</a> determines how Snd acts when files
-are added to or removed from its overall display.  The default (1)
-causes Snd to expand or contract the main window's size to accommodate
-the sounds; many people find this distracting.  If <i>autoResize</i> is 0, the outer window size remains the
-same, and the sounds try to fit as best they can (to some extent the window manager controls this stuff).  See also
-the variable <a href="extsnd.html#autoresize">auto-resize</a>.
-The <A class=def NAME="horizontalpanes">horizontalPanes resource</a>
-is equivalent to the -h flag; if 1, sounds are layed out
-horizontally rather than vertically;  if 2, you get a notebook
-widget holding the sounds.
-</p>
-<p>In Gtk, the various default colors and fonts can be found in
-Snd.gtkrc.  Currently the font and color variables mentioned above have little or no
-effect in Gtk.
-</p>
-
-
-<p><A NAME="aboutcolors"></a>The Snd-specific color resources are:</p>
-
-<table cellspacing=0 cellpadding=0>
-<tr><td width=200>basiccolor</td><td width=350>default background color everywhere</td><td><code><a href="extsnd.html#basiccolor">basic-color</a></code></td></tr>
-<tr><td>cursorcolor</td>         <td>color of the cursor</td>                   <td><code><a href="extsnd.html#cursorcolor">cursor-color</a></code></td></tr>
-<tr><td>datacolor</td>           <td>unselected data color</td>                 <td><code><a href="extsnd.html#datacolor">data-color</a></code></td></tr>
-<tr><td>doitbuttoncolor</td>     <td>color of Apply or Ok buttons</td>          <td><code><a href="extsnd.html#doitbuttoncolor">doit-button-color</a></code></td></tr>
-<tr><td>doitagainbuttoncolor</td><td>color of Undo&amp;Apply buttons</td>       <td><code><a href="extsnd.html#doitagainbuttoncolor">doit-again-button-color</a></code></td></tr>
-<tr><td>envedwaveformcolor</td>  <td>color of envelope editor waveform</td>     <td><code><a href="extsnd.html#envedwaveformcolor">enved-waveform-color</a></code></td></tr>
-<tr><td>filterwaveformcolor</td> <td>color of control panel filter waveform</td><td><code><a href="extsnd.html#filterwaveformcolor">filter-control-waveform-color</a></code></td></tr>
-<tr><td>graphcolor</td>          <td>unselected channels' graph background</td> <td><code><a href="extsnd.html#graphcolor">graph-color</a></code></td></tr>
-<tr><td>helpbuttoncolor</td>     <td>color of Help buttons</td>                 <td><code><a href="extsnd.html#helpbuttoncolor">help-button-color</a></code></td></tr>
-<tr><td>highlightcolor</td>      <td>highlighting here and there</td>           <td><code><a href="extsnd.html#highlightcolor">highlight-color</a></code></td></tr>
-<tr><td>listenercolor</td>       <td>background color of the listener</td>      <td><code><a href="extsnd.html#listenercolor">listener-color</a></code></td></tr>
-<tr><td>listenertextcolor</td>   <td>text color in the listener</td>            <td><code><a href="extsnd.html#listenertextcolor">listener-text-color</a></code></td></tr>
-<tr><td>markcolor</td>           <td>color of the mark indicator</td>           <td><code><a href="extsnd.html#markcolor">mark-color</a></code></td></tr>
-<tr><td>mixcolor</td>            <td>used for mix waveforms</td>                <td><code><a href="extsnd.html#mixcolor">mix-color</a></code></td></tr>
-<tr><td>positioncolor</td>       <td>color of position sliders</td>             <td><code><a href="extsnd.html#positioncolor">position-color</a></code></td></tr>
-<tr><td>pushedbuttoncolor</td>   <td>color of pushed button</td>                <td><code><a href="extsnd.html#pushedbuttoncolor">pushed-button-color</a></code></td></tr>
-<tr><td>quitbuttoncolor</td>     <td>color of Cancel or Dismiss buttons</td>    <td><code><a href="extsnd.html#quitbuttoncolor">quit-button-color</a></code></td></tr>
-<tr><td>resetbuttoncolor</td>    <td>color of Reset buttons</td>                <td><code><a href="extsnd.html#resetbuttoncolor">reset-button-color</a></code></td></tr>
-<tr><td>sashcolor</td>           <td>color of paned window sash handles</td>    <td><code><a href="extsnd.html#sashcolor">sash-color</a></code></td></tr>
-<tr><td>selecteddatacolor</td>   <td>color of the data in selected channel</td> <td><code><a href="extsnd.html#selecteddatacolor">selected-data-color</a></code></td></tr>
-<tr><td>selectedgraphcolor</td>  <td>background of selected channel's graph</td><td><code><a href="extsnd.html#selectedgraphcolor">selected-graph-color</a></code></td></tr>
-<tr><td>selectioncolor</td>      <td>color of an active selection</td>          <td><code><a href="extsnd.html#selectioncolor">selection-color</a></code></td></tr>
-<tr><td>textfocuscolor</td>      <td>color of text field with focus</td>        <td><code><a href="extsnd.html#textfocuscolor">text-focus-color</a></code></td></tr>
-<tr><td>zoomcolor</td>           <td>color of zoom sliders</td>                 <td><code><a href="extsnd.html#zoomcolor">zoom-color</a></code></td></tr>
-</table>
-<p>
-Each of these colors can be set in Guile using the second name given above ("basic-color").
-Colors are defined by <a href="extsnd.html#makecolor">make-color</a> with the three red/green/blue values,
-each a float between 0.0 and 1.0. <code>(set! (<a class=quiet href="extsnd.html#basiccolor">basic-color</a>) (<a class=quiet href="extsnd.html#makecolor">make-color</a> 1.0 0.0 0.0))</code> sets
-the overall background color of Snd to red.  <a href="sndscm.html#rgbdoc">rgb.scm</a> defines all the standard X11 color names
-(you probably don't want to load the whole thing; just use the names as needed). 
-</p>
-
-<p>There are several other resources that set widget sizes: zoomSliderWidth,
-positionSliderWidth, toggleSize, sashSize, sashIndent, channelSashSize, and channelSashIndent.
-And several more color resources: whitecolor (list background),
-blackcolor (recorder VU meter text), redcolor (buttons, VU clipping, etc), 
-greencolor (a few buttons),
-yellowcolor (a few envelope editor buttons), lightbluecolor (the recorder), and lighterbluecolor (the fft option panel).
-</p>
-
 <br>
 <!-- INDEX sndswitches:Invocation flags -->
 <table width="100%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="sndswitches">Snd invocation flags</a></h3></td></tr></table>
@@ -266,7 +111,8 @@ The following adds "WAV" to the sound file extension table before preloading the
 snd -e '(<a class=quiet href="extsnd.html#addsoundfileextension">add-sound-file-extension</a> "WAV")' -p /home/bil/sounds
 </pre>
 <br>
-<img src="note.png" alt="notebook" hspace=10 vspace=10><img src="bgd.png" alt="colors" vspace=10 hspace=10>
+
+<img src="bgd.png" alt="colors" vspace=10 hspace=10>
 <br>
 <br>
 
@@ -366,8 +212,168 @@ it will override Snd's default arithmetic mode settings.  GSL recommends the set
 <pre>
 GSL_IEEE_MODE=double-precision,mask-underflow,mask-denormalized
 </pre>
+<p>For more complex initialization files, see snd_conffile.scm and edit123.scm.
+</p>
+<br>
+<table width="100%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="sndresources">Snd resources</a></h3></td></tr></table>
+
+<p>In the Motif version, there are a few X-style resources that Snd looks for (see Snd.ad); each has
+a built-in default value, so you can ignore any that are already acceptable:</p>
+
+<table cellspacing=0 cellpadding=0>
+<tr><td width=200>initFile</td>               <td>"~/.snd"</td></tr>
+<tr><td>autoResize</td>                       <td>1</td></tr>
+<tr><td>horizontalPanes</td>                  <td>0</td></tr>
+<tr><td><br></td><td><br></td></tr>
+<tr><td>peaksFont</td>                        <td>-*-times-medium-r-*-*-14-*-*-*-*-*-*-*</td></tr>
+<tr><td>boldpeaksFont</td>                    <td>-*-times-bold-r-*-*-14-*-*-*-*-*-*-*</td></tr>
+<tr><td>axisLabelFont</td>                    <td>-*-times-medium-r-normal-*-20-*-*-*-*-*-*-*</td></tr>
+<tr><td>axisNumbersFont</td>                  <td>-*-courier-medium-r-normal-*-14-*-*-*-*-*-*-*</td></tr>
+<tr><td>listenerFont</td>                     <td>default font (fixed 7x13, I think)</td></tr>
+<tr><td><br></td><td><br></td></tr>
+<tr><td>useSchemes</td>                       <td>none</td></tr>
+<tr><td>highlightcolor</td>                   <td>ivory1</td></tr>
+<tr><td>basiccolor</td>                       <td>ivory2</td></tr>
+<tr><td>positioncolor</td>                    <td>ivory3</td></tr>
+<tr><td>zoomcolor</td>                        <td>ivory4</td></tr>
+<tr><td>cursorcolor</td>                      <td>red</td></tr>
+<tr><td>selectioncolor</td>                   <td>lightsteelblue1</td></tr>
+<tr><td>mixcolor</td>                         <td>lightgreen</td></tr>
+<tr><td>mixfocuscolor</td>                    <td>yellow2</td></tr>
+<tr><td>listenercolor</td>                    <td>aliceblue</td></tr>
+<tr><td>envedwaveformcolor</td>               <td>blue</td></tr>
+<tr><td>filterwaveformcolor</td>              <td>blue</td></tr>
+<tr><td>mixwaveformcolor</td>                 <td>darkgray</td></tr>
+<tr><td>graphcolor</td>                       <td>white</td></tr>
+<tr><td>selectedgraphcolor</td>               <td>white</td></tr>
+<tr><td>datacolor</td>                        <td>black</td></tr>
+<tr><td>selecteddatacolor</td>                <td>black</td></tr>
+<tr><td>markcolor</td>                        <td>red</td></tr>
+<tr><td>pushedbuttoncolor</td>                <td>lightsteelblue1</td></tr>
+<tr><td>sashcolor</td>                        <td>lightgreen</td></tr>
+<tr><td>helpbuttoncolor</td>                  <td>lightsteelblue2</td></tr>
+<tr><td>quitbuttoncolor</td>                  <td>indianred</td></tr>
+<tr><td>resetbuttoncolor</td>                 <td>goldenrod1</td></tr>
+<tr><td>doitbuttoncolor</td>                  <td>palegreen2</td></tr>
+<tr><td>doitagainbuttoncolor</td>             <td>darkolivegreen1</td></tr>
+</table>
+
+<p>You can experiment with other choices by
+using the -xrm switch:</p>
+
+<pre>
+  snd -xrm '*Highlightcolor: Red' oboe.snd
+  snd -xrm '*AxisNumbersFont: 6x10' oboe.snd
+  snd -xrm '*useSchemes: all' -xrm '*scheme: Pacific'
+  snd -xrm '*fontList: 9x15' oboe.snd
+  snd -xrm '*listenerFont: 6x10' oboe.snd
+  snd -xrm '*mixwaveformcolor: red' oboe.snd -notebook
+  snd oboe.snd pistol.snd -xrm '*selectedgraphcolor: black' -xrm '*selecteddatacolor: white'
+  snd oboe.snd -title hiho -display hummer.hiho:0.0 -xrm '*chn-graph*backgroundPixmap: text.xpm'
+  snd -xrm '*fontList: -*-times-medium-r-*-*-14-*-*-*-*-*-*-*'
+  snd -xrm '*fontList: -*-symbol-*-*-*-*-18-*-*-*-*-*-*-*'
+</pre>
+<p>Perhaps this is most useful when your window manager assumes white text for labels (menus);
+since Snd defaults to an off-white background, this makes everything unreadable. You can get
+the black text back with:
+</p>
+<pre>
+./snd -xrm '*foreground: Black'
+</pre>
+<p>or put the equivalent line in your .Xdefaults file.  The listener text color can be set
+via <code>(set! (<a href="extsnd.html#listenertextcolor">listener-text-color</a>) (<a href="extsnd.html#makecolor">make-color</a> 0 0 0))</code> in ~/.snd.
+</p>
+
+<p>The colors are defined in <a href="sndscm.html#rgbdoc">rgb.scm</a>. 
+"useSchemes" refers to SGI color schemes.
+It's unfortunate that
+there is the language Scheme implemented by Guile, and the notion of an SGI color scheme -- there is
+no connection between the two. Other systems (Linux, Solaris) use the term "theme" instead.
+You can get Snd to honor your current window manager theme by setting useSchemes to all.  
+The last example above sets the window title to "hiho", rather than
+"snd", displays the window on the machine hummer.hiho (presumably accessible over the net),
+and tiles the graph backgrounds with the contents of text.xpm.  To get the -geometry argument
+to work, set the autoResize resource to 0:</p>
+<pre>
+  snd oboe.snd -geometry 800x200 -xrm '*autoResize: 0'
+</pre>
+
+<p>These resources can be set in Snd.ad or in your .Xdefaults file:</p>
+<pre>
+snd*axisLabelFont:      -*-times-medium-r-normal-*-18-*-*-*-*-*-*-*
+snd*axisNumbersFont:    9x15
+snd*fontList:           -*-times-bold-r-*-*-14-*-*-*-*-*-*-*
+</pre>
+
+<p>To find what fonts are available, and what they look like, I use xfontsel.
+I think other toolkits use helvetica where Motif defaults to a small fixed font --
+it looks like 7x13 on my machine.
+</p>
+
+<p>
+The <A class=def NAME="xautoresize">autoResize</a> resource determines how Snd acts when files
+are added to or removed from its overall display.  The default (1)
+causes Snd to expand or contract the main window's size to accommodate
+the sounds; many people find this distracting.  If <i>autoResize</i> is 0, the outer window size remains the
+same, and the sounds try to fit as best they can (to some extent the window manager controls this stuff).  See also
+the variable <a href="extsnd.html#autoresize">auto-resize</a>.
+The <A class=def NAME="horizontalpanes">horizontalPanes</a> resource
+is equivalent to the -h flag; if 1, sounds are layed out
+horizontally rather than vertically;  if 2, you get a notebook
+widget holding the sounds.
+</p>
+<p>In Gtk, the various default colors and fonts can be found in
+Snd.gtkrc.  Currently the font and color variables mentioned above have little or no
+effect in Gtk.
+</p>
+
+
+<p><A NAME="aboutcolors"></a>The Snd-specific color resources are:</p>
+
+<table cellspacing=0 cellpadding=0>
+<tr><td width=200>basiccolor</td><td width=350>default background color everywhere</td><td><code><a href="extsnd.html#basiccolor">basic-color</a></code></td></tr>
+<tr><td>cursorcolor</td>         <td>color of the cursor</td>                   <td><code><a href="extsnd.html#cursorcolor">cursor-color</a></code></td></tr>
+<tr><td>datacolor</td>           <td>unselected data color</td>                 <td><code><a href="extsnd.html#datacolor">data-color</a></code></td></tr>
+<tr><td>doitbuttoncolor</td>     <td>color of Apply or Ok buttons</td>          <td><code><a href="extsnd.html#doitbuttoncolor">doit-button-color</a></code></td></tr>
+<tr><td>doitagainbuttoncolor</td><td>color of Undo&amp;Apply buttons</td>       <td><code><a href="extsnd.html#doitagainbuttoncolor">doit-again-button-color</a></code></td></tr>
+<tr><td>envedwaveformcolor</td>  <td>color of envelope editor waveform</td>     <td><code><a href="extsnd.html#envedwaveformcolor">enved-waveform-color</a></code></td></tr>
+<tr><td>filterwaveformcolor</td> <td>color of control panel filter waveform</td><td><code><a href="extsnd.html#filterwaveformcolor">filter-control-waveform-color</a></code></td></tr>
+<tr><td>graphcolor</td>          <td>unselected channels' graph background</td> <td><code><a href="extsnd.html#graphcolor">graph-color</a></code></td></tr>
+<tr><td>helpbuttoncolor</td>     <td>color of Help buttons</td>                 <td><code><a href="extsnd.html#helpbuttoncolor">help-button-color</a></code></td></tr>
+<tr><td>highlightcolor</td>      <td>highlighting here and there</td>           <td><code><a href="extsnd.html#highlightcolor">highlight-color</a></code></td></tr>
+<tr><td>listenercolor</td>       <td>background color of the listener</td>      <td><code><a href="extsnd.html#listenercolor">listener-color</a></code></td></tr>
+<tr><td>listenertextcolor</td>   <td>text color in the listener</td>            <td><code><a href="extsnd.html#listenertextcolor">listener-text-color</a></code></td></tr>
+<tr><td>markcolor</td>           <td>color of the mark indicator</td>           <td><code><a href="extsnd.html#markcolor">mark-color</a></code></td></tr>
+<tr><td>mixcolor</td>            <td>used for mix waveforms</td>                <td><code><a href="extsnd.html#mixcolor">mix-color</a></code></td></tr>
+<tr><td>positioncolor</td>       <td>color of position sliders</td>             <td><code><a href="extsnd.html#positioncolor">position-color</a></code></td></tr>
+<tr><td>pushedbuttoncolor</td>   <td>color of pushed button</td>                <td><code><a href="extsnd.html#pushedbuttoncolor">pushed-button-color</a></code></td></tr>
+<tr><td>quitbuttoncolor</td>     <td>color of Cancel or Dismiss buttons</td>    <td><code><a href="extsnd.html#quitbuttoncolor">quit-button-color</a></code></td></tr>
+<tr><td>resetbuttoncolor</td>    <td>color of Reset buttons</td>                <td><code><a href="extsnd.html#resetbuttoncolor">reset-button-color</a></code></td></tr>
+<tr><td>sashcolor</td>           <td>color of paned window sash handles</td>    <td><code><a href="extsnd.html#sashcolor">sash-color</a></code></td></tr>
+<tr><td>selecteddatacolor</td>   <td>color of the data in selected channel</td> <td><code><a href="extsnd.html#selecteddatacolor">selected-data-color</a></code></td></tr>
+<tr><td>selectedgraphcolor</td>  <td>background of selected channel's graph</td><td><code><a href="extsnd.html#selectedgraphcolor">selected-graph-color</a></code></td></tr>
+<tr><td>selectioncolor</td>      <td>color of an active selection</td>          <td><code><a href="extsnd.html#selectioncolor">selection-color</a></code></td></tr>
+<tr><td>textfocuscolor</td>      <td>color of text field with focus</td>        <td><code><a href="extsnd.html#textfocuscolor">text-focus-color</a></code></td></tr>
+<tr><td>zoomcolor</td>           <td>color of zoom sliders</td>                 <td><code><a href="extsnd.html#zoomcolor">zoom-color</a></code></td></tr>
+</table>
+<p>
+Each of these colors can be set in Guile using the second name given above ("basic-color").
+Colors are defined by <a href="extsnd.html#makecolor">make-color</a> with the three red/green/blue values,
+each a float between 0.0 and 1.0. <code>(set! (<a class=quiet href="extsnd.html#basiccolor">basic-color</a>) (<a class=quiet href="extsnd.html#makecolor">make-color</a> 1.0 0.0 0.0))</code> sets
+the overall background color of Snd to red.  <a href="sndscm.html#rgbdoc">rgb.scm</a> defines all the standard X11 color names
+(you probably don't want to load the whole thing; just use the names as needed). 
+</p>
+
+<p>There are several other resources that set widget sizes: zoomSliderWidth,
+positionSliderWidth, toggleSize, sashSize, sashIndent, channelSashSize, and channelSashIndent.
+And several more color resources: whitecolor (list background),
+blackcolor (recorder VU meter text), redcolor (buttons, VU clipping, etc), 
+greencolor (a few buttons),
+yellowcolor (a few envelope editor buttons), lightbluecolor (the recorder), and lighterbluecolor (the fft option panel).
+</p>
 
 <br>
+
 <table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2><A NAME="snddynamic">Runtime modules and external programs</a></h2></td></tr></table>
 
 <p>It is possible to load your own C code into Snd at run-time or
@@ -382,99 +388,12 @@ And, perhaps most useful, you can run Snd as an Emacs subjob.
 <p>Snd watches stdin; any input received
 is evaluated as if typed in Snd's lisp listener; any subsequent output
 is sent to stdout; presumably any process could communicate with
-Snd in this manner.  But the intention here is to connect to Emacs 
-via ILISP (available at
-http://sourceforge.net/projects/ilisp,
-and possibly built into Xemacs).
-Once you have ILISP, put this code in your .emacs file:</p>
-<pre>
-(require 'ilisp)
-(defdialect snd "Snd" ilisp
-  (setq ilisp-block-command "(begin \n%s)")
-  (setq ilisp-load-command "(load \"%s\")")
-  (setq ilisp-init-hook '((lambda () (ilisp-init nil nil nil))))
-  (setq comint-prompt-regexp "^&gt;+")
-  (setq ilisp-directory-command "(getcwd)")
-  (setq	ilisp-set-directory-command "(chdir \"%s\")")
-  (setq	ilisp-complete-command
-	"(map (lambda (sym) 
-                (list (symbol-&gt;string sym))) 
-              (apropos-internal \"^%s\"))")
-  (local-set-key "\C-x\C-h" '(lambda (s)
-			       (interactive "sSnd help: ")
-			       (insert "(<a class=quiet href="extsnd.html#sndhelp">snd-help</a> " s ")")
-			       (comint-send-input))))
-
-  (setq snd-program "snd")
-</pre>
-<p>You can bind this to some key via:</p>
-<pre>
-  (global-set-key "\C-x\C-l" 'snd)
-</pre>
-<p>Now C-x C-l in Emacs starts Snd as a subjob; anything you type in the Emacs
-<b>*snd*</b> buffer is sent to Snd (very much as if you were running CLM as
-an Emacs subjob), and Snd's output is appended to the <b>*snd*</b> buffer.
-Also, C-x C-h prompts for some Snd entity and appends the help text for that
-entity in the snd buffer.  The following code tries to implement Snd's
-name completion upon C-x C-i in the <b>*snd*</b> buffer:</p>
-<pre>
-(defun handle-snd-completion (process string)
-  (let ((buffer (process-buffer process)))
-    (save-excursion
-      (set-buffer buffer)
-      (goto-char (point-max))
-      (insert (substring string 1 (- (length string) 3))))
-    (goto-char (point-max))
-    (display-buffer buffer)))
-      
-(defun snd-complete-symbol ()
-  (interactive)
-  (let* ((end (point))
-	 (start (save-excursion (skip-syntax-backward "w_") (point)))
-	 (pattern (buffer-substring-no-properties start end))
-	 (proc (get-buffer-process (current-buffer)))
-	 (old-filter (process-filter proc)))
-    (delete-region start end)
-    (set-process-filter proc 'handle-snd-completion)
-    (process-send-string proc (format "(snd-completion \"%s\")\n" pattern))
-    (accept-process-output proc)
-    (set-process-filter proc old-filter)))
-</pre>
-<p>and add this to the defdialect block:</p>
-<pre>
-  (local-set-key "\C-x\C-i" 'snd-complete-symbol)
-</pre>
-<p>But for some reason it needs an open-paren?
-<i>snd-program</i> is the name of the snd image; you can include whatever
-startup switches you like:
+Snd in this manner.  But the intention here is to make it possible to run Snd as a subjob of Emacs.
+The simplest way to enable that is to use inf-snd.el by Michael
+Scholz.  It starts with a long and detailed commentary.
+A simpler alternative is Fernando Lopez-Lezcano's DotEmacs,
+which also has comments on its use.
 </p>
-<pre>
-(setq snd-program "snd -horizontal ~/cl/oboe.snd")
-</pre>
-<p>Fernando Lopez-Lezcano's DotEmacs file
-shows another way to set up the emacs-snd connection:
-</p>
-<pre>
-       (defdialect snd "Snd" guile
-         (setq comint-prompt-regexp "^&gt;+")
-         (setq ilisp-complete-command nil)
-         ;; try to autodetect the binary
-         (unless snd-program
-           (cond
-            ((file-executable-p "/usr/bin/snd")
-             (setq snd-program "/usr/bin/snd"))
-            (t (setq snd-program "snd")))))
-
-       (add-hook 'snd-hook
-                 (lambda ()
-
-                   ))
-       ;; if you have the binary somewhere else:
-       ;; (setq snd-program "snd")
-</pre>
-<p>Another, much fancier possibility is Michael Scholz's inf-snd.el.
-</p>
-
 <br>
 <table width="100%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="dynamic">Dynamically loaded modules</a></h3></td></tr></table>
 

@@ -18,13 +18,15 @@
  */
 
 #define XEN_MAJOR_VERSION 1
-#define XEN_MINOR_VERSION 9
-#define XEN_VERSION "1.9"
+#define XEN_MINOR_VERSION 10
+#define XEN_VERSION "1.10"
 
 /* HISTORY:
  *  
+ *   2-Feb-04:  C_TO_XEN_CHAR, ratio support (Guile), XEN_CONS_P, XEN_PAIR_P, etc
  *   6-Jan-04:  XEN_VARIABLE_REF in Guile changed to support 1.4 and older versions.
  *   5-Jan-04:  hook support in Ruby thanks to Michael Scholz.
+ *
  *   1-Nov-03:  protect several macros from hidden double evaluations.
  *   29-Sep-03: fixed incorrect assumption in xen_rb_cons (xen.c) that arg2 was list.
  *   8-Sep-03:  removed xen_malloc -- can't remember now why this existed.
@@ -36,12 +38,14 @@
  *   10-Mar-03: XEN_OUT_OF_RANGE_ERROR, XEN_BAD_ARITY_ERROR
  *   17-Feb-03: XEN_HOOK_P
  *   20-Jan-03: added Windows case for auto-import loader bugfix.
+ *
  *   19-Dec-02: proc arg checks for Ruby (to make sure XEN_[N|V]ARGIFY|DEFINE_PROCEDURE[etc] agree)
  *   29-Jul-02: SCM_WRITABLE_VELTS for current CVS Guile
  *   28-May-02: off_t equivalents in Ruby 1.7
  *   6-May-02:  off_t (long long) macros.
  *   29-Apr-02: XEN_EXACT_P
  *   2-Jan-02:  removed TIMING and MCHECK debugging stuff, VARIABLE_REF -> XEN_VARIABLE_REF
+ *
  *   22-Sep-01: removed (redundant) UNSIGNED_LONG macros -- use ULONG instead
 */
 
@@ -58,6 +62,14 @@
 #endif
 
 /* TODO: property lists, dynamic-wind?, procedure-source? (see snd.run too) */
+/*   currently using scm_internal_dynamic_wind, scm_current_module,
+ *   scm_procedure_source, scm_set_smob*, scm_object_property, scm_set_object_property,
+ *   scm_c_define, scm_hook_to_list, scm_mkstrport, scm_make_string, scm_current_error_port, scm_fluid_ref, scm_frame_source,
+ *   scm_stack_ref, scm_source_property, scm_internal_stack_catch, scm_apply, 
+ *   scm_display_backtrace, scm_the_last_fluid_var, scm_prin1, scm_c_use_module, scm_c_export,
+ *   SCM_OPB, SCM_WRTNG, SCM_HASHTABLE_BUCKETS, SCM_MODULE_USES, SCM_MODULE_OBARRAY, SCM_HASHTABLE_N_BUCKETS, 
+ *   and all the snd-run cases.  
+ */
 
 #ifndef c__FUNCTION__
 #if defined(__STDC__) && defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 199901L)
@@ -103,6 +115,31 @@
   #define SCM_EQ_P(a, b)   ((a) == (b))
 #endif
 
+#if HAVE_SCM_C_DEFINE
+  #define XEN_VARIABLE_REF(Var)               SCM_VARIABLE_REF(Var)
+  #define XEN_VARIABLE_SET(Var, Val)          SCM_VARIABLE_SET(Var, Val)
+  #define XEN_NAME_AS_C_STRING_TO_VALUE(a)    XEN_VARIABLE_REF(scm_sym2var(scm_str2symbol(a), scm_current_module_lookup_closure (), XEN_TRUE))
+      /* this is probably not the right thing -- the 3rd arg should be XEN_FALSE, else we're defining a new variable in the current module */
+  #define XEN_NAME_AS_C_STRING_TO_VARIABLE(a) scm_sym2var(scm_str2symbol(a), scm_current_module_lookup_closure(), XEN_FALSE)
+  #define XEN_SYMBOL_TO_VARIABLE(a)           scm_sym2var(a, scm_current_module_lookup_closure(), XEN_FALSE)
+#else
+  #define XEN_VARIABLE_REF(Var)        SCM_CDR(Var)
+  #define XEN_VARIABLE_SET(Var, Val)   SCM_SETCDR(Var, Val)
+  #define XEN_NAME_AS_C_STRING_TO_VALUE(a) scm_symbol_value0(a)
+  #define XEN_NAME_AS_C_STRING_TO_VARIABLE(a) XEN_FALSE
+  #define XEN_SYMBOL_TO_VARIABLE(a)           XEN_FALSE
+#endif
+
+#if HAVE_SCM_C_DEFINE
+#if HAVE_SCM_DEFINED_P
+  #define XEN_DEFINED_P(Name) XEN_TRUE_P(scm_defined_p(C_STRING_TO_XEN_SYMBOL(Name), XEN_UNDEFINED))
+#else
+  #define XEN_DEFINED_P(Name) XEN_TRUE_P(scm_definedp(C_STRING_TO_XEN_SYMBOL(name), XEN_UNDEFINED))
+#endif
+#else
+  #define XEN_DEFINED_P(Name) false
+#endif
+
 #if (SCM_DEBUG_TYPING_STRICTNESS == 2)
   #define XEN_MAKE_AND_RETURN_OBJECT(Tag, Val, Ignore1, Ignore2) SCM_RETURN_NEWSMOB(Tag, Val)
 #else
@@ -111,17 +148,6 @@
 #define XEN_OBJECT_REF(a) SCM_SMOB_DATA(a)
 /* remember to check the smob type agreement before calling XEN_OBJECT_REF! */
 #define XEN_MAKE_OBJECT(Var, Tag, Val, ig1, ig2)  SCM_NEWSMOB(Var, Tag, Val)
-
-#if HAVE_SCM_C_DEFINE
-  #define XEN_VARIABLE_REF(Var)        SCM_VARIABLE_REF(Var)
-  #define XEN_VARIABLE_SET(Var, Val)   SCM_VARIABLE_SET(Var, Val)
-  #define XEN_NAME_AS_C_STRING_TO_VALUE(a) XEN_VARIABLE_REF(scm_sym2var(scm_str2symbol(a), scm_current_module_lookup_closure (), XEN_TRUE))
-  /* this is probably not the right thing -- the 3rd arg should be XEN_FALSE, else we're defining a new variable in the current module */
-#else
-  #define XEN_VARIABLE_REF(Var)        SCM_CDR(Var)
-  #define XEN_VARIABLE_SET(Var, Val)   SCM_SETCDR(Var, Val)
-  #define XEN_NAME_AS_C_STRING_TO_VALUE(a) scm_symbol_value0(a)
-#endif
 
 #if HAVE_SCM_REMEMBER_UPTO_HERE
   #if HAVE_SCM_T_CATCH_BODY
@@ -169,6 +195,8 @@
 #define XEN_CDDR(a)                  SCM_CDDR(a)
 #define XEN_COPY_ARG(Lst)            Lst
 #define XEN_EQ_P(a, b)               SCM_EQ_P(a, b)
+#define XEN_EQV_P(A, B)              XEN_TO_C_BOOLEAN(scm_eqv_p(A, B))
+#define XEN_EQUAL_P(A, B)            XEN_TO_C_BOOLEAN(scm_equal_p(A, B))
 
 #define XEN_ONLY_ARG SCM_ARGn
 #define XEN_ARG_1    SCM_ARG1
@@ -348,6 +376,7 @@
 #else
   #define XEN_ERROR(Type, Info)       scm_throw(Type, Info)
 #endif
+#define XEN_THROW(Tag, Arg)           scm_throw(Tag, Arg)
 
 #ifndef SCM_BOOLP
   #define SCM_BOOLP(Arg)              gh_boolean_p(Arg)
@@ -447,6 +476,22 @@
 #else
   #define XEN_TO_C_CHAR(Arg)          gh_scm2char(Arg)
 #endif
+#ifdef SCM_MAKE_CHAR
+  #define C_TO_XEN_CHAR(c)            SCM_MAKE_CHAR(c)
+#else
+  #define C_TO_XEN_CHAR(c)            SCM_MAKICHR(c)
+#endif
+
+#if HAVE_SCM_MAKE_RATIO
+  #define XEN_NUMERATOR(Arg)          scm_numerator(Arg)
+  #define XEN_DENOMINATOR(Arg)        scm_denominator(Arg)
+  #define XEN_RATIONALIZE(Arg1, Arg2) scm_rationalize(scm_inexact_to_exact(Arg1), scm_inexact_to_exact(Arg2))
+  #define XEN_RATIO_P(Arg)            SCM_FRACTIONP(Arg)
+  #define XEN_MAKE_RATIO(Num, Den)    scm_make_ratio(Num, Den)
+#endif
+
+#define XEN_CONS_P(Arg)               SCM_CONSP(Arg)
+#define XEN_PAIR_P(a)                 XEN_TRUE_P(scm_pair_p(a))
 
 #define XEN_ARITY(Func)               scm_i_procedure_arity(Func)
 #define XEN_REQUIRED_ARGS(Func)       XEN_TO_SMALL_C_INT(XEN_CAR(XEN_ARITY(Func)))
@@ -738,17 +783,17 @@ bool xen_integer_p(XEN a);
     rb_define_variable(xen_scheme_global_variable_to_ruby(Name), (VALUE *)(&Var)); \
   }
 
-  #define XEN_DEFINE_HOOK(Var, Name, Arity, Help) \
-    { \
-      Var = xen_rb_hook_c_new(xen_scheme_global_variable_to_ruby(Name), Arity, Help); \
-      rb_define_variable(xen_scheme_global_variable_to_ruby(Name), (VALUE *)(&Var)); \
-      if (Help != NULL) xen_add_help(xen_scheme_global_variable_to_ruby(Name), Help); \
-    }
-  
-  #define XEN_DEFINE_SIMPLE_HOOK(Var, Arity) \
-    { \
-      Var = xen_rb_hook_c_new("simple_hook", Arity, NULL); \
-    }
+#define XEN_DEFINE_HOOK(Var, Name, Arity, Help) \
+  { \
+    Var = xen_rb_hook_c_new(xen_scheme_global_variable_to_ruby(Name), Arity, Help); \
+    rb_define_variable(xen_scheme_global_variable_to_ruby(Name), (VALUE *)(&Var)); \
+    if (Help != NULL) xen_add_help(xen_scheme_global_variable_to_ruby(Name), Help); \
+  }
+ 
+#define XEN_DEFINE_SIMPLE_HOOK(Var, Arity) \
+  { \
+    Var = xen_rb_hook_c_new("simple_hook", Arity, NULL); \
+  }
 
 #if defined(__GNUC__) && (!(defined(__cplusplus)))
   #define XEN_BOOLEAN_P(Arg)    ({ XEN _xen_h_7_ = Arg;        (XEN_TRUE_P(_xen_h_7_) || XEN_FALSE_P(_xen_h_7_)); })
@@ -778,9 +823,13 @@ bool xen_integer_p(XEN a);
 
 /* apparently no complex numbers (built-in) in Ruby? */
 
-#define XEN_LIST_P(Arg)                  (TYPE(Arg) == T_ARRAY)
-#define XEN_LIST_LENGTH(Arg)             RARRAY(Arg)->len
+#define XEN_LIST_P(Arg)                 (TYPE(Arg) == T_ARRAY)
+#define XEN_CONS_P(Arg)                 (TYPE(Arg) == T_ARRAY)
+#define XEN_PAIR_P(Arg)                 (TYPE(Arg) == T_ARRAY)
+#define XEN_LIST_LENGTH(Arg)            RARRAY(Arg)->len
 #define XEN_EQ_P(a, b)                  ((a) == (b))
+#define XEN_EQV_P(a, b)                 ((a) == (b))
+#define XEN_EQUAL_P(a, b)               ((a) == (b))
 #define XEN_LIST_1(a)                   rb_ary_new3(1, a)
 #define XEN_LIST_2(a, b)                rb_ary_new3(2, a, b) 
 #define XEN_LIST_3(a, b, c)             rb_ary_new3(3, a, b, c) 
@@ -816,8 +865,9 @@ bool xen_integer_p(XEN a);
 #define XEN_MAKE_VECTOR(Num, Fill)      xen_rb_ary_new_with_initial_element(Num, Fill)
 #define XEN_VECTOR_TO_LIST(a)           a
 
-#define XEN_CHAR_P(Arg)                  0
-#define XEN_TO_C_CHAR(Arg)               0
+#define XEN_CHAR_P(Arg)                  XEN_STRING_P(Arg)
+#define XEN_TO_C_CHAR(Arg)               RSTRING(Arg)->ptr[0]
+#define C_TO_XEN_CHAR(Arg)               rb_str_new((char *)(&(Arg)), 1)
 
 #define XEN_CALL_0(Func, Caller)                   xen_rb_funcall_0(Func)
 #define XEN_CALL_1(Func, Arg1, Caller)             rb_funcall(Func, rb_intern("call"), 1, Arg1)
@@ -867,6 +917,7 @@ bool xen_integer_p(XEN a);
   rb_raise(rb_eRangeError, "%s: arg %d, %s, out of range: %s\n", \
            Caller, ArgN, XEN_TO_C_STRING(XEN_TO_STRING(Arg)), Descr)
 #endif
+#define XEN_THROW(Type, Info)           xen_rb_raise(Type, Info)
 
 #if DEBUGGING
 
@@ -1238,6 +1289,8 @@ void Init_Hook(void);
 #define XEN_COMMENT_STRING  ";"
 
 #define XEN_EQ_P(a, b) 0
+#define XEN_EQV_P(a, b) 0
+#define XEN_EQUAL_P(a, b) 0
 #define XEN_EMPTY_LIST 0
 #define XEN_LIST_1(a) 0
 #define XEN_LIST_2(a, b) 0
@@ -1321,6 +1374,8 @@ void Init_Hook(void);
 #define XEN_HOOK_P(Arg) 0
 #define XEN_EXACT_P(Arg) 0
 #define XEN_LIST_P(Arg) 0
+#define XEN_CONS_P(Arg) 0
+#define XEN_PAIR_P(Arg) 0
 #define XEN_LIST_P_WITH_LENGTH(Arg, Len) 0
 #define XEN_LIST_LENGTH(Arg) 0
 #define XEN_VECTOR_LENGTH(Arg) 0
@@ -1339,6 +1394,7 @@ void Init_Hook(void);
 #define XEN_CLEAR_HOOK(Arg)
 #define XEN_CHAR_P(Arg) 0
 #define XEN_TO_C_CHAR(Arg) 0
+#define C_TO_XEN_CHAR(Arg) 0
 #define XEN_CALL_0(Func, Caller) 0
 #define XEN_CALL_1(Func, Arg1, Caller) 0
 #define XEN_CALL_2(Func, Arg1, Arg2, Caller) 0
@@ -1365,6 +1421,7 @@ void Init_Hook(void);
 #define XEN_LOAD_FILE(a) 0
 #define XEN_ERROR_TYPE(Typ) XEN_FALSE
 #define XEN_ERROR(Type, Info) fprintf(stderr, "error")
+#define XEN_THROW(Type, Info) fprintf(stderr, "error")
 #define XEN_TO_STRING(Obj) "(unknown)"
 #define XEN_WRONG_TYPE_ARG_ERROR(Caller, ArgN, Arg, Descr)
 #define XEN_OUT_OF_RANGE_ERROR(Caller, ArgN, Arg, Descr)
@@ -1429,6 +1486,17 @@ void Init_Hook(void);
             XEN_LIST_3(C_TO_XEN_STRING(Caller), \
                        C_TO_XEN_STRING(Descr), \
                        Arg))
+
+#ifndef XEN_RATIO_P
+  #define XEN_NUMERATOR(Arg)          0
+  #define XEN_DENOMINATOR(Arg)        1
+  #define XEN_RATIONALIZE(Arg1, Arg2) 1
+  #define XEN_RATIO_P(Arg)            false
+  #define XEN_MAKE_RATIO(Num, Den)    1
+#endif
+#ifndef XEN_DEFINED_P
+  #define XEN_DEFINED_P(Name) false
+#endif
 
 XEN xen_return_first(XEN a, ...);
 int xen_to_c_int_or_else(XEN obj, int fallback, const char *origin);

@@ -514,7 +514,7 @@
 		   
 		   (lambda (w context info)
 		     (help-dialog "Normalize"
-				  "Normalize scales amplitude to the normalize amount.\n Move the slider to change the scaling amount."))
+				  "Normalize scales amplitude to the normalize amount. Move the slider to change the scaling amount."))
 		   (lambda (w c i)
 		     (set! normalize-amount initial-normalize-amount)
 		     (XtSetValues (car sliders) (list XmNvalue (inexact->exact (floor (* normalize-amount 100))))))))
@@ -864,7 +864,7 @@
 		   
 		   (lambda (w context info)
 		     (help-dialog "Modulated echo"
-				  "Move the sliders to set the echo scaler, \
+				  "Move the sliders to set the echo scaler, 
 the delay time in seconds, the modulation frequency, and the echo amplitude."))
 		   (lambda (w c i)
 		     (set! zecho-scaler initial-zecho-scaler)
@@ -951,7 +951,7 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
 				 (clm-channel flt (car ms) (1+ (- (cadr ms) (car ms)))))))))
 		   (lambda (w context info)
 		     (help-dialog "Band-pass filter"
-				  "Butterworth band-pass filter.\n Move the sliders to change the center frequency and bandwidth."))
+				  "Butterworth band-pass filter. Move the sliders to change the center frequency and bandwidth."))
 		   (lambda (w c i)
 		     (set! band-pass-freq initial-band-pass-freq)
 		     (XtSetValues (car sliders) (list XmNvalue (scale-log->linear 20 band-pass-freq 22050)))
@@ -1009,7 +1009,7 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
 				 (clm-channel flt (car ms) (1+ (- (cadr ms) (car ms)))))))))
 		   (lambda (w context info)
 		     (help-dialog "Band-reject filter"
-				  "Butterworth band-reject filter.\n Move the sliders to change the center frequency and bandwidth."))
+				  "Butterworth band-reject filter. Move the sliders to change the center frequency and bandwidth."))
 		   (lambda (w c i)
 		     (set! notch-freq initial-notch-freq)
 		     (XtSetValues (car sliders) (list XmNvalue (scale-log->linear 20 notch-freq 22050)))
@@ -1065,7 +1065,7 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
 				 (clm-channel flt (car ms) (1+ (- (cadr ms) (car ms)))))))))
 		   (lambda (w context info)
 		     (help-dialog "High-pass filter"
-				  "Butterworth high-pass filter.\n Move the slider to change the high-pass cutoff frequency."))
+				  "Butterworth high-pass filter. Move the slider to change the high-pass cutoff frequency."))
 		   (lambda (w c i)
 		     (set! high-pass-freq initial-high-pass-freq)
 		     (XtSetValues (car sliders) (list XmNvalue (scale-log->linear 20 high-pass-freq 22050))))))
@@ -1116,7 +1116,7 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
 				 (clm-channel flt (car ms) (1+ (- (cadr ms) (car ms)))))))))
 		   (lambda (w context info)
 		     (help-dialog "Low-pass filter"
-				  "Butterworth low-pass filter.\n Move the slider to change the low-pass cutoff frequency."))
+				  "Butterworth low-pass filter. Move the slider to change the low-pass cutoff frequency."))
 		   (lambda (w c i)
 		     (set! low-pass-freq initial-low-pass-freq)
 		     (XtSetValues (car sliders) (list XmNvalue (scale-log->linear 20 low-pass-freq 22050))))))
@@ -1255,7 +1255,7 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
 		      "new-comb-chord" #f))
 		   (lambda (w context info)
 		     (help-dialog "Comb chord filter"
-				  "Creates chords by using filters at harmonically related sizes.\n Move the sliders to set the comb chord parameters."))
+				  "Creates chords by using filters at harmonically related sizes. Move the sliders to set the comb chord parameters."))
 		   (lambda (w c i)
 		     (set! new-comb-chord-scaler initial-new-comb-chord-scaler)
 		     (XtSetValues (list-ref sliders 0) (list XmNvalue (inexact->exact (floor (* new-comb-chord-scaler 100)))))
@@ -1335,7 +1335,7 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
 		      moog-target "moog-filter" #f))
 		   (lambda (w context info)
 		     (help-dialog "Moog filter"
-				  "Moog-style 4-pole lowpass filter with 24db/oct rolloff and variable resonance.\n\
+				  "Moog-style 4-pole lowpass filter with 24db/oct rolloff and variable resonance.
 Move the sliders to set the filter cutoff frequency and resonance."))
 		   (lambda (w c i)
 		     (set! moog-cutoff-frequency initial-moog-cutoff-frequency)
@@ -1483,8 +1483,8 @@ Move the sliders to set the filter cutoff frequency and resonance."))
 		   
 		   (lambda (w context info)
 		     (help-dialog "Sample rate conversion"
-				  "Move the slider to change the sample rate.\n\
-Values greater than 1.0 speed up file play,\n negative values reverse it."))
+				  "Move the slider to change the sample rate.
+Values greater than 1.0 speed up file play, negative values reverse it."))
 		   (lambda (w c i)
 		     (set! src-amount initial-src-amount)
 		     (XtSetValues (car sliders) (list XmNvalue (inexact->exact (floor (* src-amount 100))))))))
@@ -1933,7 +1933,7 @@ Values greater than 1.0 speed up file play,\n negative values reverse it."))
 		     (restore-controls))
 		   (lambda (w context info)
 		     (help-dialog "McNabb reverb"
-				  "Reverberator from Michael McNabb. \
+				  "Reverberator from Michael McNabb. 
 Adds reverberation scaled by reverb amount, lowpass filtering, and feedback. Move the sliders to change the reverb parameters."))
 		   (lambda (w c i)
 		     (set! reverb-amount initial-reverb-amount)
@@ -2103,7 +2103,7 @@ Adds reverberation scaled by reverb amount, lowpass filtering, and feedback. Mov
 		     (cnvtest convolve-sound-one convolve-sound-two convolve-amp))
 		   (lambda (w context info)
 		     (help-dialog "Convolution"
-				  "Very simple convolution. Move the sliders to set the numbers of the soundfiles to be convolved and the amount for the amplitude scaler.\n Output will be scaled to floating-point values, resulting in very large (but not clipped) amplitudes. Use the Normalize amplitude effect to rescale the output.\n The convolution data file typically defines a natural reverberation source, and the output from this effect can provide very striking reverb effects. You can find convolution data files on sites listed at http://www.bright.net/~dlphilp/linux_csound.html under Impulse Response Data."))
+				  "Very simple convolution. Move the sliders to set the numbers of the soundfiles to be convolved and the amount for the amplitude scaler. Output will be scaled to floating-point values, resulting in very large (but not clipped) amplitudes. Use the Normalize amplitude effect to rescale the output. The convolution data file typically defines a natural reverberation source, and the output from this effect can provide very striking reverb effects. You can find convolution data files on sites listed at http://www.bright.net/~dlphilp/linux_csound.html under Impulse Response Data."))
 		   (lambda (w c i)
 		     (set! convolve-sound-one initial-convolve-sound-one)
 		     (XtSetValues (list-ref sliders 0) (list XmNvalue (inexact->exact (floor (* convolve-sound-one 1)))))
@@ -2165,8 +2165,8 @@ Adds reverberation scaled by reverb amount, lowpass filtering, and feedback. Mov
 	(place-sound-envelope #f))
     
     (define (place-sound mono-snd stereo-snd pan-env)
-      "(place-sound mono-snd stereo-snd pan-env) mixes a mono sound into a stereo sound, splitting \
-it into two copies whose amplitudes depend on the envelope 'pan-env'.  If 'pan-env' is \
+      "(place-sound mono-snd stereo-snd pan-env) mixes a mono sound into a stereo sound, splitting 
+it into two copies whose amplitudes depend on the envelope 'pan-env'.  If 'pan-env' is 
 a number, the sound is split such that 0 is all in channel 0 and 90 is all in channel 1."
       (let ((len (frames mono-snd)))
 	(if (number? pan-env)
@@ -2425,7 +2425,7 @@ a number, the sound is split such that 0 is all in channel 0 and 90 is all in ch
 		      cross-synth-target "Cross synthesis" #f))
 		   (lambda (w context info)
 		     (help-dialog "Cross synthesis"
-				  "The sliders set the number of the soundfile to be cross-synthesized, \
+				  "The sliders set the number of the soundfile to be cross-synthesized, 
 the synthesis amplitude, the FFT size, and the radius value."))
 		   (lambda (w c i)
 		     (set! cross-synth-sound initial-cross-synth-sound)

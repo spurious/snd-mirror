@@ -5,9 +5,9 @@
 (use-modules (ice-9 optargs))
 
 (define* (make-zipper ramp-env #:optional frame-size frame-env)
-  "(make-zipper ramp-env #:optional frame-size frame-env) makes a zipper generator.  'ramp-env' is \
-a thunk (normally a ramp from 0 to 1) which sets where we are in the zipping process, \
-'frame-size' is the maximum frame length during the zip in seconds (defaults to 0.05), and \
+  "(make-zipper ramp-env #:optional frame-size frame-env) makes a zipper generator.  'ramp-env' is 
+a thunk (normally a ramp from 0 to 1) which sets where we are in the zipping process, 
+'frame-size' is the maximum frame length during the zip in seconds (defaults to 0.05), and 
 'frame-env' is a thunk returning the current frame size during the zip process."
 
   (let ((max-size (+ 1 (ceiling (* (srate) (or frame-size 0.05))))))

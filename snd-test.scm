@@ -21,7 +21,7 @@
 ;;; test 18: enved
 ;;; test 19: save and restore
 ;;; test 20: transforms
-;;; test 21: goops
+;;; test 21: unused
 ;;; test 22: run
 ;;; test 23: with-sound
 ;;; test 24: Snd user-interface
@@ -22561,6 +22561,17 @@ EDITS: 5
 	(set! (transform-normalization) old-norm)
 	(set! (transform-graph-type) old-grf)
 	(close-sound ind))
+
+      (let ((ind (open-sound "storm.snd"))
+	    (maxes (vct 0.8387 0.5169 0.3318 0.2564 0.1982 0.1532)))
+	(do ((i 0 (1+ i)))
+	    ((= i 5))
+	  (if (fneq (maxamp) (vct-ref maxes i)) (snd-display ";enving storm ~D: ~A ~A" i (vct-ref maxes i) (maxamp)))
+	  (env-sound '(0 0 1 1 2 0))
+	  (if (fneq (maxamp) (vct-ref maxes (1+ i))) (snd-display ";enving storm ~D: ~A ~A" (1+ i) (vct-ref maxes (1+ i)) (maxamp))))
+	(close-sound ind))
+	
+	  
       ))
       (run-hook after-test-hook 15)
       ))
@@ -27199,6 +27210,11 @@ EDITS: 5
 	(if (not (equal? (edit-fragment 2) '("xramp-channel 0.000 1.000 32.000 0 50828" "env" 0 50828)))
 	    (snd-display ";save-edit-history xramp 2: ~A?" (edit-fragment 2)))
 	(revert-sound nind)
+	(let ((str (file->string "hiho.scm")))
+	  (if (not (string=? str "      (ramp-channel 0.000 1.000 0 50828 sfile 0 #f)
+      (xramp-channel 0.000 1.000 32.000 0 50828 sfile 0 #f)
+"))
+	  (snd-display ";file->string: ~A" str)))
 	(let ((old-opt (optimization)))
 	  (set! (optimization) 5)
 	  (ptree-channel (lambda (y) (* y 2)))
@@ -28523,31 +28539,11 @@ EDITS: 2
 
 
 
-;;; ---------------- test 21: goops ----------------
-
-(define (gcomb gen input)
-  (gen input))	
-
-(define (make-gcomb length feedback a0 a1)
-  (let ((dly (make-delay length))
-        (flt (make-one-zero a0 a1)))
-    (lambda (input)
-      (dly (+ input (* (flt (tap dly)) feedback))))))
+;;; ---------------- test 21: ----------------
 
 (if (or full-test (= snd-test 21) (and keep-going (<= snd-test 21)))
     (begin
       (run-hook before-test-hook 21)
-      (load "goopsnd.scm")
-      (let ((f0 (make fcmb :length 4 :feedback 0.7))
-	    (g0 (make-gcomb 4 0.7 0.5 0.5)))
-	(fcomb f0 1.0)
-	(gcomb g0 1.0)
-	(do ((i 0 (1+ i)))
-	    ((= i 20))
-	  (let ((fval (fcomb f0 0.0))
-		(gval (gcomb g0 0.0)))
-	    (if (fneq fval gval)
-		(snd-display ";fcomb at ~A: ~A ~A?" i fval gval)))))
       (run-hook after-test-hook 21)
       ))
 

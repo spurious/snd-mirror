@@ -1694,12 +1694,6 @@ static char *html_directory(void)
     return(copy_string("/usr/local/share/doc/snd-7"));
   if (mus_file_probe("/usr/doc/snd-7/snd.html"))
     return(copy_string("/usr/doc/snd-7"));
-  if (mus_file_probe("/usr/share/doc/snd-6/snd.html"))
-    return(copy_string("/usr/share/doc/snd-6"));
-  if (mus_file_probe("/usr/local/share/doc/snd-6/snd.html"))
-    return(copy_string("/usr/local/share/doc/snd-6"));
-  if (mus_file_probe("/usr/doc/snd-6/snd.html"))
-    return(copy_string("/usr/doc/snd-6"));
   return(NULL);
 }
 
@@ -1825,7 +1819,7 @@ and its value is returned."
 	  XEN lookup;
 	  if ((XEN_FALSE_P(value)) && (XEN_SYMBOL_P(sym)))
 	    {
-	      lookup = scm_sym2var(sym, scm_current_module_lookup_closure(), XEN_FALSE); /* don't define in current module! */
+	      lookup = XEN_SYMBOL_TO_VARIABLE(sym);
 	      if (!(XEN_FALSE_P(lookup)))
 		value = XEN_VARIABLE_REF(lookup);
 	    }

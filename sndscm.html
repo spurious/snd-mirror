@@ -36,67 +36,68 @@
 
 <!-- I'm using A NAME (i.e caps) where the entity should be ignored by the indexer (index.cl) -->
 
-<center><A NAME="introduction"></a>
+<A NAME="introduction"></a>
 <ul>
-  <li><a href="#autosavedoc">autosave.scm: auto-save support</a>
-  <li><a href="#bessdoc">bess.scm, bess.rb: FM demo</a>
-  <li><a href="#bess1doc">bess1.scm, bess1.rb: FM violin demo</a>
-  <li><a href="#birddoc">bird.scm, bird.rb: North-American birds</a>
-  <li><a href="#clminsdoc">clm-ins.scm, clm-ins.rb: more CLM instruments</a>
-  <li><a href="#debugdoc">debug.scm: debugging aids</a>
-  <li><a href="#dlocsigdoc">dlocsig.rb (Michael Scholz)</a>
-  <li><a href="#dlpdoc">dlp and tutorial directories from Dave Phillips</a>
-  <li><a href="#drawdoc">draw.scm: graphics additions</a>
-  <li><a href="#dspdoc">dsp.scm: various DSP-related procedures</a>
-  <li><a href="#editmenudoc">edit-menu.scm: Edit menu additions</a>
-  <li><a href="#effectsdoc">new-effects.scm, gtk-effects.scm, effects.rb: an Effects menu</a>
-  <li><a href="#envdoc">env.scm, env.rb: envelope functions</a>
-  <li><a href="#enveddoc">enved.scm: envelope editor</a>
-  <li><a href="#eventdoc">event.scm: xm module stuff</a>
-  <li><a href="#exampdoc">examp.scm, examp.rb: many examples</a>
-  <li><a href="#extensionsdoc">extensions.scm, extensions.rb: various generally useful Snd extensions</a>
-  <li><a href="#fadedoc">fade.scm: frequency-domain cross-fades</a>
-  <li><a href="#fmvdoc">fmv.scm: a controller for the fm-violin</a>
-  <li><a href="#freeverbdoc">freeverb.scm, freeverb.rb: a reverb</a>
-  <li><a href="#goopsnddoc">goopsnd.scm: look at Goops</a>
-  <li><a href="#hooksdoc">hooks.scm, hooks.rb: functions related to hooks</a>
-  <li><a href="#indexdoc">index.scm, index.rb: snd-help extension</a>
-  <li><a href="#jcrevdoc">jcrev.scm: John Chowning's ancient reverb</a>
-  <li><a href="#ladspadoc">ladspa.scm: Kjetil S. Matheussen's LADSPA GUI-builder and previewer.</a>
-  <li><a href="#maracadoc">maraca.scm: Perry Cook's maraca physical model</a>
-  <li><a href="#marksdoc">marks.scm: functions related to marks</a>
-  <li><a href="#maxfdoc">maxf.scm, maxf.rb: Max Mathews resonator</a>
-  <li><a href="#mixdoc">mix.scm: functions related to mixes and tracks</a>
-  <li><a href="#moogdoc">moog.scm: Moog filter</a>
-  <li><a href="#musglyphs">musglyphs.scm: Music notation symbols (from CMN)</a>
-  <li><a href="#nbdoc">nb.scm, nb.rb: Popup File info etc</a>
-  <li><a href="#noisedoc">noise.scm: noise.ins from CLM translated to Scheme/Ruby by Michael Scholz</a>
-  <li><a href="#peakenvdoc">peak-env.scm: peak envelope support</a>
-  <li><a href="#pianodoc">piano.scm, piano.rb: piano physical model</a>
-  <li><a href="#playdoc">play.scm: play-related functions</a>
-  <li><a href="#popupdoc">popup.scm, gtk-popup.scm, popup.rb: Popup menu specializations</a>
-  <li><a href="#prc95doc">prc95.scm: Perry Cook's physical model examples</a>
-  <li><a href="#pvocdoc">pvoc.scm: phase-vocoder</a>
-  <li><a href="#rgbdoc">rgb.scm, rgb.rb: colors</a>
-  <li><a href="#rtiodoc">rtio.scm, rtio.rb: real-time stuff</a>
-  <li><a href="#rubberdoc">rubber.scm, rubber.rb: rubber-sound</a>
-  <li><a href="#singerdoc">singer.scm: Perry Cook's vocal-tract physical model</a>
-  <li><a href="#snd4doc">snd4|5|6|7.scm: Backwards compatibility</a>
-  <li><a href="#sndgldoc">snd-gl.scm: OpenGL examples (gl.c)</a>
-  <li><a href="#sndmotifdoc">snd-motif.scm, snd-gtk.scm: Motif/Gtk module (xm.c, xg.c)</a>
-  <li><a href="#sndtestdoc">snd-test.scm, snd_test.rb, and event.scm: Snd regression tests</a>
-  <li><a href="#spectrdoc">spectr.scm, spectr.rb: instrument steady state spectra</a>
-  <li><a href="#straddoc">strad.scm, strad.rb: string physical model (from CLM)</a>
-  <li><a href="#vdoc">v.scm, v.rb: fm-violin</a>
-  <li><a href="#wsdoc">ws.scm, ws.rb: with-sound</a>
-  <li><a href="#xmenveddoc">xm-enved.scm, xm-enved.rb</a>
-  <li><a href="#zipdoc">zip.scm: the zipper (a cross-fader)</a>
+  <li><a href="#autosavedoc">autosave.scm</a>: auto-save support
+  <li><a href="#bessdoc">bess.scm, bess.rb</a>: FM demo
+  <li><a href="#bess1doc">bess1.scm, bess1.rb</a>: FM violin demo
+  <li><a href="#birddoc">bird.scm, bird.rb</a>: North-American birds
+  <li><a href="#clminsdoc">clm-ins.scm, clm-ins.rb</a>: more CLM instruments
+  <li><a href="#debugdoc">debug.scm</a>: debugging aids
+  <li><a href="#dlocsigdoc">dlocsig.rb</a>: moving sounds (Michael Scholz)
+  <li><a href="#dlpdoc">dlp</a>: tutorial directories from Dave Phillips
+  <li><a href="#drawdoc">draw.scm</a>: graphics additions
+  <li><a href="#dspdoc">dsp.scm</a>: various DSP-related procedures
+  <li><a href="#editmenudoc">edit-menu.scm</a>: Edit menu additions
+  <li><a href="#dotsnd">edit123.scm, snd_conffile.scm</a>: .snd examples (Tom Roth, Kjetil S. Matheussen)
+  <li><a href="#effectsdoc">new-effects.scm, gtk-effects.scm, effects.rb</a>: an Effects menu
+  <li><a href="#envdoc">env.scm, env.rb</a>: envelope functions
+  <li><a href="#enveddoc">enved.scm</a>: envelope editor
+  <li><a href="#eventdoc">event.scm</a>: xm module stuff
+  <li><a href="#exampdoc">examp.scm, examp.rb</a>: many examples
+  <li><a href="#extensionsdoc">extensions.scm, extensions.rb</a>: various generally useful Snd extensions
+  <li><a href="#fadedoc">fade.scm</a>: frequency-domain cross-fades
+  <li><a href="#fmvdoc">fmv.scm</a>: a controller for the fm-violin
+  <li><a href="#freeverbdoc">freeverb.scm, freeverb.rb</a>: a reverb
+  <li><a href="#hooksdoc">hooks.scm, hooks.rb</a>: functions related to hooks
+  <li><a href="#indexdoc">index.scm, index.rb</a>: snd-help extension
+  <li><a href="#dotemacs">inf-snd.el, DotEmacs</a>: Emacs subjob support (Michael Scholz, Fernando Lopez-Lezcano)
+  <li><a href="#jcrevdoc">jcrev.scm</a>: John Chowning's ancient reverb
+  <li><a href="#ladspadoc">ladspa.scm, ladspa-help.scm</a>: Kjetil S. Matheussen's LADSPA GUI-builder and previewer.
+  <li><a href="#maracadoc">maraca.scm</a>: Perry Cook's maraca physical model
+  <li><a href="#marksdoc">marks.scm</a>: functions related to marks
+  <li><a href="#maxfdoc">maxf.scm, maxf.rb</a>: Max Mathews resonator
+  <li><a href="#mixdoc">mix.scm</a>: functions related to mixes and tracks
+  <li><a href="#moogdoc">moog.scm</a>: Moog filter
+  <li><a href="#musglyphs">musglyphs.scm</a>: Music notation symbols (from CMN)
+  <li><a href="#nbdoc">nb.scm, nb.rb</a>: Popup File info etc
+  <li><a href="#noisedoc">noise.scm</a>: noise.ins from CLM translated to Scheme/Ruby by Michael Scholz
+  <li><a href="#peakenvdoc">peak-env.scm</a>: peak envelope support
+  <li><a href="#pianodoc">piano.scm, piano.rb</a>: piano physical model
+  <li><a href="#playdoc">play.scm</a>: play-related functions
+  <li><a href="#popupdoc">popup.scm, gtk-popup.scm, popup.rb</a>: Popup menu specializations
+  <li><a href="#prc95doc">prc95.scm</a>: Perry Cook's physical model examples
+  <li><a href="#pvocdoc">pvoc.scm</a>: phase-vocoder
+  <li><a href="#rgbdoc">rgb.scm, rgb.rb</a>: colors
+  <li><A href="#rmsgaindoc">rmsgain.scm</a>: RMS-based gain and balance methods (Fabio Furlanete)
+  <li><a href="#rtiodoc">rtio.scm, rtio.rb</a>: real-time stuff
+  <li><a href="#rubberdoc">rubber.scm, rubber.rb</a>: rubber-sound
+  <li><a href="#singerdoc">singer.scm</a>: Perry Cook's vocal-tract physical model
+  <li><a href="#snd4doc">snd4|5|6|7.scm</a>: Backwards compatibility
+  <li><a href="#sndgldoc">snd-gl.scm</a>: OpenGL examples (gl.c)
+  <li><a href="#sndmotifdoc">snd-motif.scm, snd-gtk.scm</a>: Motif/Gtk module (xm.c, xg.c)
+  <li><a href="#sndtestdoc">snd-test.scm, snd_test.rb, and event.scm</a>: Snd regression tests
+  <li><a href="#spectrdoc">spectr.scm, spectr.rb</a>: instrument steady state spectra
+  <li><a href="#straddoc">strad.scm, strad.rb</a>: string physical model (from CLM)
+  <li><a href="#vdoc">v.scm, v.rb</a>: fm-violin
+  <li><a href="#wsdoc">ws.scm, ws.rb</a>: with-sound
+  <li><a href="#xmenveddoc">xm-enved.scm, xm-enved.rb</a>: envelope editors
+  <li><a href="#zipdoc">zip.scm</a>: the zipper (a cross-fader)
   <li><a href="#extsndvarexpl">A Note on Scheme variables in Snd</a>
   <li><a href="#extsndasneededexpl">A Note on "As-Needed" input functions</a>
   <li><a href="#extsndcgens">A Note on User-defined Generators in C-CLM</a>
   <li><a href="#continuations">About Continuations</a>
 </ul>
-</center>
 <br>
 
 <p>This file contains notes on the Scheme and Ruby files included with Snd.
@@ -452,15 +453,6 @@ include:
 <p>See the individual files and Dave's tutorial (in the tutorial directory) for more details.
 </p>
 
-<p>There are a few other files in the main directory that I haven't documented yet:</p>
-<pre>
-  <em class=emdef>DotEmacs</em>               Emacs init file (Fernando Lopez-Lezcano)
-  <em class=emdef>edit123.scm</em>            Handy editing sequences (Tom Roth)
-  <em class=emdef>inf-snd.el</em>             Ruby/Guile Emacs connection (Michael Scholz)
-  <em class=emdef>rmsgain.scm</em>            amplitude via rms (Fabio Furlanete)
-  <em class=emdef>snd_conffile.scm</em>       Snd init file (Kjetil S. Matheussen)
-</pre>
-
 
 <A NAME="drawdoc"></a><table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>draw.scm</h2></td></tr></table>
 
@@ -643,7 +635,14 @@ a sort of "FM index" parameter (named "k", hence the generator name) to vary the
 <!-- I(trim sound):A(editmenudoc) -->
 
 
-<A NAME="effectsdoc"></a><table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>new-effects.scm, gtk-effects.scm</h2></td></tr></table>
+<A NAME="dotsnd"></a><table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>edit123.scm, snd_conffile.scm</h2></td></tr></table>
+
+<p>These two files are examples of Snd customization files, suitable for inclusion in ~/.snd.
+edit123.scm is by Tom Roth, and snd_conffile.scm is by Kjetil S. Matheussen.
+</p>
+
+
+<A NAME="effectsdoc"></a><table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>new-effects.scm, gtk-effects.scm, effects.rb</h2></td></tr></table>
 
 <p>new-effects.scm implements an Effects menu.  If you have Motif,
 you can load xm.so (or build Snd with it preloaded), and get sliders
@@ -1508,6 +1507,7 @@ convenient if they were in one file.
 <pre>
   <a class=def name="exchannelproperty">channel-property</a> key snd chn
   <a class=def name="exsoundproperty">sound-property</a> key snd
+  <a class=def name="channelsync">channel-sync</a> snd chn
 
   <a class=def name="exmakeselection">make-selection</a> beg end snd chn
   <a class=def name="exdeleteselectionandsmooth">delete-selection-and-smooth</a>
@@ -1550,6 +1550,7 @@ property list.  To add or change a property, use set! with this procedure.  Simi
 These properties are normally saved when Snd's state is saved (via <a href="extsnd.html#sndsavestate">save-state</a>
 or the Options:Save State menu).  To omit a given property at that time, add its name (a symbol) to
 the property 'save-state-ignore (a list of symbols); see 'inset-envelope in extensions.scm.
+<b>channel-sync</b> uses the channel-properties list to implement a channel-local sync field.
 </p>
 
 <p><b>selection-members</b> returns a list of lists of (snd chn) indicating the channels participating in the current selection.
@@ -1768,15 +1769,6 @@ for the interested reader.
 <p>These are translations by Michael Scholz of CLM's freeverb.ins.
 </p>
 
-<A NAME="goopsnddoc"></a><table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>goopsnd.scm</h2></td></tr></table>
-
-<p>goopsnd.scm goofs around with goops, the Guile Object System.  As it stands, it
-might provide simple examples of goops syntax, but I'm not sure it's of any value
-yet. 
-Fabio Furlanete's rmsgain.scm uses goops.
-</p>
-
-
 
 <A NAME="hooksdoc"></a><table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>hooks.scm, hooks.rb</h2></td></tr></table>
 <pre>
@@ -1811,6 +1803,13 @@ in the Snd documents.
 <code>(? obj)</code> prints out any help it can find for obj, and tries to find obj in the documentation.
 The function that actually passes the url to the reader is <a href="extsnd.html#sendnetscape">send-netscape</a>.
 </p>
+
+<A NAME="dotemacs"></a><table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>inf-snd.el, DotEmacs</h2></td></tr></table>
+
+<p>These two files provide support for Snd as an Emacs subjob.  inf-snd.el is by Michael Scholz,
+and DotEmacs is by Fernando Lopez-Lezcano.
+</p>
+
 
 <A NAME="jcrevdoc"></a><table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>jcrev.scm</h2></td></tr></table>
 <p>
@@ -1878,7 +1877,7 @@ plate-reverb: ladspa.scm (a LADSPA effect)<br>
 </td></tr></TABLE>
 <br>
 
-<A NAME="ladspadoc"></a><table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>ladspa.scm</h2></td></tr></table>
+<A NAME="ladspadoc"></a><table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>ladspa.scm, ladspa-help.scm</h2></td></tr></table>
 
 <p>This file takes your LADSPA library and builds a set of dialogs
 to control and preview each effect.  The related help strings are in ladspa-help.scm.
@@ -2354,6 +2353,19 @@ which is already used by Scheme, so (at the suggestion of Dave Phillips)
 this color is named "tawny" in rgb.scm.
 </p>
 
+  <li><A href="#rmsgaindoc">rmsgain.scm</a>: RMS-based gain and balance methods
+<A NAME="rmsgaindoc"></a><table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>rmsgain.scm</h2></td></tr></table>
+
+<p>rmsgain.scm is an implementation of the balance generators of CLM (based
+on CSound originals).  I assume, from a glance at the code, that they're used
+something like this:
+</p>
+<pre>
+(define gen (make-instance &lt;rmsgain&gt;))
+(map-channel (lambda (y) (balance gen y (rms gen y))))
+</pre>
+<br>
+
 <A NAME="rtiodoc"></a><table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>rtio.scm</h2></td></tr></table>
 
 <p>rtio.scm has a collection of functions oriented loosely around
@@ -2437,7 +2449,7 @@ that were removed from or renamed in earlier versions of Snd.  Some of them are:
 <table border=0 cellspacing=10>
 <!-- backward-sample -->
 <tr><td colspan=2>
-<span class=defbox><code><em class=emdef>backward-sample</em> (<i>count snd chn</i>)</code></span>
+<em class=emdef>backward-sample</em> (<i>count snd chn</i>)
 </td></tr>
 <tr><td></td><td>
 move back <i>count</i> samples (C-b), return new cursor position.
@@ -2446,7 +2458,7 @@ move back <i>count</i> samples (C-b), return new cursor position.
 
 <!-- forward-sample -->
 <tr><td colspan=2>
-<span class=defbox><code><em class=emdef>forward-sample</em> (<i>count snd chn</i>)</code></span>
+<em class=emdef>forward-sample</em> (<i>count snd chn</i>)
 </td></tr>
 <tr><td></td><td>
 move forward <i>count</i> samples (C-f), return new cursor position.
@@ -2456,15 +2468,15 @@ move forward <i>count</i> samples (C-f), return new cursor position.
 
 <table border=0 cellspacing=5>
 <!-- vct-do! -->
-<tr><td><span class=defbox><code><em class=emdef>vct-do!</em> (vobj proc)</code></span></td>
+<tr><td><em class=emdef>vct-do!</em> (vobj proc)</td>
 <td><code>vobj[i] = (funcall proc i)</code>.</td></tr>
 
 <!-- vcts-do! -->
-<tr><td><span class=defbox><code><em class=emdef>vcts-do!</em> (vobj... proc)</code></span></td>
+<tr><td><em class=emdef>vcts-do!</em> (vobj... proc)</td>
 <td><code>vobj[vi][i] = (nth vi (funcall proc num i))</code>.</td></tr>
 
 <!-- vcts-map! -->
-<tr><td><span class=defbox><code><em class=emdef>vcts-map!</em> (vobj... proc)</code></span></td>
+<tr><td><em class=emdef>vcts-map!</em> (vobj... proc)</td>
 <td><code>vobj[vi][i] = (nth vi (funcall proc num))</code>.</td></tr>
 
 </table>
@@ -2725,7 +2737,7 @@ It implements a physical model of a bowed string with stiffness.
 </p>
 
 
-<A NAME="spectrdoc"></a><table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>spectr.scm, spectr.rb: instrument steady state spectra</h2></td></tr></table>
+<A NAME="spectrdoc"></a><table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>spectr.scm, spectr.rb</h2></td></tr></table>
 
 <p>The spectr files were translated by Michael Scholz from CLM's spectr.clm.  They contain a large 
 set of instrument steady-state spectra, gathered many years ago (before 1976) by James A Moorer.

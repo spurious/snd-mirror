@@ -1124,11 +1124,10 @@ void snd_rationalize(Float a, int *num, int *den)
 {
   XEN ratio;
   int gloc;
-  ratio = scm_rationalize(scm_inexact_to_exact(C_TO_XEN_DOUBLE(a)), 
-			  scm_inexact_to_exact(C_TO_XEN_DOUBLE(a * .02)));
+  ratio = XEN_RATIONALIZE(C_TO_XEN_DOUBLE(a), C_TO_XEN_DOUBLE(a * .02));
   gloc = snd_protect(ratio);
-  (*num) = XEN_TO_C_INT(scm_numerator(ratio));
-  (*den) = XEN_TO_C_INT(scm_denominator(ratio));
+  (*num) = XEN_TO_C_INT(XEN_NUMERATOR(ratio));
+  (*den) = XEN_TO_C_INT(XEN_DENOMINATOR(ratio));
   snd_unprotect_at(gloc);
 }
 #endif
@@ -2076,8 +2075,8 @@ static XEN sound_get(XEN snd_n, sp_field_t fld, char *caller)
       if (sp->speed_control_style == SPEED_CONTROL_AS_RATIO)
 	{
 	  if (sp->speed_control_direction == -1)
-	    return(scm_make_ratio(C_TO_XEN_INT(-sp->speed_control_numerator), C_TO_XEN_INT(sp->speed_control_denominator)));
-	  else return(scm_make_ratio(C_TO_XEN_INT(sp->speed_control_numerator), C_TO_XEN_INT(sp->speed_control_denominator)));
+	    return(XEN_MAKE_RATIO(C_TO_XEN_INT(-sp->speed_control_numerator), C_TO_XEN_INT(sp->speed_control_denominator)));
+	  else return(XEN_MAKE_RATIO(C_TO_XEN_INT(sp->speed_control_numerator), C_TO_XEN_INT(sp->speed_control_denominator)));
 	}
 #endif
       if (sp->speed_control_direction == -1) 
@@ -2342,10 +2341,10 @@ static XEN sound_set(XEN snd_n, XEN val, sp_field_t fld, char *caller)
     case SP_SPEED: 
 #if HAVE_SCM_MAKE_RATIO
       if ((sp->speed_control_style == SPEED_CONTROL_AS_RATIO) &&
-	  (SCM_FRACTIONP(val)))
+	  (XEN_RATIO_P(val)))
 	{
-	  sp->speed_control_numerator = XEN_TO_C_INT(scm_numerator(val));
-	  sp->speed_control_denominator = XEN_TO_C_INT(scm_denominator(val));
+	  sp->speed_control_numerator = XEN_TO_C_INT(XEN_NUMERATOR(val));
+	  sp->speed_control_denominator = XEN_TO_C_INT(XEN_DENOMINATOR(val));
 	  fval = (Float)(sp->speed_control_numerator) / (Float)(sp->speed_control_denominator);
 	  if (sp->speed_control_numerator < 0)
 	    {
@@ -3454,7 +3453,7 @@ the envelopes are complete (they are the result of a background process), and th
   if ((edpos < -1) || (edpos >= cp->edit_size) || (cp->edits[edpos] == NULL))
     XEN_ERROR(NO_SUCH_EDIT,
 	      XEN_LIST_2(C_TO_XEN_STRING(S_peak_env_info),
-			 C_TO_XEN_INT(pos)));
+			 pos));
   if (edpos == -1) edpos = cp->edit_ctr;
   ep = cp->amp_envs[edpos];
   if (ep)

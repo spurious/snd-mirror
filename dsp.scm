@@ -98,7 +98,7 @@
 		 (list->vct (list 0.0 c4 c5)))))
 
 (define (make-butter-low-pass fq)
-  "(make-butter-low-pass freq) makes a Butterworth filter with low pass cutoff at 'freq'.  The result \
+  "(make-butter-low-pass freq) makes a Butterworth filter with low pass cutoff at 'freq'.  The result 
 can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'butter' generator"
   (let* ((r (/ 1.0 (tan (/ (* pi fq) (srate)))))
 	 (r2 (* r r))
@@ -162,7 +162,7 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 	  (vct-set! coeffs jj coeff))))))
 
 (define (fltit-1 order spectr)
-  "(fltit-1 order spectrum) creates an FIR filter from spectrum and order and returns a closure that calls it: \
+  "(fltit-1 order spectrum) creates an FIR filter from spectrum and order and returns a closure that calls it: 
 (map-chan (fltit-1 10 (list->vct '(0 1.0 0 0 0 0 0 0 1.0 0))))"
   (let* ((flt (make-fir-filter order (spectrum->coeffs order spectr))))
     (lambda (x)

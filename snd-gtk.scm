@@ -521,12 +521,12 @@
 (define hidden-controls '())
 
 (define hidden-controls-help 
-"Expand-hop sets the time in seconds between successive grains.\n\
-Expand-length sets the length of each grain.\n\
-Expand-ramp sets the ramp-time in the grain envelope.\n\
-Contrast-amp sets the prescaler for contrast-enhancement.\n\
-Reverb-lowpass sets the feedback lowpass filter coeficient.\n\
-Reverb-feedback sets the scaler on the feedback.\n\
+"Expand-hop sets the time in seconds between successive grains.
+Expand-length sets the length of each grain.
+Expand-ramp sets the ramp-time in the grain envelope.
+Contrast-amp sets the prescaler for contrast-enhancement.
+Reverb-lowpass sets the feedback lowpass filter coeficient.
+Reverb-feedback sets the scaler on the feedback.
 ")
 
 (define (make-hidden-controls-dialog)

@@ -707,10 +707,8 @@ XEN mus_xen_to_object(mus_xen *gn) /* global for user-defined gens */
 
 XEN mus_xen_to_object_with_vct(mus_xen *gn, XEN v) /* global for user-defined gens */
 {
-  XEN new_dly = XEN_FALSE;
-  XEN_MAKE_OBJECT(new_dly, mus_xen_tag, gn, mark_mus_xen, free_mus_xen);
   gn->vcts[MUS_DATA_POSITION] = v;
-  return(new_dly);
+  XEN_MAKE_AND_RETURN_OBJECT(mus_xen_tag, gn, mark_mus_xen, free_mus_xen);
 }
 
 

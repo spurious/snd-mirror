@@ -34,20 +34,20 @@
 	    (base 1.0)
 	    #:allow-other-keys)
 
-    "(fm-violin startime dur frequency amplitude #:key \n\
+    "(fm-violin startime dur frequency amplitude #:key 
    (fm-index 1.0) (amp-env '(0 0  25 1  75 1  100 0)) 
-   (periodic-vibrato-rate 5.0) (random-vibrato-rate 16.0) \n\
-   (periodic-vibrato-amplitude 0.0025) (random-vibrato-amplitude 0.005) \n\
-   (noise-amount 0.0) (noise-freq 1000.0) (ind-noise-freq 10.0) \n\
-   (ind-noise-amount 0.0) (amp-noise-freq 20.0) \n\
-   (amp-noise-amount 0.0) (gliss-env '(0 0  100 0)) \n\
-   (glissando-amount 0.0) (fm1-env '(0 1  25 .4  75 .6  100 0)) \n\
-   (fm2-env '(0 1  25 .4  75 .6  100 0)) (fm3-rat 4.0) \n\
-   (fm3-env '(0 1  25 .4  75 .6  100 0)) (fm1-rat 1.0) \n\
-   (fm2-rat 3.0) (fm1-index #f) (fm2-index #f) \n\
-   (fm3-index #f) (degree 0) (distance 1.0) \n\
-   (reverb-amount 0.01) (base 1.0)) \n\
-This version of the fm-violin assumes it is running within with-sound (where *output* and *reverb* are defined).\n\
+   (periodic-vibrato-rate 5.0) (random-vibrato-rate 16.0) 
+   (periodic-vibrato-amplitude 0.0025) (random-vibrato-amplitude 0.005) 
+   (noise-amount 0.0) (noise-freq 1000.0) (ind-noise-freq 10.0) 
+   (ind-noise-amount 0.0) (amp-noise-freq 20.0) 
+   (amp-noise-amount 0.0) (gliss-env '(0 0  100 0)) 
+   (glissando-amount 0.0) (fm1-env '(0 1  25 .4  75 .6  100 0)) 
+   (fm2-env '(0 1  25 .4  75 .6  100 0)) (fm3-rat 4.0) 
+   (fm3-env '(0 1  25 .4  75 .6  100 0)) (fm1-rat 1.0) 
+   (fm2-rat 3.0) (fm1-index #f) (fm2-index #f) 
+   (fm3-index #f) (degree 0) (distance 1.0) 
+   (reverb-amount 0.01) (base 1.0)) 
+This version of the fm-violin assumes it is running within with-sound (where *output* and *reverb* are defined).
   (with-sound () (fm-violin 0 1 440 .1))"
 
     (let* ((pi 3.141592653589793)

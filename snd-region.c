@@ -566,11 +566,11 @@ static int save_region_1(char *ofile, int type, int format, int srate, int reg, 
 	  if (err == -1) break; /* mus_file_write presumably posted an error message */
 	}
       if (mus_file_close(ifd) != 0)
-	snd_error(_("save-region: can't close %s: %s!"), r->filename, strerror(errno));
+	snd_error(_("%s: can't close %s: %s!"), S_save_region, r->filename, strerror(errno));
       for (i = 0; i < chans; i++) FREE(bufs[i]);
       FREE(bufs);
       if (mus_file_close(ofd) != 0)
-	snd_error(_("save-region: can't close %s: %s!"), ofile, strerror(errno));
+	snd_error(_("%s: can't close %s: %s!"), S_save_region, ofile, strerror(errno));
       alert_new_file();
     }
   return(MUS_NO_ERROR);
@@ -1386,7 +1386,7 @@ mix region into snd's channel chn starting at chn-samp; return new mix id."
   if ((track_id > 0) && (!(track_p(track_id))))
     XEN_ERROR(NO_SUCH_TRACK,
 	      XEN_LIST_2(C_TO_XEN_STRING(S_mix_region),
-			 C_TO_XEN_INT(tid)));
+			 tid));
   ss->catch_message = NULL;
   buf = mus_format("%s %d at " OFF_TD, S_mix_region, rg, samp);
   id = paste_region_1(rg, cp, true, samp, buf, track_id);
