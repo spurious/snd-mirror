@@ -3,9 +3,12 @@
 ;;; currently there are four special popup menus:
 ;;;   selection fft time-domain lisp-listener
 ;;;
-;;; (add-selection-popup) creates a selection-oriented popup menu that is activated if you click button 3 in the selected portion
-;;;    (change-selection-popup-color new-color) to change its color
+;;; (add-selection-popup) creates popup menus specialized for the fft, selection, and time-domain sections of the graph
+;;;    (change-selection-popup-color new-color) to change selection memu's color
+;;;    (change-fft-popup-color new-color) to change fft menu's color
+;;;    (change-graph-popup-color new-color) to change time-domain menu's color
 ;;; (add-listener-popup) posts a special popup menu if the pointer is in the listener
+;;;    (change-listener-popup-color new-color) to change its color
 
 (use-modules (ice-9 common-list))
 
@@ -478,7 +481,7 @@
 				      (edit-graph-popup-menu snd chn)
 				      (set! (|menuToPost info) graph-popup-menu))))))))))))))))
 
-(define (change-selection-popup-color new-color)
+(define (change-menu-color menu new-color)
   ;; new-color can be the color name, an xm Pixel, a snd color, or a list of rgb values (as in Snd's make-color)
   (let ((color-pixel
 	 (if (string? new-color) ; assuming X11 color names here
@@ -497,9 +500,18 @@
 		     ;; assume a list of rgb vals?
 		     (|Pixel (snd-pixel (apply make-color new-color))))))))
     (for-each-child
-     selection-popup-menu
+     menu
      (lambda (n)
        (|XmChangeColor n color-pixel)))))
+
+(define (change-selection-popup-color new-color)
+  (change-menu-color selection-popup-menu new-color))
+
+(define (change-fft-popup-color new-color)
+  (change-menu-color fft-popup-menu new-color))
+
+(define (change-graph-popup-color new-color)
+  (change-menu-color graph-popup-menu new-color))
 
 ; (change-selection-popup-color "red") 
 ; (change-selection-popup-color (list .5 .5 .5))
@@ -655,12 +667,18 @@
 			 (if (string=? (|XtName n) "Help")
 			     ((if (listener-selection) |XtManageChild |XtUnmanageChild) n))))))
 	   listener-popup-menu)
-	  (set! (|menuToPost info) listener-popup))))))
-
-
+	  (set! (|menuToPost info) listener-popup)))
+      listener-popup)))
 
 (add-selection-popup)
-(add-listener-popup)
+(define listener-menu (add-listener-popup))
+
+(define (change-listener-popup-color new-color)
+  ;; slightly different from the earlier cases because the menu parent is not explicitly in the list
+    (change-menu-color listener-menu new-color))
+
 
 
 ;;; TODO: lisp graph, possibly some of the dialogs
+
+

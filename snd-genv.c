@@ -1090,7 +1090,7 @@ GtkWidget *create_envelope_editor (snd_state *ss)
       gtk_signal_connect(GTK_OBJECT(orderAdj), "value_changed", GTK_SIGNAL_FUNC(enved_filter_order_callback), (gpointer)ss);
       gtk_widget_show(orderL);
 
-      firB = gtk_button_new_with_label("fir");
+      firB = gtk_button_new_with_label((FIR_p) ? "fir" : "fft");
       gtk_signal_connect(GTK_OBJECT(firB), "clicked", GTK_SIGNAL_FUNC(fir_button_pressed), (gpointer)ss);
       gtk_box_pack_end(GTK_BOX(bottomrow), firB, FALSE, FALSE, 0);
       gtk_widget_show(firB);
@@ -1295,7 +1295,7 @@ static XEN g_set_enved_filter(XEN type)
   XEN_ASSERT_TYPE(XEN_BOOLEAN_P(type), type, XEN_ONLY_ARG, "set-" S_enved_filter, "boolean");
   FIR_p = XEN_TO_C_BOOLEAN(type);
   if (firB)
-    set_label(firB, (FIR_p) ? "fir" : "fft");
+    set_button_label(firB, (FIR_p) ? "fir" : "fft");
   return(type);
 }
 

@@ -26,7 +26,7 @@
 ;;;     every-sample?
 ;;;     sort-samples
 ;;; mix mono sound into stereo sound panning according to env, also simple sound placement
-;;; fft-edit, fft-squelch -- FFT based editing, fft-smoothing
+;;; fft-edit, fft-squelch, fft-env-interp, fft-smoother -- FFT based editing, fft-smoothing
 ;;; comb-filter, notch-filter, formant-filter
 ;;; echo (delays)
 ;;; ring-modulation, am
@@ -874,6 +874,46 @@
     (set-samples 0 (1- len) rdata)
     scaler))
     
+(define (fft-env-data fft-env)
+  ;; apply fft-env as spectral env to current sound, returning vct of new data
+  (let* ((sr (srate))
+	 (len (frames))
+	 (fsize (expt 2 (ceiling (/ (log len) (log 2.0)))))
+	 (rdata (samples->vct 0 fsize))
+	 (idata (make-vct fsize))
+	 (fsize2 (/ fsize 2))
+	 (e (make-env fft-env :end (1- fsize2))))
+    (fft rdata idata 1)
+    (do ((i 0 (1+ i))
+	 (j (1- fsize) (1- j)))
+	((= i fsize2))
+      (let ((val (env e)))
+	(vct-set! rdata i (* val (vct-ref rdata i)))
+	(vct-set! idata i (* val (vct-ref idata i)))
+	(vct-set! rdata j (* val (vct-ref rdata j)))
+	(vct-set! idata j (* val (vct-ref idata j)))))
+    (fft rdata idata -1)
+    (vct-scale! rdata (/ 1.0 fsize))))
+
+(define (fft-env-edit fft-env)
+  ;; edit current chan using fft-env
+  (set-samples 0 (1- (frames)) (fft-env-data fft-env)))
+
+(define (fft-env-interp env1 env2 interp)
+  ;; interpolate between two fft-filtered versions (env1 and env2 are the spectral envelopes) following interp (an env between 0 and 1)
+  (let* ((data1 (fft-env-data env1))
+	 (data2 (fft-env-data env2))
+	 (len (frames))
+	 (new-data (make-vct len))
+	 (e (make-env interp :end (1- len))))
+    (do ((i 0 (1+ i)))
+	((= i len))
+      (let ((pan (env e)))
+	(vct-set! new-data i 
+		  (+ (* (- 1.0 pan) (vct-ref data1 i))
+		     (* pan (vct-ref data2 i))))))
+    (set-samples 0 (1- len) new-data)))
+
 (define (fft-smoother cutoff start samps snd chn)
   "use fft-filtering to smooth a section"
   (let* ((fftpts (inexact->exact (expt 2 (ceiling (/ (log (1+ samps)) (log 2.0))))))

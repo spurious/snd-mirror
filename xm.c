@@ -130,6 +130,8 @@
  *    ref args are usually returned by proc, and not passed in unless init val is needed (see details below)
  *    array args are passed as lists, returned as lists
  *    pointers to structs are '(type val) where val is opaque except via accessors 
+ *      that is, all non-simple types are lists in xm where the first element is a symbol describing the type
+ *      and the second is usually the C value stored directly as an unsigned long
  *    "Va" args are passed and returned as lists
  *    XtCallback procedure args are passed by value
  *    various "client data" args are optional
@@ -2437,7 +2439,8 @@ inserts tabs into a tab list"
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg4), arg4, 4, "XmTabListInsertTabs", "int");
   len = XEN_TO_C_INT(arg3);
   tabs = XEN_TO_C_XmTabs(arg2, len);
-  tl = XmTabListInsertTabs(XEN_FALSE_P(arg1) ? NULL : XEN_TO_C_XmTabList(arg1), tabs, len, XEN_TO_C_INT(arg4));
+  tl = XmTabListInsertTabs(XEN_FALSE_P(arg1) ? NULL : XEN_TO_C_XmTabList(arg1), 
+			   tabs, len, XEN_TO_C_INT(arg4));
   free(tabs);
   return(C_TO_XEN_XmTabList(tl));
 }
@@ -4909,14 +4912,16 @@ The ToggleButtonGadget creation function"
 #if MOTIF_2
 static XEN gxm_XmToggleButtonGadgetSetValue(XEN arg1, XEN arg2, XEN arg3)
 {
+  #define H_XmToggleButtonGadgetSetValue "Boolean XmToggleButtonGadgetSetValue(Widget w, XmToggleButtonState newstate, Boolean notify)"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmToggleButtonGadgetSetValue", "Widget");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 2, "XmToggleButtonGadgetSetValue", "int");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XmToggleButtonGadgetSetValue", "int");
-  return(C_TO_XEN_BOOLEAN(XmToggleButtonGadgetSetValue(XEN_TO_C_Widget(arg1), XEN_TO_C_INT(arg2), XEN_TO_C_INT(arg3))));
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(arg3), arg3, 3, "XmToggleButtonGadgetSetValue", "boolean");
+  return(C_TO_XEN_BOOLEAN(XmToggleButtonGadgetSetValue(XEN_TO_C_Widget(arg1), XEN_TO_C_INT(arg2), XEN_TO_C_BOOLEAN(arg3))));
 }
 
 static XEN gxm_XmCreateGrabShell(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
+  #define H_XmCreateGrabShell "Widget XmCreateGrabShell(Widget parent, char *name, ArgList al, Cardinal ac) -> a new GrabShell"
   Widget w;
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmCreateGrabShell", "Widget");
   XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmCreateGrabShell", "char*");
@@ -6419,11 +6424,11 @@ changes ScrollBar's increment values and the slider's size and position"
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XmScrollBarSetValues", "int");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg4), arg4, 4, "XmScrollBarSetValues", "int");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg5), arg5, 5, "XmScrollBarSetValues", "int");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg6), arg6, 6, "XmScrollBarSetValues", "int");
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(arg6), arg6, 6, "XmScrollBarSetValues", "boolean");
   XmScrollBarSetValues(XEN_TO_C_Widget(arg1), 
 		       XEN_TO_C_INT(arg2), XEN_TO_C_INT(arg3), 
 		       XEN_TO_C_INT(arg4), XEN_TO_C_INT(arg5), 
-		       XEN_TO_C_INT(arg6));
+		       XEN_TO_C_BOOLEAN(arg6));
   return(XEN_FALSE);
 }
 
@@ -15491,7 +15496,8 @@ static int callback_struct_type(Widget w, char *name)
 static XEN gxm_XtAddCallback(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   #define H_XtAddCallback "void XtAddCallback(w, callback_name, callback, client_data) adds the specified callback procedure to \
-the specified widget's callback list."
+the specified widget's callback list.  In xm, the client-data is optional, defaulting to #f. The callback procedure takes \
+3 args: widget client-data callback-info"
   /* DIFF: XtAddCallback returns the C-side "client-data" (for subsequent XtRemoveCallback)
    */
   char *name;
@@ -15816,7 +15822,7 @@ static XEN gxm_XtRemoveTimeOut(XEN arg1)
 
 static XEN gxm_XtAppAddTimeOut(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
-  #define H_XtAddTimeout "XtIntervalId XtAddTimeout(interval, proc, client_data) has been replaced by XtAppAddTimeout."
+  #define H_XtAppAddTimeOut "XtIntervalId XtAppAddTimeOut(app_context, interval, proc, client_data) creates a timeout and returns an identifier for it."
   XtIntervalId id;
   int gc_loc;
   XEN descr;
@@ -15836,7 +15842,7 @@ static XEN gxm_XtAppAddTimeOut(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 
 static XEN gxm_XtAddTimeOut(XEN arg1, XEN arg2, XEN arg3)
 {
-  #define H_XtAppAddTimeOut "XtIntervalId XtAppAddTimeOut(app_context, interval, proc, client_data) creates a timeout and returns an identifier for it."
+  #define H_XtAddTimeOut "XtIntervalId XtAddTimeOut(interval, proc, client_data) has been replaced by XtAppAddTimeOut."
   XtIntervalId id;
   int gc_loc;
   XEN descr;
@@ -16990,7 +16996,8 @@ static XEN gxm_XpGetOneAttribute(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
   XEN_ASSERT_TYPE(XEN_XPContext_P(arg2), arg2, 2, "XpGetOneAttribute", "XPContext");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XpGetOneAttribute", "XPAttributes");
   XEN_ASSERT_TYPE(XEN_STRING_P(arg4), arg4, 4, "XpGetOneAttribute", "char*");
-  return(C_TO_XEN_STRING(XpGetOneAttribute(XEN_TO_C_Display(arg1), XEN_TO_C_XPContext(arg2), (XPAttributes)XEN_TO_C_INT(arg3), XEN_TO_C_STRING(arg4))));
+  return(C_TO_XEN_STRING(XpGetOneAttribute(XEN_TO_C_Display(arg1), XEN_TO_C_XPContext(arg2), 
+					   (XPAttributes)XEN_TO_C_INT(arg3), XEN_TO_C_STRING(arg4))));
 }
 
 static XEN gxm_XpSetAttributes(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5)
@@ -17001,7 +17008,9 @@ static XEN gxm_XpSetAttributes(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5)
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XpSetAttributes", "XPAttributes");
   XEN_ASSERT_TYPE(XEN_STRING_P(arg4), arg4, 4, "XpSetAttributes", "char*");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg5), arg5, 5, "XpSetAttributes", "XPAttrReplacement");
-  XpSetAttributes(XEN_TO_C_Display(arg1), XEN_TO_C_XPContext(arg2), (XPAttributes)XEN_TO_C_INT(arg3), XEN_TO_C_STRING(arg4), (XPAttrReplacement)XEN_TO_C_INT(arg5));
+  XpSetAttributes(XEN_TO_C_Display(arg1), XEN_TO_C_XPContext(arg2), 
+		  (XPAttributes)XEN_TO_C_INT(arg3), XEN_TO_C_STRING(arg4), 
+		  (XPAttrReplacement)XEN_TO_C_INT(arg5));
   return(XEN_FALSE);
 }
 
@@ -17011,7 +17020,8 @@ static XEN gxm_XpGetAttributes(XEN arg1, XEN arg2, XEN arg3)
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XpGetAttributes", "Display*");
   XEN_ASSERT_TYPE(XEN_XPContext_P(arg2), arg2, 2, "XpGetAttributes", "XPContext");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XpGetAttributes", "XPAttributes");
-  return(C_TO_XEN_STRING(XpGetAttributes(XEN_TO_C_Display(arg1), XEN_TO_C_XPContext(arg2), (XPAttributes)XEN_TO_C_INT(arg3))));
+  return(C_TO_XEN_STRING(XpGetAttributes(XEN_TO_C_Display(arg1), XEN_TO_C_XPContext(arg2), 
+					 (XPAttributes)XEN_TO_C_INT(arg3))));
 }
 
 static XEN gxm_XpGetScreenOfContext(XEN arg1, XEN arg2)
@@ -17029,7 +17039,8 @@ static XEN gxm_XpSendOneTicket(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
   XEN_ASSERT_TYPE(XEN_Window_P(arg2), arg2, 2, "XpSendOneTicket", "Window");
   XEN_ASSERT_TYPE(XEN_ULONG_P(arg3), arg3, 3, "XpSendOneTicket", "Xauth*"); /* opaque */
   XEN_ASSERT_TYPE(XEN_BOOLEAN_P(arg4), arg4, 4, "XpSendOneTicket", "BOOLEAN");
-  return(C_TO_XEN_INT(XpSendOneTicket(XEN_TO_C_Display(arg1), XEN_TO_C_Window(arg2), (Xauth *)XEN_TO_C_ULONG(arg3), XEN_TO_C_BOOLEAN(arg4))));
+  return(C_TO_XEN_INT(XpSendOneTicket(XEN_TO_C_Display(arg1), XEN_TO_C_Window(arg2), 
+				      (Xauth *)XEN_TO_C_ULONG(arg3), XEN_TO_C_BOOLEAN(arg4))));
 }
 
 static XEN gxm_XpGetAuthParams(XEN arg1, XEN arg2)
@@ -17399,7 +17410,8 @@ static XEN gxm_XpmWriteFileFromPixmap(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XE
   XEN_ASSERT_TYPE(XEN_Pixmap_P(arg3), arg3, 3, "XpmWriteFileFromPixmap", "Pixmap");
   XEN_ASSERT_TYPE(XEN_Pixmap_P(arg4), arg4, 4, "XpmWriteFileFromPixmap", "Pixmap");
   XEN_ASSERT_TYPE(XEN_XpmAttributes_P(arg5), arg5, 5, "XpmWriteFileFromPixmap", "XpmAttributes*");
-  return(C_TO_XEN_INT(XpmWriteFileFromPixmap(XEN_TO_C_Display(arg1), XEN_TO_C_STRING(arg2), XEN_TO_C_Pixmap(arg3), XEN_TO_C_Pixmap(arg4), 
+  return(C_TO_XEN_INT(XpmWriteFileFromPixmap(XEN_TO_C_Display(arg1), XEN_TO_C_STRING(arg2), 
+					     XEN_TO_C_Pixmap(arg3), XEN_TO_C_Pixmap(arg4), 
 					     XEN_TO_C_XpmAttributes(arg5))));
 }
 
@@ -17678,7 +17690,7 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtGetKeyboardFocusWidget" XM_POSTFIX, gxm_XtGetKeyboardFocusWidget, 1, 0, 0, H_XtGetKeyboardFocusWidget);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtLastEventProcessed" XM_POSTFIX, gxm_XtLastEventProcessed, 1, 0, 0, H_XtLastEventProcessed);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtLastTimestampProcessed" XM_POSTFIX, gxm_XtLastTimestampProcessed, 1, 0, 0, H_XtLastTimestampProcessed);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtAddTimeOut" XM_POSTFIX, gxm_XtAddTimeOut, 2, 1, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtAddTimeOut" XM_POSTFIX, gxm_XtAddTimeOut, 2, 1, 0, H_XtAddTimeOut);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtAppAddTimeOut" XM_POSTFIX, gxm_XtAppAddTimeOut, 3, 1, 0, H_XtAppAddTimeOut);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtRemoveTimeOut" XM_POSTFIX, gxm_XtRemoveTimeOut, 1, 0, 0, H_XtRemoveTimeOut);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtAddInput" XM_POSTFIX, gxm_XtAddInput, 3, 1, 0, H_XtAddInput);
@@ -17826,7 +17838,7 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtIsSessionShell" XM_POSTFIX, gxm_XtIsSessionShell, 1, 0, 0, H_XtIsSessionShell);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtMapWidget" XM_POSTFIX, gxm_XtMapWidget, 1, 0, 0, H_XtMapWidget);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtUnmapWidget" XM_POSTFIX, gxm_XtUnmapWidget, 1, 0, 0, H_XtUnmapWidget);
-   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtAppContext" XM_POSTFIX, gxm_XtAppContext, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtAppContext" XM_POSTFIX, gxm_XtAppContext, 1, 0, 0, NULL);
 #endif
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XLoadQueryFont" XM_POSTFIX, gxm_XLoadQueryFont, 2, 0, 0, H_XLoadQueryFont);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XQueryFont" XM_POSTFIX, gxm_XQueryFont, 2, 0, 0, H_XQueryFont);
@@ -18316,13 +18328,13 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmTextFieldCopyLink" XM_POSTFIX, gxm_XmTextFieldCopyLink, 2, 0, 0, H_XmTextFieldCopyLink);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmTextFieldPasteLink" XM_POSTFIX, gxm_XmTextFieldPasteLink, 1, 0, 0, H_XmTextFieldPasteLink);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmTextGetCenterline" XM_POSTFIX, gxm_XmTextGetCenterline, 1, 0, 0, H_XmTextGetCenterline);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmToggleButtonGadgetSetValue" XM_POSTFIX, gxm_XmToggleButtonGadgetSetValue, 3, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmToggleButtonGadgetSetValue" XM_POSTFIX, gxm_XmToggleButtonGadgetSetValue, 3, 0, 0, H_XmToggleButtonGadgetSetValue);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmGetIconFileName" XM_POSTFIX, gxm_XmGetIconFileName, 5, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmCreateIconGadget" XM_POSTFIX, gxm_XmCreateIconGadget, 3, 1, 0, H_XmCreateIconGadget);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmCreateIconHeader" XM_POSTFIX, gxm_XmCreateIconHeader, 3, 1, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmObjectAtPoint" XM_POSTFIX, gxm_XmObjectAtPoint, 3, 0, 0, H_XmObjectAtPoint);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmConvertStringToUnits" XM_POSTFIX, gxm_XmConvertStringToUnits, 4, 0, 0, H_XmConvertStringToUnits);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmCreateGrabShell" XM_POSTFIX, gxm_XmCreateGrabShell, 3, 1, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmCreateGrabShell" XM_POSTFIX, gxm_XmCreateGrabShell, 3, 1, 0, H_XmCreateGrabShell);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmToggleButtonSetValue" XM_POSTFIX, gxm_XmToggleButtonSetValue, 3, 0, 0, H_XmToggleButtonSetValue);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmTextPasteLink" XM_POSTFIX, gxm_XmTextPasteLink, 1, 0, 0, H_XmTextPasteLink);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmTextCopyLink" XM_POSTFIX, gxm_XmTextCopyLink, 2, 0, 0, H_XmTextCopyLink);

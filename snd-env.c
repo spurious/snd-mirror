@@ -1011,6 +1011,7 @@ void enved_show_background_waveform(snd_state *ss, chan_info *axis_cp, axis_info
   gray_ap->y_axis_y1 = ap->y_axis_y1;
   if (show_fft)
     {
+      /* TODO: extend enved background spectrum to selection at least (also a squelch choice?) */
       if ((!apply_to_mix) && (!apply_to_selection))
 	{
 	  active_channel = current_channel(ss);

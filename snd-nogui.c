@@ -459,6 +459,7 @@ void snd_doit(snd_state *ss, int argc, char **argv)
                (define (" S_channel_widgets " . args) #f)\
                (define (" S_current_font ") #f)\
                (define (" S_reset_listener_cursor ") #f)\
+               (define (set-" S_enved_filter " val) #f)\
                (define " S_basic_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
                (define " S_zoom_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
                (define " S_position_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
@@ -467,6 +468,7 @@ void snd_doit(snd_state *ss, int argc, char **argv)
                (define " S_listener_text_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
                (define " S_selected_mix_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
                (define " S_enved_waveform_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
+               (define " S_enved_filter " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
                (define " S_filter_waveform_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
                (define " S_highlight_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
                (define " S_graph_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\

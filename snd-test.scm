@@ -323,7 +323,7 @@
       (if (not (equal? (enved-clip?)  #f )) 
 	  (snd-display ";enved-clip? set def: ~A" (enved-clip?)))
       (set! (enved-filter) (enved-filter))
-      (if (not (equal? (enved-filter) #f)) 
+      (if (not (equal? (enved-filter) #t)) 
 	  (snd-display ";enved-filter set def: ~A" (enved-filter)))
       (set! (enved-filter-order) (enved-filter-order))
       (if (not (equal? (enved-filter-order)  40)) 
@@ -619,7 +619,7 @@
 	'enved-base (enved-base) 1.0 
 	'enved-clip? (enved-clip?) #f 
 	'enved-filter-order (enved-filter-order) 40
-	'enved-filter (enved-filter) #f
+	'enved-filter (enved-filter) #t
 	'enved-in-dB (enved-in-dB) #f 
 	'enved-exp? (enved-exp?) #f 
 	'enved-power (enved-power) 3.0
@@ -1144,7 +1144,7 @@
 	  (list 'graph-transform? graph-transform? #f set-graph-transform? #t)
 	  (list 'filter-control-in-dB filter-control-in-dB #f set-filter-control-in-dB #t)
 	  (list 'filter-control-env filter-control-env (list 0.0 1.0 1.0 1.0) set-filter-control-env (list 0.0 1.0 1.0 0.0))
-	  (list 'enved-filter enved-filter #f set-enved-filter #t)
+	  (list 'enved-filter enved-filter #t set-enved-filter #f)
 	  (list 'enved-filter-order enved-filter-order 40 set-enved-filter-order 20)
 	  (list 'filter-env-in-hz filter-env-in-hz #f set-filter-env-in-hz #t)
 	  (list 'filter-control-order filter-control-order 20 set-filter-control-order 40)

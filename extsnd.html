@@ -6890,7 +6890,20 @@ And an example that lets us see the result of filtering the waveform:
 <!-- enved-filter -->
 <!-- -->
 <!-- --><tr><td><span class=defbox><code><em class=def><a name="filterenv">enved-filter</a></em> ()</code></span></td>
-<!-- --><td>The type of the Envelope editor's filter. (default #t: FIR, #f is FFT)</td></tr>
+<!-- --><td>The type of the Envelope editor's filter. (default #t: FIR, #f is FFT).  To get the fft display in the envelope editor
+<!-- -->as the default:
+<!-- --></td></tr>
+<!-- -->
+<!-- --><tr><td></td><td><table border=1 cellpadding=5><tr><td bgcolor="#FCFCF0"><pre>
+(define (enved-fft)
+  (set! (enved-filter) #f)
+  (set! (enved-wave?) #t)
+  (set! (enved-target) enved-spectrum)
+  (add-hook! after-open-hook (lambda (snd)
+			       (set! (transform-size snd) 
+				     (expt 2 (ceiling (/ (log (frames snd)) 
+							 (log 2.0))))))))
+<!-- --></pre></td></tr></table></td></tr>
 <!-- -->
 <!-- enved-filter-order -->
 <!-- -->

@@ -1323,7 +1323,7 @@ Widget create_envelope_editor (snd_state *ss)
       XtSetArg(args[n], XmNshadowThickness, 0); n++;
       XtSetArg(args[n], XmNhighlightThickness, 0); n++;
       XtSetArg(args[n], XmNfillOnArm, FALSE); n++;
-      firB = sndCreatePushButtonWidget ("fir", mainform, args, n);
+      firB = sndCreatePushButtonWidget ((FIR_p) ? "fir" : "fft", mainform, args, n);
       XtAddCallback(firB, XmNhelpCallback, FIR_Help_Callback, ss);
       XtAddCallback(firB, XmNactivateCallback, FIR_Click_Callback, ss);
 

@@ -4523,7 +4523,7 @@ static int alsa_mus_audio_open_output(int ur_dev, int srate, int chans, int form
 	setup.mode = SND_PCM_MODE_BLOCK;
 	setup.channel = SND_PCM_STREAM_PLAYBACK;
 	if ((err = alsa_setup(handles[id].handle, &setup))<0) {
-	    mus_print(MUS_AUDIO_CANT_OPEN, "%s: alsa_setup: %s", 
+	    mus_print("%s: alsa_setup: %s", 
 		      __FUNCTION__, snd_strerror(err));
 	} else {
  	    frags = setup.buf.block.frags;
@@ -4610,7 +4610,7 @@ static int alsa_mus_audio_open_input(int ur_dev, int srate, int chans, int forma
 	setup.mode = SND_PCM_MODE_BLOCK;
 	setup.channel = SND_PCM_STREAM_CAPTURE;
 	if ((err = alsa_setup(handles[id].handle, &setup))<0) {
-	    mus_print(MUS_AUDIO_CANT_OPEN, "%s: setup: %s", 
+	    mus_print("%s: setup: %s", 
 		      __FUNCTION__, snd_strerror(err));
 	} else {
  	    frags = setup.buf.block.frags;

@@ -513,6 +513,7 @@
 (define pitch-scale 1.0)
 (define time-scale 1.0)
 (define expsrc-label "Expsrc")
+(define expsrc-dialog #f)
 
 (define (cp-expsrc)
   (save-controls)
@@ -526,7 +527,116 @@
   (apply-controls)
   (restore-controls))
 	    
-(add-to-menu effects-menu expsrc-label cp-expsrc)
+(if (provided? 'xm) ; if xm module is loaded, popup a dialog here
+    (begin
+
+      (define (post-expsrc-dialog)
+	(if (not (|Widget? expsrc-dialog))
+	    ;; if expsrc-dialog doesn't exist, create it
+	    (let ((xdismiss (|XmStringCreate "Dismiss" |XmFONTLIST_DEFAULT_TAG))
+		  (xhelp (|XmStringCreate "Help" |XmFONTLIST_DEFAULT_TAG))
+		  (xok (|XmStringCreate "DoIt" |XmFONTLIST_DEFAULT_TAG))
+		  (titlestr (|XmStringCreate expsrc-label |XmFONTLIST_DEFAULT_TAG))
+		  (initial-time-scale 1.0)
+		  (initial-pitch-scale 1.0)
+		  (time-slider #f)
+		  (pitch-slider #f))
+	      (set! expsrc-dialog 
+		    (|XmCreateTemplateDialog 
+		      (|Widget (cadr (main-widgets))) expsrc-label
+		      (list |XmNcancelLabelString   xdismiss
+			    |XmNhelpLabelString     xhelp
+			    |XmNokLabelString       xok
+			    |XmNautoUnmanage        #f
+			    |XmNdialogTitle         titlestr
+			    |XmNresizePolicy        |XmRESIZE_GROW
+			    |XmNnoResize            #f
+			    |XmNbackground          (|Pixel (snd-pixel (basic-color)))
+			    |XmNtransient           #f)))
+	      (for-each
+	       (lambda (button)
+		 (|XtVaSetValues 
+		   (|XmMessageBoxGetChild expsrc-dialog button)
+		   (list |XmNarmColor   (|Pixel (snd-pixel (pushed-button-color)))
+			 |XmNbackground (|Pixel (snd-pixel (basic-color))))))
+	       (list |XmDIALOG_HELP_BUTTON |XmDIALOG_CANCEL_BUTTON |XmDIALOG_OK_BUTTON))
+
+	      (|XtAddCallback expsrc-dialog |XmNcancelCallback ; "Dismiss"
+			      (lambda (w context info) 
+				(|XtUnmanageChild expsrc-dialog)))
+	      (|XtAddCallback expsrc-dialog |XmNhelpCallback   ; "Help"
+			      (lambda (w context info)
+				(help-dialog "Expsrc Help"
+					     "move the sliders to change the tims/pitch scaling amounts")))
+	      (|XtAddCallback expsrc-dialog |XmNokCallback     ; "DoIt"
+			      (lambda (w context info)
+				(cp-expsrc)))
+
+	      ;; add a Reset button
+	      (let ((reset-button (|XtCreateManagedWidget "Reset" |xmPushButtonWidgetClass expsrc-dialog
+				    (list |XmNbackground (|Pixel (snd-pixel (basic-color)))
+					  |XmNarmColor   (|Pixel (snd-pixel (pushed-button-color)))))))
+		(|XtAddCallback reset-button |XmNactivateCallback
+				(lambda (w c i)
+				  (set! time-scale initial-time-scale)
+				  (|XtSetValues time-slider (list |XmNvalue (inexact->exact (* time-scale 100))))
+				  (set! pitch-scale initial-pitch-scale)
+				  (|XtSetValues pitch-slider (list |XmNvalue (inexact->exact (* pitch-scale 100)))))))
+
+	      (|XmStringFree xhelp)
+	      (|XmStringFree xok)
+	      (|XmStringFree xdismiss)
+	      (|XmStringFree titlestr)
+
+	      (let* ((mainform 
+		      (|XtCreateManagedWidget "formd" |xmRowColumnWidgetClass expsrc-dialog
+			(list |XmNleftAttachment      |XmATTACH_FORM
+			      |XmNrightAttachment     |XmATTACH_FORM
+			      |XmNtopAttachment       |XmATTACH_FORM
+			      |XmNbottomAttachment    |XmATTACH_WIDGET
+			      |XmNbottomWidget        (|XmMessageBoxGetChild expsrc-dialog |XmDIALOG_SEPARATOR)
+			      |XmNorientation         |XmVERTICAL))))
+		(let ((title (|XmStringCreate "time scale" |XmFONTLIST_DEFAULT_TAG)))
+		  (set! time-slider 
+			(|XtCreateManagedWidget "Time scale" |xmScaleWidgetClass mainform
+			       (list |XmNorientation   |XmHORIZONTAL
+				     |XmNshowValue     #t
+				     |XmNminimum       (inexact->exact (* 0.0 100))
+				     |XmNmaximum       (inexact->exact (* 5.0 100))
+				     |XmNvalue         (inexact->exact (* 1.0 100))
+				     |XmNdecimalPoints 2
+				     |XmNtitleString   title
+				     |XmNborderWidth   1
+				     |XmNbackground    (|Pixel (snd-pixel (basic-color))))))
+		  (|XmStringFree title)
+		  (|XtAddCallback time-slider |XmNvalueChangedCallback 
+				  (lambda (w context info)
+				    (set! time-scale (/ (|value info) 100.0)))))
+		(let ((title (|XmStringCreate "pitch scale" |XmFONTLIST_DEFAULT_TAG)))
+		  (set! pitch-slider 
+			(|XtCreateManagedWidget "Pitch scale" |xmScaleWidgetClass mainform
+			       (list |XmNorientation   |XmHORIZONTAL
+				     |XmNshowValue     #t
+				     |XmNminimum       (inexact->exact (* 0.0 100))
+				     |XmNmaximum       (inexact->exact (* 5.0 100))
+				     |XmNvalue         (inexact->exact (* 1.0 100))
+				     |XmNdecimalPoints 2
+				     |XmNtitleString   title
+				     |XmNborderWidth   1
+				     |XmNbackground    (|Pixel (snd-pixel (basic-color))))))
+		  (|XmStringFree title)
+		  (|XtAddCallback pitch-slider |XmNvalueChangedCallback 
+				  (lambda (w context info)
+				    (set! pitch-scale (/ (|value info) 100.0))))))))
+	(if (not (|XtIsManaged expsrc-dialog))
+	    (|XtManageChild expsrc-dialog)
+	    (raise-dialog expsrc-dialog)))
+
+      (add-to-menu effects-menu "Time/pitch controls"
+		   (lambda ()
+		     (post-expsrc-dialog))))
+
+    (add-to-menu effects-menu expsrc-label cp-expsrc))
 
 (set! effects-list (cons (lambda ()
 			   (let ((new-label (format #f "Expsrc (~1,2F ~1,2F)" pitch-scale time-scale)))
