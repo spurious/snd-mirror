@@ -299,16 +299,14 @@ void news_help(snd_state *ss)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+1-Aug:   ladspa.scm thanks to Kjetil S. Matheussen.\n\
+         ladspa struct constants and accessors.\n\
 28-Jul:  Sun disk space bugfix (thanks to Russell Aspinwall).\n\
 22-Jul:  removed protect-region.\n\
 18-Jul:  removed button-font and buttonFont resource, help-text-font and helpTextFont.\n\
 10-Jul:  record->raw file segfault bugfix (thanks to Russell Aspinwall).\n\
 1-July:  added optional 'nth' arg to find-sound.\n\
          added optional begin time to make-track-sample-reader, play-track, and play-mix.\n\
-30-Jun:  snd 6.10.\n\
-24-Jun:  moved mix-name and mix-name->id to snd6.scm.\n\
-23-Jun:  mix-amp-env-changed-hook.\n\
-         changed mix-amp-changed-hook to take 2nd chan arg.\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*: \n'", features, "\n\n",

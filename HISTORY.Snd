@@ -1,5 +1,7 @@
 Snd change log
 
+  1-Aug:     ladspa.scm thanks to Kjetil S. Matheussen.
+             ladspa struct constants and accessors.
   28-Jul:    Sun disk space bugfix (thanks to Russell Aspinwall).
   22-Jul:    removed protect-region.
   18-Jul:    removed button-font and buttonFont resource, help-text-font and helpTextFont.

@@ -1805,7 +1805,17 @@ any of the .rb files.
   <em class=def><a name="initladspa">init-ladspa</a></em>
   <em class=def><a name="listladspa">list-ladspa</a></em>
   <em class=def><a name="analyseladspa">analyse-ladspa</a></em> library type
+  <em class=def><a name="ladspadescriptor">ladspa-descriptor</a></em> library type
   <em class=def><a name="applyladspa">apply-ladspa</a></em> reader data duration origin
+
+  <em class=def>ladspa-instantiate</em> descriptor srate
+  <em class=def>ladspa-activate</em> descriptor handle
+  <em class=def>ladspa-deactivate</em> descriptor handle
+  <em class=def>ladspa-cleanup</em> descriptor handle
+  <em class=def>ladspa-connect-port</em> descriptor handle port vct
+  <em class=def>ladspa-run</em> descriptor handle count
+  <em class=def>ladspa-run-adding</em> descriptor handle count
+  <em class=def>ladspa-set-run-adding-gain</em> descriptor handle gain
 </pre>
 
 <p>Richard Furse has provided a module to support LADSPA plugins in Snd.
@@ -1882,6 +1892,70 @@ than one input is required, the first argument to apply-ladspa should be a list 
 	 (reader (make-sample-reader beg snd chn 1 edpos)))
     (<em class=red>apply-ladspa</em> reader ladspa-data dur "apply-ladspa")
     (free-sample-reader reader)))
+</pre></td></tr></table>
+<p>There are also functions to access the LADSPA descriptor directly:
+</p>
+<pre>
+(define ptr (ladspa-descriptor "amp" "amp_mono"))
+(.Label ptr)
+    "amp_mono"
+(.Name ptr)
+    "Mono Amplifier"
+(.Copyright ptr)
+    "None"
+(.Maker ptr)
+    "Richard Furse (LADSPA example plugins)"
+(.Properties ptr)
+    4
+(.UniqueID ptr)
+    1048
+(.PortNames ptr)
+    ("Gain" "Input" "Output")
+(.PortRangeHints ptr)
+    ((593 0.0 0.0) (0 0.0 0.0) (0 0.0 0.0))
+(.PortCount ptr)
+    3
+(.PortDescriptors ptr)
+    (5 9 10)
+(logand (cadr (.PortDescriptors ptr)) LADSPA_PORT_INPUT)
+    1
+</pre>
+<p>See ladspa.h for full details. We could replace analyse-ladspa using these functions:
+</p>
+<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+(define (analyze-ladspa library label)
+  (let* ((descriptor (ladspa-descriptor library label))
+	 (data '())
+	 (names (.PortNames descriptor))
+	 (hints (.PortRangeHints descriptor))
+	 (descriptors (.PortDescriptors descriptor))
+	 (name (.Name descriptor))
+	 (maker (.Maker descriptor))
+	 (copy (.Copyright descriptor)))
+    (for-each
+     (lambda (port ranges port-name)
+       (if (and (not (= (logand port LADSPA_PORT_CONTROL) 0))
+		(not (= (logand port LADSPA_PORT_INPUT) 0)))
+	   (let ((ldata '())
+		 (hint (car ranges))
+		 (lo (cadr ranges))
+		 (hi (caddr ranges)))
+	     (if (not (= (logand hint LADSPA_HINT_TOGGLED) 0)) (set! ldata (cons "toggle" ldata)))
+	     (if (not (= (logand hint LADSPA_HINT_LOGARITHMIC) 0)) (set! ldata (cons "logarithmic" ldata)))
+	     (if (not (= (logand hint LADSPA_HINT_INTEGER) 0)) (set! ldata (cons "integer" ldata)))
+	     (if (not (= (logand hint LADSPA_HINT_SAMPLE_RATE) 0)) (set! ldata (cons "sample_rate" ldata)))
+	     (if (not (= (logand hint LADSPA_HINT_BOUNDED_ABOVE) 0)) 
+		 (begin
+		   (set! ldata (cons hi ldata))
+		   (set! ldata (cons "maximum" ldata))))
+	     (if (not (= (logand hint LADSPA_HINT_BOUNDED_BELOW) 0) )
+		 (begin
+		   (set! ldata (cons lo ldata))
+		   (set! ldata (cons "minimum" ldata))))
+	     (set! ldata (cons port-name ldata))
+	     (set! data (cons ldata data)))))
+     descriptors hints names)
+    (append (list name maker copy) data)))
 </pre></td></tr></table>
 <br>
 

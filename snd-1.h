@@ -1066,6 +1066,7 @@ void amp_env_env_selection_by(chan_info *cp, mus_any *e, off_t beg, off_t num, i
 void amp_env_ptree(chan_info *cp, void *pt, int pos, XEN init_func, int is_xen);
 void amp_env_ptree_selection(chan_info *cp, void *pt, off_t beg, off_t num, int pos, XEN init_func, int is_xen);
 void amp_env_insert_zeros(chan_info *cp, off_t beg, off_t num, int pos);
+snd_info *snd_new_file(snd_state *ss, char *newname, int header_type, int data_format, int srate, int chans, char *new_comment, off_t samples);
 
 void g_init_snd(void);
 XEN snd_no_such_sound_error(const char *caller, XEN n);
@@ -1091,25 +1092,25 @@ void restore_listener_string(int back);
 void *free_axes_data(void *sa);
 void *make_axes_data(snd_info *sp);
 int restore_axes_data(snd_info *sp, void *sa, Float new_duration, int need_edit_history_update);
-off_t disk_kspace (char *filename);
-time_t file_write_date(char *filename);
-int is_link(char *filename);
-int is_directory(char *filename);
-file_info *make_file_info(char *fullname, snd_state *ss);
+off_t disk_kspace (const char *filename);
+time_t file_write_date(const char *filename);
+int is_link(const char *filename);
+int is_directory(const char *filename);
+file_info *make_file_info(const char *fullname, snd_state *ss);
 file_info *free_file_info(file_info *hdr);
-file_info *copy_header(char *fullname, file_info *ohdr);
-file_info *make_temp_header(char *fullname, int srate, int chans, off_t samples, const char *caller);
+file_info *copy_header(const char *fullname, file_info *ohdr);
+file_info *make_temp_header(const char *fullname, int srate, int chans, off_t samples, const char *caller);
 dir *free_dir (dir *dp);
 int is_sound_file(char *name);
 void init_sound_file_extensions(void);
-dir *find_sound_files_in_dir (char *name);
+dir *find_sound_files_in_dir (const char *name);
 dir *filter_sound_files(dir *dp, char *pattern);
-snd_info *snd_open_file (char *filename, snd_state *ss, int read_only);
-snd_info *snd_open_file_unselected (char *filename, snd_state *ss, int read_only);
+snd_info *snd_open_file (const char *filename, snd_state *ss, int read_only);
+snd_info *snd_open_file_unselected (const char *filename, snd_state *ss, int read_only);
 void snd_close_file(snd_info *sp, snd_state *ss);
-int copy_file(char *oldname, char *newname);
-int move_file(char *oldfile, char *newfile);
-snd_info *make_sound_readable(snd_state *ss, char *filename, int post_close);
+int copy_file(const char *oldname, const char *newname);
+int move_file(const char *oldfile, const char *newfile);
+snd_info *make_sound_readable(snd_state *ss, const char *filename, int post_close);
 snd_info *snd_update(snd_state *ss, snd_info *sp);
 char *view_curfiles_name(int pos);
 void view_curfiles_play(snd_state *ss, int pos, int play);
@@ -1128,19 +1129,18 @@ int get_curfile_end(void);
 int get_curfile_size(void);
 int get_prevfile_size(void);
 void save_prevlist(FILE *fd);
-int find_curfile_regrow(char *shortname);
-int find_prevfile_regrow(char *shortname);
+int find_curfile_regrow(const char *shortname);
+int find_prevfile_regrow(const char *shortname);
 void clear_prevlist(snd_state *ss);
 void update_prevlist(void);
 void init_curfiles(int size);
 void init_prevfiles(int size);
-void file_unprevlist(char *filename);
-void add_directory_to_prevlist(snd_state *ss, char *dirname);
+void file_unprevlist(const char *filename);
+void add_directory_to_prevlist(snd_state *ss, const char *dirname);
 void make_prevfiles_list_1(snd_state *ss);
 char **set_header_and_data_positions(file_data *fdat, int type, int format);
 int check_for_filename_collisions_and_save(snd_state *ss, snd_info *sp, char *str, int save_type, int srate, int type, int format, char *comment);
 void edit_header_callback(snd_state *ss, snd_info *sp, file_data *edit_header_data);
-snd_info *snd_new_file(snd_state *ss, char *newname, int header_type, int data_format, int srate, int chans, char *new_comment, off_t samples);
 void reflect_file_change_in_title(snd_state *ss);
 
 int header_type_from_position(int pos);
@@ -1264,7 +1264,7 @@ void g_init_find(void);
 
 /* -------- snd-trans.c -------- */
 
-int snd_translate(char *oldname, char *newname, int type);
+int snd_translate(const char *oldname, const char *newname, int type);
 
 
 /* -------- snd-rec.c -------- */
