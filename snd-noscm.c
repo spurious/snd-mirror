@@ -290,7 +290,7 @@ static void pass_name_to_envelope_editor(snd_state *ss, char *fullstr)
   e = scan_envelope(val);
   if (e)
     {
-      alert_envelope_editor(ss,copy_string(name),e);
+      alert_envelope_editor(ss,name,e);
       add_symbol(name,e);
     }
 }

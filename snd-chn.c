@@ -212,14 +212,17 @@ static char expr_str[256];
 void report_in_minibuffer(snd_info *sp, char *format, ...)
 {
   char *buf;
+  int len;
 #if HAVE_VPRINTF
   va_list ap;
-  buf = (char *)CALLOC(256,sizeof(char));
+  len = snd_strlen(format) + 256;
+  buf = (char *)CALLOC(len,sizeof(char));
   va_start(ap,format);
   vsprintf(buf,format,ap);
   va_end(ap);
 #else
-  buf = (char *)CALLOC(256,sizeof(char));
+  len = snd_strlen(format) + 256;
+  buf = (char *)CALLOC(len,sizeof(char));
   sprintf(buf,"%s...[you need vprintf]",format);
 #endif
   set_minibuffer_string(sp,buf);

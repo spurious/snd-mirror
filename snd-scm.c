@@ -149,18 +149,18 @@ static void string_to_stdout(snd_state *ss, char *msg)
 }
 
 static int send_error_output_to_stdout = 0;
+static char *last_file_loaded = NULL;
 
 SCM snd_catch_scm_error(void *data, SCM tag, SCM throw_args) /* error handler */
 {
   /* this is actually catching any throw not caught elsewhere, I think */
   snd_info *sp;
-  /* it would be nice if this would display the current file + line number when loading scm code */
-  /*   there's apparently a line-number function and *load-pathname* */
   SCM port,ans,stmp;
 #if (!HAVE_GUILE_1_3)
   SCM stack;
 #endif
   char *name_buf = NULL;
+
 #ifdef SCM_MAKE_CHAR
   port = scm_mkstrport(SCM_INUM0, 
 		       scm_make_string(SCM_MAKINUM(MAX_ERROR_STRING_LENGTH), SCM_MAKE_CHAR(0)),
@@ -228,6 +228,14 @@ SCM snd_catch_scm_error(void *data, SCM tag, SCM throw_args) /* error handler */
       scm_display(tag,port);
       scm_puts(": ", port);
       scm_display(throw_args,port);
+    }
+  if (last_file_loaded)
+    {
+      /* sigh -- scm_current_load_port is #f so can't use scm_port_filename etc */
+      scm_puts("\n(while loading \"",port);
+      scm_puts(last_file_loaded,port);
+      scm_puts("\")",port);
+      last_file_loaded = NULL;
     }
 #if (!HAVE_GUILE_1_3_0)
   scm_force_output(port); /* needed to get rid of trailing garbage chars?? -- might be pointless now */
@@ -309,7 +317,11 @@ SCM eval_str_wrapper(void *data)
 
 static SCM eval_file_wrapper(void *data)
 {
-  return(gh_eval_file((char *)data));
+  SCM res;
+  last_file_loaded = (char *)data;
+  res = gh_eval_file((char *)data);
+  last_file_loaded = NULL;
+  return(res);
 }
 
 static SCM g_call0_1(void *arg)
@@ -3557,7 +3569,14 @@ the functions html and ? can be used in place of help to go to the HTML descript
   /* TODO    to handle (extend) apropos from session.scm, we need to set up the Snd module, I think */
   /* TODO: how to grab "display" output from scheme and put it in the listener? */
 
-    gh_eval_str("(read-set! keywords 'prefix)");
+  gh_eval_str("(read-set! keywords 'prefix)");
+
+  /* from ice-9/r4rs.scm but with output to snd listener */
+  gh_eval_str("(define snd-last-file-loaded #f)");
+  gh_eval_str("(set! %load-hook (lambda (filename)\
+                                  (set! snd-last-file-loaded filename)\
+                                  (if %load-verbosely\
+                                    (snd-print (format #f \";;; loading ~S\" filename)))))");
 
 #if USE_MOTIF
   scm_add_feature("snd-motif");

@@ -256,6 +256,7 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
+11-Oct:  added delete button in envelope editor.\n\
 10-Oct:  removed scaler arg to mix-region and associated kbd scaler arg.\n\
 9-Oct:   bird.scm.  added origin arg to as-one-edit.\n\
 6-Oct:   removed chans arg to mix-vct.\n\
@@ -270,9 +271,6 @@ void news_help(snd_state *ss)
          selection now follows the edit history lists.\n\
          selection-beg is now selection-position (to be consistent with everything else).\n\
 12-Sep:  effects.scm.\n\
-11-Sep:  generalized set! now built-in.\n\
-           removed setf.scm.\n\
-           x-bounds and y-bounds setters now take a list of (low high) values.\n\
 ",
 NULL);
   FREE(info);

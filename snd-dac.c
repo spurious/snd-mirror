@@ -4,6 +4,7 @@
  * TODO    then as running, at each block reset to initial - new scaled
  * TODO    (negative pm = longer delay)
  * TODO  play with expand is cutoff too soon
+ * TODO  can play idle (waiting for queued up sound starting in future)?
  */
 
 /* this was sound-oriented; changed to be channel-oriented 31-Aug-00 */
@@ -1414,6 +1415,8 @@ static void make_dac_buffers(dac_state *dacp)
     }
 }
 
+static void stop_audio_output (dac_state *dacp);
+
 #if (HAVE_ALSA || HAVE_OSS)
 
 int mus_audio_compatible_format(int dev) 
@@ -1456,7 +1459,6 @@ int mus_audio_compatible_format(int dev)
   int feed_first_device = 0;
 #endif
 
-#if HAVE_ALSA || HAVE_OSS
 #define ALSA_MAX_DEVICES 64
 static int alsa_devices[ALSA_MAX_DEVICES];
 static int alsa_available_chans[ALSA_MAX_DEVICES];
@@ -1535,7 +1537,6 @@ static void scan_audio_devices(void)
     }
   alsa_devices_available = index;
 }
-#endif
 
 static int start_audio_output_1 (dac_state *dacp)
 {
@@ -1740,11 +1741,7 @@ static int start_audio_output_1 (dac_state *dacp)
       if (dev_fd[0] == MUS_ERROR)
 	{
 	  dac_error(dacp,__FILE__,__LINE__,__FUNCTION__);
-	  dac_running = 0;
-	  unlock_recording_audio();
-	  if (global_reverb) {free_reverb(global_reverb); global_reverb = NULL;}
-	  max_active_slot = -1;
-	  free_dac_state(dacp);
+	  stop_audio_output(dacp);
 	  return(FALSE);
 	}
       dacp->devices = (dev_fd[1] != -1) ? 2 : 1;
@@ -1770,7 +1767,11 @@ static int start_audio_output_1 (dac_state *dacp)
       err = mus_audio_mixer_read(audio_output_device(ss),MUS_AUDIO_CHANNEL,0,val);
       if (err != MUS_ERROR) 
 	available_chans = (int)(val[0]);
-      else snd_error("can't get audio output chans? (%d) ",audio_output_device(ss));
+      else 
+	{
+	  snd_error("can't get audio output chans? (%d) ",audio_output_device(ss));
+	  return(FALSE);
+	}
     }
   for (i=0;i<MAX_DEVICES;i++) dev_fd[i] = -1;
   dacp->out_format = MUS_COMPATIBLE_FORMAT;
@@ -1786,12 +1787,8 @@ static int start_audio_output_1 (dac_state *dacp)
   unset_dac_print();
   if (dev_fd[0] == MUS_ERROR)
     {
-      dac_running = 0;
-      unlock_recording_audio();
-      if (global_reverb) {free_reverb(global_reverb); global_reverb = NULL;}
-      max_active_slot = -1;
-      free_dac_state(dacp); 
       dac_error(dacp,__FILE__,__LINE__,__FUNCTION__);
+      stop_audio_output(dacp);
       return(FALSE);
     }
   dacp->devices = 1;
@@ -1984,7 +1981,11 @@ static SCM g_play_1(SCM samp_n, SCM snd_n, SCM chn_n, int background, int syncd,
       name = mus_file_full_name(urn);
       free(urn);
       sp = make_sound_readable(get_global_state(),name,FALSE);
-      if (sp == NULL) {if (name) FREE(name); return(scm_throw(NO_SUCH_FILE,SCM_LIST2(gh_str02scm(S_play),samp_n)));}
+      if (sp == NULL) 
+	{
+	  if (name) FREE(name); 
+	  return(scm_throw(NO_SUCH_FILE,SCM_LIST2(gh_str02scm(S_play),samp_n)));
+	}
       sp->shortname = filename_without_home_directory(name);
       sp->fullname = NULL;
       sp->delete_me = 1;

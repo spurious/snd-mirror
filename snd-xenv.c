@@ -9,8 +9,8 @@
 
 static Widget enved_dialog = NULL;
 static Widget mainform,applyB,apply2B,cancelB,drawer,colB,colF,showB,saveB,revertB,undoB,redoB,printB,brkptL,graphB,fltB,ampB,srcB,rbrow,clipB;
-static Widget nameL,textL,screnvlst,screnvname,dBB,orderL;
-static Widget expB,linB,lerow,baseScale,baseLabel,baseValue,baseSep,selectionB,mixB,selrow;
+static Widget nameL,textL,screnvlst,screnvname,dBB,orderL, revrow,deleteB;
+static Widget expB,linB,lerow,baseScale,baseLabel,baseValue,baseSep,selectionB,mixB,selrow,unrow,saverow;
 static GC gc,rgc,ggc;
 
 static char *env_names[3] = {STR_amp_env_p,STR_flt_env_p,STR_src_env_p};
@@ -225,8 +225,18 @@ static void text_field_activated(snd_state *ss)
       e = name_to_env(str);
       if (!e)
 	{
-	  e = string2env(str);
-	  if (e) newenv = 1;
+	  if (isalpha((int)(str[0])))
+	    {
+	      alert_envelope_editor(ss,str,copy_env(active_env));
+	      add_or_edit_symbol(str,active_env);
+	      set_sensitive(saveB,FALSE);
+	      env_redisplay(ss); /* updates label */
+	    }
+	  else
+	    {
+	      e = string2env(str);
+	      if (e) newenv = 1;
+	    }
 	}
       if (e) 
 	{
@@ -236,14 +246,6 @@ static void text_field_activated(snd_state *ss)
 	  do_env_edit(active_env,TRUE);
 	  set_sensitive(saveB,newenv);
 	  env_redisplay(ss);
-	}
-      /* else if str is alphabetic, rename active_env as str and save a copy in the list */
-      if (isalpha((int)(str[0])))
-	{
-	  alert_envelope_editor(ss,str,copy_env(active_env));
-	  add_or_edit_symbol(str,active_env);
-	  set_sensitive(saveB,FALSE);
-	  env_redisplay(ss); /* updates label */
 	}
     }
   if (name) XtFree(name);
@@ -359,6 +361,7 @@ static void select_or_edit_env(snd_state *ss, int pos)
       selected_env = enved_all_envs(pos);
       if (showing_all_envs) view_envs(ss,env_window_width,env_window_height);
     }
+  set_sensitive(deleteB,TRUE);
 }
 
 static void clear_point_label(void)
@@ -433,7 +436,8 @@ static void drawer_button_press(Widget w,XtPointer clientData,XEvent *event,Bool
     {
       pos = hit_env(ev->x,ev->y,env_window_width,env_window_height);
       XmListSelectPos(screnvlst,pos+1,FALSE);
-      if ((pos >= 0) && (pos < enved_all_envs_top())) select_or_edit_env((snd_state *)clientData,pos);
+      if ((pos >= 0) && (pos < enved_all_envs_top())) 
+	select_or_edit_env(ss,pos);
     }
   else
     {
@@ -632,6 +636,29 @@ mix, or the entire current sound, or the current selection.\n\
 ");
 }
 
+static void delete_button_pressed(Widget w,XtPointer clientData,XtPointer callData) 
+{
+  int i,len;
+  if (selected_env)
+    {
+      len = enved_all_envs_top();
+      for (i=0;i<len;i++)
+	if (selected_env == enved_all_envs(i))
+	  {
+	    delete_envelope((snd_state *)clientData,enved_all_names(i));
+	    if (enved_all_envs_top() == 0) set_sensitive(deleteB,FALSE);
+	    break;
+	  }
+    }
+}
+
+static void delete_button_help_callback(Widget w,XtPointer clientData,XtPointer callData) 
+{
+  snd_help((snd_state *)clientData,
+	   "Delete Selected Envelope",
+"If an envelope is selected in the envs list, this will remove it");
+}
+
 static void revert_button_pressed(Widget w,XtPointer clientData,XtPointer callData) 
 {
   revert_env_edit();
@@ -802,7 +829,8 @@ lpr.\n\
 static void env_browse_Callback(Widget w,XtPointer clientData,XtPointer callData) 
 {
   XmListCallbackStruct *cb = (XmListCallbackStruct *)callData;
-  select_or_edit_env((snd_state *)clientData,cb->item_position - 1);
+  snd_state *ss = (snd_state *)clientData;
+  select_or_edit_env(ss,cb->item_position - 1);
 }
 
 static void Graph_Button_Callback(Widget w,XtPointer clientData,XtPointer callData) 
@@ -1338,12 +1366,25 @@ void create_envelope_editor (snd_state *ss)
       XtSetArg(args[n],XmNspacing,0); n++;
       colB = sndCreateRowColumnWidget("env-button-holder",colF,args,n);
 
+      /* VIEW ENVS */
+      n=0;
+      if (!(ss->using_schemes)) 
+	{
+	  XtSetArg(args[n],XmNbackground,(ss->sgx)->highlight_color); n++;
+	  XtSetArg(args[n],XM_FONT_RESOURCE,BUTTON_FONT(ss)); n++;
+	  XtSetArg(args[n],XmNarmColor,(ss->sgx)->pushed_button_color); n++;
+	}
+      showB = XtCreateManagedWidget(STR_view_envs,xmPushButtonWidgetClass,colB,args,n);
+      XtAddCallback(showB,XmNactivateCallback,show_button_pressed,ss);
+      XtAddCallback(showB,XmNhelpCallback,show_button_help_callback,ss);
+
+      /* SAVE PRINT */
       n=0;
       if (!(ss->using_schemes)) {XtSetArg(args[n],XmNbackground,(ss->sgx)->highlight_color); n++;}
       XtSetArg(args[n],XmNorientation,XmHORIZONTAL); n++;
       XtSetArg(args[n],XmNspacing,0); n++;
       XtSetArg(args[n],XmNmarginWidth,0); n++;
-      selrow = sndCreateRowColumnWidget("selmix-holder",colB,args,n);  
+      saverow = sndCreateRowColumnWidget("saverow-holder",colB,args,n);  
 
       n=0;
       if (!(ss->using_schemes)) 
@@ -1353,13 +1394,21 @@ void create_envelope_editor (snd_state *ss)
 	  XtSetArg(args[n],XmNarmColor,(ss->sgx)->pushed_button_color); n++;
 	}
       XtSetArg(args[n],XmNshadowThickness,1); n++;
-      selectionB = sndCreatePushButtonWidget("selection",selrow,args,n);
-      mixB = sndCreatePushButtonWidget("mix",selrow,args,n);
+      saveB = XtCreateManagedWidget(" save  ",xmPushButtonWidgetClass,saverow,args,n);
+      printB = XtCreateManagedWidget("  print  ",xmPushButtonWidgetClass,saverow,args,n);
 
-      XtAddCallback(selectionB,XmNactivateCallback,selection_button_pressed,ss);
-      XtAddCallback(selectionB,XmNhelpCallback,selection_button_help_callback,ss);
-      XtAddCallback(mixB,XmNactivateCallback,mix_button_pressed,ss);
-      XtAddCallback(mixB,XmNhelpCallback,mix_button_help_callback,ss);
+      XtAddCallback(saveB,XmNactivateCallback,save_button_pressed,ss);
+      XtAddCallback(saveB,XmNhelpCallback,save_button_help_callback,ss);
+      XtAddCallback(printB,XmNactivateCallback,print_button_pressed,ss);
+      XtAddCallback(printB,XmNhelpCallback,print_button_help_callback,ss);
+
+      /* UNDO REDO */
+      n=0;
+      if (!(ss->using_schemes)) {XtSetArg(args[n],XmNbackground,(ss->sgx)->highlight_color); n++;}
+      XtSetArg(args[n],XmNorientation,XmHORIZONTAL); n++;
+      XtSetArg(args[n],XmNspacing,0); n++;
+      XtSetArg(args[n],XmNmarginWidth,0); n++;
+      unrow = sndCreateRowColumnWidget("unrow-holder",colB,args,n);  
 
       n=0;
       if (!(ss->using_schemes)) 
@@ -1368,27 +1417,39 @@ void create_envelope_editor (snd_state *ss)
 	  XtSetArg(args[n],XM_FONT_RESOURCE,BUTTON_FONT(ss)); n++;
 	  XtSetArg(args[n],XmNarmColor,(ss->sgx)->pushed_button_color); n++;
 	}
-      showB = XtCreateManagedWidget(STR_view_envs,xmPushButtonWidgetClass,colB,args,n);
-      saveB = XtCreateManagedWidget(STR_save,xmPushButtonWidgetClass,colB,args,n);
-      revertB = XtCreateManagedWidget(STR_revert,xmPushButtonWidgetClass,colB,args,n);
-      undoB = XtCreateManagedWidget(STR_undo,xmPushButtonWidgetClass,colB,args,n);
-      redoB = XtCreateManagedWidget(STR_redo,xmPushButtonWidgetClass,colB,args,n);
-      printB = XtCreateManagedWidget(STR_print,xmPushButtonWidgetClass,colB,args,n);
+      XtSetArg(args[n],XmNshadowThickness,1); n++;
+      undoB = XtCreateManagedWidget(" undo  ",xmPushButtonWidgetClass,unrow,args,n);
+      redoB = XtCreateManagedWidget(" redo   ",xmPushButtonWidgetClass,unrow,args,n);
 
-      XtAddCallback(showB,XmNactivateCallback,show_button_pressed,ss);
-      XtAddCallback(saveB,XmNactivateCallback,save_button_pressed,ss);
-      XtAddCallback(revertB,XmNactivateCallback,revert_button_pressed,ss);
       XtAddCallback(undoB,XmNactivateCallback,undo_button_pressed,ss);
-      XtAddCallback(redoB,XmNactivateCallback,redo_button_pressed,ss);
-      XtAddCallback(printB,XmNactivateCallback,print_button_pressed,ss);
-
-      XtAddCallback(showB,XmNhelpCallback,show_button_help_callback,ss);
-      XtAddCallback(saveB,XmNhelpCallback,save_button_help_callback,ss);
-      XtAddCallback(revertB,XmNhelpCallback,revert_button_help_callback,ss);
       XtAddCallback(undoB,XmNhelpCallback,undo_button_help_callback,ss);
+      XtAddCallback(redoB,XmNactivateCallback,redo_button_pressed,ss);
       XtAddCallback(redoB,XmNhelpCallback,redo_button_help_callback,ss);
-      XtAddCallback(printB,XmNhelpCallback,print_button_help_callback,ss);
 
+      /* REVERT DELETE */
+      n=0;
+      if (!(ss->using_schemes)) {XtSetArg(args[n],XmNbackground,(ss->sgx)->highlight_color); n++;}
+      XtSetArg(args[n],XmNorientation,XmHORIZONTAL); n++;
+      XtSetArg(args[n],XmNspacing,0); n++;
+      XtSetArg(args[n],XmNmarginWidth,0); n++;
+      revrow = sndCreateRowColumnWidget("revrow-holder",colB,args,n);  
+
+      n=0;
+      if (!(ss->using_schemes)) 
+	{
+	  XtSetArg(args[n],XmNbackground,(ss->sgx)->highlight_color); n++;
+	  XtSetArg(args[n],XM_FONT_RESOURCE,BUTTON_FONT(ss)); n++;
+	  XtSetArg(args[n],XmNarmColor,(ss->sgx)->pushed_button_color); n++;
+	}
+      revertB = XtCreateManagedWidget(STR_revert,xmPushButtonWidgetClass,revrow,args,n);
+      deleteB = XtCreateManagedWidget("delete",xmPushButtonWidgetClass,revrow,args,n);
+
+      XtAddCallback(revertB,XmNactivateCallback,revert_button_pressed,ss);
+      XtAddCallback(revertB,XmNhelpCallback,revert_button_help_callback,ss);
+      XtAddCallback(deleteB,XmNactivateCallback,delete_button_pressed,ss);
+      XtAddCallback(deleteB,XmNhelpCallback,delete_button_help_callback,ss);
+
+      /* AMP FLT SRC */
       /* enved_function (target) choice (a row of three push buttons that acts like a "radio box") */
       n=0;
       if (!(ss->using_schemes)) {XtSetArg(args[n],XmNbackground,(ss->sgx)->highlight_color); n++;}
@@ -1407,7 +1468,7 @@ void create_envelope_editor (snd_state *ss)
       /* XtSetArg(args[n],XmNmarginWidth,0); n++; */
       XtSetArg(args[n],XmNshadowThickness,1); n++;
       ampB = XtCreateManagedWidget(STR_amp,xmPushButtonWidgetClass,rbrow,args,n);
-      fltB = XtCreateManagedWidget(STR_flt,xmPushButtonWidgetClass,rbrow,args,n);
+      fltB = XtCreateManagedWidget(" flt ",xmPushButtonWidgetClass,rbrow,args,n);
       srcB = XtCreateManagedWidget(STR_src,xmPushButtonWidgetClass,rbrow,args,n);
 
       XtAddCallback(fltB,XmNactivateCallback,Freq_Button_Callback,ss);
@@ -1417,6 +1478,7 @@ void create_envelope_editor (snd_state *ss)
       XtAddCallback(srcB,XmNactivateCallback,Src_Button_Callback,ss);
       XtAddCallback(srcB,XmNhelpCallback,Src_Button_Help_Callback,ss);
 
+      /* LINEAR EXP */
       /* similar secondary box for linear/exp buttons */
       n=0;
       if (!(ss->using_schemes)) {XtSetArg(args[n],XmNbackground,(ss->sgx)->highlight_color); n++;}
@@ -1452,6 +1514,31 @@ void create_envelope_editor (snd_state *ss)
       XtAddCallback(linB,XmNhelpCallback,Lin_Button_Help_Callback,ss);
       XtAddCallback(expB,XmNactivateCallback,Exp_Button_Callback,ss);
       XtAddCallback(expB,XmNhelpCallback,Exp_Button_Help_Callback,ss);
+
+
+      /* SELECTION MIX */
+      n=0;
+      if (!(ss->using_schemes)) {XtSetArg(args[n],XmNbackground,(ss->sgx)->highlight_color); n++;}
+      XtSetArg(args[n],XmNorientation,XmHORIZONTAL); n++;
+      XtSetArg(args[n],XmNspacing,0); n++;
+      XtSetArg(args[n],XmNmarginWidth,0); n++;
+      selrow = sndCreateRowColumnWidget("selmix-holder",colB,args,n);  
+
+      n=0;
+      if (!(ss->using_schemes)) 
+	{
+	  XtSetArg(args[n],XmNbackground,(ss->sgx)->highlight_color); n++;
+	  XtSetArg(args[n],XM_FONT_RESOURCE,BUTTON_FONT(ss)); n++;
+	  XtSetArg(args[n],XmNarmColor,(ss->sgx)->pushed_button_color); n++;
+	}
+      XtSetArg(args[n],XmNshadowThickness,1); n++;
+      selectionB = sndCreatePushButtonWidget("selection",selrow,args,n);
+      mixB = sndCreatePushButtonWidget("mix",selrow,args,n);
+
+      XtAddCallback(selectionB,XmNactivateCallback,selection_button_pressed,ss);
+      XtAddCallback(selectionB,XmNhelpCallback,selection_button_help_callback,ss);
+      XtAddCallback(mixB,XmNactivateCallback,mix_button_pressed,ss);
+      XtAddCallback(mixB,XmNhelpCallback,mix_button_help_callback,ss);
 
 
       /* -------- ENV LIST AT LEFT UNDER BUTTONS -------- */
@@ -1519,6 +1606,7 @@ void create_envelope_editor (snd_state *ss)
 	  set_sensitive(showB,FALSE);
 	}
       set_sensitive(revertB,FALSE);
+      set_sensitive(deleteB,FALSE);
       set_sensitive(undoB,FALSE);
       set_sensitive(redoB,FALSE);
       set_sensitive(saveB,FALSE);

@@ -929,6 +929,7 @@ env *enved_next_env(void);
 env *string2env(char *str);
 void add_or_edit_symbol(char *name, env *val);
 env* name_to_env(char *str);
+void delete_envelope(snd_state *ss, char *name);
 #if HAVE_GUILE
   SCM env2scm (env *e);
   env *get_env(SCM e, SCM base, char *origin);

@@ -4,8 +4,6 @@
  * TODO  enved mix flt and src undo&apply cases untested (also clean undo of selection src)
  */
 
-static char expr_buf[128];
-
 Float un_dB(snd_state *ss, Float py)
 {
   /* used only by envelope editor (snd-xenv etc) */
@@ -48,6 +46,7 @@ env *copy_env(env *e)
 char *env_to_string(env *e)
 {
   int i,j;
+  char *expr_buf;
   char *news = NULL;
   if (e)
     {
@@ -55,11 +54,13 @@ char *env_to_string(env *e)
       news[0]='\'';
       news[1]='(';
       news[2]='\0';
+      expr_buf = (char *)CALLOC(128,sizeof(char));
       for (i=0,j=0;i<e->pts;i++,j+=2)
 	{
 	  sprintf(expr_buf,"%.3f %.3f ",e->data[j],e->data[j+1]);
 	  strcat(news,expr_buf);
 	}
+      FREE(expr_buf);
       strcat(news,")");
     }
   else
@@ -1001,6 +1002,7 @@ env *enved_all_envs(int pos) {return(all_envs[pos]);}
 
 static void add_envelope(snd_state *ss, char *name, env *val)
 {
+  int i;
   if (all_envs_top == all_envs_size)
     {
       all_envs_size += 16;
@@ -1008,6 +1010,7 @@ static void add_envelope(snd_state *ss, char *name, env *val)
 	{
 	  all_envs = (env **)REALLOC(all_envs,all_envs_size * sizeof(env *));
 	  all_names = (char **)REALLOC(all_names,all_envs_size * sizeof(char *));
+	  for (i=all_envs_size-16;i<all_envs_size;i++) all_names[i] = NULL;
 	}
       else
 	{
@@ -1016,12 +1019,35 @@ static void add_envelope(snd_state *ss, char *name, env *val)
 	}
     }
   all_envs[all_envs_top] = val;
-  all_names[all_envs_top] = name;
+  if (all_names[all_envs_top]) FREE(all_names[all_envs_top]);
+  all_names[all_envs_top] = copy_string(name);
   all_envs_top++;
   if (enved_dialog_is_active())
     {
       set_enved_show_sensitive(TRUE);
       make_scrolled_env_list(ss);
+    }
+}
+
+void delete_envelope(snd_state *ss, char *name)
+{
+  int i,pos;
+  pos = find_env(name);
+  if (pos != -1)
+    {
+      if (all_names[pos]) FREE(all_names[pos]);
+      for (i=pos;i<all_envs_size-1;i++)
+	{
+	  all_envs[i] = all_envs[i+1]; all_envs[i+1] = NULL;
+	  all_names[i] = all_names[i+1]; all_names[i+1] = NULL;
+	}
+      all_envs_top--;
+      if (enved_dialog_is_active())
+	{
+	  if (all_envs_top > 0)
+	    set_enved_show_sensitive(TRUE);
+	  make_scrolled_env_list(ss);
+	}
     }
 }
 
@@ -1306,6 +1332,7 @@ static SCM g_define_envelope(SCM a, SCM b)
   char *name;
   name = gh_scm2newstr(a,NULL);
   if (gh_list_p(b)) alert_envelope_editor(get_global_state(),name,scm2env(b));
+  free(name);
   return(SCM_BOOL_F);
 }
 

@@ -2342,6 +2342,10 @@ throws the error 'no-such-file:</p>
     (or (file-exists? file)
 	(throw 'no-such-file (list "look-for-file" file)))))
 </pre>
+<p>There are a variety of debugging aids supplied by Guile, including
+a backtrace facility.  To see what files are being loaded, set the
+variable %load-verbosely to #t.
+</p>
 <hr>
 
 

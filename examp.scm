@@ -2596,3 +2596,7 @@
 ;;;(defmacro with-sound (args . body)
 ;;;  `(with-sound-helper (lambda () ,@body)
 ;;;                      ,@args))
+;;;
+;;; this could save (current-load-port) somewhere, and if it's not #f, report
+;;;   port-filename and port-line on it in case of error (since backtrace sometimes
+;;;   seems to get confused)
