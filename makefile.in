@@ -47,7 +47,6 @@ SUBDIRS = po
 	$(CC) -c $(DEFS) $(GTK_CFLAGS) $(CFLAGS) $(GUILE_CFLAGS) $(MOTIF_FLAGS) $(GSL_FLAGS) $(GTKHTML_FLAGS) $(GL_FLAGS) $<
 
 INSTALL = @INSTALL@
-mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
 prefix = @prefix@
 exec_prefix = @exec_prefix@
 bindir = @bindir@
@@ -55,6 +54,7 @@ srcdir = @srcdir@
 mandir = @mandir@
 VPATH = @srcdir@
 
+mkinstalldirs = $(SHELL) $(srcdir)/mkinstalldirs
 include $(srcdir)/makesnd.files
 
 main_target: @MAKE_TARGET@

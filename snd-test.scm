@@ -30,6 +30,13 @@
 ;;; test 27: openGL
 ;;; test 28: errors
 
+;;; TODO: mix-click-hook test and ex with remembered amps
+;;; TODO: drag-mark-hook ex with amps/pitches
+;;; TODO: data size field in header editor (and somehow settable like others)
+;;; TODO: mouse-drag in time graph hook?
+;;; TODO: thumbnail sketch in file dialog info section?
+;;; TODO: hook forward proc cases?
+
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 popen) (ice-9 optargs) (ice-9 syncase))
 
 (define (snd-display . args)
@@ -14595,6 +14602,7 @@ EDITS: 5
   (add-hook! just-sounds-hook arg1) (carg1 just-sounds-hook)
   (add-hook! mark-click-hook arg1) (carg1 mark-click-hook)
   (add-hook! listener-click-hook arg1) (carg1 listener-click-hook)
+  (add-hook! mix-click-hook arg1) (carg1 mix-click-hook)
   (add-hook! mark-drag-hook arg1) (carg1 mark-drag-hook)
   (add-hook! mix-amp-changed-hook arg1) (carg1 mix-amp-changed-hook)
   (add-hook! mix-speed-changed-hook arg1) (carg1 mix-speed-changed-hook)
@@ -34977,6 +34985,7 @@ EDITS: 2
 			(list just-sounds-hook 'just-sounds-hook)
 			(list mark-click-hook 'mark-click-hook)
 			(list listener-click-hook 'listener-click-hook)
+			(list mix-click-hook 'mix-click-hook)
 			(list mark-hook 'mark-hook)
 			(list mark-drag-hook 'mark-drag-hook)
 			(list mix-amp-changed-hook 'mix-amp-changed-hook)

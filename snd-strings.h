@@ -297,6 +297,7 @@
 #define S_mix_amp_env                   "mix-amp-env"
 #define S_mix_anchor                    "mix-anchor"
 #define S_mix_chans                     "mix-chans"
+#define S_mix_click_hook                "mix-click-hook"
 #define S_mix_color                     "mix-color"
 #define S_mix_file_dialog               "mix-file-dialog"
 #define S_mix_frames                    "mix-frames"

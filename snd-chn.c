@@ -7,6 +7,7 @@ enum {NOGRAPH, WAVE, FFT_AXIS, LISP, FFT_MAIN};    /* for marks, regions, mouse 
 static XEN lisp_graph_hook;
 static XEN mouse_press_hook; 
 static XEN mark_click_hook; 
+static XEN mix_click_hook; 
 static XEN mouse_click_hook;
 static XEN mouse_release_hook; 
 static XEN mouse_drag_hook; 
@@ -3881,7 +3882,16 @@ void graph_button_release_callback(chan_info *cp, int x, int y, int key_state, i
 		      else
 			{
 			  if (mix_tag != NO_MIX_TAG)
-			    report_in_minibuffer(sp, _("mix %d "), mix_tag);
+			    {
+			      XEN res = XEN_FALSE;
+			      /* the mix has already been selected by hit-mix above (to preapre drag) */
+			      if (XEN_HOOKED(mix_click_hook))
+				res = run_progn_hook(mix_click_hook,
+						     XEN_LIST_1(C_TO_SMALL_XEN_INT(mix_tag)),
+						     S_mix_click_hook);
+			      if (!(XEN_TRUE_P(res)))
+				report_in_minibuffer(sp, _("mix %d "), mix_tag);
+			    }
 			}
 		    }
 		}
@@ -6949,6 +6959,7 @@ If it returns a function (of no arguments), that function is called rather than 
   #define H_mouse_release_hook S_mouse_release_hook " (snd chn button state x y): called upon mouse button release within the lisp graph."
   #define H_mouse_drag_hook S_mouse_drag_hook " (snd chn button state x y): called upon mouse drag within the lisp graph."
   #define H_mark_click_hook S_mark_click_hook " (id): called when a mark is clicked; return #t to squelch the default message."
+  #define H_mix_click_hook S_mix_click_hook " (id): called when a mix is clicked; return #t to squelch the default message."
   #define H_key_press_hook S_key_press_hook " (snd chn key state): called upon a key press if the mouse is in the lisp graph. \
 If it returns #t, the key press is not passed to the main handler. 'state' refers to the control, meta, and shift keys."
   #define H_initial_graph_hook S_initial_graph_hook " (snd chn dur): called when a sound is displayed for the first time"
@@ -6964,6 +6975,7 @@ If it returns #t, the key press is not passed to the main handler. 'state' refer
   XEN_DEFINE_HOOK(mouse_drag_hook,    S_mouse_drag_hook, 6,    H_mouse_drag_hook);    /* args = sound channel button state x y */
   XEN_DEFINE_HOOK(key_press_hook,     S_key_press_hook, 4,     H_key_press_hook);     /* args = sound channel key state */
   XEN_DEFINE_HOOK(mark_click_hook,    S_mark_click_hook, 1,    H_mark_click_hook);    /* arg = id */
+  XEN_DEFINE_HOOK(mix_click_hook,     S_mix_click_hook, 1,     H_mix_click_hook);     /* arg = id */
   XEN_DEFINE_HOOK(initial_graph_hook, S_initial_graph_hook, 3, H_initial_graph_hook); /* args = sound channel duration */
 }
 

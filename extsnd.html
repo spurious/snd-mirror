@@ -1195,6 +1195,26 @@ If it returns #t, the actual remix is the hook's responsibility.
 </td></tr>
 <tr><td colspan=3></td></tr>
 
+<!-- mix-click-hook -->
+<tr><td colspan=2>
+<span class=defbox><code><em class=def><a name="mixclickhook">mix-click-hook</a></em> (id)</code></span></td><td align=right><b>progn</b>
+</td></tr>
+<tr><td></td><td colspan=2>
+called when a mix tag is clicked; return #t to omit the default action which is to print the mix id in
+the minibuffer.  Here's an example that sets the mix amps to 0 if you click it:
+</td></tr>
+<tr><td></td><td colspan=2>
+<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+(add-hook! <em class=red>mix-click-hook</em>
+  (lambda (n)
+    (do ((i 0 (1+ i)))
+	((= i (mix-chans n)))
+      (set! (mix-amp n i) 0.0))
+    #t))
+</pre></td></tr></table></td></tr>
+
+<tr><td colspan=3></td></tr>
+
 <!-- mix-position-changed-hook -->
 <tr><td colspan=2>
 <span class=defbox><code><em class=def><a name="mixpositionchangedhook">mix-position-changed-hook</a></em> (id samps)</code></span></td><td align=right><b>progn</b>

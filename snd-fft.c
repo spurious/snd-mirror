@@ -2,7 +2,7 @@
 
 #if WITH_SHARED_SNDLIB
 #if HAVE_FFTW3
-
+#include <fftw3.h>
 static double *rdata = NULL, *idata = NULL;
 static fftw_plan rplan, iplan;
 static int last_fft_size = 0;

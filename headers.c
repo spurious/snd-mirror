@@ -48,7 +48,7 @@
  * ftp.TSP.EE.McGill.CA:/pub/AFsp/AFsp-V3R2.tar.Z.  The Sound Designer formats are described
  * in the "Developer Documentation" from Digidesign.  Other useful sources can be found at
  * ftp.x.org:/contrib/audio/nas, svr-ftp.eng.cam.ac.uk:/comp.speech/tools, and
- * at http://www.wotsit.org/music.htm.  I put many of my test cases in 
+ * at http://www.wotsit.org.  I put many of my test cases in 
  * ccrma-ftp.stanford.edu:/pub/Lisp/sf.tar.gz.  The RIFF format is described in the 
  * Microsoft Multimedia Programmer's Reference Manual at ftp.microsoft.com:/SoftLib/MSLFILES/MDRK.EXE.
  * AVI format is described in http://www.rahul.net/jfm/avi.html.

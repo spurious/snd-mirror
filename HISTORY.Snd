@@ -1,5 +1,6 @@
 Snd change log
 
+  29-Apr:    mix-click-hook
   28-Apr:    snd 6.8.
              freeverb.rb and freeverb.scm from Michael Scholz.
   22-Apr:    samples function returns a vct, not a vector.

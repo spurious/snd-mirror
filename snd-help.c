@@ -309,6 +309,7 @@ void news_help(snd_state *ss)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+29-Apr:  mix-click-hook\n\
 28-Apr:  snd 6.8.\n\
          freeverb.rb and freeverb.scm from Michael Scholz.\n\
          removed mus-sound-seek.\n\
@@ -324,8 +325,6 @@ void news_help(snd_state *ss)
          mus_set_srate -> set_mus_srate in Ruby, mus-set-srate removed from Guile.\n\
            similarly for mus_sound_set_maxamp, mus_set_rand_seed, \n\
            mus_file_data_clipped, and mus_file_set_prescaler.\n\
-28-Mar:  added file arg to save-macros.\n\
-26-Mar:  maxf.scm and maxf.rb from Michael Scholz.\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*: \n'", features, "\n\n",
