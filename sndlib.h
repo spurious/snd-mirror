@@ -27,8 +27,8 @@
 
 
 #define SNDLIB_VERSION 16
-#define SNDLIB_REVISION 16
-#define SNDLIB_DATE "24-Sep-02"
+#define SNDLIB_REVISION 17
+#define SNDLIB_DATE "25-Sep-02"
 
 /* try to figure out what type of machine (and in worst case, what OS) we're running on */
 
@@ -226,9 +226,9 @@ enum {MUS_NEXT, MUS_AIFC, MUS_RIFF, MUS_BICSF, MUS_NIST, MUS_INRS, MUS_ESPS, MUS
       MUS_MIDI_SAMPLE_DUMP, MUS_DIAMONDWARE, MUS_REALAUDIO, MUS_ADF, MUS_SBSTUDIOII, MUS_DELUSION,
       MUS_FARANDOLE, MUS_SAMPLE_DUMP, MUS_ULTRATRACKER, MUS_YAMAHA_SY85, MUS_YAMAHA_TX16W, MUS_DIGIPLAYER,
       MUS_COVOX, MUS_SPL, MUS_AVI, MUS_OMF, MUS_QUICKTIME, MUS_ASF, MUS_YAMAHA_SY99, MUS_KURZWEIL_2000,
-      MUS_AIFF, MUS_PAF, MUS_CSL, MUS_FILE_SAMP, MUS_PVF, MUS_SOUNDFORGE};
+      MUS_AIFF, MUS_PAF, MUS_CSL, MUS_FILE_SAMP, MUS_PVF, MUS_SOUNDFORGE, MUS_TWINVQ};
 
-#define MUS_HEADER_TYPE_OK(n) (((n) > MUS_UNSUPPORTED) && ((n) <= MUS_SOUNDFORGE))
+#define MUS_HEADER_TYPE_OK(n) (((n) > MUS_UNSUPPORTED) && ((n) <= MUS_TWINVQ))
 
 enum {MUS_UNKNOWN, MUS_BSHORT, MUS_MULAW, MUS_BYTE, MUS_BFLOAT, MUS_BINT, MUS_ALAW, MUS_UBYTE, MUS_B24INT,
       MUS_BDOUBLE, MUS_LSHORT, MUS_LINT, MUS_LFLOAT, MUS_LDOUBLE, MUS_UBSHORT, MUS_ULSHORT, MUS_L24INT,
@@ -439,6 +439,7 @@ int mus_sound_read                PROTO((int fd, int beg, int end, int chans, mu
 int mus_sound_write               PROTO((int tfd, int beg, int end, int chans, mus_sample_t **bufs));
 off_t mus_sound_seek              PROTO((int tfd, off_t offset, int origin));
 off_t mus_sound_seek_frame        PROTO((int tfd, off_t frame));
+off_t mus_sound_maxamp            PROTO((const char *ifile, mus_sample_t *vals));
 off_t mus_sound_maxamps           PROTO((const char *ifile, int chans, mus_sample_t *vals, off_t *times));
 int mus_sound_set_maxamps         PROTO((const char *ifile, int chans, mus_sample_t *vals, off_t *times));
 int mus_sound_maxamp_exists       PROTO((const char *ifile));

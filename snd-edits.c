@@ -2970,33 +2970,25 @@ static XEN g_edit_tree(XEN snd, XEN chn, XEN upos)
   int i, len, pos;
   chan_info *cp;
   ed_list *ed;
-  XEN res;
+  XEN res = XEN_EMPTY_LIST;
   ASSERT_CHANNEL(S_edit_tree, snd, chn, 1);
   cp = get_cp(snd, chn, S_edit_tree);
-  if (cp)
-    {
-      XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(upos), upos, XEN_ARG_3, S_edit_tree, "an integer");
-      pos = XEN_TO_C_INT_OR_ELSE(upos, cp->edit_ctr);
-      ed = cp->edits[pos];
-      if (ed) 
-	{
-	  res = XEN_EMPTY_LIST;
-	  len = ed->size; /* fragments in this list */
-	  for (i = len - 1; i >= 0; i--)
-	    res = XEN_CONS(XEN_LIST_8(C_TO_XEN_OFF_T(FRAGMENT_GLOBAL_POSITION(ed, i)),
-				      C_TO_XEN_INT(FRAGMENT_SOUND(ed, i)),
-				      C_TO_XEN_OFF_T(FRAGMENT_LOCAL_POSITION(ed, i)),
-				      C_TO_XEN_OFF_T(FRAGMENT_LOCAL_END(ed, i)),
-				      C_TO_XEN_DOUBLE(FRAGMENT_SCALER(ed, i)),
-				      C_TO_XEN_DOUBLE(FRAGMENT_RAMP_BEG(ed, i)),
-				      C_TO_XEN_DOUBLE(FRAGMENT_RAMP_END(ed, i)),
-				      C_TO_XEN_INT(FRAGMENT_TYPE(ed, i))),
-			   res);
-	  return(res);
-	}
-    }
-  return(XEN_EMPTY_LIST);
+  pos = to_c_edit_position(cp, upos, S_edit_tree, 3);
+  ed = cp->edits[pos];
+  len = ed->size; /* fragments in this list */
+  for (i = len - 1; i >= 0; i--)
+    res = XEN_CONS(XEN_LIST_8(C_TO_XEN_OFF_T(FRAGMENT_GLOBAL_POSITION(ed, i)),
+			      C_TO_XEN_INT(FRAGMENT_SOUND(ed, i)),
+			      C_TO_XEN_OFF_T(FRAGMENT_LOCAL_POSITION(ed, i)),
+			      C_TO_XEN_OFF_T(FRAGMENT_LOCAL_END(ed, i)),
+			      C_TO_XEN_DOUBLE(FRAGMENT_SCALER(ed, i)),
+			      C_TO_XEN_DOUBLE(FRAGMENT_RAMP_BEG(ed, i)),
+			      C_TO_XEN_DOUBLE(FRAGMENT_RAMP_END(ed, i)),
+			      C_TO_XEN_INT(FRAGMENT_TYPE(ed, i))),
+		   res);
+  return(res);
 }
+
 
 /* ---------------- sample readers ---------------- */
 
@@ -3031,15 +3023,11 @@ char *sf_to_string(snd_fd *fd)
 	    name = (cp->sound)->short_filename;
 	  else name = "unknown source";
 	}
-      if (fd->cb)
-	{
-	  if (fd->current_sound == NULL)
-	    sprintf(desc, "#<sample-reader: %s>", (fd->cb) ? "uninitialized" : "at eof");
-	  else mus_snprintf(desc, PRINT_BUFFER_SIZE, "#<sample-reader %p: %s from " OFF_TD ", at " OFF_TD ">",
-			    fd, name, fd->initial_samp, current_location(fd));
-	}
-      else mus_snprintf(desc, PRINT_BUFFER_SIZE, "#<sample-reader %p: %s at eof>",
-			fd, name);
+      if (fd->at_eof)
+	mus_snprintf(desc, PRINT_BUFFER_SIZE, "#<sample-reader %p: %s at eof or freed>",
+		     fd, name);
+      else mus_snprintf(desc, PRINT_BUFFER_SIZE, "#<sample-reader %p: %s from " OFF_TD ", at " OFF_TD ">",
+			fd, name, fd->initial_samp, current_location(fd));
     }
   return(desc);
 }

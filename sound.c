@@ -916,6 +916,27 @@ int mus_sound_override_header(const char *arg, int srate, int chans, int format,
   return(MUS_ERROR);
 }
 
+off_t mus_sound_maxamp(const char *ifile, mus_sample_t *vals)
+{
+  /* for CLM (ffi.lisp) */
+  mus_sample_t *mvals;
+  off_t *mtimes;
+  int chans, i, j;
+  off_t frames;
+  chans = mus_sound_chans(ifile);
+  mvals = (mus_sample_t *)CALLOC(chans, sizeof(mus_sample_t));
+  mtimes = (off_t *)CALLOC(chans, sizeof(off_t));
+  frames = mus_sound_maxamps(ifile, chans, mvals, mtimes);
+  for (i = 0, j = 0; i < chans; i++, j += 2)
+    {
+      vals[j] = (mus_sample_t)(mtimes[i]);
+      vals[j + 1] = mvals[i];
+    }
+  FREE(mvals);
+  FREE(mtimes);
+  return(frames);
+}
+
 int mus_sound_maxamp_exists(const char *ifile)
 {
   sound_file *sf; 

@@ -7734,7 +7734,7 @@ static void *form_to_ptree(XEN code)
       {
 	char *msg;
 	msg = describe_ptree(prog);
-	fprintf(stderr, msg);
+	/* fprintf(stderr, msg); */
 	FREE(msg);
       }
 #endif
@@ -7843,7 +7843,7 @@ static XEN g_run_eval(XEN code, XEN arg)
       {
 	char *msg;
 	msg = describe_ptree(pt);
-	fprintf(stderr, msg);
+	/* fprintf(stderr, msg); */
 	FREE(msg);
       }
 #endif

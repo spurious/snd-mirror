@@ -1940,6 +1940,9 @@ static XEN g_add_mark(XEN samp_n, XEN snd_n, XEN chn_n)
 	  return(C_TO_XEN_INT(mark_id(m)));
 	}
     }
+  XEN_ERROR(NO_SUCH_SAMPLE,
+	    XEN_LIST_2(C_TO_XEN_STRING(S_add_mark),
+		       samp_n));
   return(XEN_FALSE);
 }
 

@@ -1026,7 +1026,10 @@ void xen_repl(int argc, char **argv);
 void xen_initialize(void);
 void *xen_malloc(int size);
 void xen_gc_mark(XEN val);
+
+#if HAVE_RUBY
 void xen_add_help(char *name, const char *help);
 char *xen_help(char *name);
+#endif
 
 #endif

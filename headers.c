@@ -265,6 +265,7 @@ static const unsigned char I_PVF1[4] = {'P','V','F','1'};  /* portable voice for
 static const unsigned char I_PVF2[4] = {'P','V','F','2'};
 static const unsigned char I_AUTH[4] = {'A','U','T','H'};
 static const unsigned char I_riff[4] = {'r','i','f','f'};  /* Sonic Foundry apparently */
+static const unsigned char I_TWIN[4] = {'T','W','I','N'};  /* TwinVQ */
 
 /* .glt and .shp -> Perry Cook's SPASM data files */
 
@@ -448,6 +449,7 @@ const char *mus_header_type_name(int type)
     case MUS_FILE_SAMP:        return("snack SMP");               break;
     case MUS_PVF:              return("Portable Voice Format");   break;
     case MUS_SOUNDFORGE:       return("SoundForge");              break;
+    case MUS_TWINVQ:           return("TwinVQ");                  break;
     default:                   return("unknown");                 break;
     }
 }
@@ -2695,6 +2697,27 @@ static int read_voc_header(int chan)
   return(MUS_NO_ERROR);
 }
 
+
+
+/* ------------------------------------ TwinVQ ------------------------------------ 
+ *
+ * from Audio Tools Library (atl.zip) at http://jfaul.de/atl.
+ * a chunked header
+ *
+ * 0: "TWIN"
+ * 4: version id (string)
+ * 12: header size ["cardinal" -- is this int or short in Pascal? -- looks like int]
+ * common chunk header (4 of ID, "cardinal" size)
+ * channels (cardinal: 0=mono 1=stereo)
+ * bitrate (cardinal)
+ * srate (cardinal khz?? 11, 22, 44! else *1000)
+ * security (cardinal 0)
+ * filesize (cardinal bytes)
+ * tag array (6 Pascal(?) strings): 'NAME', 'COMT', 'AUTH', '(c) ', 'FILE', 'ALBM'
+ * "DATA" chunk
+ */ 
+
+/* Monkey files start with "MAC ", but this is some compression-oriented format, I think (APE?) */
 
 
 /* ------------------------------------ ADC ------------------------------------ 
