@@ -1688,16 +1688,16 @@ static void raw_data_cancel_Callback(Widget w, XtPointer context, XtPointer info
 
 static void raw_data_default_Callback(Widget w, XtPointer context, XtPointer info) 
 {
-  snd_state *ss = (snd_state *)context;
-  set_use_raw_defaults(ss, 1);
   raw_data_ok_Callback(w, context, info);
 }
 
 static void raw_data_browse_Callback(Widget w, XtPointer context, XtPointer info) 
 {
-  snd_state *ss = (snd_state *)context;
+  int sr, oc, fr;
   XmListCallbackStruct *cbs = (XmListCallbackStruct *)info;
-  set_raw_format(ss, cbs->item_position);
+  mus_header_raw_defaults(&sr, &oc, &fr);
+  fr = cbs->item_position;
+  mus_header_set_raw_defaults(sr, oc, fr);
 }
 
 static void raw_data_help_Callback(Widget w, XtPointer context, XtPointer info) 
@@ -1713,9 +1713,13 @@ static void make_raw_data_dialog(char *filename, snd_state *ss)
   XmString *formats;
   XmString xstr1, xstr2, xstr3, xstr4, titlestr;
   int i, n;
+  int sr, oc, fr;
   char *str;
   Arg args[20];
   Widget lst, defw, dls, rform, dlab, dloclab, chnlab;
+
+  mus_header_raw_defaults(&sr, &oc, &fr);
+
   n = 0;
   xstr1 = XmStringCreate(STR_Cancel, XmFONTLIST_DEFAULT_TAG); /* needed by template dialog */
   xstr2 = XmStringCreate(STR_Help, XmFONTLIST_DEFAULT_TAG);
@@ -1774,9 +1778,9 @@ static void make_raw_data_dialog(char *filename, snd_state *ss)
   XtSetArg(args[n], XmNcolumns, 6); n++;
   XtSetArg(args[n], XmNresizeWidth, FALSE); n++;
   raw_srate_text = sndCreateTextFieldWidget(ss, "text", rform, args, n, NOT_ACTIVATABLE, add_completer_func(srate_completer));
-  if (raw_srate(ss) < 100000) 
-    mus_snprintf(dfs_str, LABEL_BUFFER_SIZE, " %d", raw_srate(ss)); 
-  else mus_snprintf(dfs_str, LABEL_BUFFER_SIZE, "%d", raw_srate(ss));
+  if (sr < 100000) 
+    mus_snprintf(dfs_str, LABEL_BUFFER_SIZE, " %d", sr);
+  else mus_snprintf(dfs_str, LABEL_BUFFER_SIZE, "%d", sr);
   XmTextSetString(raw_srate_text, dfs_str);
 
   n = 0;
@@ -1798,9 +1802,9 @@ static void make_raw_data_dialog(char *filename, snd_state *ss)
   XtSetArg(args[n], XmNcolumns, 3); n++;
   XtSetArg(args[n], XmNresizeWidth, FALSE); n++;
   raw_chans_text = sndCreateTextFieldWidget(ss, "text", rform, args, n, NOT_ACTIVATABLE, NO_COMPLETER);
-  if (raw_chans(ss) < 10) 
-    mus_snprintf(dfc_str, LABEL_BUFFER_SIZE, "  %d", raw_chans(ss)); 
-  else mus_snprintf(dfc_str, LABEL_BUFFER_SIZE, " %d", raw_chans(ss));
+  if (oc < 10) 
+    mus_snprintf(dfc_str, LABEL_BUFFER_SIZE, "  %d", oc);
+  else mus_snprintf(dfc_str, LABEL_BUFFER_SIZE, " %d", oc);
   XmTextSetString(raw_chans_text, dfc_str);
   
   n = 0;
@@ -1844,7 +1848,7 @@ static void make_raw_data_dialog(char *filename, snd_state *ss)
   lst = XmCreateScrolledList(rform, "raw-data-format-list", args, n);
   XtVaSetValues(lst, XmNitems, formats, XmNitemCount, num_data_formats() - 1, XmNvisibleItemCount, 6, NULL);
   XtManageChild(lst); 
-  XmListSelectPos(lst, raw_format(ss), FALSE);
+  XmListSelectPos(lst, fr, FALSE);
   for (i = 1; i < num_data_formats(); i++) 
     XmStringFree(formats[i]);
   FREE(formats);
@@ -1868,6 +1872,7 @@ file_info *raw_data_dialog_to_file_info(char *filename, snd_state *ss, const cha
   /* put up dialog for srate, chans, data format */
   XmString xstr;
   char *str;
+  int sr, oc, fr;
   file_info *hdr = NULL;
   if (!raw_data_dialog) make_raw_data_dialog(filename, ss);
   xstr = XmStringCreate((char *)title, XmFONTLIST_DEFAULT_TAG);
@@ -1879,16 +1884,17 @@ file_info *raw_data_dialog_to_file_info(char *filename, snd_state *ss, const cha
   while (XtIsManaged(raw_data_dialog)) check_for_event(ss);
   reflect_raw_open_in_menu();
   if (raw_cancelled) return(NULL);
+  mus_header_raw_defaults(&sr, &oc, &fr);
   str = XmTextGetString(raw_srate_text);
   if ((str) && (*str)) 
     {
-      set_raw_srate(ss, string2int(str)); 
+      sr = string2int(str); 
       XtFree(str);
     }
   str = XmTextGetString(raw_chans_text);
   if ((str) && (*str)) 
     {
-      set_raw_chans(ss, string2int(str)); 
+      oc = string2int(str); 
       XtFree(str);
     }
   str = XmTextGetString(raw_location_text);
@@ -1897,15 +1903,9 @@ file_info *raw_data_dialog_to_file_info(char *filename, snd_state *ss, const cha
       raw_data_location = string2int(str); 
       XtFree(str);
     }
-  mus_header_set_raw_defaults(raw_srate(ss), raw_chans(ss), raw_format(ss));
-  mus_sound_override_header(filename, 
-			    raw_srate(ss), 
-			    raw_chans(ss), 
-			    raw_format(ss), 
-			    MUS_RAW, 
-			    raw_data_location, 
-			    mus_bytes_to_samples(raw_format(ss),
-						 mus_sound_length(filename) - raw_data_location));
+  mus_header_set_raw_defaults(sr, oc, fr);
+  mus_sound_override_header(filename, sr, oc, fr, MUS_RAW, raw_data_location,
+			    mus_bytes_to_samples(fr, mus_sound_length(filename) - raw_data_location));
   hdr = (file_info *)CALLOC(1, sizeof(file_info));
   hdr->name = copy_string(filename);
   hdr->type = MUS_RAW;

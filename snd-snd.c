@@ -1978,40 +1978,31 @@ opens filename assuming the data matches the attributes indicated unless the fil
   char *fname = NULL;
   snd_state *ss;
   snd_info *sp;
-  int os, oc, ofr, ou, ofit;
+  int os, oc, ofr, ofit;
   ASSERT_TYPE(STRING_P(filename), filename, SCM_ARG1, S_open_raw_sound, "a string");
   ASSERT_TYPE(NUMBER_P(srate), srate, SCM_ARG2, S_open_raw_sound, "a number");
   ASSERT_TYPE(INTEGER_P(chans), chans, SCM_ARG3, S_open_raw_sound, "an integer");
   ASSERT_TYPE(INTEGER_P(format), format, SCM_ARG4, S_open_raw_sound, "an integer");
   ss = get_global_state();
-  ou = use_raw_defaults(ss);
-  os = raw_srate(ss);
-  oc = raw_chans(ss);
-  ofr = raw_format(ss);
+  mus_header_raw_defaults(&os, &oc, &ofr);
   ofit = fit_data_on_open(ss);
-  set_raw_srate(ss, TO_C_INT_OR_ELSE(srate, 0));
-  set_raw_chans(ss, TO_C_INT_OR_ELSE(chans, 0));
-  set_raw_format(ss, TO_C_INT_OR_ELSE(format, 0));
-  set_use_raw_defaults(ss, 1);
-  set_fit_data_on_open(ss, 1);
-  mus_header_set_raw_defaults(TO_C_INT_OR_ELSE(srate, 0),
-			      TO_C_INT(chans),
-			      TO_C_INT(format));
+  mus_header_set_raw_defaults(TO_C_INT_OR_ELSE(srate, os),
+			      TO_C_INT_OR_ELSE(chans, oc),
+			      TO_C_INT_OR_ELSE(format, ofr));
   fname = mus_expand_filename(TO_C_STRING(filename));
   if (!(mus_file_probe(fname)))
     {
       if (fname) FREE(fname);
       return(snd_no_such_file_error(S_open_raw_sound, filename));
     }
+  set_fit_data_on_open(ss, 1);
+  ss->reloading_updated_file = TRUE;
   sp = snd_open_file(fname, ss);
+  ss->reloading_updated_file = FALSE;
   /* snd_open_file -> snd_open_file_1 -> add_sound_window -> make_file_info -> raw_data_dialog_to_file_info */
   /*   so here if hooked, we'd need to save the current hook, make it return the current args, open, then restore */
-  if (fname) FREE(fname);
-  set_raw_srate(ss, os);
-  set_raw_chans(ss, oc);
-  set_raw_format(ss, ofr);
-  set_use_raw_defaults(ss, ou);
   set_fit_data_on_open(ss, ofit);
+  if (fname) FREE(fname);
   if (sp) return(TO_SCM_INT(sp->index));
   return(SCM_BOOL_F);
 }

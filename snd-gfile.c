@@ -329,11 +329,7 @@ file_data *sndCreateFileDataForm(snd_state *ss, GtkWidget *parent, char *name,
   gtk_box_pack_start(GTK_BOX(scbox), slab, FALSE, FALSE, 0);
   gtk_widget_show(slab);
 
-  fdat->srate_text = gtk_entry_new();
-  gtk_entry_set_editable(GTK_ENTRY(fdat->srate_text), TRUE);
-  gtk_box_pack_start(GTK_BOX(scbox), fdat->srate_text, TRUE, TRUE, 2);
-  set_background(fdat->srate_text, (ss->sgx)->white);
-  gtk_widget_show(fdat->srate_text);
+  fdat->srate_text = snd_entry_new(ss, scbox, TRUE);
 
   if (with_chan)
     {
@@ -341,11 +337,7 @@ file_data *sndCreateFileDataForm(snd_state *ss, GtkWidget *parent, char *name,
       gtk_box_pack_start(GTK_BOX(scbox), clab, FALSE, FALSE, 0);
       gtk_widget_show(clab);
 
-      fdat->chans_text = gtk_entry_new();
-      gtk_entry_set_editable(GTK_ENTRY(fdat->chans_text), TRUE);
-      gtk_box_pack_start(GTK_BOX(scbox), fdat->chans_text, TRUE, TRUE, 2);
-      set_background(fdat->chans_text, (ss->sgx)->white);
-      gtk_widget_show(fdat->chans_text);
+      fdat->chans_text = snd_entry_new(ss, scbox, TRUE);
       
       if (with_loc)
 	{
@@ -353,11 +345,7 @@ file_data *sndCreateFileDataForm(snd_state *ss, GtkWidget *parent, char *name,
 	  gtk_box_pack_start(GTK_BOX(scbox), loclab, FALSE, FALSE, 0);
 	  gtk_widget_show(loclab);
 
-	  fdat->location_text = gtk_entry_new();
-	  gtk_entry_set_editable(GTK_ENTRY(fdat->location_text), TRUE);
-	  gtk_box_pack_start(GTK_BOX(scbox), fdat->location_text, TRUE, TRUE, 2);
-	  set_background(fdat->location_text, (ss->sgx)->white);
-	  gtk_widget_show(fdat->location_text);
+	  fdat->location_text = snd_entry_new(ss, scbox, TRUE);
 	}
     }
 
@@ -372,11 +360,7 @@ file_data *sndCreateFileDataForm(snd_state *ss, GtkWidget *parent, char *name,
   if (comment_as_entry)
     {
       /* try to kludge around a gtk bug -- this is not needed in motif */
-      fdat->comment_text = gtk_entry_new();
-      gtk_entry_set_editable(GTK_ENTRY(fdat->comment_text), TRUE);
-      gtk_box_pack_start(GTK_BOX(combox), fdat->comment_text, TRUE, TRUE, 2);
-      gtk_widget_show(fdat->comment_text);
-      set_background(fdat->comment_text, (ss->sgx)->white);
+      fdat->comment_text = snd_entry_new(ss, combox, TRUE);
     }
   else
     {
@@ -1107,15 +1091,16 @@ static void raw_data_delete_Callback(GtkWidget *w, GdkEvent *event, gpointer con
 
 static void raw_data_default_Callback(GtkWidget *w, gpointer context) 
 {
-  snd_state *ss = (snd_state *)context;
-  set_use_raw_defaults(ss, 1);
-  raw_cancelled = 0; raw_done = 1;
+  raw_cancelled = 0; 
+  raw_done = 1;
 }
 
 static void raw_data_browse_Callback(GtkWidget *w, gint row, gint column, GdkEventButton *event, gpointer context)
 {
-  snd_state *ss = (snd_state *)context;
-  set_raw_format(ss, row + 1);
+  int sr, oc, fr;
+  mus_header_raw_defaults(&sr, &oc, &fr);
+  fr = row + 1;
+  mus_header_set_raw_defaults(sr, oc, fr);
 }
 
 static void raw_data_help_Callback(GtkWidget *w, gpointer context) 
@@ -1126,10 +1111,12 @@ static void raw_data_help_Callback(GtkWidget *w, gpointer context)
 static void make_raw_data_dialog(snd_state *ss)
 {
   char dfs_str[LABEL_BUFFER_SIZE];
-  int i;
+  int i, sr, oc, fr;
   char *str;
   GtkWidget *lst, *dls, *dlab, *dloclab, *chnlab;
   GtkWidget *defaultB, *helpB, *cancelB, *okB, *sratehbox, *lochbox, *scroller;
+
+  mus_header_raw_defaults(&sr, &oc, &fr);
 
   raw_data_dialog = gtk_dialog_new();
   set_dialog_widget(RAW_DATA_DIALOG, raw_data_dialog);
@@ -1175,25 +1162,17 @@ static void make_raw_data_dialog(snd_state *ss)
   gtk_box_pack_start(GTK_BOX(sratehbox), dls, FALSE, FALSE, 4);
   gtk_widget_show(dls);
 
-  raw_srate_text = gtk_entry_new();
-  gtk_entry_set_editable(GTK_ENTRY(raw_srate_text), TRUE);
-  gtk_box_pack_start(GTK_BOX(sratehbox), raw_srate_text, TRUE, TRUE, 2);
-  set_background(raw_srate_text, (ss->sgx)->white);
-  mus_snprintf(dfs_str, LABEL_BUFFER_SIZE, "%d", raw_srate(ss));
+  raw_srate_text = snd_entry_new(ss, sratehbox, TRUE);
+  mus_snprintf(dfs_str, LABEL_BUFFER_SIZE, "%d", sr);
   gtk_entry_set_text(GTK_ENTRY(raw_srate_text), dfs_str);
-  gtk_widget_show(raw_srate_text);
 
   chnlab = gtk_label_new(STR_chans_p);
   gtk_box_pack_start(GTK_BOX(sratehbox), chnlab, FALSE, FALSE, 4);
   gtk_widget_show(chnlab);
 
-  raw_chans_text = gtk_entry_new();
-  gtk_entry_set_editable(GTK_ENTRY(raw_chans_text), TRUE);
-  gtk_box_pack_start(GTK_BOX(sratehbox), raw_chans_text, TRUE, TRUE, 2);
-  set_background(raw_chans_text, (ss->sgx)->white);
-  mus_snprintf(dfs_str, LABEL_BUFFER_SIZE, "%d", raw_chans(ss));
+  raw_chans_text = snd_entry_new(ss, sratehbox, TRUE);
+  mus_snprintf(dfs_str, LABEL_BUFFER_SIZE, "%d", oc);
   gtk_entry_set_text(GTK_ENTRY(raw_chans_text), dfs_str);
-  gtk_widget_show(raw_chans_text);
 
   lochbox = gtk_hbox_new(FALSE, 2);
   gtk_box_pack_start(GTK_BOX(GTK_DIALOG(raw_data_dialog)->vbox), lochbox, FALSE, FALSE, 6);
@@ -1203,12 +1182,8 @@ static void make_raw_data_dialog(snd_state *ss)
   gtk_box_pack_start(GTK_BOX(lochbox), dloclab, FALSE, FALSE, 4);
   gtk_widget_show(dloclab);
 
-  raw_location_text = gtk_entry_new();
-  gtk_entry_set_editable(GTK_ENTRY(raw_location_text), TRUE);
-  gtk_box_pack_start(GTK_BOX(lochbox), raw_location_text, TRUE, TRUE, 2);
-  set_background(raw_location_text, (ss->sgx)->white);
+  raw_location_text = snd_entry_new(ss, lochbox, TRUE);
   gtk_entry_set_text(GTK_ENTRY(raw_location_text), "0");
-  gtk_widget_show(raw_location_text);
 
   dlab = gtk_label_new(STR_data_format_p);
   gtk_box_pack_start(GTK_BOX(GTK_DIALOG(raw_data_dialog)->vbox), dlab, FALSE, FALSE, 6);
@@ -1238,6 +1213,9 @@ file_info *raw_data_dialog_to_file_info(char *filename, snd_state *ss, const cha
 {
   char *str;
   file_info *hdr = NULL;
+  int sr, oc, fr;
+  mus_header_raw_defaults(&sr, &oc, &fr);
+
   if (!raw_data_dialog) make_raw_data_dialog(ss);
   gtk_label_set_text(GTK_LABEL(raw_data_label), title);
   reflect_raw_pending_in_menu();
@@ -1249,19 +1227,16 @@ file_info *raw_data_dialog_to_file_info(char *filename, snd_state *ss, const cha
   if (raw_cancelled) return(NULL);
   str = gtk_entry_get_text(GTK_ENTRY(raw_srate_text));
   if ((str) && (*str)) 
-    set_raw_srate(ss, string2int(str));
+    sr = string2int(str);
   str = gtk_entry_get_text(GTK_ENTRY(raw_chans_text));
   if ((str) && (*str)) 
-    set_raw_chans(ss, string2int(str));
+    oc = string2int(str);
   str = gtk_entry_get_text(GTK_ENTRY(raw_location_text));
   if ((str) && (*str)) 
     raw_data_location = string2int(str);
-  mus_header_set_raw_defaults(raw_srate(ss), raw_chans(ss), raw_format(ss));
-  mus_sound_override_header(filename, 
-			    raw_srate(ss), raw_chans(ss), raw_format(ss), 
-			    MUS_RAW, raw_data_location, 
-			    mus_bytes_to_samples(raw_format(ss), 
-						 mus_sound_length(filename) - raw_data_location));
+  mus_header_set_raw_defaults(sr, oc, fr);
+  mus_sound_override_header(filename, sr, oc, fr, MUS_RAW, raw_data_location, 
+			    mus_bytes_to_samples(fr, mus_sound_length(filename) - raw_data_location));
   hdr = (file_info *)CALLOC(1, sizeof(file_info));
   hdr->name = copy_string(filename);
   hdr->type = MUS_RAW;
@@ -1340,12 +1315,8 @@ snd_info *make_new_file_dialog(snd_state *ss, char *newname, int header_type, in
       gtk_box_pack_start(GTK_BOX(hform), name_label, FALSE, FALSE, 2);
       gtk_widget_show(name_label);
 
-      new_file_name = gtk_entry_new();
-      gtk_entry_set_editable(GTK_ENTRY(new_file_name), TRUE);
-      gtk_box_pack_start(GTK_BOX(hform), new_file_name, TRUE, TRUE, 2);
-      set_background(new_file_name, (ss->sgx)->white);
+      new_file_name = snd_entry_new(ss, hform, TRUE);
       gtk_entry_set_text(GTK_ENTRY(new_file_name), newname);
-      gtk_widget_show(new_file_name);
 
       new_dialog_data = sndCreateFileDataForm(ss, GTK_DIALOG(new_dialog)->vbox, "data-form", TRUE, 
 					      default_output_type(ss), default_output_format(ss), FALSE, FALSE);

@@ -396,6 +396,36 @@ static gint listener_unfocus_callback(GtkWidget *w, GdkEventCrossing *ev, gpoint
   return(0);
 }
 
+static void mouse_enter_text_callback(GtkWidget *w, GdkEventCrossing *ev, gpointer unknown)
+{
+  if (HOOKED(mouse_enter_text_hook))
+    g_c_run_progn_hook(mouse_enter_text_hook,
+		       SCM_LIST1(SND_WRAP(w)),
+		       S_mouse_enter_text_hook);
+}
+
+static void mouse_leave_text_callback(GtkWidget *w, GdkEventCrossing *ev, gpointer unknown)
+{
+  if (HOOKED(mouse_leave_text_hook))
+    g_c_run_progn_hook(mouse_leave_text_hook,
+		       SCM_LIST1(SND_WRAP(w)),
+		       S_mouse_leave_text_hook);
+}
+
+GtkWidget *snd_entry_new(snd_state *ss, GtkWidget *container, int with_white_background)
+{
+  GtkWidget *text;
+  text = gtk_entry_new();
+  gtk_entry_set_editable(GTK_ENTRY(text), TRUE);
+  gtk_box_pack_start(GTK_BOX(container), text, TRUE, TRUE, 2);
+  if (with_white_background) set_background(text, (ss->sgx)->white);
+  gtk_widget_show(text);
+  gtk_signal_connect(GTK_OBJECT(text), "enter_notify_event", GTK_SIGNAL_FUNC(mouse_enter_text_callback), (gpointer)ss);
+  gtk_signal_connect(GTK_OBJECT(text), "leave_notify_event", GTK_SIGNAL_FUNC(mouse_leave_text_callback), (gpointer)ss);
+  return(text);
+}
+
+
 static void sndCreateCommandWidget(snd_state *ss, int height)
 {
   GtkWidget *hscrollbar, *vscrollbar, *frame;

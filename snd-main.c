@@ -253,10 +253,6 @@ static void save_snd_state_options (snd_state *ss, FILE *fd)
   if (previous_files_sort(ss) != DEFAULT_PREVIOUS_FILES_SORT) pss_sd(fd, S_previous_files_sort, previous_files_sort(ss));
   if (fft_log_magnitude(ss) != DEFAULT_FFT_LOG_MAGNITUDE) pss_ss(fd, S_fft_log_magnitude, b2s(fft_log_magnitude(ss)));
   if (fft_log_frequency(ss) != DEFAULT_FFT_LOG_FREQUENCY) pss_ss(fd, S_fft_log_frequency, b2s(fft_log_frequency(ss)));
-  if (raw_srate(ss) != DEFAULT_RAW_SRATE) pss_sd(fd, S_raw_srate, raw_srate(ss));
-  if (raw_chans(ss) != DEFAULT_RAW_CHANS) pss_sd(fd, S_raw_chans, raw_chans(ss));
-  if (raw_format(ss) != DEFAULT_OUTPUT_FORMAT) pss_sd(fd, S_raw_format, raw_format(ss));
-  if (use_raw_defaults(ss) != DEFAULT_USE_RAW_DEFAULTS) pss_ss(fd, S_use_raw_defaults, b2s(use_raw_defaults(ss)));
   if (print_length(ss) != DEFAULT_PRINT_LENGTH) pss_sd(fd, S_print_length, print_length(ss));
   if (show_usage_stats(ss) != DEFAULT_SHOW_USAGE_STATS) pss_ss(fd, S_show_usage_stats, b2s(show_usage_stats(ss)));
   if (show_mix_waveforms(ss) != DEFAULT_SHOW_MIX_WAVEFORMS) pss_ss(fd, S_show_mix_waveforms, b2s(show_mix_waveforms(ss)));
@@ -282,6 +278,7 @@ static void save_snd_state_options (snd_state *ss, FILE *fd)
   if (fneq(fft_beta(ss), DEFAULT_FFT_BETA)) pss_sf(fd, S_fft_beta, fft_beta(ss));
   if (fneq(reverb_decay(ss), DEFAULT_REVERB_DECAY)) pss_sf(fd, S_reverb_decay, reverb_decay(ss));
   if (fneq(ss->min_dB, DEFAULT_MIN_DB)) pss_sf(fd, S_min_dB, ss->min_dB);
+  if (fneq(ss->Hankel_Jn, DEFAULT_HANKEL_JN)) pss_sf(fd, S_hankel_jn, ss->Hankel_Jn);
   if (fneq(color_cutoff(ss), DEFAULT_COLOR_CUTOFF)) pss_sf(fd, S_color_cutoff, color_cutoff(ss));
   if (fneq(color_scale(ss), DEFAULT_COLOR_SCALE)) pss_sf(fd, S_color_scale, color_scale(ss));
   if (fneq(spectro_x_scale(ss), DEFAULT_SPECTRO_X_SCALE)) pss_sf(fd, S_spectro_x_scale, spectro_x_scale(ss));

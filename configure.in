@@ -37,7 +37,7 @@ MAKE_TARGET="snd"
 #   --with-gtk-extra      use Gtk+extra file selection widget
 #   --with-alsa           use ALSA if possible
 #   --with-static-alsa    use ALSA statically loaded (for RPM generation)
-#   --with-html           include the XmHTML or gtkhtml library
+#   --with-html           include the XmHTML or mozilla browser library
 #   --with-big-colormap   use big colormap
 #   --with-snd-conf       look for /etc/snd.conf at startup
 #   --with-snd-as-widget  make Snd a loadable widget, not a standalone program
@@ -69,12 +69,14 @@ fi
 
 XMHTML_LIB=""
 GTKHTML_LIB=""
+GTKHTML_FLAGS=""
 AC_ARG_WITH(html,
-	[  --with-html		  include the XmHTML or gtkhtml library],
+	[  --with-html		  include the XmHTML or mozilla browser library],
   	if test "$with_html" = yes ; then
 	    AC_DEFINE(HAVE_HTML)
             XMHTML_LIB="-lXmHTML"
-            GTKHTML_LIB="-lgtkhtml -lgdk_pixbuf -lgnome -lgnomeprint -lgnomesupport -lgnomeui -lart_lgpl -lpspell -lxml"
+            GTKHTML_LIB="-Xlinker -rpath -Xlinker /usr/lib/mozilla -L/usr/lib/mozilla -lgtkembedmoz"
+            GTKHTML_FLAGS="-I/usr/include/mozilla"
 dnl which we actually use is decided later
 	fi)
 
@@ -295,8 +297,14 @@ if test "$no_x" = yes || test "$with_no_gui" = yes ; then
   AC_DEFINE(USE_NO_GUI)
   XLIBS=""
   XFLAGS=""
+  GTKHTML_LIB=""
+  GTKHTML_FLAGS=""
+  XMHTML_LIB=""
   AC_SUBST(XLIBS)
   AC_SUBST(XFLAGS)
+  AC_SUBST(GTKHTML_LIB)
+  AC_SUBST(GTKHTML_FLAGS)
+  AC_SUBST(XMHTML_LIB)
   GX_FILES="NO_GUI_O_FILES"
   GX_HEADERS="NO_GUI_HEADERS"
 
@@ -369,6 +377,8 @@ else
     AC_SUBST(XLIBS)
     AC_SUBST(XFLAGS)
     AC_SUBST(XMHTML_LIB)
+    GTKHTML_LIB=""
+    GTKHTML_FLAGS=""
 
     AC_CHECK_LIB(Xpm, XpmReadFileToPixmap, [
       XLIBS="$XLIBS -lXpm"
@@ -399,9 +409,11 @@ else
       AC_SUBST(GTK_CFLAGS)
       AC_DEFINE(USE_GTK)
       AC_SUBST(GTKHTML_LIB)
+      AC_SUBST(GTKHTML_FLAGS)
       with_gtk=yes
       XLIBS=""
       XFLAGS=""
+      XMHTML_LIB=""
       AC_SUBST(XLIBS)
       AC_SUBST(XFLAGS)
       ],

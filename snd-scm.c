@@ -1211,33 +1211,6 @@ static SCM g_set_previous_files_sort(SCM val)
   return(TO_SCM_INT(previous_files_sort(state)));
 }
 
-static SCM g_raw_chans(void) {return(TO_SCM_INT(raw_chans(state)));}
-static SCM g_set_raw_chans(SCM val) 
-{
-  #define H_raw_chans "(" S_raw_chans ") -> how many channels to expect in raw (headerless) files (1) [OBSOLETE]"
-  ASSERT_TYPE(INTEGER_P(val), val, SCM_ARGn, "set-" S_raw_chans, "an integer");
-  set_raw_chans(state, TO_C_INT(val));
-  return(TO_SCM_INT(raw_chans(state)));
-}
-
-static SCM g_raw_format(void) {return(TO_SCM_INT(raw_format(state)));}
-static SCM g_set_raw_format(SCM val) 
-{
-  #define H_raw_format "(" S_raw_format ") -> data format expected in raw (headerless) files (mus-bshort) [OBSOLETE]"
-  ASSERT_TYPE(INTEGER_P(val), val, SCM_ARGn, "set-" S_raw_format, "an integer"); 
-  set_raw_format(state, TO_C_INT(val));
-  return(TO_SCM_INT(raw_format(state)));
-}
-
-static SCM g_raw_srate(void) {return(TO_SCM_INT(raw_srate(state)));}
-static SCM g_set_raw_srate(SCM val) 
-{
-  #define H_raw_srate "(" S_raw_srate ") -> srate expected in raw (headerless) files (44100) [OBSOLETE]"
-  ASSERT_TYPE(NUMBER_P(val), val, SCM_ARGn, "set-" S_raw_srate, "a number"); 
-  set_raw_srate(state, TO_C_INT_OR_ELSE(val, 0));
-  return(TO_SCM_INT(raw_srate(state)));
-}
-
 static SCM g_save_state_on_exit(void) {return(TO_SCM_BOOLEAN(save_state_on_exit(state)));}
 static SCM g_set_save_state_on_exit(SCM val) 
 {
@@ -1295,6 +1268,15 @@ frequency whistles leaking through."
   if (len >= 0)
     set_sinc_width(state, len);
   return(TO_SCM_INT(sinc_width(state)));
+}
+
+static SCM g_hankel_jn(void) {return(TO_SCM_DOUBLE(state->Hankel_Jn));}
+static SCM g_set_hankel_jn(SCM val) 
+{
+  #define H_hankel_jn "(" S_hankel_jn ") -> Bessel function used in Hankel transform."
+  ASSERT_TYPE(NUMBER_P(val), val, SCM_ARGn, "set-" S_hankel_jn, "a number"); 
+  state->Hankel_Jn = TO_C_DOUBLE_WITH_ORIGIN(val, S_hankel_jn);
+  return(val);
 }
 
 static SCM g_color_map(void) {return(TO_SCM_INT(color_map(state)));}
@@ -1368,17 +1350,6 @@ static SCM g_set_with_mix_tags(SCM val)
   ASSERT_TYPE(BOOLEAN_IF_BOUND_P(val), val, SCM_ARGn, "set-" S_with_mix_tags, "a boolean");
   set_with_mix_tags(state, TO_C_BOOLEAN_OR_T(val));
   return(TO_SCM_BOOLEAN(with_mix_tags(state)));
-}
-
-static SCM g_use_raw_defaults(void) {return(TO_SCM_BOOLEAN(use_raw_defaults(state)));}
-static SCM g_set_use_raw_defaults(SCM val) 
-{
-  #define H_use_raw_defaults "(" S_use_raw_defaults ") -> #t if Snd should simply use the raw-* defaults \
-when a headerless file is encountered. If #f, Snd fires up the raw file dialog. [OBSOLETE]"
-
-  ASSERT_TYPE(BOOLEAN_IF_BOUND_P(val), val, SCM_ARGn, "set-" S_use_raw_defaults, "a boolean");
-  set_use_raw_defaults(state, TO_C_BOOLEAN_OR_T(val));
-  return(TO_SCM_BOOLEAN(use_raw_defaults(state)));
 }
 
 static SCM g_use_sinc_interp(void) {return(TO_SCM_BOOLEAN(use_sinc_interp(state)));}
@@ -3254,15 +3225,6 @@ void g_initialize_gh(snd_state *ss)
   define_procedure_with_setter(S_previous_files_sort, SCM_FNC g_previous_files_sort, H_previous_files_sort,
 			       "set-" S_previous_files_sort, SCM_FNC g_set_previous_files_sort, local_doc, 0, 0, 0, 1);
 
-  define_procedure_with_setter(S_raw_chans, SCM_FNC g_raw_chans, H_raw_chans,
-			       "set-" S_raw_chans, SCM_FNC g_set_raw_chans, local_doc, 0, 0, 0, 1);
-
-  define_procedure_with_setter(S_raw_format, SCM_FNC g_raw_format, H_raw_format,
-			       "set-" S_raw_format, SCM_FNC g_set_raw_format, local_doc, 0, 0, 0, 1);
-
-  define_procedure_with_setter(S_raw_srate, SCM_FNC g_raw_srate, H_raw_srate,
-			       "set-" S_raw_srate, SCM_FNC g_set_raw_srate, local_doc, 0, 0, 0, 1);
-
   define_procedure_with_setter(S_save_state_on_exit, SCM_FNC g_save_state_on_exit, H_save_state_on_exit,
 			       "set-" S_save_state_on_exit, SCM_FNC g_set_save_state_on_exit, local_doc, 0, 0, 0, 1);
 
@@ -3277,6 +3239,9 @@ void g_initialize_gh(snd_state *ss)
 
   define_procedure_with_setter(S_sinc_width, SCM_FNC g_sinc_width, H_sinc_width,
 			       "set-" S_sinc_width, SCM_FNC g_set_sinc_width, local_doc, 0, 0, 0, 1);
+
+  define_procedure_with_setter(S_hankel_jn, SCM_FNC g_hankel_jn, H_hankel_jn,
+			       "set-" S_hankel_jn, SCM_FNC g_set_hankel_jn, local_doc, 0, 0, 1, 0);
 
   define_procedure_with_setter(S_colormap, SCM_FNC g_color_map, H_colormap,
 			       "set-" S_colormap, SCM_FNC g_set_color_map, local_doc, 0, 0, 0, 1);
@@ -3295,9 +3260,6 @@ void g_initialize_gh(snd_state *ss)
 
   define_procedure_with_setter(S_with_mix_tags, SCM_FNC g_with_mix_tags, H_with_mix_tags,
 			       "set-" S_with_mix_tags, SCM_FNC g_set_with_mix_tags, local_doc, 0, 0, 0, 1);
-
-  define_procedure_with_setter(S_use_raw_defaults, SCM_FNC g_use_raw_defaults, H_use_raw_defaults,
-			       "set-" S_use_raw_defaults, SCM_FNC g_set_use_raw_defaults, local_doc, 0, 0, 0, 1);
 
   define_procedure_with_setter(S_use_sinc_interp, SCM_FNC g_use_sinc_interp, H_use_sinc_interp,
 			       "set-" S_use_sinc_interp, SCM_FNC g_set_use_sinc_interp, local_doc, 0, 0, 0, 1);

@@ -217,10 +217,6 @@ static repv snd_rep_main(repv arg)
 #else
   ss->Trap_Segfault = DEFAULT_TRAP_SEGFAULT;
 #endif
-  ss->Raw_Srate = DEFAULT_RAW_SRATE;
-  ss->Raw_Chans = DEFAULT_RAW_CHANS;
-  ss->Raw_Format = DEFAULT_OUTPUT_FORMAT;
-  ss->Use_Raw_Defaults = DEFAULT_USE_RAW_DEFAULTS;
   ss->Print_Length = DEFAULT_PRINT_LENGTH;
   ss->Previous_Files_Sort = DEFAULT_PREVIOUS_FILES_SORT;
   ss->Show_Mix_Waveforms = DEFAULT_SHOW_MIX_WAVEFORMS;
@@ -257,6 +253,7 @@ static repv snd_rep_main(repv arg)
   ss->viewing = 0;
   ss->max_sounds = 4;                 /* expands to accommodate any number of files */
   ss->stopped_explicitly = 0;
+  ss->reloading_updated_file = FALSE;
   ss->selected_sound = NO_SELECTION;
   ss->selected_mix = NO_SELECTION;
   ss->mx_sp = NULL;

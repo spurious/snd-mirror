@@ -967,12 +967,8 @@ GtkWidget *create_envelope_editor (snd_state *ss)
       gtk_box_pack_start(GTK_BOX(toprow), nameL, FALSE, FALSE, 0);
       gtk_widget_show(nameL);
 
-      textL = gtk_entry_new();
-      gtk_entry_set_editable(GTK_ENTRY(textL), TRUE);
+      textL = snd_entry_new(ss, toprow, TRUE);
       gtk_signal_connect(GTK_OBJECT(textL), "activate", GTK_SIGNAL_FUNC(text_field_activated), (gpointer)ss);
-      gtk_box_pack_start(GTK_BOX(toprow), textL, TRUE, TRUE, 2);
-      set_background(textL, (ss->sgx)->white);
-      gtk_widget_show(textL);
 
       brkbox = gtk_button_new();
       gtk_box_pack_start(GTK_BOX(toprow), brkbox, FALSE, FALSE, 0);

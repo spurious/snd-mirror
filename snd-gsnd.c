@@ -1444,9 +1444,7 @@ snd_info *add_sound_window(char *filename, snd_state *ss)
       gtk_box_pack_start(GTK_BOX(sw[W_name_form]), sw[W_info_label], FALSE, FALSE, 0);
       gtk_widget_show(sw[W_info_label]);
       
-      sw[W_info] = gtk_entry_new();
-      gtk_entry_set_editable(GTK_ENTRY(sw[W_info]), TRUE);
-      gtk_box_pack_start(GTK_BOX(sw[W_name_form]), sw[W_info], TRUE, TRUE, 2);
+      sw[W_info] = snd_entry_new(ss, sw[W_name_form], FALSE);
       gtk_signal_connect(GTK_OBJECT(sw[W_info]), "key_press_event", GTK_SIGNAL_FUNC(minibuffer_key_callback), (gpointer)sp);
       gtk_signal_connect(GTK_OBJECT(sw[W_info]), "activate", GTK_SIGNAL_FUNC(minibuffer_activate_callback), (gpointer)sp);
 
@@ -1455,7 +1453,6 @@ snd_info *add_sound_window(char *filename, snd_state *ss)
 
       set_background(sw[W_info], (ss->sgx)->basic_color);
       set_text_background(sw[W_info], (ss->sgx)->basic_color);
-      gtk_widget_show(sw[W_info]);
       
       /* now fill from other end */
       
@@ -1722,12 +1719,9 @@ snd_info *add_sound_window(char *filename, snd_state *ss)
       gtk_signal_connect(GTK_OBJECT(adjs[W_filter_adj]), "value_changed", GTK_SIGNAL_FUNC(filter_order_callback), (gpointer)sp);
       gtk_widget_show(sw[W_filter_order]);
       
-      sw[W_filter] = gtk_entry_new();
+      sw[W_filter] = snd_entry_new(ss, sw[W_filter_form], FALSE);
       gtk_signal_connect(GTK_OBJECT(sw[W_filter]), "activate", GTK_SIGNAL_FUNC(filter_activate_callback), (gpointer)sp);
-      gtk_entry_set_editable(GTK_ENTRY(sw[W_filter]), TRUE);
-      gtk_box_pack_start(GTK_BOX(sw[W_filter_form]), sw[W_filter], TRUE, TRUE, 2);
-      gtk_widget_show(sw[W_filter]);
-      
+
       sw[W_filter_dB] = gtk_check_button_new_with_label(STR_dB);
       gtk_box_pack_start(GTK_BOX(sw[W_filter_form]), sw[W_filter_dB], FALSE, FALSE, 2);
       gtk_signal_connect(GTK_OBJECT(sw[W_filter_dB]), "clicked", GTK_SIGNAL_FUNC(filter_db_callback), (gpointer)sp);

@@ -1,29 +1,19 @@
-/* TODO  tie into gtkhtml widget if HAVE_HTML
+/* 
  * TODO  test horizontal scrolling whenever gtk implements it
  * TODO  if from glistener, and text selected, complete in listener
  */
 
-#if 0
-/* from gtk-html/src/testgtkhtml.c
-#include "gtkhtml.h"
-#include "htmlurl.h"
-#include "htmlengine.h"
-#include "gtkhtml-embedded.h"
-#include "gtkhtml-properties.h"
-	GtkWidget *html_widget;
-        static GtkHTML *html;
-	html_widget = gtk_html_new ();
-	html = GTK_HTML (html_widget);
-	gtk_html_load_empty (html);
-	gtk_html_set_default_background_color (GTK_HTML (html_widget), &bgColor);
-	gtk_container_add (GTK_CONTAINER (scrolled_window), html_widget);
-void           gtk_html_load_from_string  (GtkHTML             *html,
-					   const gchar         *str,
-					   gint                 len);
-*/
-#endif
-
 #include "snd.h"
+
+static GtkWidget *help_dialog = NULL;
+static char help_window_label[LABEL_BUFFER_SIZE];
+
+static void help_help_callback(GtkWidget *w, gpointer context) {help_dialog_help((snd_state *)context);}
+static void dismiss_help(GtkWidget *w, gpointer context) {gtk_widget_hide(help_dialog);}
+static void delete_help(GtkWidget *w, GdkEvent *event, gpointer context) {gtk_widget_hide(help_dialog);}
+
+
+#if (!HAVE_HTML)
 
 /* ---------------- HELP MONOLOG ---------------- */
 
@@ -31,24 +21,7 @@ void           gtk_html_load_from_string  (GtkHTML             *html,
 #define HELP_COLUMNS 56
 /* these set the initial size of the (non XmHTML) help dialog text area */
 
-static GtkWidget *help_dialog = NULL;
 static GtkWidget *help_text = NULL;
-static char help_window_label[LABEL_BUFFER_SIZE];
-
-static void help_help_callback(GtkWidget *w, gpointer context) 
-{
-  help_dialog_help((snd_state *)context);
-}
-
-static void dismiss_help(GtkWidget *w, gpointer context)
-{
-  gtk_widget_hide(help_dialog);
-}
-
-static void delete_help(GtkWidget *w, GdkEvent *event, gpointer context)
-{
-  gtk_widget_hide(help_dialog);
-}
 
 static void add_help_text (snd_state *ss, GtkWidget *text, char *message)
 {
@@ -135,6 +108,99 @@ GtkWidget *snd_help(snd_state *ss, char *subject, char *helpstr)
   add_help_text(ss, help_text, helpstr);
   return(help_dialog);
 }
+
+#else
+
+/* HAVE_HTML -- try the mozilla embedded widget -- this taken largely from TestGtkEmbed.cpp from the Mozilla sources */
+
+#include "gtkmozembed.h"
+#include <gtk/gtk.h>
+
+static GtkWidget *help_mozilla = NULL;
+
+static void go_back (GtkButton *button, gpointer ignored) {gtk_moz_embed_go_back(GTK_MOZ_EMBED(help_mozilla));}
+static void go_forward(GtkButton *button, gpointer ignored) {gtk_moz_embed_go_forward(GTK_MOZ_EMBED(help_mozilla));}
+
+static void create_help_monolog(snd_state *ss)
+{
+  /* create scrollable but not editable text window */
+  GtkWidget *help_button, *ok_button, *back_button, *forward_button;
+  help_dialog = gtk_dialog_new();
+  set_dialog_widget(HELP_DIALOG, help_dialog);
+  gtk_signal_connect(GTK_OBJECT(help_dialog), "delete_event", GTK_SIGNAL_FUNC(delete_help), (gpointer)ss);
+  gtk_window_set_title(GTK_WINDOW(help_dialog), STR_Help);
+  gtk_window_set_policy(GTK_WINDOW(help_dialog), TRUE, TRUE, FALSE); /* allow shrink or grow */
+  set_background(help_dialog, (ss->sgx)->basic_color);
+  gtk_container_set_border_width (GTK_CONTAINER(help_dialog), 10);
+  gtk_widget_set_usize (GTK_WIDGET(help_dialog), 500, 500);
+  gtk_widget_realize(help_dialog);
+  add_dialog(ss, help_dialog);
+
+  help_button = gtk_button_new_with_label(STR_Help);
+  ok_button = gtk_button_new_with_label(STR_Ok);
+  back_button = gtk_button_new_with_label(STR_Back);
+  forward_button = gtk_button_new_with_label(STR_Forward);
+  gtk_box_pack_start(GTK_BOX(GTK_DIALOG(help_dialog)->action_area), ok_button, FALSE, TRUE, 20);
+  gtk_box_pack_start(GTK_BOX(GTK_DIALOG(help_dialog)->action_area), back_button, FALSE, TRUE, 20);
+  gtk_box_pack_start(GTK_BOX(GTK_DIALOG(help_dialog)->action_area), forward_button, FALSE, TRUE, 20);
+  gtk_box_pack_end(GTK_BOX(GTK_DIALOG(help_dialog)->action_area), help_button, FALSE, TRUE, 20);
+  gtk_signal_connect(GTK_OBJECT(ok_button), "clicked", GTK_SIGNAL_FUNC(dismiss_help), (gpointer)ss);
+  gtk_signal_connect(GTK_OBJECT(back_button), "clicked", GTK_SIGNAL_FUNC(go_back), (gpointer)ss);
+  gtk_signal_connect(GTK_OBJECT(forward_button), "clicked", GTK_SIGNAL_FUNC(go_forward), (gpointer)ss);
+  gtk_signal_connect(GTK_OBJECT(help_button), "clicked", GTK_SIGNAL_FUNC(help_help_callback), (gpointer)ss);
+  set_pushed_button_colors(help_button, ss);
+  set_pushed_button_colors(ok_button, ss);
+  set_pushed_button_colors(back_button, ss);
+  set_pushed_button_colors(forward_button, ss);
+  gtk_widget_show(ok_button);
+  gtk_widget_show(back_button);
+  gtk_widget_show(forward_button);
+  gtk_widget_show(help_button);
+
+  help_mozilla = gtk_moz_embed_new();
+  gtk_container_add(GTK_CONTAINER(GTK_DIALOG(help_dialog)->vbox), help_mozilla);
+
+  gtk_widget_show(help_mozilla);
+  gtk_widget_show(help_dialog);
+}
+
+GtkWidget *snd_help(snd_state *ss, char *subject, char *helpstr)
+{
+  int i, len, lim;
+  char *url, *urldir;
+  if (!(help_dialog)) create_help_monolog(ss); else raise_dialog(help_dialog);
+  mus_snprintf(help_window_label, LABEL_BUFFER_SIZE, "%s help", subject);
+  gtk_window_set_title(GTK_WINDOW(help_dialog), help_window_label);
+  len = snd_strlen(helpstr);
+  if (len < 15) lim = len; else lim = 15;
+  for (i = 0; i < lim; i++)
+    if (helpstr[i] == '#')
+      {
+	if (snd_strlen(html_dir(ss)) > 0) 
+	  urldir = copy_string(html_dir(ss));
+	else 
+	  {
+	    urldir = (char *)CALLOC(256, sizeof(char));
+	    urldir = getcwd(urldir, 256);
+	  }
+	url = (char *)CALLOC(len + snd_strlen(urldir) + 64, sizeof(char));
+	sprintf(url, "file:%s/%s%s", 
+		urldir,
+		(helpstr[0] == '#') ? "snd.html" : "",
+		helpstr);
+	gtk_moz_embed_load_url(GTK_MOZ_EMBED(help_mozilla), url);
+	FREE(url);
+	return(help_dialog);
+      }
+  gtk_moz_embed_open_stream(GTK_MOZ_EMBED(help_mozilla), "file://", "text/html");
+  gtk_moz_embed_append_data(GTK_MOZ_EMBED(help_mozilla), "<html><body bgcolor=white><pre>", strlen("<html><body bgcolor=white><pre>"));
+  gtk_moz_embed_append_data(GTK_MOZ_EMBED(help_mozilla), helpstr, len);
+  gtk_moz_embed_append_data(GTK_MOZ_EMBED(help_mozilla), "</pre></body></html>", strlen("</pre></body></html>"));
+  gtk_moz_embed_close_stream(GTK_MOZ_EMBED(help_mozilla));
+  return(help_dialog);
+}
+
+#endif
 
 void move_help_dialog_to(int x, int y)
 {

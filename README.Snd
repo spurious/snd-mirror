@@ -21,7 +21,7 @@ The configure program has several Snd-related arguments:
    --with-gtk            use Gtk+	
    --with-gtk-extra      use the file selection widget from libgtkextra
    --with-alsa           use ALSA if possible
-   --with-html           include the XmHTML or gtkhtml library
+   --with-html           include the XmHTML or mozilla browser library
    --with-big-colormap   use big colormap
    --with-snd-conf       look for /etc/snd.conf at startup
    --with-snd-as-widget  make Snd a loadable widget, not a standalone program

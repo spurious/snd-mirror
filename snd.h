@@ -68,8 +68,9 @@
  *   SND_AS_WIDGET This causes the entire Snd editor to become a module loadable
  *                 into some other program as a kind of enormous widget (see saw.c).
  *
- *   HAVE_HTML     define if the XmHTML widget or the gtkhtml library is available 
- *                 (used by help functions -- perhaps better would be to call netscape?)
+ *   HAVE_HTML     define if the XmHTML widget or the mozilla browser library is available 
+ *                 (used by help functions).  (The configure script assumes you have
+ *                 /usr/lib/mozilla and /usr/include/mozilla in the gtk case).
  *
  *   Float         This can be defined to double in CFLAGS if you want Snd to use 
  *                 doubles throughout (i.e. -DFloat=double).

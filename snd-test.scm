@@ -296,6 +296,7 @@
 	'just-sounds (just-sounds) #f
 	'line-size (line-size) 128 
 	'listener-prompt (listener-prompt) ">" 
+	'hankel-jn (hankel-jn) 0.0
 	'max-fft-peaks (max-fft-peaks) 100
 	'max-regions (max-regions) 16 
 	'min-dB (min-dB) -60.0 
@@ -5082,7 +5083,7 @@
 	    (if (not (string=? name (file-name index))) (snd-display (format #f ";file-name: ~A?" (file-name index))))
 	    (close-sound index))
 	  (let ((fd (open-raw-sound (string-append sf-dir "addf8.nh") 1 8012 mus-mulaw)))
-	    (if (not (= (data-format fd) mus-mulaw)) (snd-display (format #f ";open-raw-sound: ~A?" (data-format fd))))
+	    (if (not (= (data-format fd) mus-mulaw)) (snd-display (format #f ";open-raw-sound: ~A?" (mus-data-format-name (data-format fd)))))
 	    (close-sound fd))
 	  (time (test-spectral-difference "oboe.snd" (string-append sf-dir "oboe.g723_24") 20.0))
 	  (test-spectral-difference "oboe.snd" (string-append sf-dir "oboe.g723_40") 3.0)
@@ -5543,7 +5544,6 @@
 	(close-sound ind)
 	)
 
-      (set! (use-raw-defaults) #f)
       (add-hook! open-raw-sound-hook (lambda (file choices) (list 1 22050 mus-bshort)))
       (let ((ind (open-sound "../sf/addf8.nh")))
 	(play-and-wait 0 ind)
@@ -7547,7 +7547,7 @@ EDITS: 3
 	       movies new-sound next-mix-sample next-sample next-track-sample normalize-fft normalize-on-open normalize-view open-alternate-sound
 	       open-raw-sound open-sound open-sound-file orientation-dialog peak-env-info peaks play play-and-wait play-mix play-region play-selection
 	       play-track player? position-color position->x position->y prefix-arg preload-directory preload-file previous-files-sort previous-sample 
-	       print-length progress-report prompt-in-minibuffer  protect-region pushed-button-color raw-chans raw-format raw-srate read-only
+	       print-length progress-report prompt-in-minibuffer  protect-region pushed-button-color read-only
 	       read-peak-env-info-file recorder-autoload recorder-buffer-size recorder-dialog recorder-file recorder-gain recorder-in-amp recorder-in-format
 	       recorder-max-duration recorder-out-amp recorder-out-chans recorder-out-format recorder-srate recorder-trigger redo region-chans region-dialog
 	       region-id region-length region-maxamp region-sample region-samples region-samples->vct region-srate regions region? remove-from-menu
@@ -7565,7 +7565,7 @@ EDITS: 3
 	       spectro-z-angle spectro-z-scale speed speed-style speed-tones squelch-update srate src-sound src-selection start-playing start-progress-report
 	       stop-player stop-playing swap-channels syncd-marks sync temp-dir text-focus-color tiny-font track-sample-reader? transform-dialog transform-sample
 	       transform-samples transform-samples->vct transform-size transform-type trap-segfault unbind-key undo uniting update-fft update-graph
-	       update-lisp-graph update-sound update-usage-stats use-raw-defaults use-sinc-interp vct->samples vct->sound-file verbose-cursor view-sound
+	       update-lisp-graph update-sound update-usage-stats use-sinc-interp vct->samples vct->sound-file verbose-cursor view-sound
 	       vu-font vu-font-size vu-size wavelet-type waving wavo wavo-hop wavo-trace window-height window-width window-x window-y with-mix-tags
 	       write-peak-env-info-file x-axis-style x-bounds x-position-slider x->position x-zoom-slider y-bounds y-position-slider y->position
 	       y-zoom-slider zero-pad zoom-color zoom-focus-style mus-sound-samples mus-sound-frames mus-sound-duration mus-sound-datum-size
@@ -7615,7 +7615,7 @@ EDITS: 3
 		   selection-color selection-creates-region show-axes show-backtrace show-controls show-fft-peaks show-indices show-marks
 		   show-mix-waveforms show-selection-transform show-usage-stats show-y-zero sinc-width spectro-cutoff spectro-hop spectro-start
 		   spectro-x-angle spectro-x-scale spectro-y-angle spectro-y-scale spectro-z-angle spectro-z-scale speed speed-style speed-tones
-		   squelch-update sync temp-dir text-focus-color tiny-font transform-type trap-segfault uniting use-raw-defaults use-sinc-interp verbose-cursor
+		   squelch-update sync temp-dir text-focus-color tiny-font transform-type trap-segfault uniting use-sinc-interp verbose-cursor
 		   vu-font vu-font-size vu-size wavelet-type waving wavo-hop wavo-trace with-mix-tags x-axis-style zero-pad zoom-color zoom-focus-style ))
 
 (if (or full-test (= snd-test 20) (and keep-going (<= snd-test 20)))

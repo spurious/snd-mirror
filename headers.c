@@ -4414,6 +4414,13 @@ void mus_header_set_raw_defaults(int sr, int chn, int frm)
   header_raw_format = frm;
 }
 
+void mus_header_raw_defaults(int *sr, int *chn, int *frm)
+{
+  (*sr) = header_raw_srate;
+  (*chn) = header_raw_chans;
+  (*frm) = header_raw_format;
+}
+
 
 #ifdef MACOS
 

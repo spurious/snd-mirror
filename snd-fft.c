@@ -148,13 +148,13 @@ static fft_window_state *fft_windows[NUM_CACHED_FFT_WINDOWS];
   #define gsl_dht_transform_apply gsl_dht_apply
 #endif
 
-static void hankel_transform(int size, Float *input, Float *output)
+static void hankel_transform(int size, Float *input, Float *output, Float Jn)
 {
   /* args size, bessel limit, xmax */
   gsl_dht_transform *t;
   double *in1, *out1;
   int i;
-  t = gsl_dht_transform_new(size / 2, 0.0, (double)(size / 2));  /* TODO: bring out Jn (0.0 here?) */
+  t = gsl_dht_transform_new(size / 2, Jn, (double)(size / 2));
   if (sizeof(Float) == sizeof(double))
     gsl_dht_transform_apply(t, (double *)input, (double *)output); /* the casts exist only to squelch dumb compiler complaints */
   else
@@ -249,11 +249,11 @@ static void abel (Float *f, Float *g)
   a = atdat->a;
   b0 = atdat->b0;
   b1 = atdat->b1;
-  fi = f[n-1];
+  fi = f[n - 1];
   g[0] = 0.5 * f[0] + fi;
   for (j = 0, sum = 0.0; j < nse; ++j)
     {
-      xi[j] = b1[n-1][j] * fi;
+      xi[j] = b1[n - 1][j] * fi;
       sum += xi[j];
     }
   g[n-1] = sum;
@@ -899,6 +899,7 @@ static int scramble_fft_state(fft_state *fs)
 
 static int snd_fft(fft_state *fs)
 {
+  /* this (re-entrant) fft seemed like a good idea back in the days of the old 24 MHz NeXTs, but now... */
   double wtemp;
   Float vr, vi;
   Float *data;
@@ -1372,7 +1373,7 @@ static int apply_fft_window(fft_state *fs)
 	for (i = data_len; i < fs->size; i++) 
 	  fs->hwin[i] = 0.0;
 #if HAVE_GSL
-      hankel_transform(data_len, fs->hwin, fft_data);
+      hankel_transform(data_len, fs->hwin, fft_data, 0.0);
       result = 5;
 #else
       make_abel_transformer(data_len);
@@ -2470,7 +2471,7 @@ static SCM g_snd_transform(SCM type, SCM data, SCM hint)
     case HANKEL:
 #if HAVE_GSL
       dat = (Float *)CALLOC(v->length, sizeof(Float));
-      hankel_transform(v->length, v->data, dat);
+      hankel_transform(v->length, v->data, dat, 0.0);
       memcpy((void *)(v->data), (void *)dat, (v->length * sizeof(Float)));
       FREE(dat);
 #endif

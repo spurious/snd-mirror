@@ -2,7 +2,7 @@ A list of some things-to-do in Snd (these are some projects that strike
 me as straightforward -- they don't require intimate knowlege of Snd innards).
 
 
-add modules to tie sndlib into Python, Octave, etc (via SWIG?).
+add modules to tie sndlib into Python, Octave etc (via SWIG?).
 fixup the sz.h, sl.h, sr.h files to implement mzscheme, librep, ruby support.
 
 Sawfish connection: it should be possible to send commands to sawfish,
@@ -10,11 +10,6 @@ Sawfish connection: it should be possible to send commands to sawfish,
   that can draw widget backgrounds that grade between colors (as in
   sawfish's title bars) -- it might be neat to have this use the
   current theme.
-
-gtk-html support (and the XmHTML stuff needs to be updated -- it segfaults on extsnd.html).
-Perhaps a better alternative would be the mozilla library -- TestGetEmbed.cpp is
-buildable in Redhat 7 and appears to have everything we need.  Need to check
-their license and so on.
 
 A more direct connection to gmeteor (perhaps using the control-panel filter
   text widget).  use (filter-sound(make-filter ...)).

@@ -4,6 +4,8 @@
  *        map|scan-across-any-chans the same
  *        so all the map|scan funcs are specialized calls of these two
  * TODO: shouldn't temp(s)-to-sound etc use "->"?
+ *         or perhaps file->sound, sound->file, selection->sound, etc? (isn't this set-samples from a file?)
+ *         so the entire set is unneeded?
  */
 
 /* collect syncd chans */

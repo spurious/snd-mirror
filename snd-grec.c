@@ -1030,11 +1030,7 @@ static void make_file_info_pane(snd_state *ss, recorder_info *rp, GtkWidget *fil
   gtk_box_pack_start(GTK_BOX(filebox), file_label, FALSE, FALSE, 0);
   gtk_widget_show(file_label);
 
-  file_text = gtk_entry_new();
-  gtk_entry_set_editable(GTK_ENTRY(file_text), TRUE);
-  gtk_box_pack_start(GTK_BOX(filebox), file_text, TRUE, TRUE, 2);
-  set_background(file_text, (ss->sgx)->white);
-  gtk_widget_show(file_text);
+  file_text = snd_entry_new(ss, filebox, TRUE);
 
   ff_sep3 = gtk_hseparator_new();
   gtk_box_pack_start(GTK_BOX(left_form), ff_sep3, FALSE, FALSE, 8);
@@ -1068,11 +1064,7 @@ static void make_file_info_pane(snd_state *ss, recorder_info *rp, GtkWidget *fil
   gtk_box_pack_start(GTK_BOX(durbox), rec_size_label, FALSE, FALSE, 0);
   gtk_widget_show(rec_size_label);
 
-  rec_size_text = gtk_entry_new();
-  gtk_entry_set_editable(GTK_ENTRY(rec_size_text), TRUE);
-  gtk_box_pack_start(GTK_BOX(durbox), rec_size_text, TRUE, TRUE, 2);
-  set_background(rec_size_text, (ss->sgx)->white);
-  gtk_widget_show(rec_size_text);
+  rec_size_text = snd_entry_new(ss, durbox, TRUE);
   gtk_signal_connect_object(GTK_OBJECT(rec_size_text), "activate", GTK_SIGNAL_FUNC(Rec_Size_Changed_Callback), (GtkObject *)ss);
   mus_snprintf(timbuf, TIME_STR_SIZE, "%d", rp->buffer_size);
   gtk_entry_set_text(GTK_ENTRY(rec_size_text), timbuf);

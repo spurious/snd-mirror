@@ -395,33 +395,21 @@ GtkWidget *make_mix_panel(snd_state *ss)
       gtk_box_pack_start(GTK_BOX(rc), w_id_label, FALSE, FALSE, 4);
       gtk_widget_show(w_id_label);
 
-      w_id = gtk_entry_new();  /* min entry width is 150!!! */
+      w_id = snd_entry_new(ss, rc, FALSE);  /* min entry width is 150!!! */
       gtk_signal_connect(GTK_OBJECT(w_id), "activate", GTK_SIGNAL_FUNC(id_activated), (gpointer)ss);
-      gtk_entry_set_editable(GTK_ENTRY(w_id), TRUE);
-      gtk_box_pack_start(GTK_BOX(rc), w_id, TRUE, TRUE, 2);
-      gtk_widget_show(w_id);
 
-      w_name = gtk_entry_new();
+      w_name = snd_entry_new(ss, rc, FALSE);
       gtk_signal_connect(GTK_OBJECT(w_name), "activate", GTK_SIGNAL_FUNC(name_activated), (gpointer)ss);
-      gtk_entry_set_editable(GTK_ENTRY(w_name), TRUE);
-      gtk_box_pack_start(GTK_BOX(rc), w_name, TRUE, TRUE, 2);
-      gtk_widget_show(w_name);
 
-      w_beg = gtk_entry_new();
+      w_beg = snd_entry_new(ss, rc, FALSE);
       gtk_signal_connect(GTK_OBJECT(w_beg), "activate", GTK_SIGNAL_FUNC(beg_activated), (gpointer)ss);
-      gtk_entry_set_editable(GTK_ENTRY(w_beg), TRUE);
-      gtk_box_pack_start(GTK_BOX(rc), w_beg, TRUE, TRUE, 2);
-      gtk_widget_show(w_beg);
 
       w_track_label = gtk_label_new("track:");
       gtk_box_pack_start(GTK_BOX(rc), w_track_label, FALSE, FALSE, 4);
       gtk_widget_show(w_track_label);
 
-      w_track = gtk_entry_new();
+      w_track = snd_entry_new(ss, rc, FALSE);
       gtk_signal_connect(GTK_OBJECT(w_track), "activate", GTK_SIGNAL_FUNC(track_activated), (gpointer)ss);
-      gtk_entry_set_editable(GTK_ENTRY(w_track), TRUE);
-      gtk_box_pack_start(GTK_BOX(rc), w_track, TRUE, TRUE, 2);
-      gtk_widget_show(w_track);
 
       w_play = gtk_button_new();
       gtk_box_pack_start(GTK_BOX(rc), w_play, FALSE, FALSE, 2);

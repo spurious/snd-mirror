@@ -380,7 +380,6 @@ void snd_doit(snd_state *ss, int argc, char **argv)
   ss->init_file = getenv(SND_INIT_FILE_ENVIRONMENT_NAME);
   if (ss->init_file == NULL)
     ss->init_file = INIT_FILE_NAME;
-  ss->Use_Raw_Defaults = TRUE;
 
 #if HAVE_GUILE
   EVAL_STRING("(set! scm-repl-prompt \"snd> \")");

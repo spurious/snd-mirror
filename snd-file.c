@@ -84,14 +84,8 @@ file_info *make_file_info_1(char *fullname, snd_state *ss)
   hdr = (file_info *)CALLOC(1, sizeof(file_info));
   hdr->name = copy_string(fullname);
   hdr->type = mus_sound_header_type(fullname);
-  if ((hdr->type == MUS_RAW) && 
-      (use_raw_defaults(ss)))
-    {
-      hdr->srate = raw_srate(ss);
-      hdr->format = raw_format(ss);
-      hdr->chans = raw_chans(ss);
-      mus_header_set_raw_defaults(raw_srate(ss), raw_chans(ss), raw_format(ss));
-    }
+  if (hdr->type == MUS_RAW)
+    mus_header_raw_defaults(&(hdr->srate), &(hdr->chans), &(hdr->format));
   else
     {
       hdr->srate = mus_sound_srate(fullname);
@@ -219,6 +213,19 @@ file_info *make_file_info(char *fullname, snd_state *ss)
 	  SCM res = SCM_LIST0;
 	  SCM procs, arg1;
 	  int len, srate, chans, data_format, data_location, bytes;
+
+	  if (ss->reloading_updated_file)
+	    {
+	      /* choices already made, so just send back a header that reflects those choices */
+	      if (mus_file_probe(fullname))
+		return(make_file_info_1(fullname, ss));
+	      else
+		{
+		  snd_error("can't find raw (headerless) file %s: %s",
+			    fullname, strerror(errno));
+		  return(NULL);
+		}
+	    }
 	  if (HOOKED(open_raw_sound_hook))
 	    {
 	      procs = SCM_HOOK_PROCEDURES (open_raw_sound_hook);
@@ -231,9 +238,10 @@ file_info *make_file_info(char *fullname, snd_state *ss)
 	      if ((LIST_P_WITH_LENGTH(res, len)) && 
 		  (len > 0))
 		{
+		  mus_header_raw_defaults(&srate, &chans, &data_format);
 		  chans = TO_C_INT(SCM_CAR(res));
-		  if (len > 1) srate = TO_C_INT(SCM_CADR(res)); else srate = raw_srate(ss);
-		  if (len > 2) data_format = TO_C_INT(LIST_REF(res, 2)); else data_format = raw_format(ss);
+		  if (len > 1) srate = TO_C_INT(SCM_CADR(res));
+		  if (len > 2) data_format = TO_C_INT(LIST_REF(res, 2));
 		  if (len > 3) data_location = TO_C_INT(LIST_REF(res, 3)); else data_location = 0;
 		  if (len > 4) bytes = TO_C_INT(LIST_REF(res, 4)); else bytes = mus_sound_length(fullname);
 		  mus_header_set_raw_defaults(srate, chans, data_format);
@@ -249,18 +257,6 @@ file_info *make_file_info(char *fullname, snd_state *ss)
 		  hdr->data_location = mus_sound_data_location(fullname);
 		  hdr->comment = NULL;
 		  return(hdr);
-		}
-	    }
-	  if (use_raw_defaults(ss))
-	    {
-	      /* choices already made, so just send back a header that reflects those choices */
-	      if (mus_file_probe(fullname))
-		return(make_file_info_1(fullname, ss));
-	      else
-		{
-		  snd_error("can't find raw (headerless) file %s: %s",
-			    fullname, strerror(errno));
-		  return(NULL);
 		}
 	    }
 #if (!USE_NO_GUI)
@@ -825,7 +821,6 @@ static snd_info *snd_update_1(snd_state *ss, snd_info *sp, char *ur_filename)
   Float *axis_data;
   int *ffts, *waves;
   int i, j, old_chans, old_sync, old_combine, need_update;
-  int raw_def;
   Float duration;
   chan_info *cp;
   axis_info *ap;
@@ -856,10 +851,9 @@ static snd_info *snd_update_1(snd_state *ss, snd_info *sp, char *ur_filename)
   /* if it's a raw sound file being updated, we don't want to re-confirm the sound format and whatnot
    * so we set the use-raw-defaults flag in a sort of ugly wrapper around the snd_open_file
    */
-  raw_def = use_raw_defaults(ss);
-  set_use_raw_defaults(ss, 1);
+  ss->reloading_updated_file = TRUE;
   nsp = snd_open_file(filename, ss);
-  set_use_raw_defaults(ss, raw_def);
+  ss->reloading_updated_file = FALSE;
   /* end wrapper */
   duration = (Float)mus_sound_samples(filename) / (Float)(mus_sound_chans(filename) * mus_sound_srate(filename));
   for (i = 0, j = 0; i < nsp->nchans; i++)

@@ -112,12 +112,8 @@ void Edit_Find_Callback(GtkWidget *w, gpointer context)
       gtk_box_pack_start(GTK_BOX(rc), dl, FALSE, FALSE, 4);
       gtk_widget_show(dl);
 
-      edit_find_text = gtk_entry_new();
-      gtk_entry_set_editable(GTK_ENTRY(edit_find_text), TRUE);
+      edit_find_text = snd_entry_new(ss, rc, TRUE);
       gtk_signal_connect(GTK_OBJECT(edit_find_text), "activate", GTK_SIGNAL_FUNC(edit_find_next), (gpointer)ss);
-      set_background(edit_find_text, (ss->sgx)->white);
-      gtk_box_pack_start(GTK_BOX(rc), edit_find_text, TRUE, TRUE, 4);
-      gtk_widget_show(edit_find_text);
       
       edit_find_label = gtk_label_new(STR_global_search);
       gtk_box_pack_end(GTK_BOX(GTK_DIALOG(edit_find_dialog)->vbox), edit_find_label, FALSE, FALSE, 4);

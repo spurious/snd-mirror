@@ -27,8 +27,8 @@
 
 
 #define SNDLIB_VERSION 12
-#define SNDLIB_REVISION 28
-#define SNDLIB_DATE "19-May-01"
+#define SNDLIB_REVISION 29
+#define SNDLIB_DATE "21-May-01"
 
 /* try to figure out what type of machine (and in worst case, what OS) we're running on */
 
@@ -567,6 +567,7 @@ int mus_header_mark_position        PROTO((int id));
 int mus_header_base_note            PROTO((void));
 int mus_header_base_detune          PROTO((void));
 void mus_header_set_raw_defaults    PROTO((int sr, int chn, int frm));
+void mus_header_raw_defaults        PROTO((int *sr, int *chn, int *frm));
 int mus_header_true_length          PROTO((void));
 int mus_header_original_format      PROTO((void));
 int mus_header_data_format_to_bytes_per_sample PROTO((void));

@@ -37,7 +37,7 @@
 
 #define TINY_FONT "6x12"
 
-/* we assume later that we can always find these fonts (if resource file gives bogus entry, we fall back on these) */
+/* we assume later that we can always find these fonts */
 
 #define DEFAULT_BUTTON_FONT "-*-times-medium-r-*-*-14-*-*-*-*-*-iso8859-1"
 #define DEFAULT_BOLD_BUTTON_FONT "-*-times-bold-r-*-*-14-*-*-*-*-*-iso8859-1"
@@ -640,6 +640,7 @@ static SCM g_parse_rc_file(SCM name)
     gtk_rc_parse(TO_C_STRING(name));
   ss = get_global_state();
   ss->using_schemes = TRUE;
+  /* TODO: it seems we should check this flag throughout, as in Motif */
   return(SCM_BOOL_F);
 }
 

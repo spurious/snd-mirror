@@ -145,12 +145,8 @@ void File_Print_Callback(GtkWidget *w, gpointer context)
       gtk_box_pack_start(GTK_BOX(epsbox), epslabel, FALSE, FALSE, 2);
       gtk_widget_show(epslabel);
       
-      file_print_name = gtk_entry_new();
-      gtk_entry_set_editable(GTK_ENTRY(file_print_name), TRUE);
-      gtk_box_pack_start(GTK_BOX(epsbox), file_print_name, TRUE, TRUE, 2);
-      set_background(file_print_name, (ss->sgx)->white);
+      file_print_name = snd_entry_new(ss, epsbox, TRUE);
       gtk_entry_set_text(GTK_ENTRY(file_print_name), eps_file(ss));
-      gtk_widget_show(file_print_name);
 
       file_print_eps_or_lpr = gtk_check_button_new_with_label(STR_direct_to_printer);
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(file_print_dialog)->vbox), file_print_eps_or_lpr, FALSE, FALSE, 6);

@@ -228,6 +228,7 @@ enum {WAVE_AXIS_INFO, FFT_AXIS_INFO, LISP_AXIS_INFO};
 enum {COLOR_POSITION, COLOR_ZOOM};
 
 #define DEFAULT_MIN_DB -60.0
+#define DEFAULT_HANKEL_JN 0.0
 #define DEFAULT_AMP 1.0
 #define DEFAULT_CONTRAST 0.0
 #define DEFAULT_CONTRAST_AMP 1.0
@@ -610,21 +611,6 @@ enum {COLOR_POSITION, COLOR_ZOOM};
 #define listener_prompt(ss) ss->Listener_Prompt
 #define set_listener_prompt(ss, a) ss->Listener_Prompt = a
 #define DEFAULT_LISTENER_PROMPT ">"
-
-#define raw_srate(ss) ss->Raw_Srate
-#define set_raw_srate(ss, a) ss->Raw_Srate = a
-#define DEFAULT_RAW_SRATE 44100
-
-#define raw_chans(ss) ss->Raw_Chans
-#define set_raw_chans(ss, a) ss->Raw_Chans = a
-#define DEFAULT_RAW_CHANS 1
-
-#define raw_format(ss) ss->Raw_Format
-#define set_raw_format(ss, a) ss->Raw_Format = a
-
-#define use_raw_defaults(ss) ss->Use_Raw_Defaults
-#define set_use_raw_defaults(ss, a) ss->Use_Raw_Defaults = a
-#define DEFAULT_USE_RAW_DEFAULTS 0
 
 #define use_sinc_interp(ss) ss->Use_Sinc_Interp
 #define set_use_sinc_interp(ss, a) ss->Use_Sinc_Interp = a

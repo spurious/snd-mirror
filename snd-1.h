@@ -276,7 +276,7 @@ typedef struct snd__state {
   snd_info *mx_sp;
   char *pending_change;
   int print_choice, apply_choice, just_time, memory_available;
-  int stopped_explicitly, checking_explicitly;
+  int stopped_explicitly, checking_explicitly, reloading_updated_file;
   int result_printout, listening;
   Latus init_window_width, init_window_height;
   Locus init_window_x, init_window_y;
@@ -310,13 +310,13 @@ typedef struct snd__state {
   int Color_Inverted, Speed_Style, Movies, Normalize_Fft, Show_Mix_Waveforms, Mix_Waveform_Height, Fit_Data_On_Open;
   int Speed_Tones, Sinc_Width, X_Axis_Style, Zoom_Focus_Style, Save_State_On_Exit, Graph_Style;
   int Normalize_On_Open, Auto_Resize, Auto_Update, Max_Regions, Max_Fft_Peaks;
-  int Raw_Srate, Raw_Chans, Raw_Format, Use_Raw_Defaults, Audio_Output_Device, Audio_Input_Device, Show_Backtrace;
+  int Audio_Output_Device, Audio_Input_Device, Show_Backtrace;
   int Print_Length, Dac_Size, Dac_Folding, Previous_Files_Sort, Show_Selection_Transform, With_Mix_Tags, Selection_Creates_Region;
   char *Save_State_File, *Listener_Prompt;
   Float Enved_Base, Enved_Power, Corruption_Time;
   int Enved_Clipping, Enved_Exping, Enved_Target, Enved_Waving, Enved_dBing, Prefix_Arg, Graphs_Horizontal;
   int Graph_Cursor, Use_Sinc_Interp, Data_Clipped, Show_Indices, Mix_Tag_Width, Mix_Tag_Height, Minibuffer_History_Length;
-  Float min_dB, lin_dB;
+  Float min_dB, lin_dB, Hankel_Jn;
 #if HAVE_HTML
   int HTML_Width, HTML_Height;
   char *HTML_Dir, *HTML_Font_Size_List, *HTML_Fixed_Font_Size_List;

@@ -213,6 +213,9 @@ char *version_info(void)
 	  "\n    XmHTML ", itoa[5] = snd_itoa(XmHTMLVERSION), ".", 
                            itoa[6] = snd_itoa(XmHTMLREVISION), ".", 
                            itoa[7] = snd_itoa(XmHTMLUPDATE_LEVEL),
+  #else
+	  "\n,   with mozilla browser",
+	  /* TODO: find a version number for this thing */
   #endif
 #endif
 #if ((HAVE_XPM) && (defined(USE_MOTIF)))
@@ -264,7 +267,11 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
-21-May:  snd 4.14.\n\
+21-May:  Gtk version can now use the mozilla embedded browser for the help dialog.\n\
+         hankel-jn (default 0.0) for Bessel choice in Hankel transform.\n\
+         removed raw-srate, raw-chans, raw-format, and use-raw-defaults (use open-raw-sound-hook instead).\n\
+         mouse-enter|leave-text-hook now works in Gtk version as well as Motif.\n\
+20-May:  snd 4.14.\n\
 9-May:   support for GSL 0.7+\n\
 7-May:   added edit-position arg to various play functions, save-sound-as,\n\
            scan/map/find funcs, frames and maxamps.\n\
