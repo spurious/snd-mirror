@@ -1,10 +1,15 @@
 #!
 
+eval-c.scm
+-Kjetil S. Matheussen/Notam, 2005
+
+eval-c.scm is developed with support from Notam/Oslo:
+http://www.notam02.no
+
 
 This is code to evaluate prefix-notated C-code on the fly with guile.
-See gui.scm and ladspa.scm for examples of use.
-
-Kjetil Matheussen, 20.12.2004
+See gui.scm, ladspa.scm, rt-compile.scm, rt-engine.scm and snd_conffile.scm
+or examples of use.
 
 
 
@@ -73,7 +78,7 @@ The "public" macro will change the code so that it looks something like this:
 	 (scm_c_define_gsubr (string "fib") 1 0 0 fib_eval_c_helper)))
 
 
-And after running the "lambda", "if", "<", "+", "-", "string" and "run-now" macros (most of eval-c is defined
+And after running the "lambda", "if", "<", "+", "-", "run-now" and "string" macros (most of eval-c is defined
 as macros), eval-c will produce and run the following c-code:
 
 static int fib (int n){
@@ -130,15 +135,17 @@ Usually just "", but can be "-lsnd" or something if needed.
 (provide 'snd-eval-c.scm)
 
 
+(if (not (provided? 'snd-oo.scm)) (load-from-path "oo.scm"))
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;; Public variables ;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(define eval-c-verbose #f)
+(define eval-c-verbose #t)
 (define eval-c-very-verbose #f)
-(define eval-c-cleanup #t)
-
+(define eval-c-cleanup #f)
+(define eval-c-string-is-pointer #f)
 
 
 
@@ -154,7 +161,9 @@ Usually just "", but can be "-lsnd" or something if needed.
 	   (>= (string->number (minor-version)) 7))))
 
 (define (c-butlast l)
-  (reverse! (cdr (reverse l))))
+  (if (null? l)
+      l
+      (reverse! (cdr (reverse l)))))
 
 (define (c-for-each func . lists)
   (let ((n 0))
@@ -207,7 +216,9 @@ Usually just "", but can be "-lsnd" or something if needed.
 (define eval-c-void-types (list "void"))
 (define eval-c-string-types (list "char *" "char*" "gchar*" "char *"))
 (define eval-c-int-types (list "int" "long" "short" "char" "gint" "size_t"))
-(define eval-c-float-types (list "float" "double"))
+(define eval-c-float-types (list "float"))
+(define eval-c-double-types (list "double"))
+
 
 ;; etype: '<static-int>
 ;; ctype: "static int"
@@ -290,9 +301,11 @@ Usually just "", but can be "-lsnd" or something if needed.
 (define (eval-c-to-scm das-type)
   (let ((type (eval-c-strip-qualifiers das-type)))
     (cond ((member type eval-c-void-types) "UNSPECIFIED")
-	  ((member type eval-c-string-types) "STRING")
+	  ((and (not eval-c-string-is-pointer) (member type eval-c-string-types) "STRING"))
 	  ((member type eval-c-int-types) "INTEGER")
-	  ((member type eval-c-float-types) "DOUBLE")
+	  ((member type eval-c-float-types) "FLOAT")
+	  ((member type eval-c-double-types) "DOUBLE")
+	  ((string=? type "SCM") "SCM")
 	  (else
 	   "POINTER"))))
 
@@ -304,10 +317,34 @@ Usually just "", but can be "-lsnd" or something if needed.
   (set! eval-c-int-types (cons type eval-c-int-types)))
 (define (eval-c-add-float-type type)
   (set! eval-c-float-types (cons type eval-c-float-types)))
+(define (eval-c-add-double-type type)
+  (set! eval-c-double-types (cons type eval-c-double-types)))
 
+
+(define (eval-c-get-known-type type)
+  (cadr (member (eval-c-to-scm (eval-c-etype->ctype type))
+		`("UNSPECIFIED" <void>
+		  "STRING" <char-*>
+		  "INTEGER" <int>
+		  "FLOAT" <float>
+		  "DOUBLE" <double>
+		  "POINTER" <void-*>))))
 
 #!
 (eval-c-to-scm "        static  const unsigned char   *")
+(eval-c-to-scm '<static-const-char-*>)
+(eval-c-to-scm "int")
+!#
+
+(define (eval-c-get-*type etype)
+  (let ((ctype (string-trim-both (eval-c-etype->ctype etype))))
+    (if (char=? #\* (last (string->list ctype)))
+	(eval-c-ctype->etype (string-trim-both (list->string (c-butlast (string->list ctype)))))
+	etype)))
+
+#!
+(eval-c-get-*type '<--int-*->)
+(eval-c-etype->ctype '<char-*>)
 !#
 
 (define (eval-c-cify-var das-var)
@@ -352,18 +389,17 @@ Usually just "", but can be "-lsnd" or something if needed.
 
 
 
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;; Structures ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define eval-c-structlist '())
 
-(define (eval-c-addstruct name varlist)
+(define (eval-c-add-struct name varlist)
   (set! eval-c-structlist (cons (cons (c-tosymbol name) varlist)
 				eval-c-structlist)))
 
-(define (eval-c-getstruct name)
+(define (eval-c-get-struct name)
   (let ((struct (assq (c-tosymbol name) eval-c-structlist)))
     (if struct
 	(cdr struct)
@@ -457,7 +493,6 @@ Usually just "", but can be "-lsnd" or something if needed.
 (define eval-c-typelist '())
 
 (define (eval-c-puttype name type)
-  ;;(c-display "puttype, name: " name ", " type)
   (set! eval-c-typelist (cons (cons (c-tosymbol name) type) eval-c-typelist)))
 
 
@@ -493,18 +528,18 @@ Usually just "", but can be "-lsnd" or something if needed.
   (let ((varnamelist (eval-c-get-structlist name)))
 
     (define (rec struct varnamelist)
-      ;;(c-display "rec: " struct " " varnamelist)
+      (c-display "rec: " struct " " varnamelist)
       (let ((firstelem (eval-c-get-structlisttype struct (car varnamelist))))
-	;;(c-display "firstelem: " firstelem)
+	(c-display "firstelem: " firstelem)
 	(if (= (length varnamelist) 1)
 	    firstelem
-	    (rec (eval-c-getstruct firstelem) (cdr varnamelist)))))
+	    (rec (eval-c-get-struct firstelem) (cdr varnamelist)))))
     
-    ;;(c-display varnamelist)
+    (c-display varnamelist)
     (let ((start (assq (c-tosymbol (car varnamelist)) eval-c-typelist)))
       (if start
 	  (if (> (length varnamelist) 1)
-	      (rec (eval-c-getstruct (eval-c-getfulltype (car varnamelist))) (cdr varnamelist))
+	      (rec (eval-c-get-struct (eval-c-getfulltype (car varnamelist))) (cdr varnamelist))
 	      (cdr start))
 	  '<undefined_t>))))
 
@@ -520,11 +555,11 @@ Usually just "", but can be "-lsnd" or something if needed.
 
 
 #!
-(eval-c-addstruct '<struct-struct1> '((a <int>)
+(eval-c-add-struct '<struct-struct1> '((a <int>)
 				      (b <int>)))
-(eval-c-addstruct '<struct-struct2> '((c <struct-struct1> *)
+(eval-c-add-struct '<struct-struct2> '((c <struct-struct1> *)
 				      (d <int>)))
-(define a (eval-c-getstruct '<struct-struct2>))
+(define a (eval-c-get-struct '<struct-struct2>))
 (eval-c-get-structlistelem a 'c)
 (eval-c-get-structlisttype a 'c)
 (eval-c-puttype 'a '<struct-struct2>)
@@ -621,21 +656,26 @@ Usually just "", but can be "-lsnd" or something if needed.
 					  varname)
 				      type)
 
-		      (if (and (= (length term) 3)
-			       (or (not (list? (caddr term)))
-				   (not (eq? 'lambda (caaddr term)))))
-			  
-			  ;; (<int> a 5)
+		      (if (= (length term) 2)
+			  ;; (<int> a)
 			  (<-> (eval-c-get-propertype type)
-			       (eval-c-parse (eval-c-cify-var varname))
-			       " = "
-			       (eval-c-parse (caddr term)))
-			  
-			  ;; (<int> a (lambda ...)) or (<int> a) (or?)
-			  (apply <-> (map eval-c-parse (cons (eval-c-get-propertype type)
-							     (cons (eval-c-cify-var varname)
-								   (cddr term)))))))))))))))
+			       (eval-c-parse varname))
 
+			  (if (and (= (length term) 3)
+				   (or (not (list? (caddr term)))
+				       (not (eq? 'lambda (caaddr term)))))
+			  
+			      ;; (<int> a 5)
+			      (<-> (eval-c-get-propertype type)
+				   (eval-c-parse varname)
+				   " = "
+				   (eval-c-parse (caddr term)))
+			  
+			      ;; (<int> a (lambda ...))
+			      (apply <-> (map eval-c-parse (cons (eval-c-get-propertype type)
+								 (cons (eval-c-cify-var varname)
+								       (cddr term))))))))))))))))
+  
 #!
 (eval-c-parse '(<int> (define (ai (<int> avar)) (return 2))))
 (eval-c-parse '(<int> ai (lambda () (return 2))))
@@ -667,57 +707,67 @@ Usually just "", but can be "-lsnd" or something if needed.
   `(define-macro ,(cons (symbol-append eval-c-macro-prefix (car def)) (cdr def)) ,@body))
 
 
+(define-c-macro (set!-string-is-pointer-#t)
+  (set! eval-c-string-is-pointer #t)
+  "")
+
+(define-c-macro (set!-string-is-pointer-#f)
+  (set! eval-c-string-is-pointer #f)
+  "")
 
 (define-c-macro (if a b . c)
   (if (null? c)
       `(<if> "(" ,a ")" #\newline
-	     ,b)
+	     (begin ,b))
+;;	     "do{" ,b "}while(0);" )
       `(<if> "(" ,a ")" #\newline
-	     ,b ";" #\newline
+	     (begin ,b) "" #\newline
 	     else #\newline
 	     ,(car c))))
 
+(define-c-macro (?kolon a b c)
+  (<-> "("
+       (eval-c-parse a)
+       "?"
+       (eval-c-parse b)
+       ":"
+       (eval-c-parse c)
+       ")"))
+
+(define-c-macro (begin_p . rest)
+  (<-> "("
+       (eval-c-parse (car rest))
+       (apply <-> (map (lambda (t)
+			 (<-> "," (eval-c-parse t)))
+		       (cdr rest)))
+       ")"))
+			 
+		 
+(define-c-macro (MIN a b)
+  `(EC_MIN ,a ,b))
+
+(define-c-macro (MAX a b)
+  `(EC_MAX ,a ,b))
 
 
-(define (eval-c-gen-inbetweens op rest)
-  (let ((opstring (symbol->string op)))
-    (apply <-> (append (list "(")
-		       (list (eval-c-parse (car rest)))
-		       (map (lambda (x) (<-> opstring " " (eval-c-parse x) " ")) (cdr rest))
-		       (list ")")))))
+(for-each (lambda (op)
+	    (let ((opstring (symbol->string op)))
+	      (primitive-eval 
+	       `(define-c-macro (,op . rest)
+		  (if (= 1 (length rest))
+		      (<-> "( " ,opstring (eval-c-parse (car rest)) ")")
+		      (apply <-> (append (list "(")
+					 (list (eval-c-parse (car rest)))
+					 (map (lambda (x) (<-> ,opstring " " (eval-c-parse x) " ")) (cdr rest))
+					 (list ") "))))))))
+	  '(+ - * / | % & ~ == != < > <= >= || && += -= /= *= |= &= >> <<))
 
-(define-c-macro (+ . rest)
-  (eval-c-gen-inbetweens '+ rest))
-(define-c-macro (- . rest)
-  (eval-c-gen-inbetweens '- rest))
-(define-c-macro (* . rest)
-  (eval-c-gen-inbetweens '* rest))
-(define-c-macro (/ . rest)
-  (eval-c-gen-inbetweens '/ rest))
-(define-c-macro (| . rest)
-  (eval-c-gen-inbetweens '| rest))
-(define-c-macro (% . rest)
-  (eval-c-gen-inbetweens '% rest))
-(define-c-macro (& . rest)
-  (eval-c-gen-inbetweens '& rest))
-(define-c-macro (~ . rest)
-  (eval-c-gen-inbetweens '~ rest))
-(define-c-macro (== . rest)
-  (eval-c-gen-inbetweens '== rest))
-(define-c-macro (!= . rest)
-  (eval-c-gen-inbetweens '!= rest))
-(define-c-macro (< . rest)
-  (eval-c-gen-inbetweens '< rest))
-(define-c-macro (> . rest)
-  (eval-c-gen-inbetweens '> rest))
-(define-c-macro (<= . rest)
-  (eval-c-gen-inbetweens '<= rest))
-(define-c-macro (>= . rest)
-  (eval-c-gen-inbetweens '>= rest))
-(define-c-macro (|| . rest)
-  (eval-c-gen-inbetweens '|| rest))
-(define-c-macro (&& . rest)
-  (eval-c-gen-inbetweens '&& rest))
+
+(define-c-macro (= . rest)
+  (c-display "\n\nError. \"=\" is not a valid eval-c function or operator. (Perhaps you ment \"==\" or \"set!\"?):\n")
+  (display (cons '= rest))
+  (newline)(newline))
+
 
 (define-c-macro (begin . body)
   (eval-c-uplevel)
@@ -729,13 +779,17 @@ Usually just "", but can be "-lsnd" or something if needed.
 
 
 (define (eval-c-cond->if terms)
+  (c-display "terms:" terms)
   (let ((term (car terms)))
     (if (and (symbol? (car term))
 	     (eq? 'else (car term)))
 	(cons 'begin (cdr term))
-	(list 'if (car term)
-	      (append (list 'begin) (cdr term))
-	      (eval-c-cond->if (cdr terms))))))
+	(if (not (null? (cdr terms)))
+	    (list 'if (car term)
+		  (append (list 'begin) (cdr term))
+		  (eval-c-cond->if (cdr terms)))
+	    (list 'if (car term)
+		  (append (list 'begin) (cdr term)))))))
 	      
 	    
 
@@ -743,8 +797,7 @@ Usually just "", but can be "-lsnd" or something if needed.
   (eval-c-cond->if terms))
 
 
-(define (eval-c-structure structname cname rest)
-  ;;(c-display rest)
+(define (eval-c-listify-struct rest)
   (let ((das-map '())
 	(even #f))
     (define (nest rest)
@@ -761,13 +814,19 @@ Usually just "", but can be "-lsnd" or something if needed.
 		(set! even a))
 	    (nest (cdr rest)))))
     (nest rest)
-    (set! das-map (reverse! das-map))
-    (eval-c-addstruct structname
-		      (map (lambda (a)
-			     (if (= 3 (length a))
-				 (list (caddr a) (car a) (cadr a))
-				 (list (cadr a) (car a))))
-			   das-map))
+    (reverse! das-map)))
+
+
+(define* (eval-c-structure structname cname rest #:optional (do-add-struct #t))
+  (c-display "rest: " rest)
+  (let ((das-map (eval-c-listify-struct rest)))
+    (if do-add-struct
+	(eval-c-add-struct structname
+			   (map (lambda (a)
+				  (if (= 3 (length a))
+				      (list (caddr a) (car a) (cadr a))
+				      (list (cadr a) (car a))))
+				das-map)))
     (<-> "struct " cname
 	 " {\n"
 	 (apply <->
@@ -782,21 +841,67 @@ Usually just "", but can be "-lsnd" or something if needed.
 		     das-map))
 	 "}")))
 
-(define-c-macro (define-struct name . rest)
+
+(define* (eval-c-define-struct name rest #:optional (do-add-struct #t))
+  (c-display "ec-def-str,rest " rest)
   (eval-c-structure (<-> "<struct-" (string-trim-right (eval-c-get-propertype name)) ">")
 		    (eval-c-parse (eval-c-get-propertype name))
-		    rest))
+		    rest
+		    do-add-struct))
+
+(define-c-macro (define-struct name . rest)
+  (eval-c-define-struct name rest))
+
+(define-c-macro (shared-struct structname)
+  (eval-c-define-struct structname
+			(apply append (map (lambda (def)
+					     (if (= 3 (length def))
+						 (list (cadr def)
+						       (caddr def)
+						       (car def))
+						 (list (cadr def)
+						       (car def))))
+					   (let ((das-struct (eval-c-get-struct (symbol-append '<struct- (string->symbol
+													  (list->string
+													   (cdr
+													    (string->list
+													     (symbol->string
+													      structname)))))))))
+					     (if (not das-struct)
+						 (c-display "\n\nError. struct \"" structname "\" not found.\n\n"))
+					     das-struct)))
+			#f))
+
+(define-c-macro (shared-struct-but-only-known-types structname)
+  (eval-c-define-struct structname
+			(apply append (map (lambda (def)
+					       (if (= 3 (length def))
+						   (list '<void-*>
+							 (car def))
+						   (list (eval-c-get-known-type (cadr def))
+							 (car def))))
+					   (eval-c-get-struct (symbol-append '<struct- (string->symbol
+											(list->string
+											 (cdr
+											  (string->list
+											   (symbol->string
+											    structname)))))))))
+			#f))
 
 #!
+
+(eval-c-to-scm (eval-c-etype->ctype '<int>))
 (eval-c-macro-result
  '(define-struct <gakk>
     <int> a
     <int> b
     <char-*> c
     <struct-gakk> * d))
+(eval-c-macro-result '(shared-struct <gakk>))
+(eval-c-macro-result '(shared-struct-but-only-known-types <gakk>))
 (set! eval-c-typelist '())
 (begin eval-c-typelist)
-(eval-c-getstruct '<struct-gakk>)
+(eval-c-get-struct '<struct-gakk>)
 (set! eval-c-structlist '())
 (begin eval-c-structlist)
 (eval-c-puttype 'a '<struct-gakk>)
@@ -1112,23 +1217,44 @@ But, perhaps that last one shouldn't be allowed to work.
 	 (funcname (eval-c-cify-var funcname_org))
 	 (helperfuncname (<-> (symbol->string funcname) "_eval_c_helper"))
 	 (parameters (cadr (caddr term)))
-	 (rettype (car term)))
+	 (rettype (car term))
+	 (i 0)
+	 (types (map (lambda (var)
+		       (list (eval-c-to-scm
+			      (string-trim-right
+			       (eval-c-get-propertype
+				(car var))))
+			     (cadr var)))
+		     parameters)))
     `((<SCM> ,helperfuncname (lambda ,(map (lambda (var) (list '<SCM> (cadr var)))
-						  parameters)
-				      (,(let ((ret-scm (eval-c-to-scm (string-trim-right (eval-c-get-propertype rettype)))))
-					  (cond ((string=? "UNSPECIFIED" ret-scm) 'RETURN_UNSPECIFIED)
-						((string=? "POINTER" ret-scm) 'RETURN_POINTER)
-						((string=? "STRING" ret-scm) 'RETURN_STRING)
-						(else
-						 (<-> "return MAKE_" ret-scm))))
-				       (,funcname ,@(map (lambda (var)
-							   (list (string->symbol (<-> "GET_" 
-										      (eval-c-to-scm
-										       (string-trim-right
-											(eval-c-get-propertype
-											 (car var))))))
-								 (cadr var)))
-							 parameters)))))
+					   parameters)
+			       ,@(map-in-order (lambda (das-type)
+						 (let* ((type (car das-type))
+							(name (cadr das-type)))
+						   (cond ((string=? "UNSPECIFIED" type)
+							  (c-display "\n\nError! eval-c.scm/eval-c-gen-public-func: Strange type for " das-type "\n\n"))
+							 ((string=? "SCM" type) "/* */")
+							 (else
+							  `(SCM_ASSERT ,(cond ((string=? "STRING" type) `(|| (scm_is_false ,name) (XEN_STRING_P ,name)))
+									      ((string=? "POINTER" type) `(POINTER_P ,name))
+									      ((string=? "INTEGER" type) `(== SCM_BOOL_T (scm_number_p ,name)))
+									      ((string=? "FLOAT" type) `(== SCM_BOOL_T (scm_number_p ,name)))
+									      ((string=? "DOUBLE" type) `(== SCM_BOOL_T (scm_number_p ,name)))
+									      (else (c-display "\n\nError! eval.cscm/eval-c-gen-public-func: What?\n\n")))
+								       ,name
+								       ,(let ((ret i)) (set! i (1+ i)) ret)
+								       (string ,type))))))
+					       types)
+			       (,(let ((ret-scm (eval-c-to-scm (string-trim-right (eval-c-get-propertype rettype)))))
+ 				   (cond ((string=? "UNSPECIFIED" ret-scm) 'RETURN_UNSPECIFIED)
+					 ((string=? "POINTER" ret-scm) 'RETURN_POINTER)
+					 ((string=? "STRING" ret-scm) 'RETURN_STRING)
+					 (else
+					  (<-> "return MAKE_" ret-scm))))
+				(,funcname ,@(map (lambda (type)
+						    (list (string->symbol (<-> "GET_" (car type)))
+							  (cadr type)))
+						  types)))))
       (run-now
        (scm_c_define_gsubr (string ,(if publicname publicname funcname_org)) ,(length parameters) 0 0 ,helperfuncname)))))
 
@@ -1144,7 +1270,15 @@ But, perhaps that last one shouldn't be allowed to work.
 	      body)
     (eval-c-parse-lines newbody)))
 
-
+#!
+(eval-c-parse '(public (<int> a (lambda ((<int> b) (<char-*> c) (<void-*> d) (<float> e))
+				  (return 5)))))
+(eval-c ""
+	(public
+	 (<void> as (lambda ((<void-*> a))
+		      (printf (string ("still here\\n")))))))
+(as (list "A_POINTER" 1112607200))
+!#
 
 (define eval-c-get-unique-name
   (let ((num 0))
@@ -1153,7 +1287,7 @@ But, perhaps that last one shouldn't be allowed to work.
       (<-> "unique_name_" (number->string num)))))
 
 (define (eval-c-proto->public funcdef)
-  ;;(c-display "funcdef: -" funcdef "-")
+  (c-display "funcdef: -" funcdef "-")
   (let* ((temp (map string-trim-both (string-split funcdef #\()))
 	 (retname (string-split (car temp) #\space))
 	 (rettype (string-trim-both (apply <-> (map (lambda (x) (<-> x " ")) (c-butlast retname)))))
@@ -1162,7 +1296,7 @@ But, perhaps that last one shouldn't be allowed to work.
 		      (temp2 (string-trim-both (substring temp1
 							  (1+ (string-index temp1 #\())
 							  (1- (string-length temp1))))))
-		 ;;(c-display "temp2: -" temp2 "-")
+		 (c-display "temp2: -" temp2 "-")
 		 (if (or (= (string-length temp2) 0)
 			 (string=? temp2 "void"))
 		     '()
@@ -1170,7 +1304,7 @@ But, perhaps that last one shouldn't be allowed to work.
 			    (if (string-index x #\()
 				(list "void*" (eval-c-get-unique-name))
 				(let ((dassplit (map string-trim-both (string-split (string-trim-both x) #\space))))
-				  ;;(c-display "dassplit: " dassplit (length dassplit))
+				  (c-display "dassplit: " dassplit (length dassplit))
 				  (if (= 1 (length dassplit))
 				      (list (car dassplit) (eval-c-get-unique-name))
 				      (list (string-trim-both (apply <-> (map (lambda (x)
@@ -1179,7 +1313,7 @@ But, perhaps that last one shouldn't be allowed to work.
 					    (string-trim-both (last dassplit)))))))
 			  (string-split temp2 #\,)))))
 	 )
-    ;;(c-display "args: " args)
+    (c-display "args: " args)
 
     (while (char=? #\* (car (string->list name)))
 	   (begin
@@ -1190,7 +1324,7 @@ But, perhaps that last one shouldn't be allowed to work.
      `( ,(string->symbol rettype) ,(string->symbol name) (lambda ,(map (lambda (x)
 									 (let* ((type (car x))
 										(name (cadr x)))
-									   ;;(c-display "name: -" name "-")
+									   (c-display "name: -" name "-")
 									   (if (char=? #\* (car (string->list name)))
 									       (begin
 										 (set! name (list->string (cdr (string->list name))))
@@ -1280,9 +1414,17 @@ int fgetc (FILE
 (define-c-macro (let* defs . body)
   `(begin
      ,@(map (lambda (def)
-	      (list (cadr def) (car def) (caddr def)))
+	      (if (= 3 (length def))
+		  (list (cadr def) (car def) (caddr def))
+		  (list (cadr def) (car def))))
 	    defs)
      ,@body))
+
+(define-c-macro (let . something)
+  (c-display "\n\nError. No such eval-c function: let. (perhaps you ment let*?)\n\n"))
+
+(define-c-macro (cast etype var)
+  (<-> "((" (eval-c-etype->ctype etype) ")" (eval-c-parse var) ")"))
 
 (define-c-macro (not atest)
   `("!" ,atest))
@@ -1297,7 +1439,8 @@ int fgetc (FILE
   `("sizeof" ,(eval-c-get-propertype type)))
 
 (define-c-macro (while test . body)
-  `(<while> "(" ,test ")" ,@body))
+  `(<while> "(" ,test ")"
+	    (begin ,@body)))
 
 (define-c-macro (string astring)
   (<-> "\"" (if (string? astring)
@@ -1482,7 +1625,7 @@ int fgetc (FILE
     (close fd)
     (if eval-c-verbose
 	(c-display sourcefile))
-    (system (<-> "gcc -Wall -O2 -shared -o " libfile " " sourcefile " "
+    (system (<-> "gcc -Wall -O3 -shared -o " libfile " " sourcefile " "
 			   (if (getenv "CFLAGS") (getenv "CFLAGS") "") " " (if (getenv "LDFLAGS") (getenv "LDFLAGS") "") " "
 			   (string #\`) guile-config " compile" (string #\`) " "
 			   compile-options))
@@ -1514,14 +1657,18 @@ int fgetc (FILE
   (set! eval-c-run-nows '())
   (set! eval-c-typelistlist '())
   (set! eval-c-typelist '())
-  (set! eval-c-structlist '())
+  ;;;(set! eval-c-structlist '())
   (set! eval-c-classlist '())
   (set! eval-c-level 0)
+  (set! eval-c-string-is-pointer #f)
+
   `("#include <stdio.h>"
     "#include <libguile.h>"
     "#include <string.h>"
     "#include <stdlib.h>"
-    "#define MAKE_STRING(a) scm_mem2string(a,strlen(a))"
+    "#define EC_MAX(a,b) (((a)>(b))?(a):(b))"
+    "#define EC_MIN(a,b) (((a)<(b))?(a):(b))"
+    "#define MAKE_STRING(a) scm_protect_object(scm_mem2string(a,strlen(a)))"
     "#define RETURN_STRING(a) {char *ret=(a); return ret?MAKE_STRING(ret):SCM_BOOL_F;}"
     "#define GET_STRING(a) (scm_is_false(a)?NULL:(char*)SCM_STRING_CHARS(a))"
     "#define GET_POINTER3(a) (scm_is_false(a)?NULL:(void *)scm_num2ulong(a,0,\"GET_POINTER3()\"))"
@@ -1534,6 +1681,15 @@ int fgetc (FILE
     "#define MAKE_INTEGER SCM_MAKINUM"
     "#define GET_DOUBLE(a) scm_num2dbl(a,\"GET_DOUBLE\")"
     "#define MAKE_DOUBLE(a) scm_make_real((double)a)"
+    "#define GET_FLOAT(a) ((float)scm_num2dbl(a,\"GET_DOUBLE\"))"
+    "#define MAKE_FLOAT(a) scm_make_real((double)a)"
+    "#define GET_SCM(a) (a)"
+    "#define POINTER_P(a) (scm_is_false(a) || ((SCM_BOOL_T == scm_list_p(a)) && XEN_STRING_P(SCM_CAR(a)) && SCM_NULLP(SCM_CDR(SCM_CDR(a))) && (SCM_BOOL_T ==scm_number_p(SCM_CAR(SCM_CDR(a))))))"
+    "#if HAVE_SCM_C_MAKE_RECTANGULAR"
+    "#define XEN_STRING_P(Arg)           scm_is_string(Arg)"
+    "#else"
+    "#define XEN_STRING_P(Arg)           (SCM_STRINGP(Arg))"
+    "#endif"
     
     ,@(map eval-c-parse-line terms)
     
@@ -1543,23 +1699,31 @@ int fgetc (FILE
 	   (reverse eval-c-run-nows))
     "}"))
 
+#!
+(define a 2)
+(inexact->exact (floor a))
+!#
+
+(define (eval-c-non-macro compile-options . terms)
+  (apply eval-c-eval
+	 (append (list #:compile-options compile-options)
+		 (eval-c-parse-file terms))))
+	       
+			   
 
 (define-macro (eval-c compile-options . terms)
   `(eval-c-eval #:compile-options ,compile-options
 		,@(eval-c-parse-file terms)))
 
 
-;(define-macro (define-c ret-type def . body)
-;  `(eval-c ""
-;	   (public (,ret-type ,(car def) (lambda ,(cdr def)
-;					   ,@body)))))
-
-(define-macro (define-c ret-type body)
+(define-macro (define-c ret-type def . body)
   `(eval-c ""
-	   (public (,ret-type ,(car body) (lambda ,(cadr body)
-					    ,@(cddr body))))))
+	   (public (,ret-type ,(car def) (lambda ,(cdr def)
+					   ,@body)))))
+
 
 (eval-c ""
+	(<void-*> a_pointer)
 	(public
 	 (<int> ec-get-ints-element (lambda ((<int*> array) (<int> n))
 				      (return array[n])))
@@ -1593,51 +1757,26 @@ int fgetc (FILE
 				     (return (calloc n (sizeof <char*>)))))
 	 (<void**> ec-make-pointers (lambda ((<int> n))
 				      (return (calloc n (sizeof <void*>)))))
-	 
+	 (<size_t> ec-sizeof-pointer (lambda ()
+				       (return (sizeof <void-*>))))
+	 (<void-*> ec-pointer-to-pointer (lambda ((<void-*> pointer))
+					   (set! a_pointer pointer)
+					   (return &a_pointer)))
+	
 	;; No. This is dangerous, ugly and unnecesarry. #f is the same as NULL from the guile-side.
 	;;(<SCM> c_NULL (lambda ()
 	;;		(return (MAKE_POINTER NULL))))
 	;;(run-now
 	;; (scm_c_define_gsubr (string "NULL") 0 0 0 c_NULL)
-	 ))
+	))
 
+
+(define ec-pointer->integer cadr)
 
 (define (ec-pointer? something)
   (and (pair? something)
        (string? (car something))
        (string=? "A_POINTER" (car something))))
-
-(define (ec-get-nullterminated-somethings array get-func)
-  (let ((ret '()))
-    (let loop ((n 0))
-      (let ((res (get-func array n)))
-	(if res
-	    (begin
-	      (set! ret (cons res ret))
-	      (loop (1+ n))))))
-    (reverse! ret)))
-
-(define (ec-get-somethings array num-elements get-func)
-  (if num-elements
-      (let ((ret '()))
-	(c-for 0 < num_elements 1
-	       (lambda (n)
-		 (set! ret (cons (get-func array n)
-				 ret))))
-	(reverse! ret))
-      (ec-get-nullterminated-somethings array get-func)))
-  
-(define* (ec-get-ints array #:optional num)
-  (array num ec-get-ints-element))
-(define* (ec-get-doubles array #:optional  num)
-  (ec-get-somethings array num ec-get-double-element))
-(define* (ec-get-floatss array  #:optional num)
-  (ec-get-somethings array num ec-get-floats-element))
-(define* (ec-get-strings array  #:optional num)
-  (ec-get-somethings array num ec-get-strings-element))
-(define* (ec-get-pointers array  #:optional num)
-  (ec-get-somethings array num ec-get-pointers-element))
-
 
 ;; This one will never return an integer array, unless das-make-func is set to ec-make-ints. Same
 ;; goes for creating a double-array; das-make-func must be set to ec-make-doubles.
@@ -1663,9 +1802,261 @@ int fgetc (FILE
 		array)
     ret))
 
+(define (ec-get-nullterminated-somethings array get-func)
+  (let ((ret '()))
+    (let loop ((n 0))
+      (let ((res (get-func array n)))
+	(if res
+	    (begin
+	      (set! ret (cons res ret))
+	      (loop (1+ n))))))
+    (reverse! ret)))
+
+(define (ec-get-somethings array num-elements get-func)
+  (if num-elements
+      (let ((ret '()))
+	(c-for 0 < num-elements 1
+	       (lambda (n)
+		 (set! ret (cons (get-func array n)
+				 ret))))
+	(reverse! ret))
+      (ec-get-nullterminated-somethings array get-func)))
+  
+(define* (ec-get-ints array #:optional num)
+  (ec-get-somethings array num ec-get-ints-element))
+(define* (ec-get-doubles array #:optional  num)
+  (ec-get-somethings array num ec-get-double-element))
+(define* (ec-get-floatss array  #:optional num)
+  (ec-get-somethings array num ec-get-floats-element))
+(define* (ec-get-strings array  #:optional num)
+  (ec-get-somethings array num ec-get-strings-element))
+(define* (ec-get-pointers array  #:optional num)
+  (ec-get-somethings array num ec-get-pointers-element))
+
+
+#!
+(define a (ec-make-array '(0 1 2 3 4 5) #:das-make-func ec-make-ints))
+(ec-get-ints a 6)
+
+(define b (ec-make-array (list a a a a a a) #:das-make-func ec-make-pointers))
+(begin b)
+(ec-get-pointers b 6)
+!#
+
+
 ;(define (ec-make-struct something)
 ;  ())
 
+
+
+;; God ide med automatisk pool? 
+
+(define-macro (define-ec-struct name . rest)
+  (let ((structname (symbol-append '<struct- (string->symbol
+					      (list->string
+					       (cdr
+						(string->list
+						 (symbol->string
+						  name)))))))
+	(structname-pointer (symbol-append '<struct- (string->symbol
+						      (<->
+						       (list->string
+							(cdr
+							 (c-butlast
+							  (string->list
+							   (symbol->string
+							    name)))))
+						       "-*>"))))
+	(cleanname (string->symbol (eval-c-etype->ctype name)))
+	(das-map (eval-c-listify-struct rest)))
+    (c-display "structname: " structname)
+    (eval-c-add-struct structname
+		       (map (lambda (a)
+			      (if (= 3 (length a))
+				  (list (caddr a) (car a) (cadr a))
+				  (list (cadr a) (car a))))
+			    das-map))
+    (c-display "das-map: " das-map)
+    (primitive-eval
+     `(eval-c ""
+	      (shared-struct-but-only-known-types ,name)
+	      (public 
+	       (,structname-pointer ,(symbol-append cleanname '_new) (lambda ()
+								       (return (calloc 1 (sizeof ,structname)))))
+	       (<void> ,(symbol-append cleanname '_delete) (lambda ((,structname-pointer arg))
+							     (free arg)))
+	       (<int> ,(symbol-append cleanname '_get_das_size) (lambda ()
+								  (return (sizeof ,structname))))
+	       ,@(apply append (map (lambda (def)
+				      (let ((name (cadr def))
+					    (type (if (= 3 (length def))
+						      '<void-*>
+						      (eval-c-get-known-type (car def)))))
+					(c-display "name/type " name type)
+					`((<void> ,(symbol-append cleanname '_set_ name) ,(if (eq? type '<void-*>)
+											      `(lambda ((,structname-pointer arg)
+													(,type newval)
+													(<int> autofree))
+												 (if autofree (free ,(symbol-append 'arg-> name)))
+												 (set! ,(symbol-append 'arg-> name) newval))
+											      `(lambda ((,structname-pointer arg)
+													(,type newval))
+												 (set! ,(symbol-append 'arg-> name) newval))))
+					  (,type ,(symbol-append cleanname '_get_ name) (lambda ((,structname-pointer arg))
+											  (return ,(symbol-append 'arg-> name)))))))
+				    das-map)))))
+    `(def-class  (,name #:key ,@(map cadr das-map))
+
+       (define c-object (,(symbol-append cleanname '_new)))
+
+       (def-method (get-c-object)
+	 c-object)
+
+;       (define-method (get-pointer-to-c-object)
+;	 (cons "A_POINTER" (cons (scm_ulong2num  ((unsigned long)a),SCM_EOL))
+
+       (def-method (destructor)
+	 (,(symbol-append cleanname '_delete) c-object))
+
+
+       (def-method (get-size)
+	 (,(symbol-append cleanname '_get_das_size)))
+
+       ,@(map (lambda (def)
+		`(define ,(symbol-append 'num-(cadr def)) #f))
+	      das-map)
+
+       ,@(map (lambda (def)
+		(let* ((name (cadr def))
+		       (type (car def))
+		       (typetype (eval-c-to-scm (eval-c-etype->ctype type)))
+		       (type*type (eval-c-to-scm (eval-c-etype->ctype (eval-c-get-*type type)))))
+		  (if (string=? typetype "POINTER")
+		      `(def-method (,name #:key das-make-func (autofree 'auto) #:rest rest)
+			 (if (not (null? rest))
+			     (let ((newval (car rest))
+				   (org-num ,(symbol-append 'num- name)))
+			       (,(symbol-append cleanname '_set_ name)
+				c-object
+				(if (and (not (ec-pointer? newval))
+					 (list? newval))
+				    (begin
+				      (set! ,(symbol-append 'num- name) (length newval))
+				      (ec-make-array (if (procedure? (car newval))
+							 (map (lambda (a) (-> a get-c-object))
+							      newval)
+							 newval)
+						     #:das-make-func ,(cadr (member type*type
+										    `("UNSPECIFIED" ec-make-pointers
+										      "STRING" ec-make-pointers
+										      "INTEGER" ec-make-ints
+										      "DOUBLE" ec-make-doubles
+										      "FLOAT" ec-make-floats
+										      "POINTER" ec-make-pointers)))))
+				    (begin
+				      (set! ,(symbol-append 'num- name) #f)
+				      newval))
+				(if (eq? autofree 'auto)
+				    (if org-num 1 0)
+				    (if autofree 1 0))))
+			     (if ,(symbol-append 'num- name)
+				 (,(cadr (member type*type
+						 `("UNSPECIFIED" ec-get-pointers
+						   "STRING" ec-get-pointers
+						   "INTEGER" ec-get-ints
+						   "DOUBLE" ec-get-doubles
+						   "FLOAT" ec-get-floats
+						   "POINTER" ec-get-pointers)))
+				  (,(symbol-append cleanname '_get_ name) c-object)
+				  ,(symbol-append 'num- name))
+				 (,(symbol-append cleanname '_get_ name) c-object))))
+		      `(def-method (,name . rest)
+			 (if (not (null? rest))
+			     (,(symbol-append cleanname '_set_ name) c-object (car rest))
+			     (,(symbol-append cleanname '_get_ name) c-object))))))
+	      das-map)
+       ,@(map (lambda (def)
+		(let ((name (cadr def)))
+		  `(if ,name
+		       (-> this ,name ,name))))
+	      das-map))
+    
+    ))
+
+#!
+(define-ec-struct <Jack_Arg>
+  <int> num_inports
+  <int-*> ai
+  <jack_port_t**> input_ports)
+(define jack (<Jack_Arg> #:num_inports 9))
+(begin jack)
+(-> jack num_inports)
+(-> jack num_inports 4)
+(<- jack num_inports)
+
+(-> jack get-size)
+(-> jack get-c-object)
+
+(-> jack input_ports)
+(define a (ec-make-array '(0 1 2 3 4 5) #:das-make-func ec-make-ints))
+(-> jack input_ports (list a a a a a))
+
+(-> jack ai)
+(-> jack ai '(0 1 2 3 4 5))
+
+->
+(eval-c-get-struct '<struct-Jack_Arg>)
+(eval-c-macro-result '(shared-struct-but-only-known-types <Jack_Arg>))
+(eval-c-add-struct '<struct-Jack_Arg>
+		   '((<int> num_inports)
+		     (<jack_port_t**> input_ports)))
+
+(primitive-eval
+ '(eval-c ""
+	  (shared-struct-but-only-known-types <Jack_Arg>)
+	  (public
+	   (<struct-Jack_Arg-*> Jack_Arg_new (lambda (<void>)
+					     (calloc 1 (sizeof <struct-Jack_Arg>))))
+	   (<void> Jack_Arg_set_num_inports (lambda ((<struct-Jack_Arg> *arg)
+						     (<int> newval))
+					      (set! arg->num_inports newval)))
+	   (<int> Jack_Arg_get_num_inports (lambda ((<struct-Jack_Arg> *arg))
+					     (return arg->num_inports)))
+	   (<void> Jack_Arg_set_input_ports (lambda ((<struct-Jack_Arg> *arg)
+						     (<void-*> newval)
+						     (<int> autofree))
+					      (if autofree (free arg->input_ports newval))
+					      (set! arg->input_ports newval)))
+	   ...))
+
+
+(def-class (<Jack_Arg> #:key num_inports input_ports)
+
+  (define c-object (Jack_Arg_new))
+  
+  (def-method (num_inports . rest)
+    (if rest
+	(Jack_Arg_set_num_inports c-object (car rest))
+	(Jack_Arg_get_num_inports c-object)))
+	
+  (def-method (input_ports #:key das-make-func #:key (autofree #t) #:rest rest)
+    (if (and rest
+	     (not (or (eq? #:das-make-func (car rest))
+		      (eq? #:autofree (car rest)))))
+	(let ((newval (car rest)))
+	  (Jack_Arg_set_input_ports c-object (if (list? newval)
+						 (ec-make-array newval das-make-func (if autofree 1 0))
+						 newval)))
+	(Jack_Arg_get_input_ports c-object)))
+
+  (if num_inports
+      (-> this num_inports num_inports))
+  (if input_ports
+      (-> this input_ports input_ports))
+
+  )
+
+!#
 
 #!
 
