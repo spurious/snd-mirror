@@ -1,5 +1,6 @@
 snd change log
 
+  4-Apr:     improvements in contrib/dlp, thanks to Dave Phillips.
   3-Apr:     read-sample, read-mix-sample, read-track-sample, selection-maxamp.
   1-Apr:     insert-samples and set-samples no longer delete file passed as 'data'.
   29-Mar:    Mac-OSX with Motif (thanks to Charles Nichols).
