@@ -13862,6 +13862,17 @@ static XEN gxm_XtCreateApplicationContext(void)
   return(C_TO_XEN_XtAppContext(XtCreateApplicationContext()));
 }
 
+static XEN gxm_argv_to_list(XEN lst, int argc, char **argv)
+{
+  int i, loc;
+  loc = xm_protect(lst);
+  for (i = argc - 1; i >= 0; i--)
+    lst = XEN_CONS(C_TO_XEN_STRING(argv[i]), lst);
+  FREE(argv);
+  xm_unprotect_at(loc);
+  return(lst);
+}
+
 static XEN gxm_XtOpenDisplay(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6, XEN arg7, XEN arg8)
 {
   #define H_XtOpenDisplay "Display *XtOpenDisplay(app_context, display_string, application_name, application_class, options, num_options, argc, argv) \
@@ -13869,7 +13880,7 @@ calls XOpenDisplay the specified display name."
   /* DIFF: XtOpenDisplay ignore arg5 6, argc is int, argv is list of strings, returns (list dpy argv ...)
    */
   char **argv;
-  int i, argc, loc;
+  int argc;
   XEN lst = XEN_EMPTY_LIST;
   Display *dpy;
   XEN_ASSERT_TYPE(XEN_XtAppContext_P(arg1), arg1, 1, "XtOpenDisplay", "XtAppContext");
@@ -13888,24 +13899,18 @@ calls XOpenDisplay the specified display name."
   if (dpy)
     lst = XEN_CONS(C_TO_XEN_Display(dpy), lst);
   else lst = XEN_CONS(XEN_FALSE, lst);
-  loc = xm_protect(lst);
-  for (i = argc - 1; i >= 0; i--)
-    lst = XEN_CONS(C_TO_XEN_STRING(argv[i]), lst);
-  FREE(argv);
-  xm_unprotect_at(loc);
-  return(lst);
+  return(gxm_argv_to_list(lst, argc, argv));
 }
  
 static XEN gxm_XtInitialize(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6)
 {
-  #define H_XtCreateApplicationShell "Widget XtCreateApplicationShell(name, widget_class, args, num_args) calls XtAppCreateShell with the \
-application NULL, the application class passed to XtInitialize , and the default application context created by XtInitialize. This \
-routine has been replaced by XtAppCreateShell."
+  #define H_XtInitialize "Widget XtInitialize(shell_name, application_class, options, num_options, argc, argv) calls XtToolkitInitialize \
+followed by XtOpenDisplay with display_string NULL and application_name NULL, and finally calls XtAppCreateShell with appcation_name NULL, \
+widget_class applicationShellWidgetClass , and the specified args and num_args and returns the created shell. "
   /* DIFF: XtInitialize ignore arg 3 4, argc is int, argv is list of strings
    */
   char **argv;
-  int i, argc, loc;
-  XEN lst = XEN_EMPTY_LIST;
+  int argc;
   Widget w;
   XEN_ASSERT_TYPE(XEN_STRING_P(arg1), arg1, 1, "XtInitialize", "char*");
   XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XtInitialize", "char*");
@@ -13914,13 +13919,7 @@ routine has been replaced by XtAppCreateShell."
   argc = XEN_TO_C_INT(arg5);
   argv = XEN_TO_C_Strings(arg6, argc);
   w = XtInitialize(XEN_TO_C_STRING(arg1), XEN_TO_C_STRING(arg2), NULL, 0, &argc, argv);
-  lst = XEN_CONS(C_TO_XEN_Widget(w), lst);
-  loc = xm_protect(lst);
-  for (i = argc - 1; i >= 0; i--)
-    lst = XEN_CONS(C_TO_XEN_STRING(argv[i]), lst);
-  FREE(argv);
-  xm_unprotect_at(loc);
-  return(lst);
+  return(gxm_argv_to_list(XEN_CONS(C_TO_XEN_Widget(w), XEN_EMPTY_LIST), argc, argv));
 }
 
 static XEN gxm_XtVaAppInitialize(XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6, XEN arg7, XEN arg8)
@@ -13933,9 +13932,8 @@ static XEN gxm_XtVaAppInitialize(XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg
   XtAppContext app;
   Arg *args;
   Widget res;
-  int i, argc, arglen, loc;
+  int argc, arglen;
   char **argv;
-  XEN argl = XEN_EMPTY_LIST;
   XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 1, "XtVaAppInitialize", "char*");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg5), arg5, 4, "XtVaAppInitialize", "int");
   XEN_ASSERT_TYPE(XEN_LIST_P(arg6), arg6, 5, "XtVaAppInitialize", "list of String");
@@ -13957,14 +13955,9 @@ static XEN gxm_XtVaAppInitialize(XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg
       fixup_args(res, args, arglen);
       FREE(args);
     }
-  loc = xm_protect(argl);
-  for (i = argc - 1; i >= 0; i--)
-    argl = XEN_CONS(C_TO_XEN_STRING(argv[i]), argl);
-  FREE(argv);
-  xm_unprotect_at(loc);
   return(XEN_LIST_3(C_TO_XEN_Widget(res), 
 		    C_TO_XEN_XtAppContext(app),
-		    argl));
+		    gxm_argv_to_list(XEN_EMPTY_LIST, argc, argv)));
 }
 
 
@@ -13981,9 +13974,8 @@ and the specified args and num_args and returns the created shell. "
   XtAppContext app;
   Arg *args;
   Widget res;
-  int i, argc, arglen, loc;
+  int argc, arglen;
   char **argv;
-  XEN argl = XEN_EMPTY_LIST;
   XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 1, "XtAppInitialize", "char*");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg5), arg5, 4, "XtAppInitialize", "int");
   XEN_ASSERT_TYPE(XEN_LIST_P(arg6), arg6, 5, "XtAppInitialize", "list of String*");
@@ -14006,14 +13998,9 @@ and the specified args and num_args and returns the created shell. "
       fixup_args(res, args, arglen);
       FREE(args);
     }
-  loc = xm_protect(argl);
-  for (i = argc - 1; i >= 0; i--)
-    argl = XEN_CONS(C_TO_XEN_STRING(argv[i]), argl);
-  FREE(argv);
-  xm_unprotect_at(loc);
   return(XEN_LIST_3(C_TO_XEN_Widget(res), 
 		    C_TO_XEN_XtAppContext(app),
-		    argl));
+		    gxm_argv_to_list(XEN_EMPTY_LIST, argc, argv)));
 }
 
 static XEN gxm_XtVaOpenApplication(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6, XEN arg7, XEN arg8)
@@ -14026,9 +14013,8 @@ static XEN gxm_XtVaOpenApplication(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN a
   XtAppContext app;
   Arg *args;
   Widget res;
-  int i, argc, arglen, loc;
+  int argc, arglen;
   char **argv;
-  XEN argl = XEN_EMPTY_LIST;
   XEN_ASSERT_TYPE(XEN_STRING_P(arg1), arg1, 1, "XtVaOpenApplication", "char*");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XtVaOpenApplication", "int");
   XEN_ASSERT_TYPE(XEN_LIST_P(arg5), arg5, 5, "XtVaOpenApplication", "list of String");
@@ -14052,14 +14038,9 @@ static XEN gxm_XtVaOpenApplication(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN a
       fixup_args(res, args, arglen);
       FREE(args);
     }
-  loc = xm_protect(argl);
-  for (i = argc - 1; i >= 0; i--)
-    argl = XEN_CONS(C_TO_XEN_STRING(argv[i]), argl);
-  FREE(argv);
-  xm_unprotect_at(loc);
   return(XEN_LIST_3(C_TO_XEN_Widget(res), 
 		    C_TO_XEN_XtAppContext(app),
-		    argl));
+		    gxm_argv_to_list(XEN_EMPTY_LIST, argc, argv)));
 }
 
 static XEN gxm_XtOpenApplication(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6, XEN arg7, XEN arg8, XEN arg9)
@@ -14073,9 +14054,8 @@ applicationShellWidgetClass ,and the specified args and num_args and returns the
   XtAppContext app;
   Arg *args;
   Widget res;
-  int i, argc, arglen, loc;
+  int argc, arglen;
   char **argv;
-  XEN argl = XEN_EMPTY_LIST;
   XEN_ASSERT_TYPE(XEN_STRING_P(arg1), arg1, 1, "XtOpenApplication", "char*");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg4), arg4, 4, "XtOpenApplication", "int");
   XEN_ASSERT_TYPE(XEN_LIST_P(arg5), arg5, 5, "XtOpenApplication", "list of String*");
@@ -14094,14 +14074,9 @@ applicationShellWidgetClass ,and the specified args and num_args and returns the
       fixup_args(res, args, arglen);
       FREE(args);
     }
-  loc = xm_protect(argl);
-  for (i = argc - 1; i >= 0; i--)
-    argl = XEN_CONS(C_TO_XEN_STRING(argv[i]), argl);
-  FREE(argv);
-  xm_unprotect_at(loc);
   return(XEN_LIST_3(C_TO_XEN_Widget(res), 
 		    C_TO_XEN_XtAppContext(app),
-		    argl));
+		    gxm_argv_to_list(XEN_EMPTY_LIST, argc, argv)));
 }
 
 /* (define appres (|XtVaOpenApplication "hioh" 0 0 0 0 0 |applicationShellWidgetClass (list |XmNallowShellResize 1))) */
@@ -14113,8 +14088,7 @@ builds the resource database, calls the Xlib XrmParseCommand to parse the comman
   /* DIFF: XtDisplayInitialize arg 5 6 ignored, argc is normal int, argv is list of strings, returns argv
    */
   char **argv;
-  int i, argc, loc;
-  XEN lst = XEN_EMPTY_LIST;
+  int argc;
   XEN_ASSERT_TYPE(XEN_XtAppContext_P(arg1), arg1, 1, "XtDisplayInitialize", "XtAppContext");
   XEN_ASSERT_TYPE(XEN_Display_P(arg2), arg2, 2, "XtDisplayInitialize", "Display*");
   XEN_ASSERT_TYPE(XEN_STRING_P(arg3), arg3, 3, "XtDisplayInitialize", "char*");
@@ -14129,12 +14103,7 @@ builds the resource database, calls the Xlib XrmParseCommand to parse the comman
 		      XEN_TO_C_STRING(arg4), 
 		      NULL, 0, 
 		      &argc, argv);
-  loc = xm_protect(lst);
-  for (i = argc - 1; i >= 0; i--)
-    lst = XEN_CONS(C_TO_XEN_STRING(argv[i]), lst);
-  FREE(argv);
-  xm_unprotect_at(loc);
-  return(lst);
+  return(gxm_argv_to_list(XEN_EMPTY_LIST, argc, argv));
 }
 
 /* -------- XtLanguage callback -------- */
@@ -14187,9 +14156,6 @@ static XEN gxm_XtSetLanguageProc(XEN arg1, XEN arg2, XEN arg3)
 static XEN gxm_XtToolkitInitialize(void)
 {
   #define H_XtToolkitInitialize "void XtToolkitInitialize()"
-  #define H_XtInitialize "Widget XtInitialize(shell_name, application_class, options, num_options, argc, argv) calls XtToolkitInitialize \
-followed by XtOpenDisplay with display_string NULL and application_name NULL, and finally calls XtAppCreateShell with appcation_name NULL, \
-widget_class applicationShellWidgetClass , and the specified args and num_args and returns the created shell. "
   XtToolkitInitialize();
   return(XEN_FALSE);
 }
@@ -14250,6 +14216,9 @@ the specified application name and application class for qualifying all widget r
 
 static XEN gxm_XtCreateApplicationShell(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
+  #define H_XtCreateApplicationShell "Widget XtCreateApplicationShell(name, widget_class, args, num_args) calls XtAppCreateShell with the \
+application NULL, the application class passed to XtInitialize , and the default application context created by XtInitialize. This \
+routine has been replaced by XtAppCreateShell."
   Arg *args;
   Widget w;
   int arglen;
@@ -14418,9 +14387,6 @@ static XEN gxm_XtPopupSpringLoaded(XEN arg1)
 static XEN gxm_XtPopup(XEN arg1, XEN arg2)
 {
   #define H_XtPopup "void XtPopup(popup_shell, grab_kind)"
-  #define H_XtCreatePopupShell "Widget XtCreatePopupShell(name, widget_class, parent, args, num_args) ensures that the specified \
-class is a subclass of Shell and, rather than using insert_child to attach the widget to the parent's children list, attaches the shell \
-to the parent's pop-ups list directly."
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XtPopup", "Widget");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 2, "XtPopup", "XtGrabKind");
   XtPopup(XEN_TO_C_Widget(arg1), (XtGrabKind)XEN_TO_C_INT(arg2));
@@ -14453,6 +14419,9 @@ static XEN gxm_XtVaCreatePopupShell(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 
 static XEN gxm_XtCreatePopupShell(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5)
 {
+  #define H_XtCreatePopupShell "Widget XtCreatePopupShell(name, widget_class, parent, args, num_args) ensures that the specified \
+class is a subclass of Shell and, rather than using insert_child to attach the widget to the parent's children list, attaches the shell \
+to the parent's pop-ups list directly."
   Widget w;
   XEN_ASSERT_TYPE(XEN_STRING_P(arg1), arg1, 1, "XtCreatePopupShell", "char*");
   XEN_ASSERT_TYPE(XEN_WidgetClass_P(arg2), arg2, 2, "XtCreatePopupShell", "WidgetClass");
@@ -24318,7 +24287,7 @@ static int xm_already_inited = 0;
       define_structs();
       XEN_YES_WE_HAVE("xm");
 #if HAVE_GUILE
-      XEN_EVAL_C_STRING("(define xm-version \"3-Oct-01\")");
+      XEN_EVAL_C_STRING("(define xm-version \"4-Oct-01\")");
 #endif
       xm_already_inited = 1;
     }

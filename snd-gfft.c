@@ -159,7 +159,7 @@ static int map_chans_transform_size(chan_info *cp, void *ptr)
   return(0);
 }
 
-static void size_browse_Callback(GtkWidget *w, gint row, gint column, GdkEventButton *event, gpointer context)
+static void size_browse_callback(GtkWidget *w, gint row, gint column, GdkEventButton *event, gpointer context)
 {
   snd_state *ss = (snd_state *)context;
   int size;
@@ -176,7 +176,7 @@ static void size_browse_Callback(GtkWidget *w, gint row, gint column, GdkEventBu
 
 static int map_chans_wavelet_type(chan_info *cp, void *ptr) {cp->wavelet_type = (*((int *)ptr)); return(0);}
 
-static void wavelet_browse_Callback(GtkWidget *w, gint row, gint column, GdkEventButton *event, gpointer context)
+static void wavelet_browse_callback(GtkWidget *w, gint row, gint column, GdkEventButton *event, gpointer context)
 {
   snd_state *ss = (snd_state *)context;
   in_set_wavelet_type(ss, row);
@@ -185,7 +185,7 @@ static void wavelet_browse_Callback(GtkWidget *w, gint row, gint column, GdkEven
     map_over_chans(ss, calculate_fft, NULL);
 }
 
-static void window_browse_Callback(GtkWidget *w, gint row, gint column, GdkEventButton *event, gpointer context)
+static void window_browse_callback(GtkWidget *w, gint row, gint column, GdkEventButton *event, gpointer context)
 {
   snd_state *ss = (snd_state *)context;
   in_set_fft_window(ss, row);
@@ -205,7 +205,7 @@ static void window_browse_Callback(GtkWidget *w, gint row, gint column, GdkEvent
 
 static int map_chans_transform_type(chan_info *cp, void *ptr) {cp->transform_type = (*((int *)ptr)); return(0);}
 
-static void transform_browse_Callback(GtkWidget *w, gint row, gint column, GdkEventButton *event, gpointer context)
+static void transform_browse_callback(GtkWidget *w, gint row, gint column, GdkEventButton *event, gpointer context)
 {
   snd_state *ss = (snd_state *)context;
   map_over_chans(ss, force_fft_clear, NULL);
@@ -214,7 +214,7 @@ static void transform_browse_Callback(GtkWidget *w, gint row, gint column, GdkEv
   map_over_chans(ss, calculate_fft, NULL);
 }
 
-static void normal_fft_Callback(GtkWidget *w, gpointer context)
+static void normal_fft_callback(GtkWidget *w, gpointer context)
 {
   snd_state *ss = (snd_state *)context;
   if (GTK_TOGGLE_BUTTON(w)->active)
@@ -223,7 +223,7 @@ static void normal_fft_Callback(GtkWidget *w, gpointer context)
   map_over_chans(ss, calculate_fft, NULL);
 }
 
-static void sonogram_Callback(GtkWidget *w, gpointer context)
+static void sonogram_callback(GtkWidget *w, gpointer context)
 {
   snd_state *ss = (snd_state *)context;
   if (GTK_TOGGLE_BUTTON(w)->active)
@@ -232,7 +232,7 @@ static void sonogram_Callback(GtkWidget *w, gpointer context)
   map_over_chans(ss, calculate_fft, NULL);
 }
 
-static void spectrogram_Callback(GtkWidget *w, gpointer context)
+static void spectrogram_callback(GtkWidget *w, gpointer context)
 {
   snd_state *ss = (snd_state *)context;
   if (GTK_TOGGLE_BUTTON(w)->active)
@@ -243,7 +243,7 @@ static void spectrogram_Callback(GtkWidget *w, gpointer context)
 
 static int map_show_transform_peaks(chan_info *cp, void *ptr) {cp->show_transform_peaks = (*((int *)ptr)); return(0);}
 
-static void peaks_Callback(GtkWidget *w, gpointer context)
+static void peaks_callback(GtkWidget *w, gpointer context)
 {
   int val = 0;
   snd_state *ss = (snd_state *)context;
@@ -254,7 +254,7 @@ static void peaks_Callback(GtkWidget *w, gpointer context)
 
 static int map_chans_fft_log_magnitude(chan_info *cp, void *ptr) {cp->fft_log_magnitude = (*((int *)ptr)); return(0);}
 
-static void db_Callback(GtkWidget *w, gpointer context)
+static void db_callback(GtkWidget *w, gpointer context)
 {
   snd_state *ss = (snd_state *)context;
   int val;
@@ -265,7 +265,7 @@ static void db_Callback(GtkWidget *w, gpointer context)
 
 static int map_chans_fft_log_frequency(chan_info *cp, void *ptr) {cp->fft_log_frequency = (*((int *)ptr)); return(0);}
 
-static void logfreq_Callback(GtkWidget *w, gpointer context)
+static void logfreq_callback(GtkWidget *w, gpointer context)
 {
   snd_state *ss = (snd_state *)context;
   int val;
@@ -276,7 +276,7 @@ static void logfreq_Callback(GtkWidget *w, gpointer context)
 
 static int map_chans_transform_normalization(chan_info *cp, void *ptr) {cp->transform_normalization = (*((int *)ptr)); return(0);}
 
-static void normalize_Callback(GtkWidget *w, gpointer context)
+static void normalize_callback(GtkWidget *w, gpointer context)
 {
   int choice;
   snd_state *ss = (snd_state *)context;
@@ -286,14 +286,14 @@ static void normalize_Callback(GtkWidget *w, gpointer context)
   map_over_chans(ss, calculate_fft, NULL);
 }
 
-static void selection_Callback(GtkWidget *w, gpointer context)
+static void selection_callback(GtkWidget *w, gpointer context)
 {
   snd_state *ss = (snd_state *)context;
   in_set_show_selection_transform(ss, GTK_TOGGLE_BUTTON(w)->active);
   map_over_chans(ss, calculate_fft, NULL);
 }
 
-static void beta_Callback(GtkAdjustment *adj, gpointer context)
+static void beta_callback(GtkAdjustment *adj, gpointer context)
 {
   snd_state *ss = (snd_state *)context;
   in_set_fft_window_beta(ss, (Float)(adj->value));
@@ -307,27 +307,27 @@ static void beta_Callback(GtkAdjustment *adj, gpointer context)
     }
 } 
 
-static void graph_configure_Callback(GtkWidget *w, GdkEventConfigure *ev, gpointer data)
+static void graph_configure_callback(GtkWidget *w, GdkEventConfigure *ev, gpointer data)
 {
   graph_redisplay((snd_state *)data);
 }
 
-static void graph_expose_Callback(GtkWidget *w, GdkEventExpose *ev, gpointer data)
+static void graph_expose_callback(GtkWidget *w, GdkEventExpose *ev, gpointer data)
 {
   graph_redisplay((snd_state *)data);
 }
 
-static void Dismiss_Transform_Callback(GtkWidget *w, gpointer context)
+static void dismiss_transform_callback(GtkWidget *w, gpointer context)
 {
   gtk_widget_hide(transform_dialog);
 }
 
-static void Orient_Transform_Callback(GtkWidget *w, gpointer context)
+static void orient_transform_callback(GtkWidget *w, gpointer context)
 {
   start_orientation_dialog(get_global_state(), 0, 0);
 }
 
-static void Color_Transform_Callback(GtkWidget *w, gpointer context)
+static void color_transform_callback(GtkWidget *w, gpointer context)
 {
   start_color_dialog(get_global_state(), 0, 0);
 }
@@ -337,7 +337,7 @@ static void delete_transform_dialog(GtkWidget *w, GdkEvent *event, gpointer cont
   gtk_widget_hide(transform_dialog);
 }
 
-static void Help_Transform_Callback(GtkWidget *w, gpointer context)
+static void help_transform_callback(GtkWidget *w, gpointer context)
 {
   transform_dialog_help((snd_state *)context);
 }
@@ -384,10 +384,10 @@ GtkWidget *fire_up_transform_dialog(snd_state *ss, int managed)
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(transform_dialog)->action_area), color_button, FALSE, TRUE, 10);
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(transform_dialog)->action_area), orient_button, FALSE, TRUE, 10);
       gtk_box_pack_end(GTK_BOX(GTK_DIALOG(transform_dialog)->action_area), help_button, FALSE, TRUE, 10);
-      gtk_signal_connect(GTK_OBJECT(dismiss_button), "clicked", GTK_SIGNAL_FUNC(Dismiss_Transform_Callback), (gpointer)ss);
-      gtk_signal_connect(GTK_OBJECT(color_button), "clicked", GTK_SIGNAL_FUNC(Color_Transform_Callback), (gpointer)ss);
-      gtk_signal_connect(GTK_OBJECT(orient_button), "clicked", GTK_SIGNAL_FUNC(Orient_Transform_Callback), (gpointer)ss);
-      gtk_signal_connect(GTK_OBJECT(help_button), "clicked", GTK_SIGNAL_FUNC(Help_Transform_Callback), (gpointer)ss);
+      gtk_signal_connect(GTK_OBJECT(dismiss_button), "clicked", GTK_SIGNAL_FUNC(dismiss_transform_callback), (gpointer)ss);
+      gtk_signal_connect(GTK_OBJECT(color_button), "clicked", GTK_SIGNAL_FUNC(color_transform_callback), (gpointer)ss);
+      gtk_signal_connect(GTK_OBJECT(orient_button), "clicked", GTK_SIGNAL_FUNC(orient_transform_callback), (gpointer)ss);
+      gtk_signal_connect(GTK_OBJECT(help_button), "clicked", GTK_SIGNAL_FUNC(help_transform_callback), (gpointer)ss);
       set_pushed_button_colors(help_button, ss);
       set_pushed_button_colors(dismiss_button, ss);
       set_pushed_button_colors(color_button, ss);
@@ -427,7 +427,7 @@ GtkWidget *fire_up_transform_dialog(snd_state *ss, int managed)
 	  else str = added_transform_name(i);
 	  gtk_clist_append(GTK_CLIST(transform_list), &str);
 	}
-      gtk_signal_connect(GTK_OBJECT(transform_list), "select_row", GTK_SIGNAL_FUNC(transform_browse_Callback), (gpointer)ss);
+      gtk_signal_connect(GTK_OBJECT(transform_list), "select_row", GTK_SIGNAL_FUNC(transform_browse_callback), (gpointer)ss);
 
       type_scroller = gtk_scrolled_window_new(NULL, NULL);
       gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(type_scroller), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
@@ -454,7 +454,7 @@ GtkWidget *fire_up_transform_dialog(snd_state *ss, int managed)
 	  str = TRANSFORM_SIZES[i];
 	  gtk_clist_append(GTK_CLIST(size_list), &str);
 	}
-      gtk_signal_connect(GTK_OBJECT(size_list), "select_row", GTK_SIGNAL_FUNC(size_browse_Callback), (gpointer)ss);
+      gtk_signal_connect(GTK_OBJECT(size_list), "select_row", GTK_SIGNAL_FUNC(size_browse_callback), (gpointer)ss);
 
       size_scroller = gtk_scrolled_window_new(NULL, NULL);
       gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(size_scroller), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
@@ -483,56 +483,56 @@ GtkWidget *fire_up_transform_dialog(snd_state *ss, int managed)
       normal_fft_button = gtk_radio_button_new_with_label(NULL, STR_single_transform);
       gtk_box_pack_start(GTK_BOX(buttons), normal_fft_button, FALSE, FALSE, 0);
       gtk_widget_show(normal_fft_button);
-      gtk_signal_connect(GTK_OBJECT(normal_fft_button), "clicked", GTK_SIGNAL_FUNC(normal_fft_Callback), (gpointer)ss);
+      gtk_signal_connect(GTK_OBJECT(normal_fft_button), "clicked", GTK_SIGNAL_FUNC(normal_fft_callback), (gpointer)ss);
       button_pushed_red(normal_fft_button, ss);
       gtk_widget_set_usize(GTK_WIDGET(normal_fft_button), BUTTON_WIDTH, BUTTON_HEIGHT);
 
       sono_button = gtk_radio_button_new_with_label(gtk_radio_button_group(GTK_RADIO_BUTTON(normal_fft_button)), STR_sonogram);
       gtk_box_pack_start(GTK_BOX(buttons), sono_button, FALSE, FALSE, 0);
       gtk_widget_show(sono_button);
-      gtk_signal_connect(GTK_OBJECT(sono_button), "clicked", GTK_SIGNAL_FUNC(sonogram_Callback), (gpointer)ss);
+      gtk_signal_connect(GTK_OBJECT(sono_button), "clicked", GTK_SIGNAL_FUNC(sonogram_callback), (gpointer)ss);
       button_pushed_red(sono_button, ss);
       gtk_widget_set_usize(GTK_WIDGET(sono_button), BUTTON_WIDTH, BUTTON_HEIGHT);
 
       spectro_button = gtk_radio_button_new_with_label(gtk_radio_button_group(GTK_RADIO_BUTTON(normal_fft_button)), STR_spectrogram);
       gtk_box_pack_start(GTK_BOX(buttons), spectro_button, FALSE, FALSE, 0);
       gtk_widget_show(spectro_button);
-      gtk_signal_connect(GTK_OBJECT(spectro_button), "clicked", GTK_SIGNAL_FUNC(spectrogram_Callback), (gpointer)ss);
+      gtk_signal_connect(GTK_OBJECT(spectro_button), "clicked", GTK_SIGNAL_FUNC(spectrogram_callback), (gpointer)ss);
       button_pushed_red(spectro_button, ss);
       gtk_widget_set_usize(GTK_WIDGET(spectro_button), BUTTON_WIDTH, BUTTON_HEIGHT);
       
       peaks_button = gtk_check_button_new_with_label(STR_peaks);
       gtk_box_pack_start(GTK_BOX(buttons), peaks_button, FALSE, FALSE, 0);
       gtk_widget_show(peaks_button);
-      gtk_signal_connect(GTK_OBJECT(peaks_button), "toggled", GTK_SIGNAL_FUNC(peaks_Callback), (gpointer)ss);
+      gtk_signal_connect(GTK_OBJECT(peaks_button), "toggled", GTK_SIGNAL_FUNC(peaks_callback), (gpointer)ss);
       button_pushed_red(peaks_button, ss);
       gtk_widget_set_usize(GTK_WIDGET(peaks_button), BUTTON_WIDTH, BUTTON_HEIGHT);
  
       db_button = gtk_check_button_new_with_label(STR_dB);
       gtk_box_pack_start(GTK_BOX(buttons), db_button, FALSE, FALSE, 0);
       gtk_widget_show(db_button);
-      gtk_signal_connect(GTK_OBJECT(db_button), "toggled", GTK_SIGNAL_FUNC(db_Callback), (gpointer)ss);
+      gtk_signal_connect(GTK_OBJECT(db_button), "toggled", GTK_SIGNAL_FUNC(db_callback), (gpointer)ss);
       button_pushed_red(db_button, ss);
       gtk_widget_set_usize(GTK_WIDGET(db_button), BUTTON_WIDTH, BUTTON_HEIGHT);
  
       logfreq_button = gtk_check_button_new_with_label(STR_log_freq);
       gtk_box_pack_start(GTK_BOX(buttons), logfreq_button, FALSE, FALSE, 0);
       gtk_widget_show(logfreq_button);
-      gtk_signal_connect(GTK_OBJECT(logfreq_button), "toggled", GTK_SIGNAL_FUNC(logfreq_Callback), (gpointer)ss);
+      gtk_signal_connect(GTK_OBJECT(logfreq_button), "toggled", GTK_SIGNAL_FUNC(logfreq_callback), (gpointer)ss);
       button_pushed_red(logfreq_button, ss);
       gtk_widget_set_usize(GTK_WIDGET(logfreq_button), BUTTON_WIDTH, BUTTON_HEIGHT);
 
       normalize_button = gtk_check_button_new_with_label(STR_normalize);
       gtk_box_pack_start(GTK_BOX(buttons), normalize_button, FALSE, FALSE, 0);
       gtk_widget_show(normalize_button);
-      gtk_signal_connect(GTK_OBJECT(normalize_button), "toggled", GTK_SIGNAL_FUNC(normalize_Callback), (gpointer)ss);
+      gtk_signal_connect(GTK_OBJECT(normalize_button), "toggled", GTK_SIGNAL_FUNC(normalize_callback), (gpointer)ss);
       button_pushed_red(normalize_button, ss);
       gtk_widget_set_usize(GTK_WIDGET(normalize_button), BUTTON_WIDTH, BUTTON_HEIGHT);
 
       selection_button = gtk_check_button_new_with_label(STR_selection);
       gtk_box_pack_start(GTK_BOX(buttons), selection_button, FALSE, FALSE, 0);
       gtk_widget_show(selection_button);
-      gtk_signal_connect(GTK_OBJECT(selection_button), "toggled", GTK_SIGNAL_FUNC(selection_Callback), (gpointer)ss);
+      gtk_signal_connect(GTK_OBJECT(selection_button), "toggled", GTK_SIGNAL_FUNC(selection_callback), (gpointer)ss);
       button_pushed_red(selection_button, ss);
       gtk_widget_set_usize(GTK_WIDGET(selection_button), BUTTON_WIDTH, BUTTON_HEIGHT);
 
@@ -554,7 +554,7 @@ GtkWidget *fire_up_transform_dialog(snd_state *ss, int managed)
 	  str = WAVELETS[i];
 	  gtk_clist_append(GTK_CLIST(wavelet_list), &str);
 	}
-      gtk_signal_connect(GTK_OBJECT(wavelet_list), "select_row", GTK_SIGNAL_FUNC(wavelet_browse_Callback), (gpointer)ss);
+      gtk_signal_connect(GTK_OBJECT(wavelet_list), "select_row", GTK_SIGNAL_FUNC(wavelet_browse_callback), (gpointer)ss);
 
       wavelet_scroller = gtk_scrolled_window_new(NULL, NULL);
       gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(wavelet_scroller), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
@@ -584,7 +584,7 @@ GtkWidget *fire_up_transform_dialog(snd_state *ss, int managed)
 	  str = FFT_WINDOWS[i];
 	  gtk_clist_append(GTK_CLIST(window_list), &str);
 	}
-      gtk_signal_connect(GTK_OBJECT(window_list), "select_row", GTK_SIGNAL_FUNC(window_browse_Callback), (gpointer)ss);
+      gtk_signal_connect(GTK_OBJECT(window_list), "select_row", GTK_SIGNAL_FUNC(window_browse_callback), (gpointer)ss);
 
       window_scroller = gtk_scrolled_window_new(NULL, NULL);
       gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(window_scroller), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
@@ -602,7 +602,7 @@ GtkWidget *fire_up_transform_dialog(snd_state *ss, int managed)
       gtk_scale_set_digits(GTK_SCALE(window_beta_scale), 2);
       gtk_scale_set_value_pos(GTK_SCALE(window_beta_scale), GTK_POS_TOP);
       gtk_scale_set_draw_value(GTK_SCALE(window_beta_scale), TRUE);
-      gtk_signal_connect(GTK_OBJECT(beta_adj), "value_changed", GTK_SIGNAL_FUNC(beta_Callback), (gpointer)ss);
+      gtk_signal_connect(GTK_OBJECT(beta_adj), "value_changed", GTK_SIGNAL_FUNC(beta_callback), (gpointer)ss);
       gtk_table_attach(GTK_TABLE(window_box), window_beta_scale, 0, 1, 1, 2,
 		       (GtkAttachOptions)(GTK_EXPAND | GTK_FILL), 
 		       (GtkAttachOptions)(GTK_FILL), 
@@ -664,8 +664,8 @@ GtkWidget *fire_up_transform_dialog(snd_state *ss, int managed)
   if (need_callback)
     {
       get_fft_window_data(ss);
-      gtk_signal_connect(GTK_OBJECT(graph_drawer), "expose_event", GTK_SIGNAL_FUNC(graph_expose_Callback), (gpointer)ss);
-      gtk_signal_connect(GTK_OBJECT(graph_drawer), "configure_event", GTK_SIGNAL_FUNC(graph_configure_Callback), (gpointer)ss);
+      gtk_signal_connect(GTK_OBJECT(graph_drawer), "expose_event", GTK_SIGNAL_FUNC(graph_expose_callback), (gpointer)ss);
+      gtk_signal_connect(GTK_OBJECT(graph_drawer), "configure_event", GTK_SIGNAL_FUNC(graph_configure_callback), (gpointer)ss);
       need_callback = 0;
     }
   return(transform_dialog);

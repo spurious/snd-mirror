@@ -116,7 +116,7 @@ void new_active_channel_alert(snd_state *ss)
     }
 }
 
-static void Dismiss_Enved_Callback(GtkWidget *w, gpointer context)
+static void dismiss_enved_callback(GtkWidget *w, gpointer context)
 {
   gtk_widget_hide(enved_dialog);
 }
@@ -126,7 +126,7 @@ static void delete_enved_dialog(GtkWidget *w, GdkEvent *event, gpointer context)
   gtk_widget_hide(enved_dialog);
 }
 
-static void Help_Enved_Callback(GtkWidget *w, gpointer context)
+static void help_enved_callback(GtkWidget *w, gpointer context)
 {
   envelope_editor_dialog_help((snd_state *)context);
 }
@@ -292,14 +292,14 @@ static void save_button_pressed(GtkWidget *w, gpointer context)
   env_redisplay(ss);
 }
 
-static void Apply_Enved_Callback(GtkWidget *w, gpointer context)
+static void apply_enved_callback(GtkWidget *w, gpointer context)
 {
   /* apply current envs to currently sync'd channels */
   apply_enved((snd_state *)context);
   last_active_channel = active_channel;
 }
 
-static void Undo_and_Apply_Enved_Callback(GtkWidget *w, gpointer context)
+static void undo_and_apply_enved_callback(GtkWidget *w, gpointer context)
 {
   /* undo upto previous amp env, then apply */
   /* this blindly undoes the previous edit (assumed to be an envelope) -- if the user made some other change in the meantime, too bad */
@@ -669,26 +669,26 @@ static void print_button_pressed(GtkWidget *w, gpointer context)
   File_Print_Callback(w, context);
 }
 
-static void env_browse_Callback(GtkWidget *w, gint row, gint column, GdkEventButton *event, gpointer context)
+static void env_browse_callback(GtkWidget *w, gint row, gint column, GdkEventButton *event, gpointer context)
 {
   select_or_edit_env((snd_state *)context, row);
 }
 
-static void Graph_Button_Callback(GtkWidget *w, gpointer context)
+static void graph_button_callback(GtkWidget *w, gpointer context)
 {
   snd_state *ss = (snd_state *)context; 
   in_set_enved_wave_p(ss, GTK_TOGGLE_BUTTON(w)->active);
   env_redisplay(ss);
 }
 
-static void dB_Button_Callback(GtkWidget *w, gpointer context)
+static void dB_button_callback(GtkWidget *w, gpointer context)
 {
   snd_state *ss = (snd_state *)context; 
   in_set_enved_in_dB(ss, GTK_TOGGLE_BUTTON(w)->active);
   env_redisplay(ss);
 }
 
-static void Clip_Button_Callback(GtkWidget *w, gpointer context)
+static void clip_button_callback(GtkWidget *w, gpointer context)
 {
   snd_state *ss = (snd_state *)context; 
   in_set_enved_clip_p(ss, GTK_TOGGLE_BUTTON(w)->active);
@@ -843,11 +843,11 @@ GtkWidget *create_envelope_editor (snd_state *ss)
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(enved_dialog)->action_area), apply2B, FALSE, TRUE, 10);
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(enved_dialog)->action_area), resetB, FALSE, TRUE, 10);
       gtk_box_pack_end(GTK_BOX(GTK_DIALOG(enved_dialog)->action_area), helpB, FALSE, TRUE, 10);
-      gtk_signal_connect(GTK_OBJECT(cancelB), "clicked", GTK_SIGNAL_FUNC(Dismiss_Enved_Callback), (gpointer)ss);
-      gtk_signal_connect(GTK_OBJECT(applyB), "clicked", GTK_SIGNAL_FUNC(Apply_Enved_Callback), (gpointer)ss);
-      gtk_signal_connect(GTK_OBJECT(apply2B), "clicked", GTK_SIGNAL_FUNC(Undo_and_Apply_Enved_Callback), (gpointer)ss);
+      gtk_signal_connect(GTK_OBJECT(cancelB), "clicked", GTK_SIGNAL_FUNC(dismiss_enved_callback), (gpointer)ss);
+      gtk_signal_connect(GTK_OBJECT(applyB), "clicked", GTK_SIGNAL_FUNC(apply_enved_callback), (gpointer)ss);
+      gtk_signal_connect(GTK_OBJECT(apply2B), "clicked", GTK_SIGNAL_FUNC(undo_and_apply_enved_callback), (gpointer)ss);
       gtk_signal_connect(GTK_OBJECT(resetB), "clicked", GTK_SIGNAL_FUNC(reset_button_pressed), (gpointer)ss);
-      gtk_signal_connect(GTK_OBJECT(helpB), "clicked", GTK_SIGNAL_FUNC(Help_Enved_Callback), (gpointer)ss);
+      gtk_signal_connect(GTK_OBJECT(helpB), "clicked", GTK_SIGNAL_FUNC(help_enved_callback), (gpointer)ss);
       set_pushed_button_colors(helpB, ss);
       set_pushed_button_colors(cancelB, ss);
       set_pushed_button_colors(applyB, ss);
@@ -1009,7 +1009,7 @@ GtkWidget *create_envelope_editor (snd_state *ss)
       gtk_clist_set_shadow_type(GTK_CLIST(env_list), GTK_SHADOW_ETCHED_IN);
       gtk_clist_column_titles_passive(GTK_CLIST(env_list));
       if (enved_all_envs_top() > 0) make_scrolled_env_list(ss);
-      gtk_signal_connect(GTK_OBJECT(env_list), "select_row", GTK_SIGNAL_FUNC(env_browse_Callback), (gpointer)ss);
+      gtk_signal_connect(GTK_OBJECT(env_list), "select_row", GTK_SIGNAL_FUNC(env_browse_callback), (gpointer)ss);
 
       env_list_scroller = gtk_scrolled_window_new(NULL, NULL);
       gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(env_list_scroller), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
@@ -1052,17 +1052,17 @@ GtkWidget *create_envelope_editor (snd_state *ss)
       gtk_widget_show(brktxtL);
 
       clipB = gtk_check_button_new_with_label(STR_clip);
-      gtk_signal_connect(GTK_OBJECT(clipB), "toggled", GTK_SIGNAL_FUNC(Clip_Button_Callback), (gpointer)ss);
+      gtk_signal_connect(GTK_OBJECT(clipB), "toggled", GTK_SIGNAL_FUNC(clip_button_callback), (gpointer)ss);
       gtk_box_pack_start(GTK_BOX(toprow), clipB, FALSE, FALSE, 0);
       gtk_widget_show(clipB);
 
       graphB = gtk_check_button_new_with_label(STR_wave);
-      gtk_signal_connect(GTK_OBJECT(graphB), "toggled", GTK_SIGNAL_FUNC(Graph_Button_Callback), (gpointer)ss);
+      gtk_signal_connect(GTK_OBJECT(graphB), "toggled", GTK_SIGNAL_FUNC(graph_button_callback), (gpointer)ss);
       gtk_box_pack_start(GTK_BOX(toprow), graphB, FALSE, FALSE, 0);
       gtk_widget_show(graphB);
 
       dBB = gtk_check_button_new_with_label(STR_dB);
-      gtk_signal_connect(GTK_OBJECT(dBB), "toggled", GTK_SIGNAL_FUNC(dB_Button_Callback), (gpointer)ss);
+      gtk_signal_connect(GTK_OBJECT(dBB), "toggled", GTK_SIGNAL_FUNC(dB_button_callback), (gpointer)ss);
       gtk_box_pack_start(GTK_BOX(toprow), dBB, FALSE, FALSE, 0);
       gtk_widget_show(dBB);
 

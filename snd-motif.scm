@@ -1709,16 +1709,41 @@ Reverb-feedback sets the scaler on the feedback.\n\
 			|XmNorientation |XmHORIZONTAL))))
     (load "icons.scm")
     (for-each 
-     (lambda (icon)
+     (lambda (icon callback)
        (let ((button
 	      (|XtCreateManagedWidget "button" |xmPushButtonWidgetClass tools
 		(list |XmNlabelPixmap (make-pixmap tools icon)
 		      |XmNlabelType   |XmPIXMAP
 		      |XmNwidth       32
 		      |XmNheight      32))))
-	 (|XtAddCallback button |XmNactivateCallback (lambda (w c i) (snd-print "aren't icons grand?")))))
-     (list burger syringe media tut fortune bob1 caesar xmas1 umbrela chess3 compress xdbx icl8))))
-
+	 (|XtAddCallback button |XmNactivateCallback callback)))
+     (list burger syringe media tut fortune bob1 caesar xmas1 umbrela chess3 compress xdbx icl8)
+     (list (lambda (w c i) ; ahead one
+	     (set! (cursor) (min (1- (frames)) (1+ (cursor)))))
+	   (lambda (w c i) ; back one
+	     (set! (cursor) (max 0 (1- (cursor)))))
+	   (lambda (w c i) ; to sound start
+	     (set! (cursor) 0))
+	   (lambda (w c i) ; to sound end
+	     (set! (cursor) (1- (frames))))
+	   (lambda (w c i) ; to window start
+	     (set! (cursor) (left-sample)))
+	   (lambda (w c i) ; to window end
+	     (set! (cursor) (right-sample)))
+	   (lambda (w c i) ; to mid-window 
+	     (set! (cursor) (inexact->exact (/ (+ (left-sample) (right-sample)) 2))))
+	   (lambda (w c i) ; move ahead a window
+	     (set! (left-sample) (right-sample)))
+	   (lambda (w c i) ; move back a window
+	     (set! (left-sample) (max 0 (- (* 2 (left-sample)) (right-sample)))))
+	   (lambda (w c i)
+	     (snd-print "chess"))
+	   (lambda (w c i)
+	     (snd-print "compress"))
+	   (lambda (w c i)
+	     (snd-print "xdbx"))
+	   (lambda (w c i)
+	     (snd-print "icl8"))))))
 
 
 ;;; -------- add amp sliders in control panel for multi-channel sounds

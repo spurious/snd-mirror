@@ -833,7 +833,7 @@ static void display_vu_meter(VU *vu)
     }
 }
 
-static void Meter_Display_Callback(Widget w, XtPointer context, XtPointer info) 
+static void meter_display_callback(Widget w, XtPointer context, XtPointer info) 
 {
   display_vu_meter((VU *)context);
 }
@@ -1008,7 +1008,7 @@ static char *amp_to_string(Float val)
   return(amp_number_buffer);
 }
 
-static void Record_Amp_Click_Callback(Widget w, XtPointer context, XtPointer info) 
+static void record_amp_click_callback(Widget w, XtPointer context, XtPointer info) 
 {
   XmPushButtonCallbackStruct *cb = (XmPushButtonCallbackStruct *)info;
   AMP *ap = (AMP *)context;
@@ -1026,14 +1026,14 @@ static void Record_Amp_Click_Callback(Widget w, XtPointer context, XtPointer inf
   XtVaSetValues(ap->slider, XmNvalue, val, NULL);
 }
 
-static void Record_Amp_Drag_Callback(Widget w, XtPointer context, XtPointer info) 
+static void record_amp_drag_callback(Widget w, XtPointer context, XtPointer info) 
 {
   ASSERT_WIDGET_TYPE(XmIsScrollBar(w), w);
   record_amp_changed((AMP *)context, 
 		     ((XmScrollBarCallbackStruct *)info)->value);
 }
 
-static void Record_Amp_ValueChanged_Callback(Widget w, XtPointer context, XtPointer info) 
+static void record_amp_valuechanged_callback(Widget w, XtPointer context, XtPointer info) 
 {
   XmScrollBarCallbackStruct *cb = (XmScrollBarCallbackStruct *)info;
   AMP *ap = (AMP *)context;
@@ -1046,7 +1046,7 @@ static void Record_Amp_ValueChanged_Callback(Widget w, XtPointer context, XtPoin
 
 /* ---------------- MESSAGE PANE ---------------- */
 
-static void Messages_Help_Callback(Widget w, XtPointer context, XtPointer info) 
+static void messages_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_state *ss = (snd_state *)context;
   snd_help_with_wrap(ss,
@@ -1078,7 +1078,7 @@ static Widget make_message_pane(snd_state *ss, Widget message_pane)
       map_over_children(XtParent(msg), set_main_color_of_widget, (void *)ss);
       XtVaSetValues(msg, XmNbackground, (ss->sgx)->light_blue, XmNforeground, (ss->sgx)->black, NULL);
     }
-  XtAddCallback(msg, XmNhelpCallback, Messages_Help_Callback, ss);
+  XtAddCallback(msg, XmNhelpCallback, messages_help_callback, ss);
   return(msg);
 }
 
@@ -1118,12 +1118,12 @@ static void autoload_file_help_callback(Widget w, XtPointer context, XtPointer i
 "If this button is set, the recorded file is automatically loaded into Snd.");	   
 }
 
-static void Help_Record_Callback(Widget w, XtPointer context, XtPointer info) 
+static void help_record_callback(Widget w, XtPointer context, XtPointer info) 
 {
   recording_help((snd_state *)context);
 }
 
-static void VU_Reset_Help_Callback(Widget w, XtPointer context, XtPointer info) 
+static void vu_reset_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_state *ss = (snd_state *)context;
   snd_help_with_wrap(ss,
@@ -1131,7 +1131,7 @@ static void VU_Reset_Help_Callback(Widget w, XtPointer context, XtPointer info)
 "This button resets the fields above it that indicate the on-going max amp encountered since the last reset");
 }
 
-static void trigger_help_Callback(Widget w, XtPointer context, XtPointer info) 
+static void trigger_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_state *ss = (snd_state *)context;
   snd_help_with_wrap(ss,
@@ -1175,7 +1175,7 @@ static void internal_trigger_set(Float val)
     }
 }
 
-static void change_trigger_Callback(Widget w, XtPointer context, XtPointer info) 
+static void change_trigger_callback(Widget w, XtPointer context, XtPointer info) 
 {
   /* if val = 0, set record button normal label to 'Record', else 'Triggered Record' */
   XmScaleCallbackStruct *cb = (XmScaleCallbackStruct *)info;
@@ -1183,7 +1183,7 @@ static void change_trigger_Callback(Widget w, XtPointer context, XtPointer info)
   internal_trigger_set((Float)(cb->value) / 100.0);
 }
 
-static void drag_trigger_Callback(Widget w, XtPointer context, XtPointer info) 
+static void drag_trigger_callback(Widget w, XtPointer context, XtPointer info) 
 {
   XmScaleCallbackStruct *cb = (XmScaleCallbackStruct *)info;
   ASSERT_WIDGET_TYPE(XmIsScale(w), w);
@@ -1348,7 +1348,7 @@ read by CLM, someday.");
 }
 #endif
 
-static void Srate_Changed_Callback(Widget w, XtPointer context, XtPointer info) 
+static void srate_changed_callback(Widget w, XtPointer context, XtPointer info) 
 {
   char *str;
   int n;
@@ -1367,7 +1367,7 @@ static void Srate_Changed_Callback(Widget w, XtPointer context, XtPointer info)
     }
 }
 
-static void Rec_Size_Changed_Callback(Widget w, XtPointer context, XtPointer info) 
+static void rec_size_changed_callback(Widget w, XtPointer context, XtPointer info) 
 {
   char *str;
   int n;
@@ -1484,7 +1484,7 @@ static void make_file_info_pane(snd_state *ss, recorder_info *rp, Widget file_pa
   XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
   recdat = sndCreateFileDataForm(ss, ff_form, "data-form", args, n, TRUE, rp->output_header_type, rp->out_format, FALSE);
   XtVaGetValues(recdat->comment_text, XmNy, &pane_max, NULL);
-  XtAddCallback(recdat->srate_text, XmNactivateCallback, Srate_Changed_Callback, (void *)ss); /* this is a no-op -- textfield widget is not activatable */
+  XtAddCallback(recdat->srate_text, XmNactivateCallback, srate_changed_callback, (void *)ss); /* this is a no-op -- textfield widget is not activatable */
 #if defined(SGI)
   err = mus_audio_mixer_read(MUS_AUDIO_PACK_SYSTEM(0) | MUS_AUDIO_MICROPHONE, MUS_AUDIO_SRATE, 0, val);
   if (!err) rp->srate = val[0];
@@ -1537,7 +1537,7 @@ static void make_file_info_pane(snd_state *ss, recorder_info *rp, Widget file_pa
   XtSetArg(args[n], XmNcolumns, 6); n++;
   rec_size_text = sndCreateTextFieldWidget(ss, "rectext", file_form, args, n, NOT_ACTIVATABLE, NO_COMPLETER);
   XtAddCallback(rec_size_text, XmNhelpCallback, rec_size_help_callback, ss);
-  XtAddCallback(rec_size_text, XmNactivateCallback, Rec_Size_Changed_Callback, (void *)ss);
+  XtAddCallback(rec_size_text, XmNactivateCallback, rec_size_changed_callback, (void *)ss);
   mus_snprintf(timbuf, TIME_STR_SIZE, "%d", rp->buffer_size);
   XmTextSetString(rec_size_text, timbuf);
 
@@ -1591,7 +1591,7 @@ static void make_file_info_pane(snd_state *ss, recorder_info *rp, Widget file_pa
   XtSetArg(args[n], XmNtopAttachment, XmATTACH_NONE); n++;
   XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
   trigger_label = XtCreateManagedWidget("trigger:", xmLabelWidgetClass, file_form, args, n);
-  XtAddCallback(trigger_label, XmNhelpCallback, trigger_help_Callback, ss);
+  XtAddCallback(trigger_label, XmNhelpCallback, trigger_help_callback, ss);
   make_trigger_label(rp->trigger);
 
   n = 0;
@@ -1604,10 +1604,10 @@ static void make_file_info_pane(snd_state *ss, recorder_info *rp, Widget file_pa
   XtSetArg(args[n], XmNtopWidget, trigger_label); n++;
   XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
   XtSetArg(args[n], XmNvalue, (int)(100*(rp->trigger))); n++;
-  XtSetArg(args[n], XmNdragCallback, n1 = make_callback_list(drag_trigger_Callback, (XtPointer)ss)); n++;
-  XtSetArg(args[n], XmNvalueChangedCallback, n2 = make_callback_list(change_trigger_Callback, (XtPointer)ss)); n++;
+  XtSetArg(args[n], XmNdragCallback, n1 = make_callback_list(drag_trigger_callback, (XtPointer)ss)); n++;
+  XtSetArg(args[n], XmNvalueChangedCallback, n2 = make_callback_list(change_trigger_callback, (XtPointer)ss)); n++;
   trigger_scale = XtCreateManagedWidget("scale", xmScaleWidgetClass, file_form, args, n);
-  XtAddCallback(trigger_scale, XmNhelpCallback, trigger_help_Callback, ss);
+  XtAddCallback(trigger_scale, XmNhelpCallback, trigger_help_callback, ss);
 
   /* buttons */
   n = 0;
@@ -1715,7 +1715,7 @@ void unlock_recording_audio(void)
 
 
 
-static void VU_Max_Help_Callback(Widget w, XtPointer context, XtPointer info) 
+static void vu_max_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
   Wdesc *wd = (Wdesc *)context;
   ssnd_help(wd->ss,
@@ -1730,7 +1730,7 @@ The reset button sets it back to 0.0.\n",
 	    NULL);
 }
 
-static void VU_On_Help_Callback(Widget w, XtPointer context, XtPointer info) 
+static void vu_on_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
   Wdesc *wd = (Wdesc *)context;
   ssnd_help(wd->ss,
@@ -1819,7 +1819,7 @@ is reflected in the meters or the audio data.\n" : "",
 #endif
 }
 
-static void amp_slider_help_Callback(Widget w, XtPointer context, XtPointer info) 
+static void amp_slider_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
   Wdesc *wd = (Wdesc *)context;
   PANE *p;
@@ -1838,7 +1838,7 @@ static void amp_slider_help_Callback(Widget w, XtPointer context, XtPointer info
 	    NULL);
 }
 
-static void Meter_Help_Callback(Widget w, XtPointer context, XtPointer info) 
+static void meter_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
   Wdesc *wd = (Wdesc *)context;
   ssnd_help(wd->ss,
@@ -1852,7 +1852,7 @@ It is yellow if active, red if clipping.\n",
 	    NULL);
 }
 
-static void VU_Reset_Callback(Widget w, XtPointer context, XtPointer info) 
+static void vu_reset_callback(Widget w, XtPointer context, XtPointer info) 
 {
   /* set current maxes to 0.0 */
   int i;
@@ -1866,7 +1866,7 @@ static void VU_Reset_Callback(Widget w, XtPointer context, XtPointer info)
     }
 }
 
-static void Meter_Button_Callback(Widget w, XtPointer context, XtPointer info) 
+static void meter_button_callback(Widget w, XtPointer context, XtPointer info) 
 {
   Wdesc *wd = (Wdesc *)context;
   VU *vu;
@@ -1933,7 +1933,7 @@ static void volume_callback(Widget w, XtPointer context, XtPointer info)
 
 /* ---- slider button matrix ---- */
 
-static void Button_Matrix_Help_Callback(Widget w, XtPointer context, XtPointer info) 
+static void button_matrix_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_state *ss = (snd_state *)context;
   snd_help_with_wrap(ss, "Channel Matrix",
@@ -1981,8 +1981,8 @@ static Widget sndCreateRecorderSlider(snd_state *ss, PANE *p, AMP *a, Widget las
 #endif
   a->label = sndCreatePushButtonWidget(gain_channel_name(p->in_chans, p->out_chans, input, a->device_in_chan, a->out), 
 				       p->pane, args, n);
-  XtAddCallback(a->label, XmNactivateCallback, Record_Amp_Click_Callback, a);
-  XtAddCallback(a->label, XmNhelpCallback, amp_slider_help_Callback, a->wd);
+  XtAddCallback(a->label, XmNactivateCallback, record_amp_click_callback, a);
+  XtAddCallback(a->label, XmNhelpCallback, amp_slider_help_callback, a->wd);
   
   n = 0;
   if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
@@ -2009,8 +2009,8 @@ static Widget sndCreateRecorderSlider(snd_state *ss, PANE *p, AMP *a, Widget las
   XtSetArg(args[n], XmNfillOnArm, FALSE); n++;
   a->number = sndCreatePushButtonWidget ("amp-number", p->pane, args, n);
   /* this could be the snd-xsnd control panel case as well */
-  XtAddCallback(a->number, XmNactivateCallback, Record_Amp_Click_Callback, a);
-  XtAddCallback(a->number, XmNhelpCallback, amp_slider_help_Callback, a->wd);
+  XtAddCallback(a->number, XmNactivateCallback, record_amp_click_callback, a);
+  XtAddCallback(a->number, XmNhelpCallback, amp_slider_help_callback, a->wd);
   XmStringFree(s1);
 	  
   n = 0;      
@@ -2029,10 +2029,10 @@ static Widget sndCreateRecorderSlider(snd_state *ss, PANE *p, AMP *a, Widget las
   XtSetArg(args[n], XmNorientation, XmHORIZONTAL); n++;
   XtSetArg(args[n], XmNmaximum, RECORD_SCROLLBAR_MAX); n++;
   XtSetArg(args[n], XmNvalue, amp_to_slider(global_amp(a))); n++;
-  XtSetArg(args[n], XmNdragCallback, n1 = make_callback_list(Record_Amp_Drag_Callback, (XtPointer)a)); n++;
-  XtSetArg(args[n], XmNvalueChangedCallback, n2 = make_callback_list(Record_Amp_ValueChanged_Callback, (XtPointer)a)); n++;
+  XtSetArg(args[n], XmNdragCallback, n1 = make_callback_list(record_amp_drag_callback, (XtPointer)a)); n++;
+  XtSetArg(args[n], XmNvalueChangedCallback, n2 = make_callback_list(record_amp_valuechanged_callback, (XtPointer)a)); n++;
   a->slider = XtCreateManagedWidget("amp", xmScrollBarWidgetClass, p->pane, args, n);
-  XtAddCallback(a->slider, XmNhelpCallback, amp_slider_help_Callback, a->wd);
+  XtAddCallback(a->slider, XmNhelpCallback, amp_slider_help_callback, a->wd);
 
   FREE(n1);
   FREE(n2);
@@ -2096,7 +2096,7 @@ typedef struct {
   int in_chan, out_chan;
 } slider_info;
 
-static void Matrix_Button_Callback(Widget mb, XtPointer context, XtPointer info) 
+static void matrix_button_callback(Widget mb, XtPointer context, XtPointer info) 
 {
   slider_info *si = (slider_info *)context;
   PANE *p;
@@ -2230,7 +2230,7 @@ static Widget sndCreateButtonMatrix(snd_state *ss, PANE *p, char *name, Widget p
   XtSetArg(args[n], XmNwidth, (Dimension)width); n++;
   XtSetArg(args[n], XmNresizePolicy, XmRESIZE_NONE); n++;
   outer_form = sndCreateFormWidget("outer-form", outer_frame, args, n);
-  XtAddCallback(outer_form, XmNhelpCallback, Button_Matrix_Help_Callback, ss);
+  XtAddCallback(outer_form, XmNhelpCallback, button_matrix_help_callback, ss);
   XtAddEventHandler(outer_form, ButtonPressMask, FALSE, button_matrix_button_press, (XtPointer)p);
   XtAddEventHandler(outer_form, ButtonMotionMask, FALSE, button_matrix_button_motion, (XtPointer)p);
   XtAddEventHandler(outer_form, ButtonReleaseMask, FALSE, button_matrix_button_release, (XtPointer)p);
@@ -2361,7 +2361,7 @@ static Widget sndCreateButtonMatrix(snd_state *ss, PANE *p, char *name, Widget p
 	XtSetArg(args[n], XmNarmColor, (ss->sgx)->green); n++;
 	XtSetArg(args[n], XmNfillOnArm, TRUE); n++;
 	mb = sndCreatePushButtonWidget(" ", inner_form, args, n);
-	XtAddCallback(mb, XmNactivateCallback, Matrix_Button_Callback, si);
+	XtAddCallback(mb, XmNactivateCallback, matrix_button_callback, si);
 	if (active_sliders[row][col]) XmChangeColor(mb, (Pixel)((ss->sgx)->green));
 	p->matrix_buttons[row][col] = mb;
       }
@@ -2590,8 +2590,8 @@ static Widget make_vu_meters(snd_state *ss, PANE *p, int vu_meters, Widget *fram
       if (input)
 	rec_in_VU[overall_input_ctr+i] = vu;
       else rec_out_VU[i] = vu;
-      XtAddCallback(meter, XmNexposeCallback, Meter_Display_Callback, vu);
-      XtAddCallback(meter, XmNresizeCallback, Meter_Display_Callback, vu);
+      XtAddCallback(meter, XmNexposeCallback, meter_display_callback, vu);
+      XtAddCallback(meter, XmNresizeCallback, meter_display_callback, vu);
       wd = (Wdesc *)CALLOC(1, sizeof(Wdesc));
       wd->chan = i;
       wd->ss = ss;
@@ -2599,7 +2599,7 @@ static Widget make_vu_meters(snd_state *ss, PANE *p, int vu_meters, Widget *fram
       wd->field = MUS_AUDIO_AMP;
       wd->device = p->device;
       wd->system = p->system;
-      XtAddCallback(meter, XmNhelpCallback, Meter_Help_Callback, wd);
+      XtAddCallback(meter, XmNhelpCallback, meter_help_callback, wd);
       last_frame = frame;
       if ((i == (columns*(row + 1) - 1)) && 
 	  (vu_meters > (i + 1))) 
@@ -2917,8 +2917,8 @@ static Widget make_button_box(snd_state *ss, recorder_info *rp, PANE *p, Float m
       wd->device = p->device;
       wd->system = p->system;
       wd->field = MUS_AUDIO_AMP;
-      XtAddCallback(last_button, XmNactivateCallback, Meter_Button_Callback, wd);
-      XtAddCallback(last_button, XmNhelpCallback, VU_On_Help_Callback, wd);
+      XtAddCallback(last_button, XmNactivateCallback, meter_button_callback, wd);
+      XtAddCallback(last_button, XmNhelpCallback, vu_on_help_callback, wd);
 
       n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
@@ -2964,7 +2964,7 @@ static Widget make_button_box(snd_state *ss, recorder_info *rp, PANE *p, Float m
       vu = p->meters[i];
       vu->max_button = max_label;
       vu->max_val = 0.0;
-      XtAddCallback(max_label, XmNhelpCallback, VU_Max_Help_Callback, wd);
+      XtAddCallback(max_label, XmNhelpCallback, vu_max_help_callback, wd);
 
       if ((i == (columns * (row + 1) - 1)) && 
 	  (vu_meters > (i + 1))) 
@@ -3003,8 +3003,8 @@ static void make_reset_button(snd_state *ss, PANE *p, Float meter_size, Widget b
   if (meter_size < SMALL_FONT_CUTOFF) {XtSetArg(args[n], XM_FONT_RESOURCE, small_fontlist); n++;}
   XtSetArg(args[n], XmNlabelString, labelstr); n++;
   p->reset_button = XtCreateManagedWidget("reset", xmPushButtonWidgetClass, p->pane, args, n);
-  XtAddCallback(p->reset_button, XmNactivateCallback, VU_Reset_Callback, p);
-  XtAddCallback(p->reset_button, XmNhelpCallback, VU_Reset_Help_Callback, ss);
+  XtAddCallback(p->reset_button, XmNactivateCallback, vu_reset_callback, p);
+  XtAddCallback(p->reset_button, XmNhelpCallback, vu_reset_help_callback, ss);
   XmStringFree(labelstr);
 }
 
@@ -3120,7 +3120,7 @@ static void RecordCleanupCB(Widget w, XtPointer context, XtPointer info)
   cleanup_recording(); 
 }
 
-static void Reset_Record_Callback(Widget w, XtPointer context, XtPointer info) 
+static void reset_record_callback(Widget w, XtPointer context, XtPointer info) 
 {
   /* if recording, cancel and toss data, else reset various fields to default (ss) values */
   snd_state *ss = (snd_state *)context;
@@ -3178,7 +3178,7 @@ static void Reset_Record_Callback(Widget w, XtPointer context, XtPointer info)
     }
 }
 
-static void Dismiss_Record_Callback(Widget w, XtPointer context, XtPointer info) 
+static void dismiss_record_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_state *ss = (snd_state *)context;
   XmAnyCallbackStruct *cb = (XmAnyCallbackStruct *)info;
@@ -3188,7 +3188,7 @@ static void Dismiss_Record_Callback(Widget w, XtPointer context, XtPointer info)
   sgx = ss->sgx;
   if (cb->event != sgx->text_activate_event)  /* passed up from textfield widget after <cr> typed */
     {
-      if (rp->recording) Reset_Record_Callback(w, context, info);
+      if (rp->recording) reset_record_callback(w, context, info);
       XtUnmanageChild(recorder);
       close_recorder_audio();
 #if (!(HAVE_OSS || HAVE_ALSA))
@@ -3251,7 +3251,7 @@ void finish_recording(snd_state *ss, recorder_info *rp)
     }
 }
 
-static void Record_Button_Callback(Widget w, XtPointer context, XtPointer info) 
+static void record_button_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_state *ss = (snd_state *)context;
   XmString s1 = NULL, s2 = NULL;
@@ -3314,7 +3314,7 @@ static void Record_Button_Callback(Widget w, XtPointer context, XtPointer info)
 		  if (!(p->active[i]))
 		    {
 		      wd->chan = i;
-		      Meter_Button_Callback(p->on_buttons[i], (XtPointer)wd, NULL); /* info not used */
+		      meter_button_callback(p->on_buttons[i], (XtPointer)wd, NULL); /* info not used */
 		    }
 		}
 	      FREE(wd);
@@ -3442,9 +3442,9 @@ void snd_record_file(snd_state *ss)
       recorder = XmCreateTemplateDialog(MAIN_SHELL(ss), STR_Record, args, n);
       set_dialog_widget(ss, RECORDER_DIALOG, recorder);
 
-      XtAddCallback(recorder, XmNcancelCallback, Reset_Record_Callback, ss);
-      XtAddCallback(recorder, XmNhelpCallback, Help_Record_Callback, ss);
-      XtAddCallback(recorder, XmNokCallback, Dismiss_Record_Callback, ss);
+      XtAddCallback(recorder, XmNcancelCallback, reset_record_callback, ss);
+      XtAddCallback(recorder, XmNhelpCallback, help_record_callback, ss);
+      XtAddCallback(recorder, XmNokCallback, dismiss_record_callback, ss);
       XmStringFree(xhelp);
       XmStringFree(xdismiss);
       XmStringFree(xreset);
@@ -3453,7 +3453,7 @@ void snd_record_file(snd_state *ss)
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       XtSetArg(args[n], XmNlabelString, titlestr); n++;
       record_button = XtCreateManagedWidget("record-button", xmPushButtonWidgetClass, recorder, args, n);
-      XtAddCallback(record_button, XmNactivateCallback, Record_Button_Callback, ss);
+      XtAddCallback(record_button, XmNactivateCallback, record_button_callback, ss);
       XmStringFree(titlestr);
 
       reset_button = XtNameToWidget(recorder, "Cancel");

@@ -536,7 +536,7 @@ typedef struct {
 
 static color_chooser_info *ccd = NULL;
 
-static void Invert_Color_Callback(GtkWidget *w, gpointer context)
+static void invert_color_callback(GtkWidget *w, gpointer context)
 {
   snd_state *ss = (snd_state *)context;
   in_set_color_inverted(ss, GTK_TOGGLE_BUTTON(w)->active);
@@ -550,7 +550,7 @@ void set_color_inverted(snd_state *ss, int val)
   if (!(ss->graph_hook_active)) map_over_chans(ss, update_graph, NULL);
 }
 
-static void Scale_Color_Callback(GtkAdjustment *adj, gpointer context)
+static void scale_color_callback(GtkAdjustment *adj, gpointer context)
 {
   snd_state *ss = (snd_state *)context;
   gfloat scale_val, val;
@@ -578,7 +578,7 @@ void set_color_scale(snd_state *ss, Float val)
   if (!(ss->graph_hook_active)) map_over_chans(ss, update_graph, NULL);
 }
 
-static void List_Color_Callback(GtkWidget *w, gint row, gint column, GdkEventButton *event, gpointer context)
+static void list_color_callback(GtkWidget *w, gint row, gint column, GdkEventButton *event, gpointer context)
 {
   snd_state *ss = (snd_state *)context;
   in_set_color_map(ss, row);
@@ -592,7 +592,7 @@ void set_color_map(snd_state *ss, int val)
   if (!(ss->graph_hook_active)) map_over_chans(ss, update_graph, NULL);
 }
 
-static void Cutoff_Color_Callback(GtkAdjustment *adj, gpointer context)
+static void cutoff_color_callback(GtkAdjustment *adj, gpointer context)
 {
   snd_state *ss = (snd_state *)context;
   in_set_color_cutoff(ss, adj->value);
@@ -606,13 +606,13 @@ void set_color_cutoff(snd_state *ss, Float val)
   if (!(ss->graph_hook_active)) map_over_chans(ss, update_graph, NULL);
 }
 
-static void Dismiss_Color_Callback(GtkWidget *w, gpointer context)
+static void dismiss_color_callback(GtkWidget *w, gpointer context)
 {
   color_chooser_info *cd = (color_chooser_info *)context;
   gtk_widget_hide(cd->dialog);
 }
 
-static void Help_Color_Callback(GtkWidget *w, gpointer context)
+static void help_color_callback(GtkWidget *w, gpointer context)
 {
   color_dialog_help((snd_state *)context);
 }
@@ -648,8 +648,8 @@ void View_Color_Callback(GtkWidget *w, gpointer context)
       dismiss_button = gtk_button_new_with_label(STR_Dismiss);
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(ccd->dialog)->action_area), dismiss_button, FALSE, TRUE, 10);
       gtk_box_pack_end(GTK_BOX(GTK_DIALOG(ccd->dialog)->action_area), help_button, FALSE, TRUE, 10);
-      gtk_signal_connect(GTK_OBJECT(dismiss_button), "clicked", GTK_SIGNAL_FUNC(Dismiss_Color_Callback), (gpointer)ccd);
-      gtk_signal_connect(GTK_OBJECT(help_button), "clicked", GTK_SIGNAL_FUNC(Help_Color_Callback), (gpointer)ss);
+      gtk_signal_connect(GTK_OBJECT(dismiss_button), "clicked", GTK_SIGNAL_FUNC(dismiss_color_callback), (gpointer)ccd);
+      gtk_signal_connect(GTK_OBJECT(help_button), "clicked", GTK_SIGNAL_FUNC(help_color_callback), (gpointer)ss);
       set_pushed_button_colors(help_button, ss);
       set_pushed_button_colors(dismiss_button, ss);
       gtk_widget_show(dismiss_button);
@@ -670,7 +670,7 @@ void View_Color_Callback(GtkWidget *w, gpointer context)
       gtk_scale_set_value_pos(GTK_SCALE(ccd->scale), GTK_POS_TOP);
       gtk_scale_set_draw_value(GTK_SCALE(ccd->scale), TRUE);
       gtk_table_attach_defaults(GTK_TABLE(scale_box), ccd->scale, 0, 2, 0, 1);
-      gtk_signal_connect(GTK_OBJECT(ccd->scale_adj), "value_changed", GTK_SIGNAL_FUNC(Scale_Color_Callback), (gpointer)ss);
+      gtk_signal_connect(GTK_OBJECT(ccd->scale_adj), "value_changed", GTK_SIGNAL_FUNC(scale_color_callback), (gpointer)ss);
 
       light_label = gtk_label_new(STR_light);
       gtk_misc_set_alignment(GTK_MISC (light_label), 0.05, 0.0);
@@ -695,7 +695,7 @@ void View_Color_Callback(GtkWidget *w, gpointer context)
       gtk_scale_set_value_pos(GTK_SCALE(ccd->cutoff), GTK_POS_TOP);
       gtk_scale_set_draw_value(GTK_SCALE(ccd->cutoff), TRUE);
       gtk_table_attach_defaults(GTK_TABLE(cutoff_box), ccd->cutoff, 0, 2, 0, 1);
-      gtk_signal_connect(GTK_OBJECT(ccd->cutoff_adj), "value_changed", GTK_SIGNAL_FUNC(Cutoff_Color_Callback), (gpointer)ss);
+      gtk_signal_connect(GTK_OBJECT(ccd->cutoff_adj), "value_changed", GTK_SIGNAL_FUNC(cutoff_color_callback), (gpointer)ss);
 
       cutoff_label = gtk_label_new(STR_cutoff);
       gtk_misc_set_alignment(GTK_MISC (cutoff_label), 0.1, 0.0);
@@ -707,7 +707,7 @@ void View_Color_Callback(GtkWidget *w, gpointer context)
 
       ccd->invert = gtk_check_button_new_with_label(STR_invert);
       gtk_table_attach(GTK_TABLE(outer_table), ccd->invert, 0, 1, 2, 3, (GtkAttachOptions)0, (GtkAttachOptions)0, 0, 4);
-      gtk_signal_connect(GTK_OBJECT(ccd->invert), "toggled", GTK_SIGNAL_FUNC(Invert_Color_Callback), (gpointer)ss);
+      gtk_signal_connect(GTK_OBJECT(ccd->invert), "toggled", GTK_SIGNAL_FUNC(invert_color_callback), (gpointer)ss);
       gtk_widget_show(ccd->invert);
       set_toggle_button(ccd->invert, color_inverted(ss), FALSE, (gpointer)ss);
       set_pushed_button_colors(ccd->invert, ss);
@@ -732,7 +732,7 @@ void View_Color_Callback(GtkWidget *w, gpointer context)
 	  str = colormap_name(i);
 	  gtk_clist_append(GTK_CLIST(ccd->list), &str);
 	}
-      gtk_signal_connect(GTK_OBJECT(ccd->list), "select_row", GTK_SIGNAL_FUNC(List_Color_Callback), (gpointer)ss);
+      gtk_signal_connect(GTK_OBJECT(ccd->list), "select_row", GTK_SIGNAL_FUNC(list_color_callback), (gpointer)ss);
 
       colormap_scroller = gtk_scrolled_window_new(NULL, NULL);
       gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(colormap_scroller), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
@@ -774,7 +774,7 @@ typedef struct {
 
 static orientation_info *oid = NULL;
 
-static void AX_Orientation_Callback(GtkAdjustment *adj, gpointer context) 
+static void ax_orientation_callback(GtkAdjustment *adj, gpointer context) 
 {
   snd_state *ss;
   orientation_info *od = (orientation_info *)context;
@@ -792,7 +792,7 @@ void set_spectro_x_angle(snd_state *ss, Float val)
   if (!(ss->graph_hook_active)) map_over_chans(ss, update_graph, NULL);
 }
 
-static void AY_Orientation_Callback(GtkAdjustment *adj, gpointer context) 
+static void ay_orientation_callback(GtkAdjustment *adj, gpointer context) 
 {
   snd_state *ss;
   orientation_info *od = (orientation_info *)context;
@@ -810,7 +810,7 @@ void set_spectro_y_angle(snd_state *ss, Float val)
   if (!(ss->graph_hook_active)) map_over_chans(ss, update_graph, NULL);
 }
 
-static void AZ_Orientation_Callback(GtkAdjustment *adj, gpointer context) 
+static void az_orientation_callback(GtkAdjustment *adj, gpointer context) 
 {
   snd_state *ss;
   orientation_info *od = (orientation_info *)context;
@@ -828,7 +828,7 @@ void set_spectro_z_angle(snd_state *ss, Float val)
   if (!(ss->graph_hook_active)) map_over_chans(ss, update_graph, NULL);
 }
 
-static void SX_Orientation_Callback(GtkAdjustment *adj, gpointer context) 
+static void sx_orientation_callback(GtkAdjustment *adj, gpointer context) 
 {
   snd_state *ss;
   orientation_info *od = (orientation_info *)context;
@@ -846,7 +846,7 @@ void set_spectro_x_scale(snd_state *ss, Float val)
   if (!(ss->graph_hook_active)) map_over_chans(ss, update_graph, NULL);
 }
 
-static void SY_Orientation_Callback(GtkAdjustment *adj, gpointer context) 
+static void sy_orientation_callback(GtkAdjustment *adj, gpointer context) 
 {
   snd_state *ss;
   orientation_info *od = (orientation_info *)context;
@@ -864,7 +864,7 @@ void set_spectro_y_scale(snd_state *ss, Float val)
   if (!(ss->graph_hook_active)) map_over_chans(ss, update_graph, NULL);
 }
 
-static void SZ_Orientation_Callback(GtkAdjustment *adj, gpointer context) 
+static void sz_orientation_callback(GtkAdjustment *adj, gpointer context) 
 {
   snd_state *ss;
   orientation_info *od = (orientation_info *)context;
@@ -884,7 +884,7 @@ void set_spectro_z_scale(snd_state *ss, Float val)
 
 static int map_chans_spectro_hop(chan_info *cp, void *ptr) {cp->spectro_hop = (*((int *)ptr)); return(0);}
 
-static void Hop_Orientation_Callback(GtkAdjustment *adj, gpointer context) 
+static void hop_orientation_callback(GtkAdjustment *adj, gpointer context) 
 {
   snd_state *ss;
   int val;
@@ -907,7 +907,7 @@ void set_spectro_hop(snd_state *ss, int val)
     }
 }
 
-static void Cut_Orientation_Callback(GtkAdjustment *adj, gpointer context) 
+static void cut_orientation_callback(GtkAdjustment *adj, gpointer context) 
 {
   /* y axis limit */
   snd_state *ss;
@@ -925,12 +925,12 @@ void set_spectro_cutoff(snd_state *ss, Float val)
   if (!(ss->graph_hook_active)) map_over_chans(ss, update_graph, NULL);
 }
 
-static void Help_Orientation_Callback(GtkWidget *w, gpointer context)
+static void help_orientation_callback(GtkWidget *w, gpointer context)
 {
   orientation_dialog_help((snd_state *)context);
 }
 
-static void Dismiss_Orientation_Callback(GtkAdjustment *adj, gpointer context) 
+static void dismiss_orientation_callback(GtkAdjustment *adj, gpointer context) 
 {
   orientation_info *od = (orientation_info *)context;
   gtk_widget_hide(od->dialog);
@@ -972,7 +972,7 @@ void reflect_spectro(snd_state *ss)
     }
 }
 
-static void Reset_Orientation_Callback(GtkWidget *w, gpointer context)
+static void reset_orientation_callback(GtkWidget *w, gpointer context)
 {
   snd_state *ss;
   orientation_info *od = (orientation_info *)context;
@@ -1012,9 +1012,9 @@ void View_Orientation_Callback(GtkWidget *w, gpointer context)
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(oid->dialog)->action_area), reset_button, FALSE, TRUE, 10);
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(oid->dialog)->action_area), dismiss_button, FALSE, TRUE, 10);
       gtk_box_pack_end(GTK_BOX(GTK_DIALOG(oid->dialog)->action_area), help_button, FALSE, TRUE, 10);
-      gtk_signal_connect(GTK_OBJECT(reset_button), "clicked", GTK_SIGNAL_FUNC(Reset_Orientation_Callback), (gpointer)oid);
-      gtk_signal_connect(GTK_OBJECT(dismiss_button), "clicked", GTK_SIGNAL_FUNC(Dismiss_Orientation_Callback), (gpointer)oid);
-      gtk_signal_connect(GTK_OBJECT(help_button), "clicked", GTK_SIGNAL_FUNC(Help_Orientation_Callback), (gpointer)ss);
+      gtk_signal_connect(GTK_OBJECT(reset_button), "clicked", GTK_SIGNAL_FUNC(reset_orientation_callback), (gpointer)oid);
+      gtk_signal_connect(GTK_OBJECT(dismiss_button), "clicked", GTK_SIGNAL_FUNC(dismiss_orientation_callback), (gpointer)oid);
+      gtk_signal_connect(GTK_OBJECT(help_button), "clicked", GTK_SIGNAL_FUNC(help_orientation_callback), (gpointer)ss);
       set_pushed_button_colors(reset_button, ss);
       set_pushed_button_colors(help_button, ss);
       set_pushed_button_colors(dismiss_button, ss);
@@ -1037,7 +1037,7 @@ void View_Orientation_Callback(GtkWidget *w, gpointer context)
       gtk_scale_set_value_pos(GTK_SCALE(oid->ax), GTK_POS_TOP);
       gtk_scale_set_draw_value(GTK_SCALE(oid->ax), TRUE);
       gtk_table_attach_defaults(GTK_TABLE(ax_box), oid->ax, 0, 1, 0, 1);
-      gtk_signal_connect(GTK_OBJECT(oid->ax_adj), "value_changed", GTK_SIGNAL_FUNC(AX_Orientation_Callback), (gpointer)oid);
+      gtk_signal_connect(GTK_OBJECT(oid->ax_adj), "value_changed", GTK_SIGNAL_FUNC(ax_orientation_callback), (gpointer)oid);
 
       ax_label = gtk_label_new(STR_x_angle);
       gtk_misc_set_alignment(GTK_MISC (ax_label), 0.1, 0.0);
@@ -1059,7 +1059,7 @@ void View_Orientation_Callback(GtkWidget *w, gpointer context)
       gtk_scale_set_value_pos(GTK_SCALE(oid->ay), GTK_POS_TOP);
       gtk_scale_set_draw_value(GTK_SCALE(oid->ay), TRUE);
       gtk_table_attach_defaults(GTK_TABLE(ay_box), oid->ay, 0, 1, 0, 1);
-      gtk_signal_connect(GTK_OBJECT(oid->ay_adj), "value_changed", GTK_SIGNAL_FUNC(AY_Orientation_Callback), (gpointer)oid);
+      gtk_signal_connect(GTK_OBJECT(oid->ay_adj), "value_changed", GTK_SIGNAL_FUNC(ay_orientation_callback), (gpointer)oid);
 
       ay_label = gtk_label_new(STR_y_angle);
       gtk_misc_set_alignment(GTK_MISC(ay_label), 0.1, 0.0);
@@ -1081,7 +1081,7 @@ void View_Orientation_Callback(GtkWidget *w, gpointer context)
       gtk_scale_set_value_pos(GTK_SCALE(oid->az), GTK_POS_TOP);
       gtk_scale_set_draw_value(GTK_SCALE(oid->az), TRUE);
       gtk_table_attach_defaults(GTK_TABLE(az_box), oid->az, 0, 1, 0, 1);
-      gtk_signal_connect(GTK_OBJECT(oid->az_adj), "value_changed", GTK_SIGNAL_FUNC(AZ_Orientation_Callback), (gpointer)oid);
+      gtk_signal_connect(GTK_OBJECT(oid->az_adj), "value_changed", GTK_SIGNAL_FUNC(az_orientation_callback), (gpointer)oid);
 
       az_label = gtk_label_new(STR_z_angle);
       gtk_misc_set_alignment(GTK_MISC (az_label), 0.1, 0.0);
@@ -1103,7 +1103,7 @@ void View_Orientation_Callback(GtkWidget *w, gpointer context)
       gtk_scale_set_value_pos(GTK_SCALE(oid->hop), GTK_POS_TOP);
       gtk_scale_set_draw_value(GTK_SCALE(oid->hop), TRUE);
       gtk_table_attach_defaults(GTK_TABLE(hop_box), oid->hop, 0, 1, 0, 1);
-      gtk_signal_connect(GTK_OBJECT(oid->hop_adj), "value_changed", GTK_SIGNAL_FUNC(Hop_Orientation_Callback), (gpointer)oid);
+      gtk_signal_connect(GTK_OBJECT(oid->hop_adj), "value_changed", GTK_SIGNAL_FUNC(hop_orientation_callback), (gpointer)oid);
 
       hop_label = gtk_label_new(STR_hop);
       gtk_misc_set_alignment(GTK_MISC (hop_label), 0.1, 0.0);
@@ -1125,7 +1125,7 @@ void View_Orientation_Callback(GtkWidget *w, gpointer context)
       gtk_scale_set_value_pos(GTK_SCALE(oid->sx), GTK_POS_TOP);
       gtk_scale_set_draw_value(GTK_SCALE(oid->sx), TRUE);
       gtk_table_attach_defaults(GTK_TABLE(sx_box), oid->sx, 0, 1, 0, 1);
-      gtk_signal_connect(GTK_OBJECT(oid->sx_adj), "value_changed", GTK_SIGNAL_FUNC(SX_Orientation_Callback), (gpointer)oid);
+      gtk_signal_connect(GTK_OBJECT(oid->sx_adj), "value_changed", GTK_SIGNAL_FUNC(sx_orientation_callback), (gpointer)oid);
 
       sx_label = gtk_label_new(STR_x_scale);
       gtk_misc_set_alignment(GTK_MISC (sx_label), 0.1, 0.0);
@@ -1147,7 +1147,7 @@ void View_Orientation_Callback(GtkWidget *w, gpointer context)
       gtk_scale_set_value_pos(GTK_SCALE(oid->sy), GTK_POS_TOP);
       gtk_scale_set_draw_value(GTK_SCALE(oid->sy), TRUE);
       gtk_table_attach_defaults(GTK_TABLE(sy_box), oid->sy, 0, 1, 0, 1);
-      gtk_signal_connect(GTK_OBJECT(oid->sy_adj), "value_changed", GTK_SIGNAL_FUNC(SY_Orientation_Callback), (gpointer)oid);
+      gtk_signal_connect(GTK_OBJECT(oid->sy_adj), "value_changed", GTK_SIGNAL_FUNC(sy_orientation_callback), (gpointer)oid);
 
       sy_label = gtk_label_new(STR_y_scale);
       gtk_misc_set_alignment(GTK_MISC (sy_label), 0.1, 0.0);
@@ -1169,7 +1169,7 @@ void View_Orientation_Callback(GtkWidget *w, gpointer context)
       gtk_scale_set_value_pos(GTK_SCALE(oid->sz), GTK_POS_TOP);
       gtk_scale_set_draw_value(GTK_SCALE(oid->sz), TRUE);
       gtk_table_attach_defaults(GTK_TABLE(sz_box), oid->sz, 0, 1, 0, 1);
-      gtk_signal_connect(GTK_OBJECT(oid->sz_adj), "value_changed", GTK_SIGNAL_FUNC(SZ_Orientation_Callback), (gpointer)oid);
+      gtk_signal_connect(GTK_OBJECT(oid->sz_adj), "value_changed", GTK_SIGNAL_FUNC(sz_orientation_callback), (gpointer)oid);
 
       sz_label = gtk_label_new(STR_z_scale);
       gtk_misc_set_alignment(GTK_MISC (sz_label), 0.1, 0.0);
@@ -1191,7 +1191,7 @@ void View_Orientation_Callback(GtkWidget *w, gpointer context)
       gtk_scale_set_value_pos(GTK_SCALE(oid->cut), GTK_POS_TOP);
       gtk_scale_set_draw_value(GTK_SCALE(oid->cut), TRUE);
       gtk_table_attach_defaults(GTK_TABLE(cut_box), oid->cut, 0, 1, 0, 1);
-      gtk_signal_connect(GTK_OBJECT(oid->cut_adj), "value_changed", GTK_SIGNAL_FUNC(Cut_Orientation_Callback), (gpointer)oid);
+      gtk_signal_connect(GTK_OBJECT(oid->cut_adj), "value_changed", GTK_SIGNAL_FUNC(cut_orientation_callback), (gpointer)oid);
 
       cut_label = gtk_label_new(STR_percent_of_spectrum);
       gtk_misc_set_alignment(GTK_MISC (cut_label), 0.1, 0.0);

@@ -576,7 +576,7 @@ typedef struct {
 
 static color_chooser_info *ccd = NULL;
 
-static void Invert_Color_Callback(Widget w, XtPointer context, XtPointer info)
+static void invert_color_callback(Widget w, XtPointer context, XtPointer info)
 {
   snd_state *ss;
   color_chooser_info *cd = (color_chooser_info *)context;
@@ -596,7 +596,7 @@ void set_color_inverted(snd_state *ss, int val)
     map_over_chans(ss, update_graph, NULL);
 }
 
-static void Scale_Color_Callback(Widget w, XtPointer context, XtPointer info)
+static void scale_color_callback(Widget w, XtPointer context, XtPointer info)
 {
   snd_state *ss;
   Float val;
@@ -629,7 +629,7 @@ void set_color_scale(snd_state *ss, Float val)
     map_over_chans(ss, update_graph, NULL);
 }
 
-static void List_Color_Callback(Widget w, XtPointer context, XtPointer info)
+static void list_color_callback(Widget w, XtPointer context, XtPointer info)
 {
   snd_state *ss;
   XmListCallbackStruct *cbs = (XmListCallbackStruct *)info;
@@ -649,7 +649,7 @@ void set_color_map(snd_state *ss, int val)
     map_over_chans(ss, update_graph, NULL);
 }
 
-static void Cutoff_Color_Callback(Widget w, XtPointer context, XtPointer info) /* cutoff point */
+static void cutoff_color_callback(Widget w, XtPointer context, XtPointer info) /* cutoff point */
 {
   /* cutoff point for color chooser */
   snd_state *ss;
@@ -671,13 +671,13 @@ void set_color_cutoff(snd_state *ss, Float val)
 }
 
 
-static void Dismiss_Color_Callback(Widget w, XtPointer context, XtPointer info)
+static void dismiss_color_callback(Widget w, XtPointer context, XtPointer info)
 {
   color_chooser_info *cd = (color_chooser_info *)context;
   XtUnmanageChild(cd->dialog);
 }
 
-static void Help_Color_Callback(Widget w, XtPointer context, XtPointer info)
+static void help_color_callback(Widget w, XtPointer context, XtPointer info)
 {
   color_dialog_help((snd_state *)context);
 }
@@ -713,8 +713,8 @@ void View_Color_Callback(Widget w, XtPointer context, XtPointer info)
       ccd->dialog = XmCreateTemplateDialog(MAIN_SHELL(ss), STR_Color, args, n);
       set_dialog_widget(ss, COLOR_DIALOG, ccd->dialog);
 
-      XtAddCallback(ccd->dialog, XmNcancelCallback, Dismiss_Color_Callback, ccd);
-      XtAddCallback(ccd->dialog, XmNhelpCallback, Help_Color_Callback, ss);
+      XtAddCallback(ccd->dialog, XmNcancelCallback, dismiss_color_callback, ccd);
+      XtAddCallback(ccd->dialog, XmNhelpCallback, help_color_callback, ss);
       XmStringFree(xhelp);
       XmStringFree(xdismiss);
       XmStringFree(titlestr);
@@ -763,7 +763,7 @@ void View_Color_Callback(Widget w, XtPointer context, XtPointer info)
 		    XmNitemCount, NUM_COLORMAPS, 
 		    XmNvisibleItemCount, 6, 
 		    NULL);
-      XtAddCallback(ccd->list, XmNbrowseSelectionCallback, List_Color_Callback, ccd);
+      XtAddCallback(ccd->list, XmNbrowseSelectionCallback, list_color_callback, ccd);
       for (i = 0; i < NUM_COLORMAPS; i++) XmStringFree(cmaps[i]);
       FREE(cmaps);
       XtManageChild(ccd->list);
@@ -806,8 +806,8 @@ void View_Color_Callback(Widget w, XtPointer context, XtPointer info)
       XtSetArg(args[n], XmNshowValue, TRUE); n++;
       XtSetArg(args[n], XmNvalue, 50); n++;
       ccd->scale = XtCreateManagedWidget("ccdscl", xmScaleWidgetClass, mainform, args, n);
-      XtAddCallback(ccd->scale, XmNvalueChangedCallback, Scale_Color_Callback, ccd);
-      XtAddCallback(ccd->scale, XmNdragCallback, Scale_Color_Callback, ccd);
+      XtAddCallback(ccd->scale, XmNvalueChangedCallback, scale_color_callback, ccd);
+      XtAddCallback(ccd->scale, XmNdragCallback, scale_color_callback, ccd);
 
       n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
@@ -844,8 +844,8 @@ void View_Color_Callback(Widget w, XtPointer context, XtPointer info)
       XtSetArg(args[n], XmNtitleString, xcutoff); n++;
       XtSetArg(args[n], XmNvalue, (int)(color_cutoff(ss) * 1000)); n++;
       ccd->cutoff = XtCreateManagedWidget("cutoff", xmScaleWidgetClass, mainform, args, n);
-      XtAddCallback(ccd->cutoff, XmNvalueChangedCallback, Cutoff_Color_Callback, ccd);
-      XtAddCallback(ccd->cutoff, XmNdragCallback, Cutoff_Color_Callback, ccd);
+      XtAddCallback(ccd->cutoff, XmNvalueChangedCallback, cutoff_color_callback, ccd);
+      XtAddCallback(ccd->cutoff, XmNdragCallback, cutoff_color_callback, ccd);
       XmStringFree(xcutoff);
 
       n = 0;
@@ -860,7 +860,7 @@ void View_Color_Callback(Widget w, XtPointer context, XtPointer info)
       xinvert = XmStringCreate(STR_invert, XmFONTLIST_DEFAULT_TAG);
       XtSetArg(args[n], XmNlabelString, xinvert); n++;
       ccd->invert = sndCreateToggleButtonWidget(STR_invert, mainform, args, n);
-      XtAddCallback(ccd->invert, XmNvalueChangedCallback, Invert_Color_Callback, ccd);
+      XtAddCallback(ccd->invert, XmNvalueChangedCallback, invert_color_callback, ccd);
       XmStringFree(xinvert);
       if (color_scale(ss) != 1.0)
 	reflect_color_scale(color_scale(ss));
@@ -886,7 +886,7 @@ typedef struct {
 
 static orientation_info *oid = NULL;
 
-static void AX_Orientation_Callback(Widget w, XtPointer context, XtPointer info) 
+static void ax_orientation_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_state *ss;
   XmScaleCallbackStruct *cbs = (XmScaleCallbackStruct *)info;
@@ -907,14 +907,14 @@ void set_spectro_x_angle(snd_state *ss, Float val)
     map_over_chans(ss, update_graph, NULL);
 }
 
-static void AX_Help_Callback(Widget w, XtPointer context, XtPointer info) 
+static void ax_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_help_with_wrap((snd_state *)context, 
 		     "x angle slider", 
 "This slider causes the graph to rotate around the x axis.");
 }
 
-static void AY_Orientation_Callback(Widget w, XtPointer context, XtPointer info) 
+static void ay_orientation_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_state *ss;
   XmScaleCallbackStruct *cbs = (XmScaleCallbackStruct *)info;
@@ -935,14 +935,14 @@ void set_spectro_y_angle(snd_state *ss, Float val)
     map_over_chans(ss, update_graph, NULL);
 }
 
-static void AY_Help_Callback(Widget w, XtPointer context, XtPointer info) 
+static void ay_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_help_with_wrap((snd_state *)context, 
 		     "y angle slider", 
 "This slider causes the graph to rotate around the y axis.");
 }
 
-static void AZ_Orientation_Callback(Widget w, XtPointer context, XtPointer info) 
+static void az_orientation_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_state *ss;
   XmScaleCallbackStruct *cbs = (XmScaleCallbackStruct *)info;
@@ -963,14 +963,14 @@ void set_spectro_z_angle(snd_state *ss, Float val)
     map_over_chans(ss, update_graph, NULL);
 }
 
-static void AZ_Help_Callback(Widget w, XtPointer context, XtPointer info) 
+static void az_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_help_with_wrap((snd_state *)context, 
 		     "z angle slider", 
 "This slider causes the graph to rotate around the z axis.");
 }
 
-static void SX_Orientation_Callback(Widget w, XtPointer context, XtPointer info) 
+static void sx_orientation_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_state *ss;
   XmScaleCallbackStruct *cbs = (XmScaleCallbackStruct *)info;
@@ -991,14 +991,14 @@ void set_spectro_x_scale(snd_state *ss, Float val)
     map_over_chans(ss, update_graph, NULL);
 }
 
-static void SX_Help_Callback(Widget w, XtPointer context, XtPointer info) 
+static void sx_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_help_with_wrap((snd_state *)context, 
 		     "x scale slider", 
 "This slider causes the graph to expand or contract along the x axis.");
 }
 
-static void SY_Orientation_Callback(Widget w, XtPointer context, XtPointer info) 
+static void sy_orientation_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_state *ss;
   XmScaleCallbackStruct *cbs = (XmScaleCallbackStruct *)info;
@@ -1019,14 +1019,14 @@ void set_spectro_y_scale(snd_state *ss, Float val)
     map_over_chans(ss, update_graph, NULL);
 }
 
-static void SY_Help_Callback(Widget w, XtPointer context, XtPointer info) 
+static void sy_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_help_with_wrap((snd_state *)context, 
 		     "y scale slider", 
 "This slider causes the graph to expand or contract along the y axis.");
 }
 
-static void SZ_Orientation_Callback(Widget w, XtPointer context, XtPointer info) 
+static void sz_orientation_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_state *ss;
   XmScaleCallbackStruct *cbs = (XmScaleCallbackStruct *)info;
@@ -1047,7 +1047,7 @@ void set_spectro_z_scale(snd_state *ss, Float val)
     map_over_chans(ss, update_graph, NULL);
 }
 
-static void SZ_Help_Callback(Widget w, XtPointer context, XtPointer info) 
+static void sz_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_help_with_wrap((snd_state *)context, 
 		     "z scale slider", 
@@ -1056,7 +1056,7 @@ static void SZ_Help_Callback(Widget w, XtPointer context, XtPointer info)
 
 static int map_chans_spectro_hop(chan_info *cp, void *ptr) {cp->spectro_hop = (*((int *)ptr)); return(0);}
 
-static void Hop_Orientation_Callback(Widget w, XtPointer context, XtPointer info) 
+static void hop_orientation_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_state *ss;
   int val;
@@ -1082,14 +1082,14 @@ void set_spectro_hop(snd_state *ss, int val)
     }
 }
 
-static void Hop_Help_Callback(Widget w, XtPointer context, XtPointer info) 
+static void hop_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_help_with_wrap((snd_state *)context, 
 		     "hop slider", 
 "This slider changes the hop size.");
 }
 
-static void Cut_Orientation_Callback(Widget w, XtPointer context, XtPointer info) 
+static void cut_orientation_callback(Widget w, XtPointer context, XtPointer info) 
 {
   /* y axis limit */
   snd_state *ss;
@@ -1110,19 +1110,19 @@ void set_spectro_cutoff(snd_state *ss, Float val)
     map_over_chans(ss, update_graph, NULL);
 }
 
-static void Cut_Help_Callback(Widget w, XtPointer context, XtPointer info) 
+static void cut_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_help_with_wrap((snd_state *)context, 
 		     "% of spectrum slider", 
 "This slider determines how much of the spectrum is displayed");
 }
 
-static void Help_Orientation_Callback(Widget w, XtPointer context, XtPointer info) 
+static void help_orientation_callback(Widget w, XtPointer context, XtPointer info) 
 {
   orientation_dialog_help((snd_state *)context);
 }
 
-static void Dismiss_Orientation_Callback(Widget w, XtPointer context, XtPointer info) 
+static void dismiss_orientation_callback(Widget w, XtPointer context, XtPointer info) 
 {
   orientation_info *od = (orientation_info *)context;
   XtUnmanageChild(od->dialog);
@@ -1159,7 +1159,7 @@ void reflect_spectro(snd_state *ss)
     }
 }
 
-static void Reset_Orientation_Callback(Widget w, XtPointer context, XtPointer info) 
+static void reset_orientation_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_state *ss;
   orientation_info *od = (orientation_info *)context;
@@ -1201,9 +1201,9 @@ void View_Orientation_Callback(Widget w, XtPointer context, XtPointer info)
       oid->dialog = XmCreateTemplateDialog(MAIN_SHELL(ss), STR_Orientation, args, n);
       set_dialog_widget(ss, ORIENTATION_DIALOG, oid->dialog);
 
-      XtAddCallback(oid->dialog, XmNcancelCallback, Dismiss_Orientation_Callback, oid);
-      XtAddCallback(oid->dialog, XmNhelpCallback, Help_Orientation_Callback, ss);
-      XtAddCallback(oid->dialog, XmNokCallback, Reset_Orientation_Callback, oid);
+      XtAddCallback(oid->dialog, XmNcancelCallback, dismiss_orientation_callback, oid);
+      XtAddCallback(oid->dialog, XmNhelpCallback, help_orientation_callback, ss);
+      XtAddCallback(oid->dialog, XmNokCallback, reset_orientation_callback, oid);
       XmStringFree(xhelp);
       XmStringFree(xdismiss);
       XmStringFree(titlestr);
@@ -1255,9 +1255,9 @@ void View_Orientation_Callback(Widget w, XtPointer context, XtPointer info)
       XtSetArg(args[n], XmNmaximum, 360); n++;
       XtSetArg(args[n], XmNtitleString, xstr); n++;
       oid->ax = XtCreateManagedWidget("ax", xmScaleWidgetClass, leftbox, args, n);
-      XtAddCallback(oid->ax, XmNvalueChangedCallback, AX_Orientation_Callback, oid);
-      XtAddCallback(oid->ax, XmNdragCallback, AX_Orientation_Callback, oid);
-      XtAddCallback(oid->ax, XmNhelpCallback, AX_Help_Callback, ss);
+      XtAddCallback(oid->ax, XmNvalueChangedCallback, ax_orientation_callback, oid);
+      XtAddCallback(oid->ax, XmNdragCallback, ax_orientation_callback, oid);
+      XtAddCallback(oid->ax, XmNhelpCallback, ax_help_callback, ss);
       XmStringFree(xstr);
 
       n = 0;
@@ -1269,9 +1269,9 @@ void View_Orientation_Callback(Widget w, XtPointer context, XtPointer info)
       XtSetArg(args[n], XmNmaximum, 360); n++;
       XtSetArg(args[n], XmNtitleString, xstr); n++;
       oid->ay = XtCreateManagedWidget("ay", xmScaleWidgetClass, leftbox, args, n);
-      XtAddCallback(oid->ay, XmNvalueChangedCallback, AY_Orientation_Callback, oid);
-      XtAddCallback(oid->ay, XmNdragCallback, AY_Orientation_Callback, oid);
-      XtAddCallback(oid->ay, XmNhelpCallback, AY_Help_Callback, ss);
+      XtAddCallback(oid->ay, XmNvalueChangedCallback, ay_orientation_callback, oid);
+      XtAddCallback(oid->ay, XmNdragCallback, ay_orientation_callback, oid);
+      XtAddCallback(oid->ay, XmNhelpCallback, ay_help_callback, ss);
       XmStringFree(xstr);
 
       n = 0;
@@ -1283,9 +1283,9 @@ void View_Orientation_Callback(Widget w, XtPointer context, XtPointer info)
       XtSetArg(args[n], XmNmaximum, 360); n++;
       XtSetArg(args[n], XmNtitleString, xstr); n++;
       oid->az = XtCreateManagedWidget("az", xmScaleWidgetClass, leftbox, args, n);
-      XtAddCallback(oid->az, XmNvalueChangedCallback, AZ_Orientation_Callback, oid);
-      XtAddCallback(oid->az, XmNdragCallback, AZ_Orientation_Callback, oid);
-      XtAddCallback(oid->az, XmNhelpCallback, AZ_Help_Callback, ss);
+      XtAddCallback(oid->az, XmNvalueChangedCallback, az_orientation_callback, oid);
+      XtAddCallback(oid->az, XmNdragCallback, az_orientation_callback, oid);
+      XtAddCallback(oid->az, XmNhelpCallback, az_help_callback, ss);
       XmStringFree(xstr);
 
       n = 0;
@@ -1297,9 +1297,9 @@ void View_Orientation_Callback(Widget w, XtPointer context, XtPointer info)
       XtSetArg(args[n], XmNmaximum, 20); n++;
       XtSetArg(args[n], XmNtitleString, xstr); n++;
       oid->hop = XtCreateManagedWidget("hop", xmScaleWidgetClass, leftbox, args, n);
-      XtAddCallback(oid->hop, XmNvalueChangedCallback, Hop_Orientation_Callback, oid);
-      XtAddCallback(oid->hop, XmNdragCallback, Hop_Orientation_Callback, oid);
-      XtAddCallback(oid->hop, XmNhelpCallback, Hop_Help_Callback, ss);
+      XtAddCallback(oid->hop, XmNvalueChangedCallback, hop_orientation_callback, oid);
+      XtAddCallback(oid->hop, XmNdragCallback, hop_orientation_callback, oid);
+      XtAddCallback(oid->hop, XmNhelpCallback, hop_help_callback, ss);
       XmStringFree(xstr);
 
       /* right box */
@@ -1313,9 +1313,9 @@ void View_Orientation_Callback(Widget w, XtPointer context, XtPointer info)
       XtSetArg(args[n], XmNtitleString, xstr); n++;
       XtSetArg(args[n], XmNdecimalPoints, 2); n++;
       oid->sx = XtCreateManagedWidget("xs", xmScaleWidgetClass, rightbox, args, n);
-      XtAddCallback(oid->sx, XmNvalueChangedCallback, SX_Orientation_Callback, oid);
-      XtAddCallback(oid->sx, XmNdragCallback, SX_Orientation_Callback, oid);
-      XtAddCallback(oid->sx, XmNhelpCallback, SX_Help_Callback, ss);
+      XtAddCallback(oid->sx, XmNvalueChangedCallback, sx_orientation_callback, oid);
+      XtAddCallback(oid->sx, XmNdragCallback, sx_orientation_callback, oid);
+      XtAddCallback(oid->sx, XmNhelpCallback, sx_help_callback, ss);
       XmStringFree(xstr);
 
       n = 0;
@@ -1328,9 +1328,9 @@ void View_Orientation_Callback(Widget w, XtPointer context, XtPointer info)
       XtSetArg(args[n], XmNtitleString, xstr); n++;
       XtSetArg(args[n], XmNdecimalPoints, 2); n++;
       oid->sy = XtCreateManagedWidget("ys", xmScaleWidgetClass, rightbox, args, n);
-      XtAddCallback(oid->sy, XmNvalueChangedCallback, SY_Orientation_Callback, oid);
-      XtAddCallback(oid->sy, XmNdragCallback, SY_Orientation_Callback, oid);
-      XtAddCallback(oid->sy, XmNhelpCallback, SY_Help_Callback, ss);
+      XtAddCallback(oid->sy, XmNvalueChangedCallback, sy_orientation_callback, oid);
+      XtAddCallback(oid->sy, XmNdragCallback, sy_orientation_callback, oid);
+      XtAddCallback(oid->sy, XmNhelpCallback, sy_help_callback, ss);
       XmStringFree(xstr);
 
       n = 0;
@@ -1342,9 +1342,9 @@ void View_Orientation_Callback(Widget w, XtPointer context, XtPointer info)
       XtSetArg(args[n], XmNvalue, (int)(spectro_z_scale(ss) * 100)); n++;
       XtSetArg(args[n], XmNtitleString, xstr); n++;
       oid->sz = XtCreateManagedWidget("zs", xmScaleWidgetClass, rightbox, args, n);
-      XtAddCallback(oid->sz, XmNvalueChangedCallback, SZ_Orientation_Callback, oid);
-      XtAddCallback(oid->sz, XmNdragCallback, SZ_Orientation_Callback, oid);
-      XtAddCallback(oid->sz, XmNhelpCallback, SZ_Help_Callback, ss);
+      XtAddCallback(oid->sz, XmNvalueChangedCallback, sz_orientation_callback, oid);
+      XtAddCallback(oid->sz, XmNdragCallback, sz_orientation_callback, oid);
+      XtAddCallback(oid->sz, XmNhelpCallback, sz_help_callback, ss);
       XmStringFree(xstr);
 
       n = 0;
@@ -1355,9 +1355,9 @@ void View_Orientation_Callback(Widget w, XtPointer context, XtPointer info)
       XtSetArg(args[n], XmNvalue, (int)(spectro_cutoff(ss) * 100)); n++;
       XtSetArg(args[n], XmNtitleString, xstr); n++;
       oid->cut = XtCreateManagedWidget("cut", xmScaleWidgetClass, rightbox, args, n);
-      XtAddCallback(oid->cut, XmNvalueChangedCallback, Cut_Orientation_Callback, oid);
-      XtAddCallback(oid->cut, XmNdragCallback, Cut_Orientation_Callback, oid);
-      XtAddCallback(oid->cut, XmNhelpCallback, Cut_Help_Callback, ss);
+      XtAddCallback(oid->cut, XmNvalueChangedCallback, cut_orientation_callback, oid);
+      XtAddCallback(oid->cut, XmNdragCallback, cut_orientation_callback, oid);
+      XtAddCallback(oid->cut, XmNhelpCallback, cut_help_callback, ss);
       XmStringFree(xstr);
     }
   else raise_dialog(oid->dialog);

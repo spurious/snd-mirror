@@ -207,7 +207,7 @@ void resize_zy(chan_info *cp)
   set_scrollbar(zy_adj(cp), 1.0 - sqrt(ap->zy), .1);
 }
 
-static void W_sy_ValueChanged_Callback(GtkAdjustment *adj, gpointer context)
+static void sy_valuechanged_callback(GtkAdjustment *adj, gpointer context)
 {
   /* see note above -- context may be garbage!! -- this is a huge bug in gtk */
   chan_info *cp;
@@ -220,7 +220,7 @@ static void W_sy_ValueChanged_Callback(GtkAdjustment *adj, gpointer context)
     }
 }
 
-static void W_sx_ValueChanged_Callback(GtkAdjustment *adj, gpointer context)
+static void sx_valuechanged_callback(GtkAdjustment *adj, gpointer context)
 {
   chan_info *cp;
   cp = (chan_info *)get_user_data(GTK_OBJECT(adj));
@@ -232,7 +232,7 @@ static void W_sx_ValueChanged_Callback(GtkAdjustment *adj, gpointer context)
     }
 }
 
-static void W_zy_ValueChanged_Callback(GtkAdjustment *adj, gpointer context)
+static void zy_valuechanged_callback(GtkAdjustment *adj, gpointer context)
 {
   chan_info *cp;
   cp = (chan_info *)get_user_data(GTK_OBJECT(adj));
@@ -244,7 +244,7 @@ static void W_zy_ValueChanged_Callback(GtkAdjustment *adj, gpointer context)
     }
 }
 
-static void W_zx_ValueChanged_Callback(GtkAdjustment *adj, gpointer context)
+static void zx_valuechanged_callback(GtkAdjustment *adj, gpointer context)
 {
   chan_info *cp;
   cp = (chan_info *)get_user_data(GTK_OBJECT(adj));
@@ -256,7 +256,7 @@ static void W_zx_ValueChanged_Callback(GtkAdjustment *adj, gpointer context)
     }
 }
 
-static void W_gzy_ValueChanged_Callback(GtkAdjustment *adj, gpointer context)
+static void gzy_valuechanged_callback(GtkAdjustment *adj, gpointer context)
 {
   chan_info *cp;
   cp = (chan_info *)get_user_data(GTK_OBJECT(adj));
@@ -268,7 +268,7 @@ static void W_gzy_ValueChanged_Callback(GtkAdjustment *adj, gpointer context)
     }
 }
 
-static void W_gsy_ValueChanged_Callback(GtkAdjustment *adj, gpointer context)
+static void gsy_valuechanged_callback(GtkAdjustment *adj, gpointer context)
 {
   chan_info *cp;
   cp = (chan_info *)get_user_data(GTK_OBJECT(adj));
@@ -280,7 +280,7 @@ static void W_gsy_ValueChanged_Callback(GtkAdjustment *adj, gpointer context)
     }
 }
 
-static gint F_Button_Callback(GtkWidget *w, GdkEventButton *ev, gpointer data)
+static gint f_toggle_callback(GtkWidget *w, GdkEventButton *ev, gpointer data)
 { 
   f_button_callback((chan_info *)data, 
 		    !(GTK_TOGGLE_BUTTON(w)->active), 
@@ -288,7 +288,7 @@ static gint F_Button_Callback(GtkWidget *w, GdkEventButton *ev, gpointer data)
   return(TRUE);
 }
 
-static gint W_Button_Callback(GtkWidget *w, GdkEventButton *ev, gpointer data)
+static gint w_toggle_callback(GtkWidget *w, GdkEventButton *ev, gpointer data)
 {
   w_button_callback((chan_info *)data, 
 		    !(GTK_TOGGLE_BUTTON(w)->active), 
@@ -301,7 +301,7 @@ static gint W_Button_Callback(GtkWidget *w, GdkEventButton *ev, gpointer data)
 #define MIN_MIX_REGRAPH_X 30
 #define MIN_MIX_REGRAPH_Y 30
 
-static void Channel_Expose_Callback(GtkWidget *w, GdkEventExpose *ev, gpointer data)
+static void channel_expose_callback(GtkWidget *w, GdkEventExpose *ev, gpointer data)
 {
   chan_info *cp;
   snd_info *sp;
@@ -324,7 +324,7 @@ static void Channel_Expose_Callback(GtkWidget *w, GdkEventExpose *ev, gpointer d
   sound_check_control_panel(sp, widget_height(SOUND_PANE(ss)));
 }
 
-static void Channel_Resize_Callback(GtkWidget *w, GdkEventConfigure *ev, gpointer data)
+static void channel_resize_callback(GtkWidget *w, GdkEventConfigure *ev, gpointer data)
 {
   snd_info *sp;
   chan_info *cp;
@@ -369,7 +369,7 @@ static void graph_mouse_leave(GtkWidget *w, GdkEventCrossing *ev, gpointer data)
   gdk_window_set_cursor(w->window, (((snd_state *)data)->sgx)->arrow_cursor);
 }
 
-static void edit_select_Callback(GtkWidget *w, gint row, gint column, GdkEventButton *event, gpointer context)
+static void history_select_callback(GtkWidget *w, gint row, gint column, GdkEventButton *event, gpointer context)
 {
   /* undo/redo to reach selected position */
   chan_info *cp = (chan_info *)context;
@@ -612,7 +612,7 @@ void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, in
 	  gtk_clist_set_selection_mode(GTK_CLIST(cw[W_edhist]), GTK_SELECTION_SINGLE);
 	  gtk_clist_set_shadow_type(GTK_CLIST(cw[W_edhist]), GTK_SHADOW_ETCHED_IN);
 	  gtk_clist_column_titles_passive(GTK_CLIST(cw[W_edhist]));
-	  gtk_signal_connect(GTK_OBJECT(cw[W_edhist]), "select_row", GTK_SIGNAL_FUNC(edit_select_Callback), (gpointer)cp);
+	  gtk_signal_connect(GTK_OBJECT(cw[W_edhist]), "select_row", GTK_SIGNAL_FUNC(history_select_callback), (gpointer)cp);
 
 	  cw[W_edscroll] = gtk_scrolled_window_new(NULL, NULL);
 	  gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(cw[W_edscroll]), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
@@ -641,8 +641,8 @@ void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, in
       gtk_widget_show(cw[W_graph]);
       if (button_style == WITH_FW_BUTTONS)
 	{
-	  gtk_signal_connect(GTK_OBJECT(cw[W_graph]), "expose_event", GTK_SIGNAL_FUNC(Channel_Expose_Callback), (gpointer)cp);
-	  gtk_signal_connect(GTK_OBJECT(cw[W_graph]), "configure_event", GTK_SIGNAL_FUNC(Channel_Resize_Callback), (gpointer)cp);
+	  gtk_signal_connect(GTK_OBJECT(cw[W_graph]), "expose_event", GTK_SIGNAL_FUNC(channel_expose_callback), (gpointer)cp);
+	  gtk_signal_connect(GTK_OBJECT(cw[W_graph]), "configure_event", GTK_SIGNAL_FUNC(channel_resize_callback), (gpointer)cp);
 	  gtk_signal_connect(GTK_OBJECT(cw[W_graph]), "enter_notify_event", GTK_SIGNAL_FUNC(graph_mouse_enter), (gpointer)ss);
 	  gtk_signal_connect(GTK_OBJECT(cw[W_graph]), "leave_notify_event", GTK_SIGNAL_FUNC(graph_mouse_leave), (gpointer)ss);
 	  gtk_signal_connect(GTK_OBJECT(cw[W_graph]), "key_press_event", GTK_SIGNAL_FUNC(real_graph_key_press), (gpointer)cp);
@@ -664,7 +664,7 @@ void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, in
       gtk_box_pack_start(GTK_BOX(cw[W_bottom_scrollers]), cw[W_sx], TRUE, TRUE, 0);
       set_background(cw[W_sx], (ss->sgx)->position_color);
       set_user_data(GTK_OBJECT(adjs[W_sx_adj]), (gpointer)cp);
-      gtk_signal_connect(GTK_OBJECT(adjs[W_sx_adj]), "value_changed", GTK_SIGNAL_FUNC(W_sx_ValueChanged_Callback), (gpointer)cp);
+      gtk_signal_connect(GTK_OBJECT(adjs[W_sx_adj]), "value_changed", GTK_SIGNAL_FUNC(sx_valuechanged_callback), (gpointer)cp);
       gtk_widget_show(cw[W_sx]);
 
       adjs[W_zx_adj] = gtk_adjustment_new(0.0, 0.0, 1.1, 0.001, 0.01, .1);
@@ -672,7 +672,7 @@ void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, in
       set_background(cw[W_zx], (ss->sgx)->zoom_color);
       gtk_box_pack_start(GTK_BOX(cw[W_bottom_scrollers]), cw[W_zx], TRUE, TRUE, 0);
       set_user_data(GTK_OBJECT(adjs[W_zx_adj]), (gpointer)cp);
-      gtk_signal_connect(GTK_OBJECT(adjs[W_zx_adj]), "value_changed", GTK_SIGNAL_FUNC(W_zx_ValueChanged_Callback), (gpointer)cp);
+      gtk_signal_connect(GTK_OBJECT(adjs[W_zx_adj]), "value_changed", GTK_SIGNAL_FUNC(zx_valuechanged_callback), (gpointer)cp);
       gtk_widget_show(cw[W_zx]);
 
 
@@ -687,14 +687,14 @@ void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, in
 	  gtk_widget_show(cw[W_f]);
 	  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(cw[W_f]), FALSE);
 	  set_pushed_button_colors(cw[W_f], ss);
-	  gtk_signal_connect(GTK_OBJECT(cw[W_f]), "button_press_event", GTK_SIGNAL_FUNC(F_Button_Callback), (gpointer)cp);
+	  gtk_signal_connect(GTK_OBJECT(cw[W_f]), "button_press_event", GTK_SIGNAL_FUNC(f_toggle_callback), (gpointer)cp);
   
 	  cw[W_w] = gtk_check_button_new_with_label(STR_w);
 	  gtk_box_pack_start(GTK_BOX(cw[W_wf_buttons]), cw[W_w], TRUE, TRUE, 0);
 	  gtk_widget_show(cw[W_w]);
 	  set_pushed_button_colors(cw[W_w], ss);
 	  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(cw[W_w]), TRUE);
-	  gtk_signal_connect(GTK_OBJECT(cw[W_w]), "button_press_event", GTK_SIGNAL_FUNC(W_Button_Callback), (gpointer)cp);
+	  gtk_signal_connect(GTK_OBJECT(cw[W_w]), "button_press_event", GTK_SIGNAL_FUNC(w_toggle_callback), (gpointer)cp);
 
 	  /* these are needed to keep f/w buttons from flushing all keypress events after being pressed */
 	  gtk_signal_connect(GTK_OBJECT(cw[W_f]), "key_press_event", GTK_SIGNAL_FUNC(real_graph_key_press), (gpointer)cp);
@@ -731,7 +731,7 @@ void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, in
 		       (GtkAttachOptions)(GTK_EXPAND | GTK_FILL | GTK_SHRINK), 
 		       0, 0);
       set_user_data(GTK_OBJECT(adjs[W_zy_adj]), (gpointer)cp);
-      gtk_signal_connect(GTK_OBJECT(adjs[W_zy_adj]), "value_changed", GTK_SIGNAL_FUNC(W_zy_ValueChanged_Callback), (gpointer)cp);
+      gtk_signal_connect(GTK_OBJECT(adjs[W_zy_adj]), "value_changed", GTK_SIGNAL_FUNC(zy_valuechanged_callback), (gpointer)cp);
       gtk_widget_show(cw[W_zy]);
 
       adjs[W_sy_adj] = gtk_adjustment_new(0.5, 0.0, 1.01, 0.001, 0.01, .01);
@@ -742,7 +742,7 @@ void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, in
 		       (GtkAttachOptions)(GTK_EXPAND | GTK_FILL | GTK_SHRINK), 
 		       0, 0);
       set_user_data(GTK_OBJECT(adjs[W_sy_adj]), (gpointer)cp);
-      gtk_signal_connect(GTK_OBJECT(adjs[W_sy_adj]), "value_changed", GTK_SIGNAL_FUNC(W_sy_ValueChanged_Callback), (gpointer)cp);
+      gtk_signal_connect(GTK_OBJECT(adjs[W_sy_adj]), "value_changed", GTK_SIGNAL_FUNC(sy_valuechanged_callback), (gpointer)cp);
       gtk_widget_show(cw[W_sy]);
 
       if (need_extra_scrollbars)
@@ -755,7 +755,7 @@ void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, in
 			   (GtkAttachOptions)(GTK_EXPAND | GTK_FILL | GTK_SHRINK), 
 			   0, 0);
 	  set_user_data(GTK_OBJECT(adjs[W_gsy_adj]), (gpointer)cp);
-	  gtk_signal_connect(GTK_OBJECT(adjs[W_gsy_adj]), "value_changed", GTK_SIGNAL_FUNC(W_gsy_ValueChanged_Callback), (gpointer)cp);
+	  gtk_signal_connect(GTK_OBJECT(adjs[W_gsy_adj]), "value_changed", GTK_SIGNAL_FUNC(gsy_valuechanged_callback), (gpointer)cp);
 	  gtk_widget_show(cw[W_gsy]);
 
 	  adjs[W_gzy_adj] = gtk_adjustment_new(1.0, 0.0, 1.00, 0.001, 0.01, .01);
@@ -766,7 +766,7 @@ void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, in
 			   (GtkAttachOptions)(GTK_EXPAND | GTK_FILL | GTK_SHRINK), 
 			   0, 0);
 	  set_user_data(GTK_OBJECT(adjs[W_gzy_adj]), (gpointer)cp);
-	  gtk_signal_connect(GTK_OBJECT(adjs[W_gzy_adj]), "value_changed", GTK_SIGNAL_FUNC(W_gzy_ValueChanged_Callback), (gpointer)cp);
+	  gtk_signal_connect(GTK_OBJECT(adjs[W_gzy_adj]), "value_changed", GTK_SIGNAL_FUNC(gzy_valuechanged_callback), (gpointer)cp);
 	  gtk_widget_show(cw[W_gzy]);
 	  
 	  gtk_widget_hide(cw[W_gsy]);
