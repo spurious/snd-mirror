@@ -3284,6 +3284,8 @@ See also <a href="sndscm.html#panmixselection">pan-mix-selection</a> in mix.scm.
 <!-- mix-tag-y -->
 <tr><td colspan=2><code><a class=def name="mixtagy">mix-tag-y</a> (mix)</code></td></tr>
 <tr><td></td><td>tag y offset in graph of <i>mix</i> (default 0).  The x offset of the tag is determined by <a href="#mixtagposition">mix-tag-position</a>.
+To place all the mixes in track 1 at the same height above the waveform: 
+<code>(for-each (lambda (n) (set! (mix-tag-y n) 20)) (<a class=quiet href="#track">track</a> 1))</code>.
 </td></tr>
 
 <!-- mix-track -->
@@ -8990,7 +8992,7 @@ If you include a documentation string in the function, it is included in the Hel
 </pre></td></tr></table></td></tr>
 <tr><td></td><td>
 
-The modifier state is a combination of shift: 1, control: 4, meta: 8, 
+The modifier state is a combination of control = 4 and meta = 8, 
 so the first bind-key above causes C-a to print "hi" in the lisp listener.  The 
 value returned should be one of the cursor choices telling Snd what 
 action (if any) to take after evaluating <i>code</i>.  
@@ -9164,7 +9166,7 @@ In the next example, we rebind them to treat same-sense zero-crossings as line m
 </pre></td></tr></table></td></tr>
 <tr><td></td><td>Most of the predefined key definitions are given in <a href="snd.html#builtinkeys">Keyboard Commands</a>.
 The key bindings set by bind-key are active only when the active widget is a graph; when the listener is receiving
-key strokes, the underlying text widget interprets them itself.  You can change the listener's interpretation
+key strokes, the underlying text widget interprets them itself (using Emacs as a vague guide).  You can change the listener's interpretation
 in the following manner (this assumes you're using Motif and have the xm module loaded):
 </td></tr><tr><td></td><td>
 <table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>

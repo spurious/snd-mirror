@@ -317,7 +317,9 @@ static key_entry built_in_key_bindings[NUM_BUILT_IN_KEY_BINDINGS] = {
 
 char *key_binding_description(int key, int state, bool cx_extended)
 {
+#if HAVE_GUILE
   XEN value, help_text = XEN_FALSE;
+#endif
   int pos;
   if ((key < MIN_KEY_CODE) || (key > MAX_KEY_CODE) ||
       (state < MIN_KEY_STATE) || (state > MAX_KEY_STATE))

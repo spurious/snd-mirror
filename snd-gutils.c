@@ -413,7 +413,7 @@ void set_widget_y(GtkWidget *w, gint16 y)
 void set_widget_size(GtkWidget *w, guint16 width, guint16 height)
 {
 #if 1
-  /* This one resize the window. */
+  /* This one resizes the window. */
   gdk_window_resize(w->window, width, height);
 #else
   /* This one doesn't seem to do anything, but the function name seems at least to be quite similar to set_widget_size. */

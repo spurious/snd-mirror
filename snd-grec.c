@@ -1814,11 +1814,12 @@ static void record_button_callback(GtkWidget *w, gpointer context)
   char *buf;
   PANE *p;
   recorder_info *rp;
+  XEN res = XEN_FALSE;
+  bool got_name = false;
   rp = get_recorder_info();
   rp->recording = (!(rp->recording));
   if (rp->recording)
     {
-      XEN res = XEN_FALSE;
       if (!(rp->taking_input)) fire_up_recorder();
       old_srate = rp->srate;
       comment = read_file_data_choices(recdat, &rs, &ochns, &rp->output_header_type, &ofmt, &oloc, &samples); 
@@ -1880,15 +1881,22 @@ static void record_button_callback(GtkWidget *w, gpointer context)
 	}
       str = (char *)gtk_entry_get_text(GTK_ENTRY(file_text));
       if (XEN_HOOKED(recorder_file_hook))
-	res = run_progn_hook(recorder_file_hook,
-			     XEN_LIST_1((str) ? C_TO_XEN_STRING(str) : XEN_FALSE),
-			     S_recorder_file_hook);
-      if (XEN_STRING_P(res))
 	{
-	  if (rp->output_file) FREE(rp->output_file);
-	  rp->output_file = mus_expand_filename(XEN_TO_C_STRING(res));
+	  int gloc;
+	  res = run_progn_hook(recorder_file_hook,
+			       XEN_LIST_1((str) ? C_TO_XEN_STRING(str) : XEN_FALSE),
+			       S_recorder_file_hook);
+	  gloc = snd_protect(res);
+	  if (XEN_STRING_P(res))
+	    {
+	      if (rp->output_file) FREE(rp->output_file);
+	      gtk_entry_set_text(GTK_ENTRY(file_text), XEN_TO_C_STRING(res));
+	      rp->output_file = mus_expand_filename(XEN_TO_C_STRING(res));
+	      got_name = true;
+	    }
+	  snd_unprotect_at(gloc);
 	}
-      else
+      if (!got_name)
 	{
 	  if ((str) && (*str))
 	    {

@@ -8043,9 +8043,7 @@ void g_init_track(void)
 
 /* 
    mix/track stuff:
-   SOMEDAY: how to save|restore-(mix|track)-state? dialog-state? mix|track-properties?
    TODO: synchronization across mixes ("snap")
-   SOMEDAY: choice of y-style (i.e. split out tracks vertically -- track all at same height)
    TODO: axis movement stops if track drag motion stops when outside axis?
    TODO: initial dpy leaves start|end points unerased?
 */

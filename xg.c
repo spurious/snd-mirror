@@ -246,12 +246,10 @@ static void define_xm_obj(void)
 #define XEN_String_P(Arg) ((XEN_FALSE_P(Arg)) || (XEN_STRING_P(Arg)))
 
 #ifdef GTK_CELL_RENDERER_FOCUSED
-  static XEN C_TO_XEN_DRAWABLE_WAS_WINDOW (GdkDrawable* val) {if (val) return(WRAP_FOR_XEN("GdkDrawable_", val)); return(XEN_FALSE);}
   static GdkDrawable* XEN_TO_C_DRAWABLE_WAS_WINDOW (XEN val) {if (XEN_FALSE_P(val)) return(NULL); return((GdkDrawable *)XEN_TO_C_ULONG(XEN_CADR(val)));}
   static int XEN_DRAWABLE_WAS_WINDOW_P(XEN val) {return(XEN_FALSE_P(val) || (WRAP_P("GdkDrawable_", val)));}
   #define Drawable_was_Window GdkDrawable
 #else
-  static XEN C_TO_XEN_DRAWABLE_WAS_WINDOW (GdkWindow* val) {if (val) return(WRAP_FOR_XEN("GdkWindow_", val)); return(XEN_FALSE);}
   static GdkWindow* XEN_TO_C_DRAWABLE_WAS_WINDOW (XEN val) {if (XEN_FALSE_P(val)) return(NULL); return((GdkWindow *)XEN_TO_C_ULONG(XEN_CADR(val)));}
   static int XEN_DRAWABLE_WAS_WINDOW_P(XEN val) {return(XEN_FALSE_P(val) || (WRAP_P("GdkWindow_", val)));}
   #define Drawable_was_Window GdkWindow
@@ -995,6 +993,7 @@ static int xm_protect(XEN obj)
   return(i);
 }
 
+#if 0
 static void xm_unprotect_idler(guint id)
 {
   int i;
@@ -1016,6 +1015,7 @@ static void xm_unprotect_idler(guint id)
               return;
             }}}
 }
+#endif
 static void xm_unprotect_at(int ind)
 {
   XEN *velts;
@@ -32994,10 +32994,10 @@ static bool xg_already_inited = false;
       define_strings();
       XEN_YES_WE_HAVE("xg");
 #if HAVE_GUILE
-      XEN_EVAL_C_STRING("(define xm-version \"28-Feb-04\")");
+      XEN_EVAL_C_STRING("(define xm-version \"01-Mar-04\")");
 #endif
 #if HAVE_RUBY
-      rb_define_global_const("Xm_Version", C_TO_XEN_STRING("28-Feb-04"));
+      rb_define_global_const("Xm_Version", C_TO_XEN_STRING("01-Mar-04"));
 #endif
       xg_already_inited = true;
 #if WITH_GTK_AND_X11

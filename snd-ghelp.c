@@ -106,6 +106,7 @@ static bool new_help(const char *pattern)
 	  FREE(xrefs);
 	  return(true);
 	}
+      else snd_help_with_xrefs(pattern, "(no help found)", WITH_WORD_WRAP, NULL, NULL);
     }
   return(false);
 }
@@ -320,5 +321,17 @@ GtkWidget *snd_help_with_xrefs(const char *subject, const char *helpstr, with_wo
 
 void snd_help_append(char *text)
 {
-  sg_text_insert(help_text, text);
+  if (help_text) sg_text_insert(help_text, text);
+}
+
+void snd_help_back_to_top(void)
+{
+  if (help_text)
+    {
+      GtkTextIter pos;
+      GtkTextBuffer *buf;
+      buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(help_text));
+      gtk_text_buffer_get_iter_at_offset(buf, &pos, 0);
+      gtk_text_view_scroll_to_iter(GTK_TEXT_VIEW(help_text), &pos, 0.0, true, 0.0, 0.0);
+    }
 }

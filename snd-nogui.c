@@ -1,5 +1,6 @@
 #include "snd.h"
 
+void snd_help_back_to_top(void) {}
 color_t get_in_between_color(color_t fg, color_t bg) {return(0);}
 void set_find_dialog_label(const char *str) {}
 bool send_netscape(const char *html_viewer, const char *url) {return(false);}

@@ -127,17 +127,12 @@ static char *main_snd_xrefs[11] = {
 static void main_snd_help(const char *subject, ...)
 {
   va_list ap;
-  char *helpstr, *newstr;
-  int len = 0;
+  char *helpstr;
+  snd_help_with_xrefs(subject, "", WITHOUT_WORD_WRAP, main_snd_xrefs, NULL);
   va_start(ap, subject);
-  while ((helpstr = va_arg(ap, char *))) len += snd_strlen(helpstr);
+  while ((helpstr = va_arg(ap, char *))) snd_help_append(helpstr);
   va_end(ap);
-  newstr = (char *)CALLOC(len + 16, sizeof(char));
-  va_start(ap, subject);
-  while ((helpstr = va_arg(ap, char *))) strcat(newstr, helpstr);
-  va_end(ap);
-  snd_help_with_xrefs(subject, newstr, WITHOUT_WORD_WRAP, main_snd_xrefs, NULL);
-  FREE(newstr);
+  snd_help_back_to_top();
 }  
 
 static char *xm_version(void)
@@ -930,6 +925,7 @@ void key_binding_help(void)
     show_key_help(i, snd_ControlMask, true, key_binding_description(i, snd_ControlMask, true));
   map_over_key_bindings(find_buckified_cx_keys);
   map_over_key_bindings(find_leftover_keys);
+  snd_help_back_to_top();
 }
 
 void play_help(void)
@@ -1502,7 +1498,7 @@ static char *topic_names[NUM_TOPICS] = {
   "CLM", "Instrument", "CM", "CMN", "Libxm", "Sndlib", 
   "Motif", "Gtk", "Script", "Ruby", "LADSPA", "OpenGL", "Gdb", "Control panel",
   "X resources", "Invocation flags", "Initialization file", "Customization",
-  "Noise Reduction", "Window Size", "Colors"
+  "Noise Reduction", "Window Size", "Color"
 };
 
 static char *topic_urls[NUM_TOPICS] = {
@@ -1544,12 +1540,12 @@ static char *topic_url(const char *topic)
   return(NULL);
 }
 
-#define NUM_XREFS 33
+#define NUM_XREFS 34
 static char *xrefs[NUM_XREFS] = {
   "Mark", "Mix", "Region", "Selection", "Cursor", "Tracking cursor", "Delete", "Envelope", "Filter",
   "Search", "Insert", "Maxamp", "Play", "Reverse", "Save", "Smooth", "Resample", "FFT", "Reverb",
   "Src", "Find", "Undo", "Redo", "Sync", "Control panel", "Record", "Header", "Key", "Track", "Copy",
-  "Noise Reduction", "Window Size", "Colors"
+  "Noise Reduction", "Window Size", "Color", "Control"
 };
 
 static char **xref_tables[NUM_XREFS] = {
@@ -1558,7 +1554,7 @@ static char **xref_tables[NUM_XREFS] = {
   Playing_xrefs, Reversing_xrefs, Saving_xrefs, Smoothing_xrefs, Resampling_xrefs, FFTs_xrefs, Reverb_xrefs,
   Resampling_xrefs, Searching_xrefs, Undo_and_Redo_xrefs, Undo_and_Redo_xrefs, 
   sync_xrefs, control_xrefs, record_xrefs, header_and_data_xrefs, key_xrefs, Tracks_xrefs, Vcts_xrefs,
-  Noise_Reduction_xrefs, Window_size_and_position_xrefs, Colors_xrefs
+  Noise_Reduction_xrefs, Window_size_and_position_xrefs, Colors_xrefs, control_xrefs
 };
 
 static char **xref_url_tables[NUM_XREFS] = {
@@ -1567,7 +1563,7 @@ static char **xref_url_tables[NUM_XREFS] = {
   Playing_urls, Reversing_urls, Saving_urls, Smoothing_urls, Resampling_urls, FFTs_urls, Reverb_urls,
   Resampling_urls, Searching_urls, Undo_and_Redo_urls, Undo_and_Redo_urls, 
   NULL, NULL, NULL, NULL, Tracks_urls, Vcts_urls, 
-  Noise_Reduction_urls, Window_size_and_position_urls, Colors_urls
+  Noise_Reduction_urls, Window_size_and_position_urls, Colors_urls, NULL,
 };
 
 typedef void (*help_func)(void);
@@ -1578,7 +1574,7 @@ static help_func help_funcs[NUM_XREFS] = {
   &play_help, &reverse_help, &save_help, &smooth_help, &resample_help, &fft_help, &reverb_help,
   &resample_help, &find_help, &undo_help, &undo_help,
   &sync_help, &controls_help, recording_help, &sound_files_help, &key_binding_help, &track_help, &copy_help,
-  &noise_reduction_help, &window_size_help, &colors_help
+  &noise_reduction_help, &window_size_help, &colors_help, &controls_help
 };
 
 static char **snd_xrefs(const char *topic)
@@ -1601,7 +1597,7 @@ static char **snd_xref_urls(const char *topic)
 
 bool snd_topic_help(const char *topic)
 {
-  int i;
+  int i, topic_len;
   for (i = 0; i < NUM_XREFS; i++)
     if (STRCMP(topic, xrefs[i]) == 0)
       {
@@ -1611,6 +1607,36 @@ bool snd_topic_help(const char *topic)
 	    return(true);
 	  }
       }
+  topic_len = snd_strlen(topic);
+  for (i = 0; i < NUM_XREFS; i++)
+    {
+      int xref_len, j, diff, min_len;
+      const char *a, *b;
+      xref_len = strlen(xrefs[i]);
+      if (xref_len < topic_len)
+	{
+	  diff = topic_len - xref_len;
+	  min_len = xref_len;
+	  a = topic;
+	  b = xrefs[i];
+	}
+      else
+	{
+	  diff = xref_len - topic_len;
+	  min_len = topic_len;
+	  a = xrefs[i];
+	  b = topic;
+	}
+      for (j = 0; j < diff; j++)
+	if (STRNCMP((char *)(a + j), b, min_len) == 0)
+	  {
+	    if (help_funcs[i])
+	      {
+		(*help_funcs[i])();
+		return(true);
+	      }
+	  }
+    }
   return(false);
 }
 

@@ -30,7 +30,6 @@
 ;;; test 27: openGL
 ;;; test 28: errors
 
-;;; TODO: recorder-file-hook
 ;;; how to send ourselves a drop?  (button2 on menu is only the first half -- how to force 2nd?)
 ;;; TODO: replace all the (buggy) keystroke junk with snd-simulate-keystroke 
 
@@ -35557,6 +35556,22 @@ EDITS: 2
 	    ;; -------- recorder dialog
 	    (if (provided? 'snd-debug)
 		(begin
+		  (add-hook! recorder-file-hook
+			     (lambda (name)
+			       (let* ((header (recorder-out-type))
+				      (extension (if (or (= header mus-aifc) (= header mus-aiff)) ".aif"
+						     (if (= header mus-next) ".snd"
+							 ".wav"))))
+				 (if name
+				     (let ((len (string-length name)))
+				       (do ((i 0 (1+ i)))
+					   ((or (= i len)
+						(char=? (string-ref name i) #\.))
+					    (string-append (if (> i 1)
+							       (substring name 0 i)
+							       "test")
+							   extension))))
+				     (string-append "test" extension)))))
 		  (recorder-dialog)
 		  (let* ((recd (list-ref (dialog-widgets) 18)))
 		    (if recd ; /dev/mixer trouble sometimes here
@@ -35595,8 +35610,14 @@ EDITS: 2
 						(set! (.event cb) (XEvent))
 						cb)))
 			   sliders)
+			  (set! (with-background-processes) #t)
 			  (click-button record-button #t)
 			  (click-button record-button #f)
+			  (set! (with-background-processes) #f)
+			  (if (and (string? (recorder-file))
+				   (not (string=? (recorder-file) (string-append (getcwd) "/fmv.wav"))))
+			      (snd-display ";recorder-file after hook: ~A" (recorder-file)))
+			  (reset-hook! recorder-file-hook)
 			  (click-button reset-button)
 			  (for-each-child recd (lambda (w)
 						 (if (or (XmIsText w)

@@ -841,7 +841,7 @@ Information about about parameters can be acquired using analyse-ladspa."
   #define DEFINE_INTEGER(Name) rb_define_global_const(#Name, C_TO_XEN_INT(Name))
 #endif
 
-#define DEFINE_READER(Name, Value) XEN_DEFINE_PROCEDURE(FIELD_PREFIX #Name, Value, 1, 0, 0, NULL)
+#define DEFINE_READER(Name, Value, Doc) XEN_DEFINE_PROCEDURE(FIELD_PREFIX #Name, Value, 1, 0, 0, Doc)
 
 #define C_TO_XEN_Ladspa_Descriptor(Value) \
   ((Value) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("Ladspa-Descriptor"), C_TO_XEN_ULONG((unsigned long)Value)) : XEN_FALSE)
@@ -856,7 +856,6 @@ Information about about parameters can be acquired using analyse-ladspa."
                            (strcmp("Ladspa-Handle", XEN_SYMBOL_TO_C_STRING(XEN_CAR(Value))) == 0))
   
 #define S_ladspa_descriptor "ladspa-descriptor"
-
 static XEN g_ladspa_descriptor(XEN ladspa_plugin_filename, XEN ladspa_plugin_label)
 {
   #define H_ladspa_descriptor "(" S_ladspa_descriptor " library plugin): return the descriptor \
@@ -877,48 +876,56 @@ associated with the given plugin."
 
 static XEN g_ladspa_Label(XEN ptr)
 {
+  #define H_ladspa_Label "(" FIELD_PREFIX "Label descriptor): plugin identifier"
   XEN_ASSERT_TYPE(XEN_Ladspa_Descriptor_P(ptr), ptr, XEN_ONLY_ARG, FIELD_PREFIX "Label", "Ladspa descriptor");
   return(C_TO_XEN_STRING((XEN_TO_C_Ladspa_Descriptor(ptr))->Label));
 }
 
 static XEN g_ladspa_Name(XEN ptr)
 {
+  #define H_ladspa_Name "(" FIELD_PREFIX "Name descriptor): name of plugin"
   XEN_ASSERT_TYPE(XEN_Ladspa_Descriptor_P(ptr), ptr, XEN_ONLY_ARG, FIELD_PREFIX "Name", "Ladspa descriptor");
   return(C_TO_XEN_STRING((XEN_TO_C_Ladspa_Descriptor(ptr))->Name));
 }
 
 static XEN g_ladspa_Copyright(XEN ptr)
 {
+  #define H_ladspa_Copyright "(" FIELD_PREFIX "Copyright descriptor): plugin copyright or 'None'"
   XEN_ASSERT_TYPE(XEN_Ladspa_Descriptor_P(ptr), ptr, XEN_ONLY_ARG, FIELD_PREFIX "Copyright", "Ladspa descriptor");
   return(C_TO_XEN_STRING((XEN_TO_C_Ladspa_Descriptor(ptr))->Copyright));
 }
 
 static XEN g_ladspa_Maker(XEN ptr)
 {
+  #define H_ladspa_Maker "(" FIELD_PREFIX "Maker descriptor): plugin developer"
   XEN_ASSERT_TYPE(XEN_Ladspa_Descriptor_P(ptr), ptr, XEN_ONLY_ARG, FIELD_PREFIX "Maker", "Ladspa descriptor");
   return(C_TO_XEN_STRING((XEN_TO_C_Ladspa_Descriptor(ptr))->Maker));
 }
 
 static XEN g_ladspa_Properties(XEN ptr)
 {
+  #define H_ladspa_Properties "(" FIELD_PREFIX "Properties descriptor): plugin properties"
   XEN_ASSERT_TYPE(XEN_Ladspa_Descriptor_P(ptr), ptr, XEN_ONLY_ARG, FIELD_PREFIX "Properties", "Ladspa descriptor");
   return(C_TO_XEN_INT((XEN_TO_C_Ladspa_Descriptor(ptr))->Properties));
 }
 
 static XEN g_ladspa_UniqueID(XEN ptr)
 {
+  #define H_ladspa_UniqueID "(" FIELD_PREFIX "UniqueID descriptor): plugin ID number"
   XEN_ASSERT_TYPE(XEN_Ladspa_Descriptor_P(ptr), ptr, XEN_ONLY_ARG, FIELD_PREFIX "UniqueID", "Ladspa descriptor");
   return(C_TO_XEN_ULONG((XEN_TO_C_Ladspa_Descriptor(ptr))->UniqueID));
 }
 
 static XEN g_ladspa_PortCount(XEN ptr)
 {
+  #define H_ladspa_PortCount "(" FIELD_PREFIX "PortCount descriptor): plugin input and output port count"
   XEN_ASSERT_TYPE(XEN_Ladspa_Descriptor_P(ptr), ptr, XEN_ONLY_ARG, FIELD_PREFIX "PortCount", "Ladspa descriptor");
   return(C_TO_XEN_ULONG((XEN_TO_C_Ladspa_Descriptor(ptr))->PortCount));
 }
 
 static XEN g_ladspa_PortDescriptors(XEN ptr)
 {
+#define H_ladspa_PortDescriptors "(" FIELD_PREFIX "PortDescriptors descriptor): plugin port descriptors (an array of ints)"
   LADSPA_Descriptor *descriptor;
   int i, len;
   XEN lst = XEN_EMPTY_LIST;
@@ -932,6 +939,7 @@ static XEN g_ladspa_PortDescriptors(XEN ptr)
 
 static XEN g_ladspa_PortRangeHints(XEN ptr)
 {
+  #define H_ladspa_PortRangeHints "(" FIELD_PREFIX "PortRangeHints descriptor): plugin port hints"
   LADSPA_Descriptor *descriptor;
   int i, len;
   XEN lst = XEN_EMPTY_LIST;
@@ -948,6 +956,7 @@ static XEN g_ladspa_PortRangeHints(XEN ptr)
 
 static XEN g_ladspa_PortNames(XEN ptr)
 {
+  #define H_ladspa_PortNames "(" FIELD_PREFIX "PortNames descriptor): plugin descriptive port names"
   LADSPA_Descriptor *descriptor;
   int i, len;
   XEN lst = XEN_EMPTY_LIST;
@@ -963,6 +972,7 @@ static XEN g_ladspa_PortNames(XEN ptr)
 #define S_ladspa_instantiate "ladspa-instantiate"
 static XEN g_ladspa_instantiate(XEN ptr, XEN srate)
 {
+  #define H_ladspa_instantiate "(" S_ladspa_instantiate " descriptor srate): run plugin's instantiate function, return handle"
   const LADSPA_Descriptor *descriptor;
   LADSPA_Handle handle;
   XEN_ASSERT_TYPE(XEN_Ladspa_Descriptor_P(ptr), ptr, XEN_ARG_1, S_ladspa_instantiate, "Ladspa descriptor");
@@ -975,6 +985,7 @@ static XEN g_ladspa_instantiate(XEN ptr, XEN srate)
 #define S_ladspa_activate "ladspa-activate"
 static XEN g_ladspa_activate(XEN desc, XEN ptr)
 {
+  #define H_ladspa_activate "(" S_ladspa_activate " descriptor handle): run plugin's activate function"
   const LADSPA_Descriptor *descriptor;
   XEN_ASSERT_TYPE(XEN_Ladspa_Descriptor_P(desc), desc, XEN_ARG_1, S_ladspa_activate, "Ladspa descriptor");
   XEN_ASSERT_TYPE(XEN_Ladspa_Handle_P(ptr), ptr, XEN_ARG_2, S_ladspa_activate, "Ladspa handle");
@@ -986,6 +997,7 @@ static XEN g_ladspa_activate(XEN desc, XEN ptr)
 #define S_ladspa_deactivate "ladspa-deactivate"
 static XEN g_ladspa_deactivate(XEN desc, XEN ptr)
 {
+  #define H_ladspa_deactivate "(" S_ladspa_deactivate " descriptor handle): run plugin's deactivate function"
   const LADSPA_Descriptor *descriptor;
   XEN_ASSERT_TYPE(XEN_Ladspa_Descriptor_P(desc), desc, XEN_ARG_1, S_ladspa_deactivate, "Ladspa descriptor");
   XEN_ASSERT_TYPE(XEN_Ladspa_Handle_P(ptr), ptr, XEN_ARG_2, S_ladspa_deactivate, "Ladspa handle");
@@ -997,6 +1009,7 @@ static XEN g_ladspa_deactivate(XEN desc, XEN ptr)
 #define S_ladspa_cleanup "ladspa-cleanup"
 static XEN g_ladspa_cleanup(XEN desc, XEN ptr)
 {
+  #define H_ladspa_cleanup "(" S_ladspa_cleanup " descriptor handle): run plugin's cleanup function"
   const LADSPA_Descriptor *descriptor;
   XEN_ASSERT_TYPE(XEN_Ladspa_Descriptor_P(desc), desc, XEN_ARG_1, S_ladspa_cleanup, "Ladspa descriptor");
   XEN_ASSERT_TYPE(XEN_Ladspa_Handle_P(ptr), ptr, XEN_ARG_2, S_ladspa_cleanup, "Ladspa handle");
@@ -1008,6 +1021,7 @@ static XEN g_ladspa_cleanup(XEN desc, XEN ptr)
 #define S_ladspa_run "ladspa-run"
 static XEN g_ladspa_run(XEN desc, XEN ptr, XEN count)
 {
+  #define H_ladspa_run "(" S_ladspa_run " descriptor handle count): run plugin's run function"
   const LADSPA_Descriptor *descriptor;
   XEN_ASSERT_TYPE(XEN_Ladspa_Descriptor_P(desc), desc, XEN_ARG_1, S_ladspa_run, "Ladspa descriptor");
   XEN_ASSERT_TYPE(XEN_Ladspa_Handle_P(ptr), ptr, XEN_ARG_2, S_ladspa_run, "Ladspa handle");
@@ -1020,6 +1034,7 @@ static XEN g_ladspa_run(XEN desc, XEN ptr, XEN count)
 #define S_ladspa_run_adding "ladspa-run-adding"
 static XEN g_ladspa_run_adding(XEN desc, XEN ptr, XEN count)
 {
+  #define H_ladspa_run_adding "(" S_ladspa_run_adding " descriptor handle count): run plugin's run_adding function"
   const LADSPA_Descriptor *descriptor;
   XEN_ASSERT_TYPE(XEN_Ladspa_Descriptor_P(desc), desc, XEN_ARG_1, S_ladspa_run_adding, "Ladspa descriptor");
   XEN_ASSERT_TYPE(XEN_Ladspa_Handle_P(ptr), ptr, XEN_ARG_2, S_ladspa_run_adding, "Ladspa handle");
@@ -1032,6 +1047,7 @@ static XEN g_ladspa_run_adding(XEN desc, XEN ptr, XEN count)
 #define S_ladspa_set_run_adding_gain "ladspa-set-run-adding-gain"
 static XEN g_ladspa_set_run_adding_gain(XEN desc, XEN ptr, XEN gain)
 {
+  #define H_ladspa_set_run_adding_gain "(" S_ladspa_set_run_adding_gain " descriptor handle gain): run plugin's set_run_adding_gain function"
   const LADSPA_Descriptor *descriptor;
   XEN_ASSERT_TYPE(XEN_Ladspa_Descriptor_P(desc), desc, XEN_ARG_1, S_ladspa_set_run_adding_gain, "Ladspa descriptor");
   XEN_ASSERT_TYPE(XEN_Ladspa_Handle_P(ptr), ptr, XEN_ARG_2, S_ladspa_set_run_adding_gain, "Ladspa handle");
@@ -1044,6 +1060,7 @@ static XEN g_ladspa_set_run_adding_gain(XEN desc, XEN ptr, XEN gain)
 #define S_ladspa_connect_port "ladspa-connect-port"
 static XEN g_ladspa_connect_port(XEN desc, XEN ptr, XEN port, XEN data)
 {
+  #define H_ladspa_connect_port "(" S_ladspa_connect_port " descriptor handle port vct-data): run plugin's connect_port function"
   const LADSPA_Descriptor *descriptor;
   vct *samples;
   XEN_ASSERT_TYPE(XEN_Ladspa_Descriptor_P(desc), desc, XEN_ARG_1, S_ladspa_connect_port, "Ladspa descriptor");
@@ -1114,10 +1131,11 @@ XEN_NARGIFY_4(g_ladspa_connect_port_w, g_ladspa_connect_port)
 
 void g_ladspa_to_snd(void)
 {
-  XEN_DEFINE_PROCEDURE(S_analyse_ladspa, g_analyse_ladspa_w, 2, 0, 0, H_analyse_ladspa);
-  XEN_DEFINE_PROCEDURE(S_apply_ladspa, g_apply_ladspa_w, 4, 0, 0, H_apply_ladspa);
-  XEN_DEFINE_PROCEDURE(S_init_ladspa, g_init_ladspa_w, 0, 0, 0, H_init_ladspa);
-  XEN_DEFINE_PROCEDURE(S_list_ladspa, g_list_ladspa_w, 0, 0, 0, H_list_ladspa);
+  XEN_DEFINE_PROCEDURE(S_analyse_ladspa,    g_analyse_ladspa_w,    2, 0, 0, H_analyse_ladspa);
+  XEN_DEFINE_PROCEDURE(S_apply_ladspa,      g_apply_ladspa_w,      4, 0, 0, H_apply_ladspa);
+  XEN_DEFINE_PROCEDURE(S_init_ladspa,       g_init_ladspa_w,       0, 0, 0, H_init_ladspa);
+  XEN_DEFINE_PROCEDURE(S_list_ladspa,       g_list_ladspa_w,       0, 0, 0, H_list_ladspa);
+  XEN_DEFINE_PROCEDURE(S_ladspa_descriptor, g_ladspa_descriptor_w, 2, 0, 0, H_ladspa_descriptor);
 
   DEFINE_INTEGER(LADSPA_PROPERTY_REALTIME);
   DEFINE_INTEGER(LADSPA_PROPERTY_INPLACE_BROKEN);
@@ -1148,30 +1166,30 @@ void g_ladspa_to_snd(void)
   DEFINE_INTEGER(LADSPA_HINT_DEFAULT_440);
 #endif
 
-  XEN_DEFINE_PROCEDURE(S_ladspa_descriptor, g_ladspa_descriptor_w, 2, 0, 0, H_ladspa_descriptor);
-  DEFINE_READER(Label, g_ladspa_Label_w);
-  DEFINE_READER(Name, g_ladspa_Name_w);
-  DEFINE_READER(Copyright, g_ladspa_Copyright_w);
-  DEFINE_READER(Maker, g_ladspa_Maker_w);
-  DEFINE_READER(Properties, g_ladspa_Properties_w);
-  DEFINE_READER(UniqueID, g_ladspa_UniqueID_w);
-  DEFINE_READER(PortNames, g_ladspa_PortNames_w);
-  DEFINE_READER(PortDescriptors, g_ladspa_PortDescriptors_w);
-  DEFINE_READER(PortRangeHints, g_ladspa_PortRangeHints_w); 
-  DEFINE_READER(PortCount, g_ladspa_PortCount_w);
+  DEFINE_READER(Label,           g_ladspa_Label_w,           H_ladspa_Label);
+  DEFINE_READER(Name,            g_ladspa_Name_w,            H_ladspa_Name);
+  DEFINE_READER(Copyright,       g_ladspa_Copyright_w,       H_ladspa_Copyright);
+  DEFINE_READER(Maker,           g_ladspa_Maker_w,           H_ladspa_Maker);
+  DEFINE_READER(Properties,      g_ladspa_Properties_w,      H_ladspa_Properties);
+  DEFINE_READER(UniqueID,        g_ladspa_UniqueID_w,        H_ladspa_UniqueID);
+  DEFINE_READER(PortNames,       g_ladspa_PortNames_w,       H_ladspa_PortNames);
+  DEFINE_READER(PortDescriptors, g_ladspa_PortDescriptors_w, H_ladspa_PortDescriptors);
+  DEFINE_READER(PortRangeHints,  g_ladspa_PortRangeHints_w,  H_ladspa_PortRangeHints); 
+  DEFINE_READER(PortCount,       g_ladspa_PortCount_w,       H_ladspa_PortCount);
  
-  XEN_DEFINE_PROCEDURE(S_ladspa_instantiate, g_ladspa_instantiate_w,   2, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(S_ladspa_activate, g_ladspa_activate_w,         2, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(S_ladspa_deactivate, g_ladspa_deactivate_w,     2, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(S_ladspa_cleanup, g_ladspa_cleanup_w,           2, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(S_ladspa_run, g_ladspa_run_w,                   3, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(S_ladspa_run_adding, g_ladspa_run_adding_w,     3, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(S_ladspa_set_run_adding_gain, g_ladspa_set_run_adding_gain_w, 3, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(S_ladspa_connect_port, g_ladspa_connect_port_w, 4, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(S_ladspa_instantiate,         g_ladspa_instantiate_w,         2, 0, 0, H_ladspa_instantiate);
+  XEN_DEFINE_PROCEDURE(S_ladspa_activate,            g_ladspa_activate_w,            2, 0, 0, H_ladspa_activate);
+  XEN_DEFINE_PROCEDURE(S_ladspa_deactivate,          g_ladspa_deactivate_w,          2, 0, 0, H_ladspa_deactivate);
+  XEN_DEFINE_PROCEDURE(S_ladspa_cleanup,             g_ladspa_cleanup_w,             2, 0, 0, H_ladspa_cleanup);
+  XEN_DEFINE_PROCEDURE(S_ladspa_run,                 g_ladspa_run_w,                 3, 0, 0, H_ladspa_run);
+  XEN_DEFINE_PROCEDURE(S_ladspa_run_adding,          g_ladspa_run_adding_w,          3, 0, 0, H_ladspa_run_adding);
+  XEN_DEFINE_PROCEDURE(S_ladspa_set_run_adding_gain, g_ladspa_set_run_adding_gain_w, 3, 0, 0, H_ladspa_set_run_adding_gain);
+  XEN_DEFINE_PROCEDURE(S_ladspa_connect_port,        g_ladspa_connect_port_w,        4, 0, 0, H_ladspa_connect_port);
 
   XEN_YES_WE_HAVE("snd-ladspa");
 }
 
 #endif
 #endif
+
 

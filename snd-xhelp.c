@@ -26,6 +26,10 @@ void snd_help_append(char *text)
   post_it_append(text);
 }
 
+void snd_help_back_to_top(void)
+{
+}
+
 #else
 
 /* ---------------- MOTIF 2 ---------------- */
@@ -154,7 +158,7 @@ static char *help_completer(char *text) {return(NULL);}
 
 static bool new_help(const char *pattern)
 {
-  char *url;
+  char *url = NULL;
   char **xrefs;
   url = snd_url(pattern);
   if (url)
@@ -182,6 +186,7 @@ static bool new_help(const char *pattern)
 	  FREE(xrefs);
 	  return(true);
 	}
+      else snd_help_with_xrefs(pattern, "(no help found)", WITH_WORD_WRAP, NULL, NULL);
     }
   return(false);
 }
@@ -254,7 +259,8 @@ static void ok_callback(Widget w, XtPointer context, XtPointer info)
   else 
     {
       help_str = XmTextFieldGetString(help_search);
-      new_help(help_str);
+      if (snd_strlen(help_str) > 0)
+	new_help(help_str);
       XtFree(help_str);
     }
 }
@@ -548,7 +554,12 @@ Widget snd_help_with_xrefs(const char *subject, const char *helpstr, with_word_w
 
 void snd_help_append(char *text)
 {
-  XmTextInsert(help_text, XmTextGetLastPosition(help_text), text);
+  if (help_text) XmTextInsert(help_text, XmTextGetLastPosition(help_text), text);
+}
+
+void snd_help_back_to_top(void)
+{
+  if (help_text) XmTextShowPosition(help_text, 0);
 }
 
 #endif
