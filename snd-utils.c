@@ -47,20 +47,13 @@ Float in_dB(Float min_dB, Float lin_dB, Float py)
   return((py <= lin_dB) ? min_dB : (20.0 * log10(py)));
 }
 
-#if DEBUGGING
-char *copy_string_1(const char *str, const char *caller, int line)
-#else
 char *copy_string(const char *str)
-#endif
 {
 #if DEBUGGING
   char *newstr = NULL;
   if (str)
     {
-      set_encloser((char *)caller);
-      /* newstr = (char *)MALLOC((strlen(str) + 1) * sizeof(char)); */
-      newstr = mem_malloc((size_t)((strlen(str) + 1) * sizeof(char)), __FUNCTION__, "copy-string caller", line);
-      set_encloser(NULL);
+      newstr = (char *)MALLOC((strlen(str) + 1) * sizeof(char));
       strcpy(newstr, str);
     }
   return(newstr);
@@ -271,21 +264,11 @@ static char *get_tmpdir(void)
 }
 
 static int sect_ctr = 0;
-#if DEBUGGING
-char *shorter_tempnam_1(const char *udir, const char *prefix, const char *caller)
-#else
 char *shorter_tempnam(const char *udir, const char *prefix)
-#endif
 {
   /* tempnam turns out names that are inconveniently long (in this case the filename is user-visible) */
   char *str, *tmpdir = NULL;
-#if DEBUGGING
-  set_encloser((char *)caller);
-#endif
   str = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
-#if DEBUGGING
-  set_encloser(NULL);
-#endif
   if ((udir == NULL) || (snd_strlen(udir) == 0)) 
     tmpdir = get_tmpdir(); /* incoming dir could be "" */
   else tmpdir = copy_string(udir);
@@ -836,16 +819,9 @@ void mem_report(void)
 	  if (have_stacks)
 	    for (j = 0; j < mem_size; j++)
 	      if ((stacks[j]) && (locations[j] == ptr) && (pointers[j]))
-		{
-		  fprintf(Fp, "    %s    %p", stacks[j], (void *)(pointers[j]));
-		  if ((strcmp("copy_string", functions[ptr]) == 0) ||
-		      (strcmp("copy_string_1", functions[ptr]) == 0))
-		    fprintf(Fp, " [%s]", (char *)(pointers[j]));
-		  fprintf(Fp, "\n");
-		}
+		fprintf(Fp, "    %s    %p\n", stacks[j], (void *)(pointers[j]));
 	  if ((strcmp("mus_format", functions[ptr]) == 0) ||
-	      (strcmp("copy_string", functions[ptr]) == 0) ||
-	      (strcmp("copy_string_1", functions[ptr]) == 0))
+	      (strcmp("copy_string", functions[ptr]) == 0))
 	    {
 	      if (have_stacks)
 		fprintf(Fp, "                          ");

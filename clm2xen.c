@@ -460,8 +460,15 @@ static XEN g_dot_product(XEN val1, XEN val2, XEN size)
   v1 = TO_VCT(val1);
   v2 = TO_VCT(val2);
   if (XEN_INTEGER_P(size))
-    len = XEN_TO_C_INT(size);
-  else len = v1->length;
+    {
+      len = XEN_TO_C_INT(size);
+      if (len == 0) return(C_TO_XEN_DOUBLE(0.0));
+      if (len < 0)
+	XEN_OUT_OF_RANGE_ERROR(S_dot_product, 3, size, "size ~A < 0?");
+      if (len > v1->length) len = v1->length;
+    }
+  else len = v1->length; 
+  if (len > v2->length) len = v2->length;
   return(xen_return_first(C_TO_XEN_DOUBLE(mus_dot_product(v1->data, v2->data, len)), 
 			  val1, 
 			  val2));
@@ -518,8 +525,15 @@ static XEN g_sine_bank(XEN amps, XEN phases, XEN size)
   v1 = TO_VCT(amps);
   v2 = TO_VCT(phases);
   if (XEN_INTEGER_P(size))
-    len = XEN_TO_C_INT(size);
-  else len = v1->length;
+    {
+      len = XEN_TO_C_INT(size);
+      if (len == 0) return(C_TO_XEN_DOUBLE(0.0));
+      if (len < 0)
+	XEN_OUT_OF_RANGE_ERROR(S_sine_bank, 3, size, "size ~A < 0?");
+      if (len > v1->length) len = v1->length;
+    }
+  else len = v1->length; 
+  if (len > v2->length) len = v2->length;
   return(xen_return_first(C_TO_XEN_DOUBLE(mus_sine_bank(v1->data, v2->data, len)),
 			  amps, 
 			  phases));
@@ -533,18 +547,19 @@ static XEN g_fft_window_1(xclm_window_t choice, XEN val1, XEN val2, XEN ulen, co
   int len;
   XEN_ASSERT_TYPE(VCT_P(val1), val1, XEN_ARG_1, caller, "a vct");
   XEN_ASSERT_TYPE(VCT_P(val2), val2, XEN_ARG_2, caller, "a vct");
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ulen), ulen, XEN_ARG_3, caller, "an integer");
   v1 = TO_VCT(val1);
   v2 = TO_VCT(val2);
-  if (XEN_NUMBER_P(ulen)) 
+  if (XEN_INTEGER_P(ulen))
     {
-      len = XEN_TO_C_INT_OR_ELSE(ulen, 0); 
+      len = XEN_TO_C_INT(ulen);
+      if (len == 0) return(XEN_FALSE);
+      if (len < 0)
+	XEN_OUT_OF_RANGE_ERROR(caller, 3, ulen, "size ~A < 0?");
       if (len > v1->length) len = v1->length;
     }
-  else 
-    {
-      len = v1->length;
-      if (v2->length < len) len = v2->length;
-    }
+  else len = v1->length; 
+  if (len > v2->length) len = v2->length;
   switch (choice)
     {
     case G_MULTIPLY_ARRAYS: mus_multiply_arrays(v1->data, v2->data, len); break;
@@ -746,6 +761,12 @@ static XEN_OBJECT_TYPE mus_xen_tag;
 
 #define MUS_XEN_P(obj) (XEN_OBJECT_TYPE_P(obj, mus_xen_tag))
 bool mus_xen_p(XEN obj) {return(MUS_XEN_P(obj));}
+
+static XEN g_mus_generator_p(XEN obj) 
+{
+  #define H_mus_generator_p "(" S_mus_generator_p " obj) returns #t if 'obj' is a CLM generator."
+  return(C_TO_XEN_BOOLEAN(MUS_XEN_P(obj)));
+}
 
 static XEN *make_vcts(int size)
 {
@@ -1896,6 +1917,8 @@ a new one is created.  If normalize is #t, the resulting waveform goes between -
 	      XEN_LIST_3(C_TO_XEN_STRING(S_partials_to_wave), 
 			 C_TO_XEN_STRING("partials list empty?"), 
 			 partials));
+  if (!(XEN_NUMBER_P(XEN_CAR(partials))))
+    XEN_ASSERT_TYPE(false, partials, XEN_ARG_1, S_partials_to_wave, "a list of numbers (partial numbers with amplitudes)");
   if ((XEN_NOT_BOUND_P(utable)) || (!(VCT_P(utable))))
     {
       Float *wave;
@@ -1937,6 +1960,8 @@ a new one is created.  If normalize is #t, the resulting waveform goes between -
 	      XEN_LIST_3(C_TO_XEN_STRING(S_phase_partials_to_wave), 
 			 C_TO_XEN_STRING("partials list empty?"),
 			 partials));
+  if (!(XEN_NUMBER_P(XEN_CAR(partials))))
+    XEN_ASSERT_TYPE(false, partials, XEN_ARG_1, S_phase_partials_to_wave, "a list of numbers (partial numbers with amplitudes)");
   if ((XEN_NOT_BOUND_P(utable)) || (!(VCT_P(utable))))
     {
       wave = (Float *)CALLOC(clm_table_size, sizeof(Float));
@@ -3072,6 +3097,8 @@ returns partial 2 twice as loud as 3."
 	      XEN_LIST_3(C_TO_XEN_STRING(S_partials_to_waveshape), 
 			 C_TO_XEN_STRING("partials list empty?"), 
 			 amps));
+  if (!(XEN_NUMBER_P(XEN_CAR(amps))))
+    XEN_ASSERT_TYPE(false, amps, XEN_ARG_1, S_partials_to_waveshape, "a list of numbers (partial numbers with amplitudes)");
   partials = list2partials(amps, &npartials);
   wave = mus_partials_to_waveshape(npartials, partials, size, (Float *)CALLOC(size, sizeof(Float)));
   gwave = make_vct(size, wave);
@@ -3100,6 +3127,8 @@ to create (via waveshaping) the harmonic spectrum described by the partials argu
 	      XEN_LIST_3(C_TO_XEN_STRING(S_partials_to_polynomial), 
 			 C_TO_XEN_STRING("partials list empty?"), 
 			 amps));
+  if (!(XEN_NUMBER_P(XEN_CAR(amps))))
+    XEN_ASSERT_TYPE(false, amps, XEN_ARG_1, S_partials_to_polynomial, "a list of numbers (partial numbers with amplitudes)");
   partials = list2partials(amps, &npartials);
   wave = mus_partials_to_polynomial(npartials, partials, kind);
   return(xen_return_first(make_vct(npartials, wave), amps));
@@ -3431,6 +3460,8 @@ are linear, if 0.0 you get a step function, and anything else produces an expone
 		      XEN_LIST_3(C_TO_XEN_STRING(S_make_env), 
 				 C_TO_XEN_STRING("null env?"), 
 				 keys[0]));
+	  if (!(XEN_NUMBER_P(XEN_CAR(keys[0]))))
+	    XEN_ASSERT_TYPE(false, keys[0], orig_arg[0], S_make_env, "a list of numbers (breakpoints)");
 	  npts = len / 2;
 	  brkpts = (Float *)CALLOC(len, sizeof(Float));
 	  if (brkpts == NULL)
@@ -5308,6 +5339,7 @@ XEN_NARGIFY_1(g_ssb_am_p_w, g_ssb_am_p)
 XEN_NARGIFY_4(g_ssb_bank_w, g_ssb_bank)
 XEN_NARGIFY_0(g_clm_table_size_w, g_clm_table_size)
 XEN_NARGIFY_1(g_set_clm_table_size_w, g_set_clm_table_size)
+XEN_NARGIFY_1(g_mus_generator_p_w, g_mus_generator_p)
 #else
 #define g_mus_srate_w g_mus_srate
 #define g_mus_set_srate_w g_mus_set_srate
@@ -5563,6 +5595,7 @@ XEN_NARGIFY_1(g_set_clm_table_size_w, g_set_clm_table_size)
 #define g_ssb_bank_w g_ssb_bank
 #define g_clm_table_size_w g_clm_table_size
 #define g_set_clm_table_size_w g_set_clm_table_size
+#define g_mus_generator_p_w g_mus_generator_p
 #endif
 
 #if WITH_MODULES
@@ -5997,6 +6030,8 @@ the closer the radius is to 1.0, the narrower the resonance."
   XEN_DEFINE_PROCEDURE(S_ssb_am_p,      g_ssb_am_p_w,      1, 0, 0, H_ssb_am_p);
   XEN_DEFINE_PROCEDURE("mus-ssb-bank",  g_ssb_bank_w,      4, 0, 0, "an experiment");
 
+  XEN_DEFINE_PROCEDURE(S_mus_generator_p, g_mus_generator_p_w, 1, 0, 0, H_mus_generator_p);
+
   XEN_YES_WE_HAVE("clm");
 
 #if WITH_MODULES
@@ -6156,6 +6191,7 @@ the closer the radius is to 1.0, the narrower the resonance."
 	       S_mus_file_name,
 	       S_mus_formant_radius,
 	       S_mus_frequency,
+	       S_mus_generator_p,
 	       S_mus_hop,
 	       S_mus_increment,
 	       S_mus_input_p,

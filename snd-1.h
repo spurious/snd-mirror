@@ -1304,24 +1304,14 @@ off_t snd_abs_off_t(off_t val);
 int snd_ipow2(int n);
 int snd_2pow2(int n);
 Float in_dB(Float min_dB, Float lin_dB, Float py);
-#if DEBUGGING
-char *copy_string_1(const char *str, const char *caller, int line);
-#define copy_string(Str) copy_string_1(Str, __FUNCTION__, __LINE__)
-#else
 char *copy_string(const char *str);
-#endif
 int snd_strlen(const char *str);
 char *snd_strcat(char *errmsg, const char *str, int *err_size);
 char *string_to_colon(char *val);
 char *filename_without_home_directory(const char *name);
 char *just_filename(char *name);
 char *prettyf(Float num, int tens);
-#if DEBUGGING
-char *shorter_tempnam_1(const char *dir, const char *prefix, const char* caller);
-#define shorter_tempnam(Directory, Prefix) shorter_tempnam_1(Directory, Prefix, __FUNCTION__)
-#else
 char *shorter_tempnam(const char *dir, const char *prefix);
-#endif
 char *snd_tempnam(void);
 void snd_exit(int val);
 void g_init_utils(void);

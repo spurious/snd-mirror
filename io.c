@@ -1544,7 +1544,7 @@ char *mus_format(const char *format, ...)
 #endif
 #endif
 #if DEBUGGING
-  rtn = copy_string_1(buf, __FUNCTION__, __LINE__);
+  rtn = copy_string(buf);
 #else
   rtn = strdup(buf);
 #endif

@@ -205,6 +205,7 @@ typedef struct {
   XEN func; 
   bool cx_extended; /* Sun/Forte C defines "extended" somewhere */
   char *origin;
+  int gc_loc;
 } key_entry; 
 
 static key_entry *user_keymap = NULL;
@@ -405,6 +406,7 @@ static void set_keymap_entry(int key, int state, int args, XEN func, bool cx_ext
 		  user_keymap[i].func = XEN_UNDEFINED;
 		  user_keymap[i].cx_extended = false;
 		  user_keymap[i].origin = NULL;
+		  user_keymap[i].gc_loc = -1;
 		}
 	    }
 	}
@@ -417,8 +419,12 @@ static void set_keymap_entry(int key, int state, int args, XEN func, bool cx_ext
     }
   else
     {
-      if (XEN_PROCEDURE_P(user_keymap[i].func))
-	snd_unprotect(user_keymap[i].func);
+      if ((XEN_PROCEDURE_P(user_keymap[i].func)) &&
+	  (user_keymap[i].gc_loc >= 0))
+	{
+	  snd_unprotect_at(user_keymap[i].gc_loc);
+	  user_keymap[i].gc_loc = -1;
+	}
       if (user_keymap[i].origin)
 	{
 	  FREE(user_keymap[i].origin);
@@ -428,7 +434,8 @@ static void set_keymap_entry(int key, int state, int args, XEN func, bool cx_ext
   user_keymap[i].origin = copy_string(origin);
   user_keymap[i].args = args;
   user_keymap[i].func = func;
-  if (XEN_PROCEDURE_P(func)) snd_protect(func);
+  if (XEN_PROCEDURE_P(func)) 
+    user_keymap[i].gc_loc = snd_protect(func);
 }
 
 static void call_user_keymap(int hashedsym, int count)

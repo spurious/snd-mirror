@@ -2,10 +2,11 @@
 #define CLM_H
 
 #define MUS_VERSION 3
-#define MUS_REVISION 7
-#define MUS_DATE "14-Dec-04"
+#define MUS_REVISION 8
+#define MUS_DATE "15-Dec-04"
 
 /*
+ * 15-Dec:     mus_generator? for type checks (clm2xen).
  * 14-Dec:     mus_env_linear.
  * 11-Sep:     removed buffer generator.
  * 6-Sep:      removed mus_oscil_bank, mus_bank.

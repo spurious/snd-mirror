@@ -163,6 +163,7 @@
 #define S_mus_file_name              "mus-file-name"
 #define S_mus_formant_radius         "mus-formant-radius"
 #define S_mus_frequency              "mus-frequency"
+#define S_mus_generator_p            "mus-generator?"
 #define S_mus_hop                    "mus-hop"
 #define S_mus_increment              "mus-increment"
 #define S_mus_input_p                "mus-input?"

@@ -1523,7 +1523,10 @@ write region's samples starting at beg for samps in channel chan to vct v; retur
       if (beg >= region_len(reg)) 
 	return(XEN_FALSE);
       if (v1)
-	data = v1->data;
+	{
+	  data = v1->data;
+	  if (len > v1->length) len = v1->length;
+	}
       else data = (Float *)CALLOC(len, sizeof(Float));
       region_samples(reg, chn, beg, len, data);
       if (v1)

@@ -1246,7 +1246,7 @@ static XEN update_hook;
 static snd_info *snd_update_1(snd_info *sp, const char *ur_filename)
 {
   /* we can't be real smart here because the channel number may have changed and so on */
-  int i, old_srate, old_chans, old_format, sp_chans, old_index;
+  int i, old_srate, old_chans, old_format, sp_chans, old_index, gc_loc = -1;
   channel_style_t old_channel_style;
   bool read_only, old_raw;
   void *sa;
@@ -1268,7 +1268,7 @@ static snd_info *snd_update_1(snd_info *sp, const char *ur_filename)
       if (XEN_PROCEDURE_P(update_hook_result))
 	{
 	  if (XEN_REQUIRED_ARGS_OK(update_hook_result, 1))
-	    snd_protect(update_hook_result);
+	    gc_loc = snd_protect(update_hook_result);
 	  else XEN_BAD_ARITY_ERROR(S_update_hook, 0, update_hook_result, S_update_hook " function result should require 1 arg");
 	}
     }
@@ -1340,7 +1340,8 @@ static snd_info *snd_update_1(snd_info *sp, const char *ur_filename)
       XEN_CALL_1(update_hook_result,
 		 (nsp) ? C_TO_XEN_INT(nsp->index) : XEN_FALSE,
 		 "procedure returned by " S_update_hook);
-      snd_unprotect(update_hook_result);
+      if (gc_loc != -1) snd_unprotect_at(gc_loc);
+      gc_loc = -1;
     }
   if (saved_sp)
     {
