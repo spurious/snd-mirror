@@ -1352,6 +1352,7 @@ track_info *free_track_info(chan_info *cp, int loc);
 void record_initial_track_info(chan_info *cp);
 off_t track_position(int id, int chan);
 off_t track_frames(int id, int chan);
+int track_chans(int id);
 chan_info *track_channel(int id, int chn);
 env *track_dialog_track_amp_env(int id);
 Float track_dialog_track_amp(int id);

@@ -1043,6 +1043,8 @@ void alert_envelope_editor(char *name, env *val)
   else add_envelope(name, val);
 }
 
+/* TODO: bring out snd/chn or mix/track? (per chan) -- how to show track wave? (display_mix_waveform in snd-mix) */
+
 void enved_show_background_waveform(axis_info *ap, axis_info *gray_ap, bool apply_to_selection, bool show_fft, bool printing)
 {
   int srate, pts = 0;
@@ -1121,6 +1123,8 @@ void enved_show_background_waveform(axis_info *ap, axis_info *gray_ap, bool appl
       active_channel->time_graph_type = old_time_graph_type;
       active_channel->axis = active_ap;
       if (pts > 0) draw_both_grfs(gray_ap->ax, pts);
+      /* TODO: if selection displayed, but too short to have two-sided grf, enved wave is incorrrect */
+      /* TODO: if flt=fft, bg wave not displayed? -- should this be a spectrum? or set 'wave' insensitive? */
     }
   active_channel->printing = false;
 }

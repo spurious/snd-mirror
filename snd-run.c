@@ -6206,6 +6206,11 @@ static void CName ## _i(int *args, ptree *pt) {INT_RESULT = CName(INT_ARG_1);} \
 static char *descr_ ## CName ## _i(int *args, ptree *pt) {return(mus_format( INT_PT " = " #CName "(" INT_PT ")", args[0], INT_RESULT, args[1], INT_ARG_1));} \
 static xen_value * CName ## _1(ptree *prog, xen_value **args, int num_args) {return(package(prog, R_INT, CName ## _i, descr_ ##CName ## _i, args, 1));}
 
+#define FLOAT_INT_OP(CName) \
+static void CName ## _i(int *args, ptree *pt) {FLOAT_RESULT = CName(INT_ARG_1);} \
+static char *descr_ ## CName ## _i(int *args, ptree *pt) {return(mus_format( FLT_PT " = " #CName "(" INT_PT ")", args[0], FLOAT_RESULT, args[1], INT_ARG_1));} \
+static xen_value * CName ## _1(ptree *prog, xen_value **args, int num_args) {return(package(prog, R_FLOAT, CName ## _i, descr_ ##CName ## _i, args, 1));}
+
 #define BOOL_INT_OP(CName) \
 static void CName ## _i(int *args, ptree *pt) {BOOL_RESULT = CName(INT_ARG_1);} \
 static char *descr_ ## CName ## _i(int *args, ptree *pt) {return(mus_format( BOOL_PT " = " #CName "(" INT_PT ")", args[0], B2S(BOOL_RESULT), args[1], INT_ARG_1));} \
@@ -6221,23 +6226,6 @@ static xen_value * CName ## _1(ptree *prog, xen_value **args, int num_args) {ret
 static void CName ## _i(int *args, ptree *pt) {if (STRING_RESULT) FREE(STRING_RESULT); STRING_RESULT = copy_string(CName());} \
 static char *descr_ ## CName ## _i(int *args, ptree *pt) {return(mus_format( STR_PT " = " #CName "()", args[0], STRING_RESULT));} \
 static xen_value * CName ## _1(ptree *prog, xen_value **args, int num_args) {return(package(prog, R_STRING, CName ## _i, descr_ ##CName ## _i, args, 0));}
-
-/* PERHAPS: simple snd ops
-  bool from 0: selection?
-  int from 0: [selection-position(2)] [selection-frames(2)] [selected-sound -> #f]
-  int from 1: region-chans region-frames region-srate track-track track-chans
-  int from 1/2: track-position track-frames 
-  flt from 1: track-speed track-tempo region-maxamp track-amp
-  flt from 1/2: selection-maxamp mix-amp
-  str from 1: mark-name short-file-name file-name
-  str from 0 with need for free: snd-tempnam
-  int/bool from 1: sync selected-channel
-
-     current-edit-position
-     select-channel select-sound
-
-     error returns?
-*/
 
 INT_INT_OP(mus_bytes_per_sample)
 bool r_sound_p(int i);
@@ -6269,14 +6257,45 @@ INT_INT_OP(r_mix_frames);
 INT_INT_OP(r_mix_track);
 BOOL_INT_OP(r_mix_inverted);
 BOOL_INT_OP(r_mix_locked);
+INT_INT_OP(track_chans);
 
 Float r_mix_speed(int n);
+#define r_track_speed(Trk) track_dialog_track_speed(Trk)
+#define r_track_tempo(Trk) track_dialog_track_tempo(Trk)
+#define r_track_amp(Trk) track_dialog_track_amp(Trk)
+#define r_track_track(Trk) track_dialog_track_track(Trk)
+
+INT_INT_OP(r_track_track);
+FLOAT_INT_OP(r_mix_speed);
+FLOAT_INT_OP(r_track_speed);
+FLOAT_INT_OP(r_track_tempo);
+FLOAT_INT_OP(r_track_amp);
+INT_INT_OP(region_chans);
+INT_INT_OP(region_srate);
+INT_INT_OP(region_len);
+FLOAT_INT_OP(region_maxamp);
+
 char *r_mark_name(int n);
 
+/* TODO: snd-test run mix-chans|position|frames|track|inverted|locked|speed track-speed|tempo|amp|track|chans
+         region-maxamp|srate|chans|frames
+*/
 
-/* TODO: snd-test run mix-chans etc */
+/* PERHAPS: simple snd ops
+  bool from 0: selection?
+  int from 0: [selection-position(2)] [selection-frames(2)] [selected-sound -> #f]
+  int from 1/2: track-position track-frames 
+  flt from 1/2: selection-maxamp mix-amp
+  str from 1: mark-name short-file-name file-name
+  str from 0 with need for free: snd-tempnam
+  int/bool from 1: sync selected-channel
 
-  /* others need export */
+     current-edit-position
+     select-channel select-sound
+
+     error returns?
+*/
+
 
 
 /* ---------------- snd utils ---------------- */
@@ -10989,6 +11008,17 @@ static void init_walkers(void)
   INIT_WALKER(S_mix_frames, make_walker(r_mix_frames_1, NULL, NULL, 1, 1, R_INT, false, 1, R_INT));
   INIT_WALKER(S_mix_inverted_p, make_walker(r_mix_inverted_1, NULL, NULL, 1, 1, R_BOOL, false, 1, R_INT));
   INIT_WALKER(S_mix_locked_p, make_walker(r_mix_locked_1, NULL, NULL, 1, 1, R_BOOL, false, 1, R_INT));
+  INIT_WALKER(S_track_chans, make_walker(track_chans_1, NULL, NULL, 1, 1, R_INT, false, 1, R_INT));
+  INIT_WALKER(S_track_track, make_walker(r_track_track_1, NULL, NULL, 1, 1, R_INT, false, 1, R_INT));
+  INIT_WALKER(S_region_chans, make_walker(region_chans_1, NULL, NULL, 1, 1, R_INT, false, 1, R_INT));
+  INIT_WALKER(S_region_srate, make_walker(region_srate_1, NULL, NULL, 1, 1, R_INT, false, 1, R_INT));
+  INIT_WALKER(S_region_frames, make_walker(region_len_1, NULL, NULL, 1, 1, R_INT, false, 1, R_INT));
+
+  INIT_WALKER(S_mix_speed, make_walker(r_mix_speed_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_INT));
+  INIT_WALKER(S_track_speed, make_walker(r_track_speed_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_INT));
+  INIT_WALKER(S_track_tempo, make_walker(r_track_tempo_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_INT));
+  INIT_WALKER(S_track_amp, make_walker(r_track_amp_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_INT));
+  INIT_WALKER(S_region_maxamp, make_walker(region_maxamp_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_INT));
 }
 #endif
 

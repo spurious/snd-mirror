@@ -5634,7 +5634,7 @@ static void set_track_channel_bounds(mix_info *md, void *ptr)
     }
 }
 
-static int track_chans(int id)
+int track_chans(int id)
 {
   int chans = 0;
   track_mix_list_t *trk;

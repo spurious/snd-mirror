@@ -213,6 +213,10 @@ static void mix_amp_env_resize(Widget w, XtPointer context, XtPointer info)
 	  env_editor_display_env(spfs[chan], cur_env, ax, _("mix env"), (int)(chan * widget_width(w) / chans), 0,
 				 widget_width(w) / chans, widget_height(w), false);
 	  XSetForeground(MAIN_DISPLAY(ss), ax->gc, (ss->sgx)->black);
+
+	  /*
+	      enved_show_background_waveform(axis, gray_ap, false, false, false);
+	  */
 	}
     }
 }
