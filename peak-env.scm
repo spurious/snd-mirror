@@ -1,4 +1,5 @@
 (use-modules (ice-9 common-list))
+(use-modules (ice-9 format))
 
 (define save-peak-env-info #t)
 (define save-peak-env-info-directory "~/peaks")

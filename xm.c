@@ -12,6 +12,7 @@
  */
 
 /* HISTORY: 
+ *   17-Jun:    removed XtSetWMColormapWindows.
  *   29-Apr:    minor 64-bit fixups.
  *   29-Mar:    XmParseProc.
  *   20-Mar:    XpmGetErrorString omitted inadvertently earlier.
@@ -13430,26 +13431,6 @@ searches for a file using substitutions in the path list"
   return(C_TO_XEN_STRING(str));
 }
 
-static XEN gxm_XtSetWMColormapWindows(XEN arg1, XEN arg2, XEN arg3)
-{
-  #define H_XtSetWMColormapWindows "void XtSetWMColormapWindows(widget, list, count)"
-  /* minor diff: arg2 is a true lisp list */
-  Widget *ws = NULL;
-  int i, len;
-  XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XtSetWMColormapWindows", "Widget");
-  XEN_ASSERT_TYPE(XEN_LIST_P(arg2), arg2, 2, "XtSetWMColormapWindows", "Widget list");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XtSetWMColormapWindows", "int");
-  len = XEN_LIST_LENGTH(arg2);
-  if (len > 0)
-    {
-      ws = (Widget *)CALLOC(len, sizeof(Widget *));
-      for (i = 0; i < len; i++, arg2 = XEN_CDR(arg2)) 
-	ws[i] = XEN_TO_C_Widget(XEN_CAR(arg2));
-    }
-  XtSetWMColormapWindows(XEN_TO_C_Widget(arg1), ws, XEN_TO_C_INT(arg3));
-  return(XEN_FALSE);
-}
-
 static XEN gxm_XtReleaseGC(XEN arg1, XEN arg2)
 {
   #define H_XtReleaseGC "void XtReleaseGC(w, gc) deallocate the specified shared GC."
@@ -17267,7 +17248,6 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtAllocateGC" XM_POSTFIX, gxm_XtAllocateGC, 6, 0, 0, H_XtAllocateGC);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtDestroyGC" XM_POSTFIX, gxm_XtDestroyGC, 1, 0, 0, H_XtDestroyGC);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtReleaseGC" XM_POSTFIX, gxm_XtReleaseGC, 2, 0, 0, H_XtReleaseGC);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtSetWMColormapWindows" XM_POSTFIX, gxm_XtSetWMColormapWindows, 3, 0, 0, H_XtSetWMColormapWindows);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtFindFile" XM_POSTFIX, gxm_XtFindFile, 4, 0, 0, H_XtFindFile);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtResolvePathname" XM_POSTFIX, gxm_XtResolvePathname, 8, 0, 0, H_XtResolvePathname);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtDisownSelection" XM_POSTFIX, gxm_XtDisownSelection, 3, 0, 0, H_XtDisownSelection);
@@ -24533,7 +24513,7 @@ static int xm_already_inited = 0;
       define_structs();
       XEN_YES_WE_HAVE("xm");
 #if HAVE_GUILE
-      XEN_EVAL_C_STRING("(define xm-version \"29-Apr-02\")");
+      XEN_EVAL_C_STRING("(define xm-version \"17-Jun-02\")");
 #endif
       xm_already_inited = 1;
     }

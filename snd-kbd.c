@@ -137,9 +137,10 @@ static void save_macro_1(named_macro *nm, FILE *fd)
 #endif
 }
 
-static int execute_named_macro_1(chan_info *cp, char *name, int count)
+static int execute_named_macro_1(chan_info *cp, char *name, off_t count)
 {
-  int i, j, k;
+  int i, k;
+  off_t j;
   named_macro *nm;
   macro_cmd *mc;
   for (k = 0; k < named_macro_ctr; k++)
@@ -161,7 +162,7 @@ static int execute_named_macro_1(chan_info *cp, char *name, int count)
   return(0);
 }
 
-static void execute_named_macro(chan_info *cp, char *name, int count)
+static void execute_named_macro(chan_info *cp, char *name, off_t count)
 {
   int one_edit, i;
   XEN form; XEN result = XEN_UNDEFINED;
@@ -895,7 +896,7 @@ static void window_frames_selection(chan_info *cp)
 
 
 
-static int get_count_1(char *number_buffer, int number_ctr, int dot_seen, chan_info *cp)
+static off_t get_count_1(char *number_buffer, int number_ctr, int dot_seen, chan_info *cp)
 {
   /* allow floats here = secs */
   float f;
@@ -910,7 +911,7 @@ static int get_count_1(char *number_buffer, int number_ctr, int dot_seen, chan_i
   if (dot_seen)
     {
       sscanf(number_buffer, "%f", &f);
-      return((int)(f * SND_SRATE(cp->sound)));
+      return((off_t)(f * SND_SRATE(cp->sound)));
     }
   else
     {
@@ -920,10 +921,9 @@ static int get_count_1(char *number_buffer, int number_ctr, int dot_seen, chan_i
   return(1);
 }
 
-static int get_count(char *number_buffer, int number_ctr, int dot_seen, chan_info *cp, int mark_wise)
+static off_t get_count(char *number_buffer, int number_ctr, int dot_seen, chan_info *cp, int mark_wise)
 {
-  int val;
-  off_t old_cursor;
+  off_t val, old_cursor;
   val = get_count_1(number_buffer, number_ctr, dot_seen, cp);
   if (!mark_wise) return(val);
   old_cursor = cp->cursor;
@@ -995,11 +995,12 @@ void keyboard_command (chan_info *cp, int keysym, int state)
   /* keysym has Shift taken into account already (see snd-xchn.c XKeycodeToKeysym, and same snd-xsnd.c) */
   static int u_count = 0;
   static char number_buffer[NUMBER_BUFFER_SIZE];
-  static int count = 1, got_count = 0;
+  static off_t count = 1;
+  static int got_count = 0;
   static int m = 0;
   int searching, cursor_searching, hashloc, sync_num, i, clear_search = TRUE;
   off_t loc;
-  static int ext_count = NO_CX_ARG_SPECIFIED;
+  static off_t ext_count = NO_CX_ARG_SPECIFIED;
   snd_info *sp;
   axis_info *ap;
   snd_state *ss;
@@ -1196,7 +1197,7 @@ void keyboard_command (chan_info *cp, int keysym, int state)
 	    case snd_K_V: case snd_K_v:
 	      cp->cursor_on = 1;
 	      /* in emacs this is move ahead one window, but for some reason in Snd it's center cursor?? */
-	      cursor_moveto(cp, (int)((ap->losamp + ap->hisamp) / 2));
+	      cursor_moveto(cp, (off_t)((ap->losamp + ap->hisamp) / 2));
 	      break;
 	    case snd_K_W: case snd_K_w: 
 	      delete_selection("C-w", UPDATE_DISPLAY); 
@@ -1608,7 +1609,7 @@ void keyboard_command (chan_info *cp, int keysym, int state)
 	    case snd_K_L: case snd_K_l: 
 	      cp->cursor_on = 1;
 	      if (selection_is_active_in_channel(cp))
-		cursor_moveto(cp, (int)(selection_beg(cp) + 0.5 * selection_len()));
+		cursor_moveto(cp, (off_t)(selection_beg(cp) + 0.5 * selection_len()));
 	      else no_selection_error(sp); 
 	      handle_cursor(cp, CURSOR_IN_MIDDLE);
 	      break;

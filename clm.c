@@ -3664,7 +3664,7 @@ mus_mixer *mus_make_empty_mixer(int chans)
   nf = (mus_mixer *)clm_calloc(1, sizeof(mus_mixer), "mixer");
   nf->core = &MIXER_CLASS;
   nf->chans = chans;
-  nf->vals = (Float **)clm_calloc(chans, sizeof(Float), "mixer data");
+  nf->vals = (Float **)clm_calloc(chans, sizeof(Float *), "mixer data");
   for (i = 0; i < chans; i++)
     nf->vals[i] = (Float *)clm_calloc(chans, sizeof(Float), "mixer data");
   return(nf);

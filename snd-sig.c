@@ -1935,6 +1935,7 @@ void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, Float scaler, int re
 	      break;
 	    }
 	}
+      si = free_sync_info(si);
     }
   else rampable = FALSE;
 

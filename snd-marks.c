@@ -1064,8 +1064,8 @@ void src_marks(chan_info *cp, Float ratio, off_t old_samps, off_t new_samps, off
 		{
 		  m = mps[i];
 		  if (ratio > 0.0)
-		    m->samp = (int)(m->samp / ratio);
-		  else m->samp = (int)((old_samps - 1 - m->samp) / (-ratio)); /* ratio < 0 here */
+		    m->samp = (off_t)(m->samp / ratio);
+		  else m->samp = (off_t)((old_samps - 1 - m->samp) / (-ratio)); /* ratio < 0 here */
 		}
 	    }
 	  else
@@ -1077,8 +1077,8 @@ void src_marks(chan_info *cp, Float ratio, off_t old_samps, off_t new_samps, off
 		  if ((m->samp >= beg) && (m->samp <= end))
 		    {
 		      if (ratio > 0.0)
-			m->samp = beg + (int)((m->samp - beg) / ratio);
-		      else m->samp = beg + (int)((old_samps - 1 - (m->samp - beg)) / (-ratio));
+			m->samp = beg + (off_t)((m->samp - beg) / ratio);
+		      else m->samp = beg + (off_t)((old_samps - 1 - (m->samp - beg)) / (-ratio));
 		    }
 		  else
 		    {
@@ -1564,8 +1564,7 @@ static void make_mark_graph(chan_info *cp, snd_info *sp, off_t initial_sample, o
 	   * this is confusing code!
 	   */
 	  double step, xk, xki;
-	  off_t ii;
-	  int kk;
+	  off_t ii, kk;
 	  env_info *ep;
 	  ep = cp->amp_envs[cp->edit_ctr];
 	  step = samples_per_pixel / (Float)(ep->samps_per_bin);
@@ -1579,8 +1578,8 @@ static void make_mark_graph(chan_info *cp, snd_info *sp, off_t initial_sample, o
 	  xki = (double)(ap->losamp);
 	  while (i <= ap->hisamp)
 	    {
-	      k = (int)xf;
-	      kk = (int)(xf + step);
+	      k = (off_t)xf;
+	      kk = (off_t)(xf + step);
 	      if (((current_sample >= initial_sample) && 
 		   (i >= initial_sample) && 
 		   (i < current_sample)) ||
@@ -1603,7 +1602,7 @@ static void make_mark_graph(chan_info *cp, snd_info *sp, off_t initial_sample, o
 			     grf_y(MUS_SAMPLE_TO_FLOAT(ymin), ap),
 			     grf_y(MUS_SAMPLE_TO_FLOAT(ymax), ap));
 	      xk += samples_per_pixel;
-	      i = (int)xk;
+	      i = (off_t)xk;
 	      if ((current_sample < initial_sample) && 
 		  (ii >= current_sample) && 
 		  (ii < initial_sample))
@@ -1620,7 +1619,7 @@ static void make_mark_graph(chan_info *cp, snd_info *sp, off_t initial_sample, o
 		    {
 		      xf += step;
 		      xki += samples_per_pixel;
-		      ii = (int)xki;
+		      ii = (off_t)xki;
 		    }
 		}
 	    }
@@ -1704,7 +1703,7 @@ static XEN g_restore_marks(XEN size, XEN snd, XEN chn, XEN marklist)
   chan_info *cp;
   snd_info *sp;
   char *str;
-  int i, j, list_size, in_size, id, sync;
+  int i, j, list_size, in_size, id;
   ASSERT_CHANNEL(S_restore_marks, snd, chn, 2);
   sp = get_sp(snd);
   if (sp == NULL) 
@@ -1739,6 +1738,7 @@ static XEN g_restore_marks(XEN size, XEN snd, XEN chn, XEN marklist)
 		      sm = XEN_CADR(el);
 		      if (XEN_NOT_FALSE_P(sm))
 			{
+			  unsigned int sync;
 			  nm = XEN_CAR(el);
 			  if (XEN_NOT_FALSE_P(nm))
 			    str = XEN_TO_C_STRING(nm);

@@ -594,7 +594,7 @@ int save_selection(snd_state *ss, char *ofile, int type, int format, int srate, 
 {
   int ofd, comlen, err = MUS_NO_ERROR, reporting = 0, no_space, bps;
   off_t oloc;
-  sync_info *si;
+  sync_info *si = NULL;
   off_t *ends;
   int i, j, k, chans;
   off_t dur, num, ioff;

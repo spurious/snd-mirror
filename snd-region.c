@@ -843,9 +843,9 @@ static void deferred_region_to_temp_file(region *r)
 	    {
 	      lseek(fdi, 28 + r->chans * datumb * drp->begs[0], SEEK_SET);
 	      buffer = (char *)CALLOC(8192, sizeof(char));
-	      for (i = 0; i < data_size; i += 8192)
+	      for (j = 0; j < data_size; j += 8192)
 		{
-		  bytes = data_size - i;
+		  bytes = data_size - j;
 		  if (bytes > 8192) bytes = 8192;
 		  read(fdi, buffer, bytes);
 		  write(fdo, buffer, bytes);

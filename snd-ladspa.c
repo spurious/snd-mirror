@@ -557,7 +557,7 @@ Information about about parameters can be acquired using analyse-ladspa."
     }
   }
 
-  sf = (snd_fd **)CALLOC(readers, sizeof(snd_fd));
+  sf = (snd_fd **)CALLOC(readers, sizeof(snd_fd *));
 
   /* Get sample count. */
   num = XEN_TO_C_OFF_T(samples);
@@ -696,7 +696,7 @@ Information about about parameters can be acquired using analyse-ladspa."
   for (i = 0, j = 0; i < outchans; i++)
     {
       ncp = sf[j]->cp;
-      file_change_samples(sf_initial_samp(sf[j]),
+      file_change_samples(sf[j]->initial_samp,
 			  num,
 			  ofile,
 			  ncp,

@@ -292,7 +292,8 @@ typedef struct snd__info {
   XEN properties;
   int raw_prompt;
   char *search_expr;
-  int searching, marking, filing, finding_mark, amping, reging, printing, loading, macroing, prompting;
+  int searching, marking, filing, finding_mark, amping, reging, printing, loading, prompting;
+  off_t macroing;
   int minibuffer_on, read_only;
   chan_info **chans;
   struct snd__state *state;
@@ -696,7 +697,6 @@ snd_fd *free_snd_fd(snd_fd *sf);
 char *sf_to_string(snd_fd *fd);
 int sf_p(XEN obj);
 snd_fd *get_sf(XEN obj);
-int sf_initial_samp(snd_fd *sf);
 snd_fd *free_snd_fd_almost(snd_fd *sf);
 mus_sample_t previous_sound (snd_fd *sf);
 mus_sample_t next_sound (snd_fd *sf);
@@ -749,6 +749,7 @@ void clear_transform_edit_ctrs(chan_info *cp);
 void make_fft_graph(chan_info *cp, snd_info *sp, axis_info *fap, axis_context *ax, int with_hooks);
 void g_init_fft(void);
 Float fft_beta_max(int win);
+void cp_free_fft_state(chan_info *cp);
 
 
 

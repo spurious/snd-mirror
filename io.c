@@ -920,7 +920,7 @@ static int mus_read_any_1(int tfd, int beg, int chans, int nints, mus_sample_t *
     {
       charbuf = inbuf;
       siz = mus_data_format_to_bytes_per_sample(tfd);
-      prescaling = MUS_FLOAT_TO_SAMPLE(1.0);
+      prescaling = (float)(MUS_FLOAT_TO_SAMPLE(1.0));
       format = tfd;
     }
   siz_chans = siz * chans;

@@ -1791,11 +1791,6 @@ void move_to_next_sample(snd_fd *sf)
   else sf->loc++;
 }
 
-int sf_initial_samp(snd_fd *sf)
-{
-  return(sf->initial_samp);
-}
-
 static mus_sample_t reader_out_of_data(snd_fd *sf)
 {
   sf->at_eof = TRUE;

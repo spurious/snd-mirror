@@ -204,7 +204,6 @@
   XEN_NARGIFY_6(gxm_XtAllocateGC_w, gxm_XtAllocateGC)
   XEN_NARGIFY_1(gxm_XtDestroyGC_w, gxm_XtDestroyGC)
   XEN_NARGIFY_2(gxm_XtReleaseGC_w, gxm_XtReleaseGC)
-  XEN_NARGIFY_3(gxm_XtSetWMColormapWindows_w, gxm_XtSetWMColormapWindows)
   XEN_NARGIFY_4(gxm_XtFindFile_w, gxm_XtFindFile)
   XEN_NARGIFY_8(gxm_XtResolvePathname_w, gxm_XtResolvePathname)
   XEN_NARGIFY_3(gxm_XtDisownSelection_w, gxm_XtDisownSelection)
@@ -1439,7 +1438,6 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtAllocateGC" XM_POSTFIX, gxm_XtAllocateGC_w, 6, 0, 0, H_XtAllocateGC);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtDestroyGC" XM_POSTFIX, gxm_XtDestroyGC_w, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtReleaseGC" XM_POSTFIX, gxm_XtReleaseGC_w, 2, 0, 0, H_XtReleaseGC);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtSetWMColormapWindows" XM_POSTFIX, gxm_XtSetWMColormapWindows_w, 3, 0, 0, H_XtSetWMColormapWindows);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtFindFile" XM_POSTFIX, gxm_XtFindFile_w, 4, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtResolvePathname" XM_POSTFIX, gxm_XtResolvePathname_w, 8, 0, 0, H_XtResolvePathname);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtDisownSelection" XM_POSTFIX, gxm_XtDisownSelection_w, 3, 0, 0, H_XtDisownSelection);

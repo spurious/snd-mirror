@@ -184,7 +184,8 @@ void command_return(GUI_WIDGET w, snd_state *ss, int last_prompt)
   char *str = NULL, *full_str = NULL, *prompt;
   int i, j, slen;
   XEN form = XEN_UNDEFINED;
-  int end_of_text, start_of_text, last_position, current_position, parens;
+  GUI_TEXT_POSITION_TYPE end_of_text, start_of_text, last_position, current_position;
+  int parens;
   full_str = GUI_TEXT(w);
   current_position = GUI_TEXT_INSERTION_POSITION(w);
   start_of_text = current_position;

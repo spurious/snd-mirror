@@ -1,5 +1,8 @@
 ;;; various dsp procedures (leaving aside the more CLM-specific examples in examp.scm etc)
 
+(use-modules (ice-9 optargs))
+(use-modules (ice-9 format))
+
 
 ;;; -------- Dolph-Chebyshev window
 ;;; 

@@ -1292,6 +1292,12 @@ static fft_state *free_fft_state(fft_state *fs)
   return(NULL);
 }
 
+void cp_free_fft_state(chan_info *cp)
+{
+  if (cp->fft_data)
+    cp->fft_data = free_fft_state((fft_state *)(cp->fft_data));
+}
+
 int fft_window_beta_in_use(int win) {return(win >= MUS_KAISER_WINDOW);}
 
 static fft_state *make_fft_state(chan_info *cp, int simple)
@@ -1344,7 +1350,7 @@ static fft_state *make_fft_state(chan_info *cp, int simple)
     }
   if (!reuse_old)
     {
-      if (cp->fft_data) cp->fft_data = free_fft_state((fft_state *)(cp->fft_data));
+      cp_free_fft_state(cp);
       fs = (fft_state *)CALLOC(1, sizeof(fft_state));
       fs->chan = cp;
       fs->cutoff = cp->spectro_cutoff;

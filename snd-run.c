@@ -7285,6 +7285,7 @@ in multi-channel situations where you want the optimization that vct-map! provid
 		vs[j]->data[i] = vals[j];
 	    }
 	  if (pt) free_ptree(pt);
+	  if (vs) FREE(vs);
 	  return(proc);
 	}
       /* else fall through to guile */

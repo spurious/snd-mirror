@@ -1,6 +1,7 @@
 ;;; a first look at using goops in Snd
 
 (use-modules (oop goops))
+(use-modules (ice-9 format))
 
 (define-class mark ()
   (id :init-value -1 :accessor id))

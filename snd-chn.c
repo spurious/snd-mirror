@@ -257,8 +257,7 @@ void force_fft_clear(chan_info *cp)
       (cp->cgx)->fft_in_progress = 0;
     }
   if (cp->fft) cp->fft = free_fft_info(cp->fft);
-  if (cp->fft_data) {FREE(cp->fft_data); cp->fft_data = NULL;}
-  /* this may leave ->wp window unfreed? -- see snd-fft.c free_fft_state */
+  cp_free_fft_state(cp);
 }
 
 void chan_info_cleanup(chan_info *cp)

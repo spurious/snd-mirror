@@ -1,5 +1,7 @@
 ;;; examples of extensions to Snd's graphics
 
+(use-modules (ice-9 optargs))
+
 (define (display-colored-samples color beg dur snd chn)
   "(display-colored-samples color beg dur snd chn) displays samples from beg for dur in color \
 whenever they're in the current view."

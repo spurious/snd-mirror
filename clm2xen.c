@@ -4585,12 +4585,16 @@ it in conjunction with mixer to scale/envelope all the various ins and outs."
 	      {
 		if (mus_env_p(MUS_XEN_TO_CLM(vdata1[j])))
 		  envs1[i][j] = MUS_XEN_TO_CLM(vdata1[j]);
-		else XEN_ERROR(BAD_TYPE,
-			       XEN_LIST_5(C_TO_XEN_STRING(S_mus_mix),
-					  vdata1[j],
-					  C_TO_XEN_STRING("each (non #f) element of (inner) vector must be an envelope: "),
-					  C_TO_XEN_INT(i),
-					  C_TO_XEN_INT(j)));
+		else 
+		  {
+		    FREE(envs1);
+		    XEN_ERROR(BAD_TYPE,
+			      XEN_LIST_5(C_TO_XEN_STRING(S_mus_mix),
+					 vdata1[j],
+					 C_TO_XEN_STRING("each (non #f) element of (inner) vector must be an envelope: "),
+					 C_TO_XEN_INT(i),
+					 C_TO_XEN_INT(j)));
+		  }
 	      }
 	}
     }

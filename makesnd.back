@@ -33,10 +33,10 @@ sndinfo: $(SNDLIB_HEADERS) headers.o io.o audio.o sound.o sndinfo.o
 	$(CC) $(LDFLAGS) $(CFLAGS) headers.o io.o audio.o sound.o sndinfo.o -o sndinfo $(AUDIO_LIB) $(LIBS)
 
 sndsine: $(SNDLIB_HEADERS) headers.o io.o audio.o sound.o clm.o sndsine.o
-	$(CC) $(LDFLAGS) $(GSL_FLAGS) $(CFLAGS) headers.o io.o audio.o sound.o clm.o sndsine.o -o sndsine $(AUDIO_LIB) $(GSL_LIBS) $(LIBS)
+	$(CC) $(LDFLAGS) $(GSL_FLAGS) $(CFLAGS) headers.o io.o audio.o sound.o clm.o sndsine.o -o sndsine $(AUDIO_LIB) $(GSL_LIBS) $(FFTW_LIBS) $(LIBS)
 
 sndxtest: $(SNDLIB_HEADERS) headers.o io.o audio.o sound.o clm.o sndxtest.o
-	$(CC) $(LDFLAGS) $(GSL_FLAGS) $(CFLAGS) headers.o io.o audio.o sound.o clm.o sndxtest.o -o sndxtest $(AUDIO_LIB) $(GSL_LIBS) $(LIBS)
+	$(CC) $(LDFLAGS) $(GSL_FLAGS) $(CFLAGS) headers.o io.o audio.o sound.o clm.o sndxtest.o -o sndxtest $(AUDIO_LIB) $(GSL_LIBS) $(FFTW_LIBS) $(LIBS)
 
 audinfo: $(SNDLIB_HEADERS) headers.o io.o audio.o sound.o audinfo.o
 	$(CC) $(LDFLAGS) $(CFLAGS) headers.o io.o audio.o sound.o audinfo.o -o audinfo $(AUDIO_LIB) $(LIBS)

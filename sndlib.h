@@ -168,28 +168,28 @@ BEGIN_DECLS
     #define MUS_SAMPLE_BITS 24
   #endif
   #define MUS_SAMPLE_0 0
-  #define MUS_BYTE_TO_SAMPLE(n) ((n) << (MUS_SAMPLE_BITS - 8))
+  #define MUS_BYTE_TO_SAMPLE(n) ((mus_sample_t)((n) << (MUS_SAMPLE_BITS - 8)))
   #define MUS_SAMPLE_TO_BYTE(n) ((n) >> (MUS_SAMPLE_BITS - 8))
-  #define MUS_SHORT_TO_SAMPLE(n) ((n) << (MUS_SAMPLE_BITS - 16))
-  #define MUS_SAMPLE_TO_SHORT(n) ((n) >> (MUS_SAMPLE_BITS - 16))
+  #define MUS_SHORT_TO_SAMPLE(n) ((mus_sample_t)((n) << (MUS_SAMPLE_BITS - 16)))
+  #define MUS_SAMPLE_TO_SHORT(n) ((short)((n) >> (MUS_SAMPLE_BITS - 16)))
   #if (MUS_SAMPLE_BITS < 24)
-    #define MUS_INT24_TO_SAMPLE(n) ((n) >> (24 - MUS_SAMPLE_BITS))
-    #define MUS_SAMPLE_TO_INT24(n) ((n) << (24 - MUS_SAMPLE_BITS))
+    #define MUS_INT24_TO_SAMPLE(n) ((mus_sample_t)((n) >> (24 - MUS_SAMPLE_BITS)))
+    #define MUS_SAMPLE_TO_INT24(n) ((int)((n) << (24 - MUS_SAMPLE_BITS)))
   #else
-    #define MUS_INT24_TO_SAMPLE(n) ((n) << (MUS_SAMPLE_BITS - 24))
-    #define MUS_SAMPLE_TO_INT24(n) ((n) >> (MUS_SAMPLE_BITS - 24))
+    #define MUS_INT24_TO_SAMPLE(n) ((mus_sample_t)((n) << (MUS_SAMPLE_BITS - 24)))
+    #define MUS_SAMPLE_TO_INT24(n) ((int)((n) >> (MUS_SAMPLE_BITS - 24)))
   #endif
-  #define MUS_INT_TO_SAMPLE(n) (n)
-  #define MUS_SAMPLE_TO_INT(n) (n)
+  #define MUS_INT_TO_SAMPLE(n) ((mus_sample_t)(n))
+  #define MUS_SAMPLE_TO_INT(n) ((int)(n))
   /* these are for direct read/write (no cross-image assumption is made about 32 bit int scaling) */
   #define MUS_FLOAT_TO_FIX ((MUS_SAMPLE_BITS < 32) ? (1 << (MUS_SAMPLE_BITS - 1)) : 0x7fffffff)
   #define MUS_FIX_TO_FLOAT (1.0 / (float)(MUS_FLOAT_TO_FIX))
-  #define MUS_FLOAT_TO_SAMPLE(n) ((int)((n) * MUS_FLOAT_TO_FIX))
+  #define MUS_FLOAT_TO_SAMPLE(n) ((mus_sample_t)((n) * MUS_FLOAT_TO_FIX))
   #define MUS_SAMPLE_TO_FLOAT(n) ((float)((n) * MUS_FIX_TO_FLOAT))
-  #define MUS_DOUBLE_TO_SAMPLE(n) ((int)((n) * MUS_FLOAT_TO_FIX))
+  #define MUS_DOUBLE_TO_SAMPLE(n) ((mus_sample_t)((n) * MUS_FLOAT_TO_FIX))
   #define MUS_SAMPLE_TO_DOUBLE(n) ((double)((n) * MUS_FIX_TO_FLOAT))
-  #define MUS_SAMPLE_MAX ((MUS_SAMPLE_BITS < 32) ? (MUS_FLOAT_TO_FIX - 1) : 0x7fffffff)
-  #define MUS_SAMPLE_MIN ((MUS_SAMPLE_BITS < 32) ? (-(MUS_FLOAT_TO_FIX)) : -0x7fffffff)
+  #define MUS_SAMPLE_MAX ((mus_sample_t)((MUS_SAMPLE_BITS < 32) ? (MUS_FLOAT_TO_FIX - 1) : 0x7fffffff))
+  #define MUS_SAMPLE_MIN ((mus_sample_t)((MUS_SAMPLE_BITS < 32) ? (-(MUS_FLOAT_TO_FIX)) : -0x7fffffff))
 #else
   /* this could use Float throughout and reflect the Float = double choice elsewhere */
   #define mus_sample_t float
@@ -197,16 +197,16 @@ BEGIN_DECLS
     #define MUS_SAMPLE_BITS 24
   #endif
   #define MUS_SAMPLE_0 0.0
-  #define MUS_BYTE_TO_SAMPLE(n) ((float)(n) / (float)(1 << 7))
-  #define MUS_SHORT_TO_SAMPLE(n) ((float)(n) / (float)(1 << 15))
-  #define MUS_INT_TO_SAMPLE(n) ((float)(n) / (float)(1 << (MUS_SAMPLE_BITS - 1)))
-  #define MUS_INT24_TO_SAMPLE(n) ((float)(n) / (float)(1 << 23))
+  #define MUS_BYTE_TO_SAMPLE(n) ((mus_sample_t)((float)(n) / (float)(1 << 7)))
+  #define MUS_SHORT_TO_SAMPLE(n) ((mus_sample_t)((float)(n) / (float)(1 << 15)))
+  #define MUS_INT_TO_SAMPLE(n) ((mus_sample_t)((float)(n) / (float)(1 << (MUS_SAMPLE_BITS - 1))))
+  #define MUS_INT24_TO_SAMPLE(n) ((mus_sample_t)((float)(n) / (float)(1 << 23)))
   #define MUS_FLOAT_TO_FIX 1.0
   #define MUS_FIX_TO_FLOAT 1.0
-  #define MUS_FLOAT_TO_SAMPLE(n) (n)
-  #define MUS_DOUBLE_TO_SAMPLE(n) (n)
-  #define MUS_SAMPLE_TO_FLOAT(n) (n)
-  #define MUS_SAMPLE_TO_DOUBLE(n) (n)
+  #define MUS_FLOAT_TO_SAMPLE(n) ((mus_sample_t)(n))
+  #define MUS_DOUBLE_TO_SAMPLE(n) ((mus_sample_t)(n))
+  #define MUS_SAMPLE_TO_FLOAT(n) ((float)(n))
+  #define MUS_SAMPLE_TO_DOUBLE(n) ((double)(n))
   #define MUS_SAMPLE_TO_INT(n) ((int)((n) * (1 << (MUS_SAMPLE_BITS - 1))))
   #define MUS_SAMPLE_TO_INT24(n) ((int)((n) * (1 << 23)))
   #define MUS_SAMPLE_TO_SHORT(n) ((short)((n) * (1 << 15)))
@@ -633,10 +633,10 @@ char *mus_midi_describe             PROTO((void));
   void *mem_realloc                 PROTO((void *ptr, size_t size, const char *func, const char *file, int line));
 #endif
 
-END_DECLS
-
 #ifdef MPW_C
 char *strdup (const char *str);
 #endif
+
+END_DECLS
 
 #endif

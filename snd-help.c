@@ -670,7 +670,7 @@ search is satisified.  For example, (lambda (n) (> n .1) looks for the next samp
 Successive c-s or c-r repeat the search.  c-x c-s can redefine the search pattern, which is also cleared in other \
 events, much like Emacs. \
 \n\n\
-Normally, the search applies only to the current channel. To search all current files at once, use the Edit menu's find option.");
+Normally, the search applies only to the current channel. To search all current files at once, use the Edit:Find dialog.");
 }
 
 void undo_help(snd_state *ss) 

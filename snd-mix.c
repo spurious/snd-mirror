@@ -936,8 +936,8 @@ static mix_info *file_mix_samples(off_t beg, off_t num, char *tempfile, chan_inf
   mus_sample_t **data;
   Float scaler;
   mus_sample_t *chandata;
-  int j, in_chans, base, no_space, err = 0;
-  off_t i, cursamps, len, size;
+  int in_chans, base, no_space, err = 0;
+  off_t i, j, cursamps, len, size;
   file_info *ihdr, *ohdr;
   ss = cp->state;
   if (num <= 0) return(NULL); /* a no-op -- mixing in an empty file */

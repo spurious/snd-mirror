@@ -1,5 +1,7 @@
 ;;; hook-related functions
 
+(use-modules (ice-9 format))
+
 ;;; -------- snd-hooks
 
 (define (snd-hooks)

@@ -1,5 +1,7 @@
 ;;; examples of using the GL bindings
 
+(use-modules (ice-9 format))
+
 (define (gl-info)
   ;; taken loosely from glxvisuals.c
   "(gl-info) prints out GL-related info"

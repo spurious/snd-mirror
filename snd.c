@@ -7,6 +7,9 @@
 #include "snd.h"
 
 /* SOMEDAY: put Snd names in its own module
+ * TODO: [optional] typed indices for sound|chan|mark|mix|region: (|sound n) (|channel n) (|mark n) (|mix n) (|region n)
+ *                                    edits? (|edits s c data?) (|edit-position n)
+ *                  strict-types switch would insist on this form wherever index currently called-for
  */
 
 static snd_state *ss;

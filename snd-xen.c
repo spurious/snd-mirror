@@ -2750,7 +2750,12 @@ static XEN g_little_endian(void)
 static XEN g_snd_completion(XEN text)
 {
   /* perhaps callable from emacs? */
-  return(C_TO_XEN_STRING(command_completer(XEN_TO_C_STRING(text))));
+  char *str;
+  XEN res;
+  str = command_completer(XEN_TO_C_STRING(text));
+  res = C_TO_XEN_STRING(str);
+  FREE(str);
+  return(res);
 }
 
 #ifdef XEN_ARGIFY_1

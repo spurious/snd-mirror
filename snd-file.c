@@ -84,7 +84,7 @@ off_t file_bytes(char *filename) /* using this name to make searches simpler */
 
 static int is_empty_file(char *filename)
 {
-  return(file_bytes(filename) == (long)0);
+  return(file_bytes(filename) == (off_t)0);
 }
 #endif
 
@@ -1407,13 +1407,13 @@ static void file_prevlist(char *filename, char *fullname)
 	{
 	  prevnames = (char **)CALLOC(new_size, sizeof(char *));
 	  prevfullnames = (char **)CALLOC(new_size, sizeof(char *));
-	  prevtimes = (int *)CALLOC(new_size, sizeof(char *));
+	  prevtimes = (int *)CALLOC(new_size, sizeof(int));
 	}
       else
 	{
 	  prevnames = (char **)REALLOC(prevnames, new_size * sizeof(char *));
 	  prevfullnames = (char **)REALLOC(prevfullnames, new_size * sizeof(char *));
-	  prevtimes = (int *)REALLOC(prevtimes, new_size * sizeof(int *));
+	  prevtimes = (int *)REALLOC(prevtimes, new_size * sizeof(int));
 	  for (i = prevfile_size; i < new_size; i++) 
 	    {
 	      prevnames[i] = NULL; 
@@ -1506,7 +1506,7 @@ void init_curfiles(int size)
     {
       curfile_size = size;
       curnames = (char **)CALLOC(curfile_size, sizeof(char *));
-      a_big_star = (int *)CALLOC(curfile_size, sizeof(int *));
+      a_big_star = (int *)CALLOC(curfile_size, sizeof(int));
     }
 }
 
@@ -1519,12 +1519,12 @@ static void greet_me(snd_state *ss, char *shortname)
       if (curfile_size == 0)
 	{
 	  curnames = (char **)CALLOC(new_size, sizeof(char *));
-	  a_big_star = (int *)CALLOC(new_size, sizeof(int *));
+	  a_big_star = (int *)CALLOC(new_size, sizeof(int));
 	}
       else
 	{
 	  curnames = (char **)REALLOC(curnames, new_size * sizeof(char *));
-	  a_big_star = (int *)REALLOC(a_big_star, new_size * sizeof(int *));
+	  a_big_star = (int *)REALLOC(a_big_star, new_size * sizeof(int));
 	  for (i = curfile_size; i < new_size; i++) 
 	    {
 	      curnames[i] = NULL; 
@@ -1554,7 +1554,7 @@ void init_prevfiles(int size)
       prevfile_size = size;
       prevnames = (char **)CALLOC(prevfile_size, sizeof(char *));
       prevfullnames = (char **)CALLOC(prevfile_size, sizeof(char *));
-      prevtimes = (int *)CALLOC(prevfile_size, sizeof(char *));
+      prevtimes = (int *)CALLOC(prevfile_size, sizeof(int));
     }
 }
 

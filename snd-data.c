@@ -155,8 +155,7 @@ static chan_info *free_chan_info(chan_info *cp)
   cp->tcgx = NULL;
   cp->axis = free_axis_info(cp->axis);
   if (cp->fft) cp->fft = free_fft_info(cp->fft);
-  if (cp->fft_data) {FREE(cp->fft_data); cp->fft_data = NULL;}
-  /* this may leave ->wp window unfreed? -- see snd-fft.c free_fft_state */
+  cp_free_fft_state(cp);
   cp->graph_transform_p = 0;
   cp->printing = 0;
   cp->graph_time_p = 1;
