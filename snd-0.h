@@ -79,25 +79,6 @@
 
 #define XOR(a,b) ((~((a) & (b))) & ((a) | (b)))
 
-#define SND_IO_FD 1
-#define SND_IO_CHANS 2
-#define SND_IO_SIZE 3
-#define SND_IO_BEG 4
-#define SND_IO_END 5
-#define SND_IO_BUFSIZ 6
-#define SND_IO_DATA_START 7
-#define SND_IO_DATA_END 8
-#define SND_IO_DIR 9
-#define SND_IO_HDR_END 10
-#define SND_IO_DATS 11
-
-#define SND_AREF_BLOCK 0
-#define SND_AREF_SIZE 1
-#define SND_AREF_HEADER_SIZE 2
-
-#define SND_IO_IN_FILE 0
-/* #define SND_IO_OUT_FILE 1 */
-
 #define FILE_BUFFER_SIZE 8192
 #define MAX_BUFFER_SIZE 65536
 #define MIX_FILE_BUFFER_SIZE 2048

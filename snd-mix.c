@@ -446,7 +446,7 @@ static MUS_SAMPLE_TYPE next_mix_sample(mix_fd *mf)
     {
     case C_STRAIGHT:
       if (mf->type == MIX_INPUT_SOUND)
-	NEXT_SAMPLE(sum,mf->sfs[mf->base]);
+	sum = next_sample(mf->sfs[mf->base]);
       else sum = next_mix_input_amp_env_sample(mf,mf->base);
       break;
     case C_ZERO: 
@@ -460,7 +460,7 @@ static MUS_SAMPLE_TYPE next_mix_sample(mix_fd *mf)
 	  for (i=0;i<mf->chans;i++)
 	    {
 	      if (mf->type == MIX_INPUT_SOUND)
-		NEXT_SAMPLE(val,mf->sfs[i]);
+		val = next_sample(mf->sfs[i]);
 	      else val = next_mix_input_amp_env_sample(mf,i);
 	      if (mf->segs[i])
 		sum += ((MUS_SAMPLE_TYPE)(val * mus_env(mf->segs[i])));
@@ -472,10 +472,7 @@ static MUS_SAMPLE_TYPE next_mix_sample(mix_fd *mf)
 	  if (mf->type == MIX_INPUT_SOUND)
 	    {
 	      for (i=0;i<mf->chans;i++)
-		{
-		  NEXT_SAMPLE(val,mf->sfs[i]);
-		  sum += ((MUS_SAMPLE_TYPE)(val * cs->scalers[i]));
-		}
+		sum += ((MUS_SAMPLE_TYPE)(next_sample(mf->sfs[i]) * cs->scalers[i]));
 	    }
 	  else
 	    {
@@ -540,7 +537,7 @@ static MUS_SAMPLE_TYPE next_mix_sample(mix_fd *mf)
 		    {
 		      mf->lst[i] = mf->nxt[i];
 		      if (mf->type == MIX_INPUT_SOUND)
-			NEXT_SAMPLE(mf->nxt[i],mf->sfs[i]);
+			mf->nxt[i] = next_sample(mf->sfs[i]);
 		      else mf->nxt[i] = next_mix_input_amp_env_sample(mf,i);
 		    }
 		}
@@ -655,8 +652,8 @@ static mix_fd *init_mix_read_1(mixdata *md, int old, int type)
 	    {
 	      for (i=0;i<chans;i++)
 		{
-		  NEXT_SAMPLE(mf->lst[i],mf->sfs[i]);
-		  NEXT_SAMPLE(mf->nxt[i],mf->sfs[i]);
+		  mf->lst[i] = next_sample(mf->sfs[i]);
+		  mf->nxt[i] = next_sample(mf->sfs[i]);
 		}
 	    }
 	}
@@ -1009,7 +1006,6 @@ static mixdata *file_mix_samples(int beg, int num, char *tempfile, chan_info *cp
   Float scaler;
   MUS_SAMPLE_TYPE *chandata;
   int i,size,j,cursamps,in_chans,base,no_space,len,err=0;
-  MUS_SAMPLE_TYPE val;
   file_info *ihdr,*ohdr;
   if (num <= 0) 
     {
@@ -1071,7 +1067,7 @@ static mixdata *file_mix_samples(int beg, int num, char *tempfile, chan_info *cp
 	  cursamps = num-i;
 	  if (cursamps > MAX_BUFFER_SIZE) cursamps = MAX_BUFFER_SIZE;
 	  for (j=0;j<cursamps;j++)
-	    NEXT_SAMPLE(chandata[j],csf);
+	    chandata[j] = next_sample(csf);
 	  err = mus_file_write(ofd,0,cursamps-1,1,&chandata);
 	  if (err == -1) break;
 	}
@@ -1088,8 +1084,7 @@ static mixdata *file_mix_samples(int beg, int num, char *tempfile, chan_info *cp
 	      j = 0;
 	      if (err == -1) break;
 	    }
-	  NEXT_SAMPLE(val,csf);
-	  chandata[j] += val;
+	  chandata[j] += next_sample(csf);
 	  j++;
 	}
       if (j > 1) mus_file_write(ofd,0,j-1,1,&chandata);
@@ -1360,8 +1355,7 @@ void remix_file(mixdata *md, char *origin)
 	      j = 0;
 	      if (err == -1) break;
 	    }
-	  NEXT_SAMPLE(chandata[j],cur);
-	  j++;
+	  chandata[j++] = next_sample(cur);
 	}
     }
   else
@@ -1378,17 +1372,11 @@ void remix_file(mixdata *md, char *origin)
 		  j = 0;
 		  if (err == -1) break;
 		}
-	      NEXT_SAMPLE(chandata[j],cur);
+	      chandata[j] = next_sample(cur);
 	      if ((i>=old_beg) && (i<=old_end))
-		{
-		  NEXT_SAMPLE(val,sfb);
-		  chandata[j] -= val;
-		}
+		chandata[j] -= next_sample(sfb);
 	      if ((i>=new_beg) && (i<=new_end))
-		{
-		  NEXT_SAMPLE(val,afb);
-		  chandata[j] += val;
-		}
+		chandata[j] += next_sample(afb);
 	      if (chandata[j] > maxy) maxy = chandata[j];
 	      else if (chandata[j] < miny) miny = chandata[j];
 	      j++;
@@ -1404,7 +1392,7 @@ void remix_file(mixdata *md, char *origin)
 		  j = 0;
 		  if (err == -1) break;
 		}
-	      NEXT_SAMPLE(chandata[j],cur);
+	      chandata[j] = next_sample(cur);
 	      if ((i>=old_beg) && (i<=old_end))
 		{
 		  val = next_mix_sample(sub);
@@ -1701,7 +1689,7 @@ void make_temporary_graph(chan_info *cp, mixdata *md, console_state *cs)
   snd_state *ss;
   Float samples_per_pixel,xf;
   double x,incr,initial_x;
-  MUS_SAMPLE_TYPE ina,ymin,ymax,val;
+  MUS_SAMPLE_TYPE ina,ymin,ymax;
   int lo,hi;
   snd_fd *sf = NULL,*sfb,*afb;
   mix_fd *add = NULL,*sub = NULL;
@@ -1752,7 +1740,7 @@ void make_temporary_graph(chan_info *cp, mixdata *md, console_state *cs)
 	}
       for (j=0,i=lo,x=initial_x;i<=hi;i++,j++,x+=incr)
 	{
-	  NEXT_SAMPLE(ina,sf);
+	  ina = next_sample(sf);
 	  if ((i >= oldbeg) && (i <= oldend)) ina -= next_mix_sample(sub);
 	  if ((i >= newbeg) && (i <= newend)) ina += next_mix_sample(add);
 	  if (widely_spaced)
@@ -1789,7 +1777,7 @@ void make_temporary_graph(chan_info *cp, mixdata *md, console_state *cs)
 	    {
 	      while (i<=hi)
 		{
-		  NEXT_SAMPLE(ina,sf);
+		  ina = next_sample(sf);
 		  if (ina > ymax) ymax = ina;
 		  if (ina < ymin) ymin = ina;
 		  xf+=1.0;
@@ -1813,9 +1801,9 @@ void make_temporary_graph(chan_info *cp, mixdata *md, console_state *cs)
 		  afb = add->sfs[add->base];
 		  while (i<=hi)
 		    {
-		      NEXT_SAMPLE(ina,sf);
-		      if ((i >= oldbeg) && (i <= oldend)) {NEXT_SAMPLE(val,sfb); ina -= val;}
-		      if ((i >= newbeg) && (i <= newend)) {NEXT_SAMPLE(val,afb); ina += val;}
+		      ina = next_sample(sf);
+		      if ((i >= oldbeg) && (i <= oldend)) {ina -= next_sample(sfb);}
+		      if ((i >= newbeg) && (i <= newend)) {ina += next_sample(afb);}
 		      if (ina > ymax) ymax = ina;
 		      if (ina < ymin) ymin = ina;
 		      xf+=1.0;
@@ -1835,7 +1823,7 @@ void make_temporary_graph(chan_info *cp, mixdata *md, console_state *cs)
 		{
 		  while (i<=hi)
 		    {
-		      NEXT_SAMPLE(ina,sf);
+		      ina = next_sample(sf);
 		      if ((i >= oldbeg) && (i <= oldend)) ina -= next_mix_sample(sub);
 		      if ((i >= newbeg) && (i <= newend)) ina += next_mix_sample(add);
 		      if (ina > ymax) ymax = ina;

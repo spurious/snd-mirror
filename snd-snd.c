@@ -170,12 +170,12 @@ int tick_amp_env(chan_info *cp, env_state *es)
 	  sfd = es->sf;
 	  for (n=0;n<lm;n++,sb++)
 	    {
-	      NEXT_SAMPLE(val,sfd);
+	      val = next_sample(sfd);
 	      ymin = val;
 	      ymax = val;
 	      for (i=1;i<ep->samps_per_bin;i++)
 		{
-		  NEXT_SAMPLE(val,sfd);
+		  val = next_sample(sfd);
 		  if (ymin > val) 
 		    ymin = val; 
 		  else 

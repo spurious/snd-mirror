@@ -597,9 +597,9 @@ void add_channel_data(char *filename, chan_info *cp, file_info *hdr, snd_state *
 				   chdr->chans,
 				   chdr->type);
 	  during_open(fd,filename,SND_OPEN_CHANNEL);
-	  datai = make_file_state(fd,chdr,SND_IO_IN_FILE,chn,FILE_BUFFER_SIZE);
+	  datai = make_file_state(fd,chdr,chn,FILE_BUFFER_SIZE);
 	  cp->sounds[0] = make_snd_data_file(filename,datai,
-					     MUS_SAMPLE_ARRAY(datai[SND_IO_DATS+SND_AREF_HEADER_SIZE+chn]),
+					     MUS_SAMPLE_ARRAY(datai[file_state_channel_offset(chn)]),
 					     chdr,DONT_DELETE_ME,cp->edit_ctr,chn);
 	  if (show_usage_stats(ss)) gather_usage_stats(cp);
 	}
@@ -1049,6 +1049,7 @@ int make_graph(chan_info *cp, snd_info *sp, snd_state *ss)
    * on some extreme cases (hour-long 44KHz stereo), but there's always another special case...
    */
   MUS_SAMPLE_TYPE ina,ymin,ymax;
+  Float samp;
   int pixels;
   snd_fd *sf = NULL;
   int x_start,x_end;
@@ -1100,8 +1101,8 @@ int make_graph(chan_info *cp, snd_info *sp, snd_state *ss)
       incr = (double)1.0 / cur_srate;
       for (j=0,i=ap->losamp,x=((double)(ap->losamp)/cur_srate);i<=ap->hisamp;i++,j++,x+=incr)
 	{
-	  NEXT_SAMPLE(ina,sf);
-	  set_grf_point(grf_x(x,ap),j,grf_y(MUS_SAMPLE_TO_FLOAT(ina),ap));
+	  samp = next_sample_to_float(sf);
+	  set_grf_point(grf_x(x,ap),j,grf_y(samp,ap));
 
 	  /* for colored lines (mix as green for example), we'd check sf->cb[ED_COLOR],
 	   * if it has changed, send out the current points in the current color,
@@ -1114,7 +1115,7 @@ int make_graph(chan_info *cp, snd_info *sp, snd_state *ss)
 
 	  /* to show fft extent, losamp to losamp+fft_size min hisamp in fft-color */
 
-	  if (cp->printing) ps_set_grf_point((double)i/cur_srate,j,MUS_SAMPLE_TO_FLOAT(ina));
+	  if (cp->printing) ps_set_grf_point((double)i/cur_srate,j,samp);
 	}
       if (sp)
 	{
@@ -1130,9 +1131,9 @@ int make_graph(chan_info *cp, snd_info *sp, snd_state *ss)
 	  incr = (double)1.0 /cur_srate;
 	  for (j=0,i=ap->losamp,x=start_time;i<=ap->hisamp;i++,j++,x+=incr)
 	    {
-	      NEXT_SAMPLE(ina,sf);
-	      set_grf_point(grf_x(x,ap),j,grf_y(MUS_SAMPLE_TO_FLOAT(ina),ap));
-	      if (cp->printing) ps_set_grf_point(x,j,MUS_SAMPLE_TO_FLOAT(ina));
+	      samp = next_sample_to_float(sf);
+	      set_grf_point(grf_x(x,ap),j,grf_y(samp,ap));
+	      if (cp->printing) ps_set_grf_point(x,j,samp);
 	    }
 	  if (sp)
 	    {
@@ -1170,7 +1171,7 @@ int make_graph(chan_info *cp, snd_info *sp, snd_state *ss)
 	      if (cp->printing) pinc = samples_per_pixel/cur_srate;
 	      for (i=ap->losamp,xf=0.0;i<=ap->hisamp;i++)
 		{
-		  NEXT_SAMPLE(ina,sf);
+		  ina = next_sample(sf);
 		  if (ina > ymax) ymax = ina;
 		  if (ina < ymin) ymin = ina;
 		  xf+=1.0;
@@ -1944,7 +1945,6 @@ static void make_wavogram(chan_info *cp, snd_info *sp, snd_state *ss)
   Float xoff,x,y,x0,y0,xincr;
   Float width,height,zscl,yval,xval,binval;
   int i,j,yincr,yoff,xx,yy;
-  MUS_SAMPLE_TYPE ina;
   Float matrix[9];
   Float xyz[3];
   snd_fd *sf;
@@ -1974,8 +1974,9 @@ static void make_wavogram(chan_info *cp, snd_info *sp, snd_state *ss)
 	  y=yoff;
 	  for (i=0;i<cp->wavo_trace;i++,x+=xincr)
 	    {
-	      NEXT_SAMPLE(ina,sf);
-	      xyz[0]=x-x0; xyz[1]=y-y0; xyz[2]=MUS_SAMPLE_TO_FLOAT(ina);
+	      xyz[0]=x-x0; 
+	      xyz[1]=y-y0; 
+	      xyz[2]=next_sample_to_float(sf);
 	      rotate(xyz,matrix);
 	      yval = xyz[1]+xyz[2];
 	      xval = xyz[0];
@@ -1997,8 +1998,7 @@ static void make_wavogram(chan_info *cp, snd_info *sp, snd_state *ss)
 	  yy = (int)y0; /* ? */
 	  for (i=0;i<cp->wavo_trace;i++,x+=xincr)
 	    {
-	      NEXT_SAMPLE(ina,sf);
-	      binval = MUS_SAMPLE_TO_FLOAT(ina);
+	      binval = next_sample_to_float(sf);
 	      xyz[0]=x-x0; xyz[1]=y-y0; xyz[2]=binval;
 	      rotate(xyz,matrix);
 	      yval = xyz[1]+xyz[2];
@@ -2854,7 +2854,6 @@ static SCM series_scan(snd_state *ss, chan_info *cp, SCM proc, int chan_choice, 
   snd_fd **sfs;
   snd_fd *sf;
   int kp,j,ip,len,num,reporting = 0,rpt = 0,rpt4;
-  MUS_SAMPLE_TYPE val;
   SCM res;
   sp = cp->sound;
   switch (chan_choice)
@@ -2890,8 +2889,7 @@ static SCM series_scan(snd_state *ss, chan_info *cp, SCM proc, int chan_choice, 
 	  if (reporting) start_progress_report(sp,NOT_FROM_ENVED);
 	  for (kp=0;kp<num;kp++)
 	    {
-	      NEXT_SAMPLE(val,sf);
-	      res = g_call1(proc,gh_double2scm((double)(MUS_SAMPLE_TO_FLOAT(val))));
+	      res = g_call1(proc,gh_double2scm((double)next_sample_to_float(sf)));
 	      if ((SCM_NFALSEP(res)) || (SCM_SYMBOLP(res)))
 		{
 		  for (j=ip;j<si->chans;j++) free_snd_fd(sfs[j]);
@@ -2938,7 +2936,6 @@ static SCM parallel_scan(snd_state *ss, chan_info *cp, SCM proc, int chan_choice
   snd_info *sp;
   snd_fd **sfs;
   int kp,ip,pos = 0,len,num,reporting = 0,rpt = 0,rpt4;
-  MUS_SAMPLE_TYPE val;
   SCM res=SCM_UNDEFINED,args,gh_chans,zero;
   sp = cp->sound;
   switch (chan_choice)
@@ -2974,8 +2971,7 @@ static SCM parallel_scan(snd_state *ss, chan_info *cp, SCM proc, int chan_choice
       zero = gh_int2scm(0);
       for (kp=0;kp<num;kp++)
 	{
-	  NEXT_SAMPLE(val,sfs[0]);
-	  gh_vector_set_x(args,zero,gh_double2scm((double)(MUS_SAMPLE_TO_FLOAT(val))));
+	  gh_vector_set_x(args,zero,gh_double2scm((double)next_sample_to_float(sfs[0])));
 	  res = g_call2(proc,args,gh_chans);
 	  if ((SCM_NFALSEP(res)) || (SCM_SYMBOLP(res))) {pos = kp+beg; break;}
 	  if (reporting) 
@@ -2996,10 +2992,7 @@ static SCM parallel_scan(snd_state *ss, chan_info *cp, SCM proc, int chan_choice
       for (kp=0;kp<num;kp++)
 	{
 	  for (ip=0;ip<si->chans;ip++)
-	    {
-	      NEXT_SAMPLE(val,sfs[ip]);
-	      gh_vector_set_x(args,gh_int2scm(ip),gh_double2scm((double)(MUS_SAMPLE_TO_FLOAT(val))));
-	    }
+	    gh_vector_set_x(args,gh_int2scm(ip),gh_double2scm((double)next_sample_to_float(sfs[ip])));
 	  res = g_call2(proc,args,gh_chans);
 	  if ((SCM_NFALSEP(res)) || (SCM_SYMBOLP(res))) {pos = kp+beg; break;}
 	  if (reporting) 
@@ -3136,7 +3129,6 @@ static SCM series_map(snd_state *ss, chan_info *cp, SCM proc, int chan_choice, i
   snd_fd *sf;
   output_state *os = NULL;
   int kp,j,k,ip,num,val_size,reporting = 0,rpt = 0,rpt4;
-  MUS_SAMPLE_TYPE val;
   MUS_SAMPLE_TYPE *vals;
   SCM res;
   sp = cp->sound;
@@ -3165,8 +3157,7 @@ static SCM series_map(snd_state *ss, chan_info *cp, SCM proc, int chan_choice, i
 	  os = start_output(MAX_BUFFER_SIZE,sp->hdr,num);
 	  for (kp=0;kp<num;kp++)
 	    {
-	      NEXT_SAMPLE(val,sf);
-	      res = g_call1(proc,gh_double2scm((double)(MUS_SAMPLE_TO_FLOAT(val))));
+	      res = g_call1(proc,gh_double2scm((double)next_sample_to_float(sf)));
 	      if (SCM_NFALSEP(res)) /* if #f, no output on this pass */
 		{
 		  if (res != SCM_BOOL_T) /* if #t we halt the entire map */
@@ -3238,7 +3229,6 @@ static SCM parallel_map(snd_state *ss, chan_info *cp, SCM proc, int chan_choice,
   snd_fd **sfs;
   output_state **os_arr;
   int kp,k,n,ip,len,num,val_size,res_size,reporting = 0,rpt = 0,rpt4;
-  MUS_SAMPLE_TYPE val;
   MUS_SAMPLE_TYPE *vals;
   SCM res=SCM_UNDEFINED,args,gh_chans,resval;
   sp = cp->sound;
@@ -3271,10 +3261,7 @@ static SCM parallel_map(snd_state *ss, chan_info *cp, SCM proc, int chan_choice,
   for (kp=0;kp<num;kp++)
     {
       for (ip=0;ip<si->chans;ip++)
-	{
-	  NEXT_SAMPLE(val,sfs[ip]);
-	  gh_vector_set_x(args,gh_int2scm(ip),gh_double2scm((double)(MUS_SAMPLE_TO_FLOAT(val))));
-	}
+	gh_vector_set_x(args,gh_int2scm(ip),gh_double2scm((double)next_sample_to_float(sfs[ip])));
       res = g_call2(proc,args,gh_chans);
       /* #f -> no output in any channel, #t -> halt */
       if (SCM_NFALSEP(res)) /* if #f, no output on this pass */
@@ -3505,7 +3492,6 @@ static void scale_with(snd_state *ss, sync_state *sc, Float *scalers, char *orig
   snd_fd *sf;
   file_info *hdr = NULL;
   int j,ofd = 0,datumb = 0,temp_file,err=0;
-  MUS_SAMPLE_TYPE val;
   MUS_SAMPLE_TYPE **data;
   MUS_SAMPLE_TYPE *idata;
   int reporting = 0;
@@ -3569,8 +3555,7 @@ static void scale_with(snd_state *ss, sync_state *sc, Float *scalers, char *orig
 	      /* this case doesn't actually run much faster (15% or so) */
 	      for (k=0;k<dur;k++)
 		{
-		  NEXT_SAMPLE(val,sf);
-		  idata[j] = -val;
+		  idata[j] = -next_sample(sf);
 		  j++;
 		  if (temp_file)
 		    {
@@ -3588,8 +3573,7 @@ static void scale_with(snd_state *ss, sync_state *sc, Float *scalers, char *orig
 	    {
 	      for (k=0;k<dur;k++)
 		{
-		  NEXT_SAMPLE(val,sf);
-		  idata[j] = (MUS_SAMPLE_TYPE)(val*env_val);
+		  idata[j] = (MUS_SAMPLE_TYPE)(next_sample(sf)*env_val);
 		  j++;
 		  if (temp_file)
 		    {
@@ -3655,7 +3639,7 @@ Float get_maxamp(snd_info *sp, chan_info *cp)
   ymax = 0;
   for (i=0;i<current_ed_samples(cp);i++)
     {
-      NEXT_SAMPLE(val,sf);
+      val = next_sample(sf);
       if (val < 0) val = -val;
       if (val > ymax) ymax = val;
     }
@@ -3753,8 +3737,8 @@ static void swap_channels(snd_state *ss, int beg, int dur, snd_fd *c0, snd_fd *c
   j = 0;
   for (k=0;k<dur;k++)
     {
-      NEXT_SAMPLE(idata0[j],c1);
-      NEXT_SAMPLE(idata1[j],c0);
+      idata0[j] = next_sample(c1);
+      idata1[j] = next_sample(c0);
       j++;
       if (temp_file)
 	{
@@ -4004,15 +3988,13 @@ static int temp_to_snd(snd_exf *data, char *origin)
 
 static Float input_as_needed(void *arg, int dir) 
 {
-  MUS_SAMPLE_TYPE val; 
   src_state *sr = (src_state *)arg;
   snd_fd *sf;
   sf = sr->sf;
-  if (dir > 0) 
-    NEXT_SAMPLE(val,sf);
-  else PREVIOUS_SAMPLE(val,sf);
   sr->sample++;
-  return(MUS_SAMPLE_TO_FLOAT(val));
+  if (dir > 0) 
+    return(next_sample_to_float(sf));
+  else return(previous_sample_to_float(sf));
 }
 
 src_state *make_src(snd_state *ss, Float srate, snd_fd *sf)
@@ -4387,7 +4369,6 @@ void apply_filter(chan_info *ncp, int order, env *e, int from_enved, char *origi
   snd_fd *sf;
   file_info *hdr = NULL;
   int j,ofd = 0,datumb = 0,temp_file,err=0;
-  MUS_SAMPLE_TYPE val;
   MUS_SAMPLE_TYPE **data;
   MUS_SAMPLE_TYPE *idata;
   char *ofile = NULL;
@@ -4443,27 +4424,21 @@ void apply_filter(chan_info *ncp, int order, env *e, int from_enved, char *origi
 		prebeg = order-1;
 	      else prebeg = si->begs[i];
 	      if (prebeg > 0)
-		{
-		  for (m=prebeg;m>0;m--)
-		    {
-		      NEXT_SAMPLE(val,sf);
-		      d[m] = (Float)val;
-		    }
-		}
+		for (m=prebeg;m>0;m--)
+		  d[m] = next_sample_to_float(sf);
 	    }
 	  j = 0;
 	  for (k=0;k<dur;k++)
 	    {
-	      NEXT_SAMPLE(val,sf);
 	      x=0.0; 
-	      d[0]=(Float)val;
+	      d[0] = next_sample_to_float(sf);
 	      for (m=order-1;m>0;m--) 
 		{
 		  x+=d[m]*a[m]; 
 		  d[m]=d[m-1];
 		} 
 	      x+=d[0]*a[0]; 
-	      idata[j] = (MUS_SAMPLE_TYPE)x;
+	      idata[j] = MUS_FLOAT_TO_SAMPLE(x);
 	      j++;
 	      if (temp_file)
 		{
@@ -4527,7 +4502,6 @@ static void reverse_sound(chan_info *ncp, int over_selection)
   snd_state *ss;
   snd_info *sp;
   int i,dur,k,stop_point = 0;
-  MUS_SAMPLE_TYPE val;
   snd_fd **sfs;
   snd_fd *sf;
   file_info *hdr = NULL;
@@ -4569,8 +4543,7 @@ static void reverse_sound(chan_info *ncp, int over_selection)
 	  j = 0;
 	  for (k=0;k<dur;k++)
 	    {
-	      PREVIOUS_SAMPLE(val,sf);
-	      idata[j] = val;
+	      idata[j] = previous_sample(sf);
 	      j++;
 	      if (temp_file)
 		{
@@ -4637,7 +4610,6 @@ void apply_env(chan_info *cp, env *e, int beg, int dur, Float scaler, int regexp
   Float *ef = NULL;
   double *efd = NULL;
   int i,j,k,ef_ctr,pass,ofd = 0,datumb = 0,temp_file,need_free_env=0,err=0;
-  MUS_SAMPLE_TYPE val;
   MUS_SAMPLE_TYPE **data;
   MUS_SAMPLE_TYPE *idata;
   int reporting = 0;
@@ -4716,10 +4688,7 @@ void apply_env(chan_info *cp, env *e, int beg, int dur, Float scaler, int regexp
 		  for (i=0;i<dur;i++)
 		    {
 		      for (k=0;k<si->chans;k++)
-			{
-			  NEXT_SAMPLE(val,sfs[k]);
-			  data[k][j] = (MUS_SAMPLE_TYPE)(val*env_vald);
-			}
+			data[k][j] = (MUS_SAMPLE_TYPE)(next_sample(sfs[k])*env_vald);
 		      env_vald += env_incrd;
 		      pass--;
 		      if (pass <= 0) 
@@ -4748,8 +4717,7 @@ void apply_env(chan_info *cp, env *e, int beg, int dur, Float scaler, int regexp
 		  idata = data[0];
 		  for (i=0;i<dur;i++)
 		    {
-		      NEXT_SAMPLE(val,sf);
-		      idata[j] = (MUS_SAMPLE_TYPE)(val*env_vald);
+		      idata[j] = (MUS_SAMPLE_TYPE)(next_sample(sf)*env_vald);
 		      env_vald += env_incrd;
 		      pass--;
 		      if (pass <= 0) 
@@ -4783,10 +4751,7 @@ void apply_env(chan_info *cp, env *e, int beg, int dur, Float scaler, int regexp
 		  for (i=0;i<dur;i++)
 		    {
 		      for (k=0;k<si->chans;k++)
-			{
-			  NEXT_SAMPLE(val,sfs[k]);
-			  data[k][j] = (MUS_SAMPLE_TYPE)(val*env_val);
-			}
+			data[k][j] = (MUS_SAMPLE_TYPE)(next_sample(sfs[k])*env_val);
 		      env_val += env_incr;
 		      pass--;
 		      if (pass <= 0) 
@@ -4815,8 +4780,7 @@ void apply_env(chan_info *cp, env *e, int beg, int dur, Float scaler, int regexp
 		  idata = data[0];
 		  for (i=0;i<dur;i++)
 		    {
-		      NEXT_SAMPLE(val,sf);
-		      idata[j] = (MUS_SAMPLE_TYPE)(val*env_val);
+		      idata[j] = (MUS_SAMPLE_TYPE)(next_sample(sf)*env_val);
 		      env_val += env_incr;
 		      pass--;
 		      if (pass <= 0) 
@@ -4851,10 +4815,7 @@ void apply_env(chan_info *cp, env *e, int beg, int dur, Float scaler, int regexp
 	  for (i=0;i<dur;i++)
 	    {
 	      for (k=0;k<si->chans;k++)
-		{
-		  NEXT_SAMPLE(val,sfs[k]);
-		  data[k][j] = (MUS_SAMPLE_TYPE)(val*step_val);
-		}
+		data[k][j] = (MUS_SAMPLE_TYPE)(next_sample(sfs[k])*step_val);
 	      env_val += env_incr;
 	      pass--;
 	      if (pass <= 0) 
@@ -4893,10 +4854,7 @@ void apply_env(chan_info *cp, env *e, int beg, int dur, Float scaler, int regexp
 	      env_powd += env_incrd;
 	    }
 	  for (k=0;k<si->chans;k++)
-	    {
-	      NEXT_SAMPLE(val,sfs[k]);
-	      data[k][j] = (MUS_SAMPLE_TYPE)(val*env_vald);
-	    }
+	    data[k][j] = (MUS_SAMPLE_TYPE)(next_sample(sfs[k])*env_vald);
 	  pass--;
 	  if (pass <= 0) 
 	    {
@@ -5196,7 +5154,7 @@ static void eval_expression(chan_info *cp, snd_info *sp, int count, int regexpr)
 	      j = 0;
 	      for (k=0;k<chan_dur;k++)
 		{
-		  res = g_call1(sp->eval_proc,gh_double2scm((double)(MUS_SAMPLE_TO_FLOAT(sf->current_value))));
+		  res = g_call1(sp->eval_proc,gh_double2scm((double)next_sample_to_float(sf)));
 		  if (SCM_SYMBOLP(res))
 		    {
 		      for (j=chan;j<si->chans;j++) free_snd_fd(sfs[j]);
@@ -5204,7 +5162,6 @@ static void eval_expression(chan_info *cp, snd_info *sp, int count, int regexpr)
 		      scm_throw(res,SCM_LIST1(gh_str02scm("eval expression")));
 		      return;
 		    }
-		  next_sample_1(sf);
 		  if (gh_number_p(res)) val = gh_scm2double(res);
 		  j++;
 		  if (j == MAX_BUFFER_SIZE)

@@ -143,7 +143,7 @@ static Float region_sample(int reg, int chn, int samp)
 	  else 
 	    {
 	      sf = init_region_read(get_global_state(),samp,reg,chn,READ_FORWARD);
-	      NEXT_SAMPLE(val,sf);
+	      val = next_sample(sf);
 	      free_snd_fd(sf);
 	      return(MUS_SAMPLE_TO_FLOAT(val));
 	    }
@@ -156,7 +156,6 @@ static void region_samples(int reg, int chn, int beg, int num, Float *data)
 {
   region *r;
   snd_fd *sf;
-  MUS_SAMPLE_TYPE val;
   int i,j;
   if (region_ok(reg))
     {
@@ -172,10 +171,7 @@ static void region_samples(int reg, int chn, int beg, int num, Float *data)
 	    {
 	      sf = init_region_read(get_global_state(),beg,reg,chn,READ_FORWARD);
 	      for (i=beg,j=0;(i<r->frames) && (j<num);i++,j++) 
-		{
-		  NEXT_SAMPLE(val,sf);		  
-		  data[j] = MUS_SAMPLE_TO_FLOAT(val);
-		}
+		data[j] = next_sample_to_float(sf);
 	      free_snd_fd(sf);
 	    }
 	  if (j < num) for (;j<num;j++) data[j] = 0.0;
@@ -242,9 +238,9 @@ static void make_region_readable(region *r, snd_state *ss)
 				       hdr->data_location,
 				       hdr->chans,
 				       hdr->type);
-	      datai = make_file_state(fd,hdr,SND_IO_IN_FILE,i,FILE_BUFFER_SIZE);
+	      datai = make_file_state(fd,hdr,i,FILE_BUFFER_SIZE);
 	      cp->sounds[0] = make_snd_data_file(r->filename,datai,
-						 MUS_SAMPLE_ARRAY(datai[SND_IO_DATS+SND_AREF_HEADER_SIZE+i]),
+						 MUS_SAMPLE_ARRAY(datai[file_state_channel_offset(i)]),
 						 hdr,DONT_DELETE_ME,cp->edit_ctr,i); /* don't auto-delete! */
 	    }
 	}
@@ -619,10 +615,10 @@ void define_region(sync_info *si, int *ends)
 	{
 	  if (j < ends[i]) 
 	    {
-	      NEXT_SAMPLE(curval,sfs[i]);
+	      curval = next_sample(sfs[i]);
 	      r->data[i][k] = curval;
-	      if (curval>val) val=curval;
-	      if (curval<mval) mval=curval;
+	      if (curval > val) val = curval;
+	      if (curval < mval) mval = curval;
 	    }
 	  else r->data[i][k] = MUS_SAMPLE_0;
 	}

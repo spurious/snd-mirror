@@ -226,22 +226,6 @@ static char *describe_dac_info(dac_info *dp)
 }
 #endif
 
-#define ADD_NEXT_SAMPLE(val,sf) \
-  do { \
-      if (sf->data > sf->last) \
-        val += next_sound(sf); \
-      else val += (*sf->data++); \
-     } \
-  while(0)
-
-#define SCALE_NEXT_SAMPLE(val,sf,amp) \
-  do { \
-      if (sf->data > sf->last) \
-	val += (MUS_SAMPLE_TYPE)(amp*next_sound(sf)); \
-      else val += (MUS_SAMPLE_TYPE)(amp*(*sf->data++)); \
-     } \
-  while(0)
-
 
 /* -------- filter -------- */
 static mus_any *make_flt(dac_info *dp, int order, Float *env)
@@ -258,7 +242,6 @@ static Float speed(dac_info *dp, Float sr)
 {
   int move,i;
   Float result = 0.0;
-  MUS_SAMPLE_TYPE tmp;
   if ((use_sinc_interp((dp->ss))) && (dp->src))
     result = run_src(dp->src,sr);
   else
@@ -274,8 +257,7 @@ static Float speed(dac_info *dp, Float sr)
 	      for (i=0;i<move;i++)
 		{
 		  dp->lst = dp->nxt;
-		  NEXT_SAMPLE(tmp,dp->chn_fd);
-		  dp->nxt = MUS_SAMPLE_TO_FLOAT(tmp);
+		  dp->nxt = next_sample_to_float(dp->chn_fd);
 		}
 	    }
 	}
@@ -290,8 +272,7 @@ static Float speed(dac_info *dp, Float sr)
 	      for (i=0;i<move;i++)
 		{
 		  dp->lst = dp->nxt;
-		  PREVIOUS_SAMPLE(tmp,dp->chn_fd);
-		  dp->nxt = MUS_SAMPLE_TO_FLOAT(tmp);
+		  dp->nxt = previous_sample_to_float(dp->chn_fd);
 		}
 	    }
 	}
@@ -302,17 +283,12 @@ static Float speed(dac_info *dp, Float sr)
 /* -------- granular synthesis -------- */
 static Float expand_input_as_needed(void *arg, int dir) 
 {
-  MUS_SAMPLE_TYPE val; 
   spd_info *spd = (spd_info *)arg;
   dac_info *dp;
   dp = spd->dp;
   if (spd->speeding)
     return(speed(dp,spd->sr));
-  else 
-    {
-      NEXT_SAMPLE(val,dp->chn_fd);
-      return(MUS_SAMPLE_TO_FLOAT(val));
-    }
+  else return(next_sample_to_float(dp->chn_fd));
 }
 
 static int max_expand_len(snd_info *sp)
@@ -364,7 +340,6 @@ static Float expand(dac_info *dp, Float sr, Float ex)
   snd_info *sp;
   spd_info *spd;
   Float fval;
-  MUS_SAMPLE_TYPE tmp;
   sp = dp->sp;
   speeding = ((sp->play_direction != 1) || (sp->srate != 1.0) || (dp->cur_srate != 1.0));
 #if HAVE_GUILE
@@ -373,11 +348,7 @@ static Float expand(dac_info *dp, Float sr, Float ex)
       /* if speeding, pick up speed vals first, else read direct */
       if (speeding) 
 	fval = speed(dp,sr);
-      else
-	{
-	  NEXT_SAMPLE(tmp,dp->chn_fd);
-	  fval = MUS_SAMPLE_TO_FLOAT(tmp);
-	}
+      else fval = next_sample_to_float(dp->chn_fd);
       return(gh_scm2double(g_call3(g_expand,(SCM)(dp->spd),gh_double2scm(fval),gh_double2scm(ex))));
     }
   else
@@ -1215,7 +1186,7 @@ static int fill_dac_buffers(dac_state *dacp, int write_ok)
 		case NO_CHANGE:
 		  /* simplest case -- no changes at all */
 		  for (j=0;j<frames;j++)
-		    ADD_NEXT_SAMPLE(buf[j],dp->chn_fd);
+		    buf[j] += next_sample(dp->chn_fd);
 		  break;
 
 		case JUST_AMP:
@@ -1223,7 +1194,7 @@ static int fill_dac_buffers(dac_state *dacp, int write_ok)
 		  amp = dp->cur_amp;
 		  incr = (sp->amp - amp) / (Float)(frames);
 		  for (j=0;j<frames;j++,amp+=incr) 
-		    SCALE_NEXT_SAMPLE(buf[j],dp->chn_fd,amp);
+		    buf[j] += (MUS_SAMPLE_TYPE)(next_sample(dp->chn_fd) * amp);
 		  dp->cur_amp = amp;
 		  break;
 

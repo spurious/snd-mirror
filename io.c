@@ -12,7 +12,8 @@
  * int mus_file_probe(const char *arg)
  * int mus_file_set_descriptors (int tfd, char *name, int df, int ds, int dl, int chns, int typ)
  * int mus_file_close_descriptors(int tfd)
- * see sndplay.c for a short example
+ * char *mus_file_full_name(char *tok)
+ * char *mus_format(const char *format, ...)
  * --------------------------------
  */
 
@@ -472,24 +473,6 @@ static void alloc_io_fd(int tfd)
   if (io_fds[tfd] == NULL)
     io_fds[tfd] = (io_fd *)CALLOC(1,sizeof(io_fd));
 }
-
-#if 0
-/* removed 28-Sep-00 -- has been obsolete (and undocumented) for a long time */
-int mus_file_open_descriptors (int tfd, int format, int size, int location)
-{ /* transfers header info from functions in header.c back to us for reads and writes here */
-  io_fd *fd;
-  alloc_io_fd(tfd);
-  fd = io_fds[tfd];
-  fd->data_format = format;
-  fd->bytes_per_sample = size;
-  fd->data_location = location;
-  fd->data_clipped = 0;
-  fd->prescaler = 1.0;
-  fd->header_type = 0;
-  fd->chans = 1;
-  return(MUS_NO_ERROR);
-}
-#endif
 
 int mus_file_set_descriptors (int tfd, const char *name, int format, int size, int location, int chans, int type)
 {

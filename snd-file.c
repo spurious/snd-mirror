@@ -232,61 +232,6 @@ file_info *free_file_info(file_info *hdr)
   return(NULL);
 }
 
-int *make_file_state(int fd, file_info *hdr, int direction, int chan, int suggested_bufsize)
-{
-  int *datai;
-  int i,bufsize,chansize;
-  bufsize = suggested_bufsize;
-  if (direction == SND_IO_IN_FILE)
-    {
-      chansize = (hdr->samples/hdr->chans);
-      if (MAX_BUFFER_SIZE > chansize) bufsize = chansize+1;
-    }
-  else chansize = 0;
-  datai = (int *)CALLOC(SND_IO_DATS + SND_AREF_HEADER_SIZE + hdr->chans + 2,sizeof(int)); /* why the +2?? */
-  datai[SND_IO_DIR] = direction;
-  datai[SND_IO_FD] = fd;
-  datai[SND_IO_CHANS] = hdr->chans;
-  datai[SND_IO_SIZE] = chansize;
-  datai[SND_IO_BEG] = 0;
-  datai[SND_IO_END] = bufsize-1;
-  datai[SND_IO_BUFSIZ] = bufsize;
-  datai[SND_IO_DATA_START] = 0; 
-  datai[SND_IO_DATA_END] = 0;
-  datai[SND_IO_HDR_END] = hdr->data_location; 
-  datai[SND_IO_DATS+SND_AREF_BLOCK]=SND_IO_DATS + SND_AREF_HEADER_SIZE;
-  datai[SND_IO_DATS+SND_AREF_SIZE]=hdr->chans;
-  if (direction == SND_IO_IN_FILE)
-    {
-      datai[SND_IO_DATS + SND_AREF_HEADER_SIZE + chan] = (int)(MUS_MAKE_SAMPLE_ARRAY(bufsize));
-    }
-  else
-    {
-      for (i=0;i<hdr->chans;i++) 
-	datai[SND_IO_DATS + SND_AREF_HEADER_SIZE+i] = (int)(MUS_MAKE_SAMPLE_ARRAY(bufsize));
-    }
-  if (direction == SND_IO_IN_FILE) 
-    mus_file_reset(0,datai,datai); /* get ready to read -- we're assuming mus_file_read_chans here */
-  return(datai);
-}
-
-int *free_file_state(int *datai)
-{
-  /* gotta free the IO buffers as well as the descriptor buffer */
-  int i,chans;
-  if (datai)
-    {
-      chans = datai[SND_IO_CHANS];
-      for (i=0;i<chans;i++)
-	{
-	  if (datai[SND_IO_DATS + SND_AREF_HEADER_SIZE+i]) 
-	    MUS_FREE_SAMPLE_ARRAY(datai[SND_IO_DATS + SND_AREF_HEADER_SIZE+i]);
-	}
-      FREE(datai);
-    }
-  return(NULL);
-}
-
 /* mus_header_read here (or stripped-down equivalent) was very slow, and is just as easy to
  * fool as an extension check (file might start with the word ".snd" or whatever).
  */
@@ -821,9 +766,9 @@ snd_info *make_sound_readable(snd_state *ss, char *filename, int post_close)
 			       hdr->data_location,
 			       hdr->chans,
 			       hdr->type);
-      datai = make_file_state(fd,hdr,SND_IO_IN_FILE,i,(post_close) ? MAX_BUFFER_SIZE : MIX_FILE_BUFFER_SIZE);
+      datai = make_file_state(fd,hdr,i,(post_close) ? MAX_BUFFER_SIZE : MIX_FILE_BUFFER_SIZE);
       cp->sounds[0] = make_snd_data_file(filename,datai,
-					 MUS_SAMPLE_ARRAY(datai[SND_IO_DATS + SND_AREF_HEADER_SIZE+i]),
+					 MUS_SAMPLE_ARRAY(datai[file_state_channel_offset(i)]),
 					 copy_header(hdr->name,hdr),
 					 DONT_DELETE_ME,cp->edit_ctr,i);
       if (post_close) 
@@ -831,10 +776,10 @@ snd_info *make_sound_readable(snd_state *ss, char *filename, int post_close)
 	  snd_close(fd); 
 	  sd = cp->sounds[0]; 
 	  sd->open = FD_CLOSED; 
-	  datai[SND_IO_FD] = -1;
+	  set_file_state_fd(datai,-1);
 	}
       /* this is not as crazy as it looks -- we've read in the first 64K (or whatever) samples,
-       * and may need this file channel for other opens, so this file can be closed until mus_file_reset
+       * and may need this file channel for other opens, so this file can be closed until reposition_file_state_buffers
        */
     }
   return(sp);

@@ -1241,7 +1241,6 @@ static int apply_fft_window(fft_state *fs)
   int i,ind0,result = 5;
   Float *window,*fft_data;
   int data_len,pad = 0;
-  MUS_SAMPLE_TYPE val;
   snd_fd *sf;
   chan_info *cp;
   snd_state *ss;
@@ -1264,16 +1263,13 @@ static int apply_fft_window(fft_state *fs)
     case FOURIER:
       window = (Float *)((fft_window_state *)(fs->wp))->window;
       for (i=0;i<data_len;i++) 
-	{
-	  NEXT_SAMPLE(val,sf);
-	  fft_data[i] = window[i] * val;
-	}
+	fft_data[i] = window[i] * next_sample_to_float(sf);
       if (data_len < fs->size) for (i=data_len;i<fs->size;i++) fft_data[i] = 0.0;
       decrement_fft_window_use(fs);
       result = 1;
       break;
     case HANKEL:
-      for (i=0;i<data_len;i++) fs->hwin[i] = next_sample(sf);
+      for (i=0;i<data_len;i++) fs->hwin[i] = next_sample_to_float(sf);
       if (data_len < fs->size) for (i=data_len;i<fs->size;i++) fs->hwin[i] = 0.0;
 #if HAVE_GSL
       hankel_transform(data_len,fs->hwin,fft_data);
@@ -1285,35 +1281,35 @@ static int apply_fft_window(fft_state *fs)
 #endif
       break;
     case WAVELET:
-      for (i=0;i<data_len;i++) fft_data[i] = next_sample(sf);
+      for (i=0;i<data_len;i++) fft_data[i] = next_sample_to_float(sf);
       if (data_len < fs->size) for (i=data_len;i<fs->size;i++) fft_data[i] = 0.0;
       wavelet_transform(fft_data,fs->size,wavelet_data[cp->wavelet_type],wavelet_sizes[cp->wavelet_type]);
       break;
     case CHEBYSHEV:
-      for (i=0;i<data_len;i++) fft_data[i] = next_sample(sf);
+      for (i=0;i<data_len;i++) fft_data[i] = next_sample_to_float(sf);
       if (data_len < fs->size) for (i=data_len;i<fs->size;i++) fft_data[i] = 0.0;
       chebyshev_transform(fft_data,fs->size);
       break;
     case CEPSTRUM:
-      for (i=0;i<data_len;i++) fft_data[i] = next_sample(sf);
+      for (i=0;i<data_len;i++) fft_data[i] = next_sample_to_float(sf);
       if (data_len < fs->size) for (i=data_len;i<fs->size;i++) fft_data[i] = 0.0;
       cepstrum(fft_data,fs->size);
       break;
     case HADAMARD:
       window = (Float *)CALLOC(fs->size,sizeof(Float));
-      for (i=0;i<data_len;i++) fft_data[i] = next_sample(sf);
+      for (i=0;i<data_len;i++) fft_data[i] = next_sample_to_float(sf);
       if (data_len < fs->size) for (i=data_len;i<fs->size;i++) fft_data[i] = 0.0;
       fast_hwt(window,fft_data,(int)(log((Float)(fs->size+1))/log(2.0)));
       for (i=0;i<fs->size;i++) fft_data[i] = window[i];
       FREE(window);
       break;
     case WALSH:
-      for (i=0;i<data_len;i++) fft_data[i] = next_sample(sf);
+      for (i=0;i<data_len;i++) fft_data[i] = next_sample_to_float(sf);
       if (data_len < fs->size) for (i=data_len;i<fs->size;i++) fft_data[i] = 0.0;
       walsh_transform(fft_data,fs->size);
       break;
     case AUTOCORRELATION:
-      for (i=0;i<data_len;i++) fft_data[i] = next_sample(sf);
+      for (i=0;i<data_len;i++) fft_data[i] = next_sample_to_float(sf);
       if (data_len < fs->size) for (i=data_len;i<fs->size;i++) fft_data[i] = 0.0;
       autocorrelation(fft_data,fs->size);
       break;

@@ -19,20 +19,21 @@ static int run_global_search (snd_state *ss, gfd *g)
   /* if success, n=winner (as aref index), if eofs, n=-1 */
 #if HAVE_GUILE
   int i,j,k;
+  Float samp;
   SCM res;
   snd_fd *sf;
-  for (i=0;i<g->chans;i++)
+  if (gh_procedure_p(ss->search_proc))
     {
-      if (g->cps[i])
+      for (i=0;i<g->chans;i++)
 	{
-	  if (!((g->cps[i])->sound)) return(-1);
-	  sf = g->fds[i]; 
-	  if (g->direction == READ_FORWARD)
-	    next_sample_1(sf);
-	  else previous_sample_1(sf);
-	  if (gh_procedure_p(ss->search_proc))
+	  if (g->cps[i])
 	    {
-	      res = g_call1(ss->search_proc,gh_double2scm((double)(MUS_SAMPLE_TO_FLOAT(sf->current_value))));
+	      if (!((g->cps[i])->sound)) return(-1);
+	      sf = g->fds[i]; 
+	      if (g->direction == READ_FORWARD)
+		samp = next_sample_to_float(sf);
+	      else samp = previous_sample_to_float(sf);
+	      res = g_call1(ss->search_proc,gh_double2scm((double)(samp)));
 	      if (SCM_SYMBOLP(res))
 		{
 		  for (j=i;j<g->chans;j++) free_snd_fd(g->fds[j]);
@@ -43,25 +44,25 @@ static int run_global_search (snd_state *ss, gfd *g)
 		  g->n = i;
 		  return(1);
 		}
-	    }
-	  if (read_sample_eof(sf))
-	    {
-	      free_snd_fd(sf);
-	      g->fds[i] = NULL;
-	      g->cps[i] = NULL;
-	      k=0;
-	      for (j=0;j<g->chans;j++) 
+	      if (read_sample_eof(sf))
 		{
-		  if (g->cps[i]) 
+		  free_snd_fd(sf);
+		  g->fds[i] = NULL;
+		  g->cps[i] = NULL;
+		  k=0;
+		  for (j=0;j<g->chans;j++) 
 		    {
-		      k=1;
-		      break;
+		      if (g->cps[i]) 
+			{
+			  k=1;
+			  break;
+			}
 		    }
-		}
-	      if (k == 0) /* all at eof */
-		{
-		  g->n = -1;
-		  return(1);
+		  if (k == 0) /* all at eof */
+		    {
+		      g->n = -1;
+		      return(1);
+		    }
 		}
 	    }
 	}
@@ -149,6 +150,7 @@ static int cursor_find(snd_info *sp, chan_info *cp, int count, int end_sample)
   /* count>0 -> search forward, else back */
 #if HAVE_GUILE
   int i,c,inc,passes=0;
+  Float samp;
   snd_fd *sf;
   snd_state *ss;
   SCM res;
@@ -182,9 +184,9 @@ static int cursor_find(snd_info *sp, chan_info *cp, int count, int end_sample)
   while ((c>0) && (i != end_sample) && (!read_sample_eof(sf)))
     {
       if (count > 0)
-	next_sample_1(sf);
-      else previous_sample_1(sf);
-      res = g_call1(sp->search_proc,gh_double2scm((double)(MUS_SAMPLE_TO_FLOAT(sf->current_value))));
+	samp = next_sample_to_float(sf);
+      else samp = previous_sample_to_float(sf);
+      res = g_call1(sp->search_proc,gh_double2scm((double)samp));
       if (SCM_SYMBOLP(res)) break;
       if (SCM_NFALSEP(res)) {c--; if (c == 0) break;}
       i+=inc;

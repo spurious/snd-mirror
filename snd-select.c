@@ -491,7 +491,6 @@ int save_selection(snd_state *ss, char *ofile, int type, int format, int srate, 
   sync_info *si;
   int *ends;
   int i,dur,j,k;
-  MUS_SAMPLE_TYPE val;
   snd_fd **sfs;
   MUS_SAMPLE_TYPE **data;
   if (MUS_DATA_FORMAT_OK(format))
@@ -530,10 +529,7 @@ int save_selection(snd_state *ss, char *ofile, int type, int format, int srate, 
 	      for (k=0;k<si->chans;k++)
 		{
 		  if (i <= ends[k]) 
-		    {
-		      NEXT_SAMPLE(val,sfs[k]);
-		      data[k][j] = val;
-		    }
+		    data[k][j] = next_sample(sfs[k]);
 		  else data[k][j] = MUS_SAMPLE_0;
 		}
 	      j++;

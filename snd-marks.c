@@ -1381,7 +1381,7 @@ static void make_mark_graph(chan_info *cp, snd_info *sp, int initial_sample, int
 {
   int i,j=0,samps,xi,k;
   axis_info *ap;
-  Float samples_per_pixel,xf;
+  Float samples_per_pixel,xf,samp;
   double x,incr;  
   MUS_SAMPLE_TYPE ina,ymin,ymax;
   int pixels;
@@ -1416,9 +1416,8 @@ static void make_mark_graph(chan_info *cp, snd_info *sp, int initial_sample, int
 	{
 	  for (j=0,i=ap->losamp,x=start_time;i<=ap->hisamp;i++,j++,x+=incr)
 	    {
-	      if (i == current_sample) {for (k=current_sample;k<initial_sample;k++) NEXT_SAMPLE(ina,sf);}
-	      NEXT_SAMPLE(ina,sf);
-	      set_grf_point(grf_x(x,ap),j,grf_y(MUS_SAMPLE_TO_FLOAT(ina),ap));
+	      if (i == current_sample) {for (k=current_sample;k<initial_sample;k++) next_sample(sf);}
+	      set_grf_point(grf_x(x,ap),j,grf_y(next_sample_to_float(sf),ap));
 	    }
 	}
       else
@@ -1426,9 +1425,9 @@ static void make_mark_graph(chan_info *cp, snd_info *sp, int initial_sample, int
 	  for (j=0,i=ap->losamp,x=start_time;i<=ap->hisamp;i++,j++,x+=incr)
 	    {
 	      if ((i < initial_sample) || (i >= current_sample)) 
-		NEXT_SAMPLE(ina,sf);
-	      else ina = MUS_SAMPLE_0;
-	      set_grf_point(grf_x(x,ap),j,grf_y(MUS_SAMPLE_TO_FLOAT(ina),ap));
+		samp = next_sample_to_float(sf);
+	      else samp = 0.0;
+	      set_grf_point(grf_x(x,ap),j,grf_y(samp,ap));
 	    }
 	}
       erase_and_draw_grf_points(mark_movers[which],cp,j);
@@ -1446,8 +1445,8 @@ static void make_mark_graph(chan_info *cp, snd_info *sp, int initial_sample, int
 	{
 	  for (i=ap->losamp,xf=0.0;i<=ap->hisamp;i++)
 	    {
-	      if (i == current_sample) for (k=current_sample;k<initial_sample;k++) NEXT_SAMPLE(ina,sf);
-	      NEXT_SAMPLE(ina,sf);
+	      if (i == current_sample) for (k=current_sample;k<initial_sample;k++) next_sample(sf);
+	      ina = next_sample(sf);
 	      if (ina > ymax) ymax = ina;
 	      if (ina < ymin) ymin = ina;
 	      xf+=1.0;
@@ -1467,7 +1466,7 @@ static void make_mark_graph(chan_info *cp, snd_info *sp, int initial_sample, int
 	  for (i=ap->losamp,xf=0.0;i<=ap->hisamp;i++)
 	    {
 	      if ((i < initial_sample) || (i >= current_sample))
-		NEXT_SAMPLE(ina,sf);
+		ina = next_sample(sf);
 	      else ina = MUS_SAMPLE_0;
 	      if (ina > ymax) ymax = ina;
 	      if (ina < ymin) ymin = ina;

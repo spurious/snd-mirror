@@ -1610,7 +1610,6 @@ static SCM samples2vct(SCM samp_0, SCM samps, SCM snd_n, SCM chn_n, SCM v, SCM p
   snd_fd *sf;
   Float *fvals;
   int i,len,beg,edpos;
-  MUS_SAMPLE_TYPE val;
   vct *v1 = get_vct(v);
   ERRB1(samp_0,S_samples_vct);
   ERRB2(samps,S_samples_vct);
@@ -1626,10 +1625,7 @@ static SCM samples2vct(SCM samp_0, SCM samps, SCM snd_n, SCM chn_n, SCM v, SCM p
   if (sf)
     {
       for (i=0;i<len;i++) 
-	{
-	  NEXT_SAMPLE(val,sf);
-	  fvals[i] = MUS_SAMPLE_TO_FLOAT(val);
-	}
+	fvals[i] = next_sample_to_float(sf);
       free_snd_fd(sf);
     }
   if (v1)
@@ -1672,7 +1668,7 @@ static SCM samples2sound_data(SCM samp_0, SCM samps, SCM snd_n, SCM chn_n, SCM s
 	  sf = init_sample_read_any(beg,cp,READ_FORWARD,edpos);
 	  if (sf)
 	    {
-	      for (i=0;i<len;i++) {NEXT_SAMPLE(sd->data[chn][i],sf);}
+	      for (i=0;i<len;i++) sd->data[chn][i] = next_sample(sf);
 	      free_snd_fd(sf);
 	    }
 	}
@@ -1912,7 +1908,6 @@ static SCM g_samples(SCM samp_0, SCM samps, SCM snd_n, SCM chn_n, SCM pos)
   chan_info *cp;
   snd_fd *sf;
   int i,len,beg,edpos;
-  MUS_SAMPLE_TYPE val;
   SCM new_vect;
   ERRB1(samp_0,S_samples);
   ERRB2(samps,S_samples);
@@ -1926,10 +1921,7 @@ static SCM g_samples(SCM samp_0, SCM samps, SCM snd_n, SCM chn_n, SCM pos)
   if (sf)
     {
       for (i=0;i<len;i++) 
-	{
-	  NEXT_SAMPLE(val,sf);
-	  gh_vector_set_x(new_vect,gh_int2scm(i),gh_double2scm(MUS_SAMPLE_TO_FLOAT(val)));
-	}
+	gh_vector_set_x(new_vect,gh_int2scm(i),gh_double2scm(next_sample_to_float(sf)));
       free_snd_fd(sf);
     }
   return(new_vect);
@@ -2862,28 +2854,6 @@ static SCM g_filter_selection(SCM e, SCM order)
   return(scm_return_first(SCM_BOOL_T,e));
 }
 
-#if 0
-/* direct call like this is about twice as fast as going through Scheme */
-static Float getns(void *arg, int dir) {MUS_SAMPLE_TYPE val; NEXT_SAMPLE(val,((snd_fd *)arg)); return(MUS_SAMPLE_TO_FLOAT(val));}
-static SCM g_pv(void)
-{
-  mus_any *pv;
-  snd_fd *sf;
-  chan_info *cp;
-  int i,len;
-  MUS_SAMPLE_TYPE *data;
-  cp = get_cp(SCM_UNSPECIFIED,SCM_UNSPECIFIED,"pv");
-  sf = init_sample_read(0,cp,READ_FORWARD);
-  pv = mus_make_phase_vocoder(NULL,512,4,128,0.5,NULL,NULL,NULL,(void *)sf);
-  len = current_ed_samples(cp);
-  data = (MUS_SAMPLE_TYPE *)CALLOC(len,sizeof(MUS_SAMPLE_TYPE));
-  for (i=0;i<len;i++) data[i] = mus_phase_vocoder(pv,&getns);
-  change_samples(0,len,data,cp,0,"pv");
-  free_snd_fd(sf);
-  return(SCM_BOOL_F);
-}
-#endif
-  
 static SCM g_graph(SCM ldata, SCM xlabel, SCM x0, SCM x1, SCM y0, SCM y1, SCM snd_n, SCM chn_n)
 {
   #define H_graph "(" S_graph " data &optional xlabel x0 x1 y0 y1 snd chn) displays 'data' as a graph\n\

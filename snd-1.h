@@ -25,7 +25,7 @@ typedef struct {
 
 typedef struct {
   int type;
-  MUS_SAMPLE_TYPE *data;    
+  MUS_SAMPLE_TYPE *buffered_data;    
   int *io;      
   char *filename;
   file_info *hdr;
@@ -55,12 +55,11 @@ typedef struct {
   int eof;
   MUS_SAMPLE_TYPE *first;
   MUS_SAMPLE_TYPE *last;
-  MUS_SAMPLE_TYPE *data;
+  MUS_SAMPLE_TYPE *view_buffered_data;
   snd_data **sounds;
   snd_data *current_sound;
   int beg,end,initial_samp;
   int direction;
-  MUS_SAMPLE_TYPE current_value;
   struct chan__info *cp;
   struct snd__info *local_sp;          /* for local reads via make-sample-reader from Scheme */
 } snd_fd;
@@ -402,13 +401,20 @@ typedef struct {
 
 /* -------- snd-io.c -------- */
 
-void mus_file_reset(int loc0, int *io, int *datai);
-void snd_file_reset(snd_data *sd, int index);
 int snd_open_read(snd_state *ss, char *arg);
 int snd_reopen_write(snd_state *ss, char *arg);
 void snd_close(int fd);
 int snd_write_header(snd_state *ss, char *name, int type, int srate, int chans, int loc, int size, int format, char *comment, int len, int *loops);
 int snd_overwrite_ok(snd_state *ss, char *ofile);
+int file_state_channel_offset(int chan);
+int *make_file_state(int fd, file_info *hdr, int chan, int suggested_bufsize);
+int *free_file_state(int *datai);
+void set_file_state_fd(int *datai, int fd);
+void close_file_state_fd(int *datai);
+void file_buffers_forward(int ind0, int ind1, int indx, snd_fd *sf, snd_data *cur_snd);
+void file_buffers_back(int ind0, int ind1, int indx, snd_fd *sf, snd_data *cur_snd);
+MUS_SAMPLE_TYPE snd_file_read_sample(snd_data *ur_sd, int index, chan_info *cp);
+int file_state_buffer_size(int *datai);
 
 
 /* -------- snd-help.c -------- */
@@ -666,6 +672,10 @@ void display_info(snd_info *sp);
 
 /* -------- snd-edits.c -------- */
 
+#ifndef __inline__
+  #define __inline__
+#endif
+
 void allocate_ed_list(chan_info *cp);
 void set_initial_ed_list(chan_info *cp,int len);
 int edit_changes_begin_at(chan_info *cp);
@@ -692,20 +702,15 @@ Float sample (int samp, chan_info *cp);
 snd_fd *free_snd_fd(snd_fd *sf);
 snd_fd *init_sample_read (int samp, chan_info *cp, int direction);
 snd_fd *init_sample_read_any (int samp, chan_info *cp, int direction, int edit_position);
-MUS_SAMPLE_TYPE next_sound (snd_fd *sf);
-MUS_SAMPLE_TYPE previous_sound (snd_fd *sf);
-Float next_sample (snd_fd *sf);
+__inline__ MUS_SAMPLE_TYPE next_sample(snd_fd *sf);
+__inline__ MUS_SAMPLE_TYPE previous_sample(snd_fd *sf);
+Float next_sample_to_float (snd_fd *sf);
+Float previous_sample_to_float (snd_fd *sf);
 int read_sample_eof (snd_fd *sf);
-MUS_SAMPLE_TYPE next_sample_1 (snd_fd *sf);
-MUS_SAMPLE_TYPE previous_sample_1(snd_fd *sf);
 void undo_edit_with_sync(chan_info *cp, int count);
 void redo_edit_with_sync(chan_info *cp,int count);
 void undo_edit(chan_info *cp, int count);
 void redo_edit(chan_info *cp, int count);
-
-#define NEXT_SAMPLE(val,sf)  do {if (sf->data > sf->last) val=next_sound(sf); else val=(*sf->data++);} while (0)
-#define PREVIOUS_SAMPLE(val,sf)  do {if (sf->data < sf->first) val=previous_sound(sf); else val=(*sf->data--);} while (0)
-
 int chan_save_edits(chan_info *cp, char *ofile);
 void save_edits(snd_info *sp, void *ptr);
 int save_edits_2(snd_info *sp, char *new_name, int type, int format, int srate, char *comment);
@@ -717,7 +722,8 @@ int current_location(snd_fd *sf);
 #if HAVE_GUILE
   void g_init_edits(SCM local_doc);
 #endif
-
+snd_data *copy_snd_data(snd_data *sd, chan_info *cp, int bufsize);
+snd_data *free_snd_data(snd_data *sf);
 
 
 /* -------- snd-fft.c -------- */
@@ -1093,8 +1099,6 @@ file_info *free_file_info(file_info *hdr);
 file_info *copy_header(char *fullname, file_info *ohdr);
 file_info *make_temp_header(snd_state *ss, char *fullname, file_info *old_hdr, int samples);
 dir *free_dir (dir *dp);
-int *make_file_state(int fd, file_info *hdr, int direction, int chan, int suggested_bufsize);
-int *free_file_state(int *datai);
 void init_sound_file_extensions(void);
 dir *find_sound_files_in_dir (char *name);
 #if FILE_PER_CHAN

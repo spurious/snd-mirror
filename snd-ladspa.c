@@ -633,12 +633,7 @@ by any arguments. (Information about about parameters can be acquired using anal
 
     /* Prepare the input data. */
     for (lSampleIndex = 0; lSampleIndex < lBlockSize; lSampleIndex++) {
-#if SNDLIB_USE_FLOATS
-      NEXT_SAMPLE(pfInputBuffer[lSampleIndex], sf);
-#else
-      NEXT_SAMPLE(val, sf);
-      pfInputBuffer[lSampleIndex] = MUS_SAMPLE_TO_FLOAT(val);
-#endif
+     pfInputBuffer[lSampleIndex] = next_sample_to_float(sf);
     }
 
     /* Run the plugin. */
