@@ -398,25 +398,6 @@ Fernando Lopez-Lezcano mentioned this possibility:
     PATH=/usr/marco/nicepath/bin:$PATH make
 
 
-Ruby:
-After ./configure --with-ruby, 'make' stops with something like:
-
-  gcc -c -DHAVE_CONFIG_H -g -O2 -I/usr/local/lib/ruby/site_ruby/1.6/i686-linux -I/usr/X11R6/include  -g -O2 -I/usr/local/include    headers.c
-  In file included from snd.h:144,
-                   from headers.c:75:
-  xen.h:410:18: ruby.h: No such file or directory
-  make: *** [headers.o] Error 1
-
-Apparently Ruby wants the configuration process to spin through a long
-list of possible directories, but I just take the first in the list.
-You can find out where it might be with
-
-  ruby -e 'puts $:'
-
-then look at each directory for ruby.h and libruby.a; once found,
-replace the offending directory in makefile (both the -I and -L cases),
-and restart make.
-
 
 
 ----------------------------------------------------------------

@@ -470,17 +470,16 @@ The font variables are:
 The four "-widgets" procedure return lists of possibly useful widgets:
 </p>
 <pre>
-  main-widgets:    '(top-level-application top-level-shell main-pane main-sound-pane listener-pane)
-  menu-widgets:    '(top-level-menu-bar file-menu edit-menu view-menu options-menu 
-                     help-menu)
-  sound-widgets:   '(main-pane name-label control-panel minibuffer play filter-graph unite minibuffer-label name-icon)
-  channel-widgets: '(graph w f sx sy zx zy edhist)
-  dialog-widgets:  '(color_dialog orientation_dialog enved_dialog error_dialog 
-                     yes_or_no_dialog transform_dialog file_open_dialog 
-                     file_save_as_dialog view_files_dialog raw_data_dialog 
-                     new_file_dialog file_mix_dialog edit_header_dialog 
-                     find_dialog help_dialog completion_dialog mix_panel_dialog
-                     print_dialog recorder_dialog region_dialog stats_dialog)
+  main-widgets:    '(0:top-level-application 1:top-level-shell 2:main-pane 3:main-sound-pane 4:listener-pane)
+  menu-widgets:    '(0:top-level-menu-bar 1:file-menu 2:edit-menu 3:view-menu 4:options-menu 5:help-menu)
+  sound-widgets:   '(0:main-pane 1:name-label 2:control-panel 3:minibuffer 4:play 5:filter-graph 6:unite 7:minibuffer-label 8:name-icon)
+  channel-widgets: '(0:graph 1:w 2:f 3:sx 4:sy 5:zx 6:zy 7:edhist)
+  dialog-widgets:  '(0:color_dialog 1:orientation_dialog 2:enved_dialog 3:error_dialog 
+                     4:yes_or_no_dialog 5:transform_dialog 6:file_open_dialog 
+                     7:file_save_as_dialog 8:view_files_dialog 9:raw_data_dialog 
+                     10:new_file_dialog 11:file_mix_dialog 12:edit_header_dialog 
+                     13:find_dialog 14:help_dialog 15:completion_dialog 16:mix_panel_dialog
+                     17:print_dialog 18:recorder_dialog 19:region_dialog 20:stats_dialog)
 </pre>
 <p>I've only included the ones I needed immediately (for autotesting), but all Snd widgets are potentially (and easily)
 accessible; if you need access to one that

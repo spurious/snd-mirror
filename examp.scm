@@ -57,6 +57,7 @@
 ;;; lisp graph with draggable x axis
 ;;; pointer focus within Snd
 ;;; View: Files dialog chooses which sound is displayed
+;;;    C-x b support along the same lines 
 ;;; "vector synthesis"
 ;;; remove-clicks
 ;;; searching examples (zero+, next-peak, find-pitch)
@@ -576,13 +577,42 @@
 ;;;   an mpeg file to stdout.  There's also apparently a switch to write 'wave' output.
 
 (define mpg
-  (lambda (mpgfile rawfile chans)
-    "(mpg file tmpname chans) converts file from MPEG-3 to raw 16-bit samples using mpg123"
-    ;; there's probably a way to get the channels automatically
-    (system (format #f "mpg123 -s ~A > ~A" mpgfile rawfile))
-    (open-raw-sound rawfile 1 44100 (if (little-endian?) mus-lshort mus-bshort))))
+  (lambda (mpgfile rawfile)
+    "(mpg file tmpname) converts file from MPEG to raw 16-bit samples using mpg123"
+    (let* ((fd (open-file mpgfile "r"))
+	   (b0 (char->integer (read-char fd)))
+	   (b1 (char->integer (read-char fd)))
+	   (b2 (char->integer (read-char fd)))
+	   (b3 (char->integer (read-char fd))))
+      (close fd)
+      (if (or (not (= b0 255))
+	      (not (= (logand b1 #b11100000) #b11100000)))
+	  (snd-print (format #f "~S is not an MPEG file (first 11 bytes: #b~B #b~B)" mpgfile b0 (logand b1 #b11100000)))
+	  (let ((id (ash (logand b1 #b11000) -3))
+		(layer (ash (logand b1 #b110) -1))
+		(protection (logand b1 1))
+		(bitrate-index (ash (logand b2 #b11110000) -4))
+		(srate-index (ash (logand b2 #b1100) -2))
+		(padding (ash (logand b2 #b10) -1))
+		(channel-mode (ash (logand b3 #b11000000) -6))
+		(mode-extension (ash (logand b3 #b110000) -4))
+		(copyright (ash (logand b3 #b1000) -3))
+		(original (ash (logand b3 #b100) -2))
+		(emphasis (logand b3 #b11)))
+	    (if (= id 1)
+		(snd-print (format #f "odd: ~S is using a reserved Version ID" mpgfile)))
+	    (if (= layer 0)
+		(snd-print (format #f "odd: ~S is using a reserved layer decription" mpgfile)))
+	    (let* ((chans (if (= channel-mode 3) 1 2))
+		   (mpegnum (if (= id 0) 4 (if (= id 2) 2 1)))
+		   (mpeg-layer (if (= layer 3) 1 (if (= layer 2) 2 3)))
+		   (srate (/ (list-ref (list 44100 48000 32000 0) srate-index) mpegnum)))
+	      (snd-print (format #f "~S: ~A Hz, ~A, MPEG-~A~%" 
+				 mpgfile srate (if (= chans 1) "mono" "stereo") mpeg-layer))
+	      (system (format #f "mpg123 -s ~A > ~A" mpgfile rawfile))
+	      (open-raw-sound rawfile chans srate (if (little-endian?) mus-lshort mus-bshort))))))))
 
-;;; (mpg "mpeg.mpg" "mpeg.raw" 1)
+;;; (mpg "mpeg.mpg" "mpeg.raw")
 
 
 ;;; -------- make dot size dependent on number of samples being displayed

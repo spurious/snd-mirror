@@ -5427,7 +5427,7 @@ static XEN g_channel_widgets_1(chan_info *cp)
 
 static XEN g_channel_widgets(XEN snd, XEN chn)
 {
-  #define H_channel_widgets "(" S_channel_widgets " snd chn) -> list of widgets (graph w f sx sy zx zy edhist)"
+  #define H_channel_widgets "(" S_channel_widgets " snd chn) -> list of widgets ((0)graph (1)w (2)f (3)sx (4)sy (5)zx (6)zy (7)edhist)"
   ASSERT_CHANNEL(S_channel_widgets, snd, chn, 1);
   return(g_channel_widgets_1(get_cp(snd, chn, S_channel_widgets)));
 }

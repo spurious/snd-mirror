@@ -11,6 +11,7 @@
 ;;; (add-mark-pane) adds a pane of mark locations to each channel that has marks
 ;;; (add-selection-popup) creates a selection-oriented popup menu that is activated if you click button 3 in the selected portion
 ;;;    (change-selection-popup-color new-color) to change its color
+;;; (add-listener-popup) posts a special popup menu if the pointer is in the listener
 ;;; (snd-clock-icon snd hour) show an animated clock icon
 ;;; (make-sound-box name parent select-func peak-func sounds args) makes a box of sound icons
 ;;; (show-smpte-label on-or-off) shows the current SMPTE frame number
@@ -1080,6 +1081,10 @@ Reverb-feedback sets the scaler on the feedback.\n\
     (|XtSetValues w (list |XmNlabelString str))
     (|XmStringFree str)))
       
+(define (current-label w)
+  (let ((xmstr (cadr (|XtGetValues w (list |XmNlabelString 0)))))
+    (cadr (|XmStringGetLtoR xmstr |XmFONTLIST_DEFAULT_TAG))))
+
 (define selection-popup-menu 
   ;; used in graph if pointer is inside selected portion
   (let ((every-menu (list |XmNbackground (|Pixel (snd-pixel (highlight-color)))))
@@ -1245,6 +1250,9 @@ Reverb-feedback sets the scaler on the feedback.\n\
 	    (lambda (w c i)
 	      (select-sound graph-popup-snd)
 	      (file-save-as-dialog)))
+      (list "Close"              |xmPushButtonWidgetClass every-menu 
+	    (lambda (w c i)
+	      (close-sound graph-popup-snd)))
       (list "Mix selection"      |xmPushButtonWidgetClass every-menu 
 	    (lambda (w c i)
 	      (mix-selection (cursor graph-popup-snd graph-popup-chn) graph-popup-snd graph-popup-chn)))
@@ -1366,6 +1374,143 @@ Reverb-feedback sets the scaler on the feedback.\n\
 ; (change-selection-popup-color (list .5 .5 .5))
 ; (change-selection-popup-color (basic-color))
 
+
+(define (make-popdown-entry label parent func args collector with-one)
+  (let ((top-one (if with-one (|XtCreateManagedWidget label |xmPushButtonWidgetClass parent args) #f))
+	(children '()))
+    (if with-one
+	(|XtAddCallback top-one |XmNactivateCallback (lambda (w c i) (func (car (collector (sounds)))))))
+    (let* ((top-two (|XmCreatePulldownMenu parent label args))
+	   (top-two-cascade (|XtCreateManagedWidget label |xmCascadeButtonWidgetClass parent
+			       (append (list |XmNsubMenuId top-two)
+				       args))))
+      (|XtAddCallback top-two-cascade |XmNcascadingCallback
+	(lambda (w c i)
+	  (for-each
+	   (lambda (n)
+	     (|XtUnmanageChild n))
+	   children)
+	  (let ((current-sounds (collector (sounds))))
+	    (if (< (length children) (length current-sounds)) ; only active if len (collector (sounds)) > 1
+		(do ((i (length children) (1+ i)))
+		    ((= i (length current-sounds)))
+		  (let ((child (|XtCreateManagedWidget "" |xmPushButtonWidgetClass top-two args)))
+		    (|XtAddCallback child |XmNactivateCallback
+		      (lambda (w c i)
+			(func (or (string=? (current-label w) "all")
+				  (find-sound (current-label w))))))
+		    (set! children (cons child children)))))
+	    (let setup
+		((cs children)
+		 (snds current-sounds))
+	      (if (not (or (null? cs)
+			   (null? snds)))
+		  (let ((child (car cs))
+			(snd (car snds)))
+		    (change-label child (short-file-name snd))
+		    (|XtManageChild child)
+		    (setup (cdr cs) (cdr snds))))))))
+      (list 'Popdown top-one top-two top-two-cascade collector))))
+
+(define (add-listener-popup)
+  (let* ((listener (|Widget (or (list-ref (main-widgets) 4)
+				(begin
+				  (show-listener)
+				  (set! (show-listener) #f)
+				  (list-ref (main-widgets) 4)))))
+	 (every-menu (list |XmNbackground (|Pixel (snd-pixel (highlight-color)))))
+	 (listener-popup (|XmCreatePopupMenu listener "listener-popup"
+			   (append (list |XmNpopupEnabled #t) every-menu))))
+
+    (define (edited snds)
+      (remove-if (lambda (n) 
+		   (call-with-current-continuation
+		    (lambda (return)
+		      (do ((i 0 (1+ i)))
+			  ((= i (chans n)) #t)
+			(if (not (= (car (edits n i)) 0))
+			    (return #f))))))
+		 snds))
+
+    (define (focused snds)
+      (if (> (length snds) 1)
+	  snds
+	  '()))
+
+    (|XtCreateManagedWidget "Listener" |xmLabelWidgetClass listener-popup every-menu)
+    (|XtCreateManagedWidget "sep" |xmSeparatorWidgetClass listener-popup every-menu)
+
+    (let ((listener-popup-menu
+	   (list (make-popdown-entry "Play" listener-popup (lambda (snd) (play 0 snd)) every-menu identity #t)
+
+		 (let ((help-widget (|XtCreateManagedWidget "Help" |xmPushButtonWidgetClass listener-popup every-menu)))
+		   (|XtAddCallback help-widget |XmNactivateCallback
+		     (lambda (w c i)
+		       (let* ((selected (listener-selection))
+			      (help (and selected (snd-help selected))))
+			 (if help (help-dialog selected help)))))
+		   help-widget)
+
+		 (let ((open-widget (|XtCreateManagedWidget "Open" |xmPushButtonWidgetClass listener-popup every-menu)))
+		   (|XtAddCallback open-widget |XmNactivateCallback (lambda (w c i) (open-file-dialog)))
+		   open-widget)
+		 
+		 (make-popdown-entry "Close" listener-popup close-sound every-menu identity #t)
+		 
+		 (make-popdown-entry "Save" listener-popup save-sound every-menu edited #t)
+		 (make-popdown-entry "Revert" listener-popup revert-sound every-menu edited #t)
+
+		 (let ((panes-widget (|XtCreateManagedWidget "Equalize panes" |xmPushButtonWidgetClass listener-popup every-menu)))
+		   (|XtAddCallback panes-widget |XmNactivateCallback (lambda (w c i) (equalize-panes)))
+		   panes-widget)
+
+		 (make-popdown-entry "Focus" listener-popup 
+				     (lambda (us)
+				       (let* ((pane (|Widget (car (sound-widgets us))))
+					      (old-resize (auto-resize)))
+					 (|XtSetValues (|Widget (cadr (main-widgets))) (list |XmNallowShellResize #f))
+					 (for-each 
+					  (lambda (them)
+					    (|XtUnmanageChild (|Widget (car (sound-widgets them)))))
+					  (sounds))
+					 (|XtManageChild pane)
+					 (|XtSetValues (|Widget (cadr (main-widgets))) (list |XmNallowShellResize (auto-resize)))))
+				     every-menu focused #f)
+
+		 (|XtCreateManagedWidget "sep" |xmSeparatorWidgetClass listener-popup every-menu)
+		 (let ((exit-widget (|XtCreateManagedWidget "Exit" |xmPushButtonWidgetClass listener-popup every-menu)))
+		   (|XtAddCallback exit-widget |XmNactivateCallback (lambda (w c i) (exit)))
+		   exit-widget))))
+
+      (|XtAddCallback listener |XmNpopupHandlerCallback 
+        (lambda (w data info)
+	  (for-each
+	   (lambda (n)
+	     (if (and (list? n)
+		      (equal? (list-ref n 0) 'Popdown))
+		 (let ((top-one (list-ref n 1))
+		       (top-two (list-ref n 2))
+		       (top-two-cascade (list-ref n 3))
+		       (len (length ((list-ref n 4) (sounds)))))
+		   (|XtUnmanageChild top-two)
+		   (|XtUnmanageChild top-two-cascade)
+		   (if top-one (|XtUnmanageChild top-one))
+		   (if (> len 1) 
+		       (begin
+			 (|XtManageChild top-two-cascade)
+			 (|XtManageChild top-two)))
+		   (if (and top-one
+			    (= len 1))
+		       (|XtManageChild top-one)))
+		 (if (|Widget? n)
+		     (if (string=? (|XtName n) "Equalize panes")
+			 ((if (> (length (sounds)) 1) |XtManageChild |XtUnmanageChild) n)
+			 (if (string=? (|XtName n) "Help")
+			     ((if (listener-selection) |XtManageChild |XtUnmanageChild) n))))))
+	   listener-popup-menu)
+	  (set! (|menuToPost info) listener-popup))))))
+
+(add-listener-popup)
 
 
 ;;; -------- select-file --------

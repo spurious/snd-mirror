@@ -2683,10 +2683,11 @@ static int dont_babble_info(snd_info *sp)
 #if (!USE_NO_GUI)
 static XEN g_sound_widgets(XEN snd)
 {
-  #define H_sound_widgets "(" S_sound_widgets " snd) -> list of widgets (pane name ctrls minibuffer play filter-env combine name-label name-icon)"
+  #define H_sound_widgets "(" S_sound_widgets " snd) -> list of widgets \
+((0)pane (1)name (2)ctrls (3)minibuffer (4)play (5)filter-env (6)combine (7)name-label (8)name-icon)"
   /* perhaps this belongs in snd-xsnd where we can grab every widget */
   snd_info *sp;
-  ASSERT_SOUND("sound_widgets", snd, 1);
+  ASSERT_SOUND(S_sound_widgets, snd, 1);
   sp = get_sp(snd);
   return(XEN_CONS(XEN_WRAP_C_POINTER(w_snd_pane(sp)),
 	  XEN_CONS(XEN_WRAP_C_POINTER(w_snd_name(sp)),

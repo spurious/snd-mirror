@@ -33,6 +33,8 @@ static void create_snd_error_dialog(snd_state *ss, int popup)
   XtSetArg(args[n], XmNautoShowCursorPosition, FALSE); n++;
   XtSetArg(args[n], XmNcursorPositionVisible, FALSE); n++;
   XtSetArg(args[n], XmNscrollingPolicy, XmAUTOMATIC); n++;
+  XtSetArg(args[n], XmNheight,200); n++;
+  XtSetArg(args[n], XmNwidth, 400); n++;
   snd_error_history = XmCreateScrolledText(snd_error_dialog, STR_Error_History, args, n);
   XtManageChild(snd_error_history);
 

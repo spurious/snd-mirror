@@ -441,7 +441,7 @@ in the drawing mode graphic-style."
 
 static XEN g_main_widgets(void)
 {
-  #define H_main_widgets "(" S_main_widgets ") -> top level widgets (list main-app main-shell main-pane sound-pane)"
+  #define H_main_widgets "(" S_main_widgets ") -> top level widgets (list (0)main-app (1)main-shell (2)main-pane (3)sound-pane (4)listener-pane)"
   snd_state *ss;
   XEN main_win;
   ss = get_global_state();
@@ -463,10 +463,10 @@ static XEN dialog_widgets;
 static XEN g_dialog_widgets(void)
 {
   #define H_dialog_widgets "(" S_dialog_widgets ") -> dialogs (each #f if not yet created) (list \
-color orientation enved error yes_or_no transform \
-file_open file_save_as view_files raw_data new_file \
-file_mix edit_header find help completion mix_panel \
-print recorder region stats"
+(0)color (1)orientation (2)enved (3)error (4)yes_or_no (5)transform \
+(6)file_open (7)file_save_as (8)view_files (9)raw_data (10)new_file \
+(11)file_mix (12)edit_header (13)find (14)help (15)completion (16)mix_panel \
+(17)print (18)recorder (19)region (20)stats"
 
   if (!(XEN_VECTOR_P(dialog_widgets)))
     {

@@ -1541,7 +1541,7 @@ static gint middle_button_press (GtkWidget *widget, GdkEvent *bevent, gpointer d
 
 static XEN g_menu_widgets(void)
 {
-  #define H_menu_widgets "(" S_menu_widgets ") returns list of top level menu widgets (main file edit view options help)"
+  #define H_menu_widgets "(" S_menu_widgets ") returns list of top level menu widgets ((0)main (1)file (2)edit (3)view (4)options (5)help)"
   return(XEN_CONS(XEN_WRAP_C_POINTER(mw[menu_menu]),
 	  XEN_CONS(XEN_WRAP_C_POINTER(mw[f_cascade_menu]),
            XEN_CONS(XEN_WRAP_C_POINTER(mw[e_cascade_menu]),

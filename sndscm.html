@@ -1075,7 +1075,7 @@ using FM in this case.  The waveshaping version can be found in <a href="#pqwvox
 <pre>
   <em class=def><A NAME="exfinfo">finfo</a></em> filename
   <em class=def><A NAME="exshell">shell</a></em> cmd
-  <em class=def><a name="exmpg">mpg</a></em> rawfile chans
+  <em class=def><a name="exmpg">mpg</a></em> mpgfile rawfile 
 </pre>
 <p><i>finfo</i> returns a description of the file <i>filename</i>. <i>shell</i> is similar
 to Guile's <i>system</i> function, but output is sent to Snd's listener, rather than stdout.
@@ -1084,7 +1084,7 @@ format sound file to a headerless ("raw") file containing 16-bit samples.
 <pre>
 (shell "df")
 (add-hook! close-hook (lambda (snd) (shell \"sndplay wood16.wav\")))
-(mpg "mpeg.mpg" "mpeg.raw" 1)
+(mpg "mpeg.mpg" "mpeg.raw")
 </pre>
 <p>
 Presumably a similar function could be written to call TiMidity to translate
@@ -1934,6 +1934,7 @@ that were removed from or renamed in Snd-5.
   <em class=def><a name="disablecontrolpanel">disable-control-panel</a></em> 
   <em class=def><a name="addmarkpane">add-mark-pane</a></em> 
   <em class=def><a name="addselectionpopup">add-selection-popup</a></em> 
+  <em class=def><a name="addlistenerpopup">add-listener-popup</a></em> 
   <em class=def><a name="selectfile">select-file</a></em> func <i>title dir filter help</i>
   <em class=def><a name="sndclockicon">snd-clock-icon</a></em> snd hour
   <em class=def><a name="makesoundbox">make-sound-box</a></em> name parent select-func peak-func sounds args
@@ -1965,6 +1966,8 @@ the fm-violin (fmv.scm) running (interpreted!) in "real-time".
 These can be edited to move the mark, or deleted to delete the mark.
 <b>add-selection-popup</b> creates a selection-oriented popup menu that is
 posted if you click button3 in the selected portion.
+<b>add-listener-popup</b> creates a listener-oriented popup menu that is
+posted if you click button3 in the listener.
 <b>select-file</b> starts a file selection dialog, running func if a file is selected.
 </p>
 <pre>
