@@ -1099,12 +1099,12 @@ static XEN g_restore_region(XEN pos, XEN chans, XEN len, XEN srate, XEN maxamp, 
   XEN_ASSERT_TYPE(XEN_STRING_P(end), end, XEN_ARG_8, S_restore_region, "a string");
   XEN_ASSERT_TYPE(XEN_STRING_P(filename), filename, XEN_ARG_9, S_restore_region, "a string");
   r = (region *)CALLOC(1, sizeof(region));
-  regn = XEN_TO_SMALL_C_INT(pos);
+  regn = XEN_TO_C_INT(pos);
   if (regions[regn]) free_region(regions[regn], COMPLETE_DELETION);
   regions[regn] = r;
   r->id = region_id_ctr++;
   r->maxamp = XEN_TO_C_DOUBLE(maxamp);
-  r->chans = XEN_TO_SMALL_C_INT(chans);
+  r->chans = XEN_TO_C_INT(chans);
   r->rsp = NULL;
   r->editor_copy = NULL;
   r->editor_name = NULL;

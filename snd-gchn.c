@@ -359,8 +359,8 @@ static gboolean graph_mouse_enter(GtkWidget *w, GdkEventCrossing *ev, gpointer d
   pdata = get_user_int_data(G_OBJECT(w));
   if (XEN_HOOKED(mouse_enter_graph_hook))
     run_hook(mouse_enter_graph_hook,
-	     XEN_LIST_2(C_TO_SMALL_XEN_INT(UNPACK_SOUND(pdata)),
-			C_TO_SMALL_XEN_INT(UNPACK_CHANNEL(pdata))),
+	     XEN_LIST_2(C_TO_XEN_INT(UNPACK_SOUND(pdata)),
+			C_TO_XEN_INT(UNPACK_CHANNEL(pdata))),
 	     S_mouse_enter_graph_hook);
   gdk_window_set_cursor(w->window, (ss->sgx)->graph_cursor);
   return(false);
@@ -372,8 +372,8 @@ static gboolean graph_mouse_leave(GtkWidget *w, GdkEventCrossing *ev, gpointer d
   pdata = get_user_int_data(G_OBJECT(w));
   if (XEN_HOOKED(mouse_leave_graph_hook))
     run_hook(mouse_leave_graph_hook,
-	     XEN_LIST_2(C_TO_SMALL_XEN_INT(UNPACK_SOUND(pdata)),
-			C_TO_SMALL_XEN_INT(UNPACK_CHANNEL(pdata))),
+	     XEN_LIST_2(C_TO_XEN_INT(UNPACK_SOUND(pdata)),
+			C_TO_XEN_INT(UNPACK_CHANNEL(pdata))),
 	     S_mouse_leave_graph_hook);
   gdk_window_set_cursor(w->window, (ss->sgx)->arrow_cursor);
   return(false);

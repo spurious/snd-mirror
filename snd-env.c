@@ -1610,10 +1610,10 @@ static bool check_enved_hook(env *e, int pos, Float x, Float y, enved_point_t re
 	{
 	  result = XEN_APPLY(XEN_CAR(procs), 
 			     XEN_LIST_5(env_list,
-					C_TO_SMALL_XEN_INT(pos),
+					C_TO_XEN_INT(pos),
 					C_TO_XEN_DOUBLE(x),
 					C_TO_XEN_DOUBLE(y),
-					C_TO_SMALL_XEN_INT((int)reason)),
+					C_TO_XEN_INT((int)reason)),
 			     S_enved_hook);
 	  procs = XEN_CDR (procs);
 	  if ((XEN_NOT_FALSE_P(result)) && 

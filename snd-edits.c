@@ -6,7 +6,7 @@ static bool dont_save(snd_info *sp, const char *newname)
   XEN res = XEN_FALSE;
   if (XEN_HOOKED(save_hook))
     res = run_or_hook(save_hook,
-		      XEN_LIST_2(C_TO_SMALL_XEN_INT(sp->index),
+		      XEN_LIST_2(C_TO_XEN_INT(sp->index),
 				 (newname) ? C_TO_XEN_STRING(newname) : XEN_FALSE),
 		      S_save_hook);
   return(XEN_TRUE_P(res));

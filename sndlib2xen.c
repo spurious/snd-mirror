@@ -455,7 +455,7 @@ static XEN g_sound_data_chans(XEN obj)
   sound_data *v;
   XEN_ASSERT_TYPE(SOUND_DATA_P(obj), obj, XEN_ONLY_ARG, S_sound_data_chans, "a sound-data object");
   v = (sound_data *)XEN_OBJECT_REF(obj);
-  return(C_TO_SMALL_XEN_INT(v->chans));
+  return(C_TO_XEN_INT(v->chans));
 }
 
 sound_data *c_make_sound_data(int chans, int frames)
@@ -1336,7 +1336,7 @@ static XEN sound_data_compare(XEN vr1, XEN vr2)
 	      return(C_TO_XEN_INT(1));
       len = v1->length - v2->length;
       if (len == 0) return(XEN_ZERO);
-      if (len > 0) return(C_TO_SMALL_XEN_INT(1));
+      if (len > 0) return(C_TO_XEN_INT(1));
     }
   return(C_TO_XEN_INT(-1));
 }

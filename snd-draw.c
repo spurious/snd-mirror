@@ -12,10 +12,10 @@ static axis_context *get_ax(chan_info *cp, int ax_id, const char *caller)
   XEN_ERROR(NO_SUCH_AXIS_CONTEXT,
 	    XEN_LIST_3(C_TO_XEN_STRING(caller),
 		       C_TO_XEN_STRING("axis: ~A, sound index: ~A (~A), chan: ~A"),
-		       XEN_LIST_4(C_TO_SMALL_XEN_INT(ax_id),
-				  C_TO_SMALL_XEN_INT(cp->sound->index),
+		       XEN_LIST_4(C_TO_XEN_INT(ax_id),
+				  C_TO_XEN_INT(cp->sound->index),
 				  C_TO_XEN_STRING(cp->sound->short_filename),
-				  C_TO_SMALL_XEN_INT(cp->chan))));
+				  C_TO_XEN_INT(cp->chan))));
   return(NULL);
 }
 
@@ -36,10 +36,10 @@ axis_info *get_ap(chan_info *cp, axis_info_t ap_id, const char *caller)
   XEN_ERROR(NO_SUCH_AXIS_INFO,
 	    XEN_LIST_3(C_TO_XEN_STRING(caller),
 		       C_TO_XEN_STRING("axis: ~A, sound index: ~A (~A), chan: ~A (axis should be one of " S_time_graph ", " S_lisp_graph ", or " S_transform_graph ")"),
-		       XEN_LIST_4(C_TO_SMALL_XEN_INT((int)(ap_id)),
-				  C_TO_SMALL_XEN_INT(cp->sound->index),
+		       XEN_LIST_4(C_TO_XEN_INT((int)(ap_id)),
+				  C_TO_XEN_INT(cp->sound->index),
 				  C_TO_XEN_STRING(cp->sound->short_filename),
-				  C_TO_SMALL_XEN_INT(cp->chan))));
+				  C_TO_XEN_INT(cp->chan))));
   return(NULL);
 }
 
@@ -227,7 +227,7 @@ defined by the 4 controlling points x0..y3; 'n' is how many points to return"
   ax = x[3] - (x[0] + cx + bx);
   ay = y[3] - (y[0] + cy + by);
   incr = 1.0 / (float)n;
-  pts = XEN_MAKE_VECTOR(2 * (n + 1), C_TO_SMALL_XEN_INT(0));
+  pts = XEN_MAKE_VECTOR(2 * (n + 1), C_TO_XEN_INT(0));
   data = XEN_VECTOR_ELEMENTS(pts);
   /* VECTOR_SET here */
   data[0] = C_TO_XEN_INT(x[0]);

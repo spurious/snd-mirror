@@ -448,9 +448,9 @@ static void run_mark_hook(chan_info *cp, int id, mark_hook_reason_t reason)
   if (XEN_HOOKED(mark_hook))
     run_hook(mark_hook,
 	     XEN_LIST_4(C_TO_XEN_INT(id),
-			C_TO_SMALL_XEN_INT(cp->sound->index),
-			C_TO_SMALL_XEN_INT(cp->chan),
-			C_TO_SMALL_XEN_INT((int)reason)),
+			C_TO_XEN_INT(cp->sound->index),
+			C_TO_XEN_INT(cp->chan),
+			C_TO_XEN_INT((int)reason)),
 	     S_mark_hook);
 }
 
@@ -1874,8 +1874,8 @@ static XEN mark_get(XEN n, mark_field_t fld, XEN pos_n, char *caller)
       else return(C_TO_XEN_STRING("")); 
       break;
     case MARK_HOME:   
-      return(XEN_LIST_2(C_TO_SMALL_XEN_INT((ncp[0]->sound)->index),
-			C_TO_SMALL_XEN_INT(ncp[0]->chan))); 
+      return(XEN_LIST_2(C_TO_XEN_INT((ncp[0]->sound)->index),
+			C_TO_XEN_INT(ncp[0]->chan))); 
       break;
     }
   return(XEN_FALSE);
@@ -2224,7 +2224,7 @@ mark list is: channel given: (id id ...), snd given: ((id id) (id id ...)), neit
 	{
 	  sp = ss->sounds[j];
 	  if ((sp) && (sp->inuse == SOUND_NORMAL))
-	    res1 = XEN_CONS(g_marks(C_TO_SMALL_XEN_INT(j), XEN_UNDEFINED, XEN_UNDEFINED), 
+	    res1 = XEN_CONS(g_marks(C_TO_XEN_INT(j), XEN_UNDEFINED, XEN_UNDEFINED), 
 			    res1);
 	}
     }

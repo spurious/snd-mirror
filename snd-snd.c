@@ -1255,7 +1255,7 @@ void sp_name_click(snd_info *sp)
       /* call name-click-hook (if any) return #t = don't print info in minibuffer */
       if ((XEN_HOOKED(name_click_hook)) &&
 	  (XEN_TRUE_P(run_or_hook(name_click_hook, 
-				  XEN_LIST_1(C_TO_SMALL_XEN_INT(sp->index)),
+				  XEN_LIST_1(C_TO_XEN_INT(sp->index)),
 				  S_name_click_hook))))
 	return;
       hdr = sp->hdr;
@@ -1852,7 +1852,7 @@ Cessate apply_controls(Indicium ptr)
   if ((sgx) && (sgx->apply_in_progress)) sgx->apply_in_progress = 0;
   if (XEN_HOOKED(after_apply_hook))
     run_hook(after_apply_hook, 
-	     XEN_LIST_1(C_TO_SMALL_XEN_INT(sp->index)),
+	     XEN_LIST_1(C_TO_XEN_INT(sp->index)),
 	     S_after_apply_hook);
   FREE(ap);
   ss->stopped_explicitly = false;
@@ -1991,7 +1991,7 @@ static XEN sound_get(XEN snd_n, sp_field_t fld, char *caller)
 	{
 	  sp = ss->sounds[i];
 	  if ((sp) && (sp->inuse == SOUND_NORMAL))
-	    res = XEN_CONS(sound_get(C_TO_SMALL_XEN_INT(i), fld, caller), res);
+	    res = XEN_CONS(sound_get(C_TO_XEN_INT(i), fld, caller), res);
 	}
       return(res);
     }
@@ -2145,7 +2145,7 @@ static XEN sound_set(XEN snd_n, XEN val, sp_field_t fld, char *caller)
 	{
 	  sp = ss->sounds[i];
 	  if ((sp) && (sp->inuse == SOUND_NORMAL))
-	    sound_set(C_TO_SMALL_XEN_INT(i), val, fld, caller);
+	    sound_set(C_TO_XEN_INT(i), val, fld, caller);
 	}
       return(val);
     }
@@ -2217,7 +2217,7 @@ static XEN sound_set(XEN snd_n, XEN val, sp_field_t fld, char *caller)
     case SP_SRATE:
       if (!(IS_PLAYER(sp))) 
 	{
-	  ival = XEN_TO_C_INT(val);
+	  ival = XEN_TO_C_INT_OR_ELSE(val, 22050);
 	  if ((ival <= 0) || (ival > 100000000))
 	    XEN_OUT_OF_RANGE_ERROR(S_setB S_srate, 1, val, "~A: impossible srate");
 	  mus_sound_set_srate(sp->filename, ival);
@@ -2228,7 +2228,7 @@ static XEN sound_set(XEN snd_n, XEN val, sp_field_t fld, char *caller)
     case SP_NCHANS: 
       if (!(IS_PLAYER(sp))) 
 	{
-	  ival = XEN_TO_C_INT(val);
+	  ival = XEN_TO_C_INT_OR_ELSE(val, 1);
 	  if ((ival <= 0) || (ival > 256))
 	    XEN_OUT_OF_RANGE_ERROR(S_setB S_channels, 1, val, "~A: highly unlikely number of channels");
 	  mus_sound_set_chans(sp->filename, ival);
@@ -3049,7 +3049,7 @@ static XEN g_selected_sound(void)
   #define H_selected_sound "(" S_selected_sound "): index of currently selected sound (or #f if none)"
   if ((ss->selected_sound != NO_SELECTION) && 
       (snd_ok(ss->sounds[ss->selected_sound])))
-    return(C_TO_SMALL_XEN_INT(ss->selected_sound));
+    return(C_TO_XEN_INT(ss->selected_sound));
   return(XEN_FALSE); /* was -1 before 26-Mar-02 */
 }
 

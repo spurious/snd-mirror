@@ -3601,13 +3601,13 @@ static XEN g_in_any(XEN frame, XEN chan, XEN inp)
 static XEN g_ina(XEN frame, XEN inp) 
 {
   #define H_ina "(" S_ina " frame (stream #f)): input stream sample in channel 0 at frame"
-  return(g_in_any_1(S_ina, frame, C_TO_SMALL_XEN_INT(0), inp));
+  return(g_in_any_1(S_ina, frame, C_TO_XEN_INT(0), inp));
 }
 
 static XEN g_inb(XEN frame, XEN inp) 
 {
   #define H_inb "(" S_inb " frame (stream #f)): input stream sample in channel 1 at frame"
-  return(g_in_any_1(S_inb, frame, C_TO_SMALL_XEN_INT(1), inp));
+  return(g_in_any_1(S_inb, frame, C_TO_XEN_INT(1), inp));
 }
 
 static XEN g_out_any_1(char *caller, XEN frame, XEN chan, XEN val, XEN outp)
@@ -3631,25 +3631,25 @@ static XEN g_out_any(XEN frame, XEN val, XEN chan, XEN outp)
 static XEN g_outa(XEN frame, XEN val, XEN outp)
 {
   #define H_outa "(" S_outa " frame val (stream #f)): add val to output stream at frame in channel 0"
-  return(g_out_any_1(S_outa, frame, C_TO_SMALL_XEN_INT(0), val, outp));
+  return(g_out_any_1(S_outa, frame, C_TO_XEN_INT(0), val, outp));
 }
 
 static XEN g_outb(XEN frame, XEN val, XEN outp)
 {
   #define H_outb "(" S_outb " frame val (stream #f)): add val to output stream at frame in channel 1"
-  return(g_out_any_1(S_outb, frame, C_TO_SMALL_XEN_INT(1), val, outp));
+  return(g_out_any_1(S_outb, frame, C_TO_XEN_INT(1), val, outp));
 }
 
 static XEN g_outc(XEN frame, XEN val, XEN outp)
 {
   #define H_outc "(" S_outc " frame val (stream #f)): add val to output stream at frame in channel 2"
-  return(g_out_any_1(S_outc, frame, C_TO_SMALL_XEN_INT(2), val, outp));
+  return(g_out_any_1(S_outc, frame, C_TO_XEN_INT(2), val, outp));
 }
 
 static XEN g_outd(XEN frame, XEN val, XEN outp)
 {
   #define H_outd "(" S_outd " frame val (stream #f)): add val to output stream at frame in channel 3"
-  return(g_out_any_1(S_outd, frame, C_TO_SMALL_XEN_INT(3), val, outp));
+  return(g_out_any_1(S_outd, frame, C_TO_XEN_INT(3), val, outp));
 }
 
 static XEN g_mus_close(XEN ptr)
@@ -4008,14 +4008,14 @@ static XEN g_mus_channel(XEN obj)
 {
   #define H_mus_channel "(" S_mus_channel " gen): gen's " S_mus_channel " field, if any"
   XEN_ASSERT_TYPE((MUS_XEN_P(obj)) && (mus_input_p(XEN_TO_MUS_ANY(obj))), obj, XEN_ONLY_ARG, S_mus_channel, "an input gen");
-  return(C_TO_SMALL_XEN_INT(mus_channel((mus_any *)XEN_TO_MUS_ANY(obj))));
+  return(C_TO_XEN_INT(mus_channel((mus_any *)XEN_TO_MUS_ANY(obj))));
 }
 
 static XEN g_mus_interp_type(XEN obj)
 {
   #define H_mus_interp_type "(" S_mus_interp_type " gen): gen's " S_mus_interp_type " field, if any"
   XEN_ASSERT_TYPE(MUS_XEN_P(obj), obj, XEN_ONLY_ARG, S_mus_interp_type, "a generator");
-  return(C_TO_SMALL_XEN_INT(mus_interp_type((mus_any *)XEN_TO_MUS_ANY(obj))));
+  return(C_TO_XEN_INT(mus_interp_type((mus_any *)XEN_TO_MUS_ANY(obj))));
 }
 
 
@@ -4192,7 +4192,7 @@ static XEN g_mus_channels(XEN obj)
 {
   #define H_mus_channels "(" S_mus_channels " gen): gen's " S_mus_channels " field, if any"
   XEN_ASSERT_TYPE(MUS_XEN_P(obj), obj, XEN_ONLY_ARG, S_mus_channels, "a generator");
-  return(C_TO_SMALL_XEN_INT(mus_channels(XEN_TO_MUS_ANY(obj))));
+  return(C_TO_XEN_INT(mus_channels(XEN_TO_MUS_ANY(obj))));
 }
 
 static XEN g_move_locsig(XEN obj, XEN degree, XEN distance)
@@ -4228,7 +4228,7 @@ static Float funcall1 (void *ptr, int direction) /* intended for "as-needed" inp
   mus_xen *gn = (mus_xen *)ptr;
   if ((gn) && (gn->vcts) && (XEN_BOUND_P(gn->vcts[MUS_INPUT_FUNCTION])) && (XEN_PROCEDURE_P(gn->vcts[MUS_INPUT_FUNCTION])))
     /* the gh_procedure_p call can be confused by 0 -> segfault! */
-    return(XEN_TO_C_DOUBLE(XEN_CALL_1_NO_CATCH(gn->vcts[MUS_INPUT_FUNCTION], C_TO_SMALL_XEN_INT(direction), "as-needed-input")));
+    return(XEN_TO_C_DOUBLE(XEN_CALL_1_NO_CATCH(gn->vcts[MUS_INPUT_FUNCTION], C_TO_XEN_INT(direction), "as-needed-input")));
   else return(0.0);
 }
 

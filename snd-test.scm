@@ -51,7 +51,7 @@
 (define tests 1)
 (if (not (defined? 'snd-test)) (define snd-test -1))
 (if (defined? 'disable-play) (disable-play))
-(define keep-going #f)
+(define keep-going #t)
 (define full-test (< snd-test 0))
 (define total-tests 28)
 (if (not (defined? 'with-exit)) (define with-exit (< snd-test 0)))
@@ -11492,10 +11492,10 @@ EDITS: 5
 	 (comb2 (make-comb 0.733 4999))
 	 (comb3 (make-comb 0.715 5399))
 	 (comb4 (make-comb 0.697 5801))
-	 (outdel1 (make-delay (round (* .013 (srate)))))
+	 (outdel1 (make-delay (inexact->exact (round (* .013 (srate))))))
 	 (dur (+ decay-dur (/ (frames) (srate))))
 	 (envA (if amp-env (make-env :envelope amp-env :scaler volume :duration dur) #f))
-	 (len (round (* dur (srate)))))
+	 (len (inexact->exact (round (* dur (srate))))))
     (map-chan
      (let ((comb-sum 0.0)
 	   (comb-sum-1 0.0)
@@ -11519,7 +11519,7 @@ EDITS: 5
 	      (if envA
 		  (* (env envA) (delay outdel1 all-sums))
 		  (* volume (delay outdel1 all-sums)))))))
-     0 (round (* dur (srate))))))
+     0 (inexact->exact (round (* dur (srate)))))))
 
 ;;; -------- scissor-tailed flycatcher
 ;;;
@@ -11572,8 +11572,8 @@ EDITS: 5
 		     (reverb-amount 0.01)
 		     (degree #f) (distance 1.0) (degrees #f)
 		     #:allow-other-keys)
-	   (let* ((beg (floor (* startime (srate))))
-		  (len (floor (* dur (srate))))
+	   (let* ((beg (inexact->exact (floor (* startime (srate)))))
+		  (len (inexact->exact (floor (* dur (srate)))))
 		  (end (+ beg len))
 		  (frq-scl (hz->radians frequency))
 		  (modulate (not (zero? fm-index)))
@@ -11591,9 +11591,9 @@ EDITS: 5
 				  (= fm3-rat (floor fm3-rat))))
 		  (coeffs (and easy-case modulate
 			       (partials->polynomial
-				(list fm1-rat index1
-				      (floor (/ fm2-rat fm1-rat)) index2
-				      (floor (/ fm3-rat fm1-rat)) index3))))
+				(list (inexact->exact fm1-rat) index1
+				      (inexact->exact (floor (/ fm2-rat fm1-rat))) index2
+				      (inexact->exact (floor (/ fm3-rat fm1-rat))) index3))))
 		  (norm (or (and easy-case modulate 1.0) index1))
 		  (carrier (make-oscil frequency))
 		  (fmosc1  (and modulate (make-oscil (* fm1-rat frequency))))
@@ -13417,7 +13417,7 @@ EDITS: 5
 		   (begin
 		     (snd-display ";sine-summation 2: ~A: os1: ~A ss1: ~A" i os1 ss1)
 		     (give-up)))))))
-	(set! gen1 (make-sine-summation 440.0 0.0 0.0))
+	(set! gen1 (make-sine-summation 440.0 0.0 0))
 	(sine-summation gen1)
 	(let ((val (sine-summation gen1)))
 	  (if (fneq val 0.125050170279874) (snd-display ";sine-summation n=0: ~A" val))))
@@ -26700,7 +26700,7 @@ EDITS: 5
 	  (undo 3)
 	  (scale-channel 0.0 3 4)
 	  (xen-channel (lambda (y data forward)
-			 (let ((val (vct-ref data (1+ (vct-ref data 0)))))
+			 (let ((val (vct-ref data (1+ (inexact->exact (floor (vct-ref data 0)))))))
 			   (if forward
 			       (vct-set! data 0 (1+ (vct-ref data 0)))
 			       (vct-set! data 0 (1- (vct-ref data 0))))
@@ -26712,7 +26712,7 @@ EDITS: 5
 	  (undo 2)
 	  (xramp-channel 0.0 1.0 .025)
 	  (xen-channel (lambda (y data forward)
-			 (let ((val (vct-ref data (1+ (vct-ref data 0)))))
+			 (let ((val (vct-ref data (1+ (inexact->exact (floor (vct-ref data 0)))))))
 			   (if forward
 			       (vct-set! data 0 (1+ (vct-ref data 0)))
 			       (vct-set! data 0 (1- (vct-ref data 0))))
@@ -26725,7 +26725,7 @@ EDITS: 5
 	  (ramp-channel 0.0 1.0)
 	  (ramp-channel 1.0 0.0)
 	  (xen-channel (lambda (y data forward)
-			 (let ((val (vct-ref data (1+ (vct-ref data 0)))))
+			 (let ((val (vct-ref data (1+ (inexact->exact (floor (vct-ref data 0)))))))
 			   (if forward
 			       (vct-set! data 0 (1+ (vct-ref data 0)))
 			       (vct-set! data 0 (1- (vct-ref data 0))))
@@ -26739,7 +26739,7 @@ EDITS: 5
 	  (map-chan (lambda (y) (random 1.0)) 0 10)
 	  (ramp-channel 0.0 1.0)
 	  (xen-channel (lambda (y data forward)
-			 (let ((val (vct-ref data (1+ (vct-ref data 0)))))
+			 (let ((val (vct-ref data (1+ (inexact->exact (floor (vct-ref data 0)))))))
 			   (if forward
 			       (vct-set! data 0 (1+ (vct-ref data 0)))
 			       (vct-set! data 0 (1- (vct-ref data 0))))
@@ -26754,7 +26754,7 @@ EDITS: 5
 	  (undo 3)
 	  (ramp-channel 0.0 1.0)
 	  (xen-channel (lambda (y data forward)
-			 (let ((val (vct-ref data (1+ (vct-ref data 0)))))
+			 (let ((val (vct-ref data (1+ (inexact->exact (floor (vct-ref data 0)))))))
 			   (if forward
 			       (vct-set! data 0 (1+ (vct-ref data 0)))
 			       (vct-set! data 0 (1- (vct-ref data 0))))
@@ -26978,7 +26978,7 @@ EDITS: 5
 					   (lambda (pos dur)
 					     (vct 0.5))))
 		 (lambda () (xen-channel (lambda (y data forward)
-					   (let ((val (vct-ref data (1+ (vct-ref data 0)))))
+					   (let ((val (vct-ref data (1+ (inexact->exact (floor (vct-ref data 0)))))))
 					     (if forward
 						 (vct-set! data 0 (1+ (vct-ref data 0)))
 						 (vct-set! data 0 (1- (vct-ref data 0))))
@@ -31972,8 +31972,8 @@ EDITS: 2
 		     (reverb-amount 0.01)
 		     (base 1.0)
 		     #:allow-other-keys)
-	   (let* ((beg (floor (* startime (mus-srate))))
-		  (len (floor (* dur (mus-srate))))
+	   (let* ((beg (inexact->exact (floor (* startime (mus-srate)))))
+		  (len (inexact->exact (floor (* dur (mus-srate)))))
 		  (end (+ beg len))
 		  (frq-scl (hz->radians frequency))
 		  (maxdev (* frq-scl fm-index))
@@ -31990,9 +31990,9 @@ EDITS: 2
 				  (= fm3-rat (floor fm3-rat))))
 		  (coeffs (and easy-case
 			       (partials->polynomial
-				(list fm1-rat index1
-				      (floor (/ fm2-rat fm1-rat)) index2
-				      (floor (/ fm3-rat fm1-rat)) index3))))
+				(list (inexact->exact fm1-rat) index1
+				      (inexact->exact (floor (/ fm2-rat fm1-rat))) index2
+				      (inexact->exact (floor (/ fm3-rat fm1-rat))) index3))))
 		  (norm (if easy-case 1.0 index1))
 		  (carrier (make-oscil frequency))
 		  (fmosc1 (make-oscil (* fm1-rat frequency)))

@@ -1064,8 +1064,8 @@ static gint mouse_name(XEN hook, GtkWidget *w, const char *caller)
 	    }
 	  if (label)
 	    run_hook(hook,
-		     XEN_LIST_3(C_TO_SMALL_XEN_INT(r->parent),
-				C_TO_SMALL_XEN_INT(r->pos),
+		     XEN_LIST_3(C_TO_XEN_INT(r->parent),
+				C_TO_XEN_INT(r->pos),
 				C_TO_XEN_STRING(label)),
 		     caller);
 	}

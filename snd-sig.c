@@ -44,8 +44,8 @@ int to_c_edit_position(chan_info *cp, XEN edpos, const char *caller, int arg_pos
 	  return(AT_CURRENT_EDIT_POSITION);
 	}
       pos = XEN_TO_C_INT_OR_ELSE_WITH_CALLER(XEN_CALL_2(edpos, 
-							C_TO_SMALL_XEN_INT(cp->sound->index), 
-							C_TO_SMALL_XEN_INT(cp->chan),
+							C_TO_XEN_INT(cp->sound->index), 
+							C_TO_XEN_INT(cp->chan),
 							caller),
 					     AT_CURRENT_EDIT_POSITION, caller);
     }
@@ -4080,7 +4080,7 @@ convolve the selection with file; amp is the resultant peak amp"
 static XEN g_vct_convolve(XEN reals, XEN imag)
 {
   #define H_vct_convolve "(" S_vct_convolve " rl1 rl2): convolve vcts rl1 and rl2, result in rl1 (which needs to be big enough)"
-  return(g_fft_1(reals, imag, C_TO_SMALL_XEN_INT(1), false));
+  return(g_fft_1(reals, imag, C_TO_XEN_INT(1), false));
 }
 
 static Float check_src_envelope(int pts, Float *data, const char *caller)

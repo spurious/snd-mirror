@@ -45,6 +45,7 @@
 (define strings '())
 (define strings-232 '())
 (define strings-234 '())
+(define strings-250 '())
 (define structs '())
 (define make-structs '()) ; these have a xg-specific make function
 (define struct-fields '())
@@ -89,9 +90,25 @@
 (define types-234 '())
 (define check-types-234 '())
 
+(define names-250 '())
+(define funcs-250 '())
+(define types-250 '())
+(define casts-250 '())
+(define checks-250 '())
+(define check-types-250 '())
+(define ulongs-250 '())
+(define ints-250 '())
+
 (define idlers (list "g_source_remove" "g_idle_remove_by_data"
 		     "gtk_quit_remove" "gtk_quit_remove_by_data" 
 		     "gtk_key_snooper_remove"))
+
+;;; TODO:
+;;; xg.c:941: warning: `C_TO_XEN_GtkCellView_' defined but not used
+;;; xg.c:942: warning: `C_TO_XEN_GValue_' defined but not used
+;;; xg.c:943: warning: `C_TO_XEN_GtkAboutDialog_' defined but not used
+;;; xg.c:944: warning: `C_TO_XEN_GtkIconView_' defined but not used
+;;; xg.c:945: warning: `C_TO_XEN_GtkIconViewForeachFunc' defined but not used
 
 (define no-c-to-xen 
   (list "CellLayoutDataFunc" "GClosureNotify" "GDestroyNotify" "GError**" "GParamSpec*" "GQuark*" "GSignalAccumulator"
@@ -343,8 +360,17 @@
 						     (not (member type types-23))
 						     (not (member type types-234)))
 						(set! types-234 (cons type types-234)))
-					    (if (not (member type types))
-						(set! types (cons type types))))))))
+					    (if (or (eq? extra '250)
+						    (eq? extra 'callback-250))
+						(if (and (not (member type types))
+							 (not (member type types-21))
+							 (not (member type types-22))
+							 (not (member type types-23))
+							 (not (member type types-234))
+							 (not (member type types-250)))
+						    (set! types-250 (cons type types-250)))
+						(if (not (member type types))
+						    (set! types (cons type types)))))))))
 			(set! type #f))
 		      (if (> i (1+ sp))
 			  (set! type (substring args (1+ sp) i))))
@@ -514,6 +540,14 @@
 			      'permanent)
 			))
 
+(define callbacks-250 (list
+		       (list 'GtkTreeViewRowSeparatorFunc
+			     "gboolean"
+			     "row_separator"
+			     (parse-args "GtkTreeModel* model GtkTreeIter* iter lambda_data func_data" 'callback-250)
+			     'permanent)
+		       ))
+
 (define (callback-name func) (car func))
 (define (callback-type func) (cadr func))
 (define (callback-func func) (caddr func))
@@ -526,7 +560,9 @@
 	 (or (test (car funcs))
 	     (find-callback-1 test (cdr funcs)))))
   (or (find-callback-1 test callbacks)
-      (find-callback-1 test callbacks-23)))
+      (find-callback-1 test callbacks-23)
+      (find-callback-1 test callbacks-250)
+      ))
 
 (define direct-types 
   (list (cons "void" #f)
@@ -897,6 +933,23 @@
 	    (set! funcs-236 (cons (list name type strs args) funcs-236))
 	    (set! names (cons (cons name (func-type strs)) names)))))))
 
+(define* (CFNC-250 data)
+  (let ((name (cadr-str data))
+	(args (caddr-str data)))
+    (if (assoc name names)
+	(no-way "CFNC-250: ~A~%" (list name data))
+	(let ((type (car-str data)))
+	  (if (and (not (member type types))
+		   (not (member type types-21))
+		   (not (member type types-22))
+		   (not (member type types-23))
+		   (not (member type types-234))
+		   (not (member type types-250)))
+	      (set! types-250 (cons type types-250)))
+	  (let ((strs (parse-args args '250)))
+	    (set! funcs-250 (cons (list name type strs args) funcs-250))
+	    (set! names (cons (cons name (func-type strs)) names)))))))
+
 (define* (CFNC-22 data)
   (let ((name (cadr-str data))
 	(args (caddr-str data)))
@@ -970,6 +1023,13 @@
 	(set! strings-234 (cons name strings-234))
 	(set! names-23 (cons (cons name 'string) names-23)))))
 
+(define (CSTR-250 name)
+  (if (assoc name names-250)
+      (no-way "~A CSTR-250~%" name)
+      (begin
+	(set! strings-250 (cons name strings-250))
+	(set! names-250 (cons (cons name 'string) names-250)))))
+
 (define (CSTR-extra name)
   (if (assoc name names)
       (no-way "~A CSTR~%" name)
@@ -1012,6 +1072,14 @@
 	(set! ulongs-23 (cons (list name type spec-name) ulongs-23))
 	(set! names (cons (cons name 'ulong) names)))))
 
+(define* (CLNG-250 name #:optional type spec-name)
+  (save-declared-type type)
+  (if (assoc name names)
+      (no-way "~A CLNG-250~%" name)
+      (begin
+	(set! ulongs-250 (cons (list name type spec-name) ulongs-250))
+	(set! names (cons (cons name 'ulong) names)))))
+
 (define* (CINT name #:optional type)
   (save-declared-type type)
   (if (assoc name names)
@@ -1052,6 +1120,14 @@
 	(set! ints-235 (cons name ints-235))
 	(set! names (cons (cons name 'int) names)))))
 
+(define* (CINT-250 name #:optional type)
+  (save-declared-type type)
+  (if (assoc name names)
+      (no-way "~A CINT-250~%" name)
+      (begin
+	(set! ints-250 (cons name ints-250))
+	(set! names (cons (cons name 'int) names)))))
+
 (define* (CINT-extra name #:optional type)
   (save-declared-type type)
   (if (assoc name names)
@@ -1088,6 +1164,13 @@
       (no-way "~A CCAST-234~%" name)
       (begin
 	(set! casts-234 (cons (list name type) casts-234))
+	(set! names (cons (cons name 'def) names)))))
+
+(define (CCAST-250 name type)
+  (if (assoc name names)
+      (no-way "~A CCAST-250~%" name)
+      (begin
+	(set! casts-250 (cons (list name type) casts-250))
 	(set! names (cons (cons name 'def) names)))))
 
 (define (CCHK name type)
@@ -1132,6 +1215,19 @@
 	(set! checks-234 (cons (list name type) checks-234))
 	(set! names (cons (cons name 'def) names)))))
 
+(define (CCHK-250 name type)
+  (if (assoc name names)
+      (no-way "~A CCHK-250~%" name)
+      (begin
+	(if (and (not (member type check-types))
+		 (not (member type check-types-21))
+		 (not (member type check-types-23))
+		 (not (member type check-types-234))
+		 (not (member type check-types-250)))
+	    (set! check-types-250 (cons type check-types-250)))
+	(set! checks-250 (cons (list name type) checks-250))
+	(set! names (cons (cons name 'def) names)))))
+
 (define (CCAST-extra name type)
   (if (assoc name names)
       (no-way "~A CCAST-extra~%" name)
@@ -1164,7 +1260,8 @@
 		   (not (member type-name types-21))
 		   (not (member type-name types-22))
 		   (not (member type-name types-23))
-		   (not (member type-name types-234)))
+		   (not (member type-name types-234))
+		   (not (member type-name types-250)))
 	      (set! types (cons (string-append name "*") types)))
 	  (for-each 
 	   (lambda (field)
@@ -1262,6 +1359,11 @@
   (thunk)
   (dpy "#endif~%~%"))
 
+(define (with-250 dpy thunk)
+  (dpy "#if HAVE_GTK_ABOUT_DIALOG_NEW~%")
+  (thunk)
+  (dpy "#endif~%~%"))
+
 
 ;;; ---------------------------------------- write output files ----------------------------------------
 (hey "/* xg.c: Guile and Ruby bindings for gdk/gtk/pango, some of glib~%")
@@ -1279,6 +1381,7 @@
 (hey " *     HAVE_GTK_COMBO_BOX_POPUP for gtk+-2.3.4~%")
 (hey " *     HAVE_GTK_COMBO_BOX_ENTRY_NEW_TEXT for gtk+-2.3.5~%")
 (hey " *     HAVE_GBOOLEAN_GTK_FILE_CHOOSER_SET_FILENAME for gtk+-2.3.6~%")
+(hey " *     HAVE_GTK_ABOUT_DIALOG_NEW for gtk+-2.5.0~%")
 (hey " *~%")
 (hey " * reference args initial values are usually ignored, resultant values are returned in a list.~%")
 (hey " * null ptrs are passed and returned as #f, trailing \"user_data\" callback function arguments are optional (default: #f).~%")
@@ -1313,6 +1416,7 @@
 (hey " *     win32-specific functions~%")
 (hey " *~%")
 (hey " * HISTORY:~%")
+(hey " *     21-Jul:    gtk 2.5.0 changes.~%")
 (hey " *     2-Jun:     gdk_atom_name needs to free return value~%")
 (hey " *     28-May:    GtkFileSelection struct support put back in -- need ok_button et al.~%")
 (hey " *     14-Apr:    make-target-entry.~%")
@@ -1468,6 +1572,7 @@
 
 (for-each callback-p callbacks)
 (with-23 hey (lambda () (for-each callback-p callbacks-23)))
+(with-250 hey (lambda () (for-each callback-p callbacks-250)))
 
 (hey "#define XEN_lambda_P(Arg) XEN_PROCEDURE_P(Arg)~%")
 (hey "#define XEN_GCallback_P(Arg) XEN_PROCEDURE_P(Arg) && ((XEN_REQUIRED_ARGS_OK(Arg, 2)) || (XEN_REQUIRED_ARGS_OK(Arg, 3)))~%")
@@ -1479,6 +1584,7 @@
 
 (for-each xen-callback callbacks)
 (with-23 hey (lambda () (for-each xen-callback callbacks-23)))
+(with-250 hey (lambda () (for-each xen-callback callbacks-250)))
 
 (hey "#define XEN_TO_C_GCallback(Arg) ((XEN_REQUIRED_ARGS_OK(Arg, 3)) ? (GCallback)gxg_func3 : (GCallback)gxg_func2)~%")
 (hey "#define XEN_TO_C_lambda_data(Arg) (gpointer)gxg_ptr~%")
@@ -1545,6 +1651,11 @@
     (with-234 hey
 	     (lambda ()
 	       (for-each type-it (reverse types-234))
+	       )))
+(if (not (null? types-250))
+    (with-250 hey
+	     (lambda ()
+	       (for-each type-it (reverse types-250))
 	       )))
 
 (hey "#define XLS(a, b) XEN_TO_C_gchar_(XEN_LIST_REF(a, b))~%")
@@ -1734,7 +1845,8 @@
 		       (hey "));~%"))))
 	     (hey "}~%")))))))
     (for-each xc callbacks)
-    (with-23 hey (lambda () (for-each xc callbacks-23)))))
+    (with-23 hey (lambda () (for-each xc callbacks-23)))
+    (with-250 hey (lambda () (for-each xc callbacks-250)))))
 
 (hey "~%static gboolean gxg_func3(GtkWidget *w, GdkEventAny *ev, gpointer data)~%")
 (hey "{~%")
@@ -2163,6 +2275,7 @@
 (if (not (null? funcs-234)) (with-234 hey (lambda () (for-each handle-func (reverse funcs-234)))))
 (if (not (null? funcs-235)) (with-235 hey (lambda () (for-each handle-func (reverse funcs-235)))))
 (if (not (null? funcs-236)) (with-236 hey (lambda () (for-each handle-func (reverse funcs-236)))))
+(if (not (null? funcs-250)) (with-250 hey (lambda () (for-each handle-func (reverse funcs-250)))))
 
 (define cast-it
  (lambda (cast)
@@ -2176,6 +2289,7 @@
 (if (not (null? casts-21)) (with-21 hey (lambda () (for-each cast-it (reverse casts-21)))))
 (if (not (null? casts-23)) (with-23 hey (lambda () (for-each cast-it (reverse casts-23)))))
 (if (not (null? casts-234)) (with-234 hey (lambda () (for-each cast-it (reverse casts-234)))))
+(if (not (null? casts-250)) (with-250 hey (lambda () (for-each cast-it (reverse casts-250)))))
 
 ;;; checks have to use the built-in macros, not local symbol-based type checks
 (define (make-check func)
@@ -2187,6 +2301,7 @@
 (if (not (null? checks-21)) (with-21 hey (lambda () (for-each make-check (reverse checks-21)))))
 (if (not (null? checks-23)) (with-23 hey (lambda () (for-each make-check (reverse checks-23)))))
 (if (not (null? checks-234)) (with-234 hey (lambda () (for-each make-check (reverse checks-234)))))
+(if (not (null? checks-250)) (with-250 hey (lambda () (for-each make-check (reverse checks-250)))))
 
 
 (hey "~%~%/* ---------------------------------------- special functions ---------------------------------------- */~%~%")
@@ -2266,6 +2381,7 @@
 (if (not (null? funcs-234)) (with-234 say (lambda () (for-each argify-func (reverse funcs-234)))))
 (if (not (null? funcs-235)) (with-235 say (lambda () (for-each argify-func (reverse funcs-235)))))
 (if (not (null? funcs-236)) (with-236 say (lambda () (for-each argify-func (reverse funcs-236)))))
+(if (not (null? funcs-250)) (with-250 say (lambda () (for-each argify-func (reverse funcs-250)))))
 
 (define (ruby-cast func) (say "XEN_NARGIFY_1(gxg_~A_w, gxg_~A)~%" (no-arg (car func)) (no-arg (car func)))) 
 (for-each ruby-cast (reverse casts))
@@ -2273,6 +2389,7 @@
 (if (not (null? casts-21)) (with-21 say (lambda () (for-each ruby-cast (reverse casts-21)))))
 (if (not (null? casts-23)) (with-23 say (lambda () (for-each ruby-cast (reverse casts-23)))))
 (if (not (null? casts-234)) (with-234 say (lambda () (for-each ruby-cast (reverse casts-234)))))
+(if (not (null? casts-250)) (with-250 say (lambda () (for-each ruby-cast (reverse casts-250)))))
 
 (define (ruby-check func) (say "XEN_NARGIFY_1(gxg_~A_w, gxg_~A)~%" (no-arg (car func)) (no-arg (car func))))
 (for-each ruby-check (reverse checks))
@@ -2280,6 +2397,7 @@
 (if (not (null? checks-21)) (with-21 say (lambda () (for-each ruby-check (reverse checks-21)))))
 (if (not (null? checks-23)) (with-23 say (lambda () (for-each ruby-check (reverse checks-23)))))
 (if (not (null? checks-234)) (with-234 say (lambda () (for-each ruby-check (reverse checks-234)))))
+(if (not (null? checks-250)) (with-250 say (lambda () (for-each ruby-check (reverse checks-250)))))
 
 (say "XEN_NARGIFY_2(c_array_to_xen_list_w, c_array_to_xen_list)~%")
 (say "XEN_NARGIFY_2(xen_list_to_c_array_w, xen_list_to_c_array)~%")
@@ -2401,6 +2519,7 @@
 (if (not (null? funcs-234)) (with-234 say-hey (lambda () (for-each defun (reverse funcs-234)))))
 (if (not (null? funcs-235)) (with-235 say-hey (lambda () (for-each defun (reverse funcs-235)))))
 (if (not (null? funcs-236)) (with-236 say-hey (lambda () (for-each defun (reverse funcs-236)))))
+(if (not (null? funcs-250)) (with-250 say-hey (lambda () (for-each defun (reverse funcs-250)))))
 
 (define (cast-out func)
   (hey "  XG_DEFINE_PROCEDURE(~A, gxg_~A, 1, 0, 0, NULL);~%" (no-arg (car func)) (no-arg (car func)))
@@ -2411,6 +2530,7 @@
 (if (not (null? casts-21)) (with-21 say-hey (lambda () (for-each cast-out (reverse casts-21)))))
 (if (not (null? casts-23)) (with-23 say-hey (lambda () (for-each cast-out (reverse casts-23)))))
 (if (not (null? casts-234)) (with-234 say-hey (lambda () (for-each cast-out (reverse casts-234)))))
+(if (not (null? casts-250)) (with-250 say-hey (lambda () (for-each cast-out (reverse casts-250)))))
 
 (say "  XG_DEFINE_PROCEDURE(c-array->list, c_array_to_xen_list_w, 2, 0, 0, NULL);~%")
 (say "  XG_DEFINE_PROCEDURE(list->c-array, xen_list_to_c_array_w, 2, 0, 0, NULL);~%")
@@ -2428,6 +2548,7 @@
 (if (not (null? checks-21)) (with-21 say-hey (lambda () (for-each check-out (reverse checks-21)))))
 (if (not (null? checks-23)) (with-23 say-hey (lambda () (for-each check-out (reverse checks-23)))))
 (if (not (null? checks-234)) (with-234 say-hey (lambda () (for-each check-out (reverse checks-234)))))
+(if (not (null? checks-250)) (with-250 say-hey (lambda () (for-each check-out (reverse checks-250)))))
 
 (say-hey "}~%~%")
 (hey "#endif~%")
@@ -2739,6 +2860,8 @@
     (with-234 hey (lambda () (for-each (lambda (val) (hey "  DEFINE_INTEGER(~A);~%" val)) (reverse ints-234)))))
 (if (not (null? ints-235))
     (with-235 hey (lambda () (for-each (lambda (val) (hey "  DEFINE_INTEGER(~A);~%" val)) (reverse ints-235)))))
+(if (not (null? ints-250))
+    (with-250 hey (lambda () (for-each (lambda (val) (hey "  DEFINE_INTEGER(~A);~%" val)) (reverse ints-250)))))
 
 
 (for-each 
@@ -2753,6 +2876,8 @@
     (with-21 hey (lambda () (for-each (lambda (vals) (let ((val (car vals))) (hey "  DEFINE_ULONG(~A);~%" val))) (reverse ulongs-21)))))
 (if (not (null? ulongs-23))
     (with-23 hey (lambda () (for-each (lambda (vals) (let ((val (car vals))) (hey "  DEFINE_ULONG(~A);~%" val))) (reverse ulongs-23)))))
+(if (not (null? ulongs-250))
+    (with-250 hey (lambda () (for-each (lambda (vals) (let ((val (car vals))) (hey "  DEFINE_ULONG(~A);~%" val))) (reverse ulongs-250)))))
      
 
 (hey "}~%~%")
@@ -2820,6 +2945,8 @@
     (with-232 hey (lambda () (for-each (lambda (str) (hey "  DEFINE_STRING(~A);~%" str)) (reverse strings-232)))))
 (if (not (null? strings-234))
     (with-234 hey (lambda () (for-each (lambda (str) (hey "  DEFINE_STRING(~A);~%" str)) (reverse strings-234)))))
+(if (not (null? strings-250))
+    (with-250 hey (lambda () (for-each (lambda (str) (hey "  DEFINE_STRING(~A);~%" str)) (reverse strings-250)))))
 (hey "}~%~%")
 
 

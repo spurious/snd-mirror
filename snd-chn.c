@@ -24,8 +24,8 @@ static void after_fft(chan_info *cp, Float scaler)
 {
   if (XEN_HOOKED(transform_hook))
     run_hook(transform_hook,
-	     XEN_LIST_3(C_TO_SMALL_XEN_INT((cp->sound)->index),
-			C_TO_SMALL_XEN_INT(cp->chan),
+	     XEN_LIST_3(C_TO_XEN_INT((cp->sound)->index),
+			C_TO_XEN_INT(cp->chan),
 			C_TO_XEN_DOUBLE(scaler)),
 	     S_transform_hook);
 }
@@ -482,8 +482,8 @@ void add_channel_data_1(chan_info *cp, int srate, off_t frames, channel_graph_t 
       XEN res;
       int len = 0;
       res = run_or_hook(initial_graph_hook,
-			XEN_LIST_3(C_TO_SMALL_XEN_INT(cp->sound->index),
-				   C_TO_SMALL_XEN_INT(cp->chan),
+			XEN_LIST_3(C_TO_XEN_INT(cp->sound->index),
+				   C_TO_XEN_INT(cp->chan),
 				   C_TO_XEN_DOUBLE(dur)),
 			S_initial_graph_hook);
       if (XEN_LIST_P_WITH_LENGTH(res, len))
@@ -2931,8 +2931,8 @@ static void display_channel_data_with_size (chan_info *cp,
     {
       ss->graph_hook_active = true;
       res = run_progn_hook(graph_hook,
-			   XEN_LIST_4(C_TO_SMALL_XEN_INT(sp->index),
-				      C_TO_SMALL_XEN_INT(cp->chan),
+			   XEN_LIST_4(C_TO_XEN_INT(sp->index),
+				      C_TO_XEN_INT(cp->chan),
 				      C_TO_XEN_DOUBLE((cp->axis)->y0),
 				      C_TO_XEN_DOUBLE((cp->axis)->y1)),
 			   S_graph_hook);
@@ -3139,8 +3139,8 @@ static void display_channel_data_with_size (chan_info *cp,
 	  ss->lisp_graph_hook_active = true;
 	  /* inadvertent recursive call here can hang entire computer */
 	  pixel_list = run_progn_hook(lisp_graph_hook,
-				      XEN_LIST_2(C_TO_SMALL_XEN_INT((cp->sound)->index),
-						 C_TO_SMALL_XEN_INT(cp->chan)),
+				      XEN_LIST_2(C_TO_XEN_INT((cp->sound)->index),
+						 C_TO_XEN_INT(cp->chan)),
 				      S_lisp_graph_hook);
 	  ss->lisp_graph_hook_active = false;
 	  if (!(XEN_FALSE_P(pixel_list))) pixel_loc = snd_protect(pixel_list);
@@ -3176,8 +3176,8 @@ static void display_channel_data_with_size (chan_info *cp,
       if ((cp->hookable == WITH_HOOK) &&
 	  (XEN_HOOKED(after_graph_hook)))
 	run_hook(after_graph_hook,
-		 XEN_LIST_2(C_TO_SMALL_XEN_INT((cp->sound)->index),
-			    C_TO_SMALL_XEN_INT(cp->chan)),
+		 XEN_LIST_2(C_TO_XEN_INT((cp->sound)->index),
+			    C_TO_XEN_INT(cp->chan)),
 		 S_after_graph_hook);
       /* (add-hook! after-graph-hook (lambda (a b) (snd-print (format #f "~A ~A" a b)))) */
     } 
@@ -3773,8 +3773,8 @@ bool key_press_callback(chan_info *ncp, int x, int y, int key_state, int keysym)
       /* return true to keep this key press from being passed to keyboard_command */
       XEN res = XEN_FALSE;
       res = run_or_hook(key_press_hook,
-			XEN_LIST_4(C_TO_SMALL_XEN_INT(sp->index),
-				   C_TO_SMALL_XEN_INT(cp->chan),
+			XEN_LIST_4(C_TO_XEN_INT(sp->index),
+				   C_TO_XEN_INT(cp->chan),
 				   C_TO_XEN_INT(keysym),
 				   C_TO_XEN_INT(key_state)), /* this can have NumLock etc -- will be masked off in keyboard_command */
 			S_key_press_hook);
@@ -3870,8 +3870,8 @@ void graph_button_press_callback(chan_info *cp, int x, int y, int key_state, int
     case LISP:
       if (XEN_HOOKED(mouse_press_hook))
 	run_hook(mouse_press_hook,
-		 XEN_LIST_6(C_TO_SMALL_XEN_INT(sp->index),
-			    C_TO_SMALL_XEN_INT(cp->chan),
+		 XEN_LIST_6(C_TO_XEN_INT(sp->index),
+			    C_TO_XEN_INT(cp->chan),
 			    C_TO_XEN_INT(button),
 			    C_TO_XEN_INT(key_state),
 			    C_TO_XEN_DOUBLE(ungrf_x(((lisp_grf *)(cp->lisp_info))->axis, x)),
@@ -3943,8 +3943,8 @@ void graph_button_release_callback(chan_info *cp, int x, int y, int key_state, i
 
 	  if ((XEN_HOOKED(mouse_click_hook)) &&
 	      (XEN_TRUE_P(run_or_hook(mouse_click_hook,
-				      XEN_LIST_7(C_TO_SMALL_XEN_INT(sp->index),
-						 C_TO_SMALL_XEN_INT(cp->chan),
+				      XEN_LIST_7(C_TO_XEN_INT(sp->index),
+						 C_TO_XEN_INT(cp->chan),
 						 C_TO_XEN_INT(button),
 						 C_TO_XEN_INT(key_state),
 						 C_TO_XEN_INT(x),
@@ -4207,8 +4207,8 @@ void graph_button_motion_callback(chan_info *cp, int x, int y, Tempus time)
 	    case LISP:
 	      if (XEN_HOOKED(mouse_drag_hook))
 		run_hook(mouse_drag_hook,
-			 XEN_LIST_6(C_TO_SMALL_XEN_INT(cp->sound->index),
-				    C_TO_SMALL_XEN_INT(cp->chan),
+			 XEN_LIST_6(C_TO_XEN_INT(cp->sound->index),
+				    C_TO_XEN_INT(cp->chan),
 				    C_TO_XEN_INT(-1),
 				    C_TO_XEN_INT(-1),
 				    C_TO_XEN_DOUBLE(ungrf_x(((lisp_grf *)(cp->lisp_info))->axis, x)),
@@ -4357,7 +4357,7 @@ static XEN channel_get(XEN snd_n, XEN chn_n, cp_field_t fld, char *caller)
 	{
 	  sp = ss->sounds[i];
 	  if ((sp) && (sp->inuse == SOUND_NORMAL))
-	    res = XEN_CONS(channel_get(C_TO_SMALL_XEN_INT(i), chn_n, fld, caller), res);
+	    res = XEN_CONS(channel_get(C_TO_XEN_INT(i), chn_n, fld, caller), res);
 	}
       return(res);
     }
@@ -4369,7 +4369,7 @@ static XEN channel_get(XEN snd_n, XEN chn_n, cp_field_t fld, char *caller)
 	  if (sp == NULL)
 	    return(snd_no_such_sound_error(caller, snd_n));
 	  for (i = sp->nchans - 1; i >= 0; i--)
-	    res = XEN_CONS(channel_get(snd_n, C_TO_SMALL_XEN_INT(i), fld, caller), res);
+	    res = XEN_CONS(channel_get(snd_n, C_TO_XEN_INT(i), fld, caller), res);
 	  return(res);
 	}
       else
@@ -4543,7 +4543,7 @@ static XEN channel_set(XEN snd_n, XEN chn_n, XEN on, cp_field_t fld, char *calle
 	{
 	  sp = ss->sounds[i];
 	  if ((sp) && (sp->inuse == SOUND_NORMAL))
-	    res = XEN_CONS(channel_set(C_TO_SMALL_XEN_INT(i), chn_n, on, fld, caller), res);
+	    res = XEN_CONS(channel_set(C_TO_XEN_INT(i), chn_n, on, fld, caller), res);
 	}
       return(res);
     }
@@ -4553,7 +4553,7 @@ static XEN channel_set(XEN snd_n, XEN chn_n, XEN on, cp_field_t fld, char *calle
       if (sp == NULL) 
 	return(snd_no_such_sound_error(caller, snd_n));
       for (i = sp->nchans - 1; i >= 0; i--)
-	res = XEN_CONS(channel_set(snd_n, C_TO_SMALL_XEN_INT(i), on, fld, caller), res);
+	res = XEN_CONS(channel_set(snd_n, C_TO_XEN_INT(i), on, fld, caller), res);
       return(res);
     }
   ASSERT_CHANNEL(caller, snd_n, chn_n, 2);
@@ -4754,7 +4754,7 @@ static XEN channel_set(XEN snd_n, XEN chn_n, XEN on, cp_field_t fld, char *calle
       return(C_TO_XEN_INT(cp->transform_type));
       break;
     case CP_TRANSFORM_NORMALIZATION:      
-      cp->transform_normalization = (fft_normalize_t)XEN_TO_SMALL_C_INT(on); /* range already checked */
+      cp->transform_normalization = (fft_normalize_t)XEN_TO_C_INT(on); /* range already checked */
       calculate_fft(cp); 
       return(C_TO_XEN_INT((int)(cp->transform_normalization)));
       break;

@@ -562,8 +562,8 @@ bool procedure_arity_ok(XEN proc, int args)
     return(false);
 #else
   loc = snd_protect(arity);
-  rargs = XEN_TO_SMALL_C_INT(XEN_CAR(arity));
-  oargs = XEN_TO_SMALL_C_INT(XEN_CADR(arity));
+  rargs = XEN_TO_C_INT(XEN_CAR(arity));
+  oargs = XEN_TO_C_INT(XEN_CADR(arity));
   restargs = ((XEN_TRUE_P(XEN_CADDR(arity))) ? 1 : 0);
   snd_unprotect_at(loc);
   if (rargs > args) return(false);
@@ -598,8 +598,8 @@ char *procedure_ok(XEN proc, int args, const char *caller, const char *arg_name,
 			  arg_name, caller, argn, args, (rargs < 0) ? (-rargs) : rargs));
 #else
       loc = snd_protect(arity);
-      rargs = XEN_TO_SMALL_C_INT(XEN_CAR(arity));
-      oargs = XEN_TO_SMALL_C_INT(XEN_CADR(arity));
+      rargs = XEN_TO_C_INT(XEN_CAR(arity));
+      oargs = XEN_TO_C_INT(XEN_CADR(arity));
       restargs = ((XEN_TRUE_P(XEN_CADDR(arity))) ? 1 : 0);
       snd_unprotect_at(loc);
       if (rargs > args)
@@ -1510,7 +1510,7 @@ static XEN g_sounds(void)
     {
       sp = ss->sounds[i];
       if ((sp) && (sp->inuse == SOUND_NORMAL))
-	result = XEN_CONS(C_TO_SMALL_XEN_INT(i),
+	result = XEN_CONS(C_TO_XEN_INT(i),
 			  result);
     }
   return(result);
@@ -2390,7 +2390,7 @@ void after_open(int index)
 {
   if (XEN_HOOKED(after_open_hook))
     run_hook(after_open_hook,
-	     XEN_LIST_1(C_TO_SMALL_XEN_INT(index)),
+	     XEN_LIST_1(C_TO_XEN_INT(index)),
 	     S_after_open_hook);
 }
 

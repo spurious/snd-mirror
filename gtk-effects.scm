@@ -587,7 +587,7 @@
 		     (lambda (w data)
 		       (map-chan-over-target-with-sync 
 			(lambda (input-samps) 
-			  (let ((del (make-delay (round (* delay-time (srate)))))
+			  (let ((del (make-delay (inexact->exact (round (* delay-time (srate))))))
 				(samp 0))
 			    (lambda (inval)
 			      (set! samp (1+ samp))
@@ -654,7 +654,7 @@
 		       (map-chan-over-target-with-sync
 			(lambda (input-samps) 
 			  (let* ((flt (make-fir-filter :order 4 :xcoeffs (vct .125 .25 .25 .125)))
-				 (del (make-delay  (round (* flecho-delay (srate)))))
+				 (del (make-delay  (inexact->exact (round (* flecho-delay (srate))))))
 				 (samp 0))
 			    (lambda (inval)
 			      (set! samp (1+ samp))
@@ -726,7 +726,7 @@
 		       (map-chan-over-target-with-sync
 			(lambda (input-samps)
 			  (let* ((os (make-oscil zecho-freq))
-				 (len (round (* zecho-delay (srate))))
+				 (len (inexact->exact (round (* zecho-delay (srate)))))
 				 (del (make-delay len :max-size (+ len zecho-amp 1)))
 				 (samp 0))
 			    (lambda (inval)
@@ -1814,7 +1814,7 @@ Adds reverberation scaled by reverb amount, lowpass filtering, and feedback. Mov
 	       (comb2 (make-comb 0.733 4999))
 	       (comb3 (make-comb 0.715 5399))
 	       (comb4 (make-comb 0.697 5801))
-	       (outdel1 (make-delay (round (* .013 (srate)))))
+	       (outdel1 (make-delay (inexact->exact (round (* .013 (srate))))))
 	       (comb-sum 0.0)
 	       (comb-sum-1 0.0)
 	       (comb-sum-2 0.0)
@@ -2302,7 +2302,7 @@ the synthesis amplitude, the FFT size, and the radius value."))
 		       (map-chan-over-target-with-sync 
 			(lambda (ignored)
 			  (let* ((ri (make-rand-interp :frequency flange-speed :amplitude flange-amount))
-				 (len (round (* flange-time (srate))))
+				 (len (inexact->exact (round (* flange-time (srate)))))
 				 (del (make-delay len :max-size (+ len flange-amount 1))))
 			    (lambda (inval)
 			      (* .75 (+ inval

@@ -27,6 +27,7 @@
 /* HISTORY:
  *
  *  21-Jul-04: deprecated XEN_TO_SMALL_C_INT and C_TO_SMALL_XEN_INT.
+ *             use new Guile 1.7 numerical function names (under flag HAVE_SCM_TO_SIGNED_INTEGER).
  *  28-Jun-04: XEN_REQUIRED_ARGS_OK to make it easier to turn off this check.
  *  9-June-04: complex number conversions (Guile) -- I don't think Ruby has complex numbers.
  *  21-May-04: plug some memory leaks in Ruby cases.
@@ -93,25 +94,6 @@
 
 
 /* ------------------------------ GUILE ------------------------------ */
-
-/* TODO: new: scm_to_signed_integer, scm_to_unsigned_integer, scm_is_signed_integer, scm_is_unsigned_integer
- *            scm_to_short, scm_to_ushort, (scm_to_long_long, scm_to_ulong_long, scm_to_int8, scm_to_uint8,
- *            scm_to_int16, scm_to_uint16, scm_to_int32, scm_to_uint32,
- *            scm_to_int64, scm_to_uint64, 
- *            scm_from_long_long, scm_from_ulong_long, scm_from_int8,
- *            scm_from_uint8, scm_from_int16, scm_from_uint16, scm_from_int32,
- *            scm_from_uint32, scm_from_int64, scm_from_uint64,
- *            scm_is_false, scm_is_true, scm_from_bool, and scm_is_bool
- *            scm_is_unsigned_integer, scm_to_signed_integer,
- *            scm_to_unsigned_integer, scm_to_schar, scm_to_uchar, scm_to_char,
- *            scm_to_short, scm_to_ushort, scm_to_long, scm_to_ulong,
- *            scm_to_size_t, scm_to_ssize_t, scm_from_schar, scm_from_uchar,
- *            scm_from_char, scm_from_short, scm_from_ushort, scm_from_int,
- *            scm_from_uint, scm_from_long, scm_from_ulong, scm_from_size_t,
- *            scm_from_ssize_t, scm_is_real, scm_to_double, scm_from_double
- *       deprecated: SCM_BOOLP
- *               #define SCM_BOOLP(x) (SCM_EQ_P ((x), SCM_BOOL_F) || SCM_EQ_P ((x), SCM_BOOL_T))
- */
 
 #if HAVE_GUILE
 #if (!HAVE_SCM_NUM2INT)
@@ -236,33 +218,67 @@
 #define XEN_ARG_8    8
 #define XEN_ARG_9    9
 
-#define XEN_TO_C_DOUBLE(a)            scm_num2dbl(a,  c__FUNCTION__)
-#if defined(__GNUC__) && (!(defined(__cplusplus)))
-  #define XEN_TO_C_DOUBLE_OR_ELSE(a, b) ({ XEN _xen_h_0_ = a; ((XEN_NUMBER_P(_xen_h_0_)) ? (scm_num2dbl(_xen_h_0_,  c__FUNCTION__)) : (b)); })
+
+/* all the number handlers changed (names...) in 1.7 */
+#if HAVE_SCM_TO_SIGNED_INTEGER
+  #define XEN_TO_C_DOUBLE(a)            scm_to_double(a)
+  #if defined(__GNUC__) && (!(defined(__cplusplus)))
+    #define XEN_TO_C_DOUBLE_OR_ELSE(a, b) ({ XEN _xen_h_0_ = a; ((XEN_NUMBER_P(_xen_h_0_)) ? (scm_to_double(_xen_h_0_)) : (b)); })
+  #else
+    #define XEN_TO_C_DOUBLE_OR_ELSE(a, b) xen_to_c_double_or_else(a, b)
+  #endif
+  #define XEN_TO_C_DOUBLE_WITH_CALLER(a, b) scm_to_double(a)
+  #define C_TO_XEN_DOUBLE(a)            scm_from_double(a)
+  #define XEN_TO_C_INT(a)               (int)scm_to_int(a)
+  #define XEN_TO_C_INT_OR_ELSE(a, b)    xen_to_c_int_or_else(a, b, c__FUNCTION__)
+  #define XEN_TO_C_INT_OR_ELSE_WITH_CALLER(a, b, c) xen_to_c_int_or_else(a, b, c)
+  #define C_TO_XEN_INT(a)               scm_from_int(a)
+  #define XEN_TO_C_ULONG(a)             scm_to_ulong(a)
+  #define C_TO_XEN_ULONG(a)             scm_from_ulong((unsigned long)a)
+  #define C_TO_XEN_LONG_LONG(a)         scm_from_long_long(a)
+  #define XEN_TO_C_LONG_LONG(a)         scm_to_long_long(a)
+  #define XEN_EXACT_P(Arg)              XEN_TRUE_P(scm_exact_p(Arg))
+  #define XEN_INTEGER_P(Arg)            xen_integer_p(Arg)
+  #define XEN_BOOLEAN_P(Arg)            ((bool)scm_is_bool(Arg))
+  #define XEN_NUMBER_P(Arg)             ((bool)scm_is_real(Arg))
+  #define XEN_DOUBLE_P(Arg)             ((bool)scm_is_real(Arg))
+  #define XEN_OFF_T_P(Arg)              ((bool)scm_is_integer(Arg))
+  #define XEN_ULONG_P(Arg1)             (XEN_NOT_FALSE_P(scm_number_p(Arg1)))
 #else
-  #define XEN_TO_C_DOUBLE_OR_ELSE(a, b) xen_to_c_double_or_else(a, b)
+  #define XEN_TO_C_DOUBLE(a)            scm_num2dbl(a,  c__FUNCTION__)
+  #if defined(__GNUC__) && (!(defined(__cplusplus)))
+    #define XEN_TO_C_DOUBLE_OR_ELSE(a, b) ({ XEN _xen_h_0_ = a; ((XEN_NUMBER_P(_xen_h_0_)) ? (scm_num2dbl(_xen_h_0_,  c__FUNCTION__)) : (b)); })
+  #else
+    #define XEN_TO_C_DOUBLE_OR_ELSE(a, b) xen_to_c_double_or_else(a, b)
+  #endif
+  #define XEN_TO_C_DOUBLE_WITH_CALLER(a, b) scm_num2dbl(a, b)
+  #if HAVE_SCM_MAKE_REAL
+    #define C_TO_XEN_DOUBLE(a)          scm_make_real(a)
+  #else
+    #define C_TO_XEN_DOUBLE(a)          scm_makdbl(a, 0.0)
+  #endif
+  #define XEN_TO_C_INT(a)               xen_to_c_int(a)
+  #define XEN_TO_C_INT_OR_ELSE(a, b)    xen_to_c_int_or_else(a, b, c__FUNCTION__)
+  #define XEN_TO_C_INT_OR_ELSE_WITH_CALLER(a, b, c) xen_to_c_int_or_else(a, b, c)
+  #define C_TO_XEN_INT(a)               scm_long2num((long)a)
+  #define XEN_TO_C_ULONG(a)             scm_num2ulong(a, 0, c__FUNCTION__)
+  #define C_TO_XEN_ULONG(a)             scm_ulong2num((unsigned long)a)
+  #define XEN_ULONG_P(Arg1)             (XEN_NOT_FALSE_P(scm_number_p(Arg1)))
+  #define XEN_EXACT_P(Arg)              XEN_TRUE_P(scm_exact_p(Arg))
+  #if HAVE_SCM_NUM2LONG_LONG
+    #define C_TO_XEN_LONG_LONG(a)       scm_long_long2num(a)
+    #define XEN_TO_C_LONG_LONG(a)       scm_num2long_long(a, 0, c__FUNCTION__)
+  #else
+    #define C_TO_XEN_LONG_LONG(a)       scm_long2num(a)
+    #define XEN_TO_C_LONG_LONG(a)       scm_num2long(a, 0, c__FUNCTION__)
+  #endif
+  #define XEN_INTEGER_P(Arg)            xen_integer_p(Arg)
+  #define XEN_BOOLEAN_P(Arg)            (SCM_BOOLP(Arg))
+  #define XEN_NUMBER_P(Arg)             (XEN_NOT_FALSE_P(scm_real_p(Arg)))
+  #define XEN_DOUBLE_P(Arg)             (XEN_NOT_FALSE_P(scm_real_p(Arg)))
+  #define XEN_OFF_T_P(Arg)              (XEN_NOT_FALSE_P(scm_integer_p(Arg)))
 #endif
-#define XEN_TO_C_DOUBLE_WITH_CALLER(a, b) scm_num2dbl(a, b)
-#if HAVE_SCM_MAKE_REAL
-  #define C_TO_XEN_DOUBLE(a)          scm_make_real(a)
-#else
-  #define C_TO_XEN_DOUBLE(a)          scm_makdbl(a, 0.0)
-#endif
-#define XEN_TO_C_INT(a)               xen_to_c_int(a)
-#define XEN_TO_C_INT_OR_ELSE(a, b)    xen_to_c_int_or_else(a, b, c__FUNCTION__)
-#define XEN_TO_C_INT_OR_ELSE_WITH_CALLER(a, b, c) xen_to_c_int_or_else(a, b, c)
-#define C_TO_XEN_INT(a)               scm_long2num((long)a)
-#define XEN_TO_C_ULONG(a)             scm_num2ulong(a, 0, c__FUNCTION__)
-#define C_TO_XEN_ULONG(a)             scm_ulong2num((unsigned long)a)
-#define XEN_ULONG_P(Arg1)             (XEN_NOT_FALSE_P(scm_number_p(Arg1)))
-#define XEN_EXACT_P(Arg)              XEN_TRUE_P(scm_exact_p(Arg))
-#if HAVE_SCM_NUM2LONG_LONG
-  #define C_TO_XEN_LONG_LONG(a)       scm_long_long2num(a)
-  #define XEN_TO_C_LONG_LONG(a)       scm_num2long_long(a, 0, c__FUNCTION__)
-#else
-  #define C_TO_XEN_LONG_LONG(a)       scm_long2num(a)
-  #define XEN_TO_C_LONG_LONG(a)       scm_num2long(a, 0, c__FUNCTION__)
-#endif
+
 #if HAVE_COMPLEX_TRIG
   #define XEN_TO_C_COMPLEX(a)         XEN_TO_C_DOUBLE(scm_real_part(a)) + (XEN_TO_C_DOUBLE(scm_imag_part(a)) * 1.0fi)
   #define C_TO_XEN_COMPLEX(a)         scm_make_complex(__real__ a, __imag__ a)
@@ -407,8 +423,8 @@
 #endif
 #define XEN_THROW(Tag, Arg)           scm_throw(Tag, Arg)
 
-#ifndef SCM_BOOLP
-  #define SCM_BOOLP(Arg)              gh_boolean_p(Arg)
+/* these are only needed in 1.3.4, but it's hard to find the right way to distinguish it */
+#ifndef SCM_PACK
   /* the next exist in 1.3.4 but are not usable in this context (need SCM_NIMP check) */
   #undef SCM_STRINGP
   #undef SCM_VECTORP
@@ -418,19 +434,12 @@
   #define SCM_SYMBOLP(Arg)            gh_symbol_p(Arg)
 #endif
 
-#define XEN_INTEGER_P(Arg)            xen_integer_p(Arg)
-#define XEN_BOOLEAN_P(Arg)            (SCM_BOOLP(Arg))
-#define XEN_NUMBER_P(Arg)             (XEN_NOT_FALSE_P(scm_real_p(Arg)))
-#define XEN_DOUBLE_P(Arg)             (XEN_NOT_FALSE_P(scm_real_p(Arg)))
-#define XEN_OFF_T_P(Arg)              (XEN_NOT_FALSE_P(scm_integer_p(Arg)))
-
 #define XEN_SYMBOL_P(Arg)             (SCM_SYMBOLP(Arg))
 #define XEN_PROCEDURE_P(Arg)          (XEN_NOT_FALSE_P(scm_procedure_p(Arg)))
 #define XEN_STRING_P(Arg)             (SCM_STRINGP(Arg))
 #define XEN_VECTOR_P(Arg)             (SCM_VECTORP(Arg))
 #define XEN_LIST_P(Arg)               (scm_ilength(Arg) >= 0)
 #define XEN_LIST_P_WITH_LENGTH(Arg, Len) ((Len = ((int)scm_ilength(Arg))) >= 0)
-#define XEN_ULONG_P(Arg1)             (XEN_NOT_FALSE_P(scm_number_p(Arg1)))
 #define XEN_HOOK_P(Arg)               (SCM_HOOKP(Arg))
 
 #define XEN_LIST_LENGTH(Arg)          ((int)(scm_ilength(Arg)))

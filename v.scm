@@ -71,7 +71,7 @@ This version of the fm-violin assumes it is running within with-sound (where *ou
 			   (= fm3-rat (floor fm3-rat))))
 	   (coeffs (and easy-case modulate
 			(partials->polynomial
-			 (list fm1-rat index1
+			 (list (inexact->exact fm1-rat) index1
 			       (inexact->exact (floor (/ fm2-rat fm1-rat))) index2
 			       (inexact->exact (floor (/ fm3-rat fm1-rat))) index3))))
 	   (norm (or (and easy-case modulate 1.0) index1))

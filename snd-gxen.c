@@ -104,7 +104,7 @@ void color_chan_components(color_t color, slider_choice_t which_component)
 static XEN g_graph_cursor(void)
 {
   #define H_graph_cursor "(" S_graph_cursor "): current graph cursor shape"
-  return(C_TO_SMALL_XEN_INT(in_graph_cursor(ss)));
+  return(C_TO_XEN_INT(in_graph_cursor(ss)));
 }
 
 static XEN g_set_graph_cursor(XEN curs)

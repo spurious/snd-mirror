@@ -756,7 +756,9 @@ else
 	  CFLAGS="$OLD_CFLAGS"
 	], ,$GTK_LIBS)
 	# gtk 2.3.6
-	# gtk 2.4.0|1|2|3: no API changes
+	# gtk 2.4.0|1|2|3|4: no API changes
+	AC_CHECK_LIB(m, gtk_about_dialog_new, [AC_DEFINE(HAVE_GTK_ABOUT_DIALOG_NEW)], ,$GTK_LIBS)
+	# gtk 2.5.0
 
         if test "$with_x11" = yes ; then
 	  AC_DEFINE(WITH_GTK_AND_X11)
@@ -988,6 +990,7 @@ if test $GUILE_CONFIG_works = yes; then
     AC_CHECK_LIB($GNAME, scm_continuation_p,     [AC_DEFINE(HAVE_SCM_CONTINUATION_P)])
     AC_CHECK_LIB($GNAME, scm_make_ratio,         [AC_DEFINE(HAVE_SCM_MAKE_RATIO)])
     AC_CHECK_LIB($GNAME, scm_make_complex,       [AC_DEFINE(HAVE_SCM_MAKE_COMPLEX)])
+    AC_CHECK_LIB($GNAME, scm_to_signed_integer,  [AC_DEFINE(HAVE_SCM_TO_SIGNED_INTEGER)])
     AC_CHECK_LIB($GNAME, scm_c_define_module,    [AC_DEFINE(HAVE_SCM_C_DEFINE_MODULE)
                                                  if test "$with_modules" = yes; then
 						   AC_DEFINE(WITH_MODULES)
@@ -1177,11 +1180,6 @@ dnl     it was "" to cancel -lXpm without the needed -L<dir> for the same case
 	audio_system=Sun
 	LDSO_FLAGS="-G"
 # if __SUNPRO_C we could add -xO3
-        ;;
-    *-*-hpux*) 
-        AC_DEFINE(HPUX)
-	audio_system=Hpux
-	LDSO_FLAGS="+z -Ae +DA1.1"
         ;;
     *-next*) 
         AC_DEFINE(NEXT)

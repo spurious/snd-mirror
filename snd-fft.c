@@ -827,8 +827,8 @@ static void apply_fft(fft_state *fs)
       if (XEN_HOOKED(before_transform_hook))
 	{
 	  res = run_progn_hook(before_transform_hook, 
-			       XEN_LIST_2(C_TO_SMALL_XEN_INT(cp->sound->index), 
-					  C_TO_SMALL_XEN_INT(cp->chan)),
+			       XEN_LIST_2(C_TO_XEN_INT(cp->sound->index), 
+					  C_TO_XEN_INT(cp->chan)),
 			       S_before_transform_hook);
 	  if (XEN_NUMBER_P(res))
 	    ind0 = XEN_TO_C_OFF_T_OR_ELSE(res, 0) + fs->beg;
@@ -1771,7 +1771,7 @@ to be displayed goes from low to high (normally 0.0 to 1.0)"
   XEN_ASSERT_TYPE(XEN_NUMBER_P(lo), lo, XEN_ARG_3, S_add_transform, "a number");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(hi), hi, XEN_ARG_4, S_add_transform, "a number");
   XEN_ASSERT_TYPE(XEN_PROCEDURE_P(proc), proc, XEN_ARG_5, S_add_transform, "a procedure");
-  return(C_TO_SMALL_XEN_INT(add_transform(XEN_TO_C_STRING(name),
+  return(C_TO_XEN_INT(add_transform(XEN_TO_C_STRING(name),
 					  XEN_TO_C_STRING(xlabel),
 					  XEN_TO_C_DOUBLE(lo),
 					  XEN_TO_C_DOUBLE(hi),
@@ -1792,11 +1792,11 @@ and otherwise return a list (total-size active-bins active-slices)"
   if (!(cp->graph_transform_p)) 
     return(XEN_ZERO);
   if (cp->transform_graph_type == GRAPH_ONCE)
-    return(C_TO_SMALL_XEN_INT(cp->transform_size));
+    return(C_TO_XEN_INT(cp->transform_size));
   si = (sono_info *)(cp->sonogram_data);
   if (si) return(XEN_LIST_3(C_TO_XEN_DOUBLE(cp->spectro_cutoff),
-			    C_TO_SMALL_XEN_INT(si->active_slices),
-			    C_TO_SMALL_XEN_INT(si->target_bins)));
+			    C_TO_XEN_INT(si->active_slices),
+			    C_TO_XEN_INT(si->target_bins)));
   return(XEN_ZERO);
 }
 
@@ -1913,7 +1913,7 @@ static XEN g_snd_transform(XEN type, XEN data, XEN hint)
   Float *dat;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(type), type, XEN_ARG_1, "snd-transform", "an integer");
   XEN_ASSERT_TYPE(VCT_P(data), data, XEN_ARG_2, "snd-transform", "a vct");
-  trf = XEN_TO_SMALL_C_INT(type);
+  trf = XEN_TO_C_INT(type);
   if ((trf < 0) || (trf > HAAR))
     XEN_OUT_OF_RANGE_ERROR("snd-transform", 1, type, "~A: invalid transform choice");
   v = TO_VCT(data);
@@ -1948,7 +1948,7 @@ static XEN g_snd_transform(XEN type, XEN data, XEN hint)
 #endif
       break;
     case WAVELET:
-      hnt = XEN_TO_SMALL_C_INT(hint);
+      hnt = XEN_TO_C_INT(hint);
       if (hnt < NUM_WAVELETS)
 	wavelet_transform(v->data, v->length, wavelet_data[hnt], wavelet_sizes[hnt]);
       break;

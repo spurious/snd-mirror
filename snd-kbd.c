@@ -367,7 +367,7 @@ static XEN g_key_binding(XEN key, XEN state, XEN cx_extended)
   XEN_ASSERT_TYPE(XEN_INTEGER_P(key), key, XEN_ARG_1, S_key_binding, "an integer");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(state), state, XEN_ARG_2, S_key_binding, "an integer");
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(cx_extended), cx_extended, XEN_ARG_3, S_key_binding, "a boolean");
-  k = XEN_TO_SMALL_C_INT(key);
+  k = XEN_TO_C_INT(key);
   s = XEN_TO_C_INT_OR_ELSE(state, 0);
   if ((k < MIN_KEY_CODE) || (k > MAX_KEY_CODE) ||
       (s < MIN_KEY_STATE) || (s > MAX_KEY_STATE))

@@ -129,14 +129,8 @@ static XEN optimization_hook;
 #define XEN_APPLICABLE_SMOB_P(a)            (SCM_TYP7(a) == scm_tc7_smob)
 #define XEN_ENV(a)                          SCM_ENV(a)
 #define XEN_SET_CDR(pair, new_val)          scm_set_cdr_x(pair, new_val)
-#if 0
-#define XEN_FRANDOM(a)                      (a * scm_c_uniform01(scm_c_default_rstate()))
-#define XEN_IRANDOM(a)                      scm_c_random(scm_c_default_rstate(), a)
-#else
-/* those are getting some complaint from Guile about the default_rstate */
 #define XEN_FRANDOM(a)                      mus_frandom(a)
 #define XEN_IRANDOM(a)                      mus_irandom(a)
-#endif
 #define INTEGER_TO_STRING(a)                XEN_TO_C_STRING(scm_number_to_string(R_C_TO_XEN_INT(a), XEN_UNDEFINED))
 #define INTEGER_TO_STRING_WITH_RADIX(a, b)  XEN_TO_C_STRING(scm_number_to_string(R_C_TO_XEN_INT(a), R_C_TO_XEN_INT(b)))
 #define DOUBLE_TO_STRING(a)                 XEN_TO_C_STRING(scm_number_to_string(C_TO_XEN_DOUBLE(a), XEN_UNDEFINED))

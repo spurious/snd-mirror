@@ -742,9 +742,9 @@ static snd_info *snd_open_file_1 (const char *filename, bool select, bool read_o
   if (sp)
     {
 #if HAVE_RUBY
-      XEN_VARIABLE_SET(S_memo_sound, C_TO_SMALL_XEN_INT(sp->index));
+      XEN_VARIABLE_SET(S_memo_sound, C_TO_XEN_INT(sp->index));
 #else
-      XEN_VARIABLE_SET(memo_sound, C_TO_SMALL_XEN_INT(sp->index));
+      XEN_VARIABLE_SET(memo_sound, C_TO_XEN_INT(sp->index));
 #endif
       sp->write_date = file_write_date(sp->filename);
       sp->need_update = false;
@@ -789,7 +789,7 @@ void snd_close_file(snd_info *sp)
   XEN res = XEN_FALSE;
   if (XEN_HOOKED(close_hook))
     res = run_or_hook(close_hook,
-		      XEN_LIST_1(C_TO_SMALL_XEN_INT(sp->index)),
+		      XEN_LIST_1(C_TO_XEN_INT(sp->index)),
 		      S_close_hook);
   if (XEN_TRUE_P(res)) return;
   /* exit does not go through this function to clean up temps -- see snd_exit_cleanly in snd-main.c */

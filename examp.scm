@@ -789,8 +789,8 @@ then inverse ffts."
 	 (fsize (expt 2 (ceiling (/ (log len) (log 2.0)))))
 	 (rdata (samples->vct 0 fsize))
 	 (idata (make-vct fsize))
-	 (lo (round (/ bottom (/ sr fsize))))
-	 (hi (round (/ top (/ sr fsize)))))
+	 (lo (inexact->exact (round (/ bottom (/ sr fsize)))))
+	 (hi (inexact->exact (round (/ top (/ sr fsize))))))
     (fft rdata idata 1)
     (do ((i 0 (1+ i))
 	 (j (- fsize 1) (1- j)))
@@ -1026,9 +1026,9 @@ in a hurry use: (clm-channel (make-comb .8 32)) instead"
 
 (define (comb-chord scaler size amp)
   "(comb-chord scaler size amp) returns a set of harmonically-related comb filters: (map-chan (comb-chord .95 100 .3))"
-  (let ((c1 (make-comb scaler size))
-	(c2 (make-comb scaler (* size .75)))
-	(c3 (make-comb scaler (* size 1.2))))
+  (let ((c1 (make-comb scaler (inexact->exact size)))
+	(c2 (make-comb scaler (inexact->exact (* size .75))))
+	(c3 (make-comb scaler (inexact->exact (* size 1.2)))))
     (lambda (x) 
       (* amp (+ (comb c1 x) (comb c2 x) (comb c3 x))))))
 
@@ -1042,7 +1042,7 @@ envelope: (map-chan (zcomb .8 32 '(0 0 1 10)))"
 	mx
 	(max-envelope-1 (cddr e) (max mx (abs (cadr e))))))
 
-  (let ((cmb (make-comb scaler size :max-size (+ size 1 (max-envelope-1 pm 0.0))))
+  (let ((cmb (make-comb scaler size :max-size (inexact->exact (+ size 1 (max-envelope-1 pm 0.0)))))
 	(penv (make-env :envelope pm :end (frames))))
     (lambda (x)
       (comb cmb x (env penv)))))
@@ -1108,15 +1108,15 @@ formants: (map-chan (osc-formants .99 '(400 800 1200) '(400 800 1200) '(4 2 3)))
 
 (define (echo scaler secs)
   "(echo scaler secs) returns an echo maker: (map-chan (echo .5 .5) 0 44100)"
-  (let ((del (make-delay (round (* secs (srate))))))
+  (let ((del (make-delay (inexact->exact (round (* secs (srate)))))))
     (lambda (inval)
       (+ inval (delay del (* scaler (+ (tap del) inval)))))))
 
 (define (zecho scaler secs frq amp)
   "(zecho scaler secs freq amp) returns a modulated echo maker: (map-chan (zecho .5 .75 6 10.0) 0 65000)"
   (let* ((os (make-oscil frq))
-	 (len (round (* secs (srate))))
-	 (del (make-delay len :max-size (+ len amp 1))))
+	 (len (inexact->exact (round (* secs (srate)))))
+	 (del (make-delay len :max-size (inexact->exact (+ len amp 1)))))
     (lambda (inval)
       (+ inval 
 	 (delay del 
@@ -1126,7 +1126,7 @@ formants: (map-chan (osc-formants .99 '(400 800 1200) '(400 800 1200) '(4 2 3)))
 (define (flecho scaler secs)
   "(flecho scaler secs) returns a low-pass filtered echo maker: (map-chan (flecho .5 .9) 0 75000)"
   (let* ((flt (make-fir-filter :order 4 :xcoeffs (vct .125 .25 .25 .125)))
-	 (del (make-delay  (round (* secs (srate))))))
+	 (del (make-delay  (inexact->exact (round (* secs (srate)))))))
     (lambda (inval)
       (+ inval 
 	 (delay del 
@@ -1282,7 +1282,7 @@ to produce a sound at a new pitch but at the original tempo.  It returns a funct
   (let* ((dur (/ (* (/ (frames) (srate)) (integrate-envelope gr-env 0.0)) (max-x gr-env)))
 	 (gr (make-granulate :expansion (cadr gr-env) :jitter 0))
 	 (ge (make-env :envelope gr-env :duration dur))
-	 (sound-len (round (* (srate) dur)))
+	 (sound-len (inexact->exact (round (* (srate) dur))))
 	 (len (max sound-len (frames)))
 	 (out-data (make-vct len))
 	 (sf (make-sample-reader)))

@@ -594,7 +594,7 @@ static void stop_playing_with_toggle(dac_info *dp, dac_toggle_t toggle, with_hoo
 	    {
 	      if ((sp_stopping) && (XEN_HOOKED(stop_playing_hook)))
 		run_hook(stop_playing_hook,
-			 XEN_LIST_1(C_TO_SMALL_XEN_INT(sp->index)),
+			 XEN_LIST_1(C_TO_XEN_INT(sp->index)),
 			 S_stop_playing_hook);
 	      if (IS_PLAYER(sp)) {free_player(sp); sp = NULL;}
 	    }
@@ -948,7 +948,7 @@ static bool call_start_playing_hook(snd_info *sp)
 {
   if ((XEN_HOOKED(start_playing_hook)) &&
       (XEN_TRUE_P(run_or_hook(start_playing_hook,
-			      XEN_LIST_1(C_TO_SMALL_XEN_INT(sp->index)),
+			      XEN_LIST_1(C_TO_XEN_INT(sp->index)),
 			      S_start_playing_hook))))
     {
       reflect_play_stop(sp);           /* turns off buttons */
@@ -2195,7 +2195,7 @@ static XEN g_play_1(XEN samp_n, XEN snd_n, XEN chn_n, bool back, bool syncd, XEN
       sp->filename = NULL;
       sp->delete_me = (void *)1;
       if (XEN_OFF_T_P(chn_n)) end = XEN_TO_C_OFF_T(chn_n);
-      play_sound_1(sp, samp, end, background, C_TO_SMALL_XEN_INT(0), caller, arg_pos, stop_proc);
+      play_sound_1(sp, samp, end, background, C_TO_XEN_INT(0), caller, arg_pos, stop_proc);
       if (name) FREE(name);
     }
   else
@@ -2444,8 +2444,8 @@ static XEN g_player_home(XEN snd_chn)
     {
       cp = players[index]->chans[player_chans[index]]; /* trying to get back to the original sound index (not the player index) */
       if ((cp->sound) && (cp->sound->active))
-	return(XEN_LIST_2(C_TO_SMALL_XEN_INT(cp->sound->index),
-			  C_TO_SMALL_XEN_INT(cp->chan)));
+	return(XEN_LIST_2(C_TO_XEN_INT(cp->sound->index),
+			  C_TO_XEN_INT(cp->chan)));
       else return(XEN_FALSE); /* can this happen? */
     }
   return(snd_no_such_player_error(S_player_home, snd_chn));

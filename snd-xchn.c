@@ -476,8 +476,8 @@ static void graph_mouse_enter(Widget w, XtPointer context, XEvent *event, Boolea
   XtVaGetValues(w, XmNuserData, &data, NULL);
   if (XEN_HOOKED(mouse_enter_graph_hook))
     run_hook(mouse_enter_graph_hook,
-	     XEN_LIST_2(C_TO_SMALL_XEN_INT(UNPACK_SOUND(data)),
-			C_TO_SMALL_XEN_INT(UNPACK_CHANNEL(data))),
+	     XEN_LIST_2(C_TO_XEN_INT(UNPACK_SOUND(data)),
+			C_TO_XEN_INT(UNPACK_CHANNEL(data))),
 	     S_mouse_enter_graph_hook);
   XDefineCursor(XtDisplay(w), XtWindow(w), (ss->sgx)->graph_cursor);
 }
@@ -488,8 +488,8 @@ static void graph_mouse_leave(Widget w, XtPointer context, XEvent *event, Boolea
   XtVaGetValues(w, XmNuserData, &data, NULL);
   if (XEN_HOOKED(mouse_leave_graph_hook))
     run_hook(mouse_leave_graph_hook,
-	     XEN_LIST_2(C_TO_SMALL_XEN_INT(UNPACK_SOUND(data)),
-			C_TO_SMALL_XEN_INT(UNPACK_CHANNEL(data))),
+	     XEN_LIST_2(C_TO_XEN_INT(UNPACK_SOUND(data)),
+			C_TO_XEN_INT(UNPACK_CHANNEL(data))),
 	     S_mouse_leave_graph_hook);
   XUndefineCursor(XtDisplay(w), XtWindow(w));
 }

@@ -19,17 +19,6 @@ XEN xen_return_first(XEN a, ...)
   return(a);
 }
 
-int xen_to_c_int_or_else(XEN obj, int fallback, const char *origin)
-{
-  /* don't want errors about floats with non-zero fractions etc */
-  if (XEN_INTEGER_P(obj))
-    return(XEN_TO_C_INT(obj));
-  else
-    if (XEN_NUMBER_P(obj))
-      return((int)XEN_TO_C_DOUBLE_WITH_CALLER(obj, origin));
-  return(fallback);
-}
-
 off_t xen_to_c_off_t_or_else(XEN obj, off_t fallback, const char *origin)
 {
 #if HAVE_GUILE
@@ -99,11 +88,24 @@ void xen_gc_mark(XEN val)
   scm_gc_mark(val);
 }
 
-double xen_to_c_double_or_else(XEN a, double b) {return((XEN_NUMBER_P(a)) ? (scm_num2dbl(a, c__FUNCTION__)) : (b));}
-bool xen_to_c_boolean_or_true(XEN a) {return((!((XEN_FALSE_P(a) || ((SCM_INUMP(a)) && (SCM_INUM(a) == 0))))));}
+
+double xen_to_c_double_or_else(XEN a, double b) 
+{
+#if HAVE_SCM_TO_SIGNED_INTEGER
+  return((XEN_NUMBER_P(a)) ? (scm_to_double(a)) : (b));
+#else
+  return((XEN_NUMBER_P(a)) ? (scm_num2dbl(a, c__FUNCTION__)) : (b));
+#endif
+}
+
+bool xen_to_c_boolean_or_true(XEN a) 
+{
+  return((!((XEN_FALSE_P(a) || ((SCM_INUMP(a)) && (SCM_INUM(a) == 0))))));
+}
+
 bool xen_integer_p(XEN a) 
 {
-#ifndef SCM_BOOLP
+#ifndef SCM_PACK
   return(XEN_NOT_FALSE_P(scm_integer_p(a)));
 #else
   if (SCM_INUMP(a)) return(true);
@@ -122,16 +124,28 @@ bool xen_integer_p(XEN a)
 #endif
 }
 
-#if HAVE_SCM_NUM2INT
+#if HAVE_SCM_NUM2INT || HAVE_SCM_TO_SIGNED_INTEGER
 int xen_to_c_int(XEN a)
 {
   if (SCM_INUMP(a)) return(SCM_INUM(a));
   if (SCM_REALP(a)) return((int)(SCM_REAL_VALUE(a)));
+#if HAVE_SCM_TO_SIGNED_INTEGER
+  return((int)scm_to_double(a));
+#else
   return((int)scm_num2dbl(a, c__FUNCTION__));
+#endif
 }
 #else
 int xen_to_c_int(XEN a) {return((int)gh_scm2int(a));}
 #endif
+
+int xen_to_c_int_or_else(XEN obj, int fallback, const char *origin)
+{
+  /* don't want errors about floats with non-zero fractions etc */
+  if (XEN_NUMBER_P(obj))
+    return(xen_to_c_int(obj));
+  return(fallback);
+}
 
 void xen_initialize(void)
 {
@@ -215,7 +229,7 @@ XEN xen_guile_create_hook(const char *name, int args, const char *help, XEN loca
 #if HAVE_GUILE
   if ((name) && (help))
     {
-      hook = scm_permanent_object(scm_make_hook(C_TO_SMALL_XEN_INT(args)));
+      hook = scm_permanent_object(scm_make_hook(C_TO_XEN_INT(args)));
       scm_set_object_property_x(hook, local_doc, C_TO_XEN_STRING(help));
 #if HAVE_SCM_C_DEFINE
 #if XEN_DEBUGGING
@@ -230,7 +244,7 @@ XEN xen_guile_create_hook(const char *name, int args, const char *help, XEN loca
   #endif
 #endif
     }
-  else hook = scm_make_hook(C_TO_SMALL_XEN_INT(args));
+  else hook = scm_make_hook(C_TO_XEN_INT(args));
 #endif
   return(hook);
 }
@@ -290,6 +304,17 @@ void xen_initialize(void)
 {
   ruby_init();
   Init_Hook();
+}
+
+int xen_to_c_int_or_else(XEN obj, int fallback, const char *origin)
+{
+  /* don't want errors about floats with non-zero fractions etc */
+  if (XEN_INTEGER_P(obj))
+    return(XEN_TO_C_INT(obj));
+  else
+    if (XEN_NUMBER_P(obj))
+      return((int)XEN_TO_C_DOUBLE_WITH_CALLER(obj, origin));
+  return(fallback);
 }
 
 void xen_gc_mark(XEN val)
@@ -567,7 +592,7 @@ void xen_rb_raise(XEN type, XEN info)
 int xen_rb_required_args(XEN val)
 {
   int args;
-  args = XEN_TO_SMALL_C_INT(val);
+  args = XEN_TO_C_INT(val);
   if (args == -1) return(1); 
   if (args < 0) return(abs(args + 1));
   return(args);
@@ -951,6 +976,11 @@ char *xen_version(void)
 #endif
   return(buf);
 #endif
+}
+
+int xen_to_c_int_or_else(XEN obj, int fallback, const char *origin)
+{
+  return(fallback);
 }
 
 void xen_repl(int argc, char **argv)

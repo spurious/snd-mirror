@@ -13,6 +13,7 @@
  *     HAVE_GTK_COMBO_BOX_POPUP for gtk+-2.3.4
  *     HAVE_GTK_COMBO_BOX_ENTRY_NEW_TEXT for gtk+-2.3.5
  *     HAVE_GBOOLEAN_GTK_FILE_CHOOSER_SET_FILENAME for gtk+-2.3.6
+ *     HAVE_GTK_ABOUT_DIALOG_NEW for gtk+-2.5.0
  *
  * reference args initial values are usually ignored, resultant values are returned in a list.
  * null ptrs are passed and returned as #f, trailing "user_data" callback function arguments are optional (default: #f).
@@ -44,6 +45,7 @@
  *     win32-specific functions
  *
  * HISTORY:
+ *     21-Jul:    gtk 2.5.0 changes.
  *     2-Jun:     gdk_atom_name needs to free return value
  *     28-May:    GtkFileSelection struct support put back in -- need ok_button et al.
  *     14-Apr:    make-target-entry.
@@ -225,6 +227,10 @@ static void define_xm_obj(void)
 #define XEN_GtkEntryCompletionMatchFunc_P(Arg)  XEN_FALSE_P(Arg) || (XEN_PROCEDURE_P(Arg) && (XEN_REQUIRED_ARGS_OK(Arg, 4)))
 #endif
 
+#if HAVE_GTK_ABOUT_DIALOG_NEW
+#define XEN_GtkTreeViewRowSeparatorFunc_P(Arg)  XEN_FALSE_P(Arg) || (XEN_PROCEDURE_P(Arg) && (XEN_REQUIRED_ARGS_OK(Arg, 3)))
+#endif
+
 #define XEN_lambda_P(Arg) XEN_PROCEDURE_P(Arg)
 #define XEN_GCallback_P(Arg) XEN_PROCEDURE_P(Arg) && ((XEN_REQUIRED_ARGS_OK(Arg, 2)) || (XEN_REQUIRED_ARGS_OK(Arg, 3)))
 #define XEN_TO_C_lambda2(Arg) XEN_FALSE_P(Arg) ? NULL : gxg_child_func
@@ -257,6 +263,10 @@ static void define_xm_obj(void)
 #if HAVE_GTK_FILE_CHOOSER_DIALOG_NEW
 #define XEN_TO_C_GtkFileFilterFunc(Arg) XEN_FALSE_P(Arg) ? NULL : gxg_file_filter
 #define XEN_TO_C_GtkEntryCompletionMatchFunc(Arg) XEN_FALSE_P(Arg) ? NULL : gxg_entry_completion_match
+#endif
+
+#if HAVE_GTK_ABOUT_DIALOG_NEW
+#define XEN_TO_C_GtkTreeViewRowSeparatorFunc(Arg) XEN_FALSE_P(Arg) ? NULL : gxg_row_separator
 #endif
 
 #define XEN_TO_C_GCallback(Arg) ((XEN_REQUIRED_ARGS_OK(Arg, 3)) ? (GCallback)gxg_func3 : (GCallback)gxg_func2)
@@ -927,6 +937,14 @@ XM_TYPE_PTR_1(GtkToolButton_, GtkToolButton*)
 XM_TYPE_PTR_2(GtkAccelMap_, GtkAccelMap*)
 #endif
 
+#if HAVE_GTK_ABOUT_DIALOG_NEW
+XM_TYPE_PTR(GtkCellView_, GtkCellView*)
+XM_TYPE_PTR(GValue_, GValue*)
+XM_TYPE_PTR(GtkAboutDialog_, GtkAboutDialog*)
+XM_TYPE_PTR(GtkIconView_, GtkIconView*)
+XM_TYPE(GtkIconViewForeachFunc, GtkIconViewForeachFunc)
+#endif
+
 #define XLS(a, b) XEN_TO_C_gchar_(XEN_LIST_REF(a, b))
 #define XLI(a, b) XEN_TO_C_INT(XEN_LIST_REF(a, b))
 #define XLG(a, b) XEN_TO_C_GType(XEN_LIST_REF(a, b))
@@ -1251,6 +1269,17 @@ static gboolean gxg_entry_completion_match(GtkEntryCompletion* completion, const
   return(XEN_TO_C_gboolean(XEN_CALL_4(XEN_CAR((XEN)func_data),
                                       C_TO_XEN_GtkEntryCompletion_(completion),
                                       C_TO_XEN_gchar_(key),
+                                      C_TO_XEN_GtkTreeIter_(iter),
+                                      XEN_CADR((XEN)func_data),
+                                      c__FUNCTION__)));
+}
+#endif
+
+#if HAVE_GTK_ABOUT_DIALOG_NEW
+static gboolean gxg_row_separator(GtkTreeModel* model, GtkTreeIter* iter, gpointer func_data)
+{
+  return(XEN_TO_C_gboolean(XEN_CALL_3(XEN_CAR((XEN)func_data),
+                                      C_TO_XEN_GtkTreeModel_(model),
                                       C_TO_XEN_GtkTreeIter_(iter),
                                       XEN_CADR((XEN)func_data),
                                       c__FUNCTION__)));
@@ -22899,6 +22928,727 @@ gchar* uri)"
 }
 #endif
 
+#if HAVE_GTK_ABOUT_DIALOG_NEW
+static XEN gxg_gtk_cell_view_get_type(void)
+{
+  #define H_gtk_cell_view_get_type "GType gtk_cell_view_get_type( void)"
+  return(C_TO_XEN_GType(gtk_cell_view_get_type()));
+}
+static XEN gxg_gtk_cell_view_new(void)
+{
+  #define H_gtk_cell_view_new "GtkWidget* gtk_cell_view_new( void)"
+  return(C_TO_XEN_GtkWidget_(gtk_cell_view_new()));
+}
+static XEN gxg_gtk_cell_view_new_with_text(XEN text)
+{
+  #define H_gtk_cell_view_new_with_text "GtkWidget* gtk_cell_view_new_with_text(gchar* text)"
+  XEN_ASSERT_TYPE(XEN_gchar__P(text), text, 1, "gtk_cell_view_new_with_text", "gchar*");
+  return(C_TO_XEN_GtkWidget_(gtk_cell_view_new_with_text(XEN_TO_C_gchar_(text))));
+}
+static XEN gxg_gtk_cell_view_new_with_markup(XEN markup)
+{
+  #define H_gtk_cell_view_new_with_markup "GtkWidget* gtk_cell_view_new_with_markup(gchar* markup)"
+  XEN_ASSERT_TYPE(XEN_gchar__P(markup), markup, 1, "gtk_cell_view_new_with_markup", "gchar*");
+  return(C_TO_XEN_GtkWidget_(gtk_cell_view_new_with_markup(XEN_TO_C_gchar_(markup))));
+}
+static XEN gxg_gtk_cell_view_new_with_pixbuf(XEN pixbuf)
+{
+  #define H_gtk_cell_view_new_with_pixbuf "GtkWidget* gtk_cell_view_new_with_pixbuf(GdkPixbuf* pixbuf)"
+  XEN_ASSERT_TYPE(XEN_GdkPixbuf__P(pixbuf), pixbuf, 1, "gtk_cell_view_new_with_pixbuf", "GdkPixbuf*");
+  return(C_TO_XEN_GtkWidget_(gtk_cell_view_new_with_pixbuf(XEN_TO_C_GdkPixbuf_(pixbuf))));
+}
+static XEN gxg_gtk_cell_view_set_value(XEN cell_view, XEN renderer, XEN property, XEN value)
+{
+  #define H_gtk_cell_view_set_value "void gtk_cell_view_set_value(GtkCellView* cell_view, GtkCellRenderer* renderer, \
+gchar* property, GValue* value)"
+  XEN_ASSERT_TYPE(XEN_GtkCellView__P(cell_view), cell_view, 1, "gtk_cell_view_set_value", "GtkCellView*");
+  XEN_ASSERT_TYPE(XEN_GtkCellRenderer__P(renderer), renderer, 2, "gtk_cell_view_set_value", "GtkCellRenderer*");
+  XEN_ASSERT_TYPE(XEN_gchar__P(property), property, 3, "gtk_cell_view_set_value", "gchar*");
+  XEN_ASSERT_TYPE(XEN_GValue__P(value), value, 4, "gtk_cell_view_set_value", "GValue*");
+  gtk_cell_view_set_value(XEN_TO_C_GtkCellView_(cell_view), XEN_TO_C_GtkCellRenderer_(renderer), XEN_TO_C_gchar_(property), 
+                          XEN_TO_C_GValue_(value));
+  return(XEN_FALSE);
+}
+static XEN gxg_gtk_cell_view_set_model(XEN cell_view, XEN model)
+{
+  #define H_gtk_cell_view_set_model "void gtk_cell_view_set_model(GtkCellView* cell_view, GtkTreeModel* model)"
+  XEN_ASSERT_TYPE(XEN_GtkCellView__P(cell_view), cell_view, 1, "gtk_cell_view_set_model", "GtkCellView*");
+  XEN_ASSERT_TYPE(XEN_GtkTreeModel__P(model), model, 2, "gtk_cell_view_set_model", "GtkTreeModel*");
+  gtk_cell_view_set_model(XEN_TO_C_GtkCellView_(cell_view), XEN_TO_C_GtkTreeModel_(model));
+  return(XEN_FALSE);
+}
+static XEN gxg_gtk_cell_view_set_displayed_row(XEN cell_view, XEN path)
+{
+  #define H_gtk_cell_view_set_displayed_row "void gtk_cell_view_set_displayed_row(GtkCellView* cell_view, \
+GtkTreePath* path)"
+  XEN_ASSERT_TYPE(XEN_GtkCellView__P(cell_view), cell_view, 1, "gtk_cell_view_set_displayed_row", "GtkCellView*");
+  XEN_ASSERT_TYPE(XEN_GtkTreePath__P(path), path, 2, "gtk_cell_view_set_displayed_row", "GtkTreePath*");
+  gtk_cell_view_set_displayed_row(XEN_TO_C_GtkCellView_(cell_view), XEN_TO_C_GtkTreePath_(path));
+  return(XEN_FALSE);
+}
+static XEN gxg_gtk_cell_view_get_displayed_row(XEN cell_view)
+{
+  #define H_gtk_cell_view_get_displayed_row "GtkTreePath* gtk_cell_view_get_displayed_row(GtkCellView* cell_view)"
+  XEN_ASSERT_TYPE(XEN_GtkCellView__P(cell_view), cell_view, 1, "gtk_cell_view_get_displayed_row", "GtkCellView*");
+  return(C_TO_XEN_GtkTreePath_(gtk_cell_view_get_displayed_row(XEN_TO_C_GtkCellView_(cell_view))));
+}
+static XEN gxg_gtk_cell_view_get_size_of_row(XEN cell_view, XEN path, XEN requisition)
+{
+  #define H_gtk_cell_view_get_size_of_row "gboolean gtk_cell_view_get_size_of_row(GtkCellView* cell_view, \
+GtkTreePath* path, GtkRequisition* requisition)"
+  XEN_ASSERT_TYPE(XEN_GtkCellView__P(cell_view), cell_view, 1, "gtk_cell_view_get_size_of_row", "GtkCellView*");
+  XEN_ASSERT_TYPE(XEN_GtkTreePath__P(path), path, 2, "gtk_cell_view_get_size_of_row", "GtkTreePath*");
+  XEN_ASSERT_TYPE(XEN_GtkRequisition__P(requisition), requisition, 3, "gtk_cell_view_get_size_of_row", "GtkRequisition*");
+  return(C_TO_XEN_gboolean(gtk_cell_view_get_size_of_row(XEN_TO_C_GtkCellView_(cell_view), XEN_TO_C_GtkTreePath_(path), XEN_TO_C_GtkRequisition_(requisition))));
+}
+static XEN gxg_gtk_cell_view_set_background_color(XEN cell_view, XEN color)
+{
+  #define H_gtk_cell_view_set_background_color "void gtk_cell_view_set_background_color(GtkCellView* cell_view, \
+GdkColor* color)"
+  XEN_ASSERT_TYPE(XEN_GtkCellView__P(cell_view), cell_view, 1, "gtk_cell_view_set_background_color", "GtkCellView*");
+  XEN_ASSERT_TYPE(XEN_GdkColor__P(color), color, 2, "gtk_cell_view_set_background_color", "GdkColor*");
+  gtk_cell_view_set_background_color(XEN_TO_C_GtkCellView_(cell_view), XEN_TO_C_GdkColor_(color));
+  return(XEN_FALSE);
+}
+static XEN gxg_gtk_cell_view_set_cell_data(XEN cellview)
+{
+  #define H_gtk_cell_view_set_cell_data "void gtk_cell_view_set_cell_data(GtkCellView* cellview)"
+  XEN_ASSERT_TYPE(XEN_GtkCellView__P(cellview), cellview, 1, "gtk_cell_view_set_cell_data", "GtkCellView*");
+  gtk_cell_view_set_cell_data(XEN_TO_C_GtkCellView_(cellview));
+  return(XEN_FALSE);
+}
+static XEN gxg_gtk_cell_view_get_cell_renderers(XEN cellview)
+{
+  #define H_gtk_cell_view_get_cell_renderers "GList* gtk_cell_view_get_cell_renderers(GtkCellView* cellview)"
+  XEN_ASSERT_TYPE(XEN_GtkCellView__P(cellview), cellview, 1, "gtk_cell_view_get_cell_renderers", "GtkCellView*");
+  return(C_TO_XEN_GList_(gtk_cell_view_get_cell_renderers(XEN_TO_C_GtkCellView_(cellview))));
+}
+static XEN gxg_gdk_window_set_focus_on_map(XEN window, XEN focus_on_map)
+{
+  #define H_gdk_window_set_focus_on_map "void gdk_window_set_focus_on_map(GdkWindow* window, gboolean focus_on_map)"
+  XEN_ASSERT_TYPE(XEN_GdkWindow__P(window), window, 1, "gdk_window_set_focus_on_map", "GdkWindow*");
+  XEN_ASSERT_TYPE(XEN_gboolean_P(focus_on_map), focus_on_map, 2, "gdk_window_set_focus_on_map", "gboolean");
+  gdk_window_set_focus_on_map(XEN_TO_C_GdkWindow_(window), XEN_TO_C_gboolean(focus_on_map));
+  return(XEN_FALSE);
+}
+static XEN gxg_gdk_window_enable_synchronized_configure(XEN window)
+{
+  #define H_gdk_window_enable_synchronized_configure "void gdk_window_enable_synchronized_configure(GdkWindow* window)"
+  XEN_ASSERT_TYPE(XEN_GdkWindow__P(window), window, 1, "gdk_window_enable_synchronized_configure", "GdkWindow*");
+  gdk_window_enable_synchronized_configure(XEN_TO_C_GdkWindow_(window));
+  return(XEN_FALSE);
+}
+static XEN gxg_gdk_window_configure_finished(XEN window)
+{
+  #define H_gdk_window_configure_finished "void gdk_window_configure_finished(GdkWindow* window)"
+  XEN_ASSERT_TYPE(XEN_GdkWindow__P(window), window, 1, "gdk_window_configure_finished", "GdkWindow*");
+  gdk_window_configure_finished(XEN_TO_C_GdkWindow_(window));
+  return(XEN_FALSE);
+}
+static XEN gxg_gtk_action_group_translate_string(XEN action_group, XEN string)
+{
+  #define H_gtk_action_group_translate_string "gchar* gtk_action_group_translate_string(GtkActionGroup* action_group, \
+gchar* string)"
+  XEN_ASSERT_TYPE(XEN_GtkActionGroup__P(action_group), action_group, 1, "gtk_action_group_translate_string", "GtkActionGroup*");
+  XEN_ASSERT_TYPE(XEN_gchar__P(string), string, 2, "gtk_action_group_translate_string", "gchar*");
+  return(C_TO_XEN_gchar_(gtk_action_group_translate_string(XEN_TO_C_GtkActionGroup_(action_group), XEN_TO_C_gchar_(string))));
+}
+static XEN gxg_gtk_combo_box_get_wrap_width(XEN combo_box)
+{
+  #define H_gtk_combo_box_get_wrap_width "gint gtk_combo_box_get_wrap_width(GtkComboBox* combo_box)"
+  XEN_ASSERT_TYPE(XEN_GtkComboBox__P(combo_box), combo_box, 1, "gtk_combo_box_get_wrap_width", "GtkComboBox*");
+  return(C_TO_XEN_gint(gtk_combo_box_get_wrap_width(XEN_TO_C_GtkComboBox_(combo_box))));
+}
+static XEN gxg_gtk_combo_box_get_row_span_column(XEN combo_box)
+{
+  #define H_gtk_combo_box_get_row_span_column "gint gtk_combo_box_get_row_span_column(GtkComboBox* combo_box)"
+  XEN_ASSERT_TYPE(XEN_GtkComboBox__P(combo_box), combo_box, 1, "gtk_combo_box_get_row_span_column", "GtkComboBox*");
+  return(C_TO_XEN_gint(gtk_combo_box_get_row_span_column(XEN_TO_C_GtkComboBox_(combo_box))));
+}
+static XEN gxg_gtk_combo_box_get_column_span_column(XEN combo_box)
+{
+  #define H_gtk_combo_box_get_column_span_column "gint gtk_combo_box_get_column_span_column(GtkComboBox* combo_box)"
+  XEN_ASSERT_TYPE(XEN_GtkComboBox__P(combo_box), combo_box, 1, "gtk_combo_box_get_column_span_column", "GtkComboBox*");
+  return(C_TO_XEN_gint(gtk_combo_box_get_column_span_column(XEN_TO_C_GtkComboBox_(combo_box))));
+}
+static XEN gxg_gtk_combo_box_get_add_tearoffs(XEN combo_box)
+{
+  #define H_gtk_combo_box_get_add_tearoffs "gboolean gtk_combo_box_get_add_tearoffs(GtkComboBox* combo_box)"
+  XEN_ASSERT_TYPE(XEN_GtkComboBox__P(combo_box), combo_box, 1, "gtk_combo_box_get_add_tearoffs", "GtkComboBox*");
+  return(C_TO_XEN_gboolean(gtk_combo_box_get_add_tearoffs(XEN_TO_C_GtkComboBox_(combo_box))));
+}
+static XEN gxg_gtk_combo_box_set_add_tearoffs(XEN combo_box, XEN add_tearoffs)
+{
+  #define H_gtk_combo_box_set_add_tearoffs "void gtk_combo_box_set_add_tearoffs(GtkComboBox* combo_box, \
+gboolean add_tearoffs)"
+  XEN_ASSERT_TYPE(XEN_GtkComboBox__P(combo_box), combo_box, 1, "gtk_combo_box_set_add_tearoffs", "GtkComboBox*");
+  XEN_ASSERT_TYPE(XEN_gboolean_P(add_tearoffs), add_tearoffs, 2, "gtk_combo_box_set_add_tearoffs", "gboolean");
+  gtk_combo_box_set_add_tearoffs(XEN_TO_C_GtkComboBox_(combo_box), XEN_TO_C_gboolean(add_tearoffs));
+  return(XEN_FALSE);
+}
+static XEN gxg_gtk_combo_box_set_row_separator_column(XEN combo_box, XEN column)
+{
+  #define H_gtk_combo_box_set_row_separator_column "void gtk_combo_box_set_row_separator_column(GtkComboBox* combo_box, \
+gint column)"
+  XEN_ASSERT_TYPE(XEN_GtkComboBox__P(combo_box), combo_box, 1, "gtk_combo_box_set_row_separator_column", "GtkComboBox*");
+  XEN_ASSERT_TYPE(XEN_gint_P(column), column, 2, "gtk_combo_box_set_row_separator_column", "gint");
+  gtk_combo_box_set_row_separator_column(XEN_TO_C_GtkComboBox_(combo_box), XEN_TO_C_gint(column));
+  return(XEN_FALSE);
+}
+static XEN gxg_gtk_combo_box_get_row_separator_column(XEN combo_box)
+{
+  #define H_gtk_combo_box_get_row_separator_column "gint gtk_combo_box_get_row_separator_column(GtkComboBox* combo_box)"
+  XEN_ASSERT_TYPE(XEN_GtkComboBox__P(combo_box), combo_box, 1, "gtk_combo_box_get_row_separator_column", "GtkComboBox*");
+  return(C_TO_XEN_gint(gtk_combo_box_get_row_separator_column(XEN_TO_C_GtkComboBox_(combo_box))));
+}
+static XEN gxg_gtk_combo_box_get_active_text(XEN combo_box)
+{
+  #define H_gtk_combo_box_get_active_text "gchar* gtk_combo_box_get_active_text(GtkComboBox* combo_box)"
+  XEN_ASSERT_TYPE(XEN_GtkComboBox__P(combo_box), combo_box, 1, "gtk_combo_box_get_active_text", "GtkComboBox*");
+  return(C_TO_XEN_gchar_(gtk_combo_box_get_active_text(XEN_TO_C_GtkComboBox_(combo_box))));
+}
+static XEN gxg_gtk_drag_dest_add_text_targets(XEN widget)
+{
+  #define H_gtk_drag_dest_add_text_targets "void gtk_drag_dest_add_text_targets(GtkWidget* widget)"
+  XEN_ASSERT_TYPE(XEN_GtkWidget__P(widget), widget, 1, "gtk_drag_dest_add_text_targets", "GtkWidget*");
+  gtk_drag_dest_add_text_targets(XEN_TO_C_GtkWidget_(widget));
+  return(XEN_FALSE);
+}
+static XEN gxg_gtk_drag_source_add_text_targets(XEN widget)
+{
+  #define H_gtk_drag_source_add_text_targets "void gtk_drag_source_add_text_targets(GtkWidget* widget)"
+  XEN_ASSERT_TYPE(XEN_GtkWidget__P(widget), widget, 1, "gtk_drag_source_add_text_targets", "GtkWidget*");
+  gtk_drag_source_add_text_targets(XEN_TO_C_GtkWidget_(widget));
+  return(XEN_FALSE);
+}
+static XEN gxg_gtk_entry_completion_insert_prefix(XEN completion)
+{
+  #define H_gtk_entry_completion_insert_prefix "void gtk_entry_completion_insert_prefix(GtkEntryCompletion* completion)"
+  XEN_ASSERT_TYPE(XEN_GtkEntryCompletion__P(completion), completion, 1, "gtk_entry_completion_insert_prefix", "GtkEntryCompletion*");
+  gtk_entry_completion_insert_prefix(XEN_TO_C_GtkEntryCompletion_(completion));
+  return(XEN_FALSE);
+}
+static XEN gxg_gtk_entry_completion_set_inline_completion(XEN completion, XEN inline_completion)
+{
+  #define H_gtk_entry_completion_set_inline_completion "void gtk_entry_completion_set_inline_completion(GtkEntryCompletion* completion, \
+gboolean inline_completion)"
+  XEN_ASSERT_TYPE(XEN_GtkEntryCompletion__P(completion), completion, 1, "gtk_entry_completion_set_inline_completion", "GtkEntryCompletion*");
+  XEN_ASSERT_TYPE(XEN_gboolean_P(inline_completion), inline_completion, 2, "gtk_entry_completion_set_inline_completion", "gboolean");
+  gtk_entry_completion_set_inline_completion(XEN_TO_C_GtkEntryCompletion_(completion), XEN_TO_C_gboolean(inline_completion));
+  return(XEN_FALSE);
+}
+static XEN gxg_gtk_entry_completion_get_inline_completion(XEN completion)
+{
+  #define H_gtk_entry_completion_get_inline_completion "gboolean gtk_entry_completion_get_inline_completion(GtkEntryCompletion* completion)"
+  XEN_ASSERT_TYPE(XEN_GtkEntryCompletion__P(completion), completion, 1, "gtk_entry_completion_get_inline_completion", "GtkEntryCompletion*");
+  return(C_TO_XEN_gboolean(gtk_entry_completion_get_inline_completion(XEN_TO_C_GtkEntryCompletion_(completion))));
+}
+static XEN gxg_gtk_entry_completion_set_popup_completion(XEN completion, XEN popup_completion)
+{
+  #define H_gtk_entry_completion_set_popup_completion "void gtk_entry_completion_set_popup_completion(GtkEntryCompletion* completion, \
+gboolean popup_completion)"
+  XEN_ASSERT_TYPE(XEN_GtkEntryCompletion__P(completion), completion, 1, "gtk_entry_completion_set_popup_completion", "GtkEntryCompletion*");
+  XEN_ASSERT_TYPE(XEN_gboolean_P(popup_completion), popup_completion, 2, "gtk_entry_completion_set_popup_completion", "gboolean");
+  gtk_entry_completion_set_popup_completion(XEN_TO_C_GtkEntryCompletion_(completion), XEN_TO_C_gboolean(popup_completion));
+  return(XEN_FALSE);
+}
+static XEN gxg_gtk_entry_completion_get_popup_completion(XEN completion)
+{
+  #define H_gtk_entry_completion_get_popup_completion "gboolean gtk_entry_completion_get_popup_completion(GtkEntryCompletion* completion)"
+  XEN_ASSERT_TYPE(XEN_GtkEntryCompletion__P(completion), completion, 1, "gtk_entry_completion_get_popup_completion", "GtkEntryCompletion*");
+  return(C_TO_XEN_gboolean(gtk_entry_completion_get_popup_completion(XEN_TO_C_GtkEntryCompletion_(completion))));
+}
+static XEN gxg_gtk_entry_completion_get_text_column(XEN completion)
+{
+  #define H_gtk_entry_completion_get_text_column "gint gtk_entry_completion_get_text_column(GtkEntryCompletion* completion)"
+  XEN_ASSERT_TYPE(XEN_GtkEntryCompletion__P(completion), completion, 1, "gtk_entry_completion_get_text_column", "GtkEntryCompletion*");
+  return(C_TO_XEN_gint(gtk_entry_completion_get_text_column(XEN_TO_C_GtkEntryCompletion_(completion))));
+}
+static XEN gxg_gtk_icon_theme_get_icon_sizes(XEN icon_theme, XEN icon_name)
+{
+  #define H_gtk_icon_theme_get_icon_sizes "gint* gtk_icon_theme_get_icon_sizes(GtkIconTheme* icon_theme, \
+gchar* icon_name)"
+  XEN_ASSERT_TYPE(XEN_GtkIconTheme__P(icon_theme), icon_theme, 1, "gtk_icon_theme_get_icon_sizes", "GtkIconTheme*");
+  XEN_ASSERT_TYPE(XEN_gchar__P(icon_name), icon_name, 2, "gtk_icon_theme_get_icon_sizes", "gchar*");
+  return(C_TO_XEN_gint_(gtk_icon_theme_get_icon_sizes(XEN_TO_C_GtkIconTheme_(icon_theme), XEN_TO_C_gchar_(icon_name))));
+}
+static XEN gxg_gtk_menu_get_for_attach_widget(XEN widget )
+{
+  #define H_gtk_menu_get_for_attach_widget "GList* gtk_menu_get_for_attach_widget(GtkWidget* widget, \
+)"
+  XEN_ASSERT_TYPE(XEN_GtkWidget__P(widget ), widget , 1, "gtk_menu_get_for_attach_widget", "GtkWidget*");
+  return(C_TO_XEN_GList_(gtk_menu_get_for_attach_widget(XEN_TO_C_GtkWidget_(widget ))));
+}
+static XEN gxg_gtk_target_list_add_text_targets(XEN list)
+{
+  #define H_gtk_target_list_add_text_targets "void gtk_target_list_add_text_targets(GtkTargetList* list)"
+  XEN_ASSERT_TYPE(XEN_GtkTargetList__P(list), list, 1, "gtk_target_list_add_text_targets", "GtkTargetList*");
+  gtk_target_list_add_text_targets(XEN_TO_C_GtkTargetList_(list));
+  return(XEN_FALSE);
+}
+static XEN gxg_gtk_tree_view_set_fixed_height_mode(XEN tree_view, XEN enable)
+{
+  #define H_gtk_tree_view_set_fixed_height_mode "void gtk_tree_view_set_fixed_height_mode(GtkTreeView* tree_view, \
+gboolean enable)"
+  XEN_ASSERT_TYPE(XEN_GtkTreeView__P(tree_view), tree_view, 1, "gtk_tree_view_set_fixed_height_mode", "GtkTreeView*");
+  XEN_ASSERT_TYPE(XEN_gboolean_P(enable), enable, 2, "gtk_tree_view_set_fixed_height_mode", "gboolean");
+  gtk_tree_view_set_fixed_height_mode(XEN_TO_C_GtkTreeView_(tree_view), XEN_TO_C_gboolean(enable));
+  return(XEN_FALSE);
+}
+static XEN gxg_gtk_tree_view_get_fixed_height_mode(XEN tree_view)
+{
+  #define H_gtk_tree_view_get_fixed_height_mode "gboolean gtk_tree_view_get_fixed_height_mode(GtkTreeView* tree_view)"
+  XEN_ASSERT_TYPE(XEN_GtkTreeView__P(tree_view), tree_view, 1, "gtk_tree_view_get_fixed_height_mode", "GtkTreeView*");
+  return(C_TO_XEN_gboolean(gtk_tree_view_get_fixed_height_mode(XEN_TO_C_GtkTreeView_(tree_view))));
+}
+static XEN gxg_gtk_tree_view_set_hover_selection(XEN tree_view, XEN hover)
+{
+  #define H_gtk_tree_view_set_hover_selection "void gtk_tree_view_set_hover_selection(GtkTreeView* tree_view, \
+gboolean hover)"
+  XEN_ASSERT_TYPE(XEN_GtkTreeView__P(tree_view), tree_view, 1, "gtk_tree_view_set_hover_selection", "GtkTreeView*");
+  XEN_ASSERT_TYPE(XEN_gboolean_P(hover), hover, 2, "gtk_tree_view_set_hover_selection", "gboolean");
+  gtk_tree_view_set_hover_selection(XEN_TO_C_GtkTreeView_(tree_view), XEN_TO_C_gboolean(hover));
+  return(XEN_FALSE);
+}
+static XEN gxg_gtk_tree_view_get_hover_selection(XEN tree_view)
+{
+  #define H_gtk_tree_view_get_hover_selection "gboolean gtk_tree_view_get_hover_selection(GtkTreeView* tree_view)"
+  XEN_ASSERT_TYPE(XEN_GtkTreeView__P(tree_view), tree_view, 1, "gtk_tree_view_get_hover_selection", "GtkTreeView*");
+  return(C_TO_XEN_gboolean(gtk_tree_view_get_hover_selection(XEN_TO_C_GtkTreeView_(tree_view))));
+}
+static XEN gxg_gtk_tree_view_set_row_separator_func(XEN tree_view, XEN func, XEN func_data, XEN destroy)
+{
+  #define H_gtk_tree_view_set_row_separator_func "void gtk_tree_view_set_row_separator_func(GtkTreeView* tree_view, \
+GtkTreeViewRowSeparatorFunc func, lambda_data func_data, GtkDestroyNotify destroy)"
+  XEN_ASSERT_TYPE(XEN_GtkTreeView__P(tree_view), tree_view, 1, "gtk_tree_view_set_row_separator_func", "GtkTreeView*");
+  XEN_ASSERT_TYPE(XEN_GtkTreeViewRowSeparatorFunc_P(func), func, 2, "gtk_tree_view_set_row_separator_func", "GtkTreeViewRowSeparatorFunc");
+  XEN_ASSERT_TYPE(XEN_lambda_data_P(func_data), func_data, 3, "gtk_tree_view_set_row_separator_func", "lambda_data");
+  XEN_ASSERT_TYPE(XEN_GtkDestroyNotify_P(destroy), destroy, 4, "gtk_tree_view_set_row_separator_func", "GtkDestroyNotify");
+  {
+    XEN gxg_ptr = XEN_LIST_5(func, func_data, XEN_FALSE, XEN_FALSE, XEN_FALSE);
+    xm_protect(gxg_ptr);
+    XEN_LIST_SET(gxg_ptr, 3, destroy);
+    gtk_tree_view_set_row_separator_func(XEN_TO_C_GtkTreeView_(tree_view), XEN_TO_C_GtkTreeViewRowSeparatorFunc(func), XEN_TO_C_lambda_data(func_data), 
+                                     XEN_TO_C_GtkDestroyNotify(destroy));
+    return(XEN_FALSE);
+   }
+}
+static XEN gxg_gtk_window_set_focus_on_map(XEN window, XEN setting)
+{
+  #define H_gtk_window_set_focus_on_map "void gtk_window_set_focus_on_map(GtkWindow* window, gboolean setting)"
+  XEN_ASSERT_TYPE(XEN_GtkWindow__P(window), window, 1, "gtk_window_set_focus_on_map", "GtkWindow*");
+  XEN_ASSERT_TYPE(XEN_gboolean_P(setting), setting, 2, "gtk_window_set_focus_on_map", "gboolean");
+  gtk_window_set_focus_on_map(XEN_TO_C_GtkWindow_(window), XEN_TO_C_gboolean(setting));
+  return(XEN_FALSE);
+}
+static XEN gxg_gtk_window_get_focus_on_map(XEN window)
+{
+  #define H_gtk_window_get_focus_on_map "gboolean gtk_window_get_focus_on_map(GtkWindow* window)"
+  XEN_ASSERT_TYPE(XEN_GtkWindow__P(window), window, 1, "gtk_window_get_focus_on_map", "GtkWindow*");
+  return(C_TO_XEN_gboolean(gtk_window_get_focus_on_map(XEN_TO_C_GtkWindow_(window))));
+}
+static XEN gxg_gtk_window_set_icon_name(XEN window, XEN name)
+{
+  #define H_gtk_window_set_icon_name "void gtk_window_set_icon_name(GtkWindow* window, gchar* name)"
+  XEN_ASSERT_TYPE(XEN_GtkWindow__P(window), window, 1, "gtk_window_set_icon_name", "GtkWindow*");
+  XEN_ASSERT_TYPE(XEN_gchar__P(name), name, 2, "gtk_window_set_icon_name", "gchar*");
+  gtk_window_set_icon_name(XEN_TO_C_GtkWindow_(window), XEN_TO_C_gchar_(name));
+  return(XEN_FALSE);
+}
+static XEN gxg_gtk_window_get_icon_name(XEN window)
+{
+  #define H_gtk_window_get_icon_name "gchar* gtk_window_get_icon_name(GtkWindow* window)"
+  XEN_ASSERT_TYPE(XEN_GtkWindow__P(window), window, 1, "gtk_window_get_icon_name", "GtkWindow*");
+  return(C_TO_XEN_gchar_(gtk_window_get_icon_name(XEN_TO_C_GtkWindow_(window))));
+}
+static XEN gxg_gtk_window_set_default_icon_name(XEN name)
+{
+  #define H_gtk_window_set_default_icon_name "void gtk_window_set_default_icon_name(gchar* name)"
+  XEN_ASSERT_TYPE(XEN_gchar__P(name), name, 1, "gtk_window_set_default_icon_name", "gchar*");
+  gtk_window_set_default_icon_name(XEN_TO_C_gchar_(name));
+  return(XEN_FALSE);
+}
+static XEN gxg_gtk_about_dialog_get_type(void)
+{
+  #define H_gtk_about_dialog_get_type "GType gtk_about_dialog_get_type( void)"
+  return(C_TO_XEN_GType(gtk_about_dialog_get_type()));
+}
+static XEN gxg_gtk_about_dialog_new(void)
+{
+  #define H_gtk_about_dialog_new "GtkWidget* gtk_about_dialog_new( void)"
+  return(C_TO_XEN_GtkWidget_(gtk_about_dialog_new()));
+}
+static XEN gxg_gtk_about_dialog_get_name(XEN about)
+{
+  #define H_gtk_about_dialog_get_name "gchar* gtk_about_dialog_get_name(GtkAboutDialog* about)"
+  XEN_ASSERT_TYPE(XEN_GtkAboutDialog__P(about), about, 1, "gtk_about_dialog_get_name", "GtkAboutDialog*");
+  return(C_TO_XEN_gchar_(gtk_about_dialog_get_name(XEN_TO_C_GtkAboutDialog_(about))));
+}
+static XEN gxg_gtk_about_dialog_set_name(XEN about, XEN name)
+{
+  #define H_gtk_about_dialog_set_name "void gtk_about_dialog_set_name(GtkAboutDialog* about, gchar* name)"
+  XEN_ASSERT_TYPE(XEN_GtkAboutDialog__P(about), about, 1, "gtk_about_dialog_set_name", "GtkAboutDialog*");
+  XEN_ASSERT_TYPE(XEN_gchar__P(name), name, 2, "gtk_about_dialog_set_name", "gchar*");
+  gtk_about_dialog_set_name(XEN_TO_C_GtkAboutDialog_(about), XEN_TO_C_gchar_(name));
+  return(XEN_FALSE);
+}
+static XEN gxg_gtk_about_dialog_get_version(XEN about)
+{
+  #define H_gtk_about_dialog_get_version "gchar* gtk_about_dialog_get_version(GtkAboutDialog* about)"
+  XEN_ASSERT_TYPE(XEN_GtkAboutDialog__P(about), about, 1, "gtk_about_dialog_get_version", "GtkAboutDialog*");
+  return(C_TO_XEN_gchar_(gtk_about_dialog_get_version(XEN_TO_C_GtkAboutDialog_(about))));
+}
+static XEN gxg_gtk_about_dialog_set_version(XEN about, XEN version)
+{
+  #define H_gtk_about_dialog_set_version "void gtk_about_dialog_set_version(GtkAboutDialog* about, gchar* version)"
+  XEN_ASSERT_TYPE(XEN_GtkAboutDialog__P(about), about, 1, "gtk_about_dialog_set_version", "GtkAboutDialog*");
+  XEN_ASSERT_TYPE(XEN_gchar__P(version), version, 2, "gtk_about_dialog_set_version", "gchar*");
+  gtk_about_dialog_set_version(XEN_TO_C_GtkAboutDialog_(about), XEN_TO_C_gchar_(version));
+  return(XEN_FALSE);
+}
+static XEN gxg_gtk_about_dialog_get_copyright(XEN about)
+{
+  #define H_gtk_about_dialog_get_copyright "gchar* gtk_about_dialog_get_copyright(GtkAboutDialog* about)"
+  XEN_ASSERT_TYPE(XEN_GtkAboutDialog__P(about), about, 1, "gtk_about_dialog_get_copyright", "GtkAboutDialog*");
+  return(C_TO_XEN_gchar_(gtk_about_dialog_get_copyright(XEN_TO_C_GtkAboutDialog_(about))));
+}
+static XEN gxg_gtk_about_dialog_set_copyright(XEN about, XEN copyright)
+{
+  #define H_gtk_about_dialog_set_copyright "void gtk_about_dialog_set_copyright(GtkAboutDialog* about, \
+gchar* copyright)"
+  XEN_ASSERT_TYPE(XEN_GtkAboutDialog__P(about), about, 1, "gtk_about_dialog_set_copyright", "GtkAboutDialog*");
+  XEN_ASSERT_TYPE(XEN_gchar__P(copyright), copyright, 2, "gtk_about_dialog_set_copyright", "gchar*");
+  gtk_about_dialog_set_copyright(XEN_TO_C_GtkAboutDialog_(about), XEN_TO_C_gchar_(copyright));
+  return(XEN_FALSE);
+}
+static XEN gxg_gtk_about_dialog_get_comments(XEN about)
+{
+  #define H_gtk_about_dialog_get_comments "gchar* gtk_about_dialog_get_comments(GtkAboutDialog* about)"
+  XEN_ASSERT_TYPE(XEN_GtkAboutDialog__P(about), about, 1, "gtk_about_dialog_get_comments", "GtkAboutDialog*");
+  return(C_TO_XEN_gchar_(gtk_about_dialog_get_comments(XEN_TO_C_GtkAboutDialog_(about))));
+}
+static XEN gxg_gtk_about_dialog_set_comments(XEN about, XEN comments)
+{
+  #define H_gtk_about_dialog_set_comments "void gtk_about_dialog_set_comments(GtkAboutDialog* about, \
+gchar* comments)"
+  XEN_ASSERT_TYPE(XEN_GtkAboutDialog__P(about), about, 1, "gtk_about_dialog_set_comments", "GtkAboutDialog*");
+  XEN_ASSERT_TYPE(XEN_gchar__P(comments), comments, 2, "gtk_about_dialog_set_comments", "gchar*");
+  gtk_about_dialog_set_comments(XEN_TO_C_GtkAboutDialog_(about), XEN_TO_C_gchar_(comments));
+  return(XEN_FALSE);
+}
+static XEN gxg_gtk_about_dialog_get_license(XEN about)
+{
+  #define H_gtk_about_dialog_get_license "gchar* gtk_about_dialog_get_license(GtkAboutDialog* about)"
+  XEN_ASSERT_TYPE(XEN_GtkAboutDialog__P(about), about, 1, "gtk_about_dialog_get_license", "GtkAboutDialog*");
+  return(C_TO_XEN_gchar_(gtk_about_dialog_get_license(XEN_TO_C_GtkAboutDialog_(about))));
+}
+static XEN gxg_gtk_about_dialog_set_license(XEN about, XEN license)
+{
+  #define H_gtk_about_dialog_set_license "void gtk_about_dialog_set_license(GtkAboutDialog* about, gchar* license)"
+  XEN_ASSERT_TYPE(XEN_GtkAboutDialog__P(about), about, 1, "gtk_about_dialog_set_license", "GtkAboutDialog*");
+  XEN_ASSERT_TYPE(XEN_gchar__P(license), license, 2, "gtk_about_dialog_set_license", "gchar*");
+  gtk_about_dialog_set_license(XEN_TO_C_GtkAboutDialog_(about), XEN_TO_C_gchar_(license));
+  return(XEN_FALSE);
+}
+static XEN gxg_gtk_about_dialog_get_website(XEN about)
+{
+  #define H_gtk_about_dialog_get_website "gchar* gtk_about_dialog_get_website(GtkAboutDialog* about)"
+  XEN_ASSERT_TYPE(XEN_GtkAboutDialog__P(about), about, 1, "gtk_about_dialog_get_website", "GtkAboutDialog*");
+  return(C_TO_XEN_gchar_(gtk_about_dialog_get_website(XEN_TO_C_GtkAboutDialog_(about))));
+}
+static XEN gxg_gtk_about_dialog_set_website(XEN about, XEN website)
+{
+  #define H_gtk_about_dialog_set_website "void gtk_about_dialog_set_website(GtkAboutDialog* about, gchar* website)"
+  XEN_ASSERT_TYPE(XEN_GtkAboutDialog__P(about), about, 1, "gtk_about_dialog_set_website", "GtkAboutDialog*");
+  XEN_ASSERT_TYPE(XEN_gchar__P(website), website, 2, "gtk_about_dialog_set_website", "gchar*");
+  gtk_about_dialog_set_website(XEN_TO_C_GtkAboutDialog_(about), XEN_TO_C_gchar_(website));
+  return(XEN_FALSE);
+}
+static XEN gxg_gtk_about_dialog_get_website_label(XEN about)
+{
+  #define H_gtk_about_dialog_get_website_label "gchar* gtk_about_dialog_get_website_label(GtkAboutDialog* about)"
+  XEN_ASSERT_TYPE(XEN_GtkAboutDialog__P(about), about, 1, "gtk_about_dialog_get_website_label", "GtkAboutDialog*");
+  return(C_TO_XEN_gchar_(gtk_about_dialog_get_website_label(XEN_TO_C_GtkAboutDialog_(about))));
+}
+static XEN gxg_gtk_about_dialog_set_website_label(XEN about, XEN website_label)
+{
+  #define H_gtk_about_dialog_set_website_label "void gtk_about_dialog_set_website_label(GtkAboutDialog* about, \
+gchar* website_label)"
+  XEN_ASSERT_TYPE(XEN_GtkAboutDialog__P(about), about, 1, "gtk_about_dialog_set_website_label", "GtkAboutDialog*");
+  XEN_ASSERT_TYPE(XEN_gchar__P(website_label), website_label, 2, "gtk_about_dialog_set_website_label", "gchar*");
+  gtk_about_dialog_set_website_label(XEN_TO_C_GtkAboutDialog_(about), XEN_TO_C_gchar_(website_label));
+  return(XEN_FALSE);
+}
+static XEN gxg_gtk_about_dialog_get_authors(XEN about)
+{
+  #define H_gtk_about_dialog_get_authors "gchar** gtk_about_dialog_get_authors(GtkAboutDialog* about)"
+  XEN_ASSERT_TYPE(XEN_GtkAboutDialog__P(about), about, 1, "gtk_about_dialog_get_authors", "GtkAboutDialog*");
+  return(C_TO_XEN_gchar__(gtk_about_dialog_get_authors(XEN_TO_C_GtkAboutDialog_(about))));
+}
+static XEN gxg_gtk_about_dialog_set_authors(XEN about, XEN authors)
+{
+  #define H_gtk_about_dialog_set_authors "void gtk_about_dialog_set_authors(GtkAboutDialog* about, gchar** authors)"
+  XEN_ASSERT_TYPE(XEN_GtkAboutDialog__P(about), about, 1, "gtk_about_dialog_set_authors", "GtkAboutDialog*");
+  XEN_ASSERT_TYPE(XEN_gchar___P(authors), authors, 2, "gtk_about_dialog_set_authors", "gchar**");
+  gtk_about_dialog_set_authors(XEN_TO_C_GtkAboutDialog_(about), XEN_TO_C_gchar__(authors));
+  return(XEN_FALSE);
+}
+static XEN gxg_gtk_about_dialog_get_documenters(XEN about)
+{
+  #define H_gtk_about_dialog_get_documenters "gchar** gtk_about_dialog_get_documenters(GtkAboutDialog* about)"
+  XEN_ASSERT_TYPE(XEN_GtkAboutDialog__P(about), about, 1, "gtk_about_dialog_get_documenters", "GtkAboutDialog*");
+  return(C_TO_XEN_gchar__(gtk_about_dialog_get_documenters(XEN_TO_C_GtkAboutDialog_(about))));
+}
+static XEN gxg_gtk_about_dialog_set_documenters(XEN about, XEN documenters)
+{
+  #define H_gtk_about_dialog_set_documenters "void gtk_about_dialog_set_documenters(GtkAboutDialog* about, \
+gchar** documenters)"
+  XEN_ASSERT_TYPE(XEN_GtkAboutDialog__P(about), about, 1, "gtk_about_dialog_set_documenters", "GtkAboutDialog*");
+  XEN_ASSERT_TYPE(XEN_gchar___P(documenters), documenters, 2, "gtk_about_dialog_set_documenters", "gchar**");
+  gtk_about_dialog_set_documenters(XEN_TO_C_GtkAboutDialog_(about), XEN_TO_C_gchar__(documenters));
+  return(XEN_FALSE);
+}
+static XEN gxg_gtk_about_dialog_get_artists(XEN about)
+{
+  #define H_gtk_about_dialog_get_artists "gchar** gtk_about_dialog_get_artists(GtkAboutDialog* about)"
+  XEN_ASSERT_TYPE(XEN_GtkAboutDialog__P(about), about, 1, "gtk_about_dialog_get_artists", "GtkAboutDialog*");
+  return(C_TO_XEN_gchar__(gtk_about_dialog_get_artists(XEN_TO_C_GtkAboutDialog_(about))));
+}
+static XEN gxg_gtk_about_dialog_set_artists(XEN about, XEN artists)
+{
+  #define H_gtk_about_dialog_set_artists "void gtk_about_dialog_set_artists(GtkAboutDialog* about, gchar** artists)"
+  XEN_ASSERT_TYPE(XEN_GtkAboutDialog__P(about), about, 1, "gtk_about_dialog_set_artists", "GtkAboutDialog*");
+  XEN_ASSERT_TYPE(XEN_gchar___P(artists), artists, 2, "gtk_about_dialog_set_artists", "gchar**");
+  gtk_about_dialog_set_artists(XEN_TO_C_GtkAboutDialog_(about), XEN_TO_C_gchar__(artists));
+  return(XEN_FALSE);
+}
+static XEN gxg_gtk_about_dialog_get_translator_credits(XEN about)
+{
+  #define H_gtk_about_dialog_get_translator_credits "gchar* gtk_about_dialog_get_translator_credits(GtkAboutDialog* about)"
+  XEN_ASSERT_TYPE(XEN_GtkAboutDialog__P(about), about, 1, "gtk_about_dialog_get_translator_credits", "GtkAboutDialog*");
+  return(C_TO_XEN_gchar_(gtk_about_dialog_get_translator_credits(XEN_TO_C_GtkAboutDialog_(about))));
+}
+static XEN gxg_gtk_about_dialog_set_translator_credits(XEN about, XEN translator_credits)
+{
+  #define H_gtk_about_dialog_set_translator_credits "void gtk_about_dialog_set_translator_credits(GtkAboutDialog* about, \
+gchar* translator_credits)"
+  XEN_ASSERT_TYPE(XEN_GtkAboutDialog__P(about), about, 1, "gtk_about_dialog_set_translator_credits", "GtkAboutDialog*");
+  XEN_ASSERT_TYPE(XEN_gchar__P(translator_credits), translator_credits, 2, "gtk_about_dialog_set_translator_credits", "gchar*");
+  gtk_about_dialog_set_translator_credits(XEN_TO_C_GtkAboutDialog_(about), XEN_TO_C_gchar_(translator_credits));
+  return(XEN_FALSE);
+}
+static XEN gxg_gtk_about_dialog_get_logo(XEN about)
+{
+  #define H_gtk_about_dialog_get_logo "GdkPixbuf* gtk_about_dialog_get_logo(GtkAboutDialog* about)"
+  XEN_ASSERT_TYPE(XEN_GtkAboutDialog__P(about), about, 1, "gtk_about_dialog_get_logo", "GtkAboutDialog*");
+  return(C_TO_XEN_GdkPixbuf_(gtk_about_dialog_get_logo(XEN_TO_C_GtkAboutDialog_(about))));
+}
+static XEN gxg_gtk_about_dialog_set_logo(XEN about, XEN logo)
+{
+  #define H_gtk_about_dialog_set_logo "void gtk_about_dialog_set_logo(GtkAboutDialog* about, GdkPixbuf* logo)"
+  XEN_ASSERT_TYPE(XEN_GtkAboutDialog__P(about), about, 1, "gtk_about_dialog_set_logo", "GtkAboutDialog*");
+  XEN_ASSERT_TYPE(XEN_GdkPixbuf__P(logo), logo, 2, "gtk_about_dialog_set_logo", "GdkPixbuf*");
+  gtk_about_dialog_set_logo(XEN_TO_C_GtkAboutDialog_(about), XEN_TO_C_GdkPixbuf_(logo));
+  return(XEN_FALSE);
+}
+static XEN gxg_gtk_icon_view_get_type(void)
+{
+  #define H_gtk_icon_view_get_type "GType gtk_icon_view_get_type( void)"
+  return(C_TO_XEN_GType(gtk_icon_view_get_type()));
+}
+static XEN gxg_gtk_icon_view_new(void)
+{
+  #define H_gtk_icon_view_new "GtkWidget* gtk_icon_view_new( void)"
+  return(C_TO_XEN_GtkWidget_(gtk_icon_view_new()));
+}
+static XEN gxg_gtk_icon_view_new_with_model(XEN model)
+{
+  #define H_gtk_icon_view_new_with_model "GtkWidget* gtk_icon_view_new_with_model(GtkTreeModel* model)"
+  XEN_ASSERT_TYPE(XEN_GtkTreeModel__P(model), model, 1, "gtk_icon_view_new_with_model", "GtkTreeModel*");
+  return(C_TO_XEN_GtkWidget_(gtk_icon_view_new_with_model(XEN_TO_C_GtkTreeModel_(model))));
+}
+static XEN gxg_gtk_icon_view_set_model(XEN icon_view, XEN model)
+{
+  #define H_gtk_icon_view_set_model "void gtk_icon_view_set_model(GtkIconView* icon_view, GtkTreeModel* model)"
+  XEN_ASSERT_TYPE(XEN_GtkIconView__P(icon_view), icon_view, 1, "gtk_icon_view_set_model", "GtkIconView*");
+  XEN_ASSERT_TYPE(XEN_GtkTreeModel__P(model), model, 2, "gtk_icon_view_set_model", "GtkTreeModel*");
+  gtk_icon_view_set_model(XEN_TO_C_GtkIconView_(icon_view), XEN_TO_C_GtkTreeModel_(model));
+  return(XEN_FALSE);
+}
+static XEN gxg_gtk_icon_view_get_model(XEN icon_view)
+{
+  #define H_gtk_icon_view_get_model "GtkTreeModel* gtk_icon_view_get_model(GtkIconView* icon_view)"
+  XEN_ASSERT_TYPE(XEN_GtkIconView__P(icon_view), icon_view, 1, "gtk_icon_view_get_model", "GtkIconView*");
+  return(C_TO_XEN_GtkTreeModel_(gtk_icon_view_get_model(XEN_TO_C_GtkIconView_(icon_view))));
+}
+static XEN gxg_gtk_icon_view_set_text_column(XEN icon_view, XEN column)
+{
+  #define H_gtk_icon_view_set_text_column "void gtk_icon_view_set_text_column(GtkIconView* icon_view, \
+gint column)"
+  XEN_ASSERT_TYPE(XEN_GtkIconView__P(icon_view), icon_view, 1, "gtk_icon_view_set_text_column", "GtkIconView*");
+  XEN_ASSERT_TYPE(XEN_gint_P(column), column, 2, "gtk_icon_view_set_text_column", "gint");
+  gtk_icon_view_set_text_column(XEN_TO_C_GtkIconView_(icon_view), XEN_TO_C_gint(column));
+  return(XEN_FALSE);
+}
+static XEN gxg_gtk_icon_view_get_text_column(XEN icon_view)
+{
+  #define H_gtk_icon_view_get_text_column "gint gtk_icon_view_get_text_column(GtkIconView* icon_view)"
+  XEN_ASSERT_TYPE(XEN_GtkIconView__P(icon_view), icon_view, 1, "gtk_icon_view_get_text_column", "GtkIconView*");
+  return(C_TO_XEN_gint(gtk_icon_view_get_text_column(XEN_TO_C_GtkIconView_(icon_view))));
+}
+static XEN gxg_gtk_icon_view_set_markup_column(XEN icon_view, XEN column)
+{
+  #define H_gtk_icon_view_set_markup_column "void gtk_icon_view_set_markup_column(GtkIconView* icon_view, \
+gint column)"
+  XEN_ASSERT_TYPE(XEN_GtkIconView__P(icon_view), icon_view, 1, "gtk_icon_view_set_markup_column", "GtkIconView*");
+  XEN_ASSERT_TYPE(XEN_gint_P(column), column, 2, "gtk_icon_view_set_markup_column", "gint");
+  gtk_icon_view_set_markup_column(XEN_TO_C_GtkIconView_(icon_view), XEN_TO_C_gint(column));
+  return(XEN_FALSE);
+}
+static XEN gxg_gtk_icon_view_get_markup_column(XEN icon_view)
+{
+  #define H_gtk_icon_view_get_markup_column "gint gtk_icon_view_get_markup_column(GtkIconView* icon_view)"
+  XEN_ASSERT_TYPE(XEN_GtkIconView__P(icon_view), icon_view, 1, "gtk_icon_view_get_markup_column", "GtkIconView*");
+  return(C_TO_XEN_gint(gtk_icon_view_get_markup_column(XEN_TO_C_GtkIconView_(icon_view))));
+}
+static XEN gxg_gtk_icon_view_set_pixbuf_column(XEN icon_view, XEN column)
+{
+  #define H_gtk_icon_view_set_pixbuf_column "void gtk_icon_view_set_pixbuf_column(GtkIconView* icon_view, \
+gint column)"
+  XEN_ASSERT_TYPE(XEN_GtkIconView__P(icon_view), icon_view, 1, "gtk_icon_view_set_pixbuf_column", "GtkIconView*");
+  XEN_ASSERT_TYPE(XEN_gint_P(column), column, 2, "gtk_icon_view_set_pixbuf_column", "gint");
+  gtk_icon_view_set_pixbuf_column(XEN_TO_C_GtkIconView_(icon_view), XEN_TO_C_gint(column));
+  return(XEN_FALSE);
+}
+static XEN gxg_gtk_icon_view_get_pixbuf_column(XEN icon_view)
+{
+  #define H_gtk_icon_view_get_pixbuf_column "gint gtk_icon_view_get_pixbuf_column(GtkIconView* icon_view)"
+  XEN_ASSERT_TYPE(XEN_GtkIconView__P(icon_view), icon_view, 1, "gtk_icon_view_get_pixbuf_column", "GtkIconView*");
+  return(C_TO_XEN_gint(gtk_icon_view_get_pixbuf_column(XEN_TO_C_GtkIconView_(icon_view))));
+}
+static XEN gxg_gtk_icon_view_set_orientation(XEN icon_view, XEN orientation)
+{
+  #define H_gtk_icon_view_set_orientation "void gtk_icon_view_set_orientation(GtkIconView* icon_view, \
+GtkOrientation orientation)"
+  XEN_ASSERT_TYPE(XEN_GtkIconView__P(icon_view), icon_view, 1, "gtk_icon_view_set_orientation", "GtkIconView*");
+  XEN_ASSERT_TYPE(XEN_GtkOrientation_P(orientation), orientation, 2, "gtk_icon_view_set_orientation", "GtkOrientation");
+  gtk_icon_view_set_orientation(XEN_TO_C_GtkIconView_(icon_view), XEN_TO_C_GtkOrientation(orientation));
+  return(XEN_FALSE);
+}
+static XEN gxg_gtk_icon_view_get_orientation(XEN icon_view)
+{
+  #define H_gtk_icon_view_get_orientation "GtkOrientation gtk_icon_view_get_orientation(GtkIconView* icon_view)"
+  XEN_ASSERT_TYPE(XEN_GtkIconView__P(icon_view), icon_view, 1, "gtk_icon_view_get_orientation", "GtkIconView*");
+  return(C_TO_XEN_GtkOrientation(gtk_icon_view_get_orientation(XEN_TO_C_GtkIconView_(icon_view))));
+}
+static XEN gxg_gtk_icon_view_get_path_at_pos(XEN icon_view, XEN x, XEN y)
+{
+  #define H_gtk_icon_view_get_path_at_pos "GtkTreePath* gtk_icon_view_get_path_at_pos(GtkIconView* icon_view, \
+gint x, gint y)"
+  XEN_ASSERT_TYPE(XEN_GtkIconView__P(icon_view), icon_view, 1, "gtk_icon_view_get_path_at_pos", "GtkIconView*");
+  XEN_ASSERT_TYPE(XEN_gint_P(x), x, 2, "gtk_icon_view_get_path_at_pos", "gint");
+  XEN_ASSERT_TYPE(XEN_gint_P(y), y, 3, "gtk_icon_view_get_path_at_pos", "gint");
+  return(C_TO_XEN_GtkTreePath_(gtk_icon_view_get_path_at_pos(XEN_TO_C_GtkIconView_(icon_view), XEN_TO_C_gint(x), XEN_TO_C_gint(y))));
+}
+static XEN gxg_gtk_icon_view_selected_foreach(XEN icon_view, XEN func, XEN data)
+{
+  #define H_gtk_icon_view_selected_foreach "void gtk_icon_view_selected_foreach(GtkIconView* icon_view, \
+GtkIconViewForeachFunc func, gpointer data)"
+  XEN_ASSERT_TYPE(XEN_GtkIconView__P(icon_view), icon_view, 1, "gtk_icon_view_selected_foreach", "GtkIconView*");
+  XEN_ASSERT_TYPE(XEN_GtkIconViewForeachFunc_P(func), func, 2, "gtk_icon_view_selected_foreach", "GtkIconViewForeachFunc");
+  XEN_ASSERT_TYPE(XEN_gpointer_P(data), data, 3, "gtk_icon_view_selected_foreach", "gpointer");
+  gtk_icon_view_selected_foreach(XEN_TO_C_GtkIconView_(icon_view), XEN_TO_C_GtkIconViewForeachFunc(func), XEN_TO_C_gpointer(data));
+  return(XEN_FALSE);
+}
+static XEN gxg_gtk_icon_view_set_selection_mode(XEN icon_view, XEN mode)
+{
+  #define H_gtk_icon_view_set_selection_mode "void gtk_icon_view_set_selection_mode(GtkIconView* icon_view, \
+GtkSelectionMode mode)"
+  XEN_ASSERT_TYPE(XEN_GtkIconView__P(icon_view), icon_view, 1, "gtk_icon_view_set_selection_mode", "GtkIconView*");
+  XEN_ASSERT_TYPE(XEN_GtkSelectionMode_P(mode), mode, 2, "gtk_icon_view_set_selection_mode", "GtkSelectionMode");
+  gtk_icon_view_set_selection_mode(XEN_TO_C_GtkIconView_(icon_view), XEN_TO_C_GtkSelectionMode(mode));
+  return(XEN_FALSE);
+}
+static XEN gxg_gtk_icon_view_get_selection_mode(XEN icon_view)
+{
+  #define H_gtk_icon_view_get_selection_mode "GtkSelectionMode gtk_icon_view_get_selection_mode(GtkIconView* icon_view)"
+  XEN_ASSERT_TYPE(XEN_GtkIconView__P(icon_view), icon_view, 1, "gtk_icon_view_get_selection_mode", "GtkIconView*");
+  return(C_TO_XEN_GtkSelectionMode(gtk_icon_view_get_selection_mode(XEN_TO_C_GtkIconView_(icon_view))));
+}
+static XEN gxg_gtk_icon_view_select_path(XEN icon_view, XEN path)
+{
+  #define H_gtk_icon_view_select_path "void gtk_icon_view_select_path(GtkIconView* icon_view, GtkTreePath* path)"
+  XEN_ASSERT_TYPE(XEN_GtkIconView__P(icon_view), icon_view, 1, "gtk_icon_view_select_path", "GtkIconView*");
+  XEN_ASSERT_TYPE(XEN_GtkTreePath__P(path), path, 2, "gtk_icon_view_select_path", "GtkTreePath*");
+  gtk_icon_view_select_path(XEN_TO_C_GtkIconView_(icon_view), XEN_TO_C_GtkTreePath_(path));
+  return(XEN_FALSE);
+}
+static XEN gxg_gtk_icon_view_unselect_path(XEN icon_view, XEN path)
+{
+  #define H_gtk_icon_view_unselect_path "void gtk_icon_view_unselect_path(GtkIconView* icon_view, GtkTreePath* path)"
+  XEN_ASSERT_TYPE(XEN_GtkIconView__P(icon_view), icon_view, 1, "gtk_icon_view_unselect_path", "GtkIconView*");
+  XEN_ASSERT_TYPE(XEN_GtkTreePath__P(path), path, 2, "gtk_icon_view_unselect_path", "GtkTreePath*");
+  gtk_icon_view_unselect_path(XEN_TO_C_GtkIconView_(icon_view), XEN_TO_C_GtkTreePath_(path));
+  return(XEN_FALSE);
+}
+static XEN gxg_gtk_icon_view_path_is_selected(XEN icon_view, XEN path)
+{
+  #define H_gtk_icon_view_path_is_selected "gboolean gtk_icon_view_path_is_selected(GtkIconView* icon_view, \
+GtkTreePath* path)"
+  XEN_ASSERT_TYPE(XEN_GtkIconView__P(icon_view), icon_view, 1, "gtk_icon_view_path_is_selected", "GtkIconView*");
+  XEN_ASSERT_TYPE(XEN_GtkTreePath__P(path), path, 2, "gtk_icon_view_path_is_selected", "GtkTreePath*");
+  return(C_TO_XEN_gboolean(gtk_icon_view_path_is_selected(XEN_TO_C_GtkIconView_(icon_view), XEN_TO_C_GtkTreePath_(path))));
+}
+static XEN gxg_gtk_icon_view_get_selected_items(XEN icon_view)
+{
+  #define H_gtk_icon_view_get_selected_items "GList* gtk_icon_view_get_selected_items(GtkIconView* icon_view)"
+  XEN_ASSERT_TYPE(XEN_GtkIconView__P(icon_view), icon_view, 1, "gtk_icon_view_get_selected_items", "GtkIconView*");
+  return(C_TO_XEN_GList_(gtk_icon_view_get_selected_items(XEN_TO_C_GtkIconView_(icon_view))));
+}
+static XEN gxg_gtk_icon_view_select_all(XEN icon_view)
+{
+  #define H_gtk_icon_view_select_all "void gtk_icon_view_select_all(GtkIconView* icon_view)"
+  XEN_ASSERT_TYPE(XEN_GtkIconView__P(icon_view), icon_view, 1, "gtk_icon_view_select_all", "GtkIconView*");
+  gtk_icon_view_select_all(XEN_TO_C_GtkIconView_(icon_view));
+  return(XEN_FALSE);
+}
+static XEN gxg_gtk_icon_view_unselect_all(XEN icon_view)
+{
+  #define H_gtk_icon_view_unselect_all "void gtk_icon_view_unselect_all(GtkIconView* icon_view)"
+  XEN_ASSERT_TYPE(XEN_GtkIconView__P(icon_view), icon_view, 1, "gtk_icon_view_unselect_all", "GtkIconView*");
+  gtk_icon_view_unselect_all(XEN_TO_C_GtkIconView_(icon_view));
+  return(XEN_FALSE);
+}
+static XEN gxg_gtk_icon_view_item_activated(XEN icon_view, XEN path)
+{
+  #define H_gtk_icon_view_item_activated "void gtk_icon_view_item_activated(GtkIconView* icon_view, GtkTreePath* path)"
+  XEN_ASSERT_TYPE(XEN_GtkIconView__P(icon_view), icon_view, 1, "gtk_icon_view_item_activated", "GtkIconView*");
+  XEN_ASSERT_TYPE(XEN_GtkTreePath__P(path), path, 2, "gtk_icon_view_item_activated", "GtkTreePath*");
+  gtk_icon_view_item_activated(XEN_TO_C_GtkIconView_(icon_view), XEN_TO_C_GtkTreePath_(path));
+  return(XEN_FALSE);
+}
+static XEN gxg_gtk_cell_renderer_combo_get_type(void)
+{
+  #define H_gtk_cell_renderer_combo_get_type "GType gtk_cell_renderer_combo_get_type( void)"
+  return(C_TO_XEN_GType(gtk_cell_renderer_combo_get_type()));
+}
+static XEN gxg_gtk_cell_renderer_combo_new(void)
+{
+  #define H_gtk_cell_renderer_combo_new "GtkCellRenderer* gtk_cell_renderer_combo_new( void)"
+  return(C_TO_XEN_GtkCellRenderer_(gtk_cell_renderer_combo_new()));
+}
+static XEN gxg_gtk_cell_renderer_progress_get_type(void)
+{
+  #define H_gtk_cell_renderer_progress_get_type "GType gtk_cell_renderer_progress_get_type( void)"
+  return(C_TO_XEN_GType(gtk_cell_renderer_progress_get_type()));
+}
+static XEN gxg_gtk_cell_renderer_progress_new(void)
+{
+  #define H_gtk_cell_renderer_progress_new "GtkCellRenderer* gtk_cell_renderer_progress_new( void)"
+  return(C_TO_XEN_GtkCellRenderer_(gtk_cell_renderer_progress_new()));
+}
+#endif
+
 static XEN gxg_GDK_COLORMAP(XEN obj) {return(XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GdkColormap_"), XEN_CADR(obj)));}
 static XEN gxg_GDK_DRAG_CONTEXT(XEN obj) {return(XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GdkDragContext_"), XEN_CADR(obj)));}
 static XEN gxg_GDK_DRAWABLE(XEN obj) {return(XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GdkDrawable_"), XEN_CADR(obj)));}
@@ -23086,6 +23836,14 @@ static XEN gxg_GTK_TOOL_ITEM(XEN obj) {return(XEN_LIST_2(C_STRING_TO_XEN_SYMBOL(
 static XEN gxg_GTK_ACCEL_MAP(XEN obj) {return(XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkAccelMap"), XEN_CADR(obj)));}
 #endif
 
+#if HAVE_GTK_ABOUT_DIALOG_NEW
+static XEN gxg_GTK_CELL_VIEW(XEN obj) {return(XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkCellView_"), XEN_CADR(obj)));}
+static XEN gxg_GTK_ABOUT_DIALOG(XEN obj) {return(XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkAboutDialog_"), XEN_CADR(obj)));}
+static XEN gxg_GTK_CELL_RENDERER_COMBO(XEN obj) {return(XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkCellRendererCombo_"), XEN_CADR(obj)));}
+static XEN gxg_GTK_CELL_RENDERER_PROGRESS(XEN obj) {return(XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkCellRendererProgress_"), XEN_CADR(obj)));}
+static XEN gxg_GTK_ICON_VIEW(XEN obj) {return(XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkIconView_"), XEN_CADR(obj)));}
+#endif
+
 static XEN gxg_GDK_IS_COLORMAP(XEN obj) {return(C_TO_XEN_BOOLEAN(XEN_LIST_P(obj) && GDK_IS_COLORMAP((GTypeInstance *)XEN_TO_C_ULONG(XEN_CADR(obj)))));}
 static XEN gxg_GDK_IS_DRAG_CONTEXT(XEN obj) {return(C_TO_XEN_BOOLEAN(XEN_LIST_P(obj) && GDK_IS_DRAG_CONTEXT((GTypeInstance *)XEN_TO_C_ULONG(XEN_CADR(obj)))));}
 static XEN gxg_GDK_IS_DRAWABLE(XEN obj) {return(C_TO_XEN_BOOLEAN(XEN_LIST_P(obj) && GDK_IS_DRAWABLE((GTypeInstance *)XEN_TO_C_ULONG(XEN_CADR(obj)))));}
@@ -23254,6 +24012,14 @@ static XEN gxg_GTK_IS_TOOL_ITEM(XEN obj) {return(C_TO_XEN_BOOLEAN(XEN_LIST_P(obj
 
 #if HAVE_GTK_COMBO_BOX_POPUP
 static XEN gxg_GTK_IS_ACCEL_MAP(XEN obj) {return(C_TO_XEN_BOOLEAN(XEN_LIST_P(obj) && GTK_IS_ACCEL_MAP((GTypeInstance *)XEN_TO_C_ULONG(XEN_CADR(obj)))));}
+#endif
+
+#if HAVE_GTK_ABOUT_DIALOG_NEW
+static XEN gxg_GTK_IS_CELL_VIEW(XEN obj) {return(C_TO_XEN_BOOLEAN(XEN_LIST_P(obj) && GTK_IS_CELL_VIEW((GTypeInstance *)XEN_TO_C_ULONG(XEN_CADR(obj)))));}
+static XEN gxg_GTK_IS_ABOUT_DIALOG(XEN obj) {return(C_TO_XEN_BOOLEAN(XEN_LIST_P(obj) && GTK_IS_ABOUT_DIALOG((GTypeInstance *)XEN_TO_C_ULONG(XEN_CADR(obj)))));}
+static XEN gxg_GTK_IS_CELL_RENDERER_COMBO(XEN obj) {return(C_TO_XEN_BOOLEAN(XEN_LIST_P(obj) && GTK_IS_CELL_RENDERER_COMBO((GTypeInstance *)XEN_TO_C_ULONG(XEN_CADR(obj)))));}
+static XEN gxg_GTK_IS_CELL_RENDERER_PROGRESS(XEN obj) {return(C_TO_XEN_BOOLEAN(XEN_LIST_P(obj) && GTK_IS_CELL_RENDERER_PROGRESS((GTypeInstance *)XEN_TO_C_ULONG(XEN_CADR(obj)))));}
+static XEN gxg_GTK_IS_ICON_VIEW(XEN obj) {return(C_TO_XEN_BOOLEAN(XEN_LIST_P(obj) && GTK_IS_ICON_VIEW((GTypeInstance *)XEN_TO_C_ULONG(XEN_CADR(obj)))));}
 #endif
 
 
@@ -25983,6 +26749,109 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_file_chooser_set_current_folder_uri, gxg_gtk_file_chooser_set_current_folder_uri, 2, 0, 0, H_gtk_file_chooser_set_current_folder_uri);
 #endif
 
+#if HAVE_GTK_ABOUT_DIALOG_NEW
+  XG_DEFINE_PROCEDURE(gtk_cell_view_get_type, gxg_gtk_cell_view_get_type, 0, 0, 0, H_gtk_cell_view_get_type);
+  XG_DEFINE_PROCEDURE(gtk_cell_view_new, gxg_gtk_cell_view_new, 0, 0, 0, H_gtk_cell_view_new);
+  XG_DEFINE_PROCEDURE(gtk_cell_view_new_with_text, gxg_gtk_cell_view_new_with_text, 1, 0, 0, H_gtk_cell_view_new_with_text);
+  XG_DEFINE_PROCEDURE(gtk_cell_view_new_with_markup, gxg_gtk_cell_view_new_with_markup, 1, 0, 0, H_gtk_cell_view_new_with_markup);
+  XG_DEFINE_PROCEDURE(gtk_cell_view_new_with_pixbuf, gxg_gtk_cell_view_new_with_pixbuf, 1, 0, 0, H_gtk_cell_view_new_with_pixbuf);
+  XG_DEFINE_PROCEDURE(gtk_cell_view_set_value, gxg_gtk_cell_view_set_value, 4, 0, 0, H_gtk_cell_view_set_value);
+  XG_DEFINE_PROCEDURE(gtk_cell_view_set_model, gxg_gtk_cell_view_set_model, 2, 0, 0, H_gtk_cell_view_set_model);
+  XG_DEFINE_PROCEDURE(gtk_cell_view_set_displayed_row, gxg_gtk_cell_view_set_displayed_row, 2, 0, 0, H_gtk_cell_view_set_displayed_row);
+  XG_DEFINE_PROCEDURE(gtk_cell_view_get_displayed_row, gxg_gtk_cell_view_get_displayed_row, 1, 0, 0, H_gtk_cell_view_get_displayed_row);
+  XG_DEFINE_PROCEDURE(gtk_cell_view_get_size_of_row, gxg_gtk_cell_view_get_size_of_row, 3, 0, 0, H_gtk_cell_view_get_size_of_row);
+  XG_DEFINE_PROCEDURE(gtk_cell_view_set_background_color, gxg_gtk_cell_view_set_background_color, 2, 0, 0, H_gtk_cell_view_set_background_color);
+  XG_DEFINE_PROCEDURE(gtk_cell_view_set_cell_data, gxg_gtk_cell_view_set_cell_data, 1, 0, 0, H_gtk_cell_view_set_cell_data);
+  XG_DEFINE_PROCEDURE(gtk_cell_view_get_cell_renderers, gxg_gtk_cell_view_get_cell_renderers, 1, 0, 0, H_gtk_cell_view_get_cell_renderers);
+  XG_DEFINE_PROCEDURE(gdk_window_set_focus_on_map, gxg_gdk_window_set_focus_on_map, 2, 0, 0, H_gdk_window_set_focus_on_map);
+  XG_DEFINE_PROCEDURE(gdk_window_enable_synchronized_configure, gxg_gdk_window_enable_synchronized_configure, 1, 0, 0, H_gdk_window_enable_synchronized_configure);
+  XG_DEFINE_PROCEDURE(gdk_window_configure_finished, gxg_gdk_window_configure_finished, 1, 0, 0, H_gdk_window_configure_finished);
+  XG_DEFINE_PROCEDURE(gtk_action_group_translate_string, gxg_gtk_action_group_translate_string, 2, 0, 0, H_gtk_action_group_translate_string);
+  XG_DEFINE_PROCEDURE(gtk_combo_box_get_wrap_width, gxg_gtk_combo_box_get_wrap_width, 1, 0, 0, H_gtk_combo_box_get_wrap_width);
+  XG_DEFINE_PROCEDURE(gtk_combo_box_get_row_span_column, gxg_gtk_combo_box_get_row_span_column, 1, 0, 0, H_gtk_combo_box_get_row_span_column);
+  XG_DEFINE_PROCEDURE(gtk_combo_box_get_column_span_column, gxg_gtk_combo_box_get_column_span_column, 1, 0, 0, H_gtk_combo_box_get_column_span_column);
+  XG_DEFINE_PROCEDURE(gtk_combo_box_get_add_tearoffs, gxg_gtk_combo_box_get_add_tearoffs, 1, 0, 0, H_gtk_combo_box_get_add_tearoffs);
+  XG_DEFINE_PROCEDURE(gtk_combo_box_set_add_tearoffs, gxg_gtk_combo_box_set_add_tearoffs, 2, 0, 0, H_gtk_combo_box_set_add_tearoffs);
+  XG_DEFINE_PROCEDURE(gtk_combo_box_set_row_separator_column, gxg_gtk_combo_box_set_row_separator_column, 2, 0, 0, H_gtk_combo_box_set_row_separator_column);
+  XG_DEFINE_PROCEDURE(gtk_combo_box_get_row_separator_column, gxg_gtk_combo_box_get_row_separator_column, 1, 0, 0, H_gtk_combo_box_get_row_separator_column);
+  XG_DEFINE_PROCEDURE(gtk_combo_box_get_active_text, gxg_gtk_combo_box_get_active_text, 1, 0, 0, H_gtk_combo_box_get_active_text);
+  XG_DEFINE_PROCEDURE(gtk_drag_dest_add_text_targets, gxg_gtk_drag_dest_add_text_targets, 1, 0, 0, H_gtk_drag_dest_add_text_targets);
+  XG_DEFINE_PROCEDURE(gtk_drag_source_add_text_targets, gxg_gtk_drag_source_add_text_targets, 1, 0, 0, H_gtk_drag_source_add_text_targets);
+  XG_DEFINE_PROCEDURE(gtk_entry_completion_insert_prefix, gxg_gtk_entry_completion_insert_prefix, 1, 0, 0, H_gtk_entry_completion_insert_prefix);
+  XG_DEFINE_PROCEDURE(gtk_entry_completion_set_inline_completion, gxg_gtk_entry_completion_set_inline_completion, 2, 0, 0, H_gtk_entry_completion_set_inline_completion);
+  XG_DEFINE_PROCEDURE(gtk_entry_completion_get_inline_completion, gxg_gtk_entry_completion_get_inline_completion, 1, 0, 0, H_gtk_entry_completion_get_inline_completion);
+  XG_DEFINE_PROCEDURE(gtk_entry_completion_set_popup_completion, gxg_gtk_entry_completion_set_popup_completion, 2, 0, 0, H_gtk_entry_completion_set_popup_completion);
+  XG_DEFINE_PROCEDURE(gtk_entry_completion_get_popup_completion, gxg_gtk_entry_completion_get_popup_completion, 1, 0, 0, H_gtk_entry_completion_get_popup_completion);
+  XG_DEFINE_PROCEDURE(gtk_entry_completion_get_text_column, gxg_gtk_entry_completion_get_text_column, 1, 0, 0, H_gtk_entry_completion_get_text_column);
+  XG_DEFINE_PROCEDURE(gtk_icon_theme_get_icon_sizes, gxg_gtk_icon_theme_get_icon_sizes, 2, 0, 0, H_gtk_icon_theme_get_icon_sizes);
+  XG_DEFINE_PROCEDURE(gtk_menu_get_for_attach_widget, gxg_gtk_menu_get_for_attach_widget, 1, 0, 0, H_gtk_menu_get_for_attach_widget);
+  XG_DEFINE_PROCEDURE(gtk_target_list_add_text_targets, gxg_gtk_target_list_add_text_targets, 1, 0, 0, H_gtk_target_list_add_text_targets);
+  XG_DEFINE_PROCEDURE(gtk_tree_view_set_fixed_height_mode, gxg_gtk_tree_view_set_fixed_height_mode, 2, 0, 0, H_gtk_tree_view_set_fixed_height_mode);
+  XG_DEFINE_PROCEDURE(gtk_tree_view_get_fixed_height_mode, gxg_gtk_tree_view_get_fixed_height_mode, 1, 0, 0, H_gtk_tree_view_get_fixed_height_mode);
+  XG_DEFINE_PROCEDURE(gtk_tree_view_set_hover_selection, gxg_gtk_tree_view_set_hover_selection, 2, 0, 0, H_gtk_tree_view_set_hover_selection);
+  XG_DEFINE_PROCEDURE(gtk_tree_view_get_hover_selection, gxg_gtk_tree_view_get_hover_selection, 1, 0, 0, H_gtk_tree_view_get_hover_selection);
+  XG_DEFINE_PROCEDURE(gtk_tree_view_set_row_separator_func, gxg_gtk_tree_view_set_row_separator_func, 4, 0, 0, H_gtk_tree_view_set_row_separator_func);
+  XG_DEFINE_PROCEDURE(gtk_window_set_focus_on_map, gxg_gtk_window_set_focus_on_map, 2, 0, 0, H_gtk_window_set_focus_on_map);
+  XG_DEFINE_PROCEDURE(gtk_window_get_focus_on_map, gxg_gtk_window_get_focus_on_map, 1, 0, 0, H_gtk_window_get_focus_on_map);
+  XG_DEFINE_PROCEDURE(gtk_window_set_icon_name, gxg_gtk_window_set_icon_name, 2, 0, 0, H_gtk_window_set_icon_name);
+  XG_DEFINE_PROCEDURE(gtk_window_get_icon_name, gxg_gtk_window_get_icon_name, 1, 0, 0, H_gtk_window_get_icon_name);
+  XG_DEFINE_PROCEDURE(gtk_window_set_default_icon_name, gxg_gtk_window_set_default_icon_name, 1, 0, 0, H_gtk_window_set_default_icon_name);
+  XG_DEFINE_PROCEDURE(gtk_about_dialog_get_type, gxg_gtk_about_dialog_get_type, 0, 0, 0, H_gtk_about_dialog_get_type);
+  XG_DEFINE_PROCEDURE(gtk_about_dialog_new, gxg_gtk_about_dialog_new, 0, 0, 0, H_gtk_about_dialog_new);
+  XG_DEFINE_PROCEDURE(gtk_about_dialog_get_name, gxg_gtk_about_dialog_get_name, 1, 0, 0, H_gtk_about_dialog_get_name);
+  XG_DEFINE_PROCEDURE(gtk_about_dialog_set_name, gxg_gtk_about_dialog_set_name, 2, 0, 0, H_gtk_about_dialog_set_name);
+  XG_DEFINE_PROCEDURE(gtk_about_dialog_get_version, gxg_gtk_about_dialog_get_version, 1, 0, 0, H_gtk_about_dialog_get_version);
+  XG_DEFINE_PROCEDURE(gtk_about_dialog_set_version, gxg_gtk_about_dialog_set_version, 2, 0, 0, H_gtk_about_dialog_set_version);
+  XG_DEFINE_PROCEDURE(gtk_about_dialog_get_copyright, gxg_gtk_about_dialog_get_copyright, 1, 0, 0, H_gtk_about_dialog_get_copyright);
+  XG_DEFINE_PROCEDURE(gtk_about_dialog_set_copyright, gxg_gtk_about_dialog_set_copyright, 2, 0, 0, H_gtk_about_dialog_set_copyright);
+  XG_DEFINE_PROCEDURE(gtk_about_dialog_get_comments, gxg_gtk_about_dialog_get_comments, 1, 0, 0, H_gtk_about_dialog_get_comments);
+  XG_DEFINE_PROCEDURE(gtk_about_dialog_set_comments, gxg_gtk_about_dialog_set_comments, 2, 0, 0, H_gtk_about_dialog_set_comments);
+  XG_DEFINE_PROCEDURE(gtk_about_dialog_get_license, gxg_gtk_about_dialog_get_license, 1, 0, 0, H_gtk_about_dialog_get_license);
+  XG_DEFINE_PROCEDURE(gtk_about_dialog_set_license, gxg_gtk_about_dialog_set_license, 2, 0, 0, H_gtk_about_dialog_set_license);
+  XG_DEFINE_PROCEDURE(gtk_about_dialog_get_website, gxg_gtk_about_dialog_get_website, 1, 0, 0, H_gtk_about_dialog_get_website);
+  XG_DEFINE_PROCEDURE(gtk_about_dialog_set_website, gxg_gtk_about_dialog_set_website, 2, 0, 0, H_gtk_about_dialog_set_website);
+  XG_DEFINE_PROCEDURE(gtk_about_dialog_get_website_label, gxg_gtk_about_dialog_get_website_label, 1, 0, 0, H_gtk_about_dialog_get_website_label);
+  XG_DEFINE_PROCEDURE(gtk_about_dialog_set_website_label, gxg_gtk_about_dialog_set_website_label, 2, 0, 0, H_gtk_about_dialog_set_website_label);
+  XG_DEFINE_PROCEDURE(gtk_about_dialog_get_authors, gxg_gtk_about_dialog_get_authors, 1, 0, 0, H_gtk_about_dialog_get_authors);
+  XG_DEFINE_PROCEDURE(gtk_about_dialog_set_authors, gxg_gtk_about_dialog_set_authors, 2, 0, 0, H_gtk_about_dialog_set_authors);
+  XG_DEFINE_PROCEDURE(gtk_about_dialog_get_documenters, gxg_gtk_about_dialog_get_documenters, 1, 0, 0, H_gtk_about_dialog_get_documenters);
+  XG_DEFINE_PROCEDURE(gtk_about_dialog_set_documenters, gxg_gtk_about_dialog_set_documenters, 2, 0, 0, H_gtk_about_dialog_set_documenters);
+  XG_DEFINE_PROCEDURE(gtk_about_dialog_get_artists, gxg_gtk_about_dialog_get_artists, 1, 0, 0, H_gtk_about_dialog_get_artists);
+  XG_DEFINE_PROCEDURE(gtk_about_dialog_set_artists, gxg_gtk_about_dialog_set_artists, 2, 0, 0, H_gtk_about_dialog_set_artists);
+  XG_DEFINE_PROCEDURE(gtk_about_dialog_get_translator_credits, gxg_gtk_about_dialog_get_translator_credits, 1, 0, 0, H_gtk_about_dialog_get_translator_credits);
+  XG_DEFINE_PROCEDURE(gtk_about_dialog_set_translator_credits, gxg_gtk_about_dialog_set_translator_credits, 2, 0, 0, H_gtk_about_dialog_set_translator_credits);
+  XG_DEFINE_PROCEDURE(gtk_about_dialog_get_logo, gxg_gtk_about_dialog_get_logo, 1, 0, 0, H_gtk_about_dialog_get_logo);
+  XG_DEFINE_PROCEDURE(gtk_about_dialog_set_logo, gxg_gtk_about_dialog_set_logo, 2, 0, 0, H_gtk_about_dialog_set_logo);
+  XG_DEFINE_PROCEDURE(gtk_icon_view_get_type, gxg_gtk_icon_view_get_type, 0, 0, 0, H_gtk_icon_view_get_type);
+  XG_DEFINE_PROCEDURE(gtk_icon_view_new, gxg_gtk_icon_view_new, 0, 0, 0, H_gtk_icon_view_new);
+  XG_DEFINE_PROCEDURE(gtk_icon_view_new_with_model, gxg_gtk_icon_view_new_with_model, 1, 0, 0, H_gtk_icon_view_new_with_model);
+  XG_DEFINE_PROCEDURE(gtk_icon_view_set_model, gxg_gtk_icon_view_set_model, 2, 0, 0, H_gtk_icon_view_set_model);
+  XG_DEFINE_PROCEDURE(gtk_icon_view_get_model, gxg_gtk_icon_view_get_model, 1, 0, 0, H_gtk_icon_view_get_model);
+  XG_DEFINE_PROCEDURE(gtk_icon_view_set_text_column, gxg_gtk_icon_view_set_text_column, 2, 0, 0, H_gtk_icon_view_set_text_column);
+  XG_DEFINE_PROCEDURE(gtk_icon_view_get_text_column, gxg_gtk_icon_view_get_text_column, 1, 0, 0, H_gtk_icon_view_get_text_column);
+  XG_DEFINE_PROCEDURE(gtk_icon_view_set_markup_column, gxg_gtk_icon_view_set_markup_column, 2, 0, 0, H_gtk_icon_view_set_markup_column);
+  XG_DEFINE_PROCEDURE(gtk_icon_view_get_markup_column, gxg_gtk_icon_view_get_markup_column, 1, 0, 0, H_gtk_icon_view_get_markup_column);
+  XG_DEFINE_PROCEDURE(gtk_icon_view_set_pixbuf_column, gxg_gtk_icon_view_set_pixbuf_column, 2, 0, 0, H_gtk_icon_view_set_pixbuf_column);
+  XG_DEFINE_PROCEDURE(gtk_icon_view_get_pixbuf_column, gxg_gtk_icon_view_get_pixbuf_column, 1, 0, 0, H_gtk_icon_view_get_pixbuf_column);
+  XG_DEFINE_PROCEDURE(gtk_icon_view_set_orientation, gxg_gtk_icon_view_set_orientation, 2, 0, 0, H_gtk_icon_view_set_orientation);
+  XG_DEFINE_PROCEDURE(gtk_icon_view_get_orientation, gxg_gtk_icon_view_get_orientation, 1, 0, 0, H_gtk_icon_view_get_orientation);
+  XG_DEFINE_PROCEDURE(gtk_icon_view_get_path_at_pos, gxg_gtk_icon_view_get_path_at_pos, 3, 0, 0, H_gtk_icon_view_get_path_at_pos);
+  XG_DEFINE_PROCEDURE(gtk_icon_view_selected_foreach, gxg_gtk_icon_view_selected_foreach, 3, 0, 0, H_gtk_icon_view_selected_foreach);
+  XG_DEFINE_PROCEDURE(gtk_icon_view_set_selection_mode, gxg_gtk_icon_view_set_selection_mode, 2, 0, 0, H_gtk_icon_view_set_selection_mode);
+  XG_DEFINE_PROCEDURE(gtk_icon_view_get_selection_mode, gxg_gtk_icon_view_get_selection_mode, 1, 0, 0, H_gtk_icon_view_get_selection_mode);
+  XG_DEFINE_PROCEDURE(gtk_icon_view_select_path, gxg_gtk_icon_view_select_path, 2, 0, 0, H_gtk_icon_view_select_path);
+  XG_DEFINE_PROCEDURE(gtk_icon_view_unselect_path, gxg_gtk_icon_view_unselect_path, 2, 0, 0, H_gtk_icon_view_unselect_path);
+  XG_DEFINE_PROCEDURE(gtk_icon_view_path_is_selected, gxg_gtk_icon_view_path_is_selected, 2, 0, 0, H_gtk_icon_view_path_is_selected);
+  XG_DEFINE_PROCEDURE(gtk_icon_view_get_selected_items, gxg_gtk_icon_view_get_selected_items, 1, 0, 0, H_gtk_icon_view_get_selected_items);
+  XG_DEFINE_PROCEDURE(gtk_icon_view_select_all, gxg_gtk_icon_view_select_all, 1, 0, 0, H_gtk_icon_view_select_all);
+  XG_DEFINE_PROCEDURE(gtk_icon_view_unselect_all, gxg_gtk_icon_view_unselect_all, 1, 0, 0, H_gtk_icon_view_unselect_all);
+  XG_DEFINE_PROCEDURE(gtk_icon_view_item_activated, gxg_gtk_icon_view_item_activated, 2, 0, 0, H_gtk_icon_view_item_activated);
+  XG_DEFINE_PROCEDURE(gtk_cell_renderer_combo_get_type, gxg_gtk_cell_renderer_combo_get_type, 0, 0, 0, H_gtk_cell_renderer_combo_get_type);
+  XG_DEFINE_PROCEDURE(gtk_cell_renderer_combo_new, gxg_gtk_cell_renderer_combo_new, 0, 0, 0, H_gtk_cell_renderer_combo_new);
+  XG_DEFINE_PROCEDURE(gtk_cell_renderer_progress_get_type, gxg_gtk_cell_renderer_progress_get_type, 0, 0, 0, H_gtk_cell_renderer_progress_get_type);
+  XG_DEFINE_PROCEDURE(gtk_cell_renderer_progress_new, gxg_gtk_cell_renderer_progress_new, 0, 0, 0, H_gtk_cell_renderer_progress_new);
+#endif
+
   XG_DEFINE_PROCEDURE(GDK_COLORMAP, gxg_GDK_COLORMAP, 1, 0, 0, NULL);
   XG_DEFINE_PROCEDURE(GDK_DRAG_CONTEXT, gxg_GDK_DRAG_CONTEXT, 1, 0, 0, NULL);
   XG_DEFINE_PROCEDURE(GDK_DRAWABLE, gxg_GDK_DRAWABLE, 1, 0, 0, NULL);
@@ -26170,6 +27039,14 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(GTK_ACCEL_MAP, gxg_GTK_ACCEL_MAP, 1, 0, 0, NULL);
 #endif
 
+#if HAVE_GTK_ABOUT_DIALOG_NEW
+  XG_DEFINE_PROCEDURE(GTK_CELL_VIEW, gxg_GTK_CELL_VIEW, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_ABOUT_DIALOG, gxg_GTK_ABOUT_DIALOG, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_CELL_RENDERER_COMBO, gxg_GTK_CELL_RENDERER_COMBO, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_CELL_RENDERER_PROGRESS, gxg_GTK_CELL_RENDERER_PROGRESS, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_ICON_VIEW, gxg_GTK_ICON_VIEW, 1, 0, 0, NULL);
+#endif
+
   XG_DEFINE_PROCEDURE(GDK_IS_COLORMAP, gxg_GDK_IS_COLORMAP, 1, 0, 0, NULL);
   XG_DEFINE_PROCEDURE(GDK_IS_DRAG_CONTEXT, gxg_GDK_IS_DRAG_CONTEXT, 1, 0, 0, NULL);
   XG_DEFINE_PROCEDURE(GDK_IS_DRAWABLE, gxg_GDK_IS_DRAWABLE, 1, 0, 0, NULL);
@@ -26338,6 +27215,14 @@ static void define_functions(void)
 
 #if HAVE_GTK_COMBO_BOX_POPUP
   XG_DEFINE_PROCEDURE(GTK_IS_ACCEL_MAP, gxg_GTK_IS_ACCEL_MAP, 1, 0, 0, NULL);
+#endif
+
+#if HAVE_GTK_ABOUT_DIALOG_NEW
+  XG_DEFINE_PROCEDURE(GTK_IS_CELL_VIEW, gxg_GTK_IS_CELL_VIEW, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_IS_ABOUT_DIALOG, gxg_GTK_IS_ABOUT_DIALOG, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_IS_CELL_RENDERER_COMBO, gxg_GTK_IS_CELL_RENDERER_COMBO, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_IS_CELL_RENDERER_PROGRESS, gxg_GTK_IS_CELL_RENDERER_PROGRESS, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_IS_ICON_VIEW, gxg_GTK_IS_ICON_VIEW, 1, 0, 0, NULL);
 #endif
 
 }
@@ -29323,6 +30208,10 @@ static void define_integers(void)
   DEFINE_INTEGER(GTK_FILE_CHOOSER_ACTION_CREATE_FOLDER);
 #endif
 
+#if HAVE_GTK_ABOUT_DIALOG_NEW
+  DEFINE_INTEGER(GDK_OWNER_CHANGE);
+#endif
+
   DEFINE_ULONG(GDK_TYPE_PIXBUF);
   DEFINE_ULONG(GDK_TYPE_PIXBUF_ANIMATION);
   DEFINE_ULONG(GDK_TYPE_PIXBUF_ANIMATION_ITER);
@@ -29623,6 +30512,14 @@ static void define_integers(void)
   DEFINE_ULONG(GTK_TYPE_TOOL_ITEM);
 #endif
 
+#if HAVE_GTK_ABOUT_DIALOG_NEW
+  DEFINE_ULONG(GTK_TYPE_CELL_VIEW);
+  DEFINE_ULONG(GTK_TYPE_ABOUT_DIALOG);
+  DEFINE_ULONG(GTK_TYPE_CELL_RENDERER_COMBO);
+  DEFINE_ULONG(GTK_TYPE_CELL_RENDERER_PROGRESS);
+  DEFINE_ULONG(GTK_TYPE_ICON_VIEW);
+#endif
+
 }
 
 static void define_doubles(void)
@@ -29782,6 +30679,23 @@ static void define_strings(void)
   DEFINE_STRING(GTK_STOCK_NETWORK);
 #endif
 
+#if HAVE_GTK_ABOUT_DIALOG_NEW
+  DEFINE_STRING(GTK_STOCK_ABOUT);
+  DEFINE_STRING(GTK_STOCK_CONNECT);
+  DEFINE_STRING(GTK_STOCK_DIRECTORY);
+  DEFINE_STRING(GTK_STOCK_DISCONNECT);
+  DEFINE_STRING(GTK_STOCK_EDIT);
+  DEFINE_STRING(GTK_STOCK_FILE);
+  DEFINE_STRING(GTK_STOCK_MEDIA_FORWARD);
+  DEFINE_STRING(GTK_STOCK_MEDIA_NEXT);
+  DEFINE_STRING(GTK_STOCK_MEDIA_PAUSE);
+  DEFINE_STRING(GTK_STOCK_MEDIA_PLAY);
+  DEFINE_STRING(GTK_STOCK_MEDIA_PREVIOUS);
+  DEFINE_STRING(GTK_STOCK_MEDIA_RECORD);
+  DEFINE_STRING(GTK_STOCK_MEDIA_REWIND);
+  DEFINE_STRING(GTK_STOCK_MEDIA_STOP);
+#endif
+
 }
 
 /* -------------------------------- initialization -------------------------------- */
@@ -29815,10 +30729,10 @@ static bool xg_already_inited = false;
       define_strings();
       XEN_YES_WE_HAVE("xg");
 #if HAVE_GUILE
-      XEN_EVAL_C_STRING("(define xm-version \"25-Jun-04\")");
+      XEN_EVAL_C_STRING("(define xm-version \"21-Jul-04\")");
 #endif
 #if HAVE_RUBY
-      rb_define_global_const("Xm_Version", C_TO_XEN_STRING("25-Jun-04"));
+      rb_define_global_const("Xm_Version", C_TO_XEN_STRING("21-Jul-04"));
 #endif
       xg_already_inited = true;
 #if WITH_GTK_AND_X11
