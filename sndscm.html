@@ -67,6 +67,7 @@
   <li><a href="#sndtestdoc">snd-test.scm: Snd regression tests</a>
   <li><a href="#vdoc">v.scm: fm-violin</a>
   <li><a href="#wsdoc">ws.scm: with-sound</a>
+  <li><a href="#xmenveddoc">xm-enved.scm</a>
   <li><a href="#zipdoc">zip.scm: the zipper (a cross-fader)</a>
   <li><a href="#extsndvarexpl">A Note on Scheme variables in Snd</a>
   <li><a href="#extsndasneededexpl">A Note on "As-Needed" input functions</a>
@@ -2719,6 +2720,29 @@ opened (corresponding to CLM's *reverb*).  So the cooperating instrument code sh
 </pre>
 <p>which is essentially the same as in the standard CLM. 
 </p>
+
+<A NAME="xmenveddoc"></a><span class=box><h2>xm-enved.scm</h2></span>
+<pre>
+  <em class=def><A NAME="xecreateenved">xe-create-enved</a></em> name parent args axis
+  <em class=def><A NAME="xeenvelope">xe-envelope</a></em> xe-editor
+</pre>
+<p>This file implements an envelope editor using the xm module.  <b>xe-create-enved</b>
+returns a new envelope editor whose X axis label is <i>name</i>, the X and Y axis bounds
+are in the list <i>axis</i>, the editor's parent widget is <i>parent</i>,  and the Xt-style
+resource argument list is <i>args</i>.  The editor's current envelope is accessible
+(read and write) via <i>xe-envelope</i>.  For example,
+</p>
+<pre>
+(define outer (add-main-pane "hiho" |xmFormWidgetClass '()))
+(define editor (xe-create-enved "a name" outer 
+			     (list |XmNleftAttachment   |XmATTACH_FORM
+				   |XmNtopAttachment    |XmATTACH_FORM
+				   |XmNbottomAttachment |XmATTACH_FORM
+				   |XmNrightAttachment  |XmATTACH_FORM)
+			     '(0.0 1.0 0.0 1.0)))))
+(set! (xe-envelope editor) (list 0.0 1.0 1.0 0.5))
+<pre>
+
 
 <A NAME="zipdoc"></a><span class=box><h2>zip.scm</h2></span>
 <pre>

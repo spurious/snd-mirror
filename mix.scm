@@ -136,7 +136,7 @@
     (map (lambda (a)
 	   (if (mix? a)
 	       (begin
-		 (set-mix-track a id)
+		 (set! (mix-track a) id)
 		 a)
 	       #f))
 	 mixes)))
@@ -435,3 +435,29 @@
 		   ids-in-order
 		   (reverse (map mix-position ids-in-order))))))))
 
+
+;;; untested... TODO: test mix funcs
+(define (delete-track track)
+  (as-one-edit
+    (lambda ()
+      (for-each 
+        (lambda (a) 
+          (delete-mix a))
+        track))))
+
+(define (set-all-tracks new-num)
+  (tree-apply 
+    (lambda (n)
+      (set! (mix-track n) new-num))
+    (mixes)))
+
+(define (delete-all-mixes)
+  (as-one-edit
+    (lambda ()
+      (tree-apply
+        (lambda (id)
+          (delete-mix id))
+        (mixes)))))
+
+(define (delete-all-tracks)
+  (delete-all-mixes))

@@ -3856,6 +3856,9 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
 #if HAVE_RUBY
   XEN_YES_WE_HAVE("snd-ruby");
 #endif
+#if DEBUGGING
+  XEN_YES_WE_HAVE("snd-debug");
+#endif
 
   XEN_YES_WE_HAVE("snd");
 }

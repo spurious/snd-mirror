@@ -267,6 +267,7 @@ void news_help(snd_state *ss)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+20-Nov:  xm-enved.scm.\n\
 19-Nov:  reopen menu example in examp.scm.\n\
 13-Nov:  edit123.scm by Tom Roth added to contrib directory.\n\
          emacs-style-save-as\n\

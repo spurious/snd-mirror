@@ -12,8 +12,7 @@
  *                   driven by input from stdin). This version needs the flag USE_NO_GUI.
  *
  *   HAVE_GUILE    define if the guile library is available (adds lisp extension/customization language)
- *                 see http://www.gnu.org/software/guile (this is now a standard part of the Gnu distribution)
- *                 if you have Guile 1.3.4, include -DHAVE_GUILE_1_3,
+ *                 see http://www.gnu.org/software/guile. If you have Guile 1.3.4, include -DHAVE_GUILE_1_3,
  *                 (The default is Guile 1.4, versions before 1.3.4 are no longer supported).
  *                 To get a version of Snd without any extension language, -DHAVE_EXTENSION_LANGUAGE=0
  *
@@ -22,7 +21,7 @@
  *                 This part of Snd is brand-new and has many bugs/omissions/etc.
  *
  *   HAVE_XPM      define if you have the XPM library (the default in Linux and Gtk+)
- *                 (used to make cute icons in various places)
+ *                 (used to make cute icons in various places).
  *
  *   HAVE_LADSPA   define if you have LADSPA and want support for it included in Snd.
  *
@@ -159,7 +158,7 @@
 
 #include "snd-strings.h"
 
-#define SND_VERSION "19-Nov-01"
+#define SND_VERSION "20-Nov-01"
 #define SND_RPM_VERSION "5.5"
 #define SND_MAJOR_VERSION 5
 #define SND_MINOR_VERSION 5
