@@ -502,7 +502,7 @@ void make_open_file_dialog(snd_state *ss, int read_only, int managed)
 					      XmNalignment, XmALIGNMENT_END,
 					      NULL);
 #if (XmVERSION > 1)
-      open_dialog_frame = XtVaCreateWidget("", xmFrameWidgetClass, rc1);
+      open_dialog_frame = XtVaCreateWidget("", xmFrameWidgetClass, rc1, NULL);
       rc2 = XtVaCreateManagedWidget("", 
 				    xmRowColumnWidgetClass, open_dialog_frame,
 				    XmNorientation, XmVERTICAL,
