@@ -6594,7 +6594,23 @@ static XEN g_set_x_bounds(XEN bounds, XEN snd_n, XEN chn_n)
       x0 = XEN_TO_C_DOUBLE(XEN_CAR(bounds));
       x1 = XEN_TO_C_DOUBLE(XEN_CADR(bounds));
       if (x1 > x0)
-	set_x_axis_x0x1(cp, x0, x1);
+	{
+	  snd_info *sp;
+	  set_x_axis_x0x1(cp, x0, x1);
+	  sp = cp->sound;
+	  if (sp->nchans > 1)
+	    {
+	      if (((XEN_NOT_BOUND_P(chn_n)) && (cp->sound->channel_style == CHANNELS_COMBINED)) ||
+		  (XEN_TRUE_P(chn_n)))
+		{
+		  int i;
+		  for (i = 0; i < sp->nchans; i++)
+		    if (i != cp->chan)
+		      set_x_axis_x0x1(sp->chans[i], x0, x1);
+		  /* y-bounds are already tied together in the channels-combined case */
+		}
+	    }
+	}
       else XEN_OUT_OF_RANGE_ERROR(S_setB S_x_bounds, 1, bounds, "~A: x1 > x0?");
     }
   return(bounds);

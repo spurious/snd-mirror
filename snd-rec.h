@@ -161,18 +161,18 @@ void finish_recording(recorder_info *rp);
 #endif
 
 #if USE_MOTIF
-  #define FONT_TYPE XFontStruct
+  #define font_t XFontStruct
   #define LOAD_FONT(Font) XLoadQueryFont(MAIN_DISPLAY(ss), Font)
 #else
   #if USE_GTK
-    #define FONT_TYPE PangoFontDescription
+    #define font_t PangoFontDescription
     #define LOAD_FONT(Font) pango_font_description_from_string(Font)
   #else
-    #define FONT_TYPE int
+    #define font_t int
     #define LOAD_FONT(Font) NULL
   #endif
 #endif
 
-FONT_TYPE *get_vu_font(Float size);
+font_t *get_vu_font(Float size);
 
 #endif

@@ -3,7 +3,7 @@
 /* SOMEDAY: save mix/track stuff in edit-history saved-state stuff, so they remain as they were upon reload */
 /* TODO: is there some confusion if mix is used in as-one-edit? */
 /* TODO: if mix locked but still in mix dialog, need some indication that everything is inactivated (except "play") */
-/* TODO: if mix section deleted, why isn't mix removed? */
+/* TODO: if mix section deleted, why isn't mix removed? -- lock check has to precede ripple! (and insert is wrong -- beg to beg, not beg+num */
 /* TODO: if scale full chan, can't mixes be left unlocked? */
 
 typedef struct {
@@ -2880,9 +2880,7 @@ static int lock_affected_mixes_1(mix_info *md, void *ptr)
   cs = md->states[md->current_state];
   if (!(cs->locked))
     {
-      if (((cs->orig >= times->lt_beg) && (cs->orig <= times->lt_end)) ||
-	  ((cs->end >= times->lt_beg) && (cs->end <= times->lt_end)) ||
-	  ((cs->orig < times->lt_beg) && (cs->end > times->lt_end)))
+      if ((cs->orig < times->lt_end) && (cs->end > times->lt_beg))
 	{
 	  chan_info *cp;
 	  extend_mix_state_list(md);

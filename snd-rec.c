@@ -6,12 +6,12 @@
 #include "snd-rec.h"
 #include "sndlib-strings.h"
 
-FONT_TYPE *get_vu_font(Float size)
+font_t *get_vu_font(Float size)
 {
   char font_name[LABEL_BUFFER_SIZE];
   int font_size;
   char *vu_font_name;
-  FONT_TYPE *label_font;
+  font_t *label_font;
   font_size = (int)(size * 12 * vu_font_size(ss));
   if (font_size < 5) font_size = 5;
   vu_font_name = vu_font(ss);
