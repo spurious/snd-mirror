@@ -1196,6 +1196,12 @@ void backup_edit_list(chan_info *cp)
   free_amp_env(cp, cur - 1);
   cp->edits[cur - 1] = cp->edits[cur];
   cp->amp_envs[cur - 1] = cp->amp_envs[cur];
+  if (cp->tracks)
+    {
+      if (cp->tracks[cur - 1]) free_track_info(cp, cur - 1);
+      cp->tracks[cur - 1] = cp->tracks[cur];
+      cp->tracks[cur] = NULL;
+    }
   cp->edits[cur] = NULL;
   cp->amp_envs[cur] = NULL;
   cp->samples[cur - 1] = cp->samples[cur];
@@ -7705,6 +7711,7 @@ static bool save_edits_and_update_display(snd_info *sp)
       old_cursors[i] = CURSOR(cp); /* depends on edit_ctr -- set to -1 by free_edit_list below */
       if (ss->deferred_regions > 0)
 	sequester_deferred_regions(cp, -1);
+      if (cp->tracks) free_track_info_list(cp); /* needs to precede free_edit_list which clobbers cp->edit_size */
       if (cp->mixes) reset_mix_list(cp);
       if (cp->edits) free_edit_list(cp);
       free_snd_fd(sf[i]);  /* must precede free_sound_list since it accesses the snd_data structs that free_sound_list frees */
@@ -7918,7 +7925,9 @@ void save_edits(snd_info *sp, void *ptr)
 
 void revert_edits(chan_info *cp, void *ptr)
 {
+  int old_ctr;
   if (cp->edit_ctr == 0) return;
+  old_ctr = cp->edit_ctr;
   cp->edit_ctr = 0;
   clear_transform_edit_ctrs(cp);
   reflect_edit_counter_change(cp);
@@ -7926,7 +7935,7 @@ void revert_edits(chan_info *cp, void *ptr)
   if (selection_is_active())
     reflect_edit_with_selection_in_menu(); 
   else reflect_edit_without_selection_in_menu();
-  update_track_lists(cp);
+  update_track_lists(cp, old_ctr - 1);
   update_graph(cp);
   reflect_mix_in_menu();
   reflect_mix_in_enved();
@@ -7954,7 +7963,7 @@ void undo_edit(chan_info *cp, int count)
       if (selection_is_active()) 
 	reflect_edit_with_selection_in_menu();
       else reflect_edit_without_selection_in_menu();
-      update_track_lists(cp);
+      update_track_lists(cp, 0);
       update_graph(cp);
       reflect_mix_in_menu();
       reflect_mix_in_enved();
@@ -8014,7 +8023,7 @@ void redo_edit(chan_info *cp, int count)
 	  if (selection_is_active()) 
 	    reflect_edit_with_selection_in_menu(); 
 	  else reflect_edit_without_selection_in_menu();
-	  update_track_lists(cp);
+	  update_track_lists(cp, 0);
 	  update_graph(cp);
 	  reflect_mix_in_menu();
 	  reflect_mix_in_enved();
@@ -8689,6 +8698,7 @@ static void finish_as_one_edit(chan_info *cp, void *ptr)
 {
   as_one_edit(cp, (((int *)ptr)[chan_ctr] + 1), as_one_edit_origin);
   cp->squelch_update = cp->previous_squelch_update;
+  if (!(cp->squelch_update)) clear_minibuffer(cp->sound);
   cp->in_as_one_edit = false;
   reflect_edit_history_change(cp);
   update_graph(cp);

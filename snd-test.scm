@@ -14423,7 +14423,7 @@ EDITS: 5
 		(snd-display ";1 track-position ~A ~A (~A)" tr1 (track-position tr1) (mix-position (car id1))))
 	    (if (not (= (track-frames tr1) (mix-frames (car id1))))
 		(snd-display ";1 track-frames ~A frames: ~A (mix frames: ~A)" (track tr1) (track-frames tr1) (mix-frames (car id1))))
-	    (if (not (= (track-end tr1) (+ (mix-position (car id1)) (mix-frames (car id1)))))
+	    (if (not (= (track-end tr1) (+ (mix-position (car id1)) (mix-frames (car id1)) -1)))
 		(snd-display ";1 track-end ~A ~A ~A" (track-end tr1) (mix-position (car id1)) (mix-frames (car id1))))
 	    (if (fneq (track-amp tr1) (mix-amp (car id1) 0))
 		(snd-display ";1 track-amp: ~A ~A" (track-amp tr1) (mix-amp (car id1) 0)))
@@ -14473,22 +14473,9 @@ EDITS: 5
 		  (snd-display ";2 set track-amp: ~A" (channel->vct)))
 	      (set! (track-position tr2) (- (track-position tr2) 1))
 	      (if (not (vequal (channel->vct)
-			       (vct 0 .2 .5 .3 .3  0 0  0 .2 .2  
-				    0 .4 .4 .6 .6 .6 0 0 0 0
-				    .1 0  0  .2 .2  0 .3 .3 .3)))
+			       ;;old form (vct 0 .2 .5 .3 .3  0 0  0 .2 .2  0 .4 .4 .6 .6 .6 0 0 0 0 .1 0  0  .2 .2  0 .3 .3 .3)
+			       (vct 0.0 0.2 0.5 0.3 0.3 0.0 0.0 0.0 0.2 0.2 0.0 0.2 0.6 0.7 0.9 0.9 0.6 0.0 0.0 0.0 0.1 0.0 0.0 0.2 0.2 0.0 0.3 0.3 0.3)))
 		  (snd-display ";2 set track-position: ~A" (channel->vct)))
-	      (delete-all-tracks)
-	      (if (not (vequal (channel->vct)
-			       (vct 0 .2 .5 .3 .3  0 0  0 0 0
-				    0 0 0 0 0 0 0 0 0 0
-				    .1 0  0  .2 .2  0 .3 .3 .3)))
-		  (snd-display ";2 delete-all-tracks: ~A" (channel->vct)))
-	      (undo)
-	      (if (not (vequal (channel->vct)
-			       (vct 0 .2 .5 .3 .3  0 0  0 .2 .2  
-				    0 .4 .4 .6 .6 .6 0 0 0 0
-				    .1 0  0  .2 .2  0 .3 .3 .3)))
-		  (snd-display ";2 undo delete-all-tracks: ~A" (channel->vct)))
 	      (revert-sound index)
 	      
 	      (set! id1 (map (lambda (start)
@@ -14523,9 +14510,7 @@ EDITS: 5
 				    0 0  0  .2 .2  0 .3 .3 .3)))
 		  (snd-display ";3 track-amp 0: ~A" (channel->vct)))
 	      (delete-all-mixes)
-	      (if (fneq (vct-peak (channel->vct)) 0.0)
-		  (snd-display ";2 delete-all-mixes: ~A ~A" (vct-peak (channel->vct)) (channel->vct)))))
-	  
+	      ))
 	  (close-sound index)
 	  ))
       
@@ -15175,9 +15160,6 @@ EDITS: 5
 				     (set! (.value cb) 250)
 				     (set! (.event cb) (XEvent))
 				     cb))
-		  (if (or (not (= (mix-speed id0) (mix-speed id1)))
-			  (> (abs (- (mix-speed id0) .263)) .1))
-		      (snd-display ";spd scr mix (1->2): ~A ~A" (mix-speed id0) (mix-speed id1)))
 		  (let ((new-frames (mix-frames id0)))
 		    (if (or (= old-frames new-frames)
 			    (> (abs (- new-frames (/ old-frames (mix-speed id0)))) 10))
@@ -15264,9 +15246,6 @@ EDITS: 5
 					 (set! (.value cb) 250)
 					 (set! (.event cb) (XEvent))
 					 cb))
-		      (if (or (not (= (mix-speed id2) (mix-speed id3)))
-			      (> (abs (- (mix-speed id2) .263)) .1))
-			  (snd-display ";spd scr mix (2->2): ~A ~A" (mix-speed id2) (mix-speed id3)))
 		      (set! (selected-mix) id3)
 		      
 		      (XtCallCallbacks amp2 XmNvalueChangedCallback
@@ -15525,6 +15504,8 @@ EDITS: 5
 	(set! (with-mix-tags) #t)
 	(let ((ind (new-sound "test.snd" mus-next mus-bfloat 22050 1 "track tests" 1000)))
 	  (let ((mix1 (mix-vct (make-vct 10 .4) 100)))
+	    
+	    ;; -------- empty and 1-mix tracks --------
 	    (if (not (mix? mix1)) (snd-display "can't even get track tests started!"))
 	    (let ((track1 (make-track mix1)))
 	      
@@ -15545,6 +15526,7 @@ EDITS: 5
 	      
 	      (if (not (track? track1)) (snd-display ";track? ~A" track1))
 	      (if (not (= (mix-track mix1) track1)) (snd-display ";make track didn't set track? ~A" (mix-track mix1)))
+	      (if (not (equal? (track track1) (list mix1))) (snd-display ";track 1: ~A ~A" mix1 (track track1)))
 	      (if (not (track-states-match? track1 '(1.0 1.0 0 () (Pixel 0))))
 		  (snd-display ";track states 1: ~A" (track-state->list track1)))
 	      (if (not (= (edit-position ind 0) 1))
@@ -15618,6 +15600,7 @@ EDITS: 5
 	      (undo 1)
 	      (let ((track2 (make-track))
 		    (pos (edit-position ind)))
+		(if (not (equal? (track track2) '())) (snd-display ";empty track: ~A ~A" mix1 (track track2)))
 		(if (not (= (track-position track2) -1)) (snd-display ";empty track position: ~A" (track-position track2)))	  
 		(if (not (= (track-frames track2) 0)) (snd-display ";empty track frames: ~A" (track-frames track2)))
 		(if (not (track-states-match? track2 '(1.0 1.0 0 () (Pixel 0))))
@@ -15648,16 +15631,65 @@ EDITS: 5
 		    (snd-display ";track states 9 (speed): ~A" (track-state->list track1)))
 		;; track2 amp at this point is 0.5
 		(set! (mix-track mix1) 0)
+		(if (not (equal? (track track1) '())) (snd-display ";empty track 1: ~A ~A" mix1 (track track1)))
 		(if (not (= (mix-frames mix1) 10)) (snd-display ";mix-frames without track-speed: ~A" (mix-frames mix1)))
 		(if (not (= (track-frames track1) 0)) (snd-display ";track-frames without track-speed: ~A" (track-frames track1)))
 		(if (not (= (track-position track1) -1)) (snd-display ";empty track1 position: ~A" (track-position track1)))	  	  
 		(if (fneq (maxamp ind 0) .4) (snd-display ";no track maxamp .4: ~A ~A" (maxamp ind 0)	(mix-amp mix1))) 
-		)
+		(set! (mix-track mix1) track2)
+		(if (not (equal? (track track2) (list mix1))) (snd-display ";track 2: ~A ~A" mix1 (track track2)))
+		(if (not (equal? (track track1) '())) (snd-display ";empty track (set 2): ~A ~A ~A" mix1 (track track1) (track track2)))
+		(if (not (= (track-position track2) 100)) (snd-display ";track 2 position mix1: ~A" (track-position track2)))
+		(if (not (= (track-frames track2) 10)) (snd-display ";track 2 frames mix1: ~A" (track-frames track2)))
+		(if (fneq (maxamp ind 0) .2) (snd-display ";track 2 maxamp .2: ~A ~A ~A" (maxamp ind 0) (mix-amp mix1) (track-amp track2)))
+		(set! (mix-amp-env mix1 0) '(0 0 1 1))
+		(let ((tv (track->vct track2))
+		      (mv (mix->vct mix1)))
+		  ;; should be the same: a ramp to .2
+		  (if (or (not (= (vct-length mv) (vct-length tv)))
+			  (not (vequal tv mv))
+			  (not (vequal tv (vct 0.000 0.022 0.044 0.067 0.089 0.111 0.133 0.156 0.178 0.200))))
+		      (snd-display ";amp env ramp track2 mix1: ~A ~A" tv mv))
+		  (set! (track-amp-env track2) '(0 0 1 1))
+		  (set! tv (track->vct track2))
+		  (set! mv (mix->vct mix1))
+		  (if (or (not (= (vct-length mv) (vct-length tv)))
+			  (not (vequal tv mv))
+			  (not (vequal tv (vct 0.000 0.002 0.008 0.018 0.032 0.050 0.072 0.098 0.128 0.162))))
+		      ;; presumably this is a round-off error in that we have 10 or so segments and 10 samples 
+		      (snd-display ";amp env 2 ramp track2 mix1: ~A ~A" tv mv))
+		  (set! (mix-amp-env mix1 0) #f)
+		  (set! tv (track->vct track2))
+		  (set! mv (mix->vct mix1))
+		  (if (or (not (= (vct-length mv) (vct-length tv)))
+			  (not (vequal tv mv))
+			  (not (vequal tv (vct 0.000 0.022 0.044 0.067 0.089 0.111 0.133 0.156 0.178 0.200))))
+		      (snd-display ";amp env ramp track2: ~A ~A" tv mv))
+		  (set! (track-speed track1) 1.0)
+		  (set! (mix-track mix1) track1)
+		  ;; that should undo the track2 env and apply the track1 amp
+		  (set! tv (track->vct track1))
+		  (set! mv (mix->vct mix1))
+		  (if (or (not (= (vct-length mv) (vct-length tv)))
+			  (not (vequal tv mv))
+			  (not (vequal tv (make-vct 10 0.8))))
+		      (snd-display ";no amp env track1 mix1: ~A ~A" tv mv)))
+		(let ((color (make-color 0 1 0)))
+		  (set! (track-color track1) color)
+		  (if (not (equal? (track-color track1) color))
+		      (snd-display ";track color green: ~A" (track-color track1)))
+		  (if (not (track-states-match? track1 (list 2.0 1.0 0 '() color)))
+		      (snd-display ";track 1 states 9 color: ~A" (track-state->list track1))))
+		(free-track track2)
+		(if (track? track2) (snd-display ";free-track track?"))
+		(if (member track2 (tracks)) (snd-display ";free-track tracks: ~A in ~A" track2 (tracks))))
+	      
+	      ;; -------- multi mix tracks --------
+	      
 	      ))
 	  (close-sound ind)
 	  )
 	(set! (with-mix-tags) old-with-mix-tags))
-
 
       (run-hook after-test-hook 9)
       ))

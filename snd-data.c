@@ -141,10 +141,10 @@ static chan_info *free_chan_info(chan_info *cp)
   release_dangling_readers(cp, -1);
   if (cp->samples) {FREE(cp->samples); cp->samples = NULL;}
   if (cp->cursors) {FREE(cp->cursors); cp->cursors = NULL;}
+  if (cp->tracks) free_track_info_list(cp); /* needs to precede free_edit_list which clobbers cp->edit_size */
   if (cp->edits) free_edit_list(cp);
   if (cp->sounds) free_sound_list(cp);
   if (cp->ptrees) free_ptree_list(cp);
-  if (cp->tracks) free_track_info_list(cp);
   free_mark_list(cp, -1);
   free_mixes(cp);
   cp->sound = NULL;  /* a backpointer */

@@ -3161,7 +3161,8 @@ mixed without creating any mix tags.  <i>track</i> is the mix track number.
 
 <!-- mix-amp-env -->
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="sndmixampenv">mix-amp-env</a></em> (<i>mix chan</i>)</code></span></td></tr>
-<tr><td></td><td>amplitude envelope of <i>mix</i>'s channel <i>chan</i>.
+<tr><td></td><td>amplitude envelope of <i>mix</i>'s channel <i>chan</i> (a list of breakpoints.  To reset this to its default (null) state, use #f.
+<code>(set! (mix-amp-env 0 0) '(0 0 1 1))</code> sets mix 0's 0-chan envelope to a ramp.
 </td></tr>
 
 <!-- mix-anchor -->
@@ -3394,7 +3395,7 @@ not currently garbage collected; to free one, use <a href="#freetrack">free-trac
 <tr><td width=50><br></td><td>Track amp env (settable); this is a list of breakpoint pairs, not a CLM env generator.
 The amplitude envelope is applied over the entire track;
 each mix's resultant amp env is the result of multiplying its env (if any) by
-the portion of the track env that happens to fall over it.
+the portion of the track env that happens to fall over it.  Use #f to reset it to the default (null) envelope.
 </td></tr>
 
 <!-- track-color -->

@@ -359,10 +359,10 @@ in the other channel. 'chn' is the start channel for all this (logical channel 0
 ;;; TODO: track->vct and save-track need to handle multichannel tracks
 (define (track->vct trk)
   "(track->vct track) places track data in vct"
-  (vct-map! 
-   (make-vct 
-    (track-frames trk))
-   (make-track-sample-reader trk)))
+  (let ((len (track-frames trk)))
+    (if (= len 0)
+	#f
+	(vct-map! (make-vct len) (make-track-sample-reader trk)))))
 
 (define (save-track trk filename)
   "(save-track track filename) saves track data (as floats) in file filename"
