@@ -299,6 +299,11 @@ static void glGetColorTableParameterivEXT( GLenum target, GLenum pname, GLint *p
   #define FREE(a)       free(a)
 #endif
 
+#ifndef unsigned_long
+  /* for FreeBSD (thanks to Michael Scholz) (can't use ulong here due to collisions elsewhere) */
+  typedef unsigned long unsigned_long;
+#endif
+
 /* prefix for all names */
 #if HAVE_GUILE
   #define XL_PRE "|"
@@ -342,9 +347,9 @@ XL_TYPE_1(Display, Display*)
 #define XEN_int_P(Arg) XEN_INTEGER_P(Arg)
 XL_TYPE_PTR_1(int_, int*)
 XL_TYPE(GLXContext, GLXContext)
-#define C_TO_XEN_ulong(Arg) C_TO_XEN_ULONG(Arg)
-#define XEN_TO_C_ulong(Arg) (ulong)(XEN_TO_C_ULONG(Arg))
-#define XEN_ulong_P(Arg) XEN_ULONG_P(Arg)
+#define C_TO_XEN_unsigned_long(Arg) C_TO_XEN_ULONG(Arg)
+#define XEN_TO_C_unsigned_long(Arg) (unsigned_long)(XEN_TO_C_ULONG(Arg))
+#define XEN_unsigned_long_P(Arg) XEN_ULONG_P(Arg)
 #define C_TO_XEN_Bool(Arg) C_TO_XEN_BOOLEAN(Arg)
 #define XEN_TO_C_Bool(Arg) (Bool)(XEN_TO_C_BOOLEAN(Arg))
 #define XEN_Bool_P(Arg) XEN_BOOLEAN_P(Arg)
@@ -429,12 +434,12 @@ static XEN gxg_glXChooseVisual(XEN dpy, XEN screen, XEN attribList)
 
 static XEN gxg_glXCopyContext(XEN dpy, XEN src, XEN dst, XEN mask)
 {
-  #define H_glXCopyContext "void glXCopyContext(Display* dpy, GLXContext src, GLXContext dst, ulong mask)"
+  #define H_glXCopyContext "void glXCopyContext(Display* dpy, GLXContext src, GLXContext dst, unsigned_long mask)"
   XEN_ASSERT_TYPE(XEN_Display_P(dpy), dpy, 1, "glXCopyContext", "Display*");
   XEN_ASSERT_TYPE(XEN_GLXContext_P(src), src, 2, "glXCopyContext", "GLXContext");
   XEN_ASSERT_TYPE(XEN_GLXContext_P(dst), dst, 3, "glXCopyContext", "GLXContext");
-  XEN_ASSERT_TYPE(XEN_ulong_P(mask), mask, 4, "glXCopyContext", "ulong");
-  glXCopyContext(XEN_TO_C_Display(dpy), XEN_TO_C_GLXContext(src), XEN_TO_C_GLXContext(dst), XEN_TO_C_ulong(mask));
+  XEN_ASSERT_TYPE(XEN_unsigned_long_P(mask), mask, 4, "glXCopyContext", "unsigned_long");
+  glXCopyContext(XEN_TO_C_Display(dpy), XEN_TO_C_GLXContext(src), XEN_TO_C_GLXContext(dst), XEN_TO_C_unsigned_long(mask));
   return(XEN_FALSE);
 }
 
@@ -5290,7 +5295,7 @@ static int gl_already_inited = 0;
       define_functions();
       XEN_YES_WE_HAVE("gl");
 #if HAVE_GUILE
-      XEN_EVAL_C_STRING("(define gl-version \"22-Jun-02\")");
+      XEN_EVAL_C_STRING("(define gl-version \"17-Jul-02\")");
 #endif
       gl_already_inited = 1;
     }

@@ -270,7 +270,7 @@
 	(cons "GLushort" "INT")
 	(cons "GLuint" "ULONG")
 	(cons "GLubyte" "INT")
-	(cons "ulong" "ULONG")
+	(cons "unsigned_long" "ULONG")
 	(cons "Bool" "BOOLEAN")
 	(cons "xen" #t)
 	(cons "constchar*" "STRING")
@@ -677,6 +677,11 @@
 (hey "#ifndef CALLOC~%")
 (hey "  #define CALLOC(a, b)  calloc((size_t)(a), (size_t)(b))~%")
 (hey "  #define FREE(a)       free(a)~%")
+(hey "#endif~%~%")
+
+(hey "#ifndef unsigned_long~%")
+(hey "  /* for FreeBSD (thanks to Michael Scholz) (can't use ulong here due to collisions elsewhere) */~%")
+(hey "  typedef unsigned long unsigned_long;~%")
 (hey "#endif~%~%")
 
 (hey "/* prefix for all names */~%")

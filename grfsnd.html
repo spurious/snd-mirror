@@ -296,7 +296,7 @@ In addition, we could add our own analysis functions or whatever.  In more
 complex situations, you may want an initialization file particular to a given
 machine, and global across users; the 
 name of this optional global initialization file is "/etc/snd.conf". It
-is read before the user's local file; both can, of course, be
+is read before your local file; both can, of course, be
 absent.  To override reading the global init file when Snd is invoked, include the switch -noglob.
 To override the local init file, use -noinit.  
 Here's a more extended example:
@@ -2124,7 +2124,7 @@ than one input is required, the first argument to apply-ladspa should be a list 
 <!-- --><table border=1 cellpadding=5><tr><td bgcolor="#FCFCF0"><pre>
 (define* (ladspa-channel ladspa-data #:optional nbeg ndur nsnd nchn nedpos)
   (let* ((beg (or nbeg 0)) 
-	 (snd (or nsnd (selected-sound)))
+	 (snd (or nsnd (selected-sound) (car (sounds))))
 	 (chn (or nchn (selected-channel)))
 	 (dur (or ndur (- (frames snd chn) beg)))
 	 (edpos (or nedpos current-edit-position))
@@ -2265,7 +2265,7 @@ $2 = 0x40853fac "\"/home/bil/test/share/guile/1.5.0/ice-9/session.scm\""
 If you have a pointer to a CLM generator, you can use:
 </p>
 <pre>
-p mus_describe(arg)  --  show the user-view of arg
+p mus_describe(arg)  --  show the outsider's view of arg
 p mus_inspect(arg)  --  show every internal field of arg
 </pre>
 <p>The ge function can show current Snd state:</p>

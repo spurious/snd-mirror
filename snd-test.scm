@@ -15442,6 +15442,53 @@ EDITS: 5
 	      (dlinit handle "init_gsl_j0")
 	      (IF (fneq (j0 1.0) 0.765) (snd-display ";gsl loader test: ~A" (j0 1.0))))))
 
+      (let ((ind (open-sound "oboe.snd"))
+	    (ftype (add-transform "low-pass" "filtered" 0.0 1.0
+				  (lambda (len fd)
+				    (let ((flt (make-fir-filter :order 8 
+								:xcoeffs (let ((v1 (make-vct 8)))
+									   (vct-fill! v1 .0125)
+									   v1))))
+				      (vct-map! 
+				       (make-vct len) 
+				       (lambda () 
+					 (fir-filter flt (read-sample fd)))))))))
+	(set! (cursor ind 0) 12000)
+	(set! (transform-normalization) dont-normalize-transform)
+	(set! (transform-type ind 0) ftype)
+	(set! (transform-size ind 0) 16)
+	(set! (transform-graph-type ind 0) graph-transform-once)
+	(set! (graph-transform? ind 0) #t)
+	(let* ((samps (transform-samples->vct ind 0)))
+	  (if (not (vequal samps (vct 0.001 0.001 0.002 0.002 0.001 0.001 -0.000 -0.001 -0.003 -0.005 -0.006 -0.007 -0.009 -0.009 -0.010 -0.009)))
+	      (snd-display ";add-transform filtering: ~A" samps)))
+	(close-sound ind))
+
+      (let ((ind (open-sound "oboe.snd"))
+	    (ftype (add-transform "abs-it" "absit" 0.0 1.0
+				  (lambda (len fd)
+				    (vct-map! 
+				     (make-vct len) 
+				     (lambda () 
+				       (read-sample fd)))))))
+	(set! (cursor ind 0) 12000)
+	(set! (transform-normalization) dont-normalize-transform)
+	(set! (transform-type ind 0) ftype)
+	(set! (transform-size ind 0) 256)
+	(set! (transform-graph-type ind 0) graph-transform-once)
+	(set! (graph-transform? ind 0) #t)
+	(let* ((samps (transform-samples->vct ind 0))
+	       (orig (channel->vct (left-sample ind 0) 256)))
+	  (call-with-current-continuation
+	   (lambda (break)
+	     (do ((i 0 (1+ i)))
+		 ((= i 256))
+	       (if (fneq (vct-ref samps i) (vct-ref orig i))
+		   (begin
+		     (snd-display ";add-transform same: ~D ~A ~A" i (vct-ref samps i) (vct-ref orig i))
+		     (break)))))))
+	(close-sound ind))
+
       ))
       ))
 
@@ -25690,7 +25737,7 @@ EDITS: 5
     (snd-display "~%~A(~D)" test14-file (mus-sound-samples test14-file)))
 
 (show-listener)
-(snd-display "~%")
+
 (if (file-exists? original-save-dir)
     (begin
       (snd-display (format #f "ls ~A/snd_* | wc~%" original-save-dir))

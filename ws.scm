@@ -65,7 +65,7 @@
 	 (mus-close *output*)
 	 (set! *output* #f)
 	 (if statistics
-	     (setf cycles (/ (- (get-internal-real-time) start) 100)))
+	     (set! cycles (/ (- (get-internal-real-time) start) 100)))
 	 (let ((snd-output (open-sound output)))
 	   (set! (sync snd-output) #t)
 	   (if statistics
@@ -79,7 +79,8 @@
 	       (if scaled-by
 		   (scale-by scaled-by snd-output)))
 	   (if play (play-and-wait snd-output))
-	   (update-time-graph snd-output))))
+	   (update-time-graph snd-output)
+	   output)))
 
      (lambda () 
        (if *reverb*

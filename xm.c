@@ -107,7 +107,6 @@
   #endif
 #endif
 
-
 /* layout of file:
  *    preliminaries
  *    type manglers
@@ -1214,6 +1213,7 @@ static Cardinal gxm_XtOrderProc(Widget w)
   return((Cardinal)result);
 }
 
+#if MOTIF_2
 #define C_TO_XEN_XM_Parse_Callback(Code) \
   XEN_LIST_5(C_STRING_TO_XEN_SYMBOL("Parse_Callback"), Code, XEN_FALSE, XEN_ZERO, XEN_ZERO)
 #define XM_Parse_Callback_P(Arg) WRAP_P("Parse_Callback", Arg)
@@ -1250,6 +1250,7 @@ static XmIncludeStatus gxm_Parse_Callback(XtPointer *in_out, XtPointer text_end,
     }
   return(0);
 }
+#endif
 
 static XEN xm_XmColorAllocationProc = XEN_FALSE;
 
@@ -1420,7 +1421,7 @@ static Arg *XEN_TO_C_Args(XEN inargl)
 	  cl = XEN_TO_C_XtCallbackList(value);
 	  if (cl) XtSetArg(args[i], name, cl);
 	  break;
-
+#if MOTIF_2
 	case XM_PARSE_CALLBACK:
 	  if ((XEN_PROCEDURE_P(value)) && (XEN_REQUIRED_ARGS(value) == 8))
 	    {
@@ -1435,7 +1436,7 @@ static Arg *XEN_TO_C_Args(XEN inargl)
 	      else XEN_ASSERT_TYPE(0, value, 0, name, "procedure of 8 args");
 	    }
 	  break;
-
+#endif
 	case XM_DROP_CALLBACK:
 	  if ((XEN_PROCEDURE_P(value)) && (XEN_REQUIRED_ARGS(value) == 3))
 	    {
@@ -18927,15 +18928,15 @@ static XEN gxm_save_under(XEN ptr)
 static XEN gxm_backing_pixel(XEN ptr)
 {
   XEN_ASSERT_TYPE(XEN_XWindowAttributes_P(ptr) || XEN_XSetWindowAttributes_P(ptr), ptr, XEN_ONLY_ARG, "backing_pixel", "a struct with a backing_pixel field");
-  if (XEN_XWindowAttributes_P(ptr)) return(C_TO_XEN_ULONG((ulong)((XEN_TO_C_XWindowAttributes(ptr))->backing_pixel)));
-  return(C_TO_XEN_ULONG((ulong)((XEN_TO_C_XSetWindowAttributes(ptr))->backing_pixel)));
+  if (XEN_XWindowAttributes_P(ptr)) return(C_TO_XEN_ULONG((unsigned long)((XEN_TO_C_XWindowAttributes(ptr))->backing_pixel)));
+  return(C_TO_XEN_ULONG((unsigned long)((XEN_TO_C_XSetWindowAttributes(ptr))->backing_pixel)));
 }
 
 static XEN gxm_backing_planes(XEN ptr)
 {
   XEN_ASSERT_TYPE(XEN_XWindowAttributes_P(ptr) || XEN_XSetWindowAttributes_P(ptr), ptr, XEN_ONLY_ARG, "backing_planes", "a struct with a backing_planes field");
-  if (XEN_XWindowAttributes_P(ptr)) return(C_TO_XEN_ULONG((ulong)((XEN_TO_C_XWindowAttributes(ptr))->backing_planes)));
-  return(C_TO_XEN_ULONG((ulong)((XEN_TO_C_XSetWindowAttributes(ptr))->backing_planes)));
+  if (XEN_XWindowAttributes_P(ptr)) return(C_TO_XEN_ULONG((unsigned long)((XEN_TO_C_XWindowAttributes(ptr))->backing_planes)));
+  return(C_TO_XEN_ULONG((unsigned long)((XEN_TO_C_XSetWindowAttributes(ptr))->backing_planes)));
 }
 
 static XEN gxm_win_gravity(XEN ptr)
@@ -18955,7 +18956,7 @@ static XEN gxm_bit_gravity(XEN ptr)
 static XEN gxm_border_pixel(XEN ptr)
 {
   XEN_ASSERT_TYPE(XEN_XSetWindowAttributes_P(ptr), ptr, XEN_ONLY_ARG, "border_pixel", "XSetWindowAttributes");
-  return(C_TO_XEN_ULONG((ulong)((XEN_TO_C_XSetWindowAttributes(ptr))->border_pixel)));
+  return(C_TO_XEN_ULONG((unsigned long)((XEN_TO_C_XSetWindowAttributes(ptr))->border_pixel)));
 }
 
 static XEN gxm_border_pixmap(XEN ptr)
@@ -18967,7 +18968,7 @@ static XEN gxm_border_pixmap(XEN ptr)
 static XEN gxm_background_pixel(XEN ptr)
 {
   XEN_ASSERT_TYPE(XEN_XSetWindowAttributes_P(ptr), ptr, XEN_ONLY_ARG, "background_pixel", "XSetWindowAttributes");
-  return(C_TO_XEN_ULONG((ulong)((XEN_TO_C_XSetWindowAttributes(ptr))->background_pixel)));
+  return(C_TO_XEN_ULONG((unsigned long)((XEN_TO_C_XSetWindowAttributes(ptr))->background_pixel)));
 }
 
 static XEN gxm_background_pixmap(XEN ptr)
@@ -19031,7 +19032,7 @@ static XEN gxm_bits_per_rgb(XEN ptr)
 static XEN gxm_blue_mask(XEN ptr)
 {
   XEN_ASSERT_TYPE(XEN_XImage_P(ptr) || XEN_Visual_P(ptr) || XEN_XVisualInfo_P(ptr), ptr, XEN_ONLY_ARG, "blue_mask", "a struct with a blue_mask field");
-  if (XEN_XImage_P(ptr)) return(C_TO_XEN_ULONG((ulong)((XEN_TO_C_XImage(ptr))->blue_mask)));
+  if (XEN_XImage_P(ptr)) return(C_TO_XEN_ULONG((unsigned long)((XEN_TO_C_XImage(ptr))->blue_mask)));
   if (XEN_XVisualInfo_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XVisualInfo(ptr))->blue_mask)));
   return(C_TO_XEN_INT((long)((XEN_TO_C_Visual(ptr))->blue_mask)));
 }
@@ -19039,7 +19040,7 @@ static XEN gxm_blue_mask(XEN ptr)
 static XEN gxm_green_mask(XEN ptr)
 {
   XEN_ASSERT_TYPE(XEN_XImage_P(ptr) || XEN_Visual_P(ptr) || XEN_XVisualInfo_P(ptr), ptr, XEN_ONLY_ARG, "green_mask", "a struct with a green_mask field");
-  if (XEN_XImage_P(ptr)) return(C_TO_XEN_ULONG((ulong)((XEN_TO_C_XImage(ptr))->green_mask)));
+  if (XEN_XImage_P(ptr)) return(C_TO_XEN_ULONG((unsigned long)((XEN_TO_C_XImage(ptr))->green_mask)));
   if (XEN_XVisualInfo_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XVisualInfo(ptr))->green_mask)));
   return(C_TO_XEN_INT((long)((XEN_TO_C_Visual(ptr))->green_mask)));
 }
@@ -19047,9 +19048,9 @@ static XEN gxm_green_mask(XEN ptr)
 static XEN gxm_red_mask(XEN ptr)
 {
   XEN_ASSERT_TYPE(XEN_XImage_P(ptr) || XEN_Visual_P(ptr) || XEN_XVisualInfo_P(ptr), ptr, XEN_ONLY_ARG, "red_mask", "a struct with a red_mask field");
-  if (XEN_XImage_P(ptr)) return(C_TO_XEN_ULONG((ulong)((XEN_TO_C_XImage(ptr))->red_mask)));
+  if (XEN_XImage_P(ptr)) return(C_TO_XEN_ULONG((unsigned long)((XEN_TO_C_XImage(ptr))->red_mask)));
   if (XEN_XVisualInfo_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XVisualInfo(ptr))->red_mask)));
-  return(C_TO_XEN_ULONG((ulong)((XEN_TO_C_Visual(ptr))->red_mask)));
+  return(C_TO_XEN_ULONG((unsigned long)((XEN_TO_C_Visual(ptr))->red_mask)));
 }
 
 static XEN gxm_colormap_size(XEN ptr)
@@ -19235,7 +19236,7 @@ static XEN gxm_fid(XEN ptr)
 static XEN gxm_card32(XEN ptr)
 {
   XEN_ASSERT_TYPE(XEN_XFontProp_P(ptr), ptr, XEN_ONLY_ARG, "card32", "XFontProp");
-  return(C_TO_XEN_ULONG((ulong)((XEN_TO_C_XFontProp(ptr))->card32)));
+  return(C_TO_XEN_ULONG((unsigned long)((XEN_TO_C_XFontProp(ptr))->card32)));
 }
 
 static XEN gxm_set_name(XEN ptr, XEN val)
@@ -19566,7 +19567,7 @@ static XEN gxm_set_place(XEN ptr, XEN val)
 static XEN gxm_value_mask(XEN ptr)
 {
   XEN_ASSERT_TYPE(XEN_XConfigureRequestEvent_P(ptr), ptr, XEN_ONLY_ARG, "value_mask", "XConfigureRequestEvent");
-  return(C_TO_XEN_ULONG((ulong)((XEN_TO_C_XConfigureRequestEvent(ptr))->value_mask)));
+  return(C_TO_XEN_ULONG((unsigned long)((XEN_TO_C_XConfigureRequestEvent(ptr))->value_mask)));
 }
 
 static XEN gxm_set_value_mask(XEN ptr, XEN val)
@@ -20177,7 +20178,7 @@ static XEN gxm_set_send_event(XEN ptr, XEN val)
 static XEN gxm_serial(XEN ptr)
 {
   XEN_ASSERT_TYPE(XEN_XEvent_P(ptr), ptr, XEN_ONLY_ARG, "serial", "XEvent");
-  return(C_TO_XEN_ULONG((ulong)((XEN_TO_C_XAnyEvent(ptr))->serial)));
+  return(C_TO_XEN_ULONG((unsigned long)((XEN_TO_C_XAnyEvent(ptr))->serial)));
 }
 
 static XEN gxm_set_serial(XEN ptr, XEN val)
@@ -21229,8 +21230,8 @@ static XEN gxm_length(XEN ptr)
   if (XEN_XmTextBlock_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XmTextBlock(ptr))->length)));
 #if MOTIF_2
   if (XEN_XmSelectionBoxCallbackStruct_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XmSelectionBoxCallbackStruct(ptr))->length)));
-  if (XEN_XmSelectionCallbackStruct_P(ptr)) return(C_TO_XEN_ULONG((ulong)((XEN_TO_C_XmSelectionCallbackStruct(ptr))->length)));
-  if (XEN_XmConvertCallbackStruct_P(ptr)) return(C_TO_XEN_ULONG((ulong)((XEN_TO_C_XmConvertCallbackStruct(ptr))->length)));
+  if (XEN_XmSelectionCallbackStruct_P(ptr)) return(C_TO_XEN_ULONG((unsigned long)((XEN_TO_C_XmSelectionCallbackStruct(ptr))->length)));
+  if (XEN_XmConvertCallbackStruct_P(ptr)) return(C_TO_XEN_ULONG((unsigned long)((XEN_TO_C_XmConvertCallbackStruct(ptr))->length)));
 #endif
   XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "length", "a struct with a length field");
 }
@@ -21313,7 +21314,7 @@ static XEN gxm_parm_type(XEN ptr)
 static XEN gxm_parm_length(XEN ptr)
 {
   XEN_ASSERT_TYPE(XEN_XmConvertCallbackStruct_P(ptr), ptr, XEN_ONLY_ARG, "parm_length", "XmConvertCallbackStruct");
-  return(C_TO_XEN_ULONG((ulong)((XEN_TO_C_XmConvertCallbackStruct(ptr))->parm_length)));
+  return(C_TO_XEN_ULONG((unsigned long)((XEN_TO_C_XmConvertCallbackStruct(ptr))->parm_length)));
 }
 
 static XEN gxm_parm_format(XEN ptr)

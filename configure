@@ -2886,9 +2886,9 @@ fi
     	      LIBS="$GUILE_LIBS"
               OLD_CFLAGS="$CFLAGS"
               CFLAGS="$GUILE_CFLAGS -lm"
-              echo "$as_me:$LINENO: checking for rb_big2ll in -lruby" >&5
-echo $ECHO_N "checking for rb_big2ll in -lruby... $ECHO_C" >&6
-if test "${ac_cv_lib_ruby_rb_big2ll+set}" = set; then
+              echo "$as_me:$LINENO: checking for rb_num2ll in -lruby" >&5
+echo $ECHO_N "checking for rb_num2ll in -lruby... $ECHO_C" >&6
+if test "${ac_cv_lib_ruby_rb_num2ll+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   ac_check_lib_save_LIBS=$LIBS
@@ -2903,7 +2903,7 @@ extern "C"
 #endif
 /* We use char because int might match the return type of a gcc2
    builtin and then its argument prototype would still apply.  */
-char rb_big2ll ();
+char rb_num2ll ();
 #ifdef F77_DUMMY_MAIN
 #  ifdef __cplusplus
      extern "C"
@@ -2913,7 +2913,7 @@ char rb_big2ll ();
 int
 main ()
 {
-rb_big2ll ();
+rb_num2ll ();
   ;
   return 0;
 }
@@ -2930,20 +2930,20 @@ if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  ac_cv_lib_ruby_rb_big2ll=yes
+  ac_cv_lib_ruby_rb_num2ll=yes
 else
   echo "$as_me: failed program was:" >&5
 cat conftest.$ac_ext >&5
-ac_cv_lib_ruby_rb_big2ll=no
+ac_cv_lib_ruby_rb_num2ll=no
 fi
 rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
 LIBS=$ac_check_lib_save_LIBS
 fi
-echo "$as_me:$LINENO: result: $ac_cv_lib_ruby_rb_big2ll" >&5
-echo "${ECHO_T}$ac_cv_lib_ruby_rb_big2ll" >&6
-if test $ac_cv_lib_ruby_rb_big2ll = yes; then
+echo "$as_me:$LINENO: result: $ac_cv_lib_ruby_rb_num2ll" >&5
+echo "${ECHO_T}$ac_cv_lib_ruby_rb_num2ll" >&6
+if test $ac_cv_lib_ruby_rb_num2ll = yes; then
   cat >>confdefs.h <<\_ACEOF
-#define HAVE_RB_BIG2LL 1
+#define HAVE_RB_NUM2LL 1
 _ACEOF
 
 fi

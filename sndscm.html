@@ -1336,7 +1336,7 @@ It is very similar to <i>all-chans</i> which returns a list of lists of all (snd
 </pre>
 <p>binds the key sequence C-x x to a function that checks for an active selection,
 then prompts (in the minibuffer) for the function to apply, and when
-the user eventually replies with a function, applies that function
+you eventually reply with a function, applies that function
 to each sample in the selection.
 make-selection makes a selection (like make-region but without creating
 a region).
@@ -2880,6 +2880,7 @@ latter is going through the C intermediate file!
 <pre>
 (with-sound (:continue-old-file #t) (fm-violin 0 1 440 .1))
 </pre>
+<p>with-sound returns the output file name.</p>
 <br>
 
 <A NAME="xmenveddoc"></a><span class=box><h2>xm-enved.scm</h2></span>

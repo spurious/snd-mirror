@@ -1913,7 +1913,7 @@ flexible.  hooks.scm has snd-hooks and reset-all-hooks.
 <br>
 <span class=bbox><h3><A NAME="sndobjects">Snd's objects</a></h3></span>
 
-<p>Snd presents its various data structures to the user as a list
+<p>Snd presents its various data structures to you as a list
 of sounds, each with a list of channels, each with lists of edits,
 marks, and mixes.  The sound data itself is accessed through
 a variety of structure and functions, each aimed at a particular
@@ -3767,7 +3767,7 @@ the direction argument between the channel and edit-position:
 <!-- --><table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
 (define* (convolve-channel kernel #:optional nbeg ndur nsnd nchn nedpos)
   (let* ((beg (or nbeg 0)) 
-	 (snd (or nsnd (selected-sound)))
+	 (snd (or nsnd (selected-sound) (car (sounds))))
 	 (chn (or nchn (selected-channel)))
 	 (dur (or ndur (- (frames snd chn) beg)))
 	 (edpos (or nedpos current-edit-position))
@@ -4941,7 +4941,7 @@ the direction argument between the channel and edit-position:
 <!-- --><span class=defbox><code><em class=def><a name="sndpromptinminibuffer">prompt-in-minibuffer</a></em> (msg <i>callback snd (raw #f)</i>)</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
-<!-- -->Post <i>msg</i> in <i>snd</i>'s minibuffer, and when the user responds,
+<!-- -->Post <i>msg</i> in <i>snd</i>'s minibuffer, and when you respond,
 <!-- -->call <i>callback</i> with the response as the callback's argument.
 <!-- -->If <i>callback</i> is specified it should be either #f or a function of 
 <!-- -->one argument.  If 'raw' is #t, the response is returned as a string; otherwise it is evaluated first.
@@ -4952,10 +4952,10 @@ the direction argument between the channel and edit-position:
 (<em class=red>prompt-in-minibuffer</em> "sample 0 via func:"
   (lambda (func) 
     (set! (sample 0) (func (sample 0)))))
-    ;; here we're assuming the user will type a function in response to the prompt
+    ;; here we're assuming you will type a function in response to the prompt
     ;;   the value returned by the function will be the new sample 0 value
     ;;   the function should take one argument, the current sample 0 value
-    ;; now if the user responds: (lambda (y) (+ y .5))
+    ;; now if you respond: (lambda (y) (+ y .5))
     ;; sample 0 will be set to itself + .5
 <!-- --></pre></td></tr></table></td></tr>
 <!-- -->
@@ -5014,7 +5014,7 @@ the direction argument between the channel and edit-position:
 <!-- -->active member of that list
 <!-- -->chooses an accessor based on the type of edit. A  multiply by 2, for
 <!-- -->example, does not multiply anything by 2 internally; it just sets up
-<!-- -->the data accessor to multiply by 2 on any read.  From the user's
+<!-- -->the data accessor to multiply by 2 on any read.  From any other
 <!-- -->point of view, the data has been multiplied.  These accessors make it
 <!-- -->unnecessary to save any data in temp files (so that undo will still
 <!-- -->work) or internal arrays, and editing the edit-history list is very
@@ -5022,8 +5022,8 @@ the direction argument between the channel and edit-position:
 <!-- -->appears to be instantaneous and memory-less.  Lots of other operations
 <!-- -->are already being done this way in Snd (deletions, scaling, most
 <!-- -->envelopes, etc).  <b>ptree-channel</b> extends the idea to (nearly) arbitrary
-<!-- -->functions.  When the user calls <code>(ptree-channel (lambda (y) (* y 2)))</code>,
-<!-- -->which has the same effect as <code>(map-channel (lambda (y) (* y 2)))</code>, the
+<!-- -->functions.  When you call <br><br><code>(ptree-channel (lambda (y) (* y 2)))</code><br><br>
+<!-- -->which has the same effect as <br><br><code>(map-channel (lambda (y) (* y 2)))</code><br><br> the
 <!-- -->optimizer makes the parse-tree that represents <code>(lambda (y) (* y 2))</code>, then the
 <!-- -->edit-history accessor function uses that tree every time the data is
 <!-- -->read.<br><br>
@@ -5365,7 +5365,7 @@ the direction argument between the channel and edit-position:
   (let* ((func (car args))
 	 (len (length args))
 	 (start (if (&gt; len 1) (cadr args) 0))
-	 (snd (if (&gt; len 3) (cadddr args) (selected-sound)))
+	 (snd (if (&gt; len 3) (cadddr args) (or (selected-sound) (car sounds))))
 	 (chn (if (&gt; len 4) (caddddr args) (selected-channel snd)))
 	 (end (if (&gt; len 2) (caddr args) (frames snd chn)))
 	 (reader (make-sample-reader start snd chn))
@@ -5462,6 +5462,7 @@ the direction argument between the channel and edit-position:
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
 <!-- -->selected sound (index) (set it to select a sound). Returns #f is there is no selected sound.
+<!-- -->(It used to return -1 if there was no selected sound, and some of the .scm code in Snd still reflects that).
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->

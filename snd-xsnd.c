@@ -1617,12 +1617,6 @@ static snd_info *add_sound_window_with_parent (Widget parent, char *filename, sn
 	    sw[W_pane] = XtCreateManagedWidget("snd-pane", xmPanedWindowWidgetClass, sx->dialog, args, n);
 	  else sw[W_pane] = XtCreateManagedWidget("snd-pane", xmPanedWindowWidgetClass, SOUND_PANE(ss), args, n);
 	}
-      /* it would be better if we could set a paned window to keep its children relative
-       *   amounts the same upon outside resize, but the Paned Window widget doesn't
-       *   have a resize callback, and no obvious way to advise the resize mechanism.
-       *   An attempt to get the same effect by wrapping w_pane in a drawingarea widget
-       *   ran into other troubles (the thing is seriously confused about its size).
-       */
 
       XtAddCallback(sw[W_pane], XmNhelpCallback, name_help_callback, ss);
       XtAddEventHandler(sw[W_pane], KeyPressMask, FALSE, graph_key_press, (XtPointer)sp);
@@ -2560,18 +2554,8 @@ static snd_info *add_sound_window_with_parent (Widget parent, char *filename, sn
       XtAddEventHandler(sw[W_filter_env], ButtonMotionMask, FALSE, filter_drawer_button_motion, sp);
       XtAddEventHandler(sw[W_filter_env], ButtonReleaseMask, FALSE, filter_drawer_button_release, sp);
       XtAddEventHandler(sw[W_filter_env], KeyPressMask, FALSE, graph_key_press, (XtPointer)sp);
-      FREE(n1);
-      FREE(n2);
-      FREE(n3);
-      FREE(n4);
-      FREE(n5);
-      FREE(n6);
-      FREE(n7);
-      FREE(n8);
-      FREE(n9);
-      FREE(n10);
-      FREE(n11);
-      FREE(n12);
+      FREE(n1); FREE(n2); FREE(n3); FREE(n4); FREE(n5); FREE(n6);
+      FREE(n7); FREE(n8); FREE(n9); FREE(n10); FREE(n11); FREE(n12);
       /* end if control-panel */
 #if (XmVERSION > 1)
       if (sound_style(ss) == SOUNDS_IN_NOTEBOOK)
@@ -3137,6 +3121,47 @@ static XEN g_add_sound_window (XEN parent, XEN filename, XEN read_only)
   else return(XEN_FALSE);
 }
 
+
+#if DEBUGGING && HAVE_GUILE
+
+      /* it would be better if we could set a paned window to keep its children relative
+       *   amounts the same upon outside resize, but the Paned Window widget doesn't
+       *   have a resize callback, and no obvious way to advise the resize mechanism.
+       *   An attempt to get the same effect by wrapping w_pane in a drawingarea widget
+       *   ran into other troubles (the thing is seriously confused about its size).
+       *
+       * so... drop down into the sashes...
+       */
+
+#include <Xm/SashP.h>
+static void watch_sash(Widget w, XtPointer closure, XtPointer callData)
+{
+  SashCallData call_data = (SashCallData)callData;
+  /* call_data->params[0]: Commit, Move, Key, Start (as strings) */
+  /* so we could record current sizes if start,
+     then readjust if commit
+  */
+  /* TODO: relative panes via sash-watchers */
+}
+static void set_watcher(Widget w, void *userptr)
+{
+  if ((XtIsWidget(w)) && 
+      (XtIsManaged(w)) && 
+      (XtIsSubclass(w, xmSashWidgetClass)))
+    XtAddCallback(w, XmNcallback, watch_sash, NULL);
+}
+static XEN g_add_watchers(void)
+{
+  snd_state *ss;
+  ss = get_global_state();
+  map_over_children(SOUND_PANE(ss), set_watcher, NULL);
+  /* or add watcher just to per-sound-outer panes */
+  /*   these would be those whose XtParent is SOUND_PANE(ss) -- these come and go as we add sounds etc */
+  return(XEN_FALSE);
+}
+#endif
+
+
 static XEN g_sound_widgets(XEN snd)
 {
   #define H_sound_widgets "(" S_sound_widgets " snd) -> list of \
@@ -3169,5 +3194,11 @@ void g_init_gxsnd(void)
 {
   XEN_DEFINE_PROCEDURE(S_sound_widgets, g_sound_widgets_w, 0, 1, 0, H_sound_widgets);
   XEN_DEFINE_PROCEDURE("create-sound-window", g_add_sound_window, 2, 1, 0, "add a sound window to a widget");
+
+#if DEBUGGING && HAVE_GUILE
+  XEN_DEFINE_PROCEDURE("add-watchers", g_add_watchers, 0, 0, 0, "an experiment");
+#endif
 }
+
+
 

@@ -1,5 +1,5 @@
 (CFNC-X "XVisualInfo* glXChooseVisual Display* dpy int screen int* attribList")
-(CFNC-X "void glXCopyContext Display* dpy GLXContext src GLXContext dst ulong mask")
+(CFNC-X "void glXCopyContext Display* dpy GLXContext src GLXContext dst unsigned_long mask")
 (CFNC-X "GLXContext glXCreateContext Display* dpy XVisualInfo* vis GLXContext shareList Bool direct")
 (CFNC-X "GLXPixmap glXCreateGLXPixmap Display* dpy XVisualInfo* vis Pixmap pixmap")
 (CFNC-X "void glXDestroyContext Display* dpy GLXContext ctx")
