@@ -1,6 +1,11 @@
 #include "snd.h"
 #include "sndlib-strings.h"
 
+/* TODO: filter control edit of close dots hits high first?
+ * TODO: is large filter always via convolution?
+ * TODO: draggable (focusable) freq axis in filter control
+ */
+
 snd_info *snd_new_file(char *newname, int header_type, int data_format, int srate, int chans, char *new_comment, off_t samples)
 {
   int chan, err;
@@ -4313,3 +4318,13 @@ If it returns #t, the apply is aborted."
   XEN_DEFINE_PROCEDURE(S_read_peak_env_info_file,  g_read_peak_env_info_file_w,  3, 0, 0, H_read_peak_env_info_file);
   XEN_DEFINE_PROCEDURE(S_channel_amp_envs,         g_channel_amp_envs_w,         0, 5, 0, H_channel_amp_envs);
 }
+
+/* noise reduction notes:
+   TODO: pop fixer, auto click remover
+   TODO: check control filter unset and reset, and that text is always correct
+   TODO: some indication of freq response in fft case?
+   TODO: settable bounds for expand control (and the rest?): 
+         amp-control-bounds contrast-control-bounds expand-control-bounds reverb-control-length-bounds reverb-control-scale-bounds speed-control-bounds
+   TODO: env editor x axis in Hz and draggable
+   TODO: explain notch (clm) weaknesses   
+*/

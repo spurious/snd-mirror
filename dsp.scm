@@ -1110,3 +1110,31 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 		 (cascade->canonical (reverse xcoeffs))
 		 (cascade->canonical (reverse ycoeffs)))))
 	 
+
+;;; -------- notch filters
+
+(define* (make-notch-frequency-response cur-srate freqs #:optional (notch-width 2))
+  (let ((freq-response (list 0.0 0.0)))
+    (for-each
+     (lambda (i)
+      (set! freq-response (cons (/ (* 2 (- i notch-width)) cur-srate) freq-response)) ; left upper y hz
+      (set! freq-response (cons 1.0 freq-response)) ; left upper y resp
+      (set! freq-response (cons (/ (* 2 (- i (/ notch-width 2))) cur-srate) freq-response)) ; left bottom y hz
+      (set! freq-response (cons 0.0 freq-response)) ; left bottom y resp
+      (set! freq-response (cons (/ (* 2 (+ i (/ notch-width 2))) cur-srate) freq-response)) ; right bottom y hz
+      (set! freq-response (cons 0.0 freq-response)) ; right bottom y resp
+      (set! freq-response (cons (/ (* 2 (+ i notch-width)) cur-srate) freq-response)) ; right upper y hz
+      (set! freq-response (cons 1.0 freq-response))) ; right upper y resp
+     freqs)
+    (set! freq-response (cons 1.0 freq-response))
+    (set! freq-response (cons 1.0 freq-response)) 
+    (reverse freq-response)))
+
+(define* (notch-channel freqs #:optional (filter-order #f) (snd #f) (chn #f) (notch-width 2))
+  (filter-sound (make-notch-frequency-response (exact->inexact (srate snd)) freqs notch-width)
+		(or filter-order (inexact->exact (expt 2 (ceiling (/ (log (/ (srate snd) notch-width)) (log 2.0))))))
+		snd chn))
+
+(define* (notch-selection freqs #:optional (filter-order #f) (notch-width 2))
+  (filter-selection (make-notch-frequency-response (exact->inexact (selection-srate)) freqs notch-width)
+		    (or filter-order (inexact->exact (expt 2 (ceiling (/ (log (/ (selection-srate) notch-width)) (log 2.0))))))))

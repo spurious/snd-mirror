@@ -2909,9 +2909,10 @@ Float *mus_ycoeffs(mus_any *ptr)
 
 Float *mus_make_fir_coeffs(int order, Float *envl, Float *aa)
 {
- /* envl = evenly sampled freq response, has order samples */
+  /* TODO: speed up mus_make_fir_coeffs */
+  /* envl = evenly sampled freq response, has order samples */
   int n, m, i, j, jj;
-  Float am, q, xt = 0.0, xt0;
+  Float am, q, xt = 0.0, xt0, scl, qj, x;
   Float *a;
   n = order;
   if (n <= 0) return(aa);
@@ -2920,14 +2921,16 @@ Float *mus_make_fir_coeffs(int order, Float *envl, Float *aa)
   else a = (Float *)clm_calloc(order, sizeof(Float), "coeff space");
   m = (n + 1) / 2;
   am = 0.5 * (n + 1);
+  scl = 2.0 / (Float)n;
   q = TWO_PI / (Float)n;
   xt0 = envl[0] * 0.5;
   for (j = 0, jj = n - 1; j < m; j++, jj--)
     {
       xt = xt0;
-      for (i = 1; i < m; i++)
-	xt += (envl[i] * cos(q * (am - j - 1) * i));
-      a[j] = 2.0 * xt / (Float)n;
+      qj = q * (am - j - 1);
+      for (i = 1, x = qj; i < m; i++, x += qj)
+	xt += (envl[i] * cos(x));
+      a[j] = xt * scl;
       a[jj] = a[j];
     }
   return(a);

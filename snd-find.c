@@ -1,5 +1,7 @@
 #include "snd.h"
 
+/* TODO: some indication of long search progress? similarly count-matches */
+
 static bool search_in_progress = false;
 typedef struct 
 {

@@ -8,7 +8,7 @@
 
 ;;; (index '("clm.html") t "test.html" 5 '("XmHTML" "AIFF" "NeXT" "Sun" "RIFF" "IRCAM" "FIR" "IIR" "Hilbert" "AIFC") nil nil)
 
-;;; (index '("cmn.html") nil "test.html" 3 nil nil nil)
+;;; (index '("cmn.html") nil "test.html" 4 nil nil nil)
 
 ;;; (index '("extsnd.html" "grfsnd.html" "sndscm.html" "sndlib.html" "clm.html") nil "test.html" 5 '("XmHTML" "AIFF" "NeXT" "Sun" "RIFF" "IRCAM" "FIR" "IIR" "Hilbert" "AIFC") t t)
 ;;;   use (make-index)
@@ -76,7 +76,7 @@
 	(let* ((bpos (search ">" line)))
 	  (setf (elt line (1+ bpos)) (char-downcase (elt line (1+ bpos)))))))
     (let ((bpos (search ">" line))
-	  (epos (search "</a>" line)))
+	  (epos (or (search "</a>" line) (search "</A>" line))))
       (make-ind :name line :topic topic :file file :sortby (string-downcase (subseq line (1+ bpos) epos))))))
 
 (defun create-general (str file)
@@ -291,7 +291,7 @@
 			  (setf xrefing t)
 			(loop while pos do
 			  (setf dline (subseq dline pos))
-			  (let ((epos (search "</a>" dline)))
+			  (let ((epos (or (search "</a>" dline) (search "</A>" dline))))
 			    (if (not epos) 
 				(warn "<a> but no </a> for ~A" dline)
 			      (progn
@@ -757,8 +757,7 @@
 		       )
 		  (loop while pos do
 		    (setf dline (subseq dline (+ pos pos-len)))
-		    (let ((epos (or (search "</a>" dline)
-				    (search "</A>" dline))))
+		    (let ((epos (or (search "</a>" dline) (search "</A>" dline))))
 					;actually should look for close double quote
 		      (if (not epos) 
 			  (warn "<a name but no </a> for ~A in ~A[~D]" dline file linectr)
@@ -782,8 +781,7 @@
 		       (pos-len (if pos-norm 9 21)))
 		  (loop while pos do
 		    (setf dline (subseq dline (+ pos pos-len)))
-		    (let ((epos (or (search "</a>" dline)
-				    (search "</A>" dline))))
+		    (let ((epos (or (search "</a>" dline) (search "</A>" dline))))
 		      (if (not epos) 
 			  (warn "<a href but no </a> for ~A in ~A[~D]" dline file linectr)
 			(progn

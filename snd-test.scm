@@ -31,6 +31,7 @@
 ;;; test 28: errors
 
 ;;; TODO: recorder-file-hook
+;;; TODO: compsnd locally
 ;;; how to send ourselves a drop?  (button2 on menu is only the first half -- how to force 2nd?)
 
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 optargs) (ice-9 popen) (ice-9 session))
@@ -1652,7 +1653,7 @@
 
 ;;; ---------------- test 4: sndlib tests ----------------
 
-(define play-sound
+(define play-sound-1
   (lambda (file)
     (let* ((sound-fd (mus-sound-open-input file))
            (chans (mus-sound-chans file))
@@ -1968,7 +1969,7 @@
 	      (snd-display ";oboe: mus-sound-type-specifier: ~X?" (mus-sound-type-specifier "oboe.snd")))
 	  (if (not (string-=? (strftime "%d-%b-%Y %H:%M" (localtime (file-write-date "oboe.snd"))) "19-Oct-1998 09:46"))
 	      (snd-display ";oboe: file-write-date: ~A?" (strftime "%d-%b-%Y %H:%M" (localtime (file-write-date "oboe.snd")))))
-	  (play-sound "oboe.snd")
+	  (play-sound-1 "oboe.snd")
 	  
 	  (let ((lasth (do ((i 1 (1+ i)))
 			   ((string-=? (mus-header-type-name i) "unsupported") i))))
@@ -14300,7 +14301,7 @@ EDITS: 5
 	(convolve-files "oboe.snd" "fyow.snd" .5 "fmv.snd")
 	(if (fneq (cadr (mus-sound-maxamp "fmv.snd")) .5) 
 	    (snd-display ";convolve-files: ~A /= .5?" (cadr (mus-sound-maxamp "fmv.snd"))))
-	(play-sound "fmv.snd"))
+	(play-sound-1 "fmv.snd"))
       
       (let* ((fd (mus-sound-open-input "oboe.snd"))
 	     (chans (mus-sound-chans "oboe.snd"))
@@ -32823,6 +32824,7 @@ EDITS: 2
 (load "clm-ins.scm")
 (load "bird.scm")
 (load "piano.scm")
+(load "play.scm")
 
 (define old-opt-23 (optimization))
 (set! (optimization) max-optimization)
@@ -33362,6 +33364,33 @@ EDITS: 2
 	(with-sound (:reverb jc-reverb) (fm-violin 0 .1 440 .1) (with-mix () "with-mix" 0 (fm-violin 0 .1 550 .3)))
 	(check-with-mix 6 .1 1.1 .398 "()" "((fm-violin 0 0.1 550 0.3))" old-date #f))
       
+      (with-sound (:srate 44100) (fm-violin 0 2 60 0.5 :periodic-vibrato-amplitude 0.0 :random-vibrato-amplitude 0.0))
+      (let ((ind (find-sound "test.snd")))
+	(let ((mx (maxamp)))
+	  (notch-channel (let ((freqs '())) (do ((i 60 (+ i 60))) ((= i 3000)) (set! freqs (cons i freqs))) (reverse freqs)))
+	  (if (or (fneq mx .5)
+		  (ffneq (maxamp) .06))
+	      (snd-display ";notch 60 Hz: ~A to ~A" mx (maxamp)))
+	  (undo)
+	  (notch-channel (let ((freqs '())) (do ((i 60 (+ i 60))) ((= i 3000)) (set! freqs (cons i freqs))) (reverse freqs)) 1024 0 10)
+	  (if (ffneq (maxamp) .009)
+	      (snd-display ";notch 60 hz 2: ~A" (maxamp)))
+	  (undo)
+	  (select-all)
+	  (notch-selection (let ((freqs '())) (do ((i 60 (+ i 60))) ((= i 3000)) (set! freqs (cons i freqs))) (reverse freqs)) 1024)
+	  (if (ffneq (maxamp) .009)
+	      (snd-display ";notch-selection 60 hz 2: ~A" (maxamp)))
+
+	  (play-sound
+	   (lambda (data)
+	     (let ((len (sound-data-length data)))
+	       (do ((i 0 (1+ i)))
+		   ((= i len))
+		 (sound-data-set! data 0 i (* 2.0 (sound-data-ref data 0 i)))))))
+	  (close-sound ind)))
+      (play-sine 440 .1)
+      (play-sines '((425 .05) (450 .01) (470 .01) (546 .02) (667 .01) (789 .034) (910 .032)))
+
       (let ((ind (open-sound "oboe.snd")))
 	(with-sound (:output "test1.snd" :to-snd #f) (fm-violin 0 .1 440 .1))
 	(set-samples 0 2205 "test1.snd" ind 0 #f "set-samples auto-delete test" 0 #f #t)

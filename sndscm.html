@@ -97,6 +97,7 @@
   <li><a href="#extsndasneededexpl">A Note on "As-Needed" input functions</a>
   <li><a href="#extsndcgens">A Note on User-defined Generators in C-CLM</a>
   <li><a href="#continuations">About Continuations</a>
+  <li><a href="#noisystory">A Note on Noise Reduction</a>
 </ul>
 <br>
 
@@ -530,6 +531,8 @@ the listener?
   <tr><td><em class=emdef>make-butter-hp</em> M fc</td><td>any even order Butterworth highpass</td></tr>
   <tr><td><em class=emdef>make-butter-bp</em> M f1 f2</td><td>any even order Butterworth bandpass</td></tr>
   <tr><td><em class=emdef>make-butter-bs</em> M f1 f2</td><td>any even order Butterworth bandstop</td></tr>
+  <tr><td><a class=def name="notchchannel">notch-channel</a> freqs order s c width</td><td>arbitrary notch filter applied to channel</td></tr>
+  <tr><td><a class=def name="notchselection">notch-selection</a> freqs order width</td><td>arbitrary notch filter applied to selection</td></tr>
 </table>
 
 <p><b>dolph</b> is the Dolph-Chebyshev fft data window, taken
@@ -619,6 +622,31 @@ a sort of "FM index" parameter (named "k", hence the generator name) to vary the
 </p>
 <p>The Ruby version of this is in examp.rb.
 </p>
+<p>
+<b>notch-channel</b> and <b>notch-selection</b> are aimed at noise reduction.
+Each takes a list of frequencies (in Hz), and an optional filter order, and
+notches out each frequency.  The sharpness of the notch is settable
+explicitly via the <i>width</i> argument, and implicitly via the
+filter <i>order</i>.  A common application cancels 60 Hz hum:
+</p>
+<pre>
+(notch-channel (let ((freqs '())) (do ((i 60 (+ i 60))) ((= i 3000)) (set! freqs (cons i freqs))) (reverse freqs)))
+</pre>
+<p>Here we've built a list of multiples of 60 and passed it to notch-channel. Its default notch
+width is 2 Hz, and its default order tries to maintain that width given the channel's sampling rate,
+so the default filter order can be very high (65536).  The filtering is normally done via
+convolutuion (CLM's convolve generator), so a high filter order is not a big deal.  In ideal
+cases, this can reduce the hum and its harmonics by about 90%.
+But, if the hum is not absolutely stable, you'll probably want wider notches:
+</p>
+<pre>
+(notch-channel (let ((freqs '())) (do ((i 60 (+ i 60))) ((= i 3000)) (set! freqs (cons i freqs))) (reverse freqs)) 1024)
+</pre>
+<p>The order of 1024 means we get 20 Hz width minima (44100 Hz srate), so this
+notches out much bigger chunks of the spectrum.  You get 98% cancellation, but
+also lose more of the original signal.
+</p>
+
 
 <A NAME="editmenudoc"></a><table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>edit-menu.scm</h2></td></tr></table>
 
@@ -1544,7 +1572,8 @@ convenient if they were in one file.
   <a class=def name="envexptchannel">env-expt-channel</a> env exponent #:optional (symmetric #t) beg dur snd chn edpos
 
   <a class=def name="offsetchannel">offset-channel</a> amount #:optional beg dur snd chn edpos	
-  <a class=def name="contrastchannel">contrast-channel</a> index #:optional beg dur snd chn edpos	
+  <a class=def name="contrastchannel">contrast-channel</a> index #:optional beg dur snd chn edpos
+  <a class=def name="channelsequal">channels-equal</a> snd1 chn1 snd2 chn2 allowable-difference	
 </pre>
 
 <p><b>channel-property</b> returns the value associated with <i>key</i> in the given channel's
@@ -1668,6 +1697,8 @@ start point in the file, and (optionally) the channel of the file to mix:
 <b>offset-channel</b> adds a constant to a sound, using <a href="extsnd.html#ptreechannel">ptree-channel</a>.
 <b>contrast-channel</b> is the CLM <a href="clm.html#contrast-enhancement">contrast-enhancement</a> function,
 equivalent to the control panel Contrast slider.
+<b>channels-equal</b> returns #t is the two specified channels are the same within the
+given tolerance (which can be 0.0).
 </p>
 <p>
 <b>any-env-channel</b> takes an envelope and a function to produce the connection between successive
@@ -2175,10 +2206,36 @@ model by Scott van Duyne.
 <p>These functions play sounds in various ways.</p>
 <pre>
   <A class=def NAME="explaysound">play-sound</A> <i>func</i>
+  <A class=def NAME="playsine">play-sine</A> freq amp
+  <a class=def name="playsines">play-sines</a> freqs-and-amps
+  <A class=def NAME="openplayoutput">open-play-output</A> <i>chans srate format buffer-size</i>
 </pre>
 <p><b>play-sound</b> plays the current sound, calling (func data) on each buffer if func is passed.
 It is also an example of calling the low level mus-audio functions, rather than calling
 play-channel and friends. The latter are easier to use, in most cases.
+The following doubles each sample in channel 0 during playback:
+</p>
+<pre>
+(<em class=red>play-sound</em>
+ (lambda (data)
+   (let ((len (sound-data-length data)))
+     (do ((i 0 (1+ i)))
+	 ((= i len))
+       (sound-data-set! data 0 i (* 2.0 (sound-data-ref data 0 i)))))))
+</pre>
+<p>
+This calls <b>open-dac-output</b> to open an output audio port.  open-dac-output
+takes the desired number of channels, sampling rate, data format, and DAC buffer size (in samples),
+and returns a list containing the audio port (-1 on failure), the opened output channels,
+and the actual DAC buffer size (these can differ from the requested amounts in various hardware
+situations).
+<b>play-sine</b> plays a one-second sine wave at the given frequency and amplitude: <code>(play-sine 440 .1)</code>
+and <b>play-sines</b> produces a spectrum given a list of lists of frequency and amplitude:
+</p>
+<pre>
+(play-sines '((425 .05) (450 .01) (470 .01) (546 .02) (667 .01) (789 .034) (910 .032)))
+</pre>
+<p>
 To set up the keyboard
 as a kind of extended piano, we could map keys to sounds:
 </p>
@@ -4381,6 +4438,349 @@ defining call-with-current-continuation form:
 ;;; this prints "ab!a!"
 
 </pre>
+
+<!-- TODO: noise reduction as help topic -->
+
+<table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2><A NAME="noisystory">A Note on Noise Reduction</a></h2></td></tr></table>
+<!-- INDEX noisystory:Noise Reduction -->
+
+<p>There is no built-in noise reduction function in Snd.  There are so many kinds of
+noise (clicks, pops, rumble, hiss, hum, crackle, clips, flutter, "distortion", modulation, echoes, etc),
+and what is noise in one context is signal in another (consonants, percussion, etc)
+that it's hard to write a single function that can handle every case.
+As far as I can tell, looking at other programs that
+offer noise reduction, the main trick used is similar to Perry Cook's
+Scrubber program, translated to Scheme as anoi in clm-ins.scm or fft-squelch in examp.scm.
+Secondary tricks involve smoothing functions similar to smooth-channel,
+and enveloping to silence stuff between tracks, etc.
+I'd certainly be happy to include in Snd an all-inclusive function for noise reduction,
+if anyone sends me one as a gift!  But in the meantime, 
+the tools exist to do most of what you normally want to do in
+this situation.  
+</p>
+<p>
+In my case, I blithely offered to clean up some recorded telephone conversations.
+The first step was to find the clipped locations (where the conversation was
+accidentally over-recorded).  I did this first because there were places in the
+recordings where the DC offset was huge, causing clipping in a signal that would
+otherwise have been safe.  I hoped to reconstruct the signal at the clipped
+points, but these would be hard to find once the DC was removed.  A quick check:
+</p>
+<pre>
+  (count-matches (lambda (y) (or (&gt; y .9999) (&lt; y -.9999))))
+</pre>
+<p>
+returned 5437 (in 18 minutes of sound).  That seemed high, and I thought "maybe
+those are just one sample clicks that can easily be smoothed over", so
+</p>
+<pre>
+(define* (count-clips #:optional snd chn)
+  (let ((y0 0.0))
+    (count-matches 
+     (lambda (y) (let ((val (and (or (&gt; y0 .9999) (&lt; y0 -.9999))
+				 (or (&gt; y .9999) (&lt; y -.9999)))))
+		   (set! y0 y)
+		   val))
+     0 snd chn)))
+</pre>
+<p>
+But this returned 4768!  So, it's time to make a list of clipped
+portions (this function has at least one bug, but I plowed past it -- no
+time for perfection...):
+</p>
+<pre>
+(define* (list-clips #:optional snd chn)
+  (let* ((max-clips (count-clips snd chn))
+	 (clip-data (make-vector (* 2 max-clips) 0))
+	 (clip-ctr 0)
+	 (clip-beg 0)
+	 (clip-end 0)
+	 (clip-max-len 0)
+	 (in-clip #f)
+	 (samp 0))
+    (scan-channel
+     (lambda (y)
+       (if (or (&gt; y .9999) (&lt; y -.9999))
+	   (if in-clip
+	       (set! clip-end samp)
+	       (begin
+		 (set! in-clip #t)
+		 (set! clip-beg samp)
+		 (set! clip-end samp)))
+	   (if in-clip
+	       (begin
+		 (set! in-clip #f)
+		 (vector-set! clip-data clip-ctr clip-beg)
+		 (vector-set! clip-data (1+ clip-ctr) clip-end)
+		 (set! clip-max-len (max clip-max-len (1+ (- clip-end clip-beg))))
+		 (set! clip-ctr (+ clip-ctr 2)))))
+       (set! samp (1+ samp))
+       #f)) ; make sure scan doesn't quit prematurely
+    (list clip-ctr clip-max-len clip-data)))
+</pre>
+<p>
+which returned a vector of 669 clipped portions, the worst being 42 samples long!
+I saved that data in a separate file, just in case of disaster:
+</p>
+<pre>
+(with-output-to-file "clips" (display (list-clips)))
+</pre>
+<p>
+Since filtering can pad the sound at the beginning, and tends to
+change the clipped portions, I decide reconstruct them first.  This will
+produce sample values outside -1.0 to 1.0, but I can scale everything
+back down at the end.
+To see how things look, I reset the graph y bounds:
+</p>
+<pre>
+(set! (y-bounds) (list -1.5 1.5))
+</pre>
+<p>
+Now to conjure up a plausible sine wave between the clip begin and
+end points.  (This is also "just-good-enough" software).
+</p>
+<pre>
+(if (not (defined? 'pi)) (define pi 3.141592653589793))
+
+(define (fix-clip clip-beg-1 clip-end-1)
+  (if (&gt; clip-end-1 clip-beg-1)
+      (let* ((dur (1+ (- clip-end-1 clip-beg-1)))
+	     (samps (channel-&lt;vct (- clip-beg-1 4) (+ dur 9)))
+	     (clip-beg 3)
+	     (clip-end (+ dur 4)))
+	(let ((samp0 (vct-ref samps clip-beg))
+	      (samp1 (vct-ref samps clip-end)))
+	  (if (or (&gt; samp0 .99) (&lt; samp0 -.99))
+	      (begin
+	        ;; weird!  some of the clipped passages have "knees"
+		;;   this looks nuts, but no time to scratch my head
+		(set! clip-beg (1- clip-beg))
+		(set! samp0 (vct-ref samps clip-beg))
+		(if (or (&gt; samp0 .99) (&lt; samp0 -.99))
+		    (begin
+		      (set! clip-beg (1- clip-beg))
+		      (set! samp0 (vct-ref samps clip-beg))))))
+	  (if (or (&gt; samp1 .99) (&lt; samp1 -.99))
+	      (begin
+		(set! clip-end (1+ clip-end))
+		(set! samp1 (vct-ref samps clip-end))
+		(if (or (&gt; samp1 .99) (&lt; samp1 -.99))
+		    (begin
+		      (set! clip-end (1+ clip-end))
+		      (set! samp1 (vct-ref samps clip-end))))))
+          ;; now we have semi-plausible bounds
+          ;; make sine dependent on rate of change of current 
+	  (let* ((samp00 (vct-ref samps (1- clip-beg)))
+		 (samp11 (vct-ref samps (1+ clip-end)))
+		 (dist (- clip-end clip-beg))
+		 (incr (/ pi dist))
+		 (amp (* .125 (+ (abs (- samp0 samp00)) (abs (- samp1 samp11))) dist)))
+	    (if (&gt; samp0 0.0)
+                ;; clipped at 1.0
+		(do ((i (1+ clip-beg) (1+ i))
+		     (angle incr (+ angle incr)))
+		    ((= i clip-end))
+		  (vct-set! samps i (+ 1.0 (* amp (sin angle)))))
+                ;; clipped at -1.0
+		(do ((i (1+ clip-beg) (1+ i))
+		     (angle incr (+ angle incr)))
+		    ((= i clip-end))
+		  (vct-set! samps i (- -1.0 (* amp (sin angle))))))
+	    (vct-&lt;channel samps (- clip-beg-1 4))))
+	#t) ; return values so I can tell when I hit a 1-sample section during testing
+      #f))
+
+(define (fix-it n)
+  ;; turn off graphics and fix all the clipped sections
+  (set! (squelch-update) #t)
+  (do ((i 0 (1+ i)))
+      ((or (= i n) (c-g?))) 
+      ;; "clips" here is a list form of the earlier vector of clip locations
+    (fix-clip (list-ref clips (* i 2)) 
+	      (list-ref clips (1+ (* i 2)))))
+  (set! (squelch-update) #f))
+
+(fix-it 669)
+</pre>
+<p>
+This produced 418 edits, with a maxamp of 2.26.  So scale it back down:
+<code>(scale-to .9)</code>.
+Next I ran some large ffts to see what sort of overall spectrum I had:
+<code>(set! (transform-size) (expt 2 23))</code>.
+This showed a massive DC component, and numerous harmonics of 60 Hz.
+I decided to get rid of the portions that were clearly noise.  Since I was dealing with
+telephone recordings, I assumed anything under 40 Hz or above
+4000 Hz was extraneous.
+</p>
+<!-- TODO: why no regularized filter-channel? -->
+<pre>
+(define* (notch-out-rumble-and-hiss #:optional (snd #f) (chn #f))
+  (let* ((cur-srate (exact-&lt;inexact (srate snd))))
+    (filter-sound
+     (list 0.0 0.0                    ; get rid of DC
+	   (/ 80.0 cur-srate) 0.0     ; get rid of anything under 40 Hz (1.0=srate/2 here)
+	   (/ 90.0 cur-srate) 1.0     ; now the passband
+	   (/ 7000.0 cur-srate) 1.0 
+	   (/ 8000.0 cur-srate) 0.0   ; end passband (40..4000)
+	   1.0 0.0)                   ; get rid of some of the hiss
+     ;; since I'm the minimum band is 10 Hz here, 
+     ;;   cur-srate/10 rounded up to next power of 2 seems a safe filter size
+     ;;   filter-sound will actually use overlap-add convolution in this case
+     (inexact-&lt;exact (expt 2 (ceiling (/ (log (/ cur-srate 10.0)) (log 2.0)))))
+     snd chn)))
+
+(notch-out-rumble-and-hiss)
+</pre>
+<p>
+By now it was obvious I needed a simple way to play portions of the
+sound before and after an edit, sometimes with a tracking cursor.
+So I bound a few keys:
+</p>
+<!-- TODO: comparision play to examp? -->
+<pre>
+(define (play-from-cursor current)
+  (play (cursor) #f #f #f #f (if current #f (1- (edit-position)))))
+
+(define (play-from-cursor-with-tracking current)
+  ;; patterned after pfc in extsnd.html
+  (let ((old-tracking (cursor-follows-play)))
+    (set! (cursor-follows-play) #t)
+    (add-hook! stop-playing-hook 
+	       (lambda (snd)
+		 (set! (cursor-follows-play) old-tracking)))
+    (play (cursor) #f #f #f #f (if current #f (1- (edit-position))))))
+
+(bind-key (char-&lt;integer #\p) 0 (lambda () (play-from-cursor #t) keyboard-no-action))
+(bind-key (char-&lt;integer #\P) 1 (lambda () (play-from-cursor #f) keyboard-no-action))
+(bind-key (char-&lt;integer #\p) 4 (lambda () (play-from-cursor-with-tracking #t) keyboard-no-action))
+</pre>
+<p>
+So, if the mouse is in the channel graph, 'p' plays from the cursor,
+'P' plays the previous version from the cursor, and 'C-p' plays from
+the cursor with a "tracking cursor".
+</p>
+<p>
+In several of the sections (the overall sound consisted of a couple dozen
+separate conversations), there was some very loud mid-range tone that I
+dubbed "transformer noise".  To figure out what frequencies it represented,
+I FFT'd a portion containing only that noise and got this spectrum
+(plus a zillion other peaks that didn't look interesting):
+</p>
+<pre>
+((425 .05) (450 .01) (546 .02) (667 .01) (789 .034) (910 .032) (470 .01))
+</pre>
+<p>To hear that, I took play-sound from play.scm, and
+changed it to play a list of sine tones generated on the fly (the changes are in red):
+</p>
+<!-- play-sine + play-sines to play.scm doc/test -->
+<pre>
+(define (<em class=red>play-sines freqs-and-amps</em>)
+  ;; <em class=red>(play-sines '((440 .4) (660 .3)))</em>
+  (let* ((size 256)
+	 (audio-info (open-play-output <em class=red>1 22050</em> #f size))
+	 (audio-fd (car audio-info)))
+    (set! size (caddr audio-info))
+    (if (not (= audio-fd -1))
+	(let ((len <em class=red>22050</em>) ; <em class=red>play a one-second tone</em>
+	      (<em class=red>oscs (map make-oscil (map car freqs-and-amps))</em>)
+	      (<em class=red>amps (map cadr freqs-and-amps)</em>)
+	      (data (make-sound-data outchans size)))  ; the data buffer passed to the function (func above), then to mus-audio-write
+	  (set! (dac-size) outbytes)
+	  (do ((beg 0 (+ beg size)))
+	      ((or (c-g?)                   ; C-g to stop in mid-stream
+		   (&lt; beg len)))
+	    (do ((i 0 (1+ i)))
+		((= i size))
+	      (<em class=red>sound-data-set! data 0 i (apply + (map (lambda (o a) (* a (oscil o))) oscs amps))</em>))
+	    (mus-audio-write audio-fd data size))
+	  (mus-audio-close audio-fd))
+        #f)))
+</pre>
+<p>
+The only changes to the original function set up and use a list of oscillators, each with
+its own amplitude, rather than opening and reading a sound file. (I added this function to play.scm).
+I could then resynthesize the suspect tone with:
+</p>
+<pre>
+(play-sines '((425 .05) (450 .01) (546 .02) (667 .01) (789 .034) (910 .032) (470 .01)))
+</pre>
+<p>
+And to my surprise, the result was close to the main portion of the hum.  So now to notch out those frequencies,
+and see what is left:
+</p>
+<!-- TODO: notch procs regularized -->
+<pre>
+(define* (make-notch-frequency-response cur-srate freqs #:optional (notch-width 2))
+  (let ((freq-response (list 0.0 0.0)))
+    (for-each
+     (lambda (i)
+      (set! freq-response (cons (/ (* 2 (- i notch-width)) cur-srate) freq-response))       ; left upper y hz
+      (set! freq-response (cons 1.0 freq-response))                                         ; left upper y resp
+      (set! freq-response (cons (/ (* 2 (- i (/ notch-width 2))) cur-srate) freq-response)) ; left bottom y hz
+      (set! freq-response (cons 0.0 freq-response))                                         ; left bottom y resp
+      (set! freq-response (cons (/ (* 2 (+ i (/ notch-width 2))) cur-srate) freq-response)) ; right bottom y hz
+      (set! freq-response (cons 0.0 freq-response))                                         ; right bottom y resp
+      (set! freq-response (cons (/ (* 2 (+ i notch-width)) cur-srate) freq-response))       ; right upper y hz
+      (set! freq-response (cons 1.0 freq-response)))                                        ; right upper y resp
+     freqs)
+    (set! freq-response (cons 1.0 freq-response))
+    (set! freq-response (cons 1.0 freq-response)) 
+    (reverse freq-response)))
+
+(define* (notch-channel freqs #:optional (filter-order #f) (snd #f) (chn #f) (notch-width 2))
+  (filter-sound (make-notch-frequency-response (exact-&lt;inexact (srate snd)) freqs notch-width)
+		(or filter-order (inexact-&lt;exact (expt 2 (ceiling (/ (log (/ (srate snd) notch-width)) (log 2.0))))))
+		snd chn))
+
+(define* (notch-sound freqs #:optional (filter-order #f) (snd #f) (notch-width 2))
+  (filter-sound (make-notch-frequency-response (exact-&lt;inexact (srate snd)) freqs notch-width)
+		(or filter-order (inexact-&lt;exact (expt 2 (ceiling (/ (log (/ (srate snd) notch-width)) (log 2.0))))))
+		snd))
+
+(define* (notch-selection freqs #:optional (filter-order #f) (notch-width 2))
+  (filter-selection (make-notch-frequency-response (exact-&lt;inexact (selection-srate)) freqs notch-width)
+		    (or filter-order (inexact-&lt;exact (expt 2 (ceiling (/ (log (/ (srate snd) notch-width)) (log 2.0))))))))
+
+(notch-sound (list 425 450 470 546 667 789 910) 2048 1 10)
+</pre>
+<p>
+<!-- TODO: convolve-channel? -->
+And the steady hum was largely erased.  (I added these functions to dsp.scm). Unfortunately, in many cases,
+this also changed the timbre of the voices, and that wasn't acceptable
+in this context.  
+I goofed around with the notch-width and filter-size parameters, looking
+for something that that would still do the trick without removing half
+the personal side of the voices, but in only a few cases was the result
+usable. (The human ear is so attuned to the voice, that you can remove
+all but a small passband and still get understandable speech).
+In my case, what was being said was not very important, but the
+individual characteristics of each voice were.
+</p>
+<p>
+The next step was to take out noisy sections between snipits, mostly
+using <code>(env-selection '(0 1 1 0 10 0 11 1))</code>
+and equalizing each snipit, more or less, with scale-selection-by.
+There were a few "you-are-being-recorded" beeps which I deleted (via the Edit
+menu delete selection option).  
+In some of the conversations,
+between sections of speech the background hum would gradually increase, then
+the voice would abruptly start with a large peak amplitude. These
+were fixed mostly with small-section scale-by's and envelopes.
+In the female voice sections, it seemed to help to:
+<code>(filter-selection '(0 0 .01 0 .02 1 1 1) 1024)</code>
+which got rid of some of the rumble without noticeably affecting
+the vocal timbre.
+</p>
+
+<p>This may seem like a lot of programming for a simple problem, but
+I hadn't previously thought about noise reduction (so nothing was
+already written), and once this stuff is written, no one else has
+to do anything but load it.  Most of the functions mentioned
+here are now in play.scm or dsp.scm.
+</p>
+
+<br>
+
 
 <center>
 <table border=1><tr><td>

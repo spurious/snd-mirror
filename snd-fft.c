@@ -1,6 +1,7 @@
 #include "snd.h"
 
 /* TODO: why doesn't peaks output match screen? */
+/* TODO: fftw error catcher (memerr = exit) */
 
 #if WITH_SHARED_SNDLIB
 #if HAVE_FFTW3

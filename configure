@@ -853,9 +853,13 @@ Optional Features:
   --disable-FEATURE       do not include FEATURE (same as --enable-FEATURE=no)
   --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
   --disable-largefile     omit support for large files
+  --enable-snd-debug      include internal Snd debugging functions
   --disable-rpath         do not hardcode runtime library paths
   --disable-nls           do not use Native Language Support
-  --enable-snd-debug      include internal Snd debugging functions
+  --disable-deprecated      do not include any deprecated stuff from gtk or guile
+  if test "$enable_deprecated" = no ; then
+    CFLAGS="$CFLAGS -DGTK_DISABLE_DEPRECATED -DG_DISABLE_DEPRECATED -DGDK_DISABLE_DEPRECATED -DPANGO_DISABLE_DEPRECATED -DSCM_DEBUG_DEPRECATED=1 -DXM_DISABLE_DEPRECATED"
+  fi
 
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
@@ -2896,6 +2900,7 @@ _ACEOF
 #   --with-doubles        use doubles throughout (default is floats)
 #   --with-float-samples  represent samples internally as floats
 #   --enable-snd-debug    include Snd internal debugging stuff
+#   --disable-deprecated  do not include any deprecated stuff (in gtk and guile)
 #   --with-ladspa         include LADSPA plugin support (Linux)
 #   --with-sample-width=N use N bits of samples (default = 24)
 #   --with-esd            use Enlightened Sound Daemon
@@ -2923,6 +2928,7 @@ _ACEOF
 #   SNDLIB_CONFIG_path    where to look for sndlib-config
 #
 # SOMEDAY: --with-static-libraries --with-static-guile
+
 
 #--------------------------------------------------------------------------------
 
@@ -18306,6 +18312,124 @@ _ACEOF
 
 
 
+# Check whether --enable-snd-debug or --disable-snd-debug was given.
+if test "${enable_snd_debug+set}" = set; then
+  enableval="$enable_snd_debug"
+  if test "$enable_snd_debug" = yes ; then
+    cat >>confdefs.h <<\_ACEOF
+#define DEBUGGING 1
+_ACEOF
+
+    cat >>confdefs.h <<\_ACEOF
+#define DEBUG_MEMORY 1
+_ACEOF
+
+
+  ansi=
+  if test -z "$ansi"; then
+    msg="for C compiler warning flags"
+  else
+    msg="for C compiler warning and ANSI conformance flags"
+  fi
+  echo "$as_me:$LINENO: checking $msg" >&5
+echo $ECHO_N "checking $msg... $ECHO_C" >&6
+if test "${vl_cv_prog_cc_warnings+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+
+    if test -n "$CC"; then
+      cat > conftest.c <<EOF
+int main(int argc, char **argv) { return 0; }
+EOF
+
+            if test "$GCC" = "yes"; then
+        if test -z "$ansi"; then
+          vl_cv_prog_cc_warnings="-g3 -Wall"
+        else
+          vl_cv_prog_cc_warnings="-g3 -Wall -ansi -pedantic"
+        fi
+
+
+            elif $CC -V 2>&1 | grep -i "WorkShop" > /dev/null 2>&1 &&
+           $CC -c -v -Xc conftest.c > /dev/null 2>&1 &&
+           test -f conftest.o; then
+        if test -z "$ansi"; then
+          vl_cv_prog_cc_warnings="-v"
+        else
+          vl_cv_prog_cc_warnings="-v -Xc"
+        fi
+
+            elif $CC -V 2>&1 | grep -i "Digital UNIX Compiler" > /dev/null 2>&1 &&
+           $CC -c -verbose -w0 -warnprotos -std1 conftest.c > /dev/null 2>&1 &&
+           test -f conftest.o; then
+        if test -z "$ansi"; then
+          vl_cv_prog_cc_warnings="-verbose -w0 -warnprotos"
+        else
+          vl_cv_prog_cc_warnings="-verbose -w0 -warnprotos -std1"
+        fi
+
+            elif $CC 2>&1 | grep -i "C for AIX Compiler" > /dev/null 2>&1 &&
+           $CC -c -qlanglvl=ansi -qinfo=all conftest.c > /dev/null 2>&1 &&
+           test -f conftest.o; then
+        if test -z "$ansi"; then
+          vl_cv_prog_cc_warnings="-qsrcmsg -qinfo=all:noppt:noppc:noobs:nocnd"
+        else
+          vl_cv_prog_cc_warnings="-qsrcmsg -qinfo=all:noppt:noppc:noobs:nocnd -qlanglvl=ansi"
+        fi
+
+            elif $CC -version 2>&1 | grep -i "MIPSpro Compilers" > /dev/null 2>&1 &&
+           $CC -c -fullwarn -ansi -ansiE conftest.c > /dev/null 2>&1 &&
+           test -f conftest.o; then
+        if test -z "$ansi"; then
+          vl_cv_prog_cc_warnings="-fullwarn"
+        else
+          vl_cv_prog_cc_warnings="-fullwarn -ansi -ansiE"
+        fi
+
+            elif what $CC 2>&1 | grep -i "HP C Compiler" > /dev/null 2>&1 &&
+           $CC -c -Aa +w1 conftest.c > /dev/null 2>&1 &&
+           test -f conftest.o; then
+        if test -z "$ansi"; then
+          vl_cv_prog_cc_warnings="+w1"
+        else
+          vl_cv_prog_cc_warnings="+w1 -Aa"
+        fi
+
+            elif $CC -V 2>&1 | grep "/SX" > /dev/null 2>&1 &&
+           $CC -c -pvctl,fullmsg -Xc conftest.c > /dev/null 2>&1 &&
+           test -f conftest.o; then
+        if test -z "$ansi"; then
+          vl_cv_prog_cc_warnings="-pvctl,fullmsg"
+        else
+          vl_cv_prog_cc_warnings="-pvctl,fullmsg -Xc"
+        fi
+
+            elif $CC -V 2>&1 | grep -i "Cray" > /dev/null 2>&1 &&
+           $CC -c -h msglevel 2 conftest.c > /dev/null 2>&1 &&
+           test -f conftest.o; then
+        if test -z "$ansi"; then
+          vl_cv_prog_cc_warnings="-h msglevel 2"
+        else
+          vl_cv_prog_cc_warnings="-h msglevel 2 -h conform"
+        fi
+
+      fi
+      rm -f conftest.*
+    fi
+    if test -n "$vl_cv_prog_cc_warnings"; then
+      CFLAGS="$CFLAGS $vl_cv_prog_cc_warnings"
+    else
+      vl_cv_prog_cc_warnings="unknown"
+    fi
+
+fi
+echo "$as_me:$LINENO: result: $vl_cv_prog_cc_warnings" >&5
+echo "${ECHO_T}$vl_cv_prog_cc_warnings" >&6
+
+  fi
+fi;
+
+
 #--------------------------------------------------------------------------------
 # sigsetjmp special case
 #--------------------------------------------------------------------------------
@@ -20359,123 +20483,11 @@ fi
 
 
 
-# Check whether --enable-snd-debug or --disable-snd-debug was given.
-if test "${enable_snd_debug+set}" = set; then
-  enableval="$enable_snd_debug"
-  if test "$enable_snd_debug" = yes ; then
-    cat >>confdefs.h <<\_ACEOF
-#define DEBUGGING 1
-_ACEOF
+# Check whether --enable-deprecated or --disable-deprecated was given.
+if test "${enable_deprecated+set}" = set; then
+  enableval="$enable_deprecated"
 
-    cat >>confdefs.h <<\_ACEOF
-#define DEBUG_MEMORY 1
-_ACEOF
-
-
-  ansi=
-  if test -z "$ansi"; then
-    msg="for C compiler warning flags"
-  else
-    msg="for C compiler warning and ANSI conformance flags"
-  fi
-  echo "$as_me:$LINENO: checking $msg" >&5
-echo $ECHO_N "checking $msg... $ECHO_C" >&6
-if test "${vl_cv_prog_cc_warnings+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-
-    if test -n "$CC"; then
-      cat > conftest.c <<EOF
-int main(int argc, char **argv) { return 0; }
-EOF
-
-            if test "$GCC" = "yes"; then
-        if test -z "$ansi"; then
-          vl_cv_prog_cc_warnings="-g3 -Wall"
-        else
-          vl_cv_prog_cc_warnings="-g3 -Wall -ansi -pedantic"
-        fi
-
-
-            elif $CC -V 2>&1 | grep -i "WorkShop" > /dev/null 2>&1 &&
-           $CC -c -v -Xc conftest.c > /dev/null 2>&1 &&
-           test -f conftest.o; then
-        if test -z "$ansi"; then
-          vl_cv_prog_cc_warnings="-v"
-        else
-          vl_cv_prog_cc_warnings="-v -Xc"
-        fi
-
-            elif $CC -V 2>&1 | grep -i "Digital UNIX Compiler" > /dev/null 2>&1 &&
-           $CC -c -verbose -w0 -warnprotos -std1 conftest.c > /dev/null 2>&1 &&
-           test -f conftest.o; then
-        if test -z "$ansi"; then
-          vl_cv_prog_cc_warnings="-verbose -w0 -warnprotos"
-        else
-          vl_cv_prog_cc_warnings="-verbose -w0 -warnprotos -std1"
-        fi
-
-            elif $CC 2>&1 | grep -i "C for AIX Compiler" > /dev/null 2>&1 &&
-           $CC -c -qlanglvl=ansi -qinfo=all conftest.c > /dev/null 2>&1 &&
-           test -f conftest.o; then
-        if test -z "$ansi"; then
-          vl_cv_prog_cc_warnings="-qsrcmsg -qinfo=all:noppt:noppc:noobs:nocnd"
-        else
-          vl_cv_prog_cc_warnings="-qsrcmsg -qinfo=all:noppt:noppc:noobs:nocnd -qlanglvl=ansi"
-        fi
-
-            elif $CC -version 2>&1 | grep -i "MIPSpro Compilers" > /dev/null 2>&1 &&
-           $CC -c -fullwarn -ansi -ansiE conftest.c > /dev/null 2>&1 &&
-           test -f conftest.o; then
-        if test -z "$ansi"; then
-          vl_cv_prog_cc_warnings="-fullwarn"
-        else
-          vl_cv_prog_cc_warnings="-fullwarn -ansi -ansiE"
-        fi
-
-            elif what $CC 2>&1 | grep -i "HP C Compiler" > /dev/null 2>&1 &&
-           $CC -c -Aa +w1 conftest.c > /dev/null 2>&1 &&
-           test -f conftest.o; then
-        if test -z "$ansi"; then
-          vl_cv_prog_cc_warnings="+w1"
-        else
-          vl_cv_prog_cc_warnings="+w1 -Aa"
-        fi
-
-            elif $CC -V 2>&1 | grep "/SX" > /dev/null 2>&1 &&
-           $CC -c -pvctl,fullmsg -Xc conftest.c > /dev/null 2>&1 &&
-           test -f conftest.o; then
-        if test -z "$ansi"; then
-          vl_cv_prog_cc_warnings="-pvctl,fullmsg"
-        else
-          vl_cv_prog_cc_warnings="-pvctl,fullmsg -Xc"
-        fi
-
-            elif $CC -V 2>&1 | grep -i "Cray" > /dev/null 2>&1 &&
-           $CC -c -h msglevel 2 conftest.c > /dev/null 2>&1 &&
-           test -f conftest.o; then
-        if test -z "$ansi"; then
-          vl_cv_prog_cc_warnings="-h msglevel 2"
-        else
-          vl_cv_prog_cc_warnings="-h msglevel 2 -h conform"
-        fi
-
-      fi
-      rm -f conftest.*
-    fi
-    if test -n "$vl_cv_prog_cc_warnings"; then
-      CFLAGS="$CFLAGS $vl_cv_prog_cc_warnings"
-    else
-      vl_cv_prog_cc_warnings="unknown"
-    fi
-
-fi
-echo "$as_me:$LINENO: result: $vl_cv_prog_cc_warnings" >&5
-echo "${ECHO_T}$vl_cv_prog_cc_warnings" >&6
-
-  fi
 fi;
-
 
 CFLAGS="-I. $CFLAGS"
 if test "$with_profiling" = yes; then

@@ -7,6 +7,7 @@
 ;;; start-dac -- hold DAC open and play sounds via keyboard
 ;;; "vector synthesis"
 ;;; play-with-amps -- play channels with individually settable amps
+;;; play-sine and play-sines -- produce tones direct to DAC
 
 ;;; TODO: functional approach to "mixer"
 
@@ -15,14 +16,12 @@
 
 (use-modules (ice-9 format) (ice-9 optargs))
 
-(define* (play-sound #:optional func)
-  "(play-sound #:optional func) plays the currently selected sound, calling func on each data buffer, if func exists"
-  ;;   this is essentially what the built-in play function is doing
-  ;;
-  ;; first try the simple case(s) -- most sound systems can handle short (16-bit) data and 1 or 2 channels
-  (let* ((filechans (chans))       ; initial settings are picked up from the current sound
-	 (outchans filechans)
-	 (size 256)
+(define* (open-play-output #:optional out-chans out-srate out-format out-bufsize)
+  ;; returns (list audio-fd chans size)
+  (let* ((outchans (or out-chans 1))
+	 (cur-srate (or out-srate (srate)))
+	 (size (or out-bufsize 256))
+	 (frm (or out-format (if (little-endian?) mus-lshort mus-bshort)))
 	 (outbytes (* size 2))     ; 2 here since we'll first try to send short (16-bit) data to the DAC
 	 (audio-fd ;; ALSA throws an error where the rest of the audio cases simply report failure
 	           ;;   so we turn off the "error" printout, catch the error itself, and toss it
@@ -31,9 +30,7 @@
 		(add-hook! mus-error-hook (lambda (typ msg) #t)))
 	    (let ((val (catch #t
 			      (lambda ()
-				(mus-audio-open-output mus-audio-default (srate) filechans 
-						       (if (little-endian?) mus-lshort mus-bshort) 
-						       outbytes))
+				(mus-audio-open-output mus-audio-default cur-srate outchans frm outbytes))
 			      (lambda args -1)))) ; -1 returned in case of error
 	      (if no-error 
 		  (reset-hook! mus-error-hook))
@@ -50,19 +47,29 @@
 		  (set! size (inexact->exact (vector-ref vals 0))))
 	      (let* ((bps (mus-bytes-per-sample fmt)))
 		(set! outbytes (* bps size outchans))
-		(set! audio-fd (mus-audio-open-output mus-audio-default (srate) outchans fmt outbytes)))))))
-    ;; it's still possible the srate is unplayable -- Mac OSX only accepts stereo 44100!
-    ;; (snd-print (format #f "fd: ~A, size: ~A, outchans: ~A, filechans: ~A~%" audio-fd size outchans filechans))
+		(set! audio-fd (mus-audio-open-output mus-audio-default cur-srate outchans fmt outbytes)))))))
+    (if (not (= audio-fd -1))
+	(set! (dac-size) outbytes))
+    (list audio-fd outchans size)))
+
+(define* (play-sound #:optional func)
+  "(play-sound #:optional func) plays the currently selected sound, calling func on each data buffer, if func exists"
+  (let* ((filechans (chans))
+	 (outchans filechans)
+	 (size 256)
+	 (audio-info (open-play-output outchans (srate) #f size))
+	 (audio-fd (car audio-info)))
+    (set! outchans (cadr audio-info))
+    (set! size (caddr audio-info))
     (if (not (= audio-fd -1))
 	(let ((len (frames))
 	      (data (make-sound-data outchans size)))  ; the data buffer passed to the function (func above), then to mus-audio-write
-	  (set! (dac-size) outbytes)
 	  (do ((beg 0 (+ beg size)))
 	      ((or (c-g?)                   ; C-g to stop in mid-stream
 		   (> beg len)))
-	    (if (> filechans 1)
+	    (if (and (> outchans 1) (> filechans 1))
 		(do ((k 0 (1+ k)))
-		    ((= k filechans))
+		    ((= k (min outchans filechans)))
 		  (samples->sound-data beg size #f k data current-edit-position k))
 		(samples->sound-data beg size #f 0 data))
 	    (if func
@@ -70,6 +77,15 @@
 	    (mus-audio-write audio-fd data size))
 	  (mus-audio-close audio-fd))
 	(snd-print "could not open dac"))))
+
+#!
+(play-sound 
+ (lambda (data)
+   (let ((len (sound-data-length data)))
+     (do ((i 0 (1+ i)))
+	 ((= i len))
+       (sound-data-set! data 0 i (* 2.0 (sound-data-ref data 0 i)))))))
+!#
 
 
 ;;; -------- play sound n times -- (play-often 3) for example.
@@ -296,3 +312,48 @@ amp: (play-with-amps 0 1.0 0.5) plays channel 2 of stereo sound at half amplitud
           (add-player player)))
       (start-playing chans (srate sound)))))
 
+
+;;; play-sine and play-sines
+
+(define* (play-sine freq amp)
+  "(play-sine freq amp) plays a 1 second sinewave at freq and amp"
+  (let* ((size 256)
+	 (audio-info (open-play-output 1 22050 #f size))
+	 (audio-fd (car audio-info)))
+    (set! size (caddr audio-info))
+    (if (not (= audio-fd -1))
+	(let ((len 22050)
+	      (osc (make-oscil freq))
+	      (data (make-sound-data 1 size)))
+	  (do ((beg 0 (+ beg size)))
+	      ((or (c-g?)                   ; C-g to stop in mid-stream
+		   (> beg len)))
+	    (do ((i 0 (1+ i)))
+		((= i size))
+	      (sound-data-set! data 0 i (* amp (oscil osc))))
+	    (mus-audio-write audio-fd data size))
+	  (mus-audio-close audio-fd))
+	#f)))
+
+(define* (play-sines freqs-and-amps)
+  "(play-sines freqs-and-amps) produces a tone given its spectrum: (play-sines '((440 .4) (660 .3)))"
+  (let* ((size 256)
+	 (audio-info (open-play-output 1 22050 #f size))
+	 (audio-fd (car audio-info)))
+    (set! size (caddr audio-info))
+    (if (not (= audio-fd -1))
+	(let ((len 22050)
+	      (oscs (map make-oscil (map car freqs-and-amps)))
+	      (amps (map cadr freqs-and-amps))
+	      (data (make-sound-data 1 size)))
+	  (do ((beg 0 (+ beg size)))
+	      ((or (c-g?)                   ; C-g to stop in mid-stream
+		   (> beg len)))
+	    (do ((i 0 (1+ i)))
+		((= i size))
+	      (sound-data-set! data 0 i (apply + (map (lambda (o a) (* a (oscil o))) oscs amps))))
+	    (mus-audio-write audio-fd data size))
+	  (mus-audio-close audio-fd))
+	#f)))
+
+;(play-sines '((425 .05) (450 .01) (470 .01) (546 .02) (667 .01) (789 .034) (910 .032)))

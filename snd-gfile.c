@@ -447,7 +447,10 @@ static file_dialog_info *make_file_dialog(int read_only, char *title, snd_dialog
   
   sound_files_filter = gtk_file_filter_new();
   gtk_file_filter_set_name(sound_files_filter, "sound files only");
-  gtk_file_filter_add_custom(sound_files_filter, GTK_FILE_FILTER_DISPLAY_NAME | GTK_FILE_FILTER_FILENAME, sound_files_only_filter, NULL, NULL);
+  gtk_file_filter_add_custom(sound_files_filter, 
+			     (GtkFileFilterFlags)(GTK_FILE_FILTER_DISPLAY_NAME | GTK_FILE_FILTER_FILENAME), 
+			     sound_files_only_filter, 
+			     NULL, NULL);
   gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(fd->dialog), sound_files_filter);
 
 #else

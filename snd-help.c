@@ -378,6 +378,9 @@ void about_snd_help(void)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+9-Feb:   channels-equal in extensions.scm\n\
+         play-sine, play-sines, open-play-oputput in play.scm.\n\
+         notch-channel and notch-selection in dsp.scm\n\
 6-Feb:   expand-control-jitter.\n\
 29-Jan:  removed X resources epsfile (use eps-file) and overwriteCheck (use ask-before-overwrite)\n\
 26-Jan:  changed filter-control-env to filter-control-envelope, \n\
@@ -387,12 +390,6 @@ void about_snd_help(void)
 12-Jan:  removed enved-selected-env, changed enved-active-env to enved-envelope.\n\
 9-Jan:   snd 7.1\n\
 8-Jan:   extensions.rb thanks to Michael Scholz.\n\
-5-Jan:   envelopes can now have the property 'envelope-base.\n\
-         added dur arg to make-env for duration in samples.\n\
-         hooks.rb and hooks support in Ruby thanks to Michael Scholz.\n\
-22-Dec:  selection-changed-hook.\n\
-         changed enved-exp? to enved-style (envelope-linear, envelope-exponential)\n\
-           old enved-exp? is in snd7.scm.\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*: \n'", features, "\n\n",

@@ -3875,6 +3875,7 @@ add context-sensitive popup menu specific to selection: <a href="sndscm.html#add
 delete selection and write it to a file: <a href="sndscm.html#editmenudoc">cut-selection-&gt;new</a><br>
 append selection: <a href="sndscm.html#editmenudoc">append-selection</a><br>
 write selection to a file: <a href="sndscm.html#editmenudoc">selection-&gt;new</a><br>
+notch filter selection: <a href="sndscm.html#notchselection">notch-selection</a><br>
 undo select-all.: <a href="sndscm.html#dlpdoc">deselect-all</a><br>
 hook called when selection created or deleted.: <a href="#selectionchangedhook">selection-changed-hook</a><br>
 <br>
@@ -4758,7 +4759,8 @@ IIR filters of various orders/kinds: dsp.scm<br>
 Hilbert transform: make-hilbert-transform in dsp.scm<br>
 differentiator: make-differentiator in dsp.scm<br>
 block DC: see dc-block in prc95.scm, also stereo-flute in clm-ins.scm.<br>
-hum elimination: see eliminate-hum in dsp.scm<br>
+hum elimination: see eliminate-hum and notch-channel in dsp.scm<br>
+notch-filters: <a href="sndscm.html#notchchannel">notch-channel</a> and <a href="sndscm.html#notchselection">notch-selection</a><br>
 arbitrary spectrum via FIR filter: spectrum-&gt;coeffs in dsp.scm<br>
 filtered echo sound effect: flecho in examp.scm<br>
 time varying filter: fltit in examp.scm<br>
@@ -4803,6 +4805,7 @@ Explicit access to search procedures: <a href="#searchprocedure">search-procedur
 The Find dialog: <a href="snd.html#editoperations">Find</a><br>
 find silence: <a href="#mapsilence">map-silence</a><br>
 find zero crossing: <a href="#newcp">find-zero</a><br>
+find any difference between two chans: <a href="sndscm.html#channelsequal">channels-equal</a><br>
 see also <a href="#lcountmatches">count-matches</a> and <a href="#scanchannel">scan-channel</a>.<br>
 <br>
 </small></blockquote>
@@ -5541,6 +5544,7 @@ play repeatedly until C-g: <a href="sndscm.html#explayuntilcg">play-until-c-g</a
 play region repeatedly: <a href="sndscm.html#explayregionforever">play-region-forever</a><br>
 play a file upon a keystroke: <a href="#extendedpiano">bind-key</a><br>
 play using an external program: (shell "sndplay wood16.wav")<br>
+play a sine-wave or spectrum: <a href="sndscm.html#playsine">play-sine</a> and <a href="sndscm.html#playsines">play-sines</a><br>
 play arbitrary mixtures of things: <a href="#makeplayer">make-player</a> and related functions, <a href="sndscm.html#playsyncdmarks">play-syncd-marks</a><br>
 send arbitrary data to the DAC: <a href="#musaudiowrite">mus-audio-write</a>, <a href="sndscm.html#exstartdac">start-dac</a><br>
 play after sending the data through some function: <a href="sndscm.html#explaysound">play-sound</a><br>
@@ -6258,7 +6262,7 @@ save <i>snd</i>; same as File menu's Save option. <a href="#savehook">save-hook<
 <small><blockquote>
 save all sounds: <code>(for-each save-sound (sounds))</code>.<br>
 save a sound under a different name: <a href="#sndsaveas">save-sound-as</a><br>
-extract one channel of a sound: <a href="#sndsaveas">save-sound-as</a><br>
+extract one channel of a sound: <a href="#extractchannel">extract-channel</a><br>
 save a sound in a different format or header: <a href="#sndsaveas">save-sound-as</a><br>
 backup edits automatically: <a href="sndscm.html#exautosave">autosave</a><br>
 check first for unsaved edits: <a href="sndscm.html#exunsavededits">check-for-unsaved-edits</a><br>
@@ -6297,7 +6301,11 @@ save <i>snd</i> as <i>filename</i> (same as File Save as option).  If channel is
 only that channel is saved (extracted).  <i>edpos</i>, if given, specifies which edit history position to save.
 Any argument can be #f (the default for an optional argument)
 which causes its value to be taken from the sound being saved. 
-To start a parallel editing branch on a given file, you could <code>(save-sound-as "test.snd") (<a class=quiet href="#sndopen">open-sound</a> "test.snd")</code>.
+To start a parallel editing branch on a given file, you could <code>(save-sound-as "test.snd") (<a class=quiet href="#sndopen">open-sound</a> "test.snd")</code>.  To define an explicit channel extraction function:<br>
+<pre>
+(define (<a name="extractchannel">extract-channel</a> filename snd chn)
+  (<em class=red>save-sound-as</em> filename snd #f #f #f chn))
+</pre>
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -7212,7 +7220,11 @@ or (list full-size bins slices) if sonogram or spectrogram.
 <code><a class=def name="lfftsize">transform-size</a> (<em class=narg>snd chn</em>)</code>
 </td></tr>
 <tr><td></td><td>
-FFT size (default = 256).
+FFT size (default = 256).  Should be a power of 2.  Any size is ok, if you have sufficient
+memory and time.  If your version of Snd was built with FFTW, and you set transform-size
+too large (on my machine, with 2 GBytes of memory,
+<code>(expt 2 26)</code> is apparently too large), FFTW simply exits Snd!  There is currently
+no way to trap the error (it is not really a fatal error). 
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -8283,7 +8295,7 @@ duration change via autocorrelation: <a href="sndscm.html#rubberdoc">rubber-soun
 smoothing via fft: <a href="sndscm.html#exfftsmoother">fft-smoother</a><br>
 cross-synthesis: <a href="sndscm.html#excrosssynthesis">cross-synthesis</a><br>
 voiced-&gt;unvoiced effect: <a href="sndscm.html#exvoiced2unvoiced">voiced-&gt;unvoiced</a><br>
-noise reduction: <a href="sndscm.html#clminsdoc">anoi</a><br>
+noise reduction: <a href="sndscm.html#noisystory">Noise Reduction</a>, <a href="sndscm.html#notchchannel">notch-channel</a>, <a href="sndscm.html#clminsdoc">anoi</a><br>
 spectral modeling: <a href="sndscm.html#clminsdoc">pins</a><br>
 <br>
 Superimpose ffts: <a href="sndscm.html#exsuperimposeffts">superimpose-ffts</a><br>

@@ -1194,6 +1194,16 @@ static char *clm_channel(chan_info *cp, mus_any *gen, off_t beg, off_t dur, int 
   return(NULL);
 }
 
+#define MAX_SINGLE_FFT_SIZE 1048576
+
+static Float convolve_next_sample(void *ptr, int dir)
+{
+  return(read_sample_to_float(((snd_fd *)ptr)));
+}
+
+/* TODO: perhaps save filter coeffs and re-use? */
+/* TODO: filter-selection hits samples after end of selection */
+
 static char *apply_filter_or_error(chan_info *ncp, int order, env *e, enved_progress_t from_enved, 
 				   const char *origin, bool over_selection, Float *ur_a, mus_any *gen, XEN edpos, int arg_pos)
 {
@@ -1260,29 +1270,7 @@ static char *apply_filter_or_error(chan_info *ncp, int order, env *e, enved_prog
 	  if (!(editable_p(cp))) continue;
 	  dur += order;
 	  fsize = snd_2pow2(dur);
-	  sndrdat = (Float *)CALLOC(fsize, sizeof(Float));
-	  fltdat = sample_linear_env(e, fsize);
-
 	  sf = sfs[i];                                 /* init_sample_read(0, cp, READ_FORWARD); */
-	  for (k = 0; k < dur; k++) 
-	    sndrdat[k] = (Float)(read_sample_to_float(sf));
-	  sfs[i] = free_snd_fd(sf);
-
-	  mus_fftw(sndrdat, fsize, 1);
-	  check_for_event();
-	  if (ss->stopped_explicitly)
-	    {
-	      ss->stopped_explicitly = false;
-	      report_in_minibuffer(sp, _("stopped"));
-	      FREE(sndrdat);
-	      FREE(fltdat);
-	      cp->edit_hook_checked = false;
-	      break;
-	    }
-	  scale = 1.0 / (Float)fsize;
-	  for (k = 0; k < fsize; k++)
-	    sndrdat[k] *= (scale * fltdat[k]);         /* fltdat is already reflected around midpoint */
-	  mus_fftw(sndrdat, fsize, -1);
 
 	  ofile = snd_tempnam();
 	  hdr = make_temp_header(ofile, SND_SRATE(sp), 1, dur, (char *)origin);
@@ -1302,15 +1290,71 @@ static char *apply_filter_or_error(chan_info *ncp, int order, env *e, enved_prog
 	      snd_error(_("can't open %s temp file %s: %s\n"), origin, ofile, strerror(errno));
 	      break;
 	    }
-	  write(ofd, sndrdat, fsize * sizeof(Float));
-	  close_temp_file(ofd, hdr, fsize * sizeof(Float), sp);
-	  hdr = free_file_info(hdr);
-	  file_change_samples(0, dur + order, ofile, cp, 0, DELETE_ME, LOCK_MIXES, origin, cp->edit_ctr);
+
+	  if (fsize > MAX_SINGLE_FFT_SIZE)
+	    {
+	      /* set up convolution generator and run overlap-add in order-sized blocks */
+	      mus_any *gen;
+	      reporting = ((sp) && (dur > REPORTING_SIZE));
+	      if (order == 0) order = 65536; /* presumably fsize is enormous here, so no MIN needed */
+	      if (!(POWER_OF_2_P(order)))
+		order = snd_2pow2(order);
+	      fsize = 2 * order; /* need room for convolution */
+	      fltdat = get_filter_coeffs(order, e);
+	      gen = mus_make_convolve(NULL, fltdat, fsize, order, (void *)sf);
+	      j = 0;
+	      data = (mus_sample_t **)MALLOC(sizeof(mus_sample_t *));
+	      data[0] = (mus_sample_t *)CALLOC(MAX_BUFFER_SIZE, sizeof(mus_sample_t)); 
+	      idata = data[0];
+	      if (reporting) start_progress_report(sp, from_enved);
+	      for (offk = 0; offk < dur; offk++)
+		{
+		  x = mus_convolve(gen, convolve_next_sample);
+		  idata[j] = MUS_FLOAT_TO_SAMPLE(x);
+		  j++;
+		  if (j == MAX_BUFFER_SIZE)
+		    {
+		      err = mus_file_write(ofd, 0, j - 1, 1, data);
+		      j = 0;
+		      if (err == -1) break;
+		      if (reporting) 
+			progress_report(sp, S_filter_sound, i + 1, si->chans, (Float)((double)offk / (double)dur), from_enved);
+		    }
+		}
+	      if (reporting) finish_progress_report(sp, from_enved);
+	      if (j > 0) mus_file_write(ofd, 0, j - 1, 1, data);
+	      close_temp_file(ofd, hdr, dur * datumb, sp);
+	      if (over_selection)
+		file_change_samples(si->begs[i], dur, ofile, cp, 0, DELETE_ME, LOCK_MIXES, origin, cp->edit_ctr);
+	      else file_change_samples(0, dur, ofile, cp, 0, DELETE_ME, LOCK_MIXES, origin, cp->edit_ctr);
+	      sfs[i] = free_snd_fd(sf);
+	      mus_free(gen);
+	      FREE(data[0]);
+	      FREE(data);
+	    }
+	  else
+	    {
+	      /* we think there's enough memory to do the entire thing in one pass */
+	      sndrdat = (Float *)CALLOC(fsize, sizeof(Float));
+	      fltdat= sample_linear_env(e, fsize);
+	      for (k = 0; k < dur; k++) 
+		sndrdat[k] = (Float)(read_sample_to_float(sf));
+	      sfs[i] = free_snd_fd(sf);
+	      mus_fftw(sndrdat, fsize, 1);
+	      scale = 1.0 / (Float)fsize;
+	      for (k = 0; k < fsize; k++)
+		sndrdat[k] *= (scale * fltdat[k]);         /* fltdat is already reflected around midpoint */
+	      mus_fftw(sndrdat, fsize, -1);
+	      write(ofd, sndrdat, fsize * sizeof(Float));
+	      close_temp_file(ofd, hdr, fsize * sizeof(Float), sp);
+	      file_change_samples(0, dur + order, ofile, cp, 0, DELETE_ME, LOCK_MIXES, origin, cp->edit_ctr);
+	      FREE(sndrdat);
+	    }
 	  if (ofile) {FREE(ofile); ofile = NULL;}
-	  update_graph(cp);
-	  FREE(sndrdat);
-	  FREE(fltdat);
+	  hdr = free_file_info(hdr);
 	  cp->edit_hook_checked = false;
+	  FREE(fltdat);
+	  update_graph(cp);
 	  check_for_event();
 	  if (ss->stopped_explicitly)
 	    {
@@ -1323,6 +1367,7 @@ static char *apply_filter_or_error(chan_info *ncp, int order, env *e, enved_prog
   else
 #endif
     {
+      /* use FIR filter */
       if (order == 0) order = enved_filter_order(ss);
       if (!gen)
 	{

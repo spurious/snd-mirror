@@ -9292,10 +9292,6 @@ static int sndjack_init(void){
   int numch;
   int num=0;
 
-  /* The jack library prints out error messages if the client can not be made. Turn it off. */
-  FILE *oldstderr=stderr;
-  stderr=fopen("/dev/null","w");
-
   while(num<SNDJACK_MAXSNDS){
     char temp[500];
     sprintf(temp,"sndlib%d",num);
@@ -9304,8 +9300,6 @@ static int sndjack_init(void){
     }
     num++;
   }
-  fclose(stderr);
-  stderr=oldstderr;
 
   if(sndjack_client==NULL){
     /* printf("Unable to create new jack_client\n"); */

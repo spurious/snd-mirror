@@ -16,6 +16,7 @@
 ;;; ramp-squared, env-squared-channel
 ;;; ramp-expt, env-expt-channel
 ;;; offset-channel
+;;; channels-equal
 
 (use-modules (ice-9 common-list) (ice-9 optargs) (ice-9 format))
 
@@ -729,3 +730,29 @@ If 'check' is #f, the hooks are removed."
 			       (vct-set! data (+ i 2) (reader)))
 			     data)))))))
 !#
+
+;;; -------- channels-equal
+;;;
+;;; TODO: doc test channels-equal, ignore padding at end?
+
+(define (channels-equal snd1 chn1 snd2 chn2 allowable-difference)
+  ;; #t if the two channels are identical
+  (if (and (= snd1 snd2)
+	   (= chn1 chn2))
+      #t
+      (let ((len1 (frames snd1 chn1))
+	    (len2 (frames snd2 chn2)))
+	(if (not (= len1 len2))
+	    #f
+	    (let ((mx1 (maxamp snd1 chn1))
+		  (mx2 (maxamp snd1 chn1)))
+	      (if (> (abs (- mx1 mx2)) allowable-difference)
+		  #f
+		  (let ((read1 (make-sample-reader 0 snd1 chn1)))
+		    (not (scan-channel (lambda (y)
+					 (let ((val (read-sample read1)))
+					   (> (abs (- val y)) allowable-difference)))
+				       0 len2 snd2 chn2)))))))))
+
+
+;;; TODO: channels-difference (rtn loc vals) or max-difference (rtn loc val)

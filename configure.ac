@@ -31,6 +31,7 @@ AC_SUBST(VERSION)
 #   --with-doubles        use doubles throughout (default is floats)
 #   --with-float-samples  represent samples internally as floats 
 #   --enable-snd-debug    include Snd internal debugging stuff
+#   --disable-deprecated  do not include any deprecated stuff (in gtk and guile)
 #   --with-ladspa         include LADSPA plugin support (Linux)
 #   --with-sample-width=N use N bits of samples (default = 24)
 #   --with-esd            use Enlightened Sound Daemon
@@ -58,6 +59,7 @@ AC_SUBST(VERSION)
 #   SNDLIB_CONFIG_path    where to look for sndlib-config
 #
 # SOMEDAY: --with-static-libraries --with-static-guile
+
 
 #--------------------------------------------------------------------------------
 
@@ -1132,6 +1134,15 @@ AC_DEFINE_UNQUOTED(STATFS_ARGS,$statfs_args)
 dnl on NeXT, this is apparently in libc.h?
 
 
+AC_ARG_ENABLE(snd-debug,
+  [  --enable-snd-debug      include internal Snd debugging functions],
+  if test "$enable_snd_debug" = yes ; then
+    AC_DEFINE(DEBUGGING)
+    AC_DEFINE(DEBUG_MEMORY)
+    VL_PROG_CC_WARNINGS()
+  fi)
+
+
 #--------------------------------------------------------------------------------
 # sigsetjmp special case
 #--------------------------------------------------------------------------------
@@ -1226,14 +1237,11 @@ AC_CHECK_HEADER(nl_types.h,
      [AC_MSG_RESULT(no)])])
 
 
-AC_ARG_ENABLE(snd-debug,
-  [  --enable-snd-debug      include internal Snd debugging functions],
-  if test "$enable_snd_debug" = yes ; then
-    AC_DEFINE(DEBUGGING)
-    AC_DEFINE(DEBUG_MEMORY)
-    VL_PROG_CC_WARNINGS()
+AC_ARG_ENABLE(deprecated,
+  [  --disable-deprecated      do not include any deprecated stuff from gtk or guile]
+  if test "$enable_deprecated" = no ; then
+    CFLAGS="$CFLAGS -DGTK_DISABLE_DEPRECATED -DG_DISABLE_DEPRECATED -DGDK_DISABLE_DEPRECATED -DPANGO_DISABLE_DEPRECATED -DSCM_DEBUG_DEPRECATED=1 -DXM_DISABLE_DEPRECATED"
   fi)
-
 
 CFLAGS="-I. $CFLAGS"
 if test "$with_profiling" = yes; then
