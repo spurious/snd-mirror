@@ -13817,7 +13817,8 @@ EDITS: 5
 	    (v1 (make-vct 10)))
 	(print-and-check gen 
 			 "fir-filter"
-			 "fir-filter: order: 3")
+			 "fir-filter: order: 3, xs: [0.500 0.250 0.125]"
+			 )
 	(vct-set! v0 0 (fir-filter gen 1.0))
 	(do ((i 1 (1+ i)))
 	    ((= i 10))
@@ -13875,7 +13876,8 @@ EDITS: 5
 	    (v1 (make-vct 10)))
 	(print-and-check gen 
 			 "iir-filter"
-			 "iir-filter: order: 3")
+			 "iir-filter: order: 3, ys: [0.500 0.250 0.125]"
+			 )
 	(vct-set! v0 0 (iir-filter gen 1.0))
 	(do ((i 1 (1+ i)))
 	    ((= i 10))
@@ -13912,7 +13914,8 @@ EDITS: 5
 	    (gen2 (make-biquad .1 .2 .3 .4 .5)))
 	(print-and-check gen 
 			 "filter"
-			 "filter: order: 3")
+			 "filter: order: 3, xs: [0.500 0.250 0.125], ys: [0.500 0.250 0.125]"
+			 )
 	(vct-set! v0 0 (filter gen 1.0))
 	(do ((i 1 (1+ i)))
 	    ((= i 10))

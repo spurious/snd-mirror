@@ -3759,7 +3759,41 @@ static bool filter_equalp(mus_any *p1, mus_any *p2)
 static char *describe_filter(mus_any *ptr)
 {
   flt *gen = (flt *)ptr;
-  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "%s: order: %d", (gen->core)->name, gen->order);
+  char *xstr = NULL, *ystr = NULL;
+  xstr = print_array(gen->x, gen->order, 0);
+  ystr = print_array(gen->y, gen->order, 0);
+  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "%s: order: %d, xs: %s, ys: %s", 
+	       (gen->core)->name, 
+	       gen->order,
+	       xstr, ystr);
+  if (xstr) FREE(xstr);
+  if (ystr) FREE(ystr);
+  return(describe_buffer);
+}
+
+static char *describe_fir_filter(mus_any *ptr)
+{
+  flt *gen = (flt *)ptr;
+  char *xstr = NULL;
+  xstr = print_array(gen->x, gen->order, 0);
+  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "%s: order: %d, xs: %s", 
+	       (gen->core)->name, 
+	       gen->order,
+	       xstr);
+  if (xstr) FREE(xstr);
+  return(describe_buffer);
+}
+
+static char *describe_iir_filter(mus_any *ptr)
+{
+  flt *gen = (flt *)ptr;
+  char *ystr = NULL;
+  ystr = print_array(gen->y, gen->order, 0);
+  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "%s: order: %d, ys: %s", 
+	       (gen->core)->name, 
+	       gen->order,
+	       ystr);
+  if (ystr) FREE(ystr);
   return(describe_buffer);
 }
 
@@ -3797,7 +3831,7 @@ static mus_any_class FIR_FILTER_CLASS = {
   MUS_FIR_FILTER,
   S_fir_filter,
   &free_filter,
-  &describe_filter,
+  &describe_fir_filter,
   &filter_equalp,
   &filter_data, 0,
   &filter_length,
@@ -3821,7 +3855,7 @@ static mus_any_class IIR_FILTER_CLASS = {
   MUS_IIR_FILTER,
   S_iir_filter,
   &free_filter,
-  &describe_filter,
+  &describe_iir_filter,
   &filter_equalp,
   &filter_data, 0,
   &filter_length,
