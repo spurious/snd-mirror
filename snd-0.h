@@ -30,6 +30,7 @@
   #define HAVE_LOCALE_H 1
   #define HAVE_SETLOCALE 1
   #define HAVE_FINITE 1
+  #define HAVE_STRDUP 1
   #if defined(LINUX) && (!(defined(HAVE_FPU_CONTROL_H)))
     #define HAVE_FPU_CONTROL_H 1
   #endif
@@ -449,7 +450,7 @@ enum {FCP_X_ANGLE,FCP_X_SCALE,FCP_Y_ANGLE,FCP_Y_SCALE,FCP_Z_ANGLE,FCP_Z_SCALE,FC
 
 #define eps_file(ss) ss->Eps_File
 #define set_eps_file(ss,a) ss->Eps_File = a
-#define DEFAULT_EPS_FILE NULL
+#define DEFAULT_EPS_FILE EPS_FILE_NAME
 
 #define eps_left_margin(ss) ss->Eps_Left_Margin
 #define set_eps_left_margin(ss,a) ss->Eps_Left_Margin = a

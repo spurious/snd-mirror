@@ -52,6 +52,10 @@
   #define SCM_TRUE_P(a) SCM_EQ_P(a,SCM_BOOL_T)
 #endif
 
+#ifndef SCM_STRING_CHARS
+  #define SCM_STRING_CHARS(STR) SCM_CHARS(STR)
+#endif
+
 #ifdef __cplusplus
 /* #define SCM_FNC (SCM (*)(...)) */
   #define SCM_FNC (SCM (*)())
@@ -68,15 +72,23 @@
   #define TO_C_INT(a) gh_scm2int(a)
 #endif
 
+#if HAVE_GUILE_1_3_0
+  #define TO_SCM_DOUBLE(a) scm_makdbl(a,0.0)
+#else
+  #define TO_SCM_DOUBLE(a) scm_make_real(a)
+#endif
+
+#define TO_SCM_INT(a) scm_long2num((long)a)
+#define TO_SMALL_SCM_INT(a) SCM_MAKINUM(a)
+#define TO_SMALL_C_INT(a) SCM_INUM(a)
+#define TO_SCM_STRING(a) scm_makfrom0str(a)
+#define TO_NEW_C_STRING(a) gh_scm2newstr(a,NULL)
+#define TO_SCM_BOOLEAN(a) ((a) ? SCM_BOOL_T : SCM_BOOL_F)
+
 #define ERRB1(a,b) SCM_ASSERT((gh_number_p(a)) || (gh_boolean_p(a)) || (SCM_UNBNDP(a)),a,SCM_ARG1,b)
 #define ERRB2(a,b) SCM_ASSERT((gh_number_p(a)) || (gh_boolean_p(a)) || (SCM_UNBNDP(a)),a,SCM_ARG2,b)
 #define ERRB3(a,b) SCM_ASSERT((gh_number_p(a)) || (gh_boolean_p(a)) || (SCM_UNBNDP(a)),a,SCM_ARG3,b)
 #define ERRB4(a,b) SCM_ASSERT((gh_number_p(a)) || (gh_boolean_p(a)) || (SCM_UNBNDP(a)),a,SCM_ARG4,b)
-
-#define RTNBOOL(a) return((a) ? SCM_BOOL_T : SCM_BOOL_F)
-#define RTNINT(a) return(gh_int2scm(a))
-#define RTNFLT(a) return(gh_double2scm(a))
-#define RTNSTR(a) return(gh_str02scm(a))
 
 #define HOOKED(a) (!(SCM_NULLP(SCM_HOOK_PROCEDURES(a))))
 

@@ -28,8 +28,9 @@ int iclamp(int lo, int val, int hi)
     else return(val);
 }
 
-char *copy_string(char *str)
+char *copy_string(const char *str)
 {
+#if DEBUG_MEMORY || (!HAVE_STRDUP)
   char *newstr = NULL;
   if (str)
     {
@@ -37,7 +38,21 @@ char *copy_string(char *str)
       strcpy(newstr,str);
     }
   return(newstr);
+#else
+  return(snd_strdup(str));
+#endif
 }
+
+char *snd_strdup(const char *str)
+{
+#if HAVE_STRDUP
+  if (str) return(strdup(str));
+  return(NULL);
+#else
+  return(copy_string(str));
+#endif
+}
+
 
 int snd_strlen(char *str)
 {

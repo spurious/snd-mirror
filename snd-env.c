@@ -1308,10 +1308,9 @@ env *name_to_env(char *str)
 static SCM g_define_envelope(SCM a, SCM b)
 {
   #define H_define_envelope "(" S_define_envelope " name data) defines 'name' to be the envelope 'data', a list of breakpoints"
-  char *name;
-  name = gh_scm2newstr(a,NULL);
-  if (gh_list_p(b)) alert_envelope_editor(get_global_state(),name,scm2env(b));
-  free(name);
+  SCM_ASSERT(gh_string_p(a),a,SCM_ARG1,S_define_envelope);
+  if (gh_list_p(b)) 
+    alert_envelope_editor(get_global_state(),SCM_STRING_CHARS(a),scm2env(b));
   return(SCM_BOOL_F);
 }
 
@@ -1322,14 +1321,14 @@ static SCM g_env_base(SCM name)
   char *urn = NULL;
   SCM_ASSERT(gh_symbol_p(name) || gh_string_p(name),name,SCM_ARG1,S_env_base);
   if (gh_string_p(name))
-    urn = gh_scm2newstr(name,NULL);
-  else urn = gh_scm2newstr(scm_symbol_to_string(name),NULL);
+    urn = TO_NEW_C_STRING(name);
+  else urn = TO_NEW_C_STRING(scm_symbol_to_string(name));
   i = find_env(urn);
   free(urn);
   if (i != -1) 
-    RTNFLT(all_envs[i]->base);
+    return(TO_SCM_DOUBLE(all_envs[i]->base));
   else scm_throw(NO_SUCH_ENVELOPE,SCM_LIST1(name));
-  RTNFLT(0.0);
+  return(TO_SCM_DOUBLE(0.0));
 }
 
 static SCM g_set_env_base(SCM name, SCM val) 
@@ -1339,8 +1338,8 @@ static SCM g_set_env_base(SCM name, SCM val)
   SCM_ASSERT(gh_symbol_p(name) || gh_string_p(name),name,SCM_ARG1,"set-" S_env_base);
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(val)),val,SCM_ARG2,"set-" S_env_base);
   if (gh_string_p(name))
-    urn = gh_scm2newstr(name,NULL);
-  else urn = gh_scm2newstr(scm_symbol_to_string(name),NULL);
+    urn = TO_NEW_C_STRING(name);
+  else urn = TO_NEW_C_STRING(scm_symbol_to_string(name));
   i = find_env(urn);
   free(urn);
   if (i != -1) 
@@ -1420,7 +1419,10 @@ static SCM g_save_envelopes(SCM filename)
       return(filename);
     }
   if (name) FREE(name);
-  return(scm_throw(CANNOT_SAVE,SCM_LIST3(gh_str02scm(S_save_envelopes),filename,gh_str02scm(strerror(errno)))));
+  return(scm_throw(CANNOT_SAVE,
+		   SCM_LIST3(TO_SCM_STRING(S_save_envelopes),
+			     filename,
+			     TO_SCM_STRING(strerror(errno)))));
 }
 
 void g_init_env(SCM local_doc)

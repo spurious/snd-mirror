@@ -2629,17 +2629,17 @@ static SCM g_edit_fragment(SCM uctr, SCM snd, SCM chn)
   ERRCP(S_edit_fragment,snd,chn,2);
   ERRB1(uctr,S_edit_fragment);
   cp = get_cp(snd,chn,S_edit_fragment);
-  ctr = g_scm2intdef(uctr,cp->edit_ctr);
+  ctr = TO_C_INT_OR_ELSE(uctr,cp->edit_ctr);
   if ((ctr < cp->edit_size) && (ctr >= 0))
     {
       ed = cp->edits[ctr];
       if (ed) 
-	return(SCM_LIST4(gh_str02scm(ed->origin),
-			 gh_str02scm(edit_names[EDIT_TYPE(ed->sfnum)]),
-			 gh_int2scm(ed->beg),
-			 gh_int2scm(ed->len)));
+	return(SCM_LIST4(TO_SCM_STRING(ed->origin),
+			 TO_SCM_STRING(edit_names[EDIT_TYPE(ed->sfnum)]),
+			 TO_SCM_INT(ed->beg),
+			 TO_SCM_INT(ed->len)));
     }
-  return(scm_throw(NO_SUCH_EDIT,SCM_LIST4(gh_str02scm(S_edit_fragment),snd,chn,uctr)));
+  return(scm_throw(NO_SUCH_EDIT,SCM_LIST4(TO_SCM_STRING(S_edit_fragment),snd,chn,uctr)));
 }
 
 static SCM g_edit_tree(SCM snd, SCM chn, SCM upos)
@@ -2653,18 +2653,18 @@ static SCM g_edit_tree(SCM snd, SCM chn, SCM upos)
   cp = get_cp(snd,chn,S_edit_tree);
   if (cp)
     {
-      pos = g_scm2intdef(upos,cp->edit_ctr);
+      pos = TO_C_INT_OR_ELSE(upos,cp->edit_ctr);
       ed = cp->edits[pos];
       if (ed) 
 	{
 	  res = SCM_EOL;
 	  len = ed->size; /* fragments in this list */
 	  for (i=len-1;i>=0;i--)
-	    res = scm_cons(SCM_LIST5(gh_int2scm(FRAGMENT_GLOBAL_POSITION(ed,i)),
-				     gh_int2scm(FRAGMENT_SOUND(ed,i)),
-				     gh_int2scm(FRAGMENT_LOCAL_POSITION(ed,i)),
-				     gh_int2scm(FRAGMENT_LOCAL_END(ed,i)),
-				     gh_double2scm(INT_AS_FLOAT(FRAGMENT_SCALER(ed,i)))),
+	    res = scm_cons(SCM_LIST5(TO_SCM_INT(FRAGMENT_GLOBAL_POSITION(ed,i)),
+				     TO_SCM_INT(FRAGMENT_SOUND(ed,i)),
+				     TO_SCM_INT(FRAGMENT_LOCAL_POSITION(ed,i)),
+				     TO_SCM_INT(FRAGMENT_LOCAL_END(ed,i)),
+				     TO_SCM_DOUBLE(INT_AS_FLOAT(FRAGMENT_SCALER(ed,i)))),
 			   res);
 	  return(res);
 	}
@@ -2683,7 +2683,7 @@ int sf_p(SCM obj) {return((SCM_NIMP(obj)) && (SND_SMOB_TYPE(sf_tag,obj)));}
 static SCM g_sf_p(SCM obj) 
 {
   #define H_sf_p "(" S_sample_readerQ " obj) -> #t if obj is a sample-reader"
-  RTNBOOL(sf_p(obj));
+  return(TO_SCM_BOOLEAN(sf_p(obj)));
 }
 
 snd_fd *get_sf(SCM obj); /* currently for snd-ladspa.c */
@@ -2724,7 +2724,7 @@ static int print_sf(SCM obj, SCM port, scm_print_state *pstate)
 
 static SCM equalp_sf(SCM obj1, SCM obj2) 
 {
-  RTNBOOL(get_sf(obj1) == get_sf(obj2));
+  return(TO_SCM_BOOLEAN(get_sf(obj1) == get_sf(obj2)));
 }
 
 static scm_sizet free_sf(SCM obj) 
@@ -2754,7 +2754,7 @@ static SCM g_sample_reader_at_end(SCM obj)
 {
   #define H_sample_reader_at_end "(" S_sample_reader_at_endQ " obj) -> #t if sample-reader has reached the end of its data"
   SCM_ASSERT(sf_p(obj),obj,SCM_ARG1,S_sample_reader_at_endQ);
-  RTNBOOL(read_sample_eof(get_sf(obj)));
+  return(TO_SCM_BOOLEAN(read_sample_eof(get_sf(obj))));
 }
 
 SCM g_c_make_sample_reader(snd_fd *fd)
@@ -2772,7 +2772,6 @@ static SCM g_make_sample_reader(SCM samp_n, SCM snd, SCM chn, SCM dir1, SCM pos)
   snd_fd *fd = NULL;
   int edpos,chan;
   chan_info *cp;
-  char *loc_name;
   snd_state *ss;
   snd_info *loc_sp = NULL;
   ERRB1(samp_n,S_make_sample_reader);
@@ -2781,15 +2780,13 @@ static SCM g_make_sample_reader(SCM samp_n, SCM snd, SCM chn, SCM dir1, SCM pos)
   if (gh_string_p(snd))
     {
       if (!((gh_number_p(chn)) || (SCM_FALSEP(chn)) || (SCM_UNBNDP(chn)))) scm_wrong_type_arg(S_make_sample_reader,3,chn);
-      loc_name = gh_scm2newstr(snd,NULL);
-      loc_sp = make_sound_readable(ss,loc_name,FALSE);
-      free(loc_name);
-      if (loc_sp == NULL) return(scm_throw(NO_SUCH_SOUND,SCM_LIST2(gh_str02scm(S_make_sample_reader),snd)));
-      chan = g_scm2intdef(chn,0);
+      loc_sp = make_sound_readable(ss,SCM_STRING_CHARS(snd),FALSE);
+      if (loc_sp == NULL) return(scm_throw(NO_SUCH_SOUND,SCM_LIST2(TO_SCM_STRING(S_make_sample_reader),snd)));
+      chan = TO_C_INT_OR_ELSE(chn,0);
       if ((chan < 0) || (chan > loc_sp->nchans))
 	{
 	  completely_free_snd_info(loc_sp);
-	  return(scm_throw(NO_SUCH_CHANNEL,SCM_LIST3(gh_str02scm(S_make_sample_reader),snd,chn)));
+	  return(scm_throw(NO_SUCH_CHANNEL,SCM_LIST3(TO_SCM_STRING(S_make_sample_reader),snd,chn)));
 	}
       cp = loc_sp->chans[chan];
     }
@@ -2798,8 +2795,8 @@ static SCM g_make_sample_reader(SCM samp_n, SCM snd, SCM chn, SCM dir1, SCM pos)
       ERRCP(S_make_sample_reader,snd,chn,2);
       cp = get_cp(snd,chn,S_make_sample_reader);
     }
-  edpos = g_scm2intdef(pos,cp->edit_ctr);
-  fd = init_sample_read_any(g_scm2intdef(samp_n,0),cp,g_scm2intdef(dir1,1),edpos);
+  edpos = TO_C_INT_OR_ELSE(pos,cp->edit_ctr);
+  fd = init_sample_read_any(TO_C_INT_OR_ELSE(samp_n,0),cp,TO_C_INT_OR_ELSE(dir1,1),edpos);
   if (fd)
     {
       fd->local_sp = loc_sp;
@@ -2818,7 +2815,7 @@ static SCM g_make_region_sample_reader(SCM samp_n, SCM reg, SCM chn, SCM dir1)
   ERRB2(reg,S_make_sample_reader);
   ERRB3(chn,S_make_sample_reader);
   ERRB4(dir1,S_make_sample_reader);
-  fd = init_region_read(get_global_state(),g_scm2intdef(samp_n,0),g_scm2intdef(reg,0),g_scm2intdef(chn,0),g_scm2intdef(dir1,1));
+  fd = init_region_read(get_global_state(),TO_C_INT_OR_ELSE(samp_n,0),TO_C_INT_OR_ELSE(reg,0),TO_C_INT_OR_ELSE(chn,0),TO_C_INT_OR_ELSE(dir1,1));
   if (fd)
     {
       SND_RETURN_NEWSMOB(sf_tag,(SCM)fd);
@@ -2830,14 +2827,14 @@ static SCM g_next_sample(SCM obj)
 {
   #define H_next_sample "(" S_next_sample " reader) -> next sample from reader"
   SCM_ASSERT(sf_p(obj),obj,SCM_ARG1,S_next_sample);
-  return(gh_double2scm(next_sample_to_float(get_sf(obj))));
+  return(TO_SCM_DOUBLE(next_sample_to_float(get_sf(obj))));
 }
 
 static SCM g_previous_sample(SCM obj)
 {
   #define H_previous_sample "(" S_previous_sample " reader) -> previous sample from reader"
   SCM_ASSERT(sf_p(obj),obj,SCM_ARG1,S_previous_sample);
-  return(gh_double2scm(previous_sample_to_float(get_sf(obj))));
+  return(TO_SCM_DOUBLE(previous_sample_to_float(get_sf(obj))));
 }
 
 static SCM g_free_sample_reader(SCM obj)
@@ -2883,7 +2880,7 @@ static SCM g_loop_samples(SCM reader, SCM proc, SCM calls, SCM origin, SCM envir
   SCM_ASSERT(sf_p(reader),reader,SCM_ARG1,S_loop_samples);
   SCM_ASSERT(gh_number_p(calls),calls,SCM_ARG3,S_loop_samples);
   SCM_ASSERT(gh_string_p(origin),origin,SCM_ARG4,S_loop_samples);
-  num = g_scm2int(calls);
+  num = TO_C_INT_OR_ELSE(calls,0);
   sf = get_sf(reader);
   cp = sf->cp;
   ss = cp->state;
@@ -2936,7 +2933,7 @@ static SCM g_loop_samples(SCM reader, SCM proc, SCM calls, SCM origin, SCM envir
   if (j > 0) mus_file_write(ofd,0,j-1,1,data);
   close_temp_file(ofd,hdr,num*datumb,sp);
   hdr = free_file_info(hdr);
-  file_change_samples(sf->initial_samp,num,ofile,cp,0,DELETE_ME,LOCK_MIXES,gh_scm2newstr(origin,NULL));
+  file_change_samples(sf->initial_samp,num,ofile,cp,0,DELETE_ME,LOCK_MIXES,SCM_STRING_CHARS(origin));
   update_graph(cp,NULL); /* is this needed? */
   if (ofile) free(ofile);
   FREE(data[0]);
@@ -2952,12 +2949,11 @@ static SCM g_save_edit_history(SCM filename, SCM snd, SCM chn)
   int i,j;
   snd_info *sp;
   chan_info *cp;
-  char *mcf = NULL,*urn = NULL;
+  char *mcf = NULL;
   snd_state *ss;
   SCM_ASSERT(gh_string_p(filename),filename,SCM_ARG1,S_save_edit_history);
   ERRCP(S_save_edit_history,snd,chn,2);
-  urn = gh_scm2newstr(filename,NULL);
-  mcf = mus_file_full_name(urn);
+  mcf = full_filename(filename);
   fd = fopen(mcf,"w");
   if (mcf) FREE(mcf);
   if (fd)
@@ -2993,12 +2989,10 @@ static SCM g_save_edit_history(SCM filename, SCM snd, SCM chn)
 	    }
 	}
       if (fclose(fd) != 0)
-	snd_error("can't close %s! [%s[%d] %s]",urn,__FILE__,__LINE__,__FUNCTION__);
-      if (urn) free(urn);
+	snd_error("can't close %s! [%s[%d] %s]",SCM_STRING_CHARS(filename),__FILE__,__LINE__,__FUNCTION__);
       return(SCM_BOOL_T);
     }
-  if (urn) free(urn);
-  return(scm_throw(CANNOT_SAVE,SCM_LIST1(gh_str02scm(S_save_edit_history))));
+  return(scm_throw(CANNOT_SAVE,SCM_LIST1(TO_SCM_STRING(S_save_edit_history))));
 }
 
 static SCM g_undo(SCM ed_n, SCM snd_n, SCM chn_n) /* opt ed_n */
@@ -3008,7 +3002,7 @@ static SCM g_undo(SCM ed_n, SCM snd_n, SCM chn_n) /* opt ed_n */
   ERRCP(S_undo,snd_n,chn_n,2);
   cp = get_cp(snd_n,chn_n,S_undo);
   if (gh_number_p(ed_n))
-    undo_edit_with_sync(cp,g_scm2int(ed_n));
+    undo_edit_with_sync(cp,TO_C_INT_OR_ELSE(ed_n,0));
   else undo_edit_with_sync(cp,1);
   return(SCM_BOOL_T);
 }
@@ -3020,7 +3014,7 @@ static SCM g_redo(SCM ed_n, SCM snd_n, SCM chn_n) /* opt ed_n */
   ERRCP(S_redo,snd_n,chn_n,2);
   cp = get_cp(snd_n,chn_n,S_redo);
   if (gh_number_p(ed_n))
-    redo_edit_with_sync(cp,g_scm2int(ed_n));
+    redo_edit_with_sync(cp,TO_C_INT_OR_ELSE(ed_n,0));
   else redo_edit_with_sync(cp,1);
   return(SCM_BOOL_T);
 }
@@ -3074,7 +3068,7 @@ static SCM g_as_one_edit(SCM proc, SCM origin)
   if (chans > 0)
     {
       if (gh_string_p(origin))
-	as_one_edit_origin = gh_scm2newstr(origin,NULL);
+	as_one_edit_origin = SCM_STRING_CHARS(origin);
       else as_one_edit_origin = NULL;
       cur_edits = (int *)CALLOC(chans,sizeof(int));
       chan_ctr = 0;
@@ -3083,11 +3077,6 @@ static SCM g_as_one_edit(SCM proc, SCM origin)
       chan_ctr = 0;
       map_over_chans(ss,finish_as_one_edit,(void *)cur_edits);
       FREE(cur_edits);
-      if (as_one_edit_origin)
-	{
-	  free(as_one_edit_origin);
-	  as_one_edit_origin = NULL;
-	}
     }
   return(result);
 }
@@ -3127,8 +3116,8 @@ static int dont_save(snd_state *ss, snd_info *sp, char *newname)
 	{
 	  ss->save_hook_active = 1;
 	  if (newname)
-	    res = g_c_run_or_hook(save_hook,SCM_LIST2(gh_int2scm(sp->index),gh_str02scm(newname)));
-	  else res = g_c_run_or_hook(save_hook,SCM_LIST2(gh_int2scm(sp->index),SCM_BOOL_F));
+	    res = g_c_run_or_hook(save_hook,SCM_LIST2(TO_SMALL_SCM_INT(sp->index),TO_SCM_STRING(newname)));
+	  else res = g_c_run_or_hook(save_hook,SCM_LIST2(TO_SMALL_SCM_INT(sp->index),SCM_BOOL_F));
 	  ss->save_hook_active = 0;
 	}
     }

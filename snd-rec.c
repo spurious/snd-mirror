@@ -1429,103 +1429,103 @@ void set_read_in_progress (snd_state *ss)
 
 #if HAVE_GUILE
 
-static SCM g_recorder_autoload(void) {RTNBOOL(rp->autoload);}
+static SCM g_recorder_autoload(void) {return(TO_SCM_BOOLEAN(rp->autoload));}
 static SCM g_set_recorder_autoload(SCM val) 
 {
   #define H_recorder_autoload "(" S_recorder_autoload ") -> #t if newly recorded sound should be loaded into Snd automatically"
   ERRB1(val,"set-" S_recorder_autoload); 
   set_recorder_autoload(rp,bool_int_or_one(val));
-  RTNBOOL(rp->autoload);
+  return(TO_SCM_BOOLEAN(rp->autoload));
 }
 
-static SCM g_recorder_buffer_size(void) {RTNINT(rp->buffer_size);}
+static SCM g_recorder_buffer_size(void) {return(TO_SCM_INT(rp->buffer_size));}
 static SCM g_set_recorder_buffer_size(SCM val) 
 {
   #define H_recorder_buffer_size "(" S_recorder_buffer_size ") -> ADC buffer size (4096)"
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(val)),val,SCM_ARG1,"set-" S_recorder_buffer_size); 
-  rp->buffer_size = g_scm2int(val);
-  RTNINT(rp->buffer_size);
+  rp->buffer_size = TO_C_INT_OR_ELSE(val,0);
+  return(TO_SCM_INT(rp->buffer_size));
 }
 
-static SCM g_recorder_file(void) {RTNSTR(rp->output_file);}
+static SCM g_recorder_file(void) {return(TO_SCM_STRING(rp->output_file));}
 static SCM g_set_recorder_file(SCM val) 
 {
   #define H_recorder_file "(" S_recorder_file ") -> default recorder file name"
   SCM_ASSERT(gh_string_p(val),val,SCM_ARG1,"set-" S_recorder_file); 
-  rp->output_file = gh_scm2newstr(val,0);
-  RTNSTR(rp->output_file);
+  rp->output_file = TO_NEW_C_STRING(val);
+  return(TO_SCM_STRING(rp->output_file));
 }
 
-static SCM g_recorder_in_format(void) {RTNINT(rp->in_format);}
+static SCM g_recorder_in_format(void) {return(TO_SCM_INT(rp->in_format));}
 static SCM g_set_recorder_in_format(SCM val) 
 {
   #define H_recorder_in_format "(" S_recorder_in_format ") -> default recorder incoming data format (16 bit linear)"
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(val)),val,SCM_ARG1,"set-" S_recorder_in_format); 
-  rp->in_format = g_scm2int(val);
-  RTNINT(rp->in_format);
+  rp->in_format = TO_C_INT_OR_ELSE(val,0);
+  return(TO_SCM_INT(rp->in_format));
 }
 
-static SCM g_recorder_out_chans(void) {RTNINT(rp->out_chans);}
+static SCM g_recorder_out_chans(void) {return(TO_SCM_INT(rp->out_chans));}
 static SCM g_set_recorder_out_chans(SCM val) 
 {
   #define H_recorder_out_chans "(" S_recorder_out_chans ") -> default recorder output channels (2)"
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(val)),val,SCM_ARG1,"set-" S_recorder_out_chans); 
-  rp->out_chans = g_scm2int(val);
-  RTNINT(rp->out_chans);
+  rp->out_chans = TO_C_INT_OR_ELSE(val,0);
+  return(TO_SCM_INT(rp->out_chans));
 }
 
-static SCM g_recorder_out_format(void) {RTNINT(rp->out_format);}
+static SCM g_recorder_out_format(void) {return(TO_SCM_INT(rp->out_format));}
 static SCM g_set_recorder_out_format(SCM val) 
 {
   #define H_recorder_out_format "(" S_recorder_out_format ") -> default recorder output data format (16-bit linear)"
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(val)),val,SCM_ARG1,"set-" S_recorder_out_format); 
-  rp->out_format = g_scm2int(val);
-  RTNINT(rp->out_format);
+  rp->out_format = TO_C_INT_OR_ELSE(val,0);
+  return(TO_SCM_INT(rp->out_format));
 }
 
-static SCM g_recorder_srate(void) {RTNINT(rp->srate);}
+static SCM g_recorder_srate(void) {return(TO_SCM_INT(rp->srate));}
 static SCM g_set_recorder_srate(SCM val) 
 {
   #define H_recorder_srate "(" S_recorder_srate ") -> default recorder sampling rate (22050)"
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(val)),val,SCM_ARG1,"set-" S_recorder_srate); 
-  set_recorder_srate(rp,g_scm2int(val));
-  RTNINT(rp->srate);
+  set_recorder_srate(rp,TO_C_INT_OR_ELSE(val,0));
+  return(TO_SCM_INT(rp->srate));
 }
 
-static SCM g_recorder_trigger(void) {RTNFLT(rp->trigger);}
+static SCM g_recorder_trigger(void) {return(TO_SCM_DOUBLE(rp->trigger));}
 static SCM g_set_recorder_trigger(SCM val) 
 {
   #define H_recorder_trigger "(" S_recorder_trigger ") -> if doing triggered record, min amp that can trigger recording"
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(val)),val,SCM_ARG1,"set-" S_recorder_trigger); 
   set_recorder_trigger(rp,TO_C_DOUBLE(val));
-  RTNFLT(rp->trigger);
+  return(TO_SCM_DOUBLE(rp->trigger));
 }
 
-static SCM g_recorder_max_duration(void) {RTNFLT(rp->max_duration);}
+static SCM g_recorder_max_duration(void) {return(TO_SCM_DOUBLE(rp->max_duration));}
 static SCM g_set_recorder_max_duration(SCM val) 
 {
   #define H_recorder_max_duration "(" S_recorder_max_duration ") -> max recorder output file length"
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(val)),val,SCM_ARG1,"set-" S_recorder_max_duration); 
   rp->max_duration = TO_C_DOUBLE(val);
-  RTNFLT(rp->max_duration);
+  return(TO_SCM_DOUBLE(rp->max_duration));
 }
 
 static SCM g_recorder_gain (SCM num) 
 {
   #define H_recorder_gain "(" S_recorder_gain " gain) -> recorder input (soundcard) gain"
-  RTNFLT(rp->mixer_gains[g_scm2int(num)]);
+  return(TO_SCM_DOUBLE(rp->mixer_gains[TO_C_INT_OR_ELSE(num,0)]));
 }
 
 static SCM g_recorder_in_amp (SCM in, SCM out) 
 {
   #define H_recorder_in_amp "(" S_recorder_in_amp " in out) -> recorder scaler on input in to output out"
-  RTNFLT(rp->in_amps[g_scm2int(in)][g_scm2int(out)]);
+  return(TO_SCM_DOUBLE(rp->in_amps[TO_C_INT_OR_ELSE(in,0)][TO_C_INT_OR_ELSE(out,0)]));
 }
 
 static SCM g_recorder_out_amp (SCM num) 
 {
   #define H_recorder_out_amp "(" S_recorder_out_amp " out) -> recorder output out scaler"
-  RTNFLT(rp->out_amps[g_scm2int(num)]);
+  return(TO_SCM_DOUBLE(rp->out_amps[TO_C_INT_OR_ELSE(num,0)]));
 }
 
 static SCM g_set_recorder_gain (SCM num, SCM amp) 
@@ -1533,7 +1533,7 @@ static SCM g_set_recorder_gain (SCM num, SCM amp)
   int ind;
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(num)),num,SCM_ARG1,"set-" S_recorder_gain);
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(amp)),amp,SCM_ARG2,"set-" S_recorder_gain); 
-  ind = g_scm2int(num);
+  ind = TO_C_INT_OR_ELSE(num,0);
   rp->mixer_gains[ind] = TO_C_DOUBLE(amp);
   reflect_recorder_mixer_gain(ind,rp->mixer_gains[ind]);
   return(amp);
@@ -1545,8 +1545,8 @@ static SCM g_set_recorder_in_amp (SCM in, SCM out, SCM amp)
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(in)),in,SCM_ARG1,"set-" S_recorder_in_amp);
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(out)),out,SCM_ARG2,"set-" S_recorder_in_amp);
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(amp)),amp,SCM_ARG3,"set-" S_recorder_in_amp);
-  in_ind = g_scm2int(in);
-  out_ind = g_scm2int(out);
+  in_ind = TO_C_INT_OR_ELSE(in,0);
+  out_ind = TO_C_INT_OR_ELSE(out,0);
   rp->in_amps[in_ind][out_ind] = TO_C_DOUBLE(amp);
   reflect_recorder_in_amp(in_ind,out_ind,rp->in_amps[in_ind][out_ind]);
   return(amp);
@@ -1557,7 +1557,7 @@ static SCM g_set_recorder_out_amp (SCM num, SCM amp)
   int ind;
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(num)),num,SCM_ARG1,"set-" S_recorder_out_amp);
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(amp)),amp,SCM_ARG2,"set-" S_recorder_out_amp); 
-  ind = g_scm2int(num);
+  ind = TO_C_INT_OR_ELSE(num,0);
   rp->out_amps[ind] = TO_C_DOUBLE(amp); 
   reflect_recorder_out_amp(ind,rp->out_amps[ind]);
   return(amp);

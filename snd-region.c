@@ -868,11 +868,7 @@ void save_region_backpointer(snd_info *sp)
 
 static char *g_scm2newstr(SCM str)
 {
-  char *temp,*res;
-  temp = gh_scm2newstr(str,NULL);
-  res = copy_string(temp);
-  free(temp);
-  return(res);
+  return(copy_string(SCM_STRING_CHARS(str)));
 }
 
 static SCM g_restore_region(SCM n, SCM chans, SCM len, SCM srate, SCM maxamp, SCM name, SCM start, SCM end, SCM data)
@@ -881,11 +877,11 @@ static SCM g_restore_region(SCM n, SCM chans, SCM len, SCM srate, SCM maxamp, SC
   int i,j,k,regn;
   SCM *vdata;
   r = (region *)CALLOC(1,sizeof(region));
-  regn = TO_C_INT(n);
+  regn = TO_SMALL_C_INT(n);
   regions[regn] = r;
   r->id = region_id_ctr++;
   r->maxamp = TO_C_DOUBLE(maxamp);
-  r->chans = TO_C_INT(chans);
+  r->chans = TO_SMALL_C_INT(chans);
   r->rsp = NULL;
   r->editor_copy = NULL;
   r->editor_name = NULL;
@@ -920,7 +916,7 @@ static SCM g_restore_region(SCM n, SCM chans, SCM len, SCM srate, SCM maxamp, SC
 	}
     }
   reflect_regions_in_menu();
-  RTNINT(region_id(regn));
+  return(TO_SCM_INT(region_id(regn)));
 }
 
 static SCM g_insert_region(SCM samp_n, SCM reg_n, SCM snd_n, SCM chn_n) /* opt reg_n */
@@ -934,12 +930,12 @@ static SCM g_insert_region(SCM samp_n, SCM reg_n, SCM snd_n, SCM chn_n) /* opt r
   ERRB2(reg_n,S_insert_region);
   ERRCP(S_insert_region,snd_n,chn_n,3);
   cp = get_cp(snd_n,chn_n,S_insert_region);
-  rg = g_scm2intdef(reg_n,0);
-  if (!(region_ok(rg))) return(scm_throw(NO_SUCH_REGION,SCM_LIST2(gh_str02scm(S_insert_region),reg_n)));
-  samp = g_scm2intdef(samp_n,0);
+  rg = TO_C_INT_OR_ELSE(reg_n,0);
+  if (!(region_ok(rg))) return(scm_throw(NO_SUCH_REGION,SCM_LIST2(TO_SCM_STRING(S_insert_region),reg_n)));
+  samp = TO_C_INT_OR_ELSE(samp_n,0);
   paste_region_1(rg,cp,FALSE,samp,S_insert_region);
   update_graph(cp,NULL);
-  RTNINT(region_id(rg));
+  return(TO_SCM_INT(region_id(rg)));
 }
 
 static SCM g_max_regions(void) 
@@ -947,7 +943,7 @@ static SCM g_max_regions(void)
   #define H_max_regions "(" S_max_regions ") -> max number of regions saved on the region list"
   snd_state *ss;
   ss = get_global_state();
-  RTNINT(max_regions(ss));
+  return(TO_SCM_INT(max_regions(ss)));
 }
 
 static SCM g_set_max_regions(SCM n) 
@@ -955,8 +951,8 @@ static SCM g_set_max_regions(SCM n)
   snd_state *ss;
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(n)),n,SCM_ARG1,"set-" S_max_regions); 
   ss = get_global_state();
-  set_max_regions(ss,g_scm2int(n));
-  RTNINT(max_regions(ss));
+  set_max_regions(ss,TO_C_INT_OR_ELSE(n,0));
+  return(TO_SCM_INT(max_regions(ss)));
 }
 
 enum {REGION_LENGTH,REGION_SRATE,REGION_CHANS,REGION_MAXAMP,REGION_SELECT,REGION_DELETE,REGION_PLAY,REGION_ID};
@@ -970,35 +966,35 @@ static SCM region_read(int field, SCM n, char *caller)
     {
       for (i=0;i<regions_size;i++)
 	if (regions[i])
-	  res = gh_cons(region_read(field,gh_int2scm(i),caller),res);
+	  res = gh_cons(region_read(field,TO_SCM_INT(i),caller),res);
       return(scm_reverse(res));
     }
   else
     {
-      rg = g_scm2intdef(n,0);
+      rg = TO_C_INT_OR_ELSE(n,0);
       if (region_ok(rg))
 	{
 	  switch (field)
 	    {
-	    case REGION_LENGTH: RTNINT(region_len(rg)); break;
-	    case REGION_SRATE:  RTNINT(region_srate(rg)); break;
-	    case REGION_CHANS:  RTNINT(region_chans(rg)); break;
-	    case REGION_MAXAMP: RTNFLT(region_maxamp(rg)); break;
+	    case REGION_LENGTH: return(TO_SCM_INT(region_len(rg))); break;
+	    case REGION_SRATE:  return(TO_SCM_INT(region_srate(rg))); break;
+	    case REGION_CHANS:  return(TO_SCM_INT(region_chans(rg))); break;
+	    case REGION_MAXAMP: return(TO_SCM_DOUBLE(region_maxamp(rg))); break;
 	    case REGION_SELECT: select_region_and_update_browser(get_global_state(),rg); return(n); break;
 	    case REGION_DELETE: delete_region_and_update_browser(get_global_state(),rg); return(n); break;
-	    case REGION_ID:     RTNINT(region_id(rg)); break;
+	    case REGION_ID:     return(TO_SCM_INT(region_id(rg))); break;
 	    }
 	}
-      else return(scm_throw(NO_SUCH_REGION,SCM_LIST2(gh_str02scm(caller),n)));
+      else return(scm_throw(NO_SUCH_REGION,SCM_LIST2(TO_SCM_STRING(caller),n)));
     }
-  RTNINT(0);
+  return(TO_SCM_INT(0));
 }
 
 static SCM g_regionQ(SCM n)
 {
   #define H_regionQ "(" S_regionQ " reg) -> #t if region is active"
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(n)),n,SCM_ARG1,S_regionQ);
-  RTNBOOL(region_ok(g_scm2int(n)));
+  return(TO_SCM_BOOLEAN(region_ok(TO_C_INT_OR_ELSE(n,0))));
 }
 
 static SCM g_region_length (SCM n) 
@@ -1034,9 +1030,9 @@ static SCM g_id_region (SCM n)
   #define H_id_region "(" S_id_region " &optional (id 0) -> stack location of region with id"
   int sn;
   ERRB1(n,S_id_region); 
-  sn = id_region(g_scm2intdef(n,0));
-  if (sn == -1) return(scm_throw(NO_SUCH_REGION,SCM_LIST2(gh_str02scm(S_id_region),n)));
-  RTNINT(sn);
+  sn = id_region(TO_C_INT_OR_ELSE(n,0));
+  if (sn == -1) return(scm_throw(NO_SUCH_REGION,SCM_LIST2(TO_SCM_STRING(S_id_region),n)));
+  return(TO_SCM_INT(sn));
 }
 
 static SCM g_region_maxamp (SCM n) 
@@ -1066,11 +1062,11 @@ static SCM g_play_region (SCM n, SCM wait)
   int rg,wt=0;
   ERRB1(n,S_play_region); 
   ERRB2(wait,S_play_region);
-  rg = g_scm2intdef(n,0);
-  if (SCM_TRUE_P(wait)) wt = 1; else wt = g_scm2intdef(n,0);
+  rg = TO_C_INT_OR_ELSE(n,0);
+  if (SCM_TRUE_P(wait)) wt = 1; else wt = TO_C_INT_OR_ELSE(n,0);
   if (region_ok(rg))
     play_region(get_global_state(),rg,!wt);
-  else return(scm_throw(NO_SUCH_REGION,SCM_LIST2(gh_str02scm(S_play_region),n)));
+  else return(scm_throw(NO_SUCH_REGION,SCM_LIST2(TO_SCM_STRING(S_play_region),n)));
   return(n);
 }
 
@@ -1082,10 +1078,10 @@ static SCM g_protect_region (SCM n, SCM protect)
   int rg;
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(n)),n,SCM_ARG1,S_protect_region);
   ERRB2(protect,S_protect_region);
-  rg = g_scm2intdef(n,0);
+  rg = TO_C_INT_OR_ELSE(n,0);
   if (region_ok(rg))
     set_region_protect(rg,bool_int_or_one(protect)); 
-  else return(scm_throw(NO_SUCH_REGION,SCM_LIST2(gh_str02scm(S_protect_region),n)));
+  else return(scm_throw(NO_SUCH_REGION,SCM_LIST2(TO_SCM_STRING(S_protect_region),n)));
   return(protect);
 }
 
@@ -1097,7 +1093,7 @@ static SCM g_regions(void)
   result = SCM_EOL;
   for (i=(regions_size-1);i>=0;i--)
     if (regions[i])
-      result = gh_cons(gh_int2scm(regions[i]->id),result);
+      result = gh_cons(TO_SCM_INT(regions[i]->id),result);
   return(result);
 }
 
@@ -1115,39 +1111,37 @@ static SCM g_make_region (SCM beg, SCM end, SCM snd_n, SCM chn_n)
       SCM_ASSERT(SCM_NFALSEP(scm_real_p(beg)),beg,SCM_ARG1,S_make_region);
       SCM_ASSERT(SCM_NFALSEP(scm_real_p(end)),end,SCM_ARG2,S_make_region);
       cp = get_cp(snd_n,chn_n,S_make_region);
-      ibeg = g_scm2intdef(beg,0);
-      ends[0] = g_scm2intdef(end,0);
+      ibeg = TO_C_INT_OR_ELSE(beg,0);
+      ends[0] = TO_C_INT_OR_ELSE(end,0);
       if (current_ed_samples(cp)-1 < ends[0]) ends[0] = current_ed_samples(cp)-1;
-      if (ends[0] < ibeg) return(scm_throw(IMPOSSIBLE_BOUNDS,SCM_LIST5(gh_str02scm(S_make_region),beg,end,snd_n,chn_n)));
+      if (ends[0] < ibeg) return(scm_throw(IMPOSSIBLE_BOUNDS,SCM_LIST5(TO_SCM_STRING(S_make_region),beg,end,snd_n,chn_n)));
       si = make_simple_sync(cp,ibeg);
       define_region(si,ends);
       reactivate_selection(si->cps[0],si->begs[0],ends[0]); /* ??? */
       si = free_sync_info(si);
     }
-  RTNINT(region_id(0));
+  return(TO_SCM_INT(region_id(0)));
 }
 
 static SCM g_save_region (SCM n, SCM filename, SCM format) 
 {
   #define H_save_region "(" S_save_region " region filename &optional format) saves region in filename using data format (mus-bshort)"
-  char *name = NULL,*urn;
+  char *name = NULL;
   int res=MUS_NO_ERROR,rg;
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(n)),n,SCM_ARG1,S_save_region);
   SCM_ASSERT(gh_string_p(filename),filename,SCM_ARG2,S_save_region);
   ERRB3(format,S_save_region);
-  rg = g_scm2int(n);
+  rg = TO_C_INT_OR_ELSE(n,0);
   if (region_ok(rg))
     {
-      urn = gh_scm2newstr(filename,NULL);
-      name = mus_file_full_name(urn);
-      free(urn);
-      res = save_region(get_global_state(),rg,name,g_scm2intdef(format,0));
+      name = full_filename(filename);
+      res = save_region(get_global_state(),rg,name,TO_C_INT_OR_ELSE(format,0));
       if (name) FREE(name);
     }
-  else return(scm_throw(NO_SUCH_REGION,SCM_LIST2(gh_str02scm(S_save_region),n)));
+  else return(scm_throw(NO_SUCH_REGION,SCM_LIST2(TO_SCM_STRING(S_save_region),n)));
   if (res != MUS_NO_ERROR)
     return(SCM_BOOL_F);
-  return(scm_throw(CANNOT_SAVE,SCM_LIST1(gh_str02scm(S_save_region))));
+  return(scm_throw(CANNOT_SAVE,SCM_LIST1(TO_SCM_STRING(S_save_region))));
 }
 
 static SCM g_mix_region(SCM chn_samp_n, SCM reg_n, SCM snd_n, SCM chn_n)
@@ -1160,15 +1154,15 @@ static SCM g_mix_region(SCM chn_samp_n, SCM reg_n, SCM snd_n, SCM chn_n)
   ERRB1(chn_samp_n,S_mix_region);
   ERRB2(reg_n,S_mix_region);
   ERRCP(S_mix_region,snd_n,chn_n,3);
-  rg = g_scm2intdef(reg_n,0);
+  rg = TO_C_INT_OR_ELSE(reg_n,0);
   if (region_ok(rg))
     {
       cp = get_cp(snd_n,chn_n,S_mix_region);
       id = mix_region(rg,cp,
-		      g_scm2intdef(chn_samp_n,cp->cursor));
+		      TO_C_INT_OR_ELSE(chn_samp_n,cp->cursor));
     }
-  else return(scm_throw(NO_SUCH_REGION,SCM_LIST2(gh_str02scm(S_mix_region),reg_n)));
-  return(gh_int2scm(id));
+  else return(scm_throw(NO_SUCH_REGION,SCM_LIST2(TO_SCM_STRING(S_mix_region),reg_n)));
+  return(TO_SCM_INT(id));
 }
 
 static SCM g_region_sample(SCM samp_n, SCM reg_n, SCM chn_n)
@@ -1179,15 +1173,15 @@ static SCM g_region_sample(SCM samp_n, SCM reg_n, SCM chn_n)
   ERRB1(samp_n,S_region_sample);
   ERRB2(reg_n,S_region_sample);
   ERRB3(chn_n,S_region_sample);
-  rg = g_scm2intdef(reg_n,0);
-  chan = g_scm2intdef(chn_n,0);
+  rg = TO_C_INT_OR_ELSE(reg_n,0);
+  chan = TO_C_INT_OR_ELSE(chn_n,0);
   if (region_ok(rg))
     {
       if (chan < region_chans(rg))
-	RTNFLT(region_sample(rg,chan,g_scm2intdef(samp_n,0)));
-      else return(scm_throw(NO_SUCH_CHANNEL,SCM_LIST3(gh_str02scm(S_region_sample),SCM_LIST1(reg_n),chn_n)));
+	return(TO_SCM_DOUBLE(region_sample(rg,chan,TO_C_INT_OR_ELSE(samp_n,0))));
+      else return(scm_throw(NO_SUCH_CHANNEL,SCM_LIST3(TO_SCM_STRING(S_region_sample),SCM_LIST1(reg_n),chn_n)));
     }
-  else return(scm_throw(NO_SUCH_REGION,SCM_LIST2(gh_str02scm(S_region_sample),reg_n)));
+  else return(scm_throw(NO_SUCH_REGION,SCM_LIST2(TO_SCM_STRING(S_region_sample),reg_n)));
 }
 
 static SCM g_region_samples(SCM beg_n, SCM num, SCM reg_n, SCM chn_n)
@@ -1203,25 +1197,25 @@ static SCM g_region_samples(SCM beg_n, SCM num, SCM reg_n, SCM chn_n)
   ERRB2(num,S_region_samples);
   ERRB3(reg_n,S_region_samples);
   ERRB4(chn_n,S_region_samples);
-  reg = g_scm2intdef(reg_n,0);
-  if (!(region_ok(reg))) return(scm_throw(NO_SUCH_REGION,SCM_LIST2(gh_str02scm(S_region_samples),reg_n)));
-  chn = g_scm2intdef(chn_n,0);
+  reg = TO_C_INT_OR_ELSE(reg_n,0);
+  if (!(region_ok(reg))) return(scm_throw(NO_SUCH_REGION,SCM_LIST2(TO_SCM_STRING(S_region_samples),reg_n)));
+  chn = TO_C_INT_OR_ELSE(chn_n,0);
   if (chn < region_chans(reg))
     {
-      len = g_scm2intdef(num,0);
+      len = TO_C_INT_OR_ELSE(num,0);
       if (len == 0) len = region_len(reg);
       if (len > 0)
 	{
-	  new_vect = gh_make_vector(gh_int2scm(len),gh_double2scm(0.0));
+	  new_vect = gh_make_vector(TO_SCM_INT(len),TO_SCM_DOUBLE(0.0));
 	  vdata = SCM_VELTS(new_vect);
 	  data = (Float *)CALLOC(len,sizeof(Float));
-	  region_samples(reg,chn,g_scm2intdef(beg_n,0),len,data);
-	  for (i=0;i<len;i++) vdata[i] = gh_double2scm(data[i]);
+	  region_samples(reg,chn,TO_C_INT_OR_ELSE(beg_n,0),len,data);
+	  for (i=0;i<len;i++) vdata[i] = TO_SCM_DOUBLE(data[i]);
 	  FREE(data);
 	  return(new_vect);
 	}
     }
-  else return(scm_throw(NO_SUCH_CHANNEL,SCM_LIST3(gh_str02scm(S_region_samples),SCM_LIST1(reg_n),chn_n)));
+  else return(scm_throw(NO_SUCH_CHANNEL,SCM_LIST3(TO_SCM_STRING(S_region_samples),SCM_LIST1(reg_n),chn_n)));
   return(SCM_BOOL_F);
 }
 
@@ -1239,18 +1233,25 @@ static SCM g_region_samples2vct(SCM beg_n, SCM num, SCM reg_n, SCM chn_n, SCM v)
   ERRB2(num,S_region_samples_vct);
   ERRB3(reg_n,S_region_samples_vct);
   ERRB4(chn_n,S_region_samples_vct);
-  reg = g_scm2intdef(reg_n,0);
-  if (!(region_ok(reg))) return(scm_throw(NO_SUCH_REGION,SCM_LIST2(gh_str02scm(S_region_samples_vct),reg_n)));
-  chn = g_scm2intdef(chn_n,0);
-  if (chn >= region_chans(reg)) return(scm_throw(NO_SUCH_CHANNEL,SCM_LIST3(gh_str02scm(S_region_samples_vct),SCM_LIST1(reg_n),chn_n)));
-  len = g_scm2intdef(num,0);
+  reg = TO_C_INT_OR_ELSE(reg_n,0);
+  if (!(region_ok(reg))) 
+    return(scm_throw(NO_SUCH_REGION,
+		     SCM_LIST2(TO_SCM_STRING(S_region_samples_vct),
+			       reg_n)));
+  chn = TO_C_INT_OR_ELSE(chn_n,0);
+  if (chn >= region_chans(reg)) 
+    return(scm_throw(NO_SUCH_CHANNEL,
+		     SCM_LIST3(TO_SCM_STRING(S_region_samples_vct),
+			       SCM_LIST1(reg_n),
+			       chn_n)));
+  len = TO_C_INT_OR_ELSE(num,0);
   if (len == 0) len = region_len(reg);
   if (len > 0)
     {
       if (v1)
 	data = v1->data;
       else data = (Float *)CALLOC(len,sizeof(Float));
-      region_samples(reg,chn,g_scm2intdef(beg_n,0),len,data);
+      region_samples(reg,chn,TO_C_INT_OR_ELSE(beg_n,0),len,data);
       if (v1)
 	return(v);
       else return(make_vct(len,data));

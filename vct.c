@@ -97,7 +97,7 @@ int vct_p(SCM obj)
 static SCM g_vct_p(SCM obj) 
 {
   #define H_vct_p "(" S_vct_p " obj) -> #t if obj is a vct object, else #f"
-  RTNBOOL(vct_p(obj));
+  return(TO_SCM_BOOLEAN(vct_p(obj)));
 }
 
 vct *get_vct(SCM arg)
@@ -235,11 +235,11 @@ static SCM vct_move(SCM obj, SCM newi, SCM oldi, SCM backwards)
       if (ni >= v->length) 
 	scm_misc_error(S_vct_moveB,
 		       "new-index: ~A (len: ~A)?",
-		       SCM_LIST2(newi,gh_int2scm(v->length)));
+		       SCM_LIST2(newi,TO_SCM_INT(v->length)));
       if (nj >= v->length)
 	scm_misc_error(S_vct_moveB,
 		       "old-index: ~A (len: ~A)?",
-		       SCM_LIST2(oldi,gh_int2scm(v->length)));
+		       SCM_LIST2(oldi,TO_SCM_INT(v->length)));
       if (v) for (i=ni,j=nj;(j>=0) && (i>=0);i--,j--) 
 	v->data[i] = v->data[j];
     }
@@ -265,8 +265,8 @@ static SCM vct_length(SCM obj)
   vct *v = get_vct(obj);
   SCM_ASSERT(vct_p(obj),obj,SCM_ARG1,S_vct_length);
   if (v)
-    RTNINT(v->length);
-  RTNINT(0);
+    return(TO_SCM_INT(v->length));
+  return(TO_SMALL_SCM_INT(0));
 }
 
 static SCM vct_ref(SCM obj, SCM pos)
@@ -284,12 +284,12 @@ static SCM vct_ref(SCM obj, SCM pos)
       else
 	{
 	  if (loc >= v->length)
-	    scm_misc_error(S_vct_ref,"index: ~A but vct length: ~A?",SCM_LIST2(pos,gh_int2scm(v->length)));
-	  else RTNFLT(v->data[loc]);
+	    scm_misc_error(S_vct_ref,"index: ~A but vct length: ~A?",SCM_LIST2(pos,TO_SCM_INT(v->length)));
+	  else return(TO_SCM_DOUBLE(v->data[loc]));
 	}
     }
   else scm_misc_error(S_vct_ref,"~A is null?",SCM_LIST1(obj));
-  RTNFLT(0.0);
+  return(TO_SCM_DOUBLE(0.0));
 }
 
 static SCM vct_set(SCM obj, SCM pos, SCM val)
@@ -308,7 +308,7 @@ static SCM vct_set(SCM obj, SCM pos, SCM val)
       else
 	{
 	  if (loc >= v->length)
-	    scm_misc_error(S_vct_setB,"index: ~A but vct length: ~A?",SCM_LIST2(pos,gh_int2scm(v->length)));
+	    scm_misc_error(S_vct_setB,"index: ~A but vct length: ~A?",SCM_LIST2(pos,TO_SCM_INT(v->length)));
 	  else v->data[loc] = TO_C_DOUBLE(val);
 	}
     }
@@ -442,9 +442,9 @@ static SCM vct_do(SCM obj, SCM proc)
   SCM_ASSERT((gh_procedure_p(proc)),proc,SCM_ARG2,S_vct_doB);
   v = get_vct(obj);
 #if USE_SND
-  if (v) for (i=0;i<v->length;i++) v->data[i] = TO_C_DOUBLE(g_call1(proc,gh_int2scm(i)));
+  if (v) for (i=0;i<v->length;i++) v->data[i] = TO_C_DOUBLE(g_call1(proc,TO_SCM_INT(i)));
 #else
-  if (v) for (i=0;i<v->length;i++) v->data[i] = TO_C_DOUBLE(gh_call1(proc,gh_int2scm(i)));
+  if (v) for (i=0;i<v->length;i++) v->data[i] = TO_C_DOUBLE(gh_call1(proc,TO_SCM_INT(i)));
 #endif
   return(obj);
 }
@@ -460,28 +460,28 @@ static SCM vcts_map(SCM args)
   vnum = argnum-1;
   if (vnum <= 0)
     {
-      scm_wrong_num_args(gh_str02scm("vcts-map!"));
-      return(gh_int2scm(0));
+      scm_wrong_num_args(TO_SCM_STRING("vcts-map!"));
+      return(TO_SMALL_SCM_INT(0));
     }
   v = (vct **)CALLOC(vnum,sizeof(vct *));
   for (i=0;i<vnum;i++)
     {
-      arg = gh_list_ref(args,gh_int2scm(i));
+      arg = gh_list_ref(args,TO_SMALL_SCM_INT(i));
       if (!(vct_p(arg))) 
 	{
 	  scm_wrong_type_arg(S_vcts_mapB,i,arg);
-	  return(gh_int2scm(0));
+	  return(TO_SMALL_SCM_INT(0));
 	}
       v[i] = get_vct(arg);
     }
-  proc = gh_list_ref(args,gh_int2scm(vnum));
+  proc = gh_list_ref(args,TO_SMALL_SCM_INT(vnum));
   if (!(gh_procedure_p(proc)))
     {
       scm_misc_error(S_vcts_mapB,"in ~S, last argument must be a function",SCM_LIST1(args));
       FREE(v);
-      return(gh_int2scm(0));
+      return(TO_SMALL_SCM_INT(0));
     }
-  svi = gh_int2scm(vnum);
+  svi = TO_SMALL_SCM_INT(vnum);
   vsize = v[0]->length;
   for (i=1;i<vnum;i++) if (vsize > v[i]->length) vsize = v[i]->length;
   for (i=0;i<vsize;i++)
@@ -498,7 +498,7 @@ static SCM vcts_map(SCM args)
 	}
     }
   FREE(v);
-  return(gh_int2scm(vnum));
+  return(TO_SMALL_SCM_INT(vnum));
 }
 
 static SCM vcts_do(SCM args)
@@ -512,36 +512,38 @@ static SCM vcts_do(SCM args)
   vnum = argnum-1;
   if (vnum <= 0)
     {
-      scm_wrong_num_args(gh_str02scm("vcts-do!"));
-      return(gh_int2scm(0));
+      scm_wrong_num_args(TO_SCM_STRING("vcts-do!"));
+      return(TO_SMALL_SCM_INT(0));
     }
   v = (vct **)CALLOC(vnum,sizeof(vct *));
   for (i=0;i<vnum;i++)
     {
-      arg = gh_list_ref(args,gh_int2scm(i));
+      arg = gh_list_ref(args,TO_SMALL_SCM_INT(i));
       if (!(vct_p(arg))) 
 	{
 	  scm_wrong_type_arg(S_vcts_doB,i,arg);
-	  return(gh_int2scm(0));
+	  return(TO_SMALL_SCM_INT(0));
 	}
       v[i] = get_vct(arg);
     }
-  proc = gh_list_ref(args,gh_int2scm(vnum));
+  proc = gh_list_ref(args,TO_SMALL_SCM_INT(vnum));
   if (!(gh_procedure_p(proc)))
     {
       scm_misc_error(S_vcts_doB,"in ~S, last argument must be a function",SCM_LIST1(args));
       FREE(v);
-      return(gh_int2scm(0));
+      return(TO_SMALL_SCM_INT(0));
     }
   vsize = v[0]->length;
-  svi = gh_int2scm(vnum);
-  for (i=1;i<vnum;i++) if (vsize > v[i]->length) vsize = v[i]->length;
+  svi = TO_SMALL_SCM_INT(vnum);
+  for (i=1;i<vnum;i++) 
+    if (vsize > v[i]->length) 
+      vsize = v[i]->length;
   for (i=0;i<vsize;i++)
     {
 #if USE_SND
-      arg = g_call2(proc,svi,gh_int2scm(i));
+      arg = g_call2(proc,svi,TO_SCM_INT(i));
 #else
-      arg = gh_call2(proc,svi,gh_int2scm(i));
+      arg = gh_call2(proc,svi,TO_SCM_INT(i));
 #endif
       if (gh_list_p(arg))
 	{
@@ -550,7 +552,7 @@ static SCM vcts_do(SCM args)
 	}
     }
   FREE(v);
-  return(gh_int2scm(vnum));
+  return(TO_SMALL_SCM_INT(vnum));
 }
 
 static SCM vct_peak(SCM obj)
@@ -570,7 +572,7 @@ static SCM vct_peak(SCM obj)
 	  if (absv > val) val = absv;
 	}
     }
-  return(scm_return_first(gh_double2scm(val),obj));
+  return(scm_return_first(TO_SCM_DOUBLE(val),obj));
 }
 
 static SCM list2vct(SCM lst)
@@ -598,8 +600,8 @@ static SCM g_vct(SCM args)
 static SCM array_to_list(Float *arr, int i, int len)
 {
   if (i < (len-1))
-    return(gh_cons(gh_double2scm(arr[i]),array_to_list(arr,i+1,len)));
-  else return(gh_cons(gh_double2scm(arr[i]),SCM_EOL));
+    return(gh_cons(TO_SCM_DOUBLE(arr[i]),array_to_list(arr,i+1,len)));
+  else return(gh_cons(TO_SCM_DOUBLE(arr[i]),SCM_EOL));
 }
 #endif
 
@@ -668,7 +670,7 @@ void init_vct(void)
 #else
   vct_tag = scm_newsmob(&vct_smobfuns);
 #endif
-  local_doc = scm_permanent_object(scm_string_to_symbol(gh_str02scm("documentation")));
+  local_doc = scm_permanent_object(scm_string_to_symbol(TO_SCM_STRING("documentation")));
 
   DEFINE_PROC(gh_new_procedure1_0(S_make_vct,      g_make_vct),    H_make_vct);
   DEFINE_PROC(gh_new_procedure1_0(S_vct_copy,      copy_vct),      H_vct_copy);

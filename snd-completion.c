@@ -610,13 +610,13 @@ static SCM g_apropos(SCM text)
   SCM val = SCM_BOOL_F;
   SCM_ASSERT((gh_string_p(text) || gh_symbol_p(text)),text,SCM_ARG1,S_snd_apropos);
   if (gh_string_p(text))
-    str = gh_scm2newstr(text,NULL);
+    str = TO_NEW_C_STRING(text);
   else str = gh_symbol2newstr(text,NULL);
   res = snd_apropos(str);
   if (str) {free(str); str=NULL;}
   if (res) 
     {
-      val = gh_str02scm(res);
+      val = TO_SCM_STRING(res);
       FREE(res);
     }
   return(val);
@@ -628,7 +628,7 @@ static SCM g_save_listener(SCM filename)
   char *urn = NULL;
   FILE *fp = NULL;
   SCM_ASSERT(gh_string_p(filename),filename,SCM_ARG1,S_save_listener);
-  urn = gh_scm2newstr(filename,NULL);
+  urn = TO_NEW_C_STRING(filename);
   fp = fopen(urn,"w");
   if (fp)
     {
@@ -636,7 +636,10 @@ static SCM g_save_listener(SCM filename)
       if (fclose(fp) != 0)
 	snd_error("save-listener: close file %s: %s\n",urn,strerror(errno));
     }
-  else scm_throw(CANNOT_SAVE,SCM_LIST3(gh_str02scm(S_save_listener),filename,gh_str02scm(strerror(errno))));
+  else scm_throw(CANNOT_SAVE,
+		 SCM_LIST3(TO_SCM_STRING(S_save_listener),
+			   filename,
+			   TO_SCM_STRING(strerror(errno))));
   if (urn) free(urn);
   return(filename);
 }

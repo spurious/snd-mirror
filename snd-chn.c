@@ -2947,15 +2947,15 @@ static SCM series_scan(snd_state *ss, chan_info *cp, SCM proc, int chan_choice, 
 	  if (reporting) start_progress_report(sp,NOT_FROM_ENVED);
 	  for (kp=0;kp<num;kp++)
 	    {
-	      res = g_call1(proc,gh_double2scm((double)next_sample_to_float(sf)));
+	      res = g_call1(proc,TO_SCM_DOUBLE((double)next_sample_to_float(sf)));
 	      if ((SCM_NFALSEP(res)) || (SCM_SYMBOLP(res)))
 		{
 		  for (j=ip;j<si->chans;j++) free_snd_fd(sfs[j]);
 		  free_sync_state(sc); 
 		  if (reporting) finish_progress_report(sp,NOT_FROM_ENVED);
 		  if (SCM_SYMBOLP(res))
-		    return(scm_throw(res,SCM_LIST1(gh_str02scm(origin))));
-		  return(gh_list(res,gh_int2scm(kp+beg),gh_int2scm(cp->chan),gh_int2scm(sp->index),SCM_UNDEFINED));
+		    return(scm_throw(res,SCM_LIST1(TO_SCM_STRING(origin))));
+		  return(gh_list(res,TO_SCM_INT(kp+beg),TO_SMALL_SCM_INT(cp->chan),TO_SMALL_SCM_INT(sp->index),SCM_UNDEFINED));
 		}
 	      if (reporting) 
 		{
@@ -3008,7 +3008,7 @@ static SCM parallel_scan(snd_state *ss, chan_info *cp, SCM proc, int chan_choice
   si = sc->si;
   sfs = sc->sfs;
   rpt4 = MAX_BUFFER_SIZE / 4;
-  gh_chans = gh_int2scm(si->chans);
+  gh_chans = TO_SMALL_SCM_INT(si->chans);
   args = gh_make_vector(gh_chans,SCM_BOOL_F);
   vdata = SCM_VELTS(args);
   /* fixup for different length chans as above, but in this case
@@ -3030,7 +3030,7 @@ static SCM parallel_scan(snd_state *ss, chan_info *cp, SCM proc, int chan_choice
     { /* optimize common special case */
       for (kp=0;kp<num;kp++)
 	{
-	  vdata[0] = gh_double2scm((double)next_sample_to_float(sfs[0]));
+	  vdata[0] = TO_SCM_DOUBLE((double)next_sample_to_float(sfs[0]));
 	  res = g_call2(proc,args,gh_chans);
 	  if ((SCM_NFALSEP(res)) || (SCM_SYMBOLP(res))) {pos = kp+beg; break;}
 	  if (reporting) 
@@ -3051,7 +3051,7 @@ static SCM parallel_scan(snd_state *ss, chan_info *cp, SCM proc, int chan_choice
       for (kp=0;kp<num;kp++)
 	{
 	  for (ip=0;ip<si->chans;ip++)
-	    vdata[ip] = gh_double2scm((double)next_sample_to_float(sfs[ip]));
+	    vdata[ip] = TO_SCM_DOUBLE((double)next_sample_to_float(sfs[ip]));
 	  res = g_call2(proc,args,gh_chans);
 	  if ((SCM_NFALSEP(res)) || (SCM_SYMBOLP(res))) {pos = kp+beg; break;}
 	  if (reporting) 
@@ -3077,11 +3077,11 @@ static SCM parallel_scan(snd_state *ss, chan_info *cp, SCM proc, int chan_choice
   else
     {
       if (SCM_SYMBOLP(res))
-	return(scm_throw(res,SCM_LIST1(gh_str02scm(origin))));
+	return(scm_throw(res,SCM_LIST1(TO_SCM_STRING(origin))));
       else
 	{
 	  if (SCM_NFALSEP(res))
-	    return(gh_int2scm(pos));
+	    return(TO_SCM_INT(pos));
 	}
     }
   return(SCM_BOOL_F);
@@ -3215,7 +3215,7 @@ static SCM series_map(snd_state *ss, chan_info *cp, SCM proc, int chan_choice, i
 	  os = start_output(MAX_BUFFER_SIZE,sp->hdr,num);
 	  for (kp=0;kp<num;kp++)
 	    {
-	      res = g_call1(proc,gh_double2scm((double)next_sample_to_float(sf)));
+	      res = g_call1(proc,TO_SCM_DOUBLE((double)next_sample_to_float(sf)));
 	      if (SCM_NFALSEP(res)) /* if #f, no output on this pass */
 		{
 		  if (res != SCM_BOOL_T) /* if #t we halt the entire map */
@@ -3226,7 +3226,7 @@ static SCM series_map(snd_state *ss, chan_info *cp, SCM proc, int chan_choice, i
 			  for (j=ip;j<si->chans;j++) free_snd_fd(sfs[j]);    
 			  free_sync_state(sc); 
 			  if (reporting) finish_progress_report(sp,NOT_FROM_ENVED);
-			  return(scm_throw(res,SCM_LIST1(gh_str02scm(origin))));
+			  return(scm_throw(res,SCM_LIST1(TO_SCM_STRING(origin))));
 			}
 		      if (gh_number_p(res)) /* one number -> replace current sample */
 			output_sample(ss,os,SND_SRATE(sp),MUS_FLOAT_TO_SAMPLE(TO_C_DOUBLE(res)));
@@ -3315,13 +3315,13 @@ static SCM parallel_map(snd_state *ss, chan_info *cp, SCM proc, int chan_choice,
   os_arr = (output_state **)CALLOC(si->chans,sizeof(output_state *)); 
   for (ip=0;ip<si->chans;ip++)
     os_arr[ip] = start_output(MAX_BUFFER_SIZE,sp->hdr,num);
-  gh_chans = gh_int2scm(si->chans);
+  gh_chans = TO_SMALL_SCM_INT(si->chans);
   args = gh_make_vector(gh_chans,SCM_BOOL_F);
   vargs = SCM_VELTS(args);
   for (kp=0;kp<num;kp++)
     {
       for (ip=0;ip<si->chans;ip++)
-	vargs[ip] = gh_double2scm((double)next_sample_to_float(sfs[ip]));
+	vargs[ip] = TO_SCM_DOUBLE((double)next_sample_to_float(sfs[ip]));
       res = g_call2(proc,args,gh_chans);
       /* #f -> no output in any channel, #t -> halt */
       if (SCM_NFALSEP(res)) /* if #f, no output on this pass */
@@ -3377,7 +3377,7 @@ static SCM parallel_map(snd_state *ss, chan_info *cp, SCM proc, int chan_choice,
   FREE(os_arr);
   free_sync_state(sc);
   if (SCM_SYMBOLP(res))
-    return(scm_throw(res,SCM_LIST1(gh_str02scm(origin))));
+    return(scm_throw(res,SCM_LIST1(TO_SCM_STRING(origin))));
   if (ss->stopped_explicitly)
     {
       ss->stopped_explicitly = 0;
@@ -3386,7 +3386,7 @@ static SCM parallel_map(snd_state *ss, chan_info *cp, SCM proc, int chan_choice,
   else
     {
       if (SCM_NFALSEP(res))
-	return(gh_int2scm(kp+beg));
+	return(TO_SCM_INT(kp+beg));
     }
   return(SCM_BOOL_F);
 }
@@ -5322,12 +5322,12 @@ static void eval_expression(chan_info *cp, snd_info *sp, int count, int regexpr)
 	      j = 0;
 	      for (k=0;k<chan_dur;k++)
 		{
-		  res = g_call1(sp->eval_proc,gh_double2scm((double)next_sample_to_float(sf)));
+		  res = g_call1(sp->eval_proc,TO_SCM_DOUBLE((double)next_sample_to_float(sf)));
 		  if (SCM_SYMBOLP(res))
 		    {
 		      for (j=chan;j<si->chans;j++) free_snd_fd(sfs[j]);
 		      free_sync_state(sc);
-		      scm_throw(res,SCM_LIST1(gh_str02scm("eval expression")));
+		      scm_throw(res,SCM_LIST1(TO_SCM_STRING("eval expression")));
 		      return;
 		    }
 		  if (gh_number_p(res)) val = TO_C_DOUBLE(res);
@@ -5576,7 +5576,7 @@ void save_user_key_bindings(FILE *fd)
 		  "(bind-key (char->integer #\\%c) %d ",
 		  (unsigned char)(user_keymap[i].key),
 		  user_keymap[i].state);
-	  con = gh_str02scm(binder);
+	  con = TO_SCM_STRING(binder);
 	  fprintf(fd,";    %s\n",gh_print_1(user_keymap[i].func));
 	}
     }
@@ -5651,7 +5651,7 @@ static int call_user_keymap(int hashedsym, int count)
       {
 	funcres = g_call0(user_keymap[hashedsym].func);
 	if (SCM_SYMBOLP(funcres)) break; /* error tag returned? */
-	res = g_scm2intdef(funcres,KEYBOARD_NO_ACTION);
+	res = TO_C_INT_OR_ELSE(funcres,KEYBOARD_NO_ACTION);
       }
   /* in emacs, apparently, prefix-arg refers to the next command, and current-prefix-arg is this command */
   return(res);
@@ -5839,7 +5839,7 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, int with_meta)
 	      break;
 #if HAVE_OPENDIR
 	    case TEMP_FILING:
-	      newdir = copy_string(str);
+	      newdir = snd_strdup(str);
 	      clear_minibuffer(sp);
 	      dp = opendir(newdir);
 	      if (dp) 
@@ -5851,7 +5851,7 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, int with_meta)
 		{
 		  tok = dir_from_tempnam(ss);
 		  report_in_minibuffer_and_save(sp,"can't access %s! temp dir is still %s",newdir,tok);
-		  if (newdir) FREE(newdir);
+		  if (newdir) free(newdir);
 		  if (tok) free(tok);
 		}
 	      break;
@@ -5932,7 +5932,7 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, int with_meta)
 	  proc = parse_proc(str);
 	  snd_protect(proc);
 	  if ((sp->prompt_callback) && (gh_procedure_p(sp->prompt_callback)))
-	    g_call2(sp->prompt_callback,proc,gh_int2scm(sp->index));
+	    g_call2(sp->prompt_callback,proc,TO_SMALL_SCM_INT(sp->index));
 	  snd_unprotect(proc);
 	  if (str) free(str);
 	  sp->prompting = 0;
@@ -7497,10 +7497,10 @@ static SCM g_temp_filenames(SCM data)
   SCM *vlst;
   SCM lst;
   program_data = (snd_exf *)(gh_scm2ulong(data));
-  lst = gh_make_vector(gh_int2scm(program_data->files),SCM_BOOL_F);
+  lst = gh_make_vector(TO_SCM_INT(program_data->files),SCM_BOOL_F);
   vlst = SCM_VELTS(lst);
   for (i=0;i<program_data->files;i++)
-    vlst[i] = gh_str02scm(program_data->old_filenames[i]);
+    vlst[i] = TO_SCM_STRING(program_data->old_filenames[i]);
   return(lst);
 }
 
@@ -7511,13 +7511,13 @@ static SCM g_sound_to_temp_1(SCM ht, SCM df, int selection, int one_file)
   int type,format;
   snd_state *ss;
   if ((selection) && (selection_is_active() == 0)) 
-    return(scm_throw(NO_ACTIVE_SELECTION,SCM_LIST1(gh_str02scm((one_file) ? S_selection_to_temp : S_selection_to_temps))));
+    return(scm_throw(NO_ACTIVE_SELECTION,SCM_LIST1(TO_SCM_STRING((one_file) ? S_selection_to_temp : S_selection_to_temps))));
   ss = get_global_state();
   cp = current_channel(ss);
   if (cp)
     {
-      type = g_scm2intdef(ht,MUS_UNSUPPORTED);
-      format = g_scm2intdef(df,MUS_UNSUPPORTED);
+      type = TO_C_INT_OR_ELSE(ht,MUS_UNSUPPORTED);
+      format = TO_C_INT_OR_ELSE(df,MUS_UNSUPPORTED);
       program_data = snd_to_temp(cp,selection,one_file,type,format);
       if (program_data)
 	return((SCM)(gh_ulong2scm((unsigned long)program_data)));
@@ -7566,8 +7566,8 @@ static SCM g_temp_to_sound(SCM data, SCM new_name, SCM origin)
   SCM_ASSERT(gh_string_p(new_name),new_name,SCM_ARG2,S_temp_to_sound);
   SCM_ASSERT(gh_string_p(origin),origin,SCM_ARG3,S_temp_to_sound);
   program_data = (snd_exf *)(gh_scm2ulong(data));
-  program_data->new_filenames[0] = gh_scm2newstr(new_name,NULL);
-  temp_to_snd(program_data,gh_scm2newstr(origin,NULL));
+  program_data->new_filenames[0] = TO_NEW_C_STRING(new_name);
+  temp_to_snd(program_data,SCM_STRING_CHARS(origin));
   return(SCM_BOOL_T);
 }
 
@@ -7585,8 +7585,8 @@ static SCM g_temps_to_sound(SCM data, SCM new_names, SCM origin)
   len = (int)gh_vector_length(new_names);
   vdata = SCM_VELTS(new_names);
   for (i=0;i<len;i++)
-    program_data->new_filenames[i] = gh_scm2newstr(vdata[i],NULL);
-  temp_to_snd(program_data,gh_scm2newstr(origin,NULL));
+    program_data->new_filenames[i] = TO_NEW_C_STRING(vdata[i]);
+  temp_to_snd(program_data,SCM_STRING_CHARS(origin));
   return(SCM_BOOL_T);
 }
 
@@ -7616,15 +7616,15 @@ static SCM g_sp_scan(SCM proc, int chan_choice, SCM s_beg, SCM s_end, int series
 	case SCAN_ALL_CHANS: if (series) origin = S_map_all_chans; else origin = S_map_across_all_chans; break;
 	case SCAN_SYNCD_CHANS: if (series) origin = S_map_chans; else origin = S_map_across_chans; break;
 	}
-      if (gh_string_p(org)) ed_origin = gh_scm2newstr(org,NULL);
+      if (gh_string_p(org)) ed_origin = TO_NEW_C_STRING(org);
     }
   SCM_ASSERT((gh_procedure_p(proc)),proc,SCM_ARG1,origin);
   SCM_ASSERT((gh_number_p(s_beg)) || (gh_boolean_p(s_beg)) || (SCM_UNBNDP(s_beg)),s_beg,SCM_ARG2,origin);
   SCM_ASSERT((gh_number_p(s_end)) || (gh_boolean_p(s_end)) || (SCM_UNBNDP(s_end)),s_end,SCM_ARG3,origin);
   ss = get_global_state();
   cp = get_cp(snd,chn,origin);
-  beg = g_scm2intdef(s_beg,0);
-  end = g_scm2intdef(s_end,0);
+  beg = TO_C_INT_OR_ELSE(s_beg,0);
+  end = TO_C_INT_OR_ELSE(s_end,0);
   if (scan)
     {
       if (series)
@@ -7786,21 +7786,21 @@ static SCM g_count_matches(SCM expr, SCM sample, SCM snd_n, SCM chn_n)
   ERRB2(sample,S_count_matches);
   ERRCP(S_count_matches,snd_n,chn_n,3);
   cp = get_cp(snd_n,chn_n,S_count_matches);
-  samp = g_scm2intdef(sample,0);
+  samp = TO_C_INT_OR_ELSE(sample,0);
   matches = 0;
   lim = current_ed_samples(cp);
   while (samp < lim)
     {
-      cursamp = gh_int2scm(samp);
+      cursamp = TO_SCM_INT(samp);
       match = g_sp_scan(expr,SCAN_CURRENT_CHAN,cursamp,SCM_BOOL_F,TRUE,TRUE,SCM_BOOL_F,snd_n,chn_n);
       if ((gh_list_p(match)) && (SCM_TRUE_P(SCM_CAR(match))))
 	{
 	  matches++;
-	  samp = g_scm2int(SCM_CADR(match)) + 1;
+	  samp = TO_C_INT_OR_ELSE(SCM_CADR(match),0) + 1;
 	}
       else break;
     }
-  return(gh_int2scm(matches));
+  return(TO_SCM_INT(matches));
 }
 
 static SCM g_prompt_in_minibuffer(SCM msg, SCM callback, SCM snd_n)
@@ -7809,12 +7809,11 @@ static SCM g_prompt_in_minibuffer(SCM msg, SCM callback, SCM snd_n)
    then when the user eventually responds, invokes the function callback with the response and snd (the index)"
 
   snd_info *sp;
-  char *str;  
   SCM_ASSERT(gh_string_p(msg),msg,SCM_ARG1,S_prompt_in_minibuffer);
   SCM_ASSERT((SCM_UNBNDP(callback)) || (gh_boolean_p(callback)) || gh_procedure_p(callback),callback,SCM_ARG2,S_prompt_in_minibuffer);
   ERRSP(S_prompt_in_minibuffer,snd_n,3);
   sp = get_sp(snd_n);
-  if (sp == NULL) return(scm_throw(NO_SUCH_SOUND,SCM_LIST2(gh_str02scm(S_prompt_in_minibuffer),snd_n)));
+  if (sp == NULL) return(scm_throw(NO_SUCH_SOUND,SCM_LIST2(TO_SCM_STRING(S_prompt_in_minibuffer),snd_n)));
   if ((sp->prompt_callback) && (gh_procedure_p(sp->prompt_callback))) snd_unprotect(sp->prompt_callback);
   if (gh_procedure_p(callback)) 
     {
@@ -7822,13 +7821,11 @@ static SCM g_prompt_in_minibuffer(SCM msg, SCM callback, SCM snd_n)
       snd_protect(sp->prompt_callback);
     }
   else sp->prompt_callback = SCM_BOOL_F;
-  str = gh_scm2newstr(msg,NULL);
-  make_minibuffer_label(sp,str);
+  make_minibuffer_label(sp,SCM_STRING_CHARS(msg));
   sp->minibuffer_on = 1;
   sp->minibuffer_temp = 0;
   sp->prompting = 1;
   goto_minibuffer(sp);
-  free(str);
   return(SCM_BOOL_F);
 }
 
@@ -7836,14 +7833,11 @@ static SCM g_report_in_minibuffer(SCM msg, SCM snd_n)
 {
   #define H_report_in_minibuffer "(" S_report_in_minibuffer " msg &optional snd) displays msg in snd's minibuffer"
   snd_info *sp;
-  char *str;  
   SCM_ASSERT(gh_string_p(msg),msg,SCM_ARG1,S_report_in_minibuffer);
   ERRSP(S_report_in_minibuffer,snd_n,2);
   sp = get_sp(snd_n);
-  if (sp == NULL) return(scm_throw(NO_SUCH_SOUND,SCM_LIST2(gh_str02scm(S_report_in_minibuffer),snd_n)));
-  str = gh_scm2newstr(msg,NULL);
-  report_in_minibuffer(sp,str);
-  free(str);
+  if (sp == NULL) return(scm_throw(NO_SUCH_SOUND,SCM_LIST2(TO_SCM_STRING(S_report_in_minibuffer),snd_n)));
+  report_in_minibuffer(sp,SCM_STRING_CHARS(msg));
   return(msg);
 }
 
@@ -7851,16 +7845,15 @@ static SCM g_append_to_minibuffer(SCM msg, SCM snd_n)
 {
   #define H_append_to_minibuffer "(" S_append_to_minibuffer " msg &optional snd) appends msg to snd's minibuffer"
   snd_info *sp;
-  char *str=NULL,*str1=NULL;
+  char *str1=NULL;
   SCM_ASSERT(gh_string_p(msg),msg,SCM_ARG1,S_append_to_minibuffer);
   ERRSP(S_append_to_minibuffer,snd_n,2);
   sp = get_sp(snd_n);
-  if (sp == NULL) return(scm_throw(NO_SUCH_SOUND,SCM_LIST2(gh_str02scm(S_append_to_minibuffer),snd_n)));
-  sprintf(expr_str,"%s%s",str1 = get_minibuffer_string(sp),str = gh_scm2newstr(msg,NULL));
+  if (sp == NULL) return(scm_throw(NO_SUCH_SOUND,SCM_LIST2(TO_SCM_STRING(S_append_to_minibuffer),snd_n)));
+  sprintf(expr_str,"%s%s",str1 = get_minibuffer_string(sp),SCM_STRING_CHARS(msg));
   set_minibuffer_string(sp,expr_str);
   sp->minibuffer_temp = 1;
   if (str1) free(str1);
-  if (str) free(str);
   return(msg);
 }
 
@@ -7876,14 +7869,14 @@ static SCM g_bind_key(SCM key, SCM state, SCM code, SCM ignore_prefix)
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(state)),state,SCM_ARG2,S_bind_key);
   SCM_ASSERT((SCM_FALSEP(code) || gh_procedure_p(code)),code,SCM_ARG3,S_bind_key);
   if ((SCM_FALSEP(ignore_prefix)) || (SCM_UNBNDP(ignore_prefix)) ||  
-      ((gh_number_p(ignore_prefix)) && (g_scm2int(ignore_prefix) == 0)))
+      ((gh_number_p(ignore_prefix)) && (TO_C_INT_OR_ELSE(ignore_prefix,0) == 0)))
     ip = 0;
   else ip = 1;
   if (SCM_FALSEP(code))
-    set_keymap_entry(g_scm2int(key),g_scm2int(state),ip,SCM_UNDEFINED);
+    set_keymap_entry(TO_C_INT_OR_ELSE(key,0),TO_C_INT_OR_ELSE(state,0),ip,SCM_UNDEFINED);
   else 
     if (procedure_ok(code,0,0,S_bind_key,"func",3))
-      set_keymap_entry(g_scm2int(key),g_scm2int(state),ip,code);
+      set_keymap_entry(TO_C_INT_OR_ELSE(key,0),TO_C_INT_OR_ELSE(state,0),ip,code);
   return(SCM_BOOL_T);
 }
 
@@ -7894,7 +7887,7 @@ static SCM g_key(SCM kbd, SCM buckybits, SCM snd, SCM chn)
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(kbd)),kbd,SCM_ARG1,S_key);
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(buckybits)),buckybits,SCM_ARG2,S_key);
   cp = get_cp(snd,chn,S_key);
-  RTNINT(keyboard_command(cp,g_scm2int(kbd),g_scm2int(buckybits)));
+  return(TO_SCM_INT(keyboard_command(cp,TO_C_INT_OR_ELSE(kbd,0),TO_C_INT_OR_ELSE(buckybits,0))));
 }
 
 static SCM g_save_macros(void) 
@@ -7922,9 +7915,9 @@ static SCM g_forward_graph(SCM count, SCM snd, SCM chn)
   ERRB1(count,S_forward_graph);
   ERRCP(S_forward_graph,snd,chn,2);
   cp = get_cp(snd,chn,S_forward_graph);
-  val = g_scm2intdef(count,1);
+  val = TO_C_INT_OR_ELSE(count,1);
   goto_next_graph(cp,val);
-  RTNINT(val);
+  return(TO_SCM_INT(val));
 }
 
 static SCM g_backward_graph(SCM count, SCM snd, SCM chn) 
@@ -7935,9 +7928,9 @@ static SCM g_backward_graph(SCM count, SCM snd, SCM chn)
   ERRB1(count,S_backward_graph);
   ERRCP(S_backward_graph,snd,chn,2);
   cp = get_cp(snd,chn,S_backward_graph);
-  val = -(g_scm2intdef(count,1));
+  val = -(TO_C_INT_OR_ELSE(count,1));
   goto_previous_graph(cp,val);
-  RTNINT(val);
+  return(TO_SCM_INT(val));
 }
 
 enum {CP_FFTING,CP_WAVING,CP_FRAMES,CP_CURSOR,CP_LISP_GRAPHING,CP_AP_LOSAMP,CP_AP_HISAMP,CP_SQUELCH_UPDATE,
@@ -7963,7 +7956,7 @@ static SCM cp_iread(SCM snd_n, SCM chn_n, int fld, char *caller)
 	{
 	  sp = ss->sounds[i];
 	  if ((sp) && (sp->inuse))
-	    res = gh_cons(cp_iread(gh_int2scm(i),chn_n,fld,caller),res);
+	    res = gh_cons(cp_iread(TO_SMALL_SCM_INT(i),chn_n,fld,caller),res);
 	}
       return(scm_reverse(res));
     }
@@ -7972,9 +7965,9 @@ static SCM cp_iread(SCM snd_n, SCM chn_n, int fld, char *caller)
       if (SCM_EQ_P(chn_n,SCM_BOOL_T))
 	{
 	  sp = get_sp(snd_n);
-	  if (sp == NULL) return(scm_throw(NO_SUCH_SOUND,SCM_LIST2(gh_str02scm(caller),snd_n)));
+	  if (sp == NULL) return(scm_throw(NO_SUCH_SOUND,SCM_LIST2(TO_SCM_STRING(caller),snd_n)));
 	  for (i=0;i<sp->nchans;i++)
-	    res = gh_cons(cp_iread(snd_n,gh_int2scm(i),fld,caller),res);
+	    res = gh_cons(cp_iread(snd_n,TO_SMALL_SCM_INT(i),fld,caller),res);
 	  return(scm_reverse(res));
 	}
       else
@@ -7982,43 +7975,43 @@ static SCM cp_iread(SCM snd_n, SCM chn_n, int fld, char *caller)
 	  cp = get_cp(snd_n,chn_n,caller);
 	  switch(fld)
 	    {
-	    case CP_EDIT_CTR:           RTNINT(cp->edit_ctr);                     break;
-	    case CP_FFTING:             RTNBOOL(cp->ffting);                      break;
-	    case CP_WAVING:             RTNBOOL(cp->waving);                      break;
-	    case CP_CURSOR:             RTNINT(cp->cursor);                       break;
-	    case CP_FRAMES:             RTNINT(current_ed_samples(cp));           break;
-	    case CP_LISP_GRAPHING:      RTNBOOL(cp->lisp_graphing);               break;
-	    case CP_AP_LOSAMP:          if (cp->axis) RTNINT((cp->axis)->losamp); break;
-	    case CP_AP_HISAMP:          if (cp->axis) RTNINT((cp->axis)->hisamp); break;
-	    case CP_SQUELCH_UPDATE:     RTNBOOL(cp->squelch_update);              break;
-	    case CP_CURSOR_STYLE:       RTNINT(cp->cursor_style);                 break;
+	    case CP_EDIT_CTR:           return(TO_SCM_INT(cp->edit_ctr));                     break;
+	    case CP_FFTING:             return(TO_SCM_BOOLEAN(cp->ffting));                      break;
+	    case CP_WAVING:             return(TO_SCM_BOOLEAN(cp->waving));                      break;
+	    case CP_CURSOR:             return(TO_SCM_INT(cp->cursor));                       break;
+	    case CP_FRAMES:             return(TO_SCM_INT(current_ed_samples(cp)));           break;
+	    case CP_LISP_GRAPHING:      return(TO_SCM_BOOLEAN(cp->lisp_graphing));               break;
+	    case CP_AP_LOSAMP:          if (cp->axis) return(TO_SCM_INT((cp->axis)->losamp)); break;
+	    case CP_AP_HISAMP:          if (cp->axis) return(TO_SCM_INT((cp->axis)->hisamp)); break;
+	    case CP_SQUELCH_UPDATE:     return(TO_SCM_BOOLEAN(cp->squelch_update));              break;
+	    case CP_CURSOR_STYLE:       return(TO_SCM_INT(cp->cursor_style));                 break;
 	    case CP_EDIT_HOOK:          return(cp->edit_hook);                    break;
 	    case CP_UNDO_HOOK:          return(cp->undo_hook);                    break;
-	    case CP_SHOW_Y_ZERO:        RTNBOOL(cp->show_y_zero);                 break;
-	    case CP_SHOW_MARKS:         RTNBOOL(cp->show_marks);                  break;
-	    case CP_WAVO:               RTNBOOL(cp->wavo);                        break;
-	    case CP_WAVO_HOP:           RTNINT(cp->wavo_hop);                     break;
-	    case CP_WAVO_TRACE:         RTNINT(cp->wavo_trace);                   break;
-	    case CP_LINE_SIZE:          RTNINT(cp->line_size);                    break;
-	    case CP_MAX_FFT_PEAKS:      RTNINT(cp->max_fft_peaks);                break;
-	    case CP_ZERO_PAD:           RTNINT(cp->zero_pad);                     break;
-	    case CP_WAVELET_TYPE:       RTNINT(cp->wavelet_type);                 break;
-	    case CP_SHOW_FFT_PEAKS:     RTNBOOL(cp->show_fft_peaks);              break;
-	    case CP_VERBOSE_CURSOR:     RTNBOOL(cp->verbose_cursor);              break;
-	    case CP_FFT_LOG_FREQUENCY:  RTNBOOL(cp->fft_log_frequency);           break;
-	    case CP_FFT_LOG_MAGNITUDE:  RTNBOOL(cp->fft_log_magnitude);           break;
-	    case CP_SPECTRO_HOP:        RTNINT(cp->spectro_hop);                  break;
-	    case CP_FFT_SIZE:           RTNINT(cp->fft_size);                     break;
-	    case CP_FFT_STYLE:          RTNINT(cp->fft_style);                    break;
-	    case CP_FFT_WINDOW:         RTNINT(cp->fft_window);                   break;
-	    case CP_TRANSFORM_TYPE:     RTNINT(cp->transform_type);               break;
-	    case CP_NORMALIZE_FFT:      RTNINT(cp->normalize_fft);                break;
-	    case CP_SHOW_MIX_WAVEFORMS: RTNBOOL(cp->show_mix_waveforms);          break;
-	    case CP_GRAPH_STYLE:        RTNINT(cp->graph_style);                  break;
-	    case CP_DOT_SIZE:           RTNINT(cp->dot_size);                     break;
-	    case CP_SHOW_AXES:          RTNINT(cp->show_axes);                    break;
-	    case CP_GRAPHS_HORIZONTAL:  RTNBOOL(cp->graphs_horizontal);           break;
-	    case CP_SYNC:               RTNINT(cp->sync);                         break;
+	    case CP_SHOW_Y_ZERO:        return(TO_SCM_BOOLEAN(cp->show_y_zero));                 break;
+	    case CP_SHOW_MARKS:         return(TO_SCM_BOOLEAN(cp->show_marks));                  break;
+	    case CP_WAVO:               return(TO_SCM_BOOLEAN(cp->wavo));                        break;
+	    case CP_WAVO_HOP:           return(TO_SCM_INT(cp->wavo_hop));                     break;
+	    case CP_WAVO_TRACE:         return(TO_SCM_INT(cp->wavo_trace));                   break;
+	    case CP_LINE_SIZE:          return(TO_SCM_INT(cp->line_size));                    break;
+	    case CP_MAX_FFT_PEAKS:      return(TO_SCM_INT(cp->max_fft_peaks));                break;
+	    case CP_ZERO_PAD:           return(TO_SCM_INT(cp->zero_pad));                     break;
+	    case CP_WAVELET_TYPE:       return(TO_SCM_INT(cp->wavelet_type));                 break;
+	    case CP_SHOW_FFT_PEAKS:     return(TO_SCM_BOOLEAN(cp->show_fft_peaks));              break;
+	    case CP_VERBOSE_CURSOR:     return(TO_SCM_BOOLEAN(cp->verbose_cursor));              break;
+	    case CP_FFT_LOG_FREQUENCY:  return(TO_SCM_BOOLEAN(cp->fft_log_frequency));           break;
+	    case CP_FFT_LOG_MAGNITUDE:  return(TO_SCM_BOOLEAN(cp->fft_log_magnitude));           break;
+	    case CP_SPECTRO_HOP:        return(TO_SCM_INT(cp->spectro_hop));                  break;
+	    case CP_FFT_SIZE:           return(TO_SCM_INT(cp->fft_size));                     break;
+	    case CP_FFT_STYLE:          return(TO_SCM_INT(cp->fft_style));                    break;
+	    case CP_FFT_WINDOW:         return(TO_SCM_INT(cp->fft_window));                   break;
+	    case CP_TRANSFORM_TYPE:     return(TO_SCM_INT(cp->transform_type));               break;
+	    case CP_NORMALIZE_FFT:      return(TO_SCM_INT(cp->normalize_fft));                break;
+	    case CP_SHOW_MIX_WAVEFORMS: return(TO_SCM_BOOLEAN(cp->show_mix_waveforms));          break;
+	    case CP_GRAPH_STYLE:        return(TO_SCM_INT(cp->graph_style));                  break;
+	    case CP_DOT_SIZE:           return(TO_SCM_INT(cp->dot_size));                     break;
+	    case CP_SHOW_AXES:          return(TO_SCM_INT(cp->show_axes));                    break;
+	    case CP_GRAPHS_HORIZONTAL:  return(TO_SCM_BOOLEAN(cp->graphs_horizontal));           break;
+	    case CP_SYNC:               return(TO_SCM_INT(cp->sync));                         break;
 	    }
 	}
     }
@@ -8031,7 +8024,7 @@ static int g_scm2boolintdef(SCM obj, int fallback)
     return(SCM_INUM(obj));
   else
     if (gh_number_p(obj))
-      return((int)scm_num2dbl(obj,"g_scm2intdef"));
+      return((int)scm_num2dbl(obj,"TO_C_INT_OR_ELSE"));
     else
       if (SCM_FALSEP(obj))
 	return(0);
@@ -8043,13 +8036,13 @@ static int g_scm2boolintdef(SCM obj, int fallback)
 
 static int g_iclamp(int mn, SCM val, int def, int mx)
 {
-  return(iclamp(mn,g_scm2intdef(val,def),mx));
+  return(iclamp(mn,TO_C_INT_OR_ELSE(val,def),mx));
 }
 
 static int g_imin(int mn, SCM val, int def)
 {
   int nval;
-  nval = g_scm2intdef(val,def);
+  nval = TO_C_INT_OR_ELSE(val,def);
   if (nval >= mn) return(nval);
   return(mn);
 }
@@ -8069,65 +8062,65 @@ static SCM cp_iwrite(SCM snd_n, SCM chn_n, SCM on, int fld, char *caller)
 	{
 	  sp = ss->sounds[i];
 	  if ((sp) && (sp->inuse))
-	    res = gh_cons(cp_iwrite(gh_int2scm(i),chn_n,on,fld,caller),res);
+	    res = gh_cons(cp_iwrite(TO_SMALL_SCM_INT(i),chn_n,on,fld,caller),res);
 	}
       return(scm_reverse(res));
     }
   if (SCM_EQ_P(chn_n,SCM_BOOL_T))
     {
       sp = get_sp(snd_n);
-      if (sp == NULL) return(scm_throw(NO_SUCH_SOUND,SCM_LIST2(gh_str02scm(caller),snd_n)));
+      if (sp == NULL) return(scm_throw(NO_SUCH_SOUND,SCM_LIST2(TO_SCM_STRING(caller),snd_n)));
       for (i=0;i<sp->nchans;i++)
-	res = gh_cons(cp_iwrite(snd_n,gh_int2scm(i),on,fld,caller),res);
+	res = gh_cons(cp_iwrite(snd_n,TO_SMALL_SCM_INT(i),on,fld,caller),res);
       return(scm_reverse(res));
     }
   cp = get_cp(snd_n,chn_n,caller);
   switch (fld)
     {
     case CP_EDIT_CTR:
-      val = g_scm2intdef(on,0);
+      val = TO_C_INT_OR_ELSE(on,0);
       if (cp->edit_ctr < val)
 	redo_edit(cp,val - cp->edit_ctr);
       else undo_edit(cp,cp->edit_ctr - val);
-      RTNINT(cp->edit_ctr);
+      return(TO_SCM_INT(cp->edit_ctr));
       break;
     case CP_FFTING:             fftb(cp,val = bool_int_or_one(on)); update_graph(cp,NULL);                                                               break;
     case CP_WAVING:             waveb(cp,val = bool_int_or_one(on)); update_graph(cp,NULL);                                                              break;
-    case CP_CURSOR:             cp->cursor_on = 1; handle_cursor(cp,cursor_moveto(cp,val = g_scm2intdef(on,1)));                                         break;
+    case CP_CURSOR:             cp->cursor_on = 1; handle_cursor(cp,cursor_moveto(cp,val = TO_C_INT_OR_ELSE(on,1)));                                         break;
     case CP_LISP_GRAPHING:      cp->lisp_graphing = bool_int_or_one(on); val = cp->lisp_graphing; update_graph(cp,NULL);                                 break;
-    case CP_AP_LOSAMP:          set_x_axis_x0(cp,val = g_scm2intdef(on,0)); return(on);                                                                  break;
-    case CP_AP_HISAMP:          set_x_axis_x1(cp,val = g_scm2intdef(on,1)); return(on);                                                                  break;
+    case CP_AP_LOSAMP:          set_x_axis_x0(cp,val = TO_C_INT_OR_ELSE(on,0)); return(on);                                                                  break;
+    case CP_AP_HISAMP:          set_x_axis_x1(cp,val = TO_C_INT_OR_ELSE(on,1)); return(on);                                                                  break;
     case CP_SQUELCH_UPDATE:     cp->squelch_update = bool_int_or_one(on);                                                                                break;
-    case CP_CURSOR_STYLE:       cp->cursor_style = g_iclamp(0,on,0,MAX_CURSOR_STYLE); update_graph(cp,NULL); RTNINT(cp->cursor_style);                   break;
-    case CP_SHOW_Y_ZERO:        cp->show_y_zero = bool_int_or_one(on); update_graph(cp,NULL); RTNBOOL(cp->show_y_zero);                                  break;
-    case CP_SHOW_MARKS:         cp->show_marks = bool_int_or_one(on); update_graph(cp,NULL); RTNBOOL(cp->show_marks);                                    break;
-    case CP_WAVO:               cp->wavo = bool_int_or_one(on); update_graph(cp,NULL); RTNBOOL(cp->wavo);                                                break;
-    case CP_WAVO_HOP:           cp->wavo_hop = g_imin(1,on,DEFAULT_WAVO_HOP); update_graph(cp,NULL); RTNINT(cp->wavo_hop);                               break;
-    case CP_WAVO_TRACE:         cp->wavo_trace = g_imin(1,on,DEFAULT_WAVO_TRACE); update_graph(cp,NULL); RTNINT(cp->wavo_trace);                         break;
-    case CP_LINE_SIZE:          cp->line_size = g_scm2intdef(on,DEFAULT_LINE_SIZE); RTNINT(cp->line_size);                                               break;
-    case CP_MAX_FFT_PEAKS:      cp->max_fft_peaks = g_imin(0,on,DEFAULT_MAX_FFT_PEAKS); RTNINT(cp->max_fft_peaks);                                       break;
-    case CP_ZERO_PAD:           cp->zero_pad = g_imin(0,on,DEFAULT_ZERO_PAD); update_graph(cp,NULL); RTNINT(cp->zero_pad);                               break;
-    case CP_WAVELET_TYPE:       cp->wavelet_type = g_iclamp(0,on,DEFAULT_WAVELET_TYPE,NUM_WAVELETS-1); update_graph(cp,NULL); RTNINT(cp->wavelet_type);  break;
-    case CP_SHOW_FFT_PEAKS:     cp->show_fft_peaks = bool_int_or_one(on); update_graph(cp,NULL); RTNBOOL(cp->show_fft_peaks);                            break;
-    case CP_VERBOSE_CURSOR:     cp->verbose_cursor = bool_int_or_one(on); RTNBOOL(cp->verbose_cursor);                                                   break;
-    case CP_FFT_LOG_FREQUENCY:  cp->fft_log_frequency = bool_int_or_one(on); if (cp->ffting) calculate_fft(cp,NULL); RTNBOOL(cp->fft_log_frequency);     break;
-    case CP_FFT_LOG_MAGNITUDE:  cp->fft_log_magnitude = bool_int_or_one(on); if (cp->ffting) calculate_fft(cp,NULL); RTNBOOL(cp->fft_log_magnitude);     break;
-    case CP_SPECTRO_HOP:        cp->spectro_hop = g_imin(1,on,DEFAULT_SPECTRO_HOP); if (cp->ffting) calculate_fft(cp,NULL); RTNINT(cp->spectro_hop);     break;
-    case CP_FFT_SIZE:           cp->fft_size = g_imin(1,on,DEFAULT_FFT_SIZE); calculate_fft(cp,NULL); RTNINT(cp->fft_size);                              break;
-    case CP_FFT_STYLE:          cp->fft_style = g_iclamp(0,on,DEFAULT_FFT_STYLE,MAX_FFT_STYLE); calculate_fft(cp,NULL); RTNINT(cp->fft_style);           break;
-    case CP_FFT_WINDOW:         cp->fft_window = g_iclamp(0,on,DEFAULT_FFT_WINDOW,NUM_FFT_WINDOWS-1); calculate_fft(cp,NULL); RTNINT(cp->fft_window);    break;
-    case CP_TRANSFORM_TYPE:     cp->transform_type = g_imin(0,on,DEFAULT_TRANSFORM_TYPE); calculate_fft(cp,NULL); RTNINT(cp->transform_type);            break;
-    case CP_NORMALIZE_FFT:      cp->normalize_fft = g_scm2boolintdef(on,DEFAULT_NORMALIZE_FFT); calculate_fft(cp,NULL); RTNINT(cp->normalize_fft);       break;
-    case CP_SHOW_MIX_WAVEFORMS: cp->show_mix_waveforms = bool_int_or_one(on); update_graph(cp,NULL); RTNBOOL(cp->show_mix_waveforms);                    break;
-    case CP_GRAPH_STYLE:        cp->graph_style = g_scm2intdef(on,DEFAULT_GRAPH_STYLE); update_graph(cp,NULL); RTNINT(cp->graph_style);                  break;
-    case CP_DOT_SIZE:           cp->dot_size = g_imin(0,on,DEFAULT_DOT_SIZE); update_graph(cp,NULL); RTNINT(cp->dot_size);                               break;
-    case CP_SHOW_AXES:          cp->show_axes = g_scm2intdef(on,DEFAULT_SHOW_AXES); update_graph(cp,NULL); RTNINT(cp->show_axes);                        break;
-    case CP_GRAPHS_HORIZONTAL:  cp->graphs_horizontal = bool_int_or_one(on); update_graph(cp,NULL); RTNBOOL(cp->graphs_horizontal);                      break;
-    case CP_SYNC:               cp->sync = g_scm2intdef(on,0); RTNINT(cp->sync);                                                                         break;
+    case CP_CURSOR_STYLE:       cp->cursor_style = g_iclamp(0,on,0,MAX_CURSOR_STYLE); update_graph(cp,NULL); return(TO_SCM_INT(cp->cursor_style));                   break;
+    case CP_SHOW_Y_ZERO:        cp->show_y_zero = bool_int_or_one(on); update_graph(cp,NULL); return(TO_SCM_BOOLEAN(cp->show_y_zero));                                  break;
+    case CP_SHOW_MARKS:         cp->show_marks = bool_int_or_one(on); update_graph(cp,NULL); return(TO_SCM_BOOLEAN(cp->show_marks));                                    break;
+    case CP_WAVO:               cp->wavo = bool_int_or_one(on); update_graph(cp,NULL); return(TO_SCM_BOOLEAN(cp->wavo));                                                break;
+    case CP_WAVO_HOP:           cp->wavo_hop = g_imin(1,on,DEFAULT_WAVO_HOP); update_graph(cp,NULL); return(TO_SCM_INT(cp->wavo_hop));                               break;
+    case CP_WAVO_TRACE:         cp->wavo_trace = g_imin(1,on,DEFAULT_WAVO_TRACE); update_graph(cp,NULL); return(TO_SCM_INT(cp->wavo_trace));                         break;
+    case CP_LINE_SIZE:          cp->line_size = TO_C_INT_OR_ELSE(on,DEFAULT_LINE_SIZE); return(TO_SCM_INT(cp->line_size));                                               break;
+    case CP_MAX_FFT_PEAKS:      cp->max_fft_peaks = g_imin(0,on,DEFAULT_MAX_FFT_PEAKS); return(TO_SCM_INT(cp->max_fft_peaks));                                       break;
+    case CP_ZERO_PAD:           cp->zero_pad = g_imin(0,on,DEFAULT_ZERO_PAD); update_graph(cp,NULL); return(TO_SCM_INT(cp->zero_pad));                               break;
+    case CP_WAVELET_TYPE:       cp->wavelet_type = g_iclamp(0,on,DEFAULT_WAVELET_TYPE,NUM_WAVELETS-1); update_graph(cp,NULL); return(TO_SCM_INT(cp->wavelet_type));  break;
+    case CP_SHOW_FFT_PEAKS:     cp->show_fft_peaks = bool_int_or_one(on); update_graph(cp,NULL); return(TO_SCM_BOOLEAN(cp->show_fft_peaks));                            break;
+    case CP_VERBOSE_CURSOR:     cp->verbose_cursor = bool_int_or_one(on); return(TO_SCM_BOOLEAN(cp->verbose_cursor));                                                   break;
+    case CP_FFT_LOG_FREQUENCY:  cp->fft_log_frequency = bool_int_or_one(on); if (cp->ffting) calculate_fft(cp,NULL); return(TO_SCM_BOOLEAN(cp->fft_log_frequency));     break;
+    case CP_FFT_LOG_MAGNITUDE:  cp->fft_log_magnitude = bool_int_or_one(on); if (cp->ffting) calculate_fft(cp,NULL); return(TO_SCM_BOOLEAN(cp->fft_log_magnitude));     break;
+    case CP_SPECTRO_HOP:        cp->spectro_hop = g_imin(1,on,DEFAULT_SPECTRO_HOP); if (cp->ffting) calculate_fft(cp,NULL); return(TO_SCM_INT(cp->spectro_hop));     break;
+    case CP_FFT_SIZE:           cp->fft_size = g_imin(1,on,DEFAULT_FFT_SIZE); calculate_fft(cp,NULL); return(TO_SCM_INT(cp->fft_size));                              break;
+    case CP_FFT_STYLE:          cp->fft_style = g_iclamp(0,on,DEFAULT_FFT_STYLE,MAX_FFT_STYLE); calculate_fft(cp,NULL); return(TO_SCM_INT(cp->fft_style));           break;
+    case CP_FFT_WINDOW:         cp->fft_window = g_iclamp(0,on,DEFAULT_FFT_WINDOW,NUM_FFT_WINDOWS-1); calculate_fft(cp,NULL); return(TO_SCM_INT(cp->fft_window));    break;
+    case CP_TRANSFORM_TYPE:     cp->transform_type = g_imin(0,on,DEFAULT_TRANSFORM_TYPE); calculate_fft(cp,NULL); return(TO_SCM_INT(cp->transform_type));            break;
+    case CP_NORMALIZE_FFT:      cp->normalize_fft = g_scm2boolintdef(on,DEFAULT_NORMALIZE_FFT); calculate_fft(cp,NULL); return(TO_SCM_INT(cp->normalize_fft));       break;
+    case CP_SHOW_MIX_WAVEFORMS: cp->show_mix_waveforms = bool_int_or_one(on); update_graph(cp,NULL); return(TO_SCM_BOOLEAN(cp->show_mix_waveforms));                    break;
+    case CP_GRAPH_STYLE:        cp->graph_style = TO_C_INT_OR_ELSE(on,DEFAULT_GRAPH_STYLE); update_graph(cp,NULL); return(TO_SCM_INT(cp->graph_style));                  break;
+    case CP_DOT_SIZE:           cp->dot_size = g_imin(0,on,DEFAULT_DOT_SIZE); update_graph(cp,NULL); return(TO_SCM_INT(cp->dot_size));                               break;
+    case CP_SHOW_AXES:          cp->show_axes = TO_C_INT_OR_ELSE(on,DEFAULT_SHOW_AXES); update_graph(cp,NULL); return(TO_SCM_INT(cp->show_axes));                        break;
+    case CP_GRAPHS_HORIZONTAL:  cp->graphs_horizontal = bool_int_or_one(on); update_graph(cp,NULL); return(TO_SCM_BOOLEAN(cp->graphs_horizontal));                      break;
+    case CP_SYNC:               cp->sync = TO_C_INT_OR_ELSE(on,0); return(TO_SCM_INT(cp->sync));                                                                         break;
     case CP_FRAMES:
       /* if less than current, delete, else zero pad */
       curlen = current_ed_samples(cp);
-      newlen = g_scm2intdef(on,curlen);
+      newlen = TO_C_INT_OR_ELSE(on,curlen);
       if (curlen > newlen)
 	delete_samples(newlen-1,curlen-newlen,cp,"(set-frames)");
       else
@@ -8138,7 +8131,7 @@ static SCM cp_iwrite(SCM snd_n, SCM chn_n, SCM on, int fld, char *caller)
       update_graph(cp,NULL);
       break;
     }
-  RTNBOOL(val);
+  return(TO_SCM_BOOLEAN(val));
 }
 
 enum {CP_MIN_DB,CP_SPECTRO_X_ANGLE,CP_SPECTRO_Y_ANGLE,CP_SPECTRO_Z_ANGLE,CP_SPECTRO_X_SCALE,CP_SPECTRO_Y_SCALE,CP_SPECTRO_Z_SCALE,
@@ -8172,36 +8165,36 @@ static SCM cp_fread(SCM snd_n, SCM chn_n, int fld, char *caller)
 	{
 	  sp = ss->sounds[i];
 	  if ((sp) && (sp->inuse))
-	    res = gh_cons(cp_fread(gh_int2scm(i),chn_n,fld,caller),res);
+	    res = gh_cons(cp_fread(TO_SMALL_SCM_INT(i),chn_n,fld,caller),res);
 	}
       return(scm_reverse(res));
     }
   if (SCM_EQ_P(chn_n,SCM_BOOL_T))
     {
       sp = get_sp(snd_n);
-      if (sp == NULL) return(scm_throw(NO_SUCH_SOUND,SCM_LIST2(gh_str02scm(caller),snd_n)));
+      if (sp == NULL) return(scm_throw(NO_SUCH_SOUND,SCM_LIST2(TO_SCM_STRING(caller),snd_n)));
       for (i=0;i<sp->nchans;i++)
-	res = gh_cons(cp_fread(snd_n,gh_int2scm(i),fld,caller),res);
+	res = gh_cons(cp_fread(snd_n,TO_SMALL_SCM_INT(i),fld,caller),res);
       return(scm_reverse(res));
     }
   cp = get_cp(snd_n,chn_n,caller);
   switch(fld)
     {
-    case CP_AP_SX:           if (cp->axis) RTNFLT((cp->axis)->sx);     break;
-    case CP_AP_SY:           if (cp->axis) RTNFLT((cp->axis)->sy);     break;
-    case CP_AP_ZX:           if (cp->axis) RTNFLT((cp->axis)->zx);     break;
-    case CP_AP_ZY:           if (cp->axis) RTNFLT((cp->axis)->zy);     break;
-    case CP_MIN_DB:          RTNFLT(cp->min_dB);                       break;
-    case CP_SPECTRO_X_ANGLE: RTNFLT(cp->spectro_x_angle);              break;
-    case CP_SPECTRO_Y_ANGLE: RTNFLT(cp->spectro_y_angle);              break;
-    case CP_SPECTRO_Z_ANGLE: RTNFLT(cp->spectro_z_angle);              break;
-    case CP_SPECTRO_X_SCALE: RTNFLT(cp->spectro_x_scale);              break;
-    case CP_SPECTRO_Y_SCALE: RTNFLT(cp->spectro_y_scale);              break;
-    case CP_SPECTRO_Z_SCALE: RTNFLT(cp->spectro_z_scale);              break;
-    case CP_SPECTRO_CUTOFF:  RTNFLT(cp->spectro_cutoff);               break;
-    case CP_SPECTRO_START:   RTNFLT(cp->spectro_start);                break;
-    case CP_FFT_BETA:        RTNFLT(cp->fft_beta);                     break;
-    case CP_MAXAMP:          RTNFLT(get_maxamp(cp->sound,cp));         break;
+    case CP_AP_SX:           if (cp->axis) return(TO_SCM_DOUBLE((cp->axis)->sx));     break;
+    case CP_AP_SY:           if (cp->axis) return(TO_SCM_DOUBLE((cp->axis)->sy));     break;
+    case CP_AP_ZX:           if (cp->axis) return(TO_SCM_DOUBLE((cp->axis)->zx));     break;
+    case CP_AP_ZY:           if (cp->axis) return(TO_SCM_DOUBLE((cp->axis)->zy));     break;
+    case CP_MIN_DB:          return(TO_SCM_DOUBLE(cp->min_dB));                       break;
+    case CP_SPECTRO_X_ANGLE: return(TO_SCM_DOUBLE(cp->spectro_x_angle));              break;
+    case CP_SPECTRO_Y_ANGLE: return(TO_SCM_DOUBLE(cp->spectro_y_angle));              break;
+    case CP_SPECTRO_Z_ANGLE: return(TO_SCM_DOUBLE(cp->spectro_z_angle));              break;
+    case CP_SPECTRO_X_SCALE: return(TO_SCM_DOUBLE(cp->spectro_x_scale));              break;
+    case CP_SPECTRO_Y_SCALE: return(TO_SCM_DOUBLE(cp->spectro_y_scale));              break;
+    case CP_SPECTRO_Z_SCALE: return(TO_SCM_DOUBLE(cp->spectro_z_scale));              break;
+    case CP_SPECTRO_CUTOFF:  return(TO_SCM_DOUBLE(cp->spectro_cutoff));               break;
+    case CP_SPECTRO_START:   return(TO_SCM_DOUBLE(cp->spectro_start));                break;
+    case CP_FFT_BETA:        return(TO_SCM_DOUBLE(cp->fft_beta));                     break;
+    case CP_MAXAMP:          return(TO_SCM_DOUBLE(get_maxamp(cp->sound,cp)));         break;
     }
   return(SCM_BOOL_F);
 }
@@ -8222,16 +8215,16 @@ static SCM cp_fwrite(SCM snd_n, SCM chn_n, SCM on, int fld, char *caller)
 	{
 	  sp = ss->sounds[i];
 	  if ((sp) && (sp->inuse))
-	    res = gh_cons(cp_fwrite(gh_int2scm(i),chn_n,on,fld,caller),res);
+	    res = gh_cons(cp_fwrite(TO_SMALL_SCM_INT(i),chn_n,on,fld,caller),res);
 	}
       return(scm_reverse(res));
     }
   if (SCM_EQ_P(chn_n,SCM_BOOL_T))
     {
       sp = get_sp(snd_n);
-      if (sp == NULL) return(scm_throw(NO_SUCH_SOUND,SCM_LIST2(gh_str02scm(caller),snd_n)));
+      if (sp == NULL) return(scm_throw(NO_SUCH_SOUND,SCM_LIST2(TO_SCM_STRING(caller),snd_n)));
       for (i=0;i<sp->nchans;i++)
-	res = gh_cons(cp_fwrite(snd_n,gh_int2scm(i),on,fld,caller),res);
+	res = gh_cons(cp_fwrite(snd_n,TO_SMALL_SCM_INT(i),on,fld,caller),res);
       return(scm_reverse(res));
     }
   cp = get_cp(snd_n,chn_n,caller);
@@ -8248,9 +8241,9 @@ static SCM cp_fwrite(SCM snd_n, SCM chn_n, SCM on, int fld, char *caller)
     case CP_SPECTRO_X_SCALE: cp->spectro_x_scale = TO_C_DOUBLE(on); calculate_fft(cp,NULL);                                  break;
     case CP_SPECTRO_Y_SCALE: cp->spectro_y_scale = TO_C_DOUBLE(on); calculate_fft(cp,NULL);                                  break;
     case CP_SPECTRO_Z_SCALE: cp->spectro_z_scale = TO_C_DOUBLE(on); calculate_fft(cp,NULL);                                  break;
-    case CP_SPECTRO_CUTOFF:  cp->spectro_cutoff = fclamp(0.0,TO_C_DOUBLE(on),1.0); calculate_fft(cp,NULL); return(gh_double2scm(cp->spectro_cutoff)); break;
-    case CP_SPECTRO_START:   cp->spectro_start = fclamp(0.0,TO_C_DOUBLE(on),1.0); calculate_fft(cp,NULL); return(gh_double2scm(cp->spectro_start));   break;
-    case CP_FFT_BETA:        cp->fft_beta = fclamp(0.0,TO_C_DOUBLE(on),1.0); calculate_fft(cp,NULL); return(gh_double2scm(cp->fft_beta));             break;
+    case CP_SPECTRO_CUTOFF:  cp->spectro_cutoff = fclamp(0.0,TO_C_DOUBLE(on),1.0); calculate_fft(cp,NULL); return(TO_SCM_DOUBLE(cp->spectro_cutoff)); break;
+    case CP_SPECTRO_START:   cp->spectro_start = fclamp(0.0,TO_C_DOUBLE(on),1.0); calculate_fft(cp,NULL); return(TO_SCM_DOUBLE(cp->spectro_start));   break;
+    case CP_FFT_BETA:        cp->fft_beta = fclamp(0.0,TO_C_DOUBLE(on),1.0); calculate_fft(cp,NULL); return(TO_SCM_DOUBLE(cp->fft_beta));             break;
     case CP_MAXAMP:
       curamp = get_maxamp(cp->sound,cp);
       newamp[0] = TO_C_DOUBLE(on);
@@ -8503,7 +8496,7 @@ static SCM g_show_y_zero(SCM snd, SCM chn)
   if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
     return(cp_iread(snd,chn,CP_SHOW_Y_ZERO,S_show_y_zero));
   SCM_ASSERT((SCM_EQ_P(snd,SCM_UNDEFINED)),snd,SCM_ARG1,S_show_y_zero);
-  RTNBOOL(show_y_zero(get_global_state()));
+  return(TO_SCM_BOOLEAN(show_y_zero(get_global_state())));
 }
 
 static SCM g_set_show_y_zero(SCM on, SCM snd, SCM chn) 
@@ -8517,7 +8510,7 @@ static SCM g_set_show_y_zero(SCM on, SCM snd, SCM chn)
       SCM_ASSERT((SCM_EQ_P(snd,SCM_UNDEFINED)),snd,SCM_ARG2,"set-" S_show_y_zero);
       ss = get_global_state();
       set_show_y_zero(ss,bool_int_or_one(on));
-      RTNBOOL(show_y_zero(ss));
+      return(TO_SCM_BOOLEAN(show_y_zero(ss)));
     }
 }
 
@@ -8531,7 +8524,7 @@ static SCM g_min_dB(SCM snd, SCM chn)
     return(cp_fread(snd,chn,CP_MIN_DB,S_min_dB));
   SCM_ASSERT((SCM_EQ_P(snd,SCM_UNDEFINED)),snd,SCM_ARG1,S_min_dB);
   ss = get_global_state();
-  RTNFLT(ss->min_dB);
+  return(TO_SCM_DOUBLE(ss->min_dB));
 }
 
 static SCM g_set_min_dB(SCM val, SCM snd, SCM chn) 
@@ -8549,7 +8542,7 @@ static SCM g_set_min_dB(SCM val, SCM snd, SCM chn)
       ss->min_dB = db;
       ss->lin_dB = pow(10.0,db*0.05);
       cp_fwrite(SCM_BOOL_T,SCM_BOOL_T,val,CP_MIN_DB,"set-" S_min_dB);
-      RTNFLT(ss->min_dB);
+      return(TO_SCM_DOUBLE(ss->min_dB));
     }
 }
 
@@ -8561,7 +8554,7 @@ static SCM g_fft_beta(SCM snd, SCM chn)
   if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
     return(cp_fread(snd,chn,CP_FFT_BETA,S_fft_beta));
   SCM_ASSERT((SCM_EQ_P(snd,SCM_UNDEFINED)),snd,SCM_ARG1,S_fft_beta);
-  RTNFLT(fft_beta(get_global_state()));
+  return(TO_SCM_DOUBLE(fft_beta(get_global_state())));
 }
 
 static SCM g_set_fft_beta(SCM val, SCM snd, SCM chn) 
@@ -8575,7 +8568,7 @@ static SCM g_set_fft_beta(SCM val, SCM snd, SCM chn)
       SCM_ASSERT((SCM_EQ_P(snd,SCM_UNDEFINED)),snd,SCM_ARG2,"set-" S_fft_beta);
       ss = get_global_state();
       set_fft_beta(ss,fclamp(0.0,TO_C_DOUBLE(val),1.0));
-      RTNFLT(fft_beta(ss));
+      return(TO_SCM_DOUBLE(fft_beta(ss)));
     }
 }
 
@@ -8587,7 +8580,7 @@ static SCM g_spectro_cutoff(SCM snd, SCM chn)
   if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
     return(cp_fread(snd,chn,CP_SPECTRO_CUTOFF,S_spectro_cutoff));
   SCM_ASSERT((SCM_EQ_P(snd,SCM_UNDEFINED)),snd,SCM_ARG1,S_spectro_cutoff);
-  RTNFLT(spectro_cutoff(get_global_state()));
+  return(TO_SCM_DOUBLE(spectro_cutoff(get_global_state())));
 }
 
 static SCM g_set_spectro_cutoff(SCM val, SCM snd, SCM chn) 
@@ -8601,7 +8594,7 @@ static SCM g_set_spectro_cutoff(SCM val, SCM snd, SCM chn)
       SCM_ASSERT((SCM_EQ_P(snd,SCM_UNDEFINED)),snd,SCM_ARG2,"set-" S_spectro_cutoff);
       ss = get_global_state();
       set_spectro_cutoff(ss,fclamp(0.0,TO_C_DOUBLE(val),1.0));
-      RTNFLT(spectro_cutoff(ss));
+      return(TO_SCM_DOUBLE(spectro_cutoff(ss)));
     }
 }
 
@@ -8613,7 +8606,7 @@ static SCM g_spectro_start(SCM snd, SCM chn)
   if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
     return(cp_fread(snd,chn,CP_SPECTRO_START,S_spectro_start));
   SCM_ASSERT((SCM_EQ_P(snd,SCM_UNDEFINED)),snd,SCM_ARG1,S_spectro_start);
-  RTNFLT(spectro_start(get_global_state()));
+  return(TO_SCM_DOUBLE(spectro_start(get_global_state())));
 }
 
 static SCM g_set_spectro_start(SCM val, SCM snd, SCM chn) 
@@ -8627,7 +8620,7 @@ static SCM g_set_spectro_start(SCM val, SCM snd, SCM chn)
       SCM_ASSERT((SCM_EQ_P(snd,SCM_UNDEFINED)),snd,SCM_ARG2,"set-" S_spectro_start);
       ss = get_global_state();
       set_spectro_start(ss,fclamp(0.0,TO_C_DOUBLE(val),1.0));
-      RTNFLT(spectro_start(ss));
+      return(TO_SCM_DOUBLE(spectro_start(ss)));
     }
 }
 
@@ -8639,7 +8632,7 @@ static SCM g_spectro_x_angle(SCM snd, SCM chn)
   if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
     return(cp_fread(snd,chn,CP_SPECTRO_X_ANGLE,S_spectro_x_angle));
   SCM_ASSERT((SCM_EQ_P(snd,SCM_UNDEFINED)),snd,SCM_ARG1,S_spectro_x_angle);
-  RTNFLT(spectro_x_angle(get_global_state()));
+  return(TO_SCM_DOUBLE(spectro_x_angle(get_global_state())));
 }
 
 static SCM g_set_spectro_x_angle(SCM val, SCM snd, SCM chn) 
@@ -8653,7 +8646,7 @@ static SCM g_set_spectro_x_angle(SCM val, SCM snd, SCM chn)
       SCM_ASSERT((SCM_EQ_P(snd,SCM_UNDEFINED)),snd,SCM_ARG2,"set-" S_spectro_x_angle);
       ss = get_global_state();
       set_spectro_x_angle(ss,TO_C_DOUBLE(val));
-      RTNFLT(spectro_x_angle(ss));
+      return(TO_SCM_DOUBLE(spectro_x_angle(ss)));
     }
 }
 
@@ -8665,7 +8658,7 @@ static SCM g_spectro_x_scale(SCM snd, SCM chn)
   if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
     return(cp_fread(snd,chn,CP_SPECTRO_X_SCALE,S_spectro_x_scale));
   SCM_ASSERT((SCM_EQ_P(snd,SCM_UNDEFINED)),snd,SCM_ARG1,S_spectro_x_scale);
-  RTNFLT(spectro_x_scale(get_global_state()));
+  return(TO_SCM_DOUBLE(spectro_x_scale(get_global_state())));
 }
 
 static SCM g_set_spectro_x_scale(SCM val, SCM snd, SCM chn) 
@@ -8679,7 +8672,7 @@ static SCM g_set_spectro_x_scale(SCM val, SCM snd, SCM chn)
       SCM_ASSERT((SCM_EQ_P(snd,SCM_UNDEFINED)),snd,SCM_ARG2,"set-" S_spectro_x_scale);
       ss = get_global_state();
       set_spectro_x_scale(ss,TO_C_DOUBLE(val));
-      RTNFLT(spectro_x_scale(ss));
+      return(TO_SCM_DOUBLE(spectro_x_scale(ss)));
     }
 }
 
@@ -8691,7 +8684,7 @@ static SCM g_spectro_y_angle(SCM snd, SCM chn)
   if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
     return(cp_fread(snd,chn,CP_SPECTRO_Y_ANGLE,S_spectro_y_angle));
   SCM_ASSERT((SCM_EQ_P(snd,SCM_UNDEFINED)),snd,SCM_ARG1,S_spectro_y_angle);
-  RTNFLT(spectro_y_angle(get_global_state()));
+  return(TO_SCM_DOUBLE(spectro_y_angle(get_global_state())));
 }
 
 static SCM g_set_spectro_y_angle(SCM val, SCM snd, SCM chn) 
@@ -8705,7 +8698,7 @@ static SCM g_set_spectro_y_angle(SCM val, SCM snd, SCM chn)
       SCM_ASSERT((SCM_EQ_P(snd,SCM_UNDEFINED)),snd,SCM_ARG2,"set-" S_spectro_y_angle);
       ss = get_global_state();
       set_spectro_y_angle(ss,TO_C_DOUBLE(val));
-      RTNFLT(spectro_y_angle(ss));
+      return(TO_SCM_DOUBLE(spectro_y_angle(ss)));
     }
 }
 
@@ -8717,7 +8710,7 @@ static SCM g_spectro_y_scale(SCM snd, SCM chn)
   if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
     return(cp_fread(snd,chn,CP_SPECTRO_Y_SCALE,S_spectro_y_scale));
   SCM_ASSERT((SCM_EQ_P(snd,SCM_UNDEFINED)),snd,SCM_ARG1,S_spectro_y_scale);
-  RTNFLT(spectro_y_scale(get_global_state()));
+  return(TO_SCM_DOUBLE(spectro_y_scale(get_global_state())));
 }
 
 static SCM g_set_spectro_y_scale(SCM val, SCM snd, SCM chn) 
@@ -8731,7 +8724,7 @@ static SCM g_set_spectro_y_scale(SCM val, SCM snd, SCM chn)
       SCM_ASSERT((SCM_EQ_P(snd,SCM_UNDEFINED)),snd,SCM_ARG2,"set-" S_spectro_y_scale);
       ss = get_global_state();
       set_spectro_y_scale(ss,TO_C_DOUBLE(val));
-      RTNFLT(spectro_y_scale(ss));
+      return(TO_SCM_DOUBLE(spectro_y_scale(ss)));
     }
 }
 
@@ -8743,7 +8736,7 @@ static SCM g_spectro_z_angle(SCM snd, SCM chn)
   if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
     return(cp_fread(snd,chn,CP_SPECTRO_Z_ANGLE,S_spectro_z_angle));
   SCM_ASSERT((SCM_EQ_P(snd,SCM_UNDEFINED)),snd,SCM_ARG1,S_spectro_z_angle);
-  RTNFLT(spectro_z_angle(get_global_state()));
+  return(TO_SCM_DOUBLE(spectro_z_angle(get_global_state())));
 }
 
 static SCM g_set_spectro_z_angle(SCM val, SCM snd, SCM chn) 
@@ -8757,7 +8750,7 @@ static SCM g_set_spectro_z_angle(SCM val, SCM snd, SCM chn)
       SCM_ASSERT((SCM_EQ_P(snd,SCM_UNDEFINED)),snd,SCM_ARG2,"set-" S_spectro_z_angle);
       ss = get_global_state();
       set_spectro_z_angle(ss,TO_C_DOUBLE(val));
-      RTNFLT(spectro_z_angle(ss));
+      return(TO_SCM_DOUBLE(spectro_z_angle(ss)));
     }
 }
 
@@ -8769,7 +8762,7 @@ static SCM g_spectro_z_scale(SCM snd, SCM chn)
   if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
     return(cp_fread(snd,chn,CP_SPECTRO_Z_SCALE,S_spectro_z_scale));
   SCM_ASSERT((SCM_EQ_P(snd,SCM_UNDEFINED)),snd,SCM_ARG1,S_spectro_z_scale);
-  RTNFLT(spectro_z_scale(get_global_state()));
+  return(TO_SCM_DOUBLE(spectro_z_scale(get_global_state())));
 }
 
 static SCM g_set_spectro_z_scale(SCM val, SCM snd, SCM chn) 
@@ -8783,7 +8776,7 @@ static SCM g_set_spectro_z_scale(SCM val, SCM snd, SCM chn)
       SCM_ASSERT((SCM_EQ_P(snd,SCM_UNDEFINED)),snd,SCM_ARG2,"set-" S_spectro_z_scale);
       ss = get_global_state();
       set_spectro_z_scale(ss,TO_C_DOUBLE(val));
-      RTNFLT(spectro_z_scale(ss));
+      return(TO_SCM_DOUBLE(spectro_z_scale(ss)));
     }
 }
 
@@ -8795,7 +8788,7 @@ static SCM g_spectro_hop(SCM snd, SCM chn)
   if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
     return(cp_iread(snd,chn,CP_SPECTRO_HOP,S_spectro_hop));
   SCM_ASSERT((SCM_EQ_P(snd,SCM_UNDEFINED)),snd,SCM_ARG1,S_spectro_hop);
-  RTNINT(spectro_hop(get_global_state()));
+  return(TO_SCM_INT(spectro_hop(get_global_state())));
 }
 
 static SCM g_set_spectro_hop(SCM val, SCM snd, SCM chn)
@@ -8808,8 +8801,8 @@ static SCM g_set_spectro_hop(SCM val, SCM snd, SCM chn)
     {
       SCM_ASSERT((SCM_EQ_P(snd,SCM_UNDEFINED)),snd,SCM_ARG2,"set-" S_spectro_hop);
       ss = get_global_state();
-      set_spectro_hop(ss,g_scm2int(val));
-      RTNINT(spectro_hop(ss));
+      set_spectro_hop(ss,TO_C_INT_OR_ELSE(val,0));
+      return(TO_SCM_INT(spectro_hop(ss)));
     }
 }
 
@@ -8822,7 +8815,7 @@ static SCM g_show_marks(SCM snd, SCM chn)
   if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
     return(cp_iread(snd,chn,CP_SHOW_MARKS,S_show_marks));
   SCM_ASSERT((SCM_EQ_P(snd,SCM_UNDEFINED)),snd,SCM_ARG1,S_show_marks);
-  RTNBOOL(show_marks(get_global_state()));
+  return(TO_SCM_BOOLEAN(show_marks(get_global_state())));
 }
 
 static SCM g_set_show_marks(SCM on, SCM snd, SCM chn)
@@ -8836,7 +8829,7 @@ static SCM g_set_show_marks(SCM on, SCM snd, SCM chn)
       SCM_ASSERT((SCM_EQ_P(snd,SCM_UNDEFINED)),snd,SCM_ARG2,"set-" S_show_marks);
       ss = get_global_state();
       set_show_marks(ss,bool_int_or_one(on));
-      RTNBOOL(show_marks(ss));
+      return(TO_SCM_BOOLEAN(show_marks(ss)));
     }
 }
 
@@ -8848,7 +8841,7 @@ static SCM g_show_fft_peaks(SCM snd, SCM chn)
   if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
     return(cp_iread(snd,chn,CP_SHOW_FFT_PEAKS,S_show_fft_peaks));
   SCM_ASSERT((SCM_EQ_P(snd,SCM_UNDEFINED)),snd,SCM_ARG1,S_show_fft_peaks);
-  RTNBOOL(show_fft_peaks(get_global_state()));
+  return(TO_SCM_BOOLEAN(show_fft_peaks(get_global_state())));
 }
 
 static SCM g_set_show_fft_peaks(SCM val, SCM snd, SCM chn)
@@ -8862,7 +8855,7 @@ static SCM g_set_show_fft_peaks(SCM val, SCM snd, SCM chn)
       SCM_ASSERT((SCM_EQ_P(snd,SCM_UNDEFINED)),snd,SCM_ARG2,"set-" S_show_fft_peaks);
       ss = get_global_state();
       set_show_fft_peaks(ss,bool_int_or_one(val));
-      RTNBOOL(show_fft_peaks(ss));
+      return(TO_SCM_BOOLEAN(show_fft_peaks(ss)));
     }
 }
 
@@ -8874,7 +8867,7 @@ static SCM g_zero_pad(SCM snd, SCM chn)
   if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
     return(cp_iread(snd,chn,CP_ZERO_PAD,S_zero_pad));
   SCM_ASSERT((SCM_EQ_P(snd,SCM_UNDEFINED)),snd,SCM_ARG1,S_zero_pad);
-  RTNINT(zero_pad(get_global_state()));
+  return(TO_SCM_INT(zero_pad(get_global_state())));
 }
 
 static SCM g_set_zero_pad(SCM val, SCM snd, SCM chn)
@@ -8888,7 +8881,7 @@ static SCM g_set_zero_pad(SCM val, SCM snd, SCM chn)
       SCM_ASSERT((SCM_EQ_P(snd,SCM_UNDEFINED)),snd,SCM_ARG2,"set-" S_zero_pad);
       ss = get_global_state();
       set_zero_pad(ss,bool_int_or_one(val)); 
-      RTNINT(zero_pad(ss));
+      return(TO_SCM_INT(zero_pad(ss)));
     }
 }
 
@@ -8900,7 +8893,7 @@ static SCM g_wavelet_type(SCM snd, SCM chn)
   if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
     return(cp_iread(snd,chn,CP_WAVELET_TYPE,S_wavelet_type));
   SCM_ASSERT((SCM_EQ_P(snd,SCM_UNDEFINED)),snd,SCM_ARG1,S_wavelet_type);
-  RTNINT(wavelet_type(get_global_state()));
+  return(TO_SCM_INT(wavelet_type(get_global_state())));
 }
 
 static SCM g_set_wavelet_type(SCM val, SCM snd, SCM chn)
@@ -8913,8 +8906,8 @@ static SCM g_set_wavelet_type(SCM val, SCM snd, SCM chn)
     {
       SCM_ASSERT((SCM_EQ_P(snd,SCM_UNDEFINED)),snd,SCM_ARG2,"set-" S_wavelet_type);
       ss = get_global_state();
-      set_wavelet_type(ss,iclamp(0,g_scm2int(val),NUM_WAVELETS-1));
-      RTNINT(wavelet_type(ss));
+      set_wavelet_type(ss,iclamp(0,TO_C_INT_OR_ELSE(val,0),NUM_WAVELETS-1));
+      return(TO_SCM_INT(wavelet_type(ss)));
     }
 }
 
@@ -8926,7 +8919,7 @@ static SCM g_fft_log_frequency(SCM snd, SCM chn)
   if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
     return(cp_iread(snd,chn,CP_FFT_LOG_FREQUENCY,S_fft_log_frequency));
   SCM_ASSERT((SCM_EQ_P(snd,SCM_UNDEFINED)),snd,SCM_ARG1,S_fft_log_frequency);
-  RTNBOOL(fft_log_frequency(get_global_state()));
+  return(TO_SCM_BOOLEAN(fft_log_frequency(get_global_state())));
 }
 
 static SCM g_set_fft_log_frequency(SCM on, SCM snd, SCM chn)
@@ -8940,7 +8933,7 @@ static SCM g_set_fft_log_frequency(SCM on, SCM snd, SCM chn)
       SCM_ASSERT((SCM_EQ_P(snd,SCM_UNDEFINED)),snd,SCM_ARG2,"set-" S_fft_log_frequency);
       ss = get_global_state();
       set_fft_log_frequency(ss,bool_int_or_one(on)); 
-      RTNBOOL(fft_log_frequency(ss));
+      return(TO_SCM_BOOLEAN(fft_log_frequency(ss)));
     }
 }
 
@@ -8952,7 +8945,7 @@ static SCM g_fft_log_magnitude(SCM snd, SCM chn)
   if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
     return(cp_iread(snd,chn,CP_FFT_LOG_MAGNITUDE,S_fft_log_magnitude));
   SCM_ASSERT((SCM_EQ_P(snd,SCM_UNDEFINED)),snd,SCM_ARG1,S_fft_log_magnitude);
-  RTNBOOL(fft_log_magnitude(get_global_state()));
+  return(TO_SCM_BOOLEAN(fft_log_magnitude(get_global_state())));
 }
 
 static SCM g_set_fft_log_magnitude(SCM on, SCM snd, SCM chn)
@@ -8966,7 +8959,7 @@ static SCM g_set_fft_log_magnitude(SCM on, SCM snd, SCM chn)
       SCM_ASSERT((SCM_EQ_P(snd,SCM_UNDEFINED)),snd,SCM_ARG2,"set-" S_fft_log_magnitude);
       ss = get_global_state();
       set_fft_log_magnitude(ss,bool_int_or_one(on)); 
-      RTNBOOL(fft_log_magnitude(ss));
+      return(TO_SCM_BOOLEAN(fft_log_magnitude(ss)));
     }
 }
 
@@ -8978,7 +8971,7 @@ static SCM g_show_mix_waveforms(SCM snd, SCM chn)
   if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
     return(cp_iread(snd,chn,CP_SHOW_MIX_WAVEFORMS,S_show_mix_waveforms));
   SCM_ASSERT((SCM_EQ_P(snd,SCM_UNDEFINED)),snd,SCM_ARG1,S_show_mix_waveforms);
-  RTNBOOL(show_mix_waveforms(get_global_state()));
+  return(TO_SCM_BOOLEAN(show_mix_waveforms(get_global_state())));
 }
 
 static SCM g_set_show_mix_waveforms(SCM on, SCM snd, SCM chn)
@@ -8992,7 +8985,7 @@ static SCM g_set_show_mix_waveforms(SCM on, SCM snd, SCM chn)
       SCM_ASSERT((SCM_EQ_P(snd,SCM_UNDEFINED)),snd,SCM_ARG2,"set-" S_show_mix_waveforms);
       ss = get_global_state();
       set_show_mix_waveforms(ss,bool_int_or_one(on));
-      RTNBOOL(show_mix_waveforms(ss));
+      return(TO_SCM_BOOLEAN(show_mix_waveforms(ss)));
     }
 }
 
@@ -9004,7 +8997,7 @@ static SCM g_verbose_cursor(SCM snd, SCM chn)
   if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
     return(cp_iread(snd,chn,CP_VERBOSE_CURSOR,S_verbose_cursor));
   SCM_ASSERT((SCM_EQ_P(snd,SCM_UNDEFINED)),snd,SCM_ARG1,S_verbose_cursor);
-  RTNBOOL(verbose_cursor(get_global_state()));
+  return(TO_SCM_BOOLEAN(verbose_cursor(get_global_state())));
 }
 
 static SCM g_set_verbose_cursor(SCM on, SCM snd, SCM chn)
@@ -9018,7 +9011,7 @@ static SCM g_set_verbose_cursor(SCM on, SCM snd, SCM chn)
       SCM_ASSERT((SCM_EQ_P(snd,SCM_UNDEFINED)),snd,SCM_ARG2,"set-" S_verbose_cursor);
       ss = get_global_state();
       set_verbose_cursor(ss,bool_int_or_one(on));
-      RTNBOOL(verbose_cursor(ss));
+      return(TO_SCM_BOOLEAN(verbose_cursor(ss)));
     }
 }
 
@@ -9031,7 +9024,7 @@ static SCM g_wavo(SCM snd, SCM chn)
   if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
     return(cp_iread(snd,chn,CP_WAVO,S_wavo));
   SCM_ASSERT((SCM_EQ_P(snd,SCM_UNDEFINED)),snd,SCM_ARG1,S_wavo);
-  RTNBOOL(wavo(get_global_state()));
+  return(TO_SCM_BOOLEAN(wavo(get_global_state())));
 }
 
 static SCM g_set_wavo(SCM val, SCM snd, SCM chn) 
@@ -9047,7 +9040,7 @@ static SCM g_set_wavo(SCM val, SCM snd, SCM chn)
       ss = get_global_state();
       on = bool_int_or_one(val);
       set_wavo(ss,on);
-      RTNBOOL(wavo(ss));
+      return(TO_SCM_BOOLEAN(wavo(ss)));
     }
 }
 
@@ -9059,7 +9052,7 @@ static SCM g_wavo_hop(SCM snd, SCM chn)
   if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
     return(cp_iread(snd,chn,CP_WAVO_HOP,S_wavo_hop));
   SCM_ASSERT((SCM_EQ_P(snd,SCM_UNDEFINED)),snd,SCM_ARG1,S_wavo_hop);
-  RTNINT(wavo_hop(get_global_state()));
+  return(TO_SCM_INT(wavo_hop(get_global_state())));
 }
 
 static SCM g_set_wavo_hop(SCM val, SCM snd, SCM chn) 
@@ -9072,8 +9065,8 @@ static SCM g_set_wavo_hop(SCM val, SCM snd, SCM chn)
     {
       SCM_ASSERT((SCM_EQ_P(snd,SCM_UNDEFINED)),snd,SCM_ARG2,"set-" S_wavo_hop);
       ss = get_global_state();
-      set_wavo_hop(ss,g_scm2int(val));
-      RTNINT(wavo_hop(ss));
+      set_wavo_hop(ss,TO_C_INT_OR_ELSE(val,0));
+      return(TO_SCM_INT(wavo_hop(ss)));
     }
 }
 
@@ -9085,7 +9078,7 @@ static SCM g_wavo_trace(SCM snd, SCM chn)
   if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
     return(cp_iread(snd,chn,CP_WAVO_TRACE,S_wavo_trace));
   SCM_ASSERT((SCM_EQ_P(snd,SCM_UNDEFINED)),snd,SCM_ARG1,S_wavo_trace);
-  RTNINT(wavo_trace(get_global_state()));
+  return(TO_SCM_INT(wavo_trace(get_global_state())));
 }
 
 static SCM g_set_wavo_trace(SCM val, SCM snd, SCM chn)
@@ -9098,8 +9091,8 @@ static SCM g_set_wavo_trace(SCM val, SCM snd, SCM chn)
     {
       SCM_ASSERT((SCM_EQ_P(snd,SCM_UNDEFINED)),snd,SCM_ARG2,"set-" S_wavo_trace);
       ss = get_global_state();
-      set_wavo_trace(ss,g_scm2int(val));
-      RTNINT(wavo_trace(ss));
+      set_wavo_trace(ss,TO_C_INT_OR_ELSE(val,0));
+      return(TO_SCM_INT(wavo_trace(ss)));
     }
 }
 
@@ -9111,7 +9104,7 @@ static SCM g_line_size(SCM snd, SCM chn)
   if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
     return(cp_iread(snd,chn,CP_LINE_SIZE,S_line_size));
   SCM_ASSERT((SCM_EQ_P(snd,SCM_UNDEFINED)),snd,SCM_ARG1,S_line_size);
-  RTNINT(line_size(get_global_state()));
+  return(TO_SCM_INT(line_size(get_global_state())));
 }
 
 static SCM g_set_line_size(SCM val, SCM snd, SCM chn)
@@ -9124,8 +9117,8 @@ static SCM g_set_line_size(SCM val, SCM snd, SCM chn)
     {
       SCM_ASSERT((SCM_EQ_P(snd,SCM_UNDEFINED)),snd,SCM_ARG2,"set-" S_line_size);
       ss = get_global_state();
-      set_line_size(ss,g_scm2int(val));
-      RTNINT(line_size(ss));
+      set_line_size(ss,TO_C_INT_OR_ELSE(val,0));
+      return(TO_SCM_INT(line_size(ss)));
     }
 }
 
@@ -9137,7 +9130,7 @@ static SCM g_fft_size(SCM snd, SCM chn)
   if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
     return(cp_iread(snd,chn,CP_FFT_SIZE,S_fft_size));
   SCM_ASSERT((SCM_EQ_P(snd,SCM_UNDEFINED)),snd,SCM_ARG1,S_fft_size);
-  RTNINT(fft_size(get_global_state()));
+  return(TO_SCM_INT(fft_size(get_global_state())));
 }
 
 static SCM g_set_fft_size(SCM val, SCM snd, SCM chn)
@@ -9145,7 +9138,7 @@ static SCM g_set_fft_size(SCM val, SCM snd, SCM chn)
   snd_state *ss;
   int len;
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(val)),val,SCM_ARG1,"set-" S_fft_size); 
-  len = g_scm2int(val);
+  len = TO_C_INT_OR_ELSE(val,0);
   if (len <= 0) return(SCM_BOOL_F);
   if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
     return(cp_iwrite(snd,chn,val,CP_FFT_SIZE,"set-" S_fft_size));
@@ -9154,7 +9147,7 @@ static SCM g_set_fft_size(SCM val, SCM snd, SCM chn)
       SCM_ASSERT((SCM_EQ_P(snd,SCM_UNDEFINED)),snd,SCM_ARG2,"set-" S_fft_size);
       ss = get_global_state();
       set_fft_size(ss,(int)pow(2,(ceil(log((double)(len))/log(2.0)))));
-      RTNINT(fft_size(ss));
+      return(TO_SCM_INT(fft_size(ss)));
     }
 }
 
@@ -9166,7 +9159,7 @@ static SCM g_fft_style(SCM snd, SCM chn)
   if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
     return(cp_iread(snd,chn,CP_FFT_STYLE,S_fft_style));
   SCM_ASSERT((SCM_EQ_P(snd,SCM_UNDEFINED)),snd,SCM_ARG1,S_fft_style);
-  RTNINT(fft_style(get_global_state()));
+  return(TO_SCM_INT(fft_style(get_global_state())));
 }
 
 static SCM g_set_fft_style(SCM val, SCM snd, SCM chn)
@@ -9174,15 +9167,15 @@ static SCM g_set_fft_style(SCM val, SCM snd, SCM chn)
   snd_state *ss;
   int style;
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(val)),val,SCM_ARG1,"set-" S_fft_style); 
-  style = iclamp(NORMAL_FFT,g_scm2int(val),SPECTROGRAM);
+  style = iclamp(NORMAL_FFT,TO_C_INT_OR_ELSE(val,0),SPECTROGRAM);
   if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
-    return(cp_iwrite(snd,chn,gh_int2scm(style),CP_FFT_STYLE,"set-" S_fft_style));
+    return(cp_iwrite(snd,chn,TO_SMALL_SCM_INT(style),CP_FFT_STYLE,"set-" S_fft_style));
   else
     {
       SCM_ASSERT((SCM_EQ_P(snd,SCM_UNDEFINED)),snd,SCM_ARG2,"set-" S_fft_style);
       ss = get_global_state();
       set_fft_style(ss,style);
-      RTNINT(fft_style(ss));
+      return(TO_SCM_INT(fft_style(ss)));
     }
 }
 
@@ -9194,7 +9187,7 @@ static SCM g_fft_window(SCM snd, SCM chn)
   if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
     return(cp_iread(snd,chn,CP_FFT_WINDOW,S_fft_window));
   SCM_ASSERT((SCM_EQ_P(snd,SCM_UNDEFINED)),snd,SCM_ARG1,S_fft_window);
-  RTNINT(fft_window(get_global_state()));
+  return(TO_SCM_INT(fft_window(get_global_state())));
 }
 
 static SCM g_set_fft_window(SCM val, SCM snd, SCM chn)
@@ -9202,15 +9195,15 @@ static SCM g_set_fft_window(SCM val, SCM snd, SCM chn)
   snd_state *ss;
   int win;
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(val)),val,SCM_ARG1,"set-" S_fft_window); 
-  win = iclamp(0,g_scm2int(val),NUM_FFT_WINDOWS-1);
+  win = iclamp(0,TO_C_INT_OR_ELSE(val,0),NUM_FFT_WINDOWS-1);
   if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
-    return(cp_iwrite(snd,chn,gh_int2scm(win),CP_FFT_WINDOW,"set-" S_fft_window));
+    return(cp_iwrite(snd,chn,TO_SMALL_SCM_INT(win),CP_FFT_WINDOW,"set-" S_fft_window));
   else
     {
       SCM_ASSERT((SCM_EQ_P(snd,SCM_UNDEFINED)),snd,SCM_ARG2,"set-" S_fft_window);
       ss = get_global_state();
       set_fft_window(ss,win);
-      RTNINT(fft_window(ss));
+      return(TO_SCM_INT(fft_window(ss)));
     }
 }
 
@@ -9222,7 +9215,7 @@ static SCM g_transform_type(SCM snd, SCM chn)
   if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
     return(cp_iread(snd,chn,CP_TRANSFORM_TYPE,S_transform_type));
   SCM_ASSERT((SCM_EQ_P(snd,SCM_UNDEFINED)),snd,SCM_ARG1,S_transform_type);
-  RTNINT(transform_type(get_global_state()));
+  return(TO_SCM_INT(transform_type(get_global_state())));
 }
 
 static SCM g_set_transform_type(SCM val, SCM snd, SCM chn)
@@ -9230,15 +9223,15 @@ static SCM g_set_transform_type(SCM val, SCM snd, SCM chn)
   int type;
   snd_state *ss;
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(val)),val,SCM_ARG1,"set-" S_transform_type); 
-  type = iclamp(0,g_scm2int(val),max_transform_type());
+  type = iclamp(0,TO_C_INT_OR_ELSE(val,0),max_transform_type());
   if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
-    return(cp_iwrite(snd,chn,gh_int2scm(type),CP_TRANSFORM_TYPE,"set-" S_transform_type));
+    return(cp_iwrite(snd,chn,TO_SMALL_SCM_INT(type),CP_TRANSFORM_TYPE,"set-" S_transform_type));
   else
     {
       SCM_ASSERT((SCM_EQ_P(snd,SCM_UNDEFINED)),snd,SCM_ARG2,"set-" S_transform_type);
       ss = get_global_state();
       set_transform_type(ss,type);
-      RTNINT(transform_type(ss));
+      return(TO_SCM_INT(transform_type(ss)));
     }
 }
 
@@ -9252,7 +9245,7 @@ static SCM g_normalize_fft(SCM snd, SCM chn)
   if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
     return(cp_iread(snd,chn,CP_NORMALIZE_FFT,S_normalize_fft));
   SCM_ASSERT((SCM_EQ_P(snd,SCM_UNDEFINED)),snd,SCM_ARG1,S_normalize_fft);
-  RTNINT(normalize_fft(get_global_state()));
+  return(TO_SCM_INT(normalize_fft(get_global_state())));
 }
 
 static SCM g_set_normalize_fft(SCM val, SCM snd, SCM chn)
@@ -9266,7 +9259,7 @@ static SCM g_set_normalize_fft(SCM val, SCM snd, SCM chn)
       SCM_ASSERT((SCM_EQ_P(snd,SCM_UNDEFINED)),snd,SCM_ARG2,"set-" S_normalize_fft);
       ss = get_global_state();
       set_normalize_fft(ss,bool_int_or_one(val));
-      RTNINT(normalize_fft(ss));
+      return(TO_SCM_INT(normalize_fft(ss)));
     }
 }
 
@@ -9278,7 +9271,7 @@ static SCM g_max_fft_peaks(SCM snd, SCM chn)
   if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
     return(cp_iread(snd,chn,CP_MAX_FFT_PEAKS,S_max_fft_peaks));
   SCM_ASSERT((SCM_EQ_P(snd,SCM_UNDEFINED)),snd,SCM_ARG1,S_max_fft_peaks);
-  RTNINT(max_fft_peaks(get_global_state()));
+  return(TO_SCM_INT(max_fft_peaks(get_global_state())));
 }
 
 static SCM g_set_max_fft_peaks(SCM n, SCM snd, SCM chn)
@@ -9291,11 +9284,11 @@ static SCM g_set_max_fft_peaks(SCM n, SCM snd, SCM chn)
   else
     {
       SCM_ASSERT((SCM_EQ_P(snd,SCM_UNDEFINED)),snd,SCM_ARG2,"set-" S_max_fft_peaks);
-      lim = g_scm2int(n);
+      lim = TO_C_INT_OR_ELSE(n,0);
       ss = get_global_state();
       if (lim >= 0)
 	set_max_fft_peaks(ss,lim);
-      RTNINT(max_fft_peaks(ss));
+      return(TO_SCM_INT(max_fft_peaks(ss)));
     }
 }
 
@@ -9309,7 +9302,7 @@ static SCM g_graph_style(SCM snd, SCM chn)
   if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
     return(cp_iread(snd,chn,CP_GRAPH_STYLE,S_graph_style));
   SCM_ASSERT((SCM_EQ_P(snd,SCM_UNDEFINED)),snd,SCM_ARG1,S_graph_style);
-  RTNINT(graph_style(get_global_state()));
+  return(TO_SCM_INT(graph_style(get_global_state())));
 }
 
 static SCM g_set_graph_style(SCM style, SCM snd, SCM chn)
@@ -9322,8 +9315,8 @@ static SCM g_set_graph_style(SCM style, SCM snd, SCM chn)
     {
       SCM_ASSERT((SCM_EQ_P(snd,SCM_UNDEFINED)),snd,SCM_ARG2,"set-" S_graph_style);
       ss = get_global_state();
-      set_graph_style(ss,g_scm2int(style));
-      RTNINT(graph_style(ss));
+      set_graph_style(ss,TO_C_INT_OR_ELSE(style,0));
+      return(TO_SCM_INT(graph_style(ss)));
     }
 }
 
@@ -9335,7 +9328,7 @@ static SCM g_dot_size(SCM snd, SCM chn)
   if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
     return(cp_iread(snd,chn,CP_DOT_SIZE,S_dot_size));
   SCM_ASSERT((SCM_EQ_P(snd,SCM_UNDEFINED)),snd,SCM_ARG1,S_dot_size);
-  RTNINT(dot_size(get_global_state()));
+  return(TO_SCM_INT(dot_size(get_global_state())));
 }
 
 static SCM g_set_dot_size(SCM size, SCM snd, SCM chn)
@@ -9348,8 +9341,8 @@ static SCM g_set_dot_size(SCM size, SCM snd, SCM chn)
     {
       SCM_ASSERT((SCM_EQ_P(snd,SCM_UNDEFINED)),snd,SCM_ARG2,"set-" S_dot_size);
       ss = get_global_state();
-      set_dot_size(ss,g_scm2int(size));
-      RTNINT(dot_size(ss));
+      set_dot_size(ss,TO_C_INT_OR_ELSE(size,0));
+      return(TO_SCM_INT(dot_size(ss)));
     }
 }
 
@@ -9361,7 +9354,7 @@ static SCM g_show_axes(SCM snd, SCM chn)
   if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
     return(cp_iread(snd,chn,CP_SHOW_AXES,S_show_axes));
   SCM_ASSERT((SCM_EQ_P(snd,SCM_UNDEFINED)),snd,SCM_ARG1,S_show_axes);
-  RTNINT(show_axes(get_global_state()));
+  return(TO_SCM_INT(show_axes(get_global_state())));
 }
 
 static SCM g_set_show_axes(SCM on, SCM snd, SCM chn)
@@ -9374,8 +9367,8 @@ static SCM g_set_show_axes(SCM on, SCM snd, SCM chn)
     {
       SCM_ASSERT((SCM_EQ_P(snd,SCM_UNDEFINED)),snd,SCM_ARG2,"set-" S_show_axes);
       ss = get_global_state();
-      set_show_axes(ss,iclamp(SHOW_NO_AXES,g_scm2intdef(on,SHOW_ALL_AXES),SHOW_X_AXIS));
-      RTNINT(show_axes(ss));
+      set_show_axes(ss,iclamp(SHOW_NO_AXES,TO_C_INT_OR_ELSE(on,SHOW_ALL_AXES),SHOW_X_AXIS));
+      return(TO_SCM_INT(show_axes(ss)));
     }
 }
 
@@ -9387,7 +9380,7 @@ static SCM g_graphs_horizontal(SCM snd, SCM chn)
   if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
     return(cp_iread(snd,chn,CP_GRAPHS_HORIZONTAL,S_graphs_horizontal));
   SCM_ASSERT((SCM_EQ_P(snd,SCM_UNDEFINED)),snd,SCM_ARG1,S_graphs_horizontal);
-  RTNBOOL(graphs_horizontal(get_global_state()));
+  return(TO_SCM_BOOLEAN(graphs_horizontal(get_global_state())));
 }
 
 static SCM g_set_graphs_horizontal(SCM val, SCM snd, SCM chn)
@@ -9401,7 +9394,7 @@ static SCM g_set_graphs_horizontal(SCM val, SCM snd, SCM chn)
       SCM_ASSERT((SCM_EQ_P(snd,SCM_UNDEFINED)),snd,SCM_ARG2,"set-" S_graphs_horizontal);
       ss = get_global_state();
       set_graphs_horizontal(ss,bool_int_or_one(val)); 
-      RTNBOOL(graphs_horizontal(ss));
+      return(TO_SCM_BOOLEAN(graphs_horizontal(ss)));
     }
 }
 
@@ -9414,17 +9407,13 @@ static SCM g_peaks(SCM filename, SCM snd_n, SCM chn_n)
    to the help dialog if filename is omitted"
 
   chan_info *cp;
-  char *name = NULL,*urn;
+  char *name = NULL;
   int err;
   SCM_ASSERT((gh_string_p(filename) || (SCM_FALSEP(filename)) || (SCM_UNBNDP(filename))),filename,SCM_ARG1,S_peaks);
   ERRCP(S_peaks,snd_n,chn_n,2);
   cp = get_cp(snd_n,chn_n,S_peaks);
   if (gh_string_p(filename))
-    {
-      urn = gh_scm2newstr(filename,NULL);
-      name = mus_file_full_name(urn);
-      free(urn);
-    }
+    name = mus_file_full_name(SCM_STRING_CHARS(filename));
   else name = NULL;
   err = display_fft_peaks(cp,name);
   if (name) FREE(name);
@@ -9489,7 +9478,7 @@ static SCM g_edits(SCM snd_n, SCM chn_n)
   cp = get_cp(snd_n,chn_n,S_edits);
   for (i=cp->edit_ctr+1;i<cp->edit_size;i++)
     if (!(cp->edits[i])) break;
-  return(SCM_LIST2(gh_int2scm(cp->edit_ctr),gh_int2scm(i-cp->edit_ctr-1)));
+  return(SCM_LIST2(TO_SCM_INT(cp->edit_ctr),TO_SCM_INT(i-cp->edit_ctr-1)));
 }
 
 static SCM g_set_x_bounds(SCM bounds, SCM snd_n, SCM chn_n)
@@ -9502,7 +9491,7 @@ static SCM g_set_x_bounds(SCM bounds, SCM snd_n, SCM chn_n)
   x1 = TO_C_DOUBLE(gh_cadr(bounds));
   if (x1 > x0)
     set_x_axis_x0x1(cp,x0,x1);
-  else return(scm_throw(IMPOSSIBLE_BOUNDS,SCM_LIST2(gh_str02scm("set-" S_x_bounds),bounds)));
+  else return(scm_throw(IMPOSSIBLE_BOUNDS,SCM_LIST2(TO_SCM_STRING("set-" S_x_bounds),bounds)));
   return(SCM_BOOL_F);
 }
 
@@ -9547,7 +9536,7 @@ static SCM g_set_y_bounds(SCM bounds, SCM snd_n, SCM chn_n)
     }
   if (hi > low)
     set_y_axis_y0y1(cp,low,hi);
-  else return(scm_throw(IMPOSSIBLE_BOUNDS,SCM_LIST2(gh_str02scm("set-" S_y_bounds),bounds)));
+  else return(scm_throw(IMPOSSIBLE_BOUNDS,SCM_LIST2(TO_SCM_STRING("set-" S_y_bounds),bounds)));
   return(SCM_BOOL_F);
 }
 
@@ -9561,7 +9550,7 @@ static SCM g_x_bounds(SCM snd_n, SCM chn_n)
   ERRCP(S_x_bounds,snd_n,chn_n,1);
   cp = get_cp(snd_n,chn_n,S_x_bounds);
   ap = cp->axis;
-  return(SCM_LIST2(gh_double2scm(ap->x0),gh_double2scm(ap->x1)));
+  return(SCM_LIST2(TO_SCM_DOUBLE(ap->x0),TO_SCM_DOUBLE(ap->x1)));
 }
 
 static SCM g_y_bounds(SCM snd_n, SCM chn_n)
@@ -9572,7 +9561,7 @@ static SCM g_y_bounds(SCM snd_n, SCM chn_n)
   ERRCP(S_y_bounds,snd_n,chn_n,1);
   cp = get_cp(snd_n,chn_n,S_y_bounds);
   ap = cp->axis;
-  return(SCM_LIST2(gh_double2scm(ap->y0),gh_double2scm(ap->y1)));
+  return(SCM_LIST2(TO_SCM_DOUBLE(ap->y0),TO_SCM_DOUBLE(ap->y1)));
 }
 
 static SCM g_forward_sample(SCM count, SCM snd, SCM chn) 
@@ -9582,8 +9571,8 @@ static SCM g_forward_sample(SCM count, SCM snd, SCM chn)
   ERRB1(count,S_forward_sample); 
   ERRCP(S_forward_sample,snd,chn,2);
   cp = get_cp(snd,chn,S_forward_sample);
-  handle_cursor(cp,cursor_move(cp,g_scm2intdef(count,1))); 
-  RTNINT(cp->cursor);
+  handle_cursor(cp,cursor_move(cp,TO_C_INT_OR_ELSE(count,1))); 
+  return(TO_SCM_INT(cp->cursor));
 }
 
 static SCM g_backward_sample(SCM count, SCM snd, SCM chn) 
@@ -9593,8 +9582,8 @@ static SCM g_backward_sample(SCM count, SCM snd, SCM chn)
   ERRB1(count,S_backward_sample); 
   ERRCP(S_backward_sample,snd,chn,2);
   cp = get_cp(snd,chn,S_backward_sample);
-  handle_cursor(cp,cursor_move(cp,-(g_scm2intdef(count,1)))); 
-  RTNINT(cp->cursor);
+  handle_cursor(cp,cursor_move(cp,-(TO_C_INT_OR_ELSE(count,1)))); 
+  return(TO_SCM_INT(cp->cursor));
 }
 
 static SCM g_smooth(SCM beg, SCM num, SCM snd_n, SCM chn_n)
@@ -9605,7 +9594,7 @@ static SCM g_smooth(SCM beg, SCM num, SCM snd_n, SCM chn_n)
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(num)),num,SCM_ARG2,S_smooth);
   ERRCP(S_smooth,snd_n,chn_n,3);
   cp = get_cp(snd_n,chn_n,S_smooth);
-  cos_smooth(cp,g_scm2int(beg),g_scm2int(num),FALSE,S_smooth); 
+  cos_smooth(cp,TO_C_INT_OR_ELSE(beg,0),TO_C_INT_OR_ELSE(num,0),FALSE,S_smooth); 
   return(SCM_BOOL_T);
 }
 
@@ -9614,7 +9603,7 @@ static SCM g_smooth_selection(void)
   #define H_smooth_selection "(" S_smooth_selection ") smooths the data in the currently selected portion"
   chan_info *cp;
   if (selection_is_active() == 0) 
-    return(scm_throw(NO_ACTIVE_SELECTION,SCM_LIST1(gh_str02scm(S_smooth_selection))));
+    return(scm_throw(NO_ACTIVE_SELECTION,SCM_LIST1(TO_SCM_STRING(S_smooth_selection))));
   cp = get_cp(SCM_BOOL_F,SCM_BOOL_F,S_smooth_selection);
   cos_smooth(cp,0,0,TRUE,S_smooth_selection);
   return(SCM_BOOL_T);
@@ -9635,7 +9624,7 @@ static SCM g_reverse_selection(void)
   #define H_reverse_selection "(" S_reverse_selection ") reverses the data in the currently selected portion"
   chan_info *cp;
   if (selection_is_active() == 0) 
-    return(scm_throw(NO_ACTIVE_SELECTION,SCM_LIST1(gh_str02scm(S_reverse_selection))));
+    return(scm_throw(NO_ACTIVE_SELECTION,SCM_LIST1(TO_SCM_STRING(S_reverse_selection))));
   cp = get_cp(SCM_BOOL_F,SCM_BOOL_F,S_reverse_selection);
   reverse_sound(cp,TRUE);
   return(SCM_BOOL_F);
@@ -9649,7 +9638,7 @@ static SCM g_insert_silence(SCM beg, SCM num, SCM snd, SCM chn)
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(num)),num,SCM_ARG2,S_insert_silence);
   ERRCP(S_insert_silence,snd,chn,3);
   cp = get_cp(snd,chn,S_insert_silence);
-  cursor_insert(cp,g_scm2int(beg),g_scm2int(num),S_insert_silence);
+  cursor_insert(cp,TO_C_INT_OR_ELSE(beg,0),TO_C_INT_OR_ELSE(num,0),S_insert_silence);
   return(beg);
 }
 
@@ -9738,9 +9727,9 @@ static SCM g_fht(SCM data)
   if (((int)(pow(4.0,pow4))) != v->length) 
     scm_misc_error(S_fht,
 		   "fht data length must be a power of 4: ~S: ~S (~S)",
-		   SCM_LIST3(gh_int2scm(v->length),
-			     gh_double2scm((log(v->length) / (log(4)))),
-			     gh_int2scm((int)(pow(4.0,pow4)))));
+		   SCM_LIST3(TO_SCM_INT(v->length),
+			     TO_SCM_DOUBLE((log(v->length) / (log(4)))),
+			     TO_SCM_INT((int)(pow(4.0,pow4)))));
   fht(pow4,v->data);
   return(data);
 }
@@ -9759,9 +9748,9 @@ static void after_fft(snd_state *ss, chan_info *cp, Float scaler)
 	{
 	  ss->fft_hook_active = 1;
 	  g_c_run_progn_hook(fft_hook,
-			     SCM_LIST3(gh_int2scm((cp->sound)->index),
-				       gh_int2scm(cp->chan),
-				       gh_double2scm(scaler)));
+			     SCM_LIST3(TO_SMALL_SCM_INT((cp->sound)->index),
+				       TO_SMALL_SCM_INT(cp->chan),
+				       TO_SCM_DOUBLE(scaler)));
 	  ss->fft_hook_active = 0;
 	}
     }
@@ -9776,10 +9765,10 @@ static int dont_graph(snd_state *ss, chan_info *cp)
 	{
 	  ss->graph_hook_active = 1;
 	  res = g_c_run_progn_hook(graph_hook,
-				   SCM_LIST4(gh_int2scm((cp->sound)->index),
-					     gh_int2scm(cp->chan),
-					     gh_double2scm((cp->axis)->y0),
-					     gh_double2scm((cp->axis)->y1)));
+				   SCM_LIST4(TO_SMALL_SCM_INT((cp->sound)->index),
+					     TO_SMALL_SCM_INT(cp->chan),
+					     TO_SCM_DOUBLE((cp->axis)->y0),
+					     TO_SCM_DOUBLE((cp->axis)->y1)));
 	  /* (add-hook! graph-hook (lambda (a b c d) (snd-print (format #f "~A ~A ~A ~A" a b c d)))) */
 	  ss->graph_hook_active = 0;
 	}
@@ -9790,7 +9779,9 @@ static int dont_graph(snd_state *ss, chan_info *cp)
 static void after_graph(chan_info *cp)
 {
   if (HOOKED(after_graph_hook))
-    g_c_run_progn_hook(after_graph_hook,SCM_LIST2(gh_int2scm((cp->sound)->index),gh_int2scm(cp->chan)));
+    g_c_run_progn_hook(after_graph_hook,
+		       SCM_LIST2(TO_SMALL_SCM_INT((cp->sound)->index),
+				 TO_SMALL_SCM_INT(cp->chan)));
   /* (add-hook! after-graph-hook (lambda (a b) (snd-print (format #f "~A ~A" a b)))) */
 }
 
@@ -9798,7 +9789,8 @@ static int handle_mark_click(int id)
 {
   SCM res = SCM_BOOL_F;
   if (HOOKED(mark_click_hook))
-    res = g_c_run_progn_hook(mark_click_hook,SCM_LIST1(gh_int2scm(id)));
+    res = g_c_run_progn_hook(mark_click_hook,
+			     SCM_LIST1(TO_SMALL_SCM_INT(id)));
   return(SCM_TRUE_P(res));
 }
   
@@ -9808,12 +9800,12 @@ static void handle_mouse_event(SCM hook, snd_info *sp, chan_info *cp, Float x, F
 {
   if (HOOKED(hook))
     g_c_run_progn_hook(hook,
-		       SCM_LIST6(gh_int2scm(sp->index),
-				 gh_int2scm(cp->chan),
-				 gh_int2scm(button),
-				 gh_int2scm(state),
-				 gh_double2scm(x),
-				 gh_double2scm(y)));
+		       SCM_LIST6(TO_SMALL_SCM_INT(sp->index),
+				 TO_SMALL_SCM_INT(cp->chan),
+				 TO_SCM_INT(button),
+				 TO_SCM_INT(state),
+				 TO_SCM_DOUBLE(x),
+				 TO_SCM_DOUBLE(y)));
 }
 
 static void handle_mouse_release(snd_info *sp, chan_info *cp, Float x, Float y, int button, int state)
@@ -9837,10 +9829,10 @@ static int handle_key_press(chan_info *cp, int key, int state)
   SCM res = SCM_BOOL_F;
   if (HOOKED(key_press_hook))
     res = g_c_run_or_hook(key_press_hook,
-			  SCM_LIST4(gh_int2scm((cp->sound)->index),
-				    gh_int2scm(cp->chan),
-				    gh_int2scm(key),
-				    gh_int2scm(state)));
+			  SCM_LIST4(TO_SMALL_SCM_INT((cp->sound)->index),
+				    TO_SMALL_SCM_INT(cp->chan),
+				    TO_SCM_INT(key),
+				    TO_SCM_INT(state)));
   return(SCM_TRUE_P(res));
 }
 

@@ -1285,9 +1285,9 @@ static int apply_fft_window(fft_state *fs)
       SCM res;
       if (HOOKED(before_fft_hook))
 	{
-	  res = g_c_run_progn_hook(before_fft_hook,SCM_LIST2(gh_int2scm(cp->sound->index),gh_int2scm(cp->chan)));
+	  res = g_c_run_progn_hook(before_fft_hook,SCM_LIST2(TO_SMALL_SCM_INT(cp->sound->index),TO_SMALL_SCM_INT(cp->chan)));
 	  if (gh_number_p(res))
-	    ind0 = g_scm2int(res) + fs->beg;
+	    ind0 = TO_C_INT_OR_ELSE(res,0) + fs->beg;
 	  else ind0 = (cp->axis)->losamp + fs->beg;
 	}
       else
@@ -1359,7 +1359,7 @@ static int apply_fft_window(fft_state *fs)
 	int len,i;
 	sfd = g_c_make_sample_reader(sf);
 	snd_protect(sfd);
-	res = g_call2(added_transform_proc(cp->transform_type),gh_int2scm(data_len),sfd);
+	res = g_call2(added_transform_proc(cp->transform_type),TO_SCM_INT(data_len),sfd);
 	snd_protect(res);
 	if (vct_p(res))
 	  {
@@ -2144,7 +2144,7 @@ static SCM g_autocorrelate(SCM reals)
   if (v1 == NULL) 
     {
       vdata = SCM_VELTS(reals);
-      for (i=0;i<n;i++) vdata[i] = gh_double2scm(rl[i]);
+      for (i=0;i<n;i++) vdata[i] = TO_SCM_DOUBLE(rl[i]);
       FREE(rl);
     }
   return(reals);
@@ -2158,19 +2158,18 @@ static SCM g_add_transform(SCM name, SCM xlabel, SCM lo, SCM hi, SCM proc)
    'name' is the transform's name, x-label is its x-axis label, and the relevant returned data\n\
    to be displayed goes from low to high (normally 0.0 to 1.0)"
 
-  char *str1=NULL,*str2=NULL;
-  SCM res=SCM_BOOL_F;
+  SCM res = SCM_BOOL_F;
   SCM_ASSERT(gh_string_p(name),name,SCM_ARG1,S_add_transform);
   SCM_ASSERT(gh_string_p(xlabel),xlabel,SCM_ARG2,S_add_transform);
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(lo)),lo,SCM_ARG3,S_add_transform);
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(hi)),hi,SCM_ARG4,S_add_transform);
-  str1 = gh_scm2newstr(name,NULL);
-  str2 = gh_scm2newstr(xlabel,NULL);
   SCM_ASSERT(gh_procedure_p(proc),proc,SCM_ARG5,S_add_transform);
   if (procedure_ok(proc,2,0,S_add_transform,"func",5))
-    res = gh_int2scm(add_transform(str1,str2,TO_C_DOUBLE(lo),TO_C_DOUBLE(hi),proc));
-  if (str1) free(str1);
-  if (str2) free(str2);
+    res = TO_SMALL_SCM_INT(add_transform(SCM_STRING_CHARS(name),
+				   SCM_STRING_CHARS(xlabel),
+				   TO_C_DOUBLE(lo),
+				   TO_C_DOUBLE(hi),
+				   proc));
   return(res);
 }
 
@@ -2180,14 +2179,14 @@ void g_init_fft(SCM local_doc)
 #if HAVE_HOOKS
   before_fft_hook = scm_create_hook(S_before_fft_hook,2);       /* args = snd chn */
 #endif
-  gh_define(S_fourier_transform,gh_int2scm(FOURIER));
-  gh_define(S_wavelet_transform,gh_int2scm(WAVELET));
-  gh_define(S_hankel_transform,gh_int2scm(HANKEL));
-  gh_define(S_chebyshev_transform,gh_int2scm(CHEBYSHEV));
-  gh_define(S_cepstrum,gh_int2scm(CEPSTRUM));
-  gh_define(S_hadamard_transform,gh_int2scm(HADAMARD));
-  gh_define(S_walsh_transform,gh_int2scm(WALSH));
-  gh_define(S_autocorrelation,gh_int2scm(AUTOCORRELATION));
+  gh_define(S_fourier_transform,TO_SMALL_SCM_INT(FOURIER));
+  gh_define(S_wavelet_transform,TO_SMALL_SCM_INT(WAVELET));
+  gh_define(S_hankel_transform,TO_SMALL_SCM_INT(HANKEL));
+  gh_define(S_chebyshev_transform,TO_SMALL_SCM_INT(CHEBYSHEV));
+  gh_define(S_cepstrum,TO_SMALL_SCM_INT(CEPSTRUM));
+  gh_define(S_hadamard_transform,TO_SMALL_SCM_INT(HADAMARD));
+  gh_define(S_walsh_transform,TO_SMALL_SCM_INT(WALSH));
+  gh_define(S_autocorrelation,TO_SMALL_SCM_INT(AUTOCORRELATION));
 
   DEFINE_PROC(gh_new_procedure1_0(S_autocorrelate,g_autocorrelate),H_autocorrelate);
   DEFINE_PROC(gh_new_procedure5_0(S_add_transform,g_add_transform),H_add_transform);

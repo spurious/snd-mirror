@@ -1483,7 +1483,7 @@ static SCM g_restore_marks(SCM size, SCM snd, SCM chn, SCM marklist)
 		    {
 		      nm = SCM_CAR(el);
 		      if (SCM_NFALSEP(nm))
-			str = gh_scm2newstr(nm,NULL);
+			str = SCM_STRING_CHARS(nm);
 		      else str = NULL;
 		      id = TO_C_INT(SCM_CADDR(el));
 		      if (gh_length(el) > 3)
@@ -1491,7 +1491,6 @@ static SCM g_restore_marks(SCM size, SCM snd, SCM chn, SCM marklist)
 		      else sync = 0;
 		      cp->marks[i][j] = make_mark_1(TO_C_INT(sm),str,id,sync);
 		      if (id > mark_id_counter) mark_id_counter = id;
-		      if (str) {free(str); str=NULL;}
 		    }
 		}
 	    }
@@ -1510,15 +1509,15 @@ static SCM iread_mark(SCM n, int fld, int pos_n, char *caller)
   int pos;
   chan_info *ncp[1];
   mark *m;
-  pos = g_scm2intdef(pos_n,-1);
-  m = find_mark_id(ncp,g_scm2intdef(n,0),pos);
-  if (m == NULL) return(scm_throw(NO_SUCH_MARK,SCM_LIST2(gh_str02scm(caller),n)));
+  pos = TO_C_INT_OR_ELSE(pos_n,-1);
+  m = find_mark_id(ncp,TO_C_INT_OR_ELSE(n,0),pos);
+  if (m == NULL) return(scm_throw(NO_SUCH_MARK,SCM_LIST2(TO_SCM_STRING(caller),n)));
   switch (fld)
     {
-    case MARK_SAMPLE: RTNINT(m->samp); break;
-    case MARK_SYNC:   RTNINT(mark_sync(m)); break;
-    case MARK_NAME:   if (m->name) RTNSTR(m->name); else RTNSTR(""); break;
-    case MARK_HOME:   return(SCM_LIST2(gh_int2scm((ncp[0]->sound)->index),gh_int2scm(ncp[0]->chan))); break;
+    case MARK_SAMPLE: return(TO_SCM_INT(m->samp)); break;
+    case MARK_SYNC:   return(TO_SCM_INT(mark_sync(m))); break;
+    case MARK_NAME:   if (m->name) return(TO_SCM_STRING(m->name)); else return(TO_SCM_STRING("")); break;
+    case MARK_HOME:   return(SCM_LIST2(TO_SMALL_SCM_INT((ncp[0]->sound)->index),TO_SMALL_SCM_INT(ncp[0]->chan))); break;
     }
   return(SCM_BOOL_F);
 }
@@ -1527,24 +1526,21 @@ static SCM iwrite_mark(SCM mark_n, SCM val, int fld, char *caller)
 {
   chan_info *cp[1];
   mark *m;
-  char *str;
-  m = find_mark_id(cp,g_scm2intdef(mark_n,0),-1);
-  if (m == NULL) return(scm_throw(NO_SUCH_MARK,SCM_LIST2(gh_str02scm(caller),mark_n)));
+  m = find_mark_id(cp,TO_C_INT_OR_ELSE(mark_n,0),-1);
+  if (m == NULL) return(scm_throw(NO_SUCH_MARK,SCM_LIST2(TO_SCM_STRING(caller),mark_n)));
   switch (fld)
     {
     case MARK_SAMPLE: 
-      m->samp = iclamp(0,g_scm2int(val),current_ed_samples(cp[0]));
+      m->samp = iclamp(0,TO_C_INT_OR_ELSE(val,0),current_ed_samples(cp[0]));
       sort_marks(cp[0]); /* update and re-sort current mark list */
       update_graph(cp[0],NULL);
       break;
     case MARK_SYNC: 
-      set_mark_sync(m,g_scm2int(val));
+      set_mark_sync(m,TO_C_INT_OR_ELSE(val,0));
       break;
     case MARK_NAME:
       if (m->name) FREE(m->name);
-      str = gh_scm2newstr(val,NULL);
-      m->name = copy_string(str);
-      free(str);
+      m->name = copy_string(SCM_STRING_CHARS(val));
       update_graph(cp[0],NULL);
       break;
     }
@@ -1556,7 +1552,7 @@ static SCM g_markQ(SCM id_n)
   #define H_markQ "(" S_markQ " id) -> #t if mark is active"
   chan_info *ncp[1];
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(id_n)),id_n,SCM_ARG1,S_markQ);
-  RTNBOOL(find_mark_id(ncp,g_scm2int(id_n),-1));
+  return(TO_SCM_BOOLEAN(find_mark_id(ncp,TO_C_INT_OR_ELSE(id_n,0),-1)));
 }
 
 static SCM g_mark_sample(SCM mark_n, SCM pos_n) 
@@ -1605,7 +1601,7 @@ static SCM g_set_mark_name(SCM mark_n, SCM name)
 static SCM g_mark_sync_max(void) 
 {
   #define H_mark_sync_max "(" S_mark_sync_max ") -> max mark sync value seen so far"
-  return(gh_int2scm(mark_sync_max()));
+  return(TO_SCM_INT(mark_sync_max()));
 }
 
 static SCM g_mark_to_sound(SCM mark_n)
@@ -1627,30 +1623,27 @@ static SCM g_find_mark(SCM samp_n, SCM snd_n, SCM chn_n)
   SCM_ASSERT((gh_number_p(samp_n) || gh_string_p(samp_n) || (SCM_UNBNDP(samp_n)) || (SCM_FALSEP(samp_n))),samp_n,SCM_ARG1,S_find_mark);
   ERRCP(S_find_mark,snd_n,chn_n,2); 
   cp = get_cp(snd_n,chn_n,S_find_mark);
-  if (cp->marks == NULL) return(scm_throw(NO_SUCH_MARK,SCM_LIST2(gh_str02scm(S_find_mark),samp_n)));
+  if (cp->marks == NULL) return(scm_throw(NO_SUCH_MARK,SCM_LIST2(TO_SCM_STRING(S_find_mark),samp_n)));
   mps = cp->marks[cp->edit_ctr];
   if (mps)
     {
       if (gh_string_p(samp_n))
-	name = gh_scm2newstr(samp_n,NULL);
-      else samp = g_scm2intdef(samp_n,0);
+	name = SCM_STRING_CHARS(samp_n);
+      else samp = TO_C_INT_OR_ELSE(samp_n,0);
       if (name)
 	{
 	  for (i=0;i<=cp->mark_ctr[cp->edit_ctr];i++) 
 	    if ((mps[i]) && (mps[i]->name) && (strcmp(name,mps[i]->name) == 0))
-	      {
-		free(name);
-		RTNINT(mark_id(mps[i]));
-	      }
+	      return(TO_SCM_INT(mark_id(mps[i])));
 	}
       else
 	{
 	  for (i=0;i<=cp->mark_ctr[cp->edit_ctr];i++)
 	    if ((mps[i]) && (mps[i]->samp == samp)) 
-	      RTNINT(mark_id(mps[i]));
+	      return(TO_SCM_INT(mark_id(mps[i])));
 	}
     }
-  return(scm_throw(NO_SUCH_MARK,SCM_LIST2(gh_str02scm(S_find_mark),samp_n)));
+  return(scm_throw(NO_SUCH_MARK,SCM_LIST2(TO_SCM_STRING(S_find_mark),samp_n)));
 }
 
 static SCM g_add_mark(SCM samp_n, SCM snd_n, SCM chn_n) 
@@ -1661,14 +1654,14 @@ static SCM g_add_mark(SCM samp_n, SCM snd_n, SCM chn_n)
   ERRB1(samp_n,S_add_mark); 
   ERRCP(S_add_mark,snd_n,chn_n,2);
   cp = get_cp(snd_n,chn_n,S_add_mark);
-  m = add_mark(g_scm2intdef(samp_n,0),NULL,cp);
+  m = add_mark(TO_C_INT_OR_ELSE(samp_n,0),NULL,cp);
   if (m)
     {
       /* if it's a redundant mark, and we're ignoring them, return -1 */
       update_graph(cp,NULL);
-      RTNINT(mark_id(m));
+      return(TO_SCM_INT(mark_id(m)));
     }
-  else RTNINT(-1); /* ?? SCM_BOOL_F? or 'redundant-mark? */
+  else return(TO_SCM_INT(-1)); /* ?? SCM_BOOL_F? or 'redundant-mark? */
 }
 
 static SCM g_delete_mark(SCM id_n) 
@@ -1678,8 +1671,8 @@ static SCM g_delete_mark(SCM id_n)
   mark *m;
   int id;
   ERRB1(id_n,S_delete_mark);
-  m = find_mark_id(cp,id = g_scm2intdef(id_n,0),-1);
-  if (m == NULL) return(scm_throw(NO_SUCH_MARK,SCM_LIST2(gh_str02scm(S_delete_mark),id_n)));
+  m = find_mark_id(cp,id = TO_C_INT_OR_ELSE(id_n,0),-1);
+  if (m == NULL) return(scm_throw(NO_SUCH_MARK,SCM_LIST2(TO_SCM_STRING(S_delete_mark),id_n)));
   delete_mark_id(id,cp[0]);
   update_graph(cp[0],NULL);
   return(id_n);
@@ -1698,8 +1691,8 @@ static SCM g_delete_marks(SCM snd_n, SCM chn_n)
 static SCM int_array_to_list(int *arr, int i, int len)
 {
   if (i < len)
-    return(gh_cons(gh_int2scm(arr[i]),int_array_to_list(arr,i+1,len)));
-  else return(gh_cons(gh_int2scm(arr[i]),SCM_EOL));
+    return(gh_cons(TO_SCM_INT(arr[i]),int_array_to_list(arr,i+1,len)));
+  else return(gh_cons(TO_SCM_INT(arr[i]),SCM_EOL));
 }
 
 static int *syncd_marks(snd_state *ss, int sync)
@@ -1775,7 +1768,7 @@ static SCM g_marks(SCM snd_n, SCM chn_n, SCM pos_n)
 	else
 	  {
 	    sp = get_sp(snd_n);
-	    if (sp == NULL) return(scm_throw(NO_SUCH_SOUND,SCM_LIST2(gh_str02scm(S_marks),snd_n)));
+	    if (sp == NULL) return(scm_throw(NO_SUCH_SOUND,SCM_LIST2(TO_SCM_STRING(S_marks),snd_n)));
 	    for (i=sp->nchans-1;i>=0;i--)
 	      {
 		cp = sp->chans[i];
@@ -1795,7 +1788,7 @@ static SCM g_marks(SCM snd_n, SCM chn_n, SCM pos_n)
 	{
 	  sp = ss->sounds[j];
 	  if ((sp) && (sp->inuse))
-	    res1 = gh_cons(g_marks(gh_int2scm(j),SCM_UNDEFINED,SCM_UNDEFINED),res1);
+	    res1 = gh_cons(g_marks(TO_SMALL_SCM_INT(j),SCM_UNDEFINED,SCM_UNDEFINED),res1);
 	}
     }
   return(res1);
@@ -1809,9 +1802,9 @@ static SCM g_forward_mark(SCM count, SCM snd, SCM chn)
   ERRB1(count,S_forward_mark);
   ERRCP(S_forward_mark,snd,chn,2);
   cp = get_cp(snd,chn,S_forward_mark);
-  val = g_scm2intdef(count,1); 
+  val = TO_C_INT_OR_ELSE(count,1); 
   handle_cursor(cp,goto_mark(cp,val));
-  RTNINT(val);
+  return(TO_SCM_INT(val));
 }
 
 static SCM g_backward_mark(SCM count, SCM snd, SCM chn) 
@@ -1822,9 +1815,9 @@ static SCM g_backward_mark(SCM count, SCM snd, SCM chn)
   ERRB1(count,S_backward_mark);
   ERRCP(S_backward_mark,snd,chn,2);
   cp = get_cp(snd,chn,S_backward_mark);
-  val = -(g_scm2intdef(count,1)); 
+  val = -(TO_C_INT_OR_ELSE(count,1)); 
   handle_cursor(cp,goto_mark(cp,val));
-  RTNINT(val);
+  return(TO_SCM_INT(val));
 }
 
 #if HAVE_HOOKS
@@ -1832,7 +1825,7 @@ static SCM mark_drag_hook;
 static void call_mark_drag_hook(int id)
 {
   if (HOOKED(mark_drag_hook))
-    g_c_run_progn_hook(mark_drag_hook,SCM_LIST1(gh_int2scm(id)));
+    g_c_run_progn_hook(mark_drag_hook,SCM_LIST1(TO_SMALL_SCM_INT(id)));
 }
 #endif
 
@@ -1887,9 +1880,9 @@ static SCM g_save_marks(SCM snd_n)
   SCM res;
   ERRSP(S_save_marks,snd_n,1);
   sp = get_sp(snd_n);
-  if (sp == NULL) return(scm_throw(NO_SUCH_SOUND,SCM_LIST2(gh_str02scm(S_save_marks),snd_n)));
+  if (sp == NULL) return(scm_throw(NO_SUCH_SOUND,SCM_LIST2(TO_SCM_STRING(S_save_marks),snd_n)));
   str = save_marks(sp);
-  res = gh_str02scm(str);
+  res = TO_SCM_STRING(str);
   FREE(str);
   return(res);
 }

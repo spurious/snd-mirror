@@ -1,7 +1,7 @@
-/* sndlib2scm (for Snd) */
-
 #ifndef SNDLIB2SCM_H
 #define SNDLIB2SCM_H
+
+#if HAVE_GUILE
 
 typedef struct {
   int length,chans;
@@ -11,4 +11,5 @@ typedef struct {
 int sound_data_p(SCM obj);
 SCM make_sound_data(int chans, int frames);
 
+#endif
 #endif

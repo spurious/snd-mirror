@@ -1143,7 +1143,7 @@ static env *find_named_env(SCM name)
 {
   char *env_name;
   int i,len;
-  env_name = gh_scm2newstr(name,NULL);
+  env_name = TO_NEW_C_STRING(name);
   len = enved_all_envs_top();
   for (i=0;i<len;i++)
     if (strcmp(env_name,enved_all_names(i)) == 0)

@@ -1,5 +1,6 @@
 #include "snd.h"
 #include "vct.h"
+#include "clm2scm.h"
 
 #if HAVE_LOCALE_H
   #include <locale.h>
@@ -159,8 +160,6 @@ static char *b2s(int val) {if (val) return("#t"); else return("#f");}
 #else
 static char *b2s(int val) {if (val) return("1"); else return("0");}
 #endif
-
-char *mus_fft_window_name(int i); /* from clm2scm.c */
 
 #define white_space "      "
 
@@ -695,23 +694,20 @@ int handle_next_startup_arg(snd_state *ss, int auto_open_ctr, char **auto_open_f
 static SCM g_save_options(SCM filename)
 {
   #define H_save_options "(" S_save_options " filename) saves Snd options in filename"
-  char *name = NULL,*urn;
+  char *name = NULL;
   FILE *fd;
   SCM_ASSERT(gh_string_p(filename),filename,SCM_ARG1,S_save_options);
-  urn = gh_scm2newstr(filename,NULL);
-  name = mus_file_full_name(urn);
+  name = full_filename(filename);
   fd = fopen(name,"w");
   if (name) FREE(name);
   if (fd) 
     {
       save_snd_state_options(get_global_state(),fd);
       if (fclose(fd) != 0)
-	snd_error("can't close %s: %s [%s[%d] %s]",urn,strerror(errno),__FILE__,__LINE__,__FUNCTION__);
-      free(urn);
+	snd_error("can't close %s: %s [%s[%d] %s]",SCM_STRING_CHARS(filename),strerror(errno),__FILE__,__LINE__,__FUNCTION__);
       return(filename);
     }
-  free(urn);
-  return(scm_throw(CANNOT_SAVE,SCM_LIST1(gh_str02scm(S_save_options))));
+  return(scm_throw(CANNOT_SAVE,SCM_LIST1(TO_SCM_STRING(S_save_options))));
 }
 
 static SCM g_mem_report(void) 

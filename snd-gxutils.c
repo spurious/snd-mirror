@@ -55,7 +55,7 @@ static SCM send_netscape(SCM cmd)
   ss = get_global_state();
   dpy = MAIN_DISPLAY(ss);
   command = (char *)CALLOC(256,sizeof(char));
-  tmp = gh_scm2newstr(cmd,NULL);
+  tmp = TO_NEW_C_STRING(cmd);
   if ((window = find_window(dpy,DefaultRootWindow(dpy),NS_VERSION,compare_window)))
     {
       sprintf(command,"openURL(file:%s)",tmp);
@@ -90,22 +90,18 @@ static void change_property(snd_state *ss, char *winat, char *name, char *comman
 
 static SCM g_change_property(SCM winat, SCM name, SCM command)
 {
-  char *n,*c,*w;
+  char *c;
   /* winat arg needed as well as command arg because we need an atom that is guaranteed to have a value */
   SCM_ASSERT(gh_string_p(winat),name,SCM_ARG1,"change-property");
   SCM_ASSERT(gh_string_p(name),name,SCM_ARG2,"change-property");
-  w = gh_scm2newstr(winat,NULL);
-  n = gh_scm2newstr(name,NULL);
   if (gh_string_p(command))
-    c = gh_scm2newstr(command,NULL);
+    c = TO_NEW_C_STRING(command);
   else
     {
       /* turn it into a string before passing it to change_property */
       c = gh_print_1(command);
     }
-  change_property(get_global_state(),w,n,c);
-  if (w) free(w);
-  if (n) free(n);
+  change_property(get_global_state(),SCM_STRING_CHARS(winat),SCM_STRING_CHARS(name),c);
   if (c) free(c);
   return(SCM_BOOL_F);
 }

@@ -87,7 +87,7 @@ static char *snd_itoa(int n)
 #if HAVE_GUILE
 static char *guile_version(void) 
 { 
-  return(gh_scm2newstr(scm_version(),NULL));
+  return(TO_NEW_C_STRING(scm_version()));
 }
 #endif
 

@@ -529,7 +529,7 @@ static char *output_name(void)
       while (SCM_NIMP (procs))
 	{
 	  result = g_call0(SCM_CAR(procs));
-	  if (gh_string_p(result)) return(gh_scm2newstr(result,NULL));
+	  if (gh_string_p(result)) return(TO_NEW_C_STRING(result));
 	  procs = SCM_CDR (procs);
 	}
     }
@@ -543,12 +543,13 @@ static SCM g_save_state_file(void)
 {
   snd_state *ss;
   ss = get_global_state();
-  RTNSTR(save_state_file(ss));
+  return(TO_SCM_STRING(save_state_file(ss)));
 }
 
 static void set_save_state_file(snd_state *ss, char *name)
 {
-  in_set_save_state_file(ss,name);
+  if (save_state_file(ss)) free(save_state_file(ss));
+  in_set_save_state_file(ss,snd_strdup(name));
   set_sensitive(options_save_state_menu(),(snd_strlen(name) > 0));
 }
 
@@ -558,8 +559,8 @@ static SCM g_set_save_state_file(SCM val)
   snd_state *ss;
   SCM_ASSERT(gh_string_p(val),val,SCM_ARG1,"set-" S_save_state_file); 
   ss = get_global_state();
-  set_save_state_file(ss,gh_scm2newstr(val,0));
-  RTNSTR(save_state_file(ss));
+  set_save_state_file(ss,TO_NEW_C_STRING(val));
+  return(TO_SCM_STRING(save_state_file(ss)));
 }
 
 static char **menu_strings = NULL; /* backwards compatibility */
@@ -598,7 +599,7 @@ static int make_callback_slot(void)
 static void add_callback(int slot, SCM callstr)
 {
   if (gh_string_p(callstr))
-    menu_strings[slot] = gh_scm2newstr(callstr,NULL);
+    menu_strings[slot] = TO_NEW_C_STRING(callstr);
   else 
     {
       if ((menu_functions[slot]) && (gh_procedure_p(menu_functions[slot]))) snd_unprotect(menu_functions[slot]);
@@ -610,7 +611,6 @@ static void add_callback(int slot, SCM callstr)
 static SCM g_add_to_main_menu(SCM label, SCM callback)
 {
   #define H_add_to_main_menu "(" S_add_to_main_menu " label &optional callback) adds label to the main (top-level) menu, returning its index"
-  char *name = NULL;
   int val,slot=-1;
   SCM_ASSERT(gh_string_p(label),label,SCM_ARG1,S_add_to_main_menu);
   if (gh_procedure_p(callback)) 
@@ -618,10 +618,8 @@ static SCM g_add_to_main_menu(SCM label, SCM callback)
       slot = make_callback_slot();
       add_callback(slot,callback);
     }
-  name = gh_scm2newstr(label,NULL);
-  val = gh_add_to_main_menu(get_global_state(),name,slot);
-  free(name);
-  RTNINT(val);
+  val = gh_add_to_main_menu(get_global_state(),SCM_STRING_CHARS(label),slot);
+  return(TO_SCM_INT(val));
 }
 
 static SCM g_add_to_menu(SCM menu, SCM label, SCM callstr)
@@ -629,15 +627,15 @@ static SCM g_add_to_menu(SCM menu, SCM label, SCM callstr)
   #define H_add_to_menu "(" S_add_to_menu " menu label func) adds label to menu invoking func when activated\n\
    menu is the index returned by add-to-main-menu, func should be a function of no arguments"
 
-  char *name;
   int err=0,slot;
   SCM_ASSERT(gh_string_p(label),label,SCM_ARG2,S_add_to_menu);
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(menu)),menu,SCM_ARG1,S_add_to_menu);
   slot = make_callback_slot();
-  name = gh_scm2newstr(label,NULL);
-  err = gh_add_to_menu(get_global_state(),g_scm2int(menu),name,slot);
-  free(name);
-  if (err == -1) return(scm_throw(NO_SUCH_MENU,SCM_LIST2(gh_str02scm(S_add_to_menu),menu)));
+  err = gh_add_to_menu(get_global_state(),TO_C_INT_OR_ELSE(menu,0),SCM_STRING_CHARS(label),slot);
+  if (err == -1) 
+    return(scm_throw(NO_SUCH_MENU,
+		     SCM_LIST2(TO_SCM_STRING(S_add_to_menu),
+			       menu)));
   add_callback(slot,callstr);
   return(label);
 }
@@ -651,56 +649,42 @@ void g_snd_callback(int callb)
 static SCM g_remove_from_menu(SCM menu, SCM label)
 {
   #define H_remove_from_menu "(" S_remove_from_menu " menu label) removes menu item label from menu"
-  char *name;
   int val;
   SCM_ASSERT(gh_string_p(label),label,SCM_ARG2,S_remove_from_menu);
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(menu)),menu,SCM_ARG1,S_remove_from_menu);
-  name = gh_scm2newstr(label,NULL);
-  val = gh_remove_from_menu(g_scm2int(menu),name);
-  free(name);
-  RTNINT(val);
+  val = gh_remove_from_menu(TO_C_INT_OR_ELSE(menu,0),SCM_STRING_CHARS(label));
+  return(TO_SCM_INT(val));
 }
 
 static SCM g_change_menu_label(SCM menu, SCM old_label, SCM new_label)
 {
   #define H_change_menu_label "(" S_change_menu_label " menu old-label new-label) changes menu's label"
-  char *old_name,*new_name;
   int val;
   SCM_ASSERT(gh_string_p(old_label),old_label,SCM_ARG2,S_change_menu_label);
   SCM_ASSERT(gh_string_p(new_label),new_label,SCM_ARG3,S_change_menu_label);
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(menu)),menu,SCM_ARG1,S_change_menu_label);
-  old_name = gh_scm2newstr(old_label,NULL);
-  new_name = gh_scm2newstr(new_label,NULL);
-  val = gh_change_menu_label(g_scm2int(menu),old_name,new_name);
-  free(old_name);
-  free(new_name);
-  RTNINT(val);
+  val = gh_change_menu_label(TO_C_INT_OR_ELSE(menu,0),SCM_STRING_CHARS(old_label),SCM_STRING_CHARS(new_label));
+  return(TO_SCM_INT(val));
 }
 
 static SCM g_menu_sensitive(SCM menu, SCM label)
 {
   #define H_menu_sensitive "(" S_menu_sensitive " menu label) reflects whether item label in menu is sensitive"
-  char *name;
   int val;
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(menu)),menu,SCM_ARG1,"set-" S_menu_sensitive);
   SCM_ASSERT(gh_string_p(label),label,SCM_ARG2,"set-" S_menu_sensitive);
-  name = gh_scm2newstr(label,NULL);
-  val = gh_menu_is_sensitive(g_scm2int(menu),name);
-  free(name);
-  RTNBOOL(val);
+  val = gh_menu_is_sensitive(TO_C_INT_OR_ELSE(menu,0),SCM_STRING_CHARS(label));
+  return(TO_SCM_BOOLEAN(val));
 }
 
 static SCM g_set_menu_sensitive(SCM menu, SCM label, SCM on)
 {
-  char *name;
   int val;
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(menu)),menu,SCM_ARG1,"set-" S_menu_sensitive);
   SCM_ASSERT(gh_string_p(label),label,SCM_ARG2,"set-" S_menu_sensitive);
   ERRB3(on,"set-" S_menu_sensitive);
-  name = gh_scm2newstr(label,NULL);
-  val = gh_set_menu_sensitive(g_scm2int(menu),name,bool_int_or_one(on));
-  free(name);
-  RTNBOOL(val);
+  val = gh_set_menu_sensitive(TO_C_INT_OR_ELSE(menu,0),SCM_STRING_CHARS(label),bool_int_or_one(on));
+  return(TO_SCM_BOOLEAN(val));
 }
 
 

@@ -31,8 +31,10 @@ static void mus_error2snd(int type, char *msg)
       if (ss->catch_exists) /* damned thing aborts main program if throw to tag is not caught! */
 	{
 	  if (msg == NULL)
-	    scm_throw(MUS_MISC_ERROR,SCM_LIST1(gh_str02scm((char *)mus_error_to_string(type))));
-	  else scm_throw(MUS_MISC_ERROR,SCM_LIST1(gh_str02scm(msg)));
+	    scm_throw(MUS_MISC_ERROR,
+		      SCM_LIST1(TO_SCM_STRING((char *)mus_error_to_string(type))));
+	  else scm_throw(MUS_MISC_ERROR,
+			 SCM_LIST1(TO_SCM_STRING(msg)));
 	}
     }
 #endif
@@ -151,7 +153,7 @@ static void mus_print2snd(char *msg)
   ss->Dot_Size = DEFAULT_DOT_SIZE;
   ss->Vu_Size = DEFAULT_VU_SIZE;
   ss->Vu_Font_Size = DEFAULT_VU_FONT_SIZE;
-  ss->Vu_Font = DEFAULT_VU_FONT;
+  ss->Vu_Font = snd_strdup(DEFAULT_VU_FONT);
   ss->Speed_Style = DEFAULT_SPEED_STYLE;
   ss->Movies = DEFAULT_MOVIES;
   ss->Selection_Creates_Region = DEFAULT_SELECTION_CREATES_REGION;
@@ -164,13 +166,13 @@ static void mus_print2snd(char *msg)
   ss->Filter_Env_Order = DEFAULT_FILTER_ENV_ORDER;
   ss->Filter_Env_In_Hz = DEFAULT_FILTER_ENV_IN_HZ;
   ss->Verbose_Cursor = DEFAULT_VERBOSE_CURSOR;
-  ss->Temp_Dir = DEFAULT_TEMP_DIR;
-  ss->Save_Dir = DEFAULT_SAVE_DIR;
-  ss->Eps_File = DEFAULT_EPS_FILE;
+  ss->Temp_Dir = snd_strdup(DEFAULT_TEMP_DIR);
+  ss->Save_Dir = snd_strdup(DEFAULT_SAVE_DIR);
+  ss->Eps_File = snd_strdup(DEFAULT_EPS_FILE);
   ss->Eps_Bottom_Margin = DEFAULT_EPS_BOTTOM_MARGIN;
   ss->Eps_Left_Margin = DEFAULT_EPS_LEFT_MARGIN;
-  ss->Listener_Prompt = DEFAULT_LISTENER_PROMPT;
-  ss->Audio_State_File = AUDIO_STATE_FILE;
+  ss->Listener_Prompt = snd_strdup(DEFAULT_LISTENER_PROMPT);
+  ss->Audio_State_File = snd_strdup(AUDIO_STATE_FILE);
   ss->Show_Fft_Peaks = DEFAULT_SHOW_FFT_PEAKS;
   ss->Show_Y_Zero = DEFAULT_SHOW_Y_ZERO;
   ss->Show_Axes = DEFAULT_SHOW_AXES;
@@ -199,7 +201,7 @@ static void mus_print2snd(char *msg)
   ss->Mix_Tag_Width = DEFAULT_MIX_TAG_WIDTH;
   ss->Mix_Tag_Height = DEFAULT_MIX_TAG_HEIGHT;
   ss->Show_Usage_Stats = DEFAULT_SHOW_USAGE_STATS;
-  ss->Save_State_File = DEFAULT_SAVE_STATE_FILE;
+  ss->Save_State_File = snd_strdup(DEFAULT_SAVE_STATE_FILE);
   ss->Enved_Base = DEFAULT_ENVED_BASE;
   ss->Enved_Power = DEFAULT_ENVED_POWER;
   ss->Enved_Waving = DEFAULT_ENVED_WAVING;

@@ -103,22 +103,16 @@ void snd_error(char *format, ...)
 static SCM g_snd_error(SCM msg)
 {
   #define H_snd_error "(" S_snd_error " str) reports error message str"
-  char *str = NULL;
   SCM_ASSERT(gh_string_p(msg),msg,SCM_ARG1,S_snd_error);
-  str = gh_scm2newstr(msg,NULL);
-  snd_error(str);
-  if (str) free(str);
+  snd_error(SCM_STRING_CHARS(msg));
   return(msg);
 }
   
 static SCM g_snd_warning(SCM msg)
 {
   #define H_snd_warning "(" S_snd_warning " str) reports warning message str"
-  char *str = NULL;
   SCM_ASSERT(gh_string_p(msg),msg,SCM_ARG1,S_snd_warning);
-  str = gh_scm2newstr(msg,NULL);
-  snd_warning(str);
-  if (str) free(str);
+  snd_warning(SCM_STRING_CHARS(msg));
   return(msg);
 }
  
@@ -129,7 +123,7 @@ int ignore_mus_error(int type, char *msg)
 {
   SCM result = SCM_BOOL_F;
   if (HOOKED(mus_error_hook))
-    result = g_c_run_or_hook(mus_error_hook,SCM_LIST2(gh_int2scm(type),gh_str02scm(msg)));
+    result = g_c_run_or_hook(mus_error_hook,SCM_LIST2(TO_SCM_INT(type),TO_SCM_STRING(msg)));
   return(SCM_NFALSEP(result));
 }
 
@@ -137,7 +131,7 @@ static int ignore_snd_error(char *msg)
 {
   SCM result = SCM_BOOL_F;
   if (HOOKED(snd_error_hook))
-    result = g_c_run_or_hook(snd_error_hook,SCM_LIST1(gh_str02scm(msg)));
+    result = g_c_run_or_hook(snd_error_hook,SCM_LIST1(TO_SCM_STRING(msg)));
   return(SCM_NFALSEP(result));
 }
 
@@ -145,7 +139,7 @@ static int ignore_snd_warning(char *msg)
 {
   SCM result = SCM_BOOL_F;
   if (HOOKED(snd_warning_hook))
-    result = g_c_run_or_hook(snd_warning_hook,SCM_LIST1(gh_str02scm(msg)));
+    result = g_c_run_or_hook(snd_warning_hook,SCM_LIST1(TO_SCM_STRING(msg)));
   return(SCM_NFALSEP(result));
 }
 

@@ -15,13 +15,13 @@ static snd_state *state;
 static SCM g_html_dir(void) 
 {
   #define H_html_dir "(" S_html_dir ") -> location of Snd documentation"
-  RTNSTR(html_dir(state));
+  return(TO_SCM_STRING(html_dir(state)));
 }
 
 static SCM g_set_html_dir(SCM val) 
 {
   SCM_ASSERT(gh_string_p(val),val,SCM_ARG1,"set-" S_html_dir);
-  set_html_dir(state,gh_scm2newstr(val,0)); 
+  set_html_dir(state,TO_NEW_C_STRING(val)); 
   return(val);
 }
 #endif
@@ -68,7 +68,7 @@ static int snd_color_p(SCM obj)
 static SCM g_color_p(SCM obj) 
 {
   #define H_color_p "(" S_colorQ " obj) -> #t if obj is a color object"
-  RTNBOOL(snd_color_p(obj));
+  return(TO_SCM_BOOLEAN(snd_color_p(obj)));
 }
 
 static snd_color *get_snd_color(SCM arg)
@@ -126,9 +126,9 @@ static SCM g_color2list(SCM obj)
   tmp_color.flags = DoRed | DoGreen | DoBlue;
   tmp_color.pixel = v->color;
   XQueryColor(dpy,cmap,&tmp_color);
-  return(scm_return_first(SCM_LIST3(gh_double2scm((float)tmp_color.red / 65535.0),
-				    gh_double2scm((float)tmp_color.green / 65535.0),
-				    gh_double2scm((float)tmp_color.blue / 65535.0)),
+  return(scm_return_first(SCM_LIST3(TO_SCM_DOUBLE((float)tmp_color.red / 65535.0),
+				    TO_SCM_DOUBLE((float)tmp_color.green / 65535.0),
+				    TO_SCM_DOUBLE((float)tmp_color.blue / 65535.0)),
 			  obj));
 }
 
@@ -137,7 +137,7 @@ static SCM equalp_snd_color(SCM obj1, SCM obj2)
   snd_color *v1,*v2;
   v1 = (snd_color *)SND_VALUE_OF(obj1);
   v2 = (snd_color *)SND_VALUE_OF(obj2);
-  RTNBOOL(v1->color == v2->color);
+  return(TO_SCM_BOOLEAN(v1->color == v2->color));
 }
 
 static SCM g_make_snd_color(SCM r, SCM g, SCM b)
@@ -174,9 +174,9 @@ static SCM pixel2color(Pixel pix)
   tmp_color.flags = DoRed | DoGreen | DoBlue;
   tmp_color.pixel = pix;
   XQueryColor(dpy,cmap,&tmp_color);
-  return(g_make_snd_color(gh_double2scm((Float)tmp_color.red / 65535.0),
-			  gh_double2scm((Float)tmp_color.green / 65535.0),
-			  gh_double2scm((Float)tmp_color.blue / 65535.0)));
+  return(g_make_snd_color(TO_SCM_DOUBLE((Float)tmp_color.red / 65535.0),
+			  TO_SCM_DOUBLE((Float)tmp_color.green / 65535.0),
+			  TO_SCM_DOUBLE((Float)tmp_color.blue / 65535.0)));
 }
 
 #if (!(HAVE_NEW_SMOB))
@@ -534,7 +534,7 @@ static SCM g_set_mix_color (SCM arg1, SCM arg2)
   if (v) 
     {
       if (gh_number_p(mix_id))
-	color_one_mix_from_id(TO_C_INT(mix_id),v->color);
+	color_one_mix_from_id(TO_SMALL_C_INT(mix_id),v->color);
       else set_mix_color(state,v->color);
       map_over_chans(state,update_graph,NULL);
     }
@@ -545,7 +545,7 @@ static SCM g_mix_color(SCM mix_id)
 {
   #define H_mix_color "(" S_mix_color ") -> color of mix consoles"
   if (gh_number_p(mix_id))
-    return(pixel2color(mix_to_color_from_id(TO_C_INT(mix_id))));
+    return(pixel2color(mix_to_color_from_id(TO_SMALL_C_INT(mix_id))));
   return(pixel2color((state->sgx)->mix_color));
 }
 
@@ -649,13 +649,13 @@ static SCM g_load_colormap(SCM colors)
     }
   x_load_colormap(xcs);
   FREE(xcs);
-  return(gh_int2scm(len));
+  return(TO_SCM_INT(len));
 }
 
 static SCM g_graph_cursor(void)
 {
   #define H_graph_cursor "(" S_graph_cursor ") -> current graph cursor shape"
-  return(gh_int2scm(in_graph_cursor(state)));
+  return(TO_SCM_INT(in_graph_cursor(state)));
 }
 
 static SCM g_set_graph_cursor(SCM curs)

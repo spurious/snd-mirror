@@ -573,7 +573,6 @@ void snd_doit(snd_state *ss,int argc, char **argv)
   ss->init_file = getenv(SND_INIT_FILE_ENVIRONMENT_NAME);
   if (ss->init_file == NULL)
     ss->init_file = INIT_FILE_NAME;
-  set_eps_file(ss,EPS_FILE_NAME);
 
   set_color_map(ss,DEFAULT_SPECTROGRAM_COLOR);
   set_ask_before_overwrite(ss,FALSE);

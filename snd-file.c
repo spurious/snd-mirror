@@ -484,7 +484,7 @@ static int dont_open(snd_state *ss, char *file)
       if (HOOKED(open_hook))
 	{
 	  ss->open_hook_active = 1;
-	  res = g_c_run_or_hook(open_hook,SCM_LIST1(gh_str02scm(mcf = mus_file_full_name(file))));
+	  res = g_c_run_or_hook(open_hook,SCM_LIST1(TO_SCM_STRING(mcf = mus_file_full_name(file))));
 	  if (mcf) FREE(mcf);
 	  ss->open_hook_active = 0;
 	}
@@ -500,7 +500,7 @@ static int dont_close(snd_state *ss, snd_info *sp)
       if (HOOKED(close_hook))
 	{
 	  ss->close_hook_active = 1;
-	  res = g_c_run_or_hook(close_hook,SCM_LIST1(gh_int2scm(sp->index)));
+	  res = g_c_run_or_hook(close_hook,SCM_LIST1(TO_SMALL_SCM_INT(sp->index)));
 	  ss->close_hook_active = 0;
 	}
     }
@@ -511,7 +511,7 @@ static int just_sounds_happy(char *filename)
 {
   SCM res = SCM_BOOL_T;
   if (HOOKED(just_sounds_hook))
-    res = g_c_run_or_hook(just_sounds_hook,SCM_LIST1(gh_str02scm(filename)));
+    res = g_c_run_or_hook(just_sounds_hook,SCM_LIST1(TO_SCM_STRING(filename)));
   return(SCM_TRUE_P(res));
 }
 
@@ -542,7 +542,7 @@ static snd_info *snd_open_file_1 (char *filename, snd_state *ss, int select)
   if (sp)
     {
 #if HAVE_GUILE
-      SCM_SETCDR(memo_sound,gh_int2scm(sp->index));
+      SCM_SETCDR(memo_sound,TO_SMALL_SCM_INT(sp->index));
 #endif
       sp->write_date = file_write_date(sp->fullname);
       sp->need_update = 0;
@@ -1843,11 +1843,8 @@ snd_info *snd_new_file(snd_state *ss, char *newname, int header_type, int data_f
 static SCM g_add_sound_file_extension(SCM ext)
 {
   #define H_add_sound_file_extension "(" S_add_sound_file_extension " ext)  adds the file extension ext to the list of sound file extensions"
-  char *name;
   SCM_ASSERT(gh_string_p(ext),ext,SCM_ARG1,S_add_sound_file_extension);
-  name = gh_scm2newstr(ext,NULL);
-  add_sound_file_extension(name);
-  free(name);
+  add_sound_file_extension(SCM_STRING_CHARS(ext));
   return(ext);
 }
 
@@ -1855,13 +1852,10 @@ static SCM g_file_write_date(SCM file)
 {
   #define S_file_write_date "file-write-date"
   #define H_file_write_date "(" S_file_write_date " file) -> write date"
-  char *name;
   time_t date;
   SCM_ASSERT(gh_string_p(file),file,SCM_ARG1,S_file_write_date);
-  name = gh_scm2newstr(file,NULL);
-  date = file_write_date(name);
-  free(name);
-  return(gh_int2scm(date));
+  date = file_write_date(SCM_STRING_CHARS(file));
+  return(scm_return_first(TO_SCM_INT(date),file));
 }
 
 static SCM g_set_sound_loop_info(SCM start0, SCM end0, SCM start1, SCM end1, SCM snd)
@@ -1876,13 +1870,13 @@ static SCM g_set_sound_loop_info(SCM start0, SCM end0, SCM start1, SCM end1, SCM
   ERRB4(end1,"set-" S_sound_loop_info);
   ERRSP("set-" S_sound_loop_info,snd,5);
   sp = get_sp(snd);
-  if (sp == NULL) return(scm_throw(NO_SUCH_SOUND,SCM_LIST2(gh_str02scm("set-" S_sound_loop_info),snd)));
+  if (sp == NULL) return(scm_throw(NO_SUCH_SOUND,SCM_LIST2(TO_SCM_STRING("set-" S_sound_loop_info),snd)));
   if ((sp->hdr)->loops == NULL)
     (sp->hdr)->loops = (int *)CALLOC(6,sizeof(int));
-  (sp->hdr)->loops[0] = g_scm2int(start0);
-  (sp->hdr)->loops[1] = g_scm2int(end0);
-  (sp->hdr)->loops[2] = g_scm2intdef(start1,0);
-  (sp->hdr)->loops[3] = g_scm2intdef(end1,0);
+  (sp->hdr)->loops[0] = TO_C_INT_OR_ELSE(start0,0);
+  (sp->hdr)->loops[1] = TO_C_INT_OR_ELSE(end0,0);
+  (sp->hdr)->loops[2] = TO_C_INT_OR_ELSE(start1,0);
+  (sp->hdr)->loops[3] = TO_C_INT_OR_ELSE(end1,0);
   mus_sound_set_loop_info(sp->fullname,(sp->hdr)->loops);
   type = (sp->hdr)->type;
   if ((type != MUS_AIFF) && (type != MUS_AIFC))
@@ -1910,7 +1904,7 @@ static SCM g_soundfont_info(SCM snd)
   snd_info *sp;
   ERRSP(S_soundfont_info,snd,1);
   sp = get_sp(snd);
-  if (sp == NULL) return(scm_throw(NO_SUCH_SOUND,SCM_LIST2(gh_str02scm(S_soundfont_info),snd)));
+  if (sp == NULL) return(scm_throw(NO_SUCH_SOUND,SCM_LIST2(TO_SCM_STRING(S_soundfont_info),snd)));
   mus_header_read(sp->fullname);
   if (mus_header_type() == MUS_SOUNDFONT)
     {
@@ -1919,10 +1913,10 @@ static SCM g_soundfont_info(SCM snd)
 	{
 	  for (i=lim-1;i>=0;i--)
 	    {
-	      inlist = SCM_LIST4(gh_str02scm(mus_header_sf2_name(i)),
-				 gh_int2scm(mus_header_sf2_start(i)),
-				 gh_int2scm(mus_header_sf2_loop_start(i)),
-				 gh_int2scm(mus_header_sf2_end(i)));
+	      inlist = SCM_LIST4(TO_SCM_STRING(mus_header_sf2_name(i)),
+				 TO_SCM_INT(mus_header_sf2_start(i)),
+				 TO_SCM_INT(mus_header_sf2_loop_start(i)),
+				 TO_SCM_INT(mus_header_sf2_end(i)));
 	      outlist = gh_cons(inlist,outlist);
 	    }
 	}
@@ -1933,22 +1927,17 @@ static SCM g_soundfont_info(SCM snd)
 static SCM g_preload_directory(SCM directory) 
 {
   #define H_preload_directory "(" S_preload_directory " dir) preloads (into the View:Files dialog) any sounds in dir"
-  char *str;
   SCM_ASSERT(gh_string_p(directory),directory,SCM_ARG1,S_preload_directory);
-  str = gh_scm2newstr(directory,NULL);
-  if (str) add_directory_to_prevlist(get_global_state(),str);
-  free(str);
+  add_directory_to_prevlist(get_global_state(),SCM_STRING_CHARS(directory));
   return(directory);
 }
 
 static SCM g_preload_file(SCM file) 
 {
   #define H_preload_file "(" S_preload_file " file) preloads file (into the View:Files dialog)"
-  char *name = NULL,*urn;
+  char *name = NULL;
   SCM_ASSERT(gh_string_p(file),file,SCM_ARG1,S_preload_file);
-  urn = gh_scm2newstr(file,NULL);
-  name = mus_file_full_name(urn);
-  free(urn);
+  name = full_filename(file);
   remember_me(get_global_state(),filename_without_home_directory(name),name);
   if (name) FREE(name);
   return(file);
@@ -1963,7 +1952,7 @@ static SCM g_sound_files_in_directory(SCM dirname)
   SCM vect = SCM_BOOL_F;
   SCM *vdata;
   SCM_ASSERT(gh_string_p(dirname),dirname,SCM_ARG1,S_sound_files_in_directory);
-  name = gh_scm2newstr(dirname,NULL);
+  name = TO_NEW_C_STRING(dirname);
   if (name)
     {
       dp = find_sound_files_in_dir(name);
@@ -1971,10 +1960,10 @@ static SCM g_sound_files_in_directory(SCM dirname)
       if (dp)
 	{
 	  numfiles = dp->len;
-	  vect = gh_make_vector(gh_int2scm(numfiles),SCM_BOOL_F);
+	  vect = gh_make_vector(TO_SCM_INT(numfiles),SCM_BOOL_F);
 	  vdata = SCM_VELTS(vect);
 	  for (i=0;i<numfiles;i++)
-	    vdata[i] = gh_str02scm(dp->files[i]);
+	    vdata[i] = TO_SCM_STRING(dp->files[i]);
 	  free_dir(dp);
 	}
     }

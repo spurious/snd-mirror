@@ -662,7 +662,7 @@ static SCM g_cut(void)
       delete_selection(S_cut,UPDATE_DISPLAY);
       return(SCM_BOOL_T);
     }
-  return(scm_throw(NO_ACTIVE_SELECTION,SCM_LIST1(gh_str02scm(S_cut))));
+  return(scm_throw(NO_ACTIVE_SELECTION,SCM_LIST1(TO_SCM_STRING(S_cut))));
 }
 
 static SCM g_insert_selection(SCM beg, SCM snd, SCM chn)
@@ -676,11 +676,11 @@ static SCM g_insert_selection(SCM beg, SCM snd, SCM chn)
       ss = get_global_state();
       cp = get_cp(snd,chn,S_insert_selection);
       if (cp == NULL) cp = selected_channel(ss);
-      if (cp == NULL) return(scm_throw(NO_SUCH_CHANNEL,SCM_LIST3(gh_str02scm(S_insert_selection),snd,chn)));
-      err = insert_selection(ss,cp,g_scm2intdef(beg,0),S_insert_selection);
-      RTNBOOL((err == MUS_NO_ERROR));
+      if (cp == NULL) return(scm_throw(NO_SUCH_CHANNEL,SCM_LIST3(TO_SCM_STRING(S_insert_selection),snd,chn)));
+      err = insert_selection(ss,cp,TO_C_INT_OR_ELSE(beg,0),S_insert_selection);
+      return(TO_SCM_BOOLEAN((err == MUS_NO_ERROR)));
     }
-  return(scm_throw(NO_ACTIVE_SELECTION,SCM_LIST1(gh_str02scm(S_insert_selection))));
+  return(scm_throw(NO_ACTIVE_SELECTION,SCM_LIST1(TO_SCM_STRING(S_insert_selection))));
 }
 
 static SCM g_mix_selection(SCM beg, SCM snd, SCM chn)
@@ -693,16 +693,16 @@ static SCM g_mix_selection(SCM beg, SCM snd, SCM chn)
       ss = get_global_state();
       cp = get_cp(snd,chn,S_mix_selection);
       if (cp == NULL) cp = selected_channel(ss);
-      if (cp == NULL) return(scm_throw(NO_SUCH_CHANNEL,SCM_LIST3(gh_str02scm(S_mix_selection),snd,chn)));
-      return(gh_int2scm(mix_selection(ss,cp,g_scm2intdef(beg,0),S_mix_selection)));
+      if (cp == NULL) return(scm_throw(NO_SUCH_CHANNEL,SCM_LIST3(TO_SCM_STRING(S_mix_selection),snd,chn)));
+      return(TO_SCM_INT(mix_selection(ss,cp,TO_C_INT_OR_ELSE(beg,0),S_mix_selection)));
     }
-  return(scm_throw(NO_ACTIVE_SELECTION,SCM_LIST1(gh_str02scm(S_mix_selection))));
+  return(scm_throw(NO_ACTIVE_SELECTION,SCM_LIST1(TO_SCM_STRING(S_mix_selection))));
 }
 
 static SCM g_selectionQ(void)
 {
   #define H_selectionQ "(" S_selectionQ ") -> #t if selection is currently active, visible, etc"
-  RTNBOOL(selection_is_active());
+  return(TO_SCM_BOOLEAN(selection_is_active()));
 }
 
 static SCM g_selection_position(SCM snd, SCM chn)
@@ -712,14 +712,14 @@ static SCM g_selection_position(SCM snd, SCM chn)
   if (selection_is_active())
     {
       if (SCM_UNBNDP(snd))
-	return(gh_int2scm(selection_beg(NULL)));
+	return(TO_SCM_INT(selection_beg(NULL)));
       else
 	{
 	  cp = get_cp(snd,chn,S_selection_position);
-	  return(gh_int2scm(selection_beg(cp)));
+	  return(TO_SCM_INT(selection_beg(cp)));
 	}
     }
-  return(scm_throw(NO_ACTIVE_SELECTION,SCM_LIST1(gh_str02scm(S_selection_position))));
+  return(scm_throw(NO_ACTIVE_SELECTION,SCM_LIST1(TO_SCM_STRING(S_selection_position))));
 }
 
 static SCM g_set_selection_position(SCM pos, SCM snd, SCM chn)
@@ -727,7 +727,7 @@ static SCM g_set_selection_position(SCM pos, SCM snd, SCM chn)
   chan_info *cp;
   sync_info *si = NULL;
   int i,beg;
-  beg = g_scm2intdef(pos,0);
+  beg = TO_C_INT_OR_ELSE(pos,0);
   if (SCM_UNBNDP(snd))
     {
       if (selection_is_active())
@@ -761,14 +761,14 @@ static SCM g_selection_length(SCM snd, SCM chn)
   if (selection_is_active())
     {
       if (SCM_UNBNDP(snd))
-	return(gh_int2scm(selection_len()));
+	return(TO_SCM_INT(selection_len()));
       else
 	{
 	  cp = get_cp(snd,chn,S_selection_length);
-	  return(gh_int2scm(cp_selection_len(cp,NULL)));
+	  return(TO_SCM_INT(cp_selection_len(cp,NULL)));
 	}
     }
-  return(scm_throw(NO_ACTIVE_SELECTION,SCM_LIST1(gh_str02scm(S_selection_length))));
+  return(scm_throw(NO_ACTIVE_SELECTION,SCM_LIST1(TO_SCM_STRING(S_selection_length))));
 }
 
 static SCM g_set_selection_length(SCM samps, SCM snd, SCM chn)
@@ -776,7 +776,7 @@ static SCM g_set_selection_length(SCM samps, SCM snd, SCM chn)
   chan_info *cp;
   sync_info *si = NULL;
   int i,len;
-  len = g_scm2intdef(samps,0);
+  len = TO_C_INT_OR_ELSE(samps,0);
   if (SCM_UNBNDP(snd))
     {
       if (selection_is_active())
@@ -809,7 +809,7 @@ static SCM g_selection_member(SCM snd, SCM chn)
   chan_info *cp;
   ERRCP(S_selection_member,snd,chn,1);
   cp = get_cp(snd,chn,S_selection_member);
-  RTNBOOL(selection_is_active_in_channel(cp));
+  return(TO_SCM_BOOLEAN(selection_is_active_in_channel(cp)));
 }
 
 static SCM g_set_selection_member(SCM on, SCM snd, SCM chn)
@@ -817,7 +817,7 @@ static SCM g_set_selection_member(SCM on, SCM snd, SCM chn)
   chan_info *cp;
   ERRCP("set-" S_selection_member,snd,chn,2);
   cp = get_cp(snd,chn,"set-" S_selection_member);
-  if (g_scm2intdef(on,1))
+  if (TO_C_INT_OR_ELSE(on,1))
     {
       if (selection_is_active())
 	cp_set_selection_beg(cp,selection_beg(NULL));
@@ -842,7 +842,7 @@ static SCM g_select_all (SCM snd_n, SCM chn_n)
   ERRCP(S_select_all,snd_n,chn_n,1);
   cp = get_cp(snd_n,chn_n,S_select_all);
   select_all(cp);
-  RTNINT(region_id(0));
+  return(TO_SCM_INT(region_id(0)));
 }
 
 static SCM g_save_selection(SCM filename, SCM header_type, SCM data_format, SCM srate, SCM comment)
@@ -854,24 +854,28 @@ static SCM g_save_selection(SCM filename, SCM header_type, SCM data_format, SCM 
   int type,format,sr,err;
   char *com = NULL, *fname = NULL;
   SCM_ASSERT(gh_string_p(filename),filename,SCM_ARG1,S_save_selection);
-  if (selection_is_active() == 0) return(scm_throw(NO_ACTIVE_SELECTION,SCM_LIST1(gh_str02scm(S_save_selection))));
+  if (selection_is_active() == 0)
+    return(scm_throw(NO_ACTIVE_SELECTION,
+		     SCM_LIST1(TO_SCM_STRING(S_save_selection))));
   ss = get_global_state();
   if (gh_number_p(header_type)) 
-    type = g_scm2int(header_type); 
+    type = TO_C_INT_OR_ELSE(header_type,0); 
 #if MUS_LITTLE_ENDIAN
   else type = MUS_RIFF;
 #else
   else type = MUS_NEXT;
 #endif
-  format = g_scm2intdef(data_format,MUS_OUT_FORMAT);
-  sr = g_scm2intdef(srate,region_srate(0));
-  if (gh_string_p(comment)) com = gh_scm2newstr(comment,NULL); else com = NULL;
+  format = TO_C_INT_OR_ELSE(data_format,MUS_OUT_FORMAT);
+  sr = TO_C_INT_OR_ELSE(srate,region_srate(0));
+  if (gh_string_p(comment)) 
+    com = TO_NEW_C_STRING(comment); 
+  else com = NULL;
   fname = full_filename(filename);
   err = save_selection(ss,fname,type,format,sr,com);
   if (fname) FREE(fname);
   if (com) free(com);
   if (err == MUS_NO_ERROR) return(filename);
-  RTNINT(err);
+  return(TO_SCM_INT(err));
 }
 
 void g_init_selection(SCM local_doc)

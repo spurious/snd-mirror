@@ -308,7 +308,7 @@ static int just_sounds_state = FALSE;
 static SCM g_just_sounds(void)
 {
   #define H_just_sounds "(" S_just_sounds ") reflects the 'just sounds' button in the file chooser dialog"
-  RTNBOOL(just_sounds_state);
+  return(TO_SCM_BOOLEAN(just_sounds_state));
 }
 
 static SCM g_set_just_sounds(SCM on) 
@@ -319,7 +319,7 @@ static SCM g_set_just_sounds(SCM on)
   if (just_sounds_button)
     XmToggleButtonSetState(just_sounds_button,n,TRUE);
   just_sounds_state = n;
-  RTNBOOL(n);
+  return(TO_SCM_BOOLEAN(n));
 }
 
 void g_initialize_xgfile(SCM local_doc)

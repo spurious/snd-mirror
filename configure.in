@@ -257,7 +257,7 @@ AC_MSG_RESULT(${ok})
 
 AC_TYPE_SIGNAL
 AC_FUNC_STRFTIME
-AC_CHECK_FUNCS(getcwd strerror tempnam mallinfo readlink setlocale access opendir sleep signal memset finite mkstemp)
+AC_CHECK_FUNCS(getcwd strerror tempnam mallinfo readlink setlocale access opendir sleep signal memset finite mkstemp strdup)
 AC_FUNC_CLOSEDIR_VOID
 AC_FUNC_VPRINTF
 
