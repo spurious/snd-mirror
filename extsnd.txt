@@ -1,6 +1,6 @@
 Snd Customization and Extension
 
-   related documentationsnd.html   grfsnd.html    clm.html   sndlib.html
+related documentationsnd.html   grfsnd.html   clm.html   sndlib.html    sndscm.html
 
    * Introduction
    * Snd Programming
@@ -86,6 +86,7 @@ examples of and extensions to Snd can be found in:
   prc95.scm         Perry Cook's physical model examples (from CLM)
   pvoc.scm          phase-vocoder examples
   rgb.scm           color definitions
+  rtio.scm          real-time stuff
   rubber.scm        rubber-sound
   snd-gtk.scm       various Guile-Gtk examples
   v.scm             fm-violin (from CLM)
@@ -724,6 +725,7 @@ Now our vct object hi has 100 -3.14's.
   vcts-do!          (vobj... proc)    vobj[vi][i] = (nth vi (funcall proc num i)).
   vcts-map!         (vobj... proc)    vobj[vi][i] = (nth vi (funcall proc num)).
   vector->vct       (vect)            return vct object with elements of vector vect
+  vct-subseq        (vobj start end new-vobj) return vct (new-vobj) with vobj[start..end].
 
 Many of the functions described below can take a vct object as an argument;
 there are also several functions that create and fill vcts with data:
@@ -789,7 +791,7 @@ vct->sound-file, then when finished, close-sound-file. If the new data is to
 replace the old, call (set! (samples...) data) with the new sound file's
 name; otherwise call insert-samples.
 
-If you have Guile 1.4.1 or later, it's possible to access a vct objects
+If you have Guile 1.4.1 or later, it's possible to access a vct object's
 elements with the syntax (obj index), equivalent to (vct-ref obj index).
 This is using a feature called "applicable smobs" in Guile; I may extend it
 to handle vct-set! and perhaps others: sound-data objects, the various
@@ -1651,7 +1653,7 @@ value to val.
 
                                     (play-with-amps 0 1.0 0.5) ;plays channel 2 of stereo sound at half amplitude
 
-                                  See also make-amp-controls in snd-gtk.scm, and play-syncd-marks in marks.scm.
+                                  See also make-amp-controls in sndgtk.scm, and play-syncd-marks in marks.scm.
 
   map-across-all-chans (func start end edname)
                                   apply func to all open channels in parallel (see Scanning Data).
@@ -3132,4 +3134,4 @@ menu option (see examp.scm for a version that uses format):
 
 [picture of examp.scm in action]
 
-   related documentationsnd.html   grfsnd.html    clm.html   sndlib.html
+related documentationsnd.html   grfsnd.html   clm.html   sndlib.html    sndscm.html

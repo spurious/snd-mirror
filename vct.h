@@ -22,6 +22,7 @@
 #define S_vct2list       "vct->list"
 #define S_vector2vct     "vector->vct"
 #define S_vct_moveB      "vct-move!"
+#define S_vct_subseq     "vct-subseq"
 
 #if HAVE_GUILE
 

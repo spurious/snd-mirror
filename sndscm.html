@@ -49,6 +49,7 @@
   <li><a href="#prc95doc">prc95.scm: Perry Cook's physical model examples</a>
   <li><a href="#pvocdoc">pvoc.scm: phase-vocoder</a>
   <li><a href="#rgbdoc">rgb.scm: colors</a>
+  <li><a href="#rtiodoc">rtio.scm: real-time stuff</a>
   <li><a href="#rubberdoc">rubber.scm: rubber-sound</a>
   <li><a href="#sndgtkdoc">snd-gtk.scm: Guile-Gtk examples</a>
   <li><a href="#sndtestdoc">snd-test.scm: Snd regression tests</a>
@@ -1577,6 +1578,23 @@ less and less need for these elaborate color names, and less
 reason to limit these numbers to bytes.
 </p>
 
+<A NAME="rtiodoc"></a><span class=box><h2>rtio.scm</h2></span>
+
+<p>rtio.scm has a collection of functions oriented loosely around
+"real-time" operations.
+</p>
+<pre>
+  <b><A NAME="exshowinput">show-input</a></b> &amp;optional (in-sys 0)
+  <b><A NAME="exshowinputfft">show-input-fft</a></b> &amp;optional (in-sys 0)
+  <b><A NAME="exinout">in-out</a></b> func in-sys out-sys
+</pre>
+<p>These three functions show how to read incoming data (from the adc),
+write data (to the dac), and interpose a function while reading and
+writing data.  The example interposed functions filter the data or
+change its amplitude. <i>show-input-fft</i> displays the input data's
+spectrum.  
+</p>
+
 <A NAME="rubberdoc"></a><span class=box><h2>rubber.scm</h2></span>
 
 <pre>
@@ -2054,7 +2072,70 @@ to mimic violin or cello sounds over a wide range of frequencies.
 There's no limit on what this instrument can do; nearly all my compositions in the 80's used
 it.  In CLM, there's fmviolin.clm which shows some of the effects (although it's unfortunately
 hard to read due to the way the Sambox system worked).
+And I just found this out on the net; I'm no csound expert, so I merely quote what I find:
 </p>
+<pre>
+;ORC
+; edited by R. Pinkston, modified for use with MIDI2CS by R. Borrmann
+;
+;==========================================================================;
+;                Schottstaedt FM String Instrument from Dodge              ;
+;                                                                          ;
+;p4 = amp p5 = pch p6 = rise p7 = dec p8 = vibdel p9 = vibwth p10 = vibrte ;
+;==========================================================================;
+;        sr      =       44100
+;        kr      =       4410
+;        ksmps   =       10
+;        nchnls  =       1
+;
+;                instr   1
+
+par
+  p_maxamplitude 32000
+  p_cps
+endpar
+
+        iamp    =       p4
+
+        irise   = .2    ;p6
+        idec    = .2    ;p7
+        ivibdel = .75   ;p8
+        ivibwth = .03   ;p9
+        ivibrte = 5.5   ;p10
+
+        ifc     =       p5
+        ifm1    =       ifc
+        ifm2    =       ifc*3
+        ifm3    =       ifc*4
+        indx1   =       7.5/log(ifc)    ;range from ca 2 to 1
+        indx2   =       15/sqrt(ifc)    ;range from ca 2.6 to .5
+        indx3   =       1.25/sqrt(ifc)  ;range from ca .2 to .038
+        kvib    init    0 
+
+                timout  0,ivibdel,transient  ;delays vibrato for p8 seconds
+        kvbctl  linen   1,.5,p3-ivibdel,.1   ;vibrato control envelope
+        krnd    randi   .0075,15        ;random deviation in vib width 
+        kvib    oscili  kvbctl*ivibwth+krnd,ivibrte*kvbctl,1 ;vibrato generator
+               
+transient:
+        timout  .2,p3,continue          ;execute for .2 secs only
+        ktrans  linseg  1,.2,0,1,0      ;transient envelope 
+        anoise  randi   ktrans,.2*ifc   ;noise... 
+        attack  oscil   anoise,2000,1   ;...centered around 2kHz
+
+continue: 
+        amod1   oscili  ifm1*(indx1+ktrans),ifm1,1
+        amod2   oscili  ifm2*(indx2+ktrans),ifm2,1
+        amod3   oscili  ifm3*(indx3+ktrans),ifm3,1
+        asig    oscili  iamp,(ifc+amod1+amod2+amod3)*(1+kvib),1
+        asig    linen   asig+attack,irise,p3,idec
+;                out     asig
+; 
+;                endin
+        aright  = asig
+        aleft   = asig
+</pre>
+<br>
 
 <A NAME="wsdoc"></a><span class=box><h2>ws.scm</h2></span>
 <p>

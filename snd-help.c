@@ -253,6 +253,7 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
+30-Jan:  rtio.scm.\n\
 29-Jan:  pvf headers.\n\
 23-Jan:  no-gui version now reads ~/.snd (thanks to Eliot Handelman)\n\
 16-Jan:  fm.html, sndscm.html.\n\

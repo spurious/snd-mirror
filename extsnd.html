@@ -138,6 +138,7 @@ various examples of and extensions to Snd can be found in:
 <tr><td><a href="sndscm.html#prc95doc">prc95.scm</a></td><td>Perry Cook's physical model examples (from CLM)</td></tr>
 <tr><td><a href="sndscm.html#pvocdoc">pvoc.scm</a></td><td>phase-vocoder examples</td></tr>
 <tr><td><a href="sndscm.html#rgbdoc">rgb.scm</a></td><td>color definitions</td></tr>
+<tr><td><a href="sndscm.html#rtiodoc">rtio.scm</a></td><td>real-time stuff</td></tr>
 <tr><td><a href="sndscm.html#rubberdoc">rubber.scm</a></td><td>rubber-sound</td></tr>
 <tr><td><a href="sndscm.html#sndgtkdoc">snd-gtk.scm</a></td><td>various Guile-Gtk examples</td></tr>
 <tr><td><a href="sndscm.html#vdoc">v.scm</a></td><td>fm-violin (from CLM)</td></tr>
@@ -821,6 +822,7 @@ functions:</p>
   <b><a name="vctsdo">vcts-do!</a></b>          (vobj... proc)    vobj[vi][i] = (nth vi (funcall proc num i)).
   <b><a name="vctsmap">vcts-map!</a></b>         (vobj... proc)    vobj[vi][i] = (nth vi (funcall proc num)).
   <b><a name="sndvector2vct">vector-&gt;vct</a></b>       (vect)            return vct object with elements of vector <i>vect</i>
+  <b><a name="vctsubseq">vct-subseq</a></b>        (vobj start <i>end new-vobj</i>) return vct (new-vobj) with vobj[start..end].
 </pre>
 <p>Many of the functions described below can take a vct object as an argument; 
 there are also several functions that create and fill vcts with data:</p>

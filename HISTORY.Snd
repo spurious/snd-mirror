@@ -1,5 +1,6 @@
 snd change log
 
+  30-Jan:    rtio.scm.
   29-Jan:    pvf headers.
   23-Jan:    no-gui version now reads ~/.snd (thanks to Eliot Handelman).
   16-Jan:    fm.html, sndscm.html.

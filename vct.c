@@ -34,6 +34,7 @@
  *   (vct->list v1)                        return list with elements of vct v1
  *   (vector->vct vect)                    return vct with elements of vector vect
  *   (vct-move! v new old)                 v[new++]=v[old++] -> v
+ *   (vct-subseq v start end &opt vnew)    vnew = v[start..end]
  *
  * The intended use is a sort of latter-day array-processing system that handles huge
  * one-dimensional vectors -- fft's, etc.  Some of these functions can be found in
@@ -594,6 +595,30 @@ static SCM vector2vct(SCM vect)
   return(scm_return_first(scv,vect));
 }
 
+static SCM vct_subseq(SCM vobj, SCM start, SCM end, SCM newv)
+{
+  #define H_vct_subseq "(" S_vct_subseq " v start end &optional vnew) -> vnew with vals v[start..end]"
+  vct *vold,*vnew;
+  SCM res;
+  int i,old_len,new_len,j;
+  SCM_ASSERT(vct_p(vobj),vobj,SCM_ARG1,S_vct_subseq);
+  SCM_ASSERT(SCM_NFALSEP(scm_real_p(start)),start,SCM_ARG2,S_vct_subseq);
+  vold = get_vct(vobj);
+  old_len = vold->length;
+  if (SCM_INUMP(end))
+    new_len = SCM_INUM(end) - SCM_INUM(start) + 1;
+  else new_len = old_len - SCM_INUM(start);
+  if (new_len <= 0) return(SCM_BOOL_F);
+  if (vct_p(newv))
+    res = newv;
+  else res = make_vct(new_len,(Float *)CALLOC(new_len,sizeof(Float)));
+  vnew = get_vct(res);
+  if (new_len > vnew->length) new_len = vnew->length;
+  for (i=SCM_INUM(start),j=0;(j < new_len) && (i < old_len);i++,j++)
+    vnew->data[j] = vold->data[i];
+  return(scm_return_first(res,vobj,vnew));
+}
+
 #if HAVE_APPLICABLE_SMOB
 static SCM vct_apply(SCM vobj, SCM arg)
 {
@@ -642,6 +667,7 @@ void init_vct(void)
   DEFINE_PROC(gh_new_procedure(S_vcts_mapB,SCM_FNC vcts_map,0,0,1),H_vcts_mapB);
   DEFINE_PROC(gh_new_procedure(S_vcts_doB, SCM_FNC vcts_do,0,0,1), H_vcts_doB);
   DEFINE_PROC(gh_new_procedure3_0(S_vct_moveB,     vct_move),      H_vct_moveB);
+  DEFINE_PROC(gh_new_procedure2_2(S_vct_subseq,    vct_subseq),    H_vct_subseq);
 #if USE_SND
   define_procedure_with_setter(S_vct_ref,SCM_FNC vct_ref,H_vct_ref,
 			       "set-" S_vct_ref,SCM_FNC vct_set,local_doc,2,0,3,0);

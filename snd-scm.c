@@ -2870,6 +2870,7 @@ static SCM g_snd_spectrum(SCM data, SCM win, SCM len, SCM linear_or_dB)
   v = get_vct(data);
   rdat = v->data;
   n = g_scm2int(len);
+  if (n > v->length) n = v->length;
   if (SCM_TRUE_P(linear_or_dB)) linear=1; else linear=0;
   idat = (Float *)CALLOC(n,sizeof(Float));
   window = (Float *)CALLOC(n,sizeof(Float));
