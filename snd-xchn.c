@@ -1035,7 +1035,7 @@ void set_bold_peak_numbers_font(chan_info *cp)
   XSetFont(XtDisplay(cx->chan_widgets[W_graph]),copy_GC(cp),bf->fid);
 }
 
-unsigned long get_foreground_color(chan_info *cp, axis_context *ax)
+COLOR_TYPE get_foreground_color(chan_info *cp, axis_context *ax)
 {
   XGCValues gv;
   snd_state *ss;

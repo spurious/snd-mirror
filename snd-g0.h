@@ -121,7 +121,7 @@ typedef struct {
 } mix_context;
 
 typedef struct {
-  int inuse,chans_allocated,x,y,moving,active,state,playing;
+  int inuse,chans_allocated,x,y,moving,active,state,playing,size;
   void *owner;           /* pointer to current mixdata struct that is using this set of widgets */
   GtkWidget **w;
   GtkObject **a;
@@ -180,8 +180,12 @@ typedef struct {
 #define AXIS_NUMBERS_FONT(a) ((state_context *)((snd_state *)a)->sgx)->axis_numbers_fnt
 #define AXIS_LABEL_FONT(a) ((state_context *)((snd_state *)a)->sgx)->axis_label_fnt
 #define COLOR_TYPE GdkColor *
+#define KEY_TO_NAME(key) gdk_keyval_name(key)
 
-/* now pull in the key names */
+/* #define GUI_CURRENT_TIME(ss) GDK_CURRENT_TIME */
+
+
+/* now pull in the key names (gdk/gdkkeysyms.h) */
 #define snd_K_Shift_L GDK_Shift_L	 
 #define snd_K_space GDK_space 
 #define snd_K_openparen GDK_parenleft 

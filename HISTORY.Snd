@@ -1,5 +1,6 @@
 snd change log
 
+  28-Aug:    more gtk-related bugfixes.
   24-Aug:    drag-and-drop bugfixes.
   23-Aug:    removed -s startup switch.
   22-Aug:    removed snd-gdac.c, snd-xdac.c.

@@ -371,17 +371,10 @@ void set_title(snd_state *ss, char *title)
 #endif
 }
 
-#if 0
-static int get_window_height(GtkWidget *w) {return(w->allocation.height);}
-static int get_window_width(GtkWidget *w) {return(w->allocation.width);}
-#endif
-
 void goto_window(GtkWidget *text)
 {
   gtk_widget_grab_focus(text);
 }
-
-char *key_to_name(int keysym) {return(gdk_keyval_name(keysym));}
 
 void gc_set_foreground_xor(GdkGC *gc,GdkColor *col1, GdkColor *col2)
 { 
@@ -480,10 +473,6 @@ void recolor_graph(chan_info *cp, int selected)
   set_background(channel_graph(cp),(selected) ? sx->selected_graph_color : sx->graph_color);
 }
 
-TIME_TYPE main_time(snd_state *ss)
-{
-  return(GDK_CURRENT_TIME - ss->play_start_time);
-}
 
 
 void reflect_resize(snd_state *ss)

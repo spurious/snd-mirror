@@ -1,3 +1,5 @@
+/* TODO: if enved wave button set and associated chan has wavo set, graph goes to wrong window */
+
 #include "snd.h"
 
 static char expr_buf[128];

@@ -291,7 +291,6 @@ typedef struct snd__state {
   int position_slider_width,zoom_slider_width,toggle_size,enved_point_size,channel_sash_indent,sash_size,channel_sash_size,sash_indent;
   char *init_file;
   int max_sounds;
-  int play_start_time;
   snd_info *mx_sp;
   char *pending_change;
   int print_choice,apply_choice;
@@ -587,6 +586,7 @@ void clear_possible_completions(void);
 char *filename_completer(char *text);
 char *srate_completer(char *text);
 char *info_completer(char *text);
+char *complete_listener_text(char *old_text, int end, int *try_completion, char **to_file_text);
 #if HAVE_GUILE
   void g_init_completions(SCM local_doc);
 #endif

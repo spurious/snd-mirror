@@ -59,6 +59,7 @@ void reflect_spectro(snd_state *ss);
 
 /* -------- snd-xlistener.c -------- */
 
+void append_listener_text(int end, char *msg);
 void snd_append_command(snd_state *ss, char *msg);
 void goto_listener(void);
 void snd_append_char(snd_state *ss, char *msg);
@@ -203,9 +204,7 @@ void white_color(snd_state *ss, int w);
 void set_title(snd_state *ss, char *title);
 void check_for_event(snd_state *ss);
 void work_wait(snd_state *ss);
-char *key_to_name(int keysym);
 void recolor_graph(chan_info *cp, int selected);
-TIME_TYPE main_time(snd_state *ss);
 void reflect_resize(snd_state *ss);
 void set_sensitive(int wid, int val);
 void set_toggle_button(int wid, int val, int passed, void *data);
@@ -242,7 +241,7 @@ void reflect_save_as_in_edit_history(chan_info *cp, char *filename);
 void set_peak_numbers_font(chan_info *cp);
 void set_bold_peak_numbers_font(chan_info *cp);
 void set_tiny_numbers_font(chan_info *cp);
-unsigned long get_foreground_color(chan_info *cp, axis_context *ax);
+COLOR_TYPE get_foreground_color(chan_info *cp, axis_context *ax);
 void set_foreground_color(chan_info *cp, axis_context *ax, int color);
 void cleanup_cw(chan_info *cp);
 void combine_sound(snd_info *sp);

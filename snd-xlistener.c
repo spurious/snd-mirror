@@ -18,7 +18,6 @@ void textfield_unfocus_Callback(Widget w,XtPointer clientData,XtPointer callData
 
 /* -------- specialized action procs -------- */
 
-static snd_state *action_ss; /* need some way to get Snd global state into action proc */
 static int actions_loaded = 0;
 #define CONTROL_KEY 4
 
@@ -34,7 +33,7 @@ static void Activate_keyboard (Widget w, XEvent *ev, char **str, Cardinal *num)
 {
   /* make the current channel active preloading kbd cmd with str[0]+ctrl bit */
   chan_info *cp;
-  cp = current_channel(action_ss);
+  cp = current_channel(get_global_state());
   if (cp) 
     {
       goto_graph(cp);
@@ -46,8 +45,10 @@ static void Activate_channel (Widget w, XEvent *ev, char **str, Cardinal *num)
 {
   /* make the current channel active and abort if anything in progress */
   chan_info *cp;
-  if (action_ss->checking_explicitly) action_ss->stopped_explicitly = 1; 
-  cp = current_channel(action_ss);
+  snd_state *ss;
+  ss = get_global_state();
+  if (ss->checking_explicitly) ss->stopped_explicitly = 1; 
+  cp = current_channel(ss);
   if (cp) goto_graph(cp);
 }
 
@@ -109,10 +110,12 @@ static void B1_press(Widget w, XEvent *event, char **str, Cardinal *num)
 {
   XmTextPosition pos;
   XButtonEvent *ev = (XButtonEvent *)event;
+  snd_state *ss;
+  ss = get_global_state();
   XmProcessTraversal(w,XmTRAVERSE_CURRENT);
   /* we're replacing the built-in take_focus action here, so do it by hand, but leave listener blue, so to speak */
-  if ((!(action_ss->using_schemes)) && (w != listener_text))
-    XtVaSetValues(w,XmNbackground,(action_ss->sgx)->white,NULL);
+  if ((!(ss->using_schemes)) && (w != listener_text))
+    XtVaSetValues(w,XmNbackground,(ss->sgx)->white,NULL);
   if (w == listener_text) XmTextClearSelection(listener_text,CurrentTime); /* should this happen in other windows as well? */
   pos = XmTextXYToPos(w,ev->x,ev->y);
   XmTextSetCursorPosition(w,pos);
@@ -243,6 +246,8 @@ static void Name_completion(Widget w, XEvent *event, char **str, Cardinal *num)
   Window wn;
   Pixel old_color;
   char *old_text,*new_text,*search_text;
+  snd_state *ss;
+  ss = get_global_state();
   data = -1;
   for (i=0;i<cmpwids_size;i++)
     if (w == cmpwids[i])
@@ -261,8 +266,8 @@ static void Name_completion(Widget w, XEvent *event, char **str, Cardinal *num)
 	{
 	  XtVaGetValues(w,XmNforeground,&old_color,NULL);
 	  if (matches > 1)
-	    XtVaSetValues(w,XmNforeground,(action_ss->sgx)->green,NULL);
-	  else if (matches == 0) XtVaSetValues(w,XmNforeground,(action_ss->sgx)->red,NULL);
+	    XtVaSetValues(w,XmNforeground,(ss->sgx)->green,NULL);
+	  else if (matches == 0) XtVaSetValues(w,XmNforeground,(ss->sgx)->red,NULL);
 	  XmUpdateDisplay(w);
 #if HAVE_SLEEP
 	  sleep(1);
@@ -275,7 +280,7 @@ static void Name_completion(Widget w, XEvent *event, char **str, Cardinal *num)
 	      search_text = complete_text(old_text,data);
 	      if (search_text) FREE(search_text);
 	      need_position = (!(help_dialog_is_active()));
-	      display_completions(action_ss);
+	      display_completions(ss);
 	      set_save_completions(FALSE);
 	      if (need_position)
 		{
@@ -297,24 +302,10 @@ static void Name_completion(Widget w, XEvent *event, char **str, Cardinal *num)
     }
 }
 
-static int find_indentation(char *str,int loc)
+void append_listener_text(int end, char *msg)
 {
-  int line_beg = 0,open_paren = -1,parens,i;
-  parens = 0;
-  for (i=loc-1;i>=0;i--)
-    {
-      if (str[i] == ')') parens--;
-      if (str[i] == '(') parens++;
-      if (parens == 1) {open_paren = i; break;}
-    }
-  if (open_paren == -1) return(1);
-  if (open_paren == 0) return(3);
-  for (i=open_paren-1;i>0;i--)
-    {
-      if (str[i] == '\n') {line_beg = i; break;}
-    }
-  if (line_beg == 0) return(1);
-  return(open_paren - line_beg + 2);
+  XmTextInsert(listener_text,end,msg);
+  XmTextSetCursorPosition(listener_text,XmTextGetLastPosition(listener_text));
 }
 
 static void Listener_completion(Widget w, XEvent *event, char **str, Cardinal *num) 
@@ -323,11 +314,14 @@ static void Listener_completion(Widget w, XEvent *event, char **str, Cardinal *n
    *   and we don't want to back up past the last prompt
    *   also if at start of line (or all white-space to previous \n, indent
    */
-  int beg,end,len,i,k,matches = 0,need_position,spaces,text_pos = 0,cr_pos = 0;
-  char *old_text,*new_text = NULL,*file_text = NULL,*new_file = NULL;
+  int beg,end,len,matches = 0,need_position;
+  char *old_text,*new_text = NULL,*file_text = NULL;
+  int try_completion = 1;
   Position wx,wy;
   int xoff,yoff; 
   Window wn;
+  snd_state *ss;
+  ss = get_global_state();
   beg = last_prompt+1;
   end = XmTextGetLastPosition(w);
   if (end <= beg) return;
@@ -337,68 +331,12 @@ static void Listener_completion(Widget w, XEvent *event, char **str, Cardinal *n
   /* now old_text is the stuff typed since the last prompt */
   if (old_text)
     {
-      len = strlen(old_text);
-      for (i=len-1;i>0;i--)
+      new_text = complete_listener_text(old_text, end,&try_completion,&file_text);
+      if (try_completion == 0)
 	{
-	  if (old_text[i] == '\n')
-	    {
-	      /* tab as indentation */
-	      /* look at previous line to decide */
-	      spaces = find_indentation(old_text,i);
-	      if (spaces > 0)
-		{
-		  file_text = (char *)CALLOC(spaces+1,sizeof(char));
-		  for (k=0;k<spaces;k++) file_text[k] = ' ';
-		  file_text[spaces] = 0;
-		  XmTextInsert(w,end,file_text);
-		  XmTextSetCursorPosition(w,XmTextGetLastPosition(w));
-		  FREE(file_text);
-		  file_text = NULL;
-		}
-	      FREE(old_text);
-	      old_text = NULL;
-	      return;
-	    }
-	  if (old_text[i] == ';')
-	    {
-	      /* this isn't quite right, but how much effort should we put in it? */
-	      spaces = 20;
-	      for (k=i-1;k>0;k--) 
-		if (old_text[k] == '\n') 
-		  {cr_pos = k; break;} 
-		else 
-		  if ((!(isspace((int)(old_text[k])))) && (text_pos == 0)) 
-		    text_pos = k;
-	      if (text_pos > 0)
-		text_pos -= cr_pos;
-	      if (cr_pos == 0) spaces--; 
-	      if (text_pos < spaces)
-		{
-		  file_text = (char *)CALLOC(spaces+2,sizeof(char));
-		  for (k=text_pos+1;k<spaces;k++) file_text[k-text_pos-1] = ' ';
-		  file_text[spaces] = ';';
-		  file_text[spaces+1] = 0;
-		  XmTextInsert(w,end-1,file_text);
-		  XmTextSetCursorPosition(w,XmTextGetLastPosition(w));
-		  FREE(file_text);
-		}
-	      FREE(old_text);
-	      return;
-	    }
-	  if (old_text[i] == '\"')
-	    {
-	      file_text = copy_string((char *)(old_text+i+1));
-	      new_file = filename_completer(file_text);
-	      len = i + 2 + snd_strlen(new_file);
-	      new_text = (char *)CALLOC(len,sizeof(char));
-	      strncpy(new_text,old_text,i+1);
-	      strcat(new_text,new_file);
-	      if (new_file) FREE(new_file);
-	      break;
-	    }
-	  if (isspace((int)(old_text[i]))) break;
+	  FREE(old_text);
+	  return;
 	}
-      if (new_text == NULL) new_text = command_completer(old_text);
       if (strcmp(old_text,new_text) == 0) matches = get_completion_matches();
       XmTextReplace(w,beg,end,new_text);
       XmTextSetCursorPosition(w,XmTextGetLastPosition(w));
@@ -410,7 +348,7 @@ static void Listener_completion(Widget w, XEvent *event, char **str, Cardinal *n
 	  if (file_text) new_text = filename_completer(file_text); else new_text = command_completer(old_text);
 	  if (new_text) {FREE(new_text); new_text = NULL;}
 	  need_position = (!(help_dialog_is_active()));
-	  display_completions(action_ss);
+	  display_completions(ss);
 	  set_save_completions(FALSE);
 	  if (need_position)
 	    {
@@ -604,7 +542,7 @@ Widget sndCreateTextFieldWidget(snd_state *ss, char *name, Widget parent, Arg *a
 {
   /* white background when active, emacs translations, text_activate_event in ss->sgx for subsequent activation check */
   Widget df;
-  if (!actions_loaded) {XtAppAddActions(MAIN_APP(ss),acts,NUM_ACTS); actions_loaded = 1; action_ss = ss;}
+  if (!actions_loaded) {XtAppAddActions(MAIN_APP(ss),acts,NUM_ACTS); actions_loaded = 1;}
   XtSetArg(args[n],XmNactivateCallback,make_callback_list(remember_event,(XtPointer)ss)); n++;
   /* can't use XmNuserData here because it is in use elsewhere (snd-xmix.c) */
   df = XtCreateManagedWidget(name,xmTextFieldWidgetClass,parent,args,n);
@@ -627,7 +565,7 @@ Widget sndCreateTextFieldWidget(snd_state *ss, char *name, Widget parent, Arg *a
 void add_completer_to_textfield(snd_state *ss, Widget w, int completer)
 {
   /* used to make file selection dialog act like other text field widgets */
-  if (!actions_loaded) {XtAppAddActions(MAIN_APP(ss),acts,NUM_ACTS); actions_loaded = 1; action_ss = ss;}
+  if (!actions_loaded) {XtAppAddActions(MAIN_APP(ss),acts,NUM_ACTS); actions_loaded = 1;}
   if (!transTable2) transTable2 = XtParseTranslationTable(TextTrans2);
   XtOverrideTranslations(w,transTable2);
   add_completer_widget(w,completer);
@@ -637,7 +575,7 @@ Widget sndCreateTextWidget(snd_state *ss, char *name, Widget parent, Arg *args, 
 {
   /* white background when active, emacs translations, text_activate_event in ss->sgx for subsequent activation check */
   Widget df;
-  if (!actions_loaded) {XtAppAddActions(MAIN_APP(ss),acts,NUM_ACTS); actions_loaded = 1; action_ss = ss;}
+  if (!actions_loaded) {XtAppAddActions(MAIN_APP(ss),acts,NUM_ACTS); actions_loaded = 1;}
   XtSetArg(args[n],XmNactivateCallback,make_callback_list(remember_event,(XtPointer)ss)); n++;
   XtSetArg(args[n],XmNeditMode,XmMULTI_LINE_EDIT); n++;
   df = XmCreateScrolledText(parent,name,args,n);
@@ -868,7 +806,7 @@ static void sndCreateCommandWidget(snd_state *ss, int height)
   int n;
   if (!listener_text)
     {
-      if (!actions_loaded) {XtAppAddActions(MAIN_APP(ss),acts,NUM_ACTS); actions_loaded = 1; action_ss = ss;}
+      if (!actions_loaded) {XtAppAddActions(MAIN_APP(ss),acts,NUM_ACTS); actions_loaded = 1;}
 
       n=0;
       XtSetArg(args[n],XmNtopAttachment,XmATTACH_FORM); n++;

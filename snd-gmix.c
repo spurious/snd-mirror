@@ -1,16 +1,16 @@
-/* TODO: colors are screwed up (why do they flash?), icon backgrounds are wrong
- *       infinite loop of expose events if consoles overlap (can't find a repeatable case)
+/* TODO: 
  *       close leaves full size, no complete minimum size
- *       speed label is centered? and wrong color
  */
 
 #include "snd.h"
+
 
 /* ---------------- MIX CURSOR ---------------- */
 
 static void mix_mouse_enter(GtkWidget *w, GdkEventCrossing *ev, gpointer data)
 {
   gdk_window_set_cursor(w->window,(((snd_state *)data)->sgx)->mix_cursor);
+  gtk_signal_emit_stop_by_name(GTK_OBJECT(w),"enter_notify_event");
 }
 
 static void mix_mouse_leave(GtkWidget *w, GdkEventCrossing *ev, gpointer data)
@@ -70,9 +70,9 @@ enum {mm_main,               /* form holds console, catches mouse acts (click, d
       mm_open,mm_open_pix,   /* pushbutton; if just title, open to full console, else close to title row */
       mm_console,            /* holds the rest of the console under the title bar */
       mm_title_sep,          /* if open, horizontal sep below title */
-      mm_amp,mm_amp_ev,      /* the "amp:" label */
+      mm_amp,                /* the "amp:" label */
       mm_track,mm_trackbox,  /* track button on right */
-      mm_speed,mm_speed_ev,  /* if open, srate control */
+      mm_speed,              /* if open, srate control */
       mm_speed_label,
       mm_spdscl,
       mm_spdsep,mm_spdbox,mm_amptable,
@@ -84,7 +84,7 @@ enum {mm_main,               /* form holds console, catches mouse acts (click, d
 #define MIX_CHAN_SIZE 2
 
 #define title_row_start mm_beg
-#define title_row_end mm_open
+#define title_row_end mm_open_pix
 
 
 void release_mixmark_widgets(mixmark *m)
@@ -560,7 +560,6 @@ void mix_set_title_name(mixdata *md, mixmark *m)
   set_button_label(m->w[mm_name],md->name); 
 }
 
-/* none of the following works */
 void mix_set_console(mixdata *md, mixmark *m)
 {
   console_state *cs;
@@ -575,13 +574,16 @@ void mix_set_console(mixdata *md, mixmark *m)
 
 void mix_open_console(mixmark *m)
 {
+  int i;
+  for (i=0;i<m->size;i++) if (m->w[i]) gtk_widget_show(m->w[i]);
   set_pixmap(m->w[mm_open_pix],mini_pix,mini_mask);
   gtk_widget_show(m->w[mm_console]);
 }
 
 void mix_close_console(mixmark *m)
 {
-  return;
+  int i;
+  for (i=title_row_end+1;i<m->size;i++) if (m->w[i]) gtk_widget_hide(m->w[i]);
   gtk_widget_hide(m->w[mm_console]);
   set_pixmap(m->w[mm_open_pix],mixer_pix,mixer_mask);
 }
@@ -589,14 +591,14 @@ void mix_close_console(mixmark *m)
 void mix_open_title(mixmark *m)
 {
   int i;
-  for (i=title_row_start;i<=title_row_end;i++) gtk_widget_show(m->w[i]);
+  for (i=title_row_start;i<=title_row_end;i++) if (m->w[i]) gtk_widget_show(m->w[i]);
 }
 
 void mix_close_title(mixmark *m)
 {
   int i;
   return;
-  for (i=title_row_start;i<=title_row_end;i++) gtk_widget_hide(m->w[i]);
+  for (i=title_row_start;i<=title_row_end;i++) if (m->w[i]) gtk_widget_hide(m->w[i]);
 }
 
 void fixup_mixmark(mixdata *md)
@@ -605,7 +607,6 @@ void fixup_mixmark(mixdata *md)
   m = md->mixer;
   fixup_mixmark_1(md,m);
   if (m->active == 0) activate_mixmark_widgets(m);
-  md->width = widget_width(m->w[mm_main]);
 }
 
 static void mix_console_open_callback(GtkWidget *w,gpointer clientData) 
@@ -668,8 +669,7 @@ static void mix_title_button_release(GtkWidget *w, GdkEventButton *ev, gpointer 
   mix_watch_title(m,cp);
 }
 
-#if 0
-/* this entire section is broken */
+
 static void mix_console_name_callback(GtkWidget *w, GdkEventButton *ev, gpointer data)
 {
   /* called upon button release in name widget */
@@ -689,7 +689,7 @@ static void mix_console_name_callback(GtkWidget *w, GdkEventButton *ev, gpointer
     }
   last_console_time = ev->time;
 }
-#endif
+
 
 void set_mix_track_button_color(mixdata *md, int track)
 {
@@ -751,17 +751,13 @@ static void mix_title_button_motion(GtkWidget *w, GdkEventMotion *ev, gpointer d
 
 void move_mixmark(mixmark *m, int x, int y)
 {
-  int wid;
-  set_widget_position(m->w[mm_main],x,y);
-  m->x = widget_x(m->w[mm_main]);
-  m->y = widget_y(m->w[mm_main]);
-  wid = widget_width(m->w[mm_main]);
-  if (!(m->active)) activate_mixmark_widgets(m);
-  if (wid < 15)
+  if ((widget_x(m->w[mm_main]) != x) || (widget_y(m->w[mm_main]) != y))
     {
-      mix_open_console(m); /* try to force it to pop into existence */
-      mix_close_console(m); 
+      set_widget_position(m->w[mm_main],x,y);
+      m->x = widget_x(m->w[mm_main]);
+      m->y = widget_y(m->w[mm_main]);
     }
+  if (!(m->active)) activate_mixmark_widgets(m);
 }
 
 void move_mix_y(mixmark *m, int yspot)
@@ -785,7 +781,6 @@ static void create_mixer(mixdata *md, int x, int y)
   mixmark *m;
   mix_context *ms;
   int i,n,old_squelch=0;
-  int wid;
   GtkWidget *last_widget;
   ss = md->ss;
   ms = md->wg;
@@ -797,13 +792,13 @@ static void create_mixer(mixdata *md, int x, int y)
       old_squelch = (md->cp)->squelch_update;
       (md->cp)->squelch_update = 1;
     }
-  m->w = (GtkWidget **)CALLOC(mm_chans+(md->in_chans*MIX_CHAN_SIZE),sizeof(GtkWidget *));
+  m->size = mm_chans+(md->in_chans*MIX_CHAN_SIZE);
+  m->w = (GtkWidget **)CALLOC(m->size,sizeof(GtkWidget *));
   m->a = (GtkObject **)CALLOC(1+md->in_chans,sizeof(GtkObject *));
   m->chans_allocated = md->in_chans;
   n=0;
 
   m->w[mm_main] = gtk_event_box_new();
-  /* set_background(m->w[mm_main],(ss->sgx)->basic_color); */
   gtk_snd_fixed_put(GTK_SND_FIXED(ms->graph),m->w[mm_main],x,y);
   set_widget_position(m->w[mm_main],x,y);
   gtk_widget_show(m->w[mm_main]);
@@ -828,9 +823,9 @@ static void create_mixer(mixdata *md, int x, int y)
   gtk_widget_show(m->w[mm_title]);
 
   m->w[mm_name] = gtk_button_new_with_label(md->name);
+  set_backgrounds(m->w[mm_name],(ss->sgx)->mix_color);
   gtk_widget_add_events(m->w[mm_name],GDK_POINTER_MOTION_HINT_MASK);
   gtk_box_pack_start(GTK_BOX(m->w[mm_title]),m->w[mm_name],FALSE,FALSE,2);
-  gtk_button_set_relief(GTK_BUTTON(m->w[mm_name]),GTK_RELIEF_NONE);
   gtk_widget_show(m->w[mm_name]);
   gtk_signal_connect(GTK_OBJECT(m->w[mm_name]),"button_press_event",GTK_SIGNAL_FUNC(mix_title_button_press),(gpointer)m);
   gtk_signal_connect(GTK_OBJECT(m->w[mm_name]),"button_release_event",GTK_SIGNAL_FUNC(mix_title_button_release),(gpointer)m);
@@ -838,12 +833,12 @@ static void create_mixer(mixdata *md, int x, int y)
 
   m->w[mm_beg] = gtk_button_new_with_label("0.00:0.00");
   gtk_box_pack_start(GTK_BOX(m->w[mm_title]),m->w[mm_beg],TRUE,TRUE,2);
-  set_background(m->w[mm_beg],(ss->sgx)->white);
+  set_backgrounds(m->w[mm_beg],(ss->sgx)->white);
   gtk_signal_connect(GTK_OBJECT(m->w[mm_beg]),"clicked",GTK_SIGNAL_FUNC(beg_click_callback),(gpointer)m);
-  gtk_button_set_relief(GTK_BUTTON(m->w[mm_beg]),GTK_RELIEF_NONE);
   gtk_widget_show(m->w[mm_beg]);
 
   m->w[mm_play] = gtk_button_new();
+  set_backgrounds(m->w[mm_play],(ss->sgx)->mix_color);
   gtk_box_pack_start(GTK_BOX(m->w[mm_title]),m->w[mm_play],FALSE,FALSE,2);
   gtk_signal_connect(GTK_OBJECT(m->w[mm_play]),"clicked",GTK_SIGNAL_FUNC(mix_console_play_callback),(gpointer)m);
   gtk_widget_show(m->w[mm_play]);
@@ -856,7 +851,6 @@ static void create_mixer(mixdata *md, int x, int y)
   set_backgrounds(m->w[mm_close],(ss->sgx)->mix_color);
   gtk_box_pack_start(GTK_BOX(m->w[mm_title]),m->w[mm_close],FALSE,FALSE,2);
   gtk_signal_connect(GTK_OBJECT(m->w[mm_close]),"clicked",GTK_SIGNAL_FUNC(mix_console_close_callback),(gpointer)m);
-  gtk_button_set_relief(GTK_BUTTON(m->w[mm_close]),GTK_RELIEF_NONE);
   gtk_widget_show(m->w[mm_close]);
       
   m->w[mm_close_pix] = gtk_pixmap_new(cross_pix,cross_mask);
@@ -867,7 +861,6 @@ static void create_mixer(mixdata *md, int x, int y)
   set_backgrounds(m->w[mm_open],(ss->sgx)->mix_color);
   gtk_box_pack_start(GTK_BOX(m->w[mm_title]),m->w[mm_open],FALSE,FALSE,2);
   gtk_signal_connect(GTK_OBJECT(m->w[mm_open]),"clicked",GTK_SIGNAL_FUNC(mix_console_open_callback),(gpointer)m);
-  gtk_button_set_relief(GTK_BUTTON(m->w[mm_open]),GTK_RELIEF_NONE);
   gtk_widget_show(m->w[mm_open]);
       
   m->w[mm_open_pix] = gtk_pixmap_new(mixer_pix,mixer_mask);
@@ -875,7 +868,8 @@ static void create_mixer(mixdata *md, int x, int y)
   gtk_widget_show(m->w[mm_open_pix]);
 
   m->w[mm_console] = gtk_vbox_new(FALSE,0); /* not strictly needed, but a convenience for open/close */
-  gtk_box_pack_start(GTK_BOX(m->w[mm_fmain]),m->w[mm_console],TRUE,TRUE,2);
+  set_backgrounds(m->w[mm_console],(ss->sgx)->basic_color);
+  gtk_box_pack_start(GTK_BOX(m->w[mm_fmain]),m->w[mm_console],TRUE,TRUE,0);
   gtk_widget_show(m->w[mm_console]);
 
   m->w[mm_title_sep] = gtk_hseparator_new();
@@ -883,19 +877,15 @@ static void create_mixer(mixdata *md, int x, int y)
   gtk_widget_show(m->w[mm_title_sep]);
 
   m->w[mm_trackbox] = gtk_hbox_new(FALSE,0);
+  set_backgrounds(m->w[mm_trackbox],(ss->sgx)->basic_color);
   gtk_box_pack_start(GTK_BOX(m->w[mm_console]),m->w[mm_trackbox],FALSE,FALSE,0);
   gtk_widget_show(m->w[mm_trackbox]);
 
-  m->w[mm_amp_ev] = gtk_event_box_new();
-  gtk_box_pack_start(GTK_BOX(m->w[mm_trackbox]),m->w[mm_amp_ev],FALSE,FALSE,0);
-  gtk_widget_show(m->w[mm_amp_ev]);
-  gtk_signal_connect(GTK_OBJECT(m->w[mm_amp_ev]),"button_press_event",GTK_SIGNAL_FUNC(amp_click_callback),(gpointer)m);
-
-  m->w[mm_amp] = gtk_label_new(STR_amp_p);
-  set_background(m->w[mm_amp],(ss->sgx)->basic_color);
-  gtk_container_add(GTK_CONTAINER(m->w[mm_amp_ev]),m->w[mm_amp]);
+  m->w[mm_amp] = gtk_button_new_with_label(STR_amp_p);
+  gtk_box_pack_start(GTK_BOX(m->w[mm_trackbox]),m->w[mm_amp],TRUE,TRUE,0);
+  set_backgrounds(m->w[mm_amp],(ss->sgx)->basic_color);
   gtk_widget_show(m->w[mm_amp]);
-  gtk_widget_set_usize(m->w[mm_amp],60,12);
+  gtk_signal_connect(GTK_OBJECT(m->w[mm_amp]),"button_press_event",GTK_SIGNAL_FUNC(amp_click_callback),(gpointer)m);
 
   m->w[mm_track] = gtk_check_button_new();
   set_backgrounds(m->w[mm_track],(ss->sgx)->basic_color);
@@ -916,32 +906,22 @@ static void create_mixer(mixdata *md, int x, int y)
       gtk_table_attach(GTK_TABLE(m->w[mm_amptable]),last_widget,0,1,i,i+1,0,0,0,0);
       gtk_widget_show(last_widget);
 
-      m->a[i+1] = gtk_adjustment_new((i == md->out_chan) ? 0.5 : 0.0,0.0,1.01,0.001,0.01,.01);
+      m->a[i+1] = gtk_adjustment_new((i == md->out_chan) ? 0.5 : 0.0,0.0,1.01,0.001,0.01,.1);
       gtk_object_set_user_data(GTK_OBJECT(m->a[i+1]),(gpointer)i);
-      gtk_signal_connect(GTK_OBJECT(m->a[i+1]),"value_changed",GTK_SIGNAL_FUNC(amp_drag_callback),(gpointer)m);
 
-      last_widget = gtk_hscale_new(GTK_ADJUSTMENT(m->a[i+1]));
-      gtk_object_set_user_data(GTK_OBJECT(last_widget),(gpointer)i);
-      gtk_range_set_update_policy(GTK_RANGE(GTK_SCALE(last_widget)),GTK_UPDATE_CONTINUOUS);
-      gtk_scale_set_draw_value(GTK_SCALE(last_widget),FALSE);
-      set_backgrounds(last_widget,(ss->sgx)->position_color);
+      last_widget = gtk_hscrollbar_new(GTK_ADJUSTMENT(m->a[i+1]));
       m->w[mm_chans + mm_scl + i*MIX_CHAN_SIZE] = last_widget;
       gtk_table_attach_defaults(GTK_TABLE(m->w[mm_amptable]),last_widget,1,2,i,i+1);
       gtk_widget_show(last_widget);
       gtk_signal_connect(GTK_OBJECT(last_widget),"button_release_event",GTK_SIGNAL_FUNC(amp_value_changed_callback),(gpointer)m);
+      gtk_signal_connect(GTK_OBJECT(m->a[i+1]),"value_changed",GTK_SIGNAL_FUNC(amp_drag_callback),(gpointer)m);
     }
-  
-  m->w[mm_speed_ev] = gtk_event_box_new();
-  gtk_box_pack_start(GTK_BOX(m->w[mm_console]),m->w[mm_speed_ev],TRUE,TRUE,0);
-  gtk_widget_show(m->w[mm_speed_ev]);
-  gtk_signal_connect(GTK_OBJECT(m->w[mm_speed_ev]),"button_press_event",GTK_SIGNAL_FUNC(speed_click_callback),(gpointer)m);
 
-  m->w[mm_speed] = gtk_label_new(STR_speed);
-  set_background(m->w[mm_speed],(ss->sgx)->basic_color);
-  gtk_label_set_justify(GTK_LABEL(m->w[mm_speed]),GTK_JUSTIFY_LEFT);
-  gtk_container_add(GTK_CONTAINER(m->w[mm_speed_ev]),m->w[mm_speed]);
+  m->w[mm_speed] = gtk_button_new_with_label(STR_speed);
+  gtk_box_pack_start(GTK_BOX(m->w[mm_console]),m->w[mm_speed],TRUE,TRUE,0);
+  set_backgrounds(m->w[mm_speed],(ss->sgx)->basic_color);
   gtk_widget_show(m->w[mm_speed]);
-  gtk_widget_set_usize(m->w[mm_speed],60,12);
+  gtk_signal_connect(GTK_OBJECT(m->w[mm_speed]),"button_press_event",GTK_SIGNAL_FUNC(speed_click_callback),(gpointer)m);
 
   m->w[mm_spdbox] = gtk_hbox_new(FALSE,0);
   gtk_box_pack_start(GTK_BOX(m->w[mm_console]),m->w[mm_spdbox],FALSE,FALSE,0);
@@ -953,22 +933,21 @@ static void create_mixer(mixdata *md, int x, int y)
   gtk_box_pack_start(GTK_BOX(m->w[mm_spdbox]),m->w[mm_speed_label],FALSE,FALSE,0);
   gtk_widget_show(m->w[mm_speed_label]);
   
-  m->a[0] = gtk_adjustment_new(0.5,0.0,1.01,0.001,0.01,.05);
-  gtk_signal_connect(GTK_OBJECT(m->a[0]),"value_changed",GTK_SIGNAL_FUNC(speed_drag_callback),(gpointer)m);
-
-  m->w[mm_spdscl] = gtk_hscale_new(GTK_ADJUSTMENT(m->a[0]));
-  gtk_signal_connect(GTK_OBJECT(m->w[mm_spdscl]),"button_release_event",GTK_SIGNAL_FUNC(speed_value_changed_callback),(gpointer)m);
+  m->a[0] = gtk_adjustment_new(0.5,0.0,1.01,0.001,0.01,.1);
+  m->w[mm_spdscl] = gtk_hscrollbar_new(GTK_ADJUSTMENT(m->a[0]));
   gtk_box_pack_start(GTK_BOX(m->w[mm_spdbox]),m->w[mm_spdscl],TRUE,TRUE,2);
-  gtk_range_set_update_policy(GTK_RANGE(GTK_SCALE(m->w[mm_spdscl])),GTK_UPDATE_CONTINUOUS);
-  gtk_scale_set_draw_value(GTK_SCALE(m->w[mm_spdscl]),FALSE);
   gtk_widget_show(m->w[mm_spdscl]);
+  gtk_signal_connect(GTK_OBJECT(m->a[0]),"value_changed",GTK_SIGNAL_FUNC(speed_drag_callback),(gpointer)m);
+  gtk_signal_connect(GTK_OBJECT(m->w[mm_spdscl]),"button_release_event",GTK_SIGNAL_FUNC(speed_value_changed_callback),(gpointer)m);
   
-  wid = widget_width(m->w[mm_main]);
-  md->width = wid;
   m->state = MD_CS;
   m->active = 1;
 
-  for (i=0;i<mm_chans+(md->in_chans*MIX_CHAN_SIZE);i++) if (m->w[i]) GTK_WIDGET_UNSET_FLAGS(m->w[i],GTK_CAN_FOCUS);
+  for (i=0;i<mm_chans+(md->in_chans*MIX_CHAN_SIZE);i++) 
+    if (m->w[i]) 
+      {
+	GTK_WIDGET_UNSET_FLAGS(m->w[i],GTK_CAN_FOCUS);
+      }
   if (md->cp) (md->cp)->squelch_update = old_squelch;
 
 }
@@ -1018,9 +997,9 @@ enum {mm_main,mm_fevent,
       mm_close,
       mm_open,
       mm_console,            /* holds the rest of the console under the title bar */
-      mm_amp,mm_amp_ev,      /* the "amp:" label */
+      mm_amp,      /* the "amp:" label */
       mm_track,
-      mm_speed,mm_speed_ev,  /* if open, srate control */
+      mm_speed,  /* if open, srate control */
       mm_speed_label,
       mm_spdscl,
       mm_chans               /* if open, start of controls (per input channel) */

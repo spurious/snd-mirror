@@ -779,16 +779,14 @@ void move_mixmark(mixmark *m, int x, int y)
 {
   Position xx,yy;
   Dimension wid;
-  XtVaSetValues(m->w[mm_main],XmNx,(Position)x,XmNy,(Position)y,NULL);
-  XtVaGetValues(m->w[mm_main],XmNx,&xx,XmNy,&yy,XmNwidth,&wid,NULL);
-  m->x = xx;
-  m->y = yy;
-  if (!(m->active)) activate_mixmark_widgets(m);
-  if (wid < 15)
+  if ((widget_x(m->w[mm_main]) != x) || (widget_y(m->w[mm_main]) != y))
     {
-      mix_open_console(m); /* try to force it to pop into existence */
-      mix_close_console(m); 
+      XtVaSetValues(m->w[mm_main],XmNx,(Position)x,XmNy,(Position)y,NULL);
+      XtVaGetValues(m->w[mm_main],XmNx,&xx,XmNy,&yy,XmNwidth,&wid,NULL);
+      m->x = xx;
+      m->y = yy;
     }
+  if (!(m->active)) activate_mixmark_widgets(m);
 }
 
 void move_mix_y(mixmark *m, int yspot)

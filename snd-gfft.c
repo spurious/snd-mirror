@@ -1,8 +1,3 @@
-/* TODO: figure out how to get rid of the excessive spacing in the button box (use box here not table?)
- *       highlight beta if relevant (and space better)
- *       bottom half of table is squashed
- */
-
 /* transform settings dialog */
 
 #include "snd.h"

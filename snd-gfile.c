@@ -1,9 +1,6 @@
 /* DIFFS: no "just-sounds" button since the search proc is apparently a simple string
  *          depending on built-in filename completion routine
- *        no help buttons (documentation is misleading in this area, and attempts to shoe-horn them in got segfaults)
  *        no forced re-read of directory when file is written (update button?)
- *        layout of save_as dialog is crummy.
- *        view files dialog isn't the right color, has lopsided layout, etc
  */
 
 #include "snd.h"
@@ -484,7 +481,7 @@ ww_info *make_title_row(snd_state *ss, GtkWidget *formw, char *first_str, char *
   gtk_box_pack_start(GTK_BOX(formw),wwi->tophbox,FALSE,FALSE,4);
   gtk_widget_show(wwi->tophbox);
 
-  wwi->svw = gtk_label_new(first_str); /* TODO: button (small) font here */
+  wwi->svw = gtk_label_new(first_str); 
   gtk_box_pack_start(GTK_BOX(wwi->tophbox),wwi->svw,FALSE,FALSE,(pad == PAD_TITLE_ON_LEFT) ? 5 : 2);
   gtk_widget_show(wwi->svw);
 
@@ -550,21 +547,24 @@ regrow *make_regrow(snd_state *ss, GtkWidget *ww,
   /* assume "ww" is a vbox widget in this case */
 
   r->rw = gtk_hbox_new(FALSE,0);
-  gtk_box_pack_start(GTK_BOX(ww),r->rw,TRUE,TRUE,0);
+  gtk_box_pack_start(GTK_BOX(ww),r->rw,FALSE,FALSE,0);
   set_background(r->rw,(ss->sgx)->zoom_color);
   gtk_widget_show(r->rw);
 
   r->sv = gtk_check_button_new();
+  set_backgrounds(r->rw,(ss->sgx)->highlight_color);
   gtk_box_pack_start(GTK_BOX(r->rw),r->sv,FALSE,FALSE,2);
   gtk_signal_connect(GTK_OBJECT(r->sv),"toggled",GTK_SIGNAL_FUNC(first_callback),(gpointer)r);
   gtk_widget_show(r->sv);
 
   r->pl = gtk_check_button_new();
+  set_backgrounds(r->pl,(ss->sgx)->highlight_color);
   gtk_box_pack_start(GTK_BOX(r->rw),r->pl,FALSE,FALSE,2);
   gtk_signal_connect(GTK_OBJECT(r->pl),"toggled",GTK_SIGNAL_FUNC(second_callback),(gpointer)r);
   gtk_widget_show(r->pl);
 
   r->nm = gtk_button_new_with_label("");
+  set_backgrounds(r->nm,(ss->sgx)->highlight_color);
   gtk_box_pack_start(GTK_BOX(r->rw),r->nm,TRUE,TRUE,2);
   gtk_signal_connect(GTK_OBJECT(r->nm),"clicked",GTK_SIGNAL_FUNC(third_callback),(gpointer)r);
   gtk_widget_show(r->nm);
@@ -680,8 +680,8 @@ static void curfile_unhighlight(snd_state *ss)
       if (vf_selected_file != -1)
 	{
 	  r = cur_name_row[vf_selected_file];
-	  set_background(r->rw,(ss->sgx)->highlight_color);
-	  set_background(r->nm,(ss->sgx)->highlight_color);
+	  set_backgrounds(r->rw,(ss->sgx)->highlight_color);
+	  set_backgrounds(r->nm,(ss->sgx)->highlight_color);
 	  vf_selected_file = -1;
 	}
     }
@@ -694,8 +694,8 @@ void curfile_highlight(snd_state *ss, int i)
     {
       if (vf_selected_file != -1) curfile_unhighlight(ss);
       r = cur_name_row[i];
-      set_background(r->rw,(ss->sgx)->zoom_color);
-      set_background(r->nm,(ss->sgx)->zoom_color);
+      set_backgrounds(r->rw,(ss->sgx)->zoom_color);
+      set_backgrounds(r->nm,(ss->sgx)->zoom_color);
       vf_selected_file = i;
     }
 }
@@ -851,6 +851,7 @@ void View_Files_Callback(GtkWidget *w,gpointer clientData)
    */
   snd_state *ss = (snd_state *)clientData;
   ww_info *wwl;
+  GtkWidget *s1,*s3;
   GtkWidget *mainform,*curform,*prevform,*updateB,*helpB,*dismissB,*clearB,*sep;
   if (!view_files_dialog)
     {
@@ -860,7 +861,7 @@ void View_Files_Callback(GtkWidget *w,gpointer clientData)
       gtk_signal_connect(GTK_OBJECT(view_files_dialog),"delete_event",GTK_SIGNAL_FUNC(View_Files_Delete_Callback),(gpointer)ss);
       gtk_window_set_title(GTK_WINDOW(view_files_dialog),STR_Files);
       gtk_window_set_policy(GTK_WINDOW(view_files_dialog),TRUE,TRUE,FALSE); /* allow shrink or grow */
-      set_background(view_files_dialog,(ss->sgx)->basic_color);
+      set_backgrounds(view_files_dialog,(ss->sgx)->basic_color);
       gtk_container_set_border_width (GTK_CONTAINER(view_files_dialog), 10);
       gtk_widget_set_usize(GTK_WIDGET(view_files_dialog),400,200);
       gtk_widget_realize(view_files_dialog);
@@ -905,6 +906,7 @@ void View_Files_Callback(GtkWidget *w,gpointer clientData)
 
       /* current files section: save play current files | files */
       wwl = make_title_row(ss,curform,STR_save,STR_play,STR_current_files,PAD_TITLE_ON_RIGHT,WITHOUT_SORT_BUTTON,WITHOUT_PANED_WINDOW);
+      s1 = wwl->tophbox;
       vf_curww = wwl->list; /* different from Motif */
       vf_curlst = wwl->list;
       FREE(wwl); 
@@ -912,6 +914,7 @@ void View_Files_Callback(GtkWidget *w,gpointer clientData)
 
       /* previous files section: unlist play previous files | files */
       wwl = make_title_row(ss,prevform,STR_unlist,STR_play,STR_previous_files,PAD_TITLE_ON_LEFT,WITH_SORT_BUTTON,WITHOUT_PANED_WINDOW);
+      s3 = wwl->tophbox;
 
       gtk_signal_connect_object(GTK_OBJECT(wwl->byname),"activate",GTK_SIGNAL_FUNC(sort_prevfiles_by_name),(gpointer)ss);
       gtk_signal_connect_object(GTK_OBJECT(wwl->bydate),"activate",GTK_SIGNAL_FUNC(sort_prevfiles_by_date),(gpointer)ss);
@@ -927,6 +930,8 @@ void View_Files_Callback(GtkWidget *w,gpointer clientData)
   make_curfiles_list(ss);
   make_prevfiles_list(ss);
   highlight_selected_sound(ss);
+
+  set_widget_height(s1,widget_height(s3));
 }
 
 void start_file_dialog(snd_state *ss, int width, int height)

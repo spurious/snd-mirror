@@ -1,28 +1,18 @@
 #include "snd.h"
 
-/* TODO: kill ring, c-a should not back over prompt
- *       there's cursor move and delete_text events apparently
- *         also changed -- see gtkeditable.h
- */
-
 static GtkWidget *listener_text = NULL;
 static GtkWidget *listener_pane = NULL; 
 static int last_prompt;
 
-static void append_listener_text(snd_state *ss, char *msg)
+void append_listener_text(int end, char *msg)
 {
+  /* "end" arg needed in Motif */
   int chars;
+  snd_state *ss;
+  ss = get_global_state();
   chars = gtk_text_get_length(GTK_TEXT(listener_text));
   if (chars > 0) gtk_text_set_point(GTK_TEXT(listener_text),chars);
   gtk_text_insert(GTK_TEXT(listener_text),(ss->sgx)->listener_fnt,(ss->sgx)->black,(ss->sgx)->listener_color,msg,-1);
-}
-
-void set_graph_active(int val)
-{
-  snd_state *ss;
-  ss = get_global_state();
-  /* fprintf(stderr,"set: %d ",val); */
-  (ss->sgx)->graph_is_active = val;
 }
 
 static void Activate_channel (snd_state *ss)
@@ -36,35 +26,12 @@ static void Activate_channel (snd_state *ss)
   /* fprintf(stderr,"activate -> true "); */
 }
 
-static int find_indentation(char *str,int loc)
-{
-  int line_beg = 0,open_paren = -1,parens,i;
-  parens = 0;
-  for (i=loc-1;i>=0;i--)
-    {
-      if (str[i] == ')') parens--;
-      if (str[i] == '(') parens++;
-      if (parens == 1) {open_paren = i; break;}
-    }
-  if (open_paren == -1) return(1);
-  if (open_paren == 0) return(3);
-  for (i=open_paren-1;i>0;i--)
-    {
-      if (str[i] == '\n') {line_beg = i; break;}
-    }
-  if (line_beg == 0) return(1);
-  return(open_paren - line_beg + 2);
-}
-
 static void Listener_completion(snd_state *ss)
 {
-  /* used only by the listener widget -- needs to be smart about text since overall string can be enormous 
-   *   and we don't want to back up past the last prompt
-   *   also if at start of line (or all white-space to previous \n, indent
-   */
-  int beg,end,len,i,k,matches = 0,need_position,spaces,text_pos = 0,cr_pos = 0;
-  char *old_text,*new_text = NULL,*file_text = NULL,*new_file = NULL;
+  int beg,end,matches = 0,need_position;
+  char *old_text,*new_text = NULL,*file_text = NULL;
   gint xoff,yoff; 
+  int try_completion = 1;
   beg = last_prompt+1;
   end = gtk_text_get_length(GTK_TEXT(listener_text));
   if (end <= beg) return;
@@ -72,69 +39,15 @@ static void Listener_completion(snd_state *ss)
   /* now old_text is the stuff typed since the last prompt */
   if (old_text)
     {
-      len = strlen(old_text);
-      for (i=len-1;i>0;i--)
+      new_text = complete_listener_text(old_text,end,&try_completion,&file_text);
+      if (try_completion == 0)
 	{
-	  if (old_text[i] == '\n')
-	    {
-	      /* tab as indentation */
-	      /* look at previous line to decide */
-	      spaces = find_indentation(old_text,i);
-	      if (spaces > 0)
-		{
-		  file_text = (char *)CALLOC(spaces+1,sizeof(char));
-		  for (k=0;k<spaces;k++) file_text[k] = ' ';
-		  file_text[spaces] = 0;
-		  append_listener_text(ss,file_text);
-		  FREE(file_text);
-		  file_text = NULL;
-		}
-	      free(old_text);
-	      old_text = NULL;
-	      return;
-	    }
-	  if (old_text[i] == ';')
-	    {
-	      /* this isn't quite right, but how much effort should we put in it? */
-	      spaces = 20;
-	      for (k=i-1;k>0;k--) 
-		if (old_text[k] == '\n') 
-		  {cr_pos = k; break;} 
-		else 
-		  if ((!(isspace((int)(old_text[k])))) && (text_pos == 0)) 
-		    text_pos = k;
-	      if (text_pos > 0)
-		text_pos -= cr_pos;
-	      if (cr_pos == 0) spaces--; 
-	      if (text_pos < spaces)
-		{
-		  file_text = (char *)CALLOC(spaces+2,sizeof(char));
-		  for (k=text_pos+1;k<spaces;k++) file_text[k-text_pos-1] = ' ';
-		  file_text[spaces] = ';';
-		  file_text[spaces+1] = 0;
-		  append_listener_text(ss,file_text);
-		  FREE(file_text);
-		}
-	      free(old_text);
-	      return;
-	    }
-	  if (old_text[i] == '\"')
-	    {
-	      file_text = copy_string((char *)(old_text+i+1));
-	      new_file = filename_completer(file_text);
-	      len = i + 2 + snd_strlen(new_file);
-	      new_text = (char *)CALLOC(len,sizeof(char));
-	      strncpy(new_text,old_text,i+1);
-	      strcat(new_text,new_file);
-	      if (new_file) FREE(new_file);
-	      break;
-	    }
-	  if (isspace((int)(old_text[i]))) break;
+	  free(old_text);
+	  return;
 	}
-      if (new_text == NULL) new_text = command_completer(old_text);
       if (strcmp(old_text,new_text) == 0) matches = get_completion_matches();
       gtk_text_backward_delete(GTK_TEXT(listener_text),(end-beg));
-      append_listener_text(ss,new_text);
+      append_listener_text(0,new_text);
       if (new_text) {FREE(new_text); new_text = NULL;}
       if (matches > 1)
 	{
@@ -165,15 +78,12 @@ void snd_append_char(snd_state *ss, char *msg)
   if (listener_text)
     {
       if ((ss->sgx)->graph_is_active)
-	{
-	  /* fprintf(stderr,"append->false "); */
-	  (ss->sgx)->graph_is_active = FALSE;
-	}
-      else append_listener_text(ss,msg);
+	(ss->sgx)->graph_is_active = FALSE;
+      append_listener_text(0,msg);
     }
 }
 
-static char listener_prompt_buffer[4];
+static char listener_prompt_buffer[16];
 static char *listener_prompt_with_cr(snd_state *ss)
 {
   sprintf(listener_prompt_buffer,"\n%s",listener_prompt(ss));
@@ -186,11 +96,11 @@ void snd_append_command(snd_state *ss, char *msg)
   if (listener_text)
     {
       if (ss->result_printout != PLAIN_MESSAGE) 
-	append_listener_text(ss,"\n");
+	append_listener_text(0,"\n");
       if (msg)
-	append_listener_text(ss,msg);
+	append_listener_text(0,msg);
       if (ss->result_printout == MESSAGE_WITH_CARET) 
-	append_listener_text(ss,listener_prompt_with_cr(ss));
+	append_listener_text(0,listener_prompt_with_cr(ss));
       ss->result_printout = 0;
       cmd_eot = gtk_text_get_length(GTK_TEXT(listener_text));
       last_prompt = cmd_eot-1;
@@ -252,7 +162,7 @@ static void Command_Return_Callback(snd_state *ss)
 	      FREE(str);
 	      str = NULL;
 	      new_eot = gtk_text_get_length(GTK_TEXT(listener_text));
-	      append_listener_text(ss,"\n");
+	      append_listener_text(0,"\n");
 	      /* gtk_text_set_point(GTK_TEXT(listener_text),gtk_text_get_length(GTK_TEXT(listener_text))); */
 	      gtk_editable_set_position(GTK_EDITABLE(listener_text),gtk_text_get_length(GTK_TEXT(listener_text)));
 	      return;
@@ -262,7 +172,7 @@ static void Command_Return_Callback(snd_state *ss)
 	{
 	  if (current_position < (last_position-2))
 	    {
-	      append_listener_text(ss,str);
+	      append_listener_text(0,str);
 	    }
 	  gdk_window_set_cursor(listener_text->window,(ss->sgx)->wait_cursor);
 	  snd_eval_listener_str(ss,str);
@@ -273,18 +183,65 @@ static void Command_Return_Callback(snd_state *ss)
       else
 	{
 	  new_eot = gtk_text_get_length(GTK_TEXT(listener_text));
-	  append_listener_text(ss,listener_prompt_with_cr(ss));
+	  append_listener_text(0,listener_prompt_with_cr(ss));
 	}
       last_prompt = gtk_text_get_length(GTK_TEXT(listener_text)) - 1;
     }
   else 
     {
       new_eot = gtk_text_get_length(GTK_TEXT(listener_text));
-      append_listener_text(ss,"\n");
+      append_listener_text(0,"\n");
     }
   cmd_eot = gtk_text_get_length(GTK_TEXT(listener_text));
   /* gtk_text_set_point(GTK_TEXT(listener_text),cmd_eot); */
   gtk_editable_set_position(GTK_EDITABLE(listener_text),cmd_eot); 
+  if (full_str) free(full_str);
+}
+
+static char *C_k_str = NULL;
+static void grab_line(snd_state *ss)
+{
+  char *full_str;
+  int current_position,last_position,i,j,k;
+  full_str = gtk_editable_get_chars(GTK_EDITABLE(listener_text),0,-1);
+  current_position = (GTK_EDITABLE(listener_text))->current_pos; /* is this gtk_editable_get_position? */
+  last_position = gtk_text_get_length(GTK_TEXT(listener_text));
+  for (i=current_position;i<last_position;i++)
+    if (full_str[i] == '\n')
+      break;
+  if (C_k_str) FREE(C_k_str);
+  C_k_str = NULL;
+  if (i > current_position)
+    {
+      C_k_str = (char *)CALLOC(i-current_position+2,sizeof(char));
+      for (j=current_position,k=0;j<i;j++,k++) C_k_str[k] = full_str[j];
+    }
+  if (full_str) free(full_str);
+}
+
+static void insert_line(snd_state *ss)
+{
+  if (C_k_str)
+    gtk_text_insert(GTK_TEXT(listener_text),(ss->sgx)->listener_fnt,(ss->sgx)->black,(ss->sgx)->listener_color,C_k_str,snd_strlen(C_k_str));
+}
+
+static void back_to_start(snd_state *ss)
+{
+  char *full_str = NULL,*prompt;
+  int i,start_of_text;
+  full_str = gtk_editable_get_chars(GTK_EDITABLE(listener_text),0,-1);
+  start_of_text = (GTK_EDITABLE(listener_text))->current_pos; /* is this gtk_editable_get_position? */
+  prompt = listener_prompt(ss);
+  if (start_of_text > 0)
+    {
+      for (i=start_of_text;i>=0;i--)
+	if ((full_str[i] == prompt[0]) && ((i == 0) || (full_str[i-1] == '\n')))
+	  {
+	    start_of_text = i+1;
+	    break;
+	  }
+    }
+  gtk_editable_set_position(GTK_EDITABLE(listener_text),start_of_text);
   if (full_str) free(full_str);
 }
 
@@ -296,31 +253,67 @@ static gint listener_key_press(GtkWidget *w, GdkEventKey *event, gpointer data)
     {
       cp = current_channel(ss);
       graph_key_press(channel_graph(cp),event,(gpointer)cp); 
-      gtk_signal_emit_stop_by_name(GTK_OBJECT(w),"key_press_event");
       return(TRUE);
     }
-  if (event->keyval == GDK_Tab)
+  else
     {
-      Listener_completion(ss);
-      gtk_signal_emit_stop_by_name(GTK_OBJECT(w),"key_press_event");
-      return(TRUE);
+      if (event->keyval == GDK_Tab)
+	Listener_completion(ss);
+      else
+	{
+	  if (event->keyval == GDK_Return)
+	    Command_Return_Callback(ss);
+	  else
+	    {
+	      if (((event->keyval == snd_K_g) || (event->keyval == snd_K_G)) && (event->state & snd_ControlMask))
+		Activate_channel(ss);
+	      else
+		{
+		  if (((event->keyval == snd_K_k) || (event->keyval == snd_K_K)) && (event->state & snd_ControlMask))
+		    {
+		      grab_line(ss);
+		      return(TRUE);
+		    }
+		  else
+		    {
+		      if (((event->keyval == snd_K_y) || (event->keyval == snd_K_Y)) && (event->state & snd_ControlMask))
+			{
+			  insert_line(ss);
+			}
+		      else
+			{
+			  if (((event->keyval == snd_K_a) || (event->keyval == snd_K_A)) && (event->state & snd_ControlMask))
+			    {
+			      back_to_start(ss);
+			    }
+			  else
+			    {
+			      if (event->keyval == GDK_BackSpace)
+				{
+				  int current_position;
+				  char *fstr;
+				  current_position = (GTK_EDITABLE(listener_text))->current_pos;
+				  if (current_position > 1)
+				    {
+				      fstr = gtk_editable_get_chars(GTK_EDITABLE(listener_text),current_position-2,current_position);
+				      if ((current_position != (last_prompt - 2)) && (strcmp(fstr,listener_prompt_with_cr(ss)) != 0))
+					{
+					  free(fstr);
+					  return(TRUE);
+					}
+				      free(fstr);
+				    }
+				}
+			      else return(TRUE);
+			    }
+			}
+		    }
+		}
+	    }
+	}
     }
-  if (event->keyval == GDK_Return)
-    {
-      Command_Return_Callback(ss);
-      gtk_signal_emit_stop_by_name(GTK_OBJECT(w),"key_press_event");
-      return(TRUE);
-    }
-  if ((event->keyval == snd_K_g) && (event->state & snd_ControlMask))
-    {
-      Activate_channel(ss);
-      gtk_signal_emit_stop_by_name(GTK_OBJECT(w),"key_press_event");
-      return(TRUE);
-    }
-
-  /* also backspace over our prompt */
-  
-  return(FALSE);
+  gtk_signal_emit_stop_by_name(GTK_OBJECT(w),"key_press_event");
+  return(TRUE);
 }
 
 static void listener_button_press(GtkWidget *w, GdkEventButton *ev, gpointer data)
@@ -337,7 +330,9 @@ static void sndCreateCommandWidget(snd_state *ss, int height)
       frame = gtk_frame_new(NULL);
       gtk_frame_set_shadow_type(GTK_FRAME(frame),GTK_SHADOW_ETCHED_IN);
       gtk_widget_show(frame);
-      gtk_paned_add2(GTK_PANED(SOUND_PANE(ss)),frame);
+      if (sound_style(ss) != SOUNDS_IN_SEPARATE_WINDOWS)
+	gtk_paned_add2(GTK_PANED(SOUND_PANE(ss)),frame);
+      else gtk_container_add(GTK_CONTAINER(MAIN_PANE(ss)),frame);
       listener_pane = gtk_table_new (2, 2, FALSE);
       gtk_container_add(GTK_CONTAINER(frame),listener_pane);
 

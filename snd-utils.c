@@ -375,6 +375,7 @@ int check_balance(char *expr, int start, int end)
   return 0;
 }
 
+
 char *kmg (int num)
 {
   /* return number 0..1024, then in terms of K, M, G */

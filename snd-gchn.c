@@ -1,10 +1,3 @@
-/* TODO: bottom scrollbars have space between them that can't be deleted
- *       edhist handle collides with w button and is too small
- *       slider widths are not settable (except at the class level)
- *       paned widgets take only 2 panes, so lots of things need to be done differently
- *       should RGB replace colormaps?
- */
-
 #include "snd.h"
 
 enum {
@@ -433,15 +426,17 @@ static gint real_graph_key_press(GtkWidget *w, GdkEventKey *ev, gpointer data)
   chan_info *cp = (chan_info *)data;
   int keysym,theirs;
   int x,y;
+  snd_state *ss;
   GdkModifierType key_state;
   gdk_window_get_pointer(ev->window,&x,&y,&key_state);
   key_state = ev->state;
   keysym = ev->keyval;
+  ss = cp->state;
   /* fprintf(stderr,"grf: %s %d ",gdk_keyval_name(keysym),key_state); */
   theirs = key_press_callback(NULL,NULL,cp,
 			      x,y,ev->state,keysym,
 			      gdk_keyval_name(keysym));
-  if (theirs) set_graph_active(FALSE);
+  if (theirs) (ss->sgx)->graph_is_active = FALSE;
   gtk_signal_emit_stop_by_name(GTK_OBJECT(w),"key_press_event");
   return(TRUE);
 }
@@ -451,23 +446,27 @@ gint graph_key_press(GtkWidget *w, GdkEventKey *ev, gpointer data)
   chan_info *cp = (chan_info *)data;
   int keysym,theirs;
   int x,y;
+  snd_state *ss;
   GdkModifierType key_state;
   gdk_window_get_pointer(ev->window,&x,&y,&key_state);
   key_state = ev->state;
   keysym = ev->keyval;
+  ss = cp->state;
   /* fprintf(stderr,"key: %s %d ",gdk_keyval_name(keysym),key_state); */
   theirs = key_press_callback(NULL,NULL,cp,
 			      x,y,ev->state,keysym,
 			      gdk_keyval_name(keysym));
-  if (theirs) set_graph_active(FALSE);
+  if (theirs) (ss->sgx)->graph_is_active = TRUE;
   return(TRUE);
 }
  
 static void graph_button_press(GtkWidget *w, GdkEventButton *ev, gpointer data)
 {
   chan_info *cp = (chan_info *)data;
+  snd_state *ss;
   /* fprintf(stderr,"graph press "); */
-  set_graph_active(TRUE);
+  ss = cp->state;
+  (ss->sgx)->graph_is_active = TRUE;
   gtk_widget_grab_focus(w);
   ((cp->sound)->sgx)->mini_active = 0;
   graph_button_press_callback(cp,(int)(ev->x),(int)(ev->y),ev->state,ev->button,ev->time);
@@ -725,7 +724,7 @@ void set_bold_peak_numbers_font(chan_info *cp)
   gdk_gc_set_font(copy_GC(cp),(ss->sgx)->bold_button_fnt);
 }
 
-GdkColor *get_foreground_color(chan_info *cp, axis_context *ax)
+COLOR_TYPE get_foreground_color(chan_info *cp, axis_context *ax)
 {
   GdkGCValues gv;
   snd_state *ss;

@@ -906,7 +906,7 @@ unsigned char *snd_plain_icon_bits(void) {return(snd_plain_bits);}
 static char * speaker_xpm[] = {
 "12 12 2 1",
 "X	c black",
-"-      c ivory2 s basiccolor",
+"-      s basiccolor",
 "--------XXX-",
 "------XX--X-",
 "----XX----X-",
@@ -944,7 +944,7 @@ char **mic_bits(void) {return(mic_xpm);}
 static char *cross_xpm[] = {
 "12 12 2 1",
 "X	c black",
-"-      c ivory2 s basiccolor",
+"-      s basiccolor",
 "------------",
 "-X--------X-",
 "--X------X--",
@@ -963,7 +963,7 @@ char **cross_bits(void) {return(cross_xpm);}
 static char *mixer_xpm[] = {
 "12 12 2 1",
 "X	c black",
-"-      c ivory2 s basiccolor",
+"-      s basiccolor",
 "------------",
 "-XXXXXXXXXX-",
 "-X-------XX-",
@@ -982,7 +982,7 @@ char **mixer_bits(void) {return(mixer_xpm);}
 static char * mini_xpm[] = {
 "12 12 2 1",
 "X	c black",
-"-      c ivory2 s basiccolor",
+"-      s basiccolor",
 "------------",
 "------------",
 "------------",
@@ -1002,7 +1002,7 @@ char **mini_bits(void) {return(mini_xpm);}
 static char *cd_xpm[] = {
 "12 12 2 1",
 "X	c black",
-"-      c ivory2 s basiccolor",
+"-      s basiccolor",
 "---XXXXX----",
 "-XX-----XX--",
 "-X--XXX--X--",
@@ -1021,7 +1021,7 @@ char **cd_bits(void) {return(cd_xpm);}
 static char *line_in_xpm[] = {
 "12 12 2 1",
 "X	c black",
-"-      c ivory2 s basiccolor",
+"-      s basiccolor",
 "----------X-",
 "------X--X--",
 "-----X---X--",

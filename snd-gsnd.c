@@ -1,5 +1,4 @@
 /* TODO: 
- *       slider trough color?
  *       if controls close, drag main sash should keep it closed
  */
 
@@ -1186,6 +1185,15 @@ void reflect_amp_env_in_progress(snd_info *sp)
 #endif
 }
 
+static gint Close_Sound_Dialog(GtkWidget *w, GdkEvent *event, gpointer clientData)
+{
+  snd_info *sp = (snd_info *)clientData;
+  finish_keyboard_selection();
+  if (sp) snd_close_file(sp,sp->state);
+  gtk_widget_hide(sp->sgx->dialog); 
+  return(TRUE);
+} 
+
 
 /* -------- SOUND PANE -------- */
 
@@ -1197,7 +1205,7 @@ snd_info *add_sound_window(char *filename, snd_state *ss)
   GtkObject **adjs;
   GtkWidget *tablab;
   int snd_slot,nchans,make_widgets,i,k,old_chans;
-  char *old_name = NULL;
+  char *old_name = NULL,*title;
   int app_y,app_dy,screen_y,chan_min_y;
   /* these dimensions are used to try to get a reasonable channel graph size without falling off the screen bottom */
   int samples_per_channel;
@@ -1300,18 +1308,27 @@ snd_info *add_sound_window(char *filename, snd_state *ss)
       gtk_paned_set_gutter_size(GTK_PANED(sw[W_pane]),8);
       gtk_paned_set_handle_size(GTK_PANED(sw[W_pane]),ss->sash_size);
       gtk_container_set_border_width(GTK_CONTAINER(sw[W_pane]),0);
-      if (sound_style(ss) == SOUNDS_IN_NOTEBOOK)
+      if (sound_style(ss) == SOUNDS_IN_SEPARATE_WINDOWS)
 	{
-	  tablab = gtk_label_new(sp->shortname);
-	  set_background(tablab,(ss->sgx)->basic_color);
-	  set_text_background(tablab,(ss->sgx)->basic_color);
-	  /* why are these settings ignored? -- apparently the color comes from the parent no matter what */
-	  gtk_widget_show(tablab);
-	  gtk_notebook_append_page(GTK_NOTEBOOK(SOUND_PANE_BOX(ss)),sw[W_pane],tablab);
+	  sx->dialog = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+	  set_background(sx->dialog,(ss->sgx)->basic_color);
+	  gtk_window_set_policy(GTK_WINDOW(sx->dialog),TRUE,TRUE,FALSE); /* allow shrink or grow */
+	  gtk_container_add(GTK_CONTAINER(sx->dialog),sw[W_pane]);
+	  gtk_widget_show(sx->dialog);
+	  add_dialog(ss,sx->dialog);
+	  gtk_signal_connect(GTK_OBJECT(sx->dialog),"delete_event",GTK_SIGNAL_FUNC(Close_Sound_Dialog),(gpointer)sp);
 	}
-      else gtk_box_pack_start(GTK_BOX(SOUND_PANE_BOX(ss)),sw[W_pane],TRUE,TRUE,0);
-      /* child2 is listener */
-
+      else
+	{
+	  if (sound_style(ss) == SOUNDS_IN_NOTEBOOK)
+	    {
+	      tablab = gtk_label_new(sp->shortname);
+	      gtk_widget_show(tablab);
+	      gtk_notebook_append_page(GTK_NOTEBOOK(SOUND_PANE_BOX(ss)),sw[W_pane],tablab);
+	    }
+	  else gtk_box_pack_start(GTK_BOX(SOUND_PANE_BOX(ss)),sw[W_pane],TRUE,TRUE,0);
+	  /* child2 is listener */
+	}
       sw[W_pane_box] = gtk_vbox_new(FALSE,0);
       gtk_paned_add1(GTK_PANED(sw[W_pane]),sw[W_pane_box]);
       gtk_widget_show(sw[W_pane_box]);
@@ -1705,6 +1722,8 @@ snd_info *add_sound_window(char *filename, snd_state *ss)
     } /* new sound ss */
   else
     { /* re-manage currently inactive chan */
+      if (sound_style(ss) == SOUNDS_IN_SEPARATE_WINDOWS) 
+	raise_dialog(sx->dialog);
       gtk_widget_show(w_snd_pane(sp));
       for (k=0;k<nchans;k++) add_channel_window(sp,k,ss,chan_min_y,0,NULL,WITH_FW_BUTTONS);
       gtk_label_set_text(GTK_LABEL(sw[W_name]),shortname_indexed(sp));
@@ -1716,6 +1735,15 @@ snd_info *add_sound_window(char *filename, snd_state *ss)
 	  set_text_background(gtk_notebook_get_tab_label(GTK_NOTEBOOK(SOUND_PANE_BOX(ss)),sw[W_pane]),(ss->sgx)->basic_color);
 	}
     }
+
+  if (sound_style(ss) == SOUNDS_IN_SEPARATE_WINDOWS)
+    {
+      title = (char *)CALLOC(128,sizeof(char));
+      sprintf(title,"%d: %s",snd_slot,sp->shortname);
+      gtk_window_set_title(GTK_WINDOW(sx->dialog),title);
+      FREE(title);
+    }
+
   if (sp->nchans == 1) gtk_widget_hide(sw[W_combine]);
   add_sound_data(filename,sp,ss);
 
@@ -1750,15 +1778,6 @@ int sound_lock_ctrls(snd_info *sp, void *ptr)
 {
   return(0);
 }
-#if 0
-
-static void Close_Sound_Dialog(GtkWidget w,XtPointer clientData,XtPointer callData) 
-{
-  snd_info *sp = (snd_info *)clientData;
-  finish_keyboard_selection();
-  if (sp) snd_close_file(sp,sp->state);
-} 
-#endif
 
 void snd_info_cleanup(snd_info *sp)
 {

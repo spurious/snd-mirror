@@ -101,6 +101,7 @@ void snd_help(snd_state *ss, char *subject, char *helpstr)
 
 void move_help_dialog_to(int x, int y)
 {
+  if (!(help_dialog)) create_help_monolog(get_global_state()); else raise_dialog(help_dialog);
   set_widget_position(help_dialog,x,y);
 }
 

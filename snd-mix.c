@@ -945,7 +945,11 @@ static mixdata *add_mix(chan_info *cp, int chan, int beg, int num,
     }
   cs->speed = 1.0;
   cs->scl_speed = 1.0;
+#if USE_GTK
+  cs->old_speed = 0.5;
+#else
   cs->old_speed = 50;
+#endif
   md->curcons = 0;
   make_current_console(md);
   md->out_filename = copy_string(mixed_chan_file);

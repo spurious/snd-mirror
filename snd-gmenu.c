@@ -1,11 +1,10 @@
 #include "snd.h"
 
 /* DIFFS: click for help is called tipquery or something like that (and isn't implemented)
- *        no normalize menus (not using paned windows here, so no need for them)
+ *        no normalize menus (not using paned windows here, so no use for them)
  */
 /* TODO: popup doesn't work right 
  *       finish guile-gtk connection (popup and decide about inner cascades)
- *       drag/drop untested
  */
 
 enum {menu_menu,

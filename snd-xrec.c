@@ -1,6 +1,9 @@
 /* TODO: split out stuff that is not widget-dependent into snd-rec.c
  *         see snd-rec.h/c 
  *
+ * it would be possible to combine much of the Motif/Gtk code using macros (WIDGET,etc)
+ *   but I can't decide if it's worth the bother
+ *
  *
  *   This split is underway -- many name changes, weird temporary code, etc
  *
@@ -99,7 +102,9 @@ static Widget rec_size_text,trigger_scale,trigger_label;
 static Widget file_duration,messages,record_button,reset_button,file_text;
 static Widget *device_buttons;
 static int device_buttons_size = 0;
-static int active_device_button = -1;
+#if NEW_SGI_AL || defined(SUN)
+  static int active_device_button = -1;
+#endif
 static int mixer_gains_posted[MAX_SOUNDCARDS];
 static int tone_controls_posted[MAX_SOUNDCARDS];
 static XM_FONT_TYPE small_fontlist;
@@ -739,43 +744,6 @@ static void allocate_meter_1(snd_state *ss, vu_label *vu)
   XpmWriteFileFromPixmap(dp,"cliplabel.xpm",vu->clip_label,NULL,NULL);
 #endif
 
-static void allocate_meter(snd_state *ss, vu_label *vu)
-{
-#if HAVE_XPM  
-  int err = XpmSuccess;
-  if ((vu->size == 1.0) || (vu->size > 4.0) || (vu->size < .25))
-    err = allocate_meter_2(recorder,vu);
-  else allocate_meter_1(ss,vu);
-  if (err != XpmSuccess) {vu->on_label = 0; vu->off_label = 0; vu->clip_label = 0;}
-#else
-  allocate_meter_1(ss,vu);
-#endif
-}
-
-static vu_label *get_vu_label(snd_state *ss, Float size)
-{
-  int i;
-  vu_label *vu;
-  for (i=0;i<current_vu_label;i++)
-    {
-      if (vu_labels[i]->size == size) return(vu_labels[i]);
-    }
-  if (current_vu_label >= vu_labels_size)
-    {
-      vu_labels_size += 8;
-      if (!vu_labels)
-	vu_labels = (vu_label **)CALLOC(vu_labels_size,sizeof(vu_label *));
-      else vu_labels = (vu_label **)REALLOC(vu_labels,vu_labels_size * sizeof(vu_label *));
-    }
-  vu_labels[current_vu_label] = (vu_label *)CALLOC(1,sizeof(vu_label));
-  vu = vu_labels[current_vu_label];
-  vu->label_font = get_vu_font(ss,size);
-  vu->size = size;
-  current_vu_label++;
-  allocate_meter(ss,vu);
-  return(vu);
-}
-
 static void display_vu_meter(VU *vu)
 {
   Float deg,rdeg,val;
@@ -869,7 +837,11 @@ static void Meter_Display_Callback(Widget w,XtPointer clientData,XtPointer callD
 static VU *make_vu_meter(Widget meter, int light_x, int light_y, int center_x, int center_y, snd_state *ss, Float size)
 {
   VU *vu;
-  vu_label *vl;
+  int i;
+  vu_label *vl = NULL;
+#if HAVE_XPM  
+  int err = XpmSuccess;
+#endif
   vu = (VU *)CALLOC(1,sizeof(VU));
   vu->meter = meter;
   vu->size = size;
@@ -886,7 +858,35 @@ static VU *make_vu_meter(Widget meter, int light_x, int light_y, int center_x, i
   vu->center_x = (int)(center_x*size);
   vu->center_y = (int)(center_y*size);
   vu->ss = ss;
-  vl = get_vu_label(ss,size);
+  for (i=0;i<current_vu_label;i++)
+    if (vu_labels[i]->size == size) 
+      {
+	vl = vu_labels[i];
+	break;
+      }
+  if (vl == NULL)
+    {
+      if (current_vu_label >= vu_labels_size)
+	{
+	  vu_labels_size += 8;
+	  if (!vu_labels)
+	    vu_labels = (vu_label **)CALLOC(vu_labels_size,sizeof(vu_label *));
+	  else vu_labels = (vu_label **)REALLOC(vu_labels,vu_labels_size * sizeof(vu_label *));
+	}
+      vu_labels[current_vu_label] = (vu_label *)CALLOC(1,sizeof(vu_label));
+      vl = vu_labels[current_vu_label];
+      current_vu_label++;
+      vl->label_font = get_vu_font(ss,size);
+      vl->size = size;
+#if HAVE_XPM  
+      if ((vl->size == 1.0) || (vl->size > 4.0) || (vl->size < .25))
+	err = allocate_meter_2(recorder,vl);
+      else allocate_meter_1(ss,vl);
+      if (err != XpmSuccess) {vl->on_label = 0; vl->off_label = 0; vl->clip_label = 0;}
+#else
+      allocate_meter_1(ss,vl);
+#endif
+    }
   vu->on_label = vl->on_label;
   vu->off_label = vl->off_label;
   vu->clip_label = vl->clip_label;
@@ -3148,7 +3148,9 @@ void finish_recording(snd_state *ss, recorder_info *rp)
   XmStringFree(s2);
   snd_close(rp->output_file_descriptor);
   rp->output_file_descriptor = mus_file_reopen_write(rp->output_file);
-  mus_header_update_with_fd(rp->output_file_descriptor,rp->output_header_type,rp->total_output_frames*rp->out_chans*mus_data_format_to_bytes_per_sample(rp->out_format));
+  mus_header_update_with_fd(rp->output_file_descriptor,
+			    rp->output_header_type,
+			    rp->total_output_frames*rp->out_chans*mus_data_format_to_bytes_per_sample(rp->out_format));
   close(rp->output_file_descriptor);
   rp->output_file_descriptor = -1;
   duration = (Float)rp->total_output_frames / (Float)(rp->srate);

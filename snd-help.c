@@ -253,6 +253,7 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
+28-Aug:  more gtk-related bugfixes.\n\
 24-Aug:  drag-and-drop bugfixes.\n\
 23-Aug:  removed -s startup switch.\n\
 22-Aug:  removed snd-gdac.c, snd-xdac.c.\n\

@@ -1,7 +1,3 @@
-/* TODO: info labels aren't left justified -- what container to use here?
- *       colors are ignored -- is this base or foreground or text or...?
- */
-
 #include "snd.h"
 
 /* -------- region browser -------- */
@@ -284,16 +280,20 @@ static void region_edit_Callback(GtkWidget *w,gpointer clientData)
     region_edit((snd_state *)clientData,current_region);
 }
 
+static void region_labels_mouse_enter(GtkWidget *w, GdkEventCrossing *ev, gpointer data)
+{
+  gtk_signal_emit_stop_by_name(GTK_OBJECT(w),"enter_notify_event");
+}
+
 static void make_region_dialog(snd_state *ss)
 {
   int i;
-  GtkWidget *infosep,*print_button,*edit_button;
+  GtkWidget *print_button,*edit_button;
   regrow *r;
   chan_info *cp;
   file_info *hdr;
   ww_info *wwl;
-
-  GtkWidget *dismiss_button,*help_button,*delete_button,*infobox;
+  GtkWidget *dismiss_button,*help_button,*delete_button,*infobox,*labels,*labbox;
 
   region_dialog = gtk_dialog_new();
   gtk_signal_connect(GTK_OBJECT(region_dialog),"delete_event",GTK_SIGNAL_FUNC(region_browser_delete_Callback),(gpointer)ss);
@@ -332,14 +332,9 @@ static void make_region_dialog(snd_state *ss)
 
   wwl = make_title_row(ss,GTK_DIALOG(region_dialog)->vbox,STR_save,STR_play,STR_regions,DONT_PAD_TITLE,WITHOUT_SORT_BUTTON,WITH_PANED_WINDOW);
   region_list = wwl->list;
-  
-  infosep = gtk_vseparator_new();
-  gtk_box_pack_start(GTK_BOX(wwl->toppane),infosep,FALSE,FALSE,4);
-  gtk_widget_show(infosep);
-  
+
   infobox = gtk_vbox_new(FALSE,0);
-  gtk_box_pack_start(GTK_BOX(wwl->toppane),infobox,FALSE,FALSE,4);
-  set_backgrounds(infobox,(ss->sgx)->highlight_color);
+  gtk_box_pack_start(GTK_BOX(wwl->toppane),infobox,FALSE,FALSE,2);
   gtk_widget_show(infobox);
   
   region_rows = (regrow **)CALLOC(max_regions(ss),sizeof(regrow *));
@@ -353,28 +348,41 @@ static void make_region_dialog(snd_state *ss)
 
   update_region_browser(ss,0);
 
+
+  /* in Gtk, apparently, labels are just the text, not the background (i.e. they're transparent) */
+  /* we need a button simply to get the background color, then a vbox to put four labels on the button */
+  /* but we get a button which flashes whenever the mouse comes near it and has "relief" */
+  /* if we turn off the relief, the colors go away */
+  /* all I want is an opaque label with a background color */
+
+  labels = gtk_button_new();
+  set_background(labels,(ss->sgx)->highlight_color);
+  gtk_box_pack_start(GTK_BOX(infobox),labels,TRUE,TRUE,2);
+  gtk_widget_show(labels);
+  gtk_signal_connect(GTK_OBJECT(labels),"enter_notify_event",GTK_SIGNAL_FUNC(region_labels_mouse_enter),NULL);
+
+  labbox = gtk_vbox_new(TRUE,0);
+  gtk_container_add(GTK_CONTAINER(labels),labbox);
+  gtk_widget_show(labbox);
+  
   srate_text = gtk_label_new(STR_srate_p);
-  gtk_label_set_justify(GTK_LABEL(srate_text),GTK_JUSTIFY_LEFT);
-  set_text_background(srate_text,(ss->sgx)->highlight_color);
-  gtk_box_pack_start(GTK_BOX(infobox),srate_text,FALSE,FALSE,2);
+  gtk_label_set_justify(GTK_LABEL(srate_text),GTK_JUSTIFY_LEFT);  /* these appear to be no-ops! */
+  gtk_box_pack_start(GTK_BOX(labbox),srate_text,FALSE,FALSE,2);
   gtk_widget_show(srate_text);
 
   chans_text = gtk_label_new(STR_chans_p);
   gtk_label_set_justify(GTK_LABEL(chans_text),GTK_JUSTIFY_LEFT);
-  set_text_background(chans_text,(ss->sgx)->highlight_color);
-  gtk_box_pack_start(GTK_BOX(infobox),chans_text,FALSE,FALSE,2);
+  gtk_box_pack_start(GTK_BOX(labbox),chans_text,FALSE,FALSE,2);
   gtk_widget_show(chans_text);
 
   length_text = gtk_label_new(STR_length_p);
-  gtk_label_set_justify(GTK_LABEL(chans_text),GTK_JUSTIFY_LEFT);
-  set_text_background(length_text,(ss->sgx)->highlight_color);
-  gtk_box_pack_start(GTK_BOX(infobox),length_text,FALSE,FALSE,2);
+  gtk_label_set_justify(GTK_LABEL(length_text),GTK_JUSTIFY_LEFT);
+  gtk_box_pack_start(GTK_BOX(labbox),length_text,FALSE,FALSE,2);
   gtk_widget_show(length_text);
 
   maxamp_text = gtk_label_new(STR_maxamp_p);
-  gtk_label_set_justify(GTK_LABEL(chans_text),GTK_JUSTIFY_LEFT);
-  set_text_background(maxamp_text,(ss->sgx)->highlight_color);
-  gtk_box_pack_start(GTK_BOX(infobox),maxamp_text,FALSE,FALSE,2);
+  gtk_label_set_justify(GTK_LABEL(maxamp_text),GTK_JUSTIFY_LEFT);
+  gtk_box_pack_start(GTK_BOX(labbox),maxamp_text,FALSE,FALSE,2);
   gtk_widget_show(maxamp_text);
 
   edit_button = gtk_button_new_with_label(STR_edit);

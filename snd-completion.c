@@ -555,6 +555,95 @@ char *info_completer(char *text)
   else return(command_completer(text));
 }
 
+static int find_indentation(char *str,int loc)
+{
+  int line_beg = 0,open_paren = -1,parens,i;
+  parens = 0;
+  for (i=loc-1;i>=0;i--)
+    {
+      if (str[i] == ')') parens--;
+      if (str[i] == '(') parens++;
+      if (parens == 1) {open_paren = i; break;}
+    }
+  if (open_paren == -1) return(1);
+  if (open_paren == 0) return(3);
+  for (i=open_paren-1;i>0;i--)
+    {
+      if (str[i] == '\n') {line_beg = i; break;}
+    }
+  if (line_beg == 0) return(1);
+  return(open_paren - line_beg + 2);
+}
+
+char *complete_listener_text(char *old_text, int end, int *try_completion, char **to_file_text)
+{
+  int len,i,k,spaces,text_pos = 0,cr_pos = 0;
+  char *new_text = NULL,*file_text = NULL,*new_file = NULL;
+  len = strlen(old_text);
+  for (i=len-1;i>0;i--)
+    {
+      if (old_text[i] == '\n')
+	{
+	  /* tab as indentation */
+	  /* look at previous line to decide */
+	  spaces = find_indentation(old_text,i);
+	  if (spaces > 0)
+	    {
+	      file_text = (char *)CALLOC(spaces+1,sizeof(char));
+	      for (k=0;k<spaces;k++) file_text[k] = ' ';
+	      file_text[spaces] = 0;
+	      append_listener_text(end,file_text);
+	      FREE(file_text);
+	      file_text = NULL;
+	    }
+	  (*try_completion) = 0;
+	  return(NULL);
+	}
+      if (old_text[i] == ';')
+	{
+	  /* this isn't quite right, but how much effort should we put in it? */
+	  spaces = 20;
+	  for (k=i-1;k>0;k--) 
+	    if (old_text[k] == '\n') 
+	      {cr_pos = k; break;} 
+	    else 
+	      if ((!(isspace((int)(old_text[k])))) && (text_pos == 0)) 
+		text_pos = k;
+	  if (text_pos > 0)
+	    text_pos -= cr_pos;
+	  if (cr_pos == 0) spaces--; 
+	  if (text_pos < spaces)
+	    {
+	      file_text = (char *)CALLOC(spaces+2,sizeof(char));
+	      for (k=text_pos+1;k<spaces;k++) file_text[k-text_pos-1] = ' ';
+	      file_text[spaces] = ';';
+	      file_text[spaces+1] = 0;
+	      append_listener_text(end-1,file_text);
+	      FREE(file_text);
+	    }
+	  (*try_completion) = 0;
+	  return(NULL);
+	}
+      if (old_text[i] == '\"')
+	{
+	  file_text = copy_string((char *)(old_text+i+1));
+	  new_file = filename_completer(file_text);
+	  len = i + 2 + snd_strlen(new_file);
+	  new_text = (char *)CALLOC(len,sizeof(char));
+	  strncpy(new_text,old_text,i+1);
+	  strcat(new_text,new_file);
+	  if (new_file) FREE(new_file);
+	  break;
+	}
+      if (isspace((int)(old_text[i]))) break;
+    }
+  if (new_text == NULL) new_text = command_completer(old_text);
+  (*try_completion) = 1;
+  (*to_file_text) = file_text;
+  return(new_text);
+}
+
+
 
 #if HAVE_GUILE
 #include "sg.h"

@@ -1041,8 +1041,6 @@ static void start_playing_1(void *ptr, int start, int background, int paused, in
     }
   if (!dac_running)
     {
-      ss->play_start_time = 0; /* not redundant */
-      ss->play_start_time = main_time(ss);
       dac_m = (dac_manager *)CALLOC(1,sizeof(dac_manager));
       dac_m->slice = 0;
       dac_m->ss = ss;

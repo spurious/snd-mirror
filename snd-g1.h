@@ -85,9 +85,9 @@ void color_listener(GdkColor *pix);
 void handle_listener(snd_state *ss, int new_state);
 int listener_height(void);
 void goto_listener(void);
+void append_listener_text(int end, char *msg);
 void snd_append_char(snd_state *ss, char *msg);
 void snd_append_command(snd_state *ss, char *msg);
-void set_graph_active(int val);
 #if HAVE_GUILE_GTK
   void init_listener_widgets(SCM local_doc);
 #endif
@@ -288,7 +288,7 @@ void add_channel_window(snd_info *sound, int channel, snd_state *ss, int chan_y,
 void set_peak_numbers_font(chan_info *cp);
 void set_bold_peak_numbers_font(chan_info *cp);
 void set_tiny_numbers_font(chan_info *cp);
-GdkColor *get_foreground_color(chan_info *cp, axis_context *ax);
+COLOR_TYPE get_foreground_color(chan_info *cp, axis_context *ax);
 void set_foreground_color(chan_info *cp, axis_context *ax, GdkColor *color);
 GdkGC *copy_GC(chan_info *cp);
 GdkGC *erase_GC(chan_info *cp);
@@ -346,7 +346,6 @@ void check_for_event(snd_state *ss);
 void work_wait(snd_state *ss);
 void set_title(snd_state *ss, char *title);
 void goto_window(GtkWidget *text);
-char *key_to_name(int keysym);
 void gc_set_foreground_xor(GdkGC *gc,GdkColor *col1, GdkColor *col2);
 void color_cursor(snd_state *ss, GdkColor *color);
 void color_marks(snd_state *ss, GdkColor *color);
@@ -357,7 +356,6 @@ void color_graph(snd_state *ss, GdkColor *color);
 void color_selected_graph(snd_state *ss, GdkColor *color);
 void color_mix_waveform(snd_state *ss, GdkColor *color);
 void recolor_graph(chan_info *cp, int selected);
-guint main_time(snd_state *ss);
 void reflect_resize(snd_state *ss);
 void set_sensitive(GtkWidget *wid, int val);
 void set_toggle_button(GtkWidget *wid, int val, int passed, void *data);

@@ -374,9 +374,6 @@ void check_for_event(snd_state *ss)
   ss->checking_explicitly = 0;
 }
 
-char *key_to_name(int keysym) {if (keysym > 0) return(XKeysymToString(keysym)); else return("NUL");}
-/* on the Sun, if keysym is 0, XKeysymToString segfaults! */
-
 void color_cursor(snd_state *ss, Pixel color)
 {
   state_context *sx;
@@ -476,11 +473,6 @@ void recolor_graph(chan_info *cp, int selected)
 #if NEED_XPM_GET_ERROR_STRING
 char *XpmGetErrorString(off_err) {return("");}
 #endif
-
-TIME_TYPE main_time(snd_state *ss)
-{
-  return(XtLastTimestampProcessed(MAIN_DISPLAY(ss)) - ss->play_start_time);
-}
 
 void reflect_resize(snd_state *ss)
 {

@@ -46,6 +46,7 @@ int orientation_dialog_is_active(void) {return(0);}
 void reflect_spectro(snd_state *ss) {}
 void snd_append_command(snd_state *ss, char *msg) {fprintf(stderr,"%s",msg);}
 void goto_listener(void) {}
+void append_listener_text(int end, char *msg) {}
 void snd_append_char(snd_state *ss, char *msg) {fprintf(stderr,"%s",msg);}
 void handle_listener(snd_state *ss, int new_state) {}
 int listener_height(void) {return(0);}
@@ -150,9 +151,7 @@ void set_title(snd_state *ss, char *title) {}
 void goto_window(int text) {}
 void check_for_event(snd_state *ss) {}
 void work_wait(snd_state *ss) {}
-char *key_to_name(int keysym) {return(NULL);}
 void recolor_graph(chan_info *cp, int selected) {}
-int main_time(snd_state *ss) {return(0);}
 void reflect_resize(snd_state *ss) {}
 void set_sensitive(int wid, int val) {}
 void set_toggle_button(int wid, int val, int passed, void *data) {}
@@ -185,7 +184,7 @@ void reflect_save_as_in_edit_history(chan_info *cp, char *filename) {}
 void set_peak_numbers_font(chan_info *cp) {}
 void set_bold_peak_numbers_font(chan_info *cp) {}
 void set_tiny_numbers_font(chan_info *cp) {}
-unsigned long get_foreground_color(chan_info *cp, axis_context *ax) {}
+COLOR_TYPE get_foreground_color(chan_info *cp, axis_context *ax) {}
 void set_foreground_color(chan_info *cp, axis_context *ax, int color) {}
 void change_channel_style(snd_info *sp, int new_style) {}
 void reflect_amp_env_in_progress(snd_info *sp) {}

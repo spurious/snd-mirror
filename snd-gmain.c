@@ -1,7 +1,5 @@
-/* TODO: other outer choice here ... (separate windows)
- *       also key_press event to graph_key_press
- *       sash color (currently basically invisible)
- *       debug X property support -- appears to be missing property notify events?
+/* TODO: sash color (currently basically invisible)
+ *       debug X property support -- appears to be ignoring non-selection property notify events?
  */
 
 /* DIFF: no .Xdefaults -- use ~/.sndrc 
@@ -644,32 +642,34 @@ void snd_doit(snd_state *ss,int argc, char **argv)
 
   add_menu(ss);
 
-  sx->soundpane = gtk_vpaned_new();
-  gtk_paned_set_handle_size(GTK_PANED(SOUND_PANE(ss)),ss->sash_size);
-  gtk_paned_set_gutter_size(GTK_PANED(SOUND_PANE(ss)),8);
-  gtk_container_set_border_width(GTK_CONTAINER(SOUND_PANE(ss)),0);
-  /* we need gtk 1.2.7 or later here */
-  gtk_container_add(GTK_CONTAINER(MAIN_PANE(ss)),SOUND_PANE(ss));
-  set_background(SOUND_PANE(ss),(ss->sgx)->basic_color);
-
-  /* gtk_signal_connect(GTK_OBJECT(MAIN_SHELL(ss)),"key_press_event",GTK_SIGNAL_FUNC(shell_key_press),(gpointer)ss); */
-
-  if (sound_style(ss) == SOUNDS_IN_NOTEBOOK)
+  if (sound_style(ss) != SOUNDS_IN_SEPARATE_WINDOWS)
     {
-      sx->soundpanebox = gtk_notebook_new();
-      set_background(sx->soundpanebox,sx->basic_color);
-      gtk_notebook_set_tab_pos(GTK_NOTEBOOK(sx->soundpanebox),GTK_POS_RIGHT);
-    }
-  else 
-    {
-      if (sound_style(ss) == SOUNDS_HORIZONTAL)
-	sx->soundpanebox = gtk_hbox_new(FALSE,0);
-      else sx->soundpanebox = gtk_vbox_new(FALSE,0);
-    }
-  gtk_paned_add1(GTK_PANED(SOUND_PANE(ss)),sx->soundpanebox);
-  gtk_widget_show(sx->soundpanebox);
+      sx->soundpane = gtk_vpaned_new();
+      gtk_paned_set_handle_size(GTK_PANED(SOUND_PANE(ss)),ss->sash_size);
+      gtk_paned_set_gutter_size(GTK_PANED(SOUND_PANE(ss)),8);
+      gtk_container_set_border_width(GTK_CONTAINER(SOUND_PANE(ss)),0);
+      /* we need gtk 1.2.7 or later here */
+      gtk_container_add(GTK_CONTAINER(MAIN_PANE(ss)),SOUND_PANE(ss));
+      set_background(SOUND_PANE(ss),(ss->sgx)->basic_color);
+      
+      /* gtk_signal_connect(GTK_OBJECT(MAIN_SHELL(ss)),"key_press_event",GTK_SIGNAL_FUNC(shell_key_press),(gpointer)ss); */
 
-  gtk_widget_show(SOUND_PANE(ss));
+      if (sound_style(ss) == SOUNDS_IN_NOTEBOOK)
+	{
+	  sx->soundpanebox = gtk_notebook_new();
+	  set_background(sx->soundpanebox,sx->basic_color);
+	  gtk_notebook_set_tab_pos(GTK_NOTEBOOK(sx->soundpanebox),GTK_POS_RIGHT);
+	}
+      else 
+	{
+	  if (sound_style(ss) == SOUNDS_HORIZONTAL)
+	    sx->soundpanebox = gtk_hbox_new(FALSE,0);
+	  else sx->soundpanebox = gtk_vbox_new(FALSE,0);
+	}
+      gtk_paned_add1(GTK_PANED(SOUND_PANE(ss)),sx->soundpanebox);
+      gtk_widget_show(sx->soundpanebox);
+      gtk_widget_show(SOUND_PANE(ss));
+    }
   gtk_widget_show(MAIN_PANE(ss));
   gtk_widget_show (MAIN_SHELL(ss));
 #ifndef SND_AS_WIDGET

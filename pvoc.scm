@@ -1,4 +1,4 @@
-;;; versions of the Moore-Klingbeil-Trevisani-Edwards pvocoder
+;;; versions of the Moore-Klingbeil-Trevisani-Edwards phase-vocoder
 ;;;
 
 (use-modules (ice-9 optargs))

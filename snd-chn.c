@@ -1937,7 +1937,7 @@ static void make_wavogram(chan_info *cp, snd_info *sp, snd_state *ss)
   snd_fd *sf;
   axis_info *ap;
   ap = cp->axis;
-  ap->losamp = (int)(ap->x0*SND_SRATE(sp));
+  if (sp) ap->losamp = (int)(ap->x0*SND_SRATE(sp));
   sf = init_sample_read(ap->losamp,cp,READ_FORWARD);
   allocate_grf_points();
   if (cp->printing) ps_allocate_grf_points();
@@ -5837,6 +5837,9 @@ static void no_selection_error(snd_info *sp)
 {
   report_in_minibuffer(sp,"no active selection");
 }
+
+
+static char *key_to_name(int keysym) {if (keysym) return(KEY_TO_NAME(keysym)); else return("NUL");}
 
 #define NO_CX_ARG_SPECIFIED -1
 
