@@ -116,10 +116,6 @@ void snd_unprotect_at(int loc)
 
 /* -------- error handling -------- */
 
-#if HAVE_GUILE
-  #include <libguile/fluids.h>
-#endif
-
 static int send_error_output_to_stdout = FALSE;
 static char *last_file_loaded = NULL;
 
@@ -135,6 +131,10 @@ static void string_to_stdout(snd_state *ss, char *msg)
 
 #ifndef DEBUGGING
   #define DEBUGGING 0
+#endif
+
+#if HAVE_GUILE
+  #include <libguile/fluids.h>
 #endif
 
 static XEN snd_catch_scm_error(void *data, XEN tag, XEN throw_args) /* error handler */
@@ -213,7 +213,7 @@ static XEN snd_catch_scm_error(void *data, XEN tag, XEN throw_args) /* error han
 #if HAVE_GSL
 		  (XEN_EQ_P(tag, SND_GSL_ERROR)) ||
 #endif
-		  (XEN_EQ_P(tag, IMPOSSIBLE_BOUNDS)) || (XEN_EQ_P(tag, NO_SUCH_SAMPLE)))
+		  (XEN_EQ_P(tag, IMPOSSIBLE_BOUNDS)) || (XEN_EQ_P(tag, NO_SUCH_SAMPLE)) || (XEN_EQ_P(tag, NO_SUCH_KEY)))
 		{
 		  XEN_DISPLAY(tag, port);
 		  XEN_PUTS(" ", port);
@@ -227,6 +227,7 @@ static XEN snd_catch_scm_error(void *data, XEN tag, XEN throw_args) /* error han
 		  else XEN_DISPLAY(tag, port);
 		  if (show_backtrace(ss))
 		    {
+		      /* this should probably use lazy catch to get the stack at the point of the error */
 #if HAVE_SCM_C_DEFINE
 		      stack = scm_fluid_ref(XEN_VARIABLE_REF(scm_the_last_stack_fluid_var));
 #else
@@ -303,6 +304,7 @@ static XEN snd_catch_scm_error(void *data, XEN tag, XEN throw_args) /* error han
   return(tag);
 }
 
+
 /* if error occurs in sndlib, mus-error wants to throw to user-defined catch
  *   (or our own global catch), but if the sndlib function was not called by the user, 
  *   the attempt to throw to a non-existent catch tag exits the main program!!
@@ -356,6 +358,7 @@ XEN snd_catch_any(XEN_CATCH_BODY_TYPE body, void *body_data, const char *caller)
   return((*body)(body_data));
 }
 #endif
+
 
 char *procedure_ok(XEN proc, int args, const char *caller, const char *arg_name, int argn)
 {

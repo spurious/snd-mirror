@@ -753,7 +753,11 @@ determines which kind of Chebyshev polynomial we are interested in.</p>
 <b>Pulse-train</b> produces a single sample of 1.0, then zeros.
 <b>Square-wave</b> produces 1 for half a period, then 0.  All have a "period"
 of two-pi, so the <i>fm</i> argument should have an effect comparable to the
-same fm applied to the same waveform in <a href="#table-lookup">table-lookup</a>.</p>
+same fm applied to the same waveform in <a href="#table-lookup">table-lookup</a>.
+These are not "band-limited"; if the frequency is too high, you can get foldover.
+David Lowenfels has provided band-limited versions based on the sum-of-cosines
+generator: good-sqr.ins, good-saw.ins, and good-tri.ins.
+</p>
 
 <table border align=left hspace=40>
 <tr><td colspan=2><center>saw-tooth and friends' methods</center></td></tr>
@@ -2554,6 +2558,9 @@ directory (see also <a href="ins">ins</a>):</p>
 <tr><td>fm examples</td><td><a href="fmex.ins">fmex.ins</a></td><td>fm bell, gong, drum</td></tr>
 <tr><td>Jezar's reverb</td><td><a href="freeverb/index.html">freeverb/freeverb.ins</a></td><td>fancy reverb</td></tr>
 <tr><td>fullmix</td><td><a href="fullmix.ins">fullmix.ins</a></td><td>a mixer</td></tr>
+<tr><td>good-sqr</td><td><a href="good-sqr.ins">good-sqr.ins</a></td><td>band-limited square-wave (D Lowenfels)</td></tr>
+<tr><td>good-tri</td><td><a href="good-tri.ins">good-tri.ins</a></td><td>band-limited triangle-wave (D Lowenfels)</td></tr>
+<tr><td>good-saw</td><td><a href="good-saw.ins">good-saw.ins</a></td><td>band-limited sawtooth (D Lowenfels)</td></tr>
 <tr><td>grani</td><td><a href="grani.ins">grani.ins</a></td><td>granular synthesis (Fernando Lopez-Lezcano)</td></tr>
 <tr><td>grapheq</td><td><a href="grapheq.ins">grapheq.ins</a></td><td>graphic equalizer</td></tr>
 <tr><td>fm-insect</td><td><a href="insect.ins">insect.ins</a></td><td>fm</td></tr>

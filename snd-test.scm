@@ -12225,6 +12225,24 @@ EDITS: 5
 	    (IF (not (equal? genx genxx)) (snd-display ";phase-vocoder equal: ~A ~A" genxx genx))))
 	(close-sound ind))
 
+      (load "moog.scm")
+      (let ((ind (open-sound "oboe.snd")))
+	(let ((gen (make-moog-filter 500.0 .1)))
+	  (IF (fneq 500.0 (car gen)) (snd-display ";moog freq: ~A" (car gen)))
+	  (IF (fneq .1 (cadr gen)) (snd-display ";moog Q: ~A" (cadr gen)))
+	  (IF (not (vct? (list-ref gen 2))) (snd-display ";moog state: ~A" (list-ref gen 2)))
+	  (IF (fneq 0.0 (list-ref gen 3)) (snd-display ";moog A? ~A" (list-ref gen 3)))
+	  (IF (fneq -0.861 (list-ref gen 4)) (snd-display ";moog freqtable: ~A" (lisst-ref gen 4)))
+	  (let ((vals (make-vct 20)))
+	    (vct-set! vals 0 (moog-filter gen 1.0))
+	    (do ((i 1 (1+ i)))
+		((= i 20))
+	      (vct-set! vals i (moog-filter gen 0.0)))
+	    (if (not (vequal vals (vct 0.0    0.0    0.0025 0.0062 0.0120 0.0198 0.0292 0.0398 0.0510 0.0625
+				       0.0739 0.0847 0.0946 0.1036 0.1113 0.1177 0.1228 0.1266 0.1290 0.1301)))
+		(snd-display ";moog output: ~A" vals))))
+	(close-sound ind))
+
       ))
 
 
@@ -12900,7 +12918,7 @@ EDITS: 5
       (set! (mix-speed md) 0.5)
       (update-time-graph)
       (set! (mix-amp md 0) 1.0)
-      (if (fneq (maxamp ind 1) .165) (snd-display ";non-sinc mix-speed: ~A" (maxamp ind 1)))
+      (if (fneq (maxamp ind 1) .166) (snd-display ";non-sinc mix-speed: ~A" (maxamp ind 1)))
       (set! (use-sinc-interp) #t)
       (set! (mix-amp-env md 0) '(0 0 1 1 2 0))
       (update-time-graph)
@@ -24913,7 +24931,7 @@ EDITS: 2
 				  (* (mus-sound-chans file) (mus-sound-srate file))))))
 	    "oboe.snd: chans: 1, srate: 22050, Sun, big endian short (16 bits), len: 2.30512475967407")
       (ftst '(mus-sound-duration "oboe.snd") 2.30512)
-      (stst '(mus-sound-comment "1.snd") ";Written Fri 31-Jan-03 09:49 PST by bil at fatty (Linux/X86) using Allegro CL, clm of 3-Feb-03")
+      (stst '(mus-sound-comment "1.snd") ";Written Tue 2-Jul-102 at 12:09 MDT  by bil at goggle (Linux/X86) using Allegro CL, clm of 3-July-02")
       (ftst '(radians->hz 2.84951704088598e-4) 1.0)
       (ftst '(radians->degrees 1.0) 57.2957801818848)
       (ftst '(degrees->radians 57.2957801818848) 1.0)

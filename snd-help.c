@@ -272,6 +272,7 @@ void news_help(snd_state *ss)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+28-Feb:  new-effects.scm bugfixes from Michael Scholz.\n\
 21-Feb:  convolve-arrays renamed vct-convolve!.\n\
 20-Feb:  removed transform-samples and region-samples.\n\
 17-Feb:  snd 6.6.\n\

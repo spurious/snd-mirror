@@ -8285,8 +8285,13 @@ static xen_value *walk(ptree *prog, XEN form, int need_result)
 	    }
 	}
       if ((num_args == 2) && (strcmp(funcname, "list-ref") == 0) && (XEN_EXACT_P(XEN_CADDR(form))))
-	return(clean_up(unwrap_xen_object(prog, XEN_LIST_REF_WRAPPED(get_lst(prog, args), XEN_CADDR(form)), funcname), args, num_args));
-
+	{
+	  XEN lst;
+	  lst = get_lst(prog, args);
+	  if ((lst) && (XEN_LIST_P(lst)))
+	    return(clean_up(unwrap_xen_object(prog, XEN_LIST_REF_WRAPPED(get_lst(prog, args), XEN_CADDR(form)), funcname), args, num_args));
+	  else return(clean_up(run_warn("can't handle this list: ~A", XEN_AS_STRING(form)), args, num_args));
+	}
       for (k = 0; k < clm_struct_top; k++)
 	if (strcmp(funcname, clm_struct_names[k]) == 0)
 	  return(clean_up(clm_struct_ref(prog, args[1], k), args, num_args));

@@ -235,11 +235,11 @@
 
 					 
 
-(define (add-sliders dialog sliders)
+(define* (add-sliders dialog sliders #:optional use-form)
   ;; sliders is a list of lists, each inner list being (title low initial high callback scale ['log])
   ;; returns list of widgets (for reset callbacks)
   (let ((mainform 
-	 (XtCreateManagedWidget "formd" xmRowColumnWidgetClass dialog
+	 (XtCreateManagedWidget "formd" (if use-form xmFormWidgetClass xmRowColumnWidgetClass) dialog
 	   (list XmNleftAttachment      XmATTACH_FORM
 		 XmNrightAttachment     XmATTACH_FORM
 		 XmNtopAttachment       XmATTACH_FORM
@@ -267,6 +267,9 @@
 				      XmNvalue         (inexact->exact (* initial scale))
 				      XmNdecimalPoints (if (= scale 1000) 3 (if (= scale 100) 2 (if (= scale 10) 1 0)))
 				      XmNtitleString   title
+		      XmNleftAttachment XmATTACH_FORM
+		      XmNrightAttachment XmATTACH_FORM
+
 				      XmNbackground    (basic-color))))))
 	 (XmStringFree title)
 	 (XtAddCallback new-slider XmNvalueChangedCallback func)
@@ -300,6 +303,9 @@
 		      XmNbackground       (basic-color)
 		      XmNradioBehavior    #t
 		      XmNradioAlwaysOne   #t
+		      XmNbottomAttachment XmATTACH_FORM
+		      XmNleftAttachment   XmATTACH_FORM
+		      XmNrightAttachment  XmATTACH_FORM
 		      XmNentryClass       xmToggleButtonWidgetClass
 		      XmNisHomogeneous    #t))))
     (for-each
@@ -320,7 +326,8 @@
                 (list XmNbackground       (basic-color)
 		      XmNset              #t
 		      XmNselectColor      (yellow-pixel)))))
-	  (XtAddCallback trbutton XmNvalueChangedCallback (lambda (w c i) (truncate-callback (.set i)))) ))))
+	  (XtAddCallback trbutton XmNvalueChangedCallback (lambda (w c i) (truncate-callback (.set i)))) ))
+    rc))
 
 
 (define (activate-dialog dialog)
@@ -402,30 +409,33 @@
 		     (set! gain-amount initial-gain-amount)
 		     (set! (xe-envelope gain-envelope) (list 0.0 1.0 1.0 1.0))
 		     (XtSetValues (car sliders) (list XmNvalue (inexact->exact (* gain-amount 100)))))))
-	    (XtVaSetValues gain-dialog (list XmNnoResize #t XmNresizePolicy XmRESIZE_NONE))
-	    ;; TODO: fix this (the no resize kludge should not be needed)
-	    ;;       but, I think what is needed here is an outer form widget holding the row-column widget
-	    ;;       that is the current "parent", and that requires re-parenting the latter, or knowing
-	    ;;       in advance that we'll want an envelope editor (i.e. before calling add-sliders)
+
 	    (set! sliders
 		  (add-sliders gain-dialog
 			       (list (list "gain" 0.0 initial-gain-amount 5.0
 					   (lambda (w context info)
 					     (set! gain-amount (/ (.value info) 100.0)))
-					   100))))
-	    
+					   100))
+			       #t))
 	    (set! fr (XtCreateManagedWidget "fr" xmFrameWidgetClass (XtParent (car sliders))
-					    (list XmNheight 200
+					    (list XmNheight              200
+						  XmNleftAttachment      XmATTACH_FORM
+						  XmNrightAttachment     XmATTACH_FORM
+						  XmNtopAttachment       XmATTACH_WIDGET
+						  XmNtopWidget           (list-ref sliders (1- (length sliders)))
 						  XmNshadowThickness     4
 						  XmNshadowType          XmSHADOW_ETCHED_OUT)))
 	    
-	    (add-target (XtParent (car sliders)) (lambda (target) (set! gain-target target)) #f)
-	    (activate-dialog gain-dialog)
+	    (let ((target-row (add-target (XtParent (car sliders)) (lambda (target) (set! gain-target target)) #f)))
+	      (activate-dialog gain-dialog)
 	    
-	    (set! gain-envelope (xe-create-enved "gain"  fr
-						 (list XmNheight 200)
-						 '(0.0 1.0 0.0 1.0)))
-	    (set! (xe-envelope gain-envelope) (list 0.0 1.0 1.0 1.0))
+	      (set! gain-envelope (xe-create-enved "gain"  fr
+						   (list XmNheight 200)
+						   '(0.0 1.0 0.0 1.0)))
+	      (set! (xe-envelope gain-envelope) (list 0.0 1.0 1.0 1.0))
+	      (XtVaSetValues fr (list XmNbottomAttachment XmATTACH_WIDGET
+				      XmNbottomWidget     target-row)))
+
 	    )
 	  (activate-dialog gain-dialog)))
     
@@ -1604,25 +1614,30 @@ Values greater than 1.0 speed up file play,\n\ negative values reverse it."))
 		     (set! (xe-envelope am-effect-envelope) (list 0.0 1.0 1.0 1.0))
 		     (XtSetValues (car sliders) (list XmNvalue (inexact->exact am-effect-amount))))))
 	    
-	    (XtVaSetValues am-effect-dialog (list XmNnoResize #t XmNresizePolicy XmRESIZE_NONE))
-	    
 	    (set! sliders
 		  (add-sliders am-effect-dialog
 			       (list (list "amplitude modulation" 0.0 initial-am-effect-amount 1000.0
 					   (lambda (w context info)
 					     (set! am-effect-amount (.value info)))
-					   1))))
+					   1))
+			       #t))
 	    (set! fr (XtCreateManagedWidget "fr" xmFrameWidgetClass (XtParent (car sliders))
-					    (list XmNheight 200
+					    (list XmNheight              200
+						  XmNleftAttachment      XmATTACH_FORM
+						  XmNrightAttachment     XmATTACH_FORM
+						  XmNtopAttachment       XmATTACH_WIDGET
+						  XmNtopWidget           (list-ref sliders (1- (length sliders)))
 						  XmNshadowThickness     4
 						  XmNshadowType          XmSHADOW_ETCHED_OUT)))
-	    (add-target (XtParent (car sliders)) (lambda (target) (set! am-effect-target target)) #f)
+	    (let ((target-row (add-target (XtParent (car sliders)) (lambda (target) (set! am-effect-target target)) #f)))
 	    
-	    (activate-dialog am-effect-dialog)
-	    (set! am-effect-envelope (xe-create-enved "am"  fr
-						      (list XmNheight 200)
-						      '(0.0 1.0 0.0 1.0)))
-	    (set! (xe-envelope am-effect-envelope) (list 0.0 1.0 1.0 1.0))
+	      (activate-dialog am-effect-dialog)
+	      (set! am-effect-envelope (xe-create-enved "am"  fr
+							(list XmNheight 200)
+							'(0.0 1.0 0.0 1.0)))
+	      (set! (xe-envelope am-effect-envelope) (list 0.0 1.0 1.0 1.0))
+	      (XtVaSetValues fr (list XmNbottomAttachment XmATTACH_WIDGET
+				      XmNbottomWidget     target-row)))
 	    )
 	  (activate-dialog am-effect-dialog)))
     
@@ -1685,8 +1700,6 @@ Values greater than 1.0 speed up file play,\n\ negative values reverse it."))
 		     (set! rm-radians initial-rm-radians)
 		     (XtSetValues (cadr sliders) (list XmNvalue (inexact->exact (* rm-radians 1)))))))
 	    
-	    (XtVaSetValues rm-dialog (list XmNnoResize #t XmNresizePolicy XmRESIZE_NONE))
-	    
 	    (set! sliders
 		  (add-sliders rm-dialog
 			       (list 
@@ -1697,18 +1710,26 @@ Values greater than 1.0 speed up file play,\n\ negative values reverse it."))
 				(list "modulation radians" 0 initial-rm-radians 360
 				      (lambda (w context info)
 					(set! rm-radians (.value info)))
-				      1))))
+				      1))
+			       #t))
 	    (set! fr (XtCreateManagedWidget "fr" xmFrameWidgetClass (XtParent (car sliders))
-					    (list XmNheight          200
-						  XmNshadowThickness 4
-						  XmNshadowType      XmSHADOW_ETCHED_OUT)))
-	    (add-target (XtParent (car sliders)) (lambda (target) (set! rm-target target)) #f)
+					    (list XmNheight              200
+						  XmNleftAttachment      XmATTACH_FORM
+						  XmNrightAttachment     XmATTACH_FORM
+						  XmNtopAttachment       XmATTACH_WIDGET
+						  XmNtopWidget           (list-ref sliders (1- (length sliders)))
+						  XmNshadowThickness     4
+						  XmNshadowType          XmSHADOW_ETCHED_OUT)))
+	    (let ((target-row (add-target (XtParent (car sliders)) (lambda (target) (set! rm-target target)) #f)))
 	    
-	    (activate-dialog rm-dialog)
-	    (set! rm-envelope (xe-create-enved "rm frequency"  fr
-					       (list XmNheight 200)
-					       '(0.0 1.0 0.0 1.0)))
-	    (set! (xe-envelope rm-envelope) (list 0.0 1.0 1.0 1.0)))
+	      (activate-dialog rm-dialog)
+	      (set! rm-envelope (xe-create-enved "rm frequency"  fr
+						 (list XmNheight 200)
+						 '(0.0 1.0 0.0 1.0)))
+	      (set! (xe-envelope rm-envelope) (list 0.0 1.0 1.0 1.0))
+	      (XtVaSetValues fr (list XmNbottomAttachment XmATTACH_WIDGET
+				      XmNbottomWidget     target-row)))
+	    )
 	  (activate-dialog rm-dialog)))
     
     (let ((child (XtCreateManagedWidget "Ring modulation" xmPushButtonWidgetClass mod-menu
@@ -2057,7 +2078,6 @@ a number, the sound is split such that 0 is all in channel 0 and 90 is all in ch
 		     (XtSetValues (list-ref sliders 1) (list XmNvalue (inexact->exact (* stereo-snd 1))))
 		     (set! pan-pos initial-pan-pos)
 		     (XtSetValues (list-ref sliders 2) (list XmNvalue (inexact->exact (* pan-pos 1)))))))
-	    (XtVaSetValues place-sound-dialog (list XmNnoResize #t XmNresizePolicy XmRESIZE_NONE))
 	    (set! sliders
 		  (add-sliders place-sound-dialog
 			       (list (list "mono sound" 0 initial-mono-snd 50
@@ -2071,18 +2091,24 @@ a number, the sound is split such that 0 is all in channel 0 and 90 is all in ch
 				     (list "pan position" 0 initial-pan-pos 90
 					   (lambda (w context info)
 					     (set! pan-pos (/ (.value info) 1)))
-					   1))))
+					   1))
+			       #t))
 	    
 	    (set! fr (XtCreateManagedWidget "fr" xmFrameWidgetClass (XtParent (car sliders))
-					    (list XmNheight 200
+					    (list XmNheight              200
+						  XmNleftAttachment      XmATTACH_FORM
+						  XmNrightAttachment     XmATTACH_FORM
+						  XmNtopAttachment       XmATTACH_WIDGET
+						  XmNbottomAttachment    XmATTACH_FORM
+						  XmNtopWidget           (list-ref sliders (1- (length sliders)))
 						  XmNshadowThickness     4
 						  XmNshadowType          XmSHADOW_ETCHED_OUT)))
 	    
-;	      (add-target (XtParent (car sliders)) (lambda (target) (set! place-sound-target target)) #f)
 	    (activate-dialog place-sound-dialog)
-	    
 	    (set! place-sound-envelope (xe-create-enved "panning"  fr
-							(list XmNheight 200)
+							(list XmNheight 200
+							      XmNbottomAttachment XmATTACH_FORM
+							      )
 							'(0.0 1.0 0.0 1.0)))
 	    (set! (xe-envelope place-sound-envelope) (list 0.0 1.0 1.0 1.0))
 	    ))
@@ -2256,10 +2282,10 @@ a number, the sound is split such that 0 is all in channel 0 and 90 is all in ch
 		  (make-effect-dialog 
 		   cross-synth-label
 		   (lambda (w context info)
-		     (map-chan-over-target
+		     (map-chan-over-target-with-sync
 		      (lambda (ignored) 
 			(cross-synthesis cross-synth-sound cross-synth-amp cross-synth-fft-size cross-synth-radius))
-		      cross-synth-target #f))
+		      cross-synth-target "Cross synthesis" #f))
 		   (lambda (w context info)
 		     (help-dialog "Cross synthesis"
 				  "The sliders set the number of the soundfile to be cross-synthesized, \

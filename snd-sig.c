@@ -1937,8 +1937,6 @@ void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, int regexpr,
     }
 
   /* step env and degenerate cases are out of the way */
-
-  /* ramps of either kind aren't currently chainable */
   if (sp->sync)
     si = snd_sync(ss, sp->sync);
   else si = make_simple_sync(cp, beg);
@@ -2193,6 +2191,7 @@ void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, int regexpr,
 	  if (tmpstr) FREE(tmpstr);
 	  free_env(newe);
 	  as_one_edit(si->cps[i], local_edpos + 1, new_origin);
+	  update_graph(si->cps[i]);
 	  FREE(new_origin);
 	}
     }

@@ -2200,10 +2200,10 @@ a number, the sound is split such that 0 is all in channel 0 and 90 is all in ch
 		    (make-effect-dialog
 		     "Cross synthesis"
 		     (lambda (w data)
-		       (map-chan-over-target
+		       (map-chan-over-target-with-sync
 			(lambda (ignored) 
 			  (cross-synthesis cross-synth-sound cross-synth-amp cross-synth-fft-size cross-synth-radius))
-			cross-synth-target #f))
+			cross-synth-target "Cross synthesis" #f))
 		     (lambda (w data)
 		       (help-dialog "Cross synthesis"
 				    "The sliders set the number of the soundfile to be cross-synthesized, \

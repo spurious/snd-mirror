@@ -70,34 +70,38 @@
 'Q' sets the resonance: 0 = no resonance, 1: oscillates at 'frequency'"
   (list frequency Q (make-vct 4) 0.0 (envelope-interp (/ frequency (* (srate) 0.5)) moog-freqtable)))
 
+(define moog-frequency
+  (make-procedure-with-setter
+   (lambda (gen)
+     (list-ref gen 0))
+   (lambda (gen frq)
+     (list-set! gen 0 frq)
+     (list-set! gen 4 (envelope-interp (/ frq (* (srate) 0.5)) moog-freqtable)))))
+
+(define moog-Q
+  (make-procedure-with-setter
+   (lambda (gen)
+     (list-ref gen 1))
+   (lambda (gen Q)
+     (list-set! gen 1 Q))))
+
 (define (moog-filter m sig)
   "(moog-filter m sig) is the generator associated with make-moog-filter"
-  
-  (define (saturate x) (min (max x -0.95) 0.95))
-  (define (moog-frequency n) (car n))
-  (define (moog-frequency-set! m n) (list-set! m 0 n) (list-set! m 4 (envelope-interp (/ n (* (srate) 0.5)) moog-freqtable)))
-  (define (moog-Q n) (cadr n))
-  (define (moog-Q-set! m n) (list-set! m 1 n))
-  (define (moog-s n) (caddr n))
-  (define (moog-A n) (cadddr n))
-  (define (moog-A-set! m n) (list-set! m 3 n))
-  (define (caddddr n) (cadr (cdddr n)))
-
-  (let* ((fc (caddddr m))
-	 (s (moog-s m))
-	 (A (* 0.25 (- sig (moog-A m)))))
+  (let* ((fc (list-ref m 4))
+	 (s (list-ref m 2))
+	 (A (* 0.25 (- sig (list-ref m 3)))))
     (do ((cell 0 (1+ cell)))
 	((= cell 4))
       (let ((st (vct-ref s cell)))
-	(set! A (saturate (+ A (* fc (- A st)))))
+	(set! A (min (max -0.95 (+ A (* fc (- A st)))) 0.95))
 	(vct-set! s cell A)
-	(set! A (saturate (+ A st)))))
+	(set! A (min (max -0.95 (+ A st)) 0.95))))
     (let* ((out A))
       (let* ((ix (* fc 99.0))
 	     (ixint (inexact->exact ix))
 	     (ixfrac (- ix ixint)))
-	(moog-A-set! m (* A
-			  (moog-Q m) 
+	(list-set! m 3 (* A
+			  (list-ref m 1)
 			  (+ (* (- 1 ixfrac)
 				(vct-ref moog-gaintable (+ ixint 99)))
 			     (* ixfrac (vct-ref moog-gaintable (+ ixint 100)))))))

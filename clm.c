@@ -3011,7 +3011,7 @@ Float *mus_make_fir_coeffs(int order, Float *envl, Float *aa)
 {
  /* envl = evenly sampled freq response, has order samples */
   int n, m, i, j, jj;
-  Float am, q, xt = 0.0;
+  Float am, q, xt = 0.0, xt0;
   Float *a;
   n = order;
   if (n <= 0) return(aa);
@@ -3021,9 +3021,10 @@ Float *mus_make_fir_coeffs(int order, Float *envl, Float *aa)
   m = (n + 1) / 2;
   am = 0.5 * (n + 1);
   q = TWO_PI / (Float)n;
+  xt0 = envl[0] * 0.5;
   for (j = 0, jj = n - 1; j < m; j++, jj--)
     {
-      xt = envl[0] * 0.5;
+      xt = xt0;
       for (i = 1; i < m; i++)
 	xt += (envl[i] * cos(q * (am - j - 1) * i));
       a[j] = 2.0 * xt / (Float)n;
