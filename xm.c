@@ -10,6 +10,7 @@
  * TODO: finish the -> converters
  * TODO: XmParseProc callback (p860)
  * TODO: add_resource
+ * TODO: get Xprt to work and test the Xp stuff
  */
 
 /* HISTORY: 
@@ -96,7 +97,7 @@
 
 #if HAVE_MOTIF
   #define MOTIF_2 (XmVERSION >= 2)
-  /* 2.1 really -- I don't have a test system for 2.0 */
+  /* 2.1 really -- I don't have a test system for 2.0 -- I'm using LessTif's headers to blindly check 1.2 */
   #ifdef XmNtoolTipString
     #define MOTIF_2_2 1
   #endif
@@ -319,7 +320,7 @@ XM_TYPE_PTR(XGCValues, XGCValues *)
 XM_TYPE_PTR(XTextItem, XTextItem *)
 XM_TYPE_PTR(XModifierKeymap, XModifierKeymap *) /* opaque in this implementation */
 XM_TYPE_PTR(XImage, XImage *)
-  static XAnyEvent *XEN_TO_C_XAnyEvent(XEN val) {return((XAnyEvent *)XEN_TO_C_ULONG(XEN_CADR(val)));}
+static XAnyEvent *XEN_TO_C_XAnyEvent(XEN val) {return((XAnyEvent *)XEN_TO_C_ULONG(XEN_CADR(val)));}
 XM_TYPE_PTR(XButtonEvent, XButtonEvent *)
 XM_TYPE_PTR(XCirculateEvent, XCirculateEvent *)
 XM_TYPE_PTR(XCirculateRequestEvent, XCirculateRequestEvent *)
@@ -1786,8 +1787,10 @@ static int xmstringtable_length(Widget w, char *name)
   else if (strcmp(name, XmNhistoryItems) == 0) XtVaGetValues(w, XmNhistoryItemCount, &len, NULL);
   else if (strcmp(name, XmNfileListItems) == 0) XtVaGetValues(w, XmNfileListItemCount, &len, NULL);
   else if (strcmp(name, XmNdirListItems) == 0) XtVaGetValues(w, XmNdirListItemCount, &len, NULL);
+#if MOTIF_2
   else if (strcmp(name, XmNdetail) == 0) XtVaGetValues(w, XmNdetailCount, &len, NULL);
   else if (strcmp(name, XmNvalues) == 0) XtVaGetValues(w, XmNnumValues, &len, NULL);
+#endif
   else XtVaGetValues(w, XmNbuttonCount, &len, NULL);
   return(len);
 }
@@ -5259,6 +5262,7 @@ static XEN gxm_XmTextGetEditable(XEN arg1)
   return(C_TO_XEN_BOOLEAN(XmTextGetEditable(XEN_TO_C_Widget(arg1))));
 }
 
+#if MOTIF_2
 static XEN gxm_XmTextGetAddMode(XEN arg1)
 {
   #define H_XmTextGetAddMode "Boolean XmTextGetAddMode(Widget w) presumably returns the widget's current add mode."
@@ -5275,6 +5279,7 @@ this determines whether you can move the insertion cursor without changing the p
   XmTextSetAddMode(XEN_TO_C_Widget(arg1), XEN_TO_C_BOOLEAN(arg2));
   return(XEN_FALSE);
 }
+#endif
 
 static XEN gxm_XmTextInsert(XEN arg1, XEN arg2, XEN arg3)
 {
@@ -5635,6 +5640,7 @@ static XEN gxm_XmTextFieldGetEditable(XEN arg1)
   return(C_TO_XEN_BOOLEAN(XmTextFieldGetEditable(XEN_TO_C_Widget(arg1))));
 }
 
+#if MOTIF_2
 static XEN gxm_XmTextFieldGetAddMode(XEN arg1)
 {
   #define H_XmTextFieldGetAddMode "Boolean XmTextFieldGetAddMode(Widget w) presumably returns the widget's current add mode."
@@ -5650,6 +5656,7 @@ static XEN gxm_XmTextFieldSetAddMode(XEN arg1, XEN arg2)
   XmTextFieldSetAddMode(XEN_TO_C_Widget(arg1), XEN_TO_C_BOOLEAN(arg2));
   return(XEN_FALSE);
 }
+#endif
 
 static XEN gxm_XmTextFieldInsert(XEN arg1, XEN arg2, XEN arg3)
 {
@@ -6163,6 +6170,7 @@ The ScrollBar widget creation function"
   return(gxm_new_widget("XmCreateScrollBar", XmCreateScrollBar, arg1, arg2, arg3, arg4));
 }
 
+#if MOTIF_2
 static XEN gxm_XmGetXmScreen(XEN arg1)
 {
   #define H_XmGetXmScreen "Widget XmGetXmScreen(Screen *screen) returns the XmScreen object ID for a specified screen"
@@ -6170,6 +6178,7 @@ static XEN gxm_XmGetXmScreen(XEN arg1)
   XEN_ASSERT_TYPE(XEN_Screen_P(arg1), arg1, 1, "XmGetXmScreen", "Screen*");
   return(C_TO_XEN_Widget(XmGetXmScreen(XEN_TO_C_Screen(arg1))));
 }
+#endif
 
 static XEN gxm_XmClipboardRegisterFormat(XEN arg1, XEN arg2, XEN arg3)
 {
@@ -6438,7 +6447,7 @@ sets up a storage and data structure, returns id"
   if (XEN_PROCEDURE_P(xm_XmCutPasteProc)) xm_unprotect(xm_XmCutPasteProc);
   xm_XmCutPasteProc = arg6;
   val = XmClipboardStartCopy(XEN_TO_C_Display(arg1), XEN_TO_C_Window(arg2), XEN_TO_C_XmString(arg3), 
-			     XEN_TO_C_Time(arg4), XEN_TO_C_Widget(arg5), gxm_XmCutPasteProc, &id);
+			     XEN_TO_C_Time(arg4), XEN_TO_C_Widget(arg5), (XmCutPasteProc)gxm_XmCutPasteProc, &id);
   return(XEN_LIST_2(C_TO_XEN_INT(val),
 		    C_TO_XEN_INT(id)));
 }
@@ -7350,18 +7359,18 @@ static XEN gxm_XmIsContainer(XEN arg)
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsContainer", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsContainer(XEN_TO_C_Widget(arg))));
 }
+
+static XEN gxm_XmIsScreen(XEN arg)
+{
+  XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsScreen", "Widget");
+  return(C_TO_XEN_BOOLEAN(XmIsScreen(XEN_TO_C_Widget(arg))));
+}
 #endif
 
 static XEN gxm_XmIsScale(XEN arg)
 {
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsScale", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsScale(XEN_TO_C_Widget(arg))));
-}
-
-static XEN gxm_XmIsScreen(XEN arg)
-{
-  XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsScreen", "Widget");
-  return(C_TO_XEN_BOOLEAN(XmIsScreen(XEN_TO_C_Widget(arg))));
 }
 
 static XEN gxm_XmIsScrollBar(XEN arg)
@@ -7406,11 +7415,13 @@ static XEN gxm_XmIsSeparatorGadget(XEN arg)
   return(C_TO_XEN_BOOLEAN(XmIsSeparatorGadget(XEN_TO_C_Widget(arg))));
 }
 
+#if MOTIF_2
 static XEN gxm_XmIsDragIconObjectClass(XEN arg)
 {
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsDragIconObjectClass", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsDragIconObjectClass(XEN_TO_C_Widget(arg))));
 }
+#endif
 
 static XEN gxm_XmIsSeparator(XEN arg)
 {
@@ -17739,7 +17750,9 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmClipboardInquireLength" XM_POSTFIX, gxm_XmClipboardInquireLength, 3, 0, 0, H_XmClipboardInquireLength);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmClipboardInquirePendingItems" XM_POSTFIX, gxm_XmClipboardInquirePendingItems, 3, 0, 0, H_XmClipboardInquirePendingItems);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmClipboardRegisterFormat" XM_POSTFIX, gxm_XmClipboardRegisterFormat, 3, 0, 0, H_XmClipboardRegisterFormat);
+#if MOTIF_2
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmGetXmScreen" XM_POSTFIX, gxm_XmGetXmScreen, 1, 0, 0, H_XmGetXmScreen);
+#endif
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmCreateScrollBar" XM_POSTFIX, gxm_XmCreateScrollBar, 3, 1, 0, H_XmCreateScrollBar);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmScrollBarGetValues" XM_POSTFIX, gxm_XmScrollBarGetValues, 1, 0, 0, H_XmScrollBarGetValues);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmScrollBarSetValues" XM_POSTFIX, gxm_XmScrollBarSetValues, 6, 0, 0, H_XmScrollBarSetValues);
@@ -17776,8 +17789,10 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmTextFieldSetString" XM_POSTFIX, gxm_XmTextFieldSetString, 2, 0, 0, H_XmTextFieldSetString);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmTextFieldReplace" XM_POSTFIX, gxm_XmTextFieldReplace, 4, 0, 0, H_XmTextFieldReplace);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmTextFieldInsert" XM_POSTFIX, gxm_XmTextFieldInsert, 3, 0, 0, H_XmTextFieldInsert);
+#if MOTIF_2
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmTextFieldSetAddMode" XM_POSTFIX, gxm_XmTextFieldSetAddMode, 2, 0, 0, H_XmTextFieldSetAddMode);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmTextFieldGetAddMode" XM_POSTFIX, gxm_XmTextFieldGetAddMode, 1, 0, 0, H_XmTextFieldGetAddMode);
+#endif
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmTextFieldGetEditable" XM_POSTFIX, gxm_XmTextFieldGetEditable, 1, 0, 0, H_XmTextFieldGetEditable);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmTextFieldSetEditable" XM_POSTFIX, gxm_XmTextFieldSetEditable, 2, 0, 0, H_XmTextFieldSetEditable);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmTextFieldGetMaxLength" XM_POSTFIX, gxm_XmTextFieldGetMaxLength, 1, 0, 0, H_XmTextFieldGetMaxLength);
@@ -17813,8 +17828,10 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmTextSetString" XM_POSTFIX, gxm_XmTextSetString, 2, 0, 0, H_XmTextSetString);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmTextReplace" XM_POSTFIX, gxm_XmTextReplace, 4, 0, 0, H_XmTextReplace);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmTextInsert" XM_POSTFIX, gxm_XmTextInsert, 3, 0, 0, H_XmTextInsert);
+#if MOTIF_2
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmTextSetAddMode" XM_POSTFIX, gxm_XmTextSetAddMode, 2, 0, 0, H_XmTextSetAddMode);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmTextGetAddMode" XM_POSTFIX, gxm_XmTextGetAddMode, 1, 0, 0, H_XmTextGetAddMode);
+#endif
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmTextGetEditable" XM_POSTFIX, gxm_XmTextGetEditable, 1, 0, 0, H_XmTextGetEditable);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmTextSetEditable" XM_POSTFIX, gxm_XmTextSetEditable, 2, 0, 0, H_XmTextSetEditable);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmTextGetMaxLength" XM_POSTFIX, gxm_XmTextGetMaxLength, 1, 0, 0, H_XmTextGetMaxLength);
@@ -18026,7 +18043,9 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmIsCommand" XM_POSTFIX, gxm_XmIsCommand, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmIsRowColumn" XM_POSTFIX, gxm_XmIsRowColumn, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmIsScale" XM_POSTFIX, gxm_XmIsScale, 1, 0, 0, NULL);
+#if MOTIF_2
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmIsScreen" XM_POSTFIX, gxm_XmIsScreen, 1, 0, 0, NULL);
+#endif
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmIsScrollBar" XM_POSTFIX, gxm_XmIsScrollBar, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmIsDialogShell" XM_POSTFIX, gxm_XmIsDialogShell, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmIsScrolledWindow" XM_POSTFIX, gxm_XmIsScrolledWindow, 1, 0, 0, NULL);
@@ -18034,7 +18053,9 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmIsSelectionBox" XM_POSTFIX, gxm_XmIsSelectionBox, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmIsDragContext" XM_POSTFIX, gxm_XmIsDragContext, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmIsSeparatorGadget" XM_POSTFIX, gxm_XmIsSeparatorGadget, 1, 0, 0, NULL);
+#if MOTIF_2
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmIsDragIconObjectClass" XM_POSTFIX, gxm_XmIsDragIconObjectClass, 1, 0, 0, NULL);
+#endif
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmIsSeparator" XM_POSTFIX, gxm_XmIsSeparator, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmIsDrawingArea" XM_POSTFIX, gxm_XmIsDrawingArea, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmIsDrawnButton" XM_POSTFIX, gxm_XmIsDrawnButton, 1, 0, 0, NULL);
@@ -18081,7 +18102,9 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtPeekEvent" XM_POSTFIX, gxm_XtPeekEvent, 0, 0, 0, H_XtPeekEvent);
 
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmFontListEntryCreate" XM_POSTFIX, gxm_XmFontListEntryCreate, 3, 0, 0, H_XmFontListEntryCreate);
+#if MOTIF_2
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmFontListEntryCreate_r" XM_POSTFIX, gxm_XmFontListEntryCreate_r, 4, 0, 0, NULL);
+#endif
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmFontListEntryFree" XM_POSTFIX, gxm_XmFontListEntryFree, 1, 0, 0, H_XmFontListEntryFree);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmFontListEntryGetFont" XM_POSTFIX, gxm_XmFontListEntryGetFont, 2, 0, 0, H_XmFontListEntryGetFont);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmFontListEntryGetTag" XM_POSTFIX, gxm_XmFontListEntryGetTag, 1, 0, 0, H_XmFontListEntryGetTag);
@@ -18097,7 +18120,9 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmFontContext?" XM_POSTFIX, XEN_XmFontContext_p, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmFontListEntry?" XM_POSTFIX, XEN_XmFontListEntry_p, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmFontList?" XM_POSTFIX, XEN_XmFontList_p, 1, 0, 0, NULL);
+#if MOTIF_2
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmFontListCreate_r" XM_POSTFIX, gxm_XmFontListCreate_r, 3, 0, 0, H_XmFontListCreate_r);
+#endif
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmFontListCreate" XM_POSTFIX, gxm_XmFontListCreate, 2, 0, 0, H_XmFontListCreate);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmTrackingLocate" XM_POSTFIX, gxm_XmTrackingLocate, 3, 0, 0, H_XmTrackingLocate);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmFontListGetNextFont" XM_POSTFIX, gxm_XmFontListGetNextFont, 1, 0, 0, H_XmFontListGetNextFont);
@@ -18253,12 +18278,16 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmCascadeButton?" XM_POSTFIX, gxm_XmIsCascadeButton, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmForm?" XM_POSTFIX, gxm_XmIsForm, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmBulletinBoard?" XM_POSTFIX, gxm_XmIsBulletinBoard, 1, 0, 0, NULL);
+#if MOTIF_2
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmScreen?" XM_POSTFIX, gxm_XmIsScreen, 1, 0, 0, NULL);
+#endif
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmDialogShell?" XM_POSTFIX, gxm_XmIsDialogShell, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmDisplay?" XM_POSTFIX, gxm_XmIsDisplay, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmSelectionBox?" XM_POSTFIX, gxm_XmIsSelectionBox, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmDragContext?" XM_POSTFIX, gxm_XmIsDragContext, 1, 0, 0, NULL);
+#if MOTIF_2
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmDragIconObjectClass?" XM_POSTFIX, gxm_XmIsDragIconObjectClass, 1, 0, 0, NULL);
+#endif
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmSeparator?" XM_POSTFIX, gxm_XmIsSeparator, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmDropSiteManager?" XM_POSTFIX, gxm_XmIsDropSiteManager, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmDropTransfer?" XM_POSTFIX, gxm_XmIsDropTransfer, 1, 0, 0, NULL);
@@ -22348,8 +22377,10 @@ static void define_strings(void)
   DEFINE_RESOURCE(XM_PREFIX "XmNsingleSelectionCallback" XM_POSTFIX, XmNsingleSelectionCallback,  XM_CALLBACK);
   DEFINE_RESOURCE(XM_PREFIX "XmNskipAdjust" XM_POSTFIX, XmNskipAdjust,			          XM_BOOLEAN);
   DEFINE_RESOURCE(XM_PREFIX "XmNsliderSize" XM_POSTFIX, XmNsliderSize,			          XM_INT);
+#if MOTIF_2
   DEFINE_RESOURCE(XM_PREFIX "XmNsliderVisual" XM_POSTFIX, XmNsliderVisual,		          XM_INT);
   DEFINE_RESOURCE(XM_PREFIX "XmNslidingMode" XM_POSTFIX, XmNslidingMode,		          XM_INT);
+#endif
   DEFINE_RESOURCE(XM_PREFIX "XmNsource" XM_POSTFIX, XmNsource,				          XM_TEXT_SOURCE);
   DEFINE_RESOURCE(XM_PREFIX "XmNsourceCursorIcon" XM_POSTFIX, XmNsourceCursorIcon,	          XM_WIDGET);
   DEFINE_RESOURCE(XM_PREFIX "XmNsourcePixmapIcon" XM_POSTFIX, XmNsourcePixmapIcon,	          XM_WIDGET);
@@ -23710,7 +23741,9 @@ static void define_integers(void)
   DEFINE_INTEGER(XM_PREFIX "XmSTRING_COMPONENT_END" XM_POSTFIX,	      XmSTRING_COMPONENT_END);
 #if (!XM_DISABLE_DEPRECATED)
   DEFINE_INTEGER(XM_PREFIX "XmSTRING_COMPONENT_CHARSET" XM_POSTFIX,   XmSTRING_COMPONENT_CHARSET);
+#if MOTIF_2
   DEFINE_INTEGER(XM_PREFIX "XmSTRING_COMPONENT_FONTLIST_ELEMENT_TAG" XM_POSTFIX, XmSTRING_COMPONENT_FONTLIST_ELEMENT_TAG);
+#endif
 #endif
 #if MOTIF_2
   DEFINE_INTEGER(XM_PREFIX "XmPAGE_FOUND" XM_POSTFIX,		      XmPAGE_FOUND);
@@ -23783,11 +23816,12 @@ static void define_integers(void)
   DEFINE_INTEGER(XM_PREFIX "XmUNSPECIFIED_LOAD_MODEL" XM_POSTFIX,     XmUNSPECIFIED_LOAD_MODEL);
   DEFINE_INTEGER(XM_PREFIX "XmLOAD_DEFERRED" XM_POSTFIX,	      XmLOAD_DEFERRED);
   DEFINE_INTEGER(XM_PREFIX "XmLOAD_IMMEDIATE" XM_POSTFIX,	      XmLOAD_IMMEDIATE);
-#endif
   DEFINE_INTEGER(XM_PREFIX "XmCHANGE_ALL" XM_POSTFIX,		      XmCHANGE_ALL);
   DEFINE_INTEGER(XM_PREFIX "XmCHANGE_NONE" XM_POSTFIX,		      XmCHANGE_NONE);
   DEFINE_INTEGER(XM_PREFIX "XmCHANGE_WIDTH" XM_POSTFIX,		      XmCHANGE_WIDTH);
   DEFINE_INTEGER(XM_PREFIX "XmCHANGE_HEIGHT" XM_POSTFIX,	      XmCHANGE_HEIGHT);
+  DEFINE_INTEGER(XM_PREFIX "XmDYNAMIC_DEFAULT_TAB_GROUP" XM_POSTFIX,  XmDYNAMIC_DEFAULT_TAB_GROUP);
+#endif
   DEFINE_INTEGER(XM_PREFIX "XmPIXELS" XM_POSTFIX,		      XmPIXELS);
   DEFINE_INTEGER(XM_PREFIX "Xm100TH_MILLIMETERS" XM_POSTFIX,	      Xm100TH_MILLIMETERS);
   DEFINE_INTEGER(XM_PREFIX "Xm1000TH_INCHES" XM_POSTFIX,	      Xm1000TH_INCHES);
@@ -23802,7 +23836,6 @@ static void define_integers(void)
   DEFINE_INTEGER(XM_PREFIX "XmTAB_GROUP" XM_POSTFIX,		      XmTAB_GROUP);
   DEFINE_INTEGER(XM_PREFIX "XmSTICKY_TAB_GROUP" XM_POSTFIX,	      XmSTICKY_TAB_GROUP);
   DEFINE_INTEGER(XM_PREFIX "XmEXCLUSIVE_TAB_GROUP" XM_POSTFIX,	      XmEXCLUSIVE_TAB_GROUP);
-  DEFINE_INTEGER(XM_PREFIX "XmDYNAMIC_DEFAULT_TAB_GROUP" XM_POSTFIX,  XmDYNAMIC_DEFAULT_TAB_GROUP);
   DEFINE_INTEGER(XM_PREFIX "XmBELL" XM_POSTFIX,			      XmBELL);
   DEFINE_INTEGER(XM_PREFIX "XmNO_ORIENTATION" XM_POSTFIX,	      XmNO_ORIENTATION);
   DEFINE_INTEGER(XM_PREFIX "XmVERTICAL" XM_POSTFIX,		      XmVERTICAL);
@@ -23981,10 +24014,10 @@ static void define_integers(void)
   DEFINE_INTEGER(XM_PREFIX "XmAUTO_NO_CHANGE" XM_POSTFIX,	      XmAUTO_NO_CHANGE);
   DEFINE_INTEGER(XM_PREFIX "XmAUTO_CHANGE" XM_POSTFIX,		      XmAUTO_CHANGE);
   DEFINE_INTEGER(XM_PREFIX "XmDRAG_WINDOW" XM_POSTFIX,		      XmDRAG_WINDOW);
-#endif
   DEFINE_INTEGER(XM_PREFIX "XmSLIDER" XM_POSTFIX,		      XmSLIDER);
   DEFINE_INTEGER(XM_PREFIX "XmTHERMOMETER" XM_POSTFIX,		      XmTHERMOMETER);
   DEFINE_INTEGER(XM_PREFIX "XmETCHED_LINE" XM_POSTFIX,		      XmETCHED_LINE);
+#endif
   DEFINE_INTEGER(XM_PREFIX "XmMULTICLICK_DISCARD" XM_POSTFIX,	      XmMULTICLICK_DISCARD);
   DEFINE_INTEGER(XM_PREFIX "XmMULTICLICK_KEEP" XM_POSTFIX,	      XmMULTICLICK_KEEP);
   DEFINE_INTEGER(XM_PREFIX "XmSHADOW_IN" XM_POSTFIX,		      XmSHADOW_IN);
@@ -24448,7 +24481,7 @@ static int xm_already_inited = 0;
       define_structs();
       XEN_YES_WE_HAVE("xm");
 #if HAVE_GUILE
-      XEN_EVAL_C_STRING("(define xm-version \"4-Mar-02\")");
+      XEN_EVAL_C_STRING("(define xm-version \"11-Mar-02\")");
 #endif
       xm_already_inited = 1;
     }

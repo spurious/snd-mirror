@@ -791,7 +791,9 @@
   XEN_NARGIFY_3(gxm_XmClipboardInquireLength_w, gxm_XmClipboardInquireLength)
   XEN_NARGIFY_3(gxm_XmClipboardInquirePendingItems_w, gxm_XmClipboardInquirePendingItems)
   XEN_NARGIFY_3(gxm_XmClipboardRegisterFormat_w, gxm_XmClipboardRegisterFormat)
+#if MOTIF_2
   XEN_NARGIFY_1(gxm_XmGetXmScreen_w, gxm_XmGetXmScreen)
+#endif
   XEN_ARGIFY_4(gxm_XmCreateScrollBar_w, gxm_XmCreateScrollBar)
   XEN_NARGIFY_1(gxm_XmScrollBarGetValues_w, gxm_XmScrollBarGetValues)
   XEN_NARGIFY_6(gxm_XmScrollBarSetValues_w, gxm_XmScrollBarSetValues)
@@ -828,8 +830,10 @@
   XEN_NARGIFY_2(gxm_XmTextFieldSetString_w, gxm_XmTextFieldSetString)
   XEN_NARGIFY_4(gxm_XmTextFieldReplace_w, gxm_XmTextFieldReplace)
   XEN_NARGIFY_3(gxm_XmTextFieldInsert_w, gxm_XmTextFieldInsert)
+#if MOTIF_2
   XEN_NARGIFY_2(gxm_XmTextFieldSetAddMode_w, gxm_XmTextFieldSetAddMode)
   XEN_NARGIFY_1(gxm_XmTextFieldGetAddMode_w, gxm_XmTextFieldGetAddMode)
+#endif
   XEN_NARGIFY_1(gxm_XmTextFieldGetEditable_w, gxm_XmTextFieldGetEditable)
   XEN_NARGIFY_2(gxm_XmTextFieldSetEditable_w, gxm_XmTextFieldSetEditable)
   XEN_NARGIFY_1(gxm_XmTextFieldGetMaxLength_w, gxm_XmTextFieldGetMaxLength)
@@ -865,8 +869,10 @@
   XEN_NARGIFY_2(gxm_XmTextSetString_w, gxm_XmTextSetString)
   XEN_NARGIFY_4(gxm_XmTextReplace_w, gxm_XmTextReplace)
   XEN_NARGIFY_3(gxm_XmTextInsert_w, gxm_XmTextInsert)
+#if MOTIF_2
   XEN_NARGIFY_2(gxm_XmTextSetAddMode_w, gxm_XmTextSetAddMode)
   XEN_NARGIFY_1(gxm_XmTextGetAddMode_w, gxm_XmTextGetAddMode)
+#endif
   XEN_NARGIFY_1(gxm_XmTextGetEditable_w, gxm_XmTextGetEditable)
   XEN_NARGIFY_2(gxm_XmTextSetEditable_w, gxm_XmTextSetEditable)
   XEN_NARGIFY_1(gxm_XmTextGetMaxLength_w, gxm_XmTextGetMaxLength)
@@ -1074,7 +1080,9 @@
   XEN_NARGIFY_1(gxm_XmIsCommand_w, gxm_XmIsCommand)
   XEN_NARGIFY_1(gxm_XmIsRowColumn_w, gxm_XmIsRowColumn)
   XEN_NARGIFY_1(gxm_XmIsScale_w, gxm_XmIsScale)
+#if MOTIF_2
   XEN_NARGIFY_1(gxm_XmIsScreen_w, gxm_XmIsScreen)
+#endif
   XEN_NARGIFY_1(gxm_XmIsScrollBar_w, gxm_XmIsScrollBar)
   XEN_NARGIFY_1(gxm_XmIsDialogShell_w, gxm_XmIsDialogShell)
   XEN_NARGIFY_1(gxm_XmIsScrolledWindow_w, gxm_XmIsScrolledWindow)
@@ -1082,7 +1090,9 @@
   XEN_NARGIFY_1(gxm_XmIsSelectionBox_w, gxm_XmIsSelectionBox)
   XEN_NARGIFY_1(gxm_XmIsDragContext_w, gxm_XmIsDragContext)
   XEN_NARGIFY_1(gxm_XmIsSeparatorGadget_w, gxm_XmIsSeparatorGadget)
+#if MOTIF_2
   XEN_NARGIFY_1(gxm_XmIsDragIconObjectClass_w, gxm_XmIsDragIconObjectClass)
+#endif
   XEN_NARGIFY_1(gxm_XmIsSeparator_w, gxm_XmIsSeparator)
   XEN_NARGIFY_1(gxm_XmIsDrawingArea_w, gxm_XmIsDrawingArea)
   XEN_NARGIFY_1(gxm_XmIsDrawnButton_w, gxm_XmIsDrawnButton)
@@ -2050,8 +2060,10 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmTextFieldSetString" XM_POSTFIX, gxm_XmTextFieldSetString_w, 2, 0, 0, H_XmTextFieldSetString);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmTextFieldReplace" XM_POSTFIX, gxm_XmTextFieldReplace_w, 4, 0, 0, H_XmTextFieldReplace);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmTextFieldInsert" XM_POSTFIX, gxm_XmTextFieldInsert_w, 3, 0, 0, H_XmTextFieldInsert);
+#if MOTIF_2
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmTextFieldSetAddMode" XM_POSTFIX, gxm_XmTextFieldSetAddMode_w, 2, 0, 0, H_XmTextFieldSetAddMode);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmTextFieldGetAddMode" XM_POSTFIX, gxm_XmTextFieldGetAddMode_w, 1, 0, 0, NULL);
+#endif
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmTextFieldGetEditable" XM_POSTFIX, gxm_XmTextFieldGetEditable_w, 1, 0, 0, H_XmTextFieldGetEditable);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmTextFieldSetEditable" XM_POSTFIX, gxm_XmTextFieldSetEditable_w, 2, 0, 0, H_XmTextFieldSetEditable);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmTextFieldGetMaxLength" XM_POSTFIX, gxm_XmTextFieldGetMaxLength_w, 1, 0, 0, H_XmTextFieldGetMaxLength);
@@ -2087,8 +2099,10 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmTextSetString" XM_POSTFIX, gxm_XmTextSetString_w, 2, 0, 0, H_XmTextSetString);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmTextReplace" XM_POSTFIX, gxm_XmTextReplace_w, 4, 0, 0, H_XmTextReplace);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmTextInsert" XM_POSTFIX, gxm_XmTextInsert_w, 3, 0, 0, H_XmTextInsert);
+#if MOTIF_2
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmTextSetAddMode" XM_POSTFIX, gxm_XmTextSetAddMode_w, 2, 0, 0, H_XmTextSetAddMode);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmTextGetAddMode" XM_POSTFIX, gxm_XmTextGetAddMode_w, 1, 0, 0, NULL);
+#endif
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmTextGetEditable" XM_POSTFIX, gxm_XmTextGetEditable_w, 1, 0, 0, H_XmTextGetEditable);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmTextSetEditable" XM_POSTFIX, gxm_XmTextSetEditable_w, 2, 0, 0, H_XmTextSetEditable);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmTextGetMaxLength" XM_POSTFIX, gxm_XmTextGetMaxLength_w, 1, 0, 0, H_XmTextGetMaxLength);
@@ -2296,7 +2310,9 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmIsCommand" XM_POSTFIX, gxm_XmIsCommand_w, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmIsRowColumn" XM_POSTFIX, gxm_XmIsRowColumn_w, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmIsScale" XM_POSTFIX, gxm_XmIsScale_w, 1, 0, 0, NULL);
+#if MOTIF_2
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmIsScreen" XM_POSTFIX, gxm_XmIsScreen_w, 1, 0, 0, NULL);
+#endif
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmIsScrollBar" XM_POSTFIX, gxm_XmIsScrollBar_w, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmIsDialogShell" XM_POSTFIX, gxm_XmIsDialogShell_w, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmIsScrolledWindow" XM_POSTFIX, gxm_XmIsScrolledWindow_w, 1, 0, 0, NULL);
@@ -2304,7 +2320,9 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmIsSelectionBox" XM_POSTFIX, gxm_XmIsSelectionBox_w, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmIsDragContext" XM_POSTFIX, gxm_XmIsDragContext_w, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmIsSeparatorGadget" XM_POSTFIX, gxm_XmIsSeparatorGadget_w, 1, 0, 0, NULL);
+#if MOTIF_2
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmIsDragIconObjectClass" XM_POSTFIX, gxm_XmIsDragIconObjectClass_w, 1, 0, 0, NULL);
+#endif
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmIsSeparator" XM_POSTFIX, gxm_XmIsSeparator_w, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmIsDrawingArea" XM_POSTFIX, gxm_XmIsDrawingArea_w, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmIsDrawnButton" XM_POSTFIX, gxm_XmIsDrawnButton_w, 1, 0, 0, NULL);
@@ -2506,12 +2524,16 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmCascadeButton?" XM_POSTFIX, gxm_XmIsCascadeButton_w, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmForm?" XM_POSTFIX, gxm_XmIsForm_w, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmBulletinBoard?" XM_POSTFIX, gxm_XmIsBulletinBoard_w, 1, 0, 0, NULL);
+#if MOTIF_2
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmScreen?" XM_POSTFIX, gxm_XmIsScreen_w, 1, 0, 0, NULL);
+#endif
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmDialogShell?" XM_POSTFIX, gxm_XmIsDialogShell_w, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmDisplay?" XM_POSTFIX, gxm_XmIsDisplay_w, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmSelectionBox?" XM_POSTFIX, gxm_XmIsSelectionBox_w, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmDragContext?" XM_POSTFIX, gxm_XmIsDragContext_w, 1, 0, 0, NULL);
+#if MOTIF_2
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmDragIconObjectClass?" XM_POSTFIX, gxm_XmIsDragIconObjectClass_w, 1, 0, 0, NULL);
+#endif
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmSeparator?" XM_POSTFIX, gxm_XmIsSeparator_w, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmDropSiteManager?" XM_POSTFIX, gxm_XmIsDropSiteManager_w, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmDropTransfer?" XM_POSTFIX, gxm_XmIsDropTransfer_w, 1, 0, 0, NULL);
