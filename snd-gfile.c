@@ -178,22 +178,115 @@ static GtkWidget *snd_gtk_file_selection_new(snd_state *ss, char *title, GtkSign
 }
 
 
-/* -------- Open File Dialog -------- */
+/* -------- Open/Mix File Dialogs -------- */
 
-static GtkWidget *open_dialog = NULL;
+typedef struct {
+  int file_dialog_read_only, need_update, new_file_written;
+  GtkWidget *dialog, *play_selected_button, *dialog_frame, *dialog_info1, *dialog_info2, *dialog_vbox;
+  snd_info *file_play_sp;
+} file_dialog_info;
+
 void alert_new_file(void) {}
 
-static int file_dialog_read_only = 0;
+void set_open_file_play_button(int val) {}
+/* TODO: add the file:open dialog play button */
+
+#if (!HAVE_GTKEXTRA)
+
+static void dialog_select_callback(GtkWidget *w, gint row, gint column, GdkEventButton *event, gpointer context)
+{
+  char *filename;
+  char *buf;
+  char timestr[64];
+  time_t date;
+  file_dialog_info *fd = (file_dialog_info *)context;
+  filename = gtk_file_selection_get_filename(GTK_FILE_SELECTION(fd->dialog));
+  if ((filename) && (is_sound_file(filename)))
+    {
+      buf = (char *)CALLOC(LABEL_BUFFER_SIZE, sizeof(char));
+      mus_snprintf(buf, LABEL_BUFFER_SIZE, "%s: %d chan%s, %d Hz, %.3f secs",
+		   filename_without_home_directory(filename),
+		   mus_sound_chans(filename),
+		   (mus_sound_chans(filename) > 1) ? "s" : "",
+		   mus_sound_srate(filename),
+		   mus_sound_duration(filename));
+      gtk_label_set_text(GTK_LABEL(fd->dialog_info1), buf);
+      date = mus_sound_write_date(filename);
+#if (!defined(HAVE_CONFIG_H)) || defined(HAVE_STRFTIME)
+      strftime(timestr, 64, ", %d-%b-%Y", localtime(&date));
+#else
+      sprintf(timestr, "");
+#endif
+      mus_snprintf(buf, LABEL_BUFFER_SIZE, "%s %s%s",
+		   mus_header_type_name(mus_sound_header_type(filename)),
+		   mus_short_data_format_name(mus_sound_data_format(filename)),
+		   timestr);
+      gtk_label_set_text(GTK_LABEL(fd->dialog_info2), buf);
+      FREE(buf);
+      gtk_widget_show(fd->dialog_frame);
+      gtk_widget_show(fd->dialog_vbox);
+      gtk_widget_show(fd->dialog_info1);
+      gtk_widget_show(fd->dialog_info2);
+    }
+  else
+    {
+      gtk_widget_hide(fd->dialog_frame);
+      gtk_widget_hide(fd->dialog_vbox);
+      gtk_widget_hide(fd->dialog_info1);
+      gtk_widget_hide(fd->dialog_info2);
+    }
+}
+
+#endif
+
+static file_dialog_info *make_file_dialog(snd_state *ss, int read_only, char *title, int which_dialog, 
+					  GtkSignalFunc file_ok_proc,
+					  GtkSignalFunc file_delete_proc,
+					  GtkSignalFunc file_dismiss_proc)
+{
+  file_dialog_info *fd;
+  fd = (file_dialog_info *)CALLOC(1, sizeof(file_dialog_info));
+  fd->file_dialog_read_only = read_only;
+  fd->dialog = snd_gtk_file_selection_new(ss, title,
+					  file_delete_proc,
+					  file_ok_proc,
+					  file_dismiss_proc);
+  set_dialog_widget(ss, which_dialog, fd->dialog);
+#if (!HAVE_GTKEXTRA)
+  fd->dialog_frame = gtk_frame_new(NULL);
+  gtk_box_pack_start(GTK_BOX(GTK_FILE_SELECTION(fd->dialog)->main_vbox), fd->dialog_frame, TRUE, TRUE, 0);
+  /* gtk+extra/gtkiconfilesel.h says action_area as gtk table here? */
+  gtk_frame_set_shadow_type(GTK_FRAME(fd->dialog_frame), GTK_SHADOW_ETCHED_IN);
+  
+  fd->dialog_vbox = gtk_vbox_new(FALSE, 0);
+  gtk_container_add(GTK_CONTAINER(fd->dialog_frame), fd->dialog_vbox);
+
+  fd->dialog_info1 = gtk_label_new(NULL);
+  gtk_box_pack_start(GTK_BOX(fd->dialog_vbox), fd->dialog_info1, TRUE, TRUE, 2);
+	
+  fd->dialog_info2 = gtk_label_new(NULL);
+  gtk_box_pack_start(GTK_BOX(fd->dialog_vbox), fd->dialog_info2, TRUE, TRUE, 2);
+
+  gtk_signal_connect(GTK_OBJECT(GTK_FILE_SELECTION(fd->dialog)->file_list), 
+		     "select_row",
+		     GTK_SIGNAL_FUNC(dialog_select_callback), 
+		     (gpointer)fd);
+#endif
+  return(fd);
+}
+
+static file_dialog_info *open_dialog = NULL;
+static file_dialog_info *mix_dialog = NULL;
 
 static void file_open_dialog_ok(GtkWidget *w, gpointer data)
 {
   snd_info *sp;
   snd_state *ss = (snd_state *)data;
-  last_filename = snd_gtk_get_filename(open_dialog);
-  gtk_widget_hide(open_dialog);
+  last_filename = snd_gtk_get_filename(open_dialog->dialog);
+  gtk_widget_hide(open_dialog->dialog);
   if (!(is_directory(last_filename)))
     {
-      sp = snd_open_file(last_filename, ss, file_dialog_read_only);
+      sp = snd_open_file(last_filename, ss, open_dialog->file_dialog_read_only);
       if (sp) select_channel(sp, 0);           /* add_sound_window (snd-xsnd.c) will report reason for error, if any */
     }
   else
@@ -205,101 +298,60 @@ static void file_open_dialog_ok(GtkWidget *w, gpointer data)
 
 static void file_open_dialog_dismiss(GtkWidget *w, gpointer context)
 {
-  gtk_widget_hide(open_dialog);
+  gtk_widget_hide(open_dialog->dialog);
 }
 
 static void file_open_dialog_delete(GtkWidget *w, GdkEvent *event, gpointer context)
 {
-  gtk_widget_hide(open_dialog);
+  gtk_widget_hide(open_dialog->dialog);
 }
-
-void set_open_file_play_button(int val) {}
-/* TODO: add the file:open dialog play button */
-
-#if (!HAVE_GTKEXTRA)
-  static GtkWidget *open_dialog_frame, *open_dialog_info1, *open_dialog_info2, *open_dialog_vbox;
-
-static void open_dialog_select_callback(GtkWidget *w, gint row, gint column, GdkEventButton *event, gpointer context)
-{
-  char *filename;
-  char *buf;
-  char timestr[64];
-  time_t date;
-  filename = gtk_file_selection_get_filename(GTK_FILE_SELECTION(open_dialog));
-  if ((filename) && (is_sound_file(filename)))
-    {
-      buf = (char *)CALLOC(LABEL_BUFFER_SIZE, sizeof(char));
-      mus_snprintf(buf, LABEL_BUFFER_SIZE, "%s: %d chan%s, %d Hz, %.3f secs",
-		   filename_without_home_directory(filename),
-		   mus_sound_chans(filename),
-		   (mus_sound_chans(filename) > 1) ? "s" : "",
-		   mus_sound_srate(filename),
-		   mus_sound_duration(filename));
-      gtk_label_set_text(GTK_LABEL(open_dialog_info1), buf);
-      date = mus_sound_write_date(filename);
-#if (!defined(HAVE_CONFIG_H)) || defined(HAVE_STRFTIME)
-      strftime(timestr, 64, ", %d-%b-%Y", localtime(&date));
-#else
-      sprintf(timestr, "");
-#endif
-      mus_snprintf(buf, LABEL_BUFFER_SIZE, "%s %s%s",
-		   mus_header_type_name(mus_sound_header_type(filename)),
-		   mus_short_data_format_name(mus_sound_data_format(filename)),
-		   timestr);
-      gtk_label_set_text(GTK_LABEL(open_dialog_info2), buf);
-      FREE(buf);
-      gtk_widget_show(open_dialog_frame);
-      gtk_widget_show(open_dialog_vbox);
-      gtk_widget_show(open_dialog_info1);
-      gtk_widget_show(open_dialog_info2);
-    }
-  else
-    {
-      gtk_widget_hide(open_dialog_frame);
-      gtk_widget_hide(open_dialog_vbox);
-      gtk_widget_hide(open_dialog_info1);
-      gtk_widget_hide(open_dialog_info2);
-    }
-}
-
-#endif
 
 void make_open_file_dialog(snd_state *ss, int read_only, int managed)
 {
-  file_dialog_read_only = read_only;
   if (!open_dialog)
     {
-      open_dialog = snd_gtk_file_selection_new(ss, STR_File,
-					       (GtkSignalFunc)file_open_dialog_delete,
-					       (GtkSignalFunc)file_open_dialog_ok,
-					       (GtkSignalFunc)file_open_dialog_dismiss);
-      set_dialog_widget(ss, FILE_OPEN_DIALOG, open_dialog);
-#if (!HAVE_GTKEXTRA)
-      {
-	open_dialog_frame = gtk_frame_new(NULL);
-	gtk_box_pack_start(GTK_BOX(GTK_FILE_SELECTION(open_dialog)->main_vbox), open_dialog_frame, TRUE, TRUE, 0);
-	/* gtk+extra/gtkiconfilesel.h says action_area as gtk table here? */
-	gtk_frame_set_shadow_type(GTK_FRAME(open_dialog_frame), GTK_SHADOW_ETCHED_IN);
-
-	open_dialog_vbox = gtk_vbox_new(FALSE, 0);
-	gtk_container_add(GTK_CONTAINER(open_dialog_frame), open_dialog_vbox);
-
-	open_dialog_info1 = gtk_label_new(NULL);
-	gtk_box_pack_start(GTK_BOX(open_dialog_vbox), open_dialog_info1, TRUE, TRUE, 2);
-	
-	open_dialog_info2 = gtk_label_new(NULL);
-	gtk_box_pack_start(GTK_BOX(open_dialog_vbox), open_dialog_info2, TRUE, TRUE, 2);
-
-	gtk_signal_connect(GTK_OBJECT(GTK_FILE_SELECTION(open_dialog)->file_list), 
-			   "select_row", 
-			   GTK_SIGNAL_FUNC(open_dialog_select_callback), 
-			   NULL);
-      }
-#endif
-
+      open_dialog = make_file_dialog(ss, read_only, STR_File, FILE_OPEN_DIALOG,
+				     (GtkSignalFunc)file_open_dialog_ok,				     
+				     (GtkSignalFunc)file_open_dialog_delete,
+				     (GtkSignalFunc)file_open_dialog_dismiss);
     }
-  if (managed) gtk_widget_show(open_dialog);
+  if (managed) gtk_widget_show(open_dialog->dialog);
 }
+
+
+/* -------- mix file dialog -------- */
+
+static void file_mix_cancel_callback(GtkWidget *w, gpointer context)
+{
+  gtk_widget_hide(mix_dialog->dialog);
+}
+
+static void file_mix_delete_callback(GtkWidget *w, GdkEvent *event, gpointer context)
+{
+  gtk_widget_hide(mix_dialog->dialog);
+}
+
+static void file_mix_ok_callback(GtkWidget *w, gpointer context)
+{
+  snd_state *ss = (snd_state *)context;
+  gtk_widget_hide(mix_dialog->dialog);
+  mix_complete_file(any_selected_sound(ss),
+		    snd_gtk_get_filename(mix_dialog->dialog),
+		    "File: mix", with_mix_tags(ss));
+}
+
+void make_mix_file_dialog(snd_state *ss, int managed)
+  {
+  if (mix_dialog == NULL)
+    {
+      mix_dialog = make_file_dialog(ss, FALSE, STR_mix_file_p, FILE_MIX_DIALOG,
+				    (GtkSignalFunc)file_mix_ok_callback,
+				    (GtkSignalFunc)file_mix_delete_callback,
+				    (GtkSignalFunc)file_mix_cancel_callback);
+    }
+  if (managed) gtk_widget_show(mix_dialog->dialog);
+}
+
 
 
 /* -------- file data choices -------- */
@@ -1444,45 +1496,6 @@ snd_info *make_new_file_dialog(snd_state *ss, char *newname, int header_type, in
   return(sp);
 }
 
-
-
-/* -------- mix file dialog -------- */
-
-/* TODO: merge mix dialog with open as in motif */
-
-static GtkWidget *file_mix_dialog = NULL;
-
-static void file_mix_cancel_callback(GtkWidget *w, gpointer context)
-{
-  gtk_widget_hide(file_mix_dialog);
-}
-
-static void file_mix_delete_callback(GtkWidget *w, GdkEvent *event, gpointer context)
-{
-  gtk_widget_hide(file_mix_dialog);
-}
-
-static void file_mix_ok_callback(GtkWidget *w, gpointer context)
-{
-  snd_state *ss = (snd_state *)context;
-  gtk_widget_hide(file_mix_dialog);
-  mix_complete_file(any_selected_sound(ss),
-		    snd_gtk_get_filename(file_mix_dialog),
-		    "File: mix", with_mix_tags(ss));
-}
-
-void make_mix_file_dialog(snd_state *ss, int managed)
-  {
-  if (!file_mix_dialog)
-    {
-      file_mix_dialog = snd_gtk_file_selection_new(ss, STR_mix_file_p,
-						   (GtkSignalFunc)file_mix_delete_callback,
-						   (GtkSignalFunc)file_mix_ok_callback,
-						   (GtkSignalFunc)file_mix_cancel_callback);
-      set_dialog_widget(ss, FILE_MIX_DIALOG, file_mix_dialog);
-    }
-  if (managed) gtk_widget_show(file_mix_dialog);
-}
 
 
 /* ---------------- EDIT_HEADER ---------------- */

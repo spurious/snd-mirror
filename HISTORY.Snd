@@ -8,7 +8,7 @@ snd change log
   1-Sep:     zero-phase, rotate-phase in dsp.scm (Scott McNab).
              region-play-list in examp.scm.
   31-Aug:    snd 5.2.
-  29-Aug:    added edit-menu.scm and merged in Dave Phillips changes for effects.scm.
+  29-Aug:    added edit-menu.scm and merged in Dave Phillips' changes for effects.scm.
   28-Aug:    after-apply-hook, before-apply-hook.
   24-Aug:    add-amp-controls in snd-motif.scm, add-notes in examp.scm.
   21-Aug:    added explicit FIR/FFT choice to envelope editor (enved-filter).

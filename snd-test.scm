@@ -1068,6 +1068,7 @@
 	    (list "woodblock.aiff" 1 44100 0.0367800444364548 "AIFF" "big endian short (16 bits)")
 	    (list "woodflt.snd" 1 44100 0.0367800444364548 "Sun" "big endian float (32 bits)")
 	    (list "RealDrums.sf2" 1 44100 6.39725637435913 "SoundFont" "little endian short (16 bits)")
+	    (list "32bit.sf" 1 44100 4.6 "IRCAM" "big endian float (32 bits)")
 	    (list "zulu_a4.w11" 1 33000 1.21987879276276 "TX-16" "unsupported")))))
     )
 
@@ -9459,6 +9460,7 @@ EDITS: 3
       ))
       ))
 
+#!
 (if (or full-test (= snd-test 20) (and keep-going (<= snd-test 20)))
     (begin
       (load "gm.scm")
@@ -9467,7 +9469,7 @@ EDITS: 3
 	    (v2 (vct 0.0197 -0.0406 -0.0739 0.1340 0.4479 0.4479 0.13403 -0.0739 -0.0406 0.0197)))
 	(if (not (vfequal v1 v2))
 	    (snd-display ";gm ~A ~A?" v1 v2)))))
-
+!#
 
 
 

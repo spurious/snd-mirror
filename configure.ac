@@ -21,7 +21,7 @@ dnl Process this file with autoconf 2.50 to produce a configure script.
 #   alphaev67-unknown-linux-gnu i386-unknown-freebsd4.2
 #--------------------------------------------------------------------------------
 
-AC_INIT(snd, 5.1, bil@ccrma.stanford.edu)
+AC_INIT(snd, 5.3, bil@ccrma.stanford.edu)
 AC_CONFIG_SRCDIR(snd.c)
 AC_CANONICAL_HOST
 AC_CONFIG_HEADER(config.h)
@@ -202,14 +202,14 @@ else
   fi
   gsl_version="`$GSL_CONFIG --version`"
   AC_MSG_RESULT($gsl_version)
-  AC_DEFINE_UNQUOTED(GSL_VERSION,"${gsl_version}")
-  if test "`$GSL_CONFIG --version`" = "0.6" || test "`$GSL_CONFIG --version`" = "0.7"; then
+  if test "`$GSL_CONFIG --version`" = "0.6" || test "`$GSL_CONFIG --version`" = "0.7" || test "`$GSL_CONFIG --version`" = "0.5"; then
     AC_MSG_WARN([Snd needs GSL 0.8 or later])
   else
     if test "`$GSL_CONFIG --version`" = "0.8" && test "$with_static_gsl" = yes ; then
       GSL_LIBS="$GSL_LIBS $GSL_PREFIX/lib/libgslcblas.a"
     fi
     AC_DEFINE(HAVE_GSL)
+    AC_DEFINE_UNQUOTED(GSL_VERSION,"${gsl_version}")
   fi
 fi
 AC_SUBST(GSL_LIBS)

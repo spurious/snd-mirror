@@ -2336,7 +2336,7 @@ for more examples.</p>
 	 (fdr (make-double-float-array fftsize))
 	 (win (<em class=red>make-fft-window</em> blackman2-window fftsize))
 	 (in-file (open-input* infile))
-	 (out-file (mus-open-write outfile))
+	 (out-file (mus-create outfile))
 	 (k 0)
 	 (freqsize (floor fftsize 2))
 	 (end (sound-frames infile)))

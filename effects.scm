@@ -127,11 +127,10 @@
 (define (add-target mainform target-callback)
   ;; add a set of 3 radio buttons at the bottom of the main section for choice between sound, selection, between-marks
   ;;   target-callback should take one arg, a symbol: 'sound, 'selection, 'marks, and apply the effect accordingly (upon "DoIt")
-  ;;   if there are no marks, or no selection, the respective button is insensitive
   (let* ((sep (|XtCreateManagedWidget "sep" |xmSeparatorWidgetClass mainform
 		(list |XmNorientation      |XmHORIZONTAL
 		      |XmNseparatorType    |XmSHADOW_ETCHED_OUT
-		      ;|XmNheight           4
+		      ;|XmNheight          4
 		      |XmNbackground       (|Pixel (snd-pixel (basic-color))))))
 	 (rc (|XtCreateManagedWidget "rc"  |xmRowColumnWidgetClass mainform
                 (list |XmNtopAttachment    |XmATTACH_WIDGET

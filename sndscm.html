@@ -353,9 +353,11 @@ the phazor package of Scott McNab.
 
 <A NAME="effectsdoc"></a><span class=box><h2>effects.scm</h2></span>
 
-<!-- TODO: talk about effects GUI -->
-<p>effects.scm implements a simple "Effects" menu, mimicking other sound editors.
-The effects implemented currently are:
+<p>effects.scm implements an "Effects" menu.  If you have Motif,
+you can load xm.so (or build Snd with it preloaded), and get sliders
+to control most of the effects.
+The actual list of effects changes relatively frequently, but
+probably has:
 </p>
 <pre>
   reverse
@@ -372,7 +374,8 @@ The effects implemented currently are:
   add silence (at cursor) (silence-amount)
   remove DC
   expsrc (independent pitch/time scaling) (time-scale and pitch-scale)
-  notch filter (notch-freq and notch-bw)
+  various filters
+  cross synthesis
 </pre>
 
 <!-- I(reverse samples):M(Effects: Reverse)(effectsdoc) -->
@@ -384,11 +387,8 @@ The effects implemented currently are:
 <!-- I(change tempo):M(Effects: Expsrc)(effectsdoc) -->
 
 <p>Most of these are either simple calls on Snd functions ("invert" is <code>(scale-by -1)</code>),
-or use functions in examp.scm.  The actual operations follow the sync chain of the
-currently active channel.  Many are dependent on variables that could, I suppose, be
-brought out in some dialog.  "reverberate", for example, depends on the variable
-<i>reverb-amount</i> to determine how much reverberation you get.  To change such
-a variable <code>(set! reverb-amount .1)</code>.
+or use functions in the other scm files.  The actual operations follow the sync chain of the
+currently active channel.  
 </p>
 <p>One possibly interesting part of effects.scm is the implementation of the
 Effects menu.  If you change one of the variables, you'll notice that the
