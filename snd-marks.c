@@ -441,8 +441,9 @@ void finish_moving_play_mark(chan_info *cp)
   sp->speed_control = 1.0;
 }
 
-enum {MARK_ADD, MARK_DELETE, MARK_MOVE, MARKS_DELETE, MARK_RELEASE};
-static void run_mark_hook(chan_info *cp, int id, int reason)
+typedef enum {MARK_ADD, MARK_DELETE, MARK_MOVE, MARKS_DELETE, MARK_RELEASE} mark_hook_reason_t;
+
+static void run_mark_hook(chan_info *cp, int id, mark_hook_reason_t reason)
 {
   /* called after the mark list has been made consistent */
   if (XEN_HOOKED(mark_hook))
@@ -450,7 +451,7 @@ static void run_mark_hook(chan_info *cp, int id, int reason)
 	     XEN_LIST_4(C_TO_XEN_INT(id),
 			C_TO_SMALL_XEN_INT(cp->sound->index),
 			C_TO_SMALL_XEN_INT(cp->chan),
-			C_TO_SMALL_XEN_INT(reason)),
+			C_TO_SMALL_XEN_INT((int)reason)),
 	     S_mark_hook);
 }
 
@@ -1814,9 +1815,9 @@ static XEN g_restore_marks(XEN size, XEN snd, XEN chn, XEN marklist)
   return(marklist);
 }
 
-enum {MARK_SAMPLE, MARK_NAME, MARK_SYNC, MARK_HOME};
+typedef enum {MARK_SAMPLE, MARK_NAME, MARK_SYNC, MARK_HOME} mark_field_t;
 
-static XEN mark_get(XEN n, int fld, XEN pos_n, char *caller)
+static XEN mark_get(XEN n, mark_field_t fld, XEN pos_n, char *caller)
 {
   int pos;
   chan_info *ncp[1];
@@ -1847,7 +1848,7 @@ static XEN mark_get(XEN n, int fld, XEN pos_n, char *caller)
   return(XEN_FALSE);
 }
 
-static XEN mark_set(XEN mark_n, XEN val, int fld, char *caller)
+static XEN mark_set(XEN mark_n, XEN val, mark_field_t fld, char *caller)
 {
   chan_info *cp[1];
   mark *m;
@@ -1873,6 +1874,8 @@ static XEN mark_set(XEN mark_n, XEN val, int fld, char *caller)
       if (m->name) FREE(m->name);
       m->name = copy_string(XEN_TO_C_STRING(val));
       update_graph(cp[0]);
+      break;
+    default:
       break;
     }
   return(val);

@@ -329,7 +329,7 @@ static int name_to_type(const char *name)
 #define POINTER_OR_GOTO_P(Type) ((Type) > R_FUNCTION)
 #define VECTOR_P(Type) (((Type) >= R_FLOAT_VECTOR) && ((Type) <= R_CLM_VECTOR))
 
-enum {R_VARIABLE, R_CONSTANT};
+typedef enum {R_VARIABLE, R_CONSTANT} xen_value_constant_t;
 typedef enum {DONT_NEED_RESULT, NEED_ANY_RESULT, NEED_INT_RESULT, NEED_XCLM_RESULT} walk_result_t;
 
 static int current_optimization = DONT_OPTIMIZE;
@@ -338,7 +338,7 @@ static bool run_warned = false;
 typedef struct {
   int type;
   int addr;
-  int constant;
+  xen_value_constant_t constant;
   bool gc;
 } xen_value;
 
@@ -509,7 +509,7 @@ static char *describe_triple(triple *trp, ptree *pt)
   return(NULL);
 }
 
-static xen_value *make_xen_value(int typ, int address, int constant)
+static xen_value *make_xen_value(int typ, int address, xen_value_constant_t constant)
 {
   xen_value *v;
   v = (xen_value *)CALLOC(1, sizeof(xen_value));
@@ -7096,7 +7096,6 @@ INT_GEN0(hop)
 INT_GEN0(channels)
 INT_GEN0(location)
 INT_GEN0(ramp)
-INT_GEN0(position)
 INT_GEN0(order)
 INT_GEN0(length)
 INT_GEN0(cosines)
@@ -10011,11 +10010,10 @@ XEN_NARGIFY_2(g_vct_map_w, g_vct_map)
 
 static void init_walkers(void)
 {
-  XEN do_star, declare, call_cc, gmus_position;
+  XEN do_star, declare, call_cc;
   XEN_DEFINE_VARIABLE("do*", do_star, XEN_FALSE);
   XEN_DEFINE_VARIABLE("declare", declare, XEN_FALSE);
   XEN_DEFINE_VARIABLE("call/cc", call_cc, XEN_FALSE);
-  XEN_DEFINE_VARIABLE("mus-position", gmus_position, XEN_FALSE);
   walk_sym = C_STRING_TO_XEN_SYMBOL("snd-walk");
   snd_protect(walk_sym);
 
@@ -10254,7 +10252,6 @@ static void init_walkers(void)
   INIT_WALKER(S_mus_channel, make_walker(mus_channel_0, NULL, NULL, 1, 1, R_INT, false, 1, R_CLM));
   INIT_WALKER(S_mus_location, make_walker(mus_location_0, NULL, mus_set_location_1, 1, 1, R_INT, false, 1, R_CLM));
   INIT_WALKER(S_mus_ramp, make_walker(mus_ramp_0, NULL, mus_set_ramp_1, 1, 1, R_INT, false, 1, R_CLM));
-  INIT_WALKER(S_mus_position, make_walker(mus_position_0, NULL, NULL, 1, 1, R_INT, false, 1, R_CLM));
   INIT_WALKER(S_mus_order, make_walker(mus_order_0, NULL, NULL, 1, 1, R_INT, false, 1, R_CLM));
   INIT_WALKER(S_mus_length, make_walker(mus_length_0, NULL, mus_set_length_1, 1, 1, R_INT, false, 1, R_CLM));
   INIT_WALKER(S_mus_cosines, make_walker(mus_cosines_0, NULL, mus_set_cosines_1, 1, 1, R_INT, false, 1, R_CLM));

@@ -509,7 +509,6 @@ static int save_region_1(char *ofile, int type, int format, int srate, int reg, 
     {
       if (r->use_temp_file == REGION_DEFERRED) 
 	deferred_region_to_temp_file(r);
-
       if ((snd_write_header(ofile, type, srate, r->chans, 28, r->chans * r->frames, format, comment, comlen, NULL)) == -1)
 	return(MUS_HEADER_WRITE_FAILED);
       oloc = mus_header_data_location();
@@ -520,7 +519,6 @@ static int save_region_1(char *ofile, int type, int format, int srate, int reg, 
 				oloc, r->chans, type);
       mus_file_set_data_clipped(ofd, data_clipped(ss));
       lseek(ofd, oloc, SEEK_SET);
-
       /* copy r->filename with possible header/data format changes */
       if ((ifd = snd_open_read(r->filename)) == -1) 
 	{
@@ -542,7 +540,6 @@ static int save_region_1(char *ofile, int type, int format, int srate, int reg, 
       lseek(ifd, iloc, SEEK_SET);
       bufs = (mus_sample_t **)CALLOC(chans, sizeof(mus_sample_t *));
       for (i = 0; i < chans; i++) bufs[i] = (mus_sample_t *)CALLOC(FILE_BUFFER_SIZE, sizeof(mus_sample_t));
-      
       if (((frames * chans * mus_sound_datum_size(r->filename)) >> 10) > disk_kspace(ofile))
 	snd_warning(_("not enough space to save region? -- need " PRId64 " bytes"),
 		    frames * chans * mus_sound_datum_size(r->filename));
@@ -745,7 +742,6 @@ static void deferred_region_to_temp_file(region *r)
 	  copy_ok = false;
 	  break;
 	}
-
   if (copy_ok)
     {
       /* write next header with correct len
@@ -806,7 +802,6 @@ static void deferred_region_to_temp_file(region *r)
 	  sfs = (snd_fd **)CALLOC(r->chans, sizeof(snd_fd *));
 	  data = (mus_sample_t **)CALLOC(r->chans, sizeof(mus_sample_t *));
 	  datumb = mus_bytes_per_sample(hdr->format);
-
 	  /* here if amp_envs, maxamp exists */
 	  for (i = 0; i < r->chans; i++)
 	    {
@@ -942,10 +937,8 @@ void save_regions(FILE *fd)
 	  fprintf(fd, "(%s %d %d " OFF_TD " %d %.4f \"%s\" \"%s\" \"%s\"",
 	          S_restore_region, i, r->chans, r->frames, r->srate, r->maxamp, r->name, r->start, r->end);
 #endif
-
 	  if (r->use_temp_file == REGION_DEFERRED) 
 	    deferred_region_to_temp_file(r);
-
 	  newname = run_save_state_hook(shorter_tempnam(save_dir(ss), "snd_save_"));
 	  copy_file(r->filename, newname);
 	  fprintf(fd, " \"%s\")\n", newname);
@@ -975,10 +968,8 @@ void region_edit(int pos)
 	snd_error(_("region %d already being edited"), r->id);
       else
 	{
-
 	  if (r->use_temp_file == REGION_DEFERRED) 
 	    deferred_region_to_temp_file(r);
-
 	  temp_region_name = shorter_tempnam(temp_dir(ss), "region-");
 	  err = copy_file(r->filename, temp_region_name);
 	  if (err == MUS_NO_ERROR)
@@ -1059,7 +1050,6 @@ void save_region_backpointer(snd_info *sp)
 #define XEN_REGION_IF_BOUND_P(Val) ((XEN_NOT_BOUND_P(Val)) || (XEN_INTEGER_P(Val)))
 #define XEN_REGION_TO_C_INT(Val) ((XEN_INTEGER_P(Val)) ? XEN_TO_C_INT(Val) : stack_position_to_id(0))
 #define C_INT_TO_XEN_REGION(Val) C_TO_XEN_INT(Val)
-
 
 static XEN snd_no_such_region_error(const char *caller, XEN n)
 {
@@ -1143,9 +1133,9 @@ static XEN g_set_max_regions(XEN n)
   return(C_TO_XEN_INT(max_regions(ss)));
 }
 
-enum {REGION_FRAMES, REGION_SRATE, REGION_CHANS, REGION_MAXAMP, REGION_FORGET, REGION_PLAY};
+typedef enum {REGION_FRAMES, REGION_SRATE, REGION_CHANS, REGION_MAXAMP, REGION_FORGET, REGION_PLAY} region_field_t;
 
-static XEN region_get(int field, XEN n, char *caller)
+static XEN region_get(region_field_t field, XEN n, char *caller)
 {
   int rg;
   rg = XEN_REGION_TO_C_INT(n);
@@ -1158,6 +1148,7 @@ static XEN region_get(int field, XEN n, char *caller)
     case REGION_CHANS:  return(C_TO_XEN_INT(region_chans(rg))); break;
     case REGION_MAXAMP: return(C_TO_XEN_DOUBLE(region_maxamp(rg))); break;
     case REGION_FORGET: delete_region_and_update_browser(id_to_stack_position(rg)); return(n); break;
+    default: break;
     }
   return(XEN_FALSE);
 }

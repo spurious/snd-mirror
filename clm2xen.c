@@ -5788,7 +5788,6 @@ the closer the radius is to 1.0, the narrower the resonance."
 	       S_mus_order,
 	       S_mus_output_p,
 	       S_mus_phase,
-	       S_mus_position,
 	       S_mus_ramp,
 	       S_mus_rand_seed,
 	       S_mus_random,

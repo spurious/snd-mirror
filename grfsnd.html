@@ -484,7 +484,7 @@ Next add Guile wrappers to your C code:</p>
   #include &lt;math.h&gt;
   #include &lt;stdio.h&gt;
   #include &lt;stdlib.h&gt;
-  #include &lt;guile/gh.h&gt;
+  #include &lt;libguile.h&gt;
 
   int hiho (int a) 
   { /* this is the function we want to call from Snd */
@@ -534,7 +534,7 @@ from GSL (Gnu Scientific Library); in this case, we need to build Snd
 with GSL (the easiest way is to include the --with-gsl option to configure).
 Then make a file (say "gsl-ex.c"):</p>
 <pre>
-#include &lt;guile/gh.h&gt;
+#include &lt;libguile.h&gt;
 #include &lt;gsl/gsl_sf_bessel.h&gt;
 
 static SCM scm_j0(SCM x)
@@ -589,7 +589,7 @@ value of scm_symbol_value0("function-name"), and in the
 rest of the code call it via scm_apply. The following
 is a sketch using the Snd internal "srate" function:</p>
 <pre>
-  #include &lt;guile/gh.h&gt;
+  #include &lt;libguile.h&gt;
   static SCM g_srate;
   static SCM srate_wrapper(SCM a) {return(scm_call_1(g_srate, a));}
   void init_srate(void) 

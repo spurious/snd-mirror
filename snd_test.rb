@@ -103,17 +103,17 @@ if Lisp_graph != 2 then snd_display sprintf("\n# Lisp_graph => %d", Lisp_graph) 
 if Copy_context != 0 then snd_display sprintf("\n# Copy_context => %d", Copy_context) end
 if Cursor_context != 3 then snd_display sprintf("\n# Cursor_context => %d", Cursor_context) end
 if Selection_context != 2 then snd_display sprintf("\n# Selection_context => %d", Selection_context) end
-if Mus_next != 0 then snd_display sprintf("\n# Mus_next => %d", Mus_next) end
-if Mus_aifc != 1 then snd_display sprintf("\n# Mus_aifc => %d", Mus_aifc) end
-if Mus_riff != 2 then snd_display sprintf("\n# Mus_riff => %d", Mus_riff) end
-if Mus_nist != 4 then snd_display sprintf("\n# Mus_nist => %d", Mus_nist) end
-if Mus_raw != 10 then snd_display sprintf("\n# Mus_raw => %d", Mus_raw) end
-if Mus_ircam != 13 then snd_display sprintf("\n# Mus_ircam => %d", Mus_ircam) end
-if Mus_aiff != 48 then snd_display sprintf("\n# Mus_aiff => %d", Mus_aiff) end
-if Mus_bicsf != 3 then snd_display sprintf("\n# Mus_bicsf => %d", Mus_bicsf) end
-if Mus_voc != 8 then snd_display sprintf("\n# Mus_voc => %d", Mus_voc) end
-if Mus_svx != 7 then snd_display sprintf("\n# Mus_svx => %d", Mus_svx) end
-if Mus_soundfont != 24 then snd_display sprintf("\n# Mus_soundfont => %d", Mus_soundfont) end
+if Mus_next != 1 then snd_display sprintf("\n# Mus_next => %d", Mus_next) end
+if Mus_aifc != 2 then snd_display sprintf("\n# Mus_aifc => %d", Mus_aifc) end
+if Mus_riff != 3 then snd_display sprintf("\n# Mus_riff => %d", Mus_riff) end
+if Mus_nist != 5 then snd_display sprintf("\n# Mus_nist => %d", Mus_nist) end
+if Mus_raw != 11 then snd_display sprintf("\n# Mus_raw => %d", Mus_raw) end
+if Mus_ircam != 14 then snd_display sprintf("\n# Mus_ircam => %d", Mus_ircam) end
+if Mus_aiff != 49 then snd_display sprintf("\n# Mus_aiff => %d", Mus_aiff) end
+if Mus_bicsf != 4 then snd_display sprintf("\n# Mus_bicsf => %d", Mus_bicsf) end
+if Mus_voc != 9 then snd_display sprintf("\n# Mus_voc => %d", Mus_voc) end
+if Mus_svx != 8 then snd_display sprintf("\n# Mus_svx => %d", Mus_svx) end
+if Mus_soundfont != 25 then snd_display sprintf("\n# Mus_soundfont => %d", Mus_soundfont) end
 if Mus_bshort != 1 then snd_display sprintf("\n# Mus_bshort => %d", Mus_bshort) end
 if Mus_lshort != 10 then snd_display sprintf("\n# Mus_lshort => %d", Mus_lshort) end
 if Mus_mulaw != 2 then snd_display sprintf("\n# Mus_mulaw => %d", Mus_mulaw) end
@@ -198,7 +198,7 @@ if data_clipped != false then snd_display sprintf("\n# data_clipped: %s", data_c
 if default_output_chans != 1 then snd_display sprintf("\n# default_output_chans: %s", default_output_chans) end
 if default_output_format != 1 then snd_display sprintf("\n# default_output_format: %s", default_output_format) end
 if default_output_srate != 22050 then snd_display sprintf("\n# default_output_srate: %s", default_output_srate) end
-if default_output_type != 0 then snd_display sprintf("\n# default_output_type: %s", default_output_type) end
+if default_output_type != 1 then snd_display sprintf("\n# default_output_type: %s", default_output_type) end
 if dot_size != 1 then snd_display sprintf("\n# dot_size: %s", dot_size) end
 if enved_base != 1.0 then snd_display sprintf("\n# enved_base: %s", enved_base) end
 if enved_clip? != false then snd_display sprintf("\n# enved_clip?: %s", enved_clip?) end
@@ -334,8 +334,8 @@ test_headers("Porder.aif", 1, 8000, 0.00112499995157123, "AIFC", "mulaw (8 bits)
 test_headers("Ptjunk.aif", 1, 8000, 0.00112499995157123, "AIFC", "mulaw (8 bits)")
 test_headers("Ptjunk.wav", 1, 8000, 0.00112499995157123, "RIFF", "mulaw (8 bits)")
 test_headers("SINE24-S.WAV", 2, 44100, 2.0, "RIFF", "little endian int (24 bits)")
-test_headers("a1.asf", 1, 16000, 0.0, "asf", "unsupported")
-test_headers("a2.asf", 1, 8000, 0.0, "asf", "unsupported")
+test_headers("a1.asf", 1, 16000, 0.0, "asf", "unknown")
+test_headers("a2.asf", 1, 8000, 0.0, "asf", "unknown")
 test_headers("addf8.afsp", 1, 8000, 2.9760000705719, "Sun", "big endian short (16 bits)")
 test_headers("addf8.d", 1, 8000, 2.9760000705719, "SPPACK", "big endian short (16 bits)")
 test_headers("addf8.dwd", 1, 8000, 2.9760000705719, "DiamondWare", "little endian short (16 bits)")
@@ -351,10 +351,10 @@ test_headers("aiff-8.snd", 2, 44100, 0.746666669845581, "AIFF", "signed byte (8 
 test_headers("alaw.aifc", 1, 44100, 0.0367800444364548, "AIFC", "alaw (8 bits)")
 test_headers("alaw.wav", 1, 11025, 8.70666694641113, "RIFF", "alaw (8 bits)")
 test_headers("astor_basia.mp2", 2, 44100, 1.02179133892059, "raw (no header)", "big endian short (16 bits)")
-test_headers("c.asf", 1, 8000, 0.0, "asf", "unsupported")
-test_headers("ce-c3.w02", 1, 33000, 3.88848495483398, "TX-16W", "unsupported")
-test_headers("ce-c4.w03", 1, 33000, 2.91618180274963, "TX-16W", "unsupported")
-test_headers("ce-d2.w01", 1, 33000, 3.46439385414124, "TX-16W", "unsupported")
+test_headers("c.asf", 1, 8000, 0.0, "asf", "unknown")
+test_headers("ce-c3.w02", 1, 33000, 3.88848495483398, "TX-16W", "unknown")
+test_headers("ce-c4.w03", 1, 33000, 2.91618180274963, "TX-16W", "unknown")
+test_headers("ce-d2.w01", 1, 33000, 3.46439385414124, "TX-16W", "unknown")
 test_headers("clbonef.wav", 1, 22050, 2.57832193374634, "RIFF", "little endian float (32 bits)")
 test_headers("cranker.krz", 1, 44100, 3.48267579078674, "Kurzweil 2000", "big endian short (16 bits)")
 test_headers("d40130.aif", 1, 10000, 0.100000001490116, "AIFF", "big endian short (16 bits)")
@@ -363,7 +363,7 @@ test_headers("d40130.dsf", 1, 8000, 0.125, "Delusion", "little endian short (16 
 test_headers("d40130.fsm", 1, 8000, 0.125249996781349, "Farandole", "little endian short (16 bits)")
 test_headers("d40130.iff", 1, 10000, 0.100000001490116, "SVX8", "signed byte (8 bits)")
 test_headers("d40130.pat", 1, 10000, 0.100000001490116, "Gravis Ultrasound patch", "little endian short (16 bits)")
-test_headers("d40130.sds", 1, 10000, 0.100000001490116, "MIDI sample dump", "unsupported")
+test_headers("d40130.sds", 1, 10000, 0.100000001490116, "MIDI sample dump", "unknown")
 test_headers("d40130.sdx", 1, 10000, 0.100000001490116, "Sample dump", "unsigned little endian short (16 bits)")
 test_headers("d40130.sf", 1, 10000, 0.100000001490116, "IRCAM", "little endian short (16 bits)")
 test_headers("d40130.smp", 1, 8000, 0.125, "SMP", "little endian short (16 bits)")
@@ -371,27 +371,27 @@ test_headers("d40130.sou", 1, 8000, 0.125, "SBStudioII", "little endian short (1
 test_headers("d40130.st3", 1, 8000, 0.125, "Digiplayer ST3", "unsigned little endian short (16 bits)")
 test_headers("d40130.uwf", 1, 8000, 0.125249996781349, "Ultratracker", "little endian short (16 bits)")
 test_headers("d40130.voc", 1, 10000, 0.100100003182888, "VOC", "unsigned byte (8 bits)")
-test_headers("d40130.w00", 1, 16000, 0.0625, "TX-16W", "unsupported")
+test_headers("d40130.w00", 1, 16000, 0.0625, "TX-16W", "unknown")
 test_headers("d40130.wav", 1, 10000, 0.100000001490116, "RIFF", "little endian short (16 bits)")
 test_headers("d43.wav", 1, 10000, 0.100000001490116, "RIFF", "little endian short (16 bits)")
 test_headers("digit0v0.aiff", 1, 8000, 0.560000002384186, "AIFC", "big endian short (16 bits)")
 test_headers("esps-16.snd", 1, 8000, 3.09737491607666, "ESPS", "big endian short (16 bits)")
 test_headers("forest.aiff", 2, 44100, 3.907143, "AIFF", "big endian short (16 bits)")
-test_headers("g721.au", 1, 11025, 4.35328817367554, "Sun", "unsupported")
-test_headers("g722.aifc", 1, 44100, 0.0184353739023209, "AIFC", "unsupported")
+test_headers("g721.au", 1, 11025, 4.35328817367554, "Sun", "unknown")
+test_headers("g722.aifc", 1, 44100, 0.0184353739023209, "AIFC", "unknown")
 test_headers("gong.wve", 1, 8000, 3.96799993515015, "PSION", "alaw (8 bits)")
-test_headers("gsm610.wav", 1, 11025, 1.7687075138092, "RIFF", "unsupported")
+test_headers("gsm610.wav", 1, 11025, 1.7687075138092, "RIFF", "unknown")
 test_headers("inrs-16.snd", 1, 8000, 2.46399998664856, "INRS", "little endian short (16 bits)")
 test_headers("kirk.wve", 1, 8000, 1.40799999237061, "PSION", "alaw (8 bits)")
 test_headers("loop.aiff", 1, 44100, 0.0367120169103146, "AIFC", "big endian short (16 bits)")
-test_headers("m.asf", 1, 8000, 0.0, "asf", "unsupported")
+test_headers("m.asf", 1, 8000, 0.0, "asf", "unknown")
 # test_headers("mary-sun4.sig", 1, 8000, 5.95137500762939, "Comdisco SPW signal", "big endian double (64 bits)")
 test_headers("mocksong.wav", 1, 11025, 7.86956930160522, "RIFF", "little endian short (16 bits)")
 test_headers("mono24.wav", 1, 22050, 1.98997735977173, "RIFF", "little endian int (24 bits)")
-test_headers("msadpcm.wav", 1, 11025, 4.43501138687134, "RIFF", "unsupported")
+test_headers("msadpcm.wav", 1, 11025, 4.43501138687134, "RIFF", "unknown")
 test_headers("n8.snd", 1, 44100, 0.0367800444364548, "Sun", "signed byte (8 bits)")
 test_headers("nasahal.aif", 1, 11025, 9.89841270446777, "AIFF", "signed byte (8 bits)")
-test_headers("nasahal.avi", 1, 11025, 0.0, "AVI", "unsupported")
+test_headers("nasahal.avi", 1, 11025, 0.0, "AVI", "unknown")
 test_headers("nasahal.dig", 1, 11025, 9.89841270446777, "Sound Designer 1", "big endian short (16 bits)")
 test_headers("nasahal.ivc", 2, 44100, 0.449002265930176, "raw (no header)", "big endian short (16 bits)")
 test_headers("nasahal.pat", 1, 11025, 3.95410442352295, "Gravis Ultrasound patch", "unsigned byte (8 bits)")
@@ -412,9 +412,9 @@ test_headers("next24.snd", 1, 44100, 0.0367800444364548, "Sun", "big endian int 
 test_headers("nist-01.wav", 1, 16000, 2.26912498474121, "NIST", "little endian short (16 bits)")
 test_headers("nist-10.wav", 1, 16000, 2.26912498474121, "NIST", "big endian short (16 bits)")
 test_headers("nist-16.snd", 1, 16000, 1.02400004863739, "NIST", "big endian short (16 bits)")
-test_headers("nist-shortpack.wav", 1, 16000, 4.53824996948242, "NIST", "unsupported")
+test_headers("nist-shortpack.wav", 1, 16000, 4.53824996948242, "NIST", "unknown")
 test_headers("none.aifc", 1, 44100, 0.0367800444364548, "AIFC", "big endian short (16 bits)")
-test_headers("nylon2.wav", 2, 22050, 1.14376413822174, "RIFF", "unsupported")
+test_headers("nylon2.wav", 2, 22050, 1.14376413822174, "RIFF", "unknown")
 test_headers("o2.avr", 1, 44100, 0.0183900222182274, "AVR", "big endian short (16 bits)")
 test_headers("o2.bicsf", 1, 44100, 0.0367800444364548, "IRCAM", "big endian short (16 bits)")
 test_headers("o2.mpeg1", 2, 44100, 0.00709750549867749, "raw (no header)", "big endian short (16 bits)")
@@ -426,37 +426,37 @@ test_headers("o2.wave", 1, 44100, 0.0367800444364548, "RIFF", "little endian sho
 test_headers("o2_12bit.aiff", 1, 44100, 0.0367800444364548, "AIFF", "big endian short (16 bits)")
 test_headers("o2_18bit.aiff", 1, 44100, 0.0367800444364548, "AIFF", "big endian int (24 bits)")
 test_headers("o2_711u.wave", 1, 44100, 0.0367800444364548, "RIFF", "mulaw (8 bits)")
-test_headers("o2_722.snd", 1, 44100, 0.0183900222182274, "Sun", "unsupported")
-test_headers("o2_726.aiff", 1, 8000, 0.0367499999701977, "AIFC", "unsupported")
-test_headers("o2_726.snd", 1, 44100, 0.0230158735066652, "Sun", "unsupported")
-test_headers("o2_728.aiff", 1, 8000, 0.0367499999701977, "AIFC", "unsupported")
+test_headers("o2_722.snd", 1, 44100, 0.0183900222182274, "Sun", "unknown")
+test_headers("o2_726.aiff", 1, 8000, 0.0367499999701977, "AIFC", "unknown")
+test_headers("o2_726.snd", 1, 44100, 0.0230158735066652, "Sun", "unknown")
+test_headers("o2_728.aiff", 1, 8000, 0.0367499999701977, "AIFC", "unknown")
 test_headers("o2_8.iff", 1, 44100, 0.0367800444364548, "SVX8", "signed byte (8 bits)")
 test_headers("o2_8.voc", 1, 44100, 0.0370294786989689, "VOC", "unsigned byte (8 bits)")
-test_headers("o2_dvi.wave", 1, 44100, 0.0232199542224407, "RIFF", "unsupported")
+test_headers("o2_dvi.wave", 1, 44100, 0.0232199542224407, "RIFF", "unknown")
 test_headers("o2_float.bicsf", 1, 44100, 0.0367800444364548, "IRCAM", "big endian float (32 bits)")
-test_headers("o2_gsm.aiff", 1, 8000, 0.0367499999701977, "AIFC", "unsupported")
+test_headers("o2_gsm.aiff", 1, 8000, 0.0367499999701977, "AIFC", "unknown")
 test_headers("o2_u8.avr", 1, 44100, 0.0367800444364548, "AVR", "unsigned byte (8 bits)")
 test_headers("o2_u8.wave", 1, 44100, 0.0367800444364548, "RIFF", "unsigned byte (8 bits)")
-test_headers("oboe.g721", 1, 22050, 1.15287983417511, "Sun", "unsupported")
-test_headers("oboe.g723_24", 1, 22050, 0.864761888980865, "Sun", "unsupported")
-test_headers("oboe.g723_40", 1, 22050, 1.44126987457275, "Sun", "unsupported")
+test_headers("oboe.g721", 1, 22050, 1.15287983417511, "Sun", "unknown")
+test_headers("oboe.g723_24", 1, 22050, 0.864761888980865, "Sun", "unknown")
+test_headers("oboe.g723_40", 1, 22050, 1.44126987457275, "Sun", "unknown")
 test_headers("oboe.sf2", 1, 22050, 2.30512475967407, "SoundFont", "little endian short (16 bits)")
 test_headers("oboe.paf", 1, 22050, 2.305125, "Ensoniq Paris", "big endian short (16 bits)")
 test_headers("oboe.smp", 1, 22050, 2.305125, "snack SMP", "little endian short (16 bits)")
 test_headers("oboe.nsp", 1, 22050, 2.305125, "CSL", "little endian short (16 bits)")
 test_headers("oki.snd", 2, 44100, 0.0041950112208724, "raw (no header)", "big endian short (16 bits)")
-test_headers("orv-dvi-adpcm.wav", 1, 44100, 1.92725622653961, "RIFF", "unsupported")
+test_headers("orv-dvi-adpcm.wav", 1, 44100, 1.92725622653961, "RIFF", "unknown")
 test_headers("riff-16.snd", 1, 22050, 1.88766443729401, "RIFF", "little endian short (16 bits)")
 test_headers("riff-8-u.snd", 1, 11025, 0.506848096847534, "RIFF", "unsigned byte (8 bits)")
 test_headers("rooster.wve", 1, 8000, 2.04800009727478, "PSION", "alaw (8 bits)")
 test_headers("sd1-16.snd", 1, 44100, 0.400544226169586, "Sound Designer 1", "big endian short (16 bits)")
-test_headers("segfault.snd", 16777216, 576061440, 1.24986669902682e-7, "Sun", "unsupported")
+test_headers("segfault.snd", 16777216, 576061440, 1.24986669902682e-7, "Sun", "unknown")
 test_headers("sf-16.snd", 1, 22050, 1.88766443729401, "IRCAM", "big endian short (16 bits)")
 test_headers("si654.adc", 1, 16000, 6.71362495422363, "ADC/OGI", "big endian short (16 bits)")
 test_headers("smp-16.snd", 1, 8000, 5.2028751373291, "SMP", "little endian short (16 bits)")
 test_headers("sound.pat", 1, 8000, 1.95050001144409, "Gravis Ultrasound patch", "unsigned little endian short (16 bits)")
 test_headers("sound.sap", 1, 8000, 1.95050001144409, "Goldwave sample", "little endian short (16 bits)")
-test_headers("sound.sds", 1, 8000, 1.95050001144409, "MIDI sample dump", "unsupported")
+test_headers("sound.sds", 1, 8000, 1.95050001144409, "MIDI sample dump", "unknown")
 test_headers("sound.sfr", 1, 8000, 1.95050001144409, "SRFS", "little endian short (16 bits)")
 test_headers("sound.v8", 1, 8000, 1.95050001144409, "Covox V8", "unsigned byte (8 bits)")
 test_headers("sound.vox", 2, 44100, 0.044217687100172, "raw (no header)", "big endian short (16 bits)")
@@ -469,10 +469,10 @@ test_headers("swirl.pat", 1, 22050, 1.0619500875473, "Gravis Ultrasound patch", 
 test_headers("sy85.snd", 1, 8000, 5.05600023269653, "Sy-85", "big endian short (16 bits)")
 test_headers("sy99.snd", 1, 8000, 4.54400014877319, "Sy-99", "big endian short (16 bits)")
 test_headers("telephone.wav", 1, 16000, 2.27881240844727, "NIST", "little endian short (16 bits)")
-test_headers("truspech.wav", 1, 8000, 1.1599999666214, "RIFF", "unsupported")
+test_headers("truspech.wav", 1, 8000, 1.1599999666214, "RIFF", "unknown")
 test_headers("ulaw.aifc", 1, 44100, 0.0367800444364548, "AIFC", "mulaw (8 bits)")
 test_headers("voc-8-u.snd", 1, 8000, 1.49937498569489, "VOC", "unsigned byte (8 bits)")
-test_headers("voxware.wav", 1, 8000, 0.324000000953674, "RIFF", "unsupported")
+test_headers("voxware.wav", 1, 8000, 0.324000000953674, "RIFF", "unknown")
 test_headers("wd.w00", 1, 8000, 0.202749997377396, "Sy-99", "big endian short (16 bits)")
 test_headers("wd1.smp", 1, 8000, 0.202749997377396, "SMP", "little endian short (16 bits)")
 test_headers("wd1.wav", 1, 44100, 0.0367800444364548, "RIFF", "little endian short (16 bits)")
@@ -481,22 +481,22 @@ test_headers("b8.pvf", 1, 44100, 0.036803, "Portable Voice Format", "signed byte
 test_headers("b16.pvf", 1, 44100, 0.036803, "Portable Voice Format", "big endian short (16 bits)")
 test_headers("b32.pvf", 1, 44100, 0.036803, "Portable Voice Format", "big endian int (32 bits)")
 test_headers("wood.dsf", 1, 8000, 0.202749997377396, "Delusion", "little endian short (16 bits)")
-test_headers("wood.dvi", 1, 22100, 0.0278733037412167, "RIFF", "unsupported")
+test_headers("wood.dvi", 1, 22100, 0.0278733037412167, "RIFF", "unknown")
 test_headers("wood.dwd", 1, 22100, 0.0733936652541161, "DiamondWare", "signed byte (8 bits)")
 test_headers("wood.fsm", 1, 8000, 0.202999994158745, "Farandole", "little endian short (16 bits)")
-test_headers("wood.mad", 1, 22100, 0.0372398197650909, "RIFF", "unsupported")
+test_headers("wood.mad", 1, 22100, 0.0372398197650909, "RIFF", "unknown")
 test_headers("wood.maud", 1, 44100, 0.0183900222182274, "MAUD", "big endian short (16 bits)")
 test_headers("wood.pat", 1, 22100, 0.0733936652541161, "Gravis Ultrasound patch", "little endian short (16 bits)")
 test_headers("wood.riff", 1, 44100, 0.0367800444364548, "RIFF", "little endian short (16 bits)")
 test_headers("wood.rifx", 1, 44100, 0.0367800444364548, "RIFF", "big endian short (16 bits)")
-test_headers("wood.sds", 1, 22100, 0.0733936652541161, "MIDI sample dump", "unsupported")
+test_headers("wood.sds", 1, 22100, 0.0733936652541161, "MIDI sample dump", "unknown")
 test_headers("wood.sdx", 1, 22100, 0.0733936652541161, "Sample dump", "unsigned little endian short (16 bits)")
 test_headers("wood.sf", 1, 44100, 0.0367800444364548, "IRCAM", "big endian short (16 bits)")
 test_headers("wood.sndr", 2, 44100, 0.0092290248721838, "raw (no header)", "big endian short (16 bits)")
 test_headers("wood.sndt", 1, 44100, 0.0367800444364548, "SNDT", "unsigned byte (8 bits)")
 test_headers("wood.st3", 1, 8000, 0.202749997377396, "Digiplayer ST3", "unsigned little endian short (16 bits)")
 test_headers("wood.uwf", 1, 8000, 0.202999994158745, "Ultratracker", "little endian short (16 bits)")
-test_headers("wood.w00", 1, 16000, 0.101374998688698, "TX-16W", "unsupported")
+test_headers("wood.w00", 1, 16000, 0.101374998688698, "TX-16W", "unknown")
 test_headers("wood12.aiff", 1, 44100, 0.0367800444364548, "AIFF", "big endian short (16 bits)")
 test_headers("wood16.dwd", 2, 44100, 0.0367800444364548, "DiamondWare", "little endian short (16 bits)")
 test_headers("wood16.wav", 2, 44100, 0.0367800444364548, "RIFF", "little endian short (16 bits)")
@@ -510,7 +510,7 @@ test_headers("32bit.sf", 1, 44100, 4.6, "IRCAM", "little endian float (32 bits, 
 test_headers("PCM_48_8bit_m.w64", 1, 48000, 0.375, "SoundForge", "unsigned byte (8 bits)")
 test_headers("addf8.24we", 1, 8000, 2.976000, "RIFF", "little endian int (24 bits)")
 test_headers("hybrid.snd", 1, 44100, 4.600000, "BICSF", "big endian float (32 bits)")
-test_headers("zulu_a4.w11", 1, 33000, 1.21987879276276, "TX-16W", "unsupported")
+test_headers("zulu_a4.w11", 1, 33000, 1.21987879276276, "TX-16W", "unknown")
 
 # ---------------------------------------- test 3 ----------------------------------------
 
@@ -623,10 +623,10 @@ set_default_output_srate 44100
 if default_output_srate !=  44100 then snd_display sprintf("\n# default_output_srate: %s", default_output_srate) end
 set_default_output_srate 22050 
 if default_output_srate != 22050 then snd_display sprintf("\n# default_output_srate: %s", default_output_srate) end
-set_default_output_type 1
-if default_output_type !=  1 then snd_display sprintf("\n# default_output_type: %s", default_output_type) end
-set_default_output_type 0 
-if default_output_type != 0 then snd_display sprintf("\n# default_output_type: %s", default_output_type) end
+set_default_output_type Mus_riff
+if default_output_type !=  Mus_riff then snd_display sprintf("\n# default_output_type: %s", default_output_type) end
+set_default_output_type Mus_next
+if default_output_type != Mus_next then snd_display sprintf("\n# default_output_type: %s", default_output_type) end
 set_dot_size 4
 if dot_size !=  4 then snd_display sprintf("\n# dot_size: %s", dot_size) end
 set_dot_size 1 

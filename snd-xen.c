@@ -2,8 +2,6 @@
 #include "clm2xen.h"
 #include "sndlib-strings.h"
 
-/* TODO: in Ruby, the error report proc name (or all S_* names) need to be rubified */
-
 #define NO_ACTIVE_SELECTION XEN_ERROR_TYPE("no-active-selection")
 
 /* Snd defines its own exit, delay, and frame? clobbering (presumably) the Guile versions,
@@ -122,6 +120,51 @@ void snd_unprotect_at(int loc)
 }
 
 
+#if HAVE_RUBY
+static char *scheme_to_ruby(const char *name)
+{
+  char *new_name = NULL;
+  int len, i, j, cap_loc = -1;
+  len = snd_strlen(name);
+  if (len > 0)
+    {
+      new_name = (char *)calloc(len + 8, sizeof(char));
+      for (i = 0, j = 0; i < len; i++)
+	{
+	  if (isalnum(name[i]))
+	    {
+	      if (cap_loc == -1) cap_loc = j;
+	      new_name[j++] = name[i];
+	    }
+	  else 
+	    {
+	      if (name[i] != '!')
+		{
+		  if (name[i] == '-')
+		    {
+		      if ((i < len - 1) && (name[i + 1] == '>'))
+			{
+			  new_name[j++] = '2';
+			  i++;
+			}
+		      else
+			{
+			  new_name[j++] = '_';
+			  if (cap_loc != -1)
+			    new_name[cap_loc] = (char)toupper((int)(new_name[cap_loc]));
+			}
+		    }
+		  else new_name[j++] = name[i];
+		}
+	      cap_loc = -1;
+	    }
+	}
+    }
+  return(new_name);
+}
+
+#endif
+
 /* -------- error handling -------- */
 
 static bool send_error_output_to_stdout = false;
@@ -225,7 +268,16 @@ static XEN snd_format_if_needed(XEN args)
 	  errmsg = snd_strcat(errmsg, XEN_AS_STRING(XEN_LIST_REF(args, i)), &err_size);
 	}
     }
+#if HAVE_RUBY
+  {
+    char *temp;
+    temp = scheme_to_ruby(errmsg);
+    result = C_TO_XEN_STRING(temp);
+    FREE(temp);
+  }
+#else
   result = C_TO_XEN_STRING(errmsg);
+#endif
   FREE(errmsg);
   return(result);
 }
@@ -237,8 +289,6 @@ static XEN snd_format_if_needed(XEN args)
 #endif
 
 #if HAVE_GUILE
-#include <libguile/fluids.h>
-
 static XEN snd_catch_scm_error(void *data, XEN tag, XEN throw_args) /* error handler */
 {
   snd_info *sp;
@@ -400,7 +450,9 @@ void snd_rb_raise(XEN tag, XEN throw_args)
       /* normally car is string name of calling func */
       if (XEN_NOT_FALSE_P(XEN_CAR(throw_args)))
 	{
-	  snprintf(msg, 2048, "%s: %s", XEN_AS_STRING(XEN_CAR(throw_args)), rb_id2name(tag));
+	  snprintf(msg, 2048, "%s: %s", 
+		   xen_scheme_procedure_to_ruby(XEN_AS_STRING(XEN_CAR(throw_args))), 
+		   rb_id2name(tag));
 	  need_comma = true;
 	}
       if (XEN_LIST_LENGTH(throw_args) > 1)

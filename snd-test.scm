@@ -58,7 +58,6 @@
 (define debugging-device-channels 8)
 
 (define pi 3.141592653589793)
-(define mus-position mus-channels)
 (define max-optimization 6)
 
 (define home-dir "/home/bil")
@@ -29010,13 +29009,13 @@ EDITS: 2
 			    (set! (mus-location e) 8)
 			    (set! enq (env? e))
 			    (set! val8 (env e))
-			    (set! ep (mus-position e))
+			    (set! ep (mus-channels e))
 			    (restart-env e)
 			    (set! val0 (env e))
 			    (env-interp .5 e)))
 	      (if (not enq) (snd-display ";run env?"))
 	      (if (not (= cs 2)) (snd-display ";run mus-location: ~A" cs))
-	      (if (not (= ep 0)) (snd-display ";run mus-position: ~A" ep))
+	      (if (not (= ep 0)) (snd-display ";run mus-channels: ~A" ep))
 	      (if (fneq b 1.0) (snd-display ";run mus-increment: ~A" b))
 	      (if (fneq val8 0.8) (snd-display ";run set location: ~A" val8))
 	      (if (fneq val0 0.0) (snd-display ";run restart-env: ~A" val0))
@@ -37707,7 +37706,7 @@ EDITS: 2
 		     beats-per-minute buffer-full? channel-amp-envs convolve-files find-mix filter-control-coeffs 
 		     locsig-type make-phase-vocoder mus-audio-mixer-read mus-bank 
 		     mus-describe mus-inspect mus-error-to-string mus-file-buffer-size mus-name mus-offset mus-out-format
-		     mus-position mus-rand-seed mus-width mus-x1 mus-x2 mus-y1 mus-y2 phase-vocoder?
+		     mus-rand-seed mus-width mus-x1 mus-x2 mus-y1 mus-y2 phase-vocoder?
 		     polar->rectangular previous-files-sort-procedure 
 		     pv-amp-increments pv-amps pv-freqs pv-outctr pv-phase-increments pv-phases 
 		     read-sample reset-listener-cursor sample-reader-home selection-chans selection-srate snd-gcs
@@ -37757,7 +37756,7 @@ EDITS: 2
 			 mus-increment mus-length mus-location mus-phase mus-ramp mus-scaler vct-ref x-axis-label
 			 
 			 beats-per-minute filter-control-coeffs locsig-type mus-file-buffer-size 
-			 mus-position mus-rand-seed mus-width mus-x1 mus-x2 mus-y1 mus-y2 
+			 mus-rand-seed mus-width mus-x1 mus-x2 mus-y1 mus-y2 
 			 previous-files-sort-procedure pv-amp-increments pv-amps pv-freqs pv-outctr pv-phase-increments pv-phases 
 			 ))
       

@@ -605,7 +605,7 @@ You'll need to uninstall Lesstif and install OpenMotif.
 
 
 So to sum up: 
-  GSL 0.8 or later
+  either a recent GCC or GSL 0.8 or later
   if Gtk, then Gtk+ 2.0.0 or later
   Motif 2.n but not Lesstif (I no longer have any way to test Motif 1)
   in Linux, ALSA 0.9beta8 or later (or any version of OSS)

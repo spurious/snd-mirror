@@ -9596,6 +9596,7 @@ static char *snd2sample_describe(mus_any *ptr)
 {
   int i, len = PRINT_BUFFER_SIZE;
   snd2sample *spl = (snd2sample *)ptr;
+  char *temp;
   if (snd2sample_buf)
     {
       FREE(snd2sample_buf);
@@ -9606,7 +9607,14 @@ static char *snd2sample_describe(mus_any *ptr)
       len += spl->chans * 8;
       for (i = 0; i < spl->chans; i++)
 	if (spl->sfs[i])
-	  len += snd_strlen(sf_to_string(spl->sfs[i]));
+	  {
+	    temp = sf_to_string(spl->sfs[i]);
+	    if (temp)
+	      {
+		len += strlen(temp);
+		FREE(temp);
+	      }
+	  }
     }
   snd2sample_buf = (char *)CALLOC(len, sizeof(char));
   mus_snprintf(snd2sample_buf, len, "%s: reading %s (%d chan%s) at " OFF_TD ":[", 
@@ -9620,7 +9628,12 @@ static char *snd2sample_describe(mus_any *ptr)
       for (i = 0; i < spl->chans; i++)
 	if (spl->sfs[i])
 	  {
-	    strcat(snd2sample_buf, sf_to_string(spl->sfs[i]));
+	    temp = sf_to_string(spl->sfs[i]);
+	    if (temp)
+	      {
+		strcat(snd2sample_buf, temp);
+		FREE(temp);
+	      }
 	    if (i < spl->chans - 1) 
 	      strcat(snd2sample_buf, ", ");
 	    else strcat(snd2sample_buf, "]");

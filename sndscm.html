@@ -3611,7 +3611,7 @@ program defines "counter" as a scheme variable, accessible in C:
 </p>
 <pre>
 #include &lt;stdio.h&gt;
-#include &lt;guile/gh.h&gt;
+#include &lt;libguile.h&gt;
 
 void inner_main(void *closure, int argc, char **argv)
 {
@@ -3660,7 +3660,7 @@ So, we first defined each variable along these lines:
 </p>
 <pre>
 #include &lt;stdio.h&gt;
-#include &lt;guile/gh.h&gt;
+#include &lt;libguile.h&gt;
 
 int counter = 0;
 
@@ -3743,7 +3743,7 @@ to the counter:
 </p>
 <pre>
 #include &lt;stdio.h&gt;
-#include &lt;guile/gh.h&gt;
+#include &lt;libguile.h&gt;
 
 int counter = 0;
 SCM g_counter(void) {return(scm_long2num(counter));}
@@ -3902,7 +3902,7 @@ function is a Scheme function passed in as Scheme code:
 </p>
 <pre>
 #include &lt;stdio.h&gt;
-#include &lt;guile/gh.h&gt;
+#include &lt;libguile.h&gt;
 #include "clm.h"
 
 typedef struct {

@@ -174,7 +174,6 @@
 #define S_mus_order                  "mus-order"
 #define S_mus_output_p               "mus-output?"
 #define S_mus_phase                  "mus-phase"
-#define S_mus_position               "mus-position"
 #define S_mus_ramp                   "mus-ramp"
 #define S_mus_rand_seed              "mus-rand-seed"
 #define S_mus_random                 "mus-random"
