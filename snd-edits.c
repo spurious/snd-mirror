@@ -1671,7 +1671,7 @@ snd_fd *free_snd_fd(snd_fd *sf)
 
 off_t current_location(snd_fd *sf) 
 {
-  /* only used by moving cursor code in snd-dac.c */
+  /* only used by moving cursor code in snd-dac.c [and sample-reader-position] */
   if (sf->current_sound)
     return(sf->cb->out - sf->cb->beg + sf->current_sound->io->beg + sf->loc);
   return(sf->cb->out - sf->cb->beg + sf->loc);
@@ -3041,6 +3041,13 @@ static XEN g_sample_reader_at_end(XEN obj)
   return(C_TO_XEN_BOOLEAN(read_sample_eof(TO_SAMPLE_READER(obj))));
 }
 
+static XEN g_sample_reader_position(XEN obj) 
+{
+  #define H_sample_reader_position "(" S_sample_reader_position " obj) -> current (sample-wise) location of sample-reader"
+  XEN_ASSERT_TYPE(SAMPLE_READER_P(obj), obj, XEN_ONLY_ARG, S_sample_reader_position, "a sample-reader");
+  return(C_TO_XEN_OFF_T(current_location(TO_SAMPLE_READER(obj))));
+}
+
 static XEN g_sample_reader_home(XEN obj)
 {
   #define H_sample_reader_home "(" S_sample_reader_home " obj) -> (list sound-index chan-num) associated with reader"
@@ -4216,6 +4223,7 @@ XEN_NARGIFY_1(g_read_sample_w, g_read_sample)
 XEN_NARGIFY_1(g_previous_sample_w, g_previous_sample)
 XEN_NARGIFY_1(g_free_sample_reader_w, g_free_sample_reader)
 XEN_NARGIFY_1(g_sample_reader_home_w, g_sample_reader_home)
+XEN_NARGIFY_1(g_sample_reader_position_w, g_sample_reader_position)
 XEN_NARGIFY_1(g_sf_p_w, g_sf_p)
 XEN_NARGIFY_1(g_sample_reader_at_end_w, g_sample_reader_at_end)
 XEN_ARGIFY_5(g_loop_samples_w, g_loop_samples)
@@ -4254,6 +4262,7 @@ XEN_ARGIFY_9(g_set_samples_w, g_set_samples)
 #define g_previous_sample_w g_previous_sample
 #define g_free_sample_reader_w g_free_sample_reader
 #define g_sample_reader_home_w g_sample_reader_home
+#define g_sample_reader_position_w g_sample_reader_position
 #define g_sf_p_w g_sf_p
 #define g_sample_reader_at_end_w g_sample_reader_at_end
 #define g_loop_samples_w g_loop_samples
@@ -4513,6 +4522,7 @@ void g_init_edits(void)
   XEN_DEFINE_PROCEDURE(S_sample_reader_home,        g_sample_reader_home_w, 1, 0, 0,        H_sample_reader_home);
   XEN_DEFINE_PROCEDURE(S_sample_reader_p,           g_sf_p_w, 1, 0, 0,                      H_sf_p);
   XEN_DEFINE_PROCEDURE(S_sample_reader_at_end_p,    g_sample_reader_at_end_w, 1, 0, 0,      H_sample_reader_at_end);
+  XEN_DEFINE_PROCEDURE(S_sample_reader_position,    g_sample_reader_position_w, 1, 0, 0,    H_sample_reader_position);
   XEN_DEFINE_PROCEDURE(S_loop_samples,              g_loop_samples_w, 4, 1, 0,              H_loop_samples);
 
   XEN_DEFINE_PROCEDURE(S_save_edit_history,         g_save_edit_history_w, 1, 2, 0,         H_save_edit_history);

@@ -4806,6 +4806,60 @@ static xen_value *edit_position_1(ptree *pt, xen_value **args, int num_args)
 }
 
 
+/* ---------------- frames ---------------- */
+
+static void frames_i(int *args, int *ints, Float *dbls) 
+{
+  snd_state *ss;
+  snd_info *sp;
+  chan_info *cp; 
+  int pos;
+  ss = get_global_state();
+  if (INT_ARG_1 == -1)
+    sp = any_selected_sound(ss);
+  else sp = ss->sounds[INT_ARG_1];
+  if (INT_ARG_2 == -1)
+    cp = any_selected_channel(sp);
+  else cp = sp->chans[INT_ARG_2];
+  if (INT_ARG_3 == AT_CURRENT_EDIT_POSITION)
+    pos = cp->edit_ctr;
+  else pos = INT_ARG_3;
+  INT_RESULT = cp->samples[pos];
+}
+static char *descr_frames_i(int *args, int *ints, Float *dbls) 
+{
+  return(mus_format( INT_PT " = frames(" INT_PT ", " INT_PT ", " INT_PT ")", 
+		     args[0], INT_RESULT, args[1], INT_ARG_1, args[2], INT_ARG_2, args[3], INT_ARG_3));
+}
+static xen_value *frames_1(ptree *pt, xen_value **args, int num_args)
+{
+  xen_value *true_args[4];
+  if (num_args > 3) 
+    return(run_warn("frames: too many args"));
+  if (num_args < 3)
+    true_args[3] = make_xen_value(R_INT, add_int_to_ptree(pt, AT_CURRENT_EDIT_POSITION), R_CONSTANT);
+  else true_args[3] = args[3];
+  if (num_args < 2)
+    true_args[2] = make_xen_value(R_INT, add_int_to_ptree(pt, -1), R_CONSTANT);
+  else
+    {
+      if (args[2]->type == R_BOOL)
+	pt->ints[args[2]->addr] = -1;
+      true_args[2] = args[2];
+    }
+  if (num_args < 1)
+    true_args[1] = make_xen_value(R_INT, add_int_to_ptree(pt, -1), R_CONSTANT);
+  else
+    {
+      if (args[1]->type == R_BOOL)
+	pt->ints[args[1]->addr] = -1;
+      true_args[1] = args[1];
+    }
+  true_args[0] = args[0];
+  return(package(pt, R_INT, frames_i, descr_frames_i, true_args, 3));
+}
+
+
 /* ---------------- sample-reader stuff ---------------- */
 
 static void reader_f(int *args, int *ints, Float *dbls) {FLOAT_RESULT = read_sample_to_float(((snd_fd *)(INT_ARG_1)));}
@@ -4882,7 +4936,7 @@ static xen_value *make_sample_reader_1(ptree *pt, xen_value **args, int num_args
     {
       if (args[3]->type == R_BOOL)
 	pt->ints[args[3]->addr] = -1;
-      else true_args[3] = args[3];
+      true_args[3] = args[3];
     }
   if (num_args < 2)
     true_args[2] = make_xen_value(R_INT, add_int_to_ptree(pt, -1), R_CONSTANT);
@@ -4890,7 +4944,7 @@ static xen_value *make_sample_reader_1(ptree *pt, xen_value **args, int num_args
     {
       if (args[2]->type == R_BOOL)
 	pt->ints[args[2]->addr] = -1;
-      else true_args[2] = args[2];
+      true_args[2] = args[2];
     }
   if (num_args == 0)
     true_args[1] = make_xen_value(R_INT, add_int_to_ptree(pt, 0), R_CONSTANT);
@@ -5360,17 +5414,32 @@ static char *descr_gen(int *args, int *ints, Float *dbls, char *which, int num_a
     if (num_args == 2) return(package(prog, R_FLOAT, Name ## _1f, descr_ ## Name ## _1f, args, 2)); \
     return(run_warn(#Name ": wrong number of args")); \
   }
-#define GEN_ONLY_2(Name) \
-  GEN2_1(Name) \
-  static xen_value * Name ## _1(ptree *prog, xen_value **args, int num_args) \
-  { \
-    if (num_args == 2) \
-      { \
-        if (args[2]->type == R_INT) single_to_float(prog, args, 2); \
-        return(package(prog, R_FLOAT, Name ## _1f, descr_ ## Name ## _1f, args, 2)); \
-      } \
-    return(run_warn(#Name ": wrong number of args")); \
-  }
+
+GEN2_1(sample2buffer)
+GEN2_1(tap)
+GEN2_0(tap)
+static xen_value *sample2buffer_1(ptree *prog, xen_value **args, int num_args)
+{
+  if (num_args == 2)
+    {
+      if (args[2]->type == R_INT) single_to_float(prog, args, 2);
+      return(package(prog, R_FLOAT, sample2buffer_1f, descr_sample2buffer_1f, args, 2));
+    }
+  return(run_warn("sample2buffer: wrong number of args"));
+}
+
+static xen_value *tap_1(ptree *prog, xen_value **args, int num_args)
+{
+  if (num_args == 1)
+    return(package(prog, R_FLOAT, tap_0f, descr_tap_0f, args, 1));
+  if (num_args == 2)
+    {
+      if (args[2]->type == R_INT) single_to_float(prog, args, 2);
+      return(package(prog, R_FLOAT, tap_1f, descr_tap_1f, args, 2));
+    }
+  return(run_warn("tap: wrong number of args"));
+}
+
 #define GEN1(Name) \
   GEN1_0(Name) \
   GEN_P(Name) \
@@ -5425,9 +5494,6 @@ GEN2(filter)
 GEN2(fir_filter)
 GEN2(iir_filter)
 GEN1(readin)
-
-GEN_ONLY_2(sample2buffer)
-GEN_ONLY_2(tap)
 
 GEN0(buffer2sample)
 GEN0(increment)
@@ -6928,7 +6994,8 @@ static xen_value *walk(ptree *prog, XEN form, int need_result)
       /* both of these can be applicable objects, but those are not counted in the arg scan */
       /* no readers or CLM gens from here on */
       if (strcmp(funcname, "edit-position") == 0) return(clean_up(edit_position_1(prog, args, num_args), args, num_args));
-      /* TODO: frames, tap with 1 arg */
+      if (strcmp(funcname, "frames") == 0) return(clean_up(frames_1(prog, args, num_args), args, num_args));
+
       if (vcts > 0)
 	{
 	  if (strcmp(funcname, "vct-ref") == 0) return(clean_up(vct_ref_1(prog, args, num_args), args, num_args));

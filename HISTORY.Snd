@@ -1,5 +1,7 @@
 snd change log
 
+  8-Jul:     update-transform changed to update-transform-graph.
+             added sample-reader-position.
   3-Jul:     added contrib/DotEmacs thanks to Fernando.
   27-Jun:    bad-header-hook.
   20-Jun:    ptree-channel (an experiment) -- any func as virtual edit.

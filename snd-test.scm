@@ -30,8 +30,6 @@
 
 ;;; TODO: GL tests, gtk (xg) tests
 ;;; TODO: mix panel env editor (apply button (|XmMessageBoxGetChild mix_panel |XmDIALOG_CANCEL_BUTTON)
-;;; TODO: output-name-hook [requires New dialog] -- new data dialog help
-
 
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 popen) (ice-9 optargs) (ice-9 syncase))
 
@@ -2707,7 +2705,7 @@
       (IF (and (number? (transform-samples-size))
 	       (= (transform-samples-size) 0))
 	  (snd-display ";graph-transform? transform-samples-size ~A?" (transform-samples-size)))
-      (update-transform)
+      (update-transform-graph)
       (peaks "tmp.peaks")
       (if (defined? 'read-line)
 	  (let ((p (open-input-file "tmp.peaks")))
@@ -2740,7 +2738,7 @@
 	  (do ((j 0 (1+ j)))
 	      ((= j num-transform-graph-types))
 	    (set! (transform-graph-type index 0) j)
-	    (update-transform index 0))))
+	    (update-transform-graph index 0))))
       (set! (transform-type) fourier-transform)
 
       (IF (read-only index) (snd-display ";read-only open-sound: ~A?" (read-only index)))
@@ -2851,6 +2849,7 @@
 	      (samps2 (region-samples->vct 0 50828 r0 0))
 	      (vr (make-sample-reader 0 index 0 1)))
 	  (IF (not (sample-reader? vr)) (snd-display ";~A not sample-reader?" vr))
+	  (IF (not (= (sample-reader-position vr) 0)) (snd-display ";initial sample-reader-position: ~A" (sample-reader-position vr)))
 	  (IF (not (equal? (sample-reader-home vr) (list index 0))) 
 	      (snd-display ";sample-reader-home: ~A ~A?" (sample-reader-home vr) (list index 0)))
 	  (IF (region-samples->vct -1 1233 r0) (snd-display ";region-samples->vct -1: ~A" (region-samples->vct -1 1233)))
@@ -2892,7 +2891,7 @@
       (let ((var (catch #t (lambda () (insert-sample -12 1.0)) (lambda args args))))
 	(IF (not (eq? (car var) 'no-such-sample))
 	    (snd-display ";insert-sample bad pos: ~A" var)))
-      (update-transform index) 
+      (update-transform-graph index) 
       (update-time-graph index) 
       (IF (or (fneq (sample 100) .5)
 	      (not (= (frames index) 50829)))
@@ -4600,6 +4599,7 @@
 	     (map-channel (lambda (y) 1.0))
 	     (env-sound '(0 0 1 1 2 0))
 	     (let ((reader (make-sample-reader (1- (frames)) ind 0 -1)))
+	       (IF (not (= (sample-reader-position reader) (1- (frames)))) (snd-display ";sample-reader-position: ~A" (sample-reader-position reader)))
 	       (map-channel (lambda (y) (read-sample reader))))
 	     (scan-channel (let ((pos 0)
 				 (e (make-env '(0 0 1 1 2 0) :end dur)))
@@ -8605,13 +8605,15 @@
 
 ;;; ---------------- test 10: marks ----------------
 (if (or full-test (= snd-test 10) (and keep-going (<= snd-test 10)))
+    (begin 
+	(if (procedure? test-hook) (test-hook 10))
     (do ((test-ctr 0 (1+ test-ctr)))
 	((= test-ctr tests))
+      (if (> tests 1) (snd-display ";test ~D" test-ctr))
       (let ((ind0 (view-sound "oboe.snd"))
 	    (ind1 (view-sound "pistol.snd"))
 	    (v0 (make-vct 100))
 	    (vc (make-vector 10)))
-	(if (procedure? test-hook) (test-hook 10))
 	(log-mem test-ctr)
 	(vct-fill! v0 .1)
 	(vector-set! vc 0 (mix-vct v0 0 ind0))
@@ -8727,7 +8729,7 @@
 	  (graph->ps "aaa.eps")
 	  (set! (graph-transform? ind1 0) #t)
 	  (set! (transform-graph-type ind1 0) graph-transform-as-sonogram)
-	  (update-transform)
+	  (update-transform-graph)
 	  (let ((size (transform-samples-size ind1 0)))
 	    (IF (or (number? size)
 		    (not (= (length size) 3)))
@@ -9157,7 +9159,7 @@
 		(else (add-mark (irandom (1- (frames))))))))
 	  (close-sound ind))
 	
-	)))
+	))))
 
 
 ;;; ---------------- test 11: dialogs ----------------
@@ -9675,7 +9677,7 @@
        (lambda (dpy-type fft-type)
 	 (set! (transform-graph-type fd 0) dpy-type)
 	 (set! (transform-type fd 0) fft-type)
-	 (update-transform fd 0)
+	 (update-transform-graph fd 0)
 	 (let ((v0 (transform-samples->vct fd 0))
 	       (vc (transform-samples fd 0))
 	       (val (catch #t (lambda () (transform-sample 50 0 fd 0)) (lambda args -1234.1234))))
@@ -10145,7 +10147,7 @@
 			   #f)))
 	  (set! (graph-transform? ind 0) #t)
 	  (update-time-graph ind 0)
-	  (update-transform ind 0)
+	  (update-transform-graph ind 0)
 	  (IF (not gr) (snd-display ";graph-hook not called?"))
 	  (IF (not agr) (snd-display ";after-graph-hook not called?"))
 	  (IF (not gbf) (snd-display ";before-transform-hook not called?"))
@@ -11078,21 +11080,22 @@
 	  (test-channel edit-hook 'edit-hook)
 	  (test-channel after-edit-hook 'after-edit-hook)
 	  (test-channel undo-hook 'undo-hook)
-	  (set! (transform-type)
-		(add-transform "histogram" "bins" 0.0 1.0 
-			       (lambda (len fd)
-				 (let ((v (make-vct len))
-				       (steps (/ len 16))
-				       (step (/ 1.0 len)))
-				   (vct-fill! v 0.0)
-				   (do ((i 0 (1+ i)))
-				       ((= i len) v)
-				     (let* ((val (abs (next-sample fd)))
-					    (bin (inexact->exact (* val 16.0))))
-				       (if (< bin steps)
-					   (do ((j 0 (1+ j)))
-					       ((= j steps))
-					     (vct-set! v (+ j bin) (+ step (vct-ref v (+ j bin))))))))))))
+	  (if (<= tests 2)
+	      (set! (transform-type)
+		    (add-transform "histogram" "bins" 0.0 1.0 
+				   (lambda (len fd)
+				     (let ((v (make-vct len))
+					   (steps (/ len 16))
+					   (step (/ 1.0 len)))
+				       (vct-fill! v 0.0)
+				       (do ((i 0 (1+ i)))
+					   ((= i len) v)
+					 (let* ((val (abs (next-sample fd)))
+						(bin (inexact->exact (* val 16.0))))
+					   (if (< bin steps)
+					       (do ((j 0 (1+ j)))
+						   ((= j steps))
+						 (vct-set! v (+ j bin) (+ step (vct-ref v (+ j bin)))))))))))))
 	  (set! (x-bounds) '(.1 .2))
 	  (set! (transform-type) graph-transform-once)
 	  (set! (x-bounds) '(.1 .2))
@@ -11226,12 +11229,12 @@
 		    (list 'fft-window-beta #f 0.0  set-fft-window-beta 1.0)
 		    (list 'fft-log-frequency #f #f set-fft-log-frequency #t)
 		    (list 'fft-log-magnitude #f #f set-fft-log-magnitude #t)
-		    (list 'transform-size #f 16 set-transform-size 4096)
+		    (list 'transform-size #f 16 set-transform-size (if (<= tests 10) 4096 128))
 		    (list 'transform-graph-type #f 0 set-transform-graph-type 2)
 		    (list 'fft-window #f 0 set-fft-window dolph-chebyshev-window)
 		    (list 'graph-transform? #t #f set-graph-transform? #t)
 		    (list 'filter-control-in-dB #t #f set-filter-control-in-dB #t)
-		    (list 'filter-control-order #t 2 set-filter-control-order 400)
+		    (list 'filter-control-order #t 2 set-filter-control-order (if (<= tests 10) 400 40))
 		    (list 'filter-control? #t #f set-filter-control? #t)
 		    (list 'graph-cursor #f 0 set-graph-cursor 35)
 		    (list 'graph-style #f 0 set-graph-style 4)
@@ -11272,7 +11275,7 @@
 		    (list 'speed-control-style #f 0 set-speed-control-style 2)
 		    (list 'speed-control-tones #f 2 set-speed-control-tones 100)
 		    (list 'sync #t 0 set-sync 5)
-		    (list 'transform-type #f 0 set-transform-type 6)
+		    (list 'transform-type #f fourier-transform set-transform-type (if (<= tests 10) 6 3))
 		    (list 'use-sinc-interp #f #f set-use-sinc-interp #t)
 		    (list 'verbose-cursor #f #f set-verbose-cursor #t)
 		    (list 'wavelet-type #f 0 set-wavelet-type 10)
@@ -12006,6 +12009,7 @@
 		  ((= i 100))
 		(let ((val (next-sample reader)))
 		  (if (fneq val 0.0) (snd-display ";C-o[~D]: ~A?" i val))))
+	      (IF (not (= (sample-reader-position reader) 1300)) (snd-display ";reader pos: ~A" (sample-reader-position reader)))
 	      (free-sample-reader reader)))
 	(revert-sound ind)
 	(set! (cursor ind) 1200)
@@ -12277,7 +12281,7 @@
 	(make-selection 0 200)
 	(set! (show-selection-transform) #t)
 	(set! (selection-length) 300)
-	(update-transform)
+	(update-transform-graph)
 	(let* ((data (transform-samples->vct))
 	       (peak (vct-peak data)))
 	  (if (< peak 40.0) (snd-display ";transform selection peak: ~A" peak))
@@ -12285,7 +12289,7 @@
 	(for-each
 	 (lambda (pad)
 	   (set! (zero-pad) pad)
-	   (update-transform)
+	   (update-transform-graph)
 	   (let* ((data (transform-samples->vct))
 		  (peak (vct-peak data))
 		  (pval (vct-ref data (inexact->exact (* .1 (vct-length data))))))
@@ -14671,7 +14675,7 @@ EDITS: 5
 	   (for-each
 	    (lambda (size)
 	      (set! (transform-size) size)
-	      (update-transform))
+	      (update-transform-graph))
 	    (list 8 7 -7 4 3 2 1 0)))
 	 (list fourier-transform  wavelet-transform   hankel-transform    chebyshev-transform
 	       autocorrelation    walsh-transform     hadamard-transform  cepstrum     haar-transform))
@@ -17887,6 +17891,15 @@ EDITS: 5
 	  (vct-map! v (let ((r (make-sample-reader 2000)))
 			(lambda () (next-sample r))))
 	  (if (or (fneq (vct-ref v 0) .0662) (fneq (vct-ref v 1) .0551)) (snd-display "next-sample let ftst: ~A" v))
+	  (vct-map! v (let ((r (make-sample-reader 2000 #f)))
+			(lambda () (next-sample r))))
+	  (if (or (fneq (vct-ref v 0) .0662) (fneq (vct-ref v 1) .0551)) (snd-display "next-sample let ftst #f: ~A" v))
+	  (vct-map! v (let ((r (make-sample-reader 2000 #f #f)))
+			(lambda () (next-sample r))))
+	  (if (or (fneq (vct-ref v 0) .0662) (fneq (vct-ref v 1) .0551)) (snd-display "next-sample let ftst #f #f: ~A" v))
+	  (vct-map! v (let ((r (make-sample-reader 2000 #f #f 1 current-edit-position)))
+			(lambda () (next-sample r))))
+	  (if (or (fneq (vct-ref v 0) .0662) (fneq (vct-ref v 1) .0551)) (snd-display "next-sample let ftst #f #f 1 -1: ~A" v))
 	  (vct-map! v (let ((r (make-sample-reader 2000 ind)))
 			(lambda () (next-sample r))))
 	  (if (or (fneq (vct-ref v 0) .0662) (fneq (vct-ref v 1) .0551)) (snd-display "next-sample let snd ftst: ~A" v))
@@ -17899,6 +17912,13 @@ EDITS: 5
 			      -123.0
 			      (next-sample r)))))
 	  (if (or (fneq (vct-ref v 0) .0662) (fneq (vct-ref v 1) .0551)) (snd-display "next-sample let edit ftst: ~A" v))
+	  (itst '(frames) 50828)
+	  (itst (list 'frames ind) 50828)
+	  (itst (list 'frames ind 0) 50828)
+	  (itst (list 'frames ind 0 0) 50828)
+	  (itst (list 'frames #f 0) 50828)
+	  (itst (list 'frames #f #f) 50828)
+	  (itst (list 'frames #f #f current-edit-position) 50828)
 	  (close-sound ind)))
 
       (define max-optimization 5)
@@ -19625,7 +19645,7 @@ EDITS: 5
 		      (|XmListSelectPos lst i #t)
 		      (IF (not (= (colormap) (- i 1)))
 			  (snd-display ";color dialog list ~A: ~A" (- i 1) (colormap)))
-		      (update-transform)))
+		      (update-transform-graph)))
 		  (close-sound ind)
 		  (click-button (|XmMessageBoxGetChild colord |XmDIALOG_CANCEL_BUTTON)) (force-event))
 
@@ -20097,12 +20117,18 @@ EDITS: 5
 		;; ---------------- file:new dialog ----------------
 		(if (defined? 'new-file-dialog)
 		    (begin
+		      (reset-hook! output-name-hook)
+		      (add-hook! output-name-hook (lambda () "hiho.snd"))
 		      (let ((old-val (with-background-processes)))
 			(set! (with-background-processes) 1234)
 			(let ((newind (new-file-dialog)))
 			  (IF (not (sound? newind)) 
 			      (snd-display ";new file dialog: ~A" newind)
-			      (close-sound newind)))
+			      (begin
+				(if (not (string=? (short-file-name newind) "hiho.snd"))
+				    (snd-display ";output-name-hook: ~A" (short-file-name newind)))
+				(close-sound newind))))
+			(reset-hook! output-name-hook)
 			(set! (with-background-processes) old-val))))
 
 		;; ---------------- file:mix dialog ----------------
@@ -23897,7 +23923,7 @@ EDITS: 5
 	       region-srate regions region?  remove-from-menu report-in-minibuffer reset-controls restore-controls
 	       restore-marks restore-region reverb-control-decay reverb-control-feedback 
 	       reverb-control-length reverb-control-lowpass reverb-control-scale reverb-control?  reverse-sound
-	       reverse-selection revert-sound right-sample sample sample-reader-at-end?  sample-reader? samples
+	       reverse-selection revert-sound right-sample sample sample-reader-at-end?  sample-reader? samples sample-reader-position
 	       samples->vct samples->sound-data sash-color save-controls ladspa-dir save-dir save-edit-history save-envelopes
 	       save-listener save-macros save-marks save-options save-region save-selection save-sound save-sound-as
 	       save-state save-state-file scale-by scale-selection-by scale-selection-to scale-to scale-sound-by
@@ -23913,7 +23939,7 @@ EDITS: 5
 	       start-playing start-progress-report stop-player stop-playing swap-channels syncd-marks sync sound-properties temp-dir
 	       text-focus-color tiny-font track-sample-reader?  transform-dialog transform-sample transform-samples
 	       transform-samples->vct transform-samples-size transform-type trap-segfault optimization unbind-key undo
-	       update-transform update-time-graph update-lisp-graph update-sound use-sinc-interp
+	       update-transform-graph update-time-graph update-lisp-graph update-sound use-sinc-interp
 	       vct->samples vct->sound-file verbose-cursor view-sound vu-font vu-font-size vu-size wavelet-type
 	       graph-time?  time-graph-type wavo-hop wavo-trace window-height window-width window-x window-y
 	       with-mix-tags with-gl write-peak-env-info-file x-axis-style beats-per-minute x-bounds x-position-slider x->position x-zoom-slider
@@ -24357,7 +24383,7 @@ EDITS: 5
 			  select-channel show-axes show-transform-peaks show-marks show-mix-waveforms show-y-zero
 			  spectro-cutoff spectro-hop spectro-start spectro-x-angle spectro-x-scale spectro-y-angle
 			  spectro-y-scale spectro-z-angle spectro-z-scale squelch-update transform-sample transform-samples
-			  transform-samples->vct transform-samples-size transform-type update-transform update-time-graph
+			  transform-samples->vct transform-samples-size transform-type update-transform-graph update-time-graph
 			  update-lisp-graph update-sound wavelet-type graph-time? time-graph-type wavo-hop wavo-trace x-bounds
 			  x-position-slider x-zoom-slider y-bounds y-position-slider y-zoom-slider zero-pad))
 	  (gc))
@@ -24383,7 +24409,7 @@ EDITS: 5
 			  show-mix-waveforms show-y-zero spectro-cutoff spectro-hop spectro-start spectro-x-angle
 			  spectro-x-scale spectro-y-angle spectro-y-scale spectro-z-angle spectro-z-scale squelch-update
 			  transform-sample transform-samples transform-samples->vct transform-samples-size transform-type
-			  update-transform update-time-graph update-lisp-graph wavelet-type graph-time? time-graph-type
+			  update-transform-graph update-time-graph update-lisp-graph wavelet-type graph-time? time-graph-type
 			  wavo-hop wavo-trace x-bounds x-position-slider x-zoom-slider y-bounds y-position-slider
 			  y-zoom-slider zero-pad)))
 
@@ -24408,7 +24434,7 @@ EDITS: 5
 			  show-marks show-mix-waveforms show-y-zero spectro-cutoff spectro-hop spectro-start spectro-x-angle
 			  spectro-x-scale spectro-y-angle spectro-y-scale spectro-z-angle spectro-z-scale squelch-update
 			  src-sound transform-sample transform-samples transform-samples->vct scale-sound-by scale-sound-to
-			  transform-samples-size transform-type undo update-transform update-time-graph update-lisp-graph
+			  transform-samples-size transform-type undo update-transform-graph update-time-graph update-lisp-graph
 			  update-sound wavelet-type graph-time? time-graph-type wavo-hop wavo-trace x-bounds x-position-slider
 			  x->position x-zoom-slider y-bounds y-position-slider y->position y-zoom-slider zero-pad scale-channel)))
 
@@ -24460,7 +24486,7 @@ EDITS: 5
 			  reverse-sound right-sample show-axes show-transform-peaks show-marks show-mix-waveforms show-y-zero
 			  spectro-cutoff spectro-hop spectro-start spectro-x-angle spectro-x-scale spectro-y-angle
 			  spectro-y-scale spectro-z-angle spectro-z-scale squelch-update transform-samples->vct
-			  transform-samples-size transform-type update-transform update-time-graph update-lisp-graph
+			  transform-samples-size transform-type update-transform-graph update-time-graph update-lisp-graph
 			  wavelet-type graph-time?  time-graph-type wavo-hop wavo-trace x-bounds x-position-slider
 			  x-zoom-slider y-bounds y-position-slider y-zoom-slider zero-pad channel-properties))
 	  (close-sound index))
@@ -24483,7 +24509,7 @@ EDITS: 5
 			  show-transform-peaks show-marks show-mix-waveforms show-y-zero spectro-cutoff spectro-hop
 			  spectro-start spectro-x-angle spectro-x-scale spectro-y-angle spectro-y-scale spectro-z-angle
 			  spectro-z-scale squelch-update transform-samples->vct transform-samples-size transform-type
-			  update-transform update-time-graph update-lisp-graph wavelet-type graph-time? time-graph-type
+			  update-transform-graph update-time-graph update-lisp-graph wavelet-type graph-time? time-graph-type
 			  wavo-hop wavo-trace x-bounds x-position-slider x-zoom-slider y-bounds y-position-slider
 			  y-zoom-slider zero-pad
 			  ))

@@ -1075,7 +1075,7 @@
     (list "update-lisp-graph" "extsnd.html#sndupdatelispgraph" "snd-chn.c" 4596 "g_update_lisp_graph")
     (list "update-sound" "extsnd.html#sndupdate" "snd-snd.c" 2413 "g_update_sound")
     (list "update-time-graph" "extsnd.html#sndupdategraph" "snd-chn.c" 4583 "g_update_time_graph")
-    (list "update-transform" "extsnd.html#sndupdatefft" "snd-chn.c" 4590 "g_update_transform")
+    (list "update-transform-graph" "extsnd.html#sndupdatefft" "snd-chn.c" 4590 "g_update_transform_graph")
     (list "use-sinc-interp" "extsnd.html#usesincinterp" "snd-xen.c" 1391 "g_use_sinc_interp")
     (list "vct" "extsnd.html#sndvct" "vct.c" 498 "g_vct")
     (list "vct->channel" "extsnd.html#vct2channel" "snd-edits.c" 3807 "g_vct2channel")

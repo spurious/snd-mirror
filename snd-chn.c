@@ -4096,7 +4096,7 @@ enum {CP_GRAPH_TRANSFORM_P, CP_GRAPH_TIME_P, CP_FRAMES, CP_CURSOR, CP_GRAPH_LISP
       CP_WAVELET_TYPE, CP_SPECTRO_HOP, CP_TRANSFORM_SIZE, CP_TRANSFORM_GRAPH_TYPE, CP_FFT_WINDOW, CP_TRANSFORM_TYPE,
       CP_TRANSFORM_NORMALIZATION, CP_SHOW_MIX_WAVEFORMS, CP_GRAPH_STYLE, CP_DOT_SIZE,
       CP_SHOW_AXES, CP_GRAPHS_HORIZONTAL, CP_CURSOR_SIZE, CP_CURSOR_POSITION,
-      CP_EDPOS_FRAMES, CP_X_AXIS_STYLE, CP_UPDATE_TIME, CP_UPDATE_TRANSFORM, CP_UPDATE_LISP, CP_PROPERTIES,
+      CP_EDPOS_FRAMES, CP_X_AXIS_STYLE, CP_UPDATE_TIME, CP_UPDATE_TRANSFORM_GRAPH, CP_UPDATE_LISP, CP_PROPERTIES,
       CP_MIN_DB, CP_SPECTRO_X_ANGLE, CP_SPECTRO_Y_ANGLE, CP_SPECTRO_Z_ANGLE, CP_SPECTRO_X_SCALE, CP_SPECTRO_Y_SCALE, CP_SPECTRO_Z_SCALE,
       CP_SPECTRO_CUTOFF, CP_SPECTRO_START, CP_FFT_WINDOW_BETA, CP_AP_SX, CP_AP_SY, CP_AP_ZX, CP_AP_ZY, CP_MAXAMP, CP_EDPOS_MAXAMP,
       CP_BEATS_PER_MINUTE
@@ -4181,7 +4181,7 @@ static XEN channel_get(XEN snd_n, XEN chn_n, int fld, char *caller)
 	    case CP_EDPOS_FRAMES:       return(C_TO_XEN_OFF_T(to_c_edit_samples(cp, cp_edpos, caller, 3))); break;
 	    case CP_UPDATE_TIME:        display_channel_time_data(cp, cp->sound, cp->state);         break;
 	    case CP_UPDATE_LISP:        display_channel_lisp_data(cp, cp->sound, cp->state);         break;
-	    case CP_UPDATE_TRANSFORM: 
+	    case CP_UPDATE_TRANSFORM_GRAPH: 
 	      if (cp->graph_transform_p)
 		{
 		  void *val;
@@ -4584,11 +4584,10 @@ static XEN g_update_time_graph(XEN snd, XEN chn)
   return(channel_get(snd, chn, CP_UPDATE_TIME, S_update_time_graph));
 }
 
-static XEN g_update_transform(XEN snd, XEN chn) 
+static XEN g_update_transform_graph(XEN snd, XEN chn) 
 {
-  /* TODO: update-transform should (to be consistent) be update-transform-graph (except that it is updating the transform as well) */
-  #define H_update_transform "(" S_update_transform " &optional snd chn) recalculates snd channel chn's fft (and forces it to completion)"
-  return(channel_get(snd, chn, CP_UPDATE_TRANSFORM, S_update_time_graph));
+  #define H_update_transform_graph "(" S_update_transform_graph " &optional snd chn) redraws snd channel chn's fft display"
+  return(channel_get(snd, chn, CP_UPDATE_TRANSFORM_GRAPH, S_update_time_graph));
 }
 
 static XEN g_update_lisp_graph(XEN snd, XEN chn) 
@@ -6213,7 +6212,7 @@ XEN_ARGIFY_2(g_y_bounds_w, g_y_bounds)
 XEN_ARGIFY_3(g_set_y_bounds_w, g_set_y_bounds)
 XEN_ARGIFY_2(g_update_time_graph_w, g_update_time_graph)
 XEN_ARGIFY_2(g_update_lisp_graph_w, g_update_lisp_graph)
-XEN_ARGIFY_2(g_update_transform_w, g_update_transform)
+XEN_ARGIFY_2(g_update_transform_graph_w, g_update_transform_graph)
 XEN_NARGIFY_2(g_colormap_ref_w, g_colormap_ref)
 #else
 #define g_graph_w g_graph
@@ -6333,7 +6332,7 @@ XEN_NARGIFY_2(g_colormap_ref_w, g_colormap_ref)
 #define g_set_y_bounds_w g_set_y_bounds
 #define g_update_time_graph_w g_update_time_graph
 #define g_update_lisp_graph_w g_update_lisp_graph
-#define g_update_transform_w g_update_transform
+#define g_update_transform_graph_w g_update_transform_graph
 #define g_colormap_ref_w g_colormap_ref
 #endif
 
@@ -6349,7 +6348,7 @@ void g_init_chn(void)
   XEN_DEFINE_PROCEDURE(S_undo_hook,               g_undo_hook_w, 0, 2, 0,               H_undo_hook);
   XEN_DEFINE_PROCEDURE(S_update_time_graph,       g_update_time_graph_w, 0, 2, 0,       H_update_time_graph);
   XEN_DEFINE_PROCEDURE(S_update_lisp_graph,       g_update_lisp_graph_w, 0, 2, 0,       H_update_lisp_graph);
-  XEN_DEFINE_PROCEDURE(S_update_transform,        g_update_transform_w, 0, 2, 0,        H_update_transform);
+  XEN_DEFINE_PROCEDURE(S_update_transform_graph,  g_update_transform_graph_w, 0, 2, 0,  H_update_transform_graph);
 
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_x_position_slider, g_ap_sx_w, H_x_position_slider,
 					    "set-" S_x_position_slider, g_set_ap_sx_w, g_set_ap_sx_reversed, 0, 2, 0, 3);

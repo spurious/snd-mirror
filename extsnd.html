@@ -1357,7 +1357,7 @@ the hook.
 (add-hook! <em class=red>before-transform-hook</em> (lambda (snd chn) fft-position))
 (add-hook! mark-drag-hook (lambda (id)
                             (set! fft-position (mark-sample id))
-                            (update-transform)))
+                            (update-transform-graph)))
 <!-- --></pre></td></tr></table></td></tr>
 <!-- --><tr><td colspan=3></td></tr>
 <!-- -->
@@ -2420,7 +2420,7 @@ the hook.
 <!-- -->
 <!-- --><tr><td></td><td colspan=2>
 <!-- -->update-hook is called just before update-sound is called. 
-<!-- -->The update process can  be triggered by a variety of situations, not just by update-sound. 
+<!-- -->The update process can be triggered by a variety of situations, not just by update-sound. 
 <!-- -->The hook is passed the sound's index.  If it returns #t, the update is cancelled (this is not 
 <!-- -->recommended!); if it returns a procedure of one argument, that procedure is called upon 
 <!-- -->completion of the update operation; its argument is the (possibly different) sound index. 
@@ -2735,7 +2735,7 @@ there are also several functions that create and fill vcts with data:</p>
 <p>There is one slightly
 unusual function in this family: <i>vct-map!</i>.
 This is essentially providing a do-loop (or for-each) over a vct, calling some 
-Scheme function to get the values to assign into the vct.  For example</p>
+function to get the values to assign into the vct.  For example</p>
 <pre>
   (vct-map! out-data (lambda () 
                        (convolve cnv (lambda (dir) 
@@ -3151,30 +3151,30 @@ edited) sound can be accessed by a normal sample-reader.
 <!-- free-mix-sample-reader -->
 <!-- --><tr><td colspan=2><span class=defbox><code><em class=def><a name="freemixsamplereader">free-mix-sample-reader</a></em> (obj)</code></span></td>
 <!-- --></tr><tr><td></td>
-<!-- --><td>release <a href="#samplereaders">mix-sample-reader</a> <i>obj</i>.</td></tr>
+<!-- --><td>release mix-sample-reader <i>obj</i>.</td></tr>
 <!-- -->
 <!-- free-sample-reader -->
 <!-- --><tr><td><span class=defbox><code><em class=def><a name="freesamplereader">free-sample-reader</a></em> (obj)</code></span></td>
-<!-- --><td>release <a href="#samplereaders">sample-reader</a> <i>obj</i>.</td></tr>
+<!-- --><td>release sample-reader <i>obj</i>.</td></tr>
 <!-- -->
 <!-- free-track-sample-reader -->
 <!-- --><tr><td colspan=2><span class=defbox><code><em class=def><a name="freetracksamplereader">free-track-sample-reader</a></em> (obj)</code></span></td>
 <!-- --></tr><tr><td></td>
-<!-- --><td>release <a href="#samplereaders">track-sample-reader</a> <i>obj</i>.</td></tr>
+<!-- --><td>release track-sample-reader <i>obj</i>.</td></tr>
 <!-- -->
 <!-- make-mix-sample-reader -->
 <!-- --><tr><td colspan=2><span class=defbox><code><em class=def><a name="makemixsamplereader">make-mix-sample-reader</a></em> (mix)</code></span></td>
 <!-- --></tr><tr><td></td>
-<!-- --><td>create a <a href="#samplereaders">mix-sample-reader</a> object reading <i>mix</i></td></tr>
+<!-- --><td>create a mix-sample-reader object reading <i>mix</i></td></tr>
 <!-- -->
 <!-- mix-sample-reader? -->
 <!-- --><tr><td><span class=defbox><code><em class=def><a name="mixsamplereaderQ">mix-sample-reader?</a></em> (obj)</code></span></td>
-<!-- --><td>#t if <i>obj</i> is a <a href="#samplereaders">mix-sample-reader</a>.</td></tr>
+<!-- --><td>#t if <i>obj</i> is a mix-sample-reader.</td></tr>
 <!-- -->
 <!-- make-region-sample-reader -->
 <!-- --><tr><td colspan=2><span class=defbox><code><em class=def><a name="makeregionsamplereader">make-region-sample-reader</a></em> (<i>start reg chn dir</i>)</code></span></td>
 <!-- --></tr><tr><td></td>
-<!-- --><td>create a <a href="#samplereaders">sample-reader</a> object reading region <i>reg</i>'s channel <i>chn</i>.
+<!-- --><td>create a sample-reader object reading region <i>reg</i>'s channel <i>chn</i>.
 <!-- -->It is not safe to assume this reader will return zeros beyond the region boundaries.
 <!-- --></td></tr>
 <!-- -->
@@ -3182,7 +3182,7 @@ edited) sound can be accessed by a normal sample-reader.
 <!-- --><tr><td colspan=2><span class=defbox><code><em class=def><a name="makesamplereader">make-sample-reader</a></em> (<i>start snd chn dir pos</i>)</code></span></td>
 <!-- --></tr><tr><td></td>
 <!-- --><td>
-<!-- -->create a <a href="#samplereaders">sample-reader</a> object reading <i>snd</i>'s channel <i>chn</i>
+<!-- -->create a sample-reader object reading <i>snd</i>'s channel <i>chn</i>
 <!-- -->starting at sample <i>start</i> with initial read direction <i>dir</i> 
 <!-- -->(1=forward, -1=backward).  <i>pos</i> is the edit history position to read 
 <!-- -->(defaults to current position). One use of <i>pos</i> is to get the difference 
@@ -3213,51 +3213,55 @@ edited) sound can be accessed by a normal sample-reader.
 <!-- make-track-sample-reader -->
 <!-- --><tr><td colspan=2><span class=defbox><code><em class=def><a name="maketracksamplereader">make-track-sample-reader</a></em> (track snd chn)</code></span></td>
 <!-- --></tr><tr><td></td>
-<!-- --><td>create a <a href="#samplereaders">track-sample-reader</a> object reading <i>track</i></td></tr>
+<!-- --><td>create a track-sample-reader object reading <i>track</i></td></tr>
 <!-- -->
 <!-- next-mix-sample -->
 <!-- --><tr><td><span class=defbox><code><em class=def><a name="nextmixsample">next-mix-sample</a></em>   (obj)</code></span></td>
-<!-- --><td>return next sample read by <a href="#samplereaders">mix-sample-reader</a> <i>obj</i>.</td></tr>
+<!-- --><td>return next sample read by mix-sample-reader <i>obj</i>.</td></tr>
 <!-- -->
 <!-- next-sample -->
 <!-- --><tr><td><span class=defbox><code><em class=def><a name="nextsample">next-sample</a></em>       (obj)</code></span></td>
-<!-- --><td>return next sample (reading forward) read by <a href="#samplereaders">sample-reader</a> <i>obj</i>.</td></tr>
+<!-- --><td>return next sample (reading forward) read by sample-reader <i>obj</i>.</td></tr>
 <!-- -->
 <!-- next-track-sample -->
 <!-- --><tr><td><span class=defbox><code><em class=def><a name="nexttracksample">next-track-sample</a></em> (obj)</code></span></td>
-<!-- --><td>return next sample read by <a href="#samplereaders">track-sample-reader</a> <i>obj</i>.</td></tr>
+<!-- --><td>return next sample read by track-sample-reader <i>obj</i>.</td></tr>
 <!-- -->
 <!-- previous-sample -->
 <!-- --><tr><td><span class=defbox><code><em class=def><a name="previoussample">previous-sample</a></em>   (obj)</code></span></td>
-<!-- --><td>return previous sample in stream read by <a href="#samplereaders">sample-reader</a> <i>obj</i>.</td></tr>
+<!-- --><td>return previous sample in stream read by sample-reader <i>obj</i>.</td></tr>
 <!-- -->
 <!-- read-sample -->
 <!-- --><tr><td><span class=defbox><code><em class=def><a name="readsample">read-sample</a></em>       (obj)</code></span></td>
-<!-- --><td>return next sample (reading in the direction set by make-sample-reader) from <a href="#samplereaders">sample-reader</a> <i>obj</i>.</td></tr>
+<!-- --><td>return next sample (reading in the direction set by make-sample-reader) from sample-reader <i>obj</i>.</td></tr>
 <!-- -->
 <!-- read-mix-sample -->
 <!-- --><tr><td><span class=defbox><code><em class=def><a name="readmixsample">read-mix-sample</a></em>   (obj)</code></span></td>
-<!-- --><td>return next sample read by <a href="#samplereaders">mix-sample-reader</a> <i>obj</i>.</td></tr>
+<!-- --><td>return next sample read by mix-sample-reader <i>obj</i>.</td></tr>
 <!-- -->
 <!-- read-track-sample -->
 <!-- --><tr><td><span class=defbox><code><em class=def><a name="readtracksample">read-track-sample</a></em> (obj)</code></span></td>
-<!-- --><td>return next sample read by <a href="#samplereaders">track-sample-reader</a> <i>obj</i>.</td></tr>
+<!-- --><td>return next sample read by track-sample-reader <i>obj</i>.</td></tr>
 <!-- -->
 <!-- sample-reader-at-end? -->
 <!-- --><tr><td><span class=defbox><code><em class=def><a name="samplereaderatendQ">sample-reader-at-end?</a></em> (obj)</code></span></td>
-<!-- --><td>#t if <a href="#samplereaders">sample-reader</a> <i>obj</i> is at EOF.</td></tr>
+<!-- --><td>#t if sample-reader <i>obj</i> is at EOF.</td></tr>
 <!-- -->
 <!-- sample-reader-home -->
 <!-- --><tr><td><span class=defbox><code><em class=def><a name="samplereaderhome">sample-reader-home</a></em> (obj)</code></span></td>
 <!-- --><td>returns a list with the sound index and channel number associated with <i>obj</i>.</td></tr>
 <!-- -->
+<!-- sample-reader-position -->
+<!-- --><tr><td><span class=defbox><code><em class=def><a name="samplereaderposition">sample-reader-position</a></em> (obj)</code></span></td>
+<!-- --><td>current (sample-wise) location of sample-reader <i>obj</i>.</td></tr>
+<!-- -->
 <!-- sample-reader? -->
 <!-- --><tr><td><span class=defbox><code><em class=def><a name="samplereaderQ">sample-reader?</a></em>    (obj)</code></span></td>
-<!-- --><td>#t if <i>obj</i> is a <a href="#samplereaders">sample-reader</a>.</td></tr>
+<!-- --><td>#t if <i>obj</i> is a sample-reader.</td></tr>
 <!-- -->
 <!-- track-sample-reader? -->
 <!-- --><tr><td><span class=defbox><code><em class=def><a name="tracksamplereaderQ">track-sample-reader?</a></em> (obj)</code></span></td>
-<!-- --><td>#t if <i>obj</i> is a <a href="#samplereaders">track-sample-reader</a>.</td></tr>
+<!-- --><td>#t if <i>obj</i> is a track-sample-reader.</td></tr>
 <!-- -->
 <!-- --></table>
 
@@ -4161,7 +4165,7 @@ The following substitutions can be made:
 <a href="#sndinsertfile">insert-sound</a> file beg filechn s c e             <a href="sndscm.html#insertchannel">insert-channel</a> filedat beg dur s c e
 </pre>
 </small>
-<p><small>A scheme equivalent to map-channel might be:</small></p>
+<p><small>An equivalent to map-channel might be:</small></p>
 <pre>
 <small>
  (define* (map-channel func #:optional (beg 0) dur snd chn edpos (edname "map-channel"))
@@ -4375,7 +4379,7 @@ the direction argument between the channel and edit-position:
 <!-- --><span class=defbox><code><em class=def><a name="sndclose">close-sound</a></em> (<em class=targ>snd</em>)</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
-<!-- -->close <i>snd</i> (same as File menu Close).
+<!-- -->close <i>snd</i> (same as File menu Close). To close all: <code>(map close-sound (sounds))</code>.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -4386,7 +4390,7 @@ the direction argument between the channel and edit-position:
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
 <!-- --><i>snd</i>'s comment, if any (this refers initially to the file's header which can often contain a comment, identical
-<!-- -->to <a href="#soundcomment">mus-sound-comment</a>). 
+<!-- -->to <a href="#soundcomment">mus-sound-comment</a>).  If you set it, the header is not updated until the sound is saved.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -4421,7 +4425,7 @@ the direction argument between the channel and edit-position:
 <!-- --><span class=defbox><code><em class=def><a name="lcountmatches">count-matches</a></em> (expr <i>sample snd chn edpos</i>) </code></span></td></tr>
 <!-- --><tr><td></td><td>
 <!-- -->return how many samples satisfy the expression <i>expr</i>.  <i>expr</i>
-<!-- -->is a Scheme function of one argument (the current sample value). <i>sample</i> 
+<!-- -->is a function of one argument (the current sample value). <i>sample</i> 
 <!-- -->determines where to start the search.<br><br>
 <!-- -->
 <!-- --><code>(count-matches (lambda (y) (&gt; y .1)))</code>
@@ -4653,7 +4657,7 @@ the direction argument between the channel and edit-position:
 <!-- -->out), and <i>env-base</i> &gt; 1.0 gives concave curves (i.e. sagging).
 <!-- -->If you'd rather think in terms of e^-kt, set <i>env-base</i> to (exp k).
 <!-- -->See env.lisp for a CLM instrument that shows the relation between the connecting
-<!-- -->curve's exponent and <i>env-base</i>.  Here's a brief restatement in Scheme:
+<!-- -->curve's exponent and <i>env-base</i>.  Here's a brief restatement:
 <!-- --></td></tr>
 <!-- -->
 <!-- --><tr><td></td><td>
@@ -4762,7 +4766,7 @@ the direction argument between the channel and edit-position:
 <!-- --><tr><td colspan=2>
 <!-- --><span class=defbox><code><em class=def><a name="lfind">find</a></em> (expr <i>sample snd chn edpos</i>) </code></span></td></tr>
 <!-- --><tr><td></td><td>
-<!-- -->find the sample that satisfies the Scheme function <i>expr</i>. <i>sample</i>
+<!-- -->find the sample that satisfies the function <i>expr</i>. <i>sample</i>
 <!-- -->determines where to start the search. 
 <!-- -->If the function returns an integer, it represents how many samples to offset the cursor from the "find" location.<br><br>
 <!-- -->
@@ -4776,8 +4780,22 @@ the direction argument between the channel and edit-position:
 <!-- --><span class=defbox><code><em class=def><a name="sndfindsound">find-sound</a></em> (filename)</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
-<!-- -->returns the index of <i>filename</i> (used as <i>snd</i> throughout).
-<!-- -->returns #f if no sound is found that matches <i>filename</i>.
+<!-- -->returns the index of <i>filename</i> or
+<!-- -->#f if no sound is found that matches <i>filename</i>.  find-sound could be defined as:
+<!-- --></td></tr>
+<!-- --><tr><td></td><td>
+<!-- --><table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+(define (find-sound name)
+  (call-with-current-continuation
+   (lambda (return)
+     (for-each 
+      (lambda (snd)
+	(if (or (string=? (short-file-name snd) name)
+		(string=? (file-name snd) name))
+	    (return snd)))
+      (sounds))
+     #f)))
+<!-- --></pre></td></tr></table>
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -4787,7 +4805,7 @@ the direction argument between the channel and edit-position:
 <!-- --><span class=defbox><code><em class=def><a name="finishprogressreport">finish-progress-report</a></em> (<i>snd</i>)</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
-<!-- -->see <a href="#progressreport">progress-report</a>.
+<!-- -->End an on-going "progress report" (a visual indication of how far along some time-consuming process is). See <a href="#progressreport">progress-report</a>.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -5398,7 +5416,7 @@ the direction argument between the channel and edit-position:
 <!-- --><span class=defbox><code><em class=def><a name="playerhome">player-home</a></em> (player)</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td width=150></td><td>
-<!-- -->return a list of the sound index and channel number associated with <i>player-home</i>. [<em class=error>no-such-player</em>]
+<!-- -->return a list of the sound index and channel number associated with <a href="#makeplayer">player</a>. [<em class=error>no-such-player</em>]
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -5408,7 +5426,7 @@ the direction argument between the channel and edit-position:
 <!-- --><span class=defbox><code><em class=def><a name="playerQ">player?</a></em> (obj)</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
-<!-- -->#t is <i>obj</i> is an active player.
+<!-- -->#t is <i>obj</i> is an active <a href="#makeplayer">player</a>.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -5459,7 +5477,7 @@ the direction argument between the channel and edit-position:
 <!-- -->Post <i>msg</i> in <i>snd</i>'s minibuffer, and when the user responds,
 <!-- -->call <i>callback</i> with the response as the callback's argument.
 <!-- -->If <i>callback</i> is specified it should be either #f or a function of 
-<!-- -->one argument.  If 'raw' is #t, the response is returned as a string; otherwise it is evaluated first as Scheme code.
+<!-- -->one argument.  If 'raw' is #t, the response is returned as a string; otherwise it is evaluated first.
 <!-- --></td></tr>
 <!-- -->
 <!-- --><tr><td></td><td>
@@ -5575,6 +5593,7 @@ the direction argument between the channel and edit-position:
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
 <!-- -->#t if <i>snd</i> is read-only, #f otherwise.  <a href="#sndview">view-sound</a> sets this field to #t.
+<!-- -->This can be set at any time.  If it is #t, a lock icon is displayed beside the file name.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -5658,7 +5677,7 @@ the direction argument between the channel and edit-position:
 <!-- -->If the desired sample happens to fall outside the current buffer 
 <!-- -->for the indicated channel, this function grinds to a halt -- if you're 
 <!-- -->running a loop through a bunch of samples, use the <a href="#samplereaders">sample-readers</a> 
-<!-- -->or samples-&gt;vct instead.  <i>samp</i> defaults to the current cursor location.
+<!-- -->or <a href="#samples2vct">samples-&gt;vct</a> instead.  <i>samp</i> defaults to the current cursor location.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -5704,7 +5723,7 @@ the direction argument between the channel and edit-position:
 <!-- --><span class=defbox><code><em class=def><a name="sndsave">save-sound</a></em> (<em class=targ>snd</em>)</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
-<!-- -->save <i>snd</i>; same as File menu's Save option. [<em class=error>cannot-save</em>].
+<!-- -->save <i>snd</i>; same as File menu's Save option. To save all sounds: <code>(map save-sound (sounds))</code>. [<em class=error>cannot-save</em>].
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -5930,7 +5949,7 @@ the direction argument between the channel and edit-position:
 <!-- --><span class=defbox><code><em class=def><a name="sndselectchannel">select-channel</a></em> (<i>chn</i>)</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
-<!-- -->select channel <i>chn</i>. [<em class=error>no-such-channel</em>].
+<!-- -->select channel <i>chn</i>. This could be defined as <code>(set! (selected-channel) chn)</code>.  [<em class=error>no-such-channel</em>].
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -5940,7 +5959,7 @@ the direction argument between the channel and edit-position:
 <!-- --><span class=defbox><code><em class=def><a name="sndselectsound">select-sound</a></em> (<i>snd</i>)</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
-<!-- -->select sound <i>snd</i> (an index). [<em class=error>no-such-sound</em>].
+<!-- -->select sound <i>snd</i> (an index). This could be defined as <code>(set! (selected-sound) snd)</code>. [<em class=error>no-such-sound</em>].
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -6313,7 +6332,7 @@ the direction argument between the channel and edit-position:
 <!-- --><span class=defbox><code><em class=def><a name="startprogressreport">start-progress-report</a></em> (<i>snd</i>)</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
-<!-- -->see <a href="#progressreport">progress-report</a>.
+<!-- -->Start a "progress report"; see <a href="#progressreport">progress-report</a>.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -6402,7 +6421,7 @@ the direction argument between the channel and edit-position:
 <!-- --><tr><td></td><td>
 <!-- -->return the current value of the transform (if any) in <i>bin</i> and (if a 
 <!-- -->sonogram or spectrogram) <i>slice</i> in <i>snd</i>'s channel <i>chn</i>.  
-<!-- -->Use <a href="#sndupdatefft">update-transform</a> to make sure the transform has run to completion. [<em class=error>no-such-sample</em>].
+<!-- -->[<em class=error>no-such-sample</em>].
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -6413,7 +6432,6 @@ the direction argument between the channel and edit-position:
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
 <!-- -->return the transform data currently in <i>snd</i>'s channel <i>chn</i>.
-<!-- -->Use <a href="#sndupdatefft">update-transform</a> to make sure the transform has run to completion.
 <!-- -->(This function calls transform-samples-&gt;vct, then vct-&gt;vector; it may someday return the vct instead).
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
@@ -6426,7 +6444,6 @@ the direction argument between the channel and edit-position:
 <!-- --><tr><td></td><td>
 <!-- -->return vct struct with the transform data currently in <i>snd</i>'s channel <i>chn</i>.
 <!-- -->If v (a vct) is provided, it is filled, rather than creating a new vct.
-<!-- -->Use <a href="#sndupdatefft">update-transform</a> to make sure the transform has run to completion.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -6490,6 +6507,7 @@ the direction argument between the channel and edit-position:
 <!-- --><tr><td></td><td>
 <!-- -->update <i>snd</i> (re-reads data from disk, flushing any pending edits).  In some cases (primarily involving
 <!-- -->a change in the number of channels), update-sound can change the index of the sound referred to by 'snd'.
+<!-- -->See <a href="#updatehook">update-hook</a> for a way to deal with the index confusion.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -6504,12 +6522,12 @@ the direction argument between the channel and edit-position:
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
 <!-- -->
-<!-- update-transform -->
+<!-- update-transform-graph -->
 <!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="sndupdatefft">update-transform</a></em> (<em class=narg>snd chn</em>)</code></span>
+<!-- --><span class=defbox><code><em class=def><a name="sndupdatefft">update-transform-graph</a></em> (<em class=narg>snd chn</em>)</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
-<!-- -->recalculate <i>chn's</i> fft, forcing it to completion.
+<!-- -->redisplay <i>chn's</i> fft graph; for historical reasons, it also forces the current transform to completion.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -6715,12 +6733,12 @@ the direction argument between the channel and edit-position:
 (bind-key (char-&gt;integer #\p) 0 
   (lambda () 
     (set! (zero-pad) (+ (<em class=red>zero-pad</em>) 1)) 
-    (update-transform)))
+    (update-transform-graph)))
 
 (bind-key (char-&gt;integer #\m) 0 
   (lambda () 
     (set! (zero-pad) (- (<em class=red>zero-pad</em>) 1)) 
-    (update-transform)))
+    (update-transform-graph)))
 <!-- --></pre></td></tr></table></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -7256,12 +7274,12 @@ put in it something like:</p>
 </pre></td></tr></table>
 
 <p>Now fire up Snd: <code>snd -l myfile.scm</code> and voila!
-Files like this can contain any arbitrary Scheme code, calling
+Files like this can contain any arbitrary code, calling
 anything in Snd or anywhere else for that matter; you basically
 have a CLM-like notelist reader to describe sound file edits.
 Similarly, when you save Snd's state (via the Save State menu
 option or by calling the function <a href="#sndsavestate">save-state</a>),
-the result is a Scheme program that can be edited just like any
+the result is a program that can be edited just like any
 other such text.
 </p>
 <p>
@@ -7381,7 +7399,7 @@ And an example that lets us see the result of filtering the waveform:
 <tr><td><a href="#ffthook">transform-hook</a></td><td><a href="#spectrocutoff">spectro-cutoff</a></td><td><a href="#transformsamples2vct">transform-samples-&gt;vct</a></td></tr>
 <tr><td><a href="#fftlogfrequency">fft-log-frequency</a></td><td><a href="#spectrohop">spectro-hop</a></td><td><a href="#transformgraphsize">transform-samples-size</a></td></tr>
 <tr><td><a href="#fftlogmagnitude">fft-log-magnitude</a></td><td><a href="#spectrostart">spectro-start</a></td><td><a href="#ltransformtype">transform-type</a></td></tr>
-<tr><td><a href="#lfftsize">transform-size</a></td><td><a href="#spectroxangle">spectro-x-angle</a></td><td><a href="#sndupdatefft">update-transform</a></td></tr>
+<tr><td><a href="#lfftsize">transform-size</a></td><td><a href="#spectroxangle">spectro-x-angle</a></td><td><a href="#sndupdatefft">update-transform-graph</a></td></tr>
 <tr><td><a href="#lfftstyle">transform-graph-type</a></td><td><a href="#spectroxscale">spectro-x-scale</a></td><td><a href="#normalizefft">transform-normalization</a></td></tr>
 <tr><td><a href="#lfftwindow">fft-window</a></td><td><a href="#spectroyangle">spectro-y-angle</a></td><td><a href="#zeropad">zero-pad</a></td></tr>
 <tr><td><a href="#maxfftpeaks">max-transform-peaks</a></td><td><a href="#spectroyscale">spectro-y-scale</a></td><td><a href="#wavelettype">wavelet-type</a></td></tr>
@@ -8567,7 +8585,7 @@ run
 <!-- -->the newly opened sound's index.  This supports the "snd-memo" feature 
 <!-- -->in CLM, but can be used independently of CLM to store marks, selections,
 <!-- -->or whatever that you want associated with a particular sound. Confusingly
-<!-- -->enough, this is a Scheme variable, unlike all the others -- that is, you
+<!-- -->enough, this is a variable, unlike all the others -- that is, you
 <!-- -->refer to it directly, not as a procedure call.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
@@ -8716,7 +8734,7 @@ run
 <!-- --><tr><td colspan=2>
 <!-- --><span class=defbox><code><em class=def><a name="sndrememberpaths">snd-remember-paths</a></em></code></span></td></tr>
 <!-- --><tr><td></td><td>
-<!-- -->A Scheme variable (not a function); if #t (default is #f), Snd adds code to the Guile %load-hook that makes sure the
+<!-- -->A variable (not a function); if #t (default is #f), Snd adds code to the Guile %load-hook that makes sure the
 <!-- -->current file's path is included in %load-path when load or load-from-file is called.  This makes it possible to
 <!-- -->use load-from-path inside a scheme file when you don't know in advance where that file will reside at load time.
 <!-- --></td></tr>

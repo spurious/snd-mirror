@@ -1,8 +1,6 @@
 #include "snd.h"
 #include "vct.h"
 
-/* SOMEDAY: use clm envs not local env */
-
 Float un_dB(snd_state *ss, Float py)
 {
   /* used only by envelope editor (snd-xenv etc) */

@@ -667,7 +667,7 @@
 #define S_sample                        "sample"
 #define S_sample_reader_at_end_p        "sample-reader-at-end?"
 #define S_sample_reader_home            "sample-reader-home"
-/* SOMEDAY: sample-reader-position sample-reader-direction if useful */
+#define S_sample_reader_position        "sample-reader-position"
 #define S_sample_reader_p               "sample-reader?"
 #define S_samples                       "samples"
 #define S_samples2sound_data            "samples->sound-data"
@@ -819,7 +819,7 @@
 #define S_update_lisp_graph             "update-lisp-graph"
 #define S_update_sound                  "update-sound"
 #define S_update_time_graph             "update-time-graph"
-#define S_update_transform              "update-transform"
+#define S_update_transform_graph        "update-transform-graph"
 #define S_use_sinc_interp               "use-sinc-interp"
 #define S_vct_map                       "vct-map"
 #define S_vct2channel                   "vct->channel"

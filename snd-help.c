@@ -246,6 +246,8 @@ void news_help(snd_state *ss)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+8-Jul:   update-transform changed to update-transform-graph.\n\
+         added sample-reader-position.\n\
 3-Jul:   added contrib/DotEmacs thanks to Fernando.\n\
 27-Jun:  bad-header-hook.\n\
 20-Jun:  ptree-channel (an experiment) -- any func as virtual edit.\n\
@@ -1385,7 +1387,7 @@ all refer to the same thing.\n\
   " S_update_lisp_graph " (snd chn)\n\
   " S_update_sound "      ()\n\
   " S_update_time_graph " (snd chn)\n\
-  " S_update_transform "  (snd chn)\n\
+  " S_update_transform_graph " (snd chn)\n\
   " S_widget_position "   (wid)\n\
   " S_widget_size "       (wid)\n\
   " S_vct_p "              (vobj)\n\

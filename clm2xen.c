@@ -4589,6 +4589,7 @@ it in conjunction with mixer to scale/envelope all the various ins and outs."
 		  envs1[i][j] = MUS_XEN_TO_CLM(vdata1[j]);
 		else 
 		  {
+		    for (i = 0; i < in_size; i++) if (envs1[i]) FREE(envs1[i]);
 		    FREE(envs1);
 		    XEN_ERROR(BAD_TYPE,
 			      XEN_LIST_5(C_TO_XEN_STRING(S_mus_mix),

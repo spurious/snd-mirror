@@ -160,7 +160,6 @@ typedef struct {
   int ctr;
   int size;
 } mark_info;
-/* SOMEDAY: use mark_info to handle cp->marks lists */
 
 typedef struct {
   Float *data;

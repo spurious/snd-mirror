@@ -428,7 +428,7 @@ file_info *fixup_region_data(chan_info *cp, int chan, int pos)
 	  ncp = nsp->chans[chan];
 	  cp->sounds = ncp->sounds;
 	  cp->sound_size = ncp->sound_size;
-	  cp->edits = ncp->edits;
+	  cp->edits = ncp->edits; /* ?? is this safe ?? */
 	  cp->edit_size = ncp->edit_size;
 	  cp->edit_ctr = ncp->edit_ctr;
 	  cp->samples[0] = ncp->samples[0];
