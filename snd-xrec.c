@@ -1368,6 +1368,7 @@ static void make_file_info_pane(snd_state *ss, recorder_info *rp, Widget file_pa
   char *name;
   Widget file_label,file_form,button_frame,button_holder,duration_label,rec_size_label,
     ff_form,ff_sep1,ff_sep2,ff_sep3,ff_sep4,autoload_file;
+  XtCallbackList n1,n2;
 #if (HAVE_OSS || HAVE_ALSA)
   Widget save_audio_settings;
 #endif
@@ -1569,8 +1570,8 @@ static void make_file_info_pane(snd_state *ss, recorder_info *rp, Widget file_pa
   XtSetArg(args[n],XmNtopWidget,trigger_label); n++;
   XtSetArg(args[n],XmNrightAttachment,XmATTACH_FORM); n++;
   XtSetArg(args[n],XmNvalue,(int)(100*(rp->trigger))); n++;
-  XtSetArg(args[n],XmNdragCallback,make_callback_list(drag_trigger_Callback,(XtPointer)ss)); n++;
-  XtSetArg(args[n],XmNvalueChangedCallback,make_callback_list(change_trigger_Callback,(XtPointer)ss)); n++;
+  XtSetArg(args[n],XmNdragCallback,n1 = make_callback_list(drag_trigger_Callback,(XtPointer)ss)); n++;
+  XtSetArg(args[n],XmNvalueChangedCallback,n2 = make_callback_list(change_trigger_Callback,(XtPointer)ss)); n++;
   trigger_scale = XtCreateManagedWidget("scale",xmScaleWidgetClass,file_form,args,n);
   XtAddCallback(trigger_scale,XmNhelpCallback,trigger_help_Callback,ss);
 
@@ -1640,6 +1641,9 @@ static void make_file_info_pane(snd_state *ss, recorder_info *rp, Widget file_pa
   XtAddCallback(save_audio_settings,XmNvalueChangedCallback,save_audio_settings_callback,NULL);
   XtAddCallback(save_audio_settings,XmNhelpCallback,save_audio_settings_help_callback,ss);
 #endif
+
+  FREE(n1);
+  FREE(n2);
 }
 
 void reflect_recorder_duration(Float new_dur)
@@ -1915,6 +1919,7 @@ static Widget sndCreateRecorderSlider(snd_state *ss, PANE *p, AMP *a, Widget las
   int n;
   Arg args[32];
   XmString s1;
+  XtCallbackList n1,n2;
 
   n=0;      
   if (!(ss->using_schemes)) {XtSetArg(args[n],XmNbackground,(ss->sgx)->basic_color); n++;}
@@ -1987,10 +1992,14 @@ static Widget sndCreateRecorderSlider(snd_state *ss, PANE *p, AMP *a, Widget las
   XtSetArg(args[n],XmNorientation,XmHORIZONTAL); n++;
   XtSetArg(args[n],XmNmaximum,RECORD_SCROLLBAR_MAX); n++;
   XtSetArg(args[n],XmNvalue,amp_to_slider(global_amp(a))); n++;
-  XtSetArg(args[n],XmNdragCallback,make_callback_list(Record_Amp_Drag_Callback,(XtPointer)a)); n++;
-  XtSetArg(args[n],XmNvalueChangedCallback,make_callback_list(Record_Amp_ValueChanged_Callback,(XtPointer)a)); n++;
+  XtSetArg(args[n],XmNdragCallback,n1 = make_callback_list(Record_Amp_Drag_Callback,(XtPointer)a)); n++;
+  XtSetArg(args[n],XmNvalueChangedCallback,n2 = make_callback_list(Record_Amp_ValueChanged_Callback,(XtPointer)a)); n++;
   a->slider = XtCreateManagedWidget("amp",xmScrollBarWidgetClass,p->pane,args,n);
   XtAddCallback(a->slider,XmNhelpCallback,amp_slider_help_Callback,a->wd);
+
+  FREE(n1);
+  FREE(n2);
+
   return(a->slider);
 }
 

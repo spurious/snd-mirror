@@ -69,6 +69,20 @@
   #endif
 #endif
 
+#if 0
+/* this is not compatible with the Sun */
+#if HAVE_GETTEXT
+  #include <libintl.h>
+  #define _(String) gettext (String)
+  #define N_(String) gettext_noop (String)
+#else
+  #define _(String) (String)
+  #define N_(String) (String)
+  #define textdomain(Domain)
+  #define bindtextdomain(Package, Directory)
+#endif
+#endif
+
 #ifndef FSTATFS_ARGS
   #define FSTATFS_ARGS 2
 #endif
@@ -150,6 +164,9 @@ enum {DONT_NORMALIZE,NORMALIZE_BY_CHANNEL,NORMALIZE_BY_SOUND,NORMALIZE_GLOBALLY}
 
 #define NOT_FROM_ENVED 0
 #define FROM_ENVED 1
+
+#define WITHOUT_GRAPH 0
+#define WITH_GRAPH 1
 
 #define IS_PLAYER(snd) ((snd) && (snd->index < 0))
 #define PLAYER(snd) (-(snd->index))

@@ -726,7 +726,7 @@ snd_info *make_sound_readable(snd_state *ss, char *filename, int post_close)
       FREE(cp->cgx);
       cp->cgx = NULL;
       sp->chans[i] = cp;
-      add_channel_data_1(cp,sp,ss,0);
+      add_channel_data_1(cp,sp,ss,WITHOUT_GRAPH);
       set_initial_ed_list(cp,len-1);
       cp->edit_size = 1;
       cp->sound_size = 1;
@@ -986,6 +986,7 @@ void file_unprevlist(char *filename)
 	  prevtimes[j] = prevtimes[j+1];
 	}
       prevnames[prevfile_end] = NULL; 
+      prevfullnames[prevfile_end] = NULL; 
       prevfile_end--;
     }
 }
@@ -1122,17 +1123,23 @@ static void greet_me(snd_state *ss, char *shortname)
 
 void init_curfiles(int size)
 {
-  curfile_size = size;
-  curnames = (char **)CALLOC(curfile_size,sizeof(char *));
-  a_big_star = (int *)CALLOC(curfile_size,sizeof(int *));
+  if (curfile_size == 0)
+    {
+      curfile_size = size;
+      curnames = (char **)CALLOC(curfile_size,sizeof(char *));
+      a_big_star = (int *)CALLOC(curfile_size,sizeof(int *));
+    }
 }
 
 void init_prevfiles(int size)
 {
-  prevfile_size = size;
-  prevnames = (char **)CALLOC(prevfile_size,sizeof(char *));
-  prevfullnames = (char **)CALLOC(prevfile_size,sizeof(char *));
-  prevtimes = (int *)CALLOC(prevfile_size,sizeof(char *));
+  if (prevfile_size == 0)
+    {
+      prevfile_size = size;
+      prevnames = (char **)CALLOC(prevfile_size,sizeof(char *));
+      prevfullnames = (char **)CALLOC(prevfile_size,sizeof(char *));
+      prevtimes = (int *)CALLOC(prevfile_size,sizeof(char *));
+    }
 }
 
 void make_a_big_star_outa_me(char *shortname, int big_star)
@@ -1177,7 +1184,7 @@ void save_prevlist(FILE *fd)
 void clear_prevlist(snd_state *ss)
 {
   int i;
-  for (i=0;i<=prevfile_end;i++)
+  for (i=0;i<=prevfile_size;i++)
     {
       if (prevnames[i]) 
 	{

@@ -550,8 +550,9 @@ Widget sndCreateTextFieldWidget(snd_state *ss, char *name, Widget parent, Arg *a
 {
   /* white background when active, emacs translations, text_activate_event in ss->sgx for subsequent activation check */
   Widget df;
+  XtCallbackList n1;
   if (!actions_loaded) {XtAppAddActions(MAIN_APP(ss),acts,NUM_ACTS); actions_loaded = 1;}
-  XtSetArg(args[n],XmNactivateCallback,make_callback_list(remember_event,(XtPointer)ss)); n++;
+  XtSetArg(args[n],XmNactivateCallback,n1 = make_callback_list(remember_event,(XtPointer)ss)); n++;
   /* can't use XmNuserData here because it is in use elsewhere (snd-xmix.c) */
   df = XtCreateManagedWidget(name,xmTextFieldWidgetClass,parent,args,n);
   XtAddCallback(df,XmNfocusCallback,textfield_focus_Callback,ss);
@@ -567,6 +568,7 @@ Widget sndCreateTextFieldWidget(snd_state *ss, char *name, Widget parent, Arg *a
       XtOverrideTranslations(df,transTable6);
     }
   add_completer_widget(df,completer);
+  FREE(n1);
   return(df);
 }
 
@@ -583,8 +585,9 @@ Widget sndCreateTextWidget(snd_state *ss, char *name, Widget parent, Arg *args, 
 {
   /* white background when active, emacs translations, text_activate_event in ss->sgx for subsequent activation check */
   Widget df;
+  XtCallbackList n1;
   if (!actions_loaded) {XtAppAddActions(MAIN_APP(ss),acts,NUM_ACTS); actions_loaded = 1;}
-  XtSetArg(args[n],XmNactivateCallback,make_callback_list(remember_event,(XtPointer)ss)); n++;
+  XtSetArg(args[n],XmNactivateCallback,n1 = make_callback_list(remember_event,(XtPointer)ss)); n++;
   XtSetArg(args[n],XmNeditMode,XmMULTI_LINE_EDIT); n++;
   df = XmCreateScrolledText(parent,name,args,n);
   XtManageChild(df);
@@ -594,6 +597,7 @@ Widget sndCreateTextWidget(snd_state *ss, char *name, Widget parent, Arg *args, 
   /* b1_press action overrides focus */
   if (!transTable3) transTable3 = XtParseTranslationTable(TextTrans3);
   XtOverrideTranslations(df,transTable3);
+  FREE(n1);
   return(df);
 }
 
@@ -820,6 +824,7 @@ static void sndCreateCommandWidget(snd_state *ss, int height)
 {
   Arg args[32];
   Widget wv,wh;
+  XtCallbackList n1;
   int n;
   if (!listener_text)
     {
@@ -846,7 +851,7 @@ static void sndCreateCommandWidget(snd_state *ss, int height)
       XtSetArg(args[n],XmNbottomAttachment,XmATTACH_FORM); n++;
       XtSetArg(args[n],XmNleftAttachment,XmATTACH_FORM); n++;
       XtSetArg(args[n],XmNrightAttachment,XmATTACH_FORM); n++;
-      XtSetArg(args[n],XmNactivateCallback,make_callback_list(remember_event,(XtPointer)ss)); n++;
+      XtSetArg(args[n],XmNactivateCallback,n1 = make_callback_list(remember_event,(XtPointer)ss)); n++;
       XtSetArg(args[n],XmNeditMode,XmMULTI_LINE_EDIT); n++;
       XtSetArg(args[n],XmNskipAdjust,TRUE); n++;
       XtSetArg(args[n],XmNvalue,listener_prompt(ss)); n++;
@@ -875,7 +880,7 @@ static void sndCreateCommandWidget(snd_state *ss, int height)
       XtAddCallback(listener_text,XmNmodifyVerifyCallback,Command_Modify_Callback,ss);
       XtAddCallback(listener_text,XmNmotionVerifyCallback,Command_Motion_Callback,ss);
       XtAddCallback(listener_text,XmNhelpCallback,Command_Help_Callback,ss);
-      
+      FREE(n1);
       lisp_window = XtParent(listener_text);
       
       if (!(ss->using_schemes))

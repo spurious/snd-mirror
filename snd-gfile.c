@@ -1455,7 +1455,6 @@ void edit_header(snd_info *sp)
 
 #if HAVE_GUILE_GTK
 #include <guile-gtk.h>
-#include "sg.h"
  
 #define Sg_open_file_dialog_widget    "sg-open-file-dialog-widget"
 #define Sg_save_file_as_dialog_widget "sg-save-file-as-dialog-widget"

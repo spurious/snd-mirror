@@ -5519,7 +5519,6 @@ Float *mus_make_fft_window_with_window(int type, int size, Float beta, Float *wi
    */
   int i,j,midn,midp1,midm1;
   Float freq,rate,sr1,angle,expn,expsum,I0beta,cx;
-  I0beta = 0.0;
   midn = size >> 1;
   midp1 = (size+1)/2;
   midm1 = (size-1)/2;
@@ -5528,7 +5527,6 @@ Float *mus_make_fft_window_with_window(int type, int size, Float beta, Float *wi
   angle = 0.0;
   expn = log(2)/(Float)midn+1.0;
   expsum = 1.0;
-  if (type == MUS_KAISER_WINDOW) I0beta = mus_bessi0(beta); /* Harris multiplies beta by pi */
   switch (type)
     {
     case MUS_RECTANGULAR_WINDOW:
@@ -5574,6 +5572,7 @@ Float *mus_make_fft_window_with_window(int type, int size, Float beta, Float *wi
       for (i=0,j=size-1;i<=midn;i++,j--) {window[j]=(window[i]=expsum-1.0); expsum *= expn;}
       break;
     case MUS_KAISER_WINDOW:
+      I0beta = mus_bessi0(beta); /* Harris multiplies beta by pi */
       for (i=0,j=size-1,angle=1.0;i<=midn;i++,j--,angle-=rate) {window[j]=(window[i]=mus_bessi0(beta*sqrt(1.0-sqr(angle)))/I0beta);}
       break;
     case MUS_CAUCHY_WINDOW:

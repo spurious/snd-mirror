@@ -1077,6 +1077,7 @@ void create_envelope_editor (snd_state *ss)
   Widget spacer,spacer1,aform;
   XmString xhelp,xdismiss,xapply,titlestr,s1;
   XGCValues gv;
+  XtCallbackList n1,n2;
   char str[8];
 
   if (!enved_dialog)
@@ -1214,8 +1215,8 @@ void create_envelope_editor (snd_state *ss)
       XtSetArg(args[n],XmNvalue,BASE_MID); n++;
       XtSetArg(args[n],XmNincrement,1); n++;
       XtSetArg(args[n],XmNpageIncrement,1); n++;
-      XtSetArg(args[n],XmNdragCallback,make_callback_list(Base_Drag_Callback,(XtPointer)ss)); n++;
-      XtSetArg(args[n],XmNvalueChangedCallback,make_callback_list(Base_ValueChanged_Callback,(XtPointer)ss)); n++;
+      XtSetArg(args[n],XmNdragCallback,n1 = make_callback_list(Base_Drag_Callback,(XtPointer)ss)); n++;
+      XtSetArg(args[n],XmNvalueChangedCallback,n2 = make_callback_list(Base_ValueChanged_Callback,(XtPointer)ss)); n++;
       baseScale = XtCreateManagedWidget("expscl",xmScrollBarWidgetClass,mainform,args,n);
       XtAddCallback(baseScale,XmNhelpCallback,Base_Help_Callback,ss);
 
@@ -1634,6 +1635,9 @@ void create_envelope_editor (snd_state *ss)
       XmToggleButtonSetState(clipB,enved_clipping(ss),FALSE);
       XmToggleButtonSetState(graphB,enved_waving(ss),FALSE);
       XmToggleButtonSetState(dBB,enved_dBing(ss),FALSE);
+
+      FREE(n1);
+      FREE(n2);
 
       reflect_apply_state(ss);
       reflect_segment_state(ss);

@@ -24,8 +24,6 @@ Snd name completion tied into the Emacs-Snd subjob connection.
 
 Snd's help and apropos merged with Guile's.
 
-Dolph-chebyshev window.  (Also some expert needs to bless the cepstrum).
-
 GL spectrum display (the communication with Snd is in glfft.c).
 
 Sawfish connection: it should be possible to send commands to sawfish,
@@ -62,4 +60,15 @@ More effects (see list of suggestions in effects.scm)
 
 Add Gnome tie-ins.
 
-Gettext support, if there's interest.
+
+Gettext support, if there's interest. (How does gettext handle Scheme-style
+string formatting as in scm_misc_error?). The main drawback of gettext, besides problems like
+how to handle help strings and the completion array, is that it seems to
+require that we drag around an infinite number of ancillary files; surely
+there's a way to do the same thing in a less intrusive manner?
+Here's an example of the scm problem: in vct.c we have
+
+scm_misc_error(S_vct_ref,"index: ~A but vct length: ~A?",SCM_LIST2(pos,gh_int2scm(v->length)));
+
+but if translation requires that the args be reversed (as in the %2$d msgfmt business),
+does msgfmt know about things like ~A and SCM_LIST2?

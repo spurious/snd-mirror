@@ -64,6 +64,7 @@
 ;;; hold DAC open and play sounds via keyboard
 ;;; "frequency division"
 ;;; "adaptive saturation"
+;;; Dolph-Chebyshev fft data window
 
 ;;; TODO: pitch tracker
 ;;;       adaptive notch filter
@@ -139,8 +140,9 @@
 		  (sqrt (/ sum len))
 		  (let ((val (next-sample reader)))
 		    (rsum (1- leng) (+ sum (* val val)))))))
-	  (rsum len 0.0)
-	  (free-sample-reader reader))
+	  (let ((val (rsum len 0.0)))
+	    (free-sample-reader reader)
+	    val))
 	(throw 'no-active-selection(list "selection-rms")))))
 
 (define region-rms
@@ -1249,6 +1251,30 @@
 	  val)))))
 
 ; (map-chan (moving-formant .99 '(0 1200 1 2400)))
+
+(define osc-formants
+  ;; set up any number of independently oscillating formants
+  (lambda (radius bases amounts freqs)
+    (let* ((len (length bases))
+	   (frms (make-vector len))
+	   (oscs (make-vector len)))
+      (do ((i 0 (1+ i)))
+	  ((= i len))
+	(vector-set! frms i (make-formant radius (list-ref bases i)))
+	(vector-set! oscs i (make-oscil (list-ref freqs i))))
+      (lambda (x)
+	(let ((val 0.0))
+	  (do ((i 0 (1+ i)))
+	      ((= i len))
+	    (let ((frm (vector-ref frms i)))
+	      (set! val (+ val (formant frm x)))
+	      (set! (mus-frequency frm) 
+		    (+ (list-ref bases i) ;(this is not optimized for speed!)
+		       (* (list-ref amounts i) 
+			  (oscil (vector-ref oscs i)))))))
+	  val)))))
+
+;(map-chan (osc-formants .99 '(400 800 1200) '(400 800 1200) '(4 2 3)))
 
 
 ;;; -------- echo
@@ -2696,3 +2722,34 @@
 			(if (< val mn) (set! mn val))
 			(set! n (1+ n))
 			#f)))))))
+
+
+;;; -------- Dolph-Chebyshev window
+;;; 
+;;; might be nice to have this in C (clm.c mus_make_fft_window)
+;;; formula taken from Richard Lyons, "Understanding DSP"
+
+(define (dolph N gamma)
+  (let* ((alpha (cosh (/ (acosh (expt 10.0 gamma)) N)))
+	 (den (/ 1.0 (cosh (* N (acosh alpha)))))
+	 (freq (/ pi N))
+	 (rl (make-vct N))
+	 (im (make-vct N)))
+    (do ((i 0 (1+ i))
+	 (phase 0.0 (+ phase freq)))
+	((= i N))
+      (let ((val (* den (cos (* N (acos (* alpha (cos phase))))))))
+	(vct-set! rl i (real-part val))
+	(vct-set! im i (imag-part val))))
+    (fft rl im -1)            ;direction could also be 1
+    (vct-set! rl (/ N 2) 0.0) ;hmm... why is this needed?
+    (let ((pk (vct-peak rl)))
+      (vct-scale! rl (/ 1.0 pk)))
+    (do ((i 0 (1+ i))
+	 (j (/ N 2)))
+	((= i N))
+      (vct-set! im i (vct-ref rl j))
+      (set! j (+ j 1))
+      (if (= j N) (set! j 0)))
+    im))
+

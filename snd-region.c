@@ -221,7 +221,7 @@ static void make_region_readable(region *r, snd_state *ss)
     {
       cp = make_chan_info(NULL,i,regsp,ss);
       regsp->chans[i] = cp;
-      add_channel_data_1(cp,regsp,ss,0);
+      add_channel_data_1(cp,regsp,ss,WITHOUT_GRAPH);
       set_initial_ed_list(cp,r->frames-1);
       cp->edit_size = 1;
       cp->sound_size = 1;

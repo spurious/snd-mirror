@@ -1336,6 +1336,7 @@ snd_info *add_sound_window (char *filename, snd_state *ss)
   Pixmap rb,lb;
   int depth;
   Widget form;
+  XtCallbackList n1,n2,n3,n4,n5,n6,n7,n8,n9,n10,n11,n12;
   snd_context *sx;
   Atom sound_delete;
   static int first_window = 1;
@@ -1717,8 +1718,8 @@ snd_info *add_sound_window (char *filename, snd_state *ss)
       XtSetArg(args[n],XmNorientation,XmHORIZONTAL); n++;
       XtSetArg(args[n],XmNmaximum,SCROLLBAR_MAX); n++;
       XtSetArg(args[n],XmNvalue,SCROLLBAR_MID); n++;
-      XtSetArg(args[n],XmNdragCallback,make_callback_list(W_amp_Drag_Callback,(XtPointer)sp)); n++;
-      XtSetArg(args[n],XmNvalueChangedCallback,make_callback_list(W_amp_ValueChanged_Callback,(XtPointer)sp)); n++;
+      XtSetArg(args[n],XmNdragCallback,n1 = make_callback_list(W_amp_Drag_Callback,(XtPointer)sp)); n++;
+      XtSetArg(args[n],XmNvalueChangedCallback,n2 = make_callback_list(W_amp_ValueChanged_Callback,(XtPointer)sp)); n++;
       sw[W_amp] = XtCreateManagedWidget("amp",xmScrollBarWidgetClass,sw[W_amp_form],args,n);
       XtAddCallback(sw[W_amp],XmNhelpCallback,W_amp_Help_Callback,ss);
       XtAddEventHandler(sw[W_amp],KeyPressMask,FALSE,graph_key_press,(XtPointer)sp);
@@ -1805,8 +1806,8 @@ snd_info *add_sound_window (char *filename, snd_state *ss)
       XtSetArg(args[n],XmNmaximum,SPEED_SCROLLBAR_MAX); n++;
       XtSetArg(args[n],XmNvalue,450); n++;
       XtSetArg(args[n],XmNheight,16); n++;
-      XtSetArg(args[n],XmNdragCallback,make_callback_list(W_srate_Drag_Callback,(XtPointer)sp)); n++;
-      XtSetArg(args[n],XmNvalueChangedCallback,make_callback_list(W_srate_ValueChanged_Callback,(XtPointer)sp)); n++;
+      XtSetArg(args[n],XmNdragCallback,n3 = make_callback_list(W_srate_Drag_Callback,(XtPointer)sp)); n++;
+      XtSetArg(args[n],XmNvalueChangedCallback,n4 = make_callback_list(W_srate_ValueChanged_Callback,(XtPointer)sp)); n++;
       sw[W_srate] = XtCreateManagedWidget("srate",xmScrollBarWidgetClass,sw[W_amp_form],args,n);
       XtAddCallback(sw[W_srate],XmNhelpCallback,W_srate_Help_Callback,ss);
       XtAddEventHandler(sw[W_srate],KeyPressMask,FALSE,graph_key_press,(XtPointer)sp);
@@ -1886,8 +1887,8 @@ snd_info *add_sound_window (char *filename, snd_state *ss)
       XtSetArg(args[n],XmNvalue,450); n++;
       XtSetArg(args[n],XmNheight,16); n++;
       XtSetArg(args[n],XmNmarginHeight,CONTROLS_MARGIN); n++;
-      XtSetArg(args[n],XmNdragCallback,make_callback_list(W_expand_Drag_Callback,(XtPointer)sp)); n++;
-      XtSetArg(args[n],XmNvalueChangedCallback,make_callback_list(W_expand_ValueChanged_Callback,(XtPointer)sp)); n++;
+      XtSetArg(args[n],XmNdragCallback,n5 = make_callback_list(W_expand_Drag_Callback,(XtPointer)sp)); n++;
+      XtSetArg(args[n],XmNvalueChangedCallback,n6 = make_callback_list(W_expand_ValueChanged_Callback,(XtPointer)sp)); n++;
       sw[W_expand] = XtCreateManagedWidget("",xmScrollBarWidgetClass,sw[W_amp_form],args,n);
       XtAddCallback(sw[W_expand],XmNhelpCallback,W_expand_Help_Callback,ss);
       XtAddEventHandler(sw[W_expand],KeyPressMask,FALSE,graph_key_press,(XtPointer)sp);
@@ -1967,8 +1968,8 @@ snd_info *add_sound_window (char *filename, snd_state *ss)
       XtSetArg(args[n],XmNheight,16); n++;
       XtSetArg(args[n],XmNvalue,0); n++;
       XtSetArg(args[n],XmNmarginHeight,CONTROLS_MARGIN); n++;
-      XtSetArg(args[n],XmNdragCallback,make_callback_list(W_contrast_Drag_Callback,(XtPointer)sp)); n++;
-      XtSetArg(args[n],XmNvalueChangedCallback,make_callback_list(W_contrast_ValueChanged_Callback,(XtPointer)sp)); n++;
+      XtSetArg(args[n],XmNdragCallback,n7 = make_callback_list(W_contrast_Drag_Callback,(XtPointer)sp)); n++;
+      XtSetArg(args[n],XmNvalueChangedCallback,n8 = make_callback_list(W_contrast_ValueChanged_Callback,(XtPointer)sp)); n++;
       sw[W_contrast] = XtCreateManagedWidget("",xmScrollBarWidgetClass,sw[W_amp_form],args,n);
       XtAddCallback(sw[W_contrast],XmNhelpCallback,W_contrast_Help_Callback,ss);
       XtAddEventHandler(sw[W_contrast],KeyPressMask,FALSE,graph_key_press,(XtPointer)sp);
@@ -2026,8 +2027,8 @@ snd_info *add_sound_window (char *filename, snd_state *ss)
       XtSetArg(args[n],XmNheight,16); n++;
       XtSetArg(args[n],XmNvalue,0); n++;
       XtSetArg(args[n],XmNmarginHeight,CONTROLS_MARGIN); n++;
-      XtSetArg(args[n],XmNdragCallback,make_callback_list(W_revscl_Drag_Callback,(XtPointer)sp)); n++;
-      XtSetArg(args[n],XmNvalueChangedCallback,make_callback_list(W_revscl_ValueChanged_Callback,(XtPointer)sp)); n++;
+      XtSetArg(args[n],XmNdragCallback,n9 = make_callback_list(W_revscl_Drag_Callback,(XtPointer)sp)); n++;
+      XtSetArg(args[n],XmNvalueChangedCallback,n10 = make_callback_list(W_revscl_ValueChanged_Callback,(XtPointer)sp)); n++;
       sw[W_revscl] = XtCreateManagedWidget("",xmScrollBarWidgetClass,sw[W_amp_form],args,n);
       XtAddCallback(sw[W_revscl],XmNhelpCallback,W_revscl_Help_Callback,ss);
       XtAddEventHandler(sw[W_revscl],KeyPressMask,FALSE,graph_key_press,(XtPointer)sp);
@@ -2110,8 +2111,8 @@ snd_info *add_sound_window (char *filename, snd_state *ss)
       XtSetArg(args[n],XmNheight,16); n++;
       XtSetArg(args[n],XmNvalue,20); n++;
       XtSetArg(args[n],XmNmarginHeight,CONTROLS_MARGIN); n++;
-      XtSetArg(args[n],XmNdragCallback,make_callback_list(W_revlen_Drag_Callback,(XtPointer)sp)); n++;
-      XtSetArg(args[n],XmNvalueChangedCallback,make_callback_list(W_revlen_ValueChanged_Callback,(XtPointer)sp)); n++;
+      XtSetArg(args[n],XmNdragCallback,n11 = make_callback_list(W_revlen_Drag_Callback,(XtPointer)sp)); n++;
+      XtSetArg(args[n],XmNvalueChangedCallback,n12 = make_callback_list(W_revlen_ValueChanged_Callback,(XtPointer)sp)); n++;
       sw[W_revlen] = XtCreateManagedWidget("",xmScrollBarWidgetClass,sw[W_amp_form],args,n);
       XtAddCallback(sw[W_revlen],XmNhelpCallback,W_revlen_Help_Callback,ss);
       XtAddEventHandler(sw[W_revlen],KeyPressMask,FALSE,graph_key_press,(XtPointer)sp);
@@ -2364,6 +2365,18 @@ snd_info *add_sound_window (char *filename, snd_state *ss)
       XtAddEventHandler(sw[W_filter_env],ButtonMotionMask,FALSE,filter_drawer_button_motion,sp);
       XtAddEventHandler(sw[W_filter_env],ButtonReleaseMask,FALSE,filter_drawer_button_release,sp);
       XtAddEventHandler(sw[W_filter_env],KeyPressMask,FALSE,graph_key_press,(XtPointer)sp);
+      FREE(n1);
+      FREE(n2);
+      FREE(n3);
+      FREE(n4);
+      FREE(n5);
+      FREE(n6);
+      FREE(n7);
+      FREE(n8);
+      FREE(n9);
+      FREE(n10);
+      FREE(n11);
+      FREE(n12);
       /* end if control-panel */
 #if (XmVERSION > 1)
       if (sound_style(ss) == SOUNDS_IN_NOTEBOOK)

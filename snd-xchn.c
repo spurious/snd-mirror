@@ -681,6 +681,7 @@ void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, in
 {
   Widget *cw;
   Widget left_widget = NULL;
+  XtCallbackList n1,n2,n3,n4,n5,n6,n7,n8,n9,n10,n11,n12,n13,n14;
   chan_info *cp;
   chan_context *cx;
   axis_context *cax;
@@ -836,8 +837,8 @@ void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, in
       XtSetArg(args[n],XmNmaximum,SCROLLBAR_MAX); n++; 
       XtSetArg(args[n],XmNincrement,1); n++;
       XtSetArg(args[n],XmNprocessingDirection,XmMAX_ON_TOP); n++;
-      XtSetArg(args[n],XmNdragCallback,make_callback_list(W_zy_Drag_Callback,(XtPointer)cp)); n++;
-      XtSetArg(args[n],XmNvalueChangedCallback,make_callback_list(W_zy_ValueChanged_Callback,(XtPointer)cp)); n++;
+      XtSetArg(args[n],XmNdragCallback,n1 = make_callback_list(W_zy_Drag_Callback,(XtPointer)cp)); n++;
+      XtSetArg(args[n],XmNvalueChangedCallback,n2 = make_callback_list(W_zy_ValueChanged_Callback,(XtPointer)cp)); n++;
       cw[W_zy] = XtCreateManagedWidget("chn-zy",xmScrollBarWidgetClass,cw[W_left_scrollers],args,n);
       XtAddCallback(cw[W_zy],XmNhelpCallback,W_zy_Help_Callback,ss);
       XtAddEventHandler(cw[W_zy],KeyPressMask,FALSE,graph_key_press,(XtPointer)sp);
@@ -854,8 +855,8 @@ void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, in
       XtSetArg(args[n],XmNmaximum,SCROLLBAR_SY_MAX); n++;
       XtSetArg(args[n],XmNincrement,1); n++;
       XtSetArg(args[n],XmNprocessingDirection,XmMAX_ON_TOP); n++;
-      XtSetArg(args[n],XmNdragCallback,make_callback_list(W_sy_Drag_Callback,(XtPointer)cp)); n++;
-      XtSetArg(args[n],XmNvalueChangedCallback,make_callback_list(W_sy_ValueChanged_Callback,(XtPointer)cp)); n++;
+      XtSetArg(args[n],XmNdragCallback,n3 = make_callback_list(W_sy_Drag_Callback,(XtPointer)cp)); n++;
+      XtSetArg(args[n],XmNvalueChangedCallback,n4 = make_callback_list(W_sy_ValueChanged_Callback,(XtPointer)cp)); n++;
       cw[W_sy] = XtCreateManagedWidget("chn-sy",xmScrollBarWidgetClass,cw[W_left_scrollers],args,n);
       XtAddCallback(cw[W_sy],XmNhelpCallback,W_sy_Help_Callback,ss);
       XtAddEventHandler(cw[W_sy],KeyPressMask,FALSE,graph_key_press,(XtPointer)sp);
@@ -882,10 +883,10 @@ void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, in
       XtSetArg(args[n],XmNorientation,XmHORIZONTAL); n++;
       XtSetArg(args[n],XmNmaximum,sp->sx_scroll_max); n++;
       XtSetArg(args[n],XmNincrement,1); n++;
-      XtSetArg(args[n],XmNdragCallback,make_callback_list(W_sx_Drag_Callback,(XtPointer)cp)); n++;
-      XtSetArg(args[n],XmNincrementCallback,make_callback_list(W_sx_Increment_Callback,(XtPointer)cp)); n++;
-      XtSetArg(args[n],XmNdecrementCallback,make_callback_list(W_sx_Decrement_Callback,(XtPointer)cp)); n++;
-      XtSetArg(args[n],XmNvalueChangedCallback,make_callback_list(W_sx_ValueChanged_Callback,(XtPointer)cp)); n++;
+      XtSetArg(args[n],XmNdragCallback,n5 = make_callback_list(W_sx_Drag_Callback,(XtPointer)cp)); n++;
+      XtSetArg(args[n],XmNincrementCallback,n6 = make_callback_list(W_sx_Increment_Callback,(XtPointer)cp)); n++;
+      XtSetArg(args[n],XmNdecrementCallback,n7 = make_callback_list(W_sx_Decrement_Callback,(XtPointer)cp)); n++;
+      XtSetArg(args[n],XmNvalueChangedCallback,n8 = make_callback_list(W_sx_ValueChanged_Callback,(XtPointer)cp)); n++;
       cw[W_sx] = XtCreateManagedWidget("chn-sx",xmScrollBarWidgetClass,cw[W_bottom_scrollers],args,n);
       XtAddCallback(cw[W_sx],XmNhelpCallback,W_sx_Help_Callback,ss);
       XtAddEventHandler(cw[W_sx],KeyPressMask,FALSE,graph_key_press,(XtPointer)sp);
@@ -901,8 +902,8 @@ void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, in
       XtSetArg(args[n],XmNrightAttachment,XmATTACH_FORM); n++;
       XtSetArg(args[n],XmNmaximum,SCROLLBAR_MAX); n++;
       XtSetArg(args[n],XmNincrement,1); n++;
-      XtSetArg(args[n],XmNdragCallback,make_callback_list(W_zx_Drag_Callback,(XtPointer)cp)); n++;
-      XtSetArg(args[n],XmNvalueChangedCallback,make_callback_list(W_zx_ValueChanged_Callback,(XtPointer)cp)); n++;
+      XtSetArg(args[n],XmNdragCallback,n9 = make_callback_list(W_zx_Drag_Callback,(XtPointer)cp)); n++;
+      XtSetArg(args[n],XmNvalueChangedCallback,n10 = make_callback_list(W_zx_ValueChanged_Callback,(XtPointer)cp)); n++;
       cw[W_zx] = XtCreateManagedWidget("chn-zx",xmScrollBarWidgetClass,cw[W_bottom_scrollers],args,n);
       XtAddCallback(cw[W_zx],XmNhelpCallback,W_zx_Help_Callback,ss);
       XtAddEventHandler(cw[W_zx],KeyPressMask,FALSE,graph_key_press,(XtPointer)sp);
@@ -938,6 +939,17 @@ void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, in
 	  XtAddEventHandler(cw[W_graph],ButtonReleaseMask,FALSE,graph_button_release,(XtPointer)cp);
 	  XtAddEventHandler(cw[W_graph],KeyPressMask,FALSE,cp_graph_key_press,(XtPointer)cp);
 	}
+      FREE(n1);
+      FREE(n2);
+      FREE(n3);
+      FREE(n4);
+      FREE(n5);
+      FREE(n6);
+      FREE(n7);
+      FREE(n8);
+      FREE(n9);
+      FREE(n10);
+      
       if (need_extra_scrollbars)
 	{
 	  /* that is: not region browser chan, might need combined graph, channel 0 is the controller in that case */
@@ -954,8 +966,8 @@ void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, in
 	  XtSetArg(args[n],XmNmaximum,SCROLLBAR_MAX); n++; 
 	  XtSetArg(args[n],XmNincrement,1); n++;
 	  XtSetArg(args[n],XmNprocessingDirection,XmMAX_ON_TOP); n++;
-	  XtSetArg(args[n],XmNdragCallback,make_callback_list(W_gzy_Drag_Callback,(XtPointer)cp)); n++;
-	  XtSetArg(args[n],XmNvalueChangedCallback,make_callback_list(W_gzy_ValueChanged_Callback,(XtPointer)cp)); n++;
+	  XtSetArg(args[n],XmNdragCallback,n11 = make_callback_list(W_gzy_Drag_Callback,(XtPointer)cp)); n++;
+	  XtSetArg(args[n],XmNvalueChangedCallback,n12 = make_callback_list(W_gzy_ValueChanged_Callback,(XtPointer)cp)); n++;
 	  cw[W_gzy] = XtCreateManagedWidget("chn-gzy",xmScrollBarWidgetClass,cw[W_main_window],args,n);
 	  XtAddCallback(cw[W_gzy],XmNhelpCallback,W_gzy_Help_Callback,ss);
 	  XtAddEventHandler(cw[W_gzy],KeyPressMask,FALSE,graph_key_press,(XtPointer)sp);
@@ -973,11 +985,16 @@ void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, in
 	  XtSetArg(args[n],XmNmaximum,SCROLLBAR_MAX); n++;
 	  XtSetArg(args[n],XmNincrement,1); n++;
 	  XtSetArg(args[n],XmNprocessingDirection,XmMAX_ON_TOP); n++;
-	  XtSetArg(args[n],XmNdragCallback,make_callback_list(W_gsy_Drag_Callback,(XtPointer)cp)); n++;
-	  XtSetArg(args[n],XmNvalueChangedCallback,make_callback_list(W_gsy_ValueChanged_Callback,(XtPointer)cp)); n++;
+	  XtSetArg(args[n],XmNdragCallback,n13 = make_callback_list(W_gsy_Drag_Callback,(XtPointer)cp)); n++;
+	  XtSetArg(args[n],XmNvalueChangedCallback,n14 = make_callback_list(W_gsy_ValueChanged_Callback,(XtPointer)cp)); n++;
 	  cw[W_gsy] = XtCreateManagedWidget("chn-gsy",xmScrollBarWidgetClass,cw[W_main_window],args,n);
 	  XtAddCallback(cw[W_gsy],XmNhelpCallback,W_gsy_Help_Callback,ss);
 	  XtAddEventHandler(cw[W_gsy],KeyPressMask,FALSE,graph_key_press,(XtPointer)sp);
+	  
+	  FREE(n11);
+	  FREE(n12);
+	  FREE(n13);
+	  FREE(n14);
 
 	  n=0;
 	}

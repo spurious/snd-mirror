@@ -1072,6 +1072,8 @@ regrow *make_regrow(snd_state *ss, Widget ww, Widget last_row,
   Arg args[32];
   regrow *r;
   XmString s1;
+  XtCallbackList n1,n2,n3;
+
   s1 = XmStringCreate("",XmFONTLIST_DEFAULT_TAG);
   r = (regrow *)CALLOC(1,sizeof(regrow));
 
@@ -1097,7 +1099,7 @@ regrow *make_regrow(snd_state *ss, Widget ww, Widget last_row,
   XtSetArg(args[n],XmNbottomAttachment,XmATTACH_FORM); n++;
   if (!(ss->using_schemes)) {XtSetArg(args[n],XmNselectColor,(ss->sgx)->pushed_button_color); n++;}
   XtSetArg(args[n],XmNlabelString,s1); n++;
-  XtSetArg(args[n],XmNvalueChangedCallback,make_callback_list(first_callback,(XtPointer)r)); n++;
+  XtSetArg(args[n],XmNvalueChangedCallback,n1 = make_callback_list(first_callback,(XtPointer)r)); n++;
   if (ss->toggle_size > 0) {XtSetArg(args[n],XmNindicatorSize,ss->toggle_size); n++;}
   r->sv = sndCreateToggleButtonWidget("sv",r->rw,args,n);
 
@@ -1110,7 +1112,7 @@ regrow *make_regrow(snd_state *ss, Widget ww, Widget last_row,
   XtSetArg(args[n],XmNbottomAttachment,XmATTACH_FORM); n++;
   if (!(ss->using_schemes)) {XtSetArg(args[n],XmNselectColor,(ss->sgx)->pushed_button_color); n++;}
   XtSetArg(args[n],XmNlabelString,s1); n++;
-  XtSetArg(args[n],XmNvalueChangedCallback,make_callback_list(second_callback,(XtPointer)r)); n++;
+  XtSetArg(args[n],XmNvalueChangedCallback,n2 = make_callback_list(second_callback,(XtPointer)r)); n++;
   if (ss->toggle_size > 0) {XtSetArg(args[n],XmNindicatorSize,ss->toggle_size); n++;}
   r->pl = sndCreateToggleButtonWidget("pl",r->rw,args,n);
 
@@ -1128,9 +1130,14 @@ regrow *make_regrow(snd_state *ss, Widget ww, Widget last_row,
   XtSetArg(args[n],XM_FONT_RESOURCE,BOLD_BUTTON_FONT(ss)); n++;
   XtSetArg(args[n],XmNrecomputeSize,FALSE); n++;
   XtSetArg(args[n],XmNwidth,300); n++;
-  XtSetArg(args[n],XmNactivateCallback,make_callback_list(third_callback,(XtPointer)r)); n++;
+  XtSetArg(args[n],XmNactivateCallback,n3 = make_callback_list(third_callback,(XtPointer)r)); n++;
   r->nm = XtCreateManagedWidget("nm",xmPushButtonWidgetClass,r->rw,args,n);
   XmStringFree(s1);
+
+  FREE(n1);
+  FREE(n2);
+  FREE(n3);
+
   return(r);
 }
 

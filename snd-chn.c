@@ -1,9 +1,5 @@
 #include "snd.h"
 
-/* TODO  some of the guile tie-ins are still in snd-scm
- * TODO  C-g should flush pending X events (not sure how to do this given background events etc)
- */
-
 #if defined(NEXT) || defined(HAVE_SYS_DIR_H)
   #include <sys/dir.h>
   #include <sys/dirent.h>
@@ -558,8 +554,7 @@ void add_channel_data_1(chan_info *cp, snd_info *sp, snd_state *ss, int graphed)
   ap->zy = (ap->y1-ap->y0)/(ap->ymax-ap->ymin);
   ap->sy = (ap->y0-ap->ymin)/(ap->ymax-ap->ymin);
   cp->axis = ap;
-  if (graphed) initialize_scrollbars(cp);
-
+  if (graphed == WITH_GRAPH) initialize_scrollbars(cp);
   /* our initial edit_list size will be relatively small */
   cp->edit_size = INITIAL_EDIT_SIZE;
   cp->edit_ctr = 0;
@@ -594,7 +589,7 @@ void add_channel_data(char *filename, chan_info *cp, file_info *hdr, snd_state *
   snd_info *sp;
   file_info *chdr;
   sp = cp->sound;
-  add_channel_data_1(cp,sp,ss,1);
+  add_channel_data_1(cp,sp,ss,WITH_GRAPH);
   set_initial_ed_list(cp,(hdr->samples/hdr->chans) - 1);
   chdr = copy_header(filename,sp->hdr); /* need one separate from snd_info case */
   chn = cp->chan;
@@ -4229,6 +4224,7 @@ void src_env_or_num(snd_state *ss, chan_info *cp, env *e, Float ratio, int just_
     }
   FREE(data[0]);
   FREE(data);
+  for (i=0;i<si->chans;i++) if (sfs[i]) free_snd_fd(sfs[i]);
   free_sync_state(sc);
   if ((e) && (need_free_env)) free_env(e);
 }
@@ -4325,6 +4321,171 @@ static Float frequency_response(Float *coeffs, int order, Float frq)
   return(2*at);
 }
 
+/* Hartley Transfrom */
+
+static Float *fht_sines=NULL,*fht_cosines=NULL;
+static int fht_last_length = 0,fht_length = 0;
+
+static void make_sines(int length)
+{
+  int i;
+  Float freq,temp;
+  if (length != fht_last_length)
+    {
+      if (fht_length < length)
+	{
+	  if (fht_sines) FREE(fht_sines);
+	  if (fht_cosines) FREE(fht_cosines);
+	  fht_sines = (Float *)CALLOC(length,sizeof(Float));
+	  fht_cosines = (Float *)CALLOC(length,sizeof(Float));
+	  fht_length = length;
+	}
+      fht_last_length = length;
+      freq = TWO_PI / (Float)length;
+      for (i=0;i<length;i++) 
+	{
+	  temp = freq * i;
+	  fht_sines[i] = sin(temp);
+	  fht_cosines[i] = cos(temp);
+        }
+    }
+}
+
+static void fht(int powerOfFour, Float *array)
+{
+  /*  In place Fast Hartley Transform of floating point data in array.
+      Size of data array must be power of four. Lots of sets of four 
+      inline code statements, so it is verbose and repetitive, but fast. 
+      The Fast Hartley Transform algorithm is patented, and is documented
+      in the book "The Hartley Transform", by Ronald N. Bracewell.
+      This routine was converted to C from a BASIC routine in the above book,
+      that routine Copyright 1985, The Board of Trustees of Stanford University 	
+   */
+  /* fht is its own inverse, so to speak -- run it again to return to original data */
+
+  register int j=0,i=0,k=0,L=0;
+  int n=0,n4=0,d1=0,d2=0,d3=0,d4=0,d5=1,d6=0,d7=0,d8=0,d9=0;
+  int L1=0,L2=0,L3=0,L4=0,L5=0,L6=0,L7=0,L8=0;
+  int n_over_d3;
+  Float r=0.0;
+  int a1=0,a2=0,a3=0;
+  Float t=0.0,t1=0.0,t2 =0.0,t3=0.0,t4=0.0,t5=0.0,t6=0.0,t7=0.0,t8=0.0;
+  Float t9=0.0,t0=0.0;
+  n = (int)(pow(4.0 ,(double)powerOfFour));
+  make_sines(n);
+  n4 = n / 4;
+  r = 1.414213562;
+  j = 1;
+  i = 0;
+  while (i<n-1)	
+    {
+      i++;
+      if (i<j)	
+	{
+	  t = array[j-1];
+	  array[j-1] = array[i-1];
+	  array[i-1] = t;
+    	}
+      k = n4;
+      while ((3*k)<j)	
+	{
+	  j -= 3 * k;
+	  k /= 4;
+    	}
+      j += k;
+    }
+  for (i=0;i<n;i += 4) 
+    {
+      t5 = array[i];
+      t6 = array[i+1];
+      t7 = array[i+2];
+      t8 = array[i+3];
+      t1 = t5 + t6;
+      t2 = t5 - t6;
+      t3 = t7 + t8;
+      t4 = t7 - t8;
+      array[i] = t1 + t3;
+      array[i+1] = t1 - t3;
+      array[i+2] = t2 + t4;
+      array[i+3] = t2 - t4;
+    }
+  for (L=2;L<=powerOfFour;L++)  
+    {
+      d1 = (int)(pow(2.0 , L+L-3.0));
+      d2=d1+d1;
+      d3=d2+d2;
+      n_over_d3 = n / 2 / d3;
+      d4=d2+d3;
+      d5=d3+d3;
+      for (j=0;j<n;j += d5)	  
+	{
+	  t5 = array[j];
+	  t6 = array[j+d2];
+	  t7 = array[j+d3];
+	  t8 = array[j+d4];
+	  t1 = t5+t6;
+	  t2 = t5-t6;
+	  t3 = t7+t8;
+	  t4 = t7-t8;
+	  array[j] = t1 + t3;
+	  array[j+d2] = t1 - t3;
+	  array[j+d3] = t2 + t4;
+	  array[j+d4] = t2 - t4;
+	  d6 = j+d1;
+	  d7 = j+d1+d2;
+	  d8 = j+d1+d3;
+	  d9 = j+d1+d4;
+	  t1 = array[d6];
+	  t2 = array[d7] * r;
+	  t3 = array[d8];
+	  t4 = array[d9] * r;
+	  array[d6] = t1 + t2 + t3;
+	  array[d7] = t1 - t3 + t4;
+	  array[d8] = t1 - t2 + t3;
+	  array[d9] = t1 - t3 - t4;
+	  for (k=1;k<d1;k++)	
+	    {
+	      L1 = j + k;
+	      L2 = L1 + d2;
+	      L3 = L1 + d3;
+	      L4 = L1 + d4;
+	      L5 = j + d2 - k;
+	      L6 = L5 + d2;
+	      L7 = L5 + d3;
+	      L8 = L5 + d4;
+	      a1 = (int) (k * n_over_d3) % n;
+	      a2 = (a1 + a1) % n;
+	      a3 = (a1 + a2) % n;
+	      t5 = array[L2] * fht_cosines[a1] + array[L6] * fht_sines[a1];
+	      t6 = array[L3] * fht_cosines[a2] + array[L7] * fht_sines[a2];
+	      t7 = array[L4] * fht_cosines[a3] + array[L8] * fht_sines[a3];
+	      t8 = array[L6] * fht_cosines[a1] - array[L2] * fht_sines[a1];
+	      t9 = array[L7] * fht_cosines[a2] - array[L3] * fht_sines[a2];
+	      t0 = array[L8] * fht_cosines[a3] - array[L4] * fht_sines[a3];
+	      t1 = array[L5] - t9;
+	      t2 = array[L5] + t9;
+	      t3 = - t8 - t0;
+	      t4 = t5 - t7;
+	      array[L5] = t1 + t4;
+	      array[L6] = t2 + t3;
+	      array[L7] = t1 - t4;
+	      array[L8] = t2 - t3;
+	      t1 = array[L1] + t6;
+	      t2 = array[L1] - t6;
+	      t3 = t8 - t0;
+	      t4 = t5 + t7;
+	      array[L1] = t1 + t4;
+	      array[L2] = t2 + t3;
+	      array[L3] = t1 - t4;
+	      array[L4] = t2 - t3;
+	    }
+	}
+    }		  
+}
+
+
+#define USE_MUS_FFT 0
+
 void apply_filter(chan_info *ncp, int order, env *e, int from_enved, char *origin, int over_selection, Float *ur_a)
 {
   /* interpret e as frequency response and apply as filter to all sync'd chans */
@@ -4345,8 +4506,14 @@ void apply_filter(chan_info *ncp, int order, env *e, int from_enved, char *origi
   char *ofile = NULL;
   chan_info *cp;
   int fsize;
-  Float scale,spectr;
-  Float *sndrdat,*sndidat,*fltdat;
+  Float scale;
+  Float *sndrdat,*fltdat;
+#if USE_MUS_FFT
+  Float *sndidat;
+  Float spectr;
+#else
+  int pow4;
+#endif
 
   if ((!e) && (!ur_a)) return;
   ss = ncp->state;
@@ -4357,7 +4524,7 @@ void apply_filter(chan_info *ncp, int order, env *e, int from_enved, char *origi
   sfs = sc->sfs;
   scdur = sc->dur;
 
-  if ((!ur_a) && (!over_selection) && (order > 512) && ((int)((current_ed_samples(ncp)+order)/128) < ss->memory_available))
+  if ((!ur_a) && (!over_selection) && (order >= 256) && ((int)((current_ed_samples(ncp)+order)/128) < ss->memory_available))
     {
       /* use convolution if order is large and there's memory available (and not over_selection) */
       /*   probably faster here would be overlap-add */
@@ -4372,7 +4539,8 @@ void apply_filter(chan_info *ncp, int order, env *e, int from_enved, char *origi
 	      if (sfs[i]) {free_snd_fd(sfs[i]); sfs[i] = NULL;}
 	      continue;
 	    }
-
+#if USE_MUS_FFT
+	  /* this is about 3 times slower then the fht version below */
 	  fsize = (int)(pow(2.0,(int)ceil(log(order + dur)/log(2.0))));
 	  sndrdat = (Float *)CALLOC(fsize,sizeof(Float));
 	  sndidat = (Float *)CALLOC(fsize,sizeof(Float));
@@ -4398,6 +4566,29 @@ void apply_filter(chan_info *ncp, int order, env *e, int from_enved, char *origi
 	      sndidat[k] *= spectr;
 	    }
 	  mus_fft(sndrdat,sndidat,fsize,-1);
+#else
+	  fsize = (int)(pow(4.0,pow4 = (int)ceil(log(order + dur)/log(4.0))));
+	  sndrdat = (Float *)CALLOC(fsize,sizeof(Float));
+	  fltdat = env2array(fsize,e);
+
+	  sf = sfs[i]; /* init_sample_read(0,cp,READ_FORWARD); */
+	  for (k=0;k<dur;k++) sndrdat[k] = (Float)(next_sample_to_float(sf));
+	  sfs[i] = free_snd_fd(sf);
+
+	  fht(pow4,sndrdat);
+	  check_for_event(ss);
+	  if (ss->stopped_explicitly)
+	    {
+	      ss->stopped_explicitly = 0;
+	      report_in_minibuffer(sp,"stopped");
+	      break;
+	    }
+	  scale = 1.0 / (Float)fsize;
+	  for (k=0;k<fsize;k++)
+	    sndrdat[k] *= (scale * fltdat[k]); /* fltdat (via env2array) is already reflected around midpoint */
+	  fht(pow4,sndrdat);
+#endif
+
 	  ofile = snd_tempnam(ss);
 	  hdr = make_temp_header(ofile,SND_SRATE(sp),1,dur);
 #if MUS_LITTLE_ENDIAN
@@ -4417,7 +4608,9 @@ void apply_filter(chan_info *ncp, int order, env *e, int from_enved, char *origi
 	  if (ofile) {free(ofile); ofile=NULL;}
 	  update_graph(cp,NULL);
 	  FREE(sndrdat);
+#if USE_MUS_FFT
 	  FREE(sndidat);
+#endif
 	  FREE(fltdat);
 	  check_for_event(ss);
 	  if (ss->stopped_explicitly)
@@ -7381,8 +7574,7 @@ axis_context *selected_mix_waveform_context (chan_info *cp) {return(set_context(
 static axis_context *combined_context (chan_info *cp)       {return(set_context(cp,CHAN_TMPGC));}
 
 #if HAVE_GUILE
-
-/* -------- EXTERNAL PROGRAMS -------- */
+#include "vct.h"
 
 #define USE_FULL_FILE 0
 #define USE_SELECTION 1
@@ -9621,6 +9813,24 @@ static SCM g_swap_channels(SCM snd0, SCM chn0, SCM snd1, SCM chn1, SCM beg, SCM 
   return(SCM_BOOL_F);
 }
 
+static SCM g_fht(SCM data)
+{
+  #define H_fht "(fht vct-obj) returns the Hartley transform of the data in the vct object whose size must be a power of 4"
+  vct *v;
+  int pow4;
+  SCM_ASSERT(vct_p(data),data,SCM_ARG1,S_fht);
+  v = get_vct(data);
+  pow4 = (int)(round(log(v->length) / (log(4))));
+  if (((int)(pow(4.0,pow4))) != v->length) 
+    scm_misc_error(S_fht,
+		   "fht data length must be a power of 4: ~S: ~S (~S)",
+		   SCM_LIST3(gh_int2scm(v->length),
+			     gh_double2scm((log(v->length) / (log(4)))),
+			     gh_int2scm((int)(pow(4.0,pow4)))));
+  fht(pow4,v->data);
+  return(data);
+}
+
 static SCM mouse_press_hook,mark_click_hook;
 static SCM mouse_release_hook,mouse_drag_hook,key_press_hook,fft_hook;
 static SCM graph_hook,after_graph_hook;
@@ -9804,6 +10014,7 @@ void g_init_chn(SCM local_doc)
   DEFINE_PROC(gh_new_procedure(S_reverse_selection,SCM_FNC g_reverse_selection,0,0,0),H_reverse_selection);
   DEFINE_PROC(gh_new_procedure(S_swap_channels,SCM_FNC g_swap_channels,0,6,0),H_swap_channels);
   DEFINE_PROC(gh_new_procedure(S_insert_silence,SCM_FNC g_insert_silence,2,2,0),H_insert_silence);
+  DEFINE_PROC(gh_new_procedure(S_fht,SCM_FNC g_fht,1,0,0),H_fht);
 
   define_procedure_with_reversed_setter(S_edit_position,SCM_FNC g_edit_position,H_edit_position,
 					"set-" S_edit_position,SCM_FNC g_set_edit_position, SCM_FNC g_set_edit_position_reversed,

@@ -1,6 +1,6 @@
 #include "snd.h"
 
-/* TODO:   dolph-chebychev window  
+/* TODO:   dolph-chebychev window in C (see examp.scm)
  */
 
 /* handling of "beta" changed drastically 28-June-98 
@@ -1345,9 +1345,6 @@ static int apply_fft_window(fft_state *fs)
 	SCM res,sfd;
 	vct *v;
 	int len,i;
-#if DEBUGGING
-	sf->origin = copy_string("fft");
-#endif
 	sfd = g_c_make_sample_reader(sf);
 	snd_protect(sfd);
 	res = g_call2(added_transform_proc(cp->transform_type),gh_int2scm(data_len),sfd);

@@ -443,6 +443,7 @@ void fire_up_transform_dialog(snd_state *ss)
   XmString wavelets[NUM_WAVELETS];
   XmString windows[NUM_FFT_WINDOWS];
   XGCValues gv;
+  XtCallbackList n1,n2;
   int size_pos = 1;
   int n,i,need_callback = 0;
   Widget mainform,type_frame,type_form,type_label,
@@ -879,8 +880,8 @@ void fire_up_transform_dialog(snd_state *ss)
       XtSetArg(args[n],XmNshowValue,TRUE); n++;
       XtSetArg(args[n],XmNdecimalPoints,2); n++;
       XtSetArg(args[n],XmNvalue,100 * fft_beta(ss)); n++;
-      XtSetArg(args[n],XmNdragCallback,make_callback_list(beta_Callback,(XtPointer)ss)); n++;
-      XtSetArg(args[n],XmNvalueChangedCallback,make_callback_list(beta_Callback,(XtPointer)ss)); n++;
+      XtSetArg(args[n],XmNdragCallback,n1 = make_callback_list(beta_Callback,(XtPointer)ss)); n++;
+      XtSetArg(args[n],XmNvalueChangedCallback,n2 = make_callback_list(beta_Callback,(XtPointer)ss)); n++;
       window_beta_scale = XtCreateManagedWidget("scale",xmScaleWidgetClass,window_form,args,n);
       XtAddCallback(window_beta_scale,XmNhelpCallback,beta_help_Callback,ss);
 
@@ -981,6 +982,9 @@ void fire_up_transform_dialog(snd_state *ss)
       XmListSelectPos(window_list,fft_window(ss)+1,FALSE);
       need_callback = 1;
       if (fft_window_beta_in_use(fft_window(ss))) XtVaSetValues(window_beta_scale,XmNbackground,(ss->sgx)->highlight_color,NULL);
+
+      FREE(n1);
+      FREE(n2);
     }
   else
     {
