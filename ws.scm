@@ -1,4 +1,11 @@
+;;; with-sound and friends
+
 (use-modules (ice-9 optargs) (ice-9 format))
+
+;;; TODO: with-mix?
+;;; TODO: definstrument run loop needs to be interruptible via C-g (and this should interrupt with-sound as well)
+;;; TODO: definstrument state readback
+
 
 ;;; changed default variable names 3-Apr-03 for Common Music's benefit
 ;;;   *clm-channels* is the default number of with-sound output chans in
@@ -279,9 +286,6 @@
 	output)
       (throw 'wrong-type-arg
 	     (list "finish-with-sound" wsd))))
-
-;;; TODO: with-mix?
-
 
 (define (mus-data-format->string df)
   (cond ((= df mus-bshort) "mus-bshort")

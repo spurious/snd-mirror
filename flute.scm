@@ -1,6 +1,7 @@
 ;;; Nicky Hind's physical model of a flute (from CLM flute.ins)
 
 (use-modules (ice-9 optargs))
+(if (not (defined? '*output*)) (load-from-path "ws.scm"))
 
 (definstrument (stereo-flute start dur freq flow 
 			     #:key

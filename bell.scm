@@ -1,4 +1,5 @@
 (use-modules (ice-9 optargs))
+(if (not (defined? '*output*)) (load-from-path "ws.scm"))
 
 (definstrument (fm-bell startime dur frequency amplitude #:optional amp-env index-env index)
   "(fm-bell startime dur frequency amplitude #:optional amp-env index-env index) mixes in one fm bell note"

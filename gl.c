@@ -227,6 +227,7 @@ static int how_many_vals(GLenum gl)
     case GL_LINE_WIDTH_RANGE:
       return(2);
       break;
+    default: return(1); break; /* try to squelch c++ babbling */
     }
   return(1);
 }
@@ -5181,10 +5182,10 @@ static int gl_already_inited = FALSE;
       define_functions();
       XEN_YES_WE_HAVE("gl");
 #if HAVE_GUILE
-      XEN_EVAL_C_STRING("(define gl-version \"08-Mar-03\")");
+      XEN_EVAL_C_STRING("(define gl-version \"15-May-03\")");
 #endif
 #if HAVE_RUBY
-      rb_define_global_const("Gl_Version", C_TO_XEN_STRING("08-Mar-03"));
+      rb_define_global_const("Gl_Version", C_TO_XEN_STRING("15-May-03"));
 #endif
       gl_already_inited = TRUE;
     }

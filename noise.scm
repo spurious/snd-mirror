@@ -14,7 +14,8 @@
 ;;; The "noise" instrument (useful for Oceanic Music):
 
 (use-modules (ice-9 format) (ice-9 optargs))
-(load-from-path "ws.scm")
+(if (not (defined? '*output*)) (load-from-path "ws.scm"))
+(load-from-path "env.scm") ; for stretch-envelope
 
 (define *locsig-type* mus-sinusoidal)
 
@@ -26,7 +27,7 @@
 		    attack)
 		duration)))
 
-(define* (fm-noise startime dur freq0 amp ampfun ampat ampdc
+(definstrument (fm-noise startime dur freq0 amp ampfun ampat ampdc
 		   freq1 glissfun freqat freqdc rfreq0 rfreq1 rfreqfun rfreqat rfreqdc
 		   dev0 dev1 devfun devat devdc
 		   #:key (degree 0.0)

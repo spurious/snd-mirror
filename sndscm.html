@@ -35,6 +35,7 @@
   <li><a href="#belldoc">bell.scm: the fm-bell from CLM</a>
   <li><a href="#bessdoc">bess.scm, bess.rb: FM demo</a>
   <li><a href="#birddoc">bird.scm, bird.rb: North-American birds</a>
+  <li><a href="#clminsdoc">clm-ins.scm: more CLM instruments</a>
   <li><a href="#dlocsigdoc">dlocsig.rb (Michael Scholz)</a>
   <li><a href="#dlpdoc">dlp and tutorial directories from Dave Phillips</a>
   <li><a href="#drawdoc">draw.scm: graphics additions</a>
@@ -164,53 +165,10 @@ up a simple sine wave (bird) and simple waveshaping synthesis (bigbird).  Use a
 low-pass filter for distance effects (a bird song sounds really silly
 reverberated).  All the real information is in the amplitude and frequency
 envelopes.  These were transcribed from sonograms found in some bird guides and articles from
-the Cornell Ornithology Lab.  The variable <i>with-editable-mixes</i> controls
-whether each bird is tagged so that you can move it around later (for a pretty picture of the
-result, check <a href="snd.html#mixingfiles">this</a> out).  The function
-<i>one-bird</i> mixes in one complete birdsong, using the bird's name for the
-edit history list.  Many of these birds were used in "Colony".  To hear all the
-birds, <code>(make-birds)</code>.  This writes the sequence out as "test.snd"; give the
-desired file name as the (optional) argument to <i>make-birds</i>: <code>(make-birds "birds.snd")</code>.
+the Cornell Ornithology Lab. 
+Many of these birds were used in "Colony".  To hear all the
+birds, <code>(make-birds)</code>.  This writes the sequence out as "test.snd" using with-sound.
 Waveshaping is described in Le Brun, "Digital Waveshaping Synthesis", JAES 1979 April, vol 27, no 4, p250.
-</p>
-<pre>
-(define (one-bird beg maxdur func birdname)
-  (set! out-data (make-vct (round (* (srate) maxdur))))
-  (func)
-  (as-one-edit 
-   (lambda ()
-     (mix-vct out-data (round (* beg (srate))) out-file 0 with-editable-mixes))
-   birdname))
-</pre>
-<p>The <i>one-bird</i> function collects all the individual tweets of a given bird song
-into one vct, then mixes that into the output sound.  The <i>beg</i> and <i>maxdur</i>
-arguments set the begin time and maximum duration in seconds of the mix; the duration is
-used to allocate the global vct <i>out-data</i>. The <i>func</i> argument is
-a Scheme function of no arguments (known in Scheme as a thunk).  It is called
-via <code>(func)</code>; the assumption is that <i>func</i> will actually provide
-a complete bird song:</p>
-<pre>
-(define (bobwhite beg)
-  (let ((bobup1 '(.00 .00 .40 1.00 1.00 1.0))
-	(bobup2 '(.00 .00 .65 .50 1.00 1.0)))
-    (one-bird beg 2.0
-     (lambda ()
-       (bigbird .4 .2 1800 200 .1 bobup1 main-amp '(1 1 2 .02))
-       (bigbird 1 .20 1800 1200 .2 bobup2 main-amp '(1 1 2 .02)))
-     (report-in-minibuffer "bobwhite"))))
-</pre>
-<p>defines a Bobwhite call (a kind of mid-western quail, <i>Colinus virginianus</i> -- I grew up in Oklahoma
-and heard these calls every day). The <i>func</i> in this case is:</p>
-<pre>
-     (lambda ()
-       (bigbird .4 .2 1800 200 .1 bobup1 main-amp '(1 1 2 .02))
-       (bigbird 1 .20 1800 1200 .2 bobup2 main-amp '(1 1 2 .02)))
-</pre>
-<p>which calls bigbird twice (the "bob" and the "white"). It also reports the
-name "bobwhite" in the minibuffer (this is mostly to let the caller know that
-something is happening -- since we aren't calling update-graph, there's no
-visual indication that a bird has been mixed in).
-In <i>bigbird</i> the lines
 </p>
 <pre>
            ...
@@ -257,6 +215,30 @@ def bird(start, dur, frequency, freqskew, amplitude, freq_envelope, amp_envelope
 end
 </pre>
 <br>
+
+<A NAME="clminsdoc"></a><span class=box><h2>clm-ins.scm</h2></span>
+
+<p>These are instruments from the CLM tarball translated for use in Snd.
+</p>
+<pre>
+  <em class=def>bes-fm</em>           from Bessel.lisp, FM analog using J0 rather than sin
+  <em class=def>fofins</em> ...many args...
+  <em class=def>pluck</em> start dur freq amp weighting lossfact
+  <em class=def>vox</em> beg dur freq amp ampfun freqfun freqscl voxfun index vibscl
+</pre>
+<p>
+<i>fofins</i> is an implementation of FOF synthesis, taken originally from
+fof.c of Perry Cook and the article
+"Synthesis of the Singing Voice" by Bennett and Rodet in
+"Current Directions in Computer Music Research" (MIT Press).
+<i>pluck</i> is based on
+the Karplus-Strong algorithm as extended by David Jaffe and Julius Smith -- see 
+Jaffe and Smith, "Extensions of the Karplus-Strong Plucked-String Algorithm"
+CMJ vol 7 no 2 Summer 1983, reprinted in "The Music Machine".
+Another physical model is Nicky Hind's flute in flute.scm.
+<i>vox</i> is a translations of Marc LeBrun's MUS10 waveshaping voice instrument
+using FM in this case.  The waveshaping version can be found in <a href="#pqwvoxdoc">pqwvox.scm</a>.
+</p>
 
 <A NAME="dlocsigdoc"></a><span class=box><h2>dlocsig.rb</h2></span>
 
@@ -828,19 +810,8 @@ I'm slowly dividing out related groups of procedures to separate files.
     <li>cross-synthesis (using a formant bank)
     <li>voiced-&gt;unvoiced (formants)
     <li>convolution (convolve)
-    <li>reverb (all-pass etc)
     <li>fancier locsig
     <li>"vector synthesis"
-  </ul>
-</small>
-<li><a href="#sssynthesis">synthesis</a>
-<small>
-  <ul>
-    <li>scissor-tailed flycatcher (waveshaping)
-    <li>fm-violin (FM and various other generators, #:key args)
-    <li>FOF voice synthesis (wave-train, #:optional args)
-    <li>pluck instrument (physical modelling)
-    <li>voice instrument (formants via FM)
     <li>chain-dsps
   </ul>
 </small>
@@ -1180,6 +1151,7 @@ the split depends on the panning envelope (0 = all in chan 0, etc).
   <em class=def>cnvtest</em> snd0 snd1 amp
   <em class=def>jc-reverb</em> decay-dur low-pass volume amp-env
   <em class=def>"vector synthesis"</em>	
+  <em class=def>chained-dsps</em> beg dur #:rest dsps
 </pre>
 <p><i>expsrc</i> uses sampling rate conversion (the src gen) and granular synthesis (granulate)
 to lengthen or shorten a sound without changing its pitch.  The same idea is used in the effects menu.
@@ -1211,35 +1183,9 @@ Here are some sample calls:
 <p>There are lots more sound effects scattered around the Snd distribution.
 "vector synthesis" cycles through a collection of incoming audio streams, playing whatever
 happens to be on the chosen one, with fade-ins and fade-outs to avoid clicks.
-</p>
-
-<!-- -------------------------------- SYNTHESIS -------------------------------- -->
-<span class=bbox><h3><A NAME="sssynthesis">synthesis</a></h3></span>
-
-<p>The synthesis examples are taken primarily from CLM:</p>
-<pre>
-  <em class=def>scissor</em> begin-time
-  <em class=def>fm-violin</em> ...many args...
-  <em class=def>fofins</em> ...many args...
-  <em class=def>pluck</em> start dur freq amp weighting lossfact
-  <em class=def>vox</em> beg dur freq amp ampfun freqfun freqscl voxfun index vibscl
-  <em class=def>chained-dsps</em> beg dur #:rest dsps
-</pre>
-<p><i>scissor</i> synthesizes the squawk of the scissor-tailed flycatcher (state bird of Oklahoma, <i>Tyrannus forficatus</i>);
-see <a href="#birddoc">bird.scm</a> for more birds.  The fm-violin is discussed in <a href="#vdoc">v.scm</a>.
-<i>fofins</i> is an implementation of FOF synthesis, taken originally from
-fof.c of Perry Cook and the article
-"Synthesis of the Singing Voice" by Bennett and Rodet in
-"Current Directions in Computer Music Research" (MIT Press).
-<i>pluck</i> is based on
-the Karplus-Strong algorithm as extended by David Jaffe and Julius Smith -- see 
-Jaffe and Smith, "Extensions of the Karplus-Strong Plucked-String Algorithm"
-CMJ vol 7 no 2 Summer 1983, reprinted in "The Music Machine".
-Another physical model is Nicky Hind's flute in flute.scm.
-<i>vox</i> is a translations of Marc LeBrun's MUS10 waveshaping voice instrument
-using FM in this case.  The waveshaping version can be found in <a href="#pqwvoxdoc">pqwvox.scm</a>.
 <i>chain-dsps</i> creates a patch of chained generators from its arguments.
 </p>
+
 
 <!-- -------------------------------- MISCELLANEOUS EXTENSIONS -------------------------------- -->
 <span class=bbox><h3><A NAME="ssmiscellaneousextensions">miscellaneous extensions</a></h3></span>

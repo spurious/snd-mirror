@@ -36,17 +36,11 @@
 ;;; cross-synthesis (using a formant bank)
 ;;; voiced->unvoiced (formants)
 ;;; convolution (convolve)
-;;; reverb (all-pass etc)
-;;; scissor-tailed flycatcher (waveshaping)
-;;; fm-violin
-;;; FOF voice synthesis (wave-train)
 ;;; time varying FIR filter, notch filter
 ;;; swap selection chans
 ;;; sound-interp, env-sound-interp
 ;;; add date and time to title bar
 ;;; how to get 'display' to write to Snd's listener
-;;; pluck instrument (physical modelling)
-;;; voice instrument (formants via FM)
 ;;; filtered-env (low-pass and amplitude follow envelope)
 ;;; multi-colored rxvt printout
 ;;; lisp graph with draggable x axis
@@ -1326,254 +1320,6 @@ selected sound: (map-chan (cross-synthesis 1 .5 128 6.0))"
       (if (> max-samp 1.0) (set! (y-bounds snd1) (list (- max-samp) max-samp)))
       max-samp)))
 
-
-;;; -------- reverb (1-channel in this example)
-;;;
-;;; CLM version is jcrev.ins
-
-(define (jc-reverb decay-dur low-pass volume amp-env)
-  "(jc-reverb decay-dur low-pass volume amp-env) is the old Chowning reverberator: (jc-reverb 2.0 #f .1 #f)"
-  (let* ((allpass1 (make-all-pass -0.700 0.700 1051))
-	 (allpass2 (make-all-pass -0.700 0.700  337))
-	 (allpass3 (make-all-pass -0.700 0.700  113))
-	 (comb1 (make-comb 0.742 4799))
-	 (comb2 (make-comb 0.733 4999))
-	 (comb3 (make-comb 0.715 5399))
-	 (comb4 (make-comb 0.697 5801))
-	 (outdel1 (make-delay (round (* .013 (srate)))))
-	 (dur (+ decay-dur (/ (frames) (srate))))
-	 (envA (if amp-env (make-env :envelope amp-env :scaler volume :duration dur) #f))
-	 (len (round (* dur (srate)))))
-    (map-chan
-     (let ((comb-sum 0.0)
-	   (comb-sum-1 0.0)
-	   (comb-sum-2 0.0)
-	   (all-sums 0.0)
-	   (delA 0.0)
-	   (delB 0.0))
-       (lambda (inval)
-	 (let ((allpass-sum (all-pass allpass3 (all-pass allpass2 (all-pass allpass1 inval)))))
-	   (set! comb-sum-2 comb-sum-1)
-	   (set! comb-sum-1 comb-sum)
-	   (set! comb-sum 
-		 (+ (comb comb1 allpass-sum)
-		    (comb comb2 allpass-sum)
-		    (comb comb3 allpass-sum)
-		    (comb comb4 allpass-sum)))
-	   (if low-pass
-	       (set! all-sums (+ (* .25 (+ comb-sum comb-sum-2)) (* .5 comb-sum-1)))
-	       (set! all-sums comb-sum))
-	   (+ inval
-	      (if envA
-		  (* (env envA) (delay outdel1 all-sums))
-		  (* volume (delay outdel1 all-sums)))))))
-       0 (round (* dur (srate))))))
-
-
-
-;;; -------- scissor-tailed flycatcher
-;;;
-;;; mix a scissor-tailed flycatcher call into the current sound
-;;; see bird.scm for lots more birds
-
-(define (bigbird start dur frequency freqskew amplitude
-		 freq-envelope amp-envelope partials
-		 lpcoeff)
-  (define sum-partials
-    (lambda (lst sum)
-      (if (null? lst)
-	  sum
-	  (sum-partials (cddr lst) (+ sum (cadr lst))))))
-  
-  (define scale-partials
-    (lambda (lst scl newlst)
-      (if (null? lst)
-	  newlst
-	  (scale-partials (cddr lst) scl (append newlst (list (car lst) (* scl (cadr lst))))))))
-  
-  (define normalize-partials
-    (lambda (lst)
-      (scale-partials lst (/ 1.0 (sum-partials lst 0.0)) '())))
-  
-  (let* ((gls-env (make-env freq-envelope (hz->radians freqskew) dur))
-	 (os (make-oscil :frequency frequency))
-	 (fil (make-one-pole lpcoeff (- 1.0 lpcoeff)))
-	 (coeffs (partials->polynomial (normalize-partials partials)))
-	 (amp-env (make-env amp-envelope amplitude dur))
-	 (len (round (* (srate) dur)))
-	 (beg (round (* (srate) start)))
-	 (sf (make-sample-reader beg))
-	 (out-data (make-vct len)))
-    (vct-map! out-data
-	      (lambda ()
-		(+ (next-sample sf)
-		   (one-pole fil (* (env amp-env)
-				    (polynomial coeffs
-						(oscil os (env gls-env))))))))
-    (free-sample-reader sf)
-    (vct->samples beg len out-data)))
-
-(define (scissor begin-time)
-  "(scissor beg) is the scissor-tailed flycatcher"
-  (let ((scissorf '(0 0  40 1  60 1  100 0)))
-    (bigbird begin-time 0.05 1800 1800 .2 
-	     scissorf 
-	     '(0 0  25 1  75 1  100 0) 
-	     '(1 .5  2 1  3 .5  4 .1  5 .01)
-	     1.0)))
-
-
-;;; -------- fm-violin
-;;;
-;;; here we're using the keyword stuff in guile/ice-9/optargs.scm
-;;; CLM version is v.ins, C version is in sndlib.html
-;;; a version treating the entire violin as a generator is in fmv.scm.
-
-(define pi 3.141592653589793)
-
-(define fm-violin 
-  (lambda* (startime dur frequency amplitude #:key
-	    (fm-index 1.0)
-	    (amp-env '(0 0  25 1  75 1  100 0))
-	    (periodic-vibrato-rate 5.0) 
-	    (random-vibrato-rate 16.0)
-	    (periodic-vibrato-amplitude 0.0025) 
-	    (random-vibrato-amplitude 0.005)
-	    (noise-amount 0.0) 
-	    (noise-freq 1000.0)
-	    (ind-noise-freq 10.0) 
-	    (ind-noise-amount 0.0)
-	    (amp-noise-freq 20.0) 
-	    (amp-noise-amount 0.0)
-	    (gliss-env '(0 0  100 0)) 
-	    (glissando-amount 0.0) 
-	    (fm1-env '(0 1  25 .4  75 .6  100 0))  
-	    (fm2-env '(0 1  25 .4  75 .6  100 0)) 
-	    (fm3-env '(0 1  25 .4  75 .6  100 0))
-	    (fm1-rat 1.0) 
-	    (fm2-rat 3.0)	 
-	    (fm3-rat 4.0)                    
-	    (fm1-index #f) 
-	    (fm2-index #f) 
-	    (fm3-index #f)
-	    (base 1.0)
-	    (reverb-amount 0.01)
-	    (degree #f) (distance 1.0) (degrees #f)
-	    #:allow-other-keys)
-    (let* ((beg (floor (* startime (srate))))
-	   (len (floor (* dur (srate))))
-	   (end (+ beg len))
-	   (frq-scl (hz->radians frequency))
-	   (modulate (not (zero? fm-index)))
-	   (maxdev (* frq-scl fm-index))
-	   (logfreq (log frequency))
-	   (sqrtfreq (sqrt frequency))
-	   (index1 (or fm1-index (min pi (* maxdev (/ 5.0 logfreq)))))
-	   (index2 (or fm2-index (min pi (* maxdev 3.0 (/ (- 8.5 logfreq) (+ 3.0 (* frequency .001)))))))
-	   (index3 (or fm3-index (min pi (* maxdev (/ 4.0 sqrtfreq)))))
-	   (easy-case (and (zero? noise-amount)
-			   (equal? fm1-env fm2-env)
-			   (equal? fm1-env fm3-env)
-			   (= fm1-rat (floor fm1-rat))
-			   (= fm2-rat (floor fm2-rat))
-			   (= fm3-rat (floor fm3-rat))))
-	   (coeffs (and easy-case modulate
-			(partials->polynomial
-			 (list fm1-rat index1
-			       (floor (/ fm2-rat fm1-rat)) index2
-			       (floor (/ fm3-rat fm1-rat)) index3))))
-	   (norm (or (and easy-case modulate 1.0) index1))
-	   (carrier (make-oscil frequency))
-	   (fmosc1  (and modulate (make-oscil (* fm1-rat frequency))))
-	   (fmosc2  (and modulate (or easy-case (make-oscil (* fm2-rat frequency)))))
-	   (fmosc3  (and modulate (or easy-case (make-oscil (* fm3-rat frequency)))))
-	   (ampf  (make-env amp-env :scaler amplitude :base base :duration dur))
-	   (indf1 (and modulate (make-env fm1-env norm :duration dur)))
-	   (indf2 (and modulate (or easy-case (make-env fm2-env index2 :duration dur))))
-	   (indf3 (and modulate (or easy-case (make-env fm3-env index3 :duration dur))))
-	   (frqf (make-env gliss-env (* glissando-amount frq-scl) :duration dur))
-	   (pervib (make-triangle-wave periodic-vibrato-rate (* periodic-vibrato-amplitude frq-scl)))
-	   (ranvib (make-rand-interp random-vibrato-rate (* random-vibrato-amplitude frq-scl)))
-	   (fm-noi (and (not (= 0.0 noise-amount))
-			(make-rand noise-freq (* pi noise-amount))))
-	   (ind-noi (and (not (= 0.0 ind-noise-amount)) 
-			 (not (= 0.0 ind-noise-freq))
-			 (make-rand-interp ind-noise-freq ind-noise-amount)))
-	   (amp-noi (and (not (= 0.0 amp-noise-amount)) 
-			 (not (= 0.0 amp-noise-freq))
-			 (make-rand-interp amp-noise-freq amp-noise-amount)))
-	   (vib 0.0) 
-	   (modulation 0.0)
-	   (loc (make-locsig :channels (channels) :degree (or degree degrees (random 90.0)) :reverb reverb-amount :distance distance))
-	   (fuzz 0.0)
-	   (ind-fuzz 1.0)
-	   (amp-fuzz 1.0)
-	   (out-data (make-vct len)))
-      (vct-map! out-data
-		(lambda ()
-		  (if (not (= 0.0 noise-amount))
-		      (set! fuzz (rand fm-noi)))
-		  (set! vib (+ (env frqf) (triangle-wave pervib) (rand-interp ranvib)))
-		  (if ind-noi (set! ind-fuzz (+ 1.0 (rand-interp ind-noi))))
-		  (if amp-noi (set! amp-fuzz (+ 1.0 (rand-interp amp-noi))))
-		  (if modulate
-		      (if easy-case
-			  (set! modulation
-				(* (env indf1) 
-				   (polynomial coeffs (oscil fmosc1 vib)))) ;(* vib fm1-rat)??
-			  (set! modulation
-				(+ (* (env indf1) (oscil fmosc1 (+ (* fm1-rat vib) fuzz)))
-				   (* (env indf2) (oscil fmosc2 (+ (* fm2-rat vib) fuzz)))
-				   (* (env indf3) (oscil fmosc3 (+ (* fm3-rat vib) fuzz)))))))
-		  (* (env ampf) amp-fuzz
-		     (oscil carrier (+ vib (* ind-fuzz modulation))))))
-      (if (= (channels) 2)
-	  (let ((bsamps (vct-copy out-data)))
-	    (mix-vct (vct-scale! bsamps (locsig-ref loc 1)) beg #f 1 #f)
-	    (mix-vct (vct-scale! out-data (locsig-ref loc 0)) beg #f 0 #f))
-	  (mix-vct out-data beg #f 0 #f)))))
-
-; (fm-violin 0 1 440 .1 :fm-index 2.0)
-
-
-;;; -------- FOF example
-
-(define* (fofins beg dur frq amp uvib f0 a0 f1 a1 f2 a2 #:optional (ae '(0 0 25 1 75 1 100 0)))
-
-  "(fofins beg dur frq amp vib f0 a0 f1 a1 f2 a2 #:optional (ae '(0 0 25 1 75 1 100 0))) produces FOF \
-synthesis: (fofins 0 1 270 .2 .001 730 .6 1090 .3 2440 .1)"
-
-    (let* ((two-pi (* 2 3.141592653589793))
-	   (start (floor (* beg (srate))))
-	   (len (floor (* dur (srate))))
-	   (vib uvib) ; for the optimizer (it can't find define* args sometimes)
-	   (ampf (make-env :envelope ae :scaler amp :duration dur))
-	   (frq0 (hz->radians f0))
-	   (frq1 (hz->radians f1))
-	   (frq2 (hz->radians f2))
-	   (foflen (if (= (srate) 22050) 100 200))
-	   (vibr (make-oscil :frequency 6))
-	   (win-freq (/ two-pi foflen))
-	   (foftab (make-vct foflen))
-	   (sf (make-sample-reader start))
-	   (wt0 (make-wave-train :wave foftab :frequency frq))
-	   (out-data (make-vct len)))
-      (do ((i 0 (1+ i)))
-	  ((= i foflen))
-	(vct-set! foftab i (* (+ (* a0 (sin (* i frq0)))
-				 (* a1 (sin (* i frq1)))
-				 (* a2 (sin (* i frq2))))
-			      .5 (- 1.0 (cos (* i win-freq))))))
-      (vct-map! out-data 
-		(lambda ()
-		  (+ (next-sample sf)
-		     (* (env ampf) 
-			(wave-train wt0 (* vib (oscil vibr)))))))
-      (free-sample-reader sf)
-      (vct->samples start len out-data)))
-
-
-
 #!
 ;;; -------- time varying FIR filter
 
@@ -1775,210 +1521,6 @@ this clock, set retitle-time to 0"
 ;;; Perhaps this should be built-in, allowing us to merge snd-help and help etc.
 
 
-
-;;; -------- pluck
-;;;
-;;; The Karplus-Strong algorithm as extended by David Jaffe and Julius Smith -- see 
-;;;  Jaffe and Smith, "Extensions of the Karplus-Strong Plucked-String Algorithm"
-;;;  CMJ vol 7 no 2 Summer 1983, reprinted in "The Music Machine".
-;;;  translated from CLM's pluck.ins
-
-(definstrument (pluck start dur freq amp-1 #:optional (weighting .5) (lossfact .9))
-  "(pluck start dur freq amp weighting lossfact) implements the Jaffe-Smith plucked string physical model. \
-'weighting' is the ratio of the once-delayed to the twice-delayed samples.  It defaults to .5=shortest decay. \
-Anything other than .5 = longer decay.  Must be between 0 and less than 1.0. \
-'lossfact' can be used to shorten decays.  Most useful values are between .8 and 1.0. (pluck 0 1 330 .3 .95 .95)"
-
-  (define (getOptimumC S o p)
-    (let* ((pa (* (/ 1.0 o) (atan (* S (sin o)) (+ (- 1.0 S) (* S (cos o))))))
-	   (tmpInt (inexact->exact (floor (- p pa))))
-	   (pc (- p pa tmpInt)))
-      (if (< pc .1)
-	  (do ()
-	      ((>= pc .1))
-	    (set! tmpInt (- tmpInt 1))
-	    (set! pc (+ pc 1.0))))
-      (list tmpInt (/ (- (sin o) (sin (* o pc))) (sin (+ o (* o pc)))))))
-
-  (define (tuneIt f s1)
-    (let* ((p (/ (mus-srate) f))	;period as float
-	   (s (if (= s1 0.0) 0.5 s1))
-	   (o (hz->radians f))
-	   (vals (getOptimumC s o p))
-	   (T1 (car vals))
-	   (C1 (cadr vals))
-	   (vals1 (getOptimumC (- 1.0 s) o p))
-	   (T2 (car vals1))
-	   (C2 (cadr vals1)))
-      (if (and (not (= s .5))
-	       (< (abs C1) (abs C2)))
-	  (list (- 1.0 s) C1 T1)
-	(list s C2 T2))))
-
-  (let* ((vals (tuneIt freq weighting))
-	 (wt0 (car vals))
-	 (c (cadr vals))
-	 (dlen (caddr vals))
-	 (amp amp-1)
-	 (beg (inexact->exact (floor (* start (mus-srate)))))
-	 (end (+ beg (inexact->exact (floor (* dur (mus-srate))))))
-	 (lf (if (= lossfact 0.0) 1.0 (min 1.0 lossfact)))
-	 (wt (if (= wt0 0.0) 0.5 (min 1.0 wt0)))
-	 (tab (make-vct dlen))
-	 ;; get initial waveform in "tab" -- here we can introduce 0's to simulate different pick
-	 ;; positions, and so on -- see the CMJ article for numerous extensions.  The normal case
-	 ;; is to load it with white noise (between -1 and 1).
-	 (val 0.0)
-	 (allp (make-one-zero (* lf (- 1.0 wt)) (* lf wt)))
-	 (feedb (make-one-zero c 1.0)) ;or (feedb (make-one-zero 1.0 c))
-	 (ctr 0))
-    (do ((i 0 (1+ i)))
-	((= i dlen))
-      (vct-set! tab i (- 1.0 (random 2.0))))
-    (run 
-     (lambda ()
-       (do ((i beg (1+ i)))
-	   ((= i end))
-	 (let ((val (vct-ref tab ctr)))	;current output value
-	   (vct-set! tab ctr (* (- 1.0 c) 
-				(one-zero feedb 
-					  (one-zero allp val))))
-	   (set! ctr (+ ctr 1))
-	   (if (>= ctr dlen) (set! ctr 0))
-	   (outa i (* amp val) *output*)))))))
-
-
-
-;;; -------- mlbvoi
-;;;
-;;; translation from MUS10 of Marc LeBrun's waveshaping voice instrument (using FM here)
-;;; this version translated (and simplified slightly) from CLM's mlbvoi.ins
-
-(define (vox beg dur freq amp ampfun freqfun freqscl voxfun index vibscl)
-  "(vox beg dur freq amp ampfun freqfun freqscl voxfun index vibscl) is a version of the waveshaping \
-voice: (vox 0 2 110 .4 '(0 0 25 1 75 1 100 0) '(0 0 5 .5 10 0 100 1) .1 '(0 UH 25 UH 35 ER 65 ER 75 UH 100 UH) .025 .1)"
-
-  (let ((formants
-	 '((I 390 1990 2550)  (E 530 1840 2480)  (AE 660 1720 2410)
-	   (UH 520 1190 2390) (A 730 1090 2440)  (OW 570 840 2410)
-	   (U 440 1020 2240)  (OO 300 870 2240)  (ER 490 1350 1690)
-	   (W 300 610 2200)   (LL 380 880 2575)  (R 420 1300 1600)
-	   (Y 300 2200 3065)  (EE 260 3500 3800) (LH 280 1450 1600)
-	   (L 300 1300 3000)  (I2 350 2300 3340) (B 200 800 1750)
-	   (D 300 1700 2600)  (G 250 1350 2000)  (M 280 900 2200)
-	   (N 280 1700 2600)  (NG 280 2300 2750) (P 300 800 1750)
-	   (T 200 1700 2600)  (K 350 1350 2000)  (F 175 900 4400)
-	   (TH 200 1400 2200) (S 200 1300 2500)  (SH 200 1800 2000)
-	   (V 175 1100 2400)  (THE 200 1600 2200)(Z 200 1300 2500)
-	   (ZH 175 1800 2000) (ZZ 900 2400 3800) (VV 565 1045 2400))))
-	;;formant center frequencies for a male speaker
-
-    (define (find-phoneme phoneme forms)
-      (if (eq? phoneme (car (car forms)))
-	  (cdr (car forms))
-	(find-phoneme phoneme (cdr forms))))
-    
-    (let ((f1 '())
-	  (f2 '())
-	  (f3 '())
-	  (len (length voxfun)))
-      (do ((i (- len 1) (- i 2)))
-	  ((<= i 0))
-	(let ((phon (find-phoneme (list-ref voxfun i) formants))
-	      (x (list-ref voxfun (- i 1))))
-	  (set! f1 (cons (car phon) f1))
-	  (set! f1 (cons x f1))
-	  (set! f2 (cons (cadr phon) f2))
-	  (set! f2 (cons x f2))
-	  (set! f3 (cons (caddr phon) f3))
-	  (set! f3 (cons x f3))))
-      
-      (let* ((start (inexact->exact (floor (* (mus-srate) beg))))
-	     (end (+ start (inexact->exact (floor (* (mus-srate) dur)))))
-	     (car-os (make-oscil :frequency 0))
-	     (of0 (make-oscil :frequency 0))
-	     (of1 (make-oscil :frequency 0))
-	     (of2 (make-oscil :frequency 0))
-	     (of3 (make-oscil :frequency 0))
-	     (of4 (make-oscil :frequency 0))
-	     (of5 (make-oscil :frequency 0))
-	     (ampf (make-env :envelope ampfun :scaler amp :duration dur))
-	     (frmf1 (make-env :envelope f1 :duration dur))
-	     (frmf2 (make-env :envelope f2 :duration dur))
-	     (frmf3 (make-env :envelope f3 :duration dur))
-	     (freqf (make-env :envelope freqfun :duration dur
-			      :scaler (* freqscl freq)
-			      :offset freq))
-	     (per-vib (make-triangle-wave :frequency 6 :amplitude (* freq vibscl)))
-	     (ran-vib (make-rand-interp :frequency 20 :amplitude (* freq .01)))
-	     (car 0.0)
-	     (frq 0.0)
-	     (frm-int 0)
-	     (frm0 0.0)
-	     (frm 0.0)
-	     (frq0 0.0) (frq1 0.0) (frq2 0.0) (frq3 0.0) (frq4 0.0) (frq5 0.0)
-	     (amp0 0.0) (amp1 0.0) (amp2 0.0) (amp3 0.0) (amp4 0.0) (amp5 0.0)
-	     (out-data (make-vct (+ 1 (- end start)))))
-	(vct-map! out-data
-		  (lambda ()
-		    (set! frq (+ (env freqf) (triangle-wave per-vib) (rand-interp ran-vib)))
-		    (set! car (* index (oscil car-os (hz->radians frq))))
-		    (set! frm (env frmf1))
-		    (set! frm0 (/ frm frq))
-		    (set! frm-int (inexact->exact (floor frm0)))
-		    (if (even? frm-int)
-			(begin
-			 (set! frq0 (hz->radians (* frm-int frq)))
-			 (set! frq1 (hz->radians (* (+ frm-int 1) frq)))
-			 (set! amp1 (- frm0 frm-int))
-			 (set! amp0 (- 1.0 amp1)))
-		      (begin
-		       (set! frq1 (hz->radians (* frm-int frq)))
-		       (set! frq0 (hz->radians (* (+ frm-int 1) frq)))
-		       (set! amp0 (- frm0 frm-int))
-		       (set! amp1 (- 1.0 amp0))))
-		    (set! frm (env frmf2))
-		    (set! frm0 (/ frm frq))
-		    (set! frm-int (inexact->exact (floor frm0)))
-		    (if (even? frm-int)
-			(begin
-			 (set! frq2 (hz->radians (* frm-int frq)))
-			 (set! frq3 (hz->radians (* (+ frm-int 1) frq)))
-			 (set! amp3 (- frm0 frm-int))
-			 (set! amp2 (- 1.0 amp3)))
-		      (begin
-		       (set! frq3 (hz->radians (* frm-int frq)))
-		       (set! frq2 (hz->radians (* (+ frm-int 1) frq)))
-		       (set! amp2 (- frm0 frm-int))
-		       (set! amp3 (- 1.0 amp2))))
-		    (set! frm (env frmf3))
-		    (set! frm0 (/ frm frq))
-		    (set! frm-int (inexact->exact (floor frm0)))
-		    (if (even? frm-int)
-			(begin
-			 (set! frq4 (hz->radians (* frm-int frq)))
-			 (set! frq5 (hz->radians (* (+ frm-int 1) frq)))
-			 (set! amp5 (- frm0 frm-int))
-			 (set! amp4 (- 1.0 amp5)))
-		      (begin
-		       (set! frq5 (hz->radians (* frm-int frq)))
-		       (set! frq4 (hz->radians (* (+ frm-int 1) frq)))
-		       (set! amp4 (- frm0 frm-int))
-		       (set! amp5 (- 1.0 amp4))))
-		    (* (env ampf)
-		       (+ (* .8 (+ (* amp0 (oscil of0 (+ frq0 (* .2 car))))
-				   (* amp1 (oscil of1 (+ frq1 (* .2 car))))))
-			  (* .15 (+ (* amp2 (oscil of2 (+ frq2 (* .5 car))))
-				    (* amp3 (oscil of3 (+ frq3 (* .5 car))))))
-			  (* .05 (+ (* amp4 (oscil of4 (+ frq4 car)))
-				    (* amp5 (oscil of5 (+ frq5 car)))))))))
-	(mix-vct out-data beg #f 0 #f)
-	(update-time-graph)))))
-  
-;;; (vox 0 2 170 .4 '(0 0 25 1 75 1 100 0) '(0 0 5 .5 10 0 100 1) .1 '(0 E 25 AE 35 ER 65 ER 75 I 100 UH) .05 .1)
-;;; (vox 0 2 300 .4 '(0 0 25 1 75 1 100 0) '(0 0 5 .5 10 0 100 1) .1 '(0 I 5 OW 10 I 50 AE 100 OO) .02 .1)
-;;; (vox 0 5 600 .4 '(0 0 25 1 75 1 100 0) '(0 0 5 .5 10 0 100 1) .1 '(0 I 5 OW 10 I 50 AE 100 OO) .01 .1)
-  
 
 ;;; -------- filtered-env 
 
@@ -2508,7 +2050,7 @@ a sort of play list: (region-play-list (list (list 0.0 0) (list 0.5 1) (list 1.0
 
 ;;; -------- chain-dsps
 
-(define* (chain-dsps beg dur #:rest dsps)
+(definstrument (chain-dsps beg dur #:rest dsps)
   ;; I assume the dsps are already made, 
   ;;          the envs are present as break-point lists
   ;;          the calls are ordered out->in (or last first)
@@ -2517,29 +2059,35 @@ a sort of play list: (region-play-list (list (list 0.0 0) (list 0.5 1) (list 1.0
 						     (make-env gen :duration dur)
 						     gen))
 					       dsps))))
-	 (output (make-vct (inexact->exact (floor (* dur (mus-srate))))))
+	 (start (inexact->exact (floor (* (mus-srate) beg))))
+	 (samps (inexact->exact (floor (* (mus-srate) dur))))
+	 (end (+ start samps))
 	 (len (vector-length dsp-chain)))
-    (vct-map! output (lambda ()
-		       (let ((val 0.0))
-			 ;; using do and vector here for the run macro's benefit
-			 (do ((i 0 (1+ i)))
-			     ((= i len))
-			   (let ((gen (vector-ref dsp-chain i)))
-			     (if (env? gen)
-				 (set! val (* (gen) val))
-				 (if (readin? gen)
-				     (set! val (+ val (gen)))
-				     (set! val (gen val))))))
-			 val)))
-    (mix-vct output (inexact->exact (floor (* beg (mus-srate)))) #f #f #f)))
+    (run
+     (lambda ()
+       (do ((k start (1+ k)))
+	   ((= k end))
+	 (let ((val 0.0))
+	   ;; using do and vector here for the run macro's benefit
+	   (do ((i 0 (1+ i)))
+	       ((= i len))
+	     (let ((gen (vector-ref dsp-chain i)))
+	       (if (env? gen)
+		   (set! val (* (gen) val))
+		   (if (readin? gen)
+		       (set! val (+ val (gen)))
+		       (set! val (gen val))))))
+	   (outa k val *output*)))))))
 
 #!
-(chain-dsps 0 1.0 '(0 0 1 1 2 0) (make-oscil 440))
-(chain-dsps 0 1.0 '(0 0 1 1 2 0) (make-one-zero .5) (make-readin "oboe.snd"))
-(chain-dsps 0 1.0 '(0 0 1 1 2 0) (let ((osc1 (make-oscil 220)) 
-				       (osc2 (make-oscil 440))) 
-				   (lambda (val) (+ (osc1 val) 
-						    (osc2 (* 2 val))))))
+(with-sound ()
+  (chain-dsps 0 1.0 '(0 0 1 1 2 0) (make-oscil 440))
+  (chain-dsps 0 1.0 '(0 0 1 1 2 0) (make-one-zero .5) (make-readin "oboe.snd"))
+  ;; next call not currently optimizable
+  (chain-dsps 0 1.0 '(0 0 1 1 2 0) (let ((osc1 (make-oscil 220)) 
+					 (osc2 (make-oscil 440))) 
+				     (lambda (val) (+ (osc1 val) 
+						      (osc2 (* 2 val)))))))
 !#
 
 

@@ -563,6 +563,7 @@
 (hey "    case GL_LINE_WIDTH_RANGE:~%")
 (hey "      return(2);~%")
 (hey "      break;~%")
+(hey "    default: return(1); break; /* try to squelch c++ babbling */~%")
 (hey "    }~%")
 (hey "  return(1);~%")
 (hey "}~%")

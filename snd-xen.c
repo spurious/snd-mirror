@@ -272,7 +272,7 @@ static XEN snd_catch_scm_error(void *data, XEN tag, XEN throw_args) /* error han
     }
 
   /* Guile's error messages sometimes have formatting directives in the first of the throw_args,
-   *   but it's simple_format (called by Guile's error handlers) can itself die with an error
+   *   but its simple_format (called by Guile's error handlers) can itself die with an error
    *   in some cases, causing the main program to exit, so we replace the whole thing with our own.
    */
   if ((XEN_LIST_P(throw_args)) && 

@@ -1,5 +1,6 @@
 ;;; CLM piano.ins (Scott Van Duyne) translated to Snd/Scheme
 
+(if (not (defined? '*output*)) (load-from-path "ws.scm"))
 (load "env.scm")
 
 (define number-of-stiffness-allpasses 8)
@@ -152,7 +153,7 @@
 		 wT)))
     (apfloor len wT)))
 
-(define* (p start
+(definstrument (p start
    #:key (duration 1.0)
    (keyNum 60.0) ;;middleC=60: can use fractional part to detune
    (strike-velocity 0.5) ;;corresponding normalized velocities (range: 0.0--1.0)
@@ -361,8 +362,7 @@
 	     (couplingFilter-input 0.0)
 	     (couplingFilter-output 0.0)
 	     (sampCount 0)
-	     (noi (make-noise))
-	     (out-data (make-vct (- end beg))))
+	     (noi (make-noise)))
 	(do ((i 0 (1+ i))) ((= i 8))
 	  (vector-set! string1-stiffness-ap i (make-one-pole-allpass stiffnessCoefficientL)))
 	(do ((i 0 (1+ i))) ((= i 8))
@@ -370,9 +370,10 @@
 	(do ((i 0 (1+ i))) ((= i 8))
 	  (vector-set! string3-stiffness-ap i (make-one-pole-allpass stiffnessCoefficient)))
 
-	(vct-map!
-	 out-data
+	(run
 	 (lambda ()
+	   (do ((i beg (1+ i)))
+	       ((= i end))
 	   (cond
 	    (is-release-time
 	     (set! loop-gain (loop-gain-expseg looprate)))
@@ -417,15 +418,15 @@
 	   (set! couplingFilter-input (+ string1-junction-input string2-junction-input string3-junction-input))
 	   (set! couplingFilter-output (one-pole-one-zero cou0 cou1 couplingFilter-input))
 	   (set! sampCount (1+ sampCount))
-	   couplingFilter-input
-	   )))))
+	   (outa i couplingFilter-input *output*)
+	   ))))))
 
 
 
 #!
 
-(do ((i 0 (1+ i))) ((= i 8))
-  (vct->channel
+(with-sound ()
+  (do ((i 0 (1+ i))) ((= i 8))
     (p
      (* i .5)
      :duration .5
@@ -438,12 +439,11 @@
 					;0 no open string resonance
 					;1.0 is about full resonance of dampers raised
 					;can be greater than 1.0
-  )
-    (inexact->exact (* *srate* (* i .5)))))
+  )))
 
 
-(do ((i 0 (1+ i))) ((= i 8))
-  (vct->channel
+(with-sound ()
+  (do ((i 0 (1+ i))) ((= i 8))
     (p
      (* i .5)
      :duration .5
@@ -469,12 +469,11 @@
      :stiffnessFactor-table '(21 1.5 24 1.5 36 1.5 48 1.5 60 1.4
 				 72 1.3 84 1.2 96 1.0 108 1.0)
 					;0.0 to 1.0 is less stiff, 1.0 to 2.0 is more stiff...
-     )
-    (inexact->exact (* *srate* (* i .5)))))
+     )))
 
-
-(do ((i 0 (1+ i))) ((= i 8))
-  (vct->channel
+ 
+(with-sound ()
+  (do ((i 0 (1+ i))) ((= i 8))
     (p
      (* i .5)
      :duration .5
@@ -501,11 +500,10 @@
 					  99.000 .7 108.000 .7)
 					;these are the actual allpass coefficients modified here
 					;to allow dampedness at hig freqs
-     )
-    (inexact->exact (* *srate* (* i .5)))))
+     )))
 
 (let ((i 5))
-  (vct->channel
+  (with-sound ()
     (p
      0
      :duration 5
@@ -523,6 +521,4 @@
      :singleStringDecayRateFactor 1/10
 					;scales attenuation rate (1/2 means twice as long duration)
      )))
-
-
 !#

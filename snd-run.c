@@ -67,6 +67,8 @@
  * SOMEDAY: split Scheme from Snd/Clm here and do the latter via an FFI of some sort
  * SOMEDAY: save ptree somehow (local runs make this problematic) -- perhaps definstrument here
  *
+ * TODO: do loop limit as inexact ints are 0?
+ *
  * LIMITATIONS: <insert anxious lucubration here about DSP context and so on>
  *      variables can have only one type, the type has to be ascertainable somehow (similarly for vector elements)
  *      some variables (imported from outside our context) cannot be set, in some cases they can't even be found (args to define* for example)

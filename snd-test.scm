@@ -37,12 +37,9 @@
 ;;; TODO: xemacs style top list of sounds, current takes whole screen [make-top-row tmp18.scm, files-popup-buffer in examp.scm]
 ;;; TOOD: extend the mix-as-list syntax to list-of-ids (tracks) (are these all rationalized now?)
 ;;; TODO: translate clm ins: prc96.ins, canter.ins+drone.ins+bag.clm, badd.ins, addflt.ins, add.ins
-;;; TODO:           grani.ins, dlocsig, jcvoi?, lbjPiano?, resflt?, reson?, san?, scanned?, trp?, vox?, ugex?
-;;;                 see all-ins, scm-ins for the full lists
-;;; change to use with-sound as in v.scm, clm-ins.scm, test case here, table in grfsnd, "definstrument"?
+;;; TODO:           grani.ins, dlocsig, jcvoi?, lbjPiano?, resflt?, reson?, san?, scanned?, vox?, ugex?
 ;;; effects crossref + tests, interface crossref
 ;;; are there redundancies in examp.scm? (jcrev?)
-;;; predefine definstrument so ws.scm isn't required for CM
 ;;; mus10+sam versions?
 ;;;
 ;;; doc: grfsnd table + sndscm for new
@@ -8932,9 +8929,6 @@ EDITS: 5
 
 ;;; ---------------- test 6 vcts ----------------
 
-(load "prc95.scm")
-(load "flute.scm")
-
 (if (or full-test (= snd-test 6) (and keep-going (<= snd-test 6)))
     (begin 
       (if (procedure? test-hook) (test-hook 6))
@@ -9111,19 +9105,11 @@ EDITS: 5
       (let ((v1 (vct 1 2 3 4)))
 	(if (fneq (v1 1) 2.0)
 	    (snd-display ";(v1 1) = ~A?" (v1 1))))
-      (let ((nind (new-sound "tmp.snd" mus-next mus-bshort 22050 1 "hiho a comment")))
-	(test-prc95)
-	(play-and-wait 0 nind)
+      (let ((nind (open-sound "oboe.snd")))
 	(set! (speed-control nind) .5)
 	(play-and-wait)
 	(apply-controls)
-	(close-sound nind)
-	(delete-file "tmp.snd"))
-      (let ((nind (new-sound "tmp.snd" mus-next mus-bshort 22050 2 "hiho a comment")))
-	(stereo-flute 0 1 440 .55 :flow-envelope '(0 0 1 1 2 1 3 0))
-	(play-and-wait 0 nind)
-	(close-sound nind)
-	(delete-file "tmp.snd"))
+	(close-sound nind))
       (let ((v1 (make-vct 32)))
 	(vct-map! v1
 		  (lambda ()
@@ -9253,11 +9239,211 @@ EDITS: 5
 
 (reset-hook! graph-hook)
 (load "mix.scm")
-(load "pqwvox.scm")
 (clear-sincs)
 
 ;;; ---------------- test 8: clm ----------------
 
+(define (jc-reverb decay-dur low-pass volume amp-env)
+  "(jc-reverb decay-dur low-pass volume amp-env) is the old Chowning reverberator: (jc-reverb 2.0 #f .1 #f)"
+  (let* ((allpass1 (make-all-pass -0.700 0.700 1051))
+	 (allpass2 (make-all-pass -0.700 0.700  337))
+	 (allpass3 (make-all-pass -0.700 0.700  113))
+	 (comb1 (make-comb 0.742 4799))
+	 (comb2 (make-comb 0.733 4999))
+	 (comb3 (make-comb 0.715 5399))
+	 (comb4 (make-comb 0.697 5801))
+	 (outdel1 (make-delay (round (* .013 (srate)))))
+	 (dur (+ decay-dur (/ (frames) (srate))))
+	 (envA (if amp-env (make-env :envelope amp-env :scaler volume :duration dur) #f))
+	 (len (round (* dur (srate)))))
+    (map-chan
+     (let ((comb-sum 0.0)
+	   (comb-sum-1 0.0)
+	   (comb-sum-2 0.0)
+	   (all-sums 0.0)
+	   (delA 0.0)
+	   (delB 0.0))
+       (lambda (inval)
+	 (let ((allpass-sum (all-pass allpass3 (all-pass allpass2 (all-pass allpass1 inval)))))
+	   (set! comb-sum-2 comb-sum-1)
+	   (set! comb-sum-1 comb-sum)
+	   (set! comb-sum 
+		 (+ (comb comb1 allpass-sum)
+		    (comb comb2 allpass-sum)
+		    (comb comb3 allpass-sum)
+		    (comb comb4 allpass-sum)))
+	   (if low-pass
+	       (set! all-sums (+ (* .25 (+ comb-sum comb-sum-2)) (* .5 comb-sum-1)))
+	       (set! all-sums comb-sum))
+	   (+ inval
+	      (if envA
+		  (* (env envA) (delay outdel1 all-sums))
+		  (* volume (delay outdel1 all-sums)))))))
+       0 (round (* dur (srate))))))
+
+;;; -------- scissor-tailed flycatcher
+;;;
+;;; mix a scissor-tailed flycatcher call into the current sound
+;;; see bird.scm for lots more birds
+
+(define (bigbird start dur frequency freqskew amplitude
+		 freq-envelope amp-envelope partials
+		 lpcoeff)
+  (define sum-partials
+    (lambda (lst sum)
+      (if (null? lst)
+	  sum
+	  (sum-partials (cddr lst) (+ sum (cadr lst))))))
+  
+  (define scale-partials
+    (lambda (lst scl newlst)
+      (if (null? lst)
+	  newlst
+	  (scale-partials (cddr lst) scl (append newlst (list (car lst) (* scl (cadr lst))))))))
+  
+  (define normalize-partials
+    (lambda (lst)
+      (scale-partials lst (/ 1.0 (sum-partials lst 0.0)) '())))
+  
+  (let* ((gls-env (make-env freq-envelope (hz->radians freqskew) dur))
+	 (os (make-oscil :frequency frequency))
+	 (fil (make-one-pole lpcoeff (- 1.0 lpcoeff)))
+	 (coeffs (partials->polynomial (normalize-partials partials)))
+	 (amp-env (make-env amp-envelope amplitude dur))
+	 (len (round (* (srate) dur)))
+	 (beg (round (* (srate) start)))
+	 (sf (make-sample-reader beg))
+	 (out-data (make-vct len)))
+    (vct-map! out-data
+	      (lambda ()
+		(+ (next-sample sf)
+		   (one-pole fil (* (env amp-env)
+				    (polynomial coeffs
+						(oscil os (env gls-env))))))))
+    (free-sample-reader sf)
+    (vct->samples beg len out-data)))
+
+(define (scissor begin-time)
+  "(scissor beg) is the scissor-tailed flycatcher"
+  (let ((scissorf '(0 0  40 1  60 1  100 0)))
+    (bigbird begin-time 0.05 1800 1800 .2 
+	     scissorf 
+	     '(0 0  25 1  75 1  100 0) 
+	     '(1 .5  2 1  3 .5  4 .1  5 .01)
+	     1.0)))
+
+
+;;; -------- fm-violin
+;;;
+;;; here we're using the keyword stuff in guile/ice-9/optargs.scm
+;;; CLM version is v.ins, C version is in sndlib.html
+;;; a version treating the entire violin as a generator is in fmv.scm.
+
+(define pi 3.141592653589793)
+
+(define fm-violin 
+  (lambda* (startime dur frequency amplitude #:key
+	    (fm-index 1.0)
+	    (amp-env '(0 0  25 1  75 1  100 0))
+	    (periodic-vibrato-rate 5.0) 
+	    (random-vibrato-rate 16.0)
+	    (periodic-vibrato-amplitude 0.0025) 
+	    (random-vibrato-amplitude 0.005)
+	    (noise-amount 0.0) 
+	    (noise-freq 1000.0)
+	    (ind-noise-freq 10.0) 
+	    (ind-noise-amount 0.0)
+	    (amp-noise-freq 20.0) 
+	    (amp-noise-amount 0.0)
+	    (gliss-env '(0 0  100 0)) 
+	    (glissando-amount 0.0) 
+	    (fm1-env '(0 1  25 .4  75 .6  100 0))  
+	    (fm2-env '(0 1  25 .4  75 .6  100 0)) 
+	    (fm3-env '(0 1  25 .4  75 .6  100 0))
+	    (fm1-rat 1.0) 
+	    (fm2-rat 3.0)	 
+	    (fm3-rat 4.0)                    
+	    (fm1-index #f) 
+	    (fm2-index #f) 
+	    (fm3-index #f)
+	    (base 1.0)
+	    (reverb-amount 0.01)
+	    (degree #f) (distance 1.0) (degrees #f)
+	    #:allow-other-keys)
+    (let* ((beg (floor (* startime (srate))))
+	   (len (floor (* dur (srate))))
+	   (end (+ beg len))
+	   (frq-scl (hz->radians frequency))
+	   (modulate (not (zero? fm-index)))
+	   (maxdev (* frq-scl fm-index))
+	   (logfreq (log frequency))
+	   (sqrtfreq (sqrt frequency))
+	   (index1 (or fm1-index (min pi (* maxdev (/ 5.0 logfreq)))))
+	   (index2 (or fm2-index (min pi (* maxdev 3.0 (/ (- 8.5 logfreq) (+ 3.0 (* frequency .001)))))))
+	   (index3 (or fm3-index (min pi (* maxdev (/ 4.0 sqrtfreq)))))
+	   (easy-case (and (zero? noise-amount)
+			   (equal? fm1-env fm2-env)
+			   (equal? fm1-env fm3-env)
+			   (= fm1-rat (floor fm1-rat))
+			   (= fm2-rat (floor fm2-rat))
+			   (= fm3-rat (floor fm3-rat))))
+	   (coeffs (and easy-case modulate
+			(partials->polynomial
+			 (list fm1-rat index1
+			       (floor (/ fm2-rat fm1-rat)) index2
+			       (floor (/ fm3-rat fm1-rat)) index3))))
+	   (norm (or (and easy-case modulate 1.0) index1))
+	   (carrier (make-oscil frequency))
+	   (fmosc1  (and modulate (make-oscil (* fm1-rat frequency))))
+	   (fmosc2  (and modulate (or easy-case (make-oscil (* fm2-rat frequency)))))
+	   (fmosc3  (and modulate (or easy-case (make-oscil (* fm3-rat frequency)))))
+	   (ampf  (make-env amp-env :scaler amplitude :base base :duration dur))
+	   (indf1 (and modulate (make-env fm1-env norm :duration dur)))
+	   (indf2 (and modulate (or easy-case (make-env fm2-env index2 :duration dur))))
+	   (indf3 (and modulate (or easy-case (make-env fm3-env index3 :duration dur))))
+	   (frqf (make-env gliss-env (* glissando-amount frq-scl) :duration dur))
+	   (pervib (make-triangle-wave periodic-vibrato-rate (* periodic-vibrato-amplitude frq-scl)))
+	   (ranvib (make-rand-interp random-vibrato-rate (* random-vibrato-amplitude frq-scl)))
+	   (fm-noi (and (not (= 0.0 noise-amount))
+			(make-rand noise-freq (* pi noise-amount))))
+	   (ind-noi (and (not (= 0.0 ind-noise-amount)) 
+			 (not (= 0.0 ind-noise-freq))
+			 (make-rand-interp ind-noise-freq ind-noise-amount)))
+	   (amp-noi (and (not (= 0.0 amp-noise-amount)) 
+			 (not (= 0.0 amp-noise-freq))
+			 (make-rand-interp amp-noise-freq amp-noise-amount)))
+	   (vib 0.0) 
+	   (modulation 0.0)
+	   (loc (make-locsig :channels (channels) :degree (or degree degrees (random 90.0)) :reverb reverb-amount :distance distance))
+	   (fuzz 0.0)
+	   (ind-fuzz 1.0)
+	   (amp-fuzz 1.0)
+	   (out-data (make-vct len)))
+      (vct-map! out-data
+		(lambda ()
+		  (if (not (= 0.0 noise-amount))
+		      (set! fuzz (rand fm-noi)))
+		  (set! vib (+ (env frqf) (triangle-wave pervib) (rand-interp ranvib)))
+		  (if ind-noi (set! ind-fuzz (+ 1.0 (rand-interp ind-noi))))
+		  (if amp-noi (set! amp-fuzz (+ 1.0 (rand-interp amp-noi))))
+		  (if modulate
+		      (if easy-case
+			  (set! modulation
+				(* (env indf1) 
+				   (polynomial coeffs (oscil fmosc1 vib)))) ;(* vib fm1-rat)??
+			  (set! modulation
+				(+ (* (env indf1) (oscil fmosc1 (+ (* fm1-rat vib) fuzz)))
+				   (* (env indf2) (oscil fmosc2 (+ (* fm2-rat vib) fuzz)))
+				   (* (env indf3) (oscil fmosc3 (+ (* fm3-rat vib) fuzz)))))))
+		  (* (env ampf) amp-fuzz
+		     (oscil carrier (+ vib (* ind-fuzz modulation))))))
+      (if (= (channels) 2)
+	  (let ((bsamps (vct-copy out-data)))
+	    (mix-vct (vct-scale! bsamps (locsig-ref loc 1)) beg #f 1 #f)
+	    (mix-vct (vct-scale! out-data (locsig-ref loc 0)) beg #f 0 #f))
+	  (mix-vct out-data beg #f 0 #f)))))
+
+; (fm-violin 0 1 440 .1 :fm-index 2.0)
 (define (fltit)
   "(fltit) returns a time-varying filter: (map-chan (fltit))"
   (let* ((coeffs (list .1 .2 .3 .4 .4 .3 .2 .1))
@@ -12133,7 +12319,6 @@ EDITS: 5
 
       (let ((nind (new-sound "fmv.snd" mus-aifc mus-bshort 22050 1 "this is a comment")))
 	(time (fm-violin 0 1 440 .1))
-	(fofins 1 1 270 .2 .001 730 .6 1090 .3 2440 .1) 
 	(scissor 2.0) 
 	(play-and-wait 0 nind)
 	(save-sound nind)
@@ -12248,8 +12433,6 @@ EDITS: 5
 	(pvoc :pitch 0.5 :time 1.0 :snd nind) 
 	(play-and-wait 0 nind)
 	(revert-sound nind)
-	(pqw-vox 0 1 300 300 .1 '(0 0 50 1 100 0) '(0 0 100 0) 0 '(0 L 100 L) '(.33 .33 .33) '((1 1 2 .5) (1 .5 2 .5 3 1) (1 1 4 .5)))
-	(play-and-wait 0 nind)
 	(close-sound nind))
 
       (if (file-exists? "fmv.snd") (delete-file "fmv.snd"))
@@ -12844,10 +13027,6 @@ EDITS: 5
 		(snd-display ";external reader trouble")))
 	  (free-sample-reader reader)))
       )
-    (load "bird.scm")
-    (time (make-birds "fmv.snd"))
-    ;(play-and-wait 0 (find-sound "fmv.snd"))
-    (close-sound (find-sound "fmv.snd"))
     (dismiss-all-dialogs)
 
     (let ((ind (new-sound "new.snd"))
@@ -26805,15 +26984,6 @@ EDITS: 2
 	  (set! v1 (channel->vct 1000 100))
 	  (if (not (vequal v0 v1)) (snd-display ";jcrev: opt: ~A ~A" v0 v1))
 	  (set! ts (cons (list "jcrev  " t0 t1 (inexact->exact (round (/ t0 t1)))) ts))
-	  (undo 1 ind)
-	  (set! (optimization) 0) 
-	  (set! t0 (time-it (vox 0 2 110 .4 '(0 0 25 1 75 1 100 0) '(0 0 5 .5 10 0 100 1) .1 '(0 UH 25 UH 35 ER 65 ER 75 UH 100 UH) .025 .1)))
-	  (set! v0 (channel->vct 1000 100))
-	  (undo 1 ind)
-	  (set! (optimization) max-optimization) 
-	  (set! t1 (time-it (vox 0 2 110 .4 '(0 0 25 1 75 1 100 0) '(0 0 5 .5 10 0 100 1) .1 '(0 UH 25 UH 35 ER 65 ER 75 UH 100 UH) .025 .1)))
-	  (set! v1 (channel->vct 1000 100))
-	  (set! ts (cons (list "mlbvoi " t0 t1 (inexact->exact (round (/ t0 t1)))) ts))
 	  (close-sound ind))
 	(snd-display ";         ~{~%       ~A~}~%" ts))
 
@@ -26917,11 +27087,19 @@ EDITS: 2
 
 ;;; ---------------- test 23: with-sound ----------------
 
+(load "prc95.scm")
 (load "v.scm")
 (load "jcrev.scm") ; redefines jc-reverb (different from examp.scm version used above)
 (load "maraca.scm")
 (load "bell.scm")
 (load "singer.scm")
+(load "strad.scm")
+(load "pqwvox.scm")
+(load "noise.scm")
+(load "clm-ins.scm")
+(load "flute.scm")
+(load "bird.scm")
+(load "piano.scm")
 
 (define old-opt-23 (optimization))
 (set! (optimization) max-optimization)
@@ -27123,6 +27301,22 @@ EDITS: 2
 		 1.0)
 	(singer .4 .1 (list (list .4 ehh.shp test.glt 523.0 .8 0.0 .01) (list .6 oo.shp test.glt 523.0 .7 .1 .01)))
 	(stereo-flute .6 .2 440 .55 :flow-envelope '(0 0 1 1 2 1 3 0))
+	(fofins 1 .3 270 .4 .001 730 .6 1090 .3 2440 .1)
+	(bow 1.2 .3 400 0.5 :vb 0.15 :fb 0.1 :inharm 0.25)
+	(pqw-vox 1.5 1 300 300 .1 '(0 0 50 1 100 0) '(0 0 100 0) 0 '(0 L 100 L) '(.33 .33 .33) '((1 1 2 .5) (1 .5 2 .5 3 1) (1 1 4 .5)))
+	(fm-noise 2 0.5 500 0.25 '(0 0 25 1 75 1 100 0) 0.1 0.1  1000 '(0 0 100 1) 0.1 0.1 10 1000 '(0 0 100 1) 0 0  100 500 '(0 0 100 1) 0 0)
+	(bes-fm 2.5 .5 440 5.0 1.0 8.0)
+	(chain-dsps 3 0.5 '(0 0 1 .1 2 0) (make-oscil 440))
+	(chain-dsps 3.5 1.0 '(0 0 1 1 2 0) (make-one-zero .5) (make-readin "oboe.snd"))
+	(vox 4 2 170 .4 '(0 0 25 1 75 1 100 0) '(0 0 5 .5 10 0 100 1) .1 '(0 E 25 AE 35 ER 65 ER 75 I 100 UH) .05 .1)
+	(p 5.0 :duration .5 :keyNum 36 :strike-velocity .5 :amp .4 :DryPedalResonanceFactor .25)
+	(bobwhite 5.5)
+	(plucky 3.25 .3 440 .2 1.0)
+	(bowstr 3.75 .3 220 .2 1.0)
+	(brass 4.2 .3 440 .2 1.0)
+	(clarinet 5.75 .3 440 .2 1.0)
+	(flute 6 .3 440 .2 1.0)
+	(fm-trumpet 6.5 .25)
 	)
       (if (defined? 'enable-play) (enable-play))
       (let ((ind (find-sound "test.snd")))

@@ -212,6 +212,7 @@ static void auto_update_check(XtPointer context, XtIntervalId *id)
     }
 }
 
+#ifndef SND_AS_WIDGET
 static void dismiss_all_dialogs(snd_state *ss)
 {
   state_context *sx;
@@ -271,9 +272,11 @@ static void minify_maxify_window(Widget w, XtPointer context, XEvent *event, Boo
 	      XtManageChild(sx->dialogs[i]);
     }
 }
+#endif
 
 static Atom snd_v, snd_c;
 
+#ifndef SND_AS_WIDGET
 #if HAVE_EXTENSION_LANGUAGE
 static XEN window_property_changed_hook;
 
@@ -302,6 +305,7 @@ static void who_called(Widget w, XtPointer context, XEvent *event, Boolean *cont
 	  }
     }
 }
+#endif
 #endif
 
 #if HAVE_SETJMP_H
@@ -364,7 +368,9 @@ static int tm_slice = 0;
 
 static Cessate startup_funcs(XtPointer context)
 {
+#ifndef SND_AS_WIDGET
   Atom wm_delete_window;
+#endif
   snd_state *ss;
   snd_info *sp;
   static int auto_open_ctr = 0;
@@ -495,16 +501,18 @@ static void SetupIcon(Widget shell)
 #endif
 #endif
 
+#ifndef SND_AS_WIDGET
 static void muffle_warning(char *name, char *type, char *klass, char *defaultp, char **params, unsigned int *num_params)
 {
-#if 0
+#if DEBUGGING
   int i;
-  fprintf(stderr, "warning: %s: %s", name, defaultp);
+  fprintf(stderr, "Xt warning: %s: %s", name, defaultp);
   for (i = 0; i < (*num_params); i++)
     fprintf(stderr, " %s", params[i]);
   fprintf(stderr, "\n");
 #endif
 }
+#endif
 
 static Pixel get_color(Widget shell,
 		       char *rs_color, char *defined_color, char *fallback_color, char *second_fallback_color,

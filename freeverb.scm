@@ -32,7 +32,7 @@
 ;;; Code:
 
 (use-modules (ice-9 format) (ice-9 optargs))
-(load-from-path "ws.scm")
+(if (not (defined? '*output*)) (load-from-path "ws.scm"))
 
 (def-clm-struct fcomb
   delay
@@ -45,7 +45,7 @@
 				 (tap (fcomb-delay ,comb)))
 		       (fcomb-feedback ,comb)))))
 
-(define* (freeverb #:optional
+(definstrument (freeverb #:optional
 		   (startime 0)
 		   (dur (+ 1.0 (mus-sound-duration (mus-file-name *reverb*))))
 		   #:key

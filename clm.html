@@ -255,18 +255,18 @@ lisps there's actually no way to unload it).
 </p>
 <p>In Scheme/Snd, the exact same sequence can be used: with-sound
 has the same syntax, and the run macro optimizes compute speed.  The main
-difference is that definstrument is define, and loop may not be supported,
-so our simp instrument becomes:
+difference is that "run" takes a "thunk":
 </p>
 <pre>
-(define (simp start-time duration frequency amplitude)
+(definstrument (scm-simp start-time duration frequency amplitude)
   (let* ((beg (inexact-&gt;exact (floor (* start-time (mus-srate)))))
          (dur (inexact-&gt;exact (floor (* duration (mus-srate)))))
          (s (make-oscil :frequency frequency)))
     (run
-      (do ((i 0 (1+ i)))
-          ((= i dur))
-        (outa (+ i beg) (* amplitude (oscil s)))))))
+      (lambda ()
+        (do ((i 0 (1+ i)))
+            ((= i dur))
+          (outa (+ i beg) (* amplitude (oscil s)) *output*))))))
 </pre>
 
 <br>

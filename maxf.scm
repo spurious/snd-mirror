@@ -33,8 +33,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (use-modules (ice-9 format) (ice-9 optargs))
+(if (not (defined? '*output*)) (load-from-path "ws.scm"))
 (load-from-path "jcrev.scm")
-(load-from-path "ws.scm")
 
 (define pi 3.141592653589793)
 (define *locsig-type* mus-sinusoidal)

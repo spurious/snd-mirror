@@ -15,7 +15,7 @@
 ;;; Apparently all Perry's data is aimed at srate=22050.
 ;;;
 ;;; translated from CLM singer.ins
-
+(if (not (defined? '*output*)) (load-from-path "ws.scm"))
 
 (definstrument (singer beg amp-1 data)
   ;; data is a list of lists very similar to the sequence of synthesize calls in Perry's original implementation.
