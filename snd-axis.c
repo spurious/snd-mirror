@@ -294,20 +294,83 @@ static void draw_vertical_grid_line(int x, axis_info *ap, axis_context *ax)
   set_foreground_color(ap->cp, ax, old_color);
 }
 
+static void draw_label(char *label, int x, int y, axis_info *ap, axis_context *ax, printing_t printing)
+{
+  draw_string(ax, x, y, label, snd_strlen(label));
+  if (printing) 
+    ps_draw_string(ap, x, y, label);
+}
+
+static void draw_vertical_tick(int x, int y0, int y1, axis_info *ap, axis_context *ax, printing_t printing, bool include_grid)
+{
+  draw_line(ax, x, y1, x, y0);
+  if (printing) ps_draw_line(ap, x, y1, x, y0);
+  if (include_grid) draw_vertical_grid_line(x, ap, ax);
+}
+
+static void draw_horizontal_tick(int x0, int x1, int y, axis_info *ap, axis_context *ax, printing_t printing, bool include_grid)
+{
+  draw_line(ax, x0, y, x1, y);
+  if (printing) ps_draw_line(ap, x0, y, x1, y);
+  if (include_grid) draw_horizontal_grid_line(y, ap, ax);
+}
+
+static void draw_log_tick_label(char *label, int logx, int x_label_width, int right_border_width, axis_info *ap, axis_context *ax, printing_t printing)
+{
+  /* is there room for a label? */
+  /* the main label is at ap->x_label_x to that plus x_label_width */
+  int lx0, lx1, tx0, tx1, label_width;
+  lx0 = ap->x_label_x;
+  lx1 = lx0 + x_label_width;
+  label_width = number_width(label);
+  tx0 = logx - .45 * label_width;
+  if ((tx0 + label_width) > ap->x_axis_x1)
+    tx0 = logx - label_width + .75 * right_border_width;
+  tx1 = tx0 + label_width;
+  if ((lx0 > tx1) || (lx1 < tx0))
+    draw_label(label, tx0, ap->x_label_y + X_NUMBERS_OFFSET, ap, ax, printing);
+}
+
+static void set_numbers_font(axis_context *ax, printing_t printing)
+{
+#if USE_MOTIF
+  ax->current_font = ((XFontStruct *)(AXIS_NUMBERS_FONT(ss)))->fid;
+  XSetFont(ax->dp, ax->gc, ((XFontStruct *)(AXIS_NUMBERS_FONT(ss)))->fid);
+#else
+#if USE_GTK
+  ax->current_font = AXIS_NUMBERS_FONT(ss);
+#endif
+#endif
+  if (printing) ps_set_number_font();
+}
+
+static void set_labels_font(axis_context *ax, printing_t printing)
+{
+#if USE_MOTIF
+  ax->current_font = ((XFontStruct *)(AXIS_LABEL_FONT(ss)))->fid;
+  XSetFont(ax->dp, ax->gc, ((XFontStruct *)(AXIS_LABEL_FONT(ss)))->fid);
+#else
+  #if USE_GTK
+  ax->current_font = AXIS_LABEL_FONT(ss);
+  #endif
+#endif
+  if (printing)
+    ps_set_label_font();
+}
+
+
 void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t axes, printing_t printing, 
 		 with_x_axis_t show_x_axis, with_grid_t with_grid, log_axis_t log_axes)
 {
   Latus width, height;
-  double x_range, y_range, tens;
-  Latus axis_thickness, left_border_width, bottom_border_width, top_border_width, right_border_width;
-  Latus inner_border_width, tick_label_width;
+  Latus axis_thickness, left_border_width, bottom_border_width, top_border_width, right_border_width, inner_border_width;
   Latus major_tick_length, minor_tick_length, x_tick_spacing, y_tick_spacing;
   bool include_x_label, include_x_ticks, include_x_tick_labels, include_y_ticks, include_y_tick_labels, include_grid;
+  bool y_axis_linear = true, x_axis_linear = true;
   Latus x_label_width, x_label_height, x_number_height;
-  int num_ticks, majy, miny, majx, minx, x, y, tx, ty, x0, y0;
-  double fy, fx;
+  int num_ticks;
   tick_descriptor *tdx = NULL, *tdy = NULL;
-  Locus curx, cury, curdy;
+  Locus curx, cury;
   axis_context *ax;
 #if HAVE_GL
   Float xthick, ythick, xmajorlen, xminorlen, ymajorlen, yminorlen;
@@ -379,8 +442,8 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
       if ((axes == SHOW_X_AXIS_UNLABELLED) || (axes == SHOW_ALL_AXES_UNLABELLED))
 	include_x_label = false;
       else include_x_label = ((ap->xlabel) && ((height > 100) && (width > 100)));
-      include_x_tick_labels = ((height > 60) && (width > 100) && (log_axes != WITH_LOG_X_AXIS));
-      include_x_ticks = ((height > 40) && (width > 40) && (log_axes != WITH_LOG_X_AXIS));
+      include_x_tick_labels = ((height > 60) && (width > 100));
+      include_x_ticks = ((height > 40) && (width > 40));
     }
   else
     {
@@ -388,20 +451,22 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
       include_x_tick_labels = false;
       include_x_ticks = false;
     }
+  if (log_axes == WITH_LOG_X_AXIS) x_axis_linear = false;
+
   if ((axes != SHOW_X_AXIS) && (axes != SHOW_X_AXIS_UNLABELLED))
     {
-      include_y_tick_labels = ((width > 100) && (height > 60) && (log_axes != WITH_LOG_Y_AXIS));
-      include_y_ticks = ((width > 100) && (height > 40) && (log_axes != WITH_LOG_Y_AXIS));
+      include_y_tick_labels = ((width > 100) && (height > 60));
+      include_y_ticks = ((width > 100) && (height > 40));
     }
   else
     {
       include_y_tick_labels = false;
       include_y_ticks = false;
     }
+  if (log_axes == WITH_LOG_Y_AXIS) y_axis_linear = false;
 
   curx = left_border_width;
   cury = height - bottom_border_width;
-  
   x_number_height = number_height();
   x_label_height = 0;
   x_label_width = 0;
@@ -421,82 +486,95 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
     if (include_x_ticks) 
       x_label_height = label_height();
 
-  curdy = cury;
-  if (include_y_ticks)
+  if (y_axis_linear)
     {
-      /* figure out how long the longest tick label will be and make room for it */
-      /* values go from ap->y0 to ap->y1 */
-      /* basic tick spacing is tick_spacing pixels */
-      num_ticks = curdy / y_tick_spacing;
-      /* ticks start and stop at 10-based locations (i.e. sloppy axis bounds) */
-      /* so, given the current min..max, find the pretty min..max for ticks */
-      y_range = ap->y1 - ap->y0;
-      if (y_range <= 0.0)
+      if (include_y_ticks)
 	{
-	  if (ap->y0 != 0.0)
+	  double y_range;
+	  /* figure out how long the longest tick label will be and make room for it */
+	  /* values go from ap->y0 to ap->y1 */
+	  /* basic tick spacing is tick_spacing pixels */
+	  num_ticks = cury / y_tick_spacing;
+	  /* ticks start and stop at 10-based locations (i.e. sloppy axis bounds) */
+	  /* so, given the current min..max, find the pretty min..max for ticks */
+	  y_range = ap->y1 - ap->y0;
+	  if (y_range <= 0.0)
 	    {
-	      ap->y1 = ap->y0 * 1.25;
-	      y_range = ap->y0 * .25;
+	      if (ap->y0 != 0.0)
+		{
+		  ap->y1 = ap->y0 * 1.25;
+		  y_range = ap->y0 * .25;
+		}
+	      else
+		{
+		  ap->y1 = 1.0;
+		  y_range = 1.0;
+		}
 	    }
-	  else
+	  tdy = describe_ticks((tick_descriptor *)(ap->y_ticks), ap->y0, ap->y1, num_ticks);
+	  ap->y_ticks = tdy;
+	  if (include_y_tick_labels)
 	    {
-	      ap->y1 = 1.0;
-	      y_range = 1.0;
+	      Latus tick_label_width;
+	      if (tdy->min_label) 
+		{
+		  FREE(tdy->min_label); 
+		  tdy->min_label = NULL;
+		}
+	      tdy->min_label = prettyf(tdy->mlo, tdy->tens);
+	      tdy->min_label_width = number_width(tdy->min_label);
+	      
+	      if (tdy->max_label) 
+		{
+		  FREE(tdy->max_label); 
+		  tdy->max_label = NULL;
+		}
+	      tdy->max_label = prettyf(tdy->mhi, tdy->tens);
+	      tdy->max_label_width = number_width(tdy->max_label);
+	      tick_label_width = tdy->min_label_width;
+	      if (tick_label_width < tdy->max_label_width) 
+		tick_label_width = tdy->max_label_width;
+	      if (((curx + tick_label_width) > (int)(.61 * width)) || 
+		  ((4 * x_number_height) > height))
+		include_y_tick_labels = false;
+	      else curx += tick_label_width;
 	    }
+	  
+	  curx += major_tick_length;
+	  tdy->maj_tick_len = major_tick_length;
+	  tdy->min_tick_len = minor_tick_length;
+	  ap->y_axis_y1 = top_border_width;
 	}
-
-      tdy = describe_ticks((tick_descriptor *)(ap->y_ticks), ap->y0, ap->y1, num_ticks);
-      ap->y_ticks = tdy;
-      if (include_y_tick_labels)
-	{
-	  if (tdy->min_label) 
-	    {
-	      FREE(tdy->min_label); 
-	      tdy->min_label = NULL;
-	    }
-	  tdy->min_label = prettyf(tdy->mlo, tdy->tens);
-	  tdy->min_label_width = number_width(tdy->min_label);
-
-	  if (tdy->max_label) 
-	    {
-	      FREE(tdy->max_label); 
-	      tdy->max_label = NULL;
-	    }
-	  tdy->max_label = prettyf(tdy->mhi, tdy->tens);
-	  tdy->max_label_width = number_width(tdy->max_label);
-	  tick_label_width = tdy->min_label_width;
-	  if (tick_label_width < tdy->max_label_width) 
-	    tick_label_width = tdy->max_label_width;
-	  if (((curx + tick_label_width) > (int)(.61 * width)) || 
-	      ((4 * x_number_height) > height))
-	    include_y_tick_labels = false;
-	  else curx += tick_label_width;
-	}
-      
-      curx += major_tick_length;
-      tdy->maj_tick_len = major_tick_length;
-      tdy->min_tick_len = minor_tick_length;
-      ap->y_axis_y1 = top_border_width;
+      else ap->y_axis_y1 = 0;
     }
-  else ap->y_axis_y1 = 0;
-
+  else
+    {
+      /* log case */
+      if (include_y_tick_labels)
+	curx += number_width("10000");
+      curx += major_tick_length;
+    }
+  
   ap->x_axis_x1 = width - right_border_width;
   ap->x_axis_x0 = curx;
-  x_range = ap->x1 - ap->x0;
-  if (x_range <= 0)
-    {
-      if (ap->x0 != 0.0)
-	{
-	  ap->x1 = ap->x0 * 1.25;
-	  x_range = ap->x0 * .25;
-	}
-      else
-	{
-	  ap->x1 = .1;
-	  x_range = .1;
-	}
-    }
-  if (include_x_ticks) 
+  {
+    double x_range;
+    x_range = ap->x1 - ap->x0;
+    if (x_range <= 0)
+      {
+	if (ap->x0 != 0.0)
+	  {
+	    ap->x1 = ap->x0 * 1.25;
+	    x_range = ap->x0 * .25;
+	  }
+	else
+	  {
+	    ap->x1 = .1;
+	    x_range = .1;
+	  }
+      }
+  }
+  if ((x_axis_linear) && (include_x_ticks))
     {
       num_ticks = (ap->x_axis_x1 - curx) / x_tick_spacing;
       switch (x_style)
@@ -522,6 +600,7 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
       ap->x_ticks = tdx;
       if (include_x_tick_labels)
 	{
+	  Latus tick_label_width;
 	  if (tdx->min_label) 
 	    {
 	      FREE(tdx->min_label); 
@@ -576,16 +655,11 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
   if (ap->use_gl) activate_gl_fonts();
   ap->used_gl = ap->use_gl;
 #endif
+
+  /* x axis label */
   if (include_x_label)
     {
-#if USE_MOTIF
-      ax->current_font = ((XFontStruct *)(AXIS_LABEL_FONT(ss)))->fid;
-      XSetFont(ax->dp, ax->gc, ((XFontStruct *)(AXIS_LABEL_FONT(ss)))->fid);
-#else
-  #if USE_GTK
-      ax->current_font = AXIS_LABEL_FONT(ss);
-  #endif
-#endif
+      set_labels_font(ax, printing);
 #if HAVE_GL
       if (ap->use_gl)
 	{
@@ -600,12 +674,10 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
 #endif
       draw_string(ax, ap->x_label_x, ap->x_label_y + X_LABEL_Y_OFFSET, ap->xlabel, snd_strlen(ap->xlabel));
       if (printing) 
-	{
-	  ps_set_label_font();
-	  ps_draw_string(ap, ap->x_label_x, ap->x_label_y + X_LABEL_Y_OFFSET, ap->xlabel);
-	}
+	ps_draw_string(ap, ap->x_label_x, ap->x_label_y + X_LABEL_Y_OFFSET, ap->xlabel);
     }
 
+  /* x axis */
   if (show_x_axis)
     {
 #if HAVE_GL
@@ -623,6 +695,8 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
 #endif
       fill_rectangle(ax, ap->x_axis_x0, ap->x_axis_y0, (unsigned int)(ap->x_axis_x1 - ap->x_axis_x0), axis_thickness);
     }
+
+  /* y axis */
   if ((axes != SHOW_X_AXIS) && (axes != SHOW_X_AXIS_UNLABELLED))
     {
 #if HAVE_GL
@@ -640,30 +714,21 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
 #endif
       fill_rectangle(ax, ap->y_axis_x0, ap->y_axis_y1, axis_thickness, (unsigned int)(ap->y_axis_y0 - ap->y_axis_y1));
     }
-  if ((include_y_tick_labels) || 
-      (include_x_tick_labels))
-#if USE_MOTIF
-    {
-      ax->current_font = ((XFontStruct *)(AXIS_NUMBERS_FONT(ss)))->fid;
-      XSetFont(ax->dp, ax->gc, ((XFontStruct *)(AXIS_NUMBERS_FONT(ss)))->fid);
-    }
-#else
-  #if USE_GTK
-    ax->current_font = AXIS_NUMBERS_FONT(ss);
-  #endif
-#endif
+
   if (printing) 
     {
       if (show_x_axis)
 	ps_fill_rectangle(ap, ap->x_axis_x0, ap->x_axis_y0, ap->x_axis_x1 - ap->x_axis_x0, axis_thickness);
       if ((axes != SHOW_X_AXIS) && (axes != SHOW_X_AXIS_UNLABELLED))
 	ps_fill_rectangle(ap, ap->y_axis_x0, ap->y_axis_y1, axis_thickness, ap->y_axis_y0 - ap->y_axis_y1);
-      if ((include_y_tick_labels) || 
-	  (include_x_tick_labels)) 
-	ps_set_number_font();
     }
 
-  if (include_y_tick_labels)
+  /* linear axis ticks/labels */
+  if ((include_y_tick_labels) || 
+      (include_x_tick_labels))
+    set_numbers_font(ax, printing);
+  
+  if ((y_axis_linear) && (include_y_tick_labels))
     {
 #if HAVE_GL
       if (ap->use_gl)
@@ -717,7 +782,7 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
 		      tdy->max_label);
 	}
     }
-  if (include_x_tick_labels)
+  if ((x_axis_linear) && (include_x_tick_labels))
     {
       int lx0, lx1, tx0, tx1;
       /* the label is at ap->x_label_x to that plus x_label_width */
@@ -739,16 +804,7 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
 	    }
 	  else
 #endif
-	  draw_string(ax,
-		      tx0,
-		      ap->x_label_y + X_NUMBERS_OFFSET,
-		      tdx->min_label,
-		      strlen(tdx->min_label));
-	  if (printing) 
-	    ps_draw_string(ap,
-			   tx0,
-			   ap->x_label_y + X_NUMBERS_OFFSET,
-			   tdx->min_label);
+          draw_label(tdx->min_label, tx0, ap->x_label_y + X_NUMBERS_OFFSET, ap, ax, printing);
 	}
       tx0 = (int)(tick_grf_x(tdx->mhi, ap, x_style, srate) - (.45 * tdx->max_label_width)); /* try centered label first */
       if ((tx0 + tdx->max_label_width) > ap->x_axis_x1)
@@ -767,20 +823,13 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
 	    }
 	  else
 #endif
-	  draw_string(ax,
-		      tx0,
-		      ap->x_label_y + X_NUMBERS_OFFSET,
-		      tdx->max_label,
-		      strlen(tdx->max_label));
-	  if (printing) 
-	    ps_draw_string(ap,
-			   tx0,
-			   ap->x_label_y + X_NUMBERS_OFFSET,
-			   tdx->max_label);
+          draw_label(tdx->max_label, tx0, ap->x_label_y + X_NUMBERS_OFFSET, ap, ax, printing);
 	}
     }
-  if (include_y_ticks)
+  if ((y_axis_linear) && (include_y_ticks))
     {
+      double fy, tens;
+      int ty, x0, majx, minx, x;
       /* start ticks at flo, go to fhi by step, major ticks at mlo mhi and intervals of tenstep surrounding */
       x0 = ap->y_axis_x0;
       majx = x0 - tdy->maj_tick_len;
@@ -799,9 +848,8 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
 	}
       else
 #endif
-      draw_line(ax, majx, ty, x0, ty);
-      if (printing) ps_draw_line(ap, majx, ty, x0, ty);
-      if (include_grid) draw_horizontal_grid_line(ty, ap, ax);
+
+      draw_horizontal_tick(majx, x0, ty, ap, ax, printing, include_grid);
       tens = 0.0;
       fy -= tdy->step;
       while (fy >= tdy->flo)
@@ -826,9 +874,7 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
 	    }
 	  else
 #endif
-	  draw_line(ax, x, ty, x0, ty);
-	  if (printing) ps_draw_line(ap, x, ty, x0, ty);
-	  if (include_grid) draw_horizontal_grid_line(ty, ap, ax);
+          draw_horizontal_tick(x, x0, ty, ap, ax, printing, include_grid);
 	  fy -= tdy->step;
 	}
       tens = 0.0;
@@ -856,14 +902,14 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
 	    }
 	  else
 #endif
-	  draw_line(ax, x, ty, x0, ty);
-	  if (printing) ps_draw_line(ap, x, ty, x0, ty);
-	  if (include_grid) draw_horizontal_grid_line(ty, ap, ax);
+          draw_horizontal_tick(x, x0, ty, ap, ax, printing, include_grid);
 	  fy += tdy->step;
 	}
     }
-  if (include_x_ticks)
+  if ((x_axis_linear) && (include_x_ticks))
     {
+      double fx, tens;
+      int tx, y0, majy, miny, y;
       /* start ticks at flo, go to fhi by step, major ticks at mlo mhi and intervals of tenstep surrounding */
       y0 = ap->x_axis_y0;
       majy = y0 + tdx->maj_tick_len;
@@ -882,9 +928,8 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
 	}
       else
 #endif
-      draw_line(ax, tx, majy, tx, y0);
-      if (printing) ps_draw_line(ap, tx, majy, tx, y0);
-      if (include_grid) draw_vertical_grid_line(tx, ap, ax);
+
+      draw_vertical_tick(tx, y0, majy, ap, ax, printing, include_grid);
       tens = 0.0;
       fx -= tdx->step;
       while (fx >= tdx->flo)
@@ -909,9 +954,7 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
 	    }
 	  else
 #endif
-	  draw_line(ax, tx, y, tx, y0);
-	  if (printing) ps_draw_line(ap, tx, y, tx, y0);
-	  if (include_grid) draw_vertical_grid_line(tx, ap, ax);
+          draw_vertical_tick(tx, y0, y, ap, ax, printing, include_grid);
 	  fx -= tdx->step;
 	}
       tens = 0.0;
@@ -939,11 +982,156 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
 	    }
 	  else
 #endif
-	  draw_line(ax, tx, y, tx, y0);
-	  if (printing) ps_draw_line(ap, tx, y, tx, y0);
-	  if (include_grid) draw_vertical_grid_line(tx, ap, ax);
+          draw_vertical_tick(tx, y0, y, ap, ax, printing, include_grid);
 	  fx += tdx->step;
 	}
+    }
+
+  /* all linear axis stuff has been taken care of. check for log axes (assume fft context, not spectrogram so no GL) */
+  /* x axis overall label has already gone out */
+
+  if ((!x_axis_linear) && (show_x_axis))
+    {
+      double min_freq, max_freq;
+      Float minlx = 0.0, maxlx, fap_range, log_range, lscale = 1.0, curlx;
+      Locus logx;
+      int y0, majy, miny;
+      if (include_x_ticks)
+	{
+	  int i;
+	  char *label = NULL;
+	  Float freq = 0.0, freq10 = 0.0;
+	  /* get min (log-freq or spectro-start), max, add major ticks and brief labels, then if room add log-style minor ticks (100's, 1000's) */
+	  y0 = ap->x_axis_y0;
+	  majy = y0 + major_tick_length;
+	  miny = y0 + minor_tick_length;
+	  min_freq = ap->x0;
+	  max_freq = ap->x1;
+	  if (include_x_tick_labels)
+	    set_numbers_font(ax, printing);
+	  fap_range = max_freq - min_freq;
+	  if (min_freq > 1.0) minlx = log(min_freq); else minlx = 0.0;
+	  maxlx = log(max_freq);
+	  log_range = (maxlx - minlx);
+	  lscale = fap_range / log_range;
+	  for (i = 0; i < 3; i++)
+	    {
+	      switch (i)
+		{
+		case 0:
+		  label = "100";
+		  freq = 100.0;
+		  break;
+		case 1:
+		  label = "1000";
+		  freq = 1000.0;
+		  break;
+		case 2:
+		  label = "10000";
+		  freq = 10000.0;
+		  break;
+		}
+	      if ((min_freq <= freq) && (max_freq >= freq))
+		{
+		  /* draw major tick at freq */
+		  freq10 = freq / 10.0;
+		  logx = grf_x(min_freq + lscale * (log(freq) - minlx), ap);
+		  draw_vertical_tick(logx, y0, majy, ap, ax, printing, include_grid);	      
+		  draw_log_tick_label(label, logx, x_label_width, right_border_width, ap, ax, printing);
+		  if (width > 200)
+		    {
+		      curlx = snd_round(min_freq / freq10) * freq10;
+		      for (; curlx < freq; curlx += freq10)
+			{
+			  logx = grf_x(min_freq + lscale * (log(curlx) - minlx), ap);
+			  draw_vertical_tick(logx, y0, miny, ap, ax, printing, include_grid);	      
+			}
+		    }
+		}
+	    }
+	}
+    }
+
+  if ((!y_axis_linear) && (axes != SHOW_X_AXIS) && (axes != SHOW_X_AXIS_UNLABELLED))
+    {
+      double min_freq, max_freq;
+      Float minlx = 0.0, maxlx, fap_range, log_range, lscale = 1.0, curly;
+      Locus logy;
+      int x0, majx, minx;
+      if (include_y_ticks)
+	{
+	  int i;
+	  char *label = NULL;
+	  Float freq = 0.0, freq10 = 0.0;
+	  /* get min (log-freq or spectro-start), max, add major ticks and brief labels, then if room add log-style minor ticks (100's, 1000's) */
+	  x0 = ap->y_axis_x0;
+	  majx = x0 - major_tick_length;
+	  minx = x0 - minor_tick_length;
+	  min_freq = ap->y0;
+	  max_freq = ap->y1;
+	  if (include_y_tick_labels)
+	    set_numbers_font(ax, printing);
+	  fap_range = max_freq - min_freq;
+	  if (min_freq > 1.0) minlx = log(min_freq); else minlx = 0.0;
+	  maxlx = log(max_freq);
+	  log_range = (maxlx - minlx);
+	  lscale = fap_range / log_range;
+	  for (i = 0; i < 3; i++)
+	    {
+	      switch (i)
+		{
+		case 0:
+		  label = "100";
+		  freq = 100.0;
+		  break;
+		case 1:
+		  label = "1000";
+		  freq = 1000.0;
+		  break;
+		case 2:
+		  label = "10000";
+		  freq = 10000.0;
+		  break;
+		}
+	      if ((min_freq <= freq) && (max_freq >= freq))
+		{
+		  /* draw major tick at freq */
+		  freq10 = freq / 10.0;
+		  logy = grf_y(min_freq + lscale * (log(freq) - minlx), ap);
+		  draw_horizontal_tick(majx, x0, logy, ap, ax, printing, include_grid);	      
+		  if (include_y_tick_labels)
+		    {
+		      int label_width;
+		      label_width = number_width(label);
+		      draw_string(ax,
+				  ap->y_axis_x0 - major_tick_length - label_width - inner_border_width,
+#if USE_GTK
+				  (int)(logy - .5 * x_number_height),
+#else
+				  (int)(logy + .25 * x_number_height),
+#endif
+				  label,
+				  snd_strlen(label));
+		      
+		      if (printing) 
+			ps_draw_string(ap,
+				       ap->y_axis_x0 - major_tick_length - label_width - inner_border_width,
+				       (int)(logy + .25 * x_number_height),
+				       label);
+		    }
+		  if (height > 200)
+		    {
+		      curly = snd_round(min_freq / freq10) * freq10;
+		      for (; curly < freq; curly += freq10)
+			{
+			  logy = grf_y(min_freq + lscale * (log(curly) - minlx), ap);
+			  draw_horizontal_tick(minx, x0, logy, ap, ax, printing, include_grid);	      
+			}
+		    }
+		}
+	    }
+	}
+      
     }
 }
 

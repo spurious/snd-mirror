@@ -490,7 +490,7 @@ down the x axis, wasting valuable screen space!  But it also seemed a bother to 
 <a href="#spectrostart">spectro-start</a> variable every time you wanted to flip between log and linear
 displays.  log-freq-start to the rescue?  (In earlier versions of Snd I tried to kludge around this
 by pre-multiplying the frequencies by some big number, thereby shifting everything up in log space,
-but I decided that was a worse kludge than log-freq-start.
+but I decided that was a worse kludge than log-freq-start).
 </td></tr>
 <tr><td colspan=3></td></tr>
 
@@ -606,7 +606,7 @@ them); if you're not using regions anyway, this switch can turn them off.
 <tr><td colspan=3></td></tr>
 
 <!-- show-selection-transform -->
-<tr><td colspan=2><code><a class=def name="lshowselectiontransform">show-selection-transform</a></code></td>
+<tr><td colspan=2><code><a class=def name="showselectiontransform">show-selection-transform</a></code></td>
 <td><code>#f</code></td></tr>
 <tr><td></td><td colspan=2>If #t, display the transform of the current active selection, if any.
 </td></tr>
@@ -3959,7 +3959,7 @@ this is the same as <i>src-sound</i> but applied to selection.
 <small><blockquote>
 color of selected portion: <a href="#selectioncolor">selection-color</a><br>
 set whether creating a selection creates a region: <a href="#selectioncreatesregion">selection-creates-region</a><br>
-fft graph refers to the selection: <a href="#lshowselectiontransform">show-selection-transform</a><br>
+fft graph refers to the selection: <a href="#showselectiontransform">show-selection-transform</a><br>
 hook called when selection stops playing: <a href="#stopplayingselectionhook">stop-playing-selection-hook</a><br>
 swap chans in selected portion: <a href="sndscm.html#exswapselectionchannels">swap-selection-channels</a><br>
 replace portion with selection: <a href="sndscm.html#exreplacewithselection">replace-with-selection</a><br>
@@ -4394,7 +4394,7 @@ Convolve-with in conjunction with mix can provide high-quality reverb:
 
 <!-- count-matches -->
 <tr><td colspan=2>
-<code><a class=def name="lcountmatches">count-matches</a> (proc <i>sample snd chn edpos</i>) </code></td></tr>
+<code><a class=def name="countmatches">count-matches</a> (proc <i>sample snd chn edpos</i>) </code></td></tr>
 <tr><td></td><td>
 return how many samples satisfy the function <i>proc</i>; <i>proc</i> should
 take one argument (the current sample value), and return #t for a hit. <i>sample</i> 
@@ -4716,7 +4716,7 @@ To get .1 seconds of attack and decay:
 <br>
 <A NAME="envexamples"></a>
 An 'envelope' in Snd is a list of breakpoints. It can be packaged as a CLM generator (an 'env') via <a href="clm.html#make-env">make-env</a>.
-It can be declared via define, just like any other variable, or <a href="#ldefvar">defvar</a> (for CLM/Snd intercompatibility),
+It can be declared via define, just like any other variable, or <a href="#defvar">defvar</a> (for CLM/Snd intercompatibility),
 or <a href="#defineenvelope">define-envelope</a>.  The latter is probably most convenient because it automatically
 sets up the envelope property 'envelope-base.
 <!-- INDEX envexamples:Envelopes -->
@@ -4971,7 +4971,7 @@ The Find dialog: <a href="snd.html#editoperations">Find</a> or <a href="#finddia
 find silence: <a href="#mapsilence">map-silence</a>, scramble-channel in examp.scm<br>
 find zero crossing: <a href="#newcp">find-zero</a><br>
 find any difference between two chans: <a href="sndscm.html#channelsequal">channels-equal</a><br>
-see also <a href="#lcountmatches">count-matches</a> and <a href="#scanchannel">scan-channel</a><br>
+see also <a href="#countmatches">count-matches</a> and <a href="#scanchannel">scan-channel</a><br>
 find a widget: find-child in snd-motif.scm<br>
 add C-s and C-r to the listener key bindings: add-find-to-listener in snd-motif.scm<br>
 Guile find: find-if<br>
@@ -5238,7 +5238,7 @@ fft window:<br>
 window size: drag x axis, <a href="#spectrocutoff">spectro-cutoff</a><br>
 window start: <a href="#spectrostart">spectro-start</a><br>
 relation to time domain: <a href="#beforeffthook">before-transform-hook</a><br>
-selection fft: <a href="#lshowselectiontransform">show-selection-transform</a><br>
+selection fft: <a href="#showselectiontransform">show-selection-transform</a><br>
 <br>
 general info:<br>
 Axis description: <a href="#axisinfo">axis-info</a><br>
@@ -7473,6 +7473,10 @@ graph-lines  graph-dots  graph-filled  graph-lollipops  graph-dots-and-lines
 <tr><td></td><td>
 choice of spectral display.  The choices are (default) <i>graph-once</i>, 
 <i>graph-as-sonogram</i>, and <i>graph-as-spectrogram</i>.
+Currently, the <a href="#fftlogfrequency">fft-log-frequency</a> and <a href="#normalizefft">transform-normalization</a>
+choices are ignored by the spectrogram display.
+If you've included openGL in Snd, the spectrogram will use it if <a href="#withgl">with-gl</a> is #t (the
+default).
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -7541,7 +7545,7 @@ no way to trap the error (it is not really a fatal error).
 
 <!-- transform-type -->
 <tr><td colspan=2>
-<code><a class=def name="ltransformtype">transform-type</a> (<em class=narg>snd chn</em>)</code>
+<code><a class=def name="transformtype">transform-type</a> (<em class=narg>snd chn</em>)</code>
 </td></tr>
 <tr><td></td><td>
 The spectrum transform type (default: <i>fourier-transform</i>).
@@ -7660,7 +7664,7 @@ displayed in the minibuffer.  This is the View:Verbose cursor option
 <code><a class=def name="wavelettype">wavelet-type</a> (<em class=narg>snd chn</em>)</code>
 </td></tr>
 <tr><td></td><td>
-If <i><a href="#ltransformtype">transform-type</a></i> is <i>wavelet-transform</i>, <i>wavelet-type</i> selects which 
+If <i><a href="#transformtype">transform-type</a></i> is <i>wavelet-transform</i>, <i>wavelet-type</i> selects which 
 wavelet is used.  The list of available wavelets is in the Transform 
 Dialog. There are currently 48 choices, so this variable goes from 
 0 to 47 (default: 0).
@@ -8302,7 +8306,7 @@ If no <i>snd</i> argument is given, this also affects the Mix and Track.
 
 <!-- speed-control-style -->
 <tr><td colspan=2>
-<code><a class=def name="lspeedstyle">speed-control-style</a> (<em class=narg>snd</em>)</code>
+<code><a class=def name="speedstyle">speed-control-style</a> (<em class=narg>snd</em>)</code>
 </td></tr>
 <tr><td></td><td>
 The speed control can be interpreted as a 
@@ -8649,9 +8653,9 @@ the size of the vcts passed to it, whereas CLM's takes the size as an argument.
 <p>Other related variables and functions:</p>
 <table cellpadding=0 celspacing=10 border=0>
 <tr><td width=200><a href="#transformgraphp"><small>transform-graph?</small></a></td><td width=200><a href="#showfftpeaks"><small>show-transform-peaks</small></a></td><td><a href="#transformsample"><small>transform-sample</small></a></td></tr>
-<tr><td><a href="#fftbeta"><small>fft-window-beta</small></a></td><td><a href="#lshowselectiontransform"><small>show-selection-transform</small></a></td><td><a href="#transformsamples_to_vct"><small>transform-samples-&gt;vct</small></a></td></tr>
+<tr><td><a href="#fftbeta"><small>fft-window-beta</small></a></td><td><a href="#showselectiontransform"><small>show-selection-transform</small></a></td><td><a href="#transformsamples_to_vct"><small>transform-samples-&gt;vct</small></a></td></tr>
 <tr><td><a href="#ffthook"><small>transform-hook</small></a></td><td><a href="#spectrocutoff"><small>spectro-cutoff</small></a></td><td><a href="#transformgraphsize"><small>transform-samples-size</small></a></td></tr>
-<tr><td><a href="#fftlogfrequency"><small>fft-log-frequency</small></a></td><td><a href="#spectrohop"><small>spectro-hop</small></a></td><td><a href="#ltransformtype"><small>transform-type</small></a></td></tr>
+<tr><td><a href="#fftlogfrequency"><small>fft-log-frequency</small></a></td><td><a href="#spectrohop"><small>spectro-hop</small></a></td><td><a href="#transformtype"><small>transform-type</small></a></td></tr>
 <tr><td><a href="#fftlogmagnitude"><small>fft-log-magnitude</small></a></td><td><a href="#spectrostart"><small>spectro-start</small></a></td><td><a href="#updatetransformgraph"><small>update-transform-graph</small></a></td></tr>
 <tr><td><a href="#lfftsize"><small>transform-size</small></a></td><td><a href="#spectroxangle"><small>spectro-x-angle</small></a></td><td><a href="#normalizefft"><small>transform-normalization</small></a></td></tr>
 <tr><td><a href="#transformgraphtype"><small>transform-graph-type</small></a></td><td><a href="#spectroxscale"><small>spectro-x-scale</small></a></td><td><a href="#zeropad"><small>zero-pad</small></a></td></tr>
@@ -8726,7 +8730,7 @@ to the File:Open dialog, first makes sure the dialog exists with <code>(open-fil
 <tr><td colspan=2><code><a class=def name="defineenvelope">define-envelope</a> (name data (base 1.0))</code></td></tr>
 <tr><td></td><td>
 Add an envelope to the envelope editor's list, under the name 'name', using the list of breakpoints
-'data', and the optional 'base'.  If the 'base' is omitted, this is the same as <a href="#ldefvar">defvar</a>.
+'data', and the optional 'base'.  If the 'base' is omitted, this is the same as <a href="#defvar">defvar</a>.
 <code>(define-envelope ramp '(0 0 1 1))</code>.
 </td></tr>
 
@@ -9702,7 +9706,7 @@ send it output via <a href="#musaudiowrite">mus-audio-write</a>, dac-is-running 
 
 <!-- defvar -->
 <tr><td colspan=2>
-<code><a class=def name="ldefvar">defvar</a> (var val)</code></td></tr>
+<code><a class=def name="defvar">defvar</a> (var val)</code></td></tr>
 <tr><td></td><td>
 same as <code>(define var val)</code> except that the envelope editor keeps track
 of <i>var</i> thereafter and treats lists as envelopes. (<i>defvar</i> is a macro).
@@ -10145,7 +10149,7 @@ to put the date and time in the Snd title bar.
   graph-once  graph-as-sonogram  graph-as-spectrogram
 </pre>
 <br>
-<p><b>Transform type</b> (<a href="#ltransformtype">transform-type</a>):</p>
+<p><b>Transform type</b> (<a href="#transformtype">transform-type</a>):</p>
 <pre>
   <a name="fouriertransform">fourier-transform</a>  wavelet-transform   cepstrum   haar-transform
   autocorrelation    walsh-transform
@@ -10175,7 +10179,7 @@ to put the date and time in the Snd title bar.
   x-axis-in-seconds  x-axis-in-samples  x-axis-as-percentage  x-axis-in-beats
 </pre><br>
 
-<p><b>Speed Control</b> style (<a href="#lspeedstyle">speed-control-style</a>):</p>
+<p><b>Speed Control</b> style (<a href="#speedstyle">speed-control-style</a>):</p>
 <pre>
   speed-control-as-float     speed-control-as-ratio     speed-control-as-semitone
 </pre><br>
@@ -11176,7 +11180,7 @@ If #t and GL is loaded, use GL where possible (default is #t if HAVE_GL).</td></
 	<!-- I(sonogram):L(transform-graph-type)(transformgraphtype) -->
 	<!-- I(spectrogram):L(transform-graph-type)(transformgraphtype) -->
         <!-- I(X axis units):L(x-axis-style)(xaxisstyle) -->
-	<!-- I(speed units):L(speed-control-style)(lspeedstyle) -->
+	<!-- I(speed units):L(speed-control-style)(speedstyle) -->
 	<!-- I(speed units):O(speed-control-tones)(speedtones) -->
 	<!-- I(change srate):L(src-sound)(srcsound) -->	
 	<!-- I(edit env):L(enved-dialog)(enveddialog) -->
@@ -11205,7 +11209,7 @@ If #t and GL is loaded, use GL where possible (default is #t if HAVE_GL).</td></
 	<!-- I(save options):L(save-options)(saveoptions) -->
 	<!-- I(describe audio):A(musaudiodescribe) --><!-- I(describe audio):L(mus-audio-describe)(musaudiodescribe) -->
 	<!-- I(abort command):L(c-g?)(cgp) -->
-	<!-- I(count matches):L(count-matches)(lcountmatches) --><!-- I(count matches):A(lcountmatches) -->
+	<!-- I(count matches):L(count-matches)(countmatches) --><!-- I(count matches):A(countmatches) -->
 	<!-- I(convolution):L(convolution)(convolve) --><!-- I(convolution):A(convolve) --><!-- I(convolution):O(convolve-with)(convolvewith) -->
 	<!-- I(auto save):O(autosave.scm) -->
         <!-- I(reverberate file):L(convolve-with)(convolvewith) -->

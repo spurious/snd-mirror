@@ -4526,7 +4526,7 @@ points, but these would be hard to find once the DC was removed.  A quick check:
 </p>
 
 <pre>
-  (<a class=quiet href="extsnd.html#lcountmatches">count-matches</a> (lambda (y) (or (&gt; y .9999) (&lt; y -.9999))))
+  (<a class=quiet href="extsnd.html#countmatches">count-matches</a> (lambda (y) (or (&gt; y .9999) (&lt; y -.9999))))
 </pre>
 <p>
 returned 5437 (in 18 minutes of sound).  That seemed high, and I thought "maybe
@@ -4535,7 +4535,7 @@ those are just one sample clicks that can easily be smoothed over", so
 <pre>
 (define* (count-clips #:optional snd chn)
   (let ((y0 0.0))
-    (<a class=quiet href="extsnd.html#lcountmatches">count-matches</a> 
+    (<a class=quiet href="extsnd.html#countmatches">count-matches</a> 
      (lambda (y) (let ((val (and (or (&gt; y0 .9999) (&lt; y0 -.9999))
 				 (or (&gt; y .9999) (&lt; y -.9999)))))
 		   (set! y0 y)

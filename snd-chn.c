@@ -1965,9 +1965,7 @@ static void make_sonogram(chan_info *cp)
   axis_context *ax;
   static int *sono_js = NULL;
   static int sono_js_size = 0;
-
   Float minlx = 0.0, maxlx, curlx = 0.0, fap_range, log_range, lscale = 1.0;
-
   if (chan_fft_in_progress(cp)) return;
   sp = cp->sound;
   si = (sono_info *)(cp->sonogram_data);
@@ -2001,7 +1999,6 @@ static void make_sonogram(chan_info *cp)
 	{
 	  if (cp->fft_log_frequency)
 	    {
-	      /* TODO: log_freq_start in sonogram (spectro_start not ignored -- not sure it's correct however) */
 	      fap_range = fap->y1 - fap->y0;
 	      if (fap->y0 > 1.0) minlx = log(fap->y0); else minlx = 0.0;
 	      maxlx = log(fap->y1);
@@ -3127,8 +3124,7 @@ static void display_channel_data_with_size (chan_info *cp,
 		  /* In Gtk+ (apparently) the first proc added is run, not the most recent */
 #endif
 		  ((cp->show_grid) && 
-		   (cp->transform_graph_type != GRAPH_AS_SPECTROGRAM) &&
-		   (!(cp->fft_log_frequency))) ? WITH_GRID : NO_GRID,
+		   (cp->transform_graph_type != GRAPH_AS_SPECTROGRAM)) ? WITH_GRID : NO_GRID,
 
 		  ((!(cp->fft_log_frequency)) || 
 		   (cp->transform_graph_type == GRAPH_AS_SPECTROGRAM)) ? WITH_LINEAR_AXES :
@@ -3721,7 +3717,6 @@ static char *describe_fft_point(chan_info *cp, int x, int y)
 	    {
 	      if (cp->fft_log_frequency)
 		{
-		  /* TODO: functionalize these log freq calcs */
 		  Float minlx = 0.0, maxlx, ap_range, log_range, lscale = 1.0;
 		  ap_range = ap->y1 - ap->y0;
 		  if (ap->y0 > 1.0) minlx = log(ap->y0); else minlx = 0.0;

@@ -1515,8 +1515,8 @@ static XEN g_set_log_freq_start(XEN val)
   #define H_log_freq_start "(" S_log_freq_start "): log freq base (default: 25.0)"
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, S_setB S_log_freq_start, "a number");
   base = XEN_TO_C_DOUBLE(val);
-  if (base <= 0.0)
-    XEN_OUT_OF_RANGE_ERROR(S_log_freq_start, XEN_ONLY_ARG, val, "a number > 0.0");
+  if (base < 0.0)
+    XEN_OUT_OF_RANGE_ERROR(S_log_freq_start, XEN_ONLY_ARG, val, "a number >= 0.0");
   set_log_freq_start(base);
   reflect_log_freq_start_in_transform_dialog();
   return(C_TO_XEN_DOUBLE(log_freq_start(ss)));

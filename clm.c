@@ -3281,6 +3281,7 @@ Float *mus_make_fir_coeffs(int order, Float *envl, Float *aa)
   if (aa) 
     a = aa;
   else a = (Float *)clm_calloc(order, sizeof(Float), "coeff space");
+  if (!a) return(NULL);
   if (!(POWER_OF_2_P(order)))
     {
       m = (n + 1) / 2;
@@ -3532,6 +3533,7 @@ Float *mus_partials_to_polynomial(int npartials, Float *partials, int kind)
   T1 = (int *)clm_calloc(npartials + 1, sizeof(int), "partials_to_polynomial t1");
   Tn = (int *)clm_calloc(npartials + 1, sizeof(int), "partials_to_polynomial tn");
   Cc1 = (Float *)clm_calloc(npartials + 1, sizeof(Float), "partials_to_polynomial cc1");
+  if (!Cc1) return(NULL);
   T0[0] = kind;
   T1[1] = 1;
   for (i = 1; i < npartials; i++)
@@ -7160,10 +7162,10 @@ void mus_mix_with_reader_and_writer(mus_any *outf, mus_any *inf, off_t out_start
 	      if (envs[j][k])
 		mx->vals[j][k] = mus_env(envs[j][k]);
 	  mus_frame_to_file(outf, 
-			 outc, 
-			 mus_frame_to_frame((mus_any *)mx, 
-					 mus_file_to_frame(inf, inc, (mus_any *)frin), 
-					 (mus_any *)frthru));
+			    outc, 
+			    mus_frame_to_frame((mus_any *)mx, 
+					       mus_file_to_frame(inf, inc, (mus_any *)frin), 
+					       (mus_any *)frthru));
 	}
       if (umx == NULL) mus_free((mus_any *)mx);
       break;
@@ -7176,10 +7178,10 @@ void mus_mix_with_reader_and_writer(mus_any *outf, mus_any *inf, off_t out_start
     case SCALED_MIX:
       for (offi = 0, inc = in_start, outc = out_start; offi < out_frames; offi++, inc++, outc++)
 	mus_frame_to_file(outf, 
-		       outc, 
-		       mus_frame_to_frame((mus_any *)mx, 
-				       mus_file_to_frame(inf, inc, (mus_any *)frin), 
-				       (mus_any *)frthru));
+			  outc, 
+			  mus_frame_to_frame((mus_any *)mx, 
+					     mus_file_to_frame(inf, inc, (mus_any *)frin), 
+					     (mus_any *)frthru));
       break;
 
     }

@@ -814,7 +814,7 @@ posted during the current run of Snd.  If some error gets erased too quickly fro
         <!-- I(fft window parameter):A(Xfftbeta) --><!-- I(zoom focus):M(Options: Zoom style)(zoomoption) -->
 	<!-- I(save options):M(Options: Save options)(saveoptions) -->
         <!-- I(save state):M(Options: Save State)(savedstate) -->
-        <!-- I(speed units):A(lspeedstyle) -->
+        <!-- I(speed units):A(speedstyle) -->
 	<!-- I(wavelets):A(transformtype) --><!-- I(wavelets):M(Options: Transform)(transformtype) -->
 
 <A NAME="viewfft"></a><p>
@@ -836,7 +836,7 @@ to choose the desired member of that family of windows.
 <img src="ftrans.png" alt="transform dialog" usemap="#fftdialog" align=left hspace=20 onMouseOver="showCoords(e)">
 <map name="fftdialog">
   <area shape=rect coords="0,0,500,20" href="extsnd.html#sndtransforms" alt="transforms">
-  <area shape=rect coords="0,20,170,200" href="extsnd.html#ltransformtype" alt="transform types">
+  <area shape=rect coords="0,20,170,200" href="extsnd.html#transformtype" alt="transform types">
   <area shape=rect coords="0,200,170,380" href="extsnd.html#wavelettype" alt="wavelet types">
   <area shape=rect coords="170,20,320,200" href="extsnd.html#lfftsize" alt="transform sizes">
   <area shape=rect coords="170,200,320,330" href="extsnd.html#fftwindow" alt="transform windows">
@@ -848,7 +848,7 @@ to choose the desired member of that family of windows.
   <area shape=rect coords="320,164,420,190" href="extsnd.html#fftlogmagnitude" alt="log magnitude fft">
   <area shape=rect coords="320,190,420,216" href="extsnd.html#fftlogfrequency" alt="log frequency fft">
   <area shape=rect coords="320,216,420,242" href="extsnd.html#normalizefft" alt="transform normalizations">
-  <area shape=rect coords="320,242,420,270" href="extsnd.html#lshowselectiontransform" alt="show selection transform">
+  <area shape=rect coords="320,242,420,270" href="extsnd.html#showselectiontransform" alt="show selection transform">
 </map>
 
 <p>The FFT is taken from the start (the left edge) of the
@@ -972,7 +972,7 @@ midpoint of the current window.</p>
         <!-- I(undo edit):M(Edit: Undo)(undoredo) --><!-- I(undo edit):K(C-_ or C-x C-u)(cxcu) --><!-- I(undo edit):O(Popup: Undo) -->
         <!-- I(redo edit):M(Edit: Redo)(undoredo) --><!-- I(redo edit):K(C-x C-r)(cxcr) --><!-- I(redo edit):O(Popup: Redo) -->
         <!-- I(find):M(Edit: Find)(find) --><!-- I(find):K(C-s or C-r)(cs) --><!-- I(cut selection):M(Edit: Cut)(editcut) -->
-	<!-- I(find):L(find)(find) --><!-- I(find):O(count-matches)(lcountmatches) -->
+	<!-- I(find):L(find)(find) --><!-- I(find):O(count-matches)(countmatches) -->
         <!-- I(cut selection):A(editoperations) --><!-- I(delete samples):M(Edit: Cut)(editcut) --><!-- I(delete samples):A(editoperations) -->
         <!-- I(insert selection):M(Edit: Paste)(editcut) --><!-- I(insert selection):K(C-y or C-x i)(cxi) --><!-- I(insert selection):A(editcut) -->
         <!-- I(mix selection):M(Edit: Mix)(editcut) --><!-- I(mix selection):K(C-x q)(cxq) --><!-- I(mix selection):A(editcut) -->
@@ -1230,7 +1230,7 @@ you made.
 current time domain displays), there are lots of functions that
 can edit that portion of the current sounds.
 If the 'selection' button is set in the transform options dialog,
-(or equivalently, <a href="extsnd.html#lshowselectiontransform">show-selection-transform</a>
+(or equivalently, <a href="extsnd.html#showselectiontransform">show-selection-transform</a>
 is #t), the fft display, if any, displays the transform of the selected portion.
 </p>
 <br>
@@ -1475,7 +1475,7 @@ the next positive-going zero crossing, placing the cursor just before it:</p>
 </pre>
 <p>Now C-s (zero+) followed by C-s's moves to successive zero crossings.
 There are more examples in <a href="sndscm.html#exzeroplus">sndscm.html</a>.
-See also the functions <a href="extsnd.html#find">find</a> and <a href="extsnd.html#lcountmatches">count-matches</a>.
+See also the functions <a href="extsnd.html#find">find</a> and <a href="extsnd.html#countmatches">count-matches</a>.
 </p>
 
 <h4><A NAME="changesamples">Change samples</a></h4>
@@ -1823,8 +1823,8 @@ using defvar, and loaded from a separate file of envelope
 definitions via load:
 </p>
 <pre>
-  (<a class=quiet href="extsnd.html#ldefvar">defvar</a> ramp '(0 0 1 1))
-  (<a class=quiet href="extsnd.html#ldefvar">defvar</a> pyramid '(0 0 1 1 2 0))
+  (<a class=quiet href="extsnd.html#defvar">defvar</a> ramp '(0 0 1 1))
+  (<a class=quiet href="extsnd.html#defvar">defvar</a> pyramid '(0 0 1 1 2 0))
 </pre>
 <p>defines two envelopes that can be used in Snd wherever an
 envelope is needed (e.g. C-x C-a).  You can also define
@@ -2338,7 +2338,7 @@ panel are:</p>
   <tr><td><a href="#savedstate">continue session</a></td><td><br></td><td><a href="#cxcl"><small>Cx Cl</small></a></td><td><small>load</small></td><td><a href="#minusl"><small>-l switch to Snd</small></a></td></tr>
   <tr><td><a href="#controls">control panel</a></td><td><small>View: <a href="#controls">Show controls</a></small></td><td><a href="#cxco"><small>Cx Co, Cx Cc</small></a></td><td><a href="extsnd.html#showcontrols"><small>show-controls</small></a></td><td><a href="#panecontrol"><small>drag pane sash</small></a></td></tr>
   <tr><td><a href="clm.html#convolve">convolution</a></td><td><br></td><td><br></td><td><a href="clm.html#convolve"><small>convolution</small></a></td><td><a href="extsnd.html#convolvewith"><small>convolve-with</small></a></td></tr>
-  <tr><td><a href="extsnd.html#lcountmatches">count matches</a></td><td><br></td><td><br></td><td><a href="extsnd.html#lcountmatches"><small>count-matches</small></a></td><td><br></td></tr>
+  <tr><td><a href="extsnd.html#countmatches">count matches</a></td><td><br></td><td><br></td><td><a href="extsnd.html#countmatches"><small>count-matches</small></a></td><td><br></td></tr>
   <tr><td><a href="#newfile">create new file</a></td><td><small>File: <a href="#newfile">New</a></small></td><td><br></td><td><a href="extsnd.html#newsound"><small>new-sound</small></a></td><td><a href="extsnd.html#defaultoutputsrate"><small>default-output-srate</small></a></td></tr>
   <tr><td><a href="#editoperations">cut selection</a></td><td><small>Edit: <a href="#editcut">Cut</a></small></td><td><a href="#cw"><small>Cw</small></a></td><td><a href="extsnd.html#deleteselection"><small>delete-selection</small></a></td><td><br></td></tr>
   <tr><td><a href="#marks">define mark</a></td><td><br></td><td><a href="#cxcm"><small>Cx /, Cx Cm</small></a></td><td><a href="extsnd.html#addmark"><small>add-mark</small></a></td><td><a href="#cm"><small>also Cm</small></a></td></tr>
@@ -2367,7 +2367,7 @@ panel are:</p>
   <tr><td><a href="#prevfiles">file lists</a></td><td><small>View: <a href="#prevfiles">Files</a></small></td><td><br></td><td><a href="extsnd.html#viewfilesdialog"><small>view-files-dialog</small></a></td><td><a href="extsnd.html#mouseenterlabelhook"><small>mouse-enter-label-hook</small></a></td></tr>
   <tr><td><a href="#filtercontrol">filter</a></td><td><small>Edit: <a href="#editenvelope">Edit Env</a></small></td><td><br></td><td><a href="extsnd.html#filtercontrolenvelope"><small>filter-env</small></a></td><td><a href="#filtercontrol"><small>see filter controls</small></a></td></tr>
   <tr><td><a href="extsnd.html#filtersound">filter samples</a></td><td><small>Edit: <a href="#editenvelope">Edit Env</a></small></td><td><br></td><td><a href="extsnd.html#filtersound"><small>filter-sound</small></a></td><td><a href="extsnd.html#filterselection"><small>filter-selection</small></a></td></tr>
-  <tr><td><a href="#find">find</a></td><td><small>Edit: <a href="#find">Find</a></small></td><td><a href="#cs"><small>Cs or Cr</small></a></td><td><a href="extsnd.html#find"><small>find</small></a></td><td><a href="extsnd.html#lcountmatches"><small>count-matches</small></a></td></tr>
+  <tr><td><a href="#find">find</a></td><td><small>Edit: <a href="#find">Find</a></small></td><td><a href="#cs"><small>Cs or Cr</small></a></td><td><a href="extsnd.html#find"><small>find</small></a></td><td><a href="extsnd.html#countmatches"><small>count-matches</small></a></td></tr>
   <tr><td><a href="#verticalpane">horizontal panes</a></td><td><br></td><td><br></td><td><a href="extsnd.html#graphshorizontal"><small>graphs-horizontal</small></a></td><td><a href="#verticalpane"><small>-h switch to Snd</small></a></td></tr>
   <tr><td><a href="#cxci">insert file</a></td><td><br></td><td><a href="#cxci"><small>Cx Ci</small></a></td><td><a href="extsnd.html#insertsound"><small>insert-sound</small></a></td><td><br></td></tr>
   <tr><td><a href="#editcut">insert selection</a></td><td><small>Edit: <a href="#editcut">Paste</a></small></td><td><a href="#cxi"><small>Cy or Cx i</small></a></td><td><a href="extsnd.html#insertselection"><small>insert-selection</small></a></td><td><a href="extsnd.html#insertregion"><small>insert-region</small></a></td></tr>
@@ -2421,7 +2421,7 @@ panel are:</p>
   <tr><td><a href="#cxz">smooth selection</a></td><td><br></td><td><a href="#cxz"><small>Cx z</small></a></td><td><a href="extsnd.html#smoothselection"><small>smooth-selection</small></a></td><td><br></td></tr>
   <tr><td><a href="#fftstyle">sonogram</a></td><td><small>Options: <a href="#fftstyle">Transform</a></small></td><td><br></td><td><a href="extsnd.html#transformgraphtype"><small>transform-graph-type</small></a></td><td><a href="extsnd.html#colormap"><small>colormap</small></a></td></tr>
   <tr><td><a href="#fftstyle">spectrogram</a></td><td><small>Options: <a href="#fftstyle">Transform</a></small></td><td><br></td><td><a href="extsnd.html#transformgraphtype"><small>transform-graph-type</small></a></td><td><a href="extsnd.html#spectrocutoff"><small>orientation, scaling</small></a></td></tr>
-  <tr><td><a href="extsnd.html#lspeedstyle">speed units</a></td><td></td><td><br></td><td><a href="extsnd.html#lspeedstyle"><small>speed-control-style</small></a></td><td><a href="extsnd.html#speedtones"><small>speed-control-tones</small></a></td></tr>
+  <tr><td><a href="extsnd.html#speedstyle">speed units</a></td><td></td><td><br></td><td><a href="extsnd.html#speedstyle"><small>speed-control-style</small></a></td><td><a href="extsnd.html#speedtones"><small>speed-control-tones</small></a></td></tr>
   <tr><td><a href="extsnd.html#srcsound">srate conversion</a></td><td><small>Edit: <a href="#editenvelope">Edit Env</a></small></td><td><br></td><td><a href="extsnd.html#srcsound"><small>src-sound</small></a></td><td><a href="extsnd.html#srcsoundselection"><small>src-selection</small></a></td></tr>
   <tr><td><a href="extsnd.html#swapchannels">swap channels</a></td><td><br></td><td><br></td><td><a href="extsnd.html#swapchannels"><small>swap-channels</small></a></td><td><br></td></tr>
   <tr><td><a href="#ktempdir">temp directory</a></td><td><br></td><td><a href="#ktempdir"><small>Cx d</small></a></td><td><a href="extsnd.html#tempdir"><small>temp-dir</small></a></td><td><small>TMPDIR or /var/tmp</small></td></tr>
