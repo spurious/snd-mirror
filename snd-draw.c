@@ -105,7 +105,11 @@ static XEN g_draw_string(XEN text, XEN x0, XEN y0, XEN snd, XEN chn, XEN ax)
   XEN_ASSERT_TYPE(XEN_STRING_P(text), text, XEN_ARG_1, S_draw_string, "a string");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(x0), x0, XEN_ARG_2, S_draw_string, "a number");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(y0), y0, XEN_ARG_3, S_draw_string, "a number");
+#if HAVE_MOTIF
+  gtk_style_draw_string(TO_C_AXIS_CONTEXT(snd, chn, ax, S_draw_string),
+#else
   draw_string(TO_C_AXIS_CONTEXT(snd, chn, ax, S_draw_string),
+#endif
 	      XEN_TO_C_INT(x0),
 	      XEN_TO_C_INT(y0),
 	      XEN_TO_C_STRING(text),

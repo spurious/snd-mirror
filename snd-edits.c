@@ -35,7 +35,7 @@ void free_sound_list(chan_info *cp)
     {
       if (cp->sounds)
 	{
-	  if ((cp->sound) && (cp->sound->playing)) stop_playing_sound(cp->sound);
+	  if ((cp->sound) && (cp->sound->playing)) stop_playing_sound_without_hook(cp->sound);
 	  for (i = 0; i < cp->sound_size; i++)
 	    if (cp->sounds[i]) 
 	      cp->sounds[i] = free_snd_data(cp->sounds[i]);
@@ -55,7 +55,7 @@ static void release_pending_sounds(chan_info *cp, int edit_ctr)
   if ((cp) && (cp->sounds))
     {
       if ((cp->sound) && (cp->sound->playing)) 
-	stop_playing_sound(cp->sound);
+	stop_playing_sound_without_hook(cp->sound);
       for (i = 0; i < cp->sound_size; i++)
 	{
 	  sf = cp->sounds[i];
@@ -85,7 +85,7 @@ static void prepare_sound_list (chan_info *cp)
     }
   if (cp->sounds[cp->sound_ctr]) 
     {
-      if ((cp->sound) && (cp->sound->playing)) stop_playing_sound(cp->sound);
+      if ((cp->sound) && (cp->sound->playing)) stop_playing_sound_without_hook(cp->sound);
       cp->sounds[cp->sound_ctr] = free_snd_data(cp->sounds[cp->sound_ctr]);
     }
 }
@@ -225,7 +225,7 @@ static bool prepare_edit_list(chan_info *cp, off_t len, int pos, const char *cal
     }
   sp = cp->sound;
   stop_amp_env(cp);
-  if ((sp) && (sp->playing)) stop_playing_sound(sp);
+  if ((sp) && (sp->playing)) stop_playing_sound_without_hook(sp);
   cp->edit_ctr++;
   if (cp->edit_ctr >= cp->edit_size)
     {
@@ -8969,11 +8969,11 @@ append the rest?
 */
 
 /* 
-      since ramps are basically no-ops, what about ramp-n (i.e expandable array of ramps)?
+      PERHAPS: since ramps are basically no-ops, what about ramp-n (i.e expandable array of ramps)?
         would still have n-split cases + associated reader_scaler confusion
         but any ramp4 could circle in rampn
 
-      more xen cases? (xen2 as well?)
+      PERHAPS: more xen cases? (xen2 as well?)
         same on ptree3[zero] -- doesn't seem useful yet (need real-life stats here)
         ptree3 could piggy-back on ptree2 (about 125 ops currently) -- add to ptree base readers,
 	  add ops, everything else (all accessors/ramp setup etc) remains the same.
@@ -8983,17 +8983,17 @@ append the rest?
       TODO: currently mix+tag then scl locks mix -- seems unnecessary (env as well?)
         but remix is needed somewhere -- initial stab at this failed
       
-      filter: need to save segment init state vals, own local reader for base of table and mimic dir in table reader
+      PERHAPS: filter: need to save segment init state vals, own local reader for base of table and mimic dir in table reader
         filter op itself needs to be reversible -- initial 2 or 3 stabs at this failed (and amp env is a mess as well)
 
-      reverse as pure-top-level (i.e. any split=>make explicit)
+      PERHAPS: reverse as pure-top-level (i.e. any split=>make explicit)
         but init_read within reversed fragment needs to get beg correctly etc
 
       SOMEDAY: change over to an array of functions: ramp_start_number, xramp+scale, ptree(zero), etc
         the basic accessor sequence can be (*(arr[1]))(sf, ((*(arr[0]))(sf, sf->data[loc...]))) --
         means changing function type slightly, and ptree_zero case is sticky, and scalers are tricky 
 
-      could ptree-channel have an only-forward version?
-      cleaner ptree-channel interface: split "dir" into read-forward and read-backward funcs?
-      could delay-channel be just offset from beg + 0 limiter at ends? -- need to mess with reader here
+      PERHAPS: could ptree-channel have an only-forward version?
+      PERHAPS: cleaner ptree-channel interface: split "dir" into read-forward and read-backward funcs?
+      PERHAPS: could delay-channel be just offset from beg + 0 limiter at ends? -- need to mess with reader here
 */

@@ -6213,20 +6213,28 @@ static void CName ## _i(int *args, ptree *pt) {INT_RESULT = CName();} \
 static char *descr_ ## CName ## _i(int *args, ptree *pt) {return(mus_format( INT_PT " = " #CName "()", args[0], INT_RESULT));} \
 static xen_value * CName ## _1(ptree *prog, xen_value **args, int num_args) {return(package(prog, R_INT, CName ## _i, descr_ ##CName ## _i, args, 0));}
 
-/*
+/* must copy string here because free_ptree will free all temp strings */
+#define STR_VOID_OP(CName) \
+static void CName ## _i(int *args, ptree *pt) {if (STRING_RESULT) FREE(STRING_RESULT); STRING_RESULT = copy_string(CName());} \
+static char *descr_ ## CName ## _i(int *args, ptree *pt) {return(mus_format( STR_PT " = " #CName "()", args[0], STRING_RESULT));} \
+static xen_value * CName ## _1(ptree *prog, xen_value **args, int num_args) {return(package(prog, R_STRING, CName ## _i, descr_ ##CName ## _i, args, 0));}
+
+/* PERHAPS: simple snd ops
   bool from 1: mix-inverted? mix-locked?
   bool from 0: selection?
-  int from 0: selection-position selection-chans selection-frames select-all selected-channel selected-sound mark-sync-max
+  int from 0: [selection-position(2)] [selection-frames(2)] [selected-sound -> #f]
   int from 1: mark-sample mark-sync mix-track mix-chans mix-frames mix-position region-chans region-frames region-srate track-track track-chans
   int from 1/2: track-position track-frames 
   flt from 1: track-speed track-tempo region-maxamp track-amp
   flt from 1/2: selection-maxamp mix-amp
-  str from 1: mark-name short-file-name file-name snd-tempnam
-  str from 0: temp-dir save-dir
-  int/bool from 1: sync
+  str from 1: mark-name short-file-name file-name
+  str from 0 with need for free: snd-tempnam
+  int/bool from 1: sync selected-channel
 
      current-edit-position
      select-channel select-sound
+
+     error returns?
 */
 
 INT_INT_OP(mus_bytes_per_sample)
@@ -6237,6 +6245,12 @@ BOOL_INT_OP(track_p);
 BOOL_INT_OP(region_ok);
 bool r_mark_p(int n);
 BOOL_INT_OP(r_mark_p);
+INT_VOID_OP(mark_sync_max);
+INT_VOID_OP(selection_chans);
+static char *r_temp_dir(void) {return(temp_dir(ss));}
+static char *r_save_dir(void) {return(save_dir(ss));}
+STR_VOID_OP(r_temp_dir);
+STR_VOID_OP(r_save_dir);
 
   /* others need export */
 
@@ -10882,6 +10896,10 @@ static void init_walkers(void)
   INIT_WALKER(S_track_p, make_walker(track_p_1, NULL, NULL, 1, 1, R_BOOL, false, 1, R_INT));
   INIT_WALKER(S_region_p, make_walker(region_ok_1, NULL, NULL, 1, 1, R_BOOL, false, 1, R_INT));
   INIT_WALKER(S_mark_p, make_walker(r_mark_p_1, NULL, NULL, 1, 1, R_BOOL, false, 1, R_INT));
+  INIT_WALKER(S_mark_sync_max, make_walker(mark_sync_max_1, NULL, NULL, 0, 0, R_INT, false, 0));
+  INIT_WALKER(S_selection_chans, make_walker(selection_chans_1, NULL, NULL, 0, 0, R_INT, false, 0));
+  INIT_WALKER(S_temp_dir, make_walker(r_temp_dir_1, NULL, NULL, 0, 0, R_STRING, false, 0));
+  INIT_WALKER(S_save_dir, make_walker(r_save_dir_1, NULL, NULL, 0, 0, R_STRING, false, 0));
 
   INIT_WALKER(S_vct_ref, make_walker(vct_ref_1, NULL, vct_set_1, 2, 2, R_FLOAT, false, 2, R_VCT, R_INT));
   INIT_WALKER(S_vct_length, make_walker(vct_length_1, NULL, NULL, 1, 1, R_INT, false, 1, R_VCT));

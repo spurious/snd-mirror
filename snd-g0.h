@@ -21,7 +21,8 @@
   #define COLORMAP_SIZE 512
 #endif
 
-#define CLOSED_CTRLS_HEIGHT 0
+#define CLOSED_CTRLS_HEIGHT 20
+/* was 0, but that makes show-controls always return #t -- need some reasonable way to tell that a pane is closed */
 #define NUM_COLORMAPS 16
 #define BACKGROUND_QUIT 0
 #define BACKGROUND_CONTINUE 1

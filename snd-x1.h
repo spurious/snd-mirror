@@ -40,6 +40,7 @@ void erase_rectangle (chan_info *cp, axis_context *ax, int x0, int y0, int width
 void fill_polygon(axis_context *ax, int points, ...);
 void draw_polygon(axis_context *ax, int points, ...);
 void draw_string (axis_context *ax, int x0, int y0, char *str, int len);
+void gtk_style_draw_string (axis_context *ax, int x0, int y0, char *str, int len);
 void draw_arc(axis_context *ax, int x, int y, int size);
 void set_grf_points(Locus xi, int j, Locus ymin, Locus ymax);
 void set_grf_point(Locus xi, int j, Locus yi);

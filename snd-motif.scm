@@ -1489,7 +1489,7 @@ Reverb-feedback sets the scaler on the feedback.\n\
 			    (cadr (snd-gcs))
 			    (car (snd-gcs)))
 			(.fid fs))
-	      (draw-string smpte (+ x 4) (+ y height -4) snd chn)))))))
+	      (draw-string smpte (+ x 4) (+ y 4) snd chn)))))))
 
 (define show-smpte-label
   (lambda arg

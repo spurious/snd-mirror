@@ -20,6 +20,17 @@ void draw_string (axis_context *ax, int x0, int y0, char *str, int len)
   XDrawString(ax->dp, ax->wn, ax->gc, x0, y0, str, len);
 }
 
+void gtk_style_draw_string (axis_context *ax, int x0, int y0, char *str, int len)
+{
+  /* for callers of Scheme-level draw-string, the Motif and Gtk versions should agree on where "y0" is */
+  XGCValues gv;
+  XFontStruct *fs;
+  XGetGCValues(MAIN_DISPLAY(ss), ax->gc, GCFont, &gv);
+  /* now gv.font is the default font */
+  fs = XQueryFont(MAIN_DISPLAY(ss), gv.font);
+  XDrawString(ax->dp, ax->wn, ax->gc, x0, y0 + fs->ascent, str, len);
+}
+
 void fill_polygon(axis_context *ax, int points, ...)
 { /* currently used only in snd-marks.c */
   int i;

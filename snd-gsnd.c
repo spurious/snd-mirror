@@ -1279,8 +1279,12 @@ snd_info *add_sound_window(char *filename, bool read_only)
   samples_per_channel = hdr->samples / nchans;
   app_y = widget_y(MAIN_SHELL(ss));
   app_dy = widget_height(MAIN_SHELL(ss));
-  screen_y = gdk_screen_height();
-  app_dy = (screen_y - app_y - app_dy - 20 * nchans);
+  if (auto_resize(ss))
+    {
+      screen_y = gdk_screen_height();
+      app_dy = (screen_y - app_y - app_dy - 20 * nchans);
+    }
+  else app_dy -= listener_height();
   chan_min_y = app_dy / nchans;
   if (chan_min_y > ss->channel_min_height)
     chan_min_y = ss->channel_min_height; 
@@ -1988,14 +1992,13 @@ void sound_hide_ctrls(snd_info *sp)
 
 bool control_panel_open(snd_info *sp)
 {
-  return(widget_height(CONTROL_PANEL(sp)) > CLOSED_CTRLS_HEIGHT);
+  return((GTK_WIDGET_MAPPED(CONTROL_PANEL(sp))) && (GTK_WIDGET_VISIBLE(CONTROL_PANEL(sp))));
 }
 
 void show_controls(void)
 {
   snd_info *sp;
   int i;
-  ss->ctrls_height = ss->open_ctrls_height;
   set_view_ctrls_label(_("Hide controls"));
   for (i = 0; i < ss->max_sounds; i++)
     {
@@ -2009,7 +2012,6 @@ void hide_controls(void)
 {
   snd_info *sp;
   int i;
-  ss->ctrls_height = CLOSED_CTRLS_HEIGHT;
   set_view_ctrls_label(_("Show controls"));
   for (i = 0; i < ss->max_sounds; i++)
     {

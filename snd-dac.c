@@ -307,47 +307,25 @@ static Float contrast (dac_info *dp, Float amp, Float index, Float inval)
   return(amp * mus_contrast_enhancement(dp->contrast_amp * inval, index));
 }
 
-static int li_loc = 0;
-static Float *li_e = NULL;
-static Float li_x = -1.0;
-
-/* TODO: shouldn't list_interp be replaced by mus_env_interp? (used only for filter coeffs) */
-static Float list_interp(Float x, Float *e, int size)
-{
-  int loc, lim;
-  if ((li_e == e) && (x >= li_x))
-    {
-      if (li_loc >= size - 2) return(e[size - 1]);
-      loc = li_loc;
-    }
-  else 
-    {
-      loc = 0;
-      if (size == 0) return(0.0);
-    }
-  lim = size - 2;
-  while ((loc < lim) && (e[loc + 2] <= x)) loc += 2;
-  li_e = e;
-  li_loc = loc;
-  li_x = x;
-  if ((loc == lim) || (e[loc + 1] == e[loc + 3]) || (x <= e[loc])) return(e[loc + 1]);
-  return(e[loc + 1] + (x - e[loc]) * (e[loc + 3] - e[loc + 1]) / (e[loc + 2] - e[loc]));
-}
-
 Float *sample_linear_env(env *e, int order)
 {
   /* used only for filter coeffs (env here is the frequency response curve) */
+  mus_any *ge;
+  int ordp;
   Float *data;
   Float last_x, step, x;
-  int i, j, size;
+  int i, j;
   data = (Float *)CALLOC(order, sizeof(Float));
   last_x = e->data[(e->pts - 1) * 2];
   step = 2 * last_x / ((Float)order - 1);
-  size = e->pts * 2;
+  ordp = e->pts; 
+  if (ordp < order) ordp = order;
+  ge = mus_make_env(e->data, e->pts, 1.0, 0.0, e->base, 0.0, 0, 1000 * ordp, NULL);
   for (i = 0, x = 0.0; i < order / 2; i++, x += step) 
-    data[i] = list_interp(x, e->data, size);
+    data[i] = mus_env_interp(x, ge);
   for (j = order / 2 - 1, i = order / 2; (i < order) && (j >= 0); i++, j--) 
     data[i] = data[j];
+  mus_free(ge);
   return(data);
 }
 
@@ -543,7 +521,10 @@ static void reflect_play_stop (snd_info *sp)
 
 static void free_player(snd_info *sp);
 
-static void stop_playing_with_toggle(dac_info *dp, bool toggle)
+typedef enum {WITHOUT_HOOK, WITH_HOOK} dac_hook_t;
+typedef enum {WITHOUT_TOGGLE, WITH_TOGGLE} dac_toggle_t;
+
+static void stop_playing_with_toggle(dac_info *dp, dac_toggle_t toggle, dac_hook_t with_hook)
 {
   snd_info *sp = NULL;
   bool sp_stopping = false;
@@ -564,7 +545,7 @@ static void stop_playing_with_toggle(dac_info *dp, bool toggle)
     }
   play_list[dp->slot] = NULL;
   play_list_members--;
-  if (toggle) 
+  if (toggle == WITH_TOGGLE) 
     {
       if ((sp) && (sp->playing <= 0)) 
 	reflect_play_stop(sp);
@@ -573,36 +554,43 @@ static void stop_playing_with_toggle(dac_info *dp, bool toggle)
 	  reflect_play_region_stop(dp->region);
     }
   if (dp->slot == max_active_slot) max_active_slot--;
-  if (dp->region >= 0)
+  if (with_hook == WITH_HOOK)
     {
-      if (XEN_HOOKED(stop_playing_region_hook))
-	run_hook(stop_playing_region_hook,
-		 XEN_LIST_1(C_TO_SMALL_XEN_INT(dp->region)),
-		 S_stop_playing_region_hook);
-    }
-  else
-    {
-      if (dp->selection)
+      if (dp->region >= 0)
 	{
-	  reflect_play_selection_stop();
-	  if (XEN_HOOKED(stop_playing_selection_hook))
-	    run_hook(stop_playing_selection_hook, 
-		     XEN_EMPTY_LIST, 
-		     S_stop_playing_selection_hook);
+	  if (XEN_HOOKED(stop_playing_region_hook))
+	    run_hook(stop_playing_region_hook,
+		     XEN_LIST_1(C_TO_SMALL_XEN_INT(dp->region)),
+		     S_stop_playing_region_hook);
 	}
       else
 	{
-	  if ((sp_stopping) && (XEN_HOOKED(stop_playing_hook)))
-	    run_hook(stop_playing_hook,
-		     XEN_LIST_1(C_TO_SMALL_XEN_INT(sp->index)),
-		     S_stop_playing_hook);
-	  if (XEN_HOOKED(stop_playing_channel_hook))
-	    run_hook(stop_playing_channel_hook,
-		     XEN_LIST_2(C_TO_SMALL_XEN_INT(sp->index),
-				C_TO_SMALL_XEN_INT(cp->chan)),
-		     S_stop_playing_channel_hook);
-	  if (sp->index < 0) {free_player(sp); sp = NULL;}
+	  if (dp->selection)
+	    {
+	      reflect_play_selection_stop();
+	      if (XEN_HOOKED(stop_playing_selection_hook))
+		run_hook(stop_playing_selection_hook, 
+			 XEN_EMPTY_LIST, 
+			 S_stop_playing_selection_hook);
+	    }
+	  else
+	    {
+	      if ((sp_stopping) && (XEN_HOOKED(stop_playing_hook)))
+		run_hook(stop_playing_hook,
+			 XEN_LIST_1(C_TO_SMALL_XEN_INT(sp->index)),
+			 S_stop_playing_hook);
+	      if (XEN_HOOKED(stop_playing_channel_hook))
+		run_hook(stop_playing_channel_hook,
+			 XEN_LIST_2(C_TO_SMALL_XEN_INT(sp->index),
+				    C_TO_SMALL_XEN_INT(cp->chan)),
+			 S_stop_playing_channel_hook);
+	      if (IS_PLAYER(sp)) {free_player(sp); sp = NULL;}
+	    }
 	}
+    }
+  else
+    {
+      if ((sp) && (IS_PLAYER(sp))) {free_player(sp); sp = NULL;}
     }
   free_dac_info(dp);
   if ((sp) && (sp_stopping) && (sp->delete_me)) 
@@ -612,50 +600,106 @@ static void stop_playing_with_toggle(dac_info *dp, bool toggle)
     }
 }
 
-static void stop_playing(dac_info *dp) {stop_playing_with_toggle(dp, true);}
+static void stop_playing(dac_info *dp, dac_hook_t with_hook) {stop_playing_with_toggle(dp, WITH_TOGGLE, with_hook);}
 
-static void stop_playing_sound_with_toggle(snd_info *sp, bool toggle)
+static void stop_playing_sound_with_toggle(snd_info *sp, dac_toggle_t toggle, dac_hook_t with_hook)
 {
   /* this needs to scan all current play_list members and remove any that are referring
    * to sp, even indirectly (as through the current selection)
    */
   int i;
+  dac_info *dp;
   if ((sp) && (play_list))
-    for (i = 0; i < dac_max_sounds; i++)
-      if ((play_list[i]) && 
-	  (sp == (play_list[i]->sp)))
+    {
+      for (i = 0; i < dac_max_sounds; i++)
+	if ((play_list[i]) && 
+	    (sp == (play_list[i]->sp)))
+	  {
+	    dp = play_list[i];
+	    play_list[i] = NULL;	  
+	    stop_playing_with_toggle(dp, toggle, with_hook);
+	  }
+      if ((play_list_members > 0) && (with_hook == WITH_HOOK))
 	{
-	  stop_playing_with_toggle(play_list[i], toggle);
-	  play_list[i] = NULL;
+	  /* see comment below */
+	  for (i = 0; i < dac_max_sounds; i++)
+	    if ((play_list[i]) && 
+		(sp == (play_list[i]->sp)))
+	      {
+		dp = play_list[i];
+		play_list[i] = NULL;	  
+		stop_playing_with_toggle(dp, toggle, WITHOUT_HOOK); /* do it again but with hook disabled */
+	      }
 	}
+    }
 }
 
-void stop_playing_sound(snd_info *sp) {stop_playing_sound_with_toggle(sp, true);}
-void stop_playing_sound_no_toggle(snd_info *sp) {stop_playing_sound_with_toggle(sp, false);}
+void stop_playing_sound(snd_info *sp) {stop_playing_sound_with_toggle(sp, WITH_TOGGLE, WITH_HOOK);}
+void stop_playing_sound_without_hook(snd_info *sp) {stop_playing_sound_with_toggle(sp, WITH_TOGGLE, WITHOUT_HOOK);}
+void stop_playing_sound_no_toggle(snd_info *sp) {stop_playing_sound_with_toggle(sp, WITHOUT_TOGGLE, WITH_HOOK);}
 
-void stop_playing_all_sounds (void)
+static void stop_playing_all_sounds_1(dac_hook_t with_hook)
 {
   int i;
+  dac_info *dp;
   if (play_list)
-    for (i = 0; i < dac_max_sounds; i++)
-      {
-	stop_playing(play_list[i]);
-	play_list[i] = NULL;
-      }
+    {
+      for (i = 0; i < dac_max_sounds; i++)
+	{
+	  dp = play_list[i];
+	  play_list[i] = NULL;	  
+	  stop_playing(dp, with_hook);
+	  /* this can call stop_playing_hook which can make a new play_list member where the old one used to be! */
+	}
+      if ((play_list_members > 0) && (with_hook == WITH_HOOK))
+	{
+	  /* stop-playing-hook must have started a new player, but in this case,
+	   *   the rest of Snd assumes the dac has stopped no matter what.  So,
+	   *   we make a second pass with the hooks disabled.
+	   */
+	  for (i = 0; i < dac_max_sounds; i++)
+	    {
+	      dp = play_list[i];
+	      play_list[i] = NULL;	  
+	      stop_playing(dp, WITHOUT_HOOK);
+	    }
+	}
+    }
 }
 
-void stop_playing_region(int n)
+void stop_playing_all_sounds(void) {stop_playing_all_sounds_1(WITH_HOOK);}
+void stop_playing_all_sounds_without_hook(void) {stop_playing_all_sounds_1(WITHOUT_HOOK);}
+
+static void stop_playing_region_1(int n, dac_hook_t with_hook)
 {
   int i;
+  dac_info *dp;
   if (play_list)
-    for (i = 0; i < dac_max_sounds; i++)
-      if ((play_list[i]) &&
-	  (play_list[i]->region == n))
+    {
+      for (i = 0; i < dac_max_sounds; i++)
+	if ((play_list[i]) &&
+	    (play_list[i]->region == n))
+	  {
+	    dp = play_list[i];
+	    play_list[i] = NULL;	  
+	    stop_playing(dp, with_hook);
+	  }
+      if ((play_list_members > 0) && (with_hook == WITH_HOOK))
 	{
-	  stop_playing(play_list[i]);
-	  play_list[i] = NULL;
+	  for (i = 0; i < dac_max_sounds; i++)
+	    if ((play_list[i]) &&
+		(play_list[i]->region == n))
+	      {
+		dp = play_list[i];
+		play_list[i] = NULL;	  
+		stop_playing(dp, WITHOUT_HOOK);
+	      }
 	}
+    }
 }
+
+void stop_playing_region(int n) {stop_playing_region_1(n, WITH_HOOK);}
+void stop_playing_region_without_hook(int n) {stop_playing_region_1(n, WITHOUT_HOOK);}
 
 static bool dac_is_running(void)
 {
@@ -764,7 +808,7 @@ static void start_dac(int srate, int channels, play_process_t background)
 	    {
 	      if (dac_combines_channels(ss))
 		dp->audio_chan %= channels;
-	      else stop_playing(dp);
+	      else stop_playing(dp, WITHOUT_HOOK);
 	    }
 	}
     }
@@ -788,6 +832,9 @@ static void start_dac(int srate, int channels, play_process_t background)
       if (disable_play) 
 	{
 	  stop_playing_all_sounds();
+#if DEBUGGING
+	  if (play_list_members > 0) fprintf(stderr, "dac still running? %d\n", play_list_members);
+#endif
 	  play_list_members = 0; 
 	  max_active_slot = -1;
 	  free_dac_state();
@@ -1126,7 +1173,7 @@ static int fill_dac_buffers(dac_state *dacp, int write_ok)
 	      sp = dp->sp; /* can be nil if region playing */
 	      if ((sp) && ((sp->inuse == SOUND_IDLE) || (sp->playing == 0)))
 		{
-		  stop_playing(dp); 
+		  stop_playing(dp, WITHOUT_HOOK); 
 		  return(frames);
 		}
 	      if ((sp) && 
@@ -1282,18 +1329,18 @@ static int fill_dac_buffers(dac_state *dacp, int write_ok)
 	      if (write_ok == WRITE_TO_DAC)
 		{
 		  if (dp->end == 0)
-		    stop_playing(dp);
+		    stop_playing(dp, WITH_HOOK);
 		  else
 		    {
 		      if (dp->chn_fd->at_eof)
 			{
 			  if (!(dp->expanding))
-			    stop_playing(dp);
+			    stop_playing(dp, WITH_HOOK);
 			  else
 			    {
 			      dp->expand_ring_frames -= frames;
 			      if (dp->expand_ring_frames <= 0)
-				stop_playing(dp);
+				stop_playing(dp, WITH_HOOK);
 			    }
 			}
 		    }
@@ -1302,7 +1349,10 @@ static int fill_dac_buffers(dac_state *dacp, int write_ok)
 		{
 		  if (dp->end == 0)
 		    {
-		      stop_playing_all_sounds();
+		      stop_playing_all_sounds_without_hook();
+#if DEBUGGING
+		      if (play_list_members > 0) fprintf(stderr, "apply still running? %d\n", play_list_members);
+#endif
 		      play_list_members = 0; 
 		      max_active_slot = -1;
 		    }
@@ -1419,7 +1469,7 @@ static char *describe_dac(void)
 
 static void dac_error(void)
 {
-  stop_playing_all_sounds();
+  stop_playing_all_sounds_without_hook();
   snd_error(_("can't play %s: %s"),
 	    describe_dac(),
 	    (last_print) ? last_print : "reason not known");
@@ -1525,7 +1575,7 @@ static void scan_audio_devices(void)
 					  MUS_AUDIO_PORT, 
 					  ALSA_MAX_DEVICES, val)) != MUS_NO_ERROR) 
 	    {
-	      stop_playing_all_sounds();
+	      stop_playing_all_sounds_without_hook();
 	      snd_error("%s[%d] %s: mus_audio_mixer_read", 
 			__FILE__, __LINE__, c__FUNCTION__);
 	    }
@@ -1539,7 +1589,7 @@ static void scan_audio_devices(void)
 					      0, 
 					      &direction)) != MUS_NO_ERROR) 
 		{
-		  stop_playing_all_sounds();
+		  stop_playing_all_sounds_without_hook();
 		  snd_error(_("%s: can't read direction, ignoring device %d"), 
 			    c__FUNCTION__, dev);
 		  direction = 0;
@@ -1882,7 +1932,7 @@ static bool start_audio_output(dac_state *dacp)
 		{
 		  if (dac_combines_channels(ss))
 		    dp->audio_chan %= dacp->channels;
-		  else stop_playing(dp);
+		  else stop_playing(dp, WITHOUT_HOOK);
 		}
 	    }
 	}
@@ -1953,8 +2003,11 @@ static Cessate dac_in_background(Indicium ptr)
 void initialize_apply(snd_info *sp, int chans, off_t beg, off_t dur)
 {
   int curchan = 0;
-  stop_playing_all_sounds();
+  stop_playing_all_sounds_without_hook();
   if (chans <= 0) return;
+#if DEBUGGING
+  if (play_list_members > 0) fprintf(stderr, "start apply dac still running? %d\n", play_list_members);
+#endif
   max_active_slot = -1;
   play_list_members = 0;
   dac_running = true; /* this keeps start_dac from actually starting the dac */
@@ -1990,7 +2043,10 @@ void initialize_apply(snd_info *sp, int chans, off_t beg, off_t dur)
 void finalize_apply(snd_info *sp)
 {
   /* if no reverb, these need to be cleaned up */
-  stop_playing_all_sounds();
+  stop_playing_all_sounds_without_hook();
+#if DEBUGGING
+  if (play_list_members > 0) fprintf(stderr, "finish apply dac still running? %d\n", play_list_members);
+#endif
   max_active_slot = -1;
   play_list_members = 0;
   sp->playing = 0;

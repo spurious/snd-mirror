@@ -184,9 +184,11 @@ static void view_cursor_callback(GtkWidget *w, gpointer info) {set_verbose_curso
 
 static void view_ctrls_callback(GtkWidget *w, gpointer info)
 {
-  if (ss->ctrls_height < 100) 
+  char *label;
+  label = (char *)gtk_label_get_text(GTK_LABEL(GTK_BIN(w)->child));
+  if ((label) && (strcmp((const char *)label, _("Show controls")) == 0))
     show_controls(); 
-  else hide_controls(); /* snd-xmain.c */
+  else hide_controls();
 }
 
 #if HAVE_EXTENSION_LANGUAGE

@@ -78,7 +78,7 @@ static void prepare_env_edit(env *new_env)
   prepare_enved_edit(new_env);
   set_enved_style(new_env->type);
   if (new_env->type == ENVELOPE_EXPONENTIAL)
-    set_enved_base(new_env->base); /* TODO: why doesn't this cause the base slider to move? */
+    set_enved_base(new_env->base);
   reflect_segment_state();
 }
 
@@ -739,8 +739,8 @@ static void reflect_changed_base(Float val)
 	  else ival = (0.5 + ((0.5 * (pow(val, (1.0 / (enved_power(ss)))) - 1)) / 10.0));
 	}
     }
-  GTK_ADJUSTMENT(orderAdj)->value = ival;
-  gtk_adjustment_value_changed(GTK_ADJUSTMENT(orderAdj));
+  GTK_ADJUSTMENT(baseAdj)->value = ival;
+  gtk_adjustment_value_changed(GTK_ADJUSTMENT(baseAdj));
   make_base_label(val);
 }
 

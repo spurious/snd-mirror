@@ -598,7 +598,6 @@ void snd_doit(int argc, char **argv)
 #else
   XtSetLanguageProc(NULL, NULL, NULL);
 #endif
-  ss->ctrls_height = CLOSED_CTRLS_HEIGHT;
   ss->channel_min_height = CHANNEL_MIN_HEIGHT;
   ss->Graph_Cursor = XC_crosshair;
 #ifndef SND_AS_WIDGET
@@ -733,6 +732,7 @@ void snd_doit(int argc, char **argv)
   sx->mainapp = app;
   sx->mainshell = shell;
   sx->mdpy = dpy;
+
   /* the gray shades are an attempt to get around Netscape which hogs all the colors */
   sx->white =                 get_color(shell, snd_rs.white_color,           WHITE_COLOR,           NULL, NULL, true);
   sx->black =                 get_color(shell, snd_rs.black_color,           BLACK_COLOR,           NULL, NULL, false);

@@ -346,7 +346,7 @@ typedef struct snd_info {
 typedef struct snd_state {
   int selected_sound;         /* NO_SELECTION = none selected = which sound is currently receiving user's attention */
   int active_sounds;
-  Latus ctrls_height, open_ctrls_height, channel_min_height;
+  Latus channel_min_height;
   snd_info **sounds;
   char *search_expr, *startup_title;
   void *search_tree;
@@ -1001,9 +1001,12 @@ void g_init_env(void);
 
 void cleanup_dac(void);
 void stop_playing_sound(snd_info *sp);
+void stop_playing_sound_without_hook(snd_info *sp);
 void stop_playing_sound_no_toggle(snd_info *sp);
+void stop_playing_all_sounds_without_hook(void);
 void stop_playing_all_sounds(void);
 void stop_playing_region(int n);
+void stop_playing_region_without_hook(int n);
 void play_region(int n, play_process_t background);
 void play_channel(chan_info *cp, off_t start, off_t end, play_process_t background, XEN edpos, const char *caller, int arg_pos);
 void play_sound(snd_info *sp, off_t start, off_t end, play_process_t background, XEN edpos, const char *caller, int arg_pos);

@@ -192,9 +192,15 @@ static void view_zero_callback(Widget w, XtPointer info, XtPointer context){set_
 static void view_cursor_callback(Widget w, XtPointer info, XtPointer context){set_verbose_cursor((!(verbose_cursor(ss))));}
 static void view_ctrls_callback(Widget w, XtPointer info, XtPointer context)
 {
-  if (ss->ctrls_height < 100) 
+  XmString s1;
+  char *label = NULL;
+  XtVaGetValues(w, XmNlabelString, &s1, NULL);
+  if (XmStringEmpty(s1)) return;
+  XmStringGetLtoR(s1, XmFONTLIST_DEFAULT_TAG, &label);
+  XmStringFree(s1);
+  if ((label) && (strcmp(label, _("Show controls")) == 0))
     show_controls(); 
-  else hide_controls(); /* snd-xmain.c */
+  else hide_controls();
 }
 static void view_region_callback_1(Widget w, XtPointer info, XtPointer context) {view_region_callback(w, info, context);}
 static void view_orientation_callback_1(Widget w, XtPointer info, XtPointer context) {view_orientation_callback(w, info, context);}

@@ -478,7 +478,7 @@ int remove_region_from_list(int pos) /* region browser */
   int i, id;
   id = region_list_position_to_id(pos);
   if (id == INVALID_REGION) return(INVALID_REGION);
-  stop_playing_region(id);
+  stop_playing_region_without_hook(id);
   free_region(id_to_region(id), COMPLETE_DELETION);
   for (i = pos; i < regions_size - 1; i++) 
     regions[i] = regions[i + 1]; 
@@ -501,7 +501,7 @@ static void add_to_region_list(region *r)
     okr = max_regions(ss) - 1;
   if (regions[okr]) 
     {
-      stop_playing_region(regions[okr]->id);
+      stop_playing_region_without_hook(regions[okr]->id);
       free_region(regions[okr], COMPLETE_DELETION);
     }
   for (i = okr; i > 0; i--) 

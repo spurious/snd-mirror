@@ -378,6 +378,7 @@ void about_snd_help(void)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+13-Jan:  Motif version of draw-string now adds in the font height to y0 (to mimic Gtk version).\n\
 12-Jan:  removed enved-selected-env, changed enved-active-env to enved-envelope.\n\
 9-Jan:   snd 7.1\n\
 8-Jan:   extensions.rb thanks to Michael Scholz.\n\

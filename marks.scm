@@ -225,7 +225,7 @@
 		 (add-hook! stop-playing-hook
 			    (lambda (snd)
 			      (report-in-minibuffer "" snd)
-			      (reset-hook! play-hook)
+			      (reset-hook! play-hook)                ;;; TODO: reset-hook is a bad idea here (and probably elsewhere: play.scm)
 			      (reset-hook! stop-playing-hook)))
 		 (add-hook! play-hook 
 			    (lambda (size)

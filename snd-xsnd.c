@@ -100,6 +100,8 @@ void make_minibuffer_label(snd_info *sp , char *str)
     }
 }
 
+static Latus open_ctrls_height = 180; /* just a first guess */
+static Latus ctrls_height = CLOSED_CTRLS_HEIGHT;
 
 void sound_unlock_control_panel(snd_info *sp, void *ptr)
 {
@@ -112,7 +114,7 @@ void sound_lock_control_panel(snd_info *sp, void *ptr)
   Dimension height;
   XtVaGetValues(CONTROL_PANEL(sp), XmNpaneMaximum, &height, NULL);  
   XtUnmanageChild(CONTROL_PANEL(sp));
-  if (height > ss->ctrls_height) height = ss->ctrls_height;
+  if (height > ctrls_height) height = ctrls_height;
   XtVaSetValues(CONTROL_PANEL(sp), XmNpaneMinimum, height, NULL);
 }
 
@@ -1687,8 +1689,8 @@ snd_info *add_sound_window(char *filename, bool read_only)
       
       n = 0;      
       if (need_colors) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
-      XtSetArg(args[n], XmNpaneMinimum, ss->ctrls_height); n++;
-      XtSetArg(args[n], XmNpaneMaximum, ss->ctrls_height); n++;
+      XtSetArg(args[n], XmNpaneMinimum, ctrls_height); n++;
+      XtSetArg(args[n], XmNpaneMaximum, ctrls_height); n++;
       sw[W_control_panel] = XtCreateManagedWidget ("snd-ctrls", xmFormWidgetClass, sw[W_pane], args, n);
       XtAddEventHandler(sw[W_control_panel], KeyPressMask, false, graph_key_press, (XtPointer)sp);
 
@@ -2561,8 +2563,8 @@ snd_info *add_sound_window(char *filename, bool read_only)
     { /* re-manage currently inactive chan */
       if (sound_style(ss) != SOUNDS_IN_SEPARATE_WINDOWS)
 	XtVaSetValues(sw[W_control_panel],
-		      XmNpaneMinimum, ss->ctrls_height,
-		      XmNpaneMaximum, ss->ctrls_height,
+		      XmNpaneMinimum, ctrls_height,
+		      XmNpaneMaximum, ctrls_height,
 		      NULL);
       else 
 	{
@@ -2616,7 +2618,7 @@ snd_info *add_sound_window(char *filename, bool read_only)
       fey = widget_y(sw[W_filter_frame]);
       rsy = widget_y(sw[W_apply]);
       /* end if control-panel */
-      ss->open_ctrls_height = fey + ((rsy < 0) ? (-rsy) : rsy) + cy - 1;
+      open_ctrls_height = fey + ((rsy < 0) ? (-rsy) : rsy) + cy - 1;
       first_window = false;
     } 
   if (sound_style(ss) != SOUNDS_IN_SEPARATE_WINDOWS)
@@ -2911,7 +2913,7 @@ void equalize_all_panes(void)
       if (chans > 1)
 	{
 	  /* now we try to make room for the sound ctrl bar, each channel, perhaps the menu */
-	  chan_y = (height - (sounds * ss->ctrls_height)) / chans - 16;
+	  chan_y = (height - (sounds * ctrls_height)) / chans - 16;
 	  /* probably can be 14 or 12 -- seems to be margin related or something */
 	  wid[0] = chan_y;
 	  for_each_sound(sound_lock_control_panel, NULL);
@@ -2949,8 +2951,8 @@ void sound_show_ctrls(snd_info *sp)
 {
   XtUnmanageChild(CONTROL_PANEL(sp));
   XtVaSetValues(CONTROL_PANEL(sp),
-		XmNpaneMinimum, ss->open_ctrls_height,
-		XmNpaneMaximum, ss->open_ctrls_height,
+		XmNpaneMinimum, open_ctrls_height,
+		XmNpaneMaximum, open_ctrls_height,
 		NULL);
   XtManageChild(CONTROL_PANEL(sp));
   XtVaSetValues(CONTROL_PANEL(sp),
@@ -2984,7 +2986,7 @@ void show_controls(void)
 {
   snd_info *sp;
   int i;
-  ss->ctrls_height = ss->open_ctrls_height;
+  ctrls_height = open_ctrls_height;
   set_view_ctrls_label(_("Hide controls"));
   for (i = 0; i < ss->max_sounds; i++)
     {
@@ -2998,7 +3000,7 @@ void hide_controls(void)
 {
   snd_info *sp;
   int i;
-  ss->ctrls_height = CLOSED_CTRLS_HEIGHT;
+  ctrls_height = CLOSED_CTRLS_HEIGHT;
   set_view_ctrls_label(_("Show controls"));
   for (i = 0; i < ss->max_sounds; i++)
     {

@@ -345,7 +345,8 @@ void recolor_graph(chan_info *cp, bool selected)
 
 void reflect_resize(void)
 {
-  gtk_window_set_resizable(GTK_WINDOW(MAIN_SHELL(ss)), auto_resize(ss));
+  /* gtk_window_set_resizable(GTK_WINDOW(MAIN_SHELL(ss)), auto_resize(ss)); */
+  /* this clobbers the user's ability to resize by dragging the edge */
 }
 
 void set_sensitive(GtkWidget *wid, bool val) 

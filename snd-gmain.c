@@ -428,7 +428,6 @@ void snd_doit(int argc, char **argv)
 #endif
 #endif
 
-  ss->ctrls_height = CLOSED_CTRLS_HEIGHT;
   ss->channel_min_height = CHANNEL_MIN_HEIGHT;
   ss->Graph_Cursor = GDK_CROSSHAIR;
 

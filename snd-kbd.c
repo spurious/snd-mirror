@@ -965,7 +965,7 @@ void control_g(snd_info *sp)
   /*   but, as in other such cases, it leaves this flag set so all subsequent uses of it need to clear it first */
   if (sp)
     {
-      if (sp->playing) stop_playing_all_sounds();
+      if (sp->playing) stop_playing_all_sounds_without_hook();
       if (sp->applying) stop_applying(sp);
       for_each_sound_chan(sp, stop_fft_in_progress);
       clear_minibuffer(sp);
