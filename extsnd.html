@@ -524,6 +524,63 @@ The lowest level procedures are:
 <!-- -------------------------------- GRAPHICS TABLE -------------------------------- -->
 <!-- --><table border=0 cellspacing=4>
 <!-- -->
+<!-- axis-info -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="axisinfo">axis-info</a></em> (snd chn <i>grf</i>)</code></span></td></tr>
+<!-- -->
+<!-- --><tr><td><spacer type=horizontal size=40><br></td><td>
+<!-- -->returns a list describing the specified axis:
+<!-- --><code>'(left-sample right-sample x0 y0 x1 y1 x-min y-min x-max y-max 
+<!-- -->x0-position y0-position x1-position y1-position)</code>.  This might be
+<!-- -->useful if you're drawing arbitrary figures in a graph.  <i>grf</i> defaults to
+<!-- -->time-graph; the other choices are transform-graph and lisp-graph.  The procedure <a href="#x2position">x-&gt;position</a>
+<!-- -->could be defined as:
+<!-- --></td></tr>
+<!-- --><tr><td></td><td>
+<!-- --><table border=1 cellpadding=5><tr><td bgcolor="#FCFCF0"><pre>
+(define (x-&gt;position-1 x snd chn)
+  (let* ((axinfo (<em class=red>axis-info</em> snd chn time-graph))
+	 (x0 (list-ref axinfo 2))
+	 (x1 (list-ref axinfo 4))
+	 (axis-left (list-ref axinfo 10))
+	 (axis-right (list-ref axinfo 12)))
+    (inexact->exact 
+     (+ axis-left
+	(* (- x x0) 
+	   (/ (- axis-right axis-left)
+	      (- x1 x0)))))))
+<!-- --></pre></td></tr></table>
+<!-- --></td></tr>
+<!-- --><tr><td colspan=2></td></tr>
+<!-- -->
+<!-- copy-context -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="copycontext">copy-context</a></em></code></span></td></tr>
+<!-- -->
+<!-- --><tr><td></td><td>
+<!-- -->the graphics mode to use to draw over whatever is currently in a graph.
+<!-- -->The "contexts" refer to graphics contexts used throughout Snd; the <i>copy-context</i>
+<!-- -->copies into the current graph, whereas the <i>cursor-context</i> uses XOR.
+<!-- -->The error returned for an unimplemented 'context' is 'no-such-graphics-context.
+<!-- --></td></tr>
+<!-- --><tr><td colspan=2></td></tr>
+<!-- -->
+<!-- current-font -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="currentfont">current-font</a></em> (snd chn context)</code></span></td></tr>
+<!-- -->
+<!-- --><tr><td></td><td>
+<!-- -->returns the current font (also settable).</td></tr>
+<!-- --><tr><td colspan=2></td></tr>
+<!-- -->
+<!-- cursor-context -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="cursorcontext">cursor-context</a></em></code></span></td></tr>
+<!-- -->
+<!-- --><tr><td></td><td>
+<!-- -->the graphics mode for XOR drawing in the cursor color (for cursors, normally).</td></tr>
+<!-- --><tr><td colspan=2></td></tr>
+<!-- -->
 <!-- draw-dot -->
 <!-- --><tr><td colspan=2>
 <!-- --><span class=defbox><code><em class=def><a name="drawdot">draw-dot</a></em> (x0 y0 dot-size snd chn context)</code></span></td></tr>
@@ -630,26 +687,6 @@ The lowest level procedures are:
 <!-- -->musglyphs.scm has some elaborate examples that use fill-polygon to draw various music symbols.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
-<!-- load-font -->
-<!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="loadfont">load-font</a></em> (font-name)</code></span></td></tr>
-<!-- -->
-<!-- --><tr><td></td><td>
-<!-- -->loads the font <i>font-name</i> (an X-style font spec), and returns a handle for it (for <i>current-font</i> below).
-<!-- --><pre>
-<!-- -->  (define new-font (<em class=red>load-font</em> "-adobe-helvetica-bold-r-*-*-14-*-*-*-*-*-*-*"))
-<!-- --></pre>
-<!-- --></td></tr>
-<!-- --><tr><td colspan=2></td></tr>
-<!-- -->
-<!-- current-font -->
-<!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="currentfont">current-font</a></em> (snd chn context)</code></span></td></tr>
-<!-- -->
-<!-- --><tr><td></td><td>
-<!-- -->returns the current font (also settable).</td></tr>
-<!-- --><tr><td colspan=2></td></tr>
-<!-- -->
 <!-- foreground-color -->
 <!-- --><tr><td colspan=2>
 <!-- --><span class=defbox><code><em class=def><a name="foregroundcolor">foreground-color</a></em> (snd chn context)</code></span></td></tr>
@@ -685,138 +722,22 @@ The lowest level procedures are:
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
-<!-- copy-context -->
+
+<!-- graph-data -->
 <!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="copycontext">copy-context</a></em></code></span></td></tr>
+<!-- --><span class=defbox><code><em class=def><a name="graphdata">graph-data</a></em> (data snd chn context low high graphics-style)</code></span></td></tr>
 <!-- -->
 <!-- --><tr><td></td><td>
-<!-- -->the graphics mode to use to draw over whatever is currently in a graph.</td></tr>
-<!-- --><tr><td colspan=2></td></tr>
-<!-- -->
-<!-- cursor-context -->
-<!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="cursorcontext">cursor-context</a></em></code></span></td></tr>
-<!-- -->
-<!-- --><tr><td></td><td>
-<!-- -->the graphics mode for XOR drawing in the cursor color (for cursors, normally).</td></tr>
-<!-- --><tr><td colspan=2></td></tr>
-<!-- -->
-<!-- selection-context -->
-<!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="selectioncontext">selection-context</a></em></code></span></td></tr>
-<!-- -->
-<!-- --><tr><td></td><td>
-<!-- -->the graphics mode for XOR drawing in the selection color.</td></tr>
-<!-- --><tr><td colspan=2></td></tr>
-<!-- -->
-<!-- axis-info -->
-<!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="axisinfo">axis-info</a></em> (snd chn <i>grf</i>)</code></span></td></tr>
-<!-- -->
-<!-- --><tr><td></td><td>
-<!-- -->returns a list describing the specified axis:
-<!-- --><code>'(left-sample right-sample x0 y0 x1 y1 x-min y-min x-max y-max 
-<!-- -->x0-position y0-position x1-position y1-position)</code>.  This might be
-<!-- -->useful if you're drawing arbitrary figures in a graph.  <i>grf</i> defaults to
-<!-- -->time-graph; the other choices are transform-graph and lisp-graph.  The procedure <a href="#x2position">x-&gt;position</a>
-<!-- -->could be defined as:
+<!-- --><i>graph-data</i> displays <i>data</i> in the time domain graph of <i>snd</i>'s channel
+<!-- --><i>chn</i> using the graphics context <i>context</i> (normally copy-context), placing the
+<!-- -->data in the recipient's graph between points <i>low</i> and <i>high</i>
+<!-- -->in the drawing mode (<i>graphics-style</i>).
+<!-- -->With this function and <i>make-graph-data</i> we can overlay sounds,
+<!-- -->overlay different versions of the same sound, place a portion of a
+<!-- -->sound over another at an arbitrary point, and so on (see draw.scm):
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
 <!-- --><table border=1 cellpadding=5><tr><td bgcolor="#FCFCF0"><pre>
-(define (x-&gt;position-1 x snd chn)
-  (let* ((axinfo (<em class=red>axis-info</em> snd chn time-graph))
-	 (x0 (list-ref axinfo 2))
-	 (x1 (list-ref axinfo 4))
-	 (axis-left (list-ref axinfo 10))
-	 (axis-right (list-ref axinfo 12)))
-    (inexact->exact 
-     (+ axis-left
-	(* (- x x0) 
-	   (/ (- axis-right axis-left)
-	      (- x1 x0)))))))
-<!-- --></pre></td></tr></table>
-<!-- --></td></tr>
-
-<!-- --><tr><td colspan=2></td></tr>
-<!-- --></table>
-
-<p>The "contexts" refer to graphics contexts used throughout Snd; the <i>copy-context</i>
-copies into the current graph, whereas the <i>cursor-context</i> uses XOR.
-The error returned for an unimplemented 'context' is 'no-such-graphics-context.
-
-<p>To get the currently displayed data (i.e. the actual waveform displayed
-in the graph, which can be based on an overall envelope rather than the
-actual samples), use:
-</p>
-<pre>
-  <em class=def><a name="makegraphdata">make-graph-data</a></em> (snd chn edit-position low-sample high-sample)
-</pre>
-<p>This returns either a vct (if the graph has one trace), or a
-list of two vcts (the two sides of the envelope graph).
-<i>edit-position</i> defaults to the current edit history position,
-<i>low-sample</i> defaults to the current window left sample, and
-<i>high-sample</i> defaults to the current rightmost sample.
-The result can be use in the "lisp graph":
-</p>
-
-<table border=1 cellpadding=5><tr><td bgcolor="#FCFCF0"><pre>
-(define <A NAME="displaydb">display-db</A>
-  (lambda (snd chn)
-    "(display-db snd chn) is a lisp-graph-hook function to display the time domain data in dB"
-    (let* ((datal (<em class=red>make-graph-data</em> snd chn))
-	   (data (if (vct? datal) datal (cadr datal)))
-           (sr (srate snd)))
-      (define (dB val)
-	(if (&lt; val .001)
-	    -60.0
-	    (* 20.0 (log10 val))))
-      (vct-do! data (lambda (i)
-		      (vct-set! data i (+ 60.0 (dB (abs (vct-ref data i)))))))
-      (graph data "dB" 
-	     (/ (left-sample snd chn) sr) (/ (right-sample snd chn) sr)  
-	     0.0 60.0
-	     snd chn))))
-
-(add-hook! lisp-graph-hook display-db)
-</pre></td></tr></table>
-
-<p>Here we are taking whatever is displayed in the time domain, and
-presenting the same thing in dB in the lisp graph.  <i>display-energy</i>
-in examp.scm is another example.  But the real power of this function
-comes from its use with <i>graph-data</i>.  
-The latter takes its argument (either a vct or a list of two
-vcts), and displays it in any channel's time domain graph using its current graph-style.
-</p>
-<pre>
-  <em class=def><a name="graphdata">graph-data</a></em> data snd chn context low high graphics-style
-</pre>
-<p><i>graph-data</i> displays <i>data</i> in the time domain graph of <i>snd</i>'s channel
-<i>chn</i> using the graphics context <i>context</i> (normally copy-context), placing the
-data in the recipient's graph between points <i>low</i> and <i>high</i>
-in the drawing mode (<i>graphics-style</i>).
-With this function and <i>make-graph-data</i> we can overlay sounds,
-overlay different versions of the same sound, place a portion of a
-sound over another at an arbitrary point, and so on:
-</p>
-
-<table border=1 cellpadding=5><tr><td bgcolor="#FCFCF0"><pre>
-(define (overlay-sounds . args)
-  "overlay-sounds overlays onto its first argument all subsequent arguments: (overlay-sounds 1 0 3)"
-  (let ((base (car args)))
-    (add-hook! 
-      after-graph-hook
-       (lambda (snd chn)
-	 (if (= snd base)
-	     (for-each 
-	      (lambda (snd)
-		;; perhaps this should also set syncing
-		(if (and (&gt; (channels snd) chn)
-			 (&gt; (channels base) chn))
-		    (<em class=red>graph-data</em>
-		     (<em class=red>make-graph-data</em> snd chn) 
-		     base chn <em class=red>copy-context</em> #f #f graph-dots)))
-	      (cdr args)))))))
-
 (define (<A NAME="displaysampsinred">display-samps-in-red</A> snd chn)
   "display samples 1000 to 2000 in red whenever they're in the current view"
   (let ((left (left-sample snd chn))
@@ -848,36 +769,88 @@ sound over another at an arbitrary point, and so on:
 		     (new-low-data (vct-subseq low-data left-bin right-bin))
 		     (new-high-data (vct-subseq high-data left-bin right-bin)))
 		(set! (foreground-color snd chn) red)
-		(<em class=red>graph-data</em> (list new-low-data new-high-data) snd chn copy-context left-bin right-bin)
+		(<em class=red>graph-data</em> 
+                  (list new-low-data new-high-data) snd chn copy-context left-bin right-bin)
 		(set! (foreground-color snd chn) old-color)))))))
 
-;; (add-hook! after-graph-hook display-samps-in-red)
-</pre>
-<center><image src="redsamps.png" alt="red samples"></center>
-<pre>
-(define (<A NAME="displaypreviousedits">display-previous-edits</a> snd chn)
-  "display all edits of the current sound, with older versions gradually fading away"
-  (let* ((edits (edit-position snd chn))
-	 (old-color (foreground-color snd chn))
-	 (clist (color-&gt;list old-color))
-	 (r (car clist))
-	 (g (cadr clist))
-	 (b (caddr clist))
-	 (rinc (/ (- 1.0 r) (+ edits 1)))     ;oldest version is nearly white
-	 (ginc (/ (- 1.0 g) (+ edits 1)))
-	 (binc (/ (- 1.0 b) (+ edits 1))))
-    (if (&gt; edits 0)
-	(begin
-	  (do ((pos 0 (1+ pos))
-	       (re (- 1.0 rinc) (- re rinc))  ;subsequent versions approach the current color
-	       (ge (- 1.0 ginc) (- ge ginc))
-	       (be (- 1.0 binc) (- be binc)))
-	      ((&gt; pos edits))
-	    (let ((data (<em class=red>make-graph-data</em> snd chn pos)))
-	      (set! (foreground-color snd chn) (make-color re ge be))
-	      (<em class=red>graph-data</em> data snd chn)))
-	  (set! (foreground-color snd chn) old-color)))))
-</pre></td></tr></table>
+(add-hook! after-graph-hook display-samps-in-red)
+<!-- --></pre></td></tr></table></td></tr>
+<!-- --><tr><td></td><td align=center>
+<!-- --><image src="redsamps.png" alt="red samples">
+<!-- -->
+<!-- --></td></tr>
+<!-- --><tr><td colspan=2></td></tr>
+<!-- -->
+<!-- load-font -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="loadfont">load-font</a></em> (font-name)</code></span></td></tr>
+<!-- -->
+<!-- --><tr><td></td><td>
+<!-- -->loads the font <i>font-name</i> (an X-style font spec), and returns a handle for it (for <i>current-font</i> below).
+<!-- --><pre>
+<!-- -->  (define new-font (<em class=red>load-font</em> "-adobe-helvetica-bold-r-*-*-14-*-*-*-*-*-*-*"))
+<!-- --></pre>
+<!-- --></td></tr>
+<!-- --><tr><td colspan=2></td></tr>
+<!-- -->
+<!-- make-graph-data -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="makegraphdata">make-graph-data</a></em> (snd chn edit-position low-sample high-sample)</code></span></td></tr>
+<!-- -->
+<!-- --><tr><td></td><td>
+<!-- -->Use <i>make-grph-data</i> to get the currently displayed data (i.e. the actual waveform displayed
+<!-- -->in the graph, which can be based on an overall envelope rather than the
+<!-- -->actual samples).
+<!-- -->It returns either a vct (if the graph has one trace), or a
+<!-- -->list of two vcts (the two sides of the envelope graph).
+<!-- --><i>edit-position</i> defaults to the current edit history position,
+<!-- --><i>low-sample</i> defaults to the current window left sample, and
+<!-- --><i>high-sample</i> defaults to the current rightmost sample.
+<!-- -->The result can be use in the "lisp graph":
+<!-- -->
+<!-- --></td></tr>
+<!-- --><tr><td></td><td>
+<!-- --><table border=1 cellpadding=5><tr><td bgcolor="#FCFCF0"><pre>
+(define <A NAME="displaydb">display-db</A>
+  (lambda (snd chn)
+    "(display-db snd chn) is a lisp-graph-hook function to display the time domain data in dB"
+    (let* ((datal (<em class=red>make-graph-data</em> snd chn))
+	   (data (if (vct? datal) datal (cadr datal)))
+           (sr (srate snd)))
+      (define (dB val)
+	(if (&lt; val .001)
+	    -60.0
+	    (* 20.0 (log10 val))))
+      (vct-do! data (lambda (i)
+		      (vct-set! data i (+ 60.0 (dB (abs (vct-ref data i)))))))
+      (graph data "dB" 
+	     (/ (left-sample snd chn) sr) (/ (right-sample snd chn) sr)  
+	     0.0 60.0
+	     snd chn))))
+
+(add-hook! lisp-graph-hook display-db)
+<!-- --></pre></td></tr></table>
+<!-- --></td></tr>
+<!-- --><tr><td></td><td>
+<!-- -->Here we are taking whatever is displayed in the time domain, and
+<!-- -->presenting the same thing in dB in the lisp graph.  <i>display-energy</i>
+<!-- -->in examp.scm is another example.  But the real power of this function
+<!-- -->comes from its use with <i>graph-data</i>.  
+<!-- -->The latter takes its argument (either a vct or a list of two
+<!-- -->vcts), and displays it in any channel's time domain graph using its current graph-style.
+<!-- --></td></tr>
+<!-- --><tr><td colspan=2></td></tr>
+<!-- -->
+<!-- selection-context -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="selectioncontext">selection-context</a></em></code></span></td></tr>
+<!-- -->
+<!-- --><tr><td></td><td>
+<!-- -->the graphics mode for XOR drawing in the selection color.</td></tr>
+<!-- --><tr><td colspan=2></td></tr>
+<!-- -->
+<!-- --></table>
+
 
 <p>This only scratches the surface of these functions; I'll eventually 
 collect more examples into draw.scm.
@@ -3865,7 +3838,7 @@ desired edit history position.
 <!-- --><tr><td colspan=2>
 <!-- --><span class=defbox><code><em class=def><a name="addplayer">add-player</a></em> (player <i>start end pos</i>)</code></span>
 <!-- --></td></tr>
-<!-- --><tr><td width=150></td><td>
+<!-- --><tr><td><spacer type=horizontal size=40><br></td><td>
 <!-- -->add <i>player</i> to the play-list (see <a href="#makeplayer">make-player</a>). 
 <!-- -->If <i>pos</i> is given, play at that edit position. [<em class=error>no-such-player</em>]
 <!-- --></td></tr>
@@ -5994,7 +5967,7 @@ the reverb.  The control panel procedures are:
 <!-- --><tr><td colspan=2>
 <!-- --><span class=defbox><code><em class=def><a name="sndamp">amp-control</a></em> (<em class=targ>snd</em>)</code></span>
 <!-- --></td></tr>
-<!-- --><tr><td></td><td>
+<!-- --><tr><td><spacer type=horizontal size=40><br></td><td>
 <!-- -->current amp (control panel slider) value.
 <!-- -->It is possible to use these controls (in "real-time") in your own functions.
 <!-- -->See amprt in <a href="sndscm.html#exampdoc">examp.scm</a> for a simple example, and <a href="sndscm.html#sndgtkdoc">snd-gtk.scm</a> for a complicated one. 
@@ -6493,7 +6466,7 @@ one, and are exposed in many functions described above as the <i>pos</i> argumen
 <!-- --><table border=1 cellpadding=5><tr><td bgcolor="#FCFCF0"><pre>
 (define sfile 0)
 
-(define* (clone-sound-as new-name #:optional snd)
+(define* (<a name="clonesoundas">clone-sound-as</a> new-name #:optional snd)
   (let* ((tmpf (snd-tempnam))
 	 (scm (string-append (substring tmpf 0 (- (string-length tmpf) 3)) "scm"))
 	 (oldsnd (or snd (selected-sound))))
@@ -7807,20 +7780,19 @@ variable %load-verbosely to #t.
 <!-- --><tr><td colspan=2>
 <!-- --><span class=defbox><code><em class=def><a name="soundfilesindirectory">sound-files-in-directory</a></em> (dir)</code></span></td></tr>
 <!-- --><tr><td></td><td>
-<!-- -->return a vector of sound file names.
+<!-- -->return a list of sound file names.
 <!-- -->This is useful for "batch" processing of sounds.  The following,
 <!-- -->for example, prints the names of all the stereo AIFC files it finds:
 <!-- --></td></tr>
 <!-- -->
 <!-- --><tr><td></td><td>
 <!-- --><table border=1 cellpadding=5><tr><td bgcolor="#FCFCF0"><pre>
-(let ((files (<em class=red>sound-files-in-directory</em> ".")))
-  (do ((i 0 (1+ i)))
-      ((= i (vector-length files)))
-    (let ((filename (vector-ref files i)))
-      (if (and (= (mus-sound-header-type filename) mus-aifc)
-               (= (mus-sound-chans filename) 2))
-          (snd-print filename)))))
+(for-each
+  (lambda (filename)
+    (if (and (= (mus-sound-header-type filename) mus-aifc)
+             (= (mus-sound-chans filename) 2))
+        (snd-print (format #f "~%~A" filename))))
+  (<em class=red>sound-files-in-directory</em> "."))
 <!-- --></pre></td></tr></table></td></tr>
 <!-- -->
 <!-- --><tr><td></td><td>

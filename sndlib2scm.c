@@ -65,8 +65,8 @@ void define_procedure_with_setter(char *get_name, SCM (*get_func)(), char *get_h
   scm_permanent_object(
     scm_c_define(get_name,
       scm_make_procedure_with_setter(
-        gh_new_procedure("", SCM_FNC get_func, get_req, get_opt, 0),
-	gh_new_procedure(set_name, SCM_FNC set_func, set_req, set_opt, 0))));
+        SND_NEW_PROCEDURE("", SCM_FNC get_func, get_req, get_opt, 0),
+	SND_NEW_PROCEDURE(set_name, SCM_FNC set_func, set_req, set_opt, 0))));
   scm_set_object_property_x(TO_SCM_SYMBOL(get_name), local_doc, str);
   scm_set_procedure_property_x(SND_LOOKUP(get_name), local_doc, str);
 #else
@@ -74,8 +74,8 @@ void define_procedure_with_setter(char *get_name, SCM (*get_func)(), char *get_h
     SCM_CDR(
       gh_define(get_name,
 	scm_make_procedure_with_setter(
-          gh_new_procedure("", SCM_FNC get_func, get_req, get_opt, 0),
-	  gh_new_procedure(set_name, SCM_FNC set_func, set_req, set_opt, 0)
+          SND_NEW_PROCEDURE("", SCM_FNC get_func, get_req, get_opt, 0),
+	  SND_NEW_PROCEDURE(set_name, SCM_FNC set_func, set_req, set_opt, 0)
 	  ))),
     local_doc,
     TO_SCM_STRING(get_help));

@@ -520,9 +520,15 @@ void snd_doit(snd_state *ss, int argc, char **argv)
   /* gh_repl(1, argv); */ 
   scm_shell(1, argv);  /* not argc because scm_shell tries to interpret all args! */
 #endif
+
 #if HAVE_LIBREP
   rep_top_level_recursive_edit();
   rep_top_level_exit ();
+#endif
+
+#if HAVE_RUBY
+  ruby_script("embedded");
+  while (1) ruby_run();
 #endif
 }
 

@@ -91,7 +91,7 @@ dnl which we actually use is decided later
 
 AC_ARG_WITH(big-colormap, [  --with-big-colormap	  assume at least 512 colors are available (default=yes)])
 if test "$with_big_colormap" = no ; then
-  AC_DEFINE_UNQUOTED(WITH_BIG_COLORMAP, 0)
+  AC_DEFINE_UNQUOTED(WITH_BIG_COLORMAP,0)
 else
   AC_DEFINE(WITH_BIG_COLORMAP)
 fi
@@ -237,7 +237,7 @@ AC_ARG_WITH(float-samples,
 AC_ARG_WITH(sample-width,
 	[  --with-sample-width=N   use N bits of samples],
 	AC_MSG_RESULT(Using $with_sample_width bit samples)
-	AC_DEFINE_UNQUOTED(MUS_SAMPLE_BITS, $with_sample_width)
+	AC_DEFINE_UNQUOTED(MUS_SAMPLE_BITS,$with_sample_width)
 	)
 
 AC_ARG_ENABLE(snd-debug,
@@ -307,11 +307,11 @@ fi
 # this test taken from Guile's configure.in -- we have the same problem (we're wrapping function pointers)
 AC_CHECK_SIZEOF(void *)
 if test "$ac_cv_sizeof_long" -eq "$ac_cv_sizeof_void_p"; then
-  AC_DEFINE(SND_VOID_T, unsigned long)
+  AC_DEFINE(SND_VOID_T,unsigned long)
 elif test \( "$snd_cv_long_longs" = yes \) -a \( "$ac_cv_sizeof_long_long" -eq "$ac_cv_sizeof_void_p" \); then
-  AC_DEFINE(SND_VOID_T, unsigned long long)
+  AC_DEFINE(SND_VOID_T,unsigned long long)
 elif test "$ac_cv_sizeof_int" -eq "$ac_cv_sizeof_void_p"; then
-  AC_DEFINE(SND_VOID_T, unsigned int)
+  AC_DEFINE(SND_VOID_T,unsigned int)
 else
   AC_MSG_ERROR(cannot find an integral type capable of storing a pointer: "$ac_cv_sizeof_void_p" bytes)
 fi
@@ -414,11 +414,8 @@ else
     LIBS=$XLIBS
     CFLAGS=$XFLAGS
     AC_CHECK_LIB(Xm, XmCreateForm, 
-	[
-	],
-	[
-      AC_MSG_WARN([can't find the motif library!])
-        ])
+	[],
+	[AC_MSG_WARN([can't find the motif library!])])
     LIBS=$SAVELIBS
     CFLAGS=$SAVEFLAGS
 
@@ -494,8 +491,8 @@ GUILE_CONFIG_path=""
 GUILE_LIB_path=""
 
 if test "$with_no_guile" = yes ; then
-  AC_DEFINE(HAVE_GUILE, 0)
-  AC_DEFINE(HAVE_EXTENSION_LANGUAGE, 0)
+  AC_DEFINE(HAVE_GUILE,0)
+  AC_DEFINE(HAVE_EXTENSION_LANGUAGE,0)
 else
 
   AC_DEFINE(HAVE_EXTENSION_LANGUAGE)
@@ -527,7 +524,7 @@ if test $GUILE_CONFIG_works = yes; then
   if test "`guile -c '(display (string>=? (version) "1.3.4"))'`" != "#t"; then
     AC_MSG_WARN(Snd needs Guile 1.3.4 or later)
     AC_DEFINE(HAVE_GUILE,0)
-    AC_DEFINE(HAVE_EXTENSION_LANGUAGE, 0)
+    AC_DEFINE(HAVE_EXTENSION_LANGUAGE,0)
   else
     AC_SUBST(GUILE_CFLAGS)
     AC_SUBST(GUILE_LIBS)
@@ -545,6 +542,7 @@ if test $GUILE_CONFIG_works = yes; then
     AC_CHECK_LIB(guile, scm_num2int,            [AC_DEFINE(HAVE_SCM_NUMINT)])
     AC_CHECK_LIB(guile, scm_c_make_vector,      [AC_DEFINE(HAVE_SCM_C_MAKE_VECTOR)])
     AC_CHECK_LIB(guile, scm_c_define,           [AC_DEFINE(HAVE_SCM_C_DEFINE)])
+    AC_CHECK_LIB(guile, scm_c_define_gsubr,     [AC_DEFINE(HAVE_SCM_C_DEFINE_GSUBR)])
     LIBS="$OLD_LIBS"
 
     if test "`guile -c '(display (string<=? (version) "1.3.4"))'`" = "#t"; then
@@ -576,7 +574,7 @@ if test $GUILE_CONFIG_works = yes; then
         AC_DEFINE(HAVE_GUILE_GTK)
         AC_SUBST(GUILE_GTK_LIBS)
         guile_gtk_version="`$GUILE_GTK_PROG -c '(use-modules (gtk config)) (display gtkconf-guile-gtk-version)'`"
-        AC_DEFINE_UNQUOTED(GUILE_GTK_VERSION, "${guile_gtk_version}")
+        AC_DEFINE_UNQUOTED(GUILE_GTK_VERSION,"${guile_gtk_version}")
 
         if test "`guile -c '(display (string>? (version) "1.3.4"))'`" = "#t"; then
           if test "`$GUILE_GTK_PROG -c '(use-modules (gtk config)) (display (string<? gtkconf-guile-gtk-version "0.19"))'`" = "#t"; then
@@ -588,7 +586,7 @@ if test $GUILE_CONFIG_works = yes; then
   fi
 else
   AC_DEFINE(HAVE_GUILE,0)
-  AC_DEFINE(HAVE_EXTENSION_LANGUAGE, 0)
+  AC_DEFINE(HAVE_EXTENSION_LANGUAGE,0)
 fi
 fi
 fi
@@ -649,9 +647,9 @@ dnl     it was "" to cancel -lXpm without the needed -L<dir> for the same case
 	    ESD)
 		AC_DEFINE(ESD)
 	        esd_version="`esd-config --version`"
-                AC_DEFINE_UNQUOTED(ESD_VERSION, "${esd_version}")
+                AC_DEFINE_UNQUOTED(ESD_VERSION,"${esd_version}")
                 audiofile_version="`audiofile-config --version`"
-                AC_DEFINE_UNQUOTED(AUDIOFILE_VERSION, "${audiofile_version}")
+                AC_DEFINE_UNQUOTED(AUDIOFILE_VERSION,"${audiofile_version}")
                 AUDIO_LIB="`esd-config --libs`"
 #               ESD_CFLAGS="`esd-config --cflags`"
 		AC_SUBST(AUDIO_LIB)
@@ -812,7 +810,7 @@ if test $fstatfs_args = 0; then
   fstatfs_args=2
 fi
 AC_MSG_RESULT($fstatfs_args)
-AC_DEFINE_UNQUOTED(FSTATFS_ARGS, $fstatfs_args)
+AC_DEFINE_UNQUOTED(FSTATFS_ARGS,$fstatfs_args)
 dnl on NeXT, this is apparently in libc.h?
 
 

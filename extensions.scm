@@ -5,7 +5,7 @@
 ;;; eval over selection
 ;;; mix with result at original peak amp
 ;;; mix with envelope
-;;; map-sound-files, match-sound-files
+;;; map-sound-files, for-each-sound-file, match-sound-files
 ;;; selection-members
 ;;; make-selection
 ;;; snd-debug
@@ -125,35 +125,43 @@
   (lambda args
     "(map-sound-files func &optional dir) applies func to each sound file in dir"
     (map (car args) 
-	 (vector->list (sound-files-in-directory (if (null? (cdr args)) "." (cadr args)))))))
+	 (sound-files-in-directory (if (null? (cdr args)) "." (cadr args))))))
 
-; (map-sound-files 
-;  (lambda (n) 
-;    (catch #t
-;           (lambda ()
-; 	      (if (not (null? (mus-sound-loop-info (string-append "/home/bil/sf/" n)))) 
-; 		  (snd-print n)))
-;             (lambda args #f)))
-;  "/home/bil/sf")
+(define for-each-sound-file
+  (lambda args
+    "(for-each-sound-file func &optional dir) applies func to each sound file in dir"
+    (for-each 
+     (car args) 
+     (sound-files-in-directory (if (null? (cdr args)) "." (cadr args))))))
+
+#!
+ (for-each-sound-file
+  (lambda (n) 
+    (catch #t
+           (lambda ()
+ 	      (if (not (null? (mus-sound-loop-info (string-append "/home/bil/sf/" n)))) 
+ 		  (snd-print (format #f "~%~A" n))))
+           (lambda args #f)))
+  "/home/bil/sf")
+!#
 
 (define match-sound-files
   (lambda args
     "(match-sound-files func &optional dir) applies func to each sound file in dir and returns a list of files for which func does not return #f"
     (let* ((func (car args))
-	   (files (sound-files-in-directory (if (null? (cdr args)) "." (cadr args))))
 	   (matches '()))
-      (do ((i 0 (1+ i)))
-	  ((= i (vector-length files)))
-	(let ((filename (vector-ref files i)))
-	  (if (func filename)
-	      (set! matches (cons filename matches)))))
+      (for-each
+       (lambda (file)
+	 (if (func file)
+	     (set! matches (cons file matches))))
+       (sound-files-in-directory (if (null? (cdr args)) "." (cadr args))))
       matches)))
   
 ;;; we can use Guile's regexp support here to search for all .snd and .wav files:
-;
-;(let ((reg (make-regexp ".wav|.snd$")))
-;  (match-sound-files (lambda (file) (regexp-exec reg file))))
-;
+#!
+(let ((reg (make-regexp ".wav|.snd$")))
+  (match-sound-files (lambda (file) (regexp-exec reg file))))
+!#
 ;;; this argument to make-regexp is looking for *.wav and *.snd
 ;;; in fact, we could use regexp's in place of Snd's sound-files-in-directory.
 
@@ -170,11 +178,10 @@
   (lambda args
     (filter-list 
      (car args) 
-     (vector->list 
-      (sound-files-in-directory 
-       (if (null? (cdr args)) 
-	   "." 
-	   (cadr args)))))))
+     (sound-files-in-directory 
+      (if (null? (cdr args)) 
+	  "." 
+	  (cadr args))))))
 
     
 ;;; -------- selection-members

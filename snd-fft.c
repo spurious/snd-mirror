@@ -7,6 +7,9 @@
  * returned to old wavelet code 18-Apr-01, and finally wrote the snd-test.scm tests.
  */
 
+#define FFT_IN_BACKGROUND_SIZE 4096
+/* this fft size decides when to use a background process rather than a single fft call */
+
 #define NUM_CACHED_FFT_WINDOWS 8
 
 static Float beta_maxes[NUM_FFT_WINDOWS] = {1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0,
@@ -1335,9 +1338,10 @@ static int apply_fft_window(fft_state *fs)
     {
     case FOURIER:
       window = (Float *)((fft_window_state *)(fs->wp))->window;
-      if (fs->size <= 4096)
+      if (fs->size <= FFT_IN_BACKGROUND_SIZE)
 	{
 	  /* to my surprise, it's smoother even on an old SGI to just do the fft in place */
+	  /*   hooray for micro-optimization! */
 	  p = (int)(log(fs->size) / log(4.0));
 	  use_fht = (fs->size == (int)pow(4, p));
 	}

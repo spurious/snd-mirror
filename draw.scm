@@ -178,7 +178,8 @@
 	     (data1 #f))
 
 	(if (and (> width 10)
-		 (> height 10))
+		 (> height 10)
+		 (> (frames snd chn) 0))
 	    (begin
 	      
 	      ;; draw axes around the inset graph

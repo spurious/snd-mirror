@@ -6,7 +6,7 @@
  *   hoping eventually to be able to make a parallel header file that
  *   allows us to use librep as the extension language without any
  *   (or not many) internal code changes.  Perhaps other Scheme extension
- *   systems could also work. (see sl.h for librep equivalents -- I think
+ *   systems could also work. (see sl.h for librep equivalents) -- I think
  *   I'll stay with "SCM" in Snd code, defining SCM as repv etc.  A major
  *   problem with librep: no setf, no defsetf, no defmacro... 
  */
@@ -121,14 +121,22 @@
 
 #define HOOKED(a) (NOT_NULL_P(SCM_HOOK_PROCEDURES(a)))
 
+#if HAVE_SCM_C_DEFINE_GSUBR
+  #define SND_NEW_PROCEDURE(Name, Func, Req, Opt, Rst) scm_c_define_gsubr(Name, Req, Opt, Rst, SCM_FNC Func)
+#else
+  #define SND_NEW_PROCEDURE(Name, Func, Req, Opt, Rst) gh_new_procedure(Name, SCM_FNC Func, Req, Opt, Rst)
+#endif
+
 #if (!TIMING) && (!GCING)
+
 #define DEFINE_PROC(Name, Func, ReqArg, OptArg, RstArg, Doc) \
-  scm_set_procedure_property_x(gh_new_procedure(Name, SCM_FNC Func, ReqArg, OptArg, RstArg), local_doc, gh_str02scm(Doc))
+  scm_set_procedure_property_x(SND_NEW_PROCEDURE(Name, Func, ReqArg, OptArg, RstArg), local_doc, TO_SCM_STRING(Doc))
+
 #else
 #if (TIMING)
 /* add timing calls */
 #define DEFINE_PROC(Name, Func, ReqArg, OptArg, RstArg, Doc) \
-  gh_new_procedure(Name "-t", SCM_FNC Func, ReqArg, OptArg, RstArg); \
+  SND_NEW_PROCEDURE(Name "-t", SCM_FNC Func, ReqArg, OptArg, RstArg); \
   { \
     int tag; \
     tag = new_time(Name); \
@@ -144,7 +152,7 @@
 #else
 /* pound on gc-related bugs! */
 #define DEFINE_PROC(Name, Func, ReqArg, OptArg, RstArg, Doc) \
-  gh_new_procedure(Name "-t", SCM_FNC Func, ReqArg, OptArg, RstArg); \
+  SND_NEW_PROCEDURE(Name "-t", SCM_FNC Func, ReqArg, OptArg, RstArg); \
   scm_eval_0str("(define " Name " \
                    (lambda args \
                      (let ((res #f)) \
@@ -165,9 +173,15 @@
 			       "set-" Name, SCM_FNC SetFunc, SCM_FNC RevFunc, local_doc, Req, Opt, Req + 1, Opt)
 #endif
 
+#if HAVE_SCM_C_DEFINE
+  #define SND_DEFINE(a, b) scm_c_define(a, b)
+#else
+  #define SND_DEFINE(a, b) gh_define(a, b)
+#endif
+
 #define DEFINE_VAR(Name, Value, Help) \
   { \
-    gh_define(Name, TO_SMALL_SCM_INT(Value)); \
+    SND_DEFINE(Name, TO_SMALL_SCM_INT(Value)); \
     scm_set_object_property_x(TO_SCM_SYMBOL(Name), local_doc, TO_SCM_STRING(Help)); \
   }
 
@@ -282,18 +296,17 @@ static SCM name_reversed(SCM arg1, SCM arg2, SCM arg3) \
 #endif
 
 #if USE_SND
-  #define CALL0(Func, Caller) g_call0(Func, Caller)
-  #define CALL1(Func, Arg1, Caller) g_call1(Func, Arg1, Caller)
-  #define CALL2(Func, Arg1, Arg2, Caller) g_call2(Func, Arg1, Arg2, Caller)
+  #define CALL0(Func, Caller)                   g_call0(Func, Caller)
+  #define CALL1(Func, Arg1, Caller)             g_call1(Func, Arg1, Caller)
+  #define CALL2(Func, Arg1, Arg2, Caller)       g_call2(Func, Arg1, Arg2, Caller)
   #define CALL3(Func, Arg1, Arg2, Arg3, Caller) g_call3(Func, Arg1, Arg2, Arg3, Caller)
-  #define APPLY(Func, Args, Caller) g_call_any(Func, Args, Caller)
+  #define APPLY(Func, Args, Caller)             g_call_any(Func, Args, Caller)
 #else
-  #define CALL0(Func, Caller) gh_call0(Func)
-  #define CALL1(Func, Arg1, Caller) gh_call1(Func, Arg1)
-  #define CALL2(Func, Arg1, Arg2, Caller) gh_call2(Func, Arg1, Arg2)
-  #define CALL3(Func, Arg1, Arg2, Arg3, Caller) gh_call3(Func, Arg1, Arg2, Arg3)
-  #define APPLY(Func, Args, Caller) gh_apply(Func, Args)
-  /* gh_apply is scm_apply(proc, args, SCM_EOL) */
+  #define CALL0(Func, Caller)                   scm_apply(Func, SCM_EOL, SCM_EOL)
+  #define CALL1(Func, Arg1, Caller)             scm_apply(Func, Arg1, scm_listofnull)
+  #define CALL2(Func, Arg1, Arg2, Caller)       scm_apply(Func, Arg1, scm_cons(Arg2, scm_listofnull))
+  #define CALL3(Func, Arg1, Arg2, Arg3, Caller) scm_apply(Func, Arg1, scm_cons2(Arg2, Arg3, scm_listofnull))
+  #define APPLY(Func, Args, Caller)             scm_apply(Func, Args, SCM_EOL)
 #endif
 
 #define APPLY_EOL scm_listofnull

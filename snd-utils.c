@@ -785,9 +785,9 @@ void g_init_timing(SCM local_doc)
 {
 #if HAVE_GUILE
   /* not DEFINE_PROC here! */
-  gh_new_procedure("start-time", start_time, 1, 0, 0);
-  gh_new_procedure("stop-time", stop_time, 1, 0, 0);
-  gh_new_procedure("report-times", report_times, 0, 0, 0);
+  SND_NEW_PROCEDURE("start-time", start_time, 1, 0, 0);
+  SND_NEW_PROCEDURE("stop-time", stop_time, 1, 0, 0);
+  SND_NEW_PROCEDURE("report-times", report_times, 0, 0, 0);
 #endif
 }
 #endif

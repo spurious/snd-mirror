@@ -27,6 +27,8 @@
 <span class=htmlbox>related documentation</span><span class=htmlbox><a href="snd.html">snd.html</a><spacer type=horizontal size=25><a href="extsnd.html">extsnd.html</a><spacer type=horizontal size=25><a href="grfsnd.html">grfsnd.html</a><spacer type=horizontal size=25><a href="clm.html">clm.html</a><spacer type=horizontal size=25><a href="sndlib.html">sndlib.html</a><spacer type=horizontal size=25><a href="index.html">index.html</a></span>
 </center>
 
+<!-- TODO: get rid of deprecated gh_ stuff (also in grfsnd.html) -->
+
 <!-- I'm using A NAME (i.e caps) where the entity should be ignored by the indexer (index.cl) -->
 
 <center><A NAME="introduction"></a>
@@ -1168,6 +1170,7 @@ convenient if they were in one file.
   <em class=def><a name="exselectionmembers">selection-members</a></em>
 
   <em class=def><a name="exmapsoundfiles">map-sound-files</a></em> func &amp;optional dir
+  <em class=def><a name="exforeachsoundfile">for-each-sound-file</a></em> func &amp;optional dir
   <em class=def><a name="exmatchsoundfiles">match-sound-files</a></em> func &amp;optional dir
 
   <em class=def><a name="exnormalizedmix">normalized-mix</a></em> filename beg in-chan snd chn
@@ -1243,18 +1246,12 @@ a region).
 <i>match-sound-files</i> applies <i>func</i> to each sound file in <i>dir</i> and returns a list of files for which func does not return #f.
 </p>
 <pre>
-(map-sound-files 
+(for-each-sound-file
   (lambda (n) 
     (if (&gt; (mus-sound-duration n) 10.0) 
-      (snd-print n))))
-
-(let ((reg (make-regexp ".wav|.snd$")))
-  (match-sound-files 
-    (lambda (file) 
-       (regexp-exec reg file))))
+      (snd-print n)))
+  (sound-files-in-directory "."))
 </pre>
-<p>The argument to make-regexp is looking for *.wav and *.snd.
-</p>
 
 <p><i>normalized-mix</i> is like <a href="extsnd.html#sndmix">mix</a> but the mixed result has same peak amplitude as the 
 original data. <i>enveloped-mix</i> is like <a href="extsnd.html#sndmixsound">mix-sound</a>, but includes an
@@ -2536,19 +2533,18 @@ program defines "counter" as a scheme variable, accessible in C:
 #include &lt;stdio.h&gt;
 #include &lt;guile/gh.h&gt;
 
-void inner_main(int argc, char **argv)
+void inner_main(void *closure, int argc, char **argv)
 {
   SCM counter;
   int size = 512;
   char **buffer = NULL;
   buffer = (char **)calloc(1, sizeof(char *));
   buffer[0] = (char *)calloc(size, sizeof(char));
-  /* counter = gh_define("counter", gh_int2scm(0)); */       /* old style (pre Guile 1.6) */
   counter = scm_permanent_object(scm_c_define("counter", gh_int2scm(0)));
   while (1)
     {
       getline(buffer, &amp;size, stdin);
-      gh_eval_str(buffer[0]);
+      scm_eval_str0(buffer[0]);
       /* fprintf(stdout, "counter is %d\n", gh_scm2int(gh_cdr(counter))); */ /* old style */
       fprintf(stdout, "counter is %d\n", gh_scm2int(SCM_VARIABLE_REF(counter)));
     }
@@ -2556,7 +2552,7 @@ void inner_main(int argc, char **argv)
 
 int main(int argc, char *argv[])
 {
-  gh_enter(argc, argv, inner_main);
+  scm_boot_guile(argc, argv, inner_main, 0);
   return(0);
 }
 </pre>
@@ -2600,25 +2596,25 @@ SCM g_set_counter(SCM newval)
   return(newval);
 }
 
-void inner_main(int argc, char **argv)
+void inner_main(void *closure, int argc, char **argv)
 {
   int size = 512;
   char **buffer = NULL;
   buffer = (char **)calloc(1, sizeof(char *));
   buffer[0] = (char *)calloc(size, sizeof(char));
-  gh_new_procedure0_0("counter", g_counter);
-  gh_new_procedure1_0("set-counter", g_set_counter);
+  scm_c_define_gsubr("counter", 0, 0, 0, g_counter);
+  scm_c_define_gsubr("set-counter", 1, 0, 0, g_set_counter);
   while (1)
     {
       getline(buffer, &amp;size, stdin);
-      gh_eval_str(buffer[0]);
+      scm_eval_str0(buffer[0]);
       fprintf(stdout, "counter is %d\n", counter);
     }
 }
 
 int main(int argc, char *argv[])
 {
-  gh_enter(argc,argv, inner_main);
+  scm_boot_guile(argc,argv, inner_main, 0);
   return(0);
 }
 </pre>
@@ -2639,13 +2635,13 @@ counter is 246
 and the variable lives in C, so two of our problems are solved.
 But we don't really want the extra name "set-counter".
 So, we use Guile's generalized set! by replacing the two
-gh_new_procedure calls above with:
+scm_c_define_gsubr calls above with:
 </p>
 <pre>
-  gh_define("counter",
+  scm_c_define("counter",
     scm_make_procedure_with_setter(
-      gh_new_procedure0_0("", g_counter),
-      gh_new_procedure1_0("", g_set_counter)));
+      scm_c_define_gsubr("", 0, 0, 0, g_counter),
+      scm_c_define_gsubr("", 1, 0, 0, g_set_counter)));
 </pre>
 <p>Now we have Snd's way of handling things:
 </p>
@@ -2698,17 +2694,17 @@ static SCM add_to_counter(SCM val)
   return(gh_int2scm(counter));  /* return our new counter value */
 }
 
-static void inner_main(int argc, char **argv)
+static void inner_main(void *closure, int argc, char **argv)
 {
   SCM result;
   int size = 512;
   char **buffer = NULL;
-  gh_new_procedure("add-to-counter", add_to_counter, 1, 0, 0);
+  scm_c_define_gsubr("add-to-counter", 1, 0, 0, add_to_counter);
 
-  gh_define("counter",
+  scm_c_define("counter",
     scm_make_procedure_with_setter(
-      gh_new_procedure0_0("",g_counter),
-      gh_new_procedure1_0("",g_set_counter)));
+      scm_c_define_gsubr("", 0, 0, 0, g_counter),
+      scm_c_define_gsubr("", 1, 0, 0, g_set_counter)));
 
   buffer = (char **)calloc(1, sizeof(char *));
   buffer[0] = (char *)calloc(size, sizeof(char));
@@ -2718,7 +2714,7 @@ static void inner_main(int argc, char **argv)
       fprintf(stdout, "&gt;");
       getline(buffer, &mp;size, stdin);
       result = scm_internal_stack_catch(SCM_BOOL_T, /* this is our "catch" */
-					gh_eval_str, 
+					scm_eval_str0, 
 					(void *)(buffer[0]), 
 					report_error,
 					buffer[0]);
@@ -2729,7 +2725,7 @@ static void inner_main(int argc, char **argv)
 
 int main(int argc, char *argv[])
 {
-  gh_enter(argc,argv,inner_main);
+  scm_boot_guile(argc, argv, inner_main, 0);
   return(0);
 }
 </pre>
@@ -2759,11 +2755,11 @@ unbound-variable: (#f "Unbound variable: ~S" (asdf) #f)
 unbound-variable
 &gt;(exit)
 </pre>
-<p>But now the <i>gh_eval_str</i> use generates a compiler complaint about type
+<p>But now the <i>scm_eval_str0</i> use generates a compiler complaint about type
 mismatches (though it works).  We can fix that by:
 </p>
 <pre>
-static SCM eval_str_wrapper(void *data) {return(gh_eval_str((char *)data));}
+static SCM eval_str_wrapper(void *data) {return(scm_eval_str0((char *)data));}
 
 /* ... */
 
@@ -2841,7 +2837,7 @@ float src_input_as_needed(void *ptr, int direction)
   return(gh_scm2double(gh_call1(sr-&gt;input_func, gh_int2scm(direction))));
 }
 
-void inner_main(int argc, char **argv)
+void inner_main(void *closure, int argc, char **argv)
 {
   mus_any *gen;
   src_state *input;
@@ -2853,7 +2849,7 @@ void inner_main(int argc, char **argv)
   input = (src_state *)calloc(1, sizeof(src_state));
   fprintf(stdout, "input function: ");
   getline(buffer, &amp;size, stdin);
-  input-&gt;input_func = gh_eval_str(buffer[0]);
+  input-&gt;input_func = scm_eval_str0(buffer[0]);
   gen = mus_make_src(&amp;src_input_as_needed, 0.5, 10, (void *)input);
   for (i=0; i &lt; 100; i++)
     fprintf(stdout, "%f ", mus_src(gen, 0.0, src_input_as_needed));
@@ -2863,7 +2859,7 @@ void inner_main(int argc, char **argv)
 
 int main(int argc, char *argv[])
 {
-  gh_enter(argc,argv,inner_main);
+  scm_boot_guile(argc, argv, inner_main, 0);
   return(0);
 }
 
@@ -3167,9 +3163,9 @@ static SCM g_make_fcomb(SCM scaler, SCM size, SCM a0, SCM a1)
 
 static void init_fcomb(void)
 {
-  gh_new_procedure("fcomb?", SCM_FNC g_fcomb_p, 1, 0, 0);
-  gh_new_procedure("make-fcomb", SCM_FNC g_make_fcomb, 4, 0, 0);
-  gh_new_procedure("fcomb", SCM_FNC g_fcomb, 2, 0, 0);
+  scm_c_define_gsubr("fcomb?", 1, 0, 0, SCM_FNC g_fcomb_p);
+  scm_c_define_gsubr("make-fcomb", 4, 0, 0, SCM_FNC g_make_fcomb);
+  scm_c_define_gsubr("fcomb", 2, 0, 0, SCM_FNC g_fcomb);
 }
 </pre>
 

@@ -102,6 +102,7 @@
     (list "*clm-table-size*" "clm.html#*clm-table-size*")
     (list "*clm-verbose*" "clm.html#*clm-verbose*")
     (list "*clm-version*" "clm.html#*clm-version*")
+    (list "clone-sound-as" "extsnd.html#clonesoundas")
     (list "close-controls" "clm.html#close-controls")
     (list "close-hook" "extsnd.html#closehook")
     (list "close-input" "clm.html#close-input")
@@ -501,6 +502,7 @@
     (list "mixer-set!" "clm.html#mixer-set!")
     (list "mixer?" "clm.html#mixer?")
     (list "mixes" "extsnd.html#mixes")
+    (list "mouse-click-hook" "extsnd.html#mouseclickhook")
     (list "mouse-drag-hook" "extsnd.html#mousedraghook")
     (list "mouse-enter-graph-hook" "extsnd.html#mouseentergraphhook")
     (list "mouse-enter-label-hook" "extsnd.html#mouseenterlabelhook")
@@ -729,6 +731,7 @@
     (list "report-in-minibuffer" "extsnd.html#sndreportinminibuffer")
     (list "reset-all-hooks" "sndscm.html#resetallhooks")
     (list "reset-controls" "extsnd.html#sndcontrolreset")
+    (list "reset-listener-cursor" "extsnd.html#resetlistenercursor")
     (list "restart-clm" "clm.html#restart-clm")
     (list "restart-env" "clm.html#restart-env")
     (list "restore-controls" "extsnd.html#sndcontrolrestore")
@@ -741,6 +744,7 @@
     (list "reverb-control?" "extsnd.html#sndreverbing")
     (list "reverse-selection" "extsnd.html#sndreverseselection")
     (list "reverse-sound" "extsnd.html#sndreverse")
+    (list "reverse-track" "sndscm.html#reversetrack")
     (list "revert-sound" "extsnd.html#sndrevert")
     (list "right-sample" "extsnd.html#sndrightsample")
     (list "ring-modulate" "clm.html#ring-modulate")
@@ -1049,7 +1053,6 @@
     (list "zoom-color" "extsnd.html#zoomcolor")
     (list "zoom-focus-style" "extsnd.html#zoomfocusstyle")
   ))
-
 
 
 (define *html-reader* "netscape")

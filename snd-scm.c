@@ -14,11 +14,7 @@ SCM snd_create_hook(const char *name, int args, const char *help, SCM local_doc)
 #if HAVE_GUILE
   hook = scm_permanent_object(scm_make_hook(TO_SMALL_SCM_INT(args)));
   scm_set_object_property_x(hook, local_doc, TO_SCM_STRING(help));
-#if HAVE_SCM_C_DEFINE
-  scm_c_define(name, hook);
-#else
-  gh_define(name, hook);
-#endif
+  SND_DEFINE(name, hook);
 #endif
   return(hook);
 }
@@ -2705,8 +2701,8 @@ void define_procedure_with_setter(char *get_name, SCM (*get_func)(), char *get_h
   scm_permanent_object(
     scm_c_define(get_name,
       scm_make_procedure_with_setter(
-        gh_new_procedure("", SCM_FNC get_func, get_req, get_opt, 0),
-	gh_new_procedure(set_name, SCM_FNC set_func, set_req, set_opt, 0))));
+        SND_NEW_PROCEDURE("", SCM_FNC get_func, get_req, get_opt, 0),
+	SND_NEW_PROCEDURE(set_name, SCM_FNC set_func, set_req, set_opt, 0))));
   scm_set_object_property_x(TO_SCM_SYMBOL(get_name), local_doc, str);
   scm_set_procedure_property_x(SND_LOOKUP(get_name), local_doc, str);
 #else
@@ -2714,8 +2710,8 @@ void define_procedure_with_setter(char *get_name, SCM (*get_func)(), char *get_h
     SCM_CDR(
       gh_define(get_name,
 	scm_make_procedure_with_setter(
-          gh_new_procedure("", SCM_FNC get_func, get_req, get_opt, 0),
-	  gh_new_procedure(set_name, SCM_FNC set_func, set_req, set_opt, 0)
+          SND_NEW_PROCEDURE("", SCM_FNC get_func, get_req, get_opt, 0),
+	  SND_NEW_PROCEDURE(set_name, SCM_FNC set_func, set_req, set_opt, 0)
 	  ))),
     local_doc,
     TO_SCM_STRING(get_help));
@@ -2740,9 +2736,9 @@ void define_procedure_with_reversed_setter(char *get_name, SCM (*get_func)(), ch
   scm_permanent_object(
     scm_c_define(get_name,
       scm_make_procedure_with_setter(
-        gh_new_procedure("", SCM_FNC get_func, get_req, get_opt, 0),
-	gh_new_procedure("", SCM_FNC reversed_set_func, set_req, set_opt, 0))));
-  gh_new_procedure(set_name, SCM_FNC set_func, set_req, set_opt, 0);
+        SND_NEW_PROCEDURE("", SCM_FNC get_func, get_req, get_opt, 0),
+	SND_NEW_PROCEDURE("", SCM_FNC reversed_set_func, set_req, set_opt, 0))));
+  SND_NEW_PROCEDURE(set_name, SCM_FNC set_func, set_req, set_opt, 0);
   scm_set_object_property_x(TO_SCM_SYMBOL(get_name), local_doc, str);
   scm_set_procedure_property_x(SND_LOOKUP(get_name), local_doc, str);
 #else
@@ -2750,13 +2746,13 @@ void define_procedure_with_reversed_setter(char *get_name, SCM (*get_func)(), ch
     SCM_CDR(
       gh_define(get_name,
 	scm_make_procedure_with_setter(
-          gh_new_procedure("", SCM_FNC get_func, get_req, get_opt, 0),
-	  gh_new_procedure("", SCM_FNC reversed_set_func, set_req, set_opt, 0)
+          SND_NEW_PROCEDURE("", SCM_FNC get_func, get_req, get_opt, 0),
+	  SND_NEW_PROCEDURE("", SCM_FNC reversed_set_func, set_req, set_opt, 0)
 	  ))),
     local_doc,
     TO_SCM_STRING(get_help));
   /* still need to trap help output and send it to the listener */
-  gh_new_procedure(set_name, SCM_FNC set_func, set_req, set_opt, 0);
+  SND_NEW_PROCEDURE(set_name, SCM_FNC set_func, set_req, set_opt, 0);
 #endif
 #endif
 #if HAVE_LIBREP
@@ -2859,8 +2855,8 @@ void g_initialize_gh(snd_state *ss)
   local_doc = MAKE_PERMANENT(DOCUMENTATION);
 
 #if GCING
-  gh_new_procedure("set-last-proc", SCM_FNC g_set_last_proc, 2, 0, 0);
-  gh_new_procedure("g-gc-hook", SCM_FNC g_gc_hook, 0, 0, 0);
+  SND_NEW_PROCEDURE("set-last-proc", SCM_FNC g_set_last_proc, 2, 0, 0);
+  SND_NEW_PROCEDURE("g-gc-hook", SCM_FNC g_gc_hook, 0, 0, 0);
   DEFINE_VAR("g-gc-step", 10, "");
   DEFINE_VAR("g-gc-ctr", 0, "");
   scm_eval_0str("(define (gc-1) (g-gc-hook) (if (> g-gc-step 0) (begin (if (> g-gc-ctr g-gc-step) (begin (set! g-gc-ctr 0) (gc)) (set! g-gc-ctr (1+ g-gc-ctr))))))");
@@ -3510,3 +3506,66 @@ static Scheme_Object *snd_inner(void *closure_data, int argc, Scheme_Object **ar
 */
 #endif
 
+#if HAVE_RUBY
+
+static char *Scheme_to_Ruby(char *name)
+{
+  /* replace any non-alphanumeric except "?" with "_". "?" -> "_p". '->" -> "2" */
+  char *new_name = NULL;
+  int len, i, j;
+  len = snd_strlen(name);
+  if (len > 0)
+    {
+      new_name = (char *)CALLOC(len + 2, sizeof(char)); /* +1 for possible _p, +1 for possible $ */
+      for (i = 0, j = 0; i < len; i++)
+	{
+	  if (isalnum(name[i]))
+	    new_name[j++] = name[i];
+	  else 
+	    {
+	      if ((name[i] == '-') &&
+		  (name[i + 1] == '>'))
+		{
+		  new_name[j++] = '2';
+		  i++;
+		}
+	      else
+		{
+		  new_name[j++] = '_';
+		  if (name[i] == '?')
+		    new_name[j++] = 'p';
+		}
+	    }
+	}
+    }
+  return(new_name);
+}
+
+char *Scheme_constant_to_Ruby(char *name)
+{
+  /* upcase 1st char */
+  char *new_name;
+  new_name = Scheme_to_Ruby(name);
+  new_name[0] = toupper(new_name[0]);
+  return(new_name);
+}
+
+char *Scheme_procedure_to_Ruby(char *name)
+{
+  return(Scheme_to_Ruby(name));
+}
+
+char *Scheme_global_variable_to_Ruby(char *name)
+{
+  /* prepend $ */
+  char *new_name;
+  int i, len;
+  new_name = Scheme_to_Ruby(name);
+  len = snd_strlen(new_name);
+  for (i = len - 1; i > 0; i--)
+    new_name[i] = new_name[i - 1];
+  new_name[0] = '$';
+  return(new_name);
+}
+
+#endif

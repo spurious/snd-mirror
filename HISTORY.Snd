@@ -1,5 +1,6 @@
 snd change log
 
+  26-Jun:    sound-files-in-directory returns a list, not a vector (to be consistent with CLM).
   25-Jun:    gcc 3.0.
 	     added type and comment args to save-region, and moved format arg after type (to be consistent with other such calls).
              mouse-click-hook.

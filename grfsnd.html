@@ -255,10 +255,16 @@ snd -e "(set! (data-color) (make-color 1 0 0))" oboe.snd
 ./snd -eval '(begin (display (+ 1 2)) (exit))'
 </pre>
 <p>prints "3" and exits.  The "-title" argument works in both versions of Snd.
+The following adds "WAV" to the sound file extension table before preloading the directory:
 </p>
+<pre>
+snd -e '(add-sound-file-extension "WAV")' -p /home/bil/sounds
+</pre>
+<br>
 <img src="note.png" alt="notebook"><spacer type=horizontal size=10><img src="bgd.png" alt="colors" vspace=30>
 <br>
 <br>
+
 <span class=bbox><h3><A NAME="sndinitfile">The initialization file</a></h3></span>
 <p>
 When Snd starts up, it looks for an "initialization file", normally named "~/.snd" (its name can be set
@@ -435,7 +441,7 @@ Next add Guile wrappers to your C code:</p>
 
   void init_hiho() 
   { /* this declares hiho within Guile calling the wrapper which calls the C function hiho */
-    gh_new_procedure1_0("hiho", hiho_wrapper);
+    scm_c_define_gsubr("hiho", 1, 0, 0, hiho_wrapper);
   }
 </pre>
 <p>
@@ -482,7 +488,7 @@ static SCM scm_j0(SCM x)
 
 void init_gsl_j0(void)
 { /* links scm_j0 into Snd under the name j0 */
-  gh_new_procedure("j0", scm_j0, 1, 0, 0);
+  scm_c_define_gsubr("j0", 1, 0, 0, scm_j0);
 }
 </pre>
 <p>Now the usual compile, load, link into Snd sequence:</p>
@@ -554,7 +560,7 @@ static float a2(float b) {return(b * 2.0);}
 
 static SCM get_a2(void) {return(gh_ulong2scm((unsigned long)a2));}
 
-void init_hiho() {gh_new_procedure0_0("get-a2", get_a2);}
+void init_hiho() {scm_c_define_gsubr("get-a2", 0, 0, 0, get_a2);}
 </pre>
 <p>The "a2" function will be called from Snd as follows; first make
 the shared object module and load it as above, then</p>
@@ -577,15 +583,15 @@ is a sketch using the Snd internal "srate" function:</p>
   static SCM srate_wrapper(SCM a) {return(gh_call1(g_srate, a));}
   void init_srate(void) 
   { 
-    gh_new_procedure1_0("my-srate", srate_wrapper);
+    scm_c_define_gsubr("my-srate", 1, 0, 0, srate_wrapper);
     g_srate = scm_symbol_value0("srate");
   }
 </pre>
-<p>Alternatively, you can simply use gh_eval_str:</p>
+<p>Alternatively, you can simply use scm_eval_str0:</p>
 <pre>
-  gh_eval_str("(recorder-dialog)");
-  gh_eval_str("(open-sound \"oboe.snd\")");
-  srate = gh_scm2int(gh_eval_str("(srate)"));
+  scm_eval_str0("(recorder-dialog)");
+  scm_eval_str0("(open-sound \"oboe.snd\")");
+  srate = gh_scm2int(scm_eval_str0("(srate)"));
 </pre>
 <p>There is a Scheme to C compiler named <a name="hobbit">Hobbit</a>, but it's not
 very useful in our context.  If you have pure Scheme functions,
@@ -666,9 +672,9 @@ void init_eff(void)
 {
   mus_sound_initialize();
   init_mus_module();
-  gh_new_procedure("free-flange", g_free_flange, 1, 0, 0);
-  gh_new_procedure("get-flange", g_get_flange, 0, 0, 0);
-  gh_new_procedure("make-flange", g_make_flange, 3, 0, 0);
+  scm_c_define_gsubr("free-flange", 1, 0, 0, g_free_flange);
+  scm_c_define_gsubr("get-flange", 0, 0, 0, g_get_flange);
+  scm_c_define_gsubr("make-flange", 3, 0, 0, g_make_flange);
 }
 </pre>
 <p>Now compile eff.c and turn it into eff.so, then</p>
@@ -1598,8 +1604,8 @@ static SCM g_create_scale_dialog(SCM parent)
 
 void init_hiho()
 {
-  gh_new_procedure1_0("create-scale-dialog", g_create_scale_dialog);
-  gh_new_procedure0_0("hiho-scaler", hiho_scaler);
+  scm_c_define_gsubr("create-scale-dialog", 1, 0, 0, g_create_scale_dialog);
+  scm_c_define_gsubr("hiho-scaler", 0, 0, 0, hiho_scaler);
 }
 
 /* call this hiho.c:

@@ -70,7 +70,7 @@ static repv snd_rep_main(repv arg)
   snd_state *snd_main(int argc, char **argv)
 #else
   #if HAVE_GUILE
-    static void snd_main(int argc, char **argv)
+    static void snd_main(void *closure, int argc, char **argv)
   #else
     int main (int argc, char **argv)
   #endif
@@ -292,6 +292,10 @@ static repv snd_rep_main(repv arg)
     rep_init(prog_name, &argc, &argv, 0, 0);
   }
   #endif
+  
+  #if HAVE_RUBY
+    ruby_init();
+  #endif
 
   init_recorder();
 
@@ -309,9 +313,6 @@ static repv snd_rep_main(repv arg)
     rep_call_with_barrier (snd_rep_main, Qnil, rep_TRUE, 0, 0, 0);
     return(rep_top_level_exit());
   #else
-    #if HAVE_RUBY
-      ruby_init();
-    #endif
 
     snd_doit(ss, argc, argv);
 
@@ -326,7 +327,7 @@ static repv snd_rep_main(repv arg)
   #if HAVE_GUILE
   int main(int argc, char *argv[])
    {
-     gh_enter(argc, argv, snd_main);
+     scm_boot_guile(argc, argv, snd_main, 0);
      return(0);
    }
   #endif

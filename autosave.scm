@@ -1,7 +1,6 @@
 ;;; -------- auto-save 
 ;;;
 ;;; this needs to be loaded before any sounds
-;;; TODO: scan sounds upon startup
 
 (define auto-save-interval 60.0) ;seconds between auto-save checks
 
@@ -52,6 +51,9 @@
 	(if (hook-empty? (edit-hook snd i))
 	    (add-hook! (edit-hook snd i) (upon-edit snd))))
       (clear-unsaved-edits snd))))
+
+(if (not (null? (sounds)))
+    (map auto-save-open-func (sounds)))
 
 (add-hook! after-open-hook auto-save-open-func)
 

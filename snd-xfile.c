@@ -1,7 +1,7 @@
 #include "snd.h"
 
 /* TODO: user-defined sort proc for file dialog(s)? and (not the same thing) user-defined filter proc?  */
-/*       if defaults to proc that checks list, add-to=sound-file-extension becomes easier */
+/*       if defaults to proc that checks list, add-to-sound-file-extension becomes easier */
 
 /* most the dialogs present a view of the various file header possibilities */
 

@@ -2234,13 +2234,11 @@ static SCM g_preload_file(SCM file)
 
 static SCM g_sound_files_in_directory(SCM dirname)
 {
-  #define H_sound_files_in_directory "(" S_sound_files_in_directory " directory) returns a vector of sound files in directory"
-  /* TODO: should sound-files-in-directory return a list? */
+  #define H_sound_files_in_directory "(" S_sound_files_in_directory " directory) returns a list of sound files in directory"
   dir *dp = NULL;
   char *name = NULL;
-  int i, numfiles;
-  SCM vect = SCM_BOOL_F;
-  SCM *vdata;
+  int i;
+  SCM res = SCM_EOL;
   ASSERT_TYPE(STRING_P(dirname), dirname, SCM_ARGn, S_sound_files_in_directory, "a string");
   name = TO_C_STRING(dirname);
   if (name)
@@ -2248,15 +2246,12 @@ static SCM g_sound_files_in_directory(SCM dirname)
       dp = find_sound_files_in_dir(name);
       if (dp)
 	{
-	  numfiles = dp->len;
-	  vect = MAKE_VECTOR(numfiles, SCM_BOOL_F);
-	  vdata = SCM_VELTS(vect);
-	  for (i = 0; i < numfiles; i++)
-	    vdata[i] = TO_SCM_STRING(dp->files[i]);
+	  for (i = dp->len - 1; i >= 0; i--)
+	    res = CONS(TO_SCM_STRING(dp->files[i]), res);
 	  free_dir(dp);
 	}
     }
-  return(vect);
+  return(res);
 }
 
 void g_init_file(SCM local_doc)

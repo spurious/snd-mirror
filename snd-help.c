@@ -268,6 +268,7 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
+26-Jun:  sound-files-in-directory returns a list, not a vector (to be consistent with CLM).\n\
 24-Jun:  added type and comment args to save-region,\n\
            and moved format arg after type (to be consistent with other such calls).\n\
          mouse-click-hook.\n\
@@ -328,24 +329,6 @@ void news_help(snd_state *ss)
            amplitude-env -> enved-amplitude, srate-env -> enved-srate, spectrum-env -> enved-spectrum\n\
          removed save-state-on-exit (use exit-hook with save-state).\n\
          removed activate-listener and hide-listener (the latter is now (set! (show-listener) #f)).\n\
-27-May:  replaced mix-sound-channel and mix-sound-index by mix-home.\n\
-         added player-home.\n\
-         Added \"control\" to the various control panel names:\n\
-           amp -> amp-control, contrast -> contrast-control, contrast-amp -> contrast-control-amp, \n\
-           contrast-func -> contrast-control-procedure, contrasting -> contrast-control?, expand -> expand-control, \n\
-           expand-hop -> expand-control-hop, expand-length -> expand-control-length, expand-ramp -> expand-control-ramp, \n\
-           expanding -> expand-control?, filtering -> filter-control?, filter-order -> filter-control-order, \n\
-           filter-env -> filter-control-env, reverb-decay -> reverb-control-decay, reverb-feedback -> reverb-control-feedback, \n\
-           reverb-funcs -> reverb-control-procedures, reverb-length -> reverb-control-length, reverb-lowpass -> reverb-control-lowpass, \n\
-           reverb-scale -> reverb-control-scale, reverbing -> reverb-control?, speed -> speed-control, speed-as-float -> speed-control-as-float, \n\
-           speed-as-ratio -> speed-control-as-ratio, speed-as-semitone -> speed-control-as-semitone, speed-style -> speed-control-style, \n\
-           speed-tones -> speed-control-tones, filter-dBing -> filter-control-in-dB, enved-dBing -> enved-in-dB.\n\
-         renamed filter-env-order -> enved-filter-order.\n\
-         Some rationale: \n\
-           Scheme uses \"procedure\" rather than \"function\" and \"?\" for booleans.\n\
-	   The control names (\"amp\" in particular) were too likely to be confused or shadowed.\n\
-           filter-env-order was too similar to filter-order (and not obvious it meant the envelope editor filter order)\n\
-           These names actually predated the decision to use Guile -- I didn't foresee 4 years ago where Snd was headed.\n\
 ",
 NULL);
   FREE(info);

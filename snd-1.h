@@ -800,6 +800,11 @@ void clear_listener(void);
   SCM librep_eval_string(char *data);
 #endif
 
+#if HAVE_RUBY
+  char *Scheme_constant_to_Ruby(char *name);
+  char *Scheme_procedure_to_Ruby(char *name);
+  char *Scheme_global_variable_to_Ruby(char *name);
+#endif
 
 
 /* -------- snd-select.c -------- */
