@@ -597,6 +597,9 @@
 #define S_mark_color                    "mark-col" STR_OR
 #define S_mark_name                     "mark-name"
 #define S_mark_sample                   "mark-sample"
+#define S_mark_sync                     "mark-sync"
+#define S_mark_sync_max                 "mark-sync-max"
+#define S_mark_to_sound                 "mark->sound"
 #define S_marks                         "marks"
 #define S_max_fft_peaks                 "max-fft-peaks"
 #define S_max_regions                   "max-regions"
@@ -857,6 +860,7 @@
 #define S_set_mark_color                "set-mark-col" STR_OR
 #define S_set_mark_name                 "set-mark-name"
 #define S_set_mark_sample               "set-mark-sample"
+#define S_set_mark_sync                 "set-mark-sync"
 #define S_set_max_fft_peaks             "set-max-fft-peaks"
 #define S_set_max_regions               "set-max-regions"
 #define S_set_menu_sensitive            "set-menu-sensitive"
@@ -1033,6 +1037,7 @@
 #define S_stop_playing_hook             "stop-playing-hook"
 #define S_stop_playing_region_hook      "stop-playing-region-hook"
 #define S_string_length                 "string-length"
+#define S_syncd_marks                   "syncd-marks"
 #define S_syncing                       "syncing"
 #define S_temp_dir                      "temp-dir"
 #define S_temp_filenames                "temp-filenames"

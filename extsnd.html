@@ -38,6 +38,7 @@
       <li><a href="#samplereaders">Sample-readers</a>
       <li><a href="#Vcts">Vcts</a>
       </ul>
+    <li><a href="#marks">Marks</a>
     <li><a href="#writing">Writing Sound Files</a>
     <li><a href="#sndsndlib">Sndlib</a>
     </ul>
@@ -581,7 +582,7 @@ would refer to the original form.  I may extend this to accept a list of (more t
   <a name="sndcut">cut</a>               ()            cut the current selection (a no-op if no active selection).
   <a name="snddataformat">data-format</a>       (<i>snd</i>)         <i>snd</i>'s data format (a list of the format number and its name).
   <a name="snddatalocation">data-location</a>     (<i>snd</i>)         <i>snd</i>'s data location (bytes).
-  <a name="snddeletemark">delete-mark</a>       (<i>id snd chn</i>)  delete mark <i>id</i> in <i>snd</i>'s channel <i>chn</i> (- C-m).
+  <a name="snddeletemark">delete-mark</a>       (<i>id</i>)          delete mark <i>id</i> (- C-m).
   <a name="snddeletemarks">delete-marks</a>      (<i>snd chn</i>)     delete all marks in <i>snd</i>'s channel <i>chn</i>
   <a name="snddeleteregion">delete-region</a>     (<i>reg</i>)         delete region number <i>reg</i> (which defaults to 0).  This removes the
                                   region from the region stack; it doesn't edit the corresponding file(s).
@@ -593,7 +594,7 @@ would refer to the original form.  I may extend this to accept a list of (more t
                                   (given the current edit tree), and the number of samples affected.
   <a name="sndeditheaderdialog">edit-header-dialog</a>()            fire up Edit Header dialog.
   <a name="sndeditposition">edit-position</a>     (<i>snd chn</i>)     return a current position in edit history list.
-  <a name="sndedits">edits</a>             (<i>snd chn</i>)     return a vector with number of undo-able edits and redo-able edits.
+  <a name="sndedits">edits</a>             (<i>snd chn</i>)     return a list with number of undo-able edits and redo-able edits.
   <a name="sndenv">env-sound</a>         (envelope <i>samp samps env-base snd chn</i>)
                                   apply (in amplitude) <i>envelope</i> to <i>snd</i>'s channel <i>chn</i> starting
                                   at sample <i>samp</i> for <i>samps</i> samples with connecting segments
@@ -739,9 +740,12 @@ would refer to the original form.  I may extend this to accept a list of (more t
                                   (see <a href="#scanning">Scanning Data</a>).
   <a name="mapchans">map-chans</a>         (func <i>start end edname</i>) apply func to currently syncd channels
   <a name="mapsoundchan">map-sound-chans</a>   (func <i>start end edname snd</i>) apply func to current sound's channels
-  <a name="sndmarkname">mark-name</a>         (<i>id snd chn</i>) name of mark <i>id</i>.
-  <a name="sndmarksample">mark-sample</a>       (<i>id snd chn</i>) position of mark <i>id</i>.
-  <a name="sndmarks">marks</a>             (<i>snd chn</i>)     number of marks in <i>snd</i>'s channel <i>chn</i>.
+  <a name="sndmarkname">mark-name</a>         (<i>id</i>)          name of mark <i>id</i>.
+  <a name="sndmarksample">mark-sample</a>       (<i>id pos</i>)      position of mark <i>id</i> at edit history position <i>pos</i>.
+  <a name="mark2sound">mark-&gt;sound</a>       (<i>id</i>)          sound and channel that hold mark <i>id</i>.
+  <a name="sndmarksync">mark-sync</a>         (<i>id</i>)          mark <i>id</i>'s sync value.
+  <a name="sndmarksyncmax">mark-sync-max</a>     ()            max mark sync value seen so far.
+  <a name="sndmarks">marks</a>             (<i>snd chn pos</i>) list of mark ids in <i>snd</i>'s channel <i>chn</i> at edit history position <i>pos</i>.
   <a name="sndmaxsounds">max-sounds</a>        ()            current size of sound array (grows as required, may contain holes).
   <a name="sndmaxamp">maxamp</a>            (<i>snd chn</i>)     max amp of <i>snd</i>'s channel <i>chn</i>.
   <a name="sndmix">mix</a>               (file <i>samp in_chan snd chn with-mix-consoles</i>)
@@ -994,8 +998,9 @@ would refer to the original form.  I may extend this to accept a list of (more t
                                  graphics data (see <a href="#graphhook">graph-hook</a> and <a href="#sndgraph">graph</a>).
   <a name="sndsetjustsounds">set-just-sounds</a>   (<i>just-sounds</i>)       set just-sounds button in file browser (default #t).
   <a name="sndsetleftsample">set-left-sample</a>   (samp <i>snd chn</i>)      set <i>snd</i>'s <i>chn</i>'s left sample (the window bound) to <i>samp</i>.
-  <a name="sndsetmarkname">set-mark-name</a>     (id name <i>snd chn</i>) set mark <i>id</i>'s name to <i>name</i> (in <i>snd</i>'s channel <i>chn</i>).
-  <a name="sndsetmarksample">set-mark-sample</a>   (id sample <i>snd chn</i>) set mark <i>id</i>'s position to <i>sample</i> (in <i>snd</i>'s channel <i>chn</i>).
+  <a name="sndsetmarkname">set-mark-name</a>     (id name)           set mark <i>id</i>'s name to <i>name</i> (in <i>snd</i>'s channel <i>chn</i>).
+  <a name="sndsetmarksample">set-mark-sample</a>   (id sample)         set mark <i>id</i>'s position to <i>sample</i> (in <i>snd</i>'s channel <i>chn</i>).
+  <a name="sndsetmarksync">set-mark-sync</a>     (id sync)           set mark <i>id</i>'s sync value (in <i>snd</i>'s channel <i>chn</i>).
   <a name="sndsetmenusensitive">set-menu-sensitive</a>(top-menu label sensitive)
   <a name="sndsetmixamp">set-mix-amp</a>       (mix chan amp)      set <i>mix</i> channel <i>chan</i>'s amplitude to <i>amp</i>.
   <a name="sndsetmixampenv">set-mix-amp-env</a>   (mix chan env)      set <i>mix</i> channel <i>chan</i>'s amplitude envelope to <i>env</i>.
@@ -1121,6 +1126,7 @@ would refer to the original form.  I may extend this to accept a list of (more t
   <a name="sndsrcselection">src-selection</a>     (num-or-env <i>base</i>) same as <i>src</i> but applied to current selection.
   <a name="startprogressreport">start-progress-report</a> (<i>snd</i>)     see <a href="#progressreport">progress-report</a>.
   <a name="sndstop">stop-playing</a>      (<i>snd</i>)         if <i>snd</i> is playing, stop.
+  <a name="syncdmarks">syncd-marks</a>       (sync)        list of marks (ids) that share sync.
   <a name="sndsyncing">syncing</a>           (<i>snd</i>)         <i>snd</i>'s 'sync' value (an integer, 0=off)
   <a name="sndtempfilenames">temp-filenames</a>    (data)        return vector of temp file names (see <a href="#programs">external programs</a>).
   <a name="temptoselection">temp-to-selection</a> (data name origin) read selected data from temp file (see <a href="#programs">external programs</a>).
@@ -1399,7 +1405,7 @@ Snd does not exit.</p>
   (lambda (ind)
     (and (&lt; ind (max-sounds))
 	 (or (and (ok? ind)
-		  (&gt; (vector-ref (edits ind) 0) 0)
+		  (&gt; (car (edits ind)) 0)
 		  (report-in-minibuffer "there are unsaved edits")
 		  #t)
 	     (unsaved-edits? (+ ind 1))))))
@@ -1842,7 +1848,7 @@ function to take stereo sounds:
 	       (sf11 (make-sample-reader 0 snd1 1))
 	       (out-data10 (make-vct total-len))
 	       (out-data11 (make-vct total-len)))
-	  (vcts-map! out-data10 out-data11 
+	  (<em class=red>vcts-map!</em> out-data10 out-data11 
 		     (lambda (num)
 		       (list
 			(convolve cnv10 (lambda (dir) (next-sample sf10)))
@@ -1858,6 +1864,61 @@ function to take stereo sounds:
 </pre>
 <hr>
 
+
+<h4><a name="marks">Marks</a></h4>
+<p>
+Each mark has an associated sample number (<b>mark-sample</b>), name (<b>mark-name</b>), sync value (<b>mark-sync</b>), and
+a globally unique id number (returned by <b>find-mark</b> or <b>add-mark</b>, for example).  The sync value is very similar to
+the mix track number or the sound syncing field; it provides a way to group marks for simultaneous
+changes.  Marks that share the same sync value (if not 0), move together when any one of them is
+dragged, play together, etc.  <b>mark-&gt;sound</b> provides a way to go from a mark id to the sound and
+channel that hold that mark; the inverse function is <b>marks</b>.  To find which marks share a given
+sync value, use <b>syncd-marks</b>; to find an unused sync value use <b>mark-sync-max</b>. </p>
+<pre><small> 
+(define (move-syncd-marks sync diff)
+  (map (lambda (m) 
+         (set-mark-sample m (+ (mark-sample m) diff))) 
+       (<em class=red>syncd-marks</em> sync)))
+</small></pre>
+<p><b>marks</b>
+without any argument, or with just a sound index returns a list of lists; each inner list is the list
+of current marks (ids) active in that channel, ordered by sample number.  If the channel argument is
+specified, <b>marks</b> returns just the list of mark ids.  If the edit history position is given,
+the list of ids reflects the mark list at that time in the edit history.  So, for example, the
+following procedure returns a list describing the history of a mark over the course of
+editing a channel, each list entry being the mark sample at that time or #f if the mark was not active:
+</p>
+<pre><small>
+(define (describe-mark id)
+  (let ((mark-home (mark-&gt;sound id)))
+    (if (eq? mark-home 'no-such-mark)
+	;; not an active mark, so go scrounging for it
+	;;   we're looking at every edit of every channel
+	(do ((i 0 (1+ i)))
+	    ((or (= i (max-sounds)) (list? mark-home)))
+	  (if (ok? i)
+	      (do ((j 0 (1+ j)))
+		  ((or (= j (channels i)) (list? mark-home)))
+		(let* ((max-edits (apply + (edits i j))))
+		  (do ((k 0 (1+ k)))
+		      ((or (&gt; k max-edits) (list? mark-home)))
+		    (if (member id (<em class=red>marks</em> i j k))
+			(set! mark-home (list i j)))))))))
+    (if (list? mark-home)
+	(let* ((snd (car mark-home))
+	       (chn (cadr mark-home))
+	       (max-edits (apply + (edits snd chn)))
+	       (descr '())
+	       (header (list 'mark id 'sound snd (short-file-name snd) 'channel chn)))
+	  (do ((i max-edits (1- i)))
+	      ((&lt; i 0) descr)
+	    (if (member id (<em class=red>marks</em> snd chn i))
+		(set! descr (cons (mark-sample id i) descr))
+		(set! descr (cons #f descr))))
+	  (cons header descr))
+	'cant-find-mark)))
+</small></pre>
+<hr>
 
 <h3><a name="writing">Writing Sound Files</a></h3>
 
@@ -1972,7 +2033,7 @@ Say we want Snd to refuse to exit if there are unsaved edits.</p>
   (lambda (ind)
     (and (&lt; ind (max-sounds))
 	 (or (and (ok? ind)
-		  (&gt; (vector-ref (edits ind) 0) 0)
+		  (&gt; (car (edits ind)) 0)
 		  (report-in-minibuffer "there are unsaved edits")
 		  #t)
 	     (unsaved-edits? (+ ind 1))))))

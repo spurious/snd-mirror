@@ -226,17 +226,6 @@ static chan_info *get_cp(snd_state *state, char *sstr, char *cstr)
   return(NULL);
 }
 
-static mark *get_m(snd_state *state, char *sstr, char *cstr, char *mstr)
-{
-  chan_info *cp;
-  int mn;
-  cp = get_cp(state,sstr,cstr);
-  if (mstr) 
-    sscanf(mstr,"%d",&mn);
-  else mn = 0;
-  return(find_mark_id(cp,mn));
-}
-
 static void g_save_envelopes(snd_state *state, char *name)
 {
   FILE *fd;
@@ -443,7 +432,6 @@ static int handle_set(snd_state *ss, char *tok, char **str)
   if (strcmp(tok,S_set_just_sounds) == 0) {toggle_just_sounds(istr(str[1])); isym(ss,0); return(0);}
   if (strcmp(tok,S_set_left_sample) == 0) {set_x_axis_x0(get_cp(ss,str[2],str[3]),istr(str[1])); isym(ss,0);return(0);}
   if (strcmp(tok,S_set_line_size) == 0) {set_line_size(ss,istr(str[1])); isym(ss,0); return(0);}
-  if (strcmp(tok,S_set_mark_name) == 0) {m = get_m(ss,str[3],str[4],str[1]); if (m) m->name = copy_string(sstr(str[2])); isym(ss,0); return(0);}
   if (strcmp(tok,S_set_min_dB) == 0) {set_min_dB(ss,fstr(str[1])); fsym(ss,ss->min_dB); return(0);}
   if (strcmp(tok,S_set_max_fft_peaks) == 0) {set_max_fft_peaks(ss,istr(str[1])); isym(ss,0); return(0);}
   if (strcmp(tok,S_set_max_regions) == 0) {set_max_regions(ss,istr(str[1])); isym(ss,0); return(0);}
@@ -675,18 +663,6 @@ static int handle_set(snd_state *ss, char *tok, char **str)
       isym(ss,0);
       return(0);
     }
-  if (strcmp(tok,S_set_mark_sample) == 0) 
-    {
-      cp = get_cp(ss,str[3],str[4]); 
-      m = get_m(ss,str[3],str[4],str[1]); 
-      if (m) 
-	{
-	  m->samp = istr(str[2]); 
-	  finish_moving_mark(cp,m);
-	}
-      isym(ss,0);
-      return(0);
-    }
   isym(ss,-1); 
   return(-1);
 }
@@ -740,7 +716,6 @@ static int symit(snd_state *ss,char **str)
   int ival,i,num,len,beg,id;
   chan_info *cp;
   snd_info *sp;
-  mark **mps;
   mark *m;
   mixdata *md;
   Float scls[1];
@@ -849,14 +824,6 @@ static int symit(snd_state *ss,char **str)
       if (strcmp(tok,S_default_output_srate) == 0) {isym(ss,default_output_srate(ss)); return(0);}
       if (strcmp(tok,S_default_output_type) == 0) {isym(ss,default_output_type(ss)); return(0);}
       if (strcmp(tok,S_default_output_format) == 0) {isym(ss,default_output_format(ss)); return(0);}
-      if (strcmp(tok,S_delete_mark) == 0) 
-	{
-	  cp = get_cp(ss,str[2],str[3]); 
-	  m = get_m(ss,str[1],str[2],str[3]); 
-	  if (m) delete_mark_id(m->id,cp); 
-	  isym(ss,0); 
-	  return(0);
-	}
       if (strcmp(tok,S_delete_marks) == 0) {cp = get_cp(ss,str[1],str[2]); if (cp) delete_marks(cp); isym(ss,0); return(0);}
       if (strcmp(tok,S_delete_region) == 0) 
 	{
@@ -986,34 +953,6 @@ static int symit(snd_state *ss,char **str)
       if (strcmp(tok,S_forward_mix) == 0) {goto_mix(current_channel(ss),prefix_fix(str[1])); isym(ss,0); return(0);}
       if (strcmp(tok,S_forward_sample) == 0) 
 	{cp = current_channel(ss); if (cp) handle_cursor(cp,cursor_move(cp,prefix_fix(str[1]))); isym(ss,0); return(0);}
-      if (strcmp(tok,S_find_mark) == 0) 
-	{
-	  if (str[1]) 
-	    {
-	      cp = get_cp(ss,str[2],str[3]); 
-	      if ((cp) && (cp->marks)) 
-		{
-		  mps = cp->marks[cp->edit_ctr]; 
-		  if (mps) 
-		    {
-		      if (isdigit((int)(str[1][0])))
-			{
-			  num = istr(str[1]);
-			  for (i=0;i<=cp->mark_ctr[cp->edit_ctr];i++) 
-			    if (mps[i]->samp == num) {isym(ss,i); return(0);}
-			}
-		      else
-			{
-			  filename = sstr(str[1]);
-			  for (i=0;i<=cp->mark_ctr[cp->edit_ctr];i++) 
-			    if ((mps[i]->name) && (strcmp(filename,mps[i]->name) == 0)) {isym(ss,i); return(0);}
-			}
-		    }
-		}
-	    } 
-	  isym(ss,-1);
-	  return(-0);
-	} 
       if (strcmp(tok,S_frames) == 0) {cp = get_cp(ss,str[1],str[2]); if (cp) isym(ss,current_ed_samples(cp)); else isym(ss,0); return(0);}
       break;
     case 'g':
@@ -1101,10 +1040,6 @@ static int symit(snd_state *ss,char **str)
       break;
     case 'm':
       if (strcmp(tok,S_make_region) == 0) {cp = get_cp(ss,str[3],str[4]); if (cp) define_region(cp,istr(str[1]),istr(str[2]),FALSE); isym(ss,0); return(0);}
-      if (strcmp(tok,S_mark_name) == 0) {m = get_m(ss,str[2],str[3],str[1]); if (m) ssym(ss,m->name); else isym(ss,0); return(0);}
-      if (strcmp(tok,S_mark_sample) == 0) {m = get_m(ss,str[2],str[3],str[1]); if (m) isym(ss,m->samp); else isym(ss,0); return(0);}
-      if (strcmp(tok,S_marks) == 0) 
-	{cp = get_cp(ss,str[1],str[2]); if ((cp) && (cp->marks)) isym(ss,1+cp->mark_ctr[cp->edit_ctr]); else isym(ss,0); return(0);}
       if (strcmp(tok,S_max_fft_peaks) == 0) {isym(ss,max_fft_peaks(ss)); return(0);}
       if (strcmp(tok,S_max_regions) == 0) {isym(ss,max_regions(ss)); return(0);}
       if (strcmp(tok,S_max_sounds) == 0) {isym(ss,ss->max_sounds); return(0);}

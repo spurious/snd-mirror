@@ -53,9 +53,9 @@ static SCM g_set_reverb_funcs(SCM rev, SCM make_rev, SCM free_rev)
 {
   #define H_reverb_funcs "(" S_reverb_funcs ") -> list of the 3 reverb funcs (reverb make-reverb free-reverb)"
   #define H_set_reverb_funcs "(" S_set_reverb_funcs " reverb make-reverb free-reverb) sets the current reverb functions"
-  if (gh_procedure_p(g_reverb)) scm_unprotect_object(g_reverb);
-  if (gh_procedure_p(g_make_reverb)) scm_unprotect_object(g_make_reverb);
-  if (gh_procedure_p(g_free_reverb)) scm_unprotect_object(g_free_reverb);
+  if (gh_procedure_p(g_reverb)) snd_unprotect(g_reverb);
+  if (gh_procedure_p(g_make_reverb)) snd_unprotect(g_make_reverb);
+  if (gh_procedure_p(g_free_reverb)) snd_unprotect(g_free_reverb);
   if ((procedure_ok(rev,3,0,S_set_reverb_funcs,"reverb",1)) &&
       (procedure_ok(make_rev,3,0,S_set_reverb_funcs,"make-reverb",2)) &&
       (procedure_ok(free_rev,1,0,S_set_reverb_funcs,"free-reverb",3)))
@@ -63,9 +63,9 @@ static SCM g_set_reverb_funcs(SCM rev, SCM make_rev, SCM free_rev)
       g_reverb = rev;
       g_make_reverb = make_rev;
       g_free_reverb = free_rev;
-      scm_protect_object(g_reverb);
-      scm_protect_object(g_make_reverb);
-      scm_protect_object(g_free_reverb);
+      snd_protect(g_reverb);
+      snd_protect(g_make_reverb);
+      snd_protect(g_free_reverb);
       use_g_reverb = 1;
     }
   else use_g_reverb = 0;
@@ -80,11 +80,11 @@ static SCM g_set_contrast_func(SCM func)
 {
   #define H_contrast_func "(" S_contrast_func ") -> current contrast function"
   #define H_set_contrast_func "(" S_set_contrast_func " func) sets the current contrast function"
-  if (gh_procedure_p(g_contrast)) scm_unprotect_object(g_contrast);
+  if (gh_procedure_p(g_contrast)) snd_unprotect(g_contrast);
   if (procedure_ok(func,2,0,S_set_contrast_func,"contrast",1))
     {
       g_contrast = func;
-      scm_protect_object(g_contrast);
+      snd_protect(g_contrast);
       use_g_contrast = 1;
     }
   else use_g_contrast = 0;
@@ -99,9 +99,9 @@ static SCM g_set_expand_funcs(SCM expnd, SCM make_expnd, SCM free_expnd)
 {
   #define H_expand_funcs "(" S_expand_funcs ") -> list of the 3 expand funcs (expand make-expand free-expand)"
   #define H_set_expand_funcs "(" S_set_expand_funcs " expand make-expand free-expand) sets the current expand functions"
-  if (gh_procedure_p(g_expand)) scm_unprotect_object(g_expand);
-  if (gh_procedure_p(g_make_expand)) scm_unprotect_object(g_make_expand);
-  if (gh_procedure_p(g_free_expand)) scm_unprotect_object(g_free_expand);
+  if (gh_procedure_p(g_expand)) snd_unprotect(g_expand);
+  if (gh_procedure_p(g_make_expand)) snd_unprotect(g_make_expand);
+  if (gh_procedure_p(g_free_expand)) snd_unprotect(g_free_expand);
   if ((procedure_ok(expnd,3,0,S_set_expand_funcs,"expand",1)) &&
       (procedure_ok(make_expnd,3,0,S_set_expand_funcs,"make-expand",2)) &&
       (procedure_ok(free_expnd,1,0,S_set_expand_funcs,"free-expand",3)))
@@ -109,9 +109,9 @@ static SCM g_set_expand_funcs(SCM expnd, SCM make_expnd, SCM free_expnd)
       g_expand = expnd;
       g_make_expand = make_expnd;
       g_free_expand = free_expnd;
-      scm_protect_object(g_expand);
-      scm_protect_object(g_make_expand);
-      scm_protect_object(g_free_expand);
+      snd_protect(g_expand);
+      snd_protect(g_make_expand);
+      snd_protect(g_free_expand);
       use_g_expand = 1;
     }
   else use_g_expand = 0;
@@ -1110,6 +1110,17 @@ void start_playing_syncd(snd_info *sp, int start, int background)
       if (lsp) start_playing_1((void *)lsp,start,background,FALSE); /* this triggers the dac */
     }
   else start_playing_1((void *)sp,start,background,FALSE);
+}
+
+void start_playing_chan_syncd(chan_info *cp, int start, int background, int pause)
+{
+  snd_info *sp;
+  int old_syncing;
+  sp = cp->sound;
+  old_syncing = sp->syncing;
+  sp->syncing = 0;
+  start_playing_1((void *)cp,start,background,pause);
+  sp->syncing = old_syncing;
 }
 
 static int choose_dac_op (dac_info *dp, snd_info *sp)

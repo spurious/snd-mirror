@@ -61,6 +61,7 @@ Contents
                   + Scanning Data
                        + Sample-readers
                        + Vcts
+                       + Marks
                   + Writing Sound Files
                   + Sndlib
              + Examples
@@ -80,6 +81,7 @@ Contents
              + Snd and gmeteor
              + Snd and LADSPA
              + Driving Snd remotely
+             + Snd and OpenGL
         o Customization Index
    * Topical Index
 
@@ -637,10 +639,14 @@ the top. Click on the triangle at the bottom to play (or stop playing) from
 the mark; drag the triangle to play following the mouse.
 
 A mark can be named or unnamed -- the name is displayed above the horizontal
-tab at the top of the window. The following keyboard commands relate to
-marks:
+tab at the top of the window. As with sounds and mixes, marks can be grouped
+together through the "sync" field; marks sharing the same sync value (other
+than 0) will move together when one is moved, and so on. See the marks
+chapter for a further discussion of synced marks. The following keyboard
+commands relate to marks:
 
   C-m       place (or remove if argument negative) mark at cursor
+  C-M       place syncd marks at all currently syncd chan cursors
   C-x /     place named mark at cursor
   C-x C-m   add named mark
 
@@ -945,23 +951,26 @@ Revert is the same as undoing all edits.
 Play
 
 To play a sound, click the 'play' button. If the sound has more channels
-than your DAC(s), Snd will try to mix the extra channels into the available
-DAC outputs. While it is playing, you can click the button again to stop it,
-or click some other file's 'play' button to mix it into the current set of
-sounds being played. To play from a particular point, set a mark there, then
-click its 'play triangle' (the triangular portion below the x axis). To
-'rock the reels', that is to play while dragging the mouse back and forth,
-drag the mark's play triangle. The Edit menu 'Play' option plays the current
-selection, if any. The Popup menu's 'Play' option plays the currently
-selected sound. And the region and file browsers provide play buttons for
-each of the listed regions or files. If you hold down the control key when
-you click 'play', the cursor follows along as the sound is played. If
-'verbose cursor' is on, the time is also displayed in the minibuffer. If you
-stop the play in progress, the cursor remains where you stopped it, but
-otherwise returns to its original position. Type space (without control) to
-pause and continue during playback. The color of the play button corresponds
-to the state of the playback: normal: not playing, blue: playing, green:
-playing and tracking with the cursor (if any), red: playback paused.
+than your DAC(s), Snd will (normally) try to mix the extra channels into the
+available DAC outputs. While it is playing, you can click the button again
+to stop it, or click some other file's 'play' button to mix it into the
+current set of sounds being played. To play from a particular point, set a
+mark there, then click its 'play triangle' (the triangular portion below the
+x axis). To play simultaneously from an arbitrary group of start points
+(possibly spread among many sounds), set syncd marks at the start points,
+then click the play triangle of one of them. To 'rock the reels', that is to
+play while dragging the mouse back and forth, drag the mark's play triangle.
+The Edit menu 'Play' option plays the current selection, if any. The Popup
+menu's 'Play' option plays the currently selected sound. And the region and
+file browsers provide play buttons for each of the listed regions or files.
+If you hold down the control key when you click 'play', the cursor follows
+along as the sound is played. If 'verbose cursor' is on, the time is also
+displayed in the minibuffer. If you stop the play in progress, the cursor
+remains where you stopped it, but otherwise returns to its original
+position. Type space (without control) to pause and continue during
+playback. The color of the play button corresponds to the state of the
+playback: normal: not playing, blue: playing, green: playing and tracking
+with the cursor (if any), red: playback paused.
 
 In Linux, the soundcard input lines are sometimes left active by default,
 causing an amazing amount of hum and whatnot. To try to turn these off, call

@@ -4887,6 +4887,18 @@ static void eval_expression(chan_info *cp, snd_info *sp, int count, int regexpr)
 #endif
 }
 
+static int prompt_named_mark(chan_info *cp) 
+{
+  snd_info *sp = cp->sound;
+  clear_minibuffer(sp);
+  make_minibuffer_label(sp,STR_mark_p);
+  sp->minibuffer_on = 1;
+  goto_minibuffer(sp);
+  sp->marking = cp->cursor+1; /* +1 so it's not confused with 0 (if (sp->marking)...) */
+  return(CURSOR_IN_VIEW);
+}
+
+
 
 /* -------- Keyboard Macros -------- */
 /* optimized for the most common case (pure keyboard commands) */
@@ -5153,7 +5165,7 @@ void set_keymap_entry(int key, int state, char *val, int ignore)
 	  (procedure_ok(func,0,0,S_bind_key,"func",3)))
 	{
 	  user_keymap[keymap_top].func = func;
-	  scm_protect_object(func);
+	  snd_protect(func);
 	}
       else user_keymap[keymap_top].func = SCM_UNDEFINED;
 #endif
@@ -5165,12 +5177,12 @@ void set_keymap_entry(int key, int state, char *val, int ignore)
       if (user_keymap[i].code) FREE(user_keymap[i].code);
       user_keymap[i].code = copy_string(val);
 #else
-      if ((user_keymap[i].func) && (gh_procedure_p(user_keymap[i].func))) scm_unprotect_object(user_keymap[i].func);
+      if ((user_keymap[i].func) && (gh_procedure_p(user_keymap[i].func))) snd_unprotect(user_keymap[i].func);
       if ((func != SCM_UNDEFINED) &&
 	  (procedure_ok(func,0,0,S_bind_key,"func",3)))
 	{
 	  user_keymap[i].func = func;
-	  scm_protect_object(func);
+	  snd_protect(func);
 	}
       else user_keymap[i].func = SCM_UNDEFINED;
 #endif
@@ -5252,13 +5264,13 @@ void snd_minibuffer_activate(snd_info *sp, int keysym)
 	       */
 	      if (sp->search_expr) free(sp->search_expr);
 	      sp->search_expr = str;
-	      if ((sp->search_proc) && (gh_procedure_p(sp->search_proc))) scm_unprotect_object(sp->search_proc);
+	      if ((sp->search_proc) && (gh_procedure_p(sp->search_proc))) snd_unprotect(sp->search_proc);
 	      sp->search_proc = SCM_UNDEFINED;
 	      proc = parse_proc(str);
 	      if (procedure_ok(proc,1,0,"find","find procedure",1))
 		{
 		  sp->search_proc = proc;
-		  scm_protect_object(proc);
+		  snd_protect(proc);
 		}
 	    }
 	}
@@ -5428,10 +5440,10 @@ void snd_minibuffer_activate(snd_info *sp, int keysym)
       if (sp->prompting)
 	{
 	  proc = parse_proc(str);
-	  scm_protect_object(proc);
+	  snd_protect(proc);
 	  if ((sp->prompt_callback) && (gh_procedure_p(sp->prompt_callback)))
 	    g_call2(sp->prompt_callback,proc,gh_int2scm(sp->index));
-	  scm_unprotect_object(proc);
+	  snd_unprotect(proc);
 	  if (str) free(str);
 	  sp->prompting = 0;
 	  return;
@@ -5447,13 +5459,13 @@ void snd_minibuffer_activate(snd_info *sp, int keysym)
 	  sp->eval_expr = str;
 	  if (sp->evaling)
 	    {
-	      if ((sp->eval_proc) && (gh_procedure_p(sp->eval_proc))) scm_unprotect_object(sp->eval_proc);
+	      if ((sp->eval_proc) && (gh_procedure_p(sp->eval_proc))) snd_unprotect(sp->eval_proc);
 	      sp->eval_proc = SCM_UNDEFINED;
 	      proc = parse_proc(str);
 	      if (procedure_ok(proc,1,0,"eval","eval procedure",1))
 		{
 		  sp->eval_proc = proc;
-		  scm_protect_object(proc);
+		  snd_protect(proc);
 		  eval_expression(active_chan,sp,sp->evaling,sp->reging);
 		  clear_minibuffer_prompt(sp);
 		  sp->evaling = 0;
@@ -5539,12 +5551,13 @@ int keyboard_command (chan_info *cp, int keysym, int state)
   static int extended_mode = 0;
   static int count = 1;
   static int m = 0;
-  int redisplay,searching,cursor_searching,explicit_count,old_cursor_loc,hashloc,loc;
+  int redisplay,searching,cursor_searching,explicit_count,old_cursor_loc,hashloc,loc,sync_num,i;
   static int ext_explicit_count; /* these are needed for region counts which are 0-based, unlike everything else */
   static int ext_count;
   snd_info *sp;
   axis_info *ap;
   snd_state *ss;
+  sync_info *si;
   mark *mk;
   /* fprintf(stderr,"kbd: %d %d %d ",keysym,state,extended_mode); */
   if (!cp) return(KEYBOARD_NO_ACTION);
@@ -5638,6 +5651,29 @@ int keyboard_command (chan_info *cp, int keysym, int state)
 		  if (mk) draw_mark(cp,cp->axis,mk);
 		}
 	      else delete_mark_samp(cp->cursor,cp);
+	      if ((keysym == snd_K_M) && ((cp->sound)->syncing != 0))
+		{
+		  sync_num = mark_sync_max() + 1; 
+		  if (mk) set_mark_sync(mk,sync_num);
+		  si = snd_sync(cp->state,(cp->sound)->syncing);
+		  for (i=0;i<si->chans;i++) 
+		    {
+		      if (cp != si->cps[i])
+			{
+			  if (count > 0)
+			    {
+			      mk = add_mark(cp->cursor,NULL,si->cps[i]);
+			      if (mk)
+				{
+				  set_mark_sync(mk,sync_num);
+				  draw_mark(si->cps[i],(si->cps[i])->axis,mk);
+				}
+			    }
+			  else delete_mark_samp(cp->cursor,si->cps[i]);
+			}
+		    }
+		  free_sync_info(si);
+		}
 	      break;
 	    case snd_K_N: case snd_K_n: cp->cursor_on = 1; redisplay = cursor_move(cp,count*line_size(ss)); break;
 	    case snd_K_O: case snd_K_o: cp->cursor_on = 1; cks(); redisplay = cursor_insert(cp,count); break;
@@ -5759,7 +5795,7 @@ int keyboard_command (chan_info *cp, int keysym, int state)
 	    case snd_K_L: case snd_K_l: redisplay = prompt(sp,STR_load_p,NULL); sp->loading = 1; searching = 1; break;
 	    case snd_K_M: case snd_K_m:
 	      cp->cursor_on = 1; 
-	      redisplay = add_named_mark(cp); 
+	      redisplay = prompt_named_mark(cp);
 	      set_show_marks(ss,1); 
 	      searching = 1; 
 	      break;
@@ -6046,7 +6082,7 @@ int keyboard_command (chan_info *cp, int keysym, int state)
 	      break;
 	    case snd_K_slash: 
 	      cp->cursor_on = 1;
-	      redisplay = add_named_mark(cp); 
+	      redisplay = prompt_named_mark(cp); 
 	      set_show_marks(ss,1); 
 	      searching = 1; 
 	      break;
@@ -6447,7 +6483,9 @@ void graph_button_release_callback(chan_info *cp, int x, int y, int key_state, i
 	    }
 	  if (play_mark != old_mark)
 	    {
-	      start_playing(cp,play_mark->samp);
+	      if (play_mark->sync)
+		play_syncd_mark(cp,play_mark);
+	      else start_playing(cp,play_mark->samp);
 	      sp->playing_mark = play_mark;
 	      set_play_button(sp,1);
 	    }
@@ -6520,7 +6558,7 @@ void graph_button_release_callback(chan_info *cp, int x, int y, int key_state, i
       /* lisp graph dragged? */
       if (mouse_mark)
 	{
-	  finish_moving_mark(cp,mouse_mark);
+	  finish_moving_mark(cp);
 	  mouse_mark = NULL;
 	  dragged = 0;
 	}

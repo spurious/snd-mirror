@@ -17,6 +17,7 @@ Snd Customization and Extension
              + Scanning Data
                   + Sample-readers
                   + Vcts
+             + Marks
              + Writing Sound Files
              + Sndlib
         o Examples
@@ -536,7 +537,7 @@ Snd is currently in flux.
   cut               ()            cut the current selection (a no-op if no active selection).
   data-format       (snd)         snd's data format (a list of the format number and its name).
   data-location     (snd)         snd's data location (bytes).
-  delete-mark       (id snd chn)  delete mark id in snd's channel chn (- C-m).
+  delete-mark       (id)          delete mark id (- C-m).
   delete-marks      (snd chn)     delete all marks in snd's channel chn
   delete-region     (reg)         delete region number reg (which defaults to 0).  This removes the
                                   region from the region stack; it doesn't edit the corresponding file(s).
@@ -548,7 +549,7 @@ Snd is currently in flux.
                                   (given the current edit tree), and the number of samples affected.
   edit-header-dialog()            fire up Edit Header dialog.
   edit-position     (snd chn)     return a current position in edit history list.
-  edits             (snd chn)     return a vector with number of undo-able edits and redo-able edits.
+  edits             (snd chn)     return a list with number of undo-able edits and redo-able edits.
   env-sound         (envelope samp samps env-base snd chn)
                                   apply (in amplitude) envelope to snd's channel chn starting
                                   at sample samp for samps samples with connecting segments
@@ -694,9 +695,12 @@ Snd is currently in flux.
                                   (see Scanning Data).
   map-chans         (func start end edname) apply func to currently syncd channels
   map-sound-chans   (func start end edname snd) apply func to current sound's channels
-  mark-name         (id snd chn) name of mark id.
-  mark-sample       (id snd chn) position of mark id.
-  marks             (snd chn)     number of marks in snd's channel chn.
+  mark-name         (id)          name of mark id.
+  mark-sample       (id pos)      position of mark id at edit history position pos.
+  mark->sound       (id)          sound and channel that hold mark id.
+  mark-sync         (id)          mark id's sync value.
+  mark-sync-max     ()            max mark sync value seen so far.
+  marks             (snd chn pos) list of mark ids in snd's channel chn at edit history position pos.
   max-sounds        ()            current size of sound array (grows as required, may contain holes).
   maxamp            (snd chn)     max amp of snd's channel chn.
   mix               (file samp in_chan snd chn with-mix-consoles)
@@ -949,8 +953,9 @@ Snd is currently in flux.
                                  graphics data (see graph-hook and graph).
   set-just-sounds   (just-sounds)       set just-sounds button in file browser (default #t).
   set-left-sample   (samp snd chn)      set snd's chn's left sample (the window bound) to samp.
-  set-mark-name     (id name snd chn) set mark id's name to name (in snd's channel chn).
-  set-mark-sample   (id sample snd chn) set mark id's position to sample (in snd's channel chn).
+  set-mark-name     (id name)           set mark id's name to name (in snd's channel chn).
+  set-mark-sample   (id sample)         set mark id's position to sample (in snd's channel chn).
+  set-mark-sync     (id sync)           set mark id's sync value (in snd's channel chn).
   set-menu-sensitive(top-menu label sensitive)
   set-mix-amp       (mix chan amp)      set mix channel chan's amplitude to amp.
   set-mix-amp-env   (mix chan env)      set mix channel chan's amplitude envelope to env.
@@ -1076,6 +1081,7 @@ Snd is currently in flux.
   src-selection     (num-or-env base) same as src but applied to current selection.
   start-progress-report (snd)     see progress-report.
   stop-playing      (snd)         if snd is playing, stop.
+  syncd-marks       (sync)        list of marks (ids) that share sync.
   syncing           (snd)         snd's 'sync' value (an integer, 0=off)
   temp-filenames    (data)        return vector of temp file names (see external programs).
   temp-to-selection (data name origin) read selected data from temp file (see external programs).
@@ -1346,7 +1352,7 @@ evaluated; if any of them returns #t, Snd does not exit.
   (lambda (ind)
     (and (< ind (max-sounds))
          (or (and (ok? ind)
-                  (> (vector-ref (edits ind) 0) 0)
+                  (> (car (edits ind)) 0)
                   (report-in-minibuffer "there are unsaved edits")
                   #t)
              (unsaved-edits? (+ ind 1))))))
@@ -1760,6 +1766,65 @@ rewrite the cnvtest function to take stereo sounds:
 
   ------------------------------------------------------------------------
 
+Marks
+
+Each mark has an associated sample number (mark-sample), name (mark-name),
+sync value (mark-sync), and a globally unique id number (returned by
+find-mark or add-mark, for example). The sync value is very similar to the
+mix track number or the sound syncing field; it provides a way to group
+marks for simultaneous changes. Marks that share the same sync value (if not
+0), move together when any one of them is dragged, play together, etc.
+mark->sound provides a way to go from a mark id to the sound and channel
+that hold that mark; the inverse function is marks. To find which marks
+share a given sync value, use syncd-marks; to find an unused sync value use
+mark-sync-max.
+
+
+(define (move-syncd-marks sync diff)
+  (map (lambda (m)
+         (set-mark-sample m (+ (mark-sample m) diff)))
+       (syncd-marks sync)))
+
+marks without any argument, or with just a sound index returns a list of
+lists; each inner list is the list of current marks (ids) active in that
+channel, ordered by sample number. If the channel argument is specified,
+marks returns just the list of mark ids. If the edit history position is
+given, the list of ids reflects the mark list at that time in the edit
+history. So, for example, the following procedure returns a list describing
+the history of a mark over the course of editing a channel, each list entry
+being the mark sample at that time or #f if the mark was not active:
+
+(define (describe-mark id)
+  (let ((mark-home (mark->sound id)))
+    (if (eq? mark-home 'no-such-mark)
+        ;; not an active mark, so go scrounging for it
+        ;;   we're looking at every edit of every channel
+        (do ((i 0 (1+ i)))
+            ((or (= i (max-sounds)) (list? mark-home)))
+          (if (ok? i)
+              (do ((j 0 (1+ j)))
+                  ((or (= j (channels i)) (list? mark-home)))
+                (let* ((max-edits (apply + (edits i j))))
+                  (do ((k 0 (1+ k)))
+                      ((or (> k max-edits) (list? mark-home)))
+                    (if (member id (marks i j k))
+                        (set! mark-home (list i j)))))))))
+    (if (list? mark-home)
+        (let* ((snd (car mark-home))
+               (chn (cadr mark-home))
+               (max-edits (apply + (edits snd chn)))
+               (descr '())
+               (header (list 'mark id 'sound snd (short-file-name snd) 'channel chn)))
+          (do ((i max-edits (1- i)))
+              ((< i 0) descr)
+            (if (member id (marks snd chn i))
+                (set! descr (cons (mark-sample id i) descr))
+                (set! descr (cons #f descr))))
+          (cons header descr))
+        'cant-find-mark)))
+
+  ------------------------------------------------------------------------
+
 Writing Sound Files
 
 As with the mapping functions, it is sometimes inconvenient to handle the
@@ -1867,7 +1932,7 @@ to refuse to exit if there are unsaved edits.
   (lambda (ind)
     (and (< ind (max-sounds))
          (or (and (ok? ind)
-                  (> (vector-ref (edits ind) 0) 0)
+                  (> (car (edits ind)) 0)
                   (report-in-minibuffer "there are unsaved edits")
                   #t)
              (unsaved-edits? (+ ind 1))))))

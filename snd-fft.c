@@ -83,7 +83,7 @@ static added_transform *new_added_transform(void)
 int add_transform(char *name, char *xlabel, Float lo, Float hi, SCM proc)
 {
   added_transform *af;
-  scm_protect_object(proc);
+  snd_protect(proc);
   af = new_added_transform();
   af->name = copy_string(name);
   af->xlabel = copy_string(xlabel);
@@ -1328,7 +1328,7 @@ static int apply_fft_window(fft_state *fs)
 	int len,i;
 	sfd = g_c_make_sample_reader(sf);
 	res = gh_call2(added_transform_proc(transform_type(ss)),gh_int2scm(data_len),sfd);
-	scm_protect_object(res);
+	snd_protect(res);
 	if (vct_p(res))
 	  {
 	    v = get_vct(res);
@@ -1336,7 +1336,7 @@ static int apply_fft_window(fft_state *fs)
 	    for (i=0;i<len;i++) fft_data[i] = v->data[i];
 	  }
 	GH_SET_VALUE_OF(sfd,(SCM)NULL); /* don't let guile's gc mess with it */
-	scm_unprotect_object(res);
+	snd_unprotect(res);
       }
       break;
 #endif      

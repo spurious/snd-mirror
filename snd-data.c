@@ -49,9 +49,9 @@ chan_info *make_chan_info(chan_info *cip, int chan, snd_info *sound, snd_state *
 #if HAVE_GUILE
 #if (!HAVE_GUILE_1_3_0)
       cp->edit_hook = scm_make_hook(SCM_MAKINUM(0));
-      scm_protect_object(cp->edit_hook);
+      snd_protect(cp->edit_hook);
       cp->undo_hook = scm_make_hook(SCM_MAKINUM(0));
-      scm_protect_object(cp->undo_hook);
+      snd_protect(cp->undo_hook);
 #endif
 #endif
     }
@@ -300,11 +300,11 @@ snd_info *free_snd_info(snd_info *sp)
   if (sp->search_expr) {free(sp->search_expr); sp->search_expr = NULL;}
   if (sp->eval_expr) {free(sp->eval_expr); sp->eval_expr = NULL;}
 #if HAVE_GUILE
-  if ((sp->search_proc) && (gh_procedure_p(sp->search_proc))) scm_unprotect_object(sp->search_proc);
+  if ((sp->search_proc) && (gh_procedure_p(sp->search_proc))) snd_unprotect(sp->search_proc);
   sp->search_proc = SCM_UNDEFINED;
-  if ((sp->eval_proc) && (gh_procedure_p(sp->eval_proc))) scm_unprotect_object(sp->eval_proc);
+  if ((sp->eval_proc) && (gh_procedure_p(sp->eval_proc))) snd_unprotect(sp->eval_proc);
   sp->eval_proc = SCM_UNDEFINED;
-  if ((sp->prompt_callback) && (gh_procedure_p(sp->prompt_callback))) scm_unprotect_object(sp->prompt_callback);
+  if ((sp->prompt_callback) && (gh_procedure_p(sp->prompt_callback))) snd_unprotect(sp->prompt_callback);
   sp->prompt_callback = SCM_UNDEFINED;
 #endif
   sp->selected_channel = NO_SELECTION;

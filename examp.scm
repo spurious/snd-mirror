@@ -115,7 +115,7 @@
 		(if (>= chan (channels ind))
 		    #f
 		    (let ((eds (edits ind chan)))
-		      (if (> (vector-ref eds 0) 0)
+		      (if (> (car eds) 0)
 			  (not (yes-or-no-p ;that is, "yes" => exit
 				(format #f "~A has ~D unsaved edit~P in channel ~D, exit anyway? " 
 					(short-file-name ind) 
@@ -449,7 +449,7 @@
 		    (set! beg (min pos1 pos2))
 		    (set! end (max pos1 pos2))))))))))
 
-;;; m1 and m2 are mark numbers
+;;; m1 and m2 are mark (id) numbers
 ;;; (loopit 0 1 512)
 
 
@@ -573,7 +573,7 @@
 		  (chans (channels i)))
 	      (do ((chn 0 (1+ chn)))
 		  ((= chn chans))
-		(let ((eds (vector-ref (edits i chn) 0)))
+		(let ((eds (car (edits i chn))))
 		  (if (> eds max-edits) (set! max-edits eds))))
 	      (if (> max-edits 10)
 		  (begin
@@ -595,25 +595,23 @@
     (let* ((keysnd (or (selected-sound) 0))
 	   (keychn (or (selected-channel keysnd) 0))
 	   (current-left-sample (left-sample keysnd keychn))
-	   (num-marks (marks keysnd keychn)))
-      (if (= num-marks 0)
+	   (chan-marks (marks keysnd keychn)))
+      (define (find-leftmost-mark samples)
+	(if (null? samples)
+	    #f
+	    (if (> (car samples) current-left-sample)
+		(car samples)
+		(find-leftmost-mark (cdr samples)))))
+      (if (= (length chan-marks) 0)
 	  (report-in-minibuffer "no marks!")
-	(if (= num-marks 1)
-	    (begin
-	      (set-left-sample (mark-sample 0) keysnd keychn)
-	      cursor-update-display)
-          (do ((i 0 (1+ i)))
-	      ((or (= i num-marks) 
-		   (<= current-left-sample (mark-sample i)))
-	       (if (or (= i num-marks) 
-		       (> (mark-sample i) (right-sample keysnd keychn)))
-		   (report-in-minibuffer "no mark in window")
-		 (begin
-		   (set-left-sample (mark-sample i) keysnd keychn)
-		   cursor-update-display)))))))))
+	  (let ((leftmost (find-leftmost-mark (map mark-sample chan-marks))))
+	    (if (number? leftmost)
+		(begin
+		  (set-left-sample leftmost keysnd keychn)
+		  cursor-update-display)
+		(report-in-minibuffer "no mark in window")))))))
 
 (bind-key (char->integer #\m) 0 (lambda () (first-mark-in-window-at-left)))
-
 
 
 ;;; -------- flash selected data red and green
@@ -715,22 +713,33 @@
 
 ;;; the same idea can be used to apply a function between two marks:
 
-(bind-key (char->integer #\m) 0 
-	  (lambda ()
-	    (if (> (marks) 1)
-		(prompt-in-minibuffer "mark eval:" eval-between-marks)
-		(report-in-minibuffer "no marks"))))
-
 (define eval-between-marks
   (lambda (func snd)
+    (define (find-if pred l) ; this is from guile/ice-9/common-list.scm but returns l not car l
+      (cond ((null? l) #f)
+	    ((pred (car l)) l)
+	    (else (find-if pred (cdr l)))))
     (if (procedure? func)
-	(let* ((beg (mark-sample 0))
-	       (len (- (mark-sample 1) beg))
-	       (new-data (make-vct len))
-	       (old-data (samples->vct beg len snd)))
-	  (do ((k 0 (1+ k)))
-	      ((= k len) (set-samples beg len new-data snd))
-	    (vct-set! new-data k (func (vct-ref old-data k))))))))
+	;; find leftmost two marks in selected chn of snd
+	(let ((chan (selected-channel snd)))
+	  (if (< chan 0) (set! chan 0)) ;perhaps not current sound, so no selected channel in it
+	  (let ((mlist (marks snd chan)))
+	    (if (< (length mlist) 2)
+		(report-in-minibuffer "need 2 marks")
+		(let* ((left-samp (left-sample snd chan))
+		       (winl (find-if (lambda (n) (> (mark-sample n) left-samp)) mlist)))
+		  (if (and winl (> (length winl) 1))
+		      (let* ((beg (mark-sample (car winl)))
+			     (len (- (mark-sample (cadr winl)) beg))
+			     (new-data (make-vct len))
+			     (old-data (samples->vct beg len snd chan)))
+			(do ((k 0 (1+ k)))
+			    ((= k len) (set-samples beg len new-data snd chan))
+			  (vct-set! new-data k (func (vct-ref old-data k)))))))))))))
+
+(bind-key (char->integer #\m) 0 
+	  (lambda ()
+	    (prompt-in-minibuffer "mark eval:" eval-between-marks)))
 
 
 

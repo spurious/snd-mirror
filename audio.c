@@ -2911,12 +2911,9 @@ static void oss_mus_audio_mixer_restore(const char *file)
 
 static int api = ALSA_API;
 int mus_audio_api(void) {return(api);}
-/* I'd rather not have any extern variables */
 
 /* hopefully first call to sndlib will be this... */
 static int probe_api(void);
-/* static int (*vect_mus_audio_initialize)(void) = probe_api; */
-/* I don't think this fallback will work -- an infinite loop in probe_api */
 static int (*vect_mus_audio_initialize)(void);
 
 /* FIXME: add a suitable default for all other vectors

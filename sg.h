@@ -14,12 +14,13 @@
   #define GH_SET_VALUE_OF(a,b) SCM_SETCDR(a,b)
 #endif
 
+#ifndef SCM_EQ_P
+  #define SCM_EQ_P(a,b) ((a) == (b))
+  /* SCM_UNPACK used here in later Guile's */
+#endif
+
 #ifndef SCM_TRUE_P
-  #ifdef SCM_EQ_P
-    #define SCM_TRUE_P(a) SCM_EQ_P(a,SCM_BOOL_T)
-  #else
-    #define SCM_TRUE_P(a) ((a) == SCM_BOOL_T)
-  #endif
+  #define SCM_TRUE_P(a) SCM_EQ_P(a,SCM_BOOL_T)
 #endif
 
 #ifdef __cplusplus

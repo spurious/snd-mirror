@@ -104,7 +104,7 @@ typedef struct {
 typedef struct {
   int samp;
   char *name;
-  unsigned int id;
+  unsigned int id,sync;
 } mark;
 
 typedef struct {
@@ -623,16 +623,22 @@ void print_enved(char *output, chan_info *cp, int y0);
 /* -------- snd-marks.c -------- */
 
 int mark_id(mark *m);
-mark *find_mark_id(chan_info *cp, int id);
+int mark_sync(mark *m);
+int *channel_marks(chan_info *cp, int pos);
+int mark_sync_max(void);
+int set_mark_sync(mark *m, int val);
+mark *find_mark_id(chan_info **cp, int id, int pos);
 void marks_off(chan_info *cp);
 void draw_mark(chan_info *cp, axis_info *ap, mark *mp);
 mark *hit_mark(chan_info *cp, int x, int y);
 mark *hit_triangle(chan_info *cp, int x, int y);
 void move_mark_2(chan_info *cp);
 void move_mark(chan_info *cp, mark *mp, int x, int y);
+void play_syncd_mark(chan_info *cp, mark *mp);
+int *syncd_marks(snd_state *ss, int sync);
 int move_play_mark(chan_info *cp, int *mc, int cx);
 void finish_moving_play_mark(chan_info *cp);
-void finish_moving_mark(chan_info *cp, mark *mp);
+void finish_moving_mark(chan_info *cp);
 mark *add_mark(int samp, char *name, chan_info *cp);
 void delete_mark_samp(int samp, chan_info *cp);
 void delete_mark_id(int id, chan_info *cp);
@@ -644,7 +650,6 @@ int goto_named_mark(chan_info *cp, char *name);
 mark *active_mark(chan_info *cp);
 int mark_beg(chan_info *cp);
 void display_channel_marks (chan_info *cp);
-int add_named_mark(chan_info *cp);
 void release_pending_marks(chan_info *cp, int edit_ctr);
 void ripple_marks(chan_info *cp, int beg, int change);
 void mark_define_region(chan_info *cp,int count);
@@ -800,6 +805,8 @@ char *added_transform_name(int type);
     int multifile_channel(char *filename);
     char *multifile_save(int snd, int chn);
   #endif
+  void snd_protect(SCM obj);
+  void snd_unprotect(SCM obj);
 #endif
 env *string2env(char *str);
 /* Float string2Float(char *str); */
@@ -956,6 +963,7 @@ BACKGROUND_TYPE feed_dac(dac_manager *tm);
 void start_playing(void *ptr, int start);
 void play_to_end(void *ptr, int start);
 void start_playing_syncd(snd_info *sp, int start, int background);
+void start_playing_chan_syncd(chan_info *cp, int start, int background, int pause);
 void toggle_dac_pausing(snd_state *ss); /* snd-dac.c */
 int play_in_progress(void);
 int apply_duration(void);

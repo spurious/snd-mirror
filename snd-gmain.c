@@ -208,7 +208,6 @@ static jmp_buf envHandleEventsLoop;
 
 static RETSIGTYPE segv(int ignored)
 {
-  snd_error("Caught seg fault. trying to continue...");
   siglongjmp(envHandleEventsLoop,1);
 }
 #endif
@@ -719,7 +718,8 @@ void snd_doit(snd_state *ss,int argc, char **argv)
   gtk_idle_add(startup_funcs,(gpointer)tm);
 
 #if TRAP_SEGFAULT
-  sigsetjmp(envHandleEventsLoop,1);
+  if (sigsetjmp(envHandleEventsLoop,1))
+    snd_error("Caught seg fault. trying to continue...");
 #endif
 
 #ifndef SND_AS_WIDGET

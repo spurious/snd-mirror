@@ -281,13 +281,13 @@ int snd_find_1(chan_info *cp, char *c_expr, int start, int count_matches)
 	  sp->searching = 1;
  	  if (sp->search_expr) free(sp->search_expr);
  	  sp->search_expr = c_expr;
-	  if ((sp->search_proc) && (gh_procedure_p(sp->search_proc))) scm_unprotect_object(sp->search_proc);
+	  if ((sp->search_proc) && (gh_procedure_p(sp->search_proc))) snd_unprotect(sp->search_proc);
 	  sp->search_proc = SCM_UNDEFINED;
 	  proc = parse_proc(c_expr);
 	  if (procedure_ok(proc,1,0,"find","find procedure",1))
 	    {
 	      sp->search_proc = proc;
-	      scm_protect_object(proc);
+	      snd_protect(proc);
 	    }
 	  if (gh_procedure_p(sp->search_proc))
 	    {

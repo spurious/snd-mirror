@@ -180,6 +180,9 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
+19-Jun:  changes to GC handling for new guile.\n\
+         added sync field to marks, and changed much of the Guile interface to marks.\n\
+         edits function now returns a list, not a vector.\n\
 15-Jun:  changed edit|undo-hook procedure to take no args.\n\
 13-Jun:  added snd-error, snd-warning.\n\
          added cursor-style (default cursor-cross, also cursor-line).\n\
@@ -1103,9 +1106,12 @@ all refer to the same thing.\n\
   " S_make_region_sample_reader "(start snd chn dir)\n\
   " S_make_sample_reader "(start snd chn dir)\n\
   " S_make_vct "          (len)\n\
-  " S_mark_name "         (mark snd chn)\n\
-  " S_mark_sample "       (mark snd chn)\n\
-  " S_marks "             (snd chn)\n\
+  " S_mark_name "         (mark)\n\
+  " S_mark_sample "       (mark)\n\
+  " S_mark_to_sound "     (mark)\n\
+  " S_mark_sync "         (mark)\n\
+  " S_mark_sync_max "     ()\n\
+  " S_marks "             (snd chn pos)\n\
   " S_max_sounds "        ()\n\
   " S_maxamp "            (snd chn)\n\
   " S_mix "               (file samp in_chan snd chn)\n\
@@ -1222,8 +1228,9 @@ all refer to the same thing.\n\
   " S_set_graphing "      (on snd chn)\n\
   " S_set_just_sounds "   (just-sounds)\n\
   " S_set_left_sample "   (samp snd chn)\n\
-  " S_set_mark_name "     (mark name snd chn)\n\
-  " S_set_mark_sample "   (mark sample snd chn)\n\
+  " S_set_mark_name "     (mark name)\n\
+  " S_set_mark_sample "   (mark sample)\n\
+  " S_set_mark_sync "     (mark sync)\n\
   " S_set_menu_sensitive "(top-menu label on)\n\
   " S_set_mix_amp "       (mix chan amp)\n\
   " S_set_mix_amp_env "   (mix chan env)\n\
@@ -1274,6 +1281,7 @@ all refer to the same thing.\n\
   " S_src_selection "     (num-or-env base)\n\
   " S_src_sound "         (num-or-env base)\n\
   " S_stop_playing "      (snd)\n\
+  " S_syncd_marks "       (sync)\n\
   " S_syncing "           (snd)\n\
   " S_temp_filenames "    (data)\n\
   " S_temp_to_selection " ()\n\

@@ -117,6 +117,7 @@ href="ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-4.tar.gz">snd-4.tar.gz</a>.</p>
         <ul>
         <li><a href="extsnd.html#samplereaders">Sample-readers</a>
         <li><a href="extsnd.html#Vcts">Vcts</a>
+        <li><a href="extsnd.html#marks">Marks</a>
         </ul>
       <li><a href="extsnd.html#writing">Writing Sound Files</a>
       <li><a href="extsnd.html#sndsndlib">Sndlib</a>
@@ -1035,10 +1036,16 @@ bottom to play (or stop playing) from the mark; drag the
 triangle to play following the mouse.</p>
 
 <p>A mark can be named or unnamed -- the name is displayed
-above the horizontal tab at the top of the window.  The
-following keyboard commands relate to marks:</p>
+above the horizontal tab at the top of the window. As with
+sounds and mixes, marks can be grouped together through
+the "sync" field; marks sharing the same sync value (other
+than 0) will move together when one is moved, and so on.
+See the <a href="extsnd.html#marks">marks</a> chapter 
+for a further discussion of synced marks.
+The following keyboard commands relate to marks:</p>
 <pre>
   <a name="cm">C-m</a>       place (or remove if argument negative) mark at cursor
+  C-M       place syncd marks at all currently syncd chan cursors
   C-x /     place named mark at cursor
   <a name="cxcm">C-x C-m</a>   add named mark
 
@@ -1422,14 +1429,18 @@ are these keyboard commands:</p>
 <h4><a name="play">Play</a></h4>
 
 <p>To play a sound, click the 'play' button.  If the sound has more
-channels than your DAC(s), Snd will try to mix the extra channels
+channels than your DAC(s), Snd will (normally) try to mix the extra channels
 into the available DAC outputs.
 While it is playing,
 you can click the button again to stop it, or click some other
 file's 'play' button to mix it into the current set of sounds
 being played. To play from a particular point, set a mark
 there, then click its 'play triangle' (the triangular portion
-below the x axis).  To 'rock the reels', that is to play
+below the x axis).  To play simultaneously from an arbitrary
+group of start points (possibly spread among many sounds),
+set syncd marks at the start points, then click the play
+triangle of one of them.
+To 'rock the reels', that is to play
 while dragging the mouse back and forth, drag the mark's
 play triangle.  The Edit menu 'Play' option plays the current
 selection, if any.  The Popup menu's 'Play' option plays the

@@ -14,6 +14,69 @@
  * snd-xgh.c has the Motif-specific stuff (color support, etc), snd-gscm has gtk version
  */
 
+
+/* scm_protect_object has been deliberately broken, so we have to write our own... */
+
+static SCM gc_protection;
+static int gc_protection_size = 0;
+#define DEFAULT_GC_VALUE SCM_MAKINUM(0)
+/* can't use SCM_UNDEFINED here because both "==" and SCM_EQ_P fail with it (grind teeth...) */
+
+void snd_protect(SCM obj)
+{
+  int i,old_size;
+  SCM tmp,num;
+  if (gc_protection_size == 0)
+    {
+      gc_protection_size = 128;
+      /* we don't know the size in advance since each channel can have its own edit/undo hooks */
+      gc_protection = scm_make_vector(SCM_MAKINUM(gc_protection_size),DEFAULT_GC_VALUE);
+      scm_permanent_object(gc_protection);
+      scm_vector_set_x(gc_protection,SCM_MAKINUM(0),obj);
+    }
+  else
+    {
+      for (i=0;i<gc_protection_size;i++)
+	{
+	  if (SCM_EQ_P(scm_vector_ref(gc_protection,SCM_MAKINUM(i)),DEFAULT_GC_VALUE))
+	    {
+	      scm_vector_set_x(gc_protection,SCM_MAKINUM(i),obj);
+	      return;
+	    }
+	}
+      tmp = gc_protection;
+      old_size = gc_protection_size;
+      gc_protection_size *= 2;
+      gc_protection = scm_make_vector(SCM_MAKINUM(gc_protection_size),DEFAULT_GC_VALUE);
+      scm_permanent_object(gc_protection);
+      for (i=0;i<old_size;i++)
+	{
+	  num = SCM_MAKINUM(i);
+	  scm_vector_set_x(gc_protection,num,scm_vector_ref(tmp,num));
+	  scm_vector_set_x(tmp,num,DEFAULT_GC_VALUE);
+	}
+      scm_vector_set_x(gc_protection,SCM_MAKINUM(old_size),obj);
+    }
+}
+
+void snd_unprotect(SCM obj)
+{
+  int i;
+  for (i=0;i<gc_protection_size;i++)
+    {
+      if (SCM_EQ_P(scm_vector_ref(gc_protection,SCM_MAKINUM(i)),obj))
+	{
+	  scm_vector_set_x(gc_protection,SCM_MAKINUM(i),DEFAULT_GC_VALUE);
+	  return;
+	}
+    }
+#if DEBUGGING
+  fprintf(stderr,"gc trouble");
+  abort();
+#endif
+}
+
+
 static int bool_or_arg_p(SCM a) {return((gh_number_p(a)) || (gh_boolean_p(a)) || (SCM_UNBNDP(a)));}
 
 static int g_scm2int(SCM obj)
@@ -157,7 +220,7 @@ int procedure_ok(SCM proc, int req_args, int opt_args, char *caller, char *arg_n
       return(1);
 #else
       arity_list = scm_i_procedure_arity(proc);
-      scm_protect_object(arity_list);
+      snd_protect(arity_list);
       args = gh_scm2int(gh_car(arity_list));
       if (args != req_args)
 	snd_error("%s, arg %d to %s, should take %d required argument%s, but instead takes %d",
@@ -173,7 +236,7 @@ int procedure_ok(SCM proc, int req_args, int opt_args, char *caller, char *arg_n
 	  /* ignore &rest */
 	  else res = 1;
 	}
-      scm_unprotect_object(arity_list);
+      snd_unprotect(arity_list);
 #endif
     }
   return(res);
@@ -3280,7 +3343,7 @@ static SCM g_set_reverb_lowpass(SCM on, SCM snd_n)
   return(sp_fwrite(snd_n,on,REVERBLOWPASSF));
 }
 
-enum {FFTF,WAVEF,LENGTHF,CURSORF,MARKSF,MAXAMPF,GRAPHINGF,LOSAMPF,HISAMPF,SQUELCH_UPDATE,AP_SX,AP_SY,AP_ZX,AP_ZY,EDITF,CURSOR_STYLE,EDIT_HOOK,UNDO_HOOK};
+enum {FFTF,WAVEF,LENGTHF,CURSORF,MAXAMPF,GRAPHINGF,LOSAMPF,HISAMPF,SQUELCH_UPDATE,AP_SX,AP_SY,AP_ZX,AP_ZY,EDITF,CURSOR_STYLE,EDIT_HOOK,UNDO_HOOK};
 
 static SCM cp_iread(SCM snd_n, SCM chn_n, int fld)
 {
@@ -3294,7 +3357,6 @@ static SCM cp_iread(SCM snd_n, SCM chn_n, int fld)
     case WAVEF: RTNBOOL(cp->waving); break;
     case CURSORF: RTNINT(cp->cursor); break;
     case LENGTHF: RTNINT(current_ed_samples(cp)); break;
-    case MARKSF: if (cp->marks) RTNINT(1+(cp->mark_ctr[cp->edit_ctr])); else RTNINT(0); break;
     case MAXAMPF: RTNFLT(get_maxamp(state,cp->sound,cp)); break;
     case GRAPHINGF: RTNBOOL(cp->lisp_graphing); break;
     case LOSAMPF: if (cp->axis) RTNINT((cp->axis)->losamp); break;
@@ -3424,13 +3486,6 @@ static SCM g_frames(SCM snd_n, SCM chn_n)
   return(cp_iread(snd_n,chn_n,LENGTHF));
 }
 
-static SCM g_marks(SCM snd_n, SCM chn_n) 
-{
-  #define H_marks "(" S_marks " &optional snd chn) -> number of marks in snd's channel chn"
-  ERRCP(S_marks,snd_n,chn_n,1); 
-  return(cp_iread(snd_n,chn_n,MARKSF));
-}
-
 static SCM g_maxamp(SCM snd_n, SCM chn_n) 
 {
   #define H_maxamp "(" S_maxamp " &optional snd chn) -> max amp of data in snd's channel chn"
@@ -3551,15 +3606,12 @@ static SCM g_edits(SCM snd_n, SCM chn_n)
   #define H_edits "(" S_edits " &optional snd chn) returns a vector of undoable and redoable edits in snd's channel chn"
   chan_info *cp;
   int i;
-  SCM vect = SCM_BOOL_F;
   ERRCP(S_edits,snd_n,chn_n,1);
   cp = get_cp(snd_n,chn_n);
   if (cp == NULL) return(NO_SUCH_CHANNEL);
-  vect = gh_make_vector(gh_int2scm(2),gh_int2scm(cp->edit_ctr));
   for (i=cp->edit_ctr+1;i<cp->edit_size;i++)
     if (!(cp->edits[i])) break;
-  gh_vector_set_x(vect,gh_int2scm(1),gh_int2scm(i-cp->edit_ctr-1));
-  return(vect);
+  return(SCM_LIST2(gh_int2scm(cp->edit_ctr),gh_int2scm(i-cp->edit_ctr-1)));
 }
 
 static SCM g_find(SCM expr, SCM sample, SCM snd_n, SCM chn_n)
@@ -3619,147 +3671,114 @@ static SCM g_count_matches(SCM expr, SCM sample, SCM snd_n, SCM chn_n)
   return(SCM_BOOL_F);
 }
 
-enum {MARKSAMPLEF,MARKNAMEF,MARKFINDF,MARKADDF,MARKDELETEF};
 
-static SCM iread_mark(SCM snd_n, SCM chn_n, SCM ms_n, int fld)
-{
-  chan_info *cp;
-  int msn = -1,i;
-  mark *m;
-  mark **mps = NULL;
-  char *name = NULL;
-  cp = get_cp(snd_n,chn_n);
-  if (cp == NULL) return(NO_SUCH_CHANNEL);
-  if (gh_string_p(ms_n))
-    name = gh_scm2newstr(ms_n,NULL);
-  else msn = int_or_zero(ms_n);
-  if (fld == MARKADDF)
-    {
-      m = add_mark(msn,NULL,cp);
-      if (m)
-	{
-	  /* if it's a redundant mark, and we're ignoring them, return -1 */
-	  update_graph(cp,NULL);
-	  RTNINT(mark_id(m));
-	}
-      else RTNINT(-1);
-    }
-  else
-    {
-      if ((cp->marks) && (cp->marks[cp->edit_ctr]))
-	{
-	  switch (fld)
-	    {
-	    case MARKSAMPLEF: 
-	      m = find_mark_id(cp,msn);
-	      if (m)
-		RTNINT(m->samp);
-	      else return(NO_SUCH_MARK);
-	      break;
-	    case MARKNAMEF: 
-	      m = find_mark_id(cp,msn);
-	      if (m) 
-		{
-		  if (m->name) RTNSTR(m->name);
-		}
-	      else return(NO_SUCH_MARK);
-	      break;
-	    case MARKFINDF:
-	      mps = cp->marks[cp->edit_ctr];
-	      if (name)
-		{
-		  for (i=0;i<=cp->mark_ctr[cp->edit_ctr];i++) 
-		    {
-		      if ((mps[i]) && (mps[i]->name) && (strcmp(name,mps[i]->name) == 0))
-			{
-			  free(name);
-			  RTNINT(mark_id(mps[i]));
-			}
-		    }
-		}
-	      else
-		{
-		  for (i=0;i<=cp->mark_ctr[cp->edit_ctr];i++) 
-		    {
-		      if ((mps[i]) && (mps[i]->samp == msn)) 
-			RTNINT(mark_id(mps[i]));
-		    }
-		}
-	      return(NO_SUCH_MARK);
-	      break;
-	    case MARKDELETEF:
-	      delete_mark_id(msn,cp);
-	      update_graph(cp,NULL);
-	      break;
-	    }
-	}
-      else return(NO_SUCH_MARK);
-    }
-  if (name) free(name);
-  return(SCM_BOOL_F);
-}
+/* -------------------------------- MARKS (completely changed 16-June-00) -------------------------------- */
 
-static SCM iwrite_mark(SCM snd_n, SCM chn_n, SCM mark_n, SCM val, int fld)
+enum {MARK_SAMPLE,MARK_NAME,MARK_SYNC,MARK_HOME};
+
+static SCM iread_mark(SCM n, int fld, int pos_n)
 {
-  chan_info *cp;
+  int pos;
+  chan_info *ncp[1];
   mark *m;
-  char *str;
-  cp = get_cp(snd_n,chn_n);
-  if (cp == NULL) return(NO_SUCH_CHANNEL);
-  m = find_mark_id(cp,int_or_zero(mark_n));
+  pos = g_scm2intdef(pos_n,-1);
+  m = find_mark_id(ncp,int_or_zero(n),pos);
   if (m == NULL) return(NO_SUCH_MARK);
   switch (fld)
     {
-    case MARKSAMPLEF: 
-      ERRN2(val,S_set_mark_sample); /* 2->original arg order */
+    case MARK_SAMPLE: RTNINT(m->samp); break;
+    case MARK_SYNC:   RTNINT(mark_sync(m)); break;
+    case MARK_NAME:   if (m->name) RTNSTR(m->name); else RTNSTR(""); break;
+    case MARK_HOME:   return(SCM_LIST2(gh_int2scm((ncp[0]->sound)->index),gh_int2scm(ncp[0]->chan))); break;
+    }
+  return(SCM_BOOL_F);
+}
+
+static SCM iwrite_mark(SCM mark_n, SCM val, int fld)
+{
+  chan_info *cp[1];
+  mark *m;
+  char *str;
+  m = find_mark_id(cp,int_or_zero(mark_n),-1);
+  if (m == NULL) return(NO_SUCH_MARK);
+  switch (fld)
+    {
+    case MARK_SAMPLE: 
       m->samp = g_scm2int(val);
-      finish_moving_mark(cp,m); /* update and re-sort current mark list */
-      update_graph(cp,NULL);
+      finish_moving_mark(cp[0]); /* update and re-sort current mark list */
+      update_graph(cp[0],NULL);
       break;
-    case MARKNAMEF:
-      ERRS2(val,S_set_mark_name);
+    case MARK_SYNC: 
+      set_mark_sync(m,g_scm2int(val));
+      break;
+    case MARK_NAME:
       if (m->name) FREE(m->name);
       str = gh_scm2newstr(val,NULL);
       m->name = copy_string(str);
       free(str);
-      update_graph(cp,NULL);
+      update_graph(cp[0],NULL);
       break;
     }
   return(val);
 }
 
-static SCM g_mark_sample(SCM mark_n, SCM snd_n, SCM chn_n) 
+static SCM g_mark_sample(SCM mark_n, SCM pos_n) 
 {
-  #define H_mark_sample "(" S_mark_sample " id &optional snd chn) returns the mark's location (sample number)"
+  #define H_mark_sample "(" S_mark_sample " &optional id pos) returns the mark's location (sample number) at edit history pos"
   ERRB1(mark_n,S_mark_sample);
-  ERRCP(S_mark_sample,snd_n,chn_n,2);
-  return(iread_mark(snd_n,chn_n,mark_n,MARKSAMPLEF));
+  ERRB2(pos_n,S_mark_sample);
+  return(iread_mark(mark_n,MARK_SAMPLE,pos_n));
 }
 
-static SCM g_set_mark_sample(SCM mark_n, SCM samp_n, SCM snd_n, SCM chn_n) 
+static SCM g_set_mark_sample(SCM mark_n, SCM samp_n) 
 {
-  #define H_set_mark_sample "(" S_set_mark_sample " id samp &optional snd chn) sets the mark's location"
-  ERRB1(mark_n,S_mark_sample); 
-  ERRB2(samp_n,S_mark_sample); 
-  ERRCP(S_set_mark_sample,snd_n,chn_n,3);
-  return(iwrite_mark(snd_n,chn_n,mark_n,samp_n,MARKSAMPLEF));
+  #define H_set_mark_sample "(" S_set_mark_sample " id samp) sets the mark's location"
+  ERRB1(mark_n,S_set_mark_sample); 
+  ERRB2(samp_n,S_set_mark_sample); 
+  return(iwrite_mark(mark_n,samp_n,MARK_SAMPLE));
 }
 
-static SCM g_mark_name(SCM mark_n, SCM snd_n, SCM chn_n) 
+static SCM g_mark_sync(SCM mark_n) 
+{
+  #define H_mark_sync "(" S_mark_sync " id) returns the mark's sync value"
+  ERRB1(mark_n,S_mark_sync);
+  return(iread_mark(mark_n,MARK_SYNC,SCM_UNSPECIFIED));
+}
+
+static SCM g_set_mark_sync(SCM mark_n, SCM sync_n) 
+{
+  #define H_set_mark_sync "(" S_set_mark_sync " id sync) sets the mark's sync value"
+  ERRB1(mark_n,S_set_mark_sync); 
+  ERRB2(sync_n,S_set_mark_sync); 
+  return(iwrite_mark(mark_n,sync_n,MARK_SYNC));
+}
+
+static SCM g_mark_name(SCM mark_n) 
 {
   #define H_mark_name "(" S_mark_name " id &optional snd chn) returns the mark's name"
   ERRB1(mark_n,S_mark_name); 
-  ERRCP(S_mark_name,snd_n,chn_n,2);
-  return(iread_mark(snd_n,chn_n,mark_n,MARKNAMEF));
+  return(iread_mark(mark_n,MARK_NAME,SCM_UNSPECIFIED));
 }
 
-static SCM g_set_mark_name(SCM mark_n, SCM name, SCM snd_n, SCM chn_n) 
+static SCM g_set_mark_name(SCM mark_n, SCM name) 
 {
-  #define H_set_mark_name "("   S_set_mark_name " id name &optional snd chn) sets the mark's name"
+  #define H_set_mark_name "("   S_set_mark_name " id name) sets the mark's name"
   ERRB1(mark_n,S_set_mark_name); 
   ERRS2(name,S_set_mark_name);
-  ERRCP(S_set_mark_name,snd_n,chn_n,3);
-  return(iwrite_mark(snd_n,chn_n,mark_n,name,MARKNAMEF));
+  return(iwrite_mark(mark_n,name,MARK_NAME));
+}
+
+static SCM g_mark_sync_max(void) 
+{
+  #define H_mark_sync_max "(" S_mark_sync_max ") -> max mark sync value seen so far"
+  return(gh_int2scm(mark_sync_max()));
+}
+
+static SCM g_mark_to_sound(SCM mark_n)
+{
+  #define H_mark_to_sound "(" S_mark_to_sound " id) returns the sound (index) and channel that hold mark id"
+  ERRB1(mark_n,S_mark_to_sound);
+  return(iread_mark(mark_n,MARK_HOME,SCM_UNSPECIFIED));
 }
 
 static SCM g_find_mark(SCM samp_n, SCM snd_n, SCM chn_n) 
@@ -3767,25 +3786,70 @@ static SCM g_find_mark(SCM samp_n, SCM snd_n, SCM chn_n)
   #define H_find_mark "(" S_find_mark " samp-or-name &optional snd chn) finds the mark in snd's channel chn\n\
    at samp (if a number) or with the given name (if a string), returning the mark id"
 
+  mark **mps;
+  int i,samp;
+  char *name = NULL;
+  chan_info *cp = NULL;
   SCM_ASSERT((gh_number_p(samp_n) || gh_string_p(samp_n) || (SCM_UNBNDP(samp_n)) || (SCM_FALSEP(samp_n))),samp_n,SCM_ARG1,S_find_mark);
   ERRCP(S_find_mark,snd_n,chn_n,2); 
-  return(iread_mark(snd_n,chn_n,samp_n,MARKFINDF));
+  cp = get_cp(snd_n,chn_n);
+  if (cp == NULL) return(NO_SUCH_CHANNEL);
+  mps = cp->marks[cp->edit_ctr];
+  if (mps)
+    {
+      if (gh_string_p(samp_n))
+	name = gh_scm2newstr(samp_n,NULL);
+      else samp = g_scm2intdef(samp_n,0);
+      if (name)
+	{
+	  for (i=0;i<=cp->mark_ctr[cp->edit_ctr];i++) 
+	    if ((mps[i]) && (mps[i]->name) && (strcmp(name,mps[i]->name) == 0))
+	      {
+		free(name);
+		RTNINT(mark_id(mps[i]));
+	      }
+	}
+      else
+	{
+	  for (i=0;i<=cp->mark_ctr[cp->edit_ctr];i++)
+	    if ((mps[i]) && (mps[i]->samp == samp)) 
+	      RTNINT(mark_id(mps[i]));
+	}
+    }
+  return(NO_SUCH_MARK);
 }
 
 static SCM g_add_mark(SCM samp_n, SCM snd_n, SCM chn_n) 
 {
   #define H_add_mark "(" S_add_mark ") samp &optional snd chn) adds a mark at sample samp returning the mark id"
+  mark *m;
+  chan_info *cp;
   ERRB1(samp_n,S_add_mark); 
   ERRCP(S_add_mark,snd_n,chn_n,2);
-  return(iread_mark(snd_n,chn_n,samp_n,MARKADDF));
+  cp = get_cp(snd_n,chn_n);
+  if (cp == NULL) return(NO_SUCH_CHANNEL);
+  m = add_mark(g_scm2intdef(samp_n,0),NULL,cp);
+  if (m)
+    {
+      /* if it's a redundant mark, and we're ignoring them, return -1 */
+      update_graph(cp,NULL);
+      RTNINT(mark_id(m));
+    }
+  else RTNINT(-1);
 }
 
-static SCM g_delete_mark(SCM id_n, SCM snd_n, SCM chn_n) 
+static SCM g_delete_mark(SCM id_n) 
 {
-  #define H_delete_mark "(" S_delete_mark " id &optional snd chn) delete mark id in snd's channel chn (- C-m)"
-  ERRB1(id_n,S_delete_mark); 
-  ERRCP(S_delete_mark,snd_n,chn_n,2);
-  return(iread_mark(snd_n,chn_n,id_n,MARKDELETEF));
+  #define H_delete_mark "(" S_delete_mark " id) delete mark id (- C-m)"
+  chan_info *cp[1];
+  mark *m;
+  int id;
+  ERRB1(id_n,S_delete_mark);
+  m = find_mark_id(cp,id = int_or_zero(id_n),-1);
+  if (m == NULL) return(NO_SUCH_MARK);
+  delete_mark_id(id,cp[0]);
+  update_graph(cp[0],NULL);
+  return(id_n);
 }
 
 static SCM g_delete_marks(SCM snd_n, SCM chn_n) 
@@ -3797,6 +3861,65 @@ static SCM g_delete_marks(SCM snd_n, SCM chn_n)
   if (cp) delete_marks(cp); else return(NO_SUCH_CHANNEL);
   return(SCM_BOOL_F);
 }
+
+static SCM int_array_to_list(int *arr, int i, int len)
+{
+  if (i < len)
+    return(gh_cons(gh_int2scm(arr[i]),int_array_to_list(arr,i+1,len)));
+  else return(gh_cons(gh_int2scm(arr[i]),SCM_EOL));
+}
+
+static SCM g_syncd_marks(SCM sync)
+{
+  #define H_syncd_marks "(" S_syncd_marks " sync) -> list of mark ids that share sync"
+  int *ids;
+  SCM res;
+  ERRN1(sync,S_syncd_marks);
+  ids = syncd_marks(state,gh_scm2int(sync));
+  if ((ids == NULL) || (ids[0] == 0)) return(SCM_EOL);
+  res = int_array_to_list(ids,1,ids[0]);
+  FREE(ids);
+  return(res);
+}
+
+static SCM g_marks(SCM snd_n, SCM chn_n, SCM pos_n) 
+{
+  #define H_marks "(" S_marks " &optional snd chn pos) -> list of marks (ids) in snd/chn at edit history position pos"
+  /* mark list is: channel: (id id id), snd: ((id id) (id id...)) */
+  chan_info *cp;
+  snd_info *sp;
+  SCM res,res1 = SCM_EOL;
+  int *ids;
+  int i,pos;
+  if ((SCM_INUMP(snd_n)) && (SCM_INUMP(chn_n)))
+    {
+      cp = get_cp(snd_n,chn_n);
+      if (cp == NULL) return(NO_SUCH_CHANNEL);
+      if (SCM_INUMP(pos_n)) pos = SCM_INUM(pos_n); else pos = cp->edit_ctr;
+      ids = channel_marks(cp,pos);
+      if ((ids == NULL) || (ids[0] == 0)) return(SCM_EOL);
+      res = int_array_to_list(ids,1,ids[0]);
+      FREE(ids);
+      return(res);
+    }
+  else
+    {
+      sp = get_sp(snd_n);
+      if (sp == NULL) return(NO_SUCH_SOUND);
+      for (i=sp->nchans-1;i>=0;i--)
+	{
+	  cp = sp->chans[i];
+	  ids = channel_marks(cp,cp->edit_ctr);
+	  if ((ids == NULL) || (ids[0] == 0))
+	    res1 = gh_cons(SCM_EOL,res1);
+	  else res1 = gh_cons(int_array_to_list(ids,1,ids[0]),res1);
+	  if (ids) FREE(ids);
+	}
+    }
+  return(res1);
+}
+
+
 
 static SCM g_find_sound(SCM filename)
 {
@@ -5049,11 +5172,11 @@ static SCM g_prompt_in_minibuffer(SCM msg, SCM callback, SCM snd_n)
   ERRSP(S_prompt_in_minibuffer,snd_n,3);
   sp = get_sp(snd_n);
   if (sp == NULL) return(NO_SUCH_SOUND);
-  if ((sp->prompt_callback) && (gh_procedure_p(sp->prompt_callback))) scm_unprotect_object(sp->prompt_callback);
+  if ((sp->prompt_callback) && (gh_procedure_p(sp->prompt_callback))) snd_unprotect(sp->prompt_callback);
   if (gh_procedure_p(callback)) 
     {
       sp->prompt_callback = callback;
-      scm_protect_object(sp->prompt_callback);
+      snd_protect(sp->prompt_callback);
     }
   else sp->prompt_callback = SCM_BOOL_F;
   str = gh_scm2newstr(msg,NULL);
@@ -6708,9 +6831,9 @@ static SCM g_add_to_menu(SCM menu, SCM label, SCM callstr)
     menu_strings[callb] = gh_scm2newstr(callstr,NULL);
   else 
     {
-      if ((menu_functions[callb]) && (gh_procedure_p(menu_functions[callb]))) scm_unprotect_object(menu_functions[callb]);
+      if ((menu_functions[callb]) && (gh_procedure_p(menu_functions[callb]))) snd_unprotect(menu_functions[callb]);
       menu_functions[callb] = callstr;
-      scm_protect_object(callstr);
+      snd_protect(callstr);
     }
   callb++;
   return(label);
@@ -8040,14 +8163,19 @@ void g_initialize_gh(snd_state *ss)
   DEFINE_PROC(gh_new_procedure0_2(S_edits,g_edits),H_edits);
   DEFINE_PROC(gh_new_procedure0_2(S_maxamp,g_maxamp),H_maxamp);
   DEFINE_PROC(gh_new_procedure0_3(S_peaks,g_peaks),H_peaks);
-  DEFINE_PROC(gh_new_procedure0_2(S_marks,g_marks),H_marks);
-  DEFINE_PROC(gh_new_procedure0_3(S_mark_sample,g_mark_sample),H_mark_sample);
-  DEFINE_PROC(gh_new_procedure1_3(S_set_mark_sample,g_set_mark_sample),H_set_mark_sample);
-  DEFINE_PROC(gh_new_procedure0_3(S_mark_name,g_mark_name),H_mark_name);
-  DEFINE_PROC(gh_new_procedure1_3(S_set_mark_name,g_set_mark_name),H_set_mark_name);
+  DEFINE_PROC(gh_new_procedure0_3(S_marks,g_marks),H_marks);
+  DEFINE_PROC(gh_new_procedure0_2(S_mark_sample,g_mark_sample),H_mark_sample);
+  DEFINE_PROC(gh_new_procedure1_1(S_set_mark_sample,g_set_mark_sample),H_set_mark_sample);
+  DEFINE_PROC(gh_new_procedure0_0(S_mark_sync_max,g_mark_sync_max),H_mark_sync_max);
+  DEFINE_PROC(gh_new_procedure0_1(S_mark_sync,g_mark_sync),H_mark_sync);
+  DEFINE_PROC(gh_new_procedure1_1(S_set_mark_sync,g_set_mark_sync),H_set_mark_sync);
+  DEFINE_PROC(gh_new_procedure0_1(S_mark_name,g_mark_name),H_mark_name);
+  DEFINE_PROC(gh_new_procedure1_1(S_set_mark_name,g_set_mark_name),H_set_mark_name);
   DEFINE_PROC(gh_new_procedure0_3(S_add_mark,g_add_mark),H_add_mark);
-  DEFINE_PROC(gh_new_procedure0_3(S_delete_mark,g_delete_mark),H_delete_mark);
+  DEFINE_PROC(gh_new_procedure0_1(S_delete_mark,g_delete_mark),H_delete_mark);
   DEFINE_PROC(gh_new_procedure0_2(S_delete_marks,g_delete_marks),H_delete_marks);
+  DEFINE_PROC(gh_new_procedure1_0(S_syncd_marks,g_syncd_marks),H_syncd_marks);
+  DEFINE_PROC(gh_new_procedure0_1(S_mark_to_sound,g_mark_to_sound),H_mark_to_sound);
   DEFINE_PROC(gh_new_procedure1_2(S_find_mark,g_find_mark),H_find_mark);
   DEFINE_PROC(gh_new_procedure0_3(S_undo,g_undo),H_undo);
   DEFINE_PROC(gh_new_procedure0_3(S_redo,g_redo),H_redo);

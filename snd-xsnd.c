@@ -1336,7 +1336,7 @@ snd_info *add_sound_window (char *filename, snd_state *ss)
   else
     {
       hdr = make_file_info(filename,ss);
-      hdr->chan_type = FILE_PER_SOUND;
+      if (hdr) hdr->chan_type = FILE_PER_SOUND; else return(NULL);
     }
 #else
   hdr = make_file_info(filename,ss);

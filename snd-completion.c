@@ -15,7 +15,7 @@
 #endif
       
 
-#define NUM_COMMANDS 729
+#define NUM_COMMANDS 733
 
 static char *snd_commands[NUM_COMMANDS]={
   S_abort,S_abortQ,S_activate_listener,S_active_sounds,S_add_mark,S_add_sound_file_extension,S_add_to_main_menu,S_add_to_menu,S_add_transform,
@@ -72,7 +72,7 @@ static char *snd_commands[NUM_COMMANDS]={
 
   S_make_color,S_make_mix_sample_reader,S_make_region,S_make_region_sample_reader,S_make_sample_reader,S_make_track_sample_reader,S_make_vct,
   S_map_across_all_chans,S_map_across_chans,S_map_across_sound_chans,S_map_all_chans,S_map_chan,S_map_chans,S_map_sound_chans,
-  S_mark_color,S_mark_name,S_mark_sample,S_marks,S_max_fft_peaks,
+  S_mark_color,S_mark_name,S_mark_sample,S_mark_sync,S_mark_sync_max,S_marks,S_max_fft_peaks,
   S_max_regions,S_max_sounds,S_maxamp,S_memo_sound,S_min_dB,S_mix,
   S_mix_amp,S_mix_amp_changed_hook,S_mix_amp_env,S_mix_anchor,S_mix_chans,S_mix_color,
   S_mix_console_amp_scaler,S_mix_console_speed_scaler,S_mix_console_state,S_mix_console_state_changed_hook,S_mix_console_y,
@@ -128,7 +128,7 @@ static char *snd_commands[NUM_COMMANDS]={
   S_set_help_text_font,S_set_highlight_color,
   S_set_html_dir,S_set_initial_x0,S_set_initial_x1,S_set_initial_y0,S_set_initial_y1,
   S_set_just_sounds,S_set_left_sample,S_set_line_size,S_set_listener_color,S_set_listener_font,S_set_listener_prompt,
-  S_set_mark_color,S_set_mark_name,S_set_mark_sample,
+  S_set_mark_color,S_set_mark_name,S_set_mark_sample,S_set_mark_sync,
   S_set_max_fft_peaks, S_set_max_regions,S_set_menu_sensitive,
   S_set_min_dB,S_set_mix_amp,S_set_mix_amp_env,S_set_mix_anchor,S_set_mix_color,
   S_set_mix_console_amp_scaler,S_set_mix_console_speed_scaler,S_set_mix_console_state,S_set_mix_console_y,
@@ -168,7 +168,8 @@ static char *snd_commands[NUM_COMMANDS]={
   S_spectro_z_angle,S_spectro_z_scale,S_spectrogram,S_spectrum_env,S_speed,S_speed_as_float,S_speed_as_ratio,S_speed_as_semitone,
   S_speed_style,S_speed_tones,S_squelch_update,S_srate,S_srate_env,
   S_src_selection,S_src_sound,S_start_hook,S_start_playing_hook,S_start_progress_report,
-  S_stop_playing,S_stop_playing_hook,S_stop_playing_region_hook,S_string_length,S_syncing,
+  S_stop_playing,S_stop_playing_hook,S_stop_playing_region_hook,S_string_length,
+  S_syncd_marks,S_syncing,
 
   S_temp_dir,S_temp_filenames,S_temp_to_selection,S_temp_to_sound,S_temps_to_selection,S_temps_to_sound,S_text_focus_color,
   S_tiny_font,S_track_sample_readerQ,

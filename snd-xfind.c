@@ -27,13 +27,13 @@ static void edit_find_ok_callback(int direction, Widget w,XtPointer clientData,X
     { 
       if (ss->search_expr) XtFree(ss->search_expr);
       ss->search_expr = str;
-      if ((ss->search_proc) && (gh_procedure_p(ss->search_proc))) scm_unprotect_object(ss->search_proc);
+      if ((ss->search_proc) && (gh_procedure_p(ss->search_proc))) snd_unprotect(ss->search_proc);
       ss->search_proc = SCM_UNDEFINED;
       proc = parse_proc(str);
       if (procedure_ok(proc,1,0,"find","find procedure",1))
 	{
 	  ss->search_proc = proc;
-	  scm_protect_object(proc);
+	  snd_protect(proc);
 	}
       buf = (char *)CALLOC(256,sizeof(char));
       sprintf(buf,STR_find_s,str);
