@@ -1,3 +1,14 @@
+# Moog style four pole lowpass filter clm unit generator
+#   low pass, 24db/Oct, variable resonance, warm, analog sound ;-)
+#   [all this digital wizardry and we're back where we started!]
+#
+# original C instrument by Tim Stilson
+# translation into clm and tuning by 
+#   Fernando Lopez-Lezcano, nando@ccrma.stanford.edu
+#   http://www-ccrma.stanford.edu/~nando/clm/moog
+#
+# translated to Ruby by Bill
+
 $moog_gaintable = [0.999969, 0.990082, 0.980347, 0.970764, 0.961304, 0.951996, 0.94281, 0.933777, 0.924866, 0.916077,
 		   0.90741, 0.898865, 0.890442, 0.882141 , 0.873962, 0.865906, 0.857941, 0.850067, 0.842346, 0.834686,
 		   0.827148, 0.819733, 0.812378, 0.805145, 0.798004, 0.790955, 0.783997, 0.77713, 0.770355, 0.763672,
@@ -34,7 +45,7 @@ def frqtable(frq)
 end
 
 def make_moog_filter(freq, q)
-  return [freq, q, 0.0, 0.0, 0.0, 0.0, 0.0, frqtable(2*freq/mus_srate())]
+  return [freq, q, 0.0, 0.0, 0.0, 0.0, 0.0, frqtable(2 * freq / mus_srate())]
 end
 
 def moog_filter(gen, input)

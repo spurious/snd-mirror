@@ -126,14 +126,14 @@ sections, each of the basic entities is treated in a separate
 section with cross-references where needed.  The <a href="index.html">index</a>
 provides alphabetical entry.</p>
 
-<p>There are many examples in <a href="sndscm.html#exampdoc">examp.scm</a> and <a href="sndscm.html#sndtestdoc">snd-test.scm</a>. 
+<p>There are many examples in <a href="sndscm.html#exampdoc">examp.scm</a> (contrib/examp.rb), and <a href="sndscm.html#sndtestdoc">snd-test.scm</a>. 
 Extensions to Snd can be found in the contrib directory, and in:
 </p>
 
 <table border=8 bordercolor="lightsteelblue">
 <tr><td width=140><a href="sndscm.html#autosavedoc">autosave.scm</a></td><td>auto-save (edit backup) support</td></tr>
 <tr><td><a href="sndscm.html#belldoc">bell.scm</a></td>      <td>the fm-bell from CLM</td></tr>
-<tr><td><a href="sndscm.html#bessdoc">bess.scm</a></td><td>FM demo (from bess.cl in CLM)</td></tr>
+<tr><td><a href="sndscm.html#bessdoc">bess.scm, contrib/bess.rb</a></td><td>FM demo (from bess.cl in CLM)</td></tr>
 <tr><td><a href="sndscm.html#birddoc">bird.scm, bird.rb</a></td><td>various North-American birds (from bird.clm)</td></tr>
 <tr><td><a href="sndscm.html#contribdoc">contrib directory entries</a></td><td>various useful contributions</td></tr>
 <tr><td><a href="sndscm.html#drawdoc">draw.scm</a></td>      <td>graphics additions</td></tr>
@@ -152,7 +152,7 @@ Extensions to Snd can be found in the contrib directory, and in:
 <tr><td><a href="sndscm.html#maracadoc">maraca.scm</a></td>  <td>Perry Cook's maraca physical model</td></tr>
 <tr><td><a href="sndscm.html#marksdoc">marks.scm</a></td>    <td>functions related to marks</td></tr>
 <tr><td><a href="sndscm.html#mixdoc">mix.scm</a></td>        <td>functions related to mixes and tracks</td></tr>
-<tr><td><a href="sndscm.html#moogdoc">moog.scm</a></td>      <td>Moog filter (from CLM)</td></tr>
+<tr><td><a href="sndscm.html#moogdoc">moog.scm, moog.rb</a></td><td>Moog filter (from CLM)</td></tr>
 <tr><td><a href="sndscm.html#musglyphs">musglyphs.scm</a></td><td>Music notation symbols (from CMN)</td></tr>
 <tr><td><a href="sndscm.html#nbdoc">nb.scm</a></td>          <td>Popup File info etc</td></tr>
 <tr><td><a href="sndscm.html#peakenvdoc">peak-env.scm</a></td><td>peak envelope support</td></tr>
@@ -170,7 +170,7 @@ Extensions to Snd can be found in the contrib directory, and in:
 <tr><td><a href="sndscm.html#snd4doc">snd4.scm</a></td>      <td>backwards compatibility for version 4</td></tr>
 <tr><td><a href="sndscm.html#snd5doc">snd5.scm</a></td>      <td>backwards compatibility for version 5</td></tr>
 <tr><td><a href="sndscm.html#snd6doc">snd6.scm</a></td>      <td>backwards compatibility for version 6</td></tr>
-<tr><td><a href="sndscm.html#vdoc">v.scm</a></td>            <td>fm-violin (from CLM)</td></tr>
+<tr><td><a href="sndscm.html#vdoc">v.scm, contrib/v.rb</a></td><td>fm-violin (from CLM)</td></tr>
 <tr><td><a href="sndscm.html#wsdoc">ws.scm</a></td>          <td>with-sound implementation</td></tr>
 <tr><td><a href="sndscm.html#xmenveddoc">xm-enved.scm</a></td><td>xm-based envelope editor</td></tr>
 <tr><td><a href="sndscm.html#zipdoc">zip.scm</a></td>        <td>the zipper (a cross-fader, sort of) (from CLM)</td></tr>
@@ -7166,7 +7166,9 @@ one edit (in all channels) in the edit history mechanism.  Graphics redisplays a
     (set! (sample 200) .2)))
 </pre></td></tr></table>
 <br>
-See mix.scm for many examples.
+See mix.scm for many examples. If you want to save Snd's state after using as-one-edit, you need to
+set 'origin' to some string that can restore the effect of the as-one-edit 'func'; the default is
+to copy the last edit history string and use its associated bounds -- unlikely to be what you want.
 </td></tr>
 <tr><td></td><td></td></tr>
 

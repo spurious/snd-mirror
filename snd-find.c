@@ -400,7 +400,7 @@ static XEN g_search_procedure(XEN snd)
   if (XEN_BOUND_P(snd))
     {
       ASSERT_SOUND(S_search_procedure, snd, 1);
-      sp = get_sp(snd);
+      sp = get_sp(snd, NO_PLAYERS);
       if (sp)
 	return(sp->search_proc);
       else return(XEN_FALSE);
@@ -419,7 +419,7 @@ static XEN g_set_search_procedure(XEN snd, XEN proc)
   if (XEN_INTEGER_P(snd)) /* could be the proc arg if no snd */
     {
       ASSERT_SOUND(S_setB S_search_procedure, snd, 1);
-      sp = get_sp(snd);
+      sp = get_sp(snd, NO_PLAYERS);
       if (sp)
 	{
 	  error = procedure_ok(proc, 1, S_setB S_search_procedure, "proc", 1);

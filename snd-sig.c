@@ -3271,7 +3271,7 @@ static XEN g_swap_channels(XEN snd0, XEN chn0, XEN snd1, XEN chn1, XEN beg, XEN 
   else
     {
       if (XEN_INTEGER_P(snd1))
-	sp = get_sp(snd1);
+	sp = get_sp(snd1, NO_PLAYERS);
       else sp = cp0->sound;
       if (sp == NULL) 
 	return(snd_no_such_sound_error(S_swap_channels, snd1));
@@ -3468,13 +3468,17 @@ applies gen to snd's channel chn starting at beg for dur samples. overlap is the
 static XEN g_env_1(XEN edata, off_t beg, off_t dur, XEN base, chan_info *cp, XEN edpos, const char *caller, int selection)
 {
   env *e;
+  Float fbase = 1.0;
   mus_any *egen = NULL;
   if (XEN_LIST_P(edata))
     {
       e = get_env(edata, (char *)caller);
       if (e)
 	{
-	  apply_env(cp, e, beg, dur, selection, NOT_FROM_ENVED, caller, NULL, edpos, 7, XEN_TO_C_DOUBLE_OR_ELSE(base, 1.0));
+	  fbase = XEN_TO_C_DOUBLE_OR_ELSE(base, 1.0);
+	  if (fbase < 0.0)
+	    mus_misc_error(caller, "base < 0.0", base);
+	  apply_env(cp, e, beg, dur, selection, NOT_FROM_ENVED, caller, NULL, edpos, 7, fbase);
 	  free_env(e);
 	  return(edata);
 	}
@@ -3623,6 +3627,8 @@ between beg and beg + num by an exponential ramp going from rmp0 to rmp1 with cu
   pos = to_c_edit_position(cp, edpos, S_xramp_channel, 8);
   samps = dur_to_samples(num, samp, cp, pos, 4, S_xramp_channel);
   ebase = XEN_TO_C_DOUBLE(base);
+  if (ebase < 0.0) 
+    mus_misc_error(S_xramp_channel, "base < 0.0", base);
   if (ramp_or_ptree_fragments_in_use(cp, samp, samps, pos, ebase))
     {
       snd_info *sp;
@@ -3635,7 +3641,7 @@ between beg and beg + num by an exponential ramp going from rmp0 to rmp1 with cu
 			       rmp0,
 			       C_TO_XEN_DOUBLE(1.0), 
 			       rmp1),
-		    samp, samps, base, cp, edpos, S_ramp_channel, FALSE);
+		    samp, samps, base, cp, edpos, S_xramp_channel, FALSE);
       sp->sync = old_sync;
       return(val);
     }
@@ -3654,42 +3660,34 @@ between beg and beg + num by an exponential ramp going from rmp0 to rmp1 with cu
 	    ramp_channel(cp, XEN_TO_C_DOUBLE(rmp0), XEN_TO_C_DOUBLE(rmp1), samp, samps, pos, FALSE);
 	  else
 	    {
-	      if (ebase < 0.0)
-		XEN_ERROR(MUS_MISC_ERROR,
-			  XEN_LIST_3(C_TO_XEN_STRING(S_xramp_channel),
-				     C_TO_XEN_STRING("base < 0.0?"),
-				     base));
-	      else
+	      data = (Float *)CALLOC(4, sizeof(Float));
+	      data[0] = 0.0;
+	      data[1] = XEN_TO_C_DOUBLE(rmp0);
+	      data[2] = 1.0;
+	      data[3] = XEN_TO_C_DOUBLE(rmp1);
+	      e = mus_make_env(data, 2, 1.0, 0.0, ebase, 0.0, samp, samp + samps - 1, NULL);
+	      /* fprintf(stderr,"e: %s\n", mus_inspect(e)); */
+	      r0 = mus_env_initial_power(e);
+	      rates = mus_env_rates(e);
+	      passes = mus_env_passes(e);
+	      r1 = r0 + passes[0] * rates[0];
+	      xramp_channel(cp, r0, r1, mus_env_scaler(e), mus_env_offset(e), samp, samps, pos, FALSE, e, 0);
+	      if (cp->amp_envs[pos])
 		{
-		  data = (Float *)CALLOC(4, sizeof(Float));
-		  data[0] = 0.0;
-		  data[1] = XEN_TO_C_DOUBLE(rmp0);
-		  data[2] = 1.0;
-		  data[3] = XEN_TO_C_DOUBLE(rmp1);
-		  e = mus_make_env(data, 2, 1.0, 0.0, ebase, 0.0, samp, samp + samps - 1, NULL);
-		  /* fprintf(stderr,"e: %s\n", mus_inspect(e)); */
-		  r0 = mus_env_initial_power(e);
-		  rates = mus_env_rates(e);
-		  passes = mus_env_passes(e);
-		  r1 = r0 + passes[0] * rates[0];
-		  xramp_channel(cp, r0, r1, mus_env_scaler(e), mus_env_offset(e), samp, samps, pos, FALSE, e, 0);
-		  if (cp->amp_envs[pos])
+		  if ((samp == 0) && 
+		      (samps >= cp->samples[pos]))
+		    amp_env_env(cp, data, 2, pos, ebase, mus_env_scaler(e), mus_env_offset(e));
+		  else 
 		    {
-		      if ((samp == 0) && 
-			  (samps >= cp->samples[pos]))
-			amp_env_env(cp, data, 2, pos, ebase, mus_env_scaler(e), mus_env_offset(e));
-		      else 
-			{
-			  mus_any *egen;
-			  egen = mus_make_env(data, 2, 1.0, 0.0, ebase, 0.0, 0, samps - 1, NULL);
-			  amp_env_env_selection_by(cp, egen, samp, samps, pos);
-			  mus_free(egen);
-			}
+		      mus_any *egen;
+		      egen = mus_make_env(data, 2, 1.0, 0.0, ebase, 0.0, 0, samps - 1, NULL);
+		      amp_env_env_selection_by(cp, egen, samp, samps, pos);
+		      mus_free(egen);
 		    }
-		  FREE(data);
-		  mus_free(e);
-		  update_graph(cp);
 		}
+	      FREE(data);
+	      mus_free(e);
+	      update_graph(cp);
 	    }
 	}
     }

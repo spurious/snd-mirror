@@ -3523,7 +3523,7 @@ static XEN g_mixes(XEN snd, XEN chn)
 	}
       else
 	{
-	  sp = get_sp(snd);
+	  sp = get_sp(snd, NO_PLAYERS);
 	  if (sp == NULL) 
 	    return(snd_no_such_sound_error(S_mixes, snd));
 	  for (i = sp->nchans - 1; i >= 0; i--)

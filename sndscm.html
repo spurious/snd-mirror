@@ -54,7 +54,7 @@
   <li><a href="#maracadoc">maraca.scm: Perry Cook's maraca physical model</a>
   <li><a href="#marksdoc">marks.scm: functions related to marks</a>
   <li><a href="#mixdoc">mix.scm: functions related to mixes and tracks</a>
-  <li><a href="#moogdoc">moog.scm: Moog filter</a>
+  <li><a href="#moogdoc">moog.scm, moog.rb: Moog filter</a>
   <li><a href="#musglyphs">musglyphs.scm: Music notation symbols (from CMN)</a>
   <li><a href="#nbdoc">nb.scm: Popup File info etc</a>
   <li><a href="#peakenvdoc">peak-env.scm: peak envelope support</a>
@@ -562,6 +562,9 @@ envelope functions that are often useful:
   <em class=def><a name="reverseenvelope">reverse-envelope</a></em> env
   <em class=def><a name="concatenateenvelopes">concatenate-envelopes</a></em> #:rest envs
   <em class=def><a name="repeatenvelope">repeat-envelope</a></em> env repeats #:optional (reflected #f) (normalized #f)
+  <em class=def><a name="powerenv">power-env</a></em> e
+  <em class=def><a name="makepowerenv">make-power-env</a></em> e #:key (scaler 1.0) (offset 0.0) duration
+  <em class=def><a name="powerenvchannel">power-env-channel</a></em> pe #:optional (beg 0) dur snd chn edpos (edname "power-env-channel")
 </pre>
 <p>These are translated from CLM's env.lisp.
 <code>(envelope-interp x env base)</code> returns value of env at x.
@@ -649,6 +652,17 @@ inserted between repeats. 'normalized' causes the new envelope's x axis
 to have the same extent as the original's. 'reflected' causes every other
 repetition to be in reverse.
 </p>
+<p><i>make-power-env</i> and <i>power-env</i> implement an extension of exponential
+envelopes; each segment has its own base.  <i>power-env-channel</i> uses the same
+mechanism as an extension of env-channel.
+</p>
+<pre>
+(let ((pe (make-power-env '(0 0 32.0  1 1 0.0312  2 0 1) :duration 1.0)))
+  (map-channel (lambda (y) (* y (power-env pe)))))
+
+(let ((pe1 (make-power-env '(0 0 32.0  1 1 0.0312  2 0 1.0  3 .5 3.0  4 0 0) :duration 1.0)))
+  (power-env-channel pe1))
+</pre>
 <br>
 
 <A NAME="enveddoc"></a><span class=box><h2>enved.scm</h2></span>
@@ -1792,12 +1806,12 @@ Most of the "set-" functions also exist in the generalized set! form, for exampl
 <code>(set! (track-position trk) 0)</code>.
 </p>
 
-<A NAME="moogdoc"></a><span class=box><h2>moog.scm</h2></span>
+<A NAME="moogdoc"></a><span class=box><h2>moog.scm, moog.rb</h2></span>
 <pre>
   <em class=def><A NAME="makemoogfilter">make-moog-filter</a></em> frequency Q
   <em class=def><A NAME="moogfilter">moog-filter</a></em> gen input
 </pre>
-<p>moog.scm is a translation of CLM's moog.lisp (written by Fernando Lopez-Lezcano --
+<p>moog.scm (moog.rb) is a translation of CLM's moog.lisp (written by Fernando Lopez-Lezcano --
 http://www-ccrma.stanford.edu/~nando/clm/moog),
 itself a translation of Tim Stilson's original C code.  The functions provide
 a kind of CLM generator view of the filter.  Fernando describes it as a

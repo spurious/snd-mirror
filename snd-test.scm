@@ -6360,8 +6360,17 @@ EDITS: 5
 					    home-dir 
 					    "/cl/oboe.snd[0](forward) beg: 0, at 0 [frag_pos: 0, first: 0, last: 8191], fragment 0")))
 	      (snd-display ";inspect-sample-reader: ~A" (inspect-sample-reader vr)))
-	  (IF (region-samples->vct -1 1233 r0) (snd-display ";region-samples->vct -1: ~A" (region-samples->vct -1 1233)))
-	  (IF (region-samples->vct 12345678 1 r0) (snd-display ";region-samples->vct inf: ~A" (region-samples->vct 12345678 1)))
+	  (let ((err (catch #t
+			    (lambda ()
+			      (region-samples->vct -1 1233 r0))
+			    (lambda args (car args)))))
+	    (IF (not (eq? err 'no-such-sample)) (snd-display ";region->vct -1: ~A" err)))
+	  (let ((err (catch #t
+			    (lambda ()
+			      (region-samples->vct 12345678 1 r0))
+			    (lambda args (car args)))))
+	    ;; should this return 'no-such-sample?
+	    (IF err (snd-display ";region->vct 12345678: ~A" err)))
 	  (let ((reader-string (format #f "~A" vr)))
 	    (IF (not (string=? (substring reader-string 0 18) "#<sample-reader 0x"))
 		(snd-display ";sample reader actually got: [~S]" (substring reader-string 0 18)))
@@ -7943,7 +7952,7 @@ EDITS: 5
 	      (env-channel '(0 0 1 1))
 	      (env-channel '(0 0 1 1 2 0))
 	      (ptree-channel (lambda (y) (* y 2.0)))
-	      (peak-env-equal? "ptree-ramp2 peak" ind (channel-amp-envs ind 0 3) .0001)
+	      (peak-env-equal? "ptree-ramp20 peak" ind (channel-amp-envs ind 0 3) .0001)
 
 	      (revert-sound ind)
 	      (ramp-channel 0.0 1.0 12000 5000)
@@ -8013,7 +8022,7 @@ EDITS: 5
 	      (env-channel '(0 0 1 1))
 	      (env-channel '(0 0 1 1 2 0))
 	      (ptree-channel (lambda (y) (* y 2.0)) 2000 1000)
-	      (peak-env-equal? "ptree-ramp2 peak" ind (channel-amp-envs ind 0 3) .0001)
+	      (peak-env-equal? "ptree-ramp21 peak" ind (channel-amp-envs ind 0 3) .002)
 
 	      (revert-sound ind)
 	      (env-channel '(0 0 1 1))
@@ -9418,6 +9427,12 @@ EDITS: 5
 	      (snd-display ";describe zdelay: ~A" (mus-describe del)))
 	  (IF (not (string=? (mus-inspect del) "dly line[5,8 at 4,7 (external)]: [0.000 0.000 0.000 1.000 0.000], xscl: 0.000000, yscl: 0.000000"))
 	      (snd-display ";inspect zdelay: ~A" (mus-inspect del)))))
+      (let ((tag (catch #t (lambda () 
+			     (let ((gen (make-oscil)))
+			       (tap gen)))
+			(lambda args (car args)))))
+	(if (not (eq? tag 'wrong-type-arg))
+	    (snd-display ";tap of oscil: ~A" tag)))
 
       (let ((dly (make-delay 3))
 	    (flt (make-one-zero .5 .4))
@@ -12135,16 +12150,17 @@ EDITS: 5
 				       (lambda (v)
 					; new editing func changes pitch
 					 (let* ((N (mus-length v)) ;mus-increment => interp, mus-data => in-data
-						(D (mus-hop v)))
+						(D (mus-hop v))
+						(freqs (pv-freqs v)))
 					   (do ((k 0 (1+ k))
 						(pscl (/ 1.0 D))
 						(kscl (/ pi2 N)))
 					       ((= k (inexact->exact (floor (/ N 2)))))
-					     (let ((phasediff (- (vct-ref (pv-freqs v) k) (vct-ref lastphases k))))
-					       (vct-set! lastphases k (vct-ref (pv-freqs v) k))
+					     (let ((phasediff (- (vct-ref freqs k) (vct-ref lastphases k))))
+					       (vct-set! lastphases k (vct-ref freqs k))
 					       (if (> phasediff pi) (do () ((<= phasediff pi)) (set! phasediff (- phasediff pi2))))
 					       (if (< phasediff (- pi)) (do () ((>= phasediff (- pi))) (set! phasediff (+ phasediff pi2))))
-					       (vct-set! (pv-freqs v) k 
+					       (vct-set! freqs k 
 							 (* 0.5
 							    (+ (* pscl phasediff)
 							       (* k kscl))))))
@@ -17262,15 +17278,18 @@ EDITS: 5
 		     (en (make-env e :end (1- dur))))
 		(do ((i 0 (1+ i)))
 		    ((= i dur))
-		  (let ((val0 (* (env en) (reader0)))
-			(val1 (reader1)))
+		  (let* ((e0 (env en))
+			 (val00 (reader0))
+			 (val0 (* e0 val00))
+			 (val1 (reader1)))
 		    (if (fneq val0 val1)
 			(begin
 			  (save-state "baddy.scm")
-			  (snd-display ";read env (~A) at ~A: ~A ~A (~A ~A): ~A" 
-					  e i val0 val1
-					  reader0 reader1
-					  (display-edits cursnd curchn))
+			  (snd-display ";read env off by ~A: ~%    (~A) at ~A: ~%    ~A ~A (~A ~A) [~A ~A]:~%    ~A" 
+				       (abs (- val0 val1))
+				       e i val0 val1
+				       reader0 reader1 e0 val00
+				       (display-edits cursnd curchn))
 			  (throw 'mus-error))))))))
       
       ;; env-channel
@@ -18167,10 +18186,10 @@ EDITS: 5
 
 	    (lambda (ind)
 	      ;; forced-fallback
-	      (ptree-channel (let ((sym 'hi)) (lambda (y) (if (eq? sym 'hi) (* y 0.5) y))) 2 3 ind 0 #f #f))
+	      (ptree-channel (let ((sym (list 1))) (lambda (y) (if (eq? (car sym) 1) (* y 0.5) y))) 2 3 ind 0 #f #f))
 	    (lambda (ind)
 	      ;; forced-fallback
-	      (ptree-channel (let ((sym 'hi)) (lambda (y) (if (eq? sym 'hi) (* y 0.5) y))) 0 #f ind 0 #f #f))
+	      (ptree-channel (let ((sym (list 1))) (lambda (y) (if (eq? (car sym) 1) (* y 0.5) y))) 0 #f ind 0 #f #f))
 
 	    (lambda (ind)
 	      (scale-by 0.0)
@@ -18270,19 +18289,19 @@ EDITS: 5
 
 	    (lambda (ind)
 	      ;; forced-fallback
-	      (ptree-channel (let ((sym 'hi)) 
+	      (ptree-channel (let ((sym (list 1))) 
 			       (lambda (y data dir)
 				 (declare (y real) (data vct) (dir boolean))
-				 (if (eq? sym 'hi) (* y 0.5) (* y (vct-ref v 0)))))
+				 (if (eq? (car sym) 1) (* y 0.5) (* y (vct-ref data 0)))))
 			     2 3 ind 0 #f #f
 			     (lambda (pos dur)
 			       (vct 1.0))))
 	    (lambda (ind)
 	      ;; forced-fallback
-	      (ptree-channel (let ((sym 'hi)) 
+	      (ptree-channel (let ((sym (list 1))) 
 			       (lambda (y data dir)
 				 (declare (y real) (data vct) (dir boolean))
-				 (if (eq? sym 'hi) (* y 0.5) (* y (vct-ref v 0)))))
+				 (if (eq? (car sym) 1) (* y 0.5) (* y (vct-ref data 0)))))
 			     0 #f ind 0 #f #f
 			     (lambda (pos dur)
 			       (vct 1.0))))
@@ -18340,10 +18359,10 @@ EDITS: 5
 
 	    (lambda (ind)
 	      ;; forced-fallback
-	      (map-channel (let ((sym 'hi)) (lambda (y) (if (eq? sym 'hi) (* y 0.5) y))) 2 3 ind 0))
+	      (map-channel (let ((sym (list 1))) (lambda (y) (if (eq? (car sym) 1) (* y 0.5) y))) 2 3 ind 0))
 	    (lambda (ind)
 	      ;; forced-fallback
-	      (map-channel (let ((sym 'hi)) (lambda (y) (if (eq? sym 'hi) (* y 0.5) y))) 0 #f ind 0))
+	      (map-channel (let ((sym (list 1))) (lambda (y) (if (eq? (car sym) 1) (* y 0.5) y))) 0 #f ind 0))
 	    (lambda (ind)
 	      (scale-by 0.0)
 	      (map-channel (lambda (y) y) 0 #f ind 0 2)
@@ -23567,7 +23586,21 @@ EDITS: 2
       (etst '(boolean?))
       (etst '(boolean? 1 2 3))
       (btsta '(lambda (y) (boolean? (odd? y))) 2.0 #t)
+
+      (btst '(symbol? 'a) #t)
+      (btst '(symbol? 1) #f)
+      (btst '(symbol? :a) #f)
+      (btst '(symbol? "a") #f)
+
+      (stst '(symbol->string 'asdf) "asdf")
       
+      (btst '(keyword? :asdf) #t)
+      (btst '(keyword? 32) #f)
+      (etst '(null? :asdf))
+      (etst '(* 1 2 :asdf))
+      (btst '(keyword? (quote :asdf)) #t)
+      (btst '(keyword? 'a) #f)
+
       (ftst '(sin 0.0) 0.0)
       (ftst '(sin 0) 0.0)
       (ftst '(sin (/ 3.14159 2)) 1.0)
@@ -23684,6 +23717,10 @@ EDITS: 2
       (btsta '(lambda (y) (eq? 1 y)) 1.0 #f)
       (btst '(let ((a 1) (b 1)) (eq? a b)) #t)
       (btsta '(lambda (y) (let ((a (inexact->exact y)) (b 1)) (eq? a b))) 1.0 #t)
+      (btst '(eq? :a :a) #t)
+      (btst '(eq? :a :b) #f)
+      (btst '(eq? 'a 'a) #t)
+      (btst '(eq? 'a 'b) #f)
       
       (btst '(eqv? 1 1) #t)
       (btst '(eqv? 1 2) #f)
@@ -23701,6 +23738,10 @@ EDITS: 2
       (btsta '(lambda (y) (eqv? #t y)) 1.0 #f)
       (btsta '(lambda (y) (eqv? 1 y)) 1.0 #f)
       (btsta '(lambda (y) (eqv? 1 (inexact->exact y))) 1 #t)
+      (btst '(eqv? :a :a) #t)
+      (btst '(eqv? :a :b) #f)
+      (btst '(eqv? 'a 'a) #t)
+      (btst '(eqv? 'a 'b) #f)
       
       (btst '(equal? 1 1) #t)
       (btst '(equal? 1 2) #f)
@@ -23718,6 +23759,10 @@ EDITS: 2
       (btsta '(lambda (y) (equal? y 1.0)) 1.0 #t)
       (btsta '(lambda (y) (equal? #t y)) 1.0 #f)
       (btsta '(lambda (y) (equal? 1 y)) 1.0 #f)
+      (btst '(equal? :a :a) #t)
+      (btst '(equal? :a :b) #f)
+      (btst '(equal? 'a 'a) #t)
+      (btst '(equal? 'a 'b) #f)
 
       (btst '(eq? #\a #\a) #t)
       (btst '(eqv? #\a #\a) #t)
@@ -24656,12 +24701,6 @@ EDITS: 2
       (itsta '(lambda (y) (cadr list-var)) 0.0 3)
       (ststa '(lambda (y) (caddr list-var)) 0.0 "hiho")
       (btsta '(lambda (y) (cadddr list-var)) 0.0 #t)
-
-      (btst '(keyword? :asdf) #t)
-      (btst '(keyword? 32) #f)
-      (etst '(null? :asdf))
-      (etst '(* 1 2 :asdf))
-      (btst '(keyword? (quote :asdf)) #t)
 
       (itst '(car '(1 . 2)) 1)
       (itst '(cdr '(1 . 2)) 2)
@@ -26086,7 +26125,7 @@ EDITS: 2
 	       (snd-print "snd-print test...")
 	       (snd-warning "snd-warning test...")
 	       (report-in-minibuffer "report-in-minibuffer test..." ind)
-	       (display hi) (display '(1 2)) (display '(1 . 2)) (display :hiho)
+	       (display hi) (display '(1 2)) (display '(1 . 2)) (display :hiho)(display 'asdf)
 	       (call/cc (lambda (hiho) (if #f (hiho) (display hiho))))
 	       (display #\newline) (display "---------------------------------------------------------------") (display #\newline)
 	       ))
@@ -34124,6 +34163,15 @@ EDITS: 2
 	  (select-all)
 	  (check-error-tag 'no-such-channel (lambda () (mix-selection 0 ind 123)))
 	  (check-error-tag 'no-such-channel (lambda () (insert-selection 0 ind 123)))
+	  (check-error-tag 'mus-error (lambda () (set! (channels ind) 0)))
+	  (check-error-tag 'mus-error (lambda () (set! (channels ind) -1)))
+	  (check-error-tag 'mus-error (lambda () (set! (channels ind) 12340)))
+	  (check-error-tag 'mus-error (lambda () (set! (data-format ind) 12340)))
+	  (check-error-tag 'mus-error (lambda () (set! (header-type ind) 12340)))
+	  (check-error-tag 'mus-error (lambda () (set! (srate ind) 0)))
+	  (check-error-tag 'mus-error (lambda () (set! (data-location ind) -1)))
+	  (check-error-tag 'no-such-sample (lambda () (set! (sample -1) -1)))
+	  (check-error-tag 'no-such-sample (lambda () ((sample -1))))
 	  (check-error-tag 'cannot-save (lambda () (save-sound-as "hiho.snd" ind -1)))
 	  (check-error-tag 'cannot-save (lambda () (save-sound-as "hiho.snd" ind mus-next -1)))
 	  (check-error-tag 'cannot-save (lambda () (save-sound-as "test.snd" ind mus-nist mus-bdouble)))
@@ -34584,31 +34632,6 @@ EDITS: 2
 		     (list 1.5 "/hiho" 1234 (make-vct 3) (sqrt -1.0) -1 0 #f 12345678901234567890)))
 		  (list 1.5 "/hiho" 1234 (make-vct 3) (sqrt -1.0) -1 0 #f 12345678901234567890))
 
-	      ;; ---------------- set! 5 Args
-	      (for-each 
-	       (lambda (arg1)
-		 (for-each 
-		  (lambda (arg2)
-		    (for-each 
-		     (lambda (arg3)
-		       (for-each 
-			(lambda (arg4)
-			  (for-each
-			   (lambda (arg5)
-			     (for-each 
-			      (lambda (n)
-				(catch #t
-				       (lambda () (set! (n arg1 arg2 arg3 arg4) arg5))
-				       (lambda args (car args))))
-			      procs5))
-			      (list 1.5 "/hiho" 1234 (make-vct 3) (sqrt -1.0) -1 0 #f 12345678901234567890)))
-			   (list 1.5 "/hiho" 1234 -1 0 #f 12345678901234567890)))
-			(list 1.5 "/hiho" 1234 (make-vct 3) (sqrt -1.0) -1)))
-		     (list 1.5 -1 0 #f 12345678901234567890)))
-		  (list 1.5 "/hiho" 1234 (make-vct 3) (sqrt -1.0) -1 0 #f 12345678901234567890))
-
-	      (gc)
-
 	      ;; ---------------- 6 Args
 	      (for-each 
 	       (lambda (arg1)
@@ -34635,32 +34658,6 @@ EDITS: 2
 		  (list 1.5 (make-vct 3) -1 0 #f #t)))
 	       (list 1.5 "/hiho" #f))
 		 
-	      ;; ---------------- set! 6 Args
-	      (for-each 
-	       (lambda (arg1)
-		 (for-each 
-		  (lambda (arg2)
-		    (for-each 
-		     (lambda (arg3)
-		       (for-each 
-			(lambda (arg4)
-			  (for-each
-			   (lambda (arg5)
-			     (for-each 
-			      (lambda (arg6)
-				(for-each 
-				 (lambda (n)
-				   (catch #t
-					  (lambda () (set! (n arg1 arg2 arg3 arg4 arg5) arg6))
-					  (lambda args (car args))))
-				 procs6))
-			      (list 1.5 "/hiho" 1234 -1 0 #f)))
-			   (list 1.5 "/hiho" 1234 0 #t)))
-			(list 1.5 "/hiho" 1234 (make-vct 3) #f #t)))
-		     (list 1.5 "/hiho" (make-vct 3) -1 #t)))
-		  (list 1.5 (make-vct 3) -1 0 #f #t)))
-	       (list 1.5 "/hiho" #f))
-
 	      ;; ---------------- 8 Args
 	      (for-each 
 	       (lambda (arg1)
@@ -34818,7 +34815,9 @@ EDITS: 2
 ;;;(mus-sound-report-cache "hiho.tmp")
 (gc)
 (mem-report)
-(system "fgrep -H -n 'snd-run' memlog >> optimizer.log")
+(if (and full-test
+	 (file-exists? "oldopt2.log"))
+    (system "diff -w optimizer.log oldopt2.log"))
 
 (if (file-exists? (string-append home-dir "/dot-snd"))
     (system (string-append "cp " home-dir "/dot-snd " home-dir "/.snd")))

@@ -29,11 +29,8 @@
   #define PRINT_BUFFER_SIZE 512
   #define LABEL_BUFFER_SIZE 64
 #endif
-#if DEBUGGING
-#define MAX_TABLE_SIZE (1024 * 256)
-#else
+
 #define MAX_TABLE_SIZE (1024 * 1024 * 20) /* delay line allocation etc */
-#endif
 
 #include <stddef.h>
 #include <math.h>
@@ -1273,7 +1270,7 @@ static XEN g_tap(XEN obj, XEN loc)
 {
   #define H_tap "(" S_tap " gen &optional (pm 0.0)) taps the " S_delay " generator offset by pm"
   Float dloc = 0.0;
-  XEN_ASSERT_TYPE((MUS_XEN_P(obj)), obj, XEN_ARG_1, S_tap, "a delay line tap");
+  XEN_ASSERT_TYPE((MUS_XEN_P(obj)) && (mus_delay_line_p(XEN_TO_MUS_ANY(obj))), obj, XEN_ARG_1, S_tap, "a delay line tap");
   if (XEN_NUMBER_P(loc)) dloc = XEN_TO_C_DOUBLE(loc); else XEN_ASSERT_TYPE(XEN_NOT_BOUND_P(loc), loc, XEN_ARG_3, S_tap, "a number");
   return(C_TO_XEN_DOUBLE(mus_tap(XEN_TO_MUS_ANY(obj), dloc)));
 }

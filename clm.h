@@ -2,10 +2,11 @@
 #define MUS_H
 
 #define MUS_VERSION 2
-#define MUS_REVISION 25
-#define MUS_DATE "27-Feb-03"
+#define MUS_REVISION 26
+#define MUS_DATE "3-Mar-03"
 
 /* 
+ * 3-Mar:      mus_delay_line_p for tap error checking.
  * 27-Feb:     mus_length for env -> original duration in samples.
  * 21-Feb:     mus_set_cosines added, mus_cosines moved to hop slot.
  *             mus_[set_]x1/x2/y1/y2.
@@ -281,6 +282,7 @@ Float mus_tap                   PROTO((mus_any *gen, Float loc));
 Float mus_tap_1                 PROTO((mus_any *gen));
 mus_any *mus_make_delay         PROTO((int size, Float *line, int line_size));
 int mus_delay_p                 PROTO((mus_any *ptr));
+int mus_delay_line_p            PROTO((mus_any *gen)); /* added 2-Mar-03 for tap error checks */
 
 Float mus_comb                  PROTO((mus_any *gen, Float input, Float pm));
 Float mus_comb_1                PROTO((mus_any *gen, Float input));

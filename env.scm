@@ -13,6 +13,7 @@
 ;;; reverse-envelope (env) reverses the breakpoints in 'env'
 ;;; concatenate-envelopes (&rest envs) concatenates its arguments into a new envelope
 ;;; repeat-envelope env repeats &optional (reflected #f) (normalized #f) repeats an envelope
+;;; power-env: generator for extended envelopes (each segment has its own base)
 
 (use-modules (ice-9 format) (ice-9 optargs))
 
@@ -344,4 +345,56 @@ repetition to be in reverse."
 	    (list-set! new-env i (* scl (list-ref new-env i))))))
     new-env))
 
-;;; TODO: power-env 
+
+;;; -------- power-env 
+
+(if (not (provided? 'def-clm-struct))
+    (load "ws.scm"))
+
+(def-clm-struct penv envs total-envs current-env current-pass)
+
+(define (power-env pe)
+  ;; this doesn't yet work within the Snd run macro
+  (let* ((val (env (vector-ref (penv-envs pe) (penv-current-env pe)))))
+    (set! (penv-current-pass pe) (1- (penv-current-pass pe)))
+    (if (= (penv-current-pass pe) 0)
+      (if (< (penv-current-env pe) (1- (penv-total-envs pe)))
+	  (begin
+	    (set! (penv-current-env pe) (1+ (penv-current-env pe)))
+	    (set! (penv-current-pass pe) (mus-length (vector-ref (penv-envs pe) (penv-current-env pe)))))))
+    val))
+
+(define* (make-power-env envelope #:key (scaler 1.0) (offset 0.0) duration)
+  (let* ((len (1- (inexact->exact (floor (/ (length envelope) 3)))))
+	 (pe (make-penv :envs (make-vector len)
+			:total-envs len
+			:current-env 0
+			:current-pass 0))
+	 (xext (- (list-ref envelope (- (length envelope) 3)) (car envelope))))
+    (do ((i 0 (1+ i))
+	 (j 0 (+ j 3)))
+	((= i len))
+      (let ((x0 (list-ref envelope j))
+	    (x1 (list-ref envelope (+ j 3)))
+	    (y0 (list-ref envelope (+ j 1)))
+	    (y1 (list-ref envelope (+ j 4)))
+	    (base (list-ref envelope (+ j 2))))
+	(vector-set! (penv-envs pe) i (make-env (list 0.0 y0 1.0 y1) 
+						:base base :scaler scaler :offset offset 
+						:duration (* duration (/ (- x1 x0) xext))))))
+    (set! (penv-current-pass pe) (mus-length (vector-ref (penv-envs pe) 0)))
+    pe))
+
+(define* (power-env-channel pe #:optional (beg 0) dur snd chn edpos (edname "power-env-channel"))
+  ;; split into successive calls on env-channel
+  (let ((curbeg beg)) ; sample number
+    (as-one-edit
+     (lambda ()
+       (do ((i 0 (1+ i)))
+	   ((= i (penv-total-envs pe)))
+	 (let* ((e (vector-ref (penv-envs pe) i))
+		(len (1+ (mus-length e))))
+	   (env-channel e curbeg len snd chn edpos)
+	   (set! curbeg (+ curbeg len)))))
+     edname)))
+

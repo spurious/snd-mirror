@@ -22,7 +22,7 @@ void dump_protection(FILE *Fp)
   XEN *gcdata;
   int i;
   gcdata = XEN_VECTOR_ELEMENTS(gc_protection);
-  fprintf(Fp, "snd_protect:\n");
+  fprintf(Fp, "\n\nsnd_protect:\n");
   for (i = 0; i < gc_protection_size; i++)
     if (!(XEN_EQ_P(gcdata[i], DEFAULT_GC_VALUE)))
       {
@@ -1482,7 +1482,7 @@ static XEN g_equalize_panes(XEN snd)
     equalize_all_panes(ss); 
   else 
     {
-      sp = get_sp(snd);
+      sp = get_sp(snd, NO_PLAYERS);
       if (sp)
 	equalize_sound_panes(get_global_state(), 
 			     sp,
@@ -1737,7 +1737,7 @@ static XEN g_abortq(void)
   return(XEN_FALSE);
 }
 
-snd_info *get_sp(XEN x_snd_n)
+snd_info *get_sp(XEN x_snd_n, int accept_player)
 {
   int snd_n, len;
   snd_state *ss;
@@ -1755,7 +1755,12 @@ snd_info *get_sp(XEN x_snd_n)
 	    return(ss->sounds[snd_n]);
 	  else return(NULL);
 	}
-      else return(player(snd_n));
+      else
+	{
+	  if (accept_player)
+	    return(player(snd_n));
+	  else return(NULL);
+	}
       return(NULL);
     }
   else
@@ -1782,7 +1787,7 @@ chan_info *get_cp(XEN x_snd_n, XEN x_chn_n, const char *caller)
 {
   snd_info *sp;
   int chn_n;
-  sp = get_sp(x_snd_n);
+  sp = get_sp(x_snd_n, NO_PLAYERS);
   if ((sp == NULL) || (!(sp->active)))
     {
       snd_no_such_sound_error(caller, x_snd_n); 
@@ -2119,7 +2124,7 @@ static XEN g_edit_header_dialog(XEN snd_n)
 {
   #define H_edit_header_dialog "(" S_edit_header_dialog " snd) opens the Edit Header dialog on sound snd"
   snd_info *sp; 
-  sp = get_sp(snd_n);
+  sp = get_sp(snd_n, NO_PLAYERS);
   if (sp == NULL)
     return(snd_no_such_sound_error(S_edit_header_dialog, snd_n));
   return(XEN_WRAP_WIDGET(edit_header(sp))); 
@@ -3449,7 +3454,7 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
                                     (lambda ()\
                                       (apropos (if (string? val) val (object->string val)))))))");
   XEN_EVAL_C_STRING("(read-set! keywords 'prefix)");
-  XEN_EVAL_C_STRING("(print-enable 'source)");  /* added 13-Feb-01 -- print closures with source  */
+  XEN_EVAL_C_STRING("(print-enable 'source)");
   XEN_EVAL_C_STRING("(defmacro declare args #f)"); /* for optimizer */
 
   /* from ice-9/r4rs.scm but with output to snd listener */
@@ -3468,12 +3473,11 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
                                                 (if (not (member new-path %load-path))\
 	                                            (set! %load-path (cons new-path %load-path))))))))");
 #endif
-  /* TODO: Ruby clm-print support (and snd-apropos?, and debugger for that matter?) 
-                format is Kernel.format or Kernel.sprintf
-		def clm_print(str, *args) 
-                  snd_print format(str, *args)
-                  end
-   */
+#if HAVE_RUBY
+  XEN_EVAL_C_STRING("def clm_print(str, *args)\n\
+                       snd_print format(str, *args)\n\
+                       end");
+#endif
 
 #if HAVE_STATIC_XM
 #if HAVE_GUILE

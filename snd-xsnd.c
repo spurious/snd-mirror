@@ -3033,9 +3033,11 @@ static XEN g_sound_widgets(XEN snd)
 widgets: (0)pane (1)name (2)control-panel (3)minibuffer (4)play-button (5)filter-env (6)unite-button (7)name-label (8)name-icon (9)sync-button"
   snd_info *sp;
   ASSERT_SOUND(S_sound_widgets, snd, 1);
-  sp = get_sp(snd);
+  sp = get_sp(snd, NO_PLAYERS);
   if (sp == NULL)
     return(snd_no_such_sound_error(S_sound_widgets, snd));
+  if (sp->sgx == NULL)
+    return(XEN_EMPTY_LIST);
   return(XEN_CONS(XEN_WRAP_WIDGET(w_snd_pane(sp)),
 	  XEN_CONS(XEN_WRAP_WIDGET(w_snd_name(sp)),
            XEN_CONS(XEN_WRAP_WIDGET(CONTROL_PANEL(sp)),

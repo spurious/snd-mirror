@@ -772,7 +772,7 @@ XEN eval_form_wrapper(void *data);
 XEN string_to_form(void *data);
 char *g_print_1(XEN obj);
 chan_info *get_cp(XEN snd_n, XEN chn_n, const char *caller);
-snd_info *get_sp(XEN snd_n);
+snd_info *get_sp(XEN snd_n, int accept_player);
 XEN g_c_make_sample_reader(snd_fd *fd);
 XEN g_call0(XEN proc, const char *caller);
 XEN g_call1(XEN proc, XEN arg, const char *caller);

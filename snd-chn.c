@@ -4149,7 +4149,7 @@ static XEN channel_get(XEN snd_n, XEN chn_n, int fld, char *caller)
     {
       if (XEN_TRUE_P(chn_n))
 	{
-	  sp = get_sp(snd_n);
+	  sp = get_sp(snd_n, NO_PLAYERS);
 	  if (sp == NULL)
 	    return(snd_no_such_sound_error(caller, snd_n));
 	  for (i = sp->nchans - 1; i >= 0; i--)
@@ -4309,7 +4309,7 @@ static XEN channel_set(XEN snd_n, XEN chn_n, XEN on, int fld, char *caller)
     }
   if (XEN_TRUE_P(chn_n))
     {
-      sp = get_sp(snd_n);
+      sp = get_sp(snd_n, NO_PLAYERS);
       if (sp == NULL) 
 	return(snd_no_such_sound_error(caller, snd_n));
       for (i = sp->nchans - 1; i >= 0; i--)
@@ -4520,22 +4520,34 @@ static XEN channel_set(XEN snd_n, XEN chn_n, XEN on, int fld, char *caller)
       return(C_TO_XEN_BOOLEAN(cp->show_mix_waveforms));
       break;
     case CP_TIME_GRAPH_STYLE:
-      cp->time_graph_style = XEN_TO_C_INT_OR_ELSE_WITH_CALLER(on, DEFAULT_GRAPH_STYLE, caller);
+      val = XEN_TO_C_INT_OR_ELSE_WITH_CALLER(on, DEFAULT_GRAPH_STYLE, caller);
+      if (!(GRAPH_STYLE_OK(val)))
+	mus_misc_error(caller, "unknown graph-style", on);
+      cp->time_graph_style = val;
       if (call_update_graph) update_graph(cp);
       return(C_TO_XEN_INT(cp->time_graph_style));
       break;
     case CP_LISP_GRAPH_STYLE:
-      cp->lisp_graph_style = XEN_TO_C_INT_OR_ELSE_WITH_CALLER(on, DEFAULT_GRAPH_STYLE, caller);
+      val = XEN_TO_C_INT_OR_ELSE_WITH_CALLER(on, DEFAULT_GRAPH_STYLE, caller);
+      if (!(GRAPH_STYLE_OK(val)))
+	mus_misc_error(caller, "unknown graph-style", on);
+      cp->lisp_graph_style = val;
       if (call_update_graph) update_graph(cp);
       return(C_TO_XEN_INT(cp->lisp_graph_style));
       break;
     case CP_TRANSFORM_GRAPH_STYLE:
-      cp->transform_graph_style = XEN_TO_C_INT_OR_ELSE_WITH_CALLER(on, DEFAULT_GRAPH_STYLE, caller);
+      val = XEN_TO_C_INT_OR_ELSE_WITH_CALLER(on, DEFAULT_GRAPH_STYLE, caller);
+      if (!(GRAPH_STYLE_OK(val)))
+	mus_misc_error(caller, "unknown graph-style", on);
+      cp->transform_graph_style = val;
       if (call_update_graph) update_graph(cp);
       return(C_TO_XEN_INT(cp->transform_graph_style));
       break;
     case CP_X_AXIS_STYLE:
       val = XEN_TO_C_INT_OR_ELSE_WITH_CALLER(on, DEFAULT_X_AXIS_STYLE, caller);
+      if ((val < X_AXIS_IN_SECONDS) ||
+	  (val > X_AXIS_IN_BEATS))
+	mus_misc_error(caller, "unknown x axis style", on);
       chans_x_axis_style(cp, (void *)(&val));
       return(C_TO_XEN_INT(cp->x_axis_style));
       break;
@@ -4545,7 +4557,11 @@ static XEN channel_set(XEN snd_n, XEN chn_n, XEN on, int fld, char *caller)
       return(C_TO_XEN_INT(cp->dot_size));
       break;
     case CP_SHOW_AXES:
-      cp->show_axes = XEN_TO_C_INT_OR_ELSE_WITH_CALLER(on, DEFAULT_SHOW_AXES, caller); 
+      val = XEN_TO_C_INT_OR_ELSE_WITH_CALLER(on, DEFAULT_SHOW_AXES, caller);
+      if ((val < SHOW_NO_AXES) ||
+	  (val > SHOW_X_AXIS))
+	mus_misc_error(caller, "unknown show-axes value", on);
+      cp->show_axes = val;
       update_graph(cp); 
       return(C_TO_XEN_INT(cp->show_axes));
       break;

@@ -1182,7 +1182,7 @@ inserts region data into snd's channel chn starting at 'start-samp'"
   rg = XEN_REGION_TO_C_INT(reg_n);
   if (!(region_ok(rg)))
     return(snd_no_such_region_error(S_insert_region, reg_n));
-  samp = XEN_TO_C_OFF_T_OR_ELSE(samp_n, 0);
+  samp = beg_to_sample(samp_n, S_insert_region);
   paste_region_1(rg, cp, FALSE, samp, S_insert_region);
   update_graph(cp);
   return(reg_n);
@@ -1336,7 +1336,7 @@ selection is used."
       if (XEN_TRUE_P(chn_n))
 	{
 	  /* all chans and all sync'd chans if sync not 0 */
-	  sp = get_sp(snd_n);
+	  sp = get_sp(snd_n, NO_PLAYERS);
 	  if (sp)
 	    {
 	      old_sync = sp->sync;
@@ -1436,6 +1436,7 @@ static XEN g_mix_region(XEN chn_samp_n, XEN reg_n, XEN snd_n, XEN chn_n)
 mixes region into snd's channel chn starting at chn-samp; returns new mix id."
 
   chan_info *cp;
+  off_t samp;
   int rg, id = -1;
   XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(chn_samp_n), chn_samp_n, XEN_ARG_1, S_mix_region, "a number");
   XEN_ASSERT_TYPE(XEN_REGION_IF_BOUND_P(reg_n), reg_n, XEN_ARG_2, S_mix_region, "a region id");
@@ -1444,10 +1445,11 @@ mixes region into snd's channel chn starting at chn-samp; returns new mix id."
   if (!(region_ok(rg)))
     return(snd_no_such_region_error(S_mix_region, reg_n));
   cp = get_cp(snd_n, chn_n, S_mix_region);
+  if (XEN_BOUND_P(chn_samp_n))
+    samp = beg_to_sample(chn_samp_n, S_mix_region);
+  else samp = CURSOR(cp);
   cp->state->catch_message = NULL;
-  id = paste_region_1(rg, cp, TRUE,
-		      XEN_TO_C_OFF_T_OR_ELSE(chn_samp_n, CURSOR(cp)),
-		      S_mix_region);
+  id = paste_region_1(rg, cp, TRUE, samp, S_mix_region);
   if (id == INVALID_MIX_ID)
     XEN_ERROR(MUS_MISC_ERROR,
 	      XEN_LIST_2(C_TO_XEN_STRING(S_mix_region),
@@ -1460,6 +1462,7 @@ static XEN g_region_sample(XEN samp_n, XEN reg_n, XEN chn_n)
   #define H_region_sample "(" S_region_sample " &optional (samp 0) (region 0) (chan 0)) -> region's sample at samp in chan"
 
   int rg, chan;
+  off_t samp;
   XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(samp_n), samp_n, XEN_ARG_1, S_region_sample, "a number");
   XEN_ASSERT_TYPE(XEN_REGION_IF_BOUND_P(reg_n), reg_n, XEN_ARG_2, S_region_sample, "a region id");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(chn_n), chn_n, XEN_ARG_3, S_region_sample, "an integer");
@@ -1467,8 +1470,9 @@ static XEN g_region_sample(XEN samp_n, XEN reg_n, XEN chn_n)
   rg = XEN_REGION_TO_C_INT(reg_n);
   if (!(region_ok(rg)))
     return(snd_no_such_region_error(S_region_sample, reg_n));
-  if (chan < region_chans(rg))
-    return(C_TO_XEN_DOUBLE(region_sample(rg, chan, XEN_TO_C_OFF_T_OR_ELSE(samp_n, 0))));
+  samp = beg_to_sample(samp_n, S_region_sample);
+  if ((chan >= 0) && (chan < region_chans(rg)))
+    return(C_TO_XEN_DOUBLE(region_sample(rg, chan, samp)));
   else return(snd_no_such_channel_error(S_region_sample, XEN_LIST_1(reg_n), chn_n));
 }
 
@@ -1489,14 +1493,14 @@ writes region's samples starting at beg for samps in channel chan to vct obj, re
   if (!(region_ok(reg)))
     return(snd_no_such_region_error(S_region_samples2vct, reg_n));
   chn = XEN_TO_C_INT_OR_ELSE(chn_n, 0);
-  if (chn >= region_chans(reg)) 
+  if ((chn < 0) || (chn >= region_chans(reg)))
     return(snd_no_such_channel_error(S_region_samples2vct, XEN_LIST_1(reg_n), chn_n));
   len = XEN_TO_C_OFF_T_OR_ELSE(num, 0);
   if (len == 0) len = region_len(reg);
   if (len > 0)
     {
-      beg = XEN_TO_C_OFF_T_OR_ELSE(beg_n, 0);
-      if ((beg < 0) || (beg >= region_len(reg))) 
+      beg = beg_to_sample(beg_n, S_region_samples2vct);
+      if (beg >= region_len(reg)) 
 	return(XEN_FALSE);
       if (v1)
 	data = v1->data;

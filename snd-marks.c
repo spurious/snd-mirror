@@ -1715,7 +1715,7 @@ static XEN g_restore_marks(XEN size, XEN snd, XEN chn, XEN marklist)
   char *str;
   int i, j, list_size, in_size, id;
   ASSERT_CHANNEL(S_restore_marks, snd, chn, 2);
-  sp = get_sp(snd);
+  sp = get_sp(snd, NO_PLAYERS);
   if (sp == NULL) 
     return(snd_no_such_sound_error(S_restore_marks, snd));
   cp = get_cp(snd, chn, S_restore_marks);
@@ -2062,7 +2062,14 @@ mark list is: channel given: (id id ...), snd given: ((id id) (id id ...)), neit
 	  {
 	    cp = get_cp(snd_n, chn_n, S_marks);
 	    if (XEN_INTEGER_P(pos_n)) 
-	      pos = XEN_TO_C_INT(pos_n); 
+	      {
+		pos = XEN_TO_C_INT(pos_n); 
+		if ((pos < -1) || (pos >= cp->edit_size) || (cp->edits[pos] == NULL))
+		  XEN_ERROR(NO_SUCH_EDIT,
+			    XEN_LIST_2(C_TO_XEN_STRING(S_marks),
+				       C_TO_XEN_INT(pos_n)));
+		if (pos == -1) pos = cp->edit_ctr;
+	      }
 	    else pos = cp->edit_ctr;
 	    ids = channel_marks(cp, pos);
 	    if (ids == NULL) return(XEN_EMPTY_LIST);
@@ -2077,7 +2084,7 @@ mark list is: channel given: (id id ...), snd given: ((id id) (id id ...)), neit
 	  }
 	else
 	  {
-	    sp = get_sp(snd_n);
+	    sp = get_sp(snd_n, NO_PLAYERS);
 	    if (sp == NULL) 
 	      return(snd_no_such_sound_error(S_marks, snd_n));
 	    for (i = sp->nchans - 1; i >= 0; i--)
@@ -2198,7 +2205,7 @@ static XEN g_save_marks(XEN snd_n)
   char *str;
   XEN res = XEN_FALSE;
   ASSERT_SOUND(S_save_marks, snd_n, 1);
-  sp = get_sp(snd_n);
+  sp = get_sp(snd_n, NO_PLAYERS);
   if (sp == NULL) 
     return(snd_no_such_sound_error(S_save_marks, snd_n));
   str = save_marks(sp);

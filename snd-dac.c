@@ -2109,7 +2109,7 @@ static XEN g_play_1(XEN samp_n, XEN snd_n, XEN chn_n, int background, int syncd,
       if (samp < 0) XEN_ERROR(NO_SUCH_SAMPLE,
 			      XEN_LIST_2(C_TO_XEN_STRING(caller),
 					 samp_n));
-      sp = get_sp(snd_n);
+      sp = get_sp(snd_n, PLAYERS_OK);
       if (sp == NULL) 
 	return(snd_no_such_sound_error(caller, snd_n));
       if ((syncd) && (sp->sync != 0))
@@ -2191,7 +2191,7 @@ static XEN g_stop_playing(XEN snd_n)
   #define H_stop_playing "(" S_stop_playing " &optional snd) stops play in progress"
   snd_info *sp = NULL;
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(snd_n), snd_n, XEN_ARG_1, S_stop_playing, "an integer");
-  if (XEN_INTEGER_P(snd_n)) sp = get_sp(snd_n);
+  if (XEN_INTEGER_P(snd_n)) sp = get_sp(snd_n, PLAYERS_OK);
   if (sp) 
     stop_playing_sound(sp); 
   else stop_playing_all_sounds();
@@ -2292,7 +2292,7 @@ static XEN g_make_player(XEN snd, XEN chn)
   snd_info *true_sp, *new_sp;
   chan_info *cp;
   ASSERT_CHANNEL(S_make_player, snd, chn, 1);
-  true_sp = get_sp(snd);
+  true_sp = get_sp(snd, NO_PLAYERS);
   if (true_sp == NULL) 
     return(snd_no_such_sound_error(S_make_player, snd));
   cp = get_cp(snd, chn, S_make_player);
@@ -2332,11 +2332,11 @@ static XEN g_player_home(XEN snd_chn)
 
 static XEN g_add_player(XEN snd_chn, XEN start, XEN end, XEN edpos)
 {
-  #define H_add_player "(" S_add_player " &optional player start end pos) starts playing snd's channel chn"
+  #define H_add_player "(" S_add_player " &optional player start end pos) snd's channel chn to the play list"
   snd_info *sp = NULL;
   chan_info *cp;
   dac_info *dp = NULL;
-  int index;
+  int index, i;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(snd_chn), snd_chn, XEN_ARG_1, S_add_player, "an integer");
   XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(start), start, XEN_ARG_2, S_add_player, "a number");
   XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(end), end, XEN_ARG_3, S_add_player, "a number");
@@ -2344,6 +2344,14 @@ static XEN g_add_player(XEN snd_chn, XEN start, XEN end, XEN edpos)
   if ((index > 0) && (index < players_size)) sp = players[index];
   if (sp)
     {
+      if (play_list)
+	for (i = 0; i < dac_max_sounds; i++)
+	  if ((play_list[i]) && 
+	      (sp == (play_list[i]->sp)))
+	    XEN_ERROR(MUS_MISC_ERROR,
+		      XEN_LIST_3(C_TO_XEN_STRING(S_add_player),
+				 C_TO_XEN_STRING("player is already in the play list"),
+				 snd_chn));
       cp = sp->chans[player_chans[index]];
       dp = add_channel_to_play_list(cp, sp,
 				    XEN_TO_C_OFF_T_OR_ELSE(start, 0),
@@ -2359,16 +2367,13 @@ static XEN g_add_player(XEN snd_chn, XEN start, XEN end, XEN edpos)
 
 static XEN g_start_playing(XEN Chans, XEN Srate, XEN In_Background)
 {
-
-  /* need some way to distinguish XEN from C vars that represent the same thing -- trying Caps here as an experiment */
-
   #define H_start_playing "(" S_start_playing " &optional chans srate in-background)"
   int chans, srate;
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(Chans), Chans, XEN_ARG_1, S_start_playing, "an integer");
   XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(Srate), Srate, XEN_ARG_2, S_start_playing, "a number");
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(In_Background), In_Background, XEN_ARG_3, S_start_playing, "a boolean");
   chans = XEN_TO_C_INT_OR_ELSE(Chans, 1);
-  if (chans <= 0)
+  if ((chans <= 0) || (chans > 256))
     mus_misc_error(S_start_playing, _("invalid chans arg"), Chans);
   srate = XEN_TO_C_INT_OR_ELSE(Srate, 44100);
   if (srate <= 0)

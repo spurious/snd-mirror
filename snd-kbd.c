@@ -1835,7 +1835,7 @@ returned as a string; otherwise it is evaluated first as Scheme code"
 		  callback, XEN_ARG_2, S_prompt_in_minibuffer, "#f or a procedure");
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(raw), raw, XEN_ARG_4, S_prompt_in_minibuffer, "a boolean");
   ASSERT_SOUND(S_prompt_in_minibuffer, snd_n, 3);
-  sp = get_sp(snd_n);
+  sp = get_sp(snd_n, NO_PLAYERS);
   if (sp == NULL)
     return(snd_no_such_sound_error(S_prompt_in_minibuffer, snd_n));
   if (XEN_PROCEDURE_P(sp->prompt_callback))
@@ -1869,7 +1869,7 @@ static XEN g_report_in_minibuffer(XEN msg, XEN snd_n)
   snd_info *sp;
   XEN_ASSERT_TYPE(XEN_STRING_P(msg), msg, XEN_ARG_1, S_report_in_minibuffer, "a string");
   ASSERT_SOUND(S_report_in_minibuffer, snd_n, 2);
-  sp = get_sp(snd_n);
+  sp = get_sp(snd_n, NO_PLAYERS);
   if (sp == NULL)
     return(snd_no_such_sound_error(S_report_in_minibuffer, snd_n));
   report_in_minibuffer(sp, XEN_TO_C_STRING(msg));
@@ -1883,7 +1883,7 @@ static XEN g_append_to_minibuffer(XEN msg, XEN snd_n)
   char *str1 = NULL, *expr_str;
   XEN_ASSERT_TYPE(XEN_STRING_P(msg), msg, XEN_ARG_1, S_append_to_minibuffer, "a string");
   ASSERT_SOUND(S_append_to_minibuffer, snd_n, 2);
-  sp = get_sp(snd_n);
+  sp = get_sp(snd_n, NO_PLAYERS);
   if (sp == NULL)
     return(snd_no_such_sound_error(S_append_to_minibuffer, snd_n));
   expr_str = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));

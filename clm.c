@@ -52,7 +52,7 @@ enum {MUS_OSCIL, MUS_SUM_OF_COSINES, MUS_DELAY, MUS_COMB, MUS_NOTCH, MUS_ALL_PAS
       MUS_SAMPLE2FILE, MUS_FRAME2FILE, MUS_MIXER, MUS_PHASE_VOCODER,
       MUS_INITIAL_GEN_TAG};
 
-enum {MUS_NOT_SPECIAL, MUS_SIMPLE_FILTER, MUS_FULL_FILTER, MUS_OUTPUT, MUS_INPUT};
+enum {MUS_NOT_SPECIAL, MUS_SIMPLE_FILTER, MUS_FULL_FILTER, MUS_OUTPUT, MUS_INPUT, MUS_DELAY_LINE};
 
 static int mus_class_tag = MUS_INITIAL_GEN_TAG;
 int mus_make_class_tag(void) {return(mus_class_tag++);}
@@ -1186,6 +1186,11 @@ static Float *delay_set_data(mus_any *ptr, Float *val)
   return(val);
 }
 
+int mus_delay_line_p(mus_any *gen)
+{
+  return((gen) && ((gen->core)->extended_type == MUS_DELAY_LINE));
+}
+
 static mus_any_class DELAY_CLASS = {
   MUS_DELAY,
   "delay",
@@ -1200,7 +1205,7 @@ static mus_any_class DELAY_CLASS = {
   0, 0, 0, 0, 0, 0, /* freq phase scaler */
   0, 0,
   &mus_delay,
-  MUS_FULL_FILTER, 
+  MUS_DELAY_LINE,
   NULL, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0
@@ -1264,7 +1269,7 @@ static mus_any_class COMB_CLASS = {
   &delay_fb,
   &set_delay_fb,
   &mus_comb,
-  MUS_FULL_FILTER, 
+  MUS_DELAY_LINE,
   NULL, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0
@@ -1301,7 +1306,7 @@ static mus_any_class NOTCH_CLASS = {
   &set_delay_scaler,
   0, 0,
   &mus_notch,
-  MUS_FULL_FILTER, 
+  MUS_DELAY_LINE,
   NULL, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0
@@ -1370,7 +1375,7 @@ static mus_any_class ALL_PASS_CLASS = {
   &delay_fb,
   &set_delay_fb,
   &mus_all_pass,
-  MUS_FULL_FILTER, 
+  MUS_DELAY_LINE,
   NULL, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0
@@ -3036,7 +3041,8 @@ Float *mus_make_fir_coeffs(int order, Float *envl, Float *aa)
 
 void mus_clear_filter_state(mus_any *gen)
 {
-  if ((gen->core)->extended_type == MUS_FULL_FILTER)
+  if (((gen->core)->extended_type == MUS_FULL_FILTER) ||
+      ((gen->core)->extended_type == MUS_DELAY_LINE))
     {
       int len;
       Float *state;

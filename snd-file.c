@@ -1238,7 +1238,7 @@ snd_info *snd_update(snd_state *ss, snd_info *sp)
   sp = snd_update_1(ss, sp, sp->filename);
   if (sp)
     report_in_minibuffer(sp, _("updated %s"), sp->short_filename);
-  else snd_error(_("update %s failed!"), sp->filename);
+  else snd_error(_("update failed!"));
   set_widget_size(MAIN_SHELL(ss), app_x, app_y);
   return(sp);
 }
@@ -2315,7 +2315,7 @@ list: (sustain-start sustain-end release-start release-end baseNote detune)"
   int *res;
   snd_info *sp;
   ASSERT_SOUND(S_sound_loop_info, snd, 1);
-  sp = get_sp(snd);
+  sp = get_sp(snd, NO_PLAYERS);
   if (sp == NULL)
     return(snd_no_such_sound_error(S_sound_loop_info, snd));
   res = sp->hdr->loops;
@@ -2343,9 +2343,9 @@ static XEN g_set_sound_loop_info(XEN snd, XEN vals)
     {
       vals = snd;
       len = XEN_LIST_LENGTH(vals); 
-      sp = get_sp(XEN_UNDEFINED);
+      sp = get_sp(XEN_UNDEFINED, NO_PLAYERS);
     }
-  else sp = get_sp(snd);
+  else sp = get_sp(snd, NO_PLAYERS);
   if (sp == NULL) 
     return(snd_no_such_sound_error(S_setB S_sound_loop_info, snd));
   if (sp->read_only)
@@ -2438,7 +2438,7 @@ each inner list has the form: (name start loopstart loopend)"
   int i, lim;
   snd_info *sp;
   ASSERT_SOUND(S_soundfont_info, snd, 1);
-  sp = get_sp(snd);
+  sp = get_sp(snd, NO_PLAYERS);
   if (sp == NULL) 
     return(snd_no_such_sound_error(S_soundfont_info, snd));
   mus_header_read(sp->filename);

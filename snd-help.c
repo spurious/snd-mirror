@@ -272,13 +272,14 @@ void news_help(snd_state *ss)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+1-Mar:   moog.rb.\n\
+         make-power-env and power-env in env.scm.\n\
 28-Feb:  new-effects.scm bugfixes from Michael Scholz.\n\
 21-Feb:  convolve-arrays renamed vct-convolve!.\n\
 20-Feb:  removed transform-samples and region-samples.\n\
 17-Feb:  snd 6.6.\n\
 10-Feb:  removed click-for-help option.\n\
 7-Feb:   German translation (po/de.po) thanks to Michael Scholz.\n\
-30-Jan:  gettext changes\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*: \n'", features, "\n\n",

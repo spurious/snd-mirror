@@ -701,6 +701,7 @@ static XEN g_insert_selection(XEN beg, XEN snd, XEN chn)
   #define H_insert_selection "(" S_insert_selection " beg snd chn) inserts the currently selected portion start at beg"
   chan_info *cp;
   snd_state *ss;
+  off_t samp;
   int err = MUS_NO_ERROR;
   if (selection_is_active())
     {
@@ -708,9 +709,8 @@ static XEN g_insert_selection(XEN beg, XEN snd, XEN chn)
       XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(beg), beg, XEN_ARG_1, S_insert_selection, "a number");
       ss = get_global_state();
       cp = get_cp(snd, chn, S_insert_selection);
-      err = insert_selection(ss, cp, 
-			     XEN_TO_C_OFF_T_OR_ELSE(beg, 0), 
-			     S_insert_selection);
+      samp = beg_to_sample(beg, S_insert_selection);
+      err = insert_selection(ss, cp, samp, S_insert_selection);
       return(C_TO_XEN_BOOLEAN((err == MUS_NO_ERROR)));
     }
   return(snd_no_active_selection_error(S_insert_selection));

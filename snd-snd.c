@@ -133,6 +133,9 @@ static env_state *make_env_state(chan_info *cp, off_t samples)
 	      if (abs(samples - old_samples) < (samples / 2))
 		{
 		  start = edit_changes_begin_at(cp);
+		  /* as-one-edit backs up edit records without resetting any beg/len values.
+		   *   but this is tricky stuff -- not worth pushing...
+		   */
 		  end = edit_changes_end_at(cp);
 		  if (abs(end - start) < (samples / 2))
 		    {
@@ -976,8 +979,6 @@ env_info *make_mix_input_amp_env(chan_info *cp)
     }
   return(NULL);
 }
-
-/* TODO: extend amp_env_insert to subsamp != 1, and not zero insertions */
 
 void amp_env_insert_zeros(chan_info *cp, off_t beg, off_t num, int pos)
 {
@@ -1829,7 +1830,7 @@ static XEN g_sound_p(XEN snd_n)
 {
   #define H_sound_p "(" S_sound_p " &optional (index 0)) -> #t if sound associated with index is active (accessible)"
   snd_info *sp;
-  sp = get_sp(snd_n);
+  sp = get_sp(snd_n, PLAYERS_OK);
   return(C_TO_XEN_BOOLEAN((sp) && snd_ok(sp)));
 }
 
@@ -1901,7 +1902,7 @@ static XEN g_bomb(XEN snd, XEN on)
   #define H_bomb "(" S_bomb " &optional snd (on #t)) displays (or erases if on=#f) the bomb icon"
   snd_info *sp;
   ASSERT_SOUND(S_bomb, snd, 1);
-  sp = get_sp(snd);
+  sp = get_sp(snd, NO_PLAYERS);
   if (sp == NULL)
     return(snd_no_such_sound_error(S_bomb, snd));
   x_bomb(sp, XEN_TO_C_BOOLEAN_OR_TRUE(on));
@@ -1935,7 +1936,7 @@ static XEN sound_get(XEN snd_n, int fld, char *caller)
       return(res);
     }
   ASSERT_SOUND(caller, snd_n, 1);
-  sp = get_sp(snd_n);
+  sp = get_sp(snd_n, PLAYERS_OK);
   if (sp == NULL)
     return(snd_no_such_sound_error(caller, snd_n));
   switch (fld)
@@ -1953,30 +1954,31 @@ static XEN sound_get(XEN snd_n, int fld, char *caller)
     case SP_DATA_FORMAT:         return(C_TO_XEN_INT((sp->hdr)->format));              break;
     case SP_HEADER_TYPE:         return(C_TO_XEN_INT((sp->hdr)->type));                break;
     case SP_DATA_LOCATION:       return(C_TO_XEN_OFF_T((sp->hdr)->data_location));     break;
-    case SP_SAVE_CONTROLS:       save_controls(sp);                                    break;
-    case SP_RESTORE_CONTROLS:    restore_controls(sp);                                 break;
-    case SP_RESET_CONTROLS:      reset_controls(sp);                                   break;
+    case SP_SAVE_CONTROLS:       if (!(IS_PLAYER(sp))) save_controls(sp);              break;
+    case SP_RESTORE_CONTROLS:    if (!(IS_PLAYER(sp))) restore_controls(sp);           break;
+    case SP_RESET_CONTROLS:      if (!(IS_PLAYER(sp))) reset_controls(sp);             break;
     case SP_SELECTED_CHANNEL:    if (sp->selected_channel != NO_SELECTION) return(C_TO_XEN_INT(sp->selected_channel)); else return(XEN_FALSE); break;
     case SP_FILE_NAME:           return(C_TO_XEN_STRING(sp->filename));                break;
     case SP_SHORT_FILE_NAME:     return(C_TO_XEN_STRING(sp->short_filename));          break;
-    case SP_CLOSE:               snd_close_file(sp, sp->state);                        break;
-    case SP_SAVE:                save_edits(sp, NULL);                                 break;
-    case SP_UPDATE:              sp = snd_update(sp->state, sp); if (sp) return(C_TO_XEN_INT(sp->index)); break;
+    case SP_CLOSE:               if (!(IS_PLAYER(sp))) snd_close_file(sp, sp->state);  break;
+    case SP_SAVE:                if (!(IS_PLAYER(sp))) save_edits(sp, NULL);           break;
+    case SP_UPDATE:              if (!(IS_PLAYER(sp))) {sp = snd_update(sp->state, sp); if (sp) return(C_TO_XEN_INT(sp->index));} break;
     case SP_CURSOR_FOLLOWS_PLAY: return(C_TO_XEN_BOOLEAN(sp->cursor_follows_play));    break;
-    case SP_SHOW_CONTROLS:       return(C_TO_XEN_BOOLEAN(control_panel_open(sp)));     break;
+    case SP_SHOW_CONTROLS:       if (!(IS_PLAYER(sp))) return(C_TO_XEN_BOOLEAN(control_panel_open(sp))); break;
     case SP_SPEED_TONES:         return(C_TO_XEN_INT(sp->speed_control_tones));        break;
     case SP_SPEED_STYLE:         return(C_TO_XEN_INT(sp->speed_control_style));        break;
     case SP_COMMENT:             return(C_TO_XEN_STRING(sp->hdr->comment));            break;
-
     case SP_PROPERTIES:
-      if (!(XEN_VECTOR_P(sp->properties)))
+      if (!(IS_PLAYER(sp))) 
 	{
-	  sp->properties = XEN_MAKE_VECTOR(1, XEN_EMPTY_LIST);
-	  snd_protect(sp->properties);
+	  if (!(XEN_VECTOR_P(sp->properties)))
+	    {
+	      sp->properties = XEN_MAKE_VECTOR(1, XEN_EMPTY_LIST);
+	      snd_protect(sp->properties);
+	    }
+	  return(XEN_VECTOR_REF(sp->properties, 0));
 	}
-      return(XEN_VECTOR_REF(sp->properties, 0));
       break;
-
     case SP_AMP:                 return(C_TO_XEN_DOUBLE(sp->amp_control));             break;
     case SP_CONTRAST:            return(C_TO_XEN_DOUBLE(sp->contrast_control));        break;
     case SP_CONTRAST_AMP:        return(C_TO_XEN_DOUBLE(sp->contrast_control_amp));    break;
@@ -2030,7 +2032,7 @@ static XEN sound_set(XEN snd_n, XEN val, int fld, char *caller)
       return(val);
     }
   ASSERT_SOUND(caller, snd_n, 2); /* 2 from caller's point of view */
-  sp = get_sp(snd_n);
+  sp = get_sp(snd_n, PLAYERS_OK);
   if (sp == NULL) 
     return(snd_no_such_sound_error(caller, snd_n));
   ss = sp->state;
@@ -2042,8 +2044,11 @@ static XEN sound_set(XEN snd_n, XEN val, int fld, char *caller)
       else syncb(sp, XEN_TO_C_BOOLEAN(val));
       break;
     case SP_READ_ONLY:
-      sp->read_only = XEN_TO_C_BOOLEAN_OR_TRUE(val); 
-      snd_file_lock_icon(sp, sp->read_only); 
+      if (!(IS_PLAYER(sp)))
+	{
+	  sp->read_only = XEN_TO_C_BOOLEAN_OR_TRUE(val); 
+	  snd_file_lock_icon(sp, sp->read_only); 
+	}
       break;
     case SP_EXPANDING:
       toggle_expand_button(sp, XEN_TO_C_BOOLEAN_OR_TRUE(val));
@@ -2067,9 +2072,12 @@ static XEN sound_set(XEN snd_n, XEN val, int fld, char *caller)
       sp->cursor_follows_play = XEN_TO_C_BOOLEAN_OR_TRUE(val);
       break;
     case SP_SHOW_CONTROLS:
-      if (XEN_TO_C_BOOLEAN_OR_TRUE(val))
-	sound_show_ctrls(sp); 
-      else sound_hide_ctrls(sp); 
+      if (!(IS_PLAYER(sp))) 
+	{
+	  if (XEN_TO_C_BOOLEAN_OR_TRUE(val))
+	    sound_show_ctrls(sp); 
+	  else sound_hide_ctrls(sp); 
+	}
       break;
     case SP_SPEED_TONES:
       sp->speed_control_tones = XEN_TO_C_INT(val);
@@ -2080,61 +2088,90 @@ static XEN sound_set(XEN snd_n, XEN val, int fld, char *caller)
       sp->speed_control_style = mus_iclamp(0, XEN_TO_C_INT(val), MAX_SPEED_CONTROL_STYLE);
       break;
     case SP_SRATE:
-      ival = XEN_TO_C_INT(val);
-      mus_sound_set_srate(sp->filename, ival);
-      sp->hdr->srate = ival;
-      snd_update(ss, sp); 
-      break;
-    case SP_NCHANS: 
-      ival = XEN_TO_C_INT(val);
-      mus_sound_set_chans(sp->filename, ival);
-      sp->hdr->chans = ival;
-      snd_update(ss, sp); 
-      break;
-    case SP_DATA_FORMAT:
-      ival = XEN_TO_C_INT(val);
-      if (MUS_DATA_FORMAT_OK(ival))
+      if (!(IS_PLAYER(sp))) 
 	{
-	  old_format = sp->hdr->format;
-	  mus_sound_set_data_format(sp->filename, ival);
-	  sp->hdr->format = ival;
-	  if (mus_bytes_per_sample(old_format) != mus_bytes_per_sample(ival))
-	    {
-	      sp->hdr->samples = (sp->hdr->samples * mus_bytes_per_sample(old_format)) / mus_bytes_per_sample(ival);
-	      mus_sound_set_samples(sp->filename, sp->hdr->samples);
-	    }
-	  snd_update(ss, sp);
-	}
-      else mus_misc_error(S_setB S_data_format, "unknown data format", val);
-      break;
-    case SP_HEADER_TYPE:
-      ival = XEN_TO_C_INT(val);
-      if (MUS_HEADER_TYPE_OK(ival))
-	{
-	  mus_sound_set_header_type(sp->filename, ival);
+	  ival = XEN_TO_C_INT(val);
+	  if ((ival <= 0) || (ival > 100000000))
+	    mus_misc_error(S_setB S_srate, "impossible srate", val);
+	  mus_sound_set_srate(sp->filename, ival);
+	  sp->hdr->srate = ival;
 	  snd_update(ss, sp); 
 	}
-      else mus_misc_error(S_setB S_header_type, "unknown header type", val);
+      break;
+    case SP_NCHANS: 
+      if (!(IS_PLAYER(sp))) 
+	{
+	  ival = XEN_TO_C_INT(val);
+	  if ((ival <= 0) || (ival > 256))
+	    mus_misc_error(S_setB S_channels, "impossible channel number", val);
+	  mus_sound_set_chans(sp->filename, ival);
+	  sp->hdr->chans = ival;
+	  snd_update(ss, sp); 
+	}
+      break;
+    case SP_DATA_FORMAT:
+      if (!(IS_PLAYER(sp))) 
+	{
+	  ival = XEN_TO_C_INT(val);
+	  if (MUS_DATA_FORMAT_OK(ival))
+	    {
+	      old_format = sp->hdr->format;
+	      mus_sound_set_data_format(sp->filename, ival);
+	      sp->hdr->format = ival;
+	      if (mus_bytes_per_sample(old_format) != mus_bytes_per_sample(ival))
+		{
+		  sp->hdr->samples = (sp->hdr->samples * mus_bytes_per_sample(old_format)) / mus_bytes_per_sample(ival);
+		  mus_sound_set_samples(sp->filename, sp->hdr->samples);
+		}
+	      snd_update(ss, sp);
+	    }
+	  else mus_misc_error(S_setB S_data_format, "unknown data format", val);
+	}
+      break;
+    case SP_HEADER_TYPE:
+      if (!(IS_PLAYER(sp))) 
+	{
+	  ival = XEN_TO_C_INT(val);
+	  if (MUS_HEADER_TYPE_OK(ival))
+	    {
+	      mus_sound_set_header_type(sp->filename, ival);
+	      snd_update(ss, sp); 
+	    }
+	  else mus_misc_error(S_setB S_header_type, "unknown header type", val);
+	}
       break;
     case SP_DATA_LOCATION:  
-      mus_sound_set_data_location(sp->filename, XEN_TO_C_OFF_T(val));
-      snd_update(ss, sp); 
-      break;
-    case SP_COMMENT:      
-      if (sp->hdr->comment) FREE(sp->hdr->comment);
-      sp->hdr->comment = copy_string(XEN_TO_C_STRING(val));
-      break;
-
-    case SP_PROPERTIES:
-      if (!(XEN_VECTOR_P(sp->properties)))
+      if (!(IS_PLAYER(sp))) 
 	{
-	  sp->properties = XEN_MAKE_VECTOR(1, XEN_EMPTY_LIST);
-	  snd_protect(sp->properties);
+	  off_t loc;
+	  loc = XEN_TO_C_OFF_T(val);
+	  if (loc >= 0)
+	    {
+	      mus_sound_set_data_location(sp->filename, loc);
+	      snd_update(ss, sp); 
+	    }
+	  else mus_misc_error(S_setB S_data_location, "impossible location", val);
 	}
-      XEN_VECTOR_SET(sp->properties, 0, val);
-      return(XEN_VECTOR_REF(sp->properties, 0));
       break;
-
+    case SP_COMMENT:
+      if (!(IS_PLAYER(sp))) 
+	{
+	  if (sp->hdr->comment) FREE(sp->hdr->comment);
+	  sp->hdr->comment = copy_string(XEN_TO_C_STRING(val));
+	}
+      break;
+    case SP_PROPERTIES:
+      if (!(IS_PLAYER(sp)))
+	{
+	  if (!(XEN_VECTOR_P(sp->properties)))
+	    {
+	      sp->properties = XEN_MAKE_VECTOR(1, XEN_EMPTY_LIST);
+	      snd_protect(sp->properties);
+	    }
+	  XEN_VECTOR_SET(sp->properties, 0, val);
+	  return(XEN_VECTOR_REF(sp->properties, 0));
+	}
+      break;
     case SP_AMP:           
       fval = XEN_TO_C_DOUBLE_WITH_CALLER(val, caller);
       if (fval >= 0.0) set_snd_amp(sp, fval); 
@@ -2214,7 +2251,6 @@ static XEN sound_set(XEN snd_n, XEN val, int fld, char *caller)
       sp->reverb_control_decay = XEN_TO_C_DOUBLE_WITH_CALLER(val, caller);
       break;
     }
-
   return(val);
 }
 
@@ -2298,8 +2334,12 @@ static XEN g_comment(XEN snd_n)
 static XEN g_set_comment(XEN snd_n, XEN val) 
 {
   if (XEN_NOT_BOUND_P(val))
-    return(sound_set(XEN_UNDEFINED, snd_n, SP_COMMENT, S_setB S_comment));
-  else return(sound_set(snd_n, val, SP_COMMENT, S_setB S_comment));
+    {
+      XEN_ASSERT_TYPE(XEN_STRING_P(snd_n), snd_n, XEN_ARG_1, S_setB S_comment, "a string");
+      return(sound_set(XEN_UNDEFINED, snd_n, SP_COMMENT, S_setB S_comment));
+    }
+  XEN_ASSERT_TYPE(XEN_STRING_P(val), val, XEN_ARG_2, S_setB S_comment, "a string");
+  return(sound_set(snd_n, val, SP_COMMENT, S_setB S_comment));
 }
 
 
@@ -2359,7 +2399,7 @@ static XEN g_channel_style(XEN snd)
   if (XEN_NOT_BOUND_P(snd))
     return(C_TO_XEN_INT(channel_style(get_global_state())));
   ASSERT_SOUND(S_channel_style, snd, 1);
-  sp = get_sp(snd);
+  sp = get_sp(snd, NO_PLAYERS);
   if (sp == NULL) 
     return(snd_no_such_sound_error(S_channel_style, snd));
   return(C_TO_XEN_INT(sp->channel_style));
@@ -2387,7 +2427,7 @@ As a global (if the 'snd' arg is omitted), it is the default setting for each so
       return(C_TO_XEN_INT(channel_style(ss)));
     }
   ASSERT_SOUND(S_setB S_channel_style, snd, 2);
-  sp = get_sp(snd);
+  sp = get_sp(snd, NO_PLAYERS);
   if (sp == NULL) 
     return(snd_no_such_sound_error(S_setB S_channel_style, snd));
   set_sound_channel_style(sp, new_style);
@@ -2561,7 +2601,7 @@ static XEN g_set_selected_channel(XEN snd_n, XEN chn_n)
   else
     {
       ASSERT_SOUND(S_setB S_selected_channel, snd_n, 1); 
-      sp = get_sp(snd_n);
+      sp = get_sp(snd_n, NO_PLAYERS);
       if (sp == NULL) 
 	return(snd_no_such_sound_error(S_setB S_selected_channel, snd_n));
       if (XEN_FALSE_P(chn_n))
@@ -2623,7 +2663,7 @@ static XEN g_revert_sound(XEN index)
 			 index,
 			 C_TO_XEN_STRING("can't revert an underlying mix edit except through the outer (mixed-into) sound")));
   ASSERT_SOUND(S_revert_sound, index, 1);
-  sp = get_sp(index);
+  sp = get_sp(index, NO_PLAYERS);
   if (sp == NULL) 
     return(snd_no_such_sound_error(S_revert_sound, index));
   for (i = 0; i < sp->nchans; i++) 
@@ -2745,7 +2785,7 @@ Any argument can be #f which causes its value to be taken from the sound being s
   char *fname = NULL;
   XEN_ASSERT_TYPE(XEN_STRING_P(newfile), newfile, XEN_ARG_1, S_save_sound_as, "a string");
   ASSERT_SOUND(S_save_sound_as, index, 2);
-  sp = get_sp(index);
+  sp = get_sp(index, NO_PLAYERS);
   if (sp == NULL) 
     return(snd_no_such_sound_error(S_save_sound_as, index));
   XEN_ASSERT_TYPE(XEN_INTEGER_OR_BOOLEAN_IF_BOUND_P(type), type, XEN_ARG_3, S_save_sound_as, "an integer (a header type id)");
@@ -3163,13 +3203,29 @@ WITH_REVERSED_ARGS(g_set_reverb_control_decay_reversed, g_set_reverb_control_dec
 static XEN g_set_filter_control_env(XEN edata, XEN snd_n)
 {
   snd_info *sp;
+  env *e;
+  int i;
   ASSERT_SOUND(S_setB S_filter_control_env, snd_n, 2);
-  sp = get_sp(snd_n);
+  sp = get_sp(snd_n, PLAYERS_OK);
   if (sp == NULL)
     return(snd_no_such_sound_error(S_setB S_filter_control_env, snd_n));
   if (sp->filter_control_env) sp->filter_control_env = free_env(sp->filter_control_env);  /* set to null in case get_env throws error */
-  sp->filter_control_env = get_env(edata, S_setB S_filter_control_env);
-  filter_env_changed(sp, sp->filter_control_env);
+  e = get_env(edata, S_setB S_filter_control_env);
+  if (e)
+    {
+      for (i = 0; i < e->pts; i++)
+	if ((e->data[i * 2 + 1] > 1.0) ||
+	    (e->data[i * 2 + 1] < 0.0))
+	  {
+	    free_env(e);
+	    XEN_ERROR(MUS_MISC_ERROR,
+		      XEN_LIST_3(C_TO_XEN_STRING(S_setB S_filter_control_env),
+				 C_TO_XEN_STRING("y values out of range"),
+				 edata));
+	  }
+      sp->filter_control_env = e;
+      filter_env_changed(sp, sp->filter_control_env);
+    }
   return(edata);
 }
 
@@ -3178,7 +3234,7 @@ static XEN g_filter_control_env(XEN snd_n)
   #define H_filter_control_env "(" S_filter_control_env " &optional snd) -> snd's filter envelope (in the control panel)"
   snd_info *sp = NULL;
   ASSERT_SOUND(S_filter_control_env, snd_n, 1);
-  sp = get_sp(snd_n);
+  sp = get_sp(snd_n, PLAYERS_OK);
   if (sp == NULL)
     return(snd_no_such_sound_error(S_filter_control_env, snd_n));
   return(env_to_xen(sp->filter_control_env)); 
@@ -3198,7 +3254,7 @@ The 'choices' are 0 (apply to sound), 1 (apply to channel), and 2 (apply to sele
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(choice), choice, XEN_ARG_2, S_apply_controls, "an integer");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(beg), beg, XEN_ARG_3, S_apply_controls, "an integer");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(dur), dur, XEN_ARG_4, S_apply_controls, "an integer");
-  sp = get_sp(snd);
+  sp = get_sp(snd, PLAYERS_OK);
   if (sp) 
     {
       ss = sp->state;
@@ -3219,6 +3275,7 @@ static XEN g_peak_env_info(XEN snd, XEN chn, XEN pos)
   #define H_peak_env_info "(" S_peak_env_info " snd chn pos) -> '(complete ymin ymax)"
   chan_info *cp;
   env_info *ep;
+  int edpos;
   chan_context *cgx;
   ASSERT_CHANNEL(S_peak_env_info, snd, chn, 1);
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(pos), pos, XEN_ARG_3, S_peak_env_info, "an integer");
@@ -3226,7 +3283,13 @@ static XEN g_peak_env_info(XEN snd, XEN chn, XEN pos)
   cgx = cp->cgx;
   if ((!cgx) || (!(cp->amp_envs))) 
     return(XEN_EMPTY_LIST);
-  ep = cp->amp_envs[XEN_TO_C_INT_OR_ELSE(pos, cp->edit_ctr)];
+  edpos = XEN_TO_C_INT_OR_ELSE(pos, cp->edit_ctr);
+  if ((edpos < -1) || (edpos >= cp->edit_size) || (cp->edits[edpos] == NULL))
+    XEN_ERROR(NO_SUCH_EDIT,
+	      XEN_LIST_2(C_TO_XEN_STRING(S_peak_env_info),
+			 C_TO_XEN_INT(pos)));
+  if (edpos == -1) edpos = cp->edit_ctr;
+  ep = cp->amp_envs[edpos];
   if (ep)
     return(XEN_LIST_3(C_TO_XEN_BOOLEAN(ep->completed),
 		      C_TO_XEN_DOUBLE(MUS_SAMPLE_TO_FLOAT(ep->fmin)),
@@ -3374,6 +3437,7 @@ static XEN g_read_peak_env_info_file(XEN snd, XEN chn, XEN name)
   chan_info *cp;
   int err = 0;
   char *fullname;
+  XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ARG_3, S_read_peak_env_info_file, "a string");
   ASSERT_CHANNEL(S_read_peak_env_info_file, snd, chn, 1);
   cp = get_cp(snd, chn, S_read_peak_env_info_file);
   fullname = mus_expand_filename(XEN_TO_C_STRING(name));
@@ -3614,7 +3678,7 @@ static XEN g_start_progress_report(XEN snd)
   #define H_start_progress_report "(" S_start_progress_report " &optional snd) posts the hour-glass icon"
   snd_info *sp;
   ASSERT_SOUND(S_start_progress_report, snd, 1);
-  sp = get_sp(snd);
+  sp = get_sp(snd, NO_PLAYERS);
   if (sp == NULL)
     return(snd_no_such_sound_error(S_start_progress_report, snd));
   start_progress_report(sp, NOT_FROM_ENVED);
@@ -3626,7 +3690,7 @@ static XEN g_finish_progress_report(XEN snd)
   #define H_finish_progress_report "(" S_finish_progress_report " &optional snd) removes the hour-glass icon"
   snd_info *sp;
   ASSERT_SOUND(S_finish_progress_report, snd, 1);
-  sp = get_sp(snd);
+  sp = get_sp(snd, NO_PLAYERS);
   if (sp == NULL)
     return(snd_no_such_sound_error(S_finish_progress_report, snd));
   finish_progress_report(sp, NOT_FROM_ENVED);
@@ -3644,7 +3708,7 @@ updates an on-going 'progress report' (e. g. an animated hour-glass icon) in snd
   XEN_ASSERT_TYPE(XEN_STRING_IF_BOUND_P(name), name, XEN_ARG_2, S_progress_report, "a string");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(cur_chan), cur_chan, XEN_ARG_3, S_progress_report, "an integer");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(chans), chans, XEN_ARG_4, S_progress_report, "an integer");
-  sp = get_sp(snd);
+  sp = get_sp(snd, NO_PLAYERS);
   if (sp == NULL)
     return(snd_no_such_sound_error(S_progress_report, snd));
   progress_report(sp,

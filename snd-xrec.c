@@ -3212,7 +3212,7 @@ void reflect_recorder_in_amp(int in, int out, Float val)
   int temp;
   recorder_info *rp;
   rp = get_recorder_info();
-  if ((recorder) && (in < rp->possible_input_chans) && (out < MAX_OUT_CHANS) && (AMP_rec_ins[in][out]))
+  if ((recorder) && (in < rp->possible_input_chans) && (out < MAX_OUT_CHANS) && (AMP_rec_ins[in][out]) && (AMP_rec_ins[in][out]->slider))
     {
       temp = amp_to_slider(val); 
       record_amp_changed(AMP_rec_ins[in][out], temp); 
@@ -3223,7 +3223,7 @@ void reflect_recorder_in_amp(int in, int out, Float val)
 void reflect_recorder_out_amp(int ind, Float val)
 {
   int temp;
-  if ((recorder) && (ind < MAX_OUT_CHANS) && (AMP_rec_outs[ind]))
+  if ((recorder) && (ind < MAX_OUT_CHANS) && (AMP_rec_outs[ind]) && (AMP_rec_outs[ind]->slider))
     {
       temp = amp_to_slider(val); 
       record_amp_changed(AMP_rec_outs[ind], temp); 

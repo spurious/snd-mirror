@@ -41,7 +41,7 @@ char *env_to_string(env *e)
   char *news = NULL;
   if (e)
     {
-      news = (char *)CALLOC(4 + (e->pts * 2 * 8), sizeof(char));
+      news = (char *)CALLOC(4 + (e->pts * 2 * 16), sizeof(char));
 #if HAVE_RUBY
       news[0] = '[';
 #else

@@ -40,7 +40,7 @@
  *
  * currently handled, at least partially:
  *
- *   types: float int char string boolean vct snd_fd mus_any vector function [and list constants] keyword[underway...]
+ *   types: float int char string boolean symbol vct snd_fd mus_any vector function [and list constants] keyword[underway...]
  *
  *   lambda (use 'declare' to set arg types)
  *   call-with-current-continuation call/cc
@@ -48,7 +48,7 @@
  *   * + - / > < >= <= = max min 1+ 1-
  *   sin cos tan abs log exp expt acos asin atan sqrt
  *   boolean? exact? inexact? integer? real? number? quote
- *   odd? even? zero? positive? negative? eq? eqv? equal?
+ *   odd? even? zero? positive? negative? eq? eqv? equal? symbol? symbol->string
  *   round truncate floor ceiling exact->inexact inexact->exact
  *   gcd lcm logand logior logxor lognot ash modulo remainder quotient random
  *   char? char=? char<? char>? char<=? char>=? and char-ci*
@@ -81,7 +81,6 @@
  *      no macro expansion (not sure how to handle this in Guile)
  *      no complex, ratio, bignum
  *      no pointer aliasing (i.e. vct var set to alias another vct var etc -- GC confusion otherwise)
- *      no symbols (could be added if there were any conceivable need)
  *      no apply or eval (we need to know at parse time what we are trying to do -- actually these might be doable)
  *      no "delay/force", no syntax-case fanciness
  *      no map or for-each (these need lists)
@@ -276,16 +275,40 @@ static XEN symbol_set_value(XEN code, XEN sym, XEN new_val)
   return(new_val);
 }
 
-
-enum {R_UNSPECIFIED, R_INT, R_FLOAT, R_BOOL, R_CHAR, R_STRING, R_LIST, R_PAIR, R_KEYWORD, R_FUNCTION, R_GOTO, R_VCT, R_READER, R_CLM, R_XCLM,
+enum {R_UNSPECIFIED, R_INT, R_FLOAT, R_BOOL, R_CHAR, R_STRING, R_LIST, R_PAIR, 
+      R_SYMBOL, R_KEYWORD, R_FUNCTION, R_GOTO, R_VCT, R_READER, R_CLM, R_XCLM,
       R_FLOAT_VECTOR, R_INT_VECTOR, R_VCT_VECTOR, R_CLM_VECTOR, 
       R_NUMBER, R_CONS, R_VECTOR, R_XEN, R_ANY}; /* last 5 for walker arg checks */
 
-static char *type_names[24] = {"unspecified", "int", "float", "boolean", "char", "string", "list", "pair", "keyword", "function", "continuation", 
-			       "vct", "reader", "clm", "x-clm", "float-vector", "int-vector", "vct-vector", "clm-vector",
-			       "number", "cons", "vector", "xen", "any"};
-
-static char* type_name(int id) {if ((id >= R_INT) && (id <= R_ANY)) return(type_names[id]); return("unknown");}
+#define BUILT_IN_TYPES 25
+static int last_type = R_ANY;
+static int type_names_size = BUILT_IN_TYPES;
+static char **type_names = NULL;
+static char *basic_type_names[BUILT_IN_TYPES] = {"unspecified", "int", "float", "boolean", "char", "string", "list", "pair", 
+						 "symbol", "keyword", "function", "continuation", "vct", "reader", "clm", "x-clm", 
+						 "float-vector", "int-vector", "vct-vector", "clm-vector",
+						 "number", "cons", "vector", "xen", "any"};
+static void init_type_names(void)
+{
+  int i;
+  type_names = (char **)CALLOC(BUILT_IN_TYPES, sizeof(char *));
+  for (i = 0; i < BUILT_IN_TYPES; i++)
+    type_names[i] = basic_type_names[i];
+}
+static char* type_name(int id) {if ((id >= R_UNSPECIFIED) && (id <= last_type)) return(type_names[id]); return("unknown");}
+static int add_new_type(char *new_type)
+{
+  int i;
+  if (last_type == (type_names_size - 1))
+    {
+      type_names_size += 8;
+      type_names = (char **)REALLOC(type_names, type_names_size * sizeof(char *));
+      for (i = last_type + 1; i < type_names_size; i++) type_names[i] = NULL;
+    }
+  last_type++;
+  type_names[last_type] = copy_string(new_type);
+  return(last_type);
+}
 
 #define POINTER_P(Type) ((Type) > R_GOTO)
 #define POINTER_OR_GOTO_P(Type) ((Type) > R_FUNCTION)
@@ -768,6 +791,7 @@ static char *describe_xen_value(xen_value *v, int *ints, Float *dbls)
     case R_CHAR:    buf = (char *)CALLOC(32, sizeof(char)); mus_snprintf(buf, 32, CHR_PT , v->addr, (char)(ints[v->addr]));                break;
     case R_STRING:  buf = (char *)CALLOC(256, sizeof(char)); mus_snprintf(buf, 256, STR_PT , v->addr, (char *)(ints[v->addr]));            break;
     case R_FLOAT:   buf = (char *)CALLOC(32, sizeof(char)); mus_snprintf(buf, 32, FLT_PT , v->addr, dbls[v->addr]);                        break;
+    case R_SYMBOL:
     case R_KEYWORD: buf = (char *)CALLOC(64, sizeof(char)); mus_snprintf(buf, 64, KEY_PT , v->addr, XEN_AS_STRING((XEN)(ints[v->addr])));  break;
     case R_GOTO:    buf = mus_format("continuation: " INT_PT , v->addr, ints[v->addr]);                                                    break;
     case R_LIST:
@@ -775,7 +799,7 @@ static char *describe_xen_value(xen_value *v, int *ints, Float *dbls)
       buf = (char *)CALLOC(512, sizeof(char)); 
       if (ints[v->addr] != 0)
 	mus_snprintf(buf, 512, LST_PT, v->addr, XEN_AS_STRING((XEN)(ints[v->addr]))); 
-      else sprintf(buf, "non-constant cons");
+      else sprintf(buf, "i(%d)=0: non-constant cons", v->addr);
       break;
     case R_FLOAT_VECTOR:
     case R_VCT:
@@ -1289,9 +1313,9 @@ static int add_outer_var_to_ptree(ptree *pt, char *name, xen_value *v)
   return(cur);
 }
 
-static int add_string_to_ptree(ptree *pt, char *str)
+static int remember_string(ptree *pt, int addr)
 {
-  int i, cur, addr;
+  int i, cur;
   cur = pt->str_ctr;
   if (cur >= pt->strs_size)
     {
@@ -1304,9 +1328,13 @@ static int add_string_to_ptree(ptree *pt, char *str)
 	}
       else pt->strs = (int *)CALLOC(pt->strs_size, sizeof(int));
     }
-  addr = add_int_to_ptree(pt, (int)(str));
   pt->strs[pt->str_ctr++] = addr;
   return(addr);
+}
+
+static int add_string_to_ptree(ptree *pt, char *str)
+{
+  return(remember_string(pt, add_int_to_ptree(pt, (int)(str))));
 }
 
 static xen_value *add_empty_var_to_ptree(ptree *prog, int type)
@@ -1478,24 +1506,30 @@ static int xen_to_run_type(XEN val)
 	      if (XEN_CHAR_P(val)) return(R_CHAR); else
 		if (XEN_STRING_P(val)) return(R_STRING); else
 		  if (XEN_KEYWORD_P(val)) return(R_KEYWORD); else
-		    if (XEN_VECTOR_P(val))
-		      {
-			XEN val0;
-			val0 = XEN_VECTOR_REF(val, 0);
-			if (XEN_NUMBER_P(val0))
+		    if (XEN_SYMBOL_P(val)) return(R_SYMBOL); else
+		      if (XEN_VECTOR_P(val))
+			{
+			  XEN val0;
+			  val0 = XEN_VECTOR_REF(val, 0);
+			  if (XEN_NUMBER_P(val0))
+			    {
+			      if (XEN_EXACT_P(val0))
+				return(R_INT_VECTOR);
+			      else return(R_FLOAT_VECTOR);
+			    }
+			  else
+			    if (VCT_P(val0)) return(R_VCT_VECTOR); else
+			      if ((mus_xen_p(val0)) || (XEN_BOOLEAN_P(val0))) return(R_CLM_VECTOR);
+			}
+		      else
+			/* order matters here (list is subset of pair) */
+			if (XEN_LIST_P(val))
 			  {
-			    if (XEN_EXACT_P(val0))
-			      return(R_INT_VECTOR);
-			    else return(R_FLOAT_VECTOR);
+			    /* TODO: look for symbol as car, check for clm types */
+			    return(R_LIST); 
 			  }
 			else
-			  if (VCT_P(val0)) return(R_VCT_VECTOR); else
-			    if ((mus_xen_p(val0)) || (XEN_BOOLEAN_P(val0))) return(R_CLM_VECTOR);
-		      }
-		    else
-		      /* order matters here (list is subset of pair) */
-		      if (XEN_LIST_P(val)) return(R_LIST); else
-			if (XEN_PAIR_P(val)) return(R_PAIR);
+			  if (XEN_PAIR_P(val)) return(R_PAIR);
     }
   return(R_UNSPECIFIED);
 }
@@ -1525,7 +1559,7 @@ static xen_value *add_global_var_to_ptree(ptree *prog, XEN form, XEN *rtn)
       if (XEN_NOT_BOUND_P(val))	
 	return(run_warn("can't find %s", varname));
     }
-  /* fprintf(stderr,"add global %s %d %s\n",varname, sf_p(val), XEN_AS_STRING(val)); */
+  /* fprintf(stderr,"add global %s %s %s\n",varname, type_name(xen_to_run_type(val)), XEN_AS_STRING(val)); */
   switch (xen_to_run_type(val))
     {
     case R_INT:    v = make_xen_value(R_INT, add_int_to_ptree(prog, XEN_TO_C_INT(val)), R_VARIABLE); break;
@@ -2072,12 +2106,14 @@ static char *declare_args(ptree *prog, XEN form, int default_arg_type, int separ
 		  if (strcmp(type, "reader") == 0) arg_type = R_READER; else
 		  if (strcmp(type, "boolean") == 0) arg_type = R_BOOL; else
 		  if (strcmp(type, "char") == 0) arg_type = R_CHAR; else
+		  if (strcmp(type, "symbol") == 0) arg_type = R_SYMBOL; else
 		  if (strcmp(type, "keyword") == 0) arg_type = R_KEYWORD; else
 		  if (strcmp(type, "list") == 0) arg_type = R_LIST; 
 
 		  /* list arg type actually doesn't work -- segfault
 		   *   the problem here is that the walker needs read-time type info
 		   */
+		  /* TODO: some way to declare a def-clm-struct arg */
 		}
 	    }
 	  else
@@ -4826,6 +4862,8 @@ static void display_flt(int *args, int *ints, Float *dbls) {fprintf(stderr, "%.6
 static char *descr_display_flt(int *args, int *ints, Float *dbls) {return(mus_format("display(" FLT_PT ")", args[1], FLOAT_ARG_1));}
 static void display_lst(int *args, int *ints, Float *dbls) {fprintf(stderr, "%s", (INT_ARG_1) ? (XEN_AS_STRING((XEN)(INT_ARG_1))) : "null");}
 static char *descr_display_lst(int *args, int *ints, Float *dbls) {return(mus_format("display(" LST_PT ")", args[1], (INT_ARG_1) ? (XEN_AS_STRING(((XEN)(INT_ARG_1)))) : "null"));}
+static void display_symbol(int *args, int *ints, Float *dbls) {fprintf(stderr, "%s", (INT_ARG_1) ? (XEN_AS_STRING((XEN)(INT_ARG_1))) : "null");}
+static char *descr_display_symbol(int *args, int *ints, Float *dbls) {return(mus_format("display(" KEY_PT ")", args[1], (INT_ARG_1) ? (XEN_AS_STRING(((XEN)(INT_ARG_1)))) : "null"));}
 static void display_key(int *args, int *ints, Float *dbls) {fprintf(stderr, "%s", (INT_ARG_1) ? (XEN_AS_STRING((XEN)(INT_ARG_1))) : "null");}
 static char *descr_display_key(int *args, int *ints, Float *dbls) {return(mus_format("display(" KEY_PT ")", args[1], (INT_ARG_1) ? (XEN_AS_STRING(((XEN)(INT_ARG_1)))) : "null"));}
 static void display_clm(int *args, int *ints, Float *dbls) {fprintf(stderr, "%s", mus_describe((mus_any *)(INT_ARG_1)));}
@@ -4881,6 +4919,7 @@ static xen_value *display_1(ptree *pt, xen_value **args, int num_args)
     case R_CLM:        return(package(pt, R_BOOL, display_clm, descr_display_clm, args, 1));   break;
     case R_PAIR:
     case R_LIST:       return(package(pt, R_BOOL, display_lst, descr_display_lst, args, 1));   break;
+    case R_SYMBOL:     return(package(pt, R_BOOL, display_symbol, descr_display_symbol, args, 1));break;
     case R_KEYWORD:    return(package(pt, R_BOOL, display_key, descr_display_key, args, 1));   break;
     case R_READER:     return(package(pt, R_BOOL, display_rd, descr_display_rd, args, 1));     break;
     case R_FLOAT_VECTOR:
@@ -4894,6 +4933,13 @@ static xen_value *display_1(ptree *pt, xen_value **args, int num_args)
     case R_INT_VECTOR: return(package(pt, R_BOOL, display_int_vct, descr_display_int_vct, args, 1));   break;
     }
   return(NULL);
+}
+
+static xen_value *symbol2string_1(ptree *pt, xen_value **args, int num_args)
+{
+  return(make_xen_value(R_STRING, 
+			add_string_to_ptree(pt, copy_string(XEN_SYMBOL_TO_C_STRING((XEN)(pt->ints[args[1]->addr])))),
+			R_CONSTANT));
 }
 
 static void snd_print_s(int *args, int *ints, Float *dbls) {listener_append(STRING_ARG_1);}
@@ -7296,6 +7342,11 @@ static xen_value *keyword_p_1(ptree *prog, xen_value **args, int num_args)
   return(make_xen_value(R_BOOL, add_int_to_ptree(prog, args[1]->type == R_KEYWORD), R_CONSTANT));
 }
 
+static xen_value *symbol_p_1(ptree *prog, xen_value **args, int num_args)
+{
+  return(make_xen_value(R_BOOL, add_int_to_ptree(prog, args[1]->type == R_SYMBOL), R_CONSTANT));
+}
+
 static xen_value *vct_p_1(ptree *prog, xen_value **args, int num_args)
 {
   return(make_xen_value(R_BOOL, add_int_to_ptree(prog, args[1]->type == R_VCT), R_CONSTANT));
@@ -7365,6 +7416,7 @@ static xen_value *unwrap_xen_object_1(ptree *prog, XEN form, const char *origin,
     case R_VCT:     return(make_xen_value(R_VCT, add_int_to_ptree(prog, (int)(get_vct(form))), R_CONSTANT)); break;
     case R_PAIR:    if (constant) return(make_xen_value(R_PAIR, add_int_to_ptree(prog, (int)form), R_CONSTANT)); break;
     case R_LIST:    if (constant) return(make_xen_value(R_LIST, add_int_to_ptree(prog, (int)form), R_CONSTANT)); break;
+    case R_SYMBOL:  return(make_xen_value(R_SYMBOL, add_int_to_ptree(prog, (int)form), R_CONSTANT)); break;
     case R_KEYWORD: return(make_xen_value(R_KEYWORD, add_int_to_ptree(prog, (int)form), R_CONSTANT)); break;
     case R_INT_VECTOR: 
       if (constant)
@@ -7385,6 +7437,17 @@ static xen_value *unwrap_xen_object_1(ptree *prog, XEN form, const char *origin,
 	  vc = vector_to_vct(form);
 	  v = make_xen_value(R_FLOAT_VECTOR, add_int_to_ptree(prog, (int)vc), R_CONSTANT);
 	  add_obj_to_gcs(prog, R_FLOAT_VECTOR, v->addr);
+	  return(v);
+	}
+      break;
+    case R_CLM_VECTOR:
+      if (constant)
+	{
+	  clm_vct *cv;
+	  xen_value *v;
+	  cv = read_clm_vector(form);
+	  v = make_xen_value(R_CLM_VECTOR, add_int_to_ptree(prog, (int)cv), R_CONSTANT);
+	  add_obj_to_gcs(prog, R_CLM_VECTOR, v->addr);
 	  return(v);
 	}
       break;
@@ -7461,7 +7524,7 @@ static int xenable(xen_value *v)
   switch (v->type)
     {
     case R_FLOAT: case R_INT: case R_CHAR: case R_STRING: case R_BOOL:
-    case R_LIST: case R_PAIR: case R_FLOAT_VECTOR: case R_VCT: case R_KEYWORD:
+    case R_LIST: case R_PAIR: case R_FLOAT_VECTOR: case R_VCT: case R_KEYWORD: case R_SYMBOL:
       return(TRUE);
       break;
     }
@@ -7479,6 +7542,7 @@ static XEN xen_value_to_xen(ptree *pt, xen_value *v)
     case R_CHAR:    val = C_TO_XEN_CHAR((char)(pt->ints[v->addr])); break;
     case R_STRING:  val = C_TO_XEN_STRING((char *)(pt->ints[v->addr])); break;
     case R_BOOL:    return(C_TO_XEN_BOOLEAN(pt->ints[v->addr])); break;
+    case R_SYMBOL:
     case R_KEYWORD:
     case R_LIST:    
     case R_PAIR:    val = (XEN)(pt->ints[v->addr]); break;
@@ -7799,6 +7863,43 @@ static xen_value *make_fft_window_1(ptree *prog, xen_value **args, int num_args)
 }
 
 
+static int xen_to_addr(ptree *pt, XEN arg, int type, int addr)
+{
+  switch (type)
+    {
+    case R_FLOAT:   pt->dbls[addr] = (Float)XEN_TO_C_DOUBLE(arg);            break;
+    case R_INT:     pt->ints[addr] = (int)XEN_TO_C_INT(arg);                 break;
+    case R_CHAR:    pt->ints[addr] = (int)XEN_TO_C_CHAR(arg);                break;
+    case R_BOOL:    pt->ints[addr] = (int)XEN_TO_C_BOOLEAN(arg);             break;
+    case R_VCT:     pt->ints[addr] = (int)get_vct(arg);                      break;
+    case R_CLM:     pt->ints[addr] = (int)(XEN_TO_MUS_ANY(arg));             break;
+    case R_READER:  pt->ints[addr] = (int)get_sf(arg);                       break;
+    case R_LIST:
+    case R_PAIR:    pt->ints[addr] = (int)arg;                               break;
+    case R_STRING:  
+      pt->ints[addr] = (int)copy_string(XEN_TO_C_STRING(arg));
+      remember_string(pt, addr);
+      break;
+    case R_INT_VECTOR: 
+      pt->ints[addr] = (int)read_int_vector(arg);
+      add_obj_to_gcs(pt, R_INT_VECTOR, addr);
+      break;
+    case R_FLOAT_VECTOR:
+      pt->ints[addr] = (int)vector_to_vct(arg);
+      add_obj_to_gcs(pt, R_FLOAT_VECTOR, addr);
+      break;
+    case R_VCT_VECTOR:
+      pt->ints[addr] = (int)read_vct_vector(arg);
+      add_obj_to_gcs(pt, R_VCT_VECTOR, addr);
+      break;
+    case R_CLM_VECTOR:
+      pt->ints[addr] = (int)read_clm_vector(arg);
+      add_obj_to_gcs(pt, R_CLM_VECTOR, addr);
+      break;
+    }
+  return(addr);
+}
+
 
 /* def-clm-struct support */
 
@@ -7833,7 +7934,6 @@ static XEN g_add_clm_field(XEN name, XEN offset)
   return(name);
 }
 
-static char **clm_types = NULL;
 static char **clm_qtypes = NULL;
 static int clm_types_size = 0;
 static int clm_types_top = 0;
@@ -7842,11 +7942,11 @@ static int clm_types_top = 0;
 static XEN g_add_clm_type(XEN name)
 {
   #define H_add_clm_type "def-clm-struct tie-in to run optimizer"
+  int loc;
   XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ARG_1, S_add_clm_type, "string");
   if (clm_types_size == 0)
     {
       clm_types_size = 4;
-      clm_types = (char **)CALLOC(clm_types_size, sizeof(char *));
       clm_qtypes = (char **)CALLOC(clm_types_size, sizeof(char *));
     }
   else
@@ -7854,13 +7954,12 @@ static XEN g_add_clm_type(XEN name)
       if (clm_types_top >= clm_types_size)
 	{
 	  clm_types_size = clm_types_top + 4;
-	  clm_types = (char **)REALLOC(clm_types, clm_types_size * sizeof(char *));
 	  clm_qtypes = (char **)REALLOC(clm_qtypes, clm_types_size * sizeof(char *));
 	}
     }
-  clm_types[clm_types_top] = copy_string(XEN_TO_C_STRING(name));
-  clm_qtypes[clm_types_top] = (char *)CALLOC(strlen(clm_types[clm_types_top]) + 2, sizeof(char));
-  sprintf(clm_qtypes[clm_types_top], "%s?", clm_types[clm_types_top]);
+  loc = add_new_type(XEN_TO_C_STRING(name));
+  clm_qtypes[clm_types_top] = (char *)CALLOC(strlen(type_name(loc)) + 2, sizeof(char));
+  sprintf(clm_qtypes[clm_types_top], "%s?", type_name(loc));
   clm_types_top++;
   return(name);
 }
@@ -7914,22 +8013,13 @@ static int find_clm_var(ptree *prog, XEN lst, XEN lst_ref, int offset, int run_t
 	    }
 	}
       /* first decide if we can handle this variable */
-      if ((run_type == R_BOOL) || 
-	  (run_type == R_INT) ||
-	  (run_type == R_CHAR) ||
-	  (run_type == R_CLM) ||
-	  (run_type == R_READER) ||
-	  (run_type == R_VCT))
-	addr = add_int_to_ptree(prog, 0);
+      if (run_type == R_FLOAT)
+	addr = add_dbl_to_ptree(prog, 0.0);
       else
 	{
-	  if (run_type == R_FLOAT)
-	    addr = add_dbl_to_ptree(prog, 0.0);
-	  else
-	    {
-	      if (run_type == R_STRING)
-		addr = add_string_to_ptree(prog, "");
-	    }
+	  if (run_type == R_STRING)
+	    addr = add_string_to_ptree(prog, "");
+	  else addr = add_int_to_ptree(prog, 0);
 	}
       if (addr >= 0)
 	{
@@ -7941,23 +8031,11 @@ static int find_clm_var(ptree *prog, XEN lst, XEN lst_ref, int offset, int run_t
 	}
     }
   /* now set the (initial) value */
-  if (addr >= 0)
-    {
-      switch (run_type)
-	{
-	case R_BOOL:   prog->ints[addr] = ((XEN_FALSE_P(lst_ref)) ? 0 : 1); break;
-	case R_INT:    prog->ints[addr] = XEN_TO_C_INT(lst_ref); break;
-	case R_FLOAT:  prog->dbls[addr] = XEN_TO_C_DOUBLE(lst_ref); break;
-	case R_CHAR:   prog->ints[addr] = (int)(XEN_TO_C_CHAR(lst_ref)); break;
-	case R_STRING: prog->ints[addr] = (int)copy_string(XEN_TO_C_STRING(lst_ref)); break;
-	case R_VCT:    prog->ints[addr] = (int)(get_vct(lst_ref)); break;
-	case R_READER: prog->ints[addr] = (int)(get_sf(lst_ref)); break;
-	case R_CLM:    prog->ints[addr] = (int)(XEN_TO_MUS_ANY(lst_ref)); break;
-	}
-    }
+  if (addr >= 0) xen_to_addr(prog, lst_ref, run_type, addr);
   return(addr);
 }
 
+/* TODO: clm def-struct descriptor tied into describe-xen value etc */
 static xen_value *clm_struct_ref(ptree *prog, xen_value *v, int struct_loc)
 {
   /* types can't change within run */
@@ -7997,10 +8075,16 @@ static void clm_struct_restore(ptree *prog, xen_var *var)
 	  case R_INT:    XEN_LIST_SET(lst, loc, C_TO_XEN_INT(prog->ints[addr])); break;
 	  case R_FLOAT:  XEN_LIST_SET(lst, loc, C_TO_XEN_DOUBLE(prog->dbls[addr])); break;
 	  case R_CHAR:   XEN_LIST_SET(lst, loc, C_TO_XEN_CHAR(prog->ints[addr])); break;
-	  case R_STRING: XEN_LIST_SET(lst, loc, C_TO_XEN_STRING((char *)(prog->ints[addr]))); break; /* FREE? */
+	  case R_STRING: XEN_LIST_SET(lst, loc, C_TO_XEN_STRING((char *)(prog->ints[addr]))); break;
+	    /* TODO: restore vectors -> originals? */
+	    /* 	     case R_FLOAT_VECTOR: vct_into_vector((vct *)(prog->ints[var->v->addr]), val);
+	     *       case R_INT_VECTOR: int_vct_into_vector((int_vct *)(prog->ints[var->v->addr]), val);
+	     */
 	  }
       }
 }
+
+
 
 
 
@@ -8091,9 +8175,17 @@ static xen_value *walk(ptree *prog, XEN form, int need_result)
 		    }
 		}
 	      args[i + 1] = walk(prog, XEN_CAR(all_args), arg_result);
+	      /*
+	      if (args[i + 1] != NULL)
+		{
+		  fprintf(stderr, "arg %d: addr: %d type: %s val: %d\n", i, args[i+1]->addr, type_name(args[i+1]->type), prog->ints[args[i + 1]->addr]);
+		  fprintf(stderr, "%s\n", describe_ptree(prog));
+		}
+	      else fprintf(stderr,"arg %d null", i);
+	      */
 	      if ((args[i + 1] == NULL) ||
 		  (((args[i + 1]->type == R_LIST) || (args[i + 1]->type == R_PAIR)) && (prog->ints[args[i + 1]->addr] == 0)))
-		return(clean_up(NULL, args, num_args));
+		return(clean_up(NULL, args, num_args)); /* no run_warn here so that reported error includes enclosing form */
 	      if (args[i + 1]->constant == R_CONSTANT) constants++;
 	      if (args[i + 1]->type == R_FLOAT) float_result = TRUE; /* for "*" et al */
 	    }
@@ -8298,7 +8390,7 @@ static xen_value *walk(ptree *prog, XEN form, int need_result)
       for (k = 0; k < clm_types_top; k++)
 	if (strcmp(funcname, clm_qtypes[k]) == 0)
 	  return(clean_up(make_xen_value(R_BOOL, 
-					 add_int_to_ptree(prog, check_clm_type(XEN_CAR(get_lst(prog, args)), clm_types[k])), 
+					 add_int_to_ptree(prog, check_clm_type(XEN_CAR(get_lst(prog, args)), type_name(R_ANY + k + 1))),
 					 R_CONSTANT), 
 			  args, num_args));
 
@@ -8618,6 +8710,7 @@ static XEN eval_ptree_to_xen(ptree *pt)
     case R_BOOL:    result = C_TO_XEN_BOOLEAN(pt->ints[pt->result->addr]); break;
     case R_LIST:
     case R_PAIR:
+    case R_SYMBOL:
     case R_KEYWORD: result = (XEN)(pt->ints[pt->result->addr]); break;
     case R_VCT:
       {
@@ -8653,21 +8746,7 @@ static XEN g_run_eval(XEN code, XEN arg)
       }
 #endif
       if ((XEN_BOUND_P(arg)) && (pt->args))
-	{
-	  switch (pt->arg_types[0])
-	    {
-	    case R_FLOAT:   pt->dbls[pt->args[0]] = (Float)XEN_TO_C_DOUBLE(arg); break;
-	    case R_INT:     pt->ints[pt->args[0]] = (int)XEN_TO_C_INT(arg); break;
-	    case R_STRING:  pt->ints[pt->args[0]] = (int)copy_string(XEN_TO_C_STRING(arg)); break;
-	    case R_CHAR:    pt->ints[pt->args[0]] = (int)XEN_TO_C_CHAR(arg); break;
-	    case R_BOOL:    pt->ints[pt->args[0]] = (int)XEN_TO_C_BOOLEAN(arg); break;
-	    case R_VCT:     pt->ints[pt->args[0]] = (int)get_vct(arg); break;
-	    case R_CLM:     pt->ints[pt->args[0]] = (int)(XEN_TO_MUS_ANY(arg)); break;
-	    case R_READER:  pt->ints[pt->args[0]] = (int)get_sf(arg); break;
-	    case R_LIST:
-	    case R_PAIR:    pt->ints[pt->args[0]] = (int)arg; break;
-	    }
-	}
+	xen_to_addr(pt, arg, pt->arg_types[0], pt->args[0]);
       eval_ptree(pt);
       result = eval_ptree_to_xen(pt);
       free_ptree((void *)pt);
@@ -8906,8 +8985,7 @@ static void init_walkers(void)
   INIT_WALKER("char?", make_walker(char_p_1, NULL, NULL, 1, 1, R_BOOL, FALSE, 0));
   INIT_WALKER("string?", make_walker(string_p_1, NULL, NULL, 1, 1, R_BOOL, FALSE, 0));
   INIT_WALKER("keyword?", make_walker(keyword_p_1, NULL, NULL, 1, 1, R_BOOL, FALSE, 0));
-  INIT_WALKER("sample-reader?", make_walker(sample_reader_p_1, NULL, NULL, 1, 1, R_BOOL, FALSE, 0));
-  INIT_WALKER("vct?", make_walker(vct_p_1, NULL, NULL, 1, 1, R_BOOL, FALSE, 0));
+  INIT_WALKER("symbol?", make_walker(symbol_p_1, NULL, NULL, 1, 1, R_BOOL, FALSE, 0));
   INIT_WALKER("vector?", make_walker(vector_p_1, NULL, NULL, 1, 1, R_BOOL, FALSE, 0));
   INIT_WALKER("list?", make_walker(list_p_1, NULL, NULL, 1, 1, R_BOOL, FALSE, 0));
   INIT_WALKER("pair?", make_walker(pair_p_1, NULL, NULL, 1, 1, R_BOOL, FALSE, 0));
@@ -9005,6 +9083,7 @@ static void init_walkers(void)
   INIT_WALKER("display", make_walker(display_1, NULL, NULL, 1, 1, R_STRING, FALSE, 0));
   INIT_WALKER("make-string", make_walker(make_string_1, NULL, NULL, 1, 2, R_STRING, FALSE, 2, R_INT, R_CHAR));
   INIT_WALKER("number->string", make_walker(number2string_1, NULL, NULL, 1, 2, R_STRING, FALSE, 2, R_NUMBER, R_INT));
+  INIT_WALKER("symbol->string", make_walker(symbol2string_1, NULL, NULL, 1, 1, R_STRING, FALSE, 1, R_SYMBOL));
 
   /* -------- vector funcs */
   INIT_WALKER("vector-ref", make_walker(vector_ref_1, NULL, NULL, 2, 2, R_ANY, FALSE, 2, R_VECTOR, R_INT));
@@ -9281,12 +9360,14 @@ static void init_walkers(void)
   INIT_WALKER(S_make_vct, make_walker(make_vct_1, NULL, NULL, 1, 2, R_VCT, FALSE, 2, R_INT, R_FLOAT));
   INIT_WALKER(S_vct_convolve, make_walker(vct_convolve_1, NULL, NULL, 2, 2, R_VCT, FALSE, 2, R_VCT, R_VCT));
   INIT_WALKER(S_vct, make_walker(vct_1, NULL, NULL, 1, UNLIMITED_ARGS, R_VCT, FALSE, 1, -R_FLOAT));
+  INIT_WALKER(S_vct_p, make_walker(vct_p_1, NULL, NULL, 1, 1, R_BOOL, FALSE, 0));
 
   /* -------- snd funcs */
   INIT_WALKER(S_next_sample, make_walker(next_sample_1, NULL, NULL, 1, 1, R_FLOAT, FALSE, 1, R_READER));
   INIT_WALKER(S_previous_sample, make_walker(previous_sample_1, NULL, NULL, 1, 1, R_FLOAT, FALSE, 1, R_READER));
   INIT_WALKER(S_read_sample, make_walker(reader_1, NULL, NULL, 1, 1, R_FLOAT, FALSE, 1, R_READER));
   INIT_WALKER(S_make_sample_reader, make_walker(make_sample_reader_1, NULL, NULL, 0, 5, R_READER, FALSE, 1, R_NUMBER));
+  INIT_WALKER(S_sample_reader_p, make_walker(sample_reader_p_1, NULL, NULL, 1, 1, R_BOOL, FALSE, 0));
 
   INIT_WALKER(S_edit_position, make_walker(edit_position_1, NULL, NULL, 0, 2, R_INT, FALSE, 0));
   INIT_WALKER(S_frames, make_walker(frames_1, NULL, NULL, 0, 3, R_INT, FALSE, 0));
@@ -9334,5 +9415,6 @@ You can often slightly rewrite the form to make run happy."
 
 #if HAVE_GUILE && WITH_RUN 
   init_walkers();
+  init_type_names();
 #endif
 }
