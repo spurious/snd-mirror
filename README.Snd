@@ -132,9 +132,8 @@ switch.
 
 
 There are RPM packages of Snd available at the ccrma-ftp site
-mentioned above: snd-7-7.i386.rpm and snd-7-7.src.rpm.  These RPM
-files have been superseded by Fernando Lopez-Lezcano's set available
-at http://ccrma.stanford.edu/planetccrma/software/
+mentioned above: snd-7-8.i386.rpm and snd-7-8.src.rpm.  
+See also http://ccrma.stanford.edu/planetccrma/software/.
 
 
 ----------------------------------------------------------------

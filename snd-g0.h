@@ -68,7 +68,6 @@ typedef struct {
   GtkObject **snd_adjs;
   void *flt;
   GtkWidget *dialog;
-  bool controls_fixed;
   int page;
   bool mini_active;
 } snd_context;

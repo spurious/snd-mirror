@@ -147,17 +147,6 @@
 
 /* isn't mus_env_interp backwards? */
 
-/* compile time switches:
- *
- * HAVE_GSL(default 0)
- *   if 1, use libgsl for some math functions
- * 
- * Float can be defined to be double or float(default)
- *
- * HAVE_FFTW
- *  if 1, include mus_fftw which calls the fftw real fft
- */
-
 #include "sndlib.h"
 
 #if HAVE_COMPLEX_TRIG

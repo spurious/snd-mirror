@@ -2,6 +2,10 @@
 
 /* TODO: split out the Jack cases */
 /* TODO: recorder-in-chans as a list of hardware chans -> displayed input chans, also recorder-out-chans */
+/* (Motif) troubles: in->out scalers follow out (need in)
+ *                   gains follow old out (not new)
+ *                   on buttons in upper right are crushed
+ */
 
 #include "snd.h"
 #include "snd-rec.h"

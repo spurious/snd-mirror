@@ -1261,7 +1261,6 @@ snd_info *add_sound_window(char *filename, bool read_only)
   sp = ss->sounds[snd_slot];
   sp->inuse = SOUND_NORMAL;
   sx = sp->sgx;
-  sx->controls_fixed = false;
   sx->file_pix = blank;
   sp->bomb_ctr = 0;
   make_pixmaps();
