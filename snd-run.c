@@ -8218,25 +8218,41 @@ static xen_value *file_to_frame_1(ptree *prog, xen_value **args, int num_args)
 }
 
 
-/* ---------------- outa ---------------- */
+/* ---------------- out-any ---------------- */
 /* if *output* is null these become no-ops (there is no error message as there would be in the standard case) */
 
-#define OUT_GEN(CName, SName) \
-static char *descr_ ## CName ## _3(int *args, ptree *pt) \
-{ \
-  return(mus_format( FLT_PT " = " #SName "(" INT_PT ", " FLT_PT ", " CLM_PT ")", \
-		    args[0], FLOAT_RESULT, args[1], INT_ARG_1, args[2], FLOAT_ARG_2, args[3], DESC_CLM_ARG_3)); \
-} \
-static void CName ## _3(int *args, ptree *pt) {FLOAT_RESULT = mus_ ## CName (INT_ARG_1, FLOAT_ARG_2, CLM_ARG_3);} \
-static xen_value * CName ## _1(ptree *prog, xen_value **args, int num_args) \
-{ \
-  return(package(prog, R_FLOAT, CName ## _3, descr_ ## CName ## _3, args, 3)); \
-}
 
-OUT_GEN(outa, outa)
-OUT_GEN(outb, outb)
-OUT_GEN(outc, outc)
-OUT_GEN(outd, outd)
+static char *descr_outa_3(int *args, ptree *pt)
+{
+  return(mus_format( FLT_PT " = outa(" INT_PT ", " FLT_PT ", " CLM_PT ")",
+		    args[0], FLOAT_RESULT, args[1], INT_ARG_1, args[2], FLOAT_ARG_2, args[3], DESC_CLM_ARG_3));
+}
+static void outa_3(int *args, ptree *pt) {FLOAT_RESULT = mus_out_any(INT_ARG_1, FLOAT_ARG_2, 0, CLM_ARG_3);}
+static xen_value *outa_1(ptree *prog, xen_value **args, int num_args) {return(package(prog, R_FLOAT, outa_3, descr_outa_3, args, 3));}
+
+static char *descr_outb_3(int *args, ptree *pt)
+{
+  return(mus_format( FLT_PT " = outb(" INT_PT ", " FLT_PT ", " CLM_PT ")",
+		    args[0], FLOAT_RESULT, args[1], INT_ARG_1, args[2], FLOAT_ARG_2, args[3], DESC_CLM_ARG_3));
+}
+static void outb_3(int *args, ptree *pt) {FLOAT_RESULT = mus_out_any(INT_ARG_1, FLOAT_ARG_2, 1, CLM_ARG_3);}
+static xen_value *outb_1(ptree *prog, xen_value **args, int num_args) {return(package(prog, R_FLOAT, outb_3, descr_outb_3, args, 3));}
+
+static char *descr_outc_3(int *args, ptree *pt)
+{
+  return(mus_format( FLT_PT " = outc(" INT_PT ", " FLT_PT ", " CLM_PT ")",
+		    args[0], FLOAT_RESULT, args[1], INT_ARG_1, args[2], FLOAT_ARG_2, args[3], DESC_CLM_ARG_3));
+}
+static void outc_3(int *args, ptree *pt) {FLOAT_RESULT = mus_out_any(INT_ARG_1, FLOAT_ARG_2, 2, CLM_ARG_3);}
+static xen_value *outc_1(ptree *prog, xen_value **args, int num_args) {return(package(prog, R_FLOAT, outc_3, descr_outc_3, args, 3));}
+
+static char *descr_outd_3(int *args, ptree *pt)
+{
+  return(mus_format( FLT_PT " = outd(" INT_PT ", " FLT_PT ", " CLM_PT ")",
+		    args[0], FLOAT_RESULT, args[1], INT_ARG_1, args[2], FLOAT_ARG_2, args[3], DESC_CLM_ARG_3));
+}
+static void outd_3(int *args, ptree *pt) {FLOAT_RESULT = mus_out_any(INT_ARG_1, FLOAT_ARG_2, 3, CLM_ARG_3);}
+static xen_value *outd_1(ptree *prog, xen_value **args, int num_args) {return(package(prog, R_FLOAT, outd_3, descr_outd_3, args, 3));}
 
 static char *descr_out_any_4(int *args, ptree *pt)
 {
@@ -8250,21 +8266,21 @@ static xen_value *out_any_1(ptree *prog, xen_value **args, int num_args)
 }
 
 
-/* ---------------- ina ---------------- */
+/* ---------------- in-any ---------------- */
 
-#define IN_GEN(CName, SName) \
-static char *descr_ ## CName ## _2(int *args, ptree *pt) \
-{ \
-  return(mus_format( FLT_PT " = " #SName "(" INT_PT ", " CLM_PT ")", args[0], FLOAT_RESULT, args[1], INT_ARG_1, args[2], DESC_CLM_ARG_2)); \
-} \
-static void CName ## _2(int *args, ptree *pt) {FLOAT_RESULT = mus_ ## CName (INT_ARG_1, CLM_ARG_2);} \
-static xen_value * CName ## _1(ptree *prog, xen_value **args, int num_args) \
-{ \
-  return(package(prog, R_FLOAT, CName ## _2, descr_ ## CName ## _2, args, 2)); \
+static char *descr_ina_2(int *args, ptree *pt)
+{
+  return(mus_format( FLT_PT " = ina(" INT_PT ", " CLM_PT ")", args[0], FLOAT_RESULT, args[1], INT_ARG_1, args[2], DESC_CLM_ARG_2));
 }
+static void ina_2(int *args, ptree *pt) {FLOAT_RESULT = mus_in_any(INT_ARG_1, 0, CLM_ARG_2);}
+static xen_value *ina_1(ptree *prog, xen_value **args, int num_args) {return(package(prog, R_FLOAT, ina_2, descr_ina_2, args, 2));}
 
-IN_GEN(ina, ina)
-IN_GEN(inb, inb)
+static char *descr_inb_2(int *args, ptree *pt)
+{
+  return(mus_format( FLT_PT " = inb(" INT_PT ", " CLM_PT ")", args[0], FLOAT_RESULT, args[1], INT_ARG_1, args[2], DESC_CLM_ARG_2));
+}
+static void inb_2(int *args, ptree *pt) {FLOAT_RESULT = mus_in_any(INT_ARG_1, 1, CLM_ARG_2);}
+static xen_value *inb_1(ptree *prog, xen_value **args, int num_args) {return(package(prog, R_FLOAT, inb_2, descr_inb_2, args, 2));}
 
 static char *descr_in_any_3(int *args, ptree *pt)
 {

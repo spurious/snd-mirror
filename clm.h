@@ -7,6 +7,8 @@
 
 /*
  * 14-July:    clm 3.0!
+ *             deprecated mus_ina|b, mus-outa|b|c|d.
+ *             mus_make_frame_to_file_with_comment.
  * 28-June:    ssb_am + added fm arg (ssb_am_1 is the previous form).
  * 21-June:    wrapper method.
  * 14-June:    ssb_am generator.
@@ -514,8 +516,6 @@ int mus_channel(mus_any *rd);
 bool mus_output_p(mus_any *ptr);
 bool mus_input_p(mus_any *ptr);
 Float mus_in_any(off_t frame, int chan, mus_any *IO);
-Float mus_ina(off_t frame, mus_any *inp);
-Float mus_inb(off_t frame, mus_any *inp);
 
 mus_any *mus_make_file_to_frame(const char *filename);
 bool mus_file_to_frame_p(mus_any *ptr);
@@ -529,14 +529,10 @@ mus_any *mus_continue_sample_to_file(const char *filename);
 int mus_close_file(mus_any *ptr);
 
 Float mus_out_any(off_t frame, Float val, int chan, mus_any *IO);
-Float mus_outa(off_t frame, Float val, mus_any *IO);
-Float mus_outb(off_t frame, Float val, mus_any *IO);
-Float mus_outc(off_t frame, Float val, mus_any *IO);
-Float mus_outd(off_t frame, Float val, mus_any *IO);
-
 mus_any *mus_make_frame_to_file(const char *filename, int chans, int out_format, int out_type);
 bool mus_frame_to_file_p(mus_any *ptr);
 mus_any *mus_frame_to_file(mus_any *ptr, off_t samp, mus_any *data);
+mus_any *mus_make_frame_to_file_with_comment(const char *filename, int chans, int out_format, int out_type, const char *comment);
 
 mus_any *mus_locsig(mus_any *ptr, off_t loc, Float val);
 mus_any *mus_make_locsig(Float degree, Float distance, Float reverb, int chans, mus_any *output, mus_any *revput, mus_interp_t type);
@@ -677,6 +673,14 @@ Float mus_sin(Float phase);
 #define mus_set_b1(Gen, Val) mus_set_ycoeff(Gen, 1, Val)
 #define mus_b2(Gen) mus_ycoeff(Gen, 2)
 #define mus_set_b2(Gen, Val) mus_set_ycoeff(Gen, 2, Val)
+
+#define mus_ina(Samp, Inp) mus_in_any(Samp, 0, Inp)
+#define mus_inb(Samp, Inp) mus_in_any(Samp, 1, Inp)
+
+#define mus_outa(Samp, Val, Outp) mus_out_any(Samp, val, 0, Outp)
+#define mus_outb(Samp, Val, Outp) mus_out_any(Samp, val, 1, Outp)
+#define mus_outc(Samp, Val, Outp) mus_out_any(Samp, val, 2, Outp)
+#define mus_outd(Samp, Val, Outp) mus_out_any(Samp, val, 3, Outp)
 
 #endif
 

@@ -175,9 +175,6 @@
   #define mus_sample_abs(Sample) fabs(Sample)
 #endif
 
-#define MUS_DAC_CHANNEL 252525
-#define MUS_DAC_REVERB 252520
-
 enum {MUS_UNSUPPORTED, MUS_NEXT, MUS_AIFC, MUS_RIFF, MUS_BICSF, MUS_NIST, MUS_INRS, MUS_ESPS, MUS_SVX, MUS_VOC, 
       MUS_SNDT, MUS_RAW, MUS_SMP, MUS_AVR, MUS_IRCAM, MUS_SD1, MUS_SPPACK, MUS_MUS10, MUS_HCOM, MUS_PSION, MUS_MAUD,
       MUS_IEEE, MUS_MATLAB, MUS_ADC, MUS_MIDI, MUS_SOUNDFONT, MUS_GRAVIS, MUS_COMDISCO, MUS_GOLDWAVE, MUS_SRFS,
@@ -551,7 +548,6 @@ Float mus_fclamp(Float lo, Float val, Float hi);
 void mus_reset_io_c(void);
 void mus_reset_headers_c(void);
 void mus_reset_audio_c(void);
-void mus_set_rt_audio_p(int rt);
 
 
 

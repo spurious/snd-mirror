@@ -429,14 +429,6 @@ void mus_ldouble_to_char(unsigned char *j, double x)
 
 /* ---------------- file descriptors ---------------- */
 
-static int rt_ap_out;   /* address of RT audio ports, if any */
-
-/* for CLM */
-void mus_set_rt_audio_p (int rt)
-{
-  rt_ap_out = rt;
-}
-
 typedef struct {
   char *name;
   int data_format, bytes_per_sample, chans, header_type;
@@ -626,7 +618,6 @@ int mus_file_close(int fd)
 off_t mus_file_seek_frame(int tfd, off_t frame)
 {
   io_fd *fd;
-  if ((tfd == MUS_DAC_CHANNEL) || (tfd == MUS_DAC_REVERB)) return(0);
   if (io_fds == NULL) 
     return(mus_error(MUS_FILE_DESCRIPTORS_NOT_INITIALIZED, "mus_file_seek_frame: no file descriptors!"));
   if (tfd < 0)
@@ -1048,32 +1039,27 @@ static int checked_write(int tfd, char *buf, int chars)
 {
   int bytes;
   io_fd *fd;
-  if (tfd == MUS_DAC_CHANNEL)
-    mus_audio_write(rt_ap_out, buf, chars);
-  else
+  bytes = write(tfd, buf, chars);
+  if (bytes != chars) 
     {
-      bytes = write(tfd, buf, chars);
-      if (bytes != chars) 
-	{
-	  if ((io_fds == NULL) || (tfd >= io_fd_size) || (tfd < 0) || (io_fds[tfd] == NULL))
-	    return(mus_error(MUS_FILE_DESCRIPTORS_NOT_INITIALIZED, "mus_write: no file descriptors!"));
-	  fd = io_fds[tfd];
-	  if (fd->data_format == MUS_UNKNOWN) 
-	    return(mus_error(MUS_FILE_CLOSED,
-			     "attempt to write closed file %s",
-			     fd->name));
-	  else
+      if ((io_fds == NULL) || (tfd >= io_fd_size) || (tfd < 0) || (io_fds[tfd] == NULL))
+	return(mus_error(MUS_FILE_DESCRIPTORS_NOT_INITIALIZED, "mus_write: no file descriptors!"));
+      fd = io_fds[tfd];
+      if (fd->data_format == MUS_UNKNOWN) 
+	return(mus_error(MUS_FILE_CLOSED,
+			 "attempt to write closed file %s",
+			 fd->name));
+      else
 #ifndef MACOS
-	    return(mus_error(MUS_WRITE_ERROR,
-			     "mus_write: write error for %s%s%s: only %d of %d bytes written",
-			     fd->name, (errno) ? ": " : "", (errno) ? strerror(errno) : "",
-			     bytes, chars));
+	return(mus_error(MUS_WRITE_ERROR,
+			 "mus_write: write error for %s%s%s: only %d of %d bytes written",
+			 fd->name, (errno) ? ": " : "", (errno) ? strerror(errno) : "",
+			 bytes, chars));
 #else
-	    return(mus_error(MUS_WRITE_ERROR,
-			     "mus_write: write error for %s: only %d of %d bytes written",
-			     fd->name, bytes, chars));
+      return(mus_error(MUS_WRITE_ERROR,
+		       "mus_write: write error for %s: only %d of %d bytes written",
+		       fd->name, bytes, chars));
 #endif
-	}
     }
   return(MUS_NO_ERROR);
 }
@@ -1086,7 +1072,6 @@ off_t mus_file_write_zeros(int tfd, off_t num)
   off_t curnum;
   io_fd *fd;
   char *charbuf = NULL;
-  if (tfd == MUS_DAC_REVERB) return(0);
   if ((io_fds == NULL) || (tfd >= io_fd_size) || (tfd < 0) || (io_fds[tfd] == NULL))
     return(mus_error(MUS_FILE_DESCRIPTORS_NOT_INITIALIZED, "mus_file_write_zeros: no file descriptors!"));
   fd = io_fds[tfd];
@@ -1129,7 +1114,6 @@ static int mus_write_1(int tfd, int beg, int end, int chans, mus_sample_t **bufs
   if (inbuf) to_buffer = true;
   if (!to_buffer)
     {
-      if (tfd == MUS_DAC_REVERB) return(0);
       if ((io_fds == NULL) || (tfd >= io_fd_size) || (tfd < 0) || (io_fds[tfd] == NULL))
 	return(mus_error(MUS_FILE_DESCRIPTORS_NOT_INITIALIZED, "mus_write: no file descriptors!"));
       fd = io_fds[tfd];

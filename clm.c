@@ -5457,10 +5457,6 @@ Float mus_in_any(off_t samp, int chan, mus_any *IO)
   return(0.0);
 }
 
-Float mus_ina(off_t samp, mus_any *inp) {return(mus_in_any(samp, 0, inp));}
-Float mus_inb(off_t samp, mus_any *inp) {return(mus_in_any(samp, 1, inp));}
-
-
 
 /* ---------------- file->frame ---------------- */
 
@@ -5776,11 +5772,11 @@ static mus_any *mus_make_sample_to_file_with_comment_1(const char *filename, int
 mus_any *mus_continue_sample_to_file(const char *filename)
 {
   return(mus_make_sample_to_file_with_comment_1(filename,
-					     mus_sound_chans(filename),
-					     mus_sound_data_format(filename),
-					     mus_sound_header_type(filename),
-					     NULL,
-					     true));
+						mus_sound_chans(filename),
+						mus_sound_data_format(filename),
+						mus_sound_header_type(filename),
+						NULL,
+						true));
 }
 
 mus_any *mus_make_sample_to_file_with_comment(const char *filename, int out_chans, int out_format, int out_type, const char *comment)
@@ -5815,11 +5811,6 @@ Float mus_out_any(off_t samp, Float val, int chan, mus_any *IO)
   if (IO) return(mus_sample_to_file(IO, samp, chan, val));
   return(0.0);
 }
-
-Float mus_outa(off_t samp, Float val, mus_any *IO) {return(mus_out_any(samp, val, 0, IO));}
-Float mus_outb(off_t samp, Float val, mus_any *IO) {return(mus_out_any(samp, val, 1, IO));}
-Float mus_outc(off_t samp, Float val, mus_any *IO) {return(mus_out_any(samp, val, 2, IO));}
-Float mus_outd(off_t samp, Float val, mus_any *IO) {return(mus_out_any(samp, val, 3, IO));}
 
 
 
@@ -5866,6 +5857,18 @@ mus_any *mus_make_frame_to_file(const char *filename, int chans, int out_format,
 {
   rdout *gen;
   gen = (rdout *)mus_make_sample_to_file(filename, chans, out_format, out_type);
+  if (gen) 
+    {
+      gen->core = &FRAME_TO_FILE_CLASS;
+      return((mus_any *)gen);
+    }
+  return(NULL);
+}
+
+mus_any *mus_make_frame_to_file_with_comment(const char *filename, int chans, int out_format, int out_type, const char *comment)
+{
+  rdout *gen;
+  gen = (rdout *)mus_make_sample_to_file_with_comment(filename, chans, out_format, out_type, comment);
   if (gen) 
     {
       gen->core = &FRAME_TO_FILE_CLASS;
@@ -6438,8 +6441,9 @@ mus_any *mus_make_src(Float (*input)(void *arg, int direction), Float srate, int
 	  srp->len = wid * SRC_SINC_DENSITY;
 	  srp->data = (Float *)clm_calloc(srp->lim + 1, sizeof(Float), "src table");
 	  srp->sinc_table = init_sinc_table(wid);
-	  for (i = wid - 1; i < srp->lim; i++) 
-	    srp->data[i] = (*input)(closure, (srate >= 0.0) ? 1 : -1);
+	  if (input)
+	    for (i = wid - 1; i < srp->lim; i++) 
+	      srp->data[i] = (*input)(closure, (srate >= 0.0) ? 1 : -1);
 	  /* was i = 0 here but we want the incoming data centered */
 	  srp->width_1 = 1.0 - wid;
 	  return((mus_any *)srp);
