@@ -1,9 +1,6 @@
 #include "snd.h"
 #include "clm2xen.h"
 
-/* TODO: check (again!) that whenever there is an active selection, gtk selection menus are active
- */
-
 static XEN selection_changed_hook;
 
 static bool cp_has_selection(chan_info *cp, void *ignore)

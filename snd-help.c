@@ -369,6 +369,7 @@ void about_snd_help(void)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+20-Jan:  translation of CLM scentroid (B Battey) in dsp.scm.\n\
 19-Jan:  changed send-netscape to send-mozilla.\n\
          transform?, delete-transform\n\
 18-Jan:  changed transform-hook to after-transform-hook.\n\

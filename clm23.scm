@@ -16,7 +16,7 @@
 ;;; array of gen -> vector (and setf aref to vector-set! in this case)
 ;;; nil -> #f, t -> #t
 ;;; outa needs *output*
-;;; incf, defc 
+;;; incf, decf 
 ;;; length sometimes vector-length, vct-length etc
 ;;; make-filter in scm requires coeffs arrays
 ;;; &optional -> #:optional, &key too (using define*)

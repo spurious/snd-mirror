@@ -4194,7 +4194,7 @@ restarting the sequence whenever it reaches the end.
     (if (&gt; n 0) 
 	(begin 
 	  (<em class=red>bomb</em>) 
-	  (in speed (lambda () (show-bomb (- n 1) speed))))
+	  (<a class=quiet href="#gin">in</a> speed (lambda () (show-bomb (- n 1) speed))))
 	(<em class=red>bomb</em> 0 #f))))
 
 (show-bomb 20 200)
@@ -6105,7 +6105,7 @@ is accessed is not foolish:
   (let ((dither (* .5 amount)))
     (<em class=red>ptree-channel</em> 
       (lambda (y) 
-        (+ y (mus-random dither) (mus-random dither))) 
+        (+ y (<a class=quiet href="clm.html#mus-random">mus-random</a> dither) (<a class=quiet href="clm.html#mus-random">mus-random</a> dither))) 
       beg dur snd chn edpos #t)))
 </pre>
 This gives a slightly different take on the sound each time you look at it or listen to it;
@@ -10738,9 +10738,9 @@ of FractInt's royal colormap):
 <table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (add-colormap "purple" 
   (lambda (size) 
-    (let ((r (make-vct size))
-	  (g (make-vct size))
-	  (b (make-vct size))
+    (let ((r (<a class=quiet href="#makevct">make-vct</a> size))
+	  (g (<a class=quiet href="#makevct">make-vct</a> size))
+	  (b (<a class=quiet href="#makevct">make-vct</a> size))
 	  (incr (exact-&gt;inexact (/ 256.0 size)))
 	  (er (list 0 60 60 116 128 252 192 252 256 60))
 	  (eg (list 0 0  64 0   128 252 192 252 256 0))
@@ -10748,24 +10748,24 @@ of FractInt's royal colormap):
       (do ((i 0 (1+ i))
 	   (x 0.0 (+ x incr)))
 	  ((= i size))
-        (vct-set! r i (exact-&gt;inexact (/ (envelope-interp x er) 256.0)))
-        (vct-set! g i (exact-&gt;inexact (/ (envelope-interp x eg) 256.0)))
-        (vct-set! b i (exact-&gt;inexact (/ (envelope-interp x eb) 256.0))))
+        (<a class=quiet href="#vctset">vct-set!</a> r i (exact-&gt;inexact (/ (<a class=quiet href="sndscm.html#envelopeinterp">envelope-interp</a> x er) 256.0)))
+        (<a class=quiet href="#vctset">vct-set!</a> g i (exact-&gt;inexact (/ (<a class=quiet href="sndscm.html#envelopeinterp">envelope-interp</a> x eg) 256.0)))
+        (<a class=quiet href="#vctset">vct-set!</a> b i (exact-&gt;inexact (/ (<a class=quiet href="sndscm.html#envelopeinterp">envelope-interp</a> x eb) 256.0))))
       (list r g b))))
 
 ;;; another amusing colormap from FractInt:
 (add-colormap "cos" 
   (lambda (size) 
-    (let ((r (make-vct size))
-	  (g (make-vct size))
-	  (b (make-vct size))
+    (let ((r (<a class=quiet href="#makevct">make-vct</a> size))
+	  (g (<a class=quiet href="#makevct">make-vct</a> size))
+	  (b (<a class=quiet href="#makevct">make-vct</a> size))
 	  (incr (exact-&gt;inexact (/ 3.14159 size))))
       (do ((i 0 (1+ i))
 	   (x 0.0 (+ x incr)))
 	  ((= i size))
-	(vct-set! r i (abs (sin (* 1.5 x))))
-	(vct-set! g i (abs (sin (* 3.5 x))))
-	(vct-set! b i (abs (sin (* 2.5 x)))))
+	(<a class=quiet href="#vctset">vct-set!</a> r i (abs (sin (* 1.5 x))))
+	(<a class=quiet href="#vctset">vct-set!</a> g i (abs (sin (* 3.5 x))))
+	(<a class=quiet href="#vctset">vct-set!</a> b i (abs (sin (* 2.5 x)))))
       (list r g b))))
 </pre></td></tr></table>
 </td></tr><tr><td colspan=2></td></tr>

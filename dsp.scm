@@ -1739,3 +1739,73 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 		(let ((pk (vct-peak new-sound)))
 		  (vct-scale! new-sound (/ peak pk)))))))
     (vct->channel new-sound 0 (max len (* len (1- num-coeffs))) snd chn #f (format #f "spectral-polynomial ~A" (vct->string coeffs)))))
+
+
+;;; ----------------
+;;; SCENTROID
+;;;
+;;; by Bret Battey
+;;; Version 1.0 July 13, 2002
+;;; translated to Snd/Scheme Bill S 19-Jan-05
+;;;
+;;; Returns the continuous spectral centroid envelope of a sound.
+;;; The spectral centroid is the "center of gravity" of the spectrum, and it
+;;; has a rough correlation to our sense of "brightness" of a sound. 
+;;;
+;;; [Beauchamp, J., "Synthesis by spectral amplitude and 'brightness' matching
+;;; analyzed musical sounds". Journal of Audio Engineering Society 30(6), 396-406]
+;;;
+;;; The formula used is:
+;;;    C = [SUM<n=1toj>F(n)A(n)] / [SUM<n=1toj>A(n)]
+;;;    Where j is the number of bins in the analysis, 
+;;;    F(n) is the frequency of a given bin,
+;;;    A(n) is the magnitude of the given bin.
+;;;
+;;; If a pitch envelope for the analyzed sound is available, the results
+;;; of SCENTROID can be used with the function NORMALIZE-CENTROID, below, 
+;;; to provide a "normalized spectral centroid". 
+;;;
+;;; DB-FLOOR -- Frames below this decibel level (0 dB = max) will be discarded
+;;; and returned with spectral centroid = 0
+;;;
+;;; RFREQ -- Rendering frequency. Number of  measurements per second.
+;;;
+;;; FFTSIZE -- FFT window size. Must be a power of 2. 4096 is recommended.
+
+(define* (scentroid file #:key (beg 0.0) dur (db-floor -40.0) (rfreq 100.0) (fftsize 4096))
+  (let* ((fsr (mus-sound-srate file))
+	 (incrsamps (inexact->exact (floor (/ fsr rfreq))))
+	 (start (inexact->exact (floor (* beg fsr))))
+	 (end (+ start (if dur (inexact->exact (* dur fsr)) (- (mus-sound-frames file) beg))))
+	 (fdr (make-vct fftsize))
+	 (fdi (make-vct fftsize))
+	 (windows (1+ (inexact->exact (floor (/ (- end start) incrsamps)))))
+	 (results (make-vct windows))
+	 (fft2 (inexact->exact (floor (/ fftsize 2))))
+	 (binwidth (exact->inexact (/ fsr fftsize)))
+	 (rd (make-readin file)))
+    (run
+     (lambda ()
+       (do ((i start (+ i incrsamps))
+	    (loc 0 (1+ loc)))
+	   ((>= i end) results)
+	 (set! (mus-location rd) i)
+	 (let ((sum-of-squares 0.0))
+	   (do ((j 0 (1+ j)))
+	       ((= j fftsize))
+	     (let ((val (readin rd)))
+	       (set! sum-of-squares (+ sum-of-squares (* val val)))
+	       (vct-set! fdr j val)))
+	   (if (>= (linear->db (sqrt (/ sum-of-squares fftsize))) db-floor)
+	       (let ((numsum 0.0)
+		     (densum 0.0))
+		 (clear-array fdi)
+		 (mus-fft fdr fdi fftsize)
+		 (rectangular->polar fdr fdi)
+		 (do ((k 0 (1+ k)))
+		     ((= k fft2))
+		   (set! numsum (+ numsum (* k binwidth (vct-ref fdr k))))
+		   (set! densum (+ densum (vct-ref fdr k))))
+		 (vct-set! results loc (/ numsum densum))))))))))
+	     
+

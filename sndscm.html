@@ -551,6 +551,7 @@ the listener?
   <tr><td><a class=def name="vctpolynomial">vct-polynomial</a> v coeffs</td><td>polynomial evaluation of entire vct</td></tr>
   <tr><td><a class=def name="channelpolynomial">channel-polynomial</a> coeffs snd chn</td><td>polynomial evaluation of entire channel</td></tr>
   <tr><td><a class=def name="spectralpolynomial">spectral-polynomial</a>coeffs snd chn</td><td>polynomial evaluation of entire channel in frequency domain (convolution)</td></tr>
+  <tr><td><a class=def name="scentroid">scentroid</a> file beg dur db-floor rfreq fftsize 4096</td><td>spectral center of gravity (brightness)</td></tr>
 </table>
 
 <p><b>dolph</b> is the Dolph-Chebyshev fft data window, taken
@@ -690,6 +691,7 @@ multiply being a convolution).
 </pre>
 <p>The "constant" (coeff 0) term in spectral polynomial is treated as a dither amount (that is,
 it has the given magnitude, but its phase is randomized, rather than being simple DC).
+<b>scentroid</b> is Brett Battey's CLM scentroid instrument, translated to Snd/Scheme.
 </p>
 
 
@@ -864,7 +866,7 @@ is arbitrary, though it's simplest to use 0.0 to 1.0.  env.scm provides several
 envelope functions that are often useful:
 </p>
 <pre>
-  <em class=emdef>envelope-interp</em> x env <i>base</i>
+  <a class=def Name="envelopeinterp">envelope-interp</a> x env <i>base</i>
   <em class=emdef>window-envelope</em> beg end env
   <em class=emdef>map-envelopes</em> func env1 env2
   <em class=emdef>multiply-envelopes</em> env1 env2

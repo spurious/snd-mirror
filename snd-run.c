@@ -10245,6 +10245,7 @@ static xen_value *walk(ptree *prog, XEN form, walk_result_t walk_result)
 	  walk_result_t arg_result = NEED_ANY_RESULT;
 	  for (i = 0; i < num_args; i++, all_args = XEN_CDR(all_args))
 	    {
+	      arg_result = NEED_ANY_RESULT;
 	      if (w)
 		{
 		  if ((w->need_int_result) ||

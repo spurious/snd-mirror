@@ -2,8 +2,6 @@
 ;;; || for ref arg list, {} for ref arg int as list len
 ;;; & in struct for settable field
 
-;;; TODO: a lot of 'frees are missing here
-
 (CFNC "gchar* g_type_name GType type")
 (CFNC "GQuark g_type_qname GType type")
 (CFNC "GType g_type_from_name gchar* name")
@@ -830,7 +828,7 @@
 (CFNC "GdkRegion* gdk_region_rectangle GdkRectangle* rectangle")
 (CFNC "void gdk_region_destroy GdkRegion* region")
 (CFNC "void gdk_region_get_clipbox GdkRegion* region GdkRectangle* rectangle")
-(CFNC "void gdk_region_get_rectangles GdkRegion* region GdkRectangle** [rectangles] gint* [n_rectangles]") ; TODO: returned rect arr free
+(CFNC "void gdk_region_get_rectangles GdkRegion* region GdkRectangle** [rectangles] gint* [n_rectangles]") ; FREE: returned rect arr
 (CFNC "gboolean gdk_region_empty GdkRegion* region")
 (CFNC "gboolean gdk_region_equal GdkRegion* region1 GdkRegion* region2")
 (CFNC "gboolean gdk_region_point_in GdkRegion* region int x int y")
