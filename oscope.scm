@@ -1,7 +1,10 @@
 (use-modules (ice-9 format) (ice-9 optargs))
 (provide 'snd-oscope.scm)
 
-(define audio-srate 22050) ; change this to 44100 to change the graph's sampling rate
+
+(define audio-srate 22050) ; graph's sampling rate
+(define max-cycle 8192)    ; maximum size in samples of the displayed buffer
+(define cycle-length 1024) ; initial cycle length
 
 (if (not (provided? 'xm))
     (let ((hxm (dlopen "xm.so")))
@@ -27,7 +30,6 @@
 
 (define oscope-dialog #f)
 (define in-data (make-sound-data 1 256))
-(define cycle-length 1024)
 (define cycle-start 0)
 (define power #f)
 (define frozen #f)
@@ -45,8 +47,8 @@
 						      XmNresizePolicy        XmRESIZE_GROW
 						      XmNnoResize            #f
 						      XmNtransient           #f
-						      XmNheight              400
-						      XmNwidth               400
+						      XmNheight              600
+						      XmNwidth               800
 						      XmNbackground          (basic-color))))
     (XtVaSetValues (XmMessageBoxGetChild oscope-dialog XmDIALOG_OK_BUTTON)
 		   (list XmNarmColor   (pushed-button-color)
@@ -94,7 +96,7 @@
 					 (list XmNorientation   XmHORIZONTAL
 					       XmNshowValue     #t
 					       XmNminimum       32
-					       XmNmaximum       8192
+					       XmNmaximum       max-cycle
 					       XmNvalue         cycle-length
 					       XmNdecimalPoints 0
 					       XmNtitleString   cycle-title
@@ -108,8 +110,9 @@
 						  XmNbottomWidget        bottom-row
 						  XmNbackground          (basic-color)
 						  )))
-    	   (graph (make-variable-graph mainform "input" 8192 audio-srate))
-	   (data (channel-data graph 0)))
+    	   (graph (make-variable-graph mainform "input" max-cycle audio-srate))
+	   (data (channel-data graph 0))
+	   (in-frames 256))
       (set! pbutton power-button)
 
       (set! (max-transform-peaks graph 0) 10)
@@ -134,15 +137,38 @@
 		       (if power
 			   (begin
 			     (set! in-port (mus-audio-open-input mus-audio-microphone audio-srate 1 mus-lshort 512))
+			     (if (= in-port -1)
+				 ;; ask card what it wants
+				 (let ((vals (make-vct 32))
+				       (chans 1)
+				       (bytes 512))
+				   (mus-audio-mixer-read mus-audio-microphone mus-audio-format 32 vals)
+				   (let ((fmt (inexact->exact (vct-ref vals 1))))
+				     (mus-audio-mixer-read mus-audio-microphone mus-audio-channel 32 vals)
+				     (set! chans (inexact->exact (vct-ref vals 0)))
+				     (let ((err (mus-audio-mixer-read mus-audio-microphone mus-audio-samples-per-channel 2 vals)))
+				       (if (not (= err -1))
+					   (set! in-frames (inexact->exact (vct-ref vals 0))))
+				       (let* ((bps (mus-bytes-per-sample fmt)))
+					 (set! bytes (* bps in-frames chans))
+					 (set! in-port (catch #t
+							      (lambda ()
+								(mus-audio-open-output mus-audio-default audio-srate chans fmt bytes))
+							      (lambda args -1)))
+					 (if (not (= in-port -1))
+					     (begin
+					       (if (or (not (= (sound-data-chans in-data) chans))
+						       (not (= (sound-data-length in-data) in-frames)))
+						   (set! in-data (make-sound-data chans in-frames))))))))))
 			     (if (not (= in-port -1))
 				 (begin
 				   (do ()
 				       ((or (not power) (c-g?)))
-				     (mus-audio-read in-port in-data 256)
+				     (mus-audio-read in-port in-data in-frames)
 				     (if (not frozen)
 					 (begin
-					   (set! cycle-start (sound-data->sound-data in-data data cycle-start 256 cycle-length))
-					   (if (< cycle-start 256)
+					   (set! cycle-start (sound-data->sound-data in-data data cycle-start in-frames cycle-length))
+					   (if (< cycle-start in-frames)
 					       (begin
 						 (if (time-graph? graph 0) (update-time-graph graph 0))
 						 (if (transform-graph? graph 0) (update-transform-graph graph 0)))))))
@@ -156,5 +182,4 @@
 
 (define oscope (make-oscope))
 
-;;; TODO: sine tone out
 ;;; TODO: gl checks ("waterfall"), gtk version, rb cases

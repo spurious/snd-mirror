@@ -37,8 +37,8 @@ typedef struct {
   file_delete_t temporary;     /* in-filename was written by us and needs to be deleted when mix state is deleted */
   snd_info *add_snd;           /* readable snd_info struct for mix input */
   int id, x, nx, y, tagx, tagy, height, orig_chan, orig_edit_ctr; 
-  env **dialog_envs;            /* mix dialog version of current amp envs */
-  bool save_needed;
+  env **dialog_envs;           /* mix dialog version of current amp envs */
+  bool save_needed;            /* for mix drag display */
 } mix_info;
 
 typedef enum {C_STRAIGHT_SOUND, C_AMP_SOUND, C_SPEED_SOUND, C_ZERO_SOUND, C_AMP_ENV_SOUND, C_SPEED_AMP_SOUND, C_SPEED_ENV_SOUND,
@@ -312,6 +312,8 @@ static mix_info *md_from_id(int n)
   return(NULL);
 }
 
+static int pending_mix_id(void) {return(mix_infos_ctr);}
+
 static mix_info *make_mix_info(chan_info *cp)
 {
   mix_info *md;
@@ -450,9 +452,9 @@ static mix_info *free_mix_info(mix_info *md)
 
 #if HAVE_GUILE
 /* edit-list->function support for mixes/tracks:
- *      mix list search for current channel, make outer let holding all names as (_mix_### ###)
- *      origins for make-mix procs: (set! _mix_### (...))
- *      origins otherwise, reference to mix: _mix_###
+ *      mix list search for current channel, make outer let holding all names as (-mix-### ###)
+ *      origins for make-mix procs: (set! -mix-### (...))
+ *      origins otherwise, reference to mix: -mix-###
  *      same mechanism for tracks
  *      eventually we'll need to deal with Ruby as well
  * what about mix not created within list then applied to some other channel? -- some auto-copy mechanism?
@@ -469,7 +471,7 @@ char *edit_list_mix_and_track_init(chan_info *cp)
       if ((md) && (md->cp == cp))
 	{
 	  old_list = mix_list;
-	  mix_list = mus_format("%s(_mix_%d %d)", (old_list) ? " " : "", i, i); /* i is md->id = mix id from user's point of view */
+	  mix_list = mus_format("%s(-mix-%d %d)", (old_list) ? " " : "", i, i); /* i is md->id = mix id from user's point of view */
 	  if (old_list) FREE(old_list);
 	}
     }
@@ -1109,7 +1111,7 @@ static mix_info *file_mix_samples(off_t beg, off_t num, char *mixfile, chan_info
   snd_fd *csf = NULL;
   snd_info *sp;
   int ofd, ifd;
-  char *ofile;
+  char *ofile, *new_origin = NULL;
   mus_sample_t **data;
   mus_sample_t *chandata;
   int in_chans, err = 0;
@@ -1203,9 +1205,14 @@ static mix_info *file_mix_samples(off_t beg, off_t num, char *mixfile, chan_info
   FREE(data);
   free_file_info(ihdr);
   free_file_info(ohdr);
-  file_change_samples(beg, num, ofile, cp, 0, DELETE_ME, DONT_LOCK_MIXES, origin, cp->edit_ctr); /* editable checked already */
-  /* ORIGIN? (set! _mix_### %s [snd chn]) using origin as %s ? -- need to reset outer origin to reflect this */
-  /*   this only if with_tag, else just use origin? */
+  if ((origin) && (with_tag))
+    {
+      int next_mix;
+      next_mix = pending_mix_id();
+      new_origin = mus_format("set! -mix-%d (%s)", next_mix, origin);
+    }
+  else new_origin = copy_string(origin);
+  file_change_samples(beg, num, ofile, cp, 0, DELETE_ME, DONT_LOCK_MIXES, new_origin, cp->edit_ctr); /* editable checked already */
   if (ofile) FREE(ofile);
   if (with_tag)
     {
@@ -1218,7 +1225,9 @@ static mix_info *file_mix_samples(off_t beg, off_t num, char *mixfile, chan_info
 	  while (cp->edit_ctr > edpos) backup_edit_list(cp);
 	  backup_mix_list(cp, edpos); /* needed if track exists and imposes changes on mixed-in data */
 	  if (cp->edits[cp->edit_ctr]->origin) FREE(cp->edits[cp->edit_ctr]->origin);
-	  cp->edits[cp->edit_ctr]->origin = copy_string(origin);
+	  if (new_origin)
+	    cp->edits[cp->edit_ctr]->origin = copy_string(new_origin);
+	  else cp->edits[cp->edit_ctr]->origin = copy_string(origin);
 	}
     }
   else
@@ -1228,6 +1237,7 @@ static mix_info *file_mix_samples(off_t beg, off_t num, char *mixfile, chan_info
     }
   if (redisplay) update_graph(cp);
   cp->edit_hook_checked = false;
+  if (new_origin) FREE(new_origin);
   return(md);
 }
 
@@ -2486,7 +2496,7 @@ void move_mix_tag(int mix_tag, int x)
     {
       if (md->save_needed)
 	{
-	  wrap_mix_save_graph(md, "drag mix"); /* ORIGIN? */
+	  wrap_mix_save_graph(md, "drag mix");
 	  md->save_needed = false;
 	}
       md->x = x;
@@ -3279,7 +3289,7 @@ static int set_mix_amp(int mix_id, int chan, Float val, bool from_gui, bool remi
 		    return(mix_id);
 		  cs->scalers[chan] = val;
 		  reflect_mix_or_track_change(mix_id, ANY_TRACK_ID, false);
-		  origin = mus_format("Mix %d: amp[%d]=%.3f", md->id, chan, val); /* ORIGIN? */
+		  origin = mus_format("set! (%s -mix-%d %d) %.4f", S_mix_amp, md->id, chan, val);
 		  remix_file(md, origin, true);
 		  FREE(origin);
 		}
@@ -3289,7 +3299,7 @@ static int set_mix_amp(int mix_id, int chan, Float val, bool from_gui, bool remi
 		  cs->scalers[chan] = val;
 		  if (remix)
 		    {
-		      origin = mus_format("Mix %d: amp[%d]=%.3f", md->id, chan, val); /* ORIGIN? */	      
+		      origin = mus_format("set! (%s -mix-%d %d) %.4f", S_mix_amp, md->id, chan, val);
 		      remix_file(md, origin, false);
 		      FREE(origin);
 		    }
@@ -3315,7 +3325,7 @@ int mix_dialog_set_mix_amp(int mix_id, int chan, Float val, bool dragging)
   md = md_from_id(mix_id);
   if ((md->save_needed) && (dragging))
     {
-      wrap_mix_save_graph(md, S_setB S_mix_amp); /* ORIGIN? */
+      wrap_mix_save_graph(md, S_setB S_mix_amp);
       md->save_needed = false;
       mix_slider_dragged = true;
     }
@@ -3385,7 +3395,7 @@ static int set_mix_speed(int mix_id, Float val, bool from_gui, bool remix)
 	      (cs->speed == new_speed) && /* drag sets speed, so we can't optimize that case without some difficulties */
 	      (md->cp->sound->sync == 0))
 	    return(mix_id);
-	  origin = mus_format("Mix %d: speed=%.3f", md->id, new_speed); /* ORIGIN? */
+	  origin = mus_format("set! (%s -mix-%d) %.4f", S_mix_speed, md->id, val);
 	  if ((found_track_amp_env(cs->track)) && /* amp-env needs bounds check; if bounds are changed by mix speed change, re-calc entire track */
 	      (track_members(cs->track) > 1))
 	    {
@@ -3466,7 +3476,7 @@ int mix_dialog_set_mix_speed(int mix_id, Float val, bool dragging)
   md = md_from_id(mix_id);
   if ((md->save_needed) && (dragging))
     {
-      wrap_mix_save_graph(md, S_setB S_mix_speed); /* ORIGIN? */
+      wrap_mix_save_graph(md, S_setB S_mix_speed);
       md->save_needed = false;
       mix_slider_dragged = true;
     }
@@ -3519,14 +3529,17 @@ int mix_dialog_mix_track(int mix_id)
   return(0);
 }
 
-typedef struct {int id; off_t pos; char *caller;} set_mix_position_t;
+typedef struct {int id; off_t pos;} set_mix_position_t;
 
 static void set_mix_position_1(mix_info *md, void *val)
 {
+  char *origin;
   set_mix_position_t *ptr = (set_mix_position_t *)val;
   if (md->id == ptr->id) 
     md->active_mix_state->beg = ptr->pos;
-  remix_file(md, ptr->caller, false); /* ORIGIN? */
+  origin = mus_format("set! (%s -mix-%d) " OFF_TD, S_mix_position, md->id, ptr->pos);
+  remix_file(md, origin, false);
+  FREE(origin);
 }
 
 int set_mix_position(int mix_id, off_t val)
@@ -3544,7 +3557,6 @@ int set_mix_position(int mix_id, off_t val)
 	      (md->cp->sound->sync == 0))
 	    return(mix_id);
 	  if (val < 0) val = 0;
-	  origin = mus_format("Mix %d: position=" OFF_TD, md->id, val); /* ORIGIN? */
 	  if ((found_track_amp_env(cs->track)) && /* amp-env needs bounds check; if bounds are changed by mix position change, re-calc entire track */
 	      (track_members(cs->track) > 1))
 	    {
@@ -3565,7 +3577,6 @@ int set_mix_position(int mix_id, off_t val)
 		  mp = (set_mix_position_t *)CALLOC(1, sizeof(set_mix_position_t));
 		  mp->id = mix_id;
 		  mp->pos = val;
-		  mp->caller = origin;
 		  remix_track_with_preset_times(cs->track, new_trk_beg, new_trk_len, reset_bounds, 1.0, set_mix_position_1, (void *)mp);
 		  FREE(mp);
 		  /* "1.0" = speed change, reset_bounds just sets bounds of chained tracks */
@@ -3573,17 +3584,20 @@ int set_mix_position(int mix_id, off_t val)
 	      else
 		{
 		  /* no fanciness needed */
+		  origin = mus_format("set! (%s -mix-%d) " OFF_TD, S_mix_position, md->id, val);
 		  cs->beg = val; 
-		  remix_file(md, origin, true); 
+		  remix_file(md, origin, true);
+		  FREE(origin);
 		}
 	    }
 	  else
 	    {
+	      origin = mus_format("set! (%s -mix-%d) " OFF_TD, S_mix_position, md->id, val);
 	      cs->beg = val; 
 	      remix_file(md, origin, true); 
+	      FREE(origin);
 	    }
 	  reflect_mix_or_track_change(mix_id, ANY_TRACK_ID, false);
-	  if (origin) FREE(origin);
 	}
       return(mix_id);
     }
@@ -3995,7 +4009,7 @@ static void set_mix_locked(mix_info *md, bool on, bool redisplay)
   mix_state *cs;
   cs = md->active_mix_state;
   cs->locked = on;
-  origin = mus_format("set! (%s _mix_%d) %s", S_mix_locked_p, md->id, (on) ? "#t" : "#f");
+  origin = mus_format("set! (%s -mix-%d) %s", S_mix_locked_p, md->id, (on) ? "#t" : "#f");
   remix_file(md, origin, redisplay);
 }
 
@@ -4017,7 +4031,7 @@ static void set_mix_inverted(mix_info *md, bool on, bool redisplay)
   mix_state *cs;
   cs = md->active_mix_state;
   cs->inverted = on;
-  origin = mus_format("set! (%s _mix_%d) %s", S_mix_inverted_p, md->id, (on) ? "#t" : "#f");
+  origin = mus_format("set! (%s -mix-%d) %s", S_mix_inverted_p, md->id, (on) ? "#t" : "#f");
   remix_file(md, origin, redisplay);
   FREE(origin);
 }
@@ -4647,7 +4661,7 @@ mix data (a vct) into snd's channel chn starting at beg; return the new mix id"
       for (i = 0; i < len; i++)
 	data[i] += read_sample(sf);
       free_snd_fd(sf);
-      change_samples(bg, len, data, cp, LOCK_MIXES, S_mix_vct, cp->edit_ctr);
+      change_samples(bg, len, data, cp, LOCK_MIXES, (char *)((edname == NULL) ? S_mix_vct : edname), cp->edit_ctr);
     }
   else
     {

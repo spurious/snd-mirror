@@ -30220,6 +30220,9 @@ EDITS: 1
 (define* (clm-channel-test #:optional snd chn)
   (clm-channel (make-two-zero 1 -1) 0 #f snd chn #f #f "clm-channel-test"))
 
+(define* (make-v-mix #:optional snd chn)
+  (mix-vct (vct .1 .2 .3) 100 snd chn #t "make-v-mix snd chn"))
+
 (if (or full-test (= snd-test 19) (and keep-going (<= snd-test 19)))
     (let ((nind (open-sound "oboe.snd")))
       (run-hook before-test-hook 19)
@@ -31402,6 +31405,8 @@ EDITS: 2
 	      (lambda () (effects-blp 1000.0 0 #f))
 	      (lambda () (effects-hello-dentist 50.0 0.5 0 #f))
 	      (lambda () (effects-fp 1.0 0.3 20.0 0 #f))
+	      (lambda () (effects-cnv 0 .01))
+	      (lambda () (effects-flange 5.0 2.0 0.001 0 #f))
 
 	      )
 	     (list 
@@ -31469,6 +31474,8 @@ EDITS: 2
 	      "(lambda (snd chn) (effects-blp 1000.0 0 #f snd chn))"
 	      "(lambda (snd chn) (effects-hello-dentist 50.0 0.5 0 #f snd chn))"
 	      "(lambda (snd chn) (effects-fp 1.0 0.3 20.0 0 #f snd chn))"
+	      "(lambda (snd chn) (effects-cnv 0 0.01 snd chn))"
+	      "(lambda (snd chn) (effects-flange 5.0 2.0 0.001 0 #f snd chn))"
 
 	      )
 	     ))
@@ -31567,13 +31574,107 @@ EDITS: 2
 	    (revert-sound ind)
 	    (if (not (= (filter-control-order ind) order)) (snd-display ";controls->channel filter: ~A" (filter-control-order ind)))))
 	
+	;; ---- mix stuff
+	(let ((id (make-v-mix ind 0)))
+	  ;; ---- mix-position
+	  (set! (mix-position id) 200)
+	  (if (not (= (mix-position id) 200)) (snd-display ";edit-list->function mix off to a bad start: ~A" (mix-position id)))
+	  (let ((func (edit-list->function)))
+	    (if (not (procedure? func)) 
+		(snd-display ";edit-list->function mix 1: ~A" func))
+	    (if (not (string=? (object->string (procedure-source func))
+			       (format #f "(lambda (snd chn) (let ((-mix-~D ~D)) (set! -mix-~D (make-v-mix snd chn)) (set! (mix-position -mix-~D) 200)))"
+				       id id id id)))
+		(snd-display ";edit-list->function mix 1: ~A" (object->string (procedure-source func))))
+	    (revert-sound ind)
+	    (func ind 0)
+	    (if (or (null? (mixes ind 0))
+		    (not (= (mix-position (car (mixes ind 0))) 200)))
+		(snd-display ";edit-list->function mix 1 repos: ~A ~A" 
+			     (mixes ind 0) (and (not (null? (mixes ind 0))) (mix-position (car (mixes ind 0)))))))
+	  (revert-sound ind)
+	  
+	  ;; ---- mix-inverted?
+	  (set! id (make-v-mix ind 0))
+	  (set! (mix-inverted? id) #t)
+	  (let ((func (edit-list->function)))
+	    (if (not (procedure? func)) 
+		(snd-display ";edit-list->function mix 2: ~A" func))
+	    (if (not (string=? (object->string (procedure-source func))
+			       (format #f "(lambda (snd chn) (let ((-mix-~D ~D)) (set! -mix-~D (make-v-mix snd chn)) (set! (mix-inverted? -mix-~D) #t)))"
+				       id id id id)))
+		(snd-display ";edit-list->function mix 2: ~A" (object->string (procedure-source func))))
+	    (revert-sound ind)
+	    (func ind 0)
+	    (if (or (null? (mixes ind 0))
+		    (not (mix-inverted? (car (mixes ind 0)))))
+		(snd-display ";edit-list->function mix 2 reinvert: ~A ~A" 
+			     (mixes ind 0) (and (not (null? (mixes ind 0))) (mix-inverted? (car (mixes ind 0)))))))
+	  (revert-sound ind)
+	  
+	  ;; ---- mix-locked?
+	  (set! id (make-v-mix ind 0))
+	  (set! (mix-locked? id) #t)
+	  (let ((func (edit-list->function)))
+	    (if (not (procedure? func)) 
+		(snd-display ";edit-list->function mix 3: ~A" func))
+	    (if (not (string=? (object->string (procedure-source func))
+			       (format #f "(lambda (snd chn) (let ((-mix-~D ~D)) (set! -mix-~D (make-v-mix snd chn)) (set! (mix-locked? -mix-~D) #t)))"
+				       id id id id)))
+		(snd-display ";edit-list->function mix 3: ~A" (object->string (procedure-source func))))
+	    (revert-sound ind)
+	    (func ind 0)
+	    (if (or (null? (mixes ind 0))
+		    (not (mix-locked? (car (mixes ind 0)))))
+		(snd-display ";edit-list->function mix 3 relock: ~A ~A" 
+			     (mixes ind 0) (and (not (null? (mixes ind 0))) (mix-locked? (car (mixes ind 0)))))))
+	  (revert-sound ind)
+	  
+	  ;; ---- mix-amp
+	  (set! id (make-v-mix ind 0))
+	  (set! (mix-amp id 0) 0.5)
+	  (let ((func (edit-list->function)))
+	    (if (not (procedure? func)) 
+		(snd-display ";edit-list->function mix 4: ~A" func))
+	    (if (not (string=? (object->string (procedure-source func))
+			       (format #f "(lambda (snd chn) (let ((-mix-~D ~D)) (set! -mix-~D (make-v-mix snd chn)) (set! (mix-amp -mix-~D 0) 0.5)))"
+				       id id id id)))
+		(snd-display ";edit-list->function mix 4: ~A" (object->string (procedure-source func))))
+	    (revert-sound ind)
+	    (func ind 0)
+	    (if (or (null? (mixes ind 0))
+		    (fneq (mix-amp (car (mixes ind 0)) 0) 0.5))
+		(snd-display ";edit-list->function mix 4 reamp: ~A ~A" 
+			     (mixes ind 0) (and (not (null? (mixes ind 0))) (mix-amp (car (mixes ind 0)) 0)))))
+	  (revert-sound ind)
+	  
+	  ;; ---- mix-speed
+	  (set! id (make-v-mix ind 0))
+	  (set! (mix-speed id) 0.5)
+	  (let ((func (edit-list->function)))
+	    (if (not (procedure? func)) 
+		(snd-display ";edit-list->function mix 5: ~A" func))
+	    (if (not (string=? (object->string (procedure-source func))
+			       (format #f "(lambda (snd chn) (let ((-mix-~D ~D)) (set! -mix-~D (make-v-mix snd chn)) (set! (mix-speed -mix-~D) 0.5)))"
+				       id id id id)))
+		(snd-display ";edit-list->function mix 5: ~A" (object->string (procedure-source func))))
+	    (revert-sound ind)
+	    (func ind 0)
+	    (if (or (null? (mixes ind 0))
+		    (fneq (mix-speed (car (mixes ind 0))) 0.5))
+		(snd-display ";edit-list->function mix 5 respeed: ~A ~A" 
+			     (mixes ind 0) (and (not (null? (mixes ind 0))) (mix-speed (car (mixes ind 0)))))))
+	  (revert-sound ind)
+	  )
+	  
+	  
 	(close-sound ind))
-  
+	
       (mus-sound-prune)
       (run-hook after-test-hook 19)
       ))
-
-
+    
+    
 ;;; ---------------- test 20: transforms ----------------
 
 (define (inverse-haar f)

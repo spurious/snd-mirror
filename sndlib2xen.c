@@ -638,7 +638,7 @@ static XEN g_sound_data_to_sound_data(XEN sd_in, XEN sd_out, XEN start, XEN fram
   #define H_sound_data_to_sound_data "(" S_sound_data_to_sound_data " sd-in sd-out start frames): copies sound-data sd-in's \
 data from 0 for 'frames' frames into 'sd-out' starting at 'start', wrapping around if sd-out's end is reached."
   sound_data *sdi, *sdo;
-  int len, beg, i, j = 0, ilen, olen, cycle;
+  int len, beg, i, j = 0, ilen, olen, cycle, chans;
   XEN_ASSERT_TYPE(SOUND_DATA_P(sd_in), sd_in, XEN_ARG_1, S_sound_data_to_sound_data, "a sound-data object");
   XEN_ASSERT_TYPE(SOUND_DATA_P(sd_out), sd_out, XEN_ARG_2, S_sound_data_to_sound_data, "a sound-data object");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(start), start, XEN_ARG_3, S_sound_data_to_sound_data, "an integer");
@@ -654,16 +654,18 @@ data from 0 for 'frames' frames into 'sd-out' starting at 'start', wrapping arou
   olen = sdo->length;
   if (beg >= olen) beg = 0;
   if (cycle > olen) cycle = olen;
+  chans = sdo->chans;
+  if (sdi->chans < chans) chans = sdi->chans;
   if ((beg + len) < cycle)
     {
-      for (i = 0; i < sdo->chans; i++)
+      for (i = 0; i < chans; i++)
 	memmove((void *)(sdo->data[i] + beg), (void *)(sdi->data[i]), (len * sizeof(mus_sample_t)));
       j = beg + len;
     }
   else
     {
       int k;
-      for (i = 0; i < sdo->chans; i++)
+      for (i = 0; i < chans; i++)
 	{
 	  j = beg;
 	  for (k = 0; k < len; k++)

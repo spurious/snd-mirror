@@ -4762,7 +4762,9 @@ static char *edit_list_to_function(chan_info *cp, int start_pos, int end_pos)
 	  /*   In insert/change/ptree/xen cases, there's basically no choice */
 	  if (ed->backed_up)
 	    {
-	      function = mus_format("%s (%s snd chn)", function, ed->origin);
+	      if ((ed->origin) && (strncmp(ed->origin, "set!", 4) == 0))
+		function = mus_format("%s (%s)", function, ed->origin);
+	      else function = mus_format("%s (%s snd chn)", function, ed->origin);
 	    }
 	  else
 	    {
