@@ -48,7 +48,7 @@ static Float get_scrollbar(Widget w, int val, int scrollbar_max)
   int size;
   if (val == 0) return(0.0);
   XtVaGetValues(w, XmNsliderSize, &size, NULL);
-  return((Float)val / (Float)(scrollbar_max-size));
+  return((Float)val / (Float)(scrollbar_max - size));
 }
 
 static void sy_changed(int value, chan_info *cp)
@@ -115,7 +115,7 @@ static void zx_changed(int value, chan_info *cp)
 
 void set_zx_scrollbar_value(chan_info *cp, Float value)
 {
-  XtVaSetValues(channel_zx(cp), XmNvalue, (int)(value*SCROLLBAR_MAX), NULL);
+  XtVaSetValues(channel_zx(cp), XmNvalue, (int)(value * SCROLLBAR_MAX), NULL);
 }
 
 static void set_scrollbar(Widget w, Float position, Float range, int scrollbar_max) /* position and range 0 to 1.0 */
@@ -126,7 +126,7 @@ static void set_scrollbar(Widget w, Float position, Float range, int scrollbar_m
     size = scrollbar_max; /* this can't happen!?! */
   if (size < 1) size = 1;
   val = (int)(scrollbar_max * position);
-  if ((val + size)>scrollbar_max) val = scrollbar_max - size;
+  if ((val + size) > scrollbar_max) val = scrollbar_max - size;
   if (val < 0) val = 0;
   XtVaSetValues(w,
 		XmNsliderSize, size,

@@ -1608,22 +1608,8 @@ match-sound-files from extensions.scm):
 ;(install-searcher (lambda (file) (= (mus-sound-chans file) 4)))
 </pre>
 <p>Now click the 'Filter' button to see only those files that fit the procedure in
-the dialog's files list.
+the dialog's files list.  See snd-motif.scm for more examples.
 </p>
-<!--
-This disables the y-position slider:
-(define sy (|Widget (list-ref (channel-widgets) 4)))
-(|XtRemoveAllCallbacks sy |XmNdragCallback)
-(|XtRemoveAllCallbacks sy |XmNvalueChangedCallback)
-
-This gets its current (raw) value
-(|XtGetValues sy (list |XmNvalue 0))
-
-(|XtSetValues sy |XmNdragCallback)
-  (list (lambda (w c i)
-          (set! (left-sample) (+ (left-sample) (- (|value i) 50))))
-	#f))
--->
 <br>
 
 <span class=bbox><h3><A NAME="sndwithgtk">Snd and Gtk+</a></h3></span>

@@ -28,7 +28,6 @@ SND_FLAGS =
 
 GX_HEADERS = $(@GX_HEADERS@)
 GX_FILES = $(@GX_FILES@)
-GM_FILES = @GM_FILES@
 
 LDSO_FLAGS = @LDSO_FLAGS@
 SO_INSTALL = @SO_INSTALL@
@@ -51,7 +50,7 @@ xm: 	$(GM_FILES) xen.h
 
 widget: snd_widget.o
 
-snd_widget.o: $(SNDLIB_HEADERS) $(SND_HEADERS) $(GX_HEADERS) $(SNDLIB_O_FILES) $(O_FILES) $(GX_FILES) $(GM_FILES)
+snd_widget.o: $(SNDLIB_HEADERS) $(SND_HEADERS) $(GX_HEADERS) $(SNDLIB_O_FILES) $(O_FILES) $(GX_FILES)
 	$(LD) -r $(LDFLAGS) $(CFLAGS) $(SND_FLAGS) $(SNDLIB_O_FILES) $(O_FILES) $(GX_FILES) -o snd_widget.o
 
 include makesnd.back

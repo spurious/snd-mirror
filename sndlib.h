@@ -27,8 +27,8 @@
 
 
 #define SNDLIB_VERSION 13
-#define SNDLIB_REVISION 1
-#define SNDLIB_DATE "13-Jul-01"
+#define SNDLIB_REVISION 2
+#define SNDLIB_DATE "27-Jul-01"
 
 /* try to figure out what type of machine (and in worst case, what OS) we're running on */
 
@@ -67,6 +67,12 @@
 
 #if defined(ALPHA) || defined(WINDOZE) || defined(__alpha__)
   #define MUS_LITTLE_ENDIAN 1
+#endif
+
+#if MACOS
+  #define off_t long
+#else
+  #include <sys/types.h>
 #endif
 
 #if (!(defined(MACOS))) && (defined(MPW_C) || defined(macintosh) || defined(__MRC__))
@@ -546,7 +552,7 @@ Float mus_fclamp                    PROTO((Float lo, Float val, Float hi));
 
 /* -------- headers.c -------- */
 
-int mus_header_samples              PROTO((void));
+off_t mus_header_samples            PROTO((void));
 int mus_header_data_location        PROTO((void));
 int mus_header_chans                PROTO((void));
 int mus_header_srate                PROTO((void));
@@ -567,11 +573,11 @@ int mus_header_base_note            PROTO((void));
 int mus_header_base_detune          PROTO((void));
 void mus_header_set_raw_defaults    PROTO((int sr, int chn, int frm));
 void mus_header_raw_defaults        PROTO((int *sr, int *chn, int *frm));
-int mus_header_true_length          PROTO((void));
+off_t mus_header_true_length        PROTO((void));
 int mus_header_original_format      PROTO((void));
 int mus_header_data_format_to_bytes_per_sample PROTO((void));
-int mus_samples_to_bytes            PROTO((int format, int size));
-int mus_bytes_to_samples            PROTO((int format, int size));
+unsigned int mus_samples_to_bytes   PROTO((int format, unsigned int size));
+unsigned int mus_bytes_to_samples   PROTO((int format, unsigned int size));
 int mus_header_write_next_header    PROTO((int chan, int srate, int chans, int loc, int siz, int format, const char *comment, int len));
 int mus_header_read_with_fd         PROTO((int chan));
 int mus_header_read                 PROTO((const char *name));

@@ -1,5 +1,6 @@
 snd change log
 
+  27-Jul:    zync/unzync in snd-motif.scm.
   26-Jul:    added 'play selected sound' button to open file dialog.
              previous-files-select-hook, open-file-dialog, install-searcher (grfsnd.html).
              snd-motif.scm.

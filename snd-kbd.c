@@ -1875,8 +1875,8 @@ static XEN g_key(XEN kbd, XEN buckybits, XEN snd, XEN chn)
   ASSERT_CHANNEL(S_key, snd, chn, 3);
   cp = get_cp(snd, chn, S_key);
   return(C_TO_XEN_INT(keyboard_command(cp, 
-				     XEN_TO_C_INT(kbd), 
-				     XEN_TO_C_INT(buckybits))));
+				       XEN_TO_C_INT(kbd), 
+				       XEN_TO_C_INT(buckybits))));
 }
 
 static XEN g_save_macros(void) 

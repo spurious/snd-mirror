@@ -104,15 +104,18 @@ void xen_guile_define_procedure_with_setter(char *get_name, XEN (*get_func)(), c
 					    int get_req, int get_opt, int set_req, int set_opt)
 {
 #if HAVE_SCM_C_DEFINE
-  XEN str;
-  str = C_TO_XEN_STRING(get_help);
+  XEN str = XEN_FALSE;
+  if (get_help) str = C_TO_XEN_STRING(get_help);
   scm_permanent_object(
     scm_c_define(get_name,
       scm_make_procedure_with_setter(
         XEN_NEW_PROCEDURE("", XEN_PROCEDURE_CAST get_func, get_req, get_opt, 0),
 	XEN_NEW_PROCEDURE(set_name, XEN_PROCEDURE_CAST set_func, set_req, set_opt, 0))));
-  scm_set_object_property_x(C_STRING_TO_XEN_SYMBOL(get_name), local_doc, str);
-  scm_set_procedure_property_x(XEN_NAME_AS_C_STRING_TO_VALUE(get_name), local_doc, str);
+  if (get_help)
+    {
+      scm_set_object_property_x(C_STRING_TO_XEN_SYMBOL(get_name), local_doc, str);
+      scm_set_procedure_property_x(XEN_NAME_AS_C_STRING_TO_VALUE(get_name), local_doc, str);
+    }
 #else
   scm_set_object_property_x(
     XEN_CDR(
@@ -132,16 +135,19 @@ void xen_guile_define_procedure_with_reversed_setter(char *get_name, XEN (*get_f
 						     int get_req, int get_opt, int set_req, int set_opt)
 {
 #if HAVE_SCM_C_DEFINE
-  XEN str;
-  str = C_TO_XEN_STRING(get_help);
+  XEN str = XEN_FALSE;
+  if (get_help) str = C_TO_XEN_STRING(get_help);
   scm_permanent_object(
     scm_c_define(get_name,
       scm_make_procedure_with_setter(
         XEN_NEW_PROCEDURE("", XEN_PROCEDURE_CAST get_func, get_req, get_opt, 0),
 	XEN_NEW_PROCEDURE("", XEN_PROCEDURE_CAST reversed_set_func, set_req, set_opt, 0))));
   XEN_NEW_PROCEDURE(set_name, XEN_PROCEDURE_CAST set_func, set_req, set_opt, 0);
-  scm_set_object_property_x(C_STRING_TO_XEN_SYMBOL(get_name), local_doc, str);
-  scm_set_procedure_property_x(XEN_NAME_AS_C_STRING_TO_VALUE(get_name), local_doc, str);
+  if (get_help)
+    {
+      scm_set_object_property_x(C_STRING_TO_XEN_SYMBOL(get_name), local_doc, str);
+      scm_set_procedure_property_x(XEN_NAME_AS_C_STRING_TO_VALUE(get_name), local_doc, str);
+    }
 #else
   scm_set_object_property_x(
     XEN_CDR(

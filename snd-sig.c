@@ -37,10 +37,10 @@ int to_c_edit_position(chan_info *cp, XEN edpos, const char *caller, int arg_pos
 	  return(0); /* never called, presumably */
 	}
       pos = XEN_TO_C_INT_OR_ELSE_WITH_CALLER(XEN_CALL_2(edpos, 
-					       C_TO_SMALL_XEN_INT(cp->sound->index), 
-					       C_TO_SMALL_XEN_INT(cp->chan),
-					       caller),
-					 AT_CURRENT_EDIT_POSITION, caller);
+							C_TO_SMALL_XEN_INT(cp->sound->index), 
+							C_TO_SMALL_XEN_INT(cp->chan),
+							caller),
+					     AT_CURRENT_EDIT_POSITION, caller);
     }
   else pos = XEN_TO_C_INT_OR_ELSE_WITH_CALLER(edpos, AT_CURRENT_EDIT_POSITION, caller);
   if ((pos == AT_CURRENT_EDIT_POSITION) || (pos < 0) || (pos > cp->edit_size))
@@ -244,11 +244,11 @@ static char *convolve_with_or_error(char *filename, Float amp, chan_info *cp, XE
 		{
 		  hdr = sp->hdr;
 		  mus_file_open_descriptors(scfd,
-					   saved_chan_file,
-					   hdr->format,
-					   mus_data_format_to_bytes_per_sample(hdr->format),
-					   hdr->data_location,
-					   1, hdr->type); /* ??? */
+					    saved_chan_file,
+					    hdr->format,
+					    mus_data_format_to_bytes_per_sample(hdr->format),
+					    hdr->data_location,
+					    1, hdr->type); /* ??? */
 		  fltfd = mus_file_open_read(filename);
 		  if (fltfd == -1) 
 		    return(mus_format("convolve: open filter file %s: %s\n", 
@@ -256,12 +256,12 @@ static char *convolve_with_or_error(char *filename, Float amp, chan_info *cp, XE
 		  else
 		    {
 		      mus_file_open_descriptors(fltfd,
-					       filename,
-					       dataformat,
-					       mus_data_format_to_bytes_per_sample(dataformat),
-					       dataloc,
-					       filter_chans,
-					       mus_sound_header_type(filename));
+						filename,
+						dataformat,
+						mus_data_format_to_bytes_per_sample(dataformat),
+						dataloc,
+						filter_chans,
+						mus_sound_header_type(filename));
 		      if (cp == NULL)
 			filesize = selection_len();
 		      else filesize = to_c_edit_samples(ucp, edpos, S_convolve_with, arg_pos);
@@ -2090,8 +2090,8 @@ static XEN g_sp_scan(XEN proc, XEN s_beg, XEN s_end, XEN snd, XEN chn,
       for (kp = 0; kp < num; kp++)
 	{
 	  res = XEN_CALL_1(proc,
-		      C_TO_XEN_DOUBLE((double)next_sample_to_float(sf)),
-		      caller);
+			   C_TO_XEN_DOUBLE((double)next_sample_to_float(sf)),
+			   caller);
 	  if (XEN_NOT_FALSE_P(res))
 	    {
 	      if ((counting) &&
@@ -2316,8 +2316,8 @@ static XEN g_fht(XEN data)
     mus_misc_error(S_fht,
 		   "fht data length must be a power of 4",
 		   XEN_LIST_3(C_TO_XEN_INT(v->length),
-			  C_TO_XEN_DOUBLE((log(v->length) / (log(4)))),
-			  C_TO_XEN_INT((int)(pow(4.0, pow4)))));
+			      C_TO_XEN_DOUBLE((log(v->length) / (log(4)))),
+			      C_TO_XEN_INT((int)(pow(4.0, pow4)))));
   fht(pow4, v->data);
   return(data);
 }

@@ -251,7 +251,8 @@ typedef struct {
   int *loop_modes, *loop_starts, *loop_ends;
   int markers, base_detune, base_note;
   int *marker_ids, *marker_positions;
-  int samples, datum_size, data_location, srate, chans, header_type, data_format, original_sound_format, true_file_length;
+  unsigned int samples, data_location, true_file_length;
+  int srate, chans, header_type, data_format, original_sound_format, datum_size; 
   int comment_start, comment_end, header_distributed, type_specifier, bits_per_sample, fact_samples, block_align;
   time_t write_date;
   MUS_SAMPLE_TYPE *max_amps;
@@ -871,7 +872,8 @@ int mus_sound_max_amp_exists(const char *ifile)
 
 int mus_sound_max_amp(const char *ifile, MUS_SAMPLE_TYPE *vals)
 {
-  int ifd, ichans, bufnum, n, curframes, i, frames, chn;
+  int ifd, ichans, chn, j;
+  unsigned int n, i, bufnum, frames, curframes;
   MUS_SAMPLE_TYPE fc;
   MUS_SAMPLE_TYPE *buffer, *time, *samp;
   MUS_SAMPLE_TYPE **ibufs;
@@ -892,7 +894,7 @@ int mus_sound_max_amp(const char *ifile, MUS_SAMPLE_TYPE *vals)
   /* sf = getsf(ifile); */
   ichans = mus_sound_chans(ifile);
   frames = mus_sound_frames(ifile);
-  if (frames <= 0) 
+  if (frames == 0) 
     {
       mus_sound_close_input(ifd);
       return(0);
@@ -900,8 +902,8 @@ int mus_sound_max_amp(const char *ifile, MUS_SAMPLE_TYPE *vals)
   mus_sound_seek_frame(ifd, 0);
   ibufs = (MUS_SAMPLE_TYPE **)CALLOC(ichans, sizeof(MUS_SAMPLE_TYPE *));
   bufnum = 8192;
-  for (i = 0; i < ichans; i++) 
-    ibufs[i] = (MUS_SAMPLE_TYPE *)CALLOC(bufnum, sizeof(MUS_SAMPLE_TYPE));
+  for (j = 0; j < ichans; j++) 
+    ibufs[j] = (MUS_SAMPLE_TYPE *)CALLOC(bufnum, sizeof(MUS_SAMPLE_TYPE));
   time = (MUS_SAMPLE_TYPE *)CALLOC(ichans, sizeof(MUS_SAMPLE_TYPE));
   samp = (MUS_SAMPLE_TYPE *)CALLOC(ichans, sizeof(MUS_SAMPLE_TYPE));
   for (n = 0; n < frames; n += bufnum)
@@ -934,7 +936,7 @@ int mus_sound_max_amp(const char *ifile, MUS_SAMPLE_TYPE *vals)
   mus_sound_set_max_amp(ifile, vals);
   FREE(time);
   FREE(samp);
-  for (i = 0; i < ichans; i++) FREE(ibufs[i]);
+  for (j = 0; j < ichans; j++) FREE(ibufs[j]);
   FREE(ibufs);
   return(frames);
 }

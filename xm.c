@@ -136,6 +136,7 @@
  *    XtGetKeySymTable, XtChangeManagedSet (undocumented)
  *    XtSetEventDispatcher (undoc), XtSignal stuff (undoc), XtGetErrorDatabaseText
  *    XtBlockHook stuff (undoc), XtRegisterExtensionSelector (undoc)
+ *    XmResolvePartOffsets, XmResolveAllPartOffsets
  *
  * changed:
  *
@@ -351,6 +352,8 @@
  *    XtSetKeyTranslator user XtKeyProc should return the new Modifiers and KeySym as a list (not as ref arg), set arg2 #f to get default proc
  *    XtRegisterCaseConverter user XtCaseProc should return the new KeySyms as a list (not as ref args)
  *    XtActionHookProc takes 5 args (last is string list)
+ *    XtRemoveCallback omits proc arg and is passed whatever XtAddCallback returned
+ *    XtAddCallback returns the C-side "client-data" (for subsequent XtRemoveCallback)
  *    XpmCreatePixmapFromXpmImage omits and returns pixmap args
  *    XpmCreatePixmapFromBuffer omits and returns pixmap args
  *    XpmReadFileToPixmap omits and returns pixmap args
@@ -999,10 +1002,40 @@ static void gxm_XmQualifyProc(Widget w, XtPointer indata, XtPointer outdata)
       if (XEN_PROCEDURE_P(code))
 	XEN_CALL_3(code,
 		   C_TO_XEN_Widget(w),
-		   (XtPointer)C_TO_XEN_XmFileSelectionBoxCallbackStruct(indata),
-		   (XtPointer)C_TO_XEN_XmFileSelectionBoxCallbackStruct(outdata),
+		   C_TO_XEN_XmFileSelectionBoxCallbackStruct((XmFileSelectionBoxCallbackStruct *)indata),
+		   C_TO_XEN_XmFileSelectionBoxCallbackStruct((XmFileSelectionBoxCallbackStruct *)outdata),
 		   __FUNCTION__);
     }
+}
+
+#define C_TO_XEN_XM_XtOrderProc(Code) \
+  XEN_LIST_5(C_STRING_TO_XEN_SYMBOL("XtOrderProc"), Code, XEN_FALSE, XEN_ZERO, XEN_ZERO)
+#define XM_XtOrderProc_P(Arg) WRAP_P("XtOrderProc", Arg)
+
+static int find_orderproc(XEN val, int loc, unsigned long w)
+{
+  return((XM_XtOrderProc_P(val)) &&
+	 (((XEN_FALSE_P((XEN)w)) && 
+	   (XEN_FALSE_P(XEN_LIST_REF(val, CALLBACK_DATA)))) ||
+	  ((XEN_Widget_P(XEN_LIST_REF(val, CALLBACK_DATA))) &&
+	   (XEN_TO_C_ULONG(XEN_CADR(XEN_LIST_REF(val, CALLBACK_DATA))) == w))));
+}
+
+static Cardinal gxm_XtOrderProc(Widget w)
+{
+  /* here we again have to go by the widget */
+  XEN code, result = XEN_ZERO;
+  int i;
+  i = map_over_protected_elements(find_orderproc, (unsigned long)w);
+  if (i >= 0)
+    {
+      code = XEN_LIST_REF(xm_protected_element(i), CALLBACK_FUNC);
+      if (XEN_PROCEDURE_P(code))
+	result = XEN_CALL_1(code,
+			    C_TO_XEN_Widget(w),
+			    __FUNCTION__);
+    }
+  return((Cardinal)XEN_TO_C_INT(result));
 }
 
 
@@ -1070,7 +1103,7 @@ static XtCallbackList XEN_TO_C_XtCallbackList(XEN call_list)
 static Arg *XEN_TO_C_Args(XEN inarg)
 {
   /* an Arg array in xm is a list of name value pairs */
-  /* TODO: type checks */
+  /* TODO: resource/value type checks */
   Arg *args = NULL;
   int i, len, type;
   XtCallbackRec *cl = NULL;
@@ -1111,13 +1144,19 @@ static Arg *XEN_TO_C_Args(XEN inarg)
 	      XEN_LIST_SET(descr, CALLBACK_GC_LOC, C_TO_XEN_INT(xm_protect(descr)));
 	    }
 	  break;
+	case XM_ORDER_CALLBACK:
+	  if ((XEN_PROCEDURE_P(XEN_CADR(inarg))) && (XEN_REQUIRED_ARGS(XEN_CADR(inarg)) == 1))
+	    {
+	      XtSetArg(args[i], name, (unsigned long)gxm_XtOrderProc);
+	      descr = C_TO_XEN_XM_XtOrderProc(XEN_CADR(inarg));
+	      XEN_LIST_SET(descr, CALLBACK_GC_LOC, C_TO_XEN_INT(xm_protect(descr)));
+	    }
+	  break;
 
 
-	  /* TODO: fill in this table of callbacks */
-	case XM_TRANSFER_CALLBACK:  /* XmNtransferProc, XtSelectionCallbackProc */
-	case XM_CONVERT_CALLBACK:   /* XmNconvertProc, XtConvertSelectionIncrProc */
-	case XM_ORDER_CALLBACK:     /* XmNinsertPosition, XtOrderProc */
-
+	  /* TODO: fill in this table of callbacks (these callback procs have a million args) */
+	case XM_TRANSFER_CALLBACK:  /* XmNtransferProc, XtSelectionCallbackProc, XmDropTransfer */
+	case XM_CONVERT_CALLBACK:   /* XmNconvertProc, XtConvertSelectionIncrProc, XmDragContext */
 
 
 	case XM_ALLOC_COLOR_CALLBACK:     /* XmNcolorAllocationProc, XmAllocColorProc XmScreen 921 */
@@ -1177,7 +1216,6 @@ static void fixup_args(Widget w, Arg *args, int len)
 	      break;
 
 
-	    case XM_ORDER_CALLBACK:
 	    case XM_TRANSFER_CALLBACK:
 	    case XM_CONVERT_CALLBACK:
 
@@ -1204,6 +1242,20 @@ static void fixup_args(Widget w, Arg *args, int len)
 		  xm_unprotect_at(XEN_TO_C_INT(XEN_LIST_REF(data, CALLBACK_GC_LOC)));
 		}
 	      j = map_over_protected_elements(find_searchproc, (unsigned long)XEN_FALSE);
+	      if (j >= 0)
+		{
+		  data = xm_protected_element(j);
+		  XEN_LIST_SET(data, CALLBACK_DATA, C_TO_XEN_Widget(w));
+		}
+	      break;
+	    case XM_ORDER_CALLBACK:
+	      j = map_over_protected_elements(find_orderproc, (unsigned long)w);
+	      if (j >= 0)
+		{
+		  data = xm_protected_element(j);
+		  xm_unprotect_at(XEN_TO_C_INT(XEN_LIST_REF(data, CALLBACK_GC_LOC)));
+		}
+	      j = map_over_protected_elements(find_orderproc, (unsigned long)XEN_FALSE);
 	      if (j >= 0)
 		{
 		  data = xm_protected_element(j);
@@ -1268,6 +1320,10 @@ static XEN C_TO_XEN_ANY(Widget w, char *name, unsigned long *v)
       j = map_over_protected_elements(find_searchproc, (unsigned long)w);
       if (j >= 0) return(XEN_LIST_REF(xm_protected_element(j), CALLBACK_FUNC));
       break;
+    case XM_ORDER_CALLBACK:
+      j = map_over_protected_elements(find_orderproc, (unsigned long)w);
+      if (j >= 0) return(XEN_LIST_REF(xm_protected_element(j), CALLBACK_FUNC));
+      break;
     case XM_QUALIFY_CALLBACK:
       j = map_over_protected_elements(find_qualifyproc, (unsigned long)w);
       if (j >= 0) return(XEN_LIST_REF(xm_protected_element(j), CALLBACK_FUNC));
@@ -1286,7 +1342,6 @@ static XEN C_TO_XEN_ANY(Widget w, char *name, unsigned long *v)
       /* TODO: more callbacks to fill-in */
     case XM_TRANSFER_CALLBACK:
     case XM_CONVERT_CALLBACK:
-    case XM_ORDER_CALLBACK:
 
     case XM_CALLBACK:	      return(C_TO_XEN_ULONG(value));
       /* TODO:  given the callback name and the widget, we probably can return the callback list */
@@ -3247,26 +3302,6 @@ static XEN gxm_XmUpdateDisplay(XEN arg1)
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmUpdateDisplay", "Widget");
   XmUpdateDisplay(XEN_TO_C_Widget(arg1));
   return(XEN_FALSE);
-}
-
-static XEN gxm_XmResolvePartOffsets(XEN arg1)
-{
-  /* DIFF: XmResolvePartOffsets class [offset] -> offset
-   */
-  XmOffsetPtr off = 0; /* should this return the wrapped struct? */
-  XEN_ASSERT_TYPE(XEN_WidgetClass_P(arg1), arg1, 1, "XmResolvePartOffsets", "WidgetClass");
-  XmResolvePartOffsets(XEN_TO_C_WidgetClass(arg1), &off);
-  return(C_TO_XEN_INT((int)off));
-}
-
-static XEN gxm_XmResolveAllPartOffsets(XEN arg1)
-{
-  /* DIFF: XmResolveAllPartOffsets class [offset constraint] -> (list off constraint)
-   */
-  XmOffsetPtr off = 0, constraint = 0;/* should this return the wrapped structs? */
-  XEN_ASSERT_TYPE(XEN_WidgetClass_P(arg1), arg1, 1, "XmResolveAllPartOffsets", "WidgetClass");
-  XmResolveAllPartOffsets(XEN_TO_C_WidgetClass(arg1), &off, &constraint);
-  return(XEN_LIST_2(C_TO_XEN_INT((int)off), C_TO_XEN_INT((int)constraint))); /* TODO: these are actually *long */
 }
 
 static XEN gxm_XmDestroyPixmap(XEN arg1, XEN arg2)
@@ -13180,11 +13215,12 @@ static XEN gxm_XtAddCallbacks(XEN arg1, XEN arg2, XEN arg3)
   return(XEN_FALSE);
 }
 
-static XEN gxm_XtRemoveCallback(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+static XEN gxm_XtRemoveCallback(XEN arg1, XEN arg2, XEN arg4)
 {
+  /* DIFF: XtRemoveCallback omits proc arg and is passed whatever XtAddCallback returned
+   */
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XtRemoveCallback", "Widget");
   XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XtRemoveCallback", "char*"); 
-  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg3), arg3, 3, "XtRemoveCallback", "XtCallbackProc");
   xm_unprotect_at(XEN_TO_C_INT(XEN_LIST_REF(arg4, CALLBACK_GC_LOC)));
   XtRemoveCallback(XEN_TO_C_Widget(arg1), XEN_TO_C_STRING(arg2), gxm_XtCallbackProc, (XtPointer)arg4);
   return(XEN_FALSE);
@@ -13334,6 +13370,8 @@ static int callback_struct_type(Widget w, char *name)
 
 static XEN gxm_XtAddCallback(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
+  /* DIFF: XtAddCallback returns the C-side "client-data" (for subsequent XtRemoveCallback)
+   */
   char *name;
   Widget w;
   int gc_loc;
@@ -13348,7 +13386,7 @@ static XEN gxm_XtAddCallback(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
   XEN_LIST_SET(call_descr, CALLBACK_GC_LOC, C_TO_XEN_INT(gc_loc));
   XEN_LIST_SET(call_descr, CALLBACK_STRUCT_TYPE, C_TO_XEN_INT(callback_struct_type(w, name)));
   XtAddCallback(w, name, gxm_XtCallbackProc, (XtPointer)call_descr);
-  return(XEN_FALSE);
+  return(call_descr);
 }
 
 static XEN gxm_XtParent(XEN arg1)
@@ -13821,7 +13859,7 @@ static XEN gxm_XtRemoveEventHandler(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN 
   XEN_ASSERT_TYPE(XEN_ULONG_P(arg2), arg2, 2, "XtRemoveEventHandler", "EventMask");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XtRemoveEventHandler", "int");
   XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg4), arg4, 4, "XtRemoveEventHandler", "XtEventHandler");
-  /* here we can search the gc table for xteventhandler with widget/mask/proc/data the same */
+  /* TODO: here we can search the gc table for xteventhandler with widget/mask/proc/data the same */
   XtRemoveEventHandler(XEN_TO_C_Widget(arg1), XEN_TO_C_ULONG(arg2), XEN_TO_C_INT(arg3), 
 		       gxm_XtEventHandler, (XtPointer)arg5);
   return(XEN_FALSE);
@@ -14926,7 +14964,7 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtClass" XM_POSTFIX, gxm_XtClass, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtParent" XM_POSTFIX, gxm_XtParent, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtAddCallback" XM_POSTFIX, gxm_XtAddCallback, 3, 1, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtRemoveCallback" XM_POSTFIX, gxm_XtRemoveCallback, 4, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtRemoveCallback" XM_POSTFIX, gxm_XtRemoveCallback, 3, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtAddCallbacks" XM_POSTFIX, gxm_XtAddCallbacks, 3, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtRemoveCallbacks" XM_POSTFIX, gxm_XtRemoveCallbacks, 3, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtRemoveAllCallbacks" XM_POSTFIX, gxm_XtRemoveAllCallbacks, 2, 0, 0, NULL);
@@ -15766,8 +15804,6 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmGetPixmap" XM_POSTFIX, gxm_XmGetPixmap, 4, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmGetPixmapByDepth" XM_POSTFIX, gxm_XmGetPixmapByDepth, 5, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmDestroyPixmap" XM_POSTFIX, gxm_XmDestroyPixmap, 2, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmResolveAllPartOffsets" XM_POSTFIX, gxm_XmResolveAllPartOffsets, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmResolvePartOffsets" XM_POSTFIX, gxm_XmResolvePartOffsets, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmUpdateDisplay" XM_POSTFIX, gxm_XmUpdateDisplay, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmWidgetGetBaselines" XM_POSTFIX, gxm_XmWidgetGetBaselines, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmWidgetGetDisplayRect" XM_POSTFIX, gxm_XmWidgetGetDisplayRect, 1, 0, 0, NULL);
@@ -21971,8 +22007,6 @@ XEN init_xm(void)
        (lambda (n)
 	 (for-each-child n func))
        (cadr (|XtGetValues w (list |XmNchildren 0) 1)))))
-
-(define c1 #f)
 
 (define scale-dialog #f)
 (define current-scaler 1.0)

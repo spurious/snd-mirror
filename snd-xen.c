@@ -956,7 +956,7 @@ Other writable headers include " S_mus_aiff ", " S_mus_riff ", " S_mus_ircam ", 
   else mus_misc_error("set-" S_default_output_type, 
 		      "can't write this header type", 
 		      XEN_LIST_2(val, 
-			     C_TO_XEN_STRING(mus_header_type_name(typ))));
+				 C_TO_XEN_STRING(mus_header_type_name(typ))));
   return(C_TO_XEN_INT(default_output_type(state)));
 }
 
@@ -3643,9 +3643,9 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
 
 #if HAVE_GUILE
   XEN_EVAL_C_STRING("(defmacro defvar (a b)\
-                 `(begin\
-                    (define , a , b)\
-                    (define-envelope (symbol->string ', a) , b)))");
+                       `(begin\
+                          (define , a , b)\
+                          (define-envelope (symbol->string ', a) , b)))");
   /* this is trying to keep track of envelopes for the envelope editor */
 
   XEN_EVAL_C_STRING("(define (" S_snd_apropos " val) (snd-print (with-output-to-string (lambda () (apropos (if (string? val) val (object->string val)))))))");
@@ -3659,9 +3659,9 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
   /* from ice-9/r4rs.scm but with output to snd listener */
   XEN_EVAL_C_STRING("(define snd-last-file-loaded #f)");
   XEN_EVAL_C_STRING("(set! %load-hook (lambda (filename)\
-                                  (set! snd-last-file-loaded filename)\
-                                  (if %load-verbosely\
-                                    (snd-print (format #f \";;; loading ~S\" filename)))))");
+                                        (set! snd-last-file-loaded filename)\
+                                        (if %load-verbosely\
+                                          (snd-print (format #f \";;; loading ~S\" filename)))))");
 #endif
 
 #if USE_MOTIF

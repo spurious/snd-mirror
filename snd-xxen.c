@@ -175,6 +175,15 @@ COLOR_TYPE color2pixel(XEN color)
   return(ss->sgx->basic_color);
 }
 
+XEN g_snd_pixel(XEN color)
+{
+  snd_color *v;
+  v = TO_SND_COLOR(color); 
+  if (v)
+    return(C_TO_XEN_ULONG((unsigned long)(v->color)));
+  return(XEN_ZERO);
+}
+
 void recolor_everything(GUI_WIDGET w, GUI_POINTER ptr)
 {
   Pixel curcol;
@@ -378,6 +387,8 @@ void g_initialize_xgh(snd_state *ss)
   XEN_DEFINE_PROCEDURE(S_color_p,       g_color_p_w, 1, 0, 0,        H_color_p);
   XEN_DEFINE_PROCEDURE(S_color2list,    g_color2list_w, 1, 0, 0,     H_color2list);
   XEN_DEFINE_PROCEDURE(S_load_colormap, g_load_colormap_w, 1, 0, 0,  H_load_colormap);
+
+  XEN_DEFINE_PROCEDURE("snd-pixel", g_snd_pixel, 1, 0, 0, NULL);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_graph_cursor, g_graph_cursor_w, H_graph_cursor,
 			       "set-" S_graph_cursor, g_set_graph_cursor_w,  0, 0, 1, 0);

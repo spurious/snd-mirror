@@ -2589,10 +2589,10 @@ static void draw_graph_cursor(chan_info *cp)
 	  break;
 	case CURSOR_PROC:
 	  XEN_CALL_3(cp->cursor_proc,
-		C_TO_XEN_INT(cp->sound->index),
-		C_TO_XEN_INT(cp->chan),
-		C_TO_XEN_INT(TIME_AXIS_INFO),
-		__FUNCTION__);
+		     C_TO_XEN_INT(cp->sound->index),
+		     C_TO_XEN_INT(cp->chan),
+		     C_TO_XEN_INT(TIME_AXIS_INFO),
+		     __FUNCTION__);
 	  break;
 	}
     }
@@ -2609,10 +2609,10 @@ static void draw_graph_cursor(chan_info *cp)
       break;
     case CURSOR_PROC:
       XEN_CALL_3(cp->cursor_proc,
-	    C_TO_XEN_INT(cp->sound->index),
-	    C_TO_XEN_INT(cp->chan),
-	    C_TO_XEN_INT(TIME_AXIS_INFO),
-	    __FUNCTION__);
+		 C_TO_XEN_INT(cp->sound->index),
+		 C_TO_XEN_INT(cp->chan),
+		 C_TO_XEN_INT(TIME_AXIS_INFO),
+		 __FUNCTION__);
       break;
     }
   cp->cursor_visible = 1;
@@ -3576,8 +3576,8 @@ static XEN cp_iread(XEN snd_n, XEN chn_n, int fld, char *caller)
 	    case CP_SQUELCH_UPDATE:     return(C_TO_XEN_BOOLEAN(cp->squelch_update));                break;
 	    case CP_CURSOR_SIZE:        return(C_TO_XEN_INT(cp->cursor_size));                       break;
 	    case CP_CURSOR_STYLE:       return(C_TO_XEN_INT(cp->cursor_style));                      break;
-	    case CP_EDIT_HOOK:          return(cp->edit_hook);                                     break;
-	    case CP_UNDO_HOOK:          return(cp->undo_hook);                                     break;
+	    case CP_EDIT_HOOK:          return(cp->edit_hook);                                       break;
+	    case CP_UNDO_HOOK:          return(cp->undo_hook);                                       break;
 	    case CP_SHOW_Y_ZERO:        return(C_TO_XEN_BOOLEAN(cp->show_y_zero));                   break;
 	    case CP_SHOW_MARKS:         return(C_TO_XEN_BOOLEAN(cp->show_marks));                    break;
 	    case CP_TIME_GRAPH_TYPE:    return(C_TO_XEN_INT(cp->time_graph_type));                   break;
@@ -3941,7 +3941,7 @@ static XEN cp_fread(XEN snd_n, XEN chn_n, int fld, char *caller)
     case CP_SPECTRO_Z_SCALE: return(C_TO_XEN_DOUBLE(cp->spectro_z_scale));              break;
     case CP_SPECTRO_CUTOFF:  return(C_TO_XEN_DOUBLE(cp->spectro_cutoff));               break;
     case CP_SPECTRO_START:   return(C_TO_XEN_DOUBLE(cp->spectro_start));                break;
-    case CP_FFT_WINDOW_BETA:        return(C_TO_XEN_DOUBLE(cp->fft_window_beta));                     break;
+    case CP_FFT_WINDOW_BETA: return(C_TO_XEN_DOUBLE(cp->fft_window_beta));              break;
     case CP_MAXAMP:          return(C_TO_XEN_DOUBLE(get_maxamp(cp->sound, cp, AT_CURRENT_EDIT_POSITION)));        break;
     case CP_EDPOS_MAXAMP:    return(C_TO_XEN_DOUBLE(get_maxamp(cp->sound, cp, to_c_edit_position(cp, cp_edpos, S_maxamp, 3)))); break;
     }
@@ -5373,6 +5373,28 @@ static XEN g_channel_widgets(XEN snd, XEN chn)
 #endif
 
 
+#if 0
+static XEN g_cp(XEN snd, XEN chn)
+{
+  ASSERT_CHANNEL("cp", snd, chn, 1);
+  return(C_TO_XEN_ULONG((unsigned long)get_cp(snd, chn, "cp")));
+}
+
+static XEN g_sp(XEN snd)
+{
+  ASSERT_SOUND("sp", snd, 1);
+  return(C_TO_XEN_ULONG((unsigned long)get_sp(snd)));
+}
+
+static XEN g_ss(void)
+{
+  return(C_TO_XEN_ULONG((unsigned long)get_global_state()));
+}
+#endif
+
+
+
+
 #ifdef XEN_ARGIFY_1
 #if (!USE_NO_GUI)
 XEN_ARGIFY_2(g_channel_widgets_w, g_channel_widgets)
@@ -5904,6 +5926,12 @@ If it returns #t, the key press is not passed to the main handler. 'state' refer
   XEN_DEFINE_HOOK(key_press_hook, S_key_press_hook, 4, H_key_press_hook);             /* args = sound channel key state */
   XEN_DEFINE_HOOK(mark_click_hook, S_mark_click_hook, 1, H_mark_click_hook);          /* arg = id */
   XEN_DEFINE_HOOK(initial_graph_hook, S_initial_graph_hook, 3, H_initial_graph_hook); /* args = sound channel duration */
+
+#if 0
+  XEN_DEFINE_PROCEDURE("cp", g_cp, 2, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE("sp", g_sp, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE("ss", g_ss, 0, 0, 0, NULL);
+#endif
 }
 
 

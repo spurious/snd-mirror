@@ -95,12 +95,6 @@
 
 #include "sndlib.h"
 
-#if MACOS
-  #define off_t long
-#else
-  #include <sys/types.h>
-#endif
-
 static int hdrbuf_is_inited = 0;
 
 #define HDRBUFSIZ 256
@@ -291,7 +285,7 @@ static int comment_start = 0, comment_end = 0, header_distributed = 0, type_spec
 static off_t true_file_length = 0, data_size = 0;
 static int base_detune = 0, base_note = 0;
 
-int mus_header_samples (void) {return(data_size);}
+off_t mus_header_samples (void) {return(data_size);}
 int mus_header_data_location (void) {return(data_location);}
 int mus_header_chans (void) {return(chans);}
 int mus_header_srate (void) {return(srate);}
@@ -306,7 +300,7 @@ int mus_header_type_specifier (void) {return(type_specifier);}
 int mus_header_bits_per_sample (void) {return(bits_per_sample);}
 int mus_header_fact_samples (void) {return(fact_samples);}
 int mus_header_block_align (void) {return(block_align);}
-int mus_header_true_length (void) {return(true_file_length);}
+off_t mus_header_true_length (void) {return(true_file_length);}
 int mus_header_original_format (void) {return(original_data_format);}
 int mus_header_loop_mode(int which) {return(loop_modes[which]);}
 int mus_header_loop_start(int which) {return(loop_starts[which]);}
@@ -342,8 +336,8 @@ int mus_data_format_to_bytes_per_sample (int format)
 }
 
 int mus_header_data_format_to_bytes_per_sample (void) {return(mus_data_format_to_bytes_per_sample(data_format));}
-int mus_samples_to_bytes (int format, int size) {return(size * (mus_data_format_to_bytes_per_sample(format)));}
-int mus_bytes_to_samples (int format, int size) {return((int)(size / (mus_data_format_to_bytes_per_sample(format))));}
+unsigned int mus_samples_to_bytes (int format, unsigned int size) {return(size * (mus_data_format_to_bytes_per_sample(format)));}
+unsigned int mus_bytes_to_samples (int format, unsigned int size) {return((unsigned int)(size / (mus_data_format_to_bytes_per_sample(format))));}
 static off_t mus_long_bytes_to_samples (int format, off_t size) {return(size / (mus_data_format_to_bytes_per_sample(format)));}
 static off_t mus_long_samples_to_bytes (int format, off_t size) {return(size * (mus_data_format_to_bytes_per_sample(format)));}
 
@@ -371,6 +365,12 @@ static int big_or_little_endian_int (const unsigned char *n, int little)
 {
   if (little) return(mus_char_to_lint(n));
   return(mus_char_to_bint(n));
+}
+
+static unsigned int big_or_little_endian_uint (const unsigned char *n, int little)
+{
+  if (little) return(mus_char_to_ulint(n));
+  return(mus_char_to_ubint(n));
 }
 
 static float big_or_little_endian_float (const unsigned char *n, int little)
@@ -862,7 +862,7 @@ static int read_aiff_header (int chan, int overall_offset)
       if (match_four_chars((unsigned char *)hdrbuf, I_COMM))
 	{
 	  chans = mus_char_to_bshort((unsigned char *)(hdrbuf + 8));
-	  frames = mus_char_to_bint((unsigned char *)(hdrbuf + 10));
+	  frames = mus_char_to_ubint((unsigned char *)(hdrbuf + 10)); /* was bint 27-Jul-01 */
 	  update_frames_location = 10 + offset;
 	  original_data_format = mus_char_to_bshort((unsigned char *)(hdrbuf + 14));
 	  if ((original_data_format % 8) != 0) 
@@ -1525,7 +1525,7 @@ static int read_riff_header (int chan)
 	    {
 	      update_ssnd_location = offset + 4;
 	      data_location = offset + 8;
-	      data_size = big_or_little_endian_int((unsigned char *)(hdrbuf + 4), little);
+	      data_size = big_or_little_endian_uint((unsigned char *)(hdrbuf + 4), little); /* was int 27-Jul-01 */
 	      if (chunksize == 0) break; /* see aiff comment */
 	    }
 	  else
