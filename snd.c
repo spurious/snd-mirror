@@ -137,10 +137,6 @@ static void mus_print2snd(char *msg)
 
   ss = (snd_state *)CALLOC(1, sizeof(snd_state));
 
-#if HAVE_MZSCHEME
-  xen_get_env();
-#endif
-
   ss->Transform_Size = DEFAULT_TRANSFORM_SIZE;
   ss->Minibuffer_History_Length = DEFAULT_MINIBUFFER_HISTORY_LENGTH;
   ss->Fft_Window = DEFAULT_FFT_WINDOW;

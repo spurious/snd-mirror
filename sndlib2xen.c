@@ -412,9 +412,6 @@ XEN make_sound_data(int chans, int frames)
   int i;
   sound_data *new_sound_data;
   new_sound_data = (sound_data *)xen_malloc(sizeof(sound_data));
-#if HAVE_MZSCHEME
-  new_sound_data->type = sound_data_tag;
-#endif
   new_sound_data->length = frames;
   new_sound_data->chans = chans;
   new_sound_data->data = (MUS_SAMPLE_TYPE **)CALLOC(chans, sizeof(MUS_SAMPLE_TYPE *));

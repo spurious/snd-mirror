@@ -1883,6 +1883,9 @@ static int read_avi_header (int chan)
  *     smpl chunk (16 bit linear little-endian)
  *   LIST xxxx pdta list chunk 
  *     shdr subchunk has srate at 40 (int), samples at 28
+ *
+ * http://smurf.sourceforge.net/sfont_intro.php
+ * http://www.hammersound.net/
  */
 
 static int soundfont_entries = 0;

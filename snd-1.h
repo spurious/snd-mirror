@@ -31,9 +31,6 @@ typedef struct {
 } env_info;
 
 typedef struct {
-#if HAVE_MZSCHEME
-  XEN_OBJECT_TYPE mztype;
-#endif
   COLOR_TYPE color;
 } snd_color;
 
@@ -85,9 +82,6 @@ typedef struct {
 } ed_list;
 
 typedef struct snd_fd {
-#if HAVE_MZSCHEME
-  XEN_OBJECT_TYPE mztype;
-#endif
   ed_list *current_state;
   int *cb;
   int cbi;

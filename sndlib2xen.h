@@ -30,9 +30,6 @@
 
 
 typedef struct {
-#if HAVE_MZSCHEME
-  XEN_OBJECT_TYPE type;
-#endif
   int length, chans;
   MUS_SAMPLE_TYPE **data;
 } sound_data;

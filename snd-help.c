@@ -255,7 +255,6 @@ void news_help(snd_state *ss)
 \n\
 12-Jul:  ALSA 0.9 support from Fernando.\n\
 9-Jul:   xen.c, xen.html.\n\
-         MzScheme support.\n\
 6-Jul:   sg.h, sl.h, noguile.h, sr.h, sz.h -> xen.h.\n\
          snd-scm.c, clm2scm.[ch], sndlib2scm.[ch] -> xen for scm.\n\
          many internal name changes to change scm to xen.\n\
@@ -2712,7 +2711,7 @@ and the location of the associated C code will be displayed, if it can be found.
       if (str) FREE(str);
     }
 #endif
-#if HAVE_RUBY || HAVE_MZSCHEME
+#if HAVE_RUBY
   if (XEN_STRING_P(text))
      str = xen_help(XEN_TO_C_STRING(text));
   else 

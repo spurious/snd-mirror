@@ -111,9 +111,6 @@ static XEN g_make_snd_color(XEN r, XEN g, XEN b)
     XEN_ERROR(NO_SUCH_COLOR,
 	  XEN_LIST_2(C_TO_XEN_STRING(S_make_color),
 		    XEN_LIST_3(r, g, b)));
-#if HAVE_MZSCHEME
-  new_color->mztype = snd_color_tag;
-#endif
   XEN_MAKE_AND_RETURN_OBJECT(snd_color_tag, new_color, 0, free_snd_color);
 }
 

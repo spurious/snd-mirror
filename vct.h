@@ -30,9 +30,6 @@
 #endif
 
 typedef struct {
-#if HAVE_MZSCHEME
-  XEN_OBJECT_TYPE mztype;
-#endif
   int length;
   Float *data;
   int dont_free;

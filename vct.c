@@ -141,14 +141,6 @@ static char *vct_to_string(vct *v)
 
 XEN_MAKE_OBJECT_PRINT_PROCEDURE(vct, print_vct, vct_to_string)
 
-#if HAVE_MZSCHEME
-static Scheme_Object *vct_write(Scheme_Object *obj)
-{
-  fprintf(stderr,"in writer");
-  return(C_TO_XEN_STRING("Vct..."));
-}
-#endif
-
 static XEN equalp_vct(XEN obj1, XEN obj2)
 {
   vct *v1, *v2;
@@ -167,9 +159,6 @@ XEN make_vct(int len, Float *data)
 {
   vct *new_vct;
   new_vct = (vct *)xen_malloc(sizeof(vct));
-#if HAVE_MZSCHEME
-  new_vct->mztype = vct_tag;
-#endif
   new_vct->length = len;
   new_vct->data = data;
   new_vct->dont_free = 0;
@@ -180,9 +169,6 @@ XEN make_vct_wrapper(int len, Float *data)
 {
   vct *new_vct;
   new_vct = (vct *)xen_malloc(sizeof(vct));
-#if HAVE_MZSCHEME
-  new_vct->mztype = vct_tag;
-#endif
   new_vct->length = len;
   new_vct->data = data;
   new_vct->dont_free = 1;
@@ -800,10 +786,6 @@ void init_vct(void)
   rb_define_method(vct_tag, "each", vct_each, 0);
   rb_define_method(vct_tag, "<=>", vct_compare, 1);
   /* many more could be added */
-#endif
-
-#if HAVE_MZSCHEME
-  scheme_install_type_writer(vct_tag, vct_write);
 #endif
 
   XEN_DEFINE_PROCEDURE(S_make_vct,      g_make_vct_w, 1, 0, 0,    H_make_vct);

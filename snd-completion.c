@@ -111,43 +111,7 @@ static int completions(char *text)
 
 #endif
 
-#if HAVE_MZSCHEME
-/* in MzScheme there's a static list_globals (env.c), but I'll use the snd-help array instead */
-
-static int completions(char *text)
-{
-  char **names;
-  int i, j, n, curlen, len, matches = 0;
-  char *sym;
-  names = xen_mzscheme_get_help(&n);
-  len = strlen(text);
-  for (i = 0; i < n; ++i)
-    {
-      sym = names[i];
-      if (strncmp(text, sym, len) == 0)
-	{
-	  matches++;
-	  add_possible_completion(sym);
-	  if (current_match == NULL)
-	    current_match = copy_string(sym);
-	  else 
-	    {
-	      curlen = snd_strlen(current_match);
-	      for (j = 0; j < curlen; j++)
-		if (current_match[j] != sym[j])
-		  {
-		    current_match[j] = '\0';
-		    break;
-		  }
-	    }
-	}
-    }
-  return(matches);
-}
-
-#endif
-
-#if (!HAVE_GUILE) && (!HAVE_RUBY) && (!HAVE_MZSCHEME)
+#if (!HAVE_GUILE) && (!HAVE_RUBY)
 static int completions(char *text) {return(0);}
 #endif
 

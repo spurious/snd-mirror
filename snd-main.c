@@ -218,22 +218,6 @@ static void pcp_sf(FILE *fd, char *name, Float val, int chan) {fprintf(fd, "%s(s
 static void pcp_sl(FILE *fd, char *name, Float val1, Float val2, int chan) 
   {fprintf(fd, "%s(set! (%s sfile %d) (list %.4f %.4f))\n", white_space, name, chan, val1, val2);}
 #endif
-#if HAVE_MZSCHEME
-static void pss_ss(FILE *fd, char *name, char *val) {fprintf(fd, "(set-%s %s)\n", name, val);}
-static void pss_sq(FILE *fd, char *name, char *val) {fprintf(fd, "(set-%s \"%s\")\n", name, val);}
-static void pss_sd(FILE *fd, char *name, int val) {fprintf(fd, "(set-%s %d)\n", name, val);}
-static void pss_sf(FILE *fd, char *name, Float val) {fprintf(fd, "(set-%s %.4f)\n", name, val);}
-
-static void psp_ss(FILE *fd, char *name, char *val) {fprintf(fd, "%s(set-%s %s sfile)\n", white_space, name, val);}
-static void psp_sd(FILE *fd, char *name, int val) {fprintf(fd, "%s(set-%s %d sfile)\n", white_space, name, val);}
-static void psp_sf(FILE *fd, char *name, Float val) {fprintf(fd, "%s(set-%s %.4f sfile)\n", white_space, name, val);}
-
-static void pcp_ss(FILE *fd, char *name, char *val, int chan) {fprintf(fd, "%s(set-%s %s sfile %d)\n", white_space, name, val, chan);}
-static void pcp_sd(FILE *fd, char *name, int val, int chan) {fprintf(fd, "%s(set-%s %d sfile %d)\n", white_space, name, val, chan);}
-static void pcp_sf(FILE *fd, char *name, Float val, int chan) {fprintf(fd, "%s(set-%s %.4f sfile %d)\n", white_space, name, val, chan);}
-static void pcp_sl(FILE *fd, char *name, Float val1, Float val2, int chan) 
-  {fprintf(fd, "%s(set-%s (list %.4f %.4f) sfile %d)\n", white_space, name, val1, val2, chan);}
-#endif
 
 static void save_snd_state_options (snd_state *ss, FILE *fd)
 { /* for save options menu choice (.snd) -- mostly saving snd_state info */

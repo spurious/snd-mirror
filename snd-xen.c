@@ -327,24 +327,6 @@ char *procedure_ok(XEN proc, int args, const char *caller, const char *arg_name,
 	return(mus_format("%s function (%s arg %d) should take %d args, not %d", 
 			  arg_name, caller, argn, args, (rargs < 0) ? (-rargs) : rargs));
 #else
-#if HAVE_MZSCHEME
-      if (XEN_INTEGER_P(arity))
-	{
-	  rargs = XEN_TO_C_INT(arity);
-	  oargs = rargs;
-	}
-      else
-	{
-	  rargs = XEN_TO_SMALL_C_INT(XEN_CAR(arity));
-	  oargs = XEN_TO_SMALL_C_INT(XEN_CADR(arity));
-	}
-      if (rargs > args)
-	return(mus_format("%s function (%s arg %d) should take %d argument%s, but instead requires %d",
-			  arg_name, caller, argn, args, (args != 1) ? "s" : "", rargs));
-      if (oargs < args)
-	return(mus_format("%s function (%s arg %d) should accept at least %d argument%s, but instead accepts only %d",
-			  arg_name, caller, argn, args, (args != 1) ? "s" : "", rargs + oargs));
-#else
       snd_protect(arity);
       rargs = XEN_TO_SMALL_C_INT(XEN_CAR(arity));
       oargs = XEN_TO_SMALL_C_INT(XEN_CADR(arity));
@@ -356,7 +338,6 @@ char *procedure_ok(XEN proc, int args, const char *caller, const char *arg_name,
       if ((restargs == 0) && ((rargs + oargs) < args))
 	return(mus_format("%s function (%s arg %d) should accept at least %d argument%s, but instead accepts only %d",
 			  arg_name, caller, argn, args, (args != 1) ? "s" : "", rargs + oargs));
-#endif
 #endif
     }
   return(NULL);
@@ -455,11 +436,7 @@ XEN g_call0(XEN proc, const char *caller) /* replacement for gh_call0 -- protect
   return(snd_catch_any(g_call0_1, (void *)proc, caller));
 #endif
 #else
-#if HAVE_MZSCHEME
-  return(_scheme_apply(proc, 0, NULL));
-#else
   return(proc);
-#endif
 #endif
 }
 
@@ -480,12 +457,7 @@ XEN g_call1(XEN proc, XEN arg, const char *caller)
   args[1] = arg;
   return(snd_catch_any(g_call1_1, (void *)args, caller));
 #else
-#if HAVE_MZSCHEME
-  args[0] = arg;
-  return(_scheme_apply(proc, 1, args));
-#else
   return(arg);
-#endif
 #endif
 }
 
@@ -528,13 +500,7 @@ XEN g_call2(XEN proc, XEN arg1, XEN arg2, const char *caller)
   args[2] = arg2;
   return(snd_catch_any(g_call2_1, (void *)args, caller));
 #else
-#if HAVE_MZSCHEME
-  args[0] = arg1;
-  args[1] = arg2;
-  return(_scheme_apply(proc, 2, args));
-#else
   return(arg1);
-#endif
 #endif
 }
 
@@ -559,14 +525,7 @@ XEN g_call3(XEN proc, XEN arg1, XEN arg2, XEN arg3, const char *caller)
   args[3] = arg3;
   return(snd_catch_any(g_call3_1, (void *)args, caller));
 #else
-#if HAVE_MZSCHEME
-  args[0] = arg1;
-  args[1] = arg2;
-  args[2] = arg3;
-  return(_scheme_apply(proc, 3, args));
-#else
   return(arg1);
-#endif
 #endif
 }
 
@@ -591,9 +550,6 @@ char *g_print_1(XEN obj, const char *caller)
   if (XEN_NULL_P(obj))
     return(copy_string("nil")); /* Ruby returns the null string in this case??? */
   return(XEN_TO_NEW_C_STRING(XEN_TO_STRING(obj)));
-#endif
-#if HAVE_MZSCHEME
-  return(copy_string(scheme_display_to_string(obj, NULL)));
 #endif
   return(str1);
 }
@@ -676,7 +632,7 @@ XEN snd_report_listener_result(snd_state *ss, XEN form)
   char *str = NULL;
   XEN res = XEN_FALSE; XEN result;
   listener_append(ss, "\n");
-#if HAVE_RUBY || HAVE_MZSCHEME
+#if HAVE_RUBY
   str = gl_print(form, "repl");
 #else
   result = snd_catch_any(eval_form_wrapper, (void *)form, NULL);
@@ -1066,7 +1022,6 @@ static XEN g_set_listener_prompt(XEN val)
     XEN_EVAL_C_STRING(str);
     FREE(str);
 #endif
-    /* TODO: mzscheme prompt? */
   }
 #endif
   return(C_TO_XEN_STRING(listener_prompt(state)));
@@ -3717,9 +3672,6 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
 #endif
 #if HAVE_RUBY
   XEN_YES_WE_HAVE("snd-ruby");
-#endif
-#if HAVE_MZSCHEME
-  XEN_YES_WE_HAVE("snd-mzscheme");
 #endif
 
   XEN_YES_WE_HAVE("snd");

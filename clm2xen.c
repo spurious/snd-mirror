@@ -611,10 +611,6 @@ static XEN *make_vcts(int size)
   vcts = (XEN *)MALLOC(size * sizeof(XEN));
   for (i = 0; i < size; i++)
     vcts[i] = XEN_UNDEFINED;
-#if HAVE_MZSCHEME
-  for (i = 0; i < size; i++)
-    XEN_PROTECT_FROM_GC(vcts[i]);
-#endif
   return(vcts);
 }
 
@@ -642,11 +638,6 @@ static XEN_MARK_OBJECT_TYPE mark_mus_xen(XEN obj)
 static void mus_xen_free(mus_xen *ms)
 {
   if (ms->nvcts != DONT_FREE_FRAME) mus_free(ms->gen);
-#if HAVE_MZSCHEME
-  if (ms->vcts) 
-    for (i = 0; i < ms->nvcts; i++) 
-      XEN_UNPROTECT_FROM_GC(ms->vcts[i]);
-#endif
   if (ms->vcts) FREE(ms->vcts);  
   FREE(ms);
 }
@@ -689,9 +680,6 @@ XEN mus_xen_to_object(mus_xen *gn)
 {
 #if HAVE_GUILE
   scm_done_malloc(sizeof(mus_xen));
-#endif
-#if HAVE_MZSCHEME
-  gn->mztype = mus_xen_tag;
 #endif
   XEN_MAKE_AND_RETURN_OBJECT(mus_xen_tag, gn, mark_mus_xen, free_mus_xen);
 }
