@@ -1,13 +1,17 @@
 #include "snd.h"
 
-#if defined(NEXT) || defined(HAVE_SYS_DIR_H)
-  #include <sys/dir.h>
-  #include <sys/dirent.h>
+#if HAVE_DIRENT_H
+  #include <dirent.h>
 #else
-  #if defined(WINDOZE) && (!(defined(__CYGWIN__)))
-    #include <direct.h>
-  #else
-    #include <dirent.h>
+  #define dirent direct
+  #if HAVE_SYS_NDIR_H
+    #include <sys/ndir.h>
+  #endif
+  #if HAVE_SYS_DIR_H
+    #include <sys/dir.h>
+  #endif
+  #if HAVE_NDIR_H
+    #include <ndir.h>
   #endif
 #endif
 
@@ -326,7 +330,6 @@ static BACKGROUND_TYPE startup_funcs(gpointer clientData)
 #endif
 
 #ifndef SND_AS_WIDGET
-#ifndef NEXT
       /* add X property level communication path (see sndctrl.c for the other side) */
       snd_v = gdk_atom_intern("SND_VERSION", FALSE);
       snd_c = gdk_atom_intern("SND_COMMAND", FALSE);
@@ -337,7 +340,6 @@ static BACKGROUND_TYPE startup_funcs(gpointer clientData)
 
       /* trap outer-level Close for cleanup check */
       gtk_signal_connect(GTK_OBJECT(tm->shell), "delete_event", GTK_SIGNAL_FUNC(Window_Close), (gpointer)ss);
-#endif
       gtk_signal_connect(GTK_OBJECT(tm->shell), "unmap_event", GTK_SIGNAL_FUNC(iconify_window), (gpointer)ss);
 #endif
 

@@ -263,7 +263,7 @@ static Pixmap transform_text (Widget w, char *str, XFontStruct *font, Float angl
 	    {
 	      bx0 = (int)xscl; if (bx0 == 0) bx0=1;  /* draw full lines if possible (i.e. fill in scaled gaps) */
 	      by0 = (int)yscl; if (by0 == 0) by0=1;
-	      for (i=0;i<bx0;i++)
+	      for (i=0; i<bx0; i++)
 		{
 		  for (j=0;j<by0;j++)
 		    {
@@ -523,14 +523,14 @@ static void allocate_meter_1(snd_state *ss, vu_label *vu)
       vu_colors_allocated = 1;
       tmp_color.flags = DoRed | DoGreen | DoBlue;
       tmp_color.red = (unsigned short)65535;
-      for (i=0;i<VU_COLORS;i++)
+      for (i=0; i<VU_COLORS; i++)
 	{
 	  tmp_color.blue = (unsigned short)(256*yellow_vals[i]);
 	  tmp_color.green = (unsigned short)(256*230 + 26*yellow_vals[i]);
 	  XAllocColor(dp, cmap, &tmp_color);
 	  yellows[i] = tmp_color.pixel;
 	}
-      for (i=0;i<VU_COLORS;i++)
+      for (i=0; i<VU_COLORS; i++)
 	{
 	  tmp_color.blue = (unsigned short)(128*yellow_vals[i]);
 	  tmp_color.green = (unsigned short)(128*yellow_vals[i]);
@@ -590,7 +590,7 @@ static void allocate_meter_1(snd_state *ss, vu_label *vu)
 	XFillPolygon(dp, vu->clip_label, draw_gc, pts, 7, Convex, CoordModeOrigin);
       else XFillPolygon(dp, vu->on_label, draw_gc, pts, 7, Convex, CoordModeOrigin);
 
-      for (i=1;i<VU_COLORS;i++)
+      for (i=1; i<VU_COLORS; i++)
 	{
 	  band += i;
 	  if (k == 1) 
@@ -691,7 +691,7 @@ static void allocate_meter_1(snd_state *ss, vu_label *vu)
   XDrawArc(dp, vu->clip_label, draw_gc, xs[3], ys[3], (unsigned int)(size*(232)), (unsigned int)(size*(232)), 45*64, 90*64);
 
   /* draw the axis ticks */
-  for (i=0;i<5;i++)
+  for (i=0; i<5; i++)
     {
       rdeg = mus_degrees2radians(45-i*22.5);
       x0 = (int)(CENTER_X*size+120*size*sin(rdeg));
@@ -719,7 +719,7 @@ static void allocate_meter_1(snd_state *ss, vu_label *vu)
 	    }
 	}
     }
-  for (i=0;i<VU_NUMBERS;i++) XFreePixmap(dp, numbers[i]);
+  for (i=0; i<VU_NUMBERS; i++) XFreePixmap(dp, numbers[i]);
 }
 
 #if 0
@@ -809,7 +809,7 @@ static void display_vu_meter(VU *vu)
       if (redx<(VU_BUBBLE_SIZE)) redy=redx; else redy=VU_BUBBLE_SIZE;
       bub0 = (int)(size*117);
       bub1 = (int)(size*119);
-      for (i=bub0, j=bub0*2;i<=bub1;i++,j+=(int)(2*size))
+      for (i=bub0, j=bub0*2; i<=bub1; i++,j+=(int)(2*size))
 	XDrawArc(vu->dp, vu->wn, vu_gc, vu->center_x - i, vu->center_y - i, j, j, 135*64 - redx, redy);
       XSetForeground(vu->dp, vu_gc, sx->black);
     }
@@ -844,7 +844,7 @@ static VU *make_vu_meter(Widget meter, int light_x, int light_y, int center_x, i
   vu->center_x = (int)(center_x*size);
   vu->center_y = (int)(center_y*size);
   vu->ss = ss;
-  for (i=0;i<current_vu_label;i++)
+  for (i=0; i<current_vu_label; i++)
     if (vu_labels[i]->size == size) 
       {
 	vl = vu_labels[i];
@@ -1016,7 +1016,7 @@ static Widget make_message_pane(snd_state *ss, Widget message_pane)
   int n;
   Arg args[32];
   Widget msg;
-  n=0;
+  n = 0;
   if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
   XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
   XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
@@ -1377,7 +1377,7 @@ static void make_file_info_pane(snd_state *ss, recorder_info *rp, Widget file_pa
   int err;
 #endif
 
-  n=0;
+  n = 0;
   if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
   XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
   XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
@@ -1385,7 +1385,7 @@ static void make_file_info_pane(snd_state *ss, recorder_info *rp, Widget file_pa
   XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
   file_form = sndCreateFormWidget("file-data", file_pane, args, n);
 
-  n=0;
+  n = 0;
   if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->black); n++;}
   XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
   XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
@@ -1397,7 +1397,7 @@ static void make_file_info_pane(snd_state *ss, recorder_info *rp, Widget file_pa
   ff_sep4 = XtCreateManagedWidget("ff-sep4", xmSeparatorWidgetClass, file_form, args, n);
       
   /* file data */
-  n=0;
+  n = 0;
   if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
   XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
   XtSetArg(args[n], XmNtopWidget, ff_sep4); n++;
@@ -1406,7 +1406,7 @@ static void make_file_info_pane(snd_state *ss, recorder_info *rp, Widget file_pa
   XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
   ff_form = sndCreateFormWidget("ff-form", file_form, args, n);
 
-  n=0;
+  n = 0;
   /* if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->red); n++;} */
   XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
   XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
@@ -1418,7 +1418,7 @@ static void make_file_info_pane(snd_state *ss, recorder_info *rp, Widget file_pa
   file_label = XtCreateManagedWidget(STR_file_p, xmLabelWidgetClass, ff_form, args, n);
   XtAddCallback(file_label, XmNhelpCallback, file_label_help_callback, ss);
 
-  n=0;
+  n = 0;
   /* if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;} */
   XtSetArg(args[n], XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET); n++;
   XtSetArg(args[n], XmNtopWidget, file_label); n++;
@@ -1430,7 +1430,7 @@ static void make_file_info_pane(snd_state *ss, recorder_info *rp, Widget file_pa
   file_text = sndCreateTextFieldWidget(ss, "text", ff_form, args, n, NOT_ACTIVATABLE, NO_COMPLETER);
   XtAddCallback(file_text, XmNhelpCallback, file_label_help_callback, ss);
 
-  n=0;
+  n = 0;
   /* if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;} */
   XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
   XtSetArg(args[n], XmNtopWidget, file_text); n++;
@@ -1441,7 +1441,7 @@ static void make_file_info_pane(snd_state *ss, recorder_info *rp, Widget file_pa
   XtSetArg(args[n], XmNheight, 10); n++;
   ff_sep3 = XtCreateManagedWidget("ff-sep3", xmSeparatorWidgetClass, ff_form, args, n);      
 
-  n=0;
+  n = 0;
   /* if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;} */
   XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
   XtSetArg(args[n], XmNtopWidget, ff_sep3); n++;
@@ -1467,7 +1467,7 @@ static void make_file_info_pane(snd_state *ss, recorder_info *rp, Widget file_pa
       XtVaSetValues(file_label, XmNbackground, (ss->sgx)->highlight_color, NULL);
     }
 
-  n=0;
+  n = 0;
   if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
   XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
   XtSetArg(args[n], XmNtopWidget, ff_sep4); n++;
@@ -1479,7 +1479,7 @@ static void make_file_info_pane(snd_state *ss, recorder_info *rp, Widget file_pa
   XtSetArg(args[n], XmNwidth, 15); n++;
   ff_sep1 = XtCreateManagedWidget("ff-sep1", xmSeparatorWidgetClass, file_form, args, n);      
 
-  n=0;
+  n = 0;
   if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
   XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
   XtSetArg(args[n], XmNtopWidget, ff_sep4); n++;
@@ -1492,7 +1492,7 @@ static void make_file_info_pane(snd_state *ss, recorder_info *rp, Widget file_pa
   duration_label = XtCreateManagedWidget(STR_duration_p, xmLabelWidgetClass, file_form, args, n);
   XtAddCallback(duration_label, XmNhelpCallback, duration_label_help_callback, ss);
 
-  n=0;
+  n = 0;
   if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
   XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
   XtSetArg(args[n], XmNtopWidget, ff_sep4); n++;
@@ -1507,7 +1507,7 @@ static void make_file_info_pane(snd_state *ss, recorder_info *rp, Widget file_pa
   sprintf(timbuf, "%d", rp->buffer_size);
   XmTextSetString(rec_size_text, timbuf);
 
-  n=0;
+  n = 0;
   if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
   XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
   XtSetArg(args[n], XmNtopWidget, ff_sep4); n++;
@@ -1520,7 +1520,7 @@ static void make_file_info_pane(snd_state *ss, recorder_info *rp, Widget file_pa
   rec_size_label = XtCreateManagedWidget("buf:", xmLabelWidgetClass, file_form, args, n);
   XtAddCallback(rec_size_label, XmNhelpCallback, rec_size_help_callback, ss);
 
-  n=0;
+  n = 0;
   if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->light_blue); n++;}
   XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
   XtSetArg(args[n], XmNtopWidget, ff_sep4); n++;
@@ -1535,7 +1535,7 @@ static void make_file_info_pane(snd_state *ss, recorder_info *rp, Widget file_pa
   file_duration = XtCreateManagedWidget("  0.0 ", xmLabelWidgetClass, file_form, args, n);
   XtAddCallback(file_duration, XmNhelpCallback, duration_label_help_callback, ss);
 
-  n=0;
+  n = 0;
   if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
   XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
   XtSetArg(args[n], XmNtopWidget, rec_size_text); n++;
@@ -1549,7 +1549,7 @@ static void make_file_info_pane(snd_state *ss, recorder_info *rp, Widget file_pa
 
 
   /* Auto-trigger scale */
-  n=0;
+  n = 0;
   if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
   XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
   XtSetArg(args[n], XmNleftWidget, ff_sep1); n++;
@@ -1560,7 +1560,7 @@ static void make_file_info_pane(snd_state *ss, recorder_info *rp, Widget file_pa
   XtAddCallback(trigger_label, XmNhelpCallback, trigger_help_Callback, ss);
   make_trigger_label(rp->trigger);
 
-  n=0;
+  n = 0;
   if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
   XtSetArg(args[n], XmNorientation, XmHORIZONTAL); n++;
   XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
@@ -1576,7 +1576,7 @@ static void make_file_info_pane(snd_state *ss, recorder_info *rp, Widget file_pa
   XtAddCallback(trigger_scale, XmNhelpCallback, trigger_help_Callback, ss);
 
   /* buttons */
-  n=0;
+  n = 0;
   if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->zoom_color); n++;}
   XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
   XtSetArg(args[n], XmNtopWidget, ff_sep2); n++;
@@ -1588,7 +1588,7 @@ static void make_file_info_pane(snd_state *ss, recorder_info *rp, Widget file_pa
   XtSetArg(args[n], XmNshadowThickness, 4); n++;
   button_frame = sndCreateFrameWidget("button-frame", file_form, args, n);
 
-  n=0;
+  n = 0;
   if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->highlight_color); n++;}
   XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
   XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
@@ -1600,14 +1600,14 @@ static void make_file_info_pane(snd_state *ss, recorder_info *rp, Widget file_pa
   XtAddCallback(button_holder, XmNhelpCallback, button_holder_help_callback, ss);
 
   /* load up the box of panel on-buttons and various other settings (autoload for now) */
-  n=0;
+  n = 0;
   if (!(ss->using_schemes)) 
     {
       XtSetArg(args[n], XmNbackground, (ss->sgx)->highlight_color); n++;
       XtSetArg(args[n], XmNselectColor, (ss->sgx)->red); n++;
     }
   init_n = n;
-  for (i=0;i<ndevs;i++)
+  for (i=0; i<ndevs; i++)
     {
       n = init_n;
       XtSetArg(args[n], XmNuserData, i); n++;
@@ -1824,7 +1824,7 @@ static void VU_Reset_Callback(Widget w, XtPointer clientData, XtPointer callData
   int i;
   PANE *p = (PANE *)clientData;
   VU *vu;
-  for (i=0;i<p->meters_size;i++)
+  for (i=0; i<p->meters_size; i++)
     {
       vu = p->meters[i];
       vu->max_val = 0.0;
@@ -1868,9 +1868,9 @@ static void Meter_Button_Callback(Widget w, XtPointer clientData, XtPointer call
 	  n = string2int(str);
 	  XtFree(str);
 	}
-      else n=0;
+      else n = 0;
       val = 0;
-      for (i=0;i<p->active_size;i++) {if (p->active[i]) val++;}
+      for (i=0; i<p->active_size; i++) {if (p->active[i]) val++;}
       if ((val>0) && (val != n))
 	{
 	  sprintf(timbuf, "%d", val);
@@ -1921,7 +1921,7 @@ static Widget sndCreateRecorderSlider(snd_state *ss, PANE *p, AMP *a, Widget las
   XmString s1;
   XtCallbackList n1,n2;
 
-  n=0;      
+  n = 0;      
   if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
   XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;	
   XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
@@ -1947,7 +1947,7 @@ static Widget sndCreateRecorderSlider(snd_state *ss, PANE *p, AMP *a, Widget las
   XtAddCallback(a->label, XmNactivateCallback, Record_Amp_Click_Callback, a);
   XtAddCallback(a->label, XmNhelpCallback, amp_slider_help_Callback, a->wd);
   
-  n=0;
+  n = 0;
   if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
 #if 0
   if (amp_sliders>4)
@@ -1976,7 +1976,7 @@ static Widget sndCreateRecorderSlider(snd_state *ss, PANE *p, AMP *a, Widget las
   XtAddCallback(a->number, XmNhelpCallback, amp_slider_help_Callback, a->wd);
   XmStringFree(s1);
 	  
-  n=0;      
+  n = 0;      
   if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->position_color); n++;}
   XtSetArg(args[n], XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET); n++;
   XtSetArg(args[n], XmNtopWidget, a->number); n++;
@@ -2038,7 +2038,7 @@ static void handle_matrix_slider(Widget mb, PANE *p, int bin, int bout, int cura
 	  new_top = sndCreateRecorderSlider(ss, p, a, a->top, TRUE);
 	}
     }
-  for (i=curamp+1;i<p->amps_size;i++)
+  for (i=curamp+1; i<p->amps_size; i++)
     {
       a = p->amps[i];
       if (a)
@@ -2091,7 +2091,7 @@ static void button_matrix_button_motion(Widget w, XtPointer clientData, XEvent *
   XButtonEvent *ev = (XButtonEvent *)event;
   Widget current_button = NULL;
   Position x,y;
-  int bin=0,bout=0;
+  int bin = 0,bout=0;
   XtVaGetValues(w, XmNx, &x, XmNy, &y, NULL);
   x += (ev->x - p->bx);
   y += (ev->y - p->by);
@@ -2114,7 +2114,7 @@ static void button_matrix_button_release(Widget w, XtPointer clientData, XEvent 
   XButtonEvent *ev = (XButtonEvent *)event;
   Position x,y;
   int row,col,on;
-  int bin=0,bout=0;
+  int bin = 0,bout=0;
 #if DEBUGGING
   if ((int)ev <= 0) return;
 #endif
@@ -2176,7 +2176,7 @@ static Widget sndCreateButtonMatrix(snd_state *ss, PANE *p, char *name, Widget p
   XtAddEventHandler(outer_frame, ButtonMotionMask, FALSE, button_matrix_button_motion, (XtPointer)p);
   XtAddEventHandler(outer_frame, ButtonReleaseMask, FALSE, button_matrix_button_release, (XtPointer)p);
 
-  n=0;
+  n = 0;
   if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
   XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
   XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
@@ -2191,7 +2191,7 @@ static Widget sndCreateButtonMatrix(snd_state *ss, PANE *p, char *name, Widget p
   XtAddEventHandler(outer_form, ButtonMotionMask, FALSE, button_matrix_button_motion, (XtPointer)p);
   XtAddEventHandler(outer_form, ButtonReleaseMask, FALSE, button_matrix_button_release, (XtPointer)p);
 
-  n=0;
+  n = 0;
   if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->highlight_color); n++;}
   XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
   XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
@@ -2204,7 +2204,7 @@ static Widget sndCreateButtonMatrix(snd_state *ss, PANE *p, char *name, Widget p
   XtAddEventHandler(diag_button, ButtonReleaseMask, FALSE, button_matrix_button_release, (XtPointer)p);
   XtUninstallTranslations(diag_button);
 
-  n=0;
+  n = 0;
   if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->highlight_color); n++;}
   XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
   XtSetArg(args[n], XmNleftWidget, diag_button); n++;
@@ -2219,7 +2219,7 @@ static Widget sndCreateButtonMatrix(snd_state *ss, PANE *p, char *name, Widget p
   XtAddEventHandler(outputs_label, ButtonReleaseMask, FALSE, button_matrix_button_release, (XtPointer)p);
   XtUninstallTranslations(outputs_label);
 
-  n=0;
+  n = 0;
   if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->highlight_color); n++;}
   XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
   XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
@@ -2235,7 +2235,7 @@ static Widget sndCreateButtonMatrix(snd_state *ss, PANE *p, char *name, Widget p
   XtAddEventHandler(inputs_label0, ButtonReleaseMask, FALSE, button_matrix_button_release, (XtPointer)p);
   XtUninstallTranslations(inputs_label0);
 
-  n=0;
+  n = 0;
   if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->highlight_color); n++;}
   XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
   XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
@@ -2251,7 +2251,7 @@ static Widget sndCreateButtonMatrix(snd_state *ss, PANE *p, char *name, Widget p
   XtAddEventHandler(inputs_label1, ButtonReleaseMask, FALSE, button_matrix_button_release, (XtPointer)p);
   XtUninstallTranslations(inputs_label1);
 
-  n=0;
+  n = 0;
   if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->highlight_color); n++;}
   XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
   XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
@@ -2265,7 +2265,7 @@ static Widget sndCreateButtonMatrix(snd_state *ss, PANE *p, char *name, Widget p
   XtAddEventHandler(inputs_label2, ButtonReleaseMask, FALSE, button_matrix_button_release, (XtPointer)p);
   XtUninstallTranslations(inputs_label2);
 
-  n=0;
+  n = 0;
   if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
   XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
   XtSetArg(args[n], XmNleftWidget, inputs_label0); n++;
@@ -2281,7 +2281,7 @@ static Widget sndCreateButtonMatrix(snd_state *ss, PANE *p, char *name, Widget p
   p->matrix_buttons = (Widget **)CALLOC(ins, sizeof(Widget *));
   for (row=0;row<ins;row++) p->matrix_buttons[row] = (Widget *)CALLOC(outs, sizeof(Widget));
 
-  n=0;
+  n = 0;
   if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
   XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
   XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
@@ -2298,7 +2298,7 @@ static Widget sndCreateButtonMatrix(snd_state *ss, PANE *p, char *name, Widget p
 	si->in_chan = row;
 	si->out_chan = col;
 
-	n=0;
+	n = 0;
 	if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
 	XtSetArg(args[n], XmNleftAttachment, XmATTACH_POSITION); n++;
 	XtSetArg(args[n], XmNleftPosition, col*ins); n++;
@@ -2384,10 +2384,10 @@ static PANE *make_pane(snd_state *ss, recorder_info *rp, Widget paned_window, in
   p->active = (int *)CALLOC(vu_meters, sizeof(int));
   p->active_size = vu_meters;
   p->active_sliders = (int **)CALLOC(p->in_chans, sizeof(int *));
-  for (i=0;i<p->in_chans;i++) p->active_sliders[i] = (int *)CALLOC(p->out_chans, sizeof(int));
+  for (i=0; i<p->in_chans; i++) p->active_sliders[i] = (int *)CALLOC(p->out_chans, sizeof(int));
   frames = (Widget *)CALLOC(vu_meters, sizeof(Widget));
 
-  n=0;
+  n = 0;
   if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
   XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
   XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
@@ -2404,12 +2404,12 @@ static PANE *make_pane(snd_state *ss, recorder_info *rp, Widget paned_window, in
 
   if ((input) && ((p->in_chans*p->out_chans) > 8))
     {
-      for (i=0;i<p->in_chans;i++) 
+      for (i=0; i<p->in_chans; i++) 
 	for (k=0;k<p->out_chans;k++) 
 	  if (i == k) p->active_sliders[i][k] = 1;
 
       /* rather than default to posting 64 (or 256!) sliders, set up a channel matrix where desired sliders can be set */
-      n=0;
+      n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
@@ -2421,7 +2421,7 @@ static PANE *make_pane(snd_state *ss, recorder_info *rp, Widget paned_window, in
     }
   else 
     {
-      for (i=0;i<p->in_chans;i++) 
+      for (i=0; i<p->in_chans; i++) 
 	for (k=0;k<p->out_chans;k++) 
 	  p->active_sliders[i][k]=1;
     }
@@ -2451,7 +2451,7 @@ static PANE *make_pane(snd_state *ss, recorder_info *rp, Widget paned_window, in
 
 #if NEW_SGI_AL
   if (p->device == MUS_AUDIO_MICROPHONE)
-    for (i=p->in_chan_loc, k=0;k<p->in_chans;i++,k++) 
+    for (i=p->in_chan_loc, k=0;k<p->in_chans; i++,k++) 
       rp->input_channel_active[i] = 1;
 #endif
 
@@ -2480,9 +2480,9 @@ static Widget make_vu_meters(snd_state *ss, PANE *p, int vu_meters, Widget *fram
   columns = recorder_columns(vu_meters);
   row = 0;
 
-  for (i=0;i<vu_meters;i++)
+  for (i=0; i<vu_meters; i++)
     {
-      n=0;
+      n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->black); n++;}
       if (row == 0)
 	{
@@ -2522,7 +2522,7 @@ static Widget make_vu_meters(snd_state *ss, PANE *p, int vu_meters, Widget *fram
       frames[i] = frame;
       if (!first_frame) first_frame = frame;
 
-      n=0;
+      n = 0;
       XtSetArg(args[n], XmNbackground, (ss->sgx)->white); n++;
       XtSetArg(args[n], XmNforeground, (ss->sgx)->black); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
@@ -2566,7 +2566,7 @@ static Widget make_vertical_gain_separator(snd_state *ss, PANE *p, int vu_meters
   int n;
   Arg args[32];
 
-  n=0;
+  n = 0;
   if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
   XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
   XtSetArg(args[n], XmNbottomAttachment, XmATTACH_OPPOSITE_WIDGET); n++;
@@ -2605,7 +2605,7 @@ static Widget make_vertical_gain_sliders(snd_state *ss, recorder_info *rp, PANE 
   last_device = MUS_AUDIO_MICROPHONE;
 #endif
 
-  n=0;
+  n = 0;
   if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
   XtSetArg(args[n], XmNlabelType, XmPIXMAP); n++;
 #if (HAVE_OSS || HAVE_ALSA)
@@ -2638,7 +2638,7 @@ static Widget make_vertical_gain_sliders(snd_state *ss, recorder_info *rp, PANE 
   icon_label = XtCreateManagedWidget("icon", xmLabelWidgetClass, p->pane, args, n);
       
   last_slider = NULL;
-  for (i=0, chan=num_gains-1;i<num_gains;i++,chan--)
+  for (i=0, chan=num_gains-1; i<num_gains; i++,chan--)
     {
       /* we're moving right to left here, so the first slider represents the highest channel */
       /* in the Linux case, as each new device pops up, we need some indication above it */
@@ -2658,7 +2658,7 @@ static Widget make_vertical_gain_sliders(snd_state *ss, recorder_info *rp, PANE 
 #if (HAVE_OSS || HAVE_ALSA)
       if (last_device != this_device)
 	{
-	  n=0;
+	  n = 0;
 	  if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
 	  if (this_device == MUS_AUDIO_LINE_IN)
 	    {
@@ -2687,7 +2687,7 @@ static Widget make_vertical_gain_sliders(snd_state *ss, recorder_info *rp, PANE 
 	  if ((this_device != MUS_AUDIO_LINE_IN) && (slabel)) {XmStringFree(slabel); slabel=NULL;}
 	}
 #endif
-      n=0;
+      n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->zoom_color); n++;}
       if (last_slider)
 	{
@@ -2726,7 +2726,7 @@ static void make_gain_separator(snd_state *ss, PANE *p, int num_gains, int vu_me
   int n;
   Arg args[32];
 
-  n=0;
+  n = 0;
   if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
   XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
   XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
@@ -2757,7 +2757,7 @@ static Widget make_button_box(snd_state *ss, recorder_info *rp, PANE *p, Float m
   Wdesc *wd;
   VU *vu;
 
-  n=0;
+  n = 0;
   if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->highlight_color); n++;}
   XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
   XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
@@ -2772,7 +2772,7 @@ static Widget make_button_box(snd_state *ss, recorder_info *rp, PANE *p, Float m
     {
       button1_label = XtCreateManagedWidget(mus_audio_system_name(p->system), xmLabelWidgetClass, p->pane, args, n);
       /* using 2 labels here because there is no way to get a multiline label (at least in Metroworks Motif) */
-      n=0;
+      n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->highlight_color); n++;}
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNtopWidget, button1_label); n++;
@@ -2786,7 +2786,7 @@ static Widget make_button_box(snd_state *ss, recorder_info *rp, PANE *p, Float m
     }
   
   /* all the buttons and labels except the top device name are contained in a separate box (form widget) */
-  n=0;
+  n = 0;
   if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
   XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
   XtSetArg(args[n], XmNtopWidget, button_label); n++;
@@ -2808,9 +2808,9 @@ static Widget make_button_box(snd_state *ss, recorder_info *rp, PANE *p, Float m
   row = 0;
   button_size = 100/columns;
 
-  for (i=0;i<vu_meters;i++)
+  for (i=0; i<vu_meters; i++)
     {
-      n=0;
+      n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       if (row == 0)
 	{XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;}
@@ -2856,7 +2856,7 @@ static Widget make_button_box(snd_state *ss, recorder_info *rp, PANE *p, Float m
       XtAddCallback(last_button, XmNactivateCallback, Meter_Button_Callback, wd);
       XtAddCallback(last_button, XmNhelpCallback, VU_On_Help_Callback, wd);
 
-      n=0;
+      n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNtopWidget, last_button); n++;
@@ -2885,7 +2885,7 @@ static Widget make_button_box(snd_state *ss, recorder_info *rp, PANE *p, Float m
       last_max = sndCreateFrameWidget("max-frame1", button_box, args, n);
       frames[i] = last_max;
       
-      n=0;
+      n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       XtSetArg(args[n], XmNrecomputeSize, FALSE); n++;
       if (meter_size<SMALL_FONT_CUTOFF) {XtSetArg(args[n], XM_FONT_RESOURCE, small_fontlist); n++;}
@@ -2921,7 +2921,7 @@ static void make_reset_button(snd_state *ss, PANE *p, Float meter_size, Widget b
   if (meter_size<SMALL_FONT_CUTOFF)
     labelstr = XmStringCreate(STR_Reset, "small_font");
   else labelstr = XmStringCreate(STR_Reset, XmFONTLIST_DEFAULT_TAG);
-  n=0;
+  n = 0;
   if (!(ss->using_schemes)) 
     {
       XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;
@@ -2953,7 +2953,7 @@ static Position make_amp_sliders(snd_state *ss, recorder_info *rp, PANE *p, Widg
   Wdesc *wd;
   system = p->system;
   last_slider = NULL;
-  n=0;
+  n = 0;
   if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
   XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
   XtSetArg(args[n], XmNtopWidget, first_frame); n++;
@@ -2978,7 +2978,7 @@ static Position make_amp_sliders(snd_state *ss, recorder_info *rp, PANE *p, Widg
   /* if input, do direct cases first, then fill in rest of 1, rest of 2 etc */
   temp_out_chan = 0;
   temp_in_chan = 0;
-  for (i=0;i<amp_sliders;i++)
+  for (i=0; i<amp_sliders; i++)
     {
       in_chan = temp_in_chan;
       out_chan = temp_out_chan;
@@ -3037,7 +3037,7 @@ static Position make_amp_sliders(snd_state *ss, recorder_info *rp, PANE *p, Widg
 void sensitize_control_buttons(void)
 {
   int i;
-  for (i=0;i<device_buttons_size-1;i++) /* last button is autoload_file */
+  for (i=0; i<device_buttons_size-1; i++) /* last button is autoload_file */
     {
       if (device_buttons[i])
 	set_sensitive(device_buttons[i], TRUE);
@@ -3047,7 +3047,7 @@ void sensitize_control_buttons(void)
 void unsensitize_control_buttons(void)
 {
   int i;
-  for (i=0;i<device_buttons_size-1;i++)
+  for (i=0; i<device_buttons_size-1; i++)
     {
       if (device_buttons[i])
 	set_sensitive(device_buttons[i], FALSE);
@@ -3096,7 +3096,7 @@ static void Reset_Record_Callback(Widget w, XtPointer clientData, XtPointer call
     }
   else                            /* reset or restart */
     { 
-      for (i=0;i<rp->ordered_devices_size;i++)
+      for (i=0; i<rp->ordered_devices_size; i++)
 	{
 	  p = all_panes[i];
 	  for (k=0;k<p->meters_size;k++)
@@ -3245,7 +3245,7 @@ static void Record_Button_Callback(Widget w, XtPointer clientData, XtPointer cal
 	      wd->field = MUS_AUDIO_AMP;
 	      wd->device = p->device;
 	      wd->system = 0;
-	      for (i=0;i<rp->out_chans;i++)
+	      for (i=0; i<rp->out_chans; i++)
 		{
 		  if (!(p->active[i]))
 		    {
@@ -3327,7 +3327,7 @@ void snd_record_file(snd_state *ss)
       rec_out_VU = (VU **)CALLOC(MAX_OUT_CHANS, sizeof(VU *));
 
       AMP_rec_ins = (AMP ***)CALLOC(rp->possible_input_chans, sizeof(AMP **));
-      for (i=0;i<rp->possible_input_chans;i++) 
+      for (i=0; i<rp->possible_input_chans; i++) 
 	AMP_rec_ins[i] = (AMP **)CALLOC(MAX_OUT_CHANS, sizeof(AMP *));
       AMP_rec_outs = (AMP **)CALLOC(MAX_OUT_CHANS, sizeof(AMP *));
 
@@ -3336,7 +3336,7 @@ void snd_record_file(snd_state *ss)
 #if (USE_RENDITIONS)
       {
 	XmRendition rend;
-	n=0;
+	n = 0;
 	if (small_fontstruct)
 	  XtSetArg(args[n], XmNfontName, (vu_size(ss) < SMALLER_FONT_CUTOFF) ? SMALLER_FONT : SMALL_FONT);
 	else XtSetArg(args[n], XmNfontName, button_font(ss));
@@ -3363,18 +3363,16 @@ void snd_record_file(snd_state *ss)
       xreset = XmStringCreate(STR_Reset, XmFONTLIST_DEFAULT_TAG);
       titlestr = XmStringCreate(STR_Record, XmFONTLIST_DEFAULT_TAG);
 
-      n=0;
+      n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       XtSetArg(args[n], XmNcancelLabelString, xreset); n++;
       XtSetArg(args[n], XmNhelpLabelString, xhelp); n++;
       XtSetArg(args[n], XmNokLabelString, xdismiss); n++;
       XtSetArg(args[n], XmNautoUnmanage, FALSE); n++;
       XtSetArg(args[n], XmNdialogTitle, titlestr); n++;
-#if RESIZE_DIALOG
       XtSetArg(args[n], XmNallowResize, TRUE); n++;
       XtSetArg(args[n], XmNresizePolicy, XmRESIZE_ANY); n++;
       XtSetArg(args[n], XmNnoResize, FALSE); n++;
-#endif
       XtSetArg(args[n], XmNtransient, FALSE); n++;
       recorder = XmCreateTemplateDialog(MAIN_SHELL(ss), STR_Record, args, n);
       add_dialog(ss, recorder);
@@ -3389,7 +3387,7 @@ void snd_record_file(snd_state *ss)
       XmStringFree(xdismiss);
       XmStringFree(xreset);
 
-      n=0;
+      n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       XtSetArg(args[n], XmNlabelString, titlestr); n++;
       record_button = XtCreateManagedWidget("record-button", xmPushButtonWidgetClass, recorder, args, n);
@@ -3405,7 +3403,7 @@ void snd_record_file(snd_state *ss)
 	  XtVaSetValues(XmMessageBoxGetChild(recorder, XmDIALOG_OK_BUTTON), XmNarmColor, (ss->sgx)->pushed_button_color, NULL);
 	}
 
-      n=0;
+      n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
@@ -3429,7 +3427,7 @@ void snd_record_file(snd_state *ss)
       if ((rp->out_chans == DEFAULT_RECORDER_OUT_CHANS) && (n > 2))
 	rp->out_chans = n;
 
-      for (i=0;i<rp->ordered_devices_size;i++)
+      for (i=0; i<rp->ordered_devices_size; i++)
 	{
 	  /* last one is output */
 	  device = rp->ordered_devices[i];
@@ -3438,7 +3436,7 @@ void snd_record_file(snd_state *ss)
 	}
 
       /* then make file_info_pane and message_pane at the bottom */
-      n=0;
+      n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
@@ -3454,7 +3452,7 @@ void snd_record_file(snd_state *ss)
       if (!(ss->using_schemes)) map_over_children(rec_panes, color_sashes, (void *)ss);
 
       /* loop through all panes reading p->pane_size and */
-      for (i=0;i<rp->ordered_devices_size;i++)
+      for (i=0; i<rp->ordered_devices_size; i++)
 	{
 	  p = all_panes[i];
 	  XtVaSetValues(p->pane, XmNpaneMaximum, p->pane_size, NULL);
@@ -3472,7 +3470,7 @@ void snd_record_file(snd_state *ss)
     }
   if (!XtIsManaged(recorder)) XtManageChild(recorder);
   XtVaSetValues(message_pane, XmNpaneMinimum, 1, NULL);
-  for (i=0;i<rp->ordered_devices_size;i++)
+  for (i=0; i<rp->ordered_devices_size; i++)
     {
       p = all_panes[i];
       XtVaSetValues(p->pane, XmNpaneMaximum, LOTSA_PIXELS, NULL); /* release max once we're set up so user can do what he wants */
@@ -3480,7 +3478,7 @@ void snd_record_file(snd_state *ss)
 
   if (pending_errors>0)
     {
-      for (i=0;i<pending_errors;i++)
+      for (i=0; i<pending_errors; i++)
 	{
 	  record_report(messages, pending_error[i], NULL);
 	  FREE(pending_error[i]);
@@ -3543,7 +3541,7 @@ static void initialize_recorder(recorder_info *rp)
   int err;
   int in_digital = 0;
 #endif
-  for (i=0;i<MAX_SOUNDCARDS;i++)
+  for (i=0; i<MAX_SOUNDCARDS; i++)
     {
       rp->raw_input_bufs[i] = NULL;
 #if (HAVE_OSS || HAVE_ALSA)
@@ -3561,7 +3559,7 @@ static void initialize_recorder(recorder_info *rp)
 #if NEW_SGI_AL || defined(SUN)
   /* for simplicity, and until someone complains, new SGI AL machines will just have one active input device */
   active_device_button = rp->microphone_button;
-  for (i=0;i<device_buttons_size-1;i++)
+  for (i=0; i<device_buttons_size-1; i++)
     {
       if (device_buttons[i])
 	{

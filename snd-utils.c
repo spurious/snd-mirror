@@ -593,42 +593,29 @@ void mem_report(void)
 
 #if DEBUGGING
 
-#if defined(SGI) || defined(LINUX) || defined(BEOS) || defined(SUN)
+#if HAVE_SYS_TIME_H
   #include <sys/time.h>
 #endif
 
-#if defined(NEXT) || defined(LINUX) || defined(BEOS) || defined(SGI) || defined(SUN)
-  struct timeval t0,t1;
-  struct timezone z0,z1;
-#else
-  static clock_t c1,c2;
-#endif
+struct timeval t0,t1;
+struct timezone z0,z1;
 
 static void start_time (void)
 {
-#if defined(NEXT) || defined(LINUX) || defined(BEOS) || defined(SUN)
+#if (!SGI)
   gettimeofday(&t0, &z0);
 #else
-  #ifdef SGI
-    gettimeofday(&t0);
-  #else
-    c1=clock();
-  #endif
+  gettimeofday(&t0);
 #endif
 }
 
 static int run_time (void)
 {
   int secs,millisecs;
-#if defined(NEXT) || defined(LINUX) || defined(BEOS) || defined(SUN)
+#if (!SGI)
   gettimeofday(&t1, &z1);
 #else
-  #ifdef SGI
-    gettimeofday(&t1);
-  #else
-      c2 = clock();
-      return((int)(1000.0 * ((float)(c2 - c1)) / (float)CLOCKS_PER_SEC));
-  #endif
+  gettimeofday(&t1);
 #endif
   secs = (t1.tv_sec - t0.tv_sec);
   millisecs = ((t1.tv_usec - t0.tv_usec) / 1000);

@@ -383,7 +383,9 @@ int save_options(snd_state *ss)
     {
       save_snd_state_options(ss, fd);
       if (fclose(fd) != 0)
-	snd_error("can't close %s: %s [%s[%d] %s]", ss->init_file, strerror(errno), __FILE__, __LINE__, __FUNCTION__);
+	snd_error("can't close %s: %s [%s[%d] %s]", 
+		  ss->init_file, strerror(errno), 
+		  __FILE__, __LINE__, __FUNCTION__);
       return(0);
     }
   else return(-1);
@@ -429,7 +431,7 @@ static int save_sound_state (snd_info *sp, void *ptr)
   if (sp->filter_dBing != DEFAULT_FILTER_DBING) psp_ss(fd, S_filter_dBing, b2s(sp->filter_dBing));
   if (sp->filter_env) 
     {
-      psp_ss(fd, S_filter_env, tmpstr=env_to_string(sp->filter_env));
+      psp_ss(fd, S_filter_env, tmpstr = env_to_string(sp->filter_env));
       if (tmpstr) FREE(tmpstr);
     }
   if (sp->cursor_follows_play) psp_ss(fd, S_cursor_follows_play, b2s(sp->cursor_follows_play));
@@ -564,7 +566,7 @@ int save_state (snd_state *ss, char *save_state_name)
 	   *   some sort of pretty-printer is really needed, but I couldn't get slib's to work.
 	   */
 
-	  for (i=0;i<NUM_HOOKS;i++)
+	  for (i=0; i<NUM_HOOKS; i++)
 	    {
 	      hook = SND_LOOKUP(hook_names[i]);
 	      if (HOOKED(hook))
@@ -617,7 +619,10 @@ int save_state (snd_state *ss, char *save_state_name)
 static char *file_extension(char *arg)
 {
   char *dot = NULL,*sp;
-  if (arg) for (sp=arg;(*sp) != '\0';sp++) if ((*sp) == '.') dot=(++sp);
+  if (arg) 
+    for (sp=arg; (*sp) != '\0'; sp++) 
+      if ((*sp) == '.') 
+	dot = (++sp);
   return(dot);
 }
 
@@ -704,10 +709,14 @@ static SCM g_save_options(SCM filename)
     {
       save_snd_state_options(get_global_state(), fd);
       if (fclose(fd) != 0)
-	snd_error("can't close %s: %s [%s[%d] %s]", SCM_STRING_CHARS(filename), strerror(errno), __FILE__, __LINE__, __FUNCTION__);
+	snd_error("can't close %s: %s [%s[%d] %s]", 
+		  SCM_STRING_CHARS(filename), 
+		  strerror(errno),
+		  __FILE__, __LINE__, __FUNCTION__);
       return(filename);
     }
-  return(scm_throw(CANNOT_SAVE, SCM_LIST1(TO_SCM_STRING(S_save_options))));
+  return(scm_throw(CANNOT_SAVE, 
+		   SCM_LIST1(TO_SCM_STRING(S_save_options))));
 }
 
 static SCM g_mem_report(void) 

@@ -28,7 +28,7 @@ void fill_polygon(axis_context *ax, int points, ...)
   if (points == 0) return;
   pts = (XPoint *)CALLOC(points, sizeof(XPoint));
   va_start(ap, points);
-  for (i=0;i<points;i++)
+  for (i=0; i<points; i++)
     {
       pts[i].x = va_arg(ap, int);
       pts[i].y = va_arg(ap, int);
@@ -46,7 +46,7 @@ void draw_polygon(axis_context *ax, int points, ...)
   if (points == 0) return;
   pts = (XPoint *)CALLOC(points, sizeof(XPoint));
   va_start(ap, points);
-  for (i=0;i<points;i++)
+  for (i=0; i<points; i++)
     {
       pts[i].x = va_arg(ap, int);
       pts[i].y = va_arg(ap, int);
@@ -75,12 +75,12 @@ static void draw_points (axis_context *ax, XPoint *points, int num, int size)
       /* create squares or whatever centered on each point */
       size2 = size/2;
       rs = (XArc *)CALLOC(num, sizeof(XArc));
-      for (i=0;i<num;i++)
+      for (i=0; i<num; i++)
 	{
 	  rs[i].x = points[i].x - size2;
 	  rs[i].y = points[i].y - size2;
 	  rs[i].angle1 = 0;
-	  rs[i].angle2 = 360*64;
+	  rs[i].angle2 = 360 * 64;
 	  rs[i].width = size;
 	  rs[i].height = size;
 	}
@@ -94,12 +94,20 @@ static void draw_point (Display *dp, Drawable wn, GC gc, XPoint point, int size)
   if (size == 1)
     XDrawPoint(dp, wn, gc, point.x, point.y);
   else
-    XFillArc(dp, wn, gc, point.x - size/2, point.y - size/2, size, size, 0, 360*64);
+    XFillArc(dp, wn, gc, 
+	     point.x - size / 2, 
+	     point.y - size / 2, 
+	     size, size, 0, 
+	     360 * 64);
 }
 
 void draw_arc(axis_context *ax, int x, int y, int size)
 {
-  XFillArc(ax->dp, ax->wn, ax->gc, x - size/2, y - size/2, size, size, 0, 360*64);
+  XFillArc(ax->dp, ax->wn, ax->gc, 
+	   x - size / 2, 
+	   y - size / 2, 
+	   size, size, 0, 
+	   360 * 64);
 }
 
 static XPoint polypts[4];
@@ -107,7 +115,7 @@ static XPoint polypts[4];
 static void fill_polygons (axis_context *ax, XPoint *points, int num, int y0)
 {
   int i;
-  for (i=1;i<num;i++)
+  for (i=1; i<num; i++)
     {
       polypts[0].x = points[i-1].x;
       polypts[0].y = points[i-1].y;
@@ -124,7 +132,7 @@ static void fill_polygons (axis_context *ax, XPoint *points, int num, int y0)
 static void fill_two_sided_polygons(axis_context *ax, XPoint *points, XPoint *points1, int num)
 {
   int i;
-  for (i=1;i<num;i++)
+  for (i=1; i<num; i++)
     {
       polypts[0].x = points[i-1].x;
       polypts[0].y = points[i-1].y;
@@ -191,7 +199,7 @@ void draw_both_grf_points(chan_info *cp, axis_context *ax, int j, int graph_styl
     case GRAPH_LOLLIPOPS:
       if (cp->dot_size == 1)
 	{
-	  for (i=0;i<j;i++)
+	  for (i=0; i<j; i++)
 	    XDrawLine(ax->dp, ax->wn, ax->gc, points[i].x, points[i].y, points1[i].x, points1[i].y);
 	}
       else
@@ -201,8 +209,12 @@ void draw_both_grf_points(chan_info *cp, axis_context *ax, int j, int graph_styl
 	  if (size4 < 1) size4 = 1;
 	  draw_points(ax, points, j, cp->dot_size);
 	  draw_points(ax, points1, j, cp->dot_size);
-	  for (i=0;i<j;i++)
-	    XFillRectangle(ax->dp, ax->wn, ax->gc, points[i].x - size8, points[i].y, size4, points1[i].y - points[i].y);
+	  for (i=0; i<j; i++)
+	    XFillRectangle(ax->dp, ax->wn, ax->gc, 
+			   points[i].x - size8, 
+			   points[i].y, 
+			   size4, 
+			   points1[i].y - points[i].y);
 	}
  
     }
@@ -213,9 +225,15 @@ void draw_grf_points(chan_info *cp, axis_context *ax, int j, axis_info *ap, Floa
   int i,gy0,size8,size4;
   switch (graph_style)
     {
-    case GRAPH_LINES: draw_lines(ax, points, j); break;
-    case GRAPH_DOTS: draw_points(ax, points, j, cp->dot_size); break;
-    case GRAPH_FILLED: fill_polygons(ax, points, j, grf_y(y0, ap)); break;
+    case GRAPH_LINES: 
+      draw_lines(ax, points, j); 
+      break;
+    case GRAPH_DOTS: 
+      draw_points(ax, points, j, cp->dot_size); 
+      break;
+    case GRAPH_FILLED: 
+      fill_polygons(ax, points, j, grf_y(y0, ap)); 
+      break;
     case GRAPH_DOTS_AND_LINES: 
       if (cp->dot_size > 1) draw_points(ax, points, j, cp->dot_size); 
       draw_lines(ax, points, j); 
@@ -224,16 +242,16 @@ void draw_grf_points(chan_info *cp, axis_context *ax, int j, axis_info *ap, Floa
       gy0 = grf_y(y0, ap);
       if (cp->dot_size == 1)
 	{
-	  for (i=0;i<j;i++)
+	  for (i=0; i<j; i++)
 	    XDrawLine(ax->dp, ax->wn, ax->gc, points[i].x, points[i].y, points[i].x, gy0);
 	}
       else
 	{
-	  size8 = cp->dot_size/8;
-	  size4 = cp->dot_size/4;
+	  size8 = cp->dot_size / 8;
+	  size4 = cp->dot_size / 4;
 	  if (size4 < 1) size4 = 1;
 	  draw_points(ax, points, j, cp->dot_size);
-	  for (i=0;i<j;i++)
+	  for (i=0; i<j; i++)
 	    if (points[i].y > gy0) /* unsigned int height */
 	      XFillRectangle(ax->dp, ax->wn, ax->gc, points[i].x - size8, gy0, size4, points[i].y - gy0);
 	    else XFillRectangle(ax->dp, ax->wn, ax->gc, points[i].x - size8, points[i].y, size4, gy0 - points[i].y);
@@ -245,7 +263,8 @@ void draw_grf_points(chan_info *cp, axis_context *ax, int j, axis_info *ap, Floa
 void draw_both_grfs(axis_context *ax, int j) /* only for enved wave */
 {
   XDrawLines(ax->dp, ax->wn, ax->gc, points, j, CoordModeOrigin);
-  if (points1[0].x != -1) XDrawLines(ax->dp, ax->wn, ax->gc, points1, j, CoordModeOrigin);
+  if (points1[0].x != -1) 
+    XDrawLines(ax->dp, ax->wn, ax->gc, points1, j, CoordModeOrigin);
 }
 
 static void allocate_erase_grf_points(mix_context *ms)
@@ -264,7 +283,7 @@ static void backup_erase_grf_points(mix_context *ms, int nj)
   points = points_address(0);
   points1 = points_address(1);
   ms->lastpj = nj;
-  for (i=0;i<nj;i++)
+  for (i=0; i<nj; i++)
     {
       ms->p0[i] = points[i];
       ms->p1[i] = points1[i];
@@ -301,39 +320,43 @@ void erase_and_draw_grf_points(mix_context *ms, chan_info *cp, int nj)
   min = ((nj < previous_j) ? nj : previous_j);
   if (cp->graph_style == GRAPH_LINES)
     {
-      for (i=0, j=1;i<min-1;i++,j++)
+      for (i=0, j=1; i<min-1; i++, j++)
 	{
 	  XDrawLine(dpy, wn, undraw_gc, ms->p0[i].x, ms->p0[i].y, ms->p0[j].x, ms->p0[j].y);
 	  XDrawLine(dpy, wn, draw_gc, points[i].x, points[i].y, points[j].x, points[j].y);
 	}
       if (nj > previous_j)
 	{
-	  for (i=min-1;i<nj-1;i++) XDrawLine(dpy, wn, draw_gc, points[i].x, points[i].y, points[i+1].x, points[i+1].y);
+	  for (i=min-1; i<nj-1; i++) 
+	    XDrawLine(dpy, wn, draw_gc, points[i].x, points[i].y, points[i+1].x, points[i+1].y);
 	}
       else
 	{
 	  if (previous_j > nj)
 	    {
-	      for (i=min-1;i<previous_j-1;i++) XDrawLine(dpy, wn, undraw_gc, ms->p0[i].x, ms->p0[i].y, ms->p0[i+1].x, ms->p0[i+1].y);
+	      for (i=min-1; i<previous_j-1; i++) 
+		XDrawLine(dpy, wn, undraw_gc, ms->p0[i].x, ms->p0[i].y, ms->p0[i+1].x, ms->p0[i+1].y);
 	    }
 	}
     }
   else /* dots */
     {
-      for (i=0;i<min;i++)
+      for (i=0; i<min; i++)
 	{
 	  draw_point(dpy, wn, undraw_gc, ms->p0[i], cp->dot_size);
 	  draw_point(dpy, wn, draw_gc, points[i], cp->dot_size);
 	}
       if (nj > previous_j)
 	{
-	  for (i=min;i<nj;i++) draw_point(dpy, wn, draw_gc, points[i], cp->dot_size);
+	  for (i=min; i<nj; i++) 
+	    draw_point(dpy, wn, draw_gc, points[i], cp->dot_size);
 	}
       else
 	{
 	  if (previous_j > nj)
 	    {
-	      for (i=min;i<previous_j;i++) draw_point(dpy, wn, undraw_gc, ms->p0[i], cp->dot_size);
+	      for (i=min; i<previous_j; i++) 
+		draw_point(dpy, wn, undraw_gc, ms->p0[i], cp->dot_size);
 	    }
 	}
     }
@@ -362,7 +385,7 @@ void erase_and_draw_both_grf_points(mix_context *ms, chan_info *cp, int nj)
   min = ((nj < previous_j) ? nj : previous_j);
   if (cp->graph_style == GRAPH_LINES)
     {
-      for (i=0, j=1;i<min-1;i++,j++)
+      for (i=0, j=1; i<min-1; i++, j++)
 	{
 	  XDrawLine(dpy, wn, undraw_gc, ms->p0[i].x, ms->p0[i].y, ms->p0[j].x, ms->p0[j].y);
 	  XDrawLine(dpy, wn, draw_gc, points[i].x, points[i].y, points[j].x, points[j].y);
@@ -371,7 +394,7 @@ void erase_and_draw_both_grf_points(mix_context *ms, chan_info *cp, int nj)
 	}
       if (nj > previous_j)
 	{
-	  for (i=min-1;i<nj-1;i++) 
+	  for (i=min-1; i<nj-1; i++) 
 	    {
 	      XDrawLine(dpy, wn, draw_gc, points[i].x, points[i].y, points[i+1].x, points[i+1].y);
 	      XDrawLine(dpy, wn, draw_gc, points1[i].x, points1[i].y, points1[i+1].x, points1[i+1].y);
@@ -380,7 +403,7 @@ void erase_and_draw_both_grf_points(mix_context *ms, chan_info *cp, int nj)
       else
 	if (previous_j > nj)
 	  {
-	    for (i=min-1;i<previous_j-1;i++) 
+	    for (i=min-1; i<previous_j-1; i++) 
 	      {
 		XDrawLine(dpy, wn, undraw_gc, ms->p0[i].x, ms->p0[i].y, ms->p0[i+1].x, ms->p0[i+1].y);
 		XDrawLine(dpy, wn, undraw_gc, ms->p1[i].x, ms->p1[i].y, ms->p1[i+1].x, ms->p1[i+1].y);
@@ -389,7 +412,7 @@ void erase_and_draw_both_grf_points(mix_context *ms, chan_info *cp, int nj)
     }
   else /* dots */
     {
-      for (i=0;i<min;i++)
+      for (i=0; i<min; i++)
 	{
 	  draw_point(dpy, wn, undraw_gc, ms->p0[i], cp->dot_size);
 	  draw_point(dpy, wn, draw_gc, points[i], cp->dot_size);
@@ -398,7 +421,7 @@ void erase_and_draw_both_grf_points(mix_context *ms, chan_info *cp, int nj)
 	}
       if (nj > previous_j)
 	{
-	  for (i=min;i<nj;i++) 
+	  for (i=min; i<nj; i++) 
 	    {
 	      draw_point(dpy, wn, draw_gc, points[i], cp->dot_size);
 	      draw_point(dpy, wn, draw_gc, points1[i], cp->dot_size);
@@ -408,7 +431,7 @@ void erase_and_draw_both_grf_points(mix_context *ms, chan_info *cp, int nj)
 	{
 	  if (previous_j > nj)
 	    {
-	      for (i=min;i<previous_j;i++) 
+	      for (i=min; i<previous_j; i++) 
 		{
 		  draw_point(dpy, wn, undraw_gc, ms->p0[i], cp->dot_size);
 		  draw_point(dpy, wn, undraw_gc, ms->p1[i], cp->dot_size);
@@ -482,12 +505,12 @@ void allocate_sono_rects(snd_state *ss, int size)
   else allocate_color_map(ss, 0);
   if (size > sono_size)
     {
-      for (i=0;i<GRAY_SCALES;i++)
+      for (i=0; i<GRAY_SCALES; i++)
 	{
 	  if ((sono_size > 0) && (sono_data[i])) FREE(sono_data[i]); 
 	  sono_data[i] = NULL;
 	}
-      for (i=0;i<GRAY_SCALES;i++)
+      for (i=0; i<GRAY_SCALES; i++)
 	{
 	  sono_data[i] = (XRectangle *)CALLOC(size, sizeof(XRectangle));
 	}
@@ -514,7 +537,7 @@ void allocate_color_map(snd_state *ss, int colormap)
       /* 8-bit color displays can't handle all these colors, apparently, so we have to check status */
       if (grays_allocated != -1) XFreeColors(dpy, cmap, grays, GRAY_SCALES, 0);
       j = 0;
-      for (i=0;i<GRAY_SCALES;i++)
+      for (i=0; i<GRAY_SCALES; i++)
 	{
 	  tmp_color.red = curmap[j++];
 	  tmp_color.green = curmap[j++];
@@ -542,7 +565,8 @@ void allocate_color_map(snd_state *ss, int colormap)
 void x_load_colormap(Pixel *colors)
 {
   int i;
-  for (i=0;i<GRAY_SCALES;i++) grays[i] = colors[i];
+  for (i=0; i<GRAY_SCALES; i++) 
+    grays[i] = colors[i];
 }
 #endif
 
@@ -572,8 +596,10 @@ static void Invert_Color_Callback(Widget w, XtPointer clientData, XtPointer call
 void set_color_inverted(snd_state *ss, int val)
 {
   in_set_color_inverted(ss, val);
-  if (ccd) XmToggleButtonSetState(ccd->invert, val, FALSE);
-  if (!(ss->graph_hook_active)) map_over_chans(ss, update_graph, NULL);
+  if (ccd) 
+    XmToggleButtonSetState(ccd->invert, val, FALSE);
+  if (!(ss->graph_hook_active)) 
+    map_over_chans(ss, update_graph, NULL);
 }
 
 static void Scale_Color_Callback(Widget w, XtPointer clientData, XtPointer callData)
@@ -586,24 +612,26 @@ static void Scale_Color_Callback(Widget w, XtPointer clientData, XtPointer callD
   ss = cd->state;
   scale_val = cbs->value;
   if (scale_val <= 50) 
-    val = (Float)(scale_val+1)/51.0;
-  else val = 1.0 + (Float)(scale_val-50)*20.0;
+    val = (Float)(scale_val + 1) / 51.0;
+  else val = 1.0 + (Float)(scale_val - 50) * 20.0;
   in_set_color_scale(ss, val);
   map_over_chans(ss, update_graph, NULL);
 }
 
 static void reflect_color_scale(Float val)
 {
-  if (val<=1.0) 
-    XmScaleSetValue(ccd->scale, (int)(val*51.0 - 1));
-  else XmScaleSetValue(ccd->scale, (int)((val-1.0)/20.0 + 50.0));
+  if (val <= 1.0) 
+    XmScaleSetValue(ccd->scale, (int)(val * 51.0 - 1));
+  else XmScaleSetValue(ccd->scale, (int)((val - 1.0) / 20.0 + 50.0));
 }
 
 void set_color_scale(snd_state *ss, Float val)
 {
   in_set_color_scale(ss, val);
-  if (ccd) reflect_color_scale(color_scale(ss));
-  if (!(ss->graph_hook_active)) map_over_chans(ss, update_graph, NULL);
+  if (ccd) 
+    reflect_color_scale(color_scale(ss));
+  if (!(ss->graph_hook_active)) 
+    map_over_chans(ss, update_graph, NULL);
 }
 
 static void List_Color_Callback(Widget w, XtPointer clientData, XtPointer callData)
@@ -619,8 +647,10 @@ static void List_Color_Callback(Widget w, XtPointer clientData, XtPointer callDa
 void set_color_map(snd_state *ss, int val)
 {
   in_set_color_map(ss, val);
-  if (ccd) XmListSelectPos(ccd->list, val+1, FALSE);
-  if (!(ss->graph_hook_active)) map_over_chans(ss, update_graph, NULL);
+  if (ccd) 
+    XmListSelectPos(ccd->list, val + 1, FALSE);
+  if (!(ss->graph_hook_active)) 
+    map_over_chans(ss, update_graph, NULL);
 }
 
 static void Cutoff_Color_Callback(Widget w, XtPointer clientData, XtPointer callData) /* cutoff point */
@@ -630,15 +660,17 @@ static void Cutoff_Color_Callback(Widget w, XtPointer clientData, XtPointer call
   XmScaleCallbackStruct *cbs = (XmScaleCallbackStruct *)callData;
   color_chooser_info *cd = (color_chooser_info *)clientData;
   ss = cd->state;
-  in_set_color_cutoff(ss, (Float)(cbs->value)/1000.0);
+  in_set_color_cutoff(ss, (Float)(cbs->value) / 1000.0);
   map_over_chans(ss, update_graph, NULL);
 }
 
 void set_color_cutoff(snd_state *ss, Float val)
 {
   in_set_color_cutoff(ss, val);
-  if (ccd) XmScaleSetValue(ccd->cutoff, (int)(val*1000.0));
-  if (!(ss->graph_hook_active)) map_over_chans(ss, update_graph, NULL);
+  if (ccd) 
+    XmScaleSetValue(ccd->cutoff, (int)(val * 1000.0));
+  if (!(ss->graph_hook_active)) 
+    map_over_chans(ss, update_graph, NULL);
 }
 
 
@@ -672,16 +704,14 @@ void View_Color_Callback(Widget w, XtPointer clientData, XtPointer callData)
       xdismiss = XmStringCreate(STR_Dismiss, XmFONTLIST_DEFAULT_TAG); /* needed by template dialog */
       xhelp = XmStringCreate(STR_Help, XmFONTLIST_DEFAULT_TAG);
       titlestr = XmStringCreate(STR_Color_Editor, XmFONTLIST_DEFAULT_TAG);
-      n=0;
+      n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       XtSetArg(args[n], XmNcancelLabelString, xdismiss); n++;
       XtSetArg(args[n], XmNhelpLabelString, xhelp); n++;
       XtSetArg(args[n], XmNautoUnmanage, FALSE); n++;
       XtSetArg(args[n], XmNdialogTitle, titlestr); n++;
-#if RESIZE_DIALOG
       XtSetArg(args[n], XmNresizePolicy, XmRESIZE_GROW); n++;
       XtSetArg(args[n], XmNnoResize, FALSE); n++;
-#endif
       XtSetArg(args[n], XmNtransient, FALSE); n++;
       ccd->dialog = XmCreateTemplateDialog(MAIN_SHELL(ss), STR_Color, args, n);
       add_dialog(ss, ccd->dialog);
@@ -701,7 +731,7 @@ void View_Color_Callback(Widget w, XtPointer clientData, XtPointer callData)
 	  XtVaSetValues(XmMessageBoxGetChild(ccd->dialog, XmDIALOG_HELP_BUTTON), XmNarmColor, (ss->sgx)->pushed_button_color, NULL);
 	}
 
-      n=0;
+      n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
@@ -710,7 +740,7 @@ void View_Color_Callback(Widget w, XtPointer clientData, XtPointer callData)
       XtSetArg(args[n], XmNbottomWidget, XmMessageBoxGetChild(ccd->dialog, XmDIALOG_SEPARATOR)); n++;
       mainform = sndCreateFormWidget("formd", ccd->dialog, args, n);
 
-      n=0;
+      n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
@@ -718,9 +748,9 @@ void View_Color_Callback(Widget w, XtPointer clientData, XtPointer callData)
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
       list_label = XtCreateManagedWidget(S_colormap, xmLabelWidgetClass, mainform, args, n);
       
-      n=0;
+      n = 0;
       cmaps = (XmString *)CALLOC(NUM_COLORMAPS, sizeof(XmString));
-      for (i=0;i<NUM_COLORMAPS;i++) cmaps[i] = XmStringCreate(colormap_name(i), XmFONTLIST_DEFAULT_TAG);
+      for (i=0; i<NUM_COLORMAPS; i++) cmaps[i] = XmStringCreate(colormap_name(i), XmFONTLIST_DEFAULT_TAG);
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
@@ -729,14 +759,22 @@ void View_Color_Callback(Widget w, XtPointer clientData, XtPointer callData)
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNlistMarginWidth, 3); n++;
       ccd->list = XmCreateScrolledList(mainform, "colormap-list", args, n);
-      if (!(ss->using_schemes)) XtVaSetValues(ccd->list, XmNbackground, (ss->sgx)->white, XmNforeground, (ss->sgx)->black, NULL);
-      XtVaSetValues(ccd->list, XmNitems, cmaps, XmNitemCount, NUM_COLORMAPS, XmNvisibleItemCount, 6, NULL);
+      if (!(ss->using_schemes)) 
+	XtVaSetValues(ccd->list, 
+		      XmNbackground, (ss->sgx)->white, 
+		      XmNforeground, (ss->sgx)->black, 
+		      NULL);
+      XtVaSetValues(ccd->list, 
+		    XmNitems, cmaps, 
+		    XmNitemCount, NUM_COLORMAPS, 
+		    XmNvisibleItemCount, 6, 
+		    NULL);
       XtAddCallback(ccd->list, XmNbrowseSelectionCallback, List_Color_Callback, ccd);
-      for (i=0;i<NUM_COLORMAPS;i++) XmStringFree(cmaps[i]);
+      for (i=0; i<NUM_COLORMAPS; i++) XmStringFree(cmaps[i]);
       FREE(cmaps);
       XtManageChild(ccd->list);
 
-      n=0;
+      n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_WIDGET); n++;
@@ -750,7 +788,7 @@ void View_Color_Callback(Widget w, XtPointer clientData, XtPointer callData)
       sep = XtCreateManagedWidget("sep", xmSeparatorWidgetClass, mainform, args, n);
 
       /* this horizontal separator exists solely to keep the "light" label from clobbering the "dark" label! */
-      n=0;
+      n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
@@ -762,7 +800,7 @@ void View_Color_Callback(Widget w, XtPointer clientData, XtPointer callData)
       XtSetArg(args[n], XmNheight, 10); n++;
       sep1 = XtCreateManagedWidget("sep1", xmSeparatorWidgetClass, mainform, args, n);
 
-      n=0;
+      n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_WIDGET); n++;
@@ -777,7 +815,7 @@ void View_Color_Callback(Widget w, XtPointer clientData, XtPointer callData)
       XtAddCallback(ccd->scale, XmNvalueChangedCallback, Scale_Color_Callback, ccd);
       XtAddCallback(ccd->scale, XmNdragCallback, Scale_Color_Callback, ccd);
 
-      n=0;
+      n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
@@ -786,7 +824,7 @@ void View_Color_Callback(Widget w, XtPointer clientData, XtPointer callData)
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
       light_label = XtCreateManagedWidget(STR_light, xmLabelWidgetClass, mainform, args, n);
 
-      n=0;
+      n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_WIDGET); n++;
@@ -796,7 +834,7 @@ void View_Color_Callback(Widget w, XtPointer clientData, XtPointer callData)
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
       XtCreateManagedWidget(STR_dark, xmLabelWidgetClass, mainform, args, n);
 
-      n=0;
+      n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_WIDGET); n++;
@@ -816,7 +854,7 @@ void View_Color_Callback(Widget w, XtPointer clientData, XtPointer callData)
       XtAddCallback(ccd->cutoff, XmNdragCallback, Cutoff_Color_Callback, ccd);
       XmStringFree(xcutoff);
 
-      n=0;
+      n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNselectColor, (ss->sgx)->pushed_button_color); n++;}
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
@@ -830,10 +868,12 @@ void View_Color_Callback(Widget w, XtPointer clientData, XtPointer callData)
       ccd->invert = sndCreateToggleButtonWidget(STR_invert, mainform, args, n);
       XtAddCallback(ccd->invert, XmNvalueChangedCallback, Invert_Color_Callback, ccd);
       XmStringFree(xinvert);
-      if (color_scale(ss) != 1.0) reflect_color_scale(color_scale(ss));
+      if (color_scale(ss) != 1.0)
+	reflect_color_scale(color_scale(ss));
     }
   else raise_dialog(ccd->dialog);
-  if (!XtIsManaged(ccd->dialog)) XtManageChild(ccd->dialog);
+  if (!XtIsManaged(ccd->dialog)) 
+    XtManageChild(ccd->dialog);
 }
 
 int color_dialog_is_active(void)
@@ -868,12 +908,15 @@ void set_spectro_x_angle(snd_state *ss, Float val)
   in_set_spectro_x_angle(ss, val);
   if (oid) XmScaleSetValue(oid->ax, (int)val);
   map_chans_field(ss, FCP_X_ANGLE, val);
-  if (!(ss->graph_hook_active)) map_over_chans(ss, update_graph, NULL);
+  if (!(ss->graph_hook_active)) 
+    map_over_chans(ss, update_graph, NULL);
 }
 
 static void AX_Help_Callback(Widget w, XtPointer clientData, XtPointer callData) 
 {
-  snd_help((snd_state *)clientData, "x angle slider", "This slider causes the graph to rotate\naround the x axis.\n");
+  snd_help((snd_state *)clientData, 
+	   "x angle slider", 
+	   "This slider causes the graph to rotate\naround the x axis.\n");
 }
 
 static void AY_Orientation_Callback(Widget w, XtPointer clientData, XtPointer callData) 
@@ -892,12 +935,15 @@ void set_spectro_y_angle(snd_state *ss, Float val)
   in_set_spectro_y_angle(ss, val);
   if (oid) XmScaleSetValue(oid->ay, (int)val);
   map_chans_field(ss, FCP_Y_ANGLE, val);
-  if (!(ss->graph_hook_active)) map_over_chans(ss, update_graph, NULL);
+  if (!(ss->graph_hook_active)) 
+    map_over_chans(ss, update_graph, NULL);
 }
 
 static void AY_Help_Callback(Widget w, XtPointer clientData, XtPointer callData) 
 {
-  snd_help((snd_state *)clientData, "y angle slider", "This slider causes the graph to rotate\naround the y axis.\n");
+  snd_help((snd_state *)clientData, 
+	   "y angle slider", 
+	   "This slider causes the graph to rotate\naround the y axis.\n");
 }
 
 static void AZ_Orientation_Callback(Widget w, XtPointer clientData, XtPointer callData) 
@@ -916,12 +962,15 @@ void set_spectro_z_angle(snd_state *ss, Float val)
   in_set_spectro_z_angle(ss, val);
   if (oid) XmScaleSetValue(oid->az, (int)val);
   map_chans_field(ss, FCP_Z_ANGLE, val);
-  if (!(ss->graph_hook_active)) map_over_chans(ss, update_graph, NULL);
+  if (!(ss->graph_hook_active)) 
+    map_over_chans(ss, update_graph, NULL);
 }
 
 static void AZ_Help_Callback(Widget w, XtPointer clientData, XtPointer callData) 
 {
-  snd_help((snd_state *)clientData, "z angle slider", "This slider causes the graph to rotate\naround the z axis.\n");
+  snd_help((snd_state *)clientData, 
+	   "z angle slider", 
+	   "This slider causes the graph to rotate\naround the z axis.\n");
 }
 
 static void SX_Orientation_Callback(Widget w, XtPointer clientData, XtPointer callData) 
@@ -930,22 +979,25 @@ static void SX_Orientation_Callback(Widget w, XtPointer clientData, XtPointer ca
   XmScaleCallbackStruct *cbs = (XmScaleCallbackStruct *)callData;
   orientation_info *od = (orientation_info *)clientData;
   ss = od->state;
-  in_set_spectro_x_scale(ss, (Float)(cbs->value)*0.01);
-  map_chans_field(ss, FCP_X_SCALE, (Float)(cbs->value)*0.01);
+  in_set_spectro_x_scale(ss, (Float)(cbs->value) * 0.01);
+  map_chans_field(ss, FCP_X_SCALE, (Float)(cbs->value) * 0.01);
   map_over_chans(ss, update_graph, NULL);
 }
 
 void set_spectro_x_scale(snd_state *ss, Float val)
 {
   in_set_spectro_x_scale(ss, val);
-  if (oid) XmScaleSetValue(oid->sx, (int)(val*100));
+  if (oid) XmScaleSetValue(oid->sx, (int)(val * 100));
   map_chans_field(ss, FCP_X_SCALE, val);
-  if (!(ss->graph_hook_active)) map_over_chans(ss, update_graph, NULL);
+  if (!(ss->graph_hook_active)) 
+    map_over_chans(ss, update_graph, NULL);
 }
 
 static void SX_Help_Callback(Widget w, XtPointer clientData, XtPointer callData) 
 {
-  snd_help((snd_state *)clientData, "x scale slider", "This slider causes the graph to expand or\ncontract along the x axis.\n");
+  snd_help((snd_state *)clientData, 
+	   "x scale slider", 
+	   "This slider causes the graph to expand or\ncontract along the x axis.\n");
 }
 
 static void SY_Orientation_Callback(Widget w, XtPointer clientData, XtPointer callData) 
@@ -954,22 +1006,25 @@ static void SY_Orientation_Callback(Widget w, XtPointer clientData, XtPointer ca
   XmScaleCallbackStruct *cbs = (XmScaleCallbackStruct *)callData;
   orientation_info *od = (orientation_info *)clientData;
   ss = od->state;
-  in_set_spectro_y_scale(ss, (Float)(cbs->value)*0.01);
-  map_chans_field(ss, FCP_Y_SCALE, (Float)(cbs->value)*0.01);
+  in_set_spectro_y_scale(ss, (Float)(cbs->value) * 0.01);
+  map_chans_field(ss, FCP_Y_SCALE, (Float)(cbs->value) * 0.01);
   map_over_chans(ss, update_graph, NULL);
 }
 
 void set_spectro_y_scale(snd_state *ss, Float val)
 {
   in_set_spectro_y_scale(ss, val);
-  if (oid) XmScaleSetValue(oid->sy, (int)(val*100));
+  if (oid) XmScaleSetValue(oid->sy, (int)(val * 100));
   map_chans_field(ss, FCP_Y_SCALE, val);
-  if (!(ss->graph_hook_active)) map_over_chans(ss, update_graph, NULL);
+  if (!(ss->graph_hook_active)) 
+    map_over_chans(ss, update_graph, NULL);
 }
 
 static void SY_Help_Callback(Widget w, XtPointer clientData, XtPointer callData) 
 {
-  snd_help((snd_state *)clientData, "y scale slider", "This slider causes the graph to expand or\ncontract along the y axis.\n");
+  snd_help((snd_state *)clientData, 
+	   "y scale slider", 
+	   "This slider causes the graph to expand or\ncontract along the y axis.\n");
 }
 
 static void SZ_Orientation_Callback(Widget w, XtPointer clientData, XtPointer callData) 
@@ -978,22 +1033,25 @@ static void SZ_Orientation_Callback(Widget w, XtPointer clientData, XtPointer ca
   XmScaleCallbackStruct *cbs = (XmScaleCallbackStruct *)callData;
   orientation_info *od = (orientation_info *)clientData;
   ss = od->state;
-  in_set_spectro_z_scale(ss, (Float)(cbs->value)*0.01);
-  map_chans_field(ss, FCP_Z_SCALE, (Float)(cbs->value)*0.01);
+  in_set_spectro_z_scale(ss, (Float)(cbs->value) * 0.01);
+  map_chans_field(ss, FCP_Z_SCALE, (Float)(cbs->value) * 0.01);
   map_over_chans(ss, update_graph, NULL);
 }
 
 void set_spectro_z_scale(snd_state *ss, Float val)
 {
   in_set_spectro_z_scale(ss, val);
-  if (oid) XmScaleSetValue(oid->sz, (int)(val*100));
+  if (oid) XmScaleSetValue(oid->sz, (int)(val * 100));
   map_chans_field(ss, FCP_Z_SCALE, val);
-  if (!(ss->graph_hook_active)) map_over_chans(ss, update_graph, NULL);
+  if (!(ss->graph_hook_active)) 
+    map_over_chans(ss, update_graph, NULL);
 }
 
 static void SZ_Help_Callback(Widget w, XtPointer clientData, XtPointer callData) 
 {
-  snd_help((snd_state *)clientData, "z scale slider", "This slider causes the graph to expand or\ncontract along the z axis.\n");
+  snd_help((snd_state *)clientData, 
+	   "z scale slider", 
+	   "This slider causes the graph to expand or\ncontract along the z axis.\n");
 }
 
 static int map_chans_spectro_hop(chan_info *cp, void *ptr) {cp->spectro_hop = (int)ptr; return(0);}
@@ -1018,13 +1076,16 @@ void set_spectro_hop(snd_state *ss, int val)
       in_set_spectro_hop(ss, val);
       if (oid) XmScaleSetValue(oid->hop, val);
       map_over_chans(ss, map_chans_spectro_hop, (void *)val);
-      if (!(ss->graph_hook_active)) map_over_chans(ss, update_graph, NULL);
+      if (!(ss->graph_hook_active)) 
+	map_over_chans(ss, update_graph, NULL);
     }
 }
 
 static void Hop_Help_Callback(Widget w, XtPointer clientData, XtPointer callData) 
 {
-  snd_help((snd_state *)clientData, "hop slider", "This slider changes the hop size.\n");
+  snd_help((snd_state *)clientData, 
+	   "hop slider", 
+	   "This slider changes the hop size.\n");
 }
 
 static void Cut_Orientation_Callback(Widget w, XtPointer clientData, XtPointer callData) 
@@ -1034,21 +1095,24 @@ static void Cut_Orientation_Callback(Widget w, XtPointer clientData, XtPointer c
   XmScaleCallbackStruct *cbs = (XmScaleCallbackStruct *)callData;
   orientation_info *od = (orientation_info *)clientData;
   ss = od->state;
-  map_chans_field(ss, FCP_CUTOFF, (Float)(cbs->value)*0.01);
-  set_spectro_cutoff_and_redisplay(ss, (Float)(cbs->value)*0.01); /* calls in_set... */
+  map_chans_field(ss, FCP_CUTOFF, (Float)(cbs->value) * 0.01);
+  set_spectro_cutoff_and_redisplay(ss, (Float)(cbs->value) * 0.01); /* calls in_set... */
 } 
 
 void set_spectro_cutoff(snd_state *ss, Float val)
 {
   in_set_spectro_cutoff(ss, val);
-  if (oid) XmScaleSetValue(oid->cut, (int)(val*100));
+  if (oid) XmScaleSetValue(oid->cut, (int)(val * 100));
   map_chans_field(ss, FCP_CUTOFF, val);
-  if (!(ss->graph_hook_active)) map_over_chans(ss, update_graph, NULL);
+  if (!(ss->graph_hook_active)) 
+    map_over_chans(ss, update_graph, NULL);
 }
 
 static void Cut_Help_Callback(Widget w, XtPointer clientData, XtPointer callData) 
 {
-  snd_help((snd_state *)clientData, "% of spectrum slider", "This slider determines how much of\nthe spectrum is displayed\n");
+  snd_help((snd_state *)clientData, 
+	   "% of spectrum slider", 
+	   "This slider determines how much of\nthe spectrum is displayed\n");
 }
 
 static void Help_Orientation_Callback(Widget w, XtPointer clientData, XtPointer callData) 
@@ -1067,7 +1131,7 @@ static int fixup_angle(Float ang)
   int na;
   na = (int)ang;
   if (na < 0) na += 360;
-  na = na%360;
+  na = na % 360;
   return(na);
 }
 
@@ -1077,7 +1141,7 @@ void reflect_spectro(snd_state *ss)
   if (ccd) 
     {
       XmToggleButtonSetState(ccd->invert, color_inverted(ss), FALSE);
-      XtVaSetValues(ccd->cutoff, XmNvalue, (int)((color_cutoff(ss))*1000), NULL);
+      XtVaSetValues(ccd->cutoff, XmNvalue, (int)((color_cutoff(ss)) * 1000), NULL);
       reflect_color_scale(color_scale(ss));
     }
   if (oid) 
@@ -1121,24 +1185,22 @@ void View_Orientation_Callback(Widget w, XtPointer clientData, XtPointer callDat
       xhelp = XmStringCreate(STR_Help, XmFONTLIST_DEFAULT_TAG);
       xreset = XmStringCreate(STR_Reset, XmFONTLIST_DEFAULT_TAG);
       titlestr = XmStringCreate(STR_Spectrogram_Orientation, XmFONTLIST_DEFAULT_TAG);
-      n=0;
+
+      n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       XtSetArg(args[n], XmNcancelLabelString, xdismiss); n++;
       XtSetArg(args[n], XmNhelpLabelString, xhelp); n++;
       XtSetArg(args[n], XmNokLabelString, xreset); n++;
       XtSetArg(args[n], XmNautoUnmanage, FALSE); n++;
       XtSetArg(args[n], XmNdialogTitle, titlestr); n++;
-#if RESIZE_DIALOG
       XtSetArg(args[n], XmNresizePolicy, XmRESIZE_GROW); n++;
       XtSetArg(args[n], XmNnoResize, FALSE); n++;
-#endif
       XtSetArg(args[n], XmNtransient, FALSE); n++;
       oid->dialog = XmCreateTemplateDialog(MAIN_SHELL(ss), STR_Orientation, args, n);
       add_dialog(ss, oid->dialog);
 #if OVERRIDE_TOGGLE
       override_form_translation(oid->dialog);
 #endif
-
 
       XtAddCallback(oid->dialog, XmNcancelCallback, Dismiss_Orientation_Callback, oid);
       XtAddCallback(oid->dialog, XmNhelpCallback, Help_Orientation_Callback, ss);
@@ -1155,7 +1217,7 @@ void View_Orientation_Callback(Widget w, XtPointer clientData, XtPointer callDat
 	  XtVaSetValues(XmMessageBoxGetChild(oid->dialog, XmDIALOG_HELP_BUTTON), XmNarmColor, (ss->sgx)->pushed_button_color, NULL);
 	}
 
-      n=0;
+      n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
@@ -1164,7 +1226,7 @@ void View_Orientation_Callback(Widget w, XtPointer clientData, XtPointer callDat
       XtSetArg(args[n], XmNbottomWidget, XmMessageBoxGetChild(oid->dialog, XmDIALOG_SEPARATOR)); n++;
       mainform = sndCreateFormWidget("formd", oid->dialog, args, n);
       
-      n=0;
+      n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_POSITION); n++;
@@ -1174,7 +1236,7 @@ void View_Orientation_Callback(Widget w, XtPointer clientData, XtPointer callDat
       XtSetArg(args[n], XmNorientation, XmVERTICAL); n++;
       leftbox = sndCreateRowColumnWidget("leftb", mainform, args, n);
       
-      n=0;
+      n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNleftWidget, leftbox); n++;
@@ -1185,7 +1247,7 @@ void View_Orientation_Callback(Widget w, XtPointer clientData, XtPointer callDat
       rightbox = sndCreateRowColumnWidget("rightb", mainform, args, n);
       
       /* left box */
-      n=0;
+      n = 0;
       xstr = XmStringCreate(STR_x_angle, XmFONTLIST_DEFAULT_TAG);
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       XtSetArg(args[n], XmNorientation, XmHORIZONTAL); n++;
@@ -1199,7 +1261,7 @@ void View_Orientation_Callback(Widget w, XtPointer clientData, XtPointer callDat
       XtAddCallback(oid->ax, XmNhelpCallback, AX_Help_Callback, ss);
       XmStringFree(xstr);
 
-      n=0;
+      n = 0;
       xstr = XmStringCreate(STR_y_angle, XmFONTLIST_DEFAULT_TAG);
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       XtSetArg(args[n], XmNorientation, XmHORIZONTAL); n++;
@@ -1213,7 +1275,7 @@ void View_Orientation_Callback(Widget w, XtPointer clientData, XtPointer callDat
       XtAddCallback(oid->ay, XmNhelpCallback, AY_Help_Callback, ss);
       XmStringFree(xstr);
 
-      n=0;
+      n = 0;
       xstr = XmStringCreate(STR_z_angle, XmFONTLIST_DEFAULT_TAG);
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       XtSetArg(args[n], XmNorientation, XmHORIZONTAL); n++;
@@ -1227,7 +1289,7 @@ void View_Orientation_Callback(Widget w, XtPointer clientData, XtPointer callDat
       XtAddCallback(oid->az, XmNhelpCallback, AZ_Help_Callback, ss);
       XmStringFree(xstr);
 
-      n=0;
+      n = 0;
       xstr = XmStringCreate(STR_hop, XmFONTLIST_DEFAULT_TAG);
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       XtSetArg(args[n], XmNorientation, XmHORIZONTAL); n++;
@@ -1242,7 +1304,7 @@ void View_Orientation_Callback(Widget w, XtPointer clientData, XtPointer callDat
       XmStringFree(xstr);
 
       /* right box */
-      n=0;
+      n = 0;
       xstr = XmStringCreate(STR_x_scale, XmFONTLIST_DEFAULT_TAG);
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       XtSetArg(args[n], XmNorientation, XmHORIZONTAL); n++;
@@ -1257,7 +1319,7 @@ void View_Orientation_Callback(Widget w, XtPointer clientData, XtPointer callDat
       XtAddCallback(oid->sx, XmNhelpCallback, SX_Help_Callback, ss);
       XmStringFree(xstr);
 
-      n=0;
+      n = 0;
       xstr = XmStringCreate(STR_y_scale, XmFONTLIST_DEFAULT_TAG);
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       XtSetArg(args[n], XmNorientation, XmHORIZONTAL); n++;
@@ -1272,7 +1334,7 @@ void View_Orientation_Callback(Widget w, XtPointer clientData, XtPointer callDat
       XtAddCallback(oid->sy, XmNhelpCallback, SY_Help_Callback, ss);
       XmStringFree(xstr);
 
-      n=0;
+      n = 0;
       xstr = XmStringCreate(STR_z_scale, XmFONTLIST_DEFAULT_TAG);
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       XtSetArg(args[n], XmNorientation, XmHORIZONTAL); n++;
@@ -1286,7 +1348,7 @@ void View_Orientation_Callback(Widget w, XtPointer clientData, XtPointer callDat
       XtAddCallback(oid->sz, XmNhelpCallback, SZ_Help_Callback, ss);
       XmStringFree(xstr);
 
-      n=0;
+      n = 0;
       xstr = XmStringCreate(STR_percent_of_spectrum, XmFONTLIST_DEFAULT_TAG);
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       XtSetArg(args[n], XmNorientation, XmHORIZONTAL); n++;
@@ -1311,12 +1373,20 @@ int orientation_dialog_is_active(void)
 void start_color_dialog(snd_state *ss, int width, int height)
 {
   View_Color_Callback(NULL, (XtPointer)ss, NULL);
-  if (width != 0) XtVaSetValues(ccd->dialog, XmNwidth, (Dimension)width, XmNheight, (Dimension)height, NULL);
+  if (width != 0) 
+    XtVaSetValues(ccd->dialog, 
+		  XmNwidth, (Dimension)width, 
+		  XmNheight, (Dimension)height, 
+		  NULL);
 }
 
 void start_orientation_dialog(snd_state *ss, int width, int height)
 {
   View_Orientation_Callback(NULL, (XtPointer)ss, NULL);
-  if (width != 0) XtVaSetValues(oid->dialog, XmNwidth, (Dimension)width, XmNheight, (Dimension)height, NULL);
+  if (width != 0) 
+    XtVaSetValues(oid->dialog, 
+		  XmNwidth, (Dimension)width, 
+		  XmNheight, (Dimension)height, 
+		  NULL);
 }
 

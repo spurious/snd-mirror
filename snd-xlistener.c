@@ -4,7 +4,6 @@
  * TODO    bubble args help if tab at end of name? (or click name?)
  */
 
-
 static Widget listener_text = NULL;
 
 static Widget completion_help_dialog = NULL,completion_help_list = NULL;
@@ -28,13 +27,14 @@ static void completion_help_browse_callback(Widget w, XtPointer clientData, XtPo
   old_text = XmTextGetString(listener_text);
   old_len = snd_strlen(old_text);
   new_len = snd_strlen(text);
-  for (i=old_len-1, j=new_len-1;j>=0;j--)
+  for (i=old_len-1, j=new_len-1; j>=0; j--)
     {
       if (old_text[i] != text[j])
 	i = old_len - 1;
       else i--;
     }
-  append_listener_text(XmTextGetLastPosition(listener_text), (char *)(text - 1 + old_len - i));
+  append_listener_text(XmTextGetLastPosition(listener_text), 
+		       (char *)(text - 1 + old_len - i));
   if (text) XtFree(text);
   if (old_text) XtFree(old_text);
   XtUnmanageChild(completion_help_dialog);
@@ -47,13 +47,11 @@ static void create_completion_help_dialog(snd_state *ss, char *title)
   XmString titlestr;
   titlestr = XmStringCreate(title, XmFONTLIST_DEFAULT_TAG);
 
-  n=0;
+  n = 0;
   if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
   XtSetArg(args[n], XmNdialogTitle, titlestr); n++;
   XtSetArg(args[n], XmNresizePolicy, XmRESIZE_GROW); n++;
-#if RESIZE_DIALOG
   XtSetArg(args[n], XmNnoResize, FALSE); n++;
-#endif
   /* XtSetArg(args[n], XmNtransient, FALSE); n++; */
   completion_help_dialog = XmCreateMessageDialog(MAIN_PANE(ss), "snd-completion-help", args, n);
   add_dialog(ss, completion_help_dialog);
@@ -65,7 +63,7 @@ static void create_completion_help_dialog(snd_state *ss, char *title)
   XtUnmanageChild(XmMessageBoxGetChild(completion_help_dialog, XmDIALOG_SYMBOL_LABEL));
   XmStringFree(titlestr);
 
-  n=0;
+  n = 0;
   completion_help_list = XmCreateScrolledList(completion_help_dialog, "completion-help-text", args, n);
   if (!(ss->using_schemes)) XtVaSetValues(completion_help_list, XmNbackground, (ss->sgx)->white, XmNforeground, (ss->sgx)->black, NULL);
 
@@ -74,9 +72,7 @@ static void create_completion_help_dialog(snd_state *ss, char *title)
   XtAddCallback(completion_help_list, XmNbrowseSelectionCallback, completion_help_browse_callback, ss);
   XtAddCallback(completion_help_dialog, XmNhelpCallback, completion_help_help_callback, ss);
 
-#if MANAGE_DIALOG
   XtManageChild(completion_help_dialog);
-#endif
 
   if (!(ss->using_schemes))
     {
@@ -96,12 +92,24 @@ void snd_completion_help(snd_state *ss, int matches, char **buffer)
     XtManageChild(completion_help_dialog);
   else create_completion_help_dialog(ss, "Completions");
   match = (XmString *)CALLOC(matches, sizeof(XmString));
-  for (i=0;i<matches;i++) 
+  for (i=0; i<matches; i++) 
     match[i] = XmStringCreate(buffer[i], XmFONTLIST_DEFAULT_TAG);
-  XtVaSetValues(completion_help_list, XmNitems, match, XmNitemCount, matches, XmNvisibleItemCount, iclamp(1, matches, 12), NULL);
-  XtVaGetValues(completion_help_list, XmNwidth, &w, XmNheight, &h, NULL);
-  if ((w < 100) || (h < 100)) XtVaSetValues(completion_help_dialog, XmNwidth, 200, XmNheight, 200, NULL);
-  for (i=0;i<matches;i++) XmStringFree(match[i]);
+  XtVaSetValues(completion_help_list, 
+		XmNitems, match, 
+		XmNitemCount, matches, 
+		XmNvisibleItemCount, iclamp(1, matches, 12), 
+		NULL);
+  XtVaGetValues(completion_help_list, 
+		XmNwidth, &w, 
+		XmNheight, &h, 
+		NULL);
+  if ((w < 100) || (h < 100)) 
+    XtVaSetValues(completion_help_dialog, 
+		  XmNwidth, 200,
+		  XmNheight, 200, 
+		  NULL);
+  for (i=0; i<matches; i++) 
+    XmStringFree(match[i]);
   FREE(match);
 }
 
@@ -112,13 +120,15 @@ void snd_completion_help(snd_state *ss, int matches, char **buffer)
 void textfield_focus_Callback(Widget w, XtPointer clientData, XtPointer callData)
 {
   snd_state *ss = (snd_state *)clientData;
-  if (!(ss->using_schemes)) XtVaSetValues(w, XmNbackground, (ss->sgx)->text_focus_color, NULL);
+  if (!(ss->using_schemes)) 
+    XtVaSetValues(w, XmNbackground, (ss->sgx)->text_focus_color, NULL);
 }
 
 void textfield_unfocus_Callback(Widget w, XtPointer clientData, XtPointer callData)
 {
   snd_state *ss = (snd_state *)clientData;
-  if (!(ss->using_schemes)) XtVaSetValues(w, XmNbackground, (ss->sgx)->basic_color, NULL);
+  if (!(ss->using_schemes)) 
+    XtVaSetValues(w, XmNbackground, (ss->sgx)->basic_color, NULL);
 }
 
 
@@ -211,11 +221,11 @@ static void Begin_of_line(Widget w, XEvent *ev, char **ustr, Cardinal *num)
     {
       ss = get_global_state();
       prompt_len = snd_strlen(listener_prompt(ss));
-      str = (char *)CALLOC(prompt_len+3, sizeof(char));
-      XmTextGetSubstring(w, loc+1, prompt_len, prompt_len+2, str);
+      str = (char *)CALLOC(prompt_len + 3, sizeof(char));
+      XmTextGetSubstring(w, loc+1, prompt_len, prompt_len + 2, str);
       if (strncmp(listener_prompt(ss), str, prompt_len) == 0)
-	XmTextSetCursorPosition(w, loc+prompt_len+1);
-      else XmTextSetCursorPosition(w, loc+1);
+	XmTextSetCursorPosition(w, loc+prompt_len + 1);
+      else XmTextSetCursorPosition(w, loc + 1);
       FREE(str);
     }
   else XmTextSetCursorPosition(w, 1);
@@ -282,12 +292,12 @@ static void Text_transpose(Widget w, XEvent *event, char **str, Cardinal *num)
   curpos = XmTextGetCursorPosition(w);
   if (curpos > 1)
     {
-      XmTextGetSubstring(w, (XmTextPosition)(curpos-1), 2, 3, buf);
+      XmTextGetSubstring(w, (XmTextPosition)(curpos - 1), 2, 3, buf);
       tmp = buf[0];
-      buf[0]=buf[1];
-      buf[1]=tmp;
-      XmTextReplace(w, curpos-1, curpos+1, buf);
-      XmTextSetCursorPosition(w, curpos+1);
+      buf[0] = buf[1];
+      buf[1] = tmp;
+      XmTextReplace(w, curpos - 1, curpos + 1, buf);
+      XmTextSetCursorPosition(w, curpos + 1);
     }
 }
 
@@ -303,17 +313,17 @@ static void Word_upper(Widget w, XEvent *event, char **str, Cardinal *num)
   if (curpos < endpos)
     {
       length = endpos - curpos;
-      buf = (char *)CALLOC(length+1, sizeof(char));
-      XmTextGetSubstring(w, curpos, length, length+1, buf);
+      buf = (char *)CALLOC(length + 1, sizeof(char));
+      XmTextGetSubstring(w, curpos, length, length + 1, buf);
       wstart = 0;
       wend = length;
-      for (i=0;i<length;i++)
+      for (i=0; i<length; i++)
 	if (!isspace((int)(buf[i])))
 	  {
-	    wstart=i;
+	    wstart = i;
 	    break;
 	  }
-      for (i=wstart+1;i<length;i++)
+      for (i=wstart+1; i<length; i++)
 	if (isspace((int)(buf[i])))
 	  {
 	    wend = i;
@@ -322,17 +332,17 @@ static void Word_upper(Widget w, XEvent *event, char **str, Cardinal *num)
       if (cap)
 	{
 	  buf[0] = toupper(buf[wstart]);
-	  buf[1]='\0';
-	  XmTextReplace(w, curpos+wstart, curpos+wstart+1, buf);
+	  buf[1] = '\0';
+	  XmTextReplace(w, curpos + wstart, curpos + wstart + 1, buf);
 	}
       else
 	{
-	  for (i=wstart, j=0;i<wend;i++,j++)
+	  for (i=wstart, j=0; i<wend; i++, j++)
 	    if (up) 
 	      buf[j] = toupper(buf[i]);
 	    else buf[j] = tolower(buf[i]);
-	  buf[j]='\0';
-	  XmTextReplace(w, curpos+wstart, curpos+wend, buf);
+	  buf[j] = '\0';
+	  XmTextReplace(w, curpos + wstart, curpos + wend, buf);
 	}
       XmTextSetCursorPosition(w, curpos+wend);
     }
@@ -349,13 +359,13 @@ static void add_completer_widget(Widget w, int row)
       if (cmpwids_size <= row)
 	{
 	  i = cmpwids_size;
-	  cmpwids_size = row+8;
+	  cmpwids_size = row + 8;
 	  if (cmpwids == NULL)
 	    cmpwids = (Widget *)CALLOC(cmpwids_size, sizeof(Widget));
 	  else 
 	    {
 	      cmpwids = (Widget *)REALLOC(cmpwids, cmpwids_size * sizeof(Widget));
-	      for (;i<cmpwids_size;i++) cmpwids[i] = NULL;
+	      for (; i<cmpwids_size; i++) cmpwids[i] = NULL;
 	    }
 	}
       cmpwids[row] = w;
@@ -373,7 +383,7 @@ static void Name_completion(Widget w, XEvent *event, char **str, Cardinal *num)
   snd_state *ss;
   ss = get_global_state();
   data = -1;
-  for (i=0;i<cmpwids_size;i++)
+  for (i=0; i<cmpwids_size; i++)
     if (w == cmpwids[i])
       {
 	data = i;
@@ -386,12 +396,15 @@ static void Name_completion(Widget w, XEvent *event, char **str, Cardinal *num)
       matches = get_completion_matches();
       XmTextSetString(w, new_text);
       XmTextSetCursorPosition(w, XmTextGetLastPosition(w));
-      if ((strcmp(old_text, new_text) == 0) && (matches != -1))
+      if ((strcmp(old_text, new_text) == 0) && 
+	  (matches != -1))
 	{
 	  XtVaGetValues(w, XmNforeground, &old_color, NULL);
 	  if (matches > 1)
 	    XtVaSetValues(w, XmNforeground, (ss->sgx)->green, NULL);
-	  else if (matches == 0) XtVaSetValues(w, XmNforeground, (ss->sgx)->red, NULL);
+	  else 
+	    if (matches == 0) 
+	      XtVaSetValues(w, XmNforeground, (ss->sgx)->red, NULL);
 	  XmUpdateDisplay(w);
 #if HAVE_SLEEP
 	  sleep(1);
@@ -411,8 +424,8 @@ static void Name_completion(Widget w, XEvent *event, char **str, Cardinal *num)
 		  /* try to position the newly popped up help window below the text field */
 		  XtVaGetValues(w, XmNx, &wx, XmNy, &wy, NULL);
 		  XTranslateCoordinates(XtDisplay(w), XtWindow(w), DefaultRootWindow(XtDisplay(w)), 0, 0, &xoff, &yoff, &wn);
-		  wx+=xoff; 
-		  wy+=yoff;
+		  wx += xoff; 
+		  wy += yoff;
 		  XtVaSetValues(completion_help_dialog, XmNx, wx, XmNy, wy+40, NULL);
 		}
 	    }
@@ -434,7 +447,7 @@ void append_listener_text(int end, char *msg)
 
 void save_listener_text(FILE *fp)
 {
-  char *str=NULL;
+  char *str = NULL;
   str = XmTextGetString(listener_text);
   if (str)
     {
@@ -460,9 +473,9 @@ static void Listener_completion(Widget w, XEvent *event, char **str, Cardinal *n
   beg = last_prompt+1;
   end = XmTextGetLastPosition(w);
   if (end <= beg) return;
-  len = end-beg+1;
-  old_text = (char *)CALLOC(len+1, sizeof(char));
-  XmTextGetSubstring(w, beg, len, len+1, old_text);
+  len = end - beg + 1;
+  old_text = (char *)CALLOC(len + 1, sizeof(char));
+  XmTextGetSubstring(w, beg, len, len + 1, old_text);
   /* now old_text is the stuff typed since the last prompt */
   if (old_text)
     {
@@ -501,9 +514,9 @@ static void Listener_completion(Widget w, XEvent *event, char **str, Cardinal *n
 	      /* try to position the newly popped up help window below the text field */
 	      XtVaGetValues(w, XmNx, &wx, XmNy, &wy, NULL);
 	      XTranslateCoordinates(XtDisplay(w), XtWindow(w), DefaultRootWindow(XtDisplay(w)), 0, 0, &xoff, &yoff, &wn);
-	      wx+=xoff; 
-	      wy+=yoff;
-	      XtVaSetValues(completion_help_dialog, XmNx, wx, XmNy, wy+140, NULL);
+	      wx += xoff; 
+	      wy += yoff;
+	      XtVaSetValues(completion_help_dialog, XmNx, wx, XmNy, wy + 140, NULL);
 	    }
 	  if (file_text) FREE(file_text);
 	}
@@ -691,7 +704,11 @@ Widget sndCreateTextFieldWidget(snd_state *ss, char *name, Widget parent, Arg *a
   /* white background when active, emacs translations, text_activate_event in ss->sgx for subsequent activation check */
   Widget df;
   XtCallbackList n1;
-  if (!actions_loaded) {XtAppAddActions(MAIN_APP(ss), acts, NUM_ACTS); actions_loaded = 1;}
+  if (!actions_loaded) 
+    {
+      XtAppAddActions(MAIN_APP(ss), acts, NUM_ACTS); 
+      actions_loaded = 1;
+    }
   XtSetArg(args[n], XmNactivateCallback, n1 = make_callback_list(remember_event, (XtPointer)ss)); n++;
   /* can't use XmNuserData here because it is in use elsewhere (snd-xmix.c) */
   df = XtCreateManagedWidget(name, xmTextFieldWidgetClass, parent, args, n);
@@ -699,12 +716,14 @@ Widget sndCreateTextFieldWidget(snd_state *ss, char *name, Widget parent, Arg *a
   XtAddCallback(df, XmNlosingFocusCallback, textfield_unfocus_Callback, ss);
   if (activatable == ACTIVATABLE)
     {
-      if (!transTable2) transTable2 = XtParseTranslationTable(TextTrans2);
+      if (!transTable2) 
+	transTable2 = XtParseTranslationTable(TextTrans2);
       XtOverrideTranslations(df, transTable2);
     }
   else
     {
-      if (!transTable6) transTable6 = XtParseTranslationTable(TextTrans6);
+      if (!transTable6) 
+	transTable6 = XtParseTranslationTable(TextTrans6);
       XtOverrideTranslations(df, transTable6);
     }
   add_completer_widget(df, completer);
@@ -715,8 +734,13 @@ Widget sndCreateTextFieldWidget(snd_state *ss, char *name, Widget parent, Arg *a
 void add_completer_to_textfield(snd_state *ss, Widget w, int completer)
 {
   /* used to make file selection dialog act like other text field widgets */
-  if (!actions_loaded) {XtAppAddActions(MAIN_APP(ss), acts, NUM_ACTS); actions_loaded = 1;}
-  if (!transTable2) transTable2 = XtParseTranslationTable(TextTrans2);
+  if (!actions_loaded) 
+    {
+      XtAppAddActions(MAIN_APP(ss), acts, NUM_ACTS); 
+      actions_loaded = 1;
+    }
+  if (!transTable2) 
+    transTable2 = XtParseTranslationTable(TextTrans2);
   XtOverrideTranslations(w, transTable2);
   add_completer_widget(w, completer);
 }
@@ -726,7 +750,11 @@ Widget sndCreateTextWidget(snd_state *ss, char *name, Widget parent, Arg *args, 
   /* white background when active, emacs translations, text_activate_event in ss->sgx for subsequent activation check */
   Widget df;
   XtCallbackList n1;
-  if (!actions_loaded) {XtAppAddActions(MAIN_APP(ss), acts, NUM_ACTS); actions_loaded = 1;}
+  if (!actions_loaded) 
+    {
+      XtAppAddActions(MAIN_APP(ss), acts, NUM_ACTS); 
+      actions_loaded = 1;
+    }
   XtSetArg(args[n], XmNactivateCallback, n1 = make_callback_list(remember_event, (XtPointer)ss)); n++;
   XtSetArg(args[n], XmNeditMode, XmMULTI_LINE_EDIT); n++;
   df = XmCreateScrolledText(parent, name, args, n);
@@ -735,7 +763,8 @@ Widget sndCreateTextWidget(snd_state *ss, char *name, Widget parent, Arg *args, 
   /* XtAddCallback(df, XmNfocusCallback, textfield_focus_Callback, ss); */
   XtAddCallback(df, XmNlosingFocusCallback, textfield_unfocus_Callback, ss);
   /* b1_press action overrides focus */
-  if (!transTable3) transTable3 = XtParseTranslationTable(TextTrans3);
+  if (!transTable3) 
+    transTable3 = XtParseTranslationTable(TextTrans3);
   XtOverrideTranslations(df, transTable3);
   FREE(n1);
   return(df);
@@ -749,9 +778,7 @@ static Widget lisp_window = NULL;
 void snd_append_char(snd_state *ss, char *msg)
 {
   if (listener_text)
-    {
-      XmTextInsert(listener_text, XmTextGetLastPosition(listener_text), msg);
-    }
+    XmTextInsert(listener_text, XmTextGetLastPosition(listener_text), msg);
 }
  
 static Widget listener_pane = NULL; 
@@ -766,11 +793,12 @@ void snd_append_command(snd_state *ss, char *msg)
       if (msg)
 	XmTextInsert(listener_text, XmTextGetLastPosition(listener_text), msg);
       cmd_eot = XmTextGetLastPosition(listener_text);
-      if (ss->result_printout == MESSAGE_WITH_CARET) XmTextInsert(listener_text, cmd_eot, listener_prompt_with_cr(ss));
+      if (ss->result_printout == MESSAGE_WITH_CARET) 
+	XmTextInsert(listener_text, cmd_eot, listener_prompt_with_cr(ss));
       ss->result_printout = 0;
       cmd_eot = XmTextGetLastPosition(listener_text);
-      last_prompt = cmd_eot-1;
-      XmTextShowPosition(listener_text, cmd_eot-1);
+      last_prompt = cmd_eot - 1;
+      XmTextShowPosition(listener_text, cmd_eot - 1);
       XmUpdateDisplay(listener_text);
     }
 }
@@ -786,12 +814,12 @@ static void Command_Motion_Callback(Widget w, XtPointer clientData, XtPointer ca
 {
   XmTextVerifyCallbackStruct *cbs = (XmTextVerifyCallbackStruct *)callData;
   snd_state *ss = (snd_state *)clientData;
-  char *str=NULL,*prompt;
+  char *str = NULL,*prompt;
   int pos,i,parens;
   cbs->doit = TRUE; 
   if (last_highlight_position != -1)
     {
-      XmTextSetHighlight(w, last_highlight_position, last_highlight_position+1, XmHIGHLIGHT_NORMAL);
+      XmTextSetHighlight(w, last_highlight_position, last_highlight_position + 1, XmHIGHLIGHT_NORMAL);
       last_highlight_position = -1;
     }
   pos = cbs->newInsert - 1;
@@ -803,15 +831,15 @@ static void Command_Motion_Callback(Widget w, XtPointer clientData, XtPointer ca
       if (str[pos] == ')')
 	{
 	  parens = 1;
-	  for (i=pos-1;i>0;i--)
+	  for (i=pos-1; i>0; i--)
 	    {
-	      if ((i>0) && (str[i] == prompt[0]) && (str[i-1] == '\n'))
+	      if ((i > 0) && (str[i] == prompt[0]) && (str[i - 1] == '\n'))
 		break;
 	      if (str[i] == ')') parens++;
 	      if (str[i] == '(') parens--;
 	      if (parens == 0)
 		{
-		  XmTextSetHighlight(w, i, i+1, XmHIGHLIGHT_SECONDARY_SELECTED);
+		  XmTextSetHighlight(w, i, i + 1, XmHIGHLIGHT_SECONDARY_SELECTED);
 		  last_highlight_position = i;
 		  break;
 		}
@@ -838,18 +866,13 @@ static void Command_Modify_Callback(Widget w, XtPointer clientData, XtPointer ca
 	  prompt = listener_prompt(ss);
 	  str = XmTextGetString(w);
 	  len = XmTextGetLastPosition(w);
-	  if ( ((str[cbs->currInsert-1] == prompt[0]) && (str[cbs->currInsert - 2] == '\n')) ||
-	       ((cbs->currInsert < (len-1)) && (str[cbs->currInsert] == prompt[0]) && (str[cbs->currInsert-1] == '\n')))
+	  if ( ((str[cbs->currInsert-1] == prompt[0]) && 
+		(str[cbs->currInsert - 2] == '\n')) ||
+	       ((cbs->currInsert < (len - 1)) && 
+		(str[cbs->currInsert] == prompt[0]) && 
+		(str[cbs->currInsert - 1] == '\n')))
 	    cbs->doit = FALSE;
 	  else cbs->doit = TRUE;
-#if 0
-	  fprintf(stderr, "insert: %d (%c %c %c), len: %d\n",
-		  cbs->currInsert,
-		  (cbs->currInsert > 0) ? str[cbs->currInsert - 1] : '?',
-		  str[cbs->currInsert],
-		  (cbs->currInsert < len) ? str[cbs->currInsert + 1] : '?',
-		  (cbs->text)->length);
-#endif	  
 	  if (str) XtFree(str);
 	}
     }
@@ -870,7 +893,7 @@ static void sndCreateCommandWidget(snd_state *ss, int height)
     {
       if (!actions_loaded) {XtAppAddActions(MAIN_APP(ss), acts, NUM_ACTS); actions_loaded = 1;}
 
-      n=0;
+      n = 0;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
@@ -881,7 +904,7 @@ static void sndCreateCommandWidget(snd_state *ss, int height)
       else listener_pane = sndCreateFormWidget("frm", SOUND_PANE(ss), args, n);
       /* this widget is not redundant at least in Metroworks Motif */
 
-      n=0;
+      n = 0;
       if (!(ss->using_schemes)) 
 	{
 	  XtSetArg(args[n], XmNbackground, (ss->sgx)->listener_color); n++;
@@ -898,22 +921,12 @@ static void sndCreateCommandWidget(snd_state *ss, int height)
       XtSetArg(args[n], XmNpendingDelete, FALSE); n++; /* don't cut selection upon paste */
       XtSetArg(args[n], XmNpositionIndex, XmLAST_POSITION); n++;
       XtSetArg(args[n], XmNpaneMinimum, height); n++;
-
       listener_text = XmCreateScrolledText(listener_pane, "lisp-listener", args, n);
-#if 0
-      {
-	XtActionList lst;
-	XtActionsRec *ls;
-	Cardinal num,i;
-	XtGetActionList(xmFormWidgetClass, &lst, &num);
-	ls = lst;
-	for (i=0;i<num;i++) fprintf(stderr, "%s\n", ls[i].string);
-      }
-#endif
 
       XtManageChild(listener_text);
       XmTextSetCursorPosition(listener_text, 1);
-      if (!transTable4) transTable4 = XtParseTranslationTable(TextTrans4);
+      if (!transTable4) 
+	transTable4 = XtParseTranslationTable(TextTrans4);
       XtOverrideTranslations(listener_text, transTable4);
       last_prompt = 0;
       XtAddCallback(listener_text, XmNactivateCallback, Command_Return_Callback, ss);
@@ -992,7 +1005,9 @@ void handle_listener(snd_state *ss, int new_state)
 
 int listener_height(void)
 {
-  if (listener_text) return(widget_height(listener_text)); else return(0);
+  if (listener_text) 
+    return(widget_height(listener_text)); 
+  else return(0);
 }
 
 #if OVERRIDE_TOGGLE

@@ -1,13 +1,17 @@
 #include "snd.h"
 
-#if defined(NEXT) || defined(HAVE_SYS_DIR_H)
-  #include <sys/dir.h>
-  #include <sys/dirent.h>
+#if HAVE_DIRENT_H
+  #include <dirent.h>
 #else
-  #if defined(WINDOZE) && (!(defined(__CYGWIN__)))
-    #include <direct.h>
-  #else
-    #include <dirent.h>
+  #define dirent direct
+  #if HAVE_SYS_NDIR_H
+    #include <sys/ndir.h>
+  #endif
+  #if HAVE_SYS_DIR_H
+    #include <sys/dir.h>
+  #endif
+  #if HAVE_NDIR_H
+    #include <ndir.h>
   #endif
 #endif
 
@@ -1089,16 +1093,17 @@ static axis_context *combined_context(chan_info *cp);
 
 /* TODO: to add: add-graph, remove-graph, reset-graph
  *   where each channel has two graph lists for time/fft
- *   each list (snd chn pos color style)
+ *   each list (snd chn pos color style [proc?])
  *   starts with (current-snd current-chn current-pos current-color current-style)
  * a problem (can easily add pos arg to init_sample_read below):
  *   amp_env_usable (et al) assume cp->edit_ctr -- would it be safe to pass as arg?
+ *   or: if pos check without starting background process, use if already ok
  */
 
 int make_graph(chan_info *cp, snd_info *sp, snd_state *ss)
 {
   /* axes are already set, determining the data we will show -- do we need explicit clipping ? */
-  int i,j=0,samps,xi;
+  int i,j = 0,samps,xi;
   axis_info *ap;
   Float samples_per_pixel,xf,pinc = 0.0;
   double x,incr;  
@@ -1127,8 +1132,8 @@ int make_graph(chan_info *cp, snd_info *sp, snd_state *ss)
   int pixels;
   snd_fd *sf = NULL;
   int x_start,x_end;
-  double start_time=0.0,cur_srate=1.0;
-  axis_context *ax=NULL;
+  double start_time = 0.0,cur_srate = 1.0;
+  axis_context *ax = NULL;
   chan_context *cgx;
   env_info *ep;
   ap = cp->axis;
@@ -1172,7 +1177,7 @@ int make_graph(chan_info *cp, snd_info *sp, snd_state *ss)
        */
       sf = init_sample_read(ap->losamp, cp, READ_FORWARD);
       incr = (double)1.0 / cur_srate;
-      for (j=0, i=ap->losamp, x=((double)(ap->losamp)/cur_srate); i<=ap->hisamp; i++,j++,x+=incr)
+      for (j=0, i=ap->losamp, x=((double)(ap->losamp)/cur_srate); i<=ap->hisamp; i++, j++, x+=incr)
 	{
 	  samp = next_sample_to_float(sf);
 	  set_grf_point(local_grf_x(x, ap), j, local_grf_y(samp, ap));
@@ -1217,7 +1222,7 @@ int make_graph(chan_info *cp, snd_info *sp, snd_state *ss)
       else
 	{
 	  /* take min, max */
-	  if (amp_env_usable(cp, samples_per_pixel, ap->hisamp))
+	  if (amp_env_usable(cp, samples_per_pixel, ap->hisamp,TRUE)) /* true=start new background amp env process if needed */
 	    j = amp_env_graph(cp, ap, samples_per_pixel, (sp) ? ((int)SND_SRATE(sp)) : 1);
 	  else
 	    {
@@ -2300,7 +2305,7 @@ static void display_channel_data_with_size (chan_info *cp, snd_info *sp, snd_sta
 	}
       if (with_lisp) 
 	{
-	  uap->y_offset += (height*(displays - 1)); 
+	  uap->y_offset += (height * (displays - 1)); 
 	  uap->graph_x0 = 0;
 	}
     }
@@ -2314,9 +2319,10 @@ static void display_channel_data_with_size (chan_info *cp, snd_info *sp, snd_sta
 	{
 	  if (cp->wavo)
 	    {
-	      if (ap->y_axis_y0 == ap->y_axis_y1) make_axes(cp, ap, x_axis_style(ss), FALSE); /* first time needs setup */
+	      if (ap->y_axis_y0 == ap->y_axis_y1) 
+		make_axes(cp, ap, x_axis_style(ss), FALSE); /* first time needs setup */
 	      ap->y0 = ap->x0;
-	      ap->y1 = ap->y0+(Float)(cp->wavo_trace * (ap->y_axis_y0 - ap->y_axis_y1)) / ((Float)(cp->wavo_hop)*SND_SRATE(sp));
+	      ap->y1 = ap->y0 + (Float)(cp->wavo_trace * (ap->y_axis_y0 - ap->y_axis_y1)) / ((Float)(cp->wavo_hop) * SND_SRATE(sp));
 	      ap->x1 = ap->x0 + (Float)(cp->wavo_trace) / (Float)SND_SRATE(sp);
 	    }
 	  make_axes(cp, ap,
@@ -6402,7 +6408,7 @@ int keyboard_command (chan_info *cp, int keysym, int state)
 	      undo_edit_with_sync(cp, count); 
 	      redisplay = CURSOR_UPDATE_DISPLAY; 
 	      break;
-#if !defined(NEXT) && !defined(UW2)
+#if !defined(UW2)
 	    case snd_keypad_Left: 
 	    case snd_keypad_4: 
 	      set_spectro_y_angle(ss, spectro_y_angle(ss)-1.0);
@@ -6542,7 +6548,7 @@ int keyboard_command (chan_info *cp, int keysym, int state)
 	      break;
 
 	      /* fUn WiTh KeYpAd! */
-#if !defined(NEXT) && !defined(UW2)
+#if !defined(UW2)
 	    case snd_keypad_Up: case snd_keypad_8: 
 	      set_spectro_z_scale(ss, spectro_z_scale(ss)+.01);
 	      redisplay = CURSOR_UPDATE_DISPLAY;
@@ -6614,7 +6620,7 @@ int keyboard_command (chan_info *cp, int keysym, int state)
 	      if (fft_size(ss) > 4) set_fft_size(ss, fft_size(ss) / 2); 
 	      redisplay = CURSOR_UPDATE_DISPLAY; 
 	      break;
-#if !defined(NEXT) && !defined(UW2)
+#if !defined(UW2)
 	    case snd_keypad_Delete: case snd_keypad_Decimal: 
 	      set_dot_size(ss, dot_size(ss)+1); 
 	      redisplay = KEYBOARD_NO_ACTION; 

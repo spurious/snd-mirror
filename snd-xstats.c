@@ -37,7 +37,7 @@ void update_stats_display(snd_state *ss, int all)
 
   if (!stats_window)
     {
-      n=0;
+      n = 0;
       xstr1 = XmStringCreate(STR_Dismiss, XmFONTLIST_DEFAULT_TAG);
       xstr2 = XmStringCreate(STR_Help, XmFONTLIST_DEFAULT_TAG);
       xstr3 = XmStringCreate(STR_Update, XmFONTLIST_DEFAULT_TAG);
@@ -48,10 +48,8 @@ void update_stats_display(snd_state *ss, int all)
       XtSetArg(args[n], XmNokLabelString, xstr1); n++;
       XtSetArg(args[n], XmNdialogTitle, titlestr); n++;
       XtSetArg(args[n], XmNautoUnmanage, FALSE); n++;
-#if RESIZE_DIALOG
       XtSetArg(args[n], XmNresizePolicy, XmRESIZE_GROW); n++;
       XtSetArg(args[n], XmNnoResize, FALSE); n++;
-#endif
       XtSetArg(args[n], XmNtransient, FALSE); n++;
       stats_window = XmCreateTemplateDialog(MAIN_SHELL(ss), STR_Disk_and_Memory_Usage, args, n);
       add_dialog(ss, stats_window);
@@ -67,7 +65,7 @@ void update_stats_display(snd_state *ss, int all)
       XmStringFree(xstr3);
       XmStringFree(titlestr);
 
-      n=0;
+      n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
@@ -77,9 +75,8 @@ void update_stats_display(snd_state *ss, int all)
       XtSetArg(args[n], XmNwidth, 300); n++;
       stats_form = sndCreateTextWidget(ss, "stats", stats_window, args, n);
 
-#if MANAGE_DIALOG
       XtManageChild(stats_window);
-#endif
+
       if (!(ss->using_schemes)) 
 	{
 	  XtVaSetValues(XmMessageBoxGetChild(stats_window, XmDIALOG_OK_BUTTON), XmNarmColor, (ss->sgx)->pushed_button_color, NULL);
@@ -92,7 +89,8 @@ void update_stats_display(snd_state *ss, int all)
   else raise_dialog(stats_window);
   if (all) update_all_usage_stats(ss);
   update_stats(ss);
-  if (!(XtIsManaged(stats_window))) XtManageChild(stats_window);
+  if (!(XtIsManaged(stats_window))) 
+    XtManageChild(stats_window);
 }
 
 void check_stats_window(snd_state *ss, int val)

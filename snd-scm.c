@@ -148,9 +148,7 @@ SCM snd_catch_scm_error(void *data, SCM tag, SCM throw_args) /* error handler */
   /* this is actually catching any throw not caught elsewhere, I think */
   snd_info *sp;
   SCM port,ans,stmp;
-#if (!HAVE_GUILE_1_3)
   SCM stack;
-#endif
   char *name_buf = NULL;
 
 #ifdef SCM_MAKE_CHAR
@@ -207,6 +205,7 @@ SCM snd_catch_scm_error(void *data, SCM tag, SCM throw_args) /* error handler */
 			scm_display_error_message(stmp, gh_caddr(throw_args), port);
 		      else scm_display(tag, port);
 #if (!HAVE_GUILE_1_3)
+		      /* this was buggy in 1.3.4 */
 		      stack = scm_fluid_ref(SCM_CDR(scm_the_last_stack_fluid));
 		      if (SCM_NFALSEP(stack)) 
 			scm_display_backtrace(stack, port, SCM_UNDEFINED, SCM_UNDEFINED);
@@ -231,7 +230,7 @@ SCM snd_catch_scm_error(void *data, SCM tag, SCM throw_args) /* error handler */
       scm_puts("\")",port);
       last_file_loaded = NULL;
     }
-#if (!HAVE_GUILE_1_3_0)
+#if HAVE_SCM_STRPORT_TO_STRING
   scm_force_output(port); /* needed to get rid of trailing garbage chars?? -- might be pointless now */
   ans = scm_strport_to_string(port);
 #else
@@ -276,7 +275,7 @@ int procedure_ok(SCM proc, int req_args, int opt_args, char *caller, char *arg_n
     }
   else
     {
-#if HAVE_GUILE_1_3_0
+#if (!HAVE_SCM_CREATE_HOOK)
       return(1);
 #else
       arity_list = scm_i_procedure_arity(proc);
@@ -397,7 +396,7 @@ char *full_filename(SCM file)
 char *gh_print_1(SCM obj, const char *caller)
 {
   char *str1;
-#if (!HAVE_GUILE_1_3_0)
+#if HAVE_SCM_STRPORT_TO_STRING
   SCM str,val;
   SCM port;
   str = scm_makstr (0, 0);
@@ -3209,14 +3208,14 @@ static SCM g_filter_sound(SCM e, SCM order, SCM snd_n, SCM chn_n)
   else
     {
       len = TO_C_INT_OR_ELSE(order, 0);
-#if HAVE_GUILE_1_4
+#if HAVE_SCM_OUT_OF_RANGE_POS
       if (len <= 0) 
 	scm_out_of_range_pos(S_filter_sound, order, TO_SMALL_SCM_INT(2));
 #endif
       if (vct_p(e)) /* the filter coefficients direct */
 	{
 	  v = get_vct(e);
-#if HAVE_GUILE_1_4
+#if HAVE_SCM_OUT_OF_RANGE_POS
 	  if (len > v->length) 
 	    scm_out_of_range_pos(S_filter_sound, order, TO_SMALL_SCM_INT(2));
 #endif
@@ -3253,14 +3252,14 @@ static SCM g_filter_selection(SCM e, SCM order)
   else
     {
       len = TO_C_INT_OR_ELSE(order, 0);
-#if HAVE_GUILE_1_4
+#if HAVE_SCM_OUT_OF_RANGE_POS
       if (len <= 0) 
 	scm_out_of_range_pos(S_filter_selection, order, TO_SMALL_SCM_INT(2));
 #endif
       if (vct_p(e)) /* the filter coefficients direct */
 	{
 	  v = get_vct(e);
-#if HAVE_GUILE_1_4
+#if HAVE_SCM_OUT_OF_RANGE_POS
 	  if (len > v->length) 
 	    scm_out_of_range_pos(S_filter_selection, order, TO_SMALL_SCM_INT(2));
 #endif

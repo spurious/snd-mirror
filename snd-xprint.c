@@ -32,7 +32,7 @@ static void file_print_ok_callback(Widget w, XtPointer clientData, XtPointer cal
 {
   snd_state *ss = (snd_state *)clientData;
   int print_it,quit = 0,err = 0;
-  char *name,*str=NULL;
+  char *name,*str = NULL;
   XmString plab,slab;
   snd_info *nsp = NULL;
   if (printing) 
@@ -45,7 +45,10 @@ static void file_print_ok_callback(Widget w, XtPointer clientData, XtPointer cal
 	  nsp = any_selected_sound(ss);
 	  sprintf(print_string, "printing %s", nsp->shortname);
 	  slab = XmStringCreate(print_string, XmFONTLIST_DEFAULT_TAG);
-	  XtVaSetValues(file_print_dialog, XmNokLabelString, plab, XmNmessageString, slab, NULL);
+	  XtVaSetValues(file_print_dialog, 
+			XmNokLabelString, plab, 
+			XmNmessageString, slab, 
+			NULL);
 	  XmStringFree(plab);
 	  XmStringFree(slab);
 	}
@@ -82,12 +85,16 @@ static void file_print_ok_callback(Widget w, XtPointer clientData, XtPointer cal
       plab = XmStringCreate(STR_Print, XmFONTLIST_DEFAULT_TAG);
       sprintf(print_string, "print %s", nsp->shortname);
       slab = XmStringCreate(print_string, XmFONTLIST_DEFAULT_TAG);
-      XtVaSetValues(file_print_dialog, XmNokLabelString, plab, XmNmessageString, slab, NULL);
+      XtVaSetValues(file_print_dialog, 
+		    XmNokLabelString, plab, 
+		    XmNmessageString, slab, 
+		    NULL);
       XmStringFree(plab);
       XmStringFree(slab);
     }
   ss->print_choice = PRINT_SND;
-  if (quit) XtUnmanageChild(file_print_dialog);
+  if (quit) 
+    XtUnmanageChild(file_print_dialog);
 }
 
 void File_Print_Callback(Widget w, XtPointer clientData, XtPointer callData)
@@ -109,11 +116,11 @@ void File_Print_Callback(Widget w, XtPointer clientData, XtPointer callData)
 
   if (!file_print_dialog)
     {
-      n=0;
+      n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
-      xmstr1=XmStringCreate(STR_Print, XmFONTLIST_DEFAULT_TAG);  /* "ok" here is confusing -- might mean, ok I'm done */
-      xmstr2=XmStringCreate(STR_Help, XmFONTLIST_DEFAULT_TAG);
-      xmstr3=XmStringCreate(STR_Dismiss, XmFONTLIST_DEFAULT_TAG);
+      xmstr1 = XmStringCreate(STR_Print, XmFONTLIST_DEFAULT_TAG);  /* "ok" here is confusing -- might mean, ok I'm done */
+      xmstr2 = XmStringCreate(STR_Help, XmFONTLIST_DEFAULT_TAG);
+      xmstr3 = XmStringCreate(STR_Dismiss, XmFONTLIST_DEFAULT_TAG);
       titlestr = XmStringCreate(STR_Print, XmFONTLIST_DEFAULT_TAG);
 
       XtSetArg(args[n], XmNmessageString, xmstr4); n++;
@@ -122,10 +129,8 @@ void File_Print_Callback(Widget w, XtPointer clientData, XtPointer callData)
       XtSetArg(args[n], XmNcancelLabelString, xmstr3); n++;
       XtSetArg(args[n], XmNautoUnmanage, FALSE); n++;
       XtSetArg(args[n], XmNdialogTitle, titlestr); n++;
-#if RESIZE_DIALOG
       XtSetArg(args[n], XmNresizePolicy, XmRESIZE_GROW); n++;
       XtSetArg(args[n], XmNnoResize, FALSE); n++;
-#endif
       file_print_dialog = XmCreateMessageDialog(w, STR_eps_file_p, args, n);
 #if OVERRIDE_TOGGLE
       override_form_translation(file_print_dialog);
@@ -150,7 +155,7 @@ void File_Print_Callback(Widget w, XtPointer clientData, XtPointer callData)
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
       dl = XtCreateManagedWidget(STR_eps_file_p, xmLabelWidgetClass, rc, args, n);
 
-      n=0;
+      n = 0;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNleftWidget, dl); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
@@ -159,7 +164,7 @@ void File_Print_Callback(Widget w, XtPointer clientData, XtPointer callData)
       XtSetArg(args[n], XmNvalue, eps_file(ss)); n++;
       file_print_name = sndCreateTextFieldWidget(ss, "text", rc, args, n, NOT_ACTIVATABLE, NO_COMPLETER);
 
-      n=0;
+      n = 0;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
@@ -167,9 +172,7 @@ void File_Print_Callback(Widget w, XtPointer clientData, XtPointer callData)
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
       file_print_eps_or_lpr = sndCreateToggleButtonWidget(STR_direct_to_printer, rc, args, n);
 
-#if MANAGE_DIALOG
       XtManageChild(file_print_dialog);
-#endif
 
       if (!(ss->using_schemes))	
 	{
@@ -187,7 +190,8 @@ void File_Print_Callback(Widget w, XtPointer clientData, XtPointer callData)
       XmStringFree(xmstr4);
       raise_dialog(file_print_dialog);
     }
-  if (!XtIsManaged(file_print_dialog)) XtManageChild(file_print_dialog);
+  if (!XtIsManaged(file_print_dialog)) 
+    XtManageChild(file_print_dialog);
 }
 
 char *ps_rgb(snd_state *ss, int pchan)
@@ -207,8 +211,8 @@ char *ps_rgb(snd_state *ss, int pchan)
     case 3: color = sx->light_blue; break;
     default: color = sx->black;     break;
     }
-  dpy=XtDisplay(MAIN_SHELL(ss));
-  cmap=DefaultColormap(dpy, DefaultScreen(dpy));
+  dpy = XtDisplay(MAIN_SHELL(ss));
+  cmap = DefaultColormap(dpy, DefaultScreen(dpy));
   tmp_color.flags = DoRed | DoGreen | DoBlue;
   tmp_color.pixel = color;
   XQueryColor(dpy, cmap, &tmp_color);

@@ -1,13 +1,17 @@
 #include "snd.h"
 
-#if defined(NEXT) || defined(HAVE_SYS_DIR_H)
-  #include <sys/dir.h>
-  #include <sys/dirent.h>
+#if HAVE_DIRENT_H
+  #include <dirent.h>
 #else
-  #if defined(WINDOZE) && (!(defined(__CYGWIN__)))
-    #include <direct.h>
-  #else
-    #include <dirent.h>
+  #define dirent direct
+  #if HAVE_SYS_NDIR_H
+    #include <sys/ndir.h>
+  #endif
+  #if HAVE_SYS_DIR_H
+    #include <sys/dir.h>
+  #endif
+  #if HAVE_NDIR_H
+    #include <ndir.h>
   #endif
 #endif
 
@@ -425,7 +429,6 @@ static BACKGROUND_TYPE startup_funcs(XtPointer clientData)
 #endif
 #endif
 #ifndef SND_AS_WIDGET
-#ifndef NEXT
       /* trap outer-level Close for cleanup check */
       wm_delete_window = XmInternAtom(tm->dpy, "WM_DELETE_WINDOW", FALSE);
       /* XmAddWMProtocols(tm->shell, &wm_delete_window, 1); */ /* is this ever needed? */
@@ -435,7 +438,6 @@ static BACKGROUND_TYPE startup_funcs(XtPointer clientData)
       snd_c = XInternAtom(tm->dpy, "SND_COMMAND", FALSE);
       XChangeProperty(tm->dpy, XtWindow(tm->shell), snd_v, XA_STRING, 8, PropModeReplace, (unsigned char *)(SND_VERSION), strlen(SND_VERSION)+1);
       XtAddEventHandler(tm->shell, PropertyChangeMask, FALSE, who_called, (XtPointer)ss);
-#endif
       XtAddEventHandler(tm->shell, StructureNotifyMask, FALSE, minify_maxify_window, (XtPointer)ss);
 #endif
       (ss->sgx)->graph_cursor = XCreateFontCursor(XtDisplay(MAIN_SHELL(ss)), in_graph_cursor(ss));
@@ -633,19 +635,9 @@ void snd_doit(snd_state *ss, int argc, char **argv)
   XtSetArg(args[1], XtNheight, 256);
   shell = XtAppInitialize( &app, "Snd", NULL, 0, &argc, argv, NULL, args, 2 );
 #else
-
- #if defined(NEXT)
-  XtInitialize(argv[0], "Snd", NULL, 0, &argc, argv);
-  app = XtCreateApplicationContext();
-  n=0;
-  XtSetArg(args[n], XmNallowShellResize, TRUE); n++;
-  shell = XtCreateApplicationShell("Snd", shellWidgetClass, args, n);
- #else
-
   shell = XtVaOpenApplication(&app, "Snd", NULL, 0, &argc, argv, NULL, applicationShellWidgetClass,
 			      XmNallowShellResize, AUTO_RESIZE_DEFAULT,
 			      NULL);
- #endif
 #endif
 
   /* if user has *keyboardFocusPolicy: Pointer in .Xdefaults, it can screw up Snd's attempt to

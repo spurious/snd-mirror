@@ -61,7 +61,7 @@ static void sy_changed(int value, chan_info *cp)
   Float low;
   ap = cp->axis;
   low = get_scrollbar(channel_sy(cp), value, SCROLLBAR_SY_MAX);
-  ap->sy = (1.0-ap->zy)*low;
+  ap->sy = (1.0 - ap->zy) * low;
   apply_y_axis_change(ap, cp);
 }
 
@@ -74,7 +74,7 @@ static void sx_changed(int value, chan_info *cp)
   ap = cp->axis;
   sp = cp->sound;
   low = get_scrollbar(channel_sx(cp), value, sp->sx_scroll_max);
-  ap->sx = low*(1.0-ap->zx);
+  ap->sx = low * (1.0 - ap->zx);
   apply_x_axis_change(ap, cp, sp);
 }
 
@@ -86,7 +86,7 @@ static void zy_changed(int value, chan_info *cp)
   if (value < 1) value = 1;
   old_zy = ap->zy;
   ap->zy = sqr(get_scrollbar(channel_zy(cp), value, SCROLLBAR_MAX));
-  ap->sy += (.5*(old_zy - ap->zy)); /* try to keep wave centered */
+  ap->sy += (.5 * (old_zy - ap->zy)); /* try to keep wave centered */
   if (ap->sy < 0) ap->sy = 0;
   apply_y_axis_change(ap, cp);
   resize_sy(cp);
@@ -103,7 +103,7 @@ static void zx_changed(int value, chan_info *cp)
   ss = cp->state;
   ap = cp->axis;
   if (ap->xmax == 0.0) return;
-  if (ap->xmax <= ap->xmin) ap->xmax = ap->xmin+.001;
+  if (ap->xmax <= ap->xmin) ap->xmax = ap->xmin + .001;
   if (value < 1) value = 1;
   if ((ap->xmax-ap->xmin) < X_RANGE_CHANGEOVER)
     ap->zx = sqr(get_scrollbar(channel_zx(cp), value, SCROLLBAR_MAX));
@@ -122,10 +122,11 @@ static void set_scrollbar(Widget w, Float position, Float range, int scrollbar_m
 {
   int size,val;
   size = (int)(scrollbar_max * range);
-  if (size > scrollbar_max) size = scrollbar_max; /* this can't happen!?! */
+  if (size > scrollbar_max) 
+    size = scrollbar_max; /* this can't happen!?! */
   if (size < 1) size = 1;
   val = (int)(scrollbar_max * position);
-  if ((val+size)>scrollbar_max) val=scrollbar_max-size;
+  if ((val + size)>scrollbar_max) val = scrollbar_max - size;
   if (val < 0) val = 0;
   XtVaSetValues(w,
 		XmNsliderSize, size,
@@ -138,8 +139,10 @@ static void gzy_changed(int value, chan_info *cp)
   Float chan_frac,new_gsy,new_size;
   cp->gzy = get_scrollbar(channel_gzy(cp), value, SCROLLBAR_MAX);
   chan_frac = 1.0 / ((Float)(((snd_info *)(cp->sound))->nchans));
-  new_size = chan_frac + ((1.0-chan_frac)*cp->gzy);
-  if ((cp->gsy+new_size) > 1.0) new_gsy = 1.0-new_size; else new_gsy = cp->gsy;
+  new_size = chan_frac + ((1.0 - chan_frac) * cp->gzy);
+  if ((cp->gsy + new_size) > 1.0) 
+    new_gsy = 1.0 - new_size; 
+  else new_gsy = cp->gsy;
   if (new_gsy < 0.0) new_gsy = 0.0;
   set_scrollbar(channel_gsy(cp), new_gsy, new_size, SCROLLBAR_MAX);
   map_over_sound_chans(cp->sound, update_graph, NULL);
@@ -149,7 +152,7 @@ static void gsy_changed(int value, chan_info *cp)
 {
   Float low;
   low = get_scrollbar(channel_gsy(cp), value, SCROLLBAR_MAX);
-  cp->gsy = (1.0-cp->gzy)*low;
+  cp->gsy = (1.0 - cp->gzy) * low;
   map_over_sound_chans(cp->sound, update_graph, NULL);
 }
 
@@ -160,16 +163,16 @@ void fixup_gsy(chan_info *cp, Float low, Float high)
   Float val,size;
   wcp = channel_gsy(cp);
   XtVaGetValues(wcp, XmNvalue, &ival, NULL);
-  val = (Float)ival/(Float)(SCROLLBAR_MAX);
+  val = (Float)ival / (Float)(SCROLLBAR_MAX);
   XtVaGetValues(wcp, XmNsliderSize, &ival, NULL);
-  size = (Float)ival/(Float)(SCROLLBAR_MAX);
-  if ((val > low) || ((val+size) < high))
+  size = (Float)ival / (Float)(SCROLLBAR_MAX);
+  if ((val > low) || ((val + size) < high))
     {
       val = low;
-      if ((val+size) > 1.0) val = 1.0 - size;
-      ival = (int)(val*SCROLLBAR_MAX);
+      if ((val + size) > 1.0) val = 1.0 - size;
+      ival = (int)(val * SCROLLBAR_MAX);
       XtVaSetValues(wcp, XmNvalue, ival, NULL);
-      gsy_changed((int)(val*SCROLLBAR_MAX), cp);
+      gsy_changed((int)(val * SCROLLBAR_MAX), cp);
     }
 }
 
@@ -188,7 +191,7 @@ Float gsy_size(chan_info *cp)
   int ival;
   wcp = channel_gsy(cp);
   XtVaGetValues(wcp, XmNsliderSize, &ival, NULL);
-  return((Float)ival/(Float)(SCROLLBAR_MAX));
+  return((Float)ival / (Float)(SCROLLBAR_MAX));
 }
 
 void initialize_scrollbars(chan_info *cp)
@@ -206,7 +209,7 @@ void initialize_scrollbars(chan_info *cp)
   if ((sp->nchans > 1) && (cp->chan == 0) && (channel_gsy(cp)))
     {
       set_scrollbar(channel_gsy(cp), cp->gsy, cp->gzy, SCROLLBAR_MAX);
-      set_scrollbar(channel_gzy(cp), cp->gzy, 1.0/(Float)(sp->nchans), SCROLLBAR_MAX);
+      set_scrollbar(channel_gzy(cp), cp->gzy, 1.0 / (Float)(sp->nchans), SCROLLBAR_MAX);
     }
 }
 
@@ -216,8 +219,8 @@ void resize_sy(chan_info *cp)
   axis_info *ap;
   ap = cp->axis;
   set_scrollbar(channel_sy(cp),
-		(ap->y0-ap->ymin)/(ap->ymax-ap->ymin),
-		(ap->y1-ap->y0)/(ap->ymax-ap->ymin),
+		(ap->y0 - ap->ymin) / (ap->ymax - ap->ymin),
+		(ap->y1 - ap->y0) / (ap->ymax - ap->ymin),
 		SCROLLBAR_SY_MAX);
 }
 
@@ -228,8 +231,8 @@ void resize_sx(chan_info *cp)
   ap = cp->axis;
   sp = cp->sound;
   set_scrollbar(channel_sx(cp),
-		(ap->x0-ap->xmin)/(ap->xmax-ap->xmin),
-		(ap->x1-ap->x0)/(ap->xmax-ap->xmin),
+		(ap->x0 - ap->xmin) / (ap->xmax - ap->xmin),
+		(ap->x1 - ap->x0) / (ap->xmax - ap->xmin),
 		sp->sx_scroll_max);
 }
 
@@ -237,16 +240,16 @@ void resize_zx(chan_info *cp)
 {
   axis_info *ap;
   ap = cp->axis;
-  if ((ap->xmax-ap->xmin) < X_RANGE_CHANGEOVER)
-    set_scrollbar(channel_zx(cp), sqrt(ap->zx)*.9, .1, SCROLLBAR_MAX);
-  else set_scrollbar(channel_zx(cp), pow(ap->zx*.9, 1.0/3.0), .1, SCROLLBAR_MAX);
+  if ((ap->xmax - ap->xmin) < X_RANGE_CHANGEOVER)
+    set_scrollbar(channel_zx(cp), sqrt(ap->zx) * .9, .1, SCROLLBAR_MAX);
+  else set_scrollbar(channel_zx(cp), pow(ap->zx * .9, 1.0 / 3.0), .1, SCROLLBAR_MAX);
 }
 
 void resize_zy(chan_info *cp)
 {
   axis_info *ap;
   ap = cp->axis;
-  set_scrollbar(channel_zy(cp), sqrt(ap->zy)*.9, .1, SCROLLBAR_MAX);
+  set_scrollbar(channel_zy(cp), sqrt(ap->zy) * .9, .1, SCROLLBAR_MAX);
 }
 
 
@@ -272,8 +275,8 @@ int channel_lock_pane(chan_info *cp, void *ptr)
   if (val < 6) val = 6;
   XtUnmanageChild(channel_main_pane(cp));
   XtVaSetValues(channel_main_pane(cp),
-		XmNpaneMinimum, val-5,
-		XmNpaneMaximum, val+5,
+		XmNpaneMinimum, val - 5,
+		XmNpaneMaximum, val + 5,
 		NULL);
   return(0);
 }
@@ -613,27 +616,30 @@ void reflect_edit_history_change(chan_info *cp)
 		  if ((eds == cp->edit_ctr) && (eds > 1)) /* need to force 0 (1) case to start list with sound file name */
 		    {
 		      /* special common case -- we're appending a new edit description */
-		      XmListDeleteItemsPos(lst, cp->edit_size, eds+1);
+		      XmListDeleteItemsPos(lst, cp->edit_size, eds + 1);
 		      edit = XmStringCreate(edit_to_string(cp, eds), XmFONTLIST_DEFAULT_TAG);
-		      XmListAddItemUnselected(lst, edit, eds+1);
+		      XmListAddItemUnselected(lst, edit, eds + 1);
 		      XmStringFree(edit);
 		    }
 		  else
 		    {
 		      sp = cp->sound;
-		      edits = (XmString *)CALLOC(eds+1, sizeof(XmString));
+		      edits = (XmString *)CALLOC(eds + 1, sizeof(XmString));
 		      edits[0] = XmStringCreate(sp->fullname, XmFONTLIST_DEFAULT_TAG);
-		      for (i=1;i<=eds;i++) 
+		      for (i=1; i<=eds; i++) 
 			edits[i] = XmStringCreate(edit_to_string(cp, i), XmFONTLIST_DEFAULT_TAG);
-		      XtVaSetValues(lst, XmNitems, edits, XmNitemCount, eds+1, NULL);
-		      for (i=0;i<=eds;i++) 
+		      XtVaSetValues(lst, 
+				    XmNitems, edits, 
+				    XmNitemCount, eds+1, 
+				    NULL);
+		      for (i=0; i<=eds; i++) 
 			XmStringFree(edits[i]);
 		      FREE(edits);
 		    }
 		  XmListSelectPos(lst, cp->edit_ctr+1, FALSE);
 		  XtVaGetValues(lst, XmNvisibleItemCount, &i, NULL);
 		  if (i <= eds)
-		    XtVaSetValues(lst, XmNtopItemPosition, eds-i+2, NULL);
+		    XtVaSetValues(lst, XmNtopItemPosition, eds - i + 2, NULL);
 		  goto_graph(cp);
 		}
 	    }
@@ -662,7 +668,7 @@ void reflect_save_as_in_edit_history(chan_info *cp, char *filename)
 	  new_line = (char *)CALLOC(256, sizeof(char));
 	  sprintf(new_line, "%s: (save-sound-as \"%s\")", edit_to_string(cp, cp->edit_ctr), filename);
 	  str = XmStringCreate(new_line, XmFONTLIST_DEFAULT_TAG);
-	  pos = cp->edit_ctr+1;
+	  pos = cp->edit_ctr + 1;
 	  XmListReplacePositions(lst, &pos, &str, 1);
 	  XmStringFree(str);
 	  FREE(new_line);
@@ -686,12 +692,15 @@ void reflect_edit_counter_change(chan_info *cp)
 	  lst = cx->chan_widgets[W_edhist];
 	  if (lst)
 	    {
-	      XmListSelectPos(lst, cp->edit_ctr+1, FALSE);
-	      XtVaGetValues(lst, XmNvisibleItemCount, &len, XmNtopItemPosition, &top, NULL);
-	      if ((cp->edit_ctr+1) < top) 
-		XtVaSetValues(lst, XmNtopItemPosition, cp->edit_ctr+1, NULL);
+	      XmListSelectPos(lst, cp->edit_ctr + 1, FALSE);
+	      XtVaGetValues(lst, 
+			    XmNvisibleItemCount, &len, 
+			    XmNtopItemPosition, &top, 
+			    NULL);
+	      if ((cp->edit_ctr + 1) < top) 
+		XtVaSetValues(lst, XmNtopItemPosition, cp->edit_ctr + 1, NULL);
 	      else
-		if ((cp->edit_ctr+1) >= (top+len))
+		if ((cp->edit_ctr + 1) >= (top + len))
 		  XtVaSetValues(lst, XmNtopItemPosition, cp->edit_ctr, NULL);
 	      goto_graph(cp);
 	    }
@@ -731,7 +740,7 @@ void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, in
 
       if (!main)
 	{
-	  n=0;
+	  n = 0;
 	  if (need_colors) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
 	  if (insertion) {XtSetArg(args[n], XmNpositionIndex, (short)channel); n++;}
 	  XtSetArg(args[n], XmNpaneMinimum, chan_y); n++;
@@ -739,7 +748,7 @@ void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, in
 	  cw[W_form] = sndCreateFormWidget("hiho", w_snd_pane(sp), args, n);
 	  if ((sp->combining == CHANNELS_COMBINED) && (channel > 0)) XtUnmanageChild(cw[W_form]);
 
-	  n=0;
+	  n = 0;
 	  if (need_colors) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
 	  n = no_padding(args, n);
 	  XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
@@ -756,13 +765,13 @@ void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, in
 #endif
 
 #if (XmVERSION > 1)
-	  n=0;
+	  n = 0;
 	  if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->white); n++;}
 	  XtSetArg(args[n], XmNpaneMaximum, DEFAULT_EDIT_HISTORY_WIDTH); n++;
 	  XtSetArg(args[n], XmNlistSizePolicy, XmCONSTANT); n++;
 	  cw[W_edhist] = XmCreateScrolledList(cw[W_top], "edhist", args, n);
 
-	  n=0;
+	  n = 0;
 	  if (need_colors) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
 	  XtSetArg(args[n], XmNpaneMaximum, LOTSA_PIXELS); n++;
 	  cw[W_main_window] = sndCreateFormWidget("chn-main-window", cw[W_top], args, n);
@@ -778,7 +787,7 @@ void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, in
 	}
       else cw[W_main_window] = main;
 
-      n=0;  
+      n = 0;  
       if (need_colors) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
@@ -800,7 +809,7 @@ void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, in
 
       if (button_style == WITH_FW_BUTTONS)
 	{
-	  n=0;
+	  n = 0;
 	  if (need_colors) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
 	  XtSetArg(args[n], XM_FONT_RESOURCE, BUTTON_FONT(ss)); n++;
 	  XtSetArg(args[n], XmNspacing, 1); n++;
@@ -818,20 +827,20 @@ void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, in
 	}
       else
 	{
-	  n=0;
+	  n = 0;
 	  if (need_colors) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
 	  XtSetArg(args[n], XmNarrowDirection, XmARROW_UP); n++;
 	  XtSetArg(args[n], XmNsensitive, FALSE); n++;
 	  cw[W_f] = XtCreateManagedWidget("up", xmArrowButtonWidgetClass, cw[W_wf_buttons], args, n);
 
-	  n=0;
+	  n = 0;
 	  if (need_colors) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
 	  XtSetArg(args[n], XmNarrowDirection, XmARROW_DOWN); n++;
 	  XtSetArg(args[n], XmNsensitive, FALSE); n++;
 	  cw[W_w] = XtCreateManagedWidget("down", xmArrowButtonWidgetClass, cw[W_wf_buttons], args, n);
 	}
 
-      n=0;
+      n = 0;
       if (need_colors) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       XtSetArg(args[n], XmNorientation, XmHORIZONTAL); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
@@ -851,7 +860,7 @@ void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, in
       cw[W_left_scrollers] = sndCreateRowColumnWidget("chn-left", cw[W_main_window], args, n);
       XtAddEventHandler(cw[W_left_scrollers], KeyPressMask, FALSE, graph_key_press, (XtPointer)sp);
 
-      n=0;
+      n = 0;
       if (need_colors) {XtSetArg(args[n], XmNbackground, (ss->sgx)->zoom_color); n++;}
       XtSetArg(args[n], XmNwidth, ss->position_slider_width); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
@@ -868,7 +877,7 @@ void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, in
       XtAddCallback(cw[W_zy], XmNhelpCallback, W_zy_Help_Callback, ss);
       XtAddEventHandler(cw[W_zy], KeyPressMask, FALSE, graph_key_press, (XtPointer)sp);
 
-      n=0;
+      n = 0;
       if (need_colors) {XtSetArg(args[n], XmNbackground, (ss->sgx)->position_color); n++;}
       XtSetArg(args[n], XmNwidth, ss->zoom_slider_width); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
@@ -886,7 +895,7 @@ void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, in
       XtAddCallback(cw[W_sy], XmNhelpCallback, W_sy_Help_Callback, ss);
       XtAddEventHandler(cw[W_sy], KeyPressMask, FALSE, graph_key_press, (XtPointer)sp);
 
-      n=0;
+      n = 0;
       if (need_colors) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       XtSetArg(args[n], XmNorientation, XmVERTICAL); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_NONE); n++;
@@ -898,7 +907,7 @@ void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, in
       cw[W_bottom_scrollers] = sndCreateRowColumnWidget("chn-bottom", cw[W_main_window], args, n);
       XtAddEventHandler(cw[W_bottom_scrollers], KeyPressMask, FALSE, graph_key_press, (XtPointer)sp);
 
-      n=0;
+      n = 0;
       if (need_colors) {XtSetArg(args[n], XmNbackground, (ss->sgx)->position_color); n++;}
       XtSetArg(args[n], XmNheight, ss->position_slider_width); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_NONE); n++;
@@ -916,7 +925,7 @@ void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, in
       XtAddCallback(cw[W_sx], XmNhelpCallback, W_sx_Help_Callback, ss);
       XtAddEventHandler(cw[W_sx], KeyPressMask, FALSE, graph_key_press, (XtPointer)sp);
 
-      n=0;
+      n = 0;
       if (need_colors) {XtSetArg(args[n], XmNbackground, (ss->sgx)->zoom_color); n++;}
       XtSetArg(args[n], XmNheight, ss->zoom_slider_width+2); n++;
       XtSetArg(args[n], XmNorientation, XmHORIZONTAL); n++;
@@ -933,7 +942,7 @@ void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, in
       XtAddCallback(cw[W_zx], XmNhelpCallback, W_zx_Help_Callback, ss);
       XtAddEventHandler(cw[W_zx], KeyPressMask, FALSE, graph_key_press, (XtPointer)sp);
 
-      n=0;
+      n = 0;
       if (need_colors) 
 	{
 	  XtSetArg(args[n], XmNbackground, sx->graph_color); n++;
@@ -979,7 +988,7 @@ void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, in
 	{
 	  /* that is: not region browser chan, might need combined graph, channel 0 is the controller in that case */
 	  /* this is independent of sp->nchans because these structs are re-used and added to as needed */
-	  n=0;
+	  n = 0;
 	  if (need_colors) {XtSetArg(args[n], XmNbackground, (ss->sgx)->zoom_color); n++;}
 	  XtSetArg(args[n], XmNwidth, ss->position_slider_width); n++;
 	  XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
@@ -997,7 +1006,7 @@ void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, in
 	  XtAddCallback(cw[W_gzy], XmNhelpCallback, W_gzy_Help_Callback, ss);
 	  XtAddEventHandler(cw[W_gzy], KeyPressMask, FALSE, graph_key_press, (XtPointer)sp);
 
-	  n=0;
+	  n = 0;
 	  if (need_colors) {XtSetArg(args[n], XmNbackground, (ss->sgx)->position_color); n++;}
 	  XtSetArg(args[n], XmNwidth, ss->position_slider_width); n++;
 	  XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
@@ -1021,7 +1030,7 @@ void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, in
 	  FREE(n13);
 	  FREE(n14);
 
-	  n=0;
+	  n = 0;
 	}
       else
 	{
@@ -1039,18 +1048,19 @@ void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, in
       if (cw[W_edhist]) XtVaSetValues(XtParent(cw[W_edhist]), XmNpaneMaximum, 1, NULL);
 #endif
       if ((sp->combining != CHANNELS_COMBINED) || (channel == 0))
-	for (i=0;i<NUM_CHAN_WIDGETS;i++)
+	for (i=0; i<NUM_CHAN_WIDGETS; i++)
 	  {
 	    if (cw[i])
 	      {
-		if  (!XtIsManaged(cw[i])) XtManageChild(cw[i]);
+		if  (!XtIsManaged(cw[i])) 
+		  XtManageChild(cw[i]);
 		if (i == W_sx) 
 		  {
 		    int current_size;
 		    XtVaSetValues(cw[i], XmNvalue, 0, NULL);
 		    XtVaGetValues(cw[i], XmNsliderSize, &current_size, NULL);
 		    if (current_size > sp->sx_scroll_max) 
-		      XtVaSetValues(cw[i], XmNsliderSize, sp->sx_scroll_max/2, NULL);
+		      XtVaSetValues(cw[i], XmNsliderSize, sp->sx_scroll_max / 2, NULL);
 		    XtVaSetValues(cw[i], XmNmaximum, sp->sx_scroll_max, NULL);
 		  }
 	      }
@@ -1058,7 +1068,8 @@ void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, in
       recolor_graph(cp, FALSE); /* in case selection color left over from previous use */
     }
 #if (XmVERSION > 1)
-  if (cw[W_edhist]) XtVaSetValues(XtParent(cw[W_edhist]), XmNpaneMaximum, LOTSA_PIXELS, NULL);
+  if (cw[W_edhist]) 
+    XtVaSetValues(XtParent(cw[W_edhist]), XmNpaneMaximum, LOTSA_PIXELS, NULL);
 #endif
   if ((need_extra_scrollbars) && (sp->combining == CHANNELS_SEPARATE)) 
     hide_gz_scrollbars(sp); /* default is on in this case */  
@@ -1138,7 +1149,9 @@ GC erase_GC(chan_info *cp)
   sp = cp->sound;
   sx = ss->sgx;
   if (((cp->cgx)->selected) ||
-      ((sp) && (sp->combining == CHANNELS_SUPERIMPOSED) && (sp->index == ss->selected_sound)))
+      ((sp) && 
+       (sp->combining == CHANNELS_SUPERIMPOSED) && 
+       (sp->index == ss->selected_sound)))
     return(sx->selected_erase_gc);
   return(sx->erase_gc);
 }
@@ -1243,7 +1256,7 @@ void change_channel_style(snd_info *sp, int new_style)
 	      sound_lock_ctrls(sp, NULL);
 	      channel_lock_pane(ncp, height);
 	      mcgx = ncp->cgx;
-	      for (i=1;i<sp->nchans;i++) 
+	      for (i=1; i<sp->nchans; i++) 
 		{
 		  ncp = sp->chans[i];
 		  cleanup_cw(ncp);
@@ -1266,24 +1279,28 @@ void change_channel_style(snd_info *sp, int new_style)
 		  map_over_sound_chans(sp, channel_open_pane, NULL);
 		  map_over_sound_chans(sp, channel_unlock_pane, NULL);
 		  sound_unlock_ctrls(sp, NULL);
-		  for (i=0;i<sp->nchans;i++) reset_mix_graph_parent(sp->chans[i]);
+		  for (i=0; i<sp->nchans; i++) 
+		    reset_mix_graph_parent(sp->chans[i]);
 		  pcp = sp->chans[0];
 		  ap = pcp->axis;
-		  for (i=1;i<sp->nchans;i++)
+		  for (i=1; i<sp->nchans; i++)
 		    {
 		      cp = sp->chans[i];
 		      cp->tcgx = NULL;
 		      cx = cp->cgx;
 		      cw = cx->chan_widgets;
 #if (XmVERSION > 1)
-		      if (cw[W_edhist]) XtVaSetValues(XtParent(cw[W_edhist]), XmNpaneMaximum, DEFAULT_EDIT_HISTORY_WIDTH, NULL);
+		      if (cw[W_edhist]) 
+			XtVaSetValues(XtParent(cw[W_edhist]), XmNpaneMaximum, DEFAULT_EDIT_HISTORY_WIDTH, NULL);
 #endif
 		      for (j=0;j<NUM_CHAN_WIDGETS;j++)
 			{
-			  if ((cw[j]) && (!XtIsManaged(cw[j]))) XtManageChild(cw[j]);
+			  if ((cw[j]) && (!XtIsManaged(cw[j]))) 
+			    XtManageChild(cw[j]);
 			}
 #if (XmVERSION > 1)
-		      if (cw[W_edhist]) XtVaSetValues(XtParent(cw[W_edhist]), XmNpaneMaximum, LOTSA_PIXELS, NULL);
+		      if (cw[W_edhist]) 
+			XtVaSetValues(XtParent(cw[W_edhist]), XmNpaneMaximum, LOTSA_PIXELS, NULL);
 #endif
 		      XmToggleButtonSetState(cw[W_f], cp->ffting, FALSE);
 		      XmToggleButtonSetState(cw[W_w], cp->waving, FALSE);
@@ -1298,4 +1315,8 @@ void change_channel_style(snd_info *sp, int new_style)
 }
 
 
-int fixup_cp_cgx_ax_wn(chan_info *cp) {((cp->cgx)->ax)->wn = XtWindow((cp->cgx)->chan_widgets[W_graph]); return(1);}
+int fixup_cp_cgx_ax_wn(chan_info *cp) 
+{
+  ((cp->cgx)->ax)->wn = XtWindow((cp->cgx)->chan_widgets[W_graph]); 
+  return(1);
+}

@@ -87,12 +87,14 @@ void make_scrolled_env_list (snd_state *ss)
   size = enved_all_envs_top();
   if (!(ss->using_schemes)) XtVaSetValues(screnvlst, XmNbackground, (ss->sgx)->highlight_color, NULL); 
   strs = (XmString *)CALLOC(size, sizeof(XmString)); 
-  for (n=0;n<size;n++) strs[n] = XmStringCreate(enved_all_names(n), "button_font");
+  for (n=0; n<size; n++) 
+    strs[n] = XmStringCreate(enved_all_names(n), "button_font");
   XtVaSetValues(screnvlst, 
 		XmNitems, strs, 
 		XmNitemCount, size, 
 		NULL);
-  for (n=0;n<size;n++) XmStringFree(strs[n]);
+  for (n=0; n<size; n++) 
+    XmStringFree(strs[n]);
   FREE(strs);
 }
 
@@ -132,7 +134,7 @@ static int within_selection_src = 0;
 
 static void apply_enved(snd_state *ss)
 {
-  int mix_id=0,i,j,chan;
+  int mix_id = 0,i,j,chan;
   env *max_env = NULL;
   snd_info *sp;
   if (active_env)
@@ -162,20 +164,29 @@ static void apply_enved(snd_state *ss)
 		  set_mix_amp_env(mix_id, NO_SELECTION, active_env); /* chan = NO_SELECTION: use selected chan if more than 1 */
 		  active_channel = current_channel(ss);
 		}
-	      else apply_env(active_channel, active_env, 0, current_ed_samples(active_channel), 1.0, apply_to_selection, FROM_ENVED, "Enved: amp", NULL); 
+	      else apply_env(active_channel, active_env, 0,
+			     current_ed_samples(active_channel), 
+			     1.0, apply_to_selection, FROM_ENVED, 
+			     "Enved: amp", NULL); 
 	      /* calls update_graph, I think, but in short files that doesn't update the amp-env */
 	      if (enved_waving(ss)) env_redisplay(ss);
 	      break;
 	    case SPECTRUM_ENV: 
-	      apply_filter(active_channel, filter_env_order(ss), active_env, FROM_ENVED, "Enved: flt", apply_to_selection, NULL, NULL);
+	      apply_filter(active_channel, 
+			   filter_env_order(ss), active_env, FROM_ENVED, 
+			   "Enved: flt", apply_to_selection, 
+			   NULL, NULL);
 	      break;
 	    case SRATE_ENV:
 	      /* mus_src no longer protects against 0 srate */
 	      max_env = copy_env(active_env);
-	      for (i=0, j=1;i<max_env->pts;i++,j+=2)
-		if (max_env->data[j] < .01) max_env->data[j] = .01;
+	      for (i=0, j=1; i<max_env->pts; i++, j+=2)
+		if (max_env->data[j] < .01) 
+		  max_env->data[j] = .01;
 	      within_selection_src = 1;
-	      src_env_or_num(ss, active_channel, max_env, 0.0, FALSE, FROM_ENVED, "Enved: src", apply_to_selection, NULL);
+	      src_env_or_num(ss, active_channel, max_env, 0.0, 
+			     FALSE, FROM_ENVED, "Enved: src", 
+			     apply_to_selection, NULL);
 	      within_selection_src = 0;
 	      max_env = free_env(max_env);
 	      if (enved_waving(ss)) env_redisplay(ss);
@@ -221,8 +232,10 @@ static void order_field_activated(snd_state *ss)
   if ((str) && (*str))
     {
       order = string2int(str);
-      if (order&1) order++;
-      if ((order>0) && (order<2000)) set_filter_env_order(ss, order);
+      if (order & 1) order++;
+      if ((order > 0) && 
+	  (order < 2000)) 
+	set_filter_env_order(ss, order);
     }
   if (str) XtFree(str);
 }
@@ -345,8 +358,12 @@ static void reflect_segment_state (snd_state *ss)
     {
       if (!(ss->using_schemes))
 	{
-	  XmChangeColor(expB, (enved_exping(ss)) ? ((Pixel)(ss->sgx)->yellow) : ((Pixel)(ss->sgx)->highlight_color));
-	  XmChangeColor(linB, (enved_exping(ss)) ? ((Pixel)(ss->sgx)->highlight_color) : ((Pixel)(ss->sgx)->yellow));
+	  XmChangeColor(expB, 
+			(enved_exping(ss)) ? ((Pixel)(ss->sgx)->yellow) : 
+			                     ((Pixel)(ss->sgx)->highlight_color));
+	  XmChangeColor(linB, 
+			(enved_exping(ss)) ? ((Pixel)(ss->sgx)->highlight_color) : 
+                                            ((Pixel)(ss->sgx)->yellow));
 	}
       if ((active_env) && 
 	  (!(showing_all_envs))) 
@@ -378,7 +395,8 @@ static void select_or_edit_env(snd_state *ss, int pos)
   else
     {
       selected_env = enved_all_envs(pos);
-      if (showing_all_envs) view_envs(ss, env_window_width, env_window_height);
+      if (showing_all_envs) 
+	view_envs(ss, env_window_width, env_window_height);
     }
   set_sensitive(deleteB, TRUE);
 }
@@ -402,7 +420,10 @@ void display_enved_progress(char *str, Pixmap pix)
 {
   if (pix == 0)
     set_button_label_normal(brkptL, str);
-  else XtVaSetValues(brkptL, XmNlabelType, XmPIXMAP, XmNlabelPixmap, pix, NULL);
+  else XtVaSetValues(brkptL, 
+		     XmNlabelType, XmPIXMAP, 
+		     XmNlabelPixmap, pix, 
+		     NULL);
 }
 
 static TIME_TYPE down_time;
@@ -425,19 +446,25 @@ static void drawer_button_motion(Widget w, XtPointer clientData, XEvent *event, 
       click_to_delete = 0;
       ap = axis_cp->axis;
       x = ungrf_x(ap, ev->x);
-      if (env_pos > 0) x0 = active_env->data[env_pos*2-2]; else x0 = 0.0;
-      if (env_pos < active_env->pts) x1 = active_env->data[env_pos*2+2]; else x1 = 1.0;
-      if (x<x0) x=x0;
-      if (x>x1) x=x1;
+      if (env_pos > 0) 
+	x0 = active_env->data[env_pos * 2 - 2]; 
+      else x0 = 0.0;
+      if (env_pos < active_env->pts) 
+	x1 = active_env->data[env_pos * 2 + 2]; 
+      else x1 = 1.0;
+      if (x < x0) x = x0;
+      if (x > x1) x = x1;
       if (env_pos == 0) x = active_env->data[0];
-      if (env_pos == (active_env->pts-1)) x = active_env->data[(active_env->pts-1)*2];
+      if (env_pos == (active_env->pts - 1)) 
+	x = active_env->data[(active_env->pts - 1) * 2];
       y = ungrf_y(ap, ev->y);
-      if ((enved_clipping(ss)) || (enved_dBing(ss)))
+      if ((enved_clipping(ss)) || 
+	  (enved_dBing(ss)))
 	{
-	  if (y<ap->y0) y=ap->y0;
-	  if (y>ap->y1) y=ap->y1;
+	  if (y < ap->y0) y = ap->y0;
+	  if (y > ap->y1) y = ap->y1;
 	}
-      if (enved_dBing(ss)) y=un_dB(ss, y);
+      if (enved_dBing(ss)) y = un_dB(ss, y);
       move_point(active_env, env_pos, x, y);
       enved_display_point_label(ss, x, y);
       env_redisplay(ss);
@@ -454,8 +481,9 @@ static void drawer_button_press(Widget w, XtPointer clientData, XEvent *event, B
   if (showing_all_envs)
     {
       pos = hit_env(ev->x, ev->y, env_window_width, env_window_height);
-      XmListSelectPos(screnvlst, pos+1, FALSE);
-      if ((pos >= 0) && (pos < enved_all_envs_top())) 
+      XmListSelectPos(screnvlst, pos + 1, FALSE);
+      if ((pos >= 0) && 
+	  (pos < enved_all_envs_top())) 
 	select_or_edit_env(ss, pos);
     }
   else
@@ -587,11 +615,17 @@ static void selection_button_pressed(Widget s, XtPointer clientData, XtPointer c
   apply_to_selection = (!apply_to_selection);
   if (apply_to_selection) 
     {
-      if (apply_to_mix) XmChangeColor(mixB, ((Pixel)(ss->sgx)->highlight_color));
+      if (apply_to_mix) 
+	XmChangeColor(mixB, ((Pixel)(ss->sgx)->highlight_color));
       apply_to_mix = 0;
     }
-  XmChangeColor(selectionB, (apply_to_selection) ? ((Pixel)(ss->sgx)->yellow) : ((Pixel)(ss->sgx)->highlight_color));
-  if ((enved_target(ss) != SPECTRUM_ENV) && (enved_waving(ss)) && (!showing_all_envs)) env_redisplay(ss);
+  XmChangeColor(selectionB, 
+		(apply_to_selection) ? ((Pixel)(ss->sgx)->yellow) : 
+                                       ((Pixel)(ss->sgx)->highlight_color));
+  if ((enved_target(ss) != SPECTRUM_ENV) && 
+      (enved_waving(ss)) && 
+      (!showing_all_envs)) 
+    env_redisplay(ss);
 }
 
 static void mix_button_pressed(Widget w, XtPointer clientData, XtPointer callData) 
@@ -630,7 +664,9 @@ static void mix_button_pressed(Widget w, XtPointer clientData, XtPointer callDat
 	    }
 	}
     }
-  XmChangeColor(mixB, (apply_to_mix) ? ((Pixel)(ss->sgx)->yellow) : ((Pixel)(ss->sgx)->highlight_color));
+  XmChangeColor(mixB, 
+		(apply_to_mix) ? ((Pixel)(ss->sgx)->yellow) : 
+                                 ((Pixel)(ss->sgx)->highlight_color));
   if ((enved_target(ss) == AMPLITUDE_ENV) && 
       (enved_waving(ss)) && 
       (!showing_all_envs)) 
@@ -661,11 +697,12 @@ static void delete_button_pressed(Widget w, XtPointer clientData, XtPointer call
   if (selected_env)
     {
       len = enved_all_envs_top();
-      for (i=0;i<len;i++)
+      for (i=0; i<len; i++)
 	if (selected_env == enved_all_envs(i))
 	  {
 	    delete_envelope((snd_state *)clientData, enved_all_names(i));
-	    if (enved_all_envs_top() == 0) set_sensitive(deleteB, FALSE);
+	    if (enved_all_envs_top() == 0)
+	      set_sensitive(deleteB, FALSE);
 	    break;
 	  }
     }
@@ -737,10 +774,18 @@ all_that can be undone and redone.\n\
 static void reflect_apply_state (snd_state *ss)
 {
   set_label(nameL, env_names[enved_target(ss)]);
-  XmChangeColor(ampB, (enved_target(ss) == AMPLITUDE_ENV) ? ((Pixel)(ss->sgx)->green) : ((Pixel)(ss->sgx)->highlight_color));
-  XmChangeColor(fltB, (enved_target(ss) == SPECTRUM_ENV) ? ((Pixel)(ss->sgx)->green) : ((Pixel)(ss->sgx)->highlight_color));
-  XmChangeColor(srcB, (enved_target(ss) == SRATE_ENV) ? ((Pixel)(ss->sgx)->green) : ((Pixel)(ss->sgx)->highlight_color));
-  if ((!showing_all_envs) && (enved_waving(ss))) env_redisplay(ss);
+  XmChangeColor(ampB, 
+		(enved_target(ss) == AMPLITUDE_ENV) ? ((Pixel)(ss->sgx)->green) : 
+                                                      ((Pixel)(ss->sgx)->highlight_color));
+  XmChangeColor(fltB, 
+		(enved_target(ss) == SPECTRUM_ENV) ? ((Pixel)(ss->sgx)->green) : 
+                                                     ((Pixel)(ss->sgx)->highlight_color));
+  XmChangeColor(srcB, 
+		(enved_target(ss) == SRATE_ENV) ? ((Pixel)(ss->sgx)->green) : 
+                                                  ((Pixel)(ss->sgx)->highlight_color));
+  if ((!showing_all_envs) && 
+      (enved_waving(ss))) 
+    env_redisplay(ss);
 }
 
 static void amp_button_pressed(Widget w, XtPointer clientData, XtPointer callData) 
@@ -913,7 +958,8 @@ static void Exp_Button_Callback(Widget w, XtPointer clientData, XtPointer callDa
   snd_state *ss = (snd_state *)clientData; 
   XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)callData; 
   in_set_enved_exping(ss, cb->set);
-  if ((active_env) && (!(showing_all_envs)))
+  if ((active_env) && 
+      (!(showing_all_envs)))
     {
       if (enved_exping(ss))
 	active_env->base = enved_base(ss);
@@ -937,7 +983,8 @@ static void Lin_Button_Callback(Widget w, XtPointer clientData, XtPointer callDa
   snd_state *ss = (snd_state *)clientData; 
   XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)callData; 
   in_set_enved_exping(ss, (!(cb->set)));
-  if ((active_env) && (!(showing_all_envs)))
+  if ((active_env) && 
+      (!(showing_all_envs)))
     {
       if (enved_exping(ss))
 	active_env->base = enved_base(ss);
@@ -988,15 +1035,18 @@ static void make_base_label(snd_state *ss, Float bval)
   sprintf(sfs, "%f", bval);
   scale_len = (int)(enved_power(ss) + 3);
   buf = (char *)CALLOC(scale_len, sizeof(char));
-  for (i=0;i<scale_len-1;i++) buf[i] = sfs[i];
+  for (i=0; i<scale_len-1; i++) 
+    buf[i] = sfs[i];
   set_button_label(baseValue, buf);
   FREE(sfs);
   FREE(buf);
   in_set_enved_base(ss, bval);
-  if ((active_env) && (!(showing_all_envs))) 
+  if ((active_env) && 
+      (!(showing_all_envs))) 
     {
       active_env->base = enved_base(ss);
-      if (enved_exping(ss)) env_redisplay(ss);
+      if (enved_exping(ss)) 
+	env_redisplay(ss);
     }
 }
 
@@ -1012,13 +1062,14 @@ static void base_changed(snd_state *ss, int val)
       else
 	{
 	  if (val>BASE_MID)
-	    bval = pow(1.0 + (10.0 * ((Float)(val - BASE_MID)/(Float)BASE_MID)), enved_power(ss));  
+	    bval = pow(1.0 + (10.0 * ((Float)(val - BASE_MID) / (Float)BASE_MID)), enved_power(ss));  
 	  else 
 	    bval = pow(((Float)val / (Float)BASE_MID), enved_power(ss) - 1.0);
 	}
     }
   make_base_label(ss, bval);
-  if ((active_env) && (enved_exping(ss))) set_sensitive(saveB, TRUE); /* what about undo/redo here? */
+  if ((active_env) && (enved_exping(ss))) 
+    set_sensitive(saveB, TRUE); /* what about undo/redo here? */
 }
 
 static void reflect_changed_base(snd_state *ss, Float val)
@@ -1033,8 +1084,8 @@ static void reflect_changed_base(snd_state *ss, Float val)
       else
 	{
 	  if (val <= 1.0)
-	    ival = (int)(pow(val, 1.0/(enved_power(ss)-1.0))*BASE_MID);
-	  else ival = (int)(BASE_MID + ((BASE_MID * (pow(val, (1.0/(enved_power(ss)))) - 1)) / 10.0));
+	    ival = (int)(pow(val, 1.0 / (enved_power(ss) - 1.0)) * BASE_MID);
+	  else ival = (int)(BASE_MID + ((BASE_MID * (pow(val, (1.0 / (enved_power(ss)))) - 1)) / 10.0));
 	}
     }
   XtVaSetValues(baseScale, XmNvalue, ival, NULL);
@@ -1068,7 +1119,9 @@ static void Base_Click_Callback(Widget w, XtPointer clientData, XtPointer callDa
 #if DEBUGGING
   if ((int)ev <= 0) return;
 #endif
-  if (ev->state & (snd_ControlMask | snd_MetaMask)) val = base_last_value; else val = BASE_MID;
+  if (ev->state & (snd_ControlMask | snd_MetaMask)) 
+    val = base_last_value; 
+  else val = BASE_MID;
   base_changed(ss, val);
   XtVaSetValues(baseScale, XmNvalue, val, NULL);
 }
@@ -1092,7 +1145,7 @@ void create_envelope_editor (snd_state *ss)
       titlestr = XmStringCreate(STR_Edit_Envelope, XmFONTLIST_DEFAULT_TAG);
       xapply = XmStringCreate(STR_Apply, XmFONTLIST_DEFAULT_TAG);
 
-      n=0;
+      n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       XtSetArg(args[n], XmNautoUnmanage, FALSE); n++;
       XtSetArg(args[n], XmNcancelLabelString, xdismiss); n++;
@@ -1100,10 +1153,7 @@ void create_envelope_editor (snd_state *ss)
       XtSetArg(args[n], XmNokLabelString, xapply); n++;
       XtSetArg(args[n], XmNdialogTitle, titlestr); n++;
       XtSetArg(args[n], XmNresizePolicy, XmRESIZE_GROW); n++;
-
-#if RESIZE_DIALOG
       XtSetArg(args[n], XmNnoResize, FALSE); n++;
-#endif
       XtSetArg(args[n], XmNtransient, FALSE); n++;
       enved_dialog = XmCreateTemplateDialog(MAIN_SHELL(ss), "envelope editor", args, n);
       add_dialog(ss, enved_dialog);
@@ -1127,7 +1177,7 @@ void create_envelope_editor (snd_state *ss)
 	  XtVaSetValues(XmMessageBoxGetChild(enved_dialog, XmDIALOG_OK_BUTTON), XmNarmColor, (ss->sgx)->pushed_button_color, NULL);
 	}
 
-      n=0;
+      n = 0;
       if (!(ss->using_schemes)) 
 	{
 	  XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;
@@ -1138,7 +1188,7 @@ void create_envelope_editor (snd_state *ss)
       XtAddCallback(apply2B, XmNhelpCallback, Undo_and_Apply_Help_Callback, ss);
 
       /* -------- MAIN WIDGET -------- */
-      n=0;
+      n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
@@ -1153,7 +1203,7 @@ void create_envelope_editor (snd_state *ss)
        */
 
       /* -------- EXP SLIDER AT BOTTOM -------- */
-      n=0;      
+      n = 0;      
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;	
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_NONE); n++;
@@ -1168,7 +1218,7 @@ void create_envelope_editor (snd_state *ss)
       XtAddCallback(baseLabel, XmNhelpCallback, Base_Help_Callback, ss);
       XtAddCallback(baseLabel, XmNactivateCallback, Base_Click_Callback, ss);
 
-      n=0;
+      n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       s1 = XmStringCreate("1.000", XmFONTLIST_DEFAULT_TAG);
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;	
@@ -1184,7 +1234,7 @@ void create_envelope_editor (snd_state *ss)
       XtAddCallback(baseValue, XmNhelpCallback, Base_Help_Callback, ss);
       XmStringFree(s1);
 
-      n=0;      
+      n = 0;      
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
@@ -1204,7 +1254,7 @@ void create_envelope_editor (snd_state *ss)
       orderL = sndCreateTextFieldWidget(ss, "orderL", mainform, args, n, ACTIVATABLE, NO_COMPLETER);
       XtAddCallback(orderL, XmNhelpCallback, Order_Help_Callback, ss);
 
-      n=0;      
+      n = 0;      
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->position_color); n++;}
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET); n++;
       XtSetArg(args[n], XmNtopWidget, baseLabel); n++;
@@ -1223,7 +1273,7 @@ void create_envelope_editor (snd_state *ss)
       baseScale = XtCreateManagedWidget("expscl", xmScrollBarWidgetClass, mainform, args, n);
       XtAddCallback(baseScale, XmNhelpCallback, Base_Help_Callback, ss);
 
-      n=0;
+      n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_WIDGET); n++;
@@ -1238,8 +1288,8 @@ void create_envelope_editor (snd_state *ss)
       baseSep = XtCreateManagedWidget("snd-rec-sep", xmSeparatorWidgetClass, mainform, args, n);
 
       /* -------- AMP ENV NAME -------- */
-      n=0;
-      s1=XmStringCreate(STR_amp_env_p, XmFONTLIST_DEFAULT_TAG);
+      n = 0;
+      s1 = XmStringCreate(STR_amp_env_p, XmFONTLIST_DEFAULT_TAG);
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;	
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_NONE); n++;
@@ -1256,7 +1306,7 @@ void create_envelope_editor (snd_state *ss)
       XtAddCallback(nameL, XmNhelpCallback, amp_button_help_callback, ss);
       XmStringFree(s1);
 
-      n=0;
+      n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_WIDGET); n++;
@@ -1268,7 +1318,7 @@ void create_envelope_editor (snd_state *ss)
       XtAddCallback(textL, XmNhelpCallback, Text_Help_Callback, ss);
 
       /* -------- dB, GRAPH ('wave') AND CLIP BUTTONS -------- */
-      n=0;
+      n = 0;
       if (!(ss->using_schemes)) 
 	{
 	  XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;
@@ -1284,7 +1334,7 @@ void create_envelope_editor (snd_state *ss)
       XtAddCallback(dBB, XmNvalueChangedCallback, dB_Button_Callback, ss);
       XtAddCallback(dBB, XmNhelpCallback, dB_Button_Help_Callback, ss);
 
-      n=0;
+      n = 0;
       if (!(ss->using_schemes)) 
 	{
 	  XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;
@@ -1301,7 +1351,7 @@ void create_envelope_editor (snd_state *ss)
       XtAddCallback(graphB, XmNvalueChangedCallback, Graph_Button_Callback, ss);
       XtAddCallback(graphB, XmNhelpCallback, Graph_Button_Help_Callback, ss);
 
-      n=0;
+      n = 0;
       if (!(ss->using_schemes)) 
 	{
 	  XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;
@@ -1319,7 +1369,7 @@ void create_envelope_editor (snd_state *ss)
       XtAddCallback(clipB, XmNhelpCallback, Clip_Button_Help_Callback, ss);
 
       /* -------- BREAKPOINT DATA DISPLAY LABEL -------- */
-      n=0;
+      n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_WIDGET); n++;
@@ -1335,7 +1385,7 @@ void create_envelope_editor (snd_state *ss)
       XtAddCallback(brkptL, XmNhelpCallback, Brkpt_Help_Callback, ss);
 
       /* -------- SPACERS TO DIVIDE WINDOW IN TWO -------- */
-      n=0;
+      n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_WIDGET); n++;
@@ -1347,7 +1397,7 @@ void create_envelope_editor (snd_state *ss)
       XtSetArg(args[n], XmNseparatorType, XmNO_LINE); n++;
       spacer = XtCreateManagedWidget("spacer", xmSeparatorWidgetClass, mainform, args, n);
 
-      n=0;
+      n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_WIDGET); n++;
@@ -1360,7 +1410,7 @@ void create_envelope_editor (snd_state *ss)
       /* second separator needed because marginTop seems to be broken or non-existent for these widgets */
 
       /* -------- WINDOW LEFT WIDGET HOLDER -------- */
-      n=0;
+      n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_WIDGET); n++;
@@ -1370,7 +1420,7 @@ void create_envelope_editor (snd_state *ss)
       aform = sndCreateFormWidget("aform", mainform, args, n);
 
       /* -------- BUTTON BOX AT TOP LEFT -------- */
-      n=0;
+      n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->zoom_color); n++;}
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
@@ -1379,7 +1429,7 @@ void create_envelope_editor (snd_state *ss)
       XtSetArg(args[n], XmNshadowThickness, 4); n++;
       colF = sndCreateFrameWidget("env-button-frame", aform, args, n);
 
-      n=0;
+      n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->highlight_color); n++;}
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
@@ -1390,7 +1440,7 @@ void create_envelope_editor (snd_state *ss)
       colB = sndCreateRowColumnWidget("env-button-holder", colF, args, n);
 
       /* VIEW ENVS */
-      n=0;
+      n = 0;
       if (!(ss->using_schemes)) 
 	{
 	  XtSetArg(args[n], XmNbackground, (ss->sgx)->highlight_color); n++;
@@ -1402,14 +1452,14 @@ void create_envelope_editor (snd_state *ss)
       XtAddCallback(showB, XmNhelpCallback, show_button_help_callback, ss);
 
       /* SAVE PRINT */
-      n=0;
+      n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->highlight_color); n++;}
       XtSetArg(args[n], XmNorientation, XmHORIZONTAL); n++;
       XtSetArg(args[n], XmNspacing, 0); n++;
       XtSetArg(args[n], XmNmarginWidth, 0); n++;
       saverow = sndCreateRowColumnWidget("saverow-holder", colB, args, n);  
 
-      n=0;
+      n = 0;
       if (!(ss->using_schemes)) 
 	{
 	  XtSetArg(args[n], XmNbackground, (ss->sgx)->highlight_color); n++;
@@ -1426,14 +1476,14 @@ void create_envelope_editor (snd_state *ss)
       XtAddCallback(printB, XmNhelpCallback, print_button_help_callback, ss);
 
       /* UNDO REDO */
-      n=0;
+      n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->highlight_color); n++;}
       XtSetArg(args[n], XmNorientation, XmHORIZONTAL); n++;
       XtSetArg(args[n], XmNspacing, 0); n++;
       XtSetArg(args[n], XmNmarginWidth, 0); n++;
       unrow = sndCreateRowColumnWidget("unrow-holder", colB, args, n);  
 
-      n=0;
+      n = 0;
       if (!(ss->using_schemes)) 
 	{
 	  XtSetArg(args[n], XmNbackground, (ss->sgx)->highlight_color); n++;
@@ -1450,14 +1500,14 @@ void create_envelope_editor (snd_state *ss)
       XtAddCallback(redoB, XmNhelpCallback, redo_button_help_callback, ss);
 
       /* REVERT DELETE */
-      n=0;
+      n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->highlight_color); n++;}
       XtSetArg(args[n], XmNorientation, XmHORIZONTAL); n++;
       XtSetArg(args[n], XmNspacing, 0); n++;
       XtSetArg(args[n], XmNmarginWidth, 0); n++;
       revrow = sndCreateRowColumnWidget("revrow-holder", colB, args, n);  
 
-      n=0;
+      n = 0;
       if (!(ss->using_schemes)) 
 	{
 	  XtSetArg(args[n], XmNbackground, (ss->sgx)->highlight_color); n++;
@@ -1474,14 +1524,14 @@ void create_envelope_editor (snd_state *ss)
 
       /* AMP FLT SRC */
       /* enved_function (target) choice (a row of three push buttons that acts like a "radio box") */
-      n=0;
+      n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->highlight_color); n++;}
       XtSetArg(args[n], XmNorientation, XmHORIZONTAL); n++;
       XtSetArg(args[n], XmNspacing, 0); n++;
       XtSetArg(args[n], XmNmarginWidth, 0); n++;
       rbrow = sndCreateRowColumnWidget("asf-holder", colB, args, n);  
 
-      n=0;
+      n = 0;
       if (!(ss->using_schemes)) 
 	{
 	  XtSetArg(args[n], XmNbackground, (ss->sgx)->highlight_color); n++;
@@ -1503,7 +1553,7 @@ void create_envelope_editor (snd_state *ss)
 
       /* LINEAR EXP */
       /* similar secondary box for linear/exp buttons */
-      n=0;
+      n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->highlight_color); n++;}
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
@@ -1511,7 +1561,7 @@ void create_envelope_editor (snd_state *ss)
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       lerow = sndCreateFormWidget("le-holder", colB, args, n);  
 
-      n=0;
+      n = 0;
       if (!(ss->using_schemes)) 
 	{
 	  XtSetArg(args[n], XmNbackground, (ss->sgx)->highlight_color); n++;
@@ -1527,7 +1577,7 @@ void create_envelope_editor (snd_state *ss)
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_POSITION); n++;
       XtSetArg(args[n], XmNrightPosition, 50); n++;
       linB = XtCreateManagedWidget(STR_linear, xmPushButtonWidgetClass, lerow, args, n);
-      n-=3;
+      n -= 3;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNleftWidget, linB); n++;
@@ -1540,14 +1590,14 @@ void create_envelope_editor (snd_state *ss)
 
 
       /* SELECTION MIX */
-      n=0;
+      n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->highlight_color); n++;}
       XtSetArg(args[n], XmNorientation, XmHORIZONTAL); n++;
       XtSetArg(args[n], XmNspacing, 0); n++;
       XtSetArg(args[n], XmNmarginWidth, 0); n++;
       selrow = sndCreateRowColumnWidget("selmix-holder", colB, args, n);  
 
-      n=0;
+      n = 0;
       if (!(ss->using_schemes)) 
 	{
 	  XtSetArg(args[n], XmNbackground, (ss->sgx)->highlight_color); n++;
@@ -1565,7 +1615,7 @@ void create_envelope_editor (snd_state *ss)
 
 
       /* -------- ENV LIST AT LEFT UNDER BUTTONS -------- */
-      n=0;
+      n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
@@ -1575,7 +1625,7 @@ void create_envelope_editor (snd_state *ss)
       screnvname = XtCreateManagedWidget(STR_envs_p, xmLabelWidgetClass, aform, args, n);
       XtAddCallback(screnvname, XmNhelpCallback, Scrolled_List_Help_Callback, ss);
 
-      n=0;
+      n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
@@ -1592,7 +1642,7 @@ void create_envelope_editor (snd_state *ss)
 
       /* -------- MAIN GRAPH -------- */
 
-      n=0;
+      n = 0;
       if (!(ss->using_schemes))	{XtSetArg(args[n], XmNbackground, (ss->sgx)->graph_color); n++;}
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_WIDGET); n++;
@@ -1625,15 +1675,14 @@ void create_envelope_editor (snd_state *ss)
       XtAddEventHandler(drawer, ButtonReleaseMask, FALSE, drawer_button_release, ss);
 
       if (enved_all_envs_top() == 0)
-	{
-	  set_sensitive(showB, FALSE);
-	}
+	set_sensitive(showB, FALSE);
       set_sensitive(revertB, FALSE);
       set_sensitive(deleteB, FALSE);
       set_sensitive(undoB, FALSE);
       set_sensitive(redoB, FALSE);
       set_sensitive(saveB, FALSE);
-      if (!(selection_is_active())) set_sensitive(selectionB, FALSE);
+      if (!(selection_is_active())) 
+	set_sensitive(selectionB, FALSE);
 
       XmToggleButtonSetState(clipB, enved_clipping(ss), FALSE);
       XmToggleButtonSetState(graphB, enved_waving(ss), FALSE);
@@ -1646,17 +1695,54 @@ void create_envelope_editor (snd_state *ss)
       reflect_segment_state(ss);
     }
   else raise_dialog(enved_dialog);
-  if (!XtIsManaged(enved_dialog)) XtManageChild(enved_dialog);
+  if (!XtIsManaged(enved_dialog)) 
+    XtManageChild(enved_dialog);
   active_channel = current_channel(ss);
   set_sensitive(mixB, (mixes() > 0));
 }
 
-void set_enved_clipping(snd_state *ss, int val) {in_set_enved_clipping(ss, val); if (enved_dialog) XmToggleButtonSetState(clipB, val, FALSE);}
-void set_enved_exping(snd_state *ss, int val) {in_set_enved_exping(ss, val); if (enved_dialog) XmToggleButtonSetState(expB, val, FALSE); reflect_segment_state(ss);}
-void set_enved_target(snd_state *ss, int val) {in_set_enved_target(ss, val); if (enved_dialog) reflect_apply_state(ss);}
-void set_enved_waving(snd_state *ss, int val) {in_set_enved_waving(ss, val); if (enved_dialog) XmToggleButtonSetState(graphB, val, FALSE);}
-void set_enved_dBing(snd_state *ss, int val) {in_set_enved_dBing(ss, val); if (enved_dialog) XmToggleButtonSetState(dBB, val, FALSE);}
-void set_enved_base(snd_state *ss, Float val) {in_set_enved_base(ss, val); if (enved_dialog) reflect_changed_base(ss, val);}
+void set_enved_clipping(snd_state *ss, int val) 
+{
+  in_set_enved_clipping(ss, val); 
+  if (enved_dialog) 
+    XmToggleButtonSetState(clipB, val, FALSE);
+}
+
+void set_enved_exping(snd_state *ss, int val) 
+{
+  in_set_enved_exping(ss, val); 
+  if (enved_dialog) 
+    XmToggleButtonSetState(expB, val, FALSE); 
+  reflect_segment_state(ss);
+}
+
+void set_enved_target(snd_state *ss, int val) 
+{
+  in_set_enved_target(ss, val); 
+  if (enved_dialog) 
+    reflect_apply_state(ss);
+}
+
+void set_enved_waving(snd_state *ss, int val) 
+{
+  in_set_enved_waving(ss, val); 
+  if (enved_dialog) 
+    XmToggleButtonSetState(graphB, val, FALSE);
+}
+
+void set_enved_dBing(snd_state *ss, int val) 
+{
+  in_set_enved_dBing(ss, val);
+  if (enved_dialog) 
+    XmToggleButtonSetState(dBB, val, FALSE);
+}
+
+void set_enved_base(snd_state *ss, Float val) 
+{
+  in_set_enved_base(ss, val); 
+  if (enved_dialog) 
+    reflect_changed_base(ss, val);
+}
 
 int enved_dialog_is_active(void)
 {
@@ -1666,10 +1752,10 @@ int enved_dialog_is_active(void)
 void set_filter_env_order(snd_state *ss, int order)
 {
   char str[8];
-  if ((order>0) && (order<2000))
+  if ((order > 0) && (order < 2000))
     {
-      if (order&1) 
-	in_set_filter_env_order(ss, order+1);
+      if (order & 1) 
+	in_set_filter_env_order(ss, order + 1);
       else in_set_filter_env_order(ss, order);
       if (enved_dialog)
 	{
@@ -1695,7 +1781,10 @@ void enved_reflect_selection(int on)
 	  apply_to_selection = 0;
 	  XmChangeColor(selectionB, (Pixel)(ss->sgx)->highlight_color);
 	}
-      if ((enved_target(ss) != SPECTRUM_ENV) && (enved_waving(ss)) && (!showing_all_envs)) env_redisplay(ss);
+      if ((enved_target(ss) != SPECTRUM_ENV) && 
+	  (enved_waving(ss)) && 
+	  (!showing_all_envs)) 
+	env_redisplay(ss);
     }
 }
 
@@ -1707,7 +1796,9 @@ void color_enved_waveform(Pixel pix)
   if (enved_dialog)
     {
       XSetForeground(MAIN_DISPLAY(ss), ggc, pix);
-      if ((enved_waving(ss)) && (enved_dialog)) env_redisplay(ss);
+      if ((enved_waving(ss)) && 
+	  (enved_dialog)) 
+	env_redisplay(ss);
     }
 }
 
@@ -1725,14 +1816,15 @@ static env *find_named_env(SCM name)
   int i,len;
   env_name = TO_NEW_C_STRING(name);
   len = enved_all_envs_top();
-  for (i=0;i<len;i++)
+  for (i=0; i<len; i++)
     if (strcmp(env_name, enved_all_names(i)) == 0)
       {
 	free(env_name);
 	return(enved_all_envs(i));
       }
   free(env_name);
-  scm_throw(NO_SUCH_ENVELOPE, SCM_LIST1(name));
+  scm_throw(NO_SUCH_ENVELOPE, 
+	    SCM_LIST1(name));
   return(NULL);
 }
 
@@ -1748,7 +1840,8 @@ static SCM g_set_enved_active_env(SCM e)
   if (gh_string_p(e))
     active_env = copy_env(find_named_env(e));
   else active_env = scm2env(e);
-  if (enved_dialog) env_redisplay(get_global_state());
+  if (enved_dialog) 
+    env_redisplay(get_global_state());
   return(e);
 }
 

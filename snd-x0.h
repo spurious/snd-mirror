@@ -22,27 +22,13 @@
 
 #define HAVE_CLICK_FOR_HELP 1
 
-#if defined(LINUX) || defined(SCO5) || defined(UW2) || defined(SOLARIS) || defined(HPUX) || defined(ALPHA) || defined(WINDOZE)
-  #define RESIZE_DIALOG 1
-  /* these versions of Motif need to be told to allow a dialog to include resize controls */
-#else
-  #define RESIZE_DIALOG 0
-#endif
- 
-#if defined(LINUX) || defined(SCO5) || defined(UW2) || defined(SOLARIS) || defined(HPUX) || defined(ALPHA) || defined(WINDOZE)
-  #define MANAGE_DIALOG 1
-  /* these versions of Motif need to "manage" a dialog before dealing with its children */
-#else
-  #define MANAGE_DIALOG 0
-#endif
-
 #if __GNUC__
 #ifdef LESSTIF_VERSION
   #warning You appear to be using Lesstif: this is not recommended!  Expect bugs...
 #endif
 #endif
 
-#if defined(SUN) || (defined(LINUX) && (!(defined(LESSTIF_VERSION))))
+#if defined(SUN) || defined(LINUX)
   #define OVERRIDE_TOGGLE 1
   /* Metrolink Motif (Linux) defines control-button1 to be "take focus" -- this is not a good idea!! */
   /*    (without this override ctrl-button1 in a graph causes a segfault in Metrolink Motif because someone is calling XmProcessTraversal) */
@@ -82,13 +68,8 @@
 #ifdef SGI
   #define LINE_MARGIN 10
   #define CONTROLS_MARGIN 0
-#endif
-#ifdef NEXT
-  #define LINE_MARGIN 10
-  #define CONTROLS_MARGIN 0
-#endif
-
-#if defined(LINUX) || defined(__bsdi__) || defined(SCO5) || defined(UW2) || defined(SOLARIS) || defined(HPUX) || defined(ALPHA) || defined(WINDOZE)
+  #define NEED_TOGGLE_MARGIN 0
+#else
   #define LINE_MARGIN 4
   #define CONTROLS_MARGIN 1
   #ifndef LESSTIF_VERSION
@@ -97,8 +78,6 @@
   #else
     #define NEED_TOGGLE_MARGIN 0
   #endif
-#else
-  #define NEED_TOGGLE_MARGIN 0
 #endif
 
 #define SCROLLBAR_MAX 100       /* used by zx, zy but not sx (huge files need special handling) or sy (tiny motions needed here too) */

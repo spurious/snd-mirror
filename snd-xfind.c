@@ -80,7 +80,7 @@ static void make_edit_find_dialog(snd_state *ss)
   int n;
   XmString xmstr1,xmstr2,xmstr3,titlestr;
 
-  n=0;
+  n = 0;
   if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
   xmstr1=XmStringCreate(STR_Dismiss, XmFONTLIST_DEFAULT_TAG);
   xmstr2=XmStringCreate(STR_Next, XmFONTLIST_DEFAULT_TAG);
@@ -90,10 +90,8 @@ static void make_edit_find_dialog(snd_state *ss)
   XtSetArg(args[n], XmNcancelLabelString, xmstr3); n++;
   XtSetArg(args[n], XmNautoUnmanage, FALSE); n++;
   XtSetArg(args[n], XmNdialogTitle, titlestr); n++;
-#if RESIZE_DIALOG
   XtSetArg(args[n], XmNresizePolicy, XmRESIZE_GROW); n++;
   XtSetArg(args[n], XmNnoResize, FALSE); n++;
-#endif
   XtSetArg(args[n], XmNtransient, FALSE); n++;
   edit_find_dialog = XmCreateMessageDialog(MAIN_SHELL(ss), "find", args, n);
   add_dialog(ss, edit_find_dialog);
@@ -112,7 +110,7 @@ static void make_edit_find_dialog(snd_state *ss)
   XtAddCallback(edit_find_dialog, XmNcancelCallback, edit_find_previous_callback, ss);
   XtAddCallback(edit_find_dialog, XmNokCallback, edit_find_cancel_callback, ss);
 
-  n=0;
+  n = 0;
   if (!(ss->using_schemes)) 
     {
       XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;
@@ -123,14 +121,14 @@ static void make_edit_find_dialog(snd_state *ss)
 
   rc = sndCreateFormWidget("row", edit_find_dialog, NULL, 0);
 
-  n=0;
+  n = 0;
   XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
   XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
   XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
   XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
   dl = XtCreateManagedWidget("find:", xmLabelWidgetClass, rc, args, n);
 
-  n=0;
+  n = 0;
   XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
   XtSetArg(args[n], XmNleftWidget, dl); n++;
   XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
@@ -138,7 +136,7 @@ static void make_edit_find_dialog(snd_state *ss)
   XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
   edit_find_text = sndCreateTextFieldWidget(ss, "text", rc, args, n, ACTIVATABLE, NO_COMPLETER);
 
-  n=0;
+  n = 0;
   XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
   XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
   XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
@@ -153,9 +151,8 @@ void Edit_Find_Callback(Widget w, XtPointer clientData, XtPointer callData)
   if (!edit_find_dialog)
     {
       make_edit_find_dialog(ss);
-#if MANAGE_DIALOG
       XtManageChild(edit_find_dialog);
-#endif
+
       if (!(ss->using_schemes)) 
 	{
 	  map_over_children(edit_find_dialog, set_main_color_of_widget, (void *)clientData);

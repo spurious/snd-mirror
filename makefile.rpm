@@ -1,7 +1,7 @@
 # RPM's make file for Snd in Linux with Motif and Guile
 
 CC = gcc
-CFLAGS = -O3 -DLINUX -I/usr/X11R6/include
+CFLAGS = -O3 -DLINUX -I/usr/X11R6/include -DUSE_SND
 LIBS = /usr/X11R6/lib/libXm.a /usr/X11R6/lib/libXp.a /usr/X11R6/lib/libXpm.a /usr/X11R6/lib/libXext.a /usr/X11R6/lib/libXt.a /usr/X11R6/lib/libSM.a /usr/X11R6/lib/libICE.a /usr/X11R6/lib/libX11.a /usr/local/lib/libguile.a -lm -ldl
 
 include makesnd.files

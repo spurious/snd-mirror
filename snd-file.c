@@ -1,39 +1,34 @@
 #include "snd.h"
 
-#if defined(NEXT) || defined(HAVE_SYS_DIR_H)
-  #include <sys/dir.h>
-  #include <sys/dirent.h>
-  #define dirent direct
+#if HAVE_DIRENT_H
+  #include <dirent.h>
 #else
-  #if defined(WINDOZE) && (!(defined(__CYGWIN__)))
-    #include <direct.h>
-  #else
-    #include <dirent.h>
+  #define dirent direct
+  #if HAVE_SYS_NDIR_H
+    #include <sys/ndir.h>
+  #endif
+  #if HAVE_SYS_DIR_H
+    #include <sys/dir.h>
+  #endif
+  #if HAVE_NDIR_H
+    #include <ndir.h>
   #endif
 #endif
-      
+
 #if defined(HAVE_SYS_STATFS_H)
   #include <sys/statfs.h>
 #endif
 #if defined(HAVE_SYS_VFS_H)
   #include <sys/vfs.h>
 #endif
-#if (defined(HAVE_SYS_MOUNT_H) || defined(__APPLE__) || defined(__bsdi__))
 #ifdef __bsdi__
   #include <sys/param.h>
 #endif
+#if (defined(HAVE_SYS_MOUNT_H) || defined(__APPLE__) || defined(__bsdi__))
   #include <sys/mount.h>
 #endif
 
-#ifdef NEXT
-  #define S_ISDIR(mode) (((mode) & S_IFMT) == S_IFDIR)
-  #define S_ISLNK(mode) (((mode) & S_IFMT) == S_IFLNK)
-#endif
-
-/* TODO: use HAVE_FSTATFS here (cygwin has it) */
-/* TODO: perhaps add HAVE_SYS_PARAM_H ? */
-
-#if defined(WINDOZE) || (!(defined(FSTATFS_ARGS))) || (FSTATFS_ARGS == 0) || defined(BEOS)
+#if (!HAVE_FSTATFS)
   int disk_kspace (int fd) {return(1234567);}
   int is_link(char *filename) {return(0);}
   int is_directory(char *filename) {return(0);}
@@ -51,13 +46,9 @@ int disk_kspace (int fd)
   /* in 32 bit land, the number of bytes can easily go over 2^32, so we'll look at kbytes here */
   if (err == 0) 
     {
-#ifndef NEXT
       if (buf.f_bsize == 1024) return(buf.f_bfree);
       else if (buf.f_bsize == 512) return(buf.f_bfree >> 1);
       else return((int)(buf.f_bsize * ((Float)(buf.f_bfree) / 1024.0)));
-#else
-      return(buf.f_bavail);
-#endif
     }
   return(err);
 }

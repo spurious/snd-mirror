@@ -11,19 +11,17 @@ static void create_snd_error_dialog(snd_state *ss, int popup)
   int n;
   XmString titlestr;
   titlestr = XmStringCreate(STR_Error, XmFONTLIST_DEFAULT_TAG);
-  n=0;
+  n = 0;
   if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
   XtSetArg(args[n], XmNresizePolicy, XmRESIZE_GROW); n++;
-#if RESIZE_DIALOG
   XtSetArg(args[n], XmNnoResize, FALSE); n++;
-#endif
   XtSetArg(args[n], XmNdialogTitle, titlestr); n++;
   snd_error_dialog = XmCreateErrorDialog(MAIN_PANE(ss), "error", args, n);
   XtUnmanageChild(XmMessageBoxGetChild(snd_error_dialog, XmDIALOG_SYMBOL_LABEL));
   XtUnmanageChild(XmMessageBoxGetChild(snd_error_dialog, XmDIALOG_CANCEL_BUTTON));
   XtUnmanageChild(XmMessageBoxGetChild(snd_error_dialog, XmDIALOG_HELP_BUTTON));
 
-  n=0;
+  n = 0;
   XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
   XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
   XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
@@ -37,9 +35,8 @@ static void create_snd_error_dialog(snd_state *ss, int popup)
   snd_error_history = XmCreateScrolledText(snd_error_dialog, STR_Error_History, args, n);
   XtManageChild(snd_error_history);
 
-#if MANAGE_DIALOG
-  if (popup) XtManageChild(snd_error_dialog);
-#endif
+  if (popup) 
+    XtManageChild(snd_error_dialog);
 
   if (!(ss->using_schemes)) map_over_children(snd_error_dialog, set_main_color_of_widget, (void *)ss);
   XmStringFree(titlestr);
@@ -61,7 +58,8 @@ void add_to_error_history(snd_state *ss, char *msg, int popup)
   if (!snd_error_dialog) 
     create_snd_error_dialog(ss, popup);
   else
-    if ((popup) && (!(XtIsManaged(snd_error_dialog))))
+    if ((popup) && 
+	(!(XtIsManaged(snd_error_dialog))))
       XtManageChild(snd_error_dialog);
 #if (!defined(HAVE_CONFIG_H)) || defined(HAVE_STRFTIME)
   tim = (char *)CALLOC(TIME_STR_SIZE, sizeof(char));
@@ -96,7 +94,8 @@ void post_error_dialog(snd_state *ss, char *msg)
   if (!snd_error_dialog) create_snd_error_dialog(ss, TRUE);
   error_msg = XmStringCreateLtoR(msg, XmFONTLIST_DEFAULT_TAG);
   XtVaSetValues(snd_error_dialog, XmNmessageString, error_msg, NULL);
-  if (!(XtIsManaged(snd_error_dialog))) XtManageChild(snd_error_dialog);
+  if (!(XtIsManaged(snd_error_dialog)))
+    XtManageChild(snd_error_dialog);
   XmStringFree(error_msg);
 }
 
@@ -141,19 +140,16 @@ int snd_yes_or_no_p(snd_state *ss, const char *format, ...)
       xmstr1=XmStringCreate(STR_Yes, XmFONTLIST_DEFAULT_TAG);
       xmstr2=XmStringCreate(STR_No, XmFONTLIST_DEFAULT_TAG);
 
-      n=0;
+      n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       XtSetArg(args[n], XmNresizePolicy, XmRESIZE_GROW); n++;
-#if RESIZE_DIALOG
       XtSetArg(args[n], XmNnoResize, FALSE); n++;
-#endif
       XtSetArg(args[n], XmNdialogTitle, titlestr); n++;
       XtSetArg(args[n], XmNokLabelString, xmstr1); n++;
       XtSetArg(args[n], XmNcancelLabelString, xmstr2); n++;
       yes_or_no_dialog = XmCreateQuestionDialog(MAIN_PANE(ss), "yow!", args, n);
-#if MANAGE_DIALOG
       XtManageChild(yes_or_no_dialog);
-#endif
+
       XtUnmanageChild(XmMessageBoxGetChild(yes_or_no_dialog, XmDIALOG_SYMBOL_LABEL));
       XtUnmanageChild(XmMessageBoxGetChild(yes_or_no_dialog, XmDIALOG_HELP_BUTTON));
       if (!(ss->using_schemes)) map_over_children(yes_or_no_dialog, set_main_color_of_widget, (void *)ss);
@@ -170,9 +166,11 @@ int snd_yes_or_no_p(snd_state *ss, const char *format, ...)
       XmStringFree(xmstr2);
     }
   error_msg = XmStringCreateLtoR(yes_buf, XmFONTLIST_DEFAULT_TAG);
-  if (!(XtIsManaged(yes_or_no_dialog))) XtManageChild(yes_or_no_dialog);
+  if (!(XtIsManaged(yes_or_no_dialog))) 
+    XtManageChild(yes_or_no_dialog);
   XtVaSetValues(yes_or_no_dialog, XmNmessageString, error_msg, NULL);
-  while (XtIsManaged(yes_or_no_dialog)) check_for_event(ss);
+  while (XtIsManaged(yes_or_no_dialog)) 
+    check_for_event(ss);
   XmStringFree(error_msg);
   FREE(yes_buf);
   return(yes_or_no);

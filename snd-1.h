@@ -1033,7 +1033,7 @@ int tick_amp_env(chan_info *cp, env_state *es);
 BACKGROUND_TYPE get_amp_env(GUI_POINTER ptr);
 int amp_env_maxamp_ok(chan_info *cp);
 Float amp_env_maxamp(chan_info *cp);
-int amp_env_usable(chan_info *cp, Float samples_per_pixel, int hisamp);
+int amp_env_usable(chan_info *cp, Float samples_per_pixel, int hisamp, int start_new);
 int amp_env_graph(chan_info *cp, axis_info *ap, Float samples_per_pixel, int srate);
 char *shortname(snd_info *sp);
 char *shortname_indexed(snd_info *sp);

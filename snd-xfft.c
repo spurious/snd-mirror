@@ -13,8 +13,8 @@ static GC gc,fgc;
 
 #define GRAPH_SIZE 128
 static Float current_graph_data[GRAPH_SIZE]; /* fft window graph in transform options dialog */
-static Float current_graph_fftr[GRAPH_SIZE*2];
-static Float current_graph_ffti[GRAPH_SIZE*2];
+static Float current_graph_fftr[GRAPH_SIZE * 2];
+static Float current_graph_ffti[GRAPH_SIZE * 2];
 
 #define NUM_FFT_SIZES 14
 static char *FFT_SIZES[NUM_FFT_SIZES] = {"16","32","64","128","256","512","1024","2048","4096","8192","16384","65536","262144","1048576    "};
@@ -105,7 +105,7 @@ static axis_context *make_axis_cp(snd_state *ss, Widget w)
 
 static Float fp_dB(snd_state *ss, Float py)
 {
-  return((py <= ss->lin_dB) ? 0.0 : (1.0 - ((20.0*(log10(py))) / ss->min_dB)));
+  return((py <= ss->lin_dB) ? 0.0 : (1.0 - ((20.0 * (log10(py))) / ss->min_dB)));
 }
 
 static inline short local_grf_x(double val, axis_info *ap)
@@ -139,7 +139,7 @@ static void graph_redisplay(snd_state *ss)
   iy1 = local_grf_y(current_graph_data[0], axis_cp->axis);
   xincr = 1.0 / (Float)GRAPH_SIZE;
 
-  for (i=1, x=xincr;i<GRAPH_SIZE;i++,x+=xincr)
+  for (i=1, x=xincr; i<GRAPH_SIZE; i++, x+=xincr)
     {
       ix0 = ix1;
       iy0 = iy1;
@@ -153,7 +153,7 @@ static void graph_redisplay(snd_state *ss)
   iy1 = local_grf_y(current_graph_fftr[0], axis_cp->axis);
   xincr = 1.0 / (Float)GRAPH_SIZE;
 
-  for (i=1, x=xincr;i<GRAPH_SIZE;i++,x+=xincr)
+  for (i=1, x=xincr; i<GRAPH_SIZE; i++, x+=xincr)
     {
       ix0 = ix1;
       iy0 = iy1;
@@ -180,15 +180,15 @@ static void get_fft_window_data(snd_state *ss)
 {
   int i;
   make_fft_window_1(current_graph_data, GRAPH_SIZE, fft_window(ss), fft_beta(ss));
-  for (i=0;i<GRAPH_SIZE*2;i++)
+  for (i=0; i<GRAPH_SIZE*2; i++)
     {
       current_graph_fftr[i] = 0.0;
       current_graph_ffti[i] = 0.0;
     }
-  for (i=0;i<GRAPH_SIZE;i++)
+  for (i=0; i<GRAPH_SIZE; i++)
     current_graph_fftr[i] = current_graph_data[i];
   mus_spectrum(current_graph_fftr, current_graph_ffti, NULL, GRAPH_SIZE*2, 0);
-  for (i=0;i<GRAPH_SIZE;i++)
+  for (i=0; i<GRAPH_SIZE; i++)
     current_graph_fftr[i] = (current_graph_fftr[i] + 80.0)/80.0;
 }
 
@@ -425,13 +425,14 @@ static void beta_Callback(Widget w, XtPointer clientData, XtPointer callData)
 {
   snd_state *ss = (snd_state *)clientData;
   XmScaleCallbackStruct *cb = (XmScaleCallbackStruct *)callData;
-  in_set_fft_beta(ss, (Float)(cb->value)/100.0);
-  map_chans_field(ss, FCP_BETA, (Float)(cb->value)/100.0);
+  in_set_fft_beta(ss, (Float)(cb->value) / 100.0);
+  map_chans_field(ss, FCP_BETA, (Float)(cb->value) / 100.0);
   if (fft_window_beta_in_use(fft_window(ss)))
     {
       get_fft_window_data(ss);
       graph_redisplay(ss);
-      if (transform_type(ss) == FOURIER) map_over_chans(ss, calculate_fft, NULL);
+      if (transform_type(ss) == FOURIER) 
+	map_over_chans(ss, calculate_fft, NULL);
     }
 } 
 
@@ -481,26 +482,24 @@ void fire_up_transform_dialog(snd_state *ss)
   if (!transform_dialog)
     {
       types = (XmString *)CALLOC(num_transform_types, sizeof(XmString));
-      for (i=0;i<NUM_FFT_SIZES;i++)
+      for (i=0; i<NUM_FFT_SIZES; i++)
 	if (fft_sizes[i] == fft_size(ss))
 	  {
-	    size_pos = i+1;
+	    size_pos = i + 1;
 	    break;
 	  }
       xdismiss = XmStringCreate(STR_Dismiss, XmFONTLIST_DEFAULT_TAG); /* needed by template dialog */
       xhelp = XmStringCreate(STR_Help, XmFONTLIST_DEFAULT_TAG);
       xtitle = XmStringCreate(STR_Transform_Options, XmFONTLIST_DEFAULT_TAG);
 
-      n=0;
+      n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       XtSetArg(args[n], XmNcancelLabelString, xdismiss); n++;
       XtSetArg(args[n], XmNhelpLabelString, xhelp); n++;
       XtSetArg(args[n], XmNautoUnmanage, FALSE); n++;
       XtSetArg(args[n], XmNdialogTitle, xtitle); n++;
-#if RESIZE_DIALOG
       XtSetArg(args[n], XmNresizePolicy, XmRESIZE_GROW); n++;
       XtSetArg(args[n], XmNnoResize, FALSE); n++;
-#endif
       XtSetArg(args[n], XmNtransient, FALSE); n++;
       transform_dialog = XmCreateTemplateDialog(MAIN_SHELL(ss), STR_Transform_Options, args, n);
       add_dialog(ss, transform_dialog);
@@ -519,7 +518,7 @@ void fire_up_transform_dialog(snd_state *ss)
 	  XtVaSetValues(XmMessageBoxGetChild(transform_dialog, XmDIALOG_HELP_BUTTON), XmNarmColor, (ss->sgx)->pushed_button_color, NULL);
 	}
 
-      n=0;
+      n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
@@ -538,7 +537,7 @@ void fire_up_transform_dialog(snd_state *ss)
       */
 
       /* TYPE */
-      n=0;
+      n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
@@ -550,7 +549,7 @@ void fire_up_transform_dialog(snd_state *ss)
       type_frame = sndCreateFrameWidget("type-frame", mainform, args, n);
       XtAddCallback(type_frame, XmNhelpCallback, transform_type_help_Callback, ss);
 
-      n=0;
+      n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
@@ -560,7 +559,7 @@ void fire_up_transform_dialog(snd_state *ss)
       /* needed because XmFrame only accepts one child */
       XtAddCallback(type_form, XmNhelpCallback, transform_type_help_Callback, ss);
 
-      n=0;
+      n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->highlight_color); n++;}
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
@@ -570,7 +569,7 @@ void fire_up_transform_dialog(snd_state *ss)
       type_label = XtCreateManagedWidget(STR_type, xmLabelWidgetClass, type_form, args, n);
       XtAddCallback(type_label, XmNhelpCallback, transform_type_help_Callback, ss);
 
-      n=0;
+      n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
@@ -579,21 +578,26 @@ void fire_up_transform_dialog(snd_state *ss)
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       type_list = XmCreateScrolledList(type_form, "type-list", args, n);
       if (!(ss->using_schemes)) XtVaSetValues(type_list, XmNbackground, (ss->sgx)->white, XmNforeground, (ss->sgx)->black, NULL);
-      for (i=0;i<num_transform_types;i++) 
+      for (i=0; i<num_transform_types; i++) 
 	{
 	  if (i < NUM_TRANSFORM_TYPES)
 	    types[i] = XmStringCreate(TRANSFORM_TYPES[i], XmFONTLIST_DEFAULT_TAG);
 	  else types[i] = XmStringCreate(added_transform_name(i), XmFONTLIST_DEFAULT_TAG);
 	}
-      XtVaSetValues(type_list, XmNitems, types, XmNitemCount, num_transform_types, XmNvisibleItemCount, 6, NULL);
-      for (i=0;i<num_transform_types;i++) XmStringFree(types[i]);
+      XtVaSetValues(type_list, 
+		    XmNitems, types, 
+		    XmNitemCount, num_transform_types, 
+		    XmNvisibleItemCount, 6, 
+		    NULL);
+      for (i=0; i<num_transform_types; i++) 
+	XmStringFree(types[i]);
       XtManageChild(type_list); 
       XtAddCallback(type_list, XmNbrowseSelectionCallback, transform_type_browse_Callback, ss);
       XtAddCallback(type_list, XmNhelpCallback, transform_type_help_Callback, ss);
       FREE(types);
 
       /* SIZE */
-      n=0;
+      n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNleftWidget, type_frame); n++;
@@ -606,7 +610,7 @@ void fire_up_transform_dialog(snd_state *ss)
       size_frame = sndCreateFrameWidget("size-frame", mainform, args, n);
       XtAddCallback(size_frame, XmNhelpCallback, size_help_Callback, ss);
 
-      n=0;
+      n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
@@ -615,7 +619,7 @@ void fire_up_transform_dialog(snd_state *ss)
       size_form = sndCreateFormWidget("size-form", size_frame, args, n);
       XtAddCallback(size_form, XmNhelpCallback, size_help_Callback, ss);
 
-      n=0;
+      n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->highlight_color); n++;}
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
@@ -625,26 +629,32 @@ void fire_up_transform_dialog(snd_state *ss)
       size_label = XtCreateManagedWidget(STR_size, xmLabelWidgetClass, size_form, args, n);
       XtAddCallback(size_label, XmNhelpCallback, size_help_Callback, ss);
 
-      n=0;
+      n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNtopWidget, size_label); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
-      XtSetArg(args[n], XmNtopItemPosition, (size_pos>2) ? (size_pos-2) : size_pos); n++;
+      XtSetArg(args[n], XmNtopItemPosition, (size_pos>2) ? (size_pos - 2) : size_pos); n++;
       size_list = XmCreateScrolledList(size_form, "size-list", args, n);
       if (!(ss->using_schemes)) XtVaSetValues(size_list, XmNbackground, (ss->sgx)->white, XmNforeground, (ss->sgx)->black, NULL);
-      for (i=0;i<NUM_FFT_SIZES;i++) sizes[i] = XmStringCreate(FFT_SIZES[i], XmFONTLIST_DEFAULT_TAG);
-      XtVaSetValues(size_list, XmNitems, sizes, XmNitemCount, NUM_FFT_SIZES, XmNvisibleItemCount, 6, NULL);
-      for (i=0;i<NUM_FFT_SIZES;i++) XmStringFree(sizes[i]);
+      for (i=0; i<NUM_FFT_SIZES; i++) 
+	sizes[i] = XmStringCreate(FFT_SIZES[i], XmFONTLIST_DEFAULT_TAG);
+      XtVaSetValues(size_list, 
+		    XmNitems, sizes, 
+		    XmNitemCount, NUM_FFT_SIZES, 
+		    XmNvisibleItemCount, 6, 
+		    NULL);
+      for (i=0; i<NUM_FFT_SIZES; i++) 
+	XmStringFree(sizes[i]);
       XtManageChild(size_list); 
       XtAddCallback(size_list, XmNbrowseSelectionCallback, size_browse_Callback, ss);
       XtAddCallback(size_list, XmNhelpCallback, size_help_Callback, ss);
 
 
       /* DISPLAY */
-      n=0;
+      n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNleftWidget, size_frame); n++;
@@ -655,7 +665,7 @@ void fire_up_transform_dialog(snd_state *ss)
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNborderColor, (ss->sgx)->basic_color); n++;}
       display_frame = sndCreateFrameWidget("display-frame", mainform, args, n);
 
-      n=0;
+      n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->zoom_color); n++;}
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
@@ -663,7 +673,7 @@ void fire_up_transform_dialog(snd_state *ss)
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
       display_form = sndCreateFormWidget("display-form", display_frame, args, n);
 
-      n=0;
+      n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->highlight_color); n++;}
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
@@ -672,7 +682,7 @@ void fire_up_transform_dialog(snd_state *ss)
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_CENTER); n++;
       display_label = XtCreateManagedWidget(STR_display, xmLabelWidgetClass, display_form, args, n);
 
-      n=0;
+      n = 0;
       if (!(ss->using_schemes)) 
 	{
 	  XtSetArg(args[n], XmNbackground, (ss->sgx)->lighter_blue); n++;
@@ -691,7 +701,7 @@ void fire_up_transform_dialog(snd_state *ss)
       XtAddCallback(normo_button, XmNvalueChangedCallback, normal_fft_Callback, ss);
       XmStringFree(bstr);
 
-      n=0;
+      n = 0;
       if (!(ss->using_schemes)) 
 	{
 	  XtSetArg(args[n], XmNbackground, (ss->sgx)->lighter_blue); n++;
@@ -710,7 +720,7 @@ void fire_up_transform_dialog(snd_state *ss)
       XtAddCallback(sono_button, XmNvalueChangedCallback, sonogram_Callback, ss);
       XmStringFree(bstr);
 
-      n=0;
+      n = 0;
       if (!(ss->using_schemes)) 
 	{
 	  XtSetArg(args[n], XmNbackground, (ss->sgx)->lighter_blue); n++;
@@ -729,7 +739,7 @@ void fire_up_transform_dialog(snd_state *ss)
       XtAddCallback(spectro_button, XmNvalueChangedCallback, spectrogram_Callback, ss);
       XmStringFree(bstr);
 
-      n=0;
+      n = 0;
       if (!(ss->using_schemes)) 
 	{
 	  XtSetArg(args[n], XmNbackground, (ss->sgx)->lighter_blue); n++;
@@ -747,7 +757,7 @@ void fire_up_transform_dialog(snd_state *ss)
       XtAddCallback(peaks_button, XmNvalueChangedCallback, peaks_Callback, ss);
       XmStringFree(bstr);
 
-      n=0;
+      n = 0;
       if (!(ss->using_schemes)) 
 	{
 	  XtSetArg(args[n], XmNbackground, (ss->sgx)->lighter_blue); n++;
@@ -765,7 +775,7 @@ void fire_up_transform_dialog(snd_state *ss)
       XtAddCallback(db_button, XmNvalueChangedCallback, db_Callback, ss);
       XmStringFree(bstr);
 
-      n=0;
+      n = 0;
       if (!(ss->using_schemes)) 
 	{
 	  XtSetArg(args[n], XmNbackground, (ss->sgx)->lighter_blue); n++;
@@ -783,7 +793,7 @@ void fire_up_transform_dialog(snd_state *ss)
       XtAddCallback(logfreq_button, XmNvalueChangedCallback, logfreq_Callback, ss);
       XmStringFree(bstr);
 
-      n=0;
+      n = 0;
       if (!(ss->using_schemes)) 
 	{
 	  XtSetArg(args[n], XmNbackground, (ss->sgx)->lighter_blue); n++;
@@ -801,7 +811,7 @@ void fire_up_transform_dialog(snd_state *ss)
       XtAddCallback(normalize_button, XmNvalueChangedCallback, normalize_Callback, ss);
       XmStringFree(bstr);
 
-      n=0;
+      n = 0;
       if (!(ss->using_schemes)) 
 	{
 	  XtSetArg(args[n], XmNbackground, (ss->sgx)->lighter_blue); n++;
@@ -822,7 +832,7 @@ void fire_up_transform_dialog(snd_state *ss)
 
       
       /* WAVELET */
-      n=0;
+      n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_OPPOSITE_WIDGET); n++;
@@ -835,7 +845,7 @@ void fire_up_transform_dialog(snd_state *ss)
       wavelet_frame = sndCreateFrameWidget("wavelet-frame", mainform, args, n);
       XtAddCallback(wavelet_frame, XmNhelpCallback, wavelet_help_Callback, ss);
 
-      n=0;
+      n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
@@ -844,7 +854,7 @@ void fire_up_transform_dialog(snd_state *ss)
       wavelet_form = sndCreateFormWidget("wavelet-form", wavelet_frame, args, n);
       XtAddCallback(wavelet_form, XmNhelpCallback, wavelet_help_Callback, ss);
 
-      n=0;
+      n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->highlight_color); n++;}
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
@@ -854,7 +864,7 @@ void fire_up_transform_dialog(snd_state *ss)
       wavelet_label = XtCreateManagedWidget(STR_wavelet, xmLabelWidgetClass, wavelet_form, args, n);
       XtAddCallback(wavelet_label, XmNhelpCallback, wavelet_help_Callback, ss);
 
-      n=0;
+      n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
@@ -863,16 +873,22 @@ void fire_up_transform_dialog(snd_state *ss)
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       wavelet_list = XmCreateScrolledList(wavelet_form, "wavelet-list", args, n);
       if (!(ss->using_schemes)) XtVaSetValues(wavelet_list, XmNbackground, (ss->sgx)->white, XmNforeground, (ss->sgx)->black, NULL);
-      for (i=0;i<NUM_WAVELETS;i++) wavelets[i] = XmStringCreate(WAVELETS[i], XmFONTLIST_DEFAULT_TAG);
-      XtVaSetValues(wavelet_list, XmNitems, wavelets, XmNitemCount, NUM_WAVELETS, XmNvisibleItemCount, 5, NULL);
-      for (i=0;i<NUM_WAVELETS;i++) XmStringFree(wavelets[i]);
+      for (i=0; i<NUM_WAVELETS; i++) 
+	wavelets[i] = XmStringCreate(WAVELETS[i], XmFONTLIST_DEFAULT_TAG);
+      XtVaSetValues(wavelet_list, 
+		    XmNitems, wavelets, 
+		    XmNitemCount, NUM_WAVELETS, 
+		    XmNvisibleItemCount, 5, 
+		    NULL);
+      for (i=0; i<NUM_WAVELETS; i++) 
+	XmStringFree(wavelets[i]);
       XtManageChild(wavelet_list); 
       XtAddCallback(wavelet_list, XmNbrowseSelectionCallback, wavelet_browse_Callback, ss);
       XtAddCallback(wavelet_list, XmNhelpCallback, wavelet_help_Callback, ss);
 
 
       /* WINDOW */
-      n=0;
+      n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNleftWidget, wavelet_frame); n++;
@@ -886,7 +902,7 @@ void fire_up_transform_dialog(snd_state *ss)
       window_frame = sndCreateFrameWidget("window-frame", mainform, args, n);
       XtAddCallback(window_frame, XmNhelpCallback, window_help_Callback, ss);
 
-      n=0;
+      n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
@@ -895,7 +911,7 @@ void fire_up_transform_dialog(snd_state *ss)
       window_form = sndCreateFormWidget("window-form", window_frame, args, n);
       XtAddCallback(window_form, XmNhelpCallback, window_help_Callback, ss);
 
-      n=0;
+      n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       XtSetArg(args[n], XmNorientation, XmHORIZONTAL); n++;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
@@ -910,7 +926,7 @@ void fire_up_transform_dialog(snd_state *ss)
       window_beta_scale = XtCreateManagedWidget("scale", xmScaleWidgetClass, window_form, args, n);
       XtAddCallback(window_beta_scale, XmNhelpCallback, beta_help_Callback, ss);
 
-      n=0;
+      n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->highlight_color); n++;}
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
@@ -920,7 +936,7 @@ void fire_up_transform_dialog(snd_state *ss)
       window_label = XtCreateManagedWidget(STR_window, xmLabelWidgetClass, window_form, args, n);
       XtAddCallback(window_label, XmNhelpCallback, window_help_Callback, ss);
 
-      n=0;
+      n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_WIDGET); n++;
@@ -931,9 +947,15 @@ void fire_up_transform_dialog(snd_state *ss)
       XtSetArg(args[n], XmNtopItemPosition, (fft_window(ss)>2) ? (fft_window(ss)-1) : (fft_window(ss)+1)); n++;
       window_list = XmCreateScrolledList(window_form, "window-list", args, n);
       if (!(ss->using_schemes)) XtVaSetValues(window_list, XmNbackground, (ss->sgx)->white, XmNforeground, (ss->sgx)->black, NULL);
-      for (i=0;i<GUI_NUM_FFT_WINDOWS;i++) windows[i] = XmStringCreate(FFT_WINDOWS[i], XmFONTLIST_DEFAULT_TAG);
-      XtVaSetValues(window_list, XmNitems, windows, XmNitemCount, GUI_NUM_FFT_WINDOWS, XmNvisibleItemCount, 5, NULL);
-      for (i=0;i<GUI_NUM_FFT_WINDOWS;i++) XmStringFree(windows[i]);
+      for (i=0; i<GUI_NUM_FFT_WINDOWS; i++)
+	windows[i] = XmStringCreate(FFT_WINDOWS[i], XmFONTLIST_DEFAULT_TAG);
+      XtVaSetValues(window_list, 
+		    XmNitems, windows, 
+		    XmNitemCount, GUI_NUM_FFT_WINDOWS, 
+		    XmNvisibleItemCount, 5, 
+		    NULL);
+      for (i=0; i<GUI_NUM_FFT_WINDOWS; i++) 
+	XmStringFree(windows[i]);
       XtManageChild(window_list); 
       XtAddCallback(window_list, XmNbrowseSelectionCallback, window_browse_Callback, ss);
       XtAddCallback(window_list, XmNhelpCallback, window_help_Callback, ss);
@@ -941,7 +963,7 @@ void fire_up_transform_dialog(snd_state *ss)
 
 
       /* GRAPH */
-      n=0;
+      n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNleftWidget, window_frame); n++;
@@ -953,7 +975,7 @@ void fire_up_transform_dialog(snd_state *ss)
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNborderColor, (ss->sgx)->basic_color); n++;}
       graph_frame = sndCreateFrameWidget("graph-frame", mainform, args, n);
 
-      n=0;
+      n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
@@ -961,7 +983,7 @@ void fire_up_transform_dialog(snd_state *ss)
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
       graph_form = sndCreateFormWidget("graph-form", graph_frame, args, n);
 
-      n=0;
+      n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->highlight_color); n++;}
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
@@ -971,7 +993,7 @@ void fire_up_transform_dialog(snd_state *ss)
       graph_label = XtCreateManagedWidget(STR_window, xmLabelWidgetClass, graph_form, args, n);
       /* label should change according to what is being displayed */
 
-      n=0;
+      n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->graph_color); n++;}
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNtopWidget, graph_label); n++;
@@ -1006,7 +1028,8 @@ void fire_up_transform_dialog(snd_state *ss)
       XmListSelectPos(size_list, size_pos, FALSE);
       XmListSelectPos(window_list, fft_window(ss)+1, FALSE);
       need_callback = 1;
-      if (fft_window_beta_in_use(fft_window(ss))) XtVaSetValues(window_beta_scale, XmNbackground, (ss->sgx)->highlight_color, NULL);
+      if (fft_window_beta_in_use(fft_window(ss))) 
+	XtVaSetValues(window_beta_scale, XmNbackground, (ss->sgx)->highlight_color, NULL);
 
       FREE(n1);
       FREE(n2);
@@ -1015,7 +1038,8 @@ void fire_up_transform_dialog(snd_state *ss)
     {
       raise_dialog(transform_dialog);
     }
-  if (!XtIsManaged(transform_dialog)) XtManageChild(transform_dialog);
+  if (!XtIsManaged(transform_dialog)) 
+    XtManageChild(transform_dialog);
   if (need_callback)
     {
       set_label(graph_label, FFT_WINDOWS[fft_window(ss)]);
@@ -1042,7 +1066,8 @@ void set_fft_beta(snd_state *ss, Float val)
       get_fft_window_data(ss);
       graph_redisplay(ss);
     }
-  if (!(ss->graph_hook_active)) map_over_chans(ss, calculate_fft, NULL);
+  if (!(ss->graph_hook_active)) 
+    map_over_chans(ss, calculate_fft, NULL);
 }
 
 void set_fft_style(snd_state *ss, int val)
@@ -1067,7 +1092,8 @@ void set_fft_style(snd_state *ss, int val)
 	XmToggleButtonSetState(sono_button, FALSE, FALSE);
 	break;
       }
-  if (!(ss->graph_hook_active)) map_over_chans(ss, calculate_fft, NULL);
+  if (!(ss->graph_hook_active)) 
+    map_over_chans(ss, calculate_fft, NULL);
 }
 
 void set_fft_size(snd_state *ss, int val)
@@ -1077,7 +1103,7 @@ void set_fft_size(snd_state *ss, int val)
   map_over_chans(ss, map_chans_fft_size, (void *)val);
   if (transform_dialog)
     {
-      for (i=0;i<NUM_FFT_SIZES;i++)
+      for (i=0; i<NUM_FFT_SIZES; i++)
 	if (fft_sizes[i] == val)
 	  {
 	    XmListSelectPos(size_list, i+1, FALSE);
@@ -1108,8 +1134,9 @@ void set_transform_type(snd_state *ss, int val)
   if (!(ss->graph_hook_active)) map_over_chans(ss, force_fft_clear, NULL);
   in_set_transform_type(ss, val);
   map_over_chans(ss, map_chans_transform_type, (void *)val);
-  if (!(ss->graph_hook_active)) map_over_chans(ss, calculate_fft, NULL);
-  if (transform_dialog) XmListSelectPos(type_list, val+1, FALSE);
+  if (!(ss->graph_hook_active)) 
+    map_over_chans(ss, calculate_fft, NULL);
+  if (transform_dialog) XmListSelectPos(type_list, val + 1, FALSE);
 }
 
 void set_wavelet_type(snd_state *ss, int val)
@@ -1117,7 +1144,9 @@ void set_wavelet_type(snd_state *ss, int val)
   if (transform_dialog) XmListSelectPos(wavelet_list, val, FALSE);
   in_set_wavelet_type(ss, val);
   map_over_chans(ss, map_chans_wavelet_type, (void *)val);
-  if ((transform_type(ss) == WAVELET) && (!(ss->graph_hook_active))) map_over_chans(ss, calculate_fft, NULL);
+  if ((transform_type(ss) == WAVELET) && 
+      (!(ss->graph_hook_active))) 
+    map_over_chans(ss, calculate_fft, NULL);
 }
 
 /* various set- cases need to be reflected in the transform dialog */
@@ -1127,7 +1156,8 @@ void set_show_fft_peaks(snd_state *ss, int val)
   map_over_chans(ss, map_show_fft_peaks, (void *)val);
   if (transform_dialog) 
     set_toggle_button(peaks_button, val, FALSE, (void *)ss);
-  if (!(ss->graph_hook_active)) map_over_chans(ss, calculate_fft, NULL);
+  if (!(ss->graph_hook_active)) 
+    map_over_chans(ss, calculate_fft, NULL);
 }
 
 void set_fft_log_frequency(snd_state *ss, int val)
@@ -1136,7 +1166,8 @@ void set_fft_log_frequency(snd_state *ss, int val)
   map_over_chans(ss, map_chans_fft_log_frequency, (void *)val);
   if (transform_dialog)
     set_toggle_button(logfreq_button, val, FALSE, (void *)ss);
-  if (!(ss->graph_hook_active)) map_over_chans(ss, calculate_fft, NULL);
+  if (!(ss->graph_hook_active)) 
+    map_over_chans(ss, calculate_fft, NULL);
 }
 
 void set_fft_log_magnitude(snd_state *ss, int val)
@@ -1145,7 +1176,8 @@ void set_fft_log_magnitude(snd_state *ss, int val)
   map_over_chans(ss, map_chans_fft_log_magnitude, (void *)val);
   if (transform_dialog) 
     set_toggle_button(db_button, val, FALSE, (void *)ss);
-  if (!(ss->graph_hook_active)) map_over_chans(ss, calculate_fft, NULL);
+  if (!(ss->graph_hook_active)) 
+    map_over_chans(ss, calculate_fft, NULL);
 }
 
 void set_normalize_fft(snd_state *ss, int val)
@@ -1154,7 +1186,8 @@ void set_normalize_fft(snd_state *ss, int val)
   map_over_chans(ss, map_chans_normalize_fft, (void *)val);
   if (transform_dialog) 
     set_toggle_button(normalize_button, val, FALSE, (void *)ss);
-  if (!(ss->graph_hook_active)) map_over_chans(ss, calculate_fft, NULL);
+  if (!(ss->graph_hook_active)) 
+    map_over_chans(ss, calculate_fft, NULL);
 }
 
 void set_show_selection_transform(snd_state *ss, int show)
@@ -1162,7 +1195,8 @@ void set_show_selection_transform(snd_state *ss, int show)
   in_set_show_selection_transform(ss, show);
   if (transform_dialog)
     set_toggle_button(selection_button, show, FALSE, (void *)ss); 
-  if (!(ss->graph_hook_active)) map_over_chans(ss, calculate_fft, NULL);
+  if (!(ss->graph_hook_active)) 
+    map_over_chans(ss, calculate_fft, NULL);
 }
 
 #if HAVE_GUILE

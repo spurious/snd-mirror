@@ -6,18 +6,21 @@
  * TODO  completion activated in emacs (snd-as-subjob)
  */
 
-#if defined(NEXT) || defined(HAVE_SYS_DIR_H)
-  #include <sys/dir.h>
-  #include <sys/dirent.h>
-  #define dirent direct
+#if HAVE_DIRENT_H
+  #include <dirent.h>
 #else
-  #if defined(WINDOZE) && (!(defined(__CYGWIN__)))
-    #include <direct.h>
-  #else
-    #include <dirent.h>
+  #define dirent direct
+  #if HAVE_SYS_NDIR_H
+    #include <sys/ndir.h>
+  #endif
+  #if HAVE_SYS_DIR_H
+    #include <sys/dir.h>
+  #endif
+  #if HAVE_NDIR_H
+    #include <ndir.h>
   #endif
 #endif
-      
+
 #define NUM_COMMANDS 563
 
 static char *snd_commands[NUM_COMMANDS]={

@@ -59,7 +59,7 @@ static int be_snd_checked_write(int fd, unsigned char *buf, int bytes)
 #ifdef MUS_LITTLE_ENDIAN
   unsigned char tmp;
   int i;
-  for (i=0;i<bytes;i+=2)
+  for (i=0; i<bytes; i+=2)
     {
       tmp = buf[i];
       buf[i] = buf[i+1];
@@ -290,11 +290,11 @@ static int read_ieee_text(char *oldname, char *newname, char *hdr)
 	    {
 	      if (srate == 0)
 		{
-		  for (i=op+1, j=0;(i<inp) && (j < 13);i++,j++) str[j] = buf[i];
+		  for (i=op+1, j=0;(i<inp) && (j < 13); i++,j++) str[j] = buf[i];
 		  str[13] = '\0';
 		  if (strcmp(str, "sampling rate") == 0) 
 		    {
-		      for (i=op+15, j=0;j<6;i++,j++) str[j] = buf[i];
+		      for (i=op+15, j=0;j<6; i++,j++) str[j] = buf[i];
 		      str[6] = '\0';
 		      sscanf(str, "%f", &fsrate);
 		      srate = (int)(fsrate*1000);
@@ -303,7 +303,7 @@ static int read_ieee_text(char *oldname, char *newname, char *hdr)
 		    {
 		      if (strcmp(str, "Sampling Rate") == 0)
 			{
-			  for (i=op+15, j=0;j<6;i++,j++) str[j] = buf[i];
+			  for (i=op+15, j=0;j<6; i++,j++) str[j] = buf[i];
 			  str[6] = '\0';
 			  sscanf(str, "%d", &srate);
 			}
@@ -562,7 +562,7 @@ static int read_ibm_cvsd(char *oldname, char *newname, char *hdr)
 	  /* each byte becomes 8 samples */
 	  chn = 0;
 	  byte = buf[inp]; inp++;
-	  for (i=0;i<8;i++)
+	  for (i=0; i<8; i++)
 	    {
 	      /* are the bits consumed low to high or high to low? assume low to high for now (count i down from 7 to 0 if high to low) */
 	      if (byte & (1<<i)) curvals[chn]++; else curvals[chn]--;
@@ -605,7 +605,7 @@ static int read_hcom(char *oldname, char *newname, char *hdr)
   d = (short **)CALLOC(size, sizeof(short *));
   read(fd, buf, size*4+2); /* 2 for pad byte + first sample */
   osp = 0;
-  for (i=0;i<size;i++) 
+  for (i=0; i<size; i++) 
     {
       d[i] = (short *)CALLOC(2, sizeof(short));
       d[i][0] = mus_char_to_bshort((unsigned char *)(buf+osp)); osp+=2;
@@ -636,7 +636,7 @@ static int read_hcom(char *oldname, char *newname, char *hdr)
 	{
 	  if (snd_checked_write(fs, (unsigned char *)hdr, TRANS_BUF_SIZE) == MUS_ERROR) 
 	    {
-	      for (i=0;i<size;i++) FREE(d[i]);
+	      for (i=0; i<size; i++) FREE(d[i]);
 	      FREE(d);
 	      CLEANUP();
 	      RETURN_MUS_WRITE_ERROR(oldname, newname);
@@ -670,7 +670,7 @@ static int read_hcom(char *oldname, char *newname, char *hdr)
 	}
     }
   err = snd_checked_write(fs, (unsigned char *)hdr, outp);
-  for (i=0;i<size;i++) FREE(d[i]);
+  for (i=0; i<size; i++) FREE(d[i]);
   FREE(d);
   CLEANUP();
   if (err == MUS_ERROR) RETURN_MUS_WRITE_ERROR(oldname, newname);
@@ -1000,7 +1000,7 @@ static int read_oki_adpcm(char *oldname, char *newname, char *hdr)
     {
       totalin = read(fd, buf, blksiz);
       if (totalin <= 0) break;
-      for (i=0, j=0;i<totalin;i++)
+      for (i=0, j=0; i<totalin; i++)
 	{
 	  /* samps_read will be twice totalin because these are 4-bit quantities */
 	  buf1[j++] = oki_adpcm_decode((char)((buf[i]>>4) & 0x0f), &stat);
@@ -1045,7 +1045,7 @@ static int read_12bit(char *oldname, char *newname, char *hdr)
     {
       totalin = read(fd, buf, (int)(TRANS_BUF_SIZE*1.5));
       if (totalin <= 0) break;
-      for (i=0, j=0;i<totalin;i+=3,j+=2)
+      for (i=0, j=0; i<totalin; i+=3,j+=2)
 	{
 	  buf1[j] = (signed short)((buf[i]<<8) + (buf[i+1]&0xf0));
 	  buf1[j+1] = (signed short)((buf[i+2]<<8) + ((buf[i+1]&0xf)<<4));
@@ -1091,7 +1091,7 @@ static int read_iff(char *oldname, char *newname, int orig, char *hdr)
     {
       totalin = read(fd, hdr, TRANS_BUF_SIZE);
       if (totalin <= 0) break;
-      for (i=0, j=0;i<totalin;i++,j+=2)
+      for (i=0, j=0; i<totalin; i++,j+=2)
 	{
 	  f1 = ((unsigned char)hdr[i])&0xf;
 	  f2 = (((unsigned char)hdr[i])>>4)&0xf;
@@ -1172,7 +1172,7 @@ static int read_avi(char *oldname, char *newname, char *hdr)
 		{
 #ifndef MUS_LITTLE_ENDIAN
 		  bb = (unsigned char *)buf;
-		  for (i=0;i<totalin/2;i++,bb+=2) buf[i] = mus_char_to_lshort(bb);
+		  for (i=0; i<totalin/2; i++,bb+=2) buf[i] = mus_char_to_lshort(bb);
 #endif		  
 		  if (be_snd_checked_write(fs, (unsigned char *)buf, totalin) == MUS_ERROR) 
 		    {
@@ -1202,7 +1202,7 @@ static short power2[15] = {1, 2, 4, 8, 0x10, 0x20, 0x40, 0x80, 0x100, 0x200, 0x4
 static int quan(int val, short *table, int size)
 {
   int i;
-  for (i=0;i<size;i++)if (val < *table++) break;
+  for (i=0; i<size; i++)if (val < *table++) break;
   return (i);
 }
 
@@ -1246,7 +1246,7 @@ static int predictor_zero(struct g72x_state *state_ptr)
 {
   int i,sezi;
   sezi = fmult(state_ptr->b[0] >> 2, state_ptr->dq[0]);
-  for (i=1;i<6;i++) sezi += fmult(state_ptr->b[i] >> 2, state_ptr->dq[i]);
+  for (i=1; i<6; i++) sezi += fmult(state_ptr->b[i] >> 2, state_ptr->dq[i]);
   return (sezi);
 }
 

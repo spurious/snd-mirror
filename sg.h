@@ -2,7 +2,7 @@
 #define SG_H
 /* macros useful in all the files using guile */
 
-#if (HAVE_GUILE) && (!(HAVE_GUILE_1_3_0))
+#if (HAVE_SCM_CREATE_HOOK)
   #define HAVE_GENERALIZED_SET 1
   #define HAVE_NEW_SMOB 1
   #define HAVE_KEYWORDS 1
@@ -80,10 +80,10 @@
   #define TO_C_INT_OR_ELSE(a, b) to_c_int_or_else(a, b, "to_c_int_or_else")
 #endif
 
-#if HAVE_GUILE_1_3
-  #define TO_SCM_DOUBLE(a) scm_makdbl(a, 0.0)
-#else
+#if HAVE_SCM_MAKE_REAL
   #define TO_SCM_DOUBLE(a) scm_make_real(a)
+#else
+  #define TO_SCM_DOUBLE(a) scm_makdbl(a, 0.0)
 #endif
 
 #define TO_SCM_INT(a) scm_long2num((long)a)

@@ -63,7 +63,9 @@ env_state *make_env_state(chan_info *cp, int samples)
       es->ep = (env_info *)CALLOC(1, sizeof(env_info));
       ep = es->ep;
       old_ep = cp->amp_envs[cp->edit_ctr - 1];
-      if ((cp->edit_ctr > 0) && (old_ep) && (old_ep->completed))
+      if ((cp->edit_ctr > 0) && 
+	  (old_ep) && 
+	  (old_ep->completed))
 	{
 	  /* here in many cases, the preceding edit's amp env has most of the data we need.
 	   * cp->edits[cp->edit_ctr] describes the current edit, with beg and end, so in the
@@ -88,7 +90,7 @@ env_state *make_env_state(chan_info *cp, int samples)
 		  start_bin = (int)(start / ep->samps_per_bin);
 		  ep->fmin = MUS_SAMPLE_0;
 		  ep->fmax = MUS_SAMPLE_0;
-		  for (i=0;i<start_bin;i++) 
+		  for (i=0; i<start_bin; i++) 
 		    {
 		      ep->data_min[i] = old_ep->data_min[i];
 		      ep->data_max[i] = old_ep->data_max[i];
@@ -101,7 +103,7 @@ env_state *make_env_state(chan_info *cp, int samples)
 		      old_end_bin = (int)(end / old_ep->samps_per_bin);
 		      end += (samples - old_samples);
 		      end_bin = (int)(end / ep->samps_per_bin);
-		      for (i=end_bin, j=old_end_bin;(i < ep->amp_env_size) && (j < old_ep->amp_env_size);i++,j++)
+		      for (i=end_bin, j=old_end_bin; (i < ep->amp_env_size) && (j < old_ep->amp_env_size); i++, j++)
 			{
 			  ep->data_min[i] = old_ep->data_min[j];
 			  ep->data_max[i] = old_ep->data_max[j];
@@ -173,7 +175,7 @@ int tick_amp_env(chan_info *cp, env_state *es)
 	      val = next_sample(sfd);
 	      ymin = val;
 	      ymax = val;
-	      for (i=1;i<ep->samps_per_bin;i++)
+	      for (i=1; i<ep->samps_per_bin; i++)
 		{
 		  val = next_sample(sfd);
 		  if (ymin > val) 
@@ -229,7 +231,7 @@ int tick_amp_env(chan_info *cp, env_state *es)
 	      val = bufs[nc][m++];
 	      ymin = val;
 	      ymax = val;
-	      for (i=1;i<ep->samps_per_bin;i+=subsamp,m++)
+	      for (i=1; i<ep->samps_per_bin; i+=subsamp,m++)
 		{
 		  val = bufs[nc][m];
 		  if (ymin > val) ymin = val; else if (ymax < val) ymax = val;
@@ -317,7 +319,7 @@ Float amp_env_maxamp(chan_info *cp)
   return(MUS_SAMPLE_TO_FLOAT(ymax));
 }
 
-int amp_env_usable(chan_info *cp, Float samples_per_pixel, int hisamp) 
+int amp_env_usable(chan_info *cp, Float samples_per_pixel, int hisamp, int start_new) 
 {
   env_info *ep;
   int bin;
@@ -335,7 +337,8 @@ int amp_env_usable(chan_info *cp, Float samples_per_pixel, int hisamp)
 		   ((ep->top_bin != 0) && (bin > ep->top_bin))))
 	return(samples_per_pixel >= (Float)(ep->samps_per_bin));
     }
-  if ((!(cgx->amp_env_in_progress)) && 
+  if ((start_new) &&
+      (!(cgx->amp_env_in_progress)) && 
       (current_ed_samples(cp) > AMP_ENV_CUTOFF)) 
     start_amp_env(cp);
   return(FALSE);
@@ -420,7 +423,7 @@ void amp_env_scale_by(chan_info *cp, Float scl)
 	{
 	  new_ep->fmin = (MUS_SAMPLE_TYPE)(old_ep->fmin * scl);
 	  new_ep->fmax = (MUS_SAMPLE_TYPE)(old_ep->fmax * scl);
-	  for (i=0;i<new_ep->amp_env_size;i++) 
+	  for (i=0; i<new_ep->amp_env_size; i++) 
 	    {
 	      new_ep->data_min[i] = (MUS_SAMPLE_TYPE)(old_ep->data_min[i] * scl);
 	      new_ep->data_max[i] = (MUS_SAMPLE_TYPE)(old_ep->data_max[i] * scl);
@@ -430,7 +433,7 @@ void amp_env_scale_by(chan_info *cp, Float scl)
 	{
 	  new_ep->fmax = (MUS_SAMPLE_TYPE)(old_ep->fmin * scl);
 	  new_ep->fmin = (MUS_SAMPLE_TYPE)(old_ep->fmax * scl);
-	  for (i=0;i<new_ep->amp_env_size;i++) 
+	  for (i=0; i<new_ep->amp_env_size; i++) 
 	    {
 	      new_ep->data_max[i] = (MUS_SAMPLE_TYPE)(old_ep->data_min[i] * scl);
 	      new_ep->data_min[i] = (MUS_SAMPLE_TYPE)(old_ep->data_max[i] * scl);
@@ -465,7 +468,7 @@ void amp_env_scale_selection_by(chan_info *cp, Float scl, int beg, int num)
       new_ep->samps_per_bin = old_ep->samps_per_bin;
       end = beg+num-1;
       start = beg - new_ep->samps_per_bin;
-      for (i=0, cursamp=0;i<new_ep->amp_env_size;i++,cursamp+=new_ep->samps_per_bin) 
+      for (i=0, cursamp=0; i<new_ep->amp_env_size; i++,cursamp+=new_ep->samps_per_bin) 
 	{
 	  if ((cursamp >= end) || (cursamp <= start))
 	    {
@@ -534,7 +537,7 @@ void amp_env_scale_selection_by(chan_info *cp, Float scl, int beg, int num)
 
 env_info *amp_env_copy(chan_info *cp, int reversed)
 {
-  env_info *old_ep,*new_ep=NULL;
+  env_info *old_ep,*new_ep = NULL;
   int i,j;
   old_ep = cp->amp_envs[cp->edit_ctr];
   if ((old_ep) && (old_ep->completed))
@@ -548,7 +551,7 @@ env_info *amp_env_copy(chan_info *cp, int reversed)
       new_ep->fmax = old_ep->fmax;
       if (reversed)
 	{
-	  for (i=0, j=new_ep->amp_env_size-1;i<new_ep->amp_env_size;i++,j--) 
+	  for (i=0, j=new_ep->amp_env_size-1; i<new_ep->amp_env_size; i++, j--) 
 	    {
 	      new_ep->data_min[j] = old_ep->data_min[i];
 	      new_ep->data_max[j] = old_ep->data_max[i];
@@ -556,7 +559,7 @@ env_info *amp_env_copy(chan_info *cp, int reversed)
 	}
       else
 	{
-	  for (i=0;i<new_ep->amp_env_size;i++) 
+	  for (i=0; i<new_ep->amp_env_size; i++) 
 	    {
 	      new_ep->data_min[i] = old_ep->data_min[i];
 	      new_ep->data_max[i] = old_ep->data_max[i];
@@ -600,20 +603,20 @@ Float srate_changed(Float val, char *srcbuf, int style, int tones)
   switch (style)
     {
     case SPEED_AS_RATIO: 
-      for (i=1;i<TOTAL_RATS;i++)
+      for (i=1; i<TOTAL_RATS; i++)
 	if (rat_values[i] > val) 
 	  break;
       sprintf(srcbuf, "%s", rat_names[i-1]);
-      return(rat_values[i-1]);
+      return(rat_values[i - 1]);
       break;
     case SPEED_AS_SEMITONE: 
       /* find closest semitone to val */
       semi = round(log(val) * ((Float)tones / log(2.0)));
       /* space until (-) num (-52 to 52 is its range if 12-tone) */
-      for (i=0;i<3;i++) srcbuf[i] = ' '; 
+      for (i=0; i<3; i++) srcbuf[i] = ' '; 
       sprintf(src_txt_buf, "%d", semi);
       j = strlen(src_txt_buf) - 1;
-      for (i=3;(i>=0) && (j>=0);i--,j--) 
+      for (i=3; (i>=0) && (j>=0); i--, j--) 
 	srcbuf[i] = src_txt_buf[j];
       return(pow(2.0, ((Float)semi / (Float)tones)));
       break;
@@ -653,7 +656,7 @@ char *shortname_indexed(snd_info *sp)
 void add_sound_data(char *filename, snd_info *sp, snd_state *ss)
 {
   int i;
-  for (i=0;i<sp->nchans;i++) 
+  for (i=0; i<sp->nchans; i++) 
     add_channel_data(filename, sp->chans[i], sp->hdr, ss);
 }
 
@@ -794,7 +797,9 @@ void save_control_panel(snd_info *sp)
       if (cs->filter_env) free_env(cs->filter_env);
       cs->filter_env = copy_env(sp->filter_env);
     }
-  if (sp->play_direction == 1) cs->direction = 0; else cs->direction = 1;
+  if (sp->play_direction == 1) 
+    cs->direction = 0; 
+  else cs->direction = 1;
 }
 
 void restore_control_panel(snd_info *sp) 
@@ -888,7 +893,7 @@ static void remember_string(snd_info *sp, char *str, int which)
     }
   top = mh->strings_size - 1;
   if (mh->strings[top]) FREE(mh->strings[top]);
-  for (i=top;i>0;i--) mh->strings[i] = mh->strings[i-1];
+  for (i=top; i>0; i--) mh->strings[i] = mh->strings[i-1];
   mh->strings[0] = copy_string(str);
   mh->strings_pos = 0;
   mh->first_time = 1;
@@ -948,7 +953,7 @@ static void clear_strings(snd_info *sp, int which)
 	case MINIBUFFER: sp->minibuffer_history = NULL; break;
 	case FILTER_TEXT: sp->filter_history = NULL; break;
 	}
-      for (i=0;i<mh->strings_size;i++) 
+      for (i=0; i<mh->strings_size; i++) 
 	if (mh->strings[i])
 	  FREE(mh->strings[i]);
       FREE(mh->strings);
@@ -1126,7 +1131,7 @@ BACKGROUND_TYPE apply_controls(GUI_POINTER ptr)
 		case APPLY_TO_SOUND:
 		  if (sp->nchans > 1) 
 		    remember_temp(ap->ofile, sp->nchans);
-		  for (i=0;i<sp->nchans;i++)
+		  for (i=0; i<sp->nchans; i++)
 		    file_override_samples(apply_dur, ap->ofile, sp->chans[i], i,
 					  (sp->nchans > 1) ? MULTICHANNEL_DELETION : DELETE_ME,
 					  LOCK_MIXES, "Apply");
@@ -1142,7 +1147,7 @@ BACKGROUND_TYPE apply_controls(GUI_POINTER ptr)
 		  si = selection_sync();
 		  if (apply_dur == selection_len())
 		    {
-		      for (i=0;i<si->chans;i++)
+		      for (i=0; i<si->chans; i++)
 			{
 			  file_change_samples(si->begs[i], apply_dur, ap->ofile, si->cps[i], i,
 					      (si->chans > 1) ? MULTICHANNEL_DELETION : DELETE_ME,
@@ -1154,7 +1159,7 @@ BACKGROUND_TYPE apply_controls(GUI_POINTER ptr)
 		    {
 		      int ok;
 		      ok = delete_selection(S_src_selection, DONT_UPDATE_DISPLAY);
-		      for (i=0;i<si->chans;i++)
+		      for (i=0; i<si->chans; i++)
 			{
 			  file_insert_samples(si->begs[i], apply_dur, ap->ofile, si->cps[i], 0, DELETE_ME, "Apply to selection");
 			  reactivate_selection(si->cps[i], si->begs[i], si->begs[i] + apply_dur);
@@ -1168,9 +1173,10 @@ BACKGROUND_TYPE apply_controls(GUI_POINTER ptr)
 	      set_apply_button(sp, FALSE);
 	      sp->apply_ok = 0;
 	      
-	      if ((sp->expanding) || (sp->play_direction != 1) || (sp->srate != 1.0))
+	      if ((sp->expanding) || 
+		  (sp->play_direction != 1) || (sp->srate != 1.0))
 		{
-		  for (i=0;i<sp->nchans;i++)
+		  for (i=0; i<sp->nchans; i++)
 		    {
 		      cp = sp->chans[i];
 		      if (cp->marks)
@@ -1239,7 +1245,7 @@ static void set_reverb_decay(snd_state *ss, Float val)
   int i;
   snd_info *sp;
   in_set_reverb_decay(ss, val);
-  for (i=0;i<ss->max_sounds;i++)
+  for (i=0; i<ss->max_sounds; i++)
     {
       sp = ss->sounds[i];
       if ((sp) && (sp->inuse))
@@ -1353,7 +1359,7 @@ static SCM sp_iread(SCM snd_n, int fld, char *caller)
   if (SCM_EQ_P(snd_n, SCM_BOOL_T))
     {
       ss = get_global_state();
-      for (i=0;i<ss->max_sounds;i++)
+      for (i=0; i<ss->max_sounds; i++)
 	{
 	  sp = ss->sounds[i];
 	  if ((sp) && (sp->inuse))
@@ -1414,7 +1420,7 @@ static SCM sp_iwrite(SCM snd_n, SCM val, int fld, char *caller)
   if (SCM_EQ_P(snd_n, SCM_BOOL_T))
     {
       ss = get_global_state();
-      for (i=0;i<ss->max_sounds;i++)
+      for (i=0; i<ss->max_sounds; i++)
 	{
 	  sp = ss->sounds[i];
 	  if ((sp) && (sp->inuse))
@@ -1796,7 +1802,7 @@ static SCM g_revert_sound(SCM index)
     return(scm_throw(NO_SUCH_SOUND,
 		     SCM_LIST2(TO_SCM_STRING(S_revert_sound),
 			       index)));
-  for (i=0;i<sp->nchans;i++) 
+  for (i=0; i<sp->nchans; i++) 
     {
       revert_edits(sp->chans[i], NULL); 
       update_graph(sp->chans[i], NULL);
@@ -1989,19 +1995,6 @@ static SCM g_new_sound(SCM name, SCM type, SCM format, SCM srate, SCM chans, SCM
 		  sp = snd_new_file(ss, str, ht, df, sr, ch, com, WITHOUT_DIALOG);
 		  if (com) free(com);
 		}
-#if HAVE_GUILE_1_3_0
-	      else scm_misc_error(S_new_sound, 
-				  "can't write this combination of data format (%S) and header type (%S)",
-				  SCM_LIST2(type, format));
-	    }
-	  else scm_misc_error(S_new_sound, 
-			      "invalid data format: %S",
-			      SCM_LIST1(format));
-	}
-      else scm_misc_error(S_new_sound, 
-			  "invalid header type: %S",
-			  SCM_LIST1(type));
-#else
 	      else scm_misc_error(S_new_sound, 
 				  "can't write this combination of data format (~S) and header type (~S)",
 				  SCM_LIST2(type, format));
@@ -2013,7 +2006,6 @@ static SCM g_new_sound(SCM name, SCM type, SCM format, SCM srate, SCM chans, SCM
       else scm_misc_error(S_new_sound, 
 			  "invalid header type: ~S",
 			  SCM_LIST1(type));
-#endif
     }
   if (str) FREE(str);
   if (sp) return(TO_SCM_INT(sp->index));
@@ -2137,7 +2129,7 @@ static SCM sp_fread(SCM snd_n, int fld, char *caller)
   if (SCM_EQ_P(snd_n, SCM_BOOL_T))
     {
       ss = get_global_state();
-      for (i=0;i<ss->max_sounds;i++)
+      for (i=0; i<ss->max_sounds; i++)
 	{
 	  sp = ss->sounds[i];
 	  if ((sp) && (sp->inuse))
@@ -2178,7 +2170,7 @@ static SCM sp_fwrite(SCM snd_n, SCM val, int fld, char *caller)
   if (SCM_EQ_P(snd_n, SCM_BOOL_T))
     {
       ss = get_global_state();
-      for (i=0;i<ss->max_sounds;i++)
+      for (i=0; i<ss->max_sounds; i++)
 	{
 	  sp = ss->sounds[i];
 	  if ((sp) && (sp->inuse))

@@ -84,8 +84,8 @@ void update_region_browser(snd_state *ss, int grf_too)
   chan_info *cp;
   rs = region_report();
   len = rs->len;
-  for (i=0;i<len;i++) make_region_element(rs, i);
-  for (i=len;i<max_regions(ss);i++) XtUnmanageChild(region_rows[i]->rw);
+  for (i=0; i<len; i++) make_region_element(rs, i);
+  for (i=len; i<max_regions(ss); i++) XtUnmanageChild(region_rows[i]->rw);
   free_region_state(rs);
   if (len == 0) return;
   XtManageChild(region_list);
@@ -300,17 +300,15 @@ static void make_region_dialog(snd_state *ss)
   xdelete = XmStringCreate(STR_Delete, XmFONTLIST_DEFAULT_TAG);
   titlestr = XmStringCreate(STR_Regions, XmFONTLIST_DEFAULT_TAG);
 
-  n=0;
+  n = 0;
   if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
   XtSetArg(args[n], XmNcancelLabelString, xdelete); n++;
   XtSetArg(args[n], XmNhelpLabelString, xhelp); n++;
   XtSetArg(args[n], XmNokLabelString, xok); n++;
   XtSetArg(args[n], XmNautoUnmanage, FALSE); n++;
   XtSetArg(args[n], XmNdialogTitle, titlestr); n++;
-#if RESIZE_DIALOG
   XtSetArg(args[n], XmNresizePolicy, XmRESIZE_GROW); n++;
   XtSetArg(args[n], XmNnoResize, FALSE); n++;
-#endif
   XtSetArg(args[n], XmNtransient, FALSE); n++;
   region_dialog = XmCreateTemplateDialog(MAIN_SHELL(ss), STR_Regions, args, n);
   add_dialog(ss, region_dialog);
@@ -333,13 +331,13 @@ static void make_region_dialog(snd_state *ss)
       XtVaSetValues(XmMessageBoxGetChild(region_dialog, XmDIALOG_HELP_BUTTON), XmNarmColor, (ss->sgx)->pushed_button_color, NULL);
     }
 
-  n=0;
+  n = 0;
   if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
   selectw = XtCreateManagedWidget(STR_Select, xmPushButtonWidgetClass, region_dialog, args, n);
   XtAddCallback(selectw, XmNactivateCallback, region_select_Callback, ss);
   set_sensitive(selectw, FALSE);
 
-  n=0;
+  n = 0;
   if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
   XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
   XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
@@ -356,7 +354,7 @@ static void make_region_dialog(snd_state *ss)
   last_row = NULL;
   
   region_rows = (regrow **)CALLOC(max_regions(ss), sizeof(regrow *));
-  for (i=0;i<max_regions(ss);i++)
+  for (i=0; i<max_regions(ss); i++)
     {
       r = make_regrow(ss, ww, last_row, region_save_Callback, region_play_Callback, region_focus_Callback);
       region_rows[i] = r;
@@ -367,7 +365,7 @@ static void make_region_dialog(snd_state *ss)
 
   update_region_browser(ss, 0);
 
-  n=0;
+  n = 0;
   if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
   XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
   XtSetArg(args[n], XmNleftWidget, region_list); n++;
@@ -378,7 +376,7 @@ static void make_region_dialog(snd_state *ss)
   XtSetArg(args[n], XmNseparatorType, XmSHADOW_ETCHED_IN); n++;
   infosep = XtCreateManagedWidget("infosep", xmSeparatorWidgetClass, wwl->toppane, args, n);
 
-  n=0;
+  n = 0;
   if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->highlight_color); n++;}
   XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
   XtSetArg(args[n], XmNleftWidget, infosep); n++;
@@ -389,7 +387,7 @@ static void make_region_dialog(snd_state *ss)
   XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;
   reg_srtxt = XtCreateManagedWidget(STR_srate_p, xmLabelWidgetClass, wwl->toppane, args, n);
 
-  n=0;
+  n = 0;
   if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->highlight_color); n++;}
   XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
   XtSetArg(args[n], XmNleftWidget, infosep); n++;
@@ -401,7 +399,7 @@ static void make_region_dialog(snd_state *ss)
   XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;
   reg_chntxt = XtCreateManagedWidget(STR_chans_p, xmLabelWidgetClass, wwl->toppane, args, n);
 
-  n=0;
+  n = 0;
   if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->highlight_color); n++;}
   XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
   XtSetArg(args[n], XmNleftWidget, infosep); n++;
@@ -413,7 +411,7 @@ static void make_region_dialog(snd_state *ss)
   XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;
   reg_lentxt = XtCreateManagedWidget(STR_length_p, xmLabelWidgetClass, wwl->toppane, args, n);
 
-  n=0;
+  n = 0;
   if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->highlight_color); n++;}
   XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
   XtSetArg(args[n], XmNleftWidget, infosep); n++;
@@ -425,7 +423,7 @@ static void make_region_dialog(snd_state *ss)
   XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;
   reg_maxtxt = XtCreateManagedWidget(STR_maxamp_p, xmLabelWidgetClass, wwl->toppane, args, n);
 
-  n=0;
+  n = 0;
   if (!(ss->using_schemes)) 
     {
       XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;
@@ -442,7 +440,7 @@ static void make_region_dialog(snd_state *ss)
   editb = XtCreateManagedWidget(STR_edit, xmPushButtonWidgetClass, wwl->toppane, args, n);
   XtAddCallback(editb, XmNactivateCallback, region_edit_Callback, (XtPointer)ss);
 
-  n=0;
+  n = 0;
   if (!(ss->using_schemes)) 
     {
       XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;
@@ -459,7 +457,7 @@ static void make_region_dialog(snd_state *ss)
   prtb = XtCreateManagedWidget(STR_print, xmPushButtonWidgetClass, wwl->toppane, args, n);
   XtAddCallback(prtb, XmNactivateCallback, region_print_Callback, (XtPointer)ss);
 
-  n=0;
+  n = 0;
   if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->white); n++;}
   XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
   XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
@@ -552,7 +550,7 @@ void allocate_region_rows(snd_state *ss, int n)
       r = region_rows[max_regions(ss) - 1];
       last_row = r->rw;
       region_rows = (regrow **)REALLOC(region_rows, n * sizeof(regrow *));
-      for (i=max_regions(ss);i<n;i++)
+      for (i=max_regions(ss); i<n; i++)
 	{
 	  r = make_regrow(ss, region_ww, last_row, region_save_Callback, region_play_Callback, region_focus_Callback);
 	  region_rows[i] = r;

@@ -35,7 +35,8 @@ static char *Load_HTML_File(char *filename)
   content = (char *)CALLOC(size+1, sizeof(char));
   if (content == NULL) return(NULL);
   if ((fread(content, 1, size, file)) != size)
-    snd_error("%s[%d] %s: did not read entire file!\n", __FILE__, __LINE__, __FUNCTION__);
+    snd_error("%s[%d] %s: did not read entire file!\n", 
+	      __FILE__, __LINE__, __FUNCTION__);
   fclose(file);
   return(content);
 }
@@ -57,14 +58,15 @@ static void add_anchor(int html, char *anchor)
   if (current_anchor == (MAX_HTML_HISTORY-1))
     {
       FREE(anchors[0]);
-      for (i=0;i<MAX_HTML_HISTORY-1;i++) anchors[i] = anchors[i+1];
+      for (i=0; i<MAX_HTML_HISTORY-1; i++) 
+	anchors[i] = anchors[i+1];
     }
   else 
     {
       current_anchor++;
       if (anchors[current_anchor]) 
 	{
-	  for (i=current_anchor;i<MAX_HTML_HISTORY;i++) 
+	  for (i=current_anchor; i<MAX_HTML_HISTORY; i++) 
 	    if (anchors[i])
 	      {
 		FREE(anchors[i]);
@@ -111,7 +113,8 @@ static void back_anchor_callback(Widget w, XtPointer clientData, XtPointer callD
     {
       current_anchor--;
       load_html(ss, html_files[current_anchor], anchors[current_anchor], FALSE);
-      if (current_anchor == 0) XtSetSensitive(back_button, FALSE);
+      if (current_anchor == 0) 
+	XtSetSensitive(back_button, FALSE);
       XtSetSensitive(forward_button, TRUE);
     }
   if (!XtIsManaged(help_dialog)) XtManageChild(help_dialog);
@@ -120,14 +123,14 @@ static void back_anchor_callback(Widget w, XtPointer clientData, XtPointer callD
 static void forward_anchor_callback(Widget w, XtPointer clientData, XtPointer callData)
 {
   snd_state *ss = (snd_state *)clientData;
-  if ((current_anchor < (MAX_HTML_HISTORY-1)) &&
-      (anchors[current_anchor+1]))
+  if ((current_anchor < (MAX_HTML_HISTORY - 1)) &&
+      (anchors[current_anchor + 1]))
     {
       current_anchor++;
       load_html(ss, html_files[current_anchor], anchors[current_anchor], FALSE);
       XtSetSensitive(back_button, TRUE);
-      if ((current_anchor == (MAX_HTML_HISTORY-1)) ||
-	  (anchors[current_anchor+1] == NULL))
+      if ((current_anchor == (MAX_HTML_HISTORY - 1)) ||
+	  (anchors[current_anchor + 1] == NULL))
 	XtSetSensitive(forward_button, FALSE);
     }
   if (!XtIsManaged(help_dialog)) XtManageChild(help_dialog);
@@ -209,14 +212,12 @@ static void create_help_monolog(snd_state *ss)
   forwardstr = XmStringCreate(STR_Forward, XmFONTLIST_DEFAULT_TAG);
 #endif
 
-  n=0;
+  n = 0;
   if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
   XtSetArg(args[n], XmNdialogTitle, titlestr); n++;
   /* this window should be resizable by the user (i.e. have the resize bars), but not resize itself */
   XtSetArg(args[n], XmNresizePolicy, XmRESIZE_GROW); n++;
-#if RESIZE_DIALOG
   XtSetArg(args[n], XmNnoResize, FALSE); n++;
-#endif
   XtSetArg(args[n], XmNtransient, FALSE); n++;
   help_dialog = XmCreateMessageDialog(MAIN_PANE(ss), "snd-help", args, n);
   add_dialog(ss, help_dialog);
@@ -224,14 +225,14 @@ static void create_help_monolog(snd_state *ss)
   override_form_translation(help_dialog);
 #endif
 
-  n=0;
+  n = 0;
   if (!(ss->using_schemes)) 
   {
     XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;
     XtSetArg(args[n], XmNarmColor, (ss->sgx)->pushed_button_color); n++;
   }
 #if HAVE_HTML
-  for (i=0;i<MAX_HTML_HISTORY;i++) anchors[i] = NULL;
+  for (i=0; i<MAX_HTML_HISTORY; i++) anchors[i] = NULL;
   back_button = XtCreateManagedWidget(STR_Back, xmPushButtonWidgetClass, help_dialog, args, n);
   XtAddCallback(back_button, XmNactivateCallback, back_anchor_callback, ss);
   XtSetSensitive(back_button, FALSE);
@@ -250,7 +251,7 @@ static void create_help_monolog(snd_state *ss)
   XmStringFree(forwardstr);
 #endif
 
-  n=0;
+  n = 0;
 #if HAVE_HTML
   XtSetArg(args[n], XmNwidth, html_width(ss)); n++;
   XtSetArg(args[n], XmNheight, html_height(ss)); n++;
@@ -274,9 +275,7 @@ static void create_help_monolog(snd_state *ss)
   XtManageChild(help_text);
 #endif
 
-#if MANAGE_DIALOG
   XtManageChild(help_dialog);
-#endif
 
   if (!(ss->using_schemes))
     {
@@ -322,7 +321,7 @@ void snd_help(snd_state *ss, char *subject, char *helpstr)
       if (strncmp(helpstr, "snd.html", 8) == 0)
 	{
 	  if (strlen(helpstr) > 9)
-	    load_html(ss, SND_HTML, (char *)(helpstr+8), TRUE);
+	    load_html(ss, SND_HTML, (char *)(helpstr + 8), TRUE);
 	  else load_html(ss, SND_HTML, NULL, TRUE);
 	}
       else
@@ -330,7 +329,7 @@ void snd_help(snd_state *ss, char *subject, char *helpstr)
 	  if (strncmp(helpstr, "extsnd.html", 11) == 0)
 	    {
 	      if (strlen(helpstr) > 12)
-		load_html(ss, EXTSND_HTML, (char *)(helpstr+11), TRUE);
+		load_html(ss, EXTSND_HTML, (char *)(helpstr + 11), TRUE);
 	      else load_html(ss, EXTSND_HTML, NULL, TRUE);
 	    }
 	  else
@@ -338,7 +337,7 @@ void snd_help(snd_state *ss, char *subject, char *helpstr)
 	      if (strncmp(helpstr, "sndlib.html", 11) == 0)
 		{
 		  if (strlen(helpstr) > 12)
-		    load_html(ss, SNDLIB_HTML, (char *)(helpstr+11), TRUE);
+		    load_html(ss, SNDLIB_HTML, (char *)(helpstr + 11), TRUE);
 		  else load_html(ss, SNDLIB_HTML, NULL, TRUE);
 		}
 	      else
@@ -346,7 +345,7 @@ void snd_help(snd_state *ss, char *subject, char *helpstr)
 		  if (strncmp(helpstr, "clm.html", 8) == 0)
 		    {
 		      if (strlen(helpstr) > 9)
-			load_html(ss, CLM_HTML, (char *)(helpstr+8), TRUE);
+			load_html(ss, CLM_HTML, (char *)(helpstr + 8), TRUE);
 		      else load_html(ss, CLM_HTML, NULL, TRUE);
 		    }	
 		  else
@@ -354,7 +353,7 @@ void snd_help(snd_state *ss, char *subject, char *helpstr)
 		      if (strncmp(helpstr, "grfsnd.html", 11) == 0)
 			{
 			  if (strlen(helpstr) > 12)
-			    load_html(ss, GRFSND_HTML, (char *)(helpstr+11), TRUE);
+			    load_html(ss, GRFSND_HTML, (char *)(helpstr + 11), TRUE);
 			  else load_html(ss, GRFSND_HTML, NULL, TRUE);
 			}
 		      else
@@ -373,7 +372,8 @@ void snd_help(snd_state *ss, char *subject, char *helpstr)
 #else
   XmTextSetString(help_text, helpstr);
 #endif
-  if (!XtIsManaged(help_dialog)) XtManageChild(help_dialog);
+  if (!XtIsManaged(help_dialog)) 
+    XtManageChild(help_dialog);
   XmStringFree(xstr1);
 }
 

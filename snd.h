@@ -104,7 +104,7 @@
 #include <errno.h>
 #include <stdlib.h>
 
-#if (defined(NEXT) || (defined(HAVE_LIBC_H) && (!defined(HAVE_UNISTD_H))))
+#if defined(HAVE_LIBC_H) && (!defined(HAVE_UNISTD_H))
   #include <libc.h>
 #else
   #ifndef _MSC_VER
@@ -146,12 +146,12 @@
 
 #include "sndlib.h"
 #include "clm.h"
+#include "snd-0.h"
 
 #if HAVE_GUILE
   #include "sg.h"
 #endif
 
-#include "snd-0.h"
 #ifdef USE_MOTIF
   #include "snd-x0.h"
 #else
@@ -173,10 +173,10 @@
 #endif
 #include "snd-strings.h"
 
-#define SND_VERSION "21-Feb-01"
-#define SND_RPM_VERSION "4.10"
+#define SND_VERSION "22-Feb-01"
+#define SND_RPM_VERSION "4.11"
 #define SND_MAJOR_VERSION 4
-#define SND_MINOR_VERSION 10
+#define SND_MINOR_VERSION 11
 
 #endif
 

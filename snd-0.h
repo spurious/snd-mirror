@@ -7,7 +7,7 @@
     #define HAVE_SYS_STATFS_H
     #define FSTATFS_ARGS 4
   #else
-    #if defined(HPUX) || defined(LINUX) || defined(NEXT)
+    #if defined(HPUX) || defined(LINUX)
       #define HAVE_SYS_VFS_H
       #define FSTATFS_ARGS 2
     #else
@@ -42,18 +42,18 @@
     #define HAVE_MKSTEMP 1
   #endif
   #ifndef _MSC_VER
-    #ifndef NEXT
-      #ifndef TRAP_SEGFAULT
-        #define TRAP_SEGFAULT 1
-      #endif
-      #define HAVE_TEMPNAM 1
+    #ifndef TRAP_SEGFAULT
+      #define TRAP_SEGFAULT 1
     #endif
+    #define HAVE_TEMPNAM 1
     #define HAVE_READLINK 1
     #define HAVE_ACCESS 1
     #define HAVE_OPENDIR 1
     #define HAVE_SLEEP 1
     #define HAVE_SIGNAL 1
     #define HAVE_MEMSET 1
+    #define HAVE_FSTATFS 1
+    #define HAVE_DIRENT_H 1
   #endif
   #ifdef __GNUC__
     #define HAVE_LONG_LONGS 1
@@ -64,10 +64,17 @@
   #ifndef BEOS
     #define HAVE_X 1
   #endif
-#endif
-
-#if defined(NEXT) && (!(defined(O_NONBLOCK)))
-  #define O_NONBLOCK 0
+  #if GUILE_1_3_0
+    #define HAVE_SCM_CREATE_HOOK 0
+    #define HAVE_SCM_STRPORT_TO_STRING 0
+  #else
+    #define HAVE_SCM_CREATE_HOOK 1
+    #define HAVE_SCM_STRPORT_TO_STRING 1
+    #if (!GUILE_1_3)
+      #define HAVE_SCM_MAKE_REAL 1
+      #define HAVE_SCM_OUT_OF_RANGE_POS 1
+    #endif
+  #endif
 #endif
 
 #if 0
