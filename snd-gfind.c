@@ -69,6 +69,7 @@ static void edit_find_find(read_direction_t direction, GtkWidget *w, gpointer co
     }
 } 
 
+void set_find_dialog_label(const char *str) {if (edit_find_label) set_label(edit_find_label, str);}
 static void edit_find_next(GtkWidget *w, gpointer context) {edit_find_find(READ_FORWARD, w, context);}
 static void edit_find_previous(GtkWidget *w, gpointer context) {edit_find_find(READ_BACKWARD, w, context);}
 

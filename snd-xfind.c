@@ -64,6 +64,7 @@ static void edit_find_ok_callback(read_direction_t direction, Widget w, XtPointe
     }
 } 
 
+void set_find_dialog_label(const char *str) {if (edit_find_label) set_label(edit_find_label, str);}
 static void edit_find_next_callback(Widget w, XtPointer context, XtPointer info) {edit_find_ok_callback(READ_FORWARD, w, context, info);}
 static void edit_find_previous_callback(Widget w, XtPointer context, XtPointer info) {edit_find_ok_callback(READ_BACKWARD, w, context, info);}
 

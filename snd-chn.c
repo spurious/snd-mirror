@@ -4,8 +4,7 @@
 /* SOMEDAY: if superimposed and 2chn cursor set, 1chan is xor'd, subsequent click sets both (and chan1 cursor takes precedence?) */
 /*    cursor redraw can check for this, but it gloms up code */
 /* TODO: in stereo file, if c-g during cursor-follows-play, unselected chan may not sync up */
-/* TODO: if cursor-follows-play with fft and movinf window via mouse and c-g, fft may not ever be fixed for that window */
-/* TODO: filter-sound doesn't move edit pos forward?? */
+/* TODO: if cursor-follows-play with fft and moving window via mouse and c-g, fft may not ever be fixed for that window */
 /* TODO: auto-to-mix in ws (with-mix -> to-mix?) */
 
 typedef enum {NOGRAPH, WAVE, FFT_AXIS, LISP, FFT_MAIN} click_loc_t;    /* for marks, regions, mouse click detection */

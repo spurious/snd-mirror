@@ -1,14 +1,12 @@
 #include "snd.h"
 
-/* TODO: some indication of long search progress? similarly count-matches */
-
 static bool search_in_progress = false;
 typedef struct 
 {
   int n; 
   read_direction_t direction; 
   int chans; 
-  off_t inc; 
+  off_t inc, dur; 
   chan_info **cps; 
   snd_fd **fds;
 } gfd;
@@ -18,10 +16,21 @@ typedef struct
 static void prepare_global_search (chan_info *cp, void *g0)
 {
   gfd *g = (gfd *)g0;
+  off_t this_dur;
   read_direction_t direction;
   direction = g->direction;
   g->cps[g->n] = cp;
-  g->fds[g->n] = init_sample_read((direction == READ_FORWARD) ? (CURSOR(cp) + 1) : (CURSOR(cp) - 1), cp, direction);
+  if (direction == READ_FORWARD)
+    {
+      g->fds[g->n] = init_sample_read(CURSOR(cp) + 1, cp, direction);
+      this_dur = CURRENT_SAMPLES(cp) - CURSOR(cp);
+    }
+  else
+    {
+      g->fds[g->n] = init_sample_read(CURSOR(cp) - 1, cp, direction);
+      this_dur = CURSOR(cp);
+    }
+  if (this_dur > g->dur) g->dur = this_dur;
   if (g->fds[g->n] != NULL) g->n++;
 }
 
@@ -106,7 +115,8 @@ char *global_search(read_direction_t direction)
    * update cursor/graph and report success (if any) in associated info window
    * subsequent runs (if no new text) repeat the search from the current locations
    */
-  int chans, i, passes = 0;
+  int chans, i, passes = 0, report_passes = 0;
+  bool reporting = false;
   gfd *fd;
   chan_info *cp;
   if (search_in_progress) 
@@ -153,12 +163,15 @@ char *global_search(read_direction_t direction)
       fd->n = 0;
       fd->inc = 1;
       fd->direction = direction;
+      fd->dur = 0;
       fd->chans = chans;
       fd->fds = (snd_fd **)CALLOC(chans, sizeof(snd_fd *));
       fd->cps = (chan_info **)CALLOC(chans, sizeof(chan_info *));
       for_each_chan_1(prepare_global_search, (void *)fd);
       fd->n = -1;
       ss->stopped_explicitly = false;
+      reporting = (fd->dur >= (REPORTING_SIZE * 10));
+      if (reporting) set_find_dialog_label("0%");
       while (!(run_global_search(fd)))
 	{
 	  passes++;
@@ -167,6 +180,17 @@ char *global_search(read_direction_t direction)
 	      check_for_event();
 	      passes = 0;
 	      fd->n = -1;
+	      if (reporting)
+		{
+		  report_passes += MANY_PASSES;
+		  if (report_passes > REPORTING_SIZE)
+		    {
+		      char buf[8];
+		      mus_snprintf(buf, 8, "%d%%", (int)(100 * (double)(fd->inc) / (double)(fd->dur)));
+		      set_find_dialog_label(buf);
+		      report_passes = 0;
+		    }
+		}
 	    }
 	  if (ss->stopped_explicitly) break;
 	}
@@ -181,6 +205,7 @@ char *global_search(read_direction_t direction)
 	{
 	  /* fd->n is winner, fd->inc is how far forward we searched from current cursor loc */
 	  cp = fd->cps[fd->n];
+	  set_find_dialog_label("");
           cp->cursor_on = true;
 	  if (direction == READ_FORWARD)
 	    cursor_move(cp, fd->inc);

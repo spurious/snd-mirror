@@ -67,6 +67,10 @@ bool set_with_gl(bool val);
 void recorder_error(char *msg);
 
 
+/* -------- snd-xfind.c -------- */
+
+void set_find_dialog_label(const char *str);
+
 
 /* -------- snd-xlistener.c -------- */
 

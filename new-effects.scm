@@ -251,21 +251,22 @@
 		      (change-label label (semi-scale-label (.value info)))))
     scale))
 
-					 
-
-(define* (add-sliders dialog sliders #:optional use-form)
+(define* (add-sliders dialog sliders)
   ;; sliders is a list of lists, each inner list being (title low initial high callback scale ['log])
   ;; returns list of widgets (for reset callbacks)
-  (let ((mainform 
-	 (XtCreateManagedWidget "formd" (if use-form xmFormWidgetClass xmRowColumnWidgetClass) dialog
-	   (list XmNleftAttachment      XmATTACH_FORM
-		 XmNrightAttachment     XmATTACH_FORM
-		 XmNtopAttachment       XmATTACH_FORM
-		 XmNbottomAttachment    XmATTACH_WIDGET
-		 XmNbottomWidget        (XmMessageBoxGetChild dialog XmDIALOG_SEPARATOR)
-		 XmNbackground          (highlight-color)
-		 XmNorientation         XmVERTICAL))))
-    (map 
+  (let* ((mainfrm (XtCreateManagedWidget "formd" xmFormWidgetClass dialog
+                  (list XmNleftAttachment      XmATTACH_FORM
+                        XmNrightAttachment     XmATTACH_FORM
+                        XmNtopAttachment       XmATTACH_FORM
+                        XmNbottomAttachment    XmATTACH_WIDGET
+                        XmNbottomWidget        (XmMessageBoxGetChild dialog XmDIALOG_SEPARATOR)
+                        XmNbackground          (highlight-color))))
+         (mainform (XtCreateManagedWidget "formd" xmRowColumnWidgetClass mainfrm
+                  (list XmNleftAttachment      XmATTACH_FORM
+                        XmNrightAttachment     XmATTACH_FORM
+                        XmNbackground          (highlight-color)
+                        XmNorientation         XmVERTICAL))))
+    (map
      (lambda (slider-data)
        (let* ((title (XmStringCreate (list-ref slider-data 0) XmFONTLIST_DEFAULT_TAG))
 	      (low (list-ref slider-data 1))
@@ -450,9 +451,8 @@
 			       (list (list "gain" 0.0 initial-gain-amount 5.0
 					   (lambda (w context info)
 					     (set! gain-amount (/ (.value info) 100.0)))
-					   100))
-			       #t))
-	    (set! fr (XtCreateManagedWidget "fr" xmFrameWidgetClass (XtParent (car sliders))
+					   100))))
+	    (set! fr (XtCreateManagedWidget "fr" xmFrameWidgetClass (XtParent (XtParent (car sliders)))
 					    (list XmNheight              200
 						  XmNleftAttachment      XmATTACH_FORM
 						  XmNrightAttachment     XmATTACH_FORM
@@ -461,7 +461,7 @@
 						  XmNshadowThickness     4
 						  XmNshadowType          XmSHADOW_ETCHED_OUT)))
 	    
-	    (let ((target-row (add-target (XtParent (car sliders)) (lambda (target) (set! gain-target target)) #f)))
+	    (let ((target-row (add-target (XtParent (XtParent (car sliders))) (lambda (target) (set! gain-target target)) #f)))
 	      (activate-dialog gain-dialog)
 	    
 	      (set! gain-envelope (xe-create-enved "gain"  fr
@@ -1656,9 +1656,8 @@ Values greater than 1.0 speed up file play, negative values reverse it."))
 			       (list (list "Resample factor" 0.0 initial-src-timevar-scale 10.0
 					   (lambda (w context info)
 					     (set! src-timevar-scale (/ (.value info) 100.0)))
-					   100))
-			       #t))
-	    (set! fr (XtCreateManagedWidget "fr" xmFrameWidgetClass (XtParent (car sliders))
+					   100))))
+	    (set! fr (XtCreateManagedWidget "fr" xmFrameWidgetClass (XtParent (XtParent (car sliders)))
 					    (list XmNheight              200
 						  XmNleftAttachment      XmATTACH_FORM
 						  XmNrightAttachment     XmATTACH_FORM
@@ -1667,7 +1666,7 @@ Values greater than 1.0 speed up file play, negative values reverse it."))
 						  XmNshadowThickness     4
 						  XmNshadowType          XmSHADOW_ETCHED_OUT)))
 	    
-	    (let ((target-row (add-target (XtParent (car sliders)) (lambda (target) (set! src-timevar-target target)) #f)))
+	    (let ((target-row (add-target (XtParent (XtParent (car sliders))) (lambda (target) (set! src-timevar-target target)) #f)))
 	      (activate-dialog src-timevar-dialog)
 	    
 	      (set! src-timevar-envelope (xe-create-enved "src-timevar"  fr
@@ -1756,9 +1755,8 @@ Values greater than 1.0 speed up file play, negative values reverse it."))
 			       (list (list "amplitude modulation" 0.0 initial-am-effect-amount 1000.0
 					   (lambda (w context info)
 					     (set! am-effect-amount (.value info)))
-					   1))
-			       #t))
-	    (set! fr (XtCreateManagedWidget "fr" xmFrameWidgetClass (XtParent (car sliders))
+					   1))))
+	    (set! fr (XtCreateManagedWidget "fr" xmFrameWidgetClass (XtParent (XtParent (car sliders)))
 					    (list XmNheight              200
 						  XmNleftAttachment      XmATTACH_FORM
 						  XmNrightAttachment     XmATTACH_FORM
@@ -1766,7 +1764,7 @@ Values greater than 1.0 speed up file play, negative values reverse it."))
 						  XmNtopWidget           (list-ref sliders (1- (length sliders)))
 						  XmNshadowThickness     4
 						  XmNshadowType          XmSHADOW_ETCHED_OUT)))
-	    (let ((target-row (add-target (XtParent (car sliders)) (lambda (target) (set! am-effect-target target)) #f)))
+	    (let ((target-row (add-target (XtParent (XtParent (car sliders))) (lambda (target) (set! am-effect-target target)) #f)))
 	    
 	      (activate-dialog am-effect-dialog)
 	      (set! am-effect-envelope (xe-create-enved "am"  fr
@@ -1847,9 +1845,8 @@ Values greater than 1.0 speed up file play, negative values reverse it."))
 				(list "modulation radians" 0 initial-rm-radians 360
 				      (lambda (w context info)
 					(set! rm-radians (.value info)))
-				      1))
-			       #t))
-	    (set! fr (XtCreateManagedWidget "fr" xmFrameWidgetClass (XtParent (car sliders))
+				      1))))
+	    (set! fr (XtCreateManagedWidget "fr" xmFrameWidgetClass (XtParent (XtParent (car sliders)))
 					    (list XmNheight              200
 						  XmNleftAttachment      XmATTACH_FORM
 						  XmNrightAttachment     XmATTACH_FORM
@@ -1857,7 +1854,7 @@ Values greater than 1.0 speed up file play, negative values reverse it."))
 						  XmNtopWidget           (list-ref sliders (1- (length sliders)))
 						  XmNshadowThickness     4
 						  XmNshadowType          XmSHADOW_ETCHED_OUT)))
-	    (let ((target-row (add-target (XtParent (car sliders)) (lambda (target) (set! rm-target target)) #f)))
+	    (let ((target-row (add-target (XtParent (XtParent (car sliders))) (lambda (target) (set! rm-target target)) #f)))
 	    
 	      (activate-dialog rm-dialog)
 	      (set! rm-envelope (xe-create-enved "rm frequency"  fr
@@ -2228,10 +2225,8 @@ a number, the sound is split such that 0 is all in channel 0 and 90 is all in ch
 				     (list "pan position" 0 initial-pan-pos 90
 					   (lambda (w context info)
 					     (set! pan-pos (/ (.value info) 1)))
-					   1))
-			       #t))
-	    
-	    (set! fr (XtCreateManagedWidget "fr" xmFrameWidgetClass (XtParent (car sliders))
+					   1))))
+	    (set! fr (XtCreateManagedWidget "fr" xmFrameWidgetClass (XtParent (XtParent (car sliders)))
 					    (list XmNheight              200
 						  XmNleftAttachment      XmATTACH_FORM
 						  XmNrightAttachment     XmATTACH_FORM

@@ -100,8 +100,8 @@ are different enough that gl.c can be a pain to build).
 
 
 ----------------------------------------------------------------
-The customization/extension language is Guile, available in the Gnu
-distributions:
+The customization/extension languages are either Guile or Ruby.
+Guile is available in the Gnu distributions:
 
   ftp://ftp.gnu.org/gnu/guile/guile-1.6.4.tar.gz
 
@@ -124,8 +124,8 @@ a variant of Lisp; see the urls below for some Scheme tutorials.
 The details of Snd customization are discussed in extsnd.html
 and grfsnd.html.
 
-You can use Ruby rather than Guile (use the --with-ruby configure
-switch).
+To use Ruby rather than Guile use the --with-ruby configure
+switch.
 
 
 There are RPM packages of Snd available at the ccrma-ftp site
@@ -167,11 +167,11 @@ legalese).  Send bug reports or suggestions to bil@ccrma.stanford.edu.
 
 
 Authors:
-Bill Schottstaedt sat around and watched these guys work:
-Michael Scholz: the German translation, the Ruby code, and the Forth version of sndlib.
+Bill Schottstaedt
+Michael Scholz: the German translation, the Ruby code, snd-inf.el, and the Forth version of sndlib.
 Fernando Lopez-Lezcano: the current ALSA support.
 Dave Phillips: the tutorial, new-effects.scm, and many other files.
-Kjetil S. Matheussen: snd_conffile.scm, ladspa.scm, and the Jack audio support.
+Kjetil S. Matheussen: snd_conffile.scm, ladspa.scm, gui.scm, and the Jack audio support.
 Richard W.E. Furse: the original LADSPA support.
 Nick Bailey: the ESD support.
 Larry Plona: the OpenServer and UnixWare ports.
@@ -192,6 +192,11 @@ Plus many other contributions from
   Kjetil S. Matheussen,
   Rick Taube,
   Anders Vinjar.
+
+
+In terms of number of lines, the languages used in Snd/Sndlib are:
+C, Scheme, Ruby, Forth, m4, Common Lisp, Emacs Lisp, javascript,
+and postscript.
 
 
 ----------------------------------------------------------------

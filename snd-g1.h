@@ -306,6 +306,7 @@ void g_init_gxchn(void);
 /* -------- snd-gfind.c -------- */
 
 void edit_find_callback(GtkWidget *w, gpointer info);
+void set_find_dialog_label(const char *str);
 #if DEBUGGING
   void g_init_gxfind(void);
 #endif
