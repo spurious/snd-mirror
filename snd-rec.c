@@ -702,7 +702,11 @@ void fire_up_recorder(snd_state *ss)
 	      if (rp->input_channels[sys] == 0 && (int)direction == 1)
 		{
 		  if ((err = mus_audio_mixer_read(sysdev, MUS_AUDIO_CHANNEL, 2, val)) == 0) 
-		    rp->input_channels[sys] = (int)val[0];
+		    {
+		      rp->input_channels[sys] = (int)val[0];
+		      if (rp->input_channels[sys] > MAX_IN_CHANS)
+			rp->input_channels[sys] = MAX_IN_CHANS;
+		    }
 		  if ((err = mus_audio_mixer_read(sysdev, MUS_AUDIO_SRATE, 2, val)) == 0)
 		    {
 		      rp->input_srates[sys] = (int)val[0];
@@ -786,6 +790,8 @@ void fire_up_recorder(snd_state *ss)
 		      rp->monitor_chans = (int)(val[0]);
 		      /* FIXME: what would be the proper value for this? 
 		       * the computer wedges if I don't initialize it, why? */
+		      if (rp->monitor_chans > MAX_OUT_CHANS)
+			rp->monitor_chans = MAX_OUT_CHANS;
 		      rp->out_chans = rp->monitor_chans;
 		    }
 		  rp->monitor_data_format = mus_audio_compatible_format(sysdev);

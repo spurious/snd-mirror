@@ -3,7 +3,8 @@
 /* envelope editor and viewer */
 
 static Widget enved_dialog = NULL;
-static Widget mainform, applyB, apply2B, cancelB, drawer, colB, colF, showB, saveB, revertB, undoB, redoB, printB, brkptL, graphB, fltB, ampB, srcB, rbrow, clipB;
+static Widget mainform, applyB, apply2B, cancelB, drawer, colB, colF, showB, saveB, revertB, undoB, redoB;
+static Widget printB, brkptL, graphB, fltB, ampB, srcB, rbrow, clipB;
 static Widget nameL, textL, screnvlst, screnvname, dBB, orderL, revrow, deleteB, resetB, firB = NULL;
 static Widget expB, linB, lerow, baseScale, baseLabel, baseValue, baseSep, selectionB, mixB, selrow, unrow, saverow;
 static GC gc, rgc, ggc;
@@ -421,7 +422,8 @@ static void select_or_edit_env(snd_state *ss, int pos)
       set_button_label_normal(showB, "view envs");
     }
   if (active_env) active_env = free_env(active_env);
-  active_env = copy_env(enved_all_envs(pos));
+  selected_env = enved_all_envs(pos);
+  active_env = copy_env(selected_env);
   XmTextSetString(textL, enved_all_names(pos));
   set_enved_env_list_top(0);
   do_env_edit(active_env, TRUE);
@@ -463,6 +465,10 @@ static int env_dragged = 0;
 static int env_pos = 0;
 static int click_to_delete = 0;
 
+#ifdef MAC_OSX
+static int press_x, press_y;
+#endif
+
 static void drawer_button_motion(Widget w, XtPointer context, XEvent *event, Boolean *cont) 
 {
   snd_state *ss = (snd_state *)context;
@@ -473,7 +479,12 @@ static void drawer_button_motion(Widget w, XtPointer context, XEvent *event, Boo
   if (!showing_all_envs)
     {
       motion_time = ev->time;
+#ifdef MAC_OSX
+      if ((motion_time - down_time) < XtGetMultiClickTime(XtDisplay(w))) return;
+      if ((ev->x == press_x) && (ev->y == press_y)) return;
+#else
       if ((motion_time - down_time) < (0.5 * XtGetMultiClickTime(XtDisplay(w)))) return;
+#endif
       env_dragged = 1;
       click_to_delete = 0;
       ap = axis;
@@ -509,6 +520,10 @@ static void drawer_button_press(Widget w, XtPointer context, XEvent *event, Bool
   XButtonEvent *ev = (XButtonEvent *)event;
   snd_state *ss = (snd_state *)context;
   int pos;
+#ifdef MAC_OSX
+  press_x = ev->x;
+  press_y = ev->y;
+#endif
   down_time = ev->time;
   env_dragged = 0;
   if (showing_all_envs)
@@ -700,6 +715,7 @@ static void mix_button_help_callback(Widget w, XtPointer context, XtPointer info
 
 static void delete_button_pressed(Widget w, XtPointer context, XtPointer info) 
 {
+  snd_state *ss = (snd_state *)context;
   int i, len;
   if (selected_env)
     {
@@ -707,9 +723,12 @@ static void delete_button_pressed(Widget w, XtPointer context, XtPointer info)
       for (i = 0; i < len; i++)
 	if (selected_env == enved_all_envs(i))
 	  {
-	    delete_envelope((snd_state *)context, enved_all_names(i));
+	    delete_envelope(ss, enved_all_names(i));
 	    if (enved_all_envs_top() == 0)
 	      set_sensitive(deleteB, FALSE);
+	    if (active_env) active_env = free_env(active_env);
+	    selected_env = NULL;
+	    env_redisplay(ss);
 	    break;
 	  }
     }

@@ -3215,7 +3215,7 @@ Most of the region number arguments default to the current region (the first in 
 <!-- --><td>
 <!-- -->create a new region spanning samples <i>beg</i> to <i>end</i> in <i>snd</i>'s channel <i>chn</i>.
 <!-- -->returns region's id.  If no arguments are given, the 
-<!-- -->current selection is used.
+<!-- -->current selection is used. If <i>chn</i> is #t, all chans are included, taking the <i>snd</i> sync field into account if it's not 0.
 <!-- --></td></tr>
 <!-- -->
 <!-- --><tr><td colspan=2><span class=defbox><code><a href="#makeregionsamplereader">make-region-sample-reader</a> (<i>start reg chn dir</i>)</code></span></td>
@@ -7118,36 +7118,36 @@ And an example that lets us see the result of filtering the waveform:
 <!-- enved-active-env -->
 <!-- -->
 <!-- --><tr><td><span class=defbox><code><em class=def><a name="envedactiveenv">enved-active-env</a></em> ()</code></span></td>
-<!-- --><td><a href="snd.html#editenvelope">Envelope editor</a> current envelope (list).</td></tr>
+<!-- --><td>current envelope in the envelope editor's graph window (list).</td></tr>
 <!-- -->
 <!-- enved-base -->
 <!-- -->
 <!-- --><tr><td><span class=defbox><code><em class=def><a name="envedbase">enved-base</a></em> () </code></span></td>
-<!-- --><td><a href="snd.html#editenvelope">Envelope editor</a> exponential base value (1.0)</td></tr>
+<!-- --><td>envelope editor exponential base value (1.0)</td></tr>
 <!-- -->
 <!-- enved-clip? -->
 <!-- -->
 <!-- --><tr><td><span class=defbox><code><em class=def><a name="envedclipping">enved-clip?</a></em> ()</code></span></td>
-<!-- --><td><a href="snd.html#editenvelope">Envelope editor</a> 'clip' button (restricts mouse motion) (#f)</td></tr>
+<!-- --><td>envelope editor 'clip' button (restricts mouse motion) (#f)</td></tr>
 <!-- -->
 <!-- enved-in-dB -->
 <!-- -->
 <!-- --><tr><td><span class=defbox><code><em class=def><a name="envedin-dB">enved-in-dB</a></em> ()</code></span></td>
-<!-- --><td><a href="snd.html#editenvelope">Envelope editor</a> 'dB' button (#f)</td></tr>
+<!-- --><td>envelope editor 'dB' button (#f)</td></tr>
 <!-- -->
 <!-- enved-dialog -->
 <!-- -->
 <!-- --><tr><td><span class=defbox><code><em class=def><a name="sndenveddialog">enved-dialog</a></em> ()</code></span></td>
-<!-- --><td>create the Envelope editor dialog, if necessary, activate it, and return the dialog widget. See also <a href="#envedhook">enved-hook</a>.</td></tr>
+<!-- --><td>start the Envelope editor dialog, return the dialog widget.</td></tr>
 <!-- -->
 <!-- enved-exp? -->
 <!-- -->
 <!-- --><tr><td><span class=defbox><code><em class=def><a name="envedexping">enved-exp?</a></em> ()</code></span></td>
-<!-- --><td><a href="snd.html#editenvelope">Envelope editor</a> 'exp' and 'lin' buttons (type of connecting segments) (#f)</td></tr>
+<!-- --><td>envelope editor 'exp' and 'lin' buttons (type of connecting segments) (#f)</td></tr>
 <!-- -->
 <!-- enved-filter -->
 <!-- -->
-<!-- --><tr><td><span class=defbox><code><em class=def><a name="filterenv">enved-filter</a></em> ()</code></span></td>
+<!-- --><tr><td valign=top><span class=defbox><code><em class=def><a name="filterenv">enved-filter</a></em> ()</code></span></td>
 <!-- --><td>The type of the Envelope editor's filter. (default #t: FIR, #f is FFT).  To get the fft display in the envelope editor
 <!-- -->as the default:
 <!-- --></td></tr>
@@ -7166,26 +7166,25 @@ And an example that lets us see the result of filtering the waveform:
 <!-- enved-filter-order -->
 <!-- -->
 <!-- --><tr><td><span class=defbox><code><em class=def><a name="filterenvorder">enved-filter-order</a></em> ()</code></span></td>
-<!-- --><td>The order of the Envelope editor's FIR filter. (default is 40)</td></tr>
+<!-- --><td>The order of the envelope editor's FIR filter. (default is 40)</td></tr>
 <!-- -->
 <!-- enved-power -->
 <!-- -->
 <!-- --><tr><td><span class=defbox><code><em class=def><a name="envedpower">enved-power</a></em> ()</code></span></td>
-<!-- --><td><a href="snd.html#editenvelope">Envelope editor</a> base scale range (9.0^power). (3.0)</td></tr>
+<!-- --><td>envelope editor base scale range (9.0^power). (3.0)</td></tr>
 <!-- -->
 <!-- enved-selected-env -->
 <!-- -->
-<!-- --><tr><td><span class=defbox><code><em class=def><a name="envedselectedenv">enved-selected-env</a></em> ()</code></span></td>
-<!-- --><td><a href="snd.html#editenvelope">Envelope editor</a> selected envelope (list).</td></tr>
+<!-- --><tr><td valign=top><span class=defbox><code><em class=def><a name="envedselectedenv">enved-selected-env</a></em> ()</code></span></td>
+<!-- --><td>envelope editor selected envelope (list) -- this is the unedited form; the
+<!-- -->version in the editor's graph window is called <a href="#envedactiveenv">enved-active-env</a>.</td></tr>
 <!-- -->
 <!-- enved-target -->
 <!-- -->
 <!-- --><tr><td valign=top><span class=defbox><code><em class=def><a name="envedtarget">enved-target</a></em> ()</code></span></td>
 <!-- --><td>
-<!-- -->Determines how the envelope is applied to the current data
-<!-- -->This chooses one of the 'amp', 'flt', and 'src' buttons in the <a href="snd.html#editenvelope">Envelope editor</a>.
-<!-- -->The other (named constant) choices are <i>enved-srate</i> and <i>enved-spectrum</i>.
-<!-- -->defaults to <i>enved-amplitude</i>
+<!-- -->Determines how the envelope editor's current envelope is applied to the currently selected data.
+<!-- -->The choices are <i>enved-amplitude</i>, <i>enved-srate</i> and <i>enved-spectrum</i>.
 <!-- --></td></tr>
 <!-- -->
 <!-- enved-waveform-color -->
@@ -7196,7 +7195,7 @@ And an example that lets us see the result of filtering the waveform:
 <!-- enved-wave? -->
 <!-- -->
 <!-- --><tr><td><span class=defbox><code><em class=def><a name="envedwaving">enved-wave?</a></em> ()</code></span></td>
-<!-- --><td><a href="snd.html#editenvelope">Envelope editor</a> 'wave' button
+<!-- --><td>envelope editor 'wave' button.
 <!-- -->The wave shown is the time domain display, even when filtering.
 <!-- --></td></tr>
 <!-- -->

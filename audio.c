@@ -8536,7 +8536,7 @@ int mus_audio_mixer_read(int dev1, int field, int chan, float *val)
       val[1] = MUS_BFLOAT;
       break;
     default: 
-      RETURN_ERROR_EXIT(MUS_AUDIO_CANT_READ, NULL);
+      return(MUS_ERROR);
       break;
     }
   return(MUS_NO_ERROR);
@@ -8560,7 +8560,7 @@ int mus_audio_mixer_write(int dev1, int field, int chan, float *val)
 	err = AudioDeviceSetProperty(dev, NULL, chan + 1, false, kAudioDevicePropertyVolumeScalar, sizeof(Float32), &amp);
       break;
     default: 
-      RETURN_ERROR_EXIT(MUS_AUDIO_CANT_WRITE, NULL);
+      return(MUS_ERROR);
       break;
     }
   return(MUS_NO_ERROR);

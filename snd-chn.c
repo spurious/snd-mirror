@@ -3643,6 +3643,10 @@ static int fft_axis_start = 0;
 static int mix_tag = NO_MIX_TAG;
 static chan_info *dragged_cp;
 
+#ifdef MAC_OSX
+static int press_x, press_y;
+#endif
+
 void graph_button_press_callback(chan_info *cp, int x, int y, int key_state, int button, TIME_TYPE time)
 {
   snd_info *sp;
@@ -3650,6 +3654,10 @@ void graph_button_press_callback(chan_info *cp, int x, int y, int key_state, int
   /* if combining, figure out which virtual channel the mouse is in */
   if (sp->channel_style == CHANNELS_COMBINED) cp = which_channel(sp, y);
   mouse_down_time = time;
+#ifdef MAC_OSX
+  press_x = x;
+  press_y = y;
+#endif
   select_channel(sp, cp->chan);
   dragged_cp = cp;
   dragged = 0;
@@ -3731,7 +3739,12 @@ void graph_button_release_callback(chan_info *cp, int x, int y, int key_state, i
 	    {
 	      if (play_mark->sync)
 		play_syncd_mark(cp, play_mark);
-	      else play_channel(cp, play_mark->samp, NO_END_SPECIFIED, TRUE, C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), "play button", 0);
+	      else 
+		{
+		  if (key_state & snd_ControlMask)
+		    play_sound(sp, play_mark->samp, NO_END_SPECIFIED, TRUE, C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), "play button", 0);
+		  else play_channel(cp, play_mark->samp, NO_END_SPECIFIED, TRUE, C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), "play button", 0);
+		}
 	      sp->playing_mark = play_mark;
 	      set_play_button(sp, 1);
 	    }
@@ -3895,7 +3908,13 @@ void graph_button_motion_callback(chan_info *cp, int x, int y, TIME_TYPE time, T
   Float old_cutoff;
   /* this needs to be a little slow about deciding that we are dragging, as opposed to a slow click */
   mouse_time = time;
+#ifdef MAC_OSX
+  /* on the Mac, we seem to get motion events even without any motion, and the times seem very short */
+  if ((mouse_time - mouse_down_time) < click_time) return;
+  if ((x == press_x) && (y == press_y)) return;
+#else
   if ((mouse_time - mouse_down_time) < (click_time / 2)) return;
+#endif
   sp = cp->sound;
   if (sp->channel_style == CHANNELS_COMBINED) /* in united chans, dragging mark shouldn't change channel */
     {

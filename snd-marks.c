@@ -297,7 +297,6 @@ static mark *hit_triangle_1(chan_info *cp, mark *mp, void *m)
 
 mark *hit_triangle(chan_info *cp, int x, int y)
 {
-  /* TODO: play all chans from mark? */
   mark *mp;
   mdata *md;
   axis_info *ap;

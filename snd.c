@@ -9,6 +9,9 @@
 /* SOMEDAY: put Snd names in its own module */
 
 static snd_state *ss;
+#if DEBUGGING
+  static snd_state *initial_ss = NULL;
+#endif
 
 static XEN mus_error_hook;
 
@@ -166,6 +169,9 @@ static void snd_gsl_error(const char *reason, const char *file, int line, int gs
 
   initialize_format_lists();
   ss = (snd_state *)CALLOC(1, sizeof(snd_state));
+#if DEBUGGING
+  initial_ss = ss;
+#endif
   ss->Transform_Size = DEFAULT_TRANSFORM_SIZE;
   ss->Minibuffer_History_Length = DEFAULT_MINIBUFFER_HISTORY_LENGTH;
   ss->Fft_Window = DEFAULT_FFT_WINDOW;
@@ -350,6 +356,13 @@ static void snd_gsl_error(const char *reason, const char *file, int line, int gs
 
 snd_state *get_global_state(void) 
 {
+#if DEBUGGING
+  if (ss != initial_ss)
+    {
+      fprintf(stderr,"global state clobbered! %p %p\n", initial_ss, ss);
+      abort();
+    }
+#endif
   return(ss);
 }
 

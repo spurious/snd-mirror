@@ -2683,7 +2683,7 @@ leave the generator type decision until run time:</p>
 			     (if (env? gen)
 				 (set! val (* (gen) val))
 				 (if (readin? gen)
-				     (set! val (gen))
+				     (set! val (+ val (gen)))
 				     (set! val (gen val))))))
 			 val)))
     (mix-vct output (inexact-&gt;exact (floor (* beg (mus-srate)))) #f #f #f)))

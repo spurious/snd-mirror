@@ -1335,34 +1335,74 @@ static XEN g_regions(void)
 
 static XEN g_make_region(XEN beg, XEN end, XEN snd_n, XEN chn_n)
 {
-  #define H_make_region "(" S_make_region " beg end &optional snd chn) makes a new region between beg and end in snd, returning its id"
-  /* TODO: make multi-channel region? */
+  #define H_make_region "(" S_make_region " beg end &optional snd chn) makes a new region between beg and end in snd, returning its id. \
+If 'chn' is #t, all chans are included, taking the 'snd' sync field into account if it's not 0."
   chan_info *cp;
-  sync_info *si;
-  off_t ends[1];
-  off_t ibeg;
-  int id;
+  sync_info *si = NULL;
+  snd_info *sp;
+  snd_state *ss;
+  off_t *ends = NULL;
+  off_t ibeg, iend;
+  int id = INVALID_REGION, new_sync, old_sync, i;
   if (XEN_NOT_BOUND_P(beg))
     id = make_region_from_selection();
   else
     {
       XEN_ASSERT_TYPE(XEN_NUMBER_P(beg), beg, XEN_ARG_1, S_make_region, "a number");
       XEN_ASSERT_TYPE(XEN_NUMBER_P(end), end, XEN_ARG_2, S_make_region, "a number");
-      cp = get_cp(snd_n, chn_n, S_make_region);
       ibeg = XEN_TO_C_OFF_T_OR_ELSE(beg, 0);
-      ends[0] = XEN_TO_C_OFF_T_OR_ELSE(end, 0);
-      if (CURRENT_SAMPLES(cp) - 1 < ends[0]) 
-	ends[0] = CURRENT_SAMPLES(cp) - 1;
-      if (ends[0] < ibeg) 
-	XEN_ERROR(IMPOSSIBLE_BOUNDS,
-		  XEN_LIST_5(C_TO_XEN_STRING(S_make_region),
-			     beg, end,
-			     snd_n, chn_n));
-      si = make_simple_sync(cp, ibeg);
-      id = define_region(si, ends);
-      if (selection_creates_region(get_global_state()))
-	reactivate_selection(si->cps[0], si->begs[0], ends[0]);
-      si = free_sync_info(si);
+      iend = XEN_TO_C_OFF_T_OR_ELSE(end, 0);
+      ss = get_global_state();
+      if (XEN_TRUE_P(chn_n))
+	{
+	  /* all chans and all sync'd chans if sync not 0 */
+	  sp = get_sp(snd_n);
+	  if (sp)
+	    {
+	      old_sync = sp->sync;
+	      if (sp->sync == 0)
+		{
+		  /* set up temp sync for snd_sync */
+		  new_sync = 1;
+		  for (i = 0; i < ss->max_sounds; i++)
+		    if ((ss->sounds[i]) && (new_sync <= ss->sounds[i]->sync))
+		      new_sync = ss->sounds[i]->sync + 1;
+		  sp->sync = new_sync;
+		}
+	      si = snd_sync(ss, sp->sync);
+	      sp->sync = old_sync;
+	    }
+	}
+      else
+	{
+	  cp = get_cp(snd_n, chn_n, S_make_region);
+	  si = make_simple_sync(cp, ibeg);
+	}
+      ends = (off_t *)CALLOC(si->chans, sizeof(off_t));
+      for (i = 0; i < si->chans; i++)
+	{
+	  if (CURRENT_SAMPLES(si->cps[i]) - 1 < iend)
+	    ends[i] = CURRENT_SAMPLES(si->cps[i]) - 1;
+	  else ends[i] = iend;
+	  if (ends[i] < ibeg) 
+	    {
+	      FREE(ends);
+	      ends = NULL;
+	      si = free_sync_info(si);
+	      XEN_ERROR(IMPOSSIBLE_BOUNDS,
+			XEN_LIST_5(C_TO_XEN_STRING(S_make_region),
+				   beg, end,
+				   snd_n, chn_n));
+	    }
+	}
+      if (ends)
+	{
+	  id = define_region(si, ends);
+	  if (selection_creates_region(ss))
+	    reactivate_selection(si->cps[0], si->begs[0], ends[0]);
+	  si = free_sync_info(si);
+	  FREE(ends);
+	}
     }
   return(C_INT_TO_XEN_REGION(id));
 }

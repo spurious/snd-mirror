@@ -584,7 +584,7 @@
 		   (g_cclosure_new (lambda (w d) 
 				     (set! omit-silence (.active (GTK_TOGGLE_BUTTON toggle))))
 				   #f #f) #f))))
-	(activate-dialog gate-dialog))
+	  (activate-dialog gate-dialog))
 	#f #f) #f)
       (set! amp-menu-list (cons (lambda ()
 				  (let ((new-label (format #f "Gate (~1,2F)"  gate-amount)))

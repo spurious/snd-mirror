@@ -583,22 +583,6 @@ static XEN gxg_gdk_gl_drawable_wait_gdk(XEN gldrawable)
   return(XEN_FALSE);
 }
 
-static XEN gxg_gdk_gl_drawable_gl_begin(XEN gldrawable, XEN glcontext)
-{
-  #define H_gdk_gl_drawable_gl_begin "gboolean gdk_gl_drawable_gl_begin(GdkGLDrawable* gldrawable, GdkGLContext* glcontext)"
-  XEN_ASSERT_TYPE(XEN_GdkGLDrawable__P(gldrawable), gldrawable, 1, "gdk_gl_drawable_gl_begin", "GdkGLDrawable*");
-  XEN_ASSERT_TYPE(XEN_GdkGLContext__P(glcontext), glcontext, 2, "gdk_gl_drawable_gl_begin", "GdkGLContext*");
-  return(C_TO_XEN_gboolean(gdk_gl_drawable_gl_begin(XEN_TO_C_GdkGLDrawable_(gldrawable), XEN_TO_C_GdkGLContext_(glcontext))));
-}
-
-static XEN gxg_gdk_gl_drawable_gl_end(XEN gldrawable)
-{
-  #define H_gdk_gl_drawable_gl_end "void gdk_gl_drawable_gl_end(GdkGLDrawable* gldrawable)"
-  XEN_ASSERT_TYPE(XEN_GdkGLDrawable__P(gldrawable), gldrawable, 1, "gdk_gl_drawable_gl_end", "GdkGLDrawable*");
-  gdk_gl_drawable_gl_end(XEN_TO_C_GdkGLDrawable_(gldrawable));
-  return(XEN_FALSE);
-}
-
 static XEN gxg_gdk_gl_drawable_get_gl_config(XEN gldrawable)
 {
   #define H_gdk_gl_drawable_get_gl_config "GdkGLConfig* gdk_gl_drawable_get_gl_config(GdkGLDrawable* gldrawable)"
@@ -770,7 +754,26 @@ static XEN gxg_gtk_widget_get_gl_window(XEN widget)
   return(C_TO_XEN_GdkGLWindow_(gtk_widget_get_gl_window(XEN_TO_C_GtkWidget_(widget))));
 }
 
+#ifdef GTKGLEXT_MAJOR_VERSION
+static XEN gxg_gdk_gl_drawable_gl_begin(XEN gldrawable, XEN glcontext)
+{
+  #define H_gdk_gl_drawable_gl_begin "gboolean gdk_gl_drawable_gl_begin(GdkGLDrawable* gldrawable, GdkGLContext* glcontext)"
+  XEN_ASSERT_TYPE(XEN_GdkGLDrawable__P(gldrawable), gldrawable, 1, "gdk_gl_drawable_gl_begin", "GdkGLDrawable*");
+  XEN_ASSERT_TYPE(XEN_GdkGLContext__P(glcontext), glcontext, 2, "gdk_gl_drawable_gl_begin", "GdkGLContext*");
+  return(C_TO_XEN_gboolean(gdk_gl_drawable_gl_begin(XEN_TO_C_GdkGLDrawable_(gldrawable), XEN_TO_C_GdkGLContext_(glcontext))));
+}
+
+static XEN gxg_gdk_gl_drawable_gl_end(XEN gldrawable)
+{
+  #define H_gdk_gl_drawable_gl_end "void gdk_gl_drawable_gl_end(GdkGLDrawable* gldrawable)"
+  XEN_ASSERT_TYPE(XEN_GdkGLDrawable__P(gldrawable), gldrawable, 1, "gdk_gl_drawable_gl_end", "GdkGLDrawable*");
+  gdk_gl_drawable_gl_end(XEN_TO_C_GdkGLDrawable_(gldrawable));
+  return(XEN_FALSE);
+}
+
 #endif
+#endif
+
 static XEN gxg_glClearIndex(XEN c)
 {
   #define H_glClearIndex "void glClearIndex(GLfloat c)"
@@ -3884,8 +3887,6 @@ static void define_functions(void)
   GL_DEFINE_PROCEDURE(gdk_gl_drawable_swap_buffers, gxg_gdk_gl_drawable_swap_buffers, 1, 0, 0, H_gdk_gl_drawable_swap_buffers);
   GL_DEFINE_PROCEDURE(gdk_gl_drawable_wait_gl, gxg_gdk_gl_drawable_wait_gl, 1, 0, 0, H_gdk_gl_drawable_wait_gl);
   GL_DEFINE_PROCEDURE(gdk_gl_drawable_wait_gdk, gxg_gdk_gl_drawable_wait_gdk, 1, 0, 0, H_gdk_gl_drawable_wait_gdk);
-  GL_DEFINE_PROCEDURE(gdk_gl_drawable_gl_begin, gxg_gdk_gl_drawable_gl_begin, 2, 0, 0, H_gdk_gl_drawable_gl_begin);
-  GL_DEFINE_PROCEDURE(gdk_gl_drawable_gl_end, gxg_gdk_gl_drawable_gl_end, 1, 0, 0, H_gdk_gl_drawable_gl_end);
   GL_DEFINE_PROCEDURE(gdk_gl_drawable_get_gl_config, gxg_gdk_gl_drawable_get_gl_config, 1, 0, 0, H_gdk_gl_drawable_get_gl_config);
   GL_DEFINE_PROCEDURE(gdk_gl_drawable_get_size, gxg_gdk_gl_drawable_get_size, 1, 2, 0, H_gdk_gl_drawable_get_size);
   GL_DEFINE_PROCEDURE(gdk_gl_pixmap_new, gxg_gdk_gl_pixmap_new, 3, 0, 0, H_gdk_gl_pixmap_new);
@@ -3906,6 +3907,10 @@ static void define_functions(void)
   GL_DEFINE_PROCEDURE(gtk_widget_get_gl_config, gxg_gtk_widget_get_gl_config, 1, 0, 0, H_gtk_widget_get_gl_config);
   GL_DEFINE_PROCEDURE(gtk_widget_get_gl_context, gxg_gtk_widget_get_gl_context, 1, 0, 0, H_gtk_widget_get_gl_context);
   GL_DEFINE_PROCEDURE(gtk_widget_get_gl_window, gxg_gtk_widget_get_gl_window, 1, 0, 0, H_gtk_widget_get_gl_window);
+#ifdef GTKGLEXT_MAJOR_VERSION
+  GL_DEFINE_PROCEDURE(gdk_gl_drawable_gl_begin, gxg_gdk_gl_drawable_gl_begin, 2, 0, 0, H_gdk_gl_drawable_gl_begin);
+  GL_DEFINE_PROCEDURE(gdk_gl_drawable_gl_end, gxg_gdk_gl_drawable_gl_end, 1, 0, 0, H_gdk_gl_drawable_gl_end);
+#endif
 #endif
   GL_DEFINE_PROCEDURE(glClearIndex, gxg_glClearIndex, 1, 0, 0, H_glClearIndex);
   GL_DEFINE_PROCEDURE(glClearColor, gxg_glClearColor, 4, 0, 0, H_glClearColor);
@@ -4276,11 +4281,6 @@ static void define_integers(void)
   DEFINE_INTEGER(GLX_EXTENSIONS);
 #endif
 #if USE_GTK
-  DEFINE_INTEGER(GDKGLEXT_MAJOR_VERSION);
-  DEFINE_INTEGER(GDKGLEXT_MINOR_VERSION);
-  DEFINE_INTEGER(GDKGLEXT_MICRO_VERSION);
-  DEFINE_INTEGER(GDKGLEXT_INTERFACE_AGE);
-  DEFINE_INTEGER(GDKGLEXT_BINARY_AGE);
   DEFINE_INTEGER(GDK_GL_SUCCESS);
   DEFINE_INTEGER(GDK_GL_ATTRIB_LIST_NONE);
   DEFINE_INTEGER(GDK_GL_USE_GL);
@@ -4316,8 +4316,6 @@ static void define_integers(void)
   DEFINE_INTEGER(GDK_GL_MAX_PBUFFER_HEIGHT);
   DEFINE_INTEGER(GDK_GL_MAX_PBUFFER_PIXELS);
   DEFINE_INTEGER(GDK_GL_VISUAL_ID);
-  DEFINE_INTEGER(GDK_GL_SAMPLE_BUFFERS);
-  DEFINE_INTEGER(GDK_GL_SAMPLES);
   DEFINE_INTEGER(GDK_GL_BAD_SCREEN);
   DEFINE_INTEGER(GDK_GL_BAD_ATTRIBUTE);
   DEFINE_INTEGER(GDK_GL_NO_EXTENSION);
@@ -4380,11 +4378,20 @@ static void define_integers(void)
   DEFINE_INTEGER(GDK_GL_MODE_STEREO);
   DEFINE_INTEGER(GDK_GL_MODE_MULTISAMPLE);
   DEFINE_INTEGER(GDK_GL_MODE_LUMINANCE);
+#ifdef GTKGLEXT_MAJOR_VERSION
+  DEFINE_INTEGER(GDKGLEXT_MAJOR_VERSION);
+  DEFINE_INTEGER(GDKGLEXT_MINOR_VERSION);
+  DEFINE_INTEGER(GDKGLEXT_MICRO_VERSION);
+  DEFINE_INTEGER(GDKGLEXT_INTERFACE_AGE);
+  DEFINE_INTEGER(GDKGLEXT_BINARY_AGE);
+  DEFINE_INTEGER(GDK_GL_SAMPLE_BUFFERS);
+  DEFINE_INTEGER(GDK_GL_SAMPLES);
   DEFINE_INTEGER(GTKGLEXT_MAJOR_VERSION);
   DEFINE_INTEGER(GTKGLEXT_MINOR_VERSION);
   DEFINE_INTEGER(GTKGLEXT_MICRO_VERSION);
   DEFINE_INTEGER(GTKGLEXT_INTERFACE_AGE);
   DEFINE_INTEGER(GTKGLEXT_BINARY_AGE);
+#endif
 #endif
   DEFINE_INTEGER(GL_FALSE);
   DEFINE_INTEGER(GL_TRUE);
@@ -5104,7 +5111,7 @@ static int gl_already_inited = 0;
       define_functions();
       XEN_YES_WE_HAVE("gl");
 #if HAVE_GUILE
-      XEN_EVAL_C_STRING("(define gl-version \"15-Nov-02\")");
+      XEN_EVAL_C_STRING("(define gl-version \"17-Nov-02\")");
 #endif
       gl_already_inited = 1;
     }

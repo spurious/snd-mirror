@@ -1009,18 +1009,14 @@ XEN_NARGIFY_1(gxg_gtk_grab_remove_w, gxg_gtk_grab_remove)
 XEN_ARGIFY_2(gxg_gtk_init_add_w, gxg_gtk_init_add)
 XEN_NARGIFY_2(gxg_gtk_quit_add_destroy_w, gxg_gtk_quit_add_destroy)
 XEN_ARGIFY_3(gxg_gtk_quit_add_w, gxg_gtk_quit_add)
-XEN_NARGIFY_5(gxg_gtk_quit_add_full_w, gxg_gtk_quit_add_full)
 XEN_NARGIFY_1(gxg_gtk_quit_remove_w, gxg_gtk_quit_remove)
 XEN_NARGIFY_1(gxg_gtk_quit_remove_by_data_w, gxg_gtk_quit_remove_by_data)
 XEN_ARGIFY_3(gxg_gtk_timeout_add_w, gxg_gtk_timeout_add)
-XEN_NARGIFY_5(gxg_gtk_timeout_add_full_w, gxg_gtk_timeout_add_full)
 XEN_NARGIFY_1(gxg_gtk_timeout_remove_w, gxg_gtk_timeout_remove)
 XEN_ARGIFY_2(gxg_gtk_idle_add_w, gxg_gtk_idle_add)
 XEN_ARGIFY_3(gxg_gtk_idle_add_priority_w, gxg_gtk_idle_add_priority)
-XEN_NARGIFY_5(gxg_gtk_idle_add_full_w, gxg_gtk_idle_add_full)
 XEN_NARGIFY_1(gxg_gtk_idle_remove_w, gxg_gtk_idle_remove)
 XEN_NARGIFY_1(gxg_gtk_idle_remove_by_data_w, gxg_gtk_idle_remove_by_data)
-XEN_NARGIFY_6(gxg_gtk_input_add_full_w, gxg_gtk_input_add_full)
 XEN_NARGIFY_1(gxg_gtk_input_remove_w, gxg_gtk_input_remove)
 XEN_ARGIFY_2(gxg_gtk_key_snooper_install_w, gxg_gtk_key_snooper_install)
 XEN_NARGIFY_1(gxg_gtk_key_snooper_remove_w, gxg_gtk_key_snooper_remove)
@@ -4343,18 +4339,14 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_init_add, gxg_gtk_init_add_w, 1, 1, 0, H_gtk_init_add);
   XG_DEFINE_PROCEDURE(gtk_quit_add_destroy, gxg_gtk_quit_add_destroy_w, 2, 0, 0, H_gtk_quit_add_destroy);
   XG_DEFINE_PROCEDURE(gtk_quit_add, gxg_gtk_quit_add_w, 2, 1, 0, H_gtk_quit_add);
-  XG_DEFINE_PROCEDURE(gtk_quit_add_full, gxg_gtk_quit_add_full_w, 5, 0, 0, H_gtk_quit_add_full);
   XG_DEFINE_PROCEDURE(gtk_quit_remove, gxg_gtk_quit_remove_w, 1, 0, 0, H_gtk_quit_remove);
   XG_DEFINE_PROCEDURE(gtk_quit_remove_by_data, gxg_gtk_quit_remove_by_data_w, 1, 0, 0, H_gtk_quit_remove_by_data);
   XG_DEFINE_PROCEDURE(gtk_timeout_add, gxg_gtk_timeout_add_w, 2, 1, 0, H_gtk_timeout_add);
-  XG_DEFINE_PROCEDURE(gtk_timeout_add_full, gxg_gtk_timeout_add_full_w, 5, 0, 0, H_gtk_timeout_add_full);
   XG_DEFINE_PROCEDURE(gtk_timeout_remove, gxg_gtk_timeout_remove_w, 1, 0, 0, H_gtk_timeout_remove);
   XG_DEFINE_PROCEDURE(gtk_idle_add, gxg_gtk_idle_add_w, 1, 1, 0, H_gtk_idle_add);
   XG_DEFINE_PROCEDURE(gtk_idle_add_priority, gxg_gtk_idle_add_priority_w, 2, 1, 0, H_gtk_idle_add_priority);
-  XG_DEFINE_PROCEDURE(gtk_idle_add_full, gxg_gtk_idle_add_full_w, 5, 0, 0, H_gtk_idle_add_full);
   XG_DEFINE_PROCEDURE(gtk_idle_remove, gxg_gtk_idle_remove_w, 1, 0, 0, H_gtk_idle_remove);
   XG_DEFINE_PROCEDURE(gtk_idle_remove_by_data, gxg_gtk_idle_remove_by_data_w, 1, 0, 0, H_gtk_idle_remove_by_data);
-  XG_DEFINE_PROCEDURE(gtk_input_add_full, gxg_gtk_input_add_full_w, 6, 0, 0, H_gtk_input_add_full);
   XG_DEFINE_PROCEDURE(gtk_input_remove, gxg_gtk_input_remove_w, 1, 0, 0, H_gtk_input_remove);
   XG_DEFINE_PROCEDURE(gtk_key_snooper_install, gxg_gtk_key_snooper_install_w, 1, 1, 0, H_gtk_key_snooper_install);
   XG_DEFINE_PROCEDURE(gtk_key_snooper_remove, gxg_gtk_key_snooper_remove_w, 1, 0, 0, H_gtk_key_snooper_remove);

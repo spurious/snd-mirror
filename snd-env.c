@@ -1272,17 +1272,18 @@ void add_or_edit_symbol(char *name, env *val)
   /* called from envelope editor -- pass new definition into scheme */
   XEN e;
   char *buf, *tmpstr = NULL;
-  buf = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
+  int len;
+  tmpstr = env_to_string(val);
+  len = snd_strlen(tmpstr) + snd_strlen(name) + 32;
+  buf = (char *)CALLOC(len, sizeof(char));
 #if HAVE_RUBY
-    mus_snprintf(buf, PRINT_BUFFER_SIZE, "%s = %s", 
-		 name, 
-		 tmpstr = env_to_string(val));
+  mus_snprintf(buf, len, "%s = %s", name, tmpstr);
 #else
   e = XEN_NAME_AS_C_STRING_TO_VALUE(name);
-  mus_snprintf(buf, PRINT_BUFFER_SIZE, "(%s %s %s)", 
+  mus_snprintf(buf, len, "(%s %s %s)", 
 	       ((XEN_BOUND_P(e)) && (XEN_LIST_P(e))) ? "set!" : "define",
 	       name, 
-	       tmpstr = env_to_string(val));
+	       tmpstr);
 #endif
   if (tmpstr) FREE(tmpstr);
   snd_catch_any(eval_str_wrapper, buf, buf);

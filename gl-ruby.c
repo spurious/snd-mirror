@@ -50,8 +50,6 @@ XEN_NARGIFY_1(gxg_gdk_gl_drawable_is_double_buffered_w, gxg_gdk_gl_drawable_is_d
 XEN_NARGIFY_1(gxg_gdk_gl_drawable_swap_buffers_w, gxg_gdk_gl_drawable_swap_buffers)
 XEN_NARGIFY_1(gxg_gdk_gl_drawable_wait_gl_w, gxg_gdk_gl_drawable_wait_gl)
 XEN_NARGIFY_1(gxg_gdk_gl_drawable_wait_gdk_w, gxg_gdk_gl_drawable_wait_gdk)
-XEN_NARGIFY_2(gxg_gdk_gl_drawable_gl_begin_w, gxg_gdk_gl_drawable_gl_begin)
-XEN_NARGIFY_1(gxg_gdk_gl_drawable_gl_end_w, gxg_gdk_gl_drawable_gl_end)
 XEN_NARGIFY_1(gxg_gdk_gl_drawable_get_gl_config_w, gxg_gdk_gl_drawable_get_gl_config)
 XEN_ARGIFY_3(gxg_gdk_gl_drawable_get_size_w, gxg_gdk_gl_drawable_get_size)
 XEN_NARGIFY_3(gxg_gdk_gl_pixmap_new_w, gxg_gdk_gl_pixmap_new)
@@ -72,6 +70,10 @@ XEN_NARGIFY_1(gxg_gtk_widget_is_gl_capable_w, gxg_gtk_widget_is_gl_capable)
 XEN_NARGIFY_1(gxg_gtk_widget_get_gl_config_w, gxg_gtk_widget_get_gl_config)
 XEN_NARGIFY_1(gxg_gtk_widget_get_gl_context_w, gxg_gtk_widget_get_gl_context)
 XEN_NARGIFY_1(gxg_gtk_widget_get_gl_window_w, gxg_gtk_widget_get_gl_window)
+#ifdef GTKGLEXT_MAJOR_VERSION
+XEN_NARGIFY_2(gxg_gdk_gl_drawable_gl_begin_w, gxg_gdk_gl_drawable_gl_begin)
+XEN_NARGIFY_1(gxg_gdk_gl_drawable_gl_end_w, gxg_gdk_gl_drawable_gl_end)
+#endif
 #endif
 XEN_NARGIFY_1(gxg_glClearIndex_w, gxg_glClearIndex)
 XEN_NARGIFY_4(gxg_glClearColor_w, gxg_glClearColor)
@@ -445,8 +447,6 @@ static void define_functions(void)
   GL_DEFINE_PROCEDURE(gdk_gl_drawable_swap_buffers, gxg_gdk_gl_drawable_swap_buffers_w, 1, 0, 0, H_gdk_gl_drawable_swap_buffers);
   GL_DEFINE_PROCEDURE(gdk_gl_drawable_wait_gl, gxg_gdk_gl_drawable_wait_gl_w, 1, 0, 0, H_gdk_gl_drawable_wait_gl);
   GL_DEFINE_PROCEDURE(gdk_gl_drawable_wait_gdk, gxg_gdk_gl_drawable_wait_gdk_w, 1, 0, 0, H_gdk_gl_drawable_wait_gdk);
-  GL_DEFINE_PROCEDURE(gdk_gl_drawable_gl_begin, gxg_gdk_gl_drawable_gl_begin_w, 2, 0, 0, H_gdk_gl_drawable_gl_begin);
-  GL_DEFINE_PROCEDURE(gdk_gl_drawable_gl_end, gxg_gdk_gl_drawable_gl_end_w, 1, 0, 0, H_gdk_gl_drawable_gl_end);
   GL_DEFINE_PROCEDURE(gdk_gl_drawable_get_gl_config, gxg_gdk_gl_drawable_get_gl_config_w, 1, 0, 0, H_gdk_gl_drawable_get_gl_config);
   GL_DEFINE_PROCEDURE(gdk_gl_drawable_get_size, gxg_gdk_gl_drawable_get_size_w, 1, 2, 0, H_gdk_gl_drawable_get_size);
   GL_DEFINE_PROCEDURE(gdk_gl_pixmap_new, gxg_gdk_gl_pixmap_new_w, 3, 0, 0, H_gdk_gl_pixmap_new);
@@ -467,6 +467,10 @@ static void define_functions(void)
   GL_DEFINE_PROCEDURE(gtk_widget_get_gl_config, gxg_gtk_widget_get_gl_config_w, 1, 0, 0, H_gtk_widget_get_gl_config);
   GL_DEFINE_PROCEDURE(gtk_widget_get_gl_context, gxg_gtk_widget_get_gl_context_w, 1, 0, 0, H_gtk_widget_get_gl_context);
   GL_DEFINE_PROCEDURE(gtk_widget_get_gl_window, gxg_gtk_widget_get_gl_window_w, 1, 0, 0, H_gtk_widget_get_gl_window);
+#ifdef GTKGLEXT_MAJOR_VERSION
+  GL_DEFINE_PROCEDURE(gdk_gl_drawable_gl_begin, gxg_gdk_gl_drawable_gl_begin_w, 2, 0, 0, H_gdk_gl_drawable_gl_begin);
+  GL_DEFINE_PROCEDURE(gdk_gl_drawable_gl_end, gxg_gdk_gl_drawable_gl_end_w, 1, 0, 0, H_gdk_gl_drawable_gl_end);
+#endif
 #endif
   GL_DEFINE_PROCEDURE(glClearIndex, gxg_glClearIndex_w, 1, 0, 0, H_glClearIndex);
   GL_DEFINE_PROCEDURE(glClearColor, gxg_glClearColor_w, 4, 0, 0, H_glClearColor);

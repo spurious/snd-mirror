@@ -2,6 +2,7 @@
 /*   based on code of Scott Wilson and Craig Sapp */
 
 /* TODO: test, tie into CLM (rt.lisp, sndlib2clm.lisp etc)
+ * TODO: add mus-midi support to run macro(s)
  */
 
 /*
@@ -480,7 +481,7 @@ char *mus_midi_describe(void)
   char info[256];
   struct midi_info minfo;
   fd = open("/dev/sequencer", O_RDWR, 0);
-  if (fd == -1) fd = open("/dev/music", O_RDONLY, 0); /* /dev/sequencer never works */
+  if (fd == -1) fd = open("/dev/music", O_RDONLY, 0); 
   if (fd != -1)
     {
       status = ioctl(fd, SNDCTL_SEQ_NRMIDIS, &numdevs);
@@ -507,6 +508,7 @@ char *mus_midi_describe(void)
 		  strcat(buf, info);
 		}
 	    }
+	  close(fd);
 	}
     }
   return(buf);
@@ -661,6 +663,8 @@ char *mus_midi_describe(void) {return(NULL);}            /* result should be fre
 
 /* ---------------- XEN ---------------- */
 /* tie foregoing into Xen (Guile or Ruby) */
+
+/* TODO: mus-midi example in scm */
 
 #if HAVE_EXTENSION_LANGUAGE
 

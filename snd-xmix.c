@@ -245,6 +245,10 @@ static void mix_amp_env_resize(Widget w, XtPointer context, XtPointer info)
     }
 }
 
+#ifdef MAC_OSX
+static int press_x, press_y;
+#endif
+
 static void mix_drawer_button_motion(Widget w, XtPointer context, XEvent *event, Boolean *cont) 
 {
   snd_state *ss = (snd_state *)context;
@@ -252,6 +256,9 @@ static void mix_drawer_button_motion(Widget w, XtPointer context, XEvent *event,
   int mix_id, chans, chan;
   env *e;
   Float pos;
+#ifdef MAC_OSX
+  if ((press_x == ev->x) && (press_y == ev->y)) return;
+#endif
   mix_id = current_mix_id(ss);
   chans = mix_input_chans_from_id(mix_id);
   pos = (Float)(ev->x) / (Float)widget_width(w);
@@ -273,6 +280,10 @@ static void mix_drawer_button_press(Widget w, XtPointer context, XEvent *event, 
   int mix_id, chans, chan;
   env *e;
   Float pos;
+#ifdef MAC_OSX
+  press_x = ev->x;
+  press_y = ev->y;
+#endif
   mix_id = current_mix_id(ss);
   chans = mix_input_chans_from_id(mix_id);
   pos = (Float)(ev->x) / (Float)widget_width(w);

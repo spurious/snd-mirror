@@ -902,10 +902,17 @@ static void filter_drawer_help_callback(Widget w, XtPointer context, XtPointer i
 See the envelope editor documentation for editing directions.");
 }
 
+#ifdef MAC_OSX
+static int press_x, press_y;
+#endif
+
 static void filter_drawer_button_motion(Widget w, XtPointer context, XEvent *event, Boolean *cont) 
 {
   snd_info *sp = (snd_info *)context;
   XMotionEvent *ev = (XMotionEvent *)event;
+#ifdef MAC_OSX
+  if ((press_x == ev->x) && (press_y == ev->y)) return;
+#endif
   edp_handle_point(sp->state, 
 		   sp->sgx->flt,
 		   ev->x, ev->y, ev->time, 
@@ -920,6 +927,10 @@ static void filter_drawer_button_press(Widget w, XtPointer context, XEvent *even
 {
   snd_info *sp = (snd_info *)context;
   XButtonEvent *ev = (XButtonEvent *)event;
+#ifdef MAC_OSX
+  press_x = ev->x;
+  press_y = ev->y;
+#endif
   if (edp_handle_press(sp->state, 
 		       sp->sgx->flt,
 		       ev->x, ev->y, ev->time, 

@@ -343,7 +343,8 @@ static void select_or_edit_env(snd_state *ss, int pos)
       set_button_label(showB, "view envs");
     }
   if (active_env) active_env = free_env(active_env);
-  active_env = copy_env(enved_all_envs(pos));
+  selected_env = enved_all_envs(pos);
+  active_env = copy_env(selected_env);
   gtk_entry_set_text(GTK_ENTRY(textL), enved_all_names(pos));
   set_enved_env_list_top(0);
   do_env_edit(active_env, TRUE);
@@ -587,6 +588,7 @@ static void mix_button_pressed(GtkWidget *w, gpointer data)
 
 static void delete_button_pressed(GtkWidget *w, gpointer context)
 {
+  snd_state *ss = (snd_state *)context;
   int i, len;
   if (selected_env)
     {
@@ -594,8 +596,12 @@ static void delete_button_pressed(GtkWidget *w, gpointer context)
       for (i = 0; i < len; i++)
 	if (selected_env == enved_all_envs(i))
 	  {
-	    delete_envelope((snd_state *)context, enved_all_names(i));
-	    if (enved_all_envs_top() == 0) set_sensitive(deleteB, FALSE);
+	    delete_envelope(ss, enved_all_names(i));
+	    if (enved_all_envs_top() == 0) 
+	      set_sensitive(deleteB, FALSE);
+	    if (active_env) active_env = free_env(active_env);
+	    selected_env = NULL;
+	    env_redisplay(ss);
 	    break;
 	  }
     }

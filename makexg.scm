@@ -909,7 +909,7 @@
 (hey " *~%")
 (hey " * ~A: check out the g_signal handlers~%" (string-append "T" "ODO"))
 (hey " * ~A: struct print, more struct instance creators(?)~%" (string-append "T" "ODO"))
-(hey " * ~A: unprotect *_remove, unprotect old upon reset callback~%" (string-append "T" "ODO"))
+(hey " * ~A: unprotect gdk_window_filter_remove~%" (string-append "T" "ODO"))
 (hey " * ~A: test suite (snd-test 24)~%" (string-append "T" "ODO"))
 (hey " *~%")
 (hey " * HISTORY:~%")
@@ -1404,7 +1404,7 @@
 			      (name-it "func"))))
 		      args)
 		     "XEN_FALSE")))
-	     ;; TODO: if destroynotify(gdk/d) or callbackmarshal, append these to this list, add callbacks that access list-ref 3 and 4 using same func_data
+	     ;; TODO: if destroynotify(gdk/d) add callbacks that access list-ref 3 and 4 using same func_data
 	     (if using-loc
 		 (hey "    loc = xm_protect(gxg_ptr);~%")
 		 (hey "    xm_protect(gxg_ptr);~%"))

@@ -115,8 +115,10 @@ static XEN snd_catch_scm_error(void *data, XEN tag, XEN throw_args) /* error han
   char *name_buf = NULL;
   snd_state *ss;
   ss = get_global_state();
+#if 0
   ss->catch_exists--;
   if (ss->catch_exists < 0) ss->catch_exists = 0;
+#endif
 
 #ifdef SCM_MAKE_CHAR
   port = scm_mkstrport(XEN_ZERO, 
@@ -247,8 +249,8 @@ static XEN snd_catch_scm_error(void *data, XEN tag, XEN throw_args) /* error han
 	  else snd_error(name_buf);
 	}
     }
+  check_for_event(ss);
 #endif
-  check_for_event(get_global_state());
   return(tag);
 }
 
@@ -1671,7 +1673,7 @@ chan_info *get_cp(XEN x_snd_n, XEN x_chn_n, const char *caller)
     if (sp->selected_channel != NO_SELECTION) 
       chn_n = sp->selected_channel;
     else chn_n = 0;
-  if ((chn_n >= 0) && (chn_n < sp->nchans)) 
+  if ((chn_n >= 0) && (chn_n < sp->nchans) && (sp->chans[chn_n]))
     return(sp->chans[chn_n]);
   snd_no_such_channel_error(caller, x_snd_n, x_chn_n);
   return(NULL);

@@ -33,7 +33,7 @@
  *
  * TODO: check out the g_signal handlers
  * TODO: struct print, more struct instance creators(?)
- * TODO: unprotect *_remove, unprotect old upon reset callback
+ * TODO: unprotect gdk_window_filter_remove
  * TODO: test suite (snd-test 24)
  *
  * HISTORY:
@@ -589,7 +589,6 @@ XM_TYPE_PTR(GtkLabel_, GtkLabel*)
 XM_TYPE_PTR(GtkLayout_, GtkLayout*)
 XM_TYPE_PTR(GtkListStore_, GtkListStore*)
 XM_TYPE_PTR(PangoLanguage_, PangoLanguage*)
-XM_TYPE(GtkCallbackMarshal, GtkCallbackMarshal)
 #define XEN_xen_P(Arg) ((XEN_LIST_P(Arg)) && (XEN_LIST_LENGTH(Arg) > 2))
 #define XEN_TO_C_xen(Arg) ((gpointer)Arg)
 XM_TYPE(GtkMenuDetachFunc, GtkMenuDetachFunc)
@@ -9498,28 +9497,6 @@ static XEN gxg_gtk_quit_add(XEN main_level, XEN func, XEN func_data)
     return(result);
    }
 }
-static XEN gxg_gtk_quit_add_full(XEN main_level, XEN func, XEN marshal, XEN func_data, XEN destroy)
-{
-  #define H_gtk_quit_add_full "guint gtk_quit_add_full(guint main_level, GtkFunction func, GtkCallbackMarshal marshal, \
-lambda_data func_data, GtkDestroyNotify destroy)"
-  XEN_ASSERT_TYPE(XEN_guint_P(main_level), main_level, 1, "gtk_quit_add_full", "guint");
-  XEN_ASSERT_TYPE(XEN_GtkFunction_P(func), func, 2, "gtk_quit_add_full", "GtkFunction");
-  XEN_ASSERT_TYPE(XEN_GtkCallbackMarshal_P(marshal), marshal, 3, "gtk_quit_add_full", "GtkCallbackMarshal");
-  XEN_ASSERT_TYPE(XEN_lambda_data_P(func_data), func_data, 4, "gtk_quit_add_full", "lambda_data");
-  XEN_ASSERT_TYPE(XEN_GtkDestroyNotify_P(destroy), destroy, 5, "gtk_quit_add_full", "GtkDestroyNotify");
-  {
-    XEN result = XEN_FALSE;
-    int loc;
-    XEN gxg_ptr = XEN_LIST_5(func, func_data, XEN_FALSE, XEN_FALSE, XEN_FALSE);
-    loc = xm_protect(gxg_ptr);
-    XEN_LIST_SET(gxg_ptr, 2, C_TO_XEN_INT(loc));
-    XEN_LIST_SET(gxg_ptr, 3, destroy);
-    result = C_TO_XEN_guint(gtk_quit_add_full(XEN_TO_C_guint(main_level), XEN_TO_C_GtkFunction(func), XEN_TO_C_GtkCallbackMarshal(marshal), 
-                                              XEN_TO_C_lambda_data(func_data), XEN_TO_C_GtkDestroyNotify(destroy)));
-    XEN_LIST_SET(gxg_ptr, 2, XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("idler"), result, C_TO_XEN_INT(loc)));
-    return(result);
-   }
-}
 static XEN gxg_gtk_quit_remove(XEN quit_handler_id)
 {
   #define H_gtk_quit_remove "void gtk_quit_remove(guint quit_handler_id)"
@@ -9550,27 +9527,6 @@ static XEN gxg_gtk_timeout_add(XEN interval, XEN func, XEN func_data)
     loc = xm_protect(gxg_ptr);
     XEN_LIST_SET(gxg_ptr, 2, C_TO_XEN_INT(loc));
     result = C_TO_XEN_guint(gtk_timeout_add(XEN_TO_C_guint32(interval), XEN_TO_C_GtkTimeoutFunction(func), XEN_TO_C_lambda_data(func_data)));
-    return(result);
-   }
-}
-static XEN gxg_gtk_timeout_add_full(XEN interval, XEN func, XEN marshal, XEN func_data, XEN destroy)
-{
-  #define H_gtk_timeout_add_full "guint gtk_timeout_add_full(guint32 interval, GtkTimeoutFunction func, \
-GtkCallbackMarshal marshal, lambda_data func_data, GtkDestroyNotify destroy)"
-  XEN_ASSERT_TYPE(XEN_guint32_P(interval), interval, 1, "gtk_timeout_add_full", "guint32");
-  XEN_ASSERT_TYPE(XEN_GtkTimeoutFunction_P(func), func, 2, "gtk_timeout_add_full", "GtkTimeoutFunction");
-  XEN_ASSERT_TYPE(XEN_GtkCallbackMarshal_P(marshal), marshal, 3, "gtk_timeout_add_full", "GtkCallbackMarshal");
-  XEN_ASSERT_TYPE(XEN_lambda_data_P(func_data), func_data, 4, "gtk_timeout_add_full", "lambda_data");
-  XEN_ASSERT_TYPE(XEN_GtkDestroyNotify_P(destroy), destroy, 5, "gtk_timeout_add_full", "GtkDestroyNotify");
-  {
-    XEN result = XEN_FALSE;
-    int loc;
-    XEN gxg_ptr = XEN_LIST_5(func, func_data, XEN_FALSE, XEN_FALSE, XEN_FALSE);
-    loc = xm_protect(gxg_ptr);
-    XEN_LIST_SET(gxg_ptr, 2, C_TO_XEN_INT(loc));
-    XEN_LIST_SET(gxg_ptr, 3, destroy);
-    result = C_TO_XEN_guint(gtk_timeout_add_full(XEN_TO_C_guint32(interval), XEN_TO_C_GtkTimeoutFunction(func), XEN_TO_C_GtkCallbackMarshal(marshal), 
-                                                 XEN_TO_C_lambda_data(func_data), XEN_TO_C_GtkDestroyNotify(destroy)));
     return(result);
    }
 }
@@ -9616,28 +9572,6 @@ static XEN gxg_gtk_idle_add_priority(XEN priority, XEN func, XEN func_data)
     return(result);
    }
 }
-static XEN gxg_gtk_idle_add_full(XEN priority, XEN func, XEN marshal, XEN func_data, XEN destroy)
-{
-  #define H_gtk_idle_add_full "guint gtk_idle_add_full(gint priority, GtkFunction func, GtkCallbackMarshal marshal, \
-lambda_data func_data, GtkDestroyNotify destroy)"
-  XEN_ASSERT_TYPE(XEN_gint_P(priority), priority, 1, "gtk_idle_add_full", "gint");
-  XEN_ASSERT_TYPE(XEN_GtkFunction_P(func), func, 2, "gtk_idle_add_full", "GtkFunction");
-  XEN_ASSERT_TYPE(XEN_GtkCallbackMarshal_P(marshal), marshal, 3, "gtk_idle_add_full", "GtkCallbackMarshal");
-  XEN_ASSERT_TYPE(XEN_lambda_data_P(func_data), func_data, 4, "gtk_idle_add_full", "lambda_data");
-  XEN_ASSERT_TYPE(XEN_GtkDestroyNotify_P(destroy), destroy, 5, "gtk_idle_add_full", "GtkDestroyNotify");
-  {
-    XEN result = XEN_FALSE;
-    int loc;
-    XEN gxg_ptr = XEN_LIST_5(func, func_data, XEN_FALSE, XEN_FALSE, XEN_FALSE);
-    loc = xm_protect(gxg_ptr);
-    XEN_LIST_SET(gxg_ptr, 2, C_TO_XEN_INT(loc));
-    XEN_LIST_SET(gxg_ptr, 3, destroy);
-    result = C_TO_XEN_guint(gtk_idle_add_full(XEN_TO_C_gint(priority), XEN_TO_C_GtkFunction(func), XEN_TO_C_GtkCallbackMarshal(marshal), 
-                                              XEN_TO_C_lambda_data(func_data), XEN_TO_C_GtkDestroyNotify(destroy)));
-    XEN_LIST_SET(gxg_ptr, 2, XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("idler"), result, C_TO_XEN_INT(loc)));
-    return(result);
-   }
-}
 static XEN gxg_gtk_idle_remove(XEN idle_handler_id)
 {
   #define H_gtk_idle_remove "void gtk_idle_remove(guint idle_handler_id)"
@@ -9653,29 +9587,6 @@ static XEN gxg_gtk_idle_remove_by_data(XEN data)
   gtk_idle_remove_by_data(XEN_TO_C_xen(data));
   xm_unprotect_at(XEN_TO_C_INT(XEN_CADDR(data)));
   return(XEN_FALSE);
-}
-static XEN gxg_gtk_input_add_full(XEN source, XEN condition, XEN func, XEN marshal, XEN func_data, XEN destroy)
-{
-  #define H_gtk_input_add_full "guint gtk_input_add_full(gint source, GdkInputCondition condition, GdkInputFunction func, \
-GtkCallbackMarshal marshal, lambda_data func_data, GtkDestroyNotify destroy)"
-  XEN_ASSERT_TYPE(XEN_gint_P(source), source, 1, "gtk_input_add_full", "gint");
-  XEN_ASSERT_TYPE(XEN_GdkInputCondition_P(condition), condition, 2, "gtk_input_add_full", "GdkInputCondition");
-  XEN_ASSERT_TYPE(XEN_GdkInputFunction_P(func), func, 3, "gtk_input_add_full", "GdkInputFunction");
-  XEN_ASSERT_TYPE(XEN_GtkCallbackMarshal_P(marshal), marshal, 4, "gtk_input_add_full", "GtkCallbackMarshal");
-  XEN_ASSERT_TYPE(XEN_lambda_data_P(func_data), func_data, 5, "gtk_input_add_full", "lambda_data");
-  XEN_ASSERT_TYPE(XEN_GtkDestroyNotify_P(destroy), destroy, 6, "gtk_input_add_full", "GtkDestroyNotify");
-  {
-    XEN result = XEN_FALSE;
-    int loc;
-    XEN gxg_ptr = XEN_LIST_5(func, func_data, XEN_FALSE, XEN_FALSE, XEN_FALSE);
-    loc = xm_protect(gxg_ptr);
-    XEN_LIST_SET(gxg_ptr, 2, C_TO_XEN_INT(loc));
-    XEN_LIST_SET(gxg_ptr, 3, destroy);
-    result = C_TO_XEN_guint(gtk_input_add_full(XEN_TO_C_gint(source), XEN_TO_C_GdkInputCondition(condition), XEN_TO_C_GdkInputFunction(func), 
-                                               XEN_TO_C_GtkCallbackMarshal(marshal), XEN_TO_C_lambda_data(func_data), XEN_TO_C_GtkDestroyNotify(destroy)));
-    XEN_LIST_SET(gxg_ptr, 2, XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("idler"), result, C_TO_XEN_INT(loc)));
-    return(result);
-   }
 }
 static XEN gxg_gtk_input_remove(XEN input_handler_id)
 {
@@ -22100,18 +22011,14 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_init_add, gxg_gtk_init_add, 1, 1, 0, H_gtk_init_add);
   XG_DEFINE_PROCEDURE(gtk_quit_add_destroy, gxg_gtk_quit_add_destroy, 2, 0, 0, H_gtk_quit_add_destroy);
   XG_DEFINE_PROCEDURE(gtk_quit_add, gxg_gtk_quit_add, 2, 1, 0, H_gtk_quit_add);
-  XG_DEFINE_PROCEDURE(gtk_quit_add_full, gxg_gtk_quit_add_full, 5, 0, 0, H_gtk_quit_add_full);
   XG_DEFINE_PROCEDURE(gtk_quit_remove, gxg_gtk_quit_remove, 1, 0, 0, H_gtk_quit_remove);
   XG_DEFINE_PROCEDURE(gtk_quit_remove_by_data, gxg_gtk_quit_remove_by_data, 1, 0, 0, H_gtk_quit_remove_by_data);
   XG_DEFINE_PROCEDURE(gtk_timeout_add, gxg_gtk_timeout_add, 2, 1, 0, H_gtk_timeout_add);
-  XG_DEFINE_PROCEDURE(gtk_timeout_add_full, gxg_gtk_timeout_add_full, 5, 0, 0, H_gtk_timeout_add_full);
   XG_DEFINE_PROCEDURE(gtk_timeout_remove, gxg_gtk_timeout_remove, 1, 0, 0, H_gtk_timeout_remove);
   XG_DEFINE_PROCEDURE(gtk_idle_add, gxg_gtk_idle_add, 1, 1, 0, H_gtk_idle_add);
   XG_DEFINE_PROCEDURE(gtk_idle_add_priority, gxg_gtk_idle_add_priority, 2, 1, 0, H_gtk_idle_add_priority);
-  XG_DEFINE_PROCEDURE(gtk_idle_add_full, gxg_gtk_idle_add_full, 5, 0, 0, H_gtk_idle_add_full);
   XG_DEFINE_PROCEDURE(gtk_idle_remove, gxg_gtk_idle_remove, 1, 0, 0, H_gtk_idle_remove);
   XG_DEFINE_PROCEDURE(gtk_idle_remove_by_data, gxg_gtk_idle_remove_by_data, 1, 0, 0, H_gtk_idle_remove_by_data);
-  XG_DEFINE_PROCEDURE(gtk_input_add_full, gxg_gtk_input_add_full, 6, 0, 0, H_gtk_input_add_full);
   XG_DEFINE_PROCEDURE(gtk_input_remove, gxg_gtk_input_remove, 1, 0, 0, H_gtk_input_remove);
   XG_DEFINE_PROCEDURE(gtk_key_snooper_install, gxg_gtk_key_snooper_install, 1, 1, 0, H_gtk_key_snooper_install);
   XG_DEFINE_PROCEDURE(gtk_key_snooper_remove, gxg_gtk_key_snooper_remove, 1, 0, 0, H_gtk_key_snooper_remove);
@@ -25512,7 +25419,7 @@ static XEN gxg_active(XEN ptr)
   if (XEN_GtkCellRendererToggle__P(ptr)) return(C_TO_XEN_guint((guint)((XEN_TO_C_GtkCellRendererToggle_(ptr))->active)));
   if (XEN_GtkCheckMenuItem__P(ptr)) return(C_TO_XEN_guint((guint)((XEN_TO_C_GtkCheckMenuItem_(ptr))->active)));
   if (XEN_GtkMenuShell__P(ptr)) return(C_TO_XEN_guint((guint)((XEN_TO_C_GtkMenuShell_(ptr))->active)));
-  if (XEN_GtkToggleButton__P(ptr)) return(C_TO_XEN_guint((guint)((XEN_TO_C_GtkToggleButton_(ptr))->active)));
+  if (XEN_GtkToggleButton__P(ptr)) return(C_TO_XEN_gboolean((gboolean)((XEN_TO_C_GtkToggleButton_(ptr))->active)));
   XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "active", "pointer to struct with active field");
 }
 
@@ -30552,7 +30459,7 @@ static int xg_already_inited = 0;
       define_strings();
       XEN_YES_WE_HAVE("xg");
 #if HAVE_GUILE
-      XEN_EVAL_C_STRING("(define xm-version \"15-Nov-02\")");
+      XEN_EVAL_C_STRING("(define xm-version \"17-Nov-02\")");
 #endif
       xg_already_inited = 1;
     }

@@ -2503,7 +2503,7 @@ a sort of play list: (region-play-list (list (list 0.0 0) (list 0.5 1) (list 1.0
 			     (if (env? gen)
 				 (set! val (* (gen) val))
 				 (if (readin? gen)
-				     (set! val (gen))
+				     (set! val (+ val (gen)))
 				     (set! val (gen val))))))
 			 val)))
     (mix-vct output (inexact->exact (floor (* beg (mus-srate)))) #f #f #f)))

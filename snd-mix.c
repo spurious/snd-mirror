@@ -921,9 +921,9 @@ static mix_info *add_mix(chan_info *cp, int chan, off_t beg, off_t num,
   return(md);
 }
 
-static mix_info *file_mix_samples(off_t beg, off_t num, char *tempfile, chan_info *cp, int chan, int temp, const char *origin, int with_tag)
+static mix_info *file_mix_samples(off_t beg, off_t num, char *mixfile, chan_info *cp, int chan, int temp, const char *origin, int with_tag)
 {
-  /* open tempfile, current data, write to new temp file mixed, close others, open and use new as change case */
+  /* open mixfile, current data, write to new temp file mixed, close others, open and use new as change case */
   /* used for clip-region temp file incoming and C-q in snd-chn.c (i.e. mix in file) so sync not relevant */
   snd_fd *csf = NULL;
   snd_state *ss;
@@ -932,7 +932,7 @@ static mix_info *file_mix_samples(off_t beg, off_t num, char *tempfile, chan_inf
   char *ofile;
   mus_sample_t **data;
   mus_sample_t *chandata;
-  int in_chans, base, err = 0;
+  int in_chans, err = 0;
   off_t i, j, cursamps, len, size;
   file_info *ihdr, *ohdr;
   ss = cp->state;
@@ -943,19 +943,21 @@ static mix_info *file_mix_samples(off_t beg, off_t num, char *tempfile, chan_inf
   /* might set flag here that we need backup after file_mix_samples below (backup_edit_list(cp)) */
   /* otherwise user sees unexplained mix-extend in edit history list */
   if (beg < 0) beg = 0;
-  ihdr = make_file_info(tempfile, ss);
-  if (!ihdr) return(NULL);
   sp = cp->sound;
+  ihdr = make_file_info(mixfile, ss);
+  if (!ihdr) return(NULL);
   in_chans = ihdr->chans;
-  if (in_chans <= chan) 
-    base = 0; 
-  else base = chan;  /* TODO: does this make any sense? */
+  if (chan >= in_chans) 
+    {
+      free_file_info(ihdr);
+      return(NULL); /* we're reading input[chan] so if chan >= in_chans (no such channel exists) give up */
+    }
   ofile = snd_tempnam(ss);
   ohdr = make_temp_header(ofile, SND_SRATE(sp), 1, 0, (char *)origin);
   ofd = open_temp_file(ofile, 1, ohdr, ss);
   if (ofd == -1) 
     {
-      if (ihdr) free_file_info(ihdr);
+      free_file_info(ihdr);
       snd_error("mix temp file %s: %s", ofile, strerror(errno)); 
       return(NULL);
     }
@@ -963,24 +965,24 @@ static mix_info *file_mix_samples(off_t beg, off_t num, char *tempfile, chan_inf
     csf = init_sample_read(beg, cp, READ_FORWARD);
   if (csf == NULL) 
     {
-      if (ihdr) free_file_info(ihdr);
+      free_file_info(ihdr);
       mus_file_close(ofd);
       snd_remove(ofile, TRUE);
       FREE(ofile);
       return(NULL);
     }
-  ifd = snd_open_read(ss, tempfile);
-  mus_file_open_descriptors(ifd, tempfile,
+  ifd = snd_open_read(ss, mixfile);
+  mus_file_open_descriptors(ifd, mixfile,
 			    ihdr->format,
 			    mus_bytes_per_sample(ihdr->format),
 			    ihdr->data_location,
 			    ihdr->chans,
 			    ihdr->type);
-  during_open(ifd, tempfile, SND_MIX_FILE);
+  during_open(ifd, mixfile, SND_MIX_FILE);
   if (num < MAX_BUFFER_SIZE) size = num; else size = MAX_BUFFER_SIZE;
   data = (mus_sample_t **)CALLOC(in_chans, sizeof(mus_sample_t *));
-  data[base] = (mus_sample_t *)CALLOC(size, sizeof(mus_sample_t));
-  chandata = data[base];
+  data[chan] = (mus_sample_t *)CALLOC(size, sizeof(mus_sample_t));
+  chandata = data[chan];
   lseek(ofd, ohdr->data_location, SEEK_SET);
   lseek(ifd, ihdr->data_location, SEEK_SET);
   if (in_chans <= chan)
@@ -1015,14 +1017,14 @@ static mix_info *file_mix_samples(off_t beg, off_t num, char *tempfile, chan_inf
   close_temp_file(ofd, ohdr, num * mus_bytes_per_sample(ohdr->format), sp);
   mus_file_close(ifd);
   free_snd_fd(csf);
-  FREE(data[base]);
+  FREE(data[chan]);
   FREE(data);
   free_file_info(ihdr);
   free_file_info(ohdr);
   file_change_samples(beg, num, ofile, cp, 0, DELETE_ME, DONT_LOCK_MIXES, origin, cp->edit_ctr);
   if (ofile) FREE(ofile);
   if (with_tag)
-    return(add_mix(cp, chan, beg, num, tempfile, in_chans, temp));
+    return(add_mix(cp, chan, beg, num, mixfile, in_chans, temp));
   else return(NULL);
 }
 
@@ -2828,7 +2830,7 @@ static void play_track(snd_state *ss, chan_info **ucps, int chans, int track_num
   chan_info *locp;
   int playfd, i, j, k, n, samps, chan = 0, happy = 0, need_free = 0, format, datum_bytes, outchans, frames;
 #if MAC_OSX
-  /* TODO: does OSX play-track/mix handle mono/22050 correctly? */
+  /* TODO: fix OSX play-track/mix to handle mono/22050 correctly */
   float *buf;
 #else
   #if HAVE_ALSA
