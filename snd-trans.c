@@ -515,7 +515,8 @@ static int read_ibm_cvsd(char *oldname, char *newname, char *hdr)
 {
   /* assumed to be in a RIFF file, and that we just read the header via c_read_header */
   /* avg rate gives srate/8 (8 bits per byte) -- can be ignored, can be stereo */
-  int fs = -1, fd = -1, loc, totalin, happy, chans, srate, inp, outp, i, chn, byte, err = MUS_NO_ERROR;
+  int fs = -1, fd = -1, totalin, happy, chans, srate, inp, outp, i, chn, byte, err = MUS_NO_ERROR;
+  off_t loc;
   int *curvals;
   int osp;
   unsigned char *buf = NULL;
@@ -885,8 +886,9 @@ static int adpcm_decoder(unsigned char *indata, short *outdata, int totalbytes, 
 
 static int read_dvi_adpcm(char *oldname, char *newname, char *hdr, int type)
 {
-  int fs = -1, fd = -1, loc, totalin, chans, srate, blksiz, samps, samps_read;
+  int fs = -1, fd = -1, totalin, chans, srate, blksiz, samps, samps_read;
   unsigned char *buf = NULL;
+  off_t loc;
   loc = mus_sound_data_location(oldname);
   chans = mus_sound_chans(oldname);
   blksiz = mus_sound_align(oldname);
@@ -967,8 +969,9 @@ static short oki_adpcm_decode(char code, struct oki_adpcm_status *stat)
 
 static int read_oki_adpcm(char *oldname, char *newname, char *hdr)
 {
-  int fs = -1, fd = -1, loc, i, j, totalin, chans, srate, blksiz, samps, samps_read;
+  int fs = -1, fd = -1, i, j, totalin, chans, srate, blksiz, samps, samps_read;
   unsigned char *buf = NULL;
+  off_t loc;
   short *buf1;
   struct oki_adpcm_status stat;
   chans = mus_sound_chans(oldname);
@@ -986,7 +989,7 @@ static int read_oki_adpcm(char *oldname, char *newname, char *hdr)
   STARTUP(oldname, newname, blksiz, unsigned char);
   buf1 = (short *)CALLOC(blksiz * 2, sizeof(short));
   samps = mus_sound_fact_samples(oldname);
-  if (samps == 0) samps = mus_sound_frames(oldname);
+  if (samps == 0) samps = (int)mus_sound_frames(oldname);
   srate = mus_sound_srate(oldname);
   mus_bint_to_char((unsigned char *)(hdr + 16), srate);
   mus_bint_to_char((unsigned char *)(hdr + 20), chans);
@@ -1030,9 +1033,10 @@ static int read_oki_adpcm(char *oldname, char *newname, char *hdr)
 
 static int read_12bit(char *oldname, char *newname, char *hdr)
 {
-  int loc, chans, samps, totalin, i, j, fs = -1, fd = -1;
+  int chans, totalin, i, j, fs = -1, fd = -1;
   unsigned char *buf = NULL;
   short *buf1;
+  off_t loc, samps;
   loc = mus_sound_data_location(oldname);
   chans = mus_sound_chans(oldname);
   samps = mus_sound_samples(oldname);
@@ -1077,8 +1081,9 @@ static int ex[] = {-128, -64, -32, -16, -8, -4, -2, -1, 0, 1, 2, 4, 8, 16, 32, 6
 
 static int read_iff(char *oldname, char *newname, int orig, char *hdr)
 {
-  int loc, chans, samps, totalin, i, j, fs = -1, fd = -1, f1, f2, val;
+  int chans, totalin, i, j, fs = -1, fd = -1, f1, f2, val;
   short *buf = NULL;
+  off_t loc, samps;
   loc = mus_sound_data_location(oldname);
   chans = mus_sound_chans(oldname);
   samps = mus_sound_samples(oldname);
@@ -1472,8 +1477,9 @@ static int unpack_input(FILE *fin, unsigned char *code, int bits)
 
 static int read_g72x_adpcm(char *oldname, char *newname, char *hdr, int which_g)
 {
-  int fs = -1, loc, j, chans, srate, dec_bits = 0, err = MUS_NO_ERROR;
+  int fs = -1, j, chans, srate, dec_bits = 0, err = MUS_NO_ERROR;
   FILE *fd;
+  off_t loc;
   unsigned char code;
   short *buf = NULL;
   struct g72x_state state;

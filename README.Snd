@@ -448,21 +448,19 @@ from grfsnd.html to your initialization file:
 
 
 ---- Motif: ----
-If you installed OpenMotif, then "upgraded" to RedHat 7.2, Redhat
+If you installed OpenMotif, then upgraded to RedHat 7.2, Redhat
 probably overwrote Motif with Lesstif.  You need, among other
 things, to re-install OpenMotif and make sure /usr/local/lib/libXm.so.2
 is the new version, not Lesstif's.  If you use mwm, you need
 to get it back as well, which means removing the directory that
-Lesstif put in its place.  The error you'll get will be
-some complaint about undefined xmNotebook class.  This is a major
-bug in Redhat 7.2.  Whenever I install 7.2, I immediately:
-
+Lesstif put in its place.  The error you will get will be
+some complaint about undefined xmNotebook class. So:
   rpm -e lesstif-devel
   rpm -e ddd
   rpm -e lesstif
   rpm -i openmotif-<whatever the number is>
   rpm -i openmotif-devel-<whatever the number is>
-
+In RedHat 7.3, you can choose to install openmotif, rather than lesstif.
 
 
 So to sum up: 

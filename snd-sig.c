@@ -1319,7 +1319,8 @@ static char *apply_filter_or_error(chan_info *ncp, int order, env *e, int from_e
   snd_state *ss;
   snd_info *sp;
   int reporting = 0;
-  int i, m, stop_point = 0, prebeg = 0;
+  int i, m, stop_point = 0;
+  off_t prebeg = 0;
   off_t scdur, dur, offk;
   snd_fd **sfs;
   snd_fd *sf;
@@ -1500,7 +1501,7 @@ static char *apply_filter_or_error(chan_info *ncp, int order, env *e, int from_e
 			prebeg = order - 1;
 		      else prebeg = si->begs[i];
 		      if (prebeg > 0)
-			for (m = prebeg; m > 0; m--)
+			for (m = (int)prebeg; m > 0; m--)
 			  d[m] = read_sample_to_float(sf);
 		    }
 		}
@@ -2359,8 +2360,8 @@ static XEN g_map_chan_1(XEN proc, XEN s_beg, XEN s_end, XEN org, XEN snd, XEN ch
   snd_info *sp;
   snd_fd *sf = NULL;
   XEN errstr;
-  off_t kp, len, num;
-  int reporting = 0, rpt = 0, rpt4, i, j = 0, cured, pos;
+  off_t kp, len, j = 0, num;
+  int reporting = 0, rpt = 0, rpt4, i, cured, pos;
   XEN res = XEN_FALSE;
   char *errmsg;
   char *filename;
@@ -2700,8 +2701,7 @@ apply func to samples in current channel, edname is the edit history name for th
   return(g_map_chan_1(proc, s_beg, s_end, org, snd, chn, edpos, XEN_FALSE, S_map_chan));
 }
 
-XEN g_map_channel(XEN proc, XEN s_beg, XEN s_dur, XEN snd, XEN chn, XEN edpos, XEN org);
-XEN g_map_channel(XEN proc, XEN s_beg, XEN s_dur, XEN snd, XEN chn, XEN edpos, XEN org) 
+static XEN g_map_channel(XEN proc, XEN s_beg, XEN s_dur, XEN snd, XEN chn, XEN edpos, XEN org) 
 {
   #define H_map_channel "(" S_map_channel " func &optional (start 0) dur snd chn edpos edname)\n\
 apply func to samples in current channel, edname is the edit history name for this editing operation.\n\
@@ -3092,7 +3092,7 @@ applies gen to snd's channel chn starting at beg for dur samples. overlap is the
   if (dur == 0) return(XEN_FALSE);
   XEN_ASSERT_TYPE(mus_xen_p(gen), gen, XEN_ARG_1, S_clm_channel, "a clm generator");
   egen = MUS_XEN_TO_CLM(gen);
-  errmsg = clm_channel(cp, egen, beg, dur, pos, S_clm_channel, 6, XEN_TO_C_INT_OR_ELSE(overlap, 0));
+  errmsg = clm_channel(cp, egen, beg, dur, pos, S_clm_channel, 6, XEN_TO_C_OFF_T_OR_ELSE(overlap, 0));
   if (errmsg)
     {
       str = C_TO_XEN_STRING(errmsg);
@@ -3102,7 +3102,7 @@ applies gen to snd's channel chn starting at beg for dur samples. overlap is the
   return(gen);
 }
 
-static XEN g_env_1(XEN edata, int beg, int dur, XEN base, chan_info *cp, XEN edpos, const char *caller, int selection)
+static XEN g_env_1(XEN edata, off_t beg, off_t dur, XEN base, chan_info *cp, XEN edpos, const char *caller, int selection)
 {
   env *e;
   mus_any *egen;
@@ -3613,7 +3613,7 @@ static XEN g_filter_1(XEN e, XEN order, XEN snd_n, XEN chn_n, XEN edpos, const c
     }
   else
     {
-      len = XEN_TO_C_INT_OR_ELSE(order, 0);
+      len = XEN_TO_C_OFF_T_OR_ELSE(order, 0);
       if (len <= 0) 
 	mus_misc_error(caller, "order <= 0?", order);
       if (VCT_P(e)) /* the filter coefficients direct */

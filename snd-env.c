@@ -982,7 +982,8 @@ void alert_envelope_editor(snd_state *ss, char *name, env *val)
 
 void enved_show_background_waveform(snd_state *ss, chan_info *axis_cp, axis_info *gray_ap, int apply_to_mix, int apply_to_selection, int show_fft)
 {
-  int samps, srate, pts = 0, id = INVALID_MIX_ID, old_time_graph_type = GRAPH_TIME_ONCE, mixing = 0;
+  int srate, pts = 0, id = INVALID_MIX_ID, old_time_graph_type = GRAPH_TIME_ONCE, mixing = 0;
+  off_t samps;
   axis_info *ap, *active_ap = NULL;
   chan_info *active_channel = NULL, *ncp;
   if (!(any_selected_sound(ss))) return;

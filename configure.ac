@@ -4,7 +4,7 @@ dnl Process this file with autoconf 2.53 to produce a configure script.
 #--------------------------------------------------------------------------------
 #
 # this configure/make process tested so far in 
-#       linux (rh 5.2, 6.0, 6.1, 6.2, 7.0, 7.1, 7.2), Mandrake 7.0, Suse Linux 6.4, Debian 2.2
+#       linux (rh 5.2, 6.0, 6.1, 6.2, 7.0, 7.1, 7.2, 7.3), Mandrake 7.0, Suse Linux 6.4, Debian 2.2
 #       sgi (irix 5.3, 6.2, 6.3, 6.5), 
 #       mklinux (dr3), linuxppc (r4, r5, 2000), Debian ppc linux 2.2
 #       sun (solaris 2.7, 2.8, linux)

@@ -560,7 +560,8 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, int with_meta)
   snd_state *ss;
   snd_info *nsp;
   int s_or_r = 0;
-  int nc, i, j, len;
+  int nc, i, j;
+  off_t len;
   chan_info *active_chan;
   char *str = NULL, *mcf = NULL;
   char *tok, *newdir, *str1;
@@ -921,7 +922,8 @@ static int get_count_1(char *number_buffer, int number_ctr, int dot_seen, chan_i
 
 static int get_count(char *number_buffer, int number_ctr, int dot_seen, chan_info *cp, int mark_wise)
 {
-  int val, old_cursor;
+  int val;
+  off_t old_cursor;
   val = get_count_1(number_buffer, number_ctr, dot_seen, cp);
   if (!mark_wise) return(val);
   old_cursor = cp->cursor;
@@ -995,7 +997,8 @@ void keyboard_command (chan_info *cp, int keysym, int state)
   static char number_buffer[NUMBER_BUFFER_SIZE];
   static int count = 1, got_count = 0;
   static int m = 0;
-  int searching, cursor_searching, hashloc, loc, sync_num, i, clear_search = TRUE;
+  int searching, cursor_searching, hashloc, sync_num, i, clear_search = TRUE;
+  off_t loc;
   static int ext_count = NO_CX_ARG_SPECIFIED;
   snd_info *sp;
   axis_info *ap;
@@ -1071,7 +1074,7 @@ void keyboard_command (chan_info *cp, int keysym, int state)
 	    {
 	    case snd_K_A: case snd_K_a: 
 	      cp->cursor_on = 1; 
-	      loc = (int)(ap->x0 * SND_SRATE(sp)); 
+	      loc = (off_t)(ap->x0 * SND_SRATE(sp)); 
 	      if ((loc + 1) == ap->losamp) loc = ap->losamp; /* handle dumb rounding problem */
 	      cursor_moveto(cp, loc); 
 	      break;
@@ -1085,7 +1088,7 @@ void keyboard_command (chan_info *cp, int keysym, int state)
 	      break;
 	    case snd_K_E: case snd_K_e:
 	      cp->cursor_on = 1; 
-	      loc = (int)(ap->x1 * (double)SND_SRATE(sp));
+	      loc = (off_t)(ap->x1 * (double)SND_SRATE(sp));
 	      if ((loc + 1) == ap->hisamp) loc = ap->hisamp;
 	      cursor_moveto(cp, loc); 
 	      break;

@@ -866,6 +866,21 @@ static int mus_sound_set_field(const char *arg, int field, int val)
 	case SF_SRATE:    sf->srate = val; break;
 	case SF_TYPE:     sf->header_type = val; break;
 	case SF_FORMAT:   sf->data_format = val; sf->datum_size = mus_data_format_to_bytes_per_sample(val); break;
+	default: return(MUS_ERROR); break;
+	}
+      return(MUS_NO_ERROR);
+    }
+  return(MUS_ERROR);
+}
+
+static int mus_sound_set_off_t_field(const char *arg, int field, off_t val)
+{
+  sound_file *sf; 
+  sf = getsf(arg); 
+  if (sf) 
+    {
+      switch (field)
+	{
 	case SF_SIZE:     sf->samples = val; break;
 	case SF_LOCATION: sf->data_location = val; break;
 	default: return(MUS_ERROR); break;
@@ -879,8 +894,8 @@ int mus_sound_set_chans(const char *arg, int val) {return(mus_sound_set_field(ar
 int mus_sound_set_srate(const char *arg, int val) {return(mus_sound_set_field(arg, SF_SRATE, val));}
 int mus_sound_set_header_type(const char *arg, int val) {return(mus_sound_set_field(arg, SF_TYPE, val));}
 int mus_sound_set_data_format(const char *arg, int val) {return(mus_sound_set_field(arg, SF_FORMAT, val));}
-int mus_sound_set_data_location(const char *arg, off_t val) {return(mus_sound_set_field(arg, SF_LOCATION, val));}
-int mus_sound_set_samples(const char *arg, off_t val) {return(mus_sound_set_field(arg, SF_SIZE, val));}
+int mus_sound_set_data_location(const char *arg, off_t val) {return(mus_sound_set_off_t_field(arg, SF_LOCATION, val));}
+int mus_sound_set_samples(const char *arg, off_t val) {return(mus_sound_set_off_t_field(arg, SF_SIZE, val));}
 
 int mus_sound_override_header(const char *arg, int srate, int chans, int format, int type, off_t location, off_t size)
 {
@@ -913,12 +928,14 @@ int mus_sound_maxamp_exists(const char *ifile)
   return(val);
 }
 
-int mus_sound_maxamp(const char *ifile, mus_sample_t *vals)
+off_t mus_sound_maxamp(const char *ifile, mus_sample_t *vals)
 {
   int ifd, ichans, chn, j;
-  unsigned int n, i, bufnum, frames, curframes;
+  unsigned int i, bufnum, curframes;
+  off_t n, frames;
   mus_sample_t fc;
-  mus_sample_t *buffer, *time, *samp;
+  mus_sample_t *buffer, *samp;
+  off_t *time;
   mus_sample_t **ibufs;
   sound_file *sf; 
   sf = getsf(ifile); 
@@ -947,7 +964,7 @@ int mus_sound_maxamp(const char *ifile, mus_sample_t *vals)
   bufnum = 8192;
   for (j = 0; j < ichans; j++) 
     ibufs[j] = (mus_sample_t *)CALLOC(bufnum, sizeof(mus_sample_t));
-  time = (mus_sample_t *)CALLOC(ichans, sizeof(mus_sample_t));
+  time = (off_t *)CALLOC(ichans, sizeof(off_t));
   samp = (mus_sample_t *)CALLOC(ichans, sizeof(mus_sample_t));
   for (n = 0; n < frames; n += bufnum)
     {
@@ -973,7 +990,7 @@ int mus_sound_maxamp(const char *ifile, mus_sample_t *vals)
   mus_sound_close_input(ifd);
   for (chn = 0, i = 0; chn < ichans; chn++, i += 2)
     {
-      vals[i] = time[chn];
+      vals[i] = (mus_sample_t)time[chn];
       vals[i + 1] = samp[chn];
     }
   mus_sound_set_maxamp(ifile, vals);

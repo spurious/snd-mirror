@@ -5437,8 +5437,9 @@ int mus_header_change_comment(const char *filename, char *new_comment)
 	{
 	  /* open temp, write header, copy data, replace original with temp */
 	  char *new_file;
-	  int ofd, ifd, loc;
-	  long nbytes;
+	  int ofd, ifd;
+	  off_t loc;
+	  int nbytes;
 	  char *buf = NULL;
 	  new_file = (char *)CALLOC(strlen(filename) + 5, sizeof(char));
 	  sprintf(new_file, "%s.tmp", filename);

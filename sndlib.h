@@ -438,7 +438,7 @@ int mus_sound_read            PROTO((int fd, int beg, int end, int chans, mus_sa
 int mus_sound_write           PROTO((int tfd, int beg, int end, int chans, mus_sample_t **bufs));
 off_t mus_sound_seek          PROTO((int tfd, off_t offset, int origin));
 off_t mus_sound_seek_frame    PROTO((int tfd, off_t frame));
-int mus_sound_maxamp          PROTO((const char *ifile, mus_sample_t *vals));
+off_t mus_sound_maxamp        PROTO((const char *ifile, mus_sample_t *vals));
 int mus_sound_set_maxamp      PROTO((const char *ifile, mus_sample_t *vals));
 int mus_sound_maxamp_exists   PROTO((const char *ifile));
 int mus_file_to_array         PROTO((const char *filename, int chan, int start, int samples, mus_sample_t *array));

@@ -434,7 +434,8 @@ static void edit_data_to_file(FILE *fd, ed_list *ed, chan_info *cp)
 	  else
 	    {
 	      /* read at very low level and write to (text) history files as sample list */
-	      int ifd, idataloc, bufnum, n, cursamples, samples, sample;
+	      int ifd, bufnum, cursamples, sample;
+	      off_t idataloc, n, samples;
 	      mus_sample_t *buffer;
 	      mus_sample_t **ibufs;
 	      fprintf(fd, "#(");
@@ -3944,7 +3945,7 @@ inserts data (either a vector, vct, or list of samples, or a filename) into snd'
   else
     {
       int ilen;
-      ilen = len;
+      ilen = (int)len;
       ivals = g_floats_to_samples(vect, &ilen, S_insert_samples, 3);
       if (ivals)
 	{

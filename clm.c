@@ -124,19 +124,27 @@ Float mus_sum_of_sines(Float *amps, Float *phases, int size)
   return(sum);
 }
 
+static int check_gen(mus_any *ptr, const char *name)
+{
+  if (ptr == NULL)
+    {
+      mus_error(MUS_NO_GEN, "null gen passed to %s", name);
+      return(FALSE); /* normally not reachable */
+    }
+  return(TRUE);
+}
+
 int mus_type(mus_any *ptr) 
 {
-  if (ptr)
+  if (check_gen(ptr, "mus-type"))
     return((ptr->core)->type);
-  else mus_error(MUS_NO_GEN, "null gen passed to mus_type");
   return(0);
 }
 
 char *mus_name(mus_any *ptr) 
 {
-  if (ptr)
+  if (check_gen(ptr, "mus-name"))
     return((ptr->core)->name);
-  else mus_error(MUS_NO_GEN, "null gen passed to mus_name");
   return(NULL);
 }
 
@@ -278,37 +286,34 @@ static char *print_off_t_array(off_t *arr, int len, int loc)
 
 int mus_free(mus_any *gen)
 {
-  if (gen)
+  if (check_gen(gen, "mus-free"))
     {
       if ((gen->core)->release)
 	return((*((gen->core)->release))(gen));
       mus_error(MUS_NO_FREE, "can't free %s", mus_name(gen));
     }
-  else mus_error(MUS_NO_GEN, "null gen passed to mus_free");
   return(0);
 }
 
 char *mus_describe(mus_any *gen)
 {
-  if (gen)
+  if (check_gen(gen, "mus-describe"))
     {
       if ((gen->core)->describe)
 	return((*((gen->core)->describe))(gen));
       else mus_error(MUS_NO_DESCRIBE, "can't describe %s", mus_name(gen));
     }
-  else mus_error(MUS_NO_GEN, "null gen passed to mus_describe");
   return(NULL);
 }
 
 char *mus_inspect(mus_any *gen)
 {
-  if (gen)
+  if (check_gen(gen, "mus-inspect"))
     {
       if ((gen->core)->inspect)
 	return((*((gen->core)->inspect))(gen));
       else mus_error(MUS_NO_DESCRIBE, "can't inspect %s", mus_name(gen));
     }
-  else mus_error(MUS_NO_GEN, "null gen passed to inspect");
   return(NULL);
 }
 
@@ -325,103 +330,95 @@ int mus_equalp(mus_any *p1, mus_any *p2)
 
 Float mus_frequency(mus_any *gen)
 {
-  if (gen)
+  if (check_gen(gen, "mus-frequency"))
     {
       if ((gen->core)->frequency)
 	return((*((gen->core)->frequency))(gen));
       mus_error(MUS_NO_FREQUENCY, "can't get %s's frequency", mus_name(gen));
     }
-  else mus_error(MUS_NO_GEN, "null gen passed to mus_frequency");
   return(0.0);
 }
 
 Float mus_set_frequency(mus_any *gen, Float val)
 {
-  if (gen)
+  if (check_gen(gen, "mus-set-frequency"))
     {
       if ((gen->core)->set_frequency)
 	return((*((gen->core)->set_frequency))(gen, val));
       mus_error(MUS_NO_FREQUENCY, "can't set %s's frequency", mus_name(gen));
     }
-  else mus_error(MUS_NO_GEN, "null gen passed to mus_set_frequency");
   return(0.0);
 }
 
 Float mus_phase(mus_any *gen)
 {
-  if (gen)
+  if (check_gen(gen, "mus-phase"))
     {
       if ((gen->core)->phase)
 	return((*((gen->core)->phase))(gen));
       mus_error(MUS_NO_PHASE, "can't get %s's phase", mus_name(gen));
     }
-  else mus_error(MUS_NO_GEN, "null gen passed to mus_phase");
   return(0.0);
 }
 
 Float mus_set_phase(mus_any *gen, Float val)
 {
-  if (gen)
+  if (check_gen(gen, "mus-set-phase"))
     {
       if ((gen->core)->set_phase)
 	return((*((gen->core)->set_phase))(gen, val));
       mus_error(MUS_NO_PHASE, "can't set %s's phase", mus_name(gen));
     }
-  else mus_error(MUS_NO_GEN, "null gen passed to mus_set_phase");
   return(0.0);
 }
 
 Float mus_scaler(mus_any *gen)
 {
-  if (gen)
+  if (check_gen(gen, "mus-scaler"))
     {
       if ((gen->core)->scaler)
 	return((*((gen->core)->scaler))(gen));
       mus_error(MUS_NO_SCALER, "can't get %s's scaler", mus_name(gen));
     }
-  else mus_error(MUS_NO_GEN, "null gen passed to mus_scaler");
   return(0.0);
 }
 
 Float mus_set_scaler(mus_any *gen, Float val)
 {
-  if (gen)
+  if (check_gen(gen, "mus-set-scaler"))
     {
       if ((gen->core)->set_scaler)
 	return((*((gen->core)->set_scaler))(gen, val));
       mus_error(MUS_NO_SCALER, "can't set %s's scaler", mus_name(gen));
     }
-  else mus_error(MUS_NO_GEN, "null gen passed to mus_set_scaler");
   return(0.0);
 }
 
 Float mus_run(mus_any *gen, Float arg1, Float arg2)
 {
-  if (gen)
+  if (check_gen(gen, "mus-run"))
     {
       if ((gen->core)->run)
 	return((*((gen->core)->run))(gen, arg1, arg2));
       mus_error(MUS_NO_SAMPLE_OUTPUT, "can't run %s", mus_name(gen)); /* need MUS_NO_RUN error or something */
     }
-  else mus_error(MUS_NO_GEN, "null gen passed to mus_run");
   return(0.0);
 }
 
 int mus_length(mus_any *gen)
 {
-  if (gen)
+  if (check_gen(gen, "mus-length"))
     {
       if ((gen->core)->length)
 	return((*((((mus_any *)gen)->core)->length))(gen));
       else mus_error(MUS_NO_LENGTH, "can't get %s's length", mus_name(gen));
     }
-  else mus_error(MUS_NO_GEN, "null gen passed to mus_length");
   return(0);
 }
 
 int mus_set_length(mus_any *gen, int len)
 {
-  if (gen)
+  if (check_gen(gen, "mus-set-length"))
     {
       if ((gen->core)->set_length)
 	{
@@ -430,19 +427,17 @@ int mus_set_length(mus_any *gen, int len)
 	}
       else mus_error(MUS_NO_LENGTH, "can't set %s's length", mus_name(gen));
     }
-  else mus_error(MUS_NO_GEN, "null gen passed to mus_set_length");
   return(0);
 }
 
 Float *mus_data(mus_any *gen)
 {
-  if (gen)
+  if (check_gen(gen, "mus-data"))
     {
       if ((gen->core)->data)
 	return((*((gen->core)->data))(gen));
       else mus_error(MUS_NO_DATA, "can't get %s's data", mus_name(gen));
     }
-  else mus_error(MUS_NO_GEN, "null gen passed to mus_data");
   return(NULL);
 }
 
@@ -454,7 +449,7 @@ Float *mus_data(mus_any *gen)
 
 Float *mus_set_data(mus_any *gen, Float *new_data)
 {
-  if (gen)
+  if (check_gen(gen, "mus-set-data"))
     {
       if ((gen->core)->set_data)
 	{
@@ -463,7 +458,6 @@ Float *mus_set_data(mus_any *gen, Float *new_data)
 	}
       else mus_error(MUS_NO_DATA, "can't set %s's data", mus_name(gen));
     }
-  else mus_error(MUS_NO_GEN, "null gen passed to mus_set_data");
   return(new_data);
 }
 
@@ -699,7 +693,7 @@ static Float run_sum_of_cosines(mus_any *ptr, Float fm, Float unused) {return(mu
 
 int mus_cosines(mus_any *ptr) 
 {
-  if (ptr)
+  if (check_gen(ptr, "mus-cosines"))
     {
       if (mus_sum_of_cosines_p(ptr)) 
 	return(sum_of_cosines_cosines(ptr)); 
@@ -709,7 +703,6 @@ int mus_cosines(mus_any *ptr)
 	    return(1);
 	}
     }
-  else mus_error(MUS_NO_GEN, "null gen passed to mus_cosines");
   return(0);
 }
 
@@ -1149,7 +1142,7 @@ mus_any *mus_make_all_pass (Float backward, Float forward, int size, Float *line
 
 Float mus_feedback(mus_any *ptr)
 {
-  if (ptr)
+  if (check_gen(ptr, "mus-feedback"))
     {
       if (mus_comb_p(ptr))
 	return(((dly *)ptr)->xscl);
@@ -1159,13 +1152,12 @@ Float mus_feedback(mus_any *ptr)
 	    return(((dly *)ptr)->yscl);
 	}
     }
-  else mus_error(MUS_NO_GEN, "null gen passed to mus_feedback");
   return(0.0);
 }
 
 Float mus_set_feedback(mus_any *ptr, Float val)
 {
-  if (ptr)
+  if (check_gen(ptr, "mus-set-feedback"))
     {
       if (mus_comb_p(ptr))
 	((dly *)ptr)->xscl = val;
@@ -1175,29 +1167,26 @@ Float mus_set_feedback(mus_any *ptr, Float val)
 	    ((dly *)ptr)->yscl = val;
 	}
     }
-  else mus_error(MUS_NO_GEN, "null gen passed to mus_set_feedback");
   return(val);
 }
 
 Float mus_feedforward(mus_any *ptr)
 {
-  if (ptr)
+  if (check_gen(ptr, "feedforward"))
     {
       if ((mus_notch_p(ptr)) || (mus_all_pass_p(ptr)))
 	return(((dly *)ptr)->xscl);
     }
-  else mus_error(MUS_NO_GEN, "null gen passed to mus_feedforward");
   return(0.0);
 }
 
 Float mus_set_feedforward(mus_any *ptr, Float val)
 {
-  if (ptr)
+  if (check_gen(ptr, "mus-set-feedforward"))
     {
       if ((mus_notch_p(ptr)) || (mus_all_pass_p(ptr)))
 	((dly *)ptr)->xscl = val;
     }
-  else mus_error(MUS_NO_GEN, "null gen passed to mus_set_feedforward");
   return(val);
 }
 
@@ -2223,124 +2212,114 @@ mus_any *mus_make_ppolar(Float radius, Float frequency)
 Float mus_a0(mus_any *ptr)
 {
   smpflt *gen = (smpflt *)ptr;
-  if (gen)
+  if (check_gen(ptr, "mus-a0"))
     {
       if (((gen->core)->type == MUS_ONE_ZERO) || ((gen->core)->type == MUS_ONE_POLE) ||
 	  ((gen->core)->type == MUS_TWO_ZERO) || ((gen->core)->type == MUS_TWO_POLE) ||
 	  ((gen->core)->type == MUS_FORMANT))
 	return(gen->a0);
     }
-  else mus_error(MUS_NO_GEN, "null gen passed to mus_a0");
   return(0.0);
 }
 
 Float mus_set_a0(mus_any *ptr, Float val)
 {
   smpflt *gen = (smpflt *)ptr;
-  if (gen)
+  if (check_gen(ptr, "mus-set-a0"))
     {
       if (((gen->core)->type == MUS_ONE_ZERO) || ((gen->core)->type == MUS_ONE_POLE) ||
 	  ((gen->core)->type == MUS_TWO_ZERO) || ((gen->core)->type == MUS_TWO_POLE) ||
 	  ((gen->core)->type == MUS_FORMANT))
 	gen->a0 = val;
     }
-  else mus_error(MUS_NO_GEN, "null gen passed to mus_set_a0");
   return(val);
 }
 
 Float mus_a1(mus_any *ptr)
 {
   smpflt *gen = (smpflt *)ptr;
-  if (gen) 
+  if (check_gen(ptr, "mus-a1")) 
     {
       if (((gen->core)->type == MUS_ONE_ZERO) || ((gen->core)->type == MUS_TWO_ZERO) || ((gen->core)->type == MUS_FORMANT))
 	return(gen->a1);
     }
-  else mus_error(MUS_NO_GEN, "null gen passed to mus_a1");
   return(0.0);
 }
 
 Float mus_set_a1(mus_any *ptr, Float val)
 {
   smpflt *gen = (smpflt *)ptr;
-  if (gen)
+  if (check_gen(ptr, "mus-set-a1"))
     {
       if (((gen->core)->type == MUS_ONE_ZERO) || ((gen->core)->type == MUS_TWO_ZERO) || ((gen->core)->type == MUS_FORMANT))
 	gen->a1 = val;
     }
-  else mus_error(MUS_NO_GEN, "null gen passed to mus_set_a1");
   return(val);
 }
 
 Float mus_a2(mus_any *ptr)
 {
   smpflt *gen = (smpflt *)ptr;
-  if (gen)
+  if (check_gen(ptr, "mus-a2"))
     {
       if (((gen->core)->type == MUS_TWO_ZERO) || ((gen->core)->type == MUS_FORMANT))
 	return(gen->a2);
     }
-  else mus_error(MUS_NO_GEN, "null gen passed to mus_a2");
   return(0.0);
 }
 
 Float mus_set_a2(mus_any *ptr, Float val)
 {
   smpflt *gen = (smpflt *)ptr;
-  if (gen)
+  if (check_gen(ptr, "mus-set-a2"))
     {
       if (((gen->core)->type == MUS_TWO_ZERO) || ((gen->core)->type == MUS_FORMANT))
 	gen->a2 = val;
     }
-  else mus_error(MUS_NO_GEN, "null gen passed to mus_set_a2");
   return(val);
 }
 
 Float mus_b1(mus_any *ptr)
 {
   smpflt *gen = (smpflt *)ptr;
-  if (gen)
+  if (check_gen(ptr, "mus-b1"))
     {
       if (((gen->core)->type == MUS_ONE_POLE) || ((gen->core)->type == MUS_TWO_POLE) || ((gen->core)->type == MUS_FORMANT))
 	return(gen->b1);
     }
-  else mus_error(MUS_NO_GEN, "null gen passed to mus_b1");
   return(0.0);
 }
 
 Float mus_set_b1(mus_any *ptr, Float val)
 {
   smpflt *gen = (smpflt *)ptr;
-  if (gen)
+  if (check_gen(ptr, "mus-set-b1"))
     {
       if (((gen->core)->type == MUS_ONE_POLE) || ((gen->core)->type == MUS_TWO_POLE) || ((gen->core)->type == MUS_FORMANT))
 	gen->b1 = val;
     }
-  else mus_error(MUS_NO_GEN, "null gen passed to mus_set_b1");
   return(val);
 }
 
 Float mus_b2(mus_any *ptr)
 {
   smpflt *gen = (smpflt *)ptr;
-  if (gen)
+  if (check_gen(ptr, "mus-b2"))
     {
       if (((gen->core)->type == MUS_TWO_POLE) || ((gen->core)->type == MUS_FORMANT))
 	return(gen->b2);
     }
-  else mus_error(MUS_NO_GEN, "null gen passed to mus_b2");
   return(0.0);
 }
 
 Float mus_set_b2(mus_any *ptr, Float val)
 {
   smpflt *gen = (smpflt *)ptr;
-  if (gen)
+  if (check_gen(ptr, "mus-set-b2"))
     {
       if (((gen->core)->type == MUS_TWO_POLE) || ((gen->core)->type == MUS_FORMANT))
 	gen->b2 = val;
     }
-  else mus_error(MUS_NO_GEN, "null gen passed to mus_set_b2");
   return(val);
 }
 
@@ -2415,19 +2394,19 @@ static Float set_formant_frequency(void *ptr, Float val)
 Float mus_formant_radius(mus_any *ptr)
 {
   smpflt *gen = (smpflt *)ptr;
-  if (gen)
+  if (check_gen(ptr, "mus-formant-radius"))
     {
       if (mus_formant_p(ptr)) 
 	return(gen->radius);
     }
-  else mus_error(MUS_NO_GEN, "null gen passed to mus_formant_radius");
   return(0.0);
 }
 
 Float mus_set_formant_radius(mus_any *ptr, Float val)
 {
   smpflt *gen = (smpflt *)ptr;
-  mus_set_formant_radius_and_frequency(ptr, val, gen->frequency);
+  if (check_gen(ptr, "mus-set-formant-radius"))
+    mus_set_formant_radius_and_frequency(ptr, val, gen->frequency);
   return(val);
 }
 
@@ -2792,24 +2771,22 @@ mus_any *mus_make_iir_filter(int order, Float *ycoeffs, Float *state)
 Float *mus_xcoeffs(mus_any *ptr)
 {
   flt *gen = (flt *)ptr;
-  if (gen)
+  if (check_gen(ptr, "mus-xcoeffs"))
     {
       if (((gen->core)->type == MUS_FILTER) || ((gen->core)->type == MUS_FIR_FILTER))
 	return(gen->x);
     }
-  else mus_error(MUS_NO_GEN, "null gen passed to mus_xcoeffs");
   return(NULL);
 }
 
 Float *mus_ycoeffs(mus_any *ptr)
 {
   flt *gen = (flt *)ptr;
-  if (gen)
+  if (check_gen(ptr, "mus-ycoeffs"))
     {
       if (((gen->core)->type == MUS_FILTER) || ((gen->core)->type == MUS_IIR_FILTER))
 	return(gen->y);
     }
-  else mus_error(MUS_NO_GEN, "null gen passed to mus_ycoeffs");
   return(NULL);
 }
 
@@ -4227,7 +4204,7 @@ int mus_wave_train_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_WA
 
 static Float mus_read_sample(mus_input *fd, off_t frame, int chan) 
 {
-  if (fd)
+  if (check_gen((mus_any *)fd, "mus-read-sample"))
     {
       if ((fd->base)->sample)
 	return(((*(fd->base)->sample))((void *)fd, frame, chan));
@@ -4235,13 +4212,12 @@ static Float mus_read_sample(mus_input *fd, off_t frame, int chan)
 		"can't find %s's sample input function", 
 		mus_name((mus_any *)fd));
     }
-  else mus_error(MUS_NO_GEN, "null ptr passed to mus_read_sample");
   return(0.0);
 }
 
 static Float mus_write_sample(mus_output *fd, off_t frame, int chan, Float samp) 
 {
-  if (fd)
+  if (check_gen((mus_any *)fd, "mus-write-sample"))
     {
       if ((fd->base)->sample)
 	return(((*(fd->base)->sample))((void *)fd, frame, chan, samp));
@@ -4249,7 +4225,6 @@ static Float mus_write_sample(mus_output *fd, off_t frame, int chan, Float samp)
 		"can't find %s's sample output function", 
 		mus_name((mus_any *)fd));
     }
-  else mus_error(MUS_NO_GEN, "null ptr passed to mus_write_sample");
   return(0.0);
 }
 
@@ -4545,7 +4520,7 @@ off_t mus_location(mus_any *gen)
 {
   mus_input *ingen;
   seg *envgen;
-  if (gen)
+  if (check_gen(gen, "mus-location"))
     {
       if (mus_env_p(gen))
 	{
@@ -4564,14 +4539,13 @@ off_t mus_location(mus_any *gen)
 	  else mus_error(MUS_NO_LOCATION, "can't get %s's location", mus_name(gen));
 	}
     }
-  else mus_error(MUS_NO_GEN, "null gen passed to mus_location");
   return(0);
 }
 
 off_t mus_set_location(mus_any *gen, off_t loc)
 {
   mus_input *ingen;
-  if (gen)
+  if (check_gen(gen, "mus-set-location"))
     {
       if (mus_env_p(gen))
 	{
@@ -4592,19 +4566,17 @@ off_t mus_set_location(mus_any *gen, off_t loc)
 	}
       mus_error(MUS_NO_LOCATION, "can't set %s's location", mus_name(gen));
     }
-  else mus_error(MUS_NO_GEN, "null gen passed to mus_set_location");
   return(0);
 }
 
 int mus_channel(mus_input *gen)
 {
-  if (gen)
+  if (check_gen((mus_any *)gen, "mus-channel"))
     {
       if ((gen->base)->channel)
 	return(((*(gen->base)->channel))((void *)gen));
       else mus_error(MUS_NO_CHANNEL, "can't get %s's channel", mus_name((mus_any *)gen));
     }
-  else mus_error(MUS_NO_GEN, "null gen passed to mus_channel");
   return(0);
 }
 
@@ -5296,12 +5268,14 @@ mus_frame *mus_locsig(mus_any *ptr, off_t loc, Float val)
 
 int mus_channels(mus_any *ptr)
 {
-  if (ptr == NULL) mus_error(MUS_NO_GEN, "null gen passed to mus_channels");
-  if ((mus_readin_p(ptr)) || (mus_file2sample_p(ptr)) || (mus_file2frame_p(ptr))) return(((rdin *)ptr)->chans);
-  if (mus_locsig_p(ptr)) return(((locs *)ptr)->chans);
-  if ((mus_sample2file_p(ptr)) || (mus_frame2file_p(ptr))) return(((rdout *)ptr)->chans);
-  if (mus_frame_p(ptr)) return(((mus_frame *)ptr)->chans);
-  if (mus_mixer_p(ptr)) return(((mus_mixer *)ptr)->chans);
+  if (check_gen(ptr, "mus-channels"))
+    {
+      if ((mus_readin_p(ptr)) || (mus_file2sample_p(ptr)) || (mus_file2frame_p(ptr))) return(((rdin *)ptr)->chans);
+      if (mus_locsig_p(ptr)) return(((locs *)ptr)->chans);
+      if ((mus_sample2file_p(ptr)) || (mus_frame2file_p(ptr))) return(((rdout *)ptr)->chans);
+      if (mus_frame_p(ptr)) return(((mus_frame *)ptr)->chans);
+      if (mus_mixer_p(ptr)) return(((mus_mixer *)ptr)->chans);
+    }
   return(0);
 }
 
@@ -5682,19 +5656,18 @@ static Float grn_set_frequency(void *ptr, Float val) {((grn_info *)ptr)->output_
 int mus_ramp(mus_any *ptr) 
 {
   grn_info *gen = (grn_info *)ptr; 
-  if (gen)
+  if (check_gen(ptr, "mus-ramp"))
     {
       if ((gen->core)->type == MUS_GRANULATE)
 	return(gen->rmp);
     }
-  else mus_error(MUS_NO_GEN, "null gen passed to mus_ramp");
   return(0);
 }
 
 int mus_set_ramp(mus_any *ptr, int val) 
 {
   grn_info *gen = (grn_info *)ptr; 
-  if (gen)
+  if (check_gen(ptr, "mus-set-ramp"))
     {
       if ((gen->core)->type == MUS_GRANULATE)
 	{
@@ -5702,7 +5675,6 @@ int mus_set_ramp(mus_any *ptr, int val)
 	    gen->rmp = val;
 	}
     }
-  else mus_error(MUS_NO_GEN, "null gen passed to mus_set_ramp");
   return(val);
 }
 
@@ -6314,7 +6286,8 @@ mus_any *mus_make_convolve(Float (*input)(void *arg, int direction), Float *filt
 
 void mus_convolve_files(const char *file1, const char *file2, Float maxamp, const char *output_file)
 {
-  int file1_len, file2_len, fftlen, outlen, totallen, file1_chans, file2_chans, output_chans, c1, c2;
+  off_t file1_len, file2_len;
+  int fftlen, outlen, totallen, file1_chans, file2_chans, output_chans, c1, c2;
   Float *data1, *data2, *outdat;
   mus_sample_t *samps;
   char *errmsg = NULL;
@@ -6800,53 +6773,55 @@ int mus_phase_vocoder_set_outctr(void *ptr, int val) {((pv_info *)ptr)->outctr =
 
 int mus_hop(mus_any *ptr) 
 {
-  if (ptr)
+  if (check_gen(ptr, "mus-hop"))
     {
       if ((ptr->core)->type == MUS_GRANULATE) return(((grn_info *)ptr)->output_hop);
       else if ((ptr->core)->type == MUS_PHASE_VOCODER) return(((pv_info *)ptr)->D);
     }
-  else mus_error(MUS_NO_GEN, "null gen passed to mus_hop");
   return(0);
 }
 
 int mus_set_hop(mus_any *ptr, int val) 
 {
-  if (ptr)
+  if (check_gen(ptr, "mus-set-hop"))
     {
       if ((ptr->core)->type == MUS_GRANULATE) ((grn_info *)ptr)->output_hop = val;
       else if ((ptr->core)->type == MUS_PHASE_VOCODER) ((pv_info *)ptr)->D = val;
     }
-  else mus_error(MUS_NO_GEN, "null gen passed to mus_set_hop");
   return(val);
 }
 
 Float mus_increment(mus_any *rd)
 {
-  if (rd == NULL) mus_error(MUS_NO_GEN, "null gen passed to mus_increment");
-  if (mus_readin_p(rd)) return(((rdin *)rd)->dir);
-  if (mus_file2sample_p(rd)) return(((rdin *)rd)->dir);
-  if (mus_src_p(rd)) return(((sr *)rd)->incr);
-  if (mus_buffer_p(rd)) return(((rblk *)rd)->fill_time);
-  if (mus_granulate_p(rd)) return(((Float)(((grn_info *)rd)->output_hop)) / ((Float)((grn_info *)rd)->input_hop));
-  if (mus_phase_vocoder_p(rd)) return(((pv_info *)rd)->interp);
-  if (mus_env_p(rd)) 
+  if (check_gen(rd, "mus-increment")) 
     {
-      if (((seg *)rd)->style == ENV_STEP)
-	return(0.0);
-      return(exp(((seg *)rd)->base));
+      if (mus_readin_p(rd)) return(((rdin *)rd)->dir);
+      if (mus_file2sample_p(rd)) return(((rdin *)rd)->dir);
+      if (mus_src_p(rd)) return(((sr *)rd)->incr);
+      if (mus_buffer_p(rd)) return(((rblk *)rd)->fill_time);
+      if (mus_granulate_p(rd)) return(((Float)(((grn_info *)rd)->output_hop)) / ((Float)((grn_info *)rd)->input_hop));
+      if (mus_phase_vocoder_p(rd)) return(((pv_info *)rd)->interp);
+      if (mus_env_p(rd)) 
+	{
+	  if (((seg *)rd)->style == ENV_STEP)
+	    return(0.0);
+	  return(exp(((seg *)rd)->base));
+	}
     }
   return(0);
 }
 
 Float mus_set_increment(mus_any *rd, Float direction)
 {
-  if (rd == NULL) mus_error(MUS_NO_GEN, "null gen passed to mus_set_increment");
-  if (mus_readin_p(rd)) ((rdin *)rd)->dir = (int)direction; 
-  if (mus_file2sample_p(rd)) ((rdin *)rd)->dir = (int)direction; 
-  if (mus_src_p(rd)) ((sr *)rd)->incr = direction;
-  if (mus_buffer_p(rd)) {((rblk *)rd)->fill_time = direction; ((rblk *)rd)->empty = (direction == 0.0);}
-  if (mus_granulate_p(rd)) {((grn_info *)rd)->input_hop = (int)(((grn_info *)rd)->output_hop / direction);}
-  if (mus_phase_vocoder_p(rd)) ((pv_info *)rd)->interp = (int)direction;
+  if (check_gen(rd, "mus-set-increment"))
+    {
+      if (mus_readin_p(rd)) ((rdin *)rd)->dir = (int)direction; 
+      if (mus_file2sample_p(rd)) ((rdin *)rd)->dir = (int)direction; 
+      if (mus_src_p(rd)) ((sr *)rd)->incr = direction;
+      if (mus_buffer_p(rd)) {((rblk *)rd)->fill_time = direction; ((rblk *)rd)->empty = (direction == 0.0);}
+      if (mus_granulate_p(rd)) {((grn_info *)rd)->input_hop = (int)(((grn_info *)rd)->output_hop / direction);}
+      if (mus_phase_vocoder_p(rd)) ((pv_info *)rd)->interp = (int)direction;
+    }
   return(direction);
 }
 

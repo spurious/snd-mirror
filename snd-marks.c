@@ -152,20 +152,20 @@ static mark *find_named_mark(chan_info *cp, char *name)
 
 static mark *find_previous_mark_1(chan_info *cp, mark *mp, void *m)
 {
-  if (mp->samp < (*((int *)m))) return(mp); else return(NULL);
+  if (mp->samp < (*((off_t *)m))) return(mp); else return(NULL);
 }
 
-static mark *find_previous_mark (int current_sample, chan_info *cp)
+static mark *find_previous_mark (off_t current_sample, chan_info *cp)
 {
   return(map_over_marks(cp, find_previous_mark_1, (void *)(&current_sample), READ_BACKWARD));
 }
 
 static mark *find_next_mark_1(chan_info *cp, mark *mp, void *m)
 {
-  if (mp->samp > (*((int *)m))) return(mp); else return(NULL);
+  if (mp->samp > (*((off_t *)m))) return(mp); else return(NULL);
 }
 
-static mark *find_next_mark (int current_sample, chan_info *cp)
+static mark *find_next_mark (off_t current_sample, chan_info *cp)
 {
   return(map_over_marks(cp, find_next_mark_1, (void *)(&current_sample), READ_FORWARD));
 }
@@ -725,7 +725,8 @@ void sound_restore_marks(snd_info *sp, mark_info **marks)
 
 static mark *find_nth_mark(chan_info *cp, int count)
 {
-  int i, c, samp;
+  int i, c;
+  off_t samp;
   mark *mp = NULL;
   if ((!cp) || (!cp->marks)) return(NULL);
   if (count > 0) c = count; else c = -count;
@@ -788,12 +789,12 @@ off_t mark_beg(chan_info *cp)
 static mark *display_channel_marks_1(chan_info *cp,  mark *mp, void *m)
 {
   axis_info *ap;
-  int *last_samp = (int *)m;
+  off_t last_samp = (*((off_t *)m));
   ap = cp->axis;
   if (mp->samp > ap->hisamp) return(mp); /* terminates loop */
-  if (mp->samp == last_samp[0])
+  if (mp->samp == last_samp)
     return(NULL); 
-  else last_samp[0] = mp->samp;          /* avoid drawing twice at same point == erase */
+  else last_samp = mp->samp;          /* avoid drawing twice at same point == erase */
   if ((mp->samp >= ap->losamp) && 
       (mp->samp <= ap->hisamp) && 
       (mp != moving_mark)) 
@@ -803,9 +804,9 @@ static mark *display_channel_marks_1(chan_info *cp,  mark *mp, void *m)
 
 void display_channel_marks(chan_info *cp)
 {
-  int last_samp[1];
-  last_samp[0] = -1;
-  map_over_marks(cp, display_channel_marks_1, (void *)last_samp, READ_FORWARD);
+  off_t last_samp;
+  last_samp = -1;
+  map_over_marks(cp, display_channel_marks_1, (void *)(&last_samp), READ_FORWARD);
 }
 
 void release_pending_marks(chan_info *cp, int edit_ctr)
@@ -1298,7 +1299,8 @@ mark *hit_mark(chan_info *cp, int x, int y, int key_state)
 			  (mark_sd->marks[0] != mp))
 			{
 			  mark *tm;
-			  int ts, loc = 1;
+			  int loc = 1;
+			  off_t ts;
 			  chan_info *tc;
 			  for (loc = 1; loc < mark_sd->mark_ctr; loc++)
 			    if (mark_sd->marks[loc] == mp) break;
@@ -1478,8 +1480,8 @@ void play_syncd_mark(chan_info *cp, mark *m)
 
 static void make_mark_graph(chan_info *cp, snd_info *sp, off_t initial_sample, off_t current_sample, int which)
 {
-  int i, j = 0, k;
-  off_t samps;
+  int j = 0;
+  off_t i, k, samps;
   Locus xi;
   axis_info *ap;
   double samples_per_pixel, xf, samp, x, incr;  
@@ -1546,7 +1548,8 @@ static void make_mark_graph(chan_info *cp, snd_info *sp, off_t initial_sample, o
 	   * this is confusing code!
 	   */
 	  double step, xk, xki;
-	  int ii, kk, xi;
+	  off_t ii;
+	  int kk;
 	  env_info *ep;
 	  ep = cp->amp_envs[cp->edit_ctr];
 	  step = samples_per_pixel / (Float)(ep->samps_per_bin);

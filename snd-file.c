@@ -1634,6 +1634,7 @@ void update_prevlist(void)
 
 typedef struct {
   int vals, times;
+  off_t samps;
   char *a1, *a2;
 } heapdata;
 
@@ -1648,11 +1649,11 @@ static int greater_compare(const void *a, const void *b)
 {
   heapdata *d1 = *(heapdata **)a;
   heapdata *d2 = *(heapdata **)b;
-  if (d1->vals > d2->vals) 
+  if (d1->samps > d2->samps) 
     return(1); 
   else 
     {
-      if (d1->vals == d2->vals) 
+      if (d1->samps == d2->samps) 
 	return(0); 
       else return(-1);
     }
@@ -1702,7 +1703,7 @@ void make_prevfiles_list_1(snd_state *ss)
 	  break;
 	case 3:
 	  for (i = 0; i <= prevfile_end; i++) 
-	    data[i]->vals = mus_sound_samples(prevfullnames[i]);
+	    data[i]->samps = mus_sound_samples(prevfullnames[i]);
 	  qsort((void *)data, prevfile_end + 1, sizeof(heapdata *), greater_compare);
 	  break;
 	case 4:

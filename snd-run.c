@@ -66,11 +66,12 @@
  * TODO: ptree as fragment edit op
  * TODO: general evaluate_ptree accessor
  * TODO: procedure property 'ptree -> saved ptree
+ * TODO: make-vector
  *
  *
  * LIMITATIONS: <insert anxious lucubration here about DSP context and so on>
  *      variables can have only one type, the type has to be ascertainable somehow (similarly for vector elements)
- *      some variables (imported from outside our context) cannot be set, in some cases they can't even be found
+ *      some variables (imported from outside our context) cannot be set, in some cases they can't even be found (args to define* for example)
  *      no recursion (could be added with some pain)
  *      no lists or pairs (these could be added, perhaps)
  *      no macro expansion (not sure how to handle this in Guile)
@@ -193,10 +194,10 @@ static XEN symbol_set_value(XEN code, XEN sym, XEN new_val)
 }
 
 
-enum {R_INT, R_FLOAT, R_BOOL, R_CHAR, R_STRING, R_FUNCTION, R_GOTO, R_VCT, R_READER, R_CLM, 
-      R_FLOAT_VECTOR, R_INT_VECTOR, R_VCT_VECTOR, R_CLM_VECTOR, R_UNSPECIFIED};
-static char *type_names[15] = {"int", "float", "bool", "char", "string", "function", "continuation", "vct", "reader", "clm", 
-			       "float-vector", "int-vector", "vct-vector", "clm-vector", "unspecified"};
+enum {R_UNSPECIFIED, R_INT, R_FLOAT, R_BOOL, R_CHAR, R_STRING, R_FUNCTION, R_GOTO, R_VCT, R_READER, R_CLM, 
+      R_FLOAT_VECTOR, R_INT_VECTOR, R_VCT_VECTOR, R_CLM_VECTOR};
+static char *type_names[15] = {"unspecified", "int", "float", "bool", "char", "string", "function", "continuation", "vct", "reader", "clm", 
+			       "float-vector", "int-vector", "vct-vector", "clm-vector"};
 static char* type_name(int id) {if ((id >= R_INT) && (id <= R_CLM_VECTOR)) return(type_names[id]); return("unknown");}
 
 #define POINTER_P(Type) ((Type) > R_GOTO)
@@ -6249,8 +6250,7 @@ static char *descr_ ## CName ## _f(int *args, int *ints, Float *dbls)  \
 } \
 static xen_value * CName ## _1(ptree *prog, xen_value **args) \
 { \
-  if (args[1]->type == R_STRING) return(package(prog, R_INT, CName ## _f, descr_ ##CName ## _f, args, 1)); \
-  return(NULL); \
+  return(package(prog, R_INT, CName ## _f, descr_ ##CName ## _f, args, 1)); \
 }
 
 SND_STR_OP(mus_sound_samples)
@@ -6270,8 +6270,7 @@ static char *descr_mus_sound_duration_f(int *args, int *ints, Float *dbls)
 }
 static xen_value *mus_sound_duration_1(ptree *prog, xen_value **args)
 {
-  if (args[1]->type == R_STRING) return(package(prog, R_FLOAT, mus_sound_duration_f, descr_mus_sound_duration_f, args, 1));
-  return(NULL);
+  return(package(prog, R_FLOAT, mus_sound_duration_f, descr_mus_sound_duration_f, args, 1));
 }
 
 static void mus_sound_comment_f(int *args, int *ints, Float *dbls) 
@@ -6285,8 +6284,7 @@ static char *descr_mus_sound_comment_f(int *args, int *ints, Float *dbls)
 }
 static xen_value *mus_sound_comment_1(ptree *prog, xen_value **args)
 {
-  if (args[1]->type == R_STRING) return(package(prog, R_STRING, mus_sound_comment_f, descr_mus_sound_comment_f, args, 1));
-  return(NULL);
+  return(package(prog, R_STRING, mus_sound_comment_f, descr_mus_sound_comment_f, args, 1));
 }
 
 static void mus_header_type_name_f(int *args, int *ints, Float *dbls) 
@@ -6587,8 +6585,6 @@ static xen_value *walk(ptree *prog, XEN form, int need_result)
 		return(clean_up(char_downcase(prog, args, constants), args, num_args));
 	      if (strcmp(funcname, "char->integer") == 0) 
 		return(clean_up(char_to_integer(args[1]), args, num_args));
-	      if (strcmp(funcname, "char?") == 0) 
-		return(clean_up(make_xen_value(R_BOOL, add_int_to_ptree(prog, TRUE), R_CONSTANT), args, num_args));
 	    }
 	  if (chars == num_args)
 	    {

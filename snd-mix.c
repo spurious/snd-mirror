@@ -1276,7 +1276,7 @@ static void remix_file(mix_info *md, const char *origin)
 	case NO_PROBLEM: case BLIND_LEAP: break;
 	}
     }
-  if (num < MAX_BUFFER_SIZE) size = num; else size = MAX_BUFFER_SIZE;
+  if (num < MAX_BUFFER_SIZE) size = (int)num; else size = MAX_BUFFER_SIZE;
   data = (mus_sample_t **)CALLOC(1, sizeof(mus_sample_t *));
   data[0] = (mus_sample_t *)CALLOC(size, sizeof(mus_sample_t));
   chandata = data[0];
@@ -2116,7 +2116,7 @@ int display_mix_waveform_at_zero(chan_info *cp, int mix_id)
   int pts;
   console_state *cs;
   mix_info *md;
-  int old_beg;
+  off_t old_beg;
   md = md_from_id(mix_id);
   cs = md->current_cs;
   old_beg = cs->beg;
@@ -2624,9 +2624,9 @@ void ripple_mixes(chan_info *cp, off_t beg, off_t change)
 
 static int compare_consoles(const void *umx1, const void *umx2)
 {
-  int mx1, mx2;
-  mx1 = (*((int *)umx1));
-  mx2 = (*((int *)umx2));
+  off_t mx1, mx2;
+  mx1 = (*((off_t *)umx1));
+  mx2 = (*((off_t *)umx2));
   if (mx1 > mx2) return(1);
   if (mx1 == mx2) return(0);
   return(-1);
@@ -2636,7 +2636,7 @@ void goto_mix(chan_info *cp, int count)
 {
   int i, j, k;
   mix_info *md;
-  int *css;
+  off_t *css;
   console_state *cs;
   if ((!cp) || (!cp->mixes)) return;
   k = 0;
@@ -2647,7 +2647,7 @@ void goto_mix(chan_info *cp, int count)
     }
   if (k > 0)
     {
-      css = (int *)CALLOC(k, sizeof(int));
+      css = (off_t *)CALLOC(k, sizeof(off_t));
       j = 0;
       for (i = 0; i < mix_infos_ctr; i++)
 	{
@@ -2666,7 +2666,7 @@ void goto_mix(chan_info *cp, int count)
 		}
 	    }
 	}
-      qsort((void *)css, j, sizeof(int), compare_consoles);
+      qsort((void *)css, j, sizeof(off_t), compare_consoles);
       /* now find where we are via cp->cursor and go forward or back as per count */
       if (count > 0)
 	{
@@ -3026,7 +3026,8 @@ static void play_mix(snd_state *ss, mix_info *md)
     short *buf;
   #endif
 #endif
-  int play_fd, i, j, samps, format, datum_bytes, outchans, frames;
+  int play_fd, i, j, format, datum_bytes, outchans, frames;
+  off_t samps;
   if (md == NULL) return;
   cp = md->cp;
   cs = md->current_cs;

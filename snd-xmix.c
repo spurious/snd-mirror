@@ -633,7 +633,8 @@ static void update_mix_panel(int mix_id)
 {
   snd_state *ss;
   chan_info *cp;
-  int i, chans, beg, len;
+  int i, chans;
+  off_t beg, len;
   Float val;
   char lab[LABEL_BUFFER_SIZE];
   ss = get_global_state();

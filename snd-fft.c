@@ -1419,7 +1419,8 @@ static int apply_fft_window(fft_state *fs)
   int i, j, result = 5, p = 0, use_fht = 0;
   off_t ind0;
   Float *window, *fft_data;
-  int data_len, pad = 0;
+  int data_len;
+  int pad = 0;
   snd_fd *sf;
   chan_info *cp;
   snd_state *ss;

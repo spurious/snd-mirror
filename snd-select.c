@@ -57,10 +57,9 @@ static off_t off_t_map_over_chans(snd_state *ss, off_t (*func)(chan_info *, off_
   return(val);
 }
 
-static off_t cp_selection_beg(chan_info *cp, off_t *begptr) 
+static off_t cp_selection_beg(chan_info *cp, off_t *beg) 
 {
   ed_list *ed;
-  int *beg = (int *)begptr;
   ed = cp->edits[cp->edit_ctr];
   if (ed->selection_beg != NO_SELECTION)
     {

@@ -1212,7 +1212,7 @@ XEN make_graph_data(chan_info *cp, int edit_pos, off_t losamp, off_t hisamp)
 	  xf = (double)(losamp) / (double)(ep->samps_per_bin);
 	  j = 0;
 	  ioff = losamp;
-	  xk = ioff;
+	  xk = (double)ioff;
 	  ymin = ep->fmax;
 	  ymax = ep->fmin;
 	  while (ioff <= hisamp)

@@ -296,7 +296,8 @@ static XEN g_sound_maxamp_exists(XEN file)
 static XEN g_sound_maxamp(XEN file)
 {
   #define H_mus_sound_maxamp "(" S_mus_sound_maxamp " filename) -> max amps in sound (a list of amps and locations)"
-  int chans, rtn, i;
+  int chans, i;
+  off_t rtn;
   mus_sample_t *vals;
   char *filename;
   XEN res = XEN_EMPTY_LIST;

@@ -1498,7 +1498,7 @@ static int fragments_locked = 0;
  */
 
 static void oss_mus_audio_set_oss_buffers(int num, int size) {FRAGMENTS = num; FRAGMENT_SIZE = size; fragments_locked = 1;}
-/* TODO: these should be set per-card, not globally */
+/* SOMEDAY: these should be set per-card, not globally */
 
 #define MAX_SOUNDCARDS 8
 #define MAX_DSPS 8
