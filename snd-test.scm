@@ -18720,7 +18720,8 @@ EDITS: 5
 	    (char=? ch #\!) (char=? ch #\@) (char=? ch #\#) (char=? ch #\$) (char=? ch #\%) 
 	    (char=? ch #\^) (char=? ch #\&) (char=? ch #\*) (char=? ch #\() (char=? ch #\)) 
 	    (char=? ch #\_) (char=? ch #\+) (char=? ch #\:) (char=? ch #\") (char=? ch #\?)
-	    (char=? ch #\<) (char=? ch #\>) (char=? ch #\{) (char=? ch #\}) (char=? ch #\|)  
+	    ;(char=? ch #\<) 
+	    (char=? ch #\>) (char=? ch #\{) (char=? ch #\}) (char=? ch #\|)  
 	    (char=? ch #\~))
 	1
 	0))
@@ -18749,20 +18750,20 @@ EDITS: 5
 		(snd-right-key #xFF53)
 		(snd-down-key #xFF54)
 		(snd-kp-delete-key #xFF9F)
+		(snd-kp-insert-key #xFF9E)
 		(snd-kp-multiply-key #xFFAA)
 		(snd-kp-add-key #xFFAB)
 		(snd-kp-subtract-key #xFFAD)
 		(snd-kp-decimal-key #xFFAE)
 		(snd-kp-divide-key #xFFAF)
-		(snd-kp-0-key #xFFB0)
-		(snd-kp-3-key #xFFB3)
-		(snd-kp-9-key #xFFB9)
 		(snd-kp-enter-key #xFF8D)
 		(snd-space-key #x20)
 		(snd-kp-left-key #xFF96)
 		(snd-kp-right-key #xFF98)
 		(snd-kp-up-key #xFF97)
 		(snd-tab-key #xFF09)
+		(snd-kp-pagedown-key #xFF56)
+		(snd-kp-pageup-key #xFF55)
 		(snd-kp-down-key #xFF99)
 		(snd-home-key #xFF50))
 
@@ -19005,12 +19006,12 @@ EDITS: 5
 			(snd-display ";keypad-subtract ~A -> ~A" hop (spectro-hop))))
 
 		  (set! (spectro-cutoff) 0.5)
-		  (key-event cwid snd-kp-9-key 0) (force-event)
+		  (key-event cwid snd-kp-pageup-key 0) (force-event)
 		  (IF (> (abs (- (spectro-cutoff) (/ 0.5 0.95))) .05)
-		      (snd-display ";keypad-9 ~A -> ~A" 0.5 (spectro-cutoff)))
-		  (key-event cwid snd-kp-3-key 0) (force-event)
+		      (snd-display ";keypad-pageup ~A -> ~A" 0.5 (spectro-cutoff)))
+		  (key-event cwid snd-kp-pagedown-key 0) (force-event)
 		  (IF (fneq (spectro-cutoff) 0.5)
-		      (snd-display ";keypad-3 ~A -> ~A" 0.5 (spectro-cutoff)))
+		      (snd-display ";keypad-pagedown ~A -> ~A" 0.5 (spectro-cutoff)))
 
 		  (let ((za (spectro-z-angle))
 			(zs (spectro-z-scale)))
@@ -19047,12 +19048,12 @@ EDITS: 5
 
 		  (set! (graph-style) graph-dots)
 		  (let ((ds (dot-size)))
-		    (key-event cwid snd-kp-decimal-key 1) (force-event)
+		    (key-event cwid snd-kp-delete-key 0) (force-event)
 		    (IF (not (= (dot-size) (1+ ds)))
-			(snd-display ";decimal dot-size: ~A -> ~A?" ds (dot-size)))
-		    (key-event cwid snd-kp-0-key 1) (force-event)
+			(snd-display ";keypad dot-size: ~A -> ~A?" ds (dot-size)))
+		    (key-event cwid snd-kp-insert-key 0) (force-event)
 		    (IF (not (= (dot-size) ds))
-			(snd-display ";0 dot-size: ~A -> ~A?" ds (dot-size))))
+			(snd-display ";keypad insert dot-size: ~A -> ~A?" ds (dot-size))))
 		  (set! (graph-style) graph-lines)
 		  (key-event cwid snd-kp-enter-key 0) (force-event)
 
@@ -19281,11 +19282,15 @@ EDITS: 5
 		  (key-event minibuffer snd-return-key 0) (force-event)
 		  (let ((cs (cursor)))
 		    (IF (not (< (sample cs) -.1))
-			(snd-display ";C-s -.1 -> ~A at ~A?" (sample cs) cs))
+			(snd-display ";C-s -.1 -> ~A at ~A (~A)?" 
+				     (sample cs) cs
+				     (widget-text (list-ref (sound-widgets ind) 3))))
 		    (key-event cwid (char->integer #\s) 4) (force-event)
 		    (key-event cwid (char->integer #\s) 4) (force-event)
 		    (IF (not (< (sample (cursor)) -.1))
-			(snd-display ";C-s -.1 (1) -> ~A at ~A?" (sample (cursor)) (cursor)))
+			(snd-display ";C-s -.1 (1) -> ~A at ~A (~A)?" 
+				     (sample (cursor)) (cursor)
+				     (widget-text (list-ref (sound-widgets ind) 3))))
 		    (IF (= cs (cursor))
 			(snd-display ";C-s 2 -> ~A at ~A?" cs (cursor)))
 		    (key-event cwid (char->integer #\b) 4) (force-event)
@@ -20821,7 +20826,7 @@ EDITS: 5
 		      (close-sound ind))
 		    (snd-display ";no mix file dialog?"))
 
-#!
+
 		;; ---------------- edit header dialog ----------------
                 (let ((ind (open-sound "oboe.snd")))
 		  (define (type->pos type)
@@ -21119,7 +21124,7 @@ EDITS: 5
 		    (click-button (XmMessageBoxGetChild recd XmDIALOG_OK_BUTTON)) (force-event)
 		    )
 		  (set! (with-background-processes) old-val))
-!#
+
 		;; ---------------- region dialog ----------------
 		(let ((ind (open-sound "4.aiff")))
 		  (do ((i 0 (1+ i)))

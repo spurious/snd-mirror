@@ -6,7 +6,7 @@
 #define MUS_DATE "19-Aug-02"
 
 /* 
- * 10-Aug:     changed a couple "temporary" internal phase-vocoder array accessor names
+ * 19-Aug:     changed internal phase-vocoder array accessor names
  * 13-Aug:     added set! (*-ref) for frame, locsig, mixer, locsig-reverb.
  * 29-Jul:     added various *_1 cases for the optimizer.
  * 15-Jul:     mus_continue_sample2file.

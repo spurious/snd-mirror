@@ -8,6 +8,7 @@
  */
 
 /* HISTORY: 
+ *   29-Aug:    added ten resources accidentally omitted earlier (thanks to Michael Scholz).
  *   2-Aug:     some Lesstif-related compile-time switches.
  *   26-Jul:    removed wrappers Widget Pixel GC and XtAppContext.
  *   24-Jul:    removed "|" prefix, use "." as default struct field prefix.
@@ -1564,6 +1565,10 @@ static Arg *XEN_TO_C_Args(XEN inargl)
 	case XM_INT:
 	  XEN_ASSERT_TYPE(XEN_INTEGER_P(value), value, XEN_ONLY_ARG, name, "an integer");
 	  XtSetArg(args[i], name, (XtArgVal)(XEN_TO_C_INT(value)));
+	  break;
+	case XM_FLOAT:
+	  XEN_ASSERT_TYPE(XEN_DOUBLE_P(value), value, XEN_ONLY_ARG, name, "a float");
+	  XtSetArg(args[i], name, (XtArgVal)(XEN_TO_C_DOUBLE(value)));
 	  break;
 	case XM_STRING:	      
 	  XEN_ASSERT_TYPE(XEN_STRING_P(value), value, XEN_ONLY_ARG, name, "a string");      
@@ -22454,6 +22459,7 @@ static void define_strings(void)
   DEFINE_RESOURCE(XmNcolorCalculationProc, XM_SCREEN_COLOR_CALLBACK);
   DEFINE_RESOURCE(XmNcomboBoxType, XM_UCHAR);
   DEFINE_RESOURCE(XmNconvertCallback, XM_CALLBACK);
+  DEFINE_RESOURCE(XmNcurrentPageNumber, XM_INT);
   DEFINE_RESOURCE(XmNdecimal, XM_STRING);
   DEFINE_RESOURCE(XmNdefaultArrowSensitivity, XM_UCHAR);
   DEFINE_RESOURCE(XmNdefaultButtonEmphasis, XM_INT);
@@ -22489,6 +22495,7 @@ static void define_strings(void)
   DEFINE_RESOURCE(XmNfirstPageNumber, XM_INT);
   DEFINE_RESOURCE(XmNfontName, XM_STRING);
   DEFINE_RESOURCE(XmNfontType, XM_UCHAR);
+  DEFINE_RESOURCE(XmNframeBackground, XM_PIXEL);
   DEFINE_RESOURCE(XmNframeChildType, XM_UCHAR);
   DEFINE_RESOURCE(XmNframeShadowThickness, XM_INT);
   DEFINE_RESOURCE(XmNgrabStyle, XM_UCHAR);
@@ -22507,6 +22514,8 @@ static void define_strings(void)
   DEFINE_RESOURCE(XmNlargeIcon, XM_WIDGET);
   DEFINE_RESOURCE(XmNlargeIconMask, XM_PIXMAP);
   DEFINE_RESOURCE(XmNlargeIconPixmap, XM_PIXMAP);
+  DEFINE_RESOURCE(XmNlargeIconX, XM_FLOAT);
+  DEFINE_RESOURCE(XmNlargeIconY, XM_FLOAT);
   DEFINE_RESOURCE(XmNlastPageNumber, XM_INT);
   DEFINE_RESOURCE(XmNlayoutDirection, XM_UCHAR);
   DEFINE_RESOURCE(XmNlayoutType, XM_UCHAR);
@@ -22568,6 +22577,8 @@ static void define_strings(void)
   DEFINE_RESOURCE(XmNsmallIcon, XM_WIDGET);
   DEFINE_RESOURCE(XmNsmallIconMask, XM_PIXMAP);
   DEFINE_RESOURCE(XmNsmallIconPixmap, XM_PIXMAP);
+  DEFINE_RESOURCE(XmNsmallIconX, XM_FLOAT);
+  DEFINE_RESOURCE(XmNsmallIconY, XM_FLOAT);
   DEFINE_RESOURCE(XmNsnapBackMultiple, XM_INT);
   DEFINE_RESOURCE(XmNspatialIncludeModel, XM_UCHAR);
   DEFINE_RESOURCE(XmNspatialResizeModel, XM_UCHAR);
@@ -22586,6 +22597,12 @@ static void define_strings(void)
   DEFINE_RESOURCE(XmNtotalLines, XM_INT);
   DEFINE_RESOURCE(XmNunderlineType, XM_UCHAR);
   DEFINE_RESOURCE(XmNunselectColor, XM_PIXEL);
+
+  DEFINE_RESOURCE(XmNtabValue, XM_FLOAT);
+  DEFINE_RESOURCE(XmNoffsetModel, XM_INT);
+  DEFINE_RESOURCE(XmNcallback, XM_CALLBACK);
+  DEFINE_RESOURCE(XmNwaitForWm, XM_BOOLEAN);
+
 #ifndef LESSTIF_VERSION
   DEFINE_RESOURCE(XmNuseColorObj, XM_BOOLEAN);
 #endif
@@ -22613,6 +22630,25 @@ static void define_strings(void)
   DEFINE_RESOURCE(XmNdefaultFontList, XM_FONTLIST);
   DEFINE_RESOURCE(XmNshellUnitType, XM_UCHAR);
 #endif
+
+  /* the following are defined in XmStrDefs.h but don't appear in the documentation:
+     XmNavailability XmNchildPosition XmNdesktopParent XmNdragContextClass XmNdragIconClass XmNdragOverMode
+     XmNdropSiteManagerClass XmNdroptransferClass XmNextensionType XmNfocusMovedCallback XmNfocusPolicyChanged 
+     XmNiccHandle XmNinputCreate XmNlogicalParent XmNmessageProc XmNmodifyVerifyCallbackWcs XmNneedsMotion
+     XmNmwmMessages XmNnotifyProc XmNnumRectangles XmNoutputCreate XmNpostFromCount XmNpostFromList 
+     XmNprotocolCallback XmNrealizeCallback XmNsizePolicy XmNsourceIsExternal XmNsourceWidget XmNsourceWindow 
+     XmNstartTime XmNtextValue XmNtoPositionCallback XmNtraversalCallback XmNtraversalType XmNtreeUpdateProc 
+     XmNunselectPixmap XmNupdateSliderSize XmNvalueWcs XmNtextPath XmNeditingPath XmNbidirectionalCursor 
+     XmNdefaultGlyphPixmap XmNcontainerID XmNdragOverActiveMode XmNinstallColormap XmNownerEvents XmNforegroundState 
+     XmNbackgroundState XmNarea XmNprimaryColorSetId XmNsecondaryColorSetId XmNtextColorSetId XmNactiveColorSetId 
+     XmNinactiveColorSetId XmNuseTextColor XmNuseTextColorForList XmNuseMask XmNuseMultiColorIcons XmNuseIconFileCache 
+     XmNprintOrientation XmNprintOrientations XmNprintResolution XmNprintResolutions XmNdefaultPixmapResolution 
+     XmNeditType XmNfontSet XmNforceBars XmNfunction XmNindex XmNinnerHeight XmNinnerWidth XmNinnerWindow 
+     XmNinternalHeight XmNinternalWidth XmNjumpProc XmNjustify XmNlength XmNlowerRight XmNname XmNnotify XmNparameter 
+     XmNreverseVideo XmNscrollDCursor XmNscrollHCursor XmNscrollLCursor XmNscrollProc XmNscrollRCursor XmNscrollUCursor 
+     XmNscrollVCursor XmNshown XmNspace XmNtextOptions XmNtextSink XmNtextSource XmNthickness XmNthumb XmNthumbProc 
+     XmNupdate XmNuseBottom XmNuseRight 
+  */
 
   qsort((void *)xm_hash, hd_ctr, sizeof(hdata *), alphabet_compare);
   {
@@ -24496,7 +24532,7 @@ static int xm_already_inited = 0;
       define_structs();
       XEN_YES_WE_HAVE("xm");
 #if HAVE_GUILE
-      XEN_EVAL_C_STRING("(define xm-version \"19-Aug-02\")");
+      XEN_EVAL_C_STRING("(define xm-version \"29-Aug-02\")");
 #endif
       xm_already_inited = 1;
     }

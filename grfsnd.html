@@ -1565,13 +1565,13 @@ As a very simple example, here's dialog window with a slider:</p>
 		      XmNdialogTitle         titlestr
 		      XmNresizePolicy        XmRESIZE_GROW
 	              XmNnoResize            #f
-		      XmNtransient           #f) ))
+		      XmNtransient           #f)))
 	(XtAddCallback scale-dialog 
-			XmNcancelCallback (lambda (w context info)
-					     (XtUnmanageChild scale-dialog)))
+		       XmNcancelCallback (lambda (w context info)
+					   (XtUnmanageChild scale-dialog)))
 	(XtAddCallback scale-dialog 
-			XmNhelpCallback (lambda (w context info)
-					   (snd-print "move the slider to affect the volume")))
+		       XmNhelpCallback (lambda (w context info)
+					 (snd-print "move the slider to affect the volume")))
 	(XmStringFree xhelp)
 	(XmStringFree xdismiss)
 	(XmStringFree titlestr)
@@ -1591,11 +1591,10 @@ As a very simple example, here's dialog window with a slider:</p>
 			XmNmaximum     500
 			XmNdecimalPoints 2))))
 
-      (XtAddCallback scale 
-		      XmNvalueChangedCallback (lambda (w context info)
-						 (set! current-scaler (/ (.value info) 100.0))))
+      (XtAddCallback scale XmNvalueChangedCallback (lambda (w context info)
+					     (set! current-scaler (/ (.value info) 100.0))))
       (XtAddCallback scale XmNdragCallback (lambda (w context info)
-						 (set! current-scaler (/ (.value info) 100.0)))))))
+					     (set! current-scaler (/ (.value info) 100.0)))))))
   (XtManageChild scale-dialog))
 
 (create-scale-dialog (cadr (main-widgets)))

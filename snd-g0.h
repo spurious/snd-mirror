@@ -310,6 +310,7 @@ typedef struct {
                                                gtk_window_set_resizable(GTK_WINDOW(Widget), TRUE); }
   #define SG_SET_RESIZABLE(Window, Val)      gtk_window_set_resizable(Window, Val)
   #define SG_SET_SIZE(Widget, Width, Height) gtk_window_resize(GTK_WINDOW(Widget), Width, Height)
+  #define SG_BUTTON_SET_SIZE(Widget, Width, Height) gtk_widget_set_size_request(Widget, Width, Height)
   #define SG_SET_POSITION(Widget, X, Y)      gtk_window_move(GTK_WINDOW(Widget), X, Y)
   #define SG_LABEL_TEXT(Widget)              (char *)gtk_label_get_text(Widget)
   #define SG_SET_GUTTER_SIZE(Widget, Size)
@@ -372,6 +373,7 @@ typedef struct {
   #define SG_MAKE_RESIZABLE(Widget)          gtk_window_set_policy(GTK_WINDOW(Widget), TRUE, TRUE, FALSE)
   #define SG_SET_RESIZABLE(Window, Val)      gtk_window_set_policy(Window, TRUE, TRUE, Val)
   #define SG_SET_SIZE(Widget, Width, Height) gtk_widget_set_usize(Widget, Width, Height)
+  #define SG_BUTTON_SET_SIZE(Widget, Width, Height) gtk_widget_set_usize(Widget, Width, Height)
   #define SG_SET_POSITION(Widget, X, Y)      gtk_widget_set_uposition(Widget, X, Y)
   #define SG_LABEL_TEXT(Widget)              sg_label_text(Widget)
   #define SG_SET_GUTTER_SIZE(Widget, Size)   gtk_paned_set_gutter_size(Widget,Size)

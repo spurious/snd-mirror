@@ -2090,16 +2090,11 @@ void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, Float scaler, int re
 		  segnum = segend - segbeg; /* last value is sticky in envs */
 	      if (segnum > 0)
 		{
-		  if (rates[k] == 0.0)
-		    scale_channel(si->cps[i], (Float)(data[m]), segbeg, segnum, pos);
-		  else 
-		    {
-		      if (k == 0) 
-			ramp_channel(si->cps[i], (Float)(data[m]),
-				     (Float)(data[m + 2]), segbeg, segnum, pos);
-		      else ramp_channel(si->cps[i], (Float)(data[m]) + (data[m + 2] - data[m]) / (double)segnum,
-					(Float)(data[m + 2]), segbeg, segnum, pos);
-		    }
+		  if (k == 0) 
+		    ramp_channel(si->cps[i], (Float)(data[m]),
+				 (Float)(data[m + 2]), segbeg, segnum, pos);
+		  else ramp_channel(si->cps[i], (Float)(data[m]) + (data[m + 2] - data[m]) / (double)segnum,
+				    (Float)(data[m + 2]), segbeg, segnum, pos);
 		  pos = si->cps[i]->edit_ctr;
 		}
 	      segbeg += segnum;

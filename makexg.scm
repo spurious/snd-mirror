@@ -12,7 +12,6 @@
 (debug-enable 'backtrace)
 (read-enable 'positions)
 
-(define include-broken #f)  ; set to #t to get ENABLE_BROKEN entities
 (define include-deprecated #f) ; set to #t to get DISABLE_DEPRECATED entitities
 (define worry-about-gtk-1 #f)
 
@@ -47,12 +46,6 @@
 (define structs '())
 (define make-structs '()) ; these have a xg-specific make function
 (define struct-fields '())
-;;; "broken" for obsolete gdk/gtk funcs
-(define broken-types '())
-(define broken-funcs '())
-(define broken-casts '())
-(define broken-checks '())
-(define broken-ints '())
 ;; "deprecated" for deprecated funcs
 (define deprecated-types '())
 (define deprecated-funcs '())
@@ -259,21 +252,16 @@
 				    (set! data (cons (list type given-name) data)))))
 			(if reftype (set! type reftype))
 
-			(if (eq? broken 'broken)
+			(if (eq? broken 'deprecated)
 			    (if (and (not (member type types))
-				     (not (member type deprecated-types))
-				     (not (member type broken-types)))
-				(set! broken-types (cons type broken-types)))
-			    (if (eq? broken 'deprecated)
+				     (not (member type deprecated-types)))
+				(set! deprecated-types (cons type deprecated-types)))
+			    (if (eq? broken 'extra)
 				(if (and (not (member type types))
-					 (not (member type deprecated-types)))
-				    (set! deprecated-types (cons type deprecated-types)))
-				(if (eq? broken 'extra)
-				    (if (and (not (member type types))
-					     (not (member type extra-types)))
-					(set! extra-types (cons type extra-types)))
-				    (if (not (member type types))
-					(set! types (cons type types))))))
+					 (not (member type extra-types)))
+				    (set! extra-types (cons type extra-types)))
+				(if (not (member type types))
+				    (set! types (cons type types)))))
 			(set! type #f))
 		      (if (> i (1+ sp))
 			  (set! type (substring args (1+ sp) i))))
@@ -574,12 +562,6 @@
 	(cons "GtkVisibility" "INT")
 	(cons "GtkSignalRunType" "INT")))))
 
-(if include-broken
-    (set! direct-types (append direct-types
-      (list
-	(cons "GtkTreeViewMode" "INT")))))
-
-
 (define (type-it type)
   (let ((typ (assoc type direct-types))
 	(g2 '()))
@@ -657,21 +639,6 @@
 		(set! funcs (cons (list name type strs args spec spec-name) funcs))
 		(set! funcs (cons (list name type strs args) funcs)))
 	    (set! names (cons (cons name (func-type strs)) names)))))))
-
-(define (CFNC-broken data)
-  (if include-broken
-      (let ((name (cadr-str data))
-	    (args (caddr-str data)))
-	(if (assoc name names)
-	    (no-way "~A CFNC-broken~%" name)
-	    (let ((type (car-str data)))
-	      (if (and (not (member type types))
-		       (not (member type deprecated-types))
-		       (not (member type broken-types)))
-		  (set! broken-types (cons type broken-types)))
-	      (let ((strs (parse-args args 'broken)))
-		(set! broken-funcs (cons (list name type strs args) broken-funcs))
-		(set! names (cons (cons name (func-type strs)) names))))))))
 
 (define (CFNC-dep data)
   (if include-deprecated
@@ -780,14 +747,6 @@
 	(set! extra-ints (cons name extra-ints))
 	(set! names (cons (cons name 'int) names)))))
 
-(define* (CINT-broken name #:optional type)
-  (if include-broken
-      (if (assoc name names)
-	  (no-way "~A CINT-broken~%" name)
-	  (begin
-	    (set! broken-ints (cons name broken-ints))
-	    (set! names (cons (cons name 'int) names))))))
-
 (define* (CINT-dep name #:optional type)
   (if include-deprecated
       (if (assoc name names)
@@ -814,28 +773,6 @@
 	    (set! check-types (cons type check-types)))
 	(set! checks (cons (list name type) checks))
 	(set! names (cons (cons name 'def) names)))))
-
-(define (CCAST-broken name type)
-  (if include-broken
-      (if (assoc name names)
-	  (no-way "~A CCAST-broken~%" name)
-	  (begin
-	    (if (and (not (member type types))
-		     (not (member type broken-types)))
-		(set! broken-types (cons type broken-types)))
-	    (set! broken-casts (cons (list name type) broken-casts))
-	    (set! names (cons (cons name 'def) names))))))
-
-(define (CCHK-broken name type)
-  (if include-broken
-      (if (assoc name names)
-	  (no-way "~A CCHK~%" name)
-	  (begin
-	    (if (and (not (member type types))
-		     (not (member type broken-types)))
-		(set! broken-types (cons type broken-types)))
-	    (set! broken-checks (cons (list name type) broken-checks))
-	    (set! names (cons (cons name 'def) names))))))
 
 (define (CCAST-dep name type)
   (if include-deprecated
@@ -944,15 +881,6 @@
 	(check-gtk1 #t)
 	(dpy "#endif~%~%"))))
 
-(define (with-broken dpy thunk)
-  (if include-broken
-      (begin
-	(check-gtk1 #t)
-	(dpy "#if GDK_ENABLE_BROKEN && GTK_ENABLE_BROKEN~%")
-	(thunk)
-	(check-gtk1 #t)
-	(dpy "#endif~%~%"))))
-
 (define (with-extra dpy thunk)
   (check-gtk1 #t)
   (dpy "#if PANGO_ENABLE_ENGINE && PANGO_ENABLE_BACKEND~%")
@@ -968,7 +896,6 @@
 (hey " *~%")
 (hey " *   HAVE_GTK_1 if 1.2.n~%")
 (hey " *   GDK_DISABLE_DEPRECATED, GTK_DISABLE_DEPRECATED, and GDK_PIXBUF_DISABLE_DEPRECATED are handled together~%")
-(hey " *   GDK_ENABLE_BROKEN and GTK_ENABLE_BROKEN are handled together~%")
 (hey " *   PANGO_ENABLE_ENGINE and PANGO_ENABLE_BACKEND are handled together, and may be removed later~%")
 (hey " *~%")
 (hey " *   other flags:~%")
@@ -1024,7 +951,7 @@
 (hey " * ~A: test suite (snd-test 24)~%" (string-append "T" "ODO"))
 (hey " *~%")
 (hey " * HISTORY:~%")
-(hey " *     31-Jul:    removed GTK 1.n support (it can still be generated from makexg.scm)~%")
+(hey " *     31-Jul:    removed GTK 1.n support (some of it can still be generated from makexg.scm)~%")
 (hey " *     24-Jul:    changed Guile prefix (R5RS reserves vertical-bar).~%")
 (hey " *     19-Jul:    XG_FIELD_PRE for change from using vertical-bar (reserved in R5RS)~%")
 (hey " *     2-Jun:     removed deprecated and broken stuff (see include-deprecated switch in makexg.scm)~%")
@@ -1175,11 +1102,6 @@
     (with-deprecated hey (lambda () 
 			   (for-each type-it (reverse deprecated-types))
 			   (for-each check-type-it (reverse deprecated-types)))))
-
-(if (not (null? broken-types))
-    (with-broken hey (lambda ()
-		       (for-each type-it (reverse broken-types))
-		       (for-each check-type-it (reverse broken-types)))))
 
 
 (hey "/* -------------------------------- gc protection -------------------------------- */~%")
@@ -1639,7 +1561,6 @@
 (for-each handle-func (reverse funcs))
 (if (not (null? extra-funcs)) (with-extra hey (lambda () (for-each handle-func (reverse extra-funcs)))))
 (if (not (null? deprecated-funcs)) (with-deprecated hey (lambda () (for-each handle-func (reverse deprecated-funcs)))))
-(if (not (null? broken-funcs)) (with-broken hey (lambda () (for-each handle-func (reverse broken-funcs)))))
 
 (define cast-it
  (lambda (cast)
@@ -1652,7 +1573,6 @@
 (for-each cast-it (reverse casts))
 (if (not (null? extra-casts)) (with-extra hey (lambda () (for-each cast-it (reverse extra-casts)))))
 (if (not (null? deprecated-casts)) (with-deprecated hey (lambda () (for-each cast-it (reverse deprecated-casts)))))
-(if (not (null? broken-casts)) (with-broken hey (lambda () (for-each cast-it (reverse broken-casts)))))
 
 
 ;;; ---------------- Ruby step 1 ----------------
@@ -1678,19 +1598,16 @@
 (for-each argify-func (reverse funcs))
 (if (not (null? extra-funcs)) (with-extra say (lambda () (for-each argify-func (reverse extra-funcs)))))
 (if (not (null? deprecated-funcs)) (with-deprecated say (lambda () (for-each argify-func (reverse deprecated-funcs)))))
-(if (not (null? broken-funcs)) (with-broken say (lambda () (for-each argify-func (reverse broken-funcs)))))
 
 (define (ruby-cast func) (say "XEN_NARGIFY_1(gxg_~A_w, gxg_~A)~%" (no-arg (car func)) (no-arg (car func)))) 
 (for-each ruby-cast (reverse casts))
 (if (not (null? extra-casts)) (with-extra say (lambda () (for-each ruby-cast (reverse extra-funcs)))))
 (if (not (null? deprecated-casts)) (with-deprecated say (lambda () (for-each ruby-cast (reverse deprecated-casts)))))
-(if (not (null? broken-casts)) (with-broken say (lambda () (for-each ruby-cast (reverse broken-casts)))))
 
 (define (ruby-check func) (say "XEN_NARGIFY_1(XEN_~A_p_w, XEN_~A_p)~%" (no-stars (cadr func)) (no-stars (cadr func)))) 
 (for-each ruby-check (reverse checks))
 (if (not (null? extra-checks)) (with-extra say (lambda () (for-each ruby-check (reverse extra-checks)))))
 (if (not (null? deprecated-checks)) (with-deprecated say (lambda () (for-each ruby-check (reverse deprecated-checks)))))
-(if (not (null? broken-checks)) (with-broken say (lambda () (for-each ruby-check (reverse broken-checks)))))
 
 (for-each (lambda (field) (say "XEN_NARGIFY_1(gxg_~A_w, gxg_~A)~%" field field)) struct-fields)
 (if worry-about-gtk-1 (say "#if (!HAVE_GTK_1)~%"))
@@ -1748,7 +1665,6 @@
 (for-each defun (reverse funcs))
 (if (not (null? extra-funcs)) (with-extra say-hey (lambda () (for-each defun (reverse extra-funcs)))))
 (if (not (null? deprecated-funcs)) (with-deprecated say-hey (lambda () (for-each defun (reverse deprecated-funcs)))))
-(if (not (null? broken-funcs)) (with-broken say-hey (lambda () (for-each defun (reverse broken-funcs)))))
 
 (define (cast-out func)
   (check-gtk1 (no-arg (car func)))
@@ -1758,7 +1674,6 @@
 (for-each cast-out (reverse casts))
 (if (not (null? extra-casts)) (with-extra say-hey (lambda () (for-each cast-out (reverse extra-casts)))))
 (if (not (null? deprecated-casts)) (with-deprecated say-hey (lambda () (for-each cast-out (reverse deprecated-casts)))))
-(if (not (null? broken-casts)) (with-broken say-hey (lambda () (for-each cast-out (reverse broken-casts)))))
 
 (define (check-out func)
   (check-gtk1 (no-arg-or-stars (cadr func)))
@@ -1768,7 +1683,6 @@
 (for-each check-out (reverse checks))
 (if (not (null? extra-checks)) (with-extra say-hey (lambda () (for-each check-out (reverse extra-checks)))))
 (if (not (null? deprecated-checks)) (with-deprecated say-hey (lambda () (for-each check-out (reverse deprecated-checks)))))
-(if (not (null? broken-checks)) (with-broken say-hey (lambda () (for-each check-out (reverse broken-checks)))))
 
 (check-gtk1 #t)
 (say-hey "}~%~%")
@@ -2019,8 +1933,7 @@
     (with-extra hey (lambda () (for-each (lambda (val) (hey "  DEFINE_INTEGER(~A);~%" val)) (reverse extra-ints)))))
 (if (not (null? deprecated-ints))
     (with-deprecated hey (lambda () (for-each (lambda (val) (hey "  DEFINE_INTEGER(~A);~%" val)) (reverse deprecated-ints)))))
-(if (not (null? broken-ints))
-    (with-broken hey (lambda () (for-each (lambda (val) (hey "  DEFINE_INTEGER(~A);~%" val)) (reverse broken-ints)))))
+
 (check-gtk1 #t)
 (hey "}~%~%")
 
@@ -2153,13 +2066,12 @@
 
 (for-each gtk1? names)
 (for-each gtk1? types)
-(if include-broken (for-each gtk1? broken-types))
 (if include-deprecated (for-each gtk1? deprecated-types))
 (for-each gtk1? struct-fields)
 (close-output-port gad)
 !#
 
-;/* cc -c xg.c -g3 -DUSE_GTK -DDEBUGGING -DDEBUG_MEMORY -DLINUX -DUSE_SND -DHAVE_GNU_LIBC_VERSION_H -DHAVE_GSL -DHAVE_DLFCN_H -DHAVE_GUILE -DHAVE_LLONGS -DHAVE_APPLICABLE_SMOB -DHAVE_SCM_REMEMBER_UPTO_HERE -DHAVE_SCM_OBJECT_TO_STRING -DHAVE_SCM_NUM2LONG_LONG -DHAVE_SCM_C_MAKE_VECTOR -DHAVE_SCM_C_DEFINE -DHAVE_SCM_NUM2INT -DHAVE_SCM_C_DEFINE_GSUBR -DHAVE_SCM_LIST_N -DHAVE_SCM_C_EVAL_STRING -DHAVE_SCM_STR2SYMBOL -DHAVE_SCM_MAKE_REAL -DHAVE_SCM_T_CATCH_BODY -DHAVE_EXTENSION_LANGUAGE -DHAVE_STATIC_XM -DHAVE_GTK2 -I/home/bil/test/g3/include -I/home/bil/test/g3/include/glib-2.0 -I/home/bil/test/g3/include/pango-1.0 -I/home/bil/test/g3/include/gtk-2.0 -I/home/bil/test/g3/lib/gtk-2.0/include -I/home/bil/test/g3/include/atk-1.0 -I/home/bil/test/include -DGTK_ENABLE_BROKEN -DPANGO_ENABLE_ENGINE -DPANGO_ENABLE_BACKEND -DGDK_ENABLE_BROKEN */
+;/* cc -c xg.c -g3 -DUSE_GTK -DDEBUGGING -DDEBUG_MEMORY -DLINUX -DUSE_SND -DHAVE_GNU_LIBC_VERSION_H -DHAVE_GSL -DHAVE_DLFCN_H -DHAVE_GUILE -DHAVE_LLONGS -DHAVE_APPLICABLE_SMOB -DHAVE_SCM_REMEMBER_UPTO_HERE -DHAVE_SCM_OBJECT_TO_STRING -DHAVE_SCM_NUM2LONG_LONG -DHAVE_SCM_C_MAKE_VECTOR -DHAVE_SCM_C_DEFINE -DHAVE_SCM_NUM2INT -DHAVE_SCM_C_DEFINE_GSUBR -DHAVE_SCM_LIST_N -DHAVE_SCM_C_EVAL_STRING -DHAVE_SCM_STR2SYMBOL -DHAVE_SCM_MAKE_REAL -DHAVE_SCM_T_CATCH_BODY -DHAVE_EXTENSION_LANGUAGE -DHAVE_STATIC_XM -DHAVE_GTK2 -I/home/bil/test/g3/include -I/home/bil/test/g3/include/glib-2.0 -I/home/bil/test/g3/include/pango-1.0 -I/home/bil/test/g3/include/gtk-2.0 -I/home/bil/test/g3/lib/gtk-2.0/include -I/home/bil/test/g3/include/atk-1.0 -I/home/bil/test/include -DPANGO_ENABLE_ENGINE -DPANGO_ENABLE_BACKEND */
 
 ;-DGDK_DISABLE_DEPRECATED -DGTK_DISABLE_DEPRECATED -DGDK_PIXBUF_DISABLE_DEPRECATED
 

@@ -4136,50 +4136,50 @@ static XEN channel_get(XEN snd_n, XEN chn_n, int fld, char *caller)
 	  cp = get_cp(snd_n, chn_n, caller);
 	  switch(fld)
 	    {
-	    case CP_EDIT_CTR:           return(C_TO_XEN_INT(cp->edit_ctr));                          break;
-	    case CP_GRAPH_TRANSFORM_P:  return(C_TO_XEN_BOOLEAN(cp->graph_transform_p));             break;
-	    case CP_GRAPH_TIME_P:       return(C_TO_XEN_BOOLEAN(cp->graph_time_p));                  break;
-	    case CP_CURSOR:             return(C_TO_XEN_OFF_T(cp->cursor));                          break;
-	    case CP_FRAMES:             return(C_TO_XEN_OFF_T(CURRENT_SAMPLES(cp)));                 break;
-	    case CP_GRAPH_LISP_P:       return(C_TO_XEN_BOOLEAN(cp->graph_lisp_p));                  break;
-	    case CP_AP_LOSAMP:          if (cp->axis) return(C_TO_XEN_OFF_T((cp->axis)->losamp));    break;
-	    case CP_AP_HISAMP:          if (cp->axis) return(C_TO_XEN_OFF_T((cp->axis)->hisamp));    break;
-	    case CP_SQUELCH_UPDATE:     return(C_TO_XEN_BOOLEAN(cp->squelch_update));                break;
-	    case CP_CURSOR_SIZE:        return(C_TO_XEN_INT(cp->cursor_size));                       break;
-	    case CP_CURSOR_STYLE:       return(C_TO_XEN_INT(cp->cursor_style));                      break;
-	    case CP_EDIT_HOOK:          return(cp->edit_hook);                                       break;
-	    case CP_AFTER_EDIT_HOOK:    return(cp->after_edit_hook);                                 break;
-	    case CP_UNDO_HOOK:          return(cp->undo_hook);                                       break;
-	    case CP_SHOW_Y_ZERO:        return(C_TO_XEN_BOOLEAN(cp->show_y_zero));                   break;
-	    case CP_SHOW_MARKS:         return(C_TO_XEN_BOOLEAN(cp->show_marks));                    break;
-	    case CP_TIME_GRAPH_TYPE:    return(C_TO_XEN_INT(cp->time_graph_type));                   break;
-	    case CP_WAVO_HOP:           return(C_TO_XEN_INT(cp->wavo_hop));                          break;
-	    case CP_WAVO_TRACE:         return(C_TO_XEN_INT(cp->wavo_trace));                        break;
-	    case CP_MAX_TRANSFORM_PEAKS: return(C_TO_XEN_INT(cp->max_transform_peaks));              break;
-	    case CP_ZERO_PAD:           return(C_TO_XEN_INT(cp->zero_pad));                          break;
-	    case CP_WAVELET_TYPE:       return(C_TO_XEN_INT(cp->wavelet_type));                      break;
-	    case CP_SHOW_TRANSFORM_PEAKS: return(C_TO_XEN_BOOLEAN(cp->show_transform_peaks));        break;
-	    case CP_VERBOSE_CURSOR:     return(C_TO_XEN_BOOLEAN(cp->verbose_cursor));                break;
-	    case CP_FFT_LOG_FREQUENCY:  return(C_TO_XEN_BOOLEAN(cp->fft_log_frequency));             break;
-	    case CP_FFT_LOG_MAGNITUDE:  return(C_TO_XEN_BOOLEAN(cp->fft_log_magnitude));             break;
-	    case CP_SPECTRO_HOP:        return(C_TO_XEN_INT(cp->spectro_hop));                       break;
-	    case CP_TRANSFORM_SIZE:     return(C_TO_XEN_INT(cp->transform_size));                    break;
-	    case CP_TRANSFORM_GRAPH_TYPE: return(C_TO_XEN_INT(cp->transform_graph_type));            break;
-	    case CP_FFT_WINDOW:         return(C_TO_XEN_INT(cp->fft_window));                        break;
-	    case CP_TRANSFORM_TYPE:     return(C_TO_XEN_INT(cp->transform_type));                    break;
-	    case CP_TRANSFORM_NORMALIZATION: return(C_TO_XEN_INT(cp->transform_normalization));      break;
-	    case CP_SHOW_MIX_WAVEFORMS: return(C_TO_XEN_BOOLEAN(cp->show_mix_waveforms));            break;
-	    case CP_TIME_GRAPH_STYLE:   return(C_TO_XEN_INT(cp->time_graph_style));                  break;
-	    case CP_LISP_GRAPH_STYLE:   return(C_TO_XEN_INT(cp->lisp_graph_style));                  break;
-	    case CP_TRANSFORM_GRAPH_STYLE: return(C_TO_XEN_INT(cp->transform_graph_style));          break;
-	    case CP_X_AXIS_STYLE:       return(C_TO_XEN_INT(cp->x_axis_style));                      break;
-	    case CP_DOT_SIZE:           return(C_TO_XEN_INT(cp->dot_size));                          break;
-	    case CP_SHOW_AXES:          return(C_TO_XEN_INT(cp->show_axes));                         break;
-	    case CP_GRAPHS_HORIZONTAL:  return(C_TO_XEN_BOOLEAN(cp->graphs_horizontal));             break;
-	    case CP_CURSOR_POSITION:    return(XEN_LIST_2(C_TO_XEN_INT(cp->cx), C_TO_XEN_INT(cp->cy))); break;
-	    case CP_EDPOS_FRAMES:       return(C_TO_XEN_OFF_T(to_c_edit_samples(cp, cp_edpos, caller, 3))); break;
-	    case CP_UPDATE_TIME:        display_channel_time_data(cp, cp->sound, cp->state);         break;
-	    case CP_UPDATE_LISP:        display_channel_lisp_data(cp, cp->sound, cp->state);         break;
+	    case CP_EDIT_CTR:                return(C_TO_XEN_INT(cp->edit_ctr));                               break;
+	    case CP_GRAPH_TRANSFORM_P:       return(C_TO_XEN_BOOLEAN(cp->graph_transform_p));                  break;
+	    case CP_GRAPH_TIME_P:            return(C_TO_XEN_BOOLEAN(cp->graph_time_p));                       break;
+	    case CP_CURSOR:                  return(C_TO_XEN_OFF_T(cp->cursor));                               break;
+	    case CP_FRAMES:                  return(C_TO_XEN_OFF_T(CURRENT_SAMPLES(cp)));                      break;
+	    case CP_GRAPH_LISP_P:            return(C_TO_XEN_BOOLEAN(cp->graph_lisp_p));                       break;
+	    case CP_AP_LOSAMP:               if (cp->axis) return(C_TO_XEN_OFF_T((cp->axis)->losamp));         break;
+	    case CP_AP_HISAMP:               if (cp->axis) return(C_TO_XEN_OFF_T((cp->axis)->hisamp));         break;
+	    case CP_SQUELCH_UPDATE:          return(C_TO_XEN_BOOLEAN(cp->squelch_update));                     break;
+	    case CP_CURSOR_SIZE:             return(C_TO_XEN_INT(cp->cursor_size));                            break;
+	    case CP_CURSOR_STYLE:            return(C_TO_XEN_INT(cp->cursor_style));                           break;
+	    case CP_EDIT_HOOK:               return(cp->edit_hook);                                            break;
+	    case CP_AFTER_EDIT_HOOK:         return(cp->after_edit_hook);                                      break;
+	    case CP_UNDO_HOOK:               return(cp->undo_hook);                                            break;
+	    case CP_SHOW_Y_ZERO:             return(C_TO_XEN_BOOLEAN(cp->show_y_zero));                        break;
+	    case CP_SHOW_MARKS:              return(C_TO_XEN_BOOLEAN(cp->show_marks));                         break;
+	    case CP_TIME_GRAPH_TYPE:         return(C_TO_XEN_INT(cp->time_graph_type));                        break;
+	    case CP_WAVO_HOP:                return(C_TO_XEN_INT(cp->wavo_hop));                               break;
+	    case CP_WAVO_TRACE:              return(C_TO_XEN_INT(cp->wavo_trace));                             break;
+	    case CP_MAX_TRANSFORM_PEAKS:     return(C_TO_XEN_INT(cp->max_transform_peaks));                    break;
+	    case CP_ZERO_PAD:                return(C_TO_XEN_INT(cp->zero_pad));                               break;
+	    case CP_WAVELET_TYPE:            return(C_TO_XEN_INT(cp->wavelet_type));                           break;
+	    case CP_SHOW_TRANSFORM_PEAKS:    return(C_TO_XEN_BOOLEAN(cp->show_transform_peaks));               break;
+	    case CP_VERBOSE_CURSOR:          return(C_TO_XEN_BOOLEAN(cp->verbose_cursor));                     break;
+	    case CP_FFT_LOG_FREQUENCY:       return(C_TO_XEN_BOOLEAN(cp->fft_log_frequency));                  break;
+	    case CP_FFT_LOG_MAGNITUDE:       return(C_TO_XEN_BOOLEAN(cp->fft_log_magnitude));                  break;
+	    case CP_SPECTRO_HOP:             return(C_TO_XEN_INT(cp->spectro_hop));                            break;
+	    case CP_TRANSFORM_SIZE:          return(C_TO_XEN_INT(cp->transform_size));                         break;
+	    case CP_TRANSFORM_GRAPH_TYPE:    return(C_TO_XEN_INT(cp->transform_graph_type));                   break;
+	    case CP_FFT_WINDOW:              return(C_TO_XEN_INT(cp->fft_window));                             break;
+	    case CP_TRANSFORM_TYPE:          return(C_TO_XEN_INT(cp->transform_type));                         break;
+	    case CP_TRANSFORM_NORMALIZATION: return(C_TO_XEN_INT(cp->transform_normalization));                break;
+	    case CP_SHOW_MIX_WAVEFORMS:      return(C_TO_XEN_BOOLEAN(cp->show_mix_waveforms));                 break;
+	    case CP_TIME_GRAPH_STYLE:        return(C_TO_XEN_INT(cp->time_graph_style));                       break;
+	    case CP_LISP_GRAPH_STYLE:        return(C_TO_XEN_INT(cp->lisp_graph_style));                       break;
+	    case CP_TRANSFORM_GRAPH_STYLE:   return(C_TO_XEN_INT(cp->transform_graph_style));                  break;
+	    case CP_X_AXIS_STYLE:            return(C_TO_XEN_INT(cp->x_axis_style));                           break;
+	    case CP_DOT_SIZE:                return(C_TO_XEN_INT(cp->dot_size));                               break;
+	    case CP_SHOW_AXES:               return(C_TO_XEN_INT(cp->show_axes));                              break;
+	    case CP_GRAPHS_HORIZONTAL:       return(C_TO_XEN_BOOLEAN(cp->graphs_horizontal));                  break;
+	    case CP_CURSOR_POSITION:         return(XEN_LIST_2(C_TO_XEN_INT(cp->cx), C_TO_XEN_INT(cp->cy)));   break;
+	    case CP_EDPOS_FRAMES:            return(C_TO_XEN_OFF_T(to_c_edit_samples(cp, cp_edpos, caller, 3))); break;
+	    case CP_UPDATE_TIME:             display_channel_time_data(cp, cp->sound, cp->state);              break;
+	    case CP_UPDATE_LISP:             display_channel_lisp_data(cp, cp->sound, cp->state);              break;
 	    case CP_UPDATE_TRANSFORM_GRAPH: 
 	      if (cp->graph_transform_p)
 		{
@@ -6689,16 +6689,16 @@ If it returns #t, the key press is not passed to the main handler. 'state' refer
   #define H_initial_graph_hook S_initial_graph_hook " (snd chn dur) is called when a sound is displayed for the first time"
 
   
-  XEN_DEFINE_HOOK(transform_hook, S_transform_hook, 3, H_transform_hook);             /* args = sound channel scaler */
-  XEN_DEFINE_HOOK(graph_hook, S_graph_hook, 4, H_graph_hook);                         /* args = sound channel y0 y1 */
-  XEN_DEFINE_HOOK(after_graph_hook, S_after_graph_hook, 2, H_after_graph_hook);       /* args = sound channel */
-  XEN_DEFINE_HOOK(lisp_graph_hook, S_lisp_graph_hook, 2, H_lisp_graph_hook);          /* args = sound channel */
-  XEN_DEFINE_HOOK(mouse_press_hook, S_mouse_press_hook, 6, H_mouse_press_hook);       /* args = sound channel button state x y */
-  XEN_DEFINE_HOOK(mouse_click_hook, S_mouse_click_hook, 7, H_mouse_click_hook);       /* args = sound channel button state x y axis */
+  XEN_DEFINE_HOOK(transform_hook,     S_transform_hook, 3,     H_transform_hook);     /* args = sound channel scaler */
+  XEN_DEFINE_HOOK(graph_hook,         S_graph_hook, 4,         H_graph_hook);         /* args = sound channel y0 y1 */
+  XEN_DEFINE_HOOK(after_graph_hook,   S_after_graph_hook, 2,   H_after_graph_hook);   /* args = sound channel */
+  XEN_DEFINE_HOOK(lisp_graph_hook,    S_lisp_graph_hook, 2,    H_lisp_graph_hook);    /* args = sound channel */
+  XEN_DEFINE_HOOK(mouse_press_hook,   S_mouse_press_hook, 6,   H_mouse_press_hook);   /* args = sound channel button state x y */
+  XEN_DEFINE_HOOK(mouse_click_hook,   S_mouse_click_hook, 7,   H_mouse_click_hook);   /* args = sound channel button state x y axis */
   XEN_DEFINE_HOOK(mouse_release_hook, S_mouse_release_hook, 6, H_mouse_release_hook); /* args = sound channel button state x y */
-  XEN_DEFINE_HOOK(mouse_drag_hook, S_mouse_drag_hook, 6, H_mouse_drag_hook);          /* args = sound channel button state x y */
-  XEN_DEFINE_HOOK(key_press_hook, S_key_press_hook, 4, H_key_press_hook);             /* args = sound channel key state */
-  XEN_DEFINE_HOOK(mark_click_hook, S_mark_click_hook, 1, H_mark_click_hook);          /* arg = id */
+  XEN_DEFINE_HOOK(mouse_drag_hook,    S_mouse_drag_hook, 6,    H_mouse_drag_hook);    /* args = sound channel button state x y */
+  XEN_DEFINE_HOOK(key_press_hook,     S_key_press_hook, 4,     H_key_press_hook);     /* args = sound channel key state */
+  XEN_DEFINE_HOOK(mark_click_hook,    S_mark_click_hook, 1,    H_mark_click_hook);    /* arg = id */
   XEN_DEFINE_HOOK(initial_graph_hook, S_initial_graph_hook, 3, H_initial_graph_hook); /* args = sound channel duration */
 }
 

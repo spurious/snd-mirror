@@ -171,6 +171,7 @@ static void chans_transform_size(chan_info *cp, void *ptr)
 static void gfft_size(snd_state *ss, int row)
 {
   int size;
+  for_each_chan(ss, force_fft_clear);
   in_set_transform_size(ss, transform_sizes[row]);
   size = transform_size(ss);
   for_each_chan_1(ss, chans_transform_size, (void *)(&size));
@@ -577,56 +578,56 @@ GtkWidget *fire_up_transform_dialog(snd_state *ss, int managed)
       gtk_widget_show(normal_fft_button);
       SG_SIGNAL_CONNECT(GTK_OBJECT(normal_fft_button), "clicked", GTK_SIGNAL_FUNC(normal_fft_callback), (gpointer)ss);
       button_pushed_red(normal_fft_button, ss);
-      SG_SET_SIZE(GTK_WIDGET(normal_fft_button), BUTTON_WIDTH, BUTTON_HEIGHT);
+      SG_BUTTON_SET_SIZE(GTK_WIDGET(normal_fft_button), BUTTON_WIDTH, BUTTON_HEIGHT);
 
       sono_button = gtk_radio_button_new_with_label(SG_RADIO_BUTTON_GROUP(normal_fft_button), STR_sonogram);
       gtk_box_pack_start(GTK_BOX(buttons), sono_button, FALSE, FALSE, 0);
       gtk_widget_show(sono_button);
       SG_SIGNAL_CONNECT(GTK_OBJECT(sono_button), "clicked", GTK_SIGNAL_FUNC(sonogram_callback), (gpointer)ss);
       button_pushed_red(sono_button, ss);
-      SG_SET_SIZE(GTK_WIDGET(sono_button), BUTTON_WIDTH, BUTTON_HEIGHT);
+      SG_BUTTON_SET_SIZE(GTK_WIDGET(sono_button), BUTTON_WIDTH, BUTTON_HEIGHT);
 
       spectro_button = gtk_radio_button_new_with_label(SG_RADIO_BUTTON_GROUP(normal_fft_button), STR_spectrogram);
       gtk_box_pack_start(GTK_BOX(buttons), spectro_button, FALSE, FALSE, 0);
       gtk_widget_show(spectro_button);
       SG_SIGNAL_CONNECT(GTK_OBJECT(spectro_button), "clicked", GTK_SIGNAL_FUNC(spectrogram_callback), (gpointer)ss);
       button_pushed_red(spectro_button, ss);
-      SG_SET_SIZE(GTK_WIDGET(spectro_button), BUTTON_WIDTH, BUTTON_HEIGHT);
+      SG_BUTTON_SET_SIZE(GTK_WIDGET(spectro_button), BUTTON_WIDTH, BUTTON_HEIGHT);
       
       peaks_button = gtk_check_button_new_with_label(STR_peaks);
       gtk_box_pack_start(GTK_BOX(buttons), peaks_button, FALSE, FALSE, 0);
       gtk_widget_show(peaks_button);
       SG_SIGNAL_CONNECT(GTK_OBJECT(peaks_button), "toggled", GTK_SIGNAL_FUNC(peaks_callback), (gpointer)ss);
       button_pushed_red(peaks_button, ss);
-      SG_SET_SIZE(GTK_WIDGET(peaks_button), BUTTON_WIDTH, BUTTON_HEIGHT);
+      SG_BUTTON_SET_SIZE(GTK_WIDGET(peaks_button), BUTTON_WIDTH, BUTTON_HEIGHT);
  
       db_button = gtk_check_button_new_with_label(STR_dB);
       gtk_box_pack_start(GTK_BOX(buttons), db_button, FALSE, FALSE, 0);
       gtk_widget_show(db_button);
       SG_SIGNAL_CONNECT(GTK_OBJECT(db_button), "toggled", GTK_SIGNAL_FUNC(db_callback), (gpointer)ss);
       button_pushed_red(db_button, ss);
-      SG_SET_SIZE(GTK_WIDGET(db_button), BUTTON_WIDTH, BUTTON_HEIGHT);
+      SG_BUTTON_SET_SIZE(GTK_WIDGET(db_button), BUTTON_WIDTH, BUTTON_HEIGHT);
  
       logfreq_button = gtk_check_button_new_with_label(STR_log_freq);
       gtk_box_pack_start(GTK_BOX(buttons), logfreq_button, FALSE, FALSE, 0);
       gtk_widget_show(logfreq_button);
       SG_SIGNAL_CONNECT(GTK_OBJECT(logfreq_button), "toggled", GTK_SIGNAL_FUNC(logfreq_callback), (gpointer)ss);
       button_pushed_red(logfreq_button, ss);
-      SG_SET_SIZE(GTK_WIDGET(logfreq_button), BUTTON_WIDTH, BUTTON_HEIGHT);
+      SG_BUTTON_SET_SIZE(GTK_WIDGET(logfreq_button), BUTTON_WIDTH, BUTTON_HEIGHT);
 
       normalize_button = gtk_check_button_new_with_label(STR_normalize);
       gtk_box_pack_start(GTK_BOX(buttons), normalize_button, FALSE, FALSE, 0);
       gtk_widget_show(normalize_button);
       SG_SIGNAL_CONNECT(GTK_OBJECT(normalize_button), "toggled", GTK_SIGNAL_FUNC(normalize_callback), (gpointer)ss);
       button_pushed_red(normalize_button, ss);
-      SG_SET_SIZE(GTK_WIDGET(normalize_button), BUTTON_WIDTH, BUTTON_HEIGHT);
+      SG_BUTTON_SET_SIZE(GTK_WIDGET(normalize_button), BUTTON_WIDTH, BUTTON_HEIGHT);
 
       selection_button = gtk_check_button_new_with_label(STR_selection);
       gtk_box_pack_start(GTK_BOX(buttons), selection_button, FALSE, FALSE, 0);
       gtk_widget_show(selection_button);
       SG_SIGNAL_CONNECT(GTK_OBJECT(selection_button), "toggled", GTK_SIGNAL_FUNC(selection_callback), (gpointer)ss);
       button_pushed_red(selection_button, ss);
-      SG_SET_SIZE(GTK_WIDGET(selection_button), BUTTON_WIDTH, BUTTON_HEIGHT);
+      SG_BUTTON_SET_SIZE(GTK_WIDGET(selection_button), BUTTON_WIDTH, BUTTON_HEIGHT);
 
       gtk_widget_show(buttons);
       gtk_widget_show(display_frame);
@@ -758,6 +759,7 @@ void set_fft_window_beta(snd_state *ss, Float val)
 void set_transform_size(snd_state *ss, int val)
 {
   int i;
+  for_each_chan(ss, force_fft_clear);
   in_set_transform_size(ss, val);
   for_each_chan_1(ss, chans_transform_size, (void *)(&val));
   if (transform_dialog)

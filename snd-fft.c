@@ -947,63 +947,6 @@ typedef struct {
   snd_state *ss;
 } fft_state;
 
-#if HAVE_DYNAMIC_WIND
-typedef struct {
-  XEN proc;
-  snd_fd *sf;
-  XEN sfd;
-  int len;
-  Float *fft_data;
-} add_fft;
-
-static add_fft *make_add_fft(XEN p, snd_fd *f, int l, Float *data)
-{
-  add_fft *af;
-  af = (add_fft *)CALLOC(1, sizeof(add_fft));
-  af->proc = p;
-  snd_protect(p);
-  af->sf = f;
-  af->sfd = g_c_make_sample_reader(f);
-  snd_protect(af->sfd);
-  af->len = l;
-  af->fft_data = data;
-  return(af);
-}
-
-static void before_add_fft(void *ignore)
-{
-}
-
-static XEN add_fft_body(void *context)
-{
-  add_fft *af = (add_fft *)context;
-  int i, len;
-  vct *v;
-  XEN res = XEN_FALSE;
-  res = XEN_CALL_2(af->proc,
-		   C_TO_XEN_INT(af->len), 
-		   af->sfd,
-		   "added transform func");
-  if (VCT_P(res))
-    {
-      v = TO_VCT(res);
-      len = v->length;
-      for (i = 0; i < len; i++) af->fft_data[i] = v->data[i];
-    }
-  return(res);
-}
-
-static void after_add_fft(void *context)
-{
-  add_fft *af = (add_fft *)context;
-  snd_unprotect(af->sfd);
-  free_snd_fd_almost(af->sf);
-  af->sf = NULL;
-  snd_unprotect(af->proc);
-  FREE(af);
-}
-#endif
-
 static void apply_fft(fft_state *fs)
 {
   int i;
@@ -1139,19 +1082,6 @@ static void apply_fft(fft_state *fs)
       break;
     default:
       {
-#if HAVE_DYNAMIC_WIND
-	/* is this actually needed?  We're not using the NO_ERROR form of XEN_CALL, so surely this dynamic-wind is pointless */
-	add_fft *af;
-	af = make_add_fft(added_transform_proc(cp->transform_type), 
-			  sf,
-			  data_len,
-			  fft_data);
-	scm_internal_dynamic_wind((scm_t_guard)before_add_fft,
-				  (scm_t_inner)add_fft_body,
-				  (scm_t_guard)after_add_fft,
-				  (void *)af,
-				  (void *)af);
-#else
 	XEN res = XEN_FALSE; XEN sfd;
 	vct *v;
 	int len;
@@ -1171,7 +1101,6 @@ static void apply_fft(fft_state *fs)
 	snd_unprotect(res);
 	snd_unprotect(sfd);
 	free_snd_fd_almost(sf);
-#endif
 	return;
       }
       break;

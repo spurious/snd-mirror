@@ -4,7 +4,6 @@
  *
  *   HAVE_GTK_1 if 1.2.n
  *   GDK_DISABLE_DEPRECATED, GTK_DISABLE_DEPRECATED, and GDK_PIXBUF_DISABLE_DEPRECATED are handled together
- *   GDK_ENABLE_BROKEN and GTK_ENABLE_BROKEN are handled together
  *   PANGO_ENABLE_ENGINE and PANGO_ENABLE_BACKEND are handled together, and may be removed later
  *
  *   other flags:
@@ -44,7 +43,7 @@
  * TODO: test suite (snd-test 24)
  *
  * HISTORY:
- *     31-Jul:    removed GTK 1.n support (it can still be generated from makexg.scm)
+ *     31-Jul:    removed GTK 1.n support (some of it can still be generated from makexg.scm)
  *     24-Jul:    changed Guile prefix (R5RS reserves vertical-bar).
  *     19-Jul:    XG_FIELD_PRE for change from using vertical-bar (reserved in R5RS)
  *     2-Jun:     removed deprecated and broken stuff (see include-deprecated switch in makexg.scm)
@@ -29964,7 +29963,7 @@ static int xg_already_inited = 0;
       define_strings();
       XEN_YES_WE_HAVE("xg");
 #if HAVE_GUILE
-      XEN_EVAL_C_STRING("(define xm-version \"18-Aug-02\")");
+      XEN_EVAL_C_STRING("(define xm-version \"28-Aug-02\")");
 #endif
       xg_already_inited = 1;
     }

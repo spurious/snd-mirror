@@ -3,11 +3,8 @@
 #include "snd.h"
 
 static Widget transform_dialog = NULL; /* main dialog shell */
-static Widget type_list,
-              size_list,
+static Widget type_list, size_list, wavelet_list, window_list, window_beta_scale,
               db_button, peaks_button, logfreq_button, sono_button, spectro_button, normo_button, normalize_button, selection_button,
-              window_list, window_beta_scale,
-              wavelet_list,
               graph_label, graph_drawer;
 static GC gc, fgc;
 
@@ -190,6 +187,7 @@ static void size_browse_callback(Widget w, XtPointer context, XtPointer info)
   int size;
   XmListCallbackStruct *cbs = (XmListCallbackStruct *)info;
   ASSERT_WIDGET_TYPE(XmIsList(w), w);
+  for_each_chan(ss, force_fft_clear);
   in_set_transform_size(ss, transform_sizes[cbs->item_position - 1]);
   size = transform_size(ss);
   for_each_chan_1(ss, chans_transform_size, (void *)(&size));
@@ -1102,6 +1100,7 @@ void set_transform_graph_type(snd_state *ss, int val)
 void set_transform_size(snd_state *ss, int val)
 {
   int i;
+  for_each_chan(ss, force_fft_clear);
   in_set_transform_size(ss, val);
   for_each_chan_1(ss, chans_transform_size, (void *)(&val));
   if (transform_dialog)

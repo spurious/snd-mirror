@@ -372,7 +372,9 @@ void set_widget_size(GtkWidget *w, guint16 width, guint16 height);
 void set_widget_position(GtkWidget *w, gint16 x, gint16 y);
 void fixup_axis_context(axis_context *ax, GtkWidget *w, GdkGC *gc);
 void set_user_data(GtkObject *obj, gpointer data);
+void set_user_int_data(GtkObject *obj, int data);
 gpointer get_user_data(GtkObject *obj);
+int get_user_int_data(GtkObject *obj);
 #if HAVE_GTK2
   char *sg_get_text(GtkWidget *w, int start, int end);
   void sg_set_cursor(GtkWidget *w, int position);

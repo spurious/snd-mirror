@@ -692,7 +692,7 @@ int get_user_int_data(GtkObject *obj)
   for (i = 0; i < our_int_data_size; i++)
     if (our_int_objects[i] == obj)
       return(our_int_data[i]);
-  return(NULL);
+  return(0);
 }
 
 /* many changes between gtk 1.2 and 1.3, some of which are handled here, others in snd-g0.h */

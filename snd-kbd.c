@@ -1018,16 +1018,15 @@ void keyboard_command (chan_info *cp, int keysym, int state)
   if (defining_macro) continue_macro(keysym, state);
   if (!m) count = 1; else m = 0;
   
-  /* should we check snd_keypad_Decimal as well as snd_K_period? -- is this assuming USA float syntax? */
-  /*   (similarly snd_keypad_0...9) */
-
   if ((selection_creation_in_progress()) &&
       ((extended_mode) || (stop_selecting(keysym, state))))
     finish_selection_creation();
 
   if ((counting) && (((keysym < snd_K_0) || (keysym > snd_K_9)) && 
+		     ((keysym < snd_keypad_0) || (keysym > snd_keypad_9)) && /* these are in order in both Motif (X11) and gdk */
 		     (keysym != snd_K_minus) && 
 		     (keysym != snd_K_period) && 
+		     (keysym != snd_keypad_Decimal) &&
 		     (keysym != snd_K_plus)))
     {
       m = ((u_count) && 
@@ -1238,6 +1237,14 @@ void keyboard_command (chan_info *cp, int keysym, int state)
 		number_ctr++; 
 	      /* there is also the bare-number case below */
 	      break;
+	    case snd_keypad_0: case snd_keypad_1: case snd_keypad_2: case snd_keypad_3: case snd_keypad_4:
+	    case snd_keypad_5: case snd_keypad_6: case snd_keypad_7: case snd_keypad_8: case snd_keypad_9: 
+	      counting = 1;
+	      number_buffer[number_ctr] = (char)('0' + keysym - snd_keypad_0); 
+	      if (number_ctr < (NUMBER_BUFFER_SIZE - 2)) 
+		number_ctr++; 
+	      /* there is also the bare-number case below */
+	      break;
 	    case snd_K_space: 
 	      if (count > 0)
 		{
@@ -1247,6 +1254,7 @@ void keyboard_command (chan_info *cp, int keysym, int state)
 		}
 	      break;
 	    case snd_K_period:
+	    case snd_keypad_Decimal:
 	      counting = 1; 
 	      number_buffer[number_ctr] = '.'; 
 	      number_ctr++; 
@@ -1269,22 +1277,18 @@ void keyboard_command (chan_info *cp, int keysym, int state)
 	      undo_edit_with_sync(cp, count); 
 	      break;
 	    case snd_keypad_Left: 
-	    case snd_keypad_4: 
 	      set_spectro_y_angle(ss, spectro_y_angle(ss) - 1.0);
 	      reflect_spectro(ss); 
 	      break;
 	    case snd_keypad_Right: 
-	    case snd_keypad_6: 
 	      set_spectro_y_angle(ss, spectro_y_angle(ss) + 1.0);
 	      reflect_spectro(ss); 
 	      break;
 	    case snd_keypad_Down: 
-	    case snd_keypad_2: 
 	      set_spectro_x_angle(ss, spectro_x_angle(ss) - 1.0);
 	      reflect_spectro(ss); 
 	      break;
 	    case snd_keypad_Up: 
-	    case snd_keypad_8: 
 	      set_spectro_x_angle(ss, spectro_x_angle(ss) + 1.0);
 	      reflect_spectro(ss); 
 	      break;
@@ -1416,7 +1420,15 @@ void keyboard_command (chan_info *cp, int keysym, int state)
 	      if (number_ctr < (NUMBER_BUFFER_SIZE - 2)) 
 		number_ctr++; 
 	      break;
+	    case snd_keypad_0: case snd_keypad_1: case snd_keypad_2: case snd_keypad_3: case snd_keypad_4:
+	    case snd_keypad_5: case snd_keypad_6: case snd_keypad_7: case snd_keypad_8: case snd_keypad_9: 
+	      counting = 1;
+	      number_buffer[number_ctr] = (char)('0' + keysym - snd_keypad_0); 
+	      if (number_ctr < (NUMBER_BUFFER_SIZE - 2)) 
+		number_ctr++; 
+	      break;
 	    case snd_K_period: 
+	    case snd_keypad_Decimal:
 	      counting = 1; 
 	      number_buffer[number_ctr] = '.'; 
 	      number_ctr++; 
@@ -1456,20 +1468,19 @@ void keyboard_command (chan_info *cp, int keysym, int state)
 	      else deactivate_selection();
 	      break;
 
-	      /* fUn WiTh KeYpAd! */
-	    case snd_keypad_Up: case snd_keypad_8: 
+	    case snd_keypad_Up:
 	      set_spectro_z_scale(ss, spectro_z_scale(ss) + .01);
 	      reflect_spectro(ss);
 	      break;
-	    case snd_keypad_Down: case snd_keypad_2: 
+	    case snd_keypad_Down:
 	      set_spectro_z_scale(ss, spectro_z_scale(ss) - .01);
 	      reflect_spectro(ss);
 	      break;
-	    case snd_keypad_Left: case snd_keypad_4: 
+	    case snd_keypad_Left:
 	      set_spectro_z_angle(ss, spectro_z_angle(ss) - 1.0);
 	      reflect_spectro(ss);
 	      break;
-	    case snd_keypad_Right: case snd_keypad_6: 
+	    case snd_keypad_Right:
 	      set_spectro_z_angle(ss, spectro_z_angle(ss) + 1.0);
 	      reflect_spectro(ss); 
 	      break;
@@ -1499,18 +1510,18 @@ void keyboard_command (chan_info *cp, int keysym, int state)
 	      if (transform_size(ss) > 4) 
 		set_transform_size(ss, transform_size(ss) / 2); 
 	      break;
-	    case snd_keypad_Delete: case snd_keypad_Decimal: 
+	    case snd_keypad_Delete:
 	      set_dot_size(ss, dot_size(ss) + 1); 
 	      break;
-	    case snd_keypad_Insert: case snd_keypad_0: 
+	    case snd_keypad_Insert:
 	      if (dot_size(ss) > 1) 
 		set_dot_size(ss, dot_size(ss) - 1); 
 	      break;
-	    case snd_keypad_PageDown: case snd_keypad_3: 
+	    case snd_keypad_PageDown:
 	      set_spectro_cutoff(ss, spectro_cutoff(ss) * .95); 
 	      reflect_spectro(ss); 
 	      break;
-	    case snd_keypad_PageUp: case snd_keypad_9: 
+	    case snd_keypad_PageUp:
 	      if (spectro_cutoff(ss) < 1.0) 
 		set_spectro_cutoff(ss, spectro_cutoff(ss) / .95); 
 	      reflect_spectro(ss); 
