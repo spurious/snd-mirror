@@ -8224,7 +8224,8 @@ static XEN g_set_sample_reversed(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg
 }
 #endif
 
-static XEN g_set_samples(XEN samp_0, XEN samps, XEN vect, XEN snd_n, XEN chn_n, XEN truncate, XEN edname, XEN infile_chan, XEN edpos, XEN auto_delete)
+static XEN g_set_samples_with_origin(XEN samp_0, XEN samps, XEN vect, XEN snd_n, XEN chn_n, XEN truncate, 
+				     char *edname, XEN infile_chan, XEN edpos, XEN auto_delete)
 {
   #define H_set_samples "(set-" S_samples " start-samp samps data (snd #f) (chn #f) (truncate #f) (edname #f) (infile-chan 0) (edpos #f) (auto-delete #f)): \
 set snd's channel chn's samples starting at start-samp for samps from data (a vct, vector, or string (filename)); \
@@ -8236,8 +8237,8 @@ the new data's end."
   bool override = false;
   int pos;
   char *caller;
-  if (XEN_STRING_P(edname))
-    caller = XEN_TO_C_STRING(edname);
+  if (edname)
+    caller = edname;
   else caller = "set-samples";
   ASSERT_SAMPLE_TYPE(caller, samp_0, XEN_ARG_1);
   ASSERT_SAMPLE_TYPE(caller, samps, XEN_ARG_2);
@@ -8245,7 +8246,6 @@ the new data's end."
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(truncate), truncate, XEN_ARG_6, caller, "a boolean");
   cp = get_cp(snd_n, chn_n, caller);
   XEN_ASSERT_TYPE(XEN_INTEGER_OR_BOOLEAN_IF_BOUND_P(infile_chan), infile_chan, XEN_ARG_8, caller, "an integer");
-  XEN_ASSERT_TYPE(XEN_NOT_BOUND_P(edname) || XEN_STRING_P(edname) || XEN_BOOLEAN_P(edname), edname, XEN_ARG_7, caller, "a string");
   pos = to_c_edit_position(cp, edpos, caller, 9);
   beg = beg_to_sample(samp_0, caller);
   len = dur_to_samples(samps, beg, cp, pos, 2, caller);
@@ -8280,7 +8280,15 @@ the new data's end."
 	}
     }
   update_graph(cp);
-  return(xen_return_first(vect, edname));
+  return(vect);
+}
+
+static XEN g_set_samples(XEN samp_0, XEN samps, XEN vect, XEN snd_n, XEN chn_n, XEN truncate, XEN edname, XEN infile_chan, XEN edpos, XEN auto_delete)
+{
+  XEN_ASSERT_TYPE(XEN_NOT_BOUND_P(edname) || XEN_STRING_P(edname) || XEN_BOOLEAN_P(edname), edname, XEN_ARG_7, "set-samples", "a string");
+  return(g_set_samples_with_origin(samp_0, samps, vect, snd_n, chn_n, truncate,
+				   (XEN_STRING_P(edname)) ? XEN_TO_C_STRING(edname) : "set-samples",
+				   infile_chan, edpos, auto_delete));
 }
 
 void check_saved_temp_file(const char *type, XEN filename, XEN date_and_length)
@@ -8335,11 +8343,13 @@ static XEN g_override_samples_with_origin(XEN filename, XEN samps, XEN snd_n, XE
   return(g_set_samples(XEN_ZERO, samps, filename, snd_n, chn_n, XEN_TRUE, origin, XEN_ZERO, XEN_FALSE, XEN_FALSE));
 }
 
-static XEN g_vct_to_channel(XEN v, XEN beg, XEN dur, XEN snd_n, XEN chn_n, XEN edpos)
+static XEN g_vct_to_channel(XEN v, XEN beg, XEN dur, XEN snd_n, XEN chn_n, XEN edpos, XEN origin)
 {
-  #define H_vct_to_channel "(" S_vct_to_channel " vct (beg 0) (dur len) (snd #f) (chn #f) (edpos #f)): \
+  #define H_vct_to_channel "(" S_vct_to_channel " vct (beg 0) (dur len) (snd #f) (chn #f) (edpos #f) (origin #f)): \
 set snd's channel chn's samples starting at beg for dur samps from vct data"
+  char *caller;
   XEN_ASSERT_TYPE(VCT_P(v), v, XEN_ARG_1, S_vct_to_channel, "a vct");
+  XEN_ASSERT_TYPE(XEN_STRING_IF_BOUND_P(origin), origin, XEN_ARG_7, S_vct_to_channel, "a string");
   if (XEN_NOT_BOUND_P(beg)) beg = XEN_ZERO;
   if (XEN_NOT_BOUND_P(dur)) 
     {
@@ -8347,7 +8357,10 @@ set snd's channel chn's samples starting at beg for dur samps from vct data"
       v1 = TO_VCT(v);
       dur = C_TO_XEN_INT(v1->length);
     }
-  return(g_set_samples(beg, dur, v, snd_n, chn_n, XEN_FALSE, C_TO_XEN_STRING(S_vct_to_channel), XEN_FALSE, edpos, XEN_UNDEFINED));
+  if (XEN_NOT_BOUND_P(origin))
+    caller = S_vct_to_channel;
+  else caller = XEN_TO_C_STRING(origin);
+  return(g_set_samples_with_origin(beg, dur, v, snd_n, chn_n, XEN_FALSE, caller, XEN_FALSE, edpos, XEN_UNDEFINED));
 }
 
 static XEN samples_to_vct_1(XEN samp_0, XEN samps, XEN snd_n, XEN chn_n, XEN edpos, const char *caller)
@@ -9117,7 +9130,7 @@ XEN_ARGIFY_4(g_delete_sample_w, g_delete_sample)
 XEN_ARGIFY_5(g_delete_samples_w, g_delete_samples)
 XEN_ARGIFY_5(g_insert_sample_w, g_insert_sample)
 XEN_ARGIFY_7(g_insert_samples_w, g_insert_samples)
-XEN_ARGIFY_6(g_vct_to_channel_w, g_vct_to_channel)
+XEN_ARGIFY_7(g_vct_to_channel_w, g_vct_to_channel)
 XEN_ARGIFY_5(g_channel_to_vct_w, g_channel_to_vct)
 XEN_ARGIFY_7(g_insert_sound_w, g_insert_sound)
 XEN_ARGIFY_6(g_scale_sound_by_w, g_scale_sound_by)
@@ -9234,7 +9247,7 @@ void g_init_edits(void)
   XEN_DEFINE_PROCEDURE(S_delete_samples,            g_delete_samples_w,            2, 3, 0, H_delete_samples);
   XEN_DEFINE_PROCEDURE(S_insert_sample,             g_insert_sample_w,             2, 3, 0, H_insert_sample);
   XEN_DEFINE_PROCEDURE(S_insert_samples,            g_insert_samples_w,            3, 4, 0, H_insert_samples);
-  XEN_DEFINE_PROCEDURE(S_vct_to_channel,            g_vct_to_channel_w,            1, 5, 0, H_vct_to_channel);
+  XEN_DEFINE_PROCEDURE(S_vct_to_channel,            g_vct_to_channel_w,            1, 6, 0, H_vct_to_channel);
   XEN_DEFINE_PROCEDURE(S_channel_to_vct,            g_channel_to_vct_w,            0, 5, 0, H_channel_to_vct);
   XEN_DEFINE_PROCEDURE(S_insert_sound,              g_insert_sound_w,              1, 6, 0, H_insert_sound);
   XEN_DEFINE_PROCEDURE(S_scale_sound_by,            g_scale_sound_by_w,            1, 5, 0, H_scale_sound_by);

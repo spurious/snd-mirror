@@ -130,18 +130,19 @@
 
 ;;; -------- crop (trims front and back)
 
+(define* (crop-one-channel #:optional snd chn)
+  (if (< (length (marks snd chn)) 2)
+      (report-in-minibuffer "crop needs start and end marks" snd)
+      (as-one-edit
+       (lambda ()
+	 (delete-samples 0 (mark-sample (car (marks snd chn))) snd chn)
+	 (let ((endpt (mark-sample (car (reverse (marks snd chn))))))
+	   (delete-samples (+ endpt 1) (- (frames snd chn) endpt))))
+       "crop-one-channel")))
+
 (define (crop)
   "(crop) finds the first and last marks in each of the syncd channels and removes all samples outside them"
   (let ((snc (sync)))
-    (define (crop-one-channel snd chn)
-      (if (< (length (marks snd chn)) 2)
-	  (report-in-minibuffer "crop needs start and end marks" snd)
-	  (as-one-edit
-	   (lambda ()
-	     (delete-samples 0 (mark-sample (car (marks snd chn))) snd chn)
-	     (let ((endpt (mark-sample (car (reverse (marks snd chn))))))
-	       (delete-samples (+ endpt 1) (- (frames snd chn) endpt))))
-	   "crop")))
     (if (> snc 0)
 	(apply map
 	       (lambda (snd chn)

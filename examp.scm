@@ -806,13 +806,13 @@ a number, the sound is split such that 0 is all in channel 0 and 90 is all in ch
 ;;; -------- FFT-based editing
 ;;;
 
-(define (fft-edit bottom top)
+(define* (fft-edit bottom top #:optional snd chn)
   "(fft-edit low-Hz high-Hz) ffts an entire sound, removes all energy below low-Hz and all above high-Hz, 
 then inverse ffts."
-  (let* ((sr (srate))
-	 (len (frames))
+  (let* ((sr (srate snd))
+	 (len (frames snd chn))
 	 (fsize (expt 2 (ceiling (/ (log len) (log 2.0)))))
-	 (rdata (channel->vct 0 fsize))
+	 (rdata (channel->vct 0 fsize snd chn))
 	 (idata (make-vct fsize))
 	 (lo (inexact->exact (round (/ bottom (/ sr fsize)))))
 	 (hi (inexact->exact (round (/ top (/ sr fsize))))))
@@ -833,14 +833,14 @@ then inverse ffts."
       (vct-set! idata j 0.0))
     (fft rdata idata -1)
     (vct-scale! rdata (/ 1.0 fsize))
-    (vct->channel rdata 0 (1- len))))
+    (vct->channel rdata 0 (1- len) snd chn #f (format #f "fft-edit ~A ~A" bottom top))))
 
-(define (fft-squelch squelch)
+(define* (fft-squelch squelch #:optional snd chn)
   "(fft-squelch squelch) ffts an entire sound, sets all bins to 0.0 whose energy is below squelch, then inverse ffts"
-  (let* ((sr (srate))
-	 (len (frames))
+  (let* ((sr (srate snd))
+	 (len (frames snd chn))
 	 (fsize (expt 2 (ceiling (/ (log len) (log 2.0)))))
-	 (rdata (channel->vct 0 fsize))
+	 (rdata (channel->vct 0 fsize snd chn))
 	 (idata (make-vct fsize))
 	 (fsize2 (/ fsize 2))
 	 (scaler 1.0))
@@ -849,28 +849,28 @@ then inverse ffts."
 	  (vi (vct-copy idata)))
       (rectangular->polar vr vi)
       (set! scaler (vct-peak vr)))
-    (set! squelch (* squelch scaler))
-    (do ((i 0 (1+ i))
-	 (j (- fsize 1) (1- j)))
-	((= i fsize2))
-      (let ((magnitude (sqrt (+ (* (vct-ref rdata i) (vct-ref rdata i)) (* (vct-ref idata i) (vct-ref idata i))))))
-	(if (< magnitude squelch)
-	    (begin
-	      (vct-set! rdata i 0.0)
-	      (vct-set! rdata j 0.0)
-	      (vct-set! idata i 0.0)
-	      (vct-set! idata j 0.0)))))
-    (fft rdata idata -1)
-    (vct-scale! rdata (/ 1.0 fsize))
-    (vct->channel rdata 0 (1- len))
+    (let ((scl-squelch (* squelch scaler)))
+      (do ((i 0 (1+ i))
+	   (j (- fsize 1) (1- j)))
+	  ((= i fsize2))
+	(let ((magnitude (sqrt (+ (* (vct-ref rdata i) (vct-ref rdata i)) (* (vct-ref idata i) (vct-ref idata i))))))
+	  (if (< magnitude scl-squelch)
+	      (begin
+		(vct-set! rdata i 0.0)
+		(vct-set! rdata j 0.0)
+		(vct-set! idata i 0.0)
+		(vct-set! idata j 0.0)))))
+      (fft rdata idata -1)
+      (vct-scale! rdata (/ 1.0 fsize)))
+    (vct->channel rdata 0 (1- len) snd chn #f (format #f "fft-squelch ~A" squelch))
     scaler))
 
-(define (fft-cancel lo-freq hi-freq)
+(define* (fft-cancel lo-freq hi-freq #:optional snd chn)
   "(fft-cancel lo-freq hi-freq) ffts an entire sound, sets the bin(s) representing lo-freq to hi-freq to 0.0, then inverse ffts"
-  (let* ((sr (srate))
-	 (len (frames))
+  (let* ((sr (srate snd))
+	 (len (frames snd chn))
 	 (fsize (expt 2 (ceiling (/ (log len) (log 2.0)))))
-	 (rdata (channel->vct 0 fsize))
+	 (rdata (channel->vct 0 fsize snd chn))
 	 (idata (make-vct fsize))
 	 (fsize2 (/ fsize 2))
 	 (scaler 1.0))
@@ -887,7 +887,7 @@ then inverse ffts."
 	(vct-set! idata j 0.0)))
     (fft rdata idata -1)
     (vct-scale! rdata (/ 1.0 fsize))
-    (vct->channel rdata 0 (1- len))))
+    (vct->channel rdata 0 (1- len) snd chn #f (format #f "fft-cancel ~A ~A" lo-freq hi-freq))))
     
 
 ;;; same idea but used to distinguish vowels (steady-state) from consonants
@@ -910,7 +910,7 @@ then inverse ffts."
   "(make-ramp #:optional (size 128)) returns a ramp generator"
   (list 0 size))
 
-(define (squelch-vowels)
+(define* (squelch-vowels #:optional snd chn)
   "(squelch-vowels) suppresses portions of a sound that look like steady-state"
   (let* ((fft-size 32)
 	 (fft-mid (inexact->exact (floor (/ fft-size 2))))
@@ -918,7 +918,7 @@ then inverse ffts."
 	 (im (make-vct fft-size))
 	 (ramper (make-ramp 256)) ; 512 ok too
 	 (peak (/ (maxamp) fft-mid))
-	 (read-ahead (make-sample-reader))
+	 (read-ahead (make-sample-reader 0 snd chn))
 	 (ctr 0)
 	 (in-vowel #f))
     (do ((i 0 (1+ i)))
@@ -944,15 +944,15 @@ then inverse ffts."
 		     ;(and (> rval 0.0) ; if this is included, the vowel-portions are omitted
 		     (* y rval) ; squelch vowels 
 		     ;(* y (+ (* 2 rval) .1)) ;accentuate consonants
-		     )))))
+		     ))
+		 0 #f snd chn #f "squelch-vowels")))
 
-
-(define (fft-env-data fft-env)
+(define* (fft-env-data fft-env #:optional snd chn)
   "(fft-env-data fft-env) applies fft-env as spectral env to current sound, returning vct of new data"
-  (let* ((sr (srate))
-	 (len (frames))
+  (let* ((sr (srate snd))
+	 (len (frames snd chn))
 	 (fsize (expt 2 (ceiling (/ (log len) (log 2.0)))))
-	 (rdata (channel->vct 0 fsize))
+	 (rdata (channel->vct 0 fsize snd chn))
 	 (idata (make-vct fsize))
 	 (fsize2 (/ fsize 2))
 	 (e (make-env fft-env :end (1- fsize2))))
@@ -968,16 +968,16 @@ then inverse ffts."
     (fft rdata idata -1)
     (vct-scale! rdata (/ 1.0 fsize))))
 
-(define (fft-env-edit fft-env)
+(define* (fft-env-edit fft-env #:optional snd chn)
   "(fft-env-edit fft-env) edits (filters) current chan using fft-env"
-  (vct->channel (fft-env-data fft-env) 0 (1- (frames))))
+  (vct->channel (fft-env-data fft-env snd chn) 0 (1- (frames)) snd chn #f (format "fft-env-edit '~A" fft-env)))
 
-(define (fft-env-interp env1 env2 interp)
+(define* (fft-env-interp env1 env2 interp #:optional snd chn)
   "(fft-env-interp env1 env2 interp) interpolates between two fft-filtered versions (env1 and env2 are the 
 spectral envelopes) following interp (an env between 0 and 1)"
-  (let* ((data1 (fft-env-data env1))
-	 (data2 (fft-env-data env2))
-	 (len (frames))
+  (let* ((data1 (fft-env-data env1 snd chn))
+	 (data2 (fft-env-data env2 snd chn))
+	 (len (frames snd chn))
 	 (new-data (make-vct len))
 	 (e (make-env interp :end (1- len))))
     (do ((i 0 (1+ i)))
@@ -986,9 +986,9 @@ spectral envelopes) following interp (an env between 0 and 1)"
 	(vct-set! new-data i 
 		  (+ (* (- 1.0 pan) (vct-ref data1 i))
 		     (* pan (vct-ref data2 i))))))
-    (vct->channel new-data 0 (1- len))))
+    (vct->channel new-data 0 (1- len) snd chn #f (format #f "fft-env-interp '~A '~A '~A" env1 env2 interp))))
 
-(define (fft-smoother cutoff start samps snd chn)
+(define* (fft-smoother cutoff start samps #:optional snd chn)
   "(fft-smoother cutoff start samps snd chn) uses fft-filtering to smooth a 
 section: (vct->channel (fft-smoother .1 (cursor) 400 0 0) (cursor) 400)"
   (let* ((fftpts (inexact->exact (expt 2 (ceiling (/ (log (1+ samps)) (log 2.0))))))
@@ -1188,13 +1188,13 @@ formants: (map-chan (osc-formants .99 '(400 800 1200) '(400 800 1200) '(4 2 3)))
 ;;;
 ;;; CLM instrument version is in clm.html
 
-(define (hello-dentist frq amp)
+(define* (hello-dentist frq amp #:optional snd chn)
   "(hello-dentist frq amp) varies the sampling rate randomly, making a voice sound quavery: (hello-dentist 40.0 .1)"
   (let* ((rn (make-rand-interp :frequency frq :amplitude amp))
 	 (i 0)
 	 (j 0)
 	 (len (frames))
-	 (in-data (channel->vct 0 len))
+	 (in-data (channel->vct 0 len snd chn))
 	 (out-len (inexact->exact (round (* len (+ 1.0 (* 2 amp))))))
 	 (out-data (make-vct out-len))
 	 (rd (make-src :srate 1.0 
@@ -1207,17 +1207,18 @@ formants: (map-chan (osc-formants .99 '(400 800 1200) '(400 800 1200) '(4 2 3)))
     (vct->channel
      (vct-map! out-data
 	       (lambda ()
-		 (src rd (rand-interp rn)))))))
+		 (src rd (rand-interp rn))))
+     0 len snd chn #f (format #f "hello-dentist ~A ~A" frq amp))))
 
 ;;; a very similar function uses oscil instead of rand-interp, giving
 ;;; various "Forbidden Planet" sound effects:
 
-(define (fp sr osamp osfrq)
+(define* (fp sr osamp osfrq #:optional snd chn)
   "(fp sr osamp osfrq) varies the sampling rate via an oscil: (fp 1.0 .3 20)"
   (let* ((os (make-oscil osfrq))
 	 (s (make-src :srate sr))
-	 (len (frames))
-	 (sf (make-sample-reader))
+	 (len (frames snd chn))
+	 (sf (make-sample-reader 0 snd chn))
 	 (out-data (make-vct len)))
     (vct-map! out-data
 	      (lambda () 
@@ -1227,7 +1228,7 @@ formants: (map-chan (osc-formants .99 '(400 800 1200) '(400 800 1200) '(4 2 3)))
 			   (next-sample sf)
 			   (previous-sample sf))))))
     (free-sample-reader sf)
-    (vct->channel out-data 0 len)))
+    (vct->channel out-data 0 len snd chn #f (format #f "fp ~A ~A ~A" sr osamp osfrq))))
 	    
 
 ;;; -------- compand, compand-channel

@@ -1561,7 +1561,8 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 	      (set! nmx (max nmx (abs sum)))
 	      sum))
 	  beg dur snd chn edpos)
-	 (scale-channel (/ mx nmx) beg dur snd chn edpos))))))
+	 (scale-channel (/ mx nmx) beg dur snd chn edpos)))
+     (format #f "ssb-bank ~A ~A ~A ~A ~A ~A ~A" old-freq new-freq pairs-1 order bw beg dur))))
 
 (define* (ssb-bank-env old-freq new-freq freq-env pairs-1 #:optional (order 40) (bw 50.0) (beg 0) dur snd chn edpos)
   ;; this version adds a frequency envelope
@@ -1598,7 +1599,8 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 	      (set! nmx (max nmx (abs sum)))
 	      sum))
 	  beg dur snd chn edpos)
-	 (scale-channel (/ mx nmx) beg dur snd chn edpos))))))
+	 (scale-channel (/ mx nmx) beg dur snd chn edpos)))
+     (format #f "ssb-bank-env ~A ~A '~A ~A ~A ~A ~A ~A" old-freq new-freq freq-env pairs-1 order bw beg dur))))
 
 ;;; TODO: auto-detect main freq so ssb-bank can work semi-automatically (bw/pairs choices also automated)
 ;;; TODO: if pitch follower, auto-remove gliss/vib (ssb-bank-env could be written to use oscil or triangle wave = add vib)

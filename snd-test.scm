@@ -31183,6 +31183,20 @@ EDITS: 2
 	    (func ind 0))
 	  (revert-sound ind)
 
+	  (make-selection 1000 1100)
+	  (insert-selection 2000)
+	  (let ((func (edit-list->function))
+		(val (sample 2050)))
+	    (if (not (procedure? func)) 
+		(snd-display ";edit-list->function 14d: ~A" func))
+	    (if (not (string=? (object->string (procedure-source func)) 
+			       (string-append "(lambda (snd chn) (insert-selection 2000 snd chn))")))
+		(snd-display ";edit-list->function 14d: ~A" (object->string (procedure-source func))))
+	    (revert-sound ind)
+	    (func ind 0)
+	    (if (fneq (sample 2050) val) (snd-display ";edit-list->function 14d: ~A ~A" (sample 2050) val)))
+	  (revert-sound ind)
+
 	  
 	  ;; ---- sticky env end
 	  (env-channel (make-env '(0 0 1 1 2 0) :end 500) 1000 1000)
