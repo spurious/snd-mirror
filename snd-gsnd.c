@@ -1672,7 +1672,7 @@ snd_info *add_sound_window(char *filename, snd_state *ss)
       gtk_box_pack_start(GTK_BOX(sw[W_filter_form]),sw[W_filter_label],FALSE,FALSE,4);
       gtk_widget_show(sw[W_filter_label]);
       
-      adjs[W_filter_adj] = gtk_adjustment_new(20,2,1000,2,10,0);
+      adjs[W_filter_adj] = gtk_adjustment_new(20,2,100000,2,10,0);
       sw[W_filter_order] = gtk_spin_button_new(GTK_ADJUSTMENT(adjs[W_filter_adj]),0.0,0);
       gtk_box_pack_start(GTK_BOX(sw[W_filter_form]),sw[W_filter_order],FALSE,FALSE,2);
       gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(sw[W_filter_order]),TRUE);

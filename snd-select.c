@@ -544,6 +544,9 @@ int save_selection(snd_state *ss, char *ofile, int type, int format, int srate, 
   int i,dur,j,k;
   snd_fd **sfs;
   MUS_SAMPLE_TYPE **data;
+
+  /* TODO: check for disk space */
+
   if (MUS_DATA_FORMAT_OK(format))
     {
       if (MUS_HEADER_TYPE_OK(type))
@@ -589,6 +592,13 @@ int save_selection(snd_state *ss, char *ofile, int type, int format, int srate, 
 		  err = mus_file_write(ofd,0,j-1,si->chans,data);
 		  j = 0;
 		  if (err == -1) break;
+		  check_for_event(ss);
+		  if (ss->stopped_explicitly)
+		    {
+		      ss->stopped_explicitly = 0;
+		      snd_warning("save selection stopped");
+		      break;
+		    }
 		}
 	    }
 	  if (j > 0) mus_file_write(ofd,0,j-1,si->chans,data);

@@ -999,7 +999,7 @@ void create_envelope_editor (snd_state *ss)
       gtk_box_pack_start(GTK_BOX(bottomrow),baseScale,TRUE,TRUE,4);
       gtk_widget_show(baseScale);
 
-      orderAdj = gtk_adjustment_new(20,2,1000,2,10,0);
+      orderAdj = gtk_adjustment_new(20,2,100000,2,10,0);
       orderL = gtk_spin_button_new(GTK_ADJUSTMENT(orderAdj),0.0,0);
       gtk_box_pack_end(GTK_BOX(bottomrow),orderL,FALSE,FALSE,4);
       gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(orderL),TRUE);

@@ -2187,9 +2187,10 @@ static void display_channel_data_with_size (chan_info *cp, snd_info *sp, snd_sta
   ap->width = width;
   ap->y_offset = offset;
   if (cp->waving) displays = 1; else displays = 0;
-  if ((cp->lisp_graphing) && (up = (lisp_grf *)(cp->lisp_info)))
+  if (cp->lisp_graphing) displays++;
+  up = (lisp_grf *)(cp->lisp_info);
+  if (up)
     {
-      displays++;
       uap = up->axis;
       if (uap)
 	{
@@ -2203,9 +2204,10 @@ static void display_channel_data_with_size (chan_info *cp, snd_info *sp, snd_sta
     }
   else with_lisp = 0;
 
-  if ((cp->ffting) && (fp = cp->fft))
+  if (cp->ffting) displays++;
+  fp = cp->fft;
+  if (fp)
     {
-      displays++;
       fap = fp->axis; 
       if (fap)
 	{
@@ -6991,9 +6993,7 @@ static void propogate_wf_state(snd_info *sp)
 	  set_toggle_button(channel_f(cp),(f) ? TRUE : FALSE,FALSE,(void *)cp);
 	  set_toggle_button(channel_w(cp),(w) ? TRUE : FALSE,FALSE,(void *)cp);
 	}
-      if (f) 
-	map_over_sound_chans(sp,calculate_fft,NULL);
-      else map_over_sound_chans(sp,update_graph,NULL);
+      map_over_sound_chans(sp,update_graph,NULL);
     }
 }
 
@@ -7008,7 +7008,7 @@ void f_button_callback(chan_info *cp, int on, int with_control)
     propogate_wf_state(sp);
   else
     {
-      if (cp->ffting) calculate_fft(cp,NULL); else update_graph(cp,NULL);
+      update_graph(cp,NULL);
       if (with_control)
 	{
 	  for (i=0;i<sp->nchans;i++) 
@@ -7018,7 +7018,7 @@ void f_button_callback(chan_info *cp, int on, int with_control)
 		{
 		  ncp->ffting = on;
 		  set_toggle_button(channel_f(ncp),(on) ? TRUE : FALSE,FALSE,(void *)cp);
-		  if (ncp->ffting) calculate_fft(ncp,NULL); else update_graph(ncp,NULL);
+		  update_graph(ncp,NULL);
 		}
 	    }
 	}

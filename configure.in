@@ -429,6 +429,7 @@ if test $GUILE_CONFIG_works = yes; then
       OLD_LIBS="$LIBS"
       LIBS=""
       AC_CHECK_LIB(guile, scm_set_smob_apply,[AC_DEFINE(HAVE_APPLICABLE_SMOB)])
+      AC_CHECK_LIB(guile, scm_remember_upto_here,[AC_DEFINE(HAVE_SCM_REMEMBER_UPTO_HERE)])
       LIBS="$OLD_LIBS"
 
     else

@@ -161,7 +161,7 @@ static const char *mus_initial_error_names[] = {
   "audio configuration not available","audio input closed","audio output closed","audio io interrupted",
   "no audio lines available","audio write error","audio size not available","audio device not available",
   "can't close audio","can't open audio","audio read error","audio amp not available","audio no op",
-  "can't write audio","can't read audio","no audio read permission"};
+  "can't write audio","can't read audio","no audio read permission","can't close file"};
 
 static char **mus_error_names = NULL;
 static int mus_error_names_size = 0;

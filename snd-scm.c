@@ -1888,7 +1888,7 @@ static SCM mix_vct(SCM obj, SCM beg, SCM snd, SCM chn, SCM with_consoles, SCM or
 	  FREE(data);
 	}
     }
-  scm_remember(&obj);
+  SND_REMEMBER(obj);
   return(gh_int2scm(mix_id));
 }
 
@@ -1928,7 +1928,7 @@ MUS_SAMPLE_TYPE *g_floats_to_samples(SCM obj, int *size, char *caller, int posit
 	}
     }
   (*size) = num;
-  scm_remember(&obj);
+  SND_REMEMBER(obj);
   return(vals);
 }
 
@@ -3796,7 +3796,7 @@ the functions html and ? can be used in place of help to go to the HTML descript
   /* TODO: should we append apropos results here, or a cf list? */
   /* TODO    to handle (extend) apropos from session.scm, we need to set up the Snd module, I think */
   /*     Guile's help uses procedure-documentation, but that (at the C level) just picks up the
-   *     first line of the function's source!  apparently the subr .documentation field is ignored.
+   *     first line of the function's source!
    */
 
   gh_eval_str("(read-set! keywords 'prefix)");

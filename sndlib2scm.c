@@ -341,7 +341,7 @@ static int print_sound_data(SCM obj, SCM port, scm_print_state *pstate)
       scm_puts(buf,port);
       FREE(buf);
     }
-  scm_remember(&obj);
+  SND_REMEMBER(obj);
   return(1);
 }
 

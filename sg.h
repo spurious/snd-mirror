@@ -38,6 +38,12 @@
   #define GH_SET_VALUE_OF(a,b) SCM_SETCDR(a,b)
 #endif
 
+#if HAVE_SCM_REMEMBER_UPTO_HERE
+  #define SND_REMEMBER(OBJ) scm_remember_upto_here_1(OBJ)
+#else
+  #define SND_REMEMBER(OBJ) scm_remember(&OBJ)
+#endif
+
 #ifndef SCM_EQ_P
   #define SCM_EQ_P(a,b) ((a) == (b))
   /* SCM_UNPACK used here in later Guile's */
@@ -48,7 +54,8 @@
 #endif
 
 #ifdef __cplusplus
-  #define SCM_FNC (SCM (*)(...))
+/* #define SCM_FNC (SCM (*)(...)) */
+  #define SCM_FNC (SCM (*)())
 #else
   #define SCM_FNC
 #endif

@@ -422,6 +422,9 @@ static int save_region_1(snd_state *ss, char *ofile,int type, int format, int sr
 	  mus_file_seek(ifd,iloc,SEEK_SET);
 	  bufs = (MUS_SAMPLE_TYPE **)CALLOC(chans,sizeof(MUS_SAMPLE_TYPE *));
 	  for (i=0;i<chans;i++) bufs[i] = (MUS_SAMPLE_TYPE *)CALLOC(FILE_BUFFER_SIZE,sizeof(MUS_SAMPLE_TYPE));
+
+	  /* TODO: check for disk space */
+
 	  for (i=0;i<frames;i+=FILE_BUFFER_SIZE)
 	    {
 	      if ((i+FILE_BUFFER_SIZE)<frames) cursamples = FILE_BUFFER_SIZE; else cursamples = (frames-i);
@@ -429,6 +432,12 @@ static int save_region_1(snd_state *ss, char *ofile,int type, int format, int sr
 	      err = mus_file_write(ofd,0,cursamples-1,chans,bufs);
 	      if (err == -1) break;
 	      check_for_event(ss); /* added 3-Jul-00 -- is this safe? */
+	      if (ss->stopped_explicitly)
+		{
+		  ss->stopped_explicitly = 0;
+		  snd_warning("save region %d stopped",reg);
+		  break;
+		}
 	    }
 	  mus_file_close(ifd);
 	  for (i=0;i<chans;i++) FREE(bufs[i]);
