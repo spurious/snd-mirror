@@ -25,6 +25,7 @@ bool set_listener_font(char *font)
       if (listener_font(ss)) FREE(listener_font(ss));
       in_set_listener_font(copy_string(font));
       LISTENER_FONT(ss) = fs;
+      set_listener_text_font();
       return(true);
     }
   return(false);

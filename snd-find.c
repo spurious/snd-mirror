@@ -34,10 +34,11 @@ static void prepare_global_search (chan_info *cp, void *g0)
   if (g->fds[g->n] != NULL) g->n++;
 }
 
-static int run_global_search (gfd *g)
+#define KEEP_SEARCHING false
+#define STOP_SEARCHING true
+
+static bool run_global_search (gfd *g)
 {
-  /* return 0 until success or all eof */
-  /* if success, n = winner (as aref index), if eofs, n=-1 */
   int i, j, k;
   Float samp;
   XEN res;
@@ -48,7 +49,7 @@ static int run_global_search (gfd *g)
 	{
 	  if (g->cps[i])
 	    {
-	      if (!((g->cps[i])->sound)) return(-1);
+	      if (!((g->cps[i])->sound)) return(STOP_SEARCHING);
 	      sf = g->fds[i]; 
 	      samp = read_sample_to_float(sf);
 	      if (ss->search_tree)
@@ -56,7 +57,7 @@ static int run_global_search (gfd *g)
 		  if (evaluate_ptree_1f2b(ss->search_tree, samp))
 		    {
 		      g->n = i;
-		      return(1);
+		      return(STOP_SEARCHING);
 		    }
 		}
 	      else
@@ -67,7 +68,7 @@ static int run_global_search (gfd *g)
 		  if (XEN_TRUE_P(res))
 		    {
 		      g->n = i;
-		      return(1);
+		      return(STOP_SEARCHING);
 		    }
 		  else
 		    {
@@ -77,7 +78,7 @@ static int run_global_search (gfd *g)
 			  if (g->direction == READ_FORWARD)
 			    g->inc += XEN_TO_C_INT(res);
 			  else g->inc -= XEN_TO_C_INT(res);
-			  return(1);
+			  return(STOP_SEARCHING);
 			}
 		    }
 		}
@@ -96,14 +97,14 @@ static int run_global_search (gfd *g)
 		  if (k == 0) /* all at eof */
 		    {
 		      g->n = -1;
-		      return(1);
+		      return(STOP_SEARCHING);
 		    }
 		}
 	    }
 	}
     }
   g->inc++;
-  return(0);
+  return(KEEP_SEARCHING);
 }
 
 static char search_message[PRINT_BUFFER_SIZE];
@@ -172,7 +173,7 @@ char *global_search(read_direction_t direction)
       ss->stopped_explicitly = false;
       reporting = (fd->dur >= (REPORTING_SIZE * 10));
       if (reporting) set_find_dialog_label("0%");
-      while (!(run_global_search(fd)))
+      while (run_global_search(fd) != STOP_SEARCHING)
 	{
 	  passes++;
 	  if (passes >= MANY_PASSES)
@@ -264,7 +265,7 @@ static off_t cursor_find_forward(snd_info *sp, chan_info *cp, int count)
 	      if (tick > (MANY_PASSES * TREE_REPORT_TICKS))
 		{
 		  tick = 0;
-		  report_in_minibuffer(sp, "search at min %d", (int)floor(i / (SND_SRATE(sp) * 60)));
+		  report_in_minibuffer(sp, "search at minute %d", (int)floor(i / (SND_SRATE(sp) * 60)));
 		}
 	    }
 	}
@@ -289,7 +290,7 @@ static off_t cursor_find_forward(snd_info *sp, chan_info *cp, int count)
 	      if (tick > REPORT_TICKS)
 		{
 		  tick = 0;
-		  report_in_minibuffer(sp, "search at min %d", (int)floor(i / (SND_SRATE(sp) * 60)));
+		  report_in_minibuffer(sp, "search at minute %d", (int)floor(i / (SND_SRATE(sp) * 60)));
 		}
 	      /* if user types C-s during an active search, we risk stomping on our current pointers */
 	      if (!(sp->active)) break;
@@ -342,7 +343,7 @@ static off_t cursor_find_backward(snd_info *sp, chan_info *cp, int count)
 	      if (tick > (MANY_PASSES * TREE_REPORT_TICKS))
 		{
 		  tick = 0;
-		  report_in_minibuffer(sp, "search at min %d", (int)floor(i / (SND_SRATE(sp) * 60)));
+		  report_in_minibuffer(sp, "search at minute %d", (int)floor(i / (SND_SRATE(sp) * 60)));
 		}
 	    }
 	}
@@ -369,7 +370,7 @@ static off_t cursor_find_backward(snd_info *sp, chan_info *cp, int count)
 	      if (tick > REPORT_TICKS)
 		{
 		  tick = 0;
-		  report_in_minibuffer(sp, "search at min %d", (int)floor(i / (SND_SRATE(sp) * 60)));
+		  report_in_minibuffer(sp, "search at minute %d", (int)floor(i / (SND_SRATE(sp) * 60)));
 		}
 	      if (!(sp->active)) break;
 	      passes = 0;

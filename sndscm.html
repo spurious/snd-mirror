@@ -2730,6 +2730,14 @@ whenever Snd receives focus from the window manager.
 (the lower left portion of the main Snd window when using the -notebook invocation switch).
 It returns the widget; you can write to it via XmTextFieldSetString.
 </p>
+<p>snd-gtk.scm also defines <b>make-font-selector-dialog</b> that creates a dialog
+showing a list of available fonts with sample output, and a set of toggle buttons;
+to start the dialog, click the Options:Choose Font menu option;
+choose which of Snd's fonts you want to change, then click 'ok'. This isn't available
+in snd-motif.scm because the corresponding font selection widget in Motif is still
+under development.
+The corresponding color selector is <b>make-color-selector-dialog</b>.
+</p>
 
 <p><b>make-variable-display</b> sets up a display point for an arbitrary expression which
 is updated via <b>variable-display</b>.  The latter returns its argument, so it acts as a sort of

@@ -1264,6 +1264,12 @@ void clear_listener(void)
     }
 }
 
+void set_listener_text_font(void)
+{
+  if (listener_text)
+    XtVaSetValues(listener_text, XM_FONT_RESOURCE, (ss->sgx)->listener_fontlist, NULL);
+}
+
 void lock_listener_pane(void)
 {
   int val;

@@ -940,6 +940,12 @@ static XEN g_listener_selected_text(void)
   return(res);
 }
 
+void set_listener_text_font(void)
+{
+  if (listener_text)
+    gtk_widget_modify_font(GTK_WIDGET(listener_text), LISTENER_FONT(ss));
+}
+
 static XEN g_reset_listener_cursor(void)
 {
   #define H_reset_listener_cursor "(" S_reset_listener_cursor "): reset listener cursor to the default pointer"

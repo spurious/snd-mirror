@@ -96,6 +96,7 @@ void append_listener_text(int end, char *msg);
 void listener_append(char *msg);
 void listener_append_and_prompt(char *msg);
 void clear_listener(void);
+void set_listener_text_font(void);
 void g_init_gxlistener(void);
 GtkWidget *snd_entry_new(GtkWidget *container, bool with_white_background);
 bool highlight_unbalanced_paren(void);

@@ -106,6 +106,7 @@ Widget make_pushbutton_widget(char *name, Widget parent, Arg *args, int n);
 Widget make_text_widget(char *name, Widget parent, Arg *args, int n);
 Widget make_textfield_widget(char *name, Widget parent, Arg *args, int n, text_cr_t activatable, int completer);
 void clear_listener(void);
+void set_listener_text_font(void);
 void lock_listener_pane(void);
 void unlock_listener_pane(void);
 void g_init_gxlistener(void);

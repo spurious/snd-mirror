@@ -1,5 +1,6 @@
 Snd change log
 
+  10-Mar:    make-font-selector-dialog and make-color-selector-dialog in snd-gtk
   4-Mar:     tempo-control-bounds, and all other such variables' global defaults can be set
                including cursor-follows-play.
   3-Mar:     read|write-speex for Speex files and read|write-flac for FLAC files (examp.scm)

@@ -17,10 +17,8 @@
 ;;; add delete and rename options to the file menu
 ;;; make-pixmap
 ;;; notebook-with-top-tabs
-
-;;; TODO: add font selection dialog to view menu and tie choice to various fonts [example in gtk/tests/testcalendar]
-;;;      (in Xm, XmFontSelector is not usable yet -- "sizes" not a ComboBox, etc)
-;;; TODO: add color selection dialog and so forth [example in gtk/tests/testgtk]
+;;; make-font-selector-dialog
+;;; make-color-selector-dialog
 
 (use-modules (ice-9 format))
 
@@ -34,11 +32,10 @@
 
 
 (define (g-list-foreach glist func)
-  (let ((i 0))
-    (while (< i (g_list_length glist))
-	   (func (g_list_nth_data glist i))
-	   (set! i (1+ i)))))
-
+  (let ((len (g_list_length glist)))
+    (do ((i 0 (1+ i)))
+	((= i len))
+      (func (g_list_nth_data glist i)))))
 
 (define (for-each-child w func)
   "(for-each-child w func) applies func to w and each of its children"
@@ -528,6 +525,7 @@
 (define (disable-control-panel snd)
   (gtk_widget_hide (caddr (sound-widgets snd)))
   (remove-from-menu 2 "Show controls"))
+
 
 
 
@@ -1135,3 +1133,205 @@ Reverb-feedback sets the scaler on the feedback.
 
 (define (notebook-with-top-tabs)
   (gtk_notebook_set_tab_pos (GTK_NOTEBOOK (list-ref (main-widgets) 5)) GTK_POS_TOP))
+
+
+;;; -------- font selector --------
+
+(define font-selector-dialog #f)
+(define font-selectors '())
+
+(define (make-font-selector-dialog)
+  (if (not font-selector-dialog)
+      (let ((dismiss-button (gtk_button_new_with_label "Dismiss"))
+	    (help-button (gtk_button_new_with_label "Help")))
+	(gtk_widget_set_name dismiss-button "quit_button")
+	(gtk_widget_set_name help-button "help_button")
+	(set! font-selector-dialog (gtk_font_selection_dialog_new "Choose a Font"))
+	(gtk_window_set_default_size (GTK_WINDOW font-selector-dialog) -1 -1)
+	(gtk_window_set_resizable (GTK_WINDOW font-selector-dialog) #t)
+	(gtk_widget_realize font-selector-dialog)
+	(g_signal_connect_closure_by_id (GPOINTER font-selector-dialog)
+					(g_signal_lookup "delete_event" (G_OBJECT_TYPE (GTK_OBJECT font-selector-dialog)))
+					0 (g_cclosure_new (lambda (w ev data) (gtk_widget_hide font-selector-dialog)) #f #f) #f)
+	(gtk_box_pack_start (GTK_BOX (.action_area (GTK_DIALOG font-selector-dialog))) dismiss-button #t #t 20)
+	(g_signal_connect_closure_by_id (GPOINTER dismiss-button)
+					(g_signal_lookup "clicked" (G_OBJECT_TYPE (GTK_OBJECT dismiss-button)))
+					0 (g_cclosure_new (lambda (w data) (gtk_widget_hide font-selector-dialog)) #f #f) #f)
+	(gtk_widget_show dismiss-button)
+	(gtk_box_pack_end (GTK_BOX (.action_area (GTK_DIALOG font-selector-dialog))) help-button #t #t 20)
+	(g_signal_connect_closure_by_id (GPOINTER help-button)
+					(g_signal_lookup "clicked" (G_OBJECT_TYPE (GTK_OBJECT help-button)))
+					0 (g_cclosure_new (lambda (w data) 
+							    (help-dialog "Choose a Font" 
+									 "choose a font, set which fields you want to use that font, and click 'ok'"))
+							  #f #f) #f)
+	(gtk_widget_show help-button)
+	(let ((ok-button (.ok_button (GTK_FONT_SELECTION_DIALOG font-selector-dialog))))
+	  (gtk_widget_set_name ok-button "doit_button")
+	  (g_signal_connect_closure_by_id 
+	   (GPOINTER ok-button)
+	   (g_signal_lookup "clicked" (G_OBJECT_TYPE (GTK_OBJECT ok-button)))
+	   0
+	   (g_cclosure_new (lambda (w d) 
+			     (let ((new-font (gtk_font_selection_dialog_get_font_name (GTK_FONT_SELECTION_DIALOG font-selector-dialog))))
+			       (for-each 
+				(lambda (fd)
+				  (let ((button (car fd))
+					(func (cadr fd)))
+				    (if (gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON button))
+					(set! (func) new-font))))
+				font-selectors)
+			       (if (> (length (sounds)) 0)
+				   (begin
+				     (if (time-graph?) (update-time-graph))
+				     (if (transform-graph?) (update-transform-graph))
+				     (if (lisp-graph?) (update-lisp-graph))))))
+			   #f #f) #f))
+	(let ((cancel (.cancel_button (GTK_FONT_SELECTION_DIALOG font-selector-dialog))))
+	  (gtk_widget_set_name cancel "reset_button")
+	  (g_signal_connect_closure_by_id 
+	   (GPOINTER cancel)
+	   (g_signal_lookup "clicked" (G_OBJECT_TYPE (GTK_OBJECT cancel)))
+	   0
+	   (g_cclosure_new (lambda (w d) 
+			     (for-each 
+			      (lambda (fd)
+				(let ((func (cadr fd))
+				      (old-value (caddr fd)))
+				  (set! (func) old-value)))
+				font-selectors)
+			       (if (> (length (sounds)) 0)
+				   (begin
+				     (if (time-graph?) (update-time-graph))
+				     (if (transform-graph?) (update-transform-graph))
+				     (if (lisp-graph?) (update-lisp-graph)))))
+			   #f #f) #f))
+	(let ((mainform (.vbox (GTK_DIALOG font-selector-dialog))))
+	  (let ((label (gtk_label_new "Apply font to:")))
+	    (gtk_box_pack_start (GTK_BOX mainform) label #f #f 4)
+	    (gtk_misc_set_alignment (GTK_MISC label) 0.1 0.0)
+	    (gtk_widget_show label))
+	  (for-each
+	   (lambda (title func)
+	     (let* ((button (gtk_toggle_button_new_with_label (symbol->string title))))
+	       (gtk_box_pack_start (GTK_BOX mainform) button #f #f 4)
+	       (set! font-selectors (cons (list button func (func)) font-selectors))
+	       (gtk_widget_show button)))
+	   (list 'axis-label-font 'axis-numbers-font 'bold-peaks-font 'peaks-font 'listener-font 'tiny-font)
+	   (list axis-label-font axis-numbers-font bold-peaks-font peaks-font listener-font tiny-font)))
+	(add-to-menu 3 "Choose Font" 
+		     (lambda () 
+		       (gtk_widget_show font-selector-dialog)))
+	)))
+
+
+;;; -------- color selector --------
+
+(define color-selector-dialog #f)
+(define color-selectors '())
+
+(define (make-color-selector-dialog)
+  (if (not color-selector-dialog)
+      (let ((dismiss-button (gtk_button_new_with_label "Dismiss"))
+	    (help-button (gtk_button_new_with_label "Help")))
+	(gtk_widget_set_name dismiss-button "quit_button")
+	(gtk_widget_set_name help-button "help_button")
+	(set! color-selector-dialog (gtk_color_selection_dialog_new "Choose a Color"))
+	(gtk_window_set_default_size (GTK_WINDOW color-selector-dialog) -1 -1)
+	(gtk_color_selection_set_has_palette (GTK_COLOR_SELECTION (.colorsel (GTK_COLOR_SELECTION_DIALOG color-selector-dialog))) #t)
+	(gtk_window_set_resizable (GTK_WINDOW color-selector-dialog) #t)
+	(gtk_widget_realize color-selector-dialog)
+	(g_signal_connect_closure_by_id (GPOINTER color-selector-dialog)
+					(g_signal_lookup "delete_event" (G_OBJECT_TYPE (GTK_OBJECT color-selector-dialog)))
+					0 (g_cclosure_new (lambda (w ev data) (gtk_widget_hide color-selector-dialog)) #f #f) #f)
+	(gtk_box_pack_start (GTK_BOX (.action_area (GTK_DIALOG color-selector-dialog))) dismiss-button #t #t 20)
+	(g_signal_connect_closure_by_id (GPOINTER dismiss-button)
+					(g_signal_lookup "clicked" (G_OBJECT_TYPE (GTK_OBJECT dismiss-button)))
+					0 (g_cclosure_new (lambda (w data) (gtk_widget_hide color-selector-dialog)) #f #f) #f)
+	(gtk_widget_show dismiss-button)
+	(gtk_box_pack_end (GTK_BOX (.action_area (GTK_DIALOG color-selector-dialog))) help-button #t #t 20)
+	(g_signal_connect_closure_by_id (GPOINTER help-button)
+					(g_signal_lookup "clicked" (G_OBJECT_TYPE (GTK_OBJECT help-button)))
+					0 (g_cclosure_new (lambda (w data) 
+							    (help-dialog "Choose a Color" 
+									 "choose a color, set which fields you want to use that color, and click 'ok'"))
+							  #f #f) #f)
+	(gtk_widget_show help-button)
+	(let ((ok-button (.ok_button (GTK_COLOR_SELECTION_DIALOG color-selector-dialog))))
+	  (gtk_widget_set_name ok-button "doit_button")
+	  (g_signal_connect_closure_by_id 
+	   (GPOINTER ok-button)
+	   (g_signal_lookup "clicked" (G_OBJECT_TYPE (GTK_OBJECT ok-button)))
+	   0
+	   (g_cclosure_new (lambda (w d) 
+			     (let ((new-color (GdkColor)))
+			       (gtk_color_selection_get_current_color 
+				(GTK_COLOR_SELECTION (.colorsel (GTK_COLOR_SELECTION_DIALOG color-selector-dialog)))
+				new-color)
+			       (for-each 
+				(lambda (fd)
+				  (let ((button (car fd))
+					(func (cadr fd)))
+				    (if (gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON button))
+					(set! (func) new-color))))
+				color-selectors)
+			       (if (> (length (sounds)) 0)
+				   (begin
+				     (if (time-graph?) (update-time-graph))
+				     (if (transform-graph?) (update-transform-graph))
+				     (if (lisp-graph?) (update-lisp-graph))))))
+			   #f #f) #f))
+	(let ((cancel (.cancel_button (GTK_COLOR_SELECTION_DIALOG color-selector-dialog))))
+	  (gtk_widget_set_name cancel "reset_button")
+	  (g_signal_connect_closure_by_id 
+	   (GPOINTER cancel)
+	   (g_signal_lookup "clicked" (G_OBJECT_TYPE (GTK_OBJECT cancel)))
+	   0
+	   (g_cclosure_new (lambda (w d) 
+			     (for-each 
+			      (lambda (fd)
+				(let ((func (cadr fd))
+				      (old-value (caddr fd)))
+				  (set! (func) old-value)))
+				color-selectors)
+			       (if (> (length (sounds)) 0)
+				   (begin
+				     (if (time-graph?) (update-time-graph))
+				     (if (transform-graph?) (update-transform-graph))
+				     (if (lisp-graph?) (update-lisp-graph)))))
+			   #f #f) #f))
+	(let ((mainform (.vbox (GTK_DIALOG color-selector-dialog))))
+	  (let ((label (gtk_label_new "Apply color to:")))
+	    (gtk_box_pack_start (GTK_BOX mainform) label #f #f 4)
+	    (gtk_misc_set_alignment (GTK_MISC label) 0.1 0.0)
+	    (gtk_widget_show label))
+	  (let ((table (gtk_table_new 12 2 #f))
+		(row 0)
+		(column 0))
+	    (gtk_box_pack_start (GTK_BOX mainform) table #t #t 4)
+	    (gtk_widget_show table)
+	    (for-each
+	     (lambda (title func)
+	       (let* ((button (gtk_toggle_button_new_with_label (symbol->string title))))
+		 (gtk_table_attach_defaults (GTK_TABLE table) button column (1+ column) row (1+ row))
+		 (set! row (1+ row))
+		 (if (= row 12)
+		     (begin
+		       (set! row 0)
+		       (set! column 1)))
+		 (set! color-selectors (cons (list button func (func)) color-selectors))
+		 (gtk_widget_show button)))
+	     (list 'basic-color 'cursor-color 'data-color 'doit-button-color 'doit-again-button-color 'enved-waveform-color
+		   'filter-control-waveform-color 'graph-color 'help-button-color 'highlight-color 'listener-color
+		   'listener-text-color 'mark-color 'mix-color 'position-color 'pushed-button-color 'quit-button-color
+		   'reset-button-color 'sash-color 'selected-data-color 'selected-graph-color 'selection-color
+		   'text-focus-color 'zoom-color)
+	     (list basic-color cursor-color data-color doit-button-color doit-again-button-color enved-waveform-color
+		   filter-control-waveform-color graph-color help-button-color highlight-color listener-color
+		   listener-text-color mark-color mix-color position-color pushed-button-color quit-button-color
+		   reset-button-color sash-color selected-data-color selected-graph-color selection-color
+		   text-focus-color zoom-color))))
+	(add-to-menu 3 "Choose Color" 
+		     (lambda () 
+		       (gtk_widget_show color-selector-dialog)))
+	)))

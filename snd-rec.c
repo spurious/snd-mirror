@@ -168,21 +168,21 @@ char *recorder_field_abbreviation(int fld)
 {
   switch (fld)
     {
-    case MUS_AUDIO_IMIX:   return("imx"); break;
-    case MUS_AUDIO_IGAIN:  return("ign"); break;
-    case MUS_AUDIO_RECLEV: return("rec"); break;
-    case MUS_AUDIO_PCM:    return("pcm"); break;
-    case MUS_AUDIO_PCM2:   return("pc2"); break;
-    case MUS_AUDIO_OGAIN:  return("ogn"); break;
-    case MUS_AUDIO_LINE:   return("lin"); break;
-    case MUS_AUDIO_MICROPHONE:    return("mic"); break;
-    case MUS_AUDIO_LINE1:  return("l1");  break;
-    case MUS_AUDIO_LINE2:  return("l2");  break;
-    case MUS_AUDIO_LINE3:  return("l3");  break;
-    case MUS_AUDIO_SYNTH:  return("syn"); break;
-    case MUS_AUDIO_BASS:   return("ton"); break;
-    case MUS_AUDIO_TREBLE: return("ton"); break;
-    case MUS_AUDIO_CD:     return("cd");  break;
+    case MUS_AUDIO_IMIX:       return("imx"); break;
+    case MUS_AUDIO_IGAIN:      return("ign"); break;
+    case MUS_AUDIO_RECLEV:     return("rec"); break;
+    case MUS_AUDIO_PCM:        return("pcm"); break;
+    case MUS_AUDIO_PCM2:       return("pc2"); break;
+    case MUS_AUDIO_OGAIN:      return("ogn"); break;
+    case MUS_AUDIO_LINE:       return("lin"); break;
+    case MUS_AUDIO_MICROPHONE: return("mic"); break;
+    case MUS_AUDIO_LINE1:      return("l1");  break;
+    case MUS_AUDIO_LINE2:      return("l2");  break;
+    case MUS_AUDIO_LINE3:      return("l3");  break;
+    case MUS_AUDIO_SYNTH:      return("syn"); break;
+    case MUS_AUDIO_BASS:       return("ton"); break;
+    case MUS_AUDIO_TREBLE:     return("ton"); break;
+    case MUS_AUDIO_CD:         return("cd");  break;
     }
   return("oops");
 }
@@ -578,11 +578,17 @@ static void get_input_channels(int i)
 	    {
 	      rp->input_channels[i] = device_channels(MUS_AUDIO_PACK_SYSTEM(i) | MUS_AUDIO_LINE_IN);
 	      if (rp->input_channels[i] == 0)
-		rp->input_channels[i] = device_channels(MUS_AUDIO_PACK_SYSTEM(i) | MUS_AUDIO_ADAT_IN);
-	    }
-	}
-    }
-}
+		{
+		  rp->input_channels[i] = device_channels(MUS_AUDIO_PACK_SYSTEM(i) | MUS_AUDIO_ADAT_IN);
+		  if (rp->input_channels[i] == 0)
+		    {
+		      rp->input_channels[i] = device_channels(MUS_AUDIO_PACK_SYSTEM(i) | MUS_AUDIO_DIGITAL_IN);
+		      if (rp->input_channels[i] == 0)
+			{
+			  rp->input_channels[i] = device_channels(MUS_AUDIO_PACK_SYSTEM(i) | MUS_AUDIO_SPDIF_IN);
+			  if (rp->input_channels[i] == 0)
+			    rp->input_channels[i] = device_channels(MUS_AUDIO_PACK_SYSTEM(i) | MUS_AUDIO_AES_IN);
+			}}}}}}}
 
 static void get_input_devices(void)
 {

@@ -8151,7 +8151,7 @@ static XEN gxm_XPolygonRegion(XEN larg1, XEN arg2, XEN arg3)
   for (i = 0; (i < len) && (XEN_NOT_NULL_P(arg1)); i++, arg1 = XEN_CDR(arg1))
     {
       xp = XEN_CAR(arg1);
-      if (!(XEN_XPoint_P(xp))) XEN_ASSERT_TYPE(0, xp, i, "XPolygonRegion", "XPoint");
+      if (!(XEN_XPoint_P(xp))) {FREE(pt); XEN_ASSERT_TYPE(0, xp, i, "XPolygonRegion", "XPoint"); return(XEN_FALSE);}
       pt1 = XEN_TO_C_XPoint(XEN_CAR(arg1));
       pt[i].x = pt1->x;
       pt[i].y = pt1->y;

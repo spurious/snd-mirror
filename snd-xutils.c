@@ -66,6 +66,7 @@ bool set_listener_font(char *font)
       (ss->sgx)->listener_fontstruct = fs;
       if ((ss->sgx)->listener_fontlist) XM_FONT_FREE((ss->sgx)->listener_fontlist);
       (ss->sgx)->listener_fontlist = get_xm_font((ss->sgx)->listener_fontstruct, font, "listener_font");
+      set_listener_text_font();
       return(true);
     }
   return(false);
