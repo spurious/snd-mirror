@@ -42512,6 +42512,7 @@ EDITS: 2
 	      (check-error-tag 'out-of-range (lambda () (start-playing 1 0)))
 	      (check-error-tag 'out-of-range (lambda () (set! (filter-control-envelope ind) (list 0.0 1.0 0.1 -0.1 1.0 0.0))))
 	      (check-error-tag 'out-of-range (lambda () (set! (filter-control-envelope ind) (list 0.0 1.0 0.1 1.1 1.0 0.0))))
+	      (check-error-tag 'mus-error (lambda () (filter-sound '(0 0 .1 .1 .05 .1 1 1) 32)))
 	      (check-error-tag 'out-of-range (lambda () (apply-controls ind 123)))
 	      (check-error-tag 'out-of-range (lambda () (vct->sound-file 123 (make-vct 3) 4)))
 	      (check-error-tag 'out-of-range (lambda () (vct->sound-file 123 (make-vct 3) -4)))
@@ -43270,6 +43271,24 @@ EDITS: 2
   "test.output"
   "test.data"
   "obtest.snd.stereo"
-  "envs.save"))
+  "envs.save"
+  "test-1.snd"
+  "test-2.snd"
+
+  (string-append sf-dir "mus10.snd.snd")
+  (string-append sf-dir "ieee-text-16.snd.snd")
+  (string-append sf-dir "trumps22.adp.snd")
+  (string-append sf-dir "oki.wav.snd")
+  (string-append sf-dir "nasahal.avi.snd")
+  (string-append sf-dir "hcom-16.snd.snd")
+  (string-append sf-dir "ce-c3.w02.snd")
+  (string-append sf-dir "oboe.g723_24.snd")
+  (string-append sf-dir "oboe.g723_40.snd")
+  (string-append sf-dir "oboe.g721.snd")
+  (string-append sf-dir "wood.sds.snd")
+  (string-append sf-dir "o2_dvi.wave.snd")
+  (string-append sf-dir "nist-shortpack.wav.snd")
+
+))
 
 (if with-exit (exit))

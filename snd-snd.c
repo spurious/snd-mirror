@@ -3075,10 +3075,10 @@ The 'initial-length' argument sets the number of samples (zeros) in the newly cr
   unsigned char* buf;
   char *str = NULL, *com = NULL;
   XEN_ASSERT_TYPE(XEN_STRING_IF_BOUND_P(name), name, XEN_ARG_1, S_new_sound, "a string");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(type), type, XEN_ARG_2, S_new_sound, "an integer (a header type id)");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(format), format, XEN_ARG_3, S_new_sound, "an integer (a data format id)");
-  XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(srate), srate, XEN_ARG_4, S_new_sound, "a number");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(chans), chans, XEN_ARG_5, S_new_sound, "an integer");
+  XEN_ASSERT_TYPE(XEN_INTEGER_OR_BOOLEAN_IF_BOUND_P(type), type, XEN_ARG_2, S_new_sound, "an integer (a header type id)");
+  XEN_ASSERT_TYPE(XEN_INTEGER_OR_BOOLEAN_IF_BOUND_P(format), format, XEN_ARG_3, S_new_sound, "an integer (a data format id)");
+  XEN_ASSERT_TYPE(XEN_NUMBER_OR_BOOLEAN_IF_BOUND_P(srate), srate, XEN_ARG_4, S_new_sound, "a number");
+  XEN_ASSERT_TYPE(XEN_INTEGER_OR_BOOLEAN_IF_BOUND_P(chans), chans, XEN_ARG_5, S_new_sound, "an integer");
   XEN_ASSERT_TYPE(XEN_STRING_P(comment) || XEN_FALSE_P(comment) || XEN_NOT_BOUND_P(comment), comment, XEN_ARG_6, S_new_sound, "a string or #f");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(initial_length), initial_length, XEN_ARG_7, S_new_sound, "an integer");
 

@@ -6148,7 +6148,18 @@ Virtual reverse-channel: <a href="#virtualreverse">xen-channel</a><br>
 <tr><td></td><td>
 reverse data.  There are some interesting non-causal effects you can get with this:
 take a voice sound, reverse it, reverberate it, reverse it again, and you get the original with
-reversed reverb.
+reversed reverb.  As a hack, you can reverse a sound by doing two ffts:
+<pre>
+(define* (silly-reverse #:optional snd)
+  (let* ((len (<a class=quiet href="#frames">frames</a> snd 0))
+	 (fsize (expt 2 (ceiling (/ (log len) (log 2)))))
+	 (rl (<a class=quiet href="#channel2vct">channel-&gt;vct</a> 0 fsize snd 0))
+	 (im (<a class=quiet href="#makevct">make-vct</a> fsize)))
+    (<a class=quiet href="clm.html#fft">mus-fft</a> rl im fsize)
+    (<a class=quiet href="clm.html#fft">mus-fft</a> rl im fsize)
+    (<a class=quiet href="#vctscale">vct-scale!</a> rl (/ 1.0 fsize))
+    (<a class=quiet href="#vct2channel">vct-&gt;channel</a> (<a class=quiet href="#vctsubseq">vct-subseq</a> rl (- fsize len) fsize) 0 len snd 0)))
+</pre>
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -8390,6 +8401,7 @@ spectral modeling: <a href="sndscm.html#clminsdoc">pins</a><br>
 Superimpose ffts: <a href="sndscm.html#exsuperimposeffts">superimpose-ffts</a><br>
 Waterfall real-time spectrograph: <a href="sndscm.html#startwaterfall">start-waterfall</a><br>
 Simple rt spectrum: <a href="sndscm.html#exshowinputfft">show-input-fft</a>, <a href="sndscm.html#exshowdraggableinputfft">show-draggable-input-fft</a><br>
+More transforms: <a href="sndscm.html#fractionalfouriertransform">fractional-fourier-transform</a>, <a href="sndscm.html#ztransform">z-transform</a> in dsp.scm.
 </blockquote></small>
 </td></tr></TABLE>
 

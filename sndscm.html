@@ -487,14 +487,6 @@ the listener?
 </p>
 <table border=1>
   <tr><td><A class=def NAME="exdolph">dolph</a> n gamma</td><td>Dolph-Chebyshev fft data window</td></tr>
-  <tr><td><A class=def NAME="exdht">dht</a> data</td><td>slow Hartley transform </td></tr>
-  <tr><td><em class=emdef>find-sine</em> freq beg dur</td><td>DFT at a particular frequency</td></tr>
-  <tr><td><em class=emdef>make-butter-high-pass</em> freq</td><td>2nd order Butterworth highpass</td></tr>
-  <tr><td><em class=emdef>make-butter-low-pass</em> freq</td><td>2nd order Butterworth lowpass</td></tr>
-  <tr><td><em class=emdef>make-butter-band-pass</em> freq bandwidth</td><td>2nd order Butterworth bandpass</td></tr>
-  <tr><td><em class=emdef>make-butter-band-reject</em> freq bandwidth</td><td>2nd order Butterworth bandstop</td></tr>
-  <tr><td><em class=emdef>fltit-1</em></td><td></td></tr>
-  <tr><td><em class=emdef>spectrum-&gt;coeffs</em> order spectrum-envelope</td><td>frequency-response envelope -&gt; FIR coeffs</td></tr>
   <tr><td><A class=def NAME="exdownoct">down-oct</a></td><td>move sound down 8ve using fft</td></tr>
   <tr><td><em class=emdef>freqdiv</em> n</td><td>"frequency division" effect</td></tr>
   <tr><td><em class=emdef>adsat</em> size</td><td>"adaptive saturation" effect</td></tr>
@@ -508,6 +500,7 @@ the listener?
   <tr><td><em class=emdef>kosine-summation</em></td><td>more sum-of-cosines stuff</td></tr>
   <tr><td><em class=emdef>legendre-summation</em></td><td></td></tr>
   <tr><td><em class=emdef>brighten-slightly</em> amount</td><td>add harmonics</td></tr>
+  <tr><td><em class=emdef>spectrum-&gt;coeffs</em> order spectrum-envelope</td><td>frequency-response envelope -&gt; FIR coeffs</td></tr>
   <tr><td><a class=def name="makehilberttransform">make-hilbert-transform</a> length</td><td>Hilbert transform</td></tr>
   <tr><td><a class=def name="makelowpass">make-lowpass</a> fc length</td><td>FIR lowpass</td></tr>
   <tr><td><a class=def name="makehighpass">make-highpass</a> fc length</td><td>FIR highpass</td></tr>
@@ -515,6 +508,11 @@ the listener?
   <tr><td><a class=def name="makebandstop">make-bandstop</a> flo fhi length</td><td>FIR bandstop</td></tr>
   <tr><td><a class=def name="makedifferentiator">make-differentiator</a> length</td><td>FIR differentiator</td></tr>
   <tr><td><a class=def name="makebiquad">make-biquad</a> a0 a1 a2 b1 b2</td><td>IIR cascade section</td></tr>
+  <tr><td><em class=emdef>make-butter-high-pass</em> freq</td><td>2nd order Butterworth highpass</td></tr>
+  <tr><td><em class=emdef>make-butter-low-pass</em> freq</td><td>2nd order Butterworth lowpass</td></tr>
+  <tr><td><em class=emdef>make-butter-band-pass</em> freq bandwidth</td><td>2nd order Butterworth bandpass</td></tr>
+  <tr><td><em class=emdef>make-butter-band-reject</em> freq bandwidth</td><td>2nd order Butterworth bandstop</td></tr>
+  <tr><td><em class=emdef>fltit-1</em></td><td></td></tr>
   <tr><td><em class=emdef>make-iir-low-pass-1</em> fc</td><td>IIR 1st order lowpass</td></tr>
   <tr><td><em class=emdef>make-iir-high-pass-1</em> fc</td><td>IIR 1st order highpass</td></tr>
   <tr><td><em class=emdef>make-iir-low-pass-2</em> fc d</td><td>IIR 2nd order lowpass</td></tr>
@@ -531,6 +529,10 @@ the listener?
   <tr><td><a class=def name="notchchannel">notch-channel</a> freqs order beg dur s c e trunc width</td><td>arbitrary notch filter applied to channel</td></tr>
   <tr><td><a class=def name="notchsound">notch-sound</a> freqs order s c width</td><td>arbitrary notch filter applied to sound</td></tr>
   <tr><td><a class=def name="notchselection">notch-selection</a> freqs order width</td><td>arbitrary notch filter applied to selection</td></tr>
+  <tr><td><a class=def name="fractionalfouriertransform">fractional-fourier-transform</a> rl im size angle</td></tr>
+  <tr><td><a class=def name="ztransform">z-transform</a> rl size z</td></tr>
+  <tr><td><A class=def NAME="exdht">dht</a> data</td><td>slow Hartley transform </td></tr>
+  <tr><td><em class=emdef>find-sine</em> freq beg dur</td><td>DFT at a particular frequency</td></tr>
 </table>
 
 <p><b>dolph</b> is the Dolph-Chebyshev fft data window, taken
@@ -643,6 +645,9 @@ But, if the hum is not absolutely stable, you'll probably want wider notches:
 <p>The order of 1024 means we get 20 Hz width minima (44100 Hz srate), so this
 notches out much bigger chunks of the spectrum.  You get 98% cancellation, but
 also lose more of the original signal.
+</p>
+<p><b>fractional-fourier-transform</b> is the slow (dft) version of the fractional Fourier Transform.
+<b>z-transform</b> performs a z transform.
 </p>
 
 

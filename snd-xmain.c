@@ -1,6 +1,7 @@
 #include "snd.h"
 
 /* TODO: in Mac OSX 10.3 using Apple's X11, the title bar is sometimes repeated? */
+/* TODO: some failsafe way to break out of an infinite loop -- how does shell handle C-c? */
 
 #include <X11/cursorfont.h>
 

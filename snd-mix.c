@@ -4169,7 +4169,7 @@ static XEN g_set_mix_amp_env(XEN n, XEN chan_1, XEN val_1)
   res = set_mix_amp_env(XEN_TO_C_INT(n), 
 			(XEN_BOUND_P(chan)) ? XEN_TO_C_INT(chan) : 0,
 			e);
-  e = free_env(e);
+  if (e) e = free_env(e);
   if (res == INVALID_MIX_ID)
     return(snd_no_such_mix_error(S_setB S_mix_amp_env, n));
   else 

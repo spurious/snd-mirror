@@ -300,7 +300,7 @@ static XEN vct_set(XEN obj, XEN pos, XEN val)
   int loc;
   XEN_ASSERT_TYPE(VCT_P(obj), obj, XEN_ARG_1, S_vct_setB, "a vct");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(pos), pos, XEN_ARG_2, S_vct_setB, "an integer");
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_3, S_vct_setB, "a number");
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_3, S_vct_setB, "a real number");
   v = TO_VCT(obj);
   loc = XEN_TO_C_INT(pos);
   if (loc < 0)

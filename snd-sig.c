@@ -4226,8 +4226,6 @@ the regularized version of filter-sound"
   off_t beg_1 = 0, dur_1 = 0;
   env *e_1 = NULL;
   XEN_ASSERT_TYPE(XEN_LIST_P(e), e, XEN_ARG_1, S_filter_channel, "an envelope");
-  e_1 = get_env(e, S_filter_channel);
-  if (e_1 == NULL) return(XEN_FALSE);
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(order), order, XEN_ARG_2, S_filter_channel, "an integer");
   order_1 = XEN_TO_C_INT_OR_ELSE(order, 0);
   ASSERT_CHANNEL(S_filter_channel, snd_n, chn_n, 5);
@@ -4239,7 +4237,10 @@ the regularized version of filter-sound"
   beg_1 = beg_to_sample(beg, S_filter_channel);
   edpos_1 = to_c_edit_position(cp, edpos, S_filter_channel, 7);
   dur_1 = dur_to_samples(dur, beg_1, cp, edpos_1, 4, S_filter_channel);
+  e_1 = get_env(e, S_filter_channel);
+  if (e_1 == NULL) return(XEN_FALSE);
   errstr = filter_channel(cp, order_1, e_1, beg_1, dur_1, edpos_1, S_filter_channel, truncate_1);
+  free_env(e_1);
   if (errstr)
     XEN_ERROR(MUS_MISC_ERROR,
 	      XEN_LIST_2(C_TO_XEN_STRING(S_filter_channel),

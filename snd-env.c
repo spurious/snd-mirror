@@ -1548,14 +1548,29 @@ void add_or_edit_symbol(char *name, env *val)
 
 env *get_env(XEN e, const char *origin) /* list in e */
 {
-  int len = 0;
+  int i, len = 0;
+  env *new_env;
   XEN_ASSERT_TYPE(XEN_LIST_P_WITH_LENGTH(e, len), e, XEN_ARG_1, origin, "a list");
   if (len == 0)
     XEN_ERROR(NO_DATA,
 	      XEN_LIST_3(C_TO_XEN_STRING(origin), 
 			 C_TO_XEN_STRING("null env"), 
 			 e));
-  return(xen_to_env(e));
+  new_env = xen_to_env(e);
+  for (i = 2; i < new_env->pts * 2; i += 2)
+    if (new_env->data[i - 2] > new_env->data[i])
+      {
+	XEN msg;
+	char buf[1024];
+	mus_snprintf(buf, 1024, "%s: env at breakpoint %d: x axis value %f > %f", origin, i / 2, new_env->data[i - 2], new_env->data[i]);
+	msg = C_TO_XEN_STRING(buf);
+	free_env(new_env);
+	XEN_ERROR(MUS_MISC_ERROR,
+		  XEN_LIST_3(C_TO_XEN_STRING(S_filter_channel),
+			     msg,
+			     e));
+      }
+  return(new_env);
 }
 
 static XEN g_save_envelopes(XEN filename)

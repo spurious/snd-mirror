@@ -5345,9 +5345,6 @@ static ed_list *change_samples_in_list(off_t beg, off_t num, int pos, chan_info 
   ed_fragment *changed_f;
   if (num <= 0) return(NULL);
   cur_end = cp->samples[pos];
-#if DEBUGGING
-  if (beg > cur_end) {fprintf(stderr,"unextended change?"); abort();}
-#endif
   del_num = cur_end - beg;
   if (num < del_num) del_num = num;
   del_state = delete_section_from_list(beg, del_num, cp->edits[pos], NULL);

@@ -35,146 +35,6 @@
     im))
 
 
-;;; -------- slow Hartley transform 
-
-(define (dht data) 
-  "(dht data) returns the Hartley transform of 'data'."
-  ;; taken from Perry Cook's SignalProcessor.m (the slow version of the Hartley transform)
-  (let* ((len (vct-length data)) 
-	 (arr (make-vct len))
-	 (w (/ (* 2.0 pi) len)))
-    (do ((i 0 (1+ i)))
-	((= i len))
-      (do ((j 0 (1+ j)))
-	  ((= j len))
-	(vct-set! arr i (+ (vct-ref arr i) 
-			   (* (vct-ref data j) 
-			      (+ (cos (* i j w)) 
-				 (sin (* i j w))))))))
-    arr))
-
-(define (find-sine freq beg dur)
-  "(find-sine freq beg dur) returns the amplitude and initial-phase (for sin) at freq between beg and dur"
-  (let ((incr (hz->radians freq))
-	(sw 0.0)
-	(cw 0.0)
-	(reader (make-sample-reader beg)))
-    (do ((i 0 (1+ i)))
-	((= i dur))
-      (let ((samp (next-sample reader)))
-	(set! sw (+ sw (* samp (sin (* i incr)))))
-	(set! cw (+ cw (* samp (cos (* i incr)))))))
-    (list (* 2 (/ (sqrt (+ (* sw sw) (* cw cw))) dur))
-	  (atan cw sw))))
-
-
-
-;;; -------- Butterworth filters (see also further below -- make-butter-lp et al)
-;;;
-;; translated from CLM butterworth.cl:
-;;
-;;   Sam Heisz, January 1998
-;;   inspired by some unit generators written for Csound by Paris Smaragdis
-;;   who based his work on formulas from 
-;;   Charles Dodge, Computer music: synthesis, composition, and performance.
-
-(define (butter b sig) 
-  "(butter b sig) is the generator side for the various make-butter procedure"
-  (filter b sig))
-
-(define (make-butter-high-pass fq)
-  "(make-butter-high-pass freq) makes a Butterworth filter with high pass cutoff at 'freq'"
-  ;; this is the same as iir-low-pass-2 below with 'din' set to (sqrt 2.0) -- similarly with the others
-  (let* ((r (tan (/ (* pi fq) (srate))))
-	 (r2 (* r r))
-	 (c1 (/ 1.0 (+ 1.0 (* r (sqrt 2.0)) r2)))
-	 (c2  (* -2.0 c1))
-	 (c3 c1)
-	 (c4 (* 2.0 (- r2 1.0) c1))
-	 (c5 (* (+ (- 1.0 (* r (sqrt 2.0))) r2) c1)))
-    (make-filter 3
-		 (list->vct (list c1 c2 c3))
-		 (list->vct (list 0.0 c4 c5)))))
-
-(define (make-butter-low-pass fq)
-  "(make-butter-low-pass freq) makes a Butterworth filter with low pass cutoff at 'freq'.  The result 
-can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'butter' generator"
-  (let* ((r (/ 1.0 (tan (/ (* pi fq) (srate)))))
-	 (r2 (* r r))
-	 (c1 (/ 1.0 (+ 1.0 (* r (sqrt 2.0)) r2)))
-	 (c2 (* 2.0 c1))
-	 (c3 c1)
-	 (c4 (* 2.0 (- 1.0 r2) c1))
-	 (c5  (* (+ (- 1.0 (* r (sqrt 2.0))) r2) c1)))
-    (make-filter 3
-		 (list->vct (list c1 c2 c3))
-		 (list->vct (list 0.0 c4 c5)))))
-
-(define (make-butter-band-pass fq bw)
-  "(make-butter-band-pass freq band) makes a bandpass Butterworth filter with low edge at 'freq' and width 'band'"
-  (let* ((d (* 2.0 (cos (/ (* 2.0 pi fq) (srate)))))
-	 (c (/ 1.0 (tan (/ (* pi bw) (srate)))))
-	 (c1 (/ 1.0 (+ 1.0 c)))
-	 (c2 0.0)
-	 (c3 (- c1))
-	 (c4 (* (- c) d c1))
-	 (c5 (* (- c 1.0) c1)))
-    (make-filter 3
-		 (list->vct (list c1 c2 c3))
-		 (list->vct (list 0.0 c4 c5)))))
-
-(define (make-butter-band-reject fq bw)
-  "(make-butter-band-reject freq band) makes a band-reject Butterworth filter with low edge at 'freq' and width 'band'"
-  (let* ((d  (* 2.0 (cos (/ (* 2.0 pi fq) (srate)))))
-	 (c (tan (/ (* pi bw) (srate))))
-	 (c1 (/ 1.0 (+ 1.0 c)))
-	 (c2 (* (- d) c1))
-	 (c3 c1)
-	 (c4 c2)
-	 (c5 (* (- 1.0 c) c1)))
-    (make-filter 3
-		 (list->vct (list c1 c2 c3))
-		 (list->vct (list 0.0 c4 c5)))))
-
-;;; simplest use is (filter-sound (make-butter-low-pass 500.0))
-;;; see also effects.scm
-
-
-;;; Snd's (very simple) spectrum->coefficients procedure is:
-
-(define (spectrum->coeffs order spectr)
-  "(spectrum->coeffs order spectr) returns FIR filter coefficients given the filter order and desired spectral envelope"
-  (let* ((coeffs (make-vct order))
-	 (n order)
-	 (m (inexact->exact (floor (/ (+ n 1) 2))))
-	 (am (* 0.5 (+ n 1)))
-	 (q (/ (* 3.14159 2.0) n)))
-    (do ((j 0 (1+ j))
-	 (jj (- n 1) (1- jj)))
-	((= j m) coeffs)
-      (let ((xt (* 0.5 (vct-ref spectr 0))))
-	(do ((i 1 (1+ i)))
-	    ((= i m))
-	  (set! xt (+ xt (* (vct-ref spectr i) (cos (* q i (- am j 1)))))))
-	(let ((coeff (* 2.0 (/ xt n))))
-	  (vct-set! coeffs j coeff)
-	  (vct-set! coeffs jj coeff))))))
-
-(define (fltit-1 order spectr)
-  "(fltit-1 order spectrum) creates an FIR filter from spectrum and order and returns a closure that calls it: 
-(map-chan (fltit-1 10 (vct 0 1.0 0 0 0 0 0 0 1.0 0)))"
-  (let* ((flt (make-fir-filter order (spectrum->coeffs order spectr))))
-    (lambda (x)
-      (fir-filter flt x))))
-
-;(map-chan (fltit-1 10 (list->vct '(0 1.0 0 0 0 0 0 0 1.0 0))))
-;
-;(let ((notched-spectr (make-vct 40)))
-;  (vct-set! notched-spectr 2 1.0)  
-;  (vct-set! notched-spectr 37 1.0)
-;  (map-chan (fltit-1 40 notched-spectr)))
-;
-
 ;;; -------- move sound down 8ve using fft
 
 (define (down-oct)
@@ -687,6 +547,41 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 
 ;;; -------- FIR filters
 
+;;; Snd's (very simple) spectrum->coefficients procedure is:
+
+(define (spectrum->coeffs order spectr)
+  "(spectrum->coeffs order spectr) returns FIR filter coefficients given the filter order and desired spectral envelope"
+  (let* ((coeffs (make-vct order))
+	 (n order)
+	 (m (inexact->exact (floor (/ (+ n 1) 2))))
+	 (am (* 0.5 (+ n 1)))
+	 (q (/ (* 3.14159 2.0) n)))
+    (do ((j 0 (1+ j))
+	 (jj (- n 1) (1- jj)))
+	((= j m) coeffs)
+      (let ((xt (* 0.5 (vct-ref spectr 0))))
+	(do ((i 1 (1+ i)))
+	    ((= i m))
+	  (set! xt (+ xt (* (vct-ref spectr i) (cos (* q i (- am j 1)))))))
+	(let ((coeff (* 2.0 (/ xt n))))
+	  (vct-set! coeffs j coeff)
+	  (vct-set! coeffs jj coeff))))))
+
+(define (fltit-1 order spectr)
+  "(fltit-1 order spectrum) creates an FIR filter from spectrum and order and returns a closure that calls it: 
+(map-chan (fltit-1 10 (vct 0 1.0 0 0 0 0 0 0 1.0 0)))"
+  (let* ((flt (make-fir-filter order (spectrum->coeffs order spectr))))
+    (lambda (x)
+      (fir-filter flt x))))
+
+;(map-chan (fltit-1 10 (list->vct '(0 1.0 0 0 0 0 0 0 1.0 0))))
+;
+;(let ((notched-spectr (make-vct 40)))
+;  (vct-set! notched-spectr 2 1.0)  
+;  (vct-set! notched-spectr 37 1.0)
+;  (map-chan (fltit-1 40 notched-spectr)))
+;
+
 ;;; -------- Hilbert transform
 
 (define* (make-hilbert-transform #:optional (len 30))
@@ -863,6 +758,77 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 
 
 ;;; -------- IIR filters
+
+;;; -------- Butterworth filters (see also further below -- make-butter-lp et al)
+;;;
+;; translated from CLM butterworth.cl:
+;;
+;;   Sam Heisz, January 1998
+;;   inspired by some unit generators written for Csound by Paris Smaragdis
+;;   who based his work on formulas from 
+;;   Charles Dodge, Computer music: synthesis, composition, and performance.
+
+(define (butter b sig) 
+  "(butter b sig) is the generator side for the various make-butter procedure"
+  (filter b sig))
+
+(define (make-butter-high-pass fq)
+  "(make-butter-high-pass freq) makes a Butterworth filter with high pass cutoff at 'freq'"
+  ;; this is the same as iir-low-pass-2 below with 'din' set to (sqrt 2.0) -- similarly with the others
+  (let* ((r (tan (/ (* pi fq) (srate))))
+	 (r2 (* r r))
+	 (c1 (/ 1.0 (+ 1.0 (* r (sqrt 2.0)) r2)))
+	 (c2  (* -2.0 c1))
+	 (c3 c1)
+	 (c4 (* 2.0 (- r2 1.0) c1))
+	 (c5 (* (+ (- 1.0 (* r (sqrt 2.0))) r2) c1)))
+    (make-filter 3
+		 (list->vct (list c1 c2 c3))
+		 (list->vct (list 0.0 c4 c5)))))
+
+(define (make-butter-low-pass fq)
+  "(make-butter-low-pass freq) makes a Butterworth filter with low pass cutoff at 'freq'.  The result 
+can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'butter' generator"
+  (let* ((r (/ 1.0 (tan (/ (* pi fq) (srate)))))
+	 (r2 (* r r))
+	 (c1 (/ 1.0 (+ 1.0 (* r (sqrt 2.0)) r2)))
+	 (c2 (* 2.0 c1))
+	 (c3 c1)
+	 (c4 (* 2.0 (- 1.0 r2) c1))
+	 (c5  (* (+ (- 1.0 (* r (sqrt 2.0))) r2) c1)))
+    (make-filter 3
+		 (list->vct (list c1 c2 c3))
+		 (list->vct (list 0.0 c4 c5)))))
+
+(define (make-butter-band-pass fq bw)
+  "(make-butter-band-pass freq band) makes a bandpass Butterworth filter with low edge at 'freq' and width 'band'"
+  (let* ((d (* 2.0 (cos (/ (* 2.0 pi fq) (srate)))))
+	 (c (/ 1.0 (tan (/ (* pi bw) (srate)))))
+	 (c1 (/ 1.0 (+ 1.0 c)))
+	 (c2 0.0)
+	 (c3 (- c1))
+	 (c4 (* (- c) d c1))
+	 (c5 (* (- c 1.0) c1)))
+    (make-filter 3
+		 (list->vct (list c1 c2 c3))
+		 (list->vct (list 0.0 c4 c5)))))
+
+(define (make-butter-band-reject fq bw)
+  "(make-butter-band-reject freq band) makes a band-reject Butterworth filter with low edge at 'freq' and width 'band'"
+  (let* ((d  (* 2.0 (cos (/ (* 2.0 pi fq) (srate)))))
+	 (c (tan (/ (* pi bw) (srate))))
+	 (c1 (/ 1.0 (+ 1.0 c)))
+	 (c2 (* (- d) c1))
+	 (c3 c1)
+	 (c4 c2)
+	 (c5 (* (- 1.0 c) c1)))
+    (make-filter 3
+		 (list->vct (list c1 c2 c3))
+		 (list->vct (list 0.0 c4 c5)))))
+
+;;; simplest use is (filter-sound (make-butter-low-pass 500.0))
+;;; see also effects.scm
+
 
 ;;; from "DSP Filter Cookbook" by Lane et al, Prompt Pubs, 2001
 ;;; 
@@ -1120,7 +1086,7 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 ;;; -------- notch filters
 
 (define* (make-notch-frequency-response cur-srate freqs #:optional (notch-width 2))
-  (let ((freq-response (list 0.0 0.0)))
+  (let ((freq-response (list 1.0 0.0)))
     (for-each
      (lambda (i)
       (set! freq-response (cons (/ (* 2 (- i notch-width)) cur-srate) freq-response)) ; left upper y hz
@@ -1152,3 +1118,81 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
   "(notch-selection freqs #:optional (filter-order #f) (notch-width 2)) -> notch filter removing freqs"
   (filter-selection (make-notch-frequency-response (exact->inexact (selection-srate)) freqs notch-width)
 		    (or filter-order (inexact->exact (expt 2 (ceiling (/ (log (/ (selection-srate) notch-width)) (log 2.0))))))))
+
+
+;;; -------- fractional Fourier Transform, z transform
+;;;
+;;; translated from the fxt package of Joerg Arndt
+
+(define (fractional-fourier-transform fr fi n v)
+  ;; this is the slow (dft) form
+  ;; v=1 -> normal fourier transform
+  (let ((hr (make-vct n))
+	(hi (make-vct n))
+	(ph0 (/ (* v 2 pi) n)))
+    (do ((w 0 (1+ w)))
+	((= w n))
+      (let ((sr 0.0)
+	    (si 0.0))
+	(do ((k 0 (1+ k)))
+	    ((= k n))
+	  (let* ((phase (* ph0 k w))
+		 (c (cos phase))
+		 (s (sin phase))
+		 (x (vct-ref fr k))
+		 (y (vct-ref fi k))
+		 (r (- (* x c) (* y s)))
+		 (i (+ (* y c) (* x s))))
+	    (set! sr (+ sr r))
+	    (set! si (+ si i))))
+	(vct-set! hr w sr)
+	(vct-set! hi w si)))
+    (list hr hi)))
+
+(define (z-transform f n z)
+  ;; using vector to allow complex sums (z=e^2*pi*i/n -> fourier transform)
+  (let ((res (make-vector n)))
+    (do ((w 0 (1+ w)))
+	((= w n))
+      (let ((sum 0.0)
+	    (t 1.0)
+	    (m (expt z w)))
+	(do ((k 0 (1+ k)))
+	    ((= k n))
+	  (set! sum (+ sum (* (vct-ref f k) t)))
+	  (set! t (* t m)))
+	(vector-set! res w sum)))
+    res))
+
+;;; -------- slow Hartley transform 
+
+(define (dht data) 
+  "(dht data) returns the Hartley transform of 'data'."
+  ;; taken from Perry Cook's SignalProcessor.m (the slow version of the Hartley transform)
+  (let* ((len (vct-length data)) 
+	 (arr (make-vct len))
+	 (w (/ (* 2.0 pi) len)))
+    (do ((i 0 (1+ i)))
+	((= i len))
+      (do ((j 0 (1+ j)))
+	  ((= j len))
+	(vct-set! arr i (+ (vct-ref arr i) 
+			   (* (vct-ref data j) 
+			      (+ (cos (* i j w)) 
+				 (sin (* i j w))))))))
+    arr))
+
+(define (find-sine freq beg dur)
+  "(find-sine freq beg dur) returns the amplitude and initial-phase (for sin) at freq between beg and dur"
+  (let ((incr (hz->radians freq))
+	(sw 0.0)
+	(cw 0.0)
+	(reader (make-sample-reader beg)))
+    (do ((i 0 (1+ i)))
+	((= i dur))
+      (let ((samp (next-sample reader)))
+	(set! sw (+ sw (* samp (sin (* i incr)))))
+	(set! cw (+ cw (* samp (cos (* i incr)))))))
+    (list (* 2 (/ (sqrt (+ (* sw sw) (* cw cw))) dur))
+	  (atan cw sw))))
+
