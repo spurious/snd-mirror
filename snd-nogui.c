@@ -254,6 +254,7 @@ void highlight_selected_sound(snd_state *ss) {}
 int start_file_dialog(snd_state *ss, int width, int height) {return(0);}
 int file_dialog_is_active(void) {return(0);}
 int edit_header(snd_info *sp) {return(0);}
+void make_edit_save_as_dialog(snd_state *ss) {}
 chan_info *enved_make_axis_cp(snd_state *ss, char *name, axis_context *ax, int ex0, int ey0, int width, int height, Float xmin, Float xmax, Float ymin, Float ymax) {return(NULL);}
 void display_enved_env_with_selection(snd_state *ss, env *e, char *name, int x0, int y0, int width, int height, int dots, Float base) {}
 void set_enved_redo_sensitive(int val) {}

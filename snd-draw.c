@@ -16,10 +16,10 @@ static axis_context *get_ax(chan_info *cp, int ax_id, const char *caller)
   if ((cp) && (AXIS_CONTEXT_ID_OK(ax_id)))
     return(set_context(cp, ax_id));
   XEN_ERROR(NO_SUCH_AXIS_CONTEXT,
-	XEN_LIST_4(C_TO_XEN_STRING(caller),
-	       C_TO_SMALL_XEN_INT(cp->sound->index),
-	       C_TO_SMALL_XEN_INT(cp->chan),
-	       C_TO_SMALL_XEN_INT(ax_id)));
+	    XEN_LIST_4(C_TO_XEN_STRING(caller),
+		       C_TO_SMALL_XEN_INT(cp->sound->index),
+		       C_TO_SMALL_XEN_INT(cp->chan),
+		       C_TO_SMALL_XEN_INT(ax_id)));
   return(NULL);
 }
 
@@ -44,10 +44,10 @@ axis_info *get_ap(chan_info *cp, int ap_id, const char *caller)
 	break;
       }
   XEN_ERROR(NO_SUCH_AXIS_INFO,
-	XEN_LIST_4(C_TO_XEN_STRING(caller),
-	       C_TO_SMALL_XEN_INT(cp->sound->index),
-	       C_TO_SMALL_XEN_INT(cp->chan),
-	       C_TO_SMALL_XEN_INT(ap_id)));
+	    XEN_LIST_4(C_TO_XEN_STRING(caller),
+		       C_TO_SMALL_XEN_INT(cp->sound->index),
+		       C_TO_SMALL_XEN_INT(cp->chan),
+		       C_TO_SMALL_XEN_INT(ap_id)));
   return(NULL);
 }
 
@@ -502,10 +502,10 @@ static XEN g_widget_position(XEN wid)
   w = (GUI_WIDGET)(XEN_UNWRAP_C_POINTER(wid));
   if (w)
     return(XEN_LIST_2(C_TO_XEN_INT(widget_x(w)),
-		  C_TO_XEN_INT(widget_y(w))));
+		      C_TO_XEN_INT(widget_y(w))));
   XEN_ERROR(NO_SUCH_WIDGET,
-	XEN_LIST_2(C_TO_XEN_STRING(S_widget_position),
-		  wid));
+	    XEN_LIST_2(C_TO_XEN_STRING(S_widget_position),
+		       wid));
   return(XEN_EMPTY_LIST);
 }
 
@@ -520,9 +520,9 @@ static XEN g_set_widget_position(XEN wid, XEN xy)
 			XEN_TO_C_INT(XEN_CAR(xy)),
 			XEN_TO_C_INT(XEN_CADR(xy)));
   else XEN_ERROR(NO_SUCH_WIDGET,
-	     XEN_LIST_3(C_TO_XEN_STRING("set-" S_widget_position),
-		    wid,
-		    xy));
+		 XEN_LIST_3(C_TO_XEN_STRING("set-" S_widget_position),
+			    wid,
+			    xy));
   return(wid);
 }
 
@@ -534,10 +534,10 @@ static XEN g_widget_size(XEN wid)
   w = (GUI_WIDGET)(XEN_UNWRAP_C_POINTER(wid));
   if (w)
     return(XEN_LIST_2(C_TO_XEN_INT(widget_width(w)),
-		  C_TO_XEN_INT(widget_height(w))));
+		      C_TO_XEN_INT(widget_height(w))));
   XEN_ERROR(NO_SUCH_WIDGET,
-	XEN_LIST_2(C_TO_XEN_STRING(S_widget_size),
-		  wid));
+	    XEN_LIST_2(C_TO_XEN_STRING(S_widget_size),
+		       wid));
   return(XEN_EMPTY_LIST);
 }
 
@@ -552,9 +552,9 @@ static XEN g_set_widget_size(XEN wid, XEN wh)
 		    XEN_TO_C_INT(XEN_CAR(wh)),
 		    XEN_TO_C_INT(XEN_CADR(wh)));
   else XEN_ERROR(NO_SUCH_WIDGET,
-	     XEN_LIST_3(C_TO_XEN_STRING("set-" S_widget_size),
-		    wid,
-		    wh));
+		 XEN_LIST_3(C_TO_XEN_STRING("set-" S_widget_size),
+			    wid,
+			    wh));
   return(wid);
 }
 
@@ -600,8 +600,8 @@ static XEN g_widget_text(XEN wid)
 #endif
     }
   else XEN_ERROR(NO_SUCH_WIDGET,
-	     XEN_LIST_2(C_TO_XEN_STRING(S_widget_text),
-		    wid));
+		 XEN_LIST_2(C_TO_XEN_STRING(S_widget_text),
+			    wid));
   return(res);
 }
 
@@ -624,9 +624,9 @@ static XEN g_set_widget_text(XEN wid, XEN text)
 #endif
     }
   else XEN_ERROR(NO_SUCH_WIDGET,
-	     XEN_LIST_3(C_TO_XEN_STRING("set-" S_widget_text),
-		    wid,
-		    text));
+		 XEN_LIST_3(C_TO_XEN_STRING("set-" S_widget_text),
+			    wid,
+			    text));
   return(text);
 }
 
@@ -646,9 +646,9 @@ static XEN g_recolor_widget(XEN wid, XEN color)
 #endif
     }
   else XEN_ERROR(NO_SUCH_WIDGET,
-	     XEN_LIST_3(C_TO_XEN_STRING(S_recolor_widget),
-		    wid,
-		    color));
+		 XEN_LIST_3(C_TO_XEN_STRING(S_recolor_widget),
+			    wid,
+			    color));
   return(color);
 }
 
@@ -666,9 +666,9 @@ static XEN g_set_widget_foreground(XEN wid, XEN color)
 #endif
     }
   else XEN_ERROR(NO_SUCH_WIDGET,
-	     XEN_LIST_3(C_TO_XEN_STRING("set-widget-foreground"),
-		    wid,
-		    color));
+		 XEN_LIST_3(C_TO_XEN_STRING("set-widget-foreground"),
+			    wid,
+			    color));
   return(color);
 }
 
@@ -688,8 +688,8 @@ static XEN g_hide_widget(XEN wid)
 #endif
     }
   else XEN_ERROR(NO_SUCH_WIDGET,
-	     XEN_LIST_2(C_TO_XEN_STRING(S_hide_widget),
-		    wid));
+		 XEN_LIST_2(C_TO_XEN_STRING(S_hide_widget),
+			    wid));
   return(wid);
 }
 
@@ -708,8 +708,8 @@ static XEN g_show_widget(XEN wid)
 #endif
     }
   else XEN_ERROR(NO_SUCH_WIDGET,
-	     XEN_LIST_2(C_TO_XEN_STRING(S_show_widget),
-		    wid));
+		 XEN_LIST_2(C_TO_XEN_STRING(S_show_widget),
+			    wid));
   return(wid);
 }
 
@@ -722,8 +722,8 @@ static XEN g_focus_widget(XEN wid)
   if (w)
     goto_window(w);
   else XEN_ERROR(NO_SUCH_WIDGET,
-	     XEN_LIST_2(C_TO_XEN_STRING(S_focus_widget),
-		    wid));
+		 XEN_LIST_2(C_TO_XEN_STRING(S_focus_widget),
+			    wid));
   return(wid);
 }
 
@@ -735,12 +735,16 @@ static XEN g_colormap_ref(XEN map, XEN pos)
   XEN_ASSERT_TYPE(XEN_INTEGER_P(pos), pos, XEN_ARG_2, "colormap-ref", "an integer");
   get_current_color(XEN_TO_C_INT(map), XEN_TO_C_INT(pos), &r, &g, &b);
   return(XEN_LIST_3(C_TO_XEN_DOUBLE((float)r / 65535.0),
-		C_TO_XEN_DOUBLE((float)g / 65535.0),
-		C_TO_XEN_DOUBLE((float)b / 65535.0)));
+		    C_TO_XEN_DOUBLE((float)g / 65535.0),
+		    C_TO_XEN_DOUBLE((float)b / 65535.0)));
 }
 
 static XEN g_snd_gcs(void)
 {
+  #define H_snd_gcs "(" S_snd_gcs ") -> list of Snd graphics contexts (basic selected_basic combined \
+cursor selected_cursor selection selected_selection erase selected_erase mark selected_mark mix \
+selected_mix fltenv_basic fltenv_data speed)"
+
   snd_state *ss;
   state_context *sx;
   ss = get_global_state();
@@ -892,6 +896,6 @@ void g_init_draw(void)
   XEN_DEFINE_PROCEDURE("colormap-ref", g_colormap_ref_w, 2, 0, 0, H_colormap_ref);
   XEN_DEFINE_CONSTANT("colormap-size", COLORMAP_SIZE, "colormap size");
 
-  XEN_DEFINE_PROCEDURE(S_snd_gcs, g_snd_gcs, 0, 0, 0, "(" S_snd_gcs ") -> list of Snd graphics contexts");
+  XEN_DEFINE_PROCEDURE(S_snd_gcs, g_snd_gcs, 0, 0, 0, H_snd_gcs);
 }
 #endif

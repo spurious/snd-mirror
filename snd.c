@@ -38,7 +38,7 @@ static void mus_error2snd(int type, char *msg)
 static void mus_print2snd(char *msg)
 {
   add_to_error_history(get_global_state(), msg, FALSE);
-  if (record_dialog_is_active) recorder_error(msg);
+  if (record_dialog_is_active()) recorder_error(msg);
   listener_append_and_prompt(get_global_state(), msg);
 }
 

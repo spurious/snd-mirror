@@ -3120,6 +3120,7 @@ static mark *play_mark = NULL;
 static int click_within_graph = NOGRAPH;
 static int fft_axis_start = 0;
 static int mix_tag = NO_MIX_TAG;
+static chan_info *dragged_cp;
 
 void graph_button_press_callback(chan_info *cp, int x, int y, int key_state, int button, TIME_TYPE time)
 {
@@ -3129,6 +3130,7 @@ void graph_button_press_callback(chan_info *cp, int x, int y, int key_state, int
   if (sp->channel_style == CHANNELS_COMBINED) cp = which_channel(sp, y);
   mouse_down_time = time;
   select_channel(sp, cp->chan);
+  dragged_cp = cp;
   dragged = 0;
   finish_selection_creation();
   mouse_mark = hit_mark(cp, x, y, key_state);
@@ -3174,7 +3176,13 @@ void graph_button_release_callback(chan_info *cp, int x, int y, int key_state, i
   char *str;
   sp = cp->sound;
   ss = cp->state;
-  if (sp->channel_style == CHANNELS_COMBINED) cp = which_channel(sp, y);
+  if (sp->channel_style == CHANNELS_COMBINED)
+    {
+      if ((dragged) && (dragged_cp))
+	cp = dragged_cp;
+      else cp = which_channel(sp, y);
+    }
+  dragged_cp = NULL;
   if (!dragged)
     {
       if (play_mark)
@@ -3356,7 +3364,12 @@ void graph_button_motion_callback(chan_info *cp, int x, int y, TIME_TYPE time, T
   mouse_time = time;
   if ((mouse_time - mouse_down_time) < (click_time / 2)) return;
   sp = cp->sound;
-  if (sp->channel_style == CHANNELS_COMBINED) cp = which_channel(sp, y);
+  if (sp->channel_style == CHANNELS_COMBINED) /* in united chans, dragging mark shouldn't change channel */
+    {
+      if (dragged_cp)
+	cp = dragged_cp;
+      else cp = which_channel(sp, y);
+    }
   select_channel(sp, cp->chan);
   if (mouse_mark)
     {

@@ -1390,7 +1390,7 @@
 	(if (not (string=? str "18-Oct 06:56 PDT"))
 	    (snd-display ";mus-sound-write-date oboe.snd: ~A?" str)))
       (let ((str (strftime "%d-%b %H:%M %Z" (localtime (mus-sound-write-date "pistol.snd")))))
-	(if (not (string=? str "05-Jan 15:43 PST"))
+	(if (not (string=? str "30-Dec 12:04 PST"))
 	    (snd-display ";mus-sound-write-date pistol.snd: ~A?" str)))
 
       (if com (snd-display ";oboe: mus-sound-comment ~A?" com))

@@ -2916,6 +2916,13 @@ static XEN g_channel_amp_envs(XEN filename, XEN chan, XEN pts, XEN peak_func, XE
    *   if peak_func, use it to get peak_env_info file if needed
    *   if done_func set workproc that calls it when done
    */
+  /* TODO: extsnd.html and auto-testing
+   */
+  #define H_channel_amp_envs "(" S_channel_amp_envs " file chan size peak-file-func work-proc-func)\n\
+return two vectors of length 'size' containing y vals (min and max) of file's channel chan's amp envs. \
+'peak-file-func' if any is used to get the name of the associated peak_env_info file if the file is very large. \
+'work-proc-func' is called when the amp envs are ready if the amp envs are gathered in the background."
+
   char *fullname, *peakname;
   int len, chn;
   snd_info *sp;
@@ -3378,6 +3385,6 @@ If it returns #t, the usual informative minibuffer babbling is squelched."
   XEN_DEFINE_PROCEDURE(S_peak_env_info, g_peak_env_info_w, 0, 3, 0, H_peak_env_info);
   XEN_DEFINE_PROCEDURE(S_write_peak_env_info_file, g_write_peak_env_info_file_w, 3, 0, 0, H_write_peak_env_info_file);
   XEN_DEFINE_PROCEDURE(S_read_peak_env_info_file,  g_read_peak_env_info_file_w,  3, 0, 0, H_read_peak_env_info_file);
-  XEN_DEFINE_PROCEDURE(S_channel_amp_envs, g_channel_amp_envs_w, 3, 2, 0, "TODO: add help/test/doc for channel-amp-envs");
+  XEN_DEFINE_PROCEDURE(S_channel_amp_envs, g_channel_amp_envs_w, 3, 2, 0, H_channel_amp_envs);
 }
 

@@ -960,73 +960,51 @@ Reverb-feedback sets the scaler on the feedback.\n\
     menu))
 
 (define selection-popup-menu 
-  (make-popup-menu 
-   "selection-popup"
-   (|Widget (caddr (main-widgets)))
-   (list |XmNpopupEnabled #t
-	  |XmNbackground (|Pixel (snd-pixel (highlight-color))))
+  (let ((every-menu (list |XmNbackground (|Pixel (snd-pixel (highlight-color))))))
+    (make-popup-menu 
+     "selection-popup"
+     (|Widget (caddr (main-widgets)))
+     (list |XmNpopupEnabled #t
+	   |XmNbackground (|Pixel (snd-pixel (highlight-color))))
    (list
-    (list "Selection" 
-	  |xmLabelWidgetClass 
-	   (list |XmNbackground (|Pixel (snd-pixel (highlight-color)))))
-    (list "sep"
-	  |xmSeparatorWidgetClass
-	   (list |XmNbackground (|Pixel (snd-pixel (highlight-color)))))
-    (list "play"
-	  |xmPushButtonWidgetClass
-	   (list |XmNbackground (|Pixel (snd-pixel (highlight-color))))
-	   (lambda (w c i) 
-	     (play-selection)))
-    (list "delete"
-	  |xmPushButtonWidgetClass
-	   (list |XmNbackground (|Pixel (snd-pixel (highlight-color))))
-	   (lambda (w c i) 
-	     (delete-selection)))
-    (list "zero"
-	  |xmPushButtonWidgetClass
-	   (list |XmNbackground (|Pixel (snd-pixel (highlight-color))))
-	   (lambda (w c i) 
-	     (scale-selection-by 0.0)))
-    (list "crop"
-	  |xmPushButtonWidgetClass
-	   (list |XmNbackground (|Pixel (snd-pixel (highlight-color))))
-	   (lambda (w c i)
-	     ;; delete everything except selection
-	     (for-each
-	      (lambda (selection)
-		(as-one-edit
-		 (lambda ()
-		   (let* ((snd (car selection))
-			  (chn (cadr selection))
-			  (beg (selection-position snd chn))
-			  (len (selection-length snd chn)))
-		     (if (> beg 0) 
-			 (delete-samples 0 beg snd chn))
-		     (if (< len (frames snd chn))
-			 (delete-samples (+ len 1) (- (frames snd chn) len) snd chn))))))
-	      (let ((sndlist '()))
-		(map (lambda (snd)
-		       (do ((i (1- (channels snd)) (1- i)))
-			   ((< i 0))
-			 (if (selection-member? snd i)
-			     (set! sndlist (cons (list snd i) sndlist)))))
-		     (sounds))
-		sndlist))))
-    (list "save as"
-	  |xmPushButtonWidgetClass
-	   (list |XmNbackground (|Pixel (snd-pixel (highlight-color))))
-	   (lambda (w c i) 
-	     (edit-save-as-dialog)))
-    (list "reverse"
-	  |xmPushButtonWidgetClass
-	   (list |XmNbackground (|Pixel (snd-pixel (highlight-color))))
-	   (lambda (w c i) 
-	     (reverse-selection)))
-    (list "invert"
-	  |xmPushButtonWidgetClass
-	   (list |XmNbackground (|Pixel (snd-pixel (highlight-color))))
-	   (lambda (w c i) 
-	     (scale-selection-by -1))))))
+    (list "Selection" |xmLabelWidgetClass      every-menu)
+    (list "sep"       |xmSeparatorWidgetClass  every-menu)
+    (list "Play"      |xmPushButtonWidgetClass every-menu (lambda (w c i) (play-selection)))
+    (list "Delete"    |xmPushButtonWidgetClass every-menu (lambda (w c i) (delete-selection)))
+    (list "Zero"      |xmPushButtonWidgetClass every-menu (lambda (w c i) (scale-selection-by 0.0)))
+    (list "Crop"      |xmPushButtonWidgetClass every-menu
+	  (lambda (w c i)
+	    ;; delete everything except selection
+	    (for-each
+	     (lambda (selection)
+	       (as-one-edit
+		(lambda ()
+		  (let* ((snd (car selection))
+			 (chn (cadr selection))
+			 (beg (selection-position snd chn))
+			 (len (selection-length snd chn)))
+		    (if (> beg 0) 
+			(delete-samples 0 beg snd chn))
+		    (if (< len (frames snd chn))
+			(delete-samples (+ len 1) (- (frames snd chn) len) snd chn))))))
+	     (let ((sndlist '()))
+	       (map (lambda (snd)
+		      (do ((i (1- (channels snd)) (1- i)))
+			  ((< i 0))
+			(if (selection-member? snd i)
+			    (set! sndlist (cons (list snd i) sndlist)))))
+		    (sounds))
+	       sndlist))))
+    (list "Save as"   |xmPushButtonWidgetClass every-menu (lambda (w c i) (edit-save-as-dialog)))
+    (list "Copy->New" |xmPushButtonWidgetClass every-menu 
+	  (let ((selctr 0)) 
+	    (lambda (w c i) 
+	      (let ((new-file-name (format #f "newf-~D.snd" selctr)))
+		(set! selctr (+ selctr 1))
+		(save-selection new-file-name)
+		(open-sound new-file-name)))))
+    (list "Reverse"   |xmPushButtonWidgetClass every-menu (lambda (w c i) (reverse-selection)))
+    (list "Invert"    |xmPushButtonWidgetClass every-menu (lambda (w c i) (scale-selection-by -1)))))))
 
 (define (add-selection-popup)
   (let ((popups '()))
@@ -1174,8 +1152,8 @@ Reverb-feedback sets the scaler on the feedback.\n\
 	(|XSetForeground dpy dgc (black-pixel))
 	(|XDrawArc dpy pixwin dgc 1 1 14 14 0 (* 64 360))
 	(|XDrawLine dpy pixwin dgc 8 8
-			(+ 8 (inexact->exact (* 7 (sin (* i (/ 3.14169 6.0))))))
-			(- 8 (inexact->exact (* 7 (cos (* i (/ 3.14169 6.0)))))))))
+			(+ 8 (inexact->exact (* 7 (sin (* i (/ 3.1416 6.0))))))
+			(- 8 (inexact->exact (* 7 (cos (* i (/ 3.1416 6.0)))))))))
     (|XSetBackground dpy dgc (|Pixel (snd-pixel (graph-color))))
     (|XSetForeground dpy dgc (|Pixel (snd-pixel (data-color))))
     (lambda (snd hour)

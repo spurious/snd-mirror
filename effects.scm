@@ -87,7 +87,7 @@
 	       (all-chans))
 	(trim-front-one-channel (selected-sound) (selected-channel)))))
 
-(add-to-menu effects-menu "trim front" trim-front)
+(add-to-menu effects-menu "Trim front" trim-front)
 
 (define (trim-back)
   "trim-back finds the last mark in each of the syncd channels and removes all samples after it"
@@ -105,7 +105,7 @@
 	       (all-chans))
 	(trim-back-one-channel (selected-sound) (selected-channel)))))
 
-(add-to-menu effects-menu "trim back" trim-back)
+(add-to-menu effects-menu "Trim back" trim-back)
 
 
 ;;; -------- crop (trims front and back)
@@ -129,7 +129,7 @@
 	       (all-chans))
 	(crop-one-channel (selected-sound) (selected-channel)))))
 
-(add-to-menu effects-menu "crop" crop)
+(add-to-menu effects-menu "Crop" crop)
 
 
 ;;; -------- selection -> new file
@@ -143,7 +143,7 @@
 	(save-selection new-file-name)
 	(open-sound new-file-name))))
 
-(add-to-menu effects-menu "selection->new" selection->new)
+(add-to-menu effects-menu "Selection->new" selection->new)
 
 
 ;;; -------- cut selection -> new file
@@ -156,19 +156,19 @@
 	(delete-selection)
 	(open-sound new-file-name))))
 
-(add-to-menu effects-menu "cut selection->new" cut-selection->new)
+(add-to-menu effects-menu "Cut selection->new" cut-selection->new)
 
 
 ;;; -------- insert silence (at cursor, silence-amount in secs)
 (define silence-amount .1)
-(define silence-label "add silence")
+(define silence-label "Add silence")
 
 (add-to-menu effects-menu silence-label (lambda () 
 					  (insert-silence (cursor)
 							  (inexact->exact (* (srate) silence-amount)))))
 
 (set! effects-list (cons (lambda ()
-			   (let ((new-label (format #f "add-silence (~1,2F)" silence-amount)))
+			   (let ((new-label (format #f "Add-silence (~1,2F)" silence-amount)))
 			     (change-menu-label effects-menu silence-label new-label)
 			     (set! silence-label new-label)))
 			 effects-list))
@@ -184,7 +184,7 @@
   (if (selection?)
       (insert-selection (frames))))
 
-(add-to-menu effects-menu "append selection" append-selection)
+(add-to-menu effects-menu "Append selection" append-selection)
 
 
 (add-to-menu effects-menu #f #f) ; separator
@@ -192,13 +192,13 @@
 
 ;;; -------- normalize (peak set by normalize-amount)
 (define normalization 1.0)
-(define normalize-label "normalize")
+(define normalize-label "Normalize")
 
 (define normalize-menu (add-to-menu  effects-menu normalize-label (lambda () (scale-to normalization))))
 
 (set! effects-list (cons (lambda ()
 			   ;; update menu label to show current normalization
-			   (let ((new-label (format #f "normalize (~1,2F)" normalization)))
+			   (let ((new-label (format #f "Normalize (~1,2F)" normalization)))
 			   (change-menu-label effects-menu normalize-label new-label)
 			   (set! normalize-label new-label)))
 			 effects-list))
@@ -206,17 +206,17 @@
 
 
 ;;; -------- invert
-(add-to-menu effects-menu "invert" (lambda () (scale-by -1)))
+(add-to-menu effects-menu "Invert" (lambda () (scale-by -1)))
 
 
 ;;; -------- gain (gain set by gain-amount)
 (define gain-amount 0.5)
-(define gain-label "gain")
+(define gain-label "Gain")
 
 (add-to-menu effects-menu gain-label (lambda () (scale-by gain-amount)))
 
 (set! effects-list (cons (lambda ()
-			   (let ((new-label (format #f "gain (~1,2F)" gain-amount)))
+			   (let ((new-label (format #f "Gain (~1,2F)" gain-amount)))
 			     (change-menu-label effects-menu gain-label new-label)
 			     (set! gain-label new-label)))
 			 effects-list))
@@ -284,12 +284,12 @@
 	       (all-chans))
 	(squelch-one-channel squelch-amount (selected-sound) (selected-channel)))))
 
-(define squelch-label "squelch")
+(define squelch-label "Squelch")
 
 (add-to-menu effects-menu squelch-label squelch)
 
 (set! effects-list (cons (lambda ()
-			   (let ((new-label (format #f "squelch (~1,2F)" squelch-amount)))
+			   (let ((new-label (format #f "Squelch (~1,2F)" squelch-amount)))
 			     (change-menu-label effects-menu squelch-label new-label)
 			     (set! squelch-label new-label)))
 			 effects-list))
@@ -297,7 +297,7 @@
 
 ;;; -------- intensify (contrast-enhancement set by contrast-amount)
 (define contrast-amount 1.0)
-(define contrast-label "intensify")
+(define contrast-label "Intensify")
 
 (define (intensify)
   (let ((peak (maxamp)))
@@ -313,7 +313,7 @@
 (add-to-menu effects-menu contrast-label intensify)
 
 (set! effects-list (cons (lambda ()
-			   (let ((new-label (format #f "intensify (~1,2F)" contrast-amount)))
+			   (let ((new-label (format #f "Intensify (~1,2F)" contrast-amount)))
 			     (change-menu-label effects-menu contrast-label new-label)
 			     (set! contrast-label new-label)))
 			 effects-list))
@@ -326,7 +326,7 @@
 ;;; -------- echo (controlled by echo-length and echo-amount)
 (define echo-length .5) ; i.e. delay between echoes
 (define echo-amount .2)
-(define echo-label "echo")
+(define echo-label "Echo")
 
 (define (cp-echo)
   "echo adds echos spaced by echo-length seconds and scaled by echo-amount"
@@ -339,7 +339,7 @@
 (add-to-menu effects-menu echo-label (lambda () (map-chan-with-sync (lambda () (cp-echo)) "echo")))
 
 (set! effects-list (cons (lambda ()
-			   (let ((new-label (format #f "echo (~1,2F, ~1,2F)" echo-length echo-amount)))
+			   (let ((new-label (format #f "Echo (~1,2F, ~1,2F)" echo-length echo-amount)))
 			     (change-menu-label effects-menu echo-label new-label)
 			     (set! echo-label new-label)))
 			 effects-list))
@@ -360,12 +360,12 @@
 		      inval
 		      (rand-interp ri)))))))
 
-(add-to-menu effects-menu "flange" (lambda () (map-chan-with-sync (lambda () (flange)) "flange")))
+(add-to-menu effects-menu "Flange" (lambda () (map-chan-with-sync (lambda () (flange)) "flange")))
 
 
 ;;; -------- reverberate (reverberation set by reverb-amount)
 (define reverb-amount .05)
-(define reverb-label "reverberate")
+(define reverb-label "Reverberate")
 
 (define (reverberate)
   "reverberate adds reverberation scaled by reverb-amount"
@@ -379,7 +379,7 @@
 (add-to-menu effects-menu reverb-label reverberate)
 
 (set! effects-list (cons (lambda ()
-			   (let ((new-label (format #f "reverb (~1,2F)" reverb-amount)))
+			   (let ((new-label (format #f "Reverb (~1,2F)" reverb-amount)))
 			     (change-menu-label effects-menu reverb-label new-label)
 			     (set! reverb-label new-label)))
 			 effects-list))
@@ -413,7 +413,7 @@
 	   (* .25 sum))
 	(set! sum (+ sum (flanger (vector-ref dlys i) inval)))))))
 
-;(add-to-menu effects-menu "chorus" (lambda () (map-chan-with-sync (lambda () (chorus)) "chorus")))
+;(add-to-menu effects-menu "Chorus" (lambda () (map-chan-with-sync (lambda () (chorus)) "chorus")))
 
 
 (add-to-menu effects-menu #f #f) ; separator
@@ -428,14 +428,14 @@
       (set! lastx inval)
       lasty)))
 
-(add-to-menu effects-menu "remove DC" (lambda () (map-chan-with-sync (lambda () (block-dc)) "block-dc")))
+(add-to-menu effects-menu "Remove DC" (lambda () (map-chan-with-sync (lambda () (block-dc)) "block-dc")))
 
 
 ;;; -------- pitch and time scaling by granular synthesis and sampling rate conversion
 
 (define pitch-scale 1.0)
 (define time-scale 1.0)
-(define expsrc-label "expsrc")
+(define expsrc-label "Expsrc")
 
 (define (cp-expsrc)
   (save-controls)
@@ -452,7 +452,7 @@
 (add-to-menu effects-menu expsrc-label cp-expsrc)
 
 (set! effects-list (cons (lambda ()
-			   (let ((new-label (format #f "expsrc (~1,2F ~1,2F)" pitch-scale time-scale)))
+			   (let ((new-label (format #f "Expsrc (~1,2F ~1,2F)" pitch-scale time-scale)))
 			     (change-menu-label effects-menu expsrc-label new-label)
 			     (set! expsrc-label new-label)))
 			 effects-list))
@@ -474,7 +474,7 @@
 
 (define notch-freq 60.0)
 (define notch-bw 100.0)
-(define notch-label "notch")
+(define notch-label "Notch")
 
 (add-to-menu effects-menu 
 	     notch-label
@@ -482,7 +482,7 @@
 	       (filter-sound (make-butter-band-reject notch-freq notch-bw))))
 
 (set! effects-list (cons (lambda ()
-			   (let ((new-label (format #f "notch (~1,2F ~1,2F)" notch-freq notch-bw)))
+			   (let ((new-label (format #f "Notch (~1,2F ~1,2F)" notch-freq notch-bw)))
 			     (change-menu-label effects-menu notch-label new-label)
 			     (set! notch-label new-label)))
 			 effects-list))
@@ -501,7 +501,7 @@
     (lambda (x)
       (* scaler (apply + (map (lambda (c) (comb c x)) combs))))))
 
-(add-to-menu effects-menu "chordalize" (lambda () (map-chan-with-sync (lambda () (chordalize)) "chordalize")))
+(add-to-menu effects-menu "Chordalize" (lambda () (map-chan-with-sync (lambda () (chordalize)) "chordalize")))
 
 
 ;;; -------- compand
@@ -516,9 +516,9 @@
       (let ((index (+ 8.0 (* 8.0 inval))))
 	(array-interp tbl index 17)))))
 
-(add-to-menu effects-menu "compand" (lambda () (map-chan-with-sync (lambda () (compand)) "compand")))
+(add-to-menu effects-menu "Compand" (lambda () (map-chan-with-sync (lambda () (compand)) "compand")))
 
 ;;; -------- reverse
-(add-to-menu effects-menu "reverse" (lambda () (reverse-sound)))
+(add-to-menu effects-menu "Reverse" (lambda () (reverse-sound)))
 			   
 
