@@ -6211,8 +6211,8 @@ Float *mus_make_fft_window_with_window(int type, int size, Float beta, Float *wi
                                  gsl_complex_arccosh_real(alpha),
 				 (double)size)));
 	/* den(ominator) not really needed -- we're normalizing to 1.0 */
-	rl = (Float *)clm_calloc(size, sizeof(Float), "Dolph-Chebychev buffer");
-	im = (Float *)clm_calloc(size, sizeof(Float), "Dolph-Chebychev buffer");
+	rl = (Float *)clm_calloc(size, sizeof(Float), "Dolph-Chebyshev buffer");
+	im = (Float *)clm_calloc(size, sizeof(Float), "Dolph-Chebyshev buffer");
 	for (i = 0, angle = 0.0; i < size; i++, angle += freq)
 	  {
 	    val = gsl_complex_mul_real(
