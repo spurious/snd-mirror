@@ -1,8 +1,8 @@
 # examp.rb -- Guile -> Ruby translation
 
 # Translator/Author: Michael Scholz <scholz-micha@gmx.de>
-# Last: Tue Mar 04 04:57:57 CET 2003
-# Version: $Revision: 1.12 $
+# Last: Tue Mar 18 01:21:09 CET 2003
+# Version: $Revision: 1.38 $
 
 #
 # Utilities
@@ -11,11 +11,13 @@
 #
 # get_func_name(n)
 # doc(str), putd(func), snd_putd(func)
-# help()
 # remove_if(func, lst)
 # car(v), cadr(v), caddr(v), cdr(v)
 # warn(str), die(str), message(*args)
-# shell(cmd)
+# let { ... }
+# array?(ary)
+# to_rary(ary)
+# shell(*cmd)
 # get_args(args, key, val)
 # load_init_file(file)
 #
@@ -221,89 +223,6 @@ Example:
   private :set_hook
 end
 
-def help
-  message("## Functions available
-#
-# Class Hook
-#
-# get_func_name(n)
-# doc(str), putd(func), snd_putd(func)
-# help()
-# remove_if(func, lst)
-# car(v), cadr(v), caddr(v), cdr(v)
-# warn(str), die(str), message(*args)
-# shell(cmd)
-# get_args(args, key, val)
-# load_init_file(file)
-#
-# Buffers
-# 
-# open_buffer(file)
-# close_buffer(snd)
-# add_to_reopen_menu(snd)
-# check_reopen_menu(file)
-#
-# FM
-# 
-# fm_bell(start, dur, freq, amp, *args)
-# fm_violin_rb(start, dur, freq, amp, *args)
-# jc_reverb_rb(*args)
-# with_sound(*args) { ... }
-#
-# fm_play(func, outfile, play_f)
-# fm_bell_snd(start, dur, freq, amp, amp_env, index_env, index)
-# n_rev(*args)
-# hello_dentist(frq, amp)
-# ring_mod(freq, gliss_env)
-# am(freq)
-# vibro(speed, depth)
-# fp(sr, osamp, osfreq)
-# compand(h)
-#
-# Module NB (see nb.scm)
-#  nb(note, file), unb(file), prune_db
-#  files_popup_info(type, position, name)
-#  files_popup_quit(type, position, name)
-# 
-# Module Dsp (see dsp.scm)
-#  butter(b, sig)
-#  make_butter_high_pass(freq)
-#  make_butter_low_pass(freq)
-#  make_butter_band_pass(freq, band)
-#  make_butter_band_reject(freq, band)
-#  down_oct(h)
-#  spike(h)
-#  zero_phase(h)
-#  rotate_phase(func)
-#
-# Module Env (see env.scm)
-#  envelope_interp(*args)
-#
-# Module Moog (see moog.scm)
-#  make_moog_filter(freq, q)
-#  moog_filter(m, sig)
-#
-# Global variables
-#
-# $IN_SND               = #{$IN_SND}
-#
-# $rbm_file_name        = \"#{$rbm_file_name}\"
-# $rbm_srate            = #{$rbm_srate}
-# $rbm_channels         = #{$rbm_channels}
-# $rbm_header_type      = Mus_next (#{$rbm_header_type})
-# $rbm_data_format      = Mus_bshort (#{$rbm_data_format})
-# $rbm_comment          = \"#{$rbm_comment}\"
-# $rbm_statistics       = #{$rbm_statistics}
-# $rbm_play             = #{$rbm_play}
-# $rbm_player           = #{$rbm_player}
-# $rbm_reverb_file_name = \"#{$rbm_reverb_file_name}\"
-# $rbm_reverb_channels  = #{$rbm_reverb_channels}
-# $rbm_reverb_func      = #{$rbm_reverb_func}
-#
-# Example: snd_putd :with_sound
-#          prints documentation string of with_sound()\n")
-end
-
 ##
 ## Utilities
 ##
@@ -359,6 +278,33 @@ def message(*args)
   else
     STDOUT.print format(*args) << "\n"
   end
+end
+
+#
+# let { ... }
+# a local environment
+#
+
+def let
+  yield
+rescue
+  warn get_func_name
+end
+
+def array?(ary)
+  ary.class == Array
+end
+
+def to_rary(ary)
+  doc("to_rary(ary)
+Gets an array of two arrays (produced e.g. by all_chans()) and returns
+an rarray combined by that two.
+to_rary([[0, 1, 2], [00, 11, 22]]) ==> [[0, 00], [1, 11], [2, 22]]\n") if ary == :help
+  a = ary.first.dup
+  b = ary.last.dup
+  nary = []
+  a.each_with_index do |x, i| nary << [x, b[i]] end
+  nary
 end
 
 def shell(*cmd)
@@ -1225,8 +1171,25 @@ the associated label.\n") if type == :help
     recolor_widget(widget, basic_color()) if widget
   end
 
-  $mouse_enter_label_hook = lambda { |t, p, n| files_popup_info(t, p, n) }
-  $mouse_leave_label_hook = lambda { |t, p, n| files_popup_quit(t, p, n) }
+  if defined? $mouse_enter_label_hook and $mouse_enter_label_hook
+    old_after = $mouse_enter_label_hook
+    $mouse_enter_label_hook = Hook.new("original") do |t, p, n|
+      old_after.call(t, p, n) if old_after
+    end
+    $mouse_enter_label_hook.add_hook!("NB_Enter") do |t, p, n| files_popup_info(t, p, n) end
+  else
+    $mouse_enter_label_hook = Hook.new("NB_Enter") do |t, p, n| files_popup_info(t, p, n) end
+  end
+
+  if defined? $mouse_leave_label_hook and $mouse_leave_label_hook
+    old_after = $mouse_leave_label_hook
+    $mouse_leave_label_hook = Hook.new("original") do |t, p, n|
+      old_after.call(t, p, n) if old_after
+    end
+    $mouse_leave_label_hook.add_hook!("NB_Leave") do |t, p, n| files_popup_quit(t, p, n) end
+  else
+    $mouse_leave_label_hook = Hook.new("NB_Leave") do |t, p, n| files_popup_quit(t, p, n) end
+  end
 end
 
 module Dsp
@@ -1390,11 +1353,11 @@ env.scm)\n"
     doc("envelope_interp(*args)
 envelope_interp(x, env, base = 1.0) -> value of env at x;
 base controls connecting segment type:
-envelope_interp(.3 [0, 0, 0.5, 1, 1, 0]) -> 0.6\n") if args.first == :help
+envelope_interp(0.3, [0, 0, 0.5, 1, 1, 0]) -> 0.6\n") if args.first == :help
     x = args[0]
     env = args[1]
     base = args[2]
-    if not env
+    if (not env) or env.empty?
       0.0
     elsif x <= env[0] or env[2..-1].empty?
       env[1]
@@ -1402,9 +1365,9 @@ envelope_interp(.3 [0, 0, 0.5, 1, 1, 0]) -> 0.6\n") if args.first == :help
       if env[1] == env[3] or (base and base == 0.0)
         env[1]
       elsif (not base) or base == 1.0
-        env[1] + (x - env[0]) * (env[3] - env[1]) / (env[2] - env[0])
+        env[1] + (x - env[0]) * ((env[3] - env[1]) / (env[2] - env[0]))
       else
-        env[1] + (env[3] - env[1]) / (base - 1.0) *
+        env[1] + ((env[3] - env[1]) / (base - 1.0)) *
                                      ((base ** ((x - env[0]) / (env[2] - env[0]))) - 1.0)
       end
     else
