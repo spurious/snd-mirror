@@ -3304,40 +3304,6 @@ void mus_clear_filter_state(mus_any *gen)
     }
 }
 
-Float mus_y1(mus_any *gen)
-{
-  if ((gen) &&
-      ((gen->core)->extended_type == MUS_SIMPLE_FILTER))
-    return(((smpflt *)gen)->y1);
-  return((Float)mus_error(MUS_NO_Y1, "can't get %s's y1", mus_name(gen)));
-}
-
-Float mus_set_y1(mus_any *gen, Float val)
-{
-  if ((gen) &&
-      ((gen->core)->extended_type == MUS_SIMPLE_FILTER))
-    ((smpflt *)gen)->y1 = val;
-  else mus_error(MUS_NO_Y1, "can't set %s's y1", mus_name(gen));
-  return(val);
-}
-
-Float mus_y2(mus_any *gen)
-{
-  if ((gen) &&
-      ((gen->core)->extended_type == MUS_SIMPLE_FILTER))
-    return(((smpflt *)gen)->y2);
-  return((Float)mus_error(MUS_NO_Y2, "can't get %s's y2", mus_name(gen)));
-}
-
-Float mus_set_y2(mus_any *gen, Float val)
-{
-  if ((gen) &&
-      ((gen->core)->extended_type == MUS_SIMPLE_FILTER))
-    ((smpflt *)gen)->y2 = val;
-  else mus_error(MUS_NO_Y2, "can't set %s's y2", mus_name(gen));
-  return(val);
-}
-
 
 
 /* ---------------- waveshape ---------------- */

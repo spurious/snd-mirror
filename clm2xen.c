@@ -2411,35 +2411,6 @@ static XEN g_mus_set_b2(XEN obj, XEN val)
   return(C_TO_XEN_DOUBLE(mus_set_b2(XEN_TO_MUS_ANY(obj), XEN_TO_C_DOUBLE(val))));
 }
 
-static XEN g_mus_y1(XEN obj)
-{
-  #define H_mus_y1 "(" S_mus_y1 " gen): gen's " S_mus_y1 " value"
-  XEN_ASSERT_TYPE(MUS_XEN_P(obj), obj, XEN_ONLY_ARG, S_mus_y1, "a generator");
-  return(C_TO_XEN_DOUBLE(mus_y1(XEN_TO_MUS_ANY(obj))));
-}
-
-static XEN g_mus_set_y1(XEN obj, XEN val)
-{
-  XEN_ASSERT_TYPE(MUS_XEN_P(obj), obj, XEN_ARG_1, S_setB S_mus_y1, "a generator");
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_2, S_setB S_mus_y1, "a number");
-  return(C_TO_XEN_DOUBLE(mus_set_y1(XEN_TO_MUS_ANY(obj), XEN_TO_C_DOUBLE(val))));
-}
-
-static XEN g_mus_y2(XEN obj)
-{
-  #define H_mus_y2 "(" S_mus_y2 " gen): gen's " S_mus_y2 " value"
-  XEN_ASSERT_TYPE(MUS_XEN_P(obj), obj, XEN_ONLY_ARG, S_mus_y2, "a generator");
-  return(C_TO_XEN_DOUBLE(mus_y2(XEN_TO_MUS_ANY(obj))));
-}
-
-static XEN g_mus_set_y2(XEN obj, XEN val)
-{
-  XEN_ASSERT_TYPE(MUS_XEN_P(obj), obj, XEN_ARG_1, S_setB S_mus_y2, "a generator");
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_2, S_setB S_mus_y2, "a number");
-  return(C_TO_XEN_DOUBLE(mus_set_y2(XEN_TO_MUS_ANY(obj), XEN_TO_C_DOUBLE(val))));
-}
-
-
 
 
 /* ---------------- formant ---------------- */
@@ -3344,7 +3315,12 @@ static XEN g_make_filter_1(xclm_fir_t choice, XEN arg1, XEN arg2, XEN arg3, XEN 
   vals = mus_optkey_unscramble(caller, 3, keys, args, orig_arg);
   if (vals > 0)
     {
-      order = mus_optkey_to_int(keys[0], caller, orig_arg[0], 0);
+      if (!(XEN_KEYWORD_P(keys[0])))
+	{
+	  order = mus_optkey_to_int(keys[0], caller, orig_arg[0], 0);
+	  if (order <= 0)
+	    XEN_OUT_OF_RANGE_ERROR(caller, orig_arg[0], keys[0], "order ~A <= 0?");
+	}
       if (!(XEN_KEYWORD_P(keys[1])))
         {
 	  XEN_ASSERT_TYPE(VCT_P(keys[1]), keys[1], orig_arg[1], caller, "a vct");
@@ -3366,8 +3342,6 @@ static XEN g_make_filter_1(xclm_fir_t choice, XEN arg1, XEN arg2, XEN arg3, XEN 
 	  y = TO_VCT(ywave);
 	}
     }
-  if (order < 0)
-    XEN_OUT_OF_RANGE_ERROR(caller, orig_arg[0], keys[0], "order ~A < 0?");
   if (choice == G_FILTER)
     {
       if (y == NULL)
@@ -5164,10 +5138,6 @@ XEN_NARGIFY_1(g_mus_b2_w, g_mus_b2)
 XEN_NARGIFY_2(g_mus_set_b2_w, g_mus_set_b2)
 XEN_NARGIFY_1(g_mus_a2_w, g_mus_a2)
 XEN_NARGIFY_2(g_mus_set_a2_w, g_mus_set_a2)
-XEN_NARGIFY_1(g_mus_y1_w, g_mus_y1)
-XEN_NARGIFY_2(g_mus_set_y1_w, g_mus_set_y1)
-XEN_NARGIFY_1(g_mus_y2_w, g_mus_y2)
-XEN_NARGIFY_2(g_mus_set_y2_w, g_mus_set_y2)
 XEN_ARGIFY_3(g_formant_bank_w, g_formant_bank)
 XEN_NARGIFY_1(g_formant_p_w, g_formant_p)
 XEN_ARGIFY_6(g_make_formant_w, g_make_formant)
@@ -5422,10 +5392,6 @@ XEN_ARGIFY_7(g_mus_mix_w, g_mus_mix)
 #define g_mus_set_b2_w g_mus_set_b2
 #define g_mus_a2_w g_mus_a2
 #define g_mus_set_a2_w g_mus_set_a2
-#define g_mus_y1_w g_mus_y1
-#define g_mus_set_y1_w g_mus_set_y1
-#define g_mus_y2_w g_mus_y2
-#define g_mus_set_y2_w g_mus_set_y2
 #define g_formant_bank_w g_formant_bank
 #define g_formant_p_w g_formant_p
 #define g_make_formant_w g_make_formant
@@ -5810,9 +5776,6 @@ void mus_xen_init(void)
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_b2, g_mus_b2_w, H_mus_b2, S_setB S_mus_b2, g_mus_set_b2_w,  1, 0, 2, 0);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_a2, g_mus_a2_w, H_mus_a2, S_setB S_mus_a2, g_mus_set_a2_w,  1, 0, 2, 0);
 
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_y1, g_mus_y1_w, H_mus_y1, S_setB S_mus_y1, g_mus_set_y1_w,  1, 0, 2, 0);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_y2, g_mus_y2_w, H_mus_y2, S_setB S_mus_y2, g_mus_set_y2_w,  1, 0, 2, 0);
-
   XEN_DEFINE_PROCEDURE(S_make_wave_train, g_make_wave_train_w, 0, 0, 1, H_make_wave_train);
   XEN_DEFINE_PROCEDURE(S_wave_train,      g_wave_train_w,      1, 1, 0, H_wave_train);
   XEN_DEFINE_PROCEDURE(S_wave_train_p,    g_wave_train_p_w,    1, 0, 0, H_wave_train_p);
@@ -6190,8 +6153,6 @@ the closer the radius is to 1.0, the narrower the resonance."
 	       S_mus_srate,
 	       S_mus_width,
 	       S_mus_xcoeffs,
-	       S_mus_y1,
-	       S_mus_y2,
 	       S_mus_ycoeffs,
 	       S_notch,
 	       S_notch_p,

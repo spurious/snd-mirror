@@ -198,8 +198,6 @@
 #define S_mus_srate                  "mus-srate"
 #define S_mus_width                  "mus-width"
 #define S_mus_xcoeffs                "mus-xcoeffs"
-#define S_mus_y1                     "mus-y1"
-#define S_mus_y2                     "mus-y2"
 #define S_mus_ycoeffs                "mus-ycoeffs"
 #define S_notch                      "notch"
 #define S_notch_p                    "notch?"

@@ -138,7 +138,6 @@ static XEN optimization_hook;
 #define INTEGER_TO_STRING_WITH_RADIX(a, b)  XEN_TO_C_STRING(scm_number_to_string(R_C_TO_XEN_INT(a), R_C_TO_XEN_INT(b)))
 #define DOUBLE_TO_STRING(a)                 XEN_TO_C_STRING(scm_number_to_string(C_TO_XEN_DOUBLE(a), XEN_UNDEFINED))
 #define DOUBLE_TO_STRING_WITH_RADIX(a, b)   XEN_TO_C_STRING(scm_number_to_string(C_TO_XEN_DOUBLE(a), R_C_TO_XEN_INT(b)))
-#define XEN_PROCEDURE_SOURCE_TO_C_STRING(a) XEN_AS_STRING(scm_procedure_source(a))
 #define XEN_LIST_REF_WRAPPED(a, b)          scm_list_ref(a, b)
 #define XEN_OBJECT_PROPERTY(Obj, Prop)      scm_object_property(Obj, Prop)
 #define XEN_SET_OBJECT_PROPERTY(Obj, Prop, Val) scm_set_object_property_x(Obj, Prop, Val)
@@ -7598,8 +7597,6 @@ GEN0(a1)
 GEN0(a2)
 GEN0(b1)
 GEN0(b2)
-GEN0(y1)
-GEN0(y2)
 GEN0(feedforward)
 GEN0(feedback)
 
@@ -7779,8 +7776,6 @@ SET_DBL_GEN0(a1)
 SET_DBL_GEN0(a2)
 SET_DBL_GEN0(b1)
 SET_DBL_GEN0(b2)
-SET_DBL_GEN0(y1)
-SET_DBL_GEN0(y2)
 SET_DBL_GEN0(phase)
 SET_DBL_GEN0(frequency)
 SET_DBL_GEN0(formant_radius)
@@ -10021,6 +10016,13 @@ static xen_value *walk(ptree *prog, XEN form, walk_result_t walk_result)
 	  /* case R_LIST:    can't happen */
 	case R_PAIR:    return(make_xen_value(R_PAIR, add_xen_to_ptree(prog, form), R_CONSTANT)); break;
 	case R_KEYWORD: return(make_xen_value(R_KEYWORD, add_xen_to_ptree(prog, form), R_CONSTANT)); break;
+
+	  /* TODO: need a way to distinguish newer Guiles (#@lambda) */
+	case R_UNSPECIFIED:
+	  if (strcmp(XEN_AS_STRING(form), "#@lambda") == 0)
+	    return(make_xen_value(R_INT, add_int_to_ptree(prog, 0), R_CONSTANT)); break;
+	  break;
+
 	default:
 	  if (type > R_ANY)
 	    return(make_xen_value(type, add_xen_to_ptree(prog, form), R_CONSTANT));
@@ -10774,8 +10776,6 @@ static void init_walkers(void)
   INIT_WALKER(S_mus_a2, make_walker(mus_a2_0, NULL, mus_set_a2_1, 1, 1, R_FLOAT, false, 1, R_CLM));
   INIT_WALKER(S_mus_b1, make_walker(mus_b1_0, NULL, mus_set_b1_1, 1, 1, R_FLOAT, false, 1, R_CLM));
   INIT_WALKER(S_mus_b2, make_walker(mus_b2_0, NULL, mus_set_b2_1, 1, 1, R_FLOAT, false, 1, R_CLM));
-  INIT_WALKER(S_mus_y1, make_walker(mus_y1_0, NULL, mus_set_y1_1, 1, 1, R_FLOAT, false, 1, R_CLM));
-  INIT_WALKER(S_mus_y2, make_walker(mus_y2_0, NULL, mus_set_y2_1, 1, 1, R_FLOAT, false, 1, R_CLM));
   INIT_WALKER(S_mus_data, make_walker(mus_data_1, NULL, NULL, 1, 1, R_VCT, false, 1, R_XCLM));
   INIT_WALKER(S_mus_xcoeffs, make_walker(mus_xcoeffs_1, NULL, NULL, 1, 1, R_VCT, false, 1, R_XCLM));
   INIT_WALKER(S_mus_ycoeffs, make_walker(mus_ycoeffs_1, NULL, NULL, 1, 1, R_VCT, false, 1, R_XCLM));

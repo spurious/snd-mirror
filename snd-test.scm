@@ -12755,18 +12755,10 @@ EDITS: 5
       (let ((gen (make-two-pole .4 .7 .3)))
 	(let ((val (gen 1.0)))
 	  (if (fneq val .4) (snd-display ";a0->out 2pole: ~A" val))
-	  (if (fneq (mus-y1 gen) .4) (snd-display ";a0->out 2pole y1 (0.4): ~A" (mus-y1 val)))
-	  (if (fneq (mus-y2 gen) 0.0) (snd-display ";a0->out 2pole y2 (0.0): ~A" (mus-y2 val)))
 	  (set! val (gen 0.5))
 	  (if (fneq val -.08) (snd-display ";a0->out 2pole (-0.08): ~A" val))
-	  (if (fneq (mus-y1 gen) -0.08) (snd-display ";a0->out 2pole y1 (-0.08): ~A" (mus-y1 val)))
-	  (if (fneq (mus-y2 gen) 0.4) (snd-display ";a0->out 2pole y2 (0.4): ~A" (mus-y2 val)))
-	  (set! (mus-y1 gen) .1)
-	  (set! (mus-y2 gen) .2)
-	  (if (fneq (mus-y1 gen) .1) (snd-display ";a0->out 2pole set y1 (.1): ~A" (mus-y1 val)))
-	  (if (fneq (mus-y2 gen) .2) (snd-display ";a0->out 2pole set y2 (.2): ~A" (mus-y2 val)))
 	  (set! val (gen 1.0))
-	  (if (fneq val 0.27) (snd-display ";a0->out 2pole (0.27): ~A" val))))
+	  (if (fneq val 0.336) (snd-display ";a0->out 2pole (0.336): ~A" val))))
       
       (let ((var (catch #t (lambda () (make-two-pole :b1 3.0)) (lambda args args))))
 	(if (not (eq? (car var) 'mus-error))
@@ -12948,18 +12940,6 @@ EDITS: 5
       (let ((var (catch #t (lambda () (make-delay 32 :max-size (* 1024 1024 40))) (lambda args args))))
 	(if (not (eq? (car var) 'out-of-range))
 	    (snd-display ";make-delay huge line: ~A" var)))
-      (for-each
-       (lambda (func)
-	 (let ((var (catch #t (lambda () (func (make-oscil))) (lambda args args))))
-	   (if (not (eq? (car var) 'mus-error))
-	       (snd-display ";~A should be bad gen: ~A" func var))))
-       (list mus-y1 mus-y2))
-      (for-each
-       (lambda (func)
-	 (let ((var (catch #t (lambda () (let ((gen (make-oscil))) (set! (func gen) 1.0))) (lambda args args))))
-	   (if (not (eq? (car var) 'mus-error))
-	       (snd-display ";set ~A should be bad gen: ~A" func var))))
-       (list mus-y1 mus-y2))
       
       (let ((amps (make-vector 3))
 	    (oscils (make-vector 3))
@@ -13518,6 +13498,9 @@ EDITS: 5
       (let ((var (catch #t (lambda () (make-filter :order 2 :xcoeffs (vct 1.0 0.5) :ycoeffs (vct 2.0 1.0 0.5))) (lambda args args))))
 	(if (not (eq? (car var) 'wrong-type-arg))
 	    (snd-display ";make-filter bad coeffs: ~A" var)))
+      (let ((var (catch #t (lambda () (make-filter :order 0 :xcoeffs (vct 1.0 0.5))))))
+	(if (not (eq? (car var) 'out-of-range))
+	    (snd-display ";make-filter bad order: ~A" var)))
       (let ((var (catch #t (lambda () (make-fir-filter :order 22 :xcoeffs (vct 1.0 0.5))) (lambda args args))))
 	(if (not (eq? (car var) 'wrong-type-arg))
 	    (snd-display ";make-fir-filter bad coeffs: ~A" var)))
@@ -16602,11 +16585,11 @@ EDITS: 5
 			    0.0 0.0 (lambda (dir) 0.0) 0.0 0.0 0.0 0.0
 			    0.0 0.0 0.0 0.0 0.0 (lambda (dir) 0.0)
 			    0.0 0.0))
-	    (generic-procs (list mus-a0 mus-a1 mus-a2 mus-b1 mus-b2 mus-y1 mus-y2 mus-bank mus-channel mus-channels mus-cosines mus-data
+	    (generic-procs (list mus-a0 mus-a1 mus-a2 mus-b1 mus-b2 mus-bank mus-channel mus-channels mus-cosines mus-data
 				 mus-feedback mus-feedforward mus-formant-radius mus-frequency mus-hop mus-increment mus-length
 				 mus-location mus-mix mus-order mus-phase mus-ramp mus-random mus-run mus-scaler mus-xcoeffs
 				 mus-ycoeffs))
-	    (generic-names (list 'mus-a0 'mus-a1 'mus-a2 'mus-b1 'mus-b2 'mus-y1 'mus-y2 'mus-bank 'mus-channel 
+	    (generic-names (list 'mus-a0 'mus-a1 'mus-a2 'mus-b1 'mus-b2 'mus-bank 'mus-channel 
 				 'mus-channels 'mus-cosines 'mus-data
 				 'mus-feedback 'mus-feedforward 'mus-formant-radius 'mus-frequency 'mus-hop 'mus-increment 'mus-length
 				 'mus-location 'mus-mix 'mus-order 'mus-phase 'mus-ramp 'mus-random 'mus-run 'mus-scaler 'mus-xcoeffs
@@ -31576,10 +31559,6 @@ EDITS: 2
        (if (fneq (mus-b1 fr) .5) (display ";b1 messed up"))
        (set! (mus-b2 fr) .5)
        (if (fneq (mus-b2 fr) .5) (display ";b2 messed up"))
-       (set! (mus-y1 fr) .5)
-       (if (fneq (mus-y1 fr) .5) (display ";y1 messed up"))
-       (set! (mus-y2 fr) .5)
-       (if (fneq (mus-y2 fr) .5) (display ";y2 messed up"))
        (set! (mus-formant-radius fr) .2)
        (if (fneq (mus-formant-radius fr) .2) (display ";formant-radius messed up"))
        (set! (mus-length dl) 24)
@@ -34729,8 +34708,6 @@ EDITS: 2
 		  (pf (make-two-pole .4 .7 .3))
 		  (z1 0.0) (z2 0.0) (z3 0.0)
 		  (p1 0.0) (p2 0.0) (p3 0.0)
-		  (y11 0.0) (y12 0.0) (y13 0.0)
-		  (y21 0.0) (y22 0.0) (y23 0.0)
 		  (v (make-vct 1)))
 	      (vct-map! v 
 			(lambda ()
@@ -34738,29 +34715,14 @@ EDITS: 2
 			  (set! z2 (two-zero zf 0.5))
 			  (set! z3 (two-zero zf 1.0))
 			  (set! p1 (two-pole pf 1.0))
-			  (set! y11 (mus-y1 pf))
-			  (set! y21 (mus-y2 pf))
 			  (set! p2 (two-pole pf 0.5))
-			  (set! y12 (mus-y1 pf))
-			  (set! y22 (mus-y2 pf))
-			  (set! (mus-y1 pf) .1)
-			  (set! (mus-y2 pf) .2)
-			  (set! y13 (mus-y1 pf))
-			  (set! y23 (mus-y2 pf))
 			  (set! p3 (two-pole pf 1.0))
-			  
 			  0.0))
 	      (if (fneq z1 .4) (snd-display ";run 2zero->0.4: ~A" z1))
 	      (if (fneq z2 .9) (snd-display ";run 2zero->0.9: ~A" z2))
 	      (if (fneq z3 1.05) (snd-display ";run 2zero->1.05: ~A" z3))
 	      (if (fneq p1 .4) (snd-display ";run a0->out 2pole: ~A" p1))
-	      (if (fneq y11 .4) (snd-display ";run a0->out 2pole y1 (0.4): ~A" y11))
-	      (if (fneq y21 0.0) (snd-display ";run a0->out 2pole y2 (0.0): ~A" y21))
 	      (if (fneq p2 -.08) (snd-display ";run a0->out 2pole (-0.08): ~A" p2))
-	      (if (fneq y12 -0.08) (snd-display ";run a0->out 2pole y1 (-0.08): ~A" y12))
-	      (if (fneq y22 0.4) (snd-display ";run a0->out 2pole y2 (0.4): ~A" y22))
-	      (if (fneq y13 .1) (snd-display ";run a0->out 2pole set y1 (.1): ~A" y13))
-	      (if (fneq y23 .2) (snd-display ";run a0->out 2pole set y2 (.2): ~A" y23))
 	      (if (fneq p3 0.27) (snd-display ";run a0->out 2pole (0.27): ~A" p3)))
 	    
 	    (let ((flt (make-formant .1 1000.0))
@@ -47214,7 +47176,7 @@ EDITS: 2
 		     make-pulse-train make-rand make-rand-interp make-readin make-sample->file make-sawtooth-wave
 		     make-sine-summation make-square-wave make-src make-sum-of-cosines make-sum-of-sines make-table-lookup make-triangle-wave
 		     make-two-pole make-two-zero make-wave-train make-waveshape make-zpolar mixer* mixer-ref mixer-set! mixer?
-		     multiply-arrays mus-a0 mus-a1 mus-a2 mus-array-print-length mus-b1 mus-b2 mus-y1 mus-y2 mus-channel mus-channels
+		     multiply-arrays mus-a0 mus-a1 mus-a2 mus-array-print-length mus-b1 mus-b2 mus-channel mus-channels
 		     mus-close mus-cosines mus-data mus-feedback mus-feedforward mus-fft mus-formant-radius mus-frequency
 		     mus-hop mus-increment mus-input? mus-file-name mus-length mus-location mus-mix mus-order mus-output?  mus-phase
 		     mus-ramp mus-random mus-scaler mus-srate mus-xcoeffs mus-ycoeffs notch notch? one-pole one-pole?
@@ -47313,7 +47275,7 @@ EDITS: 2
 			 minibuffer-history-length read-only right-sample sample samples selected-channel colormap-size
 			 selected-sound selection-position selection-frames selection-member? sound-loop-info
 			 srate time-graph-type x-position-slider x-zoom-slider tempo-control-bounds
-			 y-position-slider y-zoom-slider sound-data-ref mus-a0 mus-a1 mus-a2 mus-y1 mus-y2 mus-array-print-length 
+			 y-position-slider y-zoom-slider sound-data-ref mus-a0 mus-a1 mus-a2 mus-array-print-length 
 			 mus-b1 mus-b2 mus-cosines mus-data mus-feedback mus-feedforward mus-formant-radius mus-frequency mus-hop
 			 mus-increment mus-length mus-location mus-phase mus-ramp mus-scaler vct-ref x-axis-label
 			 beats-per-minute filter-control-coeffs locsig-type mus-file-buffer-size 
@@ -47610,7 +47572,7 @@ EDITS: 2
 					  make-oscil make-ppolar make-pulse-train make-rand make-rand-interp make-readin
 					  make-sawtooth-wave make-sine-summation make-square-wave make-src make-sum-of-cosines make-sum-of-sines 
 					  make-table-lookup make-triangle-wave make-two-pole make-two-zero make-wave-train
-					  make-waveshape make-zpolar mus-a0 mus-a1 mus-a2 mus-b1 mus-b2 mus-y1 mus-y2 mus-channel mus-channels
+					  make-waveshape make-zpolar mus-a0 mus-a1 mus-a2 mus-b1 mus-b2 mus-channel mus-channels
 					  mus-cosines mus-data mus-feedback mus-feedforward mus-formant-radius mus-frequency mus-hop
 					  mus-increment mus-length mus-file-name mus-location mus-order mus-phase mus-ramp mus-random mus-run
 					  mus-scaler mus-xcoeffs mus-ycoeffs notch one-pole one-zero make-average seconds->samples samples->seconds
@@ -47653,7 +47615,7 @@ EDITS: 2
 				      (lambda args (car args)))))
 			  (if (not (eq? tag 'wrong-type-arg))
 			      (snd-display ";mus-gen ~A: ~A" n tag))))
-		      (list mus-a0 mus-a1 mus-a2 mus-b1 mus-b2 mus-y1 mus-y2 mus-bank mus-channel mus-channels mus-cosines mus-data
+		      (list mus-a0 mus-a1 mus-a2 mus-b1 mus-b2 mus-bank mus-channel mus-channels mus-cosines mus-data
 			    mus-feedback mus-feedforward mus-formant-radius mus-frequency mus-hop mus-increment mus-length
 			    mus-location mus-mix mus-order mus-phase mus-ramp mus-random mus-run mus-scaler mus-xcoeffs
 			    mus-ycoeffs))

@@ -2,11 +2,11 @@
 #define CLM_H
 
 #define MUS_VERSION 2
-#define MUS_REVISION 50
+#define MUS_REVISION 51
 #define MUS_DATE "7-June-04"
 
 /*
- * 7-June:     removed mus-x1 and mus-x2 generic functions.
+ * 7-June:     removed mus-x1|x2|y1|y2 generic functions.
  * 24-May:     distribution arg to make-rand, make-rand-interp.
  * 11-May:     type arg to mus_make_table_lookup|wave_train, MUS_INTERP_NONE, MUS_INTERP_HERMITE.
  *             mus-interp-type.
@@ -412,11 +412,6 @@ bool mus_formant_p(mus_any *ptr);
 #define mus_formant_radius(Gen) mus_phase(Gen)
 #define mus_set_formant_radius(Gen, Val) mus_set_phase(Gen, Val)
 void mus_set_formant_radius_and_frequency(mus_any *ptr, Float radius, Float frequency);
-
-Float mus_y1(mus_any *gen);
-Float mus_set_y1(mus_any *gen, Float val);
-Float mus_y2(mus_any *gen);
-Float mus_set_y2(mus_any *gen, Float val);
 
 Float mus_sine_summation(mus_any *ptr, Float fm);
 mus_any *mus_make_sine_summation(Float frequency, Float phase, int n, Float a, Float b_ratio);
