@@ -1,5 +1,8 @@
 snd change log
 
+  23-May:    OSS fragment defaults changed -- see extsnd.html or HISTORY.sndlib.
+             fft-smoother added to examp.scm.
+             smooth renamed smooth-sound.
   22-May:    widget-text (mainly for auto-testing).
   21-May:    Gtk version can now use the mozilla embedded browser for the help dialog.
              hankel-jn (default 0.0) for Bessel choice in Hankel transform.

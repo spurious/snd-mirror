@@ -88,7 +88,11 @@
   #define REALLOC(a, b) realloc(a, b)
 #endif
 
-#define VCT_PRINT_LENGTH 10
+#if USE_SND
+  #define VCT_PRINT_LENGTH DEFAULT_PRINT_LENGTH
+#else
+  #define VCT_PRINT_LENGTH 10
+#endif
 
 #ifndef MIN
   #define MIN(a, b) ((a > b) ? (b) : (a))

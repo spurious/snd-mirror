@@ -2722,7 +2722,7 @@ The most important Sndlib functions for Snd are:</p>
 <!-- -->
 <!-- mus-sound-seek -->
 <!-- --><tr><td><span class=defbox><code><em class=def><a name="mussoundseek">mus-sound-seek</a></em> (fd offset origin)</code></span></td>
-<!-- --><td>complicated -- see mus-sound-seek above</td></tr>
+<!-- --><td>complicated -- see mus_sound_seek in sndlib.html</td></tr>
 <!-- -->
 <!-- mus-sound-seek-frame -->
 <!-- --><tr><td><span class=defbox><code><em class=def><a name="mussoundseekframe">mus-sound-seek-frame</a></em> (fd frame)</code></span></td>
@@ -2746,8 +2746,13 @@ The most important Sndlib functions for Snd are:</p>
 <!-- --></pre></td></tr>
 <!-- -->
 <!-- set-oss-buffers -->
-<!-- --><tr><td><span class=defbox><code><em class=def><a name="setossbuffers">set-oss-buffers</a></em> (num size)</code></span></td>
-<!-- --><td>in Linux (OSS) sets the number and size of the OSS "fragments"</td></tr>
+<!-- --><tr><td valign=top><span class=defbox><code><em class=def><a name="setossbuffers">set-oss-buffers</a></em> (num size)</code></span></td>
+<!-- --><td>in Linux (OSS), this sets the number and size of the OSS "fragments".
+<!-- -->The default (as of 21-May-01) is to accept whatever OSS chooses: I believe this is normally
+<!-- -->equivalent to <code>(set-oss-buffers 16 12)</code>.  This default makes the control panel controls very sluggish.  
+<!-- -->Snd used to call <code>(set-oss-buffers 4 12)</code> as its default, 
+<!-- -->but this seems to cause trouble for a variety of new sound cards.
+<!-- -->My initialization file includes <code>(set-oss-buffers 2 12)</code>.</td></tr>
 <!-- -->
 <!-- --></table>
 
@@ -3637,10 +3642,10 @@ these are indicated as <em class=targ>reg</em> below.
 <!-- -->
 <!-- smooth-selection -->
 <!-- -->
-<!-- --><tr><td><span class=defbox><code><em class=def><a name="sndsmoothselection">smooth-selection</a></em> ()</code></span></td>
+<!-- --><tr><td valign=top><span class=defbox><code><em class=def><a name="sndsmoothselection">smooth-selection</a></em> ()</code></span></td>
 <!-- --><td>
-<!-- -->apply a smoothing function to the current selection 
-<!-- --></td></tr>
+<!-- -->apply a smoothing function to the current selection.  This produces a sinusoid between
+<!-- -->the end points.</td></tr>
 <!-- -->
 <!-- src-selection -->
 <!-- -->
@@ -4691,7 +4696,7 @@ desired edit history position.
 <!-- -->
 <!-- new-sound -->
 <!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="sndnew">new-sound</a></em> (name <i>header-type data-format srate chans comment</i>)</code></span>
+<!-- --><span class=defbox><code><em class=def><a name="sndnew">new-sound</a></em> (<i>name header-type data-format srate chans comment</i>)</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
 <!-- -->create a new (empty) sound named <i>name</i>.  If the <i>type</i> and other 
@@ -5424,15 +5429,27 @@ desired edit history position.
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
 <!-- -->
-<!-- smooth -->
+<!-- smooth-sound -->
 <!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="sndsmooth">smooth</a></em> (beg num <i>snd chn</i>)</code></span>
+<!-- --><span class=defbox><code><em class=def><a name="sndsmooth">smooth-sound</a></em> (beg num <i>snd chn</i>)</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
-<!-- -->apply a smoothing function to the indicated data.
+<!-- -->apply a smoothing function to the indicated data.  This produces a sinusoid between
+<!-- -->the end points:</td></tr>
+<!-- --><tr><td colspan=2 align=center>
+<!-- --><table border=1 cellpadding=5><tr><td bgcolor="#FCFCF0"><pre>
+<!-- -->(define (smoother y0 y1 num)
+<!-- -->   "go sinusoidally from y0 to y1 over num samps"
+<!-- -->   (let ((v (make-vct (1+ num))) 
+<!-- -->	 (angle (if (> y1 y0) pi 0.0)) 
+<!-- -->	 (off (* .5 (+ y0 y1))) 
+<!-- -->	 (scale (* 0.5 (abs (- y1 y0)))))
+<!-- -->     (do ((i 0 (1+ i)))
+<!-- -->         ((= i num) v)
+<!-- -->       (vct-set! v i (+ off (* scale (cos (+ angle (* i (/ pi num))))))))))
+<!-- --></pre></td></tr></table>
 <!-- --></td></tr>
-<!-- --><tr><td colspan=2></td></tr>
-<!-- -->
+<!-- --><tr><td></td><td>For a fancier version, see fft-smoother in examp.scm.</td></tr>
 <!-- -->
 <!-- sound? -->
 <!-- --><tr><td colspan=2>
@@ -7095,7 +7112,7 @@ etc.  The Snd-specific errors are:</p>
 'no-such-edit    'cannot-save    'impossible-bounds  'no-active-selection
 'no-such-widget  'mus-error      'no-such-track      'no-such-envelope
 'cannot-print    'no-such-axis   'no-such-player     'bad-arity
-'no-such-graphics-context
+'no-such-color   'no-such-graphics-context
 </pre>
 <p><i>bad-arity</i> is jargon indicating that a procedure takes the
 wrong number of arguments.

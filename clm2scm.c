@@ -2501,7 +2501,8 @@ with chans samples, each sample set from the trailing arguments (defaulting to 0
   cararg = SCM_CAR(arglist);
   ASSERT_TYPE(NUMBER_P(cararg), cararg, 1, S_make_frame, "a number");
   size = TO_C_INT_OR_ELSE(cararg, 0);
-  if (len > (size + 1)) len = size + 1;
+  if (len > (size + 1)) 
+    mus_misc_error(S_make_frame, "extra trailing args?", arglist);
   if (size <= 0)
     mus_misc_error(S_make_frame, "size: ", TO_SCM_INT(size));
   gn = (mus_scm *)CALLOC(1, sizeof(mus_scm));
@@ -2733,7 +2734,13 @@ static SCM g_make_mixer(SCM arglist)
 {
   #define H_make_mixer "(" S_make_mixer " chans val0 val1 ...) makes a new mixer object \
 with chans inputs and outputs, initializing the scalers from the rest of the arguments:\n\
-   (set! gen (make-mixer 2 .5 .25 .125 1.0))"
+   (set! gen (make-mixer 2 .5 .25 .125 1.0))\n\
+which can be viewed from a matrix multiplication viewpoint as:\n\
+\n\
+   | a b |  | .5    .25 |\n\
+            | .125 1.0  |\n\
+\n\
+giving | (a*.5 + b*.125) (a*.25 + b*1.0) |"
 
   /* make_empty_mixer from first of arglist, then if more args, load vals */
   mus_scm *gn;
@@ -2747,6 +2754,8 @@ with chans inputs and outputs, initializing the scalers from the rest of the arg
   size = TO_C_INT_OR_ELSE(cararg, 0);
   if (size <= 0) mus_misc_error(S_make_mixer, "chans <= 0?", cararg);
   if (size > 256) mus_misc_error(S_make_mixer, "chans > 256?", cararg);
+  if (len > (size * size + 1)) 
+    mus_misc_error(S_make_mixer, "extra trailing args?", arglist);
   gn = (mus_scm *)CALLOC(1, sizeof(mus_scm));
   gn->gen = (mus_any *)mus_make_empty_mixer(size);
   if (len > 1)

@@ -768,6 +768,7 @@ void define_procedure_with_reversed_setter(char *get_name, SCM (*get_func)(), ch
 void during_open(int fd, char *file, int reason);
 void after_open(int index);
 
+Float check_color_range(const char *caller, SCM val);
 int string2int(char *str);
 Float string2Float(char *str);
 char *output_comment(file_info *hdr);

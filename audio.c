@@ -1480,6 +1480,8 @@ static int fragments_locked = 0;
 
 /* defaults here are FRAGMENTS 16 and FRAGMENT_SIZE 12; these values however
  * cause about a .5 second delay, which is not acceptable in "real-time" situations.
+ *
+ * this changed 22-May-01: these are causing more trouble than they're worth
  */
 
 static void oss_mus_audio_set_oss_buffers(int num, int size) {FRAGMENTS = num; FRAGMENT_SIZE = size; fragments_locked = 1;}
@@ -2119,14 +2121,8 @@ static int oss_mus_audio_open_output(int ur_dev, int srate, int chans, int forma
   if (audio_out == -1) return(MUS_ERROR);
 
   /* ioctl(audio_out, SNDCTL_DSP_RESET, 0); */ /* causes clicks */
-  if ((dev == MUS_AUDIO_DUPLEX_DEFAULT) || (size != 0))
+  if ((fragments_locked) && ((dev == MUS_AUDIO_DUPLEX_DEFAULT) || (size != 0))) /* only set if user has previously called set_oss_buffers */
     {
-      if (!fragments_locked) 
-	{
-	  if (srate > 30000) 
-	    FRAGMENTS = 4; 
-	  else FRAGMENTS = 2;
-	}
       buffer_info = (FRAGMENTS << 16) | (FRAGMENT_SIZE);
       if (ioctl(audio_out, SNDCTL_DSP_SETFRAGMENT, &buffer_info) == -1)
         {
@@ -2335,7 +2331,7 @@ static int oss_mus_audio_open_input(int ur_dev, int srate, int chans, int format
   srcbit = (srcbit | cursrc);
   ioctl(audio_fd, MIXER_WRITE(SOUND_MIXER_RECSRC), &srcbit);
   if (dsp_reset) ioctl(audio_fd, SNDCTL_DSP_RESET, 0);
-  if (requested_size != 0)
+  if ((fragments_locked) && (requested_size != 0))
     {
       buffer_info = (FRAGMENTS << 16) | (FRAGMENT_SIZE);
       ioctl(audio_fd, SNDCTL_DSP_SETFRAGMENT, &buffer_info);
@@ -3963,7 +3959,7 @@ static int alsa_mus_audio_initialize(void)
     /* initialize function pointers for normal or plugin calls */
     alsa_initialize_functions();
     /* allocate various things */
-    dev_name = (char *)CALLOC(LABEL_BUFFER_SIZE, sizeof(char));
+    dev_name = (char *)CALLOC(LABLE_BUFFER_SIZE, sizeof(char));
     /* scan for soundcards */
     mask = snd_cards_mask();
     if (!mask) {

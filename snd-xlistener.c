@@ -2,10 +2,6 @@
 
 /* TODO:   add minihistory support in listener
  * TODO    bubble args help if tab at end of name? (or click name?)
- * TODO:   extend mouse-enter-text-hook to gtk:
- *  gtk_signal_connect(GTK_OBJECT(r->nm), "enter_notify_event", GTK_SIGNAL_FUNC(label_enter_callback), (gpointer)r);
- *  gtk_signal_connect(GTK_OBJECT(r->nm), "leave_notify_event", GTK_SIGNAL_FUNC(label_leave_callback), (gpointer)r);
- *  static gint label_enter_callback(GtkWidget *w, GdkEventCrossing *ev)
  */
 
 static Widget listener_text = NULL;

@@ -952,4 +952,6 @@ void g_init_selection(SCM local_doc)
   DEFINE_PROC(S_mix_selection,    g_mix_selection, 0, 3, 0,    H_mix_selection);
   DEFINE_PROC(S_select_all,       g_select_all, 0, 2, 0,       H_select_all);
   DEFINE_PROC(S_save_selection,   g_save_selection, 1, 4, 0,   H_save_selection);
+
+  /* should save-selection (and others like it) be selection->file? */
 }

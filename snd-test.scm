@@ -28,7 +28,7 @@
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 popen) (ice-9 optargs))
 
 (define tests 1)
-(define snd-test 11)
+(define snd-test -1)
 (define keep-going #f)
 (define full-test (< snd-test 0))
 (define total-tests 22)
@@ -419,10 +419,12 @@
 				  (if (and (not (= (mus-sound-data-format file) -1))
 					   (not (= (mus-sound-header-type file) 33)) ; bogus header on test case
 					   (< (+ (mus-sound-length file) 1)
-					      (* (mus-sound-datum-size file) (mus-sound-duration file) (mus-sound-srate file) (mus-sound-chans file))))
+					      (* (mus-sound-datum-size file) (mus-sound-duration file)
+						 (mus-sound-srate file) (mus-sound-chans file))))
 				      (snd-display (format #f ";mus-sound-length ~A: ~A (~A)" file
 							   (mus-sound-length file)
-							   (* (mus-sound-duration file) (mus-sound-srate file) (mus-sound-chans file) (mus-sound-datum-size file)))))
+							   (* (mus-sound-duration file) (mus-sound-srate file) 
+							      (mus-sound-chans file) (mus-sound-datum-size file)))))
 				  (if (fneq (/ (mus-sound-frames file) (mus-sound-srate file)) (mus-sound-duration file))
 				      (snd-display (format #f ";mus-sound-frames ~A: ~A (~A ~A)" file
 							   (mus-sound-frames file)
@@ -963,6 +965,12 @@
 
 ;;; ---------------- test 4: sndlib tests ----------------
 
+(define (frame->byte file frame)
+  (+ (mus-sound-data-location file)
+     (* (mus-sound-chans file)
+	(mus-sound-datum-size file)
+	frame)))
+
 (define (show-input-1 . arg)
   ;; from rtio.scm
   (define (card+device card device)
@@ -1057,7 +1065,8 @@
       (if (or (not (string? com)) (not (string=? com "file written by SOX MAUD-export ")))
 	  (snd-display (format #f ";mus-sound-comment \"wood.maud\") -> ~A?" com)))
       (set! com (mus-sound-comment (string-append sf-dir "addf8.sf_mipseb")))
-      (if (or (not (string? com)) (not (string=? com "date=\"Feb 11 18:03:34 1981\" info=\"Original recorded at 20 kHz, 15-bit D/A, digitally filtered and resampled\" speaker=\"AMK female\" text=\"Add the sum to the product of these three.\" ")))
+      (if (or (not (string? com)) 
+	      (not (string=? com "date=\"Feb 11 18:03:34 1981\" info=\"Original recorded at 20 kHz, 15-bit D/A, digitally filtered and resampled\" speaker=\"AMK female\" text=\"Add the sum to the product of these three.\" ")))
 	  (snd-display (format #f ";mus-sound-comment \"addf8.sf_mipseb\") -> ~A?" com)))
       (set! com (mus-sound-comment (string-append sf-dir "mary-sun4.sig")))
       (if (or (not (string? com)) (not (string=? com "MARY HAD A LITTLE LAMB\n")))
@@ -1066,7 +1075,8 @@
       (if (or (not (string? com)) (not (string=? com "This patch saved with Sound Forge 3.0.")))
 	  (snd-display (format #f ";mus-sound-comment \"nasahal.pat\") -> ~A?" com)))
       (set! com (mus-sound-comment (string-append sf-dir "next-16.snd")))
-      (if (or (not (string? com)) (not (string=? com ";Written on Mon 1-Jul-91 at 12:10 PDT  at localhost (NeXT) using Allegro CL and clm of 25-June-91")))
+      (if (or (not (string? com)) 
+	      (not (string=? com ";Written on Mon 1-Jul-91 at 12:10 PDT  at localhost (NeXT) using Allegro CL and clm of 25-June-91")))
 	  (snd-display (format #f ";mus-sound-comment \"next-16.snd\") -> ~A?" com)))
       (set! com (mus-sound-comment (string-append sf-dir "wood16.nsp")))
       (if (or (not (string? com)) (not (string=? com "Created by Snack   ")))
@@ -1081,7 +1091,8 @@
       (if (or (not (string? com)) (not (string=? com "1994 Jesus Villena\n")))
 	  (snd-display (format #f ";mus-sound-comment \"anno.aif\") -> ~A?" com)))
       (set! com (mus-sound-comment (string-append sf-dir "telephone.wav")))
-      (if (or (not (string? com)) (not (string=? com "sample_byte_format -s2 01\nchannel_count -i 1\nsample_count -i 36461\nsample_rate -i 16000\nsample_n_bytes -i 2\nsample_sig_bits -i 16\n")))
+      (if (or (not (string? com)) 
+	      (not (string=? com "sample_byte_format -s2 01\nchannel_count -i 1\nsample_count -i 36461\nsample_rate -i 16000\nsample_n_bytes -i 2\nsample_sig_bits -i 16\n")))
 	  (snd-display (format #f ";mus-sound-comment \"telephone.wav\") -> ~A?" com)))
       
       (if (fneq (vector-ref ma 1) .14724) (snd-display (format #f ";oboe: mus-sound-max-amp ~F?" (vector-ref ma 1))))
@@ -1303,10 +1314,15 @@
 	(set! fd (mus-sound-open-input "fmv5.snd"))
 	(mus-sound-read fd 0 99 1 sdata)
 	(if (fneq (sound-data-ref sdata 0 10) .1) (snd-display (format #f ";mus-sound-write: ~A?" (sound-data-ref sdata 0 10))))
-	(mus-sound-seek-frame fd 20)
+	(let ((pos (mus-sound-seek-frame fd 20)))
+	  (if (not (= pos (ftell fd))) 
+	      (snd-display (format #f ";mus-sound-seek-frame: ~A ~A?" pos (ftell fd))))
+	  (if (not (= pos (frame->byte "fmv5.snd" 20)))
+	      (snd-display (format #f ";mus-sound-seek-frame(2): ~A ~A?" pos (frame->byte "fmv5.snd" 20)))))
 	(mus-sound-read fd 0 10 1 sdata)
 	(if (fneq (sound-data-ref sdata 0 0) .2) (snd-display (format #f ";mus-sound-seek: ~A?" (sound-data-ref sdata 0 0))))
-	(mus-sound-seek fd 20 0)
+	(let ((pos (mus-sound-seek fd 20 0)))
+	  (if (not (= pos (ftell fd))) (snd-display (format #f ";mus-sound-seek: ~A ~A?" pos (ftell fd)))))
 	(mus-sound-close-input fd))
 
       (let* ((ind (open-sound "2.snd"))
@@ -1359,6 +1375,11 @@
 		(mus-sound-close-output fd (* samps chans (mus-data-format-bytes-per-sample (car df-ht))))
 		(set! fd (mus-sound-open-input "fmv5.snd"))
 		(mus-sound-read fd 0 (- samps 1) chans ndata)
+		(let ((pos (mus-sound-seek-frame fd 100)))
+		  (if (not (= pos (ftell fd))) 
+		      (snd-display (format #f ";mus-sound-seek-frame[~A]: chans ~A ~A?" pos (ftell fd))))
+		  (if (not (= pos (frame->byte "fmv5.snd" 100))) 
+		      (snd-display (format #f ";mus-sound-seek-frame(100): ~A ~A?" pos (frame->byte "fmv5.snd" 100)))))
 		(mus-sound-close-input fd)
 		(catch #t
 		       (lambda ()
@@ -1473,6 +1494,15 @@
 
 
 ;;; ---------------- test 5: simple overall checks ----------------
+
+(define (our-x->position ind x) 
+  (let ((ax (axis-info ind)))
+    (list
+     (+ (list-ref ax 10) 
+	(/ (* (- x (list-ref ax 2))
+	      (- (list-ref ax 12) (list-ref ax 10)))
+	   (- (list-ref ax 4) (list-ref ax 2))))
+     (x->position x ind))))
 
 (if (or full-test (= snd-test 5) (and keep-going (<= snd-test 5)))
     (let* ((index (open-sound "oboe.snd"))
@@ -2039,10 +2069,24 @@
 		    (snd-display (format #f ";axis-info[7 ymin]: ~A?" (list-ref axinfo 7))))
 		(if (fneq (list-ref axinfo 9) 1.0)
 		    (snd-display (format #f ";axis-info[9 ymax]: ~A?" (list-ref axinfo 9))))
+		(if (> (abs (apply - (our-x->position obind x0))) 1) 
+		    (snd-display (format #f ";x0->position: ~A ~A?" (our-x->position obind x0))))
+		(if (> (abs (apply - (our-x->position obind x1))) 1) 
+		    (snd-display (format #f ";x1->position: ~A ~A?" (our-x->position obind x1))))
+		(if (> (abs (apply - (our-x->position obind (* 0.5 (+ x0 x1))))) 1)
+		    (snd-display (format #f ";xmid->position: ~A ~A?" (our-x->position obind (* 0.5 (+ x0 x1))))) 1)
 
 		(set! (left-sample obind 0) 1234)
 		(if (not (= 1234 (car (axis-info obind 0))))
 		    (snd-display (format #f ";axis-info[0 losamp at 1234]: ~A ~A?" (car (axis-info obind 0)) (left-sample obind 0))))
+		(set! x0 (list-ref axinfo 2))
+		(set! x1 (list-ref axinfo 4))
+		(if (> (abs (apply - (our-x->position obind x0))) 1) 
+		    (snd-display (format #f ";x0a->position: ~A ~A?" (our-x->position obind x0))))
+		(if (> (abs (apply - (our-x->position obind x1))) 1) 
+		    (snd-display (format #f ";x1a->position: ~A ~A?" (our-x->position obind x1))))
+		(if (> (abs (apply - (our-x->position obind (* 0.5 (+ x0 x1))))) 1)
+		    (snd-display (format #f ";xmida->position: ~A ~A?" (our-x->position obind (* 0.5 (+ x0 x1))))) 1)
 		(set! (y-bounds obind 0) (list -2.0 3.0))
 		(if (fneq (list-ref (axis-info obind 0) 7) -2.0)
 		    (snd-display (format #f ";axis-info[7 ymin -2.0]: ~A?" (list-ref (axis-info obind 0) 7))))
@@ -2093,6 +2137,20 @@
 	  (delete-file "fmv3.snd")
 	  (delete-file "fmv4.snd")
 	  (delete-file "fmv5.snd"))
+
+	(revert-sound ind1)
+	(select-all ind1)
+	(convolve-selection-with "pistol.snd" (maxamp))
+	(let ((data (samples->vct 12000 10 ind1 0)))
+	  (convolve-with "pistol.snd" (maxamp ind1 0 0) ind1 0 0)
+	  (let ((new-data (samples->vct 12000 10 ind1 0)))
+	    (if (not (vfequal data new-data))
+		(snd-display (format #f ";convolve-selection-with: ~A ~A?" data new-data)))))
+	(revert-sound ind1)
+	(make-region 1000 2000 ind1)
+	(let ((ma (maxamp ind1)))
+	  (convolve-selection-with "pistol.snd" ma)
+	  (if (fneq (maxamp ind1) ma) (snd-display (format #f ";convolve-selection-with 1000: ~A ~A?" ma (maxamp ind1)))))
 	(close-sound ind1))
 
       (let ((ind1 (open-sound "2.snd")))
@@ -2913,8 +2971,10 @@
 	(if (fneq (mus-feedforward gen) .6) (snd-display (format #f ";all-pass feedforward: ~F?" (mus-feedforward gen))))
 	(if (or (fneq (vct-ref v0 1) 0.6) (fneq (vct-ref v0 4) 1.84) (fneq (vct-ref v0 8) 2.336))
 	    (snd-display (format #f ";all-pass output: ~A" v0)))
-	(set! (mus-feedback gen) 0.5) (if (fneq (mus-feedback gen) .5) (snd-display (format #f ";all-pass set-feedback: ~F?" (mus-feedback gen))))
-	(set! (mus-feedforward gen) 0.5) (if (fneq (mus-feedforward gen) .5) (snd-display (format #f ";all-pass set-feedforward: ~F?" (mus-feedforward gen)))))
+	(set! (mus-feedback gen) 0.5) 
+	(if (fneq (mus-feedback gen) .5) (snd-display (format #f ";all-pass set-feedback: ~F?" (mus-feedback gen))))
+	(set! (mus-feedforward gen) 0.5) 
+	(if (fneq (mus-feedforward gen) .5) (snd-display (format #f ";all-pass set-feedforward: ~F?" (mus-feedforward gen)))))
 
       (test-gen-equal (let ((d1 (make-all-pass 0.7 0.5 3))) (all-pass d1 1.0) d1)
 		      (let ((d2 (make-all-pass 0.7 0.5 3))) (all-pass d2 1.0) d2) 
@@ -3512,7 +3572,8 @@
 	(set! (mus-a2 gen) .5) (if (fneq (mus-a2 gen) 0.5) (snd-display (format #f ";formant set-a2: ~F?" (mus-a2 gen))))
 	(set! (mus-b1 gen) .5) (if (fneq (mus-b1 gen) 0.5) (snd-display (format #f ";formant set-b1: ~F?" (mus-b1 gen))))
 	(set! (mus-b2 gen) .5) (if (fneq (mus-b2 gen) 0.5) (snd-display (format #f ";formant set-b2: ~F?" (mus-b2 gen))))
-	(set! (mus-formant-radius gen) .01) (if (fneq (mus-formant-radius gen) 0.01) (snd-display (format #f ";formant set-radius: ~F?" (mus-formant-radius gen)))))
+	(set! (mus-formant-radius gen) .01) 
+	(if (fneq (mus-formant-radius gen) 0.01) (snd-display (format #f ";formant set-radius: ~F?" (mus-formant-radius gen)))))
 
       (test-gen-equal (let ((f1 (make-formant .9 1200.0 1.0))) (formant f1 1.0) f1)
 		      (let ((f2 (make-formant .9 1200.0 1.0))) (formant f2 1.0) f2)
@@ -3795,6 +3856,17 @@
 	    (let ((v5 (env-interp (* i .02) e3))
 		  (v6 (env e3)))
 	      (if (ffneq v5 v6) (snd-display (format #f ";env-interp[tri ~F]: ~A (~A)?" (* .02 i) v5 v6))))))
+	
+	(let ((e1 (make-env '(0 0 1 1 2 0) :end 9))
+	      (v1 (make-vct 11))
+	      (v2 (make-vct 11))
+	      (v3 (make-vct 11)))
+	  (do ((i 0 (1+ i))) ((= i 11)) (vct-set! v1 i (env e1)))
+	  (do ((i 0 (1+ i))) ((= i 11)) (vct-set! v2 i (env e1)))
+	  (restart-env e1)
+	  (do ((i 0 (1+ i))) ((= i 11)) (vct-set! v3 i (env e1)))
+	  (if (not (vequal v1 v3)) (snd-display (format #f ";restart-env: ~A ~A?" v1 v3)))
+	  (if (not (vequal v2 (make-vct 11))) (snd-display (format #f ";restart-env 1: ~A?" v2))))
 
 	(set! gen (make-env '(0 0 1 1 2 0) :end 9))
 	(do ((i 0 (1+ i))) ((= i 4)) (env gen))
@@ -4372,7 +4444,7 @@
 	(set! (sample 200) .0001) 
 	(set! (sample 100) 1.0) 
 	(progress-report .8 "hiho" 0 1 nind)
-	(smooth 0 100) 
+	(smooth-sound 0 100) 
 	(finish-progress-report nind)
 	(if (or (fneq (sample 50) .5) (fneq (sample 30) 0.20608) (fneq (sample 90) 0.9755))
 	    (snd-display (format #f ";smooth: ~A ~A ~A?" (sample 50) (sample 30) (sample 90))))
@@ -6866,6 +6938,17 @@
 (load "rubber.scm")
 
 ;;; ---------------- test 15: chan-local vars ----------------
+
+(define (smoother y0 y1 num)
+   (let ((v (make-vct (1+ num))) 
+	 (angle (if (> y1 y0) pi 0.0)) 
+	 (off (* .5 (+ y0 y1))) 
+	 (incr (/ pi num))
+	 (scale (* 0.5 (abs (- y1 y0)))))
+     (do ((i 0 (1+ i)))
+         ((= i num) v)
+       (vct-set! v i (+ off (* scale (cos (+ angle (* i incr)))))))))
+
 (if (or full-test (= snd-test 15) (and keep-going (<= snd-test 15)))
     (let ((obi (open-sound (car (match-sound-files (lambda (file) (= (mus-sound-chans file) 1)))))))
 
@@ -6964,9 +7047,9 @@
 	(if (not (equal? (edit-fragment 0 obi 0) '(#f "init" 0 50828))) 
 	    (snd-display (format #f ";edit-fragment(0): ~A?" (edit-fragment 0 obi 0))))
 	(if (not (equal? (edit-fragment 1 obi 0) '("delete-samples" "delete" 1000 1001))) 
-	    (snd-display (format #f ";edit-fragment(0): ~A?" (edit-fragment 0 obi 0))))
-	(if (not (equal? (edit-fragment 2 obi 0) '("smooth" "set" 984 32))) 
-	    (snd-display (format #f ";edit-fragment(0): ~A?" (edit-fragment 0 obi 0))))
+	    (snd-display (format #f ";edit-fragment(1): ~A?" (edit-fragment 0 obi 0))))
+	(if (not (equal? (edit-fragment 2 obi 0) '("smooth-sound" "set" 984 32))) 
+	    (snd-display (format #f ";edit-fragment(2): ~A?" (edit-fragment 0 obi 0))))
 
 	(let ((samp100 (sample 1100 obi 0)))
 	  (safe-make-region 1000 2000 obi)
@@ -7332,6 +7415,7 @@
 	    (snd-display (format #f ";selection after reverse: '(1000 200) '(~A ~A)?" 
 			       (selection-position) 
 			       (selection-length))))
+
 	(let ((old-frames (frames ind)))
 	  (src-selection .5)
 	  (if (or (> (abs (- (frames ind) (+ 200 old-frames))) 5)
@@ -7348,6 +7432,46 @@
 				 (selection-length))))
 	  (undo 3))
 	(close-sound ind))
+
+      (if (< (print-length) 12) (set! (print-length) 12))
+      (let ((ind (new-sound "hi.snd")))
+	(do ((i 0 (1+ i)))
+	    ((= i 10)) 
+	  (set! (sample i ind) (* i .1)))
+	(select-all ind)
+	(set! (sample 10 ind) 1.0)
+	(smooth-selection)
+	(if (not (vequal (vct-subseq (samples->vct 0 11 ind) 0 9) (vct-subseq (smoother 0.0 1.0 10) 0 9)))
+	    (snd-display (format #f ";smooth-selection: ~A ~A?" (samples->vct 0 11 ind) (smoother 0.0 1.0 10))))
+	(revert-sound)
+	(do ((i 0 (1+ i)))
+	    ((= i 10)) 
+	  (set! (sample i ind) (- 1.0 (* i .1))))
+	(select-all ind)
+	(set! (sample 10 ind) 0.0)
+	(smooth-selection)
+	(if (not (vequal (vct-subseq (samples->vct 0 11 ind) 0 9) (vct-subseq (smoother 1.0 0.0 10) 0 9)))
+	    (snd-display (format #f ";smooth-selection back: ~A ~A?" (samples->vct 0 11 ind) (smoother 1.0 0.0 10))))
+	(close-sound ind))
+
+      (let ((ind (new-sound "hi.snd")))
+	(do ((i 0 (1+ i)))
+	    ((= i 10)) 
+	  (set! (sample i ind) (* i .1)))
+	(set! (sample 10 ind) 1.0)
+	(smooth-sound 0 10 ind)
+	(if (not (vequal (vct-subseq (samples->vct 0 11 ind) 0 9) (vct-subseq (smoother 0.0 1.0 10) 0 9)))
+	    (snd-display (format #f ";smooth-sound: ~A ~A?" (samples->vct 0 11 ind) (smoother 0.0 1.0 10))))
+	(revert-sound)
+	(do ((i 0 (1+ i)))
+	    ((= i 10)) 
+	  (set! (sample i ind) (- 1.0 (* i .1))))
+	(set! (sample 10 ind) 0.0)
+	(smooth-sound 0 10 ind)
+	(if (not (vequal (vct-subseq (samples->vct 0 11 ind) 0 9) (vct-subseq (smoother 1.0 0.0 10) 0 9)))
+	    (snd-display (format #f ";smooth-sound back: ~A ~A?" (samples->vct 0 11 ind) (smoother 1.0 0.0 10))))
+	(close-sound ind))
+
       (set! (show-usage-stats) #f)
       (let* ((ind (open-sound "oboe.snd"))
 	     (len (frames ind)))
@@ -9364,13 +9488,11 @@ EDITS: 3
 (if (= snd-test -1) (exit))
 
 
-;;;   map-across-all-chans map-chans scan-across-chans map-sound-chans scan-sound-chans scan-chans
-;;;   forward-mix smooth-selection convolve-selection-with save-state draw-string fill-rectangle
-;;;   mus-sound-reopen-output mus-sound-seek mus-sound-seek-frame close-sound-file vct->sound-file
-;;;   save-marks save-region save-selection vcts-map! restart-env 
-;;;   make-track-sample-reader free-track-sample-reader mix-sound-channel mix-sound-index
-;;;   backward-mix peaks cursor-position x->position y->position position->y listener-selection draw-line 
-;;;   scan-across-sound-chans change-menu-label update-sound load-font
+;;;   map-across-all-chans map-chans scan-across-chans map-sound-chans scan-sound-chans scan-chans scan-across-sound-chans 
+;;;   forward-mix save-state mus-sound-reopen-output close-sound-file vct->sound-file
+;;;   save-marks save-region save-selection vcts-map! update-sound make-track-sample-reader free-track-sample-reader 
+;;;   backward-mix peaks cursor-position y->position position->y mix-sound-channel mix-sound-index
+;;;   
 ;;;   edpos in sound->temp graph-data
 ;;;   open-raw-sound-hook (data-loc/len)
 
@@ -9380,3 +9502,8 @@ EDITS: 3
 ;;; (define handle (dlopen "/home/bil/snd-4/gsl-ex.so"))
 ;;; (dlinit handle "init_gsl_j0")
 ;;; (fneq (j0 1.0) 0.765)
+
+
+
+
+

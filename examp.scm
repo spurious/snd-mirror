@@ -31,7 +31,7 @@
 ;;;     every-sample?
 ;;;     sort-samples
 ;;; mix mono sound into stereo sound panning according to env, also simple sound placement
-;;; fft-edit -- FFT based editing
+;;; fft-edit -- FFT based editing, fft-smoothing
 ;;; comb-filter, notch-filter, formant-filter
 ;;; echo (delays)
 ;;; ring-modulation, am
@@ -824,7 +824,7 @@
 		       (if (selection-member? snd chn)
 			   (let ((smooth-beg (max 0 (- beg 16))))
 			     (delete-samples beg len snd chn)
-			     (smooth smooth-beg 32 snd chn))))
+			     (smooth-sound smooth-beg 32 snd chn))))
 		 (all-chans))))))
 
 
@@ -1077,6 +1077,42 @@
       (fft rdata idata -1)
       (vct-scale! rdata (/ 1.0 fsize))
       (set-samples 0 (1- len) rdata))))
+
+(define (fft-smoother cutoff start samps snd chn)
+  "use fft-filtering to smooth a section"
+  (let* ((fftpts (inexact->exact (expt 2 (ceiling (/ (log (1+ samps)) (log 2.0))))))
+	 (rl (make-vct fftpts))
+	 (im (make-vct fftpts))
+	 (top (inexact->exact (floor (* fftpts cutoff)))))
+    (samples->vct start samps snd chn rl)
+    (let* ((old0 (vct-ref rl 0))
+	   (old1 (vct-ref rl (1- samps)))
+	   (oldmax (vct-peak rl)))
+      (fft rl im 1)
+      (do ((i top (1+ i)))
+	  ((= i fftpts))
+	(vct-set! rl i 0.0)
+	(vct-set! im i 0.0))
+      (fft rl im -1)
+      (vct-scale! rl (/ 1.0 fftpts))
+      (let ((newmax (vct-peak rl)))
+	(if (= newmax 0.0)
+	    rl
+	    (begin
+	      (if (> (/ oldmax newmax) 1.5)
+		  (vct-scale! rl (/ oldmax newmax)))
+	      (let* ((new0 (vct-ref rl 0))
+		     (new1 (vct-ref rl (1- samps)))
+		     (offset0 (- old0 new0))
+		     (offset1 (- old1 new1))
+		     (incr (if (= offset1 offset0) 0.0 (/ (- offset1 offset0) samps))))
+		(do ((i 0 (1+ i))
+		     (trend offset0 (+ trend incr)))
+		    ((= i samps))
+		  (vct-set! rl i (+ (vct-ref rl i) trend)))
+		rl)))))))
+
+; (vct->samples (cursor) 400 (fft-smoother .1 (cursor) 400 0 0))
 
 
 ;;; -------- comb-filter

@@ -130,27 +130,9 @@ static SCM g_make_snd_color(SCM r, SCM g, SCM b)
   /* someday accept a list as r */
   ASSERT_TYPE(NUMBER_P(g), g, SCM_ARG2, S_make_color, "a number");
   ASSERT_TYPE(NUMBER_P(b), b, SCM_ARG3, S_make_color, "a number");
-
-  rf = TO_C_DOUBLE(r);
-  if ((rf > 1.0) || (rf < 0.0)) 
-    ERROR(TO_SCM_SYMBOL("out-of-range"), 
-	  SCM_LIST3(TO_SCM_STRING(S_make_color),
-		    TO_SCM_STRING("make-color: red value must be between 0.0 and 1.0: ~S"),
-		    SCM_LIST1(r)));
-
-  gf = TO_C_DOUBLE(g);
-  if ((gf > 1.0) || (gf < 0.0)) 
-    ERROR(TO_SCM_SYMBOL("out-of-range"), 
-	  SCM_LIST3(TO_SCM_STRING(S_make_color),
-		    TO_SCM_STRING("green value must be between 0.0 and 1.0: ~S"),
-		    SCM_LIST1(g)));
-  bf = TO_C_DOUBLE(b);
-  if ((bf > 1.0) || (bf < 0.0)) 
-    ERROR(TO_SCM_SYMBOL("out-of-range"), 
-	  SCM_LIST3(TO_SCM_STRING(S_make_color),
-		    TO_SCM_STRING("blue value must be between 0.0 and 1.0: ~S"),
-		    SCM_LIST1(b)));
-
+  rf = check_color_range(S_make_color, r);
+  gf = check_color_range(S_make_color, g);
+  bf = check_color_range(S_make_color, b);
   new_color = (snd_color *)scm_must_malloc(sizeof(snd_color), S_make_color);
   dpy = XtDisplay(MAIN_SHELL(state));
   cmap = DefaultColormap(dpy, DefaultScreen(dpy));
@@ -159,9 +141,10 @@ static SCM g_make_snd_color(SCM r, SCM g, SCM b)
   tmp_color.green = (unsigned short)(65535 * gf);
   tmp_color.blue = (unsigned short)(65535 * bf);
   if ((XAllocColor(dpy, cmap, &tmp_color)) == 0)
-    /* TODO: should this throw NO_SUCH_COLOR? */
-    new_color->color = BlackPixel(dpy, DefaultScreen(dpy)); 
-  else new_color->color = tmp_color.pixel;
+    ERROR(NO_SUCH_COLOR,
+	  SCM_LIST2(TO_SCM_STRING(S_make_color),
+		    SCM_LIST3(r, g, b)));
+  new_color->color = tmp_color.pixel;
   SND_RETURN_NEWSMOB(snd_color_tag, new_color);
 }
 

@@ -397,6 +397,7 @@ SCM snd_bad_arity_error(const char *caller, SCM errstr, SCM proc)
 }
 
 
+
 /* -------- various evaluators (within our error handler) -------- */
 
 SCM eval_str_wrapper(void *data)
@@ -1856,7 +1857,11 @@ reading edit version edit-position (defaulting to the current version)"
   beg = TO_C_INT_OR_ELSE(samp_0, 0);
   len = TO_C_INT_OR_ELSE(samps, cp->samples[pos] - beg);
   if (v1)
-    fvals = v1->data;
+    {
+      fvals = v1->data;
+      if (len > v1->length)
+	len = v1->length;
+    }
   else fvals = (Float *)MALLOC(len * sizeof(Float));
   sf = init_sample_read_any(beg, cp, READ_FORWARD, pos);
   if (sf)
@@ -2343,6 +2348,18 @@ static SCM g_set_html_dir(SCM val)
 
 
 /* -------- shared color funcs -------- */
+
+Float check_color_range(const char *caller, SCM val)
+{
+  Float rf;
+  rf = TO_C_DOUBLE(val);
+  if ((rf > 1.0) || (rf < 0.0))
+    ERROR(TO_SCM_SYMBOL("out-of-range"), 
+	  SCM_LIST3(TO_SCM_STRING(caller),
+		    TO_SCM_STRING("value must be between 0.0 and 1.0: ~S"),
+		    SCM_LIST1(val)));
+  return(rf);
+}
 
 static SCM g_set_cursor_color (SCM color) 
 {
@@ -3513,6 +3530,8 @@ If more than one hook function, results are concatenated. If none, the current c
   EVAL_STRING("(define (" S_snd_apropos " val) (snd-print (with-output-to-string (lambda () (apropos val)))))");
   EVAL_STRING("(read-set! keywords 'prefix)");
   EVAL_STRING("(print-enable 'source)");  /* added 13-Feb-01 */
+
+  EVAL_STRING("(define smooth smooth-sound)"); /* backwards compatibility (22-May-01) */
 
   /* from ice-9/r4rs.scm but with output to snd listener */
   EVAL_STRING("(define snd-last-file-loaded #f)");

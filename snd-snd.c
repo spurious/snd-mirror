@@ -2139,7 +2139,7 @@ static void new_local_error(int type, char *msg)
 
 static SCM g_new_sound(SCM name, SCM type, SCM format, SCM srate, SCM chans, SCM comment) 
 {
-  #define H_new_sound "(" S_new_sound " name\n    &optional type format srate chans comment)\n\
+  #define H_new_sound "(" S_new_sound " &optional name type format srate chans comment)\n\
 creates a new sound file with the indicated attributes; if any are omitted, the corresponding default-output variable is used"
 
   snd_info *sp = NULL; 
@@ -2148,14 +2148,16 @@ creates a new sound file with the indicated attributes; if any are omitted, the 
   int chan, size;
   unsigned char* buf;
   char *str = NULL, *com = NULL;
-  ASSERT_TYPE(STRING_P(name), name, SCM_ARG1, S_new_sound, "a string");
+  ASSERT_TYPE(STRING_IF_BOUND_P(name), name, SCM_ARG1, S_new_sound, "a string");
   ASSERT_TYPE(INTEGER_IF_BOUND_P(type), type, SCM_ARG2, S_new_sound, "an integer (a header type id)");
   ASSERT_TYPE(INTEGER_IF_BOUND_P(format), format, SCM_ARG3, S_new_sound, "an integer (a data format id)");
   ASSERT_TYPE(NUMBER_IF_BOUND_P(srate), srate, SCM_ARG4, S_new_sound, "a number");
   ASSERT_TYPE(INTEGER_IF_BOUND_P(chans), chans, SCM_ARG5, S_new_sound, "an integer");
   ASSERT_TYPE(STRING_IF_BOUND_P(comment), comment, SCM_ARG6, S_new_sound, "a string");
   ss = get_global_state();
-  str = mus_expand_filename(TO_C_STRING(name));
+  if (STRING_P(name))
+    str = mus_expand_filename(TO_C_STRING(name));
+  else str = snd_tempnam(ss);
   if (snd_overwrite_ok(ss, str))
     {
       mus_sound_forget(str);
@@ -2830,7 +2832,7 @@ If it returns #t, the usual informative minibuffer babbling is squelched."
   DEFINE_PROC(S_open_raw_sound,       g_open_raw_sound, 4, 0, 0,       H_open_raw_sound);
   DEFINE_PROC(S_open_alternate_sound, g_open_alternate_sound, 1, 0, 0, H_open_alternate_sound);
   DEFINE_PROC(S_view_sound,           g_view_sound, 1, 0, 0,           H_view_sound);
-  DEFINE_PROC(S_new_sound,            g_new_sound, 1, 5, 0,            H_new_sound);
+  DEFINE_PROC(S_new_sound,            g_new_sound, 0, 6, 0,            H_new_sound);
   DEFINE_PROC(S_revert_sound,         g_revert_sound, 0, 1, 0,         H_revert_sound);
   DEFINE_PROC(S_save_sound_as,        g_save_sound_as, 1, 6, 0,        H_save_sound_as);
   DEFINE_PROC(S_call_apply,           g_call_apply, 0, 2, 0,           H_call_apply);

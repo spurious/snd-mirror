@@ -1935,14 +1935,17 @@ static SCM g_save_marks(SCM snd_n)
   #define H_save_marks "(" S_save_marks " &optional snd) saves snd's marks in <snd's file-name>.marks"
   snd_info *sp;
   char *str;
-  SCM res;
+  SCM res = SCM_BOOL_F;
   SND_ASSERT_SND(S_save_marks, snd_n, 1);
   sp = get_sp(snd_n);
   if (sp == NULL) 
     return(snd_no_such_sound_error(S_save_marks, snd_n));
   str = save_marks(sp);
-  res = TO_SCM_STRING(str);
-  FREE(str);
+  if (str)
+    {
+      res = TO_SCM_STRING(str);
+      FREE(str);
+    }
   return(res);
 }
 

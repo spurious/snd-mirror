@@ -6,6 +6,8 @@
  * TODO: shouldn't temp(s)-to-sound etc use "->"?
  *         or perhaps file->sound, sound->file, selection->sound, etc? (isn't this set-samples from a file?)
  *         so the entire set is unneeded?
+ *   isn't temp->selection|temp->sound actually separable from the preceding -- user could
+ *      create such files at any time and use as an edit. 
  */
 
 /* collect syncd chans */
@@ -3332,19 +3334,19 @@ samples satisfy func (a function of one argument, the current sample, returning 
 		   TRUE, edpos));
 }
 
-static SCM g_smooth(SCM beg, SCM num, SCM snd_n, SCM chn_n)
+static SCM g_smooth_sound(SCM beg, SCM num, SCM snd_n, SCM chn_n)
 {
-  #define H_smooth "(" S_smooth " start-samp samps &optional snd chn) smooths data from start-samp for samps in snd's channel chn"
+  #define H_smooth_sound "(" S_smooth_sound " start-samp samps &optional snd chn) smooths data from start-samp for samps in snd's channel chn"
   chan_info *cp;
-  ASSERT_TYPE(NUMBER_P(beg), beg, SCM_ARG1, S_smooth, "a number");
-  ASSERT_TYPE(NUMBER_P(num), num, SCM_ARG2, S_smooth, "a number");
-  SND_ASSERT_CHAN(S_smooth, snd_n, chn_n, 3);
-  cp = get_cp(snd_n, chn_n, S_smooth);
+  ASSERT_TYPE(NUMBER_P(beg), beg, SCM_ARG1, S_smooth_sound, "a number");
+  ASSERT_TYPE(NUMBER_P(num), num, SCM_ARG2, S_smooth_sound, "a number");
+  SND_ASSERT_CHAN(S_smooth_sound, snd_n, chn_n, 3);
+  cp = get_cp(snd_n, chn_n, S_smooth_sound);
   cos_smooth(cp,
 	     TO_C_INT_OR_ELSE(beg, 0),
 	     TO_C_INT_OR_ELSE(num, 0),
 	     FALSE,
-	     S_smooth); 
+	     S_smooth_sound); 
   return(SCM_BOOL_T);
 }
 
@@ -4182,7 +4184,7 @@ void g_init_sig(SCM local_doc)
   DEFINE_PROC(S_find,                    g_find, 1, 4, 0,                    H_find);
   DEFINE_PROC(S_count_matches,           g_count_matches, 1, 4, 0,           H_count_matches);
 
-  DEFINE_PROC(S_smooth,                  g_smooth, 2, 2, 0,                  H_smooth);
+  DEFINE_PROC(S_smooth_sound,            g_smooth_sound, 2, 2, 0,            H_smooth_sound);
   DEFINE_PROC(S_smooth_selection,        g_smooth_selection, 0, 0, 0,        H_smooth_selection);
   DEFINE_PROC(S_reverse_sound,           g_reverse_sound, 0, 3, 0,           H_reverse_sound);
   DEFINE_PROC(S_reverse_selection,       g_reverse_selection, 0, 0, 0,       H_reverse_selection);

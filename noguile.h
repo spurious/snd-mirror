@@ -110,26 +110,6 @@ SCM scm_return_first(SCM a, ...);
 #define DEFINE_PROC(Name, Func, ReqArg, OptArg, RstArg, Doc)
 #define DEFINE_VAR(a, b, c)
 #define WITH_REVERSED_CHANNEL_ARGS(name_reversed, name) static SCM name_reversed(SCM arg1, SCM arg2, SCM arg3) {return(0);}
-#define NO_SUCH_CHANNEL 0
-#define NO_SUCH_SOUND 0
-#define NO_SUCH_MARK 0
-#define NO_SUCH_MIX 0
-#define NO_SUCH_TRACK 0
-#define NO_SUCH_MENU 0
-#define NO_SUCH_FILE 0
-#define NO_SUCH_REGION 0
-#define NO_SUCH_SAMPLE 0
-#define NO_SUCH_ENVELOPE 0
-#define NO_SUCH_EDIT 0
-#define CANNOT_SAVE 0
-#define CANNOT_PRINT 0
-#define IMPOSSIBLE_BOUNDS 0
-#define NO_ACTIVE_SELECTION 0
-#define MUS_MISC_ERROR 0
-#define NO_SUCH_AXIS_INFO 0
-#define NO_SUCH_PLAYER 0
-#define NO_SUCH_AXIS_CONTEXT 0
-#define BAD_ARITY 0
 #define BOOLEAN_P(Arg) 0
 #define NUMBER_P(Arg) 0
 #define INTEGER_P(Arg) 0

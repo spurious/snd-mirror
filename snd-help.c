@@ -267,6 +267,9 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
+23-May:  OSS fragment defaults changed -- see extsnd.html or HISTORY.sndlib\n\
+         fft-smoother added to examp.scm.\n\
+         smooth renamed smooth-sound.\n\
 22-May:  widget-text (mainly for auto-testing).\n\
 21-May:  Gtk version can now use the mozilla embedded browser for the help dialog.\n\
          hankel-jn (default 0.0) for Bessel choice in Hankel transform.\n\
@@ -1342,8 +1345,8 @@ all refer to the same thing.\n\
   " S_short_file_name "   (snd)\n\
   " S_show_controls "     (snd)\n\
   " S_show_listener "     ()\n\
-  " S_smooth "            (beg num snd chn)\n\
   " S_smooth_selection "  ()\n\
+  " S_smooth_sound "      (beg num snd chn)\n\
   " S_sound_files_in_directory "(dir)\n\
   " S_sound_to_temp "     (type format)\n\
   " S_sound_to_temps "    (type format)\n\

@@ -455,6 +455,7 @@ between these examples, other .scm files, and discussions in other documents.
     <li>set fft-size based on current time domain window size
     <li>superimpose spectra of sycn'd sounds
     <li>fft-edit -- FFT based editing
+    <li>fft-smoother -- fft-based smoothing
     <li>move sound down 8ve using fft
     <li>Dolph-Chebyshev fft data window
     <li>dht -- slow Hartley transform 
@@ -680,6 +681,7 @@ It returns the FIR filter coefficients given the filter order and desired spectr
   <em class=def><A NAME="exdolph">dolph</a></em> n gamma
   <em class=def><A NAME="exdownoct">down-oct</a></em>
   <em class=def><a name="exfftedit">fft-edit</a></em> low-freq high-freq
+  <em class=def><A NAME="exfftsmoother">fft-smoother</a></em> cutoff start samps snd chn
   <em class=def><A NAME="expvoc">pvoc</a></em> #:key (fftsize 512) (overlap 4) (time 1.0) (pitch 1.0) (gate 0.0) (hoffset 0.0) (snd 0) (chn 0)
   <em class=def><A NAME="exppitcher">spot-freq</a></em>
 </pre>
@@ -697,7 +699,9 @@ from Richard Lyons, "Understanding DSP".
 <i>down-oct</i> tries to move a sound down an octave by goofing with the fft data,
 then inverse ffting.  <i>fft-edit</i> is a simple example of fft-based editing.
 It takes an fft of the entire sound, removes all energy below <i>low-freq</i> and above <i>high-freq</i>,
-then inverse fft's. <i>pvoc</i> is a phase-vocoder.  
+then inverse fft's. A similar function is <i>fft-smoother</i> that uses fft-filtering to
+smooth a portion of a sound.
+<i>pvoc</i> is a phase-vocoder.  
 pvoc applies the phase-vocoder (i.e. fft analysis, oscil bank resynthesis).
 to the current sound; <i>pitch</i> specifies the pitch transposition ratio, 
 <i>time</i> specifies the time dilation ratio,
