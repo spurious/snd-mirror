@@ -166,3 +166,39 @@
 (define color-map-rainbow 13)
 (define color-map-flag 14)
 
+
+(define mus-a0
+  (make-procedure-with-setter
+   (lambda (gen)
+     (mus-xcoeff gen 0))
+   (lambda (gen val)
+     (set! (mus-xcoeff gen 0) val))))
+
+(define mus-a1
+  (make-procedure-with-setter
+   (lambda (gen)
+     (mus-xcoeff gen 1))
+   (lambda (gen val)
+     (set! (mus-xcoeff gen 1) val))))
+
+(define mus-a2
+  (make-procedure-with-setter
+   (lambda (gen)
+     (mus-xcoeff gen 2))
+   (lambda (gen val)
+     (set! (mus-xcoeff gen 2) val))))
+
+(define mus-b1
+  (make-procedure-with-setter
+   (lambda (gen)
+     (mus-ycoeff gen 1))
+   (lambda (gen val)
+     (set! (mus-ycoeff gen 1) val))))
+
+(define mus-b2
+  (make-procedure-with-setter
+   (lambda (gen)
+     (mus-ycoeff gen 2))
+   (lambda (gen val)
+     (set! (mus-ycoeff gen 2) val))))
+

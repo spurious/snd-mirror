@@ -7,8 +7,9 @@
 
 /*
  * 14-June:    ssb_am generator.
+ *             removed mus-a*|b*, replaced by mus-x|ycoeff.
  * 9-June:     mus_edot_product.
- * 7-June:     removed mus-x1|x2|y1|y2 generic functions.
+ * 7-June:     removed mus-x*|y* generic functions.
  * 24-May:     distribution arg to make-rand, make-rand-interp.
  * 11-May:     type arg to mus_make_table_lookup|wave_train, MUS_INTERP_NONE, MUS_INTERP_HERMITE.
  *             mus-interp-type.
@@ -190,8 +191,8 @@ typedef struct mus_any_class {
   Float (*set_offset)(mus_any *ptr, Float val);
   Float (*width)(mus_any *ptr);
   Float (*set_width)(mus_any *ptr, Float val);
-  Float (*b2)(mus_any *ptr);
-  Float (*set_b2)(mus_any *ptr, Float val);
+  Float (*xcoeff)(mus_any *ptr, int index);
+  Float (*set_xcoeff)(mus_any *ptr, int index, Float val);
   off_t (*hop)(mus_any *ptr);
   off_t (*set_hop)(mus_any *ptr, off_t new_length);
   off_t (*ramp)(mus_any *ptr);
@@ -203,12 +204,12 @@ typedef struct mus_any_class {
   off_t (*location)(mus_any *ptr);
   off_t (*set_location)(mus_any *ptr, off_t loc);
   int (*channel)(mus_any *ptr);
+  Float (*ycoeff)(mus_any *ptr, int index);
+  Float (*set_ycoeff)(mus_any *ptr, int index, Float val);
+  Float* (*xcoeffs)(mus_any *ptr);
+  Float* (*ycoeffs)(mus_any *ptr);
 } mus_any_class;
 
-#ifndef CLM_DISABLE_DEPRECATED
-  #define MUS_LINEAR 1
-  #define MUS_SINUSOIDAL 2
-#endif
 typedef enum {MUS_INTERP_NONE, MUS_INTERP_LINEAR, MUS_INTERP_SINUSOIDAL, MUS_INTERP_ALL_PASS, 
 	      MUS_INTERP_LAGRANGE, MUS_INTERP_BEZIER, MUS_INTERP_HERMITE} mus_interp_t;
 
@@ -402,17 +403,6 @@ mus_any *mus_make_two_pole(Float a0, Float b1, Float b2);
 bool mus_two_pole_p(mus_any *gen);
 mus_any *mus_make_ppolar(Float radius, Float frequency);
 
-#define mus_a0(Gen) mus_scaler(Gen)
-#define mus_set_a0(Gen, Val) mus_set_scaler(Gen, Val)
-#define mus_a1(Gen) mus_offset(Gen)
-#define mus_set_a1(Gen, Val) mus_set_offset(Gen, Val)
-#define mus_a2(Gen) mus_width(Gen)
-#define mus_set_a2(Gen, Val) mus_set_width(Gen, Val)
-#define mus_b1(Gen) mus_increment(Gen)
-#define mus_set_b1(Gen, Val) mus_set_increment(Gen, Val)
-Float mus_b2(mus_any *ptr);
-Float mus_set_b2(mus_any *ptr, Float val);
-
 Float mus_formant(mus_any *ptr, Float input); 
 Float mus_formant_bank(Float *amps, mus_any **formants, Float inval, int size);
 mus_any *mus_make_formant(Float radius, Float frequency, Float gain);
@@ -440,6 +430,10 @@ Float *mus_make_fir_coeffs(int order, Float *env, Float *aa);
 
 Float *mus_xcoeffs(mus_any *ptr);
 Float *mus_ycoeffs(mus_any *ptr);
+Float mus_xcoeff(mus_any *ptr, int index);
+Float mus_set_xcoeff(mus_any *ptr, int index, Float val);
+Float mus_ycoeff(mus_any *ptr, int index);
+Float mus_set_ycoeff(mus_any *ptr, int index, Float val);
 #define mus_order(Gen) mus_length(Gen)
 void mus_clear_filter_state(mus_any *gen);
 
@@ -656,6 +650,20 @@ void *mus_environ(mus_any *rd);
 #define mus_file2fltarray(Filename, Chan, Start, Samples, Array) mus_file_to_float_array(Filename, Chan, Start, Samples, Array)
 #define mus_fltarray2file(Filename, Ddata, Len, Srate, Channels) mus_float_array_to_file(Filename, Ddata, Len, Srate, Channels)
 Float mus_sin(Float phase);
+#define MUS_LINEAR 1
+#define MUS_SINUSOIDAL 2
+
+#define mus_a0(Gen) mus_xcoeff(Gen, 0)
+#define mus_set_a0(Gen, Val) mus_set_xcoeff(Gen, 0, Val)
+#define mus_a1(Gen) mus_xcoeff(Gen, 1)
+#define mus_set_a1(Gen, Val) mus_set_xcoeff(Gen, 1, Val)
+#define mus_a2(Gen) mus_xcoeff(Gen, 2)
+#define mus_set_a2(Gen, Val) mus_set_xcoeff(Gen, 2, Val)
+#define mus_b1(Gen) mus_ycoeff(Gen, 1)
+#define mus_set_b1(Gen, Val) mus_set_ycoeff(Gen, 1, Val)
+#define mus_b2(Gen) mus_ycoeff(Gen, 2)
+#define mus_set_b2(Gen, Val) mus_set_ycoeff(Gen, 2, Val)
+
 #endif
 
 #ifdef __cplusplus

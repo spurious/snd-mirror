@@ -1609,8 +1609,8 @@ as env moves to 0.0, low-pass gets more intense; amplitude and low-pass amount m
     (map-chan
      (lambda (val)
        (let ((env-val (env amp-env)))
-	 (set! (mus-a0 flt) env-val)
-	 (set! (mus-b1 flt) (- env-val 1.0))
+	 (set! (mus-xcoeff flt 0) env-val)
+	 (set! (mus-ycoeff flt 1) (- env-val 1.0))
 	 (one-pole flt (* env-val val)))))))
 
 

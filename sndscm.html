@@ -4293,7 +4293,7 @@ along the lines of:
 (defmethod print-object ((d fcomb) stream)
   (format stream "#&lt;(fcomb: size: ~A, loc: ~A, feedback: ~A, a0: ~A, a1: ~A, line: ~A&gt;"
 	  (dly-size d) (dly-loc d) (dly-xscl d)
-	  (<a class=quiet href="clm.html#mus-a0">mus-a0</a> d) (<a class=quiet href="clm.html#mus-a1">mus-a1</a> d)
+	  (<a class=quiet href="clm.html#mus-xcoeff">mus-xcoeff</a> d 0) (<a class=quiet href="clm.html#mus-xcoeff">mus-xcoeff</a> d 1)
 	  (prettified-array (dly-line d)))))
 </pre>
 <p>And to get the
@@ -4470,7 +4470,8 @@ static mus_any_class FCOMB_CLASS = {
   0,
   0, 0, 0, 0, 0, 0, 
   0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0
+  0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0
 };
 
 /* now a function to make a new generator */

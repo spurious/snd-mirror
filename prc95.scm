@@ -37,17 +37,17 @@
   (make-one-pole (- 1.0 polecoeff) (- polecoeff)))
 
 (define (set-pole p val) 
-  (set! (mus-b1 p) (- val))
-  (set! (mus-a0 p) (- 1.0 val)))
+  (set! (mus-ycoeff p 1) (- val))
+  (set! (mus-xcoeff p 0) (- 1.0 val)))
 
 (define (set-gain p val)
-  (set! (mus-a0 p) (* (mus-a0 p) val)))
+  (set! (mus-xcoeff p 0) (* (mus-xcoeff p 0) val)))
 
 
 (define (lip-set-freq b freq)
-  (set! (mus-b1 b) (* -2.0 0.999 (cos (/ (* pi 2 freq) (mus-srate)))))
-  (set! (mus-b2 b) (* 0.999 0.999))
-  (set! (mus-a0 b) 0.02))
+  (set! (mus-ycoeff b 1) (* -2.0 0.999 (cos (/ (* pi 2 freq) (mus-srate)))))
+  (set! (mus-ycoeff b 2) (* 0.999 0.999))
+  (set! (mus-xcoeff b 0) 0.02))
 
 (define (lip b mouthsample boresample)
   (let ((temp (formant b (- mouthsample boresample))))

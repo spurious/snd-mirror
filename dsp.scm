@@ -1489,10 +1489,11 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 ;;; -------- ssb-am friends
 
 (define* (map-ssb-am freq #:optional (order 40)) ; higher order = better cancellation
+  ;; TODO: a better name -- perhaps channel-shift-spectrum?
   (let* ((gen (make-ssb-am freq order)))
     (map-channel (lambda (y) (ssb-am gen y)))))
 
-(define (hz->2pi freq) (/ (* 2 pi freq) (srate)))
+(define (hz->2pi freq) (/ (* 2 pi freq) (srate))) ; hz->radians follows mus-srate unfortunately
 
 (define* (ssb-bank old-freq new-freq pairs-1 #:optional (order 40) (bw 50.0))
   (let* ((pairs pairs-1) ; for run's benefit
@@ -1525,6 +1526,19 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 
 
 ;;; TODO: auto-detect main freq so ssb-bank can work semi-automatically (bw/pairs choices also automated)
+;;; TODO: freq env to add (or remove) pitch fluctuations [if pitch follower, this could be automated]
+;;; TODO: make multiplier an arg (inharmonic or stretched partials) -- or an env [zip -> freq domain via these funcs]
+;;; TODO: hz->radians should be smart (or someone should) about srates
+;;; TODO: what about widely changing/noisy sounds?
+;;; TODO: should some form of ssb-bank be moved into CLM?
+;;; TODO: a channel (regularized) version of ssb-bank -- repitch-channel? (+ retime or whatever)
+;;; TODO: a realtime interface to this -- a slider for pitch/bw etc
+
+;;; TODO: periodogram as dsp.scm func?
+;;; TODO: complex-data freq processing funcs
+;;; TODO: either clean-up or get rid of the blit stuff in CL
+;;; TODO: run support for complex data? (what about generators?)
+
 
 #!
 (define* (repitch-sound old-freq new-freq)

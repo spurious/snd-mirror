@@ -7593,11 +7593,6 @@ GEN0(scaler)
 GEN0(width)
 GEN0(offset)
 GEN0(formant_radius)
-GEN0(a0)
-GEN0(a1)
-GEN0(a2)
-GEN0(b1)
-GEN0(b2)
 GEN0(feedforward)
 GEN0(feedback)
 
@@ -7736,6 +7731,43 @@ static void mixer_set_1(ptree *prog, xen_value *in_v, xen_value *in_v1, xen_valu
   add_triple_to_ptree(prog, va_make_triple(mixer_set_0, descr_mixer_set_0, 5, NULL, in_v, in_v1, in_v2, v));
 }
 
+/* ---------------- xcoeff/ycoeff ---------------- */
+
+static char *descr_xcoeff_0(int *args, ptree *pt)
+{
+  return(mus_format( FLT_PT " = mus-xcoeff(" CLM_PT ", " INT_PT ")", args[0], FLOAT_RESULT, args[1], DESC_CLM_ARG_1, args[2], INT_ARG_2));
+}
+static void xcoeff_0(int *args, ptree *pt) {FLOAT_RESULT = mus_xcoeff(CLM_ARG_1, INT_ARG_2);}
+static xen_value *mus_xcoeff_1(ptree *prog, xen_value **args, int num_args) {return(package(prog, R_FLOAT, xcoeff_0, descr_xcoeff_0, args, 2));}
+
+static char *descr_set_xcoeff_0(int *args, ptree *pt)
+{
+  return(mus_format("mus-set-xcoeff(" CLM_PT ", " INT_PT ", " FLT_PT ")", args[1], DESC_CLM_ARG_1, args[2], INT_ARG_2, args[3], FLOAT_ARG_3));
+}
+static void set_xcoeff_0(int *args, ptree *pt) {mus_set_xcoeff(CLM_ARG_1, INT_ARG_2, FLOAT_ARG_3);}
+static void mus_set_xcoeff_1(ptree *prog, xen_value *in_v, xen_value *in_v1, xen_value *in_v2, xen_value *v)
+{
+  add_triple_to_ptree(prog, va_make_triple(set_xcoeff_0, descr_set_xcoeff_0, 4, NULL, in_v, in_v1, v));
+}
+
+
+static char *descr_ycoeff_0(int *args, ptree *pt)
+{
+  return(mus_format( FLT_PT " = mus-ycoeff(" CLM_PT ", " INT_PT ")", args[0], FLOAT_RESULT, args[1], DESC_CLM_ARG_1, args[2], INT_ARG_2));
+}
+static void ycoeff_0(int *args, ptree *pt) {FLOAT_RESULT = mus_ycoeff(CLM_ARG_1, INT_ARG_2);}
+static xen_value *mus_ycoeff_1(ptree *prog, xen_value **args, int num_args) {return(package(prog, R_FLOAT, ycoeff_0, descr_ycoeff_0, args, 2));}
+
+static char *descr_set_ycoeff_0(int *args, ptree *pt)
+{
+  return(mus_format("mus-set-ycoeff(" CLM_PT ", " INT_PT ", " FLT_PT ")", args[1], DESC_CLM_ARG_1, args[2], INT_ARG_2, args[3], FLOAT_ARG_3));
+}
+static void set_ycoeff_0(int *args, ptree *pt) {mus_set_ycoeff(CLM_ARG_1, INT_ARG_2, FLOAT_ARG_3);}
+static void mus_set_ycoeff_1(ptree *prog, xen_value *in_v, xen_value *in_v1, xen_value *in_v2, xen_value *v)
+{
+  add_triple_to_ptree(prog, va_make_triple(set_ycoeff_0, descr_set_ycoeff_0, 4, NULL, in_v, in_v1, v));
+}
+
 
 static char *descr_set_int_gen0(int *args, ptree *pt, const char *which)
 {
@@ -7772,11 +7804,6 @@ SET_DBL_GEN0(scaler)
 SET_DBL_GEN0(width)
 SET_DBL_GEN0(feedback)
 SET_DBL_GEN0(feedforward)
-SET_DBL_GEN0(a0)
-SET_DBL_GEN0(a1)
-SET_DBL_GEN0(a2)
-SET_DBL_GEN0(b1)
-SET_DBL_GEN0(b2)
 SET_DBL_GEN0(phase)
 SET_DBL_GEN0(frequency)
 SET_DBL_GEN0(formant_radius)
@@ -10774,14 +10801,11 @@ static void init_walkers(void)
   INIT_WALKER(S_mus_scaler, make_walker(mus_scaler_0, NULL, mus_set_scaler_1, 1, 1, R_FLOAT, false, 1, R_CLM));
   INIT_WALKER(S_mus_offset, make_walker(mus_offset_0, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_CLM));
   INIT_WALKER(S_mus_formant_radius, make_walker(mus_formant_radius_0, NULL, mus_set_formant_radius_1, 1, 1, R_FLOAT, false, 1, R_CLM));
-  INIT_WALKER(S_mus_a0, make_walker(mus_a0_0, NULL, mus_set_a0_1, 1, 1, R_FLOAT, false, 1, R_CLM));
-  INIT_WALKER(S_mus_a1, make_walker(mus_a1_0, NULL, mus_set_a1_1, 1, 1, R_FLOAT, false, 1, R_CLM));
-  INIT_WALKER(S_mus_a2, make_walker(mus_a2_0, NULL, mus_set_a2_1, 1, 1, R_FLOAT, false, 1, R_CLM));
-  INIT_WALKER(S_mus_b1, make_walker(mus_b1_0, NULL, mus_set_b1_1, 1, 1, R_FLOAT, false, 1, R_CLM));
-  INIT_WALKER(S_mus_b2, make_walker(mus_b2_0, NULL, mus_set_b2_1, 1, 1, R_FLOAT, false, 1, R_CLM));
   INIT_WALKER(S_mus_data, make_walker(mus_data_1, NULL, NULL, 1, 1, R_VCT, false, 1, R_XCLM));
   INIT_WALKER(S_mus_xcoeffs, make_walker(mus_xcoeffs_1, NULL, NULL, 1, 1, R_VCT, false, 1, R_XCLM));
   INIT_WALKER(S_mus_ycoeffs, make_walker(mus_ycoeffs_1, NULL, NULL, 1, 1, R_VCT, false, 1, R_XCLM));
+  INIT_WALKER(S_mus_xcoeff, make_walker(mus_xcoeff_1, NULL, mus_set_xcoeff_1, 2, 2, R_NUMBER, false, 2, R_CLM, R_INT));
+  INIT_WALKER(S_mus_ycoeff, make_walker(mus_ycoeff_1, NULL, mus_set_ycoeff_1, 2, 2, R_NUMBER, false, 2, R_CLM, R_INT));
   INIT_WALKER(S_mus_feedforward, make_walker(mus_feedforward_0, NULL, mus_set_feedforward_1, 1, 1, R_FLOAT, false, 1, R_CLM));
   INIT_WALKER(S_mus_feedback, make_walker(mus_feedback_0, NULL, mus_set_feedback_1, 1, 1, R_FLOAT, false, 1, R_CLM));
   INIT_WALKER(S_mus_hop, make_walker(mus_hop_0, NULL, mus_set_hop_1, 1, 1, R_INT, false, 1, R_CLM));

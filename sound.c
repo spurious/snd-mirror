@@ -148,8 +148,8 @@ static const char *mus_initial_error_names[] = {
   "midi open error", "midi read error", "midi write error", "midi close error", "midi init error", "midi misc error",
 
   "no channels method", "no hop method", "no width method", "no file-name method", "no ramp method", "no run method",
-  "no increment method", "no b2 method", "no inspect method", "no offset method",
-  "no x1 method", "no x2 method", "no y1 method", "no y2 method"
+  "no increment method", "no inspect method", "no offset method",
+  "no xcoeff method", "no ycoeff method", "no xcoeffs method", "no ycoeffs method", 
 };
 
 static char **mus_error_names = NULL;

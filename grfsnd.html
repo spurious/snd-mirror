@@ -936,12 +936,7 @@ In Guile <b>frame?</b> is part of the debugger; it is renamed <b>%frame?</b> her
 <tr><td><a href="clm.html#mixer?">mixer?</a></td><td>(gen)</td><td>#t if gen is mixer object</td></tr>
 <tr><td><a href="clm.html#move-locsig">move-locsig</a></td><td colspan=2>(gen degree distance)</td></tr>
 <tr><td><a href="clm.html#multiply-arrays">multiply-arrays</a></td><td>(arr1 arr2)</td><td>arr1[i] *= arr2[i]</td></tr>
-<tr><td><a href="clm.html#mus-a0">mus-a0</a></td><td>(gen)</td><td>a0 field (simple filters)</td></tr>
-<tr><td><a href="clm.html#mus-a1">mus-a1</a></td><td>(gen)</td><td>a1 field (simple filters)</td></tr>
-<tr><td><a href="clm.html#mus-a2">mus-a2</a></td><td>(gen)</td><td>a2 field (simple filters)</td></tr>
 <tr><td><a class=def name="musarrayprintlength">mus-array-print-length</a></td><td>()</td><td>how many array (vct) elements to print in mus_describe</td></tr>
-<tr><td><a href="clm.html#mus-b1">mus-b1</a></td><td>(gen)</td><td>b1 field (simple filters)</td></tr>
-<tr><td><a href="clm.html#mus-b2">mus-b2</a></td><td>(gen)</td><td>b2 field (simple filters)</td></tr>
 <tr><td><a href="clm.html#musbank">mus-bank</a></td><td>(gens amps <i>args1 args2</i>)</td><td></td></tr>
 <tr><td><a href="clm.html#mus-channel">mus-channel</a></td><td>(gen)</td><td>channel of gen</td></tr>
 <tr><td><a href="clm.html#mus-channels">mus-channels</a></td><td>(gen)</td><td>channels of gen</td></tr>
@@ -979,8 +974,10 @@ it in conjunction with <i>mixer</i>to scale/envelope all the various ins and out
 <tr><td><a href="clm.html#mus-scaler">mus-scaler</a></td><td>(gen)</td><td>scaler of gen</td></tr>
 <tr><td><a href="clm.html#mus-set-rand-seed">mus-rand-seed</a></td><td>(val)</td><td>random number generator seed (settable via set!)</td></tr>
 <tr><td><a class=def name="mussrate">mus-srate</a></td><td>()</td><td>current sampling rate</td></tr>
+<tr><td><a href="clm.html#mus-xcoeff">mus-xcoeffs</a></td><td>(gen index)</td><td>x coeff of filter at index</td></tr>
 <tr><td><a href="clm.html#mus-xcoeffs">mus-xcoeffs</a></td><td>(gen)</td><td>feedforward (FIR) coeffs of filter</td></tr>
-<tr><td><a href="clm.html#mus-ycoeffs">mus-ycoeffs</a></td><td>(gen)</td><td>feedback (IIR) coeefs of filter</td></tr>
+<tr><td><a href="clm.html#mus-ycoeff">mus-ycoeffs</a></td><td>(gen index)</td><td>y coeff of filter at index</td></tr>
+<tr><td><a href="clm.html#mus-ycoeffs">mus-ycoeffs</a></td><td>(gen)</td><td>feedback (IIR) coeffs of filter</td></tr>
 <tr><td><a href="clm.html#notch">notch</a></td><td>(gen input <i>pm</i>)</td><td>notch filter</td></tr>
 <tr><td><a href="clm.html#notch?">notch?</a></td><td>(gen)</td><td>#t if gen is notch filter</td></tr>
 <tr><td><a href="clm.html#one-pole">one-pole</a></td><td>(gen input)</td><td>one-pole filter</td></tr>
