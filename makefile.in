@@ -82,11 +82,3 @@ config.status: configure
 
 configure: configure.in
 	cd $(srcdir); autoconf
-
-
-# the order GUILE_LIBS then GTK_LIBS (and possibly others) can cause trouble because
-#   GUILE_LIBS may start with -L/usr/local/lib, whereas GTK_LIBS leaves off the
-#   directory, but assumes /usr/lib.  An older version sitting on /usr/local/lib
-#   will therefore get accidentally loaded.  I fear the only fix is to delete the
-#   libraries on /usr/local/lib.
-

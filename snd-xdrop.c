@@ -2,6 +2,8 @@
 
 /* can't move axes if icon dragged to end of graph because the entire system freezes! */
 
+/* TODO: if mix has offset anchor, does drop reflect it? */
+
 static Atom FILE_NAME;               /* Sun uses this, SGI uses STRING */
 static Atom COMPOUND_TEXT;           /* various Motif widgets use this and the next */
 static Atom _MOTIF_COMPOUND_STRING;

@@ -468,14 +468,35 @@ loaded:
 MOTIF_LIBS =  -L/usr/X11R6/lib  -lSM -lICE /usr/local/lib/libXm.a /usr/X11R6/lib/libXp.a /usr/X11R6/lib/libXt.a -lXext -lXpm -lX11
 # MOTIF_LIBS =  -L/usr/X11R6/lib  -lSM -lICE -lXm -lXt -lX11  -lXext -lXp -lXpm
 
-and you'll probably need to add some things to the GUILE library list:
+or, if you installed libXm.a in /sw/lib (via Fink, or something):
+
+MOTIF_LIBS = -L/usr/X11R6/lib -lSM -lICE /sw/lib/libXm.a /usr/X11R6/lib/libXp.a /usr/X11R6/lib/libXt.a -lXext -lXpm -lX11
+
+
+And you'll probably need to add some things to the GUILE library list:
 
 GUILE_LIBS = -L/usr/local/lib -lguile -lm -lguile-ltdl -ldl
-# GUILE_LIBS = -L/usr/local/lib -lguile -lm
+
+or, in the fink case:
+
+GUILE_LIBS = -L/sw/lib -lguile -lm /sw/lib/libguile.a
+GUILE_CFLAGS = -I/sw/include/
+
+
+If configure didn't find Gtk or Motif, it's possible the header flags will
+also need to be fixed:
+
+# GX_HEADERS = $(NO_GUI_HEADERS)
+# GX_FILES = $(NO_GUI_O_FILES)
+GX_HEADERS = $(SND_X_HEADERS)
+GX_FILES = $(X_O_FILES)
+
+
 
 If the openmotif package forgot to include libXm.a, a version is
 at ccrma-ftp.  If the Mac loader complains that it it out of date,
 run ranlib: ranlib libXm.a (you may need to be root to do this).
+
 
 I haven't tried Gtk+ in OSX for maybe a year, but back then I made
 these changes:
@@ -499,10 +520,12 @@ to your initialization file:
 
 See also the cmdist archives for tips from Juan Pampin and others.
 
+
 If you want to use fftw, first copy Snd's versions of config.sub
 and config.guess to the main fftw directory (clobbering its ancient
 versions), then configure --disable-shared, and ignore the (bogus)
 error messages.
+
 
 On a Mac running 10.2 with the developers environment (i.e. gcc),
 I installed these programs:
@@ -525,6 +548,7 @@ from the sources:
   
 from ccrma-ftp:
   libXm.a (omitted from motifzone package, but sometimes needed by Snd)
+
 
 Loading xm.c (--with-static-xm etc) is problematic on Mac.  If you use
 the libXm.dylib from openMotif, you'll probably need the langinfo

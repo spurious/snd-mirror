@@ -908,6 +908,7 @@ void ripple_marks(chan_info *cp, off_t beg, off_t change)
 	{
 	  old_size = cp->marks_size;
 	  cp->marks_size += MARKS_ALLOC_SIZE;
+	  if (new_m >= cp->marks_size) cp->marks_size = new_m + MARKS_ALLOC_SIZE;
 	  cp->marks = (mark ***)REALLOC(cp->marks, cp->marks_size * sizeof(mark **));
 	  cp->mark_size = (int *)REALLOC(cp->mark_size, cp->marks_size * sizeof(int));
 	  cp->mark_ctr = (int *)REALLOC(cp->mark_ctr, cp->marks_size * sizeof(int));
@@ -1763,7 +1764,7 @@ static XEN g_restore_marks(XEN size, XEN snd, XEN chn, XEN marklist)
   XEN_ASSERT_TYPE(XEN_LIST_P(marklist), marklist, XEN_ARG_4, S_restore_marks, "a list");
   if (cp->marks)
     {
-      snd_error(S_restore_marks ": there are marks here already!");
+      snd_error(S_restore_marks ": %s already has marks!", sp->short_filename);
       free_mark_list(cp, 0);
     }
   cp->marks_size = XEN_TO_C_INT(size);

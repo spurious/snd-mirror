@@ -1,4 +1,5 @@
-dnl Configuration script for Snd via autoconf 2.57
+dnl Configuration script for Snd
+dnl Process this file with autoconf 2.57 to produce a configure script.
 
 AC_INIT(snd, 6.11, bil@ccrma.stanford.edu, ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-6.tar.gz)
 AC_CONFIG_SRCDIR(snd.c)
@@ -6,7 +7,7 @@ AC_CANONICAL_HOST
 AC_CONFIG_HEADER(config.h)
 AC_CONFIG_FILES(makefile po/Makefile.in )
 AC_PROG_CC
-AC_HEADER_STDC # this needs to precede AC_CHECK_HEADER!
+AC_HEADER_STDC # this needs to precede AC_CHECK_HEADER! (autoconf docs don't mention this problem)
 AC_PROG_INSTALL
 
 audio_system="unknown"
@@ -628,6 +629,8 @@ else
   fi
   if (${GUILE_CONFIG_path}guile-config link > /dev/null) 2>&1; then
     GUILE_CONFIG_works=yes
+    guile_version="`${GUILE_CONFIG_path}guile -c '(display (version))'`"
+    AC_MSG_RESULT($guile_version)
   else
     GUILE_CONFIG_works=no
     AC_MSG_RESULT(no)
@@ -647,11 +650,9 @@ if test $GUILE_CONFIG_works = yes; then
 	;;
     esac
   else
-    GUILE_LIBS="`${GUILE_CONFIG_path}guile-config link`"
+    # GUILE_CONFIG_path is empty
+    GUILE_LIBS="`guile-config link`"
   fi
-
-  guile_version="`${GUILE_CONFIG_path}guile -c '(display (version))'`"
-  AC_MSG_RESULT($guile_version)
 
   if test "`${GUILE_CONFIG_path}guile -c '(display (string>=? (version) "1.3.4"))'`" != "#t"; then
     AC_MSG_WARN(Snd needs Guile 1.3.4 or later)

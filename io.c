@@ -1348,10 +1348,6 @@ void mus_reset_io_c(void)
 {
   io_fd_size = 0;
   io_fds = NULL;
-#if LONG_INT_P
-  long_int_p_table = NULL;
-  long_int_p_table_size = 0;
-#endif
 }
 
 
