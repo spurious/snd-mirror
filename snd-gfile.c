@@ -15,25 +15,34 @@
 char *read_file_data_choices(file_data *fdat, int *srate, int *chans, int *type, int *format, int *location)
 {
   char *str;
-  int res;
+  int res, val;
   char *comment = NULL;
   if (fdat->srate_text) 
     {
       str = gtk_entry_get_text(GTK_ENTRY(fdat->srate_text)); 
       if (str) 
-	(*srate) = string2int(str);
+	{
+	  val = string2int(str);
+	  if (val > 0) (*srate) = val;
+	}
     }
   if (fdat->chans_text) 
     {
       str = gtk_entry_get_text(GTK_ENTRY(fdat->chans_text)); 
       if (str) 
-	(*chans) = string2int(str);
+	{
+	  val = string2int(str);
+	  if (val > 0) (*chans) = val;
+	}
     }
   if (fdat->location_text) 
     {
       str = gtk_entry_get_text(GTK_ENTRY(fdat->location_text)); 
-      if (str) 
-	(*location) = string2int(str);
+      if (str)
+	{
+	  val = string2int(str);
+	  if (val >= 0) (*location) = val;
+	}
     }
   if (fdat->comment_text) 
     {
@@ -754,8 +763,8 @@ ww_info *make_title_row(snd_state *ss, GtkWidget *formw, char *first_str, char *
   return(wwi);
 }
 
-static XEN mouse_name_enter_hook;
-static XEN mouse_name_leave_hook;
+static XEN mouse_enter_label_hook;
+static XEN mouse_leave_label_hook;
 
 static gint mouse_name(XEN hook, GtkWidget *w, const char *caller)
 {
@@ -790,12 +799,12 @@ static gint mouse_name(XEN hook, GtkWidget *w, const char *caller)
 
 static gint label_enter_callback(GtkWidget *w, GdkEventCrossing *ev)
 {
-  return(mouse_name(mouse_name_enter_hook, w, S_mouse_enter_label_hook));
+  return(mouse_name(mouse_enter_label_hook, w, S_mouse_enter_label_hook));
 }
 
 static gint label_leave_callback(GtkWidget *w, GdkEventCrossing *ev)
 {
-  return(mouse_name(mouse_name_leave_hook, w, S_mouse_leave_label_hook));
+  return(mouse_name(mouse_leave_label_hook, w, S_mouse_leave_label_hook));
 }
 
 
@@ -1380,13 +1389,22 @@ file_info *raw_data_dialog_to_file_info(char *filename, snd_state *ss, const cha
   if (raw_cancelled) return(NULL);
   str = gtk_entry_get_text(GTK_ENTRY(raw_srate_text));
   if ((str) && (*str)) 
-    sr = string2int(str);
+    {
+      sr = string2int(str);
+      if (sr <= 0) sr = 1;
+    }
   str = gtk_entry_get_text(GTK_ENTRY(raw_chans_text));
   if ((str) && (*str)) 
-    oc = string2int(str);
+    {
+      oc = string2int(str);
+      if (oc <= 0) oc = 1;
+    }
   str = gtk_entry_get_text(GTK_ENTRY(raw_location_text));
   if ((str) && (*str)) 
-    raw_data_location = string2int(str);
+    {
+      raw_data_location = string2int(str);
+      if (raw_data_location < 0) raw_data_location = 0;
+    }
   mus_header_set_raw_defaults(sr, oc, fr);
   mus_sound_override_header(filename, sr, oc, fr, MUS_RAW, raw_data_location, 
 			    mus_bytes_to_samples(fr, mus_sound_length(filename) - raw_data_location));
@@ -1622,7 +1640,7 @@ See also nb.scm."
 
 #define H_mouse_leave_label_hook S_mouse_leave_label_hook " (type position label) is called when a file viewer or region label is exited by the mouse"
 
-  XEN_DEFINE_HOOK(mouse_name_enter_hook, S_mouse_enter_label_hook, 3, H_mouse_enter_label_hook);
-  XEN_DEFINE_HOOK(mouse_name_leave_hook, S_mouse_leave_label_hook, 3, H_mouse_leave_label_hook);
+  XEN_DEFINE_HOOK(mouse_enter_label_hook, S_mouse_enter_label_hook, 3, H_mouse_enter_label_hook);
+  XEN_DEFINE_HOOK(mouse_leave_label_hook, S_mouse_leave_label_hook, 3, H_mouse_leave_label_hook);
 }
 

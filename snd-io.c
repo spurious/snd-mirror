@@ -19,7 +19,7 @@ static void c_io_bufclr (int *io, int *datai, int beg)
 {
   int i, k, end;
   MUS_SAMPLE_TYPE *j;
-  if (io[SND_IO_DATS+SND_AREF_BLOCK] == 0)
+  if (io[SND_IO_DATS + SND_AREF_BLOCK] == 0)
     snd_error("attempt to clear deallocated IO buffer");
   else
     {
@@ -123,12 +123,12 @@ static void reposition_file_buffers(snd_data *sd, int index)
       hdr = sd->hdr;
       /* these need to flush active data before hidden close and fixup the datai indices */
       mus_file_open_descriptors(fd,
-			       sd->filename,
-			       hdr->format,
-			       mus_data_format_to_bytes_per_sample(hdr->format),
-			       hdr->data_location,
-			       hdr->chans,
-			       hdr->type);
+				sd->filename,
+				hdr->format,
+				mus_data_format_to_bytes_per_sample(hdr->format),
+				hdr->data_location,
+				hdr->chans,
+				hdr->type);
       during_open(fd, sd->filename, SND_REOPEN_CLOSED_FILE);
       /* fix up io[SND_IO_FD] and whatever else is clobbered by mus_file_close */
       sd->io[SND_IO_FD] = fd;

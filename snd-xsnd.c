@@ -1372,7 +1372,7 @@ static snd_info *add_sound_window_with_parent (Widget parent, char *filename, sn
   file_info *hdr = NULL;
   Widget *sw;
   XmString s1;
-  int snd_slot, nchans, make_widgets, i, k, need_colors, n, old_chans;
+  int snd_slot, nchans = 1, make_widgets, i, k, need_colors, n, old_chans;
   Arg args[32];
   char *old_name = NULL, *title;
   Dimension app_y, app_dy, screen_y, chan_min_y;
@@ -1394,6 +1394,7 @@ static snd_info *add_sound_window_with_parent (Widget parent, char *filename, sn
       ss->pending_change = NULL;
     }
   nchans = hdr->chans;
+  if (nchans <= 0) nchans = 1;
   XtVaGetValues(MAIN_SHELL(ss),
 		XmNy, &app_y,
 		XmNheight, &app_dy,

@@ -579,42 +579,7 @@ void mem_report(void)
 	  fprintf(Fp, "%s[%d]:%s:  %d (%d)\n", files[ptr], lines[ptr], functions[ptr], sums[ptr], ptrs[ptr]);
 	  sums[ptr] = 0;
 	}
-    
-}
-#if DEBUGGING
-  for (loc = 0; loc <= mem_location; loc++)
-    if (strcmp(functions[loc], "init_sample_read_any_1") == 0)
-      {
-	for (i = 0; i < mem_size; i++)
-	  if ((pointers[i]) && (locations[i] == loc))
-	    fprintf(Fp, "    %s %s (%d : %d)\n",
-		    ((snd_fd *)(pointers[i]))->caller,
-		    ((snd_fd *)(pointers[i]))->filename,
-		    ((snd_fd *)(pointers[i]))->beg,
-		    ((snd_fd *)(pointers[i]))->end);
-	break;
-      }
-  for (loc = 0; loc <= mem_location; loc++)
-    if (strcmp(functions[loc], "make_snd_data_buffer") == 0)
-      {
-	for (i = 0; i < mem_size; i++)
-	  if ((pointers[i]) && (locations[i] == loc))
-	    fprintf(Fp, "    %s %s [%d %p %p %d %d %d %d %d %d]\n",
-		    ((snd_data *)(pointers[i]))->caller, 
-		    ((snd_data *)(pointers[i]))->filename,
-		    ((snd_data *)(pointers[i]))->copy,
-		    ((snd_data *)(pointers[i]))->io,
-		    ((snd_data *)(pointers[i]))->hdr,
-		    ((snd_data *)(pointers[i]))->edit_ctr,
-		    ((snd_data *)(pointers[i]))->open,
-		    ((snd_data *)(pointers[i]))->inuse,
-		    ((snd_data *)(pointers[i]))->chan,
-		    ((snd_data *)(pointers[i]))->len,
-		    ((snd_data *)(pointers[i]))->just_zeros);
-	break;
-      }
-#endif
-
+    }
   for (i = 0; i < 512; i++)
     if (mus_file_fd_name(i))
       fprintf(Fp, "[%d]: %s\n", i, mus_file_fd_name(i));

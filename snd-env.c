@@ -1598,9 +1598,9 @@ void g_init_env(void)
   #define H_enved_spectrum "The value for " S_enved_target " that sets the envelope editor 'flt' button."
   #define H_enved_srate "The value for " S_enved_target " that sets the envelope editor 'src' button."
 
-  XEN_DEFINE_CONSTANT(S_enved_amplitude,       ENVED_AMPLITUDE, H_enved_amplitude);
-  XEN_DEFINE_CONSTANT(S_enved_spectrum,        ENVED_SPECTRUM,  H_enved_spectrum);
-  XEN_DEFINE_CONSTANT(S_enved_srate,           ENVED_SRATE,     H_enved_srate);
+  XEN_DEFINE_CONSTANT(S_enved_amplitude, ENVED_AMPLITUDE, H_enved_amplitude);
+  XEN_DEFINE_CONSTANT(S_enved_spectrum,  ENVED_SPECTRUM,  H_enved_spectrum);
+  XEN_DEFINE_CONSTANT(S_enved_srate,     ENVED_SRATE,     H_enved_srate);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_enved_base,   g_enved_base_w,   H_enved_base,   "set-" S_enved_base,   g_set_enved_base_w,  0, 0, 1, 0);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_enved_power,  g_enved_power_w,  H_enved_power,  "set-" S_enved_power,  g_set_enved_power_w,  0, 0, 1, 0);

@@ -528,6 +528,7 @@ int listener_width(void) {if (listener_text) return(widget_width(listener_text))
 
 static XEN g_listener_selected_text(void)
 {
+  #define H_listener_selection "returns current selection in listener or #f"
   char *txt;
   XEN res = XEN_FALSE;
   if (listener_text)
@@ -549,6 +550,7 @@ static XEN g_listener_selected_text(void)
 
 static XEN g_reset_listener_cursor(void)
 {
+  #define H_reset_listener_cursor "resets listener cursor to default pointer"
   snd_state *ss;
   if (listener_text)
     {
@@ -590,8 +592,7 @@ leaves the lisp listener pane"
   XEN_DEFINE_HOOK(mouse_enter_text_hook, S_mouse_enter_text_hook, 1, H_mouse_enter_text_hook);    /* arg = text widget */
   XEN_DEFINE_HOOK(mouse_leave_text_hook, S_mouse_leave_text_hook, 1, H_mouse_leave_text_hook);    /* arg = text widget */
 
-  XEN_DEFINE_PROCEDURE(S_listener_selection, g_listener_selected_text_w, 0, 0, 0, "returns current selection in listener or #f");
-
-  XEN_DEFINE_PROCEDURE(S_reset_listener_cursor, g_reset_listener_cursor_w, 0, 0, 0, "resets listener cursor to default pointer");
+  XEN_DEFINE_PROCEDURE(S_listener_selection, g_listener_selected_text_w, 0, 0, 0, H_listener_selection);
+  XEN_DEFINE_PROCEDURE(S_reset_listener_cursor, g_reset_listener_cursor_w, 0, 0, 0, H_reset_listener_cursor);
 }
 

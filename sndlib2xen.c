@@ -1325,7 +1325,7 @@ void mus_sndlib2xen_initialize(void)
   XEN_DEFINE_PROCEDURE(S_mus_sound_srate,          g_sound_srate_w, 1, 0, 0,           H_mus_sound_srate);
   XEN_DEFINE_PROCEDURE(S_mus_sound_header_type,    g_sound_header_type_w, 1, 0, 0,     H_mus_sound_header_type);
   XEN_DEFINE_PROCEDURE(S_mus_sound_data_format,    g_sound_data_format_w, 1, 0, 0,     H_mus_sound_data_format);
-  XEN_DEFINE_PROCEDURE(S_mus_sound_length,         g_sound_length_w, 1, 0, 0,          H_mus_sound_length	);
+  XEN_DEFINE_PROCEDURE(S_mus_sound_length,         g_sound_length_w, 1, 0, 0,          H_mus_sound_length);
   XEN_DEFINE_PROCEDURE(S_mus_sound_type_specifier, g_sound_type_specifier_w, 1, 0, 0,  H_mus_sound_type_specifier);
   XEN_DEFINE_PROCEDURE(S_mus_header_type_name,     g_sound_type_name_w, 1, 0, 0,       H_mus_header_type_name);
   XEN_DEFINE_PROCEDURE(S_mus_data_format_name,     g_sound_format_name_w, 1, 0, 0,     H_mus_data_format_name);

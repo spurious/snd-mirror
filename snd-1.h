@@ -60,10 +60,6 @@ typedef struct {
   int chan;
   int len;
   int just_zeros;
-#if DEBUGGING
-  const char *caller;
-  int active;
-#endif
 } snd_data;
 
 typedef struct {
@@ -90,11 +86,6 @@ typedef struct snd_fd {
   MUS_SAMPLE_TYPE *last;
   MUS_SAMPLE_TYPE *view_buffered_data;
   snd_data **sounds;
-#if DEBUGGING
-  const char *caller;
-  char *filename;
-  int edit_pos;
-#endif
   snd_data *current_sound;
   int beg, end, initial_samp;
   int direction;
@@ -697,19 +688,15 @@ void delete_samples(int beg, int num, chan_info *cp, const char *origin);
 void change_samples(int beg, int num, MUS_SAMPLE_TYPE *vals, chan_info *cp, int lock, const char *origin);
 void file_change_samples(int beg, int num, char *tempfile, chan_info *cp, int chan, int auto_delete, int lock, const char *origin);
 void file_override_samples(int num, char *tempfile, chan_info *cp, int chan, int auto_delete, int lock, const char *origin);
-Float sample (int samp, chan_info *cp);
+Float chn_sample(int samp, chan_info *cp, int pos);
 snd_fd *free_snd_fd(snd_fd *sf);
 snd_fd *free_snd_fd_almost(snd_fd *sf);
 MUS_SAMPLE_TYPE previous_sound (snd_fd *sf);
 MUS_SAMPLE_TYPE next_sound (snd_fd *sf);
+void scale_channel(chan_info *cp, Float scaler, int beg, int num);
 
 snd_fd *init_sample_read(int samp, chan_info *cp, int direction);
-#if DEBUGGING
-  snd_fd *init_sample_read_any_1(int samp, chan_info *cp, int direction, int edit_position, const char *caller);
-  #define init_sample_read_any(Samp, Cp, Direction, Edit_position) init_sample_read_any_1(Samp, Cp, Direction, Edit_position, __FUNCTION__)
-#else
-  snd_fd *init_sample_read_any(int samp, chan_info *cp, int direction, int edit_position);
-#endif
+snd_fd *init_sample_read_any(int samp, chan_info *cp, int direction, int edit_position);
 
 #define next_sample_to_float(SF) \
   ((SF->view_buffered_data > SF->last) ? \
@@ -743,8 +730,6 @@ MUS_SAMPLE_TYPE *g_floats_to_samples(XEN obj, int *size, const char *caller, int
 snd_data *copy_snd_data(snd_data *sd, chan_info *cp, int bufsize);
 snd_data *free_snd_data(snd_data *sf);
 
-void parse_tree_scale_by(chan_info *cp, Float scl);
-void parse_tree_selection_scale_by(chan_info *cp, Float scl, int beg, int num);
 int no_ed_scalers(chan_info *cp);
 void set_ed_maxamp(chan_info *cp, int edpos, Float val);
 Float ed_maxamp(chan_info *cp, int edpos);
@@ -1359,6 +1344,7 @@ int cursor_delete_previous(chan_info *cp, int count, const char *origin);
 int cursor_zeros(chan_info *cp, int count, int regexpr);
 int cursor_insert(chan_info *cp, int beg, int count, const char *origin);
 void fht(int powerOfFour, Float *array);
+Float get_selection_maxamp(chan_info *cp);
 
 void g_init_sig(void);
 int to_c_edit_position(chan_info *cp, XEN edpos, const char *caller, int arg_pos);

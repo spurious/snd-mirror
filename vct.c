@@ -223,12 +223,12 @@ static XEN vct_move(XEN obj, XEN newi, XEN oldi, XEN backwards)
 	mus_misc_error(S_vct_moveB,
 		       "new-index too high?",
 		       XEN_LIST_2(newi,
-			      C_TO_XEN_INT(v->length)));
+				  C_TO_XEN_INT(v->length)));
       if (nj >= v->length)
 	mus_misc_error(S_vct_moveB,
 		       "old-index too high?",
 		       XEN_LIST_2(oldi,
-			      C_TO_XEN_INT(v->length)));
+				  C_TO_XEN_INT(v->length)));
       if (v) 
 	for (i = ni, j = nj; (j >= 0) && (i >= 0); i--, j--) 
 	  v->data[i] = v->data[j];
@@ -596,9 +596,9 @@ static XEN array_to_list(Float *arr, int i, int len)
 {
   if (i < (len - 1))
     return(XEN_CONS(C_TO_XEN_DOUBLE(arr[i]), 
-		array_to_list(arr, i + 1, len)));
+		    array_to_list(arr, i + 1, len)));
   else return(XEN_CONS(C_TO_XEN_DOUBLE(arr[i]), 
-		   XEN_EMPTY_LIST));
+		       XEN_EMPTY_LIST));
 }
 
 static XEN vct2list(XEN vobj)
@@ -788,7 +788,7 @@ void init_vct(void)
 
 #if HAVE_GUILE
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_vct_ref, vct_ref_w, H_vct_ref,
-			       "set-" S_vct_ref, vct_set_w,  2, 0, 3, 0);
+				   "set-" S_vct_ref, vct_set_w,  2, 0, 3, 0);
 #endif
 }
 

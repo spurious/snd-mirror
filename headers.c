@@ -4416,9 +4416,9 @@ static int read_no_header (int chan)
 
 void mus_header_set_raw_defaults(int sr, int chn, int frm)
 {
-  header_raw_srate = sr;
-  header_raw_chans = chn;
-  header_raw_format = frm;
+  if (sr > 0) header_raw_srate = sr;
+  if (chn > 0) header_raw_chans = chn;
+  if (MUS_DATA_FORMAT_OK(frm)) header_raw_format = frm;
 }
 
 void mus_header_raw_defaults(int *sr, int *chn, int *frm)

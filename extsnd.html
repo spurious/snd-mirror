@@ -186,6 +186,7 @@ various examples of and extensions to Snd can be found in:
 <tr><td><a href="sndscm.html#moogdoc">moog.scm</a></td>      <td>Moog filter (from CLM)</td></tr>
 <tr><td><a href="sndscm.html#musglyphs">musglyphs.scm</a></td><td>Music notation symbols (from CMN)</td></tr>
 <tr><td><a href="sndscm.html#nbdoc">nb.scm</a></td>          <td>Popup File info etc</td></tr>
+<tr><td><a href="sndscm.html#peakenvdoc">peak-env.scm</a></td><td>peak envelope support</td></tr>
 <tr><td><a href="sndscm.html#popupdoc">popup.scm</a></td>    <td>Popup menu specializations</td></tr>
 <tr><td><a href="sndscm.html#pqwvoxdoc">pqwvox.scm</a></td>  <td>phase-quadrature waveshaping (from CLM)</td></tr>
 <tr><td><a href="sndscm.html#prc95doc">prc95.scm</a></td>    <td>Perry Cook's physical model examples (from CLM)</td></tr>
@@ -2280,7 +2281,7 @@ the hook.
     (if (and (graph-transform? snd chn) 
              (= (transform-graph-type snd chn) graph-transform-once))
 	(report-in-minibuffer 
-	 (number->string (/ (* 2.0 (vct-peak (transform-samples->vct snd chn))) 
+	 (number-&gt;string (/ (* 2.0 (vct-peak (transform-samples-&gt;vct snd chn))) 
                             (transform-size snd chn)))
 	 snd)
       #f)))
@@ -5132,7 +5133,7 @@ desired edit history position.
 <!-- -->
 <!-- sample -->
 <!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="sndsample">sample</a></em> (<i>samp snd chn</i>)</code></span>
+<!-- --><span class=defbox><code><em class=def><a name="sndsample">sample</a></em> (<i>samp snd chn edpos</i>)</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
 <!-- -->value of sample <i>samp</i> in <i>snd</i>'s channel <i>chn</i>.
@@ -5214,11 +5215,31 @@ desired edit history position.
 <!-- -->channels. <i>scalers</i> can be either a float or a vector of floats.  
 <!-- -->In the latter case, the values are used one by one, applying each as 
 <!-- -->scale-by moves through the channels. If 'sync' is off, channel <i>chn</i> 
-<!-- -->is scaled (defaults to the currently selected channel).  In addition, you
-<!-- -->may notice a function named section-scale-by used in saved-state files.
-<!-- -->This is essentially scale-by applied to a portion of one channel:
-<!-- -->(section-scale-by scaler beg num snd chn).  To be consistent with other names,
-<!-- -->this function (scale-by) also exists under the name scale-sound-by.
+<!-- -->is scaled (defaults to the currently selected channel).
+<!-- --></td></tr>
+<!-- --><tr><td colspan=2></td></tr>
+<!-- -->
+<!-- -->
+<!-- scale-sound-by -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="sndscalesoundby">scale-sound-by</a></em> (scaler <i>beg num snd chn</i>)</code></span>
+<!-- --></td></tr>
+<!-- --><tr><td></td><td>
+<!-- -->scales the samples in the given channel between beg and beg + num by scaler.  If the channel argument is omitted,
+<!-- --><b>scale-sound-by</b> scales the entire sound.  <i>beg</i> defaults to 0; <i>num</i> defaults to the length of the channel.
+<!-- --><i>snd</i> defaults to the selected sound, and <i>chn</i> to the selected channel.  Unlike scale-by, this ignores the sync setting.
+<!-- --></td></tr>
+<!-- --><tr><td colspan=2></td></tr>
+<!-- -->
+<!-- -->
+<!-- scale-sound-to -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="sndscalesoundto">scale-sound-to</a></em> (norm <i>beg num snd chn</i>)</code></span>
+<!-- --></td></tr>
+<!-- --><tr><td></td><td>
+<!-- -->normalizes the samples in the given channel between beg and beg + num to norm.  If the channel argument is omitted,
+<!-- --><b>scale-sound-to</b> normalizes the entire sound.  <i>beg</i> defaults to 0; <i>num</i> defaults to the length of the channel.
+<!-- --><i>snd</i> defaults to the selected sound, and <i>chn</i> to the selected channel.  Unlike scale-to, this ignores the sync setting.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -5228,8 +5249,7 @@ desired edit history position.
 <!-- --><span class=defbox><code><em class=def><a name="sndscaleto">scale-to</a></em> (<i>scalers snd chn</i>)</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
-<!-- -->(see scale-by) -- <a href="snd.html#scaling">normalize</a> <i>snd</i> to <i>scalers</i>. To be consistent with other names,
-<!-- -->this function also exists under the name scale-sound-to.  I can't decide which name is best.
+<!-- -->(see scale-by) -- <a href="snd.html#scaling">normalize</a> <i>snd</i> to <i>scalers</i> (following sync as in scale-by).
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->

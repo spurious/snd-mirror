@@ -1304,13 +1304,14 @@ snd_info *add_sound_window(char *filename, snd_state *ss, int read_only)
       ss->pending_change = NULL;
     }
   nchans = hdr->chans;
+  if (nchans <= 0) nchans = 1;
   samples_per_channel = hdr->samples / nchans;
 
   app_y = widget_y(MAIN_SHELL(ss));
   app_dy = widget_height(MAIN_SHELL(ss));
   screen_y = gdk_screen_height();
   app_dy = (screen_y - app_y - app_dy - 20 * nchans);
-  chan_min_y = app_dy/nchans;
+  chan_min_y = app_dy / nchans;
   if (chan_min_y > (ss->channel_min_height)) 
     chan_min_y = ss->channel_min_height; 
   else 

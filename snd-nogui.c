@@ -346,6 +346,7 @@ snd_info *add_sound_window (char *filename, snd_state *ss, int read_only)
   hdr = make_file_info(filename, ss);
   if (!hdr) return(NULL);
   nchans = hdr->chans;
+  if (nchans <= 0) nchans = 1;
   if (nchans > 256)
     {
       /* either a screwed up header, or Snd was built with wrong endianess */

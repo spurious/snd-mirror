@@ -1875,7 +1875,7 @@ static XEN g_help_dialog(XEN subject, XEN msg)
   #define H_help_dialog "(" S_help_dialog " subject message) fires up the Help window with subject and message"
   XEN_ASSERT_TYPE(XEN_STRING_P(subject), subject, XEN_ARG_1, S_help_dialog, "a string");
   XEN_ASSERT_TYPE(XEN_STRING_P(msg), msg, XEN_ARG_2, S_help_dialog, "a string");
-  return(XEN_WRAP_C_POINTER(snd_help(get_global_state(), XEN_TO_C_STRING(subject), XEN_TO_C_STRING(msg))));
+  return(XEN_WRAP_C_POINTER(snd_help_with_wrap(get_global_state(), XEN_TO_C_STRING(subject), XEN_TO_C_STRING(msg))));
 }
 
 static XEN g_mix_panel(void)
@@ -3694,10 +3694,6 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
   XEN_EVAL_C_STRING("(define (" S_snd_apropos " val) (snd-print (with-output-to-string (lambda () (apropos (if (string? val) val (object->string val)))))))");
   XEN_EVAL_C_STRING("(read-set! keywords 'prefix)");
   XEN_EVAL_C_STRING("(print-enable 'source)");  /* added 13-Feb-01 */
-
-  /* not sure about these two */
-  XEN_EVAL_C_STRING("(define scale-sound-to scale-to)");
-  XEN_EVAL_C_STRING("(define scale-sound-by scale-by)");
 
   /* from ice-9/r4rs.scm but with output to snd listener */
   XEN_EVAL_C_STRING("(define snd-last-file-loaded #f)");

@@ -800,10 +800,6 @@ snd_data *make_snd_data_file(char *name, int *io, MUS_SAMPLE_TYPE *data, file_in
   sf->chan = temp_chan;
   sf->len = (hdr->samples) * (mus_data_format_to_bytes_per_sample(hdr->format)) + hdr->data_location;
   sf->just_zeros = 0;
-#if DEBUGGING
-  sf->caller = __FUNCTION__;
-  sf->active = 1;
-#endif
   return(sf);
 }
 
@@ -824,10 +820,6 @@ static snd_data *make_snd_data_zero_file(int size, int *io, MUS_SAMPLE_TYPE *dat
   sf->chan = 0;
   sf->len = size;
   sf->just_zeros = 1;
-#if DEBUGGING
-  sf->caller = __FUNCTION__;
-  sf->active = 1;
-#endif
   return(sf);
 }
 
@@ -871,10 +863,6 @@ snd_data *copy_snd_data(snd_data *sd, chan_info *cp, int bufsize)
   sf->inuse = FALSE;
   sf->copy = 1;
   sf->just_zeros = 0;
-#if DEBUGGING
-  sf->caller = __FUNCTION__;
-  sf->active = 1;
-#endif
   return(sf);
 }
 
@@ -894,57 +882,14 @@ snd_data *make_snd_data_buffer(MUS_SAMPLE_TYPE *data, int len, int ctr)
   sf->inuse = FALSE;
   sf->len = len * 4;
   sf->just_zeros = 0;
-#if DEBUGGING
-  sf->caller = __FUNCTION__;
-  sf->active = 1;
-#endif
   return(sf);
 }
-
-#if DEBUGGING
-void print_snd_data(snd_data *sf);
-void print_snd_data(snd_data *sf)
-{
-  fprintf(stderr,"snd_data: caller: %s, filename: %s, active: %d\n\
-   copy:%d, io: %p, hdr: %p, edit_ctr: %d,\n\
-   open: %d, inuse: %d, chan: %d, len: %d\n\
-   just_zeros: %d, type: %d\n",
-	  sf->caller, sf->filename, sf->active,
-	  sf->copy, sf->io, sf->hdr, sf->edit_ctr,
-	  sf->open, sf->inuse, sf->chan, sf->len, 
-	  sf->just_zeros, sf->type);
-}
-
-void print_snd_fd(snd_fd *sf);
-void print_snd_fd(snd_fd *sf)
-{
-  fprintf(stderr,"snd_fd: caller: %s, filename: %s\n\
-    current_sound: %p, first: %p, last: %p, view_buffered_data: %p,\n\
-    eof: %d, beg: %d, end: %d, direction: %d, initial_samp: %d, scaler: %f,\n\
-    cbi: %d, cp: %p, edit_pos: %d, local_sp: %p, sounds: %p, cb: %p, current_state: %p\n",
-	  sf->caller, sf->filename, 
-	  sf->current_sound, sf->first, sf->last, sf->view_buffered_data,
-	  sf->eof, sf->beg, sf->end, sf->direction, sf->initial_samp, sf->scaler,
-	  sf->cbi, sf->cp, sf->edit_pos, sf->local_sp, sf->sounds, sf->cb, sf->current_state);
-}
-#endif
 
 snd_data *free_snd_data(snd_data *sf)
 {
   /* in the snd file case, these pointers are dealt with elsewhere (where??) */
   if (sf)
     {
-#if DEBUGGING
-      if (sf->active != 1)
-	{
-	  fprintf(stderr,"double snd_data free (%s): %s %s [%d %p %p %d %d %d %d %d %d]\n",
-		  (sf->temporary == ALREADY_DELETED) ? "recognized" : "not recognized",
-		  sf->caller, sf->filename, sf->copy, sf->io, sf->hdr, sf->edit_ctr,
-		  sf->open, sf->inuse, sf->chan, sf->len, sf->just_zeros);
-	  return(NULL);
-	}
-      sf->active = 0;
-#endif
       if (sf->temporary == ALREADY_DELETED)
 	return(NULL);
       if (sf->temporary == MULTICHANNEL_DELETION)
@@ -1106,9 +1051,6 @@ static int add_sound_buffer_to_edit_list(chan_info *cp, MUS_SAMPLE_TYPE *data, i
 {
   prepare_sound_list(cp);
   cp->sounds[cp->sound_ctr] = make_snd_data_buffer(data, len, cp->edit_ctr);
-#if DEBUGGING
-  cp->sounds[cp->sound_ctr]->caller = __FUNCTION__;
-#endif
   if (show_usage_stats(cp->state)) gather_usage_stats(cp);
   return(cp->sound_ctr);
 }
@@ -1791,7 +1733,7 @@ void change_samples(int beg, int num, MUS_SAMPLE_TYPE *vals, chan_info *cp, int 
   if (cp->mix_md) reflect_mix_edit(cp, origin);
 }
 
-void parse_tree_scale_by(chan_info *cp, Float scl)
+static void parse_tree_scale_by(chan_info *cp, Float scl)
 {
   /* copy current ed-list and reset scalers */
   int len, pos, i;
@@ -1822,7 +1764,7 @@ void parse_tree_scale_by(chan_info *cp, Float scl)
   reflect_edit_history_change(cp);
 }
 
-void parse_tree_selection_scale_by(chan_info *cp, Float scl, int beg, int num)
+static void parse_tree_selection_scale_by(chan_info *cp, Float scl, int beg, int num)
 {
   /* copy current ed-list and reset scalers */
   int len, pos, i;
@@ -1845,7 +1787,7 @@ void parse_tree_selection_scale_by(chan_info *cp, Float scl, int beg, int num)
 
   cp->edits[cp->edit_ctr] = new_ed;
   new_ed->sfnum = PACK_EDIT(PARSED_EDIT, 0);
-  new_ed->origin = mus_format("section-scale-by %.4f %d %d", scl, beg, num);
+  new_ed->origin = mus_format("scale-sound-by %.4f %d %d", scl, beg, num);
   new_ed->beg = beg;
   new_ed->len = num;
   new_ed->selection_beg = old_ed->selection_beg;
@@ -1856,15 +1798,15 @@ void parse_tree_selection_scale_by(chan_info *cp, Float scl, int beg, int num)
   reflect_edit_history_change(cp);
 }
 
-Float sample(int samp, chan_info *cp)
+Float chn_sample(int samp, chan_info *cp, int pos)
 { /* slow access */
   ed_list *current_state;
   snd_data *sd;
   int len, i, cb, true_cb, index;
   int *data;
   if (samp < 0) return(0.0);
-  if (samp > cp->samples[cp->edit_ctr]) return(0.0);
-  current_state = (ed_list *)(cp->edits[cp->edit_ctr]);
+  if (samp > cp->samples[pos]) return(0.0);
+  current_state = (ed_list *)(cp->edits[pos]);
   data = current_state->fragments;
   len = current_state->size;
   for (i = 0, cb = 0; i < len; i++, cb += ED_SIZE)
@@ -1891,9 +1833,6 @@ snd_fd *free_snd_fd_almost(snd_fd *sf)
   snd_data *sd;
   if (sf) 
     {
-#if DEBUGGING
-      if (sf->filename) {FREE(sf->filename); sf->filename = NULL;}
-#endif
       sd = sf->current_sound;
       if (sd)
 	{
@@ -1928,11 +1867,7 @@ snd_fd *free_snd_fd(snd_fd *sf)
   }
 #endif
 
-#if DEBUGGING
-snd_fd *init_sample_read_any_1(int samp, chan_info *cp, int direction, int edit_position, const char *caller)
-#else
 snd_fd *init_sample_read_any(int samp, chan_info *cp, int direction, int edit_position)
-#endif
 {
   snd_fd *sf;
   snd_info *sp;
@@ -1954,11 +1889,6 @@ snd_fd *init_sample_read_any(int samp, chan_info *cp, int direction, int edit_po
   curlen = cp->samples[edit_position];
   /* snd_fd allocated only here */
   sf = (snd_fd *)CALLOC(1, sizeof(snd_fd));
-#if DEBUGGING
-  sf->caller = caller;
-  sf->filename = copy_string(sp->filename);
-  sf->edit_pos = edit_position;
-#endif
   sf->initial_samp = samp;
   sf->direction = 0;
   sf->cp = cp;
@@ -2008,10 +1938,6 @@ snd_fd *init_sample_read_any(int samp, chan_info *cp, int direction, int edit_po
 		first_snd = copy_snd_data(first_snd, cp, MIX_FILE_BUFFER_SIZE);
 	      first_snd->inuse = TRUE;
 	      sf->current_sound = first_snd;
-#if DEBUGGING
-	      if (first_snd)
-		first_snd->caller = sf->caller;
-#endif
 	      if (direction == READ_FORWARD)
 		file_buffers_forward(ind0, ind1, indx, sf, first_snd);
 	      else file_buffers_back(ind0, ind1, indx, sf, first_snd);
@@ -2064,9 +1990,6 @@ MUS_SAMPLE_TYPE previous_sound (snd_fd *sf)
 	    prev_snd = copy_snd_data(prev_snd, sf->cp, MIX_FILE_BUFFER_SIZE);
 	  prev_snd->inuse = TRUE;
 	  sf->current_sound = prev_snd;
-#if DEBUGGING
-	  prev_snd->caller = sf->caller;
-#endif
 	  file_buffers_back(ind0, ind1, ind1, sf, prev_snd);
 	}
       else 
@@ -2127,9 +2050,6 @@ MUS_SAMPLE_TYPE next_sound (snd_fd *sf)
 	    nxt_snd = copy_snd_data(nxt_snd, sf->cp, MIX_FILE_BUFFER_SIZE);
 	  nxt_snd->inuse = TRUE;
 	  sf->current_sound = nxt_snd;
-#if DEBUGGING
-	  nxt_snd->caller = sf->caller;
-#endif
 	  file_buffers_forward(ind0, ind1, ind0, sf, nxt_snd);
 	}
       else 
@@ -2449,12 +2369,6 @@ int save_edits_without_display(snd_info *sp, char *new_name, int type, int forma
 	      cp = sp->chans[i];
 	      pos = to_c_edit_position(cp, edpos, caller, arg_pos);
 	      sf[i] = init_sample_read_any(0, cp, READ_FORWARD, pos);
-#if DEBUGGING
-	      /* a memory leak (sf) here if snd_make_file throws an error */
-	      sf[i]->caller = caller;
-	      if (sf[i]->filename) FREE(sf[i]->filename);
-	      sf[i]->filename = copy_string(new_name);
-#endif
 	      if (frames < cp->samples[pos]) frames = cp->samples[pos];
 	      if (sf[i] == NULL) err = MUS_ERROR;
 	    }
@@ -3244,17 +3158,120 @@ static XEN g_as_one_edit(XEN proc, XEN origin)
   return(xen_return_first(result, proc, origin));
 }
 
-static XEN g_section_scale_by(XEN scl, XEN beg, XEN num, XEN snd, XEN chn)
+void scale_channel(chan_info *cp, Float scaler, int beg, int num)
 {
-  /* for saved state involving selection-scale-by (where there might not actually be a selection) */
+  if ((beg == 0) && 
+      (num >= current_ed_samples(cp)))
+    {
+      parse_tree_scale_by(cp, scaler);
+      amp_env_scale_by(cp, scaler);
+    }
+  else 
+    {
+      parse_tree_selection_scale_by(cp, scaler, beg, num);
+      amp_env_scale_selection_by(cp, scaler, beg, num);
+    }
+  update_graph(cp, NULL);
+}
+
+static XEN g_scale_sound_by(XEN scl, XEN beg, XEN num, XEN snd, XEN chn)
+{
+  #define H_scale_sound_by "(" S_scale_sound_by " scaler beg num snd chn) scales samples in the given sound/channel \
+between beg and beg + num by scaler.  If channel is omitted, the scaling applies to the entire sound."
+
+  snd_info *sp;
   chan_info *cp;
-  ASSERT_CHANNEL("section-scale-by", snd, chn, 4);
-  cp = get_cp(snd, chn, "section-scale-by");
-  parse_tree_selection_scale_by(cp,
-				XEN_TO_C_DOUBLE(scl),
-				XEN_TO_C_INT(beg),
-				XEN_TO_C_INT(num));
+  int i, samp;
+  Float scaler;
+  XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(beg), beg, XEN_ARG_2, S_scale_sound_by, "a number");
+  XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(num), num, XEN_ARG_3, S_scale_sound_by, "a number");
+  ASSERT_SOUND(S_scale_sound_by, snd, 4);
+  scaler = XEN_TO_C_DOUBLE(scl);
+  samp = XEN_TO_C_INT_OR_ELSE(beg, 0);
+  if (XEN_INTEGER_P(chn))
+    {
+      cp = get_cp(snd, chn, S_scale_sound_by);
+      scale_channel(cp, scaler, samp, XEN_TO_C_INT_OR_ELSE(num, current_ed_samples(cp)));
+    }
+  else
+    {
+      sp = get_sp(snd);
+      for (i = 0; i < sp->nchans; i++)
+	scale_channel(sp->chans[i], scaler, samp, XEN_TO_C_INT_OR_ELSE(num, current_ed_samples(sp->chans[i])));
+    }
   return(scl);
+}
+
+static Float local_maxamp(chan_info *cp, int beg, int num)
+{
+  snd_fd *sf;
+  Float ymax, val;
+  int i;
+  sf = init_sample_read(beg, cp, READ_FORWARD);
+  if (sf == NULL) return(0.0);
+  ymax = 0.0;
+  for (i = 0; i < num; i++)
+    {
+      val = next_sample_to_float(sf);
+      if (val < 0.0) val = -val;
+      if (val > ymax) ymax = val;
+    }
+  free_snd_fd(sf);
+  return(ymax);
+}
+
+static XEN g_scale_sound_to(XEN norm, XEN beg, XEN num, XEN snd, XEN chn)
+{
+  #define H_scale_sound_to "(" S_scale_sound_to " norm beg num snd chn) scales samples in the given sound/channel \
+between beg and beg + num to peak value norm.  If channel is omitted, the scaling applies to the entire sound."
+
+  snd_info *sp;
+  chan_info *cp;
+  int i, samp, samps;
+  Float scaler, maxamp;
+  XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(beg), beg, XEN_ARG_2, S_scale_sound_to, "a number");
+  XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(num), num, XEN_ARG_3, S_scale_sound_to, "a number");
+  ASSERT_SOUND(S_scale_sound_to, snd, 4);
+  scaler = XEN_TO_C_DOUBLE(norm);
+  samp = XEN_TO_C_INT_OR_ELSE(beg, 0);
+  sp = get_sp(snd);
+  if (XEN_INTEGER_P(chn))
+    {
+      cp = get_cp(snd, chn, S_scale_sound_by);
+      samps = XEN_TO_C_INT_OR_ELSE(num, current_ed_samples(cp));
+      if ((beg == 0) &&
+	  (samps >= current_ed_samples(cp)))
+	maxamp = get_maxamp(sp, cp, AT_CURRENT_EDIT_POSITION);
+      else maxamp = local_maxamp(cp, samp, samps);
+      if (maxamp > 0.0)
+	{
+	  scaler /= maxamp;
+	  scale_channel(cp, scaler, samp, samps);
+	}
+    }
+  else
+    {
+      for (i = 0; i < sp->nchans; i++)
+	{
+	  cp = sp->chans[i];
+	  samps = XEN_TO_C_INT_OR_ELSE(num, current_ed_samples(cp));
+	  if ((beg == 0) &&
+	      (samps >= current_ed_samples(cp)))
+	    maxamp = get_maxamp(sp, cp, AT_CURRENT_EDIT_POSITION);
+	  else maxamp = local_maxamp(cp, samp, samps);
+	}
+      if (maxamp > 0.0)
+	{
+	  scaler /= maxamp;
+	  for (i = 0; i < sp->nchans; i++)
+	    {
+	      cp = sp->chans[i];
+	      samps = XEN_TO_C_INT_OR_ELSE(num, current_ed_samples(cp));
+	      scale_channel(cp, scaler, samp, samps);
+	    }
+	}
+    }
+  return(norm);
 }
 
 MUS_SAMPLE_TYPE *g_floats_to_samples(XEN obj, int *size, const char *caller, int position)
@@ -3304,14 +3321,18 @@ MUS_SAMPLE_TYPE *g_floats_to_samples(XEN obj, int *size, const char *caller, int
   return(vals);
 }
 
-static XEN g_sample(XEN samp_n, XEN snd_n, XEN chn_n)
+static XEN g_sample(XEN samp_n, XEN snd_n, XEN chn_n, XEN pos_n)
 {
-  #define H_sample "(" S_sample " samp &optional snd chn) -> sample samp in snd's channel chn (slow access -- use sample-readers for speed)"
+  #define H_sample "(" S_sample " samp &optional snd chn pos) -> sample samp in snd's channel chn (slow access -- use sample-readers for speed)"
   chan_info *cp;
   XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(samp_n), samp_n, XEN_ARG_1, S_sample, "a number");
+  XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(pos_n), pos_n, XEN_ARG_4, S_sample, "a number");
   ASSERT_CHANNEL(S_sample, snd_n, chn_n, 2);
   cp = get_cp(snd_n, chn_n, S_sample);
-  return(C_TO_XEN_DOUBLE(sample(XEN_TO_C_INT_OR_ELSE(samp_n, cp->cursor), cp)));
+  return(C_TO_XEN_DOUBLE(chn_sample(XEN_TO_C_INT_OR_ELSE(samp_n, cp->cursor), 
+				    cp, 
+				    to_c_edit_position(cp, pos_n, S_sample, 4))));
+
 }
 
 static XEN g_set_sample(XEN samp_n, XEN val, XEN snd_n, XEN chn_n)
@@ -3763,11 +3784,12 @@ XEN_ARGIFY_4(g_insert_sample_w, g_insert_sample)
 XEN_ARGIFY_5(g_insert_samples_w, g_insert_samples)
 XEN_ARGIFY_8(g_vct2samples_w, g_vct2samples)
 XEN_ARGIFY_5(g_insert_sound_w, g_insert_sound)
-XEN_NARGIFY_5(g_section_scale_by_w, g_section_scale_by)
+XEN_ARGIFY_5(g_scale_sound_by_w, g_scale_sound_by)
+XEN_ARGIFY_5(g_scale_sound_to_w, g_scale_sound_to)
 XEN_ARGIFY_6(g_change_samples_with_origin_w, g_change_samples_with_origin)
 XEN_ARGIFY_5(g_delete_samples_with_origin_w, g_delete_samples_with_origin)
 XEN_ARGIFY_6(g_insert_samples_with_origin_w, g_insert_samples_with_origin)
-XEN_ARGIFY_3(g_sample_w, g_sample)
+XEN_ARGIFY_4(g_sample_w, g_sample)
 XEN_ARGIFY_4(g_set_sample_w, g_set_sample)
 XEN_ARGIFY_5(g_samples_w, g_samples)
 XEN_ARGIFY_8(g_set_samples_w, g_set_samples)
@@ -3794,7 +3816,8 @@ XEN_ARGIFY_8(g_set_samples_w, g_set_samples)
 #define g_insert_samples_w g_insert_samples
 #define g_vct2samples_w g_vct2samples
 #define g_insert_sound_w g_insert_sound
-#define g_section_scale_by_w g_section_scale_by
+#define g_scale_sound_by_w g_scale_sound_by
+#define g_scale_sound_to_w g_scale_sound_to
 #define g_change_samples_with_origin_w g_change_samples_with_origin
 #define g_delete_samples_with_origin_w g_delete_samples_with_origin
 #define g_insert_samples_with_origin_w g_insert_samples_with_origin
@@ -3845,20 +3868,20 @@ void g_init_edits(void)
   XEN_DEFINE_PROCEDURE(S_insert_samples,            g_insert_samples_w, 3, 2, 0,            H_insert_samples);
   XEN_DEFINE_PROCEDURE(S_vct2samples,               g_vct2samples_w, 1, 7, 0,               H_vct2samples);
   XEN_DEFINE_PROCEDURE(S_insert_sound,              g_insert_sound_w, 1, 4, 0,              H_insert_sound);
+  XEN_DEFINE_PROCEDURE(S_scale_sound_by,            g_scale_sound_by_w, 1, 4, 0,            H_scale_sound_by);
+  XEN_DEFINE_PROCEDURE(S_scale_sound_to,            g_scale_sound_to_w, 1, 4, 0,            H_scale_sound_to);
 
   /* semi-internal functions (restore-state) */
-  XEN_DEFINE_PROCEDURE("section-scale-by",           g_section_scale_by_w, 5, 0, 0,          "internal scaling function");
+  XEN_DEFINE_PROCEDURE("section-scale-by",           g_scale_sound_by_w, 5, 0, 0,           "internal scaling function");
   XEN_DEFINE_PROCEDURE(S_change_samples_with_origin, g_change_samples_with_origin_w, 4, 2, 0, "");
   XEN_DEFINE_PROCEDURE(S_delete_samples_with_origin, g_delete_samples_with_origin_w, 3, 2, 0, "");
   XEN_DEFINE_PROCEDURE(S_insert_samples_with_origin, g_insert_samples_with_origin_w, 4, 2, 0, "");
 
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_sample, g_sample_w, H_sample,
-					"set-" S_sample, g_set_sample_w, g_set_sample_reversed,
-					0, 3, 0, 4);
+					"set-" S_sample, g_set_sample_w, g_set_sample_reversed, 0, 4, 0, 4);
 
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_samples, g_samples_w, H_samples,
-					"set-" S_samples, g_set_samples_w, g_set_samples_reversed,
-					2, 3, 3, 5);
+					"set-" S_samples, g_set_samples_w, g_set_samples_reversed, 2, 3, 3, 5);
 
   #define H_save_hook S_save_hook " (snd name) is called each time a file is about to be saved. \
 If it returns #t, the file is not saved.  'name' is #f unless \

@@ -2,10 +2,16 @@
 
 /* changed 29-May to use the region id, not its stack position throughout */
 
+/* TODO: if region is large, defer saving it if possible, and make amp envs for quicker display
+ */
+
 #define REGION_ARRAY 0
 #define REGION_FILE 1
-/* region data can be stored either in-core (if less than MAX_BUFFER_SIZE ints), else in a temp file that */
-/*    is deleted when the region is deleted (hence must be copied upon insert or mix) */
+#define REGION_DEFERRED 2
+/* region data can be stored either in-core (if less than MAX_BUFFER_SIZE ints), else in a temp file that
+ *    is deleted when the region is deleted (hence must be copied upon insert or mix)
+ *    or as a descriptor of current chan/beg/num/edpos locs
+ */
 
 #define CLEAR_REGION_DATA 0
 #define COMPLETE_DELETION 1
@@ -13,20 +19,40 @@
 static int region_id_ctr = 0;
 
 typedef struct {
+  int chans;
+  chan_info **cps;
+  int *begs, *lens, *edpos;
+} deferred_region;
+
+static deferred_region *free_deferred_region(deferred_region *dr)
+{
+  if (dr)
+    {
+      if (dr->cps) FREE(dr->cps);
+      if (dr->begs) FREE(dr->begs);
+      if (dr->lens) FREE(dr->lens);
+      if (dr->edpos) FREE(dr->edpos);
+      FREE(dr);
+    }
+  return(NULL);
+}
+
+typedef struct {
   MUS_SAMPLE_TYPE **data;
   int chans;
   int frames;
-  int srate;               /* for file save (i.e. region->file) */
-  int header_type;         /* for file save */
+  int srate;                /* for file save (i.e. region->file) */
+  int header_type;          /* for file save */
   int save;
   snd_info *rsp;
-  char *name, *start, *end;  /* for region browser */
-  char *filename;          /* if region data is stored in a temp file */
-  int use_temp_file;       /* REGION_ARRAY = data is in 'data' arrays, else in temp file 'filename' */
+  char *name, *start, *end; /* for region browser */
+  char *filename;           /* if region data is stored in a temp file */
+  int use_temp_file;        /* REGION_ARRAY = data is in 'data' arrays, REGION_ARRAY = in temp file 'filename', REGION_DEFERRED = in 'dr' */
   Float maxamp;
   snd_info *editor_copy;
   char *editor_name;
   int id;
+  deferred_region *dr;      /* REGION_DEFERRED descriptor */
 } region;
 
 static void free_region(region *r, int complete)
@@ -65,6 +91,8 @@ static void free_region(region *r, int complete)
 	    }
 	  r->filename = NULL;
 	}
+      if (r->use_temp_file == REGION_DEFERRED)
+	r->dr = free_deferred_region(r->dr);
       if (r->rsp) 
 	r->rsp = completely_free_snd_info(r->rsp);
       if (complete == COMPLETE_DELETION) FREE(r);
@@ -189,19 +217,28 @@ static Float region_sample(int reg, int chn, int samp)
   region *r;
   snd_fd *sf;
   Float val;
+  deferred_region *drp;
   r = id_to_region(reg);
   if (r)
     {
       if ((samp < r->frames) && (chn < r->chans)) 
 	{
-	  if (r->use_temp_file == REGION_ARRAY)
-	    return(MUS_SAMPLE_TO_FLOAT(r->data[chn][samp]));
-	  else 
+	  switch (r->use_temp_file)
 	    {
+	    case REGION_ARRAY:
+	      return(MUS_SAMPLE_TO_FLOAT(r->data[chn][samp]));
+	    case REGION_FILE:
 	      sf = init_region_read(get_global_state(), samp, reg, chn, READ_FORWARD);
 	      val = next_sample_to_float(sf);
 	      free_snd_fd(sf);
 	      return(val);
+	    case REGION_DEFERRED:
+	      drp = r->dr;
+	      return(chn_sample(samp + drp->begs[chn], drp->cps[chn], drp->edpos[chn]));
+	      break;
+#if DEBUGGING
+	    default: abort();
+#endif
 	    }
 	}
     }
@@ -213,22 +250,31 @@ static void region_samples(int reg, int chn, int beg, int num, Float *data)
   region *r;
   snd_fd *sf;
   int i, j;
+  deferred_region *drp;
   r = id_to_region(reg);
   if (r)
     {
       if ((beg < r->frames) && (chn < r->chans))
 	{
-	  if (r->use_temp_file == REGION_ARRAY)
+	  switch (r->use_temp_file)
 	    {
+	    case REGION_ARRAY:
 	      for (i = beg, j = 0; (i < r->frames) && (j < num); i++, j++) 
 		data[j] = MUS_SAMPLE_TO_FLOAT(r->data[chn][i]);
-	    }
-	  else
-	    {
+	      break;
+	    case REGION_FILE:
 	      sf = init_region_read(get_global_state(), beg, reg, chn, READ_FORWARD);
 	      for (i = beg, j = 0; (i < r->frames) && (j < num); i++, j++) 
 		data[j] = next_sample_to_float(sf);
 	      free_snd_fd(sf);
+	      break;
+	    case REGION_DEFERRED:
+	      drp = r->dr;
+	      sf = init_sample_read_any(beg + drp->begs[chn], drp->cps[chn], READ_FORWARD, drp->edpos[chn]);
+	      for (i = beg, j = 0; (i < r->frames) && (j < num); i++, j++) 
+		data[j] = next_sample_to_float(sf);
+	      free_snd_fd(sf);
+	      break;
 	    }
 	  if (j < num) 
 	    for (; j < num; j++) 
@@ -258,18 +304,14 @@ static int check_regions(void)
   return(act);
 }
 
-#if DEBUGGING
-#define make_region_readable(R, ss) make_region_readable_1(R, ss, __FUNCTION__)
-static void make_region_readable_1(region *r, snd_state *ss, const char *caller)
-#else
 static void make_region_readable(region *r, snd_state *ss)
-#endif
 {
   snd_info *regsp;
   chan_info *cp;
   file_info *hdr;
   int *datai;
   int i, fd;
+  if (r->use_temp_file == REGION_DEFERRED) return; /* it's already (indirectly) readable */
   if (r->rsp) return;
   regsp = (snd_info *)CALLOC(1, sizeof(snd_info));
   regsp->nchans = r->chans;
@@ -295,9 +337,6 @@ static void make_region_readable(region *r, snd_state *ss)
       if (r->use_temp_file == REGION_ARRAY)
 	{
 	  cp->sounds[0] = make_snd_data_buffer(r->data[i], r->frames, cp->edit_ctr);
-#if DEBUGGING
-	  cp->sounds[0]->caller = caller;
-#endif
 	}
       else
 	{
@@ -709,6 +748,14 @@ int define_region(sync_info *si, int *ends)
 	  err = mus_file_write(ofd, 0, k - 1, r->chans, r->data);
 	  k = 0;
 	  if (err == -1) break;
+	  check_for_event(ss);  /* added 16-Sep-01 -- is this safe? */
+	  if (ss->stopped_explicitly)
+	    {
+	      ss->stopped_explicitly = 0;
+	      snd_warning("make region %d stopped", r->id); /* should we decrement region_id_ctr? */
+	      err = -1;
+	      break;
+	    }
 	}
       for (i = 0; i < r->chans; i++)
 	{
@@ -1453,8 +1500,6 @@ void g_init_regions(void)
   XEN_DEFINE_PROCEDURE(S_region_samples2vct, g_region_samples2vct_w, 0, 5, 0, H_region_samples2vct);
   XEN_DEFINE_PROCEDURE(S_region_p,           g_region_p_w, 1, 0, 0,           H_region_p);
 
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_max_regions, g_max_regions_w, H_max_regions,
-			       "set-" S_max_regions, g_set_max_regions_w,
-			       0, 0, 1, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_max_regions, g_max_regions_w, H_max_regions, "set-" S_max_regions, g_set_max_regions_w, 0, 0, 1, 0);
 }
 

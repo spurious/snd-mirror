@@ -41,13 +41,16 @@
   (let ((menu (|XmCreatePopupMenu parent name top-args)))
     (for-each
      (lambda (entry)
-       ;; entry is list: name type args callback
+       ;; entry is list: name type args optional-callback optional-func
        (let ((widget (|XtCreateManagedWidget (car entry)
 					     (cadr entry)
 					     menu
 					     (caddr entry))))
-	 (if (not (null? (cdddr entry)))
-	     (|XtAddCallback widget |XmNactivateCallback (cadddr entry)))))
+	 (if (> (length entry) 3)
+	     (begin
+	       (|XtAddCallback widget |XmNactivateCallback (list-ref entry 3))
+	       (if (> (length entry) 4)
+		   ((list-ref entry 4) widget))))))
      entries)
     menu))
 
@@ -195,20 +198,29 @@
 		    (stop-playing))
 		  (begin
 		    (change-label w "Stop")
-		    (set! stop-widget w)
 		    (set! stopping #t)
-		    (play 0 graph-popup-snd)))))
+		    (play 0 graph-popup-snd))))
+	    (lambda (wid)
+	      (set! stop-widget wid)))
       (list "Play channel"       |xmPushButtonWidgetClass every-menu 
 	    (lambda (w c i)
+	      (set! stopping #t)
+	      (change-label stop-widget "Stop")
 	      (play 0 graph-popup-snd graph-popup-chn)))
       (list "Play from cursor"   |xmPushButtonWidgetClass every-menu 
 	    (lambda (w c i)
+	      (set! stopping #t)
+	      (change-label stop-widget "Stop")
 	      (play (cursor graph-popup-snd graph-popup-chn) graph-popup-snd)))
       (list "Play previous"      |xmPushButtonWidgetClass every-menu
 	    (lambda (w c i)
+	      (set! stopping #t)
+	      (change-label stop-widget "Stop")
 	      (play 0 graph-popup-snd graph-popup-chn #f #f (1- (edit-position)))))  ; play version before most-recent edit
       (list "Play original"      |xmPushButtonWidgetClass every-menu
 	    (lambda (w c i)
+	      (set! stopping #t)
+	      (change-label stop-widget "Stop")
 	      (play 0 graph-popup-snd graph-popup-chn #f #f 0)))                     ; play unedited version
       (list "Undo"               |xmPushButtonWidgetClass every-menu 
 	    (lambda (w c i)
@@ -235,6 +247,21 @@
       (list "Insert selection"   |xmPushButtonWidgetClass every-menu 
 	    (lambda (w c i)
 	      (insert-selection (cursor graph-popup-snd graph-popup-chn) graph-popup-snd graph-popup-chn)))
+      (list "Replace with selection"   |xmPushButtonWidgetClass every-menu 
+	    (lambda (w c i)
+	      (let* ((snd graph-popup-snd)
+		     (chn graph-popup-chn)
+		     (beg (cursor snd chn))
+		     (len (selection-length))
+		     (sbeg (selection-position)))
+		(if (or (< (+ beg len) sbeg)
+			(> beg (+ sbeg len)))
+		    (begin
+		      (delete-samples beg len snd chn)
+		      (insert-selection beg snd chn))
+		    (if (< beg sbeg)
+			(delete-samples beg (- sbeg beg) snd chn)
+			(snd-warning "replace at ~D would collide with selected portion"))))))
       (list "Select all"         |xmPushButtonWidgetClass every-menu 
 	    (lambda (w c i)
 	      (select-all graph-popup-snd graph-popup-chn)))
@@ -320,7 +347,8 @@
 			 (if (string=? name "Redo")
 			     ((if (> (cadr eds) 0) |XtManageChild |XtUnmanageChild) w)
 			     (if (or (string=? name "Mix selection")
-				     (string=? name "Insert selection"))
+				     (string=? name "Insert selection")
+				     (string=? name "Replace with selection"))
 				 ((if (selection?) |XtManageChild |XtUnmanageChild) w)
 				 (if (string=? name "Play from cursor")
 				     ((if (> (cursor snd chn) 0) |XtManageChild |XtUnmanageChild) w)

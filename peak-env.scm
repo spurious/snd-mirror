@@ -1,6 +1,7 @@
 (use-modules (ice-9 common-list))
 
 (define save-peak-env-info #t)
+(define save-peak-env-info-directory "~/peaks")
 
 (let ((saved-peak-info '()))
 

@@ -427,7 +427,7 @@ void add_channel_data(char *filename, chan_info *cp, file_info *hdr, snd_state *
   file_info *chdr;
   sp = cp->sound;
   add_channel_data_1(cp, sp, graphed);
-  set_initial_ed_list(cp, (hdr->samples/hdr->chans) - 1);
+  set_initial_ed_list(cp, (hdr->samples / hdr->chans) - 1);
   chdr = copy_header(filename, sp->hdr); /* need one separate from snd_info case */
   chn = cp->chan;
   if (chdr)
@@ -724,7 +724,9 @@ void focus_x_axis_change(axis_info *ap, chan_info *cp, snd_info *sp, int focus_s
 	  if (newf != -1)
 	    {
 	      loc = (double)newf / (double)SND_SRATE(ncp->sound);
-	      if ((loc > ap->x0) && (loc < ap->x1) && (ap->x1 > ap->x0))
+	      if ((loc > ap->x0) && 
+		  (loc < ap->x1) && 
+		  (ap->x1 > ap->x0))
 		/* try to maintain current relative position in window */
 		{
 		  pos = (loc - ap->x0) / (ap->x1 - ap->x0);
@@ -894,7 +896,10 @@ static void display_selection_transform_size (chan_info *cp, axis_info *fap)
   if (cp->printing) ps_set_tiny_numbers_font();
   y0 = fap->height + fap->y_offset - 3;
   x0 = fap->x_axis_x0 + 10;
-  mus_snprintf(chn_id_str, LABEL_BUFFER_SIZE, "(len: %d/%d)", selection_len(), cp->selection_transform_size);
+  mus_snprintf(chn_id_str, LABEL_BUFFER_SIZE, 
+	       "(len: %d/%d)", 
+	       selection_len(), 
+	       cp->selection_transform_size);
   draw_string(copy_context(cp), x0, y0, chn_id_str, strlen(chn_id_str));
   if (cp->printing) ps_draw_string(fap, x0, y0, chn_id_str);
 }
@@ -2607,7 +2612,7 @@ static void draw_graph_cursor(chan_info *cp)
 	}
     }
   cp->cx = local_grf_x((double)(cp->cursor) / (double)SND_SRATE(cp->sound), ap); /* not float -- this matters in very long files (i.e. > 40 minutes) */
-  cp->cy = local_grf_y(sample(cp->cursor, cp), ap);
+  cp->cy = local_grf_y(chn_sample(cp->cursor, cp, cp->edit_ctr), ap);
   switch (cp->cursor_style)
     {
     case CURSOR_CROSS:
@@ -2706,7 +2711,7 @@ void show_cursor_info(chan_info *cp)
   sp = cp->sound;
   if ((sp->sync != 0) && (cp->chan != 0)) return;
   samp = cp->cursor;
-  y = sample(samp, cp);
+  y = chn_sample(samp, cp, cp->edit_ctr);
   absy = fabs(y);
   if (absy < .0001) digits = 4;
   else if (absy<.001) digits = 3;
@@ -2738,7 +2743,7 @@ void show_cursor_info(chan_info *cp)
 	      strcat(expr_str, ", ");
 	      FREE(s2);
 	      ncp = sp->chans[i];
-	      y = sample(samp, ncp);
+	      y = chn_sample(samp, ncp, ncp->edit_ctr);
 	      absy = fabs(y);
 	      if (absy < .0001) 
 		digits = 4;
@@ -5767,8 +5772,7 @@ void g_init_chn(void)
 					    "set-" S_squelch_update, g_set_squelch_update_w, g_set_squelch_update_reversed, 0, 2, 0, 3);
   
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_cursor, g_cursor_w, H_cursor,
-					    "set-" S_cursor, g_set_cursor_w, g_set_cursor_reversed,
-					    0, 2, 0, 3);
+					    "set-" S_cursor, g_set_cursor_w, g_set_cursor_reversed, 0, 2, 0, 3);
   
   #define H_cursor_cross "The value for " S_cursor_style " that causes is to be a cross (the default)"
   #define H_cursor_line "The value for " S_cursor_style " that causes is to be a full vertical line"
@@ -5920,20 +5924,16 @@ void g_init_chn(void)
   XEN_DEFINE_CONSTANT(S_show_x_axis,           SHOW_X_AXIS,   H_show_x_axis);
 
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_show_axes, g_show_axes_w, H_show_axes,
-					    "set-" S_show_axes, g_set_show_axes_w, g_set_show_axes_reversed,
-					    0, 2, 0, 3);
+					    "set-" S_show_axes, g_set_show_axes_w, g_set_show_axes_reversed, 0, 2, 0, 3);
 
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_graphs_horizontal, g_graphs_horizontal_w, H_graphs_horizontal,
-					    "set-" S_graphs_horizontal, g_set_graphs_horizontal_w, g_set_graphs_horizontal_reversed,
-					    0, 2, 0, 3);
+					    "set-" S_graphs_horizontal, g_set_graphs_horizontal_w, g_set_graphs_horizontal_reversed, 0, 2, 0, 3);
 
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_x_bounds, g_x_bounds_w, H_x_bounds,
-					    "set-" S_x_bounds, g_set_x_bounds_w, g_set_x_bounds_reversed,
-					    0, 2, 1, 2);
+					    "set-" S_x_bounds, g_set_x_bounds_w, g_set_x_bounds_reversed, 0, 2, 1, 2);
 
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_y_bounds, g_y_bounds_w, H_y_bounds,
-					    "set-" S_y_bounds, g_set_y_bounds_w, g_set_y_bounds_reversed,
-					    0, 2, 1, 2);
+					    "set-" S_y_bounds, g_set_y_bounds_w, g_set_y_bounds_reversed, 0, 2, 1, 2);
 
   #define H_transform_hook S_transform_hook " (snd chn scaler) is called just after a spectrum is calculated."
   #define H_graph_hook S_graph_hook " (snd chn y0 y1) is called each time a graph is about to be updated. If it returns #t, the display is not updated."

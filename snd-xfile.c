@@ -8,7 +8,7 @@ char *read_file_data_choices(file_data *fdat, int *srate, int *chans, int *type,
 {
   char *str;
   int n;
-  int res;
+  int res, val;
   int *ns = NULL;
   char *comment = NULL;
   if (fdat->srate_text) 
@@ -16,7 +16,8 @@ char *read_file_data_choices(file_data *fdat, int *srate, int *chans, int *type,
       str = XmTextGetString(fdat->srate_text); 
       if (str) 
 	{
-	  (*srate) = string2int(str); 
+	  val = string2int(str); 
+	  if (val > 0) (*srate) = val;
 	  XtFree(str);
 	}
     }
@@ -25,7 +26,8 @@ char *read_file_data_choices(file_data *fdat, int *srate, int *chans, int *type,
       str = XmTextGetString(fdat->chans_text); 
       if (str) 
 	{
-	  (*chans) = string2int(str); 
+	  val = string2int(str); 
+	  if (val > 0) (*chans) = val;
 	  XtFree(str);
 	}
     }
@@ -34,7 +36,8 @@ char *read_file_data_choices(file_data *fdat, int *srate, int *chans, int *type,
       str = XmTextGetString(fdat->location_text); 
       if (str) 
 	{
-	  (*location) = string2int(str); 
+	  val = string2int(str); 
+	  if (val >= 0) (*location) = val;
 	  XtFree(str);
 	}
     }
@@ -1298,10 +1301,10 @@ ww_info *make_title_row(snd_state *ss, Widget formw, char *first_str, char *seco
   return(wwi);
 }
 
-static XEN mouse_name_enter_hook;
-static XEN mouse_name_leave_hook;
+static XEN mouse_enter_label_hook;
+static XEN mouse_leave_label_hook;
 
-static void mouse_name_leave_or_enter(regrow *r, XEN hook, const char *caller)
+static void mouse_leave_label_or_enter(regrow *r, XEN hook, const char *caller)
 {
   XmString s1;
   char *label = NULL;
@@ -1337,14 +1340,14 @@ static void mouse_name_leave_or_enter(regrow *r, XEN hook, const char *caller)
     }
 }
 
-static void mouse_name_enter(Widget w, XtPointer context, XEvent *event, Boolean *flag)
+static void mouse_enter_label(Widget w, XtPointer context, XEvent *event, Boolean *flag)
 {
-  mouse_name_leave_or_enter((regrow *)context, mouse_name_enter_hook, S_mouse_enter_label_hook);
+  mouse_leave_label_or_enter((regrow *)context, mouse_enter_label_hook, S_mouse_enter_label_hook);
 }
 
-static void mouse_name_leave(Widget w, XtPointer context, XEvent *event, Boolean *flag)
+static void mouse_leave_label(Widget w, XtPointer context, XEvent *event, Boolean *flag)
 {
-  mouse_name_leave_or_enter((regrow *)context, mouse_name_leave_hook, S_mouse_leave_label_hook);
+  mouse_leave_label_or_enter((regrow *)context, mouse_leave_label_hook, S_mouse_leave_label_hook);
 }
 
 regrow *make_regrow(snd_state *ss, Widget ww, Widget last_row, 
@@ -1412,8 +1415,8 @@ regrow *make_regrow(snd_state *ss, Widget ww, Widget last_row,
   r->nm = XtCreateManagedWidget("nm", xmPushButtonWidgetClass, r->rw, args, n);
   XmStringFree(s1);
 
-  XtAddEventHandler(r->nm, EnterWindowMask, FALSE, mouse_name_enter, (XtPointer)r);
-  XtAddEventHandler(r->nm, LeaveWindowMask, FALSE, mouse_name_leave, (XtPointer)r);
+  XtAddEventHandler(r->nm, EnterWindowMask, FALSE, mouse_enter_label, (XtPointer)r);
+  XtAddEventHandler(r->nm, LeaveWindowMask, FALSE, mouse_leave_label, (XtPointer)r);
 
   FREE(n1);
   FREE(n2);
@@ -2103,18 +2106,21 @@ file_info *raw_data_dialog_to_file_info(char *filename, snd_state *ss, const cha
   if ((str) && (*str)) 
     {
       sr = string2int(str); 
+      if (sr <= 0) sr = 1;
       XtFree(str);
     }
   str = XmTextGetString(raw_chans_text);
   if ((str) && (*str)) 
     {
       oc = string2int(str); 
+      if (oc <= 0) oc = 1;
       XtFree(str);
     }
   str = XmTextGetString(raw_location_text);
   if ((str) && (*str)) 
     {
       raw_data_location = string2int(str); 
+      if (raw_data_location < 0) raw_data_location = 0;
       XtFree(str);
     }
   mus_header_set_raw_defaults(sr, oc, fr);
@@ -2407,7 +2413,7 @@ See also nb.scm."
 
   #define H_mouse_leave_label_hook S_mouse_leave_label_hook " (type position label) is called when a file viewer or region label is exited by the mouse"
 
-  XEN_DEFINE_HOOK(mouse_name_enter_hook, S_mouse_enter_label_hook, 3, H_mouse_enter_label_hook);
-  XEN_DEFINE_HOOK(mouse_name_leave_hook, S_mouse_leave_label_hook, 3, H_mouse_leave_label_hook);
+  XEN_DEFINE_HOOK(mouse_enter_label_hook, S_mouse_enter_label_hook, 3, H_mouse_enter_label_hook);
+  XEN_DEFINE_HOOK(mouse_leave_label_hook, S_mouse_leave_label_hook, 3, H_mouse_leave_label_hook);
 }
 

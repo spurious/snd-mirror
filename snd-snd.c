@@ -42,20 +42,24 @@ snd_info *snd_new_file(snd_state *ss, char *newname, int header_type, int data_f
 
 #define MULTIPLIER 100
 
+static env_info *free_env_info(env_info *ep)
+{
+  if (ep)
+    {
+      if (ep->data_max) {FREE(ep->data_max); ep->data_max = NULL;}
+      if (ep->data_min) {FREE(ep->data_min); ep->data_min = NULL;}
+      FREE(ep);
+    }
+  return(NULL);
+}
+
 env_info *free_amp_env(chan_info *cp, int pos)
 {
   /* can be either during channel close, or premature work proc removal */
-  env_info *ep;
-  if ((cp) && (cp->amp_envs) && (pos < cp->edit_size))
-    {
-      ep = cp->amp_envs[pos];
-      if (ep)
-	{
-	  if (ep->data_max) {FREE(ep->data_max); ep->data_max = NULL;}
-	  if (ep->data_min) {FREE(ep->data_min); ep->data_min = NULL;}
-	  FREE(ep);
-	}
-    }
+  if ((cp) && 
+      (cp->amp_envs) && 
+      (pos < cp->edit_size))
+    return(free_env_info(cp->amp_envs[pos]));
   return(NULL);
 }
 
@@ -69,15 +73,22 @@ void free_env_state(chan_info *cp)
   /* this function just cleans up the current work proc stuff (amp_env in this case can be incomplete) */
   env_state *es;
   chan_context *cgx;
-  if (!cp) return;
-  cgx = cp->cgx;
-  if (!cgx) return;
-  es = (env_state *)(cgx->amp_env_state);
-  if (!es) return;
-  if (es->sf) es->sf = free_snd_fd(es->sf);
-  FREE(es);
-  cgx->amp_env_state = NULL;
-  cgx->amp_env_in_progress = 0;
+  if (cp)
+    {
+      cgx = cp->cgx;
+      if (cgx)
+	{
+	  es = (env_state *)(cgx->amp_env_state);
+	  if (es)
+	    {
+	      if (es->sf) 
+		es->sf = free_snd_fd(es->sf);
+	      FREE(es);
+	    }
+	  cgx->amp_env_state = NULL;
+	  cgx->amp_env_in_progress = 0;
+	}
+    }
 }
 
 env_state *make_env_state(chan_info *cp, int samples)
@@ -3041,7 +3052,7 @@ If 'filename' is a sound index (an integer), pts is an edit-position, and the cu
 		{
 		  /* read amp_env data into pts (presumably smaller) */
 		  peak = g_env_info_to_vectors(ep, len);
-		  FREE(ep);
+		  ep = free_env_info(ep);
 		  if (peakname) FREE(peakname);
 		  if (fullname) FREE(fullname);
 		  return(peak);
@@ -3302,7 +3313,7 @@ If it returns #t, the apply is aborted."
   XEN_DEFINE_CONSTANT(S_channels_superimposed, CHANNELS_SUPERIMPOSED, H_channels_superimposed);
 
 #if (!USE_NO_GUI)
-  XEN_DEFINE_PROCEDURE(S_sound_widgets, g_sound_widgets_w, 0, 1, 0, "returns sound widgets");
+  XEN_DEFINE_PROCEDURE(S_sound_widgets, g_sound_widgets_w, 0, 1, 0, H_sound_widgets);
 #endif
 
   XEN_DEFINE_PROCEDURE(S_sound_p, g_sound_p_w, 0, 1, 0, H_sound_p);
@@ -3341,104 +3352,79 @@ If it returns #t, the apply is aborted."
 
 
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_filter_control_env, g_filter_control_env_w, H_filter_control_env,
-					    "set-" S_filter_control_env, g_set_filter_control_env_w, g_set_filter_control_env_reversed,
-					    0, 1, 0, 2);
+					    "set-" S_filter_control_env, g_set_filter_control_env_w, g_set_filter_control_env_reversed, 0, 1, 0, 2);
 
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_cursor_follows_play, g_cursor_follows_play_w, H_cursor_follows_play,
-					    "set-" S_cursor_follows_play, g_set_cursor_follows_play_w, g_set_cursor_follows_play_reversed,
-					    0, 1, 0, 2);
+					    "set-" S_cursor_follows_play, g_set_cursor_follows_play_w, g_set_cursor_follows_play_reversed, 0, 1, 0, 2);
 
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_show_controls, g_show_controls_w, H_show_controls,
-					    "set-" S_show_controls, g_set_show_controls_w, g_set_show_controls_reversed,
-					    0, 1, 0, 2);
+					    "set-" S_show_controls, g_set_show_controls_w, g_set_show_controls_reversed, 0, 1, 0, 2);
   
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_sync, g_sync_w, H_sync,
-					    "set-" S_sync, g_set_sync_w, g_set_sync_reversed,
-					    0, 1, 0, 2);
+					    "set-" S_sync, g_set_sync_w, g_set_sync_reversed, 0, 1, 0, 2);
   
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_channel_style, g_channel_style_w, H_channel_style,
-					    "set-" S_channel_style, g_set_channel_style_w, g_set_channel_style_reversed,
-					    0, 1, 1, 1);
+					    "set-" S_channel_style, g_set_channel_style_w, g_set_channel_style_reversed, 0, 1, 1, 1);
   
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_read_only, g_read_only_w, H_read_only,
-					    "set-" S_read_only, g_set_read_only_w, g_set_read_only_reversed,
-					    0, 1, 0, 2);
+					    "set-" S_read_only, g_set_read_only_w, g_set_read_only_reversed, 0, 1, 0, 2);
   
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_expand_control_p, g_expand_control_p_w, H_expand_control_p,
-					    "set-" S_expand_control_p, g_set_expand_control_p_w, g_set_expand_control_p_reversed,
-					    0, 1, 0, 2);
+					    "set-" S_expand_control_p, g_set_expand_control_p_w, g_set_expand_control_p_reversed, 0, 1, 0, 2);
   
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_contrast_control_p, g_contrast_control_p_w, H_contrast_control_p,
-					    "set-" S_contrast_control_p, g_set_contrast_control_p_w, g_set_contrast_control_p_reversed,
-					    0, 1, 0, 2);
+					    "set-" S_contrast_control_p, g_set_contrast_control_p_w, g_set_contrast_control_p_reversed, 0, 1, 0, 2);
   
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_reverb_control_p, g_reverb_control_p_w, H_reverb_control_p,
-					    "set-" S_reverb_control_p, g_set_reverb_control_p_w, g_set_reverb_control_p_reversed,
-					    0, 1, 0, 2);
+					    "set-" S_reverb_control_p, g_set_reverb_control_p_w, g_set_reverb_control_p_reversed, 0, 1, 0, 2);
   
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_filter_control_p, g_filter_control_p_w, H_filter_control_p,
-					    "set-" S_filter_control_p, g_set_filter_control_p_w, g_set_filter_control_p_reversed,
-					    0, 1, 0, 2);
+					    "set-" S_filter_control_p, g_set_filter_control_p_w, g_set_filter_control_p_reversed, 0, 1, 0, 2);
   
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_filter_control_in_dB, g_filter_control_in_dB_w, H_filter_control_in_dB,
-					    "set-" S_filter_control_in_dB, g_set_filter_control_in_dB_w, g_set_filter_control_in_dB_reversed,
-					    0, 1, 0, 2);
+					    "set-" S_filter_control_in_dB, g_set_filter_control_in_dB_w, g_set_filter_control_in_dB_reversed, 0, 1, 0, 2);
   
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_filter_control_order, g_filter_control_order_w, H_filter_control_order,
-					    "set-" S_filter_control_order, g_set_filter_control_order_w, g_set_filter_control_order_reversed,
-					    0, 1, 0, 2);
+					    "set-" S_filter_control_order, g_set_filter_control_order_w, g_set_filter_control_order_reversed, 0, 1, 0, 2);
   
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_contrast_control, g_contrast_control_w, H_contrast_control,
-					    "set-" S_contrast_control, g_set_contrast_control_w, g_set_contrast_control_reversed,
-					    0, 1, 0, 2);
+					    "set-" S_contrast_control, g_set_contrast_control_w, g_set_contrast_control_reversed, 0, 1, 0, 2);
   
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_contrast_control_amp, g_contrast_control_amp_w, H_contrast_control_amp,
-					    "set-" S_contrast_control_amp, g_set_contrast_control_amp_w, g_set_contrast_control_amp_reversed,
-					    0, 1, 0, 2);
+					    "set-" S_contrast_control_amp, g_set_contrast_control_amp_w, g_set_contrast_control_amp_reversed, 0, 1, 0, 2);
   
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_expand_control, g_expand_control_w, H_expand_control,
-					    "set-" S_expand_control, g_set_expand_control_w, g_set_expand_control_reversed,
-					    0, 1, 0, 2);
+					    "set-" S_expand_control, g_set_expand_control_w, g_set_expand_control_reversed, 0, 1, 0, 2);
   
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_expand_control_length, g_expand_control_length_w, H_expand_control_length,
-					    "set-" S_expand_control_length, g_set_expand_control_length_w, g_set_expand_control_length_reversed,
-					    0, 1, 0, 2);
+					    "set-" S_expand_control_length, g_set_expand_control_length_w, g_set_expand_control_length_reversed, 0, 1, 0, 2);
   
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_expand_control_ramp, g_expand_control_ramp_w, H_expand_control_ramp,
-					    "set-" S_expand_control_ramp, g_set_expand_control_ramp_w, g_set_expand_control_ramp_reversed,
-					    0, 1, 0, 2);
+					    "set-" S_expand_control_ramp, g_set_expand_control_ramp_w, g_set_expand_control_ramp_reversed, 0, 1, 0, 2);
   
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_expand_control_hop, g_expand_control_hop_w, H_expand_control_hop,
-					    "set-" S_expand_control_hop, g_set_expand_control_hop_w, g_set_expand_control_hop_reversed,
-					    0, 1, 0, 2);
+					    "set-" S_expand_control_hop, g_set_expand_control_hop_w, g_set_expand_control_hop_reversed, 0, 1, 0, 2);
   
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_speed_control, g_speed_control_w, H_speed_control,
-					    "set-" S_speed_control, g_set_speed_control_w, g_set_speed_control_reversed,
-					    0, 1, 0, 2);
+					    "set-" S_speed_control, g_set_speed_control_w, g_set_speed_control_reversed, 0, 1, 0, 2);
   
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_reverb_control_length, g_reverb_control_length_w, H_reverb_control_length,
-					    "set-" S_reverb_control_length, g_set_reverb_control_length_w, g_set_reverb_control_length_reversed,
-					    0, 1, 0, 2);
+					    "set-" S_reverb_control_length, g_set_reverb_control_length_w, g_set_reverb_control_length_reversed, 0, 1, 0, 2);
   
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_reverb_control_scale, g_reverb_control_scale_w, H_reverb_control_scale,
-					    "set-" S_reverb_control_scale, g_set_reverb_control_scale_w, g_set_reverb_control_scale_reversed,
-					    0, 1, 0, 2);
+					    "set-" S_reverb_control_scale, g_set_reverb_control_scale_w, g_set_reverb_control_scale_reversed, 0, 1, 0, 2);
   
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_reverb_control_feedback, g_reverb_control_feedback_w, H_reverb_control_feedback,
-					    "set-" S_reverb_control_feedback, g_set_reverb_control_feedback_w, g_set_reverb_control_feedback_reversed,
-					    0, 1, 0, 2);
+					    "set-" S_reverb_control_feedback, g_set_reverb_control_feedback_w, g_set_reverb_control_feedback_reversed, 0, 1, 0, 2);
   
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_reverb_control_lowpass, g_reverb_control_lowpass_w, H_reverb_control_lowpass,
-					    "set-" S_reverb_control_lowpass, g_set_reverb_control_lowpass_w, g_set_reverb_control_lowpass_reversed,
-					    0, 1, 0, 2);
+					    "set-" S_reverb_control_lowpass, g_set_reverb_control_lowpass_w, g_set_reverb_control_lowpass_reversed, 0, 1, 0, 2);
   
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_amp_control, g_amp_control_w, H_amp_control,
-					    "set-" S_amp_control, g_set_amp_control_w, g_set_amp_control_reversed,
-					    0, 2, 0, 3);
+					    "set-" S_amp_control, g_set_amp_control_w, g_set_amp_control_reversed, 0, 2, 0, 3);
   
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_reverb_control_decay, g_reverb_control_decay_w, H_reverb_control_decay,
-					    "set-" S_reverb_control_decay, g_set_reverb_control_decay_w, g_set_reverb_control_decay_reversed,
-					    0, 1, 0, 2);
+					    "set-" S_reverb_control_decay, g_set_reverb_control_decay_w, g_set_reverb_control_decay_reversed, 0, 1, 0, 2);
   
   #define H_speed_control_as_float "The value for " S_speed_control_style " that interprets the speed slider as a float"
   #define H_speed_control_as_ratio "The value for " S_speed_control_style " that interprets the speed slider as a just-intonation ratio"
@@ -3449,12 +3435,10 @@ If it returns #t, the apply is aborted."
   XEN_DEFINE_CONSTANT(S_speed_control_as_semitone,     SPEED_CONTROL_AS_SEMITONE, H_speed_control_as_semitone);
   
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_speed_control_style, g_speed_control_style_w, H_speed_control_style,
-					    "set-" S_speed_control_style, g_set_speed_control_style_w, g_set_speed_control_style_reversed,
-					    0, 1, 0, 2);
+					    "set-" S_speed_control_style, g_set_speed_control_style_w, g_set_speed_control_style_reversed, 0, 1, 0, 2);
 
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_speed_control_tones, g_speed_control_tones_w, H_speed_control_tones,
-					    "set-" S_speed_control_tones, g_set_speed_control_tones_w, g_set_speed_control_tones_reversed,
-					    0, 1, 0, 2);
+					    "set-" S_speed_control_tones, g_set_speed_control_tones_w, g_set_speed_control_tones_reversed, 0, 1, 0, 2);
 
   XEN_DEFINE_PROCEDURE(S_peak_env_info, g_peak_env_info_w, 0, 3, 0, H_peak_env_info);
   XEN_DEFINE_PROCEDURE(S_write_peak_env_info_file, g_write_peak_env_info_file_w, 3, 0, 0, H_write_peak_env_info_file);

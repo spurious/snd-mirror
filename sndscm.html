@@ -54,6 +54,7 @@
   <li><a href="#moogdoc">moog.scm: Moog filter</a>
   <li><a href="#musglyphs">musglyphs.scm: Music notation symbols (from CMN)</a>
   <li><a href="#nbdoc">nb.scm: Popup File info etc</a>
+  <li><a href="#peakenvdoc">peak-env.scm: peak envelope support</a>
   <li><a href="#popupdoc">popup.scm: Popup menu specializations</a>
   <li><a href="#pqwvoxdoc">pqwvox.scm: phase-quadrature waveshaping</a>
   <li><a href="#prc95doc">prc95.scm: Perry Cook's physical model examples</a>
@@ -1783,6 +1784,28 @@ associated with "test.snd".  <code>(prune-db)</code> erases anything associated 
 any files that no longer exist.  (nb.scm will work fine without guile-gdbm; to load
 guile-gdbm, set the variable <b>use-gdbm</b> to #t).
 </p>
+
+<A NAME="peakenvdoc"></a><span class=box><h2>peak-env.scm</h2></span>
+
+<p>The functions in peak-env.scm provide relatively robust access to
+peak envelope files.  These files save Snd's overall amplitude envelopes
+for a given sound so that a subsequent re-open of that sound has the
+waveform immediately.  For very large sounds, this can save as much as
+a minute during which Snd is running the amplitude envelope builders
+in the background and displaying whatever it can.  That is, it makes
+opening a large sound much faster after the initial read and save.
+The file has a variable <b>save-peak-env-info</b> (default #t) which
+determines whether these envelopes are being saved.  The procedure
+</p>
+<pre>
+(define (peak-env-info-file-name snd chn)	
+  (format #f "~A/~A-peaks-~D" save-peak-env-info-directory (short-file-name snd) chn))
+</pre>
+<p>determines the saved peak env file name; in the default
+case, it looks for the directory ~/peaks, but obviously this
+could be changed to suit your situation.
+</p>
+
 
 <A NAME="popupdoc"></a><span class=box><h2>popup.scm</h2></span>
 <pre>

@@ -102,11 +102,11 @@ static file_info *make_file_info_1(char *fullname)
   else
     {
       hdr->srate = mus_sound_srate(fullname);
-      if ((hdr->srate) == 0) hdr->srate = 1;
       hdr->chans = mus_sound_chans(fullname);
-      if ((hdr->chans) == 0) hdr->chans = 1;
       hdr->format = mus_sound_data_format(fullname);
     }
+  if ((hdr->srate) <= 0) hdr->srate = 1;
+  if ((hdr->chans) <= 0) hdr->chans = 1;
   hdr->samples = mus_sound_samples(fullname); /* total samples, not per channel */
   hdr->data_location = mus_sound_data_location(fullname);
   hdr->comment = NULL;

@@ -347,7 +347,17 @@ static XEN g_widget_window(XEN wid)
   return(C_TO_XEN_UNSIGNED_LONG(XtWindow((Widget)(XEN_UNWRAP_C_POINTER(wid)))));
 #endif
 #if USE_GTK
-  return(C_TO_XEN_UNSIGNED_LONG((unsigned long)(((GtkWidget *)(XEN_UNWRAP_C_POINTER(wid)))->window)));
+  GtkWidget *w;
+  w = (GtkWidget *)(XEN_UNWRAP_C_POINTER(wid));
+  while (w)
+    {
+      if (GTK_IS_WINDOW(w))
+	return(C_TO_XEN_UNSIGNED_LONG((unsigned long)(GTK_WINDOW(w))));
+      else
+	if (GTK_IS_WINDOW(w->window))
+	  return(C_TO_XEN_UNSIGNED_LONG((unsigned long)(GTK_WINDOW(w->window))));
+	else w = w->parent;
+    }
   /* this can't be used directly: Gdk-XEN_ERROR **: BadWindow (invalid Window parameter) */
 #endif
   return(XEN_FALSE);
@@ -383,9 +393,7 @@ static XEN g_click_button(XEN button)
     }
 #endif
 #if USE_GTK
-  GtkWidget *w;
-  w = (GtkWidget *)(XEN_UNWRAP_C_POINTER(button));
-  gtk_signal_emit_by_name(GTK_OBJECT(w), "clicked");
+  gtk_button_clicked(GTK_BUTTON((GtkWidget *)(XEN_UNWRAP_C_POINTER(button))));
 #endif
   return(button);
 }

@@ -361,26 +361,15 @@ void scale_by(chan_info *cp, Float *ur_scalers, int len, int selection)
 	{
 	  beg = selection_beg(ncp);
 	  frames = selection_end(ncp) - beg + 1;
-	  if ((beg == 0) && 
-	      (frames >= current_ed_samples(ncp)))
-	    {
-	      parse_tree_scale_by(ncp, ur_scalers[j]);
-	      amp_env_scale_by(ncp, ur_scalers[j]);
-	    }
-	  else 
-	    {
-	      parse_tree_selection_scale_by(ncp, ur_scalers[j], beg, frames);
-	      amp_env_scale_selection_by(ncp, ur_scalers[j], beg, frames);
-	    }
 	}
       else
 	{
-	  parse_tree_scale_by(ncp, ur_scalers[j]);
-	  amp_env_scale_by(ncp, ur_scalers[j]);
+	  beg = 0;
+	  frames = current_ed_samples(ncp);
 	}
+      scale_channel(ncp, ur_scalers[j], beg, frames);
       j++;
       if (j >= len) j = 0;
-      update_graph(ncp, NULL);
     }
   free_sync_info(si);
 }
@@ -412,7 +401,7 @@ Float get_maxamp(snd_info *sp, chan_info *cp, int edpos)
   return(ymax);
 }
 
-static Float get_selection_maxamp(chan_info *cp)
+Float get_selection_maxamp(chan_info *cp)
 {
   snd_fd *sf;
   Float ymax, val;
@@ -518,24 +507,13 @@ void scale_to(snd_state *ss, snd_info *sp, chan_info *cp, Float *ur_scalers, int
 	{
 	  beg = selection_beg(ncp);
 	  frames = selection_end(ncp) - beg + 1;
-	  if ((beg == 0) && 
-	      (frames >= current_ed_samples(ncp)))
-	    {
-	      parse_tree_scale_by(ncp, scalers[i]);
-	      amp_env_scale_by(ncp, scalers[i]);
-	    }
-	  else 
-	    {
-	      parse_tree_selection_scale_by(ncp, scalers[i], beg, frames);
-	      amp_env_scale_selection_by(ncp, scalers[i], beg, frames);
-	    }
 	}
       else
 	{
-	  parse_tree_scale_by(si->cps[i], scalers[i]);
-	  amp_env_scale_by(si->cps[i], scalers[i]);
+	  beg = 0;
+	  frames = current_ed_samples(ncp);
 	}
-      update_graph(ncp, NULL);
+      scale_channel(ncp, scalers[i], beg, frames);
     }
   FREE(scalers);
   free_sync_info(si);
@@ -1813,7 +1791,6 @@ int cursor_zeros(chan_info *cp, int count, int regexpr)
 {
   int i, num, old_sync, beg;
   snd_info *sp, *nsp;
-  MUS_SAMPLE_TYPE *zeros;
   sync_info *si = NULL;
   chan_info *ncp;
   Float scaler[1];
@@ -1857,18 +1834,8 @@ int cursor_zeros(chan_info *cp, int count, int regexpr)
 	  /* special case 1 sample -- if already 0, treat as no-op */
 	  if ((count != 1) || 
 	      (beg >= current_ed_samples(ncp)) || 
-	      (sample(beg, ncp) != 0.0))
-	    {
-	      if (num < 1024)
-		{
-		  zeros = (MUS_SAMPLE_TYPE *)CALLOC(num, sizeof(MUS_SAMPLE_TYPE));
-		  change_samples(beg, num, zeros, ncp, LOCK_MIXES, "C-z"); 
-		  FREE(zeros);
-		}
-	      else parse_tree_selection_scale_by(ncp, 0.0, beg, num);
-	      amp_env_scale_selection_by(ncp, 0.0, beg, num);
-	      update_graph(ncp, NULL);
-	    }
+	      (chn_sample(beg, ncp, ncp->edit_ctr) != 0.0))
+	    scale_channel(ncp, 0.0, beg, num);
 	}
     }
   si = free_sync_info(si);
@@ -1894,8 +1861,8 @@ void cos_smooth(chan_info *cp, int beg, int num, int regexpr, const char *origin
   for (i = 0; i < si->chans; i++)
     {
       ncp = si->cps[i];
-      y0 = sample(si->begs[i], ncp);
-      y1 = sample(si->begs[i] + num, ncp);
+      y0 = chn_sample(si->begs[i], ncp, ncp->edit_ctr);
+      y1 = chn_sample(si->begs[i] + num, ncp, ncp->edit_ctr);
       if (y1 > y0) angle = M_PI; else angle = 0.0;
       incr = M_PI/(Float)num;
       off = 0.5 * (y1 + y0);

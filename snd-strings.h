@@ -708,6 +708,8 @@
 #define S_scale_by                      "scale-by"
 #define S_scale_selection_by            "scale-selection-by"
 #define S_scale_selection_to            "scale-selection-to"
+#define S_scale_sound_by                "scale-sound-by"
+#define S_scale_sound_to                "scale-sound-to"
 #define S_scale_to                      "scale-to" 
 #define S_scan_chan                     "scan-chan"
 #define S_script_arg                    "script-arg"

@@ -318,7 +318,7 @@ int cursor_search(chan_info *cp, int count)
 	  report_in_minibuffer(sp, "%s%sy = %s at %s (%d)",
 			       (sp->search_expr) ? sp->search_expr : "",
 			       (sp->search_expr) ? ": " : "",
-			       s1 = prettyf(sample(samp, cp), 2),
+			       s1 = prettyf(chn_sample(samp, cp, cp->edit_ctr), 2),
 			       s2 = prettyf((double)samp / (double)SND_SRATE(sp), 2),
 			       samp);
 	  FREE(s1);
@@ -430,5 +430,5 @@ XEN_ARGIFY_2(g_set_search_procedure_w, g_set_search_procedure)
 void g_init_find(void)
 {
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_search_procedure, g_search_procedure_w, H_search_procedure,
-			       "set-" S_search_procedure, g_set_search_procedure_w,  0, 1, 1, 1);
+				   "set-" S_search_procedure, g_set_search_procedure_w,  0, 1, 1, 1);
 }
