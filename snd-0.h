@@ -148,6 +148,8 @@ typedef enum {GRAPH_LINES, GRAPH_DOTS, GRAPH_FILLED, GRAPH_DOTS_AND_LINES, GRAPH
   *   and I think lollipop is more accurate -- in my experience lollipops have
   *     circular candies whereas popsicles have a sort of squared-off bottom.
   */
+
+typedef enum {APPLY_TO_SOUND, APPLY_TO_CHANNEL, APPLY_TO_SELECTION} snd_apply_t;
 typedef enum {GRAPH_ONCE, GRAPH_AS_SONOGRAM, GRAPH_AS_SPECTROGRAM, GRAPH_AS_WAVOGRAM} graph_type_t;
 typedef enum {ZOOM_FOCUS_LEFT, ZOOM_FOCUS_RIGHT, ZOOM_FOCUS_ACTIVE, ZOOM_FOCUS_MIDDLE} zoom_focus_t;
 typedef enum {DONT_LOCK_MIXES, LOCK_MIXES} lock_mix_t;
@@ -237,7 +239,6 @@ enum {FOURIER, WAVELET, WALSH, AUTOCORRELATION, CEPSTRUM, HAAR}; /* not typedef'
 #define NUM_FFT_WINDOWS 19
 #define NUM_WAVELETS 48
 
-typedef enum {APPLY_TO_SOUND, APPLY_TO_CHANNEL, APPLY_TO_SELECTION} snd_apply_t;
 typedef enum {FCP_X_ANGLE, FCP_X_SCALE, FCP_Y_ANGLE, FCP_Y_SCALE, FCP_Z_ANGLE, FCP_Z_SCALE, FCP_CUTOFF, FCP_START, FCP_BETA, FCP_BEATS} fcp_t;
 typedef enum {TIME_AXIS_INFO, TRANSFORM_AXIS_INFO, LISP_AXIS_INFO} axis_info_t;
 typedef enum {COLOR_POSITION, COLOR_ZOOM} slider_choice_t;

@@ -2,11 +2,6 @@
 
 /* TODO: transparent pixmaps */
 
-#define APPLY_BUTTON_COLOR    "panel_button"
-#define REMEMBER_BUTTON_COLOR "panel_button"
-#define RESET_BUTTON_COLOR    "panel_button"
-#define RESTORE_BUTTON_COLOR  "panel_button"
-
 enum {W_pane, W_pane_box, W_control_panel,
       W_name_form, W_name, W_name_event, W_name_pix, W_info_label, W_info, W_info_sep,
       W_play, W_sync, W_unite,
@@ -17,12 +12,11 @@ enum {W_pane, W_pane_box, W_control_panel,
       W_reverb_form, W_revscl, W_revscl_event, W_revscl_label, W_revscl_number,
       W_revlen, W_revlen_event, W_revlen_label, W_revlen_number, W_reverb_button,
       W_filter_form, W_filter_label, W_filter_order, W_filter_env, W_filter, W_filter_button, W_filter_dB, W_filter_hz, W_filter_frame,
-      W_apply_form, W_remember, W_restore, W_apply, W_reset
 };
 
 enum {W_amp_adj, W_speed_adj, W_contrast_adj, W_expand_adj, W_revscl_adj, W_revlen_adj, W_filter_adj};
 
-#define NUM_SND_WIDGETS 61
+#define NUM_SND_WIDGETS 57
 #define NUM_SND_ADJS 7
 
 GtkWidget *unite_button(snd_info *sp)   {return((sp->sgx)->snd_widgets[W_unite]);}
@@ -51,7 +45,6 @@ GtkWidget *w_snd_name(snd_info *sp)     {return((sp->sgx)->snd_widgets[W_name]);
 #define REVSCL_LABEL(Sp)         (Sp->sgx)->snd_widgets[W_revscl_number]
 #define REVLEN_LABEL(Sp)         (Sp->sgx)->snd_widgets[W_revlen_number]
 #define REVERB_BUTTON(Sp)        (Sp->sgx)->snd_widgets[W_reverb_button]
-#define APPLY_BUTTON(Sp)         (Sp->sgx)->snd_widgets[W_apply]
 #define FILTER_ORDER_TEXT(Sp)    (Sp->sgx)->snd_widgets[W_filter_order]
 #define FILTER_COEFFS_TEXT(Sp)   (Sp->sgx)->snd_widgets[W_filter]
 #define FILTER_BUTTON(Sp)        (Sp->sgx)->snd_widgets[W_filter_button]
@@ -1163,72 +1156,6 @@ void color_filter_waveform(GdkColor *color)
 }
 
 
-/* -------- XEN_APPLY CALLBACKS -------- */
-
-static int last_apply_state = 0;
-
-static gboolean apply_button_press_callback(GtkWidget *w, GdkEventButton *ev, gpointer data)
-{
-  last_apply_state = ev->state;
-  return(false);
-}
-
-static void apply_button_callback(GtkWidget *w, gpointer context)
-{
-  /* create temp file of run over current file using the current (saved) ctrls state */
-  snd_info *sp = (snd_info *)context;
-  snd_context *sgx;
-  sgx = sp->sgx;
-  if (sp->applying) 
-    {
-      stop_applying(sp);
-      sp->applying = false;
-    }
-  else
-    {
-      ss->apply_choice = APPLY_TO_SOUND;
-      if (last_apply_state & snd_ControlMask) 
-	{
-	  if (selection_is_active())
-	    ss->apply_choice = APPLY_TO_SELECTION;
-	  else ss->apply_choice = APPLY_TO_CHANNEL;
-	}
-      sp->applying = true;
-      sgx->apply_in_progress = BACKGROUND_ADD(apply_controls, (Indicium)(make_apply_state_with_implied_beg_and_dur(sp)));
-    }
-}
-
-/* apply is only safe if the DAC is currently inactive and remains safe only
- * if all other apply buttons are locked out (and play).
- */
-
-static void lockapply(snd_info *sp, void *up) 
-{
-  if (sp != up) 
-    set_sensitive(APPLY_BUTTON(sp), false);
-}
-
-void lock_apply(snd_info *sp)
-{
-  /* if playing or applying, set other applys to insensitive */
-  for_each_sound(lockapply, (void *)sp);
-}
-
-static void unlockapply(snd_info *sp, void *up) 
-{
-  set_sensitive(APPLY_BUTTON(sp), true);
-}
-
-void unlock_apply(snd_info *sp)
-{
-  for_each_sound(unlockapply, (void *)sp);
-}
-
-static void remember_button_callback(GtkWidget *w, gpointer context) {save_controls((snd_info *)context);}
-static void restore_button_callback(GtkWidget *w, gpointer context) {restore_controls((snd_info *)context);}
-static void reset_button_callback(GtkWidget *w, gpointer context) {reset_controls((snd_info *)context);}
-
-
 /* -------- AMP ENVS ETC -------- */
 
 static int cant_write(char *name)
@@ -1685,39 +1612,6 @@ snd_info *add_sound_window(char *filename, bool read_only)
       gtk_widget_show(sw[W_filter_form]);
       
       
-      /* -------- XEN_APPLY BUTTONS -------- */
-      
-      sw[W_apply_form] = gtk_hbox_new(false, 2);
-      gtk_box_pack_start(GTK_BOX(sw[W_control_panel]), sw[W_apply_form], false, false, 0);
-      
-      sw[W_apply] = gtk_button_new_with_label(_("Apply"));
-      gtk_widget_set_name(sw[W_apply], APPLY_BUTTON_COLOR);
-      gtk_box_pack_start(GTK_BOX(sw[W_apply_form]), sw[W_apply], true, true, 0);
-      SG_SIGNAL_CONNECT(sw[W_apply], "clicked", apply_button_callback, sp);
-      SG_SIGNAL_CONNECT(sw[W_apply], "button_press_event", apply_button_press_callback, sp);
-      gtk_widget_show(sw[W_apply]);
-      
-      sw[W_remember] = gtk_button_new_with_label(_("Remember"));
-      gtk_widget_set_name(sw[W_remember], REMEMBER_BUTTON_COLOR);
-      gtk_box_pack_start(GTK_BOX(sw[W_apply_form]), sw[W_remember], true, true, 0);
-      SG_SIGNAL_CONNECT(sw[W_remember], "clicked", remember_button_callback, sp);
-      gtk_widget_show(sw[W_remember]);
-      
-      sw[W_restore] = gtk_button_new_with_label(_("Restore"));
-      gtk_widget_set_name(sw[W_restore], RESTORE_BUTTON_COLOR);
-      gtk_box_pack_start(GTK_BOX(sw[W_apply_form]), sw[W_restore], true, true, 0);
-      SG_SIGNAL_CONNECT(sw[W_restore], "clicked", restore_button_callback, sp);
-      gtk_widget_show(sw[W_restore]);
-      
-      sw[W_reset] = gtk_button_new_with_label(_("Reset"));
-      gtk_widget_set_name(sw[W_reset], RESET_BUTTON_COLOR);
-      gtk_box_pack_start(GTK_BOX(sw[W_apply_form]), sw[W_reset], true, true, 0);
-      SG_SIGNAL_CONNECT(sw[W_reset], "clicked", reset_button_callback, sp);
-      gtk_widget_show(sw[W_reset]);
-      
-      gtk_widget_show(sw[W_apply_form]);
-
-      
       /* -------- FILTER GRAPH -------- */
       
       sw[W_filter_frame] = gtk_frame_new(NULL);
@@ -1817,10 +1711,6 @@ void snd_info_cleanup(snd_info *sp)
     }
 }
 
-void set_apply_button(snd_info *sp, bool val) 
-{
-  gtk_widget_set_sensitive(APPLY_BUTTON(sp), val);
-}
 
 
 /* ---------------- normalize sounds ---------------- */

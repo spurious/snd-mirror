@@ -100,7 +100,6 @@ typedef struct {
 
 typedef struct {
   Pixmap file_pix;
-  Cessator apply_in_progress;
   Widget *snd_widgets;
   Widget tab;
   void *flt;

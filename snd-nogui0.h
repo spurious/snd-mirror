@@ -42,7 +42,6 @@ typedef struct {
 } chan_context;
 
 typedef struct {
-  int apply_in_progress;
   void *flt;
 } snd_context;
 

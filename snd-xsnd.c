@@ -8,11 +8,6 @@
   #define TOGGLE_MARGIN 0
 #endif
 
-#define APPLY_BUTTON_COLOR    (Pixel)((ss->sgx)->position_color)
-#define REMEMBER_BUTTON_COLOR (Pixel)((ss->sgx)->position_color)
-#define RESET_BUTTON_COLOR    (Pixel)((ss->sgx)->position_color)
-#define RESTORE_BUTTON_COLOR  (Pixel)((ss->sgx)->position_color)
-
 enum {W_pane,
       W_name_form, W_amp_form,
       W_amp, W_amp_label, W_amp_number, W_amp_separator,
@@ -21,7 +16,6 @@ enum {W_pane,
       W_contrast, W_contrast_label, W_contrast_number, W_contrast_button,
       W_revscl, W_revscl_label, W_revscl_number,
       W_revlen, W_revlen_label, W_revlen_number, W_reverb_button,
-      W_remember, W_restore, W_apply, W_reset,
       W_filter_label, W_filter_order, W_filter_env, W_filter, W_filter_button, W_filter_dB, W_filter_hz, W_filter_frame,
       W_filter_order_down, W_filter_order_up,
       W_name, W_name_icon, W_info_label, W_info,
@@ -30,7 +24,7 @@ enum {W_pane,
       W_control_panel
 };
 
-#define NUM_SND_WIDGETS 49
+#define NUM_SND_WIDGETS 45
 
 Widget unite_button(snd_info *sp) {return((sp->sgx)->snd_widgets[W_unite]);}
 Widget filter_graph(snd_info *sp) {return((sp->sgx)->snd_widgets[W_filter_env]);}
@@ -57,7 +51,6 @@ Widget w_snd_name(snd_info *sp)   {return((sp->sgx)->snd_widgets[W_name]);}
 #define REVSCL_LABEL(Sp)         (Sp->sgx)->snd_widgets[W_revscl_number]
 #define REVLEN_LABEL(Sp)         (Sp->sgx)->snd_widgets[W_revlen_number]
 #define REVERB_BUTTON(Sp)        (Sp->sgx)->snd_widgets[W_reverb_button]
-#define APPLY_BUTTON(Sp)         (Sp->sgx)->snd_widgets[W_apply]
 #define FILTER_ORDER_TEXT(Sp)    (Sp->sgx)->snd_widgets[W_filter_order]
 #define FILTER_COEFFS_TEXT(Sp)   (Sp->sgx)->snd_widgets[W_filter]
 #define FILTER_BUTTON(Sp)        (Sp->sgx)->snd_widgets[W_filter_button]
@@ -1043,67 +1036,9 @@ static void minibuffer_click_callback(Widget w, XtPointer context, XtPointer inf
 }
 
 
-/* ---------------- APPLY BUTTON ---------------- */
-
-static void apply_callback(Widget w, XtPointer context, XtPointer info) 
-{
-  /* create temp file of run over current file using the current (saved) ctrls state */
-  snd_info *sp = (snd_info *)context;
-  XmPushButtonCallbackStruct *cb = (XmPushButtonCallbackStruct *)info;
-  XButtonEvent *ev;
-  snd_context *sgx;
-  ASSERT_WIDGET_TYPE(XmIsPushButton(w), w);
-  sgx = sp->sgx;
-  if (sp->applying) 
-    {
-      stop_applying(sp);
-      if (!(ss->using_schemes)) 
-	XmChangeColor(APPLY_BUTTON(sp), APPLY_BUTTON_COLOR);
-      sp->applying = false;
-    }
-  else
-    {
-      ss->apply_choice = APPLY_TO_SOUND;
-      ev = (XButtonEvent *)(cb->event);
-      if (ev->state & snd_ControlMask) 
-	{
-	  if (selection_is_active())
-	    ss->apply_choice = APPLY_TO_SELECTION;
-	  else ss->apply_choice = APPLY_TO_CHANNEL;
-	}
-      sp->applying = true;
-      if (!(ss->using_schemes)) 
-	XmChangeColor(APPLY_BUTTON(sp), (Pixel)((ss->sgx)->pushed_button_color));
-      sgx->apply_in_progress = BACKGROUND_ADD(apply_controls, (Indicium)(make_apply_state_with_implied_beg_and_dur(sp)));
-    }
-}
-
 /* apply is only safe if the DAC is currently inactive and remains safe only
  * if all other apply buttons are locked out (and play).
  */
-
-static void lockapply(snd_info *sp, void *up) 
-{
-  if (sp != (snd_info *)up) set_sensitive(APPLY_BUTTON(sp), false);
-}
-
-void lock_apply(snd_info *sp)
-{
-  /* if playing or applying, set other applys to insensitive */
-  for_each_sound(lockapply, (void *)sp);
-}
-
-static void unlockapply(snd_info *sp, void *up) 
-{
-  if (sp != (snd_info *)up) set_sensitive(APPLY_BUTTON(sp), true);
-}
-
-void unlock_apply(snd_info *sp)
-{
-  for_each_sound(unlockapply, (void *)sp);
-  if ((sp) && (!(ss->using_schemes)) && (sp->index >= 0))
-    XmChangeColor(APPLY_BUTTON(sp), APPLY_BUTTON_COLOR);
-}
 
 #if WITH_RELATIVE_PANES
 /* It would be nice if we could set a paned window to keep its children relative
@@ -1299,10 +1234,6 @@ static bool cant_write(char *name)
   return(false);
 #endif
 }
-
-static void save_control_panel_callback(Widget w, XtPointer context, XtPointer info) {save_controls((snd_info *)context);}
-static void restore_control_panel_callback(Widget w, XtPointer context, XtPointer info) {restore_controls((snd_info *)context);}
-static void reset_control_panel_callback(Widget w, XtPointer context, XtPointer info) {reset_controls((snd_info *)context);}
 
 /* bitmaps for the playback direction arrow */
 static unsigned char speed_r_bits1[] = {
@@ -2457,88 +2388,12 @@ snd_info *add_sound_window(char *filename, bool read_only)
       sw[W_filter] = make_textfield_widget("filter-text", sw[W_amp_form], args, n, ACTIVATABLE, add_completer_func(filename_completer));
       XtAddCallback(sw[W_filter], XmNactivateCallback, filter_activate_callback, (XtPointer)sp);
 
-      /* APPLY */
-      n = 0;
-      if (need_colors) 
-	{
-	  XtSetArg(args[n], XmNbackground, APPLY_BUTTON_COLOR); n++;
-	  XtSetArg(args[n], XmNforeground, (ss->sgx)->black); n++;
-	  XtSetArg(args[n], XmNarmColor, (ss->sgx)->pushed_button_color); n++;
-	  XtSetArg(args[n], XmNfillOnArm, true); n++;
-	}
-      XtSetArg(args[n], XmNtopAttachment, XmATTACH_NONE); n++;
-      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
-      XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
-      XtSetArg(args[n], XmNrightAttachment, XmATTACH_POSITION); n++;
-      XtSetArg(args[n], XmNrightPosition, 25); n++;
-      sw[W_apply] = make_pushbutton_widget(_("Apply"), sw[W_amp_form], args, n);
-      XtAddEventHandler(sw[W_apply], KeyPressMask, false, graph_key_press, (XtPointer)sp);
-      XtAddCallback(sw[W_apply], XmNactivateCallback, apply_callback, (XtPointer)sp);
-
-      /* SAVE */
-      n = 0;
-      if (need_colors) 
-	{
-	  XtSetArg(args[n], XmNbackground, REMEMBER_BUTTON_COLOR); n++;
-	  XtSetArg(args[n], XmNforeground, (ss->sgx)->black); n++;
-	  XtSetArg(args[n], XmNarmColor, (ss->sgx)->pushed_button_color); n++;
-	  XtSetArg(args[n], XmNfillOnArm, true); n++;
-	}
-      XtSetArg(args[n], XmNtopAttachment, XmATTACH_NONE); n++;
-      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
-      XtSetArg(args[n], XmNleftAttachment, XmATTACH_POSITION); n++;
-      XtSetArg(args[n], XmNleftPosition, 25); n++;
-      XtSetArg(args[n], XmNrightAttachment, XmATTACH_POSITION); n++;
-      XtSetArg(args[n], XmNrightPosition, 50); n++;
-      sw[W_remember] = make_pushbutton_widget(_("Remember"), sw[W_amp_form], args, n);
-      XtAddEventHandler(sw[W_remember], KeyPressMask, false, graph_key_press, (XtPointer)sp);
-      XtAddCallback(sw[W_remember], XmNactivateCallback, save_control_panel_callback, (XtPointer)sp);
-
-      /* RESTORE */
-      n = 0;
-      if (need_colors) 
-	{
-	  XtSetArg(args[n], XmNbackground, RESTORE_BUTTON_COLOR); n++;
-	  XtSetArg(args[n], XmNforeground, (ss->sgx)->black); n++;
-	  XtSetArg(args[n], XmNarmColor, (ss->sgx)->pushed_button_color); n++;
-	  XtSetArg(args[n], XmNfillOnArm, true); n++;
-	}
-      XtSetArg(args[n], XmNtopAttachment, XmATTACH_NONE); n++;
-      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
-      XtSetArg(args[n], XmNleftAttachment, XmATTACH_POSITION); n++;
-      XtSetArg(args[n], XmNleftPosition, 50); n++;
-      XtSetArg(args[n], XmNrightAttachment, XmATTACH_POSITION); n++;
-      XtSetArg(args[n], XmNrightPosition, 75); n++;
-      sw[W_restore] = make_pushbutton_widget(_("Restore"), sw[W_amp_form], args, n);
-      XtAddEventHandler(sw[W_restore], KeyPressMask, false, graph_key_press, (XtPointer)sp);
-      XtAddCallback(sw[W_restore], XmNactivateCallback, restore_control_panel_callback, (XtPointer)sp);
-
-      /* RESET */
-      n = 0;
-      if (need_colors) 
-	{
-	  XtSetArg(args[n], XmNbackground, RESET_BUTTON_COLOR); n++;
-	  XtSetArg(args[n], XmNforeground, (ss->sgx)->black); n++;
-	  XtSetArg(args[n], XmNarmColor, (ss->sgx)->pushed_button_color); n++;
-	  XtSetArg(args[n], XmNfillOnArm, true); n++;
-	}
-      XtSetArg(args[n], XmNtopAttachment, XmATTACH_NONE); n++;
-      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
-      XtSetArg(args[n], XmNleftAttachment, XmATTACH_POSITION); n++;
-      XtSetArg(args[n], XmNleftPosition, 75); n++;
-      XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
-      sw[W_reset] = XtCreateManagedWidget(_("Reset"), xmPushButtonWidgetClass, sw[W_amp_form], args, n);
-      XtAddEventHandler(sw[W_reset], KeyPressMask, false, graph_key_press, (XtPointer)sp);
-      XtAddCallback(sw[W_reset], XmNactivateCallback, reset_control_panel_callback, (XtPointer)sp);
-
-
       /* FILTER GRAPH */
       n = 0;
       if (need_colors) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNtopWidget, sw[W_filter]); n++;
-      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_WIDGET); n++;
-      XtSetArg(args[n], XmNbottomWidget, sw[W_apply]); n++;
+      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_POSITION); n++;
       XtSetArg(args[n], XmNleftPosition, 4); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_POSITION); n++;
@@ -2644,13 +2499,12 @@ snd_info *add_sound_window(char *filename, bool read_only)
     {
       /* try to get the pane height that shows everything except the filter graph (hidden for my amusement) */
       /* this calculation assumes the window is built amp_form down, then record buttons up, then filter_frame */
-      Position fey, cy, rsy;
+      Position fey, cy;
       /* if control-panel */
       cy = widget_y(sw[W_amp_form]);
       fey = widget_y(sw[W_filter_frame]);
-      rsy = widget_y(sw[W_apply]);
       /* end if control-panel */
-      open_ctrls_height = fey + ((rsy < 0) ? (-rsy) : rsy) + cy - 1;
+      open_ctrls_height = fey + cy - 1;
       first_window = false;
     } 
   if (sound_style(ss) != SOUNDS_IN_SEPARATE_WINDOWS)
@@ -2721,11 +2575,6 @@ void set_sound_pane_file_label(snd_info *sp, char *str)
       sp->name_string = copy_string(str);
       set_button_label(w_snd_name(sp), str); /* this causes an expose event, so it's worth minimizing */
     }
-}
-
-void set_apply_button(snd_info *sp, bool val) 
-{
-  XmToggleButtonSetState(APPLY_BUTTON(sp), (Boolean)val, false);
 }
 
 

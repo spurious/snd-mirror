@@ -64,7 +64,6 @@ typedef struct {
 
 typedef struct {
   GdkPixmap *file_pix;
-  Cessator apply_in_progress;
   GtkWidget **snd_widgets;
   GtkObject **snd_adjs;
   void *flt;

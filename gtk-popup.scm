@@ -291,6 +291,12 @@
 		      (lambda (w) (set! unselect-popup-menu w))
 		      (lambda (w data) 
 			(set! (selection-member? #t) #f)))
+		(list "Apply controls"          every-menu 
+		      (lambda (w data) 
+			(apply-controls)))
+		(list "Reset controls"          every-menu 
+		      (lambda (w data) 
+			(reset-controls)))
 		(list "Info"                every-menu 
 		      (lambda (w data)
 			(let ((snd graph-popup-snd))

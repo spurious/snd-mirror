@@ -2003,7 +2003,6 @@ static bool start_audio_output(dac_state *dacp)
 	}
       dac_running = true;
       fill_dac_buffers(dacp, WRITE_TO_DAC);
-      lock_apply(NULL);
       return(true);
     }
   return(false);
@@ -2024,7 +2023,6 @@ static void stop_audio_output(dac_state *dacp)
    dac_pausing = false;
    if (global_rev) free_reverb();
    max_active_slot = -1;
-   unlock_apply(NULL);
 }
 
 static Cessate dac_in_background(Indicium ptr)

@@ -1416,7 +1416,6 @@ static ctrl_state *restore_control_settings(snd_info *sp, ctrl_state *cs)
 
 void restore_controls(snd_info *sp) 
 {
-  /* for use upon 'Apply' button click and in apply_controls when the actual control panel is in use */
   ctrl_state *cs;
   char *tmpstr;
   cs = (ctrl_state *)(sp->saved_controls);
@@ -1614,11 +1613,11 @@ void clear_filter_strings(snd_info *sp) {clear_strings(sp, FILTER_TEXT);}
 /* void clear_listener_strings(void) {clear_strings(NULL, LISTENER_TEXT);} */
 
 
-/* ---------------- control panel apply button ---------------- */
+/* ---------------- control panel apply ---------------- */
 
 void stop_applying(snd_info *sp)
 {
-  /* called if user unset the apply button during the apply process */
+  /* called if C-g during the apply process */
   sp->apply_ok = false;
 }
 
@@ -1635,11 +1634,10 @@ typedef struct {
 
 static XEN after_apply_hook;
 
-static void *make_apply_state(void *xp)
+static void *make_apply_state(snd_info *sp)
 {
   /* set up initial state for apply_controls */
   apply_state *ap = NULL;
-  snd_info *sp = (snd_info *)xp;
   ap = (apply_state *)CALLOC(1, sizeof(apply_state));
   ap->slice = 0;
   ap->hdr = NULL;
@@ -1672,16 +1670,8 @@ static int apply_tick = 0;
 static bool apply_reporting = false;
 static off_t apply_dur = 0, orig_dur, apply_beg = 0;
 
-void *make_apply_state_with_implied_beg_and_dur(void *xp)
+static bool apply_controls(apply_state *ap)
 {
-  apply_beg = 0;
-  apply_dur = 0;
-  return(make_apply_state(xp));
-}
-
-Cessate apply_controls(Indicium ptr)
-{
-  apply_state *ap = (apply_state *)ptr;
   snd_context *sgx;
   snd_info *sp;
   chan_info *cp;
@@ -1690,9 +1680,9 @@ Cessate apply_controls(Indicium ptr)
   int i, curchan = 0, added_dur = 0;
   bool over_selection;
   off_t orig_apply_dur;
-  if (ptr == NULL) return(BACKGROUND_QUIT);
+  if (ap == NULL) return(false);
   sp = ap->sp;
-  if ((!(sp->active)) || (sp->inuse != SOUND_NORMAL)) return(BACKGROUND_QUIT);
+  if ((!(sp->active)) || (sp->inuse != SOUND_NORMAL)) return(false);
   if (sp->filter_control_p) added_dur = sp->filter_control_order;
   mult_dur = 1.0 / fabs(sp->speed_control);
   if (sp->expand_control_p) mult_dur *= sp->expand_control;
@@ -1719,7 +1709,7 @@ Cessate apply_controls(Indicium ptr)
 	cp = sp->chans[0];
       else cp = sp->chans[sp->selected_channel];
       si = sync_to_chan(cp);
-      if (si == NULL) return(BACKGROUND_QUIT);
+      if (si == NULL) return(false);
       scalers = (Float *)CALLOC(si->chans, sizeof(Float));
       for (i = 0; i < si->chans; i++)
 	{
@@ -1760,14 +1750,14 @@ Cessate apply_controls(Indicium ptr)
 	      break;
 	    case APPLY_TO_SELECTION: 
 	      ap->hdr->chans = selection_chans();
-	      if (ap->hdr->chans <= 0) return(BACKGROUND_QUIT);
+	      if (ap->hdr->chans <= 0) return(false);
 	      if (apply_dur == 0)
 		apply_dur = selection_len(); 
 	      break;
 	    }
 	  if (ap->origin == NULL)
 	    {
-	      /* from apply-controls or the 'Apply' button */
+	      /* from apply-controls */
 	      /* to reproduce this on a channel-independent basis, we need to use controls->channel
 	       *   and conjure up a list of settings that match the current ones.
 	       */
@@ -1827,9 +1817,8 @@ Cessate apply_controls(Indicium ptr)
 	      snd_error(_("can't open apply temp file %s: %s\n"), ap->ofile, strerror(errno));
 	      sp->applying = false;
 	      ap = free_apply_state(ap);
-	      return(BACKGROUND_QUIT);
+	      return(false);
 	    }
-	  lock_apply(sp);
 	  sp->apply_ok = true;
 	  initialize_apply(sp, ap->hdr->chans, apply_beg, orig_dur + added_dur); /* dur here is input dur */
 	  apply_reporting = (apply_dur > REPORTING_SIZE);
@@ -1837,7 +1826,7 @@ Cessate apply_controls(Indicium ptr)
 	    start_progress_report(sp, NOT_FROM_ENVED);
 	  ap->i = 0;
 	  ap->slice++;
-	  return(BACKGROUND_CONTINUE);
+	  return(true);
 	  break;
 	  
 	case 1:
@@ -1870,7 +1859,7 @@ Cessate apply_controls(Indicium ptr)
 		    }
 		}
 	    }
-	  return(BACKGROUND_CONTINUE);
+	  return(true);
 	  break;
 	  
 	case 2:
@@ -1953,7 +1942,6 @@ Cessate apply_controls(Indicium ptr)
 		  break;
 		}
 	      clear_minibuffer(sp);
-	      set_apply_button(sp, false);
 	      sp->apply_ok = false;
 	      
 	      if ((sp->expand_control_p) || 
@@ -1987,28 +1975,34 @@ Cessate apply_controls(Indicium ptr)
 	  break;
 	}
     }
-  unlock_apply(sp);
   apply_unset_controls(sp);
   sp->applying = false;
   sgx = sp->sgx;
-  if ((sgx) && (sgx->apply_in_progress)) sgx->apply_in_progress = 0;
   if (XEN_HOOKED(after_apply_hook))
     run_hook(after_apply_hook, 
 	     XEN_LIST_1(C_TO_XEN_INT(sp->index)),
 	     S_after_apply_hook);
   ap = free_apply_state(ap);
   ss->stopped_explicitly = false;
-  return(BACKGROUND_QUIT);
+  return(false);
 }
 
-void remove_apply(snd_info *sp)
+void menu_apply_controls(snd_info *sp)
 {
-  snd_context *sgx;
-  if ((sp) && (sgx = sp->sgx) && (sgx->apply_in_progress))
+  apply_state *ap;
+  apply_beg = 0;
+  apply_dur = 0;
+  ap = (apply_state *)make_apply_state(sp);
+  if (ap)
     {
-      BACKGROUND_REMOVE(sgx->apply_in_progress);
-      sgx->apply_in_progress = 0;
+      sp->applying = true;
+      while (apply_controls(ap));
     }
+}
+
+void menu_reset_controls(snd_info *sp)
+{
+  reset_controls(sp);
 }
 
 XEN snd_no_such_sound_error(const char *caller, XEN n)
@@ -3859,7 +3853,7 @@ WITH_REVERSED_ARGS(g_set_reverb_control_lowpass_reversed, g_set_reverb_control_l
 
 static XEN g_reverb_control_decay(XEN snd)
 {
-  #define H_reverb_control_decay "(" S_reverb_control_decay " (snd)): 'Apply' button reverb decay time (1.0 seconds)"
+  #define H_reverb_control_decay "(" S_reverb_control_decay " (snd)): apply-controls reverb decay time (1.0 seconds)"
   return(sound_get_global(snd, SP_REVERB_DECAY, S_reverb_control_decay));
 }
 
@@ -3901,7 +3895,7 @@ static XEN controls_to_channel_body(void *context)
   apply_state *ap;
   ap = (apply_state *)(cs->ap);
   if (ap)
-    while (apply_controls((Indicium)ap) == BACKGROUND_CONTINUE);
+    while (apply_controls(ap));
   return(XEN_FALSE);
 }
 #endif
@@ -4012,7 +4006,7 @@ where each inner list entry can also be #f."
 	}
       ss->apply_choice = APPLY_TO_CHANNEL;
       sp->applying = true;
-      ap = (apply_state *)make_apply_state((void *)sp);
+      ap = (apply_state *)make_apply_state(sp);
       if (!(XEN_NUMBER_P(dur)))
 	ap->origin = mus_format("%s '%s " OFF_TD " #f", S_controls_to_channel, XEN_AS_STRING(settings), apply_beg);
       else ap->origin = mus_format("%s '%s " OFF_TD " " OFF_TD, S_controls_to_channel, XEN_AS_STRING(settings), apply_beg, apply_dur);
@@ -4027,7 +4021,7 @@ where each inner list entry can also be #f."
 				(void *)saved_settings);
 #else
       if (ap)
-	while (apply_controls((Indicium)ap) == BACKGROUND_CONTINUE);
+	while (apply_controls(ap));
       sp->selected_channel = old_selected_channel;
       restore_control_settings(sp, saved_settings);
       free_control_settings(saved_settings);
@@ -4039,7 +4033,7 @@ where each inner list entry can also be #f."
 static XEN g_apply_controls(XEN snd, XEN choice, XEN beg, XEN dur)
 {
   #define H_apply_controls "(" S_apply_controls " (snd #f) (choice 0) (beg 0) (dur len)): \
-equivalent to clicking the control panel 'Apply' button.\
+applies the current control panel state as an edit. \
 The 'choices' are 0 (apply to sound), 1 (apply to channel), and 2 (apply to selection).  If 'beg' is given, the apply starts there."
 
   snd_info *sp;
@@ -4059,9 +4053,9 @@ The 'choices' are 0 (apply to sound), 1 (apply to channel), and 2 (apply to sele
 	XEN_OUT_OF_RANGE_ERROR(S_apply_controls, 2, choice, "~A, but must be 0=sound, 1=channel, or 2=selection");
       ss->apply_choice = cur_choice;
       sp->applying = true;
-      ap = (apply_state *)make_apply_state((void *)sp);
+      ap = (apply_state *)make_apply_state(sp);
       if (ap)
-	while (apply_controls((Indicium)ap) == BACKGROUND_CONTINUE);
+	while (apply_controls(ap));
       return(snd);
     }
   return(snd_no_such_sound_error(S_apply_controls, snd));
@@ -5023,7 +5017,7 @@ void g_init_snd(void)
   #define H_name_click_hook S_name_click_hook " (snd): called when sound name clicked. \
 If it returns #t, the usual informative minibuffer babbling is squelched."
 
-  #define H_after_apply_hook S_after_apply_hook " (snd): called when 'Apply' finishes."
+  #define H_after_apply_hook S_after_apply_hook " (snd): called when apply-controls finishes."
 
   XEN_DEFINE_HOOK(name_click_hook,   S_name_click_hook,   1, H_name_click_hook);       /* args = snd-index */
   XEN_DEFINE_HOOK(after_apply_hook,  S_after_apply_hook,  1, H_after_apply_hook);      /* args = snd-index */

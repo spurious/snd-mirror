@@ -438,8 +438,6 @@ void set_filter_in_dB(snd_info *sp, bool val);
 void set_filter_in_hz(snd_info *sp, bool val);
 void filter_env_changed(snd_info *sp, env *e);
 void color_filter_waveform(GdkColor *color);
-void lock_apply(snd_info *sp);
-void unlock_apply(snd_info *sp);
 void reflect_amp_env_completion(snd_info *sp);
 void reflect_amp_env_in_progress(snd_info *sp);
 snd_info *add_sound_window (char *filename, bool read_only);
@@ -453,7 +451,6 @@ void hide_controls(void);
 void start_progress_report(snd_info *sp, enved_progress_t from_enved);
 void finish_progress_report(snd_info *sp, enved_progress_t from_enved);
 void progress_report(snd_info *sp, const char *funcname, int curchan, int chans, Float pct, enved_progress_t from_enved);
-void set_apply_button(snd_info *sp, bool val);
 void g_init_gxsnd(void);
 void reflect_sound_selection(snd_info *sp);
 

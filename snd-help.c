@@ -369,6 +369,7 @@ void about_snd_help(void)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+16-Nov:  moved the 'Apply' button and friends from the Controls pane to a popup menu.\n\
 5-Nov:   recorder-in-chans.\n\
 1-Nov:   edit history pane popup menu (popup.scm).\n\
 28-Oct:  rms-envelope in env.scm.\n\
@@ -594,14 +595,6 @@ The filter is an arbitrary (even) order FIR filter specified by giving the frequ
 envelope and filter order in the text windows provided. \
 The envelope X axis goes from 0 to half the sampling rate. The actual frequency response (given the current filter order) \
 is displayed in blue.  The filter is on only if the filter button is set. \
-\n\n\
-The 'Remember' button saves the current control panel state for a subsequent 'Restore'. \
-The 'Reset' button returns the control panel to a clean (no-change) condition. \
-To take the current panel settings and turn them into an edit of the sound, click the 'Apply' button.  Apply may change \
-the length of the file; for example, if reverb is on, the reverb decay length is added onto \
-the end.  Once Apply has taken effect, the controls section is reset to its clean state (so \
-a subsequent 'play' plays the unmodified newly edited version).  To use 'Apply' \
-over the current selection, or over the current channel (rather than the entire sound), use control-click. \
 \n\n\
 The keyboard commands associated with the control panel are: \
 \n\n\

@@ -39,12 +39,7 @@ enum {menu_menu,
 #define NUM_MENU_WIDGETS 99
 static Widget mw[NUM_MENU_WIDGETS];
 
-enum {W_pop_menu, W_pop_sep, W_pop_play, W_pop_undo, W_pop_redo, W_pop_save, W_pop_equalize_panes, W_pop_info};
-#define NUM_POPUP_CHILDREN 8
 static Widget popup_menu = NULL;
-static Widget popup_children[NUM_POPUP_CHILDREN];
-
-bool popup_menu_exists(void) {return(popup_menu != NULL);}
 
 Widget file_open_menu(void) {return(mw[f_open_menu]);}
 Widget file_close_menu(void) {return(mw[f_close_menu]);}
@@ -92,13 +87,6 @@ Widget options_focus_left_menu(void) {return(mw[o_focus_left_menu]);}
 Widget options_focus_right_menu(void) {return(mw[o_focus_right_menu]);}
 Widget options_focus_middle_menu(void) {return(mw[o_focus_middle_menu]);}
 Widget options_focus_active_menu(void) {return(mw[o_focus_active_menu]);}
-
-Widget popup_play_menu(void) {return(popup_children[W_pop_play]);}
-Widget popup_undo_menu(void) {return(popup_children[W_pop_undo]);}
-Widget popup_redo_menu(void) {return(popup_children[W_pop_redo]);}
-Widget popup_save_menu(void) {return(popup_children[W_pop_save]);}
-Widget popup_equalize_panes_menu(void) {return(popup_children[W_pop_equalize_panes]);}
-Widget popup_info_menu(void) {return(popup_children[W_pop_info]);}
 
 void set_menu_label(Widget w, const char *label) {if (w) set_button_label(w, label);}
 
@@ -860,6 +848,19 @@ Widget g_add_to_menu(int which_menu, char *label, int callb, int position)
 
 /* -------------------------------- POPUP MENU -------------------------------- */
 
+enum {W_pop_menu, W_pop_sep, W_pop_play, W_pop_undo, W_pop_redo, W_pop_save, W_pop_equalize_panes, W_pop_info, W_pop_apply, W_pop_reset};
+#define NUM_POPUP_CHILDREN 10
+static Widget popup_children[NUM_POPUP_CHILDREN];
+
+bool popup_menu_exists(void) {return(popup_menu != NULL);}
+
+Widget popup_play_menu(void) {return(popup_children[W_pop_play]);}
+Widget popup_undo_menu(void) {return(popup_children[W_pop_undo]);}
+Widget popup_redo_menu(void) {return(popup_children[W_pop_redo]);}
+Widget popup_save_menu(void) {return(popup_children[W_pop_save]);}
+Widget popup_equalize_panes_menu(void) {return(popup_children[W_pop_equalize_panes]);}
+Widget popup_info_menu(void) {return(popup_children[W_pop_info]);}
+
 static bool stopping = false;
 
 static void popup_play_callback(Widget w, XtPointer info, XtPointer context) 
@@ -901,6 +902,9 @@ static void popup_info_callback(Widget w, XtPointer info, XtPointer context)
   sp = any_selected_sound();
   if (sp) display_info(sp);
 }
+
+static void popup_apply_callback(Widget w, XtPointer info, XtPointer context) {menu_apply_controls(any_selected_sound());}
+static void popup_reset_callback(Widget w, XtPointer info, XtPointer context) {menu_reset_controls(any_selected_sound());}
 
 void post_popup(XButtonPressedEvent *event)
 {
@@ -957,6 +961,12 @@ void create_popup_menu(void)
       popup_children[W_pop_info] = XtCreateManagedWidget(_("Info"), xmPushButtonWidgetClass, popup_menu, args, n);
       XtVaSetValues(popup_children[W_pop_info], XmNsensitive, false, NULL);
       XtAddCallback(popup_children[W_pop_info], XmNactivateCallback, popup_info_callback, NULL);
+      popup_children[W_pop_apply] = XtCreateManagedWidget(_("Apply controls"), xmPushButtonWidgetClass, popup_menu, args, n);
+      XtVaSetValues(popup_children[W_pop_apply], XmNsensitive, true, NULL);
+      XtAddCallback(popup_children[W_pop_apply], XmNactivateCallback, popup_apply_callback, NULL);
+      popup_children[W_pop_reset] = XtCreateManagedWidget(_("Reset controls"), xmPushButtonWidgetClass, popup_menu, args, n);
+      XtVaSetValues(popup_children[W_pop_reset], XmNsensitive, true, NULL);
+      XtAddCallback(popup_children[W_pop_reset], XmNactivateCallback, popup_reset_callback, NULL);
     }
 }
 

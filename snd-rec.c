@@ -1445,7 +1445,7 @@ bool recorder_start_output_file(const char *comment)
 #endif
   comlen = (int)(snd_strlen(comment) + 3) / 4;
   comlen *= 4;
-  err = snd_write_header(rp->output_file, rp->output_header_type, rp->srate, rp->out_chans, 28 + comlen, 0, /* FILE_OUT */
+  err = snd_write_header(rp->output_file, rp->output_header_type, rp->srate, rp->out_chans, 28 + comlen, 0,
 			 rp->output_data_format, comment, snd_strlen(comment), NULL);
   if (err == -1)
     {
@@ -1467,7 +1467,7 @@ bool recorder_start_output_file(const char *comment)
 			    rp->output_data_format, 
 			    mus_bytes_per_sample(rp->output_data_format), 
 			    oloc,
-			    rp->out_chans, /* FILE_OUT */
+			    rp->out_chans,
 			    rp->output_header_type);
   mus_file_set_data_clipped(rp->output_file_descriptor, data_clipped(ss));
   lseek(rp->output_file_descriptor, oloc, SEEK_SET);

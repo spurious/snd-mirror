@@ -1,5 +1,6 @@
 Snd change log
 
+  16-Nov:    moved the 'Apply' button and friends from the Controls pane to a popup menu.
   5-Nov:     recorder-in-chans.
   1-Nov:     edit history pane popup menu (popup.scm).
   28-Oct:    rms-envelope in env.scm.

@@ -336,6 +336,12 @@
       (list "Equalize panes"     xmPushButtonWidgetClass every-menu 
 	    (lambda (w c i)
 	      (equalize-panes)))
+      (list "Apply controls"     xmPushButtonWidgetClass every-menu
+	    (lambda (w c i)
+	      (apply-controls)))
+      (list "Reset controls"     xmPushButtonWidgetClass every-menu
+	    (lambda (w c i)
+	      (reset-controls)))
       (list "Info"               xmPushButtonWidgetClass every-menu 
 	    (lambda (w c i)
 	      (let ((snd graph-popup-snd))
@@ -711,7 +717,6 @@ one channel's edits to others."
 		   (let ((e (.event info)))
 		     (if (= ButtonPress (.type e))
 			 (set! (.menuToPost info) (edit-history-popup-menu snd chn))))))
-	      ;; PERHAPS: the apply/restore/remember/reset buttons could be moved to a popup as well
 
 	      (XtAddCallback chn-grf XmNpopupHandlerCallback 
 		 (lambda (w data info)

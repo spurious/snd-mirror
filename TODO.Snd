@@ -17,16 +17,7 @@ dB display in VU meters (in the record dialog -- the dB value is ready
   background (perhaps from OpenGL?).
 
 dlocsig from CLM to Scheme + a path envelope editor dialog
-
-A "master volume" control in the recorder.
-
-Gtk versions of bess.scm and Dave Phillips' extensions
-    dlp/misc.scm
-    dlp/plugins-menu.scm
-    dlp/new-buttons.scm
-    dlp/marks-menu.scm
-Both versions could be rewritten to take advantage of the optimizer.
-  See bess1.scm/rb by Michael Scholz.
+  grani.ins from CL to Scheme
 
 A CD building script.
 
@@ -34,3 +25,15 @@ sdif file support (all I need is a routine to translate from
   sdif to aifc or some such format).
 
 portaudio support (rather than audio.c, at least for OSX)
+  (Is this project dead?)
+
+"waterfall" spectrum display in oscope.scm.
+
+A robust noise reduction technique.
+
+A Qt version of Snd?  An OSX-native version?  (These
+  are large projects -- say 6 months of tedious typing;
+  Qt requires C++, I think, and Cocoa may require Objective-C -- 
+  major drawbacks).
+
+A closer tie-in to CM.

@@ -39,13 +39,10 @@ enum {menu_menu,
 static GtkWidget *mw[NUM_MENU_WIDGETS];
 static const char *ml[NUM_MENU_WIDGETS];
 
-enum {W_pop_play, W_pop_undo, W_pop_redo, W_pop_save, W_pop_info};
-#define NUM_POPUP_CHILDREN 6
+#define NUM_POPUP_CHILDREN 8
 static GtkWidget *popup_menu = NULL;
 static GtkWidget *popup_children[NUM_POPUP_CHILDREN];
 static const char *pl[NUM_POPUP_CHILDREN];
-
-bool popup_menu_exists(void) {return(popup_menu != NULL);}
 
 GtkWidget *file_open_menu(void) {return(mw[f_open_menu]);}
 GtkWidget *file_close_menu(void) {return(mw[f_close_menu]);}
@@ -92,12 +89,6 @@ GtkWidget *options_focus_left_menu(void) {return(mw[o_focus_left_menu]);}
 GtkWidget *options_focus_right_menu(void) {return(mw[o_focus_right_menu]);}
 GtkWidget *options_focus_middle_menu(void) {return(mw[o_focus_middle_menu]);}
 GtkWidget *options_focus_active_menu(void) {return(mw[o_focus_active_menu]);}
-
-GtkWidget *popup_play_menu(void) {return(popup_children[W_pop_play]);}
-GtkWidget *popup_undo_menu(void) {return(popup_children[W_pop_undo]);}
-GtkWidget *popup_redo_menu(void) {return(popup_children[W_pop_redo]);}
-GtkWidget *popup_save_menu(void) {return(popup_children[W_pop_save]);}
-GtkWidget *popup_info_menu(void) {return(popup_children[W_pop_info]);}
 
 void set_menu_label(GtkWidget *w, const char *label) {if (w) set_button_label(w, label);}
 
@@ -1068,6 +1059,16 @@ int g_remove_from_menu(int which_menu, char *label)
 
 /* -------------------------------- POPUP MENU -------------------------------- */
 
+bool popup_menu_exists(void) {return(popup_menu != NULL);}
+
+enum {W_pop_play, W_pop_undo, W_pop_redo, W_pop_save, W_pop_info, W_pop_apply, W_pop_reset};
+
+GtkWidget *popup_play_menu(void) {return(popup_children[W_pop_play]);}
+GtkWidget *popup_undo_menu(void) {return(popup_children[W_pop_undo]);}
+GtkWidget *popup_redo_menu(void) {return(popup_children[W_pop_redo]);}
+GtkWidget *popup_save_menu(void) {return(popup_children[W_pop_save]);}
+GtkWidget *popup_info_menu(void) {return(popup_children[W_pop_info]);}
+
 static bool stopping = false;
 
 static void popup_play_callback(GtkWidget *w, gpointer info) 
@@ -1126,6 +1127,18 @@ static void popup_info_callback(GtkWidget *w, gpointer info)
   gtk_widget_hide(popup_menu);
 }
 
+static void popup_apply_callback(GtkWidget *w, gpointer info) 
+{
+  menu_apply_controls(any_selected_sound());
+  gtk_widget_hide(popup_menu);
+}
+
+static void popup_reset_callback(GtkWidget *w, gpointer info) 
+{
+  menu_reset_controls(any_selected_sound());
+  gtk_widget_hide(popup_menu);
+}
+
 static void create_popup_menu(guint button, Tempus time)
 {
   if (!popup_menu)
@@ -1176,6 +1189,20 @@ static void create_popup_menu(guint button, Tempus time)
       SG_SIGNAL_CONNECT(popup_children[W_pop_info], "activate", popup_info_callback, NULL);
       set_sensitive(popup_children[W_pop_info], (ss->active_sounds > 0));
       gtk_widget_show(popup_children[W_pop_info]);
+
+      popup_children[W_pop_apply] = gtk_menu_item_new_with_label(_("Apply controls"));
+      pl[W_pop_apply] = _("Apply controls");
+      gtk_menu_shell_append(GTK_MENU_SHELL(popup_menu), popup_children[W_pop_apply]);
+      SG_SIGNAL_CONNECT(popup_children[W_pop_apply], "activate", popup_apply_callback, NULL);
+      set_sensitive(popup_children[W_pop_apply], true);
+      gtk_widget_show(popup_children[W_pop_apply]);
+
+      popup_children[W_pop_reset] = gtk_menu_item_new_with_label(_("Reset controls"));
+      pl[W_pop_reset] = _("Reset controls");
+      gtk_menu_shell_append(GTK_MENU_SHELL(popup_menu), popup_children[W_pop_reset]);
+      SG_SIGNAL_CONNECT(popup_children[W_pop_reset], "activate", popup_reset_callback, NULL);
+      set_sensitive(popup_children[W_pop_reset], true);
+      gtk_widget_show(popup_children[W_pop_reset]);
     }
   gtk_menu_popup(GTK_MENU(popup_menu), NULL, NULL, NULL, NULL, button, time);
 }

@@ -2273,26 +2273,17 @@ several aspects that aren't brought out to sliders or
 buttons on the panel, but that can be accessed through
 these variables.  See the <a href="extsnd.html#customcontrols">control panel</a> section for details.</p>
 
-<A NAME="savcontrols"></a>
-<p>The 'Remember' button saves the current control
-panel state for a subsequent 'Restore'.
-The 'Reset' button returns the control
-panel to a clean (no-change) condition.
+<p>
 To take the current panel settings
 and turn them into an edit of the
-sound, click the 'Apply' button.  Apply may change
+sound, call <a href="extsnd.html#applycontrols">apply-controls</a>.  This may change
 the length of the file; for example, if reverb is
 on, the reverb decay length is added onto
-the end.  Once Apply has taken effect, the
+the end.  Once apply-controls has taken effect, the
 controls section is reset to its clean state (so
 a subsequent 'play' plays the unmodified newly
-edited version).  To use 'Apply'
-over the current selection, or over the current
-channel (rather than the entire sound), use
-control-click.
+edited version). 
 </p>
-        <!-- I(save control panel):O('Remember' button)(savcontrols) --><!-- I(save control panel):A(savcontrols) -->
-
 
 <p>The keyboard commands associated with the control
 panel are:</p>
@@ -2300,7 +2291,6 @@ panel are:</p>
   C-x C-o   show ("open") control panel
   C-x C-c   hide ("close") control panel
 </pre>
-<p>See also <a href="extsnd.html#applycontrols">apply-controls</a>.</p>
 <br>
 
 <h2>Customization and Extension</h2>
@@ -2405,7 +2395,6 @@ panel are:</p>
   <tr><td><a href="extsnd.html#reversesound">reverse samples</a></td><td><small>Effects: <a href="sndscm.html#effectsdoc">Reverse</a></small></td><td><br></td><td><a href="extsnd.html#reversesound"><small>reverse-sound</small></a></td><td><a href="extsnd.html#reverseselection"><small>reverse-selection</small></a></td></tr>
   <tr><td><a href="#revertfile">revert file</a></td><td><small>File: <a href="#revertfile">Revert</a></small></td><td><br></td><td><a href="extsnd.html#revertsound"><small>revert-sound</small></a></td><td><br></td></tr>
   <tr><td><a href="#cxcw">save channel</a></td><td><br></td><td><a href="#cxcw"><small>Cx Cw</small></a></td><td><a href="extsnd.html#savesoundas"><small>save-sound-as</small></a></td><td><br></td></tr>
-  <tr><td><a href="#savcontrols">save control panel</a></td><td><br></td><td><br></td><td><a href="extsnd.html#savecontrols"><small>save-controls</small></a></td><td><a href="#savcontrols"><small>'Remember' button</small></a></td></tr>
   <tr><td><a href="#savefile">save file</a></td><td><small>File: <a href="#savefile">Save</a></small></td><td><a href="#cxcs"><small>Cx Cs</small></a></td><td><a href="extsnd.html#savesound"><small>save-sound</small></a></td><td><small>Popup: Save</small></td></tr>
   <tr><td><a href="#changeformat">save file as</a></td><td><small>File: <a href="#savefileas">Save as</a></small></td><td><br></td><td><a href="extsnd.html#savesoundas"><small>save-sound-as</small></a></td><td></td></tr>
   <tr><td><a href="#kbdmacros">save macros</a></td><td><br></td><td><br></td><td><a href="extsnd.html#savemacros"><small>save-macros</small></a></td><td><br></td></tr>

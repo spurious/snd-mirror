@@ -1860,7 +1860,7 @@ static void button_matrix_button_release(Widget w, XtPointer context, XEvent *ev
     }
 }
 
-static Widget make_button_matrix(pane_t *p, char *name, Widget parent, Arg *in_args, int in_n, Float meter_size)
+static Widget make_button_matrix(recorder_info *rp, pane_t *p, char *name, Widget parent, Arg *in_args, int in_n, Float meter_size)
 {
   Widget outer_form, outer_frame;
   Arg args[32];
@@ -1978,6 +1978,7 @@ static Widget make_button_matrix(pane_t *p, char *name, Widget parent, Arg *in_a
 
   ins = p->in_chans;
   outs = p->out_chans;
+  if ((outs > rp->out_chans) && (rp->out_chans > 0)) outs = rp->out_chans;
   p->matrix_buttons = (Widget **)CALLOC(ins, sizeof(Widget *));
   for (row = 0; row < ins; row++) 
     p->matrix_buttons[row] = (Widget *)CALLOC(outs, sizeof(Widget));
@@ -2078,7 +2079,13 @@ static pane_t *make_pane(recorder_info *rp, Widget paned_window, int device, int
   else 
     {
       vu_meters = true_inputs;
-      if (vu_meters < rp->out_chans) vu_meters = rp->out_chans;
+      if (vu_meters < rp->out_chans) 
+	vu_meters = rp->out_chans;
+      else
+	{
+	  if ((rp->out_chans > 0) && (vu_meters > rp->out_chans))
+	    vu_meters = rp->out_chans;
+	}
       p->out_chans = vu_meters;
       p->in_chans = 1;
     }
@@ -2117,7 +2124,7 @@ static pane_t *make_pane(recorder_info *rp, Widget paned_window, int device, int
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
-      matrix_frame = make_button_matrix(p, "channel-matrix", p->pane, args, n, meter_size);
+      matrix_frame = make_button_matrix(rp, p, "channel-matrix", p->pane, args, n, meter_size);
       last_frame = matrix_frame;
       left_frame = matrix_frame;
     }
@@ -2936,23 +2943,27 @@ static void record_button_callback(Widget w, XtPointer context, XtPointer info)
       old_srate = rp->srate;
       comment = read_file_data_choices(recdat, &rs, &ochns, &rp->output_header_type, &ofmt, &oloc, &samples); 
       rp->output_data_format = ofmt;
-      if ((all_panes[out_file_pane]) && (all_panes[out_file_pane]->on_buttons_size < ochns))
+      if (rp->out_chans == 0)
 	{
-	  rp->out_chans = all_panes[out_file_pane]->on_buttons_size;
-	  buf = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
-	  mus_snprintf(buf, PRINT_BUFFER_SIZE, 
-		       "only %d out chan%s available",
-		       rp->out_chans, (rp->out_chans > 1) ? "s" : "");
-	  record_report(messages, buf, NULL);
-	  FREE(buf);
+	  if ((all_panes[out_file_pane]) && 
+	      (all_panes[out_file_pane]->on_buttons_size < ochns))
+	    {
+	      rp->out_chans = all_panes[out_file_pane]->on_buttons_size;
+	      buf = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
+	      mus_snprintf(buf, PRINT_BUFFER_SIZE, 
+			   "only %d out chan%s available",
+			   rp->out_chans, (rp->out_chans > 1) ? "s" : "");
+	      record_report(messages, buf, NULL);
+	      FREE(buf);
+	    }
+	  else rp->out_chans = ochns;
 	}
-      else rp->out_chans = ochns;
       if (rs != old_srate) 
 	{
 	  rp->srate = rs;
 	  recorder_set_audio_srate(MUS_AUDIO_DEFAULT, rp->srate, 0, rp->taking_input);
 	}
-      if (rp->out_chans <= 0)
+      if (rp->out_chans < 0)
 	{
 	  record_report(messages, _("can't record: you screwed up the output channel number!"), NULL);
 	  rp->recording = false;
@@ -3194,7 +3205,7 @@ widget_t snd_record_file(void)
       out_file_pane = (rp->ordered_devices_size - 1);
 
       n = device_channels(MUS_AUDIO_PACK_SYSTEM(rp->ordered_systems[out_file_pane]) | rp->ordered_devices[out_file_pane]);
-      if ((rp->out_chans == DEFAULT_RECORDER_OUT_CHANS) && (n > 2))
+      if (rp->out_chans == 0)
 	rp->out_chans = n;
 
       for (i = 0; i < rp->ordered_devices_size; i++)

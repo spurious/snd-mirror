@@ -351,7 +351,6 @@ void free_snd_info(snd_info *sp)
   if (sp->sgx)
     {
       env_editor *edp;
-      if ((sp->sgx)->apply_in_progress) remove_apply(sp);
       edp = (env_editor *)(sp->sgx->flt);
       if (edp)
 	{

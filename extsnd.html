@@ -7853,7 +7853,7 @@ of the fft points, making the display look smoother.
 editing anything.  You can change volume ('amp'), pitch ('speed'), tempo
 ('expand'), reverb amount ('reverb'), simulated room size ('reverb len'),
 brightness ('contrast'), and dullness ('filter').  To treat a current
-setting as an edit operation, use the 'apply' button.  For more on
+setting as an edit operation, call <a href="#applycontrols">apply-controls</a>.  For more on
 the effects themselves (and a pretty picture!), see the discussion in <a href="snd.html#controls">snd.html</a>.
 </p>
 <p>
@@ -7881,8 +7881,8 @@ It is possible to use these controls (in "real-time") in your own functions.
 See amprt in <a href="sndscm.html#exampdoc">examp.scm</a> for a simple example,
 or <i>add-amp-control</i> in snd-motif.scm.
 As an experiment, I added the optional <i>chn</i> argument; if it is specified, the
-channel's local amp-control value is set instead of the sound's.  This affects the
-apply button (<a class=quiet href="#applycontrols">apply-controls</a>) and playback.
+channel's local amp-control value is set instead of the sound's.  This affects
+<a class=quiet href="#applycontrols">apply-controls</a> and playback.
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -7904,7 +7904,7 @@ If no <i>snd</i> argument is given, this also affects the Mix, Track, and Record
 <code><a class=def name="applycontrols">apply-controls</a> (<i>snd target beg dur</i>)</code>
 </td></tr>
 <tr><td></td><td>
-The  'apply' button.
+Apply the current control panel state as an edit.
 <i>target</i> can be 0=sound, 1=channel, 2=selection.
 <i>beg</i> sets where in samples the apply starts: <code>(apply-controls 0 0 (<a class=quiet href="#marksample">mark-sample</a> m))</code> starts from the given mark.
 <i>dur</i>, if given, sets how many samples to run through the apply process (the input duration).
@@ -8142,7 +8142,7 @@ The filter frequency response waveform color.
 <code><a class=def name="resetcontrols">reset-controls</a> (<em class=narg>snd</em>)</code>
 </td></tr>
 <tr><td></td><td>
-The 'Reset' button.  This sets all the controls to their default state.
+Set all the controls to their default state.
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -8152,7 +8152,7 @@ The 'Reset' button.  This sets all the controls to their default state.
 <code><a class=def name="restorecontrols">restore-controls</a> (<em class=narg>snd</em>)</code>
 </td></tr>
 <tr><td></td><td>
-The '<a href="snd.html#savcontrols">Restore</a>' button. This sets all the
+Set all the
 controls to the last saved state.
 </td></tr>
 <tr><td colspan=2></td></tr>
@@ -8247,8 +8247,8 @@ The reverb-control-scale min and max amounts as a list.  The default is
 <code><a class=def name="savecontrols">save-controls</a> (<em class=narg>snd</em>)</code>
 </td></tr>
 <tr><td></td><td>
-The <a href="snd.html#savcontrols">Remember</a> button.  This remembers the current
-settings for a later 'Restore'.  In new-effects.scm, the effects that use the control panel
+Remember the current control
+settings for a later <a class=quiet href="#restorecontrols">restore-controls</a>.  In new-effects.scm, the effects that use the control panel
 internally (post-expsrc-dialog, for example) can save and restore the current state via:
 <pre>
 (<em class=red>save-controls</em>)
