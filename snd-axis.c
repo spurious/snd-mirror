@@ -721,7 +721,7 @@ void g_init_axis(SCM local_doc)
   DEFINE_PROC(gh_new_procedure(S_position2x, SCM_FNC g_ungrf_x, 1, 3, 0),   "(" S_position2x " val snd chn ax)");
   DEFINE_PROC(gh_new_procedure(S_position2y, SCM_FNC g_ungrf_y, 1, 3, 0),   "(" S_position2y " val snd chn ax)");
 
-  DEFINE_PROC(gh_new_procedure("graph-info", SCM_FNC g_axis_info, 0, 3, 0), "(graph-info snd chn ax)");
+  DEFINE_PROC(gh_new_procedure(S_axis_info, SCM_FNC g_axis_info, 0, 3, 0), "(" S_axis_info " snd chn grf)");
 
 }
 #endif

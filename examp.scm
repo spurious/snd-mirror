@@ -74,6 +74,7 @@
 ;;; lisp graph with draggable x axis
 ;;; describe-hook
 ;;; easily-fooled autocorrelation-based pitch tracker 
+;;; local hook
 
 ;;; TODO: robust pitch tracker
 ;;; TODO: adaptive notch filter
@@ -3061,3 +3062,25 @@
 ;(add-hook! graph-hook 
 ;	   (lambda (snd chn y0 y1) 
 ;	     (report-in-minibuffer (format #f "~A" (spot-freq (left-sample))))))
+
+
+;;; -------- local hook
+
+(define (with-local-hook hook local-hook-procs thunk)
+  "evaluate thunk with hook set to local-hook-procs (a list), then restore hook to previous state"
+  (define (list->hook hook lst)
+    (define (list->hook-1 hook l)
+      (if (not (null? l))
+	  (begin
+	    (add-hook! hook (car l))
+	    (list->hook-1 hook (cdr l)))))
+    (reset-hook! hook)
+    (list->hook-1 hook lst)
+    hook)
+
+  (let ((old-hook-procs (hook->list hook)))
+    (list->hook hook local-hook-procs)
+    (let ((result (thunk)))
+      (list->hook hook old-hook-procs)
+      result)))
+

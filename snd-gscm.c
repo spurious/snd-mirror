@@ -118,7 +118,7 @@ static SCM equalp_snd_color(SCM obj1, SCM obj2)
 
 static SCM g_make_snd_color(SCM r, SCM g, SCM b)
 {
-  #define H_make_color "(" S_make_color " r g b) -> a col" STR_OR object with the indicated rgb values"
+  #define H_make_color "(" S_make_color " r g b) -> a col" STR_OR " object with the indicated rgb values"
   snd_color *new_color;
   GdkColor gcolor;
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(r)), r, SCM_ARG1, S_make_color);
@@ -248,7 +248,7 @@ static SCM g_set_data_color (SCM color)
 
 static SCM g_data_color(void) 
 {
-  #define H_data_color "(" S_data_color ") -> col" STR_OR used to draw unselected data"
+  #define H_data_color "(" S_data_color ") -> col" STR_OR " used to draw unselected data"
   return(pixel2color((state->sgx)->data_color));
 }
 

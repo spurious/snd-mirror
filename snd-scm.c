@@ -4,7 +4,6 @@
 /* TODO: perhaps fit-data-on-open should be fit-data, callable via hooks at open time
  *         but would be much faster if we can wait until the amp-env is computed
  *         via after-open-hook?
- * TODO  list->hook? (i.e. the other side of hook->list for local (dynamic) hook bindings)
  */
 
 #if HAVE_GUILE

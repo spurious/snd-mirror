@@ -6,7 +6,6 @@
 ;;; provide separate amplitude control for each channel (an extension of the control panel)
 
 ;;; TODO:  scanned synthesis controller
-;;; TODO:  test these in the new graphics system
 
 
 (use-modules (gtk gtk) (gtk gdk))

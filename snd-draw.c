@@ -2,19 +2,11 @@
 
 /* TODO:   hide-widget show-widget widget-label set-widget-label
  *                in the label case, w-name is set-button-label in motif, set-label in gtk
- *                and getting the label as a string is tedious -- see snd-xfile.c: 1101
- *    dont_graph can cancel main (but then axis isn't set up for us?)
- * TODO  exs: annotation boxes elaborated a la channel-envelope
- * TODO       own fft peaks info
  * TODO    in -separate mode (and elsewhere?) need to save description (sizes) of window/channels etc 
  * TODO: similar split for make_fft_graph [needs sonogram etc??]
- * TODO: how to label axes?
  * TODO: need tests for all of these as well, and cursor-position etc [snd-help listing docs]
- * TODO: decide about the "info" functions
- * TODO: retest all the snd-gtk functions
- * TODO: fft-info? sync_info + accessors?
- * TODO: mouse-enter|leave-graph-hook? enter|leave-listener? error-hook (in snd-scm)? iconify-hook?
- * TODO:   surely mouse enter listener should activate it??
+ * TODO: decide about the "info" functions, fft-info? sync_info + accessors?
+ * TODO: mouse-enter|leave-graph-hook? enter|leave-listener?  surely mouse enter listener should activate it??
  */
 
 #if HAVE_GUILE && (!USE_NO_GUI)
@@ -430,8 +422,16 @@ static SCM g_remove_input(SCM id)
 
 static SCM g_make_graph_data(SCM snd, SCM chn, SCM pos, SCM lo, SCM hi)
 {
+  #define H_make_graph_data "(" S_make_graph_data " snd chn edit-pos low high)\n\
+returns either a vct (if the graph has one trace), or a \
+list of two vcts (the two sides of the envelope graph). \
+'edit-position' defaults to the current edit history position, \
+'low' defaults to the current window left sample, and \
+'high' defaults to the current rightmost sample. \
+(graph-data (make-graph-data)) reimplements the time domain graph."
+
   chan_info *cp;
-  cp = get_cp(snd, chn, "make-graph-data");
+  cp = get_cp(snd, chn, S_make_graph_data);
   return(make_graph_data(cp,
 			 TO_C_INT_OR_ELSE(pos, cp->edit_ctr),
 			 TO_C_INT_OR_ELSE(lo, -1),
@@ -440,9 +440,15 @@ static SCM g_make_graph_data(SCM snd, SCM chn, SCM pos, SCM lo, SCM hi)
 
 static SCM g_graph_data(SCM data, SCM snd, SCM chn, SCM ax, SCM lo, SCM hi, SCM style)
 {
+  #define H_graph_data "(" S_graph_data " snd chn context low high graph-style)\n\
+'graph-data' displays 'data' in the time domain graph of 'snd's channel \
+'chn' using the graphics context 'context' (normally copy-context), placing the \
+data in the recipient's graph between points 'low' and 'high' \
+in the drawing mode 'graphic-style'."
+
   chan_info *cp;
   vct *v0, *v1 = NULL;
-  cp = get_cp(snd, chn, "make-graph-data");
+  cp = get_cp(snd, chn, S_graph_data);
   if (gh_list_p(data))
     {
       v0 = get_vct(gh_car(data));
@@ -456,7 +462,7 @@ static SCM g_graph_data(SCM data, SCM snd, SCM chn, SCM ax, SCM lo, SCM hi, SCM 
 		  v0->length,
 		  v0->data,
 		  (v1) ? (v1->data) : NULL,
-		  get_ax(cp, TO_C_INT_OR_ELSE(ax, CHAN_GC), "graph-data"),
+		  get_ax(cp, TO_C_INT_OR_ELSE(ax, CHAN_GC), S_graph_data),
 		  TO_C_INT_OR_ELSE(style, MAIN_GRAPH_STYLE(cp)));
 
   return(SCM_BOOL_F);
@@ -551,7 +557,7 @@ static SCM g_set_widget_foreground(SCM wid, SCM color)
   return(color);
 }
 
-#if 0
+
 static SCM g_hide_widget(SCM wid)
 {
 #if USE_MOTIF
@@ -561,6 +567,7 @@ static SCM g_hide_widget(SCM wid)
 #endif
   return(wid);
 }
+
 static SCM g_show_widget(SCM wid)
 {
 #if USE_MOTIF
@@ -570,7 +577,7 @@ static SCM g_show_widget(SCM wid)
 #endif
   return(wid);
 }
-#endif
+
 
 
 #if USE_MOTIF
@@ -629,8 +636,8 @@ void g_init_draw(SCM local_doc)
 
   /* ---------------- unstable ---------------- */
 
-  DEFINE_PROC(gh_new_procedure(S_make_graph_data, SCM_FNC g_make_graph_data, 0, 5, 0), "TODO: HELP");
-  DEFINE_PROC(gh_new_procedure(S_graph_data, SCM_FNC g_graph_data, 1, 6, 0), "TODO: HELP");
+  DEFINE_PROC(gh_new_procedure(S_make_graph_data, SCM_FNC g_make_graph_data, 0, 5, 0), H_make_graph_data);
+  DEFINE_PROC(gh_new_procedure(S_graph_data, SCM_FNC g_graph_data, 1, 6, 0), H_graph_data);
 
   DEFINE_VAR("erase-context",        TO_SMALL_SCM_INT(CHAN_IGC),       "graphics context to erase a line");
   DEFINE_VAR("selection-context",    TO_SMALL_SCM_INT(CHAN_SELGC),     "graphics context to draw a line in a selection");
@@ -647,6 +654,9 @@ void g_init_draw(SCM local_doc)
   DEFINE_PROC(gh_new_procedure("remove-input",    SCM_FNC g_remove_input, 1, 0, 0),    "(remove-input id)");
 
   DEFINE_PROC(gh_new_procedure("set-widget-foreground", SCM_FNC g_set_widget_foreground, 2, 0, 0), "(set-widget-foreground widget color)");
+
+  DEFINE_PROC(gh_new_procedure("hide-widget",     SCM_FNC g_hide_widget, 1, 0, 0),    "(hide-widget widget)");
+  DEFINE_PROC(gh_new_procedure("show-widget",     SCM_FNC g_show_widget, 1, 0, 0),    "(show-widget widget)");
 
 
   /* ---------------- backwards compatibility ---------------- */

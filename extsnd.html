@@ -23,7 +23,6 @@
 <!-- TODO: change remaining <i> and <b> into <em class=mumble> -->
 <!-- TODO: add TOPIC references for things like sound overlay -->
 <!-- TODO: maybe a screen shot of colored samples, or overlays -->
-<!-- TODO: error indication for no-such-graphics-context -->
 
 <body bgcolor=white>
 
@@ -404,22 +403,29 @@ The lowest level procedures are:
   <em class=def><a name="drawstring">draw-string</a></em>      (text x0 y0 snd chn context)
   <em class=def><a name="fillrectangle">fill-rectangle</a></em>   (x0 y0 width height snd chn context)
   <em class=def><a name="eraserectangle">erase-rectangle</a></em>  (x0 y0 width height snd chn context)
-  <em class=def><a name="fillpolygon">fill-polygon</a></em>     (points snd chn grf)
+  <em class=def><a name="fillpolygon">fill-polygon</a></em>     (points snd chn context)
 
   <em class=def><a name="loadfont">load-font</a></em>        (font-name)
-  <em class=def><a name="currentfont">current-font</a></em>     (snd chn grf)
-  <em class=def><a name="foregroundcolor">foreground-color</a></em> (snd chn grf)
+  <em class=def><a name="currentfont">current-font</a></em>     (snd chn context)
+  <em class=def><a name="foregroundcolor">foreground-color</a></em> (snd chn context)
 
   <em class=def><a name="copycontext">copy-context</a></em>
   <em class=def><a name="cursorcontext">cursor-context</a></em>
+
+  <em class=def><a name="axisinfo">axis-info</a></em>        (snd chn grf)
 </pre>
 <p>The "contexts" refer to graphics contexts used throughout Snd; the <i>copy-context</i>
 copies into the current graph, whereas the <i>cursor-context</i> uses XOR.
+The error returned for an unimplemented 'context' is 'no-such-graphics-context.
 The following gives us a green cursor:
 </p>
 <pre>
   (set! (foreground-color 0 0 cursor-context) (make-color 1 0 1))
 </pre>
+<i>axis-info</i> returns a list describing the specified axis:
+<code>'(left-sample right-sample x0 y0 x1 y1 x-min y-min x-max y-max 
+x0-position y0-position x1-position y1-position)</code>.  This might be
+useful if you're drawing arbitrary figures in a graph.
 <p>The next procedure draws a box over sample 1000 (if it is visible)
 with the text "hiho":
 </p>
@@ -511,12 +517,12 @@ The latter takes its argument (either a vct or a list of two
 vcts), and displays it in any channel's time domain graph using its current graph-style.
 </p>
 <pre>
-  <em class=def><a name="graphdata">graph-data</a></em> SCM data, SCM snd, SCM chn, SCM ax, SCM lo, SCM hi, SCM style
+  <em class=def><a name="graphdata">graph-data</a></em> data snd chn context low high graphics-style
 </pre>
 <p><i>graph-data</i> displays <i>data</i> in the time domain graph of <i>snd</i>'s channel
-<i>chn</i> using the graphics context <i>ax</i> (normally copy-context), placing the
-data in the recipient's graph between points <i>lo</i> and <i>hi</i>
-in the drawing mode (graphics-style) <i>style</i>. 
+<i>chn</i> using the graphics context <i>context</i> (normally copy-context), placing the
+data in the recipient's graph between points <i>low</i> and <i>high</i>
+in the drawing mode (<i>graphics-style</i>).
 With this function and <i>make-graph-data</i> we can overlay sounds,
 overlay different versions of the same sound, place a portion of a
 sound over another at an arbitrary point, and so on:
@@ -4117,7 +4123,7 @@ initializes the reverb, and the function to free the reverb.
 The built-in defaults are snd-nrev, make-snd-nrev, and free-snd-nrev.
 Another choice is Jezar Wakefield's Freeverb: snd-freeverb, etc.
 The make-reverb function takes two arguments, the current sound's index,
-and the number of output channels active; it returns an SCM object that 
+and the number of output channels active; it returns an opaque object that 
 is subsequently passed to the reverb and free-reverb functions
 The reverb function takes 3 arguments, the thing returned by make-reverb, 
 the current reverb input samples (a vct object), and the output vct object
@@ -5289,7 +5295,7 @@ And an example that lets us see the result of filtering the waveform:
 <td>deactivate all dialogs.</td></tr>
 
 <tr><td><span class=defbox><code><em class=def><a name="justsounds">just-sounds</a></em> ()</code></span></td>
-<td>reflects the just-sounds button (if any)</td></tr>
+<td>reflects the just-sounds button (if any). See also <a href="#justsoundshook">just-sounds-hook</a>.</td></tr>
 
 <tr><td><span class=defbox><code><em class=def><a name="sndfiledialog">file-dialog</a></em> ()</code></span></td>
 <td>fire up the <a href="snd.html#prevfiles">list</a> of current and previous files (not the file browser).</td></tr>
@@ -5313,7 +5319,7 @@ And an example that lets us see the result of filtering the waveform:
 <td><a href="snd.html#editenvelope">Envelope editor</a> 'dB' button (#f)</td></tr>
 
 <tr><td><span class=defbox><code><em class=def><a name="sndenveddialog">enved-dialog</a></em> ()</code></span></td>
-<td>fire up the Envelope editor dialog.</td></tr>
+<td>fire up the Envelope editor dialog. See also <a href="#envedhook">enved-hook</a>.</td></tr>
 
 <tr><td><span class=defbox><code><em class=def><a name="envedexping">enved-exping</a></em> ()</code></span></td>
 <td><a href="snd.html#editenvelope">Envelope editor</a> 'exp' and 'lin' buttons (type of connecting segments) (#f)</td></tr>
@@ -5345,7 +5351,7 @@ The wave shown is the time domain display, even when filtering.
 
 <tr><td colspan=2 valign=top><span class=defbox><code><em class=def><a name="sndhelpdialog">help-dialog</a></em> (subject help-string) </code></span></td>
 <tr><td></td><td>fire up the help dialog with title <i>subject</i> and body <i>help</i>.<br>
-<code>(help-dialog "xyzzy" "are we having fun?")</code>
+<code>(help-dialog "xyzzy" "are we having fUn?")</code>
 </td></tr>
 
 <tr><td><span class=defbox><code><em class=def><a name="helptextfont">help-text-font</a></em> ()</code></span></td>
@@ -5365,6 +5371,15 @@ The wave shown is the time domain display, even when filtering.
 
 <tr><td valign=top><span class=defbox><code><em class=def><a name="listenertextcolor">listener-text-color</a></em> ()</code></span></td>
 <td>text color in lisp listener.</td></tr>
+
+<tr><td colspan=2 align=center><table border=1 cellpadding=5><tr><td bgcolor="#FCFCF0"><pre>
+(define (red-alert msg)
+  ;; this only works in the gtk version (in Motif all existing text changes color)
+  (let ((old-color (listener-text-color)))
+    (set! (listener-text-color) (make-color 1 0 0))
+    (snd-print msg)
+    (set! (listener-text-color) old-color)))
+</pre></td></tr></table></td></tr>
 
 <tr><td><span class=defbox><code><em class=def><a name="listenerfont">listener-font</a></em> ()</code></span></td>
 <td>listener font.</td></tr>
@@ -5479,8 +5494,9 @@ between responsiveness and clicks in some cases). (4096)
 <tr><td><span class=defbox><code><em class=def><a name="sndtransformdialog">transform-dialog</a></em> ()</code></span></td>
 <td>fire up the Transform window (Option menu's Transform Options choice).</td></tr>
 
-<tr><td><span class=defbox><code><em class=def><a name="sndyesornop">yes-or-no-p</a></em> (ques)</code></span></td>
-<td>modal error dialog, #t if user clicks "ok", otherwise #f.</td></tr>
+<tr><td valign=top><span class=defbox><code><em class=def><a name="sndyesornop">yes-or-no-p</a></em> (ques)</code></span></td>
+<td>modal error dialog, #t if user clicks "ok", otherwise #f.  In normal use, this is a very annoying thing to call because
+it forces everything to stop until the poor user clicks a button; in Snd, it's used for questions like "destroy disk?".</td></tr>
 
 </table>
 

@@ -272,7 +272,7 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
-7-Mar:   mouse-enter|leave-label-hook, listener-text-color, nb.scm\n\
+7-Mar:   mouse-enter|leave-label-hook, listener-text-color, axis-info, nb.scm\n\
 5-Mar:   removed all the guile-gtk-specific procedures (this is being rewritten)\n\
          added cursor-size, cursor-style can be a procedure, cursor-position.\n\
                time-graph, fft-graph, lisp-graph, cursor-context, copy-context.\n\
@@ -1139,6 +1139,7 @@ all refer to the same thing.\n\
   " S_append_to_minibuffer " (msg snd)\n\
   " S_as_one_edit "       (func snd chn)\n\
   " S_autocorrelate "     (data)\n\
+  " S_axis_info "         (snd chn grf)\n\
   " S_backward_graph "    (count)\n\
   " S_backward_mark "     (count)\n\
   " S_backward_mix "      (count)\n\

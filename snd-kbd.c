@@ -1889,7 +1889,6 @@ int keyboard_command (chan_info *cp, int keysym, int state)
 
 #if HAVE_GUILE
 
-/* TODO: no such key? */
 static SCM g_bind_key(SCM key, SCM state, SCM code, SCM ignore_prefix)
 {
   #define H_bind_key "(" S_bind_key " key modifiers func (ignore-prefix #f)) causes 'key' (an integer) \
