@@ -13547,12 +13547,16 @@ EDITS: 5
       
       (let* ((ind (open-sound "oboe.snd"))
 	     (gen (make-snd->sample ind))
+	     (gen1 (make-snd->sample ind))
 	     (v0 (make-vct 10)))
 	(print-and-check gen 
 			 "snd->sample"
 			 "snd->sample: reading oboe.snd (1 chan) at 0:[no readers]"
 			 "snd->sample: reading oboe.snd (1 chan) at 0:[no readers]")
+	(if (not (equal? gen gen)) (snd-display ";snd->sample not eq? itself?"))
+	(if (equal? gen gen1) (snd-display ";snd->sample eq? not itself?"))
 	(if (not (mus-input? gen)) (snd-display ";snd->sample ~A not input?" gen))
+	(if (not (= (frames ind) (mus-length gen))) (snd-display ";snd->sample len: ~A ~A" (frames ind) (mus-length gen)))
 	(if (not (string=? (mus-file-name gen) (string-append home-dir "/cl/oboe.snd")))
 	    (snd-display ";snd->sample mus-file-name: ~A ~A" (mus-file-name gen) (string-append home-dir "/cl/oboe.snd")))
 	(do ((i 0 (1+ i)))
@@ -13595,6 +13599,7 @@ EDITS: 5
 			 "xen->sample: #<procedure #f ((samp chan) (* 2.0 (file->sample fgen samp chan)))>"
 			 "xen->sample: #<procedure #f ((samp chan) (* 2.0 (file->sample fgen samp chan)))>")
 	(if (not (mus-input? gen)) (snd-display ";xen->sample ~A not input?" gen))
+	(if (not (equal? gen gen)) (snd-display ";xen->sample not eq? itself?"))
 	(do ((i 0 (1+ i)))
 	    ((= i 10))
 	  (vct-set! v0 i (xen->sample gen (+ 1490 i) 0)))

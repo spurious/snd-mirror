@@ -2180,11 +2180,11 @@ static int display_mix_amp_env(mix_info *md, Float scl, int yoff, off_t newbeg, 
 	}
     }
   if (draw)
-    draw_both_grf_points(cp,
+    draw_both_grf_points(cp->dot_size,
 			 set_mix_waveform_context(cp, md),
 			 j,
 			 cp->time_graph_style);
-  else draw_both_grf_points(cp, erase_context(cp), j, cp->time_graph_style);
+  else draw_both_grf_points(cp->dot_size, erase_context(cp), j, cp->time_graph_style);
   free_mix_fd(min_fd);
   free_mix_fd(max_fd);
   return(j);
@@ -2302,12 +2302,12 @@ static int display_mix_waveform(chan_info *cp, mix_info *md, mix_state *cs, bool
       if (sp)
 	{
 	  if (draw)
-	    draw_grf_points(cp,
+	    draw_grf_points(cp->dot_size,
 			    set_mix_waveform_context(cp, md),
 			    j, ap, 
 			    ungrf_y(ap, yoff), 
 			    cp->time_graph_style);
-	  else draw_grf_points(cp, 
+	  else draw_grf_points(cp->dot_size, 
 			       erase_context(cp), 
 			       j, ap, 
 			       ungrf_y(ap, yoff), 
@@ -2365,14 +2365,8 @@ static int display_mix_waveform(chan_info *cp, mix_info *md, mix_state *cs, bool
 	  if (sp)
 	    {
 	      if (draw)
-		draw_both_grf_points(cp,
-				     set_mix_waveform_context(cp, md),
-				     j,
-				     cp->time_graph_style);
-	      else draw_both_grf_points(cp, 
-					erase_context(cp), 
-					j, 
-					cp->time_graph_style);
+		draw_both_grf_points(cp->dot_size, set_mix_waveform_context(cp, md), j, cp->time_graph_style);
+	      else draw_both_grf_points(cp->dot_size, erase_context(cp), j, cp->time_graph_style);
 	    }
 	}
     }

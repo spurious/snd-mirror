@@ -940,6 +940,7 @@ void set_axes(chan_info *cp, double x0, double x1, Float y0, Float y1)
 /* these are copies from snd-axis.c; didn't want to use macros here */
 static Locus local_grf_x(double val, axis_info *ap)
 {
+  /* fprintf(stderr,"val: %f, %f %d %d\n", val, ap->x1, ap->x_axis_x1, (int)(ap->x_base + val * ap->x_scale)); */
   if (val >= ap->x1) return(ap->x_axis_x1);
   if (val <= ap->x0) return(ap->x_axis_x0);
   return((Locus)(ap->x_base + val * ap->x_scale));
@@ -1075,7 +1076,7 @@ static void make_wavogram(chan_info *cp);
 static axis_context *cursor_context(chan_info *cp);
 static axis_context *combined_context(chan_info *cp);
 
-static int make_graph_1(chan_info *cp, bool normal)
+static int make_graph_1(chan_info *cp, double cur_srate, bool normal, bool *two_sided)
 {
   snd_info *sp;
   int j = 0;
@@ -1110,7 +1111,6 @@ static int make_graph_1(chan_info *cp, bool normal)
   int pixels, grfpts;
   snd_fd *sf = NULL;
   int x_start, x_end;
-  double cur_srate = 1.0;
   axis_context *ax = NULL;
   chan_context *cgx;
   sp = cp->sound;
@@ -1124,7 +1124,6 @@ static int make_graph_1(chan_info *cp, bool normal)
     }
   if (normal)
     {
-      cur_srate = (double)SND_SRATE(sp);
       ap->losamp = snd_round_off_t(ap->x0 * cur_srate); /* was ceil??? */
       if (ap->losamp < 0) ap->losamp = 0;
       ap->hisamp = (off_t)(ap->x1 * cur_srate);
@@ -1195,10 +1194,11 @@ static int make_graph_1(chan_info *cp, bool normal)
 	}
       if (normal)
 	{
-	  draw_grf_points(cp, ax, j, ap, 0.0, cp->time_graph_style);
+	  draw_grf_points(cp->dot_size, ax, j, ap, 0.0, cp->time_graph_style);
 	  if (cp->printing) 
 	    ps_draw_grf_points(ap, j, 0.0, cp->time_graph_style, cp->dot_size);
 	}
+      else (*two_sided) = false;
     }
   else
     {
@@ -1229,7 +1229,7 @@ static int make_graph_1(chan_info *cp, bool normal)
 	  xf = 0.0;     /* samples per pixel counter */
 	  ymin = MUS_SAMPLE_MAX;
 	  ymax = MUS_SAMPLE_MIN;
-	  if (cp->printing) pinc = samples_per_pixel/cur_srate;
+	  if (cp->printing) pinc = samples_per_pixel / cur_srate;
 	  ap->changed = false;
 	  ss->stopped_explicitly = false;
 	  for (ioff = ap->losamp, xf = 0.0; ioff <= ap->hisamp; ioff++)
@@ -1268,10 +1268,11 @@ static int make_graph_1(chan_info *cp, bool normal)
 	}
       if (normal)
 	{
-	  draw_both_grf_points(cp, ax, j, cp->time_graph_style);
+	  draw_both_grf_points(cp->dot_size, ax, j, cp->time_graph_style);
 	  if (cp->printing) 
 	    ps_draw_both_grf_points(ap, j, cp->time_graph_style, cp->dot_size);
 	}
+      else (*two_sided) = true;
     }
   if (sf) {free_snd_fd(sf); sf = NULL;}
   if ((normal) && (sp->channel_style == CHANNELS_SUPERIMPOSED))
@@ -1289,8 +1290,8 @@ static int make_graph_1(chan_info *cp, bool normal)
   return(j);
 }
 
-int make_graph(chan_info *cp) {return(make_graph_1(cp, true));}
-int make_background_graph(chan_info *cp) {return(make_graph_1(cp, false));}
+int make_graph(chan_info *cp) {return(make_graph_1(cp, (double)(SND_SRATE(cp->sound)), true, NULL));}
+int make_background_graph(chan_info *cp, int srate, bool *two_sided) {return(make_graph_1(cp, (double)srate, false, two_sided));}
 
 
 /* these next two procedures split "make_graph" into two pieces; the first
@@ -1450,7 +1451,7 @@ void draw_graph_data(chan_info *cp, off_t losamp, off_t hisamp, int data_size,
 	set_grf_point(local_grf_x(x, ap), 
 		      i, 
 		      local_grf_y(data[i], ap));
-      draw_grf_points(cp, ax, samps, ap, 0.0, style);
+      draw_grf_points(cp->dot_size, ax, samps, ap, 0.0, style);
     }
   else
     {
@@ -1465,7 +1466,7 @@ void draw_graph_data(chan_info *cp, off_t losamp, off_t hisamp, int data_size,
 	set_grf_points(xi, i, 
 		       local_grf_y(data[i], ap), 
 		       local_grf_y(data1[i], ap));
-      draw_both_grf_points(cp, ax, samps, style);
+      draw_both_grf_points(cp->dot_size, ax, samps, style);
     }
 }
 
@@ -1687,7 +1688,7 @@ void make_fft_graph(chan_info *cp, axis_info *fap, axis_context *ax, bool with_h
 		}
 	    }
 	}
-      draw_grf_points(cp, ax, i - losamp, fap, 0.0, cp->transform_graph_style);
+      draw_grf_points(cp->dot_size, ax, i - losamp, fap, 0.0, cp->transform_graph_style);
       if (cp->printing) 
 	ps_draw_grf_points(fap, i - losamp, 0.0, cp->transform_graph_style, cp->dot_size);
     }
@@ -1762,7 +1763,7 @@ void make_fft_graph(chan_info *cp, axis_info *fap, axis_context *ax, bool with_h
 		}
 	    }
 	}
-      draw_grf_points(cp, ax, j, fap, 0.0, cp->transform_graph_style);
+      draw_grf_points(cp->dot_size, ax, j, fap, 0.0, cp->transform_graph_style);
       if (cp->printing) 
 	ps_draw_grf_points(fap, j, 0.0, cp->transform_graph_style, cp->dot_size);
     }
@@ -2435,7 +2436,7 @@ static bool make_spectrogram(chan_info *cp)
 		    ps_set_grf_point(ungrf_x(fap, (int)(xval + x0)), i, 
 				     ungrf_y(fap, (int)(yval + y0)));
 		}
-	      draw_grf_points(cp, ax, bins, fap, 0.0, cp->transform_graph_style);
+	      draw_grf_points(cp->dot_size, ax, bins, fap, 0.0, cp->transform_graph_style);
 	      if (cp->printing) 
 		{
 		  ps_draw_grf_points(fap, bins, 0.0, cp->transform_graph_style, cp->dot_size);
@@ -2658,7 +2659,7 @@ static void make_wavogram(chan_info *cp)
 		ps_set_grf_point(ungrf_x(ap, (int)(xval + x0)), i, 
 				 ungrf_y(ap, (int)(y0 + yval)));
 	    }
-	  draw_grf_points(cp, ax, cp->wavo_trace, ap, 0.0, cp->time_graph_style);
+	  draw_grf_points(cp->dot_size, ax, cp->wavo_trace, ap, 0.0, cp->time_graph_style);
 	  if (cp->printing) 
 	    ps_draw_grf_points(ap, cp->wavo_trace, 0.0, cp->time_graph_style, cp->dot_size);
 	}
@@ -2821,7 +2822,7 @@ static void make_lisp_graph(chan_info *cp, XEN pixel_list)
 		  if (cp->printing) 
 		    ps_set_grf_point(x, i, y);
 		}
-	      draw_grf_points(cp, ax, grf_len, uap, 0.0, cp->lisp_graph_style);
+	      draw_grf_points(cp->dot_size, ax, grf_len, uap, 0.0, cp->lisp_graph_style);
 	      if (cp->printing) 
 		ps_draw_grf_points(uap, grf_len, 0.0, cp->lisp_graph_style, cp->dot_size);
 	    }
@@ -2859,7 +2860,7 @@ static void make_lisp_graph(chan_info *cp, XEN pixel_list)
 		      ymax = -32768.0;
 		    }
 		}
-	      draw_both_grf_points(cp, ax, j, cp->lisp_graph_style);
+	      draw_both_grf_points(cp->dot_size, ax, j, cp->lisp_graph_style);
 	      if (cp->printing) 
 		ps_draw_both_grf_points(uap, j, cp->lisp_graph_style, cp->dot_size);
 	    }

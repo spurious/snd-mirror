@@ -10,6 +10,11 @@
 	EM.def {font-weight: bold; font-style: normal}
 	H1 {text-align: center}
 	UL {list-style-type: none}
+
+	A {text-decoration:none}
+	A:hover {text-decoration:underline}
+	A.quiet {color:black; text-decoration:none}
+	A.quiet:hover {text-decoration:underline}
 -->
 </style>
 </head>
@@ -209,14 +214,14 @@ effect in Gtk.
 <p>
 Each of these colors can be set in Guile using the second name given above ("basic-color").
 Colors are defined by <a href="extsnd.html#makecolor">make-color</a> with the three red/green/blue values,
-each a float between 0.0 and 1.0. <code>(set! (basic-color) (make-color 1.0 0.0 0.0))</code> sets
+each a float between 0.0 and 1.0. <code>(set! (<a class=quiet href="extsnd.html#basiccolor">basic-color</a>) (<a class=quiet href="extsnd.html#makecolor">make-color</a> 1.0 0.0 0.0))</code> sets
 the overall background color of Snd to red.  <a href="sndscm.html#rgbdoc">rgb.scm</a> defines all the standard X11 color names
 (you probably don't want to load the whole thing; just use the names as needed). 
 </p>
 
 <p>There are several other resources that set widget sizes: zoomSliderWidth,
-positionSliderWidth, toggleSize, sashSize, sashIndent, channelSashSize, channelSashIndent, and
-envedPointSize.  And several more color resources: whitecolor (list background),
+positionSliderWidth, toggleSize, sashSize, sashIndent, channelSashSize, and channelSashIndent.
+And several more color resources: whitecolor (list background),
 blackcolor (recorder VU meter text), redcolor (buttons, VU clipping, etc), 
 greencolor (a few buttons),
 yellowcolor (a few envelope editor buttons), lightbluecolor (the recorder), and lighterbluecolor (the fft option panel).
@@ -253,17 +258,17 @@ The -e switch evaluates its argument as though it had been passed to M-X.  The
 initialization file, if any, is loaded first, then the arguments are processed
 in order:</p>
 <pre>
-snd -e "(set! (data-color) (make-color 1 0 0))" oboe.snd
+snd -e "(set! (<a class=quiet href="extsnd.html#datacolor">data-color</a>) (<a class=quiet href="extsnd.html#makecolor">make-color</a> 1 0 0))" oboe.snd
 </pre>
 <p>reads ~/.snd, if any, then sets the (unselected) data color to red, then opens oboe.snd.</p>
 <pre>
-./snd -eval '(begin (display (+ 1 2)) (exit))'
+./snd -eval '(begin (display (+ 1 2)) (<a class=quiet href="extsnd.html#sndexit">exit</a>))'
 </pre>
 <p>prints "3" and exits.  The "-title" argument works in both versions of Snd.
 The following adds "WAV" to the sound file extension table before preloading the directory:
 </p>
 <pre>
-snd -e '(add-sound-file-extension "WAV")' -p /home/bil/sounds
+snd -e '(<a class=quiet href="extsnd.html#addsoundfileextension">add-sound-file-extension</a> "WAV")' -p /home/bil/sounds
 </pre>
 <br>
 <img src="note.png" alt="notebook" hspace=10 vspace=10><img src="bgd.png" alt="colors" vspace=10 hspace=10>
@@ -281,10 +286,10 @@ want the Snd window to start out 800x500, want to predefine an envelope named
 "env1", and want the file selection box to
 show just sound files.  We make ~/.snd and put in it:</p>
 <pre>
-(set! (window-width) 800)
-(set! (window-height) 500)
-(defvar env1 '(0 0 1 1 2 0))
-(set! (just-sounds) #t)
+(set! (<a class=quiet href="extsnd.html#windowwidth">window-width</a>) 800)
+(set! (<a class=quiet href="extsnd.html#windowheight">window-height</a>) 500)
+(<a class=quiet href="extsnd.html#ldefvar">defvar</a> env1 '(0 0 1 1 2 0))
+(set! (<a class=quiet href="extsnd.html#justsounds">just-sounds</a>) #t)
 </pre>
 <p>
 In more
@@ -302,40 +307,40 @@ Here's a more elaborate initialization file:
 (debug-set! stack 0)                ;turn off Guile's stack-size check
 (set! snd-remember-paths #t)        ;remember paths making "load" smarter
 
-(set! (window-width) 800)           ;these set the initial window size
-(set! (window-height) 500)
+(set! (<a class=quiet href="extsnd.html#windowwidth">window-width</a>) 800)           ;these set the initial window size
+(set! (<a class=quiet href="extsnd.html#windowheight">window-height</a>) 500)
 
 (if (provided? 'snd-motif)          ;Motif and Gtk use different font naming conventions
     (begin
-      (set! (listener-font) "9x15")
-      (set! (axis-label-font) "-*-times-medium-r-normal-*-18-*-*-*-*-*-*-*")
-      (set! (axis-numbers-font) "9x15"))
+      (set! (<a class=quiet href="extsnd.html#listenerfont">listener-font</a>) "9x15")
+      (set! (<a class=quiet href="extsnd.html#axislabelfont">axis-label-font</a>) "-*-times-medium-r-normal-*-18-*-*-*-*-*-*-*")
+      (set! (<a class=quiet href="extsnd.html#axisnumbersfont">axis-numbers-font</a>) "9x15"))
     (begin
-      (set! (listener-font) "Monospace 10")
-      (set! (axis-label-font) "Serif 14")
-      (set! (axis-numbers-font) "Monospace 10")))
+      (set! (<a class=quiet href="extsnd.html#listenerfont">listener-font</a>) "Monospace 10")
+      (set! (<a class=quiet href="extsnd.html#axislabelfont">axis-label-font</a>) "Serif 14")
+      (set! (<a class=quiet href="extsnd.html#axisnumbersfont">axis-numbers-font</a>) "Monospace 10")))
 
-(set! (listener-prompt) ":")        ;change listener prompt from the default "&gt;" to ":"
-(set! (show-listener) #t)           ;include the listener window initially
-(set! (show-indices) #t)            ;include sound index values with the sound name
+(set! (<a class=quiet href="extsnd.html#listenerprompt">listener-prompt</a>) ":")        ;change listener prompt from the default "&gt;" to ":"
+(set! (<a class=quiet href="extsnd.html#sndshowlistener">show-listener</a>) #t)           ;include the listener window initially
+(set! (<a class=quiet href="extsnd.html#showindices">show-indices</a>) #t)            ;include sound index values with the sound name
 
-(define beige (make-color 0.96 0.96 0.86))
-(define blue (make-color 0 0 1))
-(set! (selected-graph-color) beige) ;selected graph background is beige
-(set! (selected-data-color) blue)   ;selected graph data is blue
+(define beige (<a class=quiet href="extsnd.html#makecolor">make-color</a> 0.96 0.96 0.86))
+(define blue (<a class=quiet href="extsnd.html#makecolor">make-color</a> 0 0 1))
+(set! (<a class=quiet href="extsnd.html#selectedgraphcolor">selected-graph-color</a>) beige) ;selected graph background is beige
+(set! (<a class=quiet href="extsnd.html#selecteddatacolor">selected-data-color</a>) blue)   ;selected graph data is blue
 
 (add-hook! mouse-enter-graph-hook   ;automatically focus on (activate) the widget under the mouse
   (lambda (snd chn) 
-    (focus-widget (car (channel-widgets snd chn)))))
+    (<a class=quiet href="extsnd.html#focuswidget">focus-widget</a> (car (<a class=quiet href="extsnd.html#channelwidgets">channel-widgets</a> snd chn)))))
 (add-hook! mouse-enter-listener-hook 
   (lambda (widget) 
-    (focus-widget widget)))
+    (<a class=quiet href="extsnd.html#focuswidget">focus-widget</a> widget)))
 (add-hook! mouse-enter-text-hook
   (lambda (w)
-    (focus-widget w)))
+    (<a class=quiet href="extsnd.html#focuswidget">focus-widget</a> w)))
 
-(set! (save-dir) "/zap/snd")        ;save-state files are placed in /zap/snd
-(set! (temp-dir) "/zap/tmp")        ;temp files are placed in /zap/tmp
+(set! (<a class=quiet href="extsnd.html#savedir">save-dir</a>) "/zap/snd")        ;save-state files are placed in /zap/snd
+(set! (<a class=quiet href="extsnd.html#tempdir">temp-dir</a>) "/zap/tmp")        ;temp files are placed in /zap/tmp
 (load "peak-env.scm")               ;large file peak env data is saved for faster 
 				    ;  subsequent reads -- this makes the first
 				    ;  view of a large file much snappier --
@@ -353,11 +358,11 @@ Here's a more elaborate initialization file:
 
 (add-hook! after-open-hook          ;if sound has many chans, use just one pane for all
   (lambda (snd)
-    (if (&gt; (chans snd) 4)
-        (set! (channel-style snd) channels-combined))))
+    (if (&gt; (<a class=quiet href="extsnd.html#chans">chans</a> snd) 4)
+        (set! (<a class=quiet href="extsnd.html#channelstyle">channel-style</a> snd) channels-combined))))
 
-(set! (optimization) 6)             ;turn on full optimization (live dangerously...)
-(set! (selection-creates-region) #f) ;turn off automatic region creation
+(set! (<a class=quiet href="extsnd.html#optimization">optimization</a>) 6)             ;turn on full optimization (live dangerously...)
+(set! (<a class=quiet href="extsnd.html#selectioncreatesregion">selection-creates-region</a>) #f) ;turn off automatic region creation
 </pre>
 <p>
 If you loaded Snd with GSL, and have set the GSL_IEEE_MODE environment variable,
@@ -402,7 +407,7 @@ Once you have ILISP, put this code in your .emacs file:</p>
               (apropos-internal \"^%s\"))")
   (local-set-key "\C-x\C-h" '(lambda (s)
 			       (interactive "sSnd help: ")
-			       (insert "(snd-help " s ")")
+			       (insert "(<a class=quiet href="extsnd.html#sndhelp">snd-help</a> " s ")")
 			       (comint-send-input))))
 
   (setq snd-program "snd")
@@ -573,17 +578,17 @@ void init_gsl_j0(void)
  ;; bessel-FM from CLM
    (let* ((car-ph 0.0)
 	  (mod-ph 0.0)
- 	  (car-incr (hz-&gt;radians freq))
+ 	  (car-incr (<a class=quiet href="clm.html#hz-&gt;radians">hz-&gt;radians</a> freq))
 	  (mod-incr (* ratio car-incr))
-	  (ampenv (make-env :envelope '(0 0 25 1 75 1 100 0) :scaler amp :end dur))
-	  (output (make-vct dur)))
-     (vct-map! output
+	  (ampenv (<a class=quiet href="clm.html#make-env">make-env</a> :envelope '(0 0 25 1 75 1 100 0) :scaler amp :end dur))
+	  (output (<a class=quiet href="extsnd.html#makevct">make-vct</a> dur)))
+     (<a class=quiet href="extsnd.html#vctmap">vct-map!</a> output
        (lambda ()
          (let ((val (* (env ampenv) (</em><em class=red>j0</em><em class=typing> car-ph))))
            (set! car-ph (+ car-ph car-incr (* index (</em><em class=red>j0</em><em class=typing> mod-ph))))
            (set! mod-ph (+ mod-ph mod-incr))
 	   val)))
-     (vct-&gt;samples 0 dur output)))</em>
+     (<a class=quiet href="extsnd.html#vct2samples">vct-&gt;samples</a> 0 dur output)))</em>
 <em class=listener>#&lt;unspecified&gt;</em>
 &gt;<em class=typing>(bes-fm 22050 440 10.0 1.0 8.0)</em>
 </pre>
@@ -606,9 +611,9 @@ is a sketch using the Snd internal "srate" function:</p>
 </pre>
 <p>Alternatively, you can simply use scm_eval_str0:</p>
 <pre>
-  scm_eval_str0("(recorder-dialog)");
-  scm_eval_str0("(open-sound \"oboe.snd\")");
-  srate = scm_num2int(scm_eval_str0("(srate)"), 0, "");
+  scm_eval_str0("(<a class=quiet href="extsnd.html#sndrecorderdialog">recorder-dialog</a>)");
+  scm_eval_str0("(<a class=quiet href="extsnd.html#sndopen">open-sound</a> \"oboe.snd\")");
+  srate = scm_num2int(scm_eval_str0("(<a class=quiet href="extsnd.html#sndsrate">srate</a>)"), 0, "");
 </pre>
 
 <br>
@@ -675,29 +680,29 @@ these declarations in ~/.snd:
 
 <table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
 (define data-size 1024)
-(define data (make-vct data-size))
+(define data (<a class=quiet href="extsnd.html#makevct">make-vct</a> data-size))
 
 (define run 
   (lambda (fun)
     (do ((i 0 (1+ i))) 
         ((= i data-size))
-      (vct-set! data i (fun)))
-    (graph data)))
+      (<a class=quiet href="extsnd.html#vctset">vct-set!</a> data i (fun)))
+    (<a class=quiet href="extsnd.html#sndgraph">graph</a> data)))
 
 (define runf
   (lambda (fun)
     (do ((i 0 (1+ i))) 
         ((= i data-size))
-      (vct-set! data i (fun)))
-    (graph (snd-spectrum data blackman2-window data-size #t))))
+      (<a class=quiet href="extsnd.html#vctset">vct-set!</a> data i (fun)))
+    (<a class=quiet href="extsnd.html#sndgraph">graph</a> (<a class=quiet href="extsnd.html#sndspectrum">snd-spectrum</a> data blackman2-window data-size #t))))
 </pre></td></tr></table>
 
 <p>Now we can open the listener, and type:</p>
 <pre>
-(define hi (make-oscil))
-(run (lambda () (oscil hi)))
-(define ho (make-oscil))
-(runf (lambda () (oscil hi (* .5 (oscil ho)))))
+(define hi (<a class=quiet href="clm.html#make-oscil">make-oscil</a>))
+(<a class=quiet href="extsnd.html#sndrun">run</a> (lambda () (<a class=quiet href="clm.html#oscil">oscil</a> hi)))
+(define ho (<a class=quiet href="clm.html#make-oscil">make-oscil</a>))
+(runf (lambda () (<a class=quiet href="clm.html#oscil">oscil</a> hi (* .5 (<a class=quiet href="clm.html#oscil">oscil</a> ho)))))
 </pre>
 <p>Obviously, any CLM instrument or function can be used in this way 
 to edit sounds.  Say we want an echo effect:</p>
@@ -705,9 +710,9 @@ to edit sounds.  Say we want an echo effect:</p>
 <table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
 (define echo 
   (lambda (scaler secs)
-    (let ((del (make-delay (round (* secs (srate))))))
+    (let ((del (<a class=quiet href="clm.html#make-delay">make-delay</a> (round (* secs (<a class=quiet href="extsnd.html#sndsrate">srate</a>))))))
       (lambda (inval)
-        (+ inval (delay del (* scaler (+ (tap del) inval))))))))
+        (+ inval (<a class=quiet href="clm.html#delay">delay</a> del (* scaler (+ (<a class=quiet href="clm.html#tap">tap</a> del) inval))))))))
 </pre></td></tr></table>
 
 <p>
@@ -723,7 +728,7 @@ one argument (<i>inval</i>) and returns the result of passing
 that value to the delay with scaling.  The upshot of all this is that
 we can use:</p>
 <pre>
-(map-chan (echo .5 .75) 0 44100)
+(<a class=quiet href="extsnd.html#mapchan">map-chan</a> (echo .5 .75) 0 44100)
 </pre>
 <p>to take the current active channel and 
 return 44100 samples of echos, each echo half the amplitude
@@ -735,18 +740,18 @@ producing the echo.
 The CLM (common lisp) version might be something like:</p>
 
 <table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
-(definstrument echo (beg dur scaler secs file)
-  (let ((del (make-delay (round (* secs *srate*))))
-	(inf (open-input file))
+(<a class=quiet href="clm.html#definstrument">definstrument</a> echo (beg dur scaler secs file)
+  (let ((del (<a class=quiet href="clm.html#make-delay">make-delay</a> (round (* secs *srate*))))
+	(inf (<a class=quiet href="clm.html#open-input">open-input</a> file))
 	(j 0))
     (run
      (loop for i from beg below (+ beg dur) do
-       (let ((inval (ina j inf)))
-	 (outa i (+ inval (delay del (* scaler (+ (tap del) inval)))))
+       (let ((inval (<a class=quiet href="clm.html#ina">ina</a> j inf)))
+	 (<a class=quiet href="clm.html#outa">outa</a> i (+ inval (<a class=quiet href="clm.html#delay">delay</a> del (* scaler (+ (<a class=quiet href="clm.html#tap">tap</a> del) inval)))))
 	 (incf j))))
-    (close-input inf)))
+    (<a class=quiet href="clm.html#close-input">close-input</a> inf)))
 
-;;; (with-sound () (echo 0 60000 .5 1.0 "pistol.snd"))
+;;; (<a class=quiet href="clm.html#with-sound">with-sound</a> () (echo 0 60000 .5 1.0 "pistol.snd"))
 </pre></td></tr></table>
 
 <br>
@@ -890,8 +895,8 @@ In Guile <b>frame?</b> is part of the debugger; it is renamed <b>%frame?</b> her
 <tr><td><a href="extsnd.html#makexen2sample">make-xen-&gt;sample</a></td><td colspan=2>(reader)</td></tr>
 <tr><td><a href="clm.html#make-zpolar">make-zpolar</a></td><td colspan=2>(radius frequency)</td></tr>
 <tr><td><a href="clm.html#mixer*">mixer*</a></td><td>(mix1 mix2 <i>outmx</i>)</td><td>matrix multiply of mix1 and mix2</td></tr>
-<tr><td><a href="clm.html#mixer-ref">mixer-ref</a></td><td>(mix in out)</td><td>mix-scaler[in,out]</td></tr>
-<tr><td><a href="clm.html#mixer-set!">mixer-set!</a></td><td>(mix in out val)</td><td>mix-scaler[in,out] = val</td></tr>
+<tr><td><a href="clm.html#mixer-ref">mixer-ref</a></td><td>(mixer in out)</td><td>mix-scaler[in,out]</td></tr>
+<tr><td><a href="clm.html#mixer-set!">mixer-set!</a></td><td>(mixer in out val)</td><td>mix-scaler[in,out] = val</td></tr>
 <tr><td><a href="clm.html#mixer?">mixer?</a></td><td>(gen)</td><td>#t if gen is mixer object</td></tr>
 <tr><td><a href="clm.html#move-locsig">move-locsig</a></td><td colspan=2>(gen degree distance)</td></tr>
 <tr><td><a href="clm.html#multiply-arrays">multiply-arrays</a></td><td>(arr1 arr2)</td><td>arr1[i] *= arr2[i]</td></tr>
@@ -907,12 +912,12 @@ In Guile <b>frame?</b> is part of the debugger; it is renamed <b>%frame?</b> her
 <tr><td><a href="clm.html#mus-cosines">mus-cosines</a></td><td>(gen)</td><td>cosines of sum-of-cosines gen</td></tr>
 <tr><td><a href="clm.html#mus-data">mus-data</a></td><td>(gen)</td><td>data array of gen</td></tr>
 <tr><td><a href="clm.html#mus-feedback">mus-feedback</a></td><td>(gen)</td><td>feedback term of gen (simple filters)</td></tr>
-<tr><td><a href="clm.html#mus-feedforward">mus-feedforward</a></td><td>(gen)</td><td>feedforward term of gen (all-pass)</td></tr>
+<tr><td><a href="clm.html#mus-feedforward">mus-feedforward</a></td><td>(gen)</td><td>feedforward term of gen (<a class=quiet href="clm.html#all-pass">all-pass</a>)</td></tr>
 <tr><td><a name="musfilebuffersize">mus-file-buffer-size</a></td><td>()</td><td>size of input/ouput buffers (default 8192)</td></tr>
 <tr><td><a href="clm.html#mus-file-name">mus-file-name</a></td><td>(gen)</td><td>name of file assoicated with gen</td></tr>
 <tr><td><a href="clm.html#mus-formant-radius">mus-formant-radius</a></td><td>(gen)</td><td>formant radius</td></tr>
 <tr><td><a href="clm.html#mus-frequency">mus-frequency</a></td><td>(gen)</td><td>frequency of gen (Hz)</td></tr>
-<tr><td><a href="clm.html#mus-hop">mus-hop</a></td><td>(gen)</td><td>hop amount of gen (granulate)</td></tr>
+<tr><td><a href="clm.html#mus-hop">mus-hop</a></td><td>(gen)</td><td>hop amount of gen (<a class=quiet href="clm.html#granulate">granulate</a>)</td></tr>
 <tr><td><a href="clm.html#mus-increment">mus-increment</a></td><td>(gen)</td><td>increment of gen (src, readin, granulate)</td></tr>
 <tr><td><a href="clm.html#mus-input?">mus-input?</a></td><td>(gen)</td><td>#t if gen is input source</td></tr>
 <tr><td><a href="clm.html#mus-length">mus-length</a></td><td>(gen)</td><td>length of gen</td></tr>
@@ -929,7 +934,7 @@ it in conjunction with <i>mixer</i>to scale/envelope all the various ins and out
 <tr><td><a href="clm.html#mus-order">mus-order</a></td><td>(gen)</td><td>order of gen (filters)</td></tr>
 <tr><td><a href="clm.html#mus-output?">mus-output?</a></td><td>(gen)</td><td>#t if gen is output generator</td></tr>
 <tr><td><a href="clm.html#mus-phase">mus-phase</a></td><td>(gen)</td><td>phase of gen (radians)</td></tr>
-<tr><td><a href="clm.html#mus-ramp">mus-ramp</a></td><td>(gen)</td><td>ramp time of gen (granulate)</td></tr>
+<tr><td><a href="clm.html#mus-ramp">mus-ramp</a></td><td>(gen)</td><td>ramp time of gen (<a class=quiet href="clm.html#granulate">granulate</a>)</td></tr>
 <tr><td><a href="clm.html#mus-random">mus-random</a></td><td>(val)</td><td>random numbers bewteen -val and val</td></tr>
 <tr><td><a href="clm.html#mus-run">mus-run</a></td><td>(gen <i>arg1 arg2</i>)</td><td>apply gen to args</td></tr>
 <tr><td><a href="clm.html#mus-scaler">mus-scaler</a></td><td>(gen)</td><td>scaler of gen</td></tr>
@@ -991,7 +996,7 @@ In Ruby <b>rand</b> is a built-in method; it is aliased to <b>kernel_rand</b> he
 <tr><td><a href="clm.html#square-wave?">square-wave?</a></td><td>(gen)</td><td>#t if gen is square-wave generator</td></tr>
 <tr><td><a href="clm.html#src">src</a></td><td>(gen <i>fm input-function</i>)</td><td>sample rate converter</td></tr>
 <tr><td><a href="clm.html#src?">src?</a></td><td>(gen)</td><td>#t if gen is sample-rate converter</td></tr>
-<tr><td><a href="clm.html#sum-of-cosines">sum-of-cosines</a></td><td>(gen <i>fm</i>)</td><td>sum-of-cosines (pulse-train) generator</td></tr>
+<tr><td><a href="clm.html#sum-of-cosines">sum-of-cosines</a></td><td>(gen <i>fm</i>)</td><td>sum-of-cosines (<a class=quiet href="clm.html#pulse-train">pulse-train</a>) generator</td></tr>
 <tr><td><a href="clm.html#sum-of-cosines?">sum-of-cosines?</a></td><td>(gen)</td><td>#t if gen is sum-of-cosines generator</td></tr>
 <tr><td><a href="clm.html#sum-of-sines">sum-of-sines</a></td><td>(amps phases)</td><td>additive synthesis</td></tr>
 <tr><td><a href="clm.html#table-lookup">table-lookup</a></td><td>(gen <i>fm</i>)</td><td>table-lookup generator</td></tr>
@@ -1029,9 +1034,9 @@ bank of generators (the second argument) is assumed to be a vector full of gener
 <pre>
   (do ((sum 0.0)
        (i 0 (1+ i))) 
-      ((= i (vct-length gens)) sum)
+      ((= i (<a class=quiet href="extsnd.html#vctlength">vct-length</a> gens)) sum)
     (set! sum (+ sum (* (vector-ref amps i)
-                        (formant (vector-ref gens i) inval)))))
+                        (<a class=quiet href="clm.html#formant">formant</a> (vector-ref gens i) inval)))))
 </pre>
 <p>in the all-vector case.  <a href="clm.html#musbank">mus-bank</a> is the general case.
 Here are a few more examples, taken from <a href="sndscm.html#exampdoc">examp.scm</a>.
@@ -1041,22 +1046,22 @@ Here are a few more examples, taken from <a href="sndscm.html#exampdoc">examp.sc
 
 (define comb-filter 
   (lambda (scaler size)
-    (let ((cmb (make-comb scaler size)))
-      (lambda (x) (comb cmb x)))))
+    (let ((cmb (<a class=quiet href="clm.html#make-comb">make-comb</a> scaler size)))
+      (lambda (x) (<a class=quiet href="clm.html#comb">comb</a> cmb x)))))
 
-; (map-chan (comb-filter .8 32))
+; (<a class=quiet href="extsnd.html#mapchan">map-chan</a> (comb-filter .8 32))
 
 ;;; by using filters at harmonically related sizes, we can get chords:
 
 (define comb-chord
   (lambda (scaler size amp)
-    (let ((c1 (make-comb scaler size))
-	  (c2 (make-comb scaler (* size .75)))
-	  (c3 (make-comb scaler (* size 1.2))))
+    (let ((c1 (<a class=quiet href="clm.html#make-comb">make-comb</a> scaler size))
+	  (c2 (<a class=quiet href="clm.html#make-comb">make-comb</a> scaler (* size .75)))
+	  (c3 (<a class=quiet href="clm.html#make-comb">make-comb</a> scaler (* size 1.2))))
       (lambda (x)
-        (* amp (+ (comb c1 x) (comb c2 x) (comb c3 x)))))))
+        (* amp (+ (<a class=quiet href="clm.html#comb">comb</a> c1 x) (<a class=quiet href="clm.html#comb">comb</a> c2 x) (<a class=quiet href="clm.html#comb">comb</a> c3 x)))))))
 
-; (map-chan (comb-chord .95 60 .3))
+; (<a class=quiet href="extsnd.html#mapchan">map-chan</a> (comb-chord .95 60 .3))
 
 ;;; or change the comb length via an envelope:
 
@@ -1064,61 +1069,61 @@ Here are a few more examples, taken from <a href="sndscm.html#exampdoc">examp.sc
   (lambda (e mx)
     (if (null? e)
 	mx
-      (max-envelope (cddr e) (max mx (abs (cadr e)))))))
+      (<a class=quiet href="sndscm.html#maxenvelope">max-envelope</a> (cddr e) (max mx (abs (cadr e)))))))
 
 (define zcomb
   (lambda (scaler size pm)
-    (let ((cmb (make-comb scaler size :max-size (+ size 1 (max-envelope pm 0))))
-	  (penv (make-env :envelope pm :end (frames))))
-      (lambda (x) (comb cmb x (env penv))))))
+    (let ((cmb (<a class=quiet href="clm.html#make-comb">make-comb</a> scaler size :max-size (+ size 1 (<a class=quiet href="sndscm.html#maxenvelope">max-envelope</a> pm 0))))
+	  (penv (<a class=quiet href="clm.html#make-env">make-env</a> :envelope pm :end (<a class=quiet href="extsnd.html#sndframes">frames</a>))))
+      (lambda (x) (<a class=quiet href="clm.html#comb">comb</a> cmb x (env penv))))))
 
-; (map-chan (zcomb .8 32 '(0 0 1 10)))
+; (<a class=quiet href="extsnd.html#mapchan">map-chan</a> (zcomb .8 32 '(0 0 1 10)))
 
 ;;; to impose several formants, just add them in parallel:
 
 (define formants
   (lambda (r1 f1 r2 f2 r3 f3)
-    (let ((fr1 (make-formant r1 f1))
-	  (fr2 (make-formant r2 f2))
-	  (fr3 (make-formant r3 f3)))
+    (let ((fr1 (<a class=quiet href="clm.html#make-formant">make-formant</a> r1 f1))
+	  (fr2 (<a class=quiet href="clm.html#make-formant">make-formant</a> r2 f2))
+	  (fr3 (<a class=quiet href="clm.html#make-formant">make-formant</a> r3 f3)))
       (lambda (x)
-	(+ (formant fr1 x)
-	   (formant fr2 x)
-	   (formant fr3 x))))))
+	(+ (<a class=quiet href="clm.html#formant">formant</a> fr1 x)
+	   (<a class=quiet href="clm.html#formant">formant</a> fr2 x)
+	   (<a class=quiet href="clm.html#formant">formant</a> fr3 x))))))
 
-; (map-chan (formants .01 900 .02 1800 .01 2700))
+; (<a class=quiet href="extsnd.html#mapchan">map-chan</a> (formants .01 900 .02 1800 .01 2700))
 
 ;;; to get a moving formant:
 
 (define moving-formant
   (lambda (radius move)
-    (let ((frm (make-formant radius (cadr move)))
-	  (menv (make-env :envelope move :end (frames))))
+    (let ((frm (<a class=quiet href="clm.html#make-formant">make-formant</a> radius (cadr move)))
+	  (menv (<a class=quiet href="clm.html#make-env">make-env</a> :envelope move :end (<a class=quiet href="extsnd.html#sndframes">frames</a>))))
       (lambda (x)
-        (let ((val (formant frm x)))
-	  (set! (mus-frequency frm) (env menv))
+        (let ((val (<a class=quiet href="clm.html#formant">formant</a> frm x)))
+	  (set! (<a class=quiet href="clm.html#mus-frequency">mus-frequency</a> frm) (env menv))
 	  val)))))
 
-; (map-chan (moving-formant .01 '(0 1200 1 2400)))
+; (<a class=quiet href="extsnd.html#mapchan">map-chan</a> (moving-formant .01 '(0 1200 1 2400)))
 
 ;;; various "Forbidden Planet" sound effects:
 
 (define fp
   (lambda (sr osamp osfrq)
-    (let* ((os (make-oscil osfrq))
-	   (sr (make-src :srate sr))
-	   (len (frames))
-	   (sf (make-sample-reader))
-	   (out-data (make-vct len)))
-      (vct-map! out-data
+    (let* ((os (<a class=quiet href="clm.html#make-oscil">make-oscil</a> osfrq))
+	   (sr (<a class=quiet href="clm.html#make-src">make-src</a> :srate sr))
+	   (len (<a class=quiet href="extsnd.html#sndframes">frames</a>))
+	   (sf (<a class=quiet href="extsnd.html#makesamplereader">make-sample-reader</a>))
+	   (out-data (<a class=quiet href="extsnd.html#makevct">make-vct</a> len)))
+      (<a class=quiet href="extsnd.html#vctmap">vct-map!</a> out-data
 		  (lambda () 
-		    (src sr (* osamp (oscil os))
+		    (<a class=quiet href="clm.html#src">src</a> sr (* osamp (<a class=quiet href="clm.html#oscil">oscil</a> os))
 			 (lambda (dir)
 			   (if (&gt; dir 0)
-			       (next-sample sf)
-			       (previous-sample sf))))))
-      (free-sample-reader sf)
-      (vct-&gt;samples 0 len out-data))))
+			       (<a class=quiet href="extsnd.html#nextsample">next-sample</a> sf)
+			       (<a class=quiet href="extsnd.html#previoussample">previous-sample</a> sf))))))
+      (<a class=quiet href="extsnd.html#freesamplereader">free-sample-reader</a> sf)
+      (<a class=quiet href="extsnd.html#vct2samples">vct-&gt;samples</a> 0 len out-data))))
 
 ; (fp 1.0 .3 20)
 
@@ -1130,24 +1135,24 @@ Here are a few more examples, taken from <a href="sndscm.html#exampdoc">examp.sc
 
 (define <A NAME="expsrc">expsrc</a>
   (lambda (rate)
-    (let* ((gr (make-granulate :expansion rate))
-	   (sr (make-src :srate rate))
+    (let* ((gr (<a class=quiet href="clm.html#make-granulate">make-granulate</a> :expansion rate))
+	   (sr (<a class=quiet href="clm.html#make-src">make-src</a> :srate rate))
 	   (vsize 1024)
 	   (vbeg 0)
-	   (v (samples-&gt;vct 0 vsize))
+	   (v (<a class=quiet href="extsnd.html#samples2vct">samples-&gt;vct</a> 0 vsize))
 	   (inctr 0))
       (lambda (inval)
-        (src sr 0.0
+        (<a class=quiet href="clm.html#src">src</a> sr 0.0
 	  (lambda (dir)
-	    (granulate gr
+	    (<a class=quiet href="clm.html#granulate">granulate</a> gr
 	      (lambda (dir)
-		(let ((val (vct-ref v inctr)))
+		(let ((val (<a class=quiet href="extsnd.html#vctref">vct-ref</a> v inctr)))
 		  (set! inctr (+ inctr dir))
 		  (if (&gt;= inctr vsize)
 		      (begin
 			(set! vbeg (+ vbeg inctr))
 			(set! inctr 0)
-			(samples-&gt;vct vbeg vsize 0 0 v)))
+			(<a class=quiet href="extsnd.html#samples2vct">samples-&gt;vct</a> vbeg vsize 0 0 v)))
 		  val)))))))))
 
 </pre>
@@ -1169,7 +1174,7 @@ You can load Rick Taube's CM into Snd as Scheme code:
 <p>In most CLM instruments, including all those in clm-ins.scm, the assumption is that 
 you're reading and writing a temp file, calling the instruments within with-sound.
 The special generators snd-&gt;sample and xen-&gt;sample provide a way to redirect
-the CLM input handlers (in-any in particular) to either a Snd sound (via its index),
+the CLM input handlers (<a class=quiet href="clm.html#in-any">in-any</a> in particular) to either a Snd sound (via its index),
 or an arbitrary function.
 </p>
 <br>
@@ -1251,15 +1256,15 @@ CLM:
 <em class=listener>#&lt;unspecified&gt;</em>
 &gt; <em class=typing>(load "ws.scm")</em>
 <em class=listener>#&lt;unspecified&gt;</em>
-&gt; <em class=typing>(definstrument (simp beg dur freq amp)
-   (let* ((o (make-oscil freq))
-          (st (inexact-&gt;exact (* beg (mus-srate))))
-          (nd (+ st (inexact-&gt;exact (* dur (mus-srate))))))
+&gt; <em class=typing>(<a class=quiet href="clm.html#definstrument">definstrument</a> (simp beg dur freq amp)
+   (let* ((o (<a class=quiet href="clm.html#make-oscil">make-oscil</a> freq))
+          (st (inexact-&gt;exact (* beg (<a class=quiet href="grfsnd.html#mussrate">mus-srate</a>))))
+          (nd (+ st (inexact-&gt;exact (* dur (<a class=quiet href="grfsnd.html#mussrate">mus-srate</a>))))))
      (run
        (lambda ()
          (do ((i st (1+ i)))
              ((= i nd))
-           (outa i (* amp (oscil o)) *output*))))))</em>
+           (<a class=quiet href="clm.html#outa">outa</a> i (* amp (<a class=quiet href="clm.html#oscil">oscil</a> o)) *output*))))))</em>
 <em class=listener>#&lt;unspecified&gt;</em>
 &gt; <em class=typing>(formals-&gt;defobject '(simp beg dur freq amp))</em>
 <em class=listener>(defobject simp () ((beg #:accessor object-time) dur freq amp) (#:parameters beg dur freq amp))</em>
@@ -1318,7 +1323,7 @@ Here's dialog window with a slider:</p>
 					   (XtUnmanageChild scale-dialog)))
 	(XtAddCallback scale-dialog 
 		       XmNhelpCallback (lambda (w context info)
-					 (snd-print "move the slider to affect the volume")))
+					 (<a class=quiet href="extsnd.html#sndprint">snd-print</a> "move the slider to affect the volume")))
 	(XmStringFree xhelp)
 	(XmStringFree xdismiss)
 	(XmStringFree titlestr)
@@ -1344,7 +1349,7 @@ Here's dialog window with a slider:</p>
 					     (set! current-scaler (/ (.value info) 100.0)))))))
   (XtManageChild scale-dialog))
 
-(create-scale-dialog (cadr (main-widgets)))
+(create-scale-dialog (cadr (<a class=quiet href="extsnd.html#mainwidgets">main-widgets</a>)))
 </pre>
 <p>In Ruby, this is:</p>
 <pre>
@@ -1407,13 +1412,13 @@ match-sound-files from extensions.scm):
     (XmStringTableUnparse st len #f XmCHARSET_TEXT XmCHARSET_TEXT #f 0 XmOUTPUT_ALL))
   (define (list-&gt;XmStringTable strs)
     (XmStringTableParseStringArray strs (length strs) #f XmCHARSET_TEXT #f 0 #f))
-  (XtSetValues (let ((m (open-file-dialog #f)))
+  (XtSetValues (let ((m (<a class=quiet href="extsnd.html#sndopenfiledialog">open-file-dialog</a> #f)))
                          ; make sure the dialog exists
-		  (list-ref (dialog-widgets) 6))
+		  (list-ref (<a class=quiet href="extsnd.html#dialogwidgets">dialog-widgets</a>) 6))
 		(list XmNfileSearchProc                             ; set dialog file search procedure
 		       (lambda (widget info)
 			 (let* ((dir (XmString-&gt;string (dir info))) ; directory string
-				(files (match-sound-files proc dir)) ; list of matching files
+				(files (<a class=quiet href="sndscm.html#exmatchsoundfiles">match-sound-files</a> proc dir)) ; list of matching files
 				(fileTable (list-&gt;XmStringTable      ; XmStringTable for XmNfileListItems
                                              (map (lambda (n)        ; every file needs prepended dir
                                                     (string-append dir n)) 
@@ -1423,8 +1428,8 @@ match-sound-files from extensions.scm):
 					       XmNfileListItemCount (length files)
 					       XmNlistUpdated #t)))))))
 
-;(install-searcher (lambda (file) (= (mus-sound-srate file) 44100)))
-;(install-searcher (lambda (file) (= (mus-sound-chans file) 4)))
+;(install-searcher (lambda (file) (= (<a class=quiet href="extsnd.html#soundsrate">mus-sound-srate</a> file) 44100)))
+;(install-searcher (lambda (file) (= (<a class=quiet href="extsnd.html#soundchans">mus-sound-chans</a> file) 4)))
 </pre>
 <p>Now click the 'Filter' button to see only those files that fit the procedure in
 the dialog's files list.  See snd-motif.scm and popup.scm.
@@ -1467,7 +1472,7 @@ Here's the scale-dialog in xg/gtk:
 				 (gtk_widget_hide scale-dialog)))
 	  (g_signal_connect help "clicked"
 			       (lambda (w info)
-				 (help-dialog "Scaler Dialog" "move the slider to affect the volume")))
+				 (<a class=quiet href="extsnd.html#sndhelpdialog">help-dialog</a> "Scaler Dialog" "move the slider to affect the volume")))
 	  (gtk_widget_show dismiss)
 	  (gtk_widget_show help)
 	  (let* ((adj (gtk_adjustment_new 0.0 0.0 1.01 0.01 0.01 .01))
@@ -1482,7 +1487,7 @@ Here's the scale-dialog in xg/gtk:
 	    (gtk_widget_show scale)))))
   (gtk_widget_show scale-dialog))
 
-(create-scale-dialog (cadr (main-widgets)))
+(create-scale-dialog (cadr (<a class=quiet href="extsnd.html#mainwidgets">main-widgets</a>)))
 </pre>
 <p>The only change from the C code is the addition of GTK_ADJUSTMENT in the scale value_changed
 callback -- currently the xg module assumes the first argument to the two-argument callback is
@@ -1501,16 +1506,16 @@ the non-interface related functions are available, so you can do things
 like:
 </p>
 <pre>
-<em class=listener>snd&gt;</em><em class=typing> (new-sound "new.snd")</em>
+<em class=listener>snd&gt;</em><em class=typing> (<a class=quiet href="extsnd.html#sndnew">new-sound</a> "new.snd")</em>
 <em class=listener>0</em>
 <em class=listener>snd&gt;</em><em class=typing> (load "v.scm")</em>
 <em class=listener>snd&gt;</em><em class=typing> (fm-violin 0 1 440 .1)</em>
 <em class=listener>-1</em>
-<em class=listener>snd&gt;</em><em class=typing> (frames 0)</em>
+<em class=listener>snd&gt;</em><em class=typing> (<a class=quiet href="extsnd.html#sndframes">frames</a> 0)</em>
 <em class=listener>22050</em>
-<em class=listener>snd&gt;</em><em class=typing> (play)</em>
+<em class=listener>snd&gt;</em><em class=typing> (<a class=quiet href="extsnd.html#sndplay">play</a>)</em>
 <em class=listener>#t</em>
-<em class=listener>snd&gt;</em><em class=typing> (exit)</em>
+<em class=listener>snd&gt;</em><em class=typing> (<a class=quiet href="extsnd.html#sndexit">exit</a>)</em>
 </pre>
 <p>Guile's repl has its own error handlers, different from the
 normal Snd handlers; name completion, if it exists at all,
@@ -1537,42 +1542,42 @@ if you have an executable file with:
 hiho
 :a-test
 32
-:(exit)
+:(<a class=quiet href="extsnd.html#sndexit">exit</a>)
 /home/bil/test/snd-7/ 
 </pre>
 <p>The difference between this use of Snd, and using guile itself
 for scripts is that Snd uses the -l switch where guile would use -s.
 As noted above, you can use the -e switch to use Snd as a pure
-command-line program, and, of course, (exit) to drop back to the shell.
+command-line program, and, of course, (<a class=quiet href="extsnd.html#sndexit">exit</a>) to drop back to the shell.
 Here's a script that doubles every sample in "oboe.snd" and
 writes the result as "test.snd":
 </p>
 <pre>
 #!/home/bil/test/snd-7/snd -l
 !#
-(open-sound "oboe.snd")
-(scale-by 2.0)
-(save-sound-as "test.snd")
-(exit)
+(<a class=quiet href="extsnd.html#sndopen">open-sound</a> "oboe.snd")
+(<a class=quiet href="extsnd.html#sndscaleby">scale-by</a> 2.0)
+(<a class=quiet href="extsnd.html#sndsaveas">save-sound-as</a> "test.snd")
+(<a class=quiet href="extsnd.html#sndexit">exit</a>)
 </pre>
 <p>The functions <b>script-args</b> and <b>script-arg</b> can be used
 to access the script's arguments, and if necessary (if not exiting)
 tell Snd to ignore arguments.  script-args returns a list of strings
 giving the arguments.  The first two are always "-l" and the script
-file name. The current argument is (script-arg).  If you set this to
+file name. The current argument is (<a class=quiet href="extsnd.html#sndscriptarg">script-arg</a>).  If you set this to
 a higher value, Snd will subsequently ignore the intevening arguments
 as it scans the startup arguments (see snd-test.scm).
 </p>
 <pre>
 #!/home/bil/test/snd-7/snd -l
 !#
-(if (= (length (script-args)) 2) ;i.e. ("-l" "script")
+(if (= (length (<a class=quiet href="extsnd.html#sndscriptargs">script-args</a>)) 2) ;i.e. ("-l" "script")
   (display "usage: script file-name...\n")
   (begin
-    (open-sound (list-ref (script-args) (+ (script-arg) 1)))
-    (scale-by 2.0)
-    (save-sound-as "test.snd")))
-(exit)
+    (<a class=quiet href="extsnd.html#sndopen">open-sound</a> (list-ref (<a class=quiet href="extsnd.html#sndscriptargs">script-args</a>) (+ (<a class=quiet href="extsnd.html#sndscriptarg">script-arg</a>) 1)))
+    (<a class=quiet href="extsnd.html#sndscaleby">scale-by</a> 2.0)
+    (<a class=quiet href="extsnd.html#sndsaveas">save-sound-as</a> "test.snd")))
+(<a class=quiet href="extsnd.html#sndexit">exit</a>)
 </pre>
 <p>This either grumbles if no argument is given,
 or scales its argument sound by 2.0:
@@ -1588,13 +1593,13 @@ the following displays all the comments it finds:
 #!/home/bil/cl/snd -l
 !#
 (use-modules (ice-9 format))
-(if (= (length (script-args)) 2) ;i.e. ("-l" "script")
+(if (= (length (<a class=quiet href="extsnd.html#sndscriptargs">script-args</a>)) 2) ;i.e. ("-l" "script")
   (display "usage: script file-name...\n")
-  (do ((arg (+ (script-arg) 1) (1+ arg)))
-      ((= arg (length (script-args))))
-    (let ((name (list-ref (script-args) arg)))
-      (display (format #f "~A: ~A~%" name (mus-sound-comment name))))))
-(exit)
+  (do ((arg (+ (<a class=quiet href="extsnd.html#sndscriptarg">script-arg</a>) 1) (1+ arg)))
+      ((= arg (length (<a class=quiet href="extsnd.html#sndscriptargs">script-args</a>))))
+    (let ((name (list-ref (<a class=quiet href="extsnd.html#sndscriptargs">script-args</a>) arg)))
+      (display (format #f "~A: ~A~%" name (<a class=quiet href="extsnd.html#soundcomment">mus-sound-comment</a> name))))))
+(<a class=quiet href="extsnd.html#sndexit">exit</a>)
 </pre>
 <p>
 Say we save this as the file "comments".</p>
@@ -1621,24 +1626,24 @@ than 40 seconds in duration, and truncates them to 40 seconds:
 <pre>
 #!/usr/local/bin/snd -l
 !#
-(if (= (length (script-args)) 2)
+(if (= (length (<a class=quiet href="extsnd.html#sndscriptargs">script-args</a>)) 2)
   (display "usage: trunc.scm file-name...\n")
-  (do ((arg (+ (script-arg) 1) (1+ arg)))
-      ((= arg (length (script-args))))
-    (let* ((name (list-ref (script-args) arg)))
-      (if (&gt; (mus-sound-duration name) 40.0)
-	  (let* ((ind (open-sound name)))
-	    (set! (frames ind) (* 40 (srate ind)))
-	    (save-sound ind)
-	    (close-sound ind))))))
-(exit)
+  (do ((arg (+ (<a class=quiet href="extsnd.html#sndscriptarg">script-arg</a>) 1) (1+ arg)))
+      ((= arg (length (<a class=quiet href="extsnd.html#sndscriptargs">script-args</a>))))
+    (let* ((name (list-ref (<a class=quiet href="extsnd.html#sndscriptargs">script-args</a>) arg)))
+      (if (&gt; (<a class=quiet href="extsnd.html#soundduration">mus-sound-duration</a> name) 40.0)
+	  (let* ((ind (<a class=quiet href="extsnd.html#sndopen">open-sound</a> name)))
+	    (set! (<a class=quiet href="extsnd.html#sndframes">frames</a> ind) (* 40 (<a class=quiet href="extsnd.html#sndsrate">srate</a> ind)))
+	    (<a class=quiet href="extsnd.html#sndsave">save-sound</a> ind)
+	    (<a class=quiet href="extsnd.html#sndclose">close-sound</a> ind))))))
+(<a class=quiet href="extsnd.html#sndexit">exit</a>)
 </pre>
 <p>Here's a sndplay replacement script:</p>
 <pre>
 #!snd -b
 !#
-(play-and-wait (list-ref (script-args) (+ (script-arg) 1)))
-(exit)
+(<a class=quiet href="extsnd.html#sndplayandwait">play-and-wait</a> (list-ref (<a class=quiet href="extsnd.html#sndscriptargs">script-args</a>) (+ (<a class=quiet href="extsnd.html#sndscriptarg">script-arg</a>) 1)))
+(<a class=quiet href="extsnd.html#sndexit">exit</a>)
 </pre>
 <p>And here's a script that splits a multi-channel file
 into a bunch of mono files:
@@ -1646,23 +1651,23 @@ into a bunch of mono files:
 <pre>
 #!snd -b
 !#
-(if (= (length (script-args)) 2)
+(if (= (length (<a class=quiet href="extsnd.html#sndscriptargs">script-args</a>)) 2)
   (display "usage: split.scm filename\n")
-  (let* ((name (list-ref (script-args) (1+ (script-arg))))
-	 (chns (mus-sound-chans name)))
+  (let* ((name (list-ref (<a class=quiet href="extsnd.html#sndscriptargs">script-args</a>) (1+ (<a class=quiet href="extsnd.html#sndscriptarg">script-arg</a>))))
+	 (chns (<a class=quiet href="extsnd.html#soundchans">mus-sound-chans</a> name)))
     (if (&gt; chns 1)
-	(let ((ind (open-sound name)))
+	(let ((ind (<a class=quiet href="extsnd.html#sndopen">open-sound</a> name)))
 	  (do ((i 0 (1+ i)))
 	      ((= i chns))
 	    (display (format #f "~A.~D " name i))
-	    (save-sound-as (format #f "~A.~D" name i)
+	    (<a class=quiet href="extsnd.html#sndsaveas">save-sound-as</a> (format #f "~A.~D" name i)
 			   ind
-			   (header-type ind)
-			   (data-format ind)
-			   (srate ind)
+			   (<a class=quiet href="extsnd.html#sndheadertype">header-type</a> ind)
+			   (<a class=quiet href="extsnd.html#snddataformat">data-format</a> ind)
+			   (<a class=quiet href="extsnd.html#sndsrate">srate</a> ind)
 			   i))
-	  (close-sound ind)))))
-(exit)
+	  (<a class=quiet href="extsnd.html#sndclose">close-sound</a> ind)))))
+(<a class=quiet href="extsnd.html#sndexit">exit</a>)
 </pre>
 <br>
 
@@ -1675,7 +1680,7 @@ the "-" are "_", "-&gt;" is "2", hooks and memo_sound have "$" prepended
 (e.g. Autocorrelation).  The generalized set! functions are replaced
 by "set_" plus the base name (e.g. set_window_width), with arguments
 reordered in some cases to place the optional values after the new value.  That is,
-<code>(set! (sync snd) 1)</code> becomes <code>set_sync(1, snd)</code>.
+<code>(set! (<a class=quiet href="extsnd.html#sndsyncing">sync</a> snd) 1)</code> becomes <code>set_sync(1, snd)</code>.
 Hooks in Ruby (which have little or nothing to do with Ruby's "hookable variables")
 are just procedures or nil, not lists of procedures as in Guile.
 Here's the Ruby version of the init file given
@@ -1862,12 +1867,12 @@ The main function is:
 
 	Applies a LADSPA plugin to a block of samples. 
 An example call to apply the low-pass-filter in the CMT plugin library is 
-(apply-ladspa (make-sample-reader 0) (list "cmt" "lpf" 1000) 10000 "origin").
+(apply-ladspa (<a class=quiet href="extsnd.html#makesamplereader">make-sample-reader</a> 0) (list "cmt" "lpf" 1000) 10000 "origin").
 </pre>
 <p>Dave Phillips in <a href="http://www.oreillynet.com/pub/a/linux/2001/02/02/ladspa.html">Linux Audio Plug-Ins: A Look Into LADSPA</a> adds this:
 </p>
 <pre>
-  (apply-ladspa (make-sample-reader 57264) (list "cmt" "delay_5s" .3 .5) 32556 "ibm.wav")
+  (apply-ladspa (<a class=quiet href="extsnd.html#makesamplereader">make-sample-reader</a> 57264) (list "cmt" "delay_5s" .3 .5) 32556 "ibm.wav")
 </pre>
 <p>
 "This sequence tells Snd to read a block of 32556 samples from the ibm.wav file, starting at sample number 57264,
@@ -1890,8 +1895,8 @@ cmt.so is in /usr/local/lib/ladspa, (and you're using tcsh), then
 than one input is required, the first argument to apply-ladspa should be a list of readers:
 </p>
 <pre>
-  (apply-ladspa (list (make-sample-reader 0 0 0)  ;chan 0
-                      (make-sample-reader 0 0 1)) ;chan 1
+  (apply-ladspa (list (<a class=quiet href="extsnd.html#makesamplereader">make-sample-reader</a> 0 0 0)  ;chan 0
+                      (<a class=quiet href="extsnd.html#makesamplereader">make-sample-reader</a> 0 0 1)) ;chan 1
                 (list "cmt" "freeverb3" 0 .5 .5 .5 .5 .5) 
                 100000 "freeverb")
 </pre>
@@ -1900,13 +1905,13 @@ than one input is required, the first argument to apply-ladspa should be a list 
 <table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
 (define* (ladspa-channel ladspa-data #:optional nbeg ndur nsnd nchn nedpos)
   (let* ((beg (or nbeg 0)) 
-	 (snd (or nsnd (selected-sound) (car (sounds))))
-	 (chn (or nchn (selected-channel)))
-	 (dur (or ndur (- (frames snd chn) beg)))
+	 (snd (or nsnd (<a class=quiet href="extsnd.html#sndselectedsound">selected-sound</a>) (car (<a class=quiet href="extsnd.html#sounds">sounds</a>))))
+	 (chn (or nchn (<a class=quiet href="extsnd.html#sndselectedchannel">selected-channel</a>)))
+	 (dur (or ndur (- (<a class=quiet href="extsnd.html#sndframes">frames</a> snd chn) beg)))
 	 (edpos (or nedpos current-edit-position))
-	 (reader (make-sample-reader beg snd chn 1 edpos)))
+	 (reader (<a class=quiet href="extsnd.html#makesamplereader">make-sample-reader</a> beg snd chn 1 edpos)))
     (<em class=red>apply-ladspa</em> reader ladspa-data dur "apply-ladspa")
-    (free-sample-reader reader)))
+    (<a class=quiet href="extsnd.html#freesamplereader">free-sample-reader</a> reader)))
 </pre></td></tr></table>
 <p>There are also functions to access the LADSPA descriptor directly:
 </p>
@@ -1939,7 +1944,7 @@ than one input is required, the first argument to apply-ladspa should be a list 
 </p>
 <table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
 (define (analyze-ladspa library label)
-  (let* ((descriptor (ladspa-descriptor library label))
+  (let* ((descriptor (<em class=red>ladspa-descriptor</em> library label))
 	 (data '())
 	 (names (.PortNames descriptor))
 	 (hints (.PortRangeHints descriptor))
@@ -1980,20 +1985,20 @@ data directly to the DAC:
   ;; (ladspa-it "cmt" "delay_5s" .3 .5)
   (init-ladspa)
   (let* ((descriptor (ladspa-descriptor library label))
-	 (handle (ladspa-instantiate descriptor (srate)))
+	 (handle (ladspa-instantiate descriptor (<a class=quiet href="extsnd.html#sndsrate">srate</a>)))
 	 (block-size 256)
-	 (in-block (make-vct block-size))
-	 (out-block (make-vct block-size))
-	 (len (frames))
-	 (data (make-sound-data 1 block-size))
-	 (audio-port (mus-audio-open-output mus-audio-default (srate) 1 mus-lshort (* block-size 2))))
+	 (in-block (<a class=quiet href="extsnd.html#makevct">make-vct</a> block-size))
+	 (out-block (<a class=quiet href="extsnd.html#makevct">make-vct</a> block-size))
+	 (len (<a class=quiet href="extsnd.html#sndframes">frames</a>))
+	 (data (<a class=quiet href="extsnd.html#makesounddata">make-sound-data</a> 1 block-size))
+	 (audio-port (<a class=quiet href="extsnd.html#musaudioopenoutput">mus-audio-open-output</a> mus-audio-default (<a class=quiet href="extsnd.html#sndsrate">srate</a>) 1 mus-lshort (* block-size 2))))
   (dynamic-wind
    (lambda ()
      (let ((count 0))
        (for-each 
 	(lambda (port)
 	  (if (not (= (logand port LADSPA_PORT_CONTROL) 0))
-	      (let ((parameter (make-vct 1 (car plugin-parameters))))
+	      (let ((parameter (<a class=quiet href="extsnd.html#makevct">make-vct</a> 1 (car plugin-parameters))))
 		(set! plugin-parameters (cdr plugin-parameters))
 		(ladspa-connect-port descriptor handle count parameter))
 	      (if (not (= (logand port LADSPA_PORT_INPUT) 0))
@@ -2005,13 +2010,13 @@ data directly to the DAC:
      (ladspa-activate descriptor handle)
      (do ((i 0 (+ i block-size)))
 	 ((&gt;= i len))
-       (samples-&gt;vct i block-size #f #f in-block)
+       (<a class=quiet href="extsnd.html#samples2vct">samples-&gt;vct</a> i block-size #f #f in-block)
        (ladspa-run descriptor handle block-size)
-       (vct-&gt;sound-data out-block data 0)
-       (mus-audio-write audio-port data block-size)))
+       (<a class=quiet href="extsnd.html#vct2sounddata">vct-&gt;sound-data</a> out-block data 0)
+       (<a class=quiet href="extsnd.html#musaudiowrite">mus-audio-write</a> audio-port data block-size)))
    (lambda ()
      (ladspa-deactivate descriptor handle)
-     (mus-audio-close audio-port)
+     (<a class=quiet href="extsnd.html#musaudioclose">mus-audio-close</a> audio-port)
      (ladspa-cleanup descriptor handle)))))
 </pre></td></tr></table>
 <p>For a Ladspa GUI builder, see <a href="sndscm.html#ladspadoc">ladspa.scm</a>.
@@ -2038,7 +2043,7 @@ that replaces the current property value (which Snd will evaluate).
 CLM's communication
 with Snd function sends Snd this string:</p>
 <pre>
-"(change-window-property \"CLM_VERSION\" \"CLM_COMMAND\" " str ")"
+"(<a class=quiet href="extsnd.html#changeproperty">change-window-property</a> \"CLM_VERSION\" \"CLM_COMMAND\" " str ")"
 </pre>
 <p>where <i>str</i> is the form to be evaluated within Snd.  It then waits
 for a change to the CLM_COMMAND property, returning its value to the
@@ -2061,8 +2066,8 @@ program:
 </p>
 <table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
 (define (draw-it)
-  (glXMakeCurrent (XtDisplay (cadr (main-widgets))) 
-		  (XtWindow (car (channel-widgets)))
+  (glXMakeCurrent (XtDisplay (cadr (<a class=quiet href="extsnd.html#mainwidgets">main-widgets</a>))) 
+		  (XtWindow (car (<a class=quiet href="extsnd.html#channelwidgets">channel-widgets</a>)))
 		  (snd-glx-context))
   (glEnable GL_DEPTH_TEST)
   (glDepthFunc GL_LEQUAL)
@@ -2072,7 +2077,7 @@ program:
   (gluPerspective 40.0 1.0 10.0 200.0)
   (glTranslatef 0.0 0.0 -50.0)
   (glRotatef -58.0 0.0 1.0 0.0)
-  (let ((vals (XtVaGetValues (car (channel-widgets)) (list XmNwidth 0 XmNheight 0))))
+  (let ((vals (XtVaGetValues (car (<a class=quiet href="extsnd.html#channelwidgets">channel-widgets</a>)) (list XmNwidth 0 XmNheight 0))))
     (glViewport 0 0 (list-ref vals 1) (list-ref vals 3)))
   (glClear (logior GL_COLOR_BUFFER_BIT GL_DEPTH_BUFFER_BIT))
   (glBegin GL_POLYGON)
@@ -2091,8 +2096,8 @@ program:
   (glColor3f 0.0 0.0 1.0)   (glVertex3f 4.0 -9.0 -10.0)
   (glColor3f 1.0 0.0 1.0)   (glVertex3f 4.0 -6.0 -10.0)
   (glEnd)
-  (glXSwapBuffers (XtDisplay (cadr (main-widgets))) 
-		  (XtWindow (car (channel-widgets))))
+  (glXSwapBuffers (XtDisplay (cadr (<a class=quiet href="extsnd.html#mainwidgets">main-widgets</a>))) 
+		  (XtWindow (car (<a class=quiet href="extsnd.html#channelwidgets">channel-widgets</a>))))
   (glFlush))
 </pre></td></tr></table>
 <br>
@@ -2161,7 +2166,7 @@ p mus_inspect(arg)  --  show every internal field of arg
 </pre>
 <p>The ge function can show current Snd state:</p>
 <pre>
-(gdb) ge "(eps-file)"
+(gdb) ge "(<a class=quiet href="extsnd.html#epsfile">eps-file</a>)"
 $5 = 0
 $6 = 0
 $7 = 0

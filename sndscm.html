@@ -13,6 +13,11 @@
 	EM.def {font-weight: bold; font-style: normal}
 	H1 {text-align: center}
 	UL {list-style-type: none}
+
+	A {text-decoration:none}
+	A:hover {text-decoration:underline}
+	A.quiet {color:black; text-decoration:none}
+	A.quiet:hover {text-decoration:underline}
 -->
 
 </style>
@@ -156,10 +161,10 @@ The lines
 </p>
 <pre>
            ...
-	   (coeffs (partials-&gt;polynomial (normalize-partials partials)))
+	   (coeffs (<a class=quiet href="clm.html#partials-&gt;polynomial">partials-&gt;polynomial</a> (normalize-partials partials)))
            ...
-		     (polynomial coeffs
-				 (oscil os (env gls-env))))))
+		     (<a class=quiet href="clm.html#polynomial">polynomial</a> coeffs
+				 (<a class=quiet href="clm.html#oscil">oscil</a> os (env gls-env))))))
 				 <!-- ((( -->
 </pre>
 <p>setup and run the waveshaping synthesis (in this case it's just a fast
@@ -171,17 +176,17 @@ easily be turned into sonograms and transcribed as envelopes.
 </p>
 <p>In CLM, the bird is:</p>
 <pre>
-(definstrument bird (startime dur frequency freq-skew amplitude freq-envelope amp-envelope 
+(<a class=quiet href="clm.html#definstrument">definstrument</a> bird (startime dur frequency freq-skew amplitude freq-envelope amp-envelope 
 	             &amp;optional (lpfilt 1.0) (degree 0) (reverb-amount 0))
-  (multiple-value-bind (beg end) (times-&gt;samples startime dur)
-    (let* ((amp-env (make-env amp-envelope amplitude dur))
-	   (gls-env (make-env freq-envelope (hz-&gt;radians freq-skew) dur))
-	   (loc (make-locsig :degree degree :distance 1.0 :reverb reverb-amount))
-	   (fil (make-one-pole lpfilt (- 1.0 lpfilt)))
-	   (s (make-oscil :frequency frequency)))
+  (multiple-value-bind (beg end) (<a class=quiet href="clm.html#times-&gt;samples">times-&gt;samples</a> startime dur)
+    (let* ((amp-env (<a class=quiet href="clm.html#make-env">make-env</a> amp-envelope amplitude dur))
+	   (gls-env (<a class=quiet href="clm.html#make-env">make-env</a> freq-envelope (<a class=quiet href="clm.html#hz-&gt;radians">hz-&gt;radians</a> freq-skew) dur))
+	   (loc (<a class=quiet href="clm.html#make-locsig">make-locsig</a> :degree degree :distance 1.0 :reverb reverb-amount))
+	   (fil (<a class=quiet href="clm.html#make-one-pole">make-one-pole</a> lpfilt (- 1.0 lpfilt)))
+	   (s (<a class=quiet href="clm.html#make-oscil">make-oscil</a> :frequency frequency)))
       (run
        (loop for i from beg to end do
-	 (locsig loc i (one-pole fil (* (env amp-env) (oscil s (env gls-env))))))))))
+	 (<a class=quiet href="clm.html#locsig">locsig</a> loc i (<a class=quiet href="clm.html#one-pole">one-pole</a> fil (* (env amp-env) (<a class=quiet href="clm.html#oscil">oscil</a> s (env gls-env))))))))))
 </pre>
 <p>The bird.scm version could easily include the one-pole filter and so on.
 The Ruby version of this file is bird.rb.  Just for comparison, the bird instrument
@@ -293,13 +298,13 @@ the single-sideband cancellation is not working as I expected -- another bug to 
 for low bell sounds (say middle C or so). The lines
 </p>
 <pre>
-	   (mod1 (make-oscil (* frequency 2)))
-	   (mod2 (make-oscil (* frequency 1.41)))
-	   (mod3 (make-oscil (* frequency 2.82)))
-	   (mod4 (make-oscil (* frequency 2.4)))
-	   (car1 (make-oscil frequency))
-	   (car2 (make-oscil frequency))
-	   (car3 (make-oscil (* frequency 2.4)))
+	   (mod1 (<a class=quiet href="clm.html#make-oscil">make-oscil</a> (* frequency 2)))
+	   (mod2 (<a class=quiet href="clm.html#make-oscil">make-oscil</a> (* frequency 1.41)))
+	   (mod3 (<a class=quiet href="clm.html#make-oscil">make-oscil</a> (* frequency 2.82)))
+	   (mod4 (<a class=quiet href="clm.html#make-oscil">make-oscil</a> (* frequency 2.4)))
+	   (car1 (<a class=quiet href="clm.html#make-oscil">make-oscil</a> frequency))
+	   (car2 (<a class=quiet href="clm.html#make-oscil">make-oscil</a> frequency))
+	   (car3 (<a class=quiet href="clm.html#make-oscil">make-oscil</a> (* frequency 2.4)))
 </pre>
 <p>set up three FM pairs, car1+mod1 handling the basic harmonic spectra,
 car2+mod2 creating inharmonic spectra (using the square root of 2 more or less
@@ -550,7 +555,7 @@ version of Snd's very simple spectrum-&gt;coefficients procedure ("frequency sam
 It returns the FIR filter coefficients given the filter order and desired spectral envelope.
 </p>
 <pre>
-(map-chan (fltit-1 10 (list-&gt;vct '(0 1.0 0 0 0 0 0 0 1.0 0))))
+(<a class=quiet href="extsnd.html#mapchan">map-chan</a> (fltit-1 10 (<a class=quiet href="extsnd.html#sndlist2vct">list-&gt;vct</a> '(0 1.0 0 0 0 0 0 0 1.0 0))))
 </pre>
 <p>
 <b>down-oct</b> tries to move a sound down an octave by goofing with the fft data,
@@ -575,12 +580,12 @@ pitch tracking; it's easily fooled, but could probably be made relatively robust
 The code:
 </p>
 <pre>
- (let* ((logla (log10 (/ (+ cor-peak (vct-ref data i)) (* 2 cor-peak))))
-	(logca (log10 (/ (+ cor-peak (vct-ref data (+ i 1))) (* 2 cor-peak))))
-	(logra (log10 (/ (+ cor-peak (vct-ref data (+ i 2))) (* 2 cor-peak))))
+ (let* ((logla (log10 (/ (+ cor-peak (<a class=quiet href="extsnd.html#vctref">vct-ref</a> data i)) (* 2 cor-peak))))
+	(logca (log10 (/ (+ cor-peak (<a class=quiet href="extsnd.html#vctref">vct-ref</a> data (+ i 1))) (* 2 cor-peak))))
+	(logra (log10 (/ (+ cor-peak (<a class=quiet href="extsnd.html#vctref">vct-ref</a> data (+ i 2))) (* 2 cor-peak))))
 	(offset (/ (* 0.5 (- logla logra))
 		   (+ logla logra (* -2.0 logca)))))
-   (return (/ (srate snd)
+   (return (/ (<a class=quiet href="extsnd.html#sndsrate">srate</a> snd)
 	      (* 2 (+ i 1 offset)))))
 </pre>
 <p>is using Xavier Serra's interpolation technique to find the true location
@@ -671,7 +676,7 @@ The effects include:
 <!-- I(insert zeros):M(Effects: Add Silence)(effectsdoc) -->
 <!-- I(change tempo):M(Effects: Expsrc)(effectsdoc) -->
 
-<p>Most of these are either simple calls on Snd functions ("invert" is <code>(scale-by -1)</code>),
+<p>Most of these are either simple calls on Snd functions ("invert" is <code>(<a class=quiet href="extsnd.html#sndscaleby">scale-by</a> -1)</code>),
 or use functions in the other scm files.  The actual operations follow the sync chain of the
 currently active channel.  
 </p>
@@ -687,7 +692,7 @@ get its current option label.  That is,
 <pre>
 (define effects-list '())
 (define effects-menu 
-  (add-to-main-menu "Effects" 
+  (<a class=quiet href="extsnd.html#sndaddtomainmenu">add-to-main-menu</a> "Effects" 
                     (lambda ()
  		      (define (update-label effects)
 		        (if (not (null? effects))
@@ -705,14 +710,14 @@ adds its update function to the effects-list when it is loaded:
 <pre>
 (set! effects-list (cons (lambda ()
 			   (let ((new-label (format #f "gain (~1,2F)" gain-amount)))
-			     (change-menu-label effects-menu gain-label new-label)
+			     (<a class=quiet href="extsnd.html#sndchangemenulabel">change-menu-label</a> effects-menu gain-label new-label)
 			     (set! gain-label new-label)))
 			 effects-list))
 </pre>
 <p>The sound effect itself is the callback function of the given option:
 </p>
 <pre>
-(add-to-menu effects-menu "reverse" (lambda () (reverse-sound)))
+(<a class=quiet href="extsnd.html#sndaddtomenu">add-to-menu</a> effects-menu "reverse" (lambda () (<a class=quiet href="extsnd.html#sndreverse">reverse-sound</a>)))
 </pre>
 <p>I can't decide whether it would be useful to describe some of these
 effects in more detail.  The code is mostly straightforward, and
@@ -845,7 +850,7 @@ mechanism as an extension of env-channel.
 </p>
 <pre>
 (let ((pe (make-power-env '(0 0 32.0  1 1 0.0312  2 0 1) :duration 1.0)))
-  (map-channel (lambda (y) (* y (power-env pe)))))
+  (<a class=quiet href="extsnd.html#mapchannel">map-channel</a> (lambda (y) (* y (power-env pe)))))
 
 (let ((pe1 (make-power-env '(0 0 32.0  1 1 0.0312  2 0 1.0  3 .5 3.0  4 0 0) :duration 1.0)))
   (power-env-channel pe1))
@@ -904,7 +909,7 @@ the second if you're setting it to something new:
 
 <p>event.scm has functions used by snd-test.scm to exercise the user interface.
 These functions depend on the xm module and XSendEvent primarily, but there are
-also Scheme implementations of some of the built-in functions (change-window-property).
+also Scheme implementations of some of the built-in functions (<a class=quiet href="extsnd.html#changeproperty">change-window-property</a>).
 </p>
 
 
@@ -985,12 +990,12 @@ I'm slowly dividing out related groups of procedures to separate files.
     <li>echo (delays)
     <li>ring-modulation, am
     <li>src-related sound effects (src, rand-interp, etc)
-    <li>compand, compand-channel (array-interp)
+    <li>compand, compand-channel (<a class=quiet href="clm.html#array-interp">array-interp</a>)
     <li>shift pitch keeping duration constant (src+granulate)
-    <li>tempo change via envelope (granulate)
+    <li>tempo change via envelope (<a class=quiet href="clm.html#granulate">granulate</a>)
     <li>cross-synthesis (using a formant bank)
     <li>voiced-&gt;unvoiced (formants)
-    <li>convolution (convolve)
+    <li>convolution (<a class=quiet href="clm.html#convolve">convolve</a>)
     <li>"vector synthesis"
     <li>chain-dsps
   </ul>
@@ -1039,26 +1044,26 @@ filter using the envelope <i>pm</i>.  <b>notch-filter</b> parallels comb-filter.
 Some examples:
 </p>
 <pre>
-(map-chan (comb-filter .8 32))
-(map-chan (comb-chord .95 100 .3))
-(map-chan (comb-chord .95 60 .3))
-(map-chan (zcomb .8 32 '(0 0 1 10)))
-(map-chan (notch-filter .8 32))
-(map-chan (formant-filter .99 2400))
+(<a class=quiet href="extsnd.html#mapchan">map-chan</a> (comb-filter .8 32))
+(<a class=quiet href="extsnd.html#mapchan">map-chan</a> (comb-chord .95 100 .3))
+(<a class=quiet href="extsnd.html#mapchan">map-chan</a> (comb-chord .95 60 .3))
+(<a class=quiet href="extsnd.html#mapchan">map-chan</a> (zcomb .8 32 '(0 0 1 10)))
+(<a class=quiet href="extsnd.html#mapchan">map-chan</a> (notch-filter .8 32))
+(<a class=quiet href="extsnd.html#mapchan">map-chan</a> (formant-filter .99 2400))
 </pre>
 <p>In all these cases, however, it's actually much faster to pass the
 filter to filter-sound:</p>
 <pre>
-(filter-sound (make-formant .99 2400))
+(<a class=quiet href="extsnd.html#sndfilter">filter-sound</a> (<a class=quiet href="clm.html#make-formant">make-formant</a> .99 2400))
 </pre>
 <p><b>formants</b> applies three formants in parallel.
 <b>moving-formant</b> moves a formant according to an envelope.
 <b>osc-formants</b> sets up any number of independently oscillating formants.
 </p>
 <pre>
-(map-chan (formants .99 900 .98 1800 .99 2700))
-(map-chan (moving-formant .99 '(0 1200 1 2400)))
-(map-chan (osc-formants .99 '(400 800 1200) '(400 800 1200) '(4 2 3)))
+(<a class=quiet href="extsnd.html#mapchan">map-chan</a> (formants .99 900 .98 1800 .99 2700))
+(<a class=quiet href="extsnd.html#mapchan">map-chan</a> (moving-formant .99 '(0 1200 1 2400)))
+(<a class=quiet href="extsnd.html#mapchan">map-chan</a> (osc-formants .99 '(400 800 1200) '(400 800 1200) '(4 2 3)))
 </pre>
 <pre>
   <em class=def>filtered-env</em> envelope
@@ -1115,17 +1120,17 @@ size.  The simpler one is:
 <pre>
 (add-hook! graph-hook 
 	   (lambda (snd chn y0 y1)
-	     (if (and (transform-graph? snd chn) 
-                      (= (transform-graph-type snd chn) graph-once))
+	     (if (and (<a class=quiet href="extsnd.html#sndffting">transform-graph?</a> snd chn) 
+                      (= (<a class=quiet href="extsnd.html#lfftstyle">transform-graph-type</a> snd chn) graph-once))
 		 (begin
-		   (set! (transform-size snd chn)
+		   (set! (<a class=quiet href="extsnd.html#lfftsize">transform-size</a> snd chn)
 			 (expt 2 (ceiling 
-				  (/ (log (- (right-sample snd chn) (left-sample snd chn))) 
+				  (/ (log (- (<a class=quiet href="extsnd.html#sndrightsample">right-sample</a> snd chn) (<a class=quiet href="extsnd.html#sndleftsample">left-sample</a> snd chn))) 
 				     (log 2.0)))))
-		   (set! (spectro-cutoff snd chn) (y-zoom-slider snd chn))))))
+		   (set! (<a class=quiet href="extsnd.html#spectrocutoff">spectro-cutoff</a> snd chn) (<a class=quiet href="extsnd.html#yzoomslider">y-zoom-slider</a> snd chn))))))
 
 </pre>
-<p>The <i>expt...</i> code is rounding the current window size (right-sample - left-sample)
+<p>The <i>expt...</i> code is rounding the current window size (<a class=quiet href="extsnd.html#sndrightsample">right-sample</a> - left-sample)
 up to the nearest power of 2. 
 </p>
 
@@ -1171,8 +1176,8 @@ that actually calls <a href="extsnd.html#sndprint">snd-print</a> instead:
 (define snd-out
   (make-soft-port
    (vector                      ;soft port is a vector of procedures:
-    (lambda (c) (snd-print c))  ;  procedure accepting one character for output 
-    (lambda (s) (snd-print s))  ;  procedure accepting a string for output 
+    (lambda (c) (<a class=quiet href="extsnd.html#sndprint">snd-print</a> c))  ;  procedure accepting one character for output 
+    (lambda (s) (<a class=quiet href="extsnd.html#sndprint">snd-print</a> s))  ;  procedure accepting a string for output 
     (lambda () #f)              ;  thunk for flushing output (not needed here)
     #f                          ;  thunk for getting one character (also not needed)
     (lambda () #f))             ;  thunk for closing port -- hmm should this go back to the previous?
@@ -1249,7 +1254,7 @@ The two in examp.scm are:
   <em class=def>first-mark-in-window-at-left</em>
   <em class=def><a name="exmarkloops">mark-loops</a></em>
 
-(bind-key (char-&gt;integer #\l) 0 
+(<a class=quiet href="extsnd.html#sndbindkey">bind-key</a> (char-&gt;integer #\l) 0 
           (lambda () 
             (first-mark-in-window-at-left)))
 </pre>
@@ -1281,9 +1286,9 @@ of ways. The fastest and simplest uses CLM's dot-product function:
 <pre>
 (define (region-rms n)
   "(region-rms n) -&gt; rms of region n's data (chan 0)"
-  (if (region? n)
-      (let* ((data (region-samples-&gt;vct 0 0 n)))
-	(sqrt (/ (dot-product data data) (vct-length data))))
+  (if (<a class=quiet href="extsnd.html#regionok">region?</a> n)
+      (let* ((data (<a class=quiet href="extsnd.html#sndregionsamples2vct">region-samples-&gt;vct</a> 0 0 n)))
+	(sqrt (/ (<a class=quiet href="clm.html#dot-product">dot-product</a> data data) (<a class=quiet href="extsnd.html#vctlength">vct-length</a> data))))
       (throw 'no-such-region (list "region-rms" n))))
 </pre>
 <p><b>replace-with-selection</b> replaces data at the cursor with the
@@ -1349,7 +1354,7 @@ Cross fade in frequency domain: <a href="#fadedoc">fade.scm</a><br>
   <em class=def>"vector synthesis"</em>	
   <em class=def>chained-dsps</em> beg dur #:rest dsps
 </pre>
-<p><b>expsrc</b> uses sampling rate conversion (the src gen) and granular synthesis (granulate)
+<p><b>expsrc</b> uses sampling rate conversion (the src gen) and granular synthesis (<a class=quiet href="clm.html#granulate">granulate</a>)
 to lengthen or shorten a sound without changing its pitch.  The same idea is used in the effects menu.
 <b>expsnd</b> is the same but the
 change follows an envelope.  In <b>cross-synthesis</b>, <i>cross-snd</i> is the index
@@ -1359,18 +1364,18 @@ is essentially the same idea, but drives the synthesis with white noise.
 Here are some sample calls:
 </p>
 <pre>
-(map-chan (echo .5 .5) 0 44100)
-(map-chan (zecho .5 .75 6 10.0) 0 65000)
-(map-chan (flecho .5 .9) 0 75000)
-(map-chan (ring-mod 100 '(0 0 1 0)))
-(map-chan (ring-mod 10 (list 0 0 1 (hz-&gt;radians 100))))
-(map-chan (am 440))
+(<a class=quiet href="extsnd.html#mapchan">map-chan</a> (echo .5 .5) 0 44100)
+(<a class=quiet href="extsnd.html#mapchan">map-chan</a> (zecho .5 .75 6 10.0) 0 65000)
+(<a class=quiet href="extsnd.html#mapchan">map-chan</a> (flecho .5 .9) 0 75000)
+(<a class=quiet href="extsnd.html#mapchan">map-chan</a> (ring-mod 100 '(0 0 1 0)))
+(<a class=quiet href="extsnd.html#mapchan">map-chan</a> (ring-mod 10 (list 0 0 1 (<a class=quiet href="clm.html#hz-&gt;radians">hz-&gt;radians</a> 100))))
+(<a class=quiet href="extsnd.html#mapchan">map-chan</a> (am 440))
 (hello-dentist 40.0 .1)
 (fp 1.0 .3 20)
-(map-chan (compand))
+(<a class=quiet href="extsnd.html#mapchan">map-chan</a> (compand))
 (expsnd '(0 1 2 .4))
 (expsnd '(0 .5 2 2.0))
-(map-chan (cross-synthesis 1 .5 128 6.0))
+(<a class=quiet href="extsnd.html#mapchan">map-chan</a> (cross-synthesis 1 .5 128 6.0))
 (voiced-&gt;unvoiced 1.0 256 2.0 2.0)
 (cnvtest 0 1 .1)
 </pre>
@@ -1556,11 +1561,11 @@ name might be map-selection.
 The code:
 </p>
 <pre>
-(bind-key (char-&gt;integer #\x) 4
+(<a class=quiet href="extsnd.html#sndbindkey">bind-key</a> (char-&gt;integer #\x) 4
 	  (lambda ()
-	    (if (selection?)
-		(prompt-in-minibuffer "selection eval:" eval-over-selection)
-		(report-in-minibuffer "no selection")))
+	    (if (<a class=quiet href="extsnd.html#selectionok">selection?</a>)
+		(<a class=quiet href="extsnd.html#sndpromptinminibuffer">prompt-in-minibuffer</a> "selection eval:" eval-over-selection)
+		(<a class=quiet href="extsnd.html#sndreportinminibuffer">report-in-minibuffer</a> "no selection")))
 	  #t)
 </pre>
 <p>binds the key sequence C-x x to a function that checks for an active selection,
@@ -1577,9 +1582,9 @@ a region).
 <pre>
 (for-each-sound-file
   (lambda (n) 
-    (if (&gt; (mus-sound-duration n) 10.0) 
-      (snd-print n)))
-  (sound-files-in-directory "."))
+    (if (&gt; (<a class=quiet href="extsnd.html#soundduration">mus-sound-duration</a> n) 10.0) 
+      (<a class=quiet href="extsnd.html#sndprint">snd-print</a> n)))
+  (<a class=quiet href="extsnd.html#soundfilesindirectory">sound-files-in-directory</a> "."))
 </pre>
 <p>We can use Guile's regexp support here to search for all .snd and .wav files:
 </p>
@@ -1640,7 +1645,7 @@ those hooks.
 and if that same sound is subsquently re-opened, restores the previous state.
 </p>
 
-<p><b>mix-channel</b> is a regularized version of the file mixing functions (mix and mix-sound).
+<p><b>mix-channel</b> is a regularized version of the file mixing functions (<a class=quiet href="extsnd.html#sndmix">mix</a> and mix-sound).
 It's first argument can be either a filename (a string) or a list containing the filename, the
 start point in the file, and (optionally) the channel of the file to mix:
 </p>
@@ -1680,7 +1685,7 @@ up and down moving ramps look symmetrical around a break point.
 
 <p>
 The two instruments in fade.scm perform frequency-domain cross-fades, that is, the
-cross-fade is handled by a bank of bandpass filters (formant generators).  The effect
+cross-fade is handled by a bank of bandpass filters (<a class=quiet href="clm.html#formant">formant</a> generators).  The effect
 is sometimes only slightly different from a normal (time-domain) cross-fade, but
 there are some interesting possibilities ("sound evaporation", etc).
 </p>
@@ -1715,16 +1720,16 @@ in fmv.scm, the simpler one being:
   (lambda (beg dur freq amp amp-env)
     (let ((v (make-fm-violin 
 	      freq amp 
-	      :amp-env (let ((e (make-env :envelope (or amp-env '(0 0 1 1 2 0)) 
+	      :amp-env (let ((e (<a class=quiet href="clm.html#make-env">make-env</a> :envelope (or amp-env '(0 0 1 1 2 0)) 
 					  :scaler amp 
 					  :end dur)))
 			 (lambda () (env e)))))
-	  (data (samples-&gt;vct beg dur)))
+	  (data (<a class=quiet href="extsnd.html#samples2vct">samples-&gt;vct</a> beg dur)))
       (do ((i 0 (1+ i)))
 	  ((= i dur))
-	(vct-set! data i (+ (vct-ref data i)
+	(<a class=quiet href="extsnd.html#vctset">vct-set!</a> data i (+ (<a class=quiet href="extsnd.html#vctref">vct-ref</a> data i)
 			    (v))))
-      (set-samples beg dur data))))
+      (<a class=quiet href="extsnd.html#sndsetsamples">set-samples</a> beg dur data))))
 </pre>
 <p>Here we are setting up an fm-violin generator (via make-fm-violin), then
 calling it <i>dur</i> times, mixing its output into the current data (this could
@@ -1809,23 +1814,23 @@ an ordinary editing function:
 <pre>
 (if (not (defined? '*output*)) (load-from-path "ws.scm"))
 (define* (clm-reverb-sound reverb-amount reverb #:optional (reverb-data '()) snd)
-  (let ((output (snd-tempnam))
-	(revout (snd-tempnam))
-	(len (+ (frames snd) (srate snd))))
-    (scale-by (- 1.0 reverb-amount) snd)
-    (save-sound-as output snd)
-    (undo 1 snd)
-    (scale-by reverb-amount snd)
-    (save-sound-as revout snd)
-    (undo 1 snd)
-    (set! *output* (continue-sample-&gt;file output))
-    (set! (mus-srate) (srate snd))
-    (set! *reverb* (make-file-&gt;sample revout))
+  (let ((output (<a class=quiet href="extsnd.html#sndtempnam">snd-tempnam</a>))
+	(revout (<a class=quiet href="extsnd.html#sndtempnam">snd-tempnam</a>))
+	(len (+ (<a class=quiet href="extsnd.html#sndframes">frames</a> snd) (<a class=quiet href="extsnd.html#sndsrate">srate</a> snd))))
+    (<a class=quiet href="extsnd.html#sndscaleby">scale-by</a> (- 1.0 reverb-amount) snd)
+    (<a class=quiet href="extsnd.html#sndsaveas">save-sound-as</a> output snd)
+    (<a class=quiet href="extsnd.html#sndundo">undo</a> 1 snd)
+    (<a class=quiet href="extsnd.html#sndscaleby">scale-by</a> reverb-amount snd)
+    (<a class=quiet href="extsnd.html#sndsaveas">save-sound-as</a> revout snd)
+    (<a class=quiet href="extsnd.html#sndundo">undo</a> 1 snd)
+    (set! *output* (<a class=quiet href="clm.html#continue-sample-&gt;file">continue-sample-&gt;file</a> output))
+    (set! (<a class=quiet href="grfsnd.html#mussrate">mus-srate</a>) (<a class=quiet href="extsnd.html#sndsrate">srate</a> snd))
+    (set! *reverb* (<a class=quiet href="clm.html#make-file-&gt;sample">make-file-&gt;sample</a> revout))
     (apply reverb reverb-data)
-    (mus-close *reverb*)
-    (mus-close *output*)
+    (<a class=quiet href="clm.html#mus-close">mus-close</a> *reverb*)
+    (<a class=quiet href="clm.html#mus-close">mus-close</a> *output*)
     (delete-file revout)
-    (set! (samples 0 len snd #f #f #f 0 #f #t) output)))
+    (set! (<a class=quiet href="extsnd.html#sndsamples">samples</a> 0 len snd #f #f #f 0 #f #t) output)))
 
 ;;; (clm-reverb-sound .1 (lambda (dur) (jc-reverb #f 1.0 #f dur)))
 </pre>
@@ -1916,9 +1921,9 @@ functions in examp.scm and scattered around the documentation.
 between the leftmost marks in <i>snd</i>.
 </p>
 <pre>
-(bind-key (char-&gt;integer #\m) 0 
+(<a class=quiet href="extsnd.html#sndbindkey">bind-key</a> (char-&gt;integer #\m) 0 
 	  (lambda ()
-	    (prompt-in-minibuffer "mark eval:" eval-between-marks)))
+	    (<a class=quiet href="extsnd.html#sndpromptinminibuffer">prompt-in-minibuffer</a> "mark eval:" eval-between-marks)))
 </pre>
 <p><b>snap-marks</b> places marks at the start and end of the current selection.
 </p><p><b>define-selection-via-marks</b> selects the portion between the given marks.
@@ -1974,10 +1979,10 @@ track amp env is interpreted as a panning envelope.
 To tie this into C-x C-q, in place of the default "mix" function,
 </p>
 <pre>
-(bind-key (char-&gt;integer #\q) 4 ; C-q
+(<a class=quiet href="extsnd.html#sndbindkey">bind-key</a> (char-&gt;integer #\q) 4 ; C-q
 	  (lambda ()
-	    (prompt-in-minibuffer "mix:" (lambda (str) ; use pan-mix at cursor
-					   (<em class=red>pan-mix</em> str (or (cursor) 0)) #f #t)))
+	    (<a class=quiet href="extsnd.html#sndpromptinminibuffer">prompt-in-minibuffer</a> "mix:" (lambda (str) ; use pan-mix at cursor
+					   (<em class=red>pan-mix</em> str (or (<a class=quiet href="extsnd.html#sndcursor">cursor</a>) 0)) #f #t)))
 	  #t  ; an extended (C-x) command
           "C-x C-q")
 </pre>
@@ -2023,11 +2028,11 @@ If the 'chan' arg is #t, all channels are saved.
 mixes happen more quickly):
 </p>
 <pre>
-:<em class=typing>(retempo-track (track 1) 2.0)</em>
+:<em class=typing>(retempo-track (<a class=quiet href="extsnd.html#track">track</a> 1) 2.0)</em>
 <em class=listener>(1500 7770)</em>
-:<em class=typing>(mix-position 0)</em>
+:<em class=typing>(<a class=quiet href="extsnd.html#sndmixposition">mix-position</a> 0)</em>
 <em class=listener>1500</em>
-:<em class=typing>(mix-position 1)</em>
+:<em class=typing>(<a class=quiet href="extsnd.html#sndmixposition">mix-position</a> 1)</em>
 <em class=listener>7770</em>
 :<em class=typing>(+ 1500 (* .5 (- 14039 1500))) ; 14039 is the former mix 1 begin time (see above)</em>
 <em class=listener>7769.5</em>
@@ -2063,7 +2068,7 @@ faster.
       (lambda (inval)
         (<em class=red>moog-filter</em> gen inval))))
 
-  (map-chan (moog 1200.0 .7))
+  (<a class=quiet href="extsnd.html#mapchan">map-chan</a> (moog 1200.0 .7))
 </pre>
 <p>The Ruby version of this is in examp.rb.
 </p>
@@ -2132,7 +2137,7 @@ determines whether these envelopes are being saved.  The procedure
 </p>
 <pre>
 (define (peak-env-info-file-name snd chn)	
-  (format #f "~A/~A-peaks-~D" save-peak-env-info-directory (short-file-name snd) chn))
+  (format #f "~A/~A-peaks-~D" save-peak-env-info-directory (<a class=quiet href="extsnd.html#shortfilename">short-file-name</a> snd) chn))
 </pre>
 <p>determines the saved peak env file name; in the default
 case, it looks for the directory ~/peaks, but obviously this
@@ -2158,8 +2163,8 @@ To set up the keyboard
 as a kind of extended piano, we could map keys to sounds:
 </p>
 <pre>
-(bind-key (char-&gt;integer #\o) 0 (lambda () (play "oboe.snd")))
-(bind-key (char-&gt;integer #\p) 0 (lambda () (play "pistol.snd")))
+(<a class=quiet href="extsnd.html#sndbindkey">bind-key</a> (char-&gt;integer #\o) 0 (lambda () (<a class=quiet href="extsnd.html#sndplay">play</a> "oboe.snd")))
+(<a class=quiet href="extsnd.html#sndbindkey">bind-key</a> (char-&gt;integer #\p) 0 (lambda () (<a class=quiet href="extsnd.html#sndplay">play</a> "pistol.snd")))
 </pre>
 <p>The various play hooks can be used to play sounds over and over. 
 </p>
@@ -2168,8 +2173,8 @@ as a kind of extended piano, we could map keys to sounds:
   <em class=def><A NAME="explayuntilcg">play-until-c-g</A></em>
   <em class=def><A NAME="explayregionforever">play-region-forever</a></em> region
 
-(bind-key (char-&gt;integer #\p) 0 (lambda (n) (play-often (max 1 n))))
-(bind-key (char-&gt;integer #\r) 0 (lambda (n) (play-region-forever (max 0 n))))
+(<a class=quiet href="extsnd.html#sndbindkey">bind-key</a> (char-&gt;integer #\p) 0 (lambda (n) (play-often (max 1 n))))
+(<a class=quiet href="extsnd.html#sndbindkey">bind-key</a> (char-&gt;integer #\r) 0 (lambda (n) (play-region-forever (max 0 n))))
 </pre>
 <p>Now C-u 31 p plays the current sound 31 times; C-u 3 r plays region 3 until we type C-g.
 <b>play-often</b> uses stop-playing-hook, and <b>play-region-forever</b> uses stop-playing-region-hook.
@@ -2178,7 +2183,7 @@ in "real-time".  <b>play-fun</b> starts and stops the DAC, <i>ampit</i> and <i>a
 fill up the audio buffer with data.
 </p>
 <pre>
-(play-fun (ampit (frames) 2.0) 256)
+(play-fun (ampit (<a class=quiet href="extsnd.html#sndframes">frames</a>) 2.0) 256)
 </pre>
 <p>scales sound 0's samples by 2 and sends them to the DAC. (These three functions are now obsolete).
 More useful is:</p>
@@ -2278,22 +2283,22 @@ pvoc.scm also contains a few examples of using the CLM phase-vocoder generator:
 <pre>
 (define test-pv-4
   (lambda (gate)
-    (let ((pv (make-phase-vocoder #f
+    (let ((pv (<a class=quiet href="clm.html#make-phase-vocoder">make-phase-vocoder</a> #f
 				  512 4 128 1.0
 				  #f ;no change to analysis
 				  (lambda (v)
-				    (let ((N (mus-length v)))
+				    (let ((N (<a class=quiet href="clm.html#mus-length">mus-length</a> v)))
 				      (do ((i 0 (1+ i)))
 					  ((= i N))
-					(if (&lt; (vct-ref (pv-amp-increments v) i) gate)
-					    (vct-set! (pv-amp-increments v) i 0.0)))
+					(if (&lt; (<a class=quiet href="extsnd.html#vctref">vct-ref</a> (pv-amp-increments v) i) gate)
+					    (<a class=quiet href="extsnd.html#vctset">vct-set!</a> (pv-amp-increments v) i 0.0)))
 				      #t))
 				  #f ;no change to synthesis))
-	  (reader (make-sample-reader 0)))
-      (map-chan (lambda (val)
-		  (phase-vocoder pv (lambda (dir) 
+	  (reader (<a class=quiet href="extsnd.html#makesamplereader">make-sample-reader</a> 0)))
+      (<a class=quiet href="extsnd.html#mapchan">map-chan</a> (lambda (val)
+		  (<a class=quiet href="clm.html#phase-vocoder">phase-vocoder</a> pv (lambda (dir) 
 				      (reader)))))
-      (free-sample-reader reader))))
+      (<a class=quiet href="extsnd.html#freesamplereader">free-sample-reader</a> reader))))
 </pre>
 <p>sets up a phase-vocoder generator whose edit function is squelching soft partials.
 In this case, the input function is reading the currently selected channel.  The fastest
@@ -2311,7 +2316,7 @@ the gate value will not be synthesized), <i>hoffset</i> is a pitch offset in Hz.
 color objects.
 </p>
 <pre>
-(define snow (make-color 1.00 0.98 0.98))
+(define snow (<a class=quiet href="extsnd.html#makecolor">make-color</a> 1.00 0.98 0.98))
 </pre>
 <p>is taken from the line</p>
 <pre>
@@ -2548,11 +2553,11 @@ These can be edited to move the mark, or deleted to delete the mark.
 </p><p><b>select-file</b> starts a file selection dialog, running <i>func</i> if a file is selected:
 </p>
 <pre>
- (add-to-menu 0 "Insert File" 
+ (<a class=quiet href="extsnd.html#sndaddtomenu">add-to-menu</a> 0 "Insert File" 
    (lambda () 
      (select-file 
        (lambda (filename)
-         (insert-sound filename))
+         (<a class=quiet href="extsnd.html#sndinsertfile">insert-sound</a> filename))
        "Insert File" "." "*" "file will be inserted at cursor")))
 </pre>
 <p><b>snd-clock-icon</b> replaces Snd's hourglass with a clock.
@@ -2566,9 +2571,9 @@ mouse location in that channel.
 </p>
 <pre>
 (make-sound-box "sounds"
-		(list-ref (main-widgets) 3)
+		(list-ref (<a class=quiet href="extsnd.html#mainwidgets">main-widgets</a>) 3)
 		(lambda (file) 
-                  (snd-print file))
+                  (<a class=quiet href="extsnd.html#sndprint">snd-print</a> file))
 		peak-env-info-filename ; this points to ~/peaks in my case
 		(list "oboe.snd" "pistol.snd" "cardinal.snd" "storm.snd")
 		'())
@@ -2640,7 +2645,7 @@ although you have to give the sound index explicitly:
 </p>
 <pre>
 (define wid2 (make-variable-display "do-loop" "x" 'spectrum))
-(set! (show-transform-peaks (car wid2)) #t)
+(set! (<a class=quiet href="extsnd.html#showfftpeaks">show-transform-peaks</a> (car wid2)) #t)
 </pre>
 <p>Each graph or spectrum display is placed in its own pane (this is a desperate
 kludge), whereas all the others are ordered vertically in a single pane.
@@ -2660,11 +2665,11 @@ putting it in a text display:
   (let* ((beg 0)
 	 (dur 1000)
 	 (end (+ beg dur))
-	 (osc (make-oscil 440.0)))
+	 (osc (<a class=quiet href="clm.html#make-oscil">make-oscil</a> 440.0)))
     (do ((i beg (1+ i)))
 	((= i end))
       (variable-display i wid1)
-      (oscil (variable-display osc wid2) 0.0))))
+      (<a class=quiet href="clm.html#oscil">oscil</a> (variable-display osc wid2) 0.0))))
 (simp)
 </pre>
 <p>variable-display doesn't work within the run macro, but if you're debugging
@@ -2938,44 +2943,44 @@ taken from SAMBOX.BIL, November 1984):</p>
 </pre>
 <p>The CLM version of this is:</p>
 <pre>
-(definstrument simp (start-time duration frequency amplitude
+(<a class=quiet href="clm.html#definstrument">definstrument</a> simp (start-time duration frequency amplitude
                      &amp;optional (amp-env '(0 0 50 1 100 0)))
-  (multiple-value-bind (beg end) (times-&gt;samples start-time duration)
-    (let ((s (make-oscil frequency))
-          (amp (make-env amp-env :scaler amplitude :duration duration)))
+  (multiple-value-bind (beg end) (<a class=quiet href="clm.html#times-&gt;samples">times-&gt;samples</a> start-time duration)
+    (let ((s (<a class=quiet href="clm.html#make-oscil">make-oscil</a> frequency))
+          (amp (<a class=quiet href="clm.html#make-env">make-env</a> amp-env :scaler amplitude :duration duration)))
       (run
        (loop for i from beg below end do
-         (outa i (* (env amp) (oscil s))))))))
+         (<a class=quiet href="clm.html#outa">outa</a> i (* (env amp) (<a class=quiet href="clm.html#oscil">oscil</a> s))))))))
 </pre>
 <p>
 In CLM, the fm-violin became (fm.html, 1989):</p>
 <pre>
-(definstrument violin (beg end frequency amplitude fm-index)
-  (let* ((frq-scl (in-hz frequency))
+(<a class=quiet href="clm.html#definstrument">definstrument</a> violin (beg end frequency amplitude fm-index)
+  (let* ((frq-scl (<a class=quiet href="grfsnd.html#inhz">in-hz</a> frequency))
          (maxdev (* frq-scl fm-index))
          (index1 (* maxdev (/ 5.0 (log frequency))))
          (index2 (* maxdev 3.0 (/ (- 8.5 (log frequency)) (+ 3.0 (/ frequency 1000)))))
          (index3 (* maxdev (/ 4.0 (sqrt frequency))))
-         (carrier (make-oscil frequency))
-         (fmosc1 (make-oscil frequency))
-         (fmosc2 (make-oscil (* 3 frequency)))
-         (fmosc3 (make-oscil (* 4 frequency)))
-         (ampf  (make-env '(0 0 25 1 75 1 100 0) :scaler amplitude))
-         (indf1 (make-env '(0 1 25 .4 75 .6 100 0) :scaler index1))
-         (indf2 (make-env '(0 1 25 .4 75 .6 100 0) :scaler index2))
-         (indf3 (make-env '(0 1 25 .4 75 .6 100 0) :scaler index3))
-         (pervib (make-triangle-wave :frequency 5 :amplitude (* .0025 frq-scl)))
+         (carrier (<a class=quiet href="clm.html#make-oscil">make-oscil</a> frequency))
+         (fmosc1 (<a class=quiet href="clm.html#make-oscil">make-oscil</a> frequency))
+         (fmosc2 (<a class=quiet href="clm.html#make-oscil">make-oscil</a> (* 3 frequency)))
+         (fmosc3 (<a class=quiet href="clm.html#make-oscil">make-oscil</a> (* 4 frequency)))
+         (ampf  (<a class=quiet href="clm.html#make-env">make-env</a> '(0 0 25 1 75 1 100 0) :scaler amplitude))
+         (indf1 (<a class=quiet href="clm.html#make-env">make-env</a> '(0 1 25 .4 75 .6 100 0) :scaler index1))
+         (indf2 (<a class=quiet href="clm.html#make-env">make-env</a> '(0 1 25 .4 75 .6 100 0) :scaler index2))
+         (indf3 (<a class=quiet href="clm.html#make-env">make-env</a> '(0 1 25 .4 75 .6 100 0) :scaler index3))
+         (pervib (<a class=quiet href="clm.html#make-triangle-wave">make-triangle-wave</a> :frequency 5 :amplitude (* .0025 frq-scl)))
          (ranvib (make-randi :frequency 16 :amplitude (* .005 frq-scl)))
          (vib 0.0))
     (run
      (loop for i from beg to end do
-       (setf vib (+ (triangle-wave pervib) (randi ranvib)))
-       (outa i (* (env ampf)
-                  (oscil carrier
+       (setf vib (+ (<a class=quiet href="clm.html#triangle-wave">triangle-wave</a> pervib) (randi ranvib)))
+       (<a class=quiet href="clm.html#outa">outa</a> i (* (env ampf)
+                  (<a class=quiet href="clm.html#oscil">oscil</a> carrier
                          (+ vib 
-                            (* (env indf1) (oscil fmosc1 vib))
-                            (* (env indf2) (oscil fmosc2 (* 3.0 vib)))
-                            (* (env indf3) (oscil fmosc3 (* 4.0 vib)))))))))))
+                            (* (env indf1) (<a class=quiet href="clm.html#oscil">oscil</a> fmosc1 vib))
+                            (* (env indf2) (<a class=quiet href="clm.html#oscil">oscil</a> fmosc2 (* 3.0 vib)))
+                            (* (env indf3) (<a class=quiet href="clm.html#oscil">oscil</a> fmosc3 (* 4.0 vib)))))))))))
 </pre>
 <p>or in its actual (non-simplified) form:
 </p>
@@ -3000,7 +3005,7 @@ In CLM, the fm-violin became (fm.html, 1989):</p>
     (push val result)
     (nreverse result)))
 
-(definstrument fm-violin 
+(<a class=quiet href="clm.html#definstrument">definstrument</a> fm-violin 
   (startime dur frequency amplitude &amp;key
 	    (fm-index 1.0)
 	    (amp-env '(0 0  25 1  75 1  100 0))
@@ -3030,7 +3035,7 @@ In CLM, the fm-violin became (fm.html, 1989):</p>
       (setf frequency (clm-cerror "440.0?" 440.0 #'numberp "frequency = ~A?" frequency)))
   (let* ((beg (floor (* startime *srate*)))
 	 (end (+ beg (floor (* dur *srate*))))
-	 (frq-scl (hz-&gt;radians frequency))
+	 (frq-scl (<a class=quiet href="clm.html#hz-&gt;radians">hz-&gt;radians</a> frequency))
 	 (modulate (not (zerop fm-index)))
 	 (maxdev (* frq-scl fm-index))
 	 (vln (not (eq index-type :cello)))
@@ -3061,34 +3066,34 @@ In CLM, the fm-violin became (fm.html, 1989):</p>
 	 
 	 (norm (or (and easy-case modulate 1.0) index1))
 	 
-	 (carrier (make-oscil frequency))
-	 (fmosc1  (and modulate (make-oscil (* fm1-rat frequency))))
-	 (fmosc2  (and modulate (or easy-case (make-oscil (* fm2-rat frequency)))))
-	 (fmosc3  (and modulate (or easy-case (make-oscil (* fm3-rat frequency)))))
-	 (ampf  (make-env 
+	 (carrier (<a class=quiet href="clm.html#make-oscil">make-oscil</a> frequency))
+	 (fmosc1  (and modulate (<a class=quiet href="clm.html#make-oscil">make-oscil</a> (* fm1-rat frequency))))
+	 (fmosc2  (and modulate (or easy-case (<a class=quiet href="clm.html#make-oscil">make-oscil</a> (* fm2-rat frequency)))))
+	 (fmosc3  (and modulate (or easy-case (<a class=quiet href="clm.html#make-oscil">make-oscil</a> (* fm3-rat frequency)))))
+	 (ampf  (<a class=quiet href="clm.html#make-env">make-env</a> 
                   (if denoise
                        (reduce-amplitude-quantization-noise amp-env dur amplitude denoise-dur denoise-amp) 
                      amp-env)
 	          amplitude :base base :duration dur))
-	 (indf1 (and modulate (make-env fm1-env norm :duration dur)))
-	 (indf2 (and modulate (or easy-case (make-env fm2-env index2 :duration dur))))
-	 (indf3 (and modulate (or easy-case (make-env fm3-env index3 :duration dur))))
-	 (frqf (make-env gliss-env (* glissando-amount frq-scl) :duration dur))
-	 (pervib (make-triangle-wave periodic-vibrato-rate (* periodic-vibrato-amplitude frq-scl)))
-	 (ranvib (make-rand-interp random-vibrato-rate (* random-vibrato-amplitude frq-scl)))
+	 (indf1 (and modulate (<a class=quiet href="clm.html#make-env">make-env</a> fm1-env norm :duration dur)))
+	 (indf2 (and modulate (or easy-case (<a class=quiet href="clm.html#make-env">make-env</a> fm2-env index2 :duration dur))))
+	 (indf3 (and modulate (or easy-case (<a class=quiet href="clm.html#make-env">make-env</a> fm3-env index3 :duration dur))))
+	 (frqf (<a class=quiet href="clm.html#make-env">make-env</a> gliss-env (* glissando-amount frq-scl) :duration dur))
+	 (pervib (<a class=quiet href="clm.html#make-triangle-wave">make-triangle-wave</a> periodic-vibrato-rate (* periodic-vibrato-amplitude frq-scl)))
+	 (ranvib (<a class=quiet href="clm.html#make-rand-interp">make-rand-interp</a> random-vibrato-rate (* random-vibrato-amplitude frq-scl)))
 	 (fm-noi (if (and (/= 0.0 noise-amount)
 			  (null frobber))
-		     (make-rand noise-freq (* pi noise-amount))))
+		     (<a class=quiet href="clm.html#make-rand">make-rand</a> noise-freq (* pi noise-amount))))
 	 (ind-noi (if (and (/= 0.0 ind-noise-amount) (/= 0.0 ind-noise-freq))
-		      (make-rand-interp ind-noise-freq ind-noise-amount)))
+		      (<a class=quiet href="clm.html#make-rand-interp">make-rand-interp</a> ind-noise-freq ind-noise-amount)))
 	 (amp-noi (if (and (/= 0.0 amp-noise-amount) (/= 0.0 amp-noise-freq))
-		      (make-rand-interp amp-noise-freq amp-noise-amount)))
+		      (<a class=quiet href="clm.html#make-rand-interp">make-rand-interp</a> amp-noise-freq amp-noise-amount)))
 	 (frb-env (if (and (/= 0.0 noise-amount) frobber)
-		      (make-env (make-frobber-function startime (+ startime dur) frobber) :duration dur
+		      (<a class=quiet href="clm.html#make-env">make-env</a> (make-frobber-function startime (+ startime dur) frobber) :duration dur
 				:base 0	:scaler (* two-pi noise-amount))))
 	 (vib 0.0) 
 	 (modulation 0.0)
-	 (loc (make-locsig :degree (or degree degrees (random 90.0)) :reverb reverb-amount :distance distance))
+	 (loc (<a class=quiet href="clm.html#make-locsig">make-locsig</a> :degree (or degree degrees (random 90.0)) :reverb reverb-amount :distance distance))
 	 (fuzz 0.0)
 	 (ind-fuzz 1.0)
 	 (amp-fuzz 1.0))
@@ -3096,23 +3101,23 @@ In CLM, the fm-violin became (fm.html, 1989):</p>
      (loop for i from beg to end do
        (if (/= 0.0 noise-amount)
 	   (if (null frobber)
-	       (setf fuzz (rand fm-noi))
+	       (setf fuzz (<a class=quiet href="clm.html#rand">rand</a> fm-noi))
 	     (setf fuzz (env frb-env))))
-       (setf vib (+ (env frqf) (triangle-wave pervib) (rand-interp ranvib)))
-       (if ind-noi (setf ind-fuzz (+ 1.0 (rand-interp ind-noi))))
-       (if amp-noi (setf amp-fuzz (+ 1.0 (rand-interp amp-noi))))
+       (setf vib (+ (env frqf) (<a class=quiet href="clm.html#triangle-wave">triangle-wave</a> pervib) (<a class=quiet href="clm.html#rand-interp">rand-interp</a> ranvib)))
+       (if ind-noi (setf ind-fuzz (+ 1.0 (<a class=quiet href="clm.html#rand-interp">rand-interp</a> ind-noi))))
+       (if amp-noi (setf amp-fuzz (+ 1.0 (<a class=quiet href="clm.html#rand-interp">rand-interp</a> amp-noi))))
        (if modulate
 	   (if easy-case
 	       (setf modulation
 		 (* (env indf1) 
-		    (polynomial coeffs (oscil fmosc1 vib)))) ;(* vib fm1-rat)??
+		    (<a class=quiet href="clm.html#polynomial">polynomial</a> coeffs (<a class=quiet href="clm.html#oscil">oscil</a> fmosc1 vib)))) ;(* vib fm1-rat)??
 	     (setf modulation
-	       (+ (* (env indf1) (oscil fmosc1 (+ (* fm1-rat vib) fuzz)))
-		  (* (env indf2) (oscil fmosc2 (+ (* fm2-rat vib) fuzz)))
-		  (* (env indf3) (oscil fmosc3 (+ (* fm3-rat vib) fuzz)))))))
-       (locsig loc i
+	       (+ (* (env indf1) (<a class=quiet href="clm.html#oscil">oscil</a> fmosc1 (+ (* fm1-rat vib) fuzz)))
+		  (* (env indf2) (<a class=quiet href="clm.html#oscil">oscil</a> fmosc2 (+ (* fm2-rat vib) fuzz)))
+		  (* (env indf3) (<a class=quiet href="clm.html#oscil">oscil</a> fmosc3 (+ (* fm3-rat vib) fuzz)))))))
+       (<a class=quiet href="clm.html#locsig">locsig</a> loc i
 	     (* (env ampf) amp-fuzz
-		(oscil carrier (+ vib (* ind-fuzz modulation)))))))))
+		(<a class=quiet href="clm.html#oscil">oscil</a> carrier (+ vib (* ind-fuzz modulation)))))))))
 </pre>
 <p>which is very similar to the Scheme version (v.scm).
 It's basically setting up several parallel modulators of one carrier (see <a href="fm.html">fm.html</a>
@@ -3380,13 +3385,13 @@ Kalle Olavi Niemitalo came up with this Scheme/Guile replacement:
 </p>
 <pre>
 (define* (with-sound-helper thunk #:key (srate 22050) (explode #f))
-  (let ((old-srate (mus-srate)))
+  (let ((old-srate (<a class=quiet href="grfsnd.html#mussrate">mus-srate</a>)))
     (dynamic-wind 
       (lambda () 
-        (set! (mus-srate) srate))
+        (set! (<a class=quiet href="grfsnd.html#mussrate">mus-srate</a>) srate))
       thunk
       (lambda () 
-        (set! (mus-srate) old-srate)))))
+        (set! (<a class=quiet href="grfsnd.html#mussrate">mus-srate</a>) old-srate)))))
 
 (defmacro with-sound (args . body)
   `(with-sound-helper (lambda () ,@body)
@@ -3397,11 +3402,11 @@ The version in ws.scm is simply an amplification of this code.
 The global variables that parallel CLM's *clm-...* are:
 </p>
 <pre>
-  <em class=def>*clm-srate*</em> (default-output-srate)        ; default srate
+  <em class=def>*clm-srate*</em> (<a class=quiet href="extsnd.html#defaultoutputsrate">default-output-srate</a>)        ; default srate
   <em class=def>*clm-file-name*</em> "test.snd"                ; default output file name
-  <em class=def>*clm-channels*</em> (default-output-chans)     ; default number of output chans
-  <em class=def>*clm-data-format*</em> (default-output-format) ; default output data format
-  <em class=def>*clm-header-type*</em> (default-output-type)   ; default output header type
+  <em class=def>*clm-channels*</em> (<a class=quiet href="extsnd.html#defaultoutputchans">default-output-chans</a>)     ; default number of output chans
+  <em class=def>*clm-data-format*</em> (<a class=quiet href="extsnd.html#defaultoutputformat">default-output-format</a>) ; default output data format
+  <em class=def>*clm-header-type*</em> (<a class=quiet href="extsnd.html#defaultoutputtype">default-output-type</a>)   ; default output header type
   <em class=def>*clm-delete-reverb*</em> #f                    ; should reverb stream be deleted?
   <em class=def>*clm-verbose*</em> #f                          ; currently unused
   <em class=def>*clm-play*</em> #f                             ; should the output be played at the end
@@ -3448,7 +3453,7 @@ opened (corresponding to CLM's *reverb*).  So the cooperating instrument code is
       (lambda ()
         (do ((i start (1+ i)))
             ((= i end))
-          (outa i ... *output*))))))
+          (<a class=quiet href="clm.html#outa">outa</a> i ... *output*))))))
 </pre>
 <p>which parallels the Common Lisp CLM (change the loop statement to a do statement,
 add the lambda wrapper (needed by the run macro unfortunately),
@@ -3462,7 +3467,7 @@ mus-mix with *output*:
 <pre>
 (with-sound () 
   (fm-violin 0 .1 440 .1) 
-  (mus-mix *output* "oboe.snd") 
+  (<a class=quiet href="grfsnd.html#musmix">mus-mix</a> *output* "oboe.snd") 
   (fm-violin .1 .1 660 .1))
 </pre>
 <p>To continue adding notes to an existing file, set <i>continue-old-file</i>:
@@ -3601,21 +3606,21 @@ an upward ramp and a downward ramp, then zips them together:
 </p>
 <pre>
 (define (ramp-test)
-  (let ((data (make-vct 10000)))
-    (new-sound "new-0.snd")
+  (let ((data (<a class=quiet href="extsnd.html#makevct">make-vct</a> 10000)))
+    (<a class=quiet href="extsnd.html#sndnew">new-sound</a> "new-0.snd")
     (do ((i 0 (1+ i))) ((= i 10000)) 
-      (vct-set! data i (* i .0001)))
-    (vct-&gt;samples 0 10000 data 0)
-    (new-sound "new-1.snd")
+      (<a class=quiet href="extsnd.html#vctset">vct-set!</a> data i (* i .0001)))
+    (<a class=quiet href="extsnd.html#vct2samples">vct-&gt;samples</a> 0 10000 data 0)
+    (<a class=quiet href="extsnd.html#sndnew">new-sound</a> "new-1.snd")
     (do ((i 0 (1+ i))) ((= i 10000)) 
-      (vct-set! data i (- 1.0 (* i .0001))))
-    (vct-&gt;samples 0 10000 data 1)
-    (let* ((dur (frames))
-	   (zp (<em class=red>make-zipper</em> (let ((e (make-env '(0 0 1 1) :end dur)))
+      (<a class=quiet href="extsnd.html#vctset">vct-set!</a> data i (- 1.0 (* i .0001))))
+    (<a class=quiet href="extsnd.html#vct2samples">vct-&gt;samples</a> 0 10000 data 1)
+    (let* ((dur (<a class=quiet href="extsnd.html#sndframes">frames</a>))
+	   (zp (<em class=red>make-zipper</em> (let ((e (<a class=quiet href="clm.html#make-env">make-env</a> '(0 0 1 1) :end dur)))
 			      (lambda () (env e)))))
-	  (reader0 (make-sample-reader 0 0 0))
-	  (reader1 (make-sample-reader 0 1 0)))
-      (map-chan (lambda (val) (<em class=red>zipper</em> zp reader0 reader1))))))
+	  (reader0 (<a class=quiet href="extsnd.html#makesamplereader">make-sample-reader</a> 0 0 0))
+	  (reader1 (<a class=quiet href="extsnd.html#makesamplereader">make-sample-reader</a> 0 1 0)))
+      (<a class=quiet href="extsnd.html#mapchan">map-chan</a> (lambda (val) (<em class=red>zipper</em> zp reader0 reader1))))))
 </pre>
 <center><img src="zramp.png" alt="zipper ramp output"></center>
 <p>Needless to say, this is not intended to be a suave, romantic gesture!
@@ -3624,7 +3629,7 @@ an upward ramp and a downward ramp, then zips them together:
 
 <table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2><A NAME="extsndvarexpl">A Note on Scheme variables in Snd</a></h2></td></tr></table>
 
-<p>At first glance, Snd's use of functions for nearly all variable accesses, i.e. <code>(listener-prompt)</code>
+<p>At first glance, Snd's use of functions for nearly all variable accesses, i.e. <code>(<a class=quiet href="extsnd.html#listenerprompt">listener-prompt</a>)</code>
 rather than the simpler <code>listener-prompt</code>, seems unmotivated.  The following little
 program defines "counter" as a scheme variable, accessible in C:
 </p>
@@ -3851,7 +3856,7 @@ wrong-type-arg
 &gt;asdf
 unbound-variable: (#f "Unbound variable: ~S" (asdf) #f)
 unbound-variable
-&gt;(exit)
+&gt;(<a class=quiet href="extsnd.html#sndexit">exit</a>)
 </pre>
 <p>But now the <i>scm_eval_str0</i> use generates a compiler complaint about type
 mismatches (though it works).  We can fix that by:
@@ -3983,22 +3988,22 @@ translation of Jezar Wakefield's freeverb reverberator:
   filter
   (feedback 0.0))
   
-(defmacro fcomb (comb input)
-  `(delay (fcomb-delay ,comb)
-	  (+ ,input (* (one-zero (fcomb-filter ,comb)
-				 (tap (fcomb-delay ,comb)))
+(defmacro fcomb (<a class=quiet href="clm.html#comb">comb</a> input)
+  `(<a class=quiet href="clm.html#delay">delay</a> (fcomb-delay ,comb)
+	  (+ ,input (* (<a class=quiet href="clm.html#one-zero">one-zero</a> (fcomb-filter ,comb)
+				 (<a class=quiet href="clm.html#tap">tap</a> (fcomb-delay ,comb)))
 		       (fcomb-feedback ,comb)))))
 </pre>
 <p>An fcomb generator is then created (in freeverb) via:
 </p>
 <pre>
-(make-fcomb :delay (make-delay len)
+(make-fcomb :delay (<a class=quiet href="clm.html#make-delay">make-delay</a> len)
             :feedback room-decay-val
-            :filter (make-one-zero :a0 (- 1.0 dmp) :a1 dmp))
+            :filter (<a class=quiet href="clm.html#make-one-zero">make-one-zero</a> :a0 (- 1.0 dmp) :a1 dmp))
 </pre>
 <p>and called at run-time with:</p>
 <pre>
-(fcomb (aref combs c j) (frame-ref in c))
+(fcomb (aref combs c j) (<a class=quiet href="clm.html#frame-ref">frame-ref</a> in c))
 </pre>
 <p>(In this case we have a two dimensional array of these generators).  This, of course,
 does not make fcomb a full-fledged generator like oscil -- it doesn't
@@ -4009,15 +4014,15 @@ along the lines of:
 <pre> 
 (in-package :clm)
 
-(defclass fcomb (comb one-zero) ())
+(defclass fcomb (<a class=quiet href="clm.html#comb">comb</a> one-zero) ())
 
 (defmethod fcomb? ((g fcomb)) t)
 (defmethod fcomb? ((g t)) nil)
 
 (defun fcomb (gen input)
-  (delay gen
-	 (+ input (* (one-zero gen (tap gen))
-		     (mus-feedback gen)))))
+  (<a class=quiet href="clm.html#delay">delay</a> gen
+	 (+ input (* (<a class=quiet href="clm.html#one-zero">one-zero</a> gen (<a class=quiet href="clm.html#tap">tap</a> gen))
+		     (<a class=quiet href="clm.html#mus-feedback">mus-feedback</a> gen)))))
 
 (def-optkey-fun make-fcomb (length feedback a0 a1)
   (make-instance 'fcomb :loc 0 :xscl feedback :size length :zsize length :zdly nil
@@ -4027,7 +4032,7 @@ along the lines of:
 (defmethod print-object ((d fcomb) stream)
   (format stream "#&lt;(fcomb: size: ~A, loc: ~A, feedback: ~A, a0: ~A, a1: ~A, x1: ~A, line: ~A&gt;"
 	  (dly-size d) (dly-loc d) (dly-xscl d)
-	  (mus-a0 d) (mus-a1 d) (mus-x1 d)
+	  (<a class=quiet href="clm.html#mus-a0">mus-a0</a> d) (<a class=quiet href="clm.html#mus-a1">mus-a1</a> d) (mus-x1 d)
 	  (prettified-array (dly-line d)))))
 </pre>
 <p>And to get the
@@ -4037,13 +4042,13 @@ In CLM-in-Scheme, the first (simpler) fcomb above might be:
 </p>
 <pre>
 (define (fcomb gen input)
-  (delay (car gen)
-	 (+ input (* (one-zero (cadr gen) (tap (car gen)))
+  (<a class=quiet href="clm.html#delay">delay</a> (car gen)
+	 (+ input (* (<a class=quiet href="clm.html#one-zero">one-zero</a> (cadr gen) (<a class=quiet href="clm.html#tap">tap</a> (car gen)))
 		     (caddr gen)))))
 
 (define (make-fcomb length feedback a0 a1)
-  (list (make-delay length)
-	(make-one-zero a0 a1)
+  (list (<a class=quiet href="clm.html#make-delay">make-delay</a> length)
+	(<a class=quiet href="clm.html#make-one-zero">make-one-zero</a> a0 a1)
 	feedback))
 </pre>
 <p>Or perhaps a more Schemey (Schemish?) method would be:
@@ -4053,10 +4058,10 @@ In CLM-in-Scheme, the first (simpler) fcomb above might be:
   (gen input))	
 
 (define (make-fcomb length feedback a0 a1)
-  (let ((dly (make-delay length))
-        (flt (make-one-zero a0 a1)))
+  (let ((dly (<a class=quiet href="clm.html#make-delay">make-delay</a> length))
+        (flt (<a class=quiet href="clm.html#make-one-zero">make-one-zero</a> a0 a1)))
     (lambda (input)
-      (dly (+ input (* (flt (tap dly)) feedback))))))
+      (dly (+ input (* (flt (<a class=quiet href="clm.html#tap">tap</a> dly)) feedback))))))
 </pre>
 <p>(Here we're returning a closure that packages up the generator's state). 
 We could use Guile's object system to conjure up fcomb
@@ -4073,7 +4078,7 @@ classes and methods in Scheme:
 (define (fcomb gen input)
   ((fcomb-delay gen) 
    (+ input (* ((fcomb-filter gen) 
-		(tap (fcomb-delay gen)))
+		(<a class=quiet href="clm.html#tap">tap</a> (fcomb-delay gen)))
 	       (fcomb-feedback gen)))))
 
 (define-method (initialize (obj fcmb) initargs)
@@ -4082,8 +4087,8 @@ classes and methods in Scheme:
 	 (feedback (get-keyword :feedback initargs 0.5))
 	 (a0 (get-keyword :a0 initargs 0.5))
 	 (a1 (get-keyword :a1 initargs 0.5)))
-    (set! (fcomb-delay obj) (make-delay len))
-    (set! (fcomb-filter obj) (make-one-zero a0 a1))
+    (set! (fcomb-delay obj) (<a class=quiet href="clm.html#make-delay">make-delay</a> len))
+    (set! (fcomb-filter obj) (<a class=quiet href="clm.html#make-one-zero">make-one-zero</a> a0 a1))
     (set! (fcomb-feedback obj) feedback)
     obj))
 

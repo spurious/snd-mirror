@@ -10,6 +10,11 @@
 	EM.def {font-weight: bold; font-style: normal}
 	H1 {text-align: center}
 	UL {list-style-type: none}
+
+	A {text-decoration:none}
+	A:hover {text-decoration:underline}
+	A.quiet {color:black; text-decoration:none}
+	A.quiet:hover {text-decoration:underline}
 -->
 </style>
 </head>
@@ -110,7 +115,7 @@ a wrapper for Guile-specific (or Ruby-specific) functions
 and macros. 
 </p>
 <pre>
-  (set! app (car (main-widgets)))
+  (set! app (car (<a class=quiet href="extsnd.html#mainwidgets">main-widgets</a>)))
 </pre>
 <p>For many examples, see event.scm, snd-motif.scm, popup.scm, new-effects.scm,
 popup.rb, effects.rb, 

@@ -545,7 +545,7 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, bool with_meta)
 {
   snd_info *nsp;
   bool s_or_r = false;
-  int nc, i, j;
+  int nc, i, j, err;
   off_t len;
   chan_info *active_chan;
   char *str = NULL, *mcf = NULL;
@@ -683,9 +683,9 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, bool with_meta)
 	      FREE(str1);
 	      break;
 	    case CHANNEL_FILING:
-	      save_channel_edits(active_chan, mcf = mus_expand_filename(str), C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), "C-x C-w", 0);
+	      err = save_channel_edits(active_chan, mcf = mus_expand_filename(str), C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), "C-x C-w", 0);
 	      if (mcf) FREE(mcf);
-	      clear_minibuffer(sp);
+	      if (err == MUS_NO_ERROR) clear_minibuffer(sp); /* else leave error message posted */
 	      break;
 #if HAVE_OPENDIR
 	    case TEMP_FILING:
@@ -965,7 +965,7 @@ void control_g(snd_info *sp)
   /*   but, as in other such cases, it leaves this flag set so all subsequent uses of it need to clear it first */
   if (sp)
     {
-      if (sp->playing) stop_playing_all_sounds_without_hook();
+      if (sp->playing) stop_playing_all_sounds(); /* several scm files assume hooks called upon C-g */
       if (sp->applying) stop_applying(sp);
       for_each_sound_chan(sp, stop_fft_in_progress);
       clear_minibuffer(sp);

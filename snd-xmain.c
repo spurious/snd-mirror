@@ -43,7 +43,6 @@
 #define CHANNEL_SASH_INDENT -10
 #define CHANNEL_SASH_SIZE 0
 /* 0 means: use Motif default size */
-#define ENVED_POINT_SIZE 10
 #define NOTEBOOK_BINDING_WIDTH 16
 
 #define NO_ICON 0
@@ -126,7 +125,6 @@ typedef struct {
   int zoom_slider_width;
   int position_slider_width;
   int toggle_size;
-  int enved_point_size;
   int channel_sash_indent;
   int channel_sash_size;
   int sash_size;
@@ -181,7 +179,6 @@ static XtResource resources[] = {
   {"zoomSliderWidth", "ZoomSliderWidth", XmRInt, sizeof(int), XtOffset(sndres *, zoom_slider_width), XmRImmediate, (XtPointer)ZOOM_SLIDER_WIDTH},
   {"positionSliderWidth", "PositionSliderWidth", XmRInt, sizeof(int), XtOffset(sndres *, position_slider_width), XmRImmediate, (XtPointer)POSITION_SLIDER_WIDTH},
   {"toggleSize", "ToggleSize", XmRInt, sizeof(int), XtOffset(sndres *, toggle_size), XmRImmediate, (XtPointer)TOGGLE_SIZE},
-  {"envedPointSize", "EnvedPointSize", XmRInt, sizeof(int), XtOffset(sndres *, enved_point_size), XmRImmediate, (XtPointer)ENVED_POINT_SIZE},
   {"channelSashIndent", "ChannelSashIndent", XmRInt, sizeof(int), XtOffset(sndres *, channel_sash_indent), XmRImmediate, (XtPointer)CHANNEL_SASH_INDENT},
   {"channelSashSize", "ChannelSashSize", XmRInt, sizeof(int), XtOffset(sndres *, channel_sash_size), XmRImmediate, (XtPointer)CHANNEL_SASH_SIZE},
   {"sashSize", "SashSize", XmRInt, sizeof(int), XtOffset(sndres *, sash_size), XmRImmediate, (XtPointer)SASH_SIZE},
@@ -684,7 +681,6 @@ void snd_doit(int argc, char **argv)
   ss->sash_size = snd_rs.sash_size;
   ss->sash_indent = snd_rs.sash_indent;
   ss->toggle_size = snd_rs.toggle_size;
-  ss->enved_point_size = snd_rs.enved_point_size;
 #ifdef MAC_OS
   ss->click_time = XtGetMultiClickTime(dpy);
 #else

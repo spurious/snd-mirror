@@ -133,12 +133,15 @@
       (do ()
 	  ((>= loc len))
 	(let* ((leof (or (search (string #\newline) xref :start2 loc) len))
-	       (href-start (or (search "<a href=" xref :start2 loc)
-			       (search "<A HREF=" xref :start2 loc)))
+	       (href-normal-start (or (search "<a href=" xref :start2 loc)
+				      (search "<A HREF=" xref :start2 loc)))
+	       (href-quiet-start (search "<a class=quiet href=" xref :start2 loc))
+	       (href-start (or href-normal-start href-quiet-start))
+	       (href-len (if href-normal-start 8 20))
 	       (href-end (and href-start
 			      (< href-start leof)
 			      (search ">" xref :start2 (1+ href-start))))
-	       (href (and href-start href-end (subseq xref (+ href-start 8) href-end))))
+	       (href (and href-start href-end (subseq xref (+ href-start href-len) href-end))))
 	  (if href
 	      (if (char= (char href 1) #\#)
 		  (setf url-str (concatenate 'string url-str (string #\") file (subseq href 1) (format nil ",~%  ")))
@@ -167,7 +170,8 @@
 		      (incf j)
 		      (setf in-name nil)))
 		(setf in-bracket t)
-		(if (string= "<a href" (subseq xref i (+ i 7)))
+		(if (or (string= "<a href" (subseq xref i (+ i 7)))
+			(string= "<a class=quiet href" (subseq xref i (+ i 19))))
 		    (progn
 		      (if need-start
 			  (progn
@@ -291,7 +295,8 @@
 				(setf pos (search "<a name=" dline :test #'string=)))))))))
 		  (if (and xrefing
 			   (or (not (char= (elt dline 0) #\<))
-			       (search "<a href" dline)))
+			       (search "<a href" dline)
+			       (search "<a class=quiet href" dline)))
 		      (setf (aref xrefs current-general) (concatenate 'string (aref xrefs current-general) dline (format nil "~%"))))
 		  (when topic
 		    (let ((hpos (search "<hr>" dline)))
@@ -347,6 +352,11 @@
 	EM.def {font-weight: bold; font-style: normal}
 	H1 {text-align: center}
 	UL {list-style-type: none}
+
+	A {text-decoration:none}
+	A:hover {text-decoration:underline}
+	A.quiet {color:black; text-decoration:none}
+	A.quiet:hover {text-decoration:underline}
 -->
 </style>
 </head>
@@ -483,11 +493,14 @@
 		   (let* ((compos (search "<hr>" line))
 			  (srcpos (search "<!-- TOPIC " line)))
 		     (if (not (or compos srcpos))
-			 (let ((bpos (search "<a href=" line)))
+			 (let* ((bpos-norm (search "<a href=" line))
+				(bpos-quiet (search "<a class=quiet href=" line))
+				(bpos (or bpos-norm bpos-quiet))
+				(bpos-len (if bpos-norm 9 21)))
 			   (if bpos 
-			       (if (char= #\# (elt line (+ bpos 9)))
-				   (format outf "~A~%" (concatenate 'string (subseq urline 0 (+ bpos 9)) "../clm.html#" (subseq urline (+ bpos 10))))
-				 (format outf "~A~%" (concatenate 'string (subseq urline 0 (+ bpos 9)) "../" (subseq urline (+ bpos 9)))))
+			       (if (char= #\# (elt line (+ bpos bpos-len)))
+				   (format outf "~A~%" (concatenate 'string (subseq urline 0 (+ bpos bpos-len)) "../clm.html#" (subseq urline (+ 1 bpos bpos-len))))
+				 (format outf "~A~%" (concatenate 'string (subseq urline 0 (+ bpos bpos-len)) "../" (subseq urline (+ bpos bpos-len)))))
 			     (format outf "~A~%" urline)))
 		       (progn
 			 (setf state :lisp-init)
@@ -743,10 +756,13 @@
 
 		;; search for href
 		(let* ((dline line)
-		       (pos (or (search "<a href=" dline)
-				(search "<A HREF=" dline))))
+		       (pos-norm (or (search "<a href=" dline)
+				     (search "<A HREF=" dline)))
+		       (pos-quiet (search "<a class=quiet href=" dline))
+		       (pos (or pos-norm pos-quiet))
+		       (pos-len (if pos-norm 9 21)))
 		  (loop while pos do
-		    (setf dline (subseq dline (+ pos 9)))
+		    (setf dline (subseq dline (+ pos pos-len)))
 		    (let ((epos (or (search "</a>" dline)
 				    (search "</A>" dline))))
 		      (if (not epos) 
@@ -760,8 +776,12 @@
 			  (setf (aref refs href) file)
 			  (incf href)
 			  (setf dline (subseq dline epos))
-			  (setf pos (or (search "<a href=" dline)
-					(search "<A HREF=" dline))))))))))
+			  (setf pos-norm (or (search "<a href=" dline)
+					     (search "<A HREF=" dline)))
+			  (setf pos-quiet (search "<a class=quiet href=" dline))
+			  (setf pos (or pos-norm pos-quiet))
+			  (setf pos-len (if pos-norm 9 21))
+			  )))))))
 	    (incf linectr)))
 	(if commands (format t "open directives at end of ~A: ~A~%" file commands))
 	(setf commands nil)
@@ -781,7 +801,7 @@
 
 (defun check-all ()
   (html-check '("sndlib.html" "snd.html" "clm.html" "extsnd.html" "grfsnd.html"
-		"sndscm.html" "fm.html" "balance.html" "snd-contents.html"
+		"sndscm.html" "fm.html" "balance.html"
 		"xen.html" "libxm.html" "cmn.html" "index.html")))
 
 (defun make-index ()

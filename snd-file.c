@@ -1391,14 +1391,14 @@ void view_prevfiles_select(int pos)
     }
 }
 
-int view_prevfiles_play(int pos, bool play)
+bool view_prevfiles_play(int pos, bool play)
 {
   static snd_info *play_sp;
   if (play)
     {
       if (play_sp)
 	{
-	  if (play_sp->playing) return(1); /* can't play two of these at once */
+	  if (play_sp->playing) return(true); /* can't play two of these at once */
 	  if ((prevnames[pos] == NULL) || (strcmp(play_sp->short_filename, prevnames[pos]) != 0))
 	    {
 	      completely_free_snd_info(play_sp);
@@ -1417,14 +1417,14 @@ int view_prevfiles_play(int pos, bool play)
 	  play_sp->filename = NULL;
 	  play_sound(play_sp, 0, NO_END_SPECIFIED, IN_BACKGROUND, C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), "previous files play", 0);
 	}
-      else return(1); /* can't find or setup file */
+      else return(true); /* can't find or setup file */
     }
   else
     { /* play toggled off */
       if ((play_sp) && (play_sp->playing)) 
 	stop_playing_sound(play_sp);
     }
-  return(0);
+  return(false);
 }
 
 static void file_unprevlist(const char *filename)
@@ -2085,13 +2085,14 @@ static bool check_for_same_name(snd_info *sp1, void *ur_info)
   return(false);
 }
 
-int check_for_filename_collisions_and_save(snd_info *sp, char *str, save_dialog_t save_type, int srate, int type, int format, char *comment)
+bool saved_file_needs_update(snd_info *sp, char *str, save_dialog_t save_type, int srate, int type, int format, char *comment)
 {
   /* only from save-as dialog where type/format are known to be writable */
-  /* returns 0 if new file not opened, 1 if opened (same name as old), -1 if cancelled or error of some sort */
+  /* returns true if new file not yet opened, false if opened (same name as old) or if cancelled by error of some sort */
   same_name_info *collision = NULL;
   char *fullname, *ofile;
-  int result = 0, opened = 0;
+  int result = 0;
+  bool needs_update = true;
   if (sp) clear_minibuffer(sp);
   alert_new_file();
   /* now check in-core files -- need to close any of same name -- if edited what to do? */
@@ -2100,7 +2101,7 @@ int check_for_filename_collisions_and_save(snd_info *sp, char *str, save_dialog_
   if (!(snd_overwrite_ok(fullname))) 
     {
       FREE(fullname); 
-      return(-1);
+      return(false);
     }
   if (strcmp(fullname, sp->filename) == 0)
     {
@@ -2113,7 +2114,7 @@ int check_for_filename_collisions_and_save(snd_info *sp, char *str, save_dialog_
 	{
 	  report_in_minibuffer_and_save(sp, _("can't save-as %s (%s is write-protected)"), fullname, sp->short_filename);
 	  FREE(fullname);
-	  return(-1);
+	  return(false);
 	}
       /* it's possible also that the same-named file is open in several windows -- for now we'll ignore that */
       /* also what if a sound is write-protected in one window, and not in another? */
@@ -2125,7 +2126,7 @@ int check_for_filename_collisions_and_save(snd_info *sp, char *str, save_dialog_
 	report_in_minibuffer(sp, _("save as temp %s hit error: %s"), ofile, strerror(errno));
       else move_file(ofile, sp->filename);
       snd_update(sp);
-      opened = 1;
+      needs_update = false;
       FREE(ofile);
       FREE(fullname);
     }
@@ -2147,7 +2148,7 @@ int check_for_filename_collisions_and_save(snd_info *sp, char *str, save_dialog_
 		{
 		  FREE(fullname); 
 		  FREE(collision); 
-		  return(-1);
+		  return(false);
 		}
 	    }
 	  snd_close_file(collision->sp);
@@ -2159,7 +2160,7 @@ int check_for_filename_collisions_and_save(snd_info *sp, char *str, save_dialog_
       if (result != MUS_NO_ERROR)
 	{
 	  report_in_minibuffer_and_save(sp, "%s: %s", str, (errno != 0) ? strerror(errno) : mus_error_to_string(result));
-	  opened = -1;
+	  needs_update = false;
 	}
       else report_in_minibuffer(sp, _("%s saved as %s"),
 				(save_type == FILE_SAVE_AS) ? sp->short_filename : "selection",
@@ -2167,12 +2168,12 @@ int check_for_filename_collisions_and_save(snd_info *sp, char *str, save_dialog_
       if (collision->sp) 
 	{
 	  snd_open_file(fullname, false);
-	  if (opened == 0) opened = 1;
+	  if (needs_update) needs_update = false;
 	}
       FREE(fullname);
       FREE(collision);
     }
-  return(opened);
+  return(needs_update);
 }
 
 

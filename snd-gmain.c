@@ -36,7 +36,6 @@
 
 #define CHANNEL_SASH_INDENT -10
 #define CHANNEL_SASH_SIZE 10
-#define ENVED_POINT_SIZE 10
 
 #define DEFAULT_TINY_FONT "Monospace 8"
 #define DEFAULT_PEAKS_FONT "Serif 10"
@@ -476,7 +475,6 @@ void snd_doit(int argc, char **argv)
   ss->sash_size = SASH_SIZE;
   ss->sash_indent = SASH_INDENT;
   ss->toggle_size = TOGGLE_SIZE;
-  ss->enved_point_size = ENVED_POINT_SIZE;
   ss->sgx = (state_context *)CALLOC(1, sizeof(state_context));
   sx = ss->sgx;
   sx->graph_is_active = false;

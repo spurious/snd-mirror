@@ -11,6 +11,7 @@
    mix-amp-env track-amp-env
  */
 
+#define ENVED_DOT_SIZE 10
 
 /* TODO: tie sine-env (et al) into the envelope editors (enved, mix, xm-enved)
            enved: need enved-ramp(int)-procedure, application of it to underlying portion, spin-button (or whatever) to set
@@ -420,10 +421,10 @@ static int hit_point(int *cxs, int *cys, int points, int x, int y)
   int i;
   for (i = 0; i < points; i++)
     if ((x == cxs[i]) ||
-	(((x > (cxs[i] - ss->enved_point_size)) && 
-	  (x < (cxs[i] + ss->enved_point_size))) &&
-	 ((y > (cys[i] - ss->enved_point_size)) && 
-	  (y < (cys[i] + ss->enved_point_size)))))
+	(((x > (cxs[i] - ENVED_DOT_SIZE)) && 
+	  (x < (cxs[i] + ENVED_DOT_SIZE))) &&
+	 ((y > (cys[i] - ENVED_DOT_SIZE)) && 
+	  (y < (cys[i] + ENVED_DOT_SIZE)))))
       return(i);
   return(-1);
 }
@@ -555,8 +556,8 @@ void env_editor_display_env(env_editor *edp, env *e, axis_context *ax, const cha
       if (edp->with_dots)
 	{
 	  if (e->pts < 100)
-	    size = ss->enved_point_size;
-	  else size = (int)(ss->enved_point_size * 0.4);
+	    size = ENVED_DOT_SIZE;
+	  else size = (int)(ENVED_DOT_SIZE * 0.4);
 	  env_editor_set_current_point(edp, 0, ix1, iy1);
 	  draw_arc(ax, ix1, iy1, size);
 	}
@@ -1049,7 +1050,8 @@ void enved_show_background_waveform(axis_info *ap, axis_info *gray_ap, bool appl
 {
   int srate, pts = 0;
   graph_type_t old_time_graph_type = GRAPH_ONCE;
-  off_t samps;
+  off_t samps, old_printing;
+  bool two_sided = false;
   axis_info *active_ap = NULL;
   chan_info *active_channel = NULL;
   if (!(any_selected_sound())) return;
@@ -1060,6 +1062,7 @@ void enved_show_background_waveform(axis_info *ap, axis_info *gray_ap, bool appl
   gray_ap->y_axis_y1 = ap->y_axis_y1;
   active_channel = current_channel();
   if (active_channel == NULL) return;
+  old_printing = active_channel->printing;
   active_channel->printing = printing;
   if (show_fft)
     {
@@ -1090,8 +1093,8 @@ void enved_show_background_waveform(axis_info *ap, axis_info *gray_ap, bool appl
 	  srate = selection_srate();
 	  gray_ap->losamp = selection_beg(NULL);
 	  gray_ap->hisamp = gray_ap->losamp + samps - 1;
-	  gray_ap->x0 = (Float)(gray_ap->losamp) / (Float)srate;
-	  gray_ap->x1 = (Float)(gray_ap->hisamp) / (Float)srate;
+	  gray_ap->x0 = (double)(gray_ap->losamp) / (double)srate;
+	  gray_ap->x1 = (double)(gray_ap->hisamp) / (double)srate;
 	  gray_ap->y0 = -1.0;
 	  gray_ap->y1 = 1.0;
 	}
@@ -1113,20 +1116,24 @@ void enved_show_background_waveform(axis_info *ap, axis_info *gray_ap, bool appl
 	      gray_ap->y1 = active_ap->y1;
 	    }
 	  gray_ap->x0 = 0.0;
-	  gray_ap->x1 = (Float)samps / (Float)srate;
+	  gray_ap->x1 = (double)samps / (double)srate;
 	}
       init_axis_scales(gray_ap);
       active_channel->axis = gray_ap;
       old_time_graph_type = active_channel->time_graph_type;
       active_channel->time_graph_type = GRAPH_ONCE;
-      pts = make_background_graph(active_channel);
+      pts = make_background_graph(active_channel, srate, &two_sided);
       active_channel->time_graph_type = old_time_graph_type;
       active_channel->axis = active_ap;
-      if (pts > 0) draw_both_grfs(gray_ap->ax, pts);
-      /* TODO: if selection displayed, but too short to have two-sided grf, enved wave is incorrrect */
+      if (pts > 0) 
+	{
+	  if (two_sided)
+	    draw_both_grf_points(1, gray_ap->ax, pts, GRAPH_LINES);
+	  else draw_grf_points(1, gray_ap->ax, pts, gray_ap, 0.0, GRAPH_LINES);
+	}
       /* TODO: if flt=fft, bg wave not displayed? -- should this be a spectrum? or set 'wave' insensitive? */
     }
-  active_channel->printing = false;
+  active_channel->printing = old_printing;
 }
 
 env *enved_next_env(void)

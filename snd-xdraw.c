@@ -173,7 +173,7 @@ void set_grf_point(Locus xi, int j, Locus yi)
   points[j].y = yi;
 }
 
-void draw_both_grf_points(chan_info *cp, axis_context *ax, int j, graph_style_t graph_style)
+void draw_both_grf_points(int dot_size, axis_context *ax, int j, graph_style_t graph_style)
 {
   int i, size8, size4;
   switch (graph_style)
@@ -183,34 +183,34 @@ void draw_both_grf_points(chan_info *cp, axis_context *ax, int j, graph_style_t 
       XDrawLines(ax->dp, ax->wn, ax->gc, points1, j, CoordModeOrigin);
       break;
     case GRAPH_DOTS:
-      draw_points(ax, points, j, cp->dot_size);
-      draw_points(ax, points1, j, cp->dot_size);
+      draw_points(ax, points, j, dot_size);
+      draw_points(ax, points1, j, dot_size);
       break;
     case GRAPH_FILLED:
       fill_two_sided_polygons(ax, points, points1, j);
       break;
     case GRAPH_DOTS_AND_LINES:
-      if (cp->dot_size > 1)
+      if (dot_size > 1)
 	{
-	  draw_points(ax, points, j, cp->dot_size);
-	  draw_points(ax, points1, j, cp->dot_size);
+	  draw_points(ax, points, j, dot_size);
+	  draw_points(ax, points1, j, dot_size);
 	}
       XDrawLines(ax->dp, ax->wn, ax->gc, points, j, CoordModeOrigin);
       XDrawLines(ax->dp, ax->wn, ax->gc, points1, j, CoordModeOrigin);
       break;
     case GRAPH_LOLLIPOPS:
-      if (cp->dot_size == 1)
+      if (dot_size == 1)
 	{
 	  for (i = 0; i < j; i++)
 	    XDrawLine(ax->dp, ax->wn, ax->gc, points[i].x, points[i].y, points1[i].x, points1[i].y);
 	}
       else
 	{
-	  size8 = cp->dot_size / 8;
-	  size4 = cp->dot_size / 4;
+	  size8 = dot_size / 8;
+	  size4 = dot_size / 4;
 	  if (size4 < 1) size4 = 1;
-	  draw_points(ax, points, j, cp->dot_size);
-	  draw_points(ax, points1, j, cp->dot_size);
+	  draw_points(ax, points, j, dot_size);
+	  draw_points(ax, points1, j, dot_size);
 	  for (i = 0; i < j; i++)
 	    XFillRectangle(ax->dp, ax->wn, ax->gc, 
 			   points[i].x - size8, 
@@ -222,7 +222,7 @@ void draw_both_grf_points(chan_info *cp, axis_context *ax, int j, graph_style_t 
     }
 }
 
-void draw_grf_points(chan_info *cp, axis_context *ax, int j, axis_info *ap, Float y0, graph_style_t graph_style)
+void draw_grf_points(int dot_size, axis_context *ax, int j, axis_info *ap, Float y0, graph_style_t graph_style)
 {
   int i, gy0, size8, size4;
   switch (graph_style)
@@ -231,30 +231,30 @@ void draw_grf_points(chan_info *cp, axis_context *ax, int j, axis_info *ap, Floa
       draw_lines(ax, points, j); 
       break;
     case GRAPH_DOTS: 
-      draw_points(ax, points, j, cp->dot_size); 
+      draw_points(ax, points, j, dot_size); 
       break;
     case GRAPH_FILLED: 
       fill_polygons(ax, points, j, grf_y(y0, ap)); 
       break;
     case GRAPH_DOTS_AND_LINES: 
-      if (cp->dot_size > 1) draw_points(ax, points, j, cp->dot_size); 
+      if (dot_size > 1) draw_points(ax, points, j, dot_size); 
       draw_lines(ax, points, j); 
       break;
     case GRAPH_LOLLIPOPS:
       gy0 = grf_y(y0, ap);
-      if (cp->dot_size == 1)
+      if (dot_size == 1)
 	{
 	  for (i = 0; i < j; i++)
 	    XDrawLine(ax->dp, ax->wn, ax->gc, points[i].x, points[i].y, points[i].x, gy0);
 	}
       else
 	{
-	  size8 = cp->dot_size / 8;
-	  size4 = cp->dot_size / 4;
+	  size8 = dot_size / 8;
+	  size4 = dot_size / 4;
 	  if (size4 < 1) size4 = 1;
-	  if (cp->dot_size < 20)
+	  if (dot_size < 20)
 	    {
-	      draw_points(ax, points, j, cp->dot_size);
+	      draw_points(ax, points, j, dot_size);
 	      for (i = 0; i < j; i++)
 		if (points[i].y > gy0) /* unsigned int height */
 		  XFillRectangle(ax->dp, ax->wn, ax->gc, points[i].x - size8, gy0, size4, points[i].y - gy0);
@@ -263,15 +263,15 @@ void draw_grf_points(chan_info *cp, axis_context *ax, int j, axis_info *ap, Floa
 	  else
 	    {
 	      int radius, size6, size12, size3;
-	      radius = cp->dot_size / 2;
-	      size6 = snd_round(cp->dot_size / 6.0);
-	      size12 = snd_round(cp->dot_size / 12.0);
-	      size3 = snd_round(cp->dot_size / 3.0);
+	      radius = dot_size / 2;
+	      size6 = snd_round(dot_size / 6.0);
+	      size12 = snd_round(dot_size / 12.0);
+	      size3 = snd_round(dot_size / 3.0);
 	      for (i = 0; i < j; i++) 
 		{
 		  XDrawArc(ax->dp, ax->wn, ax->gc, 
 			   points[i].x - radius, points[i].y - radius,
-			   cp->dot_size, cp->dot_size, 0, 360 * 64);
+			   dot_size, dot_size, 0, 360 * 64);
 		  XDrawArc(ax->dp, ax->wn, ax->gc, 
 			   points[i].x - size3, points[i].y - size3,
 			   2 * size3, 2 * size3, 200 * 64, 140 * 64);
@@ -286,13 +286,6 @@ void draw_grf_points(chan_info *cp, axis_context *ax, int j, axis_info *ap, Floa
 	}
       break;
     }
-}
-
-void draw_both_grfs(axis_context *ax, int j) /* only for enved wave */
-{
-  XDrawLines(ax->dp, ax->wn, ax->gc, points, j, CoordModeOrigin);
-  if (points1[0].x != -1) 
-    XDrawLines(ax->dp, ax->wn, ax->gc, points1, j, CoordModeOrigin);
 }
 
 static void allocate_erase_grf_points(mix_context *ms)

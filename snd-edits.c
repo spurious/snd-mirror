@@ -4881,23 +4881,17 @@ static void new_leading_ramp(ed_fragment *new_start, ed_fragment *old_start, off
       rmp0 = ED_RAMP2_BEG(old_start);
       rmp1 = ED_RAMP2_END(old_start);
       ED_RAMP2_BEG(new_start) = rmp0;
-      if (ED_LOCAL_END(old_start) == ED_LOCAL_POSITION(old_start))
-	ED_RAMP2_END(new_start) = rmp0;
-      else ED_RAMP2_END(new_start) = rmp0 + (rmp1 - rmp0) * xpos;
+      ED_RAMP2_END(new_start) = rmp0 + (rmp1 - rmp0) * xpos;
 
       rmp0 = ED_RAMP3_BEG(old_start);
       rmp1 = ED_RAMP3_END(old_start);
       ED_RAMP3_BEG(new_start) = rmp0;
-      if (ED_LOCAL_END(old_start) == ED_LOCAL_POSITION(old_start))
-	ED_RAMP3_END(new_start) = rmp0;
-      else ED_RAMP3_END(new_start) = rmp0 + (rmp1 - rmp0) * xpos;
+      ED_RAMP3_END(new_start) = rmp0 + (rmp1 - rmp0) * xpos;
 
       rmp0 = ED_RAMP4_BEG(old_start);
       rmp1 = ED_RAMP4_END(old_start);
       ED_RAMP4_BEG(new_start) = rmp0;
-      if (ED_LOCAL_END(old_start) == ED_LOCAL_POSITION(old_start))
-	ED_RAMP4_END(new_start) = rmp0;
-      else ED_RAMP4_END(new_start) = rmp0 + (rmp1 - rmp0) * xpos;
+      ED_RAMP4_END(new_start) = rmp0 + (rmp1 - rmp0) * xpos;
     }
 }
 
@@ -4927,25 +4921,19 @@ static void new_trailing_ramp(ed_fragment *new_back, ed_fragment *old_back, off_
 
       rmp0 = ED_RAMP2_BEG(old_back);
       rmp1 = ED_RAMP2_END(old_back);
-      if (ED_LOCAL_END(old_back) == ED_LOCAL_POSITION(old_back))
-	val = rmp0;
-      else val = rmp0 + (rmp1 - rmp0) * xpos;
+      val = rmp0 + (rmp1 - rmp0) * xpos;
       ED_RAMP2_BEG(new_back) = val;
       ED_RAMP2_END(new_back) = rmp1;
       
       rmp0 = ED_RAMP3_BEG(old_back);
       rmp1 = ED_RAMP3_END(old_back);
-      if (ED_LOCAL_END(old_back) == ED_LOCAL_POSITION(old_back))
-	val = rmp0;
-      else val = rmp0 + (rmp1 - rmp0) * xpos;
+      val = rmp0 + (rmp1 - rmp0) * xpos;
       ED_RAMP3_BEG(new_back) = val;
       ED_RAMP3_END(new_back) = rmp1;
 
       rmp0 = ED_RAMP4_BEG(old_back);
       rmp1 = ED_RAMP4_END(old_back);
-      if (ED_LOCAL_END(old_back) == ED_LOCAL_POSITION(old_back))
-	val = rmp0;
-      else val = rmp0 + (rmp1 - rmp0) * xpos;
+      val = rmp0 + (rmp1 - rmp0) * xpos;
       ED_RAMP4_BEG(new_back) = val;
       ED_RAMP4_END(new_back) = rmp1;
     }

@@ -359,7 +359,7 @@ typedef struct snd_state {
   bool using_schemes;
 #endif
   state_context *sgx;
-  int position_slider_width, zoom_slider_width, toggle_size, enved_point_size, channel_sash_indent, sash_size, channel_sash_size, sash_indent;
+  int position_slider_width, zoom_slider_width, toggle_size, channel_sash_indent, sash_size, channel_sash_size, sash_indent;
   char *init_file;
   int max_sounds;
   snd_info *mx_sp;
@@ -1084,7 +1084,7 @@ void graph_button_motion_callback(chan_info *cp, int x, int y, Tempus time);
 void channel_resize(chan_info *cp);
 void edit_history_select(chan_info *cp, int row);
 int make_graph(chan_info *cp);
-int make_background_graph(chan_info *cp);
+int make_background_graph(chan_info *cp, int srate, bool *two_sided);
 void reset_spectro(void);
 void cursor_moveto (chan_info *cp, off_t samp);
 chan_info *which_channel(snd_info *sp, int y);
@@ -1214,7 +1214,7 @@ char *view_curfiles_name(int pos);
 void view_curfiles_play(int pos, bool play);
 void view_curfiles_select(int pos);
 void view_prevfiles_select(int pos);
-int view_prevfiles_play(int pos, bool play);
+bool view_prevfiles_play(int pos, bool play);
 char *get_prevname(int n);
 char *get_prevfullname(int n);
 char *get_curfullname(int pos);
@@ -1236,7 +1236,7 @@ void init_prevfiles(int size);
 void add_directory_to_prevlist(const char *dirname);
 void make_prevfiles_list_1(void);
 char **set_header_and_data_positions(file_data *fdat, int type, int format);
-int check_for_filename_collisions_and_save(snd_info *sp, char *str, save_dialog_t save_type, int srate, int type, int format, char *comment);
+bool saved_file_needs_update(snd_info *sp, char *str, save_dialog_t save_type, int srate, int type, int format, char *comment);
 void edit_header_callback(snd_info *sp, file_data *edit_header_data);
 void reflect_file_change_in_title(void);
 

@@ -7,6 +7,11 @@
 	EM.def {font-style:italic; font-weight: bold}
 	H1 {text-align: center}
 	UL {list-style-type: none}
+
+	A {text-decoration:none}
+	A:hover {text-decoration:underline}
+	A.quiet {color:black; text-decoration:none}
+	A.quiet:hover {text-decoration:underline}
 -->
 
 </style>
@@ -1157,61 +1162,61 @@ constants and functions described above into Scheme.
   (lambda (file)
     (string-append
      file
-     ": chans: " (number-&gt;string (mus-sound-chans file))
-     ", srate: " (number-&gt;string (mus-sound-srate file))
-     ", " (mus-header-type-name (mus-sound-header-type file))
-     ", " (mus-data-format-name (mus-sound-data-format file))
+     ": chans: " (number-&gt;string (<a class=quiet href="extsnd.html#soundchans">mus-sound-chans</a> file))
+     ", srate: " (number-&gt;string (<a class=quiet href="extsnd.html#soundsrate">mus-sound-srate</a> file))
+     ", " (<a class=quiet href="extsnd.html#soundtypename">mus-header-type-name</a> (<a class=quiet href="extsnd.html#soundheadertype">mus-sound-header-type</a> file))
+     ", " (<a class=quiet href="extsnd.html#soundformatname">mus-data-format-name</a> (<a class=quiet href="extsnd.html#sounddataformat">mus-sound-data-format</a> file))
      ", len: " (number-&gt;string
-                (/ (mus-sound-samples file)
-                   (* (mus-sound-chans file) (mus-sound-srate file)))))))
+                (/ (<a class=quiet href="extsnd.html#soundsamples">mus-sound-samples</a> file)
+                   (* (<a class=quiet href="extsnd.html#soundchans">mus-sound-chans</a> file) (<a class=quiet href="extsnd.html#soundsrate">mus-sound-srate</a> file)))))))
 
 ;;; this function reads the first 32 samples of a file, returning the 30th in channel 0
 (define read-sample-30 
   (lambda (file)
-    (let* ((fd (mus-sound-open-input file))
-	   (chans (mus-sound-chans file))
-	   (data (make-sound-data chans 32)))
-      (mus-sound-read fd 0 31 chans data)
+    (let* ((fd (<a class=quiet href="extsnd.html#mussoundopeninput">mus-sound-open-input</a> file))
+	   (<a class=quiet href="extsnd.html#chans">chans</a> (<a class=quiet href="extsnd.html#soundchans">mus-sound-chans</a> file))
+	   (data (<a class=quiet href="extsnd.html#makesounddata">make-sound-data</a> chans 32)))
+      (<a class=quiet href="extsnd.html#mussoundread">mus-sound-read</a> fd 0 31 chans data)
       ;; we could use sound-data-&gt;vct here to return all the samples
-      (let ((val (sound-data-ref data 0 29)))
-	(mus-sound-close-input fd)
+      (let ((val (<a class=quiet href="extsnd.html#sounddataref">sound-data-ref</a> data 0 29)))
+	(<a class=quiet href="extsnd.html#mussoundcloseinput">mus-sound-close-input</a> fd)
 	val))))
 
 ;;; here we get the microphone volume, then set it to .5
   (define vals (make-vector 32))
-  (mus-audio-mixer-read mus-audio-microphone mus-audio-amp 0 vals)
+  (<a class=quiet href="extsnd.html#musaudiomixerread">mus-audio-mixer-read</a> mus-audio-microphone mus-audio-amp 0 vals)
   (vector-ref vals 0)
   (vector-set! vals 0 .5)
-  (mus-audio-mixer-write mus-audio-microphone mus-audio-amp 0 vals)
+  (<a class=quiet href="extsnd.html#musaudiomixerwrite">mus-audio-mixer-write</a> mus-audio-microphone mus-audio-amp 0 vals)
 
 ;;; this function plays a sound (we're assuming that we can play 16-bit linear little-endian data)
 (define play-sound
   (lambda (file)
-    (let* ((sound-fd (mus-sound-open-input file))
-	   (chans (mus-sound-chans file))
-	   (frames (mus-sound-frames file))
+    (let* ((sound-fd (<a class=quiet href="extsnd.html#mussoundopeninput">mus-sound-open-input</a> file))
+	   (<a class=quiet href="extsnd.html#chans">chans</a> (<a class=quiet href="extsnd.html#soundchans">mus-sound-chans</a> file))
+	   (<a class=quiet href="extsnd.html#sndframes">frames</a> (<a class=quiet href="extsnd.html#soundframes">mus-sound-frames</a> file))
 	   (bufsize 256)
-	   (data (make-sound-data chans bufsize))
+	   (data (<a class=quiet href="extsnd.html#makesounddata">make-sound-data</a> chans bufsize))
 	   (bytes (* bufsize chans 2)))
-      (mus-sound-read sound-fd 0 (1- bufsize) chans data)
-      (let ((audio-fd (mus-audio-open-output mus-audio-default (mus-sound-srate file) chans mus-lshort bytes)))
+      (<a class=quiet href="extsnd.html#mussoundread">mus-sound-read</a> sound-fd 0 (1- bufsize) chans data)
+      (let ((audio-fd (<a class=quiet href="extsnd.html#musaudioopenoutput">mus-audio-open-output</a> mus-audio-default (<a class=quiet href="extsnd.html#soundsrate">mus-sound-srate</a> file) chans mus-lshort bytes)))
 	(do ((i 0 (+ i bufsize)))
 	    ((&gt;= i frames))
-	  (mus-audio-write audio-fd data bufsize)
-	  (mus-sound-read sound-fd 0 (1- bufsize) chans data))
-	(mus-sound-close-input sound-fd)
-	(mus-audio-close audio-fd)))))
+	  (<a class=quiet href="extsnd.html#musaudiowrite">mus-audio-write</a> audio-fd data bufsize)
+	  (<a class=quiet href="extsnd.html#mussoundread">mus-sound-read</a> sound-fd 0 (1- bufsize) chans data))
+	(<a class=quiet href="extsnd.html#mussoundcloseinput">mus-sound-close-input</a> sound-fd)
+	(<a class=quiet href="extsnd.html#musaudioclose">mus-audio-close</a> audio-fd)))))
 </pre>
 <p>You can load sndlib into the standard Guile interpreter:
 </p>
 <pre>
 guile&gt; (define lib (<em class=red>dynamic-link</em> "/home/bil/sndlib/sndlib.so"))
 guile&gt; (<em class=red>dynamic-call</em> "mus_sndlib2xen_initialize" lib)
-guile&gt; (mus-sound-srate "/home/bil/cl/oboe.snd")
+guile&gt; (<a class=quiet href="extsnd.html#soundsrate">mus-sound-srate</a> "/home/bil/cl/oboe.snd")
 22050
 guile&gt; (<em class=red>dynamic-call</em> "mus_xen_init" lib)
-guile&gt; (define osc (make-oscil 440))
-guile&gt; (oscil osc)
+guile&gt; (define osc (<a class=quiet href="clm.html#make-oscil">make-oscil</a> 440))
+guile&gt; (<a class=quiet href="clm.html#oscil">oscil</a> osc)
 0.0
 </pre>
 <p>The first dynamic-call (mus_sndlib2xen_initialize) ties sndlib2xen.c into

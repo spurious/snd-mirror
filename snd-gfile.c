@@ -770,14 +770,15 @@ static char *last_save_as_filename = NULL;
 static void save_as_ok_callback(GtkWidget *w, gpointer data)
 {
   char *comment = NULL, *fullname = NULL;
-  int i, type, format, srate, chans, opened = -1;
+  int i, type, format, srate, chans;
+  bool need_update = false;
   off_t location, samples;
   snd_info *sp;
   comment = read_file_data_choices(save_as_file_data, &srate, &chans, &type, &format, &location, &samples);
   last_save_as_filename = snd_filer_get_filename(save_as_dialog);
   sp = any_selected_sound();
   if (last_save_as_filename)
-    opened = check_for_filename_collisions_and_save(sp, last_save_as_filename, save_as_dialog_type, srate, type, format, comment);
+    need_update = saved_file_needs_update(sp, last_save_as_filename, save_as_dialog_type, srate, type, format, comment);
   else 
     if (sp) 
       report_in_minibuffer(sp, _("not saved (no name given)"));
@@ -785,7 +786,7 @@ static void save_as_ok_callback(GtkWidget *w, gpointer data)
   gtk_widget_hide(save_as_dialog);
   if ((sp) && (last_save_as_filename) && (emacs_style_save_as(ss)) &&
       (save_as_dialog_type == FILE_SAVE_AS) && 
-      (opened == 0))
+      (need_update))
     {
       for (i = 0; i < sp->nchans; i++) 
 	sp->chans[i]->edit_ctr = 0; /* don't trigger close-hook unsaved-edit checks */

@@ -154,7 +154,7 @@ void set_grf_point(Locus xi, int j, Locus yi)
   points[j].y = yi;
 }
 
-void draw_both_grf_points(chan_info *cp, axis_context *ax, int j, graph_style_t graph_style)
+void draw_both_grf_points(int dot_size, axis_context *ax, int j, graph_style_t graph_style)
 {
   int i, size8, size4;
   switch (graph_style)
@@ -164,65 +164,65 @@ void draw_both_grf_points(chan_info *cp, axis_context *ax, int j, graph_style_t 
       gdk_draw_lines(ax->wn, ax->gc, points1, j);
       break;
     case GRAPH_DOTS:
-      draw_points(ax, points, j, cp->dot_size);
-      draw_points(ax, points1, j, cp->dot_size);
+      draw_points(ax, points, j, dot_size);
+      draw_points(ax, points1, j, dot_size);
       break;
     case GRAPH_FILLED:
       fill_two_sided_polygons(ax, points, points1, j);
       break;
     case GRAPH_DOTS_AND_LINES:
-      if (cp->dot_size > 1)
+      if (dot_size > 1)
 	{
-	  draw_points(ax, points, j, cp->dot_size);
-	  draw_points(ax, points1, j, cp->dot_size);
+	  draw_points(ax, points, j, dot_size);
+	  draw_points(ax, points1, j, dot_size);
 	}
       gdk_draw_lines(ax->wn, ax->gc, points, j);
       gdk_draw_lines(ax->wn, ax->gc, points1, j);
       break;
     case GRAPH_LOLLIPOPS:
-      if (cp->dot_size == 1)
+      if (dot_size == 1)
 	{
 	  for (i = 0; i < j; i++)
 	    gdk_draw_line(ax->wn, ax->gc, points[i].x, points[i].y, points1[i].x, points1[i].y);
 	}
       else
 	{
-	  size8 = cp->dot_size / 8;
-	  size4 = cp->dot_size / 4;
+	  size8 = dot_size / 8;
+	  size4 = dot_size / 4;
 	  if (size4 < 1) size4 = 1;
-	  draw_points(ax, points, j, cp->dot_size);
-	  draw_points(ax, points1, j, cp->dot_size);
+	  draw_points(ax, points, j, dot_size);
+	  draw_points(ax, points1, j, dot_size);
 	  for (i = 0; i < j; i++)
 	    gdk_draw_rectangle(ax->wn, ax->gc, true, points[i].x - size8, points[i].y, size4, points1[i].y - points[i].y);
 	}
     }
 }
 
-void draw_grf_points(chan_info *cp, axis_context *ax, int j, axis_info *ap, Float y0, graph_style_t graph_style)
+void draw_grf_points(int dot_size, axis_context *ax, int j, axis_info *ap, Float y0, graph_style_t graph_style)
 {
   int i, gy0, size8, size4;
   switch (graph_style)
     {
     case GRAPH_LINES: draw_lines(ax, points, j); break;
-    case GRAPH_DOTS: draw_points(ax, points, j, cp->dot_size); break;
+    case GRAPH_DOTS: draw_points(ax, points, j, dot_size); break;
     case GRAPH_FILLED: fill_polygons(ax, points, j, ap, grf_y(y0, ap)); break;
     case GRAPH_DOTS_AND_LINES: 
-      if (cp->dot_size > 1) draw_points(ax, points, j, cp->dot_size); 
+      if (dot_size > 1) draw_points(ax, points, j, dot_size); 
       draw_lines(ax, points, j); 
       break;
     case GRAPH_LOLLIPOPS:
       gy0 = grf_y(y0, ap);
-      if (cp->dot_size == 1)
+      if (dot_size == 1)
 	{
 	  for (i = 0; i < j; i++)
 	    gdk_draw_line(ax->wn, ax->gc, points[i].x, points[i].y, points[i].x, gy0);
 	}
       else
 	{
-	  size8 = cp->dot_size / 8;
-	  size4 = cp->dot_size / 4;
+	  size8 = dot_size / 8;
+	  size4 = dot_size / 4;
 	  if (size4 < 1) size4 = 1;
-	  draw_points(ax, points, j, cp->dot_size);
+	  draw_points(ax, points, j, dot_size);
 	  for (i = 0; i < j; i++)
 	    if (points[i].y > gy0) /* unsigned int height */
 	      gdk_draw_rectangle(ax->wn, ax->gc, true, points[i].x - size8, gy0, size4, points[i].y - gy0);
@@ -230,12 +230,6 @@ void draw_grf_points(chan_info *cp, axis_context *ax, int j, axis_info *ap, Floa
 	}
       break;
     }
-}
-
-void draw_both_grfs(axis_context *ax, int j) /* only for enved wave */
-{
-  gdk_draw_lines(ax->wn, ax->gc, points, j);
-  if (points1[0].x != -1) gdk_draw_lines(ax->wn, ax->gc, points1, j);
 }
 
 static void allocate_erase_grf_points(mix_context *ms)

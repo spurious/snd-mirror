@@ -215,6 +215,8 @@
 
 ;;; -------- report-mark-names causes mark names to be posted in the minibuffer as a sound is played
 
+(if (not (defined? 'remove-local-hook!)) (load-from-path "hooks.scm"))
+
 (define (report-mark-names)
   "(report-mark-names) causes mark names to be printed as they are passed while playing"
   (add-hook! start-playing-hook 
@@ -222,21 +224,21 @@
 	       (let* ((marklist (marks snd 0))
 		      (samplist (map mark-sample marklist))
 		      (samp 0))
-		 (add-hook! stop-playing-hook
-			    (lambda (snd)
-			      (report-in-minibuffer "" snd)
-			      (reset-hook! play-hook)                ;;; TODO: reset-hook is a bad idea here (and probably elsewhere: play.scm)
-			      (reset-hook! stop-playing-hook)))
-		 (add-hook! play-hook 
-			    (lambda (size)
-			      (set! samp (+ samp size))
-			      (if (and (not (null? samplist))
-				       (>= samp (car samplist)))
-				  (begin
-				    (report-in-minibuffer (mark-name (car marklist)) snd)
-				    (set! marklist (cdr marklist))
-				    (set! samplist (cdr samplist))))))))))
-
+		 (define (report-mark-names-play-hook size)
+		   (set! samp (+ samp size))
+		   (if (and (not (null? samplist))
+			    (>= samp (car samplist)))
+		       (begin
+			 (report-in-minibuffer (mark-name (car marklist)) snd)
+			 (set! marklist (cdr marklist))
+			 (set! samplist (cdr samplist)))))
+		 (define (report-mark-names-stop-playing-hook snd)
+		   (report-in-minibuffer "" snd)
+		   (remove-local-hook! play-hook report-mark-names-play-hook)
+		   (remove-local-hook! stop-playing-hook report-mark-names-stop-playing-hook))
+		 
+		 (add-hook! stop-playing-hook report-mark-names-stop-playing-hook)
+		 (add-hook! play-hook report-mark-names-play-hook)))))
 
 
 ;;; -------- eval-between-marks

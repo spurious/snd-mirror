@@ -2,192 +2,334 @@
 <head>
 <title>Contents</title>
 <style type="text/css">
-<!-- 
+<!--
 	EM.red {color:red; font-style:normal}
 	H1 {text-align: center}
 	UL {list-style-type: none}
 	PRE {font-family: Times, serif}
+
+	A {text-decoration:none}
+	A:hover {text-decoration:underline}
+	A.quiet {color:black; text-decoration:none}
+	A.quiet:hover {text-decoration:underline}
 -->
 </style>
-</head>
-<body bgcolor=beige>
 
-<pre>
-<a href="snd.html#gettingstarted" target="snd1">Getting Started</a>
-<a href="tutorial/1_intro_and_build_snd.html" target="snd1">A Tutorial for Snd</a>
-  <small><a href="tutorial/1_intro_and_build_snd.html" target="snd1">Developing And Using Snd</a></small>
-  <small><a href="tutorial/2_custom_snd.html" target="snd1">Customizing Snd: The Basics</a></small>
-  <small><a href="tutorial/3_editing_and_processing_snd.html" target="snd1">A Brief Tutorial For Snd</a></small>
-  <small><a href="tutorial/4_advanced_snd.html" target="snd1">Some Advanced Uses Of Snd</a></small>
-  <small><a href="tutorial/5_close_snd.html" target="snd1">Sounding Out</a></small>
-  <small><a href="tutorial/6_resources.html" target="snd1">Resources</a></small>
-<a href="snd.html#fileoperations" target="snd1">File Operations</a>
-  <a href="snd.html#viewing" target="snd1">The Display</a>
-  <a href="snd.html#options" target="snd1">Other Options</a>
-<a href="snd.html#editoperations" target="snd1">Editing</a>
-  <a href="snd.html#thecursor" target="snd1">The Active Channel and The Cursor</a>
-  <a href="snd.html#marks" target="snd1">Marks</a>
-  <a href="snd.html#regions" target="snd1">Regions</a>
-  <a href="snd.html#edithistory" target="snd1">The Edit List</a>
-  <a href="snd.html#howtoedit" target="snd1">How to ...</a>
-    <small><a href="snd.html#saveopen" target="snd1">Save, open, close, print</a></small>
-    <small><a href="snd.html#deleteinsert" target="snd1">Delete, insert, mix</a></small>
-    <small><a href="snd.html#multichannel" target="snd1">Multi-channel operations</a></small>
-    <small><a href="snd.html#ampenvs" target="snd1">Amplitude envelopes and scaling</a></small>
-    <small><a href="snd.html#find" target="snd1">Find</a></small>
-    <small><a href="snd.html#changesamples" target="snd1">Change samples</a></small>
-    <small><a href="snd.html#undoredo" target="snd1">Undo, redo, revert</a></small>
-    <small><a href="snd.html#play" target="snd1">Play</a></small>
-    <small><a href="snd.html#mixingfiles" target="snd1">Mix Files</a></small>
-    <small><a href="snd.html#kbdmacros" target="snd1">Keyboard macros</a></small>
-    <small><a href="snd.html#changeformat" target="snd1">Change file format</a></small>
-    <small><a href="snd.html#extendfile" target="snd1">Extend a file</a></small>
-    <small><a href="snd.html#recordfile" target="snd1">Record a file</a></small>
-    <small><a href="snd.html#editenvelope" target="snd1">Edit or view an envelope</a></small>
-    <small><a href="snd.html#editheader" target="snd1">Edit, add, or remove the header</a></small>
-    <small><a href="snd.html#centeryaxis" target="snd1">Center a tiny signal with DC</a></small>
-    <small><a href="snd.html#savedstate" target="snd1">Save state for later restart</a></small>
-    <small><a href="snd.html#misccommands" target="snd1">Miscellaneous commands</a></small>
-  <a href="snd.html#keyboardcommands" target="snd1">Keyboard Commands</a>
-<a href="snd.html#controls" target="snd1">The  Control Panel</a>
-<a href="extsnd.html#extsndcontents" target="snd1">Customization and Extension</a>
-  <small><a href="extsnd.html#lisplistener" target="snd1">Introduction</a></small>
-  <a href="extsnd.html#etc" target="snd1">Snd Programming</a>
-      <small><a href="extsnd.html#behavior" target="snd1">Customizing Snd's behavior</a></small>
-          <small><a href="extsnd.html#sndglobalvars" target="snd1">Global variables</a></small>
-          <small><a href="extsnd.html#sndhooks" target="snd1">Hooks</a></small>
-      <small><a href="extsnd.html#sndobjects" target="snd1">Snd's objects</a></small>
-          <small><a href="extsnd.html#Vcts" target="snd1">Vcts</a></small>
-          <small><a href="extsnd.html#sndsounddata" target="snd1">Sound-data and Sndlib</a></small>
-          <small><a href="extsnd.html#samplereaders" target="snd1">Sample-readers</a></small>
-          <small><a href="extsnd.html#sndmarks" target="snd1">Marks</a></small>
-          <small><a href="extsnd.html#sndmixes" target="snd1">Mixes and Tracks</a></small>
-          <small><a href="extsnd.html#sndregions" target="snd1">Regions and Selections</a></small>
-          <small><a href="extsnd.html#sndsounds" target="snd1">Sounds</a></small>
-          <small><a href="extsnd.html#editlists" target="snd1">Edit Lists</a></small>
-          <small><a href="extsnd.html#sndtransforms" target="snd1">Transforms</a></small>
-          <small><a href="extsnd.html#snddialogs" target="snd1">Dialogs</a></small>
-          <small><a href="extsnd.html#sndmisc" target="snd1">Miscellaneous functions</a></small>
-          <small><a href="extsnd.html#sndconstants" target="snd1">Constants</a></small>
-          <small><a href="extsnd.html#snderrors" target="snd1">Errors and Debugging</a></small>
-      <small><a href="extsnd.html#appearance" target="snd1">Customizing Snd's appearance</a></small>
-          <small><a href="extsnd.html#colors" target="snd1">Colors</a></small>
-          <small><a href="extsnd.html#fonts" target="snd1">Fonts</a></small>
-          <small><a href="extsnd.html#sndwidgets" target="snd1">Widgets</a></small>
-          <small><a href="extsnd.html#sndgraphics" target="snd1">Graphics</a></small>
-  <a href="grfsnd.html#startup" target="snd1">Snd Startup</a>
-    <small><a href="grfsnd.html#sndresources" target="snd1">Snd resources</a></small>
-    <small><a href="grfsnd.html#sndswitches" target="snd1">Snd invocation flags</a></small>
-    <small><a href="grfsnd.html#sndinitfile" target="snd1">The initialization file</a></small>
-  <a href="grfsnd.html#snddynamic" target="snd1">Runtime modules and external programs</a>
-    <small><a href="grfsnd.html#emacssnd" target="snd1">Snd as an Emacs subjob</a></small>
-    <small><a href="grfsnd.html#dynamic" target="snd1">Dynamically loaded modules</a></small>
-    <small><a href="grfsnd.html#programs" target="snd1">External Programs</a></small>
-    <small><a href="grfsnd.html#sndaswidget" target="snd1">Snd as a Widget</a></small>
-    <small><a href="grfsnd.html#sndwithclm" target="snd1">Snd and the CLM module</a></small>
-      <small><a href="grfsnd.html#clmfuncs" target="snd1">CLM functions</a></small>
-      <small><a href="grfsnd.html#sndinstruments" target="snd1">Instruments</a></small>
-    <small><a href="grfsnd.html#sndwithcm" target="snd1">Snd and Common Music</a></small>
-    <small><a href="grfsnd.html#sndwithmotif" target="snd1">Snd and Motif</a></small>
-    <small><a href="grfsnd.html#sndwithgtk" target="snd1">Snd and Gtk</a></small>
-    <small><a href="grfsnd.html#sndwithnogui" target="snd1">Snd with no GUI and as script engine</a></small>
-    <small><a href="grfsnd.html#sndandruby" target="snd1">Snd with Ruby</a></small>
-    <small><a href="grfsnd.html#sndandladspa" target="snd1">Snd and LADSPA</a></small>
-    <small><a href="grfsnd.html#sndandx" target="snd1">Driving Snd remotely</a></small>
-    <small><a href="grfsnd.html#sndandgl" target="snd1">Snd and OpenGL</a></small>
-    <small><a href="grfsnd.html#sndandgdb" target="snd1">Snd and gdb</a></small>
-  <small><a href="index.html#extsndindex" target="snd1">Index</a></small>
-<a href="snd.html#index" target="snd1">Snd Index</a>
-<a href="sndlib.html#introduction" target="snd1">Sndlib</a>
-  <small><a href="sndlib.html#headers" target="snd1">Headers</a></small>
-  <small><a href="sndlib.html#data" target="snd1">Data</a></small>
-  <small><a href="sndlib.html#hardware" target="snd1">Hardware</a></small>
-  <small><a href="sndlib.html#music5" target="snd1">Music V</a></small>
-  <small><a href="sndlib.html#examples" target="snd1">Examples</a></small>
-   <small><a href="sndlib.html#sndinfo" target="snd1">SndInfo</a></small>
-    <small><a href="sndlib.html#sndplay" target="snd1">SndPlay</a></small>
-    <small><a href="sndlib.html#sndrecord" target="snd1">SndRecord</a></small>
-    <small><a href="sndlib.html#audinfo" target="snd1">AudInfo</a></small>
-    <small><a href="sndlib.html#sndsine" target="snd1">SndSine</a></small>
-    <small><a href="sndlib.html#clmosc" target="snd1">clmosc</a></small>
-    <small><a href="sndlib.html#otherexamples" target="snd1">Other Examples</a></small>
-  <small><a href="sndlib.html#currentstatus" target="snd1">Current Status</a></small>
-  <small><a href="sndlib.html#lowerlevels" target="snd1">Lower Levels</a></small>
-  <small><a href="sndlib.html#sndlibguile" target="snd1">Sndlib and Guile</a></small>
-  <small><a href="sndlib.html#sndlibforth" target="snd1">Sndlib and Forth</a></small>
-<a href="clm.html#introduction" target="snd1">CLM</a>
-  <small><a href="clm.html#instruments" target="snd1">Instruments</a></small>
-    <small><a href="clm.html#generators" target="snd1">Generators</a></small>
-    <small><a href="clm.html#generic-functions" target="snd1">Generic Functions</a></small>
-    <small><a href="clm.html#sound IO" target="snd1">Frames, Mixers, Sound IO</a></small>
-    <small><a href="clm.html#functions" target="snd1">Useful functions</a></small>
-    <small><a href="clm.html#def-clm-struct" target="snd1">def-clm-struct</a></small>
-    <small><a href="clm.html#definstrument" target="snd1">Definstrument</a></small>
-    <small><a href="clm.html#guileetc" target="snd1">CLM in Guile, Ruby, C</a></small>
-  <small><a href="clm.html#note-lists" target="snd1">Note Lists</a></small>
-    <small><a href="clm.html#with-sound" target="snd1">With-sound</a></small>
-    <small><a href="clm.html#mix-and-with-mix" target="snd1">With-mix</a></small>
-    <small><a href="clm.html#instrument-let" target="snd1">Instrument-let and Sound-let</a></small>
-  <small><a href="clm.html#debugging-aids" target="snd1">Debugging</a></small>
-  <small><a href="clm.html#appendices" target="snd1">Appendices</a></small>
-<a href="clm.html#index" target="snd1">CLM Index</a>
-<a href="sndscm.html#introduction" target="snd1">Snd Scheme and Ruby files</a>
-  <small><a href="sndscm.html#autosavedoc" target="snd1">autosave.scm: auto-save (edit backup) support</a></small>
-  <small><a href="sndscm.html#bessdoc" target="snd1">bess.scm, bess.rb: FM demo</a></small>
-  <small><a href="sndscm.html#bess1doc" target="snd1">bess1.scm, bess1.rb: FM violin demo</a></small>
-  <small><a href="sndscm.html#birddoc" target="snd1">bird.scm, bird.rb: North-American birds</a></small>
-  <small><a href="sndscm.html#clminsdoc" target="snd1">clm-ins.scm, clm-ins.rb: more CLM instruments</a></small>
-  <small><a href="sndscm.html#debugdoc" target="snd1">debug.scm: debugging aids</a></small>
-  <small><a href="sndscm.html#dlocsigdoc" target="snd1">dlocsig.rb</a></small>
-  <small><a href="sndscm.html#dlpdoc" target="snd1">dlp directory entries</a></small>
-  <small><a href="sndscm.html#drawdoc" target="snd1">draw.scm: graphics additions</a></small>
-  <small><a href="sndscm.html#dspdoc" target="snd1">dsp.scm: various DSP-related procedures</a></small>
-  <small><a href="sndscm.html#editmenudoc" target="snd1">edit-menu.scm: Edit menu additions</a></small>
-  <small><a href="sndscm.html#effectsdoc" target="snd1">new-effects.scm, gtk-effects.scm: an Effects menu</a></small>
-  <small><a href="sndscm.html#envdoc" target="snd1">env.scm, env.rb: envelope functions</a></small>
-  <small><a href="sndscm.html#enveddoc" target="snd1">enved.scm: envelope editor</a></small>
-  <small><a href="sndscm.html#eventdoc" target="snd1">event.scm: xm module stuff</a></small>
-  <small><a href="sndscm.html#exampdoc" target="snd1">examp.scm: many examples</a></small>
-  <small><a href="sndscm.html#extensionsdoc" target="snd1">extensions.scm, extensions.rb: extensions of Snd</a></small>
-  <small><a href="sndscm.html#fadedoc" target="snd1">fade.scm: frequency-domain cross-fades</a></small>
-  <small><a href="sndscm.html#fmvdoc" target="snd1">fmv.scm: controller for the fm-violin</a></small>
-  <small><a href="sndscm.html#freeverbdoc" target="snd1">freeverb.scm, freeverb.rb: a reverb</a></small>
-  <small><a href="sndscm.html#goopsnddoc" target="snd1">goopsnd.scm: look at Goops</a></small>
-  <small><a href="sndscm.html#hooksdoc" target="snd1">hooks.scm, hooks.rb: functions related to hooks</a></small>
-  <small><a href="sndscm.html#indexdoc" target="snd1">index.scm, index.rb: snd-help extension</a></small>
-  <small><a href="sndscm.html#jcrevdoc" target="snd1">jcrev.scm: John Chowning's reverb</a></small>
-  <small><a href="sndscm.html#ladspadoc" target="snd1">ladspa.scm: Kjetil S. Matheussen's LADSPA previewer.</a></small>
-  <small><a href="sndscm.html#maracadoc" target="snd1">maraca.scm: Perry Cook's maraca physical model</a></small>
-  <small><a href="sndscm.html#marksdoc" target="snd1">marks.scm: functions related to marks</a></small>
-  <small><a href="sndscm.html#maxfdoc" target="snd1">maxf.scm, maxf.rb: Max Mathews resonator</a></small>
-  <small><a href="sndscm.html#mixdoc" target="snd1">mix.scm: functions related to mixes and tracks</a></small>
-  <small><a href="sndscm.html#moogdoc" target="snd1">moog.scm: Moog filter</a></small>
-  <small><a href="sndscm.html#musglyphs" target="snd1">musglyphs.scm: Music notation symbols (from CMN)</a></small>
-  <small><a href="sndscm.html#nbdoc" target="snd1">nb.scm, nb.rb: Popup File info etc</a></small>
-  <small><a href="sndscm.html#noisedoc" target="snd1">noise.scm, noise.rb: CLM's noise.ins</a></small>
-  <small><a href="sndscm.html#peakenvdoc" target="snd1">peak-env.scm: peak envelope support</a></small>
-  <small><a href="sndscm.html#pianodoc" target="snd1">piano.scm, piano.rb: piano physical model</a></small>
-  <small><a href="sndscm.html#playdoc" target="snd1">play.scm: play-related functions</a></small>
-  <small><a href="sndscm.html#popupdoc" target="snd1">popup.scm, gtk-popup.scm: Popup menu specializations</a></small>
-  <small><a href="sndscm.html#prc95doc" target="snd1">prc95.scm: Perry Cook's physical model examples</a></small>
-  <small><a href="sndscm.html#pvocdoc" target="snd1">pvoc.scm: phase-vocoder</a></small>
-  <small><a href="sndscm.html#rgbdoc" target="snd1">rgb.scm, rgb.rb: colors</a></small>
-  <small><a href="sndscm.html#rtiodoc" target="snd1">rtio.scm, rtio.rb: real-time stuff</a></small>
-  <small><a href="sndscm.html#rubberdoc" target="snd1">rubber.scm, rubber.rb: rubber-sound</a></small>
-  <small><a href="sndscm.html#singerdoc" target="snd1">singer.scm: Perry Cook's vocal-tract physical model</a></small>
-  <small><a href="sndscm.html#snd4doc" target="snd1">snd4|5|6|7.scm: backwards compatibility</a></small>
-  <small><a href="sndscm.html#sndgldoc" target="snd1">snd-gl.scm: OpenGL examples (gl.c)</a></small>
-  <small><a href="sndscm.html#sndmotifdoc" target="snd1">snd-motif.scm, snd-gtk.scm: Motif/Gtk module (xm.c, xg.c)</a></small>
-  <small><a href="sndscm.html#sndtestdoc" target="snd1">snd-test.scm and event.scm: Snd regression tests</a></small>
-  <small><a href="sndscm.html#spectrdoc" target="snd1">spectr.scm, spectr.rb: instrument steady-state spectra</a></small>
-  <small><a href="sndscm.html#straddoc" target="snd1">strad.scm, strad.rb: violin physical model</a></small>
-  <small><a href="sndscm.html#vdoc" target="snd1">v.scm, v.rb: fm-violin</a></small>
-  <small><a href="sndscm.html#wsdoc" target="snd1">ws.scm, ws.rb: with-sound</a></small>
-  <small><a href="sndscm.html#xmenveddoc" target="snd1">xm-enved.scm, xm-enved.rb: xm-based envelope editor</a></small>
-  <small><a href="sndscm.html#zipdoc" target="snd1">zip.scm: the zipper (a cross-fader)</a></small>
-  <small><a href="sndscm.html#extsndvarexpl" target="snd1">A Note on Scheme variables in Snd</a></small>
-  <small><a href="sndscm.html#extsndasneededexpl" target="snd1">A Note on "As-Needed" input functions</a></small>
-  <small><a href="sndscm.html#extsndcgens" target="snd1">A Note on User-defined Generators in C-CLM</a></small>
-<a href="libxm.html#xm" target="snd1">Libxm</a>
-</pre>
+<!-- based on code from Danny Goodman, "Javascript & DHTML Cookbook", O'Reilly -->
+
+<script language="JavaScript">
+
+var collapsedWidget = new Image(20, 16);
+collapsedWidget.src = "toc-plus.png";
+var expandedWidget = new Image(20, 16);
+expandedWidget.src = "toc-minus.png";
+var emptySpace = new Image(20, 16);
+emptySpace.src = "toc-blank.png";
+
+var widgetWidth = "16";
+var widgetHeight = "16";
+var blankWidth = "16";
+var currState = "";
+var displayTarget = "snd1";
+
+function outlineItem(text, uri) {
+  this.text = text;
+  this.uri = uri;
+}
+
+function outlineInnerItem(text, uri) {
+  this.text = "<small>" + text + "</small>";
+  this.uri = uri;
+}
+
+var olData = {childNodes:
+	[{item:new outlineItem("Introduction", "snd.html#gettingstarted")},
+	 {item:new outlineItem("Tutorial", "tutorial/1_intro_and_build_snd.html"),
+	     childNodes:
+		[{item:new outlineInnerItem("Developing And Using Snd", "tutorial/1_intro_and_build_snd.html")},
+		 {item:new outlineInnerItem("Customizing Snd: The Basics", "tutorial/2_custom_snd.html")},
+		 {item:new outlineInnerItem("A Brief Tutorial For Snd", "tutorial/3_editing_and_processing_snd.html")},
+		 {item:new outlineInnerItem("Some Advanced Uses Of Snd", "tutorial/4_advanced_snd.html")},
+		 {item:new outlineInnerItem("Sounding Out", "tutorial/5_close_snd.html")},
+		 {item:new outlineInnerItem("Resources", "tutorial/6_resources.html")}]},
+	 {item:new outlineItem("File Operations", "snd.html#fileoperations"),
+	     childNodes:
+		[{item:new outlineInnerItem("The Display", "snd.html#viewing")},
+		 {item:new outlineInnerItem("Other Options", "snd.html#options")}]},
+ 	 {item:new outlineItem("Editing", "snd.html#editoperations"),
+ 	     childNodes:
+ 		[{item:new outlineInnerItem("The Active Channel and The Cursor", "snd.html#thecursor")},
+ 		 {item:new outlineInnerItem("Marks", "snd.html#marks")},
+ 		 {item:new outlineInnerItem("Regions", "snd.html#regions")},
+ 		 {item:new outlineInnerItem("Edit Lists", "snd.html#edithistory")},
+ 		 {item:new outlineInnerItem("How to ...", "snd.html#howtoedit"),
+ 		     childNodes:
+ 			[{item:new outlineInnerItem("Save, open, close, print", "snd.html#saveopen")},
+ 			 {item:new outlineInnerItem("Delete, insert, mix", "snd.html#deleteinsert")},
+ 			 {item:new outlineInnerItem("Multi-channel operationss", "snd.html#multichannel")},
+ 			 {item:new outlineInnerItem("Amplitude envelopes", "snd.html#ampenvs")},
+ 			 {item:new outlineInnerItem("Find", "snd.html#find")},
+ 			 {item:new outlineInnerItem("Change samples", "snd.html#changesamples")},
+ 			 {item:new outlineInnerItem("Undo, redo, revert", "snd.html#undoredo")},
+ 			 {item:new outlineInnerItem("Play", "snd.html#play")},
+ 			 {item:new outlineInnerItem("Mix Files", "snd.html#mixingfiles")},
+ 			 {item:new outlineInnerItem("Keyboard macros", "snd.html#kbdmacros")},
+ 			 {item:new outlineInnerItem("Change file format", "snd.html#changeformat")},
+ 			 {item:new outlineInnerItem("Extend a file", "snd.html#extendfile")},
+ 			 {item:new outlineInnerItem("Record a file", "snd.html#recordfile")},
+ 			 {item:new outlineInnerItem("Edit or view an envelope", "snd.html#editenvelope")},
+ 			 {item:new outlineInnerItem("Edit, add, or remove the header", "snd.html#editheader")},
+ 			 {item:new outlineInnerItem("Center a tiny signal with DC", "snd.html#centeryaxis")},
+ 			 {item:new outlineInnerItem("Save state", "snd.html#savedstate")},
+ 			 {item:new outlineInnerItem("Miscellaneous commands", "snd.html#misccommands")}]},
+ 		{item:new outlineInnerItem("Keyboard Commands", "snd.html#keyboardcommands")}]},
+ 	{item:new outlineItem("Control Panel", "snd.html#controls")},
+ 	{item:new outlineItem("Extension and Customization", "extsnd.html#extsndcontents"),
+ 	    childNodes:
+ 		[{item:new outlineInnerItem("Introduction", "extsnd.html#lisplistener")},
+ 		 {item:new outlineInnerItem("Snd Programming", "extsnd.html#etc")},
+ 		 {item:new outlineInnerItem("Customizing Snd's behavior", "extsnd.html#behavior")},
+ 		 {item:new outlineInnerItem("Global variables", "extsnd.html#sndglobalvars")},
+ 		 {item:new outlineInnerItem("Hooks", "extsnd.html#sndhooks")},
+ 		 {item:new outlineInnerItem("Snd's objects", "extsnd.html#sndobjects")},
+ 		 {item:new outlineInnerItem("Vcts", "extsnd.html#Vcts")},
+ 		 {item:new outlineInnerItem("Sound-data", "extsnd.html#sndsounddata")},
+ 		 {item:new outlineInnerItem("Sample-readers", "extsnd.html#samplereaders")},
+ 		 {item:new outlineInnerItem("Marks", "extsnd.html#sndmarks")},
+ 		 {item:new outlineInnerItem("Mixes and Tracks", "extsnd.html#sndmixes")},
+ 		 {item:new outlineInnerItem("Regions and Selections", "extsnd.html#sndregions")},
+ 		 {item:new outlineInnerItem("Sounds", "extsnd.html#sndsounds")},
+ 		 {item:new outlineInnerItem("Edit Lists", "extsnd.html#editlists")},
+ 		 {item:new outlineInnerItem("Transforms", "extsnd.html#sndtransforms")},
+ 		 {item:new outlineInnerItem("Dialogs", "extsnd.html#snddialogs")},
+ 		 {item:new outlineInnerItem("Miscellaneous functions", "extsnd.html#sndmisc")},
+ 		 {item:new outlineInnerItem("Constants", "extsnd.html#sndconstants")},
+ 		 {item:new outlineInnerItem("Errors and Debugging", "extsnd.html#snderrors")},
+ 		 {item:new outlineInnerItem("Customizing Snd's appearance", "extsnd.html#appearance")},
+ 		 {item:new outlineInnerItem("Colors", "extsnd.html#colors")},
+ 		 {item:new outlineInnerItem("Fonts", "extsnd.html#fonts")},
+ 		 {item:new outlineInnerItem("Widgets", "extsnd.html#sndwidgets")},
+ 		 {item:new outlineInnerItem("Graphics", "extsnd.html#sndgraphics")}]},
+ 	{item:new outlineItem("Snd Startup", "grfsnd.html#startup"),
+ 	    childNodes:
+ 		[{item:new outlineInnerItem("Resources", "grfsnd.html#sndresources")},
+ 		 {item:new outlineInnerItem("Invocation", "grfsnd.html#sndswitches")},
+ 		 {item:new outlineInnerItem("Initialization file", "grfsnd.html#sndinitfile")}]},
+ 	{item:new outlineItem("External Programs", "grfsnd.html#snddynamic"),
+ 	    childNodes:
+ 		[{item:new outlineInnerItem("Snd as an Emacs subjob", "grfsnd.html#emacssnd")},
+ 		 {item:new outlineInnerItem("Dynamically loaded modules", "grfsnd.html#dynamic")},
+ 		 {item:new outlineInnerItem("External Programs", "grfsnd.html#programs")},
+ 		 {item:new outlineInnerItem("Snd as a Widget", "grfsnd.html#sndaswidget")},
+ 		 {item:new outlineInnerItem("Snd and the CLM module", "grfsnd.html#sndwithclm")},
+ 		 {item:new outlineInnerItem("CLM functions", "grfsnd.html#clmfuncs")},
+ 		 {item:new outlineInnerItem("Instruments", "grfsnd.html#sndinstruments")},
+ 		 {item:new outlineInnerItem("Snd and Common Music", "grfsnd.html#sndwithcm")},
+ 		 {item:new outlineInnerItem("Snd and Motif", "grfsnd.html#sndwithmotif")},
+ 		 {item:new outlineInnerItem("Snd and Gtk", "grfsnd.html#sndwithgtk")},
+ 		 {item:new outlineInnerItem("Snd with no GUI and as script engine", "grfsnd.html#sndwithnogui")},
+ 		 {item:new outlineInnerItem("Snd with Ruby", "grfsnd.html#sndandruby")},
+ 		 {item:new outlineInnerItem("Snd and LADSPA", "grfsnd.html#sndandladspa")},
+ 		 {item:new outlineInnerItem("Driving Snd remotely", "grfsnd.html#sndandx")},
+ 		 {item:new outlineInnerItem("Snd and OpenGL", "grfsnd.html#sndandgl")},
+ 		 {item:new outlineInnerItem("Snd and gdb", "grfsnd.html#sndandgdb")}]},
+ 	{item:new outlineItem("Index", "index.html#extsndindex"),
+	    childNodes:
+	    [{item:new outlineInnerItem("Snd Index", "snd.html#index")},
+	     {item:new outlineInnerItem("CLM Index", "clm.html#index")}]},
+	{item:new outlineItem("Sndlib", "sndlib.html#introduction"),
+ 	    childNodes:
+ 		[{item:new outlineInnerItem("Headers", "sndlib.html#headers")},
+ 		 {item:new outlineInnerItem("Data", "sndlib.html#data")},
+ 		 {item:new outlineInnerItem("Hardware", "sndlib.html#hardware")},
+ 		 {item:new outlineInnerItem("Music V", "sndlib.html#music5")},
+ 		 {item:new outlineInnerItem("Examples", "sndlib.html#examples")},
+ 		 {item:new outlineInnerItem("SndInfo", "sndlib.html#sndinfo")},
+ 		 {item:new outlineInnerItem("SndPlay", "sndlib.html#sndplay")},
+ 		 {item:new outlineInnerItem("SndRecord", "sndlib.html#sndrecord")},
+ 		 {item:new outlineInnerItem("AudInfo", "sndlib.html#audinfo")},
+ 		 {item:new outlineInnerItem("SndSine", "sndlib.html#sndsine")},
+ 		 {item:new outlineInnerItem("clmosc", "sndlib.html#clmosc")},
+ 		 {item:new outlineInnerItem("Other Examples", "sndlib.html#otherexamples")},
+ 		 {item:new outlineInnerItem("Current Status", "sndlib.html#currentstatus")},
+ 		 {item:new outlineInnerItem("Lower Levels", "sndlib.html#lowerlevels")},
+ 		 {item:new outlineInnerItem("Sndlib and Guile", "sndlib.html#sndlibguile")},
+ 		 {item:new outlineInnerItem("Sndlib and Forth", "sndlib.html#sndlibforth")}]},
+ 	{item:new outlineItem("CLM", "clm.html#introduction"),
+ 	    childNodes:
+ 		[{item:new outlineInnerItem("Instruments", "clm.html#instruments")},
+ 		 {item:new outlineInnerItem("Generators", "clm.html#generators")},
+ 		 {item:new outlineInnerItem("Generic Functions", "clm.html#generic-functions")},
+ 		 {item:new outlineInnerItem("Frames, Mixers, Sound IO", "clm.html#sound IO")},
+ 		 {item:new outlineInnerItem("Useful functions", "clm.html#functions")},
+ 		 {item:new outlineInnerItem("def-clm-struct", "clm.html#def-clm-struct")},
+ 		 {item:new outlineInnerItem("Definstrument", "clm.html#definstrument")},
+ 		 {item:new outlineInnerItem("CLM in Guile, Ruby, C", "clm.html#guileetc")},
+ 		 {item:new outlineInnerItem("Note Lists", "clm.html#note-lists")},
+ 		 {item:new outlineInnerItem("With-sound", "clm.html#with-sound")},
+ 		 {item:new outlineInnerItem("With-mix", "clm.html#mix-and-with-mix")},
+ 		 {item:new outlineInnerItem("Instrument-let and Sound-let", "clm.html#instrument-let")},
+ 		 {item:new outlineInnerItem("Debugging", "clm.html#debugging-aids")},
+ 		 {item:new outlineInnerItem("Appendices", "clm.html#appendices")},
+ 		 {item:new outlineInnerItem("CLM Index", "clm.html#index")}]},
+ 	{item:new outlineItem("Scheme and Ruby files", "sndscm.html#introduction"),
+ 	    childNodes:
+ 		[{item:new outlineInnerItem("autosave: auto-save (edit backup) support", "sndscm.html#autosavedoc")},
+ 		 {item:new outlineInnerItem("bess: FM demo", "sndscm.html#bessdoc")},
+ 		 {item:new outlineInnerItem("bess1: FM violin demo", "sndscm.html#bess1doc")},
+ 		 {item:new outlineInnerItem("bird: North-American birds", "sndscm.html#birddoc")},
+ 		 {item:new outlineInnerItem("clm-ins: more CLM instruments", "sndscm.html#clminsdoc")},
+ 		 {item:new outlineInnerItem("debug: debugging aids", "sndscm.html#debugdoc")},
+ 		 {item:new outlineInnerItem("dlocsig", "sndscm.html#dlocsigdoc")},
+ 		 {item:new outlineInnerItem("dlp directory", "sndscm.html#dlpdoc")},
+ 		 {item:new outlineInnerItem("draw: graphics additions", "sndscm.html#drawdoc")},
+ 		 {item:new outlineInnerItem("dsp: various DSP-related procedures", "sndscm.html#dspdoc")},
+ 		 {item:new outlineInnerItem("edit-menu: Edit menu additions", "sndscm.html#editmenudoc")},
+ 		 {item:new outlineInnerItem("new-effects, gtk-effects: an Effects menu", "sndscm.html#effectsdoc")},
+ 		 {item:new outlineInnerItem("env: envelope functions", "sndscm.html#envdoc")},
+ 		 {item:new outlineInnerItem("enved: envelope editor", "sndscm.html#enveddoc")},
+ 		 {item:new outlineInnerItem("event: xm module stuff", "sndscm.html#eventdoc")},
+ 		 {item:new outlineInnerItem("examp: many examples", "sndscm.html#exampdoc")},
+ 		 {item:new outlineInnerItem("extensions: extensions of Snd", "sndscm.html#extensionsdoc")},
+ 		 {item:new outlineInnerItem("fade: frequency-domain cross-fades", "sndscm.html#fadedoc")},
+ 		 {item:new outlineInnerItem("fmv: controller for the fm-violin", "sndscm.html#fmvdoc")},
+ 		 {item:new outlineInnerItem("freeverb: a reverb", "sndscm.html#freeverbdoc")},
+ 		 {item:new outlineInnerItem("goopsnd: look at Goops", "sndscm.html#goopsnddoc")},
+ 		 {item:new outlineInnerItem("hooks: functions related to hooks", "sndscm.html#hooksdoc")},
+ 		 {item:new outlineInnerItem("index: snd-help extension", "sndscm.html#indexdoc")},
+ 		 {item:new outlineInnerItem("jcrev: John Chowning's reverb", "sndscm.html#jcrevdoc")},
+ 		 {item:new outlineInnerItem("ladspa: Kjetil S. Matheussen's LADSPA previewer.", "sndscm.html#ladspadoc")},
+ 		 {item:new outlineInnerItem("maraca: Perry Cook's maraca physical model", "sndscm.html#maracadoc")},
+ 		 {item:new outlineInnerItem("marks: functions related to marks", "sndscm.html#marksdoc")},
+ 		 {item:new outlineInnerItem("maxf: Max Mathews resonator", "sndscm.html#maxfdoc")},
+ 		 {item:new outlineInnerItem("mix: functions related to mixes and tracks", "sndscm.html#mixdoc")},
+ 		 {item:new outlineInnerItem("moog: Moog filter", "sndscm.html#moogdoc")},
+ 		 {item:new outlineInnerItem("musglyphs: Music notation symbols (from CMN)", "sndscm.html#musglyphs")},
+ 		 {item:new outlineInnerItem("nb: Popup File info etc", "sndscm.html#nbdoc")},
+ 		 {item:new outlineInnerItem("noise: CLM's noise.ins", "sndscm.html#noisedoc")},
+ 		 {item:new outlineInnerItem("peak-env: peak envelope support", "sndscm.html#peakenvdoc")},
+ 		 {item:new outlineInnerItem("piano: piano physical model", "sndscm.html#pianodoc")},
+ 		 {item:new outlineInnerItem("play: play-related functions", "sndscm.html#playdoc")},
+ 		 {item:new outlineInnerItem("popup, gtk-popup: Popup menu specializations", "sndscm.html#popupdoc")},
+ 		 {item:new outlineInnerItem("prc95: Perry Cook's physical model examples", "sndscm.html#prc95doc")},
+ 		 {item:new outlineInnerItem("pvoc: phase-vocoder", "sndscm.html#pvocdoc")},
+ 		 {item:new outlineInnerItem("rgb: colors", "sndscm.html#rgbdoc")},
+ 		 {item:new outlineInnerItem("rtio: real-time stuff", "sndscm.html#rtiodoc")},
+ 		 {item:new outlineInnerItem("rubber: rubber-sound", "sndscm.html#rubberdoc")},
+ 		 {item:new outlineInnerItem("singer: Perry Cook's vocal-tract physical model", "sndscm.html#singerdoc")},
+ 		 {item:new outlineInnerItem("snd4|5|6|7: backwards compatibility", "sndscm.html#snd4doc")},
+ 		 {item:new outlineInnerItem("snd-gl: OpenGL examples (gl.c)", "sndscm.html#sndgldoc")},
+ 		 {item:new outlineInnerItem("snd-motif, snd-gtk: Motif/Gtk module (xm.c, xg.c)", "sndscm.html#sndmotifdoc")},
+ 		 {item:new outlineInnerItem("snd-test: Snd regression tests", "sndscm.html#sndtestdoc")},
+ 		 {item:new outlineInnerItem("spectr: instrument steady-state spectra", "sndscm.html#spectrdoc")},
+ 		 {item:new outlineInnerItem("strad: violin physical model", "sndscm.html#straddoc")},
+ 		 {item:new outlineInnerItem("v.scm: fm-violin", "sndscm.html#vdoc")},
+ 		 {item:new outlineInnerItem("ws.scm: with-sound", "sndscm.html#wsdoc")},
+ 		 {item:new outlineInnerItem("xm-enved: xm-based envelope editor", "sndscm.html#xmenveddoc")},
+ 		 {item:new outlineInnerItem("zip: the zipper (a cross-fader)", "sndscm.html#zipdoc")},
+ 		 {item:new outlineInnerItem("Scheme variables in Snd", "sndscm.html#extsndvarexpl")},
+ 		 {item:new outlineInnerItem("'As-Needed' input functions", "sndscm.html#extsndasneededexpl")},
+ 		 {item:new outlineInnerItem("User-defined Generators in C-CLM", "sndscm.html#extsndcgens")}]},
+        {item:new outlineItem("FM Introduction", "fm.html#fmintro")},
+ 	{item:new outlineItem("Libxm", "libxm.html#xm")}]};
+
+function swapState(currState, currVal, n) {
+  var newState = currState.substring(0, n);
+  newState += currVal ^ 1 // Bitwise XOR item n;
+  newState += currState.substring(n + 1, currState.length);
+  return newState;
+}
+
+function toggle(img, blockNum) {
+  var newString = "";
+  var expanded, n;
+  expanded = currState.charAt(blockNum);
+  currState = swapState(currState, expanded, blockNum);
+  if (expanded == "0") {
+    document.getElementById("OLBlock" + blockNum).style.display = "block";
+    img.src = expandedWidget.src;
+    } else {
+    document.getElementById("OLBlock" + blockNum).style.display = "none";
+    img.src = collapsedWidget.src;
+    }
+}
+
+function expandAll() {
+  var newState = "";
+  while (newState.length < currState.length) {
+   newState += "1";
+  }
+  currState = newState;
+  initExpand();
+}
+
+function collapseAll() {
+  var newState = "";
+  while (newState.length < currState.length) {
+   newState += "0";
+  }
+  currState = newState;
+  initExpand();
+}
+
+var blockID = 0;
+
+function drawOutline(ol, prefix) {
+  var output = "";
+  var nestCount, link, nestPrefix;
+  prefix = (prefix) ? prefix : "";
+  for (var i = 0; i < ol.childNodes.length; i++) {
+    nestCount = (ol.childNodes[i].childNodes) ? ol.childNodes[i].childNodes.length : 0;
+    output += "<div>\n";
+    if (nestCount > 0) {
+      output += prefix + "<img id='widget" + blockID + "' src='" + collapsedWidget.src;
+      output += "' height=" + widgetHeight + " width=" + widgetWidth + " title='Click to expand/collapse' onClick= " + "'toggle(this," + blockID + ")'>&nbsp;";
+      link = (ol.childNodes[i].item.uri) ? ol.childNodes[i].item.uri : "";
+      if (link) output += "<a href='" + link + "' target='" + displayTarget + "'>";
+      output += "<span style='position:relative; top:-3px; height:11px'><nobr>" + ol.childNodes[i].item.text + "</nobr></span>";
+      if (link) output += "</a>";
+      currState += "0";
+      output += "<span class='OLBlock' blocknum='" + blockID + "' id='OLBlock" + blockID++ + "'>";
+      nestPrefix = prefix + "<img src='" + emptySpace.src + "' height=" + widgetHeight + " width=" + blankWidth + ">";
+      output += drawOutline(ol.childNodes[i], nestPrefix) + "</span>";
+    } else {
+      output += prefix + "<img src='" + emptySpace.src + "' height=" + widgetHeight + " width=" + blankWidth + ">";
+      link = (ol.childNodes[i].item.uri) ? ol.childNodes[i].item.uri : "";
+      if (link)
+        output += "&nbsp;<a href='" + link + "' target='" + displayTarget + "'>";
+      else output += "&nbsp;<a>";
+      output += "<span style='position:relative; top:-3px; height:11px'><nobr>" + ol.childNodes[i].item.text + "</nobr></span></a>";
+      }
+    output += "</div>\n";
+    }
+  return output;
+}
+
+function initExpand() {
+  for (var i = 0; i < currState.length; i++) {
+    if (currState.charAt(i) == 1) {
+      document.getElementById("OLBlock" + i).style.display = "block";
+      document.getElementById("widget" + i).src = expandedWidget.src;
+    } else {
+      document.getElementById("OLBlock" + i).style.display = "none";
+      document.getElementById("widget" + i).src = collapsedWidget.src;
+    }
+  }
+}
+
+function initExpMenu() {
+  var olHTML = "<span>" + drawOutline(olData) + "</span>";
+  document.getElementById("content").innerHTML = olHTML;
+  initExpand();
+}
+</script>
+</head>
+
+<body bgcolor=beige onload="initExpMenu()">
+<form>
+<nobr><input type="button" value="open all" bgcolor=beige onClick="expandAll()"></input>
+<input type="button" value="close all" onClick="collapseAll()"></input></nobr>
+<hr>
+</form>
+<div id="content"></div>
 </body></html>
