@@ -2,7 +2,7 @@
 /*   based on code of Scott Wilson and Craig Sapp */
 
 /* TODO: OSX support
- *       document and test
+ *       test
  *       proper error handling
  *       tie into CLM (rt.lisp, sndlib2clm.lisp etc)
  */
@@ -201,7 +201,7 @@ char *mus_midi_device_name(int sysdev)
 
 char *mus_midi_describe(void) 
 {
-  int;
+  int i, err;
   snd_rawmidi_t *line;
   snd_rawmidi_info_t *info;
   char *buf = NULL;

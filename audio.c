@@ -6310,10 +6310,6 @@ void mus_audio_restore (void)
 #define AUDIO_OK
 
 #include <sys/types.h>
-#if 0
-#include <unistd.h>
-#include <fcntl.h>
-#endif
 #include <stropts.h>
 #include <sys/filio.h>
 
@@ -9524,10 +9520,6 @@ int mus_audio_mixer_write(int ur_dev, int field, int chan, float *val)
 #define AUDIO_OK
 
 /* this code taken from Xanim, esound, and MikMod */
-#if 0
-#include <errno.h>
-#include <fcntl.h>
-#endif
 #include <sys/audio.h>
 #include <stropts.h>
 #include <sys/types.h>

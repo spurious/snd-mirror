@@ -10,6 +10,9 @@ static GtkWidget *expB, *linB, *lerow, *baseScale, *baseLabel, *baseValue, *sele
 static GtkObject *baseAdj, *orderAdj;
 static GdkGC *gc, *rgc, *ggc;
 
+static GdkPixmap *blank = NULL;
+static GdkBitmap *blank_mask = NULL;
+
 static char *env_names[3] = {STR_amp_env_p, STR_flt_env_p, STR_src_env_p};
 
 static int showing_all_envs = 0; /* edit one env (0), or view all currently defined envs (1) */
@@ -355,7 +358,7 @@ static void select_or_edit_env(snd_state *ss, int pos)
 
 static void clear_point_label(void)
 {
-  set_blank_pixmap(brkpixL);
+  SG_PIXMAP_SET(brkpixL, blank, blank_mask);
   gtk_label_set_text(GTK_LABEL(brktxtL), "");
 }
 
@@ -1043,11 +1046,11 @@ GtkWidget *create_envelope_editor (snd_state *ss)
       gtk_button_set_relief(GTK_BUTTON(brkbox), GTK_RELIEF_NONE);
       set_background(brkbox, (ss->sgx)->basic_color);
       gtk_widget_show(brkbox);
-      
-      brkpixL = get_blank_pixmap(ss);
+
+      blank = gdk_pixmap_create_from_xpm_d(MAIN_WINDOW(ss), &blank_mask, NULL, blank_bits());
+      brkpixL = SG_PIXMAP_NEW(blank, blank_mask);
       gtk_container_add(GTK_CONTAINER(brkbox), brkpixL);
       gtk_widget_show(brkpixL);
-      set_blank_pixmap(brkpixL);
       
       brktxtL = gtk_label_new(NULL);
       set_background(brktxtL, (ss->sgx)->basic_color);

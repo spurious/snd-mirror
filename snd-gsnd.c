@@ -201,17 +201,6 @@ static void make_pixmaps(snd_state *ss)
     }
 }
 
-void set_blank_pixmap(GtkWidget *w)
-{
-  SG_PIXMAP_SET(w, blank, blank_mask);
-}
-
-GtkWidget *get_blank_pixmap(snd_state *ss) 
-{
-  make_pixmaps(ss);
-  return(SG_PIXMAP_NEW(blank, blank_mask));
-}
-
 
 /* -------- MINIBUFFER CALLBACKS -------- */
 

@@ -81,17 +81,6 @@
   #define HAVE_ARROW_KEYS 1
 #endif
 
-#if 0
-#if HAVE_GETTEXT
-  #include <libintl.h>
-  #define _(String) gettext (String)
-  #define N_(String) gettext_noop (String)
-#else
-  #define _(String) (String)
-  #define N_(String) (String)
-#endif
-#endif
-
 #ifndef STATFS_ARGS
   #define STATFS_ARGS 2
 #endif

@@ -374,7 +374,9 @@ typedef struct {
   #define SG_LIST_INSERT(Widget, Position, Str)
   #define SG_LIST_SET_TEXT(Widget, Row, Str) 
   #define SG_PIXMAP_NEW(Map, Mask) NULL
+  /* perhaps returns drawingarea?? widget (will hold the pixmap and others) */
   #define SG_PIXMAP_SET(Holder, Map, Mask)
+  /* now holder is a widget and we set its pixmap -- how to tell this? */
   #define SG_FONT_LOAD(Font) NULL
 #else
   /* use deprecated forms for testing */

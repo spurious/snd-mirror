@@ -14,12 +14,9 @@
 
 /* it's important to check for mus_xen_p before de-referencing a gen arg */
 
-/* TODO:   add vct-wrappers for other internal arrays?
- *     
+/*     
  *  we have mus-sound-srate in sndlib, mus-srate in clm.c, sound-srate and *clm-srate* in clm, mus-sound-srate and srate in snd
  *    perhaps a mus module, giving mus:sound-srate in xen, mus:sound-srate in clm, mus_sound_srate in C?
- *
- * in Ruby, a zillion methods to tie into the mus_xen class etc
  */
 
 #if defined(HAVE_CONFIG_H)
@@ -617,7 +614,6 @@ static XEN_OBJECT_TYPE mus_xen_tag;
 
 #define MUS_XEN_P(obj) (XEN_OBJECT_TYPE_P(obj, mus_xen_tag))
 int mus_xen_p(XEN obj) {return(MUS_XEN_P(obj));}
-mus_any *mus_xen_to_clm(XEN obj) {return(MUS_XEN_TO_CLM(obj));}
 
 static XEN *make_vcts(int size)
 {
@@ -4322,7 +4318,7 @@ is run.  'synthesize' is a function of 1 arg, the generator; it is called to get
   return(pv_obj);
 }
 
-/* these names are all wrong!! */
+/* TODO: phase-vocoder internal names (these names are all wrong!) and help strings */
 static XEN g_pv_amps(XEN pv, XEN ind) 
 {
   Float *amps; 
@@ -5180,8 +5176,24 @@ void mus_xen_init(void)
   rb_define_method(mus_xen_tag, "scaler", XEN_PROCEDURE_CAST g_scaler, 0);
   rb_define_method(mus_xen_tag, "length", XEN_PROCEDURE_CAST g_length, 0);
   rb_define_method(mus_xen_tag, "data", XEN_PROCEDURE_CAST g_data, 0);
+  rb_define_method(mus_xen_tag, "feedforward", XEN_PROCEDURE_CAST g_feedforward, 0);
+  rb_define_method(mus_xen_tag, "feedback", XEN_PROCEDURE_CAST g_feedback, 0);
+  rb_define_method(mus_xen_tag, "cosines", XEN_PROCEDURE_CAST g_cosines, 0);
+  rb_define_method(mus_xen_tag, "order", XEN_PROCEDURE_CAST g_mus_order, 0);
   rb_define_method(mus_xen_tag, "call", XEN_PROCEDURE_CAST mus_xen_apply, 2);
-  /* TODO: rest of generics etc */
+  rb_define_method(mus_xen_tag, "location", XEN_PROCEDURE_CAST g_location, 0);
+  rb_define_method(mus_xen_tag, "increment", XEN_PROCEDURE_CAST g_increment, 0);
+  rb_define_method(mus_xen_tag, "channels", XEN_PROCEDURE_CAST g_channels, 0);
+  rb_define_method(mus_xen_tag, "channel", XEN_PROCEDURE_CAST g_channel, 0);
+  rb_define_method(mus_xen_tag, "xcoeffs", XEN_PROCEDURE_CAST g_mus_xcoeffs, 0);
+  rb_define_method(mus_xen_tag, "ycoeffs", XEN_PROCEDURE_CAST g_mus_ycoeffs, 0);
+  rb_define_method(mus_xen_tag, "ramp", XEN_PROCEDURE_CAST g_ramp, 0);
+  rb_define_method(mus_xen_tag, "hop", XEN_PROCEDURE_CAST g_hop, 0);
+  rb_define_method(mus_xen_tag, "a0", XEN_PROCEDURE_CAST g_a0, 0);
+  rb_define_method(mus_xen_tag, "a1", XEN_PROCEDURE_CAST g_a1, 0);
+  rb_define_method(mus_xen_tag, "a2", XEN_PROCEDURE_CAST g_a2, 0);
+  rb_define_method(mus_xen_tag, "b1", XEN_PROCEDURE_CAST g_b1, 0);
+  rb_define_method(mus_xen_tag, "b2", XEN_PROCEDURE_CAST g_b2, 0);
 #endif  
 
   init_keywords();

@@ -7,15 +7,10 @@ typedef struct {
   int nvcts;
 } mus_xen;
 
-/* next two macros are "deprecated" */
-#define mus_get_any(arg) (((mus_xen *)XEN_OBJECT_REF(arg))->gen)
-#define mus_xen_get(arg) ((mus_xen *)XEN_OBJECT_REF(arg))
-
 #define CLM_TO_MUS_XEN(arg) ((mus_xen *)XEN_OBJECT_REF(arg))
 #define MUS_XEN_TO_CLM(obj) ((mus_any *)((CLM_TO_MUS_XEN(obj))->gen))
 
 int mus_xen_p(XEN obj);
-mus_any *mus_xen_to_clm(XEN obj);  /* "deprecated" -- use MUS_XEN_TO_CLM */
 XEN mus_xen_to_object(mus_xen *gn);
 XEN mus_xen_to_object_with_vct(mus_xen *gn, XEN v);
 void mus_xen_init(void);

@@ -859,10 +859,6 @@ snd_data *copy_snd_data(snd_data *sd, chan_info *cp, int bufsize)
   sf->open = FD_OPEN;
   sf->inuse = FALSE;
   sf->copy = 1;
-#if 0
-  sf->chan = sd->chan;
-  sf->len = sd->len;
-#endif
   sf->just_zeros = 0;
   return(sf);
 }

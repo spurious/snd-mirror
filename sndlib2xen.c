@@ -1175,7 +1175,7 @@ static XEN sound_data_each(XEN obj)
   v = (sound_data *)XEN_OBJECT_REF(obj);
   for (j = 0; j < v->chans; j++)
     for (i = 0; i < v->length; i++)
-      rb_yield(C_TO_XEN_DOUBLE(v->data[j][i]));
+      rb_yield(C_TO_XEN_DOUBLE(MUS_SAMPLE_TO_DOUBLE(v->data[j][i])));
   return(obj);
 }
 
@@ -1203,6 +1203,41 @@ static XEN sound_data_compare(XEN vr1, XEN vr2)
   if (len > 0) return(C_TO_SMALL_XEN_INT(1));
   return(C_TO_XEN_INT(-1));
 }
+
+static XEN sound_data_size(XEN obj)
+{
+  sound_data *sd;
+  sd = (sound_data *)XEN_OBJECT_REF(obj);
+  return(C_TO_XEN_INT(sd->length * sd->chans));
+}
+
+static XEN sound_data_fill(XEN obj, XEN val)
+{
+  sound_data *sd;
+  MUS_SAMPLE_TYPE filler;
+  int i, j, chans, len;
+  filler = MUS_DOUBLE_TO_SAMPLE(XEN_TO_C_DOUBLE(val));
+  sd = (sound_data *)XEN_OBJECT_REF(obj);
+  for (i = 0; i < sd->chans; i++)
+    for (j = 0; j < sd->length; j++)
+      sd->data[i][j] = filler;
+  return(val);
+}
+
+static XEN sound_data_dup(XEN obj)
+{
+  sound_data *sd, *sdnew;
+  int i, j, chans, len;
+  XEN result;
+  sd = (sound_data *)XEN_OBJECT_REF(obj);
+  result = make_sound_data(sd->chans, sd->length);
+  sdnew = (sound_data *)XEN_OBJECT_REF(result);
+  for (i = 0; i < sd->chans; i++)
+    for (j = 0; j < sd->length; j++)
+      sdnew->data[i][j] = sd->data[i][j];
+  return(result);
+}
+
 #endif
 
 #if HAVE_OSS
@@ -1231,11 +1266,16 @@ void mus_sndlib2xen_initialize(void)
   rb_include_module(sound_data_tag, rb_mEnumerable);
   rb_define_method(sound_data_tag, "to_s", XEN_PROCEDURE_CAST print_sound_data, 0);
   rb_define_method(sound_data_tag, "eql?", XEN_PROCEDURE_CAST equalp_sound_data, 1);
+  rb_define_method(sound_data_tag, "==", XEN_PROCEDURE_CAST equalp_sound_data, 1);
   rb_define_method(sound_data_tag, "each", XEN_PROCEDURE_CAST sound_data_each, 0);
   rb_define_method(sound_data_tag, "<=>", XEN_PROCEDURE_CAST sound_data_compare, 1);
   rb_define_method(sound_data_tag, "[]", XEN_PROCEDURE_CAST sound_data_ref, 2);
   rb_define_method(sound_data_tag, "[]=", XEN_PROCEDURE_CAST sound_data_set, 3);
-  /* TODO: more sound data method tie-ins */
+  rb_define_method(sound_data_tag, "length", XEN_PROCEDURE_CAST sound_data_size, 0);
+  rb_define_method(sound_data_tag, "size", XEN_PROCEDURE_CAST sound_data_size, 0);
+  rb_define_method(sound_data_tag, "new", XEN_PROCEDURE_CAST make_sound_data, 2);
+  rb_define_method(sound_data_tag, "fill", XEN_PROCEDURE_CAST sound_data_fill, 1);
+  rb_define_method(sound_data_tag, "dup", XEN_PROCEDURE_CAST sound_data_dup, 0);
 #endif
 
   XEN_DEFINE_CONSTANT(S_mus_out_format, MUS_OUT_FORMAT, "sample format for fastest IO");

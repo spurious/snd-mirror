@@ -253,18 +253,6 @@ void raise_dialog(Widget w)
     }
 }
 
-#if 0
-void raise_widget(Widget w)
-{
-  /* try to change stacking order (form widgets in drawingarea; overlap covers desired console) */
-  XtWidgetGeometry *request;
-  request = (XtWidgetGeometry *)CALLOC(1, sizeof(XtWidgetGeometry));
-  request->request_mode = CWStackMode; /* (1 << 6) */
-  request->stack_mode = 0; /* Above */
-  XtMakeGeometryRequest(w, request, NULL);
-}
-#endif
-
 void set_main_color_of_widget (Widget w, void *userptr)
 {
   if (XtIsWidget(w))

@@ -2696,7 +2696,7 @@ applies gen to snd's channel chn starting at beg for dur samples. overlap is the
   dur = XEN_TO_C_INT_OR_ELSE(samps, 0);
   if (dur == 0) dur = (to_c_edit_samples(cp, edpos, S_clm_channel, 6) - beg);
   XEN_ASSERT_TYPE(mus_xen_p(gen), gen, XEN_ARG_1, S_clm_channel, "a clm generator");
-  egen = mus_xen_to_clm(gen);
+  egen = MUS_XEN_TO_CLM(gen);
   errmsg = clm_channel(cp, egen, beg, dur, edpos, S_clm_channel, 6, XEN_TO_C_INT_OR_ELSE(overlap, 0));
   if (errmsg)
     {
@@ -2728,7 +2728,7 @@ static XEN g_env_1(XEN edata, int beg, int dur, XEN base, XEN snd_n, XEN chn_n, 
     }
   else
     {
-      XEN_ASSERT_TYPE((mus_xen_p(edata)) && (mus_env_p(egen = mus_xen_to_clm(edata))), edata, XEN_ARG_1, caller, "an env generator or a list");
+      XEN_ASSERT_TYPE((mus_xen_p(edata)) && (mus_env_p(egen = MUS_XEN_TO_CLM(edata))), edata, XEN_ARG_1, caller, "an env generator or a list");
       apply_env(cp, NULL, beg, dur, 1.0, selection, NOT_FROM_ENVED, caller, egen, edpos, 7, 1.0);
       return(edata);
     }
@@ -2773,7 +2773,7 @@ applies amplitude envelope 'clm-env-gen' to snd's channel chn starting at beg fo
   XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(samp_n), samp_n, XEN_ARG_2, S_env_channel, "a number");
   XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(samps), samps, XEN_ARG_3, S_env_channel, "a number");
   ASSERT_CHANNEL(S_env_channel, snd_n, chn_n, 4);
-  XEN_ASSERT_TYPE((mus_xen_p(gen)) && (mus_env_p(egen = mus_xen_to_clm(gen))), gen, XEN_ARG_1, S_env_channel, "a CLM env generator");
+  XEN_ASSERT_TYPE((mus_xen_p(gen)) && (mus_env_p(egen = MUS_XEN_TO_CLM(gen))), gen, XEN_ARG_1, S_env_channel, "a CLM env generator");
   cp = get_cp(snd_n, chn_n, S_env_channel);
   beg = XEN_TO_C_INT_OR_ELSE(samp_n, 0);
   dur = XEN_TO_C_INT_OR_ELSE(samps, 0);
@@ -3103,7 +3103,7 @@ sampling-rate converts snd's channel chn by ratio, or following an envelope gene
 
   XEN_ASSERT_TYPE((XEN_NUMBER_P(ratio_or_env_gen)) || 
 		  ((mus_xen_p(ratio_or_env_gen)) && 
-		   (mus_env_p(egen = mus_xen_to_clm(ratio_or_env_gen)))),
+		   (mus_env_p(egen = MUS_XEN_TO_CLM(ratio_or_env_gen)))),
 		  ratio_or_env_gen, XEN_ARG_1, S_src_channel, "a number or a CLM env generator");
   XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(beg_n), beg_n, XEN_ARG_2, S_src_channel, "a number");
   XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(dur_n), dur_n, XEN_ARG_3, S_src_channel, "a number");
@@ -3160,7 +3160,7 @@ static XEN g_src_1(XEN ratio_or_env, XEN base, XEN snd_n, XEN chn_n, XEN edpos, 
 	}
       else
 	{
-	  XEN_ASSERT_TYPE((mus_xen_p(ratio_or_env)) && (mus_env_p(egen = mus_xen_to_clm(ratio_or_env))), 
+	  XEN_ASSERT_TYPE((mus_xen_p(ratio_or_env)) && (mus_env_p(egen = MUS_XEN_TO_CLM(ratio_or_env))), 
 			  ratio_or_env, XEN_ARG_1, caller, "a number, list, or env generator");
 	  src_env_or_num(ss, cp, NULL, 
 			 (mus_phase(egen) >= 0.0) ? 1.0 : -1.0,
@@ -3202,7 +3202,7 @@ static XEN g_filter_1(XEN e, XEN order, XEN snd_n, XEN chn_n, XEN edpos, const c
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(order), order, XEN_ARG_2, caller, "an integer");
   if (mus_xen_p(e))
     {
-      error = apply_filter_or_error(cp, 0, NULL, NOT_FROM_ENVED, caller, selection, NULL, mus_xen_to_clm(e), edpos, 5);
+      error = apply_filter_or_error(cp, 0, NULL, NOT_FROM_ENVED, caller, selection, NULL, MUS_XEN_TO_CLM(e), edpos, 5);
       if (error)
 	{
 	  errstr = C_TO_XEN_STRING(error);

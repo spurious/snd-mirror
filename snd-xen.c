@@ -3335,7 +3335,9 @@ void g_initialize_gh(snd_state *ss)
   g_init_timing();
 #endif
   mus_sndlib2xen_initialize();
+#if HAVE_EXTENSION_LANGUAGE
   mus_midi_init();
+#endif
 
   /* ---------------- CONSTANTS ---------------- */
 

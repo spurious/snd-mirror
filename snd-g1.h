@@ -402,8 +402,6 @@ GtkWidget *w_snd_name_icon(snd_info *sp);
 void snd_file_lock_icon(snd_info *sp, int on);
 void snd_file_bomb_icon(snd_info *sp, int on);
 void x_bomb(snd_info *sp, int on);
-void set_blank_pixmap(GtkWidget *w);
-GtkWidget *get_blank_pixmap(snd_state *ss);
 void goto_minibuffer(snd_info *sp);
 void set_minibuffer_string(snd_info *sp, char *str);
 void set_minibuffer_cursor_position(snd_info *sp, int pos);

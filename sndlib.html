@@ -27,6 +27,7 @@
 <li><a href="#headers">Headers</a>
 <li><a href="#data">Data</a>
 <li><a href="#hardware">Hardware</a>
+<li><a href="#midi">MIDI</a>
 <li><a href="#music5">Music V</a>
 <li><a href="#examples">Examples</a>
 <ul>
@@ -363,6 +364,51 @@ similarly for MUS_AUDIO_IMIX, MUS_AUDIO_IGAIN,
 MUS_AUDIO_FORMAT    return list of usable sound formats (e.g. MUS_BSHORT)
 MUS_AUDIO_PORT      return list of available devices (e.g. MUS_AUDIO_MICROPHONE)
 </pre>
+
+<br>
+<span class=box><h2><A NAME="midi">MIDI</a></h2></span>
+
+<p>
+There is some simple, very low-level MIDI support in sndlib.  
+</p>
+<pre>
+ int mus_midi_open_read(const char *name)
+ int mus_midi_open_write(const char *name)
+ int mus_midi_close(int line)
+ int mus_midi_read(int line, unsigned char *buffer, int bytes)
+ int mus_midi_write(int line, unsigned char *buffer, int bytes)
+ char *mus_midi_device_name(int sysdev)
+ char *mus_midi_describe(void)
+</pre>
+<p>These procedures remove all structure imposed by the available
+MIDI drivers, presenting each such device as if it were a sort of
+file.  <b>mus_midi_open_read</b> and <b>mus_midi_open_write</b>
+open a given device (its name can be found by calling <b>mus_midi_device_name</b>
+with an argument of 0), returning an integer that refers to that port
+in subsequent calls on <b>mus_midi_read</b>, <b>mus_midi_write</b>, and
+<b>mus_midi_close</b>.  No attempt is made to interpret the data, or
+time its output, etc.  <b>mus_midi_describe</b> returns a decription
+of the available MIDI hardware (its result should be freed, whereas
+the result of <b>mus_midi_device_name</b> should not be freed).
+The "int" result of each of the functions is -1 if some error ocurred.
+The <i>sysdev</i> argument to <b>mus_midi_device_name</b> is a sndlib-style
+integer packing the card number ("system" in the left half, and the
+device number in the right. 
+The corresponding Guile functions are:
+</p>
+<pre>
+  mus-midi-open-read name
+  mus-midi-open-write name
+  mus-midi-close md
+  mus-midi-device-name dev
+  mus-midi-describe
+  mus-midi-read md bytes
+  mus-midi-write md bytes
+</pre>
+<p><b>mus-midi-read</b> and <b>mus-midi-write</b> return a list
+of the bytes read or written (empty if none), or #f if something
+went wrong.  
+</p>
 
 <br>
 <span class=box><h2><A NAME="music5">MusicV</a></h2></span>
