@@ -376,7 +376,7 @@ typedef struct {
   int state,changed,out_chan,width,beg_in_samps,main_chan,sweep_tag;
   /* beg_in_samps = mix title time display choice (seconds or samples) */
   int *rows;
-  int id,y,track,selected_chan; /* number used in snd-gh calls */
+  int id,y,track,selected_chan; /* number used in snd-scm calls */
 } mixdata;
 
 typedef struct {

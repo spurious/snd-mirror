@@ -180,6 +180,7 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
+15-Jun:  changed edit|undo-hook procedure to take no args.\n\
 13-Jun:  added snd-error, snd-warning.\n\
          added cursor-style (default cursor-cross, also cursor-line).\n\
          added channel-specific edit-hook and undo-hook.\n\

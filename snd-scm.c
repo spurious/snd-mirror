@@ -1,3 +1,7 @@
+/* version, apropos and help apparently clobber (ice-9 session) or (ice-9 documentation) procedures
+ * snd module, and clm?
+ */
+
 #include "snd.h"
 #include "vct.h"
 
@@ -4111,11 +4115,11 @@ static SCM mix_vct(SCM obj, SCM beg, SCM in_chans, SCM snd, SCM chn, SCM with_co
       bg = int_or_zero(beg);
       chans = int_or_one(in_chans);
       if (chans <= 0) 
-	snd_error("mix-vct: input channels = %d?",chans);
+	scm_misc_error(S_mix_vct,"input channels = ~S?",in_chans);
       else
 	{
 	  if (bg < 0)
-	    snd_error("mix-vct: beg = %d?",bg);
+	    scm_misc_error(S_mix_vct,"beg = ~S?",beg);
 	  else
 	    {
 	      if (SCM_UNBNDP(with_consoles))
@@ -4212,8 +4216,29 @@ static SCM g_sf_p(SCM obj)
 snd_fd *get_sf(SCM obj); /* currently for snd-ladspa.c */
 snd_fd *get_sf(SCM obj) {if (sf_p(obj)) return((snd_fd *)GH_VALUE_OF(obj)); else return(NULL);}
 
-static int print_sf(SCM obj, SCM port, scm_print_state *pstate) {scm_puts("<sf>",port); return(1);}
-static SCM equalp_sf(SCM obj1, SCM obj2) {RTNBOOL(get_sf(obj1) == get_sf(obj2));}
+static int print_sf(SCM obj, SCM port, scm_print_state *pstate) 
+{
+  char *desc;
+  chan_info *cp;
+  snd_fd *fd;
+  fd = get_sf(obj);
+  cp = fd->cp;
+  desc = (char *)CALLOC(128,sizeof(char));
+  sprintf(desc,"<sample-reader %p: %s from %d, at %d (%.4f)",
+	  fd,
+	  (cp) ? ((cp->sound)->shortname) : "unknown source?",
+	  fd->initial_samp,
+	  current_location(fd),
+	  MUS_SAMPLE_TO_FLOAT(fd->current_value));
+  scm_puts(desc,port); 
+  FREE(desc);
+  return(1);
+}
+
+static SCM equalp_sf(SCM obj1, SCM obj2) 
+{
+  RTNBOOL(get_sf(obj1) == get_sf(obj2));
+}
 
 static scm_sizet free_sf(SCM obj) 
 {
@@ -4409,8 +4434,24 @@ static SCM g_mf_p(SCM obj)
 }
 
 static mix_fd *get_mf(SCM obj) {if (mf_p(obj)) return((mix_fd *)GH_VALUE_OF(obj)); else return(NULL);}
-static int print_mf(SCM obj, SCM port, scm_print_state *pstate) {scm_puts("<mf>",port); return(1);}
 static SCM equalp_mf(SCM obj1, SCM obj2) {RTNBOOL(get_mf(obj1) == get_mf(obj2));}
+
+static int print_mf(SCM obj, SCM port, scm_print_state *pstate) 
+{
+  mix_fd *fd;
+  mixdata *md;
+  char *desc;
+  fd = get_mf(obj);
+  md = fd->md;
+  desc = (char *)CALLOC(128,sizeof(char));
+  sprintf(desc,"<mix-sample-reader %p: %s via mix %d>",
+	  fd,
+	  md->in_filename,
+	  md->id);
+  scm_puts(desc,port); 
+  FREE(desc);
+  return(1);
+}
 
 static scm_sizet free_mf(SCM obj) 
 {
@@ -4489,8 +4530,41 @@ static SCM g_tf_p(SCM obj)
 }
 
 static track_fd *get_tf(SCM obj) {if (tf_p(obj)) return((track_fd *)GH_VALUE_OF(obj)); else return(NULL);}
-static int print_tf(SCM obj, SCM port, scm_print_state *pstate) {scm_puts("<tf>",port); return(1);}
 static SCM equalp_tf(SCM obj1, SCM obj2) {RTNBOOL(get_tf(obj1) == get_tf(obj2));}
+
+static int print_tf(SCM obj, SCM port, scm_print_state *pstate) 
+{
+  track_fd *fd;
+  mixdata *md;
+  mix_fd *mf;
+  char *desc;
+  int i,len;
+  fd = get_tf(obj);
+  desc = (char *)CALLOC(128,sizeof(char));
+  mf = fd->fds[0];
+  md = mf->md;
+  sprintf(desc,"<track-sample-reader %p: %s chan %d via mixes '(",
+	  fd,
+	  md->in_filename,
+	  (md->cp)->chan);
+  scm_puts(desc,port); 
+  len = fd->mixes;
+  if (len > 0)
+    {
+      for (i=0;i<len-1;i++)
+	{
+	  mf = fd->fds[i];
+	  sprintf(desc,"%d ",(mf->md)->id);
+	  scm_puts(desc,port); 
+	}
+      mf = fd->fds[len-1];
+      sprintf(desc,"%d)>",(mf->md)->id);
+    }
+  else sprintf(desc,")>");
+  scm_puts(desc,port); 
+  FREE(desc);
+  return(1);
+}
 
 static scm_sizet free_tf(SCM obj) 
 {
@@ -8713,14 +8787,14 @@ int dont_edit(chan_info *cp)
 {
   SCM res = SCM_BOOL_F;
   if (HOOKED(cp->edit_hook))
-    res = g_c_run_or_hook(cp->edit_hook,SCM_LIST2(gh_int2scm((cp->sound)->index),gh_int2scm(cp->chan)));
+    res = g_c_run_or_hook(cp->edit_hook,SCM_EOL);
   return(SCM_TRUE_P(res));
 }
 
 void call_undo_hook(chan_info *cp, int undo)
 {
   if (HOOKED(cp->undo_hook))
-    g_c_run_progn_hook(cp->undo_hook,SCM_LIST3(gh_int2scm((cp->sound)->index),gh_int2scm(cp->chan),(undo) ? SCM_BOOL_T : SCM_BOOL_F));
+    g_c_run_progn_hook(cp->undo_hook,SCM_EOL);
 }
 
 

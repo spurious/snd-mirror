@@ -3212,10 +3212,10 @@
 		(set-contrast-func #f)
 		(set-expand-funcs #f #f #f)))
 
-	  (add-hook! (edit-hook) (lambda (snd chn) #f))
+	  (add-hook! (edit-hook) (lambda () #f))
 	  (as-one-edit (lambda () (set-sample 200 .2) (set-sample 300 .3)))
 	  (delete-sample 250)
-	  (add-hook! (undo-hook) (lambda (snd chn val) (if (not val) (snd-print (format #f ";undo-hook redo?")))))
+	  (add-hook! (undo-hook) (lambda () #f))
 	  (undo)
 	  (delete-sample 250)
 	  (undo)

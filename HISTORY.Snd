@@ -1,5 +1,6 @@
 snd change log
 
+  15-Jun:    changed edit|undo-hook procedure to take no args.
   13-Jun:    added snd-error, snd-warning.
              added cursor-style (default cursor-cross, also cursor-line).
              added channel-specific edit-hook and undo-hook.

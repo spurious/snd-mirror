@@ -1245,15 +1245,28 @@ list.
      edit-hook is called just before any attempt to edit the channel's data.  If it returns #t,
      the edit is aborted. So,
 
-         (add-hook! (edit-hook) (lambda (snd chn) #t))
+         (add-hook! (edit-hook) (lambda () #t))
 
      aborts any attempt to edit the data; this is even more restrictive than setting the read-only
      flag because the latter only refuses to overwrite the current data.  undo-hook is called
-     just after any undo, redo, or revert that affects the channel.  You can use these to set
-     up protected portions of the edit history, or change colors dependent on the edit position, etc.
-     The edit-hook procedures take two arguments, the current sound index and channel number; undo-hook's
-     procedures take three arguments, the sound index, channel number, and #t if the edit position
-     change is from undo or revert, #f if from redo.
+     just after any undo, redo, or revert that affects the channel.  You can use edit-hook to set
+     up protected portions of the edit history:
+
+         (define protect
+           "(protect &optional snd chn) disallows any edits before the current one"
+           (lambda args
+             (let* ((edit-pos (apply edit-position args))
+                    (hook (apply edit-hook args)))
+               (reset-hook! hook)
+               (add-hook! hook
+                 (lambda ()
+                   (let ((val (< (apply edit-position args) edit-pos)))
+                     (if val (report-in-minibuffer "protected"))
+                     val))))))
+
+         (define unprotect
+           "(unprotect &optional snd chn) allows edits at any edit history position"
+           (lambda args (reset-hook! (apply edit-hook args))))
 
 To add a function to a hook, use add-hook!. To remove it, use remove-hook!.
 To clear a hook, use reset-hook!. (These are functions supplied by Guile).

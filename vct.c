@@ -176,6 +176,7 @@ static SCM g_make_vct(SCM len)
   int size;
   ERRN1(len,S_make_vct);
   size = gh_scm2int(len);
+  if (size <= 0) scm_misc_error(S_make_vct,"size: ~S?",SCM_LIST1(len));
   return(make_vct(size,(Float *)CALLOC(size,sizeof(Float))));
 }
 
@@ -375,7 +376,7 @@ static SCM vcts_map(SCM args)
   vnum = argnum-1;
   if (vnum <= 0)
     {
-      scm_misc_error(S_vcts_mapB,"not enough args",SCM_EOL);
+      scm_misc_error(S_vcts_mapB,"not enough args: ~S",SCM_LIST1(args));
       return(gh_int2scm(0));
     }
   v = (vct **)CALLOC(vnum,sizeof(vct *));
@@ -384,7 +385,7 @@ static SCM vcts_map(SCM args)
       arg = gh_list_ref(args,gh_int2scm(i));
       if (!(vct_p(arg))) 
 	{
-	  scm_misc_error(S_vcts_mapB,"non-vct argument",SCM_EOL);
+	  scm_misc_error(S_vcts_mapB,"in ~S, non-vct argument ~S at position ~S",SCM_LIST3(args,arg,gh_int2scm(i)));
 	  return(gh_int2scm(0));
 	}
       v[i] = get_vct(arg);
@@ -392,7 +393,7 @@ static SCM vcts_map(SCM args)
   proc = gh_list_ref(args,gh_int2scm(vnum));
   if (!(gh_procedure_p(proc)))
     {
-      scm_misc_error(S_vcts_mapB,"last argument must be a function",SCM_EOL);
+      scm_misc_error(S_vcts_mapB,"in ~S, last argument must be a function",SCM_LIST1(args));
       FREE(v);
       return(gh_int2scm(0));
     }
@@ -423,7 +424,7 @@ static SCM vcts_do(SCM args)
   vnum = argnum-1;
   if (vnum <= 0)
     {
-      scm_misc_error(S_vcts_doB,"not enought args",SCM_EOL);
+      scm_misc_error(S_vcts_doB,"not enough args: ~S",SCM_LIST1(args));
       return(gh_int2scm(0));
     }
   v = (vct **)CALLOC(vnum,sizeof(vct *));
@@ -432,7 +433,7 @@ static SCM vcts_do(SCM args)
       arg = gh_list_ref(args,gh_int2scm(i));
       if (!(vct_p(arg))) 
 	{
-	  scm_misc_error(S_vcts_doB,"non-vct argument",SCM_EOL);
+	  scm_misc_error(S_vcts_doB,"in ~S, non-vct argument ~S at position ~S",SCM_LIST3(args,arg,gh_int2scm(i)));
 	  return(gh_int2scm(0));
 	}
       v[i] = get_vct(arg);
@@ -440,7 +441,7 @@ static SCM vcts_do(SCM args)
   proc = gh_list_ref(args,gh_int2scm(vnum));
   if (!(gh_procedure_p(proc)))
     {
-      scm_misc_error(S_vcts_doB,"last argument must be a function",SCM_EOL);
+      scm_misc_error(S_vcts_doB,"in ~S, last argument must be a function",SCM_LIST1(args));
       FREE(v);
       return(gh_int2scm(0));
     }

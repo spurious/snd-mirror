@@ -1029,7 +1029,7 @@ static SCM g_mus_bank1(SCM amps, SCM gens, SCM inp, int type, char *caller)
 		{
 		  for (i=0;i<size;i++) invals[i] = gh_scm2double(gh_call1(inp,gh_int2scm(i)));
 		}
-	      else scm_misc_error("mus_bank","invalid input arg",SCM_EOL);
+	      else scm_misc_error("mus_bank","invalid input arg: ~S",SCM_LIST1(inp));
 	    }
 	}
     }
@@ -1061,7 +1061,7 @@ static SCM g_mus_bank1(SCM amps, SCM gens, SCM inp, int type, char *caller)
 		{
 		  for (i=0;i<size;i++) scls[i] = gh_scm2double(gh_call1(amps,gh_int2scm(i)));
 		}
-	      else scm_misc_error("mus_bank","invalid scaler arg",SCM_EOL);
+	      else scm_misc_error("mus_bank","invalid scaler arg: ~S",SCM_LIST1(amps));
 	    }
 	}
     }

@@ -48,9 +48,9 @@ chan_info *make_chan_info(chan_info *cip, int chan, snd_info *sound, snd_state *
       cp->last_sonogram = NULL;
 #if HAVE_GUILE
 #if (!HAVE_GUILE_1_3_0)
-      cp->edit_hook = scm_make_hook(SCM_MAKINUM(2)); /* arg = snd chn */
+      cp->edit_hook = scm_make_hook(SCM_MAKINUM(0));
       scm_protect_object(cp->edit_hook);
-      cp->undo_hook = scm_make_hook(SCM_MAKINUM(3)); /* arg = snd chn undo/redo */
+      cp->undo_hook = scm_make_hook(SCM_MAKINUM(0));
       scm_protect_object(cp->undo_hook);
 #endif
 #endif
