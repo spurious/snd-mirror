@@ -678,6 +678,9 @@
       (set! (trap-segfault) (trap-segfault))
       (IF (not (equal? (trap-segfault)  #f)) 
 	  (snd-display ";trap-segfault set def: ~A" (trap-segfault)))
+      (set! (optimization) (optimization))
+      (IF (not (equal? (optimization) 0)) 
+	  (snd-display ";optimization set def: ~A" (optimization)))
       (set! (use-sinc-interp) (use-sinc-interp))
       (IF (not (equal? (use-sinc-interp)  #t )) 
 	  (snd-display ";use-sinc-interp set def: ~A" (use-sinc-interp)))
@@ -867,7 +870,7 @@
 	'ladspa-dir (ladspa-dir) #f 
 	'tiny-font (tiny-font) "6x12"
 	'transform-type (transform-type) 0 
-	'trap-segfault (trap-segfault) #f
+	'optimization (optimization) 0
 	'use-sinc-interp (use-sinc-interp) #t 
 	'verbose-cursor (verbose-cursor) #f
 	'vu-font (vu-font) #f 
@@ -19696,7 +19699,7 @@ EDITS: 5
 	       speed-control speed-control-style speed-control-tones squelch-update srate src-sound src-selection
 	       start-playing start-progress-report stop-player stop-playing swap-channels syncd-marks sync sound-properties temp-dir
 	       text-focus-color tiny-font track-sample-reader?  transform-dialog transform-sample transform-samples
-	       transform-samples->vct transform-samples-size transform-type trap-segfault unbind-key undo
+	       transform-samples->vct transform-samples-size transform-type trap-segfault optimization unbind-key undo
 	       update-transform update-time-graph update-lisp-graph update-sound use-sinc-interp
 	       vct->samples vct->sound-file verbose-cursor view-sound vu-font vu-font-size vu-size wavelet-type
 	       graph-time?  time-graph-type wavo-hop wavo-trace window-height window-width window-x window-y
@@ -19771,7 +19774,7 @@ EDITS: 5
 		   show-y-zero sinc-width spectro-cutoff spectro-hop spectro-start spectro-x-angle
 		   spectro-x-scale spectro-y-angle spectro-y-scale spectro-z-angle spectro-z-scale speed-control
 		   speed-control-style speed-control-tones squelch-update sync sound-properties temp-dir text-focus-color tiny-font y-bounds
-		   transform-type trap-segfault use-sinc-interp verbose-cursor vu-font vu-font-size vu-size wavelet-type x-bounds
+		   transform-type trap-segfault optimization use-sinc-interp verbose-cursor vu-font vu-font-size vu-size wavelet-type x-bounds
 		   graph-time? wavo-hop wavo-trace with-mix-tags x-axis-style beats-per-minute zero-pad zoom-color zoom-focus-style 
 
 		   window-x window-y window-width window-height
@@ -20417,7 +20420,7 @@ EDITS: 5
 			  selected-channel selected-data-color selected-graph-color selected-mix selected-mix-color
 			  selected-sound selection-creates-region show-backtrace show-controls show-indices show-listener
 			  show-selection-transform sinc-width temp-dir text-focus-color tiny-font
-			  trap-segfault unbind-key use-sinc-interp verbose-cursor vu-font vu-font-size vu-size window-height
+			  trap-segfault optimization unbind-key use-sinc-interp verbose-cursor vu-font vu-font-size vu-size window-height
 			  window-width window-x window-y with-mix-tags x-axis-style beats-per-minute zoom-color zoom-focus-style mix-tag-height
 			  mix-tag-width ))
 	  (gc))

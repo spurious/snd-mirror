@@ -335,7 +335,7 @@ typedef struct snd__state {
   char *Vu_Font;
   Float Spectro_X_Scale, Spectro_Y_Scale, Spectro_Z_Scale, Spectro_Z_Angle, Spectro_X_Angle, Spectro_Y_Angle, Spectro_Cutoff, Spectro_Start;
   int Default_Output_Type, Default_Output_Format, Default_Output_Chans, Default_Output_Srate;
-  int Spectro_Hop, Color_Map, Wavelet_Type, Transform_Type;
+  int Spectro_Hop, Color_Map, Wavelet_Type, Transform_Type, Optimization;
   Latus Dot_Size;
   int Transform_Size, Fft_Window, Transform_Graph_Type, Time_Graph_Type, Zero_Pad, Ask_Before_Overwrite, Wavo_Hop, Wavo_Trace;
   Float Fft_Window_Beta, Reverb_Control_Decay;

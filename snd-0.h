@@ -347,6 +347,10 @@ enum {MINI_OFF, MINI_CURSOR, MINI_FIND, MINI_PROMPT, MINI_REPORT, MINI_USER};
 #define set_trap_segfault(ss, a) ss->Trap_Segfault = a
 #define DEFAULT_TRAP_SEGFAULT 1
 
+#define optimization(ss) ss->Optimization
+#define set_optimization(ss, a) ss->Optimization = a
+#define DEFAULT_OPTIMIZATION 0
+
 #define dot_size(ss) ss->Dot_Size
 #define in_set_dot_size(ss, a) ss->Dot_Size = a
 #define DEFAULT_DOT_SIZE 1

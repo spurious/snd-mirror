@@ -230,6 +230,7 @@ static void snd_gsl_error(const char *reason, const char *file, int line, int gs
 #else
   ss->Trap_Segfault = DEFAULT_TRAP_SEGFAULT;
 #endif
+  ss->Optimization = DEFAULT_OPTIMIZATION;
   ss->Print_Length = DEFAULT_PRINT_LENGTH;
   ss->Previous_Files_Sort = DEFAULT_PREVIOUS_FILES_SORT;
   ss->Show_Mix_Waveforms = DEFAULT_SHOW_MIX_WAVEFORMS;

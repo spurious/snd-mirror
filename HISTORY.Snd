@@ -1,5 +1,6 @@
 snd change log
 
+  12-Apr:    optimization variable, --with-run configure switch, snd-run.c.
   9-Apr:     ramp-channel.
   8-Apr:     virtualized envelopes.
   4-Apr:     improvements in contrib/dlp, thanks to Dave Phillips.

@@ -1284,6 +1284,15 @@ static XEN g_set_trap_segfault(XEN val)
   return(C_TO_XEN_BOOLEAN(trap_segfault(state)));
 }
 
+static XEN g_optimization(void) {return(C_TO_XEN_INT(optimization(state)));}
+static XEN g_set_optimization(XEN val) 
+{
+  #define H_optimization "(" S_optimization ") is the current 'run' optimization level (default 0 = off)"
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, "set-" S_optimization, "an integer");
+  set_optimization(state, XEN_TO_C_INT(val));
+  return(C_TO_XEN_INT(optimization(state)));
+}
+
 static XEN g_show_selection_transform(void) {return(C_TO_XEN_BOOLEAN(show_selection_transform(state)));}
 static XEN g_set_show_selection_transform(XEN val) 
 {
@@ -2792,6 +2801,8 @@ XEN_NARGIFY_0(g_ladspa_dir_w, g_ladspa_dir)
 XEN_ARGIFY_1(g_set_ladspa_dir_w, g_set_ladspa_dir)
 XEN_NARGIFY_0(g_trap_segfault_w, g_trap_segfault)
 XEN_ARGIFY_1(g_set_trap_segfault_w, g_set_trap_segfault)
+XEN_NARGIFY_0(g_optimization_w, g_optimization)
+XEN_ARGIFY_1(g_set_optimization_w, g_set_optimization)
 XEN_NARGIFY_0(g_show_selection_transform_w, g_show_selection_transform)
 XEN_ARGIFY_1(g_set_show_selection_transform_w, g_set_show_selection_transform)
 XEN_NARGIFY_0(g_with_mix_tags_w, g_with_mix_tags)
@@ -2992,6 +3003,8 @@ XEN_NARGIFY_1(g_snd_completion_w, g_snd_completion)
 #define g_set_ladspa_dir_w g_set_ladspa_dir
 #define g_trap_segfault_w g_trap_segfault
 #define g_set_trap_segfault_w g_set_trap_segfault
+#define g_optimization_w g_optimization
+#define g_set_optimization_w g_set_optimization
 #define g_show_selection_transform_w g_show_selection_transform
 #define g_set_show_selection_transform_w g_set_show_selection_transform
 #define g_with_mix_tags_w g_with_mix_tags
@@ -3295,6 +3308,9 @@ void g_initialize_gh(snd_state *ss)
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_trap_segfault, g_trap_segfault_w, H_trap_segfault,
 				   "set-" S_trap_segfault, g_set_trap_segfault_w,  0, 0, 0, 1);
+
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_optimization, g_optimization_w, H_optimization,
+				   "set-" S_optimization, g_set_optimization_w,  0, 0, 1, 0);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_show_selection_transform, g_show_selection_transform_w, H_show_selection_transform,
 				   "set-" S_show_selection_transform, g_set_show_selection_transform_w,  0, 0, 0, 1);

@@ -204,6 +204,7 @@ void news_help(snd_state *ss)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+12-Apr:  optimization variable, --with-run configure switch, snd-run.c.\n\
 9-Apr:   ramp-channel.\n\
 8-Apr:   virtualized envelopes.\n\
 4-Apr:   improvements in contrib/dlp, thanks to Dave Phillips.\n\

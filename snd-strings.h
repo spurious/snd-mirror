@@ -616,6 +616,7 @@
 #define S_open_raw_sound_hook           "open-raw-sound-hook"
 #define S_open_sound                    "open-sound"
 #define S_open_sound_file               "open-sound-file"
+#define S_optimization                  "optimization"
 #define S_orientation_dialog            "orientation-dialog"
 #define S_oss_buffers                   "oss-buffers"
 #define S_output_comment_hook           "output-comment-hook"
