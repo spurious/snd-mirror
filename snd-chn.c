@@ -1012,7 +1012,7 @@ int make_graph(chan_info *cp, snd_info *sp, snd_state *ss)
 	{
 	  for (j = 0, x = ((double)(ap->losamp) / cur_srate); j < grfpts; j++, x += incr)
 	    {
-	      samp = next_sample_to_float(sf);
+	      samp = read_sample_to_float(sf);
 	      set_grf_point(local_grf_x(x, ap), j, local_grf_y(samp, ap));
 	      ps_set_grf_point(x, j, samp);
 	    }
@@ -1020,7 +1020,7 @@ int make_graph(chan_info *cp, snd_info *sp, snd_state *ss)
       else
 	{
 	  for (j = 0, x = ((double)(ap->losamp) / cur_srate); j < grfpts; j++, x += incr)
-	    set_grf_point(local_grf_x(x, ap), j, local_grf_y(next_sample_to_float(sf), ap));
+	    set_grf_point(local_grf_x(x, ap), j, local_grf_y(read_sample_to_float(sf), ap));
 	}
       if (sp)
 	{
@@ -1060,7 +1060,7 @@ int make_graph(chan_info *cp, snd_info *sp, snd_state *ss)
 	  if (cp->printing) pinc = samples_per_pixel/cur_srate;
 	  for (i = ap->losamp, xf = 0.0; i <= ap->hisamp; i++)
 	    {
-	      samp = next_sample_to_float(sf);
+	      samp = read_sample_to_float(sf);
 	      if (samp > ymax) ymax = samp;
 	      if (samp < ymin) ymin = samp;
 	      xf += 1.0;
@@ -1147,7 +1147,7 @@ XEN make_graph_data(chan_info *cp, int edit_pos, int losamp, int hisamp)
       if (sf == NULL) return(XEN_FALSE); /* should this throw an error? (CHANNEL_BEING_DEALLOCATED) */
       data = (Float *)MALLOC(data_size * sizeof(Float));
       for (i = 0; i < data_size; i++)
-	data[i] = next_sample_to_float(sf);
+	data[i] = read_sample_to_float(sf);
     }
   else
     {
@@ -1203,7 +1203,7 @@ XEN make_graph_data(chan_info *cp, int edit_pos, int losamp, int hisamp)
 	  ymax = -100.0;
 	  for (i = losamp, xf = 0.0; i <= hisamp; i++)
 	    {
-	      samp = next_sample_to_float(sf);
+	      samp = read_sample_to_float(sf);
 	      if (samp > ymax) ymax = samp;
 	      if (samp < ymin) ymin = samp;
 	      xf += 1.0;
@@ -2066,7 +2066,7 @@ static void make_wavogram(chan_info *cp, snd_info *sp, snd_state *ss)
 	    {
 	      xyz[0] = x - x0; 
 	      xyz[1] = y - y0; 
-	      xyz[2] = next_sample_to_float(sf);
+	      xyz[2] = read_sample_to_float(sf);
 	      rotate(xyz, matrix);
 	      yval = xyz[1] + xyz[2];
 	      xval = xyz[0];
@@ -2094,7 +2094,7 @@ static void make_wavogram(chan_info *cp, snd_info *sp, snd_state *ss)
 	  yy = (int)y0; /* ? */
 	  for (i = 0; i < cp->wavo_trace; i++, x += xincr)
 	    {
-	      binval = next_sample_to_float(sf);
+	      binval = read_sample_to_float(sf);
 	      xyz[0] = x - x0; 
 	      xyz[1] = y - y0; 
 	      xyz[2] = binval;

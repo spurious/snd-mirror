@@ -197,7 +197,7 @@ static int cursor_find_forward(snd_info *sp, chan_info *cp, int count)
   for (i = start, passes = 0; i < end; i++, passes++)
     {
       res = XEN_CALL_1(sp->search_proc, 
-		       C_TO_XEN_DOUBLE((double)(next_sample_to_float(sf))), 
+		       C_TO_XEN_DOUBLE((double)(read_sample_to_float(sf))), 
 		       "local search func");
       if (XEN_NOT_FALSE_P(res)) 
 	{

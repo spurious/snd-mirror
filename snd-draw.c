@@ -375,12 +375,9 @@ static XEN g_set_current_font_reversed(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 static XEN g_make_graph_data(XEN snd, XEN chn, XEN edpos, XEN lo, XEN hi)
 {
   #define H_make_graph_data "(" S_make_graph_data " snd chn edit-pos low high)\n\
-returns either a vct (if the graph has one trace), or a \
-list of two vcts (the two sides of the envelope graph). \
-'edit-position' defaults to the current-edit-position, \
-'low' defaults to the current window left sample, and \
-'high' defaults to the current rightmost sample. \
-(graph-data (make-graph-data)) reimplements the time domain graph."
+returns either a vct (if the graph has one trace), or a list of two vcts (the two sides of the envelope graph). \
+'edit-position' defaults to the current-edit-position, 'low' defaults to the current window left sample, and \
+'high' defaults to the current rightmost sample. (graph-data (make-graph-data)) reimplements the time domain graph."
 
   chan_info *cp;
   ASSERT_CHANNEL(S_make_graph_data, snd, chn, 1);
@@ -396,19 +393,19 @@ list of two vcts (the two sides of the envelope graph). \
 static XEN g_graph_data(XEN data, XEN snd, XEN chn, XEN ax, XEN lo, XEN hi, XEN style)
 {
   #define H_graph_data "(" S_graph_data " snd chn context low high graph-style)\n\
-displays data in the time domain graph of snd's channel \
-chn using the graphics context context (normally copy-context), placing the \
-data in the recipient's graph between points low and high \
-in the drawing mode graphic-style."
+displays data in the time domain graph of snd's channel chn using the graphics context context (normally copy-context), placing the \
+data in the recipient's graph between points low and high in the drawing mode graphic-style."
 
   chan_info *cp;
   vct *v0, *v1 = NULL;
   ASSERT_CHANNEL(S_graph_data, snd, chn, 2);
   cp = get_cp(snd, chn, S_graph_data);
   XEN_ASSERT_TYPE((XEN_LIST_P(data) && 
-              (XEN_LIST_LENGTH(data) == 2) &&
-              (VCT_P(XEN_CAR(data))) &&
-              (VCT_P(XEN_CADR(data)))) || VCT_P(data), data, XEN_ARG_1, S_graph_data, "a list of 2 vcts or vct");
+		   (XEN_LIST_LENGTH(data) == 2) &&
+		   (VCT_P(XEN_CAR(data))) &&
+		   (VCT_P(XEN_CADR(data)))) || 
+		  VCT_P(data), 
+		  data, XEN_ARG_1, S_graph_data, "a list of 2 vcts or vct");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ax), ax, XEN_ARG_4, S_graph_data, "an integer");
   XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(lo), lo, XEN_ARG_5, S_graph_data, "a number");
   XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(hi), hi, XEN_ARG_6, S_graph_data, "a number");
@@ -417,8 +414,6 @@ in the drawing mode graphic-style."
     {
       v0 = get_vct(XEN_CAR(data));
       v1 = get_vct(XEN_CADR(data));
-      if ((v0 == NULL) || (v1 == NULL))
-        mus_misc_error(S_graph_data, "null vcts in list?", data);
     }
   else v0 = get_vct(data);
   draw_graph_data(cp, 
@@ -435,8 +430,8 @@ in the drawing mode graphic-style."
 
 static XEN g_main_widgets(void)
 {
-  #define H_main_widgets "(" S_main_widgets ") -> top level widgets \
-(list (0)main-app (1)main-shell (2)main-pane (3)sound-pane (4)listener-pane or #f (5)notebook-outer-pane or #f)"
+  #define H_main_widgets "(" S_main_widgets ") -> top level \
+widgets (list (0)main-app (1)main-shell (2)main-pane (3)sound-pane (4)listener-pane or #f (5)notebook-outer-pane or #f)"
   snd_state *ss;
   XEN main_win;
   ss = get_global_state();
@@ -463,6 +458,15 @@ void run_new_widget_hook(GUI_WIDGET w)
     g_c_run_progn_hook(new_widget_hook, XEN_LIST_1(XEN_WRAP_WIDGET(w)), S_new_widget_hook);
 }
 
+static void check_dialog_widget_table(void)
+{
+  if (!(XEN_VECTOR_P(dialog_widgets)))
+    {
+      dialog_widgets = XEN_MAKE_VECTOR(NUM_DIALOGS, XEN_FALSE);
+      XEN_PROTECT_FROM_GC(dialog_widgets);
+    }
+}
+
 static XEN g_dialog_widgets(void)
 {
   #define H_dialog_widgets "(" S_dialog_widgets ") -> dialogs (each #f if not yet created) (list \
@@ -471,11 +475,7 @@ static XEN g_dialog_widgets(void)
 (11)file_mix (12)edit_header (13)find (14)help (15)completion (16)mix_panel \
 (17)print (18)recorder (19)region"
 
-  if (!(XEN_VECTOR_P(dialog_widgets)))
-    {
-      dialog_widgets = XEN_MAKE_VECTOR(NUM_DIALOGS, XEN_FALSE);
-      XEN_PROTECT_FROM_GC(dialog_widgets);
-    }
+  check_dialog_widget_table();
   return(XEN_VECTOR_TO_LIST(dialog_widgets));
 }
 
@@ -486,11 +486,7 @@ void set_dialog_widget(snd_state *ss, int which, GUI_WIDGET wid)
   if (sx->dialogs == NULL)
     sx->dialogs = (GUI_WIDGET *)CALLOC(NUM_DIALOGS, sizeof(GUI_WIDGET));
   sx->dialogs[which] = wid;
-  if (!(XEN_VECTOR_P(dialog_widgets)))
-    {
-      dialog_widgets = XEN_MAKE_VECTOR(NUM_DIALOGS, XEN_FALSE);
-      XEN_PROTECT_FROM_GC(dialog_widgets);
-    }
+  check_dialog_widget_table();
   XEN_VECTOR_SET(dialog_widgets, 
 		 which, 
 		 XEN_WRAP_WIDGET(wid));

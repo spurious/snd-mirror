@@ -416,9 +416,8 @@ void scale_by(chan_info *cp, Float *ur_scalers, int len, int selection)
 
 Float get_maxamp(snd_info *sp, chan_info *cp, int edpos)
 {
-  snd_fd *sf;
-  Float ymax, val;
-  int i, len, pos;
+  Float val;
+  int pos;
   if (!sp) return(0.0);
   if (!cp) cp = sp->chans[0];
   if (edpos == AT_CURRENT_EDIT_POSITION) pos = cp->edit_ctr; else pos = edpos;
@@ -426,41 +425,21 @@ Float get_maxamp(snd_info *sp, chan_info *cp, int edpos)
     return(amp_env_maxamp(cp, pos));
   val = ed_maxamp(cp, pos);
   if (val >= 0.0) return(val);
-  sf = init_sample_read_any(0, cp, READ_FORWARD, pos);
-  if (sf == NULL) return(0.0);
-  ymax = 0.0;
-  len = cp->samples[pos];
-  for (i = 0; i < len; i++)
-    {
-      val = next_sample_to_float(sf);
-      if (val < 0.0) val = -val;
-      if (val > ymax) ymax = val;
-    }
-  free_snd_fd(sf);
-  set_ed_maxamp(cp, pos, ymax);
-  return(ymax);
+  val = local_maxamp(cp, 0, cp->samples[pos], pos);
+  set_ed_maxamp(cp, pos, val);
+  return(val);
 }
 
 static Float get_selection_maxamp(chan_info *cp)
 {
-  snd_fd *sf;
-  Float ymax, val;
-  int i, len;
+  Float val;
+  int len;
   val = ed_selection_maxamp(cp);
   if (val >= 0.0) return(val);
-  sf = init_sample_read(selection_beg(cp), cp, READ_FORWARD);
-  if (sf == NULL) return(0.0);
   len = selection_end(cp) - selection_beg(cp) + 1;
-  ymax = 0.0;
-  for (i = 0; i < len; i++)
-    {
-      val = next_sample_to_float(sf);
-      if (val < 0.0) val = -val;
-      if (val > ymax) ymax = val;
-    }
-  free_snd_fd(sf);
-  set_ed_selection_maxamp(cp, ymax);
-  return(ymax);
+  val = local_maxamp(cp, selection_beg(cp), len, cp->edit_ctr);
+  set_ed_selection_maxamp(cp, val);
+  return(val);
 }
 
 void scale_to(snd_state *ss, snd_info *sp, chan_info *cp, Float *ur_scalers, int len, int selection)
@@ -611,8 +590,8 @@ static void swap_channels(snd_state *ss, int beg, int dur, snd_fd *c0, snd_fd *c
   j = 0;
   for (k = 0; k < dur; k++)
     {
-      idata0[j] = next_sample(c1);
-      idata1[j] = next_sample(c0);
+      idata0[j] = read_sample(c1);
+      idata1[j] = read_sample(c0);
       j++;
       if ((temp_file) && (j == MAX_BUFFER_SIZE))
 	{
@@ -664,9 +643,12 @@ static Float input_as_needed(void *arg, int dir)
   snd_fd *sf;
   sf = sr->sf;
   sr->sample++;
-  if (dir > 0) 
-    return(next_sample_to_float(sf));
-  else return(previous_sample_to_float(sf));
+  if (dir != sr->dir)
+    {
+      read_sample_change_direction(sf, dir);
+      sr->dir = dir;
+    }
+  return(read_sample_to_float(sf));
 }
 
 src_state *make_src(snd_state *ss, Float srate, snd_fd *sf, Float initial_srate)
@@ -674,6 +656,7 @@ src_state *make_src(snd_state *ss, Float srate, snd_fd *sf, Float initial_srate)
   src_state *sr;
   sr = (src_state *)CALLOC(1, sizeof(src_state));
   sr->sf = sf;
+  if (initial_srate >= 0.0) sr->dir = 1; else sr->dir = -1;
   sr->gen = mus_make_src(&input_as_needed, initial_srate, sinc_width(ss), (void *)sr);
   mus_set_increment(sr->gen, srate);
   sr->sample = 0; /* this is how the old form worked */
@@ -1284,7 +1267,7 @@ static char *clm_channel(chan_info *cp, mus_any *gen, int beg, int dur, int edpo
   j = 0;
   for (k = 0; k < dur; k++)
     {
-      idata[j++] = MUS_FLOAT_TO_SAMPLE(MUS_RUN(gen, next_sample_to_float(sf), 0.0));
+      idata[j++] = MUS_FLOAT_TO_SAMPLE(MUS_RUN(gen, read_sample_to_float(sf), 0.0));
       if ((temp_file) && (j == MAX_BUFFER_SIZE))
 	{
 	  err = mus_file_write(ofd, 0, j - 1, 1, data);
@@ -1294,7 +1277,7 @@ static char *clm_channel(chan_info *cp, mus_any *gen, int beg, int dur, int edpo
     }
   for (k = 0; k < overlap; k++)
     {
-      idata[j++] = MUS_FLOAT_TO_SAMPLE(MUS_RUN(gen, 0.0, 0.0) + next_sample_to_float(sf));
+      idata[j++] = MUS_FLOAT_TO_SAMPLE(MUS_RUN(gen, 0.0, 0.0) + read_sample_to_float(sf));
       if ((temp_file) && (j == MAX_BUFFER_SIZE))
 	{
 	  err = mus_file_write(ofd, 0, j - 1, 1, data);
@@ -1402,7 +1385,7 @@ static char *apply_filter_or_error(chan_info *ncp, int order, env *e, int from_e
 
 	  sf = sfs[i];                                 /* init_sample_read(0, cp, READ_FORWARD); */
 	  for (k = 0; k < dur; k++) 
-	    sndrdat[k] = (Float)(next_sample_to_float(sf));
+	    sndrdat[k] = (Float)(read_sample_to_float(sf));
 	  sfs[i] = free_snd_fd(sf);
 
 	  fht(pow4, sndrdat);
@@ -1522,18 +1505,18 @@ static char *apply_filter_or_error(chan_info *ncp, int order, env *e, int from_e
 		      else prebeg = si->begs[i];
 		      if (prebeg > 0)
 			for (m = prebeg; m > 0; m--)
-			  d[m] = next_sample_to_float(sf);
+			  d[m] = read_sample_to_float(sf);
 		    }
 		}
 	      j = 0;
 	      for (k = 0; k < dur; k++)
 		{
 		  if (gen)
-		    x = MUS_RUN(gen, next_sample_to_float(sf), 0.0);
+		    x = MUS_RUN(gen, read_sample_to_float(sf), 0.0);
 		  else
 		    {
 		      x = 0.0; 
-		      d[0] = next_sample_to_float(sf);
+		      d[0] = read_sample_to_float(sf);
 		      for (m = order - 1; m > 0; m--) 
 			{
 			  x += d[m] * a[m]; 
@@ -1607,13 +1590,6 @@ void apply_filter(chan_info *ncp, int order, env *e, int from_enved,
     }
 }
 
-static MUS_SAMPLE_TYPE previous_sample_unscaled(snd_fd *sf)
-{
-  if (sf->view_buffered_data < sf->first)
-    return(previous_sound(sf));
-  else return(*sf->view_buffered_data--);
-}
-
 static char *reverse_channel(chan_info *cp, snd_fd *sf, int beg, int dur, XEN edp, char *caller, int arg_pos)
 {
   snd_state *ss;
@@ -1676,32 +1652,15 @@ static char *reverse_channel(chan_info *cp, snd_fd *sf, int beg, int dur, XEN ed
   data[0] = (MUS_SAMPLE_TYPE *)CALLOC(MAX_BUFFER_SIZE, sizeof(MUS_SAMPLE_TYPE)); 
   idata = data[0];
   j = 0;
-  if (no_ed_scalers(cp))
+  for (k = 0; k < dur; k++)
     {
-      for (k = 0; k < dur; k++)
+      idata[j] = read_sample(sf);
+      j++;
+      if ((temp_file) && (j == MAX_BUFFER_SIZE))
 	{
-	  idata[j] = previous_sample_unscaled(sf);
-	  j++;
-	  if ((temp_file) && (j == MAX_BUFFER_SIZE))
-	    {
-	      err = mus_file_write(ofd, 0, j - 1, 1, data);
-	      j = 0;
-	      if (err == -1) break;
-	    }
-	}
-    }
-  else
-    {
-      for (k = 0; k < dur; k++)
-	{
-	  idata[j] = previous_sample(sf);
-	  j++;
-	  if ((temp_file) && (j == MAX_BUFFER_SIZE))
-	    {
-	      err = mus_file_write(ofd, 0, j - 1, 1, data);
-	      j = 0;
-	      if (err == -1) break;
-	    }
+	  err = mus_file_write(ofd, 0, j - 1, 1, data);
+	  j = 0;
+	  if (err == -1) break;
 	}
     }
   if (temp_file)
@@ -1954,7 +1913,7 @@ void apply_env(chan_info *cp, env *e, int beg, int dur, Float scaler, int regexp
 	{
 	  egen_val = mus_env(egen);
 	  for (k = 0; k < si->chans; k++)
-	    data[k][j] = MUS_FLOAT_TO_SAMPLE(next_sample_to_float(sfs[k]) * egen_val);
+	    data[k][j] = MUS_FLOAT_TO_SAMPLE(read_sample_to_float(sfs[k]) * egen_val);
 	  j++;
 	  if ((temp_file) && (j == FILE_BUFFER_SIZE))
 	    {
@@ -1973,7 +1932,7 @@ void apply_env(chan_info *cp, env *e, int beg, int dur, Float scaler, int regexp
       idata = data[0];
       for (i = 0; i < dur; i++)
 	{
-	  idata[j] = MUS_FLOAT_TO_SAMPLE(next_sample_to_float(sf) * mus_env(egen));
+	  idata[j] = MUS_FLOAT_TO_SAMPLE(read_sample_to_float(sf) * mus_env(egen));
 	  j++;
 	  if ((temp_file) && (j == FILE_BUFFER_SIZE))
 	    {
@@ -2266,7 +2225,7 @@ static XEN g_map_chan_1(XEN proc, XEN s_beg, XEN s_end, XEN org, XEN snd, XEN ch
 	{
 	  /* changed here to remove catch 24-Mar-02 */
 	  res = XEN_CALL_1_NO_CATCH(proc, 
-				    C_TO_XEN_DOUBLE((double)next_sample_to_float(sf)),
+				    C_TO_XEN_DOUBLE((double)read_sample_to_float(sf)),
 				    caller);
 	  if (XEN_NUMBER_P(res))                         /* one number -> replace current sample */
 	    mus_outa(j++, XEN_TO_C_DOUBLE(res), (mus_output *)outgen);
@@ -2408,7 +2367,7 @@ static XEN g_sp_scan(XEN proc, XEN s_beg, XEN s_end, XEN snd, XEN chn,
       for (kp = 0; kp < num; kp++)
 	{
 	  res = XEN_CALL_1_NO_CATCH(proc,
-				    C_TO_XEN_DOUBLE((double)next_sample_to_float(sf)),
+				    C_TO_XEN_DOUBLE((double)read_sample_to_float(sf)),
 				    caller);
 	  if (XEN_NOT_FALSE_P(res))
 	    {
@@ -2698,7 +2657,7 @@ static XEN g_swap_channels(XEN snd0, XEN chn0, XEN snd1, XEN chn1, XEN beg, XEN 
 	  if (dur0 > dur1) num = dur1; else num = dur0;
 	}
       if ((beg0 == 0) && ((num == dur0) || (num == dur1)) &&
-	  (no_ed_scalers(cp0)) && (no_ed_scalers(cp1)) &&
+	  (no_ed_scalers(cp0, cp0->edit_ctr)) && (no_ed_scalers(cp1, cp1->edit_ctr)) &&
 	  (cp0->edit_ctr == 0) && (cp1->edit_ctr == 0))
 	{
 	  /* common special case -- just setup a new ed-list entry with the channels/sounds swapped */

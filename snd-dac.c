@@ -48,7 +48,7 @@ typedef struct dac__info {
   snd_info *sp;        /* needed to see button callback changes etc */
   chan_info *cp;
   snd_state *ss;
-  int end, no_scalers, never_sped, expand_ring_frames;
+  int end, never_sped, expand_ring_frames;
 } dac_info;
 
 #define AMP_CONTROL(sp, dp) ((dp->cp->amp_control) ? (dp->cp->amp_control[0]) : sp->amp_control)
@@ -71,7 +71,7 @@ static Float speed(dac_info *dp, Float sr)
   int move, i;
   Float result = 0.0;
   if (dp->never_sped)
-    return(next_sample_to_float(dp->chn_fd));
+    return(read_sample_to_float(dp->chn_fd));
   if ((use_sinc_interp((dp->ss))) && (dp->src))
     result = run_src(dp->src, sr);
   else
@@ -118,7 +118,7 @@ static Float expand_input_as_needed(void *arg, int dir)
   dp = spd->dp;
   if (spd->speeding)
     return(speed(dp, spd->sr));
-  else return(next_sample_to_float(dp->chn_fd));
+  else return(read_sample_to_float(dp->chn_fd));
 }
 
 static int max_expand_control_len(snd_info *sp)
@@ -375,14 +375,13 @@ static Float *sample_linear_env(env *e, int order)
   return(data);
 }
 
-static dac_info *make_dac_info(chan_info *cp, snd_info *sp, snd_fd *fd)
+static dac_info *make_dac_info(chan_info *cp, snd_info *sp, snd_fd *fd, int edpos)
 {
   dac_info *dp;
   Float *data = NULL;
   dp = (dac_info *)CALLOC(1, sizeof(dac_info));
   dp->region = -1;
   dp->a = NULL;
-  dp->no_scalers = no_ed_scalers(cp);
   dp->audio_chan = cp->chan;
   dp->never_sped = DEFAULT_NEVER_SPED;
   if (sp)
@@ -696,11 +695,11 @@ static int find_slot_to_play(void)
   return(old_size);
 }
 
-static dac_info *init_dp(int slot, chan_info *cp, snd_info *sp, snd_fd *fd, int beg, int end)
+static dac_info *init_dp(int slot, chan_info *cp, snd_info *sp, snd_fd *fd, int beg, int end, int edpos)
 {
   dac_info *dp;
   play_list_members++;
-  dp = make_dac_info(cp, sp, fd);
+  dp = make_dac_info(cp, sp, fd, edpos);
   dp->end = end;
   if (end != NO_END_SPECIFIED) 
     {
@@ -863,7 +862,7 @@ static dac_info *add_channel_to_play_list(chan_info *cp, snd_info *sp, int start
 	      cursor_moveto(cp, start);
 	    }
 	}
-      return(init_dp(slot, cp, sp, sf, start, end));
+      return(init_dp(slot, cp, sp, sf, start, end, pos));
     }
   return(NULL);
 }
@@ -876,7 +875,7 @@ static dac_info *add_region_channel_to_play_list(int region, int chan, int beg, 
   if (slot == -1) return(NULL);
   fd = init_region_read(beg, region, chan, READ_FORWARD);
   if (fd)
-    return(init_dp(slot, fd->cp, NULL, fd, beg, end));
+    return(init_dp(slot, fd->cp, NULL, fd, beg, end, fd->cp->edit_ctr));
   return(NULL);
 }
 
@@ -997,7 +996,6 @@ void play_selection(int background, XEN edpos, const char *caller, int arg_pos)
 #define JUST_AMP 1
 #define JUST_SPEED 2
 #define ALL_CHANGES 3
-#define NO_CHANGE_AND_NO_SCALING 4
 
 static int choose_dac_op (dac_info *dp, snd_info *sp)
 {
@@ -1011,11 +1009,7 @@ static int choose_dac_op (dac_info *dp, snd_info *sp)
       else
 	{
 	  if ((AMP_CONTROL(sp, dp) == dp->cur_amp) && (AMP_CONTROL(sp, dp) == 1.0))
-	    {
-	      if (dp->no_scalers)
-		return(NO_CHANGE_AND_NO_SCALING);
-	      else return(NO_CHANGE);
-	    }
+	    return(NO_CHANGE);
 	  else return(JUST_AMP);
 	}
     }
@@ -1050,13 +1044,6 @@ static void clear_dac_buffers(dac_state *dacp)
   if (global_rev)
     for (i = 0; i < dacp->channels; i++) 
       memset(rev_ins[i], 0, frames * sizeof(Float));
-}
-
-static MUS_SAMPLE_TYPE local_next_sample_unscaled(snd_fd *sf)
-{
-  if (sf->view_buffered_data > sf->last)
-    return(next_sound(sf));
-  else return(*sf->view_buffered_data++);
 }
 
 static XEN dac_hook;
@@ -1134,12 +1121,7 @@ static int fill_dac_buffers(dac_state *dacp, int write_ok)
 		case NO_CHANGE:
 		  /* simplest case -- no changes at all */
 		  for (j = 0; j < frames; j++)
-		    buf[j] += next_sample(dp->chn_fd);
-		  break;
-
-		case NO_CHANGE_AND_NO_SCALING:
-		  for (j = 0; j < frames; j++)
-		    buf[j] += local_next_sample_unscaled(dp->chn_fd);
+		    buf[j] += read_sample(dp->chn_fd);
 		  break;
 
 		case JUST_AMP:
@@ -1147,7 +1129,7 @@ static int fill_dac_buffers(dac_state *dacp, int write_ok)
 		  amp = dp->cur_amp;
 		  incr = (AMP_CONTROL(sp, dp) - amp) / (Float)(frames);
 		  for (j = 0; j < frames; j++, amp += incr) 
-		    buf[j] += MUS_FLOAT_TO_SAMPLE(next_sample_to_float(dp->chn_fd) * amp);
+		    buf[j] += MUS_FLOAT_TO_SAMPLE(read_sample_to_float(dp->chn_fd) * amp);
 		  dp->cur_amp = amp;
 		  break;
 
@@ -1229,7 +1211,7 @@ static int fill_dac_buffers(dac_state *dacp, int write_ok)
 				{
 				  for (j = 0; j < frames; j++, amp += incr, rev += revincr) 
 				    {
-				      fval = amp * next_sample_to_float(dp->chn_fd);
+				      fval = amp * read_sample_to_float(dp->chn_fd);
 				      revin[j] += fval * rev;
 				      buf[j] += MUS_FLOAT_TO_SAMPLE(fval);
 				    }

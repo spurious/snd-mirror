@@ -231,7 +231,7 @@ static Float region_sample(int reg, int chn, int samp)
 	    {
 	    case REGION_FILE:
 	      sf = init_region_read(samp, reg, chn, READ_FORWARD);
-	      val = next_sample_to_float(sf);
+	      val = read_sample_to_float(sf);
 	      free_snd_fd(sf);
 	      return(val);
 	    case REGION_DEFERRED:
@@ -260,14 +260,14 @@ static void region_samples(int reg, int chn, int beg, int num, Float *data)
 	    case REGION_FILE:
 	      sf = init_region_read(beg, reg, chn, READ_FORWARD);
 	      for (i = beg, j = 0; (i < r->frames) && (j < num); i++, j++) 
-		data[j] = next_sample_to_float(sf);
+		data[j] = read_sample_to_float(sf);
 	      free_snd_fd(sf);
 	      break;
 	    case REGION_DEFERRED:
 	      drp = r->dr;
 	      sf = init_sample_read_any(beg + drp->begs[chn], drp->cps[chn], READ_FORWARD, drp->edpos[chn]);
 	      for (i = beg, j = 0; (i < r->frames) && (j < num); i++, j++) 
-		data[j] = next_sample_to_float(sf);
+		data[j] = read_sample_to_float(sf);
 	      free_snd_fd(sf);
 	      break;
 	    }
@@ -889,7 +889,7 @@ static void deferred_region_to_temp_file(region *r)
 		{
 		  if (j <= drp->lens[i])  /* ??? was < ends[i] */
 		    {
-		      curval = next_sample(sfs[i]);
+		      curval = read_sample(sfs[i]);
 		      data[i][k] = curval;
 		      if (curval > val) val = curval;
 		      if (curval < mval) mval = curval;

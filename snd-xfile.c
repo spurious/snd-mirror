@@ -1945,8 +1945,6 @@ static void raw_data_help_callback(Widget w, XtPointer context, XtPointer info)
 static char dfs_str[LABEL_BUFFER_SIZE];
 static char dfc_str[LABEL_BUFFER_SIZE];
 
-/* TODO: use the standard header pane for the raw data dialog */
-
 static void make_raw_data_dialog(char *filename, snd_state *ss)
 {
   XmString *formats;

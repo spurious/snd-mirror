@@ -24,10 +24,8 @@
 ;;; test 21: goops
 ;;; test 22: Snd user-interface
 ;;; test 23: X/Xt/Xm/Xpm
-;;; test 24: Glib/gdk/gdk-pixbuf/pango/gtk
+;;; test 24: Glib/gdk/gdk-pixbuf/pango/gtk (none yet)
 ;;; test 25: errors
-
-;;; TODO: gtk tests
 
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 popen) (ice-9 optargs) (ice-9 syncase))
 
@@ -2013,9 +2011,12 @@
 	      ((= i 100))
 	    (sound-data-set! edat1 0 i (sound-data-ref sdata 0 i)))
 	  (IF (not (equal? sdata edat1)) (snd-display ";sound-data 3 not equal? ~A ~A" sdata edat1)))
-	(let ((v0 (make-vct 100)))
+	(let ((v0 (make-vct 100))
+	      (v1 (make-vct 3)))
 	  (sound-data->vct sdata 0 v0) 
 	  (IF (fneq (vct-ref v0 10) .1) (snd-display ";sound-data->vct: ~A?" v0))
+	  (sound-data->vct sdata 0 v1) 
+	  (IF (fneq (vct-ref v1 1) .01) (snd-display ";sound-data->(small)vct: ~A?" v1))
 	  (vct->sound-data v0 sdata 0) 
 	  (IF (fneq (sound-data-ref sdata 0 10) .1) (snd-display ";vct->sound-data: ~A?" (sound-data-ref sdata 0 10)))
 	  (let ((var (catch #t (lambda () (sound-data->vct sdata 2 v0)) (lambda args args))))
@@ -5996,7 +5997,6 @@
 	    (fr2 (make-frame 2))
 	    (mx1 (make-mixer 2))
 	    (mx2 (make-mixer 2)))
-	;; TODO: (set! (fr ind) val)? 
 	(frame-set! fr1 0 .1)
 	(let ((fradd (frame+ fr1 fr1 fr2)))
 	  (IF (not (equal? fr2 fradd)) (snd-display ";frame+ with res frame: ~A ~A" fr2 fradd))
@@ -9363,6 +9363,18 @@
 		(begin
 		  (set! (ladspa-dir) "/home/bil/test/cmt/plugins")
 		  (apply-ladspa (make-sample-reader 0) (list "cmt" "delay_5s" .3 .5) 1000 "delayed")
+		  (let ((tag (catch #t 
+				    (lambda () 
+				      (apply-ladspa (make-sample-reader 0) (list "cmt" "delay_4s" .3 .5) 1000 "delayed"))
+				    (lambda args args))))
+		    (IF (not (eq? (car tag) 'no-such-plugin))
+			(snd-display ";apply-ladspa bad plugin: ~A" tag)))
+		  (let ((tag (catch #t 
+				    (lambda () 
+				      (apply-ladspa (list (make-sample-reader 0) (make-sample-reader 0)) (list "cmt" "delay_5s" .3 .5) 1000 "delayed"))
+				    (lambda args args))))
+		    (IF (not (eq? (car tag) 'plugin-error))
+			(snd-display ";apply-ladspa reader mismatch: ~A" tag)))
 		  (let ((vals (list-ladspa)))
 		    (IF (or (not (list? vals))
 			    (null? vals))
@@ -12058,6 +12070,54 @@
 	  (let ((val (scan-channel (lambda (y) #f) 1234))) (IF val (snd-display ";scan-channel func #f with beg: ~A" val)))
 	  (let ((val (scan-channel (lambda (y) #f) 1234 4321))) (IF val (snd-display ";scan-channel func #f with beg+dur: ~A" val)))
 	  (close-sound ind))
+
+	(let* ((ind (open-sound "oboe.snd"))
+	       (oldamp 0.0)
+	       (oldloc 0)
+	       (ctr 0))
+	  (scan-channel (lambda (y)
+			  (if (>= (abs y) oldamp) 
+			      (begin
+				(set! oldamp (abs y))
+				(set! oldloc ctr)))
+			  (set! ctr (1+ ctr))
+			  #f))
+	  (scale-by 10.0)
+	  (scale-by 0.1)
+	  (reverse-channel 0 #f ind 0 1)
+	  (let ((amp 0.0)
+		(loc 0)
+		(ctr (1- (frames))))
+	    (scan-channel (lambda (y)
+			    (if (> (abs y) amp) 
+				(begin
+				  (set! amp (abs y))
+				  (set! loc ctr)))
+			    (set! ctr (1- ctr))
+			    #f))
+	    ;; can't use maxamp here because it may be set by scaling process
+	    (if (or (fneq oldamp (* .1 amp))
+		    (not (= loc oldloc)))
+		(snd-display ";reverse edpos screwup: ~A at ~A,  ~A at ~A" oldamp oldloc amp loc)))
+	  (undo)
+	  (reverse-channel 0 #f ind 0 2)
+	  (let ((amp 0.0)
+		(loc 0)
+		(ctr (1- (frames))))
+	    (scan-channel (lambda (y)
+			    (if (> (abs y) amp) 
+				(begin
+				  (set! amp (abs y))
+				  (set! loc ctr)))
+			    (set! ctr (1- ctr))
+			    #f))
+	    ;; can't use maxamp here because it may be set by scaling process
+	    (if (or (fneq oldamp amp)
+		    (not (= loc oldloc)))
+		(snd-display ";reverse unscaled edpos screwup: ~A at ~A,  ~A at ~A" oldamp oldloc amp loc)))
+	  
+	  (close-sound ind))
+
 	)))
 
 
@@ -19650,8 +19710,16 @@ EDITS: 4
 	(check-error-tag 'no-such-file (lambda () (set! (temp-dir) "/hiho")))
 	(check-error-tag 'no-such-file (lambda () (set! (save-dir) "/hiho")))
 	(check-error-tag 'mus-error (lambda () (snd-transform 20 (make-vct 4))))
+	(check-error-tag 'no-such-widget (lambda () (widget-position (list 'Widget 0)))) ; dubious -- not sure these should be supported
+	(check-error-tag 'no-such-widget (lambda () (widget-size (list 'Widget 0))))
+	(check-error-tag 'no-such-widget (lambda () (widget-text (list 'Widget 0))))
+	(check-error-tag 'no-such-widget (lambda () (set! (widget-position (list 'Widget 0)) (list 0 0))))
+	(check-error-tag 'no-such-widget (lambda () (set! (widget-size (list 'Widget 0)) (list 10 10))))
 	(let ((ind (open-sound "oboe.snd"))) 
 	  (select-all)
+	  (check-error-tag 'cannot-save (lambda () (save-sound-as "hiho.snd" ind -1)))
+	  (check-error-tag 'cannot-save (lambda () (save-sound-as "hiho.snd" ind mus-next -1)))
+	  (check-error-tag 'mus-error (lambda () (draw-lines '#())))
 	  (check-error-tag 'mus-error (lambda () (src-channel (make-env '(0 0 1 1) :end 10))))
 	  (check-error-tag 'mus-error (lambda () (src-channel (make-env '(0 1 1 0) :end 10))))
 	  (check-error-tag 'mus-error (lambda () (src-channel (make-env '(0 1 1 -1) :end 10))))

@@ -76,7 +76,7 @@ typedef struct {
   Float maxamp, selection_maxamp;      /* added 3-Oct-00 */
 } ed_list;
 
-typedef struct snd_fd {
+typedef struct snd__fd {
   ed_list *current_state;
   int *cb;
   int cbi;
@@ -89,6 +89,8 @@ typedef struct snd_fd {
   struct chan__info *cp;
   struct snd__info *local_sp;          /* for local reads via make-sample-reader from Scheme */
   Float scaler;
+  MUS_SAMPLE_TYPE (*run)(struct snd__fd *sf);
+  Float (*runf)(struct snd__fd *sf);
 } snd_fd;
 
 typedef struct {Float freq; Float amp;} fft_peak;
@@ -374,7 +376,7 @@ typedef struct {
 typedef struct {
   mus_any *gen;
   snd_fd *sf;
-  int sample;
+  int sample, dir;
 } src_state;
 
 
@@ -661,19 +663,13 @@ void scale_channel(chan_info *cp, Float scaler, int beg, int num, int pos);
 
 snd_fd *init_sample_read(int samp, chan_info *cp, int direction);
 snd_fd *init_sample_read_any(int samp, chan_info *cp, int direction, int edit_position);
+void read_sample_change_direction(snd_fd *sf, int dir);
 
-#define next_sample_to_float(SF) \
-  ((SF->view_buffered_data > SF->last) ? \
-     (MUS_SAMPLE_TO_FLOAT(next_sound(SF))) : \
-     ((*SF->view_buffered_data++) * SF->scaler))
-
-#define previous_sample_to_float(SF) \
-  ((SF->view_buffered_data < SF->first) ? \
-    (MUS_SAMPLE_TO_FLOAT(previous_sound(SF))) : \
-    ((*SF->view_buffered_data--) * SF->scaler))
-
-MUS_SAMPLE_TYPE next_sample(snd_fd *sf);
-MUS_SAMPLE_TYPE previous_sample(snd_fd *sf);
+#define read_sample(Sf) (*Sf->run)(Sf)
+#define read_sample_to_float(Sf) (*Sf->runf)(Sf)
+Float next_sample_to_float(snd_fd *sf);
+Float previous_sample_to_float(snd_fd *sf);
+Float local_maxamp(chan_info *cp, int beg, int num, int edpos);
 int read_sample_eof (snd_fd *sf);
 void undo_edit_with_sync(chan_info *cp, int count);
 void redo_edit_with_sync(chan_info *cp, int count);
@@ -690,7 +686,7 @@ void g_init_edits(void);
 snd_data *copy_snd_data(snd_data *sd, chan_info *cp, int bufsize);
 snd_data *free_snd_data(snd_data *sf);
 
-int no_ed_scalers(chan_info *cp);
+int no_ed_scalers(chan_info *cp, int edpos);
 void set_ed_maxamp(chan_info *cp, int edpos, Float val);
 Float ed_maxamp(chan_info *cp, int edpos);
 void set_ed_selection_maxamp(chan_info *cp, Float val);

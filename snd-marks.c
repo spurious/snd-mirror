@@ -1471,7 +1471,7 @@ static void make_mark_graph(chan_info *cp, snd_info *sp, int initial_sample, int
 	      if (i == current_sample) 
 		for (k = current_sample; k < initial_sample; k++) 
 		  move_to_next_sample(sf);
-	      set_grf_point(grf_x(x, ap), j, grf_y(next_sample_to_float(sf), ap));
+	      set_grf_point(grf_x(x, ap), j, grf_y(read_sample_to_float(sf), ap));
 	    }
 	}
       else
@@ -1479,7 +1479,7 @@ static void make_mark_graph(chan_info *cp, snd_info *sp, int initial_sample, int
 	  for (j = 0, i = ap->losamp, x = start_time; i <= ap->hisamp; i++, j++, x += incr)
 	    {
 	      if ((i < initial_sample) || (i >= current_sample)) 
-		samp = next_sample_to_float(sf);
+		samp = read_sample_to_float(sf);
 	      else samp = 0.0;
 	      set_grf_point(grf_x(x, ap), j, grf_y(samp, ap));
 	    }
@@ -1576,7 +1576,7 @@ static void make_mark_graph(chan_info *cp, snd_info *sp, int initial_sample, int
 		  if (i == current_sample) 
 		    for (k = current_sample; k < initial_sample; k++) 
 		      move_to_next_sample(sf);
-		  samp = next_sample_to_float(sf);
+		  samp = read_sample_to_float(sf);
 		  if (samp > ymax) ymax = samp;
 		  if (samp < ymin) ymin = samp;
 		  xf += 1.0;
@@ -1596,7 +1596,7 @@ static void make_mark_graph(chan_info *cp, snd_info *sp, int initial_sample, int
 	      for (i = ap->losamp, xf = 0.0; i <= ap->hisamp; i++)
 		{
 		  if ((i < initial_sample) || (i >= current_sample))
-		    samp = next_sample_to_float(sf);
+		    samp = read_sample_to_float(sf);
 		  else samp = 0.0;
 		  if (samp > ymax) ymax = samp;
 		  if (samp < ymin) ymin = samp;

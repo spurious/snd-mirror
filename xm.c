@@ -9,7 +9,6 @@
  * TODO: finish the -> converters
  * TODO: add_resource
  * SOMEDAY: get Xprt to work and test the Xp stuff
- * TODO: rest of help strings and check in snd-help.
  */
 
 /* HISTORY: 

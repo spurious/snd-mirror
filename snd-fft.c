@@ -1468,12 +1468,12 @@ static int apply_fft_window(fft_state *fs)
 	}
       if (use_fht)
 	for (i = 0; i < data_len; i++)
-	  fft_data[i] = window[i] * next_sample_to_float(sf);
+	  fft_data[i] = window[i] * read_sample_to_float(sf);
 	else
 	  {
 	    fft_data[0] = 0.0;
 	    for (i = 1; i < data_len; i++)  /* 22-Nov-00 was starting at 0, but I think XJS's version of the fft is 1-based */
-	      fft_data[i] = window[i - 1] * next_sample_to_float(sf);
+	      fft_data[i] = window[i - 1] * read_sample_to_float(sf);
 	  }
       /* my timing tests indicate this change to float (i.e. scaling) costs nothing in the larger scheme of things */
       if (data_len < fs->size) 
@@ -1493,7 +1493,7 @@ static int apply_fft_window(fft_state *fs)
 	}
       break;
     case HANKEL:
-      for (i = 0; i < data_len; i++) fs->hwin[i] = next_sample_to_float(sf);
+      for (i = 0; i < data_len; i++) fs->hwin[i] = read_sample_to_float(sf);
       if (data_len < fs->size) 
 	for (i = data_len; i < fs->size; i++) 
 	  fs->hwin[i] = 0.0;
@@ -1510,28 +1510,28 @@ static int apply_fft_window(fft_state *fs)
 #endif
       break;
     case WAVELET:
-      for (i = 0; i < data_len; i++) fft_data[i] = next_sample_to_float(sf);
+      for (i = 0; i < data_len; i++) fft_data[i] = read_sample_to_float(sf);
       if (data_len < fs->size) 
 	for (i = data_len; i < fs->size; i++) 
 	  fft_data[i] = 0.0;
       wavelet_transform(fft_data, fs->size, wavelet_data[cp->wavelet_type], wavelet_sizes[cp->wavelet_type]);
       break;
     case HAAR:
-      for (i = 0; i < data_len; i++) fft_data[i] = next_sample_to_float(sf);
+      for (i = 0; i < data_len; i++) fft_data[i] = read_sample_to_float(sf);
       if (data_len < fs->size) 
 	for (i = data_len; i < fs->size; i++) 
 	  fft_data[i] = 0.0;
       haar_transform(fft_data, fs->size);
       break;
     case CHEBYSHEV:
-      for (i = 0; i < data_len; i++) fft_data[i] = next_sample_to_float(sf);
+      for (i = 0; i < data_len; i++) fft_data[i] = read_sample_to_float(sf);
       if (data_len < fs->size)
 	for (i = data_len; i < fs->size; i++) 
 	  fft_data[i] = 0.0;
       chebyshev_transform(fft_data, fs->size);
       break;
     case CEPSTRUM:
-      for (i = 0; i < data_len; i++) fft_data[i] = next_sample_to_float(sf);
+      for (i = 0; i < data_len; i++) fft_data[i] = read_sample_to_float(sf);
       if (data_len < fs->size) 
 	for (i = data_len; i < fs->size; i++) 
 	  fft_data[i] = 0.0;
@@ -1541,7 +1541,7 @@ static int apply_fft_window(fft_state *fs)
       if (data_len >= 4)
 	{
 	  window = (Float *)CALLOC(fs->size, sizeof(Float));
-	  for (i = 0; i < data_len; i++) fft_data[i] = next_sample_to_float(sf);
+	  for (i = 0; i < data_len; i++) fft_data[i] = read_sample_to_float(sf);
 	  if (data_len < fs->size) 
 	    for (i = data_len; i < fs->size; i++) 
 	      fft_data[i] = 0.0;
@@ -1551,14 +1551,14 @@ static int apply_fft_window(fft_state *fs)
 	}
       break;
     case WALSH:
-      for (i = 0; i < data_len; i++) fft_data[i] = next_sample_to_float(sf);
+      for (i = 0; i < data_len; i++) fft_data[i] = read_sample_to_float(sf);
       if (data_len < fs->size) 
 	for (i = data_len; i < fs->size; i++) 
 	  fft_data[i] = 0.0;
       walsh_transform(fft_data, fs->size);
       break;
     case AUTOCORRELATION:
-      for (i = 0; i < data_len; i++) fft_data[i] = next_sample_to_float(sf);
+      for (i = 0; i < data_len; i++) fft_data[i] = read_sample_to_float(sf);
       if (data_len < fs->size) 
 	for (i = data_len; i < fs->size; i++) 
 	  fft_data[i] = 0.0;

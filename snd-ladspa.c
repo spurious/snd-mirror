@@ -652,7 +652,7 @@ Information about about parameters can be acquired using analyse-ladspa."
     /* Prepare the input data. */
     for (i = 0; i < readers; i++)
       for (lSampleIndex = 0; lSampleIndex < lBlockSize; lSampleIndex++) {
-	pfInputBuffer[i][lSampleIndex] = next_sample_to_float(sf[i]);
+	pfInputBuffer[i][lSampleIndex] = read_sample_to_float(sf[i]);
       }
 
     /* Run the plugin. */

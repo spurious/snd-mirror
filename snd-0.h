@@ -605,7 +605,7 @@ enum {COLOR_POSITION, COLOR_ZOOM};
 
 #define use_sinc_interp(ss) ss->Use_Sinc_Interp
 #define set_use_sinc_interp(ss, a) ss->Use_Sinc_Interp = a
-#define DEFAULT_USE_SINC_INTERP 1
+#define DEFAULT_USE_SINC_INTERP TRUE
 
 #define print_length(ss) ss->Print_Length
 #define set_print_length(ss, a) ss->Print_Length = a

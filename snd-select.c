@@ -69,6 +69,7 @@ static void cp_set_selection_beg(chan_info *cp, int beg)
   if (beg < len)
     ed->selection_beg = beg;
   else ed->selection_beg = len - 1;
+  ed->selection_maxamp = -1.0;
 }
 
 static int cp_selection_end(chan_info *cp, void *begptr) 
@@ -116,6 +117,7 @@ static void cp_set_selection_len(chan_info *cp, int len)
   cplen = current_ed_samples(cp);
   ed->selection_end = ed->selection_beg + len - 1;
   if (ed->selection_end >= cplen) ed->selection_end = cplen - 1;
+  ed->selection_maxamp = -1.0;
 }
 
 static int selection_chans_1(chan_info *cp, void *count)
@@ -209,6 +211,7 @@ void reactivate_selection(chan_info *cp, int beg, int end)
   ed->selection_beg = beg;
   ed->selection_end = end;
   cp->selection_visible = 0;
+  ed->selection_maxamp = -1.0;
   reflect_edit_with_selection_in_menu();
 }
 
@@ -217,6 +220,7 @@ static void update_selection(chan_info *cp, int newend)
   ed_list *ed;
   int samps;
   ed = cp->edits[cp->edit_ctr];
+  ed->selection_maxamp = -1.0;
   if ((newend != ed->selection_beg) && (newend != ed->selection_end)) /* redundant call from somewhere */
     {
       if (newend < ed->selection_beg) 
@@ -626,7 +630,7 @@ int save_selection(snd_state *ss, char *ofile, int type, int format, int srate, 
 	      for (k = 0; k < chans; k++)
 		{
 		  if (i <= ends[k]) 
-		    data[k][j] = next_sample(sfs[k]);
+		    data[k][j] = read_sample(sfs[k]);
 		  else data[k][j] = MUS_SAMPLE_0;
 		}
 	      j++;
@@ -669,15 +673,11 @@ int save_selection(snd_state *ss, char *ofile, int type, int format, int srate, 
 	}
       else 
 	{
-	  snd_error("save-selection: unsupported header type? %d (%s) [%s[%d] %s]",
-		    type, mus_header_type_name(type), 
-		    __FILE__, __LINE__, __FUNCTION__);
+	  snd_error("save-selection: unsupported header type? %d (%s)", type, mus_header_type_name(type));
 	  return(MUS_UNSUPPORTED_HEADER_TYPE);
 	}
     }
-  else snd_error("save-selection: unsupported data format? %d (%s) [%s[%d] %s]",
-		 format, mus_data_format_name(format),
-		 __FILE__, __LINE__, __FUNCTION__);
+  else snd_error("save-selection: unsupported data format? %d (%s)", format, mus_data_format_name(format));
   return(MUS_UNSUPPORTED_DATA_FORMAT);
 }
 

@@ -246,12 +246,12 @@ static int tick_amp_env(chan_info *cp, env_state *es)
 	  if (sfd == NULL) return(FALSE);
 	  for (n = 0; n < lm; n++, sb++)
 	    {
-	      val = next_sample(sfd);
+	      val = read_sample(sfd);
 	      ymin = val;
 	      ymax = val;
 	      for (i = 1; i < ep->samps_per_bin; i++)
 		{
-		  val = next_sample(sfd);
+		  val = read_sample(sfd);
 		  if (ymin > val) 
 		    ymin = val; 
 		  else 
@@ -530,7 +530,7 @@ void pick_one_bin(env_info *ep, int bin, int cursamp, chan_info *cp, int edpos)
   if (sf == NULL) return;
   for (n = 0; n < ep->samps_per_bin; n++)
     {
-      val = next_sample(sf); 
+      val = read_sample(sf); 
       if (ymin > val) ymin = val; else if (ymax < val) ymax = val;
     }
   ep->data_max[bin] = ymax;

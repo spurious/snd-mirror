@@ -1838,13 +1838,6 @@ static XEN g_close_sound_file(XEN g_fd, XEN g_bytes)
   return(C_TO_XEN_INT(result));
 }
 
-static MUS_SAMPLE_TYPE local_next_sample_unscaled(snd_fd *sf)
-{
-  if (sf->view_buffered_data > sf->last)
-    return(next_sound(sf));
-  else return(*sf->view_buffered_data++);
-}
-
 static XEN samples2sound_data(XEN samp_0, XEN samps, XEN snd_n, XEN chn_n, XEN sdobj, XEN edpos, XEN sdchan)
 {
   #define H_samples2sound_data "(" S_samples2sound_data " &optional (start-samp 0)\n    samps snd chn sdobj edit-position (sdobj-chan 0))\n\
@@ -1879,12 +1872,8 @@ reading edit version edit-position (defaulting to the current version)"
 	  sf = init_sample_read_any(beg, cp, READ_FORWARD, pos);
 	  if (sf)
 	    {
-	      if (no_ed_scalers(cp))
-		for (i = 0; i < len; i++) 
-		  sd->data[chn][i] = local_next_sample_unscaled(sf);
-	      else 
-		for (i = 0; i < len; i++) 
-		  sd->data[chn][i] = next_sample(sf);
+	      for (i = 0; i < len; i++) 
+		sd->data[chn][i] = read_sample(sf);
 	      free_snd_fd(sf);
 	    }
 	}
