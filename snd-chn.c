@@ -397,7 +397,7 @@ void update_graph(chan_info *cp)
     {
       if (sp)
 	{
-	  set_minibuffer_string(sp, "(update squelched)"); /* this has tripped me one too many times... */
+	  set_minibuffer_string(sp, "(update squelched)", false); /* this has tripped me one too many times... */
 	  sp->minibuffer_on = MINI_REPORT;
 	}
       return;
@@ -3531,7 +3531,7 @@ void show_cursor_info(chan_info *cp)
 	    }
 	}
     }
-  set_minibuffer_string(sp, expr_str);
+  set_minibuffer_string(sp, expr_str, true);
   sp->minibuffer_on = MINI_CURSOR;
   FREE(expr_str);
   FREE(s1);

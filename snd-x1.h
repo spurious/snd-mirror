@@ -376,7 +376,7 @@ void set_control_panel_play_button(snd_info *sp, bool val);
 Widget filter_graph(snd_info *sp);
 void make_minibuffer_label(snd_info *sp, char *str);
 void goto_minibuffer(snd_info *sp);
-void set_minibuffer_string(snd_info *sp, char *str);
+void set_minibuffer_string(snd_info *sp, char *str, bool update);
 void set_minibuffer_cursor_position(snd_info *sp, int pos);
 char *get_minibuffer_string(snd_info *sp);
 void sound_unlock_control_panel(snd_info *sp, void *ptr);

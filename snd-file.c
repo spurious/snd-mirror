@@ -228,7 +228,7 @@ static char *raw_data_explanation(const char *filename, file_info *hdr);
 file_info *make_file_info(const char *fullname)
 {
   file_info *hdr = NULL;
-  int type = MUS_UNSUPPORTED, format = MUS_UNKNOWN, sr = 0, ch = 0;
+  int type = MUS_UNSUPPORTED, format = MUS_UNKNOWN;
   if (mus_file_probe(fullname))
     {
       type = mus_sound_header_type(fullname);
@@ -237,6 +237,7 @@ file_info *make_file_info(const char *fullname)
 #if (!USE_NO_GUI)
       else
 	{
+	  int sr = 0, ch = 0;
 	  sr = mus_sound_srate(fullname);
 	  ch = mus_sound_chans(fullname);
 	  if ((fallback_srate > 0) && ((sr <= 0) || (sr > 100000000))) sr = fallback_srate;
@@ -801,7 +802,12 @@ void snd_close_file(snd_info *sp)
   for (i = 0; i < sp->nchans; i++) sp->chans[i]->squelch_update = true;
   add_to_previous_files(sp->short_filename, sp->filename);
   if (sp->playing) stop_playing_sound(sp, PLAY_CLOSE);
-  if (sp->sgx) clear_minibuffer(sp); /* this can trigger a redisplay-expose sequence, so make sure channels ignore it above */
+  if (sp->sgx) 
+    {
+      sp->inuse = SOUND_NORMAL;               /* needed to make sure minibuffer is actually cleared in set_minibuffer_string */
+      set_minibuffer_string(sp, NULL, false); /* false = don't try to update graphs! */
+      sp->inuse = SOUND_IDLE;
+    }
   if (sp == selected_sound()) 
     ss->selected_sound = NO_SELECTION;
   /* if sequester_deferred_regions is in free_snd_info (moved up to this level 15-12-03)

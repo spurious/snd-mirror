@@ -6664,7 +6664,7 @@ static void report_in_minibuffer_s(int *args, ptree *pt)
   sp = run_get_sp(2, args, pt->ints);
   if (sp)
     {
-      set_minibuffer_string(sp, STRING_ARG_1);
+      set_minibuffer_string(sp, STRING_ARG_1, true);
       sp->minibuffer_on = MINI_REPORT;
     }
 }
@@ -10545,12 +10545,13 @@ XEN_NARGIFY_2(g_vct_map_w, g_vct_map)
 
 static void init_walkers(void)
 {
-  XEN do_star, declare, call_cc;
-  XEN_DEFINE_VARIABLE("do*", do_star, XEN_FALSE);
-  XEN_DEFINE_VARIABLE("declare", declare, XEN_FALSE);
+  XEN do_star, declare;
 #if (!HAVE_GUILE_CALL_CC)
+  XEN call_cc;
   XEN_DEFINE_VARIABLE("call/cc", call_cc, XEN_FALSE);
 #endif
+  XEN_DEFINE_VARIABLE("do*", do_star, XEN_FALSE);
+  XEN_DEFINE_VARIABLE("declare", declare, XEN_FALSE);
   walk_sym = C_STRING_TO_XEN_SYMBOL("snd-walk");
   XEN_PROTECT_FROM_GC(walk_sym);
 

@@ -71,6 +71,7 @@ void mus_fftw(Float *rl, int n, int dir)
  * M. J. Shensa Naval Ocean Systems Center,
  * Wickerhauser "Adapted Wavelet Analysis", 
  * and the UBC Imager Wavelet Package by Bob Lewis
+ * later stuff from Numerical Recipes
  */
 
 static void wavelet_transform(Float *data, int num, Float *cc, int cc_size)
@@ -273,7 +274,6 @@ void autocorrelation(Float *data, int n)
   n2 = n / 2;
   rl = (Float *)MALLOC(n * sizeof(Float));
   memcpy((void *)rl, (void *)data, n * sizeof(Float));
-  /* for (i = 0; i < n; i++) rl[i] = data[i]; */
   fscl = 1.0 / (Float)n;
   im = (Float *)CALLOC(n, sizeof(Float));
   mus_fft(rl, im, n, 1);

@@ -397,7 +397,7 @@ void snd_file_lock_icon(snd_info *sp, bool on);
 void snd_file_bomb_icon(snd_info *sp, bool on);
 void x_bomb(snd_info *sp, bool on);
 void goto_minibuffer(snd_info *sp);
-void set_minibuffer_string(snd_info *sp, char *str);
+void set_minibuffer_string(snd_info *sp, char *str, bool update);
 void set_minibuffer_cursor_position(snd_info *sp, int pos);
 char *get_minibuffer_string(snd_info *sp);
 void make_minibuffer_label(snd_info *sp, char *str);

@@ -191,7 +191,7 @@ int w_snd_name(snd_info *sp) {return(0);}
 int filter_graph(snd_info *sp) {return(0);}
 void make_minibuffer_label(snd_info *sp, char *str) {}
 void goto_minibuffer(snd_info *sp) {}
-void set_minibuffer_string(snd_info *sp, char *str) {if ((str) && (*str)) fprintf(stderr, "%s", str);}
+void set_minibuffer_string(snd_info *sp, char *str, bool update) {if ((str) && (*str)) fprintf(stderr, "%s", str);}
 void set_minibuffer_cursor_position(snd_info *sp, int pos) {}
 char *get_minibuffer_string(snd_info *sp) {return(NULL);}
 void snd_info_cleanup(snd_info *sp) {}

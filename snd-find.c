@@ -391,7 +391,7 @@ static off_t cursor_find_backward(snd_info *sp, chan_info *cp, int count)
 static void get_find_expression(snd_info *sp, int count)
 {
   /* clear previous ? */
-  set_minibuffer_string(sp, NULL);
+  set_minibuffer_string(sp, NULL, true);
   make_minibuffer_label(sp, "find:");
   sp->minibuffer_on = MINI_FIND;
   goto_minibuffer(sp);

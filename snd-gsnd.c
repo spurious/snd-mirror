@@ -207,7 +207,7 @@ char *get_minibuffer_string(snd_info *sp)
 } 
 
 static char stupid[1] = {'\0'};
-void set_minibuffer_string(snd_info *sp, char *str) 
+void set_minibuffer_string(snd_info *sp, char *str, bool update) 
 {
   if ((sp->inuse != SOUND_NORMAL) || (!(sp->sgx))) return;
   if (str)
@@ -1972,8 +1972,8 @@ snd_info *add_sound_window(char *filename, bool read_only)
   if (sp->nchans == 1) 
     gtk_widget_hide(sw[W_unite]);
   add_sound_data(filename, sp, WITH_GRAPH);
-
-  snd_file_lock_icon(sp, (sp->read_only || (cant_write(sp->filename))));
+  if (cant_write(sp->filename)) sp->read_only = true;
+  snd_file_lock_icon(sp, sp->read_only);
   if (old_name)
     report_in_minibuffer(sp, _("(translated %s)"), old_name);
   after_open(sp->index);

@@ -1989,9 +1989,9 @@ and its value is returned."
 
   XEN help_text = XEN_FALSE; 
   char *str = NULL, *new_str, *subject = NULL;
-  bool already_looped = false;
 
 #if HAVE_GUILE
+  bool already_looped = false;
   XEN value = XEN_FALSE, sym = XEN_FALSE;
   if (XEN_EQ_P(text, XEN_UNDEFINED))                              /* if no arg, describe snd-help */
     {

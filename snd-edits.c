@@ -6118,7 +6118,10 @@ static snd_fd *init_sample_read_any_with_bufsize(off_t samp, chan_info *cp, read
   if (sp->need_update) 
     {
       if (mus_file_probe(sp->filename) == 0)
-	snd_error(_("file %s no longer exists!"), sp->short_filename);
+	{
+	  snd_error(_("file %s no longer exists!"), sp->short_filename);
+	  return(NULL);
+	}
       else snd_warning(_("file %s has changed since we last read it!"), sp->short_filename);
     }
   curlen = cp->samples[edit_position];
@@ -6167,6 +6170,8 @@ static snd_fd *init_sample_read_any_with_bufsize(off_t samp, chan_info *cp, read
 	      return(sf);
 	    }
 	  first_snd = sf->cp->sounds[READER_SOUND(sf)];
+	  if (!first_snd)
+	    return(cancel_reader(sf));
 	  if (first_snd->type == SND_DATA_FILE)
 	    {
 	      /* since arbitrarily many work procs can be running in parallel, reading the same 
@@ -6181,7 +6186,7 @@ static snd_fd *init_sample_read_any_with_bufsize(off_t samp, chan_info *cp, read
 	      if (first_snd->inuse)
 		{
 		  first_snd = copy_snd_data(first_snd, bufsize);
-		  if (first_snd == NULL)
+		  if (!first_snd)
 		    return(cancel_reader(sf));
 		}
 	      first_snd->inuse = true;
@@ -6633,9 +6638,12 @@ int save_edits_without_display(snd_info *sp, char *new_name, int type, int forma
   off_t frames = 0;
   snd_fd **sf;
   chan_info *cp;
-  if ((sp->read_only) && (strcmp(new_name, sp->filename) == 0))
+  if (((sp->read_only) && (strcmp(new_name, sp->filename) == 0)) ||
+      (mus_file_create(new_name) == -1)) /* can't use access here since file might not exist */
     {
-      snd_error(_("%s is write-protected"), sp->filename);
+      if (strcmp(caller, "file save as") == 0)
+	snd_error(_("%s is write-protected"), sp->filename);
+      else ss->catch_message = "file is write-protected";
       return(MUS_ERROR);
     }
   if (dont_save(sp, new_name)) return(MUS_NO_ERROR);
@@ -6740,6 +6748,13 @@ void save_edits(snd_info *sp, void *ptr)
 	  errno = 0;
 	  /* check for change to file while we were editing it */
 	  current_write_date = file_write_date(sp->filename);
+	  /* returns -1 if file does not exist (stat -> -1) */
+	  if (current_write_date < 0)
+	    {
+	      report_in_minibuffer(sp, _("%s has disappeared!"), sp->filename); 
+	      /* unless by chance it fits in one in-core buffer, there's nothing we can do now */
+	      return;
+	    }
 	  if ((current_write_date - sp->write_date) > 1) /* weird!! In Redhat 7.1 these can differ by 1?? Surely this is a bug! */
 	    {
 	      bool yes;

@@ -59,7 +59,7 @@
 (define with-big-file #t)
 (set! (show-backtrace) #t)
 
-(define debugging-device-channels 8)
+(define debugging-device-channels 2)
 
 (define pi 3.141592653589793)
 (define max-optimization 6)
@@ -29707,7 +29707,7 @@ EDITS: 2
 			    (break))))))))
 	     (list 16 128 512 1024 4096))
 	    
-      ;;; -------- autocorrelation
+	    ;; -------- autocorrelation
 	    
 	    (let ((rl (make-vct 16 0.0)))
 	      (vct-set! rl 0 1.0)
@@ -29921,7 +29921,22 @@ EDITS: 2
 	    (vct-scale! d0 (/ 1.0 8.0))
 	    (if (not (vequal d0 d1))
 		(snd-display ";walsh 4: ~A ~A" d0 d1))
-	    
+
+	    (set! d0 (vct 1 1 1 -1 1 1 1 -1 1 1 1 -1 -1 -1 -1 1))
+	    (set! d1 (snd-transform walsh-transform d0))
+	    (if (not (vequal d1 (vct 4.00 4.00 4.00 -4.00 4.00 4.00 4.00 -4.00 4.00 4.00 4.00 -4.00 -4.00 -4.00 -4.00 4.00)))
+		(snd-display ";walsh 5: ~A" d1))
+
+	    (set! d0 (vct 1 0 0 -1 0 0 0 0 0 0 0 0 0 0 0 0))
+	    (set! d1 (snd-transform walsh-transform d0))
+	    (if (not (vequal d1 (vct 0.000 2.000 2.000 0.000 0.000 2.000 2.000 0.000 0.000 2.000 2.000 0.000 0.000 2.000 2.000 0.000)))
+		(snd-display ";walsh 6: ~A" d1))
+
+	    (set! d0 (vct 0.174 -0.880 -0.555 -0.879 0.038 0.696 -0.612 0.006 -0.613 0.334 -0.111 -0.821 0.130 0.030 -0.229 0.170))
+	    (set! d1 (snd-transform walsh-transform d0))
+	    (if (not (vequal d1 (vct -3.122 -0.434 2.940 -0.468 -3.580 2.716 -0.178 -1.386 -0.902 0.638 1.196 1.848 -0.956 2.592 -1.046 2.926)))
+		(snd-display ";walsh 7: ~A" d1))
+
 	    
 	    ;; -------- haar
 	    
@@ -29942,6 +29957,10 @@ EDITS: 2
 	    (inverse-haar d0)
 	    (if (not (vequal d0 (vct 1.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000)))
 		(snd-display ";inverse haar 2: ~A" d0))
+
+	    (set! d0 (snd-transform haar-transform (vct -0.483 0.174 -0.880 -0.555 -0.879 0.038 0.696 -0.612)))
+	    (if (not (vequal d0 (vct -0.884 -0.349 0.563 -0.462 -0.465 -0.230 -0.648 0.925)))
+		(snd-display ";haar 3: ~A" d0))
 	    
 	    (set! d0 (make-vct 8))
 	    (set! d1 (make-vct 8))
@@ -29952,10 +29971,15 @@ EDITS: 2
 	    (snd-transform haar-transform d0)
 	    (inverse-haar d0)
 	    (if (not (vequal d0 d1))
-		(snd-display ";inverse haar 3: ~A ~A" d0 d1))
+		(snd-display ";inverse haar 4: ~A ~A" d0 d1))
 	    
 	    
 	    ;; --------- wavelet
+
+	    ;; test against fxt output
+	    (set! d0 (snd-transform wavelet-transform (vct 1 1 0 0 0 0 0 0) 0)) ;"daub4"
+	    (if (not (vequal d0 (vct 0.625 0.375 -0.217 1.083 -0.354 0.000 0.000 0.354)))
+		(snd-display ";fxt wavelet 1: ~A" d0))
 	    
 	    (for-each 
 	     (lambda (size)
@@ -37748,7 +37772,8 @@ EDITS: 2
 						 (if (and (XmIsPushButton w) 
 							  (or (string=? (XtName w) "A")
 							      (string=? (XtName w) " ")
-							      (string=? (XtName w) "/")))
+							      (string=? (XtName w) "/")
+							      (string=? (XtName (XtParent w)) "data")))
 						     (set! buttons (cons w buttons)))
 						 (if (and (XmIsPushButton w) 
 							  (string=? (XtName w) "recorder-amp-number")) 
@@ -37771,6 +37796,8 @@ EDITS: 2
 			  (set! (with-background-processes) #t)
 			  (click-button record-button #t)
 			  (click-button record-button #f)
+			  (click-button record-button #t)
+			  (click-button reset-button #t)
 			  (set! (with-background-processes) #f)
 			  (if (and (string? (recorder-file))
 				   (not (string=? (recorder-file) (string-append (getcwd) "/fmv.wav"))))
@@ -38028,6 +38055,10 @@ EDITS: 2
 		      (if (eq? (enved-filter) firB) (snd-display ";fir button had no effect?")))
 		    (click-button delete-button) (force-event)
 		    (XtCallCallbacks delete-button XmNactivateCallback #f)
+		    (widget-string text-widget "'(0 .5 .4)") (force-event)
+		    (key-event text-widget snd-return-key 0) (force-event)
+		    (widget-string text-widget "'(.5 .4 0 0)") (force-event)
+		    (key-event text-widget snd-return-key 0) (force-event)
 		    (click-button dismiss-button) (force-event)
 		    )
 		  ))
@@ -47749,6 +47780,8 @@ EDITS: 2
 	      (check-error-tag 'no-such-channel (lambda () (play 0 ind 1234)))
 	      (if (= (length (regions)) 0) (make-region 0 100))
 	      (check-error-tag 'no-such-channel (lambda () (region-sample 0 (car (regions)) 1234)))
+	      (check-error-tag 'no-such-channel (lambda () (region-frames (car (regions)) 1234)))
+	      (check-error-tag 'no-such-channel (lambda () (region-position (car (regions)) 1234)))
 	      (check-error-tag 'no-such-region (lambda () (region-samples->vct 0 1 -1)))
 	      (check-error-tag 'no-such-channel (lambda () (region-samples->vct 0 1 (car (regions)) 1234)))
 	      (check-error-tag 'cannot-save (lambda () (save-sound-as "/bad/baddy.snd")))
@@ -48315,6 +48348,78 @@ EDITS: 2
 	    (set! (window-y) 10)
 	    (dismiss-all-dialogs)
 
+	    (copy-file "oboe.snd" "test.snd")
+	    (let ((ind (open-sound "test.snd")))
+	      (delete-file "test.snd")
+	      (let ((val (update-sound ind)))
+		(let ((msg (widget-text (list-ref (sound-widgets ind) 3))))
+		  (if (or (not (string? msg))
+			  (not (string=? msg "test.snd no longer exists!")))
+		      (snd-display ";delete sound msg: ~A" msg))))
+	      (delete-sample 10)
+	      (catch #t
+		     (lambda () (save-sound ind))
+		     (lambda args #f))
+	      (let ((msg (widget-text (list-ref (sound-widgets ind) 3))))
+		(if (or (not (string? msg))
+			(not (string=? msg (format #f "~A/test.snd has disappeared!" (getcwd)))))
+		    (snd-display ";save deleted sound msg: ~A" msg)))
+	      (close-sound ind))
+	    
+	    (copy-file "oboe.snd" "test.snd")
+	    (let ((ind (open-sound "test.snd"))
+		  (reg (select-all)))
+	      (delete-file "test.snd")
+	      (view-regions-dialog)
+	      (dismiss-all-dialogs)
+	      (close-sound ind))
+
+	    (copy-file "oboe.snd" "test.snd")
+	    (let ((ind (open-sound "test.snd")))
+	      (system "chmod 400 test.snd")
+	      (delete-sample 10)
+	      (catch #t
+		     (lambda () (save-sound ind))
+		     (lambda args #f))
+	      (let ((msg (widget-text (list-ref (sound-widgets ind) 3))))
+		(if (or (not (string? msg))
+			(not (string=? (substring msg 0 57)
+				       (format #f "file write failed: Permission denied, edits are saved in:"))))
+		    (snd-display ";save protected sound msg: ~A" msg)))
+	      (close-sound ind))
+	    
+	    (let ((ind (open-sound "test.snd")))
+	      (if (not (read-only ind))
+		  (snd-display ";write-protected sound, but read-only not set"))
+	      (system "chmod 644 test.snd")
+	      (delete-file "test.snd")
+	      (close-sound ind))
+	    
+	    (copy-file "oboe.snd" "test.snd")
+	    (system "chmod 200 test.snd")
+	    (let ((tag
+		   (catch #t
+			  (lambda () (open-sound "test.snd"))
+			  (lambda args (car args)))))
+	      (if (not (eq? tag 'no-such-file))
+		  (snd-display ";open read-protected sound: ~A" tag)))
+	    (system "chmod 644 test.snd")
+	    (delete-file "test.snd")
+	    
+	    (copy-file "oboe.snd" "test.snd")
+	    (system "chmod 400 test.snd")
+	    (let ((ind (open-sound "oboe.snd")))
+	      (delete-sample 10)
+	      (let ((tag
+		     (catch #t
+			    (lambda () (save-sound-as "test.snd"))
+			    (lambda args (car args)))))
+		(if (not (eq? tag 'cannot-save))
+		    (snd-display ";save-as write-protected sound: ~A" tag)))
+	      (close-sound ind))
+	    (system "chmod 644 test.snd")
+	    (delete-file "test.snd")
+
 	    (trace traced)
 	    (snd-trace (if #t (traced 12)))
 
@@ -48420,6 +48525,7 @@ EDITS: 2
   "aaa.eps"
   "envs.save"
   "fmv.snd"
+  "fmv.wav"
   "fmv0.snd"
   "fmv1.snd"
   "fmv2.snd"

@@ -108,7 +108,7 @@ void show_snd_errors(void)
 	XtManageChild(snd_error_dialog);
       else raise_dialog(snd_error_dialog);
     }
-  else post_error_dialog(_("no errors yet"));
+  else post_error_dialog("");
 }
 
 static bool yes_or_no = false;

@@ -1498,7 +1498,7 @@ static void restore_string(snd_info *sp, bool back, mini_history_t which)
 	{
 	  switch (which)
 	    {
-	    case MINIBUFFER: set_minibuffer_string(sp, str); break;
+	    case MINIBUFFER: set_minibuffer_string(sp, str, true); break;
 	    case FILTER_TEXT: set_filter_text(sp, str); break;
 	    case LISTENER_TEXT: append_listener_text(-1, str); break;
 	    }

@@ -490,7 +490,7 @@ void report_in_minibuffer(snd_info *sp, const char *format, ...)
   va_start(ap, format);
   buf = vstr(format, ap);
   va_end(ap);
-  set_minibuffer_string(sp, buf);
+  set_minibuffer_string(sp, buf, true);
   sp->minibuffer_on = MINI_REPORT;
   FREE(buf);
   /* leave sp->minibuffer off so that keyboard_command doesn't clear it */
@@ -505,7 +505,7 @@ void report_in_minibuffer_and_save(snd_info *sp, const char *format, ...)
   va_start(ap, format);
   buf = vstr(format, ap);
   va_end(ap);
-  set_minibuffer_string(sp, buf);
+  set_minibuffer_string(sp, buf, true);
   sp->minibuffer_on = MINI_REPORT;
   add_to_error_history(buf, false);
   FREE(buf);
@@ -515,7 +515,7 @@ void report_in_minibuffer_and_save(snd_info *sp, const char *format, ...)
 void clear_minibuffer(snd_info *sp)
 {
   clear_minibuffer_prompt(sp);
-  set_minibuffer_string(sp, NULL);
+  set_minibuffer_string(sp, NULL, true);
   sp->searching = 0;
   sp->marking = 0;
   sp->filing = NOT_FILING;
@@ -536,11 +536,11 @@ static void prompt(snd_info *sp, char *msg, char *preload)
 {
   if (preload)
     {
-      set_minibuffer_string(sp, preload);
+      set_minibuffer_string(sp, preload, true);
       set_minibuffer_cursor_position(sp, snd_strlen(preload));
     }
   else
-    set_minibuffer_string(sp, NULL);
+    set_minibuffer_string(sp, NULL, true);
   make_minibuffer_label(sp, msg);
   sp->minibuffer_on = MINI_PROMPT;
   goto_minibuffer(sp);
@@ -720,7 +720,7 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, bool with_meta)
     }
   if ((keysym == snd_K_g) || (keysym == snd_K_G)) /* c-g => abort whatever we're doing and return */
     {
-      set_minibuffer_string(sp, NULL);
+      set_minibuffer_string(sp, NULL, true);
       clear_minibuffer(sp);
       return;
     }
