@@ -180,25 +180,10 @@
 	    (fveql a (cdr b) (+ i 1))))))
 
 (define (vequal v0 v1)
-  (define (dequal ctr len)
-    (if (= ctr len)
-	#t
-	(and (< (abs (- (vct-ref v0 ctr) (vct-ref v1 ctr))) .001)
-	     (dequal (1+ ctr) len))))
-  (or (equal? v0 v1)
-      (and (vct? v0)
-	   (vct? v1)
-	   (let ((len (vct-length v0)))
-	     (and (= len (vct-length v1))
-		  (dequal 0 len))))))
+  (<= (vct-peak (vct-subtract! (vct-copy v0) v1)) .001))
 
 (define (vvequal v0 v1)
-  (let ((v (vct-subtract! (vct-copy v0) v1)))
-    (if (> (vct-peak v) .00002)
-	(begin
-	  (snd-display "vv: ~A" (vct-peak v))
-	  #f)
-	#t)))
+  (<= (vct-peak (vct-subtract! (vct-copy v0) v1)) .00002))
 
 (define ran-state (seed->random-state (current-time)))
 (define my-random
@@ -4014,6 +3999,50 @@ EDITS: 5
 	      (snd-display ";multi-tree 7: ~A" (display-edits ind 0 13 #f)))
 	  (close-sound ind)))
 
+      (let ((ind (new-sound "test.snd")))
+	(map-channel (lambda (y) 1.0) 0 100)
+	(do ((i 0 (1+ i)))
+	    ((= i 10))
+	  (scale-channel 0.75 (* i 10) 10))
+	(ptree-channel (lambda (y data forward)
+			 (declare (y real) (data vct) (forward boolean))
+			 (* y (vct-ref data 0)))
+		       0 (frames) ind 0 #f #f
+		       (lambda (pos dur)
+			 (vct 0.5)))
+	(ptree-channel (lambda (y data forward)
+			 (declare (y real) (data vct) (forward boolean))
+			 (* y (vct-ref data 0)))
+		       20 45 ind 0 #f #f
+		       (lambda (pos dur)
+			 (vct 0.25)))
+	(let ((data (channel->vct))
+	      (orig (make-vct 100 1.0)))
+	  (vct-scale! orig 0.75) ; scale-channel
+	  (vct-scale! orig 0.5)  ; ptree-channel
+	  (do ((i 20 (1+ i)))
+	      ((= i 65))
+	    (vct-set! orig i (* (vct-ref orig i) .25)))
+	  (if (not (vvequal orig data))
+	      (snd-display ";p2 pos test data: ~A" data))
+	  (if (not (string=? (display-edits ind 0 13 #f) "
+ (ptree[1] 20 45) ; ptree 1 20 45 [13:12]:
+   (at 0, cp->sounds[1][0:9, 1.000000, loc: 0, pos: 0, scl: 0.750000]) [buf: 100] 
+   (at 10, cp->sounds[1][10:19, 1.000000, loc: 0, pos: 10, scl: 0.750000]) [buf: 100] 
+   (at 20, cp->sounds[1][20:29, 1.000000, loc2: 1, pos2: 0, scl2: 1.000000, loc: 0, pos: 20, scl: 0.750000]) [buf: 100] 
+   (at 30, cp->sounds[1][30:39, 1.000000, loc2: 1, pos2: 10, scl2: 1.000000, loc: 0, pos: 30, scl: 0.750000]) [buf: 100] 
+   (at 40, cp->sounds[1][40:49, 1.000000, loc2: 1, pos2: 20, scl2: 1.000000, loc: 0, pos: 40, scl: 0.750000]) [buf: 100] 
+   (at 50, cp->sounds[1][50:59, 1.000000, loc2: 1, pos2: 30, scl2: 1.000000, loc: 0, pos: 50, scl: 0.750000]) [buf: 100] 
+   (at 60, cp->sounds[1][60:64, 1.000000, loc2: 1, pos2: 40, scl2: 1.000000, loc: 0, pos: 60, scl: 0.750000]) [buf: 100] 
+   (at 65, cp->sounds[1][65:69, 1.000000, loc: 0, pos: 65, scl: 0.750000]) [buf: 100] 
+   (at 70, cp->sounds[1][70:79, 1.000000, loc: 0, pos: 70, scl: 0.750000]) [buf: 100] 
+   (at 80, cp->sounds[1][80:89, 1.000000, loc: 0, pos: 80, scl: 0.750000]) [buf: 100] 
+   (at 90, cp->sounds[1][90:99, 1.000000, loc: 0, pos: 90, scl: 0.750000]) [buf: 100] 
+   (at 100, end_mark)
+"))
+	      (snd-display ";p2 pos multi: ~A" (display-edits ind 0 13 #f)))
+	  (close-sound ind)))
+
       (let ((ind (new-sound "test.snd"))
 	    (map-data #f))
 	
@@ -5826,19 +5855,29 @@ EDITS: 5
 	(define (ramp-to-1) (ramp-channel 0.0 1.0))
 	(define (cramp-to-1 dat) (vct-multiply! dat rto1-data))
 	(define (scale-by-half) (scale-channel 0.5))
-	(define (cscale-by-half dat) (vct-scale! dat 0.5))
+	(define (cscale-by-half dat) (vct-scale! dat 0.5000))
+	(define (scale-by-two) (scale-channel 2.0 30 40))
+	(define (cscale-by-two dat) (do ((i 30 (1+ i))) ((= i 70)) (vct-set! dat i (* (vct-ref dat i) 2.0))))
 	(define (xramp-to-1) (xramp-channel 0.0 1.0 32.0))
 	(define (cxramp-to-1 dat) (vct-multiply! dat xto1-data))
 	(define (scale-mid) (scale-channel 0.125 30 30))
 	(define (cscale-mid dat) (do ((i 30 (1+ i))) ((= i 60)) (vct-set! dat i (* (vct-ref dat i) 0.125))))
 	(define (on-air) (scale-channel 0.0 10 30))
 	(define (con-air dat) (do ((i 10 (1+ i))) ((= i 40)) (vct-set! dat i 0.0)))
-	(define (ptree) (ptree-channel (lambda (y) (* y 0.75))))
-	(define (cptree dat) (vct-scale! dat 0.75))
+	(define (ptree) (ptree-channel (lambda (y) (* y 0.75)) 20 20))
+	(define (cptree dat) (do ((i 20 (1+ i))) ((= i 40)) (vct-set! dat i (* (vct-ref dat i) .75))))
 	(define (ptreec) (cosine-channel-via-ptree))
 	(define (cptreec dat) (vct-multiply! dat cos-data))
 	(define (xen) (xen-channel (lambda (y data forward) (* y (car data))) 0 (frames) ind 0 #f #f (lambda (p d) (list 0.25))))
 	(define (cxen dat) (vct-scale! dat 0.25))
+	(define (ptreec1)
+	  (ptree-channel (lambda (y data forward)
+			   (declare (y real) (data vct) (forward boolean))
+			   (* y (vct-ref data 0)))
+			 10 50 ind 0 #f #f
+			 (lambda (pos dur)
+			   (vct 0.625))))
+	(define (cptreec1 dat) (do ((i 10 (1+ i))) ((= i 60)) (vct-set! dat i (* (vct-ref dat i) 0.625))))
 	
 	(let ((xe (make-env '(0 0 1 1) :end 100 :base 32.0)))
 	  (do ((i 0 (1+ i))
@@ -5866,11 +5905,9 @@ EDITS: 5
 	   (func)
 	   (check data)
 	   (if (not (vvequal data (channel->vct)))
-	       (snd-display ";1 case: ~A ~A" (procedure-name func) (channel->vct)))
-	   (if (not (= (cadr (car (edit-tree))) 1))
-	       (snd-display ";~A: ~A" (procedure-name func) (cadr (car (edit-tree))))))
-	 (list ramp-to-1 xramp-to-1 scale-by-half scale-mid on-air ptree ptreec xen)
-	 (list cramp-to-1 cxramp-to-1 cscale-by-half cscale-mid con-air cptree cptreec cxen))
+	       (snd-display ";1 case: ~A ~A" (procedure-name func) (channel->vct))))
+	 (list scale-by-two ramp-to-1 xramp-to-1 scale-by-half scale-mid on-air ptree ptreec ptreec1 xen)
+	 (list cscale-by-two cramp-to-1 cxramp-to-1 cscale-by-half cscale-mid con-air cptree cptreec cptreec1 cxen))
 	
 	;; 2 case
 	(for-each
@@ -5885,12 +5922,11 @@ EDITS: 5
 	      (func1)
 	      (check1 data)
 	      (if (not (vvequal data (channel->vct)))
-		  (snd-display ";2 case: ~A(~A): ~A" (procedure-name func1) (procedure-name func) (channel->vct)))
-	      )
-	    (list ramp-to-1 xramp-to-1 scale-by-half scale-mid on-air ptree ptreec xen)
-	    (list cramp-to-1 cxramp-to-1 cscale-by-half cscale-mid con-air cptree cptreec cxen)))
-	 (list ramp-to-1 xramp-to-1 scale-by-half scale-mid on-air ptree ptreec xen)
-	 (list cramp-to-1 cxramp-to-1 cscale-by-half cscale-mid con-air cptree cptreec cxen))
+		  (snd-display ";2 case: ~A(~A): ~A" (procedure-name func1) (procedure-name func) (channel->vct))))
+	    (list scale-by-two ramp-to-1 xramp-to-1 scale-by-half scale-mid on-air ptree ptreec ptreec1 xen)
+	    (list cscale-by-two cramp-to-1 cxramp-to-1 cscale-by-half cscale-mid con-air cptree cptreec cptreec1 cxen)))
+	 (list scale-by-two ramp-to-1 xramp-to-1 scale-by-half scale-mid on-air ptree ptreec ptreec1 xen)
+	 (list cscale-by-two cramp-to-1 cxramp-to-1 cscale-by-half cscale-mid con-air cptree cptreec cptreec1 cxen))
 	
 	;; 3 case
 	(for-each
@@ -5909,17 +5945,16 @@ EDITS: 5
 		 (func2)
 		 (check2 data)
 		 (if (not (vvequal data (channel->vct)))
-		     (snd-display ";3 case: ~A(~A(~A)): ~A" (procedure-name func2) (procedure-name func1) (procedure-name func) (channel->vct)))
-		 )
-	       (list ramp-to-1 xramp-to-1 scale-by-half scale-mid on-air ptree ptreec xen)
-	       (list cramp-to-1 cxramp-to-1 cscale-by-half cscale-mid con-air cptree cptreec cxen)))
-	    (list ramp-to-1 xramp-to-1 scale-by-half scale-mid on-air ptree ptreec xen)
-	    (list cramp-to-1 cxramp-to-1 cscale-by-half cscale-mid con-air cptree cptreec cxen)))
-	 (list ramp-to-1 xramp-to-1 scale-by-half scale-mid on-air ptree ptreec xen)
-	 (list cramp-to-1 cxramp-to-1 cscale-by-half cscale-mid con-air cptree cptreec cxen))
+		     (snd-display ";3 case: ~A(~A(~A)): ~A" (procedure-name func2) (procedure-name func1) (procedure-name func) (channel->vct))))
+	       (list scale-by-two ramp-to-1 xramp-to-1 scale-by-half scale-mid on-air ptree ptreec ptreec1 xen)
+	       (list cscale-by-two cramp-to-1 cxramp-to-1 cscale-by-half cscale-mid con-air cptree cptreec cptreec1 cxen)))
+	    (list scale-by-two ramp-to-1 xramp-to-1 scale-by-half scale-mid on-air ptree ptreec ptreec1 xen)
+	    (list cscale-by-two cramp-to-1 cxramp-to-1 cscale-by-half cscale-mid con-air cptree cptreec cptreec1 cxen)))
+	 (list scale-by-two ramp-to-1 xramp-to-1 scale-by-half scale-mid on-air ptree ptreec ptreec1 xen)
+	 (list cscale-by-two cramp-to-1 cxramp-to-1 cscale-by-half cscale-mid con-air cptree cptreec cptreec1 cxen))
 	
 	(if all-args
-	    (begin 
+	    (begin
 	      ;; 4 case
 	      (for-each
 	       (lambda (func check)
@@ -5943,16 +5978,15 @@ EDITS: 5
 			  (if (not (vvequal data (channel->vct)))
 			      (snd-display ";4 case: ~A(~A(~A(~A))): ~A" 
 					   (procedure-name func3) (procedure-name func2) (procedure-name func1) (procedure-name func) 
-					   (channel->vct)))
-			  )
-			(list ramp-to-1 xramp-to-1 scale-by-half scale-mid on-air ptree ptreec xen)
-			(list cramp-to-1 cxramp-to-1 cscale-by-half cscale-mid con-air cptree cptreec cxen)))
-		     (list ramp-to-1 xramp-to-1 scale-by-half scale-mid on-air ptree ptreec xen)
-		     (list cramp-to-1 cxramp-to-1 cscale-by-half cscale-mid con-air cptree cptreec cxen)))
-		  (list ramp-to-1 xramp-to-1 scale-by-half scale-mid on-air ptree ptreec xen)
-		  (list cramp-to-1 cxramp-to-1 cscale-by-half cscale-mid con-air cptree cptreec cxen)))
-	       (list ramp-to-1 xramp-to-1 scale-by-half scale-mid on-air ptree ptreec xen)
-	       (list cramp-to-1 cxramp-to-1 cscale-by-half cscale-mid con-air cptree cptreec cxen))
+					   (channel->vct))))
+			(list scale-by-two ramp-to-1 xramp-to-1 scale-by-half scale-mid on-air ptree ptreec ptreec1 xen)
+			(list cscale-by-two cramp-to-1 cxramp-to-1 cscale-by-half cscale-mid con-air cptree cptreec cptreec1 cxen)))
+		     (list scale-by-two ramp-to-1 xramp-to-1 scale-by-half scale-mid on-air ptree ptreec ptreec1 xen)
+		     (list cscale-by-two cramp-to-1 cxramp-to-1 cscale-by-half cscale-mid con-air cptree cptreec cptreec1 cxen)))
+		  (list scale-by-two ramp-to-1 xramp-to-1 scale-by-half scale-mid on-air ptree ptreec ptreec1 xen)
+		  (list cscale-by-two cramp-to-1 cxramp-to-1 cscale-by-half cscale-mid con-air cptree cptreec cptreec1 cxen)))
+	       (list scale-by-two ramp-to-1 xramp-to-1 scale-by-half scale-mid on-air ptree ptreec ptreec1 xen)
+	       (list cscale-by-two cramp-to-1 cxramp-to-1 cscale-by-half cscale-mid con-air cptree cptreec cptreec1 cxen))
 	      
 	      ;; 5 case
 	      (for-each
@@ -5981,20 +6015,18 @@ EDITS: 5
 			     (if (not (vvequal data (channel->vct)))
 				 (snd-display ";5 case: ~A(~A(~A(~A(~A)))): ~A" 
 					      (procedure-name func4) (procedure-name func3) (procedure-name func2) (procedure-name func1) (procedure-name func) 
-					      (channel->vct)))
-			     )
-			   (list ramp-to-1 xramp-to-1 scale-by-half scale-mid on-air ptree ptreec xen)
-			   (list cramp-to-1 cxramp-to-1 cscale-by-half cscale-mid con-air cptree cptreec cxen)))
-			(list ramp-to-1 xramp-to-1 scale-by-half scale-mid on-air ptree ptreec xen)
-			(list cramp-to-1 cxramp-to-1 cscale-by-half cscale-mid con-air cptree cptreec cxen)))
-		     (list ramp-to-1 xramp-to-1 scale-by-half scale-mid on-air ptree ptreec)
-		     (list cramp-to-1 cxramp-to-1 cscale-by-half cscale-mid con-air cptree cptreec)))
-		  (list ramp-to-1 xramp-to-1 scale-by-half scale-mid on-air ptree ptreec)
-		  (list cramp-to-1 cxramp-to-1 cscale-by-half cscale-mid con-air cptree cptreec)))
-	       (list ramp-to-1 xramp-to-1 scale-by-half)
-	       (list cramp-to-1 cxramp-to-1 cscale-by-half))
+					      (channel->vct))))
+			   (list scale-by-two ramp-to-1 xramp-to-1 scale-by-half scale-mid on-air ptree ptreec ptreec1 xen)
+			   (list cscale-by-two cramp-to-1 cxramp-to-1 cscale-by-half cscale-mid con-air cptree cptreec cptreec1 cxen)))
+			(list scale-by-two ramp-to-1 xramp-to-1 scale-by-half scale-mid on-air ptree ptreec ptreec1 xen)
+			(list cscale-by-two cramp-to-1 cxramp-to-1 cscale-by-half cscale-mid con-air cptree cptreec cptreec1 cxen)))
+		     (list scale-by-two ramp-to-1 xramp-to-1 scale-by-half scale-mid on-air ptree ptreec ptreec1 xen)
+		     (list cscale-by-two cramp-to-1 cxramp-to-1 cscale-by-half cscale-mid con-air cptree cptreec cptreec1 cxen)))
+		  (list scale-by-two ramp-to-1 xramp-to-1 scale-by-half scale-mid on-air ptree ptreec ptreec1)
+		  (list cscale-by-two cramp-to-1 cxramp-to-1 cscale-by-half cscale-mid con-air cptree cptreec cptreec1)))
+	       (list scale-by-two ramp-to-1 xramp-to-1 scale-by-half scale-mid on-air ptree ptreec ptreec1)
+	       (list cscale-by-two cramp-to-1 cxramp-to-1 cscale-by-half cscale-mid con-air cptree cptreec cptreec1))
 	      ))
-	    
 	(close-sound ind))
 	
       (set! (optimization) old-opt-val)
@@ -18659,6 +18691,24 @@ EDITS: 5
 	(ptree-channel (lambda (y) (* y 0.5)))
 	(zigzag-check "pr2x" ind 0)
 	(undo 4)
+	(xramp-channel 0.0 1.0 32)
+	(xramp-channel 0.0 1.0 32)
+	(ptree-channel (lambda (y) (* y 0.5)))
+	(zigzag-check "px2" ind 0)
+	(undo 3)
+	(ptree-channel (lambda (y) (* y 0.5)))
+	(xramp-channel 0.0 1.0 32)
+	(ramp-channel 0.0 1.0)
+	(zigzag-check "rxp" ind 0)
+	(undo 2)
+	(ramp-channel 0.0 1.0)
+	(xramp-channel 0.0 1.0 32)
+	(zigzag-check "xrp" ind 0)
+	(undo 2)
+	(xramp-channel 0.0 1.0 32)
+	(ptree-channel (lambda (y) (* y 0.5)))
+	(zigzag-check "pxp" ind 0)
+	(undo 3)
 
 	;; ramp[n]-ptree[c][zero] or xen checks
 	(revert-sound ind)
@@ -34190,6 +34240,7 @@ EDITS: 2
 (mus-sound-prune)
 (close-output-port optimizer-log)
 ;;;(mus-sound-report-cache "hiho.tmp")
+(gc)
 (mem-report)
 (system "fgrep -H -n 'snd-run' memlog >> optimizer.log")
 

@@ -832,8 +832,8 @@ void amp_env_ptree(chan_info *cp, void *pt, int pos, XEN init_func, int is_xen)
 	}
       else
 	{
-	  if (vlo) FREE(vlo);
-	  if (vhi) FREE(vhi);
+	  if (vlo) c_free_vct(vlo);
+	  if (vhi) c_free_vct(vhi);
 	}
       new_ep->fmin = fmin;
       new_ep->fmax = fmax;
@@ -952,8 +952,8 @@ void amp_env_ptree_selection(chan_info *cp, void *pt, off_t beg, off_t num, int 
 	}
       else
 	{
-	  if (vlo) FREE(vlo);
-	  if (vhi) FREE(vhi);
+	  if (vlo) c_free_vct(vlo);
+	  if (vhi) c_free_vct(vhi);
 	}
       new_ep->fmin = fmin;
       new_ep->fmax = fmax;

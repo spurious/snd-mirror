@@ -2143,13 +2143,14 @@ Reverb-feedback sets the scaler on the feedback.\n\
 							 tip 
 							 overrideShellWidgetClass 
 							 (cadr (main-widgets)) 
-							 '()))
+							 (list XmNallowShellResize #t)))
 				    (set! tooltip-label
 					  (XtCreateManagedWidget 
 					   tip
 					   xmLabelWidgetClass 
 					   tooltip-shell
-					   (list XmNbackground (highlight-color)))))
+					   (list XmNrecomputeSize #t
+					         XmNbackground (highlight-color)))))
 				  (change-label tooltip-label tip))
 			      (let ((loc (XtTranslateCoords widget (.x ev) (.y ev))))
 				(XtVaSetValues tooltip-shell (list XmNx (car loc) XmNy (cadr loc))))
@@ -2163,7 +2164,6 @@ Reverb-feedback sets the scaler on the feedback.\n\
     
     (XtAddEventHandler widget EnterWindowMask #f (lambda (w c ev flag) (start-tooltip ev)))
     (XtAddEventHandler widget LeaveWindowMask #f (lambda (w c ev flag) (stop-tooltip)))))
-
 
 (define (menu-option name)
   "(menu-option name) finds the widget associated with a given menu item name -- (menu-option \"Print\") for example)"

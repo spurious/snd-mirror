@@ -1899,7 +1899,7 @@ static int ptreeable_op(int typ)
     case ED_RAMP2_PTREE: case ED_RAMP2_PTREE_ZERO: 
     case ED_RAMP3_PTREE: case ED_RAMP3_PTREE_ZERO:
     case ED_PTREE_RAMP2: case ED_PTREE_RAMP3: case ED_PTREE_XRAMP: case ED_XRAMP_PTREE: case ED_XRAMP_PTREE_ZERO:
-    case ED_RAMP2_PTREE_RAMP: case ED_RAMP_PTREE_RAMP2: case ED_PTREE_RAMP_PTREE_RAMP:
+    case ED_RAMP2_PTREE_RAMP: case ED_RAMP_PTREE_RAMP2: case ED_RAMP_PTREE_RAMP:
       return(TRUE);
       break;
     }
@@ -8025,7 +8025,7 @@ void redo_edit_with_sync(chan_info *cp, int count)
 
 static XEN g_display_edits(XEN snd, XEN chn, XEN edpos, XEN with_source)
 {
-  #define H_display_edits "(" S_display_edits " &optional snd chn edpos) returns the current edit tree state"
+  #define H_display_edits "(" S_display_edits " &optional snd chn edpos with-source) returns the current edit tree state"
   FILE *tmp = NULL;
   char *buf, *name;
   chan_info *cp;
@@ -9517,13 +9517,10 @@ append the rest?
  *  this is implemented via xen-channel in extsnd.html (does that code work for sections?)
  */
 
-/* these also seem reasonable...
-
+/* 
       ramp4, ramp5, ramp6 (these require rmp beg/end in fragment, cur/incr in snd_fd)
       same on ptree[c][zero] or vice versa
       ptree3?
       if xramp3 fields, xramp2_ramp xramp_ramp_xramp xramp_ramp2
-
-      test ptree2 cases for closure and position
-	           src? reverse? mix? filter?
+      src? reverse? mix? filter?
 */

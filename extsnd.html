@@ -7523,57 +7523,42 @@ input data. <i>sgn</i> is 1 for an FFT, -1 for an inverse FFT; (default 1).
 
 <p>Other related variables and functions:</p>
 <table cellpadding=0 celspacing=10 border=0>
-<tr><td width=200><a href="#sndffting">transform-graph?</a></td><td><a href="#showfftpeaks">show-transform-peaks</a></td><td><a href="#sndtransformsample">transform-sample</a></td></tr>
-<tr><td><a href="#fftbeta">fft-window-beta</a></td><td><a href="#lshowselectiontransform">show-selection-transform</a></td><td><a href="#sndtransformsamples">transform-samples</a></td></tr>
-<tr><td><a href="#ffthook">transform-hook</a></td><td><a href="#spectrocutoff">spectro-cutoff</a></td><td><a href="#transformsamples2vct">transform-samples-&gt;vct</a></td></tr>
-<tr><td><a href="#fftlogfrequency">fft-log-frequency</a></td><td><a href="#spectrohop">spectro-hop</a></td><td><a href="#transformgraphsize">transform-samples-size</a></td></tr>
-<tr><td><a href="#fftlogmagnitude">fft-log-magnitude</a></td><td><a href="#spectrostart">spectro-start</a></td><td><a href="#ltransformtype">transform-type</a></td></tr>
-<tr><td><a href="#lfftsize">transform-size</a></td><td><a href="#spectroxangle">spectro-x-angle</a></td><td><a href="#sndupdatefft">update-transform-graph</a></td></tr>
-<tr><td><a href="#lfftstyle">transform-graph-type</a></td><td><a href="#spectroxscale">spectro-x-scale</a></td><td><a href="#normalizefft">transform-normalization</a></td></tr>
-<tr><td><a href="#lfftwindow">fft-window</a></td><td><a href="#spectroyangle">spectro-y-angle</a></td><td><a href="#zeropad">zero-pad</a></td></tr>
-<tr><td><a href="#maxfftpeaks">max-transform-peaks</a></td><td><a href="#spectroyscale">spectro-y-scale</a></td><td><a href="#wavelettype">wavelet-type</a></td></tr>
-<tr><td><a href="#mindb">min-dB</a></td><td><a href="#spectrozangle">spectro-z-angle</a></td><td><a href="#spectrozscale">spectro-z-scale</a></td></tr>
+<tr><td width=200><a href="#sndffting"><small>transform-graph?</small></a></td><td width=200><a href="#showfftpeaks"><small>show-transform-peaks</small></a></td><td><a href="#sndtransformsample"><small>transform-sample</small></a></td></tr>
+<tr><td><a href="#fftbeta"><small>fft-window-beta</small></a></td><td><a href="#lshowselectiontransform"><small>show-selection-transform</small></a></td><td><a href="#sndtransformsamples"><small>transform-samples</small></a></td></tr>
+<tr><td><a href="#ffthook"><small>transform-hook</small></a></td><td><a href="#spectrocutoff"><small>spectro-cutoff</small></a></td><td><a href="#transformsamples2vct"><small>transform-samples-&gt;vct</small></a></td></tr>
+<tr><td><a href="#fftlogfrequency"><small>fft-log-frequency</small></a></td><td><a href="#spectrohop"><small>spectro-hop</small></a></td><td><a href="#transformgraphsize"><small>transform-samples-size</small></a></td></tr>
+<tr><td><a href="#fftlogmagnitude"><small>fft-log-magnitude</small></a></td><td><a href="#spectrostart"><small>spectro-start</small></a></td><td><a href="#ltransformtype"><small>transform-type</small></a></td></tr>
+<tr><td><a href="#lfftsize"><small>transform-size</small></a></td><td><a href="#spectroxangle"><small>spectro-x-angle</small></a></td><td><a href="#sndupdatefft"><small>update-transform-graph</small></a></td></tr>
+<tr><td><a href="#lfftstyle"><small>transform-graph-type</small></a></td><td><a href="#spectroxscale"><small>spectro-x-scale</small></a></td><td><a href="#normalizefft"><small>transform-normalization</small></a></td></tr>
+<tr><td><a href="#lfftwindow"><small>fft-window</small></a></td><td><a href="#spectroyangle"><small>spectro-y-angle</small></a></td><td><a href="#zeropad"><small>zero-pad</small></a></td></tr>
+<tr><td><a href="#maxfftpeaks"><small>max-transform-peaks</small></a></td><td><a href="#spectroyscale"><small>spectro-y-scale</small></a></td><td><a href="#wavelettype"><small>wavelet-type</small></a></td></tr>
+<tr><td><a href="#mindb"><small>min-dB</small></a></td><td><a href="#spectrozangle"><small>spectro-z-angle</small></a></td><td><a href="#spectrozscale"><small>spectro-z-scale</small></a></td></tr>
 </table>
 
-<!-- TODO: fft table
-<p>And fft-based effects/editing:
+<p>And some of the fft-based effects/editing functions:
 </p>
-<pre>
-    (list "fft-edit" "sndscm.html#exfftedit" "examp.scm" 715 "fft-edit")
-    (list "fft-env-edit" "sndscm.html#exfftenvedit" "examp.scm" 851 "fft-env-edit")
-    (list "fft-squelch" "sndscm.html#exfftsquelch" "examp.scm" 744 "fft-squelch")
-    (list "superimpose-ffts" "sndscm.html#exsuperimposeffts" "examp.scm" 384 "superimpose-ffts")
-  <li><a href="#rubberdoc">rubber.scm: rubber-sound</a>
+<pre><small><blockquote>
+CLM fft function: <a href="clm.html#fft">mus-fft</a>
+CLM spectrum: <a href="clm.html#spectrum">spectrum</a>
+Snd spectrum: <a href="#sndspectrum">snd-spectrum</a>
+Cross Correlation: <a href="sndscm.html#excorrelate">correlate</a>
+FFT window: <a href="clm.html#make-fft-window">make-fft-window</a>
+Dolph-Chebyshev window in Scheme: <a href="sndscm.html#exdolph">dolph</a>
+Hartley transform in Scheme: <a href="sndscm.html#exdht">dht</a>
 
-    (list "phase-vocoder" "clm.html#phase-vocoder" "clm2xen.c" 4413 "g_phase_vocoder")
-<A NAME="pvocdoc"></a><span class=box><h2>pvoc.scm</h2></span>
+fft-based filter: <a href="sndscm.html#exfftedit">fft-edit</a>, <a href="sndscm.html#exfftenvedit">fft-env-edit</a>, <a href="sndscm.html#exfftenvinterp">fft-env-interp</a>, <a href="sndscm.html#exfftsquelch">fft-squelch</a>
+phase-vocoder: <a href="clm.html#phase-vocoder">phase-vocoder</a>. <a href="sndscm.html#pvocdoc">pvoc</a>
+transposition via fft: <a href="sndscm.html#exdownoct">down-oct</a>
+phase rotation via fft: <a href="sndscm.html#zerophase">zero-phase, rotate-phase</a>
+duration change via autocorrelation: <a href="sndscm.html#rubberdoc">rubber-sound</a>
+smoothing via fft: <a href="sndscm.html#exfftsmoother">fft-smoother</a>
+cross-synthesis: <a href="sndscm.html#excrosssynthesis">cross-synthesis</a>
+voiced-&gt;unvoiced effect: <a href="sndscm.html#exvoiced2unvoiced">voiced-&gt;unvoiced</a>
 
-  <em class=def><A NAME="exdolph">dolph</a></em> n gamma
-  <em class=def><A NAME="exdht">dht</a></em> data
-  <em class=def><A NAME="exdownoct">down-oct</a></em>
-  <em class=def><A NAME="zerophase">zero-phase, rotate-phase</a></em>
-
-  <em class=def><A NAME="excorrelate">correlate</a></em> snd chn y0 y1
-  <em class=def><a name="exsuperimposeffts">superimpose-ffts</a></em> snd chn y0 y1
-  <em class=def><a name="exfftedit">fft-edit</a></em> low-freq high-freq
-  <em class=def><a name="exfftenvedit">fft-env-edit</a></em> env
-  <em class=def><A NAME="exfftenvinterp">fft-env-interp</a></em> env1 env2 interp
-  <em class=def><a name="exfftsquelch">fft-squelch</a></em> squelch
-  <em class=def><a name="exsquelchvowels">squelch-vowels</a></em>
-  <em class=def><A NAME="exfftsmoother">fft-smoother</a></em> cutoff start samps snd chn
-
-  <em class=def><A NAME="exshowinputfft">show-input-fft</a></em> &amp;optional (in-sys 0)
-  <em class=def><A NAME="exshowdraggableinputfft">show-draggable-input-fft</a></em> &amp;optional (in-sys 0)
-
-  <em class=def><a name="startwaterfall">start-waterfall</a></em> &amp;optional (scl 1.0) (pc-spectrum 0.2) (fft-size 512)
-  <em class=def><a name="excrosssynthesis">cross-synthesis</a></em> cross-snd amp fftsize radius
-  <em class=def><a name="exvoiced2unvoiced">voiced-&gt;unvoiced</a></em> amp fftsize r tempo
-
-clm.html:  <a name="fft"><em class=def>fft</em></a> <i>rdat idat fftsize</i> &am
-grfsnd.html:<tr><td><a href="clm.html#fft">mus-fft</a></td><td>(rl im <i>n sign</i>)</td><td>fft of rl and im (sign = -1 for ifft), result in rl</td></tr>
-<tr><td><a href="clm.html#make-fft-window">make-fft-window</a></td colspan=2><td>(type size beta)</td></tr>
-</pre>
--->
+Superimpose ffts: <a href="sndscm.html#exsuperimposeffts">superimpose-ffts</a>
+Waterfall real-time spectrograph: <a href="sndscm.html#startwaterfall">start-waterfall</a>
+Simple rt spectrum: <a href="sndscm.html#exshowinputfft">show-input-fft</a>, <a href="sndscm.html#exshowdraggableinputfft">show-draggable-input-fft</a>
+</blockquote></small></pre>
 
 <!-- TODO: effects table
 this is endless and changes daily...
