@@ -5111,10 +5111,14 @@ int mus_audio_read(int line, char *buf, int bytes)
       ioctl(line, FIONREAD, &bytes_available);
       if (bytes_available > 0)
 	{
-	  if ((total+bytes_available) > bytes) bytes_available = bytes-total;
+	  if ((total + bytes_available) > bytes) bytes_available = bytes - total;
 	  bytes_read = read(line, curbuf, bytes_available);
-	  total += bytes_read;
-	  curbuf = (char *)(buf + total);
+	  if (bytes_read > 0)
+	    {
+	      total += bytes_read;
+	      curbuf = (char *)(buf + total);
+	    }
+	  /* else return anyway?? */
 	}
     }
   return(MUS_NO_ERROR);

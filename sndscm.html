@@ -2190,6 +2190,9 @@ and some slightly inconsistent old function names.
   <em class=def><A NAME="showallatoms">show-all-atoms</a></em>
   <em class=def><A NAME="makechanneldropsite">make-channel-drop-site</a></em> snd chn
   <em class=def><A NAME="setchanneldrop">set-channel-drop</a></em> drop snd chn
+  <em class=def><A NAME="showfontname">show-font-name</a></em> font
+  <em class=def><A NAME="showminibufferfont">show-minibuffer-font</a></em>
+
 </pre>
 
 <p>snd-motif.scm has procedures that rely on the Motif module (xm.c).
@@ -2264,6 +2267,9 @@ set the variable <b>with-tooltips</b> to #f to turn it off.
 <b>set-channel-drop</b> changes the channel's graph's drop function to <i>drop</i>, a 
 function of 3 arguments, the dropped filename (a string) and the current sound index and
 channel number.
+<b>show-font-name</b> shows the Snd-related name and the X-related name of each font in a font list (it searches
+for the XA_FULL_NAME associated with an XFontStruct).
+<b>show-minibuffer-font</b> uses that function to show what fonts are associated with the minibuffer.
 </p>
 
 <A NAME="sndtestdoc"></a><span class=box><h2>snd-test.scm and event.scm</h2></span>

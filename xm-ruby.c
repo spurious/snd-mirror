@@ -1118,10 +1118,8 @@
   XEN_NARGIFY_1(gxm_XmStringLength_w, gxm_XmStringLength)
   XEN_NARGIFY_2(gxm_XmStringByteCompare_w, gxm_XmStringByteCompare)
   XEN_NARGIFY_4(gxm_XmScrolledWindowSetAreas_w, gxm_XmScrolledWindowSetAreas)
-  XEN_NARGIFY_4(gxm_XmFontListEntryCreate_r_w, gxm_XmFontListEntryCreate_r)
-  XEN_NARGIFY_3(gxm_XmFontListCreate_r_w, gxm_XmFontListCreate_r)
   XEN_NARGIFY_1(gxm_XmFontListEntryFree_w, gxm_XmFontListEntryFree)
-  XEN_NARGIFY_2(gxm_XmFontListEntryGetFont_w, gxm_XmFontListEntryGetFont)
+  XEN_NARGIFY_1(gxm_XmFontListEntryGetFont_w, gxm_XmFontListEntryGetFont)
   XEN_NARGIFY_1(gxm_XmFontListEntryGetTag_w, gxm_XmFontListEntryGetTag)
   XEN_NARGIFY_2(gxm_XmFontListAppendEntry_w, gxm_XmFontListAppendEntry)
   XEN_NARGIFY_1(gxm_XmFontListNextEntry_w, gxm_XmFontListNextEntry)
@@ -2368,9 +2366,8 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtPeekEvent" XM_POSTFIX, gxm_XtPeekEvent_w, 0, 0, 0, H_XtPeekEvent);
 
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmFontListEntryCreate" XM_POSTFIX, gxm_XmFontListEntryCreate_w, 3, 0, 0, H_XmFontListEntryCreate);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmFontListEntryCreate_r" XM_POSTFIX, gxm_XmFontListEntryCreate_r_w, 4, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmFontListEntryFree" XM_POSTFIX, gxm_XmFontListEntryFree_w, 1, 0, 0, H_XmFontListEntryFree);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmFontListEntryGetFont" XM_POSTFIX, gxm_XmFontListEntryGetFont_w, 2, 0, 0, H_XmFontListEntryGetFont);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmFontListEntryGetFont" XM_POSTFIX, gxm_XmFontListEntryGetFont_w, 1, 0, 0, H_XmFontListEntryGetFont);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmFontListEntryGetTag" XM_POSTFIX, gxm_XmFontListEntryGetTag_w, 1, 0, 0, H_XmFontListEntryGetTag);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmFontListAppendEntry" XM_POSTFIX, gxm_XmFontListAppendEntry_w, 2, 0, 0, H_XmFontListAppendEntry);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmFontListNextEntry" XM_POSTFIX, gxm_XmFontListNextEntry_w, 1, 0, 0, H_XmFontListNextEntry);
@@ -2384,7 +2381,6 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmFontContext?" XM_POSTFIX, XEN_XmFontContext_p_w, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmFontListEntry?" XM_POSTFIX, XEN_XmFontListEntry_p_w, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmFontList?" XM_POSTFIX, XEN_XmFontList_p_w, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmFontListCreate_r" XM_POSTFIX, gxm_XmFontListCreate_r_w, 3, 0, 0, H_XmFontListCreate_r);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmFontListCreate" XM_POSTFIX, gxm_XmFontListCreate_w, 2, 0, 0, H_XmFontListCreate);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmTrackingLocate" XM_POSTFIX, gxm_XmTrackingLocate_w, 3, 0, 0, H_XmTrackingLocate);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmFontListGetNextFont" XM_POSTFIX, gxm_XmFontListGetNextFont_w, 1, 0, 0, H_XmFontListGetNextFont);

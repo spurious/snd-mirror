@@ -4,6 +4,8 @@
  */
 
 /* HISTORY: 
+ *   18-Sep:    properties XFontStruct field now returns list of all properties.
+ *              removed XmFontListCreate_r, XmFontListEntryCreate_r
  *   9-Sep:     added Motif WMProtocol convenience macros.
  *   30-Aug:    added add-resource for user-defined extensions to the resources.
  *   29-Aug:    added ten resources accidentally omitted earlier (thanks to Michael Scholz).
@@ -3495,19 +3497,6 @@ static XEN gxm_XmFontListFree(XEN arg1)
   return(XEN_FALSE);
 }
 
-#if MOTIF_2
-#ifndef LESSTIF_VERSION
-static XEN gxm_XmFontListCreate_r(XEN arg1, XEN arg2, XEN arg3)
-{
-  #define H_XmFontListCreate_r "XmFontList XmFontListCreate_r(XFontStruct *font, XmStringCharSet charset, Widget wid)"
-  XEN_ASSERT_TYPE(XEN_XFontStruct_P(arg1), arg1, 1, "XmFontListCreate_r", "XFontStruct*");
-  XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmFontListCreate_r", "XmStringCharSet");
-  XEN_ASSERT_TYPE(XEN_Widget_P(arg3), arg3, 3, "XmFontListCreate_r", "Widget");
-  return(C_TO_XEN_XmFontList(XmFontListCreate_r(XEN_TO_C_XFontStruct(arg1), XEN_TO_C_STRING(arg2), XEN_TO_C_Widget(arg3))));
-}
-#endif
-#endif
-
 static XEN gxm_XmFontListCreate(XEN arg1, XEN arg2)
 {
   #define H_XmFontListCreate "XmFontList XmFontListCreate(XFontStruct * font, XmStringCharSet charset) creates a font list"
@@ -3567,7 +3556,7 @@ static XEN gxm_XmFontListEntryGetTag(XEN arg1)
   return(C_TO_XEN_STRING(XmFontListEntryGetTag(XEN_TO_C_XmFontListEntry(arg1))));
 }
 
-static XEN gxm_XmFontListEntryGetFont(XEN arg1, XEN arg2)
+static XEN gxm_XmFontListEntryGetFont(XEN arg1)
 {
   #define H_XmFontListEntryGetFont "XtPointer XmFontListEntryGetFont(XmFontListEntry entry) \
 retrieves font information from a font list entry -> fontstruct"
@@ -3593,29 +3582,6 @@ static XEN gxm_XmFontListEntryFree(XEN arg1)
   XmFontListEntryFree(&f);
   return(XEN_FALSE);
 }
-
-#if MOTIF_2
-#ifndef LESSTIF_VERSION
-static XEN gxm_XmFontListEntryCreate_r(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
-{
-  XmFontType type;
-  XtPointer gad;
-  XEN_ASSERT_TYPE(XEN_STRING_P(arg1), arg1, 1, "XmFontListEntryCreate_r", "char*");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 2, "XmFontListEntryCreate_r", "XmFontType");
-  XEN_ASSERT_TYPE(XEN_XFontStruct_P(arg3) || XEN_XFontSet_P(arg3), arg3, 3, "XmFontListEntryCreate_r", "XFontSet or XFontStruct");
-  XEN_ASSERT_TYPE(XEN_Widget_P(arg4), arg4, 4, "XmFontListEntryCreate_r", "Widget");
-  type = (XmFontType)XEN_TO_C_INT(arg2);
-  if (type > 1) XEN_WRONG_TYPE_ARG_ERROR("XmFontListEntryCreate_r", 2, arg2, "XmFontType");
-  if (type == XmFONT_IS_FONTSET)
-    gad = (XtPointer)XEN_TO_C_XFontSet(arg3);
-  else gad = (XtPointer)XEN_TO_C_XFontStruct(arg3);
-  return(C_TO_XEN_XmFontListEntry(XmFontListEntryCreate_r(XEN_TO_C_STRING(arg1), 
-							  type,
-							  gad,
-							  XEN_TO_C_Widget(arg4))));
-}
-#endif
-#endif
 
 static XEN gxm_XmFontListEntryCreate(XEN arg1, XEN arg2, XEN arg3)
 {
@@ -18369,13 +18335,8 @@ static void define_procedures(void)
   XM_DEFINE_PROCEDURE(XtPeekEvent, gxm_XtPeekEvent, 0, 0, 0, H_XtPeekEvent);
 
   XM_DEFINE_PROCEDURE(XmFontListEntryCreate, gxm_XmFontListEntryCreate, 3, 0, 0, H_XmFontListEntryCreate);
-#if MOTIF_2
-#ifndef LESSTIF_VERSION
-  XM_DEFINE_PROCEDURE(XmFontListEntryCreate_r, gxm_XmFontListEntryCreate_r, 4, 0, 0, NULL);
-#endif
-#endif
   XM_DEFINE_PROCEDURE(XmFontListEntryFree, gxm_XmFontListEntryFree, 1, 0, 0, H_XmFontListEntryFree);
-  XM_DEFINE_PROCEDURE(XmFontListEntryGetFont, gxm_XmFontListEntryGetFont, 2, 0, 0, H_XmFontListEntryGetFont);
+  XM_DEFINE_PROCEDURE(XmFontListEntryGetFont, gxm_XmFontListEntryGetFont, 1, 0, 0, H_XmFontListEntryGetFont);
   XM_DEFINE_PROCEDURE(XmFontListEntryGetTag, gxm_XmFontListEntryGetTag, 1, 0, 0, H_XmFontListEntryGetTag);
   XM_DEFINE_PROCEDURE(XmFontListAppendEntry, gxm_XmFontListAppendEntry, 2, 0, 0, H_XmFontListAppendEntry);
   XM_DEFINE_PROCEDURE(XmFontListNextEntry, gxm_XmFontListNextEntry, 1, 0, 0, H_XmFontListNextEntry);
@@ -18389,11 +18350,6 @@ static void define_procedures(void)
   XM_DEFINE_PROCEDURE(XmFontContext?, XEN_XmFontContext_p, 1, 0, 0, NULL);
   XM_DEFINE_PROCEDURE(XmFontListEntry?, XEN_XmFontListEntry_p, 1, 0, 0, NULL);
   XM_DEFINE_PROCEDURE(XmFontList?, XEN_XmFontList_p, 1, 0, 0, NULL);
-#if MOTIF_2
-#ifndef LESSTIF_VERSION
-  XM_DEFINE_PROCEDURE(XmFontListCreate_r, gxm_XmFontListCreate_r, 3, 0, 0, H_XmFontListCreate_r);
-#endif
-#endif
   XM_DEFINE_PROCEDURE(XmFontListCreate, gxm_XmFontListCreate, 2, 0, 0, H_XmFontListCreate);
   XM_DEFINE_PROCEDURE(XmTrackingLocate, gxm_XmTrackingLocate, 3, 0, 0, H_XmTrackingLocate);
   XM_DEFINE_PROCEDURE(XmFontListGetNextFont, gxm_XmFontListGetNextFont, 1, 0, 0, H_XmFontListGetNextFont);
@@ -19402,8 +19358,17 @@ static XEN gxm_width_inc(XEN ptr)
 
 static XEN gxm_properties(XEN ptr)
 {
+  int i, len;
+  XFontStruct *fs;
+  XFontProp *props;
+  XEN lst = XEN_EMPTY_LIST;
   XEN_ASSERT_TYPE(XEN_XFontStruct_P(ptr), ptr, XEN_ONLY_ARG, "properties", "XFontStruct");
-  return(C_TO_XEN_XFontProp((XFontProp *)((XEN_TO_C_XFontStruct(ptr))->properties)));
+  fs = XEN_TO_C_XFontStruct(ptr);
+  len = fs->n_properties;
+  props = fs->properties;
+  for (i = 0; i < len; i++)
+    lst = XEN_CONS(C_TO_XEN_XFontProp(&(props[i])), lst);
+  return(lst);
 }
 
 static XEN gxm_fid(XEN ptr)
@@ -24698,7 +24663,7 @@ static int xm_already_inited = 0;
       XEN_DEFINE_PROCEDURE(S_add_resource, g_add_resource_w, 2, 0, 0, H_add_resource);
       XEN_YES_WE_HAVE("xm");
 #if HAVE_GUILE
-      XEN_EVAL_C_STRING("(define xm-version \"9-Sep-02\")");
+      XEN_EVAL_C_STRING("(define xm-version \"18-Sep-02\")");
 #endif
       xm_already_inited = 1;
     }
