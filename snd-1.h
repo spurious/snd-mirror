@@ -96,6 +96,7 @@ typedef struct snd__fd {
   double incr, curval;
   void *ptree, *ptree1;
   XEN closure, closure1;
+  int protect, protect1;
   double incr2, curval2, incr3, curval3;
   mus_sample_t (*rev_run)(struct snd__fd *sf);
   Float (*rev_runf)(struct snd__fd *sf);
@@ -507,7 +508,7 @@ void exit_from_menu(snd_state *ss);
 void save_options_from_menu(snd_state *ss);
 void save_state_from_menu(snd_state *ss);
 snd_info *new_file_from_menu(snd_state *ss);
-
+void unprotect_callback(int slot);
 void set_graph_style(snd_state *ss, int val);
 void set_show_marks(snd_state *ss, int val);
 void set_show_y_zero(snd_state *ss, int val);
@@ -785,8 +786,9 @@ XEN g_call3_unprotected(XEN proc, XEN arg1, XEN arg2, XEN arg3);
 XEN g_call_any_unprotected(XEN proc, XEN arglist);
 char *procedure_ok(XEN proc, int args, const char *caller, const char *arg_name, int argn);
 int procedure_ok_with_error(XEN proc, int req_args, const char *caller, const char *arg_name, int argn);
-void snd_protect(XEN obj);
+int snd_protect(XEN obj);
 void snd_unprotect(XEN obj);
+void snd_unprotect_at(int loc);
 XEN run_or_hook (XEN hook, XEN args, const char *caller);
 XEN run_and_hook (XEN hook, XEN args, const char *caller);
 XEN run_progn_hook (XEN hook, XEN args, const char *caller);
@@ -1185,7 +1187,6 @@ char *shorter_tempnam(char *dir, char *prefix);
 char *snd_tempnam(snd_state *ss);
 void fill_number(char *fs, char *ps);
 void snd_exit(int val);
-char *kmg (int num);
 char local_decimal_point(void);
 void g_init_utils(void);
 #ifdef DEBUG_MEMORY

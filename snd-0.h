@@ -591,7 +591,7 @@ enum {MINI_OFF, MINI_CURSOR, MINI_FIND, MINI_PROMPT, MINI_REPORT, MINI_USER};
 
 #define with_relative_panes(ss) ss->With_Relative_Panes
 #define set_with_relative_panes(ss, a) ss->With_Relative_Panes = a
-#define DEFAULT_WITH_RELATIVE_PANES FALSE
+#define DEFAULT_WITH_RELATIVE_PANES TRUE
 
 #define with_gl(ss) ss->With_GL
 #define in_set_with_gl(ss, a) ss->With_GL = a
@@ -761,7 +761,7 @@ enum {MINI_OFF, MINI_CURSOR, MINI_FIND, MINI_PROMPT, MINI_REPORT, MINI_USER};
 
 #define graphs_horizontal(ss) ss->Graphs_Horizontal
 #define in_set_graphs_horizontal(ss, a) ss->Graphs_Horizontal = a
-#define DEFAULT_GRAPHS_HORIZONTAL 1
+#define DEFAULT_GRAPHS_HORIZONTAL TRUE
 
 #define mix_tag_width(ss) ss->Mix_Tag_Width
 #define set_mix_tag_width(ss, a) ss->Mix_Tag_Width = a

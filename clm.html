@@ -306,7 +306,11 @@ Lisp functions can occur within the body of the run macro:</p>
 options, but enough to be useful, I hope.  clm-print's syntax is (<i>clm-print</i>
 <i>format-string</i> &amp;rest <i>args</i>). If the first argument is an
 integer, rather than the format string, it is assumed to be a file
-identifier, and the text output is written to that file.</p>
+identifier, and the text output is written to that file.
+In Scheme, clm-print falls back on whatever version of format is loaded,
+so it is much less limited in that regard; it doesn't take an optional
+output file integer however.
+</p>
 
 <p><small>
 <i>Loop</i> is expanded as a macro and anything in

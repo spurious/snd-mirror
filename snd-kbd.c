@@ -800,6 +800,7 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, int with_meta)
   /* strlen can be 0 here if <cr> response to prompt */
   if (sp->prompting)
     {
+      int loc;
       if (snd_strlen(str) > 0)
 	{
 	  if (sp->raw_prompt)
@@ -807,9 +808,9 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, int with_meta)
 	  else proc = snd_catch_any(eval_str_wrapper, str, str);
 	  if (XEN_PROCEDURE_P(sp->prompt_callback))
 	    {
-	      snd_protect(proc);
+	      loc = snd_protect(proc);
 	      XEN_CALL_1(sp->prompt_callback, proc, "prompt callback func");
-	      snd_unprotect(proc);
+	      snd_unprotect_at(loc);
 	    }
 	  free(str);
 	}

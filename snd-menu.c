@@ -583,6 +583,9 @@ static int callb = 0;
 static int make_callback_slot(void)
 {
   int old_callb, i;
+  for (i = 0; i < callb; i++)
+    if (!(XEN_BOUND_P(menu_functions[i])))
+      return(i);
   if (callbacks_size == callb)
     {
       callbacks_size += CALLBACK_INCR;
@@ -604,11 +607,15 @@ static int make_callback_slot(void)
 
 static void add_callback(int slot, XEN callback)
 {
-  if ((XEN_BOUND_P(menu_functions[slot])) && 
-      (XEN_PROCEDURE_P(menu_functions[slot])))
-    snd_unprotect(menu_functions[slot]);
   menu_functions[slot] = callback;
   snd_protect(callback);
+}
+
+void unprotect_callback(int slot)
+{
+  if (XEN_PROCEDURE_P(menu_functions[slot]))
+    snd_unprotect(menu_functions[slot]);
+  menu_functions[slot] = XEN_UNDEFINED;
 }
 
 static XEN gl_add_to_main_menu(XEN label, XEN callback)
@@ -666,6 +673,7 @@ menu is the index returned by add-to-main-menu, func should be a function of no 
       if (err == -1) 
 	return(snd_no_such_menu_error(S_add_to_menu, menu));
       if (XEN_PROCEDURE_P(callback)) add_callback(slot, callback);
+      /* TODO: plug memleak here: menu widget hidden and never re-used (and XtDestroyWidget causes segfaults) */
     }
   else 
     {

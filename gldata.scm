@@ -1759,3 +1759,85 @@
 (CFNC-G "GdkGLConfig* gtk_widget_get_gl_config GtkWidget* widget")
 (CFNC-G "GdkGLContext* gtk_widget_get_gl_context GtkWidget* widget")
 (CFNC-G "GdkGLWindow* gtk_widget_get_gl_window GtkWidget* widget")
+
+
+#!
+;;; TODO: OpenGL 1.4 additions
+	GL_ARB_depth_texture
+	GL_ARB_shadow
+	GL_ARB_texture_env_crossbar
+	GL_ARB_texture_mirror_repeat
+	GL_ARB_window_pos
+	GL_EXT_blend_color
+	GL_EXT_blend_func_separate
+	GL_EXT_blend_logic_op
+	GL_EXT_blend_minmax
+	GL_EXT_blend_subtract
+	GL_EXT_fog_coord
+	GL_EXT_multi_draw_arrays
+	GL_EXT_point_parameters
+	GL_EXT_secondary_color
+	GL_EXT_stencil_wrap
+	GL_SGIS_generate_mipmap
+
+;;; and 1.3:
+   GL_ARB_multisample
+   GL_ARB_multitexture
+   GL_ARB_texture_border_clamp
+   GL_ARB_texture_compression
+   GL_ARB_texture_cube_map
+   GL_ARB_texture_env_add
+   GL_ARB_texture_env_combine
+   GL_ARB_texture_env_dot3
+   GL_ARB_transpose_matrix
+
+;;; and check...
+   glActiveTexture
+   glClientActiveTexture
+   glCompressedTexImage1D
+   glCompressedTexImage2D
+   glCompressedTexImage3D
+   glCompressedTexSubImage1D
+   glCompressedTexSubImage2D
+   glCompressedTexSubImage3D
+   glGetCompressedTexImage
+   glLoadTransposeMatrixd
+   glLoadTransposeMatrixf
+   glMultiTexCoord1d
+   glMultiTexCoord1dv
+   glMultiTexCoord1f
+   glMultiTexCoord1fv
+   glMultiTexCoord1i
+   glMultiTexCoord1iv
+   glMultiTexCoord1s
+   glMultiTexCoord1sv
+   glMultiTexCoord2d
+   glMultiTexCoord2dv
+   glMultiTexCoord2f
+   glMultiTexCoord2fv
+   glMultiTexCoord2i
+   glMultiTexCoord2iv
+   glMultiTexCoord2s
+   glMultiTexCoord2sv
+   glMultiTexCoord3d
+   glMultiTexCoord3dv
+   glMultiTexCoord3f
+   glMultiTexCoord3fv
+   glMultiTexCoord3i
+   glMultiTexCoord3iv
+   glMultiTexCoord3s
+   glMultiTexCoord3sv
+   glMultiTexCoord4d
+   glMultiTexCoord4dv
+   glMultiTexCoord4f
+   glMultiTexCoord4fv
+   glMultiTexCoord4i
+   glMultiTexCoord4iv
+   glMultiTexCoord4s
+   glMultiTexCoord4sv
+   glMultTransposeMatrixd
+   glMultTransposeMatrixf
+   glSampleCoverage
+   glSamplePass
+
+!#

@@ -2767,12 +2767,12 @@ snd_fd *free_snd_fd_almost(snd_fd *sf)
     {
       if ((sf->closure) && (sf->closure != empty_closure) && (XEN_BOUND_P(sf->closure)))
  	{
- 	  snd_unprotect(sf->closure);
+ 	  snd_unprotect_at(sf->protect);
  	  sf->closure = XEN_UNDEFINED;
  	}
       if ((sf->closure1) && (sf->closure1 != empty_closure) && (XEN_BOUND_P(sf->closure1)))
  	{
- 	  snd_unprotect(sf->closure1);
+ 	  snd_unprotect_at(sf->protect1);
  	  sf->closure1 = XEN_UNDEFINED;
  	}
       reader_out_of_data(sf);
@@ -6106,16 +6106,16 @@ static void get_sf_closure(snd_fd *sf)
   XEN proc;
   proc = sf->cp->ptree_inits[READER_PTREE_INDEX(sf)];
   if ((sf->closure) && (sf->closure != empty_closure) && (XEN_BOUND_P(sf->closure)))
-    snd_unprotect(sf->closure);
+    snd_unprotect_at(sf->protect);
   sf->closure = empty_closure;
   if (XEN_PROCEDURE_P(proc))
     {
       sf->closure = XEN_CALL_2(proc,
-					C_TO_XEN_OFF_T(sf->frag_pos + READER_PTREE_POSITION(sf)),
-					C_TO_XEN_OFF_T(READER_PTREE_DUR(sf)),
-					"ptree-channel init func");
+			       C_TO_XEN_OFF_T(sf->frag_pos + READER_PTREE_POSITION(sf)),
+			       C_TO_XEN_OFF_T(READER_PTREE_DUR(sf)),
+			       "ptree-channel init func");
       if (XEN_BOUND_P(sf->closure))
-	snd_protect(sf->closure);
+	sf->protect = snd_protect(sf->closure);
     }
 }
 
@@ -6124,16 +6124,16 @@ static void get_sf_closure1(snd_fd *sf)
   XEN proc;
   proc = sf->cp->ptree_inits[READER_PTREE2_INDEX(sf)];
   if ((sf->closure1) && (sf->closure1 != empty_closure) && (XEN_BOUND_P(sf->closure1)))
-    snd_unprotect(sf->closure1);
+    snd_unprotect_at(sf->protect1);
   sf->closure1 = empty_closure;
   if (XEN_PROCEDURE_P(proc))
     {
       sf->closure1 = XEN_CALL_2(proc,
-					 C_TO_XEN_OFF_T(sf->frag_pos + READER_PTREE2_POSITION(sf)),
-					 C_TO_XEN_OFF_T(READER_PTREE2_DUR(sf)),
-					 "ptree-channel init func");
+				C_TO_XEN_OFF_T(sf->frag_pos + READER_PTREE2_POSITION(sf)),
+				C_TO_XEN_OFF_T(READER_PTREE2_DUR(sf)),
+				"ptree-channel init func");
       if (XEN_BOUND_P(sf->closure1))
-	snd_protect(sf->closure1);
+	sf->protect1 = snd_protect(sf->closure1);
     }
 }
 

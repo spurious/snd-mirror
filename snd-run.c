@@ -40,7 +40,7 @@
  *
  * currently handled, at least partially:
  *
- *   types: float int char string boolean vct snd_fd mus_any vector function [and list constants]
+ *   types: float int char string boolean vct snd_fd mus_any vector function [and list constants] keyword[underway...]
  *
  *   lambda (use 'declare' to set arg types)
  *   call-with-current-continuation call/cc
@@ -65,11 +65,12 @@
  * tests in snd-test.scm, test 22
  *
  * SOMEDAY: split Scheme from Snd/Clm here and do the latter via an FFI of some sort
- * TODO: file->array and array->file, channels? comment? convolve-arrays? delete-mark? fft? file-name?
+ * TODO: file->array and array->file, comment? convolve-arrays? delete-mark? fft? file-name?
  * TODO: left|right-sample? mark-name? mark? mark-sample mark-sync find-mark
  * TODO: optimization? mix/track/region sample readers? region info? selection info? mix info?
  * TODO: samples->vct? samples? access to sound|channel-properties? sound?
  * TODO: in-Hz? make funcs? xcoeffs? ycoeffs? partial->poly etc?
+ * TODO: finish keyword support (aimed at make-funcs using indirection a la format_1, but that leaves gc undecided - (un)protect?)
  *
  * LIMITATIONS: <insert anxious lucubration here about DSP context and so on>
  *      variables can have only one type, the type has to be ascertainable somehow (similarly for vector elements)
@@ -80,7 +81,7 @@
  *      no complex, ratio, bignum
  *      no pointer aliasing (i.e. vct var set to alias another vct var etc -- GC confusion otherwise)
  *      no symbols (could be added if there were any conceivable need)
- *      no apply or eval (we need to know at parse time what we are trying to do)
+ *      no apply or eval (we need to know at parse time what we are trying to do -- actually these might be doable)
  *      no "delay/force", no syntax-case fanciness
  *      no map or for-each (these need lists)
  *
@@ -263,11 +264,11 @@ static XEN symbol_set_value(XEN code, XEN sym, XEN new_val)
 }
 
 
-enum {R_UNSPECIFIED, R_INT, R_FLOAT, R_BOOL, R_CHAR, R_STRING, R_LIST, R_PAIR, R_FUNCTION, R_GOTO, R_VCT, R_READER, R_CLM, 
+enum {R_UNSPECIFIED, R_INT, R_FLOAT, R_BOOL, R_CHAR, R_STRING, R_LIST, R_PAIR, R_KEYWORD, R_FUNCTION, R_GOTO, R_VCT, R_READER, R_CLM, 
       R_FLOAT_VECTOR, R_INT_VECTOR, R_VCT_VECTOR, R_CLM_VECTOR, 
       R_NUMBER, R_CONS, R_VECTOR, R_XEN, R_ANY}; /* last 5 for walker arg checks */
 
-static char *type_names[22] = {"unspecified", "int", "float", "bool", "char", "string", "list", "pair", "function", "continuation", 
+static char *type_names[23] = {"unspecified", "int", "float", "bool", "char", "string", "list", "pair", "keyword", "function", "continuation", 
 			       "vct", "reader", "clm", "float-vector", "int-vector", "vct-vector", "clm-vector",
 			       "number", "cons", "vector", "xen", "any"};
 
@@ -740,29 +741,30 @@ static char *describe_xen_value(xen_value *v, int *ints, Float *dbls)
   if (v == NULL) return(copy_string("null xen_value"));
   switch (v->type)
     {
-    case R_BOOL:    buf = (char *)CALLOC(32, sizeof(char)); mus_snprintf(buf, 32, "i%d(%s)", v->addr, (ints[v->addr] == 0) ? "#f" : "#t"); break;
-    case R_INT:     buf = (char *)CALLOC(32, sizeof(char)); mus_snprintf(buf, 32, INT_PT , v->addr, ints[v->addr]);                        break;
-    case R_CHAR:    buf = (char *)CALLOC(32, sizeof(char)); mus_snprintf(buf, 32, CHR_PT , v->addr, (char)(ints[v->addr]));                break;
-    case R_STRING:  buf = (char *)CALLOC(256, sizeof(char)); mus_snprintf(buf, 256, STR_PT , v->addr, (char *)(ints[v->addr]));            break;
-    case R_FLOAT:   buf = (char *)CALLOC(32, sizeof(char)); mus_snprintf(buf, 32, FLT_PT , v->addr, dbls[v->addr]);                        break;
+    case R_BOOL:    buf = (char *)CALLOC(32, sizeof(char)); mus_snprintf(buf, 32, "i%d(%s)", v->addr, (ints[v->addr] == 0) ? "#f" : "#t");   break;
+    case R_INT:     buf = (char *)CALLOC(32, sizeof(char)); mus_snprintf(buf, 32, INT_PT , v->addr, ints[v->addr]);                          break;
+    case R_CHAR:    buf = (char *)CALLOC(32, sizeof(char)); mus_snprintf(buf, 32, CHR_PT , v->addr, (char)(ints[v->addr]));                  break;
+    case R_STRING:  buf = (char *)CALLOC(256, sizeof(char)); mus_snprintf(buf, 256, STR_PT , v->addr, (char *)(ints[v->addr]));              break;
+    case R_FLOAT:   buf = (char *)CALLOC(32, sizeof(char)); mus_snprintf(buf, 32, FLT_PT , v->addr, dbls[v->addr]);                          break;
+    case R_KEYWORD: buf = (char *)CALLOC(64, sizeof(char)); mus_snprintf(buf, 64, "i%d(%s)" , v->addr, XEN_AS_STRING((XEN)(ints[v->addr]))); break;
     case R_LIST:
     case R_PAIR:
       buf = (char *)CALLOC(512, sizeof(char)); 
       if (ints[v->addr] != 0)
-	mus_snprintf(buf, 512, "l%d%s", v->addr, XEN_AS_STRING((XEN)(ints[v->addr]))); 
+	mus_snprintf(buf, 512, "l%d(%s)", v->addr, XEN_AS_STRING((XEN)(ints[v->addr]))); 
       else sprintf(buf, "non-constant cons");
       break;
     case R_FLOAT_VECTOR:
-    case R_VCT:     buf = vct_to_string((vct *)(ints[v->addr]));                                                                           break;
-    case R_READER:  if (ints[v->addr]) buf = sf_to_string((snd_fd *)(ints[v->addr])); else buf = copy_string("null");                      break;
-    case R_CLM:     if (ints[v->addr]) buf = copy_string(mus_describe((mus_any *)(ints[v->addr])));  else buf = copy_string("null");       break;
-    case R_GOTO:    return(mus_format("continuation: " INT_PT , v->addr, ints[v->addr]));                                                  break;
-    case R_FUNCTION: return(describe_ptree((ptree *)(ints[v->addr])));                                                                     break;
-    case R_INT_VECTOR: return(mus_format("int vector " PTR_PT , v->addr, (int_vct *)(ints[v->addr])));                                     break;
-    case R_VCT_VECTOR: return(mus_format("vct vector " PTR_PT , v->addr, (vct_vct *)(ints[v->addr])));                                     break;
-    case R_CLM_VECTOR: return(mus_format("clm vector " PTR_PT , v->addr, (clm_vct *)(ints[v->addr])));                                     break;
-    case R_UNSPECIFIED: return(copy_string("#<unspecified>"));                                                                             break;
-    default:        buf = (char *)CALLOC(32, sizeof(char)); mus_snprintf(buf, 32, "unknown type: %d", v->type);                            break;
+    case R_VCT:         buf = vct_to_string((vct *)(ints[v->addr]));                                                                         break;
+    case R_READER:      if (ints[v->addr]) buf = sf_to_string((snd_fd *)(ints[v->addr])); else buf = copy_string("null");                    break;
+    case R_CLM:         if (ints[v->addr]) buf = copy_string(mus_describe((mus_any *)(ints[v->addr])));  else buf = copy_string("null");     break;
+    case R_GOTO:        return(mus_format("continuation: " INT_PT , v->addr, ints[v->addr]));                                                break;
+    case R_FUNCTION:    return(describe_ptree((ptree *)(ints[v->addr])));                                                                    break;
+    case R_INT_VECTOR:  return(mus_format("int vector " PTR_PT , v->addr, (int_vct *)(ints[v->addr])));                                      break;
+    case R_VCT_VECTOR:  return(mus_format("vct vector " PTR_PT , v->addr, (vct_vct *)(ints[v->addr])));                                      break;
+    case R_CLM_VECTOR:  return(mus_format("clm vector " PTR_PT , v->addr, (clm_vct *)(ints[v->addr])));                                      break;
+    case R_UNSPECIFIED: return(copy_string("#<unspecified>"));                                                                               break;
+    default:            buf = (char *)CALLOC(32, sizeof(char)); mus_snprintf(buf, 32, "unknown type: %d", v->type);                          break;
     }
   return(buf);
 }
@@ -1384,24 +1386,25 @@ static int xen_to_run_type(XEN val)
 	    if (mus_xen_p(val)) return(R_CLM); else
 	      if (XEN_CHAR_P(val)) return(R_CHAR); else
 		if (XEN_STRING_P(val)) return(R_STRING); else
-		  if (XEN_VECTOR_P(val))
-		    {
-		      XEN val0;
-		      val0 = XEN_VECTOR_REF(val, 0);
-		      if (XEN_NUMBER_P(val0))
-			{
-			  if (XEN_EXACT_P(val0))
-			    return(R_INT_VECTOR);
-			  else return(R_FLOAT_VECTOR);
-			}
-		      else
-			if (VCT_P(val0)) return(R_VCT_VECTOR); else
-			  if ((mus_xen_p(val0)) || (XEN_BOOLEAN_P(val0))) return(R_CLM_VECTOR);
-		    }
-		  else
-		    /* order matters here (list is subset of pair) */
-		    if (XEN_LIST_P(val)) return(R_LIST); else
-		      if (XEN_PAIR_P(val)) return(R_PAIR);
+		  if (XEN_KEYWORD_P(val)) return(R_KEYWORD); else
+		    if (XEN_VECTOR_P(val))
+		      {
+			XEN val0;
+			val0 = XEN_VECTOR_REF(val, 0);
+			if (XEN_NUMBER_P(val0))
+			  {
+			    if (XEN_EXACT_P(val0))
+			      return(R_INT_VECTOR);
+			    else return(R_FLOAT_VECTOR);
+			  }
+			else
+			  if (VCT_P(val0)) return(R_VCT_VECTOR); else
+			    if ((mus_xen_p(val0)) || (XEN_BOOLEAN_P(val0))) return(R_CLM_VECTOR);
+		      }
+		    else
+		      /* order matters here (list is subset of pair) */
+		      if (XEN_LIST_P(val)) return(R_LIST); else
+			if (XEN_PAIR_P(val)) return(R_PAIR);
     }
   return(R_UNSPECIFIED);
 }
@@ -1970,6 +1973,7 @@ static char *declare_args(ptree *prog, XEN form, int default_arg_type, int separ
 		  if (strcmp(type, "reader") == 0) arg_type = R_READER; else
 		  if (strcmp(type, "boolean") == 0) arg_type = R_BOOL; else
 		  if (strcmp(type, "char") == 0) arg_type = R_CHAR; else
+		  if (strcmp(type, "keyword") == 0) arg_type = R_KEYWORD; else
 		  if (strcmp(type, "list") == 0) arg_type = R_LIST; 
 
 		  /* list arg type actually doesn't work -- segfault
@@ -2473,8 +2477,9 @@ static xen_value *do_form_1(ptree *prog, XEN form, int need_result, int sequenti
 	  sequential = TRUE; /* assume success */
 	  if (varlen > 1)    /* 0=doesn't matter, 1=no possible non-sequential ref */
 	    {
+	      int loc;
 	      XEN varlst = XEN_EMPTY_LIST, update = XEN_FALSE;
-	      snd_protect(varlst);
+	      loc = snd_protect(varlst);
 	      vars = XEN_CADR(form);
 	      varlst = XEN_CONS(XEN_CAAR(vars), varlst);
 	      for (vars = XEN_CDR(vars), i = 1; i < varlen; i++, vars = XEN_CDR(vars))
@@ -2496,7 +2501,7 @@ static xen_value *do_form_1(ptree *prog, XEN form, int need_result, int sequenti
 		    }
 		  varlst = XEN_CONS(XEN_CAR(var), varlst);
 		}
-	      snd_unprotect(varlst);
+	      snd_unprotect_at(loc);
 	      if (!sequential)
 		exprs = (xen_value **)CALLOC(varlen, sizeof(xen_value *));
 	    }
@@ -4758,6 +4763,7 @@ static xen_value *display_1(ptree *pt, xen_value **args, int num_args)
     }
   return(NULL);
 }
+/* TODO: display list/pair/keyword? */
 
 static void snd_print_s(int *args, int *ints, Float *dbls) {listener_append(STRING_ARG_1);}
 static char *descr_snd_print_s(int *args, int *ints, Float *dbls) {return(mus_format("snd_print(" STR_PT ")", args[1], STRING_ARG_1));}
@@ -5328,6 +5334,33 @@ static xen_value *srate_1(ptree *pt, xen_value **args, int num_args)
   run_opt_arg(pt, args, num_args, 1, true_args);
   true_args[0] = args[0];
   rtn = package(pt, R_INT, srate_i, descr_srate_i, true_args, 1);
+  for (k = num_args + 1; k <= 1; k++) FREE(true_args[k]);
+  return(rtn);
+}
+
+
+/* ---------------- channels ---------------- */
+
+static void channels_i(int *args, int *ints, Float *dbls) 
+{
+  snd_info *sp;
+  sp = run_get_sp(1, args, ints);
+  if (sp) INT_RESULT = sp->nchans;
+}
+
+static char *descr_channels_i(int *args, int *ints, Float *dbls) 
+{
+  return(mus_format( INT_PT " = channels(" INT_PT ")", args[0], INT_RESULT, args[1], INT_ARG_1));
+}
+
+static xen_value *channels_1(ptree *pt, xen_value **args, int num_args)
+{
+  xen_value *true_args[2];
+  xen_value *rtn;
+  int k;
+  run_opt_arg(pt, args, num_args, 1, true_args);
+  true_args[0] = args[0];
+  rtn = package(pt, R_INT, channels_i, descr_channels_i, true_args, 1);
   for (k = num_args + 1; k <= 1; k++) FREE(true_args[k]);
   return(rtn);
 }
@@ -7043,6 +7076,11 @@ static xen_value *sample_reader_p_1(ptree *prog, xen_value **args, int num_args)
   return(make_xen_value(R_BOOL, add_int_to_ptree(prog, args[1]->type == R_READER), R_CONSTANT));
 }
 
+static xen_value *keyword_p_1(ptree *prog, xen_value **args, int num_args)
+{
+  return(make_xen_value(R_BOOL, add_int_to_ptree(prog, args[1]->type == R_KEYWORD), R_CONSTANT));
+}
+
 static xen_value *vct_p_1(ptree *prog, xen_value **args, int num_args)
 {
   return(make_xen_value(R_BOOL, add_int_to_ptree(prog, args[1]->type == R_VCT), R_CONSTANT));
@@ -7104,14 +7142,15 @@ static xen_value *unwrap_xen_object_1(ptree *prog, XEN form, const char *origin,
 {
   switch (xen_to_run_type(form))
     {
-    case R_BOOL:   return(make_xen_value(R_BOOL, add_int_to_ptree(prog, (XEN_FALSE_P(form)) ? 0 : 1), R_CONSTANT)); break;
-    case R_INT:    return(make_xen_value(R_INT, add_int_to_ptree(prog, XEN_TO_C_INT(form)), R_CONSTANT)); break;
-    case R_FLOAT:  return(make_xen_value(R_FLOAT, add_dbl_to_ptree(prog, XEN_TO_C_DOUBLE(form)), R_CONSTANT)); break;
-    case R_CHAR:   return(make_xen_value(R_CHAR, add_int_to_ptree(prog, (int)(XEN_TO_C_CHAR(form))), R_CONSTANT)); break;
-    case R_STRING: return(make_xen_value(R_STRING, add_string_to_ptree(prog, copy_string(XEN_TO_C_STRING(form))), R_CONSTANT)); break;
-    case R_VCT:    return(make_xen_value(R_VCT, add_int_to_ptree(prog, (int)(get_vct(form))), R_CONSTANT)); break;
-    case R_PAIR:   if (constant) return(make_xen_value(R_PAIR, add_int_to_ptree(prog, (int)form), R_CONSTANT)); break;
-    case R_LIST:   if (constant) return(make_xen_value(R_LIST, add_int_to_ptree(prog, (int)form), R_CONSTANT)); break;
+    case R_BOOL:    return(make_xen_value(R_BOOL, add_int_to_ptree(prog, (XEN_FALSE_P(form)) ? 0 : 1), R_CONSTANT)); break;
+    case R_INT:     return(make_xen_value(R_INT, add_int_to_ptree(prog, XEN_TO_C_INT(form)), R_CONSTANT)); break;
+    case R_FLOAT:   return(make_xen_value(R_FLOAT, add_dbl_to_ptree(prog, XEN_TO_C_DOUBLE(form)), R_CONSTANT)); break;
+    case R_CHAR:    return(make_xen_value(R_CHAR, add_int_to_ptree(prog, (int)(XEN_TO_C_CHAR(form))), R_CONSTANT)); break;
+    case R_STRING:  return(make_xen_value(R_STRING, add_string_to_ptree(prog, copy_string(XEN_TO_C_STRING(form))), R_CONSTANT)); break;
+    case R_VCT:     return(make_xen_value(R_VCT, add_int_to_ptree(prog, (int)(get_vct(form))), R_CONSTANT)); break;
+    case R_PAIR:    if (constant) return(make_xen_value(R_PAIR, add_int_to_ptree(prog, (int)form), R_CONSTANT)); break;
+    case R_LIST:    if (constant) return(make_xen_value(R_LIST, add_int_to_ptree(prog, (int)form), R_CONSTANT)); break;
+    case R_KEYWORD: return(make_xen_value(R_KEYWORD, add_int_to_ptree(prog, (int)form), R_CONSTANT)); break;
     case R_INT_VECTOR: 
       if (constant)
 	{
@@ -7207,7 +7246,7 @@ static int xenable(xen_value *v)
   switch (v->type)
     {
     case R_FLOAT: case R_INT: case R_CHAR: case R_STRING: case R_BOOL:
-    case R_LIST: case R_PAIR: case R_FLOAT_VECTOR: case R_VCT:
+    case R_LIST: case R_PAIR: case R_FLOAT_VECTOR: case R_VCT: case R_KEYWORD:
       return(TRUE);
       break;
     }
@@ -7224,6 +7263,7 @@ static XEN xen_value_to_xen(ptree *pt, xen_value *v)
     case R_CHAR:    return(C_TO_XEN_CHAR((char)(pt->ints[v->addr]))); break;
     case R_STRING:  return(C_TO_XEN_STRING((char *)(pt->ints[v->addr]))); break;
     case R_BOOL:    return(C_TO_XEN_BOOLEAN(pt->ints[v->addr])); break;
+    case R_KEYWORD:
     case R_LIST:    
     case R_PAIR:    return((XEN)(pt->ints[v->addr])); break;
     case R_FLOAT_VECTOR:
@@ -7282,6 +7322,42 @@ static xen_value *package_n_indirect(ptree *prog,
   return(rtn);
 }
 
+static char *describe_indirect(const char *caller, int result_type, int *args, int *ints, Float *dbls)
+{
+  int num_args, i, len = 0;
+  char **descrs = NULL;
+  char *buf;
+  xen_value *res;
+  res = make_xen_value(result_type, args[0], R_VARIABLE);
+  num_args = ints[args[1]];
+  descrs = (char **)CALLOC(num_args + 2, sizeof(char *));
+  descrs[0] = describe_xen_value(res, ints, dbls);
+  len = (2 + strlen(caller));
+  if (descrs[0]) len += strlen(descrs[0]);
+  FREE(res);
+  res = NULL;
+  for (i = 2; i <= num_args + 1; i++)
+    {
+      descrs[i] = describe_xen_value((xen_value *)(args[i]), ints, dbls);
+      if (descrs[i]) len += (2 + strlen(descrs[i]));
+    }
+  buf = (char *)CALLOC(len + 16, sizeof(char));
+  if (descrs[0])
+    sprintf(buf, "%s = %s(", descrs[0], caller);
+  else sprintf(buf, "%s(", caller);
+  for (i = 2; i <= num_args + 1; i++)
+    if (descrs[i])
+      {
+	if (i > 2) strcat(buf, ", ");
+	strcat(buf, descrs[i]);
+      }
+  strcat(buf, ")");
+  for (i = 0; i < num_args + 1; i++)
+    if (descrs[i]) FREE(descrs[i]);
+  FREE(descrs);
+  return(buf);
+}
+
 static XEN xen_values_to_list(ptree *pt, int num_args, int *args, int *ints)
 {
   XEN lst = XEN_EMPTY_LIST;
@@ -7293,10 +7369,6 @@ static XEN xen_values_to_list(ptree *pt, int num_args, int *args, int *ints)
 
 static XEN format_func = XEN_FALSE;
 
-/*
- TODO: descr_format_s descr_clm_print_s
-*/
-
 static void format_s(int *args, int *ints, Float *dbls) 
 {
   if (STRING_RESULT) FREE(STRING_RESULT);
@@ -7305,10 +7377,7 @@ static void format_s(int *args, int *ints, Float *dbls)
 							"format")));
 }
 
-static char *descr_format_s(int *args, int *ints, Float *dbls)
-{
-  return(copy_string("format"));
-}
+static char *descr_format_s(int *args, int *ints, Float *dbls) {return(describe_indirect("format", R_STRING, args, ints, dbls));}
 
 static xen_value *format_1(ptree *prog, xen_value **args, int num_args)
 {
@@ -7394,10 +7463,7 @@ static void clm_print_s(int *args, int *ints, Float *dbls)
   listener_append(STRING_RESULT);
 }
 
-static char *descr_clm_print_s(int *args, int *ints, Float *dbls)
-{
-  return(copy_string("clm-print"));
-}
+static char *descr_clm_print_s(int *args, int *ints, Float *dbls) {return(describe_indirect("clm_print", R_STRING, args, ints, dbls));}
 
 static xen_value *clm_print_1(ptree *prog, xen_value **args, int num_args)
 {
@@ -7435,6 +7501,30 @@ static xen_value *set_up_format(ptree *prog, xen_value **args, int num_args, int
   return(run_warn("format not defined"));
 }
 
+#if 0
+/* with this and the keyword support, we should be able to add all the clm make functions (all in this mold):
+static void make_oscil_0(int *args, int *ints, Float *dbls) 
+{
+  XEN res;
+  if (CLM_RESULT) run_unprotect(CLM_RESULT)
+  res = XEN_APPLY(g_make_oscil, xen_values_to_list(PTREE, ints[args[1]], args, ints), S_make_oscil);
+  run_protect(res);
+  CLM_RESULT = res;
+} 
+-- need run_protect(XEN val) and run_unprotect(mus_any *val) [snd_protect now returns loc for snd_unprotect, so just need table of clm->loc]
+-- need g_make_oscil exported from clm2xen.c
+-- need cleanup via gcs at end (unprotect pending clm_results)
+
+#define CLM_RESULT ((mus_any *)(ints[args[0]]))
+static char *descr_make_oscil_0(int *args, int *ints, Float *dbls) {return(describe_indirect(S_make_oscil, R_CLM, args, ints, dbls));}
+
+static xen_value *make_oscil_1(ptree *prog, xen_value **args, int num_args)
+{
+  return(package_n_indirect(prog, R_CLM, make_oscil_0, descr_make_oscil_0, args, num_args));
+}
+  INIT_WALKER(S_make_oscil, make_walker(make_oscil_1, NULL, NULL, 0, 4, R_CLM, FALSE, 1, -R_XEN));
+*/
+#endif
 
 /* def-clm-struct support */
 
@@ -7915,13 +8005,14 @@ static xen_value *walk(ptree *prog, XEN form, int need_result)
     }
   switch (xen_to_run_type(form))
     {
-    case R_INT:    return(make_xen_value(R_INT, add_int_to_ptree(prog, XEN_TO_C_INT(form)), R_CONSTANT)); break;
-    case R_FLOAT:  return(make_xen_value(R_FLOAT, add_dbl_to_ptree(prog, XEN_TO_C_DOUBLE(form)), R_CONSTANT)); break;
-    case R_STRING: return(make_xen_value(R_STRING, add_string_to_ptree(prog, copy_string(XEN_TO_C_STRING(form))), R_CONSTANT)); break;
-    case R_CHAR:   return(make_xen_value(R_CHAR, add_int_to_ptree(prog, (int)(XEN_TO_C_CHAR(form))), R_CONSTANT)); break;
-    case R_BOOL:   return(make_xen_value(R_BOOL, add_int_to_ptree(prog, (XEN_FALSE_P(form)) ? 0 : 1), R_CONSTANT)); break;
-    case R_LIST:   return(make_xen_value(R_LIST, add_int_to_ptree(prog, (int)form), R_CONSTANT)); break;
-    case R_PAIR:   return(make_xen_value(R_PAIR, add_int_to_ptree(prog, (int)form), R_CONSTANT)); break;
+    case R_INT:     return(make_xen_value(R_INT, add_int_to_ptree(prog, XEN_TO_C_INT(form)), R_CONSTANT)); break;
+    case R_FLOAT:   return(make_xen_value(R_FLOAT, add_dbl_to_ptree(prog, XEN_TO_C_DOUBLE(form)), R_CONSTANT)); break;
+    case R_STRING:  return(make_xen_value(R_STRING, add_string_to_ptree(prog, copy_string(XEN_TO_C_STRING(form))), R_CONSTANT)); break;
+    case R_CHAR:    return(make_xen_value(R_CHAR, add_int_to_ptree(prog, (int)(XEN_TO_C_CHAR(form))), R_CONSTANT)); break;
+    case R_BOOL:    return(make_xen_value(R_BOOL, add_int_to_ptree(prog, (XEN_FALSE_P(form)) ? 0 : 1), R_CONSTANT)); break;
+    case R_LIST:    return(make_xen_value(R_LIST, add_int_to_ptree(prog, (int)form), R_CONSTANT)); break;
+    case R_PAIR:    return(make_xen_value(R_PAIR, add_int_to_ptree(prog, (int)form), R_CONSTANT)); break;
+    case R_KEYWORD: return(make_xen_value(R_KEYWORD, add_int_to_ptree(prog, (int)form), R_CONSTANT)); break;
     }
   if (XEN_SYMBOL_P(form))
     return(add_global_var_to_ptree(prog, form, &rtnval));
@@ -8183,6 +8274,9 @@ static XEN eval_ptree_to_xen(ptree *pt)
     case R_CHAR:    result = C_TO_XEN_CHAR((char)(pt->ints[pt->result->addr])); break;
     case R_STRING:  result = C_TO_XEN_STRING((char *)(pt->ints[pt->result->addr])); break;
     case R_BOOL:    result = C_TO_XEN_BOOLEAN(pt->ints[pt->result->addr]); break;
+    case R_LIST:
+    case R_PAIR:
+    case R_KEYWORD: result = (XEN)(pt->ints[pt->result->addr]); break;
     case R_VCT:
       {
 	vct *v;
@@ -8462,6 +8556,7 @@ static void init_walkers(void)
   INIT_WALKER("real?", make_walker(real_p_1, NULL, NULL, 1, 1, R_BOOL, FALSE, 0));
   INIT_WALKER("char?", make_walker(char_p_1, NULL, NULL, 1, 1, R_BOOL, FALSE, 0));
   INIT_WALKER("string?", make_walker(string_p_1, NULL, NULL, 1, 1, R_BOOL, FALSE, 0));
+  INIT_WALKER("keyword?", make_walker(keyword_p_1, NULL, NULL, 1, 1, R_BOOL, FALSE, 0));
   INIT_WALKER("sample-reader?", make_walker(sample_reader_p_1, NULL, NULL, 1, 1, R_BOOL, FALSE, 0));
   INIT_WALKER("vct?", make_walker(vct_p_1, NULL, NULL, 1, 1, R_BOOL, FALSE, 0));
   INIT_WALKER("vector?", make_walker(vector_p_1, NULL, NULL, 1, 1, R_BOOL, FALSE, 0));
@@ -8798,6 +8893,7 @@ static void init_walkers(void)
   INIT_WALKER(S_add_mark, make_walker(add_mark_1, NULL, NULL, 1, 3, R_INT, FALSE, 0));
   INIT_WALKER(S_maxamp, make_walker(maxamp_1, NULL, NULL, 0, 2, R_FLOAT, FALSE, 0));
   INIT_WALKER(S_srate, make_walker(srate_1, NULL, NULL, 0, 1, R_INT, FALSE, 0));
+  INIT_WALKER(S_channels, make_walker(channels_1, NULL, NULL, 0, 1, R_INT, FALSE, 0));
   INIT_WALKER(S_c_g, make_walker(c_g_p_1, NULL, NULL, 0, 0, R_BOOL, FALSE, 0));
   INIT_WALKER(S_autocorrelate, make_walker(autocorrelate_1, NULL, NULL, 1, 1, R_VCT, FALSE, 1, R_VCT));
 

@@ -15,20 +15,27 @@ static int gc_protection_size = 0;
 static int gc_last_cleared = -1;
 static int gc_last_set = -1;
 
-#if 0
-void dump_protection(void);
-void dump_protection(void)
+#if DEBUG_MEMORY
+void dump_protection(FILE *Fp);
+void dump_protection(FILE *Fp)
 {
   XEN *gcdata;
   int i;
   gcdata = XEN_VECTOR_ELEMENTS(gc_protection);
+  fprintf(Fp, "snd_protect:\n");
   for (i = 0; i < gc_protection_size; i++)
     if (!(XEN_EQ_P(gcdata[i], DEFAULT_GC_VALUE)))
-      fprintf(stderr,"protect[%i] %p\n",i, gcdata[i]);
+      {
+	fprintf(Fp,"  %d %p %s\n", i, gcdata[i], XEN_AS_STRING(gcdata[i]));
+#if HAVE_GUILE
+	if (XEN_TRUE_P(scm_hook_p(gcdata[i])))
+	  fprintf(Fp, "    -> %s\n", XEN_AS_STRING(scm_hook_to_list(gcdata[i])));
+#endif
+      }
 }
 #endif
 
-void snd_protect(XEN obj)
+int snd_protect(XEN obj)
 {
   int i, old_size;
   XEN tmp;
@@ -51,14 +58,14 @@ void snd_protect(XEN obj)
 	  XEN_VECTOR_SET(gc_protection, gc_last_cleared, obj);
 	  gc_last_set = gc_last_cleared;
 	  gc_last_cleared = -1;
-	  return;
+	  return(gc_last_set);
 	}
       for (i = 0; i < gc_protection_size; i++)
 	if (XEN_EQ_P(gcdata[i], DEFAULT_GC_VALUE))
 	  {
 	    XEN_VECTOR_SET(gc_protection, i, obj);
 	    gc_last_set = i;
-	    return;
+	    return(gc_last_set);
 	  }
       tmp = gc_protection;
       old_size = gc_protection_size;
@@ -73,6 +80,7 @@ void snd_protect(XEN obj)
       XEN_VECTOR_SET(gc_protection, old_size, obj);
       gc_last_set = old_size;
     }
+  return(gc_last_set);
 }
 
 void snd_unprotect(XEN obj)
@@ -95,6 +103,14 @@ void snd_unprotect(XEN obj)
 	gc_last_cleared = i;
 	return;
       }
+}
+
+void snd_unprotect_at(int loc)
+{
+  XEN *gcdata;
+  gcdata = XEN_VECTOR_ELEMENTS(gc_protection);
+  XEN_VECTOR_SET(gc_protection, loc, DEFAULT_GC_VALUE);
+  gc_last_cleared = loc;
 }
 
 
@@ -355,6 +371,7 @@ char *procedure_ok(XEN proc, int args, const char *caller, const char *arg_name,
     }
   else
     {
+      int loc;
       arity = XEN_ARITY(proc);
 #if HAVE_RUBY
       rargs = XEN_TO_C_INT(arity);
@@ -363,11 +380,11 @@ char *procedure_ok(XEN proc, int args, const char *caller, const char *arg_name,
 	return(mus_format(_("%s function (%s arg %d) should take %d args, not %d"), 
 			  arg_name, caller, argn, args, (rargs < 0) ? (-rargs) : rargs));
 #else
-      snd_protect(arity);
+      loc = snd_protect(arity);
       rargs = XEN_TO_SMALL_C_INT(XEN_CAR(arity));
       oargs = XEN_TO_SMALL_C_INT(XEN_CADR(arity));
       restargs = ((XEN_TRUE_P(XEN_CADDR(arity))) ? 1 : 0);
-      snd_unprotect(arity);
+      snd_unprotect_at(loc);
       if (rargs > args)
 	return(mus_format(_("%s function (%s arg %d) should take %d argument%s, but instead requires %d"),
 			  arg_name, caller, argn, args, (args != 1) ? "s" : "", rargs));

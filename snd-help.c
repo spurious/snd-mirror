@@ -1007,7 +1007,7 @@ new value via (set! (" S_auto_resize ") #t). \n\
   " S_window_y "             -1\n\
   " S_with_gl "               #t (if --with-gl)\n\
   " S_with_mix_tags "         #t\n\
-  " S_with_relative_panes "   #f\n\
+  " S_with_relative_panes "   #t\n\
   " S_x_axis_style "          " S_x_axis_in_seconds "\n\
   " S_zero_pad "              0 (snd #t) (chn #t)\n\
   " S_zoom_color "            ivory4\n\

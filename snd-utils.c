@@ -268,7 +268,16 @@ void snd_exit(int val)
 #endif
 }
 
-char *kmg (int num)
+#ifdef DEBUG_MEMORY
+
+/* mtrace-style malloc hooks are not very useful here since I don't care
+ * about X allocations (of which there are millions), and I need readable
+ * backtrace info for leaks.  Doing it by hand makes it easy to sort
+ * output and whatnot. All of Sndlib and Snd use the macros CALLOC,
+ * MALLOC, REALLOC, and FREE.
+ */
+
+static char *kmg (int num)
 {
   /* return number 0..1024, then in terms of K, M, G */
   char *str;
@@ -286,15 +295,6 @@ char *kmg (int num)
   else mus_snprintf(str, LABEL_BUFFER_SIZE, "%d", num);
   return(str);
 }
-
-#ifdef DEBUG_MEMORY
-
-/* mtrace-style malloc hooks are not very useful here since I don't care
- * about X allocations (of which there are millions), and I need readable
- * backtrace info for leaks.  Doing it by hand makes it easy to sort
- * output and whatnot. All of Sndlib and Snd use the macros CALLOC,
- * MALLOC, REALLOC, and FREE.
- */
 
 static int mem_size = 0, mem_top = -1;
 static int *pointers = NULL, *sizes = NULL, *locations = NULL;
@@ -666,6 +666,8 @@ int io_fclose(FILE *stream, const char *func, const char *file, int line)
   return(fclose(stream));
 }
 
+void dump_protection(FILE *Fp);
+
 void mem_report(void)
 {
   int loc, i, j, sum, ptr = 0, have_stacks = FALSE;
@@ -772,6 +774,7 @@ void mem_report(void)
   for (i = 0; i < file_size; i++)
     if (open_files[i])
       fprintf(Fp, "%s: %s[%d] (%s) %d %p?\n", file_files[i], file_funcs[i], file_lines[i], open_files[i], file_fds[i], file_fls[i]);
+  dump_protection(Fp);
   fclose(Fp);
 }
 

@@ -316,7 +316,7 @@ Here's a more extended example:
 </p>
 
 <pre>
-(use-modules (ice-9 popen) (ice-9 debug) (ice-9 format))
+(use-modules (ice-9 debug) (ice-9 format))
 
 (set! (window-width) 800)
 (set! (window-height) 500)
@@ -328,11 +328,9 @@ Here's a more extended example:
       (set! (axis-label-font) "-adobe-times-medium-r-normal-*-18-*-*-*-*-*-*-*")
       (set! (axis-numbers-font) "9x15")))
 
-(set! (show-mix-waveforms) #t)
 (set! (listener-prompt) ":")
 (show-listener)
 (set! (show-indices) #t)
-(set! (with-relative-panes) #t)
 
 (define beige (make-color 0.96 0.96 0.86))
 (define blue (make-color 0 0 1))

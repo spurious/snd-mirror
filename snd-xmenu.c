@@ -1030,8 +1030,13 @@ static void clobber_menu(Widget w, void *lab)
   char *name, *wname;
   name = (char *)lab;
   wname = XtName(w);
-  if ((wname) && (name) && (strcmp(name, wname) == 0))
-    XtUnmanageChild(w);
+  if ((wname) && (name) && (strcmp(name, wname) == 0) && (XtIsManaged(w)))
+    {
+      int slot;
+      XtVaGetValues(w, XmNuserData, &slot, NULL);
+      unprotect_callback(slot);
+      XtUnmanageChild(w);
+    }
 }
 
 int g_remove_from_menu(int which_menu, char *label)

@@ -2975,6 +2975,7 @@ static void display_channel_data_with_size (chan_info *cp, snd_info *sp, snd_sta
   if ((with_lisp) && 
       (!just_fft) && (!just_time))
     {
+      int pixel_loc = -1;
       XEN pixel_list = XEN_FALSE;
       if ((just_lisp) || ((!with_time) && (!(with_fft))))
 	{
@@ -2992,7 +2993,7 @@ static void display_channel_data_with_size (chan_info *cp, snd_info *sp, snd_sta
 						 C_TO_SMALL_XEN_INT(cp->chan)),
 				      S_lisp_graph_hook);
 	  ss->lisp_graph_hook_active = FALSE;
-	  if (!(XEN_FALSE_P(pixel_list))) snd_protect(pixel_list);
+	  if (!(XEN_FALSE_P(pixel_list))) pixel_loc = snd_protect(pixel_list);
 	}
       if (up != (lisp_grf *)(cp->lisp_info))
 	up = (lisp_grf *)(cp->lisp_info);
@@ -3005,7 +3006,7 @@ static void display_channel_data_with_size (chan_info *cp, snd_info *sp, snd_sta
       if (XEN_PROCEDURE_P(pixel_list))
 	XEN_CALL_0(pixel_list, "lisp-graph");
       else make_lisp_graph(cp, sp, ss, pixel_list);
-      if (!(XEN_FALSE_P(pixel_list))) snd_unprotect(pixel_list);
+      if (!(XEN_FALSE_P(pixel_list))) snd_unprotect_at(pixel_loc);
     }
   
   if ((!just_lisp) && (!just_fft))
@@ -4728,10 +4729,11 @@ static XEN g_cursor(XEN snd_n, XEN chn_n, XEN edpos)
   if (XEN_BOUND_P(edpos))
     {
       XEN res;
+      int loc;
       cp_edpos = edpos;
-      snd_protect(cp_edpos);
+      loc = snd_protect(cp_edpos);
       res = channel_get(snd_n, chn_n, CP_EDPOS_CURSOR, S_cursor);
-      snd_unprotect(cp_edpos);
+      snd_unprotect_at(loc);
       return(res);
     }
   return(channel_get(snd_n, chn_n, CP_CURSOR, S_cursor));
@@ -4743,10 +4745,11 @@ static XEN g_set_cursor(XEN on, XEN snd_n, XEN chn_n, XEN edpos)
   if (XEN_BOUND_P(edpos))
     {
       XEN res;
+      int loc;
       cp_edpos = edpos;
-      snd_protect(cp_edpos);
+      loc = snd_protect(cp_edpos);
       res = channel_set(snd_n, chn_n, on, CP_EDPOS_CURSOR, S_setB S_cursor);
-      snd_unprotect(cp_edpos);
+      snd_unprotect_at(loc);
       return(res);
     }
   return(channel_set(snd_n, chn_n, on, CP_CURSOR, S_setB S_cursor));
@@ -4811,10 +4814,11 @@ static XEN g_frames(XEN snd_n, XEN chn_n, XEN edpos)
   XEN res;
   if (XEN_BOUND_P(edpos))
     {
+      int loc;
       cp_edpos = edpos;
-      snd_protect(cp_edpos);
+      loc = snd_protect(cp_edpos);
       res = channel_get(snd_n, chn_n, CP_EDPOS_FRAMES, S_frames);
-      snd_unprotect(cp_edpos);
+      snd_unprotect_at(loc);
       return(res);
     }
   return(channel_get(snd_n, chn_n, CP_FRAMES, S_frames));
@@ -4834,10 +4838,11 @@ static XEN g_maxamp(XEN snd_n, XEN chn_n, XEN edpos)
   XEN res;
   if (XEN_BOUND_P(edpos))
     {
+      int loc;
       cp_edpos = edpos;
-      snd_protect(cp_edpos);
+      loc = snd_protect(cp_edpos);
       res = channel_get(snd_n, chn_n, CP_EDPOS_MAXAMP, S_maxamp);
-      snd_unprotect(cp_edpos);
+      snd_unprotect_at(loc);
       return(res);
     }
   return(channel_get(snd_n, chn_n, CP_MAXAMP, S_maxamp));

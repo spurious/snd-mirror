@@ -2651,11 +2651,12 @@ static XEN g_map_chan_ptree_fallback(XEN proc, XEN init_func, chan_info *cp, off
       outgen = mus_make_sample2file(filename, 1, MUS_OUT_FORMAT, MUS_NEXT);
       if (XEN_PROCEDURE_P(init_func))
 	{
+	  int loc;
 	  v = XEN_CALL_2(init_func,
 		     C_TO_XEN_OFF_T(0),
 		     C_TO_XEN_OFF_T(num),
 		     "ptree-channel fallback init func");
-	  snd_protect(v);
+	  loc = snd_protect(v);
 	  for (kp = 0; kp < num; kp++)
 	    {
 	      res = XEN_CALL_3(proc, 
@@ -2665,7 +2666,7 @@ static XEN g_map_chan_ptree_fallback(XEN proc, XEN init_func, chan_info *cp, off
 			       "ptree-channel fallback proc");
 	      MUS_OUTA_1(kp, XEN_TO_C_DOUBLE(res), outgen);
 	    }
-	  snd_unprotect(v);
+	  snd_unprotect_at(loc);
 	}
       else
 	{
@@ -2684,11 +2685,12 @@ static XEN g_map_chan_ptree_fallback(XEN proc, XEN init_func, chan_info *cp, off
       data = (mus_sample_t *)CALLOC(num, sizeof(mus_sample_t)); 
       if (XEN_PROCEDURE_P(init_func))
 	{
+	  int loc;
 	  v = XEN_CALL_2(init_func,
 		     C_TO_XEN_OFF_T(0),
 		     C_TO_XEN_OFF_T(num),
 		     "ptree-channel fallback init func");
-	  snd_protect(v);
+	  loc = snd_protect(v);
 	  for (kp = 0; kp < num; kp++)
 	    {
 	      res = XEN_CALL_3(proc, 
@@ -2698,7 +2700,7 @@ static XEN g_map_chan_ptree_fallback(XEN proc, XEN init_func, chan_info *cp, off
 			       "ptree-channel fallback proc");
 	      data[kp] = MUS_DOUBLE_TO_SAMPLE(XEN_TO_C_DOUBLE(res));
 	    }
-	  snd_unprotect(v);
+	  snd_unprotect_at(loc);
 	}
       else
 	{

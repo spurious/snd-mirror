@@ -929,7 +929,7 @@
 	'mix-tag-width (mix-tag-width) 6
 	'mix-tag-height (mix-tag-height) 14
 	'with-mix-tags (with-mix-tags) #t
-	'with-relative-panes (with-relative-panes) #f
+	'with-relative-panes (with-relative-panes) #t
 	'audio-output-device (audio-output-device) 0 
 	'selected-mix (selected-mix) #f
 	))))
@@ -1424,7 +1424,7 @@
 	  (list 'wavo-hop wavo-hop 3 6)
 	  (list 'wavo-trace wavo-trace 64 128)
 	  (list 'with-mix-tags with-mix-tags #t #f)
-	  (list 'with-relative-panes with-relative-panes #f #t)
+	  (list 'with-relative-panes with-relative-panes #t #f)
 	  (list 'with-gl with-gl (provided? 'gl) #f)
 	  (list 'x-axis-style x-axis-style 0 1)
 	  (list 'beats-per-minute beats-per-minute 30.0 120.0)
@@ -24406,6 +24406,7 @@ EDITS: 2
       (stst '(format #f "~,3E" 3.14159) "3.142E+0")
       (stst '(format #f "hi~16Tho") "hi              ho")
       (stst '(format #f "~{~D ~}" '(1 2 3)) "1 2 3 ")
+      (stst '(clm-print "hiho: ~D" 43) "hiho: 43")
 
       (btst '(sample-reader? "hi") #f)
       (btst '(sample-reader? #t) #f)
@@ -24555,6 +24556,12 @@ EDITS: 2
       (itsta '(lambda (y) (cadr list-var)) 0.0 3)
       (ststa '(lambda (y) (caddr list-var)) 0.0 "hiho")
       (btsta '(lambda (y) (cadddr list-var)) 0.0 #t)
+
+      (btst '(keyword? :asdf) #t)
+      (btst '(keyword? 32) #f)
+      (etst '(null? :asdf))
+      (etst '(* 1 2 :asdf))
+      (btst '(keyword? (quote :asdf)) #t)
 
       (itst '(car '(1 . 2)) 1)
       (itst '(cdr '(1 . 2)) 2)
@@ -25539,11 +25546,14 @@ EDITS: 2
 	(let ((r (make-sample-reader 2000))
 	      (v (make-vct 2)))
 	  (itst '(srate) 22050)
+	  (itst '(channels) 1)
 	  (itst '(frames) 50828)
 	  (if (not (= (run (lambda () (srate ind))) 22050))
-	      (snd-display ";run srate ind: ~A" (run (lambda () (srate ind))) 22050))
+	      (snd-display ";run srate ind: ~A" (run (lambda () (srate ind)))))
+	  (if (not (= (run (lambda () (channels ind))) 1))
+	      (snd-display ";run channels ind: ~A" (run (lambda () (channels ind)))))
 	  (if (not (= (run (lambda () (frames ind 0))) 50828))
-	      (snd-display ";run frames ind: ~A" (run (lambda () (frames ind 0))) 22050))
+	      (snd-display ";run frames ind: ~A" (run (lambda () (frames ind 0)))))
 	  (vct-map! v (lambda () (next-sample r)))
 	  (if (or (fneq (vct-ref v 0) .0662) (fneq (vct-ref v 1) .0551)) (snd-display "next-sample ftst: ~A" v))
 	  (vct-map! v (lambda () (previous-sample r)))

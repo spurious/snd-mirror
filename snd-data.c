@@ -423,10 +423,17 @@ snd_info *completely_free_snd_info(snd_info *sp)
 		FREE((cp->cgx)->ax);
 	      FREE(cp->cgx);
 	    }
+	  snd_unprotect(cp->edit_hook);
+	  snd_unprotect(cp->after_edit_hook);
+	  snd_unprotect(cp->undo_hook);
+	  if (XEN_VECTOR_P(cp->properties))
+	    snd_unprotect(cp->properties);
 	  FREE(cp);
 	}
     }
   FREE(sp->chans);
+  if (XEN_VECTOR_P(sp->properties))
+    snd_unprotect(sp->properties);
   FREE(sp);
   return(NULL);
 }

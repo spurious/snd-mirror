@@ -741,6 +741,7 @@ void amp_env_ptree(chan_info *cp, void *pt, int pos, XEN init_func, int is_xen)
   int i, need_unprotect = FALSE;
   vct *vlo = NULL, *vhi = NULL;
   XEN init_lo = XEN_UNDEFINED, init_hi = XEN_UNDEFINED;
+  int hi_loc = 0, lo_loc = 0;
   mus_sample_t fmin, fmax, dmin, dmax;
   old_ep = cp->amp_envs[pos];
   if ((old_ep) && (old_ep->completed))
@@ -767,12 +768,12 @@ void amp_env_ptree(chan_info *cp, void *pt, int pos, XEN init_func, int is_xen)
 				   C_TO_XEN_OFF_T(0),
 				   C_TO_XEN_OFF_T(new_ep->amp_env_size),
 				   "xen-channel init func");
-	      snd_protect(init_lo);
+	      lo_loc = snd_protect(init_lo);
 	      init_hi = XEN_CALL_2(init_func,
 				   C_TO_XEN_OFF_T(0),
 				   C_TO_XEN_OFF_T(new_ep->amp_env_size),
 				   "xen-channel init func");
-	      snd_protect(init_hi);
+	      hi_loc = snd_protect(init_hi);
 	      need_unprotect = TRUE;
 	    }
 	  else
@@ -825,8 +826,8 @@ void amp_env_ptree(chan_info *cp, void *pt, int pos, XEN init_func, int is_xen)
 	{
 	  if (need_unprotect)
 	    {
-	      snd_unprotect(init_lo);
-	      snd_unprotect(init_hi);
+	      snd_unprotect_at(lo_loc);
+	      snd_unprotect_at(hi_loc);
 	    }
 	}
       else
@@ -851,6 +852,7 @@ void amp_env_ptree_selection(chan_info *cp, void *pt, off_t beg, off_t num, int 
   vct *vlo = NULL, *vhi = NULL;
   off_t cursamp, start, end;
   XEN init_lo = XEN_FALSE, init_hi = XEN_FALSE;
+  int hi_loc = 0, lo_loc = 0;
   old_ep = cp->amp_envs[pos];
   if ((old_ep) && (old_ep->completed))
     {
@@ -889,12 +891,12 @@ void amp_env_ptree_selection(chan_info *cp, void *pt, off_t beg, off_t num, int 
 					       C_TO_XEN_OFF_T((off_t)((Float)(cursamp - beg) / (Float)(num))),
 					       C_TO_XEN_OFF_T((off_t)(num / new_ep->samps_per_bin)),
 					       "xen-channel init-func");
-			  snd_protect(init_lo);
+			  lo_loc = snd_protect(init_lo);
 			  init_hi = XEN_CALL_2(init_func,
 					       C_TO_XEN_OFF_T((off_t)((Float)(cursamp - beg) / (Float)(num))),
 					       C_TO_XEN_OFF_T((off_t)(num / new_ep->samps_per_bin)),
 					       "xen-channel init-func");
-			  snd_protect(init_hi);
+			  hi_loc = snd_protect(init_hi);
 			  need_unprotect = TRUE;
 			  inited = TRUE;
 			}
@@ -945,8 +947,8 @@ void amp_env_ptree_selection(chan_info *cp, void *pt, off_t beg, off_t num, int 
 	{
 	  if (need_unprotect)
 	    {
-	      snd_unprotect(init_lo);
-	      snd_unprotect(init_hi);
+	      snd_unprotect_at(lo_loc);
+	      snd_unprotect_at(hi_loc);
 	    }
 	}
       else
@@ -3308,10 +3310,11 @@ static XEN g_env_info_to_vcts(env_info *ep, int len)
   vct *vmax, *vmin;
   Float incr, x;
   mus_sample_t cmax, cmin;
+  int loc;
   if (ep->amp_env_size < len) lim = ep->amp_env_size; else lim = len;
   res = XEN_LIST_2(make_vct(lim, (Float *)CALLOC(lim, sizeof(Float))),
 		   make_vct(lim, (Float *)CALLOC(lim, sizeof(Float))));
-  snd_protect(res);
+  loc = snd_protect(res);
   vmin = get_vct(XEN_CAR(res));
   vmax = get_vct(XEN_CADR(res));
   if (ep->amp_env_size == lim)
@@ -3344,7 +3347,7 @@ static XEN g_env_info_to_vcts(env_info *ep, int len)
 	    }
 	}
     }
-  snd_unprotect(res);
+  snd_unprotect_at(loc);
   return(res);
 }
 
@@ -3358,7 +3361,7 @@ typedef struct {
 
 static Cessate tick_it(Indicium pet)
 {
-  int val;
+  int val, loc;
   env_state *es;
   chan_info *cp;
   XEN peak;
@@ -3371,14 +3374,14 @@ static Cessate tick_it(Indicium pet)
       if (es->sf) free_snd_fd(es->sf);
       FREE(es);
       peak = g_env_info_to_vcts(cp->amp_envs[0], et->len);
-      snd_protect(peak);
+      loc = snd_protect(peak);
       XEN_CALL_3(et->func,
 		 et->filename,
 		 C_TO_XEN_INT(cp->chan),
 		 peak,
 		 "amp env tick");
       snd_unprotect(et->func);
-      snd_unprotect(peak);
+      snd_unprotect_at(loc);
       completely_free_snd_info(cp->sound);
       FREE(et);
       return(BACKGROUND_QUIT);
