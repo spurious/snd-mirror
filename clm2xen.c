@@ -22,6 +22,7 @@
 #endif
 
 #define MAX_TABLE_SIZE (1024 * 1024 * 20) /* delay line allocation etc */
+#define MAX_ALLOC_SIZE (1 << 28)          /* fft size, grain size etc */
 
 #include <stddef.h>
 #include <math.h>
@@ -2796,6 +2797,8 @@ is the same in effect as make-oscil"
       wsize = mus_optkey_to_int(keys[2], S_make_waveshape, orig_arg[2], wsize);
       if (wsize <= 0)
 	XEN_OUT_OF_RANGE_ERROR(S_make_waveshape, orig_arg[2], keys[2], "table size ~A <= 0?");
+      if (wsize > MAX_TABLE_SIZE)
+	XEN_OUT_OF_RANGE_ERROR(S_make_waveshape, orig_arg[2], keys[2], "table size ~A too big?");
       v = mus_optkey_to_vct(keys[3], S_make_waveshape, orig_arg[3], NULL);
       if (v)
         {
@@ -3960,9 +3963,11 @@ return a new generator for signal placement in n channels.  Channel 0 correspond
 	    }
 	}
       out_chans = mus_optkey_to_int(keys[5], S_make_locsig, orig_arg[5], out_chans);
+      if (out_chans < 0) XEN_OUT_OF_RANGE_ERROR(S_make_locsig, orig_arg[5], keys[5], "chans ~A < 0.0?");
+      if (out_chans > MAX_TABLE_SIZE) XEN_OUT_OF_RANGE_ERROR(S_make_locsig, orig_arg[5], keys[5], "chans = ~A?");
       type = (mus_locsig_interp_t)mus_optkey_to_int(keys[6], S_make_locsig, orig_arg[6], type);
-      XEN_ASSERT_TYPE(out_chans > 0, keys[5], orig_arg[5], S_make_locsig, "int > 0");
-      XEN_ASSERT_TYPE((type == MUS_LINEAR) || (type == MUS_SINUSOIDAL), keys[6], orig_arg[6], S_make_locsig, "mus-linear or mus-sinusoidal");
+      if ((type != MUS_LINEAR) && (type != MUS_SINUSOIDAL))
+	XEN_OUT_OF_RANGE_ERROR(S_make_locsig, orig_arg[6], keys[6], "type ~A must be " S_mus_linear " or " S_mus_sinusoidal ".");
     }
   ge = mus_make_locsig(degree, distance, reverb, out_chans, outp, revp, type);
   if (ge)
@@ -4210,6 +4215,8 @@ The edit function, if any, should return the length in samples of the grain, or 
   if ((ramp_time < 0.0) || (ramp_time > 0.5)) XEN_OUT_OF_RANGE_ERROR(S_make_granulate, orig_arg[5], keys[5], "ramp ~A must be between 0.0 and 0.5");
   if ((segment_length + output_hop) > 60.0) /* multiplied by srate in mus_make_granulate in array allocation */
     XEN_OUT_OF_RANGE_ERROR(S_make_granulate, orig_arg[2], XEN_LIST_2(keys[2], keys[4]), "segment_length + output_hop = ~A: too large!");
+  if (maxsize > MAX_ALLOC_SIZE)
+    XEN_OUT_OF_RANGE_ERROR(S_make_granulate, orig_arg[7], keys[7], "max-size ~A too large!");
   gn = (mus_xen *)CALLOC(1, sizeof(mus_xen));
   old_error_handler = mus_error_set_handler(local_mus_error);
   ge = mus_make_granulate(funcall1, expansion, segment_length, segment_scaler, output_hop, ramp_time, jitter, maxsize, 
@@ -4446,6 +4453,8 @@ is run.  'synthesize' is a function of 1 arg, the generator; it is called to get
       fft_size = mus_optkey_to_int(keys[1], S_make_phase_vocoder, orig_arg[1], fft_size);
       if (fft_size <= 1) 
 	XEN_OUT_OF_RANGE_ERROR(S_make_phase_vocoder, orig_arg[1], keys[1], "fft size ~A <= 1?");
+      if (fft_size > MAX_ALLOC_SIZE)
+	XEN_OUT_OF_RANGE_ERROR(S_make_phase_vocoder, orig_arg[1], keys[1], "fft size ~A too large");
       overlap = mus_optkey_to_int(keys[2], S_make_phase_vocoder, orig_arg[2], overlap);
       if (overlap <= 0)
 	XEN_OUT_OF_RANGE_ERROR(S_make_phase_vocoder, orig_arg[2], keys[2], "overlap ~A <= 0?");

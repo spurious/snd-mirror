@@ -1477,6 +1477,7 @@ static char *direct_filter(chan_info *cp, int order, env *e, snd_fd *sf, off_t b
   FREE(data[0]);
   FREE(data);
   if (d) FREE(d);
+  if ((a) && (!precalculated_coeffs)) FREE(a);
   return(NULL);
 }
 

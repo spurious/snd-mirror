@@ -5062,6 +5062,11 @@ int mus_header_write(const char *name, int type, int in_srate, int in_chans, off
 
 int mus_header_change_data_size(const char *filename, int type, off_t size) /* in bytes */
 {
+  /* the read header at sample update (sound-close) time could be avoided if the
+   *   ssnd_location (etc) were saved and passed in -- perhaps an added optimized
+   *   header change data size?  Means saving the relevant data, and exporting it
+   *  from headers.c. Can we guarantee consistency here?
+   */
   int chan, err = MUS_NO_ERROR;
   switch (type)
     {
@@ -5093,6 +5098,9 @@ int mus_header_change_data_size(const char *filename, int type, off_t size) /* i
        * an unexpected hassle for CLM is that we can open/close the output file many times if running mix,
        * so we have to update the various size fields taking into account the old size 
        */
+
+      /* read sets current update_form_size, data_size, data_format, update_frames_location, update_ssnd_location */
+
       lseek(chan, 4L, SEEK_SET);
       mus_bint_to_char((unsigned char *)hdrbuf, (int)size + update_form_size - mus_samples_to_bytes(data_format, data_size));
       /* cancel old data_size from previous possible write */
@@ -5105,6 +5113,9 @@ int mus_header_change_data_size(const char *filename, int type, off_t size) /* i
       write(chan, hdrbuf, 4);
       break;
     case MUS_RIFF: 
+
+      /* read sets current update_form_size, data_format, data_size, update_ssnd_location */
+
       lseek(chan, 4L, SEEK_SET);
       mus_lint_to_char((unsigned char *)hdrbuf, (int)size + update_form_size - mus_samples_to_bytes(data_format, data_size)); 
       write(chan, hdrbuf, 4);
@@ -5117,6 +5128,9 @@ int mus_header_change_data_size(const char *filename, int type, off_t size) /* i
       /* size is implicit in file size */
       break;
     case MUS_NIST: 
+
+      /* read sets current srate, chans, data_format */
+
       lseek(chan, 0L, SEEK_SET);
       write_nist_header(chan, mus_header_srate(), mus_header_chans(), size, mus_header_format());
       break;
@@ -5607,7 +5621,7 @@ const char *mus_header_original_format_name(int format, int type)
 	}
       break;
     }
-  return(NULL);
+  return("unknown"); /* NULL here isn't safe -- Sun segfaults */
 }
 
 bool mus_header_no_header(const char *filename)

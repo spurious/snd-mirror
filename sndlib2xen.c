@@ -1091,7 +1091,7 @@ cache info to the file given or stdout"
 
   XEN res = XEN_FALSE;
   if (XEN_NOT_BOUND_P(file))
-    mus_sound_print_cache();
+    mus_sound_report_cache(stdout);
   else
     {
       FILE *fd;

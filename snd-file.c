@@ -1,16 +1,8 @@
 #include "snd.h"
 
-/* TODO: what if start with outsider's AIFC where data chunk is embedded, then user
- *        extends data, and asks for "save" -- doesn't this clobber the trailing chunks?
- *        what if the trailer is the COMM chunk?  Similarly for riff.
- */
-/* TODO: the read header at sample update (sound-close) time could be avoided if the
- *        ssnd_location (etc) were saved and passed in -- perhaps an added optimized
- *        header change data size?  Means saving the relevant data, and exporting it
- *        from headers.c. Can we guarantee consistency here?
- */
 /* TODO: bad header decision starts dialog even if opened from code -- this should
- *        throw an error!
+ *        throw an error!  Perhaps bad-header-dialog added, and only starts if called
+ *        via function or from file menu.
  */
 
 #if HAVE_DIRENT_H

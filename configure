@@ -882,7 +882,7 @@ Optional Packages:
   --with-gsl		  use GSL, default=yes
   --with-fftw		  use fftw, default=yes
   --with-xpm		  use xpm, default=yes
-  --with-xp		  use xp, default=yes
+  --with-xp		  use xp, default=no
   --with-profiling	  include profiling machinery, default=no
   --with-float-samples	  use floats as the internal sample respresentation
   --with-sample-width=N   use N bits of samples

@@ -418,14 +418,12 @@ const char *mus_data_format_name(int format);
 const char *mus_short_data_format_name(int format);
 char *mus_sound_comment(const char *name);
 int mus_bytes_per_sample(int format);
-#define mus_data_format_to_bytes_per_sample(Format) mus_bytes_per_sample(Format)
 float mus_sound_duration(const char *arg);
 int mus_sound_initialize(void);
 int mus_sample_bits(void);
 int mus_sound_override_header(const char *arg, int srate, int chans, int format, int type, off_t location, off_t size);
 int mus_sound_forget(const char *name);
 int mus_sound_prune(void);
-#define mus_sound_print_cache() mus_sound_report_cache(stdout)
 void mus_sound_report_cache(FILE *fp);
 int *mus_sound_loop_info(const char *arg);
 void mus_sound_set_full_loop_info(const char *arg, int *loop);
