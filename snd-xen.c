@@ -3175,9 +3175,60 @@ XEN_NARGIFY_0(g_gc_on_w, g_gc_on)
 #endif
 #endif
 
+#if HAVE_GUILE && HAVE_SCM_LIST_N
+static int after_hooked = 0, before_hooked = 0;
+static XEN after_hook = XEN_FALSE;
+static XEN before_hook = XEN_FALSE;
+static void *after_gc(void *hook_data, void *func_data, void *data)
+{
+  XEN_CALL_0(after_hook, "gc-after-hook");
+  return NULL;
+}
+
+static void *before_gc(void *hook_data, void *func_data, void *data)
+{
+  XEN_CALL_0(before_hook, "gc-before-hook");
+  return NULL;
+}
+
+static XEN gc_after_hook(XEN code)
+{
+  extern scm_t_c_hook scm_after_gc_c_hook;
+  if (XEN_PROCEDURE_P(after_hook)) snd_unprotect(after_hook);
+  snd_protect(code);
+  after_hook = code;
+  if (!after_hooked)
+    {
+      scm_c_hook_add(&scm_after_gc_c_hook, after_gc, NULL, 0);
+      after_hooked = 1;
+    }
+  return(XEN_FALSE);
+}
+
+static XEN gc_before_hook(XEN code)
+{
+  extern scm_t_c_hook scm_before_gc_c_hook;
+  if (XEN_PROCEDURE_P(before_hook)) snd_unprotect(before_hook);
+  snd_protect(code);
+  before_hook = code;
+  if (!before_hooked)
+    {
+      scm_c_hook_add(&scm_before_gc_c_hook, before_gc, NULL, 0);
+      before_hooked = 1;
+    }
+  return(XEN_FALSE);
+}
+#endif
+
+
 void g_initialize_gh(snd_state *ss)
 {
   state = ss;
+
+#if HAVE_GUILE && HAVE_SCM_LIST_N
+  XEN_DEFINE_PROCEDURE("gc-after-hook", gc_after_hook, 1, 0, 0, "");
+  XEN_DEFINE_PROCEDURE("gc-before-hook", gc_before_hook, 1, 0, 0, "");
+#endif
 
   XEN_DEFINE_PROCEDURE("show-stack", show_stack, 0 ,0, 0, "show stack trace");
 

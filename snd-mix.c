@@ -822,7 +822,7 @@ void free_mixes(chan_info *cp)
 int disk_space_p(snd_info *sp, int fd, int bytes, int other_bytes, char *filename)
 {
   int kfree, kneeded, kother, go_on;
-  kfree = disk_kspace(fd, filename);
+  kfree = disk_kspace(filename);
   if (kfree < 0) 
     {
       report_in_minibuffer_and_save(sp, strerror(errno)); 

@@ -17,6 +17,8 @@
 ;;; (make-level-meter parent width height args), (display-level data), (with-level-meters n) -- VU meters
 ;;; (make-channel-drop-site snd chn) -- add a drop site
 ;;; (select-file func &optional title dir filter help) starts a Snd-like File Selection Dialog running func if a file is selected
+;;; (show-disk-space) adds a label to the minibuffer area showing the current free space 
+
 
 (use-modules (ice-9 common-list))
 
@@ -1149,6 +1151,15 @@ Reverb-feedback sets the scaler on the feedback.\n\
 		  (set! selctr (+ selctr 1))
 		  (save-selection new-file-name)
 		  (open-sound new-file-name)))))
+      (list "Snap marks" |xmPushButtonWidgetClass every-menu 
+	    (lambda (w c i)
+	      (for-each 
+	       (lambda (select)
+		 (let ((pos  (apply selection-position select))
+		       (len  (apply selection-length select)))
+		   (apply add-mark pos select)
+		   (apply add-mark (+ pos len) select)))
+	       (selection-members))))
       (list "Reverse"   |xmPushButtonWidgetClass every-menu (lambda (w c i) (reverse-selection)))
       (list "Invert"    |xmPushButtonWidgetClass every-menu (lambda (w c i) (scale-selection-by -1)))))))
 
@@ -1221,7 +1232,7 @@ Reverb-feedback sets the scaler on the feedback.\n\
 	      (insert-selection (cursor graph-popup-snd graph-popup-chn) graph-popup-snd graph-popup-chn)))
       (list "Equalize panes"     |xmPushButtonWidgetClass every-menu 
 	    (lambda (w c i)
-	      (equalize-panes graph-popup-snd)))
+	      (equalize-panes)))
       (list "Info"               |xmPushButtonWidgetClass every-menu 
 	    (lambda (w c i)
 	      (let ((snd graph-popup-snd))
@@ -1256,16 +1267,19 @@ Reverb-feedback sets the scaler on the feedback.\n\
 		     (string=? name "Undo")
 		     (string=? name "Revert"))
 		 ((if (> (car eds) 0) |XtManageChild |XtUnmanageChild) w)
-		 (if (or (string=? name "Equalize panes")
-			 (string=? name "Play channel"))
+		 (if (string=? name "Play channel")
 		     ((if (> (chans snd) 1) |XtManageChild |XtUnmanageChild) w)
-		     (if (string=? name "Redo")
-			 ((if (> (cadr eds) 0) |XtManageChild |XtUnmanageChild) w)
-			 (if (or (string=? name "Mix selection")
-				 (string=? name "Insert selection"))
-			     ((if (selection?) |XtManageChild |XtUnmanageChild) w)
-			     (if (string=? name "Play from cursor")
-				 ((if (> (cursor snd chn) 0) |XtManageChild |XtUnmanageChild) w))))))))))))
+		     (if (string=? name "Equalize panes")
+			 ((if (or (> (chans snd) 1) 
+				  (> (length (sounds)) 1))
+			      |XtManageChild |XtUnmanageChild) w)
+			 (if (string=? name "Redo")
+			     ((if (> (cadr eds) 0) |XtManageChild |XtUnmanageChild) w)
+			     (if (or (string=? name "Mix selection")
+				     (string=? name "Insert selection"))
+				 ((if (selection?) |XtManageChild |XtUnmanageChild) w)
+				 (if (string=? name "Play from cursor")
+				     ((if (> (cursor snd chn) 0) |XtManageChild |XtUnmanageChild) w)))))))))))))
 
 (define (add-selection-popup)
   ;; TODO: add new popups to existing chans as well
@@ -1890,6 +1904,54 @@ Reverb-feedback sets the scaler on the feedback.\n\
 							      ;; the actual in-coming string (properly terminated in xm.c) is 'value'
 							      (snd-print (format #f "got: ~A ~A ~A ~A ~A ~A ~A~%"
 										 w context selection type val len fmt)))))))))))))
+
+
+
+;;; -------- show-disk-space
+;;;
+;;; adds a label to the minibuffer area showing the current free space 
+
+(define show-disk-space
+  (let ((labelled-snds '()))
+    (define (kmg num)
+      (if (<= num 0)
+	  "disk full!"
+	  (if (> num 1024)
+	      (if (> num (* 1024 1024))
+		  (format #f "space: ~6,3FG" (/ num (* 1024 1024)))
+		  (format #f "space: ~6,3FM" (/ num 1024.0)))
+	      (format #f "space: ~10DK" num))))
+    (define (show-label data id)
+      (if (sound? (car data))
+	  (let* ((space (kmg (disk-kspace (file-name (car data)))))
+		 (str (|XmStringCreateLocalized space)))
+	    (|XtSetValues (cadr data) (list |XmNlabelString str))
+	    (|XmStringFree str)
+	    (|XtAppAddTimeOut (caddr data) 10000 show-label data))))
+    (lambda (snd)
+      (let ((previous-label (find-if (lambda (n) (= (car n) snd)) labelled-snds)))
+	(if (not previous-label)
+	    (let* ((app (|XtAppContext (car (main-widgets))))
+		   (widgets (sound-widgets snd))
+		   (minibuffer (|Widget (list-ref widgets 3)))
+		   (name-form (|XtParent minibuffer))
+		   (space (kmg (disk-kspace (file-name snd))))
+		   (str (|XmStringCreateLocalized space))
+		   (new-label (|XtCreateManagedWidget "space:" |xmLabelWidgetClass name-form 
+						      (list |XmNbackground (|Pixel (snd-pixel (basic-color)))
+							    |XmNleftAttachment |XmATTACH_WIDGET
+							    |XmNleftWidget minibuffer
+							    |XmNlabelString str
+							    |XmNrightAttachment |XmATTACH_NONE
+							    |XmNtopAttachment |XmATTACH_FORM))))
+	      (|XmStringFree str)
+	      (|XtSetValues minibuffer (list |XmNrightAttachment |XmATTACH_WIDGET
+					     |XmNrightWidget new-label))
+	      (set! previous-label (list snd new-label app))
+	      (set! labelled-snds (cons previous-label labelled-snds))))
+	(|XtAppAddTimeOut (caddr previous-label) 10000 show-label previous-label)))))
+
+;(add-hook! after-open-hook show-disk-space)
 
 
 

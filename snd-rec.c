@@ -554,8 +554,6 @@ void set_record_size (int new_size)
   unlock_recording_audio();
 }
 
-#if (HAVE_ALSA || HAVE_OSS)
-
 static void oss_get_input_channels(int i)
 {
   rp->input_channels[i] = device_channels(MUS_AUDIO_PACK_SYSTEM(i) | rp->in_device);
@@ -574,7 +572,6 @@ static void oss_get_input_channels(int i)
 	}
     }
 }
-
 
 static void oss_get_input_devices(void)
 {
@@ -605,6 +602,7 @@ static void oss_get_input_devices(void)
     }
 }
 
+#if (HAVE_ALSA || HAVE_OSS)
 void fire_up_recorder(snd_state *ss)
 {
   int i, j;

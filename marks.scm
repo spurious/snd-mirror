@@ -11,6 +11,7 @@
 ;;;     play-syncd-marks and play-between-marks
 ;;;     report-mark-names causes mark names to be posted in the minibuffer as a sound is played
 ;;;     eval-between-marks evaluates func between two marks
+;;;     snap-marks places marks at current selection boundaries
 
 
 ;;; -------- mark-name->id is a global version of find-mark
@@ -256,12 +257,16 @@
 ;(bind-key (char->integer #\m) 0 (lambda () (prompt-in-minibuffer "mark eval:" eval-between-marks)))
 
 
+;;; -------- snap-marks
+
 (define (snap-marks)
-  (for-each 
-   (lambda (select)
-     (let ((pos  (apply selection-position select))
-	   (len  (apply selection-length select)))
-       (apply add-mark pos select)
-       (apply add-mark (+ pos len) select)))
-   (selection-members)))
+  "snap-marks places marks at current selection boundaries"
+  (if (selection?)
+      (for-each 
+       (lambda (select)
+	 (let ((pos  (apply selection-position select))
+	       (len  (apply selection-length select)))
+	   (apply add-mark pos select)
+	   (apply add-mark (+ pos len) select)))
+       (selection-members))))
 

@@ -74,6 +74,8 @@
  *    Motif procedures
  *    X procedures
  *    Xt procedures
+ *    Xp procedures
+ *    Xpm procedures
  *    struct handlers
  *    string constants
  *    integer constants
@@ -82,9 +84,7 @@
  */
 
 /* --------------------------------------------------------------------------------
- * a sample program (using "|" as prefix) (see end for Snd-based example):
-
-(init-xm)
+ * a sample program (using "|" as prefix)
 
 (let* ((shell-app (|XtVaOpenApplication 
 		    "Test" 0 0 0 '() 0 |applicationShellWidgetClass
@@ -122,7 +122,7 @@
 /* --------------------------------------------------------------------------------
  * differences from C:
  *
- *    Arg list is lisp lists of name/value pairs and the "len" arg associated with it is optional
+ *    Arg list is lisp list of name/value pairs and the "len" arg associated with it is optional
  *    ref args are usually returned by proc, and not passed in unless init val is needed (see details below)
  *    array args are passed as lists, returned as lists
  *    pointers to structs are '(type val) where val is opaque except via accessors 
@@ -714,7 +714,7 @@ static XEN gxm_XEvent(void)
 #if HAVE_MOTIF
 
 /* in XtGetValues we need to return tagged-types (etc) for arbitrarily named resources,
- *   and it might be nice to do type checks in XtSetValues, so resources are hashed by
+ *   and in XtSetValues we need to do type checks, so resources are hashed by
  *   name and type:
  */
 
@@ -10903,7 +10903,7 @@ static XEN gxm_XFillArcs(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5)
 
 static XEN gxm_XFillArc(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6, XEN arg7, XEN arg8, XEN arg9)
 {
-  #define H_XFillArc "XFillArc(display, d, gc, x, y, width, height, angle1, angle2) fills the region decribed by the specified arc."
+  #define H_XFillArc "XFillArc(display, d, gc, x, y, width, height, angle1, angle2) fills the region described by the specified arc."
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XFillArc", "Display*");
   XEN_ASSERT_TYPE(XEN_Window_P(arg2), arg2, 2, "XFillArc", "Drawable");
   XEN_ASSERT_TYPE(XEN_GC_P(arg3), arg3, 3, "XFillArc", "GC");
@@ -22554,7 +22554,11 @@ static void define_strings(void)
   DEFINE_RESOURCE(XM_PREFIX "XmNincrementCallback" XM_POSTFIX, XmNincrementCallback,	    XM_CALLBACK);
   DEFINE_RESOURCE(XM_PREFIX "XmNincremental" XM_POSTFIX, XmNincremental,		    XM_BOOLEAN);
   DEFINE_RESOURCE(XM_PREFIX "XmNindex" XM_POSTFIX, XmNindex,				    XM_INT);
+#if MOTIF_2
+  DEFINE_RESOURCE(XM_PREFIX "XmNindicatorOn" XM_POSTFIX, XmNindicatorOn,		    XM_INT);
+#else
   DEFINE_RESOURCE(XM_PREFIX "XmNindicatorOn" XM_POSTFIX, XmNindicatorOn,		    XM_BOOLEAN);
+#endif
   DEFINE_RESOURCE(XM_PREFIX "XmNindicatorSize" XM_POSTFIX, XmNindicatorSize,		    XM_DIMENSION);
   DEFINE_RESOURCE(XM_PREFIX "XmNindicatorType" XM_POSTFIX, XmNindicatorType,		    XM_UCHAR);
   DEFINE_RESOURCE(XM_PREFIX "XmNinitialDelay" XM_POSTFIX, XmNinitialDelay,		    XM_INT);

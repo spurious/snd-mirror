@@ -29,33 +29,23 @@
 #endif
 
 #if (!HAVE_FSTATFS) && (!HAVE_STATFS)
-  int disk_kspace (int fd, char *filename) {return(1234567);}
+  int disk_kspace (char *filename) {return(1234567);}
   int is_link(char *filename) {return(0);}
   int is_directory(char *filename) {return(0);}
 #else
 
-int disk_kspace (int fd, char *filename)
+int disk_kspace (char *filename)
 {
   struct statfs buf;
-  int err;
+  int err = -1;
 #if HAVE_STATFS
-  if (filename)
 #if (FSTATFS_ARGS == 4)
-    /* SGI case -- applies to both fstatfs and statfs */
-    err = statfs(filename, &buf, sizeof(buf), 0);
+  /* SGI case */
+  err = statfs(filename, &buf, sizeof(buf), 0);
 #else
-    err = statfs(filename, &buf);
+  err = statfs(filename, &buf);
 #endif
-  else
 #endif
-    {
-      /* this block not currently used, I think */
-#if (FSTATFS_ARGS == 4)
-    err = fstatfs(fd, &buf, sizeof(buf), 0);
-#else
-    err = fstatfs(fd, &buf);
-#endif
-    }
   /* in 32 bit land, the number of bytes can easily go over 2^32, so we'll look at kbytes here */
   if (err == 0) 
     {
@@ -412,7 +402,7 @@ void init_sound_file_extensions(void)
   add_sound_file_extension("sf2");
 }
 
-static int just_sounds_happy(char *filename);
+static XEN just_sounds_hook;
 
 int is_sound_file(char *name)
 {
@@ -453,7 +443,12 @@ dir *find_sound_files_in_dir (char *name)
 	      for (i = 0; i < sound_file_extensions_end; i++)
 		if (strcmp(dot, sound_file_extensions[i]) == 0)
 		  {
-		    if (just_sounds_happy(dirp->d_name))
+		    XEN res = XEN_TRUE;
+		    if (XEN_HOOKED(just_sounds_hook))
+		      res = g_c_run_or_hook(just_sounds_hook,
+					    XEN_LIST_1(C_TO_XEN_STRING(dirp->d_name)),
+					    S_just_sounds_hook);
+		    if (XEN_TRUE_P(res))
 		      add_snd_file_to_dir_list(dp, dirp->d_name);
 		    break;
 		  }
@@ -585,44 +580,6 @@ static void read_memo_file(snd_info *sp)
 static XEN memo_sound;
 static XEN open_hook;
 static XEN close_hook;
-static XEN just_sounds_hook;
-
-static int dont_open(char *file)
-{
-  char *mcf = NULL;
-  XEN res = XEN_FALSE; XEN fstr;
-  if (XEN_HOOKED(open_hook))
-    {
-      mcf = mus_expand_filename(file);
-      fstr = C_TO_XEN_STRING(mcf);
-      if (mcf) FREE(mcf);
-      res = g_c_run_or_hook(open_hook,
-			    XEN_LIST_1(fstr),
-			    S_open_hook);
-    }
-  return(XEN_TRUE_P(res));
-}
-
-static int dont_close(snd_info *sp)
-{
-  XEN res = XEN_FALSE;
-  if (XEN_HOOKED(close_hook))
-    res = g_c_run_or_hook(close_hook,
-			  XEN_LIST_1(C_TO_SMALL_XEN_INT(sp->index)),
-			  S_close_hook);
-  return(XEN_TRUE_P(res));
-}
-
-static int just_sounds_happy(char *filename)
-{
-  XEN res = XEN_TRUE;
-  if (XEN_HOOKED(just_sounds_hook))
-    res = g_c_run_or_hook(just_sounds_hook,
-			  XEN_LIST_1(C_TO_XEN_STRING(filename)),
-			  S_just_sounds_hook);
-  return(XEN_TRUE_P(res));
-}
-
 
 static void greet_me(snd_state *ss, char *shortname);
 static void remember_me(snd_state *ss, char *shortname, char *fullname);
@@ -633,8 +590,29 @@ static snd_info *snd_open_file_1 (char *filename, snd_state *ss, int select, int
   snd_info *sp;
   char *mcf = NULL;
   int files, val;
-  if (dont_open(filename)) return(NULL);
-  sp = add_sound_window(mcf = mus_expand_filename(filename), ss, read_only); /* snd-xsnd.c -> make_file_info */
+  XEN res = XEN_FALSE; XEN fstr;
+  mcf = mus_expand_filename(filename);
+  if (XEN_HOOKED(open_hook))
+    {
+      fstr = C_TO_XEN_STRING(mcf);
+      res = g_c_run_or_hook(open_hook,
+			    XEN_LIST_1(fstr),
+			    S_open_hook);
+      if (XEN_TRUE_P(res))
+	{
+	  if (mcf) FREE(mcf);
+	  return(NULL);
+	}
+      else
+	{
+	  if (XEN_STRING_P(res))  /* added 14-Aug-01 for user-supplied auto-translations */
+	    {
+	      if (mcf) FREE(mcf);
+	      mcf = mus_expand_filename(XEN_TO_C_STRING(res));
+	    }
+	}
+    }
+  sp = add_sound_window(mcf, ss, read_only); /* snd-xsnd.c -> make_file_info */
   if (mcf) FREE(mcf);
   if (sp)
     {
@@ -675,7 +653,12 @@ snd_info *snd_open_file_unselected (char *filename, snd_state *ss, int read_only
 void snd_close_file(snd_info *sp, snd_state *ss)
 {
   int files;
-  if (dont_close(sp)) return;
+  XEN res = XEN_FALSE;
+  if (XEN_HOOKED(close_hook))
+    res = g_c_run_or_hook(close_hook,
+			  XEN_LIST_1(C_TO_SMALL_XEN_INT(sp->index)),
+			  S_close_hook);
+  if (XEN_TRUE_P(res)) return;
   sp->inuse = 0;
   remember_me(ss, sp->short_filename, sp->filename);
   if (sp->playing) stop_playing_sound(sp);
@@ -735,7 +718,7 @@ int copy_file(char *oldname, char *newname)
 	      ifd, oldname, strerror(errno),
 	      __FILE__, __LINE__, __FUNCTION__);
   total = total >> 10;
-  wb = disk_kspace(ofd, newname);
+  wb = disk_kspace(newname);
   if (wb < 0) 
     snd_error(strerror(errno));
   else
@@ -2290,6 +2273,22 @@ static XEN g_sound_files_in_directory(XEN dirname)
   return(res);
 }
 
+#define S_disk_kspace "disk-kspace"
+static XEN g_disk_kspace(XEN name)
+{
+  #define H_disk_kspace "(" S_disk_kspace " filename) -> kbyes of space available on partition containing 'filename'"
+  XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ONLY_ARG, S_disk_kspace, "a string");
+  return(C_TO_XEN_INT(disk_kspace(XEN_TO_C_STRING(name))));
+}
+
+static XEN g_open_file_dialog(XEN managed)
+{
+  #define H_open_file_dialog "(" S_open_file_dialog " managed) creates the file dialog if needed and displays it if managed"
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(managed), managed, XEN_ONLY_ARG, S_open_file_dialog, "a boolean");
+  make_open_file_dialog(get_global_state(), FALSE, (XEN_BOUND_P(managed)) ? XEN_TO_C_BOOLEAN(managed) : 1);
+  return(managed);
+}
+
 #ifdef XEN_ARGIFY_1
 XEN_NARGIFY_1(g_add_sound_file_extension_w, g_add_sound_file_extension)
 XEN_NARGIFY_1(g_file_write_date_w, g_file_write_date)
@@ -2301,6 +2300,8 @@ XEN_ARGIFY_1(g_sound_loop_info_w, g_sound_loop_info)
 XEN_ARGIFY_2(g_set_sound_loop_info_w, g_set_sound_loop_info)
 XEN_NARGIFY_0(g_previous_files_sort_procedure_w, g_previous_files_sort_procedure)
 XEN_NARGIFY_1(g_set_previous_files_sort_procedure_w, g_set_previous_files_sort_procedure)
+XEN_NARGIFY_1(g_disk_kspace_w, g_disk_kspace)
+XEN_ARGIFY_1(g_open_file_dialog_w, g_open_file_dialog)
 #else
 #define g_add_sound_file_extension_w g_add_sound_file_extension
 #define g_file_write_date_w g_file_write_date
@@ -2312,26 +2313,20 @@ XEN_NARGIFY_1(g_set_previous_files_sort_procedure_w, g_set_previous_files_sort_p
 #define g_set_sound_loop_info_w g_set_sound_loop_info
 #define g_previous_files_sort_procedure_w g_previous_files_sort_procedure
 #define g_set_previous_files_sort_procedure_w g_set_previous_files_sort_procedure
+#define g_disk_kspace_w g_disk_kspace
+#define g_open_file_dialog_w g_open_file_dialog
 #endif
-
-static XEN g_open_file_dialog(XEN managed)
-{
-  #define H_open_file_dialog "(" S_open_file_dialog " managed) creates the file dialog if needed and displays it if managed"
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(managed), managed, XEN_ONLY_ARG, S_open_file_dialog, "a boolean");
-  make_open_file_dialog(get_global_state(), FALSE, (XEN_BOUND_P(managed)) ? XEN_TO_C_BOOLEAN(managed) : 1);
-  return(managed);
-}
 
 void g_init_file(void)
 {
-  XEN_DEFINE_PROCEDURE(S_add_sound_file_extension,    g_add_sound_file_extension_w, 1, 0, 0,     H_add_sound_file_extension);
-  XEN_DEFINE_PROCEDURE(S_file_write_date,             g_file_write_date_w, 1, 0, 0,              H_file_write_date);
-  XEN_DEFINE_PROCEDURE(S_soundfont_info,              g_soundfont_info_w, 0, 1, 0,               H_soundfont_info);
-  XEN_DEFINE_PROCEDURE(S_preload_directory,           g_preload_directory_w, 1, 0, 0,            H_preload_directory);
-  XEN_DEFINE_PROCEDURE(S_preload_file,                g_preload_file_w, 1, 0, 0,                 H_preload_file);
-  XEN_DEFINE_PROCEDURE(S_sound_files_in_directory,    g_sound_files_in_directory_w, 1, 0, 0,     H_sound_files_in_directory);
-  XEN_DEFINE_PROCEDURE(S_open_file_dialog,            g_open_file_dialog, 0, 1, 0,               H_open_file_dialog);
-
+  XEN_DEFINE_PROCEDURE(S_add_sound_file_extension,    g_add_sound_file_extension_w, 1, 0, 0,  H_add_sound_file_extension);
+  XEN_DEFINE_PROCEDURE(S_file_write_date,             g_file_write_date_w, 1, 0, 0,           H_file_write_date);
+  XEN_DEFINE_PROCEDURE(S_soundfont_info,              g_soundfont_info_w, 0, 1, 0,            H_soundfont_info);
+  XEN_DEFINE_PROCEDURE(S_preload_directory,           g_preload_directory_w, 1, 0, 0,         H_preload_directory);
+  XEN_DEFINE_PROCEDURE(S_preload_file,                g_preload_file_w, 1, 0, 0,              H_preload_file);
+  XEN_DEFINE_PROCEDURE(S_sound_files_in_directory,    g_sound_files_in_directory_w, 1, 0, 0,  H_sound_files_in_directory);
+  XEN_DEFINE_PROCEDURE(S_open_file_dialog,            g_open_file_dialog_w, 0, 1, 0,          H_open_file_dialog);
+  XEN_DEFINE_PROCEDURE(S_disk_kspace,                 g_disk_kspace_w, 1, 0, 0,               H_disk_kspace);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_sound_loop_info, g_sound_loop_info_w, H_sound_loop_info,
 			       "set-" S_sound_loop_info, g_set_sound_loop_info_w,  0, 1, 1, 1);
 

@@ -1195,7 +1195,9 @@ when you save a sound via the "save" dialog.</p>
 <!-- -->This is the same as <br>
 <!-- --><code>(cadr (<a href="widgetsize">widget-size</a> (cadr (<a href="mainwidgets">main-widgets</a>))))</code><br>
 <!-- -->except at startup when the window-height function and friends defer the set until after the main widgets
-<!-- -->have been created.
+<!-- -->have been created.  If Snd becomes confused about screen size, it can make its main window so large that
+<!-- -->you can't get at any of the "decorations" for resizing the window; in this emergency you can
+<!-- --><code>(set! (window-height) 300)</code> or some such number.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=3></td></tr>
 <!-- -->
@@ -1902,6 +1904,7 @@ the hook.
 <!-- --><tr><td></td><td colspan=2>
 <!-- -->called each time a file is opened (before the actual open).
 <!-- -->If it returns #t, the file is not opened (see the Buffer Menu code in examp.scm).
+<!-- -->If it returns a string, that file is opened instead of the original one.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=3></td></tr>
 <!-- -->
@@ -7210,6 +7213,9 @@ And an example that lets us see the result of filtering the waveform:
 <!-- -->
 <!-- -->  (<em class=red>add-to-menu</em> 1 "Stop Playing" 
 <!-- -->    (lambda () (stop-playing)))
+<!-- -->
+<!-- -->  (<em class=red>add-to-menu</em> 5 "Reduce height" 
+<!-- -->    (lambda () (set! (window-height) (/ (window-height) 2))))
 <!-- --></pre></td></tr>
 <!-- -->
 <!-- change-menu-label -->

@@ -2208,7 +2208,7 @@ int close_temp_file(int ofd, file_info *hdr, long bytes, snd_info *sp)
 {
   int kleft, kused;
   mus_header_update_with_fd(ofd, hdr->type, bytes);
-  kleft = disk_kspace(ofd, hdr->name);
+  kleft = disk_kspace(hdr->name);
   if (kleft < 0)
     snd_error("close temp file: %s", strerror(errno));
   else

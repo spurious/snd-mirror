@@ -307,12 +307,12 @@ static void make_region_readable(region *r, snd_state *ss)
 	    {
 	      fd = snd_open_read(ss, r->filename);
 	      mus_file_open_descriptors(fd,
-				       r->filename,
-				       hdr->format,
-				       mus_data_format_to_bytes_per_sample(hdr->format),
-				       hdr->data_location,
-				       hdr->chans,
-				       hdr->type);
+					r->filename,
+					hdr->format,
+					mus_data_format_to_bytes_per_sample(hdr->format),
+					hdr->data_location,
+					hdr->chans,
+					hdr->type);
 	      datai = make_file_state(fd, hdr, i, FILE_BUFFER_SIZE);
 	      cp->sounds[0] = make_snd_data_file(r->filename, datai,
 						 MUS_SAMPLE_ARRAY(datai[file_state_channel_offset(i)]),
@@ -322,8 +322,8 @@ static void make_region_readable(region *r, snd_state *ss)
 	    {
 	      if ((ss->catch_exists) && (ss->catch_message))
 		XEN_ERROR(MUS_MISC_ERROR,
-		      XEN_LIST_2(C_TO_XEN_STRING("can't read region file!!"),
-			     C_TO_XEN_STRING(ss->catch_message)));
+			  XEN_LIST_2(C_TO_XEN_STRING("can't read region file!!"),
+				     C_TO_XEN_STRING(ss->catch_message)));
 	    }
 	}
     }
@@ -469,8 +469,8 @@ static int save_region_1(snd_state *ss, char *ofile, int type, int format, int s
       if ((ofd = snd_reopen_write(ss, ofile)) == -1) 
 	return(MUS_CANT_OPEN_TEMP_FILE);
       mus_file_open_descriptors(ofd, ofile, format, 
-			       mus_data_format_to_bytes_per_sample(format), 
-			       oloc, r->chans, type);
+				mus_data_format_to_bytes_per_sample(format), 
+				oloc, r->chans, type);
       mus_file_set_data_clipped(ofd, data_clipped(ss));
       mus_file_seek(ofd, oloc, SEEK_SET);
       if (r->use_temp_file == REGION_ARRAY)
@@ -489,17 +489,17 @@ static int save_region_1(snd_state *ss, char *ofile, int type, int format, int s
 	  frames = mus_sound_samples(r->filename) / chans;
 	  iloc = mus_sound_data_location(r->filename);
 	  mus_file_open_descriptors(ifd,
-				   r->filename,
-				   mus_sound_data_format(r->filename),
-				   mus_sound_datum_size(r->filename),
-				   iloc,
-				   chans,
-				   mus_sound_header_type(r->filename));
+				    r->filename,
+				    mus_sound_data_format(r->filename),
+				    mus_sound_datum_size(r->filename),
+				    iloc,
+				    chans,
+				    mus_sound_header_type(r->filename));
 	  mus_file_seek(ifd, iloc, SEEK_SET);
 	  bufs = (MUS_SAMPLE_TYPE **)CALLOC(chans, sizeof(MUS_SAMPLE_TYPE *));
 	  for (i = 0; i < chans; i++) bufs[i] = (MUS_SAMPLE_TYPE *)CALLOC(FILE_BUFFER_SIZE, sizeof(MUS_SAMPLE_TYPE));
 
-	  if (((frames * chans * mus_sound_datum_size(r->filename)) >> 10) > disk_kspace(ofd, ofile))
+	  if (((frames * chans * mus_sound_datum_size(r->filename)) >> 10) > disk_kspace(ofile))
 	    snd_warning("not enough space? -- need %d bytes to save region %d",
 			frames * chans * mus_sound_datum_size(r->filename),
 			reg);
@@ -852,12 +852,12 @@ void save_regions(snd_state *ss, FILE *fd)
 		  ifd = mus_file_open_read(r->filename);
 		  iloc = mus_sound_data_location(r->filename);
 		  mus_file_open_descriptors(ifd,
-					   r->filename,
-					   mus_sound_data_format(r->filename),
-					   mus_sound_datum_size(r->filename),
-					   iloc,
-					   r->chans,
-					   mus_sound_header_type(r->filename));
+					    r->filename,
+					    mus_sound_data_format(r->filename),
+					    mus_sound_datum_size(r->filename),
+					    iloc,
+					    r->chans,
+					    mus_sound_header_type(r->filename));
 		  mus_file_seek(ifd, iloc, SEEK_SET);
 		  ibufs = (MUS_SAMPLE_TYPE **)CALLOC(r->chans, sizeof(MUS_SAMPLE_TYPE *));
 		  for (j = 0; j < r->chans; j++)
@@ -998,8 +998,8 @@ void save_region_backpointer(snd_info *sp)
 static XEN snd_no_such_region_error(const char *caller, XEN n)
 {
   XEN_ERROR(NO_SUCH_REGION,
-	XEN_LIST_2(C_TO_XEN_STRING(caller),
-	       n));
+	    XEN_LIST_2(C_TO_XEN_STRING(caller),
+		       n));
   return(XEN_FALSE);
 }
 
@@ -1217,9 +1217,9 @@ static XEN g_make_region(XEN beg, XEN end, XEN snd_n, XEN chn_n)
 	ends[0] = current_ed_samples(cp) - 1;
       if (ends[0] < ibeg) 
 	XEN_ERROR(IMPOSSIBLE_BOUNDS,
-	      XEN_LIST_5(C_TO_XEN_STRING(S_make_region),
-		     beg, end,
-		     snd_n, chn_n));
+		  XEN_LIST_5(C_TO_XEN_STRING(S_make_region),
+			     beg, end,
+			     snd_n, chn_n));
       si = make_simple_sync(cp, ibeg);
       id = define_region(si, ends);
       if (selection_creates_region(get_global_state()))
@@ -1266,8 +1266,8 @@ using data format (mus-bshort), header type (default is mus-next), and comment"
   if (name) FREE(name);
   if (res != MUS_NO_ERROR)
     XEN_ERROR(CANNOT_SAVE,
-	  XEN_LIST_2(C_TO_XEN_STRING(S_save_region),
-		 C_TO_XEN_STRING(ss->catch_message)));
+	      XEN_LIST_2(C_TO_XEN_STRING(S_save_region),
+			 C_TO_XEN_STRING(ss->catch_message)));
   return(n);
 }
 
@@ -1290,8 +1290,8 @@ mixes region into snd's channel chn starting at chn-samp; returns new mix id."
 		  XEN_TO_C_INT_OR_ELSE(chn_samp_n, cp->cursor));
   if (id == INVALID_MIX_ID)
     XEN_ERROR(MUS_MISC_ERROR,
-	  XEN_LIST_2(C_TO_XEN_STRING(S_mix_region),
-		 C_TO_XEN_STRING(cp->state->catch_message)));
+	      XEN_LIST_2(C_TO_XEN_STRING(S_mix_region),
+			 C_TO_XEN_STRING(cp->state->catch_message)));
   return(C_TO_XEN_INT(id));
 }
 

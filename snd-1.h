@@ -1098,7 +1098,7 @@ void clear_filter_strings(snd_info *sp);
 
 /* -------- snd-file -------- */
 
-int disk_kspace (int fd, char *filename);
+int disk_kspace (char *filename);
 time_t file_write_date(char *filename);
 int is_link(char *filename);
 int is_directory(char *filename);
