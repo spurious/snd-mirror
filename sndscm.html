@@ -67,6 +67,7 @@
   <li><a href="#marksdoc">marks.scm</a>: functions related to marks
   <li><a href="#maxfdoc">maxf.scm, maxf.rb</a>: Max Mathews resonator
   <li><a href="#mixdoc">mix.scm, mix.rb</a>: functions related to mixes and tracks
+  <li><a href="#mixerdoc">mixer.scm</a>: functions related to mixers and frames (linear algebra)
   <li><a href="#moogdoc">moog.scm, moog.rb</a>: Moog filter
   <li><a href="#musglyphs">musglyphs.scm</a>: Music notation symbols (from CMN)
   <li><a href="#nbdoc">nb.scm, nb.rb</a>: Popup File info etc
@@ -2264,6 +2265,38 @@ mixed in sound is filtered, then the mix takes place).
 <b>reverse-track</b> reverses the order in which a track's member mixes occur.
 <b>track-maxamp</b> returns the maxamp in the given track.
 </p>
+
+
+<A NAME="mixerdoc"></a><table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>mixer.scm</h2></td></tr></table>
+
+<p>mixer.scm has functions related to mixers and frames (linear algebra).  There are some
+others in the relevant section of snd-test. 
+</p>
+<pre>
+  <a class=def NAME="frame-reverse">frame-reverse</a> frame
+  <a class=def NAME="make-zero-mixer">make-zero-mixer</a> size
+  <a class=def NAME="mixer-diagonal">mixer-diagonal?</a> mixer
+  <a class=def NAME="mixer-transpose">mixer-transpose</a> mixer
+  <a class=def NAME="mixer-determinant">mixer-determinant</a> mixer
+  <a class=def NAME="mixer-trace">mixer-trace</a> mixer
+  <a class=def NAME="mixer-poly">mixer-poly</a> mixer coeffs
+  <a class=def name="mixer-inverse">mixer-inverse</a> mixer
+  <a class=def name="mixer-solve">mixer-solve</a> mixer frame
+</pre>
+
+<p>
+<b>mixer-solve</b> is probably the most useful of these functions. 
+If passed a mixer representing the coefficients of a set of simultaneous
+linear equations, and a frame representing the values thereof, it
+returns (in the original frame) the values of the independent
+variables, and (in the original mixer) the inverse of the matrix
+of coefficients.  The rest should be obvious -- these are mostly
+treating mixers as square matrices, and frames as row or column
+vectors, then performing the usual tricks upon them.  There are
+more such functions in snd-test.
+</p>
+
+<br>
 
 
 <A NAME="moogdoc"></a><table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>moog.scm</h2></td></tr></table>

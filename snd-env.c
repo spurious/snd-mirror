@@ -1464,11 +1464,8 @@ env *position_to_env(int pos)
 #else
   e = xen_to_env(XEN_EVAL_C_STRING(all_names[pos]));
 #endif
-  if ((e) && (!(envs_equal(e, all_envs[pos]))))
-    {
-      free_env(all_envs[pos]);
-      all_envs[pos] = copy_env(e);
-    }
+  free_env(all_envs[pos]);
+  all_envs[pos] = e; /* TODO: check this for copy_env */
   return(e);
 }
 
@@ -1511,8 +1508,8 @@ and 'base' into the envelope editor."
   e = xen_to_env(data);
   if ((e) && (XEN_NUMBER_P(base)))
     e->base = XEN_TO_C_DOUBLE(base);
-  alert_envelope_editor(ename, e);
 #if HAVE_RUBY
+  alert_envelope_editor(xen_scheme_global_variable_to_ruby(ename), e);
   if (env_index >= SND_ENV_MAX_VARS)
     env_index = 0;
   else
@@ -1522,6 +1519,7 @@ and 'base' into the envelope editor."
   XEN_SET_VARIABLE_PROPERTY(snd_env_array[env_index], envelope_base_sym, C_TO_XEN_DOUBLE(e->base));
   return(snd_env_array[env_index]);
 #else
+  alert_envelope_editor(ename, e);
   XEN_DEFINE_VARIABLE(ename, temp, data); /* already gc protected */
   /* add property */
   XEN_SET_VARIABLE_PROPERTY(temp, envelope_base_sym, C_TO_XEN_DOUBLE(e->base));

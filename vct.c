@@ -123,7 +123,7 @@ char *vct_to_string(vct *v)
   if (v == NULL) return(NULL);
   len = vct_print_length;
   if (len > v->length) len = v->length;
-  buf = (char *)CALLOC(64 + len * 8, sizeof(char));
+  buf = (char *)CALLOC(64 + len * 16, sizeof(char));
   sprintf(buf, "#<vct[len=%d]:", v->length);
   if (len > 0)
     {
@@ -147,7 +147,7 @@ char *vct_to_readable_string(vct *v)
   char flt[16];
   if (v == NULL) return(NULL);
   len = v->length;
-  buf = (char *)CALLOC(64 + len * 8, sizeof(char));
+  buf = (char *)CALLOC(64 + len * 16, sizeof(char));
 #if HAVE_GUILE
   sprintf(buf, "(vct");
 #else

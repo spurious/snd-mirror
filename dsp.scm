@@ -1871,7 +1871,7 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 
 ;;; ----------------
 ;;;
-;;; invert-filter inverts a filter
+;;; invert-filter inverts an FIR filter
 ;;;
 ;;; say we previously filtered a sound via (filter-channel (vct .5 .25 .125))
 ;;;   and we want to undo it without using (undo):
@@ -1879,8 +1879,7 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 ;;;
 ;;; there are a million gotchas here.  The primary one is that the inverse filter
 ;;; can "explode" -- the coefficients can grow without bound.  For example, any
-;;; filter returned by spectrum->coeffs above will be bad (and will probably
-;;; segfault because Guile tries to print out a huge number and seems to get confused).
+;;; filter returned by spectrum->coeffs above will be a problem.
 
 (define (invert-filter fcoeffs)
   (let* ((flen (vct-length fcoeffs))

@@ -330,71 +330,43 @@ static char **xr_help_data = NULL;
 static int help_size = 0;
 static int help_top = 0;
 
-void xen_add_help(char *name, const char *help)
-{
-  if (help_top >= help_size)
-    {
-      if (help_size == 0)
-	{
-	  help_size = 1024;
-	  xr_help_names = (char **)calloc(help_size, sizeof(char *));
-	  xr_help_data = (char **)calloc(help_size, sizeof(char *));
-	}
-      else
-	{
-	  help_size += 1024;
-	  xr_help_names = (char **)realloc(xr_help_names, help_size * sizeof(char *));
-	  xr_help_data = (char **)realloc(xr_help_data, help_size * sizeof(char *));
-	}
-    }
-  xr_help_names[help_top] = strdup(name);
-  xr_help_data[help_top] = strdup(help);
-  help_top++;
-}
-
-char *xen_help(char *name)
-{
-  int i;
-  for (i = 0; i < help_top; i++)
-    if (strcmp(name, xr_help_names[i]) == 0)
-      return(xr_help_data[i]);
-  return(NULL);
-}
-
+#define S_add_help "add_help"
 #define S_get_help "get_help"
 
-static XEN g_get_help(XEN name)
+XEN rb_documentation(XEN name)
 {
-#define H_get_help S_get_help"(name = :"S_get_help") -- returns help strings of String or Symbol NAME (or of itself) if help is available."
-    char *subject = NULL;
-
-    XEN_ASSERT_TYPE((XEN_STRING_P(name) || XEN_SYMBOL_P(name)), name, XEN_ONLY_ARG, S_get_help, "char* or symbol");
-    if (XEN_NOT_BOUND_P(name))
-	return C_TO_XEN_STRING(H_get_help);
-    else {
-	if (XEN_STRING_P(name))
-	    subject = XEN_TO_C_STRING(name);
-	else if (XEN_SYMBOL_P(name))
-	    subject = XEN_SYMBOL_TO_C_STRING(name);
-	return C_TO_XEN_STRING(xen_help(subject));
-    }
+  XEN_ASSERT_TYPE((XEN_STRING_P(name) || XEN_SYMBOL_P(name)), name, XEN_ONLY_ARG, S_get_help, "a char* or symbol");
+  if (XEN_SYMBOL_P(name))
+    return rb_property(XEN_SYMBOL_TO_STRING(name), XEN_DOCUMENTATION_SYMBOL);
+  else
+    return rb_property(name, XEN_DOCUMENTATION_SYMBOL);
 }
 
-#define S_add_help "add_help"
+XEN rb_set_documentation(XEN name, XEN help)
+{
+  XEN_ASSERT_TYPE((XEN_STRING_P(name) || XEN_SYMBOL_P(name)), name, XEN_ARG_1, S_add_help, "a char* or symbol");
+  XEN_ASSERT_TYPE(XEN_STRING_P(help), help, XEN_ARG_2, S_add_help, "a char*");
+  if (XEN_SYMBOL_P(name))
+    rb_set_property(XEN_SYMBOL_TO_STRING(name), XEN_DOCUMENTATION_SYMBOL, help);
+  else
+    rb_set_property(name, XEN_DOCUMENTATION_SYMBOL, help);
+  return name;
+}
 
 static XEN g_add_help(XEN name, XEN help)
 {
-#define H_add_help S_add_help"(name, help) -- adds HELP strings to topic or function NAME (String or Symbol)."
-    char *subject = NULL;
+#define H_add_help S_add_help"(name, help)  add help to topic or function name (String or Symbol)"
+  return rb_set_documentation(name, help);
+}
 
-    XEN_ASSERT_TYPE((XEN_STRING_P(name) || XEN_SYMBOL_P(name)), name, XEN_ARG_1, S_add_help, "char * or symbol");
-    XEN_ASSERT_TYPE(XEN_STRING_P(help), help, XEN_ARG_2, S_add_help, "char *");
-    if (XEN_STRING_P(name))
-	subject = XEN_TO_C_STRING(name);
-    else if (XEN_SYMBOL_P(name))
-	subject = XEN_SYMBOL_TO_C_STRING(name);
-    xen_add_help(subject, XEN_TO_C_STRING(help));
-    return name;
+static XEN g_get_help(XEN name)
+{
+#define H_get_help S_get_help"([name=:"S_get_help"])  \
+return help associated with name (String or Symbol) or false"
+  if (XEN_NOT_BOUND_P(name))
+    return C_TO_XEN_STRING(H_get_help);
+  else
+    return rb_documentation(name);
 }
 
 void xen_initialize(void)
@@ -794,32 +766,28 @@ VALUE xen_rb_is_hook_p(VALUE obj)
 /*
  * @name = "$name_of_hook"
  * @arity = arity of procedure(s),         default 0
- * @help = "optional description of hook", default ""
  * @procs = [["named proc1", proc1], ...]
  */
-
 static VALUE xen_rb_hook_initialize(int argc, VALUE *argv, VALUE hook)
 {
   VALUE name, arity, help;
   rb_scan_args(argc, argv, "12", &name, &arity, &help);
   XEN_ASSERT_TYPE(XEN_STRING_P(name) || XEN_SYMBOL_P(name), name, XEN_ARG_1, c__FUNCTION__, "a char* or symbol");
   if (XEN_SYMBOL_P(name))
-    name = C_TO_XEN_STRING(rb_id2name(SYM2ID(name)));
-  if (arity != Qnil) {
+    name = XEN_SYMBOL_TO_STRING(name);
+  if (arity != Qnil)
     XEN_ASSERT_TYPE(XEN_INTEGER_P(arity), arity, XEN_ARG_2, c__FUNCTION__, "an integer");
-  }
-  else {
+  else
     arity = INT2NUM(0);
-  }
-  if (help != Qnil) {
-    XEN_ASSERT_TYPE(XEN_STRING_P(help), help, XEN_ARG_3, c__FUNCTION__, "a char*");
-  }
-  else {
+  if (help != Qnil)
+    {
+      XEN_ASSERT_TYPE(XEN_STRING_P(help), help, XEN_ARG_3, c__FUNCTION__, "a char*");
+      XEN_SET_OBJECT_HELP(name, help);
+    }
+  else
     help = rb_str_new2("");
-  }
   rb_iv_set(hook, "@name", name);
   rb_iv_set(hook, "@arity", arity);
-  rb_iv_set(hook, "@help", help);
   rb_iv_set(hook, "@procs", rb_ary_new());
   return hook;
 }
@@ -925,14 +893,14 @@ static VALUE xen_rb_hook_name(VALUE hook)
   return rb_iv_get(hook, "@name");
 }
 
+static VALUE xen_rb_hook_describe(VALUE hook)
+{
+  return XEN_OBJECT_HELP(xen_rb_hook_name(hook));
+}
+
 static VALUE xen_rb_hook_arity(VALUE hook)
 {
   return rb_iv_get(hook, "@arity");
-}
-
-static VALUE xen_rb_hook_describe(VALUE hook)
-{
-  return rb_iv_get(hook, "@help");
 }
 
 static VALUE xen_rb_hook_inspect(VALUE hook)
@@ -1071,7 +1039,10 @@ set key-value pair for obj and return value"
   XEN_ASSERT_TYPE((value), value, XEN_ARG_3, S_set_property, "an object of any kind");
 
   if (XEN_FALSE_P(rb_object_properties))
-    rb_object_properties = rb_hash_new();
+    {
+      rb_object_properties = rb_hash_new();
+      XEN_PROTECT_FROM_GC(rb_object_properties);
+    }
   else
     props = rb_hash_aref(rb_object_properties, obj);
   

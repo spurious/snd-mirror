@@ -4715,26 +4715,24 @@ static void mixer_reset(mus_any *ptr)
     memset((void *)(gen->vals[i]), 0, gen->chans * sizeof(Float));
 }
 
-/* TODO: this printout is confusing -- the ")" seem to be missing? and the row is partially printed? */
-
 #define S_mixer "mixer"
 static char *describe_mixer(mus_any *ptr)
 {
   mus_mixer *gen = (mus_mixer *)ptr;
   char *str;
-  int i, j, lim = 8; /* TODO: mus-array-print-length here or ... or something! */
-  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE,
-	       S_mixer ": chans: %d, vals: [", gen->chans);
+  int i, j, lim;
+  lim = mus_array_print_length();
+  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, S_mixer ": chans: %d, vals: [\n ", gen->chans);
   str = (char *)CALLOC(64, sizeof(char));
-  if (gen->chans < 8) lim = gen->chans;
+  if (gen->chans < lim) lim = gen->chans;
   for (i = 0; i < lim; i++)
     for (j = 0; j < lim; j++)
       {
-	mus_snprintf(str, 64, "%s%.3f%s%s",
-		     (j == 0) ? "(" : "",
+	mus_snprintf(str, 64, "%.3f%s%s%s",
 		     gen->vals[i][j],
-		     (j == (gen->chans - 1)) ? ")" : "",
-		     ((i == (gen->chans - 1)) && (j == (gen->chans - 1))) ? "]" : " ");
+		     ((j == (lim - 1)) && (lim < gen->chans)) ? "..." : "",
+		     (j == (lim - 1)) ? "\n" : "",
+		     ((i == (lim - 1)) && (j == (lim - 1))) ? "]" : " ");
 	if ((strlen(describe_buffer) + strlen(str)) < (DESCRIBE_BUFFER_SIZE - 1))
 	  strcat(describe_buffer, str);
 	else break;

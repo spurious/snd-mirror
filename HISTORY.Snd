@@ -1,5 +1,8 @@
 Snd change log
 
+  25-Mar:    mixer.scm with various matrix/vector related functions (determinant, inverse,
+               solve simultaneous linear equations, etc) as applied to mixers/frames.
+             invert-filter in dsp.scm.
   23-Mar:    changed interpretation or frame->frame args.
   18-Mar:    snd 7.11.
   17-Mar:    gc-on|off are no-ops now in Guile.

@@ -20,8 +20,8 @@
  */
 
 #define XEN_MAJOR_VERSION 1
-#define XEN_MINOR_VERSION 30
-#define XEN_VERSION "1.30"
+#define XEN_MINOR_VERSION 31
+#define XEN_VERSION "1.31"
 
 /* HISTORY:
  *
@@ -733,7 +733,7 @@ char *xen_guile_to_c_string_with_eventual_free(XEN str);
 #define XEN_FALSE            Qfalse
 #define XEN_TRUE             Qtrue
 #define XEN_EMPTY_LIST       Qnil
-#define XEN_UNDEFINED        ID2SYM(rb_intern(":undefined"))
+#define XEN_UNDEFINED        ID2SYM(rb_intern("undefined"))
 
 #define XEN_FILE_EXTENSION  "rb"
 #define XEN_COMMENT_STRING  "#"
@@ -838,8 +838,16 @@ char *xen_guile_to_c_string_with_eventual_free(XEN str);
 
 #define XEN_PROCEDURE_SOURCE(Func)        Func
 
+#define XEN_STRING_TO_SYMBOL(Str)         C_STRING_TO_XEN_SYMBOL(XEN_TO_C_STRING(Str))
+#define XEN_SYMBOL_TO_STRING(Sym)         C_TO_XEN_STRING(XEN_SYMBOL_TO_C_STRING(Sym))
+#define XEN_DOCUMENTATION_SYMBOL          C_STRING_TO_XEN_SYMBOL("documentation")
+#define XEN_OBJECT_HELP(Name)             rb_documentation(Name)
+#define XEN_SET_OBJECT_HELP(Name, Help)   rb_set_documentation(Name, Help)
+#define C_SET_OBJECT_HELP(name, help)     ((name) && (help) && XEN_SET_OBJECT_HELP(C_TO_XEN_STRING(name), C_TO_XEN_STRING(help)))
+
 #if XEN_DEBUGGING
 /* the otiose casts to int here are required by g++ */
+
 #define XEN_DEFINE_PROCEDURE(Name, Func, ReqArg, OptArg, RstArg, Doc) \
   do { \
       if (((int)Func ## _Rst != -1) && (RstArg != 1)) fprintf(stderr,"%s rest args: %d %d?\n", Name, (int)Func ## _Rst, RstArg); \
@@ -851,13 +859,14 @@ char *xen_guile_to_c_string_with_eventual_free(XEN str);
       if (((int)Func ## _Req == 0) && (OptArg + ReqArg != (int)Func ## _Opt)) \
         fprintf(stderr,"%s total args: %d %d + %d?\n", Name, (int)Func ## _Opt, ReqArg, OptArg); \
       rb_define_global_function(xen_scheme_procedure_to_ruby(Name), XEN_PROCEDURE_CAST Func, ((RstArg > 0) ? -2 : ((OptArg > 0) ? -1 : ReqArg))); \
-      if (Doc != NULL) xen_add_help(xen_scheme_procedure_to_ruby(Name), Doc); \
+      if (Doc != NULL) C_SET_OBJECT_HELP(xen_scheme_procedure_to_ruby(Name), Doc); \
     } while (0)
 #else
+
 #define XEN_DEFINE_PROCEDURE(Name, Func, ReqArg, OptArg, RstArg, Doc) \
   do { \
       rb_define_global_function(xen_scheme_procedure_to_ruby(Name), XEN_PROCEDURE_CAST Func, ((RstArg > 0) ? -2 : (OptArg > 0) ? -1 : ReqArg)); \
-      if (Doc != NULL) xen_add_help(xen_scheme_procedure_to_ruby(Name), Doc); \
+      if (Doc != NULL) C_SET_OBJECT_HELP(xen_scheme_procedure_to_ruby(Name), Doc); \
     } while (0)
 #endif
 
@@ -865,20 +874,18 @@ char *xen_guile_to_c_string_with_eventual_free(XEN str);
   do { \
       XEN_DEFINE_PROCEDURE(Get_Name, XEN_PROCEDURE_CAST Get_Func, Get_Req, Get_Opt, 0, Get_Help); \
       XEN_DEFINE_PROCEDURE(Set_Name, XEN_PROCEDURE_CAST Set_Func, Set_Req, Set_Opt, 0, Get_Help); \
-      if (Get_Help != NULL) xen_add_help(xen_scheme_procedure_to_ruby(Get_Name), Get_Help); \
    } while (0)
 
 #define XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(Get_Name, Get_Func, Get_Help, Set_Name, Set_Func, Rev_Func, Get_Req, Get_Opt, Set_Req, Set_Opt) \
   do { \
       XEN_DEFINE_PROCEDURE(Get_Name, XEN_PROCEDURE_CAST Get_Func, Get_Req, Get_Opt, 0, Get_Help); \
       XEN_DEFINE_PROCEDURE(Set_Name, XEN_PROCEDURE_CAST Set_Func, Set_Req, Set_Opt, 0, Get_Help); \
-      if (Get_Help != NULL) xen_add_help(xen_scheme_procedure_to_ruby(Get_Name), Get_Help); \
     } while (0)
 
 #define XEN_DEFINE_CONSTANT(Name, Value, Help) \
   do { \
       rb_define_global_const(xen_scheme_constant_to_ruby(Name), C_TO_XEN_INT(Value)); \
-      if (Help) xen_add_help(xen_scheme_constant_to_ruby(Name), Help); \
+      if (Help != NULL) C_SET_OBJECT_HELP(xen_scheme_constant_to_ruby(Name), Help); \
     } while (0)
 
 #define XEN_DEFINE_VARIABLE(Name, Var, Value) \
@@ -891,9 +898,8 @@ char *xen_guile_to_c_string_with_eventual_free(XEN str);
   { \
     Var = xen_rb_hook_c_new(xen_scheme_global_variable_to_ruby(Name), Arity, Help); \
     rb_define_variable(xen_scheme_global_variable_to_ruby(Name), (VALUE *)(&Var)); \
-    if (Help != NULL) xen_add_help(xen_scheme_global_variable_to_ruby(Name), Help); \
   }
- 
+
 #define XEN_DEFINE_SIMPLE_HOOK(Var, Arity) \
   { \
     Var = xen_rb_hook_c_new("simple_hook", Arity, NULL); \
@@ -998,7 +1004,6 @@ char *xen_guile_to_c_string_with_eventual_free(XEN str);
 #define XEN_KEYWORD_EQ_P(k1, k2)        ((k1) == (k2))
 #define XEN_MAKE_KEYWORD(Arg)           C_STRING_TO_XEN_SYMBOL(xen_scheme_procedure_to_ruby(Arg))
 #define XEN_YES_WE_HAVE(a)              rb_provide(a)
-#define XEN_DOCUMENTATION_SYMBOL        rb_intern("documentation")
 #define XEN_PROTECT_FROM_GC(Var)        rb_gc_register_address(&(Var))
 #define XEN_UNPROTECT_FROM_GC(Var)      rb_gc_unregister_address(&(Var))
 
@@ -1381,10 +1386,13 @@ VALUE xen_rb_is_hook_p(VALUE hook);
 VALUE xen_rb_hook_c_new(char *name, int arity, char *help);
 VALUE xen_rb_hook_reset_hook(VALUE hook);
 VALUE xen_rb_hook_to_a(VALUE hook);
-XEN rb_property(XEN obj, XEN prop);
-XEN rb_set_property(XEN obj, XEN prop, XEN val);
 void Init_Hook(void);
 typedef XEN (*XEN_CATCH_BODY_TYPE) (void *data);
+
+XEN rb_property(XEN obj, XEN prop);
+XEN rb_set_property(XEN obj, XEN prop, XEN val);
+XEN rb_documentation(XEN name);
+XEN rb_set_documentation(XEN name, XEN help);
 #endif
 /* end HAVE_RUBY */
 

@@ -382,6 +382,9 @@ void about_snd_help(void)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+25-Mar:  mixer.scm with various matrix/vector related functions (determinant, inverse,\n\
+           solve simultaneous linear equations, etc) as applied to mixers/frames.\n\
+         invert-filter in dsp.scm.\n\
 23-Mar:  changed interpretation or frame->frame args.\n\
 18-Mar:  snd 7.11\n\
 17-Mar:  gc-on|off are no-ops now in Guile.\n\
@@ -2003,7 +2006,7 @@ and its value is returned."
   if (XEN_EQ_P(text, XEN_UNDEFINED))                              /* if no arg, describe snd-help */
     {
       help_text = C_TO_XEN_STRING(H_snd_help);
-      subject = H_snd_help;
+      subject = S_snd_help;
     }
   else
     {
@@ -2081,10 +2084,13 @@ and its value is returned."
   if (XEN_STRING_P(text))
     subject = XEN_TO_C_STRING(text);
   else 
-    if (XEN_SYMBOL_P(text))
-      subject = XEN_SYMBOL_TO_C_STRING(text);
-    else subject = H_snd_help;
-  str = xen_help(subject);
+    if ((XEN_SYMBOL_P(text)) && (XEN_BOUND_P(text)))
+      {
+	text = XEN_SYMBOL_TO_STRING(text);
+	subject = XEN_TO_C_STRING(text);
+      }
+    else text = C_TO_XEN_STRING(xen_scheme_procedure_to_ruby(S_snd_help));
+  str = XEN_AS_STRING(XEN_OBJECT_HELP(text));
 #endif
   if (str)
     {
