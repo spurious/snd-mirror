@@ -1339,6 +1339,7 @@ static XEN g_regions(void)
 static XEN g_make_region(XEN beg, XEN end, XEN snd_n, XEN chn_n)
 {
   #define H_make_region "(" S_make_region " beg end &optional snd chn) makes a new region between beg and end in snd, returning its id"
+  /* TODO: make multi-channel region? */
   chan_info *cp;
   sync_info *si;
   off_t ends[1];

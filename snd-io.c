@@ -119,11 +119,6 @@ static snd_io *free_file_state(snd_io *io)
   return(NULL);
 }
 
-static void close_file_state_fd(snd_io *io) 
-{
-  mus_file_close(io->fd);
-}
-
 void file_buffers_forward(off_t ind0, off_t ind1, off_t indx, snd_fd *sf, snd_data *cur_snd)
 {
   /* need to track in-core buffer and file-relative index */
@@ -507,7 +502,7 @@ snd_data *free_snd_data(snd_data *sd)
 	  sd->hdr = NULL;
 	  if (sd->io)
 	    {
-	      if (sd->open == FD_OPEN) close_file_state_fd(sd->io);
+	      if (sd->open == FD_OPEN) mus_file_close(sd->io->fd);
 	      sd->io = free_file_state(sd->io);
 	      if (sd->temporary == DELETE_ME) 
 		snd_remove(sd->filename, TRUE);

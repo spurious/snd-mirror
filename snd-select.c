@@ -738,10 +738,6 @@ static XEN g_insert_selection(XEN beg, XEN snd, XEN chn)
       XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(beg), beg, XEN_ARG_1, S_insert_selection, "a number");
       ss = get_global_state();
       cp = get_cp(snd, chn, S_insert_selection);
-      if (cp == NULL) 
-	cp = selected_channel(ss);
-      if (cp == NULL) 
-	return(snd_no_such_channel_error(S_insert_selection, snd, chn));
       err = insert_selection(ss, cp, 
 			     XEN_TO_C_OFF_T_OR_ELSE(beg, 0), 
 			     S_insert_selection);
@@ -762,10 +758,6 @@ static XEN g_mix_selection(XEN beg, XEN snd, XEN chn)
       XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(beg), beg, XEN_ARG_1, S_mix_selection, "a number");
       ss = get_global_state();
       cp = get_cp(snd, chn, S_mix_selection);
-      if (cp == NULL) 
-	cp = selected_channel(ss);
-      if (cp == NULL) 
-	return(snd_no_such_channel_error(S_mix_selection, snd, chn));
       return(C_TO_XEN_INT(mix_selection(ss, cp, 
 					XEN_TO_C_OFF_T_OR_ELSE(beg, 0), 
 					S_mix_selection)));
@@ -932,7 +924,8 @@ WITH_REVERSED_CHANNEL_ARGS(g_set_selection_member_reversed, g_set_selection_memb
 
 static XEN g_select_all(XEN snd_n, XEN chn_n)
 {
-  #define H_select_all "(" S_select_all " &optional snd chn) makes a new selection containing all of snd's channel chn"
+  #define H_select_all "(" S_select_all " &optional snd chn) makes a new selection containing all of snd's channel chn. \
+If sync is set, all chans are included.  The new region number is returned."
   chan_info *cp;
   int id;
   ASSERT_CHANNEL(S_select_all, snd_n, chn_n, 1);

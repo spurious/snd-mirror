@@ -38,6 +38,35 @@
     
 ;;; (key-event (car (channel-widgets)) (char->integer #\a) 4)
 
+(define key-event-with-mouse
+  (let ((e (XEvent KeyPress))
+	(cast-current-time (list 'Time CurrentTime)))
+    (lambda (widget key state x y)
+      (let ((dpy (XtDisplay widget))
+	    (window (XtWindow widget)))
+	(set! (.type e) KeyPress)
+	(set! (.window e) window)
+	(set! (.display e) dpy)
+	(set! (.root e) (RootWindow dpy (DefaultScreen dpy)))
+	(set! (.x e) x)
+	(set! (.y e) y)
+	(set! (.x_root e) x)
+	(set! (.y_root e) y)
+	(set! (.keycode e) (XKeysymToKeycode dpy (list 'KeySym key)))
+	(set! (.state e) state)
+	(set! (.time e) cast-current-time)
+	(set! (.same_screen e) #t)
+	(set! (.subwindow e) (list 'Window None))
+	(let ((err (XSendEvent dpy window #f KeyPressMask e)))
+	  (if (not (= err 0))
+	      (begin
+		(set! (.time e) cast-current-time)
+		(set! (.type e) KeyRelease)
+		(set! err (XSendEvent dpy window #f KeyReleaseMask e))))
+	  (if (= err 0)
+	      (display (format #f "[key-event error] " err)))
+	  err)))))
+
 (define resize-event
   (let ((e (XEvent ResizeRequest)))
     (lambda (widget width height)

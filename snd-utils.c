@@ -23,9 +23,7 @@ static int pow2s[POW2_SIZE] = {1, 2, 4, 8, 16, 32, 64, 128, 256,
 			       33554432, 67108864, 134217728, 268435456, 536870912, 1073741824};
 int snd_ipow2(int n)
 {
-  if (n < POW2_SIZE)
-    return(pow2s[n]);
-  return((int)pow(2.0, n));
+  return(pow2s[n]);
 }
 
 int snd_2pow2(int n)

@@ -269,13 +269,6 @@ static int read_ieee_text(char *oldname, char *newname, char *hdr)
   outp = 24;
   srate = 0;
   op = 0;
-  if (buf[0] != '%') 
-    {
-      CLEANUP();
-      return(mus_error(MUS_UNSUPPORTED_DATA_FORMAT,
-		       "can't translate IEEE text file %s:\n  Expected initial \"%%\" but found \"%c\"\n",
-		       oldname, buf[0]));
-    }
   while (commenting)
     {
       if (buf[inp] == '%') {op = inp; inp++;}

@@ -511,11 +511,6 @@ void mus_sound_report_cache(FILE *fp)
   fflush(fp);
 }
 
-void mus_sound_print_cache(void)
-{
-  mus_sound_report_cache(stdout);
-}
-
 static sound_file *fill_sf_record(const char *name, sound_file *sf)
 {
   int i;
@@ -1009,36 +1004,35 @@ int mus_sound_set_maxamps(const char *ifile, int chans, mus_sample_t *vals, off_
   int i, ichans = 0;
   sound_file *sf; 
   sf = getsf(ifile); 
-  if ((sf) && (sf->maxamps))
+  if (sf)
     {
-      if (chans > sf->chans) ichans = sf->chans; else ichans = chans;
-      for (i = 0; i < ichans; i++)
+      if (sf->maxamps)
 	{
-	  sf->maxtimes[i] = times[i];
-	  sf->maxamps[i] = vals[i];
+	  if (chans > sf->chans) ichans = sf->chans; else ichans = chans;
+	  for (i = 0; i < ichans; i++)
+	    {
+	      sf->maxtimes[i] = times[i];
+	      sf->maxamps[i] = vals[i];
+	    }
 	}
+      else
+	{
+	  ichans = mus_sound_chans(ifile);
+	  if (sf->maxamps == NULL) 
+	    {
+	      sf->maxamps = (mus_sample_t *)CALLOC(ichans, sizeof(mus_sample_t));
+	      sf->maxtimes = (off_t *)CALLOC(ichans, sizeof(off_t));
+	    }
+	  if (ichans > chans) ichans = chans;
+	  for (i = 0; i < ichans; i++)
+	    {
+	      sf->maxtimes[i] = times[i];
+	      sf->maxamps[i] = vals[i];
+	    }
+	}
+      return(MUS_NO_ERROR);
     }
-  else
-    {
-      ichans = mus_sound_chans(ifile);
-      if (sf == NULL)
-	{
-	  sf = getsf(ifile);
-	  if (sf == NULL) return(MUS_ERROR);
-	}
-      if (sf->maxamps == NULL) 
-	{
-	  sf->maxamps = (mus_sample_t *)CALLOC(ichans, sizeof(mus_sample_t));
-	  sf->maxtimes = (off_t *)CALLOC(ichans, sizeof(off_t));
-	}
-      if (ichans > chans) ichans = chans;
-      for (i = 0; i < ichans; i++)
-	{
-	  sf->maxtimes[i] = times[i];
-	  sf->maxamps[i] = vals[i];
-	}
-    }
-  return(MUS_NO_ERROR);
+  return(MUS_ERROR);
 }
 
 /* these two for backwards compatibility */

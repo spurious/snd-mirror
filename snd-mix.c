@@ -4243,8 +4243,7 @@ static XEN g_play_track(XEN num, XEN snd, XEN chn)
   else 
     {
       cp = get_cp(snd, chn, S_play_track);
-      if (cp)
-	play_track(cp->state, &cp, 1, XEN_TO_C_INT_OR_ELSE(num, 0));
+      play_track(cp->state, &cp, 1, XEN_TO_C_INT_OR_ELSE(num, 0));
     }
   return(num);
 }

@@ -1540,7 +1540,9 @@ BACKGROUND_TYPE apply_controls(GUI_POINTER ptr)
 			{
 			  for (i = 0; i < si->chans; i++)
 			    {
-			      file_insert_samples(si->begs[i], apply_dur, ap->ofile, si->cps[i], 0, DELETE_ME, "Apply to selection", si->cps[i]->edit_ctr);
+			      file_insert_samples(si->begs[i], apply_dur, ap->ofile, si->cps[i], 0, 
+						  (si->chans > 1) ? MULTICHANNEL_DELETION : DELETE_ME,
+						  "Apply to selection", si->cps[i]->edit_ctr);
 			      reactivate_selection(si->cps[i], si->begs[i], si->begs[i] + apply_dur);
 			      if (ok) backup_edit_list(si->cps[i]);
 			    }
@@ -2773,7 +2775,7 @@ static XEN g_amp_control(XEN snd_n, XEN chn_n)
     {
       ASSERT_CHANNEL(S_amp_control, snd_n, chn_n, 1);
       cp = get_cp(snd_n, chn_n, S_amp_control);
-      if ((cp) && (cp->amp_control))
+      if (cp->amp_control)
 	return(C_TO_XEN_DOUBLE(cp->amp_control[0]));
     }
   return(sound_get(snd_n, SP_AMP, S_amp_control));
@@ -2787,13 +2789,10 @@ static XEN g_set_amp_control(XEN on, XEN snd_n, XEN chn_n)
     {
       ASSERT_CHANNEL(S_amp_control, snd_n, chn_n, 2);
       cp = get_cp(snd_n, chn_n, S_amp_control);
-      if (cp)
-	{
-	  if (cp->amp_control == NULL)
-	    cp->amp_control = (Float *)CALLOC(1, sizeof(Float));
-	  cp->amp_control[0] = (Float)XEN_TO_C_DOUBLE_WITH_CALLER(on, "set! " S_amp_control);
-	  return(on);
-	}
+      if (cp->amp_control == NULL)
+	cp->amp_control = (Float *)CALLOC(1, sizeof(Float));
+      cp->amp_control[0] = (Float)XEN_TO_C_DOUBLE_WITH_CALLER(on, "set! " S_amp_control);
+      return(on);
     }
   return(sound_set(snd_n, on, SP_AMP, "set! " S_amp_control));
 }
