@@ -500,16 +500,12 @@ int widget_width(Widget w)
 
 void set_widget_height(Widget w, int height)
 {
-  Dimension whgt;
-  whgt = (Dimension)height;
-  XtVaSetValues(w,XmNheight,whgt,NULL);
+  XtVaSetValues(w,XmNheight,(Dimension)height,NULL);
 }
 
 void set_widget_width(Widget w, int width)
 {
-  Dimension wid;
-  wid = (Dimension)width;
-  XtVaSetValues(w,XmNwidth,wid,NULL);
+  XtVaSetValues(w,XmNwidth,(Dimension)width,NULL);
 }
 
 void set_widget_size(Widget w, int width, int height)
@@ -533,16 +529,12 @@ int widget_y(Widget w)
 
 void set_widget_x(Widget w, int x)
 {
-  Dimension xx;
-  xx = (Dimension)x;
-  XtVaSetValues(w,XmNx,xx,NULL);
+  XtVaSetValues(w,XmNx,(Dimension)x,NULL);
 }
 
 void set_widget_y(Widget w, int y)
 {
-  Dimension yy;
-  yy = (Dimension)y;
-  XtVaSetValues(w,XmNy,yy,NULL);
+  XtVaSetValues(w,XmNy,(Dimension)y,NULL);
 }
 
 void set_widget_position(Widget w, int x, int y)

@@ -118,8 +118,10 @@
 #if (!defined(HAVE_CONFIG_H)) || (defined(HAVE_STRING_H))
   #include <string.h>
 #endif
+#if (!defined(HAVE_CONFIG_H)) || (defined(HAVE_VPRINTF))
+  #include <stdarg.h>
+#endif
 
-#include <stdarg.h>
 #include <time.h>
 
 #if MACOS
@@ -173,7 +175,7 @@
   #include "sg.h"
 #endif
 
-#define SND_VERSION "23-Sep-00"
+#define SND_VERSION "25-Sep-00"
 #define SND_RPM_VERSION "4.6"
 #define SND_MAJOR_VERSION 4
 #define SND_MINOR_VERSION 6

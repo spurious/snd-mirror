@@ -1,5 +1,8 @@
 #include "snd.h"
 
+/* TODO:   undo-hook is not very useful until we can make channel-specific GUI indications
+ */
+
 /* -------------------------------- EDIT LISTS -------------------------------- *
  *
  * each channel has a list of lists containing the current edit history and the associated sound temp files or buffers

@@ -2,6 +2,10 @@
 #include "vct.h"
 #include "sndlib-strings.h"
 
+/* TODO: snd-apropos and help merged with Guile's?
+ *       completion activated in emacs (snd-as-subjob)
+ */
+
 #if defined(NEXT) || defined(HAVE_SYS_DIR_H)
   #include <sys/dir.h>
   #include <sys/dirent.h>

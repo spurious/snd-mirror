@@ -1,5 +1,12 @@
 #include "snd.h"
 
+/* TODO: report_in_minibuffer should (sometimes) add_to_error_history (change to snd_error?)
+ *       some of the guile tie-ins are still in snd-scm
+ *       swap-channels as snd-string etc? (seems to be half-implemented)
+ *       set! for x|y-zoom|position? maxamp? frames? edit-position?
+ *        
+ */
+
 #if defined(NEXT) || defined(HAVE_SYS_DIR_H)
   #include <sys/dir.h>
   #include <sys/dirent.h>

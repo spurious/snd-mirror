@@ -1,5 +1,8 @@
 #include "snd.h"
 
+/* TODO:   xmhtml prints to root window in help-dialog!!
+ */
+
 /* ---------------- HELP MONOLOG ---------------- */
 
 #define HELP_ROWS 12

@@ -1,6 +1,8 @@
-/* TODO: if enved wave button set and associated chan has wavo set, graph goes to wrong window */
-
 #include "snd.h"
+
+/* TODO: if enved wave button set and associated chan has wavo set, graph goes to wrong window
+ *       enved mix flt and src undo&apply cases untested (also clean undo of selection src)
+ */
 
 static char expr_buf[128];
 

@@ -1,5 +1,11 @@
 #include "snd.h"
 
+/* TODO:   user-loaded colormaps need to be added to the Color dialog list, etc
+ *         colored marks etc (requires 2 pixels for selected/unselected graphs)?
+ *         colormaps applied to lisp or data graph?
+ *         option to set the background-colour in the fft/transform-window?
+ */
+
 #if HAVE_GUILE
 
 static snd_state *state;

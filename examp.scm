@@ -58,6 +58,17 @@
 ;;; sound-interp, env-sound-interp
 ;;; compute-uniform-circular-string (and scanned-synthesis)
 ;;; add date and time to title bar
+;;; selection-members
+
+
+
+;;; TODO: pitch tracker
+;;;       adaptive notch filter
+;;;       ins: singer piano flute prc-toolkit fade pluck mlbvoi
+;;;       data-file rw case for pvoc.scm
+;;;       shorten (via autocorrelation, vowel detection), remove-vib, change-pitch (vowel oriented)
+
+
 
 (use-modules (ice-9 debug))
 (use-modules (ice-9 format))

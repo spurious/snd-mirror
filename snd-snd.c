@@ -1,5 +1,9 @@
 #include "snd.h"
 
+/* TODO:  set! for comment?
+ *        selected-sound|channel with set! to replace select-sound|channel? (ditto mix region)
+ */
+
 /* ---------------- amp envs ---------------- */
 
 #define MULTIPLIER 100

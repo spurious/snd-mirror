@@ -5,6 +5,8 @@
 ;;; control the fm-violin's amplitude from a slider
 ;;; provide separate amplitude control for each channel (an extension of the control panel)
 
+;;; TODO:  scanned synthesis controller
+
 
 (use-modules (gtk gtk) (gtk gdk))
 

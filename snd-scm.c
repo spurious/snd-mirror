@@ -2,6 +2,7 @@
 #include "vct.h"
 
 /* TODO: perhaps fit-data-on-open should be fit-data, callable via hooks at open time
+ *       mark-moved-hook? selection-creation-hook? sample-color?
  */
 
 #if HAVE_GUILE
@@ -232,6 +233,7 @@ SCM snd_catch_scm_error(void *data, SCM tag, SCM throw_args) /* error handler */
   ans = scm_strport_to_string(port);
 #else
   SCM_DEFER_INTS;
+  /* new version? SCM_STRING_CHARS(SCM_CDR...) */
   ans = scm_makfromstr (SCM_CHARS (SCM_CDR (SCM_STREAM (port))),SCM_INUM (SCM_CAR (SCM_STREAM (port))),0);
   SCM_ALLOW_INTS;
 #endif

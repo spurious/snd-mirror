@@ -18,6 +18,10 @@
 
 #if defined(HAVE_CONFIG_H)
   #include "config.h"
+#else
+  #ifndef HAVE_VPRINTF
+    #define HAVE_VPRINTF 1
+  #endif
 #endif
 
 #include <math.h>
@@ -41,6 +45,9 @@
 #endif
 #if (!defined(HAVE_CONFIG_H)) || (defined(HAVE_STRING_H))
   #include <string.h>
+#endif
+#if HAVE_VPRINTF
+  #include <stdarg.h>
 #endif
 
 #include "sndlib.h"
@@ -1519,3 +1526,20 @@ char *mus_file_full_name(char *tok)
 #endif
   return(file_name_buf);
 }
+
+char *mus_format(const char *format, ...)
+{
+  char *buf;
+#if HAVE_VPRINTF
+  va_list ap;
+  buf = (char *)CALLOC(256,sizeof(char));
+  va_start(ap,format);
+  vsprintf(buf,format,ap);
+  va_end(ap);
+#else
+  buf = (char *)CALLOC(256,sizeof(char));
+  sprintf(buf,"%s...[you need vprintf]",format);
+#endif
+  return(buf);
+}
+

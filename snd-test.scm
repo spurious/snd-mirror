@@ -19,8 +19,9 @@
 ;;; test 16: define-syntax 
 ;;; test 17: guile-gtk dialogs
 
-;;; need tests of set! srate et al
-;;;      add to test-spectral-difference set (reading o2 etc)
+
+;;; TODO: tests of set! srate et al
+;;;       add to test-spectral-difference set (reading o2 etc)
 
 
 (use-modules (ice-9 format) (ice-9 debug))
@@ -30,7 +31,7 @@
 
 (define tests 1)
 (set! full-test #t)
-;(set! snd-test 12)
+;(set! snd-test 16)
 ;;; to run a specific test: ./snd -e "(set! snd-test 4) (set! full-test #f)" -l snd-test.scm
 (define include-clm #f)
 (define original-prompt (listener-prompt))
@@ -3073,27 +3074,25 @@
           (current-sample 0)
           (chan-samples (frames)))
       (lambda (y)
-        (if y
-            (let ((old-y (vector-ref buffer position)))
-              (set! sum-of-squares (- (+ sum-of-squares (* y y)) (* old-y old-y)))
-              (vector-set! buffer position y)
-              (set! position (1+ position))
-              (if (= position 128) (set! position 0))
-              (set! current-sample (1+ current-sample))
-              (if (> sum-of-squares silence)
-                  (if (= current-sample chan-samples)
-                      ;; at end return trailing samples as long as it looks like sound
-                      (let ((temp-buffer (make-vector 128 0.0)))
-                        (do ((i 0 (1+ i)))
-                            ((= i 128) temp-buffer)
-                          (let ((final-y (vector-ref buffer position)))
-                            (vector-set! temp-buffer i (if (> sum-of-squares silence) final-y 0.0))
-                            (set! sum-of-squares (- sum-of-squares (* final-y final-y)))
-                            (set! position (1+ position))
-                            (if (= position 128) (set! position 0)))))
-                      old-y)
-                  replacement))
-            #f)))))
+	(let ((old-y (vector-ref buffer position)))
+	  (set! sum-of-squares (- (+ sum-of-squares (* y y)) (* old-y old-y)))
+	  (vector-set! buffer position y)
+	  (set! position (1+ position))
+	  (if (= position 128) (set! position 0))
+	  (set! current-sample (1+ current-sample))
+	  (if (> sum-of-squares silence)
+	      (if (= current-sample chan-samples)
+		  ;; at end return trailing samples as long as it looks like sound
+		  (let ((temp-buffer (make-vector 128 0.0)))
+		    (do ((i 0 (1+ i)))
+			((= i 128) temp-buffer)
+		      (let ((final-y (vector-ref buffer position)))
+			(vector-set! temp-buffer i (if (> sum-of-squares silence) final-y 0.0))
+			(set! sum-of-squares (- sum-of-squares (* final-y final-y)))
+			(set! position (1+ position))
+			(if (= position 128) (set! position 0)))))
+		  old-y)
+	      replacement))))))
 
 (define sf-dir-files (if (string? sf-dir) (sound-files-in-directory sf-dir) #f))
 (define sf-dir-len (if sf-dir-files (vector-length sf-dir-files) 0))
@@ -4508,7 +4507,6 @@
       ))
 
 
-(if #f (begin
 ;;; ---------------- test 16: define-syntax ----------------
 (if (or full-test (= snd-test 16))
     (let ((hi 32)
@@ -4521,7 +4519,7 @@
       (if (not (= ho 16)) (snd-print (format #f "loop: ~A?" ho)))
       (set! hi (prog1 (+ 2 ho) (set! ho 3)))
       (if (not (= hi 18)) (snd-print (format #f "prog1: ~A?" hi)))))
-))
+
 
 ;;; ---------------- test 17: guile-gtk dialogs ----------------
 (if (or full-test (= snd-test 17))

@@ -1,5 +1,11 @@
 #include "snd.h"
 
+/* TODO:   when quad file is opened, its panes are a mess (normalize?)
+ *         Hz in filter-env display
+ *         paned windows should use ratios (not doable currently -- need own panedwindow widget)
+ *         gmeteor filter coeffs for control-panel filter?
+ */
+
 #if HAVE_XPM
   #include <X11/xpm.h>
 #endif
@@ -263,7 +269,10 @@ void set_snd_amp(snd_info *sp, Float val)
 {
   if (IS_PLAYER(sp))
     sp->amp = val;
-  else XtVaSetValues(w_snd_amp(sp),XmNvalue,snd_amp_changed(sp,snd_amp_to_int(val)),NULL);
+  else XtVaSetValues(w_snd_amp(sp),
+		     XmNvalue,
+		     snd_amp_changed(sp,snd_amp_to_int(fclamp(0.0,val,7.25))),
+		     NULL);
 }
 
 static void W_amp_Click_Callback(Widget w,XtPointer clientData,XtPointer callData) 
@@ -328,7 +337,10 @@ void set_snd_srate(snd_info *sp, Float val)
 {
   if (IS_PLAYER(sp))
     sp->srate = val;
-  else XtVaSetValues(w_snd_srate(sp),XmNvalue,snd_srate_changed(sp,snd_srate_to_int(val)),NULL);
+  else XtVaSetValues(w_snd_srate(sp),
+		     XmNvalue,
+		     snd_srate_changed(sp,snd_srate_to_int(fclamp(-20.0,val,20.0))),
+		     NULL);
 }
 
 static void W_srate_Click_Callback(Widget w,XtPointer clientData,XtPointer callData) 
@@ -399,7 +411,10 @@ void set_snd_expand(snd_info *sp, Float val)
 {
   if (IS_PLAYER(sp))
     sp->expand = val;
-  else XtVaSetValues(w_snd_expand(sp),XmNvalue,snd_expand_changed(sp,snd_expand_to_int(val)),NULL);
+  else XtVaSetValues(w_snd_expand(sp),
+		     XmNvalue,
+		     snd_expand_changed(sp,snd_expand_to_int(fclamp(0.0,val,20.0))),
+		     NULL);
 }
 
 static void W_expand_Click_Callback(Widget w,XtPointer clientData,XtPointer callData) 
@@ -474,7 +489,10 @@ void set_snd_contrast(snd_info *sp, Float val)
 {
   if (IS_PLAYER(sp))
     sp->contrast = val;
-  else XtVaSetValues(w_snd_contrast(sp),XmNvalue,snd_contrast_changed(sp,snd_contrast_to_int(val)),NULL);
+  else XtVaSetValues(w_snd_contrast(sp),
+		     XmNvalue,
+		     snd_contrast_changed(sp,snd_contrast_to_int(fclamp(0.0,val,9.0))),
+		     NULL);
 }
 
 static void W_contrast_Click_Callback(Widget w,XtPointer clientData,XtPointer callData) 
@@ -561,7 +579,10 @@ void set_snd_revscl(snd_info *sp, Float val)
 {
   if (IS_PLAYER(sp))
     sp->revscl = val;
-  else XtVaSetValues(w_snd_revscl(sp),XmNvalue,snd_revscl_changed(sp,snd_revscl_to_int(val)),NULL);
+  else XtVaSetValues(w_snd_revscl(sp),
+		     XmNvalue,
+		     snd_revscl_changed(sp,snd_revscl_to_int(fclamp(0.0,val,3.25))),
+		     NULL);
 }
 
 static void W_revscl_Click_Callback(Widget w,XtPointer clientData,XtPointer callData) 
@@ -617,7 +638,10 @@ void set_snd_revlen(snd_info *sp, Float val)
 {
   if (IS_PLAYER(sp))
     sp->revlen = val;
-  else XtVaSetValues(w_snd_revlen(sp),XmNvalue,snd_revlen_changed(sp,snd_revlen_to_int(val)),NULL);
+  else XtVaSetValues(w_snd_revlen(sp),
+		     XmNvalue,
+		     snd_revlen_changed(sp,snd_revlen_to_int(fclamp(0.0,val,4.5))),
+		     NULL);
 }
 
 static void W_revlen_Click_Callback(Widget w,XtPointer clientData,XtPointer callData) 

@@ -520,15 +520,16 @@ static void SetupIcon(Widget shell)
 #endif
 
 #ifndef __cplusplus
-/* 'String' is trouble in C++ -- easiest fix is probably to use 'char *' */
 static void muffle_warning(String name, String type, String class, String defaultp, String *params, Cardinal *num_params)
+#else
+static void muffle_warning(char *name, char *type, char *klass, char *defaultp, char **params, unsigned int *num_params)
+#endif
 {
   /* these warnings are occurring when they should not, and they are of no interest to anyone, so shove a sock in Xt */
 #ifdef DEBUGGING
   fprintf(stderr,"ignoring: %s: %s\n",name,defaultp);
 #endif
 }
-#endif
 
 static void ss_graph_key_press(Widget w,XtPointer clientData,XEvent *event,Boolean *cont) 
 {
@@ -726,9 +727,7 @@ void snd_doit(snd_state *ss,int argc, char **argv)
   sx->dialog_list_size = 0;
 
 #ifndef SND_AS_WIDGET
-#ifndef __cplusplus
   XtAppSetWarningMsgHandler(app,muffle_warning);
-#endif
 #endif
 
   sx->mainapp = app;

@@ -27,8 +27,8 @@
 
 
 #define SNDLIB_VERSION 11
-#define SNDLIB_REVISION 1
-#define SNDLIB_DATE "22-Sep-00"
+#define SNDLIB_REVISION 3
+#define SNDLIB_DATE "25-Sep-00"
 
 #ifndef HAVE_SNDLIB
   #define HAVE_SNDLIB 1
@@ -336,9 +336,11 @@ __BEGIN_DECLS
 #ifdef __GNUC__
   void mus_error(int error, const char *format, ...) __attribute__ ((format (printf, 2, 3)));
   void mus_print(const char *format, ...) __attribute__ ((format (printf, 1, 2)));
+  char *mus_format(const char *format, ...) __attribute__ ((format (printf, 1, 2)));
 #else
   void mus_error              PROTO((int error, const char *format, ...));
   void mus_print              PROTO((const char *format, ...));
+  char *mus_format            PROTO((const char *format, ...));
 #endif
 
 typedef void mus_error_handler_t(int type, char *msg);
@@ -422,8 +424,6 @@ char *mus_audio_system_name   PROTO((int system));
 char *mus_audio_moniker       PROTO((void));
 
 #if HAVE_OSS
-  void mus_audio_set_dsp_devices    PROTO((int cards, int *dsps, int *mixers));
-  void mus_audio_dsp_devices        PROTO((int cards, int *dsps, int *mixers));
   void mus_audio_clear_soundcard_inputs PROTO((void));
 #endif
 #if (HAVE_OSS || HAVE_ALSA)
