@@ -668,10 +668,6 @@ Float mus_array_interp(Float *wave, Float phase, int size)
   /* changed 26-Sep-00 to be closer to mus.lisp */
   int int_part;
   Float frac_part;
-#if HAVE_DECL_ISNAN
-  /* TODO: surely there's a better way to handle Nans and infs?? */
-  if (isnan(phase)) return(0.0);
-#endif  
   if ((phase < 0.0) || (phase > size))
     {
       /* 28-Mar-01 changed to fmod; I was hoping to avoid this... */
@@ -6006,12 +6002,15 @@ Float mus_src(mus_any *srptr, Float sr_change, Float (*input)(void *arg, int dir
   int xi, xs;
   bool int_ok = false;
   lim = srp->lim;
+#if HAVE_DECL_ISNAN
+  if (isnan(sr_change)) sr_change = 0.0;
+#endif
   srx = srp->incr + sr_change;
   if (srp->x >= 1.0)
     {
       Float (*sr_input)(void *arg, int direction) = input;
       if (sr_input == NULL) sr_input = srp->feeder;
-      fsx = (int)(srp->x); /* TODO: possible overflow here */
+      fsx = (int)(srp->x);
       srp->x -= fsx;
       /* realign data, reset srp->x */
       if (fsx > lim)
@@ -7896,13 +7895,40 @@ void init_mus_module(void)
 }
 
 
-/*
- *   to make global (gen-relative) method change, need way to set gen's class fields
- *   to make gen-local method change, need to copy class, reassign core, set desired field
- *   or add-to-existing would need access to current
- *   -> [local] copy_class(gen), mus_set_[x:describe|frequency...]_method(gen|class, func, [set func])
- *      mus_defmethod(gen|class, name, func, [set func]) -- needs full decl
- *   -> [local] mus_class(gen)? (=core)
- *   will this need an added field in mus_any or perhaps mus_xen for the backpointer?
- */
+#if 0
 
+/* local methods (add_method etc) */
+/* a first guess -- add field bool local_class */
+static mus_any_class *copy_class(mus_any *gen)
+{
+  mus_any_class *new_mus;
+  int size;
+  size = sizeof(mus_any_class);
+  new_mus = (mus_any_class *)CALLOC(1, size);
+  memcpy((void *)new_mus, (void *)(gen->core), size);
+  gen->local_class = true;
+  return(new_mus);
+}
+
+char *mus_set_name(mus_any *gen, const char *name)
+{
+  if (!(gen->local_class)) 
+    gen->core = copy_class(gen);
+  else
+    {
+      if (gen->core->name) 
+	free(gen->core->name);
+    }
+  gen->core->name = strdup(name);
+  return(name);
+}
+
+/* or to set local frequency reader... */
+void mus_set_local_frequency_method(mus_any *gen, Float (*frequency)(mus_any *ptr))
+{
+  if (!(gen->local_class)) 
+    gen->core = copy_class(gen);
+  gen->core->frequency = frequency;
+}
+
+#endif

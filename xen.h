@@ -19,15 +19,14 @@
  * "xen" from Greek xenos (guest, foreigner)
  */
 
-/* TODO: decide how to handle NaNs and infs in double translations */
-
 #define XEN_MAJOR_VERSION 1
-#define XEN_MINOR_VERSION 19
-#define XEN_VERSION "1.19"
+#define XEN_MINOR_VERSION 20
+#define XEN_VERSION "1.20"
 
 /* HISTORY:
  *
  *  28-Sep-04: deprecated *_WITH_CALLER -- these no longer do anything useful in Guile.
+ *             NaNs and Infs -> 0 or 0.0 in XEN_TO_C_INT|DOUBLE -- perhaps I should add another set of macros?
  *  23-Aug-04: more Guile name changes.
  *  12-Aug-04: more Guile name changes, C_TO_XEN_STRINGN (Guile)
  *  3-Aug-04:  xen_to_c_int bugfix thanks to Kjetil S. Matheussen.
@@ -221,18 +220,14 @@
 #define XEN_EQV_P(A, B)              XEN_TO_C_BOOLEAN(scm_eqv_p(A, B))
 #define XEN_EQUAL_P(A, B)            XEN_TO_C_BOOLEAN(scm_equal_p(A, B))
 
-#define XEN_TO_C_INT(a)                 xen_to_c_int(a)
-#define XEN_TO_C_INT_OR_ELSE(a, b)      xen_to_c_int_or_else(a, b)
-#define XEN_INTEGER_P(Arg)              xen_integer_p(Arg)
+#define XEN_TO_C_INT(a)              xen_to_c_int(a)
+#define XEN_TO_C_INT_OR_ELSE(a, b)   xen_to_c_int_or_else(a, b)
+#define XEN_INTEGER_P(Arg)           xen_integer_p(Arg)
+#define XEN_TO_C_DOUBLE(a)           xen_to_c_double(a)  
+#define XEN_TO_C_DOUBLE_OR_ELSE(a, b) xen_to_c_double_or_else(a, b)  
 
 /* all the number handlers changed (names...) in 1.7 */
 #if HAVE_SCM_TO_SIGNED_INTEGER
-  #define XEN_TO_C_DOUBLE(a)            scm_to_double(a)
-  #if defined(__GNUC__) && (!(defined(__cplusplus)))
-    #define XEN_TO_C_DOUBLE_OR_ELSE(a, b) ({ XEN _xen_h_0_ = a; ((XEN_NUMBER_P(_xen_h_0_)) ? (scm_to_double(_xen_h_0_)) : (b)); })
-  #else
-    #define XEN_TO_C_DOUBLE_OR_ELSE(a, b) xen_to_c_double_or_else(a, b)
-  #endif
   #define C_TO_XEN_DOUBLE(a)            scm_from_double(a)
   #define C_TO_XEN_INT(a)               scm_from_int(a)
   #define XEN_TO_C_ULONG(a)             scm_to_ulong(a)
@@ -246,12 +241,6 @@
   #define XEN_OFF_T_P(Arg)              ((bool)scm_is_integer(Arg))
   #define XEN_ULONG_P(Arg1)             (XEN_NOT_FALSE_P(scm_number_p(Arg1)))
 #else
-  #define XEN_TO_C_DOUBLE(a)            scm_num2dbl(a,  c__FUNCTION__)
-  #if defined(__GNUC__) && (!(defined(__cplusplus)))
-    #define XEN_TO_C_DOUBLE_OR_ELSE(a, b) ({ XEN _xen_h_0_ = a; ((XEN_NUMBER_P(_xen_h_0_)) ? (scm_num2dbl(_xen_h_0_,  c__FUNCTION__)) : (b)); })
-  #else
-    #define XEN_TO_C_DOUBLE_OR_ELSE(a, b) xen_to_c_double_or_else(a, b)
-  #endif
   #if HAVE_SCM_MAKE_REAL
     #define C_TO_XEN_DOUBLE(a)          scm_make_real(a)
   #else
@@ -668,6 +657,7 @@ void xen_guile_define_procedure_with_reversed_setter(char *get_name, XEN (*get_f
 						     char *set_name, XEN (*set_func)(), XEN (*reversed_set_func)(), 
 						     XEN local_doc,
 						     int get_req, int get_opt, int set_req, int set_opt);
+double xen_to_c_double(XEN a);
 double xen_to_c_double_or_else(XEN a, double b);
 int xen_to_c_int(XEN a);
 bool xen_integer_p(XEN a);

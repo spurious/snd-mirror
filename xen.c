@@ -91,13 +91,25 @@ void xen_gc_mark(XEN val)
 }
 
 
+double xen_to_c_double(XEN a) 
+{
+  double num;
+#if HAVE_SCM_TO_SIGNED_INTEGER
+  num = scm_to_double(a);
+#else
+  num = scm_num2dbl(a, c__FUNCTION__);
+#endif
+#if HAVE_DECL_ISNAN
+  if (isnan(num)) return(0.0);
+#endif
+  return(num);
+}
+
 double xen_to_c_double_or_else(XEN a, double b) 
 {
-#if HAVE_SCM_TO_SIGNED_INTEGER
-  return((XEN_NUMBER_P(a)) ? (scm_to_double(a)) : (b));
-#else
-  return((XEN_NUMBER_P(a)) ? (scm_num2dbl(a, c__FUNCTION__)) : (b));
-#endif
+  if (XEN_NUMBER_P(a))
+    return(xen_to_c_double(a));
+  return(b);
 }
 
 bool xen_integer_p(XEN a) 
@@ -127,7 +139,7 @@ int xen_to_c_int(XEN a)
 #if HAVE_SCM_TO_SIGNED_INTEGER
     if ((SCM_INEXACTP(a)) || (SCM_FRACTIONP(a))) /* avoid error if inexact integer! SCM_INUMP deprecated in 1.7 */
       {
-	if ((scm_is_true(scm_inf_p(a))) || (scm_is_true(scm_nan_p(a)))) return(0); /* gad -- perhaps we should throw an error here? */
+	if ((scm_is_true(scm_inf_p(a))) || (scm_is_true(scm_nan_p(a)))) return(0);
 	if (SCM_REALP(a)) return((int)(SCM_REAL_VALUE(a)));
 	return((int)scm_to_double(a)); 
       }

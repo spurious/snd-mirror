@@ -363,7 +363,7 @@ char *run_save_state_hook(char *file)
 
 #define BUFFER_NOT_FILE_LIMIT 64
 
-static void edit_data_to_file(FILE *fd, ed_list *ed, chan_info *cp)
+static char *edit_data_to_file(FILE *fd, ed_list *ed, chan_info *cp)
 {
   int snd;
   snd = ed->sound_location; /* sound_location read only here (modulo error reporting) */
@@ -383,7 +383,7 @@ static void edit_data_to_file(FILE *fd, ed_list *ed, chan_info *cp)
 	      FREE(ofile);
 	      mus_array_to_file(newname, sd->buffered_data, ed->len, 22050, 1);
 	      fprintf(fd, "\"%s\"", newname);
-	      FREE(newname);
+	      return(newname);
 	    }
 	  else
 	    {
@@ -397,6 +397,7 @@ static void edit_data_to_file(FILE *fd, ed_list *ed, chan_info *cp)
 #endif
 		}
 	      fprintf(fd, VECTOR_CLOSE);
+	      return(NULL);
 	    }
 	}
       else
@@ -409,7 +410,7 @@ static void edit_data_to_file(FILE *fd, ed_list *ed, chan_info *cp)
 	      FREE(ofile);
 	      copy_file(sd->filename, newname);
 	      fprintf(fd, "\"%s\"", newname);
-	      FREE(newname);
+	      return(newname);
 	    }
 	  else
 	    {
@@ -425,7 +426,7 @@ static void edit_data_to_file(FILE *fd, ed_list *ed, chan_info *cp)
 		  snd_error(_("save edits: can't open %s: %s!"),
 			    sd->filename,
 			    strerror(errno));
-		  return;
+		  return(NULL);
 		}
 	      idataloc = mus_sound_data_location(sd->filename);
 	      mus_file_open_descriptors(ifd,
@@ -465,6 +466,7 @@ static void edit_data_to_file(FILE *fd, ed_list *ed, chan_info *cp)
 	    }
 	}
     }
+  return(NULL);
 }
 
 
@@ -4577,13 +4579,17 @@ void edit_history_to_file(FILE *fd, chan_info *cp)
 	      fprintf(fd, "      %s(\"%s\", " OFF_TD ", sfile, %d, \"%s\")\n",
 		      S_override_samples_with_origin, nfile, len, cp->chan, (ed->origin) ? ed->origin : "");
 #else
-	      fprintf(fd, "      (%s \"%s\" " OFF_TD " sfile %d \"%s\")\n",
-		      S_override_samples_with_origin, nfile, len, cp->chan, (ed->origin) ? ed->origin : "");
+	      fprintf(fd, "      (%s \"%s\" " OFF_TD " sfile %d \"%s\" (list %d " OFF_TD "))\n",
+		      S_override_samples_with_origin, nfile, len, cp->chan, (ed->origin) ? ed->origin : "",
+		      (int)mus_sound_write_date(nfile),
+		      mus_sound_length(nfile));
+		      
 #endif
 	      FREE(nfile);
 	    }
 	  else
 	    {
+	      char *nfile = NULL;
 #if HAVE_RUBY
 	      fprintf(fd, "      ");
 #else
@@ -4598,7 +4604,7 @@ void edit_history_to_file(FILE *fd, chan_info *cp)
 			  ed->beg,
 			  ed->len,
 			  (ed->origin) ? ed->origin : "");
-		  edit_data_to_file(fd, ed, cp);
+		  nfile = edit_data_to_file(fd, ed, cp);
 		  fprintf(fd, PROC_SEP "sfile" PROC_SEP "%d", cp->chan);
 		  break;
 		case DELETION_EDIT:
@@ -4616,7 +4622,7 @@ void edit_history_to_file(FILE *fd, chan_info *cp)
 			  ed->beg,
 			  ed->len,
 			  (ed->origin) ? ed->origin : "");
-		  edit_data_to_file(fd, ed, cp);
+		  nfile = edit_data_to_file(fd, ed, cp);
 		  fprintf(fd, PROC_SEP "sfile" PROC_SEP "%d", cp->chan);
 		  break;
 		case EXTEND_EDIT:
@@ -4684,6 +4690,15 @@ void edit_history_to_file(FILE *fd, chan_info *cp)
 		    fprintf(fd, " %s", XEN_AS_STRING(XEN_PROCEDURE_SOURCE(code)));
 		}
 #endif
+	      if (nfile) 
+		{
+#if HAVE_GUILE
+		  fprintf(fd, " (list %d " OFF_TD ")",
+			  (int)mus_sound_write_date(nfile),
+			  mus_sound_length(nfile));
+#endif
+		  FREE(nfile);
+		}
 	      fprintf(fd, ")\n"); /* works for both Ruby and Scheme */
 	    }
 	}
@@ -8092,8 +8107,55 @@ the new data's end."
   return(xen_return_first(vect, edname));
 }
 
-static XEN g_override_samples_with_origin(XEN filename, XEN samps, XEN snd_n, XEN chn_n, XEN origin)
+static void check_saved_temp_file(XEN filename, XEN date_and_length)
 {
+  char old_time_buf[TIME_STR_SIZE], new_time_buf[TIME_STR_SIZE];
+  char *file;
+  time_t old_time, new_time;
+  off_t old_bytes, new_bytes;
+  file = XEN_TO_C_STRING(filename);
+  if (mus_file_probe(file))
+    {
+      old_time = (time_t)XEN_TO_C_ULONG(XEN_CAR(date_and_length));
+      old_bytes = XEN_TO_C_OFF_T(XEN_CADR(date_and_length));
+      new_time = mus_sound_write_date(file);
+      new_bytes = mus_sound_length(file);
+      if ((new_time != old_time) || (new_bytes != old_bytes))
+	{
+	  char *buf = NULL;
+	  if (new_time != old_time)
+	    {
+	      strftime(old_time_buf, TIME_STR_SIZE, STRFTIME_FORMAT, localtime(&old_time));
+	      strftime(new_time_buf, TIME_STR_SIZE, STRFTIME_FORMAT, localtime(&new_time));
+	    }
+	  snd_warning("Saved temp file mismatch!  See error history for details");
+	  if (old_time != new_time)
+	    {
+	      if (old_bytes != new_bytes)
+		buf = mus_format("Saved sound temp file %s: original write date: %s, current: %s, original length: " OFF_TD "bytes, current: " OFF_TD,
+				 file,
+				 old_time_buf, new_time_buf,
+				 old_bytes, new_bytes);
+	      else 
+		buf = mus_format("Saved sound temp file %s: original write date: %s, current: %s",
+				 file,
+				 old_time_buf, new_time_buf);
+	    }
+	  else buf = mus_format("Saved sound temp file %s: original length: " OFF_TD "bytes, current: " OFF_TD,
+				 file,
+				 old_bytes, new_bytes);
+	  if (buf)
+	    {
+	      add_to_error_history(buf, false);
+	      FREE(buf);
+	    }
+	}
+    }
+}
+
+static XEN g_override_samples_with_origin(XEN filename, XEN samps, XEN snd_n, XEN chn_n, XEN origin, XEN date)
+{
+  check_saved_temp_file(filename, date);
   return(g_set_samples(XEN_ZERO, samps, filename, snd_n, chn_n, XEN_TRUE, origin, XEN_ZERO, XEN_FALSE, XEN_FALSE));
 }
 
@@ -8250,7 +8312,7 @@ static XEN g_set_samples_reversed(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN ar
 }
 #endif
 
-static XEN g_change_samples_with_origin(XEN samp_0, XEN samps, XEN origin, XEN vect, XEN snd_n, XEN chn_n, XEN edpos)
+static XEN g_change_samples_with_origin(XEN samp_0, XEN samps, XEN origin, XEN vect, XEN snd_n, XEN chn_n, XEN edpos, XEN date)
 {
   chan_info *cp;
   int pos;
@@ -8284,6 +8346,7 @@ static XEN g_change_samples_with_origin(XEN samp_0, XEN samps, XEN origin, XEN v
   else
     {
       /* string = filename here */
+      check_saved_temp_file(vect, date);
       file_change_samples(beg, len,
 			  XEN_TO_C_STRING(vect),
 			  cp, 0, DONT_DELETE_ME, LOCK_MIXES,
@@ -8482,7 +8545,7 @@ insert data (either a vector, vct, or list of samples, or a filename) into snd's
   return(C_TO_XEN_OFF_T(len));
 }
 
-static XEN g_insert_samples_with_origin(XEN samp, XEN samps, XEN origin, XEN vect, XEN snd_n, XEN chn_n, XEN edpos)
+static XEN g_insert_samples_with_origin(XEN samp, XEN samps, XEN origin, XEN vect, XEN snd_n, XEN chn_n, XEN edpos, XEN date)
 {
   chan_info *cp;
   int pos;
@@ -8514,7 +8577,11 @@ static XEN g_insert_samples_with_origin(XEN samp, XEN samps, XEN origin, XEN vec
       insert_samples(beg, len, ivals, cp, XEN_TO_C_STRING(origin), pos);
       FREE(ivals);
     }
-  else file_insert_samples(beg, len, XEN_TO_C_STRING(vect), cp, 0, DONT_DELETE_ME, XEN_TO_C_STRING(origin), pos);
+  else 
+    {
+      check_saved_temp_file(vect, date);
+      file_insert_samples(beg, len, XEN_TO_C_STRING(vect), cp, 0, DONT_DELETE_ME, XEN_TO_C_STRING(origin), pos);
+    }
   update_graph(cp);
   return(xen_return_first(C_TO_XEN_OFF_T(len), vect));
 }
@@ -8892,10 +8959,10 @@ XEN_ARGIFY_7(g_insert_sound_w, g_insert_sound)
 XEN_ARGIFY_6(g_scale_sound_by_w, g_scale_sound_by)
 XEN_ARGIFY_6(g_scale_channel_w, g_scale_channel)
 XEN_ARGIFY_5(g_scale_sound_to_w, g_scale_sound_to)
-XEN_NARGIFY_7(g_change_samples_with_origin_w, g_change_samples_with_origin)
+XEN_ARGIFY_8(g_change_samples_with_origin_w, g_change_samples_with_origin)
 XEN_NARGIFY_6(g_delete_samples_with_origin_w, g_delete_samples_with_origin)
-XEN_NARGIFY_7(g_insert_samples_with_origin_w, g_insert_samples_with_origin)
-XEN_NARGIFY_5(g_override_samples_with_origin_w, g_override_samples_with_origin)
+XEN_ARGIFY_8(g_insert_samples_with_origin_w, g_insert_samples_with_origin)
+XEN_ARGIFY_6(g_override_samples_with_origin_w, g_override_samples_with_origin)
 XEN_ARGIFY_4(g_sample_w, g_sample)
 XEN_ARGIFY_5(g_set_sample_w, g_set_sample)
 XEN_ARGIFY_5(g_samples_w, g_samples)
@@ -9016,10 +9083,10 @@ void g_init_edits(void)
 
   /* internal functions (restore-state) */
   XEN_DEFINE_PROCEDURE("section-scale-by",             g_scale_sound_by_w,               1, 5, 0, "internal scaling function used in save-state");
-  XEN_DEFINE_PROCEDURE(S_change_samples_with_origin,   g_change_samples_with_origin_w,   7, 0, 0, "internal function used in save-state");
+  XEN_DEFINE_PROCEDURE(S_change_samples_with_origin,   g_change_samples_with_origin_w,   7, 1, 0, "internal function used in save-state");
   XEN_DEFINE_PROCEDURE(S_delete_samples_with_origin,   g_delete_samples_with_origin_w,   6, 0, 0, "internal function used in save-state");
-  XEN_DEFINE_PROCEDURE(S_insert_samples_with_origin,   g_insert_samples_with_origin_w,   7, 0, 0, "internal function used in save-state");
-  XEN_DEFINE_PROCEDURE(S_override_samples_with_origin, g_override_samples_with_origin_w, 5, 0, 0, "internal function used in save-state");
+  XEN_DEFINE_PROCEDURE(S_insert_samples_with_origin,   g_insert_samples_with_origin_w,   7, 1, 0, "internal function used in save-state");
+  XEN_DEFINE_PROCEDURE(S_override_samples_with_origin, g_override_samples_with_origin_w, 5, 1, 0, "internal function used in save-state");
 
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_sample, g_sample_w, H_sample,
 					    S_setB S_sample, g_set_sample_w, g_set_sample_reversed, 0, 4, 1, 4);

@@ -257,6 +257,7 @@
 	 (gtk_widget_show scale)
 	 (gtk_box_pack_start (GTK_BOX scan-row) label #t #t 0)
 	 (gtk_widget_show label)
+	 ;; TODO: cleanup the g_signal_connect stuff in gtk scm files
 	 (g_signal_connect_closure_by_id (GPOINTER adj)
 					 (g_signal_lookup "value_changed" (G_OBJECT_TYPE (GTK_OBJECT adj)))
 					 0

@@ -2,8 +2,8 @@
 #define SNDLIB_H
 
 #define SNDLIB_VERSION 19
-#define SNDLIB_REVISION 5
-#define SNDLIB_DATE "30-Jul-04"
+#define SNDLIB_REVISION 6
+#define SNDLIB_DATE "29-Sep-04"
 
 #include <config.h>
 
@@ -342,7 +342,7 @@ off_t mus_sound_comment_start(const char *arg);
 off_t mus_sound_comment_end(const char *arg);
 off_t mus_sound_length(const char *arg);
 int mus_sound_fact_samples(const char *arg);
-int mus_sound_write_date(const char *arg);
+time_t mus_sound_write_date(const char *arg);
 int mus_sound_type_specifier(const char *arg);
 int mus_sound_block_align(const char *arg);
 int mus_sound_bits_per_sample(const char *arg);

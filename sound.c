@@ -216,7 +216,7 @@ static time_t local_file_write_date(const char *filename)
   return((time_t)(statbuf.st_mtime));
 }
 #else
-static int local_file_write_date(const char *filename) {return(1);}
+static time_t local_file_write_date(const char *filename) {return(1);}
 #endif
 
 static bool sndlib_initialized = false;
@@ -608,7 +608,7 @@ off_t mus_sound_comment_start (const char *arg) {MUS_SF(arg, sf->comment_start);
 off_t mus_sound_comment_end (const char *arg)   {MUS_SF(arg, sf->comment_end);}
 off_t mus_sound_length (const char *arg)        {MUS_SF(arg, sf->true_file_length);}
 int mus_sound_fact_samples (const char *arg)    {MUS_SF(arg, sf->fact_samples);}
-int mus_sound_write_date (const char *arg)      {MUS_SF(arg, (int)(sf->write_date));}
+time_t mus_sound_write_date (const char *arg)   {MUS_SF(arg, sf->write_date);}
 int mus_sound_type_specifier (const char *arg)  {MUS_SF(arg, sf->type_specifier);}
 int mus_sound_block_align (const char *arg)     {MUS_SF(arg, sf->block_align);}
 int mus_sound_bits_per_sample (const char *arg) {MUS_SF(arg, sf->bits_per_sample);}

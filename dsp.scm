@@ -1720,5 +1720,3 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 		(let ((pk (vct-peak new-sound)))
 		  (vct-scale! new-sound (/ peak pk)))))))
     (vct->channel new-sound 0 (max len (* len (1- num-coeffs))) snd chn)))
-
-;;; TODO: permute-channel, equalize-channel (via inv ave?), local reverse/permute (section again) or across sounds -- scramble-channel in examp?

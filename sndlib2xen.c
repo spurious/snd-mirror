@@ -218,7 +218,8 @@ static XEN g_mus_sound_comment(XEN gfilename)
 static XEN g_mus_sound_write_date(XEN filename) 
 {
   #define H_mus_sound_write_date "(" S_mus_sound_write_date " filename): write date of sound file"
-  return(gmus_sound(S_mus_sound_write_date, mus_sound_write_date, filename));
+  XEN_ASSERT_TYPE(XEN_STRING_P(filename), filename, XEN_ONLY_ARG, S_mus_sound_write_date, "a string"); 
+  return(C_TO_XEN_ULONG((unsigned long)mus_sound_write_date(local_mus_expand_filename(XEN_TO_C_STRING(filename)))));
 }
 
 static XEN g_mus_header_type_name(XEN type) 

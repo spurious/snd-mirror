@@ -4190,7 +4190,7 @@ static XEN g_src_p(XEN obj)
   return(C_TO_XEN_BOOLEAN((MUS_XEN_P(obj)) && (mus_src_p(XEN_TO_MUS_ANY(obj)))));
 }
 
-/* TODO: src "pm" can be inf/nan/bignum etc -- need range check */
+#define SRC_CHANGE_MAX 1000000.0
 
 static XEN g_src(XEN obj, XEN pm, XEN func) 
 {
@@ -4204,7 +4204,14 @@ included an 'input' argument, input-function is ignored."
   mus_xen *gn;
   XEN_ASSERT_TYPE((MUS_XEN_P(obj)) && (mus_src_p(XEN_TO_MUS_ANY(obj))), obj, XEN_ARG_1, S_src, "an src gen");
   gn = XEN_TO_MUS_XEN(obj);
-  if (XEN_NUMBER_P(pm)) pm1 = XEN_TO_C_DOUBLE(pm); else XEN_ASSERT_TYPE(XEN_NOT_BOUND_P(pm), pm, XEN_ARG_2, S_src, "a number");
+  if (XEN_NUMBER_P(pm)) 
+    {
+      pm1 = XEN_TO_C_DOUBLE(pm); 
+      /* if sr_change (pm1) is ridiculous, complain! */
+      if ((pm1 > SRC_CHANGE_MAX) || (pm1 < -SRC_CHANGE_MAX))
+	XEN_OUT_OF_RANGE_ERROR(S_src, XEN_ARG_2, pm, "src change ~A too large");
+    }
+  else XEN_ASSERT_TYPE(XEN_NOT_BOUND_P(pm), pm, XEN_ARG_2, S_src, "a number");
   if (XEN_PROCEDURE_P(func))
     {
       if (XEN_REQUIRED_ARGS_OK(func, 1))
