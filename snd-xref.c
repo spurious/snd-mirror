@@ -982,6 +982,7 @@ static char *Envelopes_xrefs[] = {
   NULL};
 
 static char *Filters_xrefs[] = {
+  "filter a sound: {filter-sound} and {clm-channel}",
   "CLM filter generators: {filter, one-pole, formant, comb, notch, all-pass, etc}, many examples in examp.scm, new-effects.scm",
   "lowpass filter: make-lowpass in dsp.scm",
   "highpass filter: make-highpass in dsp.scm",
@@ -1008,13 +1009,15 @@ static char *Filters_xrefs[] = {
   NULL};
 
 static char *Searching_xrefs[] = {
+  "find a mark: {find-mark}",
+  "find a mix: {find-mix}",
+  "find a sound: {find-sound}",
   "Example find procedures: {search-for-click, zero+, next-peak, find-pitch}",
   "Search via continuation: {scan-again}",
   "Explicit access to search procedures: {search-procedure}",
   "The Find dialog: {Find}",
   "find silence: {map-silence}",
   "find zero crossing: {find-zero}",
-  "find a mark etc: {find-mark}, {find-mix}, {find-sound}",
   "see also {count-matches} and {scan-channel}.",
   NULL};
 
@@ -1121,6 +1124,15 @@ static char *Resampling_xrefs[] = {
   "resample via FFT: {down-oct}",
   "resample through env: {sound-interp} and {env-sound-interp}",
   "resample through list: {scratch}",
+  NULL};
+
+static char *Undo_and_Redo_xrefs[] = {
+  "undo all edits: {revert-sound}",
+  "specialize undo: {undo-hook}",
+  "protect against undo: {edit-hook}",
+  "redo edit: {redo} and {redo-channel}",
+  "move around in edit list: {edit-position} and {current-edit-position}",
+  "About edit lists: {Edit lists}",
   NULL};
 
 static char *FFTs_xrefs[] = {

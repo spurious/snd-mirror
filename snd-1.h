@@ -508,6 +508,8 @@ void resample_help(void);
 void filter_help(void);
 void insert_help(void);
 void delete_help(void);
+void get_related_help(char *red_text);
+
 
 
 /* -------- snd-menu.c -------- */

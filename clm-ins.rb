@@ -1,7 +1,9 @@
 # clm-ins.rb -- CLM instruments translated to Snd/Ruby
 
 # Translator: Michael Scholz <scholz-micha@gmx.de>
-# Last: Thu Sep 18 04:17:32 CEST 2003
+# Last: Sun Sep 21 03:32:26 CEST 2003
+
+# comments from clm-ins.scm
 
 # pluck
 # vox
@@ -21,8 +23,6 @@
 # rhodey
 # hammondoid
 # metal
-
-# TODO:
 # drone
 # canter
 # nrev
@@ -47,6 +47,8 @@
 # fullmix
 
 require "ws"
+require "spectr"
+require "env"
 include Env
 include Math
 
@@ -101,16 +103,16 @@ def pluck(start, dur, freq, amp, weighting = 0.5, lossfact = 0.9)
   # with white noise (between -1 and 1).
   allp = make_one_zero(lf * (1.0 - wt), lf * wt)
   feedb = make_one_zero(c, 1.0)     # or feedb = make_one_zero(1.0, c)
-  dlen.times do |i| vct_set!(tab, i, 1.0 - rbm_random(2.0)) end
+  dlen.times do |i| tab[i] = 1.0 - rbm_random(2.0) end
   beg, len = times2samples(start, dur)
   ws_interrupt?()
   (beg..len).each do |i|
-    val = vct_ref(tab, i % dlen)
-    vct_set!(tab, i % dlen, (1.0 - c) * one_zero(feedb, one_zero(allp, val)))
+    val = tab[i % dlen]
+    tab[i % dlen] = (1.0 - c) * one_zero(feedb, one_zero(allp, val))
     outa(i, amp * val, $rbm_output)
   end
 end
-# with_sound() do pluck(0.05, 0.01, 330, 0.1, 0.95, 0.95) end
+# with_sound() do pluck(0.05, 0.1, 330, 0.1, 0.95, 0.95) end
 
 # formant center frequencies for a male speaker (vox and pqw_vox)
 Formants = {:I  => [390, 1990, 2550], :E   => [530, 1840, 2480], :AE => [660, 1720, 2410],
@@ -244,9 +246,8 @@ def fofins(start, dur, frq, amp, vib, f0, a0, f1, a1, f2, a2, ae = [0, 0, 25, 1,
   wt0 = make_wave_train(:size, foflen, :frequency, frq)
   foftab = mus_data(wt0)
   foflen.times do |i|
-    vct_set!(foftab, i, (a0 * sin(i * frq0) +
-                             a1 * sin(i * frq1) +
-                             a2 * sin(i * frq2)) * 0.5 * (1.0 - cos(i * win_freq)))
+    foftab[i] = (a0 * sin(i * frq0) + a1 * sin(i * frq1) +
+                     a2 * sin(i * frq2)) * 0.5 * (1.0 - cos(i * win_freq))
   end
   ws_interrupt?()
   (beg..len).each do |i| outa(i, env(ampf) * wave_train(wt0, vib * oscil(vibr)), $rbm_output) end
@@ -351,8 +352,7 @@ def fm_trumpet(start, dur, *args)
                     :scaler, modfrq1 * (modind12 - modind11), :duration, dur)
   mod1 = make_oscil(:frequency, 0.0)
   car1 = make_oscil(:frequency, 0.0)
-  # set frequency to zero here because it is handled multiplicatively
-  # below
+  # set frequency to zero here because it is handled multiplicatively below
   car1_f = make_env(:envelope, stretch_envelope(ampenv1, 25, ampattpt1, 75, ampdecpt1),
                     :scaler, amp1, :duration, dur)
   mod2_f = make_env(:envelope, stretch_envelope(indenv2, 25, ampattpt2, 75, dec_01),
@@ -384,8 +384,7 @@ end
 def pqw_vox(start, dur, freq, spacing_freq, amp, ampfun, freqfun, freqscl,
             phonemes, formant_amps, formant_shapes)
   vox_fun = lambda do |phons, which, newenv|
-    # make an envelope from which-th entry of phoneme data referred to
-    # by phons
+    # make an envelope from which entry of phoneme data referred to by phons
     if phons.empty?
       newenv
     else
@@ -475,18 +474,14 @@ end
 # STEREO-FLUTE
 def stereo_flute(start, dur, freq, flow, *args)
   flow_env   = get_args(args, :flow_envelope, [0, 1, 100, 1])
-  # additional time for instrument to decay
-  decay      = get_args(args, :decay, 0.01) 
+  decay      = get_args(args, :decay, 0.01)   # additional time for instrument to decay
   noise      = get_args(args, :noise, 0.0356)
   emb_size   = get_args(args, :embouchure_size, 0.5)
-  # these two are crucial for good results
-  fbk_scl1   = get_args(args, :fbk_scl1, 0.5)
+  fbk_scl1   = get_args(args, :fbk_scl1, 0.5) # these two are crucial for good results
   fbk_scl2   = get_args(args, :fbk_scl2, 0.55)
-  # from 0.0 to 1.0 along the bore
-  offset_pos = get_args(args, :offset_pos, 0.764264)
+  offset_pos = get_args(args, :offset_pos, 0.764264) # from 0.0 to 1.0 along the bore
   out_scl    = get_args(args, :out_scl, 1.0)
-  # filter coefficients
-  a0         = get_args(args, :a0, 0.7)
+  a0         = get_args(args, :a0, 0.7)       # filter coefficients
   b1         = get_args(args, :b1, -0.3)
   vib_rate   = get_args(args, :vib_rate, 5)
   vib_amount = get_args(args, :vib_amount, 0.03)
@@ -518,7 +513,7 @@ def stereo_flute(start, dur, freq, flow, *args)
     out_sig = one_pole(reflection_lp_filter, current_exitation + fbk_scl2 * delay_sig)
     tap_sig = tap(bore, offset)
     # NB the DC blocker is not in the cicuit. It is applied to the
-    # out-sig but the result is not fed back into the system.
+    # out_sig but the result is not fed back into the system.
     dc_blocked_a = (out_sig - previous_out_sig) + 0.995 * previous_dc_blocked_a
     dc_blocked_b = (tap_sig - previous_tap_sig) + 0.995 * previous_dc_blocked_b
     outa(i, out_scl * dc_blocked_a, $rbm_output)
@@ -882,5 +877,1785 @@ def metal(start, dur, freq, amp)
   end
 end
 # with_sound() do metal(0, 0.25, 440, 0.2) end
+
+# DRONE
+def drone(start, dur, freq, amp, ampfun, synth, ampat, ampdc, amtrev, deg, dis, rvibamt, rvibfreq)
+  waveform = partials2wave(synth)
+  amp *= 0.25
+  s = make_table_lookup(:frequency, freq, :wave, waveform)
+  amp_env = make_env(:envelope, stretch_envelope(ampfun, 25, 100 * (ampat / dur.to_f), 75,
+                                                 100 - 100 * (ampdc / dur.to_f)),
+                     :scaler, amp, :duration, dur)
+  ran_vib = make_rand(:frequency, rvibfreq, :amplitude, hz2radians(rvibamt * freq))
+  loc = make_locsig(:degree, deg, :distance, dis, :channels, mus_channels($rbm_output),
+                    :reverb, amtrev, :output, $rbm_output, :revout, $rbm_reverb)
+  beg, len = times2samples(start, dur)
+  ws_interrupt?()
+  (beg..len).each do |i|
+    locsig(loc, i, env(amp_env) * table_lookup(s, rand(ran_vib).abs))
+  end
+end
+
+# CANTER
+def canter(start, dur, pitch, amp, deg, dis, pcrev, ampfun, ranfun, skewfun, skewpc,
+           ranpc, ranfreq, indexfun, atdr, dcdr,
+           ampfun1, indfun1, fmtfun1,
+           ampfun2, indfun2, fmtfun2,
+           ampfun3, indfun3, fmtfun3,
+           ampfun4, indfun4, fmtfun4)
+  amp *= 0.25
+  dur = dur.to_f
+  pitch = pitch.to_f
+  rangetop = 910.0
+  rangebot = 400.0
+  k = (100 * (log(pitch / rangebot) / log(rangetop / rangebot))).floor
+  mfq = pitch
+  atpt = 100 * (atdr / dur)
+  dcpt = 100 - 100 * (dcdr / dur)
+  lfmt1 = envelope_interp(k, fmtfun1)
+  harm1 = (0.5 + lfmt1 / pitch).floor
+  dev11 = hz2radians(envelope_interp(k, indfun1) * mfq)
+  dev01 = dev11 * 0.5
+  lamp1 = envelope_interp(k, ampfun1) * amp * (1 - (harm1 - lfmt1 / pitch).abs)
+  lfmt2 = envelope_interp(k, fmtfun2)
+  harm2 = (0.5 + lfmt2 / pitch).floor
+  dev12 = hz2radians(envelope_interp(k, indfun2) * mfq)
+  dev02 = dev12 * 0.5
+  lamp2 = envelope_interp(k, ampfun2) * amp * (1 - (harm2 - lfmt2 / pitch).abs)
+  lfmt3 = envelope_interp(k, fmtfun3)
+  harm3 = (0.5 + lfmt3 / pitch).floor
+  dev13 = hz2radians(envelope_interp(k, indfun3) * mfq)
+  dev03 = dev13 * 0.5
+  lamp3 = envelope_interp(k, ampfun3) * amp * (1 - (harm3 - lfmt3 / pitch).abs)
+  lfmt4 = envelope_interp(k, fmtfun4)
+  harm4 = (0.5 + lfmt4 / pitch).floor
+  dev14 = hz2radians(envelope_interp(k, indfun4) * mfq)
+  dev04 = dev14 * 0.5
+  lamp4 = envelope_interp(k, ampfun4) * amp * (1 - (harm4 - lfmt4 / pitch).abs)
+  tampfun = make_env(:envelope, stretch_envelope(ampfun, 25, atpt, 75, dcpt), :duration, dur)
+  tskwfun = make_env(:envelope, stretch_envelope(skewfun, 25, atpt, 75, dcpt),
+                     :scaler, hz2radians(pitch * skewpc.to_f), :duration, dur)
+  tranfun = make_env(:envelope, stretch_envelope(ranfun, 25, atpt, 75, dcpt), :duration, dur)
+  tidxfun = make_env(:envelope, stretch_envelope(indexfun, 25, atpt, 75, dcpt), :duration, dur)
+  modgen = make_oscil(:frequency, pitch)
+  gen1 = make_oscil(:frequency, pitch * harm1)
+  gen2 = make_oscil(:frequency, pitch * harm2)
+  gen3 = make_oscil(:frequency, pitch * harm3)
+  gen4 = make_oscil(:frequency, pitch * harm4)
+  ranvib = make_rand(:frequency, ranfreq, :amplitude, hz2radians(ranpc * pitch))
+  loc = make_locsig(:degree, deg, :distance, dis, :channels, mus_channels($rbm_output),
+                    :reverb, pcrev, :output, $rbm_output, :revout, $rbm_reverb)
+  beg, len = times2samples(start, dur)
+  ws_interrupt?()
+  (beg..len).each do |i|
+    frqval = env(tskwfun) + env(tranfun) * rand(ranvib)
+    modval = oscil(modgen, frqval)
+    ampval = env(tampfun)
+    indval = env(tidxfun)
+    locsig(loc, i,
+           lamp1 * ampval * oscil(gen1, ((dev01 + indval * dev11) * modval + frqval) * harm1) + \
+           lamp2 * ampval * oscil(gen2, ((dev02 + indval * dev12) * modval + frqval) * harm2) + \
+           lamp3 * ampval * oscil(gen3, ((dev03 + indval * dev13) * modval + frqval) * harm3) + \
+           lamp4 * ampval * oscil(gen4, ((dev04 + indval * dev14) * modval + frqval) * harm4))
+  end
+end
+
+# NREV (the most popular Samson box reverb)
+#
+# reverb_factor controls the length of the decay -- it should not exceed (/ 1.0 .823)
+# lp_coeff controls the strength of the low pass filter inserted in the feedback loop
+# volume can be used to boost the reverb output
+def nrev(*args)
+  reverb_factor = get_args(args, :reverb_factor, 1.09)
+  lp_coeff      = get_args(args, :lp_coeff, 0.7)
+  volume        = get_args(args, :volume, 1.0)
+  next_prime = lambda do |val|
+    if val.prime?
+      val
+    else
+      next_prime.call(val + 2)
+    end
+  end
+  srscale = mus_srate() / 25641
+  dly_len = [1433, 1601, 1867, 2053, 2251, 2399, 347, 113, 37, 59, 53, 43, 37, 29, 19]
+  dly_len.map! do |x|
+    val = (x * srscale).round
+    val += 1 if val.even?
+    next_prime.call(val)
+  end
+  len = (mus_srate() + mus_length($rbm_reverb)).round
+  comb1 = make_comb(0.822 * reverb_factor, dly_len[0])
+  comb2 = make_comb(0.802 * reverb_factor, dly_len[1])
+  comb3 = make_comb(0.773 * reverb_factor, dly_len[2])
+  comb4 = make_comb(0.753 * reverb_factor, dly_len[3])
+  comb5 = make_comb(0.753 * reverb_factor, dly_len[4])
+  comb6 = make_comb(0.733 * reverb_factor, dly_len[5])
+  low = make_one_pole(lp_coeff, lp_coeff - 1.0)
+  chan2 = (mus_channels($rbm_output) > 1)
+  chan4 = (mus_channels($rbm_output) == 4)
+  allpass1 = make_all_pass(-0.7, 0.7, dly_len[6])
+  allpass2 = make_all_pass(-0.7, 0.7, dly_len[7])
+  allpass3 = make_all_pass(-0.7, 0.7, dly_len[8])
+  allpass4 = make_all_pass(-0.7, 0.7, dly_len[9]) # 10 for quad
+  allpass5 = make_all_pass(-0.7, 0.7, dly_len[11])
+  allpass6 = (chan2 ? make_all_pass(-0.7, 0.7, dly_len[12]) : nil)
+  allpass7 = (chan4 ? make_all_pass(-0.7, 0.7, dly_len[13]) : nil)
+  allpass8 = (chan4 ? make_all_pass(-0.7, 0.7, dly_len[14]) : nil)
+  ws_interrupt?()
+  len.times do |i|
+    rev = volume * ina(i, $rbm_reverb)
+    outrev = all_pass(allpass4,
+                      one_pole(low,
+                               all_pass(allpass3,
+                                        all_pass(allpass2,
+                                                 all_pass(allpass1,
+                                                          comb(comb1, rev) + \
+                                                          comb(comb2, rev) + \
+                                                          comb(comb3, rev) + \
+                                                          comb(comb4, rev) + \
+                                                          comb(comb5, rev) + \
+                                                          comb(comb6, rev))))))
+    outa(i, all_pass(allpass5, outrev), $rbm_output)
+    outb(i, all_pass(allpass6, outrev), $rbm_output) if chan2
+    outc(i, all_pass(allpass7, outrev), $rbm_output) if chan4
+    outd(i, all_pass(allpass8, outrev), $rbm_output) if chan4
+  end
+end
+=begin
+with_sound(:reverb, :nrev) do
+  fmt1 = [0, 1200, 100, 1000]
+  fmt2 = [0, 2250, 100, 1800]
+  fmt3 = [0, 4500, 100, 4500]
+  fmt4 = [0, 6750, 100, 8100]
+  amp1 = [0, 0.67, 100, 0.7]
+  amp2 = [0, 0.95, 100, 0.95]
+  amp3 = [0, 0.28, 100, 0.33]
+  amp4 = [0, 0.14, 100, 0.15]
+  ind1 = [0, 0.75, 100, 0.65]
+  ind2 = [0, 0.75, 100, 0.75]
+  ind3 = [0, 1, 100, 1]
+  ind4 = [0, 1, 100, 1]
+  skwf = [0, 0, 100, 0]
+  ampf = [0, 0, 25, 1, 75, 1, 100, 0]
+  ranf = [0, 0.5, 100, 0.5]
+  index = [0, 1, 100, 1]
+  solid = [0, 0, 5, 1, 95, 1, 100, 0]
+  bassdr2 = [0.5, 0.06, 1, 0.62, 1.5, 0.07, 2, 0.6, 2.5, 0.08, 3, 0.56, 4, 0.24, 5, 0.98, 6, 0.53,
+             7, 0.16, 8, 0.33, 9, 0.62, 10, 0.12, 12, 0.14, 14, 0.86, 16, 0.12, 23, 0.14, 24, 0.17]
+  tenordr = [0.3, 0.04, 1, 0.81, 2, 0.27, 3, 0.2, 4, 0.21, 5, 0.18, 6, 0.35, 7, 0.03,
+             8, 0.07, 9, 0.02, 10, 0.025, 11, 0.035]
+
+  drone(0, 4, 115, 0.125, solid, bassdr2, 0.1, 0.5, 0.03, 45, 1, 0.01, 10)
+  drone(0, 4, 229, 0.125, solid, tenordr, 0.1, 0.5, 0.03, 45, 1, 0.01, 11)
+  drone(0, 4, 229.5, 0.125, solid, tenordr, 0.1, 0.5, 0.03, 45, 1, 0.01, 9)
+  canter(0.000, 2.100, 918.000, 0.175, 45.0, 1, 0.05, ampf, ranf, skwf, 0.05, 0.01, 10, index,
+         0.005, 0.005, amp1, ind1, fmt1, amp2, ind2, fmt2, amp3, ind3, fmt3, amp4, ind4, fmt4)
+  canter(2.100, 0.300, 688.500, 0.175, 45.0, 1, 0.05, ampf, ranf, skwf, 0.050, 0.01, 10, index,
+         0.005, 0.005, amp1, ind1, fmt1, amp2, ind2, fmt2, amp3, ind3, fmt3, amp4, ind4, fmt4)
+  canter(2.400, 0.040, 826.200, 0.175, 45.0, 1, 0.05, ampf, ranf, skwf, 0.050, 0.01, 10, index,
+         0.005, 0.005, amp1, ind1, fmt1, amp2, ind2, fmt2, amp3, ind3, fmt3, amp4, ind4, fmt4)
+  canter(2.440, 0.560, 459.000, 0.175, 45.0, 1, 0.05, ampf, ranf, skwf, 0.050, 0.01, 10, index,
+         0.005, 0.005, amp1, ind1, fmt1, amp2, ind2, fmt2, amp3, ind3, fmt3, amp4, ind4, fmt4)
+  canter(3.000, 0.040, 408.000, 0.175, 45.0, 1, 0.05, ampf, ranf, skwf, 0.050, 0.01, 10, index,
+         0.005, 0.005, amp1, ind1, fmt1, amp2, ind2, fmt2, amp3, ind3, fmt3, amp4, ind4, fmt4)
+  canter(3.040, 0.040, 619.650, 0.175, 45.0, 1, 0.05, ampf, ranf, skwf, 0.050, 0.01, 10, index,
+         0.005, 0.005, amp1, ind1, fmt1, amp2, ind2, fmt2, amp3, ind3, fmt3, amp4, ind4, fmt4)
+  canter(3.080, 0.040, 408.000, 0.175, 45.0, 1, 0.05, ampf, ranf, skwf, 0.050, 0.01, 10, index,
+         0.005, 0.005, amp1, ind1, fmt1, amp2, ind2, fmt2, amp3, ind3, fmt3, amp4, ind4, fmt4)
+  canter(3.120, 0.040, 688.500, 0.175, 45.0, 1, 0.05, ampf, ranf, skwf, 0.050, 0.01, 10, index,
+         0.005, 0.005, amp1, ind1, fmt1, amp2, ind2, fmt2, amp3, ind3, fmt3, amp4, ind4, fmt4)
+  canter(3.160, 0.290, 459.000, 0.175, 45.0, 1, 0.05, ampf, ranf, skwf, 0.050, 0.01, 10, index,
+         0.005, 0.005, amp1, ind1, fmt1, amp2, ind2, fmt2, amp3, ind3, fmt3, amp4, ind4, fmt4)
+  canter(3.450, 0.150, 516.375, 0.175, 45.0, 1, 0.05, ampf, ranf, skwf, 0.050, 0.01, 10, index,
+         0.005, 0.005, amp1, ind1, fmt1, amp2, ind2, fmt2, amp3, ind3, fmt3, amp4, ind4, fmt4)
+  canter(3.600, 0.040, 826.200, 0.175, 45.0, 1, 0.05, ampf, ranf, skwf, 0.050, 0.01, 10, index,
+         0.005, 0.005, amp1, ind1, fmt1, amp2, ind2, fmt2, amp3, ind3, fmt3, amp4, ind4, fmt4)
+  canter(3.640, 0.040, 573.750, 0.175, 45.0, 1, 0.05, ampf, ranf, skwf, 0.050, 0.01, 10, index,
+         0.005, 0.005, amp1, ind1, fmt1, amp2, ind2, fmt2, amp3, ind3, fmt3, amp4, ind4, fmt4)
+  canter(3.680, 0.040, 619.650, 0.175, 45.0, 1, 0.05, ampf, ranf, skwf, 0.050, 0.01, 10, index,
+         0.005, 0.005, amp1, ind1, fmt1, amp2, ind2, fmt2, amp3, ind3, fmt3, amp4, ind4, fmt4)
+  canter(3.720, 0.180, 573.750, 0.175, 45.0, 1, 0.05, ampf, ranf, skwf, 0.050, 0.01, 10, index,
+         0.005, 0.005, amp1, ind1, fmt1, amp2, ind2, fmt2, amp3, ind3, fmt3, amp4, ind4, fmt4)
+  canter(3.900, 0.040, 688.500, 0.175, 45.0, 1, 0.05, ampf, ranf, skwf, 0.050, 0.01, 10, index,
+         0.005, 0.005, amp1, ind1, fmt1, amp2, ind2, fmt2, amp3, ind3, fmt3, amp4, ind4, fmt4)
+  canter(3.940, 0.260, 459.000, 0.175, 45.0, 1, 0.05, ampf, ranf, skwf, 0.050, 0.01, 10, index,
+         0.005, 0.005, amp1, ind1, fmt1, amp2, ind2, fmt2, amp3, ind3, fmt3, amp4, ind4, fmt4)
+end
+=end
+
+# RESON
+def reson(start, dur, pitch, amp, numformants, indxfun, skewfun, pcskew, skewat, skewdc,
+          vibfreq, vibpc, ranvibfreq, ranvibpc, degree, distance, reverb_amount, data)
+  # data is a list of lists of form
+  # [ampf, resonfrq, resonamp, ampat, ampdc, dev0, dev1, indxat, indxdc]
+  dur = dur.to_f
+  pitch = pitch.to_f
+  modulator = make_oscil(:frequency, pitch)
+  carriers = Array.new(numformants)
+  ampfs = Array.new(numformants)
+  indfs = Array.new(numformants)
+  c_rats = Array.new(numformants)
+  frqf = make_env(:envelope, stretch_envelope(skewfun, 25, 100 * (skewat / dur), 75,
+                                              100 - (100 * (skewdc / dur))),
+                  :scaler, hz2radians(pcskew * pitch), :duration, dur)
+  pervib = make_triangle_wave(:frequency, vibfreq, :amplitude, hz2radians(vibpc * pitch))
+  ranvib = make_rand_interp(:frequency, ranvibfreq, :amplitude, hz2radians(ranvibpc * pitch))
+  totalamp = 0.0
+  numformants.times do |i| totalamp += data[i][2] end
+  numformants.times do |i|
+    frmdat = data[i]
+    ampf = frmdat[0]
+    freq = frmdat[1]
+    rfamp = frmdat[2]
+    ampat = 100 * (frmdat[3] / dur)
+    ampdc = 100 - 100 * (frmdat[4] / dur)
+    dev0 = hz2radians(frmdat[5] * freq)
+    dev1 = hz2radians(frmdat[6] * freq)
+    indxat = 100 * (frmdat[7] / dur)
+    indxdc = 100 - 100 * (frmdat[8] / dur)
+    harm = (freq / pitch).round
+    rsamp = 1.0 - (harm - freq / pitch).abs
+    cfq = pitch * harm
+    ampat = 25 if ampat.zero?
+    ampdc = 75 if ampdc.zero?
+    indxat = 25 if indxat.zero?
+    indxdc = 75 if indxdc.zero?
+    indfs[i] = make_env(:envelope, stretch_envelope(indxfun, 25, indxat, 75, indxdc),
+                        :scaler, dev1 - dev0, :offset, dev0, :duration, dur)
+    ampfs[i] = make_env(:envelope, stretch_envelope(ampf, 25, ampat, 75, ampdc),
+                        :scaler, rsamp * amp * (rfamp / totalamp), :duration, dur)
+    c_rats[i] = harm
+    carriers[i] = make_oscil(:frequency, cfq)
+  end
+  loc = make_locsig(:degree, degree, :distance, distance, :channels, mus_channels($rbm_output),
+                    :reverb, reverb_amount, :output, $rbm_output, :revout, $rbm_reverb)
+  beg, len = times2samples(start, dur)
+  ws_interrupt?()
+  (beg..len).each do |i|
+    vib = triangle_wave(pervib) + rand_interp(ranvib) + env(frqf)
+    modsig = oscil(modulator, vib)
+    outsum = 0.0
+    numformants.times do |j|
+      outsum += env(ampfs[j]) * oscil(carriers[j], vib * c_rats[j] + env(indfs[j]) * modsig)
+    end
+    locsig(loc, i, outsum)
+  end
+end
+=begin
+with_sound() do
+  reson(0, 1.0, 440, 0.1, 2, [0, 0, 100, 1], [0, 0, 100, 1], 0.1, 0.1, 0.1, 5, 0.01, 5,
+        0.01, 0, 1.0, 0.01, [[[0, 0, 100, 1], 1200, 0.5, 0.1, 0.1, 0, 1.0, 0.1, 0.1],
+                             [[0, 1, 100, 0], 2400, 0.5, 0.1, 0.1, 0, 1.0, 0.1, 0.1]])
+end
+=end
+
+# STK's feedback-fm instrument named CelloN in Sambox-land
+def cellon(start, dur, pitch0, amp, ampfun, betafun,
+           beta0, beta1, betaat, betadc, ampat, ampdc, dis, pcrev, deg, pitch1,
+           glissfun = [0, 0, 100, 0], glissat = 0.0, glissdc = 0.0,
+           pvibfreq = 0.0, pvibpc = 0.0, pvibfun = [0, 1, 100, 1], pvibat = 0.0, pvibdc = 0.0,
+           rvibfreq = 0.0, rvibpc = 0.0, rvibfun = [0, 1, 100, 1])
+
+  pit1 = pitch1.zero? ? pitch0 : pitch1
+  car = make_oscil(:frequency, pitch0)
+  low = make_one_zero(0.5, -0.5)
+  fmosc = make_oscil(:frequency, pitch0)
+  fm = 0.0
+  dur = dur.to_f
+  pitch0 = pitch0.to_f
+  pvib = make_triangle_wave(:frequency, pvibfreq, :amplitude, 1.0)
+  rvib = make_rand_interp(:frequency, rvibfreq, :amplitude, 1.0)
+  ampap = (ampat > 0.0 ? (100 * (ampat / dur)) : 25)
+  ampdp = (ampdc > 0.0 ? (100 * (1.0 - ampdc / dur)) : 75)
+  glsap = (glissat > 0.0 ? (100 * (glissat / dur)) : 25)
+  glsdp = (glissdc > 0.0 ? (100 * (1.0 - glissdc / dur)) : 75)
+  betap = (betaat > 0.0 ? (100 * (betaat / dur)) : 25)
+  betdp = (betadc > 0.0 ? (100 * (1.0 - betadc / dur)) : 75)
+  pvbap = (pvibat > 0.0 ? (100 * (pvibat / dur)) : 25)
+  pvbdp = (pvibdc > 0.0 ? (100 * (1.0 - pvibdc / dur)) : 75)
+  pvibenv = make_env(:envelope, stretch_envelope(pvibfun, 25, pvbap, 75, pvbdp),
+                     :scaler, hz2radians(pvibpc * pitch0), :duration, dur)
+  rvibenv = make_env(:envelope, stretch_envelope(rvibfun), :duration, dur,
+                     :scaler, hz2radians(rvibpc * pitch0))
+  glisenv = make_env(:envelope, stretch_envelope(glissfun, 25, glsap, 75, glsdp),
+                     :scaler, hz2radians(pit1 - pitch0), :duration, dur)
+  amplenv = make_env(:envelope, stretch_envelope(ampfun, 25, ampap, 75, ampdp),
+                     :scaler, amp, :duration, dur)
+  betaenv = make_env(:envelope, stretch_envelope(betafun, 25, betap, 75, betdp),
+                     :scaler, beta1 - beta0, :offset, beta0, :duration, dur)
+  loc = make_locsig(:degree, deg, :distance, dis, :channels, mus_channels($rbm_output),
+                    :reverb, pcrev, :output, $rbm_output, :revout, $rbm_reverb)
+  beg, len = times2samples(start, dur)
+  ws_interrupt?()
+  (beg..len).each do |i|
+    vib = env(pvibenv) * triangle_wave(pvib) + env(rvibenv) * rand_interp(rvib) + env(glisenv)
+    fm = one_zero(low, env(betaenv) * oscil(fmosc, fm + vib))
+    locsig(loc, i, env(amplenv) * oscil(car, fm + vib))
+  end
+end
+=begin
+with_sound() do
+  cellon(0, 1, 220, 0.1, 
+         [0, 0, 25, 1, 75, 1, 100, 0], 
+         [0, 0, 25, 1, 75, 1, 100, 0], 0.75, 1.0, 0, 0, 0, 0, 1, 0, 0, 220, 
+         [0, 0, 25, 1, 75, 1, 100, 0], 0, 0, 0, 0,
+         [0, 0, 100, 0], 0, 0, 0, 0, [0, 0, 100, 0])
+end
+=end
+
+# JL-REVERB
+def jl_reverb
+  allpass1 = make_all_pass(-0.7, 0.7, 2111)
+  allpass2 = make_all_pass(-0.7, 0.7,  673)
+  allpass3 = make_all_pass(-0.7, 0.7,  223)
+  comb1 = make_comb(0.742,  9601)
+  comb2 = make_comb(0.733, 10007)
+  comb3 = make_comb(0.715, 10799)
+  comb4 = make_comb(0.697, 11597)
+  chns = mus_channels($rbm_output)
+  outdel1 = make_delay((0.013 * mus_srate()).round)
+  outdel2 = (chns > 1 ? make_delay((0.011 * mus_srate()).round) : nil)
+  len = (mus_srate() + mus_length($rbm_srate)).round
+  ws_interrupt?()
+  len.times do |i|
+    allpass_sum = all_pass(allpass3, all_pass(allpass2, all_pass(allpass1, ina(i, $rbm_reverb))))
+    comb_sum = comb(comb1, allpass_sum) + comb(comb2, allpass_sum) +
+                                         comb(comb3, allpass_sum) + comb(comb4, allpass_sum)
+    outa(i, delay(outdel1, comb_sum), $rbm_output)
+    outb(i, delay(outdel2, comb_sum), $rbm_output) if chns > 1
+  end
+end
+
+# GRAN-SYNTH
+def gran_synth(start, dur, freq, grain_dur, interval, amp)
+  grain_env = make_env(:envelope, [0, 0, 25, 1, 75, 1, 100, 0], :duration, grain_dur)
+  carrier = make_oscil(:frequency, freq)
+  grain_size = ([grain_dur, interval].max * mus_srate()).ceil
+  grains = make_wave_train(:size, grain_size, :frequency, 1.0 / interval)
+  grain = mus_data(grains)
+  grain_size.times do |i| grain[i] = env(grain_env) * oscil(carrier) end
+  beg, len = times2samples(start, dur)
+  ws_interrupt?()
+  (beg..len).each do |i| outa(i, amp * wave_train(grains), $rbm_output) end
+end
+# with_sound() do gran_synth(0, 2, 100, 0.0189, 0.02, 0.4) end
+
+# TOUCH-TONE
+def touch_tone(start, number)
+  touch_tab_1 = [0, 697, 697, 697, 770, 770, 770, 852, 852, 852, 941, 941, 941]
+  touch_tab_2 = [0, 1209, 1336, 1477, 1209, 1336, 1477, 1209, 1336, 1477, 1209, 1336, 1477]
+  number.length.times do |i|
+    k = number[i]
+    beg, len = times2samples(start + i * 0.4, 0.3)
+    ii = if k.kind_of?(Numeric)
+          k.zero? ? 11 : k
+        else
+          k == ?* ? 10 : 12
+        end
+    frq1 = make_oscil(:frequency, touch_tab_1[ii])
+    frq2 = make_oscil(:frequency, touch_tab_2[ii])
+    ws_interrupt?()
+    (beg..len).each do |j| outa(j, 0.1 * (oscil(frq1) + oscil(frq2)), $rbm_output) end
+  end
+end
+# with_sound() do touch_tone(0, [7, 2, 3, 4, 9, 7, 1]) end
+
+# SPECTRA
+def spectra(start, dur, freq, amp,
+            partials = [1, 1, 2, 0.5],
+            amp_envelope = [0, 0, 50, 1, 100, 0],
+            vibrato_amplitude = 0.005,
+            vibrato_speed = 5.0,
+            degree = 0.0,
+            distance = 1.0,
+            reverb_amount = 0.005)
+  waveform = partials2wave(partials)
+  frq = hz2radians(freq)
+  s = make_table_lookup(:frequency, freq, :wave, waveform)
+  amp_env = make_env(:envelope, amp_envelope, :scaler, amp, :duration, dur)
+  per_vib = make_triangle_wave(:frequency, vibrato_speed, :amplitude, vibrato_amplitude * frq)
+  ran_vib = make_rand_interp(:frequency, vibrato_speed + 1.0, :amplitude, vibrato_amplitude * frq)
+  loc = make_locsig(:degree, degree, :distance, distance, :channels, mus_channels($rbm_output),
+                    :reverb, reverb_amount, :output, $rbm_output, :revout, $rbm_reverb)
+  beg, len = times2samples(start, dur)
+  ws_interrupt?()
+  (beg..len).each do |i|
+    locsig(loc, i, env(amp_env) * table_lookup(s, triangle_wave(per_vib) + rand_interp(ran_vib)))
+  end
+end
+# with_sound() do
+#   spectra(0, 1, 440.0, 0.8, P_a4, [0, 0, 1, 1, 5, 0.9, 12, 0.5, 25, 0.25, 100, 0])
+# end
+
+# TWO-TAB
+#
+# interpolate between two waveforms (this could be extended to
+# implement all the various wavetable-based synthesis techniques).
+def two_tab(start, dur, freq, amp,
+            partial_1 = [1.0, 1.0, 2.0, 0.5],
+            partial_2 = [1.0, 0.0, 3.0, 1.0],
+            amp_envelope = [0, 0, 50, 1, 100, 0],
+            interp_func = [0, 1, 100, 0],
+            vibrato_amplitude = 0.005,
+            vibrato_speed = 5.0,
+            degree = 0.0,
+            distance = 1.0,
+            reverb_amount = 0.005)
+  waveform_1 = partials2wave(partial_1)
+  waveform_2 = partials2wave(partial_2)
+  frq = hz2radians(freq)
+  s_1 = make_table_lookup(:frequency, freq, :wave, waveform_1)
+  s_2 = make_table_lookup(:frequency, freq, :wave, waveform_2)
+  amp_env = make_env(:envelope, amp_envelope, :scaler, amp, :duration, dur)
+  interp_env = make_env(:envelope, interp_func, :duration, dur)
+  per_vib = make_triangle_wave(:frequency, vibrato_speed, :amplitude, vibrato_amplitude * frq)
+  ran_vib = make_rand_interp(:frequency, vibrato_speed + 1.0, :amplitude, vibrato_amplitude * frq)
+  loc = make_locsig(:degree, degree, :distance, distance, :channels, mus_channels($rbm_output),
+                    :reverb, reverb_amount, :output, $rbm_output, :revout, $rbm_reverb)
+  beg, len = times2samples(start, dur)
+  ws_interrupt?()
+  (beg..len).each do |i|
+    vib = triangle_wave(per_vib) + rand_interp(ran_vib)
+    intrp = env(interp_env)
+    locsig(loc, i, env(amp_env) * (intrp * table_lookup(s_1, vib) +
+                                          (1.0 - intrp) * table_lookup(s_2, vib)))
+  end
+end
+# with_sound() do two_tab(0, 1, 440, 0.5) end
+
+# LBJ-PIANO
+$rbm_piano_attack_duration = 0.04
+$rbm_piano_release_duration = 0.2
+$rbm_db_drop_per_second = -10.0
+
+Piano_Spectra = [[1.97, 0.0326, 2.99, 0.0086, 3.95, 0.0163, 4.97, 0.0178, 5.98, 0.0177, 6.95, 0.0315, 8.02, 0.0001,
+    8.94, 0.0076,  9.96, 0.0134, 10.99, 0.0284, 11.98, 0.0229, 13.02, 0.0229, 13.89, 0.0010, 15.06, 0.0090, 16.00, 0.0003,
+    17.08, 0.0078, 18.16, 0.0064, 19.18, 0.0129, 20.21, 0.0085, 21.27, 0.0225, 22.32, 0.0061, 23.41, 0.0102, 24.48, 0.0005,
+    25.56, 0.0016, 26.64, 0.0018, 27.70, 0.0113, 28.80, 0.0111, 29.91, 0.0158, 31.06, 0.0093, 32.17, 0.0017, 33.32, 0.0002,
+    34.42, 0.0018, 35.59, 0.0027, 36.74, 0.0055, 37.90, 0.0037, 39.06, 0.0064, 40.25, 0.0033, 41.47, 0.0014, 42.53, 0.0004,
+    43.89, 0.0010, 45.12, 0.0039, 46.33, 0.0039, 47.64, 0.0009, 48.88, 0.0016, 50.13, 0.0006, 51.37, 0.0010, 52.70, 0.0002,
+    54.00, 0.0004, 55.30, 0.0008, 56.60, 0.0025, 57.96, 0.0010, 59.30, 0.0012, 60.67, 0.0011, 61.99, 0.0003, 62.86, 0.0001,
+    64.36, 0.0005, 64.86, 0.0001, 66.26, 0.0004, 67.70, 0.0006, 68.94, 0.0002, 70.10, 0.0001, 70.58, 0.0002, 72.01, 0.0007,
+    73.53, 0.0006, 75.00, 0.0002, 77.03, 0.0005, 78.00, 0.0002, 79.57, 0.0006, 81.16, 0.0005, 82.70, 0.0005, 84.22, 0.0003,
+    85.41, 0.0002, 87.46, 0.0001, 90.30, 0.0001, 94.02, 0.0001, 95.26, 0.0002, 109.39, 0.0003],
+   
+   [1.98, 0.0194, 2.99, 0.0210, 3.97, 0.0276, 4.96, 0.0297, 5.96, 0.0158, 6.99, 0.0207, 8.01, 0.0009,
+    9.00, 0.0101, 10.00, 0.0297, 11.01, 0.0289, 12.02, 0.0211, 13.04, 0.0127, 14.07, 0.0061, 15.08, 0.0174, 16.13, 0.0009,
+    17.12, 0.0093, 18.16, 0.0117, 19.21, 0.0122, 20.29, 0.0108, 21.30, 0.0077, 22.38, 0.0132, 23.46, 0.0073, 24.14, 0.0002,
+    25.58, 0.0026, 26.69, 0.0035, 27.77, 0.0053, 28.88, 0.0024, 30.08, 0.0027, 31.13, 0.0075, 32.24, 0.0027, 33.36, 0.0004,
+    34.42, 0.0004, 35.64, 0.0019, 36.78, 0.0037, 38.10, 0.0009, 39.11, 0.0027, 40.32, 0.0010, 41.51, 0.0013, 42.66, 0.0019,
+    43.87, 0.0007, 45.13, 0.0017, 46.35, 0.0019, 47.65, 0.0021, 48.89, 0.0014, 50.18, 0.0023, 51.42, 0.0015, 52.73, 0.0002,
+    54.00, 0.0005, 55.34, 0.0006, 56.60, 0.0010, 57.96, 0.0016, 58.86, 0.0005, 59.30, 0.0004, 60.75, 0.0005, 62.22, 0.0003,
+    63.55, 0.0005, 64.82, 0.0003, 66.24, 0.0003, 67.63, 0.0011, 69.09, 0.0007, 70.52, 0.0004, 72.00, 0.0005, 73.50, 0.0008,
+    74.95, 0.0003, 77.13, 0.0013, 78.02, 0.0002, 79.48, 0.0004, 82.59, 0.0004, 84.10, 0.0003],
+
+   [2.00, 0.0313, 2.99, 0.0109, 4.00, 0.0215, 5.00, 0.0242, 5.98, 0.0355, 7.01, 0.0132, 8.01, 0.0009,
+    9.01, 0.0071, 10.00, 0.0258, 11.03, 0.0221, 12.02, 0.0056, 13.06, 0.0196, 14.05, 0.0160, 15.11, 0.0107, 16.11, 0.0003,
+    17.14, 0.0111, 18.21, 0.0085, 19.23, 0.0010, 20.28, 0.0048, 21.31, 0.0128, 22.36, 0.0051, 23.41, 0.0041, 24.05, 0.0006,
+    25.54, 0.0019, 26.62, 0.0028, 27.72, 0.0034, 28.82, 0.0062, 29.89, 0.0039, 30.98, 0.0058, 32.08, 0.0011, 33.21, 0.0002,
+    34.37, 0.0008, 35.46, 0.0018, 36.62, 0.0036, 37.77, 0.0018, 38.92, 0.0042, 40.07, 0.0037, 41.23, 0.0011, 42.67, 0.0003,
+    43.65, 0.0018, 44.68, 0.0025, 45.99, 0.0044, 47.21, 0.0051, 48.40, 0.0044, 49.67, 0.0005, 50.88, 0.0019, 52.15, 0.0003,
+    53.42, 0.0008, 54.69, 0.0010, 55.98, 0.0005, 57.26, 0.0013, 58.53, 0.0027, 59.83, 0.0011, 61.21, 0.0027, 62.54, 0.0003,
+    63.78, 0.0003, 65.20, 0.0001, 66.60, 0.0006, 67.98, 0.0008, 69.37, 0.0019, 70.73, 0.0007, 72.14, 0.0004, 73.62, 0.0002,
+    74.40, 0.0003, 76.52, 0.0006, 77.97, 0.0002, 79.49, 0.0004, 80.77, 0.0003, 81.00, 0.0001, 82.47, 0.0005, 83.97, 0.0001,
+    87.27, 0.0002],
+
+   [2.00, 0.0257, 2.99, 0.0142, 3.97, 0.0202, 4.95, 0.0148, 5.95, 0.0420, 6.95, 0.0037, 7.94, 0.0004,
+    8.94, 0.0172, 9.95, 0.0191, 10.96, 0.0115, 11.97, 0.0059, 12.98, 0.0140, 14.00, 0.0178, 15.03, 0.0121, 16.09, 0.0002,
+    17.07, 0.0066, 18.08, 0.0033, 19.15, 0.0022, 20.18, 0.0057, 21.22, 0.0077, 22.29, 0.0037, 23.33, 0.0066, 24.97, 0.0002,
+    25.49, 0.0019, 26.55, 0.0042, 27.61, 0.0043, 28.73, 0.0038, 29.81, 0.0084, 30.91, 0.0040, 32.03, 0.0025, 33.14, 0.0005,
+    34.26, 0.0003, 35.38, 0.0019, 36.56, 0.0037, 37.68, 0.0049, 38.86, 0.0036, 40.11, 0.0011, 41.28, 0.0008, 42.50, 0.0004,
+    43.60, 0.0002, 44.74, 0.0022, 45.99, 0.0050, 47.20, 0.0009, 48.40, 0.0036, 49.68, 0.0004, 50.92, 0.0009, 52.17, 0.0005,
+    53.46, 0.0007, 54.76, 0.0006, 56.06, 0.0005, 57.34, 0.0011, 58.67, 0.0005, 59.95, 0.0015, 61.37, 0.0008, 62.72, 0.0004,
+    65.42, 0.0009, 66.96, 0.0003, 68.18, 0.0003, 69.78, 0.0003, 71.21, 0.0004, 72.45, 0.0002, 74.22, 0.0003, 75.44, 0.0001,
+    76.53, 0.0003, 78.31, 0.0004, 79.83, 0.0003, 80.16, 0.0001, 81.33, 0.0003, 82.44, 0.0001, 83.17, 0.0002, 84.81, 0.0003,
+    85.97, 0.0003, 89.08, 0.0001, 90.70, 0.0002, 92.30, 0.0002, 95.59, 0.0002, 97.22, 0.0003, 98.86, 0.0001, 108.37, 0.0001,
+    125.54, 0.0001],
+
+   [1.99, 0.0650, 3.03, 0.0040, 4.03, 0.0059, 5.02, 0.0090, 5.97, 0.0227, 6.98, 0.0050, 8.04, 0.0020,
+    9.00, 0.0082, 9.96, 0.0078, 11.01, 0.0056, 12.01, 0.0095, 13.02, 0.0050, 14.04, 0.0093, 15.08, 0.0064, 16.14, 0.0017,
+    17.06, 0.0020, 18.10, 0.0025, 19.14, 0.0023, 20.18, 0.0015, 21.24, 0.0032, 22.29, 0.0029, 23.32, 0.0014, 24.37, 0.0005,
+    25.43, 0.0030, 26.50, 0.0022, 27.60, 0.0027, 28.64, 0.0024, 29.76, 0.0035, 30.81, 0.0136, 31.96, 0.0025, 33.02, 0.0003,
+    34.13, 0.0005, 35.25, 0.0007, 36.40, 0.0014, 37.51, 0.0020, 38.64, 0.0012, 39.80, 0.0019, 40.97, 0.0004, 42.09, 0.0003,
+    43.24, 0.0003, 44.48, 0.0002, 45.65, 0.0024, 46.86, 0.0005, 48.07, 0.0013, 49.27, 0.0008, 50.49, 0.0006, 52.95, 0.0001,
+    54.23, 0.0005, 55.45, 0.0004, 56.73, 0.0001, 58.03, 0.0003, 59.29, 0.0002, 60.59, 0.0003, 62.04, 0.0002, 65.89, 0.0002,
+    67.23, 0.0002, 68.61, 0.0002, 69.97, 0.0004, 71.36, 0.0005, 85.42, 0.0001],
+
+   [1.98, 0.0256, 2.96, 0.0158, 3.95, 0.0310, 4.94, 0.0411, 5.95, 0.0238, 6.94, 0.0152, 7.93, 0.0011,
+    8.95, 0.0185, 9.92, 0.0166, 10.93, 0.0306, 11.94, 0.0258, 12.96, 0.0202, 13.97, 0.0403, 14.95, 0.0228, 15.93, 0.0005,
+    17.01, 0.0072, 18.02, 0.0034, 19.06, 0.0028, 20.08, 0.0124, 21.13, 0.0137, 22.16, 0.0102, 23.19, 0.0058, 23.90, 0.0013,
+    25.30, 0.0039, 26.36, 0.0039, 27.41, 0.0025, 28.47, 0.0071, 29.64, 0.0031, 30.60, 0.0027, 31.71, 0.0021, 32.84, 0.0003,
+    33.82, 0.0002, 35.07, 0.0019, 36.09, 0.0054, 37.20, 0.0038, 38.33, 0.0024, 39.47, 0.0055, 40.55, 0.0016, 41.77, 0.0006,
+    42.95, 0.0002, 43.27, 0.0018, 44.03, 0.0006, 45.25, 0.0019, 46.36, 0.0033, 47.50, 0.0024, 48.87, 0.0012, 50.03, 0.0016,
+    51.09, 0.0004, 53.52, 0.0017, 54.74, 0.0012, 56.17, 0.0003, 57.40, 0.0011, 58.42, 0.0020, 59.70, 0.0007, 61.29, 0.0008,
+    62.56, 0.0003, 63.48, 0.0002, 64.83, 0.0002, 66.12, 0.0012, 67.46, 0.0017, 68.81, 0.0003, 69.13, 0.0003, 70.53, 0.0002,
+    71.84, 0.0001, 73.28, 0.0002, 75.52, 0.0010, 76.96, 0.0005, 77.93, 0.0003, 78.32, 0.0003, 79.73, 0.0003, 81.69, 0.0002,
+    82.52, 0.0001, 84.01, 0.0001, 84.61, 0.0002, 86.88, 0.0001, 88.36, 0.0002, 89.85, 0.0002, 91.35, 0.0003, 92.86, 0.0002,
+    93.40, 0.0001, 105.28, 0.0002, 106.22, 0.0002, 107.45, 0.0001, 108.70, 0.0003, 122.08, 0.0002],
+
+   [1.97, 0.0264, 2.97, 0.0211, 3.98, 0.0234, 4.98, 0.0307, 5.96, 0.0085, 6.94, 0.0140, 7.93, 0.0005,
+    8.96, 0.0112, 9.96, 0.0209, 10.98, 0.0194, 11.98, 0.0154, 12.99, 0.0274, 13.99, 0.0127, 15.01, 0.0101, 15.99, 0.0002,
+    17.04, 0.0011, 18.08, 0.0032, 19.14, 0.0028, 20.12, 0.0054, 21.20, 0.0053, 22.13, 0.0028, 23.22, 0.0030, 24.32, 0.0006,
+    25.24, 0.0004, 26.43, 0.0028, 27.53, 0.0048, 28.52, 0.0039, 29.54, 0.0047, 30.73, 0.0044, 31.82, 0.0007, 32.94, 0.0008,
+    34.04, 0.0012, 35.13, 0.0018, 36.29, 0.0007, 37.35, 0.0075, 38.51, 0.0045, 39.66, 0.0014, 40.90, 0.0004, 41.90, 0.0002,
+    43.08, 0.0002, 44.24, 0.0017, 45.36, 0.0013, 46.68, 0.0020, 47.79, 0.0015, 48.98, 0.0010, 50.21, 0.0012, 51.34, 0.0001,
+    53.82, 0.0003, 55.09, 0.0004, 56.23, 0.0005, 57.53, 0.0004, 58.79, 0.0005, 59.30, 0.0002, 60.03, 0.0002, 61.40, 0.0003,
+    62.84, 0.0001, 66.64, 0.0001, 67.97, 0.0001, 69.33, 0.0001, 70.68, 0.0001, 73.57, 0.0002, 75.76, 0.0002, 76.45, 0.0001,
+    79.27, 0.0001, 80.44, 0.0002, 81.87, 0.0002],
+
+   [2.00, 0.0311, 2.99, 0.0086, 3.99, 0.0266, 4.97, 0.0123, 5.98, 0.0235, 6.97, 0.0161, 7.97, 0.0008,
+    8.96, 0.0088, 9.96, 0.0621, 10.99, 0.0080, 11.99, 0.0034, 12.99, 0.0300, 14.03, 0.0228, 15.04, 0.0105, 16.03, 0.0004,
+    17.06, 0.0036, 18.09, 0.0094, 18.95, 0.0009, 20.17, 0.0071, 21.21, 0.0161, 22.25, 0.0106, 23.28, 0.0104, 24.33, 0.0008,
+    25.38, 0.0030, 26.46, 0.0035, 27.50, 0.0026, 28.59, 0.0028, 29.66, 0.0128, 30.75, 0.0139, 31.81, 0.0038, 32.93, 0.0006,
+    34.04, 0.0004, 35.16, 0.0005, 36.25, 0.0023, 37.35, 0.0012, 38.46, 0.0021, 39.59, 0.0035, 40.71, 0.0006, 41.86, 0.0007,
+    42.42, 0.0001, 43.46, 0.0003, 44.17, 0.0032, 45.29, 0.0013, 46.57, 0.0004, 47.72, 0.0011, 48.79, 0.0005, 50.11, 0.0005,
+    51.29, 0.0003, 52.47, 0.0002, 53.68, 0.0004, 55.02, 0.0005, 56.18, 0.0003, 57.41, 0.0003, 58.75, 0.0007, 59.33, 0.0009,
+    60.00, 0.0004, 61.34, 0.0001, 64.97, 0.0003, 65.20, 0.0002, 66.48, 0.0002, 67.83, 0.0002, 68.90, 0.0003, 70.25, 0.0003,
+    71.59, 0.0002, 73.68, 0.0001, 75.92, 0.0001, 77.08, 0.0002, 78.45, 0.0002, 81.56, 0.0002, 82.99, 0.0001, 88.39, 0.0001],
+
+   [0.97, 0.0059, 1.98, 0.0212, 2.99, 0.0153, 3.99, 0.0227, 4.96, 0.0215, 5.97, 0.0153, 6.98, 0.0085,
+    7.98, 0.0007, 8.97, 0.0179, 9.98, 0.0512, 10.98, 0.0322, 12.00, 0.0098, 13.02, 0.0186, 14.00, 0.0099, 15.05, 0.0109,
+    15.88, 0.0011, 17.07, 0.0076, 18.11, 0.0071, 19.12, 0.0045, 20.16, 0.0038, 21.23, 0.0213, 22.27, 0.0332, 23.34, 0.0082,
+    24.34, 0.0014, 25.42, 0.0024, 26.47, 0.0012, 27.54, 0.0014, 28.60, 0.0024, 29.72, 0.0026, 30.10, 0.0008, 31.91, 0.0021,
+    32.13, 0.0011, 33.02, 0.0007, 34.09, 0.0014, 35.17, 0.0007, 36.27, 0.0024, 37.39, 0.0029, 38.58, 0.0014, 39.65, 0.0017,
+    40.95, 0.0012, 41.97, 0.0004, 42.43, 0.0002, 43.49, 0.0001, 44.31, 0.0012, 45.42, 0.0031, 46.62, 0.0017, 47.82, 0.0013,
+    49.14, 0.0013, 50.18, 0.0010, 51.54, 0.0003, 53.90, 0.0006, 55.06, 0.0010, 56.31, 0.0003, 57.63, 0.0001, 59.02, 0.0003,
+    60.09, 0.0004, 60.35, 0.0004, 61.62, 0.0009, 63.97, 0.0001, 65.19, 0.0001, 65.54, 0.0002, 66.92, 0.0002, 67.94, 0.0002,
+    69.17, 0.0003, 69.60, 0.0004, 70.88, 0.0002, 72.24, 0.0002, 76.12, 0.0001, 78.94, 0.0001, 81.75, 0.0001, 82.06, 0.0001,
+    83.53, 0.0001, 90.29, 0.0002, 91.75, 0.0001, 92.09, 0.0002, 93.28, 0.0001, 97.07, 0.0001],
+
+   [1.98, 0.0159, 2.98, 0.1008, 3.98, 0.0365, 4.98, 0.0133, 5.97, 0.0101, 6.97, 0.0115, 7.97, 0.0007,
+    8.99, 0.0349, 10.01, 0.0342, 11.01, 0.0236, 12.00, 0.0041, 13.02, 0.0114, 14.05, 0.0137, 15.06, 0.0100, 16.05, 0.0007,
+    17.04, 0.0009, 18.12, 0.0077, 19.15, 0.0023, 20.12, 0.0017, 21.24, 0.0113, 22.26, 0.0126, 23.30, 0.0093, 24.36, 0.0007,
+    25.43, 0.0007, 26.47, 0.0009, 27.55, 0.0013, 28.59, 0.0025, 29.61, 0.0010, 30.77, 0.0021, 31.86, 0.0023, 32.96, 0.0003,
+    34.03, 0.0007, 35.06, 0.0005, 36.20, 0.0006, 37.34, 0.0006, 38.36, 0.0009, 39.60, 0.0016, 40.69, 0.0005, 41.77, 0.0002,
+    42.92, 0.0002, 44.02, 0.0003, 45.24, 0.0006, 46.33, 0.0004, 47.50, 0.0007, 48.71, 0.0007, 49.87, 0.0002, 51.27, 0.0002,
+    53.42, 0.0003, 55.88, 0.0003, 57.10, 0.0004, 58.34, 0.0002, 59.86, 0.0003, 61.13, 0.0003, 67.18, 0.0001, 68.50, 0.0001,
+    71.17, 0.0001, 83.91, 0.0001, 90.55, 0.0001],
+
+   [0.98, 0.0099, 2.00, 0.0181, 2.99, 0.0353, 3.98, 0.0285, 4.97, 0.0514, 5.96, 0.0402, 6.96, 0.0015,
+    7.98, 0.0012, 8.98, 0.0175, 9.98, 0.0264, 10.98, 0.0392, 11.98, 0.0236, 13.00, 0.0153, 14.04, 0.0049, 15.00, 0.0089,
+    16.01, 0.0001, 17.03, 0.0106, 18.03, 0.0028, 19.05, 0.0024, 20.08, 0.0040, 21.11, 0.0103, 22.12, 0.0104, 23.20, 0.0017,
+    24.19, 0.0008, 25.20, 0.0007, 26.24, 0.0011, 27.36, 0.0009, 27.97, 0.0030, 29.40, 0.0044, 30.37, 0.0019, 31.59, 0.0017,
+    32.65, 0.0008, 33.59, 0.0005, 34.79, 0.0009, 35.75, 0.0027, 36.88, 0.0035, 37.93, 0.0039, 39.00, 0.0031, 40.08, 0.0025,
+    41.16, 0.0010, 43.25, 0.0004, 44.52, 0.0012, 45.62, 0.0023, 45.85, 0.0012, 47.00, 0.0006, 47.87, 0.0008, 48.99, 0.0003,
+    50.48, 0.0003, 51.62, 0.0001, 52.43, 0.0001, 53.56, 0.0002, 54.76, 0.0002, 56.04, 0.0002, 56.68, 0.0006, 57.10, 0.0003,
+    58.28, 0.0005, 59.47, 0.0003, 59.96, 0.0002, 60.67, 0.0001, 63.08, 0.0002, 64.29, 0.0002, 66.72, 0.0001, 67.97, 0.0001,
+    68.65, 0.0001, 70.43, 0.0001, 79.38, 0.0001, 80.39, 0.0001, 82.39, 0.0001],
+
+   [1.00, 0.0765, 1.99, 0.0151, 2.99, 0.0500, 3.99, 0.0197, 5.00, 0.0260, 6.00, 0.0145, 6.98, 0.0128,
+    7.97, 0.0004, 8.98, 0.0158, 9.99, 0.0265, 11.02, 0.0290, 12.02, 0.0053, 13.03, 0.0242, 14.03, 0.0103, 15.06, 0.0054,
+    16.04, 0.0006, 17.08, 0.0008, 18.10, 0.0058, 19.16, 0.0011, 20.16, 0.0055, 21.18, 0.0040, 22.20, 0.0019, 23.22, 0.0014,
+    24.05, 0.0005, 25.31, 0.0019, 26.38, 0.0018, 27.44, 0.0022, 28.45, 0.0024, 29.57, 0.0073, 30.58, 0.0032, 31.66, 0.0071,
+    32.73, 0.0015, 33.85, 0.0005, 34.96, 0.0003, 36.00, 0.0020, 37.11, 0.0018, 38.18, 0.0055, 39.23, 0.0006, 40.33, 0.0004,
+    41.52, 0.0003, 43.41, 0.0028, 45.05, 0.0003, 45.99, 0.0002, 47.07, 0.0003, 48.52, 0.0002, 49.48, 0.0003, 50.63, 0.0003,
+    51.81, 0.0002, 54.05, 0.0002, 55.24, 0.0001, 56.62, 0.0001, 57.81, 0.0004, 59.16, 0.0013, 60.23, 0.0003, 66.44, 0.0001,
+    68.99, 0.0004, 75.49, 0.0001, 87.56, 0.0004],
+
+   [0.98, 0.0629, 1.99, 0.0232, 2.98, 0.0217, 4.00, 0.0396, 4.98, 0.0171, 5.97, 0.0098, 6.99, 0.0167,
+    7.99, 0.0003, 8.98, 0.0192, 9.98, 0.0266, 10.99, 0.0256, 12.01, 0.0061, 13.02, 0.0135, 14.02, 0.0062, 15.05, 0.0158,
+    16.06, 0.0018, 17.08, 0.0101, 18.09, 0.0053, 19.11, 0.0074, 20.13, 0.0020, 21.17, 0.0052, 22.22, 0.0077, 23.24, 0.0035,
+    24.00, 0.0009, 25.32, 0.0016, 26.40, 0.0022, 27.43, 0.0005, 28.55, 0.0026, 29.60, 0.0026, 30.65, 0.0010, 31.67, 0.0019,
+    32.77, 0.0008, 33.81, 0.0003, 34.91, 0.0003, 36.01, 0.0005, 37.11, 0.0010, 38.20, 0.0014, 39.29, 0.0039, 40.43, 0.0012,
+    41.50, 0.0006, 43.38, 0.0017, 43.75, 0.0002, 44.94, 0.0005, 46.13, 0.0002, 47.11, 0.0003, 48.28, 0.0005, 48.42, 0.0005,
+    49.44, 0.0003, 50.76, 0.0004, 51.93, 0.0002, 54.15, 0.0003, 55.31, 0.0005, 55.50, 0.0003, 56.98, 0.0003, 57.90, 0.0004,
+    60.33, 0.0002, 61.39, 0.0001, 61.59, 0.0001, 65.09, 0.0002, 66.34, 0.0001, 68.85, 0.0001, 70.42, 0.0002, 71.72, 0.0001,
+    73.05, 0.0003, 79.65, 0.0001, 85.28, 0.0002, 93.52, 0.0001],
+
+   [1.02, 0.0185, 1.99, 0.0525, 2.98, 0.0613, 3.99, 0.0415, 4.98, 0.0109, 5.97, 0.0248, 6.99, 0.0102,
+    7.98, 0.0005, 8.98, 0.0124, 9.99, 0.0103, 10.99, 0.0124, 12.00, 0.0016, 13.01, 0.0029, 14.03, 0.0211, 15.04, 0.0128,
+    16.07, 0.0021, 17.09, 0.0009, 18.09, 0.0043, 19.14, 0.0022, 20.13, 0.0016, 21.20, 0.0045, 22.21, 0.0088, 23.26, 0.0046,
+    24.29, 0.0013, 25.35, 0.0009, 26.39, 0.0028, 27.49, 0.0009, 28.51, 0.0006, 29.58, 0.0012, 30.70, 0.0010, 31.74, 0.0019,
+    32.75, 0.0002, 33.85, 0.0001, 34.95, 0.0005, 36.02, 0.0003, 37.16, 0.0009, 38.25, 0.0018, 39.35, 0.0008, 40.54, 0.0004,
+    41.61, 0.0002, 43.40, 0.0004, 43.74, 0.0003, 45.05, 0.0001, 46.11, 0.0003, 47.40, 0.0002, 48.36, 0.0004, 49.55, 0.0004,
+    50.72, 0.0002, 52.00, 0.0001, 55.58, 0.0002, 57.02, 0.0001, 57.98, 0.0002, 59.13, 0.0003, 61.56, 0.0001, 66.56, 0.0001,
+    87.65, 0.0002],
+
+   [1.00, 0.0473, 1.99, 0.0506, 2.99, 0.0982, 3.99, 0.0654, 5.00, 0.0196, 5.99, 0.0094, 6.99, 0.0118,
+    7.93, 0.0001, 8.99, 0.0057, 10.01, 0.0285, 11.01, 0.0142, 12.03, 0.0032, 13.03, 0.0056, 14.06, 0.0064, 15.06, 0.0059,
+    16.11, 0.0005, 17.09, 0.0033, 18.14, 0.0027, 19.15, 0.0014, 20.17, 0.0010, 21.21, 0.0059, 22.26, 0.0043, 23.31, 0.0031,
+    24.31, 0.0018, 25.33, 0.0009, 26.41, 0.0005, 27.47, 0.0015, 28.53, 0.0015, 29.58, 0.0041, 30.65, 0.0025, 31.73, 0.0011,
+    32.83, 0.0010, 34.98, 0.0003, 36.07, 0.0009, 37.23, 0.0001, 38.26, 0.0020, 39.41, 0.0014, 40.53, 0.0005, 41.40, 0.0003,
+    42.80, 0.0002, 43.48, 0.0028, 43.93, 0.0001, 45.03, 0.0003, 46.18, 0.0007, 47.41, 0.0001, 48.57, 0.0002, 49.67, 0.0001,
+    50.83, 0.0002, 54.39, 0.0001, 55.58, 0.0002, 57.97, 0.0005, 58.11, 0.0002, 59.21, 0.0001, 60.42, 0.0002, 61.66, 0.0001],
+
+   [1.00, 0.0503, 2.00, 0.0963, 2.99, 0.1304, 3.99, 0.0218, 4.98, 0.0041, 5.98, 0.0292, 6.98, 0.0482,
+    7.99, 0.0005, 8.99, 0.0280, 10.00, 0.0237, 11.00, 0.0152, 12.02, 0.0036, 12.95, 0.0022, 14.06, 0.0111, 15.07, 0.0196,
+    16.08, 0.0016, 17.11, 0.0044, 18.13, 0.0073, 19.17, 0.0055, 20.19, 0.0028, 21.20, 0.0012, 22.27, 0.0068, 23.30, 0.0036,
+    24.35, 0.0012, 25.35, 0.0002, 26.46, 0.0005, 27.47, 0.0005, 28.59, 0.0009, 29.65, 0.0021, 30.70, 0.0020, 31.78, 0.0012,
+    32.89, 0.0010, 35.06, 0.0005, 36.16, 0.0008, 37.27, 0.0010, 38.36, 0.0010, 39.47, 0.0014, 40.58, 0.0004, 41.43, 0.0007,
+    41.82, 0.0003, 43.48, 0.0008, 44.53, 0.0001, 45.25, 0.0003, 46.43, 0.0002, 47.46, 0.0002, 48.76, 0.0005, 49.95, 0.0004,
+    50.96, 0.0002, 51.12, 0.0002, 52.33, 0.0001, 54.75, 0.0001, 55.75, 0.0002, 56.90, 0.0002, 58.17, 0.0002, 59.40, 0.0004,
+    60.62, 0.0002, 65.65, 0.0001, 66.91, 0.0002, 69.91, 0.0001, 71.25, 0.0002],
+
+   [1.00, 0.1243, 1.98, 0.1611, 3.00, 0.0698, 3.98, 0.0390, 5.00, 0.0138, 5.99, 0.0154, 7.01, 0.0287,
+    8.01, 0.0014, 9.01, 0.0049, 10.00, 0.0144, 11.01, 0.0055, 12.05, 0.0052, 13.01, 0.0011, 14.05, 0.0118, 15.07, 0.0154,
+    16.12, 0.0028, 17.14, 0.0061, 18.25, 0.0007, 19.22, 0.0020, 20.24, 0.0011, 21.27, 0.0029, 22.30, 0.0046, 23.34, 0.0049,
+    24.35, 0.0004, 25.45, 0.0003, 26.47, 0.0007, 27.59, 0.0008, 28.16, 0.0009, 29.12, 0.0002, 29.81, 0.0006, 30.81, 0.0009,
+    31.95, 0.0004, 33.00, 0.0011, 34.12, 0.0005, 35.18, 0.0003, 36.30, 0.0008, 37.38, 0.0003, 38.55, 0.0003, 39.64, 0.0006,
+    40.77, 0.0007, 41.52, 0.0006, 41.89, 0.0006, 43.04, 0.0011, 43.60, 0.0009, 44.31, 0.0002, 45.68, 0.0002, 46.56, 0.0003,
+    47.60, 0.0001, 48.83, 0.0006, 50.01, 0.0003, 51.27, 0.0003, 56.04, 0.0005, 57.21, 0.0003, 58.56, 0.0004, 59.83, 0.0003,
+    61.05, 0.0001, 62.20, 0.0001, 67.37, 0.0002, 76.53, 0.0001],
+
+   [0.99, 0.0222, 1.99, 0.0678, 2.99, 0.0683, 4.00, 0.0191, 5.00, 0.0119, 6.01, 0.0232, 6.98, 0.0336,
+    7.99, 0.0082, 9.01, 0.0201, 10.01, 0.0189, 11.01, 0.0041, 12.01, 0.0053, 13.05, 0.0154, 14.04, 0.0159, 15.06, 0.0092,
+    16.11, 0.0038, 17.12, 0.0014, 18.15, 0.0091, 19.16, 0.0006, 20.30, 0.0012, 21.25, 0.0061, 22.28, 0.0099, 23.34, 0.0028,
+    24.38, 0.0012, 25.43, 0.0016, 26.49, 0.0048, 27.55, 0.0025, 28.62, 0.0015, 29.71, 0.0032, 30.78, 0.0077, 31.88, 0.0011,
+    32.97, 0.0007, 34.08, 0.0006, 35.16, 0.0008, 36.28, 0.0004, 37.41, 0.0006, 38.54, 0.0005, 39.62, 0.0002, 40.80, 0.0003,
+    41.93, 0.0001, 43.06, 0.0002, 44.21, 0.0003, 45.38, 0.0002, 46.54, 0.0007, 47.78, 0.0003, 48.95, 0.0004, 50.10, 0.0003,
+    51.37, 0.0002, 53.79, 0.0003, 56.20, 0.0001, 58.71, 0.0002, 66.47, 0.0003],
+
+   [1.01, 0.0241, 1.99, 0.1011, 2.98, 0.0938, 3.98, 0.0081, 4.99, 0.0062, 5.99, 0.0291, 6.99, 0.0676,
+    7.59, 0.0004, 8.98, 0.0127, 9.99, 0.0112, 10.99, 0.0142, 12.00, 0.0029, 13.02, 0.0071, 14.02, 0.0184, 15.03, 0.0064,
+    16.07, 0.0010, 17.09, 0.0011, 18.11, 0.0010, 19.15, 0.0060, 20.19, 0.0019, 21.24, 0.0025, 22.29, 0.0013, 23.31, 0.0050,
+    25.41, 0.0030, 26.50, 0.0018, 27.53, 0.0006, 28.63, 0.0012, 29.66, 0.0013, 30.77, 0.0020, 31.84, 0.0006, 34.04, 0.0001,
+    35.14, 0.0001, 36.32, 0.0004, 37.41, 0.0007, 38.53, 0.0007, 39.67, 0.0009, 40.85, 0.0003, 45.49, 0.0002, 46.65, 0.0001,
+    47.81, 0.0004, 49.01, 0.0002, 53.91, 0.0002, 55.14, 0.0002, 57.69, 0.0002],
+
+   [1.00, 0.0326, 2.00, 0.1066, 2.99, 0.1015, 4.00, 0.0210, 4.97, 0.0170, 5.99, 0.0813, 6.98, 0.0820,
+    7.96, 0.0011, 8.99, 0.0248, 10.03, 0.0107, 11.01, 0.0126, 12.01, 0.0027, 13.01, 0.0233, 14.04, 0.0151, 15.05, 0.0071,
+    16.04, 0.0002, 17.10, 0.0061, 18.12, 0.0059, 19.15, 0.0087, 20.23, 0.0005, 21.25, 0.0040, 22.30, 0.0032, 23.35, 0.0004,
+    24.40, 0.0001, 25.45, 0.0030, 26.54, 0.0022, 27.60, 0.0003, 28.70, 0.0009, 29.80, 0.0029, 30.85, 0.0006, 31.97, 0.0006,
+    34.19, 0.0004, 35.30, 0.0003, 36.43, 0.0007, 37.56, 0.0005, 38.68, 0.0019, 39.88, 0.0013, 41.00, 0.0003, 43.35, 0.0003,
+    44.51, 0.0002, 45.68, 0.0006, 46.93, 0.0010, 48.11, 0.0006, 49.29, 0.0003, 55.58, 0.0002],
+
+   [0.98, 0.0113, 1.99, 0.0967, 3.00, 0.0719, 3.98, 0.0345, 4.98, 0.0121, 6.00, 0.0621, 7.00, 0.0137,
+    7.98, 0.0006, 9.01, 0.0314, 10.01, 0.0171, 11.02, 0.0060, 12.03, 0.0024, 13.05, 0.0077, 14.07, 0.0040, 15.12, 0.0032,
+    16.13, 0.0004, 17.15, 0.0011, 18.20, 0.0028, 19.18, 0.0003, 20.26, 0.0003, 21.31, 0.0025, 22.35, 0.0021, 23.39, 0.0005,
+    25.55, 0.0002, 26.62, 0.0014, 27.70, 0.0003, 28.78, 0.0005, 29.90, 0.0030, 31.01, 0.0011, 32.12, 0.0005, 34.31, 0.0001,
+    35.50, 0.0002, 36.62, 0.0002, 37.76, 0.0005, 38.85, 0.0002, 40.09, 0.0004, 43.60, 0.0001, 44.73, 0.0002, 46.02, 0.0002,
+    47.25, 0.0004, 48.44, 0.0004],
+
+   [0.99, 0.0156, 1.98, 0.0846, 2.98, 0.0178, 3.98, 0.0367, 4.98, 0.0448, 5.98, 0.0113, 6.99, 0.0189,
+    8.00, 0.0011, 9.01, 0.0247, 10.02, 0.0089, 11.01, 0.0184, 12.03, 0.0105, 13.00, 0.0039, 14.07, 0.0116, 15.09, 0.0078,
+    16.13, 0.0008, 17.14, 0.0064, 18.19, 0.0029, 19.22, 0.0028, 20.25, 0.0017, 21.32, 0.0043, 22.37, 0.0055, 23.42, 0.0034,
+    24.48, 0.0004, 25.54, 0.0002, 26.61, 0.0017, 27.70, 0.0011, 28.80, 0.0002, 29.89, 0.0019, 30.97, 0.0028, 32.09, 0.0007,
+    34.30, 0.0002, 35.44, 0.0003, 36.55, 0.0001, 37.69, 0.0004, 38.93, 0.0002, 40.05, 0.0005, 41.20, 0.0005, 42.37, 0.0002,
+    43.54, 0.0003, 44.73, 0.0001, 45.95, 0.0002, 47.16, 0.0001, 48.43, 0.0005, 49.65, 0.0004, 55.90, 0.0002, 59.81, 0.0004],
+
+   [1.01, 0.0280, 2.00, 0.0708, 2.99, 0.0182, 3.99, 0.0248, 4.98, 0.0245, 5.98, 0.0279, 6.98, 0.0437,
+    7.99, 0.0065, 8.99, 0.0299, 10.00, 0.0073, 10.99, 0.0011, 12.03, 0.0122, 13.03, 0.0028, 14.08, 0.0044, 15.11, 0.0097,
+    16.15, 0.0010, 17.17, 0.0025, 18.19, 0.0017, 19.24, 0.0008, 20.28, 0.0040, 21.32, 0.0024, 22.38, 0.0008, 23.46, 0.0032,
+    24.52, 0.0010, 25.59, 0.0008, 26.68, 0.0009, 27.76, 0.0012, 28.88, 0.0003, 29.95, 0.0005, 31.05, 0.0017, 32.14, 0.0002,
+    33.29, 0.0003, 37.88, 0.0002, 39.03, 0.0002, 40.19, 0.0004, 41.37, 0.0003, 43.74, 0.0002, 46.20, 0.0001, 48.68, 0.0001,
+    49.93, 0.0001, 51.19, 0.0002],
+
+   [1.00, 0.0225, 1.99, 0.0921, 2.98, 0.0933, 3.99, 0.0365, 4.99, 0.0100, 5.98, 0.0213, 6.98, 0.0049,
+    7.98, 0.0041, 8.98, 0.0090, 9.99, 0.0068, 11.01, 0.0040, 12.03, 0.0086, 13.02, 0.0015, 14.04, 0.0071, 15.09, 0.0082,
+    16.14, 0.0011, 17.15, 0.0014, 18.18, 0.0010, 19.26, 0.0013, 20.26, 0.0005, 21.33, 0.0006, 22.36, 0.0011, 23.46, 0.0016,
+    24.52, 0.0004, 25.59, 0.0002, 26.70, 0.0006, 27.78, 0.0007, 28.87, 0.0002, 30.03, 0.0008, 31.14, 0.0010, 32.24, 0.0006,
+    33.37, 0.0002, 35.67, 0.0003, 37.99, 0.0004, 39.17, 0.0004, 40.35, 0.0005, 41.53, 0.0001, 46.42, 0.0001],
+
+   [1.00, 0.0465, 1.99, 0.0976, 2.98, 0.0678, 4.00, 0.0727, 4.99, 0.0305, 5.98, 0.0210, 6.98, 0.0227,
+    8.00, 0.0085, 9.01, 0.0183, 10.02, 0.0258, 11.05, 0.0003, 12.06, 0.0061, 13.05, 0.0021, 14.10, 0.0089, 15.12, 0.0077,
+    16.16, 0.0016, 17.21, 0.0061, 18.23, 0.0011, 19.29, 0.0031, 20.36, 0.0031, 21.41, 0.0007, 22.48, 0.0013, 23.55, 0.0020,
+    24.64, 0.0004, 25.74, 0.0005, 26.81, 0.0006, 27.95, 0.0006, 29.03, 0.0001, 30.22, 0.0010, 31.30, 0.0004, 32.48, 0.0001,
+    33.60, 0.0002, 38.30, 0.0003],
+
+   [1.00, 0.0674, 1.99, 0.0841, 2.98, 0.0920, 3.99, 0.0328, 4.99, 0.0368, 5.98, 0.0206, 6.99, 0.0246,
+    8.01, 0.0048, 9.01, 0.0218, 10.03, 0.0155, 11.05, 0.0048, 12.06, 0.0077, 13.00, 0.0020, 14.10, 0.0083, 15.15, 0.0084,
+    16.18, 0.0015, 17.22, 0.0039, 18.27, 0.0032, 19.34, 0.0026, 20.40, 0.0012, 21.47, 0.0009, 22.54, 0.0008, 23.62, 0.0016,
+    24.71, 0.0005, 25.82, 0.0004, 26.91, 0.0002, 28.03, 0.0008, 29.17, 0.0002, 30.32, 0.0028, 31.45, 0.0004, 32.61, 0.0005,
+    33.77, 0.0001, 36.14, 0.0003, 37.32, 0.0002, 38.54, 0.0005, 39.75, 0.0002, 42.23, 0.0002, 48.65, 0.0001],
+
+   [1.01, 0.0423, 1.99, 0.0240, 2.98, 0.0517, 4.00, 0.0493, 5.00, 0.0324, 6.00, 0.0094, 6.99, 0.0449,
+    7.99, 0.0050, 9.00, 0.0197, 10.03, 0.0132, 11.03, 0.0009, 12.07, 0.0017, 13.08, 0.0023, 14.12, 0.0094, 15.16, 0.0071,
+    16.21, 0.0020, 17.25, 0.0005, 18.30, 0.0027, 19.04, 0.0004, 20.43, 0.0022, 21.51, 0.0002, 22.59, 0.0006, 23.72, 0.0018,
+    24.80, 0.0002, 25.88, 0.0002, 27.03, 0.0002, 28.09, 0.0006, 29.31, 0.0002, 30.46, 0.0004, 31.61, 0.0007, 32.78, 0.0005,
+    33.95, 0.0001, 36.34, 0.0002, 37.56, 0.0001, 38.80, 0.0001, 40.02, 0.0001, 44.14, 0.0001],
+
+   [1.00, 0.0669, 1.99, 0.0909, 2.99, 0.0410, 3.98, 0.0292, 4.98, 0.0259, 5.98, 0.0148, 6.98, 0.0319,
+    7.99, 0.0076, 9.01, 0.0056, 10.02, 0.0206, 11.04, 0.0032, 12.05, 0.0085, 13.08, 0.0040, 14.12, 0.0037, 15.16, 0.0030,
+    16.20, 0.0013, 17.24, 0.0021, 18.30, 0.0010, 19.36, 0.0015, 20.44, 0.0013, 21.50, 0.0009, 22.60, 0.0015, 23.69, 0.0014,
+    24.80, 0.0006, 25.87, 0.0002, 27.02, 0.0006, 28.12, 0.0002, 29.28, 0.0003, 30.43, 0.0002, 31.59, 0.0007, 32.79, 0.0001,
+    35.14, 0.0001, 37.57, 0.0001, 40.03, 0.0002, 41.28, 0.0004, 44.10, 0.0001],
+
+   [0.99, 0.0421, 1.99, 0.1541, 2.98, 0.0596, 3.98, 0.0309, 4.98, 0.0301, 5.99, 0.0103, 7.00, 0.0240,
+    8.01, 0.0073, 9.01, 0.0222, 10.04, 0.0140, 11.05, 0.0033, 12.08, 0.0045, 13.13, 0.0009, 14.13, 0.0015, 15.21, 0.0026,
+    16.24, 0.0003, 17.30, 0.0004, 18.35, 0.0010, 19.39, 0.0003, 20.50, 0.0015, 21.57, 0.0003, 22.68, 0.0011, 23.80, 0.0005,
+    24.90, 0.0008, 26.02, 0.0002, 27.16, 0.0001, 28.30, 0.0006, 29.48, 0.0002, 31.81, 0.0005, 33.00, 0.0003, 34.21, 0.0001,
+    37.89, 0.0001],
+
+   [0.99, 0.0389, 2.00, 0.2095, 3.00, 0.0835, 3.99, 0.0289, 5.00, 0.0578, 5.99, 0.0363, 7.01, 0.0387,
+    8.01, 0.0056, 9.04, 0.0173, 10.05, 0.0175, 11.08, 0.0053, 12.10, 0.0056, 13.15, 0.0064, 14.19, 0.0036, 15.22, 0.0019,
+    16.29, 0.0010, 17.36, 0.0017, 18.43, 0.0018, 19.51, 0.0004, 20.60, 0.0011, 21.70, 0.0003, 22.82, 0.0003, 23.95, 0.0001,
+    25.05, 0.0004, 26.17, 0.0001, 28.50, 0.0003, 29.68, 0.0001, 32.07, 0.0003, 33.28, 0.0004, 34.52, 0.0001],
+
+   [1.00, 0.1238, 1.99, 0.2270, 3.00, 0.0102, 3.99, 0.0181, 4.98, 0.0415, 6.00, 0.0165, 7.01, 0.0314,
+    8.02, 0.0148, 9.04, 0.0203, 10.05, 0.0088, 11.07, 0.0062, 12.11, 0.0070, 13.14, 0.0054, 14.19, 0.0028, 15.24, 0.0044,
+    16.30, 0.0029, 17.38, 0.0009, 18.45, 0.0026, 19.56, 0.0003, 20.65, 0.0025, 21.74, 0.0014, 22.87, 0.0013, 23.99, 0.0007,
+    25.15, 0.0002, 27.46, 0.0004, 28.39, 0.0006, 28.65, 0.0004, 29.85, 0.0001, 31.05, 0.0002, 32.27, 0.0003, 33.52, 0.0002,
+    34.76, 0.0003],
+
+   [1.00, 0.1054, 2.00, 0.2598, 2.99, 0.0369, 3.98, 0.0523, 4.99, 0.0020, 5.99, 0.0051, 7.00, 0.0268,
+    8.01, 0.0027, 9.04, 0.0029, 10.05, 0.0081, 11.08, 0.0047, 12.12, 0.0051, 13.16, 0.0091, 14.19, 0.0015, 15.27, 0.0030,
+    16.34, 0.0017, 17.42, 0.0006, 18.51, 0.0003, 19.61, 0.0007, 20.72, 0.0003, 21.84, 0.0001, 22.99, 0.0010, 24.13, 0.0001,
+    28.44, 0.0001, 30.09, 0.0001],
+
+   [0.99, 0.0919, 2.00, 0.0418, 2.99, 0.0498, 3.99, 0.0135, 4.99, 0.0026, 6.00, 0.0155, 7.01, 0.0340,
+    8.02, 0.0033, 9.04, 0.0218, 10.08, 0.0084, 11.11, 0.0057, 12.15, 0.0051, 13.21, 0.0043, 14.25, 0.0015, 15.31, 0.0023,
+    16.40, 0.0008, 17.48, 0.0004, 18.59, 0.0016, 19.71, 0.0010, 20.84, 0.0018, 21.98, 0.0002, 23.11, 0.0013, 24.26, 0.0003,
+    26.67, 0.0002, 29.12, 0.0002, 30.37, 0.0002, 31.62, 0.0003, 32.92, 0.0001],
+
+   [0.99, 0.1174, 1.99, 0.1126, 2.99, 0.0370, 3.99, 0.0159, 5.01, 0.0472, 6.01, 0.0091, 7.03, 0.0211,
+    8.05, 0.0015, 9.07, 0.0098, 10.11, 0.0038, 11.15, 0.0042, 12.20, 0.0018, 13.24, 0.0041, 14.32, 0.0033, 15.41, 0.0052,
+    16.49, 0.0001, 17.61, 0.0004, 18.71, 0.0004, 19.84, 0.0004, 20.99, 0.0002, 22.14, 0.0006, 23.31, 0.0006, 24.50, 0.0004,
+    25.70, 0.0002, 28.09, 0.0002, 28.66, 0.0002, 32.00, 0.0001],
+
+   [1.00, 0.1085, 2.00, 0.1400, 2.99, 0.0173, 3.99, 0.0229, 5.00, 0.0272, 6.02, 0.0077, 7.03, 0.0069,
+    8.04, 0.0017, 9.08, 0.0045, 10.10, 0.0030, 11.15, 0.0040, 12.20, 0.0007, 13.25, 0.0019, 14.32, 0.0008, 15.42, 0.0024,
+    16.50, 0.0002, 17.59, 0.0005, 18.71, 0.0003, 19.83, 0.0002, 20.98, 0.0005, 23.29, 0.0008],
+
+   [1.00, 0.0985, 2.00, 0.1440, 2.99, 0.0364, 3.99, 0.0425, 5.00, 0.0190, 6.01, 0.0089, 7.03, 0.0278,
+    8.04, 0.0006, 9.07, 0.0083, 10.10, 0.0021, 11.14, 0.0050, 12.18, 0.0005, 13.26, 0.0036, 14.33, 0.0005, 15.41, 0.0026,
+    17.62, 0.0004, 18.75, 0.0004, 19.89, 0.0003, 21.04, 0.0012, 22.21, 0.0002, 23.38, 0.0004, 27.04, 0.0001],
+
+   [0.99, 0.1273, 2.00, 0.1311, 2.99, 0.0120, 4.00, 0.0099, 5.00, 0.0235, 6.02, 0.0068, 7.03, 0.0162,
+    8.06, 0.0009, 9.08, 0.0083, 10.12, 0.0014, 11.17, 0.0050, 12.24, 0.0010, 13.29, 0.0013, 14.39, 0.0022, 15.48, 0.0011,
+    16.59, 0.0002, 17.70, 0.0003, 18.84, 0.0010, 20.00, 0.0003, 21.17, 0.0003, 23.56, 0.0004, 28.79, 0.0003],
+
+   [1.00, 0.1018, 2.00, 0.1486, 3.00, 0.0165, 4.00, 0.0186, 5.01, 0.0194, 6.02, 0.0045, 7.04, 0.0083,
+    8.06, 0.0012, 9.10, 0.0066, 10.15, 0.0009, 11.19, 0.0008, 12.26, 0.0011, 13.34, 0.0028, 14.45, 0.0006, 15.53, 0.0009,
+    16.66, 0.0002, 17.79, 0.0006, 18.94, 0.0005, 20.11, 0.0003, 21.29, 0.0005, 22.49, 0.0003, 23.73, 0.0005, 26.22, 0.0001,
+    27.52, 0.0001, 28.88, 0.0002],
+
+   [1.00, 0.1889, 1.99, 0.1822, 3.00, 0.0363, 4.00, 0.0047, 5.01, 0.0202, 6.03, 0.0053, 7.05, 0.0114,
+    8.01, 0.0002, 9.13, 0.0048, 10.17, 0.0010, 11.23, 0.0033, 12.30, 0.0010, 13.38, 0.0006, 14.50, 0.0002, 15.62, 0.0010,
+    20.27, 0.0001, 21.47, 0.0001],
+
+   [1.00, 0.0522, 1.99, 0.0763, 2.99, 0.0404, 4.00, 0.0139, 5.01, 0.0185, 6.01, 0.0021, 7.06, 0.0045,
+    8.09, 0.0002, 9.11, 0.0003, 10.17, 0.0006, 11.25, 0.0004, 12.32, 0.0005, 13.40, 0.0003, 14.53, 0.0003, 15.65, 0.0007,
+    16.80, 0.0001, 17.95, 0.0002, 19.14, 0.0006, 20.34, 0.0002, 21.56, 0.0003],
+
+   [0.99, 0.1821, 1.99, 0.0773, 3.00, 0.0125, 4.01, 0.0065, 5.01, 0.0202, 6.03, 0.0071, 7.05, 0.0090,
+    8.08, 0.0006, 9.13, 0.0008, 10.18, 0.0013, 11.25, 0.0010, 12.33, 0.0012, 13.42, 0.0006, 14.54, 0.0005, 15.65, 0.0004,
+    17.97, 0.0002, 19.15, 0.0001],
+
+   [1.00, 0.1868, 2.00, 0.0951, 3.00, 0.0147, 4.01, 0.0134, 5.02, 0.0184, 6.04, 0.0132, 7.06, 0.0011,
+    8.11, 0.0008, 9.15, 0.0010, 10.22, 0.0012, 11.30, 0.0011, 12.40, 0.0003, 13.11, 0.0004, 13.49, 0.0002, 14.62, 0.0003,
+    15.77, 0.0001],
+
+   [1.00, 0.1933, 2.00, 0.0714, 3.00, 0.0373, 4.00, 0.0108, 5.02, 0.0094, 6.02, 0.0010, 7.07, 0.0022,
+    8.11, 0.0002, 9.16, 0.0065, 10.23, 0.0015, 11.31, 0.0023, 12.40, 0.0003, 13.53, 0.0014, 14.66, 0.0002, 15.81, 0.0011,
+    18.20, 0.0002, 19.41, 0.0001],
+
+   [0.99, 0.2113, 1.99, 0.0877, 3.00, 0.0492, 4.01, 0.0094, 5.02, 0.0144, 6.04, 0.0103, 7.07, 0.0117,
+    8.12, 0.0006, 9.19, 0.0019, 10.25, 0.0007, 11.35, 0.0017, 12.45, 0.0010, 13.58, 0.0003, 14.74, 0.0003, 15.91, 0.0003,
+    19.57, 0.0002],
+
+   [0.99, 0.2455, 1.99, 0.0161, 3.00, 0.0215, 4.01, 0.0036, 5.03, 0.0049, 6.04, 0.0012, 7.09, 0.0036,
+    8.14, 0.0011, 9.21, 0.0009, 10.30, 0.0001, 11.40, 0.0012, 12.50, 0.0001, 13.66, 0.0005, 14.84, 0.0001],
+
+   [1.00, 0.1132, 2.00, 0.0252, 3.00, 0.0292, 4.01, 0.0136, 5.03, 0.0045, 6.06, 0.0022, 7.11, 0.0101,
+    8.17, 0.0004, 9.23, 0.0010, 10.33, 0.0012, 11.44, 0.0013, 12.58, 0.0011, 13.75, 0.0002, 14.93, 0.0005, 16.14, 0.0002],
+
+   [1.00, 0.1655, 2.00, 0.0445, 3.00, 0.0120, 4.00, 0.0038, 5.02, 0.0015, 6.07, 0.0038, 7.11, 0.0003,
+    8.19, 0.0002, 9.25, 0.0010, 10.36, 0.0011, 11.48, 0.0005, 12.63, 0.0002, 13.79, 0.0003, 16.24, 0.0002],
+
+   [0.99, 0.3637, 1.99, 0.0259, 3.01, 0.0038, 4.01, 0.0057, 5.03, 0.0040, 6.07, 0.0067, 7.12, 0.0014,
+    8.19, 0.0004, 9.27, 0.0003, 10.38, 0.0002, 12.67, 0.0001],
+
+   [1.00, 0.1193, 2.00, 0.0230, 3.00, 0.0104, 4.01, 0.0084, 5.04, 0.0047, 6.08, 0.0035, 7.13, 0.0041,
+    8.20, 0.0002, 9.29, 0.0005, 10.40, 0.0005, 11.53, 0.0003, 12.70, 0.0002, 13.91, 0.0002],
+
+   [1.00, 0.0752, 2.00, 0.0497, 3.00, 0.0074, 4.02, 0.0076, 5.05, 0.0053, 6.09, 0.0043, 7.15, 0.0024,
+    8.22, 0.0001, 9.32, 0.0006, 10.45, 0.0002, 11.58, 0.0001, 12.78, 0.0001, 15.22, 0.0001],
+
+   [1.00, 0.2388, 2.00, 0.0629, 3.01, 0.0159, 4.04, 0.0063, 5.07, 0.0051, 6.12, 0.0045, 7.19, 0.0026, 8.29, 0.0015,
+    9.43, 0.0001, 11.75, 0.0002],
+
+   [1.00, 0.1919, 2.01, 0.0116, 3.01, 0.0031, 4.03, 0.0090, 5.07, 0.0061, 6.13, 0.0036, 7.19, 0.0013, 8.30, 0.0016,
+    9.13, 0.0001, 10.59, 0.0002, 11.78, 0.0002],
+
+   [1.00, 0.1296, 2.00, 0.0135, 3.01, 0.0041, 4.04, 0.0045, 5.09, 0.0028, 6.14, 0.0046, 7.23, 0.0007, 8.32, 0.0007,
+    9.50, 0.0001],
+
+   [1.00, 0.0692, 2.00, 0.0209, 3.02, 0.0025, 4.05, 0.0030, 5.09, 0.0047, 6.17, 0.0022, 7.25, 0.0015, 8.36, 0.0015,
+    9.53, 0.0010, 10.69, 0.0001, 13.40, 0.0001],
+
+   [1.00, 0.1715, 2.00, 0.0142, 3.01, 0.0024, 4.03, 0.0015, 5.07, 0.0017, 6.13, 0.0018, 7.22, 0.0009, 8.33, 0.0014,
+    9.51, 0.0007, 10.69, 0.0002],
+
+   [1.00, 0.1555, 2.01, 0.0148, 3.02, 0.0007, 4.06, 0.0006, 5.10, 0.0005, 6.16, 0.0008, 7.26, 0.0009, 8.39, 0.0008,
+    9.58, 0.0002],
+
+   [1.00, 0.1357, 2.00, 0.0116, 3.02, 0.0026, 4.04, 0.0009, 5.09, 0.0004, 6.17, 0.0005, 7.27, 0.0002, 8.40, 0.0001],
+
+   [1.00, 0.2185, 2.01, 0.0087, 3.03, 0.0018, 4.06, 0.0025, 5.11, 0.0020, 6.20, 0.0012, 7.32, 0.0005, 8.46, 0.0001,
+    9.66, 0.0003],
+
+   [1.00, 0.2735, 2.00, 0.0038, 3.02, 0.0008, 4.06, 0.0012, 5.12, 0.0008, 6.22, 0.0011, 7.35, 0.0003, 8.50, 0.0002],
+
+   [1.00, 0.1441, 1.99, 0.0062, 3.01, 0.0023, 4.05, 0.0011, 5.11, 0.0012, 6.20, 0.0003, 7.33, 0.0004, 8.50, 0.0001],
+
+   [1.00, 0.0726, 2.01, 0.0293, 3.03, 0.0022, 5.14, 0.0005, 6.26, 0.0011, 7.41, 0.0002, 8.63, 0.0002],
+
+   [1.00, 0.0516, 2.00, 0.0104, 3.02, 0.0029, 5.15, 0.0002, 6.27, 0.0001],
+
+   [1.00, 0.0329, 2.00, 0.0033, 3.03, 0.0013, 4.10, 0.0005, 5.19, 0.0004, 6.32, 0.0002],
+
+   [1.00, 0.0179, 1.99, 0.0012, 3.04, 0.0005, 4.10, 0.0017, 5.20, 0.0005, 6.35, 0.0001],
+
+   [1.00, 0.0334, 2.01, 0.0033, 3.04, 0.0011, 4.13, 0.0003, 5.22, 0.0003],
+
+   [0.99, 0.0161, 2.01, 0.0100, 3.04, 0.0020, 4.13, 0.0003],
+
+   [1.00, 0.0475, 1.99, 0.0045, 3.03, 0.0035, 4.12, 0.0011],
+
+   [1.00, 0.0593, 2.00, 0.0014, 4.17, 0.0002],
+
+   [1.00, 0.0249, 2.01, 0.0016],
+
+   [1.00, 0.0242, 2.00, 0.0038, 4.19, 0.0002],
+
+   [1.00, 0.0170, 2.02, 0.0030],
+
+   [1.00, 0.0381, 2.00, 0.0017, 3.09, 0.0002],
+
+   [1.00, 0.0141, 2.03, 0.0005, 3.11, 0.0003, 4.26, 0.0001],
+
+   [1.00, 0.0122, 2.03, 0.0024],
+
+   [1.00, 0.0107, 2.07, 0.0007, 3.12, 0.0004],
+
+   [1.00, 0.0250, 2.02, 0.0026, 3.15, 0.0002],
+
+   [1.01, 0.0092],
+
+   [1.01, 0.0102, 2.09, 0.0005],
+
+   [1.00, 0.0080, 2.00, 0.0005, 3.19, 0.0001],
+
+   [1.01, 0.0298, 2.01, 0.0005]]
+
+def lbj_piano(start, dur, freq, amp, *args)
+  pfreq         = get_args(args, :pfreq, freq)
+  degree        = get_args(args, :degree, 45.0)
+  distance      = get_args(args, :distance, 1.0)
+  reverb_amount = get_args(args, :reverb_amount, 0.0)
+  get_piano_partials = lambda do |frq| Piano_Spectra[(12 * (log(frq / 32.703) / log(2))).round] end
+  make_piano_ampfun = lambda do |dr|
+    release_amp = db2linear($rbm_db_drop_per_second * dr)
+    attack_time = $rbm_piano_attack_duration * 100.0 / dr
+    [0, 0, attack_time / 4, 1.0, attack_time, 1.0, 100, release_amp]
+  end
+  # This thing sounds pretty good down low, below middle c or so.
+  # Unfortunately, there are some tens of partials down there and
+  # we're using exponential envelopes.  You're going to wait for a
+  # long long time just to hear a single low note.  The high notes
+  # sound pretty rotten--they just don't sparkle; I have a feeling
+  # that this is due to the low amplitude of the original data, and
+  # the lack of mechanical noise.
+  #
+  # The only thing you can do to alter the sound of a piano note is to
+  # set the pfreq parameter.  Pfreq is used to look up the partials.
+  # By default, it's set to the requested frequency.  Setting it to a
+  # neighboring freq is useful when you're repeating notes.  Note that
+  # there's no nyquist detection; a high freq with a low pfreq, will
+  # give you fold over (hmmm...maybe I can get those high notes to
+  # sparkle after all).
+  partials = normalize_partials(get_piano_partials.call(pfreq))
+  newdur = dur + $rbm_piano_attack_duration + $rbm_piano_release_duration
+  env1dur = newdur - $rbm_piano_release_duration
+  env1samples = (env1dur * mus_srate()).floor
+  siz = (partials.length / 2).floor
+  oscils = Array.new(siz)
+  alist = make_vct(siz)
+  ampfun1 = make_piano_ampfun.call(env1dur)
+  ampenv1 = make_env(:envelope, ampfun1, :scaler, amp, :duration, env1dur, :base, 10000.0)
+  releaseamp = ampfun1.last
+  ampenv2 = make_env(:envelope, [0, 1, 100, 0], :scaler, amp * releaseamp,
+                     :duration, env1dur, :base, 1.0)
+  sktr = j = 0
+  0.step(partials.length - 1, 2) do |i|
+    alist[j] = partials[i + 1]
+    oscils[j] = make_oscil(:frequency, partials[i] * freq)
+    j += 1
+  end
+  loc = make_locsig(:degree, degree, :distance, distance, :channels, mus_channels($rbm_output),
+                    :reverb, reverb_amount, :output, $rbm_output, :revout, $rbm_reverb)
+  beg, len = times2samples(start, newdur)
+  ws_interrupt?()
+  (beg..len).each do |i|
+    sktr += 1
+    locsig(loc, i, mus_bank(oscils, alist) * env(((sktr > env1samples) ? ampenv2 : ampenv1)))
+  end
+end
+# with_sound() do lbj_piano(0, 1, 440.0, 0.2) end
+
+# RESFLT
+def resflt(start, dur, driver,
+           ranfreq, noiamp, noifun, cosamp, cosfreq1, cosfreq0, cosnum,
+           ampcosfun, freqcosfun,
+           frq1, r1, g1, frq2, r2, g2, frq3, r3, g3, *args)
+  degree        = get_args(args, :degree, 0.0)
+  distance      = get_args(args, :distance, 1.0)
+  reverb_amount = get_args(args, :reverb_amount, 0.005)
+  # driver=0 -- use sum of cosines to drive the filter,
+  # driver=1 -- use white noise
+  # if noise used, ranfreq=frequency of random number generator,
+  #                noiamp=amplitude thereof,
+  #                noifun=amplitude envelope on white noise
+  # if sum-of-cosines (i.e. a band-limited pulse train),
+  #                cosamp=amplitude of pulse train,
+  #                cosfreq1=top frequency (given freqcosfun) (i.e. pulse frequency)
+  #                cosfreq0=bottom frequency,
+  #                cosnum=number of cosines in the pulse,
+  #                ampcosfun=amplitude envelope on pulse train
+  #                freqcosfun=frequency envelope on pulse train
+  # There are then 3 resonators, centered at frq1, frq2, frq3,
+  # with pole-radius r1, r2, and r3 respectively, and
+  # with gains of g1, g2, and g3.
+  f1 = make_ppolar(r1, frq1)
+  f2 = make_ppolar(r2, frq2)
+  f3 = make_ppolar(r3, frq3)
+  with_noise = (driver == 1)
+  frqf = if with_noise
+           nil
+         else
+           make_env(:envelope, freqcosfun, :duration, dur,
+                    :scaler, hz2radians(cosfreq1 - cosfreq0))
+         end
+  ampf = if with_noise
+           make_env(:envelope, noifun, :scaler, noiamp, :duration, dur)
+         else
+           make_env(:envelope, ampcosfun, :scaler, cosamp, :duration, dur)
+         end
+  rn = if with_noise
+         make_rand(:frequency, ranfreq)
+       else
+         nil
+       end
+  cn = if with_noise
+         nil
+       else
+         make_sum_of_cosines(:frequency, cosfreq0, :cosines, cosnum)
+       end
+  loc = make_locsig(:degree, degree, :distance, distance, :channels, mus_channels($rbm_output),
+                    :reverb, reverb_amount, :output, $rbm_output, :revout, $rbm_reverb)
+  beg, len = times2samples(start, dur)
+  ws_interrupt?()
+  (beg..len).each do |i|
+    input1 = env(ampf) * (with_noise ? rand(rn) : sum_of_cosines(cn, env(frqf)))
+    locsig(loc, i,
+           two_pole(f1, input1 * g1) + \
+           two_pole(f2, input1 * g2) + \
+           two_pole(f3, input1 * g3))
+  end
+end
+=begin
+with_sound() do
+  resflt(0, 1, 0, 0, 0, nil, 0.1, 200, 230, 10, [0, 0, 50, 1, 100, 0], [0, 0, 100, 1],
+         500, 0.995, 0.1, 1000, 0.995, 0.1, 2000, 0.995, 0.1)
+  resflt(0.5, 1, 1, 10000, 0.01, [0, 0, 50, 1, 100, 0], 0, 0, 0, 0, nil, nil,
+         500, 0.995, 0.1, 1000, 0.995, 0.1, 2000, 0.995, 0.1)
+end
+=end
+
+# SCRATCH
+def scratch(start, file, src_ratio, turnaroundlist)
+  f = make_file2sample(file)
+  turntable = list2vct(turnaroundlist)
+  turn_i = 1
+  turns = turnaroundlist.length
+  cur_sample = seconds2samples(turntable[0])
+  turn_sample = seconds2samples(turntable[turn_i])
+  rd = make_src(:srate, src_ratio)
+  forwards = (src_ratio > 0.0)
+  set_mus_increment(rd, -src_ratio) if forwards and turn_sample < cur_sample
+  turning = 0
+  last_val = last_val2 = 0.0
+  i = seconds2samples(start)
+  ws_interrupt?()
+  until turn_i >= turns
+    val = src(rd, 0.0, lambda do |dir|
+                inval = file2sample(f, cur_sample)
+                cur_sample += dir
+                inval
+              end)
+    if turning.zero?
+      # we past turn point going forwards
+      if forwards and cur_sample >= turn_sample
+        turning = 1
+        # we past turn point going backwards
+      elsif (not forwards) and cur_sample <= turn_sample
+        turning = -1
+      end
+    else
+      # wait for an inflection...
+      if (last_val2 <= last_val and last_val >= val) or
+          (last_val2 >= last_val and last_val <= val)
+        turn_i += 1
+        if turn_i < turns
+          turn_sample = seconds2samples(turntable[turn_i])
+          forwards = (not forwards)
+          set_mus_increment(rd, -mus_increment(rd))
+        end
+        turning = 0
+      end
+    end
+    last_val2, last_val = last_val, val
+    outa(i, val, $rbm_output)
+    i += 1
+  end
+end
+# with_sound() do scratch(0, "now.snd", 1.5, [0.0, 0.5, 0.25, 1.0]) end
+
+# PINS
+#
+# spectral modeling (SMS)
+def pins(start, dur, file, amp, *args)
+  transposition = get_args(args, :transposition, 1.0) # this can be used to transpose the sound
+  time_scaler   = get_args(args, :time_scaler, 1.0) # this can make things happen faster
+						    # (< 1.0)/slower (> 1.0) in the output
+  fftsize       = get_args(args, :fftsize, 256)     # should be a power of 2
+  # at 22050 srate, this is ok for sounds above 300Hz or so, below
+  # that you need 512 or 1024, at 44100, probably best to double these
+  # sizes -- it takes some searching sometimes.
+  highest_bin   = get_args(args, :highest_bin, 128) # how high in fft data should we
+						    # search for peaks
+  max_peaks     = get_args(args, :max_peaks, 16)    # how many spectral peaks to track at
+						    # the maximum
+  attack        = get_args(args, :attack, nil)      # whether to use original attack via
+						    # time domain splice
+  # do the sliding fft shuffle, translate to polar coordinates, find
+  # spectral peaks, match with current, do some interesting
+  # transformation, resynthesize using oscils All the envelopes are
+  # created on the fly.  max-peaks is how many of these peaks we are
+  # willing to track at any given time.
+  beg, len = times2samples(start, dur)
+  fil = make_file2sample(file)
+  file_duration = mus_sound_duration(file)
+  fdr = make_vct(fftsize)
+  fdi = make_vct(fftsize)
+  window = make_fft_window(Blackman2_window, fftsize)
+  fftamps = make_vct(fftsize)
+  max_oscils = 2 * max_peaks
+  current_peak_freqs = make_vct(max_oscils)
+  last_peak_freqs = make_vct(max_oscils)
+  current_peak_amps = make_vct(max_oscils)
+  last_peak_amps = make_vct(max_oscils)
+  peak_amps = make_vct(max_peaks)
+  peak_freqs = make_vct(max_peaks)
+  resynth_oscils = Array.new(max_oscils) do make_oscil(:frequency, 0) end
+  # run-time generated amplitude and frequency envelopes
+  amps = make_vct(max_oscils)
+  rates = make_vct(max_oscils)
+  freqs = make_vct(max_oscils)
+  sweeps = make_vct(max_oscils)
+  lowest_magnitude = 0.001
+  hop = (fftsize / 4).floor
+  outhop = (time_scaler * hop).floor
+  ifreq = 1.0 / outhop
+  ihifreq = hz2radians(ifreq)
+  fftscale = 1.0 / (fftsize * 0.42323) # integrate Blackman-Harris window = .42323*window
+				       # width and shift by fftsize
+  fft_mag = mus_srate() / fftsize
+  furthest_away_accepted = 0.1
+  filptr = 0
+  cur_oscils = max_oscils
+  ramped = (attack or 0)
+  splice_attack = attack.kind_of?(Numeric)
+  attack_size = (attack or 1)
+  ramp_ind = 0
+  ramped_attack = make_vct(attack_size)
+  if (dur / time_scaler) > file_duration
+    snd_print(format("%s is %.3f seconds long, but we'll need %.3f seconds of data for this note",
+                     file, file_duration, dur / time_scaler))
+  end
+  trigger = outhop
+  vct_scale!(window, fftscale)
+  ws_interrupt?()
+  (beg..len).each do |i|
+    if splice_attack
+      ramp = 1.0 / attack_size
+      # my experience in translating SMS, and rumor via Greg Sandell
+      # leads me to believe that there is in fact no way to model some
+      # attacks successfully in this manner, so this block simply
+      # splices the original attack on to the rest of the note.
+      # "attack" is the number of samples to include bodily.
+      outa(i, amp * file2sample(fil, filptr), $rbm_output)
+      filptr += 1
+      if filptr > attack_size
+        mult = 1.0
+        attack_size.times do |j|
+          ramped_attack[j] = mult * file2sample(fil, filptr + j)
+          mult -= ramp
+        end
+        splice_attack = false
+      end
+    else
+      if trigger >= outhop
+        peaks = 0
+        # get next block of data and apply window to it
+        trigger = 0
+        fftsize.times do |j|
+          fdr[j] = window[j] * file2sample(fil, filptr)
+          filptr += 1
+        end
+        vct_fill!(fdi, 0.0)
+        filptr -= fftsize - hop
+        # get the fft
+        mus_fft(fdr, fdi, fftsize, 1)
+        # change to polar coordinates (ignoring phases)
+        highest_bin.times do |j|
+          # no need to paw through the upper half (so (<= highest-bin (floor fft-size 2)))
+          x = fdr[j]
+          y = fdi[j]
+          fftamps[j] = 2.0 * sqrt(x * x + y * y)
+        end
+        max_oscils.times do |j|
+          last_peak_freqs[j] = current_peak_freqs[j]
+          last_peak_amps[j] = current_peak_amps[j]
+          current_peak_amps[j] = 0.0
+        end
+        vct_fill!(peak_amps, 0.0)
+        ra = fftamps[0]
+        la = ca = 0.0
+        # search for current peaks following Xavier Serra's recommendations in
+        # "A System for Sound Analysis/Transformation/Synthesis 
+        #      Based on a Deterministic Plus Stochastic Decomposition"
+        highest_bin.times do |j|
+          la, ca, ra = ca, ra, fftamps[j]
+          if ca > lowest_magnitude and ca > ra and ca > la
+            # found a local maximum above the current threshold (its bin number is j-1)
+            logla = log10(la)
+            logca = log10(ca)
+            logra = log10(ra)
+            offset = (0.5 * (logla - logra)) / (logla + -2 * logca + logra)
+            amp_1 = 10.0 ** (logca - (0.25 * (logla - logra) * offset))
+            freq = fft_mag * (j + offset - 1)
+            if peaks == max_peaks
+              # gotta either flush this peak, or find current lowest and flush him
+              minp = 0
+              minpeak = peak_amps[0]
+              1.upto(max_peaks - 1) do |k|
+                if peak_amps[k] < minpeak
+                  minp = k
+                  minpeak = peak_amps[k]
+                end
+              end
+              if amp_1 > minpeak
+                peak_freqs[minp] = freq
+                peak_amps[minp] = amp_1
+              end
+            else
+              peak_freqs[peaks] = freq
+              peak_amps[peaks] = amp_1
+              peaks += 1
+            end
+          end
+        end
+        # now we have the current peaks -- match them to the previous
+        # set and do something interesting with the result the end
+        # results are reflected in the updated values in the rates and
+        # sweeps arrays.  search for fits between last and current,
+        # set rates/sweeps for those found try to go by largest amp
+        # first
+        peaks.times do |j|
+          maxp = 0
+          maxpk = peak_amps[0]
+          1.upto(max_peaks - 1) do |k|
+            if peak_amps[k] > maxpk
+              maxp = k
+              maxpk = peak_amps[k]
+            end
+          end
+          # now maxp points to next largest unmatched peak
+          if maxpk > 0.0
+            closestp = -1
+            closestamp = 10.0
+            current_freq = peak_freqs[maxp]
+            icf = 1.0 / current_freq
+            max_peaks.times do |k|
+              if last_peak_amps[k] > 0.0
+                closeness = icf * (last_peak_freqs[k] - current_freq).abs
+                if closeness < closestamp
+                  closestamp = closeness
+                  closestp = k
+                end
+              end
+            end
+            if closestamp < furthest_away_accepted
+              # peak_amp is transferred to appropriate current_amp and zeroed,
+              current_peak_amps[closestp] = peak_amps[maxp]
+              peak_amps[maxp] = 0.0
+              current_peak_freqs[closestp] = current_freq
+            end
+          end
+        end
+        max_peaks.times do |j|
+          if peak_amps[j] > 0.0
+            # find a place for a new oscil and start it up
+            new_place = -1
+            max_oscils.times do |k|
+              if last_peak_amps[k].zero? and current_peak_amps[k].zero?
+                new_place = k
+                break
+              end
+            end
+            current_peak_amps[new_place] = peak_amps[j]
+            peak_amps[j] = 0.0
+            current_peak_freqs[new_place] = peak_freqs[j]
+            last_peak_freqs[new_place] = peak_freqs[j]
+            set_mus_frequency(resynth_oscils[new_place], transposition * peak_freqs[j])
+          end
+        end
+        cur_oscils = 0
+        max_oscils.times do |j|
+          rates[j] = ifreq * (current_peak_amps[j] - last_peak_amps[j])
+          if current_peak_amps[j].nonzero? or last_peak_amps[j].nonzero?
+            cur_oscils = j
+          end
+          sweeps[j] = ihifreq * transposition * (current_peak_freqs[j] - last_peak_freqs[j])
+        end
+        cur_oscils += 1
+      end
+      # run oscils, update envelopes
+      trigger += 1
+      if ramped.zero?
+        sum = 0.0
+      else
+        sum = ramped_attack[ramp_ind]
+        ramp_ind += 1
+        ramped = 0 if ramp_ind == ramped
+      end
+      cur_oscils.times do |j|
+        if amps[j].nonzero? or rates[j].nonzero?
+          sum += amps[j] * oscil(resynth_oscils[j], freqs[j])
+          amps[j] += rates[j]
+          freqs[j] += sweeps[j]
+        end
+      end
+      outa(i, amp * sum, $rbm_output)
+    end
+  end
+end
+# with_sound() do pins(0, 1, "now.snd", 1, :time_scaler, 2) end
+
+# ZC
+def zc(start, dur, freq, amp, length1, length2, feedback)
+  s = make_pulse_train(:frequency, freq)
+  d0 = make_comb(:size, length1, "max-size".to_sym, [length1, length2].max + 1, :scaler, feedback)
+  zenv = make_env(:envelope, [0, 0, 1, 1], :scaler, length2 - length1, :duration, dur)
+  beg, len = times2samples(start, dur)
+  ws_interrupt?()
+  (beg..len).each do |i|
+    outa(i, comb(d0, amp * pulse_train(s), env(zenv)), $rbm_output)
+  end
+end
+# with_sound() do
+#   zc(0, 3, 100, 0.1, 20, 100, 0.95)
+#   zc(3.5, 3, 100, 0.1, 100, 20, 0.95)
+# end
+
+# ZN
+#
+# notches are spaced at srate/len, feedforward sets depth thereof so
+# sweep of len from 20 to 100 sweeps the notches down from 1000 Hz to
+# ca 200 Hz so we hear our downward glissando beneath the pulses.
+def zn(start, dur, freq, amp, length1, length2, feedforward)
+  s = make_pulse_train(:frequency, freq)
+  d0 = make_notch(:size, length1, "max-size".to_sym, [length1, length2].max + 1,
+                  :scaler, feedforward)
+  zenv = make_env(:envelope, [0, 0, 1, 1], :scaler, length2 - length1, :duration, dur)
+  beg, len = times2samples(start, dur)
+  ws_interrupt?()
+  (beg..len).each do |i|
+    outa(i, notch(d0, amp * pulse_train(s), env(zenv)), $rbm_output)
+  end
+end
+# with_sound() do
+#   zn(0, 1, 100, 0.1, 20, 100, 0.995)
+#   zn(1.5, 1, 100, 0.1, 100, 20, 0.995)
+# end
+
+# ZA
+def za(start, dur, freq, amp, length1, length2, feedback, feedforward)
+  s = make_pulse_train(:frequency, freq)
+  d0 = make_all_pass(:feedback, feedback, :feedforward, feedforward,
+                     :size, length1, "max-size".to_sym, [length1, length2].max + 1)
+  zenv = make_env(:envelope, [0, 0, 1, 1], :scaler, length2 - length1, :duration, dur)
+  beg, len = times2samples(start, dur)
+  ws_interrupt?()
+  (beg..len).each do |i|
+    outa(i, all_pass(d0, amp * pulse_train(s), env(zenv)), $rbm_output)
+  end
+end
+# with_sound() do
+#   za(0, 1, 100, 0.1, 20, 100, 0.95, 0.95)
+#   za(1.5, 1, 100, 0.1, 100, 20, 0.95, 0.95)
+# end
+
+# EXP-SND
+#
+# granulate with envelopes on the expansion amount, segment envelope
+# shape, segment length, hop length, and input file resampling rate
+def exp_snd(file, start, dur, amp,
+            exp_amt = 1.0, ramp = 0.4, seglen = 0.15, sr = 1.0, hop = 0.05, ampenv = nil)
+  f0 = make_readin(file, 0)
+  expenv = make_env(:envelope, (exp_amt.kind_of?(Array) ? exp_amt : [0, exp_amt, 1, exp_amt]),
+                    :duration, dur)
+  lenenv = make_env(:envelope, (seglen.kind_of?(Array) ? seglen : [0, seglen, 1, seglen]),
+                    :duration, dur)
+  max_seg_len, initial_seg_len = if seglen
+                                   if seglen.kind_of?(Array)
+                                     [max_envelope(seglen), seglen[1]]
+                                   else
+                                     [seglen, seglen]
+                                   end
+                                 else
+                                   [0.15, 0.15]
+                                 end
+  scaler_amp = ((max_seg_len > 0.15) ? ((0.6 * 0.15) / max_seg_len) : 0.6)
+  srenv = make_env(:envelope, (sr.kind_of?(Array) ? sr : [0, sr, 1, sr]), :duration, dur)
+  rampdata = (ramp.kind_of?(Array) ? ramp : [0, ramp, 1, ramp])
+  rampenv = make_env(:envelope, rampdata, :duration, dur)
+  initial_ramp_time = if ramp
+                        if ramp.kind_of?(Array)
+                          ramp[1]
+                        else
+                          ramp
+                        end
+                      else
+                        0.4
+                      end
+  hopenv = make_env(:envelope, (hop.kind_of?(Array) ? hop : [0, hop, 1, hop]), :duration, dur)
+  max_out_hop, initial_out_hop = if hop
+                                   if hop.kind_of?(Array)
+                                     [max_envelope(hop), hop[1]]
+                                   else
+                                     [hop, hop]
+                                   end
+                                 else
+                                   [0.05, 0.05]
+                                 end
+  min_exp_amt, initial_exp_amt = if exp_amt
+                                    if exp_amt.kind_of?(Array)
+                                      [min_envelope(exp_amt), exp_amt[1]]
+                                    else
+                                      [exp_amt, exp_amt]
+                                    end
+                                  else
+                                    [1.0, 1.0]
+                                  end
+  max_in_hop = max_out_hop / min_exp_amt.to_f
+  max_len = (mus_srate() * ([max_out_hop, max_in_hop].max + max_seg_len)).ceil
+  ampe = make_env(:envelope, (ampenv or [0, 0, 0.5, 1, 1, 0]), :scaler, amp, :duration, dur)
+  ex_a = make_granulate(:expansion, initial_exp_amt,
+                        "max-size".to_sym, max_len,
+                        :ramp, initial_ramp_time,
+                        :hop, initial_out_hop,
+                        :length, initial_seg_len,
+                        :scaler, scaler_amp)
+  ex_samp = next_samp = 0.0
+  vol = env(ampe)
+  val_a0 = vol * granulate(ex_a, lambda do |dir| readin(f0) end)
+  val_a1 = vol * granulate(ex_a, lambda do |dir| readin(f0) end)
+  if min_envelope(rampdata) <= 0.0 or max_envelope(rampdata) >= 0.5
+    snd_warning(format("ramp argument to expand must always be between 0.0 and 0.5: %.3f", ramp))
+  else
+    beg, len = times2samples(start, dur)
+    ws_interrupt?()
+    (beg..len).each do |i|
+      break if c_g?()
+      expa = env(expenv)  # current expansion amount
+      segl = env(lenenv)  # current segment length
+      resa = env(srenv)   # current resampling increment
+      rmpl = env(rampenv) # current ramp length (0 to 0.5)
+      hp = env(hopenv)    # current hop size
+      # now we set the granulate generator internal state to reflect all
+      # these envelopes
+      sl = (segl * mus_srate()).floor
+      rl = (rmpl * sl).floor
+      vol = env(ampe)
+      set_mus_length(ex_a, sl)
+      set_mus_ramp(ex_a, rl)
+      set_mus_frequency(ex_a, hp)
+      set_mus_increment(ex_a, expa)
+      next_samp += resa
+      if next_samp > (ex_samp + 1)
+        (next_samp - ex_samp).floor.times do
+          val_a0, val_a1 = val_a1, vol * granulate(ex_a, lambda do |dir| readin(f0) end)
+          ex_samp += 1
+        end
+      end
+      if next_samp == ex_samp
+        outa(i, val_a0, $rbm_output)
+      else
+        outa(i, val_a0 + (next_samp - ex_samp) * (val_a1 - val_a0), $rbm_output)
+      end
+    end  
+  end
+end
+# with_sound() do
+#   exp_snd("fyow.snd", 0, 1, 1, [0, 1, 1, 3], 0.4, 0.15, [0, 2, 1, 0.5], 0.05)
+#   exp_snd("oboe.snd", 1.2, 1, 1, [0, 1, 1, 3], 0.4, 0.15, [0, 2, 1, 0.5], 0.2)
+# end
+
+# EXPFIL
+Grn = Struct.new("Grn",
+                 :rampval, :rampinc,
+                 :loc, :segctr, :whichseg, :ramplen, :steadylen, :trigger)
+
+def expfil(start, dur, hopsecs, rampsecs, steadysecs, file1, file2)
+  fil1 = make_file2sample(file1)
+  fil2 = make_file2sample(file2)
+  hop = seconds2samples(hopsecs)
+  ramplen = seconds2samples(rampsecs)
+  steadylen = seconds2samples(steadysecs)
+  grn1 = Grn.new(0.0, 1.0 / ramplen, 0, 0, 0, ramplen, steadylen, 0)
+  grn2 = Grn.new(0.0, 1.0 / ramplen, 0, 0, 0, ramplen, steadylen, 0)
+  beg, len = times2samples(start, dur)
+  out1 = beg
+  out2 = hop + beg
+  ws_interrupt?()
+  (beg..len).each do |i|
+    val = 0.0
+    if i == out1
+      inval = ina(grn1.loc, fil1)
+      grn1.loc += 1
+      if grn1.whichseg.zero? # ramp-up
+        inval *= grn1.rampval
+        grn1.rampval += grn1.rampinc
+        grn1.segctr += 1
+        if grn1.segctr == grn1.ramplen
+          grn1.segctr = 0
+          grn1.whichseg += 1
+        end
+      else
+        if grn1.whichseg == 1 # steady-state
+          grn1.segctr += 1
+          if grn1.segctr == grn1.steadylen
+            grn1.segctr = 0
+            grn1.whichseg += 1
+          end
+        else # ramp-down
+          inval *= grn1.rampval
+          grn1.segctr += 1
+          grn1.rampval -= grn1.rampinc
+          if grn1.segctr == grn1.ramplen
+            grn1.segctr = 0
+            grn1.trigger = 1
+            grn1.whichseg = 0
+            grn1.rampval = 0.0
+          end
+        end
+      end
+      val += inval
+      out1 += 1
+      if grn1.trigger == 1
+        grn1.trigger = 0
+        out1 += hop
+      end
+    end
+    if i == out2
+      inval = ina(grn2.loc, fil2)
+      grn2.loc += 1
+      if grn2.whichseg.zero? # ramp-up
+        inval *= grn2.rampval
+        grn2.rampval += grn2.rampinc
+        grn2.segctr += 1
+        if grn2.segctr == grn2.ramplen
+          grn2.segctr = 0
+          grn2.whichseg += 1
+        end
+      else
+        if grn2.whichseg == 1 # steady-state
+          grn2.segctr += 1
+          if grn2.segctr == grn2.steadylen
+            grn2.segctr = 0
+            grn2.whichseg += 1
+          end
+        else # ramp-down
+          inval *= grn2.rampval
+          grn2.segctr += 1
+          grn2.rampval -= grn2.rampinc
+          if grn2.segctr == grn2.ramplen
+            grn2.segctr = 0
+            grn2.trigger = 1
+            grn2.whichseg = 0
+            grn2.rampval = 0.0
+          end
+        end
+      end
+      val += inval
+      out2 += 1
+      if grn2.trigger == 1
+        grn2.trigger = 0
+        out2 += hop
+      end
+    end
+    outa(i, val, $rbm_output)
+  end
+end
+# with_sound() do expfil(0, 2, 0.2, 0.01, 0.1, "oboe.snd", "fyow.snd") end
+
+# GRAPH-EQ
+#
+=begin
+From: Marco Trevisani <marco@ccrma.Stanford.EDU>
+
+This should work like a Graphic Equalizer....
+Very easy to use. Just some note:
+
+"amp" & "amp-env" apply an enveloppe to the final result of the
+filtering.  
+
+"dur" as ""standard"" in my instruments, when dur = 0 it will take the length of the
+sndfile input, otherwise the duration in seconds.
+
+"gain-freq-list" is a list of gains and frequencies to
+filter --in this order gain and frequencies--. There is no limit to
+the size of the list. Gain can be a number or an
+envelope. Unfortunatelly in this version they cant alternate, one
+should chose, all envelopes or all numbers i.e.: 
+case 1 -> '( .1 440.0 .3 1500.0 .2 330.0 ...etc) or 
+case 2 -> '((0 .1 1 .5) 440.0 (0 1 1 .01) 1500 (0 .3 1 .5) 330.0 ...etc) 
+'( .1 440.0 (0 1 1 .01) 1500 ..etc) <<< again, this is not allowed ..
+
+"offset-gain" This apply to all the gains if case 1. It adds or
+subtracts an offset to all the gains in the list. This number can be positive or
+negative. In case the result is a negative number --let's say offset =
+-.4 and, like in case 1, the first gain is .1, the result would be
+-.3 -- the instrument will pass a gain equal to 0.  
+
+"filt-gain-scale" & "filt-gain-base" will apply to the elements of the
+envelopes if we are in case 2, gains are envelopes.
+
+"stats" if #t --default-- prints the number of seconds processed, if
+nil doesnt print anything, which will speed up a bit the process.
+=end
+#
+def graph_eq(file, *args)
+  start           = get_args(args, :start, 0)
+  dur             = get_args(args, :dur, 0)
+  or_beg          = get_args(args, :or_beg, 0)
+  amp             = get_args(args, :amp, 1)
+  amp_env         = get_args(args, :amp_env, [0, 1, 0.8, 1, 1, 0])
+  amp_base        = get_args(args, :amp_base, 1)
+  offset_gain     = get_args(args, :offset_gain, 0)
+  gain_freq_list  = get_args(args, :gain_freq_list, [[0, 1, 1, 0], 440, [0, 0, 1, 1], 660])
+  filt_gain_scale = get_args(args, :filt_gain_scale, 1)
+  filt_gain_base  = get_args(args, :filt_gain_base, 1)
+  a1              = get_args(args, :a1, 0.99)
+  stats           = get_args(args, :stats, nil)
+  durata = (dur.zero? ? mus_sound_duration(file) : dur)
+  beg, len = times2samples(start, durata)
+  or_start = (or_beg * mus_sound_srate(file)).round
+  rd_a = make_readin(:file, file, :start, or_start)
+  half_list = gain_freq_list.length / 2
+  ampenv = make_env(:envelope, amp_env, :scaler, amp, :duration, durata, :base, amp_base)
+  gain_list = []
+  0.step(gain_freq_list.length - 1, 2) do |i| gain_list << gain_freq_list[i] end
+  freq_list = []
+  1.step(gain_freq_list.length - 1, 2) do |i| freq_list << gain_freq_list[i] end
+  if_list_in_gain = gain_list[0].kind_of?(Array)
+  env_size = (if_list_in_gain ? Array.new(freq_list.length) : nil)
+  frm_size = Array.new(freq_list.length)
+  samp = -1
+  half_list.times do |i|
+    gval = gain_list[i]
+    fval = freq_list[i]
+    if gval.kind_of?(Array)
+      env_size[i] = make_env(:envelope, gval, :scaler, filt_gain_scale,
+                             :duration, durata, :base, filt_gain_base)
+      frm_size[i] = make_formant(a1, fval)
+    else
+      frm_size[i] = make_formant(a, fval, [offset_gain + gval, 0].max)
+    end
+  end
+  ws_interrupt?()
+  (beg..len).each do |i|
+    if stats
+      samp += 1
+      if samp == mus_srate()
+        snd_print(format("# %f", i / mus_srate()))
+        samp = 0
+      end
+    end
+    outval = 0.0
+    inval = readin(rd_a)
+    half_list.times do |j|
+      if if_list_in_gain
+        set_mus_a0(frm_size[j], env(env_size[j]) * (1.0 - a1))
+      end
+      outval += formant(frm_size[j], inval)
+    end
+    outa(i, env(ampenv) * outval, $rbm_output)
+  end
+end
+# with_sound() do graph_eq("oboe.snd") end
+
+# ANOI
+#
+# a kind of noise reduction -- on-going average spectrum is squelched
+# to some extent obviously aimed at intermittent signal in background
+# noise
+# this is based on Perry Cook's Scrubber.m
+def anoi(infile, start, dur, fftsize = 128, amp_scaler = 1.0, r = TWO_PI)
+  freq_inc = (fftsize / 2).floor
+  fdi = make_vct(fftsize)
+  fdr = make_vct(fftsize)
+  spectr = make_vct(freq_inc, 1.0)
+  scales = make_vct(freq_inc, 1.0)
+  diffs = make_vct(freq_inc)
+  win = make_fft_window(Blackman2_window, fftsize)
+  k = 0
+  amp = 0.0
+  incr = amp_scaler * 4.0 / mus_srate()
+  file = make_file2sample(infile)
+  radius = 1.0 - r / fftsize.to_f
+  bin = mus_srate() / fftsize
+  fs = Array.new(freq_inc) do |i| make_formant(radius, i * bin) end
+  samp = 0
+  beg, len = times2samples(start, dur)
+  ws_interrupt?()
+  (beg..len).each do |i|
+    inval = file2sample(file, samp)
+    samp += 1
+    fdr[k] = inval
+    k += 1
+    amp += incr if amp < amp_scaler
+    if k >= fftsize
+      k = 0
+      spectrum(fdr, fdi, win, 1)
+      freq_inc.times do |j|
+        spectr[j] = 0.9 * spectr[j] + 0.1 * fdr[j]
+        if spectr[j] >= fdr[j]
+          diffs[j] = scales[j] / -fftsize
+        else
+          diffs[j] = ((fdr[j] - spectr[j]) / fdr[j] - scales[j]) / fftsize
+        end
+      end
+    end
+    outval = 0.0
+    1.upto(freq_inc - 1) do |j|
+      cur_scale = scales[j]
+      outval += cur_scale * formant(fs[j], inval)
+      scales[j] += diffs[j]
+    end
+    outa(i, amp * outval, $rbm_output)
+  end
+end
+# with_sound() do anoi("oboe.snd", 0, 1) end
+
+=begin
+Date: Fri, 25 Sep 1998 09:56:41 +0300
+From: Matti Koskinen <mjkoskin@sci.fi>
+To: linux-audio-dev@ginette.musique.umontreal.ca
+Subject: [linux-audio-dev] Announce: alpha version of denoising
+[...]
+	I wrote a simple denoiser called anoi after it's parent
+	clm-instrument anoi.ins.
+
+	anoi tries to remove white noise like tape hiss from wav-
+	files. Removing of noise succeeds ok, but depending of the
+	original sound, some distortion can be audible.
+
+	If someone is interested, http://www.sci.fi/~mjkoskin
+	contains tarred and gzipped file.
+
+	Now only monophonic wav-files can be denoised, but adding
+	others isn't too difficult. 
+
+-matti
+mjkoskin@sci.fi
+=end
+
+# FULLMIX
+#
+# "matrix" can be a simple amplitude or a list of lists each inner
+#     list represents one input channel's amps into one output channel
+#     each element of the list can be a number, a list (turned into an
+#     env) or an env
+def fullmix(in_file, start = 0.0, outdur = nil, inbeg = 0.0,
+            matrix = nil, srate = nil, reverb_amount = nil)
+  dur = (outdur or mus_sound_duration(in_file) / ((srate.kind_of?(Numeric) and srate.nonzero?) ?
+                                                  srate.abs : 1.0))
+  beg, len = times2samples(start, dur)
+  samps = seconds2samples(dur)
+  in_chans = mus_sound_chans(in_file)
+  inloc = (inbeg * mus_sound_srate(in_file)).floor
+  file = if srate
+           Array.new(in_chans) do |i| make_readin(in_file, i, inloc) end
+         else
+           make_file2sample(in_file)
+         end
+  out_chans = mus_channels($rbm_output)
+  mx = if matrix
+         make_mixer([in_chans, out_chans].max)
+       else
+         false
+       end
+  rev_mx = if $rbm_reverb and reverb_amount.kind_of?(Numeric) and (reverb_amount > 0.0)
+             rmx = make_identity_mixer(in_chans)
+             in_chans.times do |i| mixer_set!(rmx, i, 0, reverb_amount) end
+             rmx
+           else
+             false
+           end
+  revframe = (rev_mx ? make_frame(1) : false)
+  envs = false
+  if matrix
+    if matrix.kind_of?(Array)
+      in_chans.times do |i|
+        inlist = matrix[i]
+        out_chans.times do |j|
+          outn = inlist[j]
+          if outn
+            if outn.kind_of?(Numeric)
+              mixer_set!(mx, i, j, outn)
+            else
+              if env?(outn) or outn.kind_of?(Array)
+                envs = Array.new(in_chans) do Array.new(out_chans, nil) end unless envs
+                if env?(outn)
+                  envs[i][j] = outn
+                else
+                  envs[i][j] = make_env(:envelope, outn, :duration, dur)
+                end
+              else
+                snd_warning(format("unknown element in matrix: %s", outn))
+              end
+            end
+          end
+        end
+      end
+    else # matrix is a number (global scaler)
+      in_chans.times do |i|
+        # this is different from CLM fullmix.ins which puts scaler in
+        # all entries??
+        mixer_set!(mx, i, i, matrix) if i < out_chans
+      end
+    end
+  end
+  unless srate
+    mus_mix($rbm_output, file, beg, samps, inloc, mx, envs)
+    mus_mix($rbm_reverb, revframe, beg, samps, inloc, rev_mx, false) if rev_mx
+  else
+    inframe = make_frame(in_chans)
+    outframe = make_frame(out_chans)
+    srcs = Array.new(in_chans) do make_src(:srate, srate) end
+    (beg..len).each do |i|
+      if envs
+        in_chans.times do |j|
+          out_chans.times do |k|
+            mixer_set!(mx, j, k, env(envs[j][k])) if envs[i] and env?(envs[j][k])
+          end
+        end
+      end
+      in_chans.times do |j|
+        frame_set!(inframe, j, src(srcs[j], 0.0, lambda do |dir| readin(file[j]) end))
+      end
+      frame2file($rbm_output, i, frame2frame(mx, inframe, outframe))
+      frame2file($rbm_reverb, i, frame2frame(rev_mx, inframe, revframe)) if rev_mx
+    end
+  end
+end
+# with_sound(:channels, 2, :statistics, true) do
+#   fullmix("pistol.snd")
+#   fullmix("oboe.snd", 1, 2, 0,
+#           [[0.1, make_env(:envelope, [0, 0, 1, 1], :duration, 2, :scaler, 0.5)]])
+# end
 
 # clm-ins.rb ends here

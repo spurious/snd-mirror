@@ -545,7 +545,8 @@ GtkWidget *make_scrolled_text(GtkWidget *parent, bool editable, GtkWidget *boxer
   return(new_text);
 }
 
-GtkWidget *sg_make_list(const char *title, GtkWidget *parent, int paned, gpointer gp, int num_items, char **items, GtkSignalFunc callback, int t1, int t2, int t3, int t4)
+GtkWidget *sg_make_list(const char *title, GtkWidget *parent, int paned, gpointer gp, 
+			int num_items, char **items, GtkSignalFunc callback, int t1, int t2, int t3, int t4)
 {
   GtkWidget *list;
   int i;
@@ -567,7 +568,6 @@ GtkWidget *sg_make_list(const char *title, GtkWidget *parent, int paned, gpointe
   gtk_container_add(GTK_CONTAINER(scrolled_win), list);
   gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrolled_win), GTK_POLICY_AUTOMATIC, GTK_POLICY_ALWAYS);
   gtk_container_set_border_width(GTK_CONTAINER(scrolled_win), 0);
-
   g_signal_connect(gtk_tree_view_get_selection(GTK_TREE_VIEW(list)), "changed", G_CALLBACK(callback), gp);
 
   switch (paned)
@@ -583,7 +583,6 @@ GtkWidget *sg_make_list(const char *title, GtkWidget *parent, int paned, gpointe
     }
   gtk_widget_show(list);
   gtk_widget_show(scrolled_win);
-
   for (i = 0; i < num_items; i++) 
     {
       gtk_list_store_append(model, &iter);

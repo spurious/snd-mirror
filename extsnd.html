@@ -1750,7 +1750,8 @@ reported it via the hook).
   (lambda (msg) 
     (play "bong.snd") ; or if xm is loaded, (XBell (XtDisplay (cadr (main-widgets))) 10)
     #f))
-</pre></td></tr></table></td></tr>
+</pre></td></tr></table>
+</td></tr>
 <tr><td colspan=3></td></tr>
 
 <!-- snd-warning-hook -->
@@ -4543,6 +4544,7 @@ some other form, see <b>cascade-&gt;canonical</b> in dsp.scm, and the examples t
 <blockquote><small>
 <br>
 <A NAME="filtersinsnd">Filters</a> in Snd:<br>
+filter a sound: <a href="sndfilter">filter-sound</a> and <a href="#clmchannel">clm-channel</a><br>
 CLM filter generators: <a href="clm.html#filters">filter, one-pole, formant, comb, notch, all-pass, etc</a>, many examples in examp.scm, new-effects.scm<br>
 lowpass filter: make-lowpass in dsp.scm<br>
 highpass filter: make-highpass in dsp.scm<br>
@@ -4589,13 +4591,15 @@ In the find dialog and in C-s or C-r searches, if the value returned is an integ
 <TABLE border=3 bordercolor="tan" hspace=40><tr><td>
 <blockquote><small>
 <br>
+find a mark: <a href="#sndfindmark">find-mark</a><br>
+find a mix: <a href="#sndfindmix">find-mix</a><br>
+find a sound: <a href="#sndfindsound">find-sound</a><br>
 Example find procedures: <a href="sndscm.html#exsearchforclick">search-for-click, zero+, next-peak, find-pitch</a><br>
 Search via continuation: <a href="#scanagain">scan-again</a><br>
 Explicit access to search procedures: <a href="#searchprocedure">search-procedure</a><br>
 The Find dialog: <a href="snd.html#editoperations">Find</a><br>
 find silence: <a href="#mapsilence">map-silence</a><br>
 find zero crossing: <a href="#newcp">find-zero</a><br>
-find a mark etc: <a href="#sndfindmark">find-mark</a>, <a href="#sndfindmix">find-mix</a>, <a href="#sndfindsound">find-sound</a><br>
 see also <a href="#lcountmatches">count-matches</a> and <a href="#scanchannel">scan-channel</a>.<br>
 <br>
 </small></blockquote>
@@ -6850,6 +6854,20 @@ is not 0, which sometimes means that the channel arg is simply ignored.  The fol
 See also <a href="#undohook">undo-hook</a>.
 Since <b>redo</b> collides with Ruby, forcing me to change its name to redo_edit,
 undo can also be accessed under the name undo_edit (in Scheme, <a name="undoedit">undo-edit</a>).
+
+<!-- INDEX undoexamples:Undo and Redo -->
+<br><br>
+<A NAME="undoexamples"></a>
+<TABLE border=3 bordercolor="tan" hspace=40><tr><td>
+<small><blockquote>
+undo all edits: <a href="#sndrevert">revert-sound</a><br>
+specialize undo: <a href="#undohook">undo-hook</a><br>
+protect against undo: <a href="#edithook">edit-hook</a><br>
+redo edit: <a href="#sndredo">redo</a> and <a href="#redochannel">redo-channel</a><br>
+move around in edit list: <a href="#sndeditposition">edit-position</a> and <a href="#currenteditposition">current-edit-position</a><br>
+About edit lists: <a href="#editlists">Edit lists</a><br>
+</blockquote></small>
+</td></tr></TABLE>
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -7950,11 +7968,31 @@ The wave shown is the time domain display, even when filtering.
 <tr><td></td><td>start the File Save-as dialog (to save the currently selected sound).</td></tr>
 
 <!-- help-dialog -->
-<tr><td colspan=2 valign=top><span class=defbox><code><em class=def><a name="sndhelpdialog">help-dialog</a></em> (subject help-string) </code></span></td></tr>
-<tr><td></td><td>start the help dialog with title <i>subject</i> and body <i>help</i>, returning the dialog widget.<br>
+<tr><td colspan=2 valign=top><span class=defbox><code><em class=def><a name="sndhelpdialog">help-dialog</a></em> (subject help-string <i>xrefs</i>) </code></span></td></tr>
+<tr><td></td><td>start the help dialog with title <i>subject</i> and body <i>help</i>, returning the dialog widget.
+<i>xrefs</i> is an optional list of strings to post in the "related items" list.
+<br>
 <br><code>(help-dialog "xyzzy" "are we having fUn?")</code>
 <br><br>There are many examples in new-effects.scm.
 </td></tr>
+<tr><td></td><td colspan=2>
+<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+(defmacro with-snd-help (form)
+  ;; if an error occurs while evaluating form, try to start the help dialog with some relevant help
+  `(catch #t 
+	  (lambda ()
+	    ,form)
+	  (lambda args
+	    (if (and args (cadr args) (string? (cadr args)))
+		(let* ((func (if (string=? "set!" (substring (cadr args) 0 4))
+				(substring (cadr args) 5)
+				(cadr args)))
+		       (help (snd-help func)))
+		  (if help (help-dialog func help))))
+	    args)))
+</pre></td></tr></table>
+</td></tr>
+
 
 <!-- html-dir -->
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="htmldir">html-dir</a></em> ()</code></span></td></tr>

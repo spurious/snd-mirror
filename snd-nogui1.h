@@ -4,7 +4,8 @@
 /* -------- snd-xhelp.c -------- */
 
 int snd_help(const char *subject, const char *help, bool with_wrap);
-void snd_help_with_xrefs(const char *subject, const char *helpstr, bool with_wrap, const char *topic);
+int snd_help_with_xrefs(const char *subject, const char *helpstr, bool with_wrap, char **xrefs);
+int help_text_width(const char *txt, int start, int end);
 
 
 /* -------- snd-xerror.c -------- */

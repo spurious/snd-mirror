@@ -10,9 +10,15 @@ Widget snd_help(const char *subject, const char *helpstr, bool with_wrap)
   return(NULL);
 }
 
-void snd_help_with_xrefs(const char *subject, const char *helpstr, bool with_wrap, const char *topic)
+Widget snd_help_with_xrefs(const char *subject, const char *helpstr, bool with_wrap, char **xrefs)
 {
   post_it(subject, helpstr);
+  return(NULL);
+}
+
+int help_text_width(const char *txt, int start, int end)
+{
+  return((end - start) * 8);
 }
 
 #else
@@ -26,53 +32,28 @@ void snd_help_with_xrefs(const char *subject, const char *helpstr, bool with_wra
 
 static Widget help_dialog = NULL;
 static Widget help_text = NULL;
-
-static char *cr_to_space(char *val)
-{
-  int i, len;
-  if (val)
-    {
-      len = strlen(val);
-      for (i = 0; i < len; i++)
-	if (val[i] == '\n')
-	  val[i] = ' ';
-    }
-  return(val);
-}
-
-static bool no_cr(const char *val)
-{
-  int i, len;
-  if (val)
-    {
-      len = strlen(val);
-      for (i = 0; i < len; i++)
-	if (val[i] == '\n')
-	  return(false);
-    }
-  return(true);
-}
-
-static int help_text_width = 0;
+static char *original_help_text = NULL;
+static int old_help_text_width = 0; 
 static bool outer_with_wrap = false;
+
 static void help_expose(Widget w, XtPointer context, XEvent *event, Boolean *cont) 
 {
   int curwid;
   curwid = widget_width(help_text);
-  if (help_text_width == 0)
-    help_text_width = curwid;
+  if (old_help_text_width == 0)
+    old_help_text_width = curwid;
   else
     {
-      if ((outer_with_wrap) && (abs(curwid - help_text_width) > 10))
+      if ((outer_with_wrap) && (abs(curwid - old_help_text_width) > 10))
 	{
 	  char *cur_help;
 	  char *new_help = NULL;
-	  cur_help = cr_to_space(XmTextGetString(help_text));
-	  new_help = word_wrap(cur_help, curwid);
+	  cur_help = XmTextGetString(help_text);
+	  new_help = word_wrap(original_help_text, curwid);
 	  XmTextSetString(help_text, new_help);
 	  if (new_help) FREE(new_help);
 	  if (cur_help) XtFree(cur_help);
-	  help_text_width = curwid;
+	  old_help_text_width = curwid;
 	}
     }
 }
@@ -185,29 +166,10 @@ static void related_help(int urls, ...)
 }
 
 static char *help_completer(char *text) {return(NULL);}
-/* TODO: help completion, cref tables, help search mechanism (via help strings I guess) */
+/* TODO: help completion, help search mechanism (via help strings I guess) */
 /* TODO: if mouse over topic, post short help (doc string), returning to orig on exit  */
 /* TODO: completion in help search */
 /* TODO: back/forth buttons for help history */
-
-static char *html_directory(void)
-{
-  if (mus_file_probe("snd.html"))
-    {
-      char *path;
-      path = (char *)CALLOC(512, sizeof(char));
-      getcwd(path, 512);
-      strcat(path, "/");
-      return(path);
-    }
-  if (mus_file_probe("/usr/share/doc/snd-6/snd.html"))
-    return(copy_string("/usr/share/doc/snd-6/"));
-  if (mus_file_probe("/usr/local/share/doc/snd-6/snd.html"))
-    return(copy_string("/usr/local/share/doc/snd-6/"));
-  if (mus_file_probe("/usr/doc/snd-6/snd.html"))
-    return(copy_string("/usr/doc/snd-6/"));
-  return(NULL);
-}
 
 static bool new_help(const char *pattern)
 {
@@ -237,41 +199,12 @@ static bool new_help(const char *pattern)
 static void help_browse_callback(Widget w, XtPointer context, XtPointer info) 
 {
   /* single-click to select item in "related items" list */
-  char *path, *dir_path, *url, *red_text = NULL;
+  char *red_text = NULL;
   XmListCallbackStruct *cbs = (XmListCallbackStruct *)info;
   ASSERT_WIDGET_TYPE(XmIsList(w), w);
-  dir_path = html_directory();
-  if (dir_path)
-    {
-      red_text = find_highlighted_text(cbs->item);
-      if (red_text)
-	{
-	  url = snd_url(red_text);
-	  if (url)
-	    {
-	      char *program;
-	      program = html_program(ss);
-	      if (program)
-		{
-		  path = (char *)CALLOC(strlen(dir_path) + strlen(url) + 256, sizeof(char));
-		  if ((strcmp(program, "netscape") == 0) ||
-		      (strcmp(program, "mozilla") == 0))
-		    {
-		      sprintf(path, "%s%s", dir_path, url);
-		      send_netscape(program, path);
-		    }
-		  else
-		    {
-		      sprintf(path, "%s file:%s%s", program, dir_path, url);
-		      system(path);
-		    }
-		  FREE(path);
-		}
-	    }
-	  FREE(red_text);
-	}
-      FREE(dir_path);
-    }
+  red_text = find_highlighted_text(cbs->item);
+  if (red_text)
+    get_related_help(red_text);
 }
 
 static Widget help_search = NULL;
@@ -298,7 +231,6 @@ static void ok_callback(Widget w, XtPointer context, XtPointer info)
 
 static void text_release_callback(Widget w, XtPointer context, XEvent *event, Boolean *flag)
 {
-  /* fprintf(stderr,"text release: %s\n", XmTextGetSelection(w)); */
   char *help_str;
   help_str = XmTextGetSelection(w);
   if (help_str)
@@ -412,7 +344,7 @@ static void create_help_monolog(void)
   XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
   XtSetArg(args[n], XmNheight, 24); n++;
   /* XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++; */
-  label = XtCreateManagedWidget("help topic:", xmLabelWidgetClass, holder, args, n);
+  label = XtCreateManagedWidget(_("help topic:"), xmLabelWidgetClass, holder, args, n);
   
   n = 0;
   XtSetArg(args[n], XmNtopAttachment, XmATTACH_NONE); n++;
@@ -441,7 +373,7 @@ static void create_help_monolog(void)
   XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
   XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
   XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;
-  xref_label = XtCreateManagedWidget("related topics:", xmLabelWidgetClass, inner_holder, args, n);
+  xref_label = XtCreateManagedWidget(_("related topics:"), xmLabelWidgetClass, inner_holder, args, n);
   
   n = 0;
   XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
@@ -474,19 +406,63 @@ static void create_help_monolog(void)
   set_dialog_widget(HELP_DIALOG, help_dialog);
 }
 
+static XFontStruct *help_font_struct = NULL;
+static XFontStruct *help_font(void)
+{
+  Widget parent;
+  XmRenderTable rs = NULL;
+  if (help_font_struct) return(help_font_struct);
+  parent = help_text;
+  while ((parent != NULL) && (rs == NULL))
+    {
+      XtVaGetValues(parent, XmNrenderTable, &rs, NULL);
+      parent = XtParent(parent);
+    }
+  if (rs)
+    {
+      XmRendition rend;
+      Arg args[2];
+      XtPointer font;
+      rend = XmRenderTableGetRendition(rs, XmFONTLIST_DEFAULT_TAG);
+      if (rend)
+	{
+	  XtSetArg(args[0], XmNfont, &font);
+	  XmRenditionRetrieve(rend, args, 1);
+	  if (font)
+	    {
+	      help_font_struct = (XFontStruct *)font;
+	      return((XFontStruct *)font);
+	    }
+	}
+    }
+  return(NULL);
+}
+
+int help_text_width(const char *txt, int start, int end)
+{
+  XFontStruct *font;
+  if ((txt[start] != '\0') && (help_text))
+    {
+      font = help_font();
+      if (font)
+	return(XTextWidth(font, (char *)(txt + start), end - start));
+    }
+  return(0);
+}
+
+
 Widget snd_help(const char *subject, const char *helpstr, bool with_wrap)
 {
   /* place help string in scrollable help window */
   /* if window is already active, add this help at the top and reposition */
   XmString xstr1;
-  outer_with_wrap = ((with_wrap) && (no_cr(helpstr)));
+  outer_with_wrap = with_wrap;
   if (!(help_dialog)) 
     create_help_monolog(); 
   else raise_dialog(help_dialog);
   xstr1 = XmStringCreate((char *)subject, XmFONTLIST_DEFAULT_TAG);
   XtVaSetValues(help_dialog, XmNmessageString, xstr1, NULL);
-#if 1
-  /* how to get word wrap to work?? */
+  original_help_text = (char *)helpstr;
   if (with_wrap)
     {
       char *new_help = NULL;
@@ -495,10 +471,6 @@ Widget snd_help(const char *subject, const char *helpstr, bool with_wrap)
       if (new_help) FREE(new_help);
     }
   else XmTextSetString(help_text, (char *)helpstr);
-#else
-  XtVaSetValues(help_text, XmNwordWrap, with_wrap, NULL);
-  XmTextSetString(help_text, (char *)helpstr);
-#endif
   if (!XtIsManaged(help_dialog)) 
     XtManageChild(help_dialog);
   XmStringFree(xstr1);
@@ -506,44 +478,41 @@ Widget snd_help(const char *subject, const char *helpstr, bool with_wrap)
   return(help_dialog);
 }
 
-void snd_help_with_xrefs(const char *subject, const char *helpstr, bool with_wrap, const char *topic)
+Widget snd_help_with_xrefs(const char *subject, const char *helpstr, bool with_wrap, char **xrefs)
 {
-  char **xrefs;
-  snd_help(subject, helpstr, with_wrap);
-  if (topic)
+  Widget w;
+  w = snd_help(subject, helpstr, with_wrap);
+  if (xrefs)
     {
-      xrefs = snd_xrefs(topic);
-      if (xrefs)
+      XmString *strs;
+      int i = 0, len = 0, strs_size = 32;
+      strs = (XmString *)CALLOC(strs_size, sizeof(XmString));	  
+      while (true)
 	{
-	  XmString *strs;
-	  int i = 0, len = 0, strs_size = 32;
-	  strs = (XmString *)CALLOC(strs_size, sizeof(XmString));	  
-	  while (true)
+	  if (i >= strs_size)
 	    {
-	      if (i >= strs_size)
-		{
-		  int k;
-		  strs_size *= 2;
-		  strs = (XmString *)REALLOC(strs, strs_size * sizeof(XmString));
-		  for (k = i; k < strs_size; k++) strs[k] = NULL;
-		}
-	      if (xrefs[i])
-		{
-		  strs[i] = parse_crossref((const char *)(xrefs[i]));
-		  i++;
-		}
-	      else 
-		{
-		  len = i;
-		  break;
-		}
+	      int k;
+	      strs_size *= 2;
+	      strs = (XmString *)REALLOC(strs, strs_size * sizeof(XmString));
+	      for (k = i; k < strs_size; k++) strs[k] = NULL;
 	    }
-	  XtVaSetValues(related_items, XmNitems, strs, XmNitemCount, len, NULL);
-	  for (i = 0; i < len; i++)
-	    XmStringFree(strs[i]);
-	  FREE(strs);
+	  if (xrefs[i])
+	    {
+	      strs[i] = parse_crossref((const char *)(xrefs[i]));
+	      i++;
+	    }
+	  else 
+	    {
+	      len = i;
+	      break;
+	    }
 	}
+      XtVaSetValues(related_items, XmNitems, strs, XmNitemCount, len, NULL);
+      for (i = 0; i < len; i++)
+	XmStringFree(strs[i]);
+      FREE(strs);
     }
+  return(w);
 }
 
 #endif
