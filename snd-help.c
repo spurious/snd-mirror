@@ -256,6 +256,8 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
+28-Nov:  BSD support thanks to Steven Schultz.\n\
+         Dolph-Chebyshev window if HAVE_GSL.\n\
 24-Nov:  fht (Hartley transform).\n\
 21-Nov:  abort? -> C-g?.  edit-tree and display-edits documented.\n\
 17-Nov:  esd support thanks to Nick Bailey.\n\
@@ -269,14 +271,6 @@ void news_help(snd_state *ss)
          insert-sound arguments changed.\n\
 2-Nov:   insert-selection, mix-selection, delete-selection.\n\
 1-Nov:   filter-env-in-hz switch.\n\
-31-Oct:  syncing -> sync. Set! extended to frames, maxamp, x|y-zoom|position-slider.\n\
-30-Oct:  examp.scm soft-port example of redirecting display to Snd's listener.\n\
-         support for GSL 0.7\n\
-         scale-selection-to bugfix.\n\
-         selection-creates-region switch, channel-sync.\n\
-25-Oct:  emacs subjob 'read: unexpected \")\"' bugfix, I hope.\n\
-24-Oct:  eps-bottom-margin and eps-left-margin (for Print command).\n\
-         menu-hook\n\
 ",
 NULL);
   FREE(info);

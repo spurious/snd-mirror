@@ -37,6 +37,11 @@
 
 #include "clm.h"
 
+#if HAVE_GSL
+#include <gsl/gsl_complex.h>
+#include <gsl/gsl_complex_math.h>
+#endif
+
 static int mus_class_tag = MUS_INITIAL_GEN_TAG;
 int mus_make_class_tag(void) {return(mus_class_tag++);}
 
@@ -56,7 +61,11 @@ static char *make_desc_buf_1(void *ptr, int descr, int size)
   mus_any *gen = (mus_any *)ptr;
   desc = (char *)CALLOC(size,sizeof(char));
   if (desc == NULL) 
-    mus_error(MUS_MEMORY_ALLOCATION_FAILED,"can't allocate %d bytes for %s_%s!",size,(descr) ? "describe" : "inspect",(gen->core)->name);
+    mus_error(MUS_MEMORY_ALLOCATION_FAILED,
+	      "can't allocate %d bytes for %s_%s!",
+	      size,
+	      (descr) ? "describe" : "inspect",
+	      (gen->core)->name);
   return(desc);
 }
 
@@ -936,7 +945,9 @@ mus_any *mus_make_delay(int size, Float *preloaded_line, int line_size)
 	{
 	  gen->line = (Float *)CALLOC(line_size,sizeof(Float));
 	  if (gen->line == NULL) 
-	    mus_error(MUS_MEMORY_ALLOCATION_FAILED,"can't allocate %d bytes for delay line in mus_make_delay!",(int)(line_size * sizeof(Float)));
+	    mus_error(MUS_MEMORY_ALLOCATION_FAILED,
+		      "can't allocate %d bytes for delay line in mus_make_delay!",
+		      (int)(line_size * sizeof(Float)));
 	  else gen->line_allocated = 1;
 	}
       gen->zloc = line_size - size;
@@ -1255,7 +1266,9 @@ mus_any *mus_make_table_lookup (Float freq, Float phase, Float *table, int table
 	{
 	  gen->table = (Float *)CALLOC(table_size,sizeof(Float));
 	  if (gen->table == NULL)
-	    mus_error(MUS_MEMORY_ALLOCATION_FAILED,"can't allocate %d bytes for table in mus_make_table_lookup!",(int)(table_size * sizeof(Float)));
+	    mus_error(MUS_MEMORY_ALLOCATION_FAILED,
+		      "can't allocate %d bytes for table in mus_make_table_lookup!",
+		      (int)(table_size * sizeof(Float)));
 	  else gen->table_allocated = 1;
 	}
       return((mus_any *)gen);
@@ -2564,7 +2577,10 @@ static mus_any *make_filter(mus_any_class *cls, const char *name, int order, Flo
 	{
 	  gen->state = (Float *)CALLOC(order,sizeof(Float));
 	  if (gen->state == NULL) 
-	    mus_error(MUS_MEMORY_ALLOCATION_FAILED,"can't allocate %d bytes for state in mus_make_%s!",(int)(order * sizeof(Float)),name);
+	    mus_error(MUS_MEMORY_ALLOCATION_FAILED,
+		      "can't allocate %d bytes for state in mus_make_%s!",
+		      (int)(order * sizeof(Float)),
+		      name);
 	  else gen->state_allocated = 1;
 	}
       gen->core = cls;
@@ -2752,7 +2768,9 @@ mus_any *mus_make_waveshape(Float frequency, Float phase, Float *table, int size
 	{
 	  gen->table = (Float *)CALLOC(size,sizeof(Float));
 	  if (gen->table == NULL) 
-	    mus_error(MUS_MEMORY_ALLOCATION_FAILED,"can't allocate %d bytes for table in mus_make_waveshape!",(int)(size * sizeof(Float)));
+	    mus_error(MUS_MEMORY_ALLOCATION_FAILED,
+		      "can't allocate %d bytes for table in mus_make_waveshape!",
+		      (int)(size * sizeof(Float)));
 	  else gen->table_allocated = 1;
 	}
       gen->table_size = size;
@@ -2791,7 +2809,9 @@ Float *mus_partials2waveshape(int npartials, Float *partials, int size, Float *t
       data = (Float *)CALLOC(size,sizeof(Float));
       if (data == NULL)
 	{
-	  mus_error(MUS_MEMORY_ALLOCATION_FAILED,"can't get %d bytes for table in mus_make_waveshape_table!",(int)(size * sizeof(Float)));
+	  mus_error(MUS_MEMORY_ALLOCATION_FAILED,
+		    "can't get %d bytes for table in mus_make_waveshape_table!",
+		    (int)(size * sizeof(Float)));
 	  return(NULL);
 	}
     }
@@ -2824,18 +2844,41 @@ Float *mus_partials2polynomial(int npartials, Float *partials, int kind)
   Float *Cc1;
   bytes = (npartials + 1) * sizeof(int);
   T0 = (int *)CALLOC(npartials+1,sizeof(int));
-  if (T0 == NULL) {mus_error(MUS_MEMORY_ALLOCATION_FAILED,"can't get %d bytes for T0 in mus_partials2polynomial!",bytes); return(NULL);}
+  if (T0 == NULL) 
+    {
+      mus_error(MUS_MEMORY_ALLOCATION_FAILED,
+		"can't get %d bytes for T0 in mus_partials2polynomial!",
+		bytes); 
+      return(NULL);
+    }
   T1 = (int *)CALLOC(npartials+1,sizeof(int));
-  if (T1 == NULL) {FREE(T0); mus_error(MUS_MEMORY_ALLOCATION_FAILED,"can't get %d bytes for T1 in mus_partials2polynomial!",bytes); return(NULL);}
+  if (T1 == NULL) 
+    {
+      FREE(T0); 
+      mus_error(MUS_MEMORY_ALLOCATION_FAILED,
+		"can't get %d bytes for T1 in mus_partials2polynomial!",
+		bytes); 
+      return(NULL);
+    }
   Tn = (int *)CALLOC(npartials+1,sizeof(int));
-  if (Tn == NULL) {FREE(T0); FREE(T1); mus_error(MUS_MEMORY_ALLOCATION_FAILED,"can't get %d bytes for Tn in mus_partials2polynomial!",bytes); return(NULL);}
+  if (Tn == NULL) 
+    {
+      FREE(T0); 
+      FREE(T1); 
+      mus_error(MUS_MEMORY_ALLOCATION_FAILED,
+		"can't get %d bytes for Tn in mus_partials2polynomial!",
+		bytes); 
+      return(NULL);
+    }
   Cc1 = (Float *)CALLOC(npartials+1,sizeof(Float));
   if (Cc1 == NULL) 
     {
       FREE(T0); 
       FREE(T1); 
       FREE(Tn); 
-      mus_error(MUS_MEMORY_ALLOCATION_FAILED,"can't get %d bytes for Cc1 in mus_partials2polynomial!",(int)(npartials * sizeof(Float)));
+      mus_error(MUS_MEMORY_ALLOCATION_FAILED,
+		"can't get %d bytes for Cc1 in mus_partials2polynomial!",
+		(int)(npartials * sizeof(Float)));
       return(NULL);
     }
   T0[0] = kind;
@@ -3771,7 +3814,9 @@ mus_any *mus_make_buffer(Float *preloaded_buffer, int size, Float current_fill_t
 	{
 	  gen->buf = (Float *)CALLOC(size,sizeof(Float));
 	  if (gen->buf == NULL) 
-	    mus_error(MUS_MEMORY_ALLOCATION_FAILED,"can't allocate %d bytes for buffer2sample buffer",(int)(size * sizeof(Float)));
+	    mus_error(MUS_MEMORY_ALLOCATION_FAILED,
+		      "can't allocate %d bytes for buffer2sample buffer",
+		      (int)(size * sizeof(Float)));
 	  else 
 	    gen->buf_allocated = 1;
 	}
@@ -5390,7 +5435,7 @@ Float mus_granulate(mus_any *ptr, Float (*input)(void *arg, int direction))
 
 /* ---------------- convolve ---------------- */
 
-/* fft and convolution of real data in zero-based arrays
+/* fft and convolution of Float data in zero-based arrays
  */
 
 static void mus_scramble (Float* rl, Float* im, int n)
@@ -5443,7 +5488,7 @@ void mus_fft (Float *rl, Float *im, int n, int is)
       ui = 0.0;
       for (i2=0;i2<ldm;i2++)
 	{
-#if (HAVE_ISNAN) || (LINUX)
+#if (HAVE_ISNAN) || (LINUX) || defined(__bsdi__)
 	  if (isnan(ui)) ui=0.0;
 #endif
 	  i = i2;
@@ -5519,6 +5564,10 @@ Float *mus_make_fft_window_with_window(int type, int size, Float beta, Float *wi
    */
   int i,j,midn,midp1,midm1;
   Float freq,rate,sr1,angle,expn,expsum,I0beta,cx;
+#if HAVE_GSL
+  Float *rl,*im;
+  Float pk;
+#endif
   midn = size >> 1;
   midp1 = (size+1)/2;
   midm1 = (size-1)/2;
@@ -5604,6 +5653,50 @@ Float *mus_make_fft_window_with_window(int type, int size, Float beta, Float *wi
 	  if (i >= cx) window[j]=(window[i]=1.0);
 	  else window[j]=(window[i]=.5*(1.0-cos(M_PI*i/cx)));
 	}
+      break;
+    case MUS_DOLPH_CHEBYSHEV_WINDOW:
+#if HAVE_GSL
+      {
+	gsl_complex val;
+	Float den,alpha;
+	freq = M_PI/(Float)size;
+	if (beta < 0.2) beta = 0.2;
+	alpha = GSL_REAL(gsl_complex_cosh(
+			   gsl_complex_mul_real(
+			     gsl_complex_arccosh_real(pow(10.0,beta)),
+			     (double)(1.0/(Float)size))));
+	den = 1.0 / GSL_REAL(gsl_complex_cosh(
+			       gsl_complex_mul_real(gsl_complex_arccosh_real(alpha),
+						    (double)size)));
+	/* den(ominator) not really needed -- we're normalizing to 1.0 */
+	rl = (Float *)CALLOC(size,sizeof(Float));
+	im = (Float *)CALLOC(size,sizeof(Float));
+	for (i=0,angle=0.0;i<size;i++,angle+=freq)
+	  {
+	    val = gsl_complex_mul_real(
+		    gsl_complex_cos(
+		      gsl_complex_mul_real(
+		        gsl_complex_arccos_real(alpha * cos(angle)),
+		        (double)size)),
+		    den);
+	    rl[i] = GSL_REAL(val);
+	    im[i] = GSL_IMAG(val); /* always essentially 0.0 */
+	  }
+	mus_fft(rl,im,size,-1);    /* can be 1 here */
+	rl[size/2]=0.0;
+	pk=0.0;
+	for (i=0;i<size;i++) if (pk < rl[i]) pk=rl[i];
+	for (i=0,j=size/2;i<size;i++) 
+	  {
+	    window[i] = rl[j++]/pk;
+	    if (j == size) j = 0;
+	  }
+	FREE(rl);
+	FREE(im);
+      }
+#else
+      mus_error(MUS_NO_SUCH_FFT_WINDOW,"Dolph-Chebyshev window needs the complex trig support from GSL");
+#endif
       break;
     default: 
       mus_error(MUS_NO_SUCH_FFT_WINDOW,"unknown fft data window: %d",type); 

@@ -20,9 +20,15 @@ static Float current_graph_ffti[GRAPH_SIZE*2];
 static char *FFT_SIZES[NUM_FFT_SIZES] = {"16","32","64","128","256","512","1024","2048","4096","8192","16384","65536","262144","1048576    "};
 static int fft_sizes[NUM_FFT_SIZES] = {16,32,64,128,256,512,1024,2048,4096,8192,16384,65536,262144,1048576};
 
+#if HAVE_GSL
+  #define GUI_NUM_FFT_WINDOWS NUM_FFT_WINDOWS
+#else
+  #define GUI_NUM_FFT_WINDOWS (NUM_FFT_WINDOWS - 1)
+#endif
+
 static char *FFT_WINDOWS[NUM_FFT_WINDOWS] = 
-     {"rectangular","hanning","welch","parzen","bartlett","hamming","blackman2","blackman3","blackman4",
-      "exponential","riemann","kaiser","cauchy","poisson","gaussian","tukey"};
+     {"Rectangular","Hanning","Welch","Parzen","Bartlett","Hamming","Blackman2","Blackman3","Blackman4",
+      "Exponential","Riemann","Kaiser","Cauchy","Poisson","Gaussian","Tukey","Dolph-Chebyshev"};
 
 static char *WAVELETS[NUM_WAVELETS]={
   "daub4","daub6","daub8","daub10","daub12","daub14","daub16","daub18","daub20",
@@ -144,7 +150,7 @@ static void size_help_Callback(Widget w,XtPointer clientData,XtPointer callData)
 {
   snd_help((snd_state *)clientData,
 	   "FFT Size",
-"Any size FFT can be accomodated here, as long\n\
+"Any size FFT can be accommodated here, as long\n\
 as it will fit in memory somehow.  The larger\n\
 the FFT, the longer it takes to compute.\n\
 The size must be a power of 2.\n\
@@ -441,7 +447,7 @@ void fire_up_transform_dialog(snd_state *ss)
   XmString sizes[NUM_FFT_SIZES];
   XmString *types;
   XmString wavelets[NUM_WAVELETS];
-  XmString windows[NUM_FFT_WINDOWS];
+  XmString windows[GUI_NUM_FFT_WINDOWS];
   XGCValues gv;
   XtCallbackList n1,n2;
   int size_pos = 1;
@@ -906,9 +912,9 @@ void fire_up_transform_dialog(snd_state *ss)
       XtSetArg(args[n],XmNtopItemPosition,(fft_window(ss)>2) ? (fft_window(ss)-1) : (fft_window(ss)+1)); n++;
       window_list = XmCreateScrolledList(window_form,"window-list",args,n);
       if (!(ss->using_schemes)) XtVaSetValues(window_list,XmNbackground,(ss->sgx)->white,XmNforeground,(ss->sgx)->black,NULL);
-      for (i=0;i<NUM_FFT_WINDOWS;i++) windows[i] = XmStringCreate(FFT_WINDOWS[i],XmFONTLIST_DEFAULT_TAG);
-      XtVaSetValues(window_list,XmNitems,windows,XmNitemCount,NUM_FFT_WINDOWS,XmNvisibleItemCount,5,NULL);
-      for (i=0;i<NUM_FFT_WINDOWS;i++) XmStringFree(windows[i]);
+      for (i=0;i<GUI_NUM_FFT_WINDOWS;i++) windows[i] = XmStringCreate(FFT_WINDOWS[i],XmFONTLIST_DEFAULT_TAG);
+      XtVaSetValues(window_list,XmNitems,windows,XmNitemCount,GUI_NUM_FFT_WINDOWS,XmNvisibleItemCount,5,NULL);
+      for (i=0;i<GUI_NUM_FFT_WINDOWS;i++) XmStringFree(windows[i]);
       XtManageChild(window_list); 
       XtAddCallback(window_list,XmNbrowseSelectionCallback,window_browse_Callback,ss);
       XtAddCallback(window_list,XmNhelpCallback,window_help_Callback,ss);

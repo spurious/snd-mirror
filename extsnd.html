@@ -1576,6 +1576,7 @@ sets its value to val.
                                   bartlett-window    hamming-window     blackman2-window  blackman3-window
                                   blackman4-window   exponential-window riemann-window    kaiser-window
                                   cauchy-window      poisson-window     gaussian-window   tukey-window
+                                  dolph-chebyshev-window (this only if GSL is loaded)
 </small>
   <b><a name="sndffting">ffting</a></b>            (<em class=targ>snd chn</em>)     #t if <i>snd</i>'s channel <i>chn</i> is displaying a spectrum (the 'f' button).
 
@@ -2845,6 +2846,7 @@ Transform normalization choice:
   bartlett-window    hamming-window     blackman2-window  blackman3-window
   blackman4-window   exponential-window riemann-window    kaiser-window
   cauchy-window      poisson-window     gaussian-window   tukey-window
+  dolph-chebyshev-window (if GSL is loaded)
 
 Zoom Focus style:
   focus-left         focus-right        focus-active      focus-middle
@@ -2906,7 +2908,7 @@ Axis choice:
                                   Cause <i>key</i> (an integer) with modifiers <i>state</i> to evaluate <i>code</i>.
 <small>
                                       (bind-key (char-&gt;integer #\a) 4 (lambda () (snd-print \"hi\")))
-
+</small>
                                   The modifier state is a combination of shift: 1, control: 4, meta: 8, 
                                   so this call causes C-a to print "hi" in the lisp listener.  The 
                                   value returned should be one of the cursor choices (see below) telling Snd what 
@@ -2914,17 +2916,22 @@ Axis choice:
                                   #t, Snd does not repeat the key based on the prefix argument (<a href="snd.html#kcu">C-u</a>) --
                                   in this case, the <i>code</i> can examine <a href="#prefixarg">prefix-arg</a> if desired.
                                   Possible return values are:
-
-                                  cursor-in-view     cursor-on-left     cursor-on-right   cursor-in-middle 
-                                  cursor-update-display cursor-no-action cursor-claim-selection keyboard-no-action
+<small>
+                                    cursor-in-view     cursor-on-left     cursor-on-right   cursor-in-middle 
+                                    cursor-update-display cursor-no-action cursor-claim-selection keyboard-no-action
 </small>
                                   We can use bind-key to turn the keyboard into a sort of extended piano:
 <small>
-                                  (bind-key (char->integer #\o) 0 (lambda () (play "oboe.snd")))
-                                  (bind-key (char->integer #\p) 0 (lambda () (play "pistol.snd")))
+                                    (bind-key (char->integer #\o) 0 (lambda () (play "oboe.snd") keyboard-no-action))
+                                    (bind-key (char->integer #\p) 0 (lambda () (play "pistol.snd") keyboard-no-action))
 </small>
-                                  Now each time we hit "o", "oboe.snd" plays,  etc.
-
+                                  Now each time we hit "o", "oboe.snd" plays,  etc.  Or say we want to move
+                                  forward two samples in the graph each time we type "l":
+<small>                                  
+                                    (bind-key (char->integer #\l) 0 (lambda () 
+                                                                      (set! (left-sample 0 0) (+ 2 (left-sample 0 0))) 
+                                                                      cursor-update-display))
+</small>
   <b><a name="sndabort">c-g?</a></b>              ()            check for C-g to interrupt on-going computation (and let other UI 
                                   events through).
 

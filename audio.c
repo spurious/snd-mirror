@@ -2332,12 +2332,12 @@ static int oss_mus_audio_mixer_read(int ur_dev, int field, int chan, float *val)
 		    {
 		      switch (dev)
 			{
-			case MUS_AUDIO_SPEAKERS: channels = 2; break;
-			case MUS_AUDIO_ADAT_IN: case MUS_AUDIO_ADAT_OUT: channels = 8; break;
-			case MUS_AUDIO_AES_IN: case MUS_AUDIO_AES_OUT: channels = 2; break;
+			case MUS_AUDIO_SPEAKERS:                           channels = 2; break;
+			case MUS_AUDIO_ADAT_IN: case MUS_AUDIO_ADAT_OUT:   channels = 8; break;
+			case MUS_AUDIO_AES_IN: case MUS_AUDIO_AES_OUT:     channels = 2; break;
 			case MUS_AUDIO_SPDIF_IN: case MUS_AUDIO_SPDIF_OUT: channels = 4; break;
 			case MUS_AUDIO_DEFAULT: if (adat_mode) channels = 8; else channels = 4; break;
-			default: channels = 0; break;
+			default:                                           channels = 0; break;
 			}
 		      val[0] = channels;
 		    }
@@ -2557,9 +2557,30 @@ static int oss_mus_audio_mixer_read(int ur_dev, int field, int chan, float *val)
           /* DIGITAL1..3 as RECSRC(?) => MUS_AUDIO_DIGITAL_IN */
           val[0] = ind;
           break;
+#if 1
+         case MUS_AUDIO_FORMAT:
+	  close(fd);
+          fd = open(DAC_NAME,O_WRONLY,0);
+	  if (fd == -1) 
+	    {
+	      RETURN_ERROR_EXIT(MUS_AUDIO_CANT_OPEN,-1,
+				mus_format("can't open %s: %s",
+					   DAC_NAME,strerror(errno)));
+	      return(MUS_ERROR);
+	    }
+           ioctl(fd,SOUND_PCM_GETFMTS,&formats);
+#else
         case MUS_AUDIO_FORMAT:
           ioctl(fd,SOUND_PCM_GETFMTS,&formats);
 	  /* this returns -1 and garbage?? */
+
+	  /* from Steven Schultz:
+	I did discover why, in audio.c the SOUND_PCM_GETFMTS ioctl was failing.
+	That ioctl call can only be made against the /dev/dsp device and _not_
+	the /dev/mixer device.  With that change things starting working real
+	nice.
+	  */
+#endif
 	  ind = 0;
 	  if (formats & (to_oss_format(MUS_BYTE)))    {ind++; if (chan>ind) val[ind] = MUS_BYTE;}
  	  if (formats & (to_oss_format(MUS_BSHORT)))  {ind++; if (chan>ind) val[ind] = MUS_BSHORT;}
@@ -3418,7 +3439,7 @@ static int probe_api(void)
  *     dsp_reset, dsp_devices and set_dsp_devices are OSS specific
  *   snd-dac.c:
  *     changed DAC_BUFFER_SIZE to MAX_DAC_BUFFER_SIZE and created static variable
- *     dac_buffer_size so that larger alsa fragments can be accomodated (the 
+ *     dac_buffer_size so that larger alsa fragments can be accommodated (the 
  *     alsa write function only accepts integer multiples of the fragment size, 
  *     that is, we cannot write half a buffer in one call). 
  *

@@ -2,8 +2,8 @@ Snd
 
 Snd is a sound editor.  It currently runs on the SGI, Sun, UnixWare,
 OpenServer, HPUX, DEC Alpha, Linux, LinuxPPC, FreeBSD, BeOS (no GUI
-yet), Mac OS-X (also no GUI), and in Windoze using MS C and a
-commercial Motif.  To build Snd, get the sources from
+yet), Mac OS-X (also no GUI), BSD (BSDI 4.2), and in Windoze using MS
+C and a commercial Motif.  To build Snd, get the sources from
 
   ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-4.tar.gz
 
@@ -169,6 +169,7 @@ The current ALSA support is thanks to Fernando Lopez-Lezcano and Paul Barton-Dav
 The Sam 9407 support is thanks to Gerd Rausch.
 The LADSPA support is thanks to Richard W.E. Furse.
 The ESD support is thanks to Nick Bailey.
+The BSD port is thanks to Steven Schultz.
 
 
 ----------------------------------------------------------------

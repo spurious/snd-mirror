@@ -635,7 +635,7 @@ void set_x_bounds(axis_info *ap)
   if (ap->xmax <= ap->xmin) ap->xmax = ap->xmin+.001;
   range = ap->zx*(ap->xmax - ap->xmin);
   ap->x0 = ap->xmin + ap->sx*(ap->xmax - ap->xmin);
-#if HAVE_ISNAN
+#if (HAVE_ISNAN) || defined(__bsdi__)
   if (isnan(ap->x0)) ap->x0 = 0.0;
 #endif
   ap->x1 = (ap->x0 + range);
@@ -705,7 +705,7 @@ static void set_x_axis_x0(chan_info *cp, int left)
 	{
 	  x1x0 = ap->x1 - ap->x0; 
 	  ap->x0 = (double)left / (double)SND_SRATE(cp->sound); 
-#if HAVE_ISNAN
+#if (HAVE_ISNAN) || defined(__bsdi__)
 	  if (isnan(ap->x0)) ap->x0 = 0.0;
 #endif
 	  set_x_axis_x0x1(cp,ap->x0,ap->x0 + x1x0);
@@ -880,7 +880,7 @@ void focus_x_axis_change(axis_info *ap, chan_info *cp, snd_info *sp, int focus_s
 	    }
 	  break;
 	}
-#if HAVE_ISNAN
+#if (HAVE_ISNAN) || defined(__bsdi__)
       if (isnan(ap->x0)) ap->x0 = 0.0;
 #endif
       if (ap->x0 < 0.0) ap->x0 = 0.0;

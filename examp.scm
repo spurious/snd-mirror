@@ -65,6 +65,7 @@
 ;;; "frequency division"
 ;;; "adaptive saturation"
 ;;; Dolph-Chebyshev fft data window
+;;; spike effect
 
 ;;; TODO: pitch tracker
 ;;;       adaptive notch filter
@@ -402,10 +403,11 @@
 	;; we are sync, and we are the top sound in this sync group
 	(let* ((ls (left-sample snd chn))
 	       (rs (right-sample snd chn))
-	       (pow2 (floor (/ (log (- rs ls)) (log 2))))
+	       (pow2 (inexact->exact (ceiling (/ (log (- rs ls)) (log 2)))))
 	       (fftlen (inexact->exact (expt 2 pow2))))
-	  (graph (collect-ffts ls fftlen snd chn '() snd)
-		 "spectra" 0.0 0.5 #f #f snd chn))
+	  (if (> pow2 2)
+	      (graph (collect-ffts ls fftlen snd chn '() snd)
+		     "spectra" 0.0 0.5 #f #f snd chn)))
 	(set! (graphing snd chn) #f))
     #f))
 
@@ -2726,8 +2728,8 @@
 
 ;;; -------- Dolph-Chebyshev window
 ;;; 
-;;; might be nice to have this in C (clm.c mus_make_fft_window)
 ;;; formula taken from Richard Lyons, "Understanding DSP"
+;;; see clm.c for C version (using GSL's complex trig functions)
 
 (define (dolph N gamma)
   (let* ((alpha (cosh (/ (acosh (expt 10.0 gamma)) N)))
@@ -2740,7 +2742,7 @@
 	((= i N))
       (let ((val (* den (cos (* N (acos (* alpha (cos phase))))))))
 	(vct-set! rl i (real-part val))
-	(vct-set! im i (imag-part val))))
+	(vct-set! im i (imag-part val)))) ;this is actually always essentially 0.0
     (fft rl im -1)            ;direction could also be 1
     (vct-set! rl (/ N 2) 0.0) ;hmm... why is this needed?
     (let ((pk (vct-peak rl)))
@@ -2753,3 +2755,39 @@
       (if (= j N) (set! j 0)))
     im))
 
+
+;;; -------- spike
+;;;
+;;; makes sound more spikey -- sometimes a nice effect
+
+(map-chan (let ((x1 0.0) 
+		(x2 0.0) 
+		(amp (maxamp))) ; keep resultant peak at maxamp
+	    (lambda (x0) 
+	      (let ((res (* (/ x0 (* amp amp)) 
+			    (abs x2) 
+			    (abs x1)))) 
+		(set! x2 x1) 
+		(set! x1 x0) 
+		res))))
+
+;;; the more successive samples we include in the product, the more we
+;;;   limit the output to pulses placed at (just after) wave peaks
+
+(define (product xs n)
+  (let ((val (vct-ref xs 0)))
+    (do ((i 1 (1+ i)))
+	((= i n) val)
+      (set! val (* val (vct-ref xs i))))))
+
+(map-chan (let* ((size 10)
+		 (xs (make-vct size))
+		 (amp (expt (maxamp) size))
+		 (j 0))
+	    (lambda (x0) 
+	      (let ((res (* (/ (* x0 1000.0) amp)
+			    (product xs size))))
+		(vct-set! xs j (abs x0))
+		(set! j (1+ j))
+		(if (= j size) (set! j 0))
+		res))))

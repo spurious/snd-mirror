@@ -502,11 +502,12 @@ static SCM local_doc;
 #define S_riemann_window         "riemann-window"
 #define S_tukey_window           "tukey-window"
 #define S_welch_window           "welch-window"
+#define S_dolph_chebyshev_window "dolph-chebyshev-window"
 
-static char *FFT_WINDOW_CONSTANTS[16] = {S_rectangular_window,S_hanning_window,S_welch_window,S_parzen_window,S_bartlett_window,
+static char *FFT_WINDOW_CONSTANTS[17] = {S_rectangular_window,S_hanning_window,S_welch_window,S_parzen_window,S_bartlett_window,
 					 S_hamming_window,S_blackman2_window,S_blackman3_window,S_blackman4_window,
 					 S_exponential_window,S_riemann_window,S_kaiser_window,S_cauchy_window,
-					 S_poisson_window,S_gaussian_window,S_tukey_window
+					 S_poisson_window,S_gaussian_window,S_tukey_window,S_dolph_chebyshev_window
 };
 
 char *mus_fft_window_name(int i);
@@ -823,6 +824,7 @@ static void init_simple_stuff(void)
   gh_define(S_poisson_window,gh_int2scm(MUS_POISSON_WINDOW));
   gh_define(S_gaussian_window,gh_int2scm(MUS_GAUSSIAN_WINDOW));
   gh_define(S_tukey_window,gh_int2scm(MUS_TUKEY_WINDOW));
+  gh_define(S_dolph_chebyshev_window,gh_int2scm(MUS_DOLPH_CHEBYSHEV_WINDOW));
 }
 
 
@@ -1427,7 +1429,7 @@ static SCM g_delay(SCM obj, SCM input, SCM pm)
   #define H_delay "(" S_delay " gen &optional (val 0.0) (pm 0.0))\n\
    delays val according to the delay line's length and pm ('phase-modulation').\n\
    The Scheme built-in 'delay' function is named %delay.\n\
-   If pm is greater than 0.0, the max-size argument used to create gen should have accomodated its maximum value."
+   If pm is greater than 0.0, the max-size argument used to create gen should have accommodated its maximum value."
 
   Float in1 = 0.0, pm1 = 0.0;
   SCM_ASSERT(((mus_scm_p(obj)) && (mus_delay_p(mus_get_any(obj)))),obj,SCM_ARG1,S_delay);
@@ -4814,12 +4816,12 @@ void init_mus2scm_module(void)
 }
 
 
-#define NUM_CLM_NAMES 227
+#define NUM_CLM_NAMES 228
 static char *clm_names[NUM_CLM_NAMES] = {
 S_all_pass,S_all_pass_p,S_amplitude_modulate,S_array2file,S_array_interp,S_asymmetric_fm,S_asymmetric_fm_p,S_bartlett_window,
 S_blackman2_window,S_blackman3_window,S_blackman4_window,S_buffer2frame,S_buffer2sample,S_buffer_empty_p,S_buffer_full_p,
 S_buffer_p,S_cauchy_window,S_clear_array,S_comb,S_comb_p,S_contrast_enhancement,S_convolution,S_convolve,S_convolve_files,
-S_convolve_p,S_db_linear,S_degrees_radians,S_delay,S_delay_p,S_dot_product,S_env,S_env_interp,S_env_p,S_exponential_window,
+S_convolve_p,S_db_linear,S_degrees_radians,S_delay,S_delay_p,S_dolph_chebyshev_window,S_dot_product,S_env,S_env_interp,S_env_p,S_exponential_window,
 S_file2array,S_file2frame,S_file2frame_p,S_file2sample,S_file2sample_p,S_filter,S_filter_p,S_fir_filter,S_fir_filter_p,S_formant,
 S_formant_bank,S_formant_p,S_frame_multiply,S_frame_add,S_frame2buffer,S_frame2file,S_frame2file_p,S_frame2frame,S_frame2list,
 S_frame2sample,S_frame_ref,S_frame_set,S_frame_p,S_gaussian_window,S_granulate,S_granulate_p,S_hamming_window,S_hanning_window,

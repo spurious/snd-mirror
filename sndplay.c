@@ -29,7 +29,7 @@
   #define BUFFER_SIZE 4096
 #endif
 
-#ifdef LINUX
+#if defined(LINUX) || defined(__bsdi__)
 static char x_string[2] = {'x','\0'};
 static void set_buffers(char *bufs)
 {
@@ -71,7 +71,7 @@ int main(int argc, char *argv[])
 #endif
   if (argc == 1) {printf("usage: sndplay file\n"); exit(0);}
   mus_sound_initialize();
-#if LINUX
+#if defined(LINUX) || defined(__bsdi__)
   /* for clisp-based clm use, we need a couple added switches
    * -describe => call mus_audio_describe and exit
    * -buffers axb => set OSS fragment numbers 

@@ -83,6 +83,7 @@
 #undef HAVE_SAM_9407
 #undef MAC_OSX
 #undef ESD
+#undef BSDI
 
 #undef HAVE_GUILE
 #undef HAVE_XPM
@@ -116,6 +117,7 @@
 #undef ESD_VERSION
 #undef AUDIOFILE_VERSION
 #undef HAVE_GETTEXT
+#undef HAVE_APPLICABLE_SMOB
 
 #define USE_SND 1
 #endif

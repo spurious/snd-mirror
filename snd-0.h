@@ -11,7 +11,7 @@
       #define HAVE_SYS_VFS_H
       #define FSTATFS_ARGS 2
     #else
-      #if (defined(ALPHA) || defined(__APPLE__))
+      #if (defined(ALPHA) || defined(__APPLE__) || defined(__bsdi__))
         #define HAVE_SYS_MOUNT_H
         #define FSTATFS_ARGS 2
       #else
@@ -53,7 +53,7 @@
   #ifdef __GNUC__
     #define HAVE_LONG_LONGS 1
   #endif
-  #ifdef LINUX
+  #if defined(LINUX) || defined(__bsdi__)
     #define HAVE_ISNAN 1
   #endif
   #ifndef BEOS
@@ -186,7 +186,7 @@ enum {PRINT_SND,PRINT_ENV};
 
 enum {SOUNDS_VERTICAL,SOUNDS_HORIZONTAL,SOUNDS_IN_NOTEBOOK,SOUNDS_IN_SEPARATE_WINDOWS};
 enum {FOURIER,WAVELET,HANKEL,WALSH,AUTOCORRELATION,CHEBYSHEV,CEPSTRUM,HADAMARD};
-#define NUM_FFT_WINDOWS 16
+#define NUM_FFT_WINDOWS 17
 #define NUM_WAVELETS 20
 
 enum {NOT_FILING,INPUT_FILING,REGION_FILING,CHANNEL_FILING,TEMP_FILING,CHANGE_FILING,INSERT_FILING,MACRO_FILING};

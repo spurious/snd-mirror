@@ -25,9 +25,6 @@ void snd_exit_cleanly(snd_state *ss)
 #ifdef DEBUG_MEMORY
   mem_report();
 #endif
-#if DEBUGGING
-  if (temp_files_in_tmpdir(ss)) fprintf(stderr,"left over temps?");
-#endif
 }
 
 int snd_not_current(snd_info *sp, void *ignore)

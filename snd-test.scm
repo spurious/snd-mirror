@@ -111,6 +111,7 @@
 	'cursor-on-left cursor-on-left 1 
 	'cursor-on-right cursor-on-right 2 
 	'cursor-update-display cursor-update-display 4 
+	'dolph-chebyshev-window dolph-chebyshev-window 16
 	'exponential-window exponential-window 9 
 	'focus-active focus-active 2
 	'focus-left focus-left 0
@@ -3912,7 +3913,8 @@
 	      (if (rs 0.5) (src-sound -.5 cfd))
 	      (if (rs 0.5) (src-sound '(0 .5 1 1.5) cfd))
 	      (if (rs 0.5) (revert-sound cfd))
-	      (if (rs 0.5) (filter-sound '(0 1 .2 0 .5 1 1 0) 20 cfd))
+	      (if (rs 0.5) (filter-sound '(0 1 .2 0 .5 1 1 0) 20 cfd))      ; FIR direct form
+	      (if (rs 0.5) (filter-sound '(0 0 .1 0 .11 1 .12 0 1 0) 2048)) ; convolution
 	      (if (rs 0.5) (env-sound '(0 0 .5 1 1 0) cfd))
 	      (if (rs 0.5)
 		  (begin
@@ -4164,7 +4166,7 @@
 		    (list 'fft-log-magnitude #f #f set-fft-log-magnitude #t)
 		    (list 'fft-size #f 16 set-fft-size 4096)
 		    (list 'fft-style #f 0 set-fft-style 2)
-		    (list 'fft-window #f 0 set-fft-window 15)
+		    (list 'fft-window #f 0 set-fft-window dolph-chebyshev-window)
 		    (list 'ffting #t #f set-ffting #t)
 		    (list 'filter-dBing #t #f set-filter-dBing #t)
 		    (list 'filter-order #t 2 set-filter-order 400)

@@ -2,10 +2,11 @@
 #define MUS_H
 
 #define MUS_VERSION 1
-#define MUS_REVISION 34
-#define MUS_DATE "8-Nov-00"
+#define MUS_REVISION 35
+#define MUS_DATE "28-Nov-00"
 
 /* 
+ * 28-Nov:     added Dolph-Chebyshev window (under HAVE_GSL flag -- needs complex trig support).
  * 8-Nov:      added mus_clear_sinc_tables.
  * 12-Oct:     mus_formant_bank takes one input (can't remember why I had an array here)
  * 27-Sep:     mus_array_interp bugfix (imitates mus.lisp now).
@@ -171,7 +172,7 @@ enum {MUS_OSCIL,MUS_SUM_OF_COSINES,MUS_DELAY,MUS_COMB,MUS_NOTCH,MUS_ALL_PASS,
 enum {MUS_RECTANGULAR_WINDOW,MUS_HANNING_WINDOW,MUS_WELCH_WINDOW,MUS_PARZEN_WINDOW,MUS_BARTLETT_WINDOW,
       MUS_HAMMING_WINDOW,MUS_BLACKMAN2_WINDOW,MUS_BLACKMAN3_WINDOW,MUS_BLACKMAN4_WINDOW,
       MUS_EXPONENTIAL_WINDOW,MUS_RIEMANN_WINDOW,MUS_KAISER_WINDOW,MUS_CAUCHY_WINDOW,MUS_POISSON_WINDOW,
-      MUS_GAUSSIAN_WINDOW,MUS_TUKEY_WINDOW};
+      MUS_GAUSSIAN_WINDOW,MUS_TUKEY_WINDOW,MUS_DOLPH_CHEBYSHEV_WINDOW};
 
 
 __BEGIN_DECLS

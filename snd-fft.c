@@ -1,8 +1,5 @@
 #include "snd.h"
 
-/* TODO:   dolph-chebychev window in C (see examp.scm)
- */
-
 /* handling of "beta" changed drastically 28-June-98 
  * it is now a number between 0 and 1 from ss point of view,
  * and is scaled by the window max before being applied 
@@ -14,10 +11,9 @@
  */
 
 #define NUM_CACHED_FFT_WINDOWS 8
-#define NUM_FFT_WINDOWS 16
 
 static Float beta_maxes[NUM_FFT_WINDOWS] = {1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,
-					    1.0,1.0,15.0,10.0,10.0,10.0,1.0};
+					    1.0,1.0,15.0,10.0,10.0,10.0,1.0,18.0};
 
 typedef struct {
   int type;

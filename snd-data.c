@@ -497,7 +497,7 @@ int find_free_sound_slot (snd_state *state, int desired_chans)
 {
   int i,j;
   snd_info *sp;
-  /* first try to find an unused slot that can accomodate desired_chans (to reduce Widget creation) */
+  /* first try to find an unused slot that can accommodate desired_chans (to reduce Widget creation) */
   for (i=0;i<state->max_sounds;i++)
     {
       sp = state->sounds[i];

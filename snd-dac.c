@@ -1544,7 +1544,7 @@ static int start_audio_output_1 (dac_state *dacp)
       for (d=0;d<MAX_DEVICES;d++) dev_fd[d] = -1;
       if (feed_first_device == 0) 
 	{
-	  /* see if widest device can accomodate all channels */
+	  /* see if widest device can accommodate all channels */
 	  if (alsa_max_chans_value >= dacp->channels) 
 	    {
 	      out_dev[alloc_devs++] = alsa_max_chans_dev;

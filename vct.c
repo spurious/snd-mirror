@@ -588,6 +588,17 @@ static SCM vector2vct(SCM vect)
   return(scm_return_first(scv,vect));
 }
 
+#if HAVE_APPLICABLE_SMOB
+static SCM vct_apply(SCM vobj, SCM arg)
+{
+  /* so if vct obj v (v 3) is the same as (vct-ref v 3) -- just an experiment for now */
+  vct *v;
+  SCM_ASSERT(vct_p(vobj),vobj,SCM_ARG1,S_vct2list);
+  v = get_vct(vobj);
+  return(gh_double2scm(v->data[gh_scm2int(arg)]));
+}
+#endif
+
 void init_vct(void)
 {
   SCM local_doc;
@@ -597,6 +608,10 @@ void init_vct(void)
   scm_set_smob_print(vct_tag,print_vct);
   scm_set_smob_free(vct_tag,free_vct);
   scm_set_smob_equalp(vct_tag,equalp_vct);
+#if HAVE_APPLICABLE_SMOB
+  scm_set_smob_apply(vct_tag,vct_apply,1,0,0);
+#endif
+
 #else
   vct_tag = scm_newsmob(&vct_smobfuns);
 #endif

@@ -1452,6 +1452,7 @@ value to val.
                                   bartlett-window    hamming-window     blackman2-window  blackman3-window
                                   blackman4-window   exponential-window riemann-window    kaiser-window
                                   cauchy-window      poisson-window     gaussian-window   tukey-window
+                                  dolph-chebyshev-window (this only if GSL is loaded)
 
   ffting            (snd chn)     #t if snd's channel chn is displaying a spectrum (the 'f' button).
 
@@ -2686,6 +2687,7 @@ FFT Window type:
   bartlett-window    hamming-window     blackman2-window  blackman3-window
   blackman4-window   exponential-window riemann-window    kaiser-window
   cauchy-window      poisson-window     gaussian-window   tukey-window
+  dolph-chebyshev-window (if GSL is loaded)
 
 Zoom Focus style:
   focus-left         focus-right        focus-active      focus-middle
@@ -2751,15 +2753,20 @@ These functions don't seem to fit anywhere else:
                                   in this case, the code can examine prefix-arg if desired.
                                   Possible return values are:
 
-                                  cursor-in-view     cursor-on-left     cursor-on-right   cursor-in-middle
-                                  cursor-update-display cursor-no-action cursor-claim-selection keyboard-no-action
+                                    cursor-in-view     cursor-on-left     cursor-on-right   cursor-in-middle
+                                    cursor-update-display cursor-no-action cursor-claim-selection keyboard-no-action
 
                                   We can use bind-key to turn the keyboard into a sort of extended piano:
 
-                                  (bind-key (char->integer #\o) 0 (lambda () (play "oboe.snd")))
-                                  (bind-key (char->integer #\p) 0 (lambda () (play "pistol.snd")))
+                                    (bind-key (char->integer #\o) 0 (lambda () (play "oboe.snd") keyboard-no-action))
+                                    (bind-key (char->integer #\p) 0 (lambda () (play "pistol.snd") keyboard-no-action))
 
-                                  Now each time we hit "o", "oboe.snd" plays,  etc.
+                                  Now each time we hit "o", "oboe.snd" plays,  etc.  Or say we want to move
+                                  forward two samples in the graph each time we type "l":
+
+                                    (bind-key (char->integer #\l) 0 (lambda ()
+                                                                      (set! (left-sample 0 0) (+ 2 (left-sample 0 0)))
+                                                                      cursor-update-display))
 
   c-g?              ()            check for C-g to interrupt on-going computation (and let other UI
                                   events through).

@@ -27,8 +27,8 @@
 
 
 #define SNDLIB_VERSION 11
-#define SNDLIB_REVISION 18
-#define SNDLIB_DATE "27-Nov-00"
+#define SNDLIB_REVISION 19
+#define SNDLIB_DATE "28-Nov-00"
 
 #ifndef HAVE_SNDLIB
   #define HAVE_SNDLIB 1
@@ -128,7 +128,7 @@
 #ifndef ESD
 #ifndef HAVE_OSS
 #ifndef HAVE_ALSA
-  #if defined(LINUX) || defined(SCO5) || defined(UW2) || defined(HAVE_SOUNDCARD_H) || defined(HAVE_SYS_SOUNDCARD_H) || defined(HAVE_MACHINE_SOUNDCARD_H) || defined(USR_LIB_OSS) || defined(USR_LOCAL_LIB_OSS) || defined(OPT_OSS) || defined(VAR_LIB_OSS) || defined(__FreeBSD__)
+  #if defined(LINUX) || defined(SCO5) || defined(UW2) || defined(HAVE_SOUNDCARD_H) || defined(HAVE_SYS_SOUNDCARD_H) || defined(HAVE_MACHINE_SOUNDCARD_H) || defined(USR_LIB_OSS) || defined(USR_LOCAL_LIB_OSS) || defined(OPT_OSS) || defined(VAR_LIB_OSS) || defined(__FreeBSD__) || defined(__bsdi__)
     #define HAVE_OSS 1
   #else
     #define HAVE_OSS 0

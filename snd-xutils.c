@@ -205,7 +205,6 @@ void map_over_children (Widget w, void (*func)(Widget,void *), void *userptr)
   /* apply func to each child in entire tree beneath top widget */
   /* taken from Douglas Young, "Motif Debugging and Performance Tuning" Prentice-Hall 1995 */
   /* used mostly to get colors right in non-scheme environments with "convenience" widgets */
-  /* (also to make mix consoles handle key press correctly despite non-traversable widgets) */
   unsigned int i;
   if (w)
     {
@@ -244,7 +243,7 @@ void raise_dialog(Widget w)
 
 void raise_widget(Widget w)
 {
-  /* try to change stacking order (mix consoles in graph; form widgets in drawingarea; overlap covers desired console) */
+  /* try to change stacking order (form widgets in drawingarea; overlap covers desired console) */
   XtWidgetGeometry *request;
   request = (XtWidgetGeometry *)CALLOC(1,sizeof(XtWidgetGeometry));
   request->request_mode = CWStackMode; /* (1<<6) */

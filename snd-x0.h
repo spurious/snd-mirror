@@ -94,7 +94,7 @@
   #define CONTROLS_MARGIN 0
 #endif
 
-#if defined(LINUX) || defined(SCO5) || defined(UW2) || defined(SOLARIS) || defined(HPUX) || defined(ALPHA) || defined(WINDOZE)
+#if defined(LINUX) || defined(__bsdi__) || defined(SCO5) || defined(UW2) || defined(SOLARIS) || defined(HPUX) || defined(ALPHA) || defined(WINDOZE)
   #define LINE_MARGIN 4
   #define CONTROLS_MARGIN 1
   #ifndef LESSTIF_VERSION

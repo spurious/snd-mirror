@@ -18,9 +18,15 @@ static Float current_graph_ffti[GRAPH_SIZE*2];
 static char *FFT_SIZES[NUM_FFT_SIZES] = {"16","32","64","128","256","512","1024","2048","4096","8192","16384","65536","262144","1048576    "};
 static int fft_sizes[NUM_FFT_SIZES] = {16,32,64,128,256,512,1024,2048,4096,8192,16384,65536,262144,1048576};
 
+#if HAVE_GSL
+  #define GUI_NUM_FFT_WINDOWS NUM_FFT_WINDOWS
+#else
+  #define GUI_NUM_FFT_WINDOWS (NUM_FFT_WINDOWS - 1)
+#endif
+
 static char *FFT_WINDOWS[NUM_FFT_WINDOWS] = 
-     {"rectangular","hanning","welch","parzen","bartlett","hamming","blackman2","blackman3","blackman4",
-      "exponential","riemann","kaiser","cauchy","poisson","gaussian","tukey"};
+     {"Rectangular","Hanning","Welch","Parzen","Bartlett","Hamming","Blackman2","Blackman3","Blackman4",
+      "Exponential","Riemann","Kaiser","Cauchy","Poisson","Gaussian","Tukey","Dolph-Chebyshev"};
 
 static char *WAVELETS[NUM_WAVELETS]={
   "daub4","daub6","daub8","daub10","daub12","daub14","daub16","daub18","daub20",
@@ -561,7 +567,7 @@ void fire_up_transform_dialog(snd_state *ss)
       gtk_clist_set_selection_mode(GTK_CLIST(window_list),GTK_SELECTION_SINGLE);
       gtk_clist_set_shadow_type(GTK_CLIST(window_list),GTK_SHADOW_ETCHED_IN);
       gtk_clist_column_titles_passive(GTK_CLIST(window_list));
-      for (i=0;i<NUM_FFT_WINDOWS;i++) 
+      for (i=0;i<GUI_NUM_FFT_WINDOWS;i++) 
 	{
 	  str = FFT_WINDOWS[i];
 	  gtk_clist_append(GTK_CLIST(window_list),&str);

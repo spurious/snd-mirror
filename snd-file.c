@@ -18,9 +18,13 @@
 #if defined(HAVE_SYS_VFS_H)
   #include <sys/vfs.h>
 #endif
-#if (defined(HAVE_SYS_MOUNT_H) || defined(__APPLE__))
+#if (defined(HAVE_SYS_MOUNT_H) || defined(__APPLE__) || defined(__bsdi__))
+#ifdef __bsdi__
+  #include <sys/param.h>
+#endif
   #include <sys/mount.h>
 #endif
+
 
 #if defined(WINDOZE) || (!(defined(FSTATFS_ARGS))) || (FSTATFS_ARGS == 0) || defined(BEOS)
   int disk_kspace (int fd) {return(1234567);}
@@ -1610,7 +1614,7 @@ int check_for_filename_collisions_and_save(snd_state *ss, snd_info *sp, char *st
 
 
 #define RIPPLE_SIZE 65536
-/* needs to be big enough to accomodate any newly added header or header comments */
+/* needs to be big enough to accommodate any newly added header or header comments */
 
 void edit_header_callback(snd_state *ss, snd_info *sp, file_data *edit_header_data)
 {
@@ -1886,7 +1890,7 @@ static SCM g_set_sound_loop_info(SCM start0, SCM end0, SCM start1, SCM end1, SCM
   type = (sp->hdr)->type;
   if ((type != MUS_AIFF) && (type != MUS_AIFC))
     {
-      snd_warning("changing %s header from %s to aifc to accomodate loop info",sp->shortname,mus_header_type_name(type));
+      snd_warning("changing %s header from %s to aifc to accommodate loop info",sp->shortname,mus_header_type_name(type));
       type = MUS_AIFC;
     }
   tmp_file = snd_tempnam(sp->state);

@@ -225,7 +225,7 @@ static void mus_print2snd(char *msg)
   init_sound_file_extensions();
 
   ss->viewing = 0;
-  ss->max_sounds = 4;                 /* expands to accomodate any number of files */
+  ss->max_sounds = 4;                 /* expands to accommodate any number of files */
   ss->stopped_explicitly = 0;
   ss->selected_sound = NO_SELECTION;
   ss->selected_mix = NO_SELECTION;

@@ -317,7 +317,7 @@ void init_recorder(void)
   rp->taking_input = 0;
   rp->systems = 1;
   rp->mixer_settings_saved = 0;
-#ifdef LINUX
+#if defined(LINUX) || defined(__bsdi__)
   rp->output_header_type = MUS_RIFF;
 #else
   rp->output_header_type = MUS_AIFC;

@@ -904,7 +904,7 @@ static void Clip_Button_Help_Callback(Widget w,XtPointer clientData,XtPointer ca
 "This button, if set, causes break point motion\n\
 in the y direction to be clipped at the current\n\
 axis bounds.  If unset, the bounds will try to\n\
-change to accomodate the current mouse position.\n\
+change to accommodate the current mouse position.\n\
 ");
 }
 

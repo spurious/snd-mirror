@@ -1,5 +1,7 @@
 snd change log
 
+  28-Nov:    BSD support thanks to Steven Schultz.
+             Dolph-Chebyshev window if HAVE_GSL.
   24-Nov:    fht (Hartley transform).
   21-Nov:    abort? -> C-g?.  edit-tree and display-edits documented.
   17-Nov:    esd support thanks to Nick Bailey.
