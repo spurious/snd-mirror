@@ -9,8 +9,7 @@
  *    Sun (has switches for OPENBSD, but they're untested)
  *    Mac (Mac OS 8.1) (apparently there are important differences in subsequent versions)
  *    HPUX
- *    W95/98
- *    NetBSD etc -- untested and incomplete
+ *    Windows 95/98
  *    OSX
  *    ESD
  *    audio describers
