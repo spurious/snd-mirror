@@ -1247,7 +1247,6 @@ static int fill_dac_buffers(dac_state *dacp, int write_ok)
 		  dp->cp->just_zero = true;
 		  loc = current_location(dp->chn_fd);
 		  loc -= (int)(cursor_location_offset(ss) * dp->cur_srate); /* should work in either direction */
-		  /* TODO: tracking cursor is broken in gtk */
 		  cursor_moveto_without_verbosity(dp->cp, loc);
 		  dp->cp->just_zero = old_just_zero;
 		}

@@ -237,6 +237,7 @@ AC_HEADER_TIME
 
 AC_CHECK_DECLS(hypot,,,[#include <math.h>]) 
 AC_CHECK_DECLS(isnan,,,[#include <math.h>])
+AC_CHECK_DECLS(isinf,,,[#include <math.h>])
 
 AC_C_CONST
 AC_TYPE_MODE_T
@@ -1451,7 +1452,7 @@ AC_CHECK_HEADER(nl_types.h,
 AC_ARG_ENABLE(deprecated,
   [  --disable-deprecated	  do not include any deprecated stuff from gtk, guile, motif, clm, or sndlib],
   if test "$enable_deprecated" = no ; then
-    CFLAGS="-DGTK_DISABLE_DEPRECATED -DG_DISABLE_DEPRECATED -DGDK_DISABLE_DEPRECATED -DPANGO_DISABLE_DEPRECATED -DSCM_DEBUG_DEPRECATED=1 $CFLAGS"
+    CFLAGS="-DGTK_DISABLE_DEPRECATED -DG_DISABLE_DEPRECATED -DGDK_DISABLE_DEPRECATED -DPANGO_DISABLE_DEPRECATED $CFLAGS"
     AC_DEFINE(XM_DISABLE_DEPRECATED)
     AC_DEFINE(CLM_DISABLE_DEPRECATED)
     AC_DEFINE(SNDLIB_DISABLE_DEPRECATED)

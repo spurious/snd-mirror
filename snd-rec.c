@@ -194,7 +194,6 @@ char *recorder_field_abbreviation(int fld)
 int recorder_sort_mixer_device(void *wd, int i, int chan, bool input, int device, int *mixflds)
 {
 #if (HAVE_OSS || HAVE_ALSA)
-  int k;
   /* we're moving right to left here, chan is counting down, we need to fill out MIXER|MUS_AUDIO_DAC_FILTER fields and channels */
   /* and also handle whatever else comes along */
   /* treble and bass are actually stereo -- we'll do both at once */
@@ -240,6 +239,7 @@ int recorder_sort_mixer_device(void *wd, int i, int chan, bool input, int device
 	    }
 	  else
 	    {
+	      int k;
 	      for (k = 0; k < MAX_AUDIO_FIELD; k++)
 		{
 		  if (mixflds[k] > 0)
@@ -533,10 +533,10 @@ void set_line_source(bool in_digital)
 
 void set_record_size (int new_size)
 {
-  int i;
   lock_recording_audio();
   if (new_size > rp->buffer_size)
     {
+      int i;
       rp->buffer_size = new_size;
       if (rp->one_system_input_buf)
 	{
@@ -1029,9 +1029,9 @@ void fire_up_recorder(void)
 
 void close_recorder_audio(void) 
 {
-  int i;
   if (rp->taking_input)
     {
+      int i;
       for (i = 0; i < rp->systems; i++)
 	if (rp->input_ports[i] != -1)
 	  {
@@ -1739,13 +1739,13 @@ static XEN g_recorder_out_amp (XEN num)
 static XEN g_set_recorder_gain (XEN num, XEN amp) 
 {
   int ind;
-  Float gain;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(num), num, XEN_ARG_1, S_setB S_recorder_gain, "an integer");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(amp), amp, XEN_ARG_2, S_setB S_recorder_gain, "a number"); 
   init_recorder(); 
   ind = XEN_TO_C_INT(num);
   if ((ind >= 0) && (ind < MAX_MIXER_GAINS))
     {
+      Float gain;
       gain = XEN_TO_C_DOUBLE(amp);
       if ((gain >= 0.0) && (gain <= 1.0))
 	{
@@ -1759,7 +1759,6 @@ static XEN g_set_recorder_gain (XEN num, XEN amp)
 static XEN g_set_recorder_in_amp (XEN in, XEN out, XEN amp) 
 {
   int in_ind, out_ind;
-  Float gain;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(in), in, XEN_ARG_1, S_setB S_recorder_in_amp, "an integer");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(out), out, XEN_ARG_2, S_setB S_recorder_in_amp, "an integer");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(amp), amp, XEN_ARG_3, S_setB S_recorder_in_amp, "a number");
@@ -1769,6 +1768,7 @@ static XEN g_set_recorder_in_amp (XEN in, XEN out, XEN amp)
   if ((in_ind >= 0) && (in_ind < MAX_IN_CHANS) && 
       (out_ind >= 0) && (out_ind < MAX_OUT_CHANS))
     {
+      Float gain;
       gain = XEN_TO_C_DOUBLE(amp);
       if ((gain >= amp_control_min(ss)) && (gain <= amp_control_max(ss)))
 	{
@@ -1784,13 +1784,13 @@ static XEN g_set_recorder_in_amp (XEN in, XEN out, XEN amp)
 static XEN g_set_recorder_out_amp (XEN num, XEN amp) 
 {
   int ind;
-  Float gain;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(num), num, XEN_ARG_1, S_setB S_recorder_out_amp, "an integer");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(amp), amp, XEN_ARG_2, S_setB S_recorder_out_amp, "a number"); 
   init_recorder(); 
   ind = XEN_TO_C_INT(num);
   if ((ind >= 0) && (ind < MAX_OUT_CHANS))
     {
+      Float gain;
       gain = XEN_TO_C_DOUBLE(amp); 
       if ((gain >= amp_control_min(ss)) && (gain <= amp_control_max(ss)))
 	{

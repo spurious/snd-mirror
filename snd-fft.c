@@ -1829,6 +1829,7 @@ static XEN g_snd_transform(XEN type, XEN data, XEN hint)
 {
   int trf, i, j, hnt, n2;
   vct *v;
+  Float *dat;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(type), type, XEN_ARG_1, "snd-transform", "an integer");
   XEN_ASSERT_TYPE(VCT_P(data), data, XEN_ARG_2, "snd-transform", "a vct");
   trf = XEN_TO_C_INT(type);
@@ -1851,7 +1852,6 @@ static XEN g_snd_transform(XEN type, XEN data, XEN hint)
       else
 	{
 #endif
-	  Float *dat;
 	  dat = (Float *)CALLOC(v->length, sizeof(Float));
 	  mus_fft(v->data, dat, v->length, 1);
 	  v->data[0] *= v->data[0];

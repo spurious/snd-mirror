@@ -157,8 +157,8 @@ static void gsy_changed(int value, chan_info *cp)
 void fixup_gsy(chan_info *cp, Float low, Float high)
 {
   Widget wcp;
-  int ival;
   Float val, size;
+  int ival = 0;
   wcp = channel_gsy(cp);
   XtVaGetValues(wcp, XmNvalue, &ival, NULL);
   val = (Float)ival / (Float)(SCROLLBAR_MAX);
@@ -568,13 +568,13 @@ static void history_select_callback(Widget w, XtPointer context, XtPointer info)
 static void remake_edit_history(Widget lst, chan_info *cp, int from_graph)
 {
   snd_info *sp;
-  chan_info *ncp;
-  int i, eds, items = 0;
+  int i, eds;
   XmString *edits;
   XmListDeleteAllItems(lst);
   sp = cp->sound;
   if (sp->channel_style != CHANNELS_SEPARATE)
     {
+      chan_info *ncp;
       int k, all_eds = 0, ed, filelen;
       char *title;
       for (k = 0; k < sp->nchans; k++)
@@ -614,6 +614,7 @@ static void remake_edit_history(Widget lst, chan_info *cp, int from_graph)
     }
   else
     {
+      int items = 0;
       eds = cp->edit_ctr;
       while ((eds < (cp->edit_size - 1)) && (cp->edits[eds + 1])) eds++;
       edits = (XmString *)CALLOC(eds + 1, sizeof(XmString));
@@ -665,9 +666,6 @@ void reflect_edit_history_change(chan_info *cp)
   if ((cp->in_as_one_edit) || (cp->cgx == NULL)) return;
   sp = cp->sound;
   lst = EDIT_HISTORY_LIST(cp);
-  /*
-  fprintf(stderr,"%s[%d:%d]: %s\n", cp->sound->short_filename, cp->chan, cp->edit_ctr, cp->edits[cp->edit_ctr]->origin);
-  */
 #if WITH_RELATIVE_PANES && (XmVERSION > 1)
   if ((lst) && (widget_width(lst) > 1))
     remake_edit_history(lst, cp, true);
@@ -732,11 +730,11 @@ void reflect_edit_counter_change(chan_info *cp)
   /* undo/redo/revert -- change which line is highlighted */
 #if (XmVERSION > 1)
   Widget lst;
-  int len, top;
   if (cp->cgx == NULL) return;
   lst = EDIT_HISTORY_LIST(cp);
   if ((lst) && (widget_width(lst) > 1))
     {
+      int len, top;
       XmListSelectPos(lst, cp->edit_ctr + 1, false);
       XtVaGetValues(lst, 
 		    XmNvisibleItemCount, &len, 
@@ -800,16 +798,14 @@ static void cp_graph_key_press(Widget w, XtPointer context, XEvent *event, Boole
 
 int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Widget main, fw_button_t button_style, bool with_events)
 {
+  int i;
+  bool need_extra_scrollbars;
   Widget *cw;
-  XtCallbackList n1, n2, n3, n4, n5, n6, n7, n8, n9, n10, n11, n12, n13, n14;
   chan_info *cp;
   chan_context *cx;
   axis_context *cax;
   state_context *sx;
   bool make_widgets;
-  int i, n;
-  bool need_colors, need_extra_scrollbars;
-  Arg args[32];
   make_widgets = ((sp->chans[channel]) == NULL);
   sp->chans[channel] = make_chan_info(sp->chans[channel], channel, sp);
   if ((main) && (!(XmIsForm(main)))) return(-1);
@@ -823,6 +819,11 @@ int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Wid
 
   if (make_widgets)
     {
+      XtCallbackList n1, n2, n3, n4, n5, n6, n7, n8, n9, n10, n11, n12, n13, n14;
+      int n;
+      bool need_colors;
+      Arg args[32];
+
       /* allocate the entire widget apparatus for this channel of this sound */
       need_colors = (!(ss->using_schemes));
 
@@ -1205,10 +1206,10 @@ GC erase_GC(chan_info *cp)
 
 void cleanup_cw(chan_info *cp)
 {
-  chan_context *cx;
-  Widget *cw;
   if ((cp) && (cp->cgx))
     {
+      chan_context *cx;
+      Widget *cw;
       cx = cp->cgx;
       cx->selected = false;
       cw = cx->chan_widgets;
@@ -1227,19 +1228,14 @@ void cleanup_cw(chan_info *cp)
 
 void change_channel_style(snd_info *sp, channel_style_t new_style)
 {
-  int i, j;
-  channel_style_t old_style;
-  chan_info *ncp, *cp, *pcp;
-  int height[1];
-  chan_context *mcgx;
-  Widget *cw;
-  axis_info *ap;
-  chan_context *cx;
   if ((sp) && (sp->nchans > 1))
     {
+      int i;
+      channel_style_t old_style;
       old_style = sp->channel_style;
       if (new_style != old_style)
 	{
+	  int height[1];
 	  sp->channel_style = new_style;
 #if WITH_RELATIVE_PANES && (XmVERSION > 1)
 	  if ((new_style == CHANNELS_SEPARATE) || (old_style == CHANNELS_SEPARATE))
@@ -1282,6 +1278,8 @@ void change_channel_style(snd_info *sp, channel_style_t new_style)
 	  height[0] = widget_height(w_snd_pane(sp)) - control_panel_height(sp) - 16;
 	  if (old_style == CHANNELS_SEPARATE)
 	    {
+	      chan_context *mcgx;
+	      chan_info *ncp;
 	      ncp = sp->chans[0];
 	      sound_lock_control_panel(sp, NULL);
 	      channel_lock_pane(ncp, height);
@@ -1300,6 +1298,8 @@ void change_channel_style(snd_info *sp, channel_style_t new_style)
 	    }
 	  else
 	    {
+	      axis_info *ap;
+	      chan_info *pcp;
 	      if (new_style == CHANNELS_SEPARATE)
 		{
 		  /* height[0] = total space available */
@@ -1315,6 +1315,10 @@ void change_channel_style(snd_info *sp, channel_style_t new_style)
 		  ap = pcp->axis;
 		  for (i = 1; i < sp->nchans; i++)
 		    {
+		      Widget *cw;
+		      chan_context *cx;
+		      chan_info *cp;
+		      int j;
 		      cp = sp->chans[i];
 		      cp->tcgx = NULL;
 		      cx = cp->cgx;

@@ -169,13 +169,12 @@ static void show_mix_background_wave(int mix_id, int chan)
 
 static void mix_amp_env_resize(Widget w, XtPointer context, XtPointer info) 
 {
-  XGCValues gv;
   int chans, chan;
   env **e;
-  env *cur_env;
   if (!(mix_ok(mix_dialog_id))) return;
   if (ax == NULL)
     {
+      XGCValues gv;
       gv.function = GXcopy;
       XtVaGetValues(w_env, XmNbackground, &gv.background, XmNforeground, &gv.foreground, NULL);
       cur_gc = XtGetGC(w_env, GCForeground | GCFunction, &gv);
@@ -189,6 +188,7 @@ static void mix_amp_env_resize(Widget w, XtPointer context, XtPointer info)
   e = mix_dialog_envs(mix_dialog_id);
   for (chan = 0; chan < chans; chan++)
     {
+      env *cur_env;
       spfs[chan]->with_dots = true;
       env_editor_display_env(spfs[chan], e[chan], ax, _("mix env"), (int)(chan * widget_width(w) / chans), 0,
 			     widget_width(w) / chans, widget_height(w), NOT_PRINTING);
@@ -309,11 +309,11 @@ static bool id_changed = false;
 static void id_activated(void)
 {
   char *val;
-  int id;
   id_changed = false;
   val = XmTextGetString(w_id);
   if (val)
     {
+      int id;
       id = string_to_int(val);
       if (mix_ok_and_unlocked(id))
 	{
@@ -337,11 +337,11 @@ static void id_check_callback(Widget w, XtPointer context, XtPointer info)
 static void beg_activated(void)
 {
   char *val;
-  chan_info *cp;
   if (!(mix_ok(mix_dialog_id))) return;
   val = XmTextGetString(w_beg);
   if (val)
     {
+      chan_info *cp;
       char *up_to_colon;
       up_to_colon = string_to_colon(val);
       cp = mix_dialog_mix_channel(mix_dialog_id);
@@ -534,16 +534,17 @@ static Widget w_sep1;
 
 Widget make_mix_dialog(void) 
 {
-  Widget mainform, mix_row, track_row, last_label, last_number, mix_frame, track_frame, sep;
-  Widget w_dB_frame, w_dB, w_clip, w_wave, w_dB_row;
-  XmString xdismiss, xhelp, xtitle, s1, xapply;
-  int n, i;
-  Arg args[20];
-  XtCallbackList n1, n2;
-  XGCValues v;
-  char amplab[LABEL_BUFFER_SIZE];
   if (mix_dialog == NULL)
     {
+      Widget mainform, mix_row, track_row, last_label, last_number, mix_frame, track_frame, sep;
+      Widget w_dB_frame, w_dB, w_clip, w_wave, w_dB_row;
+      XmString xdismiss, xhelp, xtitle, s1, xapply;
+      int n, i;
+      Arg args[20];
+      XtCallbackList n1, n2;
+      XGCValues v;
+      char amplab[LABEL_BUFFER_SIZE];
+
       mix_dialog_id = any_mix_id();
       xdismiss = XmStringCreate(_("Dismiss"), XmFONTLIST_DEFAULT_TAG);
       xapply = XmStringCreate(_("Apply Env"), XmFONTLIST_DEFAULT_TAG);
@@ -957,11 +958,6 @@ static bool track_dialog_slider_dragging = false;
 
 static void update_mix_dialog(int mix_id) 
 {
-  chan_info *cp = NULL;
-  int i, chans;
-  off_t beg, len;
-  Float val;
-  char lab[LABEL_BUFFER_SIZE];
   if (!(mix_ok(mix_dialog_id)))
     {
       mix_dialog_id = mix_id; /* close-sound kills current mix, for example */
@@ -973,6 +969,8 @@ static void update_mix_dialog(int mix_id)
     }
   if ((mix_id == mix_dialog_id) || (mix_id == ANY_MIX_ID))
     {
+      Float val;
+      int chans;
       if (mix_dialog == NULL) 
 	make_mix_dialog();
       else
@@ -983,6 +981,9 @@ static void update_mix_dialog(int mix_id)
       /* now reflect current mix state in mix dialog controls */
       if (mix_ok(mix_dialog_id))
 	{
+	  chan_info *cp = NULL;
+	  off_t beg, len;
+	  char lab[LABEL_BUFFER_SIZE];
 	  cp = mix_dialog_mix_channel(mix_dialog_id);
 	  val = mix_dialog_mix_speed(mix_dialog_id);
 	  XtVaSetValues(w_speed, XmNvalue, speed_to_scroll(speed_control_min(ss), val, speed_control_max(ss)), NULL);
@@ -1018,6 +1019,7 @@ static void update_mix_dialog(int mix_id)
 	}
       if ((!mix_dialog_slider_dragging) && (!track_dialog_slider_dragging))
 	{
+	  int i;
 	  for (i = 0; i < chans; i++)
 	    {
 	      XmString s1;
@@ -1243,12 +1245,12 @@ void show_track_background_wave(int pts, bool two_sided)
 
 static void track_amp_env_resize(Widget w, XtPointer context, XtPointer info) 
 {
-  XGCValues gv;
   env *e;
   env *cur_env;
   if (!(track_p(track_dialog_id))) return;
   if (track_ax == NULL)
     {
+      XGCValues gv;
       gv.function = GXcopy;
       XtVaGetValues(w_track_env, XmNbackground, &gv.background, XmNforeground, &gv.foreground, NULL);
       track_cur_gc = XtGetGC(w_track_env, GCForeground | GCFunction, &gv);
@@ -1365,11 +1367,11 @@ static bool track_id_changed = false;
 static void track_id_activated(void)
 {
   char *val;
-  int id;
   track_id_changed = false;
   val = XmTextGetString(w_track_id);
   if (val)
     {
+      int id;
       id = string_to_int(val);
       if (track_p(id))
 	{
@@ -1397,12 +1399,12 @@ static void track_id_check_callback(Widget w, XtPointer context, XtPointer info)
 
 static void redisplay_track_bounds(void)
 {
-  char lab[LABEL_BUFFER_SIZE];
   chan_info *cp;
-  off_t beg, len;
   cp = track_channel(track_dialog_id, 0); /* can be NULL */
   if (cp)
     {
+      char lab[LABEL_BUFFER_SIZE];
+      off_t beg, len;
       beg = track_position(track_dialog_id, -1);
       len = track_frames(track_dialog_id, -1);
       mus_snprintf(lab, LABEL_BUFFER_SIZE, "%.3f : %.3f",
@@ -1419,11 +1421,11 @@ static void redisplay_track_bounds(void)
 static void track_beg_activated(void)
 {
   char *val;
-  chan_info *cp;
   if (!(track_p(track_dialog_id))) return;
   val = XmTextGetString(w_track_beg);
   if (val)
     {
+      chan_info *cp;
       cp = track_channel(track_dialog_id, 0);
       if (cp)
 	{
@@ -1592,15 +1594,16 @@ static Widget w_track_frame = NULL;
 
 Widget make_track_dialog(void) 
 {
-  Widget mainform, track_row, track_track_row, track_track_frame, sep, sep2;
-  Widget w_dB_frame, w_dB, w_clip, w_wave, w_dB_row;
-  XmString xdismiss, xhelp, xtitle, s1, xapply;
-  int n;
-  Arg args[20];
-  XtCallbackList n1, n2;
-  XGCValues v;
   if (track_dialog == NULL)
     {
+      Widget mainform, track_row, track_track_row, track_track_frame, sep, sep2;
+      Widget w_dB_frame, w_dB, w_clip, w_wave, w_dB_row;
+      XmString xdismiss, xhelp, xtitle, s1, xapply;
+      int n;
+      Arg args[20];
+      XtCallbackList n1, n2;
+      XGCValues v;
+
       track_dialog_id = any_track_id();
       xdismiss = XmStringCreate(_("Dismiss"), XmFONTLIST_DEFAULT_TAG);
       xapply = XmStringCreate(_("Apply Env"), XmFONTLIST_DEFAULT_TAG);
@@ -2062,11 +2065,6 @@ Widget make_track_dialog(void)
 
 static void update_track_dialog(int track_id) 
 {
-  chan_info *cp;
-  off_t beg, len;
-  Float val;
-  char lab[LABEL_BUFFER_SIZE];
-  char *temp = NULL;
   if (!(track_p(track_dialog_id))) track_dialog_id = track_id;
   if (!(track_p(track_dialog_id))) track_dialog_id = any_track_id();
   if (track_id == track_dialog_id)
@@ -2081,6 +2079,11 @@ static void update_track_dialog(int track_id)
       /* now reflect current track state in track dialog controls */
       if (track_p(track_dialog_id))
 	{
+	  chan_info *cp;
+	  off_t beg, len;
+	  Float val;
+	  char lab[LABEL_BUFFER_SIZE];
+	  char *temp = NULL;
 	  val = track_dialog_track_speed(track_dialog_id);
 	  XtVaSetValues(w_track_speed, XmNvalue, speed_to_scroll(speed_control_min(ss), val, speed_control_max(ss)), NULL);
 	  speed_changed(val, lab, speed_control_style(ss), speed_control_tones(ss), 6);

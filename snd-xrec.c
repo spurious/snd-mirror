@@ -312,9 +312,9 @@ static bool pixmaps_allocated = false;
 
 static void make_record_icons(Widget w)
 {
-  int depth;
   if (!pixmaps_allocated)
     {
+      int depth;
       XtVaGetValues(w, XmNdepth, &depth, NULL);
       speaker_icon = make_pixmap(speaker_bits, 12, 12, depth, draw_gc);
       mic_icon = make_pixmap(mic_bits, 12, 12, depth, draw_gc);
@@ -385,10 +385,10 @@ static void remember_widcon(Widget w, int dev)
 
 void make_recorder_icons_transparent_again(Pixel old_color, Pixel new_color)
 {
-  Display *dp;
-  int i;
   if (pixmaps_allocated)
     {
+      Display *dp;
+      int i;
       dp = XtDisplay(recorder);
       XFreePixmap(dp, speaker_icon);
       XFreePixmap(dp, mic_icon);
@@ -1039,10 +1039,10 @@ static Widget make_message_pane(Widget message_pane)
 
 static void make_trigger_label(Float val)
 {
-  XmString s1;
-  char *buf;
   if (trigger_label)
     {
+      XmString s1;
+      char *buf;
       buf = (char *)CALLOC(LABEL_BUFFER_SIZE, sizeof(char));
       mus_snprintf(buf, LABEL_BUFFER_SIZE, _("trigger: %.3f"), val);
       s1 = XmStringCreate(buf, XmFONTLIST_DEFAULT_TAG);
@@ -1054,7 +1054,6 @@ static void make_trigger_label(Float val)
 
 static void internal_trigger_set(Float val)
 {
-  XmString s1;
   recorder_info *rp;
   rp = get_recorder_info();
   rp->trigger = val;
@@ -1063,6 +1062,7 @@ static void internal_trigger_set(Float val)
   make_trigger_label(val);
   if (!(rp->recording)) /* else wait for current session to end (via click) */
     {
+      XmString s1;
       s1 = XmStringCreate((char *)((rp->triggering) ? _("Triggered Record") : _("Record")), XmFONTLIST_DEFAULT_TAG);
       XtVaSetValues(record_button, XmNlabelString, s1, NULL);
       XmStringFree(s1);
@@ -1219,12 +1219,12 @@ static void autoload_file_callback(Widget w, XtPointer context, XtPointer info)
 static void srate_changed_callback(Widget w, XtPointer context, XtPointer info) 
 {
   char *str;
-  int n;
   recorder_info *rp;
   rp = get_recorder_info();
   str = XmTextGetString(w); 
   if (str) 
     {
+      int n;
       n = string_to_int(str);
       if ((n > 0) && (n != rp->srate))
 	{
@@ -1238,12 +1238,12 @@ static void srate_changed_callback(Widget w, XtPointer context, XtPointer info)
 static void rec_size_changed_callback(Widget w, XtPointer context, XtPointer info) 
 {
   char *str;
-  int n;
   recorder_info *rp;
   rp = get_recorder_info();
   str = XmTextGetString(w); 
   if (str) 
     {
+      int n;
       n = string_to_int(str);
       if ((n > 0) && (n != rp->buffer_size)) set_record_size(n);
       XtFree(str);
@@ -1549,9 +1549,9 @@ static void vu_reset_callback(Widget w, XtPointer context, XtPointer info)
   /* set current maxes to 0.0 */
   int i;
   PANE *p = (PANE *)context;
-  VU *vu;
   for (i = 0; i < p->meters_size; i++)
     {
+      VU *vu;
       vu = p->meters[i];
       vu->max_val = 0.0;
       set_label(vu->max_button, "0.00");
@@ -2809,15 +2809,12 @@ static void reset_record_callback(Widget w, XtPointer context, XtPointer info)
 {
   /* if recording, cancel and toss data, else reset various fields to default (ss) values */
 
-  char *str;
   XmString s1;
-  PANE *p;
-  VU *vu;
-  int i, k;
   recorder_info *rp;
   rp = get_recorder_info();
   if (rp->recording)                  /* cancel */
     {
+      char *str;
       rp->recording = false;
       rp->triggered = (!rp->triggering);
       sensitize_control_buttons();
@@ -2840,6 +2837,9 @@ static void reset_record_callback(Widget w, XtPointer context, XtPointer info)
     }
   else                            /* reset or restart */
     { 
+      PANE *p;
+      VU *vu;
+      int i, k;
       for (i = 0; i < rp->ordered_devices_size; i++)
 	{
 	  p = all_panes[i];

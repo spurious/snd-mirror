@@ -7596,14 +7596,16 @@ static XEN g_undo(XEN ed_n, XEN snd_n, XEN chn_n) /* opt ed_n */
 {
   #define H_undo "(" S_undo " (count 1) (snd #f) (chn #f)): undo 'count' edits in snd's channel chn"
   chan_info *cp;
+  int num;
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ed_n), ed_n, XEN_ARG_1, S_undo, "an integer");
   ASSERT_CHANNEL(S_undo, snd_n, chn_n, 2);
   cp = get_cp(snd_n, chn_n, S_undo);
   if (XEN_INTEGER_P(ed_n))
     {
-      undo_edit_with_sync(cp, 
-			  XEN_TO_C_INT(ed_n));
-      return(ed_n);
+      num = XEN_TO_C_INT(ed_n);
+      if (num != 0)
+	undo_edit_with_sync(cp, num);
+      return(C_TO_XEN_INT(num));
     }
   undo_edit_with_sync(cp, 1);
   return(C_TO_XEN_INT(1));
@@ -7613,14 +7615,16 @@ static XEN g_redo(XEN ed_n, XEN snd_n, XEN chn_n) /* opt ed_n */
 {
   #define H_redo "(" S_redo " (count 1) (snd #f) (chn #f)): redo 'count' edits in snd's channel chn"
   chan_info *cp;
+  int num;
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ed_n), ed_n, XEN_ARG_1, S_redo, "an integer");
   ASSERT_CHANNEL(S_redo, snd_n, chn_n, 2);
   cp = get_cp(snd_n, chn_n, S_redo);
   if (XEN_INTEGER_P(ed_n))
     {
-      redo_edit_with_sync(cp, 
-			  XEN_TO_C_INT(ed_n));
-      return(ed_n);
+      num = XEN_TO_C_INT(ed_n);
+      if (num != 0)
+	redo_edit_with_sync(cp, num);
+      return(C_TO_XEN_INT(num));
     }
   redo_edit_with_sync(cp, 1);
   return(C_TO_XEN_INT(1));

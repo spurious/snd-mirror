@@ -182,10 +182,10 @@ void resize_sy(chan_info *cp)
 {
   /* something changed the y axis view, so the scale scroller needs to reflect that change (in size and position) */
   axis_info *ap;
-  Float size;
   ap = cp->axis;
   if (ap->y_ambit != 0.0)
     {
+      Float size;
       size = (ap->y1 - ap->y0) / ap->y_ambit;
       set_scrollbar(sy_adj(cp), 
 		    1.0 - ((ap->y0 - ap->ymin) / ap->y_ambit + size), 
@@ -436,7 +436,6 @@ static void history_select_callback(GtkTreeSelection *selection, gpointer *gp)
 static void remake_edit_history(GtkWidget *lst, chan_info *cp)
 {
   snd_info *sp;
-  chan_info *ncp;
   int i, eds;
   char *str;
   gtk_list_store_clear(GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(lst))));
@@ -445,6 +444,7 @@ static void remake_edit_history(GtkWidget *lst, chan_info *cp)
     {
       int k, all_eds = 0, ed, filelen;
       char *title;
+      chan_info *ncp;
       for (k = 0; k < sp->nchans; k++)
 	{
 	  ncp = sp->chans[k];
@@ -499,11 +499,11 @@ void reflect_edit_history_change(chan_info *cp)
   /* new edit so it is added, and any trailing lines removed */
   GtkWidget *lst;
   snd_info *sp;
-  chan_info *ncp;
   if ((cp->in_as_one_edit) || (cp->cgx == NULL)) return;
   sp = cp->sound;
   if ((cp->chan > 0) && (sp->channel_style != CHANNELS_SEPARATE))
     {
+      chan_info *ncp;
       ncp = sp->chans[0];
       lst = EDIT_HISTORY_LIST(ncp);
       if (lst) remake_edit_history(lst, ncp);
@@ -519,11 +519,11 @@ void reflect_edit_counter_change(chan_info *cp)
 {
   /* undo/redo/revert -- change which line is highlighted */
   snd_info *sp;
-  chan_info *ncp;
   if (cp->cgx == NULL) return;
   sp = cp->sound;
   if ((cp->chan > 0) && (sp->channel_style != CHANNELS_SEPARATE))
     {
+      chan_info *ncp;
       ncp = sp->chans[0];
       flush_select = true;
       sg_list_select(EDIT_HISTORY_LIST(ncp), cp->edit_ctr + cp->edhist_base);
@@ -578,7 +578,6 @@ gboolean graph_key_press(GtkWidget *w, GdkEventKey *ev, gpointer data)
  
 static gboolean graph_button_press(GtkWidget *w, GdkEventButton *ev, gpointer data)
 {
-  chan_info *cp = (chan_info *)data;
   if ((ev->state == 0) && (ev->type == GDK_BUTTON_PRESS) && (ev->button == POPUP_BUTTON))
     {
       int pdata;
@@ -588,6 +587,7 @@ static gboolean graph_button_press(GtkWidget *w, GdkEventButton *ev, gpointer da
     }
   else
     {
+      chan_info *cp = (chan_info *)data;
       (ss->sgx)->graph_is_active = true;
       gtk_widget_grab_focus(w);
       ((cp->sound)->sgx)->mini_active = false;
@@ -610,10 +610,10 @@ static gboolean graph_scroll(GtkWidget *w, GdkEventScroll *ev, gpointer data)
 
 static gboolean graph_button_motion(GtkWidget *w, GdkEventMotion *ev, gpointer data)
 { 
-  int x, y;
-  GdkModifierType state;
   if (ev->state & GDK_BUTTON1_MASK)
     {
+      int x, y;
+      GdkModifierType state;
       if (ev->is_hint)
 	gdk_window_get_pointer(ev->window, &x, &y, &state);
       else
@@ -904,10 +904,10 @@ GdkGC *erase_GC(chan_info *cp)
 
 void cleanup_cw(chan_info *cp)
 {
-  chan_context *cx;
-  GtkWidget **cw;
   if ((cp) && (cp->cgx))
     {
+      chan_context *cx;
+      GtkWidget **cw;
       cx = cp->cgx;
       cx->selected = false;
       cw = cx->chan_widgets;
@@ -925,21 +925,15 @@ void cleanup_cw(chan_info *cp)
 
 void change_channel_style(snd_info *sp, channel_style_t new_style)
 {
-  int i;
-  channel_style_t old_style;
-  chan_info *ncp, *cp, *pcp;
-  int height[1];
-  chan_context *mcgx;
-  GtkWidget **cw;
-  axis_info *ap;
-  chan_context *cx;
   if ((sp) && (sp->nchans > 1))
     {
+      channel_style_t old_style;
       old_style = sp->channel_style;
       if (new_style != old_style)
 	{
+	  int i;
+	  int height[1];
 	  sp->channel_style = new_style;
-
 	  if ((new_style == CHANNELS_SEPARATE) || (old_style == CHANNELS_SEPARATE))
 	    {
 	      GtkWidget* lst;
@@ -980,6 +974,8 @@ void change_channel_style(snd_info *sp, channel_style_t new_style)
 	  height[0] = widget_height(w_snd_pane(sp)) - control_panel_height(sp) - 16;
 	  if (old_style == CHANNELS_SEPARATE)
 	    {
+	      chan_context *mcgx;
+	      chan_info *ncp;
 	      ncp = sp->chans[0];
 	      mcgx = ncp->cgx;
 	      for (i = 1; i < sp->nchans; i++) 
@@ -996,6 +992,10 @@ void change_channel_style(snd_info *sp, channel_style_t new_style)
 	    {
 	      if (new_style == CHANNELS_SEPARATE)
 		{
+		  axis_info *ap;
+		  chan_info* pcp;
+		  GtkWidget **cw;
+		  chan_context *cx;
 		  /* height[0] = total space available */
 		  height[0] /= sp->nchans;
 		  map_over_sound_chans(sp, channel_open_pane, NULL);
@@ -1004,6 +1004,7 @@ void change_channel_style(snd_info *sp, channel_style_t new_style)
 		  ap = pcp->axis;
 		  for (i = 1; i < sp->nchans; i++)
 		    {
+		      chan_info *cp;
 		      cp = sp->chans[i];
 		      cp->tcgx = NULL;
 		      cx = cp->cgx;

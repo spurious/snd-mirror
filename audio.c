@@ -160,10 +160,10 @@ int device_channels(int dev)
   float val[4];
 #if USE_SND && DEBUGGING
   XEN res;
-  int chans;
   res = XEN_EVAL_C_STRING("(if (defined? 'debugging-device-channels) debugging-device-channels 0)");
   if (XEN_INTEGER_P(res))
     {
+      int chans;
       chans = XEN_TO_C_INT(res);
       if (chans > 0) return(chans);
     }
@@ -303,14 +303,17 @@ static void end_sgi_print(void)
 
 
 #define RETURN_ERROR_EXIT(Error_Type, Audio_Line, Ur_Error_Message) \
-  do { char *Error_Message; Error_Message = Ur_Error_Message; \
-    if (Audio_Line != -1) al_free(Audio_Line); \
-    if (Error_Message) \
-      {MUS_STANDARD_ERROR(Error_Type, Error_Message); FREE(Error_Message);} \
-    else MUS_STANDARD_ERROR(Error_Type, mus_error_to_string(Error_Type)); \
-    end_sgi_print(); \
-    return(MUS_ERROR); \
-  } while (false)
+  do { \
+      char *Error_Message; Error_Message = Ur_Error_Message; \
+      if (Audio_Line != -1) al_free(Audio_Line); \
+      if (Error_Message) \
+        { \
+          MUS_STANDARD_ERROR(Error_Type, Error_Message); FREE(Error_Message); \
+        } \
+      else MUS_STANDARD_ERROR(Error_Type, mus_error_to_string(Error_Type)); \
+      end_sgi_print(); \
+      return(MUS_ERROR); \
+      } while (false)
 
 
 #ifdef AL_RESOURCE
@@ -632,7 +635,6 @@ int mus_audio_open_input(int ur_dev, int srate, int chans, int format, int reque
 #ifdef AL_RESOURCE
   ALpv pv;
   ALpv x[2];
-  int itf;
 #else
   long sr[2];
   int resind;
@@ -658,6 +660,7 @@ int mus_audio_open_input(int ur_dev, int srate, int chans, int format, int reque
     device[line] = AL_DEFAULT_INPUT;
   else 
     {
+      int itf;
       device[line] = to_al_device(dev);
       itf = to_al_interface(dev);
       if (itf)
@@ -951,7 +954,6 @@ int mus_audio_mixer_write(int ur_dev, int field, int chan, float *val)
 static void dump_resources(ALvalue *x, int rv)
 {
   ALpv y[4];
-  ALpv yy;
   ALparamInfo pinf;
   ALfixed g[MAX_CHANNELS];
   char dn[STRING_SIZE];
@@ -980,6 +982,7 @@ static void dump_resources(ALvalue *x, int rv)
           pprint(audio_strbuf);
           if (pinf.min.ll != pinf.max.ll)
             {
+	      ALpv yy;
               yy.param = AL_GAIN;
               yy.value.ptr = g;
               yy.sizeIn = MAX_CHANNELS;
@@ -1052,8 +1055,9 @@ static void save_devices(ALvalue *x, int rv)
 	    }
 	  else
 	    {
+	      int j;
 	      si = (saved_info **)REALLOC(si, 2 * saved_devices * sizeof(saved_info *));
-	      for (i = saved_devices_size; i < 2 * saved_devices; i++) si[i] = NULL;
+	      for (j = saved_devices_size; j < 2 * saved_devices; j++) si[j] = NULL;
 	      saved_devices_size = 2 * saved_devices;
 	    }
 	}
@@ -1959,9 +1963,9 @@ static int find_system(int line)
 
 static int linux_audio_close(int fd)
 {
-  int err = 0, sys;
   if (fd != -1)
     {
+      int err = 0, sys;
       sys = find_system(fd);
       if (sys != -1)
 	{
@@ -2181,12 +2185,12 @@ static int oss_mus_audio_read(int line, char *buf, int bytes)
 
 static char *oss_unsrc(int srcbit)
 {
-  char *buf;
-  bool need_and = false;
   if (srcbit == 0)
     return(strdup("none"));
   else
     {
+      bool need_and = false;
+      char *buf;
       buf = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
       if (srcbit & SOUND_MASK_MIC) {need_and = true; strcat(buf, "mic");}
       if (srcbit & SOUND_MASK_LINE) {if (need_and) strcat(buf, " and "); need_and = true; strcat(buf, "line in");}
@@ -2385,12 +2389,12 @@ static int oss_mus_audio_open_input(int ur_dev, int srate, int chans, int format
 static int oss_mus_audio_mixer_read(int ur_dev, int field, int chan, float *val)
 {
   int fd, amp, channels, err = MUS_NO_ERROR, devmask, stereodevs, ind, formats, sys, dev, srate;
-  bool adat_mode = false;
   char *dev_name = NULL;
   sys = MUS_AUDIO_SYSTEM(ur_dev);
   dev = MUS_AUDIO_DEVICE(ur_dev);
   if (audio_type[sys] == SONORUS_STUDIO)
     {
+      bool adat_mode = false;
       adat_mode = (audio_mode[sys] == 1);
       if (dev == MUS_AUDIO_MIXER) val[0] = 0; /* no mixer */
       else
@@ -3307,15 +3311,17 @@ AUDIO_INFO:
 
 static void oss_mus_audio_save (void)
 {
-  int afd, i, devmask, err, level, system, systems;
+  int system, systems;
   systems = mus_audio_systems();
   for (system = 0; system < systems; system++)
     {
+      int afd;
       afd = linux_audio_open(mixer_name(system), O_RDONLY, 0, 0);
       if (afd == -1) 
 	mus_print("mus_audio_save: %s: %s", mixer_name(system), strerror(errno));
       else
 	{
+	  int i, devmask, err, level;
 	  ioctl(afd, SOUND_MIXER_READ_DEVMASK, &devmask);
 	  for (i = 0; i < SOUND_MIXER_NRDEVICES; i++)
 	    {
@@ -3338,15 +3344,17 @@ static void oss_mus_audio_save (void)
 
 static void oss_mus_audio_restore (void)
 {
-  int afd, i, level, devmask, system, systems;
+  int system, systems;
   systems = mus_audio_systems();
   for (system = 0; system < systems; system++)
     {
+      int afd;
       afd = linux_audio_open(mixer_name(system), O_RDWR, 0, 0);
       if (afd == -1) 
 	mus_print("mus_audio_restore: %s: %s", mixer_name(system), strerror(errno));
       else
 	{
+	  int i, level, devmask;
 	  ioctl(afd, SOUND_PCM_WRITE_CHANNELS, &(init_chans[system]));
 	  ioctl(afd, SOUND_PCM_WRITE_RATE, &(init_srate[system]));
 	  ioctl(afd, SOUND_PCM_SETFMT, &(init_format[system]));
@@ -5010,7 +5018,7 @@ int mus_audio_close(int line)
 
 int mus_audio_read(int line, char *buf, int bytes)
 {
-  int bytes_read, bytes_available, total = 0;
+  int total = 0;
   char *curbuf;
   /* ioctl(line, AUDIO_DRAIN, NULL) */
   /* this seems to return 8-12 bytes fewer than requested -- perverse! */
@@ -5020,9 +5028,11 @@ int mus_audio_read(int line, char *buf, int bytes)
   curbuf = buf;
   while (total < bytes)
     {
+      int bytes_available;
       ioctl(line, FIONREAD, &bytes_available);
       if (bytes_available > 0)
 	{
+	  int bytes_read;
 	  if ((total + bytes_available) > bytes) bytes_available = bytes - total;
 	  bytes_read = read(line, curbuf, bytes_available);
 	  if (bytes_read > 0)

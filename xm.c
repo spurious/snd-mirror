@@ -5,10 +5,11 @@
 
 #include <config.h>
 
-#define XM_DATE "23-Aug-04"
+#define XM_DATE "22-Sep-04"
 
 /* HISTORY: 
  *
+ *   22-Sep:    various minor cleanups.
  *   23-Aug:    more changes for new Guile.
  *   12-Aug:    some changes to accommodate new Guile names.
  *   22-June:   XmColorSelector resources.
@@ -831,13 +832,13 @@ static void define_makes(void)
 
 static int its_a_callbackstruct(char *name)
 {
-  int len;
-  char *end_name;
   if (name)
     {
+      int len;
       len = strlen(name);
       if (len > 16)
 	{
+	  char *end_name;
 	  end_name = (char *)(name + len - 14);
 	  return(strcmp(end_name, "CallbackStruct") == 0);
 	}
@@ -878,9 +879,9 @@ static xm_resource_t resource_type(char *resource);
 static XEN C_TO_XEN_Widgets(Widget *array, int len)
 {
   XEN lst = XEN_EMPTY_LIST;
-  int i, loc;
   if (array)
     {
+      int i, loc;
       loc = xm_protect(lst);
       for (i = len - 1; i >= 0; i--)
 	lst = XEN_CONS(C_TO_XEN_Widget(array[i]), lst);
@@ -892,9 +893,9 @@ static XEN C_TO_XEN_Widgets(Widget *array, int len)
 static XEN C_TO_XEN_XmStringTable(XmStringTable array, int len)
 {
   XEN lst = XEN_EMPTY_LIST;
-  int i, loc;
   if (array)
     {
+      int i, loc;
       loc = xm_protect(lst);
       for (i = len - 1; i >= 0; i--)
 	lst = XEN_CONS(C_TO_XEN_XmString(array[i]), lst);
@@ -993,9 +994,9 @@ static XmStringTable XEN_TO_C_XmStringTable(XEN v_1, int len)
 static XEN C_TO_XEN_Ints(int *array, int len)
 {
   XEN lst = XEN_EMPTY_LIST;
-  int i, loc;
   if (array)
     {
+      int i, loc;
       loc = xm_protect(lst);
       for (i = len - 1; i >= 0; i--)
 	lst = XEN_CONS(C_TO_XEN_INT(array[i]), lst);
@@ -1014,9 +1015,9 @@ static XEN c_to_xen_ints(XEN array, XEN len)
 static XEN C_TO_XEN_Atoms(Atom *array, int len)
 {
   XEN lst = XEN_EMPTY_LIST;
-  int i, loc;
   if (array)
     {
+      int i, loc;
       loc = xm_protect(lst);
       for (i = len - 1; i >= 0; i--)
 	lst = XEN_CONS(C_TO_XEN_Atom(array[i]), lst);
@@ -1035,9 +1036,9 @@ static XEN c_to_xen_atoms(XEN array, XEN len)
 static XEN C_TO_XEN_Strings(char **array, int len)
 {
   XEN lst = XEN_EMPTY_LIST;
-  int i, loc;
   if (array)
     {
+      int i, loc;
       loc = xm_protect(lst);
       for (i = len - 1; i >= 0; i--)
 	lst = XEN_CONS(C_TO_XEN_STRING(array[i]), lst);
@@ -1076,9 +1077,9 @@ static XEN copy_xrectangle(XRectangle *old_r)
 static XEN C_TO_XEN_XRectangles(XRectangle *array, int len)
 {
   XEN lst = XEN_EMPTY_LIST;
-  int i, loc;
   if (array)
     {
+      int i, loc;
       loc = xm_protect(lst);
       for (i = len - 1; i >= 0; i--)
 	lst = XEN_CONS(copy_xrectangle(&(array[i])), lst);
@@ -1097,9 +1098,9 @@ static XEN c_to_xen_xrectangles(XEN array, XEN len)
 static XEN C_TO_XEN_KeySyms(KeySym *array, int len)
 {
   XEN lst = XEN_EMPTY_LIST;
-  int i, loc;
   if (array)
     {
+      int i, loc;
       loc = xm_protect(lst);
       for (i = len - 1; i >= 0; i--)
 	lst = XEN_CONS(C_TO_XEN_KeySym(array[i]), lst);
@@ -1369,12 +1370,12 @@ static bool find_dropproc(XEN val, int loc, unsigned long w)
 
 static void gxm_Drop_Callback(Widget w, XtPointer context, XtPointer info)
 {
-  XEN code;
   int i;
   XmDropProcCallbackStruct *cb = (XmDropProcCallbackStruct *)info;
   i = map_over_protected_elements(find_dropproc, (unsigned long)w);
   if (i >= 0)
     {
+      XEN code;
       code = XEN_LIST_REF(xm_protected_element(i), CALLBACK_FUNC);
       if (XEN_PROCEDURE_P(code))
 	XEN_CALL_3(code,
@@ -1401,12 +1402,12 @@ static bool find_dragproc(XEN val, int loc, unsigned long w)
 
 static void gxm_Drag_Callback(Widget w, XtPointer context, XtPointer info)
 {
-  XEN code;
   int i;
   XmDragProcCallbackStruct *cb = (XmDragProcCallbackStruct *)info;
   i = map_over_protected_elements(find_dragproc, (unsigned long)w);
   if (i >= 0)
     {
+      XEN code;
       code = XEN_LIST_REF(xm_protected_element(i), CALLBACK_FUNC);
       if (XEN_PROCEDURE_P(code))
 	XEN_CALL_3(code,
@@ -1433,11 +1434,11 @@ static bool find_popupchild(XEN val, int loc, unsigned long w)
 static void gxm_XtPopupChild(Widget w)
 {
   /* since all we have to go by is the widget, we have to scan the gc table for any associated code */
-  XEN code;
   int i;
   i = map_over_protected_elements(find_popupchild, (unsigned long)w);
   if (i >= 0)
     {
+      XEN code;
       code = XEN_LIST_REF(xm_protected_element(i), CALLBACK_FUNC);
       if (XEN_PROCEDURE_P(code))
 	XEN_CALL_1(code,
@@ -1462,11 +1463,11 @@ static bool find_searchproc(XEN val, int loc, unsigned long w)
 static void gxm_XmSearchProc(Widget w, XmFileSelectionBoxCallbackStruct *info)
 {
   /* here we again have to go by the widget */
-  XEN code;
   int i;
   i = map_over_protected_elements(find_searchproc, (unsigned long)w);
   if (i >= 0)
     {
+      XEN code;
       code = XEN_LIST_REF(xm_protected_element(i), CALLBACK_FUNC);
       if (XEN_PROCEDURE_P(code))
 	XEN_CALL_2(code,
@@ -1492,11 +1493,11 @@ static bool find_qualifyproc(XEN val, int loc, unsigned long w)
 static void gxm_XmQualifyProc(Widget w, XtPointer indata, XtPointer outdata)
 {
   /* here we again have to go by the widget */
-  XEN code;
   int i;
   i = map_over_protected_elements(find_qualifyproc, (unsigned long)w);
   if (i >= 0)
     {
+      XEN code;
       code = XEN_LIST_REF(xm_protected_element(i), CALLBACK_FUNC);
       if (XEN_PROCEDURE_P(code))
 	XEN_CALL_3(code,
@@ -1523,11 +1524,11 @@ static bool find_orderproc(XEN val, int loc, unsigned long w)
 static Cardinal gxm_XtOrderProc(Widget w)
 {
   /* here we again have to go by the widget */
-  XEN code;
   int i, result = 0;
   i = map_over_protected_elements(find_orderproc, (unsigned long)w);
   if (i >= 0)
     {
+      XEN code;
       code = XEN_LIST_REF(xm_protected_element(i), CALLBACK_FUNC);
       if (XEN_PROCEDURE_P(code))
 	result = XEN_TO_C_INT(XEN_CALL_1(code,
@@ -1554,11 +1555,11 @@ static bool find_parseproc(XEN val, int loc, unsigned long w)
 static XmIncludeStatus gxm_Parse_Callback(XtPointer *in_out, XtPointer text_end, XmTextType type, XmStringTag locale_tag,
 					  XmParseMapping entry, int pattern_length, XmString *str_include, XtPointer call_data)
 {
-  XEN code;
   int i;
   i = map_over_protected_elements(find_parseproc, (unsigned long)entry);
   if (i >= 0)
     {
+      XEN code;
       code = XEN_LIST_REF(xm_protected_element(i), CALLBACK_FUNC);
       if (XEN_PROCEDURE_P(code))
 	return(XEN_TO_C_INT(XEN_APPLY(code,
@@ -1636,7 +1637,7 @@ static void gxm_XmColorProc(XColor *bg, XColor *fg, XColor *sel, XColor *ts, XCo
 
 static XtCallbackList XEN_TO_C_XtCallbackList(XEN call_list1)
 {
-  XEN descr, func, data, call_list;
+  XEN call_list;
   int call_i, call_len;
   XtCallbackRec *cl = NULL;
   call_list = XEN_COPY_ARG(call_list1);
@@ -1645,12 +1646,14 @@ static XtCallbackList XEN_TO_C_XtCallbackList(XEN call_list1)
   cl = (XtCallbackRec *)CALLOC(call_len + 1, sizeof(XtCallbackRec));
   for (call_i = 0; call_i < call_len; call_i++, call_list = XEN_CDDR(call_list))
     {
+      XEN func, data;
       func = XEN_CAR(call_list);
       if (XEN_LIST_LENGTH(call_list) == 2)
 	data = XEN_CADR(call_list);
       else data = XEN_FALSE;
       if ((XEN_PROCEDURE_P(func)) && (XEN_REQUIRED_ARGS_OK(func, 3)))
 	{
+	  XEN descr;
 	  cl[call_i].callback = gxm_XtCallbackProc;
 	  descr = C_TO_XEN_XM_XtCallback(XEN_CAR(call_list), data);
 	  cl[call_i].closure = (XtPointer)descr;
@@ -1735,10 +1738,7 @@ static Arg *XEN_TO_C_Args(XEN inargl)
   /* an Arg array in xm is a list of name value pairs */
   Arg *args = NULL;
   int i, len, gcloc;
-  xm_resource_t type;
-  XtCallbackRec *cl = NULL;
-  XEN descr, value, xname, inarg;
-  char *name;
+  XEN descr, inarg;
   /* if XtVaNestedList supported, scan for it here, and increase length as needed,
    *   then make recursive call to XEN_TO_C_Args in that branch, unloading afterwards
    *   this is not actually needed in xm -- just use append!
@@ -1750,6 +1750,10 @@ static Arg *XEN_TO_C_Args(XEN inargl)
   args = (Arg *)CALLOC(len, sizeof(Arg));
   for (i = 0; i < len; i++, inarg = XEN_CDDR(inarg))
     {
+      XtCallbackRec *cl = NULL;
+      xm_resource_t type;
+      XEN xname, value;
+      char *name;
       xname = XEN_CAR(inarg);
       XEN_ASSERT_TYPE(XEN_STRING_P(xname), xname, 0, c__FUNCTION__, "string");
       name = XEN_TO_C_STRING(xname);
@@ -2090,15 +2094,16 @@ static Arg *XEN_TO_C_Args(XEN inargl)
 static void fixup_args(Widget w, Arg *args, int len)
 {
   /* search for and fill-in incompletely specified callback info now that we have the widget type */
-  int i, j;
-  XEN data;
-  char *name;
-  XtCallbackRec *cl = NULL;
+  int i;
   for (i = 0; i < len; i++)
     {
+      char *name;
       name = args[i].name;
       if (name)
 	{
+	  XtCallbackRec *cl = NULL;
+	  int j;
+	  XEN data;
 	  switch (resource_type(name))
 	    {
 	    case XM_STRING_TABLE:
@@ -2406,7 +2411,6 @@ static XEN gxm_XtGetValues_1(XEN arg1, XEN larg2, int len)
   Widget w;
   XEN val, arg2;
   int i, gcloc;
-  char *name;
   /* here we need to make sure the ref args are ok from C's point of view */
   if (len <= 0) return(XEN_FALSE);
   w = XEN_TO_C_Widget(arg1);
@@ -2416,6 +2420,7 @@ static XEN gxm_XtGetValues_1(XEN arg1, XEN larg2, int len)
   locs = (unsigned long *)CALLOC(len, sizeof(unsigned long));
   for (i = 0; i < len; i++, arg2 = XEN_CDDR(arg2))
     {
+      char *name;
       name = strdup(XEN_TO_C_STRING(XEN_CAR(arg2)));
       XtSetArg(args[i], name, &(locs[i]));
     }
@@ -2795,7 +2800,7 @@ static XEN gxm_XmRenderTableGetTags(XEN arg1)
   #define H_XmRenderTableGetTags "int XmRenderTableGetTags(XmRenderTable table) gets rendition tags (list of strings)"
   /* DIFF: XmRenderTableGetTags omits arg2, returns list of strings
    */
-  int i, len, loc;
+  int len, loc;
   XEN lst = XEN_EMPTY_LIST;
   XmStringTag *str;
   XEN_ASSERT_TYPE(XEN_XmRenderTable_P(arg1), arg1, 1, "XmRenderTableGetTags", "XmRenderTable");
@@ -2803,6 +2808,7 @@ static XEN gxm_XmRenderTableGetTags(XEN arg1)
   len = XmRenderTableGetTags(XEN_TO_C_XmRenderTable(arg1), &str);
   if (str)
     {
+      int i;
       for (i = len - 1; i >= 0; i--)
 	{
 	  lst = XEN_CONS(C_TO_XEN_STRING(str[i]), lst);
@@ -3155,11 +3161,11 @@ static XmParseTable XEN_TO_C_XmParseTable(XEN lst, int size)
 {
   int i;
   XmParseTable pt;
-  XEN val;
   if (size <= 0) return(NULL);
   pt = (XmParseTable)XtCalloc(size, sizeof(XmParseMapping));
   for (i = 0; i < size; i++)
     {
+      XEN val;
       val = XEN_LIST_REF(lst, i);
       if (XEN_XmParseMapping_P(val))
 	pt[i] = XEN_TO_C_XmParseMapping(val);
@@ -3198,7 +3204,6 @@ retrieves attributes of a parse mapping"
     int len, gcloc;
     XEN val, arg2;
     int i;
-    char *name;
     len = XEN_TO_C_INT_DEF(arg3, larg2);
     arg2 = XEN_COPY_ARG(larg2);
     gcloc = xm_protect(arg2);
@@ -3206,6 +3211,7 @@ retrieves attributes of a parse mapping"
     locs = (unsigned long *)CALLOC(len, sizeof(unsigned long));
     for (i = 0; i < len; i++, arg2 = XEN_CDDR(arg2))
       {
+	char *name;
 	name = strdup(XEN_TO_C_STRING(XEN_CAR(arg2)));
 	XtSetArg(args[i], name, &(locs[i]));
       }
@@ -5428,12 +5434,13 @@ static XEN gxm_XmMultiListSelectItems(XEN arg, XEN arg1, XEN arg2, XEN arg3)
 static XEN gxm_XmMultiListGetSelectedRows(XEN arg)
 {
   XEN lst = XEN_EMPTY_LIST;
-  int i, len;
+  int i;
   XmMultiListRowInfo **rows;
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 1, "XmMultiListGetSelectedRows", "Widget");
   rows = XmMultiListGetSelectedRows(XEN_TO_C_Widget(arg));
   if (rows)
     {
+      int len;
       for (len = 0; (rows[len]) ;len++);
       for (i = len - 1; i >= 0; i--)
 	lst = XEN_CONS(C_TO_XEN_XmMultiListRowInfo(rows[i]), lst);
@@ -6743,7 +6750,6 @@ retrieves resource values set on a drop site"
   unsigned long *locs;
   XEN val = XEN_FALSE;
   int i, len, gcloc;
-  char *name;
   XEN arg2;
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmDropSiteRetrieve", "Widget");
   XEN_ASSERT_TYPE(XEN_LIST_P(larg2), larg2, 2, "XmDropSiteRetrieve", "ArgList");
@@ -6756,6 +6762,7 @@ retrieves resource values set on a drop site"
   locs = (unsigned long *)CALLOC(len, sizeof(unsigned long));
   for (i = 0; i < len; i++, arg2 = XEN_CDDR(arg2))
     {
+      char *name;
       name = strdup(XEN_TO_C_STRING(XEN_CAR(arg2)));
       XtSetArg(args[i], name, &(locs[i]));
     }
@@ -7925,14 +7932,14 @@ static XEN gxm_XmRemoveProtocolCallback(XEN arg1, XEN arg2, XEN arg3, XEN arg4, 
   #define H_XmRemoveProtocolCallback "void XmRemoveProtocolCallback(Widget shell, Atom property, Atom protocol, XtCallbackProc callback, \
 XtPointer closure) removes a callback from the internal list"
   XEN descr;
-  int loc;
+  int loc, dloc;
   XEN *velts;
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmRemoveProtocolCallback", "Widget");
   XEN_ASSERT_TYPE(XEN_Atom_P(arg2), arg2, 2, "XmRemoveProtocolCallback", "Atom");
   XEN_ASSERT_TYPE(XEN_Atom_P(arg3), arg3, 3, "XmRemoveProtocolCallback", "Atom"); 
   XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg4) && (XEN_REQUIRED_ARGS_OK(arg4, 3)), arg4, 4, "XmRemoveProtocolCallback", "XtCallbackProc (3 args)");
   descr = C_TO_XEN_XM_ProtocolProc(arg4, arg5, arg2, arg3);
-  xm_protect(descr);
+  dloc = xm_protect(descr);
   loc = map_over_protected_elements(unprotect_protocolproc, (unsigned long)descr);
   velts = XEN_VECTOR_ELEMENTS(xm_protected);
   XmRemoveProtocolCallback(XEN_TO_C_Widget(arg1), 
@@ -7941,7 +7948,7 @@ XtPointer closure) removes a callback from the internal list"
 			   gxm_ProtocolProc,
 			   (XtPointer)(velts[loc])); /* this was the original tag passed in */
   /* now unprotect the proc and our descr */
-  xm_unprotect(descr);
+  xm_unprotect_at(dloc);
   xm_unprotect_at(loc);
   return(XEN_FALSE);
 }
@@ -8761,7 +8768,7 @@ static XEN gxm_XPolygonRegion(XEN larg1, XEN arg2, XEN arg3)
   XPoint *pt, *pt1;
   int i, len;
   Region res;
-  XEN arg1, xp;
+  XEN arg1;
   XEN_ASSERT_TYPE(XEN_LIST_P(larg1), larg1, 1, "XPolygonRegion", "list of XPoints");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 2, "XPolygonRegion", "int");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XPolygonRegion", "int");
@@ -8771,6 +8778,7 @@ static XEN gxm_XPolygonRegion(XEN larg1, XEN arg2, XEN arg3)
   pt = (XPoint *)CALLOC(len, sizeof(XPoint));
   for (i = 0; (i < len) && (XEN_NOT_NULL_P(arg1)); i++, arg1 = XEN_CDR(arg1))
     {
+      XEN xp;
       xp = XEN_CAR(arg1);
       if (!(XEN_XPoint_P(xp))) {FREE(pt); XEN_ASSERT_TYPE(0, xp, i, "XPolygonRegion", "XPoint"); return(XEN_FALSE);}
       pt1 = XEN_TO_C_XPoint(XEN_CAR(arg1));
@@ -8876,7 +8884,7 @@ structures that have attributes equal to the attributes specified by vinfo_templ
   /* DIFF: XGetVisualInfo dpy mask template [nitems] -> '() or (list visual...)
    */
   XVisualInfo *v;
-  int i, len, loc;
+  int len;
   XEN lst = XEN_EMPTY_LIST;
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XGetVisualInfo", "Display*");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 2, "XGetVisualInfo", "long");
@@ -8884,6 +8892,7 @@ structures that have attributes equal to the attributes specified by vinfo_templ
   v = XGetVisualInfo(XEN_TO_C_Display(arg1), XEN_TO_C_INT(arg2), XEN_TO_C_XVisualInfo(arg3), &len);
   if (v)
     {
+      int i, loc;
       loc = xm_protect(lst);
       for (i = len - 1; i >= 0; i--)
 	lst = XEN_CONS(C_TO_XEN_XVisualInfo(v + i), lst);
@@ -9414,7 +9423,7 @@ static XEN gxm_XStoreColors(XEN arg1, XEN arg2, XEN larg3, XEN arg4)
 pixel members of the XColor structures."
   /* DIFF: XStoreColors arg 3 is list of XColor 
    */
-  XColor *xc, *xc1;
+  XColor *xc;
   int i, len;
   XEN arg3;
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XStoreColors", "Display*");
@@ -9427,6 +9436,7 @@ pixel members of the XColor structures."
   xc = (XColor *)CALLOC(len, sizeof(XColor));
   for (i = 0; (i < len) && (XEN_NOT_NULL_P(arg3)); i++, arg3 = XEN_CDR(arg3))
     {
+      XColor *xc1;
       xc1 = XEN_TO_C_XColor(XEN_CAR(arg3));
       xc[i].pixel = xc1->pixel;
       xc[i].red = xc1->red;
@@ -9801,7 +9811,7 @@ static XEN gxm_XSetClipRectangles(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN la
 the specified GC to the specified list of rectangles and sets the clip origin."
   /* DIFF: XSetClipRectangles XRectangle* arg (arg 5) is list of XRectangles
    */
-  XRectangle *pt, *pt1;
+  XRectangle *pt;
   int i, len;
   XEN arg5;
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XSetClipRectangles", "Display*");
@@ -9817,6 +9827,7 @@ the specified GC to the specified list of rectangles and sets the clip origin."
   pt = (XRectangle *)CALLOC(len, sizeof(XRectangle));
   for (i = 0; (i < len) && (XEN_NOT_NULL_P(arg5)); i++, arg5 = XEN_CDR(arg5))
     {
+      XRectangle *pt1;
       pt1 = XEN_TO_C_XRectangle(XEN_CAR(arg5));
       pt[i].x = pt1->x;
       pt[i].y = pt1->y;
@@ -11190,7 +11201,7 @@ static XEN gxm_XFillRectangles(XEN arg1, XEN arg2, XEN arg3, XEN larg4, XEN arg5
   #define H_XFillRectangles "XFillRectangles(display, d, gc, rectangles, nrectangles)"
   /* DIFF: XFillRectangles XRectangle* arg (arg 4) is list of XRectangles
    */
-  XRectangle *pt, *pt1;
+  XRectangle *pt;
   int i, len;
   XEN arg4;
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XFillRectangles", "Display*");
@@ -11204,6 +11215,7 @@ static XEN gxm_XFillRectangles(XEN arg1, XEN arg2, XEN arg3, XEN larg4, XEN arg5
   pt = (XRectangle *)CALLOC(len, sizeof(XRectangle));
   for (i = 0; (i < len) && (XEN_NOT_NULL_P(arg4)); i++, arg4 = XEN_CDR(arg4))
     {
+      XRectangle *pt1;
       pt1 = XEN_TO_C_XRectangle(XEN_CAR(arg4));
       pt[i].x = pt1->x;
       pt[i].y = pt1->y;
@@ -11240,7 +11252,7 @@ static XEN gxm_XFillPolygon(XEN arg1, XEN arg2, XEN arg3, XEN larg4, XEN arg5, X
    */
   XPoint *pt, *pt1;
   int i, len;
-  XEN xp, arg4;
+  XEN arg4;
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XFillPolygon", "Display*");
   XEN_ASSERT_TYPE(XEN_Window_P(arg2), arg2, 2, "XFillPolygon", "Drawable");
   XEN_ASSERT_TYPE(XEN_GC_P(arg3), arg3, 3, "XFillPolygon", "GC");
@@ -11254,6 +11266,7 @@ static XEN gxm_XFillPolygon(XEN arg1, XEN arg2, XEN arg3, XEN larg4, XEN arg5, X
   pt = (XPoint *)CALLOC(len, sizeof(XPoint));
   for (i = 0; (i < len) && (XEN_NOT_NULL_P(arg4)); i++, arg4 = XEN_CDR(arg4))
     {
+      XEN xp;
       xp = XEN_CAR(arg4);
       if (!(XEN_XPoint_P(xp))) XEN_ASSERT_TYPE(0, xp, i, "XFillRegion", "XPoint");
       pt1 = XEN_TO_C_XPoint(xp);
@@ -11275,7 +11288,6 @@ static XEN gxm_XFillArcs(XEN arg1, XEN arg2, XEN arg3, XEN larg4, XEN arg5)
   #define H_XFillArcs "XFillArcs(display, d, gc, arcs, narcs)"
   /* DIFF: XFillArcs Arc* arg (arg 4) is list of XArcs
    */
-  XArc *arc;
   int i, len;
   Display *dpy;
   Drawable draw;
@@ -11294,6 +11306,7 @@ static XEN gxm_XFillArcs(XEN arg1, XEN arg2, XEN arg3, XEN larg4, XEN arg5)
   gc = XEN_TO_C_GC(arg3);
   for (i = 0; (i < len) && (XEN_NOT_NULL_P(arg4)); i++, arg4 = XEN_CDR(arg4))
     {
+      XArc *arc;
       arc = XEN_TO_C_XArc(XEN_CAR(arg4));
       XFillArc(dpy, draw, gc, arc->x, arc->y, arc->width, arc->height, arc->angle1, arc->angle2);
     }
@@ -11355,7 +11368,7 @@ static XEN gxm_XDrawText(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN a
 {
   #define H_XDrawText "XDrawText(display, d, gc, x, y, items, nitems) draws text"
   int i, len = 0, res;
-  XTextItem *items, *val;
+  XTextItem *items;
   XEN lst;
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XDrawText", "Display*");
   XEN_ASSERT_TYPE(XEN_Window_P(arg2), arg2, 2, "XDrawText", "Drawable");
@@ -11369,6 +11382,7 @@ static XEN gxm_XDrawText(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN a
   items = (XTextItem *)CALLOC(len, sizeof(XTextItem));
   for (i = 0; (i < len) && (XEN_NOT_NULL_P(lst)); i++, lst = XEN_CDR(lst))
     {
+      XTextItem *val;
       val = XEN_TO_C_XTextItem(XEN_CAR(lst));
       items[i].chars = val->chars;
       items[i].nchars = val->nchars;
@@ -11406,7 +11420,7 @@ static XEN gxm_XDrawSegments(XEN arg1, XEN arg2, XEN arg3, XEN larg4, XEN arg5)
   #define H_XDrawSegments "XDrawSegments(display, d, gc, segments, nsegments) draws multiple, unconnected lines. "
   /* DIFF: XDrawSegments XSegment* arg (arg 4) is list of XSegments
    */
-  XSegment *pt, *pt1;
+  XSegment *pt;
   int i, len;
   XEN arg4;
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XDrawSegments", "Display*");
@@ -11420,6 +11434,7 @@ static XEN gxm_XDrawSegments(XEN arg1, XEN arg2, XEN arg3, XEN larg4, XEN arg5)
   pt = (XSegment *)CALLOC(len, sizeof(XSegment));
   for (i = 0; (i < len) && (XEN_NOT_NULL_P(arg4)); i++, arg4 = XEN_CDR(arg4))
     {
+      XSegment *pt1;
       pt1 = XEN_TO_C_XSegment(XEN_CAR(arg4));
       pt[i].x1 = pt1->x1;
       pt[i].y1 = pt1->y1;
@@ -11439,7 +11454,7 @@ static XEN gxm_XDrawRectangles(XEN arg1, XEN arg2, XEN arg3, XEN larg4, XEN arg5
   #define H_XDrawRectangles "XDrawRectangles(display, d, gc, rectangles, nrectangles) draws the outlines of the specified rectangles."
   /* DIFF: XDrawRectangles XRectangle* arg (arg 4) is list of XRectangles
    */
-  XRectangle *pt, *pt1;
+  XRectangle *pt;
   int i, len;
   XEN arg4;
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XDrawRectangles", "Display*");
@@ -11453,6 +11468,7 @@ static XEN gxm_XDrawRectangles(XEN arg1, XEN arg2, XEN arg3, XEN larg4, XEN arg5
   pt = (XRectangle *)CALLOC(len, sizeof(XRectangle));
   for (i = 0; (i < len) && (XEN_NOT_NULL_P(arg4)); i++, arg4 = XEN_CDR(arg4))
     {
+      XRectangle *pt1;
       pt1 = XEN_TO_C_XRectangle(XEN_CAR(arg4));
       pt[i].x = pt1->x;
       pt[i].y = pt1->y;
@@ -11490,7 +11506,7 @@ static XEN gxm_XDrawPoints(XEN arg1, XEN arg2, XEN arg3, XEN larg4, XEN arg5, XE
    */
   XPoint *pt, *pt1;
   int i, len;
-  XEN xp, arg4;
+  XEN arg4;
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XDrawPoints", "Display*");
   XEN_ASSERT_TYPE(XEN_Window_P(arg2), arg2, 2, "XDrawPoints", "Drawable");
   XEN_ASSERT_TYPE(XEN_GC_P(arg3), arg3, 3, "XDrawPoints", "GC");
@@ -11503,6 +11519,7 @@ static XEN gxm_XDrawPoints(XEN arg1, XEN arg2, XEN arg3, XEN larg4, XEN arg5, XE
   pt = (XPoint *)CALLOC(len, sizeof(XPoint));
   for (i = 0; (i < len) && (XEN_NOT_NULL_P(arg4)); i++, arg4 = XEN_CDR(arg4))
     {
+      XEN xp;
       xp = XEN_CAR(arg4);
       if (!(XEN_XPoint_P(xp))) XEN_ASSERT_TYPE(0, xp, i, "XDrawPoints", "XPoint");
       pt1 = XEN_TO_C_XPoint(xp);
@@ -11541,7 +11558,7 @@ between each pair of points (point[i], point[i+1]) in the array of XPoint struct
    */
   XPoint *pt, *pt1;
   int i, len;
-  XEN xp, arg4;
+  XEN arg4;
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XDrawLines", "Display*");
   XEN_ASSERT_TYPE(XEN_Window_P(arg2), arg2, 2, "XDrawLines", "Drawable");
   XEN_ASSERT_TYPE(XEN_GC_P(arg3), arg3, 3, "XDrawLines", "GC");
@@ -11554,6 +11571,7 @@ between each pair of points (point[i], point[i+1]) in the array of XPoint struct
   pt = (XPoint *)CALLOC(len, sizeof(XPoint));
   for (i = 0; (i < len) && (XEN_NOT_NULL_P(arg4)); i++, arg4 = XEN_CDR(arg4))
     {
+      XEN xp;
       xp = XEN_CAR(arg4);
       if (!(XEN_XPoint_P(xp))) XEN_ASSERT_TYPE(0, xp, i, "XDrawLines", "XPoint");
       pt1 = XEN_TO_C_XPoint(xp);
@@ -11661,7 +11679,6 @@ static XEN gxm_XDrawArcs(XEN arg1, XEN arg2, XEN arg3, XEN larg4, XEN arg5)
   #define H_XDrawArcs "XDrawArcs(display, d, gc, arcs, narcs) draws multiple circular or elliptical arcs."
   /* DIFF: XDrawArcs Arc* arg (arg 4) is list of XArcs
    */
-  XArc *arc;
   int i, len;
   Display *dpy;
   Drawable draw;
@@ -11679,6 +11696,7 @@ static XEN gxm_XDrawArcs(XEN arg1, XEN arg2, XEN arg3, XEN larg4, XEN arg5)
   gc = XEN_TO_C_GC(arg3);
   for (i = 0; (i < len) && (XEN_NOT_NULL_P(arg4)); i++, arg4 = XEN_CDR(arg4))
     {
+      XArc *arc;
       arc = XEN_TO_C_XArc(XEN_CAR(arg4));
       XDrawArc(dpy, draw, gc, arc->x, arc->y, arc->width, arc->height, arc->angle1, arc->angle2);
     }
@@ -12363,8 +12381,8 @@ static XEN gxm_XAllocColorPlanes(XEN args)
    */
   unsigned long r,g,b;
   unsigned long *ps;
-  int i, len, val, loc;
-  XEN lst = XEN_FALSE, plist = XEN_EMPTY_LIST;
+  int i, len, val;
+  XEN lst = XEN_FALSE;
   XEN arg1, arg2, arg3, arg5, arg6, arg7, arg8;
   arg1 = XEN_LIST_REF(args, 0);
   arg2 = XEN_LIST_REF(args, 1);
@@ -12391,6 +12409,8 @@ static XEN gxm_XAllocColorPlanes(XEN args)
 			  &r, &g, &b);
   if (val != 0)
     {
+      XEN plist = XEN_EMPTY_LIST;
+      int loc;
       loc = xm_protect(plist);
       for (i = len - 1; i >= 0; i--)
 	plist = XEN_CONS(C_TO_XEN_ULONG(ps[i]), plist);
@@ -12411,7 +12431,7 @@ static XEN gxm_XAllocColorCells(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5
 allocates read/write color cells."
   /* DIFF: XAllocColorCells arg 4 and 6 omitted and returned as (embedded) lists 
    */
-  int mlen, plen, i, val, loc1, loc2;
+  int mlen, plen, i, val;
   XEN mlst = XEN_EMPTY_LIST, plst = XEN_EMPTY_LIST;
   unsigned long *ms, *ps;
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XAllocColorCells", "Display*");
@@ -12432,6 +12452,7 @@ allocates read/write color cells."
 			 ps, plen);
   if (val != 0)
     {
+      int loc1, loc2;
       loc1 = xm_protect(mlst);
       loc2 = xm_protect(plst);
       for (i = mlen - 1; i >= 0; i--) 
@@ -12532,13 +12553,13 @@ and returns a string list."
   char **argv;
   int argc;
   XEN lst = XEN_EMPTY_LIST;
-  int i, loc;
   Status err;
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XGetCommand", "Display*");
   XEN_ASSERT_TYPE(XEN_Window_P(arg2), arg2, 2, "XGetCommand", "Window");
   err = XGetCommand(XEN_TO_C_Display(arg1), XEN_TO_C_Window(arg2), &argv, &argc);
   if (err != 0)
     {
+      int i, loc;
       loc = xm_protect(lst);
       for (i = argc - 1; i >= 0; i--)
 	lst = XEN_CONS(C_TO_XEN_STRING(argv[i]), lst);
@@ -12651,13 +12672,14 @@ structures that describe the types of Z format images supported by the specified
   /* DIFF: XListPixmapFormats omits arg2, rtns list of lists, each holding XPixmapFormatValues data
    */
   XPixmapFormatValues *ps;
-  int i, len, loc;
+  int len, loc;
   XEN lst = XEN_EMPTY_LIST;
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XListPixmapFormats", "Display*");
   ps = XListPixmapFormats(XEN_TO_C_Display(arg1), &len);
   loc = xm_protect(lst);
   if (ps)
     {
+      int i;
       for (i = len - 1; i >= 0; i--)
 	lst = XEN_CONS(XEN_LIST_3(C_TO_XEN_INT(ps[i].depth),
 				  C_TO_XEN_INT(ps[i].bits_per_pixel),
@@ -14695,12 +14717,13 @@ static Boolean gxm_XtFilePredicate(String filename)
 
 static SubstitutionRec *gxm_make_subs(XEN lst_1)
 {
-  int i, len;
-  XEN lst;
+  int len;
   SubstitutionRec *subs = NULL;
   len = XEN_LIST_LENGTH(lst_1);
   if (len > 0)
     {
+      int i;
+      XEN lst;
       lst = XEN_COPY_ARG(lst_1);
       subs = (SubstitutionRec *)CALLOC(len, sizeof(SubstitutionRec));
       for (i = 0; i < len; i++, lst = XEN_CDR(lst))
@@ -14725,7 +14748,7 @@ static XEN gxm_XtResolvePathname(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg
   /* DIFF: XtResolvePathname args use #f for NULL
    *       (XtResolvePathname (XtDisplay (cadr (main-widgets))) "app-defaults" #f #f #f #f 0 #f)
    */
-  int i, len;
+  int arg8_loc = -1;
   XEN res;
   char *str;
   SubstitutionRec *subs = NULL;
@@ -14746,7 +14769,7 @@ static XEN gxm_XtResolvePathname(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg
     }
   if (XEN_PROCEDURE_P(arg8))
     {
-      xm_protect(arg8);
+      arg8_loc = xm_protect(arg8);
       xm_filepredicate_proc = arg8;
     }
   str = XtResolvePathname(XEN_TO_C_Display(arg1), 
@@ -14757,9 +14780,10 @@ static XEN gxm_XtResolvePathname(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg
 			  subs,
 			  XEN_TO_C_INT(arg7), 
 			  (XEN_FALSE_P(arg8)) ? NULL : gxm_XtFilePredicate);
-  if (XEN_PROCEDURE_P(arg8)) xm_unprotect(arg8);
+  if (XEN_PROCEDURE_P(arg8)) xm_unprotect_at(arg8_loc);
   if (subs) 
     {
+      int i, len;
       len = XEN_LIST_LENGTH(arg6);
       for (i = 0; i < len; i++)
 	if (subs[i].substitution) free(subs[i].substitution);
@@ -14774,9 +14798,9 @@ static XEN gxm_XtFindFile(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   #define H_XtFindFile "String XtFindFile(path, substitutions, num_substitutions, predicate) \
 searches for a file using substitutions in the path list"
-  int i;
   char *str;
   XEN res;
+  int arg4_loc = -1;
   SubstitutionRec *subs = NULL;
   XEN_ASSERT_TYPE(XEN_STRING_P(arg1), arg1, 1, "XtFindFile", "char*");
   XEN_ASSERT_TYPE(XEN_FALSE_P(arg2) || XEN_LIST_P(arg2), arg2, 2, "XtFindFile", "Substitution list");
@@ -14791,17 +14815,17 @@ searches for a file using substitutions in the path list"
     }
   if (XEN_PROCEDURE_P(arg4))
     {
-      xm_protect(arg4);
+      arg4_loc = xm_protect(arg4);
       xm_filepredicate_proc = arg4;
     }
   str = XtFindFile(XEN_TO_C_STRING(arg1), 
 		   subs,
 		   XEN_TO_C_INT(arg3),
 		   (XEN_FALSE_P(arg4) ? NULL : gxm_XtFilePredicate));
-  if (XEN_PROCEDURE_P(arg4)) xm_unprotect(arg4);
+  if (XEN_PROCEDURE_P(arg4)) xm_unprotect_at(arg4_loc);
   if (subs) 
     {
-      int len;
+      int i, len;
       len = XEN_LIST_LENGTH(arg2);
       for (i = 0; i < len; i++)
 	if (subs[i].substitution) free(subs[i].substitution);
@@ -15191,11 +15215,11 @@ static void gxm_XtErrorMsgHandler(String name, String type, String clas, String 
 {
   /* DIFF: XtErrorMsgHandler takes list of string pars
    */
-  int i, len;
-  XEN lst = XEN_EMPTY_LIST;
   if ((XEN_PROCEDURE_P(xm_XtErrorMsgHandler)) && (num) && ((pars) || (*num == 0)))
     {
-      xm_protect(lst);
+      XEN lst = XEN_EMPTY_LIST;
+      int i, len, loc;
+      loc = xm_protect(lst);
       len = (*num);
       for (i = len - 1; i >= 0; i--)
 	lst = XEN_CONS(C_TO_XEN_STRING(pars[i]), lst);
@@ -15207,7 +15231,7 @@ static void gxm_XtErrorMsgHandler(String name, String type, String clas, String 
 		 lst,
 		 C_TO_XEN_INT(*num),
 		 c__FUNCTION__);
-      xm_unprotect(lst);
+      xm_unprotect_at(loc);
     }
 }
 
@@ -15244,11 +15268,11 @@ static void gxm_XtWarningMsgHandler(String name, String type, String clas, Strin
 {
   /* DIFF: XtWarningMsgHandler takes list of string pars
    */
-  int i, len;
-  XEN lst = XEN_EMPTY_LIST;
   if ((XEN_PROCEDURE_P(xm_XtWarningMsgHandler)) && (num) && ((pars) || (*num == 0)))
     {
-      xm_protect(lst);
+      XEN lst = XEN_EMPTY_LIST;
+      int i, len, loc;
+      loc = xm_protect(lst);
       len = (*num);
       for (i = len - 1; i >= 0; i--)
 	lst = XEN_CONS(C_TO_XEN_STRING(pars[i]), lst);
@@ -15260,7 +15284,7 @@ static void gxm_XtWarningMsgHandler(String name, String type, String clas, Strin
 		 lst,
 		 C_TO_XEN_INT(*num),
 		 c__FUNCTION__);
-      xm_unprotect(lst);
+      xm_unprotect_at(loc);
     }
 }
 
@@ -15506,10 +15530,9 @@ of the arguments is slightly different from the C Xt call.  The final arg is an 
   XtAppContext app;
   Arg *args;
   Widget res;
-  int argc, arglen, gcloc;
+  int i, len = 0, argc, arglen;
   char **argv = NULL;
   char **fallbacks = NULL;
-  int i, len = 0;
   XEN lst;
   XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 1, "XtVaAppInitialize", "char*");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg5), arg5, 2, "XtVaAppInitialize", "int");
@@ -15521,6 +15544,7 @@ of the arguments is slightly different from the C Xt call.  The final arg is an 
   if (argc > 0) argv = XEN_TO_C_Strings(arg6, argc);
   if (XEN_LIST_P(specs))
     {
+      int gcloc;
       len = XEN_LIST_LENGTH(specs);
       lst = XEN_COPY_ARG(specs);
       gcloc = xm_protect(lst);
@@ -17242,12 +17266,12 @@ static XEN gxm_XtGetActionList(XEN arg1)
    */
   unsigned int len;
   XtActionList act;
-  int i;
   XEN lst = XEN_EMPTY_LIST;
   XEN_ASSERT_TYPE(XEN_WidgetClass_P(arg1), arg1, 1, "XtGetActionList", "WidgetClass");
   XtGetActionList(XEN_TO_C_WidgetClass(arg1), &act, &len);
   if (len > 0)
     {
+      int i;
       for (i = len - 1; i >= 0; i--)
 	lst = XEN_CONS(XEN_LIST_2(C_TO_XEN_STRING(act[i].string),
 				  C_TO_XEN_ULONG(act[i].proc)),
@@ -17374,12 +17398,13 @@ static XtActionsRec *make_action_rec(int len, XEN larg2)
 {
   int i, gcloc;
   XtActionsRec *act;
-  XEN pair, arg2;
+  XEN arg2;
   arg2 = XEN_COPY_ARG(larg2);
   gcloc = xm_protect(arg2);
   act = (XtActionsRec *)CALLOC(len, sizeof(XtActionsRec));
   for (i = 0; i < len; i++, arg2 = XEN_CDR(arg2))
     {
+      XEN pair;
       pair = XEN_CAR(arg2);
       act[i].string = (String)strdup(XEN_TO_C_STRING(XEN_CAR(pair)));
       if (xm_action_ctr >= 8)
@@ -17523,13 +17548,14 @@ KeyCodes that have keysym in their entry for the keyboard mapping table associat
   unsigned int len;
   KeyCode *kr;
   XEN lst = XEN_EMPTY_LIST;
-  int i, loc;
+  int loc;
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XtKeysymToKeycodeList", "Display*");
   XEN_ASSERT_TYPE(XEN_KeySym_P(arg2), arg2, 2, "XtKeysymToKeycodeList", "KeySym");
   XtKeysymToKeycodeList(XEN_TO_C_Display(arg1), XEN_TO_C_KeySym(arg2), &kr, &len);
   loc = xm_protect(lst);
   if (len > 0)
     {
+      int i;
       for (i = len - 1; i >= 0; i--)
 	lst = XEN_CONS(C_TO_XEN_KeyCode(kr[i]), lst);
       free(kr);
@@ -18224,13 +18250,14 @@ static XEN gxm_XpGetPrinterList(XEN arg1, XEN arg2)
   /* DIFF: XpGetPrinterList returns list of printers, omits arg 3
    */
   XPPrinterList xp;
-  int i, len, loc;
+  int len;
   XEN lst = XEN_EMPTY_LIST;
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XpGetPrinterList", "Display*");
   XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XpGetPrinterList", "char*");
   xp = XpGetPrinterList(XEN_TO_C_Display(arg1), XEN_TO_C_STRING(arg2), &len);
   if (xp)
     {
+      int i, loc;
       loc = xm_protect(lst);
       for (i = len - 1; i >= 0; i--)
 	lst = XEN_CONS(XEN_LIST_2(C_TO_XEN_STRING(xp[i].name),
@@ -18594,7 +18621,6 @@ static XEN gxm_set_y_hotspot(XEN ptr, XEN val)
 static XEN gxm_colorsymbols(XEN ptr)
 {
   XpmAttributes *atr;
-  XpmColorSymbol *cols;
   int i, len;
   XEN lst = XEN_EMPTY_LIST;
   XM_FIELD_ASSERT_TYPE(XEN_XpmAttributes_P(ptr), ptr, XEN_ONLY_ARG, "colorsymbols", "XpmAttributes");
@@ -18602,6 +18628,7 @@ static XEN gxm_colorsymbols(XEN ptr)
   len = atr->numsymbols;
   if (len > 0)
     {
+      XpmColorSymbol *cols;
       cols = atr->colorsymbols;
       for (i = len - 1; i >= 0; i--)
 	lst = XEN_CONS(WRAP_FOR_XEN("XpmColorSymbol", &(cols[i])), lst);
@@ -18612,7 +18639,6 @@ static XEN gxm_colorsymbols(XEN ptr)
 static XEN gxm_set_colorsymbols(XEN ptr, XEN vals)
 {
   XpmAttributes *atr;
-  XpmColorSymbol *cols = NULL, *cur;
   int i, len;
   XEN lst;
   XM_SET_FIELD_ASSERT_TYPE(XEN_XpmAttributes_P(ptr), ptr, XEN_ARG_1, "colorsymbols", "XpmAttributes");
@@ -18621,6 +18647,7 @@ static XEN gxm_set_colorsymbols(XEN ptr, XEN vals)
   len = XEN_LIST_LENGTH(vals);
   if (len > 0)
     {
+      XpmColorSymbol *cols = NULL, *cur;
       cols = (XpmColorSymbol *)CALLOC(len, sizeof(XpmColorSymbol));
       for (lst = XEN_COPY_ARG(vals), i = 0; i < len; i++, lst = XEN_CDR(lst))
 	{

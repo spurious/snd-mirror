@@ -125,9 +125,9 @@ static void load_header_and_data_lists(file_data *fdat, int type, int format, in
 
 static void color_file_selection_box(Widget w)
 {
-  Widget wtmp = NULL, ftmp = NULL, ltmp = NULL;
   if (!(ss->using_schemes)) 	
     {
+      Widget wtmp = NULL, ftmp = NULL, ltmp = NULL;
       map_over_children(w, set_main_color_of_widget, NULL);
       XtVaSetValues(XmFileSelectionBoxGetChild(w, XmDIALOG_DIR_LIST), 
 		    XmNbackground, (ss->sgx)->white, 
@@ -237,13 +237,13 @@ void clear_deleted_snd_info(void *data)
 
 static void play_selected_callback(Widget w, XtPointer context, XtPointer info) 
 {
-  Widget wtmp;
-  char *filename;
-  file_dialog_info *fd = (file_dialog_info *)context;
   XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)info;
+  file_dialog_info *fd = (file_dialog_info *)context;
   ASSERT_WIDGET_TYPE(XmIsToggleButton(w), w);
   if (cb->set)
     {
+      Widget wtmp;
+      char *filename;
       if ((fd->file_play_sp) && (fd->file_play_sp->playing)) 
 	stop_playing_sound(fd->file_play_sp, PLAY_BUTTON_UNSET);
       wtmp = XtNameToWidget(fd->dialog, "Text");
@@ -294,11 +294,10 @@ static void sound_file_search(Widget FSB_w, XmFileSelectionBoxCallbackStruct *in
    * the pattern (file name mask) only matters if the filter button is hit, 
    * it appears to be "*" until the filter is invoked.
    */
-  char *pattern, *our_dir, *sp, *sn;
+  char *pattern, *our_dir;
   dir *cdp;
   file_dialog_info *fd;
   XmFileSelectionBoxCallbackStruct *data = (XmFileSelectionBoxCallbackStruct *)info;
-  XmString *names = NULL;
   int i, which_dialog;
   bool filter_callback;
   ASSERT_WIDGET_TYPE(XmIsFileSelectionBox(FSB_w), FSB_w);
@@ -363,6 +362,7 @@ static void sound_file_search(Widget FSB_w, XmFileSelectionBoxCallbackStruct *in
   fd->new_file_written = false;
   if (fd->need_update)
     {
+      XmString *names = NULL;
       if ((cdp) && (cdp->len > 0))
 	{
 	  qsort((void *)(cdp->files), cdp->len, sizeof(char *), string_compare);
@@ -380,6 +380,7 @@ static void sound_file_search(Widget FSB_w, XmFileSelectionBoxCallbackStruct *in
 
 	  for (i = 0; i < cdp->len; i++) 
 	    {
+	      char *sp, *sn;
 	      for (sp = fd->save_dir, sn = cdp->files[i]; ((*sp) = (*sn)) != '\0'; sp++, sn++);
 	      /* save_dir is a pointer into fullpathname after the directory portion */
 	      /*   this is unreadable code! -- it's basically sprintf(fullpathname,"%s%s",our_dir,cdp->files[i]) I think */
@@ -430,18 +431,18 @@ static void just_sounds_callback(Widget w, XtPointer context, XtPointer info)
 #if (XmVERSION > 1)
 static void file_dialog_select_callback(Widget w, XtPointer context, XtPointer info)
 {
+  file_dialog_info *fd = (file_dialog_info *)context;
   XmString *strs;
   char *filename = NULL;
-  XmString label;
-  char *buf;
-  char timestr[64];
-  time_t date;
-  file_dialog_info *fd = (file_dialog_info *)context;
   ASSERT_WIDGET_TYPE(XmIsList(w), w);
   XtVaGetValues(w, XmNselectedItems, &strs, NULL);
   filename = (char *)XmStringUnparse(strs[0], NULL, XmCHARSET_TEXT, XmCHARSET_TEXT, NULL, 0, XmOUTPUT_ALL);
   if ((filename) && (sound_file_p(filename)))
     {
+      XmString label;
+      char *buf;
+      char timestr[64];
+      time_t date;
       XtManageChild(fd->play_selected_button);
       buf = (char *)CALLOC(LABEL_BUFFER_SIZE, sizeof(char));
       mus_snprintf(buf, LABEL_BUFFER_SIZE, "%s: %d chan%s, %d Hz, %.3f secs",
@@ -567,7 +568,6 @@ static file_dialog_info *make_file_dialog(bool read_only, char *title, char *sel
 
 static void file_open_ok_callback(Widget w, XtPointer context, XtPointer info) 
 {
-  snd_info *sp;
   file_dialog_info *fd = (file_dialog_info *)context;
   XmFileSelectionBoxCallbackStruct *cbs = (XmFileSelectionBoxCallbackStruct *)info;
   char *filename;
@@ -577,6 +577,7 @@ static void file_open_ok_callback(Widget w, XtPointer context, XtPointer info)
   file_dialog_stop_playing(fd);
   if (!(directory_p(filename)))               /* this can be a directory name if the user clicked 'ok' when he meant 'cancel' */
     {
+      snd_info *sp;
       sp = snd_open_file(filename, 
 			 fd->file_dialog_read_only);
       if (sp) select_channel(sp, 0);           /* add_sound_window (snd-xsnd.c) will report reason for error, if any */
@@ -701,9 +702,9 @@ static save_dialog_t save_as_dialog_type = FILE_SAVE_AS;
 
 static void save_as_ok_callback(Widget w, XtPointer context, XtPointer info)
 { 
-  char *str = NULL, *comment, *fullname;
+  char *str = NULL, *comment;
   snd_info *sp;
-  int i, type, format, srate, chans;
+  int type, format, srate, chans;
   bool need_update = false;
   off_t location, samples;
   comment = read_file_data_choices(save_as_file_data, &srate, &chans, &type, &format, &location, &samples);
@@ -720,6 +721,8 @@ static void save_as_ok_callback(Widget w, XtPointer context, XtPointer info)
       (save_as_dialog_type == FILE_SAVE_AS) && 
       (need_update))
     {
+      int i;
+      char *fullname;
       for (i = 0; i < sp->nchans; i++) 
 	sp->chans[i]->edit_ctr = 0; /* don't trigger close-hook unsaved-edit checks */
       snd_close_file(sp);
@@ -769,11 +772,8 @@ static char *header_short_names[NUM_HEADER_TYPES] = {"sun  ", "aifc ", "wave ", 
 file_data *make_file_data_panel(Widget parent, char *name, Arg *in_args, int in_n, 
 				bool with_chan, int header_type, int data_format, bool with_loc, bool with_comment, bool with_samples)
 {
-  Widget mainform, form,
-    sep1, hlab, hlist, dlab, dlist,
-    slab, stext, clab, ctext = NULL, sep2, sep3, 
-    comment_label, comment_text, sep4,
-    loclab, loctext = NULL, samplab, samptext;
+  Widget mainform, form, sep1, hlab, hlist, dlab, dlist, slab, stext, clab, ctext = NULL, sep2, sep3;
+  Widget comment_label, comment_text, sep4, loclab, loctext = NULL, samplab, samptext;
   file_data *fdat;
   Arg args[32];
   int i, n;
@@ -1033,12 +1033,13 @@ static void save_as_help_callback(Widget w, XtPointer context, XtPointer info)
 static void make_save_as_dialog(char *sound_name, int header_type, int format_type)
 {
   /* save old as new, close old, open new */
-  Arg args[32];
-  int n;
-  XmString xmstr1, xmstr2, s1;
   char *file_string;
   if (!save_as_dialog)
     {
+      Arg args[32];
+      int n;
+      XmString xmstr1, xmstr2, s1;
+
       n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       s1 = XmStringCreate(_("save as:"), XmFONTLIST_DEFAULT_TAG);
@@ -1081,6 +1082,7 @@ static void make_save_as_dialog(char *sound_name, int header_type, int format_ty
     }
   else
     {
+      XmString xmstr2;
       file_string = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
       mus_snprintf(file_string, PRINT_BUFFER_SIZE, _("saving %s"), sound_name);
       xmstr2 = XmStringCreate(file_string, XmFONTLIST_DEFAULT_TAG);
@@ -1336,11 +1338,10 @@ static XEN mouse_leave_label_hook;
 
 static void mouse_leave_label_or_enter(regrow *r, XEN hook, const char *caller)
 {
-  XmString s1 = NULL;
-  char *label = NULL;
   if ((r) &&
       (XEN_HOOKED(hook)))
     {
+      char *label = NULL;
       if (r->parent == CURRENT_FILE_VIEWER)
 	label = get_curfullname(r->pos);
       else
@@ -1349,6 +1350,7 @@ static void mouse_leave_label_or_enter(regrow *r, XEN hook, const char *caller)
 	    label = get_prevfullname(r->pos);
 	  else
 	    {
+	      XmString s1 = NULL;
 	      /* it's a bit tedious to get the current button label... */
 	      XtVaGetValues(r->nm, XmNlabelString, &s1, NULL);
 	      if (XmStringEmpty(s1)) return;
@@ -1445,11 +1447,11 @@ static regrow **prev_name_row = NULL;
 
 void make_cur_name_row(int old_size, int new_size)
 {
-  int i;
   if (cur_name_row == NULL)
     cur_name_row = (regrow **)CALLOC(new_size, sizeof(regrow *));
   else 
     {
+      int i;
       cur_name_row = (regrow **)REALLOC(cur_name_row, new_size * sizeof(regrow *));
       for (i = old_size; i < new_size; i++) cur_name_row[i] = NULL;
     }
@@ -1457,11 +1459,11 @@ void make_cur_name_row(int old_size, int new_size)
 
 void make_prev_name_row(int old_size, int new_size)
 {
-  int i;
   if (prev_name_row == NULL)
     prev_name_row = (regrow **)CALLOC(new_size, sizeof(regrow *));
   else 
     {
+      int i;
       prev_name_row = (regrow **)REALLOC(prev_name_row, new_size * sizeof(regrow *));
       for (i = old_size; i < new_size; i++) prev_name_row[i] = NULL;
     }
@@ -1499,15 +1501,14 @@ static void view_files_update_callback(Widget w, XtPointer context, XtPointer in
 
 void set_file_browser_play_button(char *name, int state)
 {
-  int i, list;
-  regrow *r;
-  list = 0;
   if (view_files_dialog_is_active())
     {
+      int i, list = 0;
       i = find_curfile_regrow(name); 
       if (i != -1) list = 1; else i = find_prevfile_regrow(name);
       if (i != -1)
 	{
+	  regrow *r;
 	  if (list) r = cur_name_row[i]; else r = prev_name_row[i];
 	  XmToggleButtonSetState(r->pl, (Boolean)state, false);
 	}
@@ -1524,11 +1525,11 @@ static void view_curfiles_play_callback(Widget w, XtPointer context, XtPointer i
 
 static void curfile_unhighlight(void)
 {
-  regrow *r;
   if ((view_files_dialog_is_active()) && 
       (!(ss->using_schemes)) && 
       (vf_selected_file != -1))
     {
+      regrow *r;
       r = cur_name_row[vf_selected_file];
       XtVaSetValues(r->rw, XmNbackground, (ss->sgx)->highlight_color, NULL);
       XtVaSetValues(r->nm, XmNbackground, (ss->sgx)->highlight_color, NULL);
@@ -1538,10 +1539,10 @@ static void curfile_unhighlight(void)
 
 void curfile_highlight(int i)
 {
-  regrow *r;
   if ((view_files_dialog_is_active()) && 
       (!(ss->using_schemes)))
     {
+      regrow *r;
       if (vf_selected_file != -1) curfile_unhighlight();
       r = cur_name_row[i];
       XtVaSetValues(r->rw, XmNbackground, (ss->sgx)->zoom_color, NULL);
@@ -1576,10 +1577,10 @@ static void view_prevfiles_select_callback(Widget w, XtPointer context, XtPointe
 void highlight_selected_sound(void)
 {
   snd_info *sp;
-  int i;
   sp = selected_sound();
   if (sp)
     {
+      int i;
       i = find_curfile_regrow(sp->short_filename);
       if (i != -1) 
 	curfile_highlight(i); 
@@ -1704,14 +1705,15 @@ static void start_view_files_dialog(bool managed)
    * off-chance this browser will be fired up.  (Such files may be subsequently moved or deleted).
    */
   bool new_dialog = false;
-  int n;
-  Arg args[20];
-  ww_info *wwl;
-  regrow *r;
-  XmString xdismiss, xhelp, xclear, titlestr;
-  Widget mainform, curform, prevform, updateB, sep;
   if (!view_files_dialog)
     {
+      int n;
+      Arg args[20];
+      ww_info *wwl;
+      regrow *r;
+      XmString xdismiss, xhelp, xclear, titlestr;
+      Widget mainform, curform, prevform, updateB, sep;
+
       new_dialog = true;
       vf_selected_file = -1;
       xdismiss = XmStringCreate(_("Dismiss"), XmFONTLIST_DEFAULT_TAG);
@@ -2142,20 +2144,25 @@ static void new_file_help_callback(Widget w, XtPointer context, XtPointer info)
 
 snd_info *make_new_file_dialog(char *newname, int header_type, int data_format, int srate, int chans, char *comment)
 {
-  Arg args[20];
-  int n;
-  off_t loc;
-  XmString titlestr, xok, xcancel, xhelp;
-  char *tmpstr, *title, *newer_name = NULL;
   snd_info *sp = NULL;
-  Widget name_label, form;
-  new_file_cancelled = false;
-  title = (char *)CALLOC(snd_strlen(newname) + 32, sizeof(char));
-  sprintf(title, _("create new sound: %s"), newname);
-  titlestr = XmStringCreate(title, XmFONTLIST_DEFAULT_TAG);
-  FREE(title);
+  XmString titlestr;
+
+  {
+    char *title;
+    new_file_cancelled = false;
+    title = (char *)CALLOC(snd_strlen(newname) + 32, sizeof(char));
+    sprintf(title, _("create new sound: %s"), newname);
+    titlestr = XmStringCreate(title, XmFONTLIST_DEFAULT_TAG);
+    FREE(title);
+  }
+
   if (!new_dialog)
     {
+      Arg args[20];
+      int n;
+      XmString xok, xcancel, xhelp;
+      Widget name_label, form;
+
       xhelp = XmStringCreate(_("Help"), XmFONTLIST_DEFAULT_TAG);
       xcancel = XmStringCreate(_("Cancel"), XmFONTLIST_DEFAULT_TAG);
       xok = XmStringCreate(_("Ok"), XmFONTLIST_DEFAULT_TAG);
@@ -2249,6 +2256,8 @@ snd_info *make_new_file_dialog(char *newname, int header_type, int data_format, 
     return(NULL);
   else
     {
+      off_t loc;
+      char *tmpstr, *newer_name = NULL;
       newer_name = XmTextGetString(new_file_name);
       if (newer_name == NULL) return(NULL);
       tmpstr = read_file_data_choices(new_dialog_data, &srate, &chans, &header_type, &data_format, &loc, &initial_samples);
@@ -2311,21 +2320,26 @@ Widget edit_header(snd_info *sp)
    * if any are changed, need save button, cancel button, dismiss (leave unsaved but pending), reflect (change Snd display, not file)
    * this means the Snd-effective header is separate from the in-file header even across saves??
    */
-  XmString xstr1, xstr2, xstr3, xstr4, titlestr;
-  int n;
-  Arg args[20];
   file_info *hdr;
-  char *str;
+  XmString xstr4;
   if (!sp) return(NULL);
   edit_header_sp = sp;
   hdr = sp->hdr;
-  str = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
-  mus_snprintf(str, PRINT_BUFFER_SIZE, _("Edit header of %s"), sp->short_filename);
-  xstr4 = XmStringCreate(str, XmFONTLIST_DEFAULT_TAG);
-  FREE(str);
+
+  {
+    char *str;
+    str = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
+    mus_snprintf(str, PRINT_BUFFER_SIZE, _("Edit header of %s"), sp->short_filename);
+    xstr4 = XmStringCreate(str, XmFONTLIST_DEFAULT_TAG);
+    FREE(str);
+  }
 
   if (!edit_header_dialog)
     {
+      int n;
+      Arg args[20];
+      XmString xstr1, xstr2, xstr3, titlestr;
+
       n = 0;
       xstr1 = XmStringCreate(_("Cancel"), XmFONTLIST_DEFAULT_TAG); /* needed by template dialog */
       xstr2 = XmStringCreate(_("Help"), XmFONTLIST_DEFAULT_TAG);

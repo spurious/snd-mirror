@@ -199,13 +199,12 @@ static void show_mix_background_wave(int mix_id, int chan)
 
 static void mix_amp_env_resize(GtkWidget *w)
 {
-  GdkWindow *wn;
   int chans, chan;
   env **e;
-  env *cur_env;
   if (!(mix_ok(mix_dialog_id))) return;
   if (ax == NULL)
     {
+      GdkWindow *wn;
       wn = MAIN_WINDOW(ss);
       cur_gc = gdk_gc_new(wn);
       gdk_gc_set_background(cur_gc, (ss->sgx)->graph_color);
@@ -221,6 +220,7 @@ static void mix_amp_env_resize(GtkWidget *w)
   e = mix_dialog_envs(mix_dialog_id);
   for (chan = 0; chan < chans; chan++)
     {
+      env *cur_env;
       spfs[chan]->with_dots = true;
       env_editor_display_env(spfs[chan], e[chan], ax, _("mix env"), (int)(chan * widget_width(w) / chans), 0,
 			     widget_width(w) / chans, widget_height(w), NOT_PRINTING);
@@ -273,13 +273,13 @@ static gboolean mix_drawer_button_release(GtkWidget *w, GdkEventButton *ev, gpoi
 
 static gboolean mix_drawer_button_motion(GtkWidget *w, GdkEventMotion *ev, gpointer data)
 { 
-  int chans, chan, x, y;
-  GdkModifierType state;
-  env *e;
-  Float pos;
   if (!(mix_ok(mix_dialog_id))) return(false);
   if (ev->state & GDK_BUTTON1_MASK)
     {
+      int chans, chan, x, y;
+      GdkModifierType state;
+      env *e;
+      Float pos;
       if (ev->is_hint)
 	gdk_window_get_pointer(ev->window, &x, &y, &state);
       else
@@ -323,11 +323,11 @@ static bool id_changed = false;
 static void id_activated(GtkWidget *w, gpointer context)
 {
   char *val;
-  int id;
   id_changed = false;
   val = (char *)gtk_entry_get_text(GTK_ENTRY(w_id));
   if (val)
     {
+      int id;
       id = string_to_int(val);
       if (mix_ok_and_unlocked(id)) 
 	{
@@ -352,11 +352,11 @@ static gboolean id_modify_callback(GtkWidget *w, GdkEventKey *event, gpointer da
 static void beg_activated(GtkWidget *w, gpointer context) 
 {
   char *val;
-  chan_info *cp;
   if (!(mix_ok(mix_dialog_id))) return;
   val = (char *)gtk_entry_get_text(GTK_ENTRY(w_beg));
   if (val)
     {
+      chan_info *cp;
       char *up_to_colon;
       up_to_colon = string_to_colon(val);
       cp = mix_dialog_mix_channel(mix_dialog_id);
@@ -555,12 +555,12 @@ static void mix_dialog_help_callback(GtkWidget *w, gpointer context)
 
 GtkWidget *make_mix_dialog(void)
 {
-  GtkWidget *dismiss_button, *help_button, *rc, *mix_frame, *track_frame, *rc_top, *rc1;
-  GtkWidget *lo_hbox, *w_dB_frame, *w_dB, *w_clip, *w_wave, *w_dB_row;
-  char amplab[LABEL_BUFFER_SIZE];
-  int i;
   if (mix_dialog == NULL)
     {
+      GtkWidget *dismiss_button, *help_button, *rc, *mix_frame, *track_frame, *rc_top, *rc1;
+      GtkWidget *lo_hbox, *w_dB_frame, *w_dB, *w_clip, *w_wave, *w_dB_row;
+      char amplab[LABEL_BUFFER_SIZE];
+      int i;
       mix_dialog_id = any_mix_id();
       mix_dialog = snd_gtk_dialog_new();
       SG_SIGNAL_CONNECT(mix_dialog, "delete_event", delete_mix_dialog, NULL);
@@ -833,11 +833,6 @@ static bool track_dialog_slider_dragging = false;
 
 static void update_mix_dialog(int mix_id) 
 {
-  chan_info *cp;
-  int i, chans;
-  off_t beg, len;
-  Float val;
-  char lab[LABEL_BUFFER_SIZE];
   if (!(mix_ok(mix_dialog_id)))
     {
       mix_dialog_id = mix_id; /* close-sound kills current mix, for example */
@@ -849,6 +844,8 @@ static void update_mix_dialog(int mix_id)
     }
   if ((mix_id == mix_dialog_id) || (mix_id == ANY_MIX_ID))
     {
+      int chans = 0;
+      Float val;
       if (mix_dialog == NULL) 
 	make_mix_dialog();
       else
@@ -860,6 +857,9 @@ static void update_mix_dialog(int mix_id)
       /* now reflect current mix state in mix dialog controls */
       if (mix_ok(mix_dialog_id))
 	{
+	  char lab[LABEL_BUFFER_SIZE];
+	  chan_info *cp;
+	  off_t beg, len;
 	  cp = mix_dialog_mix_channel(mix_dialog_id);
 	  val = mix_dialog_mix_speed(mix_dialog_id);
 	  reflect_mix_speed(val);
@@ -889,6 +889,7 @@ static void update_mix_dialog(int mix_id)
 	}
       if ((!mix_dialog_slider_dragging) && (!track_dialog_slider_dragging))
 	{
+	  int i;
 	  set_label(w_amp_labels[0], (chans == 1) ? "amp:" : "amp 0:");
 	  for (i = 0; i < chans; i++)
 	    {
@@ -1132,12 +1133,12 @@ void show_track_background_wave(int pts, bool two_sided)
 
 static void track_amp_env_resize(GtkWidget *w)
 {
-  GdkWindow *wn;
   env *e;
   env *cur_env;
   if (!(track_p(track_dialog_id))) return;
   if (track_ax == NULL)
     {
+      GdkWindow *wn;
       wn = MAIN_WINDOW(ss);
       track_cur_gc = gdk_gc_new(wn);
       gdk_gc_set_background(track_cur_gc, (ss->sgx)->graph_color);
@@ -1187,12 +1188,12 @@ static gboolean track_drawer_button_release(GtkWidget *w, GdkEventButton *ev, gp
 
 static gboolean track_drawer_button_motion(GtkWidget *w, GdkEventMotion *ev, gpointer data)
 { 
-  int x, y;
-  GdkModifierType state;
-  env *e;
   if (!(track_p(track_dialog_id))) return(false);
   if (ev->state & GDK_BUTTON1_MASK)
     {
+      int x, y;
+      GdkModifierType state;
+      env *e;
       if (ev->is_hint)
 	gdk_window_get_pointer(ev->window, &x, &y, &state);
       else
@@ -1232,11 +1233,11 @@ static bool track_id_changed = false;
 static void track_id_activated(GtkWidget *w, gpointer context)
 {
   char *val;
-  int id;
   track_id_changed = false;
   val = (char *)gtk_entry_get_text(GTK_ENTRY(w_track_id));
   if (val)
     {
+      int id;
       id = string_to_int(val);
       if (track_p(id)) 
 	{
@@ -1261,12 +1262,12 @@ static gboolean track_id_modify_callback(GtkWidget *w, GdkEventKey *event, gpoin
 
 static void redisplay_track_bounds(void)
 {
-  char lab[LABEL_BUFFER_SIZE];
   chan_info *cp;
-  off_t beg, len;
   cp = track_channel(track_dialog_id, 0); /* can be NULL */
   if (cp)
     {
+      char lab[LABEL_BUFFER_SIZE];
+      off_t beg, len;
       beg = track_position(track_dialog_id, -1);
       len = track_frames(track_dialog_id, -1);
       mus_snprintf(lab, LABEL_BUFFER_SIZE, "%.3f : %.3f",
@@ -1283,10 +1284,10 @@ static void redisplay_track_bounds(void)
 static void track_beg_activated(GtkWidget *w, gpointer context) 
 {
   char *val;
-  chan_info *cp;
   val = (char *)gtk_entry_get_text(GTK_ENTRY(w_track_beg));
   if (val)
     {
+      chan_info *cp;
       cp = track_channel(track_dialog_id, 0);
       if (cp)
 	{
@@ -1467,10 +1468,10 @@ static void track_dialog_help_callback(GtkWidget *w, gpointer context)
 
 GtkWidget *make_track_dialog(void)
 {
-  GtkWidget *dismiss_button, *help_button, *rc, *apply_button, *track_frame, *t_frame, *rc_top, *rc1;
-  GtkWidget *lo_hbox, *w_dB_frame, *w_dB, *w_clip, *w_wave, *w_dB_row;
   if (track_dialog == NULL)
     {
+      GtkWidget *dismiss_button, *help_button, *rc, *apply_button, *track_frame, *t_frame, *rc_top, *rc1;
+      GtkWidget *lo_hbox, *w_dB_frame, *w_dB, *w_clip, *w_wave, *w_dB_row;
       track_spf = new_env_editor();
       track_dialog_id = any_track_id();
       track_dialog = snd_gtk_dialog_new();
@@ -1724,11 +1725,6 @@ GtkWidget *make_track_dialog(void)
 
 static void update_track_dialog(int track_id) 
 {
-  chan_info *cp;
-  off_t beg, len;
-  Float val;
-  char *temp = NULL;
-  char lab[LABEL_BUFFER_SIZE];
   if (!(track_p(track_dialog_id))) track_dialog_id = track_id;
   if (!(track_p(track_dialog_id))) track_dialog_id = any_track_id();
   if (track_id == track_dialog_id)
@@ -1743,6 +1739,11 @@ static void update_track_dialog(int track_id)
       
       if (track_p(track_dialog_id))
 	{
+	  chan_info *cp;
+	  off_t beg, len;
+	  Float val;
+	  char *temp = NULL;
+	  char lab[LABEL_BUFFER_SIZE];
 	  cp = track_channel(track_id, 0);
 	  val = track_dialog_track_speed(track_id);
 	  reflect_track_speed(val);
