@@ -50,6 +50,7 @@ void sound_not_current(snd_info *sp, void *ignore)
 /* ---------------- save sound state (options, or entire state) ---------------- */
 
 #if HAVE_GUILE
+/* TODO: files list can have deleted files, and can include the current save-state file (causing recursive load) */
 static void save_loaded_files_list(FILE *fd)
 {
   /* make sure all previously loaded code is available */

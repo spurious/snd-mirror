@@ -869,7 +869,8 @@ void fire_up_recorder(void)
 	  if (!(raw_input_bufs[i]))
 	    raw_input_bufs[i] = (char *)CALLOC(rp->buffer_size, sizeof(int)); /* 4 bytes per sample is probably enough?? */
 	  input_formats[i] = rp->in_format;
-	  input_buffer_sizes[i] = rp->buffer_size / rp->out_chans; /* ??? */
+	  if (rp->out_chans > 0)
+	    input_buffer_sizes[i] = rp->buffer_size / rp->out_chans; /* ??? */
 	}
       for (i = 0; i < rp->systems; i++)
 	get_input_channels(i);
