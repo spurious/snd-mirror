@@ -117,6 +117,7 @@ static void snd_gsl_error(const char *reason, const char *file, int line, int gs
 
 #if HAVE_SYS_FPU_H
   union fpc_csr f; f.fc_word = get_fpc_csr(); f.fc_struct.flush = 1; set_fpc_csr(f.fc_word);
+  /* what the hell? -- can this be deleted? */
 #endif
 
 #if HAVE_GSL

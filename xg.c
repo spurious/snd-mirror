@@ -48,6 +48,7 @@
  *     win32-specific functions
  *
  * HISTORY:
+ *     8-Dec:     added some g_log handler funcs.
  *     6-Dec:     added check for lost callback context.
  *                tightened type (pointer) checking considerably (#f only acceptable if explicit @ used in xgdata.scm).
  *                gtk 2.5.6 and pango 1.7.0 changes.
@@ -248,6 +249,7 @@ static void define_xm_obj(void)
 
 #if HAVE_GTK_LABEL_GET_SINGLE_LINE_MODE
 #define XEN_GtkClipboardImageReceivedFunc_P(Arg)  XEN_FALSE_P(Arg) || (XEN_PROCEDURE_P(Arg) && (XEN_REQUIRED_ARGS_OK(Arg, 3)))
+#define XEN_GLogFunc_P(Arg)  XEN_FALSE_P(Arg) || (XEN_PROCEDURE_P(Arg) && (XEN_REQUIRED_ARGS_OK(Arg, 4)))
 #endif
 
 #define XEN_lambda_P(Arg) XEN_PROCEDURE_P(Arg)
@@ -291,6 +293,7 @@ static void define_xm_obj(void)
 
 #if HAVE_GTK_LABEL_GET_SINGLE_LINE_MODE
 #define XEN_TO_C_GtkClipboardImageReceivedFunc(Arg) XEN_FALSE_P(Arg) ? NULL : gxg_clip_image_received
+#define XEN_TO_C_GLogFunc(Arg) XEN_FALSE_P(Arg) ? NULL : gxg_g_message_log_func
 #endif
 
 #define XEN_TO_C_GCallback(Arg) ((XEN_REQUIRED_ARGS_OK(Arg, 3)) ? (GCallback)gxg_func3 : (GCallback)gxg_func2)
@@ -305,16 +308,6 @@ static void define_xm_obj(void)
 #define XEN_TO_C_String(Arg) ((XEN_STRING_P(Arg)) ? XEN_TO_C_STRING(Arg) : NULL)
 #define C_TO_XEN_String(Arg) ((Arg != NULL) ? C_TO_XEN_STRING(Arg) : XEN_FALSE)
 #define XEN_String_P(Arg) ((XEN_FALSE_P(Arg)) || (XEN_STRING_P(Arg)))
-
-#if HAVE_GTK_TREE_VIEW_COLUMN_CELL_GET_POSITION
-  static GdkDrawable* XEN_TO_C_DRAWABLE_WAS_WINDOW (XEN val) {if (XEN_FALSE_P(val)) return(NULL); return((GdkDrawable *)XEN_TO_C_ULONG(XEN_CADR(val)));}
-  static bool XEN_DRAWABLE_WAS_WINDOW_P(XEN val) {return(XEN_FALSE_P(val) || (WRAP_P("GdkDrawable_", val)));}
-  #define Drawable_was_Window GdkDrawable
-#else
-  static GdkWindow* XEN_TO_C_DRAWABLE_WAS_WINDOW (XEN val) {if (XEN_FALSE_P(val)) return(NULL); return((GdkWindow *)XEN_TO_C_ULONG(XEN_CADR(val)));}
-  static bool XEN_DRAWABLE_WAS_WINDOW_P(XEN val) {return(XEN_FALSE_P(val) || (WRAP_P("GdkWindow_", val)));}
-  #define Drawable_was_Window GdkWindow
-#endif
 
 
 /* ---------------------------------------- types ---------------------------------------- */
@@ -359,6 +352,9 @@ XM_TYPE_PTR(GtkTreeViewColumn_, GtkTreeViewColumn*)
 XM_TYPE_PTR(GtkCellRenderer_, GtkCellRenderer*)
 XM_TYPE_PTR(GtkTreeSelection_, GtkTreeSelection*)
 XM_TYPE_PTR(GdkPixbuf_, GdkPixbuf*)
+#define C_TO_XEN_GLogLevelFlags(Arg) C_TO_XEN_INT(Arg)
+#define XEN_TO_C_GLogLevelFlags(Arg) (GLogLevelFlags)(XEN_TO_C_INT(Arg))
+#define XEN_GLogLevelFlags_P(Arg) XEN_INTEGER_P(Arg)
 #define C_TO_XEN_GType(Arg) C_TO_XEN_ULONG(Arg)
 #define XEN_TO_C_GType(Arg) (GType)(XEN_TO_C_ULONG(Arg))
 #define XEN_GType_P(Arg) XEN_ULONG_P(Arg)
@@ -482,10 +478,6 @@ XM_TYPE_PTR(PangoAttribute_, PangoAttribute*)
 #define C_TO_XEN_int(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_int(Arg) (int)(XEN_TO_C_INT(Arg))
 #define XEN_int_P(Arg) XEN_INTEGER_P(Arg)
-#define C_TO_XEN_Drawable_was_Window_(Arg) C_TO_XEN_DRAWABLE_WAS_WINDOW(Arg)
-#define XEN_TO_C_Drawable_was_Window_(Arg) (Drawable_was_Window*)(XEN_TO_C_DRAWABLE_WAS_WINDOW(Arg))
-#define XEN_Drawable_was_Window__P(Arg) XEN_DRAWABLE_WAS_WINDOW_P(Arg)
-XM_TYPE_PTR_1(GdkBitmap__, GdkBitmap**)
 #define C_TO_XEN_GdkNativeWindow(Arg) C_TO_XEN_ULONG(Arg)
 #define XEN_TO_C_GdkNativeWindow(Arg) (GdkNativeWindow)(XEN_TO_C_ULONG(Arg))
 #define XEN_GdkNativeWindow_P(Arg) XEN_ULONG_P(Arg)
@@ -903,6 +895,10 @@ XM_TYPE_PTR_2(GArray_, GArray*)
 #if HAVE_GDK_DRAW_PIXBUF
 XM_TYPE_PTR(GdkDisplay_, GdkDisplay*)
 XM_TYPE_PTR(GdkScreen_, GdkScreen*)
+#endif
+
+#if HAVE_GTK_TREE_VIEW_COLUMN_CELL_GET_POSITION
+XM_TYPE_PTR_1(GdkBitmap__, GdkBitmap**)
 #endif
 
 #if HAVE_GTK_FILE_CHOOSER_DIALOG_NEW
@@ -1376,6 +1372,16 @@ static void gxg_clip_image_received(GtkClipboard* clipboard, GdkPixbuf* pixbuf, 
   XEN_CALL_3(XEN_CAR((XEN)func_data),
              C_TO_XEN_GtkClipboard_(clipboard),
              C_TO_XEN_GdkPixbuf_(pixbuf),
+             XEN_CADR((XEN)func_data),
+             c__FUNCTION__);
+}
+static void gxg_g_message_log_func(const gchar* domain, GLogLevelFlags log_level, const gchar* message, gpointer func_data)
+{
+  if (!XEN_LIST_P((XEN)func_data)) return;
+  XEN_CALL_4(XEN_CAR((XEN)func_data),
+             C_TO_XEN_gchar_(domain),
+             C_TO_XEN_GLogLevelFlags(log_level),
+             C_TO_XEN_gchar_(message),
              XEN_CADR((XEN)func_data),
              c__FUNCTION__);
 }
@@ -3381,91 +3387,6 @@ static XEN gxg_gdk_pixmap_get_type(void)
 {
   #define H_gdk_pixmap_get_type "GType gdk_pixmap_get_type( void)"
   return(C_TO_XEN_GType(gdk_pixmap_get_type()));
-}
-static XEN gxg_gdk_pixmap_new(XEN window, XEN width, XEN height, XEN depth)
-{
-  #define H_gdk_pixmap_new "GdkPixmap* gdk_pixmap_new(Drawable_was_Window* window, gint width, gint height, \
-gint depth)"
-  XEN_ASSERT_TYPE(XEN_Drawable_was_Window__P(window), window, 1, "gdk_pixmap_new", "Drawable_was_Window*");
-  XEN_ASSERT_TYPE(XEN_gint_P(width), width, 2, "gdk_pixmap_new", "gint");
-  XEN_ASSERT_TYPE(XEN_gint_P(height), height, 3, "gdk_pixmap_new", "gint");
-  XEN_ASSERT_TYPE(XEN_gint_P(depth), depth, 4, "gdk_pixmap_new", "gint");
-  return(C_TO_XEN_GdkPixmap_(gdk_pixmap_new(XEN_TO_C_Drawable_was_Window_(window), XEN_TO_C_gint(width), XEN_TO_C_gint(height), 
-                                            XEN_TO_C_gint(depth))));
-}
-static XEN gxg_gdk_bitmap_create_from_data(XEN window, XEN data, XEN width, XEN height)
-{
-  #define H_gdk_bitmap_create_from_data "GdkBitmap* gdk_bitmap_create_from_data(Drawable_was_Window* window, \
-gchar* data, gint width, gint height)"
-  XEN_ASSERT_TYPE(XEN_Drawable_was_Window__P(window), window, 1, "gdk_bitmap_create_from_data", "Drawable_was_Window*");
-  XEN_ASSERT_TYPE(XEN_gchar__P(data), data, 2, "gdk_bitmap_create_from_data", "gchar*");
-  XEN_ASSERT_TYPE(XEN_gint_P(width), width, 3, "gdk_bitmap_create_from_data", "gint");
-  XEN_ASSERT_TYPE(XEN_gint_P(height), height, 4, "gdk_bitmap_create_from_data", "gint");
-  return(C_TO_XEN_GdkBitmap_(gdk_bitmap_create_from_data(XEN_TO_C_Drawable_was_Window_(window), XEN_TO_C_gchar_(data), XEN_TO_C_gint(width), 
-                                                         XEN_TO_C_gint(height))));
-}
-static XEN gxg_gdk_pixmap_create_from_data(XEN window, XEN data, XEN width, XEN height, XEN depth, XEN fg, XEN bg)
-{
-  #define H_gdk_pixmap_create_from_data "GdkPixmap* gdk_pixmap_create_from_data(Drawable_was_Window* window, \
-gchar* data, gint width, gint height, gint depth, GdkColor* fg, GdkColor* bg)"
-  XEN_ASSERT_TYPE(XEN_Drawable_was_Window__P(window), window, 1, "gdk_pixmap_create_from_data", "Drawable_was_Window*");
-  XEN_ASSERT_TYPE(XEN_gchar__P(data), data, 2, "gdk_pixmap_create_from_data", "gchar*");
-  XEN_ASSERT_TYPE(XEN_gint_P(width), width, 3, "gdk_pixmap_create_from_data", "gint");
-  XEN_ASSERT_TYPE(XEN_gint_P(height), height, 4, "gdk_pixmap_create_from_data", "gint");
-  XEN_ASSERT_TYPE(XEN_gint_P(depth), depth, 5, "gdk_pixmap_create_from_data", "gint");
-  XEN_ASSERT_TYPE(XEN_GdkColor__P(fg), fg, 6, "gdk_pixmap_create_from_data", "GdkColor*");
-  XEN_ASSERT_TYPE(XEN_GdkColor__P(bg), bg, 7, "gdk_pixmap_create_from_data", "GdkColor*");
-  return(C_TO_XEN_GdkPixmap_(gdk_pixmap_create_from_data(XEN_TO_C_Drawable_was_Window_(window), XEN_TO_C_gchar_(data), XEN_TO_C_gint(width), 
-                                                         XEN_TO_C_gint(height), XEN_TO_C_gint(depth), XEN_TO_C_GdkColor_(fg), 
-                                                         XEN_TO_C_GdkColor_(bg))));
-}
-static XEN gxg_gdk_pixmap_create_from_xpm(XEN window, XEN mask, XEN transparent_color, XEN filename)
-{
-  #define H_gdk_pixmap_create_from_xpm "GdkPixmap* gdk_pixmap_create_from_xpm(Drawable_was_Window* window, \
-GdkBitmap** mask, GdkColor* transparent_color, gchar* filename)"
-  XEN_ASSERT_TYPE(XEN_Drawable_was_Window__P(window), window, 1, "gdk_pixmap_create_from_xpm", "Drawable_was_Window*");
-  XEN_ASSERT_TYPE(XEN_GdkBitmap___P(mask) || XEN_FALSE_P(mask), mask, 2, "gdk_pixmap_create_from_xpm", "GdkBitmap**");
-  XEN_ASSERT_TYPE(XEN_GdkColor__P(transparent_color), transparent_color, 3, "gdk_pixmap_create_from_xpm", "GdkColor*");
-  XEN_ASSERT_TYPE(XEN_gchar__P(filename), filename, 4, "gdk_pixmap_create_from_xpm", "gchar*");
-  return(C_TO_XEN_GdkPixmap_(gdk_pixmap_create_from_xpm(XEN_TO_C_Drawable_was_Window_(window), XEN_TO_C_GdkBitmap__(mask), 
-                                                        XEN_TO_C_GdkColor_(transparent_color), XEN_TO_C_gchar_(filename))));
-}
-static XEN gxg_gdk_pixmap_colormap_create_from_xpm(XEN window, XEN colormap, XEN mask, XEN transparent_color, XEN filename)
-{
-  #define H_gdk_pixmap_colormap_create_from_xpm "GdkPixmap* gdk_pixmap_colormap_create_from_xpm(Drawable_was_Window* window, \
-GdkColormap* colormap, GdkBitmap** mask, GdkColor* transparent_color, gchar* filename)"
-  XEN_ASSERT_TYPE(XEN_Drawable_was_Window__P(window), window, 1, "gdk_pixmap_colormap_create_from_xpm", "Drawable_was_Window*");
-  XEN_ASSERT_TYPE(XEN_GdkColormap__P(colormap) || XEN_FALSE_P(colormap), colormap, 2, "gdk_pixmap_colormap_create_from_xpm", "GdkColormap*");
-  XEN_ASSERT_TYPE(XEN_GdkBitmap___P(mask) || XEN_FALSE_P(mask), mask, 3, "gdk_pixmap_colormap_create_from_xpm", "GdkBitmap**");
-  XEN_ASSERT_TYPE(XEN_GdkColor__P(transparent_color), transparent_color, 4, "gdk_pixmap_colormap_create_from_xpm", "GdkColor*");
-  XEN_ASSERT_TYPE(XEN_gchar__P(filename), filename, 5, "gdk_pixmap_colormap_create_from_xpm", "gchar*");
-  return(C_TO_XEN_GdkPixmap_(gdk_pixmap_colormap_create_from_xpm(XEN_TO_C_Drawable_was_Window_(window), XEN_TO_C_GdkColormap_(colormap), 
-                                                                 XEN_TO_C_GdkBitmap__(mask), XEN_TO_C_GdkColor_(transparent_color), 
-                                                                 XEN_TO_C_gchar_(filename))));
-}
-static XEN gxg_gdk_pixmap_create_from_xpm_d(XEN window, XEN mask, XEN transparent_color, XEN data)
-{
-  #define H_gdk_pixmap_create_from_xpm_d "GdkPixmap* gdk_pixmap_create_from_xpm_d(Drawable_was_Window* window, \
-GdkBitmap** mask, GdkColor* transparent_color, gchar** data)"
-  XEN_ASSERT_TYPE(XEN_Drawable_was_Window__P(window), window, 1, "gdk_pixmap_create_from_xpm_d", "Drawable_was_Window*");
-  XEN_ASSERT_TYPE(XEN_GdkBitmap___P(mask) || XEN_FALSE_P(mask), mask, 2, "gdk_pixmap_create_from_xpm_d", "GdkBitmap**");
-  XEN_ASSERT_TYPE(XEN_GdkColor__P(transparent_color), transparent_color, 3, "gdk_pixmap_create_from_xpm_d", "GdkColor*");
-  XEN_ASSERT_TYPE(XEN_gchar___P(data), data, 4, "gdk_pixmap_create_from_xpm_d", "gchar**");
-  return(C_TO_XEN_GdkPixmap_(gdk_pixmap_create_from_xpm_d(XEN_TO_C_Drawable_was_Window_(window), XEN_TO_C_GdkBitmap__(mask), 
-                                                          XEN_TO_C_GdkColor_(transparent_color), XEN_TO_C_gchar__(data))));
-}
-static XEN gxg_gdk_pixmap_colormap_create_from_xpm_d(XEN window, XEN colormap, XEN mask, XEN transparent_color, XEN data)
-{
-  #define H_gdk_pixmap_colormap_create_from_xpm_d "GdkPixmap* gdk_pixmap_colormap_create_from_xpm_d(Drawable_was_Window* window, \
-GdkColormap* colormap, GdkBitmap** mask, GdkColor* transparent_color, gchar** data)"
-  XEN_ASSERT_TYPE(XEN_Drawable_was_Window__P(window), window, 1, "gdk_pixmap_colormap_create_from_xpm_d", "Drawable_was_Window*");
-  XEN_ASSERT_TYPE(XEN_GdkColormap__P(colormap) || XEN_FALSE_P(colormap), colormap, 2, "gdk_pixmap_colormap_create_from_xpm_d", "GdkColormap*");
-  XEN_ASSERT_TYPE(XEN_GdkBitmap___P(mask) || XEN_FALSE_P(mask), mask, 3, "gdk_pixmap_colormap_create_from_xpm_d", "GdkBitmap**");
-  XEN_ASSERT_TYPE(XEN_GdkColor__P(transparent_color), transparent_color, 4, "gdk_pixmap_colormap_create_from_xpm_d", "GdkColor*");
-  XEN_ASSERT_TYPE(XEN_gchar___P(data), data, 5, "gdk_pixmap_colormap_create_from_xpm_d", "gchar**");
-  return(C_TO_XEN_GdkPixmap_(gdk_pixmap_colormap_create_from_xpm_d(XEN_TO_C_Drawable_was_Window_(window), XEN_TO_C_GdkColormap_(colormap), 
-                                                                   XEN_TO_C_GdkBitmap__(mask), XEN_TO_C_GdkColor_(transparent_color), 
-                                                                   XEN_TO_C_gchar__(data))));
 }
 static XEN gxg_gdk_pixmap_foreign_new(XEN anid)
 {
@@ -19786,6 +19707,89 @@ static XEN gxg_gdk_notify_startup_complete(void)
   gdk_notify_startup_complete();
   return(XEN_FALSE);
 }
+static XEN gxg_gdk_pixmap_new(XEN window, XEN width, XEN height, XEN depth)
+{
+  #define H_gdk_pixmap_new "GdkPixmap* gdk_pixmap_new(GdkDrawable* window, gint width, gint height, gint depth)"
+  XEN_ASSERT_TYPE(XEN_GdkDrawable__P(window), window, 1, "gdk_pixmap_new", "GdkDrawable*");
+  XEN_ASSERT_TYPE(XEN_gint_P(width), width, 2, "gdk_pixmap_new", "gint");
+  XEN_ASSERT_TYPE(XEN_gint_P(height), height, 3, "gdk_pixmap_new", "gint");
+  XEN_ASSERT_TYPE(XEN_gint_P(depth), depth, 4, "gdk_pixmap_new", "gint");
+  return(C_TO_XEN_GdkPixmap_(gdk_pixmap_new(XEN_TO_C_GdkDrawable_(window), XEN_TO_C_gint(width), XEN_TO_C_gint(height), XEN_TO_C_gint(depth))));
+}
+static XEN gxg_gdk_bitmap_create_from_data(XEN window, XEN data, XEN width, XEN height)
+{
+  #define H_gdk_bitmap_create_from_data "GdkBitmap* gdk_bitmap_create_from_data(GdkDrawable* window, \
+gchar* data, gint width, gint height)"
+  XEN_ASSERT_TYPE(XEN_GdkDrawable__P(window), window, 1, "gdk_bitmap_create_from_data", "GdkDrawable*");
+  XEN_ASSERT_TYPE(XEN_gchar__P(data), data, 2, "gdk_bitmap_create_from_data", "gchar*");
+  XEN_ASSERT_TYPE(XEN_gint_P(width), width, 3, "gdk_bitmap_create_from_data", "gint");
+  XEN_ASSERT_TYPE(XEN_gint_P(height), height, 4, "gdk_bitmap_create_from_data", "gint");
+  return(C_TO_XEN_GdkBitmap_(gdk_bitmap_create_from_data(XEN_TO_C_GdkDrawable_(window), XEN_TO_C_gchar_(data), XEN_TO_C_gint(width), 
+                                                         XEN_TO_C_gint(height))));
+}
+static XEN gxg_gdk_pixmap_create_from_data(XEN window, XEN data, XEN width, XEN height, XEN depth, XEN fg, XEN bg)
+{
+  #define H_gdk_pixmap_create_from_data "GdkPixmap* gdk_pixmap_create_from_data(GdkDrawable* window, \
+gchar* data, gint width, gint height, gint depth, GdkColor* fg, GdkColor* bg)"
+  XEN_ASSERT_TYPE(XEN_GdkDrawable__P(window), window, 1, "gdk_pixmap_create_from_data", "GdkDrawable*");
+  XEN_ASSERT_TYPE(XEN_gchar__P(data), data, 2, "gdk_pixmap_create_from_data", "gchar*");
+  XEN_ASSERT_TYPE(XEN_gint_P(width), width, 3, "gdk_pixmap_create_from_data", "gint");
+  XEN_ASSERT_TYPE(XEN_gint_P(height), height, 4, "gdk_pixmap_create_from_data", "gint");
+  XEN_ASSERT_TYPE(XEN_gint_P(depth), depth, 5, "gdk_pixmap_create_from_data", "gint");
+  XEN_ASSERT_TYPE(XEN_GdkColor__P(fg), fg, 6, "gdk_pixmap_create_from_data", "GdkColor*");
+  XEN_ASSERT_TYPE(XEN_GdkColor__P(bg), bg, 7, "gdk_pixmap_create_from_data", "GdkColor*");
+  return(C_TO_XEN_GdkPixmap_(gdk_pixmap_create_from_data(XEN_TO_C_GdkDrawable_(window), XEN_TO_C_gchar_(data), XEN_TO_C_gint(width), 
+                                                         XEN_TO_C_gint(height), XEN_TO_C_gint(depth), XEN_TO_C_GdkColor_(fg), 
+                                                         XEN_TO_C_GdkColor_(bg))));
+}
+static XEN gxg_gdk_pixmap_create_from_xpm(XEN window, XEN mask, XEN transparent_color, XEN filename)
+{
+  #define H_gdk_pixmap_create_from_xpm "GdkPixmap* gdk_pixmap_create_from_xpm(GdkDrawable* window, GdkBitmap** mask, \
+GdkColor* transparent_color, gchar* filename)"
+  XEN_ASSERT_TYPE(XEN_GdkDrawable__P(window), window, 1, "gdk_pixmap_create_from_xpm", "GdkDrawable*");
+  XEN_ASSERT_TYPE(XEN_GdkBitmap___P(mask) || XEN_FALSE_P(mask), mask, 2, "gdk_pixmap_create_from_xpm", "GdkBitmap**");
+  XEN_ASSERT_TYPE(XEN_GdkColor__P(transparent_color), transparent_color, 3, "gdk_pixmap_create_from_xpm", "GdkColor*");
+  XEN_ASSERT_TYPE(XEN_gchar__P(filename), filename, 4, "gdk_pixmap_create_from_xpm", "gchar*");
+  return(C_TO_XEN_GdkPixmap_(gdk_pixmap_create_from_xpm(XEN_TO_C_GdkDrawable_(window), XEN_TO_C_GdkBitmap__(mask), XEN_TO_C_GdkColor_(transparent_color), 
+                                                        XEN_TO_C_gchar_(filename))));
+}
+static XEN gxg_gdk_pixmap_colormap_create_from_xpm(XEN window, XEN colormap, XEN mask, XEN transparent_color, XEN filename)
+{
+  #define H_gdk_pixmap_colormap_create_from_xpm "GdkPixmap* gdk_pixmap_colormap_create_from_xpm(GdkDrawable* window, \
+GdkColormap* colormap, GdkBitmap** mask, GdkColor* transparent_color, gchar* filename)"
+  XEN_ASSERT_TYPE(XEN_GdkDrawable__P(window), window, 1, "gdk_pixmap_colormap_create_from_xpm", "GdkDrawable*");
+  XEN_ASSERT_TYPE(XEN_GdkColormap__P(colormap) || XEN_FALSE_P(colormap), colormap, 2, "gdk_pixmap_colormap_create_from_xpm", "GdkColormap*");
+  XEN_ASSERT_TYPE(XEN_GdkBitmap___P(mask) || XEN_FALSE_P(mask), mask, 3, "gdk_pixmap_colormap_create_from_xpm", "GdkBitmap**");
+  XEN_ASSERT_TYPE(XEN_GdkColor__P(transparent_color), transparent_color, 4, "gdk_pixmap_colormap_create_from_xpm", "GdkColor*");
+  XEN_ASSERT_TYPE(XEN_gchar__P(filename), filename, 5, "gdk_pixmap_colormap_create_from_xpm", "gchar*");
+  return(C_TO_XEN_GdkPixmap_(gdk_pixmap_colormap_create_from_xpm(XEN_TO_C_GdkDrawable_(window), XEN_TO_C_GdkColormap_(colormap), 
+                                                                 XEN_TO_C_GdkBitmap__(mask), XEN_TO_C_GdkColor_(transparent_color), 
+                                                                 XEN_TO_C_gchar_(filename))));
+}
+static XEN gxg_gdk_pixmap_create_from_xpm_d(XEN window, XEN mask, XEN transparent_color, XEN data)
+{
+  #define H_gdk_pixmap_create_from_xpm_d "GdkPixmap* gdk_pixmap_create_from_xpm_d(GdkDrawable* window, \
+GdkBitmap** mask, GdkColor* transparent_color, gchar** data)"
+  XEN_ASSERT_TYPE(XEN_GdkDrawable__P(window), window, 1, "gdk_pixmap_create_from_xpm_d", "GdkDrawable*");
+  XEN_ASSERT_TYPE(XEN_GdkBitmap___P(mask) || XEN_FALSE_P(mask), mask, 2, "gdk_pixmap_create_from_xpm_d", "GdkBitmap**");
+  XEN_ASSERT_TYPE(XEN_GdkColor__P(transparent_color), transparent_color, 3, "gdk_pixmap_create_from_xpm_d", "GdkColor*");
+  XEN_ASSERT_TYPE(XEN_gchar___P(data), data, 4, "gdk_pixmap_create_from_xpm_d", "gchar**");
+  return(C_TO_XEN_GdkPixmap_(gdk_pixmap_create_from_xpm_d(XEN_TO_C_GdkDrawable_(window), XEN_TO_C_GdkBitmap__(mask), XEN_TO_C_GdkColor_(transparent_color), 
+                                                          XEN_TO_C_gchar__(data))));
+}
+static XEN gxg_gdk_pixmap_colormap_create_from_xpm_d(XEN window, XEN colormap, XEN mask, XEN transparent_color, XEN data)
+{
+  #define H_gdk_pixmap_colormap_create_from_xpm_d "GdkPixmap* gdk_pixmap_colormap_create_from_xpm_d(GdkDrawable* window, \
+GdkColormap* colormap, GdkBitmap** mask, GdkColor* transparent_color, gchar** data)"
+  XEN_ASSERT_TYPE(XEN_GdkDrawable__P(window), window, 1, "gdk_pixmap_colormap_create_from_xpm_d", "GdkDrawable*");
+  XEN_ASSERT_TYPE(XEN_GdkColormap__P(colormap) || XEN_FALSE_P(colormap), colormap, 2, "gdk_pixmap_colormap_create_from_xpm_d", "GdkColormap*");
+  XEN_ASSERT_TYPE(XEN_GdkBitmap___P(mask) || XEN_FALSE_P(mask), mask, 3, "gdk_pixmap_colormap_create_from_xpm_d", "GdkBitmap**");
+  XEN_ASSERT_TYPE(XEN_GdkColor__P(transparent_color), transparent_color, 4, "gdk_pixmap_colormap_create_from_xpm_d", "GdkColor*");
+  XEN_ASSERT_TYPE(XEN_gchar___P(data), data, 5, "gdk_pixmap_colormap_create_from_xpm_d", "gchar**");
+  return(C_TO_XEN_GdkPixmap_(gdk_pixmap_colormap_create_from_xpm_d(XEN_TO_C_GdkDrawable_(window), XEN_TO_C_GdkColormap_(colormap), 
+                                                                   XEN_TO_C_GdkBitmap__(mask), XEN_TO_C_GdkColor_(transparent_color), 
+                                                                   XEN_TO_C_gchar__(data))));
+}
 static XEN gxg_gtk_tree_view_column_cell_get_position(XEN tree_column, XEN cell_renderer, XEN start_pos, XEN width)
 {
   #define H_gtk_tree_view_column_cell_get_position "gboolean gtk_tree_view_column_cell_get_position(GtkTreeViewColumn* tree_column, \
@@ -24567,11 +24571,36 @@ static XEN gxg_pango_renderer_set_matrix(XEN renderer, XEN matrix)
   pango_renderer_set_matrix(XEN_TO_C_PangoRenderer_(renderer), XEN_TO_C_PangoMatrix_(matrix));
   return(XEN_FALSE);
 }
+static XEN gxg_g_log_set_handler(XEN log_domain, XEN log_levels, XEN func, XEN func_data)
+{
+  #define H_g_log_set_handler "guint g_log_set_handler(gchar* log_domain, GLogLevelFlags log_levels, \
+GLogFunc func, lambda_data func_data)"
+  XEN_ASSERT_TYPE(XEN_gchar__P(log_domain), log_domain, 1, "g_log_set_handler", "gchar*");
+  XEN_ASSERT_TYPE(XEN_GLogLevelFlags_P(log_levels), log_levels, 2, "g_log_set_handler", "GLogLevelFlags");
+  XEN_ASSERT_TYPE(XEN_GLogFunc_P(func), func, 3, "g_log_set_handler", "GLogFunc");
+  XEN_ASSERT_TYPE(XEN_lambda_data_P(func_data), func_data, 4, "g_log_set_handler", "lambda_data");
+  {
+    XEN result = XEN_FALSE;
+    XEN gxg_ptr = XEN_LIST_5(func, func_data, XEN_FALSE, XEN_FALSE, XEN_FALSE);
+    xm_protect(gxg_ptr);
+    result = C_TO_XEN_guint(g_log_set_handler(XEN_TO_C_gchar_(log_domain), XEN_TO_C_GLogLevelFlags(log_levels), XEN_TO_C_GLogFunc(func), 
+                                              XEN_TO_C_lambda_data(func_data)));
+    return(result);
+   }
+}
+static XEN gxg_g_log_remove_handler(XEN log_domain, XEN handler_id)
+{
+  #define H_g_log_remove_handler "void g_log_remove_handler(gchar* log_domain, guint handler_id)"
+  XEN_ASSERT_TYPE(XEN_gchar__P(log_domain), log_domain, 1, "g_log_remove_handler", "gchar*");
+  XEN_ASSERT_TYPE(XEN_guint_P(handler_id), handler_id, 2, "g_log_remove_handler", "guint");
+  g_log_remove_handler(XEN_TO_C_gchar_(log_domain), XEN_TO_C_guint(handler_id));
+  return(XEN_FALSE);
+}
 #endif
 
 #define WRAPPED_OBJECT_P(Obj) (XEN_LIST_P(Obj) && (XEN_LIST_LENGTH(Obj) >= 2) && (XEN_SYMBOL_P(XEN_CAR(Obj))))
 
-static XEN gxg_GPOINTER(XEN obj) {return(XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("gpointer"), (XEN_LIST_P(obj)) ? XEN_CADR(obj) : obj));}
+static XEN gxg_GPOINTER(XEN obj) {return(XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("gpointer"), (WRAPPED_OBJECT_P(obj)) ? XEN_CADR(obj) : obj));}
 static XEN gxg_GDK_COLORMAP(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GdkColormap_"), XEN_CADR(obj)) : XEN_FALSE);}
 static XEN gxg_GDK_DRAG_CONTEXT(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GdkDragContext_"), XEN_CADR(obj)) : XEN_FALSE);}
 static XEN gxg_GDK_DRAWABLE(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GdkDrawable_"), XEN_CADR(obj)) : XEN_FALSE);}
@@ -25278,13 +25307,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gdk_pixbuf_get_from_drawable, gxg_gdk_pixbuf_get_from_drawable, 9, 0, 0, H_gdk_pixbuf_get_from_drawable);
   XG_DEFINE_PROCEDURE(gdk_pixbuf_get_from_image, gxg_gdk_pixbuf_get_from_image, 9, 0, 0, H_gdk_pixbuf_get_from_image);
   XG_DEFINE_PROCEDURE(gdk_pixmap_get_type, gxg_gdk_pixmap_get_type, 0, 0, 0, H_gdk_pixmap_get_type);
-  XG_DEFINE_PROCEDURE(gdk_pixmap_new, gxg_gdk_pixmap_new, 4, 0, 0, H_gdk_pixmap_new);
-  XG_DEFINE_PROCEDURE(gdk_bitmap_create_from_data, gxg_gdk_bitmap_create_from_data, 4, 0, 0, H_gdk_bitmap_create_from_data);
-  XG_DEFINE_PROCEDURE(gdk_pixmap_create_from_data, gxg_gdk_pixmap_create_from_data, 7, 0, 0, H_gdk_pixmap_create_from_data);
-  XG_DEFINE_PROCEDURE(gdk_pixmap_create_from_xpm, gxg_gdk_pixmap_create_from_xpm, 4, 0, 0, H_gdk_pixmap_create_from_xpm);
-  XG_DEFINE_PROCEDURE(gdk_pixmap_colormap_create_from_xpm, gxg_gdk_pixmap_colormap_create_from_xpm, 5, 0, 0, H_gdk_pixmap_colormap_create_from_xpm);
-  XG_DEFINE_PROCEDURE(gdk_pixmap_create_from_xpm_d, gxg_gdk_pixmap_create_from_xpm_d, 4, 0, 0, H_gdk_pixmap_create_from_xpm_d);
-  XG_DEFINE_PROCEDURE(gdk_pixmap_colormap_create_from_xpm_d, gxg_gdk_pixmap_colormap_create_from_xpm_d, 5, 0, 0, H_gdk_pixmap_colormap_create_from_xpm_d);
   XG_DEFINE_PROCEDURE(gdk_pixmap_foreign_new, gxg_gdk_pixmap_foreign_new, 1, 0, 0, H_gdk_pixmap_foreign_new);
   XG_DEFINE_PROCEDURE(gdk_pixmap_lookup, gxg_gdk_pixmap_lookup, 1, 0, 0, H_gdk_pixmap_lookup);
   XG_DEFINE_PROCEDURE(gdk_atom_intern, gxg_gdk_atom_intern, 2, 0, 0, H_gdk_atom_intern);
@@ -27264,6 +27286,13 @@ static void define_functions(void)
 #if HAVE_GTK_TREE_VIEW_COLUMN_CELL_GET_POSITION
   XG_DEFINE_PROCEDURE(gdk_get_display_arg_name, gxg_gdk_get_display_arg_name, 0, 0, 0, H_gdk_get_display_arg_name);
   XG_DEFINE_PROCEDURE(gdk_notify_startup_complete, gxg_gdk_notify_startup_complete, 0, 0, 0, H_gdk_notify_startup_complete);
+  XG_DEFINE_PROCEDURE(gdk_pixmap_new, gxg_gdk_pixmap_new, 4, 0, 0, H_gdk_pixmap_new);
+  XG_DEFINE_PROCEDURE(gdk_bitmap_create_from_data, gxg_gdk_bitmap_create_from_data, 4, 0, 0, H_gdk_bitmap_create_from_data);
+  XG_DEFINE_PROCEDURE(gdk_pixmap_create_from_data, gxg_gdk_pixmap_create_from_data, 7, 0, 0, H_gdk_pixmap_create_from_data);
+  XG_DEFINE_PROCEDURE(gdk_pixmap_create_from_xpm, gxg_gdk_pixmap_create_from_xpm, 4, 0, 0, H_gdk_pixmap_create_from_xpm);
+  XG_DEFINE_PROCEDURE(gdk_pixmap_colormap_create_from_xpm, gxg_gdk_pixmap_colormap_create_from_xpm, 5, 0, 0, H_gdk_pixmap_colormap_create_from_xpm);
+  XG_DEFINE_PROCEDURE(gdk_pixmap_create_from_xpm_d, gxg_gdk_pixmap_create_from_xpm_d, 4, 0, 0, H_gdk_pixmap_create_from_xpm_d);
+  XG_DEFINE_PROCEDURE(gdk_pixmap_colormap_create_from_xpm_d, gxg_gdk_pixmap_colormap_create_from_xpm_d, 5, 0, 0, H_gdk_pixmap_colormap_create_from_xpm_d);
   XG_DEFINE_PROCEDURE(gtk_tree_view_column_cell_get_position, gxg_gtk_tree_view_column_cell_get_position, 2, 2, 0, H_gtk_tree_view_column_cell_get_position);
   XG_DEFINE_PROCEDURE(gtk_window_set_auto_startup_notification, gxg_gtk_window_set_auto_startup_notification, 1, 0, 0, H_gtk_window_set_auto_startup_notification);
   XG_DEFINE_PROCEDURE(gtk_list_store_move_after, gxg_gtk_list_store_move_after, 3, 0, 0, H_gtk_list_store_move_after);
@@ -27905,6 +27934,8 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(pango_renderer_set_color, gxg_pango_renderer_set_color, 3, 0, 0, H_pango_renderer_set_color);
   XG_DEFINE_PROCEDURE(pango_renderer_get_color, gxg_pango_renderer_get_color, 2, 0, 0, H_pango_renderer_get_color);
   XG_DEFINE_PROCEDURE(pango_renderer_set_matrix, gxg_pango_renderer_set_matrix, 2, 0, 0, H_pango_renderer_set_matrix);
+  XG_DEFINE_PROCEDURE(g_log_set_handler, gxg_g_log_set_handler, 4, 0, 0, H_g_log_set_handler);
+  XG_DEFINE_PROCEDURE(g_log_remove_handler, gxg_g_log_remove_handler, 2, 0, 0, H_g_log_remove_handler);
 #endif
 
   XG_DEFINE_PROCEDURE(GPOINTER, gxg_GPOINTER, 1, 0, 0, NULL);
@@ -28470,12 +28501,6 @@ static XEN c_array_to_xen_list(XEN val_1, XEN clen)
       if (len == -1) {for (i = 0; arr[i]; i++); len = i;}
       for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_GtkTreeModel_(arr[i]), result);
     }
-  if (strcmp(ctype, "GdkBitmap__") == 0)
-    {
-      GdkBitmap** arr; arr = (GdkBitmap**)XEN_TO_C_ULONG(XEN_CADR(val)); 
-      if (len == -1) {for (i = 0; arr[i]; i++); len = i;}
-      for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_GdkBitmap_(arr[i]), result);
-    }
   if (strcmp(ctype, "GList_") == 0)
     { /* tagging these pointers is currently up to the caller */
       GList* lst;
@@ -28635,12 +28660,6 @@ static XEN xen_list_to_c_array(XEN val, XEN type)
       GtkTreeModel** arr; arr = (GtkTreeModel**)CALLOC(len + 1, sizeof(GtkTreeModel*));
       for (i = 0; i < len; i++, val = XEN_CDR(val)) arr[i] = XEN_TO_C_GtkTreeModel_(XEN_CAR(val));
       return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("GtkTreeModel__"), C_TO_XEN_ULONG((unsigned long)arr), make_xm_obj(arr)));
-    }
-  if (strcmp(ctype, "GdkBitmap**") == 0)
-    {
-      GdkBitmap** arr; arr = (GdkBitmap**)CALLOC(len + 1, sizeof(GdkBitmap*));
-      for (i = 0; i < len; i++, val = XEN_CDR(val)) arr[i] = XEN_TO_C_GdkBitmap_(XEN_CAR(val));
-      return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("GdkBitmap__"), C_TO_XEN_ULONG((unsigned long)arr), make_xm_obj(arr)));
     }
   return(XEN_FALSE);
 }
@@ -31394,6 +31413,16 @@ static void define_integers(void)
   DEFINE_INTEGER(PANGO_RENDER_PART_BACKGROUND);
   DEFINE_INTEGER(PANGO_RENDER_PART_UNDERLINE);
   DEFINE_INTEGER(PANGO_RENDER_PART_STRIKETHROUGH);
+  DEFINE_INTEGER(G_LOG_FLAG_RECURSION);
+  DEFINE_INTEGER(G_LOG_FLAG_FATAL);
+  DEFINE_INTEGER(G_LOG_LEVEL_ERROR);
+  DEFINE_INTEGER(G_LOG_LEVEL_CRITICAL);
+  DEFINE_INTEGER(G_LOG_LEVEL_WARNING);
+  DEFINE_INTEGER(G_LOG_LEVEL_MESSAGE);
+  DEFINE_INTEGER(G_LOG_LEVEL_INFO);
+  DEFINE_INTEGER(G_LOG_LEVEL_DEBUG);
+  DEFINE_INTEGER(G_LOG_LEVEL_MASK);
+  DEFINE_INTEGER(G_LOG_FATAL_MASK);
 #endif
 
   DEFINE_ULONG(GDK_TYPE_PIXBUF);
@@ -31921,10 +31950,10 @@ static bool xg_already_inited = false;
       define_strings();
       XEN_YES_WE_HAVE("xg");
 #if HAVE_GUILE
-      XEN_EVAL_C_STRING("(define xm-version \"06-Dec-04\")");
+      XEN_EVAL_C_STRING("(define xm-version \"07-Dec-04\")");
 #endif
 #if HAVE_RUBY
-      rb_define_global_const("Xm_Version", C_TO_XEN_STRING("06-Dec-04"));
+      rb_define_global_const("Xm_Version", C_TO_XEN_STRING("07-Dec-04"));
 #endif
       xg_already_inited = true;
 #if WITH_GTK_AND_X11

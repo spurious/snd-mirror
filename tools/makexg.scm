@@ -155,6 +155,7 @@
 	"gchar***" "gfloat*" "gint8*" "gsize" "gssize" "guint16*" "guint8*" "gunichar*" "GtkFileChooserButton*"
 	"GtkCellView*" "GValue*" "GtkAboutDialog*" "PangoAttrFilterFunc" "PangoScript*" "GtkMenuToolButton*"
 	"GtkClipboardImageReceivedFunc" "PangoMatrix*" "GdkTrapezoid*" "GdkPangoRenderer*" "PangoRenderPart"
+	"GLogFunc"
 	))
 
 (define no-xen-p 
@@ -569,6 +570,11 @@
 			      "clip_image_received"
 			      (parse-args "GtkClipboard* clipboard GdkPixbuf* pixbuf lambda_data func_data" 'callback-255)
 			      'permanent)
+			(list 'GLogFunc
+			      "void"
+			      "g_message_log_func"
+			      (parse-args "gchar* domain GLogLevelFlags log_level gchar* message lambda_data func_data" 'callback-255)
+			      'permanent)
 			))
 
 (define (callback-name func) (car func))
@@ -728,14 +734,12 @@
 	(cons "GdkSettingAction" "INT")
 	(cons "GdkByteOrder" "INT")
 	;(cons "GdkWChar" "ULONG")
-
-	(cons "Drawable_was_Window*" "DRAWABLE_WAS_WINDOW")
-
 	(cons "GtkFileChooserAction" "INT")
 	(cons "GtkUIManagerItemType" "INT")
 	(cons "GtkFileFilterFlags" "INT")
 	(cons "GtkIconLookupFlags" "INT")
 	(cons "GtkScrollStep" "INT")
+	(cons "GLogLevelFlags" "INT")
 	))
 
 (define (type-it type)
@@ -1589,6 +1593,7 @@
 (hey " *     win32-specific functions~%")
 (hey " *~%")
 (hey " * HISTORY:~%")
+(hey " *     8-Dec:     added some g_log handler funcs.~%")
 (hey " *     6-Dec:     added check for lost callback context.~%")
 (hey " *                tightened type (pointer) checking considerably (#f only acceptable if explicit @ used in xgdata.scm).~%")
 (hey " *                gtk 2.5.6 and pango 1.7.0 changes.~%")
@@ -1787,16 +1792,6 @@
 (hey "#define C_TO_XEN_String(Arg) ((Arg != NULL) ? C_TO_XEN_STRING(Arg) : XEN_FALSE)~%")
 (hey "#define XEN_String_P(Arg) ((XEN_FALSE_P(Arg)) || (XEN_STRING_P(Arg)))~%")
 
-(hey "~%#if HAVE_GTK_TREE_VIEW_COLUMN_CELL_GET_POSITION~%")
-(hey "  static GdkDrawable* XEN_TO_C_DRAWABLE_WAS_WINDOW (XEN val) {if (XEN_FALSE_P(val)) return(NULL); return((GdkDrawable *)XEN_TO_C_ULONG(XEN_CADR(val)));}~%")
-(hey "  static bool XEN_DRAWABLE_WAS_WINDOW_P(XEN val) {return(XEN_FALSE_P(val) || (WRAP_P(\"GdkDrawable_\", val)));}~%")
-(hey "  #define Drawable_was_Window GdkDrawable~%")
-(hey "#else~%")
-(hey "  static GdkWindow* XEN_TO_C_DRAWABLE_WAS_WINDOW (XEN val) {if (XEN_FALSE_P(val)) return(NULL); return((GdkWindow *)XEN_TO_C_ULONG(XEN_CADR(val)));}~%")
-(hey "  static bool XEN_DRAWABLE_WAS_WINDOW_P(XEN val) {return(XEN_FALSE_P(val) || (WRAP_P(\"GdkWindow_\", val)));}~%")
-(hey "  #define Drawable_was_Window GdkWindow~%")
-(hey "#endif~%")
-
 
 (hey "~%~%/* ---------------------------------------- types ---------------------------------------- */~%~%")
 
@@ -1994,9 +1989,11 @@
 				   (eq? fname 'GtkAccelMapForeach)
 				   (eq? fname 'GtkEntryCompletionMatchFunc))
 			       (= ctr 1))
-			  (and (eq? fname 'GtkTreeViewSearchEqualFunc)
+			  (and (or (eq? fname 'GtkTreeViewSearchEqualFunc)
+				   (eq? fname 'GLogFunc))
 			       (= ctr 2))
-			  (and (eq? fname 'GtkFileFilterFunc)
+			  (and (or (eq? fname 'GtkFileFilterFunc)
+				   (eq? fname 'GLogFunc))
 			       (= ctr 0)))
 		      (hey "const "))
 		  (set! ctr (1+ ctr))
@@ -2496,7 +2493,7 @@
      (hey " {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL(~S), XEN_CADR(obj)) : XEN_FALSE);}~%" (no-stars cast-type)))))
 
 (hey "static XEN gxg_GPOINTER(XEN obj)")
-(hey " {return(XEN_LIST_2(C_STRING_TO_XEN_SYMBOL(\"gpointer\"), (XEN_LIST_P(obj)) ? XEN_CADR(obj) : obj));}~%")
+(hey " {return(XEN_LIST_2(C_STRING_TO_XEN_SYMBOL(\"gpointer\"), (WRAPPED_OBJECT_P(obj)) ? XEN_CADR(obj) : obj));}~%")
 
 (for-each cast-it (reverse casts))
 (if (not (null? casts-21)) (with-21 hey (lambda () (for-each cast-it (reverse casts-21)))))

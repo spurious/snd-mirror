@@ -9196,7 +9196,7 @@ void g_init_edits(void)
   XEN_DEFINE_PROCEDURE(S_override_samples_with_origin, g_override_samples_with_origin_w, 5, 1, 0, "internal function used in save-state");
 
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_sample, g_sample_w, H_sample,
-					    S_setB S_sample, g_set_sample_w, g_set_sample_reversed, 0, 5, 1, 4);
+					    S_setB S_sample, g_set_sample_w, g_set_sample_reversed, 0, 4, 1, 4);
 
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_samples, g_samples_w, H_samples,
 					    S_setB S_samples, g_set_samples_w, g_set_samples_reversed, 0, 5, 3, 7);

@@ -743,6 +743,7 @@ Reverb-feedback sets the scaler on the feedback.
 ;;; a clock icon to replace Snd's hourglass
 ;;;   call from a work proc or whatever with hour going from 0 to 12 then #f
 
+(if (defined? 'gdk_pixmap_new)
 (define snd-clock-icon
   (let* ((shell (cadr (main-widgets)))
 	 (win (car (main-widgets)))
@@ -750,7 +751,7 @@ Reverb-feedback sets the scaler on the feedback.
 	 (dgc (car (snd-gcs))))
     (do ((i 0 (1+ i)))
 	((= i 12))
-      (let* ((pix (gdk_pixmap_new win 16 16 -1))
+      (let* ((pix (gdk_pixmap_new (GDK_DRAWABLE win) 16 16 -1))
 	     (pixwin (GDK_DRAWABLE pix)))
 	(vector-set! clock-pixmaps i pix)
 	(gdk_gc_set_foreground dgc (basic-color))
@@ -766,7 +767,7 @@ Reverb-feedback sets the scaler on the feedback.
     (lambda (snd hour)
       (gdk_draw_drawable (GDK_DRAWABLE (.window (list-ref (sound-widgets snd) 8))) dgc 
 			 (GDK_DRAWABLE (vector-ref clock-pixmaps hour)) 0 0 0 4 16 16)
-      #f)))
+      #f))))
 
 
 
@@ -1020,7 +1021,7 @@ Reverb-feedback sets the scaler on the feedback.
 "-------X----------"))
 
 (define (make-pixmap strs) ; strs is list of strings as in arrow-strs above
-  (let ((win (car (main-widgets))))
+  (let ((win (GDK_DRAWABLE (car (main-widgets)))))
     (gdk_pixmap_create_from_xpm_d win #f (basic-color) (list->c-array strs "gchar**"))))
 
 

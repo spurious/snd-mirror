@@ -242,13 +242,6 @@ XEN_ARGIFY_4(gxg_gdk_pixbuf_render_pixmap_and_mask_w, gxg_gdk_pixbuf_render_pixm
 XEN_NARGIFY_9(gxg_gdk_pixbuf_get_from_drawable_w, gxg_gdk_pixbuf_get_from_drawable)
 XEN_NARGIFY_9(gxg_gdk_pixbuf_get_from_image_w, gxg_gdk_pixbuf_get_from_image)
 XEN_NARGIFY_0(gxg_gdk_pixmap_get_type_w, gxg_gdk_pixmap_get_type)
-XEN_NARGIFY_4(gxg_gdk_pixmap_new_w, gxg_gdk_pixmap_new)
-XEN_NARGIFY_4(gxg_gdk_bitmap_create_from_data_w, gxg_gdk_bitmap_create_from_data)
-XEN_NARGIFY_7(gxg_gdk_pixmap_create_from_data_w, gxg_gdk_pixmap_create_from_data)
-XEN_NARGIFY_4(gxg_gdk_pixmap_create_from_xpm_w, gxg_gdk_pixmap_create_from_xpm)
-XEN_NARGIFY_5(gxg_gdk_pixmap_colormap_create_from_xpm_w, gxg_gdk_pixmap_colormap_create_from_xpm)
-XEN_NARGIFY_4(gxg_gdk_pixmap_create_from_xpm_d_w, gxg_gdk_pixmap_create_from_xpm_d)
-XEN_NARGIFY_5(gxg_gdk_pixmap_colormap_create_from_xpm_d_w, gxg_gdk_pixmap_colormap_create_from_xpm_d)
 XEN_NARGIFY_1(gxg_gdk_pixmap_foreign_new_w, gxg_gdk_pixmap_foreign_new)
 XEN_NARGIFY_1(gxg_gdk_pixmap_lookup_w, gxg_gdk_pixmap_lookup)
 XEN_NARGIFY_2(gxg_gdk_atom_intern_w, gxg_gdk_atom_intern)
@@ -2228,6 +2221,13 @@ XEN_NARGIFY_2(gxg_gtk_widget_get_clipboard_w, gxg_gtk_widget_get_clipboard)
 #if HAVE_GTK_TREE_VIEW_COLUMN_CELL_GET_POSITION
 XEN_NARGIFY_0(gxg_gdk_get_display_arg_name_w, gxg_gdk_get_display_arg_name)
 XEN_NARGIFY_0(gxg_gdk_notify_startup_complete_w, gxg_gdk_notify_startup_complete)
+XEN_NARGIFY_4(gxg_gdk_pixmap_new_w, gxg_gdk_pixmap_new)
+XEN_NARGIFY_4(gxg_gdk_bitmap_create_from_data_w, gxg_gdk_bitmap_create_from_data)
+XEN_NARGIFY_7(gxg_gdk_pixmap_create_from_data_w, gxg_gdk_pixmap_create_from_data)
+XEN_NARGIFY_4(gxg_gdk_pixmap_create_from_xpm_w, gxg_gdk_pixmap_create_from_xpm)
+XEN_NARGIFY_5(gxg_gdk_pixmap_colormap_create_from_xpm_w, gxg_gdk_pixmap_colormap_create_from_xpm)
+XEN_NARGIFY_4(gxg_gdk_pixmap_create_from_xpm_d_w, gxg_gdk_pixmap_create_from_xpm_d)
+XEN_NARGIFY_5(gxg_gdk_pixmap_colormap_create_from_xpm_d_w, gxg_gdk_pixmap_colormap_create_from_xpm_d)
 XEN_ARGIFY_4(gxg_gtk_tree_view_column_cell_get_position_w, gxg_gtk_tree_view_column_cell_get_position)
 XEN_NARGIFY_1(gxg_gtk_window_set_auto_startup_notification_w, gxg_gtk_window_set_auto_startup_notification)
 XEN_NARGIFY_3(gxg_gtk_list_store_move_after_w, gxg_gtk_list_store_move_after)
@@ -2869,6 +2869,8 @@ XEN_NARGIFY_2(gxg_pango_renderer_part_changed_w, gxg_pango_renderer_part_changed
 XEN_NARGIFY_3(gxg_pango_renderer_set_color_w, gxg_pango_renderer_set_color)
 XEN_NARGIFY_2(gxg_pango_renderer_get_color_w, gxg_pango_renderer_get_color)
 XEN_NARGIFY_2(gxg_pango_renderer_set_matrix_w, gxg_pango_renderer_set_matrix)
+XEN_NARGIFY_4(gxg_g_log_set_handler_w, gxg_g_log_set_handler)
+XEN_NARGIFY_2(gxg_g_log_remove_handler_w, gxg_g_log_remove_handler)
 #endif
 
 XEN_NARGIFY_1(gxg_GPOINTER_w, gxg_GPOINTER)
@@ -3761,13 +3763,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gdk_pixbuf_get_from_drawable, gxg_gdk_pixbuf_get_from_drawable_w, 9, 0, 0, H_gdk_pixbuf_get_from_drawable);
   XG_DEFINE_PROCEDURE(gdk_pixbuf_get_from_image, gxg_gdk_pixbuf_get_from_image_w, 9, 0, 0, H_gdk_pixbuf_get_from_image);
   XG_DEFINE_PROCEDURE(gdk_pixmap_get_type, gxg_gdk_pixmap_get_type_w, 0, 0, 0, H_gdk_pixmap_get_type);
-  XG_DEFINE_PROCEDURE(gdk_pixmap_new, gxg_gdk_pixmap_new_w, 4, 0, 0, H_gdk_pixmap_new);
-  XG_DEFINE_PROCEDURE(gdk_bitmap_create_from_data, gxg_gdk_bitmap_create_from_data_w, 4, 0, 0, H_gdk_bitmap_create_from_data);
-  XG_DEFINE_PROCEDURE(gdk_pixmap_create_from_data, gxg_gdk_pixmap_create_from_data_w, 7, 0, 0, H_gdk_pixmap_create_from_data);
-  XG_DEFINE_PROCEDURE(gdk_pixmap_create_from_xpm, gxg_gdk_pixmap_create_from_xpm_w, 4, 0, 0, H_gdk_pixmap_create_from_xpm);
-  XG_DEFINE_PROCEDURE(gdk_pixmap_colormap_create_from_xpm, gxg_gdk_pixmap_colormap_create_from_xpm_w, 5, 0, 0, H_gdk_pixmap_colormap_create_from_xpm);
-  XG_DEFINE_PROCEDURE(gdk_pixmap_create_from_xpm_d, gxg_gdk_pixmap_create_from_xpm_d_w, 4, 0, 0, H_gdk_pixmap_create_from_xpm_d);
-  XG_DEFINE_PROCEDURE(gdk_pixmap_colormap_create_from_xpm_d, gxg_gdk_pixmap_colormap_create_from_xpm_d_w, 5, 0, 0, H_gdk_pixmap_colormap_create_from_xpm_d);
   XG_DEFINE_PROCEDURE(gdk_pixmap_foreign_new, gxg_gdk_pixmap_foreign_new_w, 1, 0, 0, H_gdk_pixmap_foreign_new);
   XG_DEFINE_PROCEDURE(gdk_pixmap_lookup, gxg_gdk_pixmap_lookup_w, 1, 0, 0, H_gdk_pixmap_lookup);
   XG_DEFINE_PROCEDURE(gdk_atom_intern, gxg_gdk_atom_intern_w, 2, 0, 0, H_gdk_atom_intern);
@@ -5747,6 +5742,13 @@ static void define_functions(void)
 #if HAVE_GTK_TREE_VIEW_COLUMN_CELL_GET_POSITION
   XG_DEFINE_PROCEDURE(gdk_get_display_arg_name, gxg_gdk_get_display_arg_name_w, 0, 0, 0, H_gdk_get_display_arg_name);
   XG_DEFINE_PROCEDURE(gdk_notify_startup_complete, gxg_gdk_notify_startup_complete_w, 0, 0, 0, H_gdk_notify_startup_complete);
+  XG_DEFINE_PROCEDURE(gdk_pixmap_new, gxg_gdk_pixmap_new_w, 4, 0, 0, H_gdk_pixmap_new);
+  XG_DEFINE_PROCEDURE(gdk_bitmap_create_from_data, gxg_gdk_bitmap_create_from_data_w, 4, 0, 0, H_gdk_bitmap_create_from_data);
+  XG_DEFINE_PROCEDURE(gdk_pixmap_create_from_data, gxg_gdk_pixmap_create_from_data_w, 7, 0, 0, H_gdk_pixmap_create_from_data);
+  XG_DEFINE_PROCEDURE(gdk_pixmap_create_from_xpm, gxg_gdk_pixmap_create_from_xpm_w, 4, 0, 0, H_gdk_pixmap_create_from_xpm);
+  XG_DEFINE_PROCEDURE(gdk_pixmap_colormap_create_from_xpm, gxg_gdk_pixmap_colormap_create_from_xpm_w, 5, 0, 0, H_gdk_pixmap_colormap_create_from_xpm);
+  XG_DEFINE_PROCEDURE(gdk_pixmap_create_from_xpm_d, gxg_gdk_pixmap_create_from_xpm_d_w, 4, 0, 0, H_gdk_pixmap_create_from_xpm_d);
+  XG_DEFINE_PROCEDURE(gdk_pixmap_colormap_create_from_xpm_d, gxg_gdk_pixmap_colormap_create_from_xpm_d_w, 5, 0, 0, H_gdk_pixmap_colormap_create_from_xpm_d);
   XG_DEFINE_PROCEDURE(gtk_tree_view_column_cell_get_position, gxg_gtk_tree_view_column_cell_get_position_w, 2, 2, 0, H_gtk_tree_view_column_cell_get_position);
   XG_DEFINE_PROCEDURE(gtk_window_set_auto_startup_notification, gxg_gtk_window_set_auto_startup_notification_w, 1, 0, 0, H_gtk_window_set_auto_startup_notification);
   XG_DEFINE_PROCEDURE(gtk_list_store_move_after, gxg_gtk_list_store_move_after_w, 3, 0, 0, H_gtk_list_store_move_after);
@@ -6388,6 +6390,8 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(pango_renderer_set_color, gxg_pango_renderer_set_color_w, 3, 0, 0, H_pango_renderer_set_color);
   XG_DEFINE_PROCEDURE(pango_renderer_get_color, gxg_pango_renderer_get_color_w, 2, 0, 0, H_pango_renderer_get_color);
   XG_DEFINE_PROCEDURE(pango_renderer_set_matrix, gxg_pango_renderer_set_matrix_w, 2, 0, 0, H_pango_renderer_set_matrix);
+  XG_DEFINE_PROCEDURE(g_log_set_handler, gxg_g_log_set_handler_w, 4, 0, 0, H_g_log_set_handler);
+  XG_DEFINE_PROCEDURE(g_log_remove_handler, gxg_g_log_remove_handler_w, 2, 0, 0, H_g_log_remove_handler);
 #endif
 
   XG_DEFINE_PROCEDURE(GPOINTER, gxg_GPOINTER_w, 1, 0, 0, NULL);

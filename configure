@@ -868,7 +868,7 @@ Optional Packages:
   --with-gtk		  use Gtk+ to build Snd
   --with-no-gui  	  make Snd without any graphics support
   --with-doubles	  use doubles throughout
-  --with-static-gsl	  use libgsl.a to build Snd
+  --with-static-gsl	  use libgsl.a to build Snd (for obsolete RPM version)
   --with-static-xm	  include the xm module
   --with-guile	  	  use Guile
   --with-gl		  include OpenGL support
@@ -877,16 +877,16 @@ Optional Packages:
   --with-static-motif	  use libXm.a to build Snd
   --with-modules	  use if sndlib uses modules
   --with-editres	  include editres in xm
-  --with-ladspa  	  include support for LADSPA plugins
-  --with-x11		  include X funcs from xm.c with xg.c
-  --with-hobbit 	  include hobbit-style function arity checking
-  --with-builtin-gtkrc	  include built-in gtkrc fallbacks
+  --with-ladspa  	  include support for LADSPA plugins, Linux only
+  --with-x11		  include X funcs from xm.c with xg.c -- for X hacks, not normal use
+  --with-hobbit 	  include hobbit-style function arity checking, default=no
+  --with-builtin-gtkrc	  include built-in gtkrc fallbacks, default=yes
   --with-midi		  include sndlib midi module
-  --with-gsl		  use GSL, default=yes
+  --with-gsl		  use GSL, default=yes if no complex trig support in C compiler
   --with-fftw		  use fftw, default=yes
   --with-xpm		  use xpm, default=yes
   --with-xp		  use xp, default=no
-  --with-profiling	  include profiling machinery, default=no
+  --with-profiling	  include profiling machinery, default=no, for internal testing
   --with-float-samples	  use floats as the internal sample respresentation
   --with-sample-width=N   use N bits of samples
   --with-motif-prefix=PFX where Motif is installed
@@ -4367,8 +4367,7 @@ done
 
 
 
-
-for ac_header in libc.h sys/vfs.h sys/statfs.h sys/statvfs.h setjmp.h pwd.h locale.h sys/fpu.h dlfcn.h sys/param.h byteswap.h stdint.h
+for ac_header in libc.h sys/vfs.h sys/statfs.h sys/statvfs.h setjmp.h locale.h sys/fpu.h dlfcn.h sys/param.h byteswap.h stdint.h
 do
 as_ac_Header=`echo "ac_cv_header_$ac_header" | $as_tr_sh`
 if eval "test \"\${$as_ac_Header+set}\" = set"; then

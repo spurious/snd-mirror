@@ -797,13 +797,13 @@
 (CFNC "GType gdk_pixmap_get_type void")
 
 ;; GdkWindow -> GdkDrawable in gtk 2.2
-(CFNC "GdkPixmap* gdk_pixmap_new Drawable_was_Window* window gint width gint height gint depth")
-(CFNC "GdkBitmap* gdk_bitmap_create_from_data Drawable_was_Window* window gchar* data gint width gint height")
-(CFNC "GdkPixmap* gdk_pixmap_create_from_data Drawable_was_Window* window gchar* data gint width gint height gint depth GdkColor* fg GdkColor* bg")
-(CFNC "GdkPixmap* gdk_pixmap_create_from_xpm Drawable_was_Window* window GdkBitmap** @mask GdkColor* transparent_color gchar* filename")
-(CFNC "GdkPixmap* gdk_pixmap_colormap_create_from_xpm Drawable_was_Window* window GdkColormap* @colormap GdkBitmap** @mask GdkColor* transparent_color gchar* filename")
-(CFNC "GdkPixmap* gdk_pixmap_create_from_xpm_d Drawable_was_Window* window GdkBitmap** @mask GdkColor* transparent_color gchar** data")
-(CFNC "GdkPixmap* gdk_pixmap_colormap_create_from_xpm_d Drawable_was_Window* window GdkColormap* @colormap GdkBitmap** @mask GdkColor* transparent_color gchar** data")
+(CFNC-22 "GdkPixmap* gdk_pixmap_new GdkDrawable* window gint width gint height gint depth")
+(CFNC-22 "GdkBitmap* gdk_bitmap_create_from_data GdkDrawable* window gchar* data gint width gint height")
+(CFNC-22 "GdkPixmap* gdk_pixmap_create_from_data GdkDrawable* window gchar* data gint width gint height gint depth GdkColor* fg GdkColor* bg")
+(CFNC-22 "GdkPixmap* gdk_pixmap_create_from_xpm GdkDrawable* window GdkBitmap** @mask GdkColor* transparent_color gchar* filename")
+(CFNC-22 "GdkPixmap* gdk_pixmap_colormap_create_from_xpm GdkDrawable* window GdkColormap* @colormap GdkBitmap** @mask GdkColor* transparent_color gchar* filename")
+(CFNC-22 "GdkPixmap* gdk_pixmap_create_from_xpm_d GdkDrawable* window GdkBitmap** @mask GdkColor* transparent_color gchar** data")
+(CFNC-22 "GdkPixmap* gdk_pixmap_colormap_create_from_xpm_d GdkDrawable* window GdkColormap* @colormap GdkBitmap** @mask GdkColor* transparent_color gchar** data")
 
 (CFNC "GdkPixmap* gdk_pixmap_foreign_new GdkNativeWindow anid")
 (CFNC "GdkPixmap* gdk_pixmap_lookup GdkNativeWindow anid")
@@ -1386,7 +1386,7 @@
 (CCHK "GTK_IS_CHECK_MENU_ITEM(obj)" "GtkCheckMenuItem*")
 (CFNC "GtkType gtk_check_menu_item_get_type void")
 (CFNC "GtkWidget* gtk_check_menu_item_new void")
-(CFNC "GtkWidget* gtk_check_menu_item_new_with_label gchar* label")
+(CFNC "GtkWidget* gtk_check_menu_item_new_with_label gchar* label") ; null label => segfault
 (CFNC "GtkWidget* gtk_check_menu_item_new_with_mnemonic gchar* label")
 (CFNC "void gtk_check_menu_item_set_active GtkCheckMenuItem* check_menu_item gboolean is_active")
 (CFNC "gboolean gtk_check_menu_item_get_active GtkCheckMenuItem* check_menu_item")
@@ -1859,7 +1859,7 @@
 (CFNC "gboolean gtk_icon_size_lookup GtkIconSize size gint* [width] gint* [height]")
 (CFNC "GtkIconSize gtk_icon_size_register gchar* name gint width gint height")
 (CFNC "void gtk_icon_size_register_alias gchar* alias GtkIconSize target")
-(CFNC "GtkIconSize gtk_icon_size_from_name gchar* name")
+(CFNC "GtkIconSize gtk_icon_size_from_name gchar* name") ; null = segfault
 (CFNC "gchar* gtk_icon_size_get_name GtkIconSize size")
 (CFNC "GtkIconSet* gtk_icon_set_new void")
 (CFNC "GtkIconSet* gtk_icon_set_new_from_pixbuf GdkPixbuf* pixbuf")
@@ -1924,7 +1924,7 @@
 (CCHK "GTK_IS_IMAGE_MENU_ITEM(obj)" "GtkImageMenuItem*")
 (CFNC "GtkType gtk_image_menu_item_get_type void")
 (CFNC "GtkWidget* gtk_image_menu_item_new void")
-(CFNC "GtkWidget* gtk_image_menu_item_new_with_label gchar* label")
+(CFNC "GtkWidget* gtk_image_menu_item_new_with_label gchar* label") ; null = segfault
 (CFNC "GtkWidget* gtk_image_menu_item_new_with_mnemonic gchar* label")
 (CFNC "GtkWidget* gtk_image_menu_item_new_from_stock gchar* stock_id GtkAccelGroup* @accel_group")
 (CFNC "void gtk_image_menu_item_set_image GtkImageMenuItem* image_menu_item GtkWidget* image")
@@ -2126,7 +2126,7 @@
 (CCHK "GTK_IS_MENU_ITEM(obj)" "GtkMenuItem*")
 (CFNC "GtkType gtk_menu_item_get_type void")
 (CFNC "GtkWidget* gtk_menu_item_new void")
-(CFNC "GtkWidget* gtk_menu_item_new_with_label gchar* label")
+(CFNC "GtkWidget* gtk_menu_item_new_with_label gchar* label") ; null -> segfault
 (CFNC "GtkWidget* gtk_menu_item_new_with_mnemonic gchar* label")
 (CFNC "void gtk_menu_item_set_submenu GtkMenuItem* menu_item GtkWidget* submenu")
 (CFNC "GtkWidget* gtk_menu_item_get_submenu GtkMenuItem* menu_item")
@@ -5402,3 +5402,19 @@
 (CFNC-256 "PangoColor* pango_renderer_get_color PangoRenderer* renderer PangoRenderPart part")
 (CFNC-256 "void pango_renderer_set_matrix PangoRenderer* renderer PangoMatrix* matrix")
 ;;; (needs const on return) (CFNC-256 "PangoMatrix* pango_renderer_get_matrix PangoRenderer* renderer")
+
+
+(CINT-256 "G_LOG_FLAG_RECURSION" "GLogLevelFlags")
+(CINT-256 "G_LOG_FLAG_FATAL" "GLogLevelFlags")
+(CINT-256 "G_LOG_LEVEL_ERROR" "GLogLevelFlags")
+(CINT-256 "G_LOG_LEVEL_CRITICAL" "GLogLevelFlags")
+(CINT-256 "G_LOG_LEVEL_WARNING" "GLogLevelFlags")
+(CINT-256 "G_LOG_LEVEL_MESSAGE" "GLogLevelFlags")
+(CINT-256 "G_LOG_LEVEL_INFO" "GLogLevelFlags")
+(CINT-256 "G_LOG_LEVEL_DEBUG" "GLogLevelFlags")
+(CINT-256 "G_LOG_LEVEL_MASK" "GLogLevelFlags")
+(CINT-256 "G_LOG_FATAL_MASK" "GLogLevelFlags")
+
+(CFNC-256 "guint g_log_set_handler gchar* log_domain GLogLevelFlags log_levels GLogFunc func lambda_data func_data")
+(CFNC-256 "void g_log_remove_handler gchar* log_domain guint handler_id")
+

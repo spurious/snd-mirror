@@ -173,7 +173,8 @@ static void make_pixmaps(void)
 static gboolean name_pix_expose(GtkWidget *w, GdkEventExpose *ev, gpointer data)
 {
   snd_info *sp = (snd_info *)data;
-  gdk_draw_drawable(GDK_DRAWABLE(NAME_PIX(sp)->window), ss->sgx->basic_gc, sp->sgx->file_pix, 0, 0, 0, 4, 16, 16);
+  if (NAME_PIX(sp))
+    gdk_draw_drawable(GDK_DRAWABLE(NAME_PIX(sp)->window), ss->sgx->basic_gc, sp->sgx->file_pix, 0, 0, 0, 4, 16, 16);
   return(false);
 }
 

@@ -423,29 +423,29 @@ latter are (configure --help):
 <tr><td></td><td>--with-static-xm</td><td>include the xm module at build time; this is easier than trying to dynamically load xm.so</td></tr>
 <tr><td></td><td>--with-gl</td><td>include OpenGL support (spectrogram, etc)</td></tr>
 <tr><td></td><td>--with-just-gl</td><td>include OpenGL support, but omit the GL/Guile/Ruby bindings</td></tr>
-<tr><td></td><td>--with-editres</td><td>include editres in xm</td></tr>
-<tr><td></td><td>--with-xpm</td><td>use xpm, default=yes</td></tr>
-<tr><td></td><td>--with-xp</td><td>use xp, default=no; this is the Xprint library which is not tied into Snd at all</td></tr>
-<tr><td></td><td>--with-builtin-gtkrc</td><td>include built-in gtkrc fallbacks (default=yes) (some don't like my happy pastel color scheme)</td></tr>
+<tr><td></td><td>--with-editres</td><td>include editres in xm (default: no)</td></tr>
+<tr><td></td><td>--with-xpm</td><td>use xpm, default: yes</td></tr>
+<tr><td></td><td>--with-xp</td><td>use xp, default: no; this is the Xprint library which is not tied into Snd at all</td></tr>
+<tr><td></td><td>--with-builtin-gtkrc</td><td>include built-in gtkrc fallbacks (default: yes) (some don't like my happy pastel color scheme)</td></tr>
 
 <tr><td colspan=2>Language choices</td><td></td></tr>
-<tr><td></td><td>--with-guile</td><td>use Guile (default=yes), GUILE_CONFIG_path sets Guile location; version 1.3.4 or later</td></tr>
+<tr><td></td><td>--with-guile</td><td>use Guile (default: yes), GUILE_CONFIG_path sets Guile location; version 1.3.4 or later</td></tr>
 <tr><td></td><td>--with-ruby</td><td>try to use Ruby as the extension language; version 1.6.4 or later</td></tr>
 <tr><td></td><td>--with-ruby-prefix=PFX</td><td>where Ruby is installed</td></tr>
-<tr><td></td><td>--with-hobbit</td><td>include hobbit-style function arity checking (hobbit is a Scheme compiler)</td></tr>
+<tr><td></td><td>--with-hobbit</td><td>include hobbit-style function arity checking (hobbit is a Scheme compiler), default: no</td></tr>
 
 <tr><td colspan=2>Numerical choices</td><td></td></tr>
-<tr><td></td><td>--with-doubles</td><td>use doubles throughout (default=no)</td></tr>
-<tr><td></td><td>--with-float-samples</td><td>use floats as the internal sample representation (default=no)</td></tr>
-<tr><td></td><td>--with-sample-width=N</td><td>if not float samples, use N bits for ints (default=24, must be between 16 and 31)</td></tr>
+<tr><td></td><td>--with-doubles</td><td>use doubles throughout (default: no)</td></tr>
+<tr><td></td><td>--with-float-samples</td><td>use floats as the internal sample representation (default: no)</td></tr>
+<tr><td></td><td>--with-sample-width=N</td><td>if not float samples, use N bits for ints (default: 24, must be between 16 and 31)</td></tr>
 
 <tr><td colspan=2>Library choices</td><td></td></tr>
-<tr><td></td><td>--with-gsl</td><td>use GSL (Chebyshev window), default=yes if local C does not support complex trig</td></tr>
-<tr><td></td><td>--with-static-gsl</td><td>use libgsl.a</td></tr>
-<tr><td></td><td>--with-fftw</td><td>use fftw, default=yes; fallback fft is built-in</td></tr>
-<tr><td></td><td>--with-ladspa</td><td>include support for LADSPA plugins (in Linux default=yes)</td></tr>
-<tr><td></td><td>--with-midi</td><td>include sndlib midi module (default=no)</td></tr>
-<tr><td></td><td>--with-shared-sndlib</td><td>try to load libsndlib.so, rather than building it into Snd</td></tr>
+<tr><td></td><td>--with-gsl</td><td>use GSL (for Chebyshev window), default: yes if local C does not support complex trig</td></tr>
+<tr><td></td><td>--with-static-gsl</td><td>use libgsl.a (only for obsolete RPM stuff)</td></tr>
+<tr><td></td><td>--with-fftw</td><td>use fftw, default: yes; fallback fft is built-in</td></tr>
+<tr><td></td><td>--with-ladspa</td><td>include support for LADSPA plugins (in Linux default: yes)</td></tr>
+<tr><td></td><td>--with-midi</td><td>include sndlib midi module (default: no)</td></tr>
+<tr><td></td><td>--with-shared-sndlib</td><td>try to load libsndlib.so, rather than building it into Snd (default: no)</td></tr>
 <tr><td></td><td>--with-modules</td><td>use this switch with --with-shared-sndlib if sndlib.so uses modules</td></tr>
 <tr><td></td><td>--disable-deprecated</td><td>do not include any deprecated stuff from gtk, guile, sndlib, xen, clm, etc</td></tr>
 
@@ -456,8 +456,8 @@ latter are (configure --help):
 
 <tr><td colspan=2>Debugging etc</td><td></td></tr>
 <tr><td></td><td>--with-snd-as-widget</td><td>make Snd a loadable widget, not a standalone program</td></tr>
-<tr><td></td><td>--with-profiling</td><td>include profiling (branch counting) machinery, default=no (only for debugging)</td></tr>
-<tr><td></td><td>--enable-snd-debug</td><td>include internal Snd debugging functions, default=no (not useful if not actually debugging!) </td></tr>
+<tr><td></td><td>--with-profiling</td><td>include profiling (branch counting) machinery, default: no (only for debugging)</td></tr>
+<tr><td></td><td>--enable-snd-debug</td><td>include internal Snd debugging functions, default: no (not useful if not actually debugging!) </td></tr>
 <tr><td></td><td>--disable-largefile</td><td>omit support for large (64-bit byte address) files</td></tr>
 <tr><td></td><td>--disable-nls</td><td>do not use Native Language Support</td></tr>
 </table>
