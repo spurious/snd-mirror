@@ -4592,6 +4592,7 @@ static char *edit_data_to_file(FILE *fd, ed_list *ed, chan_info *cp)
 		  if ((n + bufnum) < samples) cursamples = bufnum; else cursamples = (samples - n);
 		  mus_file_read(ifd, 0, cursamples - 1, 1, ibufs);
 		  buffer = (mus_sample_t *)(ibufs[0]);
+ 		  if (n > 0) fprintf(fd, PROC_SEP);
 #if SNDLIB_USE_FLOATS
  		  fprintf(fd, "%f", MUS_SAMPLE_TO_FLOAT(buffer[0]));
 #else
