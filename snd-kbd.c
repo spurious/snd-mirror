@@ -1231,7 +1231,7 @@ void keyboard_command (chan_info *cp, int keysym, int state)
 	    case snd_K_5: case snd_K_6: case snd_K_7: case snd_K_8: case snd_K_9: 
 	      counting = 1;
 	      number_buffer[number_ctr] = (char)('0' + keysym - snd_K_0); 
-	      if (number_ctr < (NUMBER_BUFFER_SIZE-2)) 
+	      if (number_ctr < (NUMBER_BUFFER_SIZE - 2)) 
 		number_ctr++; 
 	      /* there is also the bare-number case below */
 	      break;
@@ -1429,7 +1429,7 @@ void keyboard_command (chan_info *cp, int keysym, int state)
 	    case snd_K_5: case snd_K_6: case snd_K_7: case snd_K_8: case snd_K_9: 
 	      counting = 1;
 	      number_buffer[number_ctr] = (char)('0' + keysym-snd_K_0); 
-	      if (number_ctr < (NUMBER_BUFFER_SIZE-2)) 
+	      if (number_ctr < (NUMBER_BUFFER_SIZE - 2)) 
 		number_ctr++; 
 	      break;
 	    case snd_K_period: 

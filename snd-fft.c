@@ -2041,7 +2041,7 @@ static int set_up_sonogram(sonogram_state *sg)
   sonogram_state *lsg = NULL;
   int i, tempsize, dpys = 1;
   cp = sg->cp;
-  if (cp->graph_transform_p == 0) return(2);
+  if ((cp->graph_transform_p == 0) || (cp->transform_size <= 1)) return(2);
   ss = cp->state;
   ap = cp->axis;
   sg->slice = 0;
@@ -2063,6 +2063,7 @@ static int set_up_sonogram(sonogram_state *sg)
       (cp->transform_type == AUTOCORRELATION))
     sg->spectrum_size = (cp->transform_size) / 2;
   else sg->spectrum_size = cp->transform_size;
+  if (sg->spectrum_size <= 0) return(2);
   sg->edit_ctr = cp->edit_ctr;
   si = (sono_info *)(cp->sonogram_data);
   if (!si)

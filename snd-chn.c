@@ -1135,7 +1135,7 @@ int make_graph(chan_info *cp, snd_info *sp, snd_state *ss)
 	ps_reset_color();
     }
   if ((cp->verbose_cursor) && (cp->cursor_on) && (cp->cursor >= ap->losamp) && (cp->cursor <= ap->hisamp) &&
-      ((sp->minibuffer_on == MINI_OFF) || (sp->minibuffer_on == MINI_CURSOR)))
+      ((sp) && ((sp->minibuffer_on == MINI_OFF) || (sp->minibuffer_on == MINI_CURSOR))))
     {
       show_cursor_info(cp); 
       sp->minibuffer_on = MINI_CURSOR;

@@ -69,7 +69,7 @@ static void release_pending_sounds(chan_info *cp, int edit_ctr)
     }
 }
 
-#define EDIT_ALLOC_SIZE 128
+#define EDIT_ALLOC_SIZE 32
 
 static void prepare_sound_list (chan_info *cp)
 {
@@ -829,7 +829,7 @@ static ed_list *selected_ed_list(off_t beg, off_t end, ed_list *current_state)
   if (diff != 0)
     {
       copy_ed_fragment(new_ed->fragments[k], current_state->fragments[ek]);
-      FRAGMENT_LOCAL_END(new_ed, (k-1)) -= diff;
+      FRAGMENT_LOCAL_END(new_ed, (k - 1)) -= diff;
       FRAGMENT_LOCAL_POSITION(new_ed, k) = FRAGMENT_LOCAL_END(new_ed, (k - 1)) + 1;
       FRAGMENT_GLOBAL_POSITION(new_ed, k) = end + 1; /* 1? */
       k++;
@@ -858,7 +858,7 @@ static void new_leading_ramp(ed_fragment *new_start, ed_fragment *old_start, off
   Float val;
   rmp0 = old_start->rmp0;
   rmp1 = old_start->rmp1;
-  val = rmp0 + (rmp1 - rmp0) * (Float)(samp - 1 - old_start->out) / (Float)(old_start->end - old_start->beg);
+  val = rmp0 + (rmp1 - rmp0) * (double)(samp - 1 - old_start->out) / (double)(old_start->end - old_start->beg);
   new_start->typ = ED_RAMP;
   new_start->rmp0 = old_start->rmp0;
   new_start->rmp1 = val;
@@ -870,7 +870,7 @@ static void new_trailing_ramp(ed_fragment *new_back, ed_fragment *old_back, off_
   Float val;
   rmp0 = old_back->rmp0;
   rmp1 = old_back->rmp1;
-  val = rmp0 + (rmp1 - rmp0) * (Float)(samp - old_back->out) / (Float)(old_back->end - old_back->beg);
+  val = rmp0 + (rmp1 - rmp0) * (double)(samp - old_back->out) / (double)(old_back->end - old_back->beg);
   new_back->typ = ED_RAMP;
   new_back->rmp0 = val;
   new_back->rmp1 = old_back->rmp1;

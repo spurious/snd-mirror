@@ -1,7 +1,5 @@
 #include "snd.h"
 
-/* TODO: make multi-chan hour-glass work right */
-
 #if HAVE_XPM
   #include <X11/xpm.h>
 #endif
@@ -284,9 +282,12 @@ char *get_minibuffer_string(snd_info *sp)
 void make_minibuffer_label(snd_info *sp , char *str)
 {
   XmString s1;
-  s1 = XmStringCreate(str, "button_font");
-  XtVaSetValues(MINIBUFFER_LABEL(sp), XmNlabelString, s1, NULL);
-  XmStringFree(s1);
+  if ((sp->sgx) && (MINIBUFFER_LABEL(sp)))
+    {
+      s1 = XmStringCreate(str, "button_font");
+      XtVaSetValues(MINIBUFFER_LABEL(sp), XmNlabelString, s1, NULL);
+      XmStringFree(s1);
+    }
 }
 
 
@@ -3021,12 +3022,18 @@ void progress_report(snd_info *sp, const char *funcname, int curchan, int chans,
 {
   int which;
 #if HAVE_XPM
+  char glass_num[8];
   which = (int)(pct * NUM_GLASSES);
-  if (which >= NUM_GLASSES) which = NUM_GLASSES-1;
+  if (which >= NUM_GLASSES) which = NUM_GLASSES - 1;
   if (which < 0) which = 0;
   if (from_enved)
     display_enved_progress(NULL, mini_glasses[which]);
   else snd_file_glasses_icon(sp, TRUE, which);
+  if (chans > 1) 
+    {
+      snprintf(glass_num, 8, "[%d]", curchan);
+      make_minibuffer_label(sp, glass_num);
+    }
 #else
   char *expr_str;
   expr_str = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
@@ -3048,6 +3055,7 @@ void finish_progress_report(snd_info *sp, int from_enved)
   if (from_enved)
     display_enved_progress(NULL, blank_pixmap);
   else snd_file_glasses_icon(sp, FALSE, 0);
+  clear_minibuffer_prompt(sp);
 #else
   char *expr_str;
   snd_state *ss;

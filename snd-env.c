@@ -923,7 +923,7 @@ static void add_envelope(snd_state *ss, char *name, env *val)
 	{
 	  all_envs = (env **)REALLOC(all_envs, all_envs_size * sizeof(env *));
 	  all_names = (char **)REALLOC(all_names, all_envs_size * sizeof(char *));
-	  for (i = all_envs_size-16; i < all_envs_size; i++) {all_names[i] = NULL; all_envs[i] = NULL;}
+	  for (i = all_envs_size - 16; i < all_envs_size; i++) {all_names[i] = NULL; all_envs[i] = NULL;}
 	}
       else
 	{

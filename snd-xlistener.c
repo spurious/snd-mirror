@@ -1000,7 +1000,7 @@ static void command_modify_callback(Widget w, XtPointer context, XtPointer info)
 	  prompt = listener_prompt(ss);
 	  str = XmTextGetString(w);
 	  len = XmTextGetLastPosition(w);
-	  if ( ((str[cbs->currInsert-1] == prompt[0]) && 
+	  if ( ((str[cbs->currInsert - 1] == prompt[0]) && 
 		(str[cbs->currInsert - 2] == '\n')) ||
 	       ((cbs->currInsert < (len - 1)) && 
 		(str[cbs->currInsert] == prompt[0]) && 

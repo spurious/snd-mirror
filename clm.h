@@ -74,7 +74,7 @@
  *             decided to make mus_inspect return char* like mus_describe.
  */
 
-/* TODO: isn't mus_env_interp backwards? */
+/* isn't mus_env_interp backwards? */
 
 /* compile time switches:
  *

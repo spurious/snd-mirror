@@ -575,51 +575,53 @@
 		 (lambda (w data info)
 		   (let* ((e (|event info))
 			  (xe (- (|x_root e) (car (|XtTranslateCoords w 0 0)))))
-		     ;; xe is where the mouse-click occurred in the graph window's (local) coordinates
-		     (set! graph-popup-snd snd)
-		     (set! graph-popup-chn chn)
-
-		     (if (= (channel-style snd) channels-combined)
-			 (let ((ye (|y e))) ; y axis location of mouse-down
-			   (call-with-current-continuation
-			    (lambda (break)
-			      (do ((i 0 (1+ i)))
-				  ((= i (chans snd)))
-				(let ((off (list-ref (axis-info snd i) 14)))
-				  (if (< ye off)
-				      (begin
-					(set! graph-popup-chn (- i 1))
-					(break)))))
-                              (set! graph-popup-chn (- (chans snd) 1))))))
-		     
-		     (let ((fax (if (graph-transform? snd chn) (axis-info snd chn transform-graph) #f))
-			   (lax (if (graph-lisp? snd chn) (axis-info snd chn lisp-graph) #f)))
-		       (if (and fax
-				(>= xe (list-ref fax 10))
-				(<= xe (list-ref fax 12)))
-			   ;; in fft
-			   (begin
-			     (edit-fft-popup-menu snd chn)
-			     (set! (|menuToPost info) fft-popup-menu))
+		     (if (= |ButtonPress (|type e))
+			 (begin
+			   ;; xe is where the mouse-click occurred in the graph window's (local) coordinates
+			   (set! graph-popup-snd snd)
+			   (set! graph-popup-chn chn)
 			   
-			   (if (and lax
-				    (>= xe (list-ref lax 10))
-				    (<= xe (list-ref lax 12)))
-			       ;; in lisp
-			       ;;   nothing special implemented yet
-			       ;; (set! (|menuToPost info) graph-popup-menu)
-			       #f ; just a place-holder
-			       
-			       (if (and (selection?)
-					(let* ((beg (/ (selection-position snd graph-popup-chn) (srate snd)))
-					       (end (/ (+ (selection-position snd graph-popup-chn) (selection-length snd graph-popup-chn)) (srate snd))))
-					  (and (>= xe (x->position beg snd chn))
-					       (<= xe (x->position end snd chn)))))
-				   (set! (|menuToPost info) selection-popup-menu)
-
-				   (begin
-				     (edit-graph-popup-menu graph-popup-snd graph-popup-chn)
-				     (set! (|menuToPost info) graph-popup-menu)))))))))))))
+			   (if (= (channel-style snd) channels-combined)
+			       (let ((ye (|y e))) ; y axis location of mouse-down
+				 (call-with-current-continuation
+				  (lambda (break)
+				    (do ((i 0 (1+ i)))
+					((= i (chans snd)))
+				      (let ((off (list-ref (axis-info snd i) 14)))
+					(if (< ye off)
+					    (begin
+					      (set! graph-popup-chn (- i 1))
+					      (break)))))
+				    (set! graph-popup-chn (- (chans snd) 1))))))
+			   
+			   (let ((fax (if (graph-transform? snd chn) (axis-info snd chn transform-graph) #f))
+				 (lax (if (graph-lisp? snd chn) (axis-info snd chn lisp-graph) #f)))
+			     (if (and fax
+				      (>= xe (list-ref fax 10))
+				      (<= xe (list-ref fax 12)))
+				 ;; in fft
+				 (begin
+				   (edit-fft-popup-menu snd chn)
+				   (set! (|menuToPost info) fft-popup-menu))
+				 
+				 (if (and lax
+					  (>= xe (list-ref lax 10))
+					  (<= xe (list-ref lax 12)))
+				     ;; in lisp
+				     ;;   nothing special implemented yet
+				     ;; (set! (|menuToPost info) graph-popup-menu)
+				     #f ; just a place-holder
+				     
+				     (if (and (selection?)
+					      (let* ((beg (/ (selection-position snd graph-popup-chn) (srate snd)))
+						     (end (/ (+ (selection-position snd graph-popup-chn) (selection-length snd graph-popup-chn)) (srate snd))))
+						(and (>= xe (x->position beg snd chn))
+						     (<= xe (x->position end snd chn)))))
+					 (set! (|menuToPost info) selection-popup-menu)
+					 
+					 (begin
+					   (edit-graph-popup-menu graph-popup-snd graph-popup-chn)
+					   (set! (|menuToPost info) graph-popup-menu)))))))))))))))
 
     (add-hook! after-open-hook add-popup)
     (for-each 
@@ -791,31 +793,33 @@ color name, an xm Pixel, a snd color, or a list of rgb values (as in Snd's make-
 
       (|XtAddCallback listener |XmNpopupHandlerCallback 
         (lambda (w data info)
-	  (for-each
-	   (lambda (n)
-	     (if (and (list? n)
-		      (equal? (list-ref n 0) 'Popdown))
-		 (let ((top-one (list-ref n 1))
-		       (top-two (list-ref n 2))
-		       (top-two-cascade (list-ref n 3))
-		       (len (length ((list-ref n 4) (sounds)))))
-		   (|XtUnmanageChild top-two)
-		   (|XtUnmanageChild top-two-cascade)
-		   (if top-one (|XtUnmanageChild top-one))
-		   (if (> len 1) 
-		       (begin
-			 (|XtManageChild top-two-cascade)
-			 (|XtManageChild top-two)))
-		   (if (and top-one
-			    (= len 1))
-		       (|XtManageChild top-one)))
-		 (if (|Widget? n)
-		     (if (string=? (|XtName n) "Equalize panes")
-			 ((if (> (length (sounds)) 1) |XtManageChild |XtUnmanageChild) n)
-			 (if (string=? (|XtName n) "Help")
-			     ((if (listener-selection) |XtManageChild |XtUnmanageChild) n))))))
-	   listener-popup-menu)
-	  (set! (|menuToPost info) listener-popup)))
+	  (if (= |ButtonPress (|type (|event info))) ; otherwise it's probably Meta-F or whatever 
+	      (begin
+		(for-each
+		 (lambda (n)
+		   (if (and (list? n)
+			    (equal? (list-ref n 0) 'Popdown))
+		       (let ((top-one (list-ref n 1))
+			     (top-two (list-ref n 2))
+			     (top-two-cascade (list-ref n 3))
+			     (len (length ((list-ref n 4) (sounds)))))
+			 (|XtUnmanageChild top-two)
+			 (|XtUnmanageChild top-two-cascade)
+			 (if top-one (|XtUnmanageChild top-one))
+			 (if (> len 1) 
+			     (begin
+			       (|XtManageChild top-two-cascade)
+			       (|XtManageChild top-two)))
+			 (if (and top-one
+				  (= len 1))
+			     (|XtManageChild top-one)))
+		       (if (|Widget? n)
+			   (if (string=? (|XtName n) "Equalize panes")
+			       ((if (> (length (sounds)) 1) |XtManageChild |XtUnmanageChild) n)
+			       (if (string=? (|XtName n) "Help")
+				   ((if (listener-selection) |XtManageChild |XtUnmanageChild) n))))))
+		 listener-popup-menu)
+		(set! (|menuToPost info) listener-popup)))))
       listener-popup)))
 
 (add-selection-popup)

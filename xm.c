@@ -51,6 +51,8 @@
   #include <config.h>
 #endif
 
+#if HAVE_EXTENSION_LANGUAGE
+
 #if HAVE_MOTIF
   #include <Xm/XmAll.h>
 #else
@@ -24537,3 +24539,6 @@ static int xm_already_inited = 0;
     }
   return(XEN_FALSE);
 }
+
+#endif
+/* end have_extension_language */

@@ -4686,7 +4686,7 @@ static char *descr_strn(int *args, int *ints, Float *dbls, char *which, int bool
   strcat(buf, ")");
   return(buf);
 }
-/* TODO: collapse constants */
+
 static char *string_append(ptree *pt, xen_value **args, int num_args)
 {
   int i, len = 0;
@@ -4717,10 +4717,11 @@ static xen_value *string_append_1(ptree *pt, xen_value **args, int num_args, int
     return(make_xen_value(R_STRING, add_string_to_ptree(pt, (char *)CALLOC(1, sizeof(char))), R_CONSTANT));
   if (num_args == constants)
     return(make_xen_value(R_STRING, add_string_to_ptree(pt, string_append(pt, args, num_args)), R_CONSTANT));
+  if (num_args == 1)
+    return(copy_xen_value(args[1]));
   return(package_n(pt, R_STRING, appendstr_n, descr_appendstr_n, args, num_args));
 }
 
-/* TODO: precheck constants */
 #define STR_REL_OP(CName, SName, COp) \
 static int str_ ## CName ## _n(ptree *pt, xen_value **args, int num_args) \
 { \
@@ -4745,8 +4746,18 @@ static void string_ ## CName ## _n(int *args, int *ints, Float *dbls) \
 } \
 static xen_value *string_ ## CName ## _1(ptree *pt, xen_value **args, int num_args, int constants) \
 { \
+  int i; \
+  char *lasts = NULL; \
   if (num_args <= 1) return(make_xen_value(R_BOOL, add_int_to_ptree(pt, TRUE), R_CONSTANT)); \
   if (num_args == constants) return(make_xen_value(R_BOOL, add_int_to_ptree(pt, str_ ## CName ## _n(pt, args, num_args)), R_CONSTANT)); \
+  if (constants > 1) \
+    for (i = 1; i <= num_args; i++) \
+      if (args[i]->constant == R_CONSTANT) \
+	{ \
+	  if ((lasts) && (strcmp(lasts, (char *)(pt->ints[args[i]->addr])) COp 0)) \
+	    return(make_xen_value(R_BOOL, add_int_to_ptree(pt, FALSE), R_CONSTANT)); \
+	  lasts = (char *)(pt->ints[args[i]->addr]); \
+	} \
   return(package_n(pt, R_BOOL, string_ ## CName ## _n, descr_string_ ## CName ## _n, args, num_args)); \
 }
 

@@ -7,7 +7,6 @@
 #include "snd.h"
 
 /* SOMEDAY: put Snd names in its own module
- * SOMEDAY: set up configure to handle libsndlib correctly
  */
 
 static snd_state *ss;

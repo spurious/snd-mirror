@@ -991,6 +991,7 @@ static snd_info *snd_update_1(snd_state *ss, snd_info *sp, char *ur_filename)
   old_combine = sp->channel_style;
   read_only = sp->read_only;
   sa = make_axes_data(sp);
+  /* TODO: save/restore marks across snd_update, xen procs? ... [update-sound should restore as much as possible] */
   old_raw = (sp->hdr->type == MUS_RAW);
   if (old_raw)
     {
@@ -2252,7 +2253,7 @@ each inner list has the form: (name start loopstart loopend)"
     {
       lim = mus_header_sf2_entries();
       if (lim > 0)
-	for (i = lim-1; i >= 0; i--)
+	for (i = lim - 1; i >= 0; i--)
 	  {
 	    inlist = XEN_LIST_4(C_TO_XEN_STRING(mus_header_sf2_name(i)),
 			        C_TO_XEN_INT(mus_header_sf2_start(i)),

@@ -2258,7 +2258,6 @@ Reverb-feedback sets the scaler on the feedback.\n\
 ;;; TODO: mix-panning via enved (or as part of mix file dialog?)
 ;;; SOMEDAY: spatial envelope dialog
 ;;; SOMEDAY: spectral edit dialog
-;;; SOMEDAY: finish the loop-point dialog in marks-menu.scm (create-loop-dialog)
 
 #!
 (let ((dpy (|XtDisplay (cadr (main-widgets)))))

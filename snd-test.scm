@@ -47,9 +47,7 @@
     ((IF <form1> <form2>) (if <form1> <form2>))
     ((IF <form1> <form2> <form3>) (if <form1> <form2> <form3>))))
 
-(if (string=? (version) "1.4") (load "fix-optargs.scm"))
-
-(define tests 1)
+(define tests 10)
 (define snd-test -1)
 (if (provided? 'snd-debug) (disable-play))
 (define keep-going #f)
@@ -1182,8 +1180,11 @@
       (open-sound "oboe.snd")
       (if (file-exists? "funcs.cl") (load "funcs.cl"))
       (let ((td (temp-dir)))
-	(set! (temp-dir) "/home/bil/test")
-	(IF (not (string=? (temp-dir) "/home/bil/test")) (snd-display ";set temp-dir: ~A?" (temp-dir)))
+	(catch #t
+	       (lambda ()
+		 (set! (temp-dir) "/home/bil/test")
+		 (IF (not (string=? (temp-dir) "/home/bil/test")) (snd-display ";set temp-dir: ~A?" (temp-dir))))
+	       (lambda args args))
 	(if td 
 	    (set! (temp-dir) td)
 	    (set! (temp-dir) "")))
@@ -6836,6 +6837,7 @@
 	(IF (fneq (mus-frequency gen) 4000.0) (snd-display ";rand-interp frequency: ~F?" (mus-frequency gen)))
 	(IF (= (vct-ref v0 1) (vct-ref v0 8)) (snd-display ";rand-interp output: ~A" v0)))
 
+      (set! (locsig-type) mus-linear)
       (let* ((gen (make-locsig 30.0 :channels 2))
 	     (gen1 (make-locsig 60.0 :channels 2))
 	     (gen2 (make-locsig 60.0 :channels 4))
@@ -9081,7 +9083,7 @@
       (close-sound s1)
       (close-sound s2)
       (if (> diff maxok)
-	  (snd-display ";translate ~A: ~A > ~A?" snd2 diff maxok)))))
+	  (snd-display ";translate spectral difference ~A: ~A > ~A?" snd2 diff maxok)))))
 
 (if (or full-test (= snd-test 12) (and keep-going (<= snd-test 12)))
     (if sf-dir-files

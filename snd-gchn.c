@@ -446,7 +446,7 @@ void reflect_edit_history_change(chan_info *cp)
       if (lst)
 	{
 	  eds = cp->edit_ctr;
-	  while ((eds<(cp->edit_size-1)) && (cp->edits[eds + 1])) eds++;
+	  while ((eds < (cp->edit_size - 1)) && (cp->edits[eds + 1])) eds++;
 	  if (eds >= 0)
 	    {
 	      SG_LIST_CLEAR(lst);

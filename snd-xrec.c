@@ -272,7 +272,7 @@ static Pixmap transform_text (Widget w, char *str, XFontStruct *font, Float angl
 		  iny = ty + snd_round((x + (Float)i / xscl) * matrix[1] + 
 				   (y + (Float)j / yscl) * matrix[3]); 
 		  if (iny < 0) iny = 0; 
-		  if (iny >= (int)nheight) iny = nheight-1;
+		  if (iny >= (int)nheight) iny = nheight - 1;
 		  XPutPixel(after, inx, iny, px);
 		}
 	  }
@@ -2603,7 +2603,7 @@ static Widget make_vertical_gain_sliders(snd_state *ss, recorder_info *rp, PANE 
   icon_label = XtCreateManagedWidget("icon", xmLabelWidgetClass, p->pane, args, n);
       
   last_slider = NULL;
-  for (i = 0, chan = num_gains-1; i < num_gains; i++, chan--)
+  for (i = 0, chan = num_gains - 1; i < num_gains; i++, chan--)
     {
       /* we're moving right to left here, so the first slider represents the highest channel */
       /* in the Linux case, as each new device pops up, we need some indication above it */
@@ -3005,7 +3005,7 @@ static Position make_amp_sliders(snd_state *ss, recorder_info *rp, PANE *p, Widg
 void sensitize_control_buttons(void)
 {
   int i;
-  for (i = 0; i < device_buttons_size-1; i++) /* last button is autoload_file */
+  for (i = 0; i < device_buttons_size - 1; i++) /* last button is autoload_file */
     if (device_buttons[i])
       set_sensitive(device_buttons[i], TRUE);
 }
@@ -3013,7 +3013,7 @@ void sensitize_control_buttons(void)
 void unsensitize_control_buttons(void)
 {
   int i;
-  for (i = 0; i < device_buttons_size-1; i++)
+  for (i = 0; i < device_buttons_size - 1; i++)
     if (device_buttons[i])
       set_sensitive(device_buttons[i], FALSE);
 }
@@ -3518,7 +3518,7 @@ static void initialize_recorder(recorder_info *rp)
 #if NEW_SGI_AL || defined(SUN)
   /* for simplicity, and until someone complains, new SGI AL machines will just have one active input device */
   active_device_button = rp->microphone_button;
-  for (i = 0; i < device_buttons_size-1; i++)
+  for (i = 0; i < device_buttons_size - 1; i++)
     if ((device_buttons[i]) &&
 	(i != rp->microphone_button) && 
 	(recorder_input_device(all_panes[i]->device)))

@@ -678,7 +678,7 @@ static int off_t_compare(const void *a, const void *b)
 }
 
 static char *src_channel_with_error(chan_info *cp, snd_fd *sf, off_t beg, off_t dur, Float ratio, mus_any *egen, 
-				    int from_enved, const char *origin, int over_selection)
+				    int from_enved, const char *origin, int over_selection, int curchan, int chans)
 {
   snd_info *sp = NULL;
   snd_state *ss;
@@ -731,7 +731,7 @@ static char *src_channel_with_error(chan_info *cp, snd_fd *sf, off_t beg, off_t 
 	      if (err == -1) break;
 	      if (reporting) 
 		{
-		  progress_report(sp, origin, 1, 1, (Float)(sr->sample) / (Float)dur, from_enved);
+		  progress_report(sp, origin, curchan + 1, chans, (Float)(sr->sample) / (Float)dur, from_enved);
 		  if (ss->stopped_explicitly) break;
 		}
 	    }
@@ -786,7 +786,7 @@ static char *src_channel_with_error(chan_info *cp, snd_fd *sf, off_t beg, off_t 
 	      if (err == -1) break;
 	      if (reporting) 
 		{
-		  progress_report(sp, origin, 1, 1, (Float)(sr->sample) / (Float)dur, from_enved);
+		  progress_report(sp, origin, curchan + 1, chans, (Float)(sr->sample) / (Float)dur, from_enved);
 		  if (ss->stopped_explicitly) break;
 		}
 	    }
@@ -918,7 +918,7 @@ void src_env_or_num(snd_state *ss, chan_info *cp, env *e, Float ratio, int just_
 	      else egen = gen;
 	      if (egen) ratio = 0.0;            /* added 14-Mar-01 otherwise the envelope is an offset? */
 	    }
-	  errmsg = src_channel_with_error(cp, sfs[i], si->begs[i], dur, ratio, egen, from_enved, origin, over_selection);
+	  errmsg = src_channel_with_error(cp, sfs[i], si->begs[i], dur, ratio, egen, from_enved, origin, over_selection, i, si->chans);
 	  if (egen)
 	    {
 	      if (e) 
@@ -3533,7 +3533,7 @@ sampling-rate converts snd's channel chn by ratio, or following an envelope gene
     }
   else check_src_envelope(mus_length(egen), mus_data(egen), S_src_channel);
   sf = init_sample_read_any(beg, cp, READ_FORWARD, pos);
-  errmsg = src_channel_with_error(cp, sf, beg, dur, ratio, egen, FALSE, S_src_channel, FALSE);
+  errmsg = src_channel_with_error(cp, sf, beg, dur, ratio, egen, FALSE, S_src_channel, FALSE, 1, 1);
   sf = free_snd_fd(sf);
   if (errmsg)
     {

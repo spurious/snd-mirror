@@ -1500,7 +1500,7 @@ static void make_vertical_gain_sliders(snd_state *ss, recorder_info *rp, PANE *p
 
   last_device = -1;
 
-  for (i = 0, chan = num_gains-1; i < num_gains; i++, chan--)
+  for (i = 0, chan = num_gains - 1; i < num_gains; i++, chan--)
     {
       wd = (Wdesc *)CALLOC(1, sizeof(Wdesc));
       wd->system = p->system;
