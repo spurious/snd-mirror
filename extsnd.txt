@@ -790,11 +790,14 @@ Snd is currently in flux.
                                   to that file, else post it in a help window (where it can be selected and
                                   pasted elsewhere). This function follows the state of the various 'sync'
                                   buttons, given snd and chn.
-  play              (samp snd chn sync) play snd's channel chn starting from sample samp.
-                                  If 'sync' is #t, play all sounds syncd to snd.
-  play-and-wait     (samp snd chn sync) play snd's channel chn starting from sample samp and wait for it to finish.
+  play              (samp snd chn sync end) play snd's channel chn starting from sample samp.
+                                  If 'sync' is #t, play all sounds syncd to snd.  If 'end' is not given, play until end of sound.
+                                  If 'end' is given (as a sample number), the actual end point may be off by a few samples; Snd
+                                  only checks on dac-buffer boundaries (normally around 256 samples).
+  play-and-wait     (samp snd chn sync end) play snd's channel chn starting from sample samp and wait for it to finish.
   play-mix          (mix)         play mix mix.
   play-region       (reg wait)    play region reg, if wait is #t, play to end before returning.
+  play-selection    ()            play the currently selected data.
   play-track        (track snd chn) play track track. If snd is #t, play all associated chans.
   preload-directory (dir)         preload sound files from directory dir (see -p).
   preload-file      (file)        preload file (see View menu's View Files option).

@@ -1360,7 +1360,7 @@ void play_syncd_mark(chan_info *cp, mark *m)
       for (i=0;i<sd->mark_ctr;i++)
 	{
 	  mp = sd->marks[i];
-	  start_playing_chan_syncd(sd->chans[i],mp->samp,TRUE,(i < (sd->mark_ctr-1)));
+	  start_playing_chan_syncd(sd->chans[i],mp->samp,TRUE,(i < (sd->mark_ctr-1)),NO_END_SPECIFIED);
 	}
     }
   if (sd) free_syncdata(sd);

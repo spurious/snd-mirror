@@ -90,6 +90,7 @@ static void highlight_region(snd_state *ss)
 static void make_region_labels(file_info *hdr)
 {
   char *str;
+  if (hdr == NULL) return;
   str = (char *)CALLOC(256,sizeof(char));
   sprintf(str,STR_srate,hdr->srate);
   set_label(srate_text,str);

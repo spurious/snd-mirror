@@ -836,11 +836,14 @@ would refer to the original form.  I may extend this to accept a list of (more t
                                   to that file, else post it in a help window (where it can be selected and 
                                   pasted elsewhere). This function follows the state of the various 'sync'
                                   buttons, given <i>snd</i> and <i>chn</i>.
-  <a name="sndplay">play</a>              (<i>samp snd chn sync</i>) play <i>snd</i>'s channel <i>chn</i> starting from sample <i>samp</i>.
-                                  If 'sync' is #t, play all sounds syncd to snd.
-  <a name="sndplayandwait">play-and-wait</a>     (<i>samp snd chn sync</i>) play <i>snd</i>'s channel <i>chn</i> starting from sample <i>samp</i> and wait for it to finish.
+  <a name="sndplay">play</a>              (<i>samp snd chn sync end</i>) play <i>snd</i>'s channel <i>chn</i> starting from sample <i>samp</i>.
+                                  If 'sync' is #t, play all sounds syncd to snd.  If 'end' is not given, play until end of sound.
+                                  If 'end' is given (as a sample number), the actual end point may be off by a few samples; Snd
+                                  only checks on dac-buffer boundaries (normally around 256 samples).
+  <a name="sndplayandwait">play-and-wait</a>     (<i>samp snd chn sync end</i>) play <i>snd</i>'s channel <i>chn</i> starting from sample <i>samp</i> and wait for it to finish.
   <a name="sndplaymix">play-mix</a>          (<i>mix</i>)         play mix <i>mix</i>.
   <a name="sndplayregion">play-region</a>       (<i>reg wait</i>)    play region <i>reg</i>, if wait is #t, play to end before returning.
+  <a name="sndplayselection">play-selection</a>    ()            play the currently selected data.
   <a name="sndplaytrack">play-track</a>        (<i>track snd chn</i>) play track <i>track</i>. If snd is #t, play all associated chans.
   <a name="sndpreloaddirectory">preload-directory</a> (dir)         preload sound files from directory <i>dir</i> (see -<a href="snd.html#minusp">p</a>).
   <a name="sndpreloadfile">preload-file</a>      (file)        preload <i>file</i> (see View menu's <a href="snd.html#prevfiles">View Files</a> option).

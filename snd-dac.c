@@ -261,6 +261,7 @@ typedef struct {
   src_state **srcs;
   snd_info *sp; /* needed to see button callback changes etc */
   snd_state *state;
+  int end;
 } dac_info;
 
 void snd_make_filter(int order, Float *env, Float *a)
@@ -908,7 +909,7 @@ static int find_slot_to_play(void)
   return(old_size);
 }
 
-static void start_playing_1(void *ptr, int start, int background, int paused)
+static void start_playing_1(void *ptr, int start, int background, int paused, int end)
 {
   int slot,chans = 0,i,direction,beg = 0,channels = 1;
   dac_info *dp;
@@ -1031,6 +1032,9 @@ static void start_playing_1(void *ptr, int start, int background, int paused)
     }
   dp = make_dac_info(sp,chans,fds);
   dp->ri = ri;
+  dp->end = end;
+  if (end != NO_END_SPECIFIED) {dp->end -= beg; if (dp->end < 0) dp->end = -(dp->end);}
+
   if (chans > channels) channels = chans;
   play_list[slot] = dp;
   dp->slot = slot;
@@ -1081,11 +1085,11 @@ static void start_playing_1(void *ptr, int start, int background, int paused)
     }
 }
 
-void start_playing(void *ptr, int start) {start_playing_1(ptr,start,TRUE,FALSE);}
-void play_to_end(void *ptr, int start) {start_playing_1(ptr,start,FALSE,FALSE);}
+void start_playing(void *ptr, int start, int end) {start_playing_1(ptr,start,TRUE,FALSE,end);}
+void play_to_end(void *ptr, int start, int end) {start_playing_1(ptr,start,FALSE,FALSE,end);}
 
 /* TODO: check stop_playing -- perhaps need a sync indication for it? */
-static void start_playing_syncd(snd_info *sp, int start, int background)
+static void start_playing_syncd(snd_info *sp, int start, int background, int end)
 {
   int i;
   snd_state *ss;
@@ -1098,24 +1102,41 @@ static void start_playing_syncd(snd_info *sp, int start, int background)
 	  nsp = ss->sounds[i];
 	  if ((nsp) && (nsp->inuse) && (nsp->syncing == sp->syncing))
 	    {
-	      if (lsp) start_playing_1((void *)lsp,start,background,TRUE); /* TRUE=dac waits for the rest of the sounds to be queued up */
+	      if (lsp) start_playing_1((void *)lsp,start,background,TRUE,end); /* TRUE=dac waits for the rest of the sounds to be queued up */
 	      lsp = nsp;
 	    }
 	}
-      if (lsp) start_playing_1((void *)lsp,start,background,FALSE); /* this triggers the dac */
+      if (lsp) start_playing_1((void *)lsp,start,background,FALSE,end); /* this triggers the dac */
     }
-  else start_playing_1((void *)sp,start,background,FALSE);
+  else start_playing_1((void *)sp,start,background,FALSE,end);
 }
 
-void start_playing_chan_syncd(chan_info *cp, int start, int background, int pause)
+void start_playing_chan_syncd(chan_info *cp, int start, int background, int pause, int end)
 {
   snd_info *sp;
   int old_syncing;
   sp = cp->sound;
   old_syncing = sp->syncing;
   sp->syncing = 0;
-  start_playing_1((void *)cp,start,background,pause);
+  start_playing_1((void *)cp,start,background,pause,end);
   sp->syncing = old_syncing;
+}
+
+void play_selection(snd_state *ss)
+{
+  int i,dur;
+  sync_info *si = NULL;
+  if (selection_is_current())
+    {
+      si = region_sync(0);
+      dur = region_len(0);  /* can't this change?? */
+      if (si)
+	{
+	  for (i=0;i<si->chans;i++)
+	    start_playing_chan_syncd((void *)(si->cps[i]),si->begs[i],FALSE,(i < (si->chans - 1)),si->begs[i] + dur);
+	  free_sync_info(si);
+	}
+    }
 }
 
 static int choose_dac_op (dac_info *dp, snd_info *sp)
@@ -1358,7 +1379,12 @@ static int fill_dac(snd_state *ss, int write_ok)
 		}
 
 	      /* check for EOF */
-	      if (read_sample_eof(dp->chn_fds[0]))
+	      if (dp->end != NO_END_SPECIFIED)
+		{
+		  dp->end -= len;
+		  if (dp->end < 0) dp->end = 0;
+		}
+	      if ((read_sample_eof(dp->chn_fds[0])) || (dp->end == 0))
 		{
 		  if (write_ok)  /* i.e. not apply */
 		    stop_playing(dp);
@@ -1921,6 +1947,9 @@ void initialize_apply(snd_info *sp)
   dp->cur_index = sp->contrast;
   dp->cur_exp = sp->expand;
   dp->cur_rev = sp->revscl;
+  if (ss->apply_choice == APPLY_TO_SELECTION)
+    dp->end = apply_dur;
+  else dp->end = NO_END_SPECIFIED;
   apply_dac_op = choose_dac_op(dp,sp);
   dac_chans = chans;
   dac_decay = (int)(reverb_decay(ss) * SND_SRATE(sp));
@@ -1996,12 +2025,15 @@ int run_apply(snd_info *sp, int ofd)
 #if HAVE_GUILE
 #include "sg.h"
 
-static SCM g_play_1(SCM samp_n, SCM snd_n, SCM chn_n, int background, int syncd) /* all chans if chn_n omitted, arbitrary file if snd_n is name */
+static SCM g_play_1(SCM samp_n, SCM snd_n, SCM chn_n, int background, int syncd, int end_n) 
 {
+  /* all chans if chn_n omitted, arbitrary file if snd_n is name */
   snd_info *sp;
   chan_info *cp;
   char *name = NULL,*urn;
   int samp = 0;
+  int end = NO_END_SPECIFIED;
+  if (SCM_INUMP(end_n)) end = SCM_INUM(end_n);
   if (gh_string_p(samp_n))
     {
       urn = gh_scm2newstr(samp_n,NULL);
@@ -2013,8 +2045,8 @@ static SCM g_play_1(SCM samp_n, SCM snd_n, SCM chn_n, int background, int syncd)
       sp->fullname = NULL;
       sp->delete_me = 1;
       if (background)
-	start_playing(sp,0);
-      else play_to_end(sp,0);
+	start_playing(sp,0,end);
+      else play_to_end(sp,0,end);
       if (name) FREE(name);
     }
   else
@@ -2027,12 +2059,12 @@ static SCM g_play_1(SCM samp_n, SCM snd_n, SCM chn_n, int background, int syncd)
       if (!(gh_number_p(chn_n)))
 	{
 	  if (syncd)
-	    start_playing_syncd(sp,samp,background);
+	    start_playing_syncd(sp,samp,background,end);
 	  else
 	    {
 	      if (background)
-		start_playing(sp,samp);
-	      else play_to_end(sp,samp);
+		start_playing(sp,samp,end);
+	      else play_to_end(sp,samp,end);
 	    }
 	}
       else 
@@ -2040,12 +2072,12 @@ static SCM g_play_1(SCM samp_n, SCM snd_n, SCM chn_n, int background, int syncd)
 	  cp = get_cp(snd_n,chn_n);
 	  if (cp == NULL) return(NO_SUCH_CHANNEL);
 	  if (syncd)
-	    start_playing_syncd(cp->sound,samp,background);
+	    start_playing_syncd(cp->sound,samp,background,end);
 	  else
 	    {
 	      if (background)
-		start_playing(cp,samp);
-	      play_to_end(cp,samp);
+		start_playing(cp,samp,end);
+	      play_to_end(cp,samp,end);
 	    }
 	}
     }
@@ -2054,20 +2086,32 @@ static SCM g_play_1(SCM samp_n, SCM snd_n, SCM chn_n, int background, int syncd)
 
 static int bool_int_or_zero(SCM n) {if (SCM_TRUE_P(n)) return(1); else return(g_scm2intdef(n,0));}
 
-static SCM g_play(SCM samp_n, SCM snd_n, SCM chn_n, SCM syncd) 
+static SCM g_play(SCM samp_n, SCM snd_n, SCM chn_n, SCM syncd, SCM end_n) 
 {
-  #define H_play "(" S_play " &optional (start 0) snd chn sync) plays snd or snd's channel chn starting at start.\n\
-   'start' can also be a filename: (" S_play " \"oboe.snd\").  If 'sync' is true, all sounds syncd to snd are played."
+  #define H_play "(" S_play " &optional (start 0) snd chn sync end) plays snd or snd's channel chn starting at start.\n\
+   'start' can also be a filename: (" S_play " \"oboe.snd\").  If 'sync' is true, all sounds syncd to snd are played.\n\
+   if 'end' is not given, it plays to the end of the sound."
 
-  return(g_play_1(samp_n,snd_n,chn_n,TRUE,bool_int_or_zero(syncd)));
+  return(g_play_1(samp_n,snd_n,chn_n,TRUE,bool_int_or_zero(syncd),end_n));
 }
 
-static SCM g_play_and_wait(SCM samp_n, SCM snd_n, SCM chn_n, SCM syncd) 
+static SCM g_play_selection(void) 
 {
-  #define H_play_and_wait "(" S_play_and_wait " &optional (start 0) snd chn) plays snd or snd's channel chn starting at start\n\
+  #define H_play_selection "(" S_play_selection ") plays the current selection"
+  if (selection_is_current())
+    {
+      play_selection(get_global_state());
+      return(SCM_BOOL_T);
+    }
+  return(NO_ACTIVE_SELECTION);
+}
+
+static SCM g_play_and_wait(SCM samp_n, SCM snd_n, SCM chn_n, SCM syncd, SCM end_n) 
+{
+  #define H_play_and_wait "(" S_play_and_wait " &optional (start 0) snd chn end) plays snd or snd's channel chn starting at start\n\
    and waiting for the play to complete before returning.  'start' can also be a filename: (" S_play_and_wait " \"oboe.snd\")"
 
-  return(g_play_1(samp_n,snd_n,chn_n,FALSE,bool_int_or_zero(syncd)));
+  return(g_play_1(samp_n,snd_n,chn_n,FALSE,bool_int_or_zero(syncd),end_n));
 }
 
 static SCM g_stop_playing(SCM snd_n)
@@ -2113,8 +2157,9 @@ void g_init_dac(SCM local_doc)
   DEFINE_PROC(gh_new_procedure0_0(S_expand_funcs,SCM_FNC g_expand_funcs),H_expand_funcs);
   DEFINE_PROC(gh_new_procedure0_0(S_contrast_func,SCM_FNC g_contrast_func),H_contrast_func);
 
-  DEFINE_PROC(gh_new_procedure(S_play,SCM_FNC g_play,0,4,0),H_play);
-  DEFINE_PROC(gh_new_procedure(S_play_and_wait,SCM_FNC g_play_and_wait,0,4,0),H_play_and_wait);
+  DEFINE_PROC(gh_new_procedure(S_play,SCM_FNC g_play,0,5,0),H_play);
+  DEFINE_PROC(gh_new_procedure(S_play_selection,SCM_FNC g_play_selection,0,0,0),H_play_selection);
+  DEFINE_PROC(gh_new_procedure(S_play_and_wait,SCM_FNC g_play_and_wait,0,5,0),H_play_and_wait);
   DEFINE_PROC(gh_new_procedure0_1(S_stop_playing,SCM_FNC g_stop_playing),H_stop_playing);
 #if (!HAVE_GUILE_1_3_0)
   stop_playing_hook = scm_create_hook(S_stop_playing_hook,1);     /* arg = sound */

@@ -15,7 +15,7 @@
 #endif
       
 
-#define NUM_COMMANDS 746
+#define NUM_COMMANDS 747
 
 static char *snd_commands[NUM_COMMANDS]={
   S_abort,S_abortQ,S_activate_listener,S_add_mark,S_add_sound_file_extension,S_add_to_main_menu,S_add_to_menu,S_add_transform,
@@ -87,7 +87,7 @@ static char *snd_commands[NUM_COMMANDS]={
   S_output_comment_hook,S_output_name_hook,
   S_override_data_format,S_override_data_location,S_override_data_size,
 
-  S_peaks,S_play,S_play_and_wait,S_play_mix,S_play_region,S_play_track,
+  S_peaks,S_play,S_play_and_wait,S_play_mix,S_play_region,S_play_selection,S_play_track,
   S_position_color,S_prefix_arg,S_preload_directory,S_preload_file,
   S_previous_files_sort,S_previous_sample,S_print_length,
   S_progress_report,S_prompt_in_minibuffer,S_protect_region,S_pushed_button_color,

@@ -189,6 +189,8 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
+18-Jul:  play-selection and added end arg to play etc.\n\
+         C-u 0 C-x p -> play region 0, C-x p -> play selection.\n\
 17-Jul:  optargs keyword bug was caused by string-length which existed for guile 1.3.0 (fixed).\n\
 14-Jul:  Snd appears to work in FreeBSD (thanks to Heiko Recktenwald).\n\
          pvoc.scm, loop.scm, fmv.scm.\n\
@@ -211,11 +213,6 @@ void news_help(snd_state *ss)
 29-Jun:  many ardour-related improvements from Paul Barton-Davis.\n\
 28-Jun:  added channel argument to save-sound-as (for channel extraction).\n\
          removed OSS-specific set-dsp-reset.\n\
-27-Jun:  update configure for gsl 0.6.\n\
-26-Jun:  as-one-edit now handles mark changes correctly.\n\
-         make-sample-reader snd arg can be filename (to read external files without opening them).\n\
-         Guile 1.4 is now the default -- if you are using 1.3.4, include -DHAVE_GUILE_1_3.\n\
-         various bugs fixed (thanks to Daniel Aronovitch).\n\
 ",
 NULL);
   FREE(info);
@@ -1160,9 +1157,10 @@ all refer to the same thing.\n\
   " S_open_alternate_sound "(name)\n\
   " S_orientation_dialog "()\n\
   " S_peaks "             (file snd chn)\n\
-  " S_play "              (samp snd chn sync)\n\
-  " S_play_and_wait "     (samp snd chn sync)\n\
+  " S_play "              (samp snd chn sync end)\n\
+  " S_play_and_wait "     (samp snd chn sync end)\n\
   " S_play_region "       (reg to-end)\n\
+  " S_play_selection "    ()\n\
   " S_preload_directory " (dir)\n\
   " S_preload_file "      (file)\n\
   " S_previous_sample "   (rd)\n\

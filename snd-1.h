@@ -912,9 +912,10 @@ void stop_playing_sound_no_toggle(snd_info *sp);
 void stop_playing_all_sounds(void);
 void stop_playing_region(int n);
 BACKGROUND_TYPE feed_dac(dac_manager *tm);
-void start_playing(void *ptr, int start);
-void play_to_end(void *ptr, int start);
-void start_playing_chan_syncd(chan_info *cp, int start, int background, int pause);
+void start_playing(void *ptr, int start, int end);
+void play_to_end(void *ptr, int start, int end);
+void start_playing_chan_syncd(chan_info *cp, int start, int background, int pause, int end);
+void play_selection(snd_state *ss);
 void toggle_dac_pausing(snd_state *ss); /* snd-dac.c */
 int play_in_progress(void);
 int apply_duration(void);

@@ -1197,8 +1197,7 @@ static void Popup_Play_Callback(GtkWidget *w,gpointer clientData)
 {
   snd_state *ss = (snd_state *)clientData;
   snd_info *sp;
-fprintf(stderr,"play");
-  start_playing(sp=any_selected_sound(ss),0);
+  start_playing(sp=any_selected_sound(ss),0,NO_END_SPECIFIED);
   set_play_button(sp,1);
   gtk_widget_hide(popup_menu);
 }

@@ -961,7 +961,7 @@ static void Play_button_Callback(Widget w,XtPointer clientData,XtPointer callDat
     {
       ss = sp->state;
       XtVaSetValues(w,XmNselectColor,((sp->cursor_follows_play != DONT_FOLLOW) ? ((ss->sgx)->green) : ((ss->sgx)->pushed_button_color)),NULL);
-      start_playing(sp,0);
+      start_playing(sp,0,NO_END_SPECIFIED);
     }
 }
 

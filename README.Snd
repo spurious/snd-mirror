@@ -351,6 +351,13 @@ correct directory:
 
   setenv GUILE_LOAD_PATH /home/jimb/guile-snap
 
+Another possibility is the %load-path variable; in your ~/.snd file try
+something like:
+
+    (set! %load-path (cons "/home/bil/test" %load-path)))
+
+(assuming you've put the guile files into /home/bil/test).
+
 
 If the snd rpm process can't find the guile library, yet you have it
 in /usr/local/lib, try the --nodeps switch to rpm (thanks to Charles

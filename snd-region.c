@@ -759,9 +759,7 @@ int cancel_keyboard_selection (void)
 	 beg = (int)(selbeg * SND_SRATE(sp)); /* during kbd selection we have to use selbeg (samp0 not set yet) */
 	}
       deactivate_selection();
-      stop_playing_region(0);
-      free_region(regions[0],COMPLETE_DELETION);
-      regions[0] = NULL;
+      delete_region(0);
     }
   return(beg);
 }
@@ -1261,8 +1259,8 @@ void play_region(snd_state *ss, int n, void *rg, int to_end)
   ri->rg = rg;
   ri->ss = ss;
   if (to_end)
-    play_to_end(ri,0);
-  else start_playing(ri,0);
+    play_to_end(ri,0,NO_END_SPECIFIED);
+  else start_playing(ri,0,NO_END_SPECIFIED);
 }
 
 sync_info *region_sync(int n)

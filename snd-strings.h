@@ -645,6 +645,7 @@
 #define S_play_and_wait                 "play-and-wait"
 #define S_play_mix                      "play-mix"
 #define S_play_region                   "play-region"
+#define S_play_selection                "play-selection"
 #define S_play_track                    "play-track"
 #define S_position_color                "position-col" STR_OR
 #define S_prefix_arg                    "prefix-arg"

@@ -371,7 +371,7 @@ static void play_button_click_callback(GtkWidget *w, gpointer data)
       if (sp->cursor_follows_play != DONT_FOLLOW) 
 	set_active_color(w,(ss->sgx)->green); 
       else set_active_color(w,(ss->sgx)->pushed_button_color);
-      start_playing(sp,0);
+      start_playing(sp,0,NO_END_SPECIFIED);
     }
 }
 

@@ -1018,7 +1018,7 @@ static void Popup_Play_Callback(Widget w,XtPointer clientData,XtPointer callData
 {
   snd_state *ss = (snd_state *)clientData;
   snd_info *sp;
-  start_playing(sp=any_selected_sound(ss),0);
+  start_playing(sp=any_selected_sound(ss),0,NO_END_SPECIFIED);
   set_play_button(sp,1);
 }
 

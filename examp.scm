@@ -13,7 +13,6 @@
 ;;; play region over and over until C-g typed
 ;;; play samples created on-the-fly
 ;;; play while looping continuously between two movable marks
-;;; play-section, play-selection
 ;;; make a system call
 ;;; translate mpeg input to 16-bit linear and read into Snd
 ;;; make dot size dependent on number of samples being displayed
@@ -525,39 +524,6 @@
 
 ;;; m1 and m2 are mark (id) numbers
 ;;; (loopit 0 1 512)
-
-
-;;; -------- play portion of sound, play current selection (as opposed to C-x p which plays region 0)
-
-(define play-section
-  (lambda* (beg end #&optional (snd 0))
-    "(play-section beg end snd) plays snd's data between samples beg and end"
-    (if (and (sound? snd) (> end beg))
-	(let* ((chans (channels snd))
-	       (edited (make-vector chans)))
-	  (do ((chn 0 (1+ chn)))
-	      ((= chn chans))
-	    (let ((len (frames snd chn)))
-	      (if (< end len) 
-		  (begin
-		    (vector-set! edited chn #t)
-		    (set-squelch-update #t snd chn)
-		    (delete-samples end (- len end) snd chn))
-		(vector-set! edited chn #f))))
-	  (play-and-wait beg snd)
-	  (do ((chn 0 (1+ chn)))
-	      ((= chn chans))
-	    (if (vector-ref edited chn) 
-		(begin
-		  (undo 1 snd chn)
-		  (set-squelch-update #f snd chn))))))))
-
-(define play-selection
-  (lambda ()
-    ;; this is kinda brute force
-    (save-selection "tmp.snd" mus-next mus-bshort (region-srate 0) "")
-    (play-and-wait "tmp.snd")
-    (delete-file "tmp.snd")))
 
 
 

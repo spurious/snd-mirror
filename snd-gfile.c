@@ -744,7 +744,7 @@ static void View_CurFiles_Play_Callback(GtkWidget *w,gpointer clientData)
       if (sp->playing) stop_playing_sound(sp);
       if (GTK_TOGGLE_BUTTON(w)->active)
 	{
-	  start_playing(sp,0);
+	  start_playing(sp,0,NO_END_SPECIFIED);
 	  set_play_button(sp,1);
 	}
       else set_play_button(sp,0);
@@ -826,7 +826,7 @@ static void View_PrevFiles_Play_Callback(GtkWidget *w,gpointer clientData)
 	{
 	  play_sp->shortname = get_prevnames(r->pos);
 	  play_sp->fullname = NULL;
-	  start_playing(play_sp,0);
+	  start_playing(play_sp,0,NO_END_SPECIFIED);
 	}
       else
 	{ /* can't find or setup file */

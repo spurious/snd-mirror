@@ -1,5 +1,7 @@
 snd change log
 
+  18-Jul:    play-selection and added end arg to play etc.
+             C-u 0 C-x p -> play region 0, C-x p -> play selection.
   17-Jul:    optargs keyword bug was caused by string-length which existed for guile 1.3.0 (fixed).
   14-Jul:    Snd appears to work in FreeBSD (thanks to Heiko Recktenwald).
              pvoc.scm, loop.scm, fmv.scm.
