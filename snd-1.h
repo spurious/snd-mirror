@@ -479,7 +479,6 @@ void sound_files_help(void);
 void init_file_help(void);
 void recording_help(void);
 char *version_info(void);
-void news_help(void);
 void transform_dialog_help(void);
 void color_dialog_help(void);
 void orientation_dialog_help(void);
@@ -501,6 +500,14 @@ XEN g_snd_help(XEN text, int widget_wid);
 char *snd_url(const char *name);
 void set_html_dir(char *new_dir);
 char **snd_xrefs(const char *topic);
+void key_binding_help(void);
+void play_help(void);
+void save_help(void);
+void reverb_help(void);
+void resample_help(void);
+void filter_help(void);
+void insert_help(void);
+void delete_help(void);
 
 
 /* -------- snd-menu.c -------- */

@@ -589,7 +589,7 @@ is a physical model of a flute:\n\
 	 ;; NB the DC blocker is not in the cicuit. It is applied to the out-sig 
 	 ;; but the result is not fed back into the system.
 	 (set! dc-blocked-a (+ (- out-sig previous-out-sig) (* 0.995 previous-dc-blocked-a)))
-	 (set! dc-blocked-b (+ (- tap-sig previous-tap-sig) (* 0.995 previous-dc-blocked-a)))
+	 (set! dc-blocked-b (+ (- tap-sig previous-tap-sig) (* 0.995 previous-dc-blocked-b)))
 	 (outa i (* out-scl dc-blocked-a) *output*)
 	 (if (> chns 1) (outb i (* out-scl dc-blocked-b) *output*))
 	 (set! previous-out-sig out-sig)
@@ -976,10 +976,10 @@ is a physical model of a flute:\n\
 	 (osc1 (make-oscil (* freq 4.0 0.999)))
 	 (osc2 (make-oscil (* freq 3.0 1.001)))
 	 (osc3 (make-oscil (* freq 0.50 1.002)))
-	 (ampenv0 (make-env (list 0 0 .001 1 (- dur .002) dur 0) :duration dur))
-	 (ampenv1 (make-env (list 0 0 .001 1 (- dur .011) dur 0) :duration dur))
-	 (ampenv2 (make-env (list 0 0 .01 1 (- dur .015) dur 0) :duration dur))
-	 (ampenv3 (make-env (list 0 0 .03 1 (- dur .040) dur 0) :duration dur))
+	 (ampenv0 (make-env (list 0 0 .001 1 (- dur .002) 1 dur 0) :duration dur))
+	 (ampenv1 (make-env (list 0 0 .001 1 (- dur .011) 1 dur 0) :duration dur))
+	 (ampenv2 (make-env (list 0 0 .01 1 (- dur .015) 1 dur 0) :duration dur))
+	 (ampenv3 (make-env (list 0 0 .03 1 (- dur .040) 1 dur 0) :duration dur))
 	 (g0 (* .615 amp))
 	 (g1 .202)
 	 (g2 .574)

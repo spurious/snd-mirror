@@ -36,7 +36,7 @@
   <li><a href="#bessdoc">bess.scm, bess.rb: FM demo</a>
   <li><a href="#bess1doc">bess1.scm, bess1.rb: FM violin demo</a>
   <li><a href="#birddoc">bird.scm, bird.rb: North-American birds</a>
-  <li><a href="#clminsdoc">clm-ins.scm: more CLM instruments</a>
+  <li><a href="#clminsdoc">clm-ins.scm, clm-ins.rb: more CLM instruments</a>
   <li><a href="#debugdoc">debug.scm: debugging aids</a>
   <li><a href="#dlocsigdoc">dlocsig.rb (Michael Scholz)</a>
   <li><a href="#dlpdoc">dlp and tutorial directories from Dave Phillips</a>
@@ -153,6 +153,7 @@ the Cornell Ornithology Lab.
 Many of these birds were used in "Colony".  To hear all the
 birds, <code>(make-birds)</code>.  This writes the sequence out as "test.snd" using with-sound.
 Waveshaping is described in Le Brun, "Digital Waveshaping Synthesis", JAES 1979 April, vol 27, no 4, p250.
+The lines
 </p>
 <pre>
            ...
@@ -198,9 +199,21 @@ def bird(start, dur, frequency, freqskew, amplitude, freq_envelope, amp_envelope
   vct_add!($out_data, local_data, beg)
 end
 </pre>
+<p>The Forth version (written by Michael Scholz) is:
+</p>
+<pre>
+instrument: bird { f: start f: dur f: freq f: freq-skew f: amp freq-env amp-envel }
+    freq make-oscil-1 { os }
+    amp-envel amp dur make-env { amp-env }
+    freq-env freq-skew hz&gt;radians dur make-env { gls-env }
+    90e random 1e make-locsig { loc }
+    start dur run  amp-env env  gls-env env os oscil-1  f*  i loc locsig  loop
+;instrument
+</pre>
+
 <br>
 
-<A NAME="clminsdoc"></a><table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>clm-ins.scm</h2></td></tr></table>
+<A NAME="clminsdoc"></a><table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>clm-ins.scm, clm-ins.rb</h2></td></tr></table>
 
 <p>These are instruments from the CLM tarball translated for use in Snd.
 </p>

@@ -4,8 +4,8 @@
 
 static GtkWidget *help_dialog = NULL;
 
-static void dismiss_help(GtkWidget *w, gpointer context) {gtk_widget_hide(help_dialog);}
-static void delete_help(GtkWidget *w, GdkEvent *event, gpointer context) {gtk_widget_hide(help_dialog);}
+static void dismiss_help_dialog(GtkWidget *w, gpointer context) {gtk_widget_hide(help_dialog);}
+static void delete_help_dialog(GtkWidget *w, GdkEvent *event, gpointer context) {gtk_widget_hide(help_dialog);}
 
 
 /* ---------------- HELP MONOLOG ---------------- */
@@ -89,7 +89,7 @@ static void create_help_monolog(void)
   g_signal_connect_closure_by_id(GTK_OBJECT(help_dialog),
 				 g_signal_lookup("delete_event", G_OBJECT_TYPE(GTK_OBJECT(help_dialog))),
 				 0,
-				 g_cclosure_new(GTK_SIGNAL_FUNC(delete_help), NULL, 0),
+				 g_cclosure_new(GTK_SIGNAL_FUNC(delete_help_dialog), NULL, 0),
 				 0);
 
   g_signal_connect_closure_by_id(GTK_OBJECT(GTK_OBJECT(help_dialog)),
@@ -110,7 +110,7 @@ static void create_help_monolog(void)
   g_signal_connect_closure_by_id(GTK_OBJECT(ok_button),
 				 g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(ok_button))),
 				 0,
-				 g_cclosure_new(GTK_SIGNAL_FUNC(dismiss_help), NULL, 0),
+				 g_cclosure_new(GTK_SIGNAL_FUNC(dismiss_help_dialog), NULL, 0),
 				 0);
   gtk_widget_show(ok_button);
 

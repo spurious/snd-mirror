@@ -1,5 +1,7 @@
 Snd change log
 
+  19-Sep:    clm-ins.rb thanks to Michael Scholz.
+             removed menu-hook.
   18-Sep:    info-dialog (for info-only stuff now that the help dialog has gotten complicated).
   17-Sep:    removed finder.scm, changed index.scm|rb to use snd-xref.c tables.
   15-Sep:    just-sounds support in Gtk.

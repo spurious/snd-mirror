@@ -8,14 +8,18 @@ void reflect_file_open_in_menu (void)
   set_sensitive(file_print_menu(), true);
   set_sensitive(file_mix_menu(), true);
   set_sensitive(file_save_as_menu(), true);
-  set_sensitive(file_update_menu(), true);  
-  set_sensitive(view_equalize_panes_menu(), true);  
+  set_sensitive(file_update_menu(), true);
+#if USE_MOTIF  
+  set_sensitive(view_equalize_panes_menu(), true);
+#endif
   set_sensitive(edit_header_menu(), true);
   set_sensitive(edit_find_menu(), true);
   set_sensitive(edit_select_all_menu(), true);
   if (popup_menu_exists())
     {
+#if USE_MOTIF
       set_sensitive(popup_equalize_panes_menu(), true);
+#endif
       set_sensitive(popup_play_menu(), true);
       set_sensitive(popup_info_menu(), true);
     }
@@ -45,7 +49,9 @@ void reflect_file_lack_in_menu (void)
   set_sensitive(file_update_menu(), false);
   set_sensitive(edit_undo_menu(), false);
   set_sensitive(edit_redo_menu(), false);
+#if USE_MOTIF
   set_sensitive(view_equalize_panes_menu(), false);
+#endif
   set_sensitive(edit_header_menu(), false);
   set_sensitive(edit_find_menu(), false);
   set_sensitive(edit_select_all_menu(), false);
@@ -56,7 +62,9 @@ void reflect_file_lack_in_menu (void)
       set_sensitive(popup_save_menu(), false);
       set_sensitive(popup_play_menu(), false);
       set_sensitive(popup_info_menu(), false);
+#if USE_MOTIF
       set_sensitive(popup_equalize_panes_menu(), false);
+#endif
     }
 }
 
@@ -73,7 +81,9 @@ void reflect_mix_in_menu(void)
 
 void reflect_equalize_panes_in_menu(bool on)
 {
+#if USE_MOTIF
   set_sensitive(view_equalize_panes_menu(), on);
+#endif
 }
 
 static bool find_any_edits (chan_info *cp, void *ignore)

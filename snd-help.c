@@ -286,7 +286,7 @@ char *version_info(void)
 
 static void ssnd_help(const char *subject, ...);
 
-void news_help(void)
+void about_snd_help(void)
 {
   char *info = NULL, *features = NULL;
   info = version_info();
@@ -296,10 +296,12 @@ void news_help(void)
 #if HAVE_RUBY
   features = word_wrap(XEN_AS_STRING(XEN_EVAL_C_STRING("$\".join(' ')")), 600);
 #endif
-  ssnd_help("This version of Snd",
+  ssnd_help("Snd is a sound editor.",
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+19-Sep:  clm-ins.rb thanks to Michael Scholz.\n\
+         removed menu-hook.\n\
 18-Sep:  info-dialog.\n\
 17-Sep:  removed finder.scm, changed index.scm|rb to use snd-xref.c tables.\n\
 15-Sep:  just-sounds support in Gtk.\n\
@@ -321,6 +323,7 @@ void news_help(void)
 	    "\n",
   #endif
 #endif
+	    "Please send bug reports or suggestions to bil@ccrma.stanford.edu.",
 NULL);
   if (info) FREE(info);
   if (features) FREE(features);
@@ -353,220 +356,7 @@ static void ssnd_help(const char *subject, ...)
   FREE(newstr);
 }  
 
-/* ---------------- help menu strings ---------------- */
 
-static char file_menu_help_string[] =
-"  Open: open a file.\n\
-  Close: close the current file.\n\
-  Save: save edits in the current file.\n\
-  Save as: save edits in the current file in some new file.\n\
-  Revert: undo all edits in the current file.\n\
-  Mix: mix in a file.\n\
-  Update: re-read current sound from disk.\n\
-  New: create a new empty sound file.\n\
-  Record: start the recorder\n\
-  View: open a file in read-only mode.\n\
-  Print: produce a Postscript file of the current graph.\n\
-  Exit: leave Snd, without saving any edits.\n\
-";
-
-static char edit_menu_help_string[] =
-"  Undo: undo the last edit in the current file.\n\
-  Redo: redo a previously undone edit.\n\
-  Find: a global search -- operates across all currently sync'd sounds.\n\
-  Delete selection: delete selected portion.\n\
-  Insert selection: insert the selection at the cursor.\n\
-  Mix selection: add the selection at the cursor.\n\
-  Play selection: play the selection.\n\
-  Save selection: save the selection in a file.\n\
-  Select all: select entire sound.\n\
-  Edit Envelope: start the envelope editor dialog.\n\
-  Edit Header: view or edit file's header.\n\
-";
-
-static char view_menu_help_string[] =
-"  Show Controls: display the control panel.\n\
-  Show Listener: open the lisp listener.\n\
-  Mix Panel: open the mix dialog.\n\
-  Regions: start the region browser.\n\
-  Files: start the previous file browser.\n\
-  Color: start the color browser.\n\
-  Orientation: start the graph orientation dialog.\n\
-  Graph style: display data as dots, lines or, filled polygons.\n\
-  Verbose cursor: show cursor location and sample value.\n\
-  Channel style: combine all channels into one graph.\n\
-  Equalize panes: give panes equal sizes.\n\
-  Show Y = 0: display the y = 0 line.\n\
-  X axis units: x axis labels in seconds, samples, etc.\n\
-  Error history: show errors encountered so far.\n\
-";
-
-static char options_menu_help_string[] = 
-"   Transform Options: start dialog to set various fft-related variables\n\
-   Speed style: control panel speed scrollbar interpretation.\n\
-   Zoom focus: where to focus during zooms.\n\
-   Save Options: save the current Options and View menu settings.\n\
-   Save state: save current state of Snd.\n\
-\n\
-";
-
-static char help_menu_help_string[] =   
-"  Overview: this text.\n\
-  FFT: a discussion of Snd's FFT options.\n\
-  Find: how to perform searches.\n\
-  Undo/Redo: how to back up while editing.\n\
-  Sync: how to perform multichannel operations.\n\
-  Speed: how to change sampling rate.\n\
-  Expand: how to change tempo.\n\
-  Reverb: how to reverberate.\n\
-  Contrast: how to add contrast enhancement.\n\
-  Envelope: how to apply an envelope.\n\
-  Marks: about marks in Snd.\n\
-  Mixing: about mixing in Snd.\n\
-  Formats: Snd-supported formats and headers.\n\
-  Customization: how to customize Snd.\n\
-  Recording: how to use the recorder.\n\
-  News: description of this version of Snd.\n\
-";
-
-static char about_snd_help_string[] = 
-"Snd is a sound editor. See snd.html for full\n\
-details.  Please send bug reports or suggestions to\n\
-bil@ccrma.stanford.edu.\n\
-\n\
-To get started, go to the File menu, and\n\
-open a sound file.  To hear the sound, click\n\
-the 'play' button. To see an fft, click the\n\
-'f' button on the left.  The left mouse button\n\
-is used for most pointing operations; the\n\
-middle button pastes in the selection; \n\
-the right button brings up the Snd popup menu.\n\
-\n\
-";
-
-#ifndef _MSC_VER
-static char graph_help_string[] =
-"  [Down] zoom out, amount depends on state keys\n\
-  [Up] zoom in\n\
-  [Left] move window left, amount depends on state keys\n\
-  [Right] move window right\n\
-  <:   move cursor to sample 0\n\
-  >:   move cursor to last sample\n\
-  C-<: move cursor to sample 0\n\
-  C->: move cursor to last sample\n\
-  C-a: move cursor to window start\n\
-  C-b: move cursor back one sample\n\
-  C-d: delete sample at cursor\n\
-  C-e: move cursor to window end\n\
-  C-f: move cursor ahead one sample\n\
-  C-g: abort current command\n\
-  C-h: delete previous sample\n\
-  C-i: display cursor info\n\
-  C-j: goto mark\n\
-  C-k: delete one line's worth of samples\n\
-  C-l: position window so cursor is in the middle\n\
-  C-m: place (or remove) mark at cursor location\n\
-  C-n: move cursor ahead one 'line'\n\
-  C-o: insert one zero sample at cursor\n\
-  C-p: move cursor back one 'line'\n\
-  C-q: play current channel starting at cursor\n\
-  C-r: repeat last search backwards\n\
-  C-s: search until a function returns true\n\
-       The function should take one argument.\n\
-       the current sample value.  For example.\n\
-       to search for a sample greater than .1,\n\
-       (lambda (val) (> val .1))\n\
-  C-t: stop playing\n\
-  C-u: start count definition.  If followed by a\n\
-       float, the actual count is that number multiplied\n\
-       by the current sampling rate.  If the optional\n\
-       number is followed by C-m, the count returned\n\
-       is the distance from the cursor to the n-th\n\
-       successive mark.  That is, C-u C-m C-f is the\n\
-       same as C-j.\n\
-  C-v: move cursor to mid-window\n\
-  C-w: delete current region\n\
-  C-x: start extended command (see below)\n\
-  C-y: paste in last deleted region. Use C-u\n\
-       to paste in earlier regions.\n\
-  C-z: set sample at cursor to 0.0\n\
-  C-_: undo\n\
-  C-[Space]: start selection definition\n\
-       - C-[Space] to deactivate selection\n\
-  C-m-g: clear listener\n\
-\n\
-The extended commands (preceded by C-x) are:\n\
-  a: apply envelope to selection\n\
-  b: position window so cursor is on left margin\n\
-  c: define selection from cursor to nth mark\n\
-  d: set temp dir name\n\
-  e: execute last keyboard macro\n\
-  f: position window so cursor is on right margin\n\
-  i: insert region\n\
-  j: goto named mark\n\
-  k: close file\n\
-  l: position selection in mid-view\n\
-  o: move to next or previous graph\n\
-  p: play selection or region n\n\
-  q: mix in region\n\
-  r: redo last undone edit\n\
-  u: undo last edit\n\
-  v: position window over selection\n\
-  w: save selection as file\n\
-  z: smooth selection\n\
-  /: place named mark\n\
-  (: begin keyboard macro definition\n\
-  ): end keyboard macro definition\n\
-\n\
-  C-a: apply envelope.  If a count is specified,\n\
-     the envelope is applied from the cursor for\n\
-     that number of samples.  Otherwise, the\n\
-     envelope is applied to the entire file, and\n\
-     if syncing is on, all sync'd channels.\n\
-  C-b: set x window bounds (preceded by 1 arg)\n\
-  C-c: hide controls\n\
-  C-d: print\n\
-  C-e: give last keyboard macro a name\n\
-  C-f: open file\n\
-  C-g: abort command\n\
-  C-i: insert file\n\
-  C-m: add named mark\n\
-  C-o: show controls\n\
-  C-p: set window size (preceded by 1 arg)\n\
-  C-q: mix in file\n\
-  C-r: redo last undone edit\n\
-  C-s: save file\n\
-  C-u: undo last edit\n\
-       Snd supports 'unlimited undo/redo'\n\
-  C-v: set window size as percentage of total\n\
-  C-w: save current channel in file\n\
-  C-z: smooth using cosine\n\
-\n\
-Unless otherwise noted, case is not significant; \n\
-C-a is the same as C-A.\n\
-\n\
-Most commands can be prefaced by an integer or\n\
-a float; the integer causes the command to be repeated\n\
-that many times; the float is multiplied by the\n\
-sound's sampling rate, then applied that many times.\n\
-So, for example, C-u 1.0 C-f causes the cursor to move\n\
-ahead one second in the sound.\n\
-\n\
-To change a key binding, use " S_bind_key ".\n\
-\n\
-The Tab key in a text field invokes a\n\
-context-sensitive completion function that tries\n\
-to figure out what the rest of the text probably\n\
-should be.  If it finds no matches, the text\n\
-flashes red; if it finds multiple matches and\n\
-can't extend the current text, it flashes green,\n\
-and pops up the help window with a list of possible\n\
-completions.  If there is no completion routine active,\n\
-Tab is a no-op.\n\
-";
-#else
-static char graph_help_string[] = "";
-#endif
 
 void find_help(void) 
 {
@@ -637,150 +427,6 @@ loudest point in the file becomes .5). ",
 		      "Envelope");
 }
 
-static char sound_files_help_string[] = 
-"Snd can read and write any of the sound\n\
-file data and header formats that Snd can\n\
-handle:\n\
-\n\
-read/write (many data formats):\n\
-     NeXT/Sun/DEC/AFsp\n\
-     AIFF/AIFC\n\
-     RIFF (Microsoft wave)\n\
-     IRCAM (old style)\n\
-     NIST-sphere\n\
-     no header\n\
-     ----\n\
-read-only (in selected data formats):\n\
-     8SVX (IFF), EBICSF, INRS, ESPS,\n\
-     SPPACK, ADC (OGI), AVR, VOC, PVF,\n\
-     Sound Tools, Turtle Beach SMP, SoundFont 2.0,\n\
-     Sound Designer I, PSION, MAUD, Kurzweil 2000,\n\
-     Gravis Ultrasound, ASF, PAF, CSL,\n\
-     Comdisco SPW, Goldwave sample, omf, quicktime\n\
-     Sonic Foundry, SBStudio II, Delusion digital,\n\
-     Digiplayer ST3, Farandole Composer WaveSample,\n\
-     Ultratracker WaveSample, Sample Dump exchange,\n\
-     Yamaha SY85, SY99, and TX16w, Covox v8, SPL, AVI,\n\
-     Impulse tracker, Korg, Akai, Turtle Beach\n\
-     ----\n\
-automatically translated to Sun 16-bit, then read/write:\n\
-     IEEE text, Mus10, SAM 16-bit (modes 1 and 4), AVI\n\
-     NIST shortpack, HCOM, Intel, IBM, and Oki (Dialogic) ADPCM, \n\
-     G721, G723_24, G723_40, MIDI sample dump\n\
-\n\
-The files can have any number of channels.\n\
-Data can be either big or little endian.\n\
-For MPEG and OGG translation, see the code in examp.scm.\n\
-\n\
-When edits are saved, files in the first\n\
-group are changed in place; those in the second\n\
-group are changed to use one of the first\n\
-group's headers (normally Sun); those in\n\
-the third group are translated when opened\n\
-and an new (perhaps redundant) '.snd' extension\n\
-is added to distinguish the original from the\n\
-translated form; the latter is then treated\n\
-as the original by the editor.\n\
-\n\
-";
-
-static char mark_help_string[] = 
-"A mark in Snd is attached to a particular sample in the sound data.  It moves with that \
-sample as you edit the data, and if the sample is deleted, so is its mark.  Marks also follow \
-the undo/redo edit history -- I'm not sure this is a good idea, but it seemed more intuitive \
-than other alternatives.  This means that marks are 'undone' and 'redone' alongside the edits \
-that they accompany.  The mark symbol itself has three or four \
-parts.  The name, if any, is at the top. Then a 'tab'.  You can click the name or \
-tab portion and drag the mark to redefine it. Then a line to the bottom of the graph, showing \
-where the mark is. And, below the x axis, an arrow.  You can click and drag the arrow to \
-play the data following the mouse -- sort of like listening to a tape as you rock it back \
-and forth by hand on the spindles. Or just click the arrow to play the data starting \
-at the mark.";
-
-static char init_file_help_string[] =
-"Nearly everything in Snd can be set in an initialization file,\n\
-loaded at any time from a saved-state (Guile) file, specified \n\
-via inter-process communciation from any other program, invoked \n\
-via M-x in the minibuffer, imbedded in a keyboard\n\
-macro, or dealt with from the lisp listener panel. \n\
-I've tried to bring out to lisp nearly every portion of Snd,\n\
-both the signal-processing functions, and much of the user\n\
-interface. You can, for example, add your own menu choices,\n\
-editing operations, or graphing alternatives. These\n\
-extensions can be loaded at any time.  See extsnd.html and\n\
-grfsnd.html for details.\n\
-\n\
-";
-
-
-#ifndef _MSC_VER
-static char mix_help_string[] = 
-"Since mixing is the most common and most useful editing operation performed on \
-sounds, there is relatively elaborate support for it in Snd. To mix in a file, \
-use the File Mix menu option, the command C-x C-q, or one of the various \
-mixing functions. Currently the only difference between the first two is that \
-the Mix menu option tries to take the current sync state into account, whereas \
-the C-x C-q command does not. To mix a selection, use C-x q. The mix starts at \
-the current cursor location. It is displayed as a separate waveform above \
-the main waveform with a red tag at the beginning.  You can drag the tag to \
-reposition the mix. The underlying sound being mixed can be edited by the same \
-functions used throughout Snd; the mix number is used as the first (only) \
-member of a list where the functions take the sound index argument. It is \
-usually handier, however, to adjust the mix via the Mix Panel. \
-\n\n\
-The Mix Panel is a dialog (under the View Menu) that provides various \
-commonly-used controls on the currently selected mix. At the top are the mix id, \
-name, begin and end times, track number, and a play button. Beneath that are \
-various sliders controlling the speed (sampling rate) of the mix, amplitude of \
-each input channel, and the amplitude envelope. This part of Snd is in flux currently. \
-\n\n\
-To move the cursor from one mix to the next, in the same manner as C-j moves through marks, use C-x C-j. \
-\n\n\
-It is often handy to collect several mixes into a 'track'; mix.scm implements a variety of track-related operations. \
-";
-#else
-static char mix_help_string[] = "";
-#endif
-
-static char recording_help_string[] = 
-"To make a recording, choose 'Record' from the File menu. A window opens with the various \
-recording controls.  The top three panes display the status of the input and output lines. If a \
-channel is active, its meter will glow yellow. If some signal clips during recording, \
-the meter will flash red. The numbers below the channel buttons indicate the signal maximum \
-since it was last reset. The sliders underneath the meters scale the audio data in various ways \
-before it is mixed into the output. The vertical sliders on the right scale the line-in and \
-microphone signals before the meter, and the output signal before it gets to the speaker \
-(these are needed to avoid clipping on input,  and to set the 'monitor' volume of the output \
-independent of the output file volume). \
-\n\n\
-The fourth pane has information about the current output file (its name and so on), and \
-the layout of the window. The buttons on the right can be used to open and close panes \
-painlessly. If the button is not square (a diamond on the SGI), the underlying audio \
-hardware can't handle input from that device at the same time as it reads other 'radio' button \
-devices. So, in that case, opening the panel via the button also turns off the other incompatible \
-device. The fifth pane contains a history of whatever the recorder thought worth \
-reporting. The duration field gives the current output file's duration. The bottom row of \
-buttons dismiss the window, start recording, cancel the current take, and provide some \
-help. There's also a slider on the far right that controls the speaker output volume \
-(independent of the output file volume). \
-\n\n\
-To make a recording, choose the inputs and outputs you want; for example, to record channel \
-A from the microphone to channel A of the output file, click the Microphone panel's A button and \
-the Output panel's A button. Then when you're ready to go, click the Record button. Click it \
-again to finish the recording. \
-\n\n\
-If the record window's VU meters are too big (or too small) for your screen, you can fool around \
-with the variable " S_vu_size " which defaults to 1.0. Similarly the variable " S_vu_font_size " tries to \
-change the size of the numbers on the label, and " S_vu_font " chooses the family name of the font used. \
-\n\n\
-If you go to the main Snd window while the recorder is active and play a sound, the \
-recorder's audio lines are made inactive to try to reduce confusion.  To re-activate \
-the recorder, press the 'reset' button at the bottom of the window. \
-\n\n\
-Digital input is slightly tricky -- you need to set the sampling rate before you \
-click the 'digital input' button; otherwise you'll get a stuttering effect because the output \
-(monitor) rate doesn't match the input rate. ";
-
 void envelope_editor_dialog_help(void)
 {
   snd_help("Envelope Editor",
@@ -822,47 +468,6 @@ axis bounds (the 'clip' button).",
 	   true);
 }
 
-void about_snd_help(void)
-{
-  ssnd_help("About Snd",
-about_snd_help_string,
-"The various Help menu items are:\n\
-\n",
-help_menu_help_string,
-"\n",
-"The main menu items are:\n\
-  File: operations on files.\n\
-  Edit: operations on the selection.\n\
-  View: change Snd display choices.\n\
-  Options: change Snd analysis choices.\n\
-  Help: this menu.\n\
-The main menu bar itself is Snd's 'drop' box.\n\
-\n\
-The File menu's options are:\n\
-",
-file_menu_help_string,
-"\n\
-The Edit menu's options are:\n\
-",
-edit_menu_help_string,
-"\n\
-The View menu's options are:\n\
-",
-view_menu_help_string,
-"\n\
-The Options menu's items are:\n\
-",
-options_menu_help_string,
-"\n\
-The graph editing commands are:\n\
-",
-graph_help_string,
-"\n\
-",
-init_file_help_string,
-NULL);
-}
-
 void fft_help(void)
 {
   snd_help_with_xrefs("FFT",
@@ -895,58 +500,319 @@ transform-normalization to dont-normalize.",
 
 void controls_help(void) 
 {
-  ssnd_help("The Control Panel", 
-"The control panel can provide a quick preview of various common \n\
-ways to process a sound. \n\
+  snd_help("The Control Panel", 
+"The control panel can provide a quick preview of various common ways to process a sound. \
 \n\n\
-'Speed' refers to the rate at which the sound data is consumed during \n\
-playback.  Another term might be 'srate'.  Snd uses sinc interpolation \n\
-to perform the speed change.  The arrow button on the right determines \n\
-the direction it moves through the data.  The scroll bar position is \n\
-normally interpreted as a float between .05 and 20.  The Options Speed \n\
-Style menu (oor the speed-control-style variable) can change this to \n\
-use semitones (actually microtones) or just-intonation ratios.  The \n\
-number of equal divisions to the octave in the semitone case is set by \n\
-the variable speed-control-tones (normally 12). \n\
+'Speed' refers to the rate at which the sound data is consumed during playback.  Another term might be 'srate'.  Snd uses sinc interpolation \
+to perform the speed change.  The arrow button on the right determines the direction it moves through the data.  The scroll bar position is \
+normally interpreted as a float between .05 and 20.  The Options Speed Style menu (oor the speed-control-style variable) can change this to \
+use semitones (actually microtones) or just-intonation ratios.  The number of equal divisions to the octave in the semitone case is set by \
+the variable speed-control-tones (normally 12). \
 \n\n\
-'Expand' refers to a kind of granular synthesis used to change the \n\
-tempo of events in the sound without changing pitch.  Successive short \n\
-slices of the file are overlapped with the difference in size between \n\
-the input and output hops (between successive slices) giving the \n\
-change in tempo.  This doesn't work in all files -- it sometimes \n\
-sounds like execrable reverb or is too buzzy -- but it certainly is \n\
-more robust than the phase vocoder approach to the same problem. \n\
-\n\
-There are a variety of variables that control hop sizes,  \n\
-segment lengths, and overall segment envelopes:  \n\
-\n\
-  expand-control-ramp: the length of the ramp up (.4, 0 to .5)\n\
-  expand-control-length: the length of each slice (.15)\n\
-  expand-control-hop: the hop size (.05)\n\
-\n\
-The expander is on only if the expand button is set. \n\
+'Expand' refers to a kind of granular synthesis used to change the tempo of events in the sound without changing pitch.  Successive short \
+slices of the file are overlapped with the difference in size between the input and output hops (between successive slices) giving the \
+change in tempo.  This doesn't work in all files -- it sometimes sounds like execrable reverb or is too buzzy -- but it certainly is \
+more robust than the phase vocoder approach to the same problem. There are a variety of variables that control hop sizes,  \
+segment lengths, and overall segment envelopes: expand-control-ramp, etc.  The expander is on only if the expand button is set. \
 \n\n\
-'Contrast enhancement' is my name for this somewhat weird waveshaper \n\
-or compander.  It phase-modulates a sound, which can in some cases \n\
-make it sound sharper or brighter.  For softer sounds, it causes only \n\
-an amplitude change.  Contrast is on only if the contrast button is \n\
-set. \n\
+'Contrast enhancement' is my name for this somewhat weird waveshaper or compander.  It phase-modulates a sound, which can in some cases \
+make it sound sharper or brighter.  For softer sounds, it causes only an amplitude change.  Contrast is on only if the contrast button is set. \
 \n\n\
-The control panel reverberator is a version of Michael McNabb's Nrev. \n\
-In addition to the controls in the control pane, you can set the \n\
-reverb feedback gains and the coefficient of the low pass filter in \n\
-the allpass bank (reverb-control-feedback and reverb-control-lowpass). \n\
-The reverb is on only if the reverb button is set. \n\
-",
-NULL);
+The control panel reverberator is a version of Michael McNabb's Nrev. In addition to the controls in the control pane, you can set the \
+reverb feedback gains and the coefficient of the low pass filter in the allpass bank (reverb-control-feedback and reverb-control-lowpass). \
+The reverb is on only if the reverb button is set. ",
+	   true);
 }
 
-void marks_help(void) {snd_help_with_xrefs("Marks", mark_help_string, true, "Mark");}
-void mix_help(void) {snd_help_with_xrefs("Mixing", mix_help_string, true, "Mix");}
-void sound_files_help(void) {snd_help("Headers and Data", sound_files_help_string, false);}
-void recording_help(void) {snd_help("Recording", recording_help_string, true);}
-void init_file_help(void) {ssnd_help("Customization", init_file_help_string, NULL);}
+void marks_help(void) 
+{
+  snd_help_with_xrefs("Marks", 
+"A mark in Snd is attached to a particular sample in the sound data.  It moves with that \
+sample as you edit the data, and if the sample is deleted, so is its mark.  Marks also follow \
+the undo/redo edit history -- I'm not sure this is a good idea, but it seemed more intuitive \
+than other alternatives.  This means that marks are 'undone' and 'redone' alongside the edits \
+that they accompany.  The mark symbol itself has three or four \
+parts.  The name, if any, is at the top. Then a 'tab'.  You can click the name or \
+tab portion and drag the mark to redefine it. Then a line to the bottom of the graph, showing \
+where the mark is. And, below the x axis, an arrow.  You can click and drag the arrow to \
+play the data following the mouse -- sort of like listening to a tape as you rock it back \
+and forth by hand on the spindles. Or just click the arrow to play the data starting \
+at the mark.",
+		      true, 
+		      "Mark");
+}
 
+void mix_help(void) 
+{
+  snd_help_with_xrefs("Mixing", 
+"Since mixing is the most common and most useful editing operation performed on \
+sounds, there is relatively elaborate support for it in Snd. To mix in a file, \
+use the File Mix menu option, the command C-x C-q, or one of the various \
+mixing functions. Currently the only difference between the first two is that \
+the Mix menu option tries to take the current sync state into account, whereas \
+the C-x C-q command does not. To mix a selection, use C-x q. The mix starts at \
+the current cursor location. It is displayed as a separate waveform above \
+the main waveform with a red tag at the beginning.  You can drag the tag to \
+reposition the mix. The underlying sound being mixed can be edited by the same \
+functions used throughout Snd; the mix number is used as the first (only) \
+member of a list where the functions take the sound index argument. It is \
+usually handier, however, to adjust the mix via the Mix Panel. \
+\n\n\
+The Mix Panel is a dialog (under the View Menu) that provides various \
+commonly-used controls on the currently selected mix. At the top are the mix id, \
+name, begin and end times, track number, and a play button. Beneath that are \
+various sliders controlling the speed (sampling rate) of the mix, amplitude of \
+each input channel, and the amplitude envelope. This part of Snd is in flux currently. \
+\n\n\
+To move the cursor from one mix to the next, in the same manner as C-j moves through marks, use C-x C-j. \
+\n\n\
+It is often handy to collect several mixes into a 'track'; mix.scm implements a variety of track-related operations.",
+		      true, 
+		      "Mix");
+}
+
+void recording_help(void) 
+{
+  snd_help("Record", 
+"To make a recording, choose 'Record' from the File menu. A window opens with the various \
+recording controls.  The top three panes display the status of the input and output lines. If a \
+channel is active, its meter will glow yellow. If some signal clips during recording, \
+the meter will flash red. The numbers below the channel buttons indicate the signal maximum \
+since it was last reset. The sliders underneath the meters scale the audio data in various ways \
+before it is mixed into the output. The vertical sliders on the right scale the line-in and \
+microphone signals before the meter, and the output signal before it gets to the speaker \
+(these are needed to avoid clipping on input,  and to set the 'monitor' volume of the output \
+independent of the output file volume). \
+\n\n\
+The fourth pane has information about the current output file (its name and so on), and \
+the layout of the window. The buttons on the right can be used to open and close panes \
+painlessly. If the button is not square (a diamond on the SGI), the underlying audio \
+hardware can't handle input from that device at the same time as it reads other 'radio' button \
+devices. So, in that case, opening the panel via the button also turns off the other incompatible \
+device. The fifth pane contains a history of whatever the recorder thought worth \
+reporting. The duration field gives the current output file's duration. The bottom row of \
+buttons dismiss the window, start recording, cancel the current take, and provide some \
+help. There's also a slider on the far right that controls the speaker output volume \
+(independent of the output file volume). \
+\n\n\
+To make a recording, choose the inputs and outputs you want; for example, to record channel \
+A from the microphone to channel A of the output file, click the Microphone panel's A button and \
+the Output panel's A button. Then when you're ready to go, click the Record button. Click it \
+again to finish the recording. \
+\n\n\
+If the record window's VU meters are too big (or too small) for your screen, you can fool around \
+with the variable vu-size which defaults to 1.0. Similarly the variable vu-font-size tries to \
+change the size of the numbers on the label, and vu-font chooses the family name of the font used. \
+\n\n\
+If you go to the main Snd window while the recorder is active and play a sound, the \
+recorder's audio lines are made inactive to try to reduce confusion.  To re-activate \
+the recorder, press the 'reset' button at the bottom of the window. \
+\n\n\
+Digital input is slightly tricky -- you need to set the sampling rate before you \
+click the 'digital input' button; otherwise you'll get a stuttering effect because the output \
+(monitor) rate doesn't match the input rate.",
+	   true);
+}
+
+void sound_files_help(void) 
+{
+  snd_help("Headers and Data", 
+"Snd can read and write any of the sound file data and header formats that Sndlib can handle, \
+the most useful being AIFC, NeXT, RIFF, and raw (no header). The files can have any number of channels. \
+Data can be either big or little endian. For MPEG and OGG translation, see the code in examp.scm.",
+	   true);
+}
+
+void init_file_help(void) 
+{
+  snd_help("Customization",
+"Nearly everything in Snd can be set in an initialization file, loaded at any time from a saved-state (Guile) file, specified \
+via inter-process communciation from any other program, invoked via M-x in the minibuffer, imbedded in a keyboard macro, or  \
+dealt with from the lisp listener panel. I've tried to bring out to lisp nearly every portion of Snd, \
+both the signal-processing functions, and much of the user interface. You can, for example, add your own menu choices, \
+editing operations, or graphing alternatives. These extensions can be loaded at any time.  See extsnd.html and \
+grfsnd.html for details.",
+	   true);
+}
+
+void key_binding_help(void)
+{
+  snd_help("Key bindings",
+"[Down] zoom out\n\
+[Up] zoom in\n\
+[Left] move window left\n\
+[Right] move window right\n\
+<:   move cursor to sample 0\n\
+>:   move cursor to last sample\n\
+C-<: move cursor to sample 0\n\
+C->: move cursor to last sample\n\
+C-a: move cursor to window start\n\
+C-b: move cursor back one sample\n\
+C-d: delete sample at cursor\n\
+C-e: move cursor to window end\n\
+C-f: move cursor ahead one sample\n\
+C-g: abort current command\n\
+C-h: delete previous sample\n\
+C-i: display cursor info\n\
+C-j: goto mark\n\
+C-k: delete one line's worth of samples\n\
+C-l: position window so cursor is in the middle\n\
+C-m: place (or remove) mark at cursor location\n\
+C-n: move cursor ahead one 'line'\n\
+C-o: insert one zero sample at cursor\n\
+C-p: move cursor back one 'line'\n\
+C-q: play current channel starting at cursor\n\
+C-r: search backwards\n\
+C-s: search forwards\n\
+C-t: stop playing\n\
+C-u: start count definition.  If followed by a\n\
+     float, the actual count is that number multiplied\n\
+     by the current sampling rate.  If the optional\n\
+     number is followed by C-m, the count returned\n\
+     is the distance from the cursor to the n-th\n\
+     successive mark.  That is, C-u C-m C-f is the\n\
+     same as C-j.\n\
+C-v: move cursor to mid-window\n\
+C-w: delete selection\n\
+C-y: insert selection.\n\
+C-z: set sample at cursor to 0.0\n\
+C-_: undo\n\
+C-[Space]: start selection definition\n\
+C-M-g: clear listener\n\
+\n\
+C-x a: apply envelope to selection\n\
+C-x b: position window so cursor is on left margin\n\
+C-x c: define selection from cursor to nth mark\n\
+C-x d: set temp dir name\n\
+C-x e: execute keyboard macro\n\
+C-x f: position window so cursor is on right margin\n\
+C-x i: insert region\n\
+C-x j: goto named mark\n\
+C-x k: close file\n\
+C-x l: position selection in mid-view\n\
+C-x o: move to next or previous graph\n\
+C-x p: play selection or region n\n\
+C-x q: mix in selection\n\
+C-x r: redo\n\
+C-x u: undo\n\
+C-x v: position window over selection\n\
+C-x w: save selection as file\n\
+C-x z: smooth selection\n\
+C-x /: place named mark\n\
+C-x (: begin keyboard macro definition\n\
+C-x ): end keyboard macro definition\n\
+\n\
+C-x C-a: apply envelope.\n\
+C-x C-b: set x window bounds (preceded by 1 arg)\n\
+C-x C-c: hide control panel\n\
+C-x C-d: print\n\
+C-x C-e: give last keyboard macro a name\n\
+C-x C-f: open file\n\
+C-x C-g: abort command\n\
+C-x C-i: insert file\n\
+C-x C-m: add named mark\n\
+C-x C-o: show control panel\n\
+C-x C-p: set window size (preceded by 1 arg)\n\
+C-x C-q: mix in file\n\
+C-x C-r: redo\n\
+C-x C-s: save file\n\
+C-x C-u: undo\n\
+C-x C-v: set window size as percentage of total\n\
+C-x C-w: save current channel in file\n\
+C-x C-z: smooth using cosine\n\
+\n\
+To change a key binding, use bind-key",
+	   false);
+}
+
+void play_help(void)
+{
+  snd_help_with_xrefs("Play",
+"To play a sound, click the 'play' button.  If the sound has more \
+channels than your DAC(s), Snd will (normally) try to mix the extra channels \
+into the available DAC outputs.  While it is playing, \
+you can click the button again to stop it, or click some other \
+file's 'play' button to mix it into the current set of sounds \
+being played. To play from a particular point, set a mark \
+there, then click its 'play triangle' (the triangular portion \
+below the x axis).  (Use control-click here to play all channels \
+from the mark point). To play simultaneously from an arbitrary \
+group of start points (possibly spread among many sounds), \
+set syncd marks at the start points, then click the play \
+triangle of one of them. \
+\n\n\
+The Edit menu 'Play' option plays the current \
+selection, if any.  The Popup menu's 'Play' option plays the \
+currently selected sound.  And the region and file browsers provide \
+play buttons for each of the listed regions or files.  If you \
+hold down the control key when you click 'play', the cursor \
+follows along as the sound is played.   \
+\n\n\
+In a multi-channel file, C-q plays all channels from the current channel's \
+cursor if the sync button is on, and otherwise plays only the current channel. \
+Except in the browsers, what is actually \
+played depends on the control panel.",
+		      true,
+		      "Play");
+}
+
+void reverb_help(void)
+{
+  snd_help_with_xrefs("Reverb",
+"The reverb in the control panel is a version of Michael McNabb's Nrev.  There are other \
+reverbs mentioned in the related topics list.",
+		      true,
+		      "Reverb");
+}
+
+void save_help(void)
+{
+  snd_help_with_xrefs("Save",
+"To save the current edited state of a file, use the Save option (to overwrite the old version of the \
+file), or Save as (to write to a new file, leaving the old file unchanged).  The equivalent keyboard \
+command is C-x C-s (save).  Other related keyboard commands are C-x w (save selection as file), and \
+C-x C-w (extract and save the current channel as a file). Normally, if the new file already exists, and it is \
+not currently being edited in Snd, it is silently overwritten.  If you try to overwrite a file, and \
+that file has active edits in a different Snd window, you'll be asked for confirmation. \
+If you want Snd to ask before overwriting a file in any case, set the resource overwriteCheck to 1, \
+or include the expression (set! (ask-before-overwrite) #t) in your Snd initialization file.",
+		      true,
+		      "Save");
+}
+
+void filter_help(void)
+{
+  snd_help_with_xrefs("Filter",
+"There is an FIR Filter in the control panel, and a variety of other filters scattered around; \
+see dsp.scm in particular.",
+		      true,
+		      "Filter");
+}
+
+void resample_help(void)
+{
+  snd_help_with_xrefs("Resample",
+"There is a sampling rate changer in the control panel; see the related topics list below.",
+		      true,
+		      "Resample");
+}
+
+void insert_help(void)
+{
+  snd_help_with_xrefs("Insert",
+"To insert a file, use C-x C-i, and to insert the selection C-x i.  C-o inserts a \
+zero sample at the cursor",
+		      true,
+		      "Insert");
+}
+
+void delete_help(void)
+{
+  snd_help_with_xrefs("Delete",
+"To delete a sample, use C-d; to delete the selection, C-w",
+		      true,
+		      "Delete");
+}
 
 /* -------- dialog help button -------- */
 
@@ -1140,73 +1006,31 @@ unsorted) refers to this menu.",
 
 #include "snd-xref.c"
 
-#define NUM_TOPICS 60
-static char *topics[120] = {
-  "extsnd.html#sndhooks", "Hooks",
-  "extsnd.html#Vcts", "Vcts",
-  "extsnd.html#samplereaders", "Sample-readers",
-  "extsnd.html#sndmarks", "Marks",
-  "extsnd.html#sndmixes", "Mixes",
-  "extsnd.html#sndregions", "Regions",
-  "extsnd.html#editlists", "Edit Lists",
-  "extsnd.html#sndtransforms", "Transforms",
-  "extsnd.html#snderrors", "Errors",
-  "extsnd.html#colors", "Colors",
-  "extsnd.html#fonts", "Fonts",
-  "extsnd.html#sndgraphics", "Graphics",
-  "extsnd.html#sndwidgets", "Widgets",
-  "grfsnd.html#sndresources", "resources",
-  "grfsnd.html#sndswitches", "invocation flags",
-  "grfsnd.html#sndinitfile", "initialization file",
-  "grfsnd.html#emacssnd", "Emacs subjob",
-  "grfsnd.html#dynamic", "Dynamically loaded modules",
-  "grfsnd.html#programs", "External Programs",
-  "grfsnd.html#sndwithclm", "CLM module",
-  "grfsnd.html#clmfuncs", "CLM functions",
-  "grfsnd.html#sndinstruments", "Instruments",
-  "grfsnd.html#sndwithcm", "Common Music",
-  "grfsnd.html#sndwithmotif", "Motif",
-  "grfsnd.html#sndwithgtk", "Gtk",
-  "grfsnd.html#sndwithnogui", "Scripting",
-  "grfsnd.html#sndandruby", "Ruby",
-  "grfsnd.html#sndandladspa", "LADSPA",
-  "grfsnd.html#sndandgl", "OpenGL",
-  "grfsnd.html#sndandgdb", "gdb",
-  "clm.html#with-sound", "With-sound",
-  "clm.html#mix-and-with-mix", "With-mix",
-  "clm.html#instrument-let", "Sound-let",
-  "sndscm.html#autosavedoc", "auto-save",
-  "sndscm.html#bessdoc", "FM demo",
-  "sndscm.html#bess1doc", "FM violin demo",
-  "sndscm.html#birddoc", "birds",
-  "sndscm.html#clminsdoc", "CLM instruments",
-  "sndscm.html#debugdoc", "debugging",
-  "sndscm.html#dlocsigdoc", "sound movement",
-  "sndscm.html#dspdoc", "DSP",
-  "sndscm.html#effectsdoc", "Effects",
-  "sndscm.html#envdoc", "envelopes",
-  "sndscm.html#enveddoc", "envelope editor",
-  "sndscm.html#fadedoc", "frequency-domain cross-fades",
-  "sndscm.html#freeverbdoc", "freeverb",
-  "sndscm.html#jcrevdoc", "jcrev",
-  "sndscm.html#ladspadoc", "LADSPA previewer.",
-  "sndscm.html#maracadoc", "maraca physical model",
-  "sndscm.html#maxfdoc", "Mathews resonator",
-  "sndscm.html#moogdoc", "Moog filter",
-  "sndscm.html#musglyphs", "Music notation symbols",
-  "sndscm.html#pianodoc", "piano physical model",
-  "sndscm.html#popupdoc", "Popup menu",
-  "sndscm.html#singerdoc", "Cook's vocal-tract physical model",
-  "sndscm.html#sndmotifdoc", "Motif/Gtk module",
-  "sndscm.html#vdoc", "fm-violin",
-  "sndscm.html#wsdoc", "with-sound",
-  "sndscm.html#xmenveddoc", "envelope editor",
-  "libxm.html#xm", "Libxm"};
+#if 0
+#define NUM_TOPICS 27
+static char *topic_names[NUM_TOPICS] = {
+  "Hook", "Vct", "Sample-reader", "Mark", "Mix", "Region", "Edit List", "Transform", "Error",
+  "Color", "Font", "Graphic", "Widget", "Emacs",
+  "CLM", "Instrument", "CM", "CMN", "libxm", "sndlib", 
+  "Motif", "Gtk", "Script", "Ruby", "LADSPA", "OpenGL", "gdb"
+};
+
+static char *topic_urls[NUM_TOPICS] = {
+  "extsnd.html#sndhooks", "extsnd.html#Vcts", "extsnd.html#samplereaders", "extsnd.html#sndmarks", 
+  "extsnd.html#sndmixes", "extsnd.html#sndregions", "extsnd.html#editlists", "extsnd.html#sndtransforms", 
+  "extsnd.html#snderrors", "extsnd.html#colors", "extsnd.html#fonts", "extsnd.html#sndgraphics", 
+  "extsnd.html#sndwidgets", "grfsnd.html#emacssnd", "grfsnd.html#sndwithclm", 
+  "grfsnd.html#sndinstruments", "grfsnd.html#sndwithcm", "sndscm.html#musglyphs", 
+  "libxm.html#xm", "sndlib.html#introduction", "grfsnd.html#sndwithmotif", 
+  "grfsnd.html#sndwithgtk", "grfsnd.html#sndwithnogui", "grfsnd.html#sndandruby", "grfsnd.html#sndandladspa", 
+  "grfsnd.html#sndandgl", "grfsnd.html#sndandgdb"
+};
+#endif
 
 #define NUM_XREFS 21
 static char *xrefs[NUM_XREFS] = {
-  "Mark", "Mix", "Region", "Selection", "Cursor", "Tracking cursor", "Deletion", "Envelope", "Filter",
-  "Search", "Insertion", "Maxamp", "Play", "Reverse", "Save", "Smooth", "Resample", "FFT", "Reverb",
+  "Mark", "Mix", "Region", "Selection", "Cursor", "Tracking cursor", "Delete", "Envelope", "Filter",
+  "Search", "Insert", "Maxamp", "Play", "Reverse", "Save", "Smooth", "Resample", "FFT", "Reverb",
   "Src", "Find"};
 
 static char **xref_tables[NUM_XREFS] = {
@@ -1230,12 +1054,23 @@ char **snd_xrefs(const char *topic)
   return(NULL);
 }
 
-/* TODO: add help menu: Filter Delete Insert Resample Reverb Save Play (Effects?) */
+/* TODO: add help menu Effects? */
+/* TODO: pass xref arg out to xen callers */
+/* TODO: perhaps pass out the url lists as well? */
+/*   about relate: clm, cm, cmn, libxm, sndlib
+ *   customization: init file, emacs?
+ *   control panel: 
+ *   keys: 
+ *   record: 
+ *   undo/redo
+ *   sync:
+ *   headers/data
+ */
+/* TODO: if general topic (or menu label) in help text widget, go to topic */
 /*
    includable: CLM ins, CLM gens
-   ?? Plugins (current plugins?)
+   ?? Plugins (current plugins? -- list-ladspa or equivalent)
    ?? FM, PhysMod, etc
-   ?? Key bindings
 */
 
 /* TODO: regexp access to help lists, tables */

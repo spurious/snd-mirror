@@ -133,7 +133,7 @@ Extensions to Snd can be found in:
 <tr><td><a href="sndscm.html#bessdoc">bess.scm, bess.rb</a></td>     <td>FM demo (from bess.cl in CLM)</td></tr>
 <tr><td><a href="sndscm.html#bess1doc">bess1.scm, bess1.rb</a></td>  <td>FM violin demo (from bess5.cl in CLM)</td></tr>
 <tr><td><a href="sndscm.html#birddoc">bird.scm, bird.rb</a></td>     <td>various North-American birds (from bird.clm)</td></tr>
-<tr><td><a href="sndscm.html#clminsdoc">clm-ins.scm</a></td>         <td>various CLM instruments translated to Snd</td></tr>
+<tr><td><a href="sndscm.html#clminsdoc">clm-ins.scm, clm-ins.rb</a></td><td>various CLM instruments translated to Snd</td></tr>
 <tr><td><a href="sndscm.html#debugdoc">debug.scm</a></td>            <td>debugging aids</td></tr>
 <tr><td><a href="sndscm.html#dlocsigdoc">dlocsig.rb</a></td>         <td>CLM's dlocsig in Ruby (Michael Scholz)</td></tr>
 <tr><td><a href="sndscm.html#dlpdoc">dlp directory entries</a></td>  <td>various contributions from Dave Phillips</td></tr>
@@ -1997,7 +1997,7 @@ up protected portions of the edit history:
 
 <p><a href="sndscm.html#enveddoc">enved.scm</a> uses several of these hooks to implement an envelope editor in lisp.
 <i>add-mark-pane</i> in snd-motif.scm uses them to make sure the mark list reflects the current edit history location.
-See also <a href="#menuhook">menu-hook</a> and autosave.scm.
+See also autosave.scm.
 </p>
 <p>
 You can find out what's on a given hook with the following (which is mostly adding carriage returns to the
@@ -8258,22 +8258,6 @@ remove menu <i>menu-label</i> from the top top-level menu whose index is <i>top-
 </td></tr>
 </table>
 
-
-<p>The hook <em class=def><a name="menuhook">menu-hook</a></em> is checked each time a menu item is selected;
-its entries should be functions of two arguments, the parent menu name and the option
-selected (both as strings), and should return #f if it wants to override (cancel) the default
-menu action.</p>
-
-<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
-  (add-hook! <em class=red>menu-hook</em>
-    (lambda (name option)
-      (if (and (string=? name "File")
-               (string=? option "Exit"))
-        (begin
-          (snd-print "no exit!")
-	  #f)
-        #t))) ; #t to make sure other menu items remain active
-</pre></td></tr></table>
 <p>I may change these menu handlers to use the menu-widgets list
 and more general functions; let me know what you'd like to be able
 to do!

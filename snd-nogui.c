@@ -76,7 +76,6 @@ int edit_redo_menu(void) {return(0);}
 int edit_find_menu(void) {return(0);}
 int edit_select_all_menu(void) {return(0);}
 int edit_header_menu(void) {return(0);}
-int view_equalize_panes_menu(void) {return(0);}
 int view_mix_panel_menu(void) {return(0);}
 int view_region_menu(void) {return(0);}
 int view_combine_separate_menu(void) {return(0);}
@@ -107,7 +106,6 @@ int popup_play_menu(void) {return(0);}
 int popup_undo_menu(void) {return(0);}
 int popup_redo_menu(void) {return(0);}
 int popup_save_menu(void) {return(0);}
-int popup_equalize_panes_menu(void) {return(0);}
 int popup_info_menu(void) {return(0);}
 bool popup_menu_exists(void) {return(false);}
 void set_menu_label(int w, const char *label) {}
@@ -353,7 +351,6 @@ snd_info *add_sound_window (char *filename, bool read_only)
   return(sp);
 }
 
-static XEN menu_hook;
 static char **auto_open_file_names = NULL;
 static int auto_open_files = 0;
 static bool noglob = false, noinit = false, nostdin = false;
@@ -411,7 +408,6 @@ void snd_doit(int argc, char **argv)
                (define " S_mouse_leave_text_hook " (make-hook 1))\
                (define " S_new_widget_hook " (make-hook 1))\
                (define " S_drop_hook " (make-hook 1))\
-               (define " S_menu_hook " (make-hook 2))\
                (define " S_color_hook " (make-hook 0))\
                (define " S_orientation_hook " (make-hook 0))\
                (define " S_listener_click_hook " (make-hook 1)) \
@@ -485,7 +481,6 @@ void snd_doit(int argc, char **argv)
   XEN_EVAL_C_STRING("$mouse_leave_text_hook = false");
   XEN_EVAL_C_STRING("$new_widget_hook = false");
   XEN_EVAL_C_STRING("$drop_hook = false");
-  XEN_EVAL_C_STRING("$menu_hook = false");
   XEN_EVAL_C_STRING("$color_hook = false");
   XEN_EVAL_C_STRING("$orientation_hook = false");
   XEN_EVAL_C_STRING("$listener_click_hook = false");
@@ -502,8 +497,6 @@ void snd_doit(int argc, char **argv)
   set_axis_numbers_font(FALLBACK_FONT);
   set_listener_font(FALLBACK_FONT);
   set_html_dir(copy_string(DEFAULT_HTML_DIR));
-
-  XEN_DEFINE_HOOK(menu_hook, S_menu_hook, 2, NULL);
 
   for (i = 1; i < argc; i++)
     {

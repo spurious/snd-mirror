@@ -1,6 +1,6 @@
 #include "snd.h"
 
-/* ---------------- MOTIF 1 uses post_it (info) dialog) ---------------- */
+/* ---------------- MOTIF 1 ---------------- */
 
 #if (XmVERSION == 1)
 
@@ -17,9 +17,10 @@ void snd_help_with_xrefs(const char *subject, const char *helpstr, bool with_wra
 
 #else
 
-/* ---------------- MOTIF 2 has a fancy multi-window help dialog ---------------- */
+/* ---------------- MOTIF 2 ---------------- */
 
-#define HELP_ROWS 12
+#define HELP_ROWS 10
+#define HELP_XREFS 8
 #define HELP_COLUMNS 56
 /* these set the initial size of the help dialog text area */
 
@@ -140,7 +141,7 @@ static char *find_highlighted_text(XmString xs)
       switch (type)
 	{
 	case XmSTRING_COMPONENT_RENDITION_BEGIN: 
-	  in_red_text = (strcmp((char *)text, "url_text") == 0);
+	  if (text) in_red_text = (strcmp((char *)text, "url_text") == 0);
 	  break;
 	case XmSTRING_COMPONENT_RENDITION_END:
 	  in_red_text = false;
@@ -149,13 +150,13 @@ static char *find_highlighted_text(XmString xs)
 	  if (in_red_text) 
 	    {
 	      result = copy_string((char *)text);
-	      XtFree(text);
+	      XtFree((char *)text);
 	      XmStringFreeContext(ctx);
 	      return(result);
 	    }
 	}
       /* this from the Motif docs, though it looks odd to me */
-      if (text) XtFree(text);
+      if (text) XtFree((char *)text);
       text = NULL;
     }
   XmStringFreeContext(ctx);
@@ -169,7 +170,7 @@ static void related_help(int urls, ...)
   int i;
   XmString *strs = NULL;
   va_list ap;
-  if (related_help)
+  if (related_items)
     {
       strs = (XmString *)CALLOC(urls, sizeof(XmString));
       va_start(ap, urls);
@@ -249,20 +250,23 @@ static void help_browse_callback(Widget w, XtPointer context, XtPointer info)
 	  if (url)
 	    {
 	      char *program;
-	      path = (char *)CALLOC(strlen(dir_path) + strlen(url) + 256, sizeof(char));
 	      program = html_program(ss);
-	      if ((strcmp(program, "netscape") == 0) ||
-		  (strcmp(program, "mozilla") == 0))
+	      if (program)
 		{
-		  sprintf(path, "%s%s", dir_path, url);
-		  send_netscape(program, path);
+		  path = (char *)CALLOC(strlen(dir_path) + strlen(url) + 256, sizeof(char));
+		  if ((strcmp(program, "netscape") == 0) ||
+		      (strcmp(program, "mozilla") == 0))
+		    {
+		      sprintf(path, "%s%s", dir_path, url);
+		      send_netscape(program, path);
+		    }
+		  else
+		    {
+		      sprintf(path, "%s file:%s%s", program, dir_path, url);
+		      system(path);
+		    }
+		  FREE(path);
 		}
-	      else
-		{
-		  sprintf(path, "%s file:%s%s", program, dir_path, url);
-		  system(path);
-		}
-	      FREE(path);
 	    }
 	  FREE(red_text);
 	}
@@ -449,7 +453,7 @@ static void create_help_monolog(void)
   XtSetArg(args[n], XmNfontList, NULL); n++; /* needed or new rendertable doesn't take effect! */
 #endif
   XtSetArg(args[n], XmNrenderTable, rs); n++;
-  XtSetArg(args[n], XmNvisibleItemCount, 5); n++;
+  XtSetArg(args[n], XmNvisibleItemCount, HELP_XREFS); n++;
   XtSetArg(args[n], XmNscrollBarDisplayPolicy, XmAS_NEEDED); n++;
   related_items = XmCreateScrolledList(inner_holder, "help-list", args, n);
   XtManageChild(related_items);
@@ -481,6 +485,8 @@ Widget snd_help(const char *subject, const char *helpstr, bool with_wrap)
   else raise_dialog(help_dialog);
   xstr1 = XmStringCreate((char *)subject, XmFONTLIST_DEFAULT_TAG);
   XtVaSetValues(help_dialog, XmNmessageString, xstr1, NULL);
+#if 1
+  /* how to get word wrap to work?? */
   if (with_wrap)
     {
       char *new_help = NULL;
@@ -489,6 +495,10 @@ Widget snd_help(const char *subject, const char *helpstr, bool with_wrap)
       if (new_help) FREE(new_help);
     }
   else XmTextSetString(help_text, (char *)helpstr);
+#else
+  XtVaSetValues(help_text, XmNwordWrap, with_wrap, NULL);
+  XmTextSetString(help_text, (char *)helpstr);
+#endif
   if (!XtIsManaged(help_dialog)) 
     XtManageChild(help_dialog);
   XmStringFree(xstr1);
@@ -535,13 +545,5 @@ void snd_help_with_xrefs(const char *subject, const char *helpstr, bool with_wra
 	}
     }
 }
-
-/* TODO: change help menu to 2-level:
-   About Snd (much shorter than current overview)
-   News
-   Topics -> current + all that have crossref tables, maybe as help dialog table itself -- can use underlying support
-   Howto (presents table of plausible entries given some "natural" request)
-   Index (goes to index.html)
-*/
 
 #endif

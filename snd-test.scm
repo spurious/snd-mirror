@@ -17201,37 +17201,7 @@ EDITS: 5
       
       (if (and (provided? 'snd-motif) (provided? 'xm)) (load "new-effects.scm"))
       
-      (add-hook! menu-hook
-		 (lambda (name option)
-		   (if (and (string=? name "File")
-			    (string=? option "Exit"))
-		       (begin
-			 (snd-display ";no exit!")
-			 #f)
-		       #t))) ; #t to make sure other menu items remain active
       (let ((ctr 0))
-	(add-hook! menu-hook
-		   (lambda (name option)
-		     (if (and (string=? name "Options")
-			      (string=? option "Save options"))
-			 (begin
-			   (set! ctr (+ ctr 1))
-			   #f)
-			 #t)))
-	(add-hook! menu-hook
-		   (lambda (name option)
-		     (if (and (string=? name "View")
-			      (string=? option "Files"))
-			 (set! ctr (+ ctr 1)))
-		     #t))
-	(if (provided? 'xm)
-	    (add-hook! menu-hook
-		       (lambda (name option)
-			 (if (and (string=? name "Effects")
-				  (string=? option "Invert"))
-			     (set! ctr (+ ctr 1)))
-			 #t)))
-	
 	(let ((added 0))
 	  (set! (with-background-processes) #t)
 	  (set! (vu-size) 1.25)
@@ -17319,9 +17289,7 @@ EDITS: 5
 		(snd-display ";ladspa loaded but can't find plugin directory: ~A" (ladspa-dir))))
 	
 	(revert-sound fd)
-	(close-sound fd)
-	(if (not (= ctr 2)) (snd-display ";ctr after test-menus: ~A? " ctr))
-	(reset-hook! menu-hook))
+	(close-sound fd))
       
       (test-hooks)
       (add-hook! bad-header-hook (lambda (n) #t))
