@@ -311,7 +311,7 @@ static void play_button_click_callback(GtkWidget *w, gpointer data)
   bool on;
   on = (bool)(GTK_TOGGLE_BUTTON(w)->active);
   if (sp->playing) 
-    stop_playing_sound_no_toggle(sp);
+    stop_playing_sound_no_toggle(sp, PLAY_BUTTON_UNSET);
   if (sp->cursor_follows_play != FOLLOW_ALWAYS)         /* can be set in init file */
     {
       if ((on) && (last_play_state & (snd_ControlMask | snd_MetaMask)))

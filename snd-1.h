@@ -1019,14 +1019,14 @@ void g_init_env(void);
 /* -------- snd-dac.c -------- */
 
 void cleanup_dac(void);
-void stop_playing_sound(snd_info *sp);
-void stop_playing_sound_without_hook(snd_info *sp);
-void stop_playing_sound_no_toggle(snd_info *sp);
-void stop_playing_all_sounds_without_hook(void);
-void stop_playing_all_sounds(void);
-void stop_playing_region(int n);
-void stop_playing_region_without_hook(int n);
+void stop_playing_sound(snd_info *sp, play_stop_t reason);
+void stop_playing_sound_without_hook(snd_info *sp, play_stop_t reason);
+void stop_playing_sound_no_toggle(snd_info *sp, play_stop_t reason);
+void stop_playing_all_sounds_without_hook(play_stop_t reason);
+void stop_playing_all_sounds(play_stop_t reason);
+void stop_playing_region(int n, play_stop_t reason);
 void play_region(int n, play_process_t background);
+void play_region_1(int region, play_process_t background, XEN stop_proc);
 void play_channel(chan_info *cp, off_t start, off_t end, play_process_t background, XEN edpos, const char *caller, int arg_pos);
 void play_sound(snd_info *sp, off_t start, off_t end, play_process_t background, XEN edpos, const char *caller, int arg_pos);
 void play_channels(chan_info **cps, int chans, off_t *starts, off_t *ends, play_process_t background, 

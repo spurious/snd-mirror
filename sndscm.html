@@ -2314,7 +2314,6 @@ as a kind of extended piano, we could map keys to sounds:
 (<a class=quiet href="extsnd.html#bindkey">bind-key</a> (char-&gt;integer #\r) 0 (lambda (n) "play region forever" (play-region-forever (max 0 n))))
 </pre>
 <p>Now C-u 31 p plays the current sound 31 times; C-u 3 r plays region 3 until we type C-g.
-<b>play-often</b> uses stop-playing-hook, and <b>play-region-forever</b> uses stop-playing-region-hook.
 With a sufficiently fast computer, it's possible to create the samples to be played 
 in "real-time".  <b>play-fun</b> starts and stops the DAC, <i>ampit</i> and <i>amprt</i>
 fill up the audio buffer with data.

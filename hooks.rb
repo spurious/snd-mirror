@@ -142,7 +142,6 @@ need a String or Symbol, not %s"
   $lisp_graph_hook              = Hook.new("$lisp_graph_hook", 2)
   $before_transform_hook        = Hook.new("$before_transform_hook", 2)
   $mix_release_hook             = Hook.new("$mix_release_hook", 2)
-  $stop_playing_channel_hook    = Hook.new("$stop_playing_channel_hook", 2)
   $save_hook                    = Hook.new("$save_hook", 2)
   $mus_error_hook               = Hook.new("$mus_error_hook", 2)
   $mouse_enter_graph_hook       = Hook.new("$mouse_enter_graph_hook", 2)
@@ -166,7 +165,6 @@ need a String or Symbol, not %s"
   $start_hook                   = Hook.new("$start_hook", 1)
   $start_playing_hook           = Hook.new("$start_playing_hook", 1)
   $stop_playing_hook            = Hook.new("$stop_playing_hook", 1)
-  $stop_playing_region_hook     = Hook.new("$stop_playing_region_hook", 1)
   $mouse_enter_listener_hook    = Hook.new("$mouse_enter_listener_hook", 1)
   $mouse_leave_listener_hook    = Hook.new("$mouse_leave_listener_hook", 1)
   $window_property_changed_hook = Hook.new("$window_property_changed_hook", 1)
@@ -246,7 +244,6 @@ if defined? $after_graph_hook
                $lisp_graph_hook,
                $before_transform_hook,
                $mix_release_hook,
-               $stop_playing_channel_hook,
                $save_hook,
                $mus_error_hook,
                $mouse_enter_graph_hook,
@@ -270,7 +267,6 @@ if defined? $after_graph_hook
                $start_hook,
                $start_playing_hook,
                $stop_playing_hook,
-               $stop_playing_region_hook,
                $mouse_enter_listener_hook,
                $mouse_leave_listener_hook,
                $window_property_changed_hook,

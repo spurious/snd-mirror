@@ -288,7 +288,7 @@ static void file_dialog_stop_playing(file_dialog_info *fd)
   if ((fd->file_play_sp) && 
       (fd->file_play_sp->playing)) 
     {
-      stop_playing_sound(fd->file_play_sp);
+      stop_playing_sound(fd->file_play_sp, PLAY_BUTTON_UNSET);
       fd->file_play_sp = NULL;
     }
 }
@@ -375,7 +375,7 @@ static void play_selected_callback(GtkWidget *w, gpointer data)
   if (GTK_TOGGLE_BUTTON(w)->active)
     {
       if ((fd->file_play_sp) && (fd->file_play_sp->playing)) 
-	stop_playing_sound(fd->file_play_sp);
+	stop_playing_sound(fd->file_play_sp, PLAY_BUTTON_UNSET);
       filename = snd_filer_get_filename(fd->dialog);
       if (mus_file_probe(filename))
 	{

@@ -375,6 +375,8 @@ void about_snd_help(void)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+25-May:  removed stop-playing-region-hook, stop-playing-channel-hook\n\
+         added stop-function arg to play, play-and-wait, play-selection, play-region, add-player\n\
 21-May:  --with-doc-dir configuration switch.\n\
 16-May:  snd 7.4\n\
 6-May:   mono->stereo, mono-files->stereo, stereo->mono (extensions.scm).\n\

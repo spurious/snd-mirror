@@ -502,6 +502,7 @@ this can be confusing if fft normalization is on (the default)"
 
 (define (read-ogg filename)
   ;; check for "OggS" first word, if found, translate to something Snd can read
+  ;; (open-sound (read-ogg "/home/bil/sf1/oboe.ogg"))
   (if (call-with-input-file filename 
 	(lambda (fd)
 	  (and (char=? (read-char fd) #\O)
@@ -2170,18 +2171,18 @@ a sort of play list: (region-play-list (list (list 0.0 0) (list 0.5 1) (list 1.0
 	(set! (original-cursor snd i) (cursor snd i))
 	(set! (current-cursor snd i) (cursor snd i))))
     
-    (define (local-stop-playing-func snd chn)
-      (set! (cursor snd chn) (current-cursor snd chn)))
+    (define (local-stop-playing-func snd)
+      (set! (cursor snd #t) (current-cursor snd 0)))
     
     (if enable
 	(begin
 	  (add-hook! dac-hook local-dac-func)
 	  (add-hook! start-playing-hook local-start-playing-func)
-	  (add-hook! stop-playing-channel-hook local-stop-playing-func))
+	  (add-hook! stop-playing-hook local-stop-playing-func))
 	(begin
 	  (remove-local-hook! dac-hook local-dac-func)
 	  (remove-local-hook! start-playing-hook local-start-playing-func)
-	  (remove-local-hook! stop-playing-channel-hook local-stop-playing-func)))))
+	  (remove-local-hook! stop-playing-hook local-stop-playing-func)))))
 
 
 ;;; -------- smooth-channel as virtual op

@@ -92,15 +92,14 @@
 (define (play-often n) 
   "(play-often n) plays the selected sound 'n' times (interruptible via C-g)"
   (let ((plays (- n 1)))
-    (define (play-once snd)
-      (if (or (= plays 0)
-	      (c-g?))
-	  (remove-hook! stop-playing-hook play-once)
+    (define (play-once reason)
+      (if (and (> plays 0)
+	       (not (c-g?))
+	       (= reason 0))
 	  (begin
 	    (set! plays (- plays 1))
-	    (play 0 snd))))
-    (add-hook! stop-playing-hook play-once)
-    (play)))
+	    (play 0 #f #f #f #f #f play-once))))
+    (play 0 #f #f #f #f #f play-once)))
 
 ;(bind-key (char->integer #\p) 0 (lambda (n) "play often" (play-often (max 1 n))))
 
@@ -109,26 +108,23 @@
 
 (define (play-until-c-g)
   "(play-until-c-g) plays the selected sound until you interrupt it via C-g"
-  (define (play-once snd)
-    (if (c-g?)
-	(remove-hook! stop-playing-hook play-once)
-	(play 0 snd)))
-  (if (not (member play-once (hook->list stop-playing-hook)))
-      (add-hook! stop-playing-hook play-once))
-  (play))
+  (define (play-once reason)
+    (if (and (not (c-g?))
+	     (= reason 0))
+	(play 0 #f #f #f #f #f play-once)))
+  (play 0 #f #f #f #f #f play-once))
 
 
 ;;; -------- play region over and over until C-g typed
 
 (define (play-region-forever reg)
   "(play-region-forever reg) plays region 'reg' until you interrupt it via C-g"
-  (define (play-region-again reg)
-    (if (c-g?)
-	(remove-hook! stop-playing-region-hook play-region-again)
-	(play-region reg)))
-  (reset-hook! stop-playing-region-hook)
-  (add-hook! stop-playing-region-hook play-region-again)
-  (play-region reg))
+  (define (play-region-again reason)
+    (if (and (not (c-g?))  ; be extra careful (probably superfluous)
+	     (= reason 0)) ; 0=play completed normally
+	(play-region reg #f play-region-again)))
+  (play-region reg #f play-region-again))
+
 
 ;(bind-key (char->integer #\p) 0 (lambda (n) "play region forever" (play-region-forever (list-ref (regions) (max 0 n)))))
 

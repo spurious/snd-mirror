@@ -135,7 +135,7 @@ static void edit_play_callback(Widget w, XtPointer info, XtPointer context)
 {
   if (selection_play_stop)
     {
-      stop_playing_all_sounds();
+      stop_playing_all_sounds(PLAY_BUTTON_UNSET);
     }
   else
     {
@@ -867,7 +867,7 @@ static void popup_play_callback(Widget w, XtPointer info, XtPointer context)
   sp = any_selected_sound();
   if (stopping)
     {
-      stop_playing_all_sounds();
+      stop_playing_all_sounds(PLAY_BUTTON_UNSET);
       stopping = false;
       set_button_label(w, _("Play"));
       if (sp) set_play_button(sp, false);

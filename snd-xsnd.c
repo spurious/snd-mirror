@@ -889,7 +889,7 @@ static void play_button_callback(Widget w, XtPointer context, XtPointer info)
   ASSERT_WIDGET_TYPE(XmIsToggleButton(w), w);
   ev = (XButtonEvent *)(cb->event);
   if (sp->playing) 
-    stop_playing_sound(sp);
+    stop_playing_sound(sp, PLAY_BUTTON_UNSET);
   if (sp->cursor_follows_play != FOLLOW_ALWAYS)         /* can be set in init file */
     {
       if ((cb->set) && (ev->state & (snd_ControlMask | snd_MetaMask)))

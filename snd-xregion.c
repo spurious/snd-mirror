@@ -256,7 +256,7 @@ static void region_play_callback(Widget w, XtPointer context, XtPointer info)
   regrow *r = (regrow *)context;
   if (XmToggleButtonGetState(r->pl))
     play_region(region_list_position_to_id(r->pos), IN_BACKGROUND);
-  else stop_playing_region(region_list_position_to_id(r->pos));
+  else stop_playing_region(region_list_position_to_id(r->pos), PLAY_BUTTON_UNSET);
 }
 
 static void region_print_callback(Widget w, XtPointer context, XtPointer info) 

@@ -1135,9 +1135,9 @@ void control_g(snd_info *sp)
   if ((ss->checking_explicitly) || (play_in_progress())) ss->stopped_explicitly = true; 
   /* this tries to break out of long filter/src computations (and perhaps others) */
   /*   but, as in other such cases, it leaves this flag set so all subsequent uses of it need to clear it first */
+  stop_playing_all_sounds(PLAY_C_G); /* several scm files assume hooks called upon C-g -- could be region play, etc */
   if (sp)
     {
-      if (sp->playing) stop_playing_all_sounds(); /* several scm files assume hooks called upon C-g */
       if (sp->applying) stop_applying(sp);
       for_each_sound_chan(sp, stop_fft_in_progress);
       clear_minibuffer(sp);
@@ -1342,7 +1342,7 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 	      break;
 #endif
 	    case snd_K_T: case snd_K_t: 
-	      stop_playing_sound(sp); 
+	      stop_playing_sound(sp, PLAY_C_T); 
 	      set_play_button(sp, false);
 	      break;
 	    case snd_K_U: case snd_K_u: 
@@ -1534,7 +1534,7 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 	      save_edits(sp, NULL); 
 	      break;
 	    case snd_K_T: case snd_K_t: 
-	      stop_playing_sound(sp); 
+	      stop_playing_sound(sp, PLAY_C_T); 
 	      break;
 	    case snd_K_U: case snd_K_u: 
 	      undo_edit_with_sync(cp, ext_count); 

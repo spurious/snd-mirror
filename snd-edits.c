@@ -35,7 +35,7 @@ void free_sound_list(chan_info *cp)
     {
       if (cp->sounds)
 	{
-	  if ((cp->sound) && (cp->sound->playing)) stop_playing_sound_without_hook(cp->sound);
+	  if ((cp->sound) && (cp->sound->playing)) stop_playing_sound_without_hook(cp->sound, PLAY_CLOSE);
 	  for (i = 0; i < cp->sound_size; i++)
 	    if (cp->sounds[i]) 
 	      cp->sounds[i] = free_snd_data(cp->sounds[i]);
@@ -55,7 +55,7 @@ static void release_pending_sounds(chan_info *cp, int edit_ctr)
   if ((cp) && (cp->sounds))
     {
       if ((cp->sound) && (cp->sound->playing)) 
-	stop_playing_sound_without_hook(cp->sound);
+	stop_playing_sound_without_hook(cp->sound, PLAY_CLOSE);
       for (i = 0; i < cp->sound_size; i++)
 	{
 	  sf = cp->sounds[i];
@@ -85,7 +85,7 @@ static void prepare_sound_list (chan_info *cp)
     }
   if (cp->sounds[cp->sound_ctr]) 
     {
-      if ((cp->sound) && (cp->sound->playing)) stop_playing_sound_without_hook(cp->sound);
+      if ((cp->sound) && (cp->sound->playing)) stop_playing_sound_without_hook(cp->sound, PLAY_CLOSE);
       cp->sounds[cp->sound_ctr] = free_snd_data(cp->sounds[cp->sound_ctr]);
     }
 }
@@ -240,7 +240,7 @@ static bool prepare_edit_list(chan_info *cp, off_t len, int pos, const char *cal
     }
   sp = cp->sound;
   stop_amp_env(cp);
-  if ((sp) && (sp->playing)) stop_playing_sound_without_hook(sp);
+  if ((sp) && (sp->playing)) stop_playing_sound_without_hook(sp, PLAY_EDIT);
   cp->edit_ctr++;
   if (cp->edit_ctr >= cp->edit_size)
     {

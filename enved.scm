@@ -176,23 +176,19 @@
 ;;;
 ;;; some examples of using this envelope editor
 
-(define (play-with-envs sound)
+(define* (play-with-envs #:optional (sound #f))
   "(play-with-envs snd) sets channel amps during playback from the associated enved envelopes"
   (let ((chans (chans sound)))
-    (add-hook! stop-playing-hook 
-	       (lambda (s) 
-		 (reset-hook! play-hook)
-		 (reset-hook! stop-playing-hook)))
     (do ((chan 0 (1+ chan)))
 	((= chan chans))
       (let ((player (make-player sound chan))
 	    (e (make-env (channel-envelope sound chan) 
-			 :end (inexact->exact (floor (/ (frames sound chan)
-							(dac-size)))))))
-	(add-player player)
+			 :end (inexact->exact (floor (exact->inexact (/ (frames sound chan) (dac-size))))))))
+	(add-player player 0 -1 -1 (lambda (reason) (reset-hook! play-hook)))
+	(set! (amp-control player) .5) ; force amp check
 	(add-hook! play-hook (lambda (fr)
 			       ;; if fr (dac buffer size in frames) is not dac-size, we should do something debonair
-			       (set! (amp player) (env e))))))
+			       (set! (amp-control player) (env e))))))
     (start-playing chans (srate sound))))
 
 (define (play-panned sound)

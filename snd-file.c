@@ -800,7 +800,7 @@ void snd_close_file(snd_info *sp)
   sp->inuse = SOUND_IDLE;
   for (i = 0; i < sp->nchans; i++) sp->chans[i]->squelch_update = true;
   add_to_previous_files(sp->short_filename, sp->filename);
-  if (sp->playing) stop_playing_sound(sp);
+  if (sp->playing) stop_playing_sound(sp, PLAY_CLOSE);
   if (sp->sgx) clear_minibuffer(sp); /* this can trigger a redisplay-expose sequence, so make sure channels ignore it above */
   if (sp == selected_sound()) 
     ss->selected_sound = NO_SELECTION;
@@ -1384,7 +1384,7 @@ void view_curfiles_play(int pos, bool play)
   sp = find_sound(curnames[pos], 0);
   if (sp)
     {
-      if (sp->playing) stop_playing_sound(sp);
+      if (sp->playing) stop_playing_sound(sp, PLAY_BUTTON_UNSET);
       if (play)
 	play_sound(sp, 0, NO_END_SPECIFIED, IN_BACKGROUND, C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), "current files play", 0);
       else set_play_button(sp, false);
@@ -1455,7 +1455,7 @@ bool view_prevfiles_play(int pos, bool play)
   else
     { /* play toggled off */
       if ((play_sp) && (play_sp->playing)) 
-	stop_playing_sound(play_sp);
+	stop_playing_sound(play_sp, PLAY_BUTTON_UNSET);
     }
   return(false);
 }

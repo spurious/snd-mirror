@@ -479,7 +479,7 @@ remember what they are and what order they come in).
 <table width="100%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h4>OSCIL</h4></td></tr></table>
 
 <pre>
-  <a class=def name="make-oscil">make-oscil</a> <a href="#optional-key">&amp;optional-key</a> (<i>frequency</i> 440.0) (<i>initial-phase</i> 0.0)
+  <a class=def name="make-oscil">make-oscil</a> <a class=quiet href="#optional-key">&amp;optional-key</a> (<i>frequency</i> 440.0) (<i>initial-phase</i> 0.0)
   <a class=def name="oscil">oscil</a> <i>os</i> &amp;optional (<i>fm-input</i> 0.0) (<i>pm-input</i> 0.0)
   <a class=def name="oscil?">oscil?</a> <i>os</i>
   <a class=def name="oscilbank">oscil-bank</a> <i>amps oscils fms len</i> 
@@ -524,7 +524,7 @@ discussion of fm.</p>
 <table width="100%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h4>ENV</h4></td></tr></table>
 
 <pre>
-  <a class=def name="make-env">make-env</a> <a href="#optional-key">&amp;optional-key</a> 
+  <a class=def name="make-env">make-env</a> <a class=quiet href="#optional-key">&amp;optional-key</a> 
       <i>envelope</i>      ; list of x,y break-point pairs
       (<i>scaler</i> 1.0)  ; scaler on every y value (before offset is added)
       <i>duration</i>      ; seconds
@@ -672,7 +672,7 @@ duration), it's simplest to use make-env:
 <table width="100%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h4>TABLE-LOOKUP</h4></td></tr></table>
 
 <pre>
-  <a class=def name="make-table-lookup">make-table-lookup</a> <a href="#optional-key">&amp;optional-key</a> 
+  <a class=def name="make-table-lookup">make-table-lookup</a> <a class=quiet href="#optional-key">&amp;optional-key</a> 
         (<i>frequency</i> 440.0)   ; in Hz
         (<i>initial-phase</i> 0.0) ; in radians 
         <i>wave</i>                ; double-float array
@@ -738,11 +738,11 @@ several standard orchestral instruments, courtesy of James A. Moorer.
 <!-- TOPIC waveshape -->
 <table width="100%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h4>WAVESHAPE</h4></td></tr></table>
 <pre>
-  <a class=def name="make-waveshape">make-waveshape</a> <a href="#optional-key">&amp;optional-key</a> (<i>frequency</i> 440.0) (<i>partials</i> '(1 1)) <i>wave</i> <i>size</i>
+  <a class=def name="make-waveshape">make-waveshape</a> <a class=quiet href="#optional-key">&amp;optional-key</a> (<i>frequency</i> 440.0) (<i>partials</i> '(1 1)) <i>wave</i> <i>size</i>
   <a class=def name="waveshape">waveshape</a> <i>w</i> &amp;optional (<i>index</i> 1.0) (<i>fm</i> 0.0)
   <a class=def name="waveshape?">waveshape?</a> <i>w</i>
 
-  <a class=def name="partials-&gt;waveshape">partials-&gt;waveshape</a> <a href="#optional-key">&amp;optional-key</a> <i>partials</i> (<i>norm</i> t) (<i>size</i> *clm-table-size*)
+  <a class=def name="partials-&gt;waveshape">partials-&gt;waveshape</a> <a class=quiet href="#optional-key">&amp;optional-key</a> <i>partials</i> (<i>norm</i> t) (<i>size</i> *clm-table-size*)
   <a class=def name="partials-&gt;polynomial">partials-&gt;polynomial</a> <i>partials</i> &amp;optional (<i>kind</i> 1)
 </pre>
 
@@ -782,19 +782,19 @@ determines which kind of Chebyshev polynomial we are interested in.</p>
 <table width="100%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h4>SAWTOOTH-WAVE, TRIANGLE-WAVE, PULSE-TRAIN, SQUARE-WAVE</h4></td></tr></table>
 
 <pre>
-  <a class=def name="make-triangle-wave">make-triangle-wave</a> <a href="#optional-key">&amp;optional-key</a> (<i>frequency</i> 440.0) (<i>amplitude</i> 1.0) (<i>initial-phase</i> pi)
+  <a class=def name="make-triangle-wave">make-triangle-wave</a> <a class=quiet href="#optional-key">&amp;optional-key</a> (<i>frequency</i> 440.0) (<i>amplitude</i> 1.0) (<i>initial-phase</i> pi)
   <a class=def name="triangle-wave">triangle-wave</a> <i>s</i> &amp;optional (<i>fm</i> 0.0)
   <a class=def name="triangle-wave?">triangle-wave?</a> <i>s</i>
 
-  <a class=def name="make-square-wave">make-square-wave</a> <a href="#optional-key">&amp;optional-key</a> (<i>frequency</i> 440.0) (<i>amplitude</i> 1.0) (<i>initial-phase</i> 0)
+  <a class=def name="make-square-wave">make-square-wave</a> <a class=quiet href="#optional-key">&amp;optional-key</a> (<i>frequency</i> 440.0) (<i>amplitude</i> 1.0) (<i>initial-phase</i> 0)
   <a class=def name="square-wave">square-wave</a> <i>s</i> &amp;optional (<i>fm</i>  0.0)
   <a class=def name="square-wave?">square-wave?</a> <i>s</i>
 
-  <a class=def name="make-sawtooth-wave">make-sawtooth-wave</a> <a href="#optional-key">&amp;optional-key</a> (<i>frequency</i> 440.0) (<i>amplitude</i> 1.0) (<i>initial-phase</i> pi)
+  <a class=def name="make-sawtooth-wave">make-sawtooth-wave</a> <a class=quiet href="#optional-key">&amp;optional-key</a> (<i>frequency</i> 440.0) (<i>amplitude</i> 1.0) (<i>initial-phase</i> pi)
   <a class=def name="sawtooth-wave">sawtooth-wave</a> <i>s</i> &amp;optional (<i>fm</i> 0.0)
   <a class=def name="sawtooth-wave?">sawtooth-wave?</a> <i>s</i>
 
-  <a class=def name="make-pulse-train">make-pulse-train</a> <a href="#optional-key">&amp;optional-key</a> (<i>frequency</i> 440.0) (<i>amplitude</i> 1.0) (<i>initial-phase</i> two-pi)
+  <a class=def name="make-pulse-train">make-pulse-train</a> <a class=quiet href="#optional-key">&amp;optional-key</a> (<i>frequency</i> 440.0) (<i>amplitude</i> 1.0) (<i>initial-phase</i> two-pi)
   <a class=def name="pulse-train">pulse-train</a> <i>s</i> &amp;optional (<i>fm</i> 0.0)
   <a class=def name="pulse-train?">pulse-train?</a> <i>s</i>
 </pre>
@@ -831,7 +831,7 @@ One popular kind of vibrato is:
 <!-- TOPIC sum-of-cosines -->
 <table width="100%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h4>SUM-OF-COSINES</h4></td></tr></table>
 <pre>
-  <a class=def name="make-sum-of-cosines">make-sum-of-cosines</a> <a href="#optional-key">&amp;optional-key</a> 
+  <a class=def name="make-sum-of-cosines">make-sum-of-cosines</a> <a class=quiet href="#optional-key">&amp;optional-key</a> 
         (<i>cosines</i> 1) (<i>frequency</i> 440.0) (<i>initial-phase</i> 0.0)
   <a class=def name="sum-of-cosines">sum-of-cosines</a> <i>cs</i> &amp;optional (<i>fm</i> 0.0)
   <a class=def name="sum-of-cosines?">sum-of-cosines?</a> <i>cs</i>
@@ -865,7 +865,7 @@ based on:
 <!-- TOPIC sum-of-sines -->
 <table width="100%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h4>SUM-OF-SINES</h4></td></tr></table>
 <pre>
-  <a class=def name="make-sum-of-sines">make-sum-of-sines</a> <a href="#optional-key">&amp;optional-key</a> 
+  <a class=def name="make-sum-of-sines">make-sum-of-sines</a> <a class=quiet href="#optional-key">&amp;optional-key</a> 
         (<i>sines</i> 1) (<i>frequency</i> 440.0) (<i>initial-phase</i> 0.0)
   <a class=def name="sum-of-sines">sum-of-sines</a> <i>cs</i> &amp;optional (<i>fm</i> 0.0)
   <a class=def name="sum-of-sines?">sum-of-sines?</a> <i>cs</i>
@@ -892,7 +892,7 @@ based on:
 <!-- TOPIC wave-train -->
 <table width="100%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h4>WAVE-TRAIN</h4></td></tr></table>
 <pre>
-  <a class=def name="make-wave-train">make-wave-train</a> <a href="#optional-key">&amp;optional-key</a> (<i>frequency</i> 440.0) (<i>initial-phase</i> 0.0) <i>wave size type</i>
+  <a class=def name="make-wave-train">make-wave-train</a> <a class=quiet href="#optional-key">&amp;optional-key</a> (<i>frequency</i> 440.0) (<i>initial-phase</i> 0.0) <i>wave size type</i>
   <a class=def name="wave-train">wave-train</a> <i>w</i> &amp;optional (<i>fm</i> 0.0)
   <a class=def name="wave-train?">wave-train?</a> <i>w</i>
 </pre>
@@ -958,14 +958,14 @@ use this for VOSIM and other related techniques.</p>
 <table width="100%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h4>RAND, RAND-INTERP</h4></td></tr></table>
 
 <pre>
-  <a class=def name="make-rand">make-rand</a> <a href="#optional-key">&amp;optional-key</a> 
+  <a class=def name="make-rand">make-rand</a> <a class=quiet href="#optional-key">&amp;optional-key</a> 
         (<i>frequency</i> 440.0)          ;freq at which new random numbers occur
         (<i>amplitude</i> 1.0)            ;numbers are between -amplitude and amplitude
         (<i>envelope</i> '(-1 1 1 1))     ;distribution envelope (uniform distribution between -1 and 1 is default)
         <i>distribution</i>               ;pre-computed distribution
   <a class=def name="rand">rand</a> <i>r</i> &amp;optional (<i>sweep</i> 0.0)
   <a class=def name="rand?">rand?</a> <i>r</i>
-  <a class=def name="make-rand-interp">make-rand-interp</a> <a href="#optional-key">&amp;optional-key</a> (<i>frequency</i> 440.0) (<i>amplitude</i> 1.0) (<i>envelope</i> '(-1 1 1 1) <i>distribution</i>)
+  <a class=def name="make-rand-interp">make-rand-interp</a> <a class=quiet href="#optional-key">&amp;optional-key</a> (<i>frequency</i> 440.0) (<i>amplitude</i> 1.0) (<i>envelope</i> '(-1 1 1 1) <i>distribution</i>)
   <a class=def name="rand-interp">rand-interp</a> <i>r</i> &amp;optional (<i>sweep</i> 0.0)
   <a class=def name="rand-interp?">rand-interp?</a> <i>r</i>
   <em class=emdef>centered-random</em> <i>amp</i> 
@@ -1111,19 +1111,19 @@ averager has the same period (length) as the rand.
 <table width="100%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h4>ONE-POLE, ONE-ZERO, TWO-POLE, TWO-ZERO</h4></td></tr></table>
 
 <pre>
-   <a class=def name="make-one-pole">make-one-pole</a> <a href="#optional-key">&amp;optional-key</a> <i>a0</i> <i>b1</i>    ; <i>b1</i> &lt; 0.0 gives lowpass, <i>b1</i> &gt; 0.0 gives highpass
+   <a class=def name="make-one-pole">make-one-pole</a> <a class=quiet href="#optional-key">&amp;optional-key</a> <i>a0</i> <i>b1</i>    ; <i>b1</i> &lt; 0.0 gives lowpass, <i>b1</i> &gt; 0.0 gives highpass
    <a class=def name="one-pole">one-pole</a> <i>f</i> <i>input</i> 
    <a class=def name="one-pole?">one-pole?</a> <i>f</i>
 
-   <a class=def name="make-one-zero">make-one-zero</a> <a href="#optional-key">&amp;optional-key</a> <i>a0</i> <i>a1</i>    ; <i>a1</i> &gt; 0.0 gives weak lowpass, <i>a1</i> &lt; 0.0 highpass
+   <a class=def name="make-one-zero">make-one-zero</a> <a class=quiet href="#optional-key">&amp;optional-key</a> <i>a0</i> <i>a1</i>    ; <i>a1</i> &gt; 0.0 gives weak lowpass, <i>a1</i> &lt; 0.0 highpass
    <a class=def name="one-zero">one-zero</a> <i>f</i> <i>input</i> 
    <a class=def name="one-zero?">one-zero?</a> <i>f</i>
 
-   <a class=def name="make-two-pole">make-two-pole</a> <a href="#optional-key">&amp;optional-key</a> <i>a0</i> <i>b1</i> <i>b2</i>
+   <a class=def name="make-two-pole">make-two-pole</a> <a class=quiet href="#optional-key">&amp;optional-key</a> <i>a0</i> <i>b1</i> <i>b2</i>
    <a class=def name="two-pole">two-pole</a> <i>f</i> <i>input</i> 
    <a class=def name="two-pole?">two-pole?</a> <i>f</i>
 
-   <a class=def name="make-two-zero">make-two-zero</a> <a href="#optional-key">&amp;optional-key</a> <i>a0</i> <i>a1</i> <i>a2</i>
+   <a class=def name="make-two-zero">make-two-zero</a> <a class=quiet href="#optional-key">&amp;optional-key</a> <i>a0</i> <i>a1</i> <i>a2</i>
    <a class=def name="two-zero">two-zero</a> <i>f</i> <i>input</i> 
    <a class=def name="two-zero?">two-zero?</a> <i>f</i>
 
@@ -1171,7 +1171,7 @@ in conjunction with make-ppolar.</p>
 <table width="100%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h4>FORMANT</h4></td></tr></table>
 
 <pre>
-  <a class=def name="make-formant">make-formant</a> <a href="#optional-key">&amp;optional-key</a> <i>radius</i> <i>frequency</i> (<i>gain</i> 1.0)
+  <a class=def name="make-formant">make-formant</a> <a class=quiet href="#optional-key">&amp;optional-key</a> <i>radius</i> <i>frequency</i> (<i>gain</i> 1.0)
   <a class=def name="formant">formant</a> <i>f</i> <i>input</i>       ; resonator centered at <i>frequency</i>, bandwidth set by <i>r</i>
   <a class=def name="formant?">formant?</a> <i>f</i>
 </pre>
@@ -1295,15 +1295,15 @@ See also the noi-attempt, filter-white-noise, and testR instruments in <a href="
 <table width="100%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h4>FILTER, IIR-FILTER, FIR-FILTER</h4></td></tr></table>
 
 <pre>
-   <a class=def name="make-filter">make-filter</a> <a href="#optional-key">&amp;optional-key</a> <i>order</i> <i>xcoeffs</i> <i>ycoeffs</i>
+   <a class=def name="make-filter">make-filter</a> <a class=quiet href="#optional-key">&amp;optional-key</a> <i>order</i> <i>xcoeffs</i> <i>ycoeffs</i>
    <a class=def name="filter">filter</a> <i>fl</i> <i>inp</i> 
    <a class=def name="filter?">filter?</a> <i>fl</i>
 
-   <a class=def name="make-fir-filter">make-fir-filter</a> <a href="#optional-key">&amp;optional-key</a> <i>order xcoeffs</i>
+   <a class=def name="make-fir-filter">make-fir-filter</a> <a class=quiet href="#optional-key">&amp;optional-key</a> <i>order xcoeffs</i>
    <a class=def name="fir-filter">fir-filter</a> <i>fl</i> <i>inp</i> 
    <a class=def name="fir-filter?">fir-filter?</a> <i>fl</i>
 
-   <a class=def name="make-iir-filter">make-iir-filter</a> <a href="#optional-key">&amp;optional-key</a> <i>order ycoeffs</i>
+   <a class=def name="make-iir-filter">make-iir-filter</a> <a class=quiet href="#optional-key">&amp;optional-key</a> <i>order ycoeffs</i>
    <a class=def name="iir-filter">iir-filter</a> <i>fl</i> <i>inp</i> 
    <a class=def name="iir-filter?">iir-filter?</a> <i>fl</i>
 
@@ -1377,7 +1377,7 @@ get to the envelope.</p>
 <!-- TOPIC delay -->
 <table width="100%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h4>DELAY, TAP</h4></td></tr></table>
 <pre>
-  <a class=def name="make-delay">make-delay</a> <a href="#optional-key">&amp;optional-key</a> <i>size</i> <i>initial-contents initial-element max-size type</i>
+  <a class=def name="make-delay">make-delay</a> <a class=quiet href="#optional-key">&amp;optional-key</a> <i>size</i> <i>initial-contents initial-element max-size type</i>
   <a class=def name="delay">delay</a> <i>d</i> <i>input</i> &amp;optional (<i>pm</i> 0.0)
   <a class=def name="delay?">delay?</a> <i>d</i>
   <a class=def name="tap">tap</a> <i>d</i> &amp;optional (<i>offset</i> 0)
@@ -1444,11 +1444,11 @@ The value returned is the 'input' argument.
 <table width="100%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h4>COMB, NOTCH</h4></td></tr></table>
 
 <pre>
-  <a class=def name="make-comb">make-comb</a> <a href="#optional-key">&amp;optional-key</a> <i>scaler size initial-contents initial-element max-size</i>
+  <a class=def name="make-comb">make-comb</a> <a class=quiet href="#optional-key">&amp;optional-key</a> <i>scaler size initial-contents initial-element max-size</i>
   <a class=def name="comb">comb</a> <i>cflt input</i> &amp;optional (<i>pm</i> 0.0)
   <a class=def name="comb?">comb?</a> <i>cflt</i>
 
-  <a class=def name="make-notch">make-notch</a> <a href="#optional-key">&amp;optional-key</a> <i>scaler size initial-contents initial-element max-size</i>
+  <a class=def name="make-notch">make-notch</a> <a class=quiet href="#optional-key">&amp;optional-key</a> <i>scaler size initial-contents initial-element max-size</i>
   <a class=def name="notch">notch</a> <i>cflt input</i> &amp;optional (<i>pm</i> 0.0)
   <a class=def name="notch?">notch?</a> <i>cflt</i>
 </pre>
@@ -1490,7 +1490,7 @@ Digital Waveguides".</p>
 <!-- TOPIC all-pass -->
 <table width="100%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h4>ALL-PASS</h4></td></tr></table>
 <pre>
-  <a class=def name="make-all-pass">make-all-pass</a> <a href="#optional-key">&amp;optional-key</a> <i>feedback feedforward size initial-contents initial-element max-size</i>
+  <a class=def name="make-all-pass">make-all-pass</a> <a class=quiet href="#optional-key">&amp;optional-key</a> <i>feedback feedforward size initial-contents initial-element max-size</i>
   <a class=def name="all-pass">all-pass</a> <i>f input</i> &amp;optional (<i>pm</i> 0.0)
   <a class=def name="all-pass?">all-pass?</a> <i>f</i>
 </pre>
@@ -1516,7 +1516,7 @@ average comb filter.  If both scale terms = 0, we get a pure delay line. </p>
 <!-- TOPIC average -->
 <table width="100%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h4>AVERAGE</h4></td></tr></table>
 <pre>
-  <a class=def name="make-average">make-average</a> <a href="#optional-key">&amp;optional-key</a> <i>size initial-contents initial-element</i>
+  <a class=def name="make-average">make-average</a> <a class=quiet href="#optional-key">&amp;optional-key</a> <i>size initial-contents initial-element</i>
   <a class=def name="average">average</a> <i>f input</i>
   <a class=def name="average?">average?</a> <i>f</i>
 </pre>
@@ -1537,7 +1537,7 @@ effect in new-effects.scm (Snd).
 <!-- INDEX make-src:sampling-rate conversion -->
 <table width="100%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h4>SRC</h4></td></tr></table>
 <pre>
-  <a class=def name="make-src">make-src</a> <a href="#optional-key">&amp;optional-key</a> <i>input</i> (<i>srate</i> 1.0) (<i>width</i> 5)
+  <a class=def name="make-src">make-src</a> <a class=quiet href="#optional-key">&amp;optional-key</a> <i>input</i> (<i>srate</i> 1.0) (<i>width</i> 5)
   <a class=def name="src">src</a> <i>s</i> &amp;optional (<i>sr-change</i> 0.0) <i>input-function</i>
   <a class=def name="src?">src?</a> <i>s</i>
 </pre>
@@ -1622,7 +1622,7 @@ situation, hopefully; see expsrc.ins).</p>
 <!-- TOPIC convolve -->
 <table width="100%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h4>CONVOLVE</h4></td></tr></table>
 <pre>
-  <a class=def name="make-convolve">make-convolve</a> <a href="#optional-key">&amp;optional-key</a> <i>input filter fft-size filter-size</i>
+  <a class=def name="make-convolve">make-convolve</a> <a class=quiet href="#optional-key">&amp;optional-key</a> <i>input filter fft-size filter-size</i>
    <a class=def name="convolve">convolve</a> <i>ff</i> &amp;optional <i>input-function</i>
    <a class=def name="convolve?">convolve?</a> <i>ff</i>
    <a class=def name="convolvefiles">convolve-files</a> <i>file1 file2</i> &amp;optional (<i>maxamp</i> 1.0) (<i>output-file</i> "tmp.snd")
@@ -1664,7 +1664,7 @@ handier.</p>
 <!-- INDEX grains:Granular synthesis --><A class=def NAME="grains"></a>
 <table width="100%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h4>GRANULATE</h4></td></tr></table>
 <pre>
-  <a class=def name="make-granulate">make-granulate</a> <a href="#optional-key">&amp;optional-key</a>   
+  <a class=def name="make-granulate">make-granulate</a> <a class=quiet href="#optional-key">&amp;optional-key</a>   
         <i>input</i>
         (<i>expansion</i> 1.0)   ;how much to lengthen or compress the file
         (<i>length</i> .15)      ;length of file slices that are overlapped
@@ -1773,7 +1773,7 @@ In the following code, we use the edit function to reverse every other grain:
 <!-- TOPIC phase-vocoder -->
 <table width="100%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h4>PHASE-VOCODER</h4></td></tr></table>
 <pre>
-  <a class=def name="make-phase-vocoder">make-phase-vocoder</a> <a href="#optional-key">&amp;optional-key</a> <i>input</i> (<i>fftsize</i> 512) (<i>overlap</i> 4) <i>interp</i> (<i>pitch</i> 1.0) <i>analyze edit synthesize</i>
+  <a class=def name="make-phase-vocoder">make-phase-vocoder</a> <a class=quiet href="#optional-key">&amp;optional-key</a> <i>input</i> (<i>fftsize</i> 512) (<i>overlap</i> 4) <i>interp</i> (<i>pitch</i> 1.0) <i>analyze edit synthesize</i>
   <a class=def name="phase-vocoder">phase-vocoder</a> <i>pv input</i>
   <a class=def name="phase-vocoder?">phase-vocoder?</a> <i>pv</i>
 </pre>
@@ -1802,7 +1802,7 @@ ffts (for time stretching etc).
 <!-- TOPIC buffer -->
 <table width="100%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h4>BUFFER-&gt;SAMPLE</h4></td></tr></table>
 <pre>
-  <a class=def name="make-buffer">make-buffer</a> <a href="#optional-key">&amp;optional-key</a> <i>size (fill-time 0.0)</i>
+  <a class=def name="make-buffer">make-buffer</a> <a class=quiet href="#optional-key">&amp;optional-key</a> <i>size (fill-time 0.0)</i>
   <a class=def name="buffer-&gt;sample">buffer-&gt;sample</a> <i>b</i> 
   <a class=def name="sample-&gt;buffer">sample-&gt;buffer</a> <i>b val</i> 
   <a class=def name="buffer-&gt;frame">buffer-&gt;frame</a> <i>b &amp;optional f</i> 
@@ -1842,7 +1842,7 @@ t when a new block of data is needed; mus-increment sets the next block-trigger 
 <!-- TOPIC sine-summation -->
 <table width="100%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h4>SINE-SUMMATION</h4></td></tr></table>
 <pre>
-  <a class=def name="make-sine-summation">make-sine-summation</a> <a href="#optional-key">&amp;optional-key</a> 
+  <a class=def name="make-sine-summation">make-sine-summation</a> <a class=quiet href="#optional-key">&amp;optional-key</a> 
         (<i>frequency</i> 440.0) (<i>initial-phase</i> 0.0) (<i>n</i> 1) (<i>a</i> .5) (<i>ratio</i> 1.0)
   <a class=def name="sine-summation">sine-summation</a> <i>s</i> &amp;optional (<i>fm</i> 0.0)
   <a class=def name="sine-summation?">sine-summation?</a> <i>s</i>
@@ -1884,7 +1884,7 @@ don't set <i>a</i> to 1.0!).
 <table width="100%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h4>ASYMMETRIC-FM</h4></td></tr></table>
 
 <pre>
-  <a class=def name="make-asymmetric-fm">make-asymmetric-fm</a> <a href="#optional-key">&amp;optional-key</a> 
+  <a class=def name="make-asymmetric-fm">make-asymmetric-fm</a> <a class=quiet href="#optional-key">&amp;optional-key</a> 
         (<i>frequency</i> 440.0) (<i>initial-phase</i> 0.0) (<i>r</i> 1.0) (<i>ratio</i> 1.0)
   <a class=def name="asymmetric-fm">asymmetric-fm</a> <i>af index</i> &amp;optional (<i>fm</i> 0.0)
   <a class=def name="asymmetric-fm?">asymmetric-fm?</a> <i>af</i>
@@ -2185,7 +2185,7 @@ or with-dac (0=microphone, 1=analog line in, 2=digital line in).
 <!-- TOPIC readin -->
 <table width="100%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h4>READIN</h4></td></tr></table>
 <pre>
- <a class=def name="make-readin">make-readin</a> <a href="#optional-key">&amp;optional-key</a> <i>file</i> (<i>channel</i> 0) <i>start</i> <i>(direction 1)</i>
+ <a class=def name="make-readin">make-readin</a> <a class=quiet href="#optional-key">&amp;optional-key</a> <i>file</i> (<i>channel</i> 0) <i>start</i> <i>(direction 1)</i>
  <a class=def name="readin">readin</a> <i>rd</i>
  <a class=def name="readin?">readin?</a> <i>rd</i>
 </pre>
@@ -2227,7 +2227,7 @@ readin and <a href="#env">env</a> (see also the fullmix instrument in fullmix.in
 <!-- INDEX make-locsig:Sound placement -->
 <table width="100%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h4>LOCSIG</h4></td></tr></table>
 <pre>
- <a class=def name="make-locsig">make-locsig</a> <a href="#optional-key">&amp;optional-key</a> (<i>degree</i> 0.0) (<i>distance</i> 1.0) <i>reverb channels type</i>
+ <a class=def name="make-locsig">make-locsig</a> <a class=quiet href="#optional-key">&amp;optional-key</a> (<i>degree</i> 0.0) (<i>distance</i> 1.0) <i>reverb channels type</i>
  <a class=def name="locsig">locsig</a> <i>loc i in-sig</i>
  <a class=def name="locsig?">locsig?</a> <i>loc</i>
  <a class=def name="locsig-ref">locsig-ref</a> <i>loc chan</i>
@@ -2548,7 +2548,7 @@ translated up and down by w/two-pi Hz.  The simplest case is: </p>
 <table width="100%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3>FFT</h3></td></tr></table>
 <pre>
   <a class=def Name="fft">fft</a> <i>rdat idat fftsize</i> &amp;optional <i>sign</i>
-  <a class=def name="make-fft-window">make-fft-window</a> <a href="#optional-key">&amp;optional-key</a> <i>type size</i> (<i>beta</i> 2.5)
+  <a class=def name="make-fft-window">make-fft-window</a> <a class=quiet href="#optional-key">&amp;optional-key</a> <i>type size</i> (<i>beta</i> 2.5)
   <a class=def name="multiply-arrays">multiply-arrays</a> <i>rdat</i> <i>window</i>
   <a class=def name="rectangular-&gt;polar">rectangular-&gt;polar</a> <i>rdat</i> <i>idat</i>
   <a class=def name="polar-&gt;rectangular">polar-&gt;rectangular</a> <i>rdat</i> <i>idat</i>

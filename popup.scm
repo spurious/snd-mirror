@@ -68,15 +68,6 @@
 	(stopping1 #f)
 	(stop-widget #f)
 	(stop-widget1 #f))
-
-    (add-hook! stop-playing-selection-hook
-	       (lambda () 
-		 (if stopping
-		     (begin
-		       (set! stopping #f)
-		       (if (Widget? stop-widget)
-			   (change-label stop-widget "Play"))))))
-
     (make-popup-menu 
      "selection-popup"
      (caddr (main-widgets))
@@ -94,8 +85,7 @@
 		    (if stopping1
 			(begin
 			  (set! stopping1 #f)
-			  (change-label stop-widget1 "Loop play")
-			  (remove-hook! stop-playing-selection-hook play-selection)))
+			  (change-label stop-widget1 "Loop play")))
 		    (stop-playing)) ; stops all including possible looping play
 		  (begin
 		    (change-label w "Stop")
@@ -104,22 +94,28 @@
 		    (play-selection)))))
       (list "Loop play"      xmPushButtonWidgetClass every-menu ; play over and over
 	    (lambda (w c i) 
+	      (define (stop-playing-selection)
+		(set! stopping1 #f)
+		(change-label w "Loop play")
+		(if stopping
+		    (begin
+		      (set! stopping #f)
+		      (change-label stop-widget "Play"))))
+	      (define (play-selection-again reason)
+		(if (and (not (c-g?))
+			 (= reason 0)
+			 stopping1)
+		    (play-selection #f -1 play-selection-again)
+		    (stop-playing-selection)))
 	      (if stopping1
 		  (begin
-		    (set! stopping1 #f)
-		    (change-label w "Loop play")
-		    (remove-hook! stop-playing-selection-hook play-selection)
-		    (if stopping
-			(begin
-			  (set! stopping #f)
-			  (change-label stop-widget "Play")))
+		    (stop-playing-selection)
 		    (stop-playing))
 		  (begin
 		    (change-label w "Stop!")
 		    (set! stop-widget1 w) ; needs to be separate from Play case since we're stopping/restarting deliberately
 		    (set! stopping1 #t)
-		    (add-hook! stop-playing-selection-hook play-selection) ; when one rendition ends, we immediately start another
-		    (play-selection)))))
+		    (play-selection #f -1 play-selection-again)))))
       (list "Delete"    xmPushButtonWidgetClass every-menu (lambda (w c i) (delete-selection)))
       (list "Zero"      xmPushButtonWidgetClass every-menu (lambda (w c i) (scale-selection-by 0.0)))
       (list "Crop"      xmPushButtonWidgetClass every-menu

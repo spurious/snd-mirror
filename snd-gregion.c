@@ -265,7 +265,7 @@ static void region_play_callback(GtkWidget *w, gpointer context)
   regrow *r = (regrow *)context;
   if (GTK_TOGGLE_BUTTON(r->pl)->active)
     play_region(region_list_position_to_id(r->pos), IN_BACKGROUND);
-  else stop_playing_region(region_list_position_to_id(r->pos));
+  else stop_playing_region(region_list_position_to_id(r->pos), PLAY_BUTTON_UNSET);
 }
 
 static void region_print_callback(GtkWidget *w, gpointer context)

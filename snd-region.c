@@ -477,7 +477,7 @@ int remove_region_from_list(int pos) /* region browser */
   int i, id;
   id = region_list_position_to_id(pos);
   if (id == INVALID_REGION) return(INVALID_REGION);
-  stop_playing_region_without_hook(id);
+  stop_playing_region(id, PLAY_CLOSE);
   free_region(id_to_region(id), COMPLETE_DELETION);
   for (i = pos; i < regions_size - 1; i++) 
     regions[i] = regions[i + 1]; 
@@ -500,7 +500,7 @@ static void add_to_region_list(region *r)
     okr = max_regions(ss) - 1;
   if (regions[okr]) 
     {
-      stop_playing_region_without_hook(regions[okr]->id);
+      stop_playing_region(regions[okr]->id, PLAY_CLOSE);
       free_region(regions[okr], COMPLETE_DELETION);
     }
   for (i = okr; i > 0; i--) 
@@ -1222,37 +1222,37 @@ static XEN region_get(region_field_t field, XEN n, char *caller)
   return(XEN_FALSE);
 }
 
-static XEN g_region_srate (XEN n) 
+static XEN g_region_srate(XEN n) 
 {
   #define H_region_srate "(" S_region_srate " (reg 0)): region (nominal) srate"
   XEN_ASSERT_TYPE(XEN_REGION_IF_BOUND_P(n), n, XEN_ONLY_ARG, S_region_srate, "a region id");
   return(region_get(REGION_SRATE, n, S_region_srate));
 }
 
-static XEN g_region_chans (XEN n) 
+static XEN g_region_chans(XEN n) 
 {
   #define H_region_chans "(" S_region_chans " (reg 0): region channels"
   XEN_ASSERT_TYPE(XEN_REGION_IF_BOUND_P(n), n, XEN_ONLY_ARG, S_region_chans, "a region id");
   return(region_get(REGION_CHANS, n, S_region_chans));
 }
 
-static XEN g_region_maxamp (XEN n) 
+static XEN g_region_maxamp(XEN n) 
 {
   #define H_region_maxamp "(" S_region_maxamp " (reg 0)): region maxamp"
   XEN_ASSERT_TYPE(XEN_REGION_IF_BOUND_P(n), n, XEN_ONLY_ARG, S_region_maxamp, "a region id");
   return(region_get(REGION_MAXAMP, n, S_region_maxamp));
 }
 
-static XEN g_forget_region (XEN n) 
+static XEN g_forget_region(XEN n) 
 {
   #define H_forget_region "(" S_forget_region " (reg 0)): remove region reg from the region list"
   XEN_ASSERT_TYPE(XEN_REGION_IF_BOUND_P(n), n, XEN_ONLY_ARG, S_forget_region, "a region id");
   return(region_get(REGION_FORGET, n, S_forget_region));
 }
 
-static XEN g_play_region (XEN n, XEN wait) 
+static XEN g_play_region(XEN n, XEN wait, XEN stop_proc) 
 {
-  #define H_play_region "(" S_play_region " (reg 0) (wait #f)): play region reg; if wait is #t, play to end before returning"
+  #define H_play_region "(" S_play_region " (reg 0) (wait #f) stop-proc): play region reg; if wait is #t, play to end before returning"
   int rg;
   bool wt = false;
   XEN_ASSERT_TYPE(XEN_REGION_IF_BOUND_P(n), n, XEN_ARG_1, S_play_region, "a region id");
@@ -1261,7 +1261,8 @@ static XEN g_play_region (XEN n, XEN wait)
   rg = XEN_REGION_TO_C_INT(n);
   if (!(region_ok(rg)))
     return(snd_no_such_region_error(S_play_region, n));
-  play_region(rg, (wt) ? NOT_IN_BACKGROUND : IN_BACKGROUND);
+  make_region_readable(id_to_region(rg));
+  play_region_1(rg, (wt) ? NOT_IN_BACKGROUND : IN_BACKGROUND, stop_proc);
   return(n);
 }
 
@@ -1513,7 +1514,7 @@ XEN_ARGIFY_1(g_region_chans_w, g_region_chans)
 XEN_ARGIFY_1(g_region_maxamp_w, g_region_maxamp)
 XEN_ARGIFY_9(g_save_region_w, g_save_region)
 XEN_ARGIFY_1(g_forget_region_w, g_forget_region)
-XEN_ARGIFY_2(g_play_region_w, g_play_region)
+XEN_ARGIFY_3(g_play_region_w, g_play_region)
 XEN_ARGIFY_4(g_make_region_w, g_make_region)
 XEN_ARGIFY_5(g_mix_region_w, g_mix_region)
 XEN_ARGIFY_3(g_region_sample_w, g_region_sample)
@@ -1556,7 +1557,7 @@ void g_init_regions(void)
   XEN_DEFINE_PROCEDURE(S_region_maxamp,      g_region_maxamp_w,      0, 1, 0, H_region_maxamp);
   XEN_DEFINE_PROCEDURE(S_save_region,        g_save_region_w,        2, 7, 0, H_save_region);
   XEN_DEFINE_PROCEDURE(S_forget_region,      g_forget_region_w,      0, 1, 0, H_forget_region);
-  XEN_DEFINE_PROCEDURE(S_play_region,        g_play_region_w,        0, 2, 0, H_play_region);
+  XEN_DEFINE_PROCEDURE(S_play_region,        g_play_region_w,        0, 3, 0, H_play_region);
   XEN_DEFINE_PROCEDURE(S_make_region,        g_make_region_w,        0, 4, 0, H_make_region);
   XEN_DEFINE_PROCEDURE(S_mix_region,         g_mix_region_w,         0, 5, 0, H_mix_region);
   XEN_DEFINE_PROCEDURE(S_region_sample,      g_region_sample_w,      0, 3, 0, H_region_sample);

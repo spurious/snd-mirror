@@ -3924,7 +3924,7 @@ void graph_button_release_callback(chan_info *cp, int x, int y, int key_state, i
 	  old_mark = sp->playing_mark; /* needed because stop_playing clobbers sp->playing_mark */
 	  if (sp->playing)
 	    {
-	      stop_playing_sound(sp);
+	      stop_playing_sound(sp, PLAY_BUTTON_UNSET);
 	      set_play_button(sp, false);
 	    }
 	  if (play_mark != old_mark)
@@ -4056,7 +4056,7 @@ void graph_button_release_callback(chan_info *cp, int x, int y, int key_state, i
 	  if (play_mark)
 	    {
 	      finish_moving_play_mark(cp);
-	      stop_playing_sound(sp);
+	      stop_playing_sound(sp, PLAY_BUTTON_UNSET);
 	      play_mark = NULL;
 	      dragged = false;
 	    }

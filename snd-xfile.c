@@ -234,7 +234,7 @@ static void file_dialog_stop_playing(file_dialog_info *fd)
   if ((fd->file_play_sp) && 
       (fd->file_play_sp->playing)) 
     {
-      stop_playing_sound(fd->file_play_sp);
+      stop_playing_sound(fd->file_play_sp, PLAY_BUTTON_UNSET);
       fd->file_play_sp = NULL;
     }
 }
@@ -266,7 +266,7 @@ static void play_selected_callback(Widget w, XtPointer context, XtPointer info)
   if (cb->set)
     {
       if ((fd->file_play_sp) && (fd->file_play_sp->playing)) 
-	stop_playing_sound(fd->file_play_sp);
+	stop_playing_sound(fd->file_play_sp, PLAY_BUTTON_UNSET);
       wtmp = XtNameToWidget(fd->dialog, "Text");
       if (!wtmp) 
 	wtmp = XmFileSelectionBoxGetChild(fd->dialog, XmDIALOG_TEXT);

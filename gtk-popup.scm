@@ -4,6 +4,8 @@
 ;;;   a popup for each entry/testview widget and there's no way to get rid of it!
 ;;;   perhaps we could find a pointer to its children and hide all of them?)
 
+;;; TODO: should this popup menu be persistent?
+
 (use-modules (ice-9 format))
 
 (if (not (provided? 'xg))
@@ -65,21 +67,13 @@
 	      (stopping1 #f)
 	      (stop-widget #f)
 	      (stop-widget1 #f))
-
-	  (add-hook! stop-playing-selection-hook
-		     (lambda () 
-		       (if stopping
-			   (begin
-			     (set! stopping #f)
-			     (if (GTK_IS_WIDGET stop-widget)
-				 (change-label stop-widget "Play"))))))
 	  (make-popup-menu 
 	   (lambda (w) ; top level settings
 	     #f)
 	   (list
 	    ;; name field-func callback
-	    (list "Play" every-menu 
-		  (lambda (w data) 
+	    (list "Play" every-menu
+		  (lambda (w data)
 		    (if stopping
 			(begin
 			  (set! stopping #f)
@@ -87,32 +81,37 @@
 			  (if stopping1
 			      (begin
 				(set! stopping1 #f)
-				(change-label stop-widget1 "Loop play")
-				(remove-hook! stop-playing-selection-hook play-selection)))
+				(change-label stop-widget1 "Loop play")))
 			  (stop-playing)) ; stops all including possible looping play
 			(begin
 			  (change-label w "Stop")
 			  (set! stop-widget w)
 			  (set! stopping #t)
 			  (play-selection)))))
-	    (list "Loop play" every-menu ; play over and over
+	    (list "Loop play" every-menu
 		  (lambda (w data) 
+		    (define (stop-playing-selection)
+		      (set! stopping1 #f)
+		      (change-label w "Loop play")
+		      (if stopping
+			  (begin
+			    (set! stopping #f)
+			    (change-label stop-widget "Play"))))
+		    (define (play-selection-again reason)
+		      (if (and (not (c-g?))
+			       (= reason 0)
+			       stopping1)
+			  (play-selection #f -1 play-selection-again)
+			  (stop-playing-selection)))
 		    (if stopping1
 			(begin
-			  (set! stopping1 #f)
-			  (change-label w "Loop play")
-			  (remove-hook! stop-playing-selection-hook play-selection)
-			  (if stopping
-			      (begin
-				(set! stopping #f)
-				(change-label stop-widget "Play")))
+			  (stop-playing-selection)
 			  (stop-playing))
 			(begin
 			  (change-label w "Stop!")
 			  (set! stop-widget1 w) ; needs to be separate from Play case since we're stopping/restarting deliberately
 			  (set! stopping1 #t)
-			  (add-hook! stop-playing-selection-hook play-selection) ; when one rendition ends, we immediately start another
-			  (play-selection)))))
+			  (play-selection #f -1 play-selection-again)))))
 	    (list "Delete"    every-menu (lambda (w data) (delete-selection)))
 	    (list "Zero"      every-menu (lambda (w data) (scale-selection-by 0.0)))
 	    (list "Crop"      every-menu

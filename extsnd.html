@@ -1810,60 +1810,13 @@ If it returns #t, Snd does not play the selection.
 called when Snd stops playing and turns off the DAC, normally upon mus_audio_close.  See snd-motif.scm.
 </td></tr><tr><td colspan=3></td></tr>
 
-<!-- stop-playing-channel-hook -->
-<tr><td colspan=2>
-<code><a class=def name="stopplayingchannelhook">stop-playing-channel-hook</a> (snd chn)</code></td><td>
-</td></tr>
-<tr><td></td><td colspan=2>
-called when a sound finishes playing.
-</td></tr>
-<tr><td colspan=3></td></tr>
-
 <!-- stop-playing-hook -->
 <tr><td colspan=2>
 <code><a class=def name="stopplayinghook">stop-playing-hook</a> (snd)</code></td><td>
 </td></tr>
 <tr><td></td><td colspan=2>
 called when a sound finishes playing.
-The following code plays a sound over and over until you type C-g:
-</td></tr>
-<tr><td></td><td colspan=2>
-<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
-(define (play-until-c-g)
-  (define (play-once snd)
-    (if (<a class=quiet href="#cgp">c-g?</a>)
-        (remove-hook! <em class=red>stop-playing-hook</em> play-once)
-        (<a class=quiet href="#play">play</a> 0 snd)))
-  (add-hook! <em class=red>stop-playing-hook</em> play-once)
-  (<a class=quiet href="#play">play</a>))
-</pre></td></tr></table></td></tr>
-<tr><td></td><td colspan=2>
-Here's somewhat brute-force code to play a sound a given number of times.
-</td></tr><tr><td></td><td colspan=2>
-<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
-(define (play-often n) 
-  (let ((plays (- n 1)))
-    (define (play-once snd)
-      (if (or (= plays 0)
-	      (<a class=quiet href="#cgp">c-g?</a>))
-	  (remove-hook! <em class=red>stop-playing-hook</em> play-once)
-	  (begin
-	    (set! plays (- plays 1))
-	    (<a class=quiet href="#play">play</a> 0 snd))))
-    (add-hook! <em class=red>stop-playing-hook</em> play-once)
-    (<a class=quiet href="#play">play</a>)))
-
-(<a class=quiet href="#bindkey">bind-key</a> (char-&gt;integer #\p) 0 (lambda (num) "play often" (play-often (max 1 num))))
-</pre></td></tr></table></td></tr>
-<tr><td colspan=3></td></tr>
-
-<!-- stop-playing-region-hook -->
-<tr><td colspan=2>
-<code><a class=def name="stopplayingregionhook">stop-playing-region-hook</a> (n)</code></td><td>
-</td></tr>
-<tr><td></td><td colspan=2>
-called when a region finishes playing.  See play.scm.
-</td></tr>
+</td></tr><tr><td colspan=3></td></tr>
 
 <!-- stop-playing-selection-hook -->
 <tr><td colspan=2>
@@ -1871,7 +1824,7 @@ called when a region finishes playing.  See play.scm.
 </td></tr>
 <tr><td></td><td colspan=2>
 called when the selection finishes playing.  See popup.scm.
-</td></tr>
+</td></tr><tr><td colspan=3></td></tr>
 
 <!-- transform-hook -->
 <tr><td colspan=2>
@@ -3586,7 +3539,7 @@ See also <a href="sndscm.html#panmixregion">pan-mix-region</a> in mix.scm.
 </td></tr>
 
 <!-- play-region -->
-<tr><td colspan=2><code><a class=def name="playregion">play-region</a> (<i>reg wait</i>)</code></td></tr>
+<tr><td colspan=2><code><a class=def name="playregion">play-region</a> (<i>reg wait stop-func</i>)</code></td></tr>
 <tr><td></td><td>
 play region <i>reg</i>; if wait is #t, play to the end before returning. (See play.scm).
 </td></tr>
@@ -3687,7 +3640,6 @@ args (that is, they are normal keyword arguments, but the keywords are optional)
 See also:<br>
 Max length of region list: <a href="#maxregions">max-regions</a><br>
 Whether selection creates a region: <a href="#selectioncreatesregion">selection-creates-region</a><br>
-Play hook: <a href="#stopplayingregionhook">stop-playing-region-hook</a><br>
 To play region repeatedly: <a href="sndscm.html#explayregionforever">play-region-forever</a><br>
 Start region browser from Scheme: <a href="#viewregionsdialog">view-regions-dialog</a><br>
 All about regions: <a href="snd.html#regions">regions</a><br>
@@ -3750,9 +3702,11 @@ See also <a href="sndscm.html#panmixselection">pan-mix-selection</a> in mix.scm.
 </td></tr>
 
 <!-- play-selection -->
-<tr><td colspan=2><code><a class=def name="playselection">play-selection</a> (<i>wait pos</i>)</code></td></tr>
+<tr><td colspan=2><code><a class=def name="playselection">play-selection</a> (<i>wait pos stop-proc</i>)</code></td></tr>
 <tr><td></td><td>
 play the selection.  <i>pos</i> sets the edit position.  If <i>wait</i> is #t, the function does not return until the play has completed.
+If <i>stop-proc</i> is a procedure of one argument, it is called when the play process stops.
+The argument provides the reason the play is stopping; it will be 0 if the play completed normally.
 </td></tr>
 
 <!-- reverse-selection -->
@@ -4029,12 +3983,14 @@ the direction argument between the channel and edit-position:
 
 <!-- add-player -->
 <tr><td colspan=2>
-<code><a class=def name="addplayer">add-player</a> (player <i>start end pos</i>)</code>
+<code><a class=def name="addplayer">add-player</a> (player <i>start end pos stop-proc</i>)</code>
 </td></tr>
 <tr><td width=50><br></td><td>
 add <i>player</i> to the play-list (see <a href="#makeplayer">make-player</a>). 
 If <i>pos</i> is given, play at that edit position. See <i>play-with-envs</i> in enved.scm, <i>play-syncd-marks</i>
 in marks.scm, or <i>start-dac</i> in play.scm.
+If <i>stop-proc</i> is a procedure of one argument, it is called when the play process stops.
+The argument provides the reason the play is stopping; it will be 0 if the play completed normally.
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -5515,7 +5471,7 @@ by <a href="#maxfftpeaks">max-transform-peaks</a>.
 
 <!-- play -->
 <tr><td colspan=2>
-<code><a class=def name="play">play</a> (<i>samp snd chn sync end pos</i>)</code>
+<code><a class=def name="play">play</a> (<i>samp snd chn sync end pos stop-proc</i>)</code>
 </td></tr>
 <tr><td></td><td>
 play <i>snd</i>'s channel <i>chn</i> starting from sample <i>samp</i>. 
@@ -5527,6 +5483,8 @@ also be a filename (a string).  In this case, <i>snd</i> can be the start
 sample (default 0), and <i>chn</i> can be the end sample (default end-of-file).
 If 'chn' is not given, or is a boolean, play all channels together.
 If <i>pos</i> is given, play at that edit position.
+If <i>stop-proc</i> is a procedure of one argument, it is called when the play process stops.
+The argument provides the reason the play is stopping; it will be 0 if the play completed normally.
 <br><br>
 The <i>pos</i> argument makes it easier to try "A:B" comparisons.<br>
 <br><code>(play 0 #f #f #f #f (1- (<a class=quiet href="#editposition">edit-position</a>)))</code><br><br> plays the version before the latest edit.
@@ -5586,20 +5544,21 @@ play an external file: (play "file")<br>
 
 <!-- play-and-wait -->
 <tr><td colspan=2>
-<code><a class=def name="playandwait">play-and-wait</a> (<i>samp snd chn sync end pos</i>)</code>
+<code><a class=def name="playandwait">play-and-wait</a> (<i>samp snd chn sync end pos stop-proc</i>)</code>
 </td></tr>
 <tr><td></td><td>
 play <i>snd</i>'s channel <i>chn</i> starting from sample <i>samp</i> and wait 
 for it to finish. (<a href="#play">play</a> on the other hand returns immediately so subsequent calls on play 
 mix multiple sample streams together, rather than playing them one after the other).
 If <i>pos</i> is given, play at that edit position.
+<i>stop-proc</i> is explained under <i>play</i> above.
 </td></tr>
 <tr><td colspan=2></td></tr>
 
 
 <!-- play-channel -->
 <tr><td colspan=2>
-<code><a class=def name="playchannel">play-channel</a> (<i>beg dur snd chn edpos</i>)</code>
+<code><a class=def name="playchannel">play-channel</a> (<i>beg dur snd chn edpos stop-proc</i>)</code>
 </td></tr>
 <tr><td></td><td>
 <b>play-channel</b> is the <a class=quiet href="#regularizedargs">regularized</a> version of <a href="#play">play</a>.
@@ -5634,7 +5593,7 @@ return a list of the sound index and channel number associated with <a href="#ma
 <tr><td></td><td>
 return the X axis value that corresponds to the graph (screen pixel) position <i>xpos</i>.
 To find the sample that the mouse is pointing at, given the current mouse position,
-<code>(inexact->exact (* (srate snd) (position->x x snd chn)))</code>.
+<code>(inexact-&gt;exact (* (srate snd) (position-&gt;x x snd chn)))</code>.
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -7135,9 +7094,7 @@ remove <i>player</i> from play-list(see <a href="#makeplayer">make-player</a>).
 <tr><td></td><td>
 if <i>snd</i> is playing, stop it.
 If no argument is given, stop all sounds (channels) in progress.  See play.scm or popup.scm; also
-<a href="#stopplayinghook">stop-playing-hook</a>, <a href="#stopplayingchannelhook">stop-playing-channel-hook</a>,
-<a href="#stopplayingregionhook">stop-playing-region-hook</a>, and
-<a href="#stopplayingselectionhook">stop-playing-selection-hook</a>.
+<a href="#stopplayinghook">stop-playing-hook</a>, <a href="#stopplayingselectionhook">stop-playing-selection-hook</a>.
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -9531,7 +9488,7 @@ refer to it directly, not as a procedure call.  Say we have a sound file "now.sn
 and we want it to use the grid-graph whenever it is viewed.  We make "now.snd.scm"
 and put in it: <code>(set! (show-grid memo-sound) #t)</code>.  When now.snd is
 opened, so is now.snd.scm, with memo-sound holding the index of now.snd.
-There are other fancier ways to do this (e.g. <a href="extsnd.html#exremembersoundstate">remember-sound-state</a>).
+There are other fancier ways to do this (e.g. <a href="sndscm.html#exremembersoundstate">remember-sound-state</a>).
 </td></tr>
 
 <!-- open-sound-file -->
