@@ -2297,10 +2297,13 @@ static void edit_header_ok_callback(Widget w, XtPointer context, XtPointer info)
   snd_info *sp = (snd_info *)context;
   XmAnyCallbackStruct *cb = (XmAnyCallbackStruct *)info;
   ss = sp->state;
-  if (cb->event == ((ss->sgx)->text_activate_event)) return; /* <cr> in one of text fields */
-  if (!(sp->read_only))
-    edit_header_callback(ss, sp, edit_header_data);
-  else snd_error("%s is write-protected", sp->short_filename);
+  if ((ss) && (sp->active == 1))
+    {
+      if (cb->event == ((ss->sgx)->text_activate_event)) return; /* <cr> in one of text fields */
+      if (!(sp->read_only))
+	edit_header_callback(ss, sp, edit_header_data);
+      else snd_error("%s is write-protected", sp->short_filename);
+    }
   XtUnmanageChild(edit_header_dialog);
 }
 

@@ -1267,6 +1267,14 @@ static void cp_graph_key_press(Widget w, XtPointer context, XEvent *event, Boole
   KeySym keysym;
   int key_state;
   chan_info *cp = (chan_info *)context;
+  if ((cp == NULL) || (cp->sound == NULL))
+    {
+#if DEBUGGING
+      fprintf(stderr,"unconnected chan in key press?");
+      abort();
+#endif
+      return;
+    }
   key_state = ev->state;
   keysym = XKeycodeToKeysym(XtDisplay(w),
 			    (int)(ev->keycode),

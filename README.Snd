@@ -71,7 +71,14 @@ severely limited in what it can do (there is a configure switch
 The customization/extension language is Guile, available in the Gnu
 distributions:
 
-ftp://ftp.gnu.org/pub/gnu/guile/guile-1.4.tar.gz
+  ftp://ftp.gnu.org/pub/gnu/guile/guile-1.4.tar.gz
+
+Many of the example Scheme files use the Guile 1.5 or later optional
+argument syntax, so Guile 1.4 is actually not a reasonable default 
+anymore, but Guile 1.6 will apparently never arrive. In the meantime,
+you can get a 1.6 facsimile from
+
+  ftp://alpha.gnu.org/gnu/guile/guile-1.5.4.tar.gz
 
 To include guile in Snd, either use the configure script (which should
 be able to find the guile library automatically), or go to the
@@ -391,6 +398,16 @@ in /usr/local/include.  Next, the Snd configure process is confused by
 the lack of gtk-config, so you need to rename config.osx to config.h,
 and make -f makefile.osx.  I haven't written "native" OSX audio support
 yet, but perhaps the ESD package will work.
+
+
+If you installed OpenMotif, then "upgraded" to RedHat 7.2, Redhat
+probably overwrote Motif with %$^#&@ Lesstif.  You need, among other
+things, to re-install OpenMotif and make sure /usr/local/lib/libXm.so.2
+is the new version, not %$#&%* Lesstif's.  If you use mwm, you need
+to get it back as well, which means removing the directory that
+%$^#&$ Lesstif put in its place.  The error you'll get will be
+some complaint about undefined xmNotebook class.  This is a major
+bug in Redhat 7.2.
 
 
 

@@ -173,7 +173,7 @@ char *version_info(void)
 	  ", int", itoa[17] = snd_itoa(MUS_SAMPLE_BITS), " samples",
 #endif
 #if LONG_INT_P
-	  " and int* tables",
+	  " and long int* tables",
 #endif
 	  ")", sndlib_consistency_check(),
 	  "\n    CLM ", itoa[0] = snd_itoa(MUS_VERSION), ".", 

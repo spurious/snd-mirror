@@ -1702,6 +1702,8 @@ subsequent " S_close_sound_file ". data can be written with " S_vct2sound_file
   if (result == -1) 
     {
       free_file_info(hdr);
+      /* this happens if the header writer hit an error -- need to delete the bogus output file */
+      if (mus_file_probe(name)) snd_remove(name);
       if (ss->catch_message)
 	XEN_ERROR(MUS_MISC_ERROR,
 		  XEN_LIST_2(C_TO_XEN_STRING(S_open_sound_file),

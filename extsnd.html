@@ -4368,6 +4368,7 @@ The following substitutions can be made:
 <!-- --><code>(set! (data-format) mus-ubyte)</code>.  Float data is another source of confusion;
 <!-- -->there is apparently no agreement on whether the data is between -1.0 and 1.0, or -32768.0 and 32767.0 or anything else.
 <!-- -->In this case, Snd assumes -1.0 to 1.0 (except in one special case involving ircam headers), and you may have to set y-bounds to see the actual data.
+<!-- -->If you set any of these fields, it is possible that the sound's index will change (there is an embedded update-sound).
 <!-- --></td></tr>
 <!-- -->
 <!-- --><tr><td colspan=2></td></tr>

@@ -2311,7 +2311,7 @@ static snd_info *add_sound_window_with_parent (Widget parent, char *filename, sn
       XtAddCallback(sw[W_filter], XmNhelpCallback, filter_envelope_help_callback, ss);
       XtAddCallback(sw[W_filter], XmNactivateCallback, filter_activate_callback, (XtPointer)sp);
 
-      /* XEN_APPLY */
+      /* APPLY */
       n = 0;
       if (need_colors) 
 	{
@@ -2527,8 +2527,9 @@ static snd_info *add_sound_window_with_parent (Widget parent, char *filename, sn
       /* value, but forgot that unmanage/remanage does not return to the previous size */
       XtVaSetValues(sx->dialog,
 		    XmNwidth, (Dimension)(widget_width(MAIN_SHELL(ss))),
-		    XmNheight, (Dimension)(widget_height(MAIN_SHELL(ss)) / 2),
+		    XmNheight, (Dimension)(chan_min_y * nchans), /* bugfix thanks to Paul @pobox */
 		    NULL);
+      if (nchans > 1) equalize_all_panes(ss);
     }
   after_open(sp->index);
   return(sp);
@@ -2593,7 +2594,7 @@ static int even_channels(snd_info *sp, void *ptr)
   if (chans > 1)
     {
       height = (*((int *)ptr));
-      val = height/chans - 16;
+      val = height / chans - 16;
       if (val < 6) val = 6;
       for (i = 0; i < chans; i++)
 	{
@@ -2773,7 +2774,7 @@ void equalize_all_panes(snd_state *ss)
 	    if (nsp->nchans > 1)
 	      {
 		height = widget_height(w_snd_pane(nsp));
-		even_channels(nsp, (void *)height);
+		even_channels(nsp, (void *)(&height));
 		map_over_sound_chans(nsp, channel_open_pane, NULL);
 		map_over_sound_chans(nsp, channel_unlock_pane, NULL);
 	      }
