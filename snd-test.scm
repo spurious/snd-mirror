@@ -219,8 +219,6 @@
 ;(define rs (lambda (n) (< (my-random 1.0) n)))
 (define rs (lambda (n) #t))
 
-;;; preliminaries -- check constants, default variable values (assumes -noinit), sndlib and clm stuff
-
 (define timings (make-vector (+ total-tests 1)))
 
 (snd-display ";;~A" (snd-version))
@@ -283,6 +281,7 @@
 
 
 ;;; ---------------- test 0: constants ----------------
+
 (if (or full-test (= snd-test 0) (and keep-going (<= snd-test 0)))
     (letrec ((test-constants 
 	      (lambda (lst)
@@ -945,8 +944,6 @@
 	'selected-mix (selected-mix) #f
 	))))
 
-
-;;; headers
 
 ;;; ---------------- test 2: headers ----------------
 (if (or full-test (= snd-test 2) (and keep-going (<= snd-test 2)))
@@ -18348,8 +18345,13 @@ EDITS: 5
 	  (IF (or (fneq (vct-ref v 0) .0662) (fneq (vct-ref v 1) .0551)) (snd-display "next-sample let chn ftst: ~A" v))
 	  (vct-map! v (let ((r (make-sample-reader 2000 ind 0 1 (edit-position ind 0))))
 			(lambda () 
-			  (if (not (= (edit-position ind 0) 0))
-			      -123.0
+			  (if (or (not (= (edit-position ind 0) 0))
+				  (not (= (edit-position ind) 0))
+				  (not (= (edit-position) 0)))
+			      (begin
+				(report-in-minibuffer "oops")
+				(report-in-minibuffer "oops again" ind)
+				-123.0)
 			      (next-sample r)))))
 	  (IF (or (fneq (vct-ref v 0) .0662) (fneq (vct-ref v 1) .0551)) (snd-display "next-sample let edit ftst: ~A" v))
 	  (itst '(frames) 50828)

@@ -14,6 +14,7 @@
 ;;; (show-smpte-label on-or-off) shows the current SMPTE frame number
 ;;; (make-level-meter parent width height args), (display-level data), (with-level-meters n) -- VU meters
 ;;; (make-channel-drop-site snd chn) -- add a drop site
+;;; (set-channel-drop drop snd chn) -- change given graph drop callback to drop
 ;;; (select-file func &optional title dir filter help) starts a Snd-like File Selection Dialog running func if a file is selected
 ;;; (show-disk-space) adds a label to the minibuffer area showing the current free space 
 ;;; (keep-file-dialog-open-upon-ok) changes File:Open so that clicking "ok" does not "unmanage" the dialog
@@ -1625,7 +1626,7 @@ Reverb-feedback sets the scaler on the feedback.\n\
 		       (set! (.operation i) XmDROP_COPY) ; tell system drop has succeeded
 		       (XmDropTransferStart 
 			 (.dragContext i)
-			 (list XmNdropTransfers (list (list XA_STRING w)) ; list of lists of Atoms/our-data
+			 (list XmNdropTransfers (list XA_STRING)
 			       XmNnumDropTransfers 1
 			       XmNtransferProc 
 			       (lambda (w context selection type val len fmt)
@@ -1633,6 +1634,34 @@ Reverb-feedback sets the scaler on the feedback.\n\
 				 (snd-print (format #f "got: ~A ~A ~A ~A ~A ~A ~A~%"
 						    w context selection type val len fmt)))))))))))))
 
+
+;;; -------- change a drop callback
+;;;
+;;; drop arg is 3-arg func: filename snd chn
+
+(define (set-channel-drop drop snd chn) ; drop is func of 3 args (filename snd chn)
+  (XmDropSiteUpdate
+   (car (channel-widgets snd chn))
+   (list XmNdropProc
+	 (lambda (w c i)
+	   (if (or (not (= (.dropAction i) XmDROP))
+		   (not (= (.operation i) XmDROP_COPY)))
+	       (set! (.dropSiteStatus i) XmINVALID_DROP_SITE)
+	       (begin
+		 (set! (.operation i) XmDROP_COPY)
+		 (XmDropTransferStart 
+		  (.dragContext i)
+		  (list XmNdropTransfers (list (XInternAtom (XtDisplay (cadr (main-widgets))) "FILE_NAME" #f))
+
+			;; this is saying that the in-coming drag-and-drop is passing us a FILE_NAME atom
+			;; to find out what Atoms the selection translator can handle, use
+			;;   (XtVaGetValues (.dragContext i) (list XmNexportTargets 0))
+			;; which will return a list of acceptable Atoms
+
+			XmNnumDropTransfers 1
+			XmNtransferProc 
+			(lambda (w context selection type val len fmt)
+			  (drop val snd chn))))))))))
 
 
 ;;; -------- show-disk-space

@@ -232,7 +232,7 @@ static XEN snd_catch_scm_error(void *data, XEN tag, XEN throw_args) /* error han
   else
     {
       if (listener_height() > 5)
-	listener_append_and_prompt(ss, name_buf);
+	listener_append_and_prompt(name_buf);
       else 
 	{
 	  if (ss->mx_sp)
@@ -654,18 +654,18 @@ XEN snd_report_result(snd_state *ss, XEN result, char *buf)
     }
   if (listener_height() > 5)
     {
-      if (buf) listener_append(ss, buf);
-      listener_append_and_prompt(ss, str);
+      if (buf) listener_append(buf);
+      listener_append_and_prompt(str);
     }
   if (str) FREE(str);
   return(result);
 }
 
-XEN snd_report_listener_result(snd_state *ss, XEN form)
+XEN snd_report_listener_result(XEN form)
 {
   char *str = NULL;
   XEN result;
-  listener_append(ss, "\n");
+  listener_append("\n");
 #if HAVE_RUBY
   str = gl_print(form);
   result = form;
@@ -674,19 +674,19 @@ XEN snd_report_listener_result(snd_state *ss, XEN form)
   str = gl_print(result);
 #endif
   if (listener_height() > 5)
-    listener_append_and_prompt(ss, str);
+    listener_append_and_prompt(str);
   if (str) FREE(str);
   return(result);
 }
 
-void snd_eval_property_str(snd_state *ss, char *buf)
+void snd_eval_property_str(char *buf)
 {
   XEN result;
   char *str;
   if ((snd_strlen(buf) == 0) || ((snd_strlen(buf) == 1) && (buf[0] == '\n'))) return;
   result = snd_catch_any(eval_str_wrapper, (void *)buf, buf);
   str = gl_print(result);
-  listener_append_and_prompt(ss, str);
+  listener_append_and_prompt(str);
   if (str) FREE(str);
 }
 
@@ -800,8 +800,6 @@ static XEN g_snd_print(XEN msg)
 {
   #define H_snd_print "(" S_snd_print " str) displays str in the lisp listener window"
   char *str = NULL;
-  snd_state *ss;
-  ss = get_global_state();
   if (XEN_STRING_P(msg))
     str = copy_string(XEN_TO_C_STRING(msg));
   else
@@ -813,10 +811,10 @@ static XEN g_snd_print(XEN msg)
 	}
       else str = gl_print(msg);
     }
-  listener_append(ss, str);
+  listener_append(str);
   if (str) FREE(str);
 #if (!USE_GTK)
-  check_for_event(ss);
+  check_for_event(get_global_state());
 #endif
   return(msg);
 }

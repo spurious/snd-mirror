@@ -68,7 +68,7 @@
  *         (set-object-property! <func> 'ptree pt) [scm_set_object_property_x in objprop]
  *              procedure-property? -- this has name and arity
  *         would also need an initialization process(?)
- * TODO: possible Snd additions: cursor sample samples(2vct) add-mark report-in-minibuffer[see snd-print] maxamp sample-reader-position snd-warning
+ * TODO: possible Snd additions: cursor(settable) sample samples(2vct) add-mark maxamp sample-reader-position
  * TODO: split Scheme from Snd/Clm here and do the latter via an FFI of some sort
  *
  * LIMITATIONS: <insert anxious lucubration here about DSP context and so on>
@@ -4655,12 +4655,20 @@ static xen_value *display_1(ptree *pt, xen_value **args, int num_args)
   return(NULL);
 }
 
-static void snd_print_s(int *args, int *ints, Float *dbls) {listener_append(get_global_state(), STRING_ARG_1);}
+static void snd_print_s(int *args, int *ints, Float *dbls) {listener_append(STRING_ARG_1);}
 static char *descr_snd_print_s(int *args, int *ints, Float *dbls) {return(mus_format("snd_print(" STR_PT ")", args[1], STRING_ARG_1));}
 static xen_value *snd_print_1(ptree *pt, xen_value **args, int num_args)
 {
   if (args[1]->type != R_STRING) return(run_warn("bad arg to snd-print"));
   return(package(pt, R_BOOL, snd_print_s, descr_snd_print_s, args, 1));
+}
+
+static void snd_warning_s(int *args, int *ints, Float *dbls) {snd_warning(STRING_ARG_1);}
+static char *descr_snd_warning_s(int *args, int *ints, Float *dbls) {return(mus_format("snd_warning(" STR_PT ")", args[1], STRING_ARG_1));}
+static xen_value *snd_warning_1(ptree *pt, xen_value **args, int num_args)
+{
+  if (args[1]->type != R_STRING) return(run_warn("bad arg to snd-warning"));
+  return(package(pt, R_BOOL, snd_warning_s, descr_snd_warning_s, args, 1));
 }
 
 static void strmake_c(int *args, int *ints, Float *dbls, char c) 
@@ -5035,28 +5043,79 @@ static xen_value *goto_0(ptree *prog, xen_value **args, xen_value *sf)
 }
 
 
-/* ---------------- edit-position ---------------- */
+/* ---------------- snd utils ---------------- */
 
-/* TODO: edit-position with opt args */
-static void edit_position_i(int *args, int *ints, Float *dbls) 
+static snd_info *run_get_sp(int offset, int *args, int *ints)
 {
   snd_state *ss;
-  chan_info *cp; 
+  int spint;
   ss = get_global_state();
-  cp = ss->sounds[INT_ARG_1]->chans[INT_ARG_2];
-  INT_RESULT = cp->edit_ctr;
+  spint = ints[args[offset]];
+  if (spint == -1)
+    return(any_selected_sound(ss));
+  else
+    if ((spint < ss->max_sounds) && 
+	(snd_ok(ss->sounds[spint])))
+      return(ss->sounds[spint]);
+  return(NULL);
 }
+
+static chan_info *run_get_cp(int offset, int *args, int *ints)
+{
+  snd_info *sp;
+  int cpint;
+  sp = run_get_sp(offset, args, ints);
+  if (sp)
+    {
+      cpint = ints[args[offset + 1]];
+      if (cpint == -1)
+	return(any_selected_channel(sp));
+      else
+	if (cpint < sp->nchans)
+	  return(sp->chans[cpint]);
+    }
+  return(NULL);
+}
+
+static void run_opt_arg(ptree *pt, xen_value **args, int num_args, int i, xen_value **true_args)
+{
+  if (num_args < i)
+    true_args[i] = make_xen_value(R_INT, add_int_to_ptree(pt, -1), R_CONSTANT);
+  else
+    {
+      if (args[i]->type == R_BOOL)
+	pt->ints[args[i]->addr] = -1;
+      true_args[i] = args[i];
+    }
+}
+
+/* ---------------- edit-position ---------------- */
+
+static void edit_position_i(int *args, int *ints, Float *dbls) 
+{
+  chan_info *cp; 
+  cp = run_get_cp(1, args, ints);
+  if (cp) INT_RESULT = cp->edit_ctr;
+}
+
 static char *descr_edit_position_i(int *args, int *ints, Float *dbls) 
 {
   return(mus_format( INT_PT " = edit_position(" INT_PT ", " INT_PT ")", args[0], INT_RESULT, args[1], INT_ARG_1, args[2], INT_ARG_2));
 }
+
 static xen_value *edit_position_1(ptree *pt, xen_value **args, int num_args)
 {
-  if ((num_args == 2) &&
-      (args[1]->type == R_INT) &&
-      (args[2]->type == R_INT))
-    return(package(pt, R_INT, edit_position_i, descr_edit_position_i, args, 2));
-  return(NULL);
+  xen_value *true_args[3];
+  xen_value *rtn;
+  int k;
+  if (num_args > 2) 
+    return(run_warn("edit-position: too many args"));
+  run_opt_arg(pt, args, num_args, 1, true_args);
+  run_opt_arg(pt, args, num_args, 2, true_args);
+  true_args[0] = args[0];
+  rtn = package(pt, R_INT, edit_position_i, descr_edit_position_i, true_args, 2);
+  for (k = num_args + 1; k <= 2; k++) FREE(true_args[k]);
+  return(rtn);
 }
 
 
@@ -5064,27 +5123,24 @@ static xen_value *edit_position_1(ptree *pt, xen_value **args, int num_args)
 
 static void frames_i(int *args, int *ints, Float *dbls) 
 {
-  snd_state *ss;
-  snd_info *sp;
   chan_info *cp; 
   int pos;
-  ss = get_global_state();
-  if (INT_ARG_1 == -1)
-    sp = any_selected_sound(ss);
-  else sp = ss->sounds[INT_ARG_1];
-  if (INT_ARG_2 == -1)
-    cp = any_selected_channel(sp);
-  else cp = sp->chans[INT_ARG_2];
-  if (INT_ARG_3 == AT_CURRENT_EDIT_POSITION)
-    pos = cp->edit_ctr;
-  else pos = INT_ARG_3;
-  INT_RESULT = cp->samples[pos];
+  cp = run_get_cp(1, args, ints);
+  if (cp)
+    {
+      if (INT_ARG_3 == AT_CURRENT_EDIT_POSITION)
+	pos = cp->edit_ctr;
+      else pos = INT_ARG_3;
+      INT_RESULT = cp->samples[pos];
+    }
 }
+
 static char *descr_frames_i(int *args, int *ints, Float *dbls) 
 {
   return(mus_format( INT_PT " = frames(" INT_PT ", " INT_PT ", " INT_PT ")", 
 		     args[0], INT_RESULT, args[1], INT_ARG_1, args[2], INT_ARG_2, args[3], INT_ARG_3));
 }
+
 static xen_value *frames_1(ptree *pt, xen_value **args, int num_args)
 {
   xen_value *true_args[4];
@@ -5095,25 +5151,45 @@ static xen_value *frames_1(ptree *pt, xen_value **args, int num_args)
   if (num_args < 3)
     true_args[3] = make_xen_value(R_INT, add_int_to_ptree(pt, AT_CURRENT_EDIT_POSITION), R_CONSTANT);
   else true_args[3] = args[3];
-  if (num_args < 2)
-    true_args[2] = make_xen_value(R_INT, add_int_to_ptree(pt, -1), R_CONSTANT);
-  else
-    {
-      if (args[2]->type == R_BOOL)
-	pt->ints[args[2]->addr] = -1;
-      true_args[2] = args[2];
-    }
-  if (num_args < 1)
-    true_args[1] = make_xen_value(R_INT, add_int_to_ptree(pt, -1), R_CONSTANT);
-  else
-    {
-      if (args[1]->type == R_BOOL)
-	pt->ints[args[1]->addr] = -1;
-      true_args[1] = args[1];
-    }
+  run_opt_arg(pt, args, num_args, 1, true_args);
+  run_opt_arg(pt, args, num_args, 2, true_args);
   true_args[0] = args[0];
   rtn = package(pt, R_INT, frames_i, descr_frames_i, true_args, 3);
   for (k = num_args + 1; k <= 3; k++) FREE(true_args[k]);
+  return(rtn);
+}
+
+/* ---------------- report-in-minibuffer ---------------- */
+
+static void report_in_minibuffer_s(int *args, int *ints, Float *dbls) 
+{
+  snd_info *sp;
+  sp = run_get_sp(2, args, ints);
+  if (sp)
+    {
+      set_minibuffer_string(sp, STRING_ARG_1);
+      sp->minibuffer_on = MINI_REPORT;
+    }
+}
+
+static char *descr_report_in_minibuffer_s(int *args, int *ints, Float *dbls) 
+{
+  return(mus_format("report_in_minibuffer(" STR_PT ", " INT_PT ")", args[1], STRING_ARG_1, args[2], INT_ARG_2));
+}
+
+static xen_value *report_in_minibuffer_1(ptree *pt, xen_value **args, int num_args)
+{
+  xen_value *true_args[3];
+  xen_value *rtn;
+  int k;
+  if (num_args > 2) 
+    return(run_warn("report-in-minibuffer: too many args"));
+  if (args[1]->type != R_STRING) return(run_warn("bad string arg to report-in-minibuffer"));
+  run_opt_arg(pt, args, num_args, 2, true_args);
+  true_args[1] = args[1];
+  true_args[0] = args[0];
+  rtn = package(pt, R_BOOL, report_in_minibuffer_s, descr_report_in_minibuffer_s, true_args, 2);
+  for (k = num_args + 1; k <= 2; k++) FREE(true_args[k]);
   return(rtn);
 }
 
@@ -5160,22 +5236,17 @@ static char *descr_make_sample_reader_r(int *args, int *ints, Float *dbls)
 }
 static void make_sample_reader_r(int *args, int *ints, Float *dbls) 
 {
-  snd_info *sp = NULL;
-  snd_state *ss = NULL;
   chan_info *cp = NULL;
   int pos;
-  ss = get_global_state();
-  if (INT_ARG_2 == -1)
-    sp = any_selected_sound(ss);
-  else sp = ss->sounds[INT_ARG_2];
-  if (INT_ARG_3 == -1)
-    cp = any_selected_channel(sp);
-  else cp = sp->chans[INT_ARG_3];
-  if (INT_ARG_5 == -1)
-    pos = cp->edit_ctr;
-  else pos = INT_ARG_5;
-  if (INT_RESULT) free_snd_fd((snd_fd *)(INT_RESULT));
-  INT_RESULT = (int)(init_sample_read_any(INT_ARG_1, cp, INT_ARG_4, pos));
+  cp = run_get_cp(2, args, ints);
+  if (cp)
+    {
+      if (INT_ARG_5 == -1)
+	pos = cp->edit_ctr;
+      else pos = INT_ARG_5;
+      if (INT_RESULT) free_snd_fd((snd_fd *)(INT_RESULT));
+      INT_RESULT = (int)(init_sample_read_any(INT_ARG_1, cp, INT_ARG_4, pos));
+    }
 }
 static xen_value *make_sample_reader_1(ptree *pt, xen_value **args, int num_args)
 {
@@ -5189,22 +5260,8 @@ static xen_value *make_sample_reader_1(ptree *pt, xen_value **args, int num_args
   if (num_args < 4) 
     true_args[4] = make_xen_value(R_INT, add_int_to_ptree(pt, READ_FORWARD), R_CONSTANT);
   else true_args[4] = args[4];
-  if (num_args < 3)
-    true_args[3] = make_xen_value(R_INT, add_int_to_ptree(pt, -1), R_CONSTANT);
-  else
-    {
-      if (args[3]->type == R_BOOL)
-	pt->ints[args[3]->addr] = -1;
-      true_args[3] = args[3];
-    }
-  if (num_args < 2)
-    true_args[2] = make_xen_value(R_INT, add_int_to_ptree(pt, -1), R_CONSTANT);
-  else
-    {
-      if (args[2]->type == R_BOOL)
-	pt->ints[args[2]->addr] = -1;
-      true_args[2] = args[2];
-    }
+  run_opt_arg(pt, args, num_args, 2, true_args);
+  run_opt_arg(pt, args, num_args, 3, true_args);
   if (num_args == 0)
     true_args[1] = make_xen_value(R_INT, add_int_to_ptree(pt, 0), R_CONSTANT);
   else true_args[1] = args[1];
@@ -7246,6 +7303,8 @@ static xen_value *walk(ptree *prog, XEN form, int need_result)
 	      if (strcmp(funcname, "string-copy") == 0) return(clean_up(string_copy_1(prog, args), args, num_args));
 	    }
 	  if (strcmp(funcname, "snd-print") == 0) return(clean_up(snd_print_1(prog, args, num_args), args, num_args));
+	  if (strcmp(funcname, "snd-warning") == 0) return(clean_up(snd_warning_1(prog, args, num_args), args, num_args));
+	  if (strcmp(funcname, "report-in-minibuffer") == 0) return(clean_up(report_in_minibuffer_1(prog, args, num_args), args, num_args));
 	  if (num_args == 2)
 	    {
 	      if (strcmp(funcname, "string-ref") == 0) return(clean_up(string_ref_1(prog, args), args, num_args));

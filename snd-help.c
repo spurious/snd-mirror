@@ -271,6 +271,7 @@ void news_help(snd_state *ss)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+15-Aug:  set-channel-drop in snd-motif.scm.\n\
 13-Aug:  snd 6.0.\n\
 1-Aug:   def-clm-struct (ws.scm).\n\
 19-Jul:  contrib/rmsgain.scm thanks to Fabio Furlanete.\n\

@@ -2764,7 +2764,7 @@ static void display_channel_data_with_size (chan_info *cp, snd_info *sp, snd_sta
 					    int just_fft, int just_lisp, int just_time)
 {
   /* this procedure is unnecessarily confusing! */
-  int with_fft = 0, with_lisp = 0, with_time = 0, displays = 0, points;
+  int with_fft = 0, with_lisp = 0, with_time = 0, displays = 0, points, grflsp = 0;
   axis_info *ap = NULL;
   axis_info *fap = NULL;
   axis_info *uap = NULL;
@@ -2800,8 +2800,8 @@ static void display_channel_data_with_size (chan_info *cp, snd_info *sp, snd_sta
       with_time = 1;
     }
 
-  cp->graph_lisp_p = ((cp->graph_lisp_p) || (XEN_HOOKED(lisp_graph_hook))); /* is this a good idea? */
-  if (cp->graph_lisp_p)
+  grflsp = ((cp->graph_lisp_p) || (XEN_HOOKED(lisp_graph_hook)));
+  if (grflsp)
     {
       displays++;
       up = (lisp_grf *)(cp->lisp_info);
@@ -3409,7 +3409,7 @@ static int within_graph(chan_info *cp, int x, int y)
 	  ((y0 <= ap->y_axis_y0) && (y1 >= ap->y_axis_y1)))
 	return(FFT_MAIN);
     }
-  if ((cp->graph_lisp_p) && (cp->lisp_info))
+  if (((cp->graph_lisp_p) || (XEN_HOOKED(lisp_graph_hook))) && (cp->lisp_info))
     {
       ap = (cp->lisp_info)->axis;
       if (((x0 <= ap->x_axis_x1) && (x1 >= ap->x_axis_x0)) && 
@@ -3598,7 +3598,7 @@ int key_press_callback(chan_info *ncp, int x, int y, int key_state, int keysym)
   cp = virtual_selected_channel(ncp);
   sp = cp->sound;
   select_channel(sp, cp->chan);
-  if ((cp->graph_lisp_p) && 
+  if (((cp->graph_lisp_p) || (XEN_HOOKED(lisp_graph_hook))) &&
       (within_graph(cp, x, y) == LISP) &&
       (XEN_HOOKED(key_press_hook)))
     {
@@ -4315,9 +4315,6 @@ static XEN channel_set(XEN snd_n, XEN chn_n, XEN on, int fld, char *caller)
       return(C_TO_XEN_OFF_T(cp->cursor));
       break;
     case CP_GRAPH_LISP_P:
-      /* TODO: should make_graph reset this value based on the lisp_graph_hook value?
-       *       should setting this to #f reset the hook?
-       */
       cp->graph_lisp_p = XEN_TO_C_BOOLEAN_OR_TRUE(on); 
       val = cp->graph_lisp_p; 
       update_graph(cp);

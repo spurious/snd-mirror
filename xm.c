@@ -744,18 +744,17 @@ static XmDropTransferEntryRec *XEN_TO_C_XmDropTransferEntryRecs(XEN v, int len)
   ps = (XmDropTransferEntryRec *)CALLOC(len, sizeof(XmDropTransferEntryRec));
   for (i = 0; (i < len) && (XEN_NOT_NULL_P(v)); i++, v = XEN_CDR(v))
     {
-      if (XEN_LIST_P(XEN_CAR(v)))
+      if (XEN_Atom_P(XEN_CAR(v)))
+	ps[i].target = XEN_TO_C_Atom(XEN_CAR(v));
+      else 
 	{
-	  if (XEN_Atom_P(XEN_CAR(v)))
-	    ps[i].target = XEN_TO_C_Atom(XEN_CAR(XEN_CAR(v)));
-	  else XEN_ASSERT_TYPE(0, XEN_CAR(v), i, __FUNCTION__, "an Atom");
-	  ps[i].client_data = (XtPointer)XEN_CADR(XEN_CAR(v));
-	}
-      else
-	{
-	  if (XEN_Atom_P(XEN_CAR(v)))
-	    ps[i].target = XEN_TO_C_Atom(XEN_CAR(v));
-	  else XEN_ASSERT_TYPE(0, XEN_CAR(v), 0, __FUNCTION__, "a list (Atom data)");
+	  if (XEN_LIST_P(XEN_CAR(v)))
+	    {
+	      if (XEN_Atom_P(XEN_CAR(XEN_CAR(v))))
+		ps[i].target = XEN_TO_C_Atom(XEN_CAR(XEN_CAR(v)));
+	      else XEN_ASSERT_TYPE(0, XEN_CAR(v), i, __FUNCTION__, "an Atom");
+	      ps[i].client_data = (XtPointer)XEN_CADR(XEN_CAR(v));
+	    }
 	}
     }
   return(ps);
@@ -1332,14 +1331,15 @@ static XtCallbackList XEN_TO_C_XtCallbackList(XEN call_list1)
   return(cl);
 }
 
-static XEN C_TO_XEN_STRING_WITH_TERMINATION(char *str, int len)
+static XEN C_TO_XEN_STRING_WITH_TERMINATION(char *str, unsigned long len)
 {
+  if ((len == 0) || (str == NULL)) return(XEN_FALSE);
   str[len] = '\0';
   return(C_TO_XEN_STRING(str));
 }
 
 static XEN xm_XtSelectionCallback_Descr = XEN_FALSE;
-static void gxm_XtSelectionCallbackProc(Widget w, XtPointer x, Atom* a1, Atom* a2, XtPointer x1, unsigned long* l, int* i)
+static void gxm_XtSelectionCallbackProc(Widget w, XtPointer x, Atom *a1, Atom *a2, XtPointer x1, unsigned long *l, int *i)
 {
   XEN_APPLY(XEN_CAR(xm_XtSelectionCallback_Descr),
 	    XEN_LIST_7(C_TO_XEN_Widget(w),
@@ -1353,8 +1353,8 @@ static void gxm_XtSelectionCallbackProc(Widget w, XtPointer x, Atom* a1, Atom* a
 }
 
 static XEN xm_XtConvertSelectionIncr_Descr = XEN_FALSE;
-static Boolean gxm_XtConvertSelectionIncrProc(Widget w, Atom* selection, Atom* target, 
-					   Atom* type_return, XtPointer *value_return, 
+static Boolean gxm_XtConvertSelectionIncrProc(Widget w, Atom *selection, Atom *target, 
+					   Atom *type_return, XtPointer *value_return, 
 					   unsigned long *length_return, int *format_return, 
 					   unsigned long *max_length, XtPointer client_data, 
 					   XtRequestId *request_id)
@@ -13056,12 +13056,12 @@ static XEN gxm_XDestroyImage(XEN arg1)
 #if HAVE_MOTIF
 
 /* I think these are globals in the sense that only one such procedure per selection atom  */
-static void gxm_XtCancelConvertSelectionProc(Widget w, Atom* a1, Atom* a2, XtRequestId* id, XtPointer x) {} 
-static void gxm_XtConvertSelectionProc(Widget w, Atom* a1, Atom* a2, Atom* a3, XtPointer* x, unsigned long* l, int* i) {}
-static void gxm_XtLoseSelectionIncrProc(Widget w, Atom* a, XtPointer x) {}
-static void gxm_XtLoseSelectionProc(Widget w, Atom* a) {}
-static void gxm_XtSelectionDoneProc(Widget w, Atom* a1, Atom* a2) {}
-static void gxm_XtSelectionDoneIncrProc(Widget w, Atom* a1, Atom* a2, XtRequestId* i, XtPointer x) {}
+static void gxm_XtCancelConvertSelectionProc(Widget w, Atom *a1, Atom *a2, XtRequestId *id, XtPointer x) {} 
+static void gxm_XtConvertSelectionProc(Widget w, Atom *a1, Atom *a2, Atom *a3, XtPointer* x, unsigned long *l, int *i) {}
+static void gxm_XtLoseSelectionIncrProc(Widget w, Atom *a, XtPointer x) {}
+static void gxm_XtLoseSelectionProc(Widget w, Atom *a) {}
+static void gxm_XtSelectionDoneProc(Widget w, Atom *a1, Atom *a2) {}
+static void gxm_XtSelectionDoneIncrProc(Widget w, Atom *a1, Atom *a2, XtRequestId *i, XtPointer x) {}
 
 static XEN gxm_XtAppUnlock(XEN arg1)
 {

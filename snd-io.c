@@ -519,7 +519,10 @@ snd_data *free_snd_data(snd_data *sd)
 	  sd->type = 0;
 	  FREE(sd);
 	}
-      else sd->free_me = 1;
+      else 
+	{
+	  sd->free_me = 1;
+	}
     }
   return(NULL);
 }

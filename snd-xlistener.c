@@ -538,8 +538,8 @@ static void Listener_help(Widget w, XEvent *event, char **str, Cardinal *num)
 		    FREE(name);
 		    if (XEN_STRING_P(result))
 		      {
-			listener_append(ss, "\n;");
-			listener_append_and_prompt(ss, XEN_TO_C_STRING(result));
+			listener_append("\n;");
+			listener_append_and_prompt(XEN_TO_C_STRING(result));
 			return;
 		      }
 		  }
@@ -910,9 +910,8 @@ Widget make_text_widget(snd_state *ss, char *name, Widget parent, Arg *args, int
 
 static Widget lisp_window = NULL;
 
-void listener_append(snd_state *ss, char *msg)
+void listener_append(char *msg)
 {
-
   if (listener_text)
     {
       if (listener_print_p(msg))
@@ -923,7 +922,7 @@ void listener_append(snd_state *ss, char *msg)
  
 static Widget listener_pane = NULL; 
 
-void listener_append_and_prompt(snd_state *ss, char *msg)
+void listener_append_and_prompt(char *msg)
 {
   XmTextPosition cmd_eot;
   if (listener_text)
@@ -933,7 +932,7 @@ void listener_append_and_prompt(snd_state *ss, char *msg)
 	  if (msg)
 	    XmTextInsert(listener_text, XmTextGetLastPosition(listener_text), msg);
 	  cmd_eot = XmTextGetLastPosition(listener_text);
-	  XmTextInsert(listener_text, cmd_eot, listener_prompt_with_cr(ss));
+	  XmTextInsert(listener_text, cmd_eot, listener_prompt_with_cr(get_global_state()));
 	}
       cmd_eot = XmTextGetLastPosition(listener_text);
       printout_end = cmd_eot - 1;

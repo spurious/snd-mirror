@@ -46,11 +46,11 @@ void set_spectro_cutoff(snd_state *ss, Float val) {}
 int color_dialog_is_active(void) {return(0);}
 int orientation_dialog_is_active(void) {return(0);}
 void reflect_spectro(snd_state *ss) {}
-void listener_append_and_prompt(snd_state *ss, char *msg) {fprintf(stderr, "%s", msg);}
+void listener_append_and_prompt(char *msg) {fprintf(stderr, "%s", msg);}
 void goto_listener(void) {}
 void save_listener_text(FILE *fp) {}
 void append_listener_text(int end, char *msg) {}
-void listener_append(snd_state *ss, char *msg) {fprintf(stderr, "%s", msg);}
+void listener_append(char *msg) {fprintf(stderr, "%s", msg);}
 void handle_listener(snd_state *ss, int new_state) {}
 int listener_height(void) {return(0);}
 int listener_width(void) {return(0);}

@@ -42,7 +42,7 @@ static void mus_print2snd(char *msg)
   if (!(ignore_mus_error(MUS_NO_ERROR, msg)))
     if (msg)
       {
-	listener_append(ss, ";");
+	listener_append(";");
 	{
 	  int i, len;
 	  len = strlen(msg);
@@ -51,10 +51,10 @@ static void mus_print2snd(char *msg)
 	      msg[i + 1] = ';';
 	}
 	if (msg[0] == '\n')
-	  listener_append(ss, (char *)(msg + 1));
-	else listener_append(ss, msg);
+	  listener_append((char *)(msg + 1));
+	else listener_append(msg);
 	if (msg[strlen(msg) - 1] != '\n')
-	  listener_append(ss, "\n");
+	  listener_append("\n");
       }
 }
 

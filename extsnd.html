@@ -798,7 +798,9 @@ the hook.
 <!-- -->Snd opens it as if you had called open-sound.  If you drag it to a particular channel,
 <!-- -->Snd mixes it at the cursor in that channel.  To get Snd to
 <!-- -->mix the dragged file even from the menubar:
-<!-- --></br><br><code>(add-hook! drop-hook (lambda (filename) (mix filename) #t))</code>
+<!-- --></br><br><code>(add-hook! drop-hook (lambda (filename) (mix filename) #t))</code><br><br>
+<!-- -->snd-motif.scm has examples that add a drop callback to an arbitrary widget, or
+<!-- -->change an existing callback (to pass the sound index and channel number to the drop callback function, bypassing drop-hook).
 <!-- --></td></tr><tr><td colspan=3></td></tr>
 <!-- -->
 <!-- during-open-hook -->
@@ -4358,8 +4360,8 @@ the direction argument between the channel and edit-position:
 <!-- --><span class=defbox><code><em class=def><a name="sndgraphing">graph-lisp?</a></em> (<i>snd chn</i>)</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
-<!-- -->#t if lisp-generated graph is being displayed.  (I can't decide how to handle the set! case; currently
-<!-- -->setting this field has no effect.)
+<!-- -->#t if lisp-generated graph is displayed.  This graph section is also active if there's an active function
+<!-- -->on the <a href="#lispgraphhook">lisp-graph-hook</a>.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->

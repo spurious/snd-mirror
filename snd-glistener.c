@@ -108,10 +108,12 @@ void snd_completion_help(snd_state *ss, int matches, char **pbuffer)
 
 /* ---------------- command widget replacement ---------------- */
 
-void listener_append(snd_state *ss, char *msg)
+void listener_append(char *msg)
 {
   if (listener_text)
     {
+      snd_state *ss;
+      ss = get_global_state();
       if ((ss->sgx)->graph_is_active)
 	(ss->sgx)->graph_is_active = FALSE;
       append_listener_text(0, msg);
@@ -119,14 +121,14 @@ void listener_append(snd_state *ss, char *msg)
     }
 }
 
-void listener_append_and_prompt(snd_state *ss, char *msg)
+void listener_append_and_prompt(char *msg)
 {
   int cmd_eot;
   if (listener_text)
     {
       if (msg)
 	append_listener_text(0, msg);
-      append_listener_text(0, listener_prompt_with_cr(ss));
+      append_listener_text(0, listener_prompt_with_cr(get_global_state()));
       cmd_eot = SG_TEXT_LENGTH(listener_text);
       printout_end = cmd_eot - 1;
     }

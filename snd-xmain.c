@@ -305,7 +305,6 @@ static void who_called(Widget w, XtPointer context, XEvent *event, Boolean *cont
 {
   /* watch for communication from some other program via the SND_COMMAND property */
   XPropertyEvent *ev = (XPropertyEvent *)event;
-  snd_state *ss = (snd_state *)context;
   Atom type;
   int format;
   unsigned long nitems, bytesafter;
@@ -322,7 +321,7 @@ static void who_called(Widget w, XtPointer context, XEvent *event, Boolean *cont
 		(!(XEN_TRUE_P(run_or_hook(property_changed_hook,
 					  XEN_LIST_1(C_TO_XEN_STRING((char *)(version[0]))),
 					  S_property_changed_hook)))))
-	    snd_eval_property_str(ss, (char *)(version[0]));
+	    snd_eval_property_str((char *)(version[0]));
 	    free(version[0]);
 	  }
     }
@@ -529,7 +528,7 @@ static void ss_graph_key_press(Widget w, XtPointer context, XEvent *event, Boole
   sp = any_selected_sound(ss);
   if (sp)
     key_press_callback(any_selected_channel(sp), ev->x, ev->y, ev->state, keysym);
-  else listener_append(ss, XKeysymToString(keysym));
+  else listener_append(XKeysymToString(keysym));
 }
 
 static Pixel get_color(Widget shell,

@@ -386,7 +386,7 @@ void command_return(GUI_WIDGET w, snd_state *ss, int last_prompt)
       FREE(str);
       str = NULL;
       if (XEN_BOUND_P(form))
-	snd_report_listener_result(ss, form);
+	snd_report_listener_result(form);
       GUI_UNSET_CURSOR(w, (ss->sgx)->arrow_cursor);
     }
   else

@@ -72,9 +72,9 @@ int set_with_gl(snd_state *ss, int val);
 
 void append_listener_text(int end, char *msg);
 void save_listener_text(FILE *fp);
-void listener_append_and_prompt(snd_state *ss, char *msg);
+void listener_append_and_prompt(char *msg);
 void goto_listener(void);
-void listener_append(snd_state *ss, char *msg);
+void listener_append(char *msg);
 void handle_listener(snd_state *ss, int new_state);
 int listener_height(void);
 int listener_width(void);

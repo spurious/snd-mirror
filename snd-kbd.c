@@ -1540,7 +1540,7 @@ void keyboard_command (chan_info *cp, int keysym, int state)
 		if (listener_height() > 5)
 		  {
 		    goto_listener();
-		    listener_append(ss, buf);
+		    listener_append(buf);
 		  }
 		else 
 		  {

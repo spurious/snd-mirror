@@ -1,9 +1,5 @@
 #include "snd.h"
 
-/* SOMEDAY: transfer protocol for sound data
- * TODO: perhaps drop-hook should take 3 args: filename snd chn (snd=#f if menubar)
- */
-
 static Atom FILE_NAME; /* Sun uses this, SGI uses STRING */
 
 static XEN drop_hook;
