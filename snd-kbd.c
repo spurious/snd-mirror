@@ -194,9 +194,9 @@ static SCM g_key_binding(SCM key, SCM state, SCM extended)
 {
   #define H_key_binding "(" S_key_binding " key state extended) -> function bound to this key"
   int i;
-  ASSERT_TYPE(INTEGER_P(key), key, SCM_ARG1, S_key_binding, "an integer");
-  ASSERT_TYPE(INTEGER_P(state), state, SCM_ARG2, S_key_binding, "an integer");
-  ASSERT_TYPE(BOOLEAN_IF_BOUND_P(extended), extended, SCM_ARG3, S_key_binding, "a boolean");
+  ASSERT_TYPE(INTEGER_P(key), key, ARG1, S_key_binding, "an integer");
+  ASSERT_TYPE(INTEGER_P(state), state, ARG2, S_key_binding, "an integer");
+  ASSERT_TYPE(BOOLEAN_IF_BOUND_P(extended), extended, ARG3, S_key_binding, "a boolean");
   i = in_user_keymap(TO_SMALL_C_INT(key),
 		     TO_SMALL_C_INT(state),
 		     (TRUE_P(extended)) ? 1 : 0);
@@ -1817,9 +1817,9 @@ The function should return one of the cursor choices (e.g. cursor-no-action)."
   int args;
   char *errstr;
   SCM arity_list, errmsg;
-  ASSERT_TYPE(INTEGER_P(key), key, SCM_ARG1, S_bind_key, "an integer");
-  ASSERT_TYPE(INTEGER_P(state), state, SCM_ARG2, S_bind_key, "an integer");
-  ASSERT_TYPE((FALSE_P(code) || PROCEDURE_P(code)), code, SCM_ARG3, S_bind_key, "#f or a procedure");
+  ASSERT_TYPE(INTEGER_P(key), key, ARG1, S_bind_key, "an integer");
+  ASSERT_TYPE(INTEGER_P(state), state, ARG2, S_bind_key, "an integer");
+  ASSERT_TYPE((FALSE_P(code) || PROCEDURE_P(code)), code, ARG3, S_bind_key, "#f or a procedure");
   if (FALSE_P(code))
     set_keymap_entry(TO_C_INT(key), 
 		     TO_C_INT(state), 
@@ -1829,7 +1829,7 @@ The function should return one of the cursor choices (e.g. cursor-no-action)."
   else 
     {
       arity_list = ARITY(code);
-      args = TO_SMALL_C_INT(SCM_CAR(arity_list));
+      args = TO_SMALL_C_INT(CAR(arity_list));
       if (args > 1)
 	{
 	  errstr = mus_format("bind-key function arg should take either zero or one args, not %d", args);
@@ -1858,8 +1858,8 @@ static SCM g_key(SCM kbd, SCM buckybits, SCM snd, SCM chn)
 {
   #define H_key "(" S_key " key modifiers &optional snd chn) simulates typing 'key' with 'modifiers' in snd's channel chn"
   chan_info *cp;
-  ASSERT_TYPE(INTEGER_P(kbd), kbd, SCM_ARG1, S_key, "an integer");
-  ASSERT_TYPE(INTEGER_P(buckybits), buckybits, SCM_ARG2, S_key, "an integer");
+  ASSERT_TYPE(INTEGER_P(kbd), kbd, ARG1, S_key, "an integer");
+  ASSERT_TYPE(INTEGER_P(buckybits), buckybits, ARG2, S_key, "an integer");
   SND_ASSERT_CHAN(S_key, snd, chn, 3);
   cp = get_cp(snd, chn, S_key);
   return(TO_SCM_INT(keyboard_command(cp, 
@@ -1877,7 +1877,7 @@ static SCM g_save_macros(void)
   if (fd) save_macro_state(fd);
   if ((!fd) || (fclose(fd) != 0))
     ERROR(CANNOT_SAVE,
-	  SCM_LIST3(TO_SCM_STRING(S_save_macros),
+	  LIST_3(TO_SCM_STRING(S_save_macros),
 		    TO_SCM_STRING(ss->init_file),
 		    TO_SCM_STRING(strerror(errno))));
   return(TO_SCM_STRING(ss->init_file));
@@ -1891,8 +1891,8 @@ then when the user eventually responds, invokes the function callback with the r
   snd_info *sp;
   char *errstr;
   SCM errmsg;
-  ASSERT_TYPE(STRING_P(msg), msg, SCM_ARG1, S_prompt_in_minibuffer, "a string");
-  ASSERT_TYPE((NOT_BOUND_P(callback)) || (BOOLEAN_P(callback)) || PROCEDURE_P(callback), callback, SCM_ARG2, S_prompt_in_minibuffer, "#f or a procedure");
+  ASSERT_TYPE(STRING_P(msg), msg, ARG1, S_prompt_in_minibuffer, "a string");
+  ASSERT_TYPE((NOT_BOUND_P(callback)) || (BOOLEAN_P(callback)) || PROCEDURE_P(callback), callback, ARG2, S_prompt_in_minibuffer, "#f or a procedure");
   SND_ASSERT_SND(S_prompt_in_minibuffer, snd_n, 3);
   sp = get_sp(snd_n);
   if (sp == NULL)
@@ -1926,7 +1926,7 @@ static SCM g_report_in_minibuffer(SCM msg, SCM snd_n)
 {
   #define H_report_in_minibuffer "(" S_report_in_minibuffer " msg &optional snd) displays msg in snd's minibuffer"
   snd_info *sp;
-  ASSERT_TYPE(STRING_P(msg), msg, SCM_ARG1, S_report_in_minibuffer, "a string");
+  ASSERT_TYPE(STRING_P(msg), msg, ARG1, S_report_in_minibuffer, "a string");
   SND_ASSERT_SND(S_report_in_minibuffer, snd_n, 2);
   sp = get_sp(snd_n);
   if (sp == NULL)
@@ -1940,7 +1940,7 @@ static SCM g_append_to_minibuffer(SCM msg, SCM snd_n)
   #define H_append_to_minibuffer "(" S_append_to_minibuffer " msg &optional snd) appends msg to snd's minibuffer"
   snd_info *sp;
   char *str1 = NULL, *expr_str;
-  ASSERT_TYPE(STRING_P(msg), msg, SCM_ARG1, S_append_to_minibuffer, "a string");
+  ASSERT_TYPE(STRING_P(msg), msg, ARG1, S_append_to_minibuffer, "a string");
   SND_ASSERT_SND(S_append_to_minibuffer, snd_n, 2);
   sp = get_sp(snd_n);
   if (sp == NULL)
@@ -1959,12 +1959,12 @@ static SCM g_forward_graph(SCM count, SCM snd, SCM chn)
   #define H_forward_graph "(" S_forward_graph " &optional (count 1) snd chn) moves the 'selected' graph forward by count"
   int val;
   chan_info *cp;
-  ASSERT_TYPE(INTEGER_IF_BOUND_P(count), count, SCM_ARG1, S_forward_graph, "an integer");
+  ASSERT_TYPE(INTEGER_IF_BOUND_P(count), count, ARG1, S_forward_graph, "an integer");
   SND_ASSERT_CHAN(S_forward_graph, snd, chn, 2);
   cp = get_cp(snd, chn, S_forward_graph);
   val = TO_C_INT_OR_ELSE(count, 1);
   cp = goto_next_graph(cp, val);
-  return(SCM_LIST2(TO_SMALL_SCM_INT(cp->sound->index),
+  return(LIST_2(TO_SMALL_SCM_INT(cp->sound->index),
 		   TO_SMALL_SCM_INT(cp->chan)));
 }
 
@@ -1973,12 +1973,12 @@ static SCM g_backward_graph(SCM count, SCM snd, SCM chn)
   #define H_backward_graph "(" S_backward_graph " &optional (count 1) snd chn) moves the 'selected' graph back by count"
   int val;
   chan_info *cp;
-  ASSERT_TYPE(INTEGER_IF_BOUND_P(count), count, SCM_ARG1, S_backward_graph, "an integer");
+  ASSERT_TYPE(INTEGER_IF_BOUND_P(count), count, ARG1, S_backward_graph, "an integer");
   SND_ASSERT_CHAN(S_backward_graph, snd, chn, 2);
   cp = get_cp(snd, chn, S_backward_graph);
   val = -(TO_C_INT_OR_ELSE(count, 1));
   cp = goto_previous_graph(cp, val);
-  return(SCM_LIST2(TO_SMALL_SCM_INT(cp->sound->index),
+  return(LIST_2(TO_SMALL_SCM_INT(cp->sound->index),
 		   TO_SMALL_SCM_INT(cp->chan)));
 }
 

@@ -562,7 +562,7 @@ static void select_sound (snd_state *ss, snd_info *sp)
   snd_info *osp = NULL;
   if (HOOKED(select_sound_hook))
     g_c_run_progn_hook(select_sound_hook,
-		       SCM_LIST1(TO_SCM_INT(sp->index)),
+		       LIST_1(TO_SCM_INT(sp->index)),
 		       S_select_sound_hook);
   if (ss->selected_sound != sp->index)
     {
@@ -611,7 +611,7 @@ void select_channel(snd_info *sp, int chan)
 	}
   if (HOOKED(select_channel_hook))
     g_c_run_progn_hook(select_channel_hook,
-		       SCM_LIST2(TO_SCM_INT(sp->index),
+		       LIST_2(TO_SCM_INT(sp->index),
 				 TO_SCM_INT(chan)),
 		       S_select_channel_hook);
       ncp = sp->chans[chan];

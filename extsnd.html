@@ -2472,8 +2472,12 @@ functions:</p>
 <!-- --><td>return list with elements of vct <i>v1</i></td></tr>
 <!-- -->
 <!-- vct->samples -->
-<!-- --><tr><td><span class=defbox><code><em class=def><a name="vct2samples">vct-&gt;samples</a></em> (samp samps data <i>snd chn</i>)</code></span></td>
-<!-- --><td>synonym for <a href="#sndsetsamples">set-samples</a>.</td></tr>
+<!-- --><tr><td colspan=2><span class=defbox><code><em class=def><a name="vct2samples">vct-&gt;samples</a></em> (samp samps data <i>snd chn</i>)</code></span></td>
+<!-- --></tr><tr><td></td><td>A synonym for <a href="#sndsetsamples">set-samples</a>, but you can also pass just a vct as the first argument, or a start
+<!-- -->sample and a vct as the second argument.
+<!-- --><pre>(define v (samples-&gt;vct))
+<!-- -->(vct-scale! v 2.0)
+<!-- -->(vct-&gt;samples v)</pre></td></tr>
 <!-- -->
 <!-- vct->sound-data -->
 <!-- --><tr><td><span class=defbox><code><em class=def>vct-&gt;sound-data</em> (vobj sdobj chan)</code></span></td>
@@ -4964,7 +4968,9 @@ desired edit history position.
 <!-- --><span class=defbox><code><em class=def><a name="sndreverse">reverse-sound</a></em> (<i>snd chn edpos</i>)</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
-<!-- -->reverse data.
+<!-- -->reverse data.  There are some interesting "non-causal" effects you can get with this; for example,
+<!-- -->take a voice sound, reverse it, reverberate it, reverse it again, and you get the original with
+<!-- -->reversed reverb.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->

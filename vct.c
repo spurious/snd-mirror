@@ -201,7 +201,7 @@ static SCM g_make_vct(SCM len)
 {
   #define H_make_vct "(" S_make_vct " len) -> a new vct object of length len"
   int size;
-  ASSERT_TYPE(INTEGER_P(len), len, SCM_ARGn, S_make_vct, "an integer");
+  ASSERT_TYPE(INTEGER_P(len), len, ARGn, S_make_vct, "an integer");
   size = TO_C_INT(len);
   if (size <= 0) 
     mus_misc_error(S_make_vct, "len <= 0?", len);
@@ -214,7 +214,7 @@ static SCM copy_vct(SCM obj)
   vct *v;
   Float *copied_data;
   int len;
-  ASSERT_TYPE(VCT_P(obj), obj, SCM_ARGn, S_vct_copy, "a vct");
+  ASSERT_TYPE(VCT_P(obj), obj, ARGn, S_vct_copy, "a vct");
   v = TO_VCT(obj);
   if (v)
     {
@@ -231,10 +231,10 @@ static SCM vct_move(SCM obj, SCM newi, SCM oldi, SCM backwards)
   #define H_vct_moveB "(" S_vct_moveB " obj new old backwards) moves obj data from old to new"
   vct *v;
   int i, j, ni, nj;
-  ASSERT_TYPE(VCT_P(obj), obj, SCM_ARG1, S_vct_moveB, "a vct");
-  ASSERT_TYPE(INTEGER_P(newi), newi, SCM_ARG2, S_vct_moveB, "an integer");
-  ASSERT_TYPE(INTEGER_P(oldi), oldi, SCM_ARG3, S_vct_moveB, "an integer");
-  ASSERT_TYPE(BOOLEAN_IF_BOUND_P(backwards), backwards, SCM_ARG4, S_vct_moveB, "a boolean");
+  ASSERT_TYPE(VCT_P(obj), obj, ARG1, S_vct_moveB, "a vct");
+  ASSERT_TYPE(INTEGER_P(newi), newi, ARG2, S_vct_moveB, "an integer");
+  ASSERT_TYPE(INTEGER_P(oldi), oldi, ARG3, S_vct_moveB, "an integer");
+  ASSERT_TYPE(BOOLEAN_IF_BOUND_P(backwards), backwards, ARG4, S_vct_moveB, "a boolean");
   v = TO_VCT(obj);
   ni = TO_SMALL_C_INT(newi);
   nj = TO_SMALL_C_INT(oldi);
@@ -244,13 +244,13 @@ static SCM vct_move(SCM obj, SCM newi, SCM oldi, SCM backwards)
       if (ni >= v->length) 
 	mus_misc_error(S_vct_moveB,
 		       "new-index too high?",
-		       SCM_LIST2(newi,
-				 TO_SCM_INT(v->length)));
+		       LIST_2(newi,
+			      TO_SCM_INT(v->length)));
       if (nj >= v->length)
 	mus_misc_error(S_vct_moveB,
 		       "old-index too high?",
-		       SCM_LIST2(oldi,
-				 TO_SCM_INT(v->length)));
+		       LIST_2(oldi,
+			      TO_SCM_INT(v->length)));
       if (v) 
 	for (i = ni, j = nj; (j >= 0) && (i >= 0); i--, j--) 
 	  v->data[i] = v->data[j];
@@ -276,7 +276,7 @@ static SCM vct_length(SCM obj)
 {
   #define H_vct_length "(" S_vct_length " v) -> length of vct v"
   vct *v;
-  ASSERT_TYPE(VCT_P(obj), obj, SCM_ARGn, S_vct_length, "a vct");
+  ASSERT_TYPE(VCT_P(obj), obj, ARGn, S_vct_length, "a vct");
   v = TO_VCT(obj);
   if (v)
     return(TO_SCM_INT(v->length));
@@ -291,8 +291,8 @@ static SCM vct_ref(SCM obj, SCM pos)
   #define H_vct_ref "(" S_vct_ref " v n) -> element n of vct v, v[n]"
   vct *v;
   int loc;
-  ASSERT_TYPE(VCT_P(obj), obj, SCM_ARG1, S_vct_ref, "a vct");
-  ASSERT_TYPE(INTEGER_P(pos), pos, SCM_ARG2, S_vct_ref, "an integer");
+  ASSERT_TYPE(VCT_P(obj), obj, ARG1, S_vct_ref, "a vct");
+  ASSERT_TYPE(INTEGER_P(pos), pos, ARG2, S_vct_ref, "an integer");
   v = TO_VCT(obj);
   if (v)
     {
@@ -302,7 +302,7 @@ static SCM vct_ref(SCM obj, SCM pos)
       else
 	{
 	  if (loc >= v->length)
-	    mus_misc_error(S_vct_ref, "index too high?", SCM_LIST2(pos, TO_SCM_INT(v->length)));
+	    mus_misc_error(S_vct_ref, "index too high?", LIST_2(pos, TO_SCM_INT(v->length)));
 	  return(TO_SCM_DOUBLE(v->data[loc]));
 	}
     }
@@ -315,9 +315,9 @@ static SCM vct_set(SCM obj, SCM pos, SCM val)
   #define H_vct_setB "(" S_vct_setB " v n val) sets element n of vct v to val, v[n] = val"
   vct *v;
   int loc;
-  ASSERT_TYPE(VCT_P(obj), obj, SCM_ARG1, S_vct_setB, "a vct");
-  ASSERT_TYPE(INTEGER_P(pos), pos, SCM_ARG2, S_vct_setB, "an integer");
-  ASSERT_TYPE(NUMBER_P(val), val, SCM_ARG3, S_vct_setB, "a number");
+  ASSERT_TYPE(VCT_P(obj), obj, ARG1, S_vct_setB, "a vct");
+  ASSERT_TYPE(INTEGER_P(pos), pos, ARG2, S_vct_setB, "an integer");
+  ASSERT_TYPE(NUMBER_P(val), val, ARG3, S_vct_setB, "a number");
   v = TO_VCT(obj);
   if (v)
     {
@@ -325,7 +325,7 @@ static SCM vct_set(SCM obj, SCM pos, SCM val)
       if (loc < 0)
 	mus_misc_error(S_vct_setB, "index < 0?", pos); 
       if (loc >= v->length)
-	mus_misc_error(S_vct_setB, "index >= vct-length?", SCM_LIST2(pos, TO_SCM_INT(v->length)));
+	mus_misc_error(S_vct_setB, "index >= vct-length?", LIST_2(pos, TO_SCM_INT(v->length)));
       v->data[loc] = TO_C_DOUBLE(val);
     }
   else mus_misc_error(S_vct_ref, "vct obj is null?", obj);
@@ -337,8 +337,8 @@ static SCM vct_multiply(SCM obj1, SCM obj2)
   #define H_vct_multiplyB "(" S_vct_multiplyB " v1 v2) -> v1 with element-wise multiply of vcts v1 and v2: v1[i] *= v2[i]"
   int i, lim;
   vct *v1, *v2;
-  ASSERT_TYPE(VCT_P(obj1), obj1, SCM_ARG1, S_vct_multiplyB, "a vct");
-  ASSERT_TYPE(VCT_P(obj2), obj2, SCM_ARG2, S_vct_multiplyB, "a vct");
+  ASSERT_TYPE(VCT_P(obj1), obj1, ARG1, S_vct_multiplyB, "a vct");
+  ASSERT_TYPE(VCT_P(obj2), obj2, ARG2, S_vct_multiplyB, "a vct");
   v1 = TO_VCT(obj1);
   v2 = TO_VCT(obj2);
   if ((v1) && (v2))
@@ -354,8 +354,8 @@ static SCM vct_add(SCM obj1, SCM obj2, SCM offs)
   #define H_vct_addB "(" S_vct_addB " v1 v2 &optional (offset 0)) -> v1 with element-wise add of vcts v1 and v2: v1[i+offset] += v2[i]"
   int i, lim, j;
   vct *v1, *v2;
-  ASSERT_TYPE(VCT_P(obj1), obj1, SCM_ARG1, S_vct_addB, "a vct");
-  ASSERT_TYPE(VCT_P(obj2), obj2, SCM_ARG2, S_vct_addB, "a vct");
+  ASSERT_TYPE(VCT_P(obj1), obj1, ARG1, S_vct_addB, "a vct");
+  ASSERT_TYPE(VCT_P(obj2), obj2, ARG2, S_vct_addB, "a vct");
   v1 = TO_VCT(obj1);
   v2 = TO_VCT(obj2);
   if ((v1) && (v2))
@@ -376,8 +376,8 @@ static SCM vct_subtract(SCM obj1, SCM obj2)
   #define H_vct_subtractB "(" S_vct_subtractB " v1 v2) -> v1 with element-wise subtract of vcts v1 and v2: v1[i] -= v2[i]"
   int i, lim;
   vct *v1, *v2;
-  ASSERT_TYPE(VCT_P(obj1), obj1, SCM_ARG1, S_vct_subtractB, "a vct");
-  ASSERT_TYPE(VCT_P(obj2), obj2, SCM_ARG2, S_vct_subtractB, "a vct");
+  ASSERT_TYPE(VCT_P(obj1), obj1, ARG1, S_vct_subtractB, "a vct");
+  ASSERT_TYPE(VCT_P(obj2), obj2, ARG2, S_vct_subtractB, "a vct");
   v1 = TO_VCT(obj1);
   v2 = TO_VCT(obj2);
   if ((v1) && (v2))
@@ -394,8 +394,8 @@ static SCM vct_scale(SCM obj1, SCM obj2)
   int i;
   vct *v1;
   Float scl;
-  ASSERT_TYPE(VCT_P(obj1), obj1, SCM_ARG1, S_vct_scaleB, "a vct");
-  ASSERT_TYPE(NUMBER_P(obj2), obj2, SCM_ARG2, S_vct_scaleB, "a number");
+  ASSERT_TYPE(VCT_P(obj1), obj1, ARG1, S_vct_scaleB, "a vct");
+  ASSERT_TYPE(NUMBER_P(obj2), obj2, ARG2, S_vct_scaleB, "a number");
   v1 = TO_VCT(obj1);
   scl = TO_C_DOUBLE(obj2);
   if (v1)
@@ -409,8 +409,8 @@ static SCM vct_offset(SCM obj1, SCM obj2)
   int i;
   vct *v1;
   Float scl;
-  ASSERT_TYPE(VCT_P(obj1), obj1, SCM_ARG1, S_vct_offsetB, "a vct");
-  ASSERT_TYPE(NUMBER_P(obj2), obj2, SCM_ARG2, S_vct_offsetB, "a number");
+  ASSERT_TYPE(VCT_P(obj1), obj1, ARG1, S_vct_offsetB, "a vct");
+  ASSERT_TYPE(NUMBER_P(obj2), obj2, ARG2, S_vct_offsetB, "a number");
   v1 = TO_VCT(obj1);
   scl = TO_C_DOUBLE(obj2);
   if (v1)
@@ -424,8 +424,8 @@ static SCM vct_fill(SCM obj1, SCM obj2)
   int i;
   vct *v1;
   Float scl;
-  ASSERT_TYPE(VCT_P(obj1), obj1, SCM_ARG1, S_vct_fillB, "a vct");
-  ASSERT_TYPE(NUMBER_P(obj2), obj2, SCM_ARG2, S_vct_fillB, "a number");
+  ASSERT_TYPE(VCT_P(obj1), obj1, ARG1, S_vct_fillB, "a vct");
+  ASSERT_TYPE(NUMBER_P(obj2), obj2, ARG2, S_vct_fillB, "a number");
   v1 = TO_VCT(obj1);
   scl = TO_C_DOUBLE(obj2);
   if (v1)
@@ -440,7 +440,7 @@ int procedure_fits(SCM proc, int args)
     {
       arity = ARITY(proc);
       return(NOT_FALSE_P(arity) && 
-	     (TO_C_INT(SCM_CAR(arity)) == args));
+	     (TO_C_INT(CAR(arity)) == args));
     }
   return(0);
 }
@@ -451,8 +451,8 @@ static SCM vct_map(SCM obj, SCM proc)
   int i;
   vct *v;
   SCM val;
-  ASSERT_TYPE(VCT_P(obj), obj, SCM_ARG1, S_vct_mapB, "a vct");
-  ASSERT_TYPE((PROCEDURE_P(proc)) && (procedure_fits(proc, 0)), proc, SCM_ARG2, S_vct_mapB, "a thunk");
+  ASSERT_TYPE(VCT_P(obj), obj, ARG1, S_vct_mapB, "a vct");
+  ASSERT_TYPE((PROCEDURE_P(proc)) && (procedure_fits(proc, 0)), proc, ARG2, S_vct_mapB, "a thunk");
   v = TO_VCT(obj);
   if (v) 
     for (i = 0; i < v->length; i++) 
@@ -471,8 +471,8 @@ static SCM vct_do(SCM obj, SCM proc)
   int i;
   vct *v;
   SCM val;
-  ASSERT_TYPE(VCT_P(obj), obj, SCM_ARG1, S_vct_doB, "a vct");
-  ASSERT_TYPE((PROCEDURE_P(proc)) && (procedure_fits(proc, 1)), proc, SCM_ARG2, S_vct_doB, "a procedure");
+  ASSERT_TYPE(VCT_P(obj), obj, ARG1, S_vct_doB, "a vct");
+  ASSERT_TYPE((PROCEDURE_P(proc)) && (procedure_fits(proc, 1)), proc, ARG2, S_vct_doB, "a procedure");
   v = TO_VCT(obj);
   if (v) 
     for (i = 0; i < v->length; i++) 
@@ -525,8 +525,8 @@ static SCM vcts_map(SCM args)
     {
       arg = CALL1(proc, svi, S_vcts_mapB);
       if (LIST_P(arg))
-	for (vi = 0, lst = arg; vi < vnum; vi++, lst = SCM_CDR(lst))
-	  v[vi]->data[i] = TO_C_DOUBLE(SCM_CAR(lst));
+	for (vi = 0, lst = arg; vi < vnum; vi++, lst = CDR(lst))
+	  v[vi]->data[i] = TO_C_DOUBLE(CAR(lst));
       else
 	if (SYMBOL_P(arg))
 	  break;
@@ -574,8 +574,8 @@ static SCM vcts_do(SCM args)
     {
       arg = CALL2(proc, svi, TO_SMALL_SCM_INT(i), S_vcts_doB);
       if (LIST_P(arg))
-	for (vi = 0, lst = arg; vi < vnum; vi++, lst = SCM_CDR(lst))
-	  v[vi]->data[i] = TO_C_DOUBLE(SCM_CAR(lst));
+	for (vi = 0, lst = arg; vi < vnum; vi++, lst = CDR(lst))
+	  v[vi]->data[i] = TO_C_DOUBLE(CAR(lst));
       else
 	if (SYMBOL_P(arg))
 	  break;
@@ -590,7 +590,7 @@ static SCM vct_peak(SCM obj)
   int i;
   Float val = 0.0, absv;
   vct *v;
-  ASSERT_TYPE(VCT_P(obj), obj, SCM_ARGn, S_vct_peak, "a vct");
+  ASSERT_TYPE(VCT_P(obj), obj, ARGn, S_vct_peak, "a vct");
   v = TO_VCT(obj);
   if (v) 
     {
@@ -610,13 +610,13 @@ static SCM list2vct(SCM lst)
   int len, i;
   vct *v;
   SCM scv, lst1;
-  ASSERT_TYPE(LIST_P_WITH_LENGTH(lst, len), lst, SCM_ARGn, S_list2vct, "a list");
+  ASSERT_TYPE(LIST_P_WITH_LENGTH(lst, len), lst, ARGn, S_list2vct, "a list");
   if (len == 0)
     return(SCM_BOOL_F);
   scv = make_vct(len, (Float *)CALLOC(len, sizeof(Float)));
   v = TO_VCT(scv);
-  for (i = 0, lst1 = lst; i < len; i++, lst1 = SCM_CDR(lst1)) 
-    v->data[i] = (Float)TO_C_DOUBLE(SCM_CAR(lst1));
+  for (i = 0, lst1 = lst; i < len; i++, lst1 = CDR(lst1)) 
+    v->data[i] = (Float)TO_C_DOUBLE(CAR(lst1));
   return(scm_return_first(scv, lst));
 }
 
@@ -639,7 +639,7 @@ static SCM vct2list(SCM vobj)
 {
   #define H_vct2list "(" S_vct2list " v) -> a new list with elements of vct v"
   vct *v;
-  ASSERT_TYPE(VCT_P(vobj), vobj, SCM_ARGn, S_vct2list, "a vct");
+  ASSERT_TYPE(VCT_P(vobj), vobj, ARGn, S_vct2list, "a vct");
   v = TO_VCT(vobj);
   return(scm_return_first(array_to_list(v->data, 0, v->length), vobj));
 }
@@ -651,11 +651,11 @@ static SCM vector2vct(SCM vect)
   vct *v;
   SCM *vdata;
   SCM scv;
-  ASSERT_TYPE(VECTOR_P(vect), vect, SCM_ARGn, S_vector2vct, "a vector");
+  ASSERT_TYPE(VECTOR_P(vect), vect, ARGn, S_vector2vct, "a vector");
   len = VECTOR_LENGTH(vect);
   scv = make_vct(len, (Float *)CALLOC(len, sizeof(Float)));
   v = TO_VCT(scv);
-  vdata = SCM_VELTS(vect);
+  vdata = VECTOR_ELEMENTS(vect);
   for (i = 0; i < len; i++) 
     v->data[i] = (Float)TO_C_DOUBLE(vdata[i]);
   return(scm_return_first(scv, vect));
@@ -667,9 +667,9 @@ static SCM vct_subseq(SCM vobj, SCM start, SCM end, SCM newv)
   vct *vold, *vnew;
   SCM res;
   int i, old_len, new_len, j;
-  ASSERT_TYPE(VCT_P(vobj), vobj, SCM_ARG1, S_vct_subseq, "a vct");
-  ASSERT_TYPE(INTEGER_P(start), start, SCM_ARG2, S_vct_subseq, "an integer");
-  ASSERT_TYPE(INTEGER_IF_BOUND_P(end), end, SCM_ARG3, S_vct_subseq, "an integer");
+  ASSERT_TYPE(VCT_P(vobj), vobj, ARG1, S_vct_subseq, "a vct");
+  ASSERT_TYPE(INTEGER_P(start), start, ARG2, S_vct_subseq, "an integer");
+  ASSERT_TYPE(INTEGER_IF_BOUND_P(end), end, ARG3, S_vct_subseq, "an integer");
   vold = TO_VCT(vobj);
   old_len = vold->length;
   if (INTEGER_P(end))

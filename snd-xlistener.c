@@ -691,7 +691,7 @@ static void mouse_enter_text_callback(Widget w, XtPointer context, XEvent *event
 {
   if (HOOKED(mouse_enter_text_hook))
     g_c_run_progn_hook(mouse_enter_text_hook,
-		       SCM_LIST1(SND_WRAP(w)),
+		       LIST_1(SND_WRAP(w)),
 		       S_mouse_enter_text_hook);
 }
 
@@ -699,7 +699,7 @@ static void mouse_leave_text_callback(Widget w, XtPointer context, XEvent *event
 {
   if (HOOKED(mouse_leave_text_hook))
     g_c_run_progn_hook(mouse_leave_text_hook,
-		       SCM_LIST1(SND_WRAP(w)),
+		       LIST_1(SND_WRAP(w)),
 		       S_mouse_leave_text_hook);
 }
 
@@ -900,7 +900,7 @@ static void listener_focus_callback(Widget w, XtPointer context, XEvent *event, 
 {
   if (HOOKED(mouse_enter_listener_hook))
     g_c_run_progn_hook(mouse_enter_listener_hook,
-		       SCM_LIST1(SND_WRAP(listener_text)), /* not w */
+		       LIST_1(SND_WRAP(listener_text)), /* not w */
 		       S_mouse_enter_listener_hook);
 }
 
@@ -908,7 +908,7 @@ static void listener_unfocus_callback(Widget w, XtPointer context, XEvent *event
 {
   if (HOOKED(mouse_leave_listener_hook))
     g_c_run_progn_hook(mouse_leave_listener_hook,
-		       SCM_LIST1(SND_WRAP(listener_text)), /* not w */
+		       LIST_1(SND_WRAP(listener_text)), /* not w */
 		       S_mouse_leave_listener_hook);
 }
 

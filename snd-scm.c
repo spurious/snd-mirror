@@ -44,9 +44,9 @@ void snd_protect(SCM obj)
     }
   else
     {
-      gcdata = SCM_VELTS(gc_protection);
+      gcdata = VECTOR_ELEMENTS(gc_protection);
       if ((gc_last_cleared >= 0) && 
-	  SCM_EQ_P(gcdata[gc_last_cleared], DEFAULT_GC_VALUE))
+	  EQ_P(gcdata[gc_last_cleared], DEFAULT_GC_VALUE))
 	{
 	  VECTOR_SET(gc_protection, gc_last_cleared, obj);
 	  gc_last_set = gc_last_cleared;
@@ -54,7 +54,7 @@ void snd_protect(SCM obj)
 	  return;
 	}
       for (i = 0; i < gc_protection_size; i++)
-	if (SCM_EQ_P(gcdata[i], DEFAULT_GC_VALUE))
+	if (EQ_P(gcdata[i], DEFAULT_GC_VALUE))
 	  {
 	    VECTOR_SET(gc_protection, i, obj);
 	    gc_last_set = i;
@@ -79,9 +79,9 @@ void snd_unprotect(SCM obj)
 {
   int i;
   SCM *gcdata;
-  gcdata = SCM_VELTS(gc_protection);
+  gcdata = VECTOR_ELEMENTS(gc_protection);
   if ((gc_last_set >= 0) && 
-      (SCM_EQ_P(gcdata[gc_last_set], obj)))
+      (EQ_P(gcdata[gc_last_set], obj)))
     {
       VECTOR_SET(gc_protection, gc_last_set, DEFAULT_GC_VALUE);
       gc_last_cleared = gc_last_set;
@@ -89,7 +89,7 @@ void snd_unprotect(SCM obj)
       return;
     }
   for (i = 0; i < gc_protection_size; i++)
-    if (SCM_EQ_P(gcdata[i], obj))
+    if (EQ_P(gcdata[i], obj))
       {
 	VECTOR_SET(gc_protection, i, DEFAULT_GC_VALUE);
 	gc_last_cleared = i;
@@ -180,30 +180,30 @@ static SCM snd_catch_scm_error(void *data, SCM tag, SCM throw_args) /* error han
   if ((LIST_P(throw_args)) && 
       (LIST_LENGTH(throw_args) > 0))
     {
-      if (NOT_FALSE_P(SCM_CAR(throw_args)))
+      if (NOT_FALSE_P(CAR(throw_args)))
 	{
-	  scm_display(SCM_CAR(throw_args), port);
+	  scm_display(CAR(throw_args), port);
 	  WRITE_STRING(": ", port);
 	}
       if (LIST_LENGTH(throw_args) > 1)
 	{
-	  if (SCM_EQ_P(tag, NO_SUCH_FILE))
+	  if (EQ_P(tag, NO_SUCH_FILE))
 	    {
 	      scm_display(tag, port);
 	      WRITE_STRING(" \"", port);
-	      scm_display(SCM_CADR(throw_args), port);
+	      scm_display(CADR(throw_args), port);
 	      WRITE_STRING("\" ", port);
 	      if (LIST_LENGTH(throw_args) > 2)
-		scm_display(SCM_CDDR(throw_args), port);
+		scm_display(CDDR(throw_args), port);
 	    }
 	  else
 	    {
-	      if ((SCM_EQ_P(tag, NO_SUCH_SOUND)) || (SCM_EQ_P(tag, NO_SUCH_MIX)) || (SCM_EQ_P(tag, NO_SUCH_MARK)) ||
-		  (SCM_EQ_P(tag, NO_SUCH_MENU)) || (SCM_EQ_P(tag, NO_SUCH_REGION)) || (SCM_EQ_P(tag, MUS_MISC_ERROR)) ||
-		  (SCM_EQ_P(tag, NO_SUCH_CHANNEL)) || (SCM_EQ_P(tag, NO_SUCH_EDIT)) ||
-		  (SCM_EQ_P(tag, NO_SUCH_AXIS_INFO)) || (SCM_EQ_P(tag, NO_SUCH_AXIS_CONTEXT)) ||
-		  (SCM_EQ_P(tag, CANNOT_SAVE)) || (SCM_EQ_P(tag, CANNOT_PRINT)) || (SCM_EQ_P(tag, BAD_ARITY)) ||
-		  (SCM_EQ_P(tag, IMPOSSIBLE_BOUNDS)) || (SCM_EQ_P(tag, NO_SUCH_SAMPLE)))
+	      if ((EQ_P(tag, NO_SUCH_SOUND)) || (EQ_P(tag, NO_SUCH_MIX)) || (EQ_P(tag, NO_SUCH_MARK)) ||
+		  (EQ_P(tag, NO_SUCH_MENU)) || (EQ_P(tag, NO_SUCH_REGION)) || (EQ_P(tag, MUS_MISC_ERROR)) ||
+		  (EQ_P(tag, NO_SUCH_CHANNEL)) || (EQ_P(tag, NO_SUCH_EDIT)) ||
+		  (EQ_P(tag, NO_SUCH_AXIS_INFO)) || (EQ_P(tag, NO_SUCH_AXIS_CONTEXT)) ||
+		  (EQ_P(tag, CANNOT_SAVE)) || (EQ_P(tag, CANNOT_PRINT)) || (EQ_P(tag, BAD_ARITY)) ||
+		  (EQ_P(tag, IMPOSSIBLE_BOUNDS)) || (EQ_P(tag, NO_SUCH_SAMPLE)))
 		{
 		  scm_display(tag, port);
 		  WRITE_STRING(" ", port);
@@ -211,9 +211,9 @@ static SCM snd_catch_scm_error(void *data, SCM tag, SCM throw_args) /* error han
 		}
 	      else
 		{
-		  stmp = SCM_CADR(throw_args);
+		  stmp = CADR(throw_args);
 		  if ((STRING_P(stmp)) && (LIST_LENGTH(throw_args) > 2))
-		    scm_display_error_message(stmp, SCM_CADDR(throw_args), port);
+		    scm_display_error_message(stmp, CADDR(throw_args), port);
 		  else scm_display(tag, port);
 		  if (show_backtrace(state))
 		    {
@@ -231,7 +231,7 @@ static SCM snd_catch_scm_error(void *data, SCM tag, SCM throw_args) /* error han
 #if HAVE_SCM_C_DEFINE
 		      stack = scm_fluid_ref(SCM_VARIABLE_REF(scm_the_last_stack_fluid_var));
 #else
-		      stack = scm_fluid_ref(SCM_CDR(scm_the_last_stack_fluid));
+		      stack = scm_fluid_ref(CDR(scm_the_last_stack_fluid));
 #endif
 		      if (NOT_FALSE_P(stack)) 
 			scm_display_backtrace(stack, port, SCM_UNDEFINED, SCM_UNDEFINED);
@@ -345,9 +345,9 @@ char *procedure_ok(SCM proc, int args, const char *caller, const char *arg_name,
     {
       arity_list = ARITY(proc);
       snd_protect(arity_list);
-      rargs = TO_SMALL_C_INT(SCM_CAR(arity_list));
-      oargs = TO_SMALL_C_INT(SCM_CADR(arity_list));
-      restargs = ((TRUE_P(SCM_CADDR(arity_list))) ? 1 : 0);
+      rargs = TO_SMALL_C_INT(CAR(arity_list));
+      oargs = TO_SMALL_C_INT(CADR(arity_list));
+      restargs = ((TRUE_P(CADDR(arity_list))) ? 1 : 0);
       snd_unprotect(arity_list);
       if (rargs > args)
 	return(mus_format("%s function (%s arg %d) should take %d argument%s, but instead requires %d",
@@ -375,34 +375,34 @@ int procedure_ok_with_error(SCM proc, int req_args, const char *caller, const ch
 SCM snd_no_such_file_error(const char *caller, SCM filename)
 {
   ERROR(NO_SUCH_FILE,
-	SCM_LIST3(TO_SCM_STRING(caller),
-		  filename,
-		  TO_SCM_STRING(strerror(errno))));
+	LIST_3(TO_SCM_STRING(caller),
+	       filename,
+	       TO_SCM_STRING(strerror(errno))));
   return(SCM_BOOL_F);
 }
 
 SCM snd_no_such_channel_error(const char *caller, SCM snd, SCM chn)
 {
   ERROR(NO_SUCH_CHANNEL,
-	SCM_LIST3(TO_SCM_STRING(caller),
-		  snd,
-		  chn));
+	LIST_3(TO_SCM_STRING(caller),
+	       snd,
+	       chn));
   return(SCM_BOOL_F);
 }
 
 SCM snd_no_active_selection_error(const char *caller)
 {
   ERROR(NO_ACTIVE_SELECTION,
-	SCM_LIST1(TO_SCM_STRING(caller)));
+	LIST_1(TO_SCM_STRING(caller)));
   return(SCM_BOOL_F);
 }
 
 SCM snd_bad_arity_error(const char *caller, SCM errstr, SCM proc)
 {
   ERROR(BAD_ARITY,
-	SCM_LIST3(TO_SCM_STRING(caller),
-		  errstr,
-		  proc));
+	LIST_3(TO_SCM_STRING(caller),
+	       errstr,
+	       proc));
   return(SCM_BOOL_F);
 }
 
@@ -607,7 +607,7 @@ SCM snd_report_result(snd_state *ss, SCM result, char *buf)
       if (buf) listener_append(ss, buf);
       if (HOOKED(print_hook))
 	res = g_c_run_or_hook(print_hook, 
-			      SCM_LIST1(TO_SCM_STRING(str)),
+			      LIST_1(TO_SCM_STRING(str)),
 			      S_print_hook);
       if (FALSE_P(res))
 	listener_append_and_prompt(ss, str);
@@ -627,7 +627,7 @@ SCM snd_report_listener_result(snd_state *ss, SCM form)
     {
       if (HOOKED(print_hook))
 	res = g_c_run_or_hook(print_hook, 
-			      SCM_LIST1(TO_SCM_STRING(str)),
+			      LIST_1(TO_SCM_STRING(str)),
 			      S_print_hook);
       if (FALSE_P(res))
 	listener_append_and_prompt(ss, str);
@@ -786,7 +786,7 @@ static SCM g_ask_before_overwrite(void) {return(TO_SCM_BOOLEAN(ask_before_overwr
 static SCM g_set_ask_before_overwrite(SCM val) 
 {
   #define H_ask_before_overwrite "(" S_ask_before_overwrite ") should be #t if you want Snd to ask before overwriting a file"
-  ASSERT_TYPE(BOOLEAN_IF_BOUND_P(val), val, SCM_ARGn, "set-" S_ask_before_overwrite, "a boolean");
+  ASSERT_TYPE(BOOLEAN_IF_BOUND_P(val), val, ARGn, "set-" S_ask_before_overwrite, "a boolean");
   set_ask_before_overwrite(state, TO_C_BOOLEAN_OR_T(val)); 
   return(TO_SCM_BOOLEAN(ask_before_overwrite(state)));
 }
@@ -795,7 +795,7 @@ static SCM g_audio_output_device(void) {return(TO_SCM_INT(audio_output_device(st
 static SCM g_set_audio_output_device(SCM val) 
 {
   #define H_audio_output_device "(" S_audio_output_device ") is the current sndlib default output device (mus-audio-default)"
-  ASSERT_TYPE(INTEGER_P(val), val, SCM_ARGn, "set-" S_audio_output_device, "an integer"); 
+  ASSERT_TYPE(INTEGER_P(val), val, ARGn, "set-" S_audio_output_device, "an integer"); 
   set_audio_output_device(state, TO_C_INT(val)); 
   return(TO_SCM_INT(audio_output_device(state)));
 }
@@ -804,7 +804,7 @@ static SCM g_audio_input_device(void) {return(TO_SCM_INT(audio_input_device(stat
 static SCM g_set_audio_input_device(SCM val) 
 {
   #define H_audio_input_device "(" S_audio_input_device ") is the current sndlib default input device (mus-audio-default)"
-  ASSERT_TYPE(INTEGER_P(val), val, SCM_ARGn, "set-" S_audio_input_device, "an integer"); 
+  ASSERT_TYPE(INTEGER_P(val), val, ARGn, "set-" S_audio_input_device, "an integer"); 
   set_audio_input_device(state, TO_C_INT(val)); 
   return(TO_SCM_INT(audio_input_device(state)));
 }
@@ -814,7 +814,7 @@ static SCM g_set_minibuffer_history_length(SCM val)
 {
   #define H_minibuffer_history_length "(" S_minibuffer_history_length ") is the minibuffer history length"
   int len;
-  ASSERT_TYPE(INTEGER_P(val), val, SCM_ARGn, "set-" S_minibuffer_history_length, "an integer");
+  ASSERT_TYPE(INTEGER_P(val), val, ARGn, "set-" S_minibuffer_history_length, "an integer");
   len = TO_C_INT(val);
   if (len > 0)
     set_minibuffer_history_length(state, len);
@@ -826,7 +826,7 @@ static SCM g_set_dac_size(SCM val)
 {
   #define H_dac_size "(" S_dac_size ") is the current DAC buffer size (256)"
   int len;
-  ASSERT_TYPE(NUMBER_P(val), val, SCM_ARGn, "set-" S_dac_size, "a number");
+  ASSERT_TYPE(NUMBER_P(val), val, ARGn, "set-" S_dac_size, "a number");
   len = TO_C_INT_OR_ELSE(val, 0);
   if (len > 0)
     set_dac_size(state, len);
@@ -837,7 +837,7 @@ static SCM g_dac_combines_channels(void) {return(TO_SCM_BOOLEAN(dac_combines_cha
 static SCM g_set_dac_combines_channels(SCM val) 
 {
   #define H_dac_combines_channels "(" S_dac_combines_channels ") should be #t if extra channels are to be mixed into available ones during playing (#t)"
-  ASSERT_TYPE(BOOLEAN_IF_BOUND_P(val), val, SCM_ARGn, "set-" S_dac_combines_channels, "a boolean");
+  ASSERT_TYPE(BOOLEAN_IF_BOUND_P(val), val, ARGn, "set-" S_dac_combines_channels, "a boolean");
   set_dac_combines_channels(state, TO_C_BOOLEAN_OR_T(val)); 
   return(TO_SCM_BOOLEAN(dac_combines_channels(state)));
 }
@@ -846,7 +846,7 @@ static SCM g_auto_resize(void) {return(TO_SCM_BOOLEAN(auto_resize(state)));}
 static SCM g_set_auto_resize(SCM val) 
 {
   #define H_auto_resize "(" S_auto_resize ") should be #t if Snd can change its main window size as it pleases (#t)"
-  ASSERT_TYPE(BOOLEAN_IF_BOUND_P(val), val, SCM_ARGn, "set-" S_auto_resize, "a boolean");
+  ASSERT_TYPE(BOOLEAN_IF_BOUND_P(val), val, ARGn, "set-" S_auto_resize, "a boolean");
   set_auto_resize(state, TO_C_BOOLEAN_OR_T(val)); 
   reflect_resize(state); 
   return(TO_SCM_BOOLEAN(auto_resize(state)));
@@ -856,7 +856,7 @@ static SCM g_auto_update(void) {return(TO_SCM_BOOLEAN(auto_update(state)));}
 static SCM g_set_auto_update(SCM val) 
 {
   #define H_auto_update "(" S_auto_update ") -> #t if Snd should automatically update a file if it changes unexpectedly (#f)"
-  ASSERT_TYPE(BOOLEAN_IF_BOUND_P(val), val, SCM_ARGn, "set-" S_auto_update, "a boolean");
+  ASSERT_TYPE(BOOLEAN_IF_BOUND_P(val), val, ARGn, "set-" S_auto_update, "a boolean");
   set_auto_update(state, TO_C_BOOLEAN_OR_T(val)); 
   return(TO_SCM_BOOLEAN(auto_update(state)));
 }
@@ -865,7 +865,7 @@ static SCM g_filter_env_in_hz(void) {return(TO_SCM_BOOLEAN(filter_env_in_hz(stat
 static SCM g_set_filter_env_in_hz(SCM val) 
 {
   #define H_filter_env_in_hz "(" S_filter_env_in_hz ") -> #t if filter env x axis should be in Hz"
-  ASSERT_TYPE(BOOLEAN_IF_BOUND_P(val), val, SCM_ARGn, "set-" S_filter_env_in_hz, "a boolean");
+  ASSERT_TYPE(BOOLEAN_IF_BOUND_P(val), val, ARGn, "set-" S_filter_env_in_hz, "a boolean");
   set_filter_env_in_hz(state, TO_C_BOOLEAN_OR_T(val)); 
   return(TO_SCM_BOOLEAN(filter_env_in_hz(state)));
 }
@@ -874,7 +874,7 @@ static SCM g_color_cutoff(void) {return(TO_SCM_DOUBLE(color_cutoff(state)));}
 static SCM g_set_color_cutoff(SCM val) 
 {
   #define H_color_cutoff "(" S_color_cutoff ") -> col" STR_OR " map cutoff point (default .003)"
-  ASSERT_TYPE(NUMBER_P(val), val, SCM_ARGn, "set-" S_color_cutoff, "a number");
+  ASSERT_TYPE(NUMBER_P(val), val, ARGn, "set-" S_color_cutoff, "a number");
   set_color_cutoff(state, mus_fclamp(0.0,
 				TO_C_DOUBLE(val),
 				0.25)); 
@@ -885,7 +885,7 @@ static SCM g_color_inverted(void) {return(TO_SCM_BOOLEAN(color_inverted(state)))
 static SCM g_set_color_inverted(SCM val) 
 {
   #define H_color_inverted "(" S_color_inverted ") -> whether the col" STR_OR "map in operation should be inverted"
-  ASSERT_TYPE(BOOLEAN_IF_BOUND_P(val), val, SCM_ARGn, "set-" S_color_inverted, "a boolean");
+  ASSERT_TYPE(BOOLEAN_IF_BOUND_P(val), val, ARGn, "set-" S_color_inverted, "a boolean");
   set_color_inverted(state, TO_C_BOOLEAN_OR_T(val)); 
   return(TO_SCM_BOOLEAN(color_inverted(state)));
 }
@@ -894,7 +894,7 @@ static SCM g_color_scale(void) {return(TO_SCM_DOUBLE(color_scale(state)));}
 static SCM g_set_color_scale(SCM val) 
 {
   #define H_color_scale "(" S_color_scale ") -> essentially a darkness setting for col" STR_OR "maps (0.5)"
-  ASSERT_TYPE(NUMBER_P(val), val, SCM_ARGn, "set-" S_color_scale, "a number"); 
+  ASSERT_TYPE(NUMBER_P(val), val, ARGn, "set-" S_color_scale, "a number"); 
   set_color_scale(state, mus_fclamp(0.0,
 			       TO_C_DOUBLE(val),
 			       1.0)); 
@@ -906,7 +906,7 @@ static SCM g_set_auto_update_interval(SCM val)
 {
   Float ctime;
   #define H_auto_update_interval "(" S_auto_update_interval ") -> time (seconds) between background checks for changed file on disk (60)"
-  ASSERT_TYPE(NUMBER_P(val), val, SCM_ARGn, "set-" S_auto_update_interval, "a number"); 
+  ASSERT_TYPE(NUMBER_P(val), val, ARGn, "set-" S_auto_update_interval, "a number"); 
   ctime = TO_C_DOUBLE(val);
   if ((ctime < 0.0) || (ctime > (24 * 3600)))
     mus_misc_error("set-" S_auto_update_interval, "invalid time:", val);
@@ -918,7 +918,7 @@ static SCM g_default_output_chans(void) {return(TO_SCM_INT(default_output_chans(
 static SCM g_set_default_output_chans(SCM val) 
 {
   #define H_default_output_chans "(" S_default_output_chans ") -> default number of channels when a new or temporary file is created (1)"
-  ASSERT_TYPE(INTEGER_P(val), val, SCM_ARGn, "set-" S_default_output_chans, "an integer"); 
+  ASSERT_TYPE(INTEGER_P(val), val, ARGn, "set-" S_default_output_chans, "an integer"); 
   set_default_output_chans(state, TO_C_INT(val));
   return(TO_SCM_INT(default_output_chans(state)));
 }
@@ -927,7 +927,7 @@ static SCM g_default_output_srate(void) {return(TO_SCM_INT(default_output_srate(
 static SCM g_set_default_output_srate(SCM val) 
 {
   #define H_default_output_srate "(" S_default_output_srate ") -> default srate when a new or temporary file is created (22050)" 
-  ASSERT_TYPE(NUMBER_P(val), val, SCM_ARGn, "set-" S_default_output_srate, "a number"); 
+  ASSERT_TYPE(NUMBER_P(val), val, ARGn, "set-" S_default_output_srate, "a number"); 
   set_default_output_srate(state, TO_C_INT_OR_ELSE(val, 0));
   return(TO_SCM_INT(default_output_srate(state)));
 }
@@ -940,14 +940,14 @@ static SCM g_set_default_output_type(SCM val)
 Normally this is " S_mus_next "; -1 here indicates you want Snd to use the current sound's header type, if possible. \
 Other writable headers include " S_mus_aiff ", " S_mus_riff ", " S_mus_ircam ", " S_mus_nist ", " S_mus_aifc ", and " S_mus_raw "."
 
-  ASSERT_TYPE(INTEGER_P(val), val, SCM_ARGn, "set-" S_default_output_type, "an integer"); 
+  ASSERT_TYPE(INTEGER_P(val), val, ARGn, "set-" S_default_output_type, "an integer"); 
   typ = TO_C_INT(val);
   if (mus_header_writable(typ, -2))
     set_default_output_type(state, typ); 
   else mus_misc_error("set-" S_default_output_type, 
 		      "can't write this header type", 
-		      SCM_LIST2(val, 
-				TO_SCM_STRING(mus_header_type_name(typ))));
+		      LIST_2(val, 
+			     TO_SCM_STRING(mus_header_type_name(typ))));
   return(TO_SCM_INT(default_output_type(state)));
 }
 
@@ -959,7 +959,7 @@ static SCM g_set_default_output_format(SCM val)
 normally " S_mus_bshort "; -1 here means try to use the current sound's data format; many other formats \
 are available, but not all are compatible with all header types"
 
-  ASSERT_TYPE(INTEGER_P(val), val, SCM_ARGn, "set-" S_default_output_format, "an integer"); 
+  ASSERT_TYPE(INTEGER_P(val), val, ARGn, "set-" S_default_output_format, "an integer"); 
   format = TO_C_INT(val);
   set_default_output_format(state, format); 
   return(TO_SCM_INT(default_output_format(state)));
@@ -969,7 +969,7 @@ static SCM g_eps_file(void) {return(TO_SCM_STRING(eps_file(state)));}
 static SCM g_set_eps_file(SCM val) 
 {
   #define H_eps_file "(" S_eps_file ") -> current eps ('Print' command) file name (snd.eps)"
-  ASSERT_TYPE(STRING_P(val), val, SCM_ARGn, "set-" S_eps_file, "a string"); 
+  ASSERT_TYPE(STRING_P(val), val, ARGn, "set-" S_eps_file, "a string"); 
   if (eps_file(state)) free(eps_file(state));
   set_eps_file(state, TO_NEW_C_STRING(val)); 
   return(TO_SCM_STRING(eps_file(state)));
@@ -979,7 +979,7 @@ static SCM g_eps_left_margin(void) {return(TO_SCM_DOUBLE(eps_left_margin(state))
 static SCM g_set_eps_left_margin(SCM val) 
 {
   #define H_eps_left_margin "(" S_eps_left_margin ") -> current eps ('Print' command) left margin"
-  ASSERT_TYPE(NUMBER_P(val), val, SCM_ARGn, "set-" S_eps_left_margin, "a number"); 
+  ASSERT_TYPE(NUMBER_P(val), val, ARGn, "set-" S_eps_left_margin, "a number"); 
   set_eps_left_margin(state, TO_C_DOUBLE(val));
   return(TO_SCM_DOUBLE(eps_left_margin(state)));
 }
@@ -988,7 +988,7 @@ static SCM g_eps_bottom_margin(void) {return(TO_SCM_DOUBLE(eps_bottom_margin(sta
 static SCM g_set_eps_bottom_margin(SCM val) 
 {
   #define H_eps_bottom_margin "(" S_eps_bottom_margin ") -> current eps ('Print' command) bottom margin"
-  ASSERT_TYPE(NUMBER_P(val), val, SCM_ARGn, "set-" S_eps_bottom_margin, "a number"); 
+  ASSERT_TYPE(NUMBER_P(val), val, ARGn, "set-" S_eps_bottom_margin, "a number"); 
   set_eps_bottom_margin(state, TO_C_DOUBLE(val));
   return(TO_SCM_DOUBLE(eps_bottom_margin(state)));
 }
@@ -997,7 +997,7 @@ static SCM g_listener_prompt(void) {return(TO_SCM_STRING(listener_prompt(state))
 static SCM g_set_listener_prompt(SCM val) 
 {
   #define H_listener_prompt "(" S_listener_prompt ") -> the current lisp listener prompt character ('>') "
-  ASSERT_TYPE(STRING_P(val), val, SCM_ARGn, "set-" S_listener_prompt, "a string"); 
+  ASSERT_TYPE(STRING_P(val), val, ARGn, "set-" S_listener_prompt, "a string"); 
   if (listener_prompt(state)) free(listener_prompt(state));
   set_listener_prompt(state, TO_NEW_C_STRING(val));
 #if USE_NO_GUI
@@ -1018,7 +1018,7 @@ static SCM g_audio_state_file(void) {return(TO_SCM_STRING(audio_state_file(state
 static SCM g_set_audio_state_file(SCM val) 
 {
   #define H_audio_state_file "(" S_audio_state_file ") -> filename for the mus-audio-save-state function (.snd-mixer)"
-  ASSERT_TYPE(STRING_P(val), val, SCM_ARGn, "set-" S_audio_state_file, "a string"); 
+  ASSERT_TYPE(STRING_P(val), val, ARGn, "set-" S_audio_state_file, "a string"); 
   if (audio_state_file(state)) free(audio_state_file(state));
   set_audio_state_file(state, TO_NEW_C_STRING(val));
   return(TO_SCM_STRING(audio_state_file(state)));
@@ -1028,7 +1028,7 @@ static SCM g_movies(void) {return(TO_SCM_BOOLEAN(movies(state)));}
 static SCM g_set_movies(SCM val) 
 {
   #define H_movies "(" S_movies ") -> #t if mix graphs are update continuously as the mix is dragged (#t)"
-  ASSERT_TYPE(BOOLEAN_IF_BOUND_P(val), val, SCM_ARGn, "set-" S_movies, "a boolean");
+  ASSERT_TYPE(BOOLEAN_IF_BOUND_P(val), val, ARGn, "set-" S_movies, "a boolean");
   set_movies(state, TO_C_BOOLEAN_OR_T(val));
   return(TO_SCM_BOOLEAN(movies(state)));
 }
@@ -1037,7 +1037,7 @@ static SCM g_selection_creates_region(void) {return(TO_SCM_BOOLEAN(selection_cre
 static SCM g_set_selection_creates_region(SCM val) 
 {
   #define H_selection_creates_region "(" S_selection_creates_region ") -> #t if a region should be created each time a selection is made"
-  ASSERT_TYPE(BOOLEAN_IF_BOUND_P(val), val, SCM_ARGn, "set-" S_selection_creates_region, "a boolean");
+  ASSERT_TYPE(BOOLEAN_IF_BOUND_P(val), val, ARGn, "set-" S_selection_creates_region, "a boolean");
   set_selection_creates_region(state, TO_C_BOOLEAN_OR_T(val));
   return(TO_SCM_BOOLEAN(selection_creates_region(state)));
 }
@@ -1046,7 +1046,7 @@ static SCM g_print_length(void) {return(TO_SCM_INT(print_length(state)));}
 static SCM g_set_print_length(SCM val) 
 {
   #define H_print_length "(" S_print_length ") -> number of vector elements to print in the listener (12)"
-  ASSERT_TYPE(INTEGER_P(val), val, SCM_ARGn, "set-" S_print_length, "an integer"); 
+  ASSERT_TYPE(INTEGER_P(val), val, ARGn, "set-" S_print_length, "an integer"); 
   set_print_length(state, TO_C_INT(val)); 
   set_vct_print_length(TO_C_INT(val));
   return(TO_SCM_INT(print_length(state)));
@@ -1056,7 +1056,7 @@ static SCM g_previous_files_sort(void) {return(TO_SCM_INT(previous_files_sort(st
 static SCM g_set_previous_files_sort(SCM val) 
 {
   #define H_previous_files_sort "(" S_previous_files_sort ") -> sort choice in view files (0 = unsorted, 1 = by name, etc)"
-  ASSERT_TYPE(INTEGER_P(val), val, SCM_ARGn, "set-" S_previous_files_sort, "an integer"); 
+  ASSERT_TYPE(INTEGER_P(val), val, ARGn, "set-" S_previous_files_sort, "an integer"); 
   update_prevlist(state);
   set_previous_files_sort(state, mus_iclamp(0,
 					    TO_C_INT(val),
@@ -1069,7 +1069,7 @@ static SCM g_show_indices(void) {return(TO_SCM_BOOLEAN(show_indices(state)));}
 static SCM g_set_show_indices(SCM val) 
 {
   #define H_show_indices "(" S_show_indices ") -> #t if sound name should be preceded by its index"
-  ASSERT_TYPE(BOOLEAN_IF_BOUND_P(val), val, SCM_ARGn, "set-" S_show_indices, "a boolean");
+  ASSERT_TYPE(BOOLEAN_IF_BOUND_P(val), val, ARGn, "set-" S_show_indices, "a boolean");
   set_show_indices(state, TO_C_BOOLEAN_OR_T(val));
   return(TO_SCM_BOOLEAN(show_indices(state)));
 }
@@ -1078,7 +1078,7 @@ static SCM g_show_backtrace(void) {return(TO_SCM_BOOLEAN(show_backtrace(state)))
 static SCM g_set_show_backtrace(SCM val) 
 {
   #define H_show_backtrace "(" S_show_backtrace ") -> #t to show backtrace automatically upon error"
-  ASSERT_TYPE(BOOLEAN_IF_BOUND_P(val), val, SCM_ARGn, "set-" S_show_backtrace, "a boolean");
+  ASSERT_TYPE(BOOLEAN_IF_BOUND_P(val), val, ARGn, "set-" S_show_backtrace, "a boolean");
   set_show_backtrace(state, TO_C_BOOLEAN_OR_T(val));
   return(TO_SCM_BOOLEAN(show_backtrace(state)));
 }
@@ -1087,7 +1087,7 @@ static SCM g_show_usage_stats(void) {return(TO_SCM_BOOLEAN(show_usage_stats(stat
 static SCM g_set_show_usage_stats(SCM on) 
 {
   #define H_show_usage_stats "(" S_show_usage_stats ") -> #t if Snd should display memory usage stats"
-  ASSERT_TYPE(BOOLEAN_IF_BOUND_P(on), on, SCM_ARGn, "set-" S_show_usage_stats, "a boolean");
+  ASSERT_TYPE(BOOLEAN_IF_BOUND_P(on), on, ARGn, "set-" S_show_usage_stats, "a boolean");
   set_show_usage_stats(state, TO_C_BOOLEAN_OR_T(on));
   return(TO_SCM_BOOLEAN(show_usage_stats(state)));
 }
@@ -1108,7 +1108,7 @@ src runs.  If you use too low a setting, you can sometimes hear high \
 frequency whistles leaking through."
 
   int len;
-  ASSERT_TYPE(INTEGER_P(val), val, SCM_ARGn, "set-" S_sinc_width, "an integer"); 
+  ASSERT_TYPE(INTEGER_P(val), val, ARGn, "set-" S_sinc_width, "an integer"); 
   len = TO_C_INT(val);
   if (len >= 0)
     set_sinc_width(state, len);
@@ -1119,7 +1119,7 @@ static SCM g_hankel_jn(void) {return(TO_SCM_DOUBLE(state->Hankel_Jn));}
 static SCM g_set_hankel_jn(SCM val) 
 {
   #define H_hankel_jn "(" S_hankel_jn ") -> Bessel function used in Hankel transform."
-  ASSERT_TYPE(NUMBER_P(val), val, SCM_ARGn, "set-" S_hankel_jn, "a number"); 
+  ASSERT_TYPE(NUMBER_P(val), val, ARGn, "set-" S_hankel_jn, "a number"); 
   state->Hankel_Jn = TO_C_DOUBLE_WITH_ORIGIN(val, S_hankel_jn);
   return(val);
 }
@@ -1132,7 +1132,7 @@ This should be an integer between -1 and 15.  The maps (from 0 to 15) are: \
 gray, hsv, hot, cool, bone, copper, pink, jet, prism, autumn, winter, \
 spring, summer, colorcube, flag, and lines.  -1 means black and white."
 
-  ASSERT_TYPE(INTEGER_P(val), val, SCM_ARGn, "set-" S_colormap, "an integer"); 
+  ASSERT_TYPE(INTEGER_P(val), val, ARGn, "set-" S_colormap, "an integer"); 
   set_color_map(state, mus_iclamp(0,
 			     TO_C_INT(val),
 			     NUM_COLORMAPS-1));
@@ -1164,7 +1164,7 @@ static SCM g_set_temp_dir(SCM val)
 {
   #define H_temp_dir "(" S_temp_dir ") -> name of directory for temp files"
 
-  ASSERT_TYPE(STRING_P(val) || FALSE_P(val), val, SCM_ARGn, "set-" S_temp_dir, "a string"); 
+  ASSERT_TYPE(STRING_P(val) || FALSE_P(val), val, ARGn, "set-" S_temp_dir, "a string"); 
   if (temp_dir(state)) free(temp_dir(state));
   if (FALSE_P(val))
     set_temp_dir(state, snd_strdup(DEFAULT_TEMP_DIR));
@@ -1191,7 +1191,7 @@ static SCM g_save_dir(void) {return(TO_SCM_STRING(save_dir(state)));}
 static SCM g_set_save_dir(SCM val) 
 {
   #define H_save_dir "(" S_save_dir ") -> name of directory for saved state data"
-  ASSERT_TYPE(STRING_P(val), val, SCM_ARGn, "set-" S_save_dir, "a string"); 
+  ASSERT_TYPE(STRING_P(val), val, ARGn, "set-" S_save_dir, "a string"); 
   if (save_dir(state)) free(save_dir(state));
   set_save_dir(state, TO_NEW_C_STRING(val));
   return(snd_access(save_dir(state), S_save_dir));
@@ -1201,7 +1201,7 @@ static SCM g_trap_segfault(void) {return(TO_SCM_BOOLEAN(trap_segfault(state)));}
 static SCM g_set_trap_segfault(SCM val) 
 {
   #define H_trap_segfault "(" S_trap_segfault ") -> #t if Snd should try to trap (and whine about) segfaults"
-  ASSERT_TYPE(BOOLEAN_IF_BOUND_P(val), val, SCM_ARGn, "set-" S_trap_segfault, "a boolean");
+  ASSERT_TYPE(BOOLEAN_IF_BOUND_P(val), val, ARGn, "set-" S_trap_segfault, "a boolean");
   set_trap_segfault(state, TO_C_BOOLEAN_OR_T(val));
   return(TO_SCM_BOOLEAN(trap_segfault(state)));
 }
@@ -1210,7 +1210,7 @@ static SCM g_show_selection_transform(void) {return(TO_SCM_BOOLEAN(show_selectio
 static SCM g_set_show_selection_transform(SCM val) 
 {
   #define H_show_selection_transform "(" S_show_selection_transform ") -> #t if transform display reflects selection, not time-domain window"
-  ASSERT_TYPE(BOOLEAN_IF_BOUND_P(val), val, SCM_ARGn, "set-" S_show_selection_transform, "a boolean");
+  ASSERT_TYPE(BOOLEAN_IF_BOUND_P(val), val, ARGn, "set-" S_show_selection_transform, "a boolean");
   set_show_selection_transform(state, TO_C_BOOLEAN_OR_T(val));
   return(TO_SCM_BOOLEAN(show_selection_transform(state)));
 }
@@ -1219,7 +1219,7 @@ static SCM g_with_mix_tags(void) {return(TO_SCM_BOOLEAN(with_mix_tags(state)));}
 static SCM g_set_with_mix_tags(SCM val) 
 {
   #define H_with_mix_tags "(" S_with_mix_tags ") -> #t if Snd should editable mixes"
-  ASSERT_TYPE(BOOLEAN_IF_BOUND_P(val), val, SCM_ARGn, "set-" S_with_mix_tags, "a boolean");
+  ASSERT_TYPE(BOOLEAN_IF_BOUND_P(val), val, ARGn, "set-" S_with_mix_tags, "a boolean");
   set_with_mix_tags(state, TO_C_BOOLEAN_OR_T(val));
   return(TO_SCM_BOOLEAN(with_mix_tags(state)));
 }
@@ -1230,7 +1230,7 @@ static SCM g_set_use_sinc_interp(SCM val)
   #define H_use_sinc_interp "(" S_use_sinc_interp ") -> #t if Snd should use convolution with sinc for sampling rate \
 conversion.  The other choice is (much faster) linear interpolation which can introduce distortion"
 
-  ASSERT_TYPE(BOOLEAN_IF_BOUND_P(val), val, SCM_ARGn, "set-" S_use_sinc_interp, "a boolean");
+  ASSERT_TYPE(BOOLEAN_IF_BOUND_P(val), val, ARGn, "set-" S_use_sinc_interp, "a boolean");
   set_use_sinc_interp(state, TO_C_BOOLEAN_OR_T(val));
   return(TO_SCM_BOOLEAN(use_sinc_interp(state)));
 }
@@ -1242,7 +1242,7 @@ static SCM g_set_data_clipped(SCM val)
   #define H_data_clipped "(" S_data_clipped ") -> #t if Snd should clip output values to the current \
 output data format's maximum. The default (#f) allows them to wrap-around which makes a very loud click"
 
-  ASSERT_TYPE(BOOLEAN_IF_BOUND_P(val), val, SCM_ARGn, "set-" S_data_clipped, "a boolean");
+  ASSERT_TYPE(BOOLEAN_IF_BOUND_P(val), val, ARGn, "set-" S_data_clipped, "a boolean");
   set_data_clipped(state, TO_C_BOOLEAN_OR_T(val));
   return(TO_SCM_BOOLEAN(data_clipped(state)));
 }
@@ -1251,7 +1251,7 @@ static SCM g_vu_font(void) {return(TO_SCM_STRING(vu_font(state)));}
 static SCM g_set_vu_font(SCM val) 
 {
   #define H_vu_font "(" S_vu_font ") -> name of font used to make VU meter labels (courier)"
-  ASSERT_TYPE(STRING_P(val) || FALSE_P(val), val, SCM_ARGn, "set-" S_vu_font, "a string"); 
+  ASSERT_TYPE(STRING_P(val) || FALSE_P(val), val, ARGn, "set-" S_vu_font, "a string"); 
   if (vu_font(state)) free(vu_font(state));
   if (FALSE_P(val))
     set_vu_font(state, DEFAULT_VU_FONT);
@@ -1263,7 +1263,7 @@ static SCM g_vu_font_size(void) {return(TO_SCM_DOUBLE(vu_font_size(state)));}
 static SCM g_set_vu_font_size(SCM val) 
 {
   #define H_vu_font_size "(" S_vu_font_size ") -> size of VU font meter labels (1.0)"
-  ASSERT_TYPE(NUMBER_P(val), val, SCM_ARGn, "set-" S_vu_font_size, "a number"); 
+  ASSERT_TYPE(NUMBER_P(val), val, ARGn, "set-" S_vu_font_size, "a number"); 
   set_vu_font_size(state, TO_C_DOUBLE(val));
   return(TO_SCM_DOUBLE(vu_font_size(state)));
 }
@@ -1272,7 +1272,7 @@ static SCM g_vu_size(void) {return(TO_SCM_DOUBLE(vu_size(state)));}
 static SCM g_set_vu_size(SCM val) 
 {
   #define H_vu_size "(" S_vu_size ") -> size of VU meters (1.0)"
-  ASSERT_TYPE(NUMBER_P(val), val, SCM_ARGn, "set-" S_vu_size, "a number"); 
+  ASSERT_TYPE(NUMBER_P(val), val, ARGn, "set-" S_vu_size, "a number"); 
   set_vu_size(state, TO_C_DOUBLE(val));
   return(TO_SCM_DOUBLE(vu_size(state)));
 }
@@ -1282,7 +1282,7 @@ static SCM g_set_zoom_focus_style(SCM focus)
 {
   #define H_zoom_focus_style "(" S_zoom_focus_style ") -> one of '(" S_zoom_focus_left " " S_zoom_focus_right " " S_zoom_focus_middle " " S_zoom_focus_active ")\n\
   decides what zooming centers on (default: " S_zoom_focus_active ")"
-  ASSERT_TYPE(INTEGER_P(focus), focus, SCM_ARGn, "set-" S_zoom_focus_style, "an integer"); 
+  ASSERT_TYPE(INTEGER_P(focus), focus, ARGn, "set-" S_zoom_focus_style, "an integer"); 
   activate_focus_menu(state, mus_iclamp(ZOOM_FOCUS_LEFT,
 					TO_C_INT(focus),
 					ZOOM_FOCUS_MIDDLE));
@@ -1347,7 +1347,7 @@ static SCM g_show_listener(void)
 
 static SCM g_set_show_listener(SCM val)
 {
-  ASSERT_TYPE(BOOLEAN_P(val), val, SCM_ARGn, "set-" S_show_listener, "a boolean");
+  ASSERT_TYPE(BOOLEAN_P(val), val, ARGn, "set-" S_show_listener, "a boolean");
   handle_listener(state, TO_C_BOOLEAN(val));
   return(TO_SCM_BOOLEAN(state->listening));
 }
@@ -1356,7 +1356,7 @@ static SCM g_help_text_font(void) {return(TO_SCM_STRING(help_text_font(state)));
 static SCM g_set_help_text_font(SCM val) 
 {
   #define H_help_text_font "(" S_help_text_font ") -> font used in the Help dialog"
-  ASSERT_TYPE(STRING_P(val), val, SCM_ARGn, "set-" S_help_text_font, "a string"); 
+  ASSERT_TYPE(STRING_P(val), val, ARGn, "set-" S_help_text_font, "a string"); 
   set_help_text_font(state, TO_NEW_C_STRING(val)); 
   return(val);
 }
@@ -1365,7 +1365,7 @@ static SCM g_tiny_font(void) {return(TO_SCM_STRING(tiny_font(state)));}
 static SCM g_set_tiny_font(SCM val) 
 {
   #define H_tiny_font "(" S_tiny_font ") -> font use for some info in the graphs"
-  ASSERT_TYPE(STRING_P(val), val, SCM_ARGn, "set-" S_tiny_font, "a string"); 
+  ASSERT_TYPE(STRING_P(val), val, ARGn, "set-" S_tiny_font, "a string"); 
   set_tiny_font(state, TO_NEW_C_STRING(val)); 
   return(val);
 }
@@ -1374,7 +1374,7 @@ static SCM g_axis_label_font(void) {return(TO_SCM_STRING(axis_label_font(state))
 static SCM g_set_axis_label_font(SCM val) 
 {
   #define H_axis_label_font "(" S_axis_label_font ") -> font used for axis labels"
-  ASSERT_TYPE(STRING_P(val), val, SCM_ARGn, "set-" S_axis_label_font, "a string"); 
+  ASSERT_TYPE(STRING_P(val), val, ARGn, "set-" S_axis_label_font, "a string"); 
   set_axis_label_font(state, TO_NEW_C_STRING(val)); 
   return(val);
 }
@@ -1383,7 +1383,7 @@ static SCM g_axis_numbers_font(void) {return(TO_SCM_STRING(axis_numbers_font(sta
 static SCM g_set_axis_numbers_font(SCM val) 
 {
   #define H_axis_numbers_font "(" S_axis_numbers_font ") -> font used for axis numbers"
-  ASSERT_TYPE(STRING_P(val), val, SCM_ARGn, "set-" S_axis_numbers_font, "a string"); 
+  ASSERT_TYPE(STRING_P(val), val, ARGn, "set-" S_axis_numbers_font, "a string"); 
   set_axis_numbers_font(state, TO_NEW_C_STRING(val)); 
   return(val);
 }
@@ -1392,7 +1392,7 @@ static SCM g_listener_font(void) {return(TO_SCM_STRING(listener_font(state)));}
 static SCM g_set_listener_font(SCM val) 
 {
   #define H_listener_font "(" S_listener_font ") -> font used by the lisp listener"
-  ASSERT_TYPE(STRING_P(val), val, SCM_ARGn, "set-" S_listener_font, "a string");
+  ASSERT_TYPE(STRING_P(val), val, ARGn, "set-" S_listener_font, "a string");
   set_listener_font(state, TO_NEW_C_STRING(val)); 
   return(val);
 }
@@ -1401,7 +1401,7 @@ static SCM g_bold_button_font(void) {return(TO_SCM_STRING(bold_button_font(state
 static SCM g_set_bold_button_font(SCM val) 
 {
   #define H_bold_button_font "(" S_bold_button_font ") -> font used by some buttons"
-  ASSERT_TYPE(STRING_P(val), val, SCM_ARGn, "set-" S_bold_button_font, "a string"); 
+  ASSERT_TYPE(STRING_P(val), val, ARGn, "set-" S_bold_button_font, "a string"); 
   set_bold_button_font(state, TO_NEW_C_STRING(val)); 
   return(val);
 }
@@ -1410,7 +1410,7 @@ static SCM g_button_font(void) {return(TO_SCM_STRING(button_font(state)));}
 static SCM g_set_button_font(SCM val) 
 {
   #define H_button_font "(" S_button_font ") -> font used by some buttons"
-  ASSERT_TYPE(STRING_P(val), val, SCM_ARGn, "set-" S_button_font, "a string"); 
+  ASSERT_TYPE(STRING_P(val), val, ARGn, "set-" S_button_font, "a string"); 
   set_button_font(state, TO_NEW_C_STRING(val)); 
   return(val);
 }
@@ -1443,7 +1443,7 @@ static SCM g_set_window_height(SCM height)
 {
   #define H_set_window_height "(" "set-" S_window_height " val) sets the Snd window height in pixels"
   Latus val;
-  ASSERT_TYPE(NUMBER_P(height), height, SCM_ARGn, "set-" S_window_height, "a number"); 
+  ASSERT_TYPE(NUMBER_P(height), height, ARGn, "set-" S_window_height, "a number"); 
   set_widget_height(MAIN_SHELL(state), val = (Latus)TO_C_INT_OR_ELSE(height, 0));
   state->init_window_height = val;
   return(height);
@@ -1453,7 +1453,7 @@ static SCM g_set_window_width(SCM width)
 {
   #define H_set_window_width "(" "set-" S_window_width " val) sets the Snd window width in pixels"
   Latus val;
-  ASSERT_TYPE(NUMBER_P(width), width, SCM_ARGn, "set-" S_window_width, "a number"); 
+  ASSERT_TYPE(NUMBER_P(width), width, ARGn, "set-" S_window_width, "a number"); 
   set_widget_width(MAIN_SHELL(state), val = (Latus)TO_C_INT_OR_ELSE(width, 0)); 
   state->init_window_width = val;
   return(width);
@@ -1463,7 +1463,7 @@ static SCM g_set_window_x(SCM val)
 {
   #define H_set_window_x "(" "set-" S_window_x " val) sets the Snd window x position in pixels"
   Locus x;
-  ASSERT_TYPE(NUMBER_P(val), val, SCM_ARGn, "set-" S_window_x, "a number"); 
+  ASSERT_TYPE(NUMBER_P(val), val, ARGn, "set-" S_window_x, "a number"); 
   set_widget_x(MAIN_SHELL(state), x = (Locus)TO_C_INT_OR_ELSE(val, 0));
   state->init_window_x = x;
   return(val);
@@ -1473,7 +1473,7 @@ static SCM g_set_window_y(SCM val)
 {
   #define H_set_window_y "(" "set-" S_window_y " val) sets the Snd window y position in pixels"
   Locus y;
-  ASSERT_TYPE(NUMBER_P(val), val, SCM_ARGn, "set-" S_window_y, "a number"); 
+  ASSERT_TYPE(NUMBER_P(val), val, ARGn, "set-" S_window_y, "a number"); 
   set_widget_y(MAIN_SHELL(state), y = (Locus)TO_C_INT_OR_ELSE(val, 0)); 
   state->init_window_y = y;
   return(val);
@@ -1531,7 +1531,7 @@ snd_info *get_sp(SCM scm_snd_n)
 	  /* a mix input sound */
 	  /* make sure it's not the null list */
 	  if (len > 0)
-	    return(make_mix_readable_from_id(TO_C_INT_OR_ELSE(SCM_CAR(scm_snd_n), 0)));
+	    return(make_mix_readable_from_id(TO_C_INT_OR_ELSE(CAR(scm_snd_n), 0)));
 	  return(NULL);
 	}
     }
@@ -1630,10 +1630,10 @@ subsequent " S_close_sound_file ". data can be written with " S_vct2sound_file
   int type = MUS_NEXT;
   int format = MUS_BFLOAT;
 #endif
-  ASSERT_TYPE(STRING_IF_BOUND_P(g_name), g_name, SCM_ARG1, S_open_sound_file, "a string");
-  ASSERT_TYPE(INTEGER_IF_BOUND_P(g_chans), g_chans, SCM_ARG2, S_open_sound_file, "an integer");
-  ASSERT_TYPE(NUMBER_IF_BOUND_P(g_srate), g_srate, SCM_ARG3, S_open_sound_file, "a number");
-  ASSERT_TYPE(STRING_IF_BOUND_P(g_comment), g_comment, SCM_ARG4, S_open_sound_file, "a string");
+  ASSERT_TYPE(STRING_IF_BOUND_P(g_name), g_name, ARG1, S_open_sound_file, "a string");
+  ASSERT_TYPE(INTEGER_IF_BOUND_P(g_chans), g_chans, ARG2, S_open_sound_file, "an integer");
+  ASSERT_TYPE(NUMBER_IF_BOUND_P(g_srate), g_srate, ARG3, S_open_sound_file, "a number");
+  ASSERT_TYPE(STRING_IF_BOUND_P(g_comment), g_comment, ARG4, S_open_sound_file, "a string");
   if (STRING_P(g_comment)) comment = TO_C_STRING(g_comment);
   chans = TO_C_INT_OR_ELSE(g_chans, 0); 
   srate = TO_C_INT_OR_ELSE(g_srate, 0); 
@@ -1662,8 +1662,8 @@ subsequent " S_close_sound_file ". data can be written with " S_vct2sound_file
       free_file_info(hdr);
       if (ss->catch_message)
 	ERROR(MUS_MISC_ERROR,
-	      SCM_LIST2(TO_SCM_STRING(S_open_sound_file),
-			TO_SCM_STRING(ss->catch_message)));
+	      LIST_2(TO_SCM_STRING(S_open_sound_file),
+		     TO_SCM_STRING(ss->catch_message)));
       else
 	return(snd_no_such_file_error(S_open_sound_file, g_name));
     }
@@ -1676,8 +1676,8 @@ static SCM g_close_sound_file(SCM g_fd, SCM g_bytes)
   #define H_close_sound_file "(" S_close_sound_file " fd bytes) closes file pointed to by fd, updating its header to report 'bytes' bytes of data"
   file_info *hdr;
   int result, fd, bytes;
-  ASSERT_TYPE(INTEGER_P(g_fd), g_fd, SCM_ARG1, S_close_sound_file, "an integer");
-  ASSERT_TYPE(NUMBER_P(g_bytes), g_bytes, SCM_ARG2, S_close_sound_file, "a number");
+  ASSERT_TYPE(INTEGER_P(g_fd), g_fd, ARG1, S_close_sound_file, "an integer");
+  ASSERT_TYPE(NUMBER_P(g_bytes), g_bytes, ARG2, S_close_sound_file, "a number");
   fd = TO_C_INT(g_fd);
   if ((fd < 0) || (fd == fileno(stdin)) || (fd == fileno(stdout)) || (fd == fileno(stderr)))
     mus_misc_error(S_close_sound_file, "invalid file", g_fd);
@@ -1705,8 +1705,8 @@ reading edit version edit-position (defaulting to the current version)"
   Float *fvals;
   int i, len, beg, pos;
   vct *v1 = get_vct(v);
-  ASSERT_TYPE(NUMBER_IF_BOUND_P(samp_0), samp_0, SCM_ARG1, S_samples2vct, "a number");
-  ASSERT_TYPE(NUMBER_IF_BOUND_P(samps), samps, SCM_ARG2, S_samples2vct, "a number");
+  ASSERT_TYPE(NUMBER_IF_BOUND_P(samp_0), samp_0, ARG1, S_samples2vct, "a number");
+  ASSERT_TYPE(NUMBER_IF_BOUND_P(samps), samps, ARG2, S_samples2vct, "a number");
   SND_ASSERT_CHAN(S_samples2vct, snd_n, chn_n, 3);
   cp = get_cp(snd_n, chn_n, S_samples2vct);
   pos = to_c_edit_position(cp, edpos, S_samples2vct, 6);
@@ -1749,10 +1749,10 @@ reading edit version edit-position (defaulting to the current version)"
   sound_data *sd;
   SCM newsd = SCM_BOOL_F;
   int i, len, beg, chn = 0, pos;
-  ASSERT_TYPE(NUMBER_IF_BOUND_P(samp_0), samp_0, SCM_ARG1, S_samples2sound_data, "a number");
-  ASSERT_TYPE(NUMBER_IF_BOUND_P(samps), samps, SCM_ARG2, S_samples2sound_data, "a number");
+  ASSERT_TYPE(NUMBER_IF_BOUND_P(samp_0), samp_0, ARG1, S_samples2sound_data, "a number");
+  ASSERT_TYPE(NUMBER_IF_BOUND_P(samps), samps, ARG2, S_samples2sound_data, "a number");
   SND_ASSERT_CHAN(S_samples2sound_data, snd_n, chn_n, 3);
-  ASSERT_TYPE(INTEGER_IF_BOUND_P(sdchan), sdchan, SCM_ARG7, S_samples2sound_data, "an integer");
+  ASSERT_TYPE(INTEGER_IF_BOUND_P(sdchan), sdchan, ARG7, S_samples2sound_data, "an integer");
   cp = get_cp(snd_n, chn_n, S_samples2sound_data);
   pos = to_c_edit_position(cp, edpos, S_samples2sound_data, 6);
   beg = TO_C_INT_OR_ELSE(samp_0, 0);
@@ -1793,9 +1793,9 @@ static SCM vct2soundfile(SCM g_fd, SCM obj, SCM g_nums)
   int fd, nums, i;
   float *vals;
   vct *v;
-  ASSERT_TYPE(INTEGER_P(g_fd), g_fd, SCM_ARG1, S_vct2sound_file, "an integer");
-  ASSERT_TYPE((VCT_P(obj)), obj, SCM_ARG2, S_vct2sound_file, "a vct");
-  ASSERT_TYPE(NUMBER_P(g_nums), g_nums, SCM_ARG3, S_vct2sound_file, "a number");
+  ASSERT_TYPE(INTEGER_P(g_fd), g_fd, ARG1, S_vct2sound_file, "an integer");
+  ASSERT_TYPE((VCT_P(obj)), obj, ARG2, S_vct2sound_file, "a vct");
+  ASSERT_TYPE(NUMBER_P(g_nums), g_nums, ARG3, S_vct2sound_file, "a number");
   fd = TO_C_INT(g_fd);
   if ((fd < 0) || (fd == fileno(stdin)) || (fd == fileno(stdout)) || (fd == fileno(stderr)))
     mus_misc_error(S_vct2sound_file, "invalid file", g_fd);
@@ -1900,8 +1900,8 @@ static SCM g_update_lisp_graph(SCM snd, SCM chn)
 static SCM g_help_dialog(SCM subject, SCM msg)
 {
   #define H_help_dialog "(" S_help_dialog " subject message) fires up the Help window with subject and message"
-  ASSERT_TYPE(STRING_P(subject), subject, SCM_ARG1, S_help_dialog, "a string");
-  ASSERT_TYPE(STRING_P(msg), msg, SCM_ARG2, S_help_dialog, "a string");
+  ASSERT_TYPE(STRING_P(subject), subject, ARG1, S_help_dialog, "a string");
+  ASSERT_TYPE(STRING_P(msg), msg, ARG2, S_help_dialog, "a string");
   return(SND_WRAP(snd_help(state, TO_C_STRING(subject), TO_C_STRING(msg))));
 }
 
@@ -1948,7 +1948,7 @@ static SCM g_edit_header_dialog(SCM snd_n)
 static SCM g_yes_or_no_p(SCM msg) 
 {
   #define H_yes_or_no_p "(" S_yes_or_no_p " message) displays message and waits for 'y' or 'n'; returns #t if 'y'"
-  ASSERT_TYPE(STRING_P(msg), msg, SCM_ARGn, S_yes_or_no_p, "a string");
+  ASSERT_TYPE(STRING_P(msg), msg, ARGn, S_yes_or_no_p, "a string");
   return(TO_SCM_BOOLEAN(snd_yes_or_no_p(state, TO_C_STRING(msg))));
 }
 
@@ -1971,7 +1971,7 @@ If 'data' is a list of numbers, it is treated as an envelope."
   Locus o = 0, gx0 = 0;
   axis_info *uap = NULL;
   /* ldata can be a vct object, a vector, or a list of either */
-  ASSERT_TYPE(((VCT_P(ldata)) || (VECTOR_P(ldata)) || (LIST_P(ldata))), ldata, SCM_ARG1, S_graph, "a vct, vector, or list");
+  ASSERT_TYPE(((VCT_P(ldata)) || (VECTOR_P(ldata)) || (LIST_P(ldata))), ldata, ARG1, S_graph, "a vct, vector, or list");
   SND_ASSERT_CHAN(S_graph, snd_n, chn_n, 7);
   cp = get_cp(snd_n, chn_n, S_graph);
   ymin = 32768.0;
@@ -1987,7 +1987,7 @@ If 'data' is a list of numbers, it is treated as an envelope."
   if (NUMBER_P(y0)) ymin = TO_C_DOUBLE(y0);
   if (NUMBER_P(y1)) ymax = TO_C_DOUBLE(y1);
   if ((!(LIST_P(ldata))) || 
-      (NUMBER_P(SCM_CAR(ldata))))
+      (NUMBER_P(CAR(ldata))))
     graphs = 1; 
   else graphs = LIST_LENGTH(ldata);
   if (graphs == 0) return(SCM_BOOL_F);
@@ -2013,7 +2013,7 @@ If 'data' is a list of numbers, it is treated as an envelope."
       need_update = 1;
     }
   if ((LIST_P_WITH_LENGTH(ldata, len)) && 
-      (NUMBER_P(SCM_CAR(ldata))))
+      (NUMBER_P(CAR(ldata))))
     {
       lg = cp->lisp_info;
       lg->env_data = 1;
@@ -2023,8 +2023,8 @@ If 'data' is a list of numbers, it is treated as an envelope."
 	  lg->data[0] = (Float *)CALLOC(len, sizeof(Float));
 	  lg->len[0] = len;
 	}
-      for (i = 0, lst = ldata; i < len; i++, lst = SCM_CDR(lst))
-	lg->data[0][i] = TO_C_DOUBLE(SCM_CAR(lst));
+      for (i = 0, lst = ldata; i < len; i++, lst = CDR(lst))
+	lg->data[0][i] = TO_C_DOUBLE(CAR(lst));
       if ((!NUMBER_P(y0)) || 
 	  (!NUMBER_P(y1)))
 	{
@@ -2063,7 +2063,7 @@ If 'data' is a list of numbers, it is treated as an envelope."
 	    memcpy((void *)(lg->data[graph]), (void *)(v->data), len * sizeof(Float));
 	  else 
 	    {
-	      vdata = SCM_VELTS(data);
+	      vdata = VECTOR_ELEMENTS(data);
 	      for (i = 0; i < len; i++) 
 		lg->data[graph][i] = TO_C_DOUBLE(vdata[i]);
 	    }
@@ -2090,7 +2090,7 @@ If 'data' is a list of numbers, it is treated as an envelope."
       uap->graph_x0 = gx0;
     }
   cp->graph_lisp_p = 1;
-  if ((SCM_EQ_P(force_display, SCM_UNDEFINED)) || 
+  if ((EQ_P(force_display, SCM_UNDEFINED)) || 
       (NOT_FALSE_P(force_display)))
     {
       if (need_update)
@@ -2114,8 +2114,8 @@ static SCM g_set_oss_buffers(SCM num, SCM size)
 {
   #define H_set_oss_buffers "(" "set-" S_oss_buffers " num size) sets Linux OSS 'fragment' number and size"
 #if (HAVE_OSS || HAVE_ALSA)
-  ASSERT_TYPE(INTEGER_P(num), num, SCM_ARG1, "set-" S_oss_buffers, "an integer");
-  ASSERT_TYPE(INTEGER_P(size), size, SCM_ARG2, "set-" S_oss_buffers, "an integer");
+  ASSERT_TYPE(INTEGER_P(num), num, ARG1, "set-" S_oss_buffers, "an integer");
+  ASSERT_TYPE(INTEGER_P(size), size, ARG2, "set-" S_oss_buffers, "an integer");
   mus_audio_set_oss_buffers(TO_C_INT(num),
 			    TO_C_INT(size));
 #endif
@@ -2161,11 +2161,11 @@ static SCM g_progress_report(SCM pct, SCM name, SCM cur_chan, SCM chans, SCM snd
 updates an on-going 'progress report' (e. g. an animated hour-glass icon) in snd using pct to indicate how far along we are"
 
   snd_info *sp;
-  ASSERT_TYPE(NUMBER_P(pct), pct, SCM_ARG1, S_progress_report, "a number");
+  ASSERT_TYPE(NUMBER_P(pct), pct, ARG1, S_progress_report, "a number");
   SND_ASSERT_SND(S_progress_report, snd, 5);
-  ASSERT_TYPE(STRING_IF_BOUND_P(name), name, SCM_ARG2, S_progress_report, "a string");
-  ASSERT_TYPE(INTEGER_IF_BOUND_P(cur_chan), cur_chan, SCM_ARG3, S_progress_report, "an integer");
-  ASSERT_TYPE(INTEGER_IF_BOUND_P(chans), chans, SCM_ARG4, S_progress_report, "an integer");
+  ASSERT_TYPE(STRING_IF_BOUND_P(name), name, ARG2, S_progress_report, "a string");
+  ASSERT_TYPE(INTEGER_IF_BOUND_P(cur_chan), cur_chan, ARG3, S_progress_report, "an integer");
+  ASSERT_TYPE(INTEGER_IF_BOUND_P(chans), chans, ARG4, S_progress_report, "an integer");
   sp = get_sp(snd);
   if (sp == NULL)
     return(snd_no_such_sound_error(S_progress_report, snd));
@@ -2190,7 +2190,7 @@ static SCM g_html_dir(void)
 
 static SCM g_set_html_dir(SCM val) 
 {
-  ASSERT_TYPE(STRING_P(val), val, SCM_ARGn, "set-" S_html_dir, "a string");
+  ASSERT_TYPE(STRING_P(val), val, ARGn, "set-" S_html_dir, "a string");
   set_html_dir(state, TO_NEW_C_STRING(val)); 
   return(val);
 }
@@ -2205,16 +2205,16 @@ Float check_color_range(const char *caller, SCM val)
   rf = TO_C_DOUBLE(val);
   if ((rf > 1.0) || (rf < 0.0))
     ERROR(TO_SCM_SYMBOL("out-of-range"), 
-	  SCM_LIST3(TO_SCM_STRING(caller),
-		    TO_SCM_STRING("value must be between 0.0 and 1.0: ~S"),
-		    SCM_LIST1(val)));
+	  LIST_3(TO_SCM_STRING(caller),
+		 TO_SCM_STRING("value must be between 0.0 and 1.0: ~S"),
+		 LIST_1(val)));
   return(rf);
 }
 
 static SCM g_set_cursor_color (SCM color) 
 {
   snd_color *v; 
-  ASSERT_TYPE(COLOR_P(color), color, SCM_ARGn, "set-" S_cursor_color, "a color object"); 
+  ASSERT_TYPE(COLOR_P(color), color, ARGn, "set-" S_cursor_color, "a color object"); 
   v = TO_SND_COLOR(color); 
   if (v) 
     {
@@ -2233,7 +2233,7 @@ static SCM g_cursor_color(void)
 static SCM g_set_highlight_color (SCM color) 
 {
   snd_color *v; 
-  ASSERT_TYPE(COLOR_P(color), color, SCM_ARGn, "set-" S_highlight_color, "a color object"); 
+  ASSERT_TYPE(COLOR_P(color), color, ARGn, "set-" S_highlight_color, "a color object"); 
   v = TO_SND_COLOR(color); 
   if (v) (state->sgx)->highlight_color = v->color; 
   return(color);
@@ -2248,7 +2248,7 @@ static SCM g_highlight_color(void)
 static SCM g_set_mark_color (SCM color) 
 {
   snd_color *v; 
-  ASSERT_TYPE(COLOR_P(color), color, SCM_ARGn, "set-" S_mark_color, "a color object"); 
+  ASSERT_TYPE(COLOR_P(color), color, ARGn, "set-" S_mark_color, "a color object"); 
   v = TO_SND_COLOR(color); 
   if (v) 
     {
@@ -2267,7 +2267,7 @@ static SCM g_mark_color(void)
 static SCM g_set_zoom_color (SCM color) 
 {
   snd_color *v; 
-  ASSERT_TYPE(COLOR_P(color), color, SCM_ARGn, "set-" S_zoom_color, "a color object"); 
+  ASSERT_TYPE(COLOR_P(color), color, ARGn, "set-" S_zoom_color, "a color object"); 
   v = TO_SND_COLOR(color); 
   if (v) 
     {
@@ -2286,7 +2286,7 @@ static SCM g_zoom_color(void)
 static SCM g_set_position_color (SCM color) 
 {
   snd_color *v; 
-  ASSERT_TYPE(COLOR_P(color), color, SCM_ARGn, "set-" S_position_color, "a color object"); 
+  ASSERT_TYPE(COLOR_P(color), color, ARGn, "set-" S_position_color, "a color object"); 
   v = TO_SND_COLOR(color); 
   if (v) 
     {
@@ -2305,7 +2305,7 @@ static SCM g_position_color(void)
 static SCM g_set_listener_color (SCM color) 
 {
   snd_color *v; 
-  ASSERT_TYPE(COLOR_P(color), color, SCM_ARGn, "set-" S_listener_color, "a color object"); 
+  ASSERT_TYPE(COLOR_P(color), color, ARGn, "set-" S_listener_color, "a color object"); 
   v = TO_SND_COLOR(color);
   if (v) color_listener(v->color);
   return(color);
@@ -2320,7 +2320,7 @@ static SCM g_listener_color(void)
 static SCM g_set_listener_text_color (SCM color) 
 {
   snd_color *v; 
-  ASSERT_TYPE(COLOR_P(color), color, SCM_ARGn, "set-" S_listener_text_color, "a color object"); 
+  ASSERT_TYPE(COLOR_P(color), color, ARGn, "set-" S_listener_text_color, "a color object"); 
   v = TO_SND_COLOR(color);
   if (v) color_listener_text(v->color);
   return(color);
@@ -2335,7 +2335,7 @@ static SCM g_listener_text_color(void)
 static SCM g_set_enved_waveform_color (SCM color) 
 {
   snd_color *v;
-  ASSERT_TYPE(COLOR_P(color), color, SCM_ARGn, "set-" S_enved_waveform_color, "a color object"); 
+  ASSERT_TYPE(COLOR_P(color), color, ARGn, "set-" S_enved_waveform_color, "a color object"); 
   v = TO_SND_COLOR(color); 
   if (v) color_enved_waveform(v->color);
   return(color);
@@ -2350,7 +2350,7 @@ static SCM g_enved_waveform_color(void)
 static SCM g_set_filter_waveform_color (SCM color) 
 {
   snd_color *v; 
-  ASSERT_TYPE(COLOR_P(color), color, SCM_ARGn, "set-" S_filter_waveform_color, "a color object");
+  ASSERT_TYPE(COLOR_P(color), color, ARGn, "set-" S_filter_waveform_color, "a color object");
   v = TO_SND_COLOR(color);
   if (v) color_filter_waveform(state, v->color);
   return(color);
@@ -2365,7 +2365,7 @@ static SCM g_filter_waveform_color(void)
 static SCM g_set_selection_color (SCM color) 
 {
   snd_color *v; 
-  ASSERT_TYPE(COLOR_P(color), color, SCM_ARGn, "set-" S_selection_color, "a color object"); 
+  ASSERT_TYPE(COLOR_P(color), color, ARGn, "set-" S_selection_color, "a color object"); 
   v = TO_SND_COLOR(color); 
   if (v) 
     {
@@ -2392,7 +2392,7 @@ static SCM g_set_mix_color (SCM arg1, SCM arg2)
       color = arg2;
       mix_id = arg1;
     }
-  ASSERT_TYPE(COLOR_P(color), color, SCM_ARGn, "set-" S_mix_color, "a color object"); 
+  ASSERT_TYPE(COLOR_P(color), color, ARGn, "set-" S_mix_color, "a color object"); 
   v = TO_SND_COLOR(color); 
   if (v) 
     {
@@ -2415,7 +2415,7 @@ static SCM g_mix_color(SCM mix_id)
 static SCM g_set_selected_mix_color (SCM color) 
 {
   snd_color *v; 
-  ASSERT_TYPE(COLOR_P(color), color, SCM_ARGn, "set-" S_selected_mix_color, "a color object"); 
+  ASSERT_TYPE(COLOR_P(color), color, ARGn, "set-" S_selected_mix_color, "a color object"); 
   v = TO_SND_COLOR(color); 
   if (v) 
     {
@@ -2434,7 +2434,7 @@ static SCM g_selected_mix_color(void)
 static SCM g_set_text_focus_color (SCM color) 
 {
   snd_color *v; 
-  ASSERT_TYPE(COLOR_P(color), color, SCM_ARGn, "set-" S_text_focus_color, "a color object"); 
+  ASSERT_TYPE(COLOR_P(color), color, ARGn, "set-" S_text_focus_color, "a color object"); 
   v = TO_SND_COLOR(color); 
   if (v) (state->sgx)->text_focus_color = v->color;
   return(color);
@@ -2449,7 +2449,7 @@ static SCM g_text_focus_color(void)
 static SCM g_set_sash_color (SCM color) 
 {
   snd_color *v; 
-  ASSERT_TYPE(COLOR_P(color), color, SCM_ARGn, "set-" S_sash_color, "a color object"); 
+  ASSERT_TYPE(COLOR_P(color), color, ARGn, "set-" S_sash_color, "a color object"); 
   v = TO_SND_COLOR(color); 
   if (v) (state->sgx)->sash_color = v->color;
   return(color);
@@ -2464,7 +2464,7 @@ static SCM g_sash_color(void)
 static SCM g_set_data_color (SCM color) 
 {
   snd_color *v; 
-  ASSERT_TYPE(COLOR_P(color), color, SCM_ARGn, "set-" S_data_color, "a color object"); 
+  ASSERT_TYPE(COLOR_P(color), color, ARGn, "set-" S_data_color, "a color object"); 
   v = TO_SND_COLOR(color); 
   if (v) 
     {
@@ -2484,7 +2484,7 @@ static SCM g_set_selected_data_color (SCM color)
 {
   snd_color *v; 
   chan_info *cp;
-  ASSERT_TYPE(COLOR_P(color), color, SCM_ARGn, "set-" S_selected_data_color, "a color object"); 
+  ASSERT_TYPE(COLOR_P(color), color, ARGn, "set-" S_selected_data_color, "a color object"); 
   v = TO_SND_COLOR(color); 
   if (v) 
     {
@@ -2508,7 +2508,7 @@ static SCM g_selected_data_color(void)
 static SCM g_set_graph_color (SCM color) 
 {
   snd_color *v; 
-  ASSERT_TYPE(COLOR_P(color), color, SCM_ARGn, "set-" S_graph_color, "a color object");
+  ASSERT_TYPE(COLOR_P(color), color, ARGn, "set-" S_graph_color, "a color object");
   v = TO_SND_COLOR(color);
   if (v) 
     {
@@ -2528,7 +2528,7 @@ static SCM g_set_selected_graph_color (SCM color)
 {
   snd_color *v; 
   chan_info *cp;
-  ASSERT_TYPE(COLOR_P(color), color, SCM_ARGn, "set-" S_selected_graph_color, "a color object");
+  ASSERT_TYPE(COLOR_P(color), color, ARGn, "set-" S_selected_graph_color, "a color object");
   v = TO_SND_COLOR(color); 
   if (v) 
     {
@@ -2555,7 +2555,7 @@ static SCM g_selected_graph_color(void)
 static SCM g_set_pushed_button_color (SCM color) 
 {
   snd_color *v; 
-  ASSERT_TYPE(COLOR_P(color), color, SCM_ARGn, "set-" S_pushed_button_color, "a color object"); 
+  ASSERT_TYPE(COLOR_P(color), color, ARGn, "set-" S_pushed_button_color, "a color object"); 
   v = TO_SND_COLOR(color); 
   if (v) 
     {
@@ -2581,7 +2581,7 @@ static SCM g_set_basic_color (SCM color)
 {
   snd_color *v; 
   COLOR_TYPE old_color;
-  ASSERT_TYPE(COLOR_P(color), color, SCM_ARGn, "set-" S_basic_color, "a color object"); 
+  ASSERT_TYPE(COLOR_P(color), color, ARGn, "set-" S_basic_color, "a color object"); 
   v = TO_SND_COLOR(color); 
   if (v) 
     {
@@ -2602,13 +2602,13 @@ SCM g_c_run_progn_hook (SCM hook, SCM args, const char *caller)
 {
   /* Guile built-in scm_c_run_hook doesn't return the value of the hook procedure(s) and exits on error */
   SCM result = SCM_BOOL_F;
-  SCM procs = SCM_HOOK_PROCEDURES (hook);
+  SCM procs = HOOK_PROCEDURES (hook);
   while (NOT_NULL_P (procs))
     {
-      if (!(SCM_EQ_P(args, SCM_LIST0)))
-	result = APPLY(SCM_CAR(procs), args, caller);
-      else result = CALL0(SCM_CAR(procs), caller);
-      procs = SCM_CDR (procs);
+      if (!(EQ_P(args, LIST_0)))
+	result = APPLY(CAR(procs), args, caller);
+      else result = CALL0(CAR(procs), caller);
+      procs = CDR (procs);
     }
   return(scm_return_first(result, args));
 }
@@ -2617,14 +2617,14 @@ SCM g_c_run_or_hook (SCM hook, SCM args, const char *caller)
 {
   /* Guile built-in scm_c_run_hook doesn't return the value of the hook procedure(s) and calls everything on the list */
   SCM result = SCM_BOOL_F; /* (or) -> #f */
-  SCM procs = SCM_HOOK_PROCEDURES (hook);
+  SCM procs = HOOK_PROCEDURES (hook);
   while (NOT_NULL_P (procs))
     {
-      if (!(SCM_EQ_P(args, SCM_LIST0)))
-	result = APPLY(SCM_CAR(procs), args, caller);
-      else result = CALL0(SCM_CAR(procs), caller);
+      if (!(EQ_P(args, LIST_0)))
+	result = APPLY(CAR(procs), args, caller);
+      else result = CALL0(CAR(procs), caller);
       if (NOT_FALSE_P(result)) return(result);
-      procs = SCM_CDR (procs);
+      procs = CDR (procs);
     }
   return(scm_return_first(result, args));
 }
@@ -2632,14 +2632,14 @@ SCM g_c_run_or_hook (SCM hook, SCM args, const char *caller)
 SCM g_c_run_and_hook (SCM hook, SCM args, const char *caller)
 {
   SCM result = SCM_BOOL_T; /* (and) -> #t */
-  SCM procs = SCM_HOOK_PROCEDURES (hook);
+  SCM procs = HOOK_PROCEDURES (hook);
   while (NOT_NULL_P (procs))
     {
-      if (!(SCM_EQ_P(args, SCM_LIST0)))
-	result = APPLY(SCM_CAR(procs), args, caller);
-      else result = CALL0(SCM_CAR(procs), caller);
+      if (!(EQ_P(args, LIST_0)))
+	result = APPLY(CAR(procs), args, caller);
+      else result = CALL0(CAR(procs), caller);
       if (FALSE_P(result)) return(result);
-      procs = SCM_CDR (procs);
+      procs = CDR (procs);
     }
   return(scm_return_first(result, args));
 }
@@ -2648,9 +2648,9 @@ void during_open(int fd, char *file, int reason)
 {
   if (HOOKED(during_open_hook))
     g_c_run_progn_hook(during_open_hook,
-		       SCM_LIST3(TO_SCM_INT(fd),
-				 TO_SCM_STRING(file),
-				 TO_SCM_INT(reason)),
+		       LIST_3(TO_SCM_INT(fd),
+			      TO_SCM_STRING(file),
+			      TO_SCM_INT(reason)),
 		       S_during_open_hook);
 }
 
@@ -2658,7 +2658,7 @@ void after_open(int index)
 {
   if (HOOKED(after_open_hook))
     g_c_run_progn_hook(after_open_hook,
-		       SCM_LIST1(TO_SMALL_SCM_INT(index)),
+		       LIST_1(TO_SMALL_SCM_INT(index)),
 		       S_after_open_hook);
 }
 
@@ -2670,12 +2670,12 @@ char *output_comment(file_info *hdr)
   if (HOOKED(output_comment_hook))
     {
       SCM result;
-      SCM procs = SCM_HOOK_PROCEDURES (output_comment_hook);
+      SCM procs = HOOK_PROCEDURES (output_comment_hook);
       int comment_size = 0;
       char *new_comment = NULL, *tmpstr = NULL;
       while (NOT_NULL_P (procs))
 	{
-	  result = CALL1(SCM_CAR(procs),
+	  result = CALL1(CAR(procs),
 			 TO_SCM_STRING(com),
 			 S_output_comment_hook);
 	  tmpstr = TO_NEW_C_STRING(result);
@@ -2693,7 +2693,7 @@ char *output_comment(file_info *hdr)
 	      strcat(new_comment, tmpstr);
 	      free(tmpstr);
 	    }
-	  procs = SCM_CDR (procs);
+	  procs = CDR (procs);
 	}
       return(new_comment);
     }
@@ -2718,7 +2718,7 @@ void define_procedure_with_setter(char *get_name, SCM (*get_func)(), char *get_h
   scm_set_procedure_property_x(SND_LOOKUP(get_name), local_doc, str);
 #else
   scm_set_object_property_x(
-    SCM_CDR(
+    CDR(
       gh_define(get_name,
 	scm_make_procedure_with_setter(
           SND_NEW_PROCEDURE("", SCM_FNC get_func, get_req, get_opt, 0),
@@ -2754,7 +2754,7 @@ void define_procedure_with_reversed_setter(char *get_name, SCM (*get_func)(), ch
   scm_set_procedure_property_x(SND_LOOKUP(get_name), local_doc, str);
 #else
   scm_set_object_property_x(
-    SCM_CDR(
+    CDR(
       gh_define(get_name,
 	scm_make_procedure_with_setter(
           SND_NEW_PROCEDURE("", SCM_FNC get_func, get_req, get_opt, 0),

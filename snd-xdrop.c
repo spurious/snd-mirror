@@ -24,7 +24,7 @@ static void massage_selection(Widget w, XtPointer context, Atom *selection, Atom
       str[*length] = '\0';
       if ((!(HOOKED(drop_hook))) || 
 	  (!(TRUE_P(g_c_run_or_hook(drop_hook,
-					SCM_LIST1(TO_SCM_STRING(str)),
+					LIST_1(TO_SCM_STRING(str)),
 					"drop")))))
 	{
 	  sp = snd_open_file(str, (snd_state *)context, FALSE);

@@ -374,7 +374,7 @@ static int move_mark_1(chan_info *cp, mark *mp, int x)
   if (mp->samp > samps) mp->samp = samps;
   if (HOOKED(mark_drag_hook))
     g_c_run_progn_hook(mark_drag_hook,
-		       SCM_LIST1(TO_SMALL_SCM_INT(mark_id(mp))),
+		       LIST_1(TO_SMALL_SCM_INT(mark_id(mp))),
 		       S_mark_drag_hook);
   return(redraw);
 }
@@ -1471,7 +1471,7 @@ static void make_mark_graph(chan_info *cp, snd_info *sp, int initial_sample, int
 static SCM snd_no_such_mark_error(const char *caller, SCM id)
 {
   ERROR(NO_SUCH_MARK,
-	SCM_LIST2(TO_SCM_STRING(caller),
+	LIST_2(TO_SCM_STRING(caller),
 		  id));
   return(SCM_BOOL_F);
 }
@@ -1496,32 +1496,32 @@ static SCM g_restore_marks(SCM size, SCM snd, SCM chn, SCM marklist)
       cp->mark_ctr = (int *)CALLOC(cp->marks_size, sizeof(int));
       for (i = 0; i < cp->marks_size; i++) cp->mark_ctr[i] = -1;
       list_size = LIST_LENGTH(marklist);
-      for (i = 0, olst = marklist; i < list_size; i++, olst = SCM_CDR(olst))
+      for (i = 0, olst = marklist; i < list_size; i++, olst = CDR(olst))
 	{
-	  lst = SCM_CAR(olst);
-	  cp->mark_size[i] = TO_C_INT(SCM_CAR(lst));
-	  cp->mark_ctr[i] = TO_C_INT(SCM_CADR(lst));
+	  lst = CAR(olst);
+	  cp->mark_size[i] = TO_C_INT(CAR(lst));
+	  cp->mark_ctr[i] = TO_C_INT(CADR(lst));
           if (cp->mark_size[i] > 0)
 	    {
-	      mlst = SCM_CADDR(lst);
+	      mlst = CADDR(lst);
 	      cp->marks[i] = (mark **)CALLOC(cp->mark_size[i], sizeof(mark *));
 	      in_size = LIST_LENGTH(mlst);
-	      for (j = 0, molst = mlst; j < in_size; j++, molst = SCM_CDR(molst))
+	      for (j = 0, molst = mlst; j < in_size; j++, molst = CDR(molst))
 		{
-		  el = SCM_CAR(molst);
+		  el = CAR(molst);
 		  if (!(LIST_P(el))) 
 		    snd_error("%s[%d] %s: saved mark data is not a list?? ",
 			      __FILE__, __LINE__, __FUNCTION__);
-		  sm = SCM_CADR(el);
+		  sm = CADR(el);
 		  if (NOT_FALSE_P(sm))
 		    {
-		      nm = SCM_CAR(el);
+		      nm = CAR(el);
 		      if (NOT_FALSE_P(nm))
 			str = TO_C_STRING(nm);
 		      else str = NULL;
-		      id = TO_C_INT(SCM_CADDR(el));
+		      id = TO_C_INT(CADDR(el));
 		      if (LIST_LENGTH(el) > 3)
-			sync = TO_C_INT(SCM_CADDDR(el));
+			sync = TO_C_INT(CADDDR(el));
 		      else sync = 0;
 		      cp->marks[i][j] = make_mark_1(TO_C_INT(sm), str, id, sync);
 		      if (id > mark_id_counter) mark_id_counter = id;
@@ -1563,7 +1563,7 @@ static SCM iread_mark(SCM n, int fld, SCM pos_n, char *caller)
       else return(TO_SCM_STRING("")); 
       break;
     case MARK_HOME:   
-      return(SCM_LIST2(TO_SMALL_SCM_INT((ncp[0]->sound)->index),
+      return(LIST_2(TO_SMALL_SCM_INT((ncp[0]->sound)->index),
 		       TO_SMALL_SCM_INT(ncp[0]->chan))); 
       break;
     }
@@ -1610,43 +1610,43 @@ static SCM g_mark_p(SCM id_n)
 static SCM g_mark_sample(SCM mark_n, SCM pos_n) 
 {
   #define H_mark_sample "(" S_mark_sample " &optional id pos) returns the mark's location (sample number) at edit history pos"
-  ASSERT_TYPE(INTEGER_IF_BOUND_P(mark_n), mark_n, SCM_ARG1, S_mark_sample, "an integer");
-  ASSERT_TYPE(INTEGER_IF_BOUND_P(pos_n), pos_n, SCM_ARG2, S_mark_sample, "an integer");
+  ASSERT_TYPE(INTEGER_IF_BOUND_P(mark_n), mark_n, ARG1, S_mark_sample, "an integer");
+  ASSERT_TYPE(INTEGER_IF_BOUND_P(pos_n), pos_n, ARG2, S_mark_sample, "an integer");
   return(iread_mark(mark_n, MARK_SAMPLE, pos_n, S_mark_sample));
 }
 
 static SCM g_set_mark_sample(SCM mark_n, SCM samp_n) 
 {
-  ASSERT_TYPE(INTEGER_IF_BOUND_P(mark_n), mark_n, SCM_ARG1, "set-" S_mark_sample, "an integer");
-  ASSERT_TYPE(INTEGER_IF_BOUND_P(samp_n), samp_n, SCM_ARG2, "set-" S_mark_sample, "an integer");
+  ASSERT_TYPE(INTEGER_IF_BOUND_P(mark_n), mark_n, ARG1, "set-" S_mark_sample, "an integer");
+  ASSERT_TYPE(INTEGER_IF_BOUND_P(samp_n), samp_n, ARG2, "set-" S_mark_sample, "an integer");
   return(iwrite_mark(mark_n, samp_n, MARK_SAMPLE, "set-" S_mark_sample));
 }
 
 static SCM g_mark_sync(SCM mark_n) 
 {
   #define H_mark_sync "(" S_mark_sync " id) returns the mark's sync value"
-  ASSERT_TYPE(INTEGER_IF_BOUND_P(mark_n), mark_n, SCM_ARGn, S_mark_sync, "an integer");
+  ASSERT_TYPE(INTEGER_IF_BOUND_P(mark_n), mark_n, ARGn, S_mark_sync, "an integer");
   return(iread_mark(mark_n, MARK_SYNC, SCM_UNDEFINED, S_mark_sync));
 }
 
 static SCM g_set_mark_sync(SCM mark_n, SCM sync_n) 
 {
-  ASSERT_TYPE(INTEGER_IF_BOUND_P(mark_n), mark_n, SCM_ARG1, "set-" S_mark_sync, "an integer");
-  ASSERT_TYPE(INTEGER_OR_BOOLEAN_IF_BOUND_P(sync_n), sync_n, SCM_ARG2, "set-" S_mark_sync, "an integer");
+  ASSERT_TYPE(INTEGER_IF_BOUND_P(mark_n), mark_n, ARG1, "set-" S_mark_sync, "an integer");
+  ASSERT_TYPE(INTEGER_OR_BOOLEAN_IF_BOUND_P(sync_n), sync_n, ARG2, "set-" S_mark_sync, "an integer");
   return(iwrite_mark(mark_n, sync_n, MARK_SYNC, "set-" S_mark_sync));
 }
 
 static SCM g_mark_name(SCM mark_n) 
 {
   #define H_mark_name "(" S_mark_name " id &optional snd chn) returns the mark's name"
-  ASSERT_TYPE(INTEGER_IF_BOUND_P(mark_n), mark_n, SCM_ARGn, S_mark_name, "an integer");
+  ASSERT_TYPE(INTEGER_IF_BOUND_P(mark_n), mark_n, ARGn, S_mark_name, "an integer");
   return(iread_mark(mark_n, MARK_NAME, SCM_UNDEFINED, S_mark_name));
 }
 
 static SCM g_set_mark_name(SCM mark_n, SCM name) 
 {
-  ASSERT_TYPE(INTEGER_IF_BOUND_P(mark_n), mark_n, SCM_ARG1, "set-" S_mark_name, "an integer");
-  ASSERT_TYPE(STRING_P(name), name, SCM_ARG2, "set-" S_mark_name, "a string");
+  ASSERT_TYPE(INTEGER_IF_BOUND_P(mark_n), mark_n, ARG1, "set-" S_mark_name, "an integer");
+  ASSERT_TYPE(STRING_P(name), name, ARG2, "set-" S_mark_name, "a string");
   return(iwrite_mark(mark_n, name, MARK_NAME, "set-" S_mark_name));
 }
 
@@ -1659,7 +1659,7 @@ static SCM g_mark_sync_max(void)
 static SCM g_mark_home(SCM mark_n)
 {
   #define H_mark_home "(" S_mark_home " id) returns the sound (index) and channel that hold mark id"
-  ASSERT_TYPE(INTEGER_IF_BOUND_P(mark_n), mark_n, SCM_ARGn, S_mark_home, "an integer");
+  ASSERT_TYPE(INTEGER_IF_BOUND_P(mark_n), mark_n, ARGn, S_mark_home, "an integer");
   return(iread_mark(mark_n, MARK_HOME, SCM_UNDEFINED, S_mark_home));
 }
 
@@ -1672,7 +1672,7 @@ finds the mark in snd's channel chn at samp (if a number) or with the given name
   int i, samp = 0;
   char *name = NULL;
   chan_info *cp = NULL;
-  ASSERT_TYPE((NUMBER_P(samp_n) || STRING_P(samp_n) || (NOT_BOUND_P(samp_n)) || (FALSE_P(samp_n))), samp_n, SCM_ARG1, S_find_mark, "a number or string or #f");
+  ASSERT_TYPE((NUMBER_P(samp_n) || STRING_P(samp_n) || (NOT_BOUND_P(samp_n)) || (FALSE_P(samp_n))), samp_n, ARG1, S_find_mark, "a number or string or #f");
   SND_ASSERT_CHAN(S_find_mark, snd_n, chn_n, 2); 
   cp = get_cp(snd_n, chn_n, S_find_mark);
   if (cp->marks == NULL) 
@@ -1707,7 +1707,7 @@ static SCM g_add_mark(SCM samp_n, SCM snd_n, SCM chn_n)
   #define H_add_mark "(" S_add_mark ") samp &optional snd chn) adds a mark at sample samp returning the mark id"
   mark *m;
   chan_info *cp;
-  ASSERT_TYPE(INTEGER_IF_BOUND_P(samp_n), samp_n, SCM_ARG1, S_add_mark, "an integer");
+  ASSERT_TYPE(INTEGER_IF_BOUND_P(samp_n), samp_n, ARG1, S_add_mark, "an integer");
   SND_ASSERT_CHAN(S_add_mark, snd_n, chn_n, 2);
   cp = get_cp(snd_n, chn_n, S_add_mark);
   m = add_mark(TO_C_INT_OR_ELSE(samp_n, 0), NULL, cp);
@@ -1726,7 +1726,7 @@ static SCM g_delete_mark(SCM id_n)
   chan_info *cp[1];
   mark *m;
   int id;
-  ASSERT_TYPE(INTEGER_IF_BOUND_P(id_n), id_n, SCM_ARGn, S_delete_mark, "an integer");
+  ASSERT_TYPE(INTEGER_IF_BOUND_P(id_n), id_n, ARGn, S_delete_mark, "an integer");
   m = find_mark_id(cp, id = TO_C_INT_OR_ELSE(id_n, 0), -1);
   if (m == NULL) 
     return(snd_no_such_mark_error(S_delete_mark, id_n));
@@ -1773,7 +1773,7 @@ static SCM g_syncd_marks(SCM sync)
   #define H_syncd_marks "(" S_syncd_marks " sync) -> list of mark ids that share sync"
   int *ids;
   SCM res;
-  ASSERT_TYPE(INTEGER_P(sync), sync, SCM_ARGn, S_syncd_marks, "an integer");
+  ASSERT_TYPE(INTEGER_P(sync), sync, ARGn, S_syncd_marks, "an integer");
   ids = syncd_marks(get_global_state(), TO_C_INT(sync));
   if ((ids == NULL) || (ids[0] == 0)) return(SCM_EOL);
   res = int_array_to_list(ids, 1, ids[0]);
@@ -1868,7 +1868,7 @@ static SCM g_forward_mark(SCM count, SCM snd, SCM chn)
   int val; 
   chan_info *cp;
   mark *mp = NULL;
-  ASSERT_TYPE(INTEGER_IF_BOUND_P(count), count, SCM_ARG1, S_forward_mark, "an integer");
+  ASSERT_TYPE(INTEGER_IF_BOUND_P(count), count, ARG1, S_forward_mark, "an integer");
   SND_ASSERT_CHAN(S_forward_mark, snd, chn, 2);
   cp = get_cp(snd, chn, S_forward_mark);
   val = TO_C_INT_OR_ELSE(count, 1); 
@@ -1887,7 +1887,7 @@ static SCM g_backward_mark(SCM count, SCM snd, SCM chn)
   int val; 
   chan_info *cp;
   mark *mp = NULL;
-  ASSERT_TYPE(INTEGER_IF_BOUND_P(count), count, SCM_ARG1, S_backward_mark, "an integer");
+  ASSERT_TYPE(INTEGER_IF_BOUND_P(count), count, ARG1, S_backward_mark, "an integer");
   SND_ASSERT_CHAN(S_backward_mark, snd, chn, 2);
   cp = get_cp(snd, chn, S_backward_mark);
   val = -(TO_C_INT_OR_ELSE(count, 1)); 

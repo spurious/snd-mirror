@@ -22,7 +22,7 @@ void snd_warning(char *format, ...)
   va_end(ap);
   if ((HOOKED(snd_warning_hook)) &&
       (NOT_FALSE_P(g_c_run_or_hook(snd_warning_hook, 
-				   SCM_LIST1(TO_SCM_STRING(snd_error_buffer)),
+				   LIST_1(TO_SCM_STRING(snd_error_buffer)),
 				   S_snd_warning_hook))))
     return;
   ss = get_global_state();
@@ -67,7 +67,7 @@ void snd_error(char *format, ...)
   va_end(ap);
   if ((HOOKED(snd_error_hook)) &&
       (NOT_FALSE_P(g_c_run_or_hook(snd_error_hook, 
-				   SCM_LIST1(TO_SCM_STRING(snd_error_buffer)),
+				   LIST_1(TO_SCM_STRING(snd_error_buffer)),
 				   S_snd_error_hook))))
     return;
   ss = get_global_state();
@@ -118,7 +118,7 @@ void snd_error(char *format, ...)
 static SCM g_snd_error(SCM msg)
 {
   #define H_snd_error "(" S_snd_error " str) reports error message str"
-  ASSERT_TYPE(STRING_P(msg), msg, SCM_ARGn, S_snd_error, "a string");
+  ASSERT_TYPE(STRING_P(msg), msg, ARGn, S_snd_error, "a string");
   direct_snd_error_call = 1;
   snd_error(TO_C_STRING(msg));
   direct_snd_error_call = 0;
@@ -128,7 +128,7 @@ static SCM g_snd_error(SCM msg)
 static SCM g_snd_warning(SCM msg)
 {
   #define H_snd_warning "(" S_snd_warning " str) reports warning message str"
-  ASSERT_TYPE(STRING_P(msg), msg, SCM_ARGn, S_snd_warning, "a string");
+  ASSERT_TYPE(STRING_P(msg), msg, ARGn, S_snd_warning, "a string");
   snd_warning(TO_C_STRING(msg));
   return(msg);
 }
@@ -138,7 +138,7 @@ int ignore_mus_error(int type, char *msg)
   SCM result = SCM_BOOL_F;
   if (HOOKED(mus_error_hook))
     result = g_c_run_or_hook(mus_error_hook, 
-			     SCM_LIST2(TO_SCM_INT(type), 
+			     LIST_2(TO_SCM_INT(type), 
 				       TO_SCM_STRING(msg)),
 			     S_mus_error_hook);
   return(NOT_FALSE_P(result));

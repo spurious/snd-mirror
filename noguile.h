@@ -38,24 +38,24 @@ SCM scm_return_first(SCM a, ...);
 #define scm_must_malloc(size, str) malloc(size)
 #define scm_done_malloc(size) 
 
-#define SCM_EQ_P(a, b) 0
-#define SCM_LIST0 0
-#define SCM_LIST1(a) 0
-#define SCM_LIST2(a, b) 0
-#define SCM_LIST3(a, b, c) 0
-#define SCM_LIST4(a, b, c, d) 0
-#define SCM_LIST5(a, b, c, d, e) 0
-#define SCM_LIST6(a, b, c, d, e, f) 0
-#define SCM_LIST7(a, b, c, d, e, f, g) 0
-#define SCM_CAR(a) 0
-#define SCM_CADR(a) 0
-#define SCM_CADDR(a) 0
-#define SCM_CADDDR(a) 0
-#define SCM_CDR(a) 0
-#define SCM_CDDR(a) 0
-#define SCM_VELTS(a) ((SCM *)a)
+#define EQ_P(a, b) 0
+#define LIST_0 0
+#define LIST_1(a) 0
+#define LIST_2(a, b) 0
+#define LIST_3(a, b, c) 0
+#define LIST_4(a, b, c, d) 0
+#define LIST_5(a, b, c, d, e) 0
+#define LIST_6(a, b, c, d, e, f) 0
+#define LIST_7(a, b, c, d, e, f, g) 0
+#define CAR(a) 0
+#define CADR(a) 0
+#define CADDR(a) 0
+#define CADDDR(a) 0
+#define CDR(a) 0
+#define CDDR(a) 0
+#define VECTOR_ELEMENTS(a) ((SCM *)a)
 #define SCM_NEWSMOB(a, b, c)
-#define SCM_HOOK_PROCEDURES(a) 0
+#define HOOK_PROCEDURES(a) 0
 #define SET_SCM_VALUE(a, b)
 #define SCM_VARIABLE_REF(a) 0
 

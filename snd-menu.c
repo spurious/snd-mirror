@@ -529,7 +529,7 @@ void set_channel_style(snd_state *ss, int val)
 static SCM snd_no_such_menu_error(const char *caller, SCM id)
 {
   ERROR(NO_SUCH_MENU,
-	SCM_LIST2(TO_SCM_STRING(caller),
+	LIST_2(TO_SCM_STRING(caller),
 		  id));
   return(SCM_BOOL_F);
 }
@@ -541,12 +541,12 @@ static char *output_name(void)
   if (HOOKED(output_name_hook))
     {
       SCM result;
-      SCM procs = SCM_HOOK_PROCEDURES (output_name_hook);
+      SCM procs = HOOK_PROCEDURES (output_name_hook);
       while (NOT_NULL_P(procs))
 	{
-	  result = CALL0(SCM_CAR(procs), S_output_name_hook);
+	  result = CALL0(CAR(procs), S_output_name_hook);
 	  if (STRING_P(result)) return(TO_NEW_C_STRING(result));
-	  procs = SCM_CDR (procs);
+	  procs = CDR (procs);
 	}
     }
   return(NULL);
@@ -570,7 +570,7 @@ static SCM g_set_save_state_file(SCM val)
 {
   #define H_save_state_file "(" S_save_state_file ") -> name of saved state file (\"saved-snd.scm\")"
   snd_state *ss;
-  ASSERT_TYPE(STRING_P(val), val, SCM_ARGn, "set-" S_save_state_file, "a string"); 
+  ASSERT_TYPE(STRING_P(val), val, ARGn, "set-" S_save_state_file, "a string"); 
   ss = get_global_state();
   set_save_state_file(ss, TO_C_STRING(val));
   return(TO_SCM_STRING(save_state_file(ss)));
@@ -618,7 +618,7 @@ static SCM gl_add_to_main_menu(SCM label, SCM callback)
   int val = -1, slot = -1;
   char *err;
   SCM errm;
-  ASSERT_TYPE(STRING_P(label), label, SCM_ARG1, S_add_to_main_menu, "a string");
+  ASSERT_TYPE(STRING_P(label), label, ARG1, S_add_to_main_menu, "a string");
   slot = make_callback_slot();
   if (BOUND_P(callback))
     {
@@ -646,9 +646,9 @@ menu is the index returned by add-to-main-menu, func should be a function of no 
   int err = 0, slot, m;
   char *errmsg;
   SCM errm;
-  ASSERT_TYPE(STRING_P(label), label, SCM_ARG2, S_add_to_menu, "a string");
-  ASSERT_TYPE(INTEGER_P(menu), menu, SCM_ARG1, S_add_to_menu, "an integer");
-  ASSERT_TYPE(PROCEDURE_P(callback), callback, SCM_ARG3, S_add_to_menu, "a procedure");
+  ASSERT_TYPE(STRING_P(label), label, ARG2, S_add_to_menu, "a string");
+  ASSERT_TYPE(INTEGER_P(menu), menu, ARG1, S_add_to_menu, "an integer");
+  ASSERT_TYPE(PROCEDURE_P(callback), callback, ARG3, S_add_to_menu, "a procedure");
   errmsg = procedure_ok(callback, 0, S_add_to_menu, "menu callback", 3);
   if (errmsg == NULL)
     {
@@ -683,8 +683,8 @@ static SCM gl_remove_from_menu(SCM menu, SCM label)
 {
   #define H_remove_from_menu "(" S_remove_from_menu " menu label) removes menu item label from menu"
   int val, m;
-  ASSERT_TYPE(STRING_P(label), label, SCM_ARG2, S_remove_from_menu, "a string");
-  ASSERT_TYPE(INTEGER_P(menu), menu, SCM_ARG1, S_remove_from_menu, "an integer");
+  ASSERT_TYPE(STRING_P(label), label, ARG2, S_remove_from_menu, "a string");
+  ASSERT_TYPE(INTEGER_P(menu), menu, ARG1, S_remove_from_menu, "an integer");
   m = TO_C_INT(menu);
   if (m < 0) 
     return(snd_no_such_menu_error(S_remove_from_menu, menu));
@@ -697,9 +697,9 @@ static SCM gl_change_menu_label(SCM menu, SCM old_label, SCM new_label)
 {
   #define H_change_menu_label "(" S_change_menu_label " menu old-label new-label) changes menu's label"
   int val, m;
-  ASSERT_TYPE(STRING_P(old_label), old_label, SCM_ARG2, S_change_menu_label, "a string");
-  ASSERT_TYPE(STRING_P(new_label), new_label, SCM_ARG3, S_change_menu_label, "a string");
-  ASSERT_TYPE(INTEGER_P(menu), menu, SCM_ARG1, S_change_menu_label, "an integer");
+  ASSERT_TYPE(STRING_P(old_label), old_label, ARG2, S_change_menu_label, "a string");
+  ASSERT_TYPE(STRING_P(new_label), new_label, ARG3, S_change_menu_label, "a string");
+  ASSERT_TYPE(INTEGER_P(menu), menu, ARG1, S_change_menu_label, "an integer");
   m = TO_C_INT(menu);
   if (m < 0) 
     return(snd_no_such_menu_error(S_change_menu_label,	menu));
@@ -713,8 +713,8 @@ static SCM gl_menu_sensitive(SCM menu, SCM label)
 {
   #define H_menu_sensitive "(" S_menu_sensitive " menu label) reflects whether item label in menu is sensitive"
   int val, m;
-  ASSERT_TYPE(INTEGER_P(menu), menu, SCM_ARG1, "set-" S_menu_sensitive, "an integer");
-  ASSERT_TYPE(STRING_P(label), label, SCM_ARG2, "set-" S_menu_sensitive, "a string");
+  ASSERT_TYPE(INTEGER_P(menu), menu, ARG1, "set-" S_menu_sensitive, "an integer");
+  ASSERT_TYPE(STRING_P(label), label, ARG2, "set-" S_menu_sensitive, "a string");
   m = TO_C_INT(menu);
   if (m < 0) 
     return(snd_no_such_menu_error(S_menu_sensitive, menu));
@@ -726,9 +726,9 @@ static SCM gl_menu_sensitive(SCM menu, SCM label)
 static SCM gl_set_menu_sensitive(SCM menu, SCM label, SCM on)
 {
   int val, m;
-  ASSERT_TYPE(INTEGER_P(menu), menu, SCM_ARG1, "set-" S_menu_sensitive, "an integer");
-  ASSERT_TYPE(STRING_P(label), label, SCM_ARG2, "set-" S_menu_sensitive, "a string");
-  ASSERT_TYPE(BOOLEAN_IF_BOUND_P(on), on, SCM_ARG3, "set-" S_menu_sensitive, "a boolean");
+  ASSERT_TYPE(INTEGER_P(menu), menu, ARG1, "set-" S_menu_sensitive, "an integer");
+  ASSERT_TYPE(STRING_P(label), label, ARG2, "set-" S_menu_sensitive, "a string");
+  ASSERT_TYPE(BOOLEAN_IF_BOUND_P(on), on, ARG3, "set-" S_menu_sensitive, "a boolean");
   m = TO_C_INT(menu);
   if (m < 0) 
     return(snd_no_such_menu_error("set-" S_menu_sensitive, menu));

@@ -17,8 +17,8 @@ static void drag_data_received (GtkWidget *widget, GdkDragContext *context, gint
     {
       if ((!(HOOKED(drop_hook))) || 
 	  (!(TRUE_P(g_c_run_or_hook(drop_hook,
-					SCM_LIST1(TO_SCM_STRING((char *)(data->data))),
-					"drop")))))
+				    LIST_1(TO_SCM_STRING((char *)(data->data))),
+				    "drop")))))
 	{
 	  sp = snd_open_file((char *)(data->data), get_global_state(), FALSE);
 	  if (sp) select_channel(sp, 0);

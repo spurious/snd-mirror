@@ -214,7 +214,7 @@ static SCM g_make_reverb, g_reverb, g_free_reverb;
 
 static SCM g_reverb_procedures(void) 
 {
-  return(SCM_LIST3(g_reverb, g_make_reverb, g_free_reverb));
+  return(LIST_3(g_reverb, g_make_reverb, g_free_reverb));
 }
 
 static SCM g_set_reverb_procedures(SCM rev, SCM make_rev, SCM free_rev)
@@ -252,11 +252,11 @@ static SCM g_set_reverb_procedures(SCM rev, SCM make_rev, SCM free_rev)
       g_reverb = rev;
       g_make_reverb = make_rev;
       g_free_reverb = free_rev;
-      if (SCM_EQ_P(g_reverb, SND_LOOKUP("snd-nrev")))
+      if (EQ_P(g_reverb, SND_LOOKUP("snd-nrev")))
 	which_reverb = NREVERB;
       else
 	{
-	  if (SCM_EQ_P(g_reverb, SND_LOOKUP("snd-freeverb")))
+	  if (EQ_P(g_reverb, SND_LOOKUP("snd-freeverb")))
 	    which_reverb = FREEVERB;
 	  else which_reverb = USERVERB;
 	}
@@ -447,8 +447,8 @@ static mus_any *mus_make_fcomb (Float scaler, int size, Float a0, Float a1)
         {
           #define H_fcomb "(" S_fcomb " gen &optional (val 0.0)) comb filters val with low pass on feeback."
           Float in1 = 0.0;
-          ASSERT_TYPE(((mus_scm_p(obj)) && (mus_fcomb_p(TO_CLM(obj)))), obj, SCM_ARG1, S_fcomb, "a comb filter");
-          if (NUMBER_P(input)) in1 = TO_C_DOUBLE(input); else ASSERT_TYPE(NOT_BOUND_P(input), input, SCM_ARG2, S_fcomb, "a number");
+          ASSERT_TYPE(((mus_scm_p(obj)) && (mus_fcomb_p(TO_CLM(obj)))), obj, ARG1, S_fcomb, "a comb filter");
+          if (NUMBER_P(input)) in1 = TO_C_DOUBLE(input); else ASSERT_TYPE(NOT_BOUND_P(input), input, ARG2, S_fcomb, "a number");
           return(TO_SCM_DOUBLE(mus_fcomb(TO_CLM(obj), in1, 0.0)));
         }
         
@@ -1141,7 +1141,7 @@ static void stop_playing_with_toggle(dac_info *dp, int toggle)
     {
       if (HOOKED(stop_playing_region_hook))
 	g_c_run_or_hook(stop_playing_region_hook,
-			SCM_LIST1(TO_SMALL_SCM_INT(dp->region)),
+			LIST_1(TO_SMALL_SCM_INT(dp->region)),
 			S_stop_playing_region_hook);
     }
   else
@@ -1150,13 +1150,13 @@ static void stop_playing_with_toggle(dac_info *dp, int toggle)
 	{
 	  if (HOOKED(stop_playing_hook))
 	    g_c_run_or_hook(stop_playing_hook,
-			    SCM_LIST1(TO_SMALL_SCM_INT(sp->index)),
+			    LIST_1(TO_SMALL_SCM_INT(sp->index)),
 			    S_stop_playing_hook);
 	}
       if (HOOKED(stop_playing_channel_hook))
 	g_c_run_or_hook(stop_playing_channel_hook,
-			SCM_LIST2(TO_SMALL_SCM_INT(sp->index),
-				  TO_SMALL_SCM_INT(cp->chan)),
+			LIST_2(TO_SMALL_SCM_INT(sp->index),
+			       TO_SMALL_SCM_INT(cp->chan)),
 			S_stop_playing_channel_hook);
       if (sp->index < 0) {free_player(sp); sp = NULL;}
     }
@@ -1439,8 +1439,8 @@ void play_sound(snd_info *sp, int start, int end, int background, SCM edpos, con
   if (!(sp->inuse)) return;
   if ((HOOKED(start_playing_hook)) &&
       (TRUE_P(g_c_run_or_hook(start_playing_hook,
-				  SCM_LIST1(TO_SMALL_SCM_INT(sp->index)),
-				  S_start_playing_hook))))
+			      LIST_1(TO_SMALL_SCM_INT(sp->index)),
+			      S_start_playing_hook))))
     {
       reflect_play_stop(sp);           /* turns off buttons */
       if (sp->delete_me) 
@@ -1600,7 +1600,7 @@ static int fill_dac_buffers(dac_state *dacp, int write_ok)
     {
       if (HOOKED(play_hook))
 	g_c_run_progn_hook(play_hook, 
-			   SCM_LIST1(TO_SCM_INT(frames)),
+			   LIST_1(TO_SCM_INT(frames)),
 			   S_play_hook);
       cursor_time += frames;
       cursor_change = (cursor_time >= CURSOR_UPDATE_INTERVAL);
@@ -2542,16 +2542,16 @@ static SCM g_play_1(SCM samp_n, SCM snd_n, SCM chn_n, int background, int syncd,
 	{
 	  FREE(name);
 	  mus_misc_error(caller, "can't read header", 
-			 SCM_LIST2(samp_n, 
-				   TO_SCM_STRING(mus_header_type_name(mus_header_type()))));
+			 LIST_2(samp_n, 
+				TO_SCM_STRING(mus_header_type_name(mus_header_type()))));
 	}
       if (!(MUS_DATA_FORMAT_OK(mus_sound_data_format(name))))
 	{
 	  FREE(name);
 	  mus_misc_error(caller, "can't read data", 
-			 SCM_LIST2(samp_n, 
-				   TO_SCM_STRING(mus_header_original_format_name(mus_sound_original_format(name),
-										 mus_sound_header_type(name)))));
+			 LIST_2(samp_n, 
+				TO_SCM_STRING(mus_header_original_format_name(mus_sound_original_format(name),
+									      mus_sound_header_type(name)))));
 	}
       sp = make_sound_readable(get_global_state(), name, FALSE);
       sp->short_filename = filename_without_home_directory(name);
@@ -2564,7 +2564,7 @@ static SCM g_play_1(SCM samp_n, SCM snd_n, SCM chn_n, int background, int syncd,
     }
   else
     {
-      ASSERT_TYPE(NUMBER_IF_BOUND_P(samp_n), samp_n, SCM_ARG1, caller, "a number");
+      ASSERT_TYPE(NUMBER_IF_BOUND_P(samp_n), samp_n, ARG1, caller, "a number");
       SND_ASSERT_CHAN(caller, snd_n, chn_n, 2);
       sp = get_sp(snd_n);
       if (sp == NULL) 
@@ -2615,7 +2615,7 @@ played."
 static SCM g_play_selection(SCM wait, SCM edpos) 
 {
   #define H_play_selection "(" S_play_selection " &optional (wait #f) pos) plays the current selection"
-  ASSERT_TYPE(BOOLEAN_IF_BOUND_P(wait), wait, SCM_ARG1, S_play_selection, "a boolean");
+  ASSERT_TYPE(BOOLEAN_IF_BOUND_P(wait), wait, ARG1, S_play_selection, "a boolean");
   if (selection_is_active())
     {
       play_selection(!(TO_C_BOOLEAN_OR_F(wait)), edpos, S_play_selection, 2);
@@ -2639,7 +2639,7 @@ static SCM g_stop_playing(SCM snd_n)
 {
   #define H_stop_playing "(" S_stop_playing " &optional snd) stops play in progress"
   snd_info *sp = NULL;
-  ASSERT_TYPE(INTEGER_IF_BOUND_P(snd_n), snd_n, SCM_ARG1, S_stop_playing, "an integer");
+  ASSERT_TYPE(INTEGER_IF_BOUND_P(snd_n), snd_n, ARG1, S_stop_playing, "an integer");
   if (INTEGER_P(snd_n)) sp = get_sp(snd_n);
   if (sp) 
     stop_playing_sound(sp); 
@@ -2730,8 +2730,8 @@ void clear_players(void)
 static SCM snd_no_such_player_error(const char *caller, SCM index)
 {
   ERROR(NO_SUCH_PLAYER,
-	SCM_LIST2(TO_SCM_STRING(caller),
-		  index));
+	LIST_2(TO_SCM_STRING(caller),
+	       index));
   return(SCM_BOOL_F);
 }
 
@@ -2761,7 +2761,7 @@ static SCM g_player_home(SCM snd_chn)
   #define H_player_home "(" S_player_home " player) returns a list of the sound index and channel number associated with player"
   int index;
   chan_info *cp;
-  ASSERT_TYPE(INTEGER_P(snd_chn), snd_chn, SCM_ARG1, S_player_home, "an integer");
+  ASSERT_TYPE(INTEGER_P(snd_chn), snd_chn, ARG1, S_player_home, "an integer");
   index = -TO_SMALL_C_INT(snd_chn);
   if ((index > 0) && 
       (index < players_size) && 
@@ -2771,10 +2771,10 @@ static SCM g_player_home(SCM snd_chn)
     {
       cp = players[index]->chans[player_chans[index]]; /* trying to get back to the original sound index (not the player index) */
       if ((cp->sound) && (cp->sound->active))
-	return(SCM_LIST2(TO_SMALL_SCM_INT(cp->sound->index),
+	return(LIST_2(TO_SMALL_SCM_INT(cp->sound->index),
+		      TO_SMALL_SCM_INT(cp->chan)));
+      else return(LIST_2(NO_SUCH_SOUND,
 			 TO_SMALL_SCM_INT(cp->chan)));
-      else return(SCM_LIST2(NO_SUCH_SOUND,
-			    TO_SMALL_SCM_INT(cp->chan)));
     }
   return(snd_no_such_player_error(S_player_home, snd_chn));
 }
@@ -2785,9 +2785,9 @@ static SCM g_add_player(SCM snd_chn, SCM start, SCM end, SCM edpos)
   snd_info *sp = NULL;
   chan_info *cp;
   int index;
-  ASSERT_TYPE(INTEGER_P(snd_chn), snd_chn, SCM_ARG1, S_add_player, "an integer");
-  ASSERT_TYPE(NUMBER_IF_BOUND_P(start), start, SCM_ARG2, S_add_player, "a number");
-  ASSERT_TYPE(NUMBER_IF_BOUND_P(end), end, SCM_ARG3, S_add_player, "a number");
+  ASSERT_TYPE(INTEGER_P(snd_chn), snd_chn, ARG1, S_add_player, "an integer");
+  ASSERT_TYPE(NUMBER_IF_BOUND_P(start), start, ARG2, S_add_player, "a number");
+  ASSERT_TYPE(NUMBER_IF_BOUND_P(end), end, ARG3, S_add_player, "a number");
   index = -TO_SMALL_C_INT(snd_chn);
   if ((index > 0) && (index < players_size)) sp = players[index];
   if (sp)
@@ -2811,9 +2811,9 @@ static SCM g_start_playing(SCM Chans, SCM Srate, SCM In_Background)
 
   #define H_start_playing "(" S_start_playing " &optional chans srate in-background)"
   int chans, srate;
-  ASSERT_TYPE(INTEGER_IF_BOUND_P(Chans), Chans, SCM_ARG1, S_start_playing, "an integer");
-  ASSERT_TYPE(NUMBER_IF_BOUND_P(Srate), Srate, SCM_ARG2, S_start_playing, "a number");
-  ASSERT_TYPE(BOOLEAN_IF_BOUND_P(In_Background), In_Background, SCM_ARG3, S_start_playing, "a boolean");
+  ASSERT_TYPE(INTEGER_IF_BOUND_P(Chans), Chans, ARG1, S_start_playing, "an integer");
+  ASSERT_TYPE(NUMBER_IF_BOUND_P(Srate), Srate, ARG2, S_start_playing, "a number");
+  ASSERT_TYPE(BOOLEAN_IF_BOUND_P(In_Background), In_Background, ARG3, S_start_playing, "a boolean");
   chans = TO_C_INT_OR_ELSE(Chans, 1);
   if (chans <= 0)
     mus_misc_error(S_start_playing, "invalid chans arg", Chans);
@@ -2829,7 +2829,7 @@ static SCM g_stop_player(SCM snd_chn)
   #define H_stop_player "(" S_stop_player " player) stops player"
   int index;
   snd_info *sp = NULL;
-  ASSERT_TYPE(INTEGER_P(snd_chn), snd_chn, SCM_ARG1, S_stop_player, "an integer");
+  ASSERT_TYPE(INTEGER_P(snd_chn), snd_chn, ARG1, S_stop_player, "an integer");
   index = -TO_SMALL_C_INT(snd_chn);
   if ((index > 0) && (index < players_size)) sp = players[index];
   if (sp) 
@@ -2844,7 +2844,7 @@ static SCM g_player_p(SCM snd_chn)
 {
   #define H_player_p "(" S_player_p " obj) -> is obj an active player"
   int index;
-  ASSERT_TYPE(INTEGER_P(snd_chn), snd_chn, SCM_ARG1, S_player_p, "an integer");
+  ASSERT_TYPE(INTEGER_P(snd_chn), snd_chn, ARG1, S_player_p, "an integer");
   index = -TO_SMALL_C_INT(snd_chn);
   return(TO_SCM_BOOLEAN((index > 0) && 
 			(index < players_size) && 

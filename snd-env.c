@@ -1193,9 +1193,9 @@ env *scm2env(SCM res)
       if (len > 0)
 	{
 	  data = (Float *)CALLOC(len, sizeof(Float));
-	  for (i = 0, lst = res; i < len; i++, lst = SCM_CDR(lst))
+	  for (i = 0, lst = res; i < len; i++, lst = CDR(lst))
 	    {
-	      el = SCM_CAR(lst);
+	      el = CAR(lst);
 	      if (NUMBER_P(el))
 		data[i] = TO_C_DOUBLE(el);
 	      else data[i] = 0.0;
@@ -1214,10 +1214,10 @@ static int x_increases(SCM res)
   SCM lst;
   Float x, nx;
   len = LIST_LENGTH(res);
-  x = TO_C_DOUBLE(SCM_CAR(res));
-  for (i = 2, lst = SCM_CDDR(res); i < len; i += 2, lst = SCM_CDDR(lst))
+  x = TO_C_DOUBLE(CAR(res));
+  for (i = 2, lst = CDDR(res); i < len; i += 2, lst = CDDR(lst))
     {
-      nx = TO_C_DOUBLE(SCM_CAR(lst));
+      nx = TO_C_DOUBLE(CAR(lst));
       if (x >= nx) return(0);
       x = nx;
     }
@@ -1254,7 +1254,7 @@ env *name_to_env(char *str)
 static SCM g_define_envelope(SCM a, SCM b)
 {
   #define H_define_envelope "(" S_define_envelope " name data) defines 'name' to be the envelope 'data', a list of breakpoints"
-  ASSERT_TYPE(STRING_P(a), a, SCM_ARG1, S_define_envelope, "a string");
+  ASSERT_TYPE(STRING_P(a), a, ARG1, S_define_envelope, "a string");
   if (LIST_P(b)) 
     alert_envelope_editor(get_global_state(), 
 			  TO_C_STRING(a), 
@@ -1304,14 +1304,14 @@ env *get_env(SCM e, char *origin) /* list or vector in e */
   env *newenv = NULL;
   SCM *vdata;
   SCM lst;
-  ASSERT_TYPE(((VECTOR_P(e)) || (LIST_P_WITH_LENGTH(e, len))), e, SCM_ARG1, origin, "a vector or a list");
+  ASSERT_TYPE(((VECTOR_P(e)) || (LIST_P_WITH_LENGTH(e, len))), e, ARG1, origin, "a vector or a list");
   if (VECTOR_P(e))
     {
       len = VECTOR_LENGTH(e);
       if (len == 0)
 	mus_misc_error(origin, "null env", e);
       buf = (Float *)CALLOC(len, sizeof(Float));
-      vdata = SCM_VELTS(e);
+      vdata = VECTOR_ELEMENTS(e);
       for (i = 0; i < len; i++) 
 	buf[i] = TO_C_DOUBLE(vdata[i]);
     }
@@ -1320,8 +1320,8 @@ env *get_env(SCM e, char *origin) /* list or vector in e */
       if (len == 0)
 	mus_misc_error(origin, "null env", e);
       buf = (Float *)CALLOC(len, sizeof(Float));
-      for (i = 0, lst = e; i < len; i++, lst = SCM_CDR(lst)) 
-	buf[i] = TO_C_DOUBLE(SCM_CAR(lst));
+      for (i = 0, lst = e; i < len; i++, lst = CDR(lst)) 
+	buf[i] = TO_C_DOUBLE(CAR(lst));
     }
   newenv = make_envelope(buf, len);
   if (buf) FREE(buf);
@@ -1333,7 +1333,7 @@ static SCM g_save_envelopes(SCM filename)
   #define H_save_envelopes "(" S_save_envelopes " filename) saves the envelopes known to the envelope editor in filename"
   char *name = NULL;
   FILE *fd;
-  ASSERT_TYPE((STRING_P(filename) || (FALSE_P(filename)) || (NOT_BOUND_P(filename))), filename, SCM_ARGn, S_save_envelopes, "a string or #f");
+  ASSERT_TYPE((STRING_P(filename) || (FALSE_P(filename)) || (NOT_BOUND_P(filename))), filename, ARGn, S_save_envelopes, "a string or #f");
   if (STRING_P(filename)) 
     name = mus_expand_filename(TO_C_STRING(filename));
   else name = copy_string("envs.save");
@@ -1342,7 +1342,7 @@ static SCM g_save_envelopes(SCM filename)
   if (name) FREE(name);
   if ((!fd) || (fclose(fd) != 0))
     ERROR(CANNOT_SAVE,
-	  SCM_LIST3(TO_SCM_STRING(S_save_envelopes),
+	  LIST_3(TO_SCM_STRING(S_save_envelopes),
 		    filename,
 		    TO_SCM_STRING(strerror(errno))));
   return(filename);
@@ -1361,18 +1361,18 @@ int check_enved_hook(env *e, int pos, Float x, Float y, int reason)
        * envelope -- if its length doesn't match current, we need to remake
        * current. Otherwise return 0, and assume the caller will handle default
        */
-      procs = SCM_HOOK_PROCEDURES (enved_hook);
+      procs = HOOK_PROCEDURES (enved_hook);
       env_list = env2scm(e);
       while (NOT_NULL_P(procs))
 	{
-	  result = APPLY(SCM_CAR(procs), 
-			 SCM_LIST5(env_list,
+	  result = APPLY(CAR(procs), 
+			 LIST_5(env_list,
 				   TO_SMALL_SCM_INT(pos),
 				   TO_SCM_DOUBLE(x),
 				   TO_SCM_DOUBLE(y),
 				   TO_SMALL_SCM_INT(reason)),
 			 S_enved_hook);
-	  procs = SCM_CDR (procs);
+	  procs = CDR (procs);
 	  if ((NOT_FALSE_P(result)) && 
 	      (LIST_P_WITH_LENGTH(result, len)))
 	    {
@@ -1387,8 +1387,8 @@ int check_enved_hook(env *e, int pos, Float x, Float y, int reason)
 		  e->data_size = len;
 		}
 	      e->pts = len / 2;
-	      for (i = 0, lst = result; i < len; i++, lst = SCM_CDR(lst))
-		e->data[i] = TO_C_DOUBLE(SCM_CAR(lst));
+	      for (i = 0, lst = result; i < len; i++, lst = CDR(lst))
+		e->data[i] = TO_C_DOUBLE(CAR(lst));
 	      if (NOT_NULL_P(procs))
 		env_list = env2scm(e);
 	      env_changed = 1;
@@ -1402,7 +1402,7 @@ static SCM g_enved_base(void) {return(TO_SCM_DOUBLE(enved_base(get_global_state(
 static SCM g_set_enved_base(SCM val) 
 {
   #define H_enved_base "(" S_enved_base ") -> envelope editor exponential base value (1.0)"
-  ASSERT_TYPE(NUMBER_P(val), val, SCM_ARGn, "set-" S_enved_base, "a number"); 
+  ASSERT_TYPE(NUMBER_P(val), val, ARGn, "set-" S_enved_base, "a number"); 
   set_enved_base(get_global_state(), mus_fclamp(0.0, TO_C_DOUBLE(val), 300000.0));
   return(TO_SCM_DOUBLE(enved_base(get_global_state())));
 }
@@ -1411,7 +1411,7 @@ static SCM g_enved_power(void) {return(TO_SCM_DOUBLE(enved_power(get_global_stat
 static SCM g_set_enved_power(SCM val) 
 {
   #define H_enved_power "(" S_enved_power ") -> envelope editor base scale range (9.0^power)"
-  ASSERT_TYPE(NUMBER_P(val), val, SCM_ARGn, "set-" S_enved_power, "a number"); 
+  ASSERT_TYPE(NUMBER_P(val), val, ARGn, "set-" S_enved_power, "a number"); 
   set_enved_power(get_global_state(), mus_fclamp(0.0, TO_C_DOUBLE(val), 10.0));
   return(TO_SCM_DOUBLE(enved_power(get_global_state())));
 }
@@ -1422,7 +1422,7 @@ static SCM g_set_enved_clip_p(SCM on)
   #define H_enved_clip_p "(" S_enved_clip_p ") -> envelope editor 'clip' button setting; \
 if clipping, the motion of the mouse is restricted to the current graph bounds."
 
-  ASSERT_TYPE(BOOLEAN_IF_BOUND_P(on), on, SCM_ARGn, "set-" S_enved_clip_p, "a boolean");
+  ASSERT_TYPE(BOOLEAN_IF_BOUND_P(on), on, ARGn, "set-" S_enved_clip_p, "a boolean");
   set_enved_clip_p(get_global_state(), TO_C_BOOLEAN_OR_T(on)); 
   return(TO_SCM_BOOLEAN(enved_clip_p(get_global_state())));
 }
@@ -1433,7 +1433,7 @@ static SCM g_set_enved_exp_p(SCM val)
   #define H_enved_exp_p "(" S_enved_exp_p ") -> envelope editor 'exp' and 'lin' buttons; \
 if enved-exping, the connecting segments use exponential curves rather than straight lines."
 
-  ASSERT_TYPE(BOOLEAN_IF_BOUND_P(val), val, SCM_ARGn, "set-" S_enved_exp_p, "a boolean");
+  ASSERT_TYPE(BOOLEAN_IF_BOUND_P(val), val, ARGn, "set-" S_enved_exp_p, "a boolean");
   set_enved_exp_p(get_global_state(), TO_C_BOOLEAN_OR_T(val)); 
   return(TO_SCM_BOOLEAN(enved_clip_p(get_global_state())));
 }
@@ -1445,7 +1445,7 @@ static SCM g_set_enved_target(SCM val)
   #define H_enved_target "(" S_enved_target ") determines how the envelope is applied to data in the envelope editor; \
 choices are " S_enved_amplitude ", " S_enved_srate ", and " S_enved_spectrum
 
-  ASSERT_TYPE(INTEGER_P(val), val, SCM_ARGn, "set-" S_enved_target, "an integer"); 
+  ASSERT_TYPE(INTEGER_P(val), val, ARGn, "set-" S_enved_target, "an integer"); 
   n = mus_iclamp(ENVED_AMPLITUDE,
 	     TO_C_INT(val),
 	     ENVED_SRATE); 
@@ -1457,7 +1457,7 @@ static SCM g_enved_wave_p(void) {return(TO_SCM_BOOLEAN(enved_wave_p(get_global_s
 static SCM g_set_enved_wave_p(SCM val) 
 {
   #define H_enved_wave_p "(" S_enved_wave_p ") -> #t if the envelope editor is displaying the waveform to be edited"
-  ASSERT_TYPE(BOOLEAN_IF_BOUND_P(val), val, SCM_ARGn, "set-" S_enved_wave_p, "a boolean");
+  ASSERT_TYPE(BOOLEAN_IF_BOUND_P(val), val, ARGn, "set-" S_enved_wave_p, "a boolean");
   set_enved_wave_p(get_global_state(), TO_C_BOOLEAN_OR_T(val));
   return(TO_SCM_BOOLEAN(enved_wave_p(get_global_state())));
 }
@@ -1466,7 +1466,7 @@ static SCM g_enved_in_dB(void) {return(TO_SCM_BOOLEAN(enved_in_dB(get_global_sta
 static SCM g_set_enved_in_dB(SCM val) 
 {
   #define H_enved_in_dB "(" S_enved_in_dB ") -> #t if the envelope editor is using dB"
-  ASSERT_TYPE(BOOLEAN_IF_BOUND_P(val), val, SCM_ARGn, "set-" S_enved_in_dB, "a boolean");
+  ASSERT_TYPE(BOOLEAN_IF_BOUND_P(val), val, ARGn, "set-" S_enved_in_dB, "a boolean");
   set_enved_in_dB(get_global_state(), TO_C_BOOLEAN_OR_T(val)); 
   return(TO_SCM_BOOLEAN(enved_in_dB(get_global_state())));
 }
@@ -1475,7 +1475,7 @@ static SCM g_enved_filter_order(void) {return(TO_SCM_INT(enved_filter_order(get_
 static SCM g_set_enved_filter_order(SCM val) 
 {
   #define H_enved_filter_order "(" S_enved_filter_order ") -> envelope editor's FIR filter order (40)"
-  ASSERT_TYPE(INTEGER_P(val), val, SCM_ARGn, "set-" S_enved_filter_order, "an integer"); 
+  ASSERT_TYPE(INTEGER_P(val), val, ARGn, "set-" S_enved_filter_order, "an integer"); 
   set_enved_filter_order(get_global_state(), TO_C_INT(val));
   return(TO_SCM_INT(enved_filter_order(get_global_state())));
 }

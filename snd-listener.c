@@ -204,7 +204,7 @@ void command_return(GUI_WIDGET w, snd_state *ss, int last_prompt)
       str = (char *)CALLOC(last_position - last_prompt + 1, sizeof(char));
       for (i = last_prompt + 1, j = 0; i < last_position; i++, j++) str[j] = full_str[i];
       result = g_c_run_or_hook(read_hook, 
-			       SCM_LIST1(TO_SCM_STRING(str)),
+			       LIST_1(TO_SCM_STRING(str)),
 			       S_read_hook);
       FREE(str);
       if (TRUE_P(result)) return;
@@ -472,23 +472,23 @@ void update_stats_with_widget(snd_state *ss, GUI_WIDGET stats_form)
 #ifdef SCM_NUM2LONG_LONG
 #define FUNC_NAME __FUNCTION__
 	if (len > 7)
-	  gc_swept = SCM_NUM2LONG_LONG(SCM_ARG1, SCM_CDR(LIST_REF(stats, 9)));
-	gc_heap = SCM_NUM2LONG_LONG(SCM_ARG1, SCM_CDR(LIST_REF(stats, 2)));
-	gc_cells = SCM_NUM2LONG_LONG(SCM_ARG1, SCM_CDR(LIST_REF(stats, 1)));
+	  gc_swept = SCM_NUM2LONG_LONG(ARG1, CDR(LIST_REF(stats, 9)));
+	gc_heap = SCM_NUM2LONG_LONG(ARG1, CDR(LIST_REF(stats, 2)));
+	gc_cells = SCM_NUM2LONG_LONG(ARG1, CDR(LIST_REF(stats, 1)));
 #undef FUNC_NAME
 #else
 	if (len > 7)
-	  gc_swept = scm_num2long_long(SCM_CDR(LIST_REF(stats, 9)), (char *)SCM_ARG1, __FUNCTION__);
-	gc_heap = scm_num2long_long(SCM_CDR(LIST_REF(stats, 2)), (char *)SCM_ARG1, __FUNCTION__);
-	gc_cells = scm_num2long_long(SCM_CDR(LIST_REF(stats, 1)), (char *)SCM_ARG1, __FUNCTION__);
+	  gc_swept = scm_num2long_long(CDR(LIST_REF(stats, 9)), (char *)ARG1, __FUNCTION__);
+	gc_heap = scm_num2long_long(CDR(LIST_REF(stats, 2)), (char *)ARG1, __FUNCTION__);
+	gc_cells = scm_num2long_long(CDR(LIST_REF(stats, 1)), (char *)ARG1, __FUNCTION__);
 #endif
-	gc_time = (float)(TO_C_INT(SCM_CDR(LIST_REF(stats, 0)))) / 1000.0;
+	gc_time = (float)(TO_C_INT(CDR(LIST_REF(stats, 0)))) / 1000.0;
 	str = (char *)CALLOC(STATS_BUFFER_SIZE,sizeof(char));
 	if (len > 7)
 	  mus_snprintf(str, STATS_BUFFER_SIZE,
 		  "\nGuile:\n  gc time: %.2f secs (%d sweeps)\n  cells: %Ld (%Ld gc'd)\n  heap size: %Ld",
 		  gc_time,
-		  TO_C_INT(SCM_CDR(LIST_REF(stats, 5))),     /* times */
+		  TO_C_INT(CDR(LIST_REF(stats, 5))),     /* times */
 		  gc_cells,
 		  gc_swept,
 		  gc_heap);
@@ -511,12 +511,12 @@ static SCM g_save_listener(SCM filename)
 {
   #define H_save_listener "(" S_save_listener " filename) saves the current listener text in filename"
   FILE *fp = NULL;
-  ASSERT_TYPE(STRING_P(filename), filename, SCM_ARGn, S_save_listener, "a string");
+  ASSERT_TYPE(STRING_P(filename), filename, ARGn, S_save_listener, "a string");
   fp = fopen(TO_C_STRING(filename), "w");
   if (fp) save_listener_text(fp);
   if ((!fp) || (fclose(fp) != 0))
     ERROR(CANNOT_SAVE,
-	  SCM_LIST3(TO_SCM_STRING(S_save_listener),
+	  LIST_3(TO_SCM_STRING(S_save_listener),
 		    filename,
 		    TO_SCM_STRING(strerror(errno))));
   return(filename);

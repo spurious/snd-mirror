@@ -318,7 +318,7 @@ static void who_called(Widget w, XtPointer context, XEvent *event, Boolean *cont
 	  {
 	    if ((!(HOOKED(property_changed_hook))) ||
 		(!(TRUE_P(g_c_run_or_hook(property_changed_hook,
-					      SCM_LIST1(TO_SCM_STRING((char *)(version[0]))),
+					      LIST_1(TO_SCM_STRING((char *)(version[0]))),
 					      S_property_changed_hook)))))
 	    snd_eval_property_str(ss, (char *)(version[0]));
 	    free(version[0]);
@@ -494,10 +494,11 @@ static void muffle_warning(String name, String type, String class, String defaul
 static void muffle_warning(char *name, char *type, char *klass, char *defaultp, char **params, unsigned int *num_params)
 #endif
 {
-  /* these warnings are occurring when they should not, and they are of no interest to anyone, so shove a sock in Xt */
-#if DEBUGGING
-  fprintf(stderr, "ignoring: %s: %s\n", name, defaultp);
-#endif
+  /* these warnings are occurring when they should not, and they are of no interest to anyone, so shove a sock in Xt
+   *   the main ones involve scrollbar settings that are claimed to be out-of-range, but that are generated
+   *   by Motif itself while unmanaging the widget!
+   */
+  /* fprintf(stderr, "ignoring: %s: %s\n", name, defaultp); */
 }
 
 static void ss_graph_key_press(Widget w, XtPointer context, XEvent *event, Boolean *cont) 
@@ -525,6 +526,7 @@ static Pixel get_color(Widget shell,
   Display *dpy;
   int scr;
   XColor tmp_color, ignore;
+  /* this apparently only gets called in Motif 1 on the SGI */
   dpy = XtDisplay(shell);
   scr = DefaultScreen(dpy);
   cmap = DefaultColormap(dpy, scr);

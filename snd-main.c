@@ -24,7 +24,7 @@ int snd_exit_cleanly(snd_state *ss, int force_exit)
   SCM res = SCM_BOOL_F;
   if (HOOKED(exit_hook))
     res = g_c_run_or_hook(exit_hook, 
-			  SCM_LIST0,
+			  LIST_0,
 			  S_exit_hook);
   if ((TRUE_P(res)) && (!force_exit)) return(0);
   mus_sound_finalize();
@@ -557,7 +557,7 @@ static int dont_start(char *filename)
   SCM res = SCM_BOOL_F;
   if (HOOKED(start_hook))
     res = g_c_run_or_hook(start_hook,
-			  SCM_LIST1(TO_SCM_STRING(filename)),
+			  LIST_1(TO_SCM_STRING(filename)),
 			  S_start_hook);
   return(TRUE_P(res));
 }
@@ -672,7 +672,7 @@ static SCM g_save_state(SCM filename)
 
   char *error;
   SCM result;
-  ASSERT_TYPE(STRING_P(filename), filename, SCM_ARGn, S_save_state, "a string");
+  ASSERT_TYPE(STRING_P(filename), filename, ARGn, S_save_state, "a string");
   error = save_state_or_error(get_global_state(), 
 			      TO_C_STRING(filename));
   if (error)
@@ -680,7 +680,7 @@ static SCM g_save_state(SCM filename)
       result = TO_SCM_STRING(error);
       FREE(error);
       ERROR(CANNOT_SAVE,
-	    SCM_LIST3(TO_SCM_STRING(S_save_state),
+	    LIST_3(TO_SCM_STRING(S_save_state),
 		      filename,
 		      result));
     }
@@ -692,7 +692,7 @@ static SCM g_save_options(SCM filename)
   #define H_save_options "(" S_save_options " filename) saves Snd options in filename"
   char *name = NULL;
   FILE *fd;
-  ASSERT_TYPE(STRING_P(filename), filename, SCM_ARGn, S_save_options, "a string");
+  ASSERT_TYPE(STRING_P(filename), filename, ARGn, S_save_options, "a string");
   name = mus_expand_filename(TO_C_STRING(filename));
   fd = fopen(name, "w");
   if (name) FREE(name);
@@ -701,7 +701,7 @@ static SCM g_save_options(SCM filename)
   if ((!fd) || 
       (fclose(fd) != 0))
     ERROR(CANNOT_SAVE, 
-	  SCM_LIST3(TO_SCM_STRING(S_save_options),
+	  LIST_3(TO_SCM_STRING(S_save_options),
 		    filename,
 		    TO_SCM_STRING(strerror(errno))));
   return(filename);

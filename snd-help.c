@@ -2691,7 +2691,7 @@ the functions html and ? can be used in place of help to go to the HTML descript
   SCM help_text = SCM_BOOL_F, value, local_doc;
   char *str = NULL;
 
-  if (SCM_EQ_P(text,SCM_UNDEFINED))                              /* if no arg, describe snd-help */
+  if (EQ_P(text,SCM_UNDEFINED))                              /* if no arg, describe snd-help */
     help_text = TO_SCM_STRING(H_snd_help);
   else
     {

@@ -240,20 +240,20 @@ file_info *make_file_info(char *fullname, snd_state *ss)
 	    }
 	  if (HOOKED(open_raw_sound_hook))
 	    {
-	      procs = SCM_HOOK_PROCEDURES (open_raw_sound_hook);
+	      procs = HOOK_PROCEDURES (open_raw_sound_hook);
 	      arg1 = TO_SCM_STRING(fullname);
 	      while (NOT_NULL_P(procs))
 		{
-		  res = CALL2(SCM_CAR(procs), arg1, res, S_open_raw_sound_hook);
-		  procs = SCM_CDR (procs);
+		  res = CALL2(CAR(procs), arg1, res, S_open_raw_sound_hook);
+		  procs = CDR (procs);
 		}
 	    }
 	  if (LIST_P(res)) /* empty list ok here -> accept all current defaults */
 	    {
 	      len = LIST_LENGTH(res);
 	      mus_header_raw_defaults(&srate, &chans, &data_format);
-	      if (len > 0) chans = TO_C_INT(SCM_CAR(res));
-	      if (len > 1) srate = TO_C_INT(SCM_CADR(res));
+	      if (len > 0) chans = TO_C_INT(CAR(res));
+	      if (len > 1) srate = TO_C_INT(CADR(res));
 	      if (len > 2) data_format = TO_C_INT(LIST_REF(res, 2)); 
 	      if (len > 3) data_location = TO_C_INT(LIST_REF(res, 3)); else data_location = 0;
 	      if (len > 4) bytes = TO_C_INT(LIST_REF(res, 4)); else bytes = mus_sound_length(fullname) - data_location;
@@ -575,7 +575,7 @@ static int dont_open(char *file)
       fstr = TO_SCM_STRING(mcf);
       if (mcf) FREE(mcf);
       res = g_c_run_or_hook(open_hook,
-			    SCM_LIST1(fstr),
+			    LIST_1(fstr),
 			    S_open_hook);
     }
   return(TRUE_P(res));
@@ -586,7 +586,7 @@ static int dont_close(snd_info *sp)
   SCM res = SCM_BOOL_F;
   if (HOOKED(close_hook))
     res = g_c_run_or_hook(close_hook,
-			  SCM_LIST1(TO_SMALL_SCM_INT(sp->index)),
+			  LIST_1(TO_SMALL_SCM_INT(sp->index)),
 			  S_close_hook);
   return(TRUE_P(res));
 }
@@ -596,7 +596,7 @@ static int just_sounds_happy(char *filename)
   SCM res = SCM_BOOL_T;
   if (HOOKED(just_sounds_hook))
     res = g_c_run_or_hook(just_sounds_hook,
-			  SCM_LIST1(TO_SCM_STRING(filename)),
+			  LIST_1(TO_SCM_STRING(filename)),
 			  S_just_sounds_hook);
   return(TRUE_P(res));
 }
@@ -764,7 +764,7 @@ snd_info *make_sound_readable(snd_state *ss, char *filename, int post_close)
     {
       if (ss->catch_exists)
 	ERROR(NO_SUCH_FILE,
-	      SCM_LIST2(TO_SCM_STRING(__FUNCTION__),
+	      LIST_2(TO_SCM_STRING(__FUNCTION__),
 			TO_SCM_STRING(ss->catch_message)));
       return(NULL);
     }
@@ -1463,9 +1463,9 @@ void make_prevfiles_list_1(snd_state *ss)
 	      file_list = CALL1(ss->file_sort_proc, file_list, "previous files sort");
 	      if (LIST_P(file_list))
 		{
-		  for (i = 0; (i < len) && (NOT_NULL_P(file_list)); i++, file_list = SCM_CDR(file_list))
+		  for (i = 0; (i < len) && (NOT_NULL_P(file_list)); i++, file_list = CDR(file_list))
 		    {
-		      name = TO_C_STRING(SCM_CAR(file_list));
+		      name = TO_C_STRING(CAR(file_list));
 		      for (j = 0; j < len; j++)
 			if (strcmp(data[j]->a2, name) == 0)
 			  {
@@ -2091,7 +2091,7 @@ char *raw_data_explanation(char *filename, snd_state *ss, file_info *hdr)
 static SCM g_add_sound_file_extension(SCM ext)
 {
   #define H_add_sound_file_extension "(" S_add_sound_file_extension " ext)  adds the file extension ext to the list of sound file extensions"
-  ASSERT_TYPE(STRING_P(ext), ext, SCM_ARGn, S_add_sound_file_extension, "a string");
+  ASSERT_TYPE(STRING_P(ext), ext, ARGn, S_add_sound_file_extension, "a string");
   add_sound_file_extension(TO_C_STRING(ext));
   return(ext);
 }
@@ -2104,7 +2104,7 @@ static SCM g_file_write_date(SCM file)
 Equivalent to Guile (stat:mtime (stat file))"
 
   time_t date;
-  ASSERT_TYPE(STRING_P(file), file, SCM_ARGn, S_file_write_date, "a string");
+  ASSERT_TYPE(STRING_P(file), file, ARGn, S_file_write_date, "a string");
   date = file_write_date(TO_C_STRING(file));
   return(scm_return_first(TO_SCM_INT(date), file));
 }
@@ -2121,7 +2121,7 @@ static SCM g_sound_loop_info(SCM snd)
   res = mus_sound_loop_info(sp->filename);
   if (res)
     {
-      sres = SCM_LIST6(TO_SCM_INT(res[0]), TO_SCM_INT(res[1]), TO_SCM_INT(res[2]),
+      sres = LIST_6(TO_SCM_INT(res[0]), TO_SCM_INT(res[1]), TO_SCM_INT(res[2]),
 		       TO_SCM_INT(res[3]), TO_SCM_INT(res[4]), TO_SCM_INT(res[5]));
       FREE(res);
     }
@@ -2137,7 +2137,7 @@ static SCM g_set_sound_loop_info(SCM snd, SCM vals)
   int type, len = 0;
   SCM start0 = SCM_UNDEFINED, end0 = SCM_UNDEFINED, start1 = SCM_UNDEFINED, end1 = SCM_UNDEFINED;
   SND_ASSERT_SND("set-" S_sound_loop_info, snd, 1);
-  ASSERT_TYPE(NOT_BOUND_P(vals) || LIST_P_WITH_LENGTH(vals, len), vals, SCM_ARG2, "set-" S_sound_loop_info, "a list");
+  ASSERT_TYPE(NOT_BOUND_P(vals) || LIST_P_WITH_LENGTH(vals, len), vals, ARG2, "set-" S_sound_loop_info, "a list");
   if (NOT_BOUND_P(vals))
     {
       vals = snd;
@@ -2147,10 +2147,10 @@ static SCM g_set_sound_loop_info(SCM snd, SCM vals)
   if (sp == NULL) 
     return(snd_no_such_sound_error("set-" S_sound_loop_info, snd));
   hdr = sp->hdr;
-  if (len > 0) start0 = SCM_CAR(vals);
-  if (len > 1) end0 = SCM_CADR(vals);
-  if (len > 2) start1 = SCM_CADDR(vals);
-  if (len > 3) end1 = SCM_CADDDR(vals);
+  if (len > 0) start0 = CAR(vals);
+  if (len > 1) end0 = CADR(vals);
+  if (len > 2) start1 = CADDR(vals);
+  if (len > 3) end1 = CADDDR(vals);
   if (hdr->loops == NULL)
     hdr->loops = (int *)CALLOC(6, sizeof(int));
   hdr->loops[0] = TO_C_INT_OR_ELSE(start0, 0);
@@ -2200,7 +2200,7 @@ each inner list has the form: (name start loopstart loopend)"
       if (lim > 0)
 	for (i = lim-1; i >= 0; i--)
 	  {
-	    inlist = SCM_LIST4(TO_SCM_STRING(mus_header_sf2_name(i)),
+	    inlist = LIST_4(TO_SCM_STRING(mus_header_sf2_name(i)),
 			       TO_SCM_INT(mus_header_sf2_start(i)),
 			       TO_SCM_INT(mus_header_sf2_loop_start(i)),
 			       TO_SCM_INT(mus_header_sf2_end(i)));
@@ -2213,7 +2213,7 @@ each inner list has the form: (name start loopstart loopend)"
 static SCM g_preload_directory(SCM directory) 
 {
   #define H_preload_directory "(" S_preload_directory " dir) preloads (into the View:Files dialog) any sounds in dir"
-  ASSERT_TYPE(STRING_P(directory), directory, SCM_ARGn, S_preload_directory, "a string");
+  ASSERT_TYPE(STRING_P(directory), directory, ARGn, S_preload_directory, "a string");
   add_directory_to_prevlist(get_global_state(), 
 			    TO_C_STRING(directory));
   return(directory);
@@ -2223,7 +2223,7 @@ static SCM g_preload_file(SCM file)
 {
   #define H_preload_file "(" S_preload_file " file) preloads file (into the View:Files dialog)"
   char *name = NULL;
-  ASSERT_TYPE(STRING_P(file), file, SCM_ARGn, S_preload_file, "a string");
+  ASSERT_TYPE(STRING_P(file), file, ARGn, S_preload_file, "a string");
   name = mus_expand_filename(TO_C_STRING(file));
   remember_me(get_global_state(), 
 	      filename_without_home_directory(name), 
@@ -2239,7 +2239,7 @@ static SCM g_sound_files_in_directory(SCM dirname)
   char *name = NULL;
   int i;
   SCM res = SCM_EOL;
-  ASSERT_TYPE(STRING_P(dirname), dirname, SCM_ARGn, S_sound_files_in_directory, "a string");
+  ASSERT_TYPE(STRING_P(dirname), dirname, ARGn, S_sound_files_in_directory, "a string");
   name = TO_C_STRING(dirname);
   if (name)
     {

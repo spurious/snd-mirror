@@ -1935,9 +1935,9 @@ apply func to samples in current channel, edname is the edit history name for th
   if (STRING_P(org)) 
     caller = TO_C_STRING(org);
   else caller = S_map_chan;
-  ASSERT_TYPE((PROCEDURE_P(proc)), proc, SCM_ARG1, caller, "a procedure");
-  ASSERT_TYPE(NUMBER_OR_BOOLEAN_IF_BOUND_P(s_beg), s_beg, SCM_ARG2, caller, "a number");
-  ASSERT_TYPE(NUMBER_OR_BOOLEAN_IF_BOUND_P(s_end), s_end, SCM_ARG3, caller, "a number");
+  ASSERT_TYPE((PROCEDURE_P(proc)), proc, ARG1, caller, "a procedure");
+  ASSERT_TYPE(NUMBER_OR_BOOLEAN_IF_BOUND_P(s_beg), s_beg, ARG2, caller, "a number");
+  ASSERT_TYPE(NUMBER_OR_BOOLEAN_IF_BOUND_P(s_end), s_end, ARG3, caller, "a number");
   SND_ASSERT_CHAN(S_map_chan, snd, chn, 5); 
   ss = get_global_state();
   cp = get_cp(snd, chn, caller);
@@ -1981,7 +1981,7 @@ apply func to samples in current channel, edname is the edit history name for th
 		      if (VECTOR_P(res))
 			{
 			  len = VECTOR_LENGTH(res);
-			  data = SCM_VELTS(res);
+			  data = VECTOR_ELEMENTS(res);
 			  for (i = 0; i < len; i++) 
 			    mus_outa(j++, TO_C_DOUBLE(data[i]), (mus_output *)outgen);
 			}
@@ -1998,8 +1998,8 @@ apply func to samples in current channel, edname is the edit history name for th
 			      if (LIST_P(res))
 				{
 				  len = LIST_LENGTH(res);
-				  for (i = 0; i < len; i++, res = SCM_CDR(res)) 
-				    mus_outa(j++, TO_C_DOUBLE(SCM_CAR(res)), (mus_output *)outgen);
+				  for (i = 0; i < len; i++, res = CDR(res)) 
+				    mus_outa(j++, TO_C_DOUBLE(CAR(res)), (mus_output *)outgen);
 				}
 			    }
 			}
@@ -2059,9 +2059,9 @@ static SCM g_sp_scan(SCM proc, SCM s_beg, SCM s_end, SCM snd, SCM chn,
   SCM res;
   char *errmsg;
 
-  ASSERT_TYPE((PROCEDURE_P(proc)), proc, SCM_ARG1, caller, "a procedure");
-  ASSERT_TYPE(NUMBER_OR_BOOLEAN_IF_BOUND_P(s_beg), s_beg, SCM_ARG2, caller, "a number");
-  ASSERT_TYPE(NUMBER_OR_BOOLEAN_IF_BOUND_P(s_end), s_end, SCM_ARG3, caller, "a number");
+  ASSERT_TYPE((PROCEDURE_P(proc)), proc, ARG1, caller, "a procedure");
+  ASSERT_TYPE(NUMBER_OR_BOOLEAN_IF_BOUND_P(s_beg), s_beg, ARG2, caller, "a number");
+  ASSERT_TYPE(NUMBER_OR_BOOLEAN_IF_BOUND_P(s_end), s_end, ARG3, caller, "a number");
   SND_ASSERT_CHAN(caller, snd, chn, 4);
   cp = get_cp(snd, chn, caller);
   beg = TO_C_INT_OR_ELSE_WITH_ORIGIN(s_beg, 0, caller);
@@ -2102,8 +2102,8 @@ static SCM g_sp_scan(SCM proc, SCM s_beg, SCM s_end, SCM snd, SCM chn,
 		  sf = free_snd_fd(sf);
 		  if (reporting) 
 		    finish_progress_report(sp, NOT_FROM_ENVED);
-		  return(SCM_LIST2(res,
-				   TO_SCM_INT(kp + beg)));
+		  return(LIST_2(res,
+				TO_SCM_INT(kp + beg)));
 		}
 	    }
 	  if (reporting) 
@@ -2170,8 +2170,8 @@ static SCM g_smooth_sound(SCM beg, SCM num, SCM snd_n, SCM chn_n)
 {
   #define H_smooth_sound "(" S_smooth_sound " start-samp samps &optional snd chn) smooths data from start-samp for samps in snd's channel chn"
   chan_info *cp;
-  ASSERT_TYPE(NUMBER_P(beg), beg, SCM_ARG1, S_smooth_sound, "a number");
-  ASSERT_TYPE(NUMBER_P(num), num, SCM_ARG2, S_smooth_sound, "a number");
+  ASSERT_TYPE(NUMBER_P(beg), beg, ARG1, S_smooth_sound, "a number");
+  ASSERT_TYPE(NUMBER_P(num), num, ARG2, S_smooth_sound, "a number");
   SND_ASSERT_CHAN(S_smooth_sound, snd_n, chn_n, 3);
   cp = get_cp(snd_n, chn_n, S_smooth_sound);
   cos_smooth(cp,
@@ -2218,8 +2218,8 @@ static SCM g_insert_silence(SCM beg, SCM num, SCM snd, SCM chn)
 {
   #define H_insert_silence "(" S_insert_silence " beg num snd chn) inserts num zeros at beg in snd's chn"
   chan_info *cp;
-  ASSERT_TYPE(NUMBER_P(beg), beg, SCM_ARG1, S_insert_silence, "a number");
-  ASSERT_TYPE(NUMBER_P(num), num, SCM_ARG2, S_insert_silence, "a number");
+  ASSERT_TYPE(NUMBER_P(beg), beg, ARG1, S_insert_silence, "a number");
+  ASSERT_TYPE(NUMBER_P(num), num, ARG2, S_insert_silence, "a number");
   SND_ASSERT_CHAN(S_insert_silence, snd, chn, 3);
   cp = get_cp(snd, chn, S_insert_silence);
   cursor_insert(cp,
@@ -2309,15 +2309,15 @@ static SCM g_fht(SCM data)
   #define H_fht "(fht vct-obj) returns the Hartley transform of the data in the vct object whose size must be a power of 4"
   vct *v;
   int pow4;
-  ASSERT_TYPE(VCT_P(data), data, SCM_ARGn, S_fht, "a vct");
+  ASSERT_TYPE(VCT_P(data), data, ARGn, S_fht, "a vct");
   v = TO_VCT(data);
   pow4 = (int)(snd_round(log(v->length) / (log(4))));
   if (((int)(pow(4.0, pow4))) != v->length) 
     mus_misc_error(S_fht,
 		   "fht data length must be a power of 4",
-		   SCM_LIST3(TO_SCM_INT(v->length),
-			     TO_SCM_DOUBLE((log(v->length) / (log(4)))),
-			     TO_SCM_INT((int)(pow(4.0, pow4)))));
+		   LIST_3(TO_SCM_INT(v->length),
+			  TO_SCM_DOUBLE((log(v->length) / (log(4)))),
+			  TO_SCM_INT((int)(pow(4.0, pow4)))));
   fht(pow4, v->data);
   return(data);
 }
@@ -2338,15 +2338,15 @@ static Float *load_Floats(SCM scalers, int *result_len)
   scls = (Float *)CALLOC(len, sizeof(Float));
   if (VECTOR_P(scalers))
     {
-      vdata = SCM_VELTS(scalers);
+      vdata = VECTOR_ELEMENTS(scalers);
       for (i = 0; i < len; i++) 
 	scls[i] = (Float)TO_C_DOUBLE(vdata[i]);
     }
   else
     if (LIST_P(scalers))
       {
-	for (i = 0, lst = scalers; i < len; i++, lst = SCM_CDR(lst)) 
-	  scls[i] = (Float)TO_C_DOUBLE(SCM_CAR(lst));
+	for (i = 0, lst = scalers; i < len; i++, lst = CDR(lst)) 
+	  scls[i] = (Float)TO_C_DOUBLE(CAR(lst));
       }
     else
       if (NUMBER_P(scalers))
@@ -2448,7 +2448,7 @@ applies envelope 'env' to the currently selected portion of snd's channel chn us
     }
   else
     {
-      ASSERT_TYPE((mus_scm_p(edata)) && (mus_env_p(egen = mus_scm_to_clm(edata))), edata, SCM_ARG1, S_env_selection, "an env generator or a list");
+      ASSERT_TYPE((mus_scm_p(edata)) && (mus_env_p(egen = mus_scm_to_clm(edata))), edata, ARG1, S_env_selection, "an env generator or a list");
       apply_env(cp, NULL, 0, 0, 1.0, TRUE, NOT_FROM_ENVED, S_env_selection, egen, TO_SCM_INT(AT_CURRENT_EDIT_POSITION), 0, 1.0);
       return(edata);
     }
@@ -2465,8 +2465,8 @@ either to the end of the sound or for 'samps' samples, with segments interpolati
   env *e;
   int beg = 0, dur;
   mus_any *egen;
-  ASSERT_TYPE(NUMBER_IF_BOUND_P(samp_n), samp_n, SCM_ARG2, S_env_sound, "a number");
-  ASSERT_TYPE(NUMBER_IF_BOUND_P(samps), samps, SCM_ARG3, S_env_sound, "a number");
+  ASSERT_TYPE(NUMBER_IF_BOUND_P(samp_n), samp_n, ARG2, S_env_sound, "a number");
+  ASSERT_TYPE(NUMBER_IF_BOUND_P(samps), samps, ARG3, S_env_sound, "a number");
   SND_ASSERT_CHAN(S_env_sound, snd_n, chn_n, 5);
   cp = get_cp(snd_n, chn_n, S_env_sound);
   beg = TO_C_INT_OR_ELSE(samp_n, 0);
@@ -2484,7 +2484,7 @@ either to the end of the sound or for 'samps' samples, with segments interpolati
     }
   else
     {
-      ASSERT_TYPE((mus_scm_p(edata)) && (mus_env_p(egen = mus_scm_to_clm(edata))), edata, SCM_ARG1, S_env_sound, "an env generator or a list");
+      ASSERT_TYPE((mus_scm_p(edata)) && (mus_env_p(egen = mus_scm_to_clm(edata))), edata, ARG1, S_env_sound, "an env generator or a list");
       apply_env(cp, NULL, beg, dur, 1.0, FALSE, NOT_FROM_ENVED, S_env_sound, egen, edpos, 7, 1.0);
       return(edata);
     }
@@ -2497,8 +2497,8 @@ static SCM g_fft_1(SCM reals, SCM imag, SCM sign, int use_fft)
   int ipow, n, n2, i, isign = 1, need_free = 0;
   Float *rl, *im;
   SCM *rvdata, *ivdata;
-  ASSERT_TYPE(((VCT_P(reals)) || (VECTOR_P(reals))), reals, SCM_ARG1, ((use_fft) ? S_fft : S_convolve_arrays), "a vector or a vct");
-  ASSERT_TYPE(((VCT_P(imag)) || (VECTOR_P(imag))), imag, SCM_ARG2, ((use_fft) ? S_fft : S_convolve_arrays), "a vector or a vct");
+  ASSERT_TYPE(((VCT_P(reals)) || (VECTOR_P(reals))), reals, ARG1, ((use_fft) ? S_fft : S_convolve_arrays), "a vector or a vct");
+  ASSERT_TYPE(((VCT_P(imag)) || (VECTOR_P(imag))), imag, ARG2, ((use_fft) ? S_fft : S_convolve_arrays), "a vector or a vct");
   if ((VCT_P(reals)) && (VCT_P(imag)))
     {
       v1 = (vct *)SND_VALUE_OF(reals);
@@ -2532,8 +2532,8 @@ static SCM g_fft_1(SCM reals, SCM imag, SCM sign, int use_fft)
   if (isign == 0) isign = 1;
   if (v1 == NULL)
     {
-      rvdata = SCM_VELTS(reals);
-      ivdata = SCM_VELTS(imag);
+      rvdata = VECTOR_ELEMENTS(reals);
+      ivdata = VECTOR_ELEMENTS(imag);
       for (i = 0; i < n; i++)
 	{
 	  rl[i] = TO_C_DOUBLE(rvdata[i]);
@@ -2556,8 +2556,8 @@ static SCM g_fft_1(SCM reals, SCM imag, SCM sign, int use_fft)
       mus_fft(rl, im, n2, isign);
       if (v1 == NULL)
 	{
-	  rvdata = SCM_VELTS(reals);
-	  ivdata = SCM_VELTS(imag);
+	  rvdata = VECTOR_ELEMENTS(reals);
+	  ivdata = VECTOR_ELEMENTS(imag);
 	  for (i = 0; i < n; i++)
 	    {
 	      rvdata[i] = TO_SCM_DOUBLE(rl[i]);
@@ -2581,7 +2581,7 @@ static SCM g_fft_1(SCM reals, SCM imag, SCM sign, int use_fft)
       mus_convolution(rl, im, n2);
       if (v1 == NULL)
 	{
-	  rvdata = SCM_VELTS(reals);
+	  rvdata = VECTOR_ELEMENTS(reals);
 	  for (i = 0; i < n; i++)
 	    rvdata[i] = TO_SCM_DOUBLE(rl[i]);
 	}
@@ -2617,7 +2617,7 @@ convolves file with snd's channel chn (or the currently sync'd channels), amp is
   Float amp;
   SCM errstr;
   char *fname = NULL, *error = NULL;
-  ASSERT_TYPE(STRING_P(file), file, SCM_ARG1, S_convolve_with, "a string");
+  ASSERT_TYPE(STRING_P(file), file, ARG1, S_convolve_with, "a string");
   SND_ASSERT_CHAN(S_convolve_with, snd_n, chn_n, 3);
   cp = get_cp(snd_n, chn_n, S_convolve_with);
   if (NUMBER_P(new_amp)) 
@@ -2658,10 +2658,10 @@ return magnitude spectrum of data (vct) in data using fft-window win and fft len
   Float maxa, todb, lowest, val;
   Float *idat, *rdat, *window;
   vct *v;
-  ASSERT_TYPE((VCT_P(data)), data, SCM_ARG1, S_snd_spectrum, "a vct");
-  ASSERT_TYPE(INTEGER_IF_BOUND_P(win), win, SCM_ARG2, S_snd_spectrum, "an integer");
-  ASSERT_TYPE(INTEGER_IF_BOUND_P(len), len, SCM_ARG3, S_snd_spectrum, "an integer");
-  ASSERT_TYPE(BOOLEAN_IF_BOUND_P(linear_or_dB), linear_or_dB, SCM_ARG4, S_snd_spectrum, "a boolean");
+  ASSERT_TYPE((VCT_P(data)), data, ARG1, S_snd_spectrum, "a vct");
+  ASSERT_TYPE(INTEGER_IF_BOUND_P(win), win, ARG2, S_snd_spectrum, "an integer");
+  ASSERT_TYPE(INTEGER_IF_BOUND_P(len), len, ARG3, S_snd_spectrum, "an integer");
+  ASSERT_TYPE(BOOLEAN_IF_BOUND_P(linear_or_dB), linear_or_dB, ARG4, S_snd_spectrum, "a boolean");
   v = TO_VCT(data);
   rdat = v->data;
   n = TO_C_INT_OR_ELSE(len, v->length);
@@ -2744,7 +2744,7 @@ convolves the current selection with file; amp is the resultant peak amp"
   Float amp;
   SCM errstr;
   char *fname = NULL, *error;
-  ASSERT_TYPE(STRING_P(file), file, SCM_ARG1, S_convolve_selection_with, "a string");
+  ASSERT_TYPE(STRING_P(file), file, ARG1, S_convolve_selection_with, "a string");
   if (selection_is_active() == 0) 
     return(snd_no_active_selection_error(S_convolve_selection_with));
   if (NUMBER_P(new_amp)) 
@@ -2846,7 +2846,7 @@ sampling-rate converts snd's channel chn by ratio, or following an envelope. Neg
       else
 	{
 	  ASSERT_TYPE((mus_scm_p(ratio_or_env)) && (mus_env_p(egen = mus_scm_to_clm(ratio_or_env))), 
-		      ratio_or_env, SCM_ARG1, S_src_sound, "a number, list, or env generator");
+		      ratio_or_env, ARG1, S_src_sound, "a number, list, or env generator");
 	  src_env_or_num(cp->state, cp, NULL, 
 			 (mus_phase(egen) >= 0.0) ? 1.0 : -1.0,
 			 FALSE, NOT_FROM_ENVED, S_src_sound, 
@@ -2889,7 +2889,7 @@ sampling-rate converts the currently selected data by ratio (which can be an env
       else
 	{
 	  ASSERT_TYPE((mus_scm_p(ratio_or_env)) && (mus_env_p(egen = mus_scm_to_clm(ratio_or_env))), 
-		      ratio_or_env, SCM_ARG1, S_src_selection, "a number, list, or env generator");
+		      ratio_or_env, ARG1, S_src_selection, "a number, list, or env generator");
 	  src_env_or_num(cp->state, cp, NULL,
 			 (mus_phase(egen) >= 0.0) ? 1.0 : -1.0,
 			 FALSE, NOT_FROM_ENVED, S_src_selection, 
@@ -2913,7 +2913,7 @@ applies FIR filter to snd's channel chn. 'filter' is either the frequency respon
   char *error;
   SND_ASSERT_CHAN(S_filter_sound, snd_n, chn_n, 3);
   cp = get_cp(snd_n, chn_n, S_filter_sound);
-  ASSERT_TYPE(INTEGER_IF_BOUND_P(order), order, SCM_ARG2, S_filter_sound, "an integer");
+  ASSERT_TYPE(INTEGER_IF_BOUND_P(order), order, ARG2, S_filter_sound, "an integer");
   if (mus_scm_p(e))
     {
       error = apply_filter_or_error(cp, 0, NULL, NOT_FROM_ENVED, S_filter_sound, FALSE, NULL, mus_scm_to_clm(e), edpos, 5);
@@ -2933,12 +2933,12 @@ applies FIR filter to snd's channel chn. 'filter' is either the frequency respon
 	{
 	  v = TO_VCT(e);
 	  if (len > v->length) 
-	    mus_misc_error(S_filter_sound, "order > length coeffs?", SCM_LIST2(order, e));
+	    mus_misc_error(S_filter_sound, "order > length coeffs?", LIST_2(order, e));
 	  apply_filter(cp, len, NULL, NOT_FROM_ENVED, S_filter_sound, FALSE, v->data, NULL, edpos, 5);
 	}
       else 
 	{
-	  ASSERT_TYPE((VECTOR_P(e) || (LIST_P(e))), e, SCM_ARG1, S_filter_sound, "a list, vector, vct, or env generator");
+	  ASSERT_TYPE((VECTOR_P(e) || (LIST_P(e))), e, ARG1, S_filter_sound, "a list, vector, vct, or env generator");
 	  apply_filter(cp, len,
 		       ne = get_env(e, S_filter_sound),
 		       NOT_FROM_ENVED, S_filter_sound, FALSE, NULL, NULL, edpos, 5);
@@ -2960,7 +2960,7 @@ static SCM g_filter_selection(SCM e, SCM order)
   if (selection_is_active() == 0) 
     return(snd_no_active_selection_error(S_filter_selection));
   cp = get_cp(SCM_BOOL_F, SCM_BOOL_F, S_filter_selection);
-  ASSERT_TYPE(INTEGER_IF_BOUND_P(order), order, SCM_ARG2, S_filter_selection, "an integer");
+  ASSERT_TYPE(INTEGER_IF_BOUND_P(order), order, ARG2, S_filter_selection, "an integer");
   if (mus_scm_p(e))
     {
       error = apply_filter_or_error(cp, 0, NULL, NOT_FROM_ENVED, S_filter_selection, 
@@ -2982,13 +2982,13 @@ static SCM g_filter_selection(SCM e, SCM order)
 	{
 	  v = TO_VCT(e);
 	  if (len > v->length) 
-	    mus_misc_error(S_filter_selection, "order > length coeffs?", SCM_LIST2(order, e));
+	    mus_misc_error(S_filter_selection, "order > length coeffs?", LIST_2(order, e));
 	  apply_filter(cp, len, NULL, NOT_FROM_ENVED, S_filter_selection, TRUE, v->data, NULL, 
 		       TO_SCM_INT(AT_CURRENT_EDIT_POSITION), 0);
 	}
       else 
 	{
-	  ASSERT_TYPE((VECTOR_P(e) || (LIST_P(e))), e, SCM_ARG1, S_filter_selection, "a list, vector, vct, or env generator");
+	  ASSERT_TYPE((VECTOR_P(e) || (LIST_P(e))), e, ARG1, S_filter_selection, "a list, vector, vct, or env generator");
 	  apply_filter(cp, len,
 		       ne = get_env(e, S_filter_selection),
 		       NOT_FROM_ENVED, S_filter_selection, TRUE, NULL, NULL, 

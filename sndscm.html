@@ -1261,6 +1261,14 @@ a region).
       (snd-print n)))
   (sound-files-in-directory "."))
 </pre>
+<p>We can use Guile's regexp support here to search for all .snd and .wav files:
+</p>
+<pre>
+(let ((reg (make-regexp ".wav|.snd$")))
+  (match-sound-files (lambda (file) (regexp-exec reg file))))
+</pre>
+<p>The argument to make-regexp is looking for *.wav and *.snd.
+</p>
 
 <p><i>normalized-mix</i> is like <a href="extsnd.html#sndmix">mix</a> but the mixed result has same peak amplitude as the 
 original data. <i>enveloped-mix</i> is like <a href="extsnd.html#sndmixsound">mix-sound</a>, but includes an

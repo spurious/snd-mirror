@@ -352,11 +352,11 @@ LADSPA plugins are supported by Snd at this time."
 
   ASSERT_TYPE(STRING_P(ladspa_plugin_filename),
 	     ladspa_plugin_filename,
-	     SCM_ARG1,
+	     ARG1,
 	     S_analyse_ladspa, "a string");
   ASSERT_TYPE(STRING_P(ladspa_plugin_label),
 	     ladspa_plugin_label,
-	     SCM_ARG2,
+	     ARG2,
 	     S_analyse_ladspa, "a string");
 
   /* Plugin. */
@@ -469,35 +469,35 @@ by any arguments. (Information about about parameters can be acquired using anal
   /* First parameter should be a file reader. */
   ASSERT_TYPE(sf_p(reader),
 	     reader,
-	     SCM_ARG1,
+	     ARG1,
 	     S_apply_ladspa, "a sample-reader");
   /* Second parameter should be a list of two strings, then any number
      (inc 0) of numbers. */
   //FIXME: uninformative error.
   ASSERT_TYPE(LIST_LENGTH(ladspa_plugin_configuration) >= 2,
 	     ladspa_plugin_configuration,
-	     SCM_ARG2,
+	     ARG2,
 	     S_apply_ladspa, "a list");
   //FIXME: uninformative error.
-  ASSERT_TYPE(STRING_P(SCM_CAR(ladspa_plugin_configuration)),
+  ASSERT_TYPE(STRING_P(CAR(ladspa_plugin_configuration)),
 	     ladspa_plugin_configuration,
-	     SCM_ARG2,
+	     ARG2,
 	     S_apply_ladspa, "a string");
   //FIXME: uninformative error.
-  ASSERT_TYPE(STRING_P(SCM_CAR(SCM_CDR(ladspa_plugin_configuration))),
+  ASSERT_TYPE(STRING_P(CAR(CDR(ladspa_plugin_configuration))),
 	     ladspa_plugin_configuration,
-	     SCM_ARG2,
+	     ARG2,
 	     S_apply_ladspa, "a string");
 
   /* Third parameter is the number of samples to process. */
   ASSERT_TYPE(NUMBER_P(samples),
 	     samples,
-	     SCM_ARG3,
+	     ARG3,
 	     S_apply_ladspa, "a number");
   /* The fourth parameter is a tag to identify the edit. */
   ASSERT_TYPE(STRING_P(origin),
 	     origin,
-	     SCM_ARG4,
+	     ARG4,
 	     S_apply_ladspa, "a string");
 
   /* Get sample count. */
@@ -513,8 +513,8 @@ by any arguments. (Information about about parameters can be acquired using anal
   sp = (cp->sound);
 
   /* Plugin. */
-  pcTmp = TO_NEW_C_STRING(SCM_CAR(ladspa_plugin_configuration));
-  pcLabel = TO_NEW_C_STRING(SCM_CAR(SCM_CDR(ladspa_plugin_configuration)));
+  pcTmp = TO_NEW_C_STRING(CAR(ladspa_plugin_configuration));
+  pcLabel = TO_NEW_C_STRING(CAR(CDR(ladspa_plugin_configuration)));
   pcFilename = packLADSPAFilename(pcTmp);
   free(pcTmp);
 
@@ -536,25 +536,25 @@ by any arguments. (Information about about parameters can be acquired using anal
       lParameterCount++;
   ASSERT_TYPE(LIST_LENGTH(ladspa_plugin_configuration) == 2 + lParameterCount,
 	     ladspa_plugin_configuration,
-	     SCM_ARG2,
+	     ARG2,
 	     S_apply_ladspa, "a list");
   pfControls = MALLOC(psDescriptor->PortCount * sizeof(LADSPA_Data));
 
   /* Get parameters. */
-  scmParameters = SCM_CDR(SCM_CDR(ladspa_plugin_configuration));
+  scmParameters = CDR(CDR(ladspa_plugin_configuration));
   for (lPortIndex = 0; lPortIndex < psDescriptor->PortCount; lPortIndex++) 
 {
     iPortDescriptor = psDescriptor->PortDescriptors[lPortIndex];
     if (LADSPA_IS_PORT_CONTROL(iPortDescriptor)
 	&& LADSPA_IS_PORT_INPUT(iPortDescriptor)) {
       //FIXME: uninformative error.
-      ASSERT_TYPE(NUMBER_P(SCM_CAR(scmParameters)),
+      ASSERT_TYPE(NUMBER_P(CAR(scmParameters)),
 		 ladspa_plugin_configuration,
-		 SCM_ARG2,
+		 ARG2,
 		 S_apply_ladspa, "a number");
       pfControls[lPortIndex]
-	= (LADSPA_Data)TO_C_DOUBLE(SCM_CAR(scmParameters));
-      scmParameters = SCM_CDR(scmParameters);
+	= (LADSPA_Data)TO_C_DOUBLE(CAR(scmParameters));
+      scmParameters = CDR(scmParameters);
     }
   }
 

@@ -1856,7 +1856,7 @@ static int find_named_env(SCM name)
   if (STRING_P(name)) free(env_name);
   if (pos == -1)
     ERROR(NO_SUCH_ENVELOPE, 
-	  SCM_LIST1(name));
+	  LIST_1(name));
   return(pos);
 }
 
@@ -1868,7 +1868,7 @@ static SCM g_enved_active_env(void)
 
 static SCM g_set_enved_active_env(SCM e)
 {
-  ASSERT_TYPE(LIST_P(e) || STRING_P(e) || SYMBOL_P(e), e, SCM_ARGn, "set-" S_enved_active_env, "a list, symbol, or string");
+  ASSERT_TYPE(LIST_P(e) || STRING_P(e) || SYMBOL_P(e), e, ARGn, "set-" S_enved_active_env, "a list, symbol, or string");
   if (active_env) active_env = free_env(active_env);
   if ((STRING_P(e)) || (SYMBOL_P(e)))
     active_env = copy_env(enved_all_envs(find_named_env(e)));
@@ -1887,7 +1887,7 @@ static SCM g_enved_selected_env(void)
 static SCM g_set_enved_selected_env(SCM name)
 {
   int pos;
-  ASSERT_TYPE(STRING_P(name) || SYMBOL_P(name), name, SCM_ARGn, "set-" S_enved_selected_env, "a string or symbol");
+  ASSERT_TYPE(STRING_P(name) || SYMBOL_P(name), name, ARGn, "set-" S_enved_selected_env, "a string or symbol");
   pos = find_named_env(name);
   if (pos >= 0)
     {

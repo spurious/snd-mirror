@@ -140,6 +140,7 @@
 #undef HAVE_SCM_C_DEFINE
 #undef HAVE_SCM_C_DEFINE_GSUBR
 #undef HAVE_SCM_NUM2INT
+#undef HAVE_SCM_LIST_N
 
 #define USE_SND 1
 #endif

@@ -4,11 +4,8 @@
 
 /* I'm slowly moving every gh_*, scm_* and SCM_* entity into this file,
  *   hoping eventually to be able to make a parallel header file that
- *   allows us to use librep as the extension language without any
- *   (or not many) internal code changes.  Perhaps other Scheme extension
- *   systems could also work. (see sl.h for librep equivalents) -- I think
- *   I'll stay with "SCM" in Snd code, defining SCM as repv etc.  A major
- *   problem with librep: no setf, no defsetf, no defmacro... 
+ *   allows us to use librep, mzscheme, ruby etc as the extension language
+ *   without any (or not many) internal code changes.
  */
 
 #ifdef __cplusplus
@@ -61,6 +58,27 @@
 #define BOUND_P(Arg)     (!(SCM_UNBNDP(Arg)))
 #define NOT_BOUND_P(Arg) SCM_UNBNDP(Arg)
 #define INTEGER_ZERO     SCM_INUM0
+
+#define CAR(a)             SCM_CAR(a)
+#define CADR(a)            SCM_CADR(a)
+#define CADDR(a)           SCM_CADDR(a)
+#define CADDDR(a)          SCM_CADDDR(a)
+#define CDR(a)             SCM_CDR(a)
+#define CDDR(a)            SCM_CDDR(a)
+#define VECTOR_ELEMENTS(a) SCM_VELTS(a)
+#define EQ_P(a, b)         SCM_EQ_P(a, b)
+#define HOOK_PROCEDURES(a) SCM_HOOK_PROCEDURES(a)
+
+#define ARGn SCM_ARGn
+#define ARG1 SCM_ARG1
+#define ARG2 SCM_ARG2
+#define ARG3 SCM_ARG3
+#define ARG4 SCM_ARG4
+#define ARG5 SCM_ARG5
+#define ARG6 SCM_ARG6
+#define ARG7 SCM_ARG7
+#define ARG8 8
+
 
 #define TO_C_DOUBLE(a) scm_num2dbl(a,  __FUNCTION__)
 #define TO_C_DOUBLE_OR_ELSE(a, b) ((NUMBER_P(a)) ? (scm_num2dbl(a,  __FUNCTION__)) : (b))
@@ -312,5 +330,25 @@ static SCM name_reversed(SCM arg1, SCM arg2, SCM arg3) \
 
 #define APPLY_EOL scm_listofnull
 #define WRITE_STRING(Str, Prt) scm_puts(Str, Prt)
+
+#if HAVE_SCM_LIST_N
+  #define LIST_0                      SCM_EOL
+  #define LIST_1(a)                   scm_list_1(a)
+  #define LIST_2(a, b)                scm_list_2(a, b)
+  #define LIST_3(a, b, c)             scm_list_3(a, b, c)
+  #define LIST_4(a, b, c, d)          scm_list_4(a, b, c, d)
+  #define LIST_5(a, b, c, d, e)       scm_list_5(a, b, c, d, e)
+  #define LIST_6(a, b, c, d, e, f)    scm_list_n(a, b, c, d, e, f, SCM_UNDEFINED)
+  #define LIST_7(a, b, c, d, e, f, g) scm_list_n(a, b, c, d, e, f, g, SCM_UNDEFINED)
+#else
+  #define LIST_0                      SCM_LIST0
+  #define LIST_1(a)                   SCM_LIST1(a)
+  #define LIST_2(a, b)                SCM_LIST2(a, b)
+  #define LIST_3(a, b, c)             SCM_LIST3(a, b, c)
+  #define LIST_4(a, b, c, d)          SCM_LIST4(a, b, c, d)
+  #define LIST_5(a, b, c, d, e)       SCM_LIST5(a, b, c, d, e)
+  #define LIST_6(a, b, c, d, e, f)    SCM_LIST6(a, b, c, d, e, f)
+  #define LIST_7(a, b, c, d, e, f, g) SCM_LIST7(a, b, c, d, e, f, g)
+#endif
 
 #endif

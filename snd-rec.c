@@ -1480,7 +1480,7 @@ static SCM g_recorder_autoload(void) {return(TO_SCM_BOOLEAN(rp->autoload));}
 static SCM g_set_recorder_autoload(SCM val) 
 {
   #define H_recorder_autoload "(" S_recorder_autoload ") -> #t if newly recorded sound should be loaded into Snd automatically"
-  ASSERT_TYPE(BOOLEAN_IF_BOUND_P(val), val, SCM_ARGn, "set-" S_recorder_autoload, "a boolean");
+  ASSERT_TYPE(BOOLEAN_IF_BOUND_P(val), val, ARGn, "set-" S_recorder_autoload, "a boolean");
   set_recorder_autoload(rp, TO_C_BOOLEAN_OR_T(val));
   return(TO_SCM_BOOLEAN(rp->autoload));
 }
@@ -1490,7 +1490,7 @@ static SCM g_set_recorder_buffer_size(SCM val)
 {
   int size;
   #define H_recorder_buffer_size "(" S_recorder_buffer_size ") -> ADC buffer size (4096)"
-  ASSERT_TYPE(INTEGER_P(val), val, SCM_ARGn, "set-" S_recorder_buffer_size, "an integer"); 
+  ASSERT_TYPE(INTEGER_P(val), val, ARGn, "set-" S_recorder_buffer_size, "an integer"); 
   size = TO_C_INT(val);
   if (size <= 0)
     mus_misc_error("set-" S_recorder_buffer_size, "can't set buffer size <= 0", val);
@@ -1502,7 +1502,7 @@ static SCM g_recorder_file(void) {return(TO_SCM_STRING(rp->output_file));}
 static SCM g_set_recorder_file(SCM val) 
 {
   #define H_recorder_file "(" S_recorder_file ") -> default recorder file name"
-  ASSERT_TYPE(STRING_P(val) || FALSE_P(val), val, SCM_ARGn, "set-" S_recorder_file, "a string"); 
+  ASSERT_TYPE(STRING_P(val) || FALSE_P(val), val, ARGn, "set-" S_recorder_file, "a string"); 
   if (FALSE_P(val))
     rp->output_file = DEFAULT_RECORDER_FILE;
   else rp->output_file = TO_NEW_C_STRING(val);
@@ -1513,7 +1513,7 @@ static SCM g_recorder_in_format(void) {return(TO_SCM_INT(rp->in_format));}
 static SCM g_set_recorder_in_format(SCM val) 
 {
   #define H_recorder_in_format "(" S_recorder_in_format ") -> default recorder incoming data format (16 bit linear)"
-  ASSERT_TYPE(INTEGER_P(val), val, SCM_ARGn, "set-" S_recorder_in_format, "an integer"); 
+  ASSERT_TYPE(INTEGER_P(val), val, ARGn, "set-" S_recorder_in_format, "an integer"); 
   rp->in_format = TO_C_INT(val);
   return(TO_SCM_INT(rp->in_format));
 }
@@ -1522,7 +1522,7 @@ static SCM g_recorder_out_chans(void) {return(TO_SCM_INT(rp->out_chans));}
 static SCM g_set_recorder_out_chans(SCM val) 
 {
   #define H_recorder_out_chans "(" S_recorder_out_chans ") -> default recorder output channels (2)"
-  ASSERT_TYPE(INTEGER_P(val), val, SCM_ARGn, "set-" S_recorder_out_chans, "an integer"); 
+  ASSERT_TYPE(INTEGER_P(val), val, ARGn, "set-" S_recorder_out_chans, "an integer"); 
   rp->out_chans = TO_C_INT(val);
   return(TO_SCM_INT(rp->out_chans));
 }
@@ -1531,7 +1531,7 @@ static SCM g_recorder_out_format(void) {return(TO_SCM_INT(rp->out_format));}
 static SCM g_set_recorder_out_format(SCM val) 
 {
   #define H_recorder_out_format "(" S_recorder_out_format ") -> default recorder output data format (16-bit linear)"
-  ASSERT_TYPE(INTEGER_P(val), val, SCM_ARGn, "set-" S_recorder_out_format, "an integer"); 
+  ASSERT_TYPE(INTEGER_P(val), val, ARGn, "set-" S_recorder_out_format, "an integer"); 
   rp->out_format = TO_C_INT(val);
   return(TO_SCM_INT(rp->out_format));
 }
@@ -1540,7 +1540,7 @@ static SCM g_recorder_srate(void) {return(TO_SCM_INT(rp->srate));}
 static SCM g_set_recorder_srate(SCM val) 
 {
   #define H_recorder_srate "(" S_recorder_srate ") -> default recorder sampling rate (22050)"
-  ASSERT_TYPE(NUMBER_P(val), val, SCM_ARGn, "set-" S_recorder_srate, "a number"); 
+  ASSERT_TYPE(NUMBER_P(val), val, ARGn, "set-" S_recorder_srate, "a number"); 
   set_recorder_srate(rp, TO_C_INT_OR_ELSE(val, 0));
   return(TO_SCM_INT(rp->srate));
 }
@@ -1550,7 +1550,7 @@ static SCM g_set_recorder_trigger(SCM val)
 {
   Float trigger;
   #define H_recorder_trigger "(" S_recorder_trigger ") -> if doing triggered record, min amp that can trigger recording"
-  ASSERT_TYPE(NUMBER_P(val), val, SCM_ARGn, "set-" S_recorder_trigger, "a number"); 
+  ASSERT_TYPE(NUMBER_P(val), val, ARGn, "set-" S_recorder_trigger, "a number"); 
   trigger = TO_C_DOUBLE(val);
   if (trigger > 1.0) trigger = 1.0;
   if (trigger < 0.0) trigger = 0.0;
@@ -1562,7 +1562,7 @@ static SCM g_recorder_max_duration(void) {return(TO_SCM_DOUBLE(rp->max_duration)
 static SCM g_set_recorder_max_duration(SCM val) 
 {
   #define H_recorder_max_duration "(" S_recorder_max_duration ") -> max recorder output file length"
-  ASSERT_TYPE(NUMBER_P(val), val, SCM_ARGn, "set-" S_recorder_max_duration, "a number"); 
+  ASSERT_TYPE(NUMBER_P(val), val, ARGn, "set-" S_recorder_max_duration, "a number"); 
   rp->max_duration = TO_C_DOUBLE(val);
   return(TO_SCM_DOUBLE(rp->max_duration));
 }
@@ -1571,7 +1571,7 @@ static SCM g_recorder_gain (SCM num)
 {
   #define H_recorder_gain "(" S_recorder_gain " gain) -> recorder input (soundcard) gain"
   int g;
-  ASSERT_TYPE(INTEGER_P(num), num, SCM_ARGn, S_recorder_gain, "an integer");
+  ASSERT_TYPE(INTEGER_P(num), num, ARGn, S_recorder_gain, "an integer");
   g = TO_C_INT(num);
   if ((g >= 0) && (g < MAX_MIXER_GAINS))
     return(TO_SCM_DOUBLE(rp->mixer_gains[g]));
@@ -1582,8 +1582,8 @@ static SCM g_recorder_in_amp (SCM in, SCM out)
 {
   #define H_recorder_in_amp "(" S_recorder_in_amp " in out) -> recorder scaler on input in to output out"
   int ic, oc;
-  ASSERT_TYPE(INTEGER_P(in), in, SCM_ARG1, S_recorder_in_amp, "an integer");
-  ASSERT_TYPE(INTEGER_P(out), out, SCM_ARG2, S_recorder_in_amp, "an integer");
+  ASSERT_TYPE(INTEGER_P(in), in, ARG1, S_recorder_in_amp, "an integer");
+  ASSERT_TYPE(INTEGER_P(out), out, ARG2, S_recorder_in_amp, "an integer");
   ic = TO_C_INT(in);
   oc = TO_C_INT(out);
   if ((ic >= 0) && (ic < MAX_IN_CHANS) && 
@@ -1596,7 +1596,7 @@ static SCM g_recorder_out_amp (SCM num)
 {
   #define H_recorder_out_amp "(" S_recorder_out_amp " out) -> recorder output out scaler"
   int oc;
-  ASSERT_TYPE(INTEGER_P(num), num, SCM_ARGn, S_recorder_out_amp, "an integer");
+  ASSERT_TYPE(INTEGER_P(num), num, ARGn, S_recorder_out_amp, "an integer");
   oc = TO_C_INT(num);
   if ((oc >= 0) && (oc < MAX_OUT_CHANS))
     return(TO_SCM_DOUBLE(rp->out_amps[oc]));
@@ -1606,8 +1606,8 @@ static SCM g_recorder_out_amp (SCM num)
 static SCM g_set_recorder_gain (SCM num, SCM amp) 
 {
   int ind;
-  ASSERT_TYPE(INTEGER_P(num), num, SCM_ARG1, "set-" S_recorder_gain, "an integer");
-  ASSERT_TYPE(NUMBER_P(amp), amp, SCM_ARG2, "set-" S_recorder_gain, "a number"); 
+  ASSERT_TYPE(INTEGER_P(num), num, ARG1, "set-" S_recorder_gain, "an integer");
+  ASSERT_TYPE(NUMBER_P(amp), amp, ARG2, "set-" S_recorder_gain, "a number"); 
   ind = TO_C_INT(num);
   if ((ind >= 0) && (ind < MAX_MIXER_GAINS))
     {
@@ -1620,9 +1620,9 @@ static SCM g_set_recorder_gain (SCM num, SCM amp)
 static SCM g_set_recorder_in_amp (SCM in, SCM out, SCM amp) 
 {
   int in_ind, out_ind;
-  ASSERT_TYPE(INTEGER_P(in), in, SCM_ARG1, "set-" S_recorder_in_amp, "an integer");
-  ASSERT_TYPE(INTEGER_P(out), out, SCM_ARG2, "set-" S_recorder_in_amp, "an integer");
-  ASSERT_TYPE(NUMBER_P(amp), amp, SCM_ARG3, "set-" S_recorder_in_amp, "a number");
+  ASSERT_TYPE(INTEGER_P(in), in, ARG1, "set-" S_recorder_in_amp, "an integer");
+  ASSERT_TYPE(INTEGER_P(out), out, ARG2, "set-" S_recorder_in_amp, "an integer");
+  ASSERT_TYPE(NUMBER_P(amp), amp, ARG3, "set-" S_recorder_in_amp, "a number");
   in_ind = TO_C_INT(in);
   out_ind = TO_C_INT(out);
   if ((in_ind >= 0) && (in_ind < MAX_IN_CHANS) && 
@@ -1639,8 +1639,8 @@ static SCM g_set_recorder_in_amp (SCM in, SCM out, SCM amp)
 static SCM g_set_recorder_out_amp (SCM num, SCM amp) 
 {
   int ind;
-  ASSERT_TYPE(INTEGER_P(num), num, SCM_ARG1, "set-" S_recorder_out_amp, "an integer");
-  ASSERT_TYPE(NUMBER_P(amp), amp, SCM_ARG2, "set-" S_recorder_out_amp, "a number"); 
+  ASSERT_TYPE(INTEGER_P(num), num, ARG1, "set-" S_recorder_out_amp, "an integer");
+  ASSERT_TYPE(NUMBER_P(amp), amp, ARG2, "set-" S_recorder_out_amp, "a number"); 
   ind = TO_C_INT(num);
   if ((ind >= 0) && (ind < MAX_OUT_CHANS))
     {

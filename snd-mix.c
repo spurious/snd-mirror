@@ -352,7 +352,7 @@ static void select_mix(mix_info *md)
       reflect_mix_in_mix_panel(md->id);
       if (HOOKED(select_mix_hook))
 	g_c_run_progn_hook(select_mix_hook,
-			   SCM_LIST1(TO_SCM_INT(md->id)),
+			   LIST_1(TO_SCM_INT(md->id)),
 			   S_select_mix_hook);
     }
 }
@@ -3276,7 +3276,7 @@ void display_mix_amp_envs(snd_state *ss, chan_info *axis_cp, axis_context *ax, i
 static SCM snd_no_such_mix_error(const char *caller, SCM n)
 {
   ERROR(NO_SUCH_MIX,
-	SCM_LIST2(TO_SCM_STRING(caller),
+	LIST_2(TO_SCM_STRING(caller),
 		  n));
   return(SCM_BOOL_F);
 }
@@ -3285,7 +3285,7 @@ static SCM g_mix_position(SCM n)
 {
   #define H_mix_position "(" S_mix_position " id) -> sample number of start of mix"
   console_state *cs; 
-  ASSERT_TYPE(INTEGER_IF_BOUND_P(n), n, SCM_ARGn, S_mix_position, "an integer");
+  ASSERT_TYPE(INTEGER_IF_BOUND_P(n), n, ARGn, S_mix_position, "an integer");
   cs = cs_from_id(TO_C_INT_OR_ELSE(n, 0));
   if (cs == NULL)
     return(snd_no_such_mix_error(S_mix_position, n));
@@ -3296,7 +3296,7 @@ static SCM g_mix_chans(SCM n)
 {
   #define H_mix_chans "(" S_mix_chans " id) -> (input) channels in mix"
   console_state *cs; 
-  ASSERT_TYPE(INTEGER_IF_BOUND_P(n), n, SCM_ARGn, S_mix_chans, "an integer");
+  ASSERT_TYPE(INTEGER_IF_BOUND_P(n), n, ARGn, S_mix_chans, "an integer");
   cs = cs_from_id(TO_C_INT_OR_ELSE(n, 0));
   if (cs == NULL)
     return(snd_no_such_mix_error(S_mix_chans, n));
@@ -3315,7 +3315,7 @@ static SCM g_mix_length(SCM n)
 {
   #define H_mix_length "(" S_mix_length " id) -> length (frames) of mix"
   int len;
-  ASSERT_TYPE(INTEGER_IF_BOUND_P(n), n, SCM_ARGn, S_mix_length, "an integer");
+  ASSERT_TYPE(INTEGER_IF_BOUND_P(n), n, ARGn, S_mix_length, "an integer");
   len = mix_length(TO_C_INT_OR_ELSE(n, 0));
   if (len == -1) 
     return(snd_no_such_mix_error(S_mix_length, n));
@@ -3326,7 +3326,7 @@ static SCM g_mix_locked(SCM n)
 {
   #define H_mix_locked "(" S_mix_locked " id) -> #t if mix cannot be moved (due to subsequent edits overlapping it)"
   mix_info *md;
-  ASSERT_TYPE(INTEGER_IF_BOUND_P(n), n, SCM_ARGn, S_mix_locked, "an integer");
+  ASSERT_TYPE(INTEGER_IF_BOUND_P(n), n, ARGn, S_mix_locked, "an integer");
   md = md_from_id(TO_C_INT_OR_ELSE(n, 0));
   if (md == NULL)
     return(snd_no_such_mix_error(S_mix_locked, n));
@@ -3337,7 +3337,7 @@ static SCM g_mix_anchor(SCM n)
 {
   #define H_mix_anchor "(" S_mix_anchor " id) -> location of mix 'anchor' (determines console position within mix)"
   mix_info *md; 
-  ASSERT_TYPE(INTEGER_IF_BOUND_P(n), n, SCM_ARGn, S_mix_anchor, "an integer");
+  ASSERT_TYPE(INTEGER_IF_BOUND_P(n), n, ARGn, S_mix_anchor, "an integer");
   md = md_from_id(TO_C_INT_OR_ELSE(n, 0));
   if (md == NULL)
     return(snd_no_such_mix_error(S_mix_anchor, n));
@@ -3348,7 +3348,7 @@ static SCM g_mix_name(SCM n)
 {
   #define H_mix_name "(" S_mix_name " id) -> name associated with mix"
   mix_info *md; 
-  ASSERT_TYPE(INTEGER_IF_BOUND_P(n), n, SCM_ARGn, S_mix_name, "an integer");
+  ASSERT_TYPE(INTEGER_IF_BOUND_P(n), n, ARGn, S_mix_name, "an integer");
   md = md_from_id(TO_C_INT_OR_ELSE(n, 0));
   if (md == NULL)
     return(snd_no_such_mix_error(S_mix_name, n));
@@ -3359,7 +3359,7 @@ static SCM g_mix_track(SCM n)
 {
   #define H_mix_track "(" S_mix_track " id) -> track that mix is a member of"
   mix_info *md; 
-  ASSERT_TYPE(INTEGER_IF_BOUND_P(n), n, SCM_ARGn, S_mix_track, "an integer");
+  ASSERT_TYPE(INTEGER_IF_BOUND_P(n), n, ARGn, S_mix_track, "an integer");
   md = md_from_id(TO_C_INT_OR_ELSE(n, 0));
   if (md == NULL)
     return(snd_no_such_mix_error(S_mix_track, n));
@@ -3370,7 +3370,7 @@ static SCM g_mix_tag_y(SCM n)
 {
   #define H_mix_tag_y "(" S_mix_tag_y " id) -> height of mix's tag"
   mix_info *md; 
-  ASSERT_TYPE(INTEGER_IF_BOUND_P(n), n, SCM_ARGn, S_mix_tag_y, "an integer");
+  ASSERT_TYPE(INTEGER_IF_BOUND_P(n), n, ARGn, S_mix_tag_y, "an integer");
   md = md_from_id(TO_C_INT_OR_ELSE(n, 0));
   if (md == NULL)
     return(snd_no_such_mix_error(S_mix_tag_y, n));
@@ -3381,7 +3381,7 @@ static SCM g_mix_speed(SCM n)
 {
   #define H_mix_speed "(" S_mix_speed " id) -> srate (speed slider setting) of mix"
   console_state *cs; 
-  ASSERT_TYPE(INTEGER_IF_BOUND_P(n), n, SCM_ARGn, S_mix_speed, "an integer");
+  ASSERT_TYPE(INTEGER_IF_BOUND_P(n), n, ARGn, S_mix_speed, "an integer");
   cs = cs_from_id(TO_C_INT_OR_ELSE(n, 0));
   if (cs == NULL)
     return(snd_no_such_mix_error(S_mix_speed, n));
@@ -3432,11 +3432,11 @@ static SCM g_mix_home(SCM n)
 {
   #define H_mix_home "(" S_mix_home " id) -> list of index of sound and channel number affected by mix"
   mix_info *md; 
-  ASSERT_TYPE(INTEGER_IF_BOUND_P(n), n, SCM_ARGn, S_mix_home, "an integer");
+  ASSERT_TYPE(INTEGER_IF_BOUND_P(n), n, ARGn, S_mix_home, "an integer");
   md = md_from_id(TO_C_INT_OR_ELSE(n, 0));
   if (md == NULL)
     return(snd_no_such_mix_error(S_mix_home, n));
-  return(SCM_LIST2(TO_SCM_INT(((md->cp)->sound)->index),
+  return(LIST_2(TO_SCM_INT(((md->cp)->sound)->index),
 		   TO_SCM_INT(((md->cp)->chan))));
 }
 
@@ -3445,14 +3445,14 @@ static SCM g_mix_amp(SCM n, SCM uchan)
   #define H_mix_amp "(" S_mix_amp " id &optional (chan 0)) -> amp (console slider setting) of mix's channel chan"
   console_state *cs; 
   int chan;
-  ASSERT_TYPE(INTEGER_IF_BOUND_P(n), n, SCM_ARG1, S_mix_amp, "an integer");
-  ASSERT_TYPE(INTEGER_IF_BOUND_P(uchan), uchan, SCM_ARG2, S_mix_amp, "an integer");
+  ASSERT_TYPE(INTEGER_IF_BOUND_P(n), n, ARG1, S_mix_amp, "an integer");
+  ASSERT_TYPE(INTEGER_IF_BOUND_P(uchan), uchan, ARG2, S_mix_amp, "an integer");
   cs = cs_from_id(TO_C_INT_OR_ELSE(n, 0));
   if (cs == NULL)
     return(snd_no_such_mix_error(S_mix_amp, n));
   chan = TO_C_INT_OR_ELSE(uchan, 0);
   if (chan >= cs->chans)
-    return(snd_no_such_channel_error(S_mix_amp, SCM_LIST1(n), uchan));
+    return(snd_no_such_channel_error(S_mix_amp, LIST_1(n), uchan));
   return(TO_SCM_DOUBLE(cs->scalers[chan]));
 }
 
@@ -3460,8 +3460,8 @@ static SCM g_mix_amp_env(SCM n, SCM chan)
 {
   #define H_mix_amp_env "(" S_mix_amp_env " id &optional (chan 0)) -> amplitude envelope applied to mix's channel chan"
   env *e;
-  ASSERT_TYPE(INTEGER_IF_BOUND_P(n), n, SCM_ARG1, S_mix_amp_env, "an integer");
-  ASSERT_TYPE(INTEGER_IF_BOUND_P(chan), chan, SCM_ARG2, S_mix_amp_env, "an integer");
+  ASSERT_TYPE(INTEGER_IF_BOUND_P(n), n, ARG1, S_mix_amp_env, "an integer");
+  ASSERT_TYPE(INTEGER_IF_BOUND_P(chan), chan, ARG2, S_mix_amp_env, "an integer");
   e = mix_amp_env_from_id(TO_C_INT_OR_ELSE(n, 0), 
 			  TO_C_INT_OR_ELSE(chan, 0));
   if (e) return(env2scm(e));
@@ -3470,8 +3470,8 @@ static SCM g_mix_amp_env(SCM n, SCM chan)
 
 static SCM g_set_mix_position(SCM n, SCM uval) 
 {
-  ASSERT_TYPE(NUMBER_P(n), n, SCM_ARG1, "set-" S_mix_position, "a number");
-  ASSERT_TYPE(NUMBER_P(uval), uval, SCM_ARG2, "set-" S_mix_position, "a number");
+  ASSERT_TYPE(NUMBER_P(n), n, ARG1, "set-" S_mix_position, "a number");
+  ASSERT_TYPE(NUMBER_P(uval), uval, ARG2, "set-" S_mix_position, "a number");
   if (set_mix_position(TO_C_INT_OR_ELSE(n, 0), 
 		       TO_C_INT_OR_ELSE(uval, 0),
 		       FALSE) == INVALID_MIX_ID)
@@ -3484,8 +3484,8 @@ static SCM g_set_mix_length(SCM n, SCM uval)
   mix_info *md;
   int val;
   console_state *cs = NULL;
-  ASSERT_TYPE(INTEGER_P(n), n, SCM_ARG1, "set-" S_mix_length, "an integer");
-  ASSERT_TYPE(NUMBER_P(uval), uval, SCM_ARG2, "set-" S_mix_length, "a number");
+  ASSERT_TYPE(INTEGER_P(n), n, ARG1, "set-" S_mix_length, "an integer");
+  ASSERT_TYPE(NUMBER_P(uval), uval, ARG2, "set-" S_mix_length, "a number");
   md = md_from_id(TO_C_INT(n));
   if (md == NULL)
     return(snd_no_such_mix_error("set-" S_mix_length, n));
@@ -3508,8 +3508,8 @@ static SCM g_set_mix_locked(SCM n, SCM val)
   console_state *cs;
   mix_info *md;
   int on;
-  ASSERT_TYPE(INTEGER_P(n), n, SCM_ARG1, "set-" S_mix_locked, "an integer");
-  ASSERT_TYPE(BOOLEAN_IF_BOUND_P(val), val, SCM_ARG2, "set-" S_mix_locked, "a boolean");
+  ASSERT_TYPE(INTEGER_P(n), n, ARG1, "set-" S_mix_locked, "an integer");
+  ASSERT_TYPE(BOOLEAN_IF_BOUND_P(val), val, ARG2, "set-" S_mix_locked, "a boolean");
   md = md_from_id(TO_C_INT(n));
   if (md == NULL)
     return(snd_no_such_mix_error("set-" S_mix_locked, n));
@@ -3527,8 +3527,8 @@ static SCM g_set_mix_anchor(SCM n, SCM uval)
   mix_info *md;
   console_state *cs = NULL;
   int val;
-  ASSERT_TYPE(INTEGER_P(n), n, SCM_ARG1, "set-" S_mix_anchor, "an integer");
-  ASSERT_TYPE(NUMBER_P(uval), uval, SCM_ARG2, "set-" S_mix_anchor, "a number");
+  ASSERT_TYPE(INTEGER_P(n), n, ARG1, "set-" S_mix_anchor, "an integer");
+  ASSERT_TYPE(NUMBER_P(uval), uval, ARG2, "set-" S_mix_anchor, "a number");
   md = md_from_id(TO_C_INT(n));
   if (md == NULL)
     return(snd_no_such_mix_error("set-" S_mix_anchor, n));
@@ -3548,8 +3548,8 @@ static SCM g_set_mix_anchor(SCM n, SCM uval)
 static SCM g_set_mix_name(SCM n, SCM val) 
 {
   mix_info *md;
-  ASSERT_TYPE(INTEGER_P(n), n, SCM_ARG1, "set-" S_mix_name, "an integer");
-  ASSERT_TYPE(STRING_P(val), val, SCM_ARG2, "set-" S_mix_name, "a string");
+  ASSERT_TYPE(INTEGER_P(n), n, ARG1, "set-" S_mix_name, "an integer");
+  ASSERT_TYPE(STRING_P(val), val, ARG2, "set-" S_mix_name, "a string");
   md = md_from_id(TO_C_INT(n));
   if (md == NULL)
     return(snd_no_such_mix_error("set-" S_mix_name, n));
@@ -3562,8 +3562,8 @@ static SCM g_set_mix_name(SCM n, SCM val)
 static SCM g_set_mix_track(SCM n, SCM val) 
 {
   mix_info *md;
-  ASSERT_TYPE(INTEGER_P(n), n, SCM_ARG1, "set-" S_mix_track, "an integer");
-  ASSERT_TYPE(INTEGER_P(val), val, SCM_ARG2, "set-" S_mix_track, "an integer");
+  ASSERT_TYPE(INTEGER_P(n), n, ARG1, "set-" S_mix_track, "an integer");
+  ASSERT_TYPE(INTEGER_P(val), val, ARG2, "set-" S_mix_track, "an integer");
   md = md_from_id(TO_C_INT(n));
   if (md == NULL)
     return(snd_no_such_mix_error("set-" S_mix_track, n));
@@ -3575,8 +3575,8 @@ static SCM g_set_mix_track(SCM n, SCM val)
 static SCM g_set_mix_tag_y(SCM n, SCM val) 
 {
   mix_info *md;
-  ASSERT_TYPE(INTEGER_P(n), n, SCM_ARG1, "set-" S_mix_tag_y, "an integer");
-  ASSERT_TYPE(NUMBER_P(val), val, SCM_ARG2, "set-" S_mix_tag_y, "a number");
+  ASSERT_TYPE(INTEGER_P(n), n, ARG1, "set-" S_mix_tag_y, "an integer");
+  ASSERT_TYPE(NUMBER_P(val), val, ARG2, "set-" S_mix_tag_y, "a number");
   md = md_from_id(TO_C_INT(n));
   if (md == NULL)
     return(snd_no_such_mix_error("set-" S_mix_tag_y, n));
@@ -3587,8 +3587,8 @@ static SCM g_set_mix_tag_y(SCM n, SCM val)
 
 static SCM g_set_mix_speed(SCM n, SCM uval) 
 {
-  ASSERT_TYPE(INTEGER_P(n), n, SCM_ARG1, "set-" S_mix_speed, "an integer");
-  ASSERT_TYPE(NUMBER_P(uval), uval, SCM_ARG2, "set-" S_mix_speed, "a number");
+  ASSERT_TYPE(INTEGER_P(n), n, ARG1, "set-" S_mix_speed, "an integer");
+  ASSERT_TYPE(NUMBER_P(uval), uval, ARG2, "set-" S_mix_speed, "a number");
   if (set_mix_speed(TO_C_INT(n), TO_C_DOUBLE(uval), FALSE, TRUE) == INVALID_MIX_ID)
     snd_no_such_mix_error("set-" S_mix_speed, n);
   return(uval);
@@ -3597,9 +3597,9 @@ static SCM g_set_mix_speed(SCM n, SCM uval)
 static SCM g_set_mix_amp(SCM n, SCM uchan, SCM uval) 
 {
   int res;
-  ASSERT_TYPE(INTEGER_P(n), n, SCM_ARG1, "set-" S_mix_amp, "an integer");
-  ASSERT_TYPE(INTEGER_P(uchan), uchan, SCM_ARG2, "set-" S_mix_amp, "an integer");
-  ASSERT_TYPE(NUMBER_P(uval), uval, SCM_ARG3, "set-" S_mix_amp, "a number");
+  ASSERT_TYPE(INTEGER_P(n), n, ARG1, "set-" S_mix_amp, "an integer");
+  ASSERT_TYPE(INTEGER_P(uchan), uchan, ARG2, "set-" S_mix_amp, "an integer");
+  ASSERT_TYPE(NUMBER_P(uval), uval, ARG3, "set-" S_mix_amp, "a number");
   res = set_mix_amp(TO_C_INT(n), TO_C_INT(uchan), TO_C_DOUBLE(uval), FALSE, TRUE);
   if (res == INVALID_MIX_ID)
     snd_no_such_mix_error("set-" S_mix_amp, n);
@@ -3613,8 +3613,8 @@ static SCM g_set_mix_amp_env(SCM n, SCM chan, SCM val)
 {
   env *e = NULL;
   int res;
-  ASSERT_TYPE(INTEGER_P(n), n, SCM_ARG1, "set-" S_mix_amp_env, "an integer");
-  ASSERT_TYPE(INTEGER_P(chan), chan, SCM_ARG2, "set-" S_mix_amp_env, "an integer");
+  ASSERT_TYPE(INTEGER_P(n), n, ARG1, "set-" S_mix_amp_env, "an integer");
+  ASSERT_TYPE(INTEGER_P(chan), chan, ARG2, "set-" S_mix_amp_env, "an integer");
   res = set_mix_amp_env(TO_C_INT(n), 
 			TO_C_INT(chan), 
 			e = get_env(val, 
@@ -3636,8 +3636,8 @@ static SCM g_mix_sound(SCM file, SCM start_samp)
   snd_state *ss;
   snd_info *sp;
   int beg, err = 0;
-  ASSERT_TYPE(STRING_P(file), file, SCM_ARG1, S_mix_sound, "a string");
-  ASSERT_TYPE(NUMBER_P(start_samp), start_samp, SCM_ARG2, S_mix_sound, "a number");
+  ASSERT_TYPE(STRING_P(file), file, ARG1, S_mix_sound, "a string");
+  ASSERT_TYPE(NUMBER_P(start_samp), start_samp, ARG2, S_mix_sound, "a number");
   ss = get_global_state();
   sp = any_selected_sound(ss);  /* why not as arg?? -- apparently this is assuming CLM with-sound explode */
   if (sp == NULL) mus_misc_error(S_mix_sound, "no sound to mix into!", file);
@@ -3656,7 +3656,7 @@ static SCM g_mix_sound(SCM file, SCM start_samp)
     {
       if (ss->catch_message)
 	ERROR(MUS_MISC_ERROR,
-	      SCM_LIST2(TO_SCM_STRING(S_mix),
+	      LIST_2(TO_SCM_STRING(S_mix),
 			TO_SCM_STRING(ss->catch_message)));
       snd_no_such_file_error(S_mix_sound, file);
     }
@@ -3682,7 +3682,7 @@ static SCM g_set_mix_waveform_height(SCM val)
   #define H_mix_waveform_height "(" S_mix_waveform_height ") -> max height (pixels) of mix waveforms (20)"
   snd_state *ss; 
   int new_val[1];
-  ASSERT_TYPE(NUMBER_P(val), val, SCM_ARGn, "set-" S_mix_waveform_height, "a number"); 
+  ASSERT_TYPE(NUMBER_P(val), val, ARGn, "set-" S_mix_waveform_height, "a number"); 
   ss = get_global_state(); 
   new_val[0] = TO_C_INT_OR_ELSE(val, 0);
   in_set_mix_waveform_height(ss, new_val[0]);
@@ -3697,7 +3697,7 @@ static SCM g_set_mix_tag_width(SCM val)
   #define H_mix_tag_width "(" S_mix_tag_width ") -> width (pixels) of mix tags (6)"
   snd_state *ss; 
   int width;
-  ASSERT_TYPE(NUMBER_P(val), val, SCM_ARGn, "set-" S_mix_tag_width, "a number"); 
+  ASSERT_TYPE(NUMBER_P(val), val, ARGn, "set-" S_mix_tag_width, "a number"); 
   ss = get_global_state(); 
   width = TO_C_INT_OR_ELSE(val, DEFAULT_MIX_TAG_WIDTH);
   set_mix_tag_width(ss, width);
@@ -3711,7 +3711,7 @@ static SCM g_set_mix_tag_height(SCM val)
   #define H_mix_tag_height "(" S_mix_tag_height ") -> height (pixels) of mix tags (14)"
   snd_state *ss; 
   int height;
-  ASSERT_TYPE(NUMBER_P(val), val, SCM_ARGn, "set-" S_mix_tag_height, "a number"); 
+  ASSERT_TYPE(NUMBER_P(val), val, ARGn, "set-" S_mix_tag_height, "a number"); 
   ss = get_global_state(); 
   height = TO_C_INT_OR_ELSE(val, DEFAULT_MIX_TAG_HEIGHT);
   set_mix_tag_height(ss, height);
@@ -3722,7 +3722,7 @@ static SCM g_set_mix_tag_height(SCM val)
 static SCM g_select_mix(SCM id)
 {
   #define H_select_mix "(" S_select_mix " id) makes mix is the selected mix"
-  ASSERT_TYPE(INTEGER_P(id), id, SCM_ARGn, S_select_mix, "an integer");
+  ASSERT_TYPE(INTEGER_P(id), id, ARGn, S_select_mix, "an integer");
   select_mix(md_from_id(TO_C_INT(id)));
   return(id);
 }
@@ -3740,7 +3740,7 @@ static SCM g_forward_mix(SCM count, SCM snd, SCM chn)
   #define H_forward_mix "(" S_forward_mix " &optional (count 1) snd chn) moves the cursor forward count mixes, returns mix id if any"
   int val;
   chan_info *cp;
-  ASSERT_TYPE(INTEGER_IF_BOUND_P(count), count, SCM_ARG1, S_forward_mix, "an integer");
+  ASSERT_TYPE(INTEGER_IF_BOUND_P(count), count, ARG1, S_forward_mix, "an integer");
   SND_ASSERT_CHAN(S_forward_mix, snd, chn, 2);
   cp = get_cp(snd, chn, S_forward_mix);
   val = TO_C_INT_OR_ELSE(count, 1); 
@@ -3753,7 +3753,7 @@ static SCM g_backward_mix(SCM count, SCM snd, SCM chn)
   #define H_backward_mix "(" S_backward_mix " &optional (count 1) snd chn) moves the cursor back count mixes, returns mix id if any"
   int val; 
   chan_info *cp;
-  ASSERT_TYPE(INTEGER_IF_BOUND_P(count), count, SCM_ARG1, S_backward_mix, "an integer");
+  ASSERT_TYPE(INTEGER_IF_BOUND_P(count), count, ARG1, S_backward_mix, "an integer");
   SND_ASSERT_CHAN(S_backward_mix, snd, chn, 2);
   cp = get_cp(snd, chn, S_backward_mix);
   val = -(TO_C_INT_OR_ELSE(count, 1)); 
@@ -3775,11 +3775,11 @@ If chn is omitted, file's channels are mixed until snd runs out of channels"
   int with_mixer = 1;
   snd_state *ss;
   mix_info *md;
-  ASSERT_TYPE(STRING_P(file), file, SCM_ARG1, S_mix, "a string");
-  ASSERT_TYPE(INTEGER_IF_BOUND_P(chn_samp_n), chn_samp_n, SCM_ARG2, S_mix, "an integer");
-  ASSERT_TYPE(INTEGER_IF_BOUND_P(file_chn), file_chn, SCM_ARG3, S_mix, "an integer");
+  ASSERT_TYPE(STRING_P(file), file, ARG1, S_mix, "a string");
+  ASSERT_TYPE(INTEGER_IF_BOUND_P(chn_samp_n), chn_samp_n, ARG2, S_mix, "an integer");
+  ASSERT_TYPE(INTEGER_IF_BOUND_P(file_chn), file_chn, ARG3, S_mix, "an integer");
   SND_ASSERT_CHAN(S_mix, snd_n, chn_n, 4);
-  ASSERT_TYPE(NUMBER_OR_BOOLEAN_IF_BOUND_P(console), console, SCM_ARG6, S_mix, "a number");
+  ASSERT_TYPE(NUMBER_OR_BOOLEAN_IF_BOUND_P(console), console, ARG6, S_mix, "a number");
   name = mus_expand_filename(TO_C_STRING(file));
   if (!(mus_file_probe(name)))
     {
@@ -3799,7 +3799,7 @@ If chn is omitted, file's channels are mixed until snd runs out of channels"
 	  if (name) FREE(name);
 	  if (ss->catch_message)
 	    ERROR(MUS_MISC_ERROR,
-		  SCM_LIST2(TO_SCM_STRING(S_mix),
+		  LIST_2(TO_SCM_STRING(S_mix),
 			    TO_SCM_STRING(ss->catch_message)));
 	  return(snd_no_such_file_error(S_mix, file));
 	}
@@ -3824,7 +3824,7 @@ If chn is omitted, file's channels are mixed until snd runs out of channels"
 	  else
 	    if (ss->catch_message)
 	      ERROR(MUS_MISC_ERROR,
-		    SCM_LIST2(TO_SCM_STRING(S_mix),
+		    LIST_2(TO_SCM_STRING(S_mix),
 			      TO_SCM_STRING(ss->catch_message)));
 
 	}
@@ -3901,7 +3901,7 @@ static SCM g_make_mix_sample_reader(SCM mix_id)
   #define H_make_mix_sample_reader "(" S_make_mix_sample_reader " id) returns a reader ready to access mix 'id'"
   mix_info *md = NULL;
   mix_fd *mf = NULL;
-  ASSERT_TYPE(INTEGER_P(mix_id), mix_id, SCM_ARGn, S_make_mix_sample_reader, "an integer");
+  ASSERT_TYPE(INTEGER_P(mix_id), mix_id, ARGn, S_make_mix_sample_reader, "an integer");
   md = md_from_id(TO_C_INT(mix_id));
   if (md == NULL)
     return(snd_no_such_mix_error(S_make_mix_sample_reader, mix_id));
@@ -3917,7 +3917,7 @@ static SCM g_make_mix_sample_reader(SCM mix_id)
 static SCM g_next_mix_sample(SCM obj)
 {
   #define H_next_mix_sample "(" S_next_mix_sample " reader) -> next sample from mix reader"
-  ASSERT_TYPE(MIX_SAMPLE_READER_P(obj), obj, SCM_ARGn, S_next_mix_sample, "a mix-sample-reader");
+  ASSERT_TYPE(MIX_SAMPLE_READER_P(obj), obj, ARGn, S_next_mix_sample, "a mix-sample-reader");
   return(TO_SCM_DOUBLE(next_mix_sample(TO_MIX_SAMPLE_READER(obj))));
 }
 
@@ -3925,7 +3925,7 @@ static SCM g_free_mix_sample_reader(SCM obj)
 {
   #define H_free_mix_sample_reader "(" S_free_mix_sample_reader " reader) frees mix sample reader 'reader'"
   mix_fd *mf;
-  ASSERT_TYPE(MIX_SAMPLE_READER_P(obj), obj, SCM_ARGn, S_free_mix_sample_reader, "a mix-sample-reader");
+  ASSERT_TYPE(MIX_SAMPLE_READER_P(obj), obj, ARGn, S_free_mix_sample_reader, "a mix-sample-reader");
   mf = TO_MIX_SAMPLE_READER(obj);
   free_mix_fd_almost(mf);
   return(scm_return_first(SCM_BOOL_F, obj));
@@ -4017,9 +4017,9 @@ returns a reader ready to access track's data associated with snd's channel chn 
 
   track_fd *tf = NULL;
   chan_info *cp;
-  ASSERT_TYPE(INTEGER_P(track_id), track_id, SCM_ARG1, S_make_track_sample_reader, "an integer");
+  ASSERT_TYPE(INTEGER_P(track_id), track_id, ARG1, S_make_track_sample_reader, "an integer");
   SND_ASSERT_CHAN(S_make_track_sample_reader, snd, chn, 3); 
-  ASSERT_TYPE(NUMBER_IF_BOUND_P(samp), samp, SCM_ARG2, S_make_track_sample_reader, "a number");
+  ASSERT_TYPE(NUMBER_IF_BOUND_P(samp), samp, ARG2, S_make_track_sample_reader, "a number");
   cp = get_cp(snd, chn, S_make_track_sample_reader);
   tf = init_track_reader(cp, 
 			 TO_C_INT(track_id), 
@@ -4030,7 +4030,7 @@ returns a reader ready to access track's data associated with snd's channel chn 
       SND_RETURN_NEWSMOB(tf_tag, tf);
     }
   ERROR(NO_SUCH_TRACK,
-	SCM_LIST2(TO_SCM_STRING(S_make_track_sample_reader),
+	LIST_2(TO_SCM_STRING(S_make_track_sample_reader),
 		  track_id));
   return(track_id);
 }
@@ -4038,7 +4038,7 @@ returns a reader ready to access track's data associated with snd's channel chn 
 static SCM g_next_track_sample(SCM obj)
 {
   #define H_next_track_sample "(" S_next_track_sample " reader) -> next sample from track reader"
-  ASSERT_TYPE(TRACK_SAMPLE_READER_P(obj), obj, SCM_ARGn, S_next_track_sample, "a track-sample-reader");
+  ASSERT_TYPE(TRACK_SAMPLE_READER_P(obj), obj, ARGn, S_next_track_sample, "a track-sample-reader");
   return(TO_SCM_DOUBLE(MUS_SAMPLE_TO_FLOAT(next_track_sample(TO_TRACK_SAMPLE_READER(obj)))));
 }
 
@@ -4046,7 +4046,7 @@ static SCM g_free_track_sample_reader(SCM obj)
 {
   #define H_free_track_sample_reader "(" S_free_track_sample_reader " reader) frees the track sample reader 'reader'"
   track_fd *tf = NULL;
-  ASSERT_TYPE(TRACK_SAMPLE_READER_P(obj), obj, SCM_ARGn, S_free_track_sample_reader, "a track-sample-reader");
+  ASSERT_TYPE(TRACK_SAMPLE_READER_P(obj), obj, ARGn, S_free_track_sample_reader, "a track-sample-reader");
   tf = TO_TRACK_SAMPLE_READER(obj);
   free_track_fd_almost(tf);
   return(scm_return_first(SCM_BOOL_F, obj));
@@ -4057,7 +4057,7 @@ static SCM g_play_track(SCM num, SCM snd, SCM chn)
   #define H_play_track "(" S_play_track " track &optional snd chn) plays track"
   /* just a dummy for testing */
   chan_info *cp;
-  ASSERT_TYPE(INTEGER_IF_BOUND_P(num), num, SCM_ARG1, S_play_track, "an integer");
+  ASSERT_TYPE(INTEGER_IF_BOUND_P(num), num, ARG1, S_play_track, "an integer");
   /* in this case if snd=#t, play all associated mixes in all chans */
   if (TRUE_P(snd))
     play_track(get_global_state(), NULL, 0, TO_C_INT_OR_ELSE(num, 0));
@@ -4073,7 +4073,7 @@ static SCM g_play_mix(SCM num)
 {
   #define H_play_mix "(" S_play_mix " id) plays mix"
   mix_info *md;
-  ASSERT_TYPE(INTEGER_P(num), num, SCM_ARGn, S_play_mix, "an integer");
+  ASSERT_TYPE(INTEGER_P(num), num, ARGn, S_play_mix, "an integer");
   md = md_from_id(TO_C_INT(num));
   if (md == NULL)
     return(snd_no_such_mix_error(S_play_mix, num));
@@ -4093,7 +4093,7 @@ static void call_multichannel_mix_hook(int *ids, int n)
       for (i = n - 1; i >= 0; i--)
 	lst = CONS(TO_SMALL_SCM_INT(ids[i]), lst);
       g_c_run_progn_hook(multichannel_mix_hook,
-			 SCM_LIST1(lst),
+			 LIST_1(lst),
 			 S_multichannel_mix_hook);
     }
 }
@@ -4104,7 +4104,7 @@ static int call_mix_speed_changed_hook(mix_info *md)
   if ((md) && 
       (HOOKED(mix_speed_changed_hook)))
     res = g_c_run_progn_hook(mix_speed_changed_hook,
-			     SCM_LIST1(TO_SMALL_SCM_INT(md->id)),
+			     LIST_1(TO_SMALL_SCM_INT(md->id)),
 			     S_mix_speed_changed_hook);
   return(TRUE_P(res));
 }
@@ -4115,7 +4115,7 @@ static int call_mix_amp_changed_hook(mix_info *md)
   if ((md) && 
       (HOOKED(mix_amp_changed_hook)))
     res = g_c_run_progn_hook(mix_amp_changed_hook,
-			     SCM_LIST1(TO_SMALL_SCM_INT(md->id)),
+			     LIST_1(TO_SMALL_SCM_INT(md->id)),
 			     S_mix_amp_changed_hook);
   return(TRUE_P(res));
 }
@@ -4126,7 +4126,7 @@ static int call_mix_position_changed_hook(mix_info *md, int samps)
   if ((md) && 
       (HOOKED(mix_position_changed_hook)))
     res = g_c_run_progn_hook(mix_position_changed_hook,
-			     SCM_LIST2(TO_SMALL_SCM_INT(md->id),
+			     LIST_2(TO_SMALL_SCM_INT(md->id),
 				       TO_SCM_INT(samps)),
 			     S_mix_position_changed_hook);
   return(TRUE_P(res));
@@ -4145,10 +4145,10 @@ mixes data (a vct object) into snd's channel chn starting at beg; returns the ne
   char *edname = NULL;
   MUS_SAMPLE_TYPE **data;
   int i, len, mix_id = -1, with_mixers = 1;
-  ASSERT_TYPE(VCT_P(obj), obj, SCM_ARG1, S_mix_vct, "a vct");
+  ASSERT_TYPE(VCT_P(obj), obj, ARG1, S_mix_vct, "a vct");
   SND_ASSERT_CHAN(S_mix_vct, snd, chn, 3);
-  ASSERT_TYPE(INTEGER_IF_BOUND_P(beg), beg, SCM_ARG2, S_mix_vct, "an integer");
-  ASSERT_TYPE(BOOLEAN_IF_BOUND_P(with_tag), with_tag, SCM_ARG5, S_mix_vct, "a boolean");
+  ASSERT_TYPE(INTEGER_IF_BOUND_P(beg), beg, ARG2, S_mix_vct, "an integer");
+  ASSERT_TYPE(BOOLEAN_IF_BOUND_P(with_tag), with_tag, ARG5, S_mix_vct, "a boolean");
   v = TO_VCT(obj);
   if (v)
     {
@@ -4186,7 +4186,7 @@ finds the mix in snd's channel chn at samp, returning the mix id; returns #f if 
 
   int id;
   chan_info *cp = NULL;
-  ASSERT_TYPE(NUMBER_IF_BOUND_P(samp_n), samp_n, SCM_ARG1, S_find_mix, "a number");
+  ASSERT_TYPE(NUMBER_IF_BOUND_P(samp_n), samp_n, ARG1, S_find_mix, "a number");
   SND_ASSERT_CHAN(S_find_mix, snd_n, chn_n, 2); 
   cp = get_cp(snd_n, chn_n, S_find_mix);
   id = mix_id_from_channel_position(cp, TO_C_INT_OR_ELSE_WITH_ORIGIN(samp_n, -1, S_find_mix));

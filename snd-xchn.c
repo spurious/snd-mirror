@@ -582,7 +582,7 @@ static void graph_mouse_enter(Widget w, XtPointer context, XEvent *event, Boolea
   XtVaGetValues(w, XmNuserData, &data, NULL);
   if (HOOKED(mouse_enter_graph_hook))
     g_c_run_progn_hook(mouse_enter_graph_hook,
-		       SCM_LIST2(TO_SMALL_SCM_INT(UNPACK_SOUND(data)),
+		       LIST_2(TO_SMALL_SCM_INT(UNPACK_SOUND(data)),
 				 TO_SMALL_SCM_INT(UNPACK_CHANNEL(data))),
 		       S_mouse_enter_graph_hook);
   XDefineCursor(XtDisplay(w), XtWindow(w), (ss->sgx)->graph_cursor);
@@ -594,7 +594,7 @@ static void graph_mouse_leave(Widget w, XtPointer context, XEvent *event, Boolea
   XtVaGetValues(w, XmNuserData, &data, NULL);
   if (HOOKED(mouse_leave_graph_hook))
     g_c_run_progn_hook(mouse_leave_graph_hook,
-		       SCM_LIST2(TO_SMALL_SCM_INT(UNPACK_SOUND(data)),
+		       LIST_2(TO_SMALL_SCM_INT(UNPACK_SOUND(data)),
 				 TO_SMALL_SCM_INT(UNPACK_CHANNEL(data))),
 		       S_mouse_leave_graph_hook);
   XUndefineCursor(XtDisplay(w), XtWindow(w));
@@ -675,7 +675,7 @@ void reflect_edit_history_change(chan_info *cp)
   chan_context *cx;
   Widget lst;
   snd_info *sp;
-  int i, eds;
+  int i, eds, items = 0;
   XmString *edits;
   XmString edit;
 #if (XmVERSION == 1)
@@ -695,7 +695,9 @@ void reflect_edit_history_change(chan_info *cp)
 		  if ((eds == cp->edit_ctr) && (eds > 1)) /* need to force 0 (1) case to start list with sound file name */
 		    {
 		      /* special common case -- we're appending a new edit description */
-		      XmListDeleteItemsPos(lst, cp->edit_size, eds + 1);
+		      XtVaGetValues(lst, XmNitemCount, &items, NULL);
+		      if (items > eds )
+			XmListDeleteItemsPos(lst, cp->edit_size, eds + 1);
 		      edit = XmStringCreate(edit_to_string(cp, eds), XmFONTLIST_DEFAULT_TAG);
 		      XmListAddItemUnselected(lst, edit, eds + 1);
 		      XmStringFree(edit);
@@ -716,9 +718,9 @@ void reflect_edit_history_change(chan_info *cp)
 		      FREE(edits);
 		    }
 		  XmListSelectPos(lst, cp->edit_ctr + 1, FALSE);
-		  XtVaGetValues(lst, XmNvisibleItemCount, &i, NULL);
-		  if (i <= eds)
-		    XtVaSetValues(lst, XmNtopItemPosition, eds - i + 2, NULL);
+		  XtVaGetValues(lst, XmNvisibleItemCount, &items, NULL);
+		  if (items <= eds)
+		    XtVaSetValues(lst, XmNtopItemPosition, eds - items + 2, NULL);
 		  goto_graph(cp);
 		}
 	    }

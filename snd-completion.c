@@ -15,11 +15,11 @@ static int scan_tab(SCM tab, char *text, int len, int matches)
   n = VECTOR_LENGTH(tab);
   for (i = 0; i < n; ++i)
     {
-      SCM ls = SCM_VELTS(tab)[i], handle;
+      SCM ls = VECTOR_ELEMENTS(tab)[i], handle;
       while (NOT_NULL_P(ls))
 	{
-	  handle = SCM_CAR(ls);
-	  sym = SYMBOL_TO_C_STRING(SCM_CAR(handle));
+	  handle = CAR(ls);
+	  sym = SYMBOL_TO_C_STRING(CAR(handle));
 	  if (strncmp(text, sym, len) == 0)
 	    {
 	      matches++;
@@ -37,7 +37,7 @@ static int scan_tab(SCM tab, char *text, int len, int matches)
 		      }
 		}
 	    }
-	  ls = SCM_CDR(ls);
+	  ls = CDR(ls);
 	}
     }
   return(matches);
@@ -54,9 +54,9 @@ static int completions(char *text)
   uses = SCM_MODULE_USES(curmod);
   while (SCM_CONSP(uses))
     {
-      matches = scan_tab(SCM_MODULE_OBARRAY(SCM_CAR(uses)), 
+      matches = scan_tab(SCM_MODULE_OBARRAY(CAR(uses)), 
 			 text, len, matches);
-      uses = SCM_CDR(uses);
+      uses = CDR(uses);
     }
   return(matches);
 }

@@ -113,7 +113,7 @@ static int call_menu_hook(char *name, char *option)
   SCM res = SCM_BOOL_T;
   if ((name) && (HOOKED(menu_hook)))
     res = g_c_run_and_hook(menu_hook, 
-			   SCM_LIST2(TO_SCM_STRING(name), 
+			   LIST_2(TO_SCM_STRING(name), 
 				     TO_SCM_STRING(option)),
 			   S_menu_hook);
   return(TRUE_P(res));

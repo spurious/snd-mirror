@@ -647,9 +647,9 @@ static gint mouse_name(SCM hook, GtkWidget *w, const char *caller)
 	  if (label)
 	    {
 	      g_c_run_progn_hook(hook,
-				 SCM_LIST3(TO_SMALL_SCM_INT(r->parent),
-					   TO_SMALL_SCM_INT(r->pos),
-					   TO_SCM_STRING(label)),
+				 LIST_3(TO_SMALL_SCM_INT(r->parent),
+					TO_SMALL_SCM_INT(r->pos),
+					TO_SCM_STRING(label)),
 				 caller);
 	    }
 	}

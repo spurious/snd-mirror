@@ -23,24 +23,24 @@ SCM scm_return_first(SCM a, ...);
 #define scm_must_malloc(size, str) malloc(size)
 #define scm_done_malloc(size) 
 
-#define SCM_EQ_P(a, b)  ((a) == (b))
-#define SCM_LIST0       Qnil
-#define SCM_LIST1(Arg1) rep_LIST_1(Arg1)
-#define SCM_LIST2(Arg1, Arg2) rep_LIST_2(Arg1, Arg2)
-#define SCM_LIST3(Arg1, Arg2, Arg3) rep_LIST_3(Arg1, Arg2, Arg3)
-#define SCM_LIST4(Arg1, Arg2, Arg3, Arg4) rep_LIST_4(Arg1, Arg2, Arg3, Arg4)
-#define SCM_LIST5(Arg1, Arg2, Arg3, Arg4, Arg5) rep_LIST_5(Arg1, Arg2, Arg3, Arg4, Arg5)
-#define SCM_LIST6(a, b, c, d, e, f) Fcons(a, SCM_LIST5(b, c, d, e, f))
-#define SCM_LIST7(a, b, c, d, e, f, g) Fcons(a, SCM_LIST6(b, c, d, e, f, g))
-#define SCM_CAR(Arg)    rep_CAR(Arg)
-#define SCM_CDR(Arg)    rep_CDR(Arg)
-#define SCM_CDDR(Arg)   rep_CDDR(Arg)
-#define SCM_CADR(Arg)   rep_CADR(Arg)
-#define SCM_CADDR(Arg)  rep_CADDR(Arg)
-#define SCM_CADDDR(Arg) rep_CADDDR(Arg)
-#define SCM_VELTS(a)    (repv *)(rep_VECT(a)->array)
+#define EQ_P(a, b)                           ((a) == (b))
+#define LIST_0                               Qnil
+#define LIST_1(Arg1)                         rep_LIST_1(Arg1)
+#define LIST_2(Arg1, Arg2)                   rep_LIST_2(Arg1, Arg2)
+#define LIST_3(Arg1, Arg2, Arg3)             rep_LIST_3(Arg1, Arg2, Arg3)
+#define LIST_4(Arg1, Arg2, Arg3, Arg4)       rep_LIST_4(Arg1, Arg2, Arg3, Arg4)
+#define LIST_5(Arg1, Arg2, Arg3, Arg4, Arg5) rep_LIST_5(Arg1, Arg2, Arg3, Arg4, Arg5)
+#define LIST_6(a, b, c, d, e, f)             Fcons(a, LIST_5(b, c, d, e, f))
+#define LIST_7(a, b, c, d, e, f, g)          Fcons(a, LIST_6(b, c, d, e, f, g))
+#define CAR(Arg)                             rep_CAR(Arg)
+#define CDR(Arg)                             rep_CDR(Arg)
+#define CDDR(Arg)                            rep_CDDR(Arg)
+#define CADR(Arg)                            rep_CADR(Arg)
+#define CADDR(Arg)                           rep_CADDR(Arg)
+#define CADDDR(Arg)                          rep_CADDDR(Arg)
+#define VECTOR_ELEMENTS(a)                   (repv *)(rep_VECT(a)->array)
 #define SCM_NEWSMOB(a, b, c) Qnil
-#define SCM_HOOK_PROCEDURES(a) Qnil
+#define HOOK_PROCEDURES(a) Qnil
 #define SET_SCM_VALUE(a, b)
 
 #ifdef __cplusplus

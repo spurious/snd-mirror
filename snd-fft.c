@@ -1322,7 +1322,7 @@ static int apply_fft_window(fft_state *fs)
       if (HOOKED(before_transform_hook))
 	{
 	  res = g_c_run_progn_hook(before_transform_hook, 
-				   SCM_LIST2(TO_SMALL_SCM_INT(cp->sound->index), 
+				   LIST_2(TO_SMALL_SCM_INT(cp->sound->index), 
 					     TO_SMALL_SCM_INT(cp->chan)),
 				   S_before_transform_hook);
 	  if (NUMBER_P(res))
@@ -2228,7 +2228,7 @@ static SCM g_autocorrelate(SCM reals)
   int n, i;
   SCM *vdata;
   Float *rl;
-  ASSERT_TYPE(((VCT_P(reals)) || (VECTOR_P(reals))), reals, SCM_ARGn, S_autocorrelate, "a vct or vector");
+  ASSERT_TYPE(((VCT_P(reals)) || (VECTOR_P(reals))), reals, ARGn, S_autocorrelate, "a vct or vector");
   if (VCT_P(reals))
     {
       v1 = (vct *)SND_VALUE_OF(reals);
@@ -2239,13 +2239,13 @@ static SCM g_autocorrelate(SCM reals)
     {
       n = VECTOR_LENGTH(reals);
       rl = (Float *)MALLOC(n * sizeof(Float));
-      vdata = SCM_VELTS(reals);
+      vdata = VECTOR_ELEMENTS(reals);
       for (i = 0; i < n; i++) rl[i] = TO_C_DOUBLE(vdata[i]);
     }
   autocorrelation(rl, n);
   if (v1 == NULL) 
     {
-      vdata = SCM_VELTS(reals);
+      vdata = VECTOR_ELEMENTS(reals);
       for (i = 0; i < n; i++) vdata[i] = TO_SCM_DOUBLE(rl[i]);
       FREE(rl);
     }
@@ -2269,11 +2269,11 @@ to be displayed goes from low to high (normally 0.0 to 1.0)"
       FREE(errmsg);
       return(snd_bad_arity_error(S_add_transform, errstr, proc));
     }
-  ASSERT_TYPE(STRING_P(name), name, SCM_ARG1, S_add_transform, "a string");
-  ASSERT_TYPE(STRING_P(xlabel), xlabel, SCM_ARG2, S_add_transform, "a string");
-  ASSERT_TYPE(NUMBER_P(lo), lo, SCM_ARG3, S_add_transform, "a number");
-  ASSERT_TYPE(NUMBER_P(hi), hi, SCM_ARG4, S_add_transform, "a number");
-  ASSERT_TYPE(PROCEDURE_P(proc), proc, SCM_ARG5, S_add_transform, "a procedure");
+  ASSERT_TYPE(STRING_P(name), name, ARG1, S_add_transform, "a string");
+  ASSERT_TYPE(STRING_P(xlabel), xlabel, ARG2, S_add_transform, "a string");
+  ASSERT_TYPE(NUMBER_P(lo), lo, ARG3, S_add_transform, "a number");
+  ASSERT_TYPE(NUMBER_P(hi), hi, ARG4, S_add_transform, "a number");
+  ASSERT_TYPE(PROCEDURE_P(proc), proc, ARG5, S_add_transform, "a procedure");
   return(TO_SMALL_SCM_INT(add_transform(TO_C_STRING(name),
 					TO_C_STRING(xlabel),
 					TO_C_DOUBLE(lo),
@@ -2297,7 +2297,7 @@ and otherwise returns a list (total-size active-bins active-slices)"
   if (transform_graph_type(cp->state) == GRAPH_TRANSFORM_ONCE) 
     return(TO_SMALL_SCM_INT(transform_size(cp->state)));
   si = (sono_info *)(cp->sonogram_data);
-  if (si) return(SCM_LIST3(TO_SCM_DOUBLE(spectro_cutoff(cp->state)),
+  if (si) return(LIST_3(TO_SCM_DOUBLE(spectro_cutoff(cp->state)),
 			   TO_SMALL_SCM_INT(si->active_slices),
 			   TO_SMALL_SCM_INT(si->target_bins)));
   return(INTEGER_ZERO);
@@ -2312,8 +2312,8 @@ returns the current transform sample at bin and slice in snd channel chn (assumi
   fft_info *fp;
   sono_info *si;
   int fbin, fslice;
-  ASSERT_TYPE(INTEGER_IF_BOUND_P(bin), bin, SCM_ARG1, S_transform_sample, "an integer");
-  ASSERT_TYPE(INTEGER_IF_BOUND_P(slice), slice, SCM_ARG2, S_transform_sample, "an integer");
+  ASSERT_TYPE(INTEGER_IF_BOUND_P(bin), bin, ARG1, S_transform_sample, "an integer");
+  ASSERT_TYPE(INTEGER_IF_BOUND_P(slice), slice, ARG2, S_transform_sample, "an integer");
   SND_ASSERT_CHAN(S_transform_sample, snd_n, chn_n, 3);
   cp = get_cp(snd_n, chn_n, S_transform_sample);
   if (cp->graph_transform_p)
@@ -2335,7 +2335,7 @@ returns the current transform sample at bin and slice in snd channel chn (assumi
 		  (fslice < si->active_slices))
 		return(TO_SCM_DOUBLE(si->data[fslice][fbin]));
 	      else  ERROR(NO_SUCH_SAMPLE,
-			  SCM_LIST5(TO_SCM_STRING(S_transform_sample),
+			  LIST_5(TO_SCM_STRING(S_transform_sample),
 				    bin, slice,
 				    snd_n, chn_n));
 	    }
@@ -2366,7 +2366,7 @@ static SCM g_transform_samples(SCM snd_n, SCM chn_n)
 	    {
 	      len = fp->current_size;
 	      new_vect = MAKE_VECTOR(len, TO_SCM_DOUBLE(0.0));
-	      vdata = SCM_VELTS(new_vect);
+	      vdata = VECTOR_ELEMENTS(new_vect);
 	      for (i = 0; i < len; i++) 
 		vdata[i] = TO_SCM_DOUBLE(fp->data[i]);
 	      return(new_vect);
@@ -2379,11 +2379,11 @@ static SCM g_transform_samples(SCM snd_n, SCM chn_n)
 		  slices = si->active_slices;
 		  bins = si->target_bins;
 		  new_vect = MAKE_VECTOR(slices, TO_SCM_DOUBLE(0.0));
-		  vdata = SCM_VELTS(new_vect);
+		  vdata = VECTOR_ELEMENTS(new_vect);
 		  for (i = 0; i < slices; i++)
 		    {
 		      tmp_vect = MAKE_VECTOR(bins, TO_SCM_DOUBLE(0.0));
-		      tdata = SCM_VELTS(tmp_vect);
+		      tdata = VECTOR_ELEMENTS(tmp_vect);
 		      vdata[i] = tmp_vect;
 		      for (j = 0; j < bins; j++)
 			tdata[j] = TO_SCM_DOUBLE(si->data[i][j]);
@@ -2452,8 +2452,8 @@ static SCM g_snd_transform(SCM type, SCM data, SCM hint)
   int trf, i, j, hnt, n2;
   vct *v;
   Float *dat;
-  ASSERT_TYPE(INTEGER_P(type), type, SCM_ARG1, "snd-transform", "an integer");
-  ASSERT_TYPE(VCT_P(data), data, SCM_ARG2, "snd-transform", "a vct");
+  ASSERT_TYPE(INTEGER_P(type), type, ARG1, "snd-transform", "an integer");
+  ASSERT_TYPE(VCT_P(data), data, ARG2, "snd-transform", "a vct");
   trf = TO_SMALL_C_INT(type);
   if ((trf < 0) || (trf > HAAR))
     mus_misc_error("snd-transform", "invalid transform choice", type);

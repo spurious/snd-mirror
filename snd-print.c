@@ -515,7 +515,7 @@ static SCM g_graph2ps(SCM filename)
       result = TO_SCM_STRING(error);
       FREE(error);
       ERROR(CANNOT_PRINT,
-	    SCM_LIST3(TO_SCM_STRING(S_graph2ps),
+	    LIST_3(TO_SCM_STRING(S_graph2ps),
 		      TO_SCM_STRING(file),
 		      result));
     }

@@ -60,6 +60,7 @@
 ;;; "vector synthesis"
 ;;; remove-clicks
 ;;; searching examples (zero+, next-peak, find-pitch)
+;;; sound-data->list
 
 ;;; TODO: decide how to handle the CLM examples
 ;;; TODO: robust pitch tracker
@@ -543,7 +544,7 @@
 	   (all-data (samples->sound-data)) ; for simplicity, just grab all the data
 	   (audio-data (make-sound-data 1 bufsize))
 	   (bytes (* bufsize 2))
-	   (audio-fd (mus-audio-open-output mus-audio-default 22050 1 mus-lshort bytes)))
+	   (audio-fd (mus-audio-open-output mus-audio-default (srate) 1 mus-lshort bytes)))
       (if (not (= audio-fd -1))
 	  (do ()
 	      ((c-g?) 
@@ -2636,3 +2637,19 @@ read, even if not playing.  'files' is a list of files to be played."
 			  (set! rtn (- (/ (transform-size) 2)))))))
 	       (vct-fill! data 0.0)))
 	 rtn))))
+
+
+;;; -------- sound-data->list
+
+(define (sound-data-channel->list sd chan)
+  (let ((ls '()))
+    (do ((i (1- (sound-data-length sd)) (1- i)))
+	((< i 0) ls)
+      (set! ls (cons (sound-data-ref sd chan i) ls)))))
+
+(define (sound-data->list sd)
+  (let ((lst '()))
+    (do ((i (1- (sound-data-chans sd)) (1- i)))
+	((< i 0) lst)
+      (set! lst (cons (sound-data-channel->list sd i) lst)))))
+

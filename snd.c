@@ -25,9 +25,9 @@ static void mus_error2snd(int type, char *msg)
 	{
 	  if (msg == NULL)
 	    ERROR(MUS_MISC_ERROR,
-		  SCM_LIST1(TO_SCM_STRING((char *)mus_error_to_string(type))));
+		  LIST_1(TO_SCM_STRING((char *)mus_error_to_string(type))));
 	  else ERROR(MUS_MISC_ERROR,
-		     SCM_LIST1(TO_SCM_STRING(msg)));
+		     LIST_1(TO_SCM_STRING(msg)));
 	}
       /* else we're not called from guile? */
     }

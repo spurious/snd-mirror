@@ -1134,7 +1134,7 @@ static void mouse_name_leave_or_enter(regrow *r, SCM hook, const char *caller)
 	}
       if (label)
 	g_c_run_progn_hook(hook,
-			   SCM_LIST3(TO_SMALL_SCM_INT(r->parent),
+			   LIST_3(TO_SMALL_SCM_INT(r->parent),
 				     TO_SMALL_SCM_INT(r->pos),
 				     TO_SCM_STRING(label)),
 			   caller);
@@ -2241,7 +2241,7 @@ static SCM g_just_sounds(void)
 static SCM g_set_just_sounds(SCM on) 
 {
   int n;
-  ASSERT_TYPE(BOOLEAN_IF_BOUND_P(on), on, SCM_ARG1, "set-" S_just_sounds, "a boolean");
+  ASSERT_TYPE(BOOLEAN_IF_BOUND_P(on), on, ARG1, "set-" S_just_sounds, "a boolean");
   n = TO_C_BOOLEAN_OR_T(on);
   if (just_sounds_button)
     XmToggleButtonSetState(just_sounds_button, n, TRUE);
@@ -2271,8 +2271,8 @@ return(SCM_EOL);
 static SCM g_new_file_dialog_widgets(void)
 {
   if (new_dialog)
-    return(scm_append(SCM_LIST2(file_data_dialog_widgets(new_dialog, new_dialog_data),
-				SCM_LIST1(SND_WRAP(new_file_name)))));
+    return(scm_append(LIST_2(file_data_dialog_widgets(new_dialog, new_dialog_data),
+				LIST_1(SND_WRAP(new_file_name)))));
   return(SCM_EOL);
 }
 
@@ -2286,8 +2286,8 @@ static SCM g_edit_header_dialog_widgets(void)
 static SCM g_save_as_dialog_widgets(void)
 {
   if (save_as_dialog)
-    return(scm_append(SCM_LIST2(file_data_dialog_widgets(save_as_dialog, save_as_file_data),
-				SCM_LIST1(SND_WRAP(file_save_as_file_name)))));
+    return(scm_append(LIST_2(file_data_dialog_widgets(save_as_dialog, save_as_file_data),
+				LIST_1(SND_WRAP(file_save_as_file_name)))));
   return(SCM_EOL);
 }
 
