@@ -86,7 +86,7 @@
 #if (!defined(HAVE_CONFIG_H)) || (defined(HAVE_STRING_H))
   #include <string.h>
 #endif
-#if (defined(NEXT) || (defined(HAVE_LIBC_H) && (!defined(HAVE_UNISTD_H))))
+#if (defined(HAVE_LIBC_H) && (!defined(HAVE_UNISTD_H)))
   #include <libc.h>
 #else
   #if (!(defined(_MSC_VER))) && (!(defined(MPW_C)))
@@ -2499,11 +2499,7 @@ static void write_ircam_comment(int fd, const char *comment, int len)
 
 static int write_ircam_header(int chan, int wsrate, int wchans, int format, const char *comment, int len)
 {
-#ifdef NEXT
-  mus_bint_to_char((unsigned char *)hdrbuf, 0x4a364);
-#else
   mus_bint_to_char((unsigned char *)hdrbuf, 0x2a364); /* SUN id */
-#endif
   mus_bfloat_to_char((unsigned char *)(hdrbuf + 4), (float)wsrate);
   mus_bint_to_char((unsigned char *)(hdrbuf + 8), wchans);
   mus_bint_to_char((unsigned char *)(hdrbuf + 12), sndlib_format_to_ircam(format));

@@ -394,7 +394,7 @@ void init_recorder(void)
   rp->taking_input = 0;
   rp->systems = 1;
   rp->mixer_settings_saved = 0;
-#if defined(LINUX) || defined(__bsdi__)
+#if LINUX || __bsdi__
   rp->output_header_type = MUS_RIFF;
 #else
   rp->output_header_type = MUS_AIFC;
@@ -1028,7 +1028,7 @@ void fire_up_recorder(snd_state *ss)
       return;
     }
   rp->taking_input = 1;
-#if ((HAVE_OSS) || defined(SUN))
+#if HAVE_OSS || SUN
   /* rp->monitor_port = 0; */
 
   /*

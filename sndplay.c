@@ -9,7 +9,7 @@
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
-#if (defined(NEXT) || (defined(HAVE_LIBC_H) && (!defined(HAVE_UNISTD_H))))
+#if (defined(HAVE_LIBC_H) && (!defined(HAVE_UNISTD_H)))
   #include <libc.h>
 #else
   #if (!(defined(_MSC_VER))) && (!(defined(MPW_C)))
@@ -25,20 +25,17 @@
   #include <console.h>
 #endif
 
-#if defined(NEXT) 
-  #define BUFFER_SIZE 1024
+#if MAC_OSX
+  #define BUFFER_SIZE 512
 #else
-  #if defined(MAC_OSX)
-    #define BUFFER_SIZE 512
+  #if WIN32
+    /* this setting from Scott Middleton (actually used 8096) */
+    #define BUFFER_SIZE 8192
   #else
-    #if defined(WIN32)
-      /* this setting from Scott Middleton (actually used 8096) */
-      #define BUFFER_SIZE 8192
-    #else
-      #define BUFFER_SIZE 4096
-    #endif
+    #define BUFFER_SIZE 4096
   #endif
 #endif
+
 
 #if MAC_OSX
   #define OutSample float

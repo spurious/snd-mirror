@@ -101,15 +101,7 @@ are different enough that gl.c can be a pain to build).
 The customization/extension language is Guile, available in the Gnu
 distributions:
 
-  ftp://ftp.gnu.org/pub/gnu/guile/guile-1.4.tar.gz
-
-Many of the example Scheme files use the Guile 1.5 or later optional
-argument syntax, so Guile 1.4 is actually not a reasonable default 
-anymore, but Guile 1.6 will apparently never arrive. In the meantime,
-you can get a 1.6 facsimile from
-
-  ftp://alpha.gnu.org/gnu/guile/guile-1.5.6.tar.gz
-  ftp://ccrma-ftp.stanford.edu/pub/Lisp/guile-1.5.6.tar.gz
+  ftp://ftp.gnu.org/gnu/guile/guile-1.6.0.tar.gz
 
 To include guile in Snd, either use the configure script (which should
 be able to find the guile library automatically), or go to the
@@ -143,15 +135,10 @@ http://www-ccrma.stanford.edu/planetccrma/software/
 
 ----------------------------------------------------------------
 Included with Snd are five command-line programs that might
-be of interest: sndplay, sndrecord, sndinfo, sndsine, and audinfo.  
-You can make these by using the same makefile as before
-and:
+be of interest: sndplay, sndrecord, sndinfo, sndsine, and audinfo:
 
   make sndplay
 
-or
-  
-  make -f makefile.sgi sndplay
 
 
 ----------------------------------------------------------------
@@ -495,7 +482,7 @@ fooling with this variable or not.
 
 OpenGL comes with the SGI, but its drawing area widget seems to be less
 than adequate -- I use Mesa on Linux where X drawing commands can be mixed
-with OpenGL.  On the SGI, the former are all messed up colorwise.
+with OpenGL.  On the SGI, the colors all messed up.
 
 
 ---- Gtk/OpenGL ----

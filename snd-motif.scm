@@ -2191,7 +2191,7 @@ Reverb-feedback sets the scaler on the feedback.\n\
       (cdr (menu-widgets)))
      (throw 'no-such-menu (list "menu-option" name)))))
 
-;;; SOMEDAY: bess-translations
+;;; SOMEDAY: bess-translations (first case is bess.scm)
 ;;; SOMEDAY: radar scope style region cue list
 ;;; SOMEDAY: spatial envelope dialog
 ;;; SOMEDAY: spectral edit dialog

@@ -93,7 +93,7 @@ static Widget rec_size_text, trigger_scale, trigger_label;
 static Widget file_duration, messages = NULL, record_button, reset_button, file_text;
 static Widget *device_buttons;
 static int device_buttons_size = 0;
-#if NEW_SGI_AL || defined(SUN)
+#if NEW_SGI_AL || SUN
   static int active_device_button = -1;
 #endif
 static int mixer_gains_posted[MAX_SOUNDCARDS];
@@ -1139,7 +1139,7 @@ static void device_button_callback(Widget w, XtPointer context, XtPointer info)
   PANE *p = (PANE *)context;
   int on, button;
   snd_state *ss;
-#if defined(SGI) || defined(SUN)
+#if SGI || SUN
   int other_button, j, n, i, output;
   float val[2];
 #endif
@@ -1148,7 +1148,7 @@ static void device_button_callback(Widget w, XtPointer context, XtPointer info)
   rp = get_recorder_info();
   ss = p->ss;
 
-#if defined(SGI) || defined(SUN)
+#if SGI || SUN
   output = 0;
 #endif
 
@@ -1186,7 +1186,7 @@ static void device_button_callback(Widget w, XtPointer context, XtPointer info)
 	}
     }
 #endif
-#if NEW_SGI_AL || defined(SUN)
+#if NEW_SGI_AL || SUN
   output = (!(recorder_input_device(p->device)));
   if (!output)
     {
@@ -1342,7 +1342,7 @@ static void make_file_info_pane(snd_state *ss, recorder_info *rp, Widget file_pa
 #if (HAVE_OSS || HAVE_ALSA)
   Widget save_audio_settings;
 #endif
-#if defined(SGI) || defined(SUN)
+#if SGI || SUN
   float val[1];
   int err;
 #endif
@@ -1418,7 +1418,7 @@ static void make_file_info_pane(snd_state *ss, recorder_info *rp, Widget file_pa
   recdat = make_file_data_panel(ss, ff_form, "data-form", args, n, TRUE, rp->output_header_type, rp->out_format, FALSE, TRUE);
   XtVaGetValues(recdat->comment_text, XmNy, &pane_max, NULL);
   XtAddCallback(recdat->srate_text, XmNactivateCallback, srate_changed_callback, (void *)ss); /* this is a no-op -- textfield widget is not activatable */
-#if defined(SGI)
+#if SGI
   err = mus_audio_mixer_read(MUS_AUDIO_PACK_SYSTEM(0) | MUS_AUDIO_MICROPHONE, MUS_AUDIO_SRATE, 0, val);
   if (!err) rp->srate = val[0];
 #endif
@@ -1580,7 +1580,7 @@ static void make_file_info_pane(snd_state *ss, recorder_info *rp, Widget file_pa
 	{XtSetArg(args[n], XmNindicatorType, XmONE_OF_MANY); n++;}
       else {XtSetArg(args[n], XmNindicatorType, XmN_OF_MANY); n++;}
 #endif
-#if NEW_SGI_AL || defined(SUN)
+#if NEW_SGI_AL || SUN
       if (recorder_input_device(rp->ordered_devices[i]))
 	{XtSetArg(args[n], XmNindicatorType, XmONE_OF_MANY); n++;}
       else {XtSetArg(args[n], XmNindicatorType, XmN_OF_MANY); n++;}
@@ -3516,7 +3516,7 @@ static void initialize_recorder(recorder_info *rp)
   XmToggleButtonSetState(device_buttons[rp->digital_in_button], in_digital, FALSE);
   device_button_callback(device_buttons[rp->digital_in_button], (XtPointer)all_panes[rp->digital_in_button], NULL);
 #endif
-#if NEW_SGI_AL || defined(SUN)
+#if NEW_SGI_AL || SUN
   /* for simplicity, and until someone complains, new SGI AL machines will just have one active input device */
   active_device_button = rp->microphone_button;
   for (i = 0; i < device_buttons_size - 1; i++)

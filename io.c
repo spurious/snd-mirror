@@ -40,7 +40,7 @@
 #include <errno.h>
 #include <stdlib.h>
 
-#if (defined(NEXT) || (defined(HAVE_LIBC_H) && (!defined(HAVE_UNISTD_H))))
+#if (defined(HAVE_LIBC_H) && (!defined(HAVE_UNISTD_H)))
   #include <libc.h>
 #else
   #if (!(defined(_MSC_VER))) && (!(defined(MPW_C)))
@@ -1462,7 +1462,7 @@ char *mus_expand_filename(char *utok)
 	}
       else
 	{
-#if (!defined(NEXT)) || defined(HAVE_GETCWD)
+#if HAVE_GETCWD
 	  getcwd(file_name_buf, MUS_MAX_FILE_NAME);
 #else
 	  getwd(file_name_buf);

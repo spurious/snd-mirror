@@ -16,3 +16,5 @@
 (define normalize-transform-by-channel normalize-by-channel)
 (define normalize-transform-by-sound   normalize-by-sound)
 (define normalize-transform-globally   normalize-globally)
+
+(define set-oss-buffers mus-audio-set-oss-buffers)

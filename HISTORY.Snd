@@ -1,10 +1,11 @@
 Snd change log
 
+  10-Sep:    new edit123.scm thanks to Tom Roth.
   9-Sep:     bess.scm.
              set-oss-buffers -> mus-audio-set-oss-buffers.
   4-Sep:     --with-modules for modularized sndlib.
   2-Sep:     removed gtk-1 and gtkextra support.
-  1-Sep:     if no extension language, edit position can get confused.
+  1-Sep:     bugfix: if no extension language, edit position could get confused.
   26-Aug:    added filter-control-coeffs.
              graph-lisp|time|transform? inverted to be lisp|time|transform-graph?
              graph-time-once -> graph-once, graph-transform-once -> graph-once

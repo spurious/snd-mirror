@@ -514,11 +514,8 @@ static void help_mix_callback (Widget w, XtPointer cD, XtPointer mD) {IF_MENU_HO
 static void help_sound_files_callback (Widget w, XtPointer cD, XtPointer mD) {IF_MENU_HOOK("Help", "Formats") sound_files_help((snd_state *)cD);}
 static void help_init_file_callback (Widget w, XtPointer cD, XtPointer mD) {IF_MENU_HOOK("Help", "Customization") init_file_help((snd_state *)cD);}
 static void help_recording_callback (Widget w, XtPointer cD, XtPointer mD) {IF_MENU_HOOK("Help", "Recording") recording_help((snd_state *)cD);}
-
 static void help_clm_callback (Widget w, XtPointer cD, XtPointer mD) {IF_MENU_HOOK("Help", "CLM") clm_help((snd_state *)cD);}
-
 static void help_news_callback (Widget w, XtPointer cD, XtPointer mD) {IF_MENU_HOOK("Help", "News") news_help((snd_state *)cD);}
-
 
 void check_menu_labels(int key, int state, int extended)
 {
@@ -1005,7 +1002,9 @@ static void SND_callback(Widget w, XtPointer cD, XtPointer mD)
 
 static void GHC_callback(Widget w, XtPointer cD, XtPointer mD) 
 {
-  g_snd_callback((int)cD); /* main menu cascading callback */
+  int slot;
+  XtVaGetValues(w, XmNuserData, &slot, NULL);
+  g_snd_callback(slot); /* main menu cascading callback */
 }
 
 static void add_option(Widget w, int which_menu, char *label, int callb)
@@ -1139,8 +1138,9 @@ int g_add_to_main_menu(snd_state *ss, char *label, int slot)
   n = 0;
   if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->highlight_color); n++;}
   XtSetArg(args[n], XmNsubMenuId, m); n++;
+  XtSetArg(args[n], XmNuserData, slot); n++;
   cas = XtCreateManagedWidget(label, xmCascadeButtonWidgetClass, mw[menu_menu], args, n);
-  if (slot >= 0) XtAddCallback(cas, XmNcascadingCallback, GHC_callback, (XtPointer)slot);
+  if (slot >= 0) XtAddCallback(cas, XmNcascadingCallback, GHC_callback, NULL);
 
   if (auto_resize(ss)) XtVaSetValues(MAIN_SHELL(ss), XmNallowShellResize, TRUE, NULL);
 

@@ -209,7 +209,7 @@ char *version_info(void)
     #endif
   #endif
 #endif
-#if (!(defined(USE_MOTIF))) && (!(defined(USE_GTK)))
+#if (!USE_MOTIF) && (!USE_GTK)
 	  "\n    without any graphics system",
 #endif
 #if HAVE_HTML
@@ -221,7 +221,7 @@ char *version_info(void)
 	  "\n    with mozilla browser",
   #endif
 #endif
-#if ((HAVE_XPM) && (defined(USE_MOTIF)))
+#if HAVE_XPM && USE_MOTIF
 	  "\n    Xpm ", snd_itoa(XpmFormat), ".", 
                         snd_itoa(XpmVersion), ".", 
                         snd_itoa(XpmRevision),
@@ -268,11 +268,12 @@ void news_help(snd_state *ss)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+10-Sep:  new edit123.scm thanks to Tom Roth.\n\
 9-Sep:   bess.scm.\n\
          set-oss-buffers -> mus-audio-set-oss-buffers\n\
 4-Sep:   --with-modules for modularized sndlib.\n\
 2-Sep:   removed gtk-1 and gtkextra support.\n\
-1-Sep:   if no extension language, edit position can get confused (fixed).\n\
+1-Sep:   bugfix: if no extension language, edit position could get confused (fixed).\n\
 26-Aug:  added filter-control-coeffs.\n\
          graph-lisp|time|transform? inverted to be lisp|time|transform-graph?\n\
          graph-time-once -> graph-once\n\

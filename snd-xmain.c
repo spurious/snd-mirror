@@ -601,7 +601,7 @@ void snd_doit(snd_state *ss, int argc, char **argv)
   ss->Graph_Cursor = XC_crosshair;
 
 #ifndef SND_AS_WIDGET
-#if defined(SCO5) || defined(UW2) || defined(SUN) || defined(HPUX) || defined(ALPHA)
+#if SCO5 || UW2 || SUN || HPUX || ALPHA
   /*
   ** Use of the lower level Xt routines does not work.
   */

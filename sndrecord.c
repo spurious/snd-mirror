@@ -7,7 +7,7 @@
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
-#if (defined(NEXT) || (defined(HAVE_LIBC_H) && (!defined(HAVE_UNISTD_H))))
+#if (defined(HAVE_LIBC_H) && (!defined(HAVE_UNISTD_H)))
   #include <libc.h>
 #else
   #if (!(defined(_MSC_VER))) && (!(defined(MPW_C)))
@@ -25,31 +25,22 @@
 
 #define CHANNELS 1
 
-#ifdef NEXT
-  #define BUFFER_SIZE 1024
-  #define READS 1
-  typedef char indata;
-  #define FILE_TYPE MUS_NEXT
-  #define DATA_TYPE MUS_MULAW
-  #define SAMPLING_RATE 8000
+#define BUFFER_SIZE 4096
+#define READS 10
+typedef short indata;
+#ifdef WINDOZE
+  #define FILE_TYPE MUS_RIFF
+  #define DATA_TYPE MUS_UBYTE
+  #define SAMPLING_RATE 22050
 #else
-  #define BUFFER_SIZE 4096
-  #define READS 10
-  typedef short indata;
-  #ifdef WINDOZE
+  #if (HAVE_OSS || HAVE_ALSA)
     #define FILE_TYPE MUS_RIFF
-    #define DATA_TYPE MUS_UBYTE
+    #define DATA_TYPE MUS_LSHORT
     #define SAMPLING_RATE 22050
   #else
-    #if (HAVE_OSS || HAVE_ALSA)
-      #define FILE_TYPE MUS_RIFF
-      #define DATA_TYPE MUS_LSHORT
-      #define SAMPLING_RATE 22050
-    #else
-      #define FILE_TYPE MUS_AIFC
-      #define DATA_TYPE MUS_BSHORT
-      #define SAMPLING_RATE 44100
-    #endif
+    #define FILE_TYPE MUS_AIFC
+    #define DATA_TYPE MUS_BSHORT
+    #define SAMPLING_RATE 44100
   #endif
 #endif
 

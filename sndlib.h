@@ -40,7 +40,6 @@
 #else
   #define RETSIGTYPE void
   #ifdef __LITTLE_ENDIAN__
-    /* NeXTStep on Intel */
     #define MUS_LITTLE_ENDIAN 1
   #else
     #ifdef BYTE_ORDER
@@ -83,7 +82,7 @@
 /* due to project builder stupidity, we can't always depend on -D flags here (maybe we need a SNDLIB_OS macro?) */
 /* these wouldn't work with autoconf anyway, so we'll do it by hand */
 
-#if (!defined(SGI)) && (!defined(NEXT)) && (!defined(LINUX)) && (!defined(MACOS)) && (!defined(SUN)) && (!defined(UW2)) && (!defined(SCO5)) && (!defined(ALPHA)) && (!defined(WINDOZE)) && (!defined(MAC_OSX))
+#if (!defined(SGI)) && (!defined(LINUX)) && (!defined(MACOS)) && (!defined(SUN)) && (!defined(UW2)) && (!defined(SCO5)) && (!defined(ALPHA)) && (!defined(WINDOZE)) && (!defined(MAC_OSX))
   #if defined(__dest_os)
     /* we're in Metrowerks Land */
     #if (__dest_os == __mac_os)

@@ -9,7 +9,7 @@
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
-#if (defined(NEXT) || (defined(HAVE_LIBC_H) && (!defined(HAVE_UNISTD_H))))
+#if (defined(HAVE_LIBC_H) && (!defined(HAVE_UNISTD_H)))
   #include <libc.h>
 #else
   #if (!(defined(_MSC_VER))) && (!(defined(MPW_C)))
@@ -111,7 +111,7 @@ int main(int argc, char *argv[])
 		sprintf(format_info, "%d (%s)", format, format_name);
 	      else sprintf(format_info, "%d", format);
 	    }
-#if (!defined(HAVE_CONFIG_H)) || defined(HAVE_STRFTIME)
+#if (!defined(HAVE_CONFIG_H)) || HAVE_STRFTIME
 	  strftime(timestr, 64, "%a %d-%b-%Y %H:%M %Z", localtime(&date));
 #else
 	  sprintf(timestr, "who knows?");

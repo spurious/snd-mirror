@@ -439,7 +439,7 @@ static void file_dialog_select_callback(Widget w, XtPointer context, XtPointer i
       XtVaSetValues(fd->dialog_info1, XmNlabelString, label, NULL);
       XmStringFree(label);
       date = mus_sound_write_date(filename);
-#if (!defined(HAVE_CONFIG_H)) || defined(HAVE_STRFTIME)
+#if (!defined(HAVE_CONFIG_H)) || HAVE_STRFTIME
       strftime(timestr, 64, ", %d-%b-%Y", localtime(&date));
 #else
       sprintf(timestr, "");

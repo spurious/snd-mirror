@@ -50,7 +50,7 @@
 
 <p>The sound library is a collection of sound file and audio hardware
 handlers written in C and running currently on SGI (either
-audio library), NeXT, Sun, OSS or ALSA (Linux and others), Mac, Mac OS-X, HPUX, LinuxPPC, and Windoze systems.  
+audio library), Sun, OSS or ALSA (Linux and others), Mac, Mac OS-X, HPUX, LinuxPPC, and Windoze systems.  
 It provides relatively straightforward access to many sound file headers and data
 types, and most of the features of the audio hardware. </p>
 
@@ -84,7 +84,7 @@ the word "to" as in "mus_samples_to_bytes".
   make
 </pre>
 <p>To install it, 'make install' -- I've tested this process in Linux,
-SGI, Sun, and NeXT.  It could conceivably work elsewhere.  For more
+SGI, and Sun.  It could conceivably work elsewhere.  For more
 details see <a href="#building">How to Make Sndlib</a> below.</p>
 
 <br>
@@ -930,17 +930,6 @@ cc sndplay.c -o sndplay -O -DLINUX audio.o io.o headers.o sound.o -lm
 ld -r audio.o io.o headers.o sound.o -o sndlib.a
 cc sndplay.c -o sndplay -O -DLINUX sndlib.a -lm
 </pre>
-<p>And on a NeXT:</p>
-<pre>
-cc -c io.c -O -DNEXT
-cc -c audio.c -O -DNEXT
-cc -c headers.c -O -DNEXT
-cc -c sound.c -O -DNEXT
-cc sndplay.c -o sndplay -O -DNEXT audio.o io.o headers.o sound.o 
-
-ld -r audio.o io.o headers.o sound.o -o sndlib.a
-cc sndplay.c -o sndplay -O -DNEXT sndlib.a
-</pre>
 <p>Some similar sequence should work on a Sun (-DSOLARIS) or in HP-UX (-DHPUX).
 In Windoze, you can use the C IDE (a project builder),
 or run the compiler from a DOS shell.  In the latter case,
@@ -979,8 +968,6 @@ ld -shared io.o headers.o audio.o sound.o clm.o -o sndlib.so
 <center>
 <table border=8 bordercolor="lightgreen" cellpadding=4> 
   <tr><th>System</th><th>SndSine</th><th>SndInfo</th><th>Audinfo</th><th>SndPlay</th><th>SndRecord</th><th>CLM</th><th>MIDI</th></tr>
-  <tr><td width=180>NeXT 68k</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>ok</td><td>not written</td></tr>
-  <tr><td>NeXT Intel</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>interruptions</td><td align=middle>runs (*)</td><td align=middle>ok</td><td>not written</td></tr>
   <tr><td>SGI old and new AL</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>ok</td><td>partly tested</td></tr>
   <tr><td>OSS (Linux et al)</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>ok</td><td>untested</td></tr>
   <tr><td>Mac</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>ok</td><td>not written</td></tr>

@@ -3490,9 +3490,7 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
   XEN_EVAL_C_STRING("(define normalize-transform-by-channel 1)");
   XEN_EVAL_C_STRING("(define normalize-transform-by-sound 2)");
   XEN_EVAL_C_STRING("(define normalize-transform-globally 3)");
-  #if (HAVE_OSS || HAVE_ALSA)
   XEN_EVAL_C_STRING("(define set-oss-buffers mus-audio-set-oss-buffers)");
-  #endif
 
   /* from ice-9/r4rs.scm but with output to snd listener */
   XEN_EVAL_C_STRING("(define snd-remember-paths #f)");

@@ -96,7 +96,7 @@ static GtkWidget *file_duration, *messages = NULL, *record_button, *reset_button
 static GtkWidget **device_buttons;
 static GtkObject *trigger_adj;
 static int device_buttons_size = 0;
-#if NEW_SGI_AL || defined(SUN)
+#if NEW_SGI_AL || SUN
   static int active_device_button = -1;
 #endif
 static int mixer_gains_posted[MAX_SOUNDCARDS];
@@ -745,7 +745,7 @@ static void device_button_callback(GtkWidget *w, gpointer context)
   PANE *p = (PANE *)context;
   int on, button;
   snd_state *ss;
-#if defined(SGI) || defined(SUN)
+#if SGI || SUN
   int other_button, j, n, i, output;
   float val[2];
   recorder_info *rp;
@@ -754,7 +754,7 @@ static void device_button_callback(GtkWidget *w, gpointer context)
 
   ss = p->ss;
 
-#if defined(SGI) || defined(SUN)
+#if SGI || SUN
   output = 0;
 #endif
 
@@ -784,7 +784,7 @@ static void device_button_callback(GtkWidget *w, gpointer context)
 	}
     }
 #endif
-#if NEW_SGI_AL || defined(SUN)
+#if NEW_SGI_AL || SUN
   output = (!(recorder_input_device(p->device)));
   if (!output)
     {
@@ -911,7 +911,7 @@ static void make_file_info_pane(snd_state *ss, recorder_info *rp, GtkWidget *fil
 #if (HAVE_OSS || HAVE_ALSA)
   GtkWidget *save_audio_settings;
 #endif
-#if defined(SGI) || defined(SUN)
+#if SGI || SUN
   float val[1];
   int err;
 #endif
@@ -955,7 +955,7 @@ static void make_file_info_pane(snd_state *ss, recorder_info *rp, GtkWidget *fil
 				 g_cclosure_new_swap(GTK_SIGNAL_FUNC(srate_changed_callback), (GtkObject *)ss, 0),
 				 0);
 
-#if defined(SGI)
+#if SGI
   err = mus_audio_mixer_read(MUS_AUDIO_PACK_SYSTEM(0) | MUS_AUDIO_MICROPHONE, MUS_AUDIO_SRATE, 0, val);
   if (!err) rp->srate = val[0];
 #endif
@@ -2250,7 +2250,7 @@ static void initialize_recorder(recorder_info *rp)
   device_button_callback(device_buttons[rp->digital_in_button], 
 			 all_panes[rp->digital_in_button]);
 #endif
-#if NEW_SGI_AL || defined(SUN)
+#if NEW_SGI_AL || SUN
   /* for simplicity, and until someone complains, new SGI AL machines will just have one active input device */
   active_device_button = rp->microphone_button;
   for (i = 0; i < device_buttons_size - 1; i++)
