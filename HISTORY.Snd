@@ -1,5 +1,8 @@
 snd change log
 
+  13-Jun:    added snd-error, snd-warning.
+             added cursor-style (default cursor-cross, also cursor-line).
+             added channel-specific edit-hook and undo-hook.
   12-Jun:    experimental multifile-sound support (under FILE_PER_CHAN switch).
   9-Jun:     bugfixes and improvements from Paul Barton-Davis.
   8-Jun:     OSS/ALSA choice at run-time (snd-xrec/snd-dac changes).

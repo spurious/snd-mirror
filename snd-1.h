@@ -157,6 +157,7 @@ typedef struct chan__info {
   int cursor_on;           /* channel's cursor */
   int cursor_visible;      /* for XOR decisions */
   int cursor;              /* sample */
+  int cursor_style;
   int cx,cy;               /* graph-relative cursor loc (for XOR) */
   int edit_ctr;            /* channel's edit history */
   int edit_size;           /* current edit list size */
@@ -195,6 +196,9 @@ typedef struct chan__info {
 #if FILE_PER_CHAN
   char *filename;
   file_info *hdr;
+#endif
+#if HAVE_GUILE
+  SCM edit_hook,undo_hook;
 #endif
 } chan_info;
 
@@ -832,7 +836,8 @@ int snd_eval_listener_str(snd_state *ss, char *buf);
 void snd_eval_stdin_str(snd_state *ss, char *buf);
 void g_snd_callback(snd_state *ss, int callb);
 void add_or_edit_symbol(char *name, env *val);
-
+int dont_edit(chan_info *cp);
+void call_undo_hook(chan_info *cp, int undo);
 
 
 /* -------- snd-region.c -------- */

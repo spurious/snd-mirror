@@ -1069,6 +1069,7 @@ void file_insert_samples(int beg, int num, char *inserted_file, chan_info *cp, i
       if ((inserted_file) && (auto_delete == MULTICHANNEL_DELETION)) forget_temp(inserted_file,chan);
       return;
     }
+  if (dont_edit(cp)) return;
   len = current_ed_samples(cp);
   if (beg >= len)
     {
@@ -1105,6 +1106,7 @@ void insert_samples(int beg, int num, MUS_SAMPLE_TYPE *vals, chan_info *cp, char
   int *cb;
   MUS_SAMPLE_TYPE *zeros;
   if (num <= 0) return;
+  if (dont_edit(cp)) return;
   len = current_ed_samples(cp);
   if (beg >= len)
     {
@@ -1214,6 +1216,7 @@ void delete_samples(int beg, int num, chan_info *cp, char *origin)
   int k,len;
   char *errstr;
   if (num <= 0) return;
+  if (dont_edit(cp)) return;
   len = current_ed_samples(cp);
   if ((beg < len) && (beg >= 0))
     {
@@ -1331,6 +1334,7 @@ void file_change_samples(int beg, int num, char *tempfile, chan_info *cp, int ch
       if ((tempfile) && (auto_delete == MULTICHANNEL_DELETION)) forget_temp(tempfile,chan);
       return;
     }
+  if (dont_edit(cp)) return;
   prev_len = current_ed_samples(cp);
 
   if (beg >= prev_len)
@@ -1378,6 +1382,7 @@ void file_override_samples(int num, char *tempfile, chan_info *cp, int chan, int
       if ((tempfile) && (auto_delete == MULTICHANNEL_DELETION)) forget_temp(tempfile,chan);
       return;
     }
+  if (dont_edit(cp)) return;
   ss = cp->state;
   hdr = make_file_info(tempfile,ss);
   if (hdr) 
@@ -1410,6 +1415,7 @@ void change_samples(int beg, int num, MUS_SAMPLE_TYPE *vals, chan_info *cp, int 
   int k,prev_len,new_len;
   MUS_SAMPLE_TYPE *zeros;
   if (num <= 0) return;
+  if (dont_edit(cp)) return;
   prev_len = current_ed_samples(cp);
   if (beg >= prev_len)
     {
@@ -2311,6 +2317,7 @@ int revert_edits(chan_info *cp, void *ptr)
   reflect_sample_change_in_axis(cp);
   update_graph(cp,NULL);
   if ((cp->mix_md) && (old_ctr != 0)) reflect_mix_edit(cp,"revert-sound");
+  call_undo_hook(cp,TRUE);
   return(0);
 }
 
@@ -2333,6 +2340,7 @@ void undo_edit(chan_info *cp, int count)
 	}
       update_graph(cp,NULL);
       if (cp->mix_md) reflect_mix_edit(cp,"undo");
+      call_undo_hook(cp,TRUE);
     }
 }
 
@@ -2382,6 +2390,7 @@ void redo_edit(chan_info *cp, int count)
 	  update_graph(cp,NULL);
 	  if (cp->mix_md) reflect_mix_edit(cp,"redo");
 	}
+      call_undo_hook(cp,FALSE);
     }
 }
 

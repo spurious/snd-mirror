@@ -2090,13 +2090,29 @@ static void draw_graph_cursor(chan_info *cp)
   ax = cursor_context(cp);
   if (cp->cursor_visible)
     {
-      draw_line(ax,cp->cx,cp->cy - cursor_size,cp->cx,cp->cy + cursor_size);
-      draw_line(ax,cp->cx - cursor_size,cp->cy,cp->cx + cursor_size,cp->cy);
+      switch (cp->cursor_style)
+	{
+	case CURSOR_CROSS:
+	  draw_line(ax,cp->cx,cp->cy - cursor_size,cp->cx,cp->cy + cursor_size);
+	  draw_line(ax,cp->cx - cursor_size,cp->cy,cp->cx + cursor_size,cp->cy);
+	  break;
+	case CURSOR_LINE:
+	  draw_line(ax,cp->cx,ap->y_axis_y0,cp->cx,ap->y_axis_y1);
+	  break;
+	}
     }
   cp->cx = grf_x((double)(cp->cursor)/(double)SND_SRATE(cp->sound),ap); /* not Float -- this matters in very long files (i.e. > 40 minutes) */
   cp->cy = grf_y(sample(cp->cursor,cp),ap);
-  draw_line(ax,cp->cx,cp->cy - cursor_size,cp->cx,cp->cy + cursor_size);
-  draw_line(ax,cp->cx - cursor_size,cp->cy,cp->cx + cursor_size,cp->cy);
+  switch (cp->cursor_style)
+    {
+    case CURSOR_CROSS:
+      draw_line(ax,cp->cx,cp->cy - cursor_size,cp->cx,cp->cy + cursor_size);
+      draw_line(ax,cp->cx - cursor_size,cp->cy,cp->cx + cursor_size,cp->cy);
+      break;
+    case CURSOR_LINE:
+      draw_line(ax,cp->cx,ap->y_axis_y0,cp->cx,ap->y_axis_y1);
+      break;
+    }
   cp->cursor_visible = 1;
 }
 
@@ -5966,9 +5982,7 @@ int keyboard_command (chan_info *cp, int keysym, int state)
 	    case snd_K_O: case snd_K_o: 
 	      if (ext_count > 0) goto_next_graph(cp,ext_count); else goto_previous_graph(cp,ext_count); return(CURSOR_NO_ACTION); break;
 	    case snd_K_P: case snd_K_p: 
-	      if ((ext_explicit_count == 0) && (!(selection_is_current())))
-		report_in_minibuffer(sp,"no current selection");
-	      else play_region(ss,ext_explicit_count,NULL,FALSE); 
+	      play_region(ss,ext_explicit_count,NULL,FALSE); 
 	      return(KEYBOARD_NO_ACTION);
 	      break;
 	    case snd_K_Q: case snd_K_q: add_region(ext_explicit_count,cp,"C-x q"); redisplay = CURSOR_UPDATE_DISPLAY; break;

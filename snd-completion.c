@@ -15,7 +15,7 @@
 #endif
       
 
-#define NUM_COMMANDS 721
+#define NUM_COMMANDS 729
 
 static char *snd_commands[NUM_COMMANDS]={
   S_abort,S_abortQ,S_activate_listener,S_active_sounds,S_add_mark,S_add_sound_file_extension,S_add_to_main_menu,S_add_to_menu,S_add_transform,
@@ -31,9 +31,9 @@ static char *snd_commands[NUM_COMMANDS]={
   S_close_hook,S_close_sound,S_close_sound_file,S_color2list,S_color_cutoff,S_color_dialog,S_color_inverted,S_color_scale,S_colorQ,S_colormap,
   S_comment,S_contrast,S_contrast_amp,S_contrast_func,S_contrasting,
   S_convolve_arrays,S_convolve_selection_with,S_convolve_with,S_corruption_time,S_count_matches,
-  S_cursor,S_cursor_claim_selection,S_cursor_color,
-  S_cursor_follows_play,S_cursor_in_middle,S_cursor_in_view,S_cursor_no_action,
-  S_cursor_on_left,S_cursor_on_right,S_cursor_update_display,S_cut,
+  S_cursor,S_cursor_claim_selection,S_cursor_color,S_cursor_cross,
+  S_cursor_follows_play,S_cursor_in_middle,S_cursor_in_view,S_cursor_line,S_cursor_no_action,
+  S_cursor_on_left,S_cursor_on_right,S_cursor_style,S_cursor_update_display,S_cut,
 
   S_dac_folding,S_dac_size,S_data_clipped,S_data_color,S_data_format,S_data_location,
   S_default_output_chans,S_default_output_format,S_default_output_srate,S_default_output_type,
@@ -41,7 +41,7 @@ static char *snd_commands[NUM_COMMANDS]={
   S_delete_mark,S_delete_marks,S_delete_region,S_delete_sample,S_delete_samples,S_describe_audio,
   S_dismiss_all_dialogs,S_dot_size,S_during_open_hook,
 
-  S_edit_fragment,S_edit_header_dialog,S_edit_position,S_edits,
+  S_edit_fragment,S_edit_header_dialog,S_edit_hook,S_edit_position,S_edits,
   S_env_selection,S_env_sound,S_enved_base,S_enved_clipping,S_enved_dBing,
   S_enved_dialog,S_enved_exping,S_enved_power,S_enved_target,
   S_enved_waveform_color,S_enved_waving,S_eps_file,S_exit,S_exit_hook,S_expand,S_expand_funcs,S_expand_hop,
@@ -114,8 +114,8 @@ static char *snd_commands[NUM_COMMANDS]={
   S_set_axis_label_font,S_set_axis_numbers_font,
   S_set_basic_color,S_set_bold_button_font,S_set_button_font,
   S_set_channel_style,S_set_color_cutoff,S_set_color_inverted,
-  S_set_color_scale,S_set_colormap,S_set_contrast,S_set_contrast_amp,S_set_contrast_func,S_set_contrasting,S_set_corruption_time,S_set_cursor,
-  S_set_cursor_color,S_set_cursor_follows_play,
+  S_set_color_scale,S_set_colormap,S_set_contrast,S_set_contrast_amp,S_set_contrast_func,S_set_contrasting,S_set_corruption_time,
+  S_set_cursor,S_set_cursor_color,S_set_cursor_follows_play,S_set_cursor_style,
   S_set_dac_folding,S_set_dac_size,S_set_data_clipped,S_set_data_color,
   S_set_default_output_chans,S_set_default_output_format,S_set_default_output_srate,S_set_default_output_type,
   S_set_dot_size,S_set_env_base,S_set_enved_base,S_set_enved_clipping,S_set_enved_dBing,
@@ -161,7 +161,7 @@ static char *snd_commands[NUM_COMMANDS]={
   S_short_file_name,S_short_file_names,S_show_axes,S_show_fft_peaks,S_show_listener,S_show_marks,
   S_show_mix_consoles,S_show_mix_waveforms,S_show_selection_transform,S_show_usage_stats,S_show_y_zero,
   S_showing_controls,S_sinc_width,S_smooth,S_smooth_selection,
-  S_snd_error_hook,S_snd_spectrum,S_snd_warning_hook,
+  S_snd_error,S_snd_error_hook,S_snd_spectrum,S_snd_warning,S_snd_warning_hook,
   S_sonogram,S_sound_files_in_directory,
   S_sound_to_temp,S_sound_to_temps,S_soundfont_info,
   S_spectro_cutoff,S_spectro_hop,S_spectro_start,S_spectro_x_angle,S_spectro_x_scale,S_spectro_y_angle,S_spectro_y_scale,
@@ -174,7 +174,7 @@ static char *snd_commands[NUM_COMMANDS]={
   S_tiny_font,S_track_sample_readerQ,
   S_transform_dialog,S_transform_sample,S_transform_samples,S_transform_samples_vct,S_transform_size,S_transform_type,S_trap_segfault,
 
-  S_unbind_key,S_undo,S_uniting,S_update_fft,S_update_graph,S_update_sound,S_use_raw_defaults,S_use_sinc_interp,
+  S_unbind_key,S_undo,S_undo_hook,S_uniting,S_update_fft,S_update_graph,S_update_sound,S_use_raw_defaults,S_use_sinc_interp,
 
   S_vct_samples,S_vct_sound_file,S_vct_addB,S_vct_copy,S_vct_doB,S_vct_fillB,S_vct_length,S_vct_mapB,
   S_vct_multiplyB,S_vct_offsetB,S_vct_peak,S_vct_ref,S_vct_scaleB,S_vct_setB,S_vct_subtractB,S_vct_p,S_vcts_doB,S_vcts_mapB,

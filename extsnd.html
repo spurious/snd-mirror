@@ -143,6 +143,9 @@ Graph Line style:
 Keyboard action choices:
   <a name="cursorchoices">cursor-in-view</a>     cursor-on-left     cursor-on-right   cursor-in-middle 
   cursor-update-display cursor-no-action cursor-claim-selection keyboard-no-action
+
+Cursor style:
+  cursor-cross   cursor-line
 </small>
 </pre><hr>
 
@@ -560,6 +563,21 @@ would refer to the original form.  I may extend this to accept a list of (more t
 
   <a name="sndcursor">cursor</a>            (<i>snd chn</i>)     cursor location (samples) of channel <i>chn</i> of <i>snd</i>.
   <a name="sndcursorfollowsplay">cursor-follows-play</a> (<i>snd</i>)       #t if cursor is following along in the sound as it plays.
+  <a name="cursorstyle">cursor-style</a>      (<i>snd chn</i>)     cursor style (cursor-cross or cursor-line)
+                                  The following hooks set the cursor-style to cursor-line while playing if
+                                  cursor-follows-play is #t:
+
+                                    (define set-sound-cursor
+                                      (lambda (snd shape)
+                                        (do ((j 0 (1+ j)))
+                                            ((= j (channels snd)) #f)
+                                          (<em class=red>set-cursor-style</em> shape snd j))))
+
+                                    (add-hook! start-playing-hook 
+                                      (lambda (snd) (if (cursor-follows-play snd) (set-sound-cursor snd <em class=red>cursor-line</em>))))
+                                    (add-hook! stop-playing-hook 
+                                      (lambda (snd) (set-sound-cursor snd <em class=red>cursor-cross</em>)))
+
   <a name="sndcut">cut</a>               ()            cut the current selection (a no-op if no active selection).
   <a name="snddataformat">data-format</a>       (<i>snd</i>)         <i>snd</i>'s data format (a list of the format number and its name).
   <a name="snddatalocation">data-location</a>     (<i>snd</i>)         <i>snd</i>'s data location (bytes).
@@ -942,22 +960,24 @@ would refer to the original form.  I may extend this to accept a list of (more t
   <a name="sndsetcursor">set-cursor</a>        (samp <i>snd chn</i>)      place <i>snd</i>'s channel <i>chn</i>'s cursor at <i>samp</i>.
   <a name="sndsetcursorfollowsplay">set-cursor-follows-play</a> (<i>cursor-follows snd</i>) 
                                  if #t, the cursor runs alongside the waveform as the sound if played (default #t).
+  <a name="setcursorstyle">set-cursor-style</a>  (val <i>snd chn</i>)    set cursor style (cursor-cross or cursor-line).
+                                 
   <a name="sndsetexpand">set-expand</a>        (expand-amount <i>snd</i>) set <i>snd</i>'s expansion amount to <i>expand-amount</i>.
   <a name="expandfuncs">set-expand-funcs</a>  (expand make-expand free-expand)
-                                     This function replaces the built-in Snd (control panel) expand with your own.
-                                     See set-reverb-funcs below for an example.  The three arguments are
-                                     the expand replacement, the function that makes or initializes any
-                                     state the new expand function will need, and the function to free that
-                                     state.  Set these to #f to return to the built-in versions.  The
-                                     make-expand function takes three arguments, the current sound index,
-                                     the current sampling-rate, and the initial expansion value (from the
-                                     control panel); it can return an SCM object that is subsequently
-                                     passed to the expand and free-expand functions.  The expand function
-                                     takes 3 arguments, the thing returned by make-expand, the current
-                                     sample (a float), and the current expansion slider value; it should
-                                     return a float representing the new sample value.  The corresponding
-                                     function reverb-funcs returns a list containing the three functions.
-                                     expand-funcs returns a list containing these three functions.
+                                 This function replaces the built-in Snd (control panel) expand with your own.
+                                 See set-reverb-funcs below for an example.  The three arguments are
+                                 the expand replacement, the function that makes or initializes any
+                                 state the new expand function will need, and the function to free that
+                                 state.  Set these to #f to return to the built-in versions.  The
+                                 make-expand function takes three arguments, the current sound index,
+                                 the current sampling-rate, and the initial expansion value (from the
+                                 control panel); it can return an SCM object that is subsequently
+                                 passed to the expand and free-expand functions.  The expand function
+                                 takes 3 arguments, the thing returned by make-expand, the current
+                                 sample (a float), and the current expansion slider value; it should
+                                 return a float representing the new sample value.  The corresponding
+                                 function reverb-funcs returns a list containing the three functions.
+                                 expand-funcs returns a list containing these three functions.
   <a name="sndsetexpandhop">set-expand-hop</a>    (expand-hop <i>snd</i>)    set <i>snd</i>'s expand-hop to <i>expand-hop</i>.  This is the amount the
                                  expander moves forward in the output on each segment.  If hop &gt; length, 
                                  you get a series of individual (isolated) grains.
@@ -994,34 +1014,34 @@ would refer to the original form.  I may extend this to accept a list of (more t
   <a name="sndsetrecorderoutamp">set-recorder-out-amp</a>(out amp)         set recorder's file output channel <i>out</i> to <i>amp</i>.
   <a name="sndsetreverbfeedback">set-reverb-feedback</a>(feedback <i>snd</i>)     set <i>snd</i>'s reverb feedback coefficient to <i>feedback</i>.
   <a name="reverbfuncs">set-reverb-funcs</a>  (reverb make-reverb free-reverb)
-                                      This function replaces the built-in Snd reverb with your own.
+                                  This function replaces the built-in Snd reverb with your own.
 
-                                       (define outputs (make-vector 4))
-                                       (define delay-line #f)
-                                       (define delay-time 0.5)
+                                   (define outputs (make-vector 4))
+                                   (define delay-line #f)
+                                   (define delay-time 0.5)
 
-                                       (set-reverb-funcs
-                                         (lambda (ptr inval chans)
-                                           (vector-set! outputs 0 (delay delay-line (+ (* .75 (tap delay-line)) inval)))
-                                           outputs)
-                                         (lambda (revlen srate chans)
-                                           (set! delay-line (make-delay (inexact->exact (* srate delay-time))))
-                                           delay-line)
-                                         (lambda (ptr)
-                                           ptr)
-                                         )
+                                   (set-reverb-funcs
+                                     (lambda (ptr inval chans)
+                                       (vector-set! outputs 0 (delay delay-line (+ (* .75 (tap delay-line)) inval)))
+                                       outputs)
+                                     (lambda (revlen srate chans)
+                                       (set! delay-line (make-delay (inexact->exact (* srate delay-time))))
+                                       delay-line)
+                                     (lambda (ptr)
+                                       ptr)
+                                     )
 
-                                     The three arguments are the reverb, the function that makes or
-                                     initializes the reverb, and the function to free the reverb.  Set
-                                     these to #f to return to the built-in versions.  The make-reverb
-                                     function takes three arguments, the current value of the "len" slider,
-                                     the current sampling-rate and the number of output channels active; it
-                                     returns an SCM object that is subsequently passed to the reverb and
-                                     free-reverb functions (ignored in the example above, as is the chans
-                                     argument to the reverb function).  The reverb function takes 3
-                                     arguments, the thing returned by make-reverb, the current reverb input
-                                     sample, and the number of channels of output needed; it should return
-                                     a vector of output reverb contributions.
+                                 The three arguments are the reverb, the function that makes or
+                                 initializes the reverb, and the function to free the reverb.  Set
+                                 these to #f to return to the built-in versions.  The make-reverb
+                                 function takes three arguments, the current value of the "len" slider,
+                                 the current sampling-rate and the number of output channels active; it
+                                 returns an SCM object that is subsequently passed to the reverb and
+                                 free-reverb functions (ignored in the example above, as is the chans
+                                 argument to the reverb function).  The reverb function takes 3
+                                 arguments, the thing returned by make-reverb, the current reverb input
+                                 sample, and the number of channels of output needed; it should return
+                                 a vector of output reverb contributions.
 
   <a name="sndsetreverblength">set-reverb-length</a> (length <i>snd</i>)        set <i>snd</i>'s reverb delay line length scaler to <i>length</i>.
   <a name="sndsetreverblowpass">set-reverb-lowpass</a>(lowpass <i>snd</i>)       set <i>snd</i>'s lowpass coefficient to <i>lowpass</i>.
@@ -1051,11 +1071,13 @@ would refer to the original form.  I may extend this to accept a list of (more t
   <a name="sndshowlistener">show-listener</a>     ()            open the lisp listener pane.
   <a name="sndsmoothselection">smooth-selection</a>  ()            apply a smoothing function to the current selection.
   <a name="sndsmooth">smooth</a>            (beg num <i>snd chn</i>) apply a smoothing function to the indicated data.
+  <a name="snderror">snd-error</a>         (str)         report error message <i>str</i>, return <i>str</i>.
   <a name="sndprint">snd-print</a>         (str)         display <i>str</i> in lisp listener, return <i>str</i>.  (This is intended
                                   as a debugging aid -- there's still nothing like a lowly print statement).
   <a name="sndspectrum">snd-spectrum</a>      (data window length <i>linear</i>)
                                   return spectrum of <i>data</i> (type vct) using fft-window <i>win</i>.
                                   length of data (and fft) is <i>length</i>.
+  <a name="sndwarning">snd-warning</a>       (str)         report warning message <i>str</i>, return <i>str</i>.
   <a name="soundfilesindirectory">sound-files-in-directory</a> (dir)  return a vector of sound file names.
                                   This is useful for "batch" processing of sounds.  The following,
                                   for example, prints the names of all the stereo AIFC files it finds:
@@ -1244,7 +1266,7 @@ case, the result returned by the hook is the result of the last function in the 
   <a name="outputnamehook">output-name-hook</a> ()                 called in File New dialog
   <a name="starthook">start-hook</a>         (filename)       called upon start-up. (<b>or</b>)
                                       If it returns #t, snd exits immediately.
-  <a name="startplayinghook">start-playing-hook</a>  (filename)      called when a play request is triggered. (<b>or</b>)
+  <a name="startplayinghook">start-playing-hook</a>  (snd)           called when a play request is triggered. (<b>or</b>)
                                       If it returns #t, snd does not play.
   <a name="stopplayinghook">stop-playing-hook</a>  (snd)            called when a sound finishes playing. (<b>or</b>)
   <a name="stopplayingregionhook">stop-playing-region-hook</a>  (n)       called when a region finishes playing. (<b>or</b>)
@@ -1252,8 +1274,32 @@ case, the result returned by the hook is the result of the last function in the 
                                       If it returns #t, Snd ignores the error (it assumes you've handled it via the hook).
   <a name="snderrorhook">snd-error-hook</a> (error-message)      called upon snd_error. (<b>or</b>)
                                       If it returns #t, Snd flushes the error (it assumes you've reported it via the hook).
+
+                                      (add-hook! snd-error-hook
+                                        (lambda (msg) (play "bong.snd") #f))
+
   <a name="sndwarninghook">snd-warning-hook</a> (warning-message)  called upon snd_warning. (<b>or</b>)
                                       If it returns #t, Snd flushes the warning (it assumes you've reported it via the hook).
+
+
+  Channel-specific hooks:
+
+  <a name="edithook">edit-hook</a>   (<i>snd chn</i>)
+  <a name="undohook">undo-hook</a>   (<i>snd chn</i>)
+ 
+     These are functions that return the hooks in question associated with the specified channel.
+     edit-hook is called just before any attempt to edit the channel's data.  If it returns #t,
+     the edit is aborted. So,
+
+         (add-hook! (edit-hook) (lambda (snd chn) #t))
+
+     aborts any attempt to edit the data; this is even more restrictive than setting the read-only
+     flag because the latter only refuses to overwrite the current data.  undo-hook is called
+     just after any undo, redo, or revert that affects the channel.  You can use these to set
+     up protected portions of the edit history, or change colors dependent on the edit position, etc.
+     The edit-hook procedures take two arguments, the current sound index and channel number; undo-hook's
+     procedures take three arguments, the sound index, channel number, and #t if the edit position
+     change is from undo or revert, #f if from redo.
 
 </small></pre>
 <p>To add a function to a hook, use add-hook!.  To remove it, use remove-hook!.  To clear a hook, use reset-hook!. (These are

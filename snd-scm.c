@@ -602,6 +602,28 @@ static SCM g_snd_print(SCM msg)
   return(msg);
 }
 
+static SCM g_snd_error(SCM msg)
+{
+  #define H_snd_error "(" S_snd_error " str) reports error message str"
+  char *str = NULL;
+  ERRS1(msg,S_snd_error);
+  str = gh_scm2newstr(msg,NULL);
+  snd_error(str);
+  if (str) free(str);
+  return(msg);
+}
+  
+static SCM g_snd_warning(SCM msg)
+{
+  #define H_snd_warning "(" S_snd_warning " str) reports warning message str"
+  char *str = NULL;
+  ERRS1(msg,S_snd_warning);
+  str = gh_scm2newstr(msg,NULL);
+  snd_warning(str);
+  if (str) free(str);
+  return(msg);
+}
+  
 
 /* global variables */
 
@@ -3254,7 +3276,7 @@ static SCM g_set_reverb_lowpass(SCM on, SCM snd_n)
   return(sp_fwrite(snd_n,on,REVERBLOWPASSF));
 }
 
-enum {FFTF,WAVEF,LENGTHF,CURSORF,MARKSF,MAXAMPF,GRAPHINGF,LOSAMPF,HISAMPF,SQUELCH_UPDATE,AP_SX,AP_SY,AP_ZX,AP_ZY,EDITF};
+enum {FFTF,WAVEF,LENGTHF,CURSORF,MARKSF,MAXAMPF,GRAPHINGF,LOSAMPF,HISAMPF,SQUELCH_UPDATE,AP_SX,AP_SY,AP_ZX,AP_ZY,EDITF,CURSOR_STYLE,EDIT_HOOK,UNDO_HOOK};
 
 static SCM cp_iread(SCM snd_n, SCM chn_n, int fld)
 {
@@ -3278,6 +3300,9 @@ static SCM cp_iread(SCM snd_n, SCM chn_n, int fld)
     case AP_SY: if (cp->axis) RTNFLT((cp->axis)->sy); break;
     case AP_ZX: if (cp->axis) RTNFLT((cp->axis)->zx); break;
     case AP_ZY: if (cp->axis) RTNFLT((cp->axis)->zy); break;
+    case CURSOR_STYLE: RTNINT(cp->cursor_style); break;
+    case EDIT_HOOK: return(cp->edit_hook); break;
+    case UNDO_HOOK: return(cp->undo_hook); break;
     }
   return(SCM_BOOL_F);
 }
@@ -3301,6 +3326,7 @@ static SCM cp_iwrite(SCM snd_n, SCM chn_n, SCM on, int fld)
     case LOSAMPF: set_x_axis_x0(cp,val = int_or_zero(on)); return(on); break;
     case HISAMPF: set_x_axis_x1(cp,val = int_or_one(on)); return(on); break;
     case SQUELCH_UPDATE: cp->squelch_update = bool_int_or_one(on); break;
+    case CURSOR_STYLE: cp->cursor_style = int_or_zero(on); update_graph(cp,NULL); return(on); break;
     }
   RTNBOOL(val);
 }
@@ -3372,6 +3398,21 @@ static SCM g_set_cursor(SCM on, SCM snd_n, SCM chn_n)
   return(cp_iwrite(snd_n,chn_n,on,CURSORF));
 }
 
+static SCM g_cursor_style(SCM snd_n, SCM chn_n) 
+{
+  #define H_cursor_style "(" S_cursor_style " &optional snd chn) -> current cursor style in snd's channel chn"
+  ERRCP(S_cursor_style,snd_n,chn_n,1); 
+  return(cp_iread(snd_n,chn_n,CURSOR_STYLE));
+}
+
+static SCM g_set_cursor_style(SCM on, SCM snd_n, SCM chn_n) 
+{
+  #define H_set_cursor_style "(" S_set_cursor_style " val &optional snd chn) sets the current cursor style in snd's channel chn"
+  ERRB1(on,S_set_cursor_style); 
+  ERRCP(S_set_cursor_style,snd_n,chn_n,2); 
+  return(cp_iwrite(snd_n,chn_n,on,CURSOR_STYLE));
+}
+
 static SCM g_frames(SCM snd_n, SCM chn_n) 
 {
   #define H_frames "(" S_frames " &optional snd chn) -> number of frames of data in snd's channel chn"
@@ -3434,6 +3475,20 @@ static SCM g_ap_zy(SCM snd_n, SCM chn_n)
   #define H_y_zoom_slider "(" S_y_zoom_slider " &optional snd chn) -> current y axis zoom slider of snd channel chn"
   ERRCP(S_y_zoom_slider,snd_n,chn_n,1); 
   return(cp_iread(snd_n,chn_n,AP_ZY));
+}
+
+static SCM g_edit_hook(SCM snd_n, SCM chn_n) 
+{
+  #define H_edit_hook "(" S_edit_hook " &optional snd chn) -> snd's channel chn's edit-hook"
+  ERRCP(S_edit_hook,snd_n,chn_n,1); 
+  return(cp_iread(snd_n,chn_n,EDIT_HOOK));
+}
+
+static SCM g_undo_hook(SCM snd_n, SCM chn_n) 
+{
+  #define H_undo_hook "(" S_undo_hook " &optional snd chn) -> snd's channel chn's undo-hook"
+  ERRCP(S_undo_hook,snd_n,chn_n,1); 
+  return(cp_iread(snd_n,chn_n,UNDO_HOOK));
 }
 
 static SCM g_peaks(SCM filename, SCM snd_n, SCM chn_n)
@@ -7548,6 +7603,9 @@ void g_initialize_gh(snd_state *ss)
   gh_define(S_cursor_claim_selection,gh_int2scm(CURSOR_CLAIM_SELECTION));
   gh_define(S_keyboard_no_action,gh_int2scm(KEYBOARD_NO_ACTION));
 
+  gh_define(S_cursor_cross,gh_int2scm(CURSOR_CROSS));
+  gh_define(S_cursor_line,gh_int2scm(CURSOR_LINE));
+
 
   /* ---------------- VARIABLES ---------------- */
 
@@ -7860,6 +7918,8 @@ void g_initialize_gh(snd_state *ss)
   DEFINE_PROC(gh_new_procedure3_2(S_insert_samples,g_insert_samples),H_insert_samples);
   DEFINE_PROC(gh_new_procedure0_2(S_cursor,g_cursor),H_cursor);
   DEFINE_PROC(gh_new_procedure1_2(S_set_cursor,g_set_cursor),H_set_cursor);
+  DEFINE_PROC(gh_new_procedure0_2(S_cursor_style,g_cursor_style),H_cursor_style);
+  DEFINE_PROC(gh_new_procedure1_2(S_set_cursor_style,g_set_cursor_style),H_set_cursor_style);
   DEFINE_PROC(gh_new_procedure0_2(S_left_sample,g_left_sample),H_left_sample);
   DEFINE_PROC(gh_new_procedure1_2(S_set_left_sample,g_set_left_sample),H_set_left_sample);
   DEFINE_PROC(gh_new_procedure0_2(S_right_sample,g_right_sample),H_right_sample);
@@ -8125,6 +8185,8 @@ void g_initialize_gh(snd_state *ss)
   DEFINE_PROC(gh_new_procedure1_3(S_map_across_all_chans,g_map_across_all_chans),H_map_across_all_chans);
   DEFINE_PROC(gh_new_procedure1_4(S_map_across_sound_chans,g_map_across_sound_chans),H_map_across_sound_chans);
   DEFINE_PROC(gh_new_procedure1_0(S_snd_print,g_snd_print),H_snd_print);
+  DEFINE_PROC(gh_new_procedure1_0(S_snd_error,g_snd_error),H_snd_error);
+  DEFINE_PROC(gh_new_procedure1_0(S_snd_warning,g_snd_warning),H_snd_warning);
   DEFINE_PROC(gh_new_procedure0_0(S_describe_audio,g_describe_audio),H_describe_audio);
   DEFINE_PROC(gh_new_procedure0_0("mus-audio-describe",g_describe_audio),H_describe_audio);
   DEFINE_PROC(gh_new_procedure0_2(S_bomb,g_bomb),H_bomb);
@@ -8135,6 +8197,8 @@ void g_initialize_gh(snd_state *ss)
   DEFINE_PROC(gh_new_procedure0_3(S_edit_fragment,g_edit_fragment),H_edit_fragment);
   DEFINE_PROC(gh_new_procedure0_1(S_soundfont_info,g_soundfont_info),H_soundfont_info);
 
+  DEFINE_PROC(gh_new_procedure0_2(S_edit_hook,g_edit_hook),H_edit_hook);
+  DEFINE_PROC(gh_new_procedure0_2(S_undo_hook,g_undo_hook),H_undo_hook);
 
   /* semi-internal functions (restore-state) */
   gh_new_procedure4_2(S_change_samples_with_origin,g_change_samples_with_origin);
@@ -8199,7 +8263,7 @@ void g_initialize_gh(snd_state *ss)
   /* TODO: this is wrong -- it should carry along the channel argument, if any, as well */
   /*       but that means the snd-dac needs to remember what it got as well */
   stop_playing_region_hook = scm_create_hook(S_stop_playing_region_hook,1);     /* arg = region number */
-  start_playing_hook = scm_create_hook(S_start_playing_hook,1);   /* arg = sound file name */
+  start_playing_hook = scm_create_hook(S_start_playing_hook,1);   /* arg = sound */
   mark_click_hook = scm_create_hook(S_mark_click_hook,1);         /* arg = id */
   output_comment_hook = scm_create_hook(S_output_comment_hook,1); /* arg = current mus_sound_comment(hdr) if any */
   output_name_hook = scm_create_hook(S_output_name_hook,0);
@@ -8373,7 +8437,7 @@ int ignore_snd_error(char *msg)
 {
   SCM result = SCM_BOOL_F;
   if (HOOKED(snd_error_hook))
-    result = g_c_run_or_hook(snd_error_hook,gh_str02scm(msg));
+    result = g_c_run_or_hook(snd_error_hook,SCM_LIST1(gh_str02scm(msg)));
   return(SCM_NFALSEP(result));
 }
 
@@ -8381,7 +8445,7 @@ int ignore_snd_warning(char *msg)
 {
   SCM result = SCM_BOOL_F;
   if (HOOKED(snd_warning_hook))
-    result = g_c_run_or_hook(snd_warning_hook,gh_str02scm(msg));
+    result = g_c_run_or_hook(snd_warning_hook,SCM_LIST1(gh_str02scm(msg)));
   return(SCM_NFALSEP(result));
 }
 
@@ -8551,7 +8615,7 @@ int call_start_playing_hook(snd_info *sp)
 {
   SCM stop = SCM_BOOL_F;
   if (HOOKED(start_playing_hook))
-    stop = g_c_run_or_hook(start_playing_hook,SCM_LIST1(gh_str02scm(sp->fullname)));
+    stop = g_c_run_or_hook(start_playing_hook,SCM_LIST1(gh_int2scm(sp->index)));
   return(SCM_TRUE_P(stop));
 }
 
@@ -8637,6 +8701,21 @@ char *output_name(snd_state *ss)
     }
   #endif
 
+int dont_edit(chan_info *cp) 
+{
+  SCM res = SCM_BOOL_F;
+  if (HOOKED(cp->edit_hook))
+    res = g_c_run_or_hook(cp->edit_hook,SCM_LIST2(gh_int2scm((cp->sound)->index),gh_int2scm(cp->chan)));
+  return(SCM_TRUE_P(res));
+}
+
+void call_undo_hook(chan_info *cp, int undo)
+{
+  if (HOOKED(cp->undo_hook))
+    g_c_run_progn_hook(cp->undo_hook,SCM_LIST3(gh_int2scm((cp->sound)->index),gh_int2scm(cp->chan),(undo) ? SCM_BOOL_T : SCM_BOOL_F));
+}
+
+
 #else
 int dont_open(snd_state *ss, char *file) {return(0);}
 int dont_close(snd_state *ss, snd_info *sp) {return(0);}
@@ -8668,7 +8747,10 @@ char *output_name(snd_state *ss) {return(NULL);}
     int multifile_channel(char *filename) {return(-1);}
     char *multifile_save(int snd, int chn) {return(NULL);}
   #endif
+int dont_edit(chan_info *cp) {return(0);}
+void call_undo_hook(chan_info *cp, int undo) {return;}
 #endif
+
 
 void set_memo_sound(snd_info *sp)
 {

@@ -46,6 +46,12 @@ chan_info *make_chan_info(chan_info *cip, int chan, snd_info *sound, snd_state *
       (cp->cgx)->ax = (axis_context *)CALLOC(1,sizeof(axis_context));
       cp->mixes = NULL;
       cp->last_sonogram = NULL;
+#if HAVE_GUILE
+      cp->edit_hook = scm_make_hook(SCM_MAKINUM(2)); /* arg = snd chn */
+      scm_protect_object(cp->edit_hook);
+      cp->undo_hook = scm_make_hook(SCM_MAKINUM(3)); /* arg = snd chn undo/redo */
+      scm_protect_object(cp->undo_hook);
+#endif
     }
   else cp = cip;
   cp->tcgx = NULL;
@@ -58,6 +64,7 @@ chan_info *make_chan_info(chan_info *cip, int chan, snd_info *sound, snd_state *
   cp->cursor_on = 0;
   cp->cursor_visible = 0;
   cp->cursor = 0;
+  cp->cursor_style = CURSOR_CROSS;
   cp->squelch_update = 0;
   cp->waving = 1; /* the default state (button is set when we start) */
   cp->ffting = 0;
@@ -109,6 +116,7 @@ static chan_info *free_chan_info(chan_info *cp)
   cp->cursor_on = 0;
   cp->cursor_visible = 0;
   cp->cursor = 0;
+  cp->cursor_style = CURSOR_CROSS;
   cp->drawing = 1;
   cp->waiting_to_make_graph = 0;
   if (cp->sonogram_data) free_sono_info(cp);
@@ -126,6 +134,10 @@ static chan_info *free_chan_info(chan_info *cp)
   /* assuming here that the sound_list cleanup will close the file pointer */
   if (cp->hdr) cp->hdr = free_file_info(cp->hdr);
   if (cp->filename) {FREE(cp->filename); cp->filename = NULL;}
+#endif
+#if HAVE_GUILE
+  scm_reset_hook_x(cp->edit_hook);
+  scm_reset_hook_x(cp->undo_hook);
 #endif
   return(cp);  /* pointer is left for possible future re-use */
 }

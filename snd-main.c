@@ -344,6 +344,7 @@ static int save_sound_state (snd_info *sp, void *ptr)
       fprintf(fd,"%s(%s %.4f %.4f sfile %d)\n",white_space,S_set_x_bounds,ap->x0,ap->x1,chan);
       fprintf(fd,"%s(%s %.4f %.4f sfile %d)\n",white_space,S_set_y_bounds,ap->y0,ap->y1,chan);
       fprintf(fd,"%s(%s %d sfile %d)\n",white_space,S_set_cursor,cp->cursor,chan);
+      fprintf(fd,"%s(%s %d sfile %d)\n",white_space,S_set_cursor_style,cp->cursor_style,chan);
       edit_history_to_file(fd,cp);
     }
   fprintf(fd,"      )))\n");

@@ -82,7 +82,7 @@ static char* vstrcat(char *buf,...)
 
 char *version_info(void)
 {
-  #define NUM_ITOAS 18
+  #define NUM_ITOAS 19
   char *buf;
   char **itoa;
   int i;
@@ -99,6 +99,9 @@ char *version_info(void)
 #endif
 #if HAVE_GUILE
 	  "\n    Guile ",guile_version(),guile_consistency_check(guile_version()),
+#ifdef LIBGUILE_VERSION
+	  " libguile.so.",itoa[18]=snd_itoa(LIBGUILE_VERSION),
+#endif
 #endif
 	  "\n    CLM ",itoa[0]=snd_itoa(MUS_VERSION),".",itoa[1]=snd_itoa(MUS_REVISION)," (",MUS_DATE,")",
 #if ((HAVE_XPM) && (defined(USE_MOTIF)))
@@ -177,6 +180,9 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
+13-Jun:  added snd-error, snd-warning.\n\
+         added cursor-style (default cursor-cross, also cursor-line).\n\
+         added channel-specific edit-hook and undo-hook.\n\
 12-Jun:  experimental multifile-sound support (under FILE_PER_CHAN switch).\n\
 9-Jun:   bugfixes and improvements from Paul Barton-Davis.\n\
 8-Jun:   OSS/ALSA choice at run-time (snd-xrec/snd-dac changes).\n\
@@ -814,6 +820,8 @@ Keyboard action choices:\n\
   " S_cursor_in_view "     " S_cursor_on_left "     " S_cursor_on_right "   " S_cursor_in_middle "\n\
   " S_cursor_update_display " " S_cursor_no_action " " S_cursor_claim_selection " " S_keyboard_no_action "\n\
 \n\
+Cursor style:\n\
+  " S_cursor_cross "    " S_cursor_line "\n\
 ";
 
 static char variables_help_string[] =
@@ -1031,6 +1039,7 @@ all refer to the same thing.\n\
   " S_count_matches "     (c-expr start snd chn)\n\
   " S_cursor "            (snd chn)\n\
   " S_cursor_follows_play "(snd)\n\
+  " S_cursor_style "      (val snd chn)\n\
   " S_cut "               ()\n\
   " S_data_format "       (snd)\n\
   " S_data_location "     (snd)\n\
@@ -1252,8 +1261,10 @@ all refer to the same thing.\n\
   " S_sound_files_in_directory "(dir)\n\
   " S_sound_to_temp "     (type format)\n\
   " S_sound_to_temps "    (type format)\n\
-  " S_snd_spectrum "      (data window length linear)\n\
+  " S_snd_error "         (str)\n\
   " S_snd_print "         (str)\n\
+  " S_snd_spectrum "      (data window length linear)\n\
+  " S_snd_warning "       (str)\n\
   " S_speed "             (snd)\n\
   " S_squelch_update "    (snd chn)\n\
   " S_srate "             (snd)\n\

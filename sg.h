@@ -15,7 +15,11 @@
 #endif
 
 #ifndef SCM_TRUE_P
-  #define SCM_TRUE_P(a) ((a) == SCM_BOOL_T)
+  #ifdef SCM_EQ_P
+    #define SCM_TRUE_P(a) SCM_EQ_P(a,SCM_BOOL_T)
+  #else
+    #define SCM_TRUE_P(a) ((a) == SCM_BOOL_T)
+  #endif
 #endif
 
 #ifdef __cplusplus

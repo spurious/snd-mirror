@@ -109,6 +109,8 @@
 	'walsh-transform walsh-transform 3
 	'wavelet-transform wavelet-transform 1
 	'welch-window welch-window 2 
+	'cursor-cross cursor-cross 0
+	'cursor-line cursor-line 1
 	'x-in-samples x-in-samples 1 
 	'x-in-seconds x-in-seconds 0 
 	'x-to-one x-to-one 2)))
@@ -535,6 +537,10 @@
 	  (snd-print (format #f ";stop-playing-hook: ~A?" stop-playing-hook)))
       (if (or (not (hook? key-press-hook)) (not (hook-empty? key-press-hook)))
 	  (snd-print (format #f ";key-press-hook: ~A?" key-press-hook)))
+      (if (or (not (hook? snd-error-hook)) (not (hook-empty? snd-error-hook)))
+	  (snd-print (format #f ";snd-error-hook: ~A?" snd-error-hook)))
+      (if (or (not (hook? snd-warning-hook)) (not (hook-empty? snd-warning-hook)))
+	  (snd-print (format #f ";snd-warning-hook: ~A?" snd-warning-hook)))
 
       (set-showing-controls #t)
       (enved-dialog) (w)
@@ -1070,7 +1076,11 @@
 	    (s40 (sample 40))
 	    (len (frames))
 	    (addlen (mus-sound-frames "fyow.snd")))
+	(set-cursor-style cursor-line)
 	(set-cursor 50 index) (w)
+	(if (not (= (cursor-style) cursor-line))
+	    (snd-print (format #f ";cursor-style: ~A? " (cursor-style))))
+	(set-cursor-style cursor-cross)
 	(insert-sound "fyow.snd" 0 index 0) (w)
 	(if (or (fneq (sample 40) s40) (not (fneq (sample 100) s100)) (fneq (sample 100) 0.001831))
 	    (snd-print (format #f ";insert-sound: ~A?" (sample 100))))
@@ -3202,8 +3212,10 @@
 		(set-contrast-func #f)
 		(set-expand-funcs #f #f #f)))
 
+	  (add-hook! (edit-hook) (lambda (snd chn) #f))
 	  (as-one-edit (lambda () (set-sample 200 .2) (set-sample 300 .3)))
 	  (delete-sample 250)
+	  (add-hook! (undo-hook) (lambda (snd chn val) (if (not val) (snd-print (format #f ";undo-hook redo?")))))
 	  (undo)
 	  (delete-sample 250)
 	  (undo)
@@ -3211,6 +3223,20 @@
 	  (undo 1)
 	  (as-one-edit (lambda () (set-sample 2 .2) (set-sample 3 .3)))
 	  (undo 2)
+	  (reset-hook! (undo-hook))
+	  (reset-hook! (edit-hook))
+	  (add-hook! snd-error-hook 
+		     (lambda (msg) 
+		       (if (not (string=? msg "hiho")) (snd-print (format #f ";snd-error-hook: ~A?" msg)))
+		       #t))
+	  (snd-error "hiho")
+	  (add-hook! snd-warning-hook 
+		     (lambda (msg) 
+		       (if (not (string=? msg "hiho")) (snd-print (format #f ";snd-warning-hook: ~A?" msg)))
+		       #t))
+	  (snd-warning "hiho")
+	  (reset-hook! snd-error-hook)
+	  (reset-hook! snd-warning-hook)
 	  (redo 1)
 	  (set-ffting #t)
 	  (set-transform-type histogram)

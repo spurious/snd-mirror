@@ -1697,5 +1697,7 @@ int call_mix_position_changed_hook(mixdata *md, int samps) {return(0);}
 void call_multichannel_mix_hook(snd_state *ss, int *ids, int n) {}
 void during_open(int fd, char *file, int reason) {}
 void after_open(int index) {}
+int dont_edit(chan_info *cp) {return(0);}
+void call_undo_hook(chan_info *cp, int undo) {return;}
 
 #endif
