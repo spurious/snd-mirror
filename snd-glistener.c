@@ -1,5 +1,8 @@
 #include "snd.h"
 
+/* TODO: gtk listener paren-matching is too subtle, and sometimes an extra paren is inserted at start of line
+ */
+
 static GtkWidget *completion_dialog = NULL;
 static bool first_time = true;
 static GtkWidget *listener_text = NULL, *completion_list = NULL;

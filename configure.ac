@@ -1518,6 +1518,8 @@ else
   CFLAGS="-I. $CFLAGS"
 fi
 
+# -ffast-math appears to make exp about twice as fast, but slows down filtering by the same amount -- kinda strange
+
 if test "$with_profiling" = yes; then
   CFLAGS="$CFLAGS -fprofile-arcs -ftest-coverage -fbranch-probabilities"
 fi

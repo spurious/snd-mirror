@@ -33349,6 +33349,10 @@ EDITS: 2
 		  (snd-display ";spectral-polynomial 1 len: ~A" (frames)))
 	      (close-sound ind))
 	    
+	    (let ((vals (scentroid "oboe.snd")))
+	      (if (or (fneq (vct-ref vals 0) 1876.085) (fneq (vct-ref vals 1) 1447.004))
+		  (snd-display ";scentroid: ~A" vals)))
+	    
 	    (let ((ind (new-sound "test.snd" :size 100))
 		  (gen (make-oscil 440.0)))
 	      (map-chan (lambda (y) (oscil gen)))
@@ -36007,6 +36011,13 @@ EDITS: 2
 	    (btst '(eq? global-v global-v1) #f)
 	    (btst '(eqv? global-v global-v1) #f)
 	    (btst '(equal? global-v global-v1) #f)
+
+	    (let ((val (run-eval '(let ((a (make-vct 3))) (vct-set! a 0 (/ .3 .2)) (vct-ref a 0)))))
+	      (if (fneq val 1.5) (snd-display ";run-eval of trailing non-int in vct-set! (1): ~A" val)))
+	    (let ((val (run-eval '(let ((a (make-vct 3)) (b .3)) (vct-set! a 0 (/ b 2)) (vct-ref a 0)))))
+	      (if (fneq val .15) (snd-display ";run-eval of trailing non-int in vct-set! (2): ~A" val)))
+	    (let ((val (run-eval '(let ((a (make-frame 3)) (b .3)) (frame-set! a 0 (/ b .2)) (frame-ref a 0)))))
+	      (if (fneq val 1.5) (snd-display ";run-eval of trailing non-int in frame-set! (1): ~A" val)))
 	    
 	    (define c-var #\a)
 	    (btst '(char? #\a) #t)

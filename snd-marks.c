@@ -124,7 +124,7 @@ static mark *find_mark_from_id(int id, chan_info **cps, int pos)
 		  cp->edit_ctr = old_pos;
 		  if (mp) 
 		    {
-		      cps[0] = cp; 
+		      if (cps) cps[0] = cp; 
 		      return(mp);
 		    }
 		}
@@ -1804,10 +1804,9 @@ static XEN g_test_control_drag_mark(XEN snd, XEN chn, XEN mid)
   int x, y;
   off_t cx;
   chan_info *cp;
-  chan_info *ncp[1];
   mark *m = NULL, *m1 = NULL;
   cp = get_cp(snd, chn, "test-C-mark");
-  m = find_mark_from_id(XEN_TO_C_INT(mid), ncp, -1);
+  m = find_mark_from_id(XEN_TO_C_INT(mid), NULL, -1);
   if (m == NULL) 
     return(snd_no_such_mark_error("test-C-mark", mid));
   y = cp->axis->y_axis_y1;
@@ -1915,8 +1914,7 @@ static XEN mark_get(XEN n, mark_field_t fld, XEN pos_n, char *caller)
   chan_info *ncp[1];
   mark *m = NULL;
   pos = XEN_TO_C_INT_OR_ELSE(pos_n, -1);
-  m = find_mark_from_id(XEN_TO_C_INT_OR_ELSE(n, 0), 
-			ncp, pos);
+  m = find_mark_from_id(XEN_TO_C_INT_OR_ELSE(n, 0), ncp, pos);
   if (m == NULL) 
     return(snd_no_such_mark_error(caller, n));
   switch (fld)
@@ -1976,9 +1974,8 @@ static XEN mark_set(XEN mark_n, XEN val, mark_field_t fld, char *caller)
 static XEN g_mark_p(XEN id_n)
 {
   #define H_mark_p "(" S_mark_p " id): #t if mark is active"
-  chan_info *ncp[1];
   if (XEN_INTEGER_P(id_n))
-    return(C_TO_XEN_BOOLEAN(find_mark_from_id(XEN_TO_C_INT(id_n), ncp, -1)));
+    return(C_TO_XEN_BOOLEAN(find_mark_from_id(XEN_TO_C_INT(id_n), NULL, -1)));
   return(XEN_FALSE);
 }
 
@@ -1986,16 +1983,14 @@ static XEN g_mark_p(XEN id_n)
 bool r_mark_p(int n);
 bool r_mark_p(int n)
 {
-  chan_info *ncp[1];
-  return((bool)(find_mark_from_id(n, ncp, -1)));
+  return((bool)(find_mark_from_id(n, NULL, -1)));
 }
 
 off_t r_mark_sample(int n);
 off_t r_mark_sample(int n)
 {
   mark *m;
-  chan_info *ncp[1];
-  m = find_mark_from_id(n, ncp, -1);
+  m = find_mark_from_id(n, NULL, -1);
   if (m) return(m->samp);
   return(-1);
 }
@@ -2004,8 +1999,7 @@ off_t r_mark_sync(int n);
 off_t r_mark_sync(int n)
 {
   mark *m;
-  chan_info *ncp[1];
-  m = find_mark_from_id(n, ncp, -1);
+  m = find_mark_from_id(n, NULL, -1);
   if (m) return(mark_sync(m));
   return(-1);
 }
@@ -2014,8 +2008,7 @@ char *r_mark_name(int n);
 char *r_mark_name(int n)
 {
   mark *m;
-  chan_info *ncp[1];
-  m = find_mark_from_id(n, ncp, -1);
+  m = find_mark_from_id(n, NULL, -1);
   if (m) return(m->name);
   return(NULL);
 }

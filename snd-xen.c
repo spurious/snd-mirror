@@ -1802,7 +1802,7 @@ chan_info *get_cp(XEN x_snd_n, XEN x_chn_n, const char *caller)
   snd_info *sp;
   int chn_n;
   sp = get_sp(x_snd_n, NO_PLAYERS);
-  if ((sp == NULL) || (!(sp->active)))
+  if ((sp == NULL) || (!(sp->active)) || (sp->inuse == SOUND_IDLE))
     {
       snd_no_such_sound_error(caller, x_snd_n); 
       return(NULL); /* gad -- just in case our catch has been clobbered */
