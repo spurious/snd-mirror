@@ -9,6 +9,7 @@ Snd Customization and Extension
              + Variables
              + Functions
              + Hooks
+             + Errors
         o A Topical View
              + Customizing Snd's appearance
              + Customizing Snd's behavior
@@ -397,9 +398,13 @@ refers to the processed form of the mix data, whereas next-sample would
 refer to the original form. I may extend this to accept a list of (more than
 one) mixes.
 
-When an error occurs, in most cases the function returns a symbol such as
-'no-such-sound, 'impossible-bounds, 'no-active-selection, etc. This part of
-Snd is currently in flux.
+When an error occurs, in most cases the function throws a tag such as
+'no-such-sound, 'impossible-bounds, 'no-active-selection, etc. The error tag
+is mentioned with the function in the form [no-such-channel]. All the
+functions that take sound and channel args ("snd chn" below) can return the
+errors 'no-such-sound and 'no-such-channel; all the mix-related functions
+can return 'no-such-mix; all the region-related functions can return
+'no-such-region; to reduce clutter, I'll omit mention of these below.
 
   abort             ()            drop into gdb
   abort?            ()            check for C-g to interrupt on-going computation (and let other UI
@@ -415,7 +420,7 @@ Snd is currently in flux.
   add-to-menu       (top-menu menu-label callback)
                                   add menu menu-label to top-level menu whose index is
                                   top-menu with the callback function callback.  The built-in
-                                  Snd menus are numbered from 0 ('File') to 4 ('Help'). see also remove-from-menu.
+                                  Snd menus are numbered from 0 ('File') to 4 ('Help').  [no-such-menu]
 
                                       (add-to-menu 5 "Denoise"
                                         (lambda ()
@@ -458,7 +463,7 @@ Snd is currently in flux.
   amp               (snd)         current amp (control panel slider) value.
                                   It is possible to use these controls (in "real-time") in your own functions.
                                   See amprt in examp.scm for a simple example.
-  append-to-minibuffer (msg snd)  append msg to whatever is in snd's minibuffer.
+  append-to-minibuffer (msg snd)  append msg to whatever is in snd's minibuffer [no-such-sound].
   as-one-edit       (func)        apply func (a function of no arguments), treating it as
                                   one edit (in all channels) in the edit history mechanism.
 
@@ -514,7 +519,7 @@ Snd is currently in flux.
   convolve-with     (file amp snd chn)
                                   convolve snd's channel chn (or the currently sync'd data)
                                   with the data in the sound file file. amp is the resultant peak amplitude
-                                  (leave amp unset, or set it to #f to get the unnormalized result).
+                                  (leave amp unset, or set it to #f to get the unnormalized result) [no-such-file].
                                   Convolve-with in conjunction with mix can provide high-quality reverb:
 
                                      (define conrev
@@ -525,7 +530,7 @@ Snd is currently in flux.
                                          (mix "reverb.snd")))
 
   convolve-selection-with (file amp)
-                                  convolve the current selection with file.
+                                  convolve the current selection with file [no-active-selection, no-such-file].
   count-matches     (expr sample snd chn)
                                   return how many samples satisfy the expression expr.  expr
                                   is a Scheme function of one argument (the current sample value). sample
@@ -550,20 +555,20 @@ Snd is currently in flux.
                                     (add-hook! stop-playing-hook
                                       (lambda (snd) (set-sound-cursor snd cursor-cross)))
 
-  cut               ()            cut the current selection (a no-op if no active selection).
+  cut               ()            cut the current selection (a no-op if no active selection) [no-active-selection].
   data-format       (snd)         snd's data format (a list of the format number and its name).
   data-location     (snd)         snd's data location (bytes).
   delete-mark       (id)          delete mark id (- C-m).
   delete-marks      (snd chn)     delete all marks in snd's channel chn
   delete-region     (reg)         delete region number reg (which defaults to 0).  This removes the
                                   region from the region stack; it doesn't edit the corresponding file(s).
-  delete-sample     (samp snd chn) delete sample samp in snd's channel chn.
+  delete-sample     (samp snd chn) delete sample samp in snd's channel chn [no-such-sample].
   delete-samples    (samp samps snd chn) delete samps samples starting at sample samp.
   dismiss-all-dialogs ()          deactivate all dialogs.
   edit-fragment     (num snd chn) return a list similar to that displayed in the edit history window giving
                                   the origin of the specified edit, its type (delete, insert, etc), its begin sample
                                   (given the current edit tree), and the number of samples affected.  If num is omitted,
-                                  return the last (currently active) edit.
+                                  return the last (currently active) edit [no-such-edit].
   edit-header-dialog()            fire up Edit Header dialog.
   edit-position     (snd chn)     return a current position in edit history list.
   edits             (snd chn)     return a list with number of undo-able edits and redo-able edits.
@@ -577,7 +582,7 @@ Snd is currently in flux.
                                       (env-sound '(0 0 1 1 2 0))
 
   env-selection     (envelope env-base snd chn)
-                                  apply envelope to the currently selected portion of snd's channel chn.
+                                  apply envelope to the currently selected portion of snd's channel chn [no-active-selection].
   enved-dialog      ()            fire up the Envelope editor dialog.
   exit              ()            exit Snd.
   expand            (snd)         current expansion amount (control panel).
@@ -602,7 +607,7 @@ Snd is currently in flux.
   filtering         (snd)         #t if snd is filtering (control panel filter button).
   filter-selection  (env order)   apply an FIR filter of order order and frequency response env
                                   to the current selection.  env can also be the filter coefficients
-                                  themselves, in a vct object with at least order elements.
+                                  themselves, in a vct object with at least order elements [no-active-selection].
   find              (expr sample snd chn)
                                   find the sample that satisfies the Scheme function expr. sample
                                   determines where to start the search.
@@ -643,10 +648,10 @@ Snd is currently in flux.
   id-region         (id)          map from region-id id to its current region stack location.
   in                (ms thunk)    ms milliseconds from now, evaluate thunk, a function of no arguments.
   insert-sound      (file in_chan snd chn)
-                                  insert channel in_chan of file at the cursor in snd's channel chn.
+                                  insert channel in_chan of file at the cursor in snd's channel chn [no-such-file].
   insert-region     (beg reg snd chn) insert region reg at sample beg in snd's channel chn.
   insert-sample     (samp value snd chn)
-                                  insert sample value at sample samp in snd's channel chn.
+                                  insert sample value at sample samp in snd's channel chn [no-such-sample].
   insert-samples    (samp samps data snd chn)
                                   insert samps samples of data starting at sample samp in snd's channel chn.
                                   data can be a filename; Snd assumes any such file is temporary;
@@ -733,7 +738,7 @@ Snd is currently in flux.
                                   mix returns the id of the first channel's mix (subsequent channels simply
                                   increment this number). id of -1 means some error occurred.
                                   If with-mix-consoles is #f (default is #t), the data is simply
-                                  mixed without creating any mix consoles.
+                                  mixed without creating any mix consoles [no-such-file].
   mixes             (snd chn)     list of currently active mixes in snd's channel chn at history pos.
                                   Omitted args are handled as in marks.
   mix-amp           (mix chan)    amplitude of mix's channel chan.
@@ -752,7 +757,7 @@ Snd is currently in flux.
                                   mix-region returns the id of the first channel's mix (subsequent channels simply
                                   increment this number). id of -1 means some error occurred.
   mix-sample-reader?(obj)         #t if obj is a mix-sample-reader.
-  mix-sound         (file start)  mix file into selected sound at start.
+  mix-sound         (file start)  mix file into selected sound at start [no-such-file].
   mix-sound-channel (mix)         channel affected by mix.
   mix-sound-index   (mix)         index of sound affected by mix.
   mix-speed         (mix)         speed of mix.
@@ -795,11 +800,11 @@ Snd is currently in flux.
   play              (samp snd chn sync end) play snd's channel chn starting from sample samp.
                                   If 'sync' is #t, play all sounds syncd to snd.  If 'end' is not given, play until end of sound.
                                   If 'end' is given (as a sample number), the actual end point may be off by a few samples; Snd
-                                  only checks on dac-buffer boundaries (normally around 256 samples).
+                                  only checks on dac-buffer boundaries (normally around 256 samples) [no-such-file, no-such-sound].
   play-and-wait     (samp snd chn sync end) play snd's channel chn starting from sample samp and wait for it to finish.
   play-mix          (mix)         play mix mix.
   play-region       (reg wait)    play region reg, if wait is #t, play to end before returning.
-  play-selection    ()            play the currently selected data.
+  play-selection    ()            play the currently selected data [no-active-selection].
   play-track        (track snd chn) play track track. If snd is #t, play all associated chans.
   preload-directory (dir)         preload sound files from directory dir (see -p).
   preload-file      (file)        preload file (see View menu's View Files option).
@@ -817,7 +822,7 @@ Snd is currently in flux.
   prompt-in-minibuffer (msg callback snd)
                                   Post msg in snd's minibuffer, and when the user responds,
                                   call callback with the result and the snd (the sound's index).
-                                  If callback is specified it should be either #f or a function of two arguments.
+                                  If callback is specified it should be either #f or a function of two arguments [no-such-sound].
 
                                     (define prompt-callback (lambda (func snd) (set-sample 0 (func (sample 0)))))
                                     ;; here we're assuming the user will type a function in response to the prompt
@@ -852,14 +857,14 @@ Snd is currently in flux.
   region?           (reg)         #t if region reg has data.
   remove-from-menu  (top-menu menu-label)
                                   remove menu menu-label from the top top-level menu whose index is top-menu.
-  report-in-minibuffer (msg snd)  post msg in snd's minibuffer.
+  report-in-minibuffer (msg snd)  post msg in snd's minibuffer [no-such-sound].
   restore-control-panel (snd)     same as pushing the control panel 'r' button.
   reverb-feedback   (snd)         snd's reverb feedback coefficient.
   reverb-length     (snd)         reverb delay line length scaler (control panel).
   reverb-lowpass    (snd)         reverb low pass filter coefficient.
   reverb-scale      (snd)         reverb amount (control panel).
   reverbing         (snd)         #t if snd's reverb button is on.
-  reverse-selection ()            reverse data delineated by current selection.
+  reverse-selection ()            reverse data delineated by current selection [no-active-selection].
   reverse-sound     (snd chn)     reverse data.
   revert-sound      (snd)         revert snd to saved state (undo all edits).
   right-sample      (snd chn)     position (samples) of right edge of time domain waveform.
@@ -875,7 +880,7 @@ Snd is currently in flux.
   sample-reader-at-end? (obj)     #t if sample-reader obj is at EOF.
   sample-reader?    (obj)         #t if obj is a sample-reader.
   samples->sound-data (samp samps snd chn v pos sdchan)
-                                  similar to samples->vct, but fill a sound-data object.
+                                  similar to samples->vct, but fill a sound-data object [no-such-edit].
   samples->vct      (samp samps snd chn v pos)
                                   return vct struct with same data as in samples call above.  If v (a vct object)
                                   is provided, it is filled, rather than creating a new vct object.
@@ -885,15 +890,15 @@ Snd is currently in flux.
                                   If chn is omitted, all snd's channels are saved; if snd is omitted,
                                   all edit list are saved.  If the underlying files are not subsequently
                                   changed, you can load this file to restore the current edit list state.
-                                  Returns #t if successful (file opened ok); #f is something went wrong.
-  save-envelopes    (filename)    save envelope editor contents in filename.
+                                  Returns #t if successful (file opened ok); if something went wrong [cannot-save].
+  save-envelopes    (filename)    save envelope editor contents in filename [cannot-save].
   save-macros       ()            save keyboard macros in Snd's init file (.snd).
   save-marks        (snd)         save snd's marks, writing a file <name>.marks (returns file name).
-  save-options      (filename)    save options in filename.
+  save-options      (filename)    save options in filename [cannot-save].
   save-region       (reg filename format)
-                                  save region reg in filename in data format format (default mus-bshort).
+                                  save region reg in filename in data format format (default mus-bshort) [cannot-save].
   save-selection    (file header-type data-format srate comment)
-                                  save the currently selected data in file.
+                                  save the currently selected data in file [no-active-selection].
   save-sound        (snd)         save snd; same as File menu's Save option.
   save-sound-as     (filename snd header-type data-format srate channel)
                                   save snd as filename (same as File Save as option).  If channel is specified,
@@ -907,9 +912,9 @@ Snd is currently in flux.
                                   scale-by moves through the channels. If 'sync' is off, channel chn
                                   is scaled (defaults to the currently selected channel).
   scale-selection-by(scalers)     scale the current selection by scalers which can be either a float,
-                                  or a vector of floats.
+                                  or a vector of floats [no-active-selection].
   scale-selection-to(scalers)     normalize the current selection to scalers which can be either a float,
-                                  or a vector of floats.
+                                  or a vector of floats [no-active-selection].
   scale-to          (scalers snd chn) normalize snd to scalers.
   scan-across-all-chans (func start end) apply func to all open channels in parallel (see Scanning Data).
   scan-across-chans (func start end) apply func to currently syncd channels in parallel
@@ -927,11 +932,11 @@ Snd is currently in flux.
   selected-channel  (snd)         selected channel in snd.
   selected-mix      ()            selected mix (-1 = none).
   selected-sound    ()            selected sound (index).
-  selection-beg     ()            selection begin sample number.
-  selection-length  ()            selection frames.
+  selection-beg     ()            selection begin sample number [no-active-selection].
+  selection-length  ()            selection frames [no-active-selection].
   selection-member  (snd chn)     #t if snd's chn is member of active selection.
-  selection-to-temp (type format) write out selected data as a temp file (see external programs).
-  selection-to-temps(type format) write out selected data as temp files (see external programs).
+  selection-to-temp (type format) write out selected data as a temp file (see external programs) [no-active-selection].
+  selection-to-temps(type format) write out selected data as temp files (see external programs) [no-active-selection].
   selection?        ()            #t if selection is active.
   ;;     The notation "(default #t)" below means the default value of the boolean argument
   ;;     is #t; normally the default value of the associated boolean itself is #f.  This
@@ -1053,14 +1058,14 @@ Snd is currently in flux.
   set-syncing       (syncing snd)       set snd's 'sync' button (default 1).
   set-uniting       (style snd)         set snd's 'unite' button (default channels-combined).
   set-waving        (on snd chn)        set snd's channel chn's 'w' button (default #t).
-  set-x-bounds      (x0 x1 snd chn)     set the display window x axis bounds to x0 and x1 (seconds).
+  set-x-bounds      (x0 x1 snd chn)     set the display window x axis bounds to x0 and x1 (seconds) [impossible-bounds].
   set-y-bounds      (y0 y1 snd chn)     set the display window y axis bounds to y0 and y1. If y1 is
                                 omitted, it is set from y0; if y0 is also omitted, the y axis bounds
-                                are set to reflect the channel's current max amp.
+                                are set to reflect the channel's current max amp [impossible-bounds].
   short-file-name   (snd)         return the brief (no directory) form of snd's filename.
   showing-controls  (snd)         #t if snd's control panel is open.
   show-listener     ()            open the lisp listener pane.
-  smooth-selection  ()            apply a smoothing function to the current selection.
+  smooth-selection  ()            apply a smoothing function to the current selection [no-active-selection].
   smooth            (beg num snd chn) apply a smoothing function to the indicated data.
   snd-apropos       (name)        return possible completions of name (a string or a symbol).
   snd-error         (str)         report error message str, return str.
@@ -1140,9 +1145,9 @@ Snd is currently in flux.
                                   (if any) represents the difference of the new srate from 1.0 -- that is,
                                   (src-sound '(0 0 1 0)) is a no-op, whereas (src-sound '(0 0 1 1) moves
                                   up an octave over the course of the sound.
-  src-selection     (num-or-env base) same as src but applied to current selection.
+  src-selection     (num-or-env base) same as src but applied to current selection [no-active-selection].
   start-progress-report (snd)     see progress-report.
-  stop-playing      (snd)         if snd is playing, stop.
+  stop-playing      (snd)         if snd is playing, stop [no-such-sound].
   swap-channels     (snd1 chn1 snd2 chn2 beg dur)
                                   Swap the indicated channels, between beg and beg+dur (default is whole channel).
   syncd-marks       (sync)        list of marks (ids) that share sync.
@@ -1156,7 +1161,7 @@ Snd is currently in flux.
   transform-dialog  ()            fire up the Transform window (Option menu's Transform Options choice).
   transform-sample  (bin slice snd chn)
                                   return the current value of the transform (if any) in bin and (if a
-                                  sonogram or spectrogram) slice in snd's channel chn.
+                                  sonogram or spectrogram) slice in snd's channel chn [no-such-sample].
   transform-samples (snd chn)     return the transform data currently in snd's channel chn.
   transform-samples->vct (snd chn v) return vct struct with the transform data currently in snd's channel chn.
                                   If v (a vct object) is provided, it is filled, rather than creating a new vct object.
@@ -1374,6 +1379,48 @@ list.
 
 To add a function to a hook, use add-hook!. To remove it, use remove-hook!.
 To clear a hook, use reset-hook!. (These are functions supplied by Guile).
+
+  ------------------------------------------------------------------------
+
+Errors
+
+When something goes awry, the various functions can "throw" an error (a
+symbol) which is normally "caught" by the default error handler; it prints
+out some message, and in some cases appends a stack trace. So, as a simple
+example, selection-beg throws 'no-active-selection is there isn't a
+selection. In the default case, you get behavior like this:
+
+> (selection-beg)
+selection-beg: no-active-selection
+
+But there are cases where you'd rather handle an error (or all errors)
+specially. In the case of 'no-active-selection, we set up our own handler
+for that as follows:
+
+> (catch 'no-active-selection
+       (lambda ()
+         (+ 1 (selection-beg)))
+       (lambda (tag val) 0))
+0
+
+Here's we've "caught" 'no-active-selection (if it occurs within the first
+"thunk's" body), and return 0 if it occurs; otherwise we return (+ 1
+(selection-beg)). Scheme (Guile) has a number of errors such as
+'out-of-range, 'wrong-type-arg, 'numerical-overflow, etc. The Snd-specific
+errors are:
+
+'no-such-channel 'no-such-sound 'no-such-mark       'no-such-mix
+'no-such-menu    'no-such-file  'no-such-region     'no-such-sample
+'no-such-edit    'cannot-save   'impossible-bounds  'no-active-selection
+'no-such-widget  'snd-eval-error
+
+The symbol #t stands for all errors in this case, so we can run rough-shod
+over any error with:
+
+(defmacro without-errors (func)
+  `(catch #t
+          (lambda () ,func)
+          (lambda (tag val) tag)))
 
   ------------------------------------------------------------------------
 
@@ -2038,7 +2085,7 @@ To get the data currently displayed in the time domain window:
 Now we can use window-samples and graph-hook to show a running graph of the
 time domain energy:
 
-(define display-energy
+(define displaye-nergy
  (lambda ()
   (let* ((data (window-samples))
          (len (vector-length data)))

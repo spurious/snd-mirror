@@ -4,6 +4,7 @@
 <style type="text/css">
 <!-- 
 	EM.red {color:red; font-style:normal}
+        EM.error {color:chocolate; font-style:normal}
 	H1 {text-align: center}
 	UL {list-style-type: none}
 -->
@@ -26,6 +27,7 @@
     <li><a href="#sndvariables">Variables</a>
     <li><a href="#sndfunctions">Functions</a>
     <li><a href="#sndhooks">Hooks</a>
+    <li><a href="#snderrors">Errors</a>
     </ul>
   <li><a href="#topics">A Topical View</a>	
     <ul>
@@ -441,8 +443,13 @@ amplitude, amplitude envelope, and sampling rate) -- next-mix-sample, for
 example, refers to the processed form of the mix data, whereas next-sample
 would refer to the original form.  I may extend this to accept a list of (more than one) mixes.
 </p>
-<p>When an error occurs, in most cases the function returns a symbol such as 'no-such-sound,
-'impossible-bounds, 'no-active-selection, etc.  This part of Snd is currently in flux.
+<p>When an error occurs, in most cases the function throws a tag such as 'no-such-sound,
+'impossible-bounds, 'no-active-selection, etc.
+The error tag is mentioned with the function in the form [<em class=error>no-such-channel</em>].
+All the functions that take sound and channel args ("snd chn" below) can return the errors
+'no-such-sound and 'no-such-channel; all the mix-related functions can return 'no-such-mix;
+all the region-related functions can return 'no-such-region; to reduce clutter, I'll omit mention
+of these below.
 </p>
 
 <pre>
@@ -461,7 +468,7 @@ would refer to the original form.  I may extend this to accept a list of (more t
   <a name="sndaddtomenu">add-to-menu</a>       (top-menu menu-label callback) 
                                   add menu <i>menu-label</i> to top-level menu whose index is 
                                   <i>top-menu</i> with the callback function <i>callback</i>.  The built-in
-                                  Snd menus are numbered from 0 ('File') to 4 ('Help'). see also <a href="#sndremovefrommenu">remove-from-menu</a>.
+                                  Snd menus are numbered from 0 ('File') to 4 ('Help').  [<em class=error>no-such-menu</em>]
 
                                       (<em class=red>add-to-menu</em> 5 "Denoise" 
                                         (lambda () 
@@ -504,7 +511,7 @@ would refer to the original form.  I may extend this to accept a list of (more t
   <a name="sndamp">amp</a>               (<i>snd</i>)         current amp (control panel slider) value.
                                   It is possible to use these controls (in "real-time") in your own functions.
                                   See amprt in examp.scm for a simple example.
-  <a name="sndappendtominibuffer">append-to-minibuffer</a> (msg <i>snd</i>)  append <i>msg</i> to whatever is in <i>snd</i>'s minibuffer.
+  <a name="sndappendtominibuffer">append-to-minibuffer</a> (msg <i>snd</i>)  append <i>msg</i> to whatever is in <i>snd</i>'s minibuffer [<em class=error>no-such-sound</em>].
   <a name="asoneedit">as-one-edit</a>       (func)        apply <i>func</i> (a function of no arguments), treating it as
                                   one edit (in all channels) in the edit history mechanism.
 
@@ -560,7 +567,7 @@ would refer to the original form.  I may extend this to accept a list of (more t
   <a name="sndconvolvewith">convolve-with</a>     (file <i>amp snd chn</i>)     
                                   convolve <i>snd</i>'s channel <i>chn</i> (or the currently sync'd data)
                                   with the data in the sound file <i>file</i>. <i>amp</i> is the resultant peak amplitude
-                                  (leave <i>amp</i> unset, or set it to #f to get the unnormalized result).
+                                  (leave <i>amp</i> unset, or set it to #f to get the unnormalized result) [<em class=error>no-such-file</em>].
                                   Convolve-with in conjunction with mix can provide high-quality reverb:
 
                                      (define conrev
@@ -571,7 +578,7 @@ would refer to the original form.  I may extend this to accept a list of (more t
                                          (<em class=red>mix</em> "reverb.snd")))
 
   <a name="sndconvolveselectionwith">convolve-selection-with</a> (file <i>amp</i>)     
-                                  convolve the current selection with <i>file</i>.
+                                  convolve the current selection with <i>file</i> [<em class=error>no-active-selection, no-such-file</em>].
   <a name="lcountmatches">count-matches</a>     (expr <i>sample snd chn</i>) 
                                   return how many samples satisfy the expression <i>expr</i>.  <i>expr</i>
                                   is a Scheme function of one argument (the current sample value). <i>sample</i> 
@@ -596,20 +603,20 @@ would refer to the original form.  I may extend this to accept a list of (more t
                                     (add-hook! stop-playing-hook 
                                       (lambda (snd) (set-sound-cursor snd <em class=red>cursor-cross</em>)))
 
-  <a name="sndcut">cut</a>               ()            cut the current selection (a no-op if no active selection).
+  <a name="sndcut">cut</a>               ()            cut the current selection (a no-op if no active selection) [<em class=error>no-active-selection</em>].
   <a name="snddataformat">data-format</a>       (<i>snd</i>)         <i>snd</i>'s data format (a list of the format number and its name).
   <a name="snddatalocation">data-location</a>     (<i>snd</i>)         <i>snd</i>'s data location (bytes).
   <a name="snddeletemark">delete-mark</a>       (<i>id</i>)          delete mark <i>id</i> (- C-m).
   <a name="snddeletemarks">delete-marks</a>      (<i>snd chn</i>)     delete all marks in <i>snd</i>'s channel <i>chn</i>
   <a name="snddeleteregion">delete-region</a>     (<i>reg</i>)         delete region number <i>reg</i> (which defaults to 0).  This removes the
                                   region from the region stack; it doesn't edit the corresponding file(s).
-  <a name="snddeletesample">delete-sample</a>     (samp <i>snd chn</i>) delete sample <i>samp</i> in <i>snd</i>'s channel <i>chn</i>.
+  <a name="snddeletesample">delete-sample</a>     (samp <i>snd chn</i>) delete sample <i>samp</i> in <i>snd</i>'s channel <i>chn</i> [<em class=error>no-such-sample</em>].
   <a name="snddeletesamples">delete-samples</a>    (samp samps <i>snd chn</i>) delete <i>samps</i> samples starting at sample <i>samp</i>.
   <a name="dismissalldialogs">dismiss-all-dialogs</a> ()          deactivate all dialogs.
   <a name="sndeditfragment">edit-fragment</a>     (<i>num snd chn</i>) return a list similar to that displayed in the edit history window giving 
                                   the origin of the specified edit, its type (delete, insert, etc), its begin sample 
                                   (given the current edit tree), and the number of samples affected.  If num is omitted,
-                                  return the last (currently active) edit.
+                                  return the last (currently active) edit [<em class=error>no-such-edit</em>].
   <a name="sndeditheaderdialog">edit-header-dialog</a>()            fire up Edit Header dialog.
   <a name="sndeditposition">edit-position</a>     (<i>snd chn</i>)     return a current position in edit history list.
   <a name="sndedits">edits</a>             (<i>snd chn</i>)     return a list with number of undo-able edits and redo-able edits.
@@ -623,7 +630,7 @@ would refer to the original form.  I may extend this to accept a list of (more t
                                       (env-sound '(0 0 1 1 2 0))
 
   <a name="sndenvselection">env-selection</a>     (envelope <i>env-base snd chn</i>)
-                                  apply <i>envelope</i> to the currently selected portion of <i>snd</i>'s channel <i>chn</i>.
+                                  apply <i>envelope</i> to the currently selected portion of <i>snd</i>'s channel <i>chn</i> [<em class=error>no-active-selection</em>].
   <a name="sndenveddialog">enved-dialog</a>      ()            fire up the Envelope editor dialog.
   <a name="sndexit">exit</a>              ()            exit Snd.
   <a name="sndexpand">expand</a>            (<i>snd</i>)         current <a href="snd.html#expand">expansion</a> amount (control panel).
@@ -648,7 +655,7 @@ would refer to the original form.  I may extend this to accept a list of (more t
   <a name="sndfiltering">filtering</a>         (<i>snd</i>)         #t if <i>snd</i> is filtering (control panel filter button).
   <a name="sndfilterselection">filter-selection</a>  (env order)   apply an FIR filter of order <i>order</i> and frequency response <i>env</i>
                                   to the current selection.  <i>env</i> can also be the filter coefficients
-                                  themselves, in a vct object with at least order elements.
+                                  themselves, in a vct object with at least order elements [<em class=error>no-active-selection</em>].
   <a name="lfind">find</a>              (expr <i>sample snd chn</i>) 
                                   find the sample that satisfies the Scheme function <i>expr</i>. <i>sample</i>
                                   determines where to start the search.
@@ -689,10 +696,10 @@ would refer to the original form.  I may extend this to accept a list of (more t
   <a name="sndidregion">id-region</a>         (<i>id</i>)          map from region-id <i>id</i> to its current region stack location.
   <a name="gin">in</a>                (ms thunk)    <i>ms</i> milliseconds from now, evaluate <i>thunk</i>, a function of no arguments.
   <a name="sndinsertfile">insert-sound</a>      (file <i>in_chan snd chn</i>)
-                                  insert channel <i>in_chan</i> of <i>file</i> at the cursor in <i>snd</i>'s channel <i>chn</i>.
+                                  insert channel <i>in_chan</i> of <i>file</i> at the cursor in <i>snd</i>'s channel <i>chn</i> [<em class=error>no-such-file</em>].
   <a name="sndinsertregion">insert-region</a>     (<i>beg reg snd chn</i>) insert region <i>reg</i> at sample <i>beg</i> in <i>snd</i>'s channel <i>chn</i>.
   <a name="sndinsertsample">insert-sample</a>     (samp value <i>snd chn</i>)
-                                  insert sample <i>value</i> at sample <i>samp</i> in <i>snd</i>'s channel <i>chn</i>.
+                                  insert sample <i>value</i> at sample <i>samp</i> in <i>snd</i>'s channel <i>chn</i> [<em class=error>no-such-sample</em>].
   <a name="sndinsertsamples">insert-samples</a>    (samp samps data <i>snd chn</i>)
                                   insert <i>samps</i> samples of <i>data</i> starting at sample <i>samp</i> in <i>snd</i>'s channel <i>chn</i>.
                                   <i>data</i> can be a filename; Snd assumes any such file is temporary; 
@@ -779,7 +786,7 @@ would refer to the original form.  I may extend this to accept a list of (more t
                                   mix returns the id of the first channel's mix (subsequent channels simply 
                                   increment this number). id of -1 means some error occurred.
                                   If <i>with-mix-consoles</i> is #f (default is #t), the data is simply
-                                  mixed without creating any mix consoles.
+                                  mixed without creating any mix consoles [<em class=error>no-such-file</em>].
   <a name="sndmixes">mixes</a>             (<i>snd chn</i>)     list of currently active mixes in <i>snd</i>'s channel <i>chn</i> at history <i>pos</i>.
                                   Omitted args are handled as in <a href="#sndmarks">marks</a>.
   <a name="sndmixamp">mix-amp</a>           (<i>mix chan</i>)    amplitude of <i>mix</i>'s channel <i>chan</i>.
@@ -798,7 +805,7 @@ would refer to the original form.  I may extend this to accept a list of (more t
                                   mix-region returns the id of the first channel's mix (subsequent channels simply 
                                   increment this number). id of -1 means some error occurred.
   <a name="mixsamplereaderQ">mix-sample-reader?</a>(obj)         #t if <i>obj</i> is a <a href="#samplereaders">mix-sample-reader</a>.
-  <a name="sndmixsound">mix-sound</a>         (file start)  mix <i>file</i> into selected sound at <i>start</i>.
+  <a name="sndmixsound">mix-sound</a>         (file start)  mix <i>file</i> into selected sound at <i>start</i> [<em class=error>no-such-file</em>].
   <a name="sndmixsoundchannel">mix-sound-channel</a> (<i>mix</i>)         channel affected by <i>mix</i>.
   <a name="sndmixsoundindex">mix-sound-index</a>   (<i>mix</i>)         index of sound affected by <i>mix</i>.
   <a name="sndmixspeed">mix-speed</a>         (<i>mix</i>)         speed of <i>mix</i>.
@@ -841,11 +848,11 @@ would refer to the original form.  I may extend this to accept a list of (more t
   <a name="sndplay">play</a>              (<i>samp snd chn sync end</i>) play <i>snd</i>'s channel <i>chn</i> starting from sample <i>samp</i>.
                                   If 'sync' is #t, play all sounds syncd to snd.  If 'end' is not given, play until end of sound.
                                   If 'end' is given (as a sample number), the actual end point may be off by a few samples; Snd
-                                  only checks on dac-buffer boundaries (normally around 256 samples).
+                                  only checks on dac-buffer boundaries (normally around 256 samples) [<em class=error>no-such-file, no-such-sound</em>].
   <a name="sndplayandwait">play-and-wait</a>     (<i>samp snd chn sync end</i>) play <i>snd</i>'s channel <i>chn</i> starting from sample <i>samp</i> and wait for it to finish.
   <a name="sndplaymix">play-mix</a>          (<i>mix</i>)         play mix <i>mix</i>.
   <a name="sndplayregion">play-region</a>       (<i>reg wait</i>)    play region <i>reg</i>, if wait is #t, play to end before returning.
-  <a name="sndplayselection">play-selection</a>    ()            play the currently selected data.
+  <a name="sndplayselection">play-selection</a>    ()            play the currently selected data [<em class=error>no-active-selection</em>].
   <a name="sndplaytrack">play-track</a>        (<i>track snd chn</i>) play track <i>track</i>. If snd is #t, play all associated chans.
   <a name="sndpreloaddirectory">preload-directory</a> (dir)         preload sound files from directory <i>dir</i> (see -<a href="snd.html#minusp">p</a>).
   <a name="sndpreloadfile">preload-file</a>      (file)        preload <i>file</i> (see View menu's <a href="snd.html#prevfiles">View Files</a> option).
@@ -863,7 +870,7 @@ would refer to the original form.  I may extend this to accept a list of (more t
   <a name="sndpromptinminibuffer">prompt-in-minibuffer</a> (msg <i>callback snd</i>)
                                   Post <i>msg</i> in <i>snd</i>'s minibuffer, and when the user responds,
                                   call <i>callback</i> with the result and the <i>snd</i> (the sound's index).
-                                  If <i>callback</i> is specified it should be either #f or a function of two arguments.
+                                  If <i>callback</i> is specified it should be either #f or a function of two arguments [<em class=error>no-such-sound</em>].
 
                                     (define prompt-callback (lambda (func snd) (set-sample 0 (func (sample 0)))))
                                     ;; here we're assuming the user will type a function in response to the prompt
@@ -898,14 +905,14 @@ would refer to the original form.  I may extend this to accept a list of (more t
   <a name="regionok">region?</a>           (<i>reg</i>)         #t if region <i>reg</i> has data.
   <a name="sndremovefrommenu">remove-from-menu</a>  (top-menu menu-label) 
                                   remove menu <i>menu-label</i> from the top top-level menu whose index is <i>top-menu</i>.
-  <a name="sndreportinminibuffer">report-in-minibuffer</a> (msg <i>snd</i>)  post <i>msg</i> in <i>snd</i>'s minibuffer.
+  <a name="sndreportinminibuffer">report-in-minibuffer</a> (msg <i>snd</i>)  post <i>msg</i> in <i>snd</i>'s minibuffer [<em class=error>no-such-sound</em>].
   <a name="sndcontrolpanelrestore">restore-control-panel</a> (<i>snd</i>)     same as pushing the control panel '<a href="snd.html#savcontrols">r</a>' button.
   <a name="sndreverbfeedback">reverb-feedback</a>   (<i>snd</i>)         <i>snd</i>'s reverb feedback coefficient.
   <a name="sndreverblength">reverb-length</a>     (<i>snd</i>)         <a href="snd.html#reverb">reverb</a> delay line length scaler (control panel).
   <a name="sndreverblowpass">reverb-lowpass</a>    (<i>snd</i>)         reverb low pass filter coefficient.
   <a name="sndreverbscale">reverb-scale</a>      (<i>snd</i>)         <a href="snd.html#reverb">reverb</a> amount (control panel).
   <a name="sndreverbing">reverbing</a>         (<i>snd</i>)         #t if <i>snd</i>'s reverb button is on.
-  <a name="sndreverseselection">reverse-selection</a> ()            reverse data delineated by current selection.
+  <a name="sndreverseselection">reverse-selection</a> ()            reverse data delineated by current selection [<em class=error>no-active-selection</em>].
   <a name="sndreverse">reverse-sound</a>     (<i>snd chn</i>)     reverse data.
   <a name="sndrevert">revert-sound</a>      (<i>snd</i>)         revert <i>snd</i> to saved state (undo all edits).
   <a name="sndrightsample">right-sample</a>      (<i>snd chn</i>)     position (samples) of right edge of time domain waveform.
@@ -921,7 +928,7 @@ would refer to the original form.  I may extend this to accept a list of (more t
   <a name="samplereaderatendQ">sample-reader-at-end?</a> (obj)     #t if <a href="#samplereaders">sample-reader</a> <i>obj</i> is at EOF.
   <a name="samplereaderQ">sample-reader?</a>    (obj)         #t if <i>obj</i> is a <a href="#samplereaders">sample-reader</a>.
   <a name="samples2sounddata">samples-&gt;sound-data</a> (<i>samp samps snd chn v pos sdchan</i>)  
-                                  similar to samples-&gt;vct, but fill a sound-data object.
+                                  similar to samples-&gt;vct, but fill a sound-data object [<em class=error>no-such-edit</em>].
   <a name="samples2vct">samples-&gt;vct</a>      (<i>samp samps snd chn v pos</i>)  
                                   return vct struct with same data as in <i>samples</i> call above.  If v (a vct object)
                                   is provided, it is filled, rather than creating a new vct object.
@@ -931,15 +938,15 @@ would refer to the original form.  I may extend this to accept a list of (more t
                                   If <i>chn</i> is omitted, all <i>snd</i>'s channels are saved; if <i>snd</i> is omitted,
                                   all edit list are saved.  If the underlying files are not subsequently 
                                   changed, you can load this file to restore the current edit list state.
-                                  Returns #t if successful (file opened ok); #f is something went wrong.
-  <a name="sndsaveenvelopes">save-envelopes</a>    (filename)    save envelope editor contents in <i>filename</i>.
+                                  Returns #t if successful (file opened ok); if something went wrong [<em class=error>cannot-save</em>].
+  <a name="sndsaveenvelopes">save-envelopes</a>    (filename)    save envelope editor contents in <i>filename</i> [<em class=error>cannot-save</em>].
   <a name="sndsavemacros">save-macros</a>       ()            save <a href="snd.html#kbdmacros">keyboard macros</a> in Snd's init file (.snd).
   <a name="sndsavemarks">save-marks</a>        (<i>snd</i>)         save <i>snd</i>'s marks, writing a file &lt;name&gt;.marks (returns file name).
-  <a name="sndsaveoptions">save-options</a>      (filename)    save options in <i>filename</i>.
+  <a name="sndsaveoptions">save-options</a>      (filename)    save options in <i>filename</i> [<em class=error>cannot-save</em>].
   <a name="sndsaveregion">save-region</a>       (reg filename <i>format</i>) 
-                                  save region <i>reg</i> in <i>filename</i> in data format <i>format</i> (default mus-bshort).
+                                  save region <i>reg</i> in <i>filename</i> in data format <i>format</i> (default mus-bshort) [<em class=error>cannot-save</em>].
   <a name="sndsaveselection">save-selection</a>    (file <i>header-type data-format srate comment</i>)
-                                  save the currently selected data in <i>file</i>.
+                                  save the currently selected data in <i>file</i> [<em class=error>no-active-selection</em>].
   <a name="sndsave">save-sound</a>        (<i>snd</i>)         save <i>snd</i>; same as File menu's Save option.
   <a name="sndsaveas">save-sound-as</a>     (filename <i>snd header-type data-format srate channel</i>) 
                                   save <i>snd</i> as <i>filename</i> (same as File Save as option).  If channel is specified,
@@ -953,9 +960,9 @@ would refer to the original form.  I may extend this to accept a list of (more t
                                   scale-by moves through the channels. If 'sync' is off, channel <i>chn</i> 
                                   is scaled (defaults to the currently selected channel).
   <a name="sndscaleselectionby">scale-selection-by</a>(<i>scalers</i>)     <a href="snd.html#scaling">scale</a> the current selection by <i>scalers</i> which can be either a float, 
-                                  or a vector of floats.
+                                  or a vector of floats [<em class=error>no-active-selection</em>].
   <a name="sndscaleselectionto">scale-selection-to</a>(<i>scalers</i>)     <a href="snd.html#scaling">normalize</a> the current selection to <i>scalers</i> which can be either a float, 
-                                  or a vector of floats.
+                                  or a vector of floats [<em class=error>no-active-selection</em>].
   <a name="sndscaleto">scale-to</a>          (<i>scalers snd chn</i>) <a href="snd.html#scaling">normalize</a> <i>snd</i> to <i>scalers</i>.
   <a name="scanacrossallchans">scan-across-all-chans</a> (func <i>start end</i>) apply func to all open channels in parallel (see <a href="#scanning">Scanning Data</a>).
   <a name="scanacrosschans">scan-across-chans</a> (func <i>start end</i>) apply func to currently syncd channels in parallel
@@ -973,11 +980,11 @@ would refer to the original form.  I may extend this to accept a list of (more t
   <a name="sndselectedchannel">selected-channel</a>  (<i>snd</i>)         selected channel in <i>snd</i>.
   <a name="sndselectedmix">selected-mix</a>      ()            selected mix (-1 = none).
   <a name="sndselectedsound">selected-sound</a>    ()            selected sound (index).
-  <a name="selectionbeg">selection-beg</a>     ()            selection begin sample number.
-  <a name="selectionlength">selection-length</a>  ()            selection frames.
+  <a name="selectionbeg">selection-beg</a>     ()            selection begin sample number [<em class=error>no-active-selection</em>].
+  <a name="selectionlength">selection-length</a>  ()            selection frames [<em class=error>no-active-selection</em>].
   <a name="selectionmember">selection-member</a>  (<i>snd chn</i>)     #t if snd's chn is member of active selection.
-  <a name="selectiontotemp">selection-to-temp</a> (<i>type format</i>) write out selected data as a temp file (see <a href="#programs">external programs</a>).
-  <a name="selectiontotemps">selection-to-temps</a>(<i>type format</i>) write out selected data as temp files (see <a href="#programs">external programs</a>).
+  <a name="selectiontotemp">selection-to-temp</a> (<i>type format</i>) write out selected data as a temp file (see <a href="#programs">external programs</a>) [<em class=error>no-active-selection</em>].
+  <a name="selectiontotemps">selection-to-temps</a>(<i>type format</i>) write out selected data as temp files (see <a href="#programs">external programs</a>) [<em class=error>no-active-selection</em>].
   <a name="selectionok">selection?</a>        ()            #t if selection is active.
   ;;	 The notation "(default #t)" below means the default value of the boolean argument
   ;;     is #t; normally the default value of the associated boolean itself is #f.  This
@@ -1099,14 +1106,14 @@ would refer to the original form.  I may extend this to accept a list of (more t
   <a name="sndsetsyncing">set-syncing</a>       (<i>syncing snd</i>)       set <i>snd</i>'s 'sync' button (default 1).
   <a name="sndsetuniting">set-uniting</a>       (<i>style snd</i>)         set <i>snd</i>'s 'unite' button (default channels-combined).
   <a name="sndsetwaving">set-waving</a>        (<i>on snd chn</i>)        set <i>snd</i>'s channel <i>chn</i>'s 'w' button (default #t).
-  <a name="sndsetxbounds">set-x-bounds</a>      (x0 x1 <i>snd chn</i>)     set the display window x axis bounds to x0 and x1 (seconds).
+  <a name="sndsetxbounds">set-x-bounds</a>      (x0 x1 <i>snd chn</i>)     set the display window x axis bounds to x0 and x1 (seconds) [<em class=error>impossible-bounds</em>].
   <a name="sndsetybounds">set-y-bounds</a>      (<i>y0 y1 snd chn</i>)     set the display window y axis bounds to y0 and y1. If y1 is 
                                 omitted, it is set from y0; if y0 is also omitted, the y axis bounds 
-                                are set to reflect the channel's current max amp.
+                                are set to reflect the channel's current max amp [<em class=error>impossible-bounds</em>].
   <a name="sndshortfilename">short-file-name</a>   (<i>snd</i>)         return the brief (no directory) form of <i>snd</i>'s filename.
   <a name="sndshowingcontrols">showing-controls</a>  (<i>snd</i>)         #t if <i>snd</i>'s control panel is open.
   <a name="sndshowlistener">show-listener</a>     ()            open the lisp listener pane.
-  <a name="sndsmoothselection">smooth-selection</a>  ()            apply a smoothing function to the current selection.
+  <a name="sndsmoothselection">smooth-selection</a>  ()            apply a smoothing function to the current selection [<em class=error>no-active-selection</em>].
   <a name="sndsmooth">smooth</a>            (beg num <i>snd chn</i>) apply a smoothing function to the indicated data.
   <a name="sndapropos">snd-apropos</a>       (name)        return possible completions of <i>name</i> (a string or a symbol).
   <a name="snderror">snd-error</a>         (str)         report error message <i>str</i>, return <i>str</i>.
@@ -1186,9 +1193,9 @@ would refer to the original form.  I may extend this to accept a list of (more t
                                   (if any) represents the difference of the new srate from 1.0 -- that is,
                                   (src-sound '(0 0 1 0)) is a no-op, whereas (src-sound '(0 0 1 1) moves
                                   up an octave over the course of the sound.
-  <a name="sndsrcselection">src-selection</a>     (num-or-env <i>base</i>) same as <i>src</i> but applied to current selection.
+  <a name="sndsrcselection">src-selection</a>     (num-or-env <i>base</i>) same as <i>src</i> but applied to current selection [<em class=error>no-active-selection</em>].
   <a name="startprogressreport">start-progress-report</a> (<i>snd</i>)     see <a href="#progressreport">progress-report</a>.
-  <a name="sndstop">stop-playing</a>      (<i>snd</i>)         if <i>snd</i> is playing, stop.
+  <a name="sndstop">stop-playing</a>      (<i>snd</i>)         if <i>snd</i> is playing, stop [<em class=error>no-such-sound</em>].
   <a name="swapchannels">swap-channels</a>     (<i>snd1 chn1 snd2 chn2 beg dur</i>)
                                   Swap the indicated channels, between beg and beg+dur (default is whole channel).
   <a name="syncdmarks">syncd-marks</a>       (sync)        list of marks (ids) that share sync.
@@ -1202,7 +1209,7 @@ would refer to the original form.  I may extend this to accept a list of (more t
   <a name="sndtransformdialog">transform-dialog</a>  ()            fire up the Transform window (Option menu's Transform Options choice).
   <a name="sndtransformsample">transform-sample</a>  (<i>bin slice snd chn</i>)
                                   return the current value of the transform (if any) in <i>bin</i> and (if a 
-                                  sonogram or spectrogram) <i>slice</i> in <i>snd</i>'s channel <i>chn</i>.
+                                  sonogram or spectrogram) <i>slice</i> in <i>snd</i>'s channel <i>chn</i> [<em class=error>no-such-sample</em>].
   <a name="sndtransformsamples">transform-samples</a> (<i>snd chn</i>)     return the transform data currently in <i>snd</i>'s channel <i>chn</i>.
   <a name="transformsamples2vct">transform-samples-&gt;vct</a> (<i>snd chn v</i>) return vct struct with the transform data currently in <i>snd</i>'s channel <i>chn</i>.
                                   If v (a vct object) is provided, it is filled, rather than creating a new vct object.
@@ -1421,6 +1428,47 @@ case, the result returned by the hook is the result of the last function in the 
 <p>To add a function to a hook, use add-hook!.  To remove it, use remove-hook!.  To clear a hook, use reset-hook!. (These are
 functions supplied by Guile).
 </p>
+<hr>
+
+<h3><a name="snderrors">Errors</a></h3>
+<p> When something goes awry, the various functions can "throw" an error (a symbol)
+which is normally "caught" by the default error handler; it prints out some message,
+and in some cases appends a stack trace.  So, as a simple example, selection-beg
+throws 'no-active-selection is there isn't a selection. In the default case, you
+get behavior like this:
+</p>
+<pre>
+&gt; (selection-beg)
+selection-beg: no-active-selection
+</pre>
+<p>But there are cases where you'd rather handle an error (or all errors) specially.
+In the case of 'no-active-selection, we set up our own handler for that as follows:</p>
+<pre>
+&gt; (catch 'no-active-selection 
+       (lambda () 
+         (+ 1 (selection-beg))) 
+       (lambda (tag val) 0))
+0
+</pre>
+<p>Here's we've "caught" 'no-active-selection (if it occurs within the
+first "thunk's" body), and return 0 if it occurs; otherwise we return
+<code>(+ 1 (selection-beg))</code>.  Scheme (Guile) has a number
+of errors such as 'out-of-range, 'wrong-type-arg, 'numerical-overflow,
+etc.  The Snd-specific errors are:</p>
+<pre>
+'no-such-channel 'no-such-sound 'no-such-mark       'no-such-mix
+'no-such-menu    'no-such-file  'no-such-region     'no-such-sample
+'no-such-edit    'cannot-save   'impossible-bounds  'no-active-selection
+'no-such-widget  'snd-eval-error
+</pre>
+<p>The symbol #t stands for all errors in this case, so we can 
+run rough-shod over any error with:</p>
+<pre>
+(defmacro without-errors (func)
+  `(catch #t 
+	  (lambda () ,func)
+	  (lambda (tag val) tag)))
+</pre>
 <hr>
 
 <h2><a name="topics">A Topical View</a></h2>
@@ -2135,7 +2183,7 @@ to show a running graph of the
 time domain energy:</p>
 <pre>
 <small>
-(define <a name="displayenergy">display-energy</a>
+(define <a name="displayenergy">displaye-nergy</a>
  (lambda ()
   (let* ((data (window-samples))
 	 (len (vector-length data)))

@@ -7,7 +7,7 @@
 
 (define tests 1)
 (set! full-test #t)
-;(set! snd-test 6)
+;(set! snd-test 15)
 ;;; to run a specific test: ./snd -e "(set! snd-test 4) (set! full-test #f)" -l snd-test.scm
 (define include-clm #f)
 (define original-prompt (listener-prompt))
@@ -116,13 +116,19 @@
 	'x-to-one x-to-one 2)))
     )
 
+(defmacro without-errors (func)
+  `(catch #t 
+	  (lambda ()
+	    ,func)
+	  (lambda (tag val) tag)))
+
 ;;; defaults
 (if (or full-test (= snd-test 1))
     (letrec ((test-defaults
 	      (lambda (lst)
 		(if (not (null? lst))
 		    (begin
-		      (if (not (equal? (cadr lst) (caddr lst)))
+		      (if (not (equal? (cadr lst)  (caddr lst)))
 			  (if (and (number? (caddr lst))
 				   (inexact? (caddr lst)))
 			      (if (fneq (cadr lst) (caddr lst))
@@ -131,7 +137,7 @@
 		      (test-defaults (cdddr lst)))))))
       (test-defaults
        (list
-	'amp (amp) 'no-such-sound
+	'amp (without-errors (amp)) 'no-such-sound
 	'ask-before-overwrite (ask-before-overwrite) #f 
 	'audio-output-device (audio-output-device) 0
 	'audio-state-file (audio-state-file) ".snd-mixer" 
@@ -142,11 +148,11 @@
 	'color-inverted (color-inverted) #t
 	'color-scale (color-scale) 1.0 
 	'colormap (colormap) -1 
-	'contrast (contrast) 'no-such-sound
-	'contrast-amp (contrast-amp) 'no-such-sound
-	'contrasting (contrasting) 'no-such-sound
+	'contrast (without-errors (contrast)) 'no-such-sound
+	'contrast-amp (without-errors (contrast-amp)) 'no-such-sound
+	'contrasting (without-errors (contrasting)) 'no-such-sound
 	'corruption-time (corruption-time) 60.0 
-	'cursor-follows-play (cursor-follows-play) 'no-such-sound
+	'cursor-follows-play (without-errors (cursor-follows-play)) 'no-such-sound
 	'dac-folding (dac-folding) #t
 	'dac-size (dac-size) 256 
 	'data-clipped (data-clipped) #f 
@@ -163,27 +169,27 @@
 	'enved-target (enved-target) 0 
 	'enved-waving (enved-waving) #f 
 	'eps-file (eps-file) "snd.eps" 
-	'expand (expand) 'no-such-sound
-	'expand-hop (expand-hop) 'no-such-sound
-	'expand-length (expand-length) 'no-such-sound
-	'expand-ramp (expand-ramp) 'no-such-sound
-	'expanding (expanding) 'no-such-sound
+	'expand (without-errors (expand)) 'no-such-sound
+	'expand-hop (without-errors (expand-hop)) 'no-such-sound
+	'expand-length (without-errors (expand-length)) 'no-such-sound
+	'expand-ramp (without-errors (expand-ramp)) 'no-such-sound
+	'expanding (without-errors (expanding)) 'no-such-sound
 	'fft-beta (fft-beta) 0.0 
 	'fft-log-frequency (fft-log-frequency) #f 
 	'fft-log-magnitude (fft-log-magnitude) #f 
 	'fft-size (fft-size) 256 
 	'fft-style (fft-style) 0
 	'fft-window (fft-window) 6 
-	'ffting (ffting) 'no-such-channel
-	'filter-dBing (filter-dBing) 'no-such-sound
-	'filter-env (filter-env) 'no-such-sound
+	'ffting (without-errors (ffting)) 'no-such-channel
+	'filter-dBing (without-errors (filter-dBing)) 'no-such-sound
+	'filter-env (without-errors (filter-env)) 'no-such-sound
 	'filter-env-order (filter-env-order) 40
-	'filter-order (filter-order) 'no-such-sound
-	'filtering (filtering) 'no-such-sound
+	'filter-order (without-errors (filter-order)) 'no-such-sound
+	'filtering (without-errors (filtering)) 'no-such-sound
 	'fit-data-on-open (fit-data-on-open) #f 
 	'graph-cursor (graph-cursor) 34
 	'graph-style (graph-style) 0 
-	'graphing (graphing) 'no-such-channel
+	'graphing (without-errors (graphing)) 'no-such-channel
 	'graphs-horizontal (graphs-horizontal) #t
 	'initial-x0 (initial-x0) 0.0 
 	'initial-x1 (initial-x1) 0.1 
@@ -202,7 +208,7 @@
 	'raw-chans (raw-chans) 1 
 	'raw-format (raw-format) 1
 	'raw-srate (raw-srate) 44100 
-	'read-only (read-only) 'no-such-sound
+	'read-only (without-errors (read-only)) 'no-such-sound
 	'recorder-autoload (recorder-autoload) #f
 	'recorder-buffer-size (recorder-buffer-size) 4096 
 	'recorder-file (recorder-file) #f 
@@ -211,11 +217,11 @@
 	'recorder-srate (recorder-srate) 22050 
 	'recorder-trigger (recorder-trigger) 0.0
 	'reverb-decay (reverb-decay) 1.0 
-	'reverb-feedback (reverb-feedback) 'no-such-sound
-	'reverb-length (reverb-length) 'no-such-sound
-	'reverb-lowpass (reverb-lowpass) 'no-such-sound
-	'reverb-scale (reverb-scale) 'no-such-sound
-	'reverbing (reverbing) 'no-such-sound
+	'reverb-feedback (without-errors (reverb-feedback)) 'no-such-sound
+	'reverb-length (without-errors (reverb-length)) 'no-such-sound
+	'reverb-lowpass (without-errors (reverb-lowpass)) 'no-such-sound
+	'reverb-scale (without-errors (reverb-scale)) 'no-such-sound
+	'reverbing (without-errors (reverbing)) 'no-such-sound
 	'save-state-file (save-state-file) "saved-snd.scm" 
 	'save-state-on-exit (save-state-on-exit) #f
 	'show-axes (show-axes) 1
@@ -227,7 +233,7 @@
 	'show-selection-transform (show-selection-transform) #f 
 	'show-usage-stats (show-usage-stats) #f
 	'show-y-zero (show-y-zero) #f 
-	'showing-controls (showing-controls) 'no-such-sound
+	'showing-controls (without-errors (showing-controls)) 'no-such-sound
 	'sinc-width (sinc-width) 10 
 	'spectro-cutoff (spectro-cutoff) 1.0
 	'spectro-hop (spectro-hop) 4 
@@ -238,14 +244,14 @@
 	'spectro-y-scale (spectro-y-scale) 1.0 
 	'spectro-z-angle (spectro-z-angle) -2.0
 	'spectro-z-scale (spectro-z-scale) 0.1 
-	'speed (speed) 'no-such-sound
+	'speed (without-errors (speed)) 'no-such-sound
 	'speed-style (speed-style) 0 
 	'speed-tones (speed-tones) 12
-	'syncing (syncing) 'no-such-sound
+	'syncing (without-errors (syncing)) 'no-such-sound
 	'temp-dir (temp-dir) #f 
 	'transform-type (transform-type) 0 
 	'trap-segfault (trap-segfault) #f
-	'uniting (uniting) 'no-such-sound
+	'uniting (without-errors (uniting)) 'no-such-sound
 	'use-raw-defaults (use-raw-defaults) #f 
 	'use-sinc-interp (use-sinc-interp) #t 
 	'verbose-cursor (verbose-cursor) #f
@@ -253,7 +259,7 @@
 	'vu-font-size (vu-font-size) 1.0 
 	'vu-size (vu-size) 1.0 
 	'wavelet-type (wavelet-type) 0 
-	'waving (waving) 'no-such-channel
+	'waving (without-errors (waving)) 'no-such-channel
 	'wavo (wavo) #f 
 	'wavo-hop (wavo-hop) 3 
 	'wavo-trace (wavo-trace) 64 
@@ -1220,7 +1226,7 @@
 	     (amp (maxamp obind))
 	     (dur (frames)))
 	(set-amp 2.0 obind)
-	(if (eq? (call-apply obind) 'no-such-sound) (snd-print "call-apply can't find oboe.snd?"))
+	(if (eq? (without-errors (call-apply obind)) 'no-such-sound) (snd-print "call-apply can't find oboe.snd?"))
 	(let ((newamp (maxamp obind)))
 	  (if (> (abs (- (* 2.0 amp) newamp)) .05) (snd-print (format #f ";apply amp: ~A -> ~A?" amp newamp)))
 	  (set-speed 0.5 obind)
@@ -2823,9 +2829,9 @@
 	      (sync-val (+ 1 (mark-sync-max))))
 	  (if (not (mark? m1)) (snd-print ";mark?"))
 	  (if (not (= (mark-sample m1) 123)) (snd-print (format #f ";add-mark: ~A? " (mark-sample m1))))
-	  (if (not (eq? (mark-sample 12345678) 'no-such-mark)) (snd-print (format #f ";mark-sample err: ~A?" (mark-sample 12345678))))
-	  (if (not (eq? (add-mark 123 123) 'no-such-channel)) (snd-print (format #f ";add-mark err: ~A?" (add-mark 123 123))))
-	  (let ((m2 (add-mark 12345 fd 0)))
+	  (if (not (eq? (without-errors (mark-sample 12345678)) 'no-such-mark)) (snd-print (format #f ";mark-sample err: ~A?" (mark-sample 12345678))))
+	  (if (not (eq? (without-errors (add-mark 123 123)) 'no-such-channel)) (snd-print (format #f ";add-mark err: ~A?" (add-mark 123 123))))
+	  (let ((m2 (without-errors (add-mark 12345 fd 0))))
 	    (if (eq? m2 'no-such-mark) (snd-print (format #f ";add-mark failed?")))
 	    (if (not (= (mark-sample m2) 12345)) (snd-print (format #f ";add-mark 0 0: ~A?" (mark-sample m2))))
 	    (if (not (= (mark-sync m2) 0)) (snd-print (format #f ";init mark-sync: ~A?" (mark-sync m2))))
@@ -2870,8 +2876,8 @@
 	      (if (not (string=? (mark-name m2) "hiho!")) (snd-print (format #f ";redo mark-name: ~A?" (mark-name m2))))
 	      (let ((m3 (find-mark "hiho!"))
 		    (m4 (find-mark (mark-sample m2)))
-		    (m5 (find-mark "not-a-mark"))
-		    (m6 (find-mark 123456787))
+		    (m5 (without-errors (find-mark "not-a-mark")))
+		    (m6 (without-errors (find-mark 123456787)))
 		    (m7 (mark-name->id "hiho!")))
 		(if (not (eq? m2 m3 m4 m7)) (snd-print (format #f ";find-mark: ~A ~A ~A ~A?" m2 m3 m4 m7)))
 		(if (not (eq? m5 m6 'no-such-mark)) (snd-print (format #f ";find-not-a-mark: ~A ~A?" m5 m6)))
@@ -2899,7 +2905,7 @@
 (define env1 '(0 0 1 1))
 (if (or full-test (= snd-test 11))
     (begin
-     (peaks)
+     (without-errors (peaks))
      (mus-audio-describe) (w)
      (define-envelope "env1" '(0 1 1 0)) (w)
      (enved-dialog) (w)
@@ -2908,7 +2914,7 @@
      (transform-dialog) (w)
      (file-dialog) (w)
      (region-dialog) (w)
-     (edit-header-dialog) (w)
+     (without-errors (edit-header-dialog)) (w)
      (if (and (not (provided? 'gtk))
 	      (not (provided? 'snd-guile-gtk)))
 	 (begin
@@ -3335,10 +3341,10 @@
 	    (forward-mix (choose-fd))
 	    (backward-mix (choose-fd))
 	  
-	    (select-region 2)
-	    (protect-region 2 #t)
-	    (play-region 2)
-	    (mix-region)
+	    (without-errors (select-region 2))
+	    (without-errors (protect-region 2 #t))
+	    (without-errors (play-region 2))
+	    (without-errors (mix-region))
 	    (set-use-sinc-interp #t)
 	    (play-and-wait)
 	    (set-use-sinc-interp #f)

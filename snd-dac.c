@@ -1931,7 +1931,7 @@ static SCM g_play_1(SCM samp_n, SCM snd_n, SCM chn_n, int background, int syncd,
       name = mus_file_full_name(urn);
       free(urn);
       sp = make_sound_readable(get_global_state(),name,FALSE);
-      if (sp == NULL) {if (name) FREE(name); return(NO_SUCH_SOUND);}
+      if (sp == NULL) {if (name) FREE(name); return(scm_throw(NO_SUCH_FILE,SCM_LIST1(gh_str02scm(S_play))));}
       sp->shortname = filename_without_home_directory(name);
       sp->fullname = NULL;
       sp->delete_me = 1;
@@ -1945,7 +1945,7 @@ static SCM g_play_1(SCM samp_n, SCM snd_n, SCM chn_n, int background, int syncd,
       ERRB1(samp_n,S_play);
       ERRCP(S_play,snd_n,chn_n,2);
       sp = get_sp(snd_n);
-      if (sp == NULL) return(NO_SUCH_SOUND);
+      if (sp == NULL) return(scm_throw(NO_SUCH_SOUND,SCM_LIST1(gh_str02scm(S_play))));
       samp = g_scm2intdef(samp_n,0);
       if (!(gh_number_p(chn_n)))
 	{
@@ -1961,7 +1961,7 @@ static SCM g_play_1(SCM samp_n, SCM snd_n, SCM chn_n, int background, int syncd,
       else 
 	{
 	  cp = get_cp(snd_n,chn_n);
-	  if (cp == NULL) return(NO_SUCH_CHANNEL);
+	  if (cp == NULL) return(scm_throw(NO_SUCH_CHANNEL,SCM_LIST1(gh_str02scm(S_play))));
 	  if (syncd)
 	    start_playing_syncd(cp->sound,samp,background,end);
 	  else
@@ -1994,7 +1994,7 @@ static SCM g_play_selection(void)
       play_selection(get_global_state());
       return(SCM_BOOL_T);
     }
-  return(NO_ACTIVE_SELECTION);
+  return(scm_throw(NO_ACTIVE_SELECTION,SCM_LIST1(gh_str02scm(S_play_selection))));
 }
 
 static SCM g_play_and_wait(SCM samp_n, SCM snd_n, SCM chn_n, SCM syncd, SCM end_n) 
@@ -2011,7 +2011,7 @@ static SCM g_stop_playing(SCM snd_n)
   snd_info *sp;
   ERRSP(S_stop_playing,snd_n,1);
   sp = get_sp(snd_n);
-  if (sp) stop_playing_sound(sp); else return(NO_SUCH_SOUND);
+  if (sp) stop_playing_sound(sp); else return(scm_throw(NO_SUCH_SOUND,SCM_LIST1(gh_str02scm(S_stop_playing))));
   return(SCM_BOOL_F);
 }
 

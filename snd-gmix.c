@@ -1270,7 +1270,7 @@ void use_mixmark(mixdata *md, int x, int y)
 
 #define NO_SUCH_WIDGET gh_symbol2scm("no-such-widget")
 
-static SCM get_mix_widget(SCM id, int which_widget)
+static SCM get_mix_widget(SCM id, int which_widget, char *caller)
 {
   mixdata *md;
   mixmark *mixwids;
@@ -1283,9 +1283,9 @@ static SCM get_mix_widget(SCM id, int which_widget)
 	  if ((mixwids->w) && (mixwids->w[which_widget]))
 	    return(sgtk_wrap_gtkobj((GtkObject *)(mixwids->w[which_widget])));
 	}
-      return(NO_SUCH_WIDGET);
+      return(scm_throw(NO_SUCH_WIDGET,SCM_LIST1(gh_str02scm(caller))));
     }
-  return(NO_SUCH_MIX);
+  return(scm_throw(NO_SUCH_MIX,SCM_LIST1(gh_str02scm(caller))));
 }
 
 #if 0

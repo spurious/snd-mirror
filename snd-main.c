@@ -421,7 +421,7 @@ static SCM g_save_options(SCM filename)
       fclose(fd);
       return(filename);
     }
-  return(CANNOT_SAVE);
+  return(scm_throw(CANNOT_SAVE,SCM_LIST1(gh_str02scm(S_save_options))));
 }
 
 void g_init_main(SCM local_doc)

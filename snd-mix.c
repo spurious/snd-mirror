@@ -2688,7 +2688,7 @@ static SCM g_mix_position(SCM n)
   ERRB1(n,S_mix_position); 
   cs = cs_from_int(g_scm2intdef(n,0));
   if (cs) RTNINT(cs->orig); 
-  return(NO_SUCH_MIX);
+  return(scm_throw(NO_SUCH_MIX,SCM_LIST1(gh_str02scm(S_mix_position))));
 }
 
 static SCM g_mix_chans(SCM n) 
@@ -2698,7 +2698,7 @@ static SCM g_mix_chans(SCM n)
   ERRB1(n,S_mix_chans); 
   cs = cs_from_int(g_scm2intdef(n,0));
   if (cs) RTNINT(cs->chans);
-  return(NO_SUCH_MIX);
+  return(scm_throw(NO_SUCH_MIX,SCM_LIST1(gh_str02scm(S_mix_chans))));
 }
 
 static SCM g_mixQ(SCM n) 
@@ -2714,7 +2714,7 @@ static SCM g_mix_length(SCM n)
   int len;
   ERRB1(n,S_mix_length); 
   len = mix_length(g_scm2intdef(n,0));
-  if (len == -1) return(NO_SUCH_MIX);
+  if (len == -1) return(scm_throw(NO_SUCH_MIX,SCM_LIST1(gh_str02scm(S_mix_length))));
   RTNINT(len);
 }
 
@@ -2725,7 +2725,7 @@ static SCM g_mix_locked(SCM n)
   ERRB1(n,S_mix_locked); 
   md = md_from_int(g_scm2intdef(n,0));
   if (md) RTNBOOL((md->current_cs)->locked);
-  return(NO_SUCH_MIX);
+  return(scm_throw(NO_SUCH_MIX,SCM_LIST1(gh_str02scm(S_mix_locked))));
 }
 
 static SCM g_mix_anchor(SCM n) 
@@ -2735,7 +2735,7 @@ static SCM g_mix_anchor(SCM n)
   ERRB1(n,S_mix_anchor); 
   md = md_from_int(g_scm2intdef(n,0));
   if (md) RTNINT(md->anchor);
-  return(NO_SUCH_MIX);
+  return(scm_throw(NO_SUCH_MIX,SCM_LIST1(gh_str02scm(S_mix_anchor))));
 }
 
 static SCM g_mix_name(SCM n) 
@@ -2745,7 +2745,7 @@ static SCM g_mix_name(SCM n)
   ERRB1(n,S_mix_name); 
   md = md_from_int(g_scm2intdef(n,0));
   if (md) RTNSTR(md->name);
-  return(NO_SUCH_MIX);
+  return(scm_throw(NO_SUCH_MIX,SCM_LIST1(gh_str02scm(S_mix_name))));
 }
 
 static SCM g_mix_track(SCM n) 
@@ -2755,7 +2755,7 @@ static SCM g_mix_track(SCM n)
   ERRB1(n,S_mix_track); 
   md = md_from_int(g_scm2intdef(n,0));
   if (md) RTNINT(md->track);
-  return(NO_SUCH_MIX);
+  return(scm_throw(NO_SUCH_MIX,SCM_LIST1(gh_str02scm(S_mix_track))));
 }
 
 static SCM g_mix_console_state(SCM n) 
@@ -2765,7 +2765,7 @@ static SCM g_mix_console_state(SCM n)
   ERRB1(n,S_mix_console_state); 
   md = md_from_int(g_scm2intdef(n,0));
   if (md) RTNINT(md->state);
-  return(NO_SUCH_MIX);
+  return(scm_throw(NO_SUCH_MIX,SCM_LIST1(gh_str02scm(S_mix_console_state))));
 }
 
 static SCM g_mix_console_y(SCM n) 
@@ -2775,7 +2775,7 @@ static SCM g_mix_console_y(SCM n)
   ERRB1(n,S_mix_console_y); 
   md = md_from_int(g_scm2intdef(n,0));
   if (md) RTNINT(md->y);
-  return(NO_SUCH_MIX);
+  return(scm_throw(NO_SUCH_MIX,SCM_LIST1(gh_str02scm(S_mix_console_y))));
 }
 
 static SCM g_mix_speed(SCM n) 
@@ -2785,7 +2785,7 @@ static SCM g_mix_speed(SCM n)
   ERRB1(n,S_mix_speed); 
   cs = cs_from_int(g_scm2intdef(n,0));
   if (cs) RTNFLT(cs->speed);
-  return(NO_SUCH_MIX);
+  return(scm_throw(NO_SUCH_MIX,SCM_LIST1(gh_str02scm(S_mix_speed))));
 }
 
 static SCM g_mixes(SCM snd, SCM chn)
@@ -2802,7 +2802,7 @@ static SCM g_mixes(SCM snd, SCM chn)
 	{
 	  /* scan all mixes for any associated with this channel */
 	  cp = get_cp(snd,chn);
-	  if (cp == NULL) return(NO_SUCH_CHANNEL);
+	  if (cp == NULL) return(scm_throw(NO_SUCH_CHANNEL,SCM_LIST1(gh_str02scm(S_mixes))));
 	  for (i=0;i<mixdatas_ctr;i++)
 	    if ((mix_ok(i)) && (mixdatas[i]->cp == cp))
 	      res1 = gh_cons(gh_int2scm(i),res1);
@@ -2810,7 +2810,7 @@ static SCM g_mixes(SCM snd, SCM chn)
       else
 	{
 	  sp = get_sp(snd);
-	  if (sp == NULL) return(NO_SUCH_SOUND);
+	  if (sp == NULL) return(scm_throw(NO_SUCH_SOUND,SCM_LIST1(gh_str02scm(S_mixes))));
 	  for (i=sp->nchans-1;i>=0;i--)
 	    res1 = gh_cons(g_mixes(snd,gh_int2scm(i)),res1);
 	}
@@ -2835,7 +2835,7 @@ static SCM g_mix_sound_index(SCM n)
   ERRB1(n,S_mix_sound_index); 
   md = md_from_int(g_scm2intdef(n,0));
   if (md) RTNINT(((md->cp)->sound)->index);
-  return(NO_SUCH_MIX);
+  return(scm_throw(NO_SUCH_MIX,SCM_LIST1(gh_str02scm(S_mix_sound_index))));
 }
 
 static SCM g_mix_sound_channel(SCM n) 
@@ -2845,7 +2845,7 @@ static SCM g_mix_sound_channel(SCM n)
   ERRB1(n,S_mix_sound_channel);
   md = md_from_int(g_scm2intdef(n,0));
   if (md) RTNINT((md->cp)->chan);
-  return(NO_SUCH_MIX);
+  return(scm_throw(NO_SUCH_MIX,SCM_LIST1(gh_str02scm(S_mix_sound_channel))));
 }
 
 /* these last two refer to the mix output location, not the underlying mix (input) data */
@@ -2862,9 +2862,9 @@ static SCM g_mix_amp(SCM n, SCM uchan)
     {
       chan = g_scm2intdef(uchan,0);
       if (chan < cs->chans) RTNFLT(cs->scalers[chan]);
-      return(NO_SUCH_CHANNEL);
+      return(scm_throw(NO_SUCH_CHANNEL,SCM_LIST1(gh_str02scm(S_mix_amp))));
     }
-  return(NO_SUCH_MIX);
+  return(scm_throw(NO_SUCH_MIX,SCM_LIST1(gh_str02scm(S_mix_amp))));
 }
 
 static SCM g_mix_amp_env(SCM n, SCM chan) 
@@ -2900,7 +2900,7 @@ static SCM g_set_mix_position(SCM n, SCM uval)
 	}
       return(uval);
     }
-  return(NO_SUCH_MIX);
+  return(scm_throw(NO_SUCH_MIX,SCM_LIST1(gh_str02scm(S_set_mix_position))));
 }
 
 static SCM g_set_mix_length(SCM n, SCM uval) 
@@ -2927,7 +2927,7 @@ static SCM g_set_mix_length(SCM n, SCM uval)
 	}
       return(uval);
     }
-  return(NO_SUCH_MIX);
+  return(scm_throw(NO_SUCH_MIX,SCM_LIST1(gh_str02scm(S_set_mix_length))));
 }
 
 static SCM g_set_mix_locked(SCM n, SCM val) 
@@ -2949,7 +2949,7 @@ static SCM g_set_mix_locked(SCM n, SCM val)
       display_channel_mixes(md->cp);
       return(val);
     }
-  return(NO_SUCH_MIX);
+  return(scm_throw(NO_SUCH_MIX,SCM_LIST1(gh_str02scm(S_set_mix_locked))));
 }
 
 static SCM g_set_mix_anchor(SCM n, SCM uval) 
@@ -2975,7 +2975,7 @@ static SCM g_set_mix_anchor(SCM n, SCM uval)
 	}
       return(uval);
     }
-  return(NO_SUCH_MIX);
+  return(scm_throw(NO_SUCH_MIX,SCM_LIST1(gh_str02scm(S_set_mix_anchor))));
 }
 
 static SCM g_set_mix_name(SCM n, SCM val) 
@@ -2995,7 +2995,7 @@ static SCM g_set_mix_name(SCM n, SCM val)
       reflect_mix_name(md);
       return(val);
     }
-  return(NO_SUCH_MIX);
+  return(scm_throw(NO_SUCH_MIX,SCM_LIST1(gh_str02scm(S_set_mix_name))));
 }
 
 static SCM g_set_mix_track(SCM n, SCM val) 
@@ -3011,7 +3011,7 @@ static SCM g_set_mix_track(SCM n, SCM val)
       set_mix_track_button_color(md,md->track);
       return(val);
     }
-  return(NO_SUCH_MIX);
+  return(scm_throw(NO_SUCH_MIX,SCM_LIST1(gh_str02scm(S_set_mix_track))));
 }
 
 static SCM g_set_mix_console_state(SCM n, SCM uval) 
@@ -3034,7 +3034,7 @@ static SCM g_set_mix_console_state(SCM n, SCM uval)
 	}
       return(uval);
     }
-  return(NO_SUCH_MIX);
+  return(scm_throw(NO_SUCH_MIX,SCM_LIST1(gh_str02scm(S_set_mix_console_state))));
 }
 
 static SCM g_set_mix_console_y(SCM n, SCM val) 
@@ -3050,7 +3050,7 @@ static SCM g_set_mix_console_y(SCM n, SCM val)
       if (md->mixer) move_mix_y(md->mixer,md->y);
       return(val);
     }
-  return(NO_SUCH_MIX);
+  return(scm_throw(NO_SUCH_MIX,SCM_LIST1(gh_str02scm(S_set_mix_console_y))));
 }
 
 static SCM g_set_mix_speed(SCM n, SCM uval) 
@@ -3071,7 +3071,7 @@ static SCM g_set_mix_speed(SCM n, SCM uval)
 	}
       return(uval);
     }
-  return(NO_SUCH_MIX);
+  return(scm_throw(NO_SUCH_MIX,SCM_LIST1(gh_str02scm(S_set_mix_speed))));
 }
 
 static SCM g_set_mix_amp(SCM n, SCM uchan, SCM uval) 
@@ -3095,11 +3095,11 @@ static SCM g_set_mix_amp(SCM n, SCM uchan, SCM uval)
 	      reamp(md,chan,val);
 	      remix_file(md,S_set_mix_amp);
 	    }
-	  else return(NO_SUCH_CHANNEL);
+	  else return(scm_throw(NO_SUCH_CHANNEL,SCM_LIST1(gh_str02scm(S_set_mix_amp))));
 	  return(uval);
 	}
     }
-  return(NO_SUCH_MIX);
+  return(scm_throw(NO_SUCH_MIX,SCM_LIST1(gh_str02scm(S_set_mix_amp))));
 }
 
 static SCM g_set_mix_amp_env(SCM n, SCM chan, SCM val) 
@@ -3132,7 +3132,7 @@ static SCM g_mix_sound(SCM file, SCM start_samp)
     err = mix(beg,mus_sound_frames(filename),sp->nchans,sp->chans,filename,DONT_DELETE_ME,S_mix_sound,with_mix_consoles(ss)); 
   else err = -1;
   if (filename) free(filename);
-  if (err == -1) return(NO_SUCH_FILE);
+  if (err == -1) return(scm_throw(NO_SUCH_FILE,SCM_LIST1(gh_str02scm(S_mix_sound))));
   RTNINT(err);
 }
 
@@ -3180,7 +3180,7 @@ static SCM g_forward_mix(SCM count, SCM snd, SCM chn)
   ERRCP(S_forward_mix,snd,chn,2);
   cp = get_cp(snd,chn);
   val = g_scm2intdef(count,1); 
-  if (cp) handle_cursor(cp,goto_mix(cp,val)); else return(NO_SUCH_CHANNEL);
+  if (cp) handle_cursor(cp,goto_mix(cp,val)); else return(scm_throw(NO_SUCH_CHANNEL,SCM_LIST1(gh_str02scm(S_forward_mix))));
   RTNINT(val);
 }
 
@@ -3193,7 +3193,7 @@ static SCM g_backward_mix(SCM count, SCM snd, SCM chn)
   ERRCP(S_backward_mix,snd,chn,2);
   cp = get_cp(snd,chn);
   val = -(g_scm2intdef(count,1)); 
-  if (cp) handle_cursor(cp,goto_mix(cp,val)); else return(NO_SUCH_CHANNEL);
+  if (cp) handle_cursor(cp,goto_mix(cp,val)); else return(scm_throw(NO_SUCH_CHANNEL,SCM_LIST1(gh_str02scm(S_backward_mix))));
   RTNINT(val);
 }
 
@@ -3226,6 +3226,7 @@ static SCM g_mix(SCM file, SCM chn_samp_n, SCM file_chn, SCM snd_n, SCM chn_n, S
   if (SCM_UNBNDP(chn_samp_n))
     {
       id = mix_complete_file(any_selected_sound(ss),name,S_mix,with_mixer);
+      if (id == -1) return(scm_throw(NO_SUCH_FILE,SCM_LIST1(gh_str02scm(S_mix))));
     }
   else
     {
@@ -3242,11 +3243,11 @@ static SCM g_mix(SCM file, SCM chn_samp_n, SCM file_chn, SCM snd_n, SCM chn_n, S
 				    with_mixer);
 	      if (md) id = md->id;
 	    }
-	  else return(NO_SUCH_FILE);
+	  else return(scm_throw(NO_SUCH_FILE,SCM_LIST1(gh_str02scm(S_mix))));
 	}
+      else return(scm_throw(NO_SUCH_CHANNEL,SCM_LIST1(gh_str02scm(S_mix))));
     }
   if (name) FREE(name);
-  if (cp == NULL) return(NO_SUCH_CHANNEL);
   RTNINT(id);
 }
 
@@ -3320,7 +3321,7 @@ static SCM g_make_mix_sample_reader(SCM mix_id)
 #endif
   ERRN1(mix_id,S_make_mix_sample_reader);
   md = md_from_int(g_scm2int(mix_id));
-  if (md) mf = init_mix_read(md,FALSE); else return(NO_SUCH_MIX);
+  if (md) mf = init_mix_read(md,FALSE); else return(scm_throw(NO_SUCH_MIX,SCM_LIST1(gh_str02scm(S_make_mix_sample_reader))));
   if (mf)
     {
 #if (!HAVE_GUILE_1_3_0)
@@ -3483,7 +3484,7 @@ static SCM g_play_track(SCM num, SCM snd, SCM chn)
   else 
     {
       cp = get_cp(snd,chn);
-      if (cp) play_track(cp->state,&cp,1,g_scm2int(num)); else return(NO_SUCH_CHANNEL);
+      if (cp) play_track(cp->state,&cp,1,g_scm2int(num)); else return(scm_throw(NO_SUCH_CHANNEL,SCM_LIST1(gh_str02scm(S_play_track))));
     }
   return(num);
 }
@@ -3493,7 +3494,7 @@ static SCM g_play_mix(SCM num)
   #define H_play_mix "(" S_play_mix " id) plays mix"
   mixdata *md;
   md = md_from_int(g_scm2intdef(num,0));
-  if (md) play_mix(md->ss,md); else return(NO_SUCH_MIX);
+  if (md) play_mix(md->ss,md); else return(scm_throw(NO_SUCH_MIX,SCM_LIST1(gh_str02scm(S_play_mix))));
   return(num);
 }
 

@@ -651,7 +651,7 @@ static SCM g_add_to_menu(SCM menu, SCM label, SCM callstr)
   name = gh_scm2newstr(label,NULL);
   err = gh_add_to_menu(get_global_state(),g_scm2int(menu),name,callb);
   free(name);
-  if (err == -1) return(NO_SUCH_MENU);
+  if (err == -1) return(scm_throw(NO_SUCH_MENU,SCM_LIST1(gh_str02scm(S_add_to_menu))));
   if (gh_string_p(callstr))
     menu_strings[callb] = gh_scm2newstr(callstr,NULL);
   else 

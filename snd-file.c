@@ -1888,7 +1888,7 @@ static SCM g_override_data_location(SCM loc, SCM snd)
   ERRN1(loc,S_override_data_location);
   ERRSP(S_override_data_location,snd,2);
   sp = get_sp(snd);
-  if (sp == NULL) return(NO_SUCH_SOUND);
+  if (sp == NULL) return(scm_throw(NO_SUCH_SOUND,SCM_LIST1(gh_str02scm(S_override_data_location))));
   mus_sound_override_header(sp->fullname,-1,-1,-1,-1,g_scm2int(loc),-1);
   snd_update(sp->state,sp);
   return(loc);
@@ -1901,7 +1901,7 @@ static SCM g_override_data_format(SCM frm, SCM snd)
   ERRN1(frm,S_override_data_format);
   ERRSP(S_override_data_format,snd,2);
   sp = get_sp(snd);
-  if (sp == NULL) return(NO_SUCH_SOUND);
+  if (sp == NULL) return(scm_throw(NO_SUCH_SOUND,SCM_LIST1(gh_str02scm(S_override_data_format))));
   mus_sound_override_header(sp->fullname,-1,-1,g_scm2int(frm),-1,-1,-1);
   snd_update(sp->state,sp);
   return(frm);
@@ -1914,7 +1914,7 @@ static SCM g_override_data_size(SCM over, SCM snd)
   ERRN1(over,S_override_data_size);
   ERRSP(S_override_data_size,snd,2);
   sp = get_sp(snd);
-  if (sp == NULL) return(NO_SUCH_SOUND);
+  if (sp == NULL) return(scm_throw(NO_SUCH_SOUND,SCM_LIST1(gh_str02scm(S_override_data_size))));
   mus_sound_override_header(sp->fullname,-1,-1,-1,-1,-1,g_scm2int(over));
   snd_update(sp->state,sp);
   return(over);
@@ -1932,7 +1932,7 @@ static SCM g_set_sound_loop_info(SCM start0, SCM end0, SCM start1, SCM end1, SCM
   ERRB4(end1,S_set_sound_loop_info);
   ERRSP(S_set_sound_loop_info,snd,5);
   sp = get_sp(snd);
-  if (sp == NULL) return(NO_SUCH_SOUND);
+  if (sp == NULL) return(scm_throw(NO_SUCH_SOUND,SCM_LIST1(gh_str02scm(S_set_sound_loop_info))));
   if ((sp->hdr)->loops == NULL)
     (sp->hdr)->loops = (int *)CALLOC(6,sizeof(int));
   (sp->hdr)->loops[0] = g_scm2int(start0);
@@ -1966,7 +1966,7 @@ static SCM g_soundfont_info(SCM snd)
   snd_info *sp;
   ERRSP(S_soundfont_info,snd,1);
   sp = get_sp(snd);
-  if (sp == NULL) return(NO_SUCH_SOUND);
+  if (sp == NULL) return(scm_throw(NO_SUCH_SOUND,SCM_LIST1(gh_str02scm(S_soundfont_info))));
   mus_header_read(sp->fullname);
   if (mus_header_type() == MUS_SOUNDFONT)
     {

@@ -2431,9 +2431,9 @@ static SCM g_edit_fragment(SCM uctr, SCM snd, SCM chn)
 			     gh_int2scm(ed->beg),
 			     gh_int2scm(ed->len)));
 	}
-      return(NO_SUCH_EDIT);
+      return(scm_throw(NO_SUCH_EDIT,SCM_LIST1(gh_str02scm(S_edit_fragment))));
     }
-  return(NO_SUCH_CHANNEL);
+  return(scm_throw(NO_SUCH_CHANNEL,SCM_LIST1(gh_str02scm(S_edit_fragment))));
 }
 
 /* ---------------- sample readers ---------------- */
@@ -2554,12 +2554,12 @@ static SCM g_make_sample_reader(SCM samp_n, SCM snd, SCM chn, SCM dir, SCM pos)
       loc_name = gh_scm2newstr(snd,NULL);
       loc_sp = make_sound_readable(ss,loc_name,FALSE);
       free(loc_name);
-      if (loc_sp == NULL) return(NO_SUCH_SOUND);
+      if (loc_sp == NULL) return(scm_throw(NO_SUCH_SOUND,SCM_LIST1(gh_str02scm(S_make_sample_reader))));
       chan = g_scm2intdef(chn,0);
       if ((chan < 0) || (chan > loc_sp->nchans))
 	{
 	  completely_free_snd_info(loc_sp);
-	  return(NO_SUCH_CHANNEL);
+	  return(scm_throw(NO_SUCH_CHANNEL,SCM_LIST1(gh_str02scm(S_make_sample_reader))));
 	}
       cp = loc_sp->chans[chan];
     }
@@ -2567,7 +2567,7 @@ static SCM g_make_sample_reader(SCM samp_n, SCM snd, SCM chn, SCM dir, SCM pos)
     {
       ERRCP(S_make_sample_reader,snd,chn,2);
       cp = get_cp(snd,chn);
-      if (cp == NULL) return(NO_SUCH_CHANNEL);
+      if (cp == NULL) return(scm_throw(NO_SUCH_CHANNEL,SCM_LIST1(gh_str02scm(S_make_sample_reader))));
     }
   edpos = g_scm2intdef(pos,cp->edit_ctr);
   fd = init_sample_read_any(g_scm2intdef(samp_n,0),cp,g_scm2intdef(dir,1),edpos);
@@ -2753,7 +2753,7 @@ static SCM g_save_edit_history(SCM filename, SCM snd, SCM chn)
       fclose(fd);
       return(SCM_BOOL_T);
     }
-  return(CANNOT_SAVE);
+  return(scm_throw(CANNOT_SAVE,SCM_LIST1(gh_str02scm(S_save_edit_history))));
 }
 
 static SCM g_undo(SCM ed_n, SCM snd_n, SCM chn_n) /* opt ed_n */
@@ -2762,7 +2762,7 @@ static SCM g_undo(SCM ed_n, SCM snd_n, SCM chn_n) /* opt ed_n */
   chan_info *cp;
   ERRCP(S_undo,snd_n,chn_n,2);
   cp = get_cp(snd_n,chn_n);
-  if (cp == NULL) return(NO_SUCH_CHANNEL);
+  if (cp == NULL) return(scm_throw(NO_SUCH_CHANNEL,SCM_LIST1(gh_str02scm(S_undo))));
   if (gh_number_p(ed_n))
     undo_EDIT(cp,g_scm2int(ed_n));
   else undo_EDIT(cp,1);
@@ -2776,7 +2776,7 @@ static SCM g_redo(SCM ed_n, SCM snd_n, SCM chn_n) /* opt ed_n */
   chan_info *cp;
   ERRCP(S_redo,snd_n,chn_n,2);
   cp = get_cp(snd_n,chn_n);
-  if (cp == NULL) return(NO_SUCH_CHANNEL);
+  if (cp == NULL) return(scm_throw(NO_SUCH_CHANNEL,SCM_LIST1(gh_str02scm(S_redo))));
   if (gh_number_p(ed_n))
     redo_EDIT(cp,g_scm2int(ed_n));
   else redo_EDIT(cp,1);

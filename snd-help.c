@@ -192,6 +192,7 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
+28-Jul:  use throw for error handling.\n\
 27-Jul:  (read-set! keywords 'prefix) is now built-in.\n\
 26-Jul:  Snd now uses clm for all control-panel functions (play/apply).\n\
          added name-click-hook, show-indices.\n\
