@@ -601,7 +601,17 @@ Float mus_oscil(mus_any *ptr, Float fm, Float pm)
   osc *gen = (osc *)ptr;
   result = mus_sin(gen->phase + pm);
   gen->phase += (gen->freq + fm);
-  if ((gen->phase > 100.0) || (gen->phase < -100.0)) gen->phase = fmod(gen->phase, TWO_PI);
+  if ((gen->phase > 1000.0) || (gen->phase < -1000.0)) gen->phase = fmod(gen->phase, TWO_PI);
+  return(result);
+}
+
+Float mus_oscil_1(mus_any *ptr, Float fm)
+{
+  Float result;
+  osc *gen = (osc *)ptr;
+  result = mus_sin(gen->phase);
+  gen->phase += (gen->freq + fm);
+  if ((gen->phase > 1000.0) || (gen->phase < -1000.0)) gen->phase = fmod(gen->phase, TWO_PI);
   return(result);
 }
 

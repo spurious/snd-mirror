@@ -50,10 +50,7 @@ typedef struct {
   off_t samples, m;  
   env_info *ep; 
   snd_fd *sf;
-  int amp_buffer_size;
 } env_state;
-
-#define MULTIPLIER 100
 
 env_info *free_env_info(env_info *ep)
 {
@@ -203,7 +200,6 @@ static env_state *make_env_state(chan_info *cp, off_t samples)
       ep->completed = 0;
     }
   es->sf = NULL;
-  es->amp_buffer_size = ep->samps_per_bin * MULTIPLIER;
   return(es);
 }
 
@@ -216,6 +212,7 @@ static int tick_amp_env(chan_info *cp, env_state *es)
 {
   env_info *ep;
   int i, n, sb, lm;
+  off_t samps_to_read;
   mus_sample_t ymin, ymax, val;
   snd_fd *sfd;
   ep = es->ep;
@@ -224,11 +221,13 @@ static int tick_amp_env(chan_info *cp, env_state *es)
       if (ep->top_bin != 0)
 	lm = (ep->top_bin - ep->bin + 1);
       else lm = (ep->amp_env_size - ep->bin);
-      if (lm <= 0) 
-	lm = 1;
-      else 
-	if (lm > MULTIPLIER) 
-	  lm = MULTIPLIER;
+      if (lm <= 0) lm = 1;
+      samps_to_read = (off_t)(lm * ep->samps_per_bin);
+      if (samps_to_read > 1000000)
+	{
+	  lm = 1000000 / ep->samps_per_bin;
+	  samps_to_read = (off_t)(lm * ep->samps_per_bin);
+	}
       sb = ep->bin;
       if (sb >= ep->amp_env_size)
 	{
@@ -262,7 +261,7 @@ static int tick_amp_env(chan_info *cp, env_state *es)
 	  if (ymax > ep->fmax) ep->fmax = ymax;
 	}
 
-      es->m += es->amp_buffer_size;
+      es->m += samps_to_read;
       ep->bin += lm;
       if ((es->m >= es->samples) || 
 	  ((ep->top_bin > 0) && (ep->bin >= ep->top_bin))) /* this applies to partial amp envs */

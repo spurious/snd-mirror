@@ -17,11 +17,12 @@
 #endif
 
 #define XEN_MAJOR_VERSION 1
-#define XEN_MINOR_VERSION 3
-#define XEN_VERSION "1.3"
+#define XEN_MINOR_VERSION 4
+#define XEN_VERSION "1.4"
 
 /* HISTORY:
  *  
+ *   6-May-02:  added off_t (long long) macros.
  *   29-Apr-02: added XEN_EXACT_P
  *   2-Jan-02:  removed TIMING and MCHECK debugging stuff, VARIABLE_REF -> XEN_VARIABLE_REF
  *   22-Sep-01: removed (redundant) UNSIGNED_LONG macros -- use ULONG instead
@@ -1005,6 +1006,7 @@ XEN xen_rb_copy_list(XEN val); /* Ruby arrays (lists) are passed by reference */
 #define XEN_TO_C_OFF_T_OR_ELSE(a, b)  xen_to_c_off_t_or_else(a, b, __FUNCTION__)
 #define C_TO_XEN_OFF_T(a)             c_to_xen_off_t(a)
 #define XEN_TO_C_OFF_T(a)             xen_to_c_off_t(a)
+#define XEN_AS_STRING(form)           XEN_TO_C_STRING(XEN_TO_STRING(form))
 
 XEN xen_return_first(XEN a, ...);
 int xen_to_c_int_or_else(XEN obj, int fallback, const char *origin);

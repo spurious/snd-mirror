@@ -1258,6 +1258,12 @@ XEN make_graph_data(chan_info *cp, int edit_pos, off_t losamp, off_t hisamp)
 		  xf -= samples_per_pixel;
 		  ymin = 100.0;
 		  ymax = -100.0;
+		  if ((ap->changed) || (ss->stopped_explicitly))
+		    {
+		      ss->stopped_explicitly = 0;
+		      ap->changed = 0;
+		      break;
+		    }
 		}
 	    }
 	}

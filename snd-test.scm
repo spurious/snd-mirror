@@ -59,6 +59,7 @@
 (define with-exit (< snd-test 0))
 (set! (with-background-processes) #f)
 (define all-args #f) ; huge arg testing
+(define with-big-file #t)
 (define have-libguile-so #t) ; set to #f if loading libguile.a
 (define debugging-device-channels 8)
 
@@ -2390,7 +2391,7 @@
 	(set! (mus-sound-data-location "oboe.snd") cur-loc)
 	(set! (mus-sound-header-type "oboe.snd") cur-type)
 	(set! (mus-sound-data-format "oboe.snd") cur-format))
-      (if (file-exists? "/zap/sounds/bigger.snd")
+      (if (and with-big-file (file-exists? "/zap/sounds/bigger.snd"))
 	  (begin
 	    (IF (not (= (mus-sound-samples "/zap/sounds/bigger.snd") 3175200000))
 		(snd-display ";bigger samples: ~A" (mus-sound-samples "/zap/sounds/bigger.snd")))
@@ -2402,6 +2403,7 @@
 		(snd-display ";bigger dur: ~A" (mus-sound-duration "/zap/sounds/bigger.snd")))
 	    (let ((ind (open-sound "/zap/sounds/bigger.snd")))
 	      (IF (not (= (frames ind) 3175200000)) (snd-display ";bigger frames: ~A" (frames ind)))
+	      (IF (not (= (frames ind 0 0) 3175200000)) (snd-display ";bigger edpos-frames: ~A" (frames ind)))
 	      (let ((m1 (add-mark (* 44100 50000) ind)))
 		(IF (not (= (mark-sample m1) (* 44100 50000))) (snd-display ";bigger mark at: ~A" (mark-sample m1)))
 		(set! (mark-sample m1) (* 44100 66000))
@@ -2429,7 +2431,6 @@
 	      (let ((val (forward-sample)))
 		(IF (not (= (cursor ind) (* 44100 50000))) (snd-display ";up bigger cursor: ~A" (cursor ind)))
 		(IF (not (= val (* 44100 50000))) (snd-display ";up rtn bigger cursor: ~A" (cursor ind))))
-
 	      (close-sound ind))
 	    ))
       ))))
@@ -13034,7 +13035,7 @@
 ;;; storm:    0.01  0.14  0.01  0.25  0.23  0.01   0.0  0.18  0.01   0.7  0.01   0.3
 ;;; away:     0.01  1.62  0.03  3.02  4.33  0.03  0.01  1.79  0.04  7.82  0.02  3.13
 	
-	(if (file-exists? "/zap/sounds/bigger.snd")
+	(if (and with-big-file (file-exists? "/zap/sounds/bigger.snd"))
 	    (begin
 	      (if (hook-empty? initial-graph-hook)
 		  (load "peak-env.scm"))
@@ -13095,11 +13096,15 @@
 		(IF (fneq (sample (* 44100 51000)) 0.0) (snd-display ";bigger 0 samp: ~A" (sample (* 44100 51000))))
 		(delete-samples (* 44100 52000) 100)
 		(IF (not (= (frames) (- 3175200000 100))) (snd-display ";bigger deletion frames: ~A" (frames)))
+		(IF (not (= (frames ind 0 0) 3175200000)) (snd-display ";bigger edpos deletion frames: ~A" (frames ind 0 0)))
+		(IF (not (= (frames ind 0 (edit-position)) (- 3175200000 100))) 
+		    (snd-display ";bigger ed deletion frames: ~A" (frames ind 0 (edit-position))))
 		(IF (not (fieql (edit-tree) '((0 0 0 2249099999 1.18574941158295 0.0 0.0 0) 
 					      (2249100000 1 0 0 1.0 0.0 0.0 0) 
 					      (2249100001 0 2249100001 2293199999 1.18574941158295 0.0 0.0 0) 
 					      (2293200000 0 2293200100 3175199999 1.18574941158295 0.0 0.0 0) (3175199900 -2 0 0 0.0 0.0 0.0 0))))
 		    (snd-display ";bigger deletion: ~A" (edit-tree)))
+		(delete-samples 954624868 67)
 		(revert-sound)
 		(delete-samples 1000 (* 44100 50000))
 		(IF (not (= (frames) (- 3175200000 (* 44100 50000)))) (snd-display ";bigger big deletion: ~A" (frames)))
@@ -15990,6 +15995,10 @@ This version of the fm-violin assumes it is running within with-sound (where *ou
       (ftst '(gen 1.0) 0.153)
       (ftst '(gen 0.0 0.0) 0.925)
       (ftst '(gen 0.0 1.0) 0.802)
+
+      (ftst '(mus-srate) 22050.0)
+      (ftst '(set! (mus-srate) 44100.0) 44100.0)
+      (ftst '(set! (mus-srate) 22050) 22050.0)
 
       (ftst '(let ((v (make-vct 3))) (vct-fill! v 1.0) (vct-ref v 1)) 1.0)
       (ftst '(let ((v (make-vct 3))) (vct-fill! v 1.0) (vct-scale! v 2.0) (vct-ref v 1)) 2.0)

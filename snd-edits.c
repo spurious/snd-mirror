@@ -1069,9 +1069,9 @@ static void insert_samples(off_t beg, off_t num, mus_sample_t *vals, chan_info *
 
 static ed_list *delete_samples_1(off_t beg, off_t num, ed_list *current_state, chan_info *cp, const char *origin)
 {
-  int len, k, need_to_delete, cbi, start_del, len_fixup;
+  int len, k, cbi, start_del, len_fixup;
   ed_fragment *cb_old_0, *cb_old_1;
-  off_t curbeg;
+  off_t curbeg, need_to_delete;
   ed_list *new_state;
   if (num <= 0) return(NULL);
   len = current_state->size;
@@ -1160,10 +1160,10 @@ void delete_samples(off_t beg, off_t num, chan_info *cp, const char *origin, int
     }
 }
 
-static ed_list *change_samples_1(off_t beg, off_t num, ed_list *current_state, chan_info *cp, ed_fragment **cb_rtn, int lengthen, const char *origin)
+static ed_list *change_samples_1(off_t beg, off_t num, ed_list *current_state, chan_info *cp, ed_fragment **cb_rtn, off_t lengthen, const char *origin)
 {
-  int len, k, start_del, cbi, len_fixup, need_to_delete;
-  off_t curbeg;
+  int len, k, start_del, cbi, len_fixup;
+  off_t curbeg, need_to_delete;
   ed_list *new_state;
   ed_fragment *cb_old_0, *cb_new, *cb_old_1;
   if (num <= 0) return(NULL);
@@ -3315,16 +3315,42 @@ between beg and beg + num by a ramp going from rmp0 to rmp1."
 Float local_maxamp(chan_info *cp, off_t beg, off_t num, int edpos)
 {
   snd_fd *sf;
+  snd_state *ss;
   mus_sample_t ymax, mval;
   off_t i;
+  int j = 0;
   sf = init_sample_read_any(beg, cp, READ_FORWARD, edpos);
   if (sf == NULL) return(0.0);
   ymax = MUS_SAMPLE_0;
-  for (i = 0; i < num; i++)
+  if (num > (1 << 30))
     {
-      mval = read_sample(sf);
-      if (mval < MUS_SAMPLE_0) mval = -mval;
-      if (mval > ymax) ymax = mval;
+      ss = cp->state;
+      for (i = 0; i < num; i++)
+	{
+	  mval = read_sample(sf);
+	  if (mval < MUS_SAMPLE_0) mval = -mval;
+	  if (mval > ymax) ymax = mval;
+	  j++;
+	  if (j > 1000000)
+	    {
+	      check_for_event(ss);
+	      if (ss->stopped_explicitly)
+		{
+		  ss->stopped_explicitly = 0;
+		  report_in_minibuffer(cp->sound, "maxamp check interrupted...");
+		  break;
+		}
+	    }
+	}
+    }
+  else
+    {
+      for (i = 0; i < num; i++)
+	{
+	  mval = read_sample(sf);
+	  if (mval < MUS_SAMPLE_0) mval = -mval;
+	  if (mval > ymax) ymax = mval;
+	}
     }
   free_snd_fd(sf);
   return(MUS_SAMPLE_TO_FLOAT(ymax));

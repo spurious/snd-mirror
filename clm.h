@@ -259,6 +259,7 @@ Float mus_scaler                PROTO((mus_any *gen));
 Float mus_set_scaler            PROTO((mus_any *gen, Float val));
 
 Float mus_oscil                 PROTO((mus_any *o, Float fm, Float pm));
+Float mus_oscil_1               PROTO((mus_any *ptr, Float fm));
 Float mus_oscil_bank            PROTO((Float *amps, mus_any **oscils, Float *inputs, int size));
 int mus_oscil_p                 PROTO((mus_any *ptr));
 mus_any *mus_make_oscil         PROTO((Float freq, Float phase));

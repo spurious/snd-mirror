@@ -48,7 +48,7 @@ static void reposition_file_buffers_1(off_t loc, snd_io *io)
       mus_file_read_chans(io->fd,
 			  0, frames - 1,
 			  io->chans,
-			  (mus_sample_t **)(io->arrays),
+			  io->arrays,
 			  (mus_sample_t *)(io->arrays));
 #endif
       if (frames < io->bufsize) c_io_bufclr(io, frames);

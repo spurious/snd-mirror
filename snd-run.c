@@ -93,13 +93,8 @@
 #include "vct.h"
 #include "clm2xen.h"
 
-#ifdef __USE_LARGEFILE64
-  #warn got 64
-#endif
-
 #define XEN_SYMBOL_TO_VALUE(a) XEN_VARIABLE_REF(scm_sym2var(a, scm_current_module_lookup_closure(), XEN_TRUE))
 #define XEN_SYMBOL_NAME_SET_VALUE(a, b) XEN_VARIABLE_SET(scm_sym2var(scm_str2symbol(a), scm_current_module_lookup_closure(), XEN_TRUE), b)
-#define XEN_AS_STRING(form) XEN_TO_C_STRING(XEN_TO_STRING(form))
 #define C_TO_XEN_CHAR(c) SCM_MAKE_CHAR(c)
 #define XEN_CDDDR(a) SCM_CDDDR(a)
 #define XEN_CAAR(a) XEN_CAR(XEN_CAR(a))
@@ -503,7 +498,6 @@ static void save_local_var_info(xen_var *var)
   int i, loc = -1;
   if (saved_vars == 0)
     {
-      loc = 0;
       saved_vars = 8;
       saved_dbl_addrs = (int *)CALLOC(saved_vars, sizeof(int));
       saved_int_addrs = (int *)CALLOC(saved_vars, sizeof(int));
@@ -520,9 +514,8 @@ static void save_local_var_info(xen_var *var)
 	  saved_names = (char **)REALLOC(saved_names, saved_vars * sizeof(char *));
 	  for (i = loc; i < saved_vars; i++) saved_names[i] = NULL;
 	}
-      else
-	loc = saved_var_ctr++;
     }
+  loc = saved_var_ctr++;
   if (var->v->type == R_FLOAT)
     saved_dbl_addrs[loc] = var->v->addr;
   else saved_int_addrs[loc] = var->v->addr;
@@ -1002,9 +995,6 @@ void *free_ptree(void *upt)
 {
   int i;
   ptree *pt = (ptree *)upt;
-#if DEBUGGING
-  free_saved_locals();
-#endif
   if (pt)
     {
       /* free_xen_var depends (in vector case) on finding current (unfreed) data */
@@ -2622,21 +2612,24 @@ static xen_value *generalized_set_form(ptree *prog, XEN form, int need_result)
   XEN settee, setval;
   settee = XEN_CADR(form);
   setval = XEN_CADDR(form);
-  if ((XEN_LIST_P(settee)) && (XEN_SYMBOL_P(XEN_CAR(settee))) && (XEN_LIST_LENGTH(settee) == 2))
+  if ((XEN_LIST_P(settee)) && (XEN_SYMBOL_P(XEN_CAR(settee))) && (XEN_LIST_LENGTH(settee) <= 2))
     {
       XEN in_settee;
-      xen_value *in_v, *v;
+      xen_value *in_v = NULL, *v = NULL;
       char accessor[256];
       in_settee = XEN_CAR(settee);
       mus_snprintf(accessor, 256, "%s", XEN_SYMBOL_TO_C_STRING(in_settee));
       v = walk(prog, setval, TRUE);
       if (v == NULL) 
 	return(run_warn("set!: can't handle: %s", XEN_AS_STRING(setval)));
-      in_v = walk(prog, XEN_CADR(settee), TRUE);
-      if (in_v == NULL)
+      if (XEN_NOT_NULL_P(XEN_CDR(settee)))
 	{
-	  FREE(v);
-	  return(run_warn("set!: can't handle: %s", XEN_AS_STRING(XEN_CADR(settee))));
+	  in_v = walk(prog, XEN_CADR(settee), TRUE);
+	  if (in_v == NULL)
+	    {
+	      FREE(v);
+	      return(run_warn("set!: can't handle: %s", XEN_AS_STRING(XEN_CADR(settee))));
+	    }
 	}
       return(lookup_generalized_set(prog, copy_string(accessor), in_v, v));
     }
@@ -2704,6 +2697,23 @@ static xen_value *set_form(ptree *prog, XEN form, int need_result)
 	  FREE(v);
 	  return(NULL);
 	  /* this limitation could be removed, but is it worth the bother? */
+	}
+      if (((v->type == R_FLOAT) || (v->type == R_INT)) &&
+	  (XEN_LIST_P(setval)) && 
+	  (prog->triple_ctr > 0))
+	{
+	  /* if possible, simply redirect the previous store to us (implicit set) */
+	  /* (run '(let ((a 2) (b 1)) (set! a (+ b 1)))) */
+	  int *addrs;
+	  addrs = prog->program[prog->triple_ctr - 1]->args;
+	  if ((addrs) && 
+	      (addrs[0] == v->addr))
+	    {
+	      addrs[0] = var->v->addr; /* redirect the store to us */
+	      var->unclean = TRUE;
+	      FREE(v);
+	      return(copy_xen_value(var->v));
+	    }
 	}
       set_var(prog, var->v, v);
       var->unclean = TRUE;
@@ -2916,6 +2926,7 @@ static xen_value *multiply(ptree *prog, int float_result, xen_value **args, int 
 	}
     }
   num_args = float_all_args(prog, num_args, args, float_result);
+  if (num_args == 1) return(copy_xen_value(args[1]));
   if (float_result)
     {
       if (num_args == 2) return(package(prog, R_FLOAT, multiply_f2, descr_multiply_f2, args, num_args));
@@ -3006,6 +3017,7 @@ static xen_value *add(ptree *prog, int float_result, xen_value **args, int num_a
 	}
     }
   num_args = float_all_args(prog, num_args, args, float_result);
+  if (num_args == 1) return(copy_xen_value(args[1]));
   if (float_result)
     {
       if (num_args == 2) return(package(prog, R_FLOAT, add_f2, descr_add_f2, args, num_args));
@@ -5252,14 +5264,30 @@ static char *descr_vct_set_f(int *args, int *ints, Float *dbls)
   return(mus_format( FLT_PT " = vct_set!(" PTR_PT ", " INT_PT ", " FLT_PT ")",
 		    args[0], FLOAT_RESULT, args[1], (vct *)(INT_ARG_1), args[2], INT_ARG_2, args[3], FLOAT_ARG_3));
 }
+static void vct_set_i(int *args, int *ints, Float *dbls) {FLOAT_RESULT = (Float)INT_ARG_3; ((vct *)(INT_ARG_1))->data[INT_ARG_2] = (Float)INT_ARG_3;}
+static char *descr_vct_set_i(int *args, int *ints, Float *dbls) 
+{
+  return(mus_format( FLT_PT " = vct_set!(" PTR_PT ", " INT_PT ", " INT_PT ")",
+		    args[0], FLOAT_RESULT, args[1], (vct *)(INT_ARG_1), args[2], INT_ARG_2, args[3], INT_ARG_3));
+}
+/* TODO: if the vct is global (not-settable) and the index is constant, and the incoming arg a (float) temp,
+ *         we could simply reset its address and the vct-set! becomes implicit in the tree
+ *       also if we're setting the same point we are vct-ref-ing (index can be a variable), both could be combined
+ */
 static xen_value *vct_set_1(ptree *prog, xen_value **args)
 {
   xen_var *var;
   if ((args[1] = fixup_if_pending(prog, args[1], R_VCT)) == NULL) return(run_warn("vct-set! bad arg"));
   var = find_var_in_ptree_via_addr(prog, FALSE, args[1]->addr);
   if (var) var->unclean = TRUE;
-  if ((args[2]->type == R_INT) && (args[3]->type == R_FLOAT))
-    return(package(prog, R_FLOAT, vct_set_f, descr_vct_set_f, args, 3));
+  if (args[2]->type == R_INT)
+    {
+      if (args[3]->type == R_FLOAT)
+	return(package(prog, R_FLOAT, vct_set_f, descr_vct_set_f, args, 3));
+      else
+	if (args[3]->type == R_INT)
+	  return(package(prog, R_FLOAT, vct_set_i, descr_vct_set_i, args, 3));
+    }
   return(run_warn("vct-set! bad index type"));
 }
 
@@ -5441,6 +5469,9 @@ static char *descr_gen(int *args, int *ints, Float *dbls, char *which, int num_a
 #define GEN3_1(Name) \
   static char *descr_ ## Name ## _1f(int *args, int *ints, Float *dbls) {return(descr_gen(args, ints, dbls, #Name, 1));} \
   static void Name ## _1f(int *args, int *ints, Float *dbls) {FLOAT_RESULT = mus_ ## Name (((mus_any *)(INT_ARG_1)), FLOAT_ARG_2, 0.0);}
+#define GEN3_1_1(Name) \
+  static char *descr_ ## Name ## _1f_1(int *args, int *ints, Float *dbls) {return(descr_gen(args, ints, dbls, #Name, 1));} \
+  static void Name ## _1f_1(int *args, int *ints, Float *dbls) {FLOAT_RESULT = mus_ ## Name ## _1(((mus_any *)(INT_ARG_1)), FLOAT_ARG_2);}
 #define GEN2_1(Name) \
   static char *descr_ ## Name ## _1f(int *args, int *ints, Float *dbls) {return(descr_gen(args, ints, dbls, #Name, 1));} \
   static void Name ## _1f(int *args, int *ints, Float *dbls) {FLOAT_RESULT = mus_ ## Name (((mus_any *)(INT_ARG_1)), FLOAT_ARG_2);}  
@@ -5459,6 +5490,21 @@ static char *descr_gen(int *args, int *ints, Float *dbls, char *which, int num_a
     if ((num_args > 2) && (args[3]->type == R_INT)) single_to_float(prog, args, 3); \
     if (num_args == 1) return(package(prog, R_FLOAT, Name ## _0f, descr_ ## Name ## _0f, args, 1)); \
     if (num_args == 2) return(package(prog, R_FLOAT, Name ## _1f, descr_ ## Name ## _1f, args, 2)); \
+    if (num_args == 3) return(package(prog, R_FLOAT, Name ## _2f, descr_ ## Name ## _2f, args, 3)); \
+    return(run_warn(#Name ": wrong number of args")); \
+  }
+#define GEN3_1A(Name) \
+  GEN3_0(Name) \
+  GEN3_1_1(Name) \
+  GEN3_2(Name) \
+  GEN_P(Name) \
+  static xen_value * Name ## _1(ptree *prog, xen_value **args, int num_args) \
+  { \
+    if ((args[1] = fixup_if_pending(prog, args[1], R_CLM)) == NULL) return(run_warn(#Name ": bad gen")); \
+    if ((num_args > 1) && (args[2]->type == R_INT)) single_to_float(prog, args, 2); \
+    if ((num_args > 2) && (args[3]->type == R_INT)) single_to_float(prog, args, 3); \
+    if (num_args == 1) return(package(prog, R_FLOAT, Name ## _0f, descr_ ## Name ## _0f, args, 1)); \
+    if (num_args == 2) return(package(prog, R_FLOAT, Name ## _1f_1, descr_ ## Name ## _1f_1, args, 2)); \
     if (num_args == 3) return(package(prog, R_FLOAT, Name ## _2f, descr_ ## Name ## _2f, args, 3)); \
     return(run_warn(#Name ": wrong number of args")); \
   }
@@ -5516,7 +5562,7 @@ static char *descr_int_gen0(int *args, int *ints, Float *dbls, char *which)
     return(package(prog, R_INT, Name ## _0i, descr_ ## Name ## _0i, args, 1)); \
   }
 
-GEN3(oscil)
+GEN3_1A(oscil)
 GEN1(env)
 GEN3(notch)
 GEN3(comb)
@@ -5754,6 +5800,7 @@ SET_DBL_GEN0(b1)
 SET_DBL_GEN0(b2)
 SET_DBL_GEN0(phase)
 SET_DBL_GEN0(frequency)
+SET_DBL_GEN0(formant_radius)
 
 
 
@@ -6476,6 +6523,38 @@ static xen_value *formant_bank_1(ptree *prog, xen_value **args, int num_args)
 }
 
 
+/* ---------------- mus-srate ---------------- */
+static char *descr_srate_f(int *args, int *ints, Float *dbls) {return(mus_format( FLT_PT " = mus-srate", args[0], FLOAT_RESULT));}
+static void srate_f(int *args, int *ints, Float *dbls) {FLOAT_RESULT = mus_srate();}
+static xen_value *mus_srate_1(ptree *prog, xen_value **args, int num_args) 
+{
+  if (num_args == 0) return(package(prog, R_FLOAT, srate_f, descr_srate_f, args, 0));
+  return(run_warn("mus-srate: wrong number of args"));
+}
+
+static char *descr_set_srate_f(int *args, int *ints, Float *dbls) {return(mus_format("mus-srate = " FLT_PT , args[1], FLOAT_ARG_1));}
+static void set_srate_f(int *args, int *ints, Float *dbls) {mus_set_srate(FLOAT_ARG_1); FLOAT_RESULT = mus_srate();}
+static char *descr_set_srate_i(int *args, int *ints, Float *dbls) {return(mus_format("mus-srate = " INT_PT , args[1], INT_ARG_1));}
+static void set_srate_i(int *args, int *ints, Float *dbls) {mus_set_srate((Float)INT_ARG_1); FLOAT_RESULT = mus_srate();}
+static xen_value *mus_set_srate_1(ptree *prog, xen_value *in_v, xen_value *v)
+{
+  xen_value *nv;
+  if (v->type == R_FLOAT)
+    {
+      nv = add_empty_var_to_ptree(prog, R_FLOAT);
+      add_triple_to_ptree(prog, va_make_triple(set_srate_f, descr_set_srate_f, 2, nv, v));
+      return(nv);
+    }
+  if (v->type == R_INT)
+    {
+      nv = add_empty_var_to_ptree(prog, R_FLOAT);
+      add_triple_to_ptree(prog, va_make_triple(set_srate_i, descr_set_srate_i, 2, nv, v));
+      return(nv);
+    }
+  return(run_warn("mus-set-srate: wrong number of args"));
+}
+
+
 
 /* ---------------- the code walker ---------------- */
 
@@ -6799,6 +6878,7 @@ static xen_value *walk(ptree *prog, XEN form, int need_result)
       if (strcmp(funcname, "frame*") == 0) return(clean_up(mus_frame_multiply_1(prog, args, num_args), args, num_args));
       if (strcmp(funcname, "frame->frame") == 0) return(clean_up(mus_frame2frame_1(prog, args, num_args), args, num_args));
       if (strcmp(funcname, "mixer*") == 0) return(clean_up(mus_mixer_multiply_1(prog, args, num_args), args, num_args));
+      if (strcmp(funcname, "mus-srate") == 0) return(clean_up(mus_srate_1(prog, args, num_args), args, num_args));
 
       if ((clms == 1) || (pendings == 1) || (booleans == 1))
 	/* boolean for gen that is null in the current context */
@@ -7124,7 +7204,8 @@ static xen_value *lookup_generalized_set(ptree *prog, char *accessor, xen_value 
       if (strcmp(accessor, "mus-a1") == 0) v = mus_set_a1_1(prog, in_v, v); else
       if (strcmp(accessor, "mus-a2") == 0) v = mus_set_a2_1(prog, in_v, v); else
       if (strcmp(accessor, "mus-b1") == 0) v = mus_set_b1_1(prog, in_v, v); else
-      if (strcmp(accessor, "mus-b2") == 0) v = mus_set_b2_1(prog, in_v, v);
+      if (strcmp(accessor, "mus-b2") == 0) v = mus_set_b2_1(prog, in_v, v); else
+      if (strcmp(accessor, "mus-formant-radius") == 0) v = mus_set_formant_radius_1(prog, in_v, v);
     }
   if (v->type == R_INT)
     {
@@ -7133,9 +7214,10 @@ static xen_value *lookup_generalized_set(ptree *prog, char *accessor, xen_value 
       if (strcmp(accessor, "mus-location") == 0) v = mus_set_location_1(prog, in_v, v); else
       if (strcmp(accessor, "mus-length") == 0) v = mus_set_length_1(prog, in_v, v);
     }
+  if (strcmp(accessor, "mus-srate") == 0) v = mus_set_srate_1(prog, in_v, v);
   if (v == NULL) run_warn(mus_format("can't set! %s", accessor));
-  FREE(in_v);
-  FREE(accessor);
+  if (in_v) FREE(in_v);
+  if (accessor) FREE(accessor);
   return(v);
 }
 
@@ -7145,6 +7227,9 @@ static void *form_to_ptree(XEN code)
   ptree *prog;
   xen_var *var;
   XEN form;
+#if DEBUGGING
+  free_saved_locals();
+#endif
   run_warned = FALSE;
   current_optimization = optimization(get_global_state());
   if (current_optimization == 0) return(NULL);
@@ -7153,29 +7238,9 @@ static void *form_to_ptree(XEN code)
   if ((XEN_PROCEDURE_P(XEN_CADR(code))) && 
       (SCM_TYP7(XEN_CADR(code)) != scm_tc7_smob)) /* applicable smobs cause confusion here */
     prog->code = XEN_CADR(code);                  /* need env before starting to walk the code */
-  else 
-    {
-      prog->code = XEN_FALSE;                    /* many confusing cases here -- we'll just give up */
-    }
-
-  if (XEN_SYMBOL_P(form))                         /* try to use the procedure source if it's available */
-    {
-      form = XEN_FALSE;
-      if (current_optimization > 3)
-	{
-	  XEN function, source;
-	  function = XEN_SYMBOL_TO_VALUE(form);
-	  if (XEN_PROCEDURE_P(function))
-	    {
-	      source = scm_procedure_source(function);
-	      /* fprintf(stderr,"use: %s\n", XEN_AS_STRING(source)); */
-	      if (XEN_LIST_P(source))
-		form = source;
-	    }
-	}
-      if (XEN_FALSE_P(form))
-	return(free_ptree((void *)prog));
-    }
+  else prog->code = XEN_FALSE;                    /* many confusing cases here -- we'll just give up */
+  if (XEN_SYMBOL_P(form))
+    return(free_ptree((void *)prog));
   prog->result = walk(prog, form, TRUE);
   if (prog->result)
     {
@@ -7499,14 +7564,11 @@ void g_init_run(void)
 
 #if 0
 /* not done yet for CLM:
-  Float mus_srate                 PROTO((void));
-  Float mus_set_srate             PROTO((Float val));
 void mus_spectrum               PROTO((Float *rdat, Float *idat, Float *window, int n, int type));
  [with size arg] Float mus_array_interp          PROTO((Float *wave, Float phase, int size)); 
 mus_any *mus_buffer2frame       PROTO((mus_any *rb, mus_any *fr));
 mus_frame *mus_sample2frame     PROTO((mus_any *f, Float in, mus_frame *out));
 Float *mus_set_data             PROTO((mus_any *gen, Float *data));
-Float mus_set_formant_radius    PROTO((mus_any *ptr, Float val));
 void mus_set_formant_radius_and_frequency PROTO((mus_any *ptr, Float radius, Float frequency));
 void mus_mix                    PROTO((const char *outfile, const char *infile, int out_start, int out_samps, int in_start, mus_mixer *mx, mus_any ***envs));
 int mus_file2fltarray           PROTO((const char *filename, int chan, int start, int samples, Float *array));

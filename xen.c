@@ -396,7 +396,7 @@ static XEN xen_rb_report_error(XEN nada, XEN err_info)
   /*    return rb_funcall(err_info, rb_intern("backtrace"), 0); */
   /* which can be an array of strings */
 
-  fprintf(stderr,"error: %s\n", XEN_TO_C_STRING(XEN_TO_STRING(err_info)));
+  fprintf(stderr,"error: %s\n", XEN_AS_STRING(err_info));
   return(XEN_FALSE);
 }
 
@@ -411,7 +411,7 @@ static XEN xen_rb_rep(XEN ig)
     {
       add_history(line_read);
       val = xen_rb_eval_string_with_error(line_read);
-      str = XEN_TO_C_STRING(XEN_TO_STRING(val));
+      str = XEN_AS_STRING(val);
       fprintf(stdout, "%s\n", (str) ? str : "nil");
       free(line_read);
       line_read = NULL;
@@ -424,7 +424,7 @@ static XEN xen_rb_rep(XEN ig)
   fprintf(stdout, ">");
   getline(buffer, &size, stdin);
   val = xen_rb_eval_string_with_error(buffer[0]);
-  str = XEN_TO_C_STRING(XEN_TO_STRING(val));
+  str = XEN_AS_STRING(val);
   fprintf(stdout, "%s\n", (str) ? str : "nil");
   free(buffer[0]);
   free(buffer);
@@ -451,7 +451,7 @@ void xen_repl(int argc, char **argv)
       if (status != 0)
 	{
 	  extern VALUE ruby_errinfo;
-	  fprintf(stderr, "%s\n", XEN_TO_C_STRING(XEN_TO_STRING(ruby_errinfo)));
+	  fprintf(stderr, "%s\n", XEN_AS_STRING(ruby_errinfo));
 	  status = 0;
 	}
     }
@@ -493,7 +493,7 @@ static char *xen_rb_list_to_s(XEN lst)
   len = XEN_LIST_LENGTH(lst);
   for (i = 0; i < len; i++)
     {
-      strcat(lstbuf, XEN_TO_C_STRING(XEN_TO_STRING(XEN_LIST_REF(lst, i))));
+      strcat(lstbuf, XEN_AS_STRING(XEN_LIST_REF(lst, i)));
       strcat(lstbuf, " ");
     }
   return(lstbuf);

@@ -286,8 +286,8 @@ XEN snd_throw(XEN key, XEN args)
   else
     {
       snd_error("%s: %s", 
-		XEN_TO_C_STRING(XEN_TO_STRING(key)),
-		XEN_TO_C_STRING(XEN_TO_STRING(args)));
+		XEN_AS_STRING(key),
+		XEN_AS_STRING(args));
     }
   return(XEN_FALSE);
 }
@@ -313,7 +313,7 @@ char *procedure_ok(XEN proc, int args, const char *caller, const char *arg_name,
     {
       if (XEN_NOT_FALSE_P(proc)) /* #f as explicit arg to clear */
 	return(mus_format("%s: %s (%s arg %d) is not a procedure!", 
-			  XEN_TO_C_STRING(XEN_TO_STRING(proc)),
+			  XEN_AS_STRING(proc),
 			  arg_name, caller, argn));
     }
   else
@@ -576,7 +576,7 @@ char *g_print_1(XEN obj) /* don't free return val */
   char *str1 = NULL;
 #if HAVE_GUILE
 #if HAVE_SCM_OBJECT_TO_STRING
-  return(XEN_TO_C_STRING(XEN_TO_STRING(obj))); 
+  return(XEN_AS_STRING(obj)); 
 #else
   XEN str; XEN val;
   XEN port;
@@ -591,7 +591,7 @@ char *g_print_1(XEN obj) /* don't free return val */
 #if HAVE_RUBY
   if (XEN_NULL_P(obj))
     return("nil"); /* Ruby returns the null string in this case??? */
-  return(XEN_TO_C_STRING(XEN_TO_STRING(obj)));
+  return(XEN_AS_STRING(obj));
 #endif
   return(str1);
 }

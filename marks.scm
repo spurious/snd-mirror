@@ -16,6 +16,7 @@
 ;;;     snap-marks places marks at current selection boundaries
 ;;;     define-selection-via-marks selects the portion between two marks
 ;;;     snap-mark-to-beat forces dragged mark to end up on a beat
+;;;     mark-explode splits a sound into a bunch of sounds based on mark placements
 
 
 ;;; -------- mark-name->id is a global version of find-mark
@@ -309,3 +310,20 @@
 			     (if (< (- samp lower) (- higher samp))
 				 lower
 				 higher))))))))
+
+;;; -------- mark-explode
+;;;
+;;; write out each section of a file between marks as a separate file
+
+(define (mark-explode)
+  (let ((start 0)
+	(file-ctr 0))
+    (for-each
+     (lambda (mark)
+       (let ((len (- (mark-sample mark) start)))
+	 (array->file (format #f "mark-~D.snd" file-ctr)
+		      (channel->vct start len)
+		      len (srate) 1)
+	 (set! file-ctr (1+ file-ctr))
+	 (set! start (mark-sample mark))))
+     (caar (marks)))))
