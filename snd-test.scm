@@ -37737,8 +37737,8 @@ EDITS: 2
 	    (etst '(do ((i 0 (1+ i)) (j 0 (1+ i)) (k 0 (hiho k))) ((= i 3)) 0))
 	    (etst '(call/cc (lambda (break) (let ((a 1)) (if (> a 0) (break 3) (break "hi"))))))
 	    (etst '(call/cc (lambda (break) (let ((a 1)) (if (> a 0) (break 3)) (break "hi")))))
-	    (etst '(let ((a 1)) (or (> a 1) "hi"))) ; kinda stupid -- run should handle this!
-	    (etst '(let ((a 1)) (and (> a 1) "hi"))) ; kinda stupid -- run should handle this!
+	    (btst '(let ((a 1)) (or (> a 1) "hi")) #t)
+	    (btst '(let ((a 1)) (and (> a 1) "hi")) #f)
 	    (etst '(let ((v0 (make-vct 1)) (v1 (make-vct 1))) (set! v0 v1)))
 	    
 	    (itst '(cond ((> 1 0) 1)) 1)
@@ -40493,8 +40493,8 @@ EDITS: 2
 	(if (not val) (snd-display ";run eq? of :hiho?")))
       (let ((val (run (lambda () (eq? unique-keyword 0)))))
 	(if val (snd-display ";run eq? key 0?")))
-      (let ((tag (catch #t (lambda () (run-eval '(cond ((= 1 2) 3) ((+ 2 3) 4)))) (lambda args (car args)))))
-	(if (not (eq? tag 'cannot-parse)) (snd-display ";run bad cond: ~A" tag)))
+      (let ((val (run-eval '(cond ((= 1 2) 3) ((+ 2 3) 4)))))
+	(if (not (= val 4)) (snd-display ";run bad cond: ~A" val)))
       (let ((tag (catch #t (lambda () (run-eval '(let ((a 3)) (set! a (current-module))))) (lambda args (car args)))))
 	(if (not (eq? tag 'cannot-parse)) (snd-display ";run bad set!: ~A" tag)))
       (let ((tag (catch #t (lambda () (run-eval '(let ((a 2)) (define "hi" 3) a))) (lambda args (car args)))))
@@ -40664,8 +40664,8 @@ EDITS: 2
 	(if (not (equal? tag 'cannot-parse)) (snd-display ";set or not bool: ~A" tag)))
       (let ((tag (catch #t (lambda () (run-eval '(let ((a 0)) (set! a (and 1 3)) a))) (lambda args (car args)))))
 	(if (not (equal? tag 'cannot-parse)) (snd-display ";set and not bool: ~A" tag)))
-      (let ((tag (catch #t (lambda ()(run-eval '(if 1 2 3))) (lambda args (car args)))))
-	(if (not (equal? tag 'cannot-parse)) (snd-display ";if not bool: ~A" tag)))
+      (let ((val (run-eval '(if 1 2 3))))
+	(if (not (= val 2)) (snd-display ";if not bool: ~A" val)))
       
       (let ((val (run-eval '(let* ((sine (make-vct 32 1.0))
 				   (sr (make-table-lookup :wave sine))) 

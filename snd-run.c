@@ -318,7 +318,6 @@ static int name_to_type(const char *name)
 }
 
 #define POINTER_P(Type) (((Type) >= R_VCT) && ((Type) <= R_CLM_VECTOR)) /* exclude R_ANY */
-#define POINTER_OR_GOTO_P(Type) ((Type) > R_FUNCTION)
 #define VECTOR_P(Type) (((Type) >= R_FLOAT_VECTOR) && ((Type) <= R_CLM_VECTOR))
 
 typedef enum {R_VARIABLE, R_CONSTANT} xen_value_constant_t;
@@ -1711,32 +1710,26 @@ static xen_value *add_empty_var_to_ptree(ptree *prog, int type)
 {
   switch (type)
     {
-    case R_FLOAT: return(make_xen_value(type, add_dbl_to_ptree(prog, 0.0), R_VARIABLE));      break;
-    case R_STRING: return(make_xen_value(type, add_string_to_ptree(prog, NULL), R_VARIABLE)); break;
-    case R_CLM: return(make_xen_value(type, add_clm_to_ptree(prog, NULL), R_VARIABLE));       break;
-    case R_FUNCTION: return(make_xen_value(type, add_fnc_to_ptree(prog, NULL), R_VARIABLE));  break;
-    case R_READER: return(make_xen_value(type, add_reader_to_ptree(prog, NULL), R_VARIABLE)); break;
-    case R_MIX_READER: return(make_xen_value(type, add_mix_reader_to_ptree(prog, NULL), R_VARIABLE)); break;
+    case R_BOOL:         return(make_xen_value(type, add_int_to_ptree(prog, false), R_VARIABLE));         break;
+    case R_FLOAT:        return(make_xen_value(type, add_dbl_to_ptree(prog, 0.0), R_VARIABLE));           break;
+    case R_STRING:       return(make_xen_value(type, add_string_to_ptree(prog, NULL), R_VARIABLE));       break;
+    case R_CLM:          return(make_xen_value(type, add_clm_to_ptree(prog, NULL), R_VARIABLE));          break;
+    case R_FUNCTION:     return(make_xen_value(type, add_fnc_to_ptree(prog, NULL), R_VARIABLE));          break;
+    case R_READER:       return(make_xen_value(type, add_reader_to_ptree(prog, NULL), R_VARIABLE));       break;
+    case R_MIX_READER:   return(make_xen_value(type, add_mix_reader_to_ptree(prog, NULL), R_VARIABLE));   break;
     case R_TRACK_READER: return(make_xen_value(type, add_track_reader_to_ptree(prog, NULL), R_VARIABLE)); break;
-    case R_SOUND_DATA: return(make_xen_value(type, add_sound_data_to_ptree(prog, NULL), R_VARIABLE)); break;
+    case R_SOUND_DATA:   return(make_xen_value(type, add_sound_data_to_ptree(prog, NULL), R_VARIABLE));   break;
     case R_FLOAT_VECTOR:
-    case R_VCT: 
-      return(make_xen_value(type, add_vct_to_ptree(prog, NULL), R_VARIABLE)); 
-      break;
+    case R_VCT:          return(make_xen_value(type, add_vct_to_ptree(prog, NULL), R_VARIABLE));          break;
     case R_SYMBOL: 
-    case R_KEYWORD:
-      return(make_xen_value(type, add_xen_to_ptree(prog, XEN_FALSE), R_VARIABLE)); 
-      break;
+    case R_KEYWORD:      return(make_xen_value(type, add_xen_to_ptree(prog, XEN_FALSE), R_VARIABLE));     break;
     case R_LIST:
-    case R_PAIR:
-      return(make_xen_value(type, add_xen_to_ptree(prog, XEN_UNDEFINED), R_VARIABLE)); 
+    case R_PAIR:         return(make_xen_value(type, add_xen_to_ptree(prog, XEN_UNDEFINED), R_VARIABLE)); 
       /* "undefined" for later check in walk for lists as args to embedded funcs */
       break;
     case R_CLM_VECTOR:
     case R_INT_VECTOR:
-    case R_VCT_VECTOR:
-      return(make_xen_value(type, add_vect_to_ptree(prog, NULL), R_VARIABLE)); 
-      break;
+    case R_VCT_VECTOR:   return(make_xen_value(type, add_vect_to_ptree(prog, NULL), R_VARIABLE));         break;
     default:
       if (type > R_ANY)
 	return(make_xen_value(type, add_xen_to_ptree(prog, XEN_FALSE), R_VARIABLE)); 
@@ -2353,12 +2346,6 @@ static char *descr_jump_if_not(int *args, ptree *pt)
   return(mus_format("if (!" BOOL_PT ") jump " INT_PT , args[1], B2S(INT_ARG_1), args[0], INT_RESULT));
 }
 
-static void jump_if_not_clm(int *args, ptree *pt) {if (CLM_ARG_1 == 0) PC += pt->ints[args[0]];}
-static char *descr_jump_if_not_clm(int *args, ptree *pt) 
-{
-  return(mus_format("if (!" CLM_PT ") jump " INT_PT , args[1], DESC_CLM_ARG_1, args[0], INT_RESULT));
-}
-
 static void store_i(int *args, ptree *pt) {INT_RESULT = INT_ARG_1;}
 static char *descr_store_i(int *args, ptree *pt) {return(mus_format( INT_PT " = " INT_PT , args[0], INT_RESULT, args[1], INT_ARG_1));}
 
@@ -2377,14 +2364,57 @@ static char *descr_store_false(int *args, ptree *pt) {return(mus_format( BOOL_PT
 static void store_true(int *args, ptree *pt) {BOOL_RESULT = (Int)true;}
 static char *descr_store_true(int *args, ptree *pt) {return(mus_format( BOOL_PT " = 1", args[0], B2S(BOOL_RESULT)));}
 
-static void store_b(int *args, ptree *pt) {BOOL_RESULT = BOOL_ARG_1;}
-static char *descr_store_b(int *args, ptree *pt) {return(mus_format( BOOL_PT " = " BOOL_PT , args[0], B2S(BOOL_RESULT), args[1], B2S(BOOL_ARG_1)));}
+static void store_b_b(int *args, ptree *pt) {BOOL_RESULT = BOOL_ARG_1;}
+static char *descr_store_b_b(int *args, ptree *pt) 
+  {return(mus_format( BOOL_PT " = " BOOL_PT , args[0], B2S(BOOL_RESULT), args[1], B2S(BOOL_ARG_1)));}
+
+static void store_b_clm(int *args, ptree *pt) {BOOL_RESULT = (bool)(CLM_ARG_1);}
+static char *descr_store_b_clm(int *args, ptree *pt) 
+  {return(mus_format( BOOL_PT " = (bool)" CLM_PT , args[0], B2S(BOOL_RESULT), args[1], DESC_CLM_ARG_1));}
+
+static void store_b_vct(int *args, ptree *pt) {BOOL_RESULT = (bool)(VCT_ARG_1);}
+static char *descr_store_b_vct(int *args, ptree *pt) 
+  {return(mus_format( BOOL_PT " = (bool)" VCT_PT , args[0], B2S(BOOL_RESULT), args[1], DESC_VCT_ARG_1));}
+
+static void store_b_chr(int *args, ptree *pt) {BOOL_RESULT = (bool)INT_ARG_1;}
+static char *descr_store_b_chr(int *args, ptree *pt) 
+  {return(mus_format( BOOL_PT " = (bool)" CHR_PT , args[0], B2S(BOOL_RESULT), args[1], CHAR_ARG_1));}
+
+static void store_b_flt(int *args, ptree *pt) {BOOL_RESULT = (bool)FLOAT_ARG_1;}
+static char *descr_store_b_flt(int *args, ptree *pt) 
+  {return(mus_format( BOOL_PT " = (bool)" FLT_PT , args[0], B2S(BOOL_RESULT), args[1], FLOAT_ARG_1));}
+
+static void store_b_reader(int *args, ptree *pt) {BOOL_RESULT = (bool)(READER_ARG_1);}
+static char *descr_store_b_reader(int *args, ptree *pt) 
+  {return(mus_format( BOOL_PT " = (bool)" RD_PT , args[0], B2S(BOOL_RESULT), args[1], DESC_READER_ARG_1));}
+
+static void store_b_mix_reader(int *args, ptree *pt) {BOOL_RESULT = (bool)(MIX_READER_ARG_1);}
+static char *descr_store_b_mix_reader(int *args, ptree *pt) 
+  {return(mus_format( BOOL_PT " = (bool)" MF_PT , args[0], B2S(BOOL_RESULT), args[1], DESC_MIX_READER_ARG_1));}
+
+static void store_b_track_reader(int *args, ptree *pt) {BOOL_RESULT = (bool)(TRACK_READER_ARG_1);}
+static char *descr_store_b_track_reader(int *args, ptree *pt) 
+  {return(mus_format( BOOL_PT " = (bool)" TF_PT , args[0], B2S(BOOL_RESULT), args[1], DESC_TRACK_READER_ARG_1));}
+
+static void store_b_vect(int *args, ptree *pt) {BOOL_RESULT = (bool)(VECT_ARG_1);}
+static char *descr_store_b_vect(int *args, ptree *pt) 
+  {return(mus_format( BOOL_PT " = (bool)" VECT_PT , args[0], B2S(BOOL_RESULT), args[1], DESC_VECT_ARG_1));}
+
+static void store_b_sd(int *args, ptree *pt) {BOOL_RESULT = (bool)(SOUND_DATA_ARG_1);}
+static char *descr_store_b_sd(int *args, ptree *pt) 
+  {return(mus_format( BOOL_PT " = (bool)" SD_PT , args[0], B2S(BOOL_RESULT), args[1], DESC_SOUND_DATA_ARG_1));}
+
+static void store_b_str(int *args, ptree *pt) {BOOL_RESULT = (bool)(STRING_ARG_1);}
+static char *descr_store_b_str(int *args, ptree *pt) 
+  {return(mus_format( BOOL_PT " = (bool)" STR_PT , args[0], B2S(BOOL_RESULT), args[1], STRING_ARG_1));}
 
 static void store_c(int *args, ptree *pt) {CHAR_RESULT = (int)CHAR_ARG_1;}
-static char *descr_store_c(int *args, ptree *pt) {return(mus_format( CHR_PT " = " CHR_PT , args[0], (char)(CHAR_RESULT), args[1], CHAR_ARG_1));}
+static char *descr_store_c(int *args, ptree *pt) 
+  {return(mus_format( CHR_PT " = " CHR_PT , args[0], (char)(CHAR_RESULT), args[1], CHAR_ARG_1));}
 
 static void store_x(int *args, ptree *pt) {XEN_RESULT = RXEN_ARG_1;}
-static char *descr_store_x(int *args, ptree *pt) {return(mus_format( XEN_PT " = " XEN_PT , args[0], DESC_XEN_RESULT, args[1], DESC_RXEN_ARG_1));}
+static char *descr_store_x(int *args, ptree *pt) 
+  {return(mus_format( XEN_PT " = " XEN_PT , args[0], DESC_XEN_RESULT, args[1], DESC_RXEN_ARG_1));}
 
 static void store_s(int *args, ptree *pt) 
 {
@@ -2447,7 +2477,27 @@ static triple *set_var(ptree *pt, xen_value *var, xen_value *init_val)
       return(add_triple_to_ptree(pt, va_make_triple(store_i, descr_store_i, 2, var, init_val)));
       break;
     case R_BOOL:
-      return(add_triple_to_ptree(pt, va_make_triple(store_b, descr_store_b, 2, var, init_val)));
+      {
+	switch (init_val->type)
+	  {
+	  case R_INT:
+	  case R_BOOL:       return(add_triple_to_ptree(pt, va_make_triple(store_b_b, descr_store_b_b, 2, var, init_val))); break;
+	  case R_VCT:        return(add_triple_to_ptree(pt, va_make_triple(store_b_vct, descr_store_b_vct, 2, var, init_val))); break;
+	  case R_SOUND_DATA: return(add_triple_to_ptree(pt, va_make_triple(store_b_sd, descr_store_b_sd, 2, var, init_val))); break;
+	  case R_CLM:        return(add_triple_to_ptree(pt, va_make_triple(store_b_clm, descr_store_b_clm, 2, var, init_val))); break;
+	  case R_CHAR:       return(add_triple_to_ptree(pt, va_make_triple(store_b_chr, descr_store_b_chr, 2, var, init_val))); break;
+	  case R_STRING:     return(add_triple_to_ptree(pt, va_make_triple(store_b_str, descr_store_b_str, 2, var, init_val))); break;
+	  case R_FLOAT:      return(add_triple_to_ptree(pt, va_make_triple(store_b_flt, descr_store_b_flt, 2, var, init_val))); break;
+	  case R_READER:     return(add_triple_to_ptree(pt, va_make_triple(store_b_reader, descr_store_b_reader, 2, var, init_val))); break;
+	  case R_MIX_READER: return(add_triple_to_ptree(pt, va_make_triple(store_b_mix_reader, descr_store_b_mix_reader, 2, var, init_val))); break;
+	  case R_TRACK_READER: return(add_triple_to_ptree(pt, va_make_triple(store_b_track_reader, descr_store_b_track_reader, 2, var, init_val))); break;
+	  case R_FLOAT_VECTOR: 
+	  case R_INT_VECTOR: 
+	  case R_CLM_VECTOR: 
+	    return(add_triple_to_ptree(pt, va_make_triple(store_b_vect, descr_store_b_vect, 2, var, init_val))); break;
+	  default: return(add_triple_to_ptree(pt, va_make_triple(store_b_b, descr_store_b_b, 2, var, init_val))); break;
+	  }
+      }
       break;
     case R_CHAR:
       return(add_triple_to_ptree(pt, va_make_triple(store_c, descr_store_c, 2, var, init_val)));
@@ -2821,6 +2871,15 @@ static xen_value *let_form(ptree *prog, XEN form, walk_result_t need_result)
   return(walk_then_undefine(prog, XEN_CDDR(form), need_result, "let", locals_loc));
 }
 
+static xen_value *coerce_to_boolean(ptree *prog, xen_value *v)
+{
+  xen_value *temp;
+  temp = add_empty_var_to_ptree(prog, R_BOOL);
+  set_var_no_opt(prog, temp, v);
+  FREE(v);
+  return(temp);
+}
+
 static xen_value *if_form(ptree *prog, XEN form, walk_result_t need_result)
 {
   /* form: (if selector true [false]) */
@@ -2831,16 +2890,8 @@ static xen_value *if_form(ptree *prog, XEN form, walk_result_t need_result)
   has_false = (XEN_LIST_LENGTH(form) == 4);
   if_value = walk(prog, XEN_CADR(form), NEED_ANY_RESULT);                                      /* walk selector */
   if (if_value == NULL) return(run_warn("if: bad selector? %s", XEN_AS_STRING(XEN_CADR(form))));
-  if ((if_value->type != R_BOOL) &&
-      (if_value->type != R_CLM))
-    {
-      char *name;
-      name = type_name(if_value->type);
-      FREE(if_value);
-      return(run_warn("if: selector type not boolean or clm gen: %s %s", 
-		      XEN_AS_STRING(XEN_CADR(form)), 
-		      name));
-    }
+  if ((if_value->type != R_BOOL) && (if_value->type != R_INT))
+    if_value = coerce_to_boolean(prog, if_value);
   if (if_value->constant == R_CONSTANT)
     {
       /* just ignore branch that can't be evaluated anyway */
@@ -2858,11 +2909,7 @@ static xen_value *if_form(ptree *prog, XEN form, walk_result_t need_result)
     }
   current_pc = prog->triple_ctr;
   jump_to_false = make_xen_value(R_INT, add_int_to_ptree(prog, 0), R_VARIABLE);
-  switch (if_value->type)
-    {
-    case R_BOOL: add_triple_to_ptree(prog, va_make_triple(jump_if_not, descr_jump_if_not, 2, jump_to_false, if_value)); break;
-    case R_CLM: add_triple_to_ptree(prog, va_make_triple(jump_if_not_clm, descr_jump_if_not_clm, 2, jump_to_false, if_value)); break;
-    }
+  add_triple_to_ptree(prog, va_make_triple(jump_if_not, descr_jump_if_not, 2, jump_to_false, if_value));
   FREE(if_value);
   true_result = walk(prog, XEN_CADDR(form), need_result);                           /* walk true branch */
   if (true_result == NULL) 
@@ -2953,14 +3000,15 @@ static xen_value *cond_form(ptree *prog, XEN form, walk_result_t need_result)
 	  (strcmp("else", XEN_SYMBOL_TO_C_STRING(XEN_CAR(clause))) == 0))
 	test_value = make_xen_value(R_BOOL, add_int_to_ptree(prog, (Int)true), R_CONSTANT);
       else test_value = walk(prog, XEN_CAR(clause), NEED_ANY_RESULT);
-      if ((test_value == NULL) || (test_value->type != R_BOOL))
+      if (test_value == NULL)
 	{
 	  for (i = 0; i < clause_ctr; i++) 
 	    if (fixups[i]) FREE(fixups[i]);
 	  FREE(fixups);
-	  if (test_value) FREE(test_value);
 	  return(run_warn("cond test: %s", XEN_AS_STRING(XEN_CAR(clause))));
 	}
+      if ((test_value->type != R_BOOL) && (test_value->type != R_INT))
+	test_value = coerce_to_boolean(prog, test_value);
       /* test was #t */
       local_clauses = XEN_CDR(clause); /* can be null */
       local_len = XEN_LIST_LENGTH(local_clauses);
@@ -3381,7 +3429,7 @@ static xen_value *callcc_form(ptree *prog, XEN form, walk_result_t need_result)
 
 static xen_value *or_form(ptree *prog, XEN form, walk_result_t ignored)
 {
-  /* (or ...) returning as soon as #t seen -- assume booleans only here */
+  /* (or ...) returning as soon as not #f seen */
   XEN body;
   xen_value *v = NULL, *result = NULL, *jump_to_end;
   xen_value **fixups;
@@ -3394,24 +3442,22 @@ static xen_value *or_form(ptree *prog, XEN form, walk_result_t ignored)
   for (i = 0; i < body_forms; i++, body = XEN_CDR(body))
     {
       v = walk(prog, XEN_CAR(body), NEED_ANY_RESULT);
-      if ((v == NULL) || ((v->type != R_BOOL) && (!(POINTER_OR_GOTO_P(v->type)))))
+      if (v == NULL)
 	{
-	  bool was_null;
-	  was_null = (v == NULL);
 	  for (j = 0; j < i; j++)
 	    if (fixups[j]) FREE(fixups[j]);
 	  FREE(fixups);
-	  if (v) FREE(v);
-	  if (was_null)
-	    return(run_warn("or: can't handle %s", XEN_AS_STRING(XEN_CAR(body))));
-	  else return(run_warn("or: type not boolean: %s", XEN_AS_STRING(XEN_CAR(body))));
+	  return(run_warn("or: can't handle %s", XEN_AS_STRING(XEN_CAR(body))));
 	}
+      if ((v->type != R_BOOL) && (v->type != R_INT))
+	v = coerce_to_boolean(prog, v);
       fixups[i] = make_xen_value(R_INT, add_int_to_ptree(prog, prog->triple_ctr), R_VARIABLE);
       add_triple_to_ptree(prog, va_make_triple(jump_if, descr_jump_if, 2, fixups[i], v));
       FREE(v);
     }
   /* if we fall through, return #f */
   result = make_xen_value(R_BOOL, add_int_to_ptree(prog, 0), R_VARIABLE);
+  /* TODO: shouldn't this return the first non-#f thing? */
   add_triple_to_ptree(prog, va_make_triple(store_false, descr_store_false, 1, result));
   jump_to_end = make_xen_value(R_INT, add_int_to_ptree(prog, prog->triple_ctr), R_VARIABLE);
   add_triple_to_ptree(prog, va_make_triple(jump, descr_jump, 1, jump_to_end));
@@ -3430,7 +3476,7 @@ static xen_value *or_form(ptree *prog, XEN form, walk_result_t ignored)
 
 static xen_value *and_form(ptree *prog, XEN form, walk_result_t ignored)
 {
-  /* (and ...) returning as soon as #f seen -- assume booleans only here */
+  /* (and ...) returning as soon as #f seen */
   XEN body;
   xen_value *v = NULL, *result = NULL, *jump_to_end;
   xen_value **fixups;
@@ -3443,23 +3489,21 @@ static xen_value *and_form(ptree *prog, XEN form, walk_result_t ignored)
   for (i = 0; i < body_forms; i++, body = XEN_CDR(body))
     {
       v = walk(prog, XEN_CAR(body), NEED_ANY_RESULT);
-      if ((v == NULL) || ((v->type != R_BOOL) && (!(POINTER_OR_GOTO_P(v->type)))))
+      if (v == NULL)
 	{
-	  bool was_null;
-	  was_null = (v == NULL);
 	  for (j = 0; j < i; j++)
 	    if (fixups[j]) FREE(fixups[j]);
 	  FREE(fixups);
-	  if (v) FREE(v);
-	  if (was_null)
-	    return(run_warn("and: can't handle %s", XEN_AS_STRING(XEN_CAR(body))));
-	  else return(run_warn("and: type not boolean: %s", XEN_AS_STRING(XEN_CAR(body))));
+	  return(run_warn("and: can't handle %s", XEN_AS_STRING(XEN_CAR(body))));
 	}
+      if ((v->type != R_BOOL) && (v->type != R_INT))
+	v = coerce_to_boolean(prog, v);
       fixups[i] = make_xen_value(R_INT, add_int_to_ptree(prog, prog->triple_ctr), R_VARIABLE);
       add_triple_to_ptree(prog, va_make_triple(jump_if_not, descr_jump_if_not, 2, fixups[i], v));
       FREE(v);
     }
   /* if we fall through, return #t */
+  /* TODO: shouldn't this return the last if all non-#f? */
   result = make_xen_value(R_BOOL, add_int_to_ptree(prog, 1), R_VARIABLE);
   add_triple_to_ptree(prog, va_make_triple(store_true, descr_store_true, 1, result));
   jump_to_end = make_xen_value(R_INT, add_int_to_ptree(prog, prog->triple_ctr), R_VARIABLE);
@@ -4569,6 +4613,7 @@ static char *descr_not_b(int *args, ptree *pt)
 }
 static xen_value *not_p(ptree *prog, xen_value **args, int num_args)
 {
+  /* TODO: what about (not clm-var) etc? -- we can't assume all clm-vars are #t */
   if (args[1]->type != R_BOOL)
     return(make_xen_value(R_BOOL, add_int_to_ptree(prog, (Int)false), R_CONSTANT)); /* only #f is false so (not anything)->false */
   if (prog->constants == 1)
