@@ -775,6 +775,13 @@ void snd_eval_stdin_str(snd_state *ss, char *buf);
 void g_snd_callback(int callb);
 void clear_listener(void);
 
+#if HAVE_LIBREP
+  void librep_new_procedure(const char *name, repv (*func)(), int reqargs, int optargs, int rstargs, const char *doc);
+  void librep_new_variable(const char *name, int val, const char *doc);
+  char *scm_version(void);
+  SCM librep_eval_string(char *data);
+#endif
+
 
 
 /* -------- snd-select.c -------- */
@@ -1128,7 +1135,7 @@ void g_init_file(SCM local_doc);
 
 /* -------- snd-utils -------- */
 
-int round(Float x);
+int snd_round(Float x);
 int iclamp(int lo, int val, int hi);
 Float fclamp(Float lo, Float val, Float hi);
 char *copy_string(const char *str);

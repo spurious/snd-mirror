@@ -611,7 +611,7 @@ header-type is a sndlib type indicator such as mus-aiff, sndlib currently only w
 	  if (chns > 0)
 	    {
 	      tmpstr = mus_expand_filename(TO_C_STRING(file));
-	      if (STRING_P(comment)) com = TO_NEW_C_STRING(comment);
+	      if (STRING_P(comment)) com = TO_C_STRING(comment);
 	      fd = mus_sound_open_output(tmpstr = mus_expand_filename(TO_C_STRING(file)),
 					 TO_C_INT_OR_ELSE(srate, 0),
 					 chns,
@@ -619,7 +619,6 @@ header-type is a sndlib type indicator such as mus-aiff, sndlib currently only w
 					 ht,
 					 com);
 	      if (tmpstr) FREE(tmpstr);
-	      if (com) free(com);
 	    }
 	  else mus_misc_error(S_mus_sound_open_output, "invalid chans", chans);
 	}

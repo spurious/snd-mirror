@@ -18,7 +18,7 @@
  *                 To get a version of Snd without Guile (and without Librep), -DHAVE_GUILE=0.
  *
  *   HAVE_LIBREP   define to use Librep instead of Guile as the extension language.
- *                 This option is under development...
+ *                 This option is currently on hold.
  * 
  *   HAVE_GUILE_GTK
  *                 define if you're using Gtk+ and have libguilegtk.  The configure script
@@ -181,7 +181,7 @@
 #endif
 #include "snd-strings.h"
 
-#define SND_VERSION "9-Apr-01"
+#define SND_VERSION "11-Apr-01"
 #define SND_RPM_VERSION "4.12"
 #define SND_MAJOR_VERSION 4
 #define SND_MINOR_VERSION 12

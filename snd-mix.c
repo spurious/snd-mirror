@@ -3606,10 +3606,11 @@ static SCM g_mix_sound(SCM file, SCM start_samp)
   int beg, err = 0;
   SCM_ASSERT(STRING_P(file), file, SCM_ARG1, S_mix_sound);
   SCM_ASSERT(NUMBER_P(start_samp), start_samp, SCM_ARG1, S_mix_sound);
-  filename = mus_expand_filename(TO_C_STRING(file));
-  beg = TO_C_INT_OR_ELSE(start_samp, 0);
   ss = get_global_state();
   sp = any_selected_sound(ss);  /* why not as arg?? -- apparently this is assuming CLM with-sound explode */
+  if (sp == NULL) mus_misc_error(S_mix_sound, "no sound to mix into!", file);
+  filename = mus_expand_filename(TO_C_STRING(file));
+  beg = TO_C_INT_OR_ELSE(start_samp, 0);
   if (mus_file_probe(filename))
     err = mix(beg, 
 	      mus_sound_frames(filename), 
@@ -4094,12 +4095,11 @@ mixes data (a vct object) into snd's channel chn starting at beg; returns the ne
 	  for (i = 0; i < len; i++)
 	    data[0][i] = MUS_FLOAT_TO_SAMPLE(v->data[i]);
 	  if (STRING_P(origin))
-	    edname = TO_NEW_C_STRING(origin);
+	    edname = TO_C_STRING(origin);
 	  mix_id = mix_array(bg, len, data, cp, 1, 1,
 			     SND_SRATE(cp[0]->sound),
 			     (char *)((edname == NULL) ? S_mix_vct : edname),
 			     with_mixers);
-	  if (edname) free(edname);
 	  FREE(data[0]);
 	  FREE(data);
 	}

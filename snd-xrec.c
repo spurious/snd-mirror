@@ -269,11 +269,11 @@ static Pixmap transform_text (Widget w, char *str, XFontStruct *font, Float angl
 	    for (i = 0; i < bx0; i++)
 	      for (j = 0; j < by0; j++)
 		{
-		  inx = tx + round((x + (Float)i / xscl) * matrix[0] + 
+		  inx = tx + snd_round((x + (Float)i / xscl) * matrix[0] + 
 				   (y + (Float)j / yscl) * matrix[2]);  
 		  if (inx < 0) inx = 0; 
 		  if (inx >= (int)nwidth) inx = nwidth - 1;
-		  iny = ty + round((x + (Float)i / xscl) * matrix[1] + 
+		  iny = ty + snd_round((x + (Float)i / xscl) * matrix[1] + 
 				   (y + (Float)j / yscl) * matrix[3]); 
 		  if (iny < 0) iny = 0; 
 		  if (iny >= (int)nheight) iny = nheight-1;

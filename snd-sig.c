@@ -671,25 +671,25 @@ static SCM series_map(snd_state *ss, chan_info *cp, SCM proc, int chan_choice, i
 	  for (kp = 0; kp < num; kp++)
 	    {
 	      res = CALL1(proc, 
-			    TO_SCM_DOUBLE((double)next_sample_to_float(sf)),
-			    origin);
+			  TO_SCM_DOUBLE((double)next_sample_to_float(sf)),
+			  origin);
 	      if (NOT_FALSE_P(res))                      /* if #f, no output on this pass */
 		{
 		  if (res != SCM_BOOL_T)                 /* if #t we halt the entire map */
 		    {
-		      if (SYMBOL_P(res))
-			{
-			  end_output(os, beg, cp, origin);
-			  for (j = ip; j < si->chans; j++) free_snd_fd(sfs[j]);    
-			  free_sync_state(sc); 
-			  if (reporting) finish_progress_report(sp, NOT_FROM_ENVED);
-			  scm_throw(res,
-				    SCM_LIST1(TO_SCM_STRING(origin)));
-			}
 		      if (NUMBER_P(res))              /* one number -> replace current sample */
 			output_sample(ss, os, SND_SRATE(sp), MUS_FLOAT_TO_SAMPLE(TO_C_DOUBLE(res)));
 		      else                               /* list or vector or vct, splice in data */
 			{
+			  if (SYMBOL_P(res))
+			    {
+			      end_output(os, beg, cp, origin);
+			      for (j = ip; j < si->chans; j++) free_snd_fd(sfs[j]);    
+			      free_sync_state(sc); 
+			      if (reporting) finish_progress_report(sp, NOT_FROM_ENVED);
+			      scm_throw(res,
+					SCM_LIST1(TO_SCM_STRING(origin)));
+			    }
 			  val_size = 0;
 			  vals = g_floats_to_samples(res, &val_size, origin, 1);
 			  if (vals)
@@ -3349,7 +3349,7 @@ static SCM g_fht(SCM data)
   int pow4;
   SCM_ASSERT(VCT_P(data), data, SCM_ARG1, S_fht);
   v = TO_VCT(data);
-  pow4 = (int)(round(log(v->length) / (log(4))));
+  pow4 = (int)(snd_round(log(v->length) / (log(4))));
   if (((int)(pow(4.0, pow4))) != v->length) 
     mus_misc_error(S_fht,
 		   "fht data length must be a power of 4",

@@ -3220,12 +3220,11 @@ the new data's end"
   if (STRING_P(vect))
     {
       curlen = current_ed_samples(cp);
-      fname = TO_NEW_C_STRING(vect);
+      fname = TO_C_STRING(vect);
       if ((beg == 0) && 
 	  ((len > curlen) || override))
 	file_override_samples(len, fname, cp, 0, DELETE_ME, LOCK_MIXES, "set-" S_samples);
       else file_change_samples(beg, len, fname, cp, 0, DELETE_ME, LOCK_MIXES, "set-" S_samples);
-      free(fname);
     }
   else
     {

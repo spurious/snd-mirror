@@ -1,15 +1,33 @@
 #ifndef SND_NOGUILE_H
 #define SND_NOGUILE_H
 
+/* these are the extension-language entities called by Snd.
+ *   In this case, since we're making Snd without any such language,
+ *   they're mostly 0 and no-ops.  sl.h is an on-going Librep
+ *   version, sg.h is the current Guile version, and I'm looking
+ *   at Ruby since it appears to follow basically the same paradigm
+ *   as the other two (i.e. one extension type (SCM, repv, VALUE), 
+ *   ways to get/set/load C vars/funcs, and so on)
+ */
+
 /* these are the left-over scm/gh entities */
+
 #define SCM int
 #define SCM_BOOL_F 0
 #define SCM_BOOL_T 1
 #define SCM_EOL 0
 #define SCM_UNDEFINED 0
 
-#define scm_catch_body_t void *
-#define scm_catch_handler_t void *
+#ifdef __cplusplus
+  #define SCM_FNC (SCM (*)())
+  typedef SCM (*scm_catch_body_t) (void *data);
+  typedef SCM (*scm_catch_handler_t) (void *data, SCM tag, SCM throw_args);
+#else
+  #define SCM_FNC
+  #define scm_catch_body_t void *
+  #define scm_catch_handler_t void *
+#endif
+
 #define scm_print_state int
 #define scm_sizet int
 
@@ -70,8 +88,6 @@
 #define SCM_HOOK_PROCEDURES(a) 0
 #define SCM_SETCDR(a, b)
 
-#define SCM_FNC
-
 
 /* this is the sg.h replacement */
 
@@ -117,7 +133,7 @@
 #define TO_SCM_SYMBOL(a) 0
 #define TO_C_BOOLEAN_OR_T(a) 0
 #define TO_C_BOOLEAN(a) 0
-#define SYMBOL_TO_NEW_C_STRING(a) 0
+#define SYMBOL_TO_C_STRING(a) 0
 #define SND_WRAP(a) 0
 #define SND_UNWRAP(a) 0
 #define SND_WRAPPED(a) 0

@@ -78,6 +78,7 @@ static void define_procedure_with_setter(char *get_name, SCM (*get_func)(), char
 					 SCM local_doc,
 					 int get_req, int get_opt, int set_req, int set_opt)
 {
+#if HAVE_GUILE
   scm_set_object_property_x(
     SCM_CDR(
       gh_define(get_name,
@@ -86,6 +87,11 @@ static void define_procedure_with_setter(char *get_name, SCM (*get_func)(), char
 	  ))),
     local_doc,
     TO_SCM_STRING(get_help));
+#endif
+#if HAVE_LIBREP
+  DEFINE_PROC(get_name, get_func, get_req, get_opt, 0, get_help);
+  DEFINE_PROC(set_name, set_func, set_req, set_opt, 0, get_help);
+#endif
 }
 #endif
 
@@ -731,10 +737,7 @@ static void init_simple_stuff(void)
 static SND_TAG_TYPE mus_scm_tag = 0;
 
 #define MUS_SCM_P(obj) (SMOB_TYPE_P(obj, mus_scm_tag))
-#define TO_MUS_SCM(arg) ((mus_scm *)SND_VALUE_OF(arg))
 int mus_scm_p(SCM obj) {return(MUS_SCM_P(obj));}
-
-#define TO_CLM(obj) ((mus_any *)((TO_MUS_SCM(obj))->gen))
 mus_any *mus_scm_to_clm(SCM obj) {return(TO_CLM(obj));}
 
 static SCM mark_mus_scm(SCM obj) 
@@ -1442,7 +1445,9 @@ static SCM g_set_feedforward(SCM obj, SCM val)
 
 static void init_dly(void)
 {
+#if HAVE_GUILE
   EVAL_STRING("(define %delay delay)"); /* protect the original meaning */
+#endif
   DEFINE_PROC(S_make_delay,    g_make_delay, 0, 0, 1,    H_make_delay);
   DEFINE_PROC(S_make_comb,     g_make_comb, 0, 0, 1,     H_make_comb);
   DEFINE_PROC(S_make_notch,    g_make_notch, 0, 0, 1,    H_make_notch); 
@@ -3983,26 +3988,19 @@ returns a new readin (file input) generator reading the sound file 'file' starti
       if (!(KEYWORD_P(keys[0])))
         {
 	  if (STRING_P(keys[0]))
-	    file = TO_NEW_C_STRING(keys[0]);
+	    file = TO_C_STRING(keys[0]);
 	  else scm_wrong_type_arg(S_make_readin, orig_arg[0] + 1, args[orig_arg[0]]);
 	}
     }
   if (channel < 0)
-    {
-      if (file) free(file);
-      mus_misc_error(S_make_readin, "channel < 0?", keys[1]);
-    }
+    mus_misc_error(S_make_readin, "channel < 0?", keys[1]);
   if (!(mus_file_probe(file)))
-    {
-      if (file) free(file);
-      scm_throw(NO_SUCH_FILE,
-		SCM_LIST3(TO_SCM_STRING(S_make_readin),
-			  TO_SCM_STRING(file),
-			  TO_SCM_STRING(strerror(errno))));
-    }
+    scm_throw(NO_SUCH_FILE,
+	      SCM_LIST3(TO_SCM_STRING(S_make_readin),
+			TO_SCM_STRING(file),
+			TO_SCM_STRING(strerror(errno))));
   gn = (mus_scm *)CALLOC(1, sizeof(mus_scm));
   gn->gen = mus_make_readin(file, channel, start, direction);
-  if (file) free(file);
   return(mus_scm_to_smob(gn));
 }
 
@@ -4522,14 +4520,11 @@ file1 and file2 writing outfile after scaling the convolution result to maxamp."
   SCM_ASSERT(STRING_P(file2), file2, SCM_ARG2, S_convolve_files);
   SCM_ASSERT(NUMBER_IF_BOUND_P(maxamp), maxamp, SCM_ARG3, S_convolve_files);
   SCM_ASSERT((NOT_BOUND_P(outfile)) || (STRING_P(outfile)), outfile, SCM_ARG4, S_convolve_files);
-  f1 = TO_NEW_C_STRING(file1);
-  f2 = TO_NEW_C_STRING(file2);
-  if (STRING_P(outfile)) f3 = TO_NEW_C_STRING(outfile); else f3 = "tmp.snd";
+  f1 = TO_C_STRING(file1);
+  f2 = TO_C_STRING(file2);
+  if (STRING_P(outfile)) f3 = TO_C_STRING(outfile); else f3 = "tmp.snd";
   if (NUMBER_P(maxamp)) maxval = TO_C_DOUBLE(maxamp);
   mus_convolve_files(f1, f2, maxval, f3);
-  free(f1);
-  free(f2);
-  if (STRING_P(outfile)) free(f3);
   return(SCM_BOOL_F);
 }
 
@@ -4972,12 +4967,10 @@ it in conjunction with mixer to scale/envelope all the various ins and outs."
 	    envs1[i][j] = TO_CLM(vdata1[j]);
 	}
     }
-  outfile = TO_NEW_C_STRING(out);
-  infile = TO_NEW_C_STRING(in);
+  outfile = TO_C_STRING(out);
+  infile = TO_C_STRING(in);
   if (BOUND_P(olen)) osamps = TO_C_INT_OR_ELSE(olen, 0); else osamps = mus_sound_frames(infile);
   mus_mix(outfile, infile, ostart, osamps, istart, mx1, envs1);
-  if (outfile) free(outfile);
-  if (infile) free(infile);
   if (envs1) 
     {
       for (i = 0; i < in_len; i++) if (envs1[i]) FREE(envs1[i]);

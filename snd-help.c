@@ -2699,15 +2699,11 @@ the functions html and ? can be used in place of help to go to the HTML descript
       if ((STRING_P(text)) || (SYMBOL_P(text)))            /* arg can be name (string), symbol, or the value */
 	{
 	  if (STRING_P(text))
-	    str = TO_NEW_C_STRING(text);
-	  else str = SYMBOL_TO_NEW_C_STRING(text);
+	    str = TO_C_STRING(text);
+	  else str = SYMBOL_TO_C_STRING(text);
 	  value = SND_LOOKUP(str);
 	}
-      else
-	{
-	  value = text;
-	  str = NULL;
-	}
+      else value = text;
       local_doc = TO_SCM_SYMBOL("documentation");
       
       help_text = scm_object_property(value, local_doc);         /* (object-property ...) */
@@ -2721,12 +2717,6 @@ the functions html and ? can be used in place of help to go to the HTML descript
       if ((FALSE_P(help_text)) &&
 	  (str))
 	help_text = scm_object_property(TO_SCM_SYMBOL(str), local_doc);
-
-      if (str) 
-	{
-	  free(str); 
-	  str = NULL;
-	}
     }
   
   /* help strings are always processed through the word-wrapper to fit whichever widget they are posted to */
@@ -2736,7 +2726,7 @@ the functions html and ? can be used in place of help to go to the HTML descript
     {
       str = word_wrap(TO_C_STRING(help_text), widget_wid);
       help_text = TO_SCM_STRING(str);
- if (str) FREE(str);
+      if (str) FREE(str);
     }
   return(help_text);
 }

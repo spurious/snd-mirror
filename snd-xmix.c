@@ -48,7 +48,7 @@ static int mix_speed_to_int(Float uval, snd_info *sp)
   set_label(w_speed_number, speed_number_buffer);
   if (val > 0.0)
     {
-      ival = round(450.0 + 150.0 * log(val));
+      ival = snd_round(450.0 + 150.0 * log(val));
       if (ival < SPEED_SCROLLBAR_MAX)
 	return(ival);
       else return(SPEED_SCROLLBAR_MAX);
@@ -180,10 +180,10 @@ static int mix_amp_to_int(Float amp, int chan)
     return(0);
   else
     {
-      val = (int)round(amp / (Float)(SCROLLBAR_LINEAR_MULT));
+      val = (int)snd_round(amp / (Float)(SCROLLBAR_LINEAR_MULT));
       if (val > SCROLLBAR_LINEAR_MAX)
 	{
-	  val = (int)round((log(amp) * ((Float)SCROLLBAR_MAX * .2)) + SCROLLBAR_MID);
+	  val = (int)snd_round((log(amp) * ((Float)SCROLLBAR_MAX * .2)) + SCROLLBAR_MID);
 	  if (val > SCROLLBAR_MAX) val = SCROLLBAR_MAX;
 	}
     }

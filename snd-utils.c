@@ -1,6 +1,6 @@
 #include "snd.h"
 
-int round(Float x)
+int snd_round(Float x)
 {
   int i;
   i = (int)x;

@@ -2155,11 +2155,10 @@ static SCM g_sound_files_in_directory(SCM dirname)
   SCM vect = SCM_BOOL_F;
   SCM *vdata;
   SCM_ASSERT(STRING_P(dirname), dirname, SCM_ARG1, S_sound_files_in_directory);
-  name = TO_NEW_C_STRING(dirname);
+  name = TO_C_STRING(dirname);
   if (name)
     {
       dp = find_sound_files_in_dir(name);
-      free(name);
       if (dp)
 	{
 	  numfiles = dp->len;

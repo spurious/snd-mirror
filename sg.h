@@ -62,8 +62,13 @@
 
 #define TO_C_DOUBLE(a) scm_num2dbl(a, __FUNCTION__)
 #define TO_C_DOUBLE_WITH_ORIGIN(a, b) scm_num2dbl(a, b)
-#define TO_C_INT(a) ((int)scm_num2long(a, (char *)SCM_ARG1, __FUNCTION__))
-/* using these rather than gh_scm2double and gh_scm2int to get better error reporting */
+#define TO_C_INT(a) ((int)gh_scm2int(a))
+/* would rather use scm_num2long here to get the caller passed into any error,
+ *   but the Guile folks very thoughtfully changed the argument type of the
+ *   second arg to that func without any warning, so there's no way I can see,
+ *   short of elaborate configure script screwing around, to tell which one
+ *   is currently active.
+ */
 #define TO_C_INT_OR_ELSE(a, b) to_c_int_or_else(a, b, __FUNCTION__)
 
 #ifndef SCM_STRING_CHARS
@@ -89,7 +94,11 @@
 #define TO_SCM_SYMBOL(a) gh_symbol2scm(a)
 #define TO_C_BOOLEAN_OR_T(a) ((FALSE_P(a) || ((SCM_INUMP(a)) && (SCM_INUM(a) == 0))) ? 0 : 1)
 #define TO_C_BOOLEAN(a) ((FALSE_P(a)) ? 0 : 1)
-#define SYMBOL_TO_NEW_C_STRING(a) gh_symbol2newstr(a, NULL)
+#ifdef SCM_SYMBOL_CHARS
+  #define SYMBOL_TO_C_STRING(a) SCM_SYMBOL_CHARS(a)
+#else
+  #define SYMBOL_TO_C_STRING(a) gh_symbol2newstr(a, NULL)
+#endif
 
 #define SND_WRAP(a) ((SCM)(gh_ulong2scm((unsigned long)a)))
 #define SND_UNWRAP(a) gh_scm2ulong(a)

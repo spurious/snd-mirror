@@ -161,8 +161,8 @@ static void who_called(GtkWidget *w, GdkEvent *event, gpointer context)
 	    {
 	    if ((!(HOOKED(property_changed_hook))) ||
 		(!(TRUE_P(g_c_run_or_hook(property_changed_hook,
-					      SCM_LIST1(TO_SCM_STRING((char *)(version[0]))),
-					      S_property_changed_hook)))))
+					  SCM_LIST1(TO_SCM_STRING((char *)(version[0]))),
+					  S_property_changed_hook)))))
 	      snd_eval_listener_str(ss, (char *)(version[0]));
 	      free(version[0]);
 	    }
@@ -649,8 +649,20 @@ void snd_doit(snd_state *ss, int argc, char **argv)
 #endif
 }
 
+static SCM g_parse_rc_file(SCM name)
+{
+  snd_state *ss;
+  if (STRING_P(name))
+    gtk_rc_parse(TO_C_STRING(name));
+  ss = get_global_state();
+  ss->using_schemes = TRUE;
+  return(SCM_BOOL_F);
+}
+
 void g_init_gxmain(SCM local_doc)
 {
   #define H_property_changed_hook S_property_changed_hook "(command) is called upon receipt of a SND_COMMAND"
   property_changed_hook = MAKE_HOOK(S_property_changed_hook, 1, H_property_changed_hook);
+
+  DEFINE_PROC("parse-rc-file", g_parse_rc_file, 1, 0, 0, "(parse-rc-file name) -> read gtk rc file");
 }

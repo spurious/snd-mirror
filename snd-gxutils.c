@@ -61,7 +61,7 @@ static SCM send_netscape(SCM cmd)
   ss = get_global_state();
   dpy = MAIN_DISPLAY(ss);
   command = (char *)CALLOC(256, sizeof(char));
-  tmp = TO_NEW_C_STRING(cmd);
+  tmp = TO_C_STRING(cmd);
   if ((window = find_window(dpy, DefaultRootWindow(dpy), NS_VERSION, compare_window)))
     {
       mus_snprintf(command, 256, "openURL(file:%s)", tmp);
@@ -84,7 +84,6 @@ static SCM send_netscape(SCM cmd)
 	}
     }
   FREE(command);
-  if (tmp) free(tmp);
   return(SCM_BOOL_T);
 }
 

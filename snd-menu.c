@@ -570,7 +570,7 @@ static SCM g_set_save_state_file(SCM val)
   snd_state *ss;
   SCM_ASSERT(STRING_P(val), val, SCM_ARG1, "set-" S_save_state_file); 
   ss = get_global_state();
-  set_save_state_file(ss, TO_NEW_C_STRING(val));
+  set_save_state_file(ss, TO_C_STRING(val));
   return(TO_SCM_STRING(save_state_file(ss)));
 }
 

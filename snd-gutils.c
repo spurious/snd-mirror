@@ -10,6 +10,7 @@ int set_help_text_font(snd_state *ss, char *font)
 {
   GdkFont *fs = NULL;
   state_context *sgx;
+  if (ss->using_schemes) return(FALSE);
   sgx = ss->sgx;
   fs = gdk_font_load(font);
   if (fs)
@@ -25,6 +26,7 @@ int set_tiny_font(snd_state *ss, char *font)
 {
   GdkFont *fs = NULL;
   state_context *sgx;
+  if (ss->using_schemes) return(FALSE);
   sgx = ss->sgx;
   fs = gdk_font_load(font);
   if (fs)
@@ -39,6 +41,7 @@ int set_tiny_font(snd_state *ss, char *font)
 int set_listener_font(snd_state *ss, char *font)
 {
   GdkFont *fs = NULL;
+  if (ss->using_schemes) return(FALSE);
   fs = gdk_font_load(font);
   if (fs)
     {
@@ -52,6 +55,7 @@ int set_listener_font(snd_state *ss, char *font)
 int set_button_font(snd_state *ss, char *font)
 {
   GdkFont *fs = NULL;
+  if (ss->using_schemes) return(FALSE);
   fs = gdk_font_load(font);
   if (fs)
     {
@@ -65,6 +69,7 @@ int set_button_font(snd_state *ss, char *font)
 int set_bold_button_font(snd_state *ss, char *font)
 {
   GdkFont *fs = NULL;
+  if (ss->using_schemes) return(FALSE);
   fs = gdk_font_load(font);
   if (fs)
     {
@@ -78,6 +83,7 @@ int set_bold_button_font(snd_state *ss, char *font)
 int set_axis_label_font(snd_state *ss, char *font)
 {
   GdkFont *fs = NULL;
+  if (ss->using_schemes) return(FALSE);
   fs = gdk_font_load(font);
   if (fs)
     {
@@ -91,6 +97,7 @@ int set_axis_label_font(snd_state *ss, char *font)
 int set_axis_numbers_font(snd_state *ss, char *font)
 {
   GdkFont *fs = NULL;
+  if (ss->using_schemes) return(FALSE);
   fs = gdk_font_load(font);
   if (fs)
     {
@@ -177,6 +184,9 @@ void map_over_children (GtkWidget *w, void (*func)(GtkWidget *w, gpointer ptr), 
 void set_background(GtkWidget *w, GdkColor *col)
 { 
   GtkStyle *style;
+  snd_state *ss;
+  ss = get_global_state();
+  if (ss->using_schemes) return;
   style = gtk_style_copy(gtk_widget_get_style(w));
   style->bg[GTK_STATE_NORMAL].pixel = col->pixel;
   style->bg[GTK_STATE_NORMAL].red = col->red;
@@ -189,6 +199,9 @@ void set_backgrounds(GtkWidget *w, GdkColor *col)
 { 
   GtkStyle *style;
   int i;
+  snd_state *ss;
+  ss = get_global_state();
+  if (ss->using_schemes) return;
   style = gtk_style_copy(gtk_widget_get_style(w));
   for (i = 0; i < 5; i++)
     {
@@ -200,10 +213,12 @@ void set_backgrounds(GtkWidget *w, GdkColor *col)
   gtk_widget_set_style(w, style);
 }
 
-
 void set_active_color(GtkWidget *w, GdkColor *col)
 { 
   GtkStyle *style;
+  snd_state *ss;
+  ss = get_global_state();
+  if (ss->using_schemes) return;
   style = gtk_style_copy(gtk_widget_get_style(w));
   style->bg[GTK_STATE_ACTIVE].pixel = col->pixel;
   style->bg[GTK_STATE_ACTIVE].red = col->red;
@@ -221,6 +236,9 @@ void set_background_and_redraw(GtkWidget *w, GdkColor *col)
 void set_foreground(GtkWidget *w, GdkColor *col)
 { 
   GtkStyle *style;
+  snd_state *ss;
+  ss = get_global_state();
+  if (ss->using_schemes) return;
   style = gtk_style_copy(gtk_widget_get_style(w));
   style->fg[GTK_STATE_NORMAL].pixel = col->pixel;
   style->fg[GTK_STATE_NORMAL].red = col->red;
@@ -232,6 +250,9 @@ void set_foreground(GtkWidget *w, GdkColor *col)
 void set_text_background(GtkWidget *w, GdkColor *col)
 { 
   GtkStyle *style;
+  snd_state *ss;
+  ss = get_global_state();
+  if (ss->using_schemes) return;
   style = gtk_style_copy(gtk_widget_get_style(w));
   style->base[GTK_STATE_NORMAL].pixel = col->pixel;
   style->base[GTK_STATE_NORMAL].red = col->red;
@@ -243,6 +264,7 @@ void set_text_background(GtkWidget *w, GdkColor *col)
 void set_pushed_button_colors(GtkWidget *w, snd_state *ss)
 {
   GtkStyle *style;
+  if (ss->using_schemes) return;
   style = gtk_style_copy(gtk_widget_get_style(w));
   style->bg[GTK_STATE_ACTIVE] = (*((ss->sgx)->pushed_button_color));
   style->bg[GTK_STATE_NORMAL] = (*((ss->sgx)->basic_color));
@@ -273,6 +295,7 @@ void set_button_label_bold(GtkWidget *button, const char *str)
   GtkStyle *style;
   snd_state *ss;
   ss = get_global_state();
+  if (ss->using_schemes) return;
   style = gtk_style_copy(gtk_widget_get_style(button));
   style->font = (ss->sgx)->bold_button_fnt;
   gtk_widget_set_style(button, style);

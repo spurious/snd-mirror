@@ -48,9 +48,11 @@ static int librep_argc;
 static char **librep_argv;
 static repv snd_rep_main(repv arg)
 {
-  rep_load_environment(rep_string_dup("snd"));
-  snd_doit(ss, librep_argc, librep_argv);
-  return(arg);
+  repv res;
+  rep_load_environment(Qnil); /* rep_string_dup("snd")); */
+  if (res != rep_NULL)
+    snd_doit(ss, librep_argc, librep_argv);
+  return(res);
 }
 #endif
 
@@ -271,6 +273,17 @@ static repv snd_rep_main(repv arg)
 #endif
     ss->memory_available = 0;
 
+  #if HAVE_LIBREP
+  {
+    char *prog_name;
+    librep_argc = argc;
+    librep_argv = argv;
+    prog_name = *argv++;
+    argc--;
+    rep_init(prog_name, &argc, &argv, 0, 0);
+  }
+  #endif
+
   init_recorder();
 
   ss->catch_exists = 0;
@@ -282,18 +295,9 @@ static repv snd_rep_main(repv arg)
 #ifdef SND_AS_WIDGET
   return(ss);
 #else
-
   #if HAVE_LIBREP
-  {
-    char *prog_name;
-    librep_argc = argc;
-    librep_argv = argv;
-    prog_name = *argv++;
-    argc--;
-    rep_init(prog_name, &argc, &argv, 0, 0);
-    rep_call_with_barrier(snd_rep_main, Qnil, rep_TRUE, 0, 0, 0);
+    rep_call_with_barrier (snd_rep_main, Qnil, rep_TRUE, 0, 0, 0);
     return(rep_top_level_exit());
-  }
   #else
     snd_doit(ss, argc, argv);
     #if (!HAVE_GUILE)

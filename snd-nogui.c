@@ -371,13 +371,16 @@ void snd_doit(snd_state *ss, int argc, char **argv)
 {
   static int auto_open_ctr = 0;
   int i;
+  SCM local_doc;
   ss->sgx = (state_context *)CALLOC(1, sizeof(state_context));
+  local_doc = scm_permanent_object(scm_string_to_symbol(TO_SCM_STRING("documentation")));
 
   ss->init_file = getenv(SND_INIT_FILE_ENVIRONMENT_NAME);
   if (ss->init_file == NULL)
     ss->init_file = INIT_FILE_NAME;
   ss->Use_Raw_Defaults = TRUE;
 
+#if HAVE_GUILE
   EVAL_STRING("(set! scm-repl-prompt \"snd> \")");
 
   EVAL_STRING("(define (" S_region_dialog " . args) #f)\
@@ -449,8 +452,9 @@ void snd_doit(snd_state *ss, int argc, char **argv)
                (define " S_graph_cursor " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
                (define " S_mix_color " (make-procedure-with-setter (lambda args #f) (lambda args #f)))\
                (define " S_selected_mix_color " (make-procedure-with-setter (lambda args #f) (lambda args #f)))");
+#endif
 
-  scm_create_hook(S_menu_hook, 2);
+  MAKE_HOOK(S_menu_hook, 2, "menu-hook");
 
   for (i = 1; i < argc; i++)
     {
@@ -484,6 +488,12 @@ void snd_doit(snd_state *ss, int argc, char **argv)
     snd_error("Caught seg fault; trying to continue...");
 #endif
 
+#if HAVE_GUILE
   gh_repl(1, argv); /* not argc because scm_shell tries to interpret all args! */
+#endif
+#if HAVE_LIBREP
+  rep_top_level_recursive_edit();
+  rep_top_level_exit ();
+#endif
 }
 

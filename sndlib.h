@@ -27,8 +27,8 @@
 
 
 #define SNDLIB_VERSION 12
-#define SNDLIB_REVISION 11
-#define SNDLIB_DATE "9-Apr-01"
+#define SNDLIB_REVISION 12
+#define SNDLIB_DATE "11-Apr-01"
 
 /* try to figure out what type of machine (and in worst case, what OS) we're running on */
 /* gcc has various compile-time macros like #cpu, but we're hoping to run in Metroworks C, Watcom C, MSC, MPW, etc */
@@ -268,9 +268,9 @@ enum {MUS_UNKNOWN, MUS_BSHORT, MUS_MULAW, MUS_BYTE, MUS_BFLOAT, MUS_BINT, MUS_AL
 #define MUS_NIST_SHORTPACK 2
 #define MUS_AIFF_IMA_ADPCM 99
 
-#define MUS_AUDIO_PACK_SYSTEM(n) ((n)<<16)
-#define MUS_AUDIO_SYSTEM(n) (((n)>>16)&0xffff)
-#define MUS_AUDIO_DEVICE(n) ((n)&0xffff)
+#define MUS_AUDIO_PACK_SYSTEM(n) ((n) << 16)
+#define MUS_AUDIO_SYSTEM(n) (((n) >> 16) & 0xffff)
+#define MUS_AUDIO_DEVICE(n) ((n) & 0xffff)
 
 enum {MUS_AUDIO_DEFAULT, MUS_AUDIO_DUPLEX_DEFAULT, MUS_AUDIO_ADAT_IN, MUS_AUDIO_AES_IN, MUS_AUDIO_LINE_OUT,
       MUS_AUDIO_LINE_IN, MUS_AUDIO_MICROPHONE, MUS_AUDIO_SPEAKERS, MUS_AUDIO_DIGITAL_IN, MUS_AUDIO_DIGITAL_OUT,

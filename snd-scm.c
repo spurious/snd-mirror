@@ -556,7 +556,7 @@ SCM g_call3(SCM proc, SCM arg1, SCM arg2, SCM arg3, const char *caller)
 
 char *g_print_1(SCM obj, const char *caller)
 {
-  char *str1;
+  char *str1 = NULL;
 #if HAVE_GUILE
 #if HAVE_SCM_OBJECT_TO_STRING
   return(TO_NEW_C_STRING(scm_object_to_string(obj, SCM_UNDEFINED))); /* does the GC handle the scm_close_port? */
@@ -570,6 +570,13 @@ char *g_print_1(SCM obj, const char *caller)
   scm_close_port (port);
   str1 = TO_NEW_C_STRING(val);
 #endif
+#endif
+#if HAVE_LIBREP
+  repv stream, val;
+  stream = Fmake_string_output_stream();
+  rep_print_val(stream, obj);
+  val = Fget_output_stream_string(stream);
+  str1 = TO_C_STRING(val);
 #endif
   return(str1);
 }
@@ -697,7 +704,11 @@ void snd_eval_stdin_str(snd_state *ss, char *buf)
   if (str)
     {
       send_error_output_to_stdout = 1;
+#if HAVE_LIBREP
+      result = EVAL_STRING(buf);
+#else
       result = snd_catch_any(eval_str_wrapper, str, str);
+#endif
       send_error_output_to_stdout = 0;
       FREE(stdin_str); /* same as str in this case */
       stdin_str = NULL;
@@ -1090,11 +1101,13 @@ static SCM g_set_listener_prompt(SCM val)
   set_listener_prompt(state, TO_NEW_C_STRING(val));
 #if USE_NO_GUI
   {
+#if HAVE_GUILE
     char *str;
     str = (char *)CALLOC(128, sizeof(char));
     mus_snprintf(str, 128, "(set! scm-repl-prompt \"%s\")", listener_prompt(state));
     EVAL_STRING(str);
     FREE(str);
+#endif
   }
 #endif
   return(TO_SCM_STRING(listener_prompt(state)));
@@ -1420,8 +1433,8 @@ static SCM g_set_zoom_focus_style(SCM focus)
   decides what zooming centers on (default: " S_focus_active ")"
   SCM_ASSERT(INTEGER_P(focus), focus, SCM_ARG1, "set-" S_zoom_focus_style); 
   activate_focus_menu(state, iclamp(FOCUS_LEFT,
-				   TO_C_INT(focus),
-				   FOCUS_MIDDLE));
+				    TO_C_INT(focus),
+				    FOCUS_MIDDLE));
   return(TO_SCM_INT(zoom_focus_style(state)));
 }
 
@@ -1466,14 +1479,16 @@ static SCM g_normalize_view(void)
 static SCM g_show_listener(void) 
 {
   #define H_show_listener "(" S_show_listener ") opens the lisp listner pane"
-  if (state->listening != LISTENER_OPEN) handle_listener(state, LISTENER_OPEN); 
+  if (state->listening != LISTENER_OPEN) 
+    handle_listener(state, LISTENER_OPEN); 
   return(SCM_BOOL_F);
 }
 
 static SCM g_hide_listener(void) 
 {
   #define H_hide_listener "(" S_hide_listener ") closes the lisp listener pane"
-  if (state->listening == LISTENER_OPEN) handle_listener(state, LISTENER_LISTENING); 
+  if (state->listening == LISTENER_OPEN) 
+    handle_listener(state, LISTENER_LISTENING); 
   return(SCM_BOOL_F);
 }
 
@@ -1769,7 +1784,7 @@ subsequent " S_close_sound_file ". data can be written with " S_vct_sound_file
   int format = MUS_BFLOAT;
 #endif
   if (STRING_P(g_name)) 
-    name = TO_NEW_C_STRING(g_name); 
+    name = TO_C_STRING(g_name); 
   else 
     if (BOUND_P(g_name))
       scm_wrong_type_arg(S_open_sound_file, 1, g_name);
@@ -1784,15 +1799,15 @@ subsequent " S_close_sound_file ". data can be written with " S_vct_sound_file
     if (BOUND_P(g_srate))
       scm_wrong_type_arg(S_open_sound_file, 3, g_srate);
   if (STRING_P(g_comment)) 
-    comment = TO_NEW_C_STRING(g_comment);
+    comment = TO_C_STRING(g_comment);
   else 
     if (BOUND_P(g_comment)) 
       scm_wrong_type_arg(S_open_sound_file, 4, g_comment);
   if (name == NULL)
 #if MUS_LITTLE_ENDIAN
-    name = copy_string("test.wav");
+    name = "test.wav";
 #else
-    name = copy_string("test.snd");
+    name = "test.snd";
 #endif
   hdr = (file_info *)CALLOC(1, sizeof(file_info));
   hdr->name = copy_string(name);
@@ -1803,14 +1818,10 @@ subsequent " S_close_sound_file ". data can be written with " S_vct_sound_file
   hdr->format = format;
   hdr->type = type;
   if (comment)
-    {
-      hdr->comment = copy_string(comment);
-      free(comment);
-    }
+    hdr->comment = copy_string(comment);
   old_mus_error = mus_error_set_handler(mus_local_error);
   result = open_temp_file(name, chans, hdr, state);
   mus_error_set_handler(old_mus_error);
-  free(name);
   if (result == -1) 
     snd_no_such_file_error(S_open_sound_file, g_name);
   set_temp_fd(result, hdr);
@@ -2116,7 +2127,7 @@ If 'data' is a list of numbers, it is treated as an envelope."
       (cp->sounds[cp->sound_ctr] == NULL) ||
       (cp->axis == NULL))
     return(SCM_BOOL_F);
-  if (STRING_P(xlabel)) label = TO_NEW_C_STRING(xlabel); 
+  if (STRING_P(xlabel)) label = TO_C_STRING(xlabel); 
   if (NUMBER_P(x0)) nominal_x0 = TO_C_DOUBLE(x0); else nominal_x0 = 0.0;
   if (NUMBER_P(x1)) nominal_x1 = TO_C_DOUBLE(x1); else nominal_x1 = 1.0;
   if (NUMBER_P(y0)) ymin = TO_C_DOUBLE(y0);
@@ -2227,7 +2238,6 @@ If 'data' is a list of numbers, it is treated as an envelope."
       uap->width = w;
       uap->graph_x0 = gx0;
     }
-  if (label) free(label);
   cp->lisp_graphing = 1;
   if ((SCM_EQ_P(force_display, SCM_UNDEFINED)) || 
       (NOT_FALSE_P(force_display)))
@@ -2828,6 +2838,7 @@ void define_procedure_with_setter(char *get_name, SCM (*get_func)(), char *get_h
 				  SCM local_doc,
 				  int get_req, int get_opt, int set_req, int set_opt)
 {
+#if HAVE_GUILE
   scm_set_object_property_x(
     SCM_CDR(
       gh_define(get_name,
@@ -2838,6 +2849,11 @@ void define_procedure_with_setter(char *get_name, SCM (*get_func)(), char *get_h
     local_doc,
     TO_SCM_STRING(get_help));
   /* still need to trap help output and send it to the listener */
+#endif
+#if HAVE_LIBREP
+  DEFINE_PROC(get_name, get_func, get_req, get_opt, 0, get_help);
+  DEFINE_PROC(set_name, set_func, set_req, set_opt, 0, get_help);
+#endif
 }
 
 void define_procedure_with_reversed_setter(char *get_name, SCM (*get_func)(), char *get_help,
@@ -2845,6 +2861,7 @@ void define_procedure_with_reversed_setter(char *get_name, SCM (*get_func)(), ch
 					   SCM local_doc,
 					   int get_req, int get_opt, int set_req, int set_opt)
 {
+#if HAVE_GUILE
   scm_set_object_property_x(
     SCM_CDR(
       gh_define(get_name,
@@ -2856,6 +2873,11 @@ void define_procedure_with_reversed_setter(char *get_name, SCM (*get_func)(), ch
     TO_SCM_STRING(get_help));
   /* still need to trap help output and send it to the listener */
   gh_new_procedure(set_name, SCM_FNC set_func, set_req, set_opt, 0);
+#endif
+#if HAVE_LIBREP
+  DEFINE_PROC(get_name, get_func, get_req, get_opt, 0, get_help);
+  DEFINE_PROC(set_name, set_func, set_req, set_opt, 0, get_help);
+#endif
 }
 
 #if HAVE_LADSPA
@@ -2904,6 +2926,20 @@ static void g_init_dl(SCM local_doc)
 }
 #endif
 
+static SCM g_little_endian(void)
+{
+#if MUS_LITTLE_ENDIAN
+  return(SCM_BOOL_T);
+#else
+  return(SCM_BOOL_F);
+#endif
+}
+
+#if HAVE_GUILE
+static SCM g_gc_off(void) {++scm_block_gc; return(TO_SCM_INT(scm_block_gc));}
+static SCM g_gc_on(void) {--scm_block_gc; return(TO_SCM_INT(scm_block_gc));}
+#endif
+
 void g_initialize_gh(snd_state *ss)
 {
   SCM local_doc;
@@ -2914,12 +2950,6 @@ void g_initialize_gh(snd_state *ss)
   g_init_timing(local_doc);
 #endif
   mus_sndlib2scm_initialize();
-
-#if MUS_LITTLE_ENDIAN
-  EVAL_STRING("(define little-endian? (lambda nil #t))");
-#else
-  EVAL_STRING("(define little-endian? (lambda nil #f))");
-#endif
 
   /* ---------------- CONSTANTS ---------------- */
 
@@ -3345,7 +3375,11 @@ void g_initialize_gh(snd_state *ss)
   DEFINE_PROC(S_snd_print,           g_snd_print, 1, 0, 0,           H_snd_print);
   DEFINE_PROC(S_describe_audio,      g_describe_audio, 0, 0, 0,      H_describe_audio);
   DEFINE_PROC("mus-audio-describe",  g_describe_audio, 0, 0, 0,      H_describe_audio);
-
+  DEFINE_PROC("little-endian?",      g_little_endian, 0, 0, 0,       "return #t if host is little endian");
+#if HAVE_GUILE
+  DEFINE_PROC("gc-off",              g_gc_off, 0, 0, 0,              "turn off GC");
+  DEFINE_PROC("gc-on",               g_gc_on, 0, 0, 0,               "turn on GC");
+#endif
 
   #define H_during_open_hook S_during_open_hook " (fd name reason) is called after file is opened, but before data has been read."
 
@@ -3408,6 +3442,7 @@ If more than one hook function, results are concatenated. If none, the current c
   g_ladspa_to_snd(local_doc);
 #endif
 
+#if HAVE_GUILE
   EVAL_STRING("(define unbind-key\
                  (lambda (key state)\
                    \"(unbind-key key state) undoes the effect of a prior bind-key call\"\
@@ -3429,6 +3464,7 @@ If more than one hook function, results are concatenated. If none, the current c
                                   (set! snd-last-file-loaded filename)\
                                   (if %load-verbosely\
                                     (snd-print (format #f \";;; loading ~S\" filename)))))");
+#endif
 
 #if USE_MOTIF
   scm_add_feature("snd-motif");
@@ -3450,4 +3486,100 @@ SCM scm_return_first(SCM a, ...)
   return(a);
 }
 #endif
+#endif
+
+#if HAVE_LIBREP
+
+static rep_xsubr **obarr = NULL;
+static rep_string **obstr = NULL;
+static int obarr_size = 0;
+static int obarr_ctr = 0;
+
+void librep_new_procedure(const char *name, SCM (*func)(), int reqargs, int optargs, int rstargs, const char *doc)
+{
+  rep_xsubr *ob;
+  rep_string *str;
+  if (obarr_ctr == obarr_size)
+    {
+      if (obarr == NULL)
+	{
+	  obarr = (rep_xsubr **)CALLOC(1024, sizeof(rep_xsubr *));
+	  obstr = (rep_string **)CALLOC(1024, sizeof(rep_string *));
+	}
+      else 
+	{
+	  obarr = (rep_xsubr **)REALLOC(obarr, (obarr_size + 1024) * sizeof(rep_xsubr *));
+	  obstr = (rep_string **)REALLOC(obstr, (obarr_size + 1024) * sizeof(rep_string *));
+	}
+      obarr_size += 1024;
+    }
+  obarr[obarr_ctr] = (rep_xsubr *)CALLOC(1, sizeof(rep_xsubr));
+  obstr[obarr_ctr] = (rep_string *)CALLOC(1, sizeof(rep_string));
+  str = obstr[obarr_ctr];
+  str->car = (strlen(name) << rep_STRING_LEN_SHIFT) | rep_CELL_STATIC_BIT | rep_String;
+  str->data = (u_char *)name;
+  ob = obarr[obarr_ctr++];
+  switch (reqargs + optargs)
+    {
+    case 0: ob->car = rep_Subr0; break;
+    case 1: ob->car = rep_Subr1; break;
+    case 2: ob->car = rep_Subr2; break;
+    case 3: ob->car = rep_Subr3; break;
+    case 4: ob->car = rep_Subr4; break;
+    case 5: ob->car = rep_Subr5; break;
+    default: ob->car = rep_SubrN; break;
+    }
+  ob->fun = func;
+  ob->int_spec = rep_NULL;
+  ob->name = rep_VAL(str);
+  rep_add_subr(ob, rep_TRUE);
+}
+
+static repv **obvars = NULL;
+static rep_string **obvarstrs = NULL;
+static int obvars_size = 0;
+static int obvars_ctr = 0;
+
+void librep_new_variable(const char *name, int val, const char *doc)
+{
+  repv *q;
+  rep_string *qs;
+  if (obvars_size == obvars_ctr)
+    {
+      if (obvars == NULL)
+	{
+	  obvars = (repv **)CALLOC(1024, sizeof(repv *));
+	  obvarstrs = (rep_string **)CALLOC(1024, sizeof(rep_string *));
+	}
+      else 
+	{
+	  obvars = (repv **)REALLOC(obvars, (obvars_size + 1024) * sizeof(repv *));
+	  obvarstrs = (rep_string **)REALLOC(obvarstrs, (obvars_size + 1024) * sizeof(rep_string *));
+	}
+      obvars_size += 1024;
+    }
+  obvars[obvars_ctr] = (repv *)CALLOC(1, sizeof(repv));
+  obvarstrs[obvars_ctr] = (rep_string *)CALLOC(1, sizeof(rep_string));
+  qs = obvarstrs[obvars_ctr];
+  q = obvars[obvars_ctr++];
+  qs->car = (strlen(name) << rep_STRING_LEN_SHIFT) | rep_CELL_STATIC_BIT | rep_String;
+  qs->data = (u_char *)name;
+  rep_intern_static(q, rep_VAL(qs));
+  Fmake_variable_special(*q);
+  rep_SYM(q)->car |= rep_SF_DEFVAR;
+  Fset((*q), TO_SCM_INT(val));
+}
+
+char *scm_version(void) {return(rep_VERSION);}
+
+SCM librep_eval_string(char *data)
+{
+  int c;
+  repv stream, res;
+  stream = Fmake_string_input_stream(TO_SCM_STRING(data), TO_SCM_INT(0));
+  c = rep_stream_getc(stream);
+  res = rep_eval(rep_readl(stream, &c));
+  return(res);
+}
+
 #endif

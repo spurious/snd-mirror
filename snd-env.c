@@ -764,8 +764,8 @@ void view_envs(snd_state *ss, int env_window_width, int env_window_height)
   int cols, rows, i, j, width, height, x, y, k;
   if (all_envs_top > 1)
     {
-      cols = round(sqrt((Float)(all_envs_top * env_window_width) / (Float)env_window_height));
-      rows = round((Float)all_envs_top/(Float)cols);
+      cols = snd_round(sqrt((Float)(all_envs_top * env_window_width) / (Float)env_window_height));
+      rows = snd_round((Float)all_envs_top/(Float)cols);
       if ((rows * cols) < all_envs_top) rows++;
     }
   else
@@ -796,8 +796,8 @@ int hit_env(int xe, int ye, int env_window_width, int env_window_height)
 	return(0);
       else
 	{
-	  cols = round(sqrt((Float)(all_envs_top * env_window_width) / (Float)env_window_height));
-	  rows = round((Float)all_envs_top / (Float)cols);
+	  cols = snd_round(sqrt((Float)(all_envs_top * env_window_width) / (Float)env_window_height));
+	  rows = snd_round((Float)all_envs_top / (Float)cols);
 	  if ((rows * cols) < all_envs_top) rows++;
 	  width = (int)((Float)env_window_width / (Float)cols);
 	  height = (int)((Float)env_window_height / (Float)rows);
@@ -1262,11 +1262,9 @@ static SCM g_env_base(SCM name)
   char *urn = NULL;
   SCM_ASSERT(SYMBOL_P(name) || STRING_P(name), name, SCM_ARG1, S_env_base);
   if (STRING_P(name))
-    urn = TO_NEW_C_STRING(name);
-  else urn = TO_NEW_C_STRING(scm_symbol_to_string(name));
+    urn = TO_C_STRING(name);
+  else urn = SYMBOL_TO_C_STRING(name);
   i = find_env(urn);
-  free(urn);
-  urn = NULL;
   if ((i != -1) && (all_envs[i]))
     return(TO_SCM_DOUBLE(all_envs[i]->base));
   else scm_throw(NO_SUCH_ENVELOPE, 
@@ -1281,11 +1279,9 @@ static SCM g_set_env_base(SCM name, SCM val)
   SCM_ASSERT(SYMBOL_P(name) || STRING_P(name), name, SCM_ARG1, "set-" S_env_base);
   SCM_ASSERT(NUMBER_P(val), val, SCM_ARG2, "set-" S_env_base);
   if (STRING_P(name))
-    urn = TO_NEW_C_STRING(name);
-  else urn = TO_NEW_C_STRING(scm_symbol_to_string(name));
+    urn = TO_C_STRING(name);
+  else urn = SYMBOL_TO_C_STRING(name);
   i = find_env(urn);
-  free(urn); 
-  urn = NULL;
   if ((i != -1) && (all_envs[i]))
     all_envs[i]->base = TO_C_DOUBLE(val);
   else scm_throw(NO_SUCH_ENVELOPE, 

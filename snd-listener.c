@@ -391,10 +391,19 @@ void update_stats_with_widget(snd_state *ss, GUI_WIDGET stats_form)
     stats = scm_gc_stats();
     if (LIST_P_WITH_LENGTH(stats, len))
       {
+#ifdef SCM_NUM2LONG_LONG
+#define FUNC_NAME __FUNCTION__
+	if (len > 7)
+	  gc_swept = SCM_NUM2LONG_LONG(SCM_ARG1, SCM_CDR(LIST_REF(stats, 9)));
+	gc_heap = SCM_NUM2LONG_LONG(SCM_ARG1, SCM_CDR(LIST_REF(stats, 2)));
+	gc_cells = SCM_NUM2LONG_LONG(SCM_ARG1, SCM_CDR(LIST_REF(stats, 1)));
+#undef FUNC_NAME
+#else
 	if (len > 7)
 	  gc_swept = scm_num2long_long(SCM_CDR(LIST_REF(stats, 9)), (char *)SCM_ARG1, __FUNCTION__);
 	gc_heap = scm_num2long_long(SCM_CDR(LIST_REF(stats, 2)), (char *)SCM_ARG1, __FUNCTION__);
 	gc_cells = scm_num2long_long(SCM_CDR(LIST_REF(stats, 1)), (char *)SCM_ARG1, __FUNCTION__);
+#endif
 	gc_time = (float)TO_C_INT(SCM_CDR(LIST_REF(stats, 0))) * (1000.0 / (float)CLOCKS_PER_SEC);
 	str = (char *)CALLOC(2048,sizeof(char));
 	if (len > 7)

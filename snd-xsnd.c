@@ -234,10 +234,10 @@ static int snd_amp_to_int(Float amp)
     val = 0;
   else
     {
-      val = round(amp / (Float)(SCROLLBAR_LINEAR_MULT));
+      val = snd_round(amp / (Float)(SCROLLBAR_LINEAR_MULT));
       if (val > SCROLLBAR_LINEAR_MAX)
 	{
-	  val = round((log(amp) * ((Float)SCROLLBAR_MAX * .2)) + SCROLLBAR_MID);
+	  val = snd_round((log(amp) * ((Float)SCROLLBAR_MAX * .2)) + SCROLLBAR_MID);
 	  if (val > SCROLLBAR_MAX) val = SCROLLBAR_MAX;
 	  /* in this and all similar cases, we should probably limit it to 90% of max (taking slider size into account) */
 	}
@@ -323,7 +323,7 @@ static int snd_srate_to_int(Float val)
   int ival;
   if (val > 0.0)
     {
-      ival = round(450.0 + 150.0 * log(val));
+      ival = snd_round(450.0 + 150.0 * log(val));
       if (ival < SPEED_SCROLLBAR_MAX)
 	return(ival);
       else return(SPEED_SCROLLBAR_MAX);
@@ -397,7 +397,7 @@ static int snd_expand_to_int(Float ep)
 {
   int val;
   val = (int)(ep / .0009697);
-  if (val > 100) val = (int)(round(450 + 150 * log(ep)));
+  if (val > 100) val = (int)(snd_round(450 + 150 * log(ep)));
   if (val < EXPAND_SCROLLBAR_MAX)
     return(val);
   return(EXPAND_SCROLLBAR_MAX);
@@ -482,7 +482,7 @@ static char contrast_number_buffer[5] ={'0', STR_decimal, '0', '0', '\0'};
 static int snd_contrast_to_int(Float val)
 {
   if (val < 10.0)
-    return(round(val * 10));
+    return(snd_round(val * 10));
   else return(100);
 }
 
@@ -579,7 +579,7 @@ static char number_long_zero[7] ={'0', STR_decimal, '0', '0', '0', '0', '\0'};
 
 static int snd_revscl_to_int(Float val)
 {
-  return(round(pow(val, 0.333) * 60.0));
+  return(snd_round(pow(val, 0.333) * 60.0));
 }
 
 static inline Float cube (Float a) {return(a*a*a);}
@@ -655,7 +655,7 @@ static char revlen_number_buffer[5] ={'1', STR_decimal, '0', '0', '\0'};
 
 static int snd_revlen_to_int(Float val)
 {
-  return(round(val * 20.0));
+  return(snd_round(val * 20.0));
 }
 
 static int snd_revlen_changed(snd_info *sp, int val)

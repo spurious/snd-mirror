@@ -372,7 +372,11 @@ static int free_fcomb(void *uptr)
   fcomb *ptr = (fcomb *)uptr;
   if (ptr)
     {
-      if (ptr->line) FREE(ptr->line);
+      if (ptr->line) 
+	{
+	  FREE(ptr->line);
+	  ptr->line = NULL;
+	}
       FREE(ptr); 
     }
   return(0);
@@ -445,15 +449,15 @@ static mus_any *mus_make_fcomb (Float scaler, int size, Float a0, Float a1)
         {
           #define H_fcomb "(" S_fcomb " gen &optional (val 0.0)) comb filters val with low pass on feeback."
           Float in1 = 0.0;
-          SCM_ASSERT(((mus_scm_p(obj)) && (mus_fcomb_p(mus_get_any(obj)))), obj, SCM_ARG1, S_fcomb);
+          SCM_ASSERT(((mus_scm_p(obj)) && (mus_fcomb_p(TO_CLM(obj)))), obj, SCM_ARG1, S_fcomb);
           if (NOT_FALSE_P(scm_real_p(input))) in1 = TO_C_DOUBLE(input); else if (BOUND_P(input)) scm_wrong_type_arg(S_fcomb, 2, input);
-          return(TO_SCM_DOUBLE(mus_fcomb(mus_get_any(obj), in1, 0.0)));
+          return(TO_SCM_DOUBLE(mus_fcomb(TO_CLM(obj), in1, 0.0)));
         }
         
         static SCM g_fcomb_p(SCM obj)
         {
           #define H_fcomb_p "(" S_fcomb_p " gen) -> #t if gen is an fcomb filter, else #f"
-          return(((mus_scm_p(obj)) && (mus_fcomb_p(mus_get_any(obj)))) ? SCM_BOOL_T : SCM_BOOL_F);
+          return(((mus_scm_p(obj)) && (mus_fcomb_p(TO_CLM(obj)))) ? SCM_BOOL_T : SCM_BOOL_F);
         }
         
         static SCM g_make_fcomb(SCM scaler, SCM size, SCM a0, SCM a1)
@@ -2820,7 +2824,8 @@ If it returns #t, the sound is not played."
   play_hook =                 MAKE_HOOK(S_play_hook, 1, H_play_hook);                                 /* args = size */
 
   init_rev_funcs(local_doc);
-
+#if HAVE_GUILE
   EVAL_STRING("(set-reverb-funcs snd-nrev make-snd-nrev free-snd-nrev)");
   EVAL_STRING("(set-contrast-func snd-contrast)");
+#endif
 }

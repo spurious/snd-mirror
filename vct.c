@@ -51,6 +51,7 @@
 
 #include <math.h>
 #include <stdlib.h>
+#include <stdio.h>
 
 #if HAVE_GUILE
   #include <guile/gh.h>
@@ -441,7 +442,8 @@ int procedure_fits(SCM proc, int args)
   if (PROCEDURE_P(proc))
     {
       arity = ARITY(proc);
-      return(NOT_FALSE_P(arity) && (TO_C_INT(SCM_CAR(arity)) == args));
+      return(NOT_FALSE_P(arity) && 
+	     (TO_C_INT(SCM_CAR(arity)) == args));
     }
   return(0);
 }
@@ -474,7 +476,7 @@ static SCM vct_do(SCM obj, SCM proc)
   v = TO_VCT(obj);
   if (v) 
     for (i = 0; i < v->length; i++) 
-      v->data[i] = TO_C_DOUBLE(CALL1(proc, TO_SCM_INT(i), S_vct_doB));
+      v->data[i] = TO_C_DOUBLE(CALL1(proc, TO_SMALL_SCM_INT(i), S_vct_doB));
   return(obj);
 }
 
@@ -565,7 +567,7 @@ static SCM vcts_do(SCM args)
       vsize = v[i]->length;
   for (i = 0; i < vsize; i++)
     {
-      arg = CALL2(proc, svi, TO_SCM_INT(i), S_vcts_doB);
+      arg = CALL2(proc, svi, TO_SMALL_SCM_INT(i), S_vcts_doB);
       if (LIST_P(arg))
 	{
 	  for (vi = 0, lst = arg; vi < vnum; vi++, lst = SCM_CDR(lst))

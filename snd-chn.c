@@ -3369,10 +3369,10 @@ void graph_button_motion_callback(chan_info *cp, int x, int y, TIME_TYPE time, T
 		  return;
 		}
 	      if (!dragged) 
-		start_selection_creation(cp, (int)round(ungrf_x(cp->axis, x) * SND_SRATE(sp)));
+		start_selection_creation(cp, (int)snd_round(ungrf_x(cp->axis, x) * SND_SRATE(sp)));
 	      else 
 		{
-		  update_possible_selection_in_progress((int)round(ungrf_x(cp->axis, x) * SND_SRATE(sp)));
+		  update_possible_selection_in_progress((int)snd_round(ungrf_x(cp->axis, x) * SND_SRATE(sp)));
 		  move_selection(cp, x);
 		}
 	      dragged = 1;

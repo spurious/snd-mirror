@@ -652,7 +652,7 @@ Float srate_changed(Float val, char *srcbuf, int style, int tones)
       break;
     case SPEED_AS_SEMITONE: 
       /* find closest semitone to val */
-      semi = round(log(val) * ((Float)tones / log(2.0)));
+      semi = snd_round(log(val) * ((Float)tones / log(2.0)));
       /* space until (-) num (-52 to 52 is its range if 12-tone) */
       for (i = 0; i < 3; i++) srcbuf[i] = ' '; 
       sprintf(src_txt_buf, "%d", semi);
@@ -2164,14 +2164,13 @@ creates a new sound file with the indicated attributes; if any are omitted, the 
 		      mus_misc_error(S_new_sound, "chans <= 0?", chans);
 		    }
 		  if (STRING_P(comment))
-		    com = TO_NEW_C_STRING(comment);
+		    com = TO_C_STRING(comment);
 		  toss_this = str;
 		  scm_this = name;
 		  local_error = mus_error_set_handler(new_local_error);
 		  err = snd_write_header(ss, str, ht, sr, ch, 0, ch * 2, df, com, snd_strlen(com), NULL);
 		  mus_error_set_handler(local_error);
 		  toss_this = NULL;
-		  if (com) free(com);
 		  if (err == -1)
 		    {
 		      if (str) FREE(str);

@@ -918,14 +918,13 @@ saves the current selection in filename using the indicated file attributes"
   format = TO_C_INT_OR_ELSE(data_format, MUS_OUT_FORMAT);
   sr = TO_C_INT_OR_ELSE(srate, region_srate(0));
   if (STRING_P(comment)) 
-    com = TO_NEW_C_STRING(comment); 
+    com = TO_C_STRING(comment); 
   else com = NULL;
   fname = mus_expand_filename(TO_C_STRING(filename));
   old_mus_error = mus_error_set_handler(mus_local_error);
   err = save_selection(ss, fname, type, format, sr, com);
   mus_error_set_handler(old_mus_error);
   if (fname) FREE(fname);
-  if (com) free(com);
   if (err == MUS_NO_ERROR) return(filename);
   return(TO_SCM_INT(err));
 }

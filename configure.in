@@ -69,7 +69,8 @@ AC_ARG_WITH(html,
   	if test "$with_html" = yes ; then
 	    AC_DEFINE(HAVE_HTML)
             XMHTML_LIB="-lXmHTML"
-            GTKHTML_LIB="-lgtkhtml"
+            GTKHTML_LIB="-lgtkhtml -lgdk_pixbuf -lgnome -lgnomeprint -lgnomesupport -lgnomeui -lart_lgpl -lpspell -lxml"
+dnl which we actually use is decided later
 	fi)
 
 AC_ARG_WITH(big-colormap,
