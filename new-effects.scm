@@ -1005,7 +1005,7 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
 		   (lambda (w context info)
 		     (let ((flt (make-butter-band-pass band-pass-freq band-pass-bw)))
 		       (if (eq? band-pass-target 'sound)
-			   (filter-sound flt)
+			   (filter-sound flt #f #f #f #f (format #f "effects-bbp ~A ~A 0 #f" band-pass-freq band-pass-bw))
 			   (if (eq? band-pass-target 'selection)
 			       (filter-selection flt)
 			       (let* ((ms (plausible-mark-samples))
@@ -1066,7 +1066,7 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
 		   (lambda (w context info) 
 		     (let ((flt (make-butter-band-reject notch-freq notch-bw)))
 		       (if (eq? notch-target 'sound)
-			   (filter-sound flt)
+			   (filter-sound flt #f #f #f #f (format #f "effects-bbr ~A ~A 0 #f" notch-freq notch-bw))
 			   (if (eq? notch-target 'selection)
 			       (filter-selection flt)
 			       (let* ((ms (plausible-mark-samples))
@@ -1125,7 +1125,7 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
 		   (lambda (w context info)
 		     (let ((flt (make-butter-high-pass high-pass-freq)))
 		       (if (eq? high-pass-target 'sound)
-			   (filter-sound flt)
+			   (filter-sound flt #f #f #f #f (format #f "effects-bhp ~A 0 #f" high-pass-freq))
 			   (if (eq? high-pass-target 'selection)
 			       (filter-selection flt)
 			       (let* ((ms (plausible-mark-samples))
@@ -1179,7 +1179,7 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
 		   (lambda (w context info)
 		     (let ((flt (make-butter-low-pass low-pass-freq)))
 		       (if (eq? low-pass-target 'sound)
-			   (filter-sound flt)
+			   (filter-sound flt #f #f #f #f (format #f "effects-blp ~A 0 #f" low-pass-freq))
 			   (if (eq? low-pass-target 'selection)
 			       (filter-selection flt)
 			       (let* ((ms (plausible-mark-samples))
@@ -1994,8 +1994,9 @@ Values greater than 1.0 speed up file play, negative values reverse it."))
 ;;; REVERBS
 ;;;
 
-(define* (effects-cnv snd0 amp #:optional snd chn)
-  (let* ((flt-len (frames snd0))
+(define* (effects-cnv snd0-1 amp #:optional snd chn)
+  (let* ((snd0 (if (sound? snd0-1) snd0-1 (car (sounds))))
+	 (flt-len (frames snd0))
 	 (total-len (+ flt-len (frames snd chn)))
 	 (cnv (make-convolve :filter (channel->vct 0 flt-len snd0)))
 	 (sf (make-sample-reader 0 snd chn))
@@ -2007,8 +2008,43 @@ Values greater than 1.0 speed up file play, negative values reverse it."))
       (vct->channel out-data 0 total-len snd chn #f (format #f "effects-cnv ~A ~A" snd0 amp))
       (if (> max-samp 1.0) (set! (y-bounds snd chn) (list (- max-samp) max-samp)))
       max-samp)))
-  
-;;; TODO: finish effects origins: jcrev cross-synthesis
+
+(define (effects-jc-reverb input-samps volume)
+  (let* ((allpass1 (make-all-pass -0.700 0.700 1051))
+	 (allpass2 (make-all-pass -0.700 0.700  337))
+	 (allpass3 (make-all-pass -0.700 0.700  113))
+	 (comb1 (make-comb 0.742 4799))
+	 (comb2 (make-comb 0.733 4999))
+	 (comb3 (make-comb 0.715 5399))
+	 (comb4 (make-comb 0.697 5801))
+	 (outdel1 (make-delay (inexact->exact (round (* .013 (srate))))))
+	 (comb-sum 0.0)
+	 (comb-sum-1 0.0)
+	 (comb-sum-2 0.0)
+	 (delA 0.0)
+	 (delB 0.0)
+	 (samp 0))
+    (lambda (inval)
+      (let ((allpass-sum (all-pass allpass3 
+				   (all-pass allpass2 
+					     (all-pass allpass1 
+						       (if (< samp input-samps) inval 0.0))))))
+	(set! samp (1+ samp))
+	(set! comb-sum-2 comb-sum-1)
+	(set! comb-sum-1 comb-sum)
+	(set! comb-sum 
+	      (+ (comb comb1 allpass-sum)
+		 (comb comb2 allpass-sum)
+		 (comb comb3 allpass-sum)
+		 (comb comb4 allpass-sum)))
+	(+ inval
+	   (* volume (delay outdel1 comb-sum)))))))
+    
+(define* (effects-jc-reverb-1 volume #:optional beg dur snd chn)
+  (map-channel (effects-jc-reverb (or dur (frames snd chn)) volume)
+	       beg dur snd chn #f
+	       (format #f "effects-jc-reverb-1 ~A ~A ~A" volume beg dur)))
+
 
 (let* ((reverb-menu-list '())
        (reverb-menu (XmCreatePulldownMenu (main-menu effects-menu) "Reverbs"
@@ -2109,38 +2145,6 @@ Adds reverberation scaled by reverb amount, lowpass filtering, and feedback. Mov
 	(jc-reverb-target 'sound)
 	(jc-reverb-truncate #t))
     
-    (define jc-reverb-1 ; changed from examp.scm for target/truncate (and omits low-pass and amp-env)
-      (lambda (input-samps)
-	(let* ((allpass1 (make-all-pass -0.700 0.700 1051))
-	       (allpass2 (make-all-pass -0.700 0.700  337))
-	       (allpass3 (make-all-pass -0.700 0.700  113))
-	       (comb1 (make-comb 0.742 4799))
-	       (comb2 (make-comb 0.733 4999))
-	       (comb3 (make-comb 0.715 5399))
-	       (comb4 (make-comb 0.697 5801))
-	       (outdel1 (make-delay (inexact->exact (round (* .013 (srate))))))
-	       (comb-sum 0.0)
-	       (comb-sum-1 0.0)
-	       (comb-sum-2 0.0)
-	       (delA 0.0)
-	       (delB 0.0)
-	       (samp 0))
-	  (lambda (inval)
-	    (let ((allpass-sum (all-pass allpass3 
-					 (all-pass allpass2 
-						   (all-pass allpass1 
-							     (if (< samp input-samps) inval 0.0))))))
-	      (set! samp (1+ samp))
-	      (set! comb-sum-2 comb-sum-1)
-	      (set! comb-sum-1 comb-sum)
-	      (set! comb-sum 
-		    (+ (comb comb1 allpass-sum)
-		       (comb comb2 allpass-sum)
-		       (comb comb3 allpass-sum)
-		       (comb comb4 allpass-sum)))
-	      (+ inval
-		 (* jc-reverb-volume (delay outdel1 comb-sum))))))))
-    
     (define (post-jc-reverb-dialog)
       (if (not (Widget? jc-reverb-dialog))
 	  ;; if jc-reverb-dialog doesn't exist, create it
@@ -2152,8 +2156,10 @@ Adds reverberation scaled by reverb amount, lowpass filtering, and feedback. Mov
 		   jc-reverb-label
 		   (lambda (w context info) 
 		     (map-chan-over-target-with-sync
-		      jc-reverb-1 jc-reverb-target 
-		      (lambda (target samps) "jc-reverb" )
+		      (lambda (samps) (effects-jc-reverb samps jc-reverb-volume))
+		      jc-reverb-target 
+		      (lambda (target samps) 
+			(format #f "effects-jc-reverb-1 ~A" jc-reverb-volume))
 		      (and (not jc-reverb-truncate) jc-reverb-decay)))
 		   (lambda (w context info)
 		     (help-dialog "Chowning reverb"
@@ -2327,6 +2333,38 @@ Adds reverberation scaled by reverb amount, lowpass filtering, and feedback. Mov
 		 beg dur snd chn #f (format #f "effects-flange ~A ~A ~A ~A ~A"
 					    amount speed time beg (if (and (number? dur) (not (= dur (frames snd chn)))) dur #f)))))
 
+(define (effects-cross-synthesis cross-snd amp fftsize r)
+  ;; cross-snd is the index of the other sound (as opposed to the map-channel sound)
+  (let* ((freq-inc (/ fftsize 2))
+	 (fdr (make-vct fftsize))
+	 (fdi (make-vct fftsize))
+	 (spectr (make-vct freq-inc))
+	 (inctr 0)
+	 (ctr freq-inc)
+	 (radius (- 1.0 (/ r fftsize)))
+	 (bin (/ (srate) fftsize))
+	 (formants (make-vector freq-inc)))
+    (do ((i 0 (1+ i)))
+	((= i freq-inc))
+      (vector-set! formants i (make-formant radius (* i bin))))
+    (lambda (inval)
+      (let ((outval 0.0))
+	(if (= ctr freq-inc)
+	    (begin
+	      (set! fdr (channel->vct inctr fftsize cross-snd 0))
+	      (set! inctr (+ inctr freq-inc))
+	      (spectrum fdr fdi #f 2)
+	      (vct-subtract! fdr spectr)
+	      (vct-scale! fdr (/ 1.0 freq-inc))
+	      (set! ctr 0)))
+	(set! ctr (+ ctr 1))
+	(vct-add! spectr fdr)
+	(* amp (formant-bank spectr formants inval))))))
+    
+(define* (effects-cross-synthesis-1 cross-snd amp fftsize r #:optional beg dur snd chn)
+  (map-channel (effects-cross-synthesis (if (sound? cross-snd) cross-snd (car (sounds))) amp fftsize r)
+	       beg dur snd chn #f
+	       (format #f "effects-cross-synthesis-1 ~A ~A ~A ~A ~A ~A" cross-snd amp fftsize r beg dur)))
 
 (let* ((misc-menu-list '())
        (misc-menu (XmCreatePulldownMenu (main-menu effects-menu) "Various"
@@ -2548,35 +2586,6 @@ a number, the sound is split such that 0 is all in channel 0 and 90 is all in ch
 	(cross-synth-default-fft-widget #f)
 	(cross-synth-target 'sound))
     
-    (define cross-synthesis
-      (lambda (cross-snd amp fftsize r)
-	;; cross-snd is the index of the other sound (as opposed to the map-channel sound)
-	(let* ((freq-inc (/ fftsize 2))
-	       (fdr (make-vct fftsize))
-	       (fdi (make-vct fftsize))
-	       (spectr (make-vct freq-inc))
-	       (inctr 0)
-	       (ctr freq-inc)
-	       (radius (- 1.0 (/ r fftsize)))
-	       (bin (/ (srate) fftsize))
-	       (formants (make-vector freq-inc)))
-	  (do ((i 0 (1+ i)))
-	      ((= i freq-inc))
-	    (vector-set! formants i (make-formant radius (* i bin))))
-	  (lambda (inval)
-	    (let ((outval 0.0))
-	      (if (= ctr freq-inc)
-		  (begin
-		    (set! fdr (channel->vct inctr fftsize cross-snd 0))
-		    (set! inctr (+ inctr freq-inc))
-		    (spectrum fdr fdi #f 2)
-		    (vct-subtract! fdr spectr)
-		    (vct-scale! fdr (/ 1.0 freq-inc))
-		    (set! ctr 0)))
-	      (set! ctr (+ ctr 1))
-	      (vct-add! spectr fdr)
-	      (* amp (formant-bank spectr formants inval)))))))
-    
     (define (post-cross-synth-dialog)
       (if (not (Widget? cross-synth-dialog))
 	  ;; if cross-synth-dialog doesn't exist, create it
@@ -2591,9 +2600,11 @@ a number, the sound is split such that 0 is all in channel 0 and 90 is all in ch
 		   (lambda (w context info)
 		     (map-chan-over-target-with-sync
 		      (lambda (ignored) 
-			(cross-synthesis cross-synth-sound cross-synth-amp cross-synth-fft-size cross-synth-radius))
+			(effects-cross-synthesis cross-synth-sound cross-synth-amp cross-synth-fft-size cross-synth-radius))
 		      cross-synth-target 
-		      (lambda (target samps) "Cross synthesis" )
+		      (lambda (target samps)
+			(format #f "effects-cross-synthesis-1 ~A ~A ~A ~A"
+				cross-synth-sound cross-synth-amp cross-synth-fft-size cross-synth-radius))
 		      #f))
 		   (lambda (w context info)
 		     (help-dialog "Cross synthesis"

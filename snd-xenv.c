@@ -178,7 +178,7 @@ static void apply_enved(void)
 	      apply_filter(active_channel,
 			   (FIR_p) ? enved_filter_order(ss) : 0,
 			   active_env, FROM_ENVED, 
-			   "Enved: flt", apply_to_selection, 
+			   "Enved: flt", NULL, apply_to_selection, /* TODO: origin */
 			   NULL, NULL,
 			   C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), 0, false);
 	      break;

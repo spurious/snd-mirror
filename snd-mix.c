@@ -4011,6 +4011,7 @@ static void set_mix_locked(mix_info *md, bool on, bool redisplay)
   cs->locked = on;
   origin = mus_format("set! (%s -mix-%d) %s", S_mix_locked_p, md->id, (on) ? "#t" : "#f");
   remix_file(md, origin, redisplay);
+  FREE(origin);
 }
 
 static XEN g_set_mix_locked(XEN n, XEN val) 

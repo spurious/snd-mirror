@@ -27,7 +27,7 @@
 ;;; make-locsig needs :output *output* and similarly for *reverb* if it's active
 ;;; progn -> begin, when -> if+begin (prog1 prog2), dotimes
 ;;; string= -> string=? (also string-equal)
-;;; integerp -> integer? and others like it
+;;; integerp -> integer? and others like it (null -> null?)
 ;;; sound-duration -> mus-sound-duration and similarly for others
 ;;; various array info procs like array-dimension
 ;;; no length arg to sine-bank

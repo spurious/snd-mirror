@@ -7913,8 +7913,8 @@ static XEN g_as_one_edit(XEN proc, XEN origin)
       chan_ctr = 0;
       for_each_normal_chan_1(finish_as_one_edit, (void *)cur_edits);
       FREE(cur_edits);
-      if (as_one_edit_origin) {FREE(as_one_edit_origin); as_one_edit_origin = NULL;}
 #endif
+      if (as_one_edit_origin) {FREE(as_one_edit_origin); as_one_edit_origin = NULL;}
     }
   return(xen_return_first(result, proc, origin));
 }

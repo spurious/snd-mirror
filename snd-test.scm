@@ -33,8 +33,7 @@
 ;;;
 ;;; how to send ourselves a drop?  (button2 on menu is only the first half -- how to force 2nd?)
 ;;; need all html example code in autotests
-;;; need some way to check that graphs are actually drawn (region dialog etc)
-;;; TODO: oscope.scm somehow
+;;; need some way to check that graphs are actually drawn (region dialog, oscope etc)
 
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 optargs) (ice-9 popen))
 
@@ -2723,6 +2722,24 @@
 	    (if (not (equal? sd1 sd2)) (snd-display ";1 scaled sound-data->vct->sound-data: ~A ~A" sd1 sd2))
 	    (close-sound ind))
 	  
+	  (let ((sd1 (make-sound-data 1 32))
+		(sd2 (make-sound-data 2 64)))
+	    (do ((i 0 (1+ i)))
+		((= i 32))
+	      (sound-data-set! sd1 0 i (* .01 i)))
+	    (do ((i 0 (1+ i)))
+		((= i 64))
+	      (sound-data-set! sd2 0 i (* .1 i))
+	      (sound-data-set! sd2 1 i (* .2 i)))
+	    (sound-data->sound-data sd2 sd1 3 6 32)
+	    (if (fneq (sound-data-ref sd1 0 0) 0.0) (snd-display ";sound-data->sound-data 0: ~A" (sound-data-ref sd1 0 0)))
+	    (if (fneq (sound-data-ref sd1 0 2) 0.02) (snd-display ";sound-data->sound-data 2: ~A" (sound-data-ref sd1 0 2)))
+	    (if (fneq (sound-data-ref sd1 0 3) 0.0) (snd-display ";sound-data->sound-data 3: ~A" (sound-data-ref sd1 0 3)))
+	    (if (fneq (sound-data-ref sd1 0 6) 0.3) (snd-display ";sound-data->sound-data 6: ~A" (sound-data-ref sd1 0 6)))
+	    (if (fneq (sound-data-ref sd1 0 10) 0.1) (snd-display ";sound-data->sound-data 10: ~A" (sound-data-ref sd1 0 10)))
+	    (sound-data->sound-data sd1 sd2 0 10 32)
+	    (if (fneq (sound-data-ref sd2 0 5) 0.2) (snd-display ";sound-data->sound-data 2 5: ~A" (sound-data-ref sd2 0 5))))
+
 	  (for-each 
 	   (lambda (chans)
 	     (for-each 
@@ -21488,7 +21505,6 @@ EDITS: 5
 	       (if (not (char=? (string-ref s1 i) (string-ref s2 j)))
 		   (return #f)))))))))
 
-
 (defvar env1 '(0 0 1 0))
 (defvar env2 '(0 0 1 1))
 (defvar ramp-up-env '(0 0 1 1))
@@ -21744,6 +21760,14 @@ EDITS: 5
 
 	      (close-sound ind)))
 
+	  (if (not (provided? 'snd-nogui))
+	      (begin
+		(load "oscope.scm")
+		;; oscope exists
+		(if (not (sound-data? (cadr oscope))) (snd-display ";oscope: ~A" oscope))
+		(if (provided? 'snd-motif)
+		    (XtUnmanageChild oscope-dialog)
+		    (gtk_widget_hide oscope-dialog))))
 
       (run-hook after-test-hook 11)
       ))
@@ -30899,7 +30923,7 @@ EDITS: 2
 	  
 	  ;; --- simple xramp
 	  (xramp-channel 0.2 0.9 32.0)
-	  (if (and (fneq (maxamp) 0.055) (fneq (maxamp .056))) (snd-display ";edit-list xramp: ~A" (maxamp)))
+	  (if (and (fneq (maxamp) 0.055) (fneq (maxamp) .056)) (snd-display ";edit-list xramp: ~A" (maxamp)))
 	  (let ((func (edit-list->function)))
 	    (if (not (procedure? func)) 
 		(snd-display ";edit-list->function 5: ~A" func))
@@ -31405,8 +31429,8 @@ EDITS: 2
 	      (lambda () (effects-blp 1000.0 0 #f))
 	      (lambda () (effects-hello-dentist 50.0 0.5 0 #f))
 	      (lambda () (effects-fp 1.0 0.3 20.0 0 #f))
-	      (lambda () (effects-cnv 0 .01))
 	      (lambda () (effects-flange 5.0 2.0 0.001 0 #f))
+	      (lambda () (effects-jc-reverb-1 0.1 0 #f))
 
 	      )
 	     (list 
@@ -31474,8 +31498,8 @@ EDITS: 2
 	      "(lambda (snd chn) (effects-blp 1000.0 0 #f snd chn))"
 	      "(lambda (snd chn) (effects-hello-dentist 50.0 0.5 0 #f snd chn))"
 	      "(lambda (snd chn) (effects-fp 1.0 0.3 20.0 0 #f snd chn))"
-	      "(lambda (snd chn) (effects-cnv 0 0.01 snd chn))"
 	      "(lambda (snd chn) (effects-flange 5.0 2.0 0.001 0 #f snd chn))"
+	      "(lambda (snd chn) (effects-jc-reverb-1 0.1 0 #f snd chn))"
 
 	      )
 	     ))
@@ -50695,7 +50719,7 @@ EDITS: 2
 		     mus-sound-seek-frame mus-file-prescaler mus-file-data-clipped average average? make-average
 		     mus-expand-filename make-sound-data sound-data-ref sound-data-set!  sound-data? sound-data-length
 		     sound-data-maxamp sound-data-chans sound-data->vct vct->sound-data all-pass all-pass? amplitude-modulate
-		     array->file array-interp asymmetric-fm asymmetric-fm? 
+		     array->file array-interp asymmetric-fm asymmetric-fm? sound-data->sound-data
 		     clear-array comb comb? contrast-enhancement convolution convolve convolve? db->linear degrees->radians
 		     delay delay? dot-product env env-interp env? file->array file->frame file->frame?  file->sample
 		     file->sample? filter filter? fir-filter fir-filter? formant formant-bank formant? frame* frame+

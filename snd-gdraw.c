@@ -71,6 +71,9 @@ void draw_polygon(axis_context *ax, int points, ...)
 void draw_lines (axis_context *ax, GdkPoint *points, int num)
 {
   if (num == 0) return;
+#if DEBUGGING
+  if (!GDK_IS_DRAWABLE(ax->wn)) abort();
+#endif
   gdk_draw_lines(ax->wn, ax->gc, points, num);
 }
 

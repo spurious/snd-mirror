@@ -450,7 +450,11 @@ void update_graph(chan_info *cp)
     }
   if (!(((cp->cgx)->ax)->wn)) 
     if (!(fixup_cp_cgx_ax_wn(cp))) 
-      return;
+      {
+	/* window not active yet (gtk) */
+	updating = false;
+	return;
+      }
 #if HAVE_GUILE_DYNAMIC_WIND
   scm_internal_dynamic_wind((scm_t_guard)before_dpy, 
 			    (scm_t_inner)dpy_body, 
@@ -4613,7 +4617,12 @@ static XEN channel_get(XEN snd_n, XEN chn_n, cp_field_t fld, char *caller)
 	    case CP_GRAPHS_HORIZONTAL:       return(C_TO_XEN_BOOLEAN(cp->graphs_horizontal));                  break;
 	    case CP_CURSOR_POSITION:         return(XEN_LIST_2(C_TO_XEN_INT(cp->cx), C_TO_XEN_INT(cp->cy)));   break;
 	    case CP_EDPOS_FRAMES:            return(C_TO_XEN_OFF_T(to_c_edit_samples(cp, cp_edpos, caller, 3))); break;
-	    case CP_UPDATE_TIME:             display_channel_time_data(cp);                                    break;
+	    case CP_UPDATE_TIME:             
+#if USE_GTK
+	      if (!(((cp->cgx)->ax)->wn)) fixup_cp_cgx_ax_wn(cp);
+#endif
+	      display_channel_time_data(cp);
+	      break;
 	    case CP_UPDATE_LISP:             display_channel_lisp_data(cp);                                    break;
 	    case CP_UPDATE_TRANSFORM_GRAPH: 
 	      if (cp->graph_transform_p)

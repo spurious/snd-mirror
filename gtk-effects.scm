@@ -74,32 +74,54 @@
 	      (centered-points ms))))))
 
 (define map-chan-over-target-with-sync
+  ;; target: 'marks -> beg=closest marked sample, dur=samples to next mark
+  ;;         'sound -> beg=0, dur=all samples in sound
+  ;;         'selection -> beg=selection-position, dur=selection-frames
+  ;;         'cursor -> beg=cursor, dur=samples to end of sound
+  ;; decay is how long to run the effect past the end of the sound
   (lambda (func target origin decay)
-    (let* ((snc (sync))
-	   (ms (and (eq? target 'marks)
-		    (plausible-mark-samples)))
-	   (beg (if (eq? target 'sound)
-		    0
-		    (if (eq? target 'selection)
-			(selection-position)
-			(car ms))))
-	   (overlap (if decay
-			(inexact->exact (floor (* (srate) decay)))
-			0)))
-      (apply for-each
-	     (lambda (snd chn)
-	       (let ((end (if (or (eq? target 'sound)
-				  (eq? target 'cursor))
-			      (1- (frames snd chn))
-			      (if (eq? target 'selection)
-				  (+ (selection-position) (selection-frames))
-				  (cadr ms)))))
-		 (if (= (sync snd) snc)
-		     (map-channel (func (- end beg)) beg (+ end overlap 1) snd chn #f origin))))
-	     (if (> snc 0) 
-		 (all-chans) 
-		 (list (list (selected-sound)) 
-		       (list (selected-channel))))))))
+    (if (and (eq? target 'selection)
+	     (not (selection?)))
+	(snd-print ";no selection")
+	(if (and (eq? target 'sound)
+		 (null? (sounds)))
+	    (snd-print ";no sound")
+	    (if (and (eq? target 'marks)
+		     (or (null? (sounds))
+			 (< (length (marks (selected-sound) (selected-channel))) 2)))
+		(snd-print ";no marks")
+		(let* ((snc (sync))
+		       (ms (and (eq? target 'marks)
+				(plausible-mark-samples)))
+		       (beg (if (eq? target 'sound)
+				0
+				(if (eq? target 'selection)
+				    (selection-position)
+				    (if (eq? target 'cursor)
+					(cursor (selected-sound) (selected-channel))
+					(car ms)))))
+		       (overlap (if decay
+				    (inexact->exact (floor (* (srate) decay)))
+				    0)))
+		  (apply for-each
+			 (lambda (snd chn)
+			   (let ((end (if (or (eq? target 'sound)
+					      (eq? target 'cursor))
+					  (1- (frames snd chn))
+					  (if (eq? target 'selection)
+					      (+ (selection-position) (selection-frames))
+					      (cadr ms)))))
+			     (if (= (sync snd) snc)
+				 (map-channel (func (- end beg)) beg (+ end overlap 1) snd chn #f
+					      (format #f "~A ~A ~A" 
+						      (origin target (- end beg))
+						      (if (eq? target 'sound) 0 beg)
+						      (if (eq? target 'sound) #f (1+ (- end beg))))))))
+
+			 (if (> snc 0) 
+			     (all-chans) 
+			     (list (list (selected-sound)) 
+				   (list (selected-channel)))))))))))
 
 
 (define (make-effect-dialog label ok-callback help-callback reset-callback)
@@ -303,6 +325,14 @@
 ;;; AMPLITUDE EFFECTS
 ;;;
 
+(define* (effects-squelch-channel amount gate-size #:optional snd chn)
+  (let ((f0 (make-average gate-size))
+	(f1 (make-average gate-size :initial-element 1.0))
+	(amp amount))
+    (map-channel (lambda (y) (* y (average f1 (if (< (average f0 (* y y)) amp) 0.0 1.0))))
+		 0 #f snd chn #f
+		 (format #f "effects-squelch-channel ~A ~A" amount gate-size))))
+
 (let ((amp-menu-list '())
       (amp-menu (gtk_menu_item_new_with_label "Amplitude Effects"))
       (amp-cascade (gtk_menu_new)))
@@ -445,12 +475,6 @@
 	(gate-size 128)
 	(omit-silence #f))
 
-    (define (squelch-channel amount snd chn)
-      (let ((f0 (make-average gate-size))
-	    (f1 (make-average gate-size :initial-element 1.0)))
-	(map-channel (lambda (y) (* y (average f1 (if (< (average f0 (* y y)) amount) 0.0 1.0))))
-		     0 #f snd chn)))
-
     (let ((child (gtk_menu_item_new_with_label "Gate")))
       (gtk_menu_shell_append (GTK_MENU_SHELL amp-cascade) child)
       (gtk_widget_show child)
@@ -469,9 +493,9 @@
 					       (apply map
 						      (lambda (snd chn)
 							(if (= (sync snd) snc)
-							    (squelch-channel (* gate-amount gate-amount) snd chn)))
+							    (effects-squelch-channel (* gate-amount gate-amount) gate-size snd chn)))
 						      (all-chans))
-					       (squelch-channel (* gate-amount gate-amount) (selected-sound) (selected-channel)))))
+					       (effects-squelch-channel (* gate-amount gate-amount) gate-size (selected-sound) (selected-channel)))))
 				       (lambda (w data)
 					 (help-dialog "Gate"
 						      "Move the slider to change the gate intensity. Higher values gate more of the sound."))
@@ -500,6 +524,51 @@
 
 ;;; DELAY EFFECTS
 ;;;
+
+(define* (effects-echo input-samps-1 delay-time echo-amount #:optional beg dur snd chn)
+  (let ((del (make-delay (inexact->exact (round (* delay-time (srate))))))
+	(samp 0)
+	(input-samps (or input-samps-1 dur (frames snd chn)))
+	(amp echo-amount))
+    (map-channel (lambda (inval)
+		   (set! samp (1+ samp))
+		   (+ inval
+		      (delay del
+			     (* amp (+ (tap del) (if (<= samp input-samps) inval 0.0))))))
+		 beg dur snd chn #f
+		 (format #f "effects-echo ~A ~A ~A ~A ~A" input-samps-1 delay-time echo-amount beg dur))))
+
+(define* (effects-flecho-1 scaler secs input-samps-1 #:optional beg dur snd chn)
+  (let* ((flt (make-fir-filter :order 4 :xcoeffs (vct .125 .25 .25 .125)))
+	 (del (make-delay  (inexact->exact (round (* secs (srate))))))
+	 (samp 0)
+	 (input-samps (or input-samps-1 dur (frames snd chn)))
+	 (amp scaler))
+    (map-channel (lambda (inval)
+		   (set! samp (1+ samp))
+		   (+ inval 
+		      (delay del 
+			     (fir-filter flt (* amp (+ (tap del) (if (<= samp input-samps) inval 0.0)))))))
+		 beg dur snd chn #f
+		 (format #f "effects-flecho-1 ~A ~A ~A ~A ~A" scaler secs input-samps-1 beg dur))))
+
+(define* (effects-zecho-1 scaler secs frq amp-1 input-samps-1 #:optional beg dur snd chn)
+  (let* ((os (make-oscil frq))
+	 (amp amp-1)
+	 (len (round (inexact->exact (* secs (srate)))))
+	 (del (make-delay len :max-size (+ len amp 1)))
+	 (samp 0)
+	 (input-samps (or input-samps-1 dur (frames snd chn)))
+	 (scl scaler))
+    (map-channel (lambda (inval)
+		   (set! samp (1+ samp))
+		   (+ inval 
+		      (delay del 
+			     (* scl (+ (tap del) (if (<= samp input-samps) inval 0.0)))
+			     (* amp (oscil os)))))
+		 beg dur snd chn #f
+    		 (format #f "effects-zecho-1 ~A ~A ~A ~A ~A ~A ~A" scaler secs frq amp input-samps-1 beg dur))))
+
 
 (let ((delay-menu-list '())
       (delay-menu (gtk_menu_item_new_with_label "Delay Effects"))
@@ -539,7 +608,11 @@
 			      (+ inval
 				 (delay del
 					(* echo-amount (+ (tap del) (if (<= samp input-samps) inval 0.0))))))))
-			echo-target "echo"
+			echo-target
+			(lambda (target input-samps) 
+			  (format #f "effects-echo ~A ~A ~A" 
+				  (if (eq? target 'sound) #f input-samps)
+				  delay-time echo-amount))
 			(and (not echo-truncate) 
 			     (* 4 delay-time))))
 		     (lambda (w data)
@@ -581,6 +654,18 @@
 	(flecho-dialog #f)
 	(flecho-target 'sound)
 	(flecho-truncate #t))
+
+    (define flecho-1
+      (lambda (scaler secs input-samps)
+	(let* ((flt (make-fir-filter :order 4 :xcoeffs (vct .125 .25 .25 .125)))
+	       (del (make-delay  (inexact->exact (round (* secs (srate))))))
+	       (samp 0))
+	  (lambda (inval)
+	    (set! samp (1+ samp))
+	    (+ inval 
+	       (delay del 
+		      (fir-filter flt (* scaler (+ (tap del) (if (<= samp input-samps) inval 0.0))))))))))
+    
     (gtk_menu_shell_append (GTK_MENU_SHELL delay-cascade) child)
     (gtk_widget_show child)
     (g_signal_connect child "activate"
@@ -595,16 +680,12 @@
 		     (lambda (w data)
 		       (map-chan-over-target-with-sync
 			(lambda (input-samps) 
-			  (let* ((flt (make-fir-filter :order 4 :xcoeffs (vct .125 .25 .25 .125)))
-				 (del (make-delay  (inexact->exact (round (* flecho-delay (srate))))))
-				 (samp 0))
-			    (lambda (inval)
-			      (set! samp (1+ samp))
-			      (+ inval 
-				 (delay del 
-					(fir-filter flt (* flecho-scaler (+ (tap del) (if (<= samp input-samps) inval 0.0)))))))))
+			  (flecho-1 flecho-scaler flecho-delay input-samps))
 			flecho-target 
-			"flecho"
+			(lambda (target input-samps) 
+			  (format #f "effects-flecho-1 ~A ~A ~A"
+				  flecho-scaler flecho-delay
+				  (if (eq? target 'sound) #f input-samps)))
 			(and (not flecho-truncate) 
 			     (* 4 flecho-delay))))
 		     (lambda (w data)
@@ -648,6 +729,20 @@
 	(zecho-dialog #f)
 	(zecho-target 'sound)
 	(zecho-truncate #t))
+
+    (define zecho-1
+      (lambda (scaler secs frq amp input-samps)
+	(let* ((os (make-oscil frq))
+	       (len (round (inexact->exact (* secs (srate)))))
+	       (del (make-delay len :max-size (+ len amp 1)))
+	       (samp 0))
+	  (lambda (inval)
+	    (set! samp (1+ samp))
+	    (+ inval 
+	       (delay del 
+		      (* scaler (+ (tap del) (if (<= samp input-samps) inval 0.0)))
+		      (* amp (oscil os))))))))
+
     (gtk_menu_shell_append (GTK_MENU_SHELL delay-cascade) child)
     (gtk_widget_show child)
     (g_signal_connect child "activate"
@@ -664,18 +759,12 @@
 		     (lambda (w data)
 		       (map-chan-over-target-with-sync
 			(lambda (input-samps)
-			  (let* ((os (make-oscil zecho-freq))
-				 (len (inexact->exact (round (* zecho-delay (srate)))))
-				 (del (make-delay len :max-size (+ len zecho-amp 1)))
-				 (samp 0))
-			    (lambda (inval)
-			      (set! samp (1+ samp))
-			      (+ inval 
-				 (delay del 
-					(* zecho-scaler (+ (tap del) (if (<= samp input-samps) inval 0.0)))
-					(* zecho-amp (oscil os)))))))
+			  (zecho-1 zecho-scaler zecho-delay zecho-freq zecho-amp input-samps)) 
 			zecho-target
-			"zecho"
+			(lambda (target input-samps) 
+			  (format #f "effects-zecho-1 ~A ~A ~A ~A ~A"
+				  zecho-scaler zecho-delay zecho-freq zecho-amp
+				  (if (eq? target 'sound) #f input-samps)))
 			(and (not zecho-truncate)
 			     (* 4 zecho-delay))))
 		     (lambda (w data)
@@ -730,6 +819,57 @@ the modulation frequency, and the echo amplitude."))
 ;;; FILTERS
 ;;;
 
+(define* (effects-comb-filter scaler-1 size-1 #:optional beg dur snd chn)
+  (let ((delay-line (make-vct size-1 0.0))
+	(delay-loc 0)
+	(size size-1)
+	(scaler scaler-1))
+    (map-channel (lambda (x)
+		   (let ((result (vct-ref delay-line delay-loc)))
+		     (vct-set! delay-line delay-loc (+ x (* scaler result)))
+		     (set! delay-loc (1+ delay-loc))
+		     (if (= delay-loc size) (set! delay-loc 0))
+		     result))
+		 beg dur snd chn #f
+		 (format #f "effects-comb-filter ~A ~A ~A ~A" scaler size beg dur))))
+
+(define* (effects-comb-chord scaler size amp-1 interval-one interval-two #:optional beg dur snd chn)
+  (let ((c1 (make-comb scaler size))
+	(c2 (make-comb scaler (* size interval-one)))
+	(c3 (make-comb scaler (* size interval-two)))
+	(amp amp-1))
+    (map-channel (lambda (x)
+		   (* amp (+ (comb c1 x) (comb c2 x) (comb c3 x))))
+		 beg dur snd chn #f
+		 (format #f "effects-comb-chord ~A ~A ~A ~A ~A ~A ~A" scaler size amp interval-one interval-two beg dur))))
+
+(define* (effects-moog freq Q #:optional beg dur snd chn)
+  (let ((gen (make-moog-filter freq Q)))
+    (map-channel (lambda (inval)
+		   (moog-filter gen inval))
+		 beg dur snd chn #f
+		 (format #f "effects-moog ~A ~A ~A ~A" freq Q beg dur))))
+    
+(define* (effects-bbp freq bw #:optional beg dur snd chn)
+  (let ((flt (make-butter-band-pass freq bw)))
+    (clm-channel flt beg dur snd chn #f #f
+		 (format #f "effects-bbp ~A ~A ~A ~A" freq bw beg dur))))
+
+(define* (effects-bbr freq bw #:optional beg dur snd chn)
+  (let ((flt (make-butter-band-reject freq bw)))
+    (clm-channel flt beg dur snd chn #f #f
+		 (format #f "effects-bbr ~A ~A ~A ~A" freq bw beg dur))))
+
+(define* (effects-bhp freq #:optional beg dur snd chn)
+  (let ((flt (make-butter-high-pass freq)))
+    (clm-channel flt beg dur snd chn #f #f
+		 (format #f "effects-bhp ~A ~A ~A" freq beg dur))))
+
+(define* (effects-blp freq #:optional beg dur snd chn)
+  (let ((flt (make-butter-low-pass freq)))
+    (clm-channel flt beg dur snd chn #f #f
+		 (format #f "effects-blp ~A ~A ~A" freq beg dur))))
+
 (let ((filter-menu-list '())
       (filter-menu (gtk_menu_item_new_with_label "Filter Effects"))
       (filter-cascade (gtk_menu_new))
@@ -758,10 +898,16 @@ the modulation frequency, and the echo amplitude."))
 		    (make-effect-dialog 
 		     "Band-pass filter"
 		     (lambda (w data) 
-		       (if (eq? band-pass-target 'sound)
-			   (filter-sound (make-butter-band-pass band-pass-freq band-pass-bw))
-			   (if (eq? band-pass-target 'selection)
-			       (filter-selection (make-butter-band-pass band-pass-freq band-pass-bw)))))
+		       (let ((flt (make-butter-band-pass band-pass-freq band-pass-bw)))
+			 (if (eq? band-pass-target 'sound)
+			     (filter-sound flt #f #f #f #f (format #f "effects-bbp ~A ~A 0 #f" band-pass-freq band-pass-bw))
+			     (if (eq? band-pass-target 'selection)
+				 (filter-selection flt)
+				 (let* ((ms (plausible-mark-samples))
+					(bg (car ms))
+					(nd (1+ (- (cadr ms) (car ms)))))
+				   (clm-channel flt bg nd #f #f #f #f 
+						(format #f "effects-bbp ~A ~A ~A ~A" band-pass-freq band-pass-bw bg nd)))))))
 		     (lambda (w data)
 		       (help-dialog "Band-pass filter"
 				    "Butterworth band-pass filter. Move the sliders to change the center frequency and bandwidth."))
@@ -812,10 +958,16 @@ the modulation frequency, and the echo amplitude."))
 		    (make-effect-dialog 
 		     "Band-reject filter"
 		     (lambda (w data) 
-		       (if (eq? notch-target 'sound)
-			   (filter-sound (make-butter-band-reject notch-freq notch-bw))
-			   (if (eq? notch-target 'selection)
-			       (filter-selection (make-butter-band-reject notch-freq notch-bw)))))
+		       (let ((flt (make-butter-band-reject notch-freq notch-bw)))
+			 (if (eq? notch-target 'sound)
+			     (filter-sound flt #f #f #f #f (format #f "effects-bbr ~A ~A 0 #f" notch-freq notch-bw))
+			     (if (eq? notch-target 'selection)
+				 (filter-selection flt)
+				 (let* ((ms (plausible-mark-samples))
+					(bg (car ms))
+					(nd (1+ (- (cadr ms) (car ms)))))
+				   (clm-channel flt bg nd #f #f #f #f 
+						(format #f "effects-bbr ~A ~A ~A ~A" notch-freq notch-bw bg nd)))))))
 		     (lambda (w data)
 		       (help-dialog "Band-reject filter"
 				    "Butterworth band-reject filter. Move the sliders to change the center frequency and bandwidth."))
@@ -863,10 +1015,16 @@ the modulation frequency, and the echo amplitude."))
 		    (make-effect-dialog 
 		     "High-pass filter"
 		     (lambda (w data) 
-		       (if (eq? high-pass-target 'sound)
-			   (filter-sound (make-butter-high-pass high-pass-freq))
-			   (if (eq? high-pass-target 'selection)
-			       (filter-selection (make-butter-high-pass high-pass-freq)))))
+		       (let ((flt (make-butter-high-pass high-pass-freq)))
+			 (if (eq? high-pass-target 'sound)
+			     (filter-sound flt #f #f #f #f (format #f "effects-bhp ~A 0 #f" high-pass-freq))
+			     (if (eq? high-pass-target 'selection)
+				 (filter-selection flt)
+				 (let* ((ms (plausible-mark-samples))
+					(bg (car ms))
+					(nd (1+ (- (cadr ms) (car ms)))))
+				   (clm-channel flt bg nd #f #f #f #f 
+						(format #f "effects-bhp ~A ~A ~A" high-pass-freq bg nd)))))))
 		     (lambda (w data)
 		       (help-dialog "High-pass filter"
 				    "Butterworth high-pass filter. Move the slider to change the high-pass cutoff frequency."))
@@ -907,10 +1065,16 @@ the modulation frequency, and the echo amplitude."))
 		    (make-effect-dialog 
 		     "Low-pass filter"
 		     (lambda (w data) 
-		       (if (eq? low-pass-target 'sound)
-			   (filter-sound (make-butter-low-pass low-pass-freq))
-			   (if (eq? low-pass-target 'selection)
-			       (filter-selection (make-butter-low-pass low-pass-freq)))))
+		       (let ((flt (make-butter-low-pass low-pass-freq)))
+			 (if (eq? low-pass-target 'sound)
+			     (filter-sound flt #f #f #f #f (format #f "effects-blp ~A 0 #f" low-pass-freq))
+			     (if (eq? low-pass-target 'selection)
+				 (filter-selection flt)
+				 (let* ((ms (plausible-mark-samples))
+					(bg (car ms))
+					(nd (1+ (- (cadr ms) (car ms)))))
+				   (clm-channel flt bg nd #f #f #f #f 
+						(format #f "effects-blp ~A ~A ~A" low-pass-freq bg nd)))))))
 		     (lambda (w data)
 		       (help-dialog "Low-pass filter"
 				    "Butterworth low-pass filter. Move the slider to change the low-pass cutoff frequency."))
@@ -955,15 +1119,11 @@ the modulation frequency, and the echo amplitude."))
 		     (lambda (w data) 
 		       (map-chan-over-target-with-sync
 			(lambda (ignored) 
-			  (let ((delay-line (make-vct comb-size 0.0))
-				(delay-loc 0))
-			    (lambda (x)
-			      (let ((result (vct-ref delay-line delay-loc)))
-				(vct-set! delay-line delay-loc (+ x (* comb-scaler result)))
-				(set! delay-loc (1+ delay-loc))
-				(if (= delay-loc comb-size) (set! delay-loc 0))
-				result))))
-			comb-target "comb-filter" #f))
+			  (comb-filter comb-scaler comb-size)) 
+			comb-target 
+			(lambda (target samps)
+			  (format #f "effects-comb-filter ~A ~A" comb-scaler comb-size))
+			#f))
 		    (lambda (w data)
 		      (help-dialog "Comb filter"
 				   "Move the sliders to change the comb scaler and size."))
@@ -1004,6 +1164,16 @@ the modulation frequency, and the echo amplitude."))
 	(new-comb-chord-interval-two 1.20)
 	(new-comb-chord-dialog #f)
 	(new-comb-chord-target 'sound))
+
+    (define new-comb-chord
+      (lambda (scaler size amp interval-one interval-two)
+	"Comb chord filter: create chords by using filters at harmonically related sizes."
+	(let ((c1 (make-comb scaler size))
+	      (c2 (make-comb scaler (* size interval-one)))
+	      (c3 (make-comb scaler (* size interval-two))))
+	  (lambda (x)
+	    (* amp (+ (comb c1 x) (comb c2 x) (comb c3 x)))))))
+    
     (gtk_menu_shell_append (GTK_MENU_SHELL filter-cascade) child)
     (gtk_widget_show child)
     (g_signal_connect child "activate"
@@ -1021,13 +1191,14 @@ the modulation frequency, and the echo amplitude."))
 		     (lambda (w data)
 		       (map-chan-over-target-with-sync
 			(lambda (ignored)
-			  (let ((c1 (make-comb new-comb-chord-scaler new-comb-chord-size))
-				(c2 (make-comb new-comb-chord-scaler (* new-comb-chord-size new-comb-chord-interval-one)))
-				(c3 (make-comb new-comb-chord-scaler (* new-comb-chord-size new-comb-chord-interval-two))))
-			    (lambda (x)
-			      (* new-comb-chord-amp (+ (comb c1 x) (comb c2 x) (comb c3 x))))))
+			  (new-comb-chord new-comb-chord-scaler new-comb-chord-size new-comb-chord-amp
+					  new-comb-chord-interval-one new-comb-chord-interval-two))
 			new-comb-chord-target
-			"new-comb-chord" #f))
+			(lambda (target samps)
+			  (format #f "effects-comb-chord ~A ~A ~A ~A ~A" 
+				  new-comb-chord-scaler new-comb-chord-size new-comb-chord-amp
+				  new-comb-chord-interval-one new-comb-chord-interval-two))
+			#f))
 		     (lambda (w data)
 		       (help-dialog "Comb chord filter"
 				    "Creates chords by using filters at harmonically related sizes.
@@ -1089,6 +1260,12 @@ Move the sliders to set the comb chord parameters."))
 	(moog-resonance 0.5)
 	(moog-dialog #f)
 	(moog-target 'sound))
+
+    (define (moog freq Q)
+      (let ((gen (make-moog-filter freq Q)))
+	(lambda (inval)
+	  (moog-filter gen inval))))
+    
     (gtk_menu_shell_append (GTK_MENU_SHELL filter-cascade) child)
     (gtk_widget_show child)
     (g_signal_connect child "activate"
@@ -1102,11 +1279,11 @@ Move the sliders to set the comb chord parameters."))
 		     "Moog filter"
 		     (lambda (w data)
 		       (map-chan-over-target-with-sync
-			(lambda (ignored) 
-			  (let ((gen (make-moog-filter moog-cutoff-frequency moog-resonance)))
-			    (lambda (inval)
-			      (moog-filter gen inval))))
-			moog-target "moog-filter" #f))
+			(lambda (ignored) (moog moog-cutoff-frequency moog-resonance)) 
+			moog-target 
+			(lambda (target samps)
+			  (format #f "effects-moog-filter ~A ~A" moog-cutoff-frequency moog-resonance))
+			#f))
 		     (lambda (w data)
 		       (help-dialog "Moog filter"
 				    "Moog-style 4-pole lowpass filter with 24db/oct rolloff and variable resonance.
@@ -1156,6 +1333,38 @@ Move the sliders to set the filter cutoff frequency and resonance."))
 	(adsat-size 4)
 	(adsat-dialog #f)
 	(adsat-target 'sound))
+
+    (define (cp-adsat)
+      "adsat does weird stuff by adsat size"
+      (map-chan-over-target-with-sync
+       (lambda (ignored)
+	 (let ((mn 0.0)
+	       (mx 0.0)
+	       (n 0)
+	       (vals (make-vct adsat-size)))
+	   (lambda (val)
+	     (if (= n adsat-size)
+		 (begin
+		   (do ((i 0 (1+ i)))
+		       ((= i adsat-size))
+		     (if (>= (vct-ref vals i) 0.0)
+			 (vct-set! vals i mx)
+			 (vct-set! vals i mn)))
+		   (set! n 0)
+		   (set! mx 0.0)
+		   (set! mn 0.0)
+		   vals)
+		 (begin
+		   (vct-set! vals n val)
+		   (if (> val mx) (set! mx val))
+		   (if (< val mn) (set! mn val))
+		   (set! n (1+ n))
+		   #f)))))
+       adsat-target 
+       (lambda (target samps)
+	 (format #f "adsat ~A" adsat-size))
+       #f))
+    
     (gtk_menu_shell_append (GTK_MENU_SHELL freq-cascade) child)
     (gtk_widget_show child)
     (g_signal_connect child "activate"
@@ -1167,31 +1376,7 @@ Move the sliders to set the filter cutoff frequency and resonance."))
 		    (make-effect-dialog
 		     "Adaptive saturation"
 		     (lambda (w data)
-		       (map-chan-over-target-with-sync
-			(lambda (ignored)
-			  (let ((mn 0.0)
-				(mx 0.0)
-				(n 0)
-				(vals (make-vct adsat-size)))
-			    (lambda (val)
-			      (if (= n adsat-size)
-				  (begin
-				    (do ((i 0 (1+ i)))
-					((= i adsat-size))
-				      (if (>= (vct-ref vals i) 0.0)
-					  (vct-set! vals i mx)
-					  (vct-set! vals i mn)))
-				    (set! n 0)
-				    (set! mx 0.0)
-				    (set! mn 0.0)
-				    vals)
-				  (begin
-				    (vct-set! vals n val)
-				    (if (> val mx) (set! mx val))
-				    (if (< val mn) (set! mn val))
-				    (set! n (1+ n))
-				    #f)))))
-			adsat-target "adsat" #f))
+		       (cp-adsat))
 		     (lambda (w data)
 		       (help-dialog "Adaptive saturation"
 				    "Move the slider to change the saturation scaling factor."))
@@ -1431,6 +1616,28 @@ Values greater than 1.0 speed up file play, negative values reverse it."))
 
 ;;; MODULATION EFFECTS
 
+(define* (effects-am freq en #:optional beg dur snd chn)
+  (let* ((os (make-oscil freq))
+	 (e (and en (make-env en :end (1- dur)))))
+    (map-channel (if e
+		     (lambda (inval)
+		       (amplitude-modulate 1.0 inval (* (env e) (oscil os))))
+		     (lambda (inval)
+		       (amplitude-modulate 1.0 inval (oscil os))))
+		 beg dur snd chn #f
+		 (format #f "effects-am ~A ~A ~A ~A" freq (if en (format #f "'~A" en) #f) beg dur))))
+
+(define* (effects-rm freq gliss-env #:optional beg dur snd chn)
+  (let* ((os (make-oscil freq))
+	 (e (and gliss-env (make-env gliss-env :end (1- dur)))))
+    (map-channel (if e
+		     (lambda (inval)
+		       (* inval (* (env e) (oscil os))))
+		     (lambda (inval)
+		       (* inval (oscil os))))
+		 beg dur snd chn #f
+		 (format #f "effects-rm ~A ~A ~A ~A" freq (if gliss-env (format #f "'~A" gliss-env) #f) beg dur))))
+
 (let ((mod-menu-list '())
       (mod-menu (gtk_menu_item_new_with_label "Modulation Effects"))
       (mod-cascade (gtk_menu_new)))
@@ -1446,6 +1653,18 @@ Values greater than 1.0 speed up file play, negative values reverse it."))
 	(am-effect-dialog #f)
 	(am-effect-target 'sound)
 	(am-effect-envelope #f))
+
+    (define am-effect
+      (lambda (freq)
+	(let* ((os (make-oscil freq))
+	       (need-env (not (equal? (xe-envelope am-effect-envelope) (list 0.0 1.0 1.0 1.0))))
+	       (e (and need-env (make-env (xe-envelope am-effect-envelope) :end (1- (effect-frames am-effect-target))))))
+	  (if need-env
+	      (lambda (inval)
+		(amplitude-modulate 1.0 inval (* (env e) (oscil os))))
+	      (lambda (inval)
+		(amplitude-modulate 1.0 inval (oscil os)))))))
+    
     (gtk_menu_shell_append (GTK_MENU_SHELL mod-cascade) child)
     (gtk_widget_show child)
     (g_signal_connect child "activate"
@@ -1459,15 +1678,15 @@ Values greater than 1.0 speed up file play, negative values reverse it."))
 		     (lambda (w data) 
 		       (map-chan-over-target-with-sync
 			(lambda (ignored) 
-			  (let* ((os (make-oscil am-effect-amount))
-				 (need-env (not (equal? (xe-envelope am-effect-envelope) (list 0.0 1.0 1.0 1.0))))
-				 (e (and need-env (make-env (xe-envelope am-effect-envelope) :end (1- (effect-frames am-effect-target))))))
-			    (if need-env
-				(lambda (inval)
-				  (amplitude-modulate 1.0 inval (* (env e) (oscil os))))
-				(lambda (inval)
-				  (amplitude-modulate 1.0 inval (oscil os))))))
-			am-effect-target "am" #f))
+			  (am-effect am-effect-amount)) 
+			am-effect-target 
+			(lambda (target samps)
+			  (format #f "effects-am ~A ~A" am-effect-amount
+				  (let* ((need-env (not (equal? (xe-envelope am-effect-envelope) (list 0.0 1.0 1.0 1.0))))
+					 (e (and need-env (xe-envelope am-effect-envelope))))
+				    (if e (format "'~A" e)
+					#f))))
+			#f))
 		     (lambda (w data)
 		       (help-dialog "Amplitude modulation"
 				    "Move the slider to change the modulation amount."))
@@ -1506,6 +1725,20 @@ Values greater than 1.0 speed up file play, negative values reverse it."))
 	(rm-dialog #f)
 	(rm-target 'sound)
 	(rm-envelope #f))
+
+    (define rm-effect ; avoid collision with examp.scm
+      (lambda (freq gliss-env)
+	(let* ((os (make-oscil freq))
+	       (need-env (and rm-envelope (not (equal? (xe-envelope rm-envelope) (list 0.0 1.0 1.0 1.0)))))
+	       (e (and need-env (make-env (xe-envelope rm-envelope) :end (1- (effect-frames rm-target)))))
+	       (len (frames))
+	       (genv (make-env :envelope gliss-env :end len)))
+	  (if need-env
+	      (lambda (inval)
+		(* inval (* (env e) (oscil os))))
+	      (lambda (inval)
+		(* inval (oscil os)))))))
+
     (gtk_menu_shell_append (GTK_MENU_SHELL mod-cascade) child)
     (gtk_widget_show child)
     (g_signal_connect child "activate"
@@ -1520,18 +1753,15 @@ Values greater than 1.0 speed up file play, negative values reverse it."))
 		     (lambda (w data)
 		       (map-chan-over-target-with-sync
 			(lambda (ignored) 
-			  (let* ((gliss-env (list 0 0 1 (hz->radians rm-radians)))
-				 (os (make-oscil rm-frequency))
-				 (need-env (and rm-envelope (not (equal? (xe-envelope rm-envelope) (list 0.0 1.0 1.0 1.0)))))
-				 (e (and need-env (make-env (xe-envelope rm-envelope) :end (1- (effect-frames rm-target)))))
-				 (len (frames))
-				 (genv (make-env :envelope gliss-env :end len)))
-			    (if need-env
-				(lambda (inval)
-				  (* inval (* (env e) (oscil os))))
-				(lambda (inval)
-				  (* inval (oscil os))))))
-			rm-target "ring-modulation" #f))
+			  (rm-effect rm-frequency (list 0 0 1 (hz->radians rm-radians)))) 
+			rm-target 
+			(lambda (target samps)
+			  (format #f "effects-rm ~A ~A" rm-frequency
+				  (let* ((need-env (not (equal? (xe-envelope rm-envelope) (list 0.0 1.0 1.0 1.0))))
+					 (e (and need-env (xe-envelope rm-envelope))))
+				    (if e (format "'~A" e)
+					#f))))
+			#f))
 		     (lambda (w data)
 		       (help-dialog "Ring modulation"
 				    "Move the slider to change the ring modulation parameters."))
@@ -1574,6 +1804,57 @@ Values greater than 1.0 speed up file play, negative values reverse it."))
 
 
 ;;; REVERBS
+
+(define* (effects-cnv snd0-1 amp #:optional snd chn)
+  (let* ((snd0 (if (sound? snd0-1) snd0-1 (car (sounds))))
+	 (flt-len (frames snd0))
+	 (total-len (+ flt-len (frames snd chn)))
+	 (cnv (make-convolve :filter (channel->vct 0 flt-len snd0)))
+	 (sf (make-sample-reader 0 snd chn))
+	 (out-data (make-vct total-len)))
+    (vct-map! out-data (lambda () (convolve cnv (lambda (dir) (next-sample sf)))))
+    (free-sample-reader sf)
+    (vct-scale! out-data amp)
+    (let ((max-samp (vct-peak out-data)))
+      (vct->channel out-data 0 total-len snd chn #f (format #f "effects-cnv ~A ~A" snd0 amp))
+      (if (> max-samp 1.0) (set! (y-bounds snd chn) (list (- max-samp) max-samp)))
+      max-samp)))
+
+(define (effects-jc-reverb input-samps volume)
+  (let* ((allpass1 (make-all-pass -0.700 0.700 1051))
+	 (allpass2 (make-all-pass -0.700 0.700  337))
+	 (allpass3 (make-all-pass -0.700 0.700  113))
+	 (comb1 (make-comb 0.742 4799))
+	 (comb2 (make-comb 0.733 4999))
+	 (comb3 (make-comb 0.715 5399))
+	 (comb4 (make-comb 0.697 5801))
+	 (outdel1 (make-delay (inexact->exact (round (* .013 (srate))))))
+	 (comb-sum 0.0)
+	 (comb-sum-1 0.0)
+	 (comb-sum-2 0.0)
+	 (delA 0.0)
+	 (delB 0.0)
+	 (samp 0))
+    (lambda (inval)
+      (let ((allpass-sum (all-pass allpass3 
+				   (all-pass allpass2 
+					     (all-pass allpass1 
+						       (if (< samp input-samps) inval 0.0))))))
+	(set! samp (1+ samp))
+	(set! comb-sum-2 comb-sum-1)
+	(set! comb-sum-1 comb-sum)
+	(set! comb-sum 
+	      (+ (comb comb1 allpass-sum)
+		 (comb comb2 allpass-sum)
+		 (comb comb3 allpass-sum)
+		 (comb comb4 allpass-sum)))
+	(+ inval
+	   (* volume (delay outdel1 comb-sum)))))))
+    
+(define* (effects-jc-reverb-1 volume #:optional beg dur snd chn)
+  (map-channel (effects-jc-reverb (or dur (frames snd chn)) volume)
+	       beg dur snd chn #f
+	       (format #f "effects-jc-reverb-1 ~A ~A ~A" volume beg dur)))
 
 (let ((reverb-menu-list '())
       (reverb-menu (gtk_menu_item_new_with_label "Reverberation"))
@@ -1664,38 +1945,6 @@ Adds reverberation scaled by reverb amount, lowpass filtering, and feedback. Mov
 	(jc-reverb-target 'sound)
 	(jc-reverb-truncate #t))
 
-    (define jc-reverb-1 ; changed from examp.scm for target/truncate (and omits low-pass and amp-env)
-      (lambda (input-samps)
-	(let* ((allpass1 (make-all-pass -0.700 0.700 1051))
-	       (allpass2 (make-all-pass -0.700 0.700  337))
-	       (allpass3 (make-all-pass -0.700 0.700  113))
-	       (comb1 (make-comb 0.742 4799))
-	       (comb2 (make-comb 0.733 4999))
-	       (comb3 (make-comb 0.715 5399))
-	       (comb4 (make-comb 0.697 5801))
-	       (outdel1 (make-delay (inexact->exact (round (* .013 (srate))))))
-	       (comb-sum 0.0)
-	       (comb-sum-1 0.0)
-	       (comb-sum-2 0.0)
-	       (delA 0.0)
-	       (delB 0.0)
-	       (samp 0))
-	  (lambda (inval)
-	    (let ((allpass-sum (all-pass allpass3 
-					 (all-pass allpass2 
-						   (all-pass allpass1 
-							     (if (< samp input-samps) inval 0.0))))))
-	      (set! samp (1+ samp))
-	      (set! comb-sum-2 comb-sum-1)
-	      (set! comb-sum-1 comb-sum)
-	      (set! comb-sum 
-		    (+ (comb comb1 allpass-sum)
-		       (comb comb2 allpass-sum)
-		       (comb comb3 allpass-sum)
-		       (comb comb4 allpass-sum)))
-	      (+ inval
-		 (* jc-reverb-volume (delay outdel1 comb-sum))))))))
-    
     (gtk_menu_shell_append (GTK_MENU_SHELL reverb-cascade) child)
     (gtk_widget_show child)
     (g_signal_connect child "activate"
@@ -1709,7 +1958,11 @@ Adds reverberation scaled by reverb amount, lowpass filtering, and feedback. Mov
 		     "Chowning reverb"
 		     (lambda (w data) 
 		       (map-chan-over-target-with-sync
-			jc-reverb-1 jc-reverb-target "jc-reverb" (and (not jc-reverb-truncate) jc-reverb-decay)))
+			(lambda (samps) (effects-jc-reverb samps jc-reverb-volume))
+			jc-reverb-target 
+			(lambda (target samps) 
+			  (format #f "effects-jc-reverb-1 ~A" jc-reverb-volume))
+			(and (not jc-reverb-truncate) jc-reverb-decay)))
 		     (lambda (w data)
 		       (help-dialog "Chowning reverb"
 				    "Nice reverb from John Chowning. Move the sliders to set the reverb parameters."))
@@ -1760,18 +2013,7 @@ Adds reverberation scaled by reverb amount, lowpass filtering, and feedback. Mov
 		    (make-effect-dialog
 		     "Convolution"
 		     (lambda (w data)
-		       (let* ((flt-len (frames convolve-sound-one))
-			      (total-len (+ flt-len (frames convolve-sound-two)))
-			      (cnv (make-convolve :filter (channel->vct 0 flt-len convolve-sound-one)))
-			      (sf (make-sample-reader 0 convolve-sound-two))
-			      (out-data (make-vct total-len)))
-			 (vct-map! out-data (lambda () (convolve cnv (lambda (dir) (next-sample sf)))))
-			 (free-sample-reader sf)
-			 (vct-scale! out-data convolve-amp)
-			 (let ((max-samp (vct-peak out-data)))
-			   (vct->channel out-data 0 total-len convolve-sound-two)
-			   (if (> max-samp 1.0) (set! (y-bounds snd1) (list (- max-samp) max-samp)))
-			   max-samp)))
+		       (effects-cnv convolve-sound-one convolve-amp convolve-sound-two))
 		     (lambda (w data)
 		       (help-dialog "Convolution"
 				    "Very simple convolution. Move the sliders to set the numbers of the soundfiles
@@ -1815,6 +2057,111 @@ http://www.bright.net/~dlphilp/linux_csound.html under Impulse Response Data."))
 
 ;;; VARIOUS AND MISCELLANEOUS
 
+(define* (effects-hello-dentist frq amp #:optional beg dur snd chn)
+  (let* ((rn (make-rand-interp :frequency frq :amplitude amp))
+	 (i 0)
+	 (j 0)
+	 (len (or dur (frames snd chn)))
+	 (in-data (channel->vct beg len snd chn))
+	 (out-len (inexact->exact (round (* len (+ 1.0 (* 2 amp))))))
+	 (out-data (make-vct out-len))
+	 (rd (make-src :srate 1.0
+		       :input (lambda (dir)
+				(let ((val (if (and (>= i 0) (< i len))
+					       (vct-ref in-data i)
+					       0.0)))
+				  (set! i (+ i dir))
+				  val)))))
+    (do ()
+	((or (= i len) (= j out-len)))
+      (vct-set! out-data j (src rd (rand-interp rn)))
+      (set! j (+ j 1)))
+    (vct->channel out-data beg j snd chn #f 
+		  (format #f "effects-hello-dentist ~A ~A ~A ~A" frq amp beg (if (= len (frames snd chn)) #f len)))))
+
+(define* (effects-fp srf osamp osfrq #:optional beg dur snd chn)
+  (let* ((os (make-oscil osfrq))
+	 (sr (make-src :srate srf))
+	 (sf (make-sample-reader beg))
+	 (len (or dur (frames snd chn)))
+	 (out-data (make-vct len))
+	 (amp osamp))
+    (vct-map! out-data
+	      (lambda ()
+		(src sr (* amp (oscil os))
+		     (lambda (dir)
+		       (if (> dir 0)
+			   (next-sample sf)
+			   (previous-sample sf))))))
+    (free-sample-reader sf)
+    (vct->channel out-data beg len snd chn #f
+		  (format #f "effects-fp ~A ~A ~A ~A ~A" srf osamp osfrq beg (if (= len (frames snd chn)) #f len)))))
+
+(define* (effects-position-sound mono-snd pos-1 #:optional snd chn)
+  (let ((len (frames mono-snd))
+	(reader1 (make-sample-reader 0 mono-snd))
+	(pos pos-1))
+    (if (number? pos)
+	(map-channel (lambda (y)
+		       (+ y (* pos (read-sample reader1))))
+		     0 len snd chn #f
+		     (format #f "effects-position-sound ~A ~A" mono-snd pos))
+	(let ((e1 (make-env pos :end (1- len))))
+	  (if (and (number? chn) (= chn 1))
+	      (map-channel (lambda (y)
+			     (+ y (* (env e1) (read-sample reader1))))
+			   0 len snd chn #f
+			   (format #f "effects-position-sound ~A '~A" mono-snd pos))
+	      (map-channel (lambda (y)
+			     (+ y (* (- 1.0 (env e1)) (read-sample reader1))))
+			   0 len snd chn #f
+			   (format #f "effects-position-sound ~A '~A" mono-snd pos)))))))
+    
+(define* (effects-flange amount speed time #:optional beg dur snd chn)
+  (let* ((ri (make-rand-interp :frequency speed :amplitude amount))
+	 (len (inexact->exact (round (* time (srate)))))
+	 (del (make-delay len :max-size (+ len amount 1))))
+    (map-channel (lambda (inval)
+		   (* .75 (+ inval
+			     (delay del
+				    inval
+				    (rand-interp ri)))))
+		 beg dur snd chn #f (format #f "effects-flange ~A ~A ~A ~A ~A"
+					    amount speed time beg (if (and (number? dur) (not (= dur (frames snd chn)))) dur #f)))))
+
+(define (effects-cross-synthesis cross-snd amp fftsize r)
+  ;; cross-snd is the index of the other sound (as opposed to the map-channel sound)
+  (let* ((freq-inc (/ fftsize 2))
+	 (fdr (make-vct fftsize))
+	 (fdi (make-vct fftsize))
+	 (spectr (make-vct freq-inc))
+	 (inctr 0)
+	 (ctr freq-inc)
+	 (radius (- 1.0 (/ r fftsize)))
+	 (bin (/ (srate) fftsize))
+	 (formants (make-vector freq-inc)))
+    (do ((i 0 (1+ i)))
+	((= i freq-inc))
+      (vector-set! formants i (make-formant radius (* i bin))))
+    (lambda (inval)
+      (let ((outval 0.0))
+	(if (= ctr freq-inc)
+	    (begin
+	      (set! fdr (channel->vct inctr fftsize cross-snd 0))
+	      (set! inctr (+ inctr freq-inc))
+	      (spectrum fdr fdi #f 2)
+	      (vct-subtract! fdr spectr)
+	      (vct-scale! fdr (/ 1.0 freq-inc))
+	      (set! ctr 0)))
+	(set! ctr (+ ctr 1))
+	(vct-add! spectr fdr)
+	(* amp (formant-bank spectr formants inval))))))
+    
+(define* (effects-cross-synthesis-1 cross-snd amp fftsize r #:optional beg dur snd chn)
+  (map-channel (effects-cross-synthesis (if (sound? cross-snd) cross-snd (car (sounds))) amp fftsize r)
+	       beg dur snd chn #f
+	       (format #f "effects-cross-synthesis-1 ~A ~A ~A ~A ~A ~A" cross-snd amp fftsize r beg dur)))
+
 (let ((misc-menu-list '())
       (misc-menu (gtk_menu_item_new_with_label "Various"))
       (misc-cascade (gtk_menu_new)))
@@ -1839,26 +2186,13 @@ it into two copies whose amplitudes depend on the envelope 'pan-env'.  If 'pan-e
 a number, the sound is split such that 0 is all in channel 0 and 90 is all in channel 1."
       (let ((len (frames mono-snd)))
 	(if (number? pan-env)
-	    (let* ((pos (/ pan-env 90.0))
-		   (reader0 (make-sample-reader 0 mono-snd))
-		   (reader1 (make-sample-reader 0 mono-snd)))
-	      (map-channel (lambda (y)
-			     (+ y (* pos (read-sample reader1))))
-			   0 len stereo-snd 1)
-	      (map-channel (lambda (y)
-			     (+ y (* (- 1.0 pos) (read-sample reader0))))
-			   0 len stereo-snd 0))
-	    (let ((e0 (make-env pan-env :end (1- len)))
-		  (e1 (make-env pan-env :end (1- len)))
-		  (reader0 (make-sample-reader 0 mono-snd))
-		  (reader1 (make-sample-reader 0 mono-snd)))
-	      (map-channel (lambda (y)
-			     (+ y (* (env e1) (read-sample reader1))))
-			   0 len stereo-snd 1)
-	      (map-channel (lambda (y)
-			     (+ y (* (- 1.0 (env e0)) (read-sample reader0))))
-			   0 len stereo-snd 0)))))
-
+	    (let* ((pos (/ pan-env 90.0)))
+	      (effects-position-sound mono-snd pos stereo-snd 1)
+	      (effects-position-sound mono-snd (- 1.0 pos) stereo-snd 0))
+	    (begin
+	      (effects-position-sound mono-snd pan-env stereo-snd 1)
+	      (effects-position-sound mono-snd pan-env stereo-snd 0)))))
+    
     (gtk_menu_shell_append (GTK_MENU_SHELL misc-cascade) child)
     (gtk_widget_show child)
     (g_signal_connect child "activate"
@@ -2018,34 +2352,6 @@ a number, the sound is split such that 0 is all in channel 0 and 90 is all in ch
 	(cross-synth-default-fft-widget #f)
 	(cross-synth-target 'sound))
 
-    (define (cross-synthesis cross-snd amp fftsize r)
-      ;; cross-snd is the index of the other sound (as opposed to the map-channel sound)
-      (let* ((freq-inc (/ fftsize 2))
-	     (fdr (make-vct fftsize))
-	     (fdi (make-vct fftsize))
-	     (spectr (make-vct freq-inc))
-	     (inctr 0)
-	     (ctr freq-inc)
-	     (radius (- 1.0 (/ r fftsize)))
-	     (bin (/ (srate) fftsize))
-	     (formants (make-vector freq-inc)))
-	(do ((i 0 (1+ i)))
-	    ((= i freq-inc))
-	  (vector-set! formants i (make-formant radius (* i bin))))
-	(lambda (inval)
-	  (let ((outval 0.0))
-	    (if (= ctr freq-inc)
-		(begin
-		  (set! fdr (channel->vct inctr fftsize cross-snd 0))
-		  (set! inctr (+ inctr freq-inc))
-		  (spectrum fdr fdi #f 2)
-		  (vct-subtract! fdr spectr)
-		  (vct-scale! fdr (/ 1.0 freq-inc))
-		  (set! ctr 0)))
-	    (set! ctr (+ ctr 1))
-	    (vct-add! spectr fdr)
-	    (* amp (formant-bank spectr formants inval))))))
-
     (gtk_menu_shell_append (GTK_MENU_SHELL misc-cascade) child)
     (gtk_widget_show child)
     (g_signal_connect child "activate"
@@ -2062,8 +2368,12 @@ a number, the sound is split such that 0 is all in channel 0 and 90 is all in ch
 		     (lambda (w data)
 		       (map-chan-over-target-with-sync
 			(lambda (ignored) 
-			  (cross-synthesis cross-synth-sound cross-synth-amp cross-synth-fft-size cross-synth-radius))
-			cross-synth-target "Cross synthesis" #f))
+			  (effects-cross-synthesis cross-synth-sound cross-synth-amp cross-synth-fft-size cross-synth-radius))
+			cross-synth-target 
+			(lambda (target samps)
+			  (format #f "effects-cross-synthesis-1 ~A ~A ~A ~A"
+				  cross-synth-sound cross-synth-amp cross-synth-fft-size cross-synth-radius))
+			#f))
 		     (lambda (w data)
 		       (help-dialog "Cross synthesis"
 				    "The sliders set the number of the soundfile to be cross-synthesized, 
@@ -2135,7 +2445,10 @@ the synthesis amplitude, the FFT size, and the radius value."))
 					(delay del
 					       inval
 					       (rand-interp ri)))))))
-			flange-target "flange" #f))
+			flange-target 
+			(lambda (target samps) 
+			  (format #f "effects-flange ~A ~A ~A" flange-amount flange-speed flange-time))
+			#f))
 		     (lambda (w data)
 		       (help-dialog "Flange"
 				    "Move the sliders to change the flange speed, amount, and time"))
@@ -2252,17 +2565,17 @@ the synthesis amplitude, the FFT size, and the radius value."))
 		     (lambda (w data)
 		       (let ((ms (and (eq? robotize-target 'marks)
 				      (plausible-mark-samples))))
-			 (fp-1 samp-rate osc-amp osc-freq
-			       (if (eq? robotize-target 'sound)
-				   0
-				   (if (eq? robotize-target 'selection)
-				       (selection-position)
-				       (car ms)))
-			       (if (eq? robotize-target 'sound)
-				   (1- (frames))
-				   (if (eq? robotize-target 'selection)
-				       (+ (selection-position) (selection-frames))
-				       (cadr ms))))))
+			 (effects-fp samp-rate osc-amp osc-freq
+				     (if (eq? robotize-target 'sound)
+					 0
+					 (if (eq? robotize-target 'selection)
+					     (selection-position)
+					     (car ms)))
+				     (if (eq? robotize-target 'sound)
+					 (frames)
+					 (if (eq? robotize-target 'selection)
+					     (selection-frames)
+					     (- (cadr ms) (car ms)))))))
 		     (lambda (w data)
 		       (help-dialog "Robotize"
 				    "Move the sliders to set the sample rate, oscillator amplitude, and oscillator frequency."))
@@ -2349,28 +2662,6 @@ the synthesis amplitude, the FFT size, and the radius value."))
 	(wobble-dialog #f)
 	(wobble-target 'sound))
 
-    (define hello-dentist-1 ; hello-dentist with added beg and end args
-      (lambda (frq amp beg end)
-	(let* ((rn (make-rand-interp :frequency frq :amplitude amp))
-	       (i 0)
-	       (j 0)
-	       (len (1+ (- end beg)))
-	       (in-data (channel->vct beg len))
-	       (out-len (inexact->exact (round (* len (+ 1.0 (* 2 amp))))))
-	       (out-data (make-vct out-len))
-	       (rd (make-src :srate 1.0
-			     :input (lambda (dir)
-				      (let ((val (if (and (>= i 0) (< i len))
-						     (vct-ref in-data i)
-						     0.0)))
-					(set! i (+ i dir))
-					val)))))
-	  (do ()
-	      ((or (= i len) (= j out-len)))
-	    (vct-set! out-data j (src rd (rand-interp rn)))
-	    (set! j (+ j 1)))
-	  (vct->channel out-data beg j))))
-
     (gtk_menu_shell_append (GTK_MENU_SHELL misc-cascade) child)
     (gtk_widget_show child)
     (g_signal_connect child "activate"
@@ -2385,7 +2676,7 @@ the synthesis amplitude, the FFT size, and the radius value."))
 		     (lambda (w data)
 		       (let ((ms (and (eq? wobble-target 'marks)
 				      (plausible-mark-samples))))
-			 (hello-dentist-1
+			 (effects-hello-dentist
 			  wobble-frequency wobble-amplitude
 			  (if (eq? wobble-target 'sound)
 			      0
@@ -2393,10 +2684,10 @@ the synthesis amplitude, the FFT size, and the radius value."))
 				  (selection-position)
 				  (car ms)))
 			  (if (eq? wobble-target 'sound)
-			      (1- (frames))
+			      (frames)
 			      (if (eq? wobble-target 'selection)
-				  (+ (selection-position) (selection-frames))
-				  (cadr ms))))))
+				  (selection-frames)
+				  (- (cadr ms) (car ms)))))))
 		     (lambda (w data)
 		       (help-dialog "Wobble"
 				    "Move the sliders to set the wobble frequency and amplitude."))
@@ -2469,21 +2760,31 @@ the synthesis amplitude, the FFT size, and the radius value."))
 			 (smooth-sound (- click 2) 4)
 			 (remove-click (+ click 2))))))
 	       (remove-click 0)))
-(add-to-menu effects-menu "Remove DC" (lambda () 
-					(map-channel
-					 (let ((lastx 0.0)
-					       (lasty 0.0))
-					   (lambda (inval)
-					     (set! lasty (+ inval (- (* 0.999 lasty) lastx)))
-					     (set! lastx inval)
-					     lasty)))))
+
+(define* (effects-remove-dc #:optional snd chn)
+  (map-channel
+   (let ((lastx 0.0)
+	 (lasty 0.0))
+     (lambda (inval)
+       (set! lasty (+ inval (- (* 0.999 lasty) lastx)))
+       (set! lastx inval)
+       lasty))
+   0 #f snd chn #f "effects-remove-dc"))
+
+(add-to-menu effects-menu "Remove DC" (lambda () (effects-remove-dc)))
 (add-to-menu effects-menu "Spiker" spike)
-(add-to-menu effects-menu "Compand" (lambda () (map-channel 
-						(let* ((tbl (vct -1.000 -0.960 -0.900 -0.820 -0.720 -0.600 -0.450 -0.250
-								 0.000 0.250 0.450 0.600 0.720 0.820 0.900 0.960 1.000)))
-						  (lambda (inval)
-						    (let ((index (+ 8.0 (* 8.0 inval))))
-						      (array-interp tbl index 17)))))))
+
+(define* (effects-compand #:optional snd chn)
+  (map-channel 
+   (let* ((tbl (vct -1.000 -0.960 -0.900 -0.820 -0.720 -0.600 -0.450 -0.250
+		    0.000 0.250 0.450 0.600 0.720 0.820 0.900 0.960 1.000)))
+     (lambda (inval)
+       (let ((index (+ 8.0 (* 8.0 inval))))
+	 (array-interp tbl index 17))))
+   0 #f snd chn #f "effects-compand"))
+
+(add-to-menu effects-menu "Compand" (lambda () (effects-compand)))
+
 (add-to-menu effects-menu "Invert" (lambda () (scale-by -1)))
 (add-to-menu effects-menu "Reverse" (lambda () (reverse-sound)))
 (add-to-menu effects-menu "Null phase" (lambda () (zero-phase)))

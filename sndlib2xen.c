@@ -630,8 +630,6 @@ static XEN g_vct_to_sound_data(XEN vobj, XEN sdobj, XEN chan)
   return(sdobj);
 }
 
-/* TODO: decide whether to keep sound-data->sound-data */
-
 #define S_sound_data_to_sound_data "sound-data->sound-data"
 static XEN g_sound_data_to_sound_data(XEN sd_in, XEN sd_out, XEN start, XEN frames, XEN cycle_length)
 {
