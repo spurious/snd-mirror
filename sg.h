@@ -59,9 +59,14 @@
   #define SCM_FNC
 #endif
 
+#ifdef __FUNCTION__
 #define TO_C_DOUBLE(a) scm_num2dbl(a,__FUNCTION__)
 #define TO_C_INT(a) ((int)scm_num2long(a,(char *)SCM_ARG1,__FUNCTION__))
 /* using these rather than gh_scm2double and gh_scm2int to get better error reporting */
+#else
+#define TO_C_DOUBLE(a) gh_scm2double(a)
+#define TO_C_INT(a) gh_scm2int(a)
+#endif
 
 #define ERRB1(a,b) SCM_ASSERT((gh_number_p(a)) || (gh_boolean_p(a)) || (SCM_UNBNDP(a)),a,SCM_ARG1,b)
 #define ERRB2(a,b) SCM_ASSERT((gh_number_p(a)) || (gh_boolean_p(a)) || (SCM_UNBNDP(a)),a,SCM_ARG2,b)
