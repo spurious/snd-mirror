@@ -1474,6 +1474,7 @@ if test "$enable_snd_debug" = yes ; then
   CFLAGS="-I. $CFLAGS"
 else
   # this taken from swh-plugins-0.3.7/configure.in (with minor changes)
+  # -mcpu=v9 is reported to help on the Sun
   # MACHINE="-mcpu=${build_cpu} -march=${build_cpu}"
   # if test ${build_cpu} = "powerpc"; then MACHINE=""; fi
   # CFLAGS="-I. $CFLAGS ${MACHINE}"

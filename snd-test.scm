@@ -34,6 +34,7 @@
 ;;; how to send ourselves a drop?  (button2 on menu is only the first half -- how to force 2nd?)
 ;;; need all html example code in autotests
 ;;; need some way to check that graphs are actually drawn (region dialog, oscope etc) and sounds played correctly
+;;; TODO: dlp regression tests (at least load the files!)
 
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 optargs) (ice-9 popen))
 
@@ -41,7 +42,7 @@
 
 (define tests 1)
 (define keep-going #f)
-(define all-args #t) ; huge arg testing
+(define all-args #f) ; huge arg testing
 (define with-big-file #t)
 
 (define (snd-display . args)
@@ -15255,8 +15256,8 @@ EDITS: 5
 		   ((= i 10))
 		 (vct-set! v i (wave-train tbl1 0.0))) ;(wave-train tbl1 (/ (* 2 pi .2) 4))))
 	       (if (not (vequal v vals))
-		   (snd-display ";tbl interp ~A: ~A ~A" type v (mus-describe tbl1)))
-	       (if (not (= (mus-interp-type tbl1) type)) (snd-display ";tbl interp-type (~A): ~A" type (mus-interp-type tbl1)))))))
+		   (snd-display ";wt tbl interp ~A: ~A ~A" type v (mus-describe tbl1)))
+	       (if (not (= (mus-interp-type tbl1) type)) (snd-display ";wt tbl interp-type (~A): ~A" type (mus-interp-type tbl1)))))))
        (list 
 	(list mus-interp-none (vct 0.000 1.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 1.000))
 	(list mus-interp-linear (vct 0.200 0.800 0.000 0.000 0.000 0.000 0.000 0.000 0.200 0.800))
@@ -17884,24 +17885,73 @@ EDITS: 5
 	 make-procs run-procs ques-procs gen-args func-names)
 
 	(if all-args
-	    (for-each
-	     (lambda (make runp)
-	       (let ((gen (make)))
-		 (for-each 
-		  (lambda (arg1)
-		    (catch #t (lambda () (runp gen arg1)) (lambda args (car args)))
-		    (for-each
-		     (lambda (arg2)
-		       (catch #t (lambda () (runp gen arg1 arg2)) (lambda args (car args))))
-		     (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color .95 .95 .95)  '#(0 1) 3/4 'mus-error (sqrt -1.0) (make-delay 32)
-			   (lambda () #t) (current-module) (make-sound-data 2 3) :order 0 1 -1 (make-hook 2) #f #t #\c 0.0 1.0 -1.0 
-			   '() '3 4 2 8 16 32 64 (make-vector 0) '(1 . 2) (expt 2.0 21.5) (expt 2.0 -18.0)
-			   12345678901234567890 (log 0) (nan))))
-		  (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color .95 .95 .95)  '#(0 1) 3/4 'mus-error (sqrt -1.0) (make-delay 32)
-			(lambda () #t) (current-module) (make-sound-data 2 3) :order 0 1 -1 (make-hook 2) #f #t #\c 0.0 1.0 -1.0 
-			'() '3 4 2 8 16 32 64 (make-vector 0) '(1 . 2) (expt 2.0 21.5) (expt 2.0 -18.0)
-			12345678901234567890 (log 0) (nan)))))
-	     make-procs run-procs)))
+	    (begin
+	      (for-each
+	       (lambda (make runp)
+		 (let ((gen (make)))
+		   (for-each 
+		    (lambda (arg1)
+		      (catch #t (lambda () (runp gen arg1)) (lambda args (car args)))
+		      (for-each
+		       (lambda (arg2)
+			 (catch #t (lambda () (runp gen arg1 arg2)) (lambda args (car args))))
+		       (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color .95 .95 .95)  '#(0 1) 3/4 'mus-error (sqrt -1.0) (make-delay 32)
+			     (lambda () #t) (current-module) (make-sound-data 2 3) :order 0 1 -1 (make-hook 2) #f #t #\c 0.0 1.0 -1.0 
+			     '() '3 4 2 8 16 32 64 (make-vector 0) '(1 . 2) (expt 2.0 21.5) (expt 2.0 -18.0)
+			     12345678901234567890 (log 0) (nan))))
+		    (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color .95 .95 .95)  '#(0 1) 3/4 'mus-error (sqrt -1.0) (make-delay 32)
+			  (lambda () #t) (current-module) (make-sound-data 2 3) :order 0 1 -1 (make-hook 2) #f #t #\c 0.0 1.0 -1.0 
+			  '() '3 4 2 8 16 32 64 (make-vector 0) '(1 . 2) (expt 2.0 21.5) (expt 2.0 -18.0)
+			  12345678901234567890 (log 0) (nan)))))
+	       make-procs run-procs)
+	      
+	      ;; generator torture tests...
+	      (let ((random-args (list 
+				  (expt 2.0 21.5) (expt 2.0 -18.0) 12345678901234567890 (log 0) (nan)
+				  1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color .1 .2 .3)  '#(0 1) 3/4 (sqrt -1.0) (make-delay 32)
+				  (lambda () 0.0) (lambda (dir) 1.0) (lambda (a b c) 1.0) 0 1 -1 #f #t #\c 0.0 1.0 -1.0 '() 32 '(1 . 2)
+				  ))
+		    (gen-make-procs (list make-all-pass make-asymmetric-fm make-average make-table-lookup make-triangle-wave
+					  make-comb make-convolve make-delay make-env make-fft-window
+					  make-filter make-fir-filter make-formant make-frame make-granulate
+					  make-iir-filter make-locsig make-mixer make-notch make-one-pole make-one-zero make-oscil make-ppolar
+					  make-pulse-train make-rand make-rand-interp make-sawtooth-wave
+					  make-sine-summation make-square-wave make-src make-sum-of-cosines make-sum-of-sines 
+					  make-two-pole make-two-zero make-wave-train make-waveshape make-zpolar make-phase-vocoder make-ssb-am)))
+		
+		(define (random-gen args)
+		  (for-each
+		   (lambda (n)
+		     (let ((gen (catch #t
+				       (lambda () (apply n args))
+				       (lambda args (car args)))))
+		       (if (mus-generator? gen)
+			   (begin
+			     (for-each
+			      (lambda (arg)
+				(catch #t
+				       (lambda () (gen arg))
+				       (lambda args (car args))))
+			      random-args)))))
+		   gen-make-procs))
+		
+		(random-gen '())
+		(for-each
+		 (lambda (arg1)
+		   (random-gen (list arg1))
+		   (for-each 
+		    (lambda (arg2)
+		      (random-gen (list arg1 arg2))
+		      (for-each 
+		       (lambda (arg3)
+			 (random-gen (list arg1 arg2 arg3))
+			 (for-each 
+			  (lambda (arg4)
+			    (random-gen (list arg1 arg2 arg3 arg4)))
+			  random-args))
+		       random-args))
+		    random-args))
+		 random-args)))))
       
       (run-hook after-test-hook 8)
       ))
@@ -39828,7 +39878,7 @@ EDITS: 2
       (set! *clm-header-type* mus-riff)
       (set! *clm-delete-reverb* #t)
       (set! *clm-reverb* jc-reverb)
-      (set! *clm-reverb-data* '(#t 2.0 (list 0 1 3.0 1 4.0 0)))
+      (set! *clm-reverb-data* (list #t 2.0 (list 0 1 3.0 1 4.0 0)))
       
       (with-sound () (fm-violin 0 1 440 .1 :reverb-amount .1))
       

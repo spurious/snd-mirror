@@ -9269,6 +9269,10 @@ append the rest?
         xramps could also be collapsed, but I think they would require an extra exp:
         we only win via algebra if both segments offsets are 0.0; then it can collapse 
         to e^(x1+x2) essentially.  Unfortunately, this almost never happens.
+        We could also use Horner's rule here, and use just one "x" (and incr) for
+        all ramps, but this entire discussion assumes ramps in order (i.e. ramp3,
+        not split), and costs an add (or a multiply) per ramp over the current version,
+        so we're trading space for speed and flexibility.
 
         Both cases look complicated at fragment setup -- perhaps the current brute-force-but-obvious 
         code is better.

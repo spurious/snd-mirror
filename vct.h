@@ -48,6 +48,7 @@ vct *c_free_vct(vct *v);
 vct *c_vct_copy(vct *vc);
 bool vct_equalp(vct *v1, vct *v2);
 char *vct_to_readable_string(vct *v);
+XEN list_to_vct(XEN lst);
 
 #define TO_VCT(arg) ((vct *)XEN_OBJECT_REF(arg))
 #define VCT_P(arg) vct_p(arg)

@@ -9108,6 +9108,10 @@ MUS_VCT_1(data, 0)
 MUS_VCT_1(xcoeffs, 1)
 MUS_VCT_1(ycoeffs, 2)
 
+  /* these ought to add_obj_to_gcs (pv cases also above), but we assume currently
+   * that we can return the vct result to scheme, so we can't actually clean up correctly --
+   * surely this is a bug...
+   */
 
 static xen_value *boolean_p_1(ptree *prog, xen_value **args, int num_args)
 {
@@ -9647,6 +9651,7 @@ static xen_value *clm_print_1(ptree *prog, xen_value **args, int num_args)
 {
   if (!clm_print_walk_property_set)
     {
+      /* TODO: why is this called more than once? */
       XEN_SET_OBJECT_PROPERTY(XEN_NAME_AS_C_STRING_TO_VARIABLE("clm-print"),
 			      walk_sym,
 			      C_TO_XEN_ULONG(make_walker(clm_print_1, NULL, NULL, 1, UNLIMITED_ARGS, R_STRING, false, 1, -R_XEN)));

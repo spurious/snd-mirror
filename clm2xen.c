@@ -1188,27 +1188,34 @@ static XEN g_make_delay_1(xclm_delay_t choice, XEN arglist)
   XEN args[MAX_ARGLIST_LEN]; 
   XEN keys[8];
   int orig_arg[8] = {0, 0, 0, 0, 0, 0, 0, (int)MUS_INTERP_NONE};
-  int vals, i, argn = 0, len = 0, arglist_len, keyn, max_size = -1;
+  int vals, i, argn = 0, len = 0, arglist_len, max_size = -1, size = -1;
   mus_interp_t interp_type = MUS_INTERP_NONE;
-  int size = 1;
   Float *line = NULL;
   Float scaler = 0.0, feedback = 0.0, feedforward = 0.0;
-  XEN initial_contents = XEN_UNDEFINED; 
-  XEN lst;
+  vct *initial_contents = NULL;
   Float initial_element = 0.0;
+  int scaler_key = -1, feedback_key = -1, feedforward_key = -1, size_key = -1, initial_contents_key = -1;
+  int initial_element_key = -1, max_size_key = -1, interp_type_key = -1;
+  bool size_set = false, max_size_set = false;
   switch (choice)
     {
     case G_DELAY:    caller = S_make_delay;                                                               break;
     case G_AVERAGE:  caller = S_make_average;                                                             break;
-    case G_COMB:     caller = S_make_comb;     keys[argn++] = kw_scaler;                                  break;
-    case G_NOTCH:    caller = S_make_notch;    keys[argn++] = kw_scaler;                                  break;
-    case G_ALL_PASS: caller = S_make_all_pass; keys[argn++] = kw_feedback; keys[argn++] = kw_feedforward; break;
+    case G_COMB:     caller = S_make_comb;     scaler_key = argn; keys[argn++] = kw_scaler;               break;
+    case G_NOTCH:    caller = S_make_notch;    scaler_key = argn; keys[argn++] = kw_scaler;               break;
+    case G_ALL_PASS: 
+      caller = S_make_all_pass; 
+      feedback_key = argn;
+      keys[argn++] = kw_feedback; 
+      feedforward_key = argn;
+      keys[argn++] = kw_feedforward; 
+      break;
     }
-  keys[argn++] = kw_size;
-  keys[argn++] = kw_initial_contents;
-  keys[argn++] = kw_initial_element;
-  keys[argn++] = kw_max_size;
-  keys[argn++] = kw_type;
+  size_key = argn;             keys[argn++] = kw_size;
+  initial_contents_key = argn; keys[argn++] = kw_initial_contents;
+  initial_element_key = argn;  keys[argn++] = kw_initial_element;
+  max_size_key = argn;         keys[argn++] = kw_max_size;
+  interp_type_key = argn;      keys[argn++] = kw_type;
   arglist_len = XEN_LIST_LENGTH(arglist);
   if (arglist_len > MAX_ARGLIST_LEN)
     XEN_ERROR(MUS_MISC_ERROR,
@@ -1220,147 +1227,132 @@ static XEN g_make_delay_1(xclm_delay_t choice, XEN arglist)
   vals = mus_optkey_unscramble(caller, argn, keys, args, orig_arg);
   if (vals > 0)
     {
-      keyn = 0;
+      /* try to catch obvious type/range errors before allocations 
+       *   a major complication here is that size can be 0
+       */
+
+      if (!(XEN_KEYWORD_P(keys[size_key])))
+	{
+	  size = mus_optkey_to_int(keys[size_key], caller, orig_arg[size_key], size); /* size can  be 0? -- surely we need a line in any case? */
+	  if (size < 0)
+	    XEN_OUT_OF_RANGE_ERROR(caller, orig_arg[size_key], keys[size_key], "size ~A < 0?");
+	  if (size > MAX_TABLE_SIZE)
+	    XEN_OUT_OF_RANGE_ERROR(caller, orig_arg[size_key], keys[size_key], "size ~A too large");
+	  size_set = true;
+	}
+      if (!(XEN_KEYWORD_P(keys[max_size_key])))
+	{
+	  max_size = mus_optkey_to_int(keys[max_size_key], caller, orig_arg[max_size_key], max_size); /* -1 = unset */
+	  if (max_size < 0)
+	    XEN_OUT_OF_RANGE_ERROR(caller, orig_arg[max_size_key], keys[max_size_key], "max-size ~A < 0?");
+	  if (max_size > MAX_TABLE_SIZE)
+	    XEN_OUT_OF_RANGE_ERROR(caller, orig_arg[max_size_key], keys[max_size_key], "max-size ~A too large");
+	  max_size_set = true;
+	}
+
+      if (XEN_KEYWORD_P(keys[interp_type_key]))
+	{
+	  /* if type not given, if max_size, assume linear interp (for possible tap), else no interp */
+	  if ((max_size_set) && (max_size != size))
+	    interp_type = MUS_INTERP_LINEAR;
+	  else interp_type = MUS_INTERP_NONE;
+	}
+      else
+	{
+	  interp_type = mus_optkey_to_int(keys[interp_type_key], caller, orig_arg[interp_type_key], MUS_INTERP_LINEAR);
+	  if (!(MUS_INTERP_TYPE_OK(interp_type)))
+	    XEN_OUT_OF_RANGE_ERROR(caller, orig_arg[interp_type_key], keys[interp_type_key], "no such interp-type: ~A");
+	}
+
+      initial_element = mus_optkey_to_float(keys[initial_element_key], caller, orig_arg[initial_element_key], initial_element);
+
       switch (choice)
 	{
 	case G_DELAY: 
 	case G_AVERAGE:
 	  break;
 	case G_COMB: case G_NOTCH:
-	  scaler = mus_optkey_to_float(keys[keyn], caller, orig_arg[keyn], scaler);
-	  keyn++;
+	  scaler = mus_optkey_to_float(keys[scaler_key], caller, orig_arg[scaler_key], scaler);
 	  break;
 	case G_ALL_PASS:
-	  feedback = mus_optkey_to_float(keys[keyn], caller, orig_arg[keyn], feedback);
-	  keyn++;
-	  feedforward = mus_optkey_to_float(keys[keyn], caller, orig_arg[keyn], feedforward);
-	  keyn++;
+	  feedback = mus_optkey_to_float(keys[feedback_key], caller, orig_arg[feedback_key], feedback);
+	  feedforward = mus_optkey_to_float(keys[feedforward_key], caller, orig_arg[feedforward_key], feedforward);
 	  break;
 	}
-      size = mus_optkey_to_int(keys[keyn], caller, orig_arg[keyn], size); /* size can  be 0? -- surely we need a line in any case? */
-      if (size < 0)
-	XEN_OUT_OF_RANGE_ERROR(caller, orig_arg[keyn], keys[keyn], "size ~A < 0?");
-      if (size > MAX_TABLE_SIZE)
-	XEN_OUT_OF_RANGE_ERROR(caller, orig_arg[keyn], keys[keyn], "size ~A too large");
-      keyn++;
-      if (!(XEN_KEYWORD_P(keys[keyn])))
+
+      if (!(XEN_KEYWORD_P(keys[initial_contents_key])))
 	{
-	  initial_contents = keys[keyn];
-	  if (VCT_P(initial_contents))
-	    {
-	      vct *v;
-	      v = TO_VCT(initial_contents);
-	      if (size < v->length)
-		size = v->length;
-	      else
-		{
-		  if (size > v->length)
-		    XEN_OUT_OF_RANGE_ERROR(caller, orig_arg[keyn], keys[keyn], "size ~A too large for data");
-		}
-	      line = copy_vct_data(v);
-	    }
+	  if (!(XEN_KEYWORD_P(keys[initial_element_key])))
+	    XEN_OUT_OF_RANGE_ERROR(caller, orig_arg[initial_contents_key], keys[initial_contents_key], "initial-contents and initial-element in same call?");
+	  if (VCT_P(keys[initial_contents_key]))
+	    initial_contents = TO_VCT(keys[initial_contents_key]);
 	  else
 	    {
-	      if (XEN_LIST_P_WITH_LENGTH(initial_contents, len))
+	      if (XEN_LIST_P_WITH_LENGTH(keys[initial_contents_key], len))
 		{
 		  if (len == 0) 
 		    XEN_ERROR(NO_DATA,
-			      XEN_LIST_3(C_TO_XEN_STRING(caller), 
-					 C_TO_XEN_STRING("initial-contents empty?"), 
-					 initial_contents));
-		  if (size < len) size = len;
-		  line = (Float *)CALLOC(size, sizeof(Float));
-		  if (line == NULL)
-		    return(clm_mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate delay line"));
-		  for (i = 0, lst = XEN_COPY_ARG(initial_contents); (i < len) && (XEN_NOT_NULL_P(lst)); i++, lst = XEN_CDR(lst))
-		    line[i] = XEN_TO_C_DOUBLE_OR_ELSE(XEN_CAR(lst), 0.0);
+			      XEN_LIST_2(C_TO_XEN_STRING(caller), 
+					 C_TO_XEN_STRING("initial-contents list empty?")));
+		  initial_contents = TO_VCT(list_to_vct(keys[initial_contents_key]));
+		  /* do I need to protect this until we read its contents? -- no extlang stuff except error returns */
 		}
+	      else XEN_ASSERT_TYPE(false, keys[initial_contents_key], orig_arg[initial_contents_key], caller, "a vct or a list");
 	    }
-	}
-      keyn++;
-      if (XEN_KEYWORD_P(keys[keyn]))
-	initial_element = 0.0;
-      else
-	{
-	  if (XEN_NUMBER_P(keys[keyn]))
-	    initial_element = XEN_TO_C_DOUBLE(keys[keyn]);
-	  else 
+	  if (initial_contents)
 	    {
-	      if (line) FREE(line);
-	      XEN_ASSERT_TYPE(false, keys[keyn], orig_arg[keyn], caller, "a number");
-	    }
-	}
-      keyn++;
-
-      if (XEN_KEYWORD_P(keys[keyn]))
-	max_size = size;
-      else
-	{
-	  if (XEN_NUMBER_P(keys[keyn]))
-	    {
-	      max_size = XEN_TO_C_INT_OR_ELSE(keys[keyn], 0);
-	      if (max_size > MAX_TABLE_SIZE)
+	      if (size_set)
 		{
-		  if (line) FREE(line);
-		  XEN_OUT_OF_RANGE_ERROR(caller, orig_arg[keyn], keys[keyn], "max-size ~A too large");
+		  if (size > initial_contents->length)
+		    XEN_OUT_OF_RANGE_ERROR(caller, orig_arg[initial_contents_key], keys[initial_contents_key], "size > initial-contents length");
 		}
-	    }
-	  else
-	    {
-	      if (line) FREE(line);
-	      XEN_ASSERT_TYPE(false, keys[keyn], orig_arg[keyn], caller, "a number");
-	    }
-	}
-      keyn++;
-      if (XEN_KEYWORD_P(keys[keyn]))
-	{
-	  /* if type not given, if max_size, assume linear interp (for possible tap), else no interp */
-	  if (max_size != size)
-	    interp_type = MUS_INTERP_LINEAR;
-	  else interp_type = MUS_INTERP_NONE;
-	}
-      else
-	{
-	  if (XEN_NUMBER_P(keys[keyn]))
-	    {
-	      interp_type = (mus_interp_t)XEN_TO_C_INT_OR_ELSE(keys[keyn], MUS_INTERP_LINEAR);
-	      if (!(MUS_INTERP_TYPE_OK(interp_type)))
+	      else size = initial_contents->length;
+	      if (max_size_set)
 		{
-		  if (line) FREE(line);
-		  XEN_OUT_OF_RANGE_ERROR(caller, orig_arg[keyn], keys[keyn], "no such interp-type: ~A");
+		  if (max_size > initial_contents->length)
+		    XEN_OUT_OF_RANGE_ERROR(caller, orig_arg[initial_contents_key], keys[initial_contents_key], "max-size > initial-contents length");
 		}
+	      else max_size = initial_contents->length;
 	    }
 	}
     } 
-  /* here size can be (user-set to) 0 */
-  if (max_size <= 0)
+  /* here size can be (user-set to) 0, but max_size needs to be a reasonable allocation size */
+  if (size < 0) size = 1;
+  if (max_size < size) 
     {
       if (size == 0)
 	max_size = 1;
-      else max_size = size; /* i.e. if max-size not passed as arg, assume size */
-    }
-  else
-    {
-      if ((max_size <= 0) || (max_size < size))
-	{
-	  if (line) FREE(line);
-	  XEN_OUT_OF_RANGE_ERROR(caller, 0, C_TO_XEN_INT(max_size), "~A: invalid delay length");
-	}
+      else max_size = size;
     }
   if ((choice == G_AVERAGE) && (max_size != size))
     {
-      if (line) FREE(line);
-      XEN_OUT_OF_RANGE_ERROR(caller, 0, C_TO_XEN_INT(max_size), "max_size is irrelevant to the " S_average " generator");
+      if (size == 0)
+	XEN_OUT_OF_RANGE_ERROR(caller, 0, C_TO_XEN_INT(size), "size = 0 for the " S_average " generator is kinda loony?");
+      else XEN_OUT_OF_RANGE_ERROR(caller, 0, C_TO_XEN_INT(max_size), "max_size is irrelevant to the " S_average " generator");
     }
 #if DEBUGGING
   if (max_size <= 0) {fprintf(stderr, "delay max size: %d\n", max_size); abort();}
   if (size < 0) {fprintf(stderr, "delay size: %d\n", size); abort();}
 #endif
+  /* line itself is always allocated locally */
+  line = (Float *)CALLOC(max_size, sizeof(Float));
   if (line == NULL)
+    return(clm_mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate delay line"));
+  if (initial_contents)
     {
-      line = (Float *)CALLOC(max_size, sizeof(Float));
-      if (line == NULL)
-	return(clm_mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate delay line"));
+      int i;
+#if DEBUGGING
+      if (initial_contents->length > max_size) 
+	{
+	  fprintf(stderr, "initial-contents: %d, but max-size: %d (%d)\n", initial_contents->length, max_size, size);
+	  abort();
+	}
+#endif
+      for (i = 0; i < initial_contents->length; i++)
+	line[i] = initial_contents->data[i];
+    }
+  else
+    {
       if (initial_element != 0.0) 
 	for (i = 0; i < max_size; i++) 
 	  line[i] = initial_element;
@@ -2534,6 +2526,8 @@ generator) gen's radius and frequency"
 
 /* ---------------- frame ---------------- */
 
+#define MUS_MAX_CHANS 512
+
 static XEN g_make_frame(XEN arglist)
 {
   #define H_make_frame "(" S_make_frame " chans val0 val1 ...): return a new frame object \
@@ -2553,10 +2547,9 @@ with chans samples, each sample set from the trailing arguments (defaulting to 0
       XEN_ASSERT_TYPE(XEN_NUMBER_P(cararg), cararg, XEN_ARG_1, S_make_frame, "a number");
       size = XEN_TO_C_INT_OR_ELSE(cararg, 0);
       if (size <= 0) XEN_OUT_OF_RANGE_ERROR(S_make_frame, XEN_ARG_1, cararg, "chans ~A <= 0?");
-      if (len > (size + 1)) 
-	mus_misc_error(S_make_frame, "extra trailing args?", arglist);
-      if (size <= 0)
-	XEN_OUT_OF_RANGE_ERROR(S_make_frame, XEN_ARG_1, C_TO_XEN_INT(size), "size ~A <= 0?");
+      if (len > (size + 1)) mus_misc_error(S_make_frame, "extra trailing args?", arglist);
+      if (size <= 0) XEN_OUT_OF_RANGE_ERROR(S_make_frame, XEN_ARG_1, C_TO_XEN_INT(size), "size ~A <= 0?");
+      if (size > MUS_MAX_CHANS) XEN_OUT_OF_RANGE_ERROR(S_make_frame, XEN_ARG_1, C_TO_XEN_INT(size), "size ~A too big");
     }
   ge = (mus_any *)mus_make_empty_frame(size);
   if (ge)
@@ -2844,7 +2837,7 @@ with chans inputs and outputs, initializing the scalars from the rest of the arg
     XEN_WRONG_TYPE_ARG_ERROR(S_make_mixer, 1, cararg, "integer = number of chans");
   size = XEN_TO_C_INT_OR_ELSE(cararg, 0);
   if (size <= 0) XEN_OUT_OF_RANGE_ERROR(S_make_mixer, 1, cararg, "chans ~A <= 0?");
-  if (size > 256) XEN_OUT_OF_RANGE_ERROR(S_make_mixer, 1, cararg, "chans ~A > 256?");
+  if (size > MUS_MAX_CHANS) XEN_OUT_OF_RANGE_ERROR(S_make_mixer, 1, cararg, "chans ~A too big");
   if (len > (size * size + 1)) 
     mus_misc_error(S_make_mixer, "extra trailing args?", arglist);
   ge = (mus_any *)mus_make_empty_mixer(size);
@@ -2921,7 +2914,7 @@ the repetition rate of the wave found in wave. Successive waves can overlap."
       freq = mus_optkey_to_float(keys[0], S_make_wave_train, orig_arg[0], freq);
       phase = mus_optkey_to_float(keys[1], S_make_wave_train, orig_arg[1], phase);
       v = mus_optkey_to_vct(keys[2], S_make_wave_train, orig_arg[2], NULL);
-      wsize = mus_optkey_to_int(keys[3], S_make_wave_train, orig_arg[3], wsize);
+      wsize = mus_optkey_to_int(keys[3], S_make_wave_train, orig_arg[3], (v) ? v->length : wsize);
       if (wsize <= 0)
 	XEN_OUT_OF_RANGE_ERROR(S_make_wave_train, orig_arg[3], keys[3], "size ~A <= 0?");
       if (wsize > MAX_TABLE_SIZE)
@@ -2929,11 +2922,7 @@ the repetition rate of the wave found in wave. Successive waves can overlap."
       type = (mus_interp_t)mus_optkey_to_int(keys[4], S_make_wave_train, orig_arg[4], type);
       if (!(MUS_INTERP_TYPE_OK(type)))
 	XEN_OUT_OF_RANGE_ERROR(S_make_wave_train, orig_arg[4], keys[4], "no such interp-type: ~A");
-      if (v)
-        {
-	  wave = copy_vct_data(v);
-	  wsize = v->length;
-        }
+      if (v) wave = copy_vct_data(v);
     }
   if (wave == NULL) 
     {
@@ -3028,11 +3017,6 @@ is the same in effect as make-oscil"
       if (wsize > MAX_TABLE_SIZE)
 	XEN_OUT_OF_RANGE_ERROR(S_make_waveshape, orig_arg[2], keys[2], "table size ~A too big?");
       v = mus_optkey_to_vct(keys[3], S_make_waveshape, orig_arg[3], NULL);
-      if (v)
-        {
-	  wave = copy_vct_data(v);
-	  wsize = v->length;
-	}
       if (!(XEN_KEYWORD_P(keys[1])))
         {
 	  XEN_ASSERT_TYPE(XEN_LIST_P(keys[1]), keys[1], orig_arg[1], S_make_waveshape, "a list");
@@ -3044,6 +3028,11 @@ is the same in effect as make-oscil"
 				 keys[1]));
 	  partials_allocated = true;
         }
+      if (v)
+        {
+	  wave = copy_vct_data(v);
+	  wsize = v->length;
+	}
     }
   if (wave == NULL) 
     {
@@ -5014,6 +5003,7 @@ static XEN g_make_ssb_am(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   #define H_make_ssb_am "(" S_make_ssb_am " (:frequency 440.0) (:order 40)): \
 return a new " S_ssb_am " generator."
+  #define MUS_MAX_SSB_ORDER 65536
 
   mus_any *ge;
   XEN args[4]; 
@@ -5033,6 +5023,8 @@ return a new " S_ssb_am " generator."
     }
   if (order <= 0)
     XEN_OUT_OF_RANGE_ERROR(S_make_ssb_am, orig_arg[1], keys[1], "order ~A <= 0?");
+  if (order > MUS_MAX_SSB_ORDER)
+    XEN_OUT_OF_RANGE_ERROR(S_make_ssb_am, orig_arg[1], keys[1], "order ~A too large?");
   ge = mus_make_ssb_am(freq, order);
   if (ge) return(mus_xen_to_object((mus_xen *)_mus_wrap_no_vcts(ge)));
   return(XEN_FALSE);

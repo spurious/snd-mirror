@@ -40,12 +40,15 @@
 			 (gtk_menu_item_new_with_label (car entry))
 			 (gtk_menu_item_new)))) ; separator
 	 (gtk_menu_shell_append (GTK_MENU_SHELL menu) widget)
-	 (if (cadr entry) ((cadr entry) widget))
+	 (if (and (cadr entry) 
+		  (procedure? (cadr entry)))
+	     ((cadr entry) widget))
 	 (gtk_widget_show widget)
-	 (if (not (null? (cddr entry)))
+	 (if (and (not (null? (cddr entry)))
+		  (procedure? (caddr entry)))
 	     (g_signal_connect widget "activate" (lambda (w data) 
 						   ((caddr entry) w data) 
-						   (gtk_widget_hide menu))))))
+						   (gtk_widget_hide menu)) #f))))
      entries)
     menu))
 
@@ -65,7 +68,7 @@
 		 #f)
 	       (list
 		;; name field-func callback
-		(list "Selection" (lambda x #f) (lambda x #f))
+		(list "Selection" #f)
 		(list #f #f) ; separator
 		(list "Play" every-menu
 		      (lambda (w data)
@@ -155,10 +158,12 @@
 			     (apply add-mark pos select)
 			     (apply add-mark (+ pos len) select)))
 			 (selection-members))))
-		(list "Unselect"  every-menu (lambda (w data) (set! (selection-member? #t) #f)))
-		(list "Reverse"   every-menu (lambda (w data) (reverse-selection)))
-		(list "Mix"       every-menu (lambda (w data) (mix-selection (cursor))))
-		(list "Invert"    every-menu (lambda (w data) (scale-selection-by -1)))))))
+		(list "Apply controls" every-menu (lambda (w data) (apply-controls (selected-sound) 2))) ; 2=selection
+		(list "Reset controls" every-menu (lambda (w data) (reset-controls)))
+		(list "Unselect"       every-menu (lambda (w data) (set! (selection-member? #t) #f)))
+		(list "Reverse"        every-menu (lambda (w data) (reverse-selection)))
+		(list "Mix"            every-menu (lambda (w data) (mix-selection (cursor))))
+		(list "Invert"         every-menu (lambda (w data) (scale-selection-by -1)))))))
 	   
 	   ;; -------- time domain popup
 	   
@@ -672,13 +677,14 @@ all saved edit lists."
 (define edhist-reapply-menu #f)
 (define edhist-clear-menu #f)
 
+;(gc) -- trouble here?
 (define edit-history-menu
   (let ((every-menu (lambda (w) #f)))
     (make-popup-menu 
      (lambda (w) #f)
      (list
-      (list "Edits"    #f (lambda x #f) (lambda x #f))
-      (list #f #f #f)
+      (list "Edits"    #f)
+      (list #f #f)
       (list "Save"
 	    (lambda (w) (set! edhist-save-menu w))
 	    (lambda (w d) (edhist-save-edits)))
@@ -735,4 +741,5 @@ all saved edit lists."
 			      (if old-val
 				  (set-car! old-val (format #f "~A[~A]" name i))))))))
 (for-each add-edhist-popup (sounds))
+
 

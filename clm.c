@@ -1134,6 +1134,13 @@ typedef struct {
 Float mus_delay_tick(mus_any *ptr, Float input)
 {
   dly *gen = (dly *)ptr;
+#if DEBUGGING
+  if (gen->loc >= gen->zsize)
+    {
+      fprintf(stderr, "delay tick at %d, but size=%d (%d %d %p)\n", gen->loc, gen->size, gen->zdly, gen->zsize, gen->line);
+      abort();
+    }
+#endif
   gen->line[gen->loc] = input;
   gen->loc++;
   if (gen->zdly)
@@ -1188,6 +1195,7 @@ Float mus_tap(mus_any *ptr, Float loc)
 	  return(gen->yn1);
 	  break;
 	case MUS_INTERP_NONE:
+	  if (gen->size == 0) return(gen->line[0]);
 	  taploc = (int)(gen->loc - (int)loc) % gen->size;
 	  if (taploc < 0) taploc += gen->size;
 	  return(gen->line[taploc]);
@@ -1208,14 +1216,18 @@ Float mus_tap(mus_any *ptr, Float loc)
     }
   else
     {
-      if ((int)loc == 0) 
-	return(gen->line[gen->loc]);
-      else
+      if (gen->size == 0) return(gen->line[0]);
+#if DEBUGGING
+      if (gen->loc >= gen->zsize)
 	{
-	  taploc = (int)(gen->loc - (int)loc) % gen->size;
-	  if (taploc < 0) taploc += gen->size;
-	  return(gen->line[taploc]);
+	  fprintf(stderr, "tap at %f (%d), but size=%d (%d %d %p)\n", loc, gen->loc, gen->size, gen->zdly, gen->zsize, gen->line);
+	  abort();
 	}
+#endif
+      if ((int)loc == 0) return(gen->line[gen->loc]);
+      taploc = (int)(gen->loc - (int)loc) % gen->size;
+      if (taploc < 0) taploc += gen->size;
+      return(gen->line[taploc]);
     }
 }
 
@@ -4758,7 +4770,7 @@ mus_any *mus_make_wave_train(Float freq, Float phase, Float *wave, int wave_size
  gen = (wt *)clm_calloc(1, sizeof(wt), S_make_wave_train);
  gen->core = &WAVE_TRAIN_CLASS;
  gen->freq = freq;
- gen->phase = (wave_size * phase) / TWO_PI;
+ gen->phase = fmod((wave_size * phase), TWO_PI) / TWO_PI;
  gen->wave = wave;
  gen->wave_size = wave_size;
  gen->type = type;
@@ -6037,10 +6049,17 @@ mus_any *mus_make_src(Float (*input)(void *arg, int direction), Float srate, int
 	  sr *srp;
 	  int i, wid;
 	  srp = (sr *)clm_calloc(1, sizeof(sr), S_make_src);
-	  if (width == 0) width = SRC_SINC_WIDTH;
+	  if (width <= 0) width = SRC_SINC_WIDTH;
 	  if (width < (int)(fabs(srate) * 2))
 	    wid = (int)(ceil(fabs(srate)) * 2); 
 	  else wid = width;
+#if DEBUGGING
+	  if (wid <= 0) 
+	    {
+	      fprintf(stderr, "src wid: %d (%d %f)\n", wid, width, srate);
+	      abort();
+	    }
+#endif
 	  srp->core = &SRC_CLASS;
 	  srp->x = 0.0;
 	  srp->feeder = input;
@@ -6073,6 +6092,13 @@ Float mus_src(mus_any *srptr, Float sr_change, Float (*input)(void *arg, int dir
 #if HAVE_DECL_ISNAN && HAVE_DECL_ISINF
   if ((isnan(sr_change)) || (isinf(sr_change))) sr_change = 0.0;
 #endif
+  if (sr_change > MUS_MAX_CLM_SRC) 
+    sr_change = MUS_MAX_CLM_SRC;
+  else
+    {
+      if (sr_change < -MUS_MAX_CLM_SRC) 
+	sr_change = -MUS_MAX_CLM_SRC;
+    }
   srx = srp->incr + sr_change;
   if (srp->x >= 1.0)
     {

@@ -5,9 +5,15 @@
 
 
 
-(if (or (< (string->number (major-version)) 1)
-	(and (string=? "1" (major-version))
-	     (< (string->number (minor-version)) 4)))
+(define (atleast1.6.4?)	 	
+   (let ((version (map string->number (string-split (version) #\.))))	 	
+     (or (> (car version) 1)	 	
+         (and (= 1 (car version))	 	
+              (or (> (cadr version) 6)	 	
+                  (and (= 6 (cadr version))	 	
+                       (>= (caddr version) 4)))))))	 	
+
+(if (not (atleast1.6.4?))
     (begin
       (display "Warning, snd_conffile.scm has not been tested with earlier versions of Guile than 1.6.4.")(newline)
       (display "In case of problems, please upgrade Guile to the latest version, and recompile Snd.")(newline)))
@@ -547,14 +553,23 @@
   (define playtype 'song)
 
   (define (get-selection-start)
-    (if (< (speed-control snd) 0)
-	(+ (selection-position snd) (selection-frames snd))
-	(selection-position snd)))
+    (if (selection-member? snd)
+	(if (< (speed-control snd) 0)
+	    (+ (selection-position snd) (selection-frames snd))
+	    (selection-position snd))
+	(if (< (speed-control snd) 0)	 	
+	    (1- (frames snd))	 	
+	    0)))
+
   (define (get-selection-end)
-    (if (< (speed-control snd) 0)
-	(selection-position snd)
-	(+ (selection-position snd) (selection-frames snd))))
-  
+    (if (selection-member? snd)
+	(if (< (speed-control snd) 0)
+	    (selection-position snd)
+	    (+ (selection-position snd) (selection-frames snd)))
+	(if (< (speed-control snd) 0)	 	
+	    0	 	
+	    (1- (frames snd)))))
+
   (define-method (play pos)
     (define (das-play)
       (play 0 #f #f #f #f #f das-callback))
@@ -621,7 +636,15 @@
     (this->pause)
     (thunk)
     (this->continue))
-
+ 
+  (define-method (selection-is-changed)	 	
+    (if (this->isplaying)	 	
+	(begin	 	
+	  (set! (cursor-follows-play) #f)	 	
+	  (stop-playing)	 	
+	  (this->continue (get-selection-start))	 	
+	  (set! (cursor-follows-play) #t))))	 	
+ 
   )
 
 
@@ -1045,6 +1068,7 @@ Does not work.
 		      (gc))))
 	    (c-show-times (cursor) #t)
 	    (set! selection-starting-point #f))))
+    (-> (c-p snd) selection-is-changed)
     (c-gc-on))
 
 
@@ -1820,25 +1844,12 @@ Does not work.
 ;;  (load-from-path "dlp/misc.scm"))
 
 
-
-#!
-;; Automatically open saved-as files.
-(let ((save-dialog (save-sound-dialog)))
-  (g_signal_connect  (.ok_button (GTK_FILE_SELECTION save-dialog)) "clicked"
-		     (lambda (w d)
-		       (let ((filename (gtk_file_selection_get_filename (GTK_FILE_SELECTION save-dialog))))
-			 (gtk_widget_hide save-dialog)
-			 (open-sound filename)))
-		     #f)
-  (gtk_widget_hide save-dialog)
-  )
-
-!#
-
 (add-hook! after-save-as-hook
    (lambda (snd filename from-dialog)
      (if from-dialog
          (open-sound filename))))
+
+
 
 ;;##############################################################
 ;; Add/Remove things to the edit-menu

@@ -527,7 +527,7 @@ static XEN vct_subseq(XEN vobj, XEN start, XEN end, XEN newv)
   return(xen_return_first(res, vobj, vnew));
 }
 
-static XEN list_to_vct(XEN lst)
+XEN list_to_vct(XEN lst)
 {
   #define H_list_to_vct "(" S_list_to_vct " lst): returns a new vct filled with elements of list lst"
   int len = 0, i;

@@ -183,10 +183,12 @@
 				(sqrt (/ sum len)))
 			     (let ((val (next-sample reader)))
 			       (set! sum (+ sum (* val val)))))))))))
-      (list "Unselect"  xmPushButtonWidgetClass every-menu (lambda (w c i) (set! (selection-member? #t) #f)))
-      (list "Reverse"   xmPushButtonWidgetClass every-menu (lambda (w c i) (reverse-selection)))
-      (list "Mix"       xmPushButtonWidgetClass every-menu (lambda (w c i) (mix-selection (cursor))))
-      (list "Invert"    xmPushButtonWidgetClass every-menu (lambda (w c i) (scale-selection-by -1)))))))
+      (list "Apply controls" xmPushButtonWidgetClass every-menu (lambda (w c i) (apply-controls (selected-sound) 2))) ; 2=selection
+      (list "Reset controls" xmPushButtonWidgetClass every-menu (lambda (w c i) (reset-controls)))
+      (list "Unselect"       xmPushButtonWidgetClass every-menu (lambda (w c i) (set! (selection-member? #t) #f)))
+      (list "Reverse"        xmPushButtonWidgetClass every-menu (lambda (w c i) (reverse-selection)))
+      (list "Mix"            xmPushButtonWidgetClass every-menu (lambda (w c i) (mix-selection (cursor))))
+      (list "Invert"         xmPushButtonWidgetClass every-menu (lambda (w c i) (scale-selection-by -1)))))))
 
 
 ;;; -------- time domain popup
