@@ -2033,7 +2033,7 @@ For example, to have full output to both channels,</p>
 (setf (locsig-ref loc 1) 1.0)
 </pre>
 <p>These locations can be set via envelopes and so on within the run
-loop to pan between speakers:</p>
+loop to pan between speakers (but see move-locsig below):</p>
 <pre><small>
 (definstrument space (file onset duration 
 	              &amp;key (distance-env '(0 1 100 10)) (amplitude-env '(0 1 100 1))

@@ -249,7 +249,7 @@ static void edit_play_callback(GtkWidget *w, gpointer cD)
     }
   else
     {
-      IF_MENU_HOOK(STR_Edit, STR_Play_selection) 
+      IF_MENU_HOOK(STR_Edit, STR_Play_Selection) 
 	{
 	  set_menu_label(edit_play_menu(), STR_Stop);
 	  selection_play_stop = 1;
@@ -260,7 +260,7 @@ static void edit_play_callback(GtkWidget *w, gpointer cD)
 
 void reflect_play_selection_stop(void)
 {
-  set_menu_label(edit_play_menu(), STR_Play_selection);
+  set_menu_label(edit_play_menu(), STR_Play_Selection);
   selection_play_stop = 0;
 }
 
@@ -488,6 +488,9 @@ static void help_clm_callback (GtkWidget *w, gpointer cD) {IF_MENU_HOOK(STR_Help
 static void help_news_callback (GtkWidget *w, gpointer cD) {IF_MENU_HOOK(STR_Help, STR_News) news_help((snd_state *)cD);}
 
 
+void check_menu_labels(int key, int state, int extended) {}
+
+
 /* -------------------------------- MAIN MENU -------------------------------- */
 
 GtkWidget *get_menubar(void) {return(mw[menu_menu]);}
@@ -686,8 +689,8 @@ GtkWidget *add_menu(snd_state *ss)
   set_sensitive(mw[e_mix_menu], FALSE);
   SG_SIGNAL_CONNECT(GTK_OBJECT(mw[e_mix_menu]), "activate", GTK_SIGNAL_FUNC(edit_mix_callback), (gpointer)ss);
 
-  mw[e_play_menu] = gtk_menu_item_new_with_label(STR_Play_selection);
-  ml[e_play_menu] = STR_Play_selection;
+  mw[e_play_menu] = gtk_menu_item_new_with_label(STR_Play_Selection);
+  ml[e_play_menu] = STR_Play_Selection;
   SG_MENU_APPEND(mw[e_cascade_menu], mw[e_play_menu]);
   set_background(mw[e_play_menu], (ss->sgx)->basic_color);
   gtk_widget_show(mw[e_play_menu]);

@@ -174,6 +174,7 @@ void reflect_play_stop_in_popup_menu(void);
 void reflect_play_selection_stop(void);
 void g_init_gxmenu(void);
 Widget menu_widget(int which_menu);
+void check_menu_labels(int key, int state, int extended);
 
 
 /* -------- snd-xmain.c -------- */

@@ -1097,7 +1097,7 @@ static void clear_strings(snd_info *sp, int which)
 
 void clear_mini_strings(snd_info *sp) {clear_strings(sp, MINIBUFFER);}
 void clear_filter_strings(snd_info *sp) {clear_strings(sp, FILTER_TEXT);}
-void clear_listener_strings(void) {clear_strings(NULL, LISTENER_TEXT);}
+/* void clear_listener_strings(void) {clear_strings(NULL, LISTENER_TEXT);} */
 
 
 /* ---------------- control panel apply button ---------------- */

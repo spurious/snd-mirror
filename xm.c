@@ -7,13 +7,13 @@
  * TODO: XmVaCreateSimple* (need special arglist handlers)
  * TODO: callback struct print (and tie makers into Ruby)
  * TODO: finish the -> converters
- * TODO: XmParseProc callback (p860)
  * TODO: add_resource
  * TODO: get Xprt to work and test the Xp stuff
  * TODO: rest of help strings and check in snd-help.
  */
 
 /* HISTORY: 
+ *   29-Mar:    XmParseProc.
  *   20-Mar:    XpmGetErrorString omitted inadvertently earlier.
  *   4-Mar:     XWindowChanges and XSetWindowAttributes struct creators.
  *   1-Mar:     XmTabListFree, various ->* conversions.
@@ -671,7 +671,7 @@ enum {XM_INT, XM_ULONG, XM_UCHAR, XM_FLOAT, XM_STRING, XM_XMSTRING, XM_STRING_TA
       XM_VISUAL, XM_RECTANGLE_LIST, XM_WIDGET_CLASS, XM_STRING_OR_INT,
       XM_TRANSFER_CALLBACK, XM_CONVERT_CALLBACK, XM_SEARCH_CALLBACK, XM_ORDER_CALLBACK,
       XM_QUALIFY_CALLBACK, XM_ALLOC_COLOR_CALLBACK, XM_POPUP_CALLBACK, XM_SCREEN_COLOR_CALLBACK,
-      XM_DROP_CALLBACK, XM_TRANSFER_ENTRY_LIST, XM_DRAG_CALLBACK, XM_STRING_OR_XMSTRING
+      XM_DROP_CALLBACK, XM_TRANSFER_ENTRY_LIST, XM_DRAG_CALLBACK, XM_STRING_OR_XMSTRING, XM_PARSE_CALLBACK
 };
 
 static int resource_type(char *resource);
@@ -1211,6 +1211,42 @@ static Cardinal gxm_XtOrderProc(Widget w)
   return((Cardinal)result);
 }
 
+#define C_TO_XEN_XM_Parse_Callback(Code) \
+  XEN_LIST_5(C_STRING_TO_XEN_SYMBOL("Parse_Callback"), Code, XEN_FALSE, XEN_ZERO, XEN_ZERO)
+#define XM_Parse_Callback_P(Arg) WRAP_P("Parse_Callback", Arg)
+
+static int find_parseproc(XEN val, int loc, unsigned long w)
+{
+  return((XM_Parse_Callback_P(val)) &&
+	 (((XEN_FALSE_P((XEN)w)) && 
+	   (XEN_FALSE_P(XEN_LIST_REF(val, CALLBACK_DATA)))) ||
+	  ((XEN_XmParseMapping_P(XEN_LIST_REF(val, CALLBACK_DATA))) &&
+	   (XEN_TO_C_ULONG(XEN_CADR(XEN_LIST_REF(val, CALLBACK_DATA))) == w))));
+}
+
+static XmIncludeStatus gxm_Parse_Callback(XtPointer *in_out, XtPointer text_end, XmTextType type, XmStringTag locale_tag,
+					  XmParseMapping entry, int pattern_length, XmString *str_include, XtPointer call_data)
+{
+  XEN code;
+  int i;
+  i = map_over_protected_elements(find_parseproc, (unsigned long)entry);
+  if (i >= 0)
+    {
+      code = XEN_LIST_REF(xm_protected_element(i), CALLBACK_FUNC);
+      if (XEN_PROCEDURE_P(code))
+	return(XEN_TO_C_INT(XEN_APPLY(code,
+				      XEN_LIST_8(C_TO_XEN_STRING((char *)(*in_out)),
+						 C_TO_XEN_ULONG(text_end), /* can't work... */
+						 C_TO_XEN_INT(type),
+						 C_TO_XEN_STRING(locale_tag),
+						 C_TO_XEN_XmParseMapping(entry),
+						 C_TO_XEN_INT(pattern_length),
+						 C_TO_XEN_XmString((*str_include)), /* can't work... */
+						 (XEN)call_data),
+				      __FUNCTION__)));
+    }
+  return(0);
+}
 
 static XEN xm_XmColorAllocationProc = XEN_FALSE;
 
@@ -1380,6 +1416,21 @@ static Arg *XEN_TO_C_Args(XEN inargl)
 	case XM_CALLBACK:
 	  cl = XEN_TO_C_XtCallbackList(value);
 	  if (cl) XtSetArg(args[i], name, cl);
+	  break;
+
+	case XM_PARSE_CALLBACK:
+	  if ((XEN_PROCEDURE_P(value)) && (XEN_REQUIRED_ARGS(value) == 8))
+	    {
+	      XtSetArg(args[i], name, (unsigned long)gxm_Parse_Callback);
+	      descr = C_TO_XEN_XM_Parse_Callback(value);
+	      XEN_LIST_SET(descr, CALLBACK_GC_LOC, C_TO_XEN_INT(xm_protect(descr)));
+	    }
+	  else 
+	    {
+	      if (XEN_FALSE_P(value))
+		XtSetArg(args[i], name, NULL);
+	      else XEN_ASSERT_TYPE(0, value, 0, name, "procedure of 8 args");
+	    }
 	  break;
 
 	case XM_DROP_CALLBACK:
@@ -22438,7 +22489,6 @@ static void define_strings(void)
   DEFINE_RESOURCE(XM_PREFIX "XmNvisibleWhenOff" XM_POSTFIX, XmNvisibleWhenOff,		          XM_BOOLEAN);
   DEFINE_RESOURCE(XM_PREFIX "XmNvisual" XM_POSTFIX, XmNvisual,				          XM_VISUAL);
   DEFINE_RESOURCE(XM_PREFIX "XmNvisualPolicy" XM_POSTFIX, XmNvisualPolicy,		          XM_UCHAR);
-  DEFINE_RESOURCE(XM_PREFIX "XmNwaitForWm" XM_POSTFIX, XmNwaitForWm,			          XM_BOOLEAN);
   DEFINE_RESOURCE(XM_PREFIX "XmNwidth" XM_POSTFIX, XmNwidth,				          XM_INT);
   DEFINE_RESOURCE(XM_PREFIX "XmNwidthInc" XM_POSTFIX, XmNwidthInc,			          XM_INT);
   DEFINE_RESOURCE(XM_PREFIX "XmNwinGravity" XM_POSTFIX, XmNwinGravity,			          XM_INT);
@@ -22515,7 +22565,7 @@ static void define_strings(void)
   DEFINE_RESOURCE(XM_PREFIX "XmNinnerMarginWidth" XM_POSTFIX, XmNinnerMarginWidth,	          XM_INT);
   DEFINE_RESOURCE(XM_PREFIX "XmNinputPolicy" XM_POSTFIX, XmNinputPolicy,		          XM_ULONG);
   DEFINE_RESOURCE(XM_PREFIX "XmNinsensitiveStippleBitmap" XM_POSTFIX, XmNinsensitiveStippleBitmap,  XM_PIXMAP);
-  DEFINE_RESOURCE(XM_PREFIX "XmNinvokeParseProc" XM_POSTFIX, XmNinvokeParseProc,	          XM_CALLBACK);
+  DEFINE_RESOURCE(XM_PREFIX "XmNinvokeParseProc" XM_POSTFIX, XmNinvokeParseProc,	          XM_PARSE_CALLBACK);
   DEFINE_RESOURCE(XM_PREFIX "XmNlabelRenderTable" XM_POSTFIX, XmNlabelRenderTable,	          XM_RENDER_TABLE);
   DEFINE_RESOURCE(XM_PREFIX "XmNlargeCellHeight" XM_POSTFIX, XmNlargeCellHeight,	          XM_INT);
   DEFINE_RESOURCE(XM_PREFIX "XmNlargeCellWidth" XM_POSTFIX, XmNlargeCellWidth,		          XM_INT);
@@ -24475,7 +24525,7 @@ static int xm_already_inited = 0;
       define_structs();
       XEN_YES_WE_HAVE("xm");
 #if HAVE_GUILE
-      XEN_EVAL_C_STRING("(define xm-version \"26-Mar-02\")");
+      XEN_EVAL_C_STRING("(define xm-version \"29-Mar-02\")");
 #endif
       xm_already_inited = 1;
     }

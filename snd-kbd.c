@@ -245,6 +245,7 @@ static void set_keymap_entry(int key, int state, int args, XEN func, int extende
       user_keymap[keymap_top].key = key;
       user_keymap[keymap_top].state = state;
       user_keymap[keymap_top].extended = extended;
+      check_menu_labels(key, state, extended);
       i = keymap_top;
       keymap_top++;
     }

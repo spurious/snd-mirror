@@ -141,7 +141,7 @@ int popup_equalize_panes_menu(void);
 int popup_info_menu(void);
 int popup_menu_exists(void);
 void set_menu_label(int w, const char *label);
-
+void check_menu_labels(int key, int state, int extended);
 int g_change_menu_label(int which_menu, char *old_label, char *new_label);
 int g_set_menu_sensitive(int which_menu, char *old_label, int on);
 int g_menu_is_sensitive(int which_menu, char *old_label);

@@ -953,7 +953,6 @@ void add_channel_data_1(chan_info *cp, snd_info *sp, int graphed);
 void set_x_bounds(axis_info *ap);
 void display_channel_data (chan_info *cp, snd_info *sp, snd_state *ss);
 void display_channel_fft_data (chan_info *cp, snd_info *sp, snd_state *ss);
-void display_channel_lisp_data (chan_info *cp, snd_info *sp, snd_state *ss);
 void show_cursor_info(chan_info *cp);
 void apply_x_axis_change(axis_info *ap, chan_info *cp, snd_info *sp);
 void apply_y_axis_change (axis_info *ap, chan_info *cp);
@@ -1051,7 +1050,6 @@ void restore_filter_string(snd_info *s, int back);
 void clear_filter_strings(snd_info *sp);
 void remember_listener_string(char *str);
 void restore_listener_string(int back);
-void clear_listener_strings(void);
 
 
 /* -------- snd-file -------- */

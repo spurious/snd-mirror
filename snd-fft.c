@@ -2461,27 +2461,37 @@ returns the current transform sample at bin and slice in snd channel chn (assumi
   cp = get_cp(snd_n, chn_n, S_transform_sample);
   if (cp->graph_transform_p)
     {
-      /* BACK */
       fbin = XEN_TO_C_INT_OR_ELSE(bin, 0);
       fp = cp->fft;
-      if ((fp) && 
-	  (fbin < fp->current_size))
+      if (fp)
 	{
-	  if (cp->transform_graph_type == GRAPH_TRANSFORM_ONCE)
-	    return(C_TO_XEN_DOUBLE(fp->data[fbin]));
-	  else 
+	  if (fbin < fp->current_size)
 	    {
-	      fslice = XEN_TO_C_INT_OR_ELSE(slice, 0);
-	      si = (sono_info *)(cp->sonogram_data);
-	      if ((si) && 
-		  (fbin < si->target_bins) && 
-		  (fslice < si->active_slices))
-		return(C_TO_XEN_DOUBLE(si->data[fslice][fbin]));
-	      else XEN_ERROR(NO_SUCH_SAMPLE,
-			     XEN_LIST_5(C_TO_XEN_STRING(S_transform_sample),
-					bin, slice,
-					snd_n, chn_n));
+	      if (cp->transform_graph_type == GRAPH_TRANSFORM_ONCE)
+		return(C_TO_XEN_DOUBLE(fp->data[fbin]));
+	      else 
+		{
+		  fslice = XEN_TO_C_INT_OR_ELSE(slice, 0);
+		  si = (sono_info *)(cp->sonogram_data);
+		  if ((si) && 
+		      (fbin < si->target_bins) && 
+		      (fslice < si->active_slices))
+		    return(C_TO_XEN_DOUBLE(si->data[fslice][fbin]));
+		  else XEN_ERROR(NO_SUCH_SAMPLE,
+				 XEN_LIST_8(C_TO_XEN_STRING(S_transform_sample),
+					    bin, slice,
+					    snd_n, chn_n,
+					    C_TO_XEN_STRING("max bin, max slice:"),
+					    C_TO_XEN_INT((si) ? si->target_bins : 0),
+					    C_TO_XEN_INT((si) ? si->active_slices : 0)));
+		}
 	    }
+	  else XEN_ERROR(NO_SUCH_SAMPLE,
+			 XEN_LIST_6(C_TO_XEN_STRING(S_transform_sample),
+				    bin,
+				    snd_n, chn_n,
+				    C_TO_XEN_STRING("max bin:"),
+				    C_TO_XEN_INT(fp->current_size)));
 	}
     }
   return(XEN_FALSE);
@@ -2502,7 +2512,6 @@ returns a vct object (vct-obj if passed), with the current transform data from s
   cp = get_cp(snd_n, chn_n, S_transform_samples2vct);
   if ((cp->graph_transform_p) && (cp->fft))
     {
-      /* BACK */
       if (cp->transform_graph_type == GRAPH_TRANSFORM_ONCE)
 	{
 	  fp = cp->fft;

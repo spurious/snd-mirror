@@ -89,7 +89,7 @@
 #define STR_Output                       "Output"
 #define STR_Overview			 "Overview"
 #define STR_Play			 "Play"
-#define STR_Play_selection		 "Play Selection"
+#define STR_Play_Selection		 "Play Selection"
 #define STR_Popup                        "Popup"
 #define STR_Print			 "Print"
 #define STR_Previous			 "Previous"

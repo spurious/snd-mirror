@@ -445,7 +445,7 @@ data in (vcts) rl and im from polar form (spectrum) to rectangular form (fft-sty
 
 static XEN g_mus_fft(XEN url, XEN uim, XEN len, XEN usign)
 {
-  #define H_mus_fft "(" S_mus_fft " rl im len &optional dir) returns the fft of (vcts) rl and im \
+  #define H_mus_fft "(" S_mus_fft " rl im &optional len dir) returns the fft of (vcts) rl and im \
 the real and imaginary parts of the data, len should be a power of 2, dir = 1 for fft, -1 for inverse-fft"
 
   int sign, n, np;
@@ -4169,10 +4169,6 @@ returns a new convolution generator which convolves its input with the impulse r
   if (POWER_OF_2_P(filter->length))
     fftlen = filter->length * 2;
   else fftlen = (int)pow(2.0, 1 + (int)(log((Float)(filter->length + 1)) / log(2.0)));
-#if DEBUGGING
-  if (fftlen != (int)pow(2.0, 1 + (int)(log((Float)(filter->length + 1)) / log(2.0))))
-    fprintf(stderr,"clmxen make convolve fftlen: %d %d\n", fftlen, (int)pow(2.0, 1 + (int)(log((Float)(filter->length + 1)) / log(2.0))));
-#endif
   if (fft_size < fftlen) fft_size = fftlen;
   gn = (mus_xen *)CALLOC(1, sizeof(mus_xen));
   gn->nvcts = 2;
@@ -4656,7 +4652,7 @@ it in conjunction with mixer to scale/envelope all the various ins and outs."
 	  XEN_ERROR(BAD_TYPE,
 		    XEN_LIST_3(C_TO_XEN_STRING(S_mus_mix),
 			       vdata0[i],
-			       C_TO_XEN_STRING("each element of env vector must be a vector of envelopes")));
+			       C_TO_XEN_STRING("each element of env vector must be a vector (of envelopes)")));
       out_len = XEN_VECTOR_LENGTH(vdata0[0]);
       in_chans = mus_sound_chans(infile);
       out_chans = mus_sound_chans(outfile);
@@ -4669,7 +4665,16 @@ it in conjunction with mixer to scale/envelope all the various ins and outs."
 	  vdata1 = XEN_VECTOR_ELEMENTS(vdata0[i]);
 	  for (j = 0; j < out_len; j++) 
 	    if (MUS_XEN_P(vdata1[j]))
-	      envs1[i][j] = MUS_XEN_TO_CLM(vdata1[j]);
+	      {
+		if (mus_env_p(MUS_XEN_TO_CLM(vdata1[j])))
+		  envs1[i][j] = MUS_XEN_TO_CLM(vdata1[j]);
+		else XEN_ERROR(BAD_TYPE,
+			       XEN_LIST_5(C_TO_XEN_STRING(S_mus_mix),
+					  vdata1[j],
+					  C_TO_XEN_STRING("each (non #f) element of (inner) vector must be an envelope: "),
+					  C_TO_XEN_INT(i),
+					  C_TO_XEN_INT(j)));
+	      }
 	}
     }
   mus_mix(outfile, infile, ostart, osamps, istart, mx1, envs1);
@@ -5275,7 +5280,7 @@ void mus_xen_init(void)
   XEN_DEFINE_PROCEDURE(S_polynomial,           g_polynomial_w, 2, 0, 0,           H_polynomial);
   XEN_DEFINE_PROCEDURE(S_multiply_arrays,      g_multiply_arrays_w, 2, 1, 0,      H_multiply_arrays);
   XEN_DEFINE_PROCEDURE(S_make_fft_window,      g_make_fft_window_w, 2, 1, 0,      H_make_fft_window);
-  XEN_DEFINE_PROCEDURE(S_mus_fft,              g_mus_fft_w, 3, 1, 0,              H_mus_fft);
+  XEN_DEFINE_PROCEDURE(S_mus_fft,              g_mus_fft_w, 2, 2, 0,              H_mus_fft);
   XEN_DEFINE_PROCEDURE(S_spectrum,             g_spectrum_w, 3, 2, 0,             H_mus_spectrum); 
   XEN_DEFINE_PROCEDURE(S_convolution,          g_convolution_w, 2, 1, 0,          H_mus_convolution);
   XEN_DEFINE_PROCEDURE(S_rectangular2polar,    g_rectangular2polar_w, 2, 0, 0,    H_rectangular2polar);

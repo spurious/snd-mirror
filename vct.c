@@ -196,14 +196,10 @@ static XEN copy_vct(XEN obj)
   int len;
   XEN_ASSERT_TYPE(VCT_P(obj), obj, XEN_ONLY_ARG, S_vct_copy, "a vct");
   v = TO_VCT(obj);
-  if (v)
-    {
-      len = v->length;
-      copied_data = (Float *)MALLOC(len * sizeof(Float));
-      memcpy((void *)copied_data, (void *)(v->data), (len * sizeof(Float)));
-      return(make_vct(len, copied_data));
-    }
-  return(xen_return_first(XEN_FALSE, obj));
+  len = v->length;
+  copied_data = (Float *)MALLOC(len * sizeof(Float));
+  memcpy((void *)copied_data, (void *)(v->data), (len * sizeof(Float)));
+  return(make_vct(len, copied_data));
 }
 
 static XEN vct_move(XEN obj, XEN newi, XEN oldi, XEN backwards)
@@ -231,9 +227,8 @@ static XEN vct_move(XEN obj, XEN newi, XEN oldi, XEN backwards)
 		       "old-index too high?",
 		       XEN_LIST_2(oldi,
 				  C_TO_XEN_INT(v->length)));
-      if (v) 
-	for (i = ni, j = nj; (j >= 0) && (i >= 0); i--, j--) 
-	  v->data[i] = v->data[j];
+      for (i = ni, j = nj; (j >= 0) && (i >= 0); i--, j--) 
+	v->data[i] = v->data[j];
     }
   else
     {
@@ -245,9 +240,8 @@ static XEN vct_move(XEN obj, XEN newi, XEN oldi, XEN backwards)
 	mus_misc_error(S_vct_moveB,
 		       "old-index < 0?",
 		       oldi);
-      if (v) 
-	for (i = ni, j = nj; (j < v->length) && (i < v->length); i++, j++) 
-	  v->data[i] = v->data[j];
+      for (i = ni, j = nj; (j < v->length) && (i < v->length); i++, j++) 
+	v->data[i] = v->data[j];
     }
   return(obj);
 }
@@ -258,9 +252,7 @@ static XEN vct_length(XEN obj)
   vct *v;
   XEN_ASSERT_TYPE(VCT_P(obj), obj, XEN_ONLY_ARG, S_vct_length, "a vct");
   v = TO_VCT(obj);
-  if (v)
-    return(C_TO_XEN_INT(v->length));
-  return(C_TO_SMALL_XEN_INT(0));
+  return(C_TO_XEN_INT(v->length));
 }
 
 /* static XEN reckless_vct_ref(XEN obj, XEN pos) {return(C_TO_XEN_DOUBLE(((vct *)XEN_OBJECT_REF(obj))->data[XEN_TO_SMALL_C_INT(pos)]));} */
@@ -274,20 +266,12 @@ static XEN vct_ref(XEN obj, XEN pos)
   XEN_ASSERT_TYPE(VCT_P(obj), obj, XEN_ARG_1, S_vct_ref, "a vct");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(pos), pos, XEN_ARG_2, S_vct_ref, "an integer");
   v = TO_VCT(obj);
-  if (v)
-    {
-      loc = XEN_TO_C_INT(pos);
-      if (loc < 0)
-	mus_misc_error(S_vct_ref, "index < 0?", pos);
-      else
-	{
-	  if (loc >= v->length)
-	    mus_misc_error(S_vct_ref, "index too high?", XEN_LIST_2(pos, C_TO_XEN_INT(v->length)));
-	  return(C_TO_XEN_DOUBLE(v->data[loc]));
-	}
-    }
-  else mus_misc_error(S_vct_ref, "vct obj is null?", obj);
-  return(C_TO_XEN_DOUBLE(0.0));
+  loc = XEN_TO_C_INT(pos);
+  if (loc < 0)
+    mus_misc_error(S_vct_ref, "index < 0?", pos);
+  if (loc >= v->length)
+    mus_misc_error(S_vct_ref, "index too high?", XEN_LIST_2(pos, C_TO_XEN_INT(v->length)));
+  return(C_TO_XEN_DOUBLE(v->data[loc]));
 }
 
 static XEN vct_set(XEN obj, XEN pos, XEN val)
@@ -299,16 +283,12 @@ static XEN vct_set(XEN obj, XEN pos, XEN val)
   XEN_ASSERT_TYPE(XEN_INTEGER_P(pos), pos, XEN_ARG_2, S_vct_setB, "an integer");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_3, S_vct_setB, "a number");
   v = TO_VCT(obj);
-  if (v)
-    {
-      loc = XEN_TO_C_INT(pos);
-      if (loc < 0)
-	mus_misc_error(S_vct_setB, "index < 0?", pos); 
-      if (loc >= v->length)
-	mus_misc_error(S_vct_setB, "index >= vct-length?", XEN_LIST_2(pos, C_TO_XEN_INT(v->length)));
-      v->data[loc] = XEN_TO_C_DOUBLE(val);
-    }
-  else mus_misc_error(S_vct_ref, "vct obj is null?", obj);
+  loc = XEN_TO_C_INT(pos);
+  if (loc < 0)
+    mus_misc_error(S_vct_setB, "index < 0?", pos); 
+  if (loc >= v->length)
+    mus_misc_error(S_vct_setB, "index >= vct-length?", XEN_LIST_2(pos, C_TO_XEN_INT(v->length)));
+  v->data[loc] = XEN_TO_C_DOUBLE(val);
   return(xen_return_first(val, obj, pos));
 }
 
@@ -321,11 +301,8 @@ static XEN vct_multiply(XEN obj1, XEN obj2)
   XEN_ASSERT_TYPE(VCT_P(obj2), obj2, XEN_ARG_2, S_vct_multiplyB, "a vct");
   v1 = TO_VCT(obj1);
   v2 = TO_VCT(obj2);
-  if ((v1) && (v2))
-    {
-      lim = MIN(v1->length, v2->length);
-      for (i = 0; i < lim; i++) v1->data[i] *= v2->data[i];
-    }
+  lim = MIN(v1->length, v2->length);
+  for (i = 0; i < lim; i++) v1->data[i] *= v2->data[i];
   return(xen_return_first(obj1, obj2)); /* I wonder if this is necessary */
 }
 
@@ -338,16 +315,13 @@ static XEN vct_add(XEN obj1, XEN obj2, XEN offs)
   XEN_ASSERT_TYPE(VCT_P(obj2), obj2, XEN_ARG_2, S_vct_addB, "a vct");
   v1 = TO_VCT(obj1);
   v2 = TO_VCT(obj2);
-  if ((v1) && (v2))
-    {
-      lim = MIN(v1->length, v2->length);
-      if (XEN_INTEGER_P(offs))
-	for (i = 0, j = XEN_TO_C_INT(offs); i < lim; i++, j++) 
-	  v1->data[j] += v2->data[i];
-      else
-	for (i = 0; i < lim; i++) 
-	  v1->data[i] += v2->data[i];
-    }
+  lim = MIN(v1->length, v2->length);
+  if (XEN_INTEGER_P(offs))
+    for (i = 0, j = XEN_TO_C_INT(offs); i < lim; i++, j++) 
+      v1->data[j] += v2->data[i];
+  else
+    for (i = 0; i < lim; i++) 
+      v1->data[i] += v2->data[i];
   return(xen_return_first(obj1, obj2));
 }
 
@@ -360,11 +334,8 @@ static XEN vct_subtract(XEN obj1, XEN obj2)
   XEN_ASSERT_TYPE(VCT_P(obj2), obj2, XEN_ARG_2, S_vct_subtractB, "a vct");
   v1 = TO_VCT(obj1);
   v2 = TO_VCT(obj2);
-  if ((v1) && (v2))
-    {
-      lim = MIN(v1->length, v2->length);
-      for (i = 0; i < lim; i++) v1->data[i] -= v2->data[i];
-    }
+  lim = MIN(v1->length, v2->length);
+  for (i = 0; i < lim; i++) v1->data[i] -= v2->data[i];
   return(xen_return_first(obj1, obj2));
 }
 
@@ -378,8 +349,7 @@ static XEN vct_scale(XEN obj1, XEN obj2)
   XEN_ASSERT_TYPE(XEN_NUMBER_P(obj2), obj2, XEN_ARG_2, S_vct_scaleB, "a number");
   v1 = TO_VCT(obj1);
   scl = XEN_TO_C_DOUBLE(obj2);
-  if (v1)
-    for (i = 0; i < v1->length; i++) v1->data[i] *= scl;
+  for (i = 0; i < v1->length; i++) v1->data[i] *= scl;
   return(xen_return_first(obj1, obj2));
 }
 
@@ -393,8 +363,7 @@ static XEN vct_offset(XEN obj1, XEN obj2)
   XEN_ASSERT_TYPE(XEN_NUMBER_P(obj2), obj2, XEN_ARG_2, S_vct_offsetB, "a number");
   v1 = TO_VCT(obj1);
   scl = XEN_TO_C_DOUBLE(obj2);
-  if (v1)
-    for (i = 0; i < v1->length; i++) v1->data[i] += scl;
+  for (i = 0; i < v1->length; i++) v1->data[i] += scl;
   return(xen_return_first(obj1, obj2));
 }
 
@@ -408,8 +377,7 @@ static XEN vct_fill(XEN obj1, XEN obj2)
   XEN_ASSERT_TYPE(XEN_NUMBER_P(obj2), obj2, XEN_ARG_2, S_vct_fillB, "a number");
   v1 = TO_VCT(obj1);
   scl = XEN_TO_C_DOUBLE(obj2);
-  if (v1)
-    for (i = 0; i < v1->length; i++) v1->data[i] = scl;
+  for (i = 0; i < v1->length; i++) v1->data[i] = scl;
   return(xen_return_first(obj1, obj2));
 }
 
@@ -421,9 +389,8 @@ static XEN vct_map(XEN obj, XEN proc)
   XEN_ASSERT_TYPE(VCT_P(obj), obj, XEN_ARG_1, S_vct_mapB, "a vct");
   XEN_ASSERT_TYPE(XEN_PROCEDURE_P(proc) && (XEN_REQUIRED_ARGS(proc) == 0), proc, XEN_ARG_2, S_vct_mapB, "a thunk");
   v = TO_VCT(obj);
-  if (v) 
-    for (i = 0; i < v->length; i++) 
-      v->data[i] = XEN_TO_C_DOUBLE(XEN_CALL_0_NO_CATCH(proc, S_vct_mapB));
+  for (i = 0; i < v->length; i++) 
+    v->data[i] = XEN_TO_C_DOUBLE(XEN_CALL_0_NO_CATCH(proc, S_vct_mapB));
   return(xen_return_first(obj, proc));
 }
 
@@ -435,9 +402,8 @@ static XEN vct_do(XEN obj, XEN proc)
   XEN_ASSERT_TYPE(VCT_P(obj), obj, XEN_ARG_1, S_vct_doB, "a vct");
   XEN_ASSERT_TYPE(XEN_PROCEDURE_P(proc) && (XEN_REQUIRED_ARGS(proc) == 1), proc, XEN_ARG_2, S_vct_doB, "a procedure of one arg");
   v = TO_VCT(obj);
-  if (v) 
-    for (i = 0; i < v->length; i++) 
-      v->data[i] = XEN_TO_C_DOUBLE(XEN_CALL_1_NO_CATCH(proc, C_TO_SMALL_XEN_INT(i), S_vct_doB));
+  for (i = 0; i < v->length; i++) 
+    v->data[i] = XEN_TO_C_DOUBLE(XEN_CALL_1_NO_CATCH(proc, C_TO_SMALL_XEN_INT(i), S_vct_doB));
   return(xen_return_first(obj, proc));
 }
 
@@ -552,14 +518,11 @@ static XEN vct_peak(XEN obj)
   vct *v;
   XEN_ASSERT_TYPE(VCT_P(obj), obj, XEN_ONLY_ARG, S_vct_peak, "a vct");
   v = TO_VCT(obj);
-  if (v) 
+  val = fabs(v->data[0]); 
+  for (i = 1; i < v->length; i++) 
     {
-      val = fabs(v->data[0]); 
-      for (i = 1; i < v->length; i++) 
-	{
-	  absv = fabs(v->data[i]); 
-	  if (absv > val) val = absv;
-	}
+      absv = fabs(v->data[i]); 
+      if (absv > val) val = absv;
     }
   return(xen_return_first(C_TO_XEN_DOUBLE(val), obj));
 }

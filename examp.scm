@@ -36,8 +36,8 @@
 ;;; convolution (convolve)
 ;;; reverb (all-pass etc)
 ;;; scissor-tailed flycatcher (waveshaping)
-;;; fm-violin (FM and various other generators, #:key args)
-;;; FOF voice synthesis (wave-train, #:optional args)
+;;; fm-violin
+;;; FOF voice synthesis (wave-train)
 ;;; time varying FIR filter, notch filter
 ;;; swap selection chans
 ;;; sound-interp, env-sound-interp

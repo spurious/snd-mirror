@@ -511,7 +511,7 @@ void xen_guile_define_procedure_with_reversed_setter(char *get_name, XEN (*get_f
 #define XEN_TO_C_DOUBLE_WITH_CALLER(a, b) NUM2DBL(a)
 #define C_TO_XEN_DOUBLE(a)                rb_float_new(a)
 
-#define XEN_TO_C_INT(a)                   NUM2INT(a)
+#define XEN_TO_C_INT(a)                   rb_num2int(a)
 #define XEN_TO_C_INT_OR_ELSE(a, b)        (XEN_INTEGER_P(a) ? FIX2INT(a) : b)
 #define XEN_TO_C_INT_OR_ELSE_WITH_CALLER(a, b, c) (XEN_INTEGER_P(a) ? FIX2INT(a) : b)
 #define C_TO_XEN_INT(a)                   INT2NUM(a)

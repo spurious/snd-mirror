@@ -3,77 +3,6 @@
 #include "vct.h"
 #include "clm2xen.h"
 
-void ssnd_help(snd_state *ss, char *subject, ...)
-{
-  va_list ap;
-  char *helpstr, *newstr;
-  int len, size;
-  va_start(ap, subject);
-  size = 1024;
-  newstr = (char *)CALLOC(size, sizeof(char));
-  len = 0;
-  while ((helpstr = va_arg(ap, char *)))
-    {
-      len += snd_strlen(helpstr);
-      if (len >= size)
-	{
-	  size = len + 1024;
-	  newstr = (char *)REALLOC(newstr, size * sizeof(char));
-	}
-      strcat(newstr, helpstr);
-    }
-  va_end(ap);
-  snd_help(ss, subject, newstr);
-  FREE(newstr);
-}  
-
-void snd_help_with_url(snd_state *ss, char *subject, char *url, char *helpstr)
-{
-#if HAVE_HTML
-  snd_help(ss, subject, url);
-#else
-  snd_help(ss, subject, helpstr);
-#endif
-}
-
-void snd_help_with_url_and_wrap(snd_state *ss, char *subject, char *url, char *helpstr)
-{
-#if HAVE_HTML
-  snd_help(ss, subject, url);
-#else
-  snd_help_with_wrap(ss, subject, helpstr);
-#endif
-}
-
-void ssnd_help_with_url(snd_state *ss, char *subject, char *url, ...)
-{
-#if HAVE_HTML
-  snd_help(ss, subject, url);
-#else
-  /* groan! */
-  va_list ap;
-  char *helpstr, *newstr;
-  int len, size;
-  va_start(ap, url);
-  size = 1024;
-  newstr = (char *)CALLOC(size, sizeof(char));
-  len = 0;
-  while ((helpstr = va_arg(ap, char *)))
-    {
-      len += snd_strlen(helpstr);
-      if (len >= size)
-	{
-	  size = len + 1024;
-	  newstr = (char *)REALLOC(newstr, size * sizeof(char));
-	}
-      strcat(newstr, helpstr);
-    }
-  va_end(ap);
-  snd_help_with_url(ss, subject, url, newstr);
-  FREE(newstr);
-#endif
-}
-
 /* ---------------- help 'news' menu item ---------------- */
 
 static char *snd_itoa(int n)
@@ -275,6 +204,7 @@ void news_help(snd_state *ss)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+29-Mar:  Mac-OSX with Motif (thanks to Charles Nichols).\n\
 28-Mar:  removed movies function.\n\
 27-Mar:  selected-mix, selected-sound, and selected-channel return #f if none selected (not -1)\n\
 24-Mar:  removed ALSA 0.5 support.\n\
@@ -286,11 +216,6 @@ void news_help(snd_state *ss)
          removed cursor-no-action, cursor-update-display\n\
 18-Mar:  squelch-vowels in examp.scm (and ramp gen).\n\
 13-Mar:  snd 5.8.\n\
-12-Mar:  header editor bugfix (thanks to Ludger Brummer).\n\
-11-Mar:  removed channel-sync.\n\
-28-Feb:  edit-position bugfix (thanks to Ludger Brummer).\n\
-27-Feb:  color-scale bugfix (thanks to Anders Vinjar).\n\
-25-Feb:  gtk2 port with xg (see example in grfsnd.html).\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*: \n'", features, "\n\n",
@@ -300,6 +225,80 @@ void news_help(snd_state *ss)
 NULL);
   if (info) FREE(info);
   if (features) FREE(features);
+}
+
+
+/* -------- basic helpers -------- */
+
+void ssnd_help(snd_state *ss, char *subject, ...)
+{
+  va_list ap;
+  char *helpstr, *newstr;
+  int len, size;
+  va_start(ap, subject);
+  size = 1024;
+  newstr = (char *)CALLOC(size, sizeof(char));
+  len = 0;
+  while ((helpstr = va_arg(ap, char *)))
+    {
+      len += snd_strlen(helpstr);
+      if (len >= size)
+	{
+	  size = len + 1024;
+	  newstr = (char *)REALLOC(newstr, size * sizeof(char));
+	}
+      strcat(newstr, helpstr);
+    }
+  va_end(ap);
+  snd_help(ss, subject, newstr);
+  FREE(newstr);
+}  
+
+void snd_help_with_url(snd_state *ss, char *subject, char *url, char *helpstr)
+{
+#if HAVE_HTML
+  snd_help(ss, subject, url);
+#else
+  snd_help(ss, subject, helpstr);
+#endif
+}
+
+void snd_help_with_url_and_wrap(snd_state *ss, char *subject, char *url, char *helpstr)
+{
+#if HAVE_HTML
+  snd_help(ss, subject, url);
+#else
+  snd_help_with_wrap(ss, subject, helpstr);
+#endif
+}
+
+void ssnd_help_with_url(snd_state *ss, char *subject, char *url, ...)
+{
+#if HAVE_HTML
+  snd_help(ss, subject, url);
+#else
+  /* groan! */
+  va_list ap;
+  char *helpstr, *newstr;
+  int len, size;
+  va_start(ap, url);
+  size = 1024;
+  newstr = (char *)CALLOC(size, sizeof(char));
+  len = 0;
+  while ((helpstr = va_arg(ap, char *)))
+    {
+      len += snd_strlen(helpstr);
+      if (len >= size)
+	{
+	  size = len + 1024;
+	  newstr = (char *)REALLOC(newstr, size * sizeof(char));
+	}
+      strcat(newstr, helpstr);
+    }
+  va_end(ap);
+  snd_help_with_url(ss, subject, url, newstr);
+  FREE(newstr);
+#endif
 }
 
 /* ---------------- help menu strings ---------------- */

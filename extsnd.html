@@ -2865,7 +2865,7 @@ See play.scm and rtio.scm for example code. The most important Sndlib functions 
 <!-- -->
 <!-- mus-sound-chans -->
 <!-- --><tr><td><span class=defbox><code><em class=def><a name="soundchans">mus-sound-chans</a></em> (filename)</code></span></td>
-<!-- --><td>number of channels (samples are interleaved)</td></tr>
+<!-- --><td>number of channels (samples are interleaved) (settable)</td></tr>
 <!-- -->
 <!-- mus-sound-close-input -->
 <!-- --><tr><td><span class=defbox><code><em class=def><a name="mussoundcloseinput">mus-sound-close-input</a></em> (fd)</code></span></td>
@@ -2881,11 +2881,11 @@ See play.scm and rtio.scm for example code. The most important Sndlib functions 
 <!-- -->
 <!-- mus-sound-data-format -->
 <!-- --><tr><td><span class=defbox><code><em class=def><a name="sounddataformat">mus-sound-data-format</a></em> (filename)</code></span></td>
-<!-- --><td>data format (e.g. <i>mus-bshort</i>)</td></tr>
+<!-- --><td>data format (e.g. <i>mus-bshort</i>) (settable)</td></tr>
 <!-- -->
 <!-- mus-sound-data-location -->
 <!-- --><tr><td><span class=defbox><code><em class=def><a name="sounddatalocation">mus-sound-data-location</a></em> (filename)</code></span></td>
-<!-- --><td>location of first sample (bytes)</td></tr>
+<!-- --><td>location of first sample (bytes) (settable)</td></tr>
 <!-- -->
 <!-- mus-sound-duration -->
 <!-- --><tr><td><span class=defbox><code><em class=def><a name="soundduration">mus-sound-duration</a></em> (filename)</code></span></td>
@@ -2901,7 +2901,7 @@ See play.scm and rtio.scm for example code. The most important Sndlib functions 
 <!-- -->
 <!-- mus-sound-header-type -->
 <!-- --><tr><td><span class=defbox><code><em class=def><a name="soundheadertype">mus-sound-header-type</a></em> (filename)</code></span></td>
-<!-- --><td>header type (e.g. <i>mus-aifc</i>)</td></tr>
+<!-- --><td>header type (e.g. <i>mus-aifc</i>) (settable)</td></tr>
 <!-- -->
 <!-- mus-sound-length -->
 <!-- --><tr><td><span class=defbox><code><em class=def><a name="soundlength">mus-sound-length</a></em> (filename)</code></span></td>
@@ -2953,7 +2953,7 @@ See play.scm and rtio.scm for example code. The most important Sndlib functions 
 <!-- -->
 <!-- mus-sound-samples -->
 <!-- --><tr><td><span class=defbox><code><em class=def><a name="soundsamples">mus-sound-samples</a></em> (filename)</code></span></td>
-<!-- --><td>samples of sound according to header (can be incorrect)</td></tr>
+<!-- --><td>samples of sound according to header (can be incorrect) (settable)</td></tr>
 <!-- -->
 <!-- mus-sound-seek -->
 <!-- --><tr><td><span class=defbox><code><em class=def><a name="mussoundseek">mus-sound-seek</a></em> (fd offset origin)</code></span></td>
@@ -2965,7 +2965,7 @@ See play.scm and rtio.scm for example code. The most important Sndlib functions 
 <!-- -->
 <!-- mus-sound-srate -->
 <!-- --><tr><td><span class=defbox><code><em class=def><a name="soundsrate">mus-sound-srate</a></em> (filename)</code></span></td>
-<!-- --><td>sampling rate</td></tr>
+<!-- --><td>sampling rate (settable)</td></tr>
 <!-- -->
 <!-- mus-sound-write -->
 <!-- --><tr><td colspan=2><span class=defbox><code><em class=def><a name="mussoundwrite">mus-sound-write</a></em> (fd beg end chans sdata)</code></span></td>
@@ -4433,7 +4433,7 @@ the direction argument between the channel and edit-position.
 <!-- --><span class=defbox><code><em class=def><a name="snddataformat">data-format</a></em> (<em class=targ>snd</em>)</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
-<!-- --><i>snd</i>'s data format (e.g. mus-bshort).  If you encounter a file
+<!-- --><i>snd</i>'s data format (e.g. mus-bshort).  <br><br>If you encounter a file
 <!-- -->with an unknown format, or a header that has the wrong format, 
 <!-- -->you can set this field forcing Snd to interpret the data in any 
 <!-- -->form you like.  Similar remarks apply to the srate, data-location,
@@ -4443,10 +4443,40 @@ the direction argument between the channel and edit-position.
 <!-- -->For example, some NeXT/Sun (au) header files using the data format for byte-wide data
 <!-- -->assume the byte is unsigned, whereas most others assume it is signed.  Sndlib
 <!-- -->treats it as signed by default, so to make one of these files playable,
-<!-- --><code>(set! (data-format) mus-ubyte)</code>.  Float data is another source of confusion;
+<!-- --><br><br><code>(set! (data-format) mus-ubyte)</code>.<br><br>
+<!-- -->Float data is another source of confusion;
 <!-- -->there is apparently no agreement on whether the data is between -1.0 and 1.0, or -32768.0 and 32767.0 or anything else.
-<!-- -->In this case, Snd assumes -1.0 to 1.0 (except in one special case involving ircam headers), and you may have to set y-bounds to see the actual data.
-<!-- -->If you set any of these fields, it is possible that the sound's index will change (there is an embedded update-sound).
+<!-- -->In this case, Snd assumes -1.0 to 1.0 (except in one special case involving IRCAM headers), and you may have to set y-bounds to see the actual data.
+<!-- -->Yet another: files with 32-bit integers.  Some programs (Glame, apparently, and perhaps Ardour) assume the "fraction" is
+<!-- -->31 bits wide, others (Snd) use whatever its sample-width is configured to be; there is no "correct" 
+<!-- -->placement of the fixed point, but not to worry!  Your data is ok:
+<!-- --><code>(set! (y-bounds) (list -256.0 256.0))</code>. There are several ways you can handle
+<!-- -->these files in Snd.  Perhaps the simplest is to use one of the open hooks:
+<!-- --></td></tr>
+<!-- -->
+<!-- --><tr><td></td><td>
+<!-- --><table border=1 cellpadding=5><tr><td bgcolor="#FCFCF0"><pre>
+(add-hook! after-open-hook 
+  (lambda (snd) 
+    ;; this could also (alternatively) set the y-bounds as above
+    (if (= (data-format snd) mus-lint)
+        (set! (data-format snd) mus-lintn))))
+<!-- --></pre></td></tr></table>
+<!-- --></td></tr>
+<!-- --><tr><td></td><td>
+<!-- -->or (an alternative that sets the underlying database entry, rather than the current in-Snd choice):
+<!-- --></td></tr>
+<!-- -->
+<!-- --><tr><td></td><td>
+<!-- --><table border=1 cellpadding=5><tr><td bgcolor="#FCFCF0"><pre>
+(add-hook! open-hook 
+  (lambda (name)
+    (if (= (mus-sound-data-format name) mus-lint)
+        (set! (mus-sound-data-format name) mus-lintn))))
+<!-- --></pre></td></tr></table>
+<!-- --></td></tr>
+<!-- --><tr><td></td><td>
+<!-- -->If you set any of these fields, it is possible that the sound's index may change (there can be an embedded update-sound).
 <!-- --></td></tr>
 <!-- -->
 <!-- --><tr><td colspan=2></td></tr>

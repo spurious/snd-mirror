@@ -59,7 +59,7 @@ DEC Alpha:             makefile.alpha
 LinuxPPC:              makefile.ppcrpm
 Windoze/Cygwin:        makefile.cygwin
 Windoze/MSVC:          makefile.msv (this file assumes you have clisp's cccp, etc)
-Mac-OSX:               makefile.osx and config.osx
+Mac-OSX:               makefile.motif.osx and config.motif.osx (or gtk for motif)
 
 In HPUX, fixup the makefile.hpux include and library paths, then:
   make -f makefile.hpux
@@ -103,7 +103,7 @@ a variant of Lisp; see the urls below for some Scheme tutorials.
 The details of Snd customization are discussed in extsnd.html
 and grfsnd.html.
 
-Recently I added the possibility of using Ruby rather than
+Not very recently I added the possibility of using Ruby rather than
 Guile (on the HAVE_RUBY or --with-ruby switches).
 
 
@@ -157,7 +157,7 @@ The Sam 9407 support is thanks to Gerd Rausch.
 The LADSPA support is thanks to Richard W.E. Furse.
 The ESD support is thanks to Nick Bailey.
 The BSD port is thanks to Steven Schultz.
-The Mac-OSX port is thanks to Ludger Brummer.
+The Mac-OSX port is thanks to Ludger Brummer and Charles Nichols.
 effects.scm is largely thanks to Dave Phillips.
 The contrib directory has contributions from Dave Phillips and Tom Roth.
 
@@ -308,7 +308,7 @@ the pre-loaded images such as linux-snd, or build using Gtk+.
 
 If Snd then refuses to run with the error:
 
-./snd: error in loading shared libraries: libMrm.so.1: cannot open shared
+./snd: error in loading shared libraries: lib<whatever>: cannot open shared
 object file: No such file or directory
 
 you need to add the relevant path to the loader's list of
@@ -411,22 +411,25 @@ this, load fix-optargs.scm before anything else.
 
 
 
----- Mac OS-X:  ----
-Currently you need to install Guile 1.4 (at least, I haven't
-managed to compile 1.5), GSL 0.9 (using --disable-shared), and the
-prebuilt Glib/Gtk 1.2.8 tarballs that contain the headers (the package
-at osxgnu is just the libraries -- I think I got my version from
-gnu-darwin or some such address).  These should be installed by hand
-in /usr/local/include.  Next, the Snd configure process is confused by
-the lack of gtk-config, so you need to rename config.osx to config.h,
-and make -f makefile.osx.  The "native" Mac audio hardware supports
-only stereo 44100Hz; sndplay tries to fix up 22050 and mono, but
-Snd only fixes up mono cases.  Anything else will be played incorrectly,
-though you can use the speed control to correct it by hand.
-Also, there is something odd about keypress events in this implementation
-of X or Xt; if C-f (and others like it) doesn't work, either try toggling
-the "w" button, or add the focus-widget related hooks from grfsnd.html
-to your initialization file:
+---- Mac OS-X: ---- 
+
+Currently you need to install Guile 1.4 (at least, I haven't managed
+to compile 1.5), GSL 0.9 (using --disable-shared), and the prebuilt
+Glib/Gtk 1.2.8 or Motif 2.1 tarballs that contain the headers (the
+package at osxgnu is just the libraries -- I think I got my version
+from gnu-darwin or motifzone some such address).  The Snd configure
+process is confused by the lack of gtk-config (in the Gtk case), and
+(in the Motif case) by a problem with dynamic loading, so you need to
+run configure, then compare config.h and makefile with the versions
+config.motif.osx (gtk) and makefile.motif.osx (gtk).  The main thing
+that needs to be fixed by hand is that libXm.a and libXt.a must be
+used, not the shared object versions of those libraries.  The "native"
+Mac audio hardware supports only stereo 44100Hz; sndplay tries to fix
+up 22050 and mono, but Snd only fixes up mono cases.  Anything else
+will be played incorrectly, though you can use the speed control to
+correct it by hand.  If C-f (and others like it) doesn't work, either
+try toggling the "w" button, or add the focus-widget related hooks
+from grfsnd.html to your initialization file:
 
 (add-hook! mouse-enter-graph-hook 
   (lambda (snd chn) 
@@ -461,7 +464,7 @@ So to sum up:
   GSL 0.8 or later
   Gtk+ 1.2.8 or 1.2.10, (a port to gtk2 is underway)
   any Motif but not Lesstif (and I no longer have any way to test Motif 1)
-  ALSA 0.9beta8 or later (or any version of OSS)
+  in Linux, ALSA 0.9beta8 or later (or any version of OSS)
   Guile 1.3.4 or later but Snd's Scheme files need 1.5.0 or later
   Ruby 1.6.4 or later
   
@@ -550,7 +553,7 @@ Ruby:
 
 
 ----------------------------------------------------------------
-CVS: (I haven't tested this).
+CVS:
 
 To follow the Snd CVS repository, the first time you need to
 

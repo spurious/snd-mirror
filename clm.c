@@ -331,7 +331,7 @@ Float mus_set_frequency(mus_any *gen, Float val)
 {
   if (gen)
     {
-      if ((gen->core)->frequency)
+      if ((gen->core)->set_frequency)
 	return((*((gen->core)->set_frequency))(gen, val));
       mus_error(MUS_NO_FREQUENCY, "can't set %s's frequency", mus_name(gen));
     }
@@ -354,7 +354,7 @@ Float mus_set_phase(mus_any *gen, Float val)
 {
   if (gen)
     {
-      if ((gen->core)->phase)
+      if ((gen->core)->set_phase)
 	return((*((gen->core)->set_phase))(gen, val));
       mus_error(MUS_NO_PHASE, "can't set %s's phase", mus_name(gen));
     }
@@ -376,7 +376,7 @@ Float mus_set_scaler(mus_any *gen, Float val)
 {
   if (gen)
     {
-      if ((gen->core)->scaler)
+      if ((gen->core)->set_scaler)
 	return((*((gen->core)->set_scaler))(gen, val));
       mus_error(MUS_NO_SCALER, "can't set %s's scaler", mus_name(gen));
     }

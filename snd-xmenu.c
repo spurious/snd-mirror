@@ -245,7 +245,7 @@ static void edit_play_callback(Widget w, XtPointer cD, XtPointer mD)
     }
   else
     {
-      IF_MENU_HOOK(STR_Edit, STR_Play_selection) 
+      IF_MENU_HOOK(STR_Edit, STR_Play_Selection) 
 	{
 	  set_menu_label(edit_play_menu(), STR_Stop);
 	  selection_play_stop = 1;
@@ -256,7 +256,7 @@ static void edit_play_callback(Widget w, XtPointer cD, XtPointer mD)
 
 void reflect_play_selection_stop(void)
 {
-  set_menu_label(edit_play_menu(), STR_Play_selection);
+  set_menu_label(edit_play_menu(), STR_Play_Selection);
   selection_play_stop = 0;
 }
 
@@ -523,6 +523,33 @@ static void help_clm_callback (Widget w, XtPointer cD, XtPointer mD) {IF_MENU_HO
 static void help_news_callback (Widget w, XtPointer cD, XtPointer mD) {IF_MENU_HOOK(STR_Help, STR_News) news_help((snd_state *)cD);}
 
 
+void check_menu_labels(int key, int state, int extended)
+{
+  if (extended)
+    {
+      if (state == snd_ControlMask)
+	{
+	  if (key == snd_K_f) set_label(mw[f_open_menu], STR_Open); else
+	  if (key == snd_K_s) set_label(mw[f_save_menu], STR_Save); else
+	  if (key == snd_K_q) set_label(mw[f_mix_menu], STR_Mix); else
+	  if (key == snd_K_u) set_label(mw[e_undo_menu], STR_Undo); else
+	  if (key == snd_K_r) set_label(mw[e_redo_menu], STR_Redo);
+	}
+      else
+	{
+	  if (key == snd_K_k) set_label(mw[f_close_menu], STR_Close); else
+	  if (key == snd_K_i) set_label(mw[e_paste_menu], STR_Insert_Selection); else	  
+	  if (key == snd_K_q) set_label(mw[e_mix_menu], STR_Mix_Selection); else	  
+	  if (key == snd_K_p) set_label(mw[e_play_menu], STR_Play_Selection); else	  
+	  if (key == snd_K_w) set_label(mw[e_save_as_menu], STR_Save_Selection);
+	}
+    }
+  else 
+    {
+      if ((key == snd_K_s) && (state == snd_ControlMask))
+	set_label(mw[e_find_menu], STR_Find);
+    }
+}
 
 /* -------------------------------- MAIN MENU -------------------------------- */
 
@@ -550,7 +577,7 @@ Widget add_menu(snd_state *ss)
   XtSetArg(in_args[in_n], XmNsensitive, FALSE); in_n++;
   
   n = high_n;
-  XtSetArg(high_args[n], XmNuserData, ss); n++; /* used in snd-xclip by drop site to get main state data from whatever widget got the drop */
+  XtSetArg(high_args[n], XmNuserData, ss); n++; /* used in snd-xdrop.c by drop site to get main state data from whatever widget got the drop */
   p = n;
   XtSetArg(high_args[p], XmNtopAttachment, XmATTACH_FORM); p++;
   XtSetArg(high_args[p], XmNbottomAttachment, XmATTACH_NONE); p++;
@@ -570,7 +597,6 @@ Widget add_menu(snd_state *ss)
   XtSetArg(high_args[high_n], XmNmnemonic, 'F'); high_n++;
   mw[f_cascade_menu] = XtCreateManagedWidget(STR_File, xmCascadeButtonWidgetClass, mw[menu_menu], high_args, high_n);
 
-  /* TODO: if user unbinds (e.g.) C-x C-f, remove it from the File menu Open label */
   mw[f_open_menu] = XtCreateManagedWidget(STR_Open "   C-x C-f", xmPushButtonWidgetClass, mw[file_menu], main_args, main_n);
   XtAddCallback(mw[f_open_menu], XmNactivateCallback, file_open_callback, ss);
   XtVaSetValues(mw[f_open_menu], XmNmnemonic, 'O', NULL);
@@ -660,7 +686,7 @@ Widget add_menu(snd_state *ss)
   XtAddCallback(mw[e_mix_menu], XmNactivateCallback, edit_mix_callback, ss);
   XtVaSetValues(mw[e_mix_menu], XmNmnemonic, 'M', NULL);
 
-  mw[e_play_menu] = XtCreateManagedWidget(STR_Play_selection "   C-x p", xmPushButtonWidgetClass, mw[edit_menu], in_args, in_n);
+  mw[e_play_menu] = XtCreateManagedWidget(STR_Play_Selection "   C-x p", xmPushButtonWidgetClass, mw[edit_menu], in_args, in_n);
   XtAddCallback(mw[e_play_menu], XmNactivateCallback, edit_play_callback, ss);
   XtVaSetValues(mw[e_play_menu], XmNmnemonic, 'P', NULL);
 

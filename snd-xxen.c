@@ -172,9 +172,7 @@ static XEN g_snd_pixel(XEN color)
   snd_color *v;
   XEN_ASSERT_TYPE(COLOR_P(color), color, XEN_ONLY_ARG, S_snd_pixel, "a Snd color");
   v = TO_SND_COLOR(color); 
-  if (v)
-    return(XEN_WRAP_PIXEL((unsigned long)(v->color)));
-  return(XEN_ZERO);
+  return(XEN_WRAP_PIXEL((unsigned long)(v->color)));
 }
 
 void recolor_everything(GUI_WIDGET w, GUI_POINTER ptr)

@@ -250,7 +250,6 @@ chan_info *virtual_selected_channel(chan_info *cp)
 int calculate_fft(chan_info *cp, void *ptr)
 {
   snd_state *ss;
-  /* TODO: the graph_transform_p flags (et al) could be removed if (DONT_)GRAPH_TRANSFORM(_NONE) added as transform_graph_type */
   if ((cp->graph_transform_p) &&
       (!(chan_fft_in_progress(cp))))
     {
@@ -2599,7 +2598,7 @@ void display_channel_fft_data(chan_info *cp, snd_info *sp, snd_state *ss)
   display_channel_data_1(cp, sp, ss, TRUE, FALSE);
 }
 
-void display_channel_lisp_data(chan_info *cp, snd_info *sp, snd_state *ss)
+static void display_channel_lisp_data(chan_info *cp, snd_info *sp, snd_state *ss)
 {
   display_channel_data_1(cp, sp, ss, FALSE, TRUE);
 }

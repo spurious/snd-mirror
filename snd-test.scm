@@ -28,9 +28,6 @@
 ;;; test 25: errors
 
 ;;; TODO: gtk tests
-;;; TODO: Xt selection tests?
-;;; TODO: rest of Snd callbacks triggered
-;;; TODO: mix play with various amp/speed settings
 
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 popen) (ice-9 optargs) (ice-9 syncase))
 
@@ -60,6 +57,7 @@
 (define with-exit (< snd-test 0))
 (set! (with-background-processes) #f)
 (define all-args #f) ; huge arg testing
+(define have-libguile-so #t) ; set to #f if loading libguile.a
 
 (define home-dir "/home")
 (define sf-dir "/sf1")
@@ -2320,6 +2318,36 @@
 	(test-data (string-append sf-dir "PCM_48_8bit_m.w64") 1000 10 (vct 0.062 0.070 0.070 0.086 0.086 0.102 0.102 0.109 0.109 0.117))
 	(test-data (string-append sf-dir "oki.wav") 100 10 (vct 0.396 0.564 0.677 0.779 0.761 0.540 0.209 -0.100 -0.301 -0.265))
 	)
+      (let ((cur-srate (mus-sound-srate "oboe.snd"))
+	    (cur-chans (mus-sound-chans "oboe.snd"))
+	    (cur-format (mus-sound-data-format "oboe.snd"))
+	    (cur-type (mus-sound-header-type "oboe.snd"))
+	    (cur-loc (mus-sound-data-location "oboe.snd"))
+	    (cur-samps (mus-sound-samples "oboe.snd")))
+	(set! (mus-sound-srate "oboe.snd") (* cur-srate 2))
+	(IF (not (= (* cur-srate 2) (mus-sound-srate "oboe.snd"))) 
+	    (snd-display ";set mus-sound-srate: ~A -> ~A" cur-srate (mus-sound-srate "oboe.snd")))
+	(set! (mus-sound-samples "oboe.snd") (* cur-samps 2))
+	(IF (not (= (* cur-samps 2) (mus-sound-samples "oboe.snd"))) 
+	    (snd-display ";set mus-sound-samples: ~A -> ~A" cur-samps (mus-sound-samples "oboe.snd")))
+	(set! (mus-sound-chans "oboe.snd") (* cur-chans 2))
+	(IF (not (= (* cur-chans 2) (mus-sound-chans "oboe.snd"))) 
+	    (snd-display ";set mus-sound-chans: ~A -> ~A" cur-chans (mus-sound-chans "oboe.snd")))
+	(set! (mus-sound-data-location "oboe.snd") (* cur-loc 2))
+	(IF (not (= (* cur-loc 2) (mus-sound-data-location "oboe.snd"))) 
+	    (snd-display ";set mus-sound-data-location: ~A -> ~A" cur-loc (mus-sound-data-location "oboe.snd")))
+	(set! (mus-sound-header-type "oboe.snd") mus-nist)
+	(IF (not (= mus-nist (mus-sound-header-type "oboe.snd"))) 
+	    (snd-display ";set mus-sound-header-type: ~A -> ~A" cur-type (mus-sound-header-type "oboe.snd")))
+	(set! (mus-sound-data-format "oboe.snd") mus-lintn)
+	(IF (not (= mus-lintn (mus-sound-data-format "oboe.snd"))) 
+	    (snd-display ";set mus-sound-data-format: ~A -> ~A" cur-format (mus-sound-data-format "oboe.snd")))
+	(set! (mus-sound-srate "oboe.snd") cur-srate)
+	(set! (mus-sound-samples "oboe.snd") cur-samps)
+	(set! (mus-sound-chans "oboe.snd") cur-chans)
+	(set! (mus-sound-data-location "oboe.snd") cur-loc)
+	(set! (mus-sound-header-type "oboe.snd") cur-type)
+	(set! (mus-sound-data-format "oboe.snd") cur-format))
       ))))
 
 (define a-ctr 0)
@@ -2902,6 +2930,10 @@
 	    (snd-display ";env-selection: ~A ~A ~A ~A?" (sample 64) (sample 20) (sample 120) v0))
 	(save-selection "fmv5.snd" mus-next mus-bint 22050 "") ;1.0->-1.0 if short
 	(revert-sound index)
+	(let ((tag (catch #t (lambda () (file->array "/baddy/hiho" 0 0 128 v0)) (lambda args (car args)))))
+	  (IF (not (eq? tag 'no-such-file)) (snd-display ";file->array w/o file: ~A" tag)))
+	(let ((tag (catch #t (lambda () (file->array "fmv5.snd" 123 0 128 v0)) (lambda args (car args)))))
+	  (IF (not (eq? tag 'no-such-channel)) (snd-display ";file->array w/o channel: ~A" tag)))
 	(file->array "fmv5.snd" 0 0 128 v0) 
 	(IF (or (fneq (vct-ref v0 64) 1.0) (fneq (vct-ref v0 20) .3125) (fneq (vct-ref v0 120) 0.125))
 	    (snd-display ";save-selection: ~A ~A ~A ~A?" (vct-ref v0 64) (vct-ref v0 20) (vct-ref v0 120) v0))
@@ -4282,9 +4314,12 @@
 	     (v123 (vct 0.0 1.0 2.0 3.0))
 	     (v2 (vector->vct vect))
 	     (v3 v2)
-	     (str (format #f "~A" v2)))
+	     (str (format #f "~A" v2))
+	     (str1 (format #f "~A" (make-vct 32))))
 	(IF (not (string=? str "#<vct[len=4]: 0.000 1.000 2.000 3.000>"))
 	    (snd-display ";vct print: ~%  ~A~%  ~A?" str v2))
+	(IF (not (string=? str1 "#<vct[len=32]: 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 ...>"))
+	    (snd-display ";vct(32) print: ~%  ~A~%" str1))
 	(IF (not (vequal v123 v2)) (snd-display ";vector->vct: ~A" v2))
 	(IF (not (equal? (vct->vector v123) vect)) (snd-display ";vct->vector: ~A ~A" vect (vct->vector v123)))
 	(IF (not (equal? v3 v2)) (snd-display ";vct=? ~A ~A?" v2 v3))
@@ -4765,6 +4800,13 @@
 	(let ((var (catch #t (lambda () (mus-fft xdat ydat -1 0)) (lambda args args))))
 	  (IF (not (eq? (car var) 'mus-error))
 	      (snd-display ";mus-fft bad len: ~A" var))))
+
+      (let ((rdat (make-vct 19))
+	    (idat (make-vct 19)))
+	(vct-set! rdat 3 1.0)
+	(mus-fft rdat idat)
+	(convolution rdat idat)
+	(spectrum rdat idat #f))
 
       (let ((rdat (make-vector 16))
 	    (idat (make-vector 16)))
@@ -5288,7 +5330,9 @@
 	(IF (or (fneq (vector-ref results 1) 0.12639)
 		(fneq (vector-ref results 5) 0.48203)
 		(fneq (vector-ref results 9) 0.41001))
-	    (snd-display ";mus-bank: ~A?" results)))
+	    (snd-display ";mus-bank: ~A?" results))
+	(do ((i 0 (1+ i))) ((= i 10))
+	  (vector-set! results i (mus-bank oscils amps fms (lambda (i) 0.0)))))
 
       (let ((gen (make-buffer 3)))
 	(IF (not (buffer-empty? gen)) (snd-display ";new buf not buffer-empty: ~A?" gen))
@@ -6232,6 +6276,8 @@
 	(IF (not (= (mus-location gen) 1000)) (snd-display ";mus-set-location: ~A?" (mus-location gen)))
 	(let ((val (readin gen)))
 	  (IF (fneq val 0.033) (snd-display ";mus-set-location readin: ~A?" val))))
+      (let ((tag (catch #t (lambda () (make-readin "/baddy/hiho" 0 124)) (lambda args (car args)))))
+	(IF (not (eq? tag 'no-such-file)) (snd-display ";make-readin w/o file: ~A" tag)))
 
       (test-gen-equal (make-readin "oboe.snd" 0) (make-readin "oboe.snd" 0) (make-readin "oboe.snd" 0 1230))
       (test-gen-equal (make-readin "oboe.snd" 0) (make-readin "oboe.snd" 0) (make-readin "pistol.snd" 0))
@@ -6439,6 +6485,9 @@
 	(let ((var (catch #t (lambda () (array->file "fmv3.snd" v0 -1 1000 1)) (lambda args args))))
 	  (IF (not (eq? (car var) 'mus-error))
 	      (snd-display ";array->file bad samps: ~A" var)))
+	(let ((var (catch #t (lambda () (array->file "/bad/baddy/fmv3.snd" v0 -1 1000 1)) (lambda args args))))
+	  (IF (not (eq? (car var) 'mus-error))
+	      (snd-display ";array->file bad file: ~A" var)))
 	(let ((var (catch #t (lambda () (file->array "fmv3.snd" -1 0 -1 v0)) (lambda args args))))
 	  (IF (not (eq? (car var) 'mus-error))
 	      (snd-display ";file->array bad samps: ~A" var))))
@@ -7079,7 +7128,22 @@
 	  (vector-set! vf 1 vf2)
 	  (vector-set! vf1 0 (make-env '(0 0 1 1) :end 9))
 	  (vector-set! vf2 1 (make-env '(0 0 1 1) :end 9))
-	  (mus-mix "fmv.snd" "fmv2.snd" 0 12 0 (make-mixer 2 1.0 1.0 1.0 1.0) vf))
+	  (mus-mix "fmv.snd" "fmv2.snd" 0 12 0 (make-mixer 2 1.0 1.0 1.0 1.0) vf)
+	  (let ((tag (catch #t
+			    (lambda ()
+			      (vector-set! vf 0 (make-oscil))
+			      (mus-mix "fmv.snd" "fmv2.snd" 0 12 0 (make-mixer 2 1.0 1.0 1.0 1.0) vf))
+			    (lambda args (car args)))))
+	    (IF (not (eq? tag 'bad-type))
+		(snd-display ";mix w oscil-vect: ~A" tag)))
+	  (let ((tag (catch #t
+			    (lambda ()
+			      (vector-set! vf1 0 (make-oscil))
+			      (vector-set! vf2 1 (sqrt -1.0))
+			      (mus-mix "fmv.snd" "fmv2.snd" 0 12 0 (make-mixer 2 1.0 1.0 1.0 1.0) vf))
+			    (lambda args (car args)))))
+	    (IF (not (eq? tag 'bad-type))
+		(snd-display ";mix w oscil-env: ~A" tag))))
 	(delete-file "fmv.snd")
 	(do ((i 0 (1+ i))) ((= i 12)) (vct-set! v0 i (* i .01)))
 	(array->file "fmv.snd" v0 12 22050 4)
@@ -7478,7 +7542,7 @@
 		 (reader-string (format #f "~A" mr)))
 	      (IF (not (string=? (substring reader-string 0 24) "#<track-sample-reader 0x"))
 		  (snd-display ";track sample reader actually got: [~S]" (substring reader-string 0 24)))
-	      (IF (not (string=? (substring reader-string 31) (string-append ": " home-dir "/bil/cl/oboe.snd chan 0 via mixes '(9 11 13)>")))
+	      (IF (not (string=? (substring reader-string 31) (string-append ": " home-dir "/bil/cl/oboe.snd chan 0 via mixes '(10 12 14)>")))
 		  (snd-display ";track sample reader actually got: [~S]" (substring reader-string 31)))
 	      (free-track-sample-reader mr))
 	  (let ((curend (track-end (track 1))))
@@ -8996,6 +9060,7 @@
 		  (fneq sr (srate fd)))
 	      (snd-display ";copyfile(2): ~A ~A ~A ~A?" (frames fd) (chans fd) (srate fd) (maxamp fd)))))
 
+      (set! (transform-size fd 0) 256)
       (for-each
        (lambda (dpy-type fft-type)
 	 (set! (transform-graph-type fd 0) dpy-type)
@@ -9003,7 +9068,7 @@
 	 (update-transform fd 0)
 	 (let ((v0 (transform-samples->vct fd 0))
 	       (vc (transform-samples fd 0))
-	       (val (transform-sample 50 0 fd 0)))
+	       (val (catch #t (lambda () (transform-sample 50 0 fd 0)) (lambda args -1234.1234))))
 	   (IF (and v0 vc)
 	       (begin
 		 (IF (fneq val (vector-ref vc 50)) 
@@ -9016,7 +9081,18 @@
 	     graph-transform-once graph-transform-as-sonogram graph-transform-as-spectrogram)
        (list fourier-transform fourier-transform fourier-transform 
 	     autocorrelation autocorrelation autocorrelation))
-
+      (let ((tag (catch #t
+			(lambda ()
+			  (transform-sample 5000 0 fd 0))
+			(lambda args (car args)))))
+	(IF (not (eq? tag 'no-such-sample))
+	    (snd-display ";access invalid (bin) transform sample: ~A" tag)))
+      (let ((tag (catch #t
+			(lambda ()
+			  (transform-sample 0 5000 fd 0))
+			(lambda args (car args)))))
+	(IF (not (eq? tag 'no-such-sample))
+	    (snd-display ";access invalid (slice) transform sample: ~A" tag)))
       (close-sound fd)
 
       (add-hook! after-open-hook
@@ -11886,8 +11962,6 @@
 	    (IF (not (= ctr 1)) (snd-display ";scan-channel error exit: ~A" ctr))
 	    (IF (not (eq? tag 'unbound-variable)) (snd-display ";scan-channel unbound: ~A" tag)))
 	  (close-sound ind))
-	;; TODO: rest of 'bad-type errors
-	      
 	)))
 
 
@@ -12395,6 +12469,14 @@ EDITS: 4
 	(IF (fneq (vct-ref d0 i) 1.0)
 	    (snd-display ";fourier (1.0) [~D]: ~A?" i (vct-ref d0 i))))
 
+      (set! d0 (make-vct 19))
+      (vct-set! d0 0 1.0)
+      (snd-transform fourier-transform d0 0)
+      (do ((i 0 (1+ i)))
+	  ((= i 16))
+	(IF (fneq (vct-ref d0 i) 1.0)
+	    (snd-display ";fourier (1.0) [~D]: ~A?" i (vct-ref d0 i))))
+
       (snd-transform fourier-transform d0 0)
       (IF (fneq (vct-ref d0 0) 256.0)
 	  (snd-display (format ";fourier (256.0): ~A?" (vct-ref d0 0))))
@@ -12734,6 +12816,15 @@ EDITS: 4
 	(vct-scale! d2 (/ 1.0 64.0))
 	(IF (not (vequal d1 d2))
 	    (snd-display ";random hadamard: ~A ~A" d1 d2)))
+
+      (if have-libguile-so
+	  (begin
+	    (system "cc gsl-ex.c -c")
+	    (system "ld -shared gsl-ex.o -o gsl-ex.so -lguile")
+	    (let ((handle (dlopen "/home/bil/cl/gsl-ex.so")))
+	      (dlinit handle "init_gsl_j0")
+	      (IF (fneq (j0 1.0) 0.765) (snd-display ";gsl loader test: ~A" (j0 1.0))))))
+
       ))
       ))
 
@@ -17843,7 +17934,118 @@ EDITS: 4
 	    (|XmCascadeButtonHighlight (|XmCreateCascadeButton (cadr (main-widgets)) "cascade" '()) #f)
 	    ;(|XmCascadeButtonGadgetHighlight (|XmCreateCascadeButtonGadget (cadr (main-widgets)) "gadget" '()) #f)
 
-	    (let* ((create-procs (list
+	    (let ((shell (cadr (main-widgets)))
+		  (resource-list
+	       (list |XmNaccelerator |XmNacceleratorText |XmNaccelerators |XmNactivateCallback |XmNadjustLast |XmNadjustMargin |XmNalignment 
+		     |XmNallowOverlap |XmNallowResize |XmNallowShellResize |XmNancestorSensitive |XmNanimationMask |XmNanimationPixmap 
+		     |XmNanimationPixmapDepth |XmNanimationStyle |XmNapplyCallback |XmNapplyLabelString |XmNargc |XmNargv |XmNarmCallback 
+		     |XmNarmColor |XmNarmPixmap |XmNarrowDirection |XmNattachment |XmNaudibleWarning |XmNautoShowCursorPosition |XmNautoUnmanage 
+		     |XmNautomaticSelection |XmNbackground |XmNbackgroundPixmap |XmNbaseHeight |XmNbaseWidth |XmNbitmap |XmNblendModel |XmNblinkRate 
+		     |XmNborderColor |XmNborderColor |XmNborderPixmap |XmNborderWidth |XmNbottomAttachment |XmNbottomOffset |XmNbottomPosition 
+		     |XmNbottomShadowColor |XmNbottomShadowPixmap |XmNbottomWidget |XmNbrowseSelectionCallback |XmNbuttonAcceleratorText 
+		     |XmNbuttonAccelerators |XmNbuttonCount |XmNbuttonMnemonicCharSets |XmNbuttonMnemonics |XmNbuttonSet |XmNbuttonType 
+		     |XmNbuttons |XmNcancelButton |XmNcancelCallback |XmNcancelLabelString |XmNcascadePixmap |XmNcascadingCallback 
+		     |XmNchildHorizontalAlignment |XmNchildHorizontalSpacing |XmNchildPlacement |XmNchildVerticalAlignment |XmNchildren 
+		     |XmNclientData |XmNclipWindow |XmNcolormap |XmNcolumns |XmNcommand |XmNcommandChangedCallback |XmNcommandEnteredCallback 
+		     |XmNcommandWindow |XmNcommandWindowLocation |XmNconvertProc |XmNcreatePopupChildProc |XmNcursorBackground 
+		     |XmNcursorForeground |XmNcursorPosition |XmNcursorPositionVisible |XmNdarkThreshold |XmNdecimalPoints 
+		     |XmNdecrementCallback |XmNdefaultActionCallback |XmNdefaultButton |XmNdefaultButtonShadowThickness 
+		     |XmNdefaultButtonType |XmNdefaultCopyCursorIcon |XmNdefaultInvalidCursorIcon |XmNdefaultLinkCursorIcon 
+		     |XmNdefaultMoveCursorIcon |XmNdefaultNoneCursorIcon |XmNdefaultPosition |XmNdefaultSourceCursorIcon 
+		     |XmNdefaultValidCursorIcon |XmNdeleteResponse |XmNdepth |XmNdestroyCallback |XmNdialogStyle |XmNdialogTitle 
+		     |XmNdialogType |XmNdirListItemCount |XmNdirListItems |XmNdirListLabelString |XmNdirMask |XmNdirSearchProc 
+		     |XmNdirSpec |XmNdirectory |XmNdirectoryValid |XmNdisarmCallback |XmNdoubleClickInterval |XmNdragCallback 
+		     |XmNdragDropFinishCallback |XmNdragInitiatorProtocolStyle |XmNdragMotionCallback |XmNdragOperations |XmNdragProc 
+		     |XmNdragReceiverProtocolStyle |XmNdropFinishCallback |XmNdropProc |XmNdropRectangles |XmNdropSiteActivity 
+		     |XmNdropSiteEnterCallback |XmNdropSiteLeaveCallback |XmNdropSiteOperations |XmNdropSiteType |XmNdropStartCallback 
+		     |XmNdropTransfers |XmNeditMode |XmNeditable |XmNentryAlignment |XmNentryBorder |XmNentryCallback |XmNentryClass 
+		     |XmNentryVerticalAlignment |XmNexportTargets |XmNexposeCallback |XmNextendedSelectionCallback |XmNfile 
+		     |XmNfileListItemCount |XmNfileListItems |XmNfileListLabelString |XmNfileSearchProc |XmNfileTypeMask |XmNfillOnArm 
+		     |XmNfillOnSelect |XmNfilterLabelString |XmNfocusCallback |XmNfont |XmNforeground |XmNforegroundThreshold 
+		     |XmNfractionBase |XmNgainPrimaryCallback |XmNgeometry |XmNheight |XmNheightInc |XmNhelpCallback |XmNhelpLabelString 
+		     |XmNhighlight |XmNhighlightColor |XmNhighlightOnEnter |XmNhighlightPixmap |XmNhighlightThickness |XmNhistoryItemCount 
+		     |XmNhistoryItems |XmNhistoryMaxItems |XmNhistoryVisibleItemCount |XmNhorizontalFontUnit |XmNhorizontalScrollBar 
+		     |XmNhorizontalSpacing |XmNhotX |XmNhotY |XmNiconMask |XmNiconName |XmNiconNameEncoding |XmNiconPixmap |XmNiconWindow 
+		     |XmNiconX |XmNiconY |XmNiconic |XmNimportTargets |XmNincrement |XmNincrementCallback |XmNincremental |XmNindicatorOn 
+		     |XmNindicatorSize |XmNindicatorType |XmNinitialDelay |XmNinitialFocus |XmNinitialResourcesPersistent |XmNinitialState 
+		     |XmNinput |XmNinputCallback |XmNinputMethod |XmNinsertPosition |XmNinvalidCursorForeground |XmNisAligned 
+		     |XmNisHomogeneous |XmNitemCount |XmNitems |XmNkeyboardFocusPolicy |XmNlabelInsensitivePixmap |XmNlabelPixmap 
+		     |XmNlabelString |XmNlabelType |XmNleftAttachment |XmNleftOffset |XmNleftPosition |XmNleftWidget 
+		     |XmNlightThreshold |XmNlineSpace |XmNlistItemCount |XmNlistItems |XmNlistLabelString |XmNlistMarginHeight 
+		     |XmNlistMarginWidth |XmNlistSizePolicy |XmNlistSpacing |XmNlistUpdated |XmNlistVisibleItemCount |XmNlosePrimaryCallback
+		     |XmNlosingFocusCallback |XmNmainWindowMarginHeight |XmNmainWindowMarginWidth |XmNmapCallback |XmNmappedWhenManaged 
+		     |XmNmappingDelay |XmNmargin |XmNmarginBottom |XmNmarginHeight |XmNmarginLeft |XmNmarginRight |XmNmarginTop 
+		     |XmNmarginWidth |XmNmask |XmNmaxAspectX |XmNmaxAspectY |XmNmaxHeight |XmNmaxLength |XmNmaxWidth |XmNmaximum 
+		     |XmNmenuAccelerator |XmNmenuBar |XmNmenuCursor |XmNmenuHelpWidget |XmNmenuHistory |XmNmenuPost |XmNmessageAlignment 
+		     |XmNmessageString |XmNmessageWindow |XmNminAspectX |XmNminAspectY |XmNminHeight |XmNminWidth |XmNminimizeButtons 
+		     |XmNminimum |XmNmnemonic |XmNmnemonicCharSet |XmNmodifyVerifyCallback |XmNmotionVerifyCallback |XmNmoveOpaque 
+		     |XmNmultiClick |XmNmultipleSelectionCallback |XmNmustMatch |XmNmwmDecorations |XmNmwmFunctions |XmNmwmInputMode 
+		     |XmNmwmMenu |XmNnavigationType |XmNnoMatchCallback |XmNnoMatchString |XmNnoResize |XmNnoneCursorForeground 
+		     |XmNnumChildren |XmNnumColumns |XmNnumDropRectangles |XmNnumDropTransfers |XmNnumExportTargets |XmNnumImportTargets 
+		     |XmNoffsetX |XmNoffsetY |XmNokCallback |XmNokLabelString |XmNoperationChangedCallback |XmNoperationCursorIcon 
+		     |XmNoptionLabel |XmNoptionMnemonic |XmNorientation |XmNoverrideRedirect |XmNpacking |XmNpageDecrementCallback 
+		     |XmNpageIncrement |XmNpageIncrementCallback |XmNpaneMaximum |XmNpaneMinimum |XmNpattern |XmNpendingDelete 
+		     |XmNpixmap |XmNpopdownCallback |XmNpopupCallback |XmNpopupEnabled |XmNpositionIndex |XmNpostFromButton 
+		     |XmNpreeditType |XmNprocessingDirection |XmNpromptString |XmNpushButtonEnabled |XmNqualifySearchDataProc 
+		     |XmNradioAlwaysOne |XmNradioBehavior |XmNrecomputeSize |XmNrefigureMode |XmNrepeatDelay |XmNresizable |XmNresize 
+		     |XmNresizeCallback |XmNresizeHeight |XmNresizePolicy |XmNresizeWidth |XmNrightAttachment |XmNrightOffset 
+		     |XmNrightPosition |XmNrightWidget |XmNrowColumnType |XmNrows |XmNrubberPositioning |XmNsashHeight |XmNsashIndent 
+		     |XmNsashShadowThickness |XmNsashWidth |XmNsaveUnder |XmNscaleHeight |XmNscaleMultiple |XmNscaleWidth |XmNscreen 
+		     |XmNscrollBarDisplayPolicy |XmNscrollBarPlacement |XmNscrollHorizontal |XmNscrollLeftSide |XmNscrollTopSide 
+		     |XmNscrollVertical |XmNscrolledWindowMarginHeight |XmNscrolledWindowMarginWidth |XmNscrollingPolicy 
+		     |XmNselectColor |XmNselectInsensitivePixmap |XmNselectPixmap |XmNselectThreshold |XmNselectedItemCount 
+		     |XmNselectedItems |XmNselection |XmNselectionArray |XmNselectionArrayCount |XmNselectionLabelString |XmNselectionPolicy 
+		     |XmNsensitive |XmNseparatorOn |XmNseparatorType |XmNset |XmNshadow |XmNshadowThickness |XmNshadowType |XmNshowArrows 
+		     |XmNshowAsDefault |XmNshowSeparator |XmNshowValue |XmNsimpleCallback |XmNsingleSelectionCallback |XmNskipAdjust 
+		     |XmNsliderSize |XmNsliderVisual |XmNslidingMode |XmNsource |XmNsourceCursorIcon |XmNsourcePixmapIcon |XmNspacing 
+		     |XmNspotLocation |XmNstateCursorIcon |XmNstring |XmNsubMenuId |XmNsymbolPixmap |XmNtearOffMenuActivateCallback
+		     |XmNtearOffMenuDeactivateCallback |XmNtearOffModel |XmNtextAccelerators |XmNtextColumns |XmNtextString
+		     |XmNtextTranslations |XmNtitle |XmNtitleEncoding |XmNtitleString |XmNtoBottomCallback |XmNtoTopCallback 
+		     |XmNtop |XmNtopAttachment |XmNtopCharacter |XmNtopItemPosition |XmNtopLevelEnterCallback |XmNtopLevelLeaveCallback 
+		     |XmNtopOffset |XmNtopPosition |XmNtopShadowColor |XmNtopShadowPixmap |XmNtopWidget |XmNtransferProc |XmNtransferStatus 
+		     |XmNtransient |XmNtransientFor |XmNtranslations |XmNtraversalOn |XmNtraverseObscuredCallback |XmNtroughColor 
+		     |XmNunitType |XmNunmapCallback |XmNunpostBehavior |XmNuseAsyncGeometry |XmNuserData |XmNvalidCursorForeground 
+		     |XmNvalue |XmNvalueChangedCallback |XmNverifyBell |XmNverticalFontUnit |XmNverticalScrollBar |XmNverticalSpacing 
+		     |XmNvisibleItemCount |XmNvisibleWhenOff |XmNvisual |XmNvisualPolicy |XmNwidth |XmNwidthInc |XmNwinGravity 
+		     |XmNwindow |XmNwindowGroup |XmNwmTimeout |XmNwordWrap |XmNworkWindow |XmNx |XmNy |XmNarrowLayout |XmNarrowOrientation 
+		     |XmNarrowSensitivity |XmNarrowSize |XmNarrowSpacing |XmNautoDragModel |XmNbackPageBackground |XmNbackPageForeground 
+		     |XmNbackPageNumber |XmNbackPagePlacement |XmNbackPageSize |XmNbindingPixmap |XmNbindingType |XmNbindingWidth 
+		     |XmNbitmapConversionModel |XmNbuttonRenderTable |XmNcollapsedStatePixmap |XmNcolorAllocationProc 
+		     |XmNcolorCalculationProc |XmNcomboBoxType |XmNconvertCallback |XmNdecimal |XmNdefaultArrowSensitivity 
+		     |XmNdefaultButtonEmphasis |XmNdefaultVirtualBindings |XmNdestinationCallback |XmNdetail |XmNdetailColumnHeading 
+		     |XmNdetailColumnHeadingCount |XmNdetailCount |XmNdetailOrder |XmNdetailOrderCount |XmNdetailShadowThickness 
+		     |XmNdetailTabList |XmNdirTextLabelString |XmNdragStartCallback |XmNenableBtn1Transfer |XmNenableButtonTab 
+		     |XmNenableDragIcon |XmNenableEtchedInMenu |XmNenableMultiKeyBindings |XmNenableThinThickness |XmNenableToggleColor 
+		     |XmNenableToggleVisual |XmNenableUnselectableDrag |XmNenableWarp |XmNendJobCallback |XmNentryParent 
+		     |XmNentryViewType |XmNexpandedStatePixmap |XmNfileFilterStyle |XmNfirstPageNumber |XmNfontName |XmNfontType 
+		     |XmNframeChildType |XmNframeShadowThickness |XmNgrabStyle |XmNincludeStatus |XmNincrementValue 
+		     |XmNindeterminateInsensitivePixmap |XmNindeterminatePixmap |XmNinnerMarginHeight |XmNinnerMarginWidth 
+		     |XmNinputPolicy |XmNinsensitiveStippleBitmap |XmNinvokeParseProc |XmNlabelRenderTable |XmNlargeCellHeight 
+		     |XmNlargeCellWidth |XmNlargeIcon |XmNlargeIconMask |XmNlargeIconPixmap |XmNlastPageNumber |XmNlayoutDirection 
+		     |XmNlayoutType |XmNlist |XmNloadModel |XmNmajorTabSpacing |XmNmatchBehavior |XmNmaxX |XmNmaxY |XmNmaximumValue 
+		     |XmNminX |XmNminY |XmNminimumValue |XmNminorTabSpacing |XmNmotifVersion |XmNnoFontCallback |XmNnoRenditionCallback 
+		     |XmNnotebookChildType |XmNnumValues |XmNoutlineButtonPolicy |XmNoutlineChangedCallback |XmNoutlineColumnWidth 
+		     |XmNoutlineIndentation |XmNoutlineLineStyle |XmNoutlineState |XmNpageChangedCallback |XmNpageNumber 
+		     |XmNpageSetupCallback |XmNpathMode |XmNpatternType |XmNpdmNotificationCallback |XmNpopupHandlerCallback 
+		     |XmNposition |XmNpositionMode |XmNpositionType |XmNpreeditCaretCallback |XmNpreeditDoneCallback 
+		     |XmNpreeditDrawCallback |XmNpreeditStartCallback |XmNprimaryOwnership |XmNrenderTable |XmNrenditionBackground 
+		     |XmNrenditionForeground |XmNscrolledWindowChildType |XmNselectedItem |XmNselectedObjectCount |XmNselectedObjects 
+		     |XmNselectedPosition |XmNselectedPositionCount |XmNselectedPositions |XmNselectionCallback |XmNselectionMode 
+		     |XmNselectionTechnique |XmNsliderMark |XmNsmallCellHeight |XmNsmallCellWidth |XmNsmallIcon |XmNsmallIconMask 
+		     |XmNsmallIconPixmap |XmNsnapBackMultiple |XmNspatialIncludeModel |XmNspatialResizeModel |XmNspatialSnapModel 
+		     |XmNspatialStyle |XmNspinBoxChildType |XmNstartJobCallback |XmNstrikethruType |XmNsubstitute |XmNtabList 
+		     |XmNtag |XmNtearOffTitle |XmNtextField |XmNtextRenderTable |XmNtoggleMode |XmNtotalLines |XmNunderlineType 
+		     |XmNunselectColor |XmNuseColorObj |XmNvalues |XmNverifyPreedit |XmNviewType |XmNvisualEmphasis |XmNwrap 
+		     |XmNlabelFontList |XmNbuttonFontList |XmNtextFontList |XmNwhichButton |XmNchildType |XmNstringDirection 
+		     |XmNfontList |XmNdefaultFontList |XmNshellUnitType)))
+
+	      (for-each
+	       (lambda (n)
+		 (if (not (string? n)) (snd-display ";resource ~A is not a string?" n))
+		 (|XtVaGetValues shell (list n 0)))
+	       resource-list)
+
+	      (let* ((create-procs (list
 			            |XmCreateMenuShell |XmCreateSimpleCheckBox |XmCreateSimpleRadioBox
 			            |XmCreateSimpleOptionMenu |XmCreateSimplePulldownMenu |XmCreateSimplePopupMenu
 			            |XmCreateSimpleMenuBar |XmCreateMainWindow |XmCreateScrolledList |XmCreateList
@@ -17863,10 +18065,11 @@ EDITS: 4
 			            |XmCreateTemplateDialog |XmCreateWorkingDialog |XmCreateWarningDialog
 			            |XmCreateQuestionDialog |XmCreateInformationDialog |XmCreateErrorDialog
 			            |XmCreateMessageDialog |XmCreateMessageBox |XmCreateIconGadget))
-		   (parent (list-ref (main-widgets) 3))
-		   (str (|XmStringCreateLocalized "yow"))
-		   (args (list |XmNheight 100 |XmNwidth 100 |XmNlabelString str))
-		   (ques (list   |XmMenuShell? #f #f #f #f
+		     (parent (list-ref (main-widgets) 3))
+		     (str (|XmStringCreateLocalized "yow"))
+		     (args (list |XmNheight 100 |XmNwidth 100 |XmNlabelString str))
+		     (ques (list
+			         |XmMenuShell? #f #f #f #f
 			         #f #f |XmMainWindow? #f |XmList?
 			         |XmLabel? |XmLabelGadget? |XmToggleButton?
 			         |XmToggleButtonGadget? |XmGrabShell? |XmFrame? #f |XmForm?
@@ -17880,7 +18083,8 @@ EDITS: 4
 			         |XmPushButtonGadget? |XmCascadeButton? |XmCascadeButtonGadget? #f
 			         |XmBulletinBoard? |XmPanedWindow? |XmNotebook? |XmArrowButton? |XmArrowButtonGadget?
 			         #f #f #f #f #f #f #f #f |XmIconGadget?))
-		   (is (list   |XmIsMenuShell #f #f #f #f
+		     (is (list   
+                               |XmIsMenuShell #f #f #f #f
 		               #f #f |XmIsMainWindow #f |XmIsList
 		               |XmIsLabel |XmIsLabelGadget |XmIsToggleButton
 		               |XmIsToggleButtonGadget |XmIsGrabShell |XmIsFrame #f |XmIsForm
@@ -17894,19 +18098,23 @@ EDITS: 4
 		               |XmIsPushButtonGadget |XmIsCascadeButton |XmIsCascadeButtonGadget #f
 		               |XmIsBulletinBoard |XmIsPanedWindow |XmIsNotebook |XmIsArrowButton |XmIsArrowButtonGadget
 		               #f #f #f #f #f #f #f #f |XmIsIconGadget)))
-	      (for-each 
-	       (lambda (n q qq)
-		 (let ((wid (n parent "hiho" args)))
-		   (IF (not (string=? (|XtName wid) "hiho"))
-		       (snd-display ";~A name: ~A" wid (|XtName wid)))
-		   (IF (not (|Widget? wid))
-		       (snd-display ";~A not a widget?" wid))
-		   (IF (and q (not (q wid)))
-		       (snd-display ";~A is not ~A?" wid q))
-		   (IF (and qq (not (qq wid)))
-		       (snd-display ";~A is not ~A" wid qq))
-		   ))
-	       create-procs ques is))
+		(for-each 
+		 (lambda (n q qq)
+		   (let ((wid (n parent "hiho" args)))
+		     (IF (not (string=? (|XtName wid) "hiho"))
+			 (snd-display ";~A name: ~A" wid (|XtName wid)))
+		     (IF (not (|Widget? wid))
+			 (snd-display ";~A not a widget?" wid))
+		     (IF (and q (not (q wid)))
+			 (snd-display ";~A is not ~A?" wid q))
+		     (IF (and qq (not (qq wid)))
+			 (snd-display ";~A is not ~A" wid qq))
+		     (for-each
+		      (lambda (n)
+			(|XtVaGetValues wid (list n 0)))
+		      resource-list)
+		     ))
+		 create-procs ques is)))
       
 	    (IF (not (|XEvent? (|XEvent)))
 		(snd-display ";xevent type trouble! ~A -> ~A" (|XEvent) (|XEvent? (|XEvent))))
@@ -19667,10 +19875,4 @@ EDITS: 4
 (system "cp /home/bil/dot-snd /home/bil/.snd")
 (if with-exit (exit))
 
-;;; need to know before calling this if libguile.so was loaded
-;;; (system "cc gsl-ex.c -c")
-;;; (system "ld -shared gsl-ex.o -o gsl-ex.so -lguile")
-;;; (define handle (dlopen "/home/bil/snd-4/gsl-ex.so"))
-;;; (dlinit handle "init_gsl_j0")
-;;; (fneq (j0 1.0) 0.765)
 
