@@ -3033,8 +3033,9 @@ static SCM g_scan_chan(SCM proc, SCM beg, SCM end, SCM snd, SCM chn)
 { 
   #define H_scan_chan "(" S_scan_chan " func &optional (start 0) end snd chn)\n\
 apply func to samples in current channel (or the specified channel) \
-func is a function of one argument, either the current sample, or #f (to indicate end-of-data) \
-if func returns non-#f, the scan stops, and the value is returned to the caller with the sample number"
+func is a function of one argument, the current sample. \
+if func returns non-#f, the scan stops, and the value is returned to the caller with the sample number. \n\
+  (scan-chan (lambda (x) (> x .1)))"
 
   SND_ASSERT_CHAN(S_scan_chan, snd, chn, 4); 
   return(g_sp_scan(proc, SCAN_CURRENT_CHAN, beg, end, TRUE, TRUE, snd, chn, S_scan_chan, "func", 1, FALSE));
@@ -3043,7 +3044,9 @@ if func returns non-#f, the scan stops, and the value is returned to the caller 
 static SCM g_scan_chans(SCM proc, SCM beg, SCM end) 
 { 
   #define H_scan_chans "(" S_scan_chans " func &optional (start 0) end)\n\
-   apply func to samples in all sync'd channels, one channel after another"
+apply func to samples in all sync'd channels, one channel after another.\
+if func returns non-#f, the scan stops, and the value is returned to the caller with the sample number. \n\
+  (scan-chans (lambda (x) (> x .1)))"
    
   return(g_sp_scan(proc, SCAN_SYNCD_CHANS, beg, end, TRUE, TRUE, SCM_BOOL_F, SCM_BOOL_F, S_scan_chans, "func", 1, FALSE));
 }
@@ -3051,7 +3054,9 @@ static SCM g_scan_chans(SCM proc, SCM beg, SCM end)
 static SCM g_scan_all_chans(SCM proc, SCM beg, SCM end) 
 { 
   #define H_scan_all_chans "(" S_scan_all_chans " func &optional (start 0) end)\n\
-   apply func to samples in all channels, one after the other"
+apply func to samples in all channels, one after the other.\
+if func returns non-#f, the scan stops, and the value is returned to the caller with the sample number. \n\
+  (scan-all-chans (lambda (x) (> x .1)))"
 
   return(g_sp_scan(proc, SCAN_ALL_CHANS, beg, end, TRUE, TRUE, SCM_BOOL_F, SCM_BOOL_F, S_scan_all_chans, "func", 1, FALSE));
 }
@@ -3059,7 +3064,9 @@ static SCM g_scan_all_chans(SCM proc, SCM beg, SCM end)
 static SCM g_scan_sound_chans(SCM proc, SCM beg, SCM end, SCM snd) 
 { 
   #define H_scan_sound_chans "(" S_scan_sound_chans " func &optional (start 0) end snd)\n\
-apply func to samples in all of sound snd's channels"
+apply func to samples in all of sound snd's channels.\
+if func returns non-#f, the scan stops, and the value is returned to the caller with the sample number. \n\
+  (scan-sound-chans (lambda (x) (> x .1)))"
 
   SND_ASSERT_SND(S_scan_sound_chans, snd, 4); 
   return(g_sp_scan(proc, SCAN_SOUND_CHANS, beg, end, TRUE, TRUE, snd, SCM_BOOL_F, S_scan_sound_chans, "func", 1, FALSE));
@@ -3068,7 +3075,9 @@ apply func to samples in all of sound snd's channels"
 static SCM g_scan_across_chans(SCM proc, SCM beg, SCM end) 
 { 
   #define H_scan_across_chans "(" S_scan_across_chans " func &optional (start 0) end)\n\
-apply func to samples in all sync'd channels in parallel"
+apply func to samples in all sync'd channels in parallel.\
+if func returns non-#f, the scan stops, and the value is returned to the caller with the sample number. \n\
+  (scan-across-chans (lambda (data chans) (> (vector-ref data 0) .1)))"
 
   return(g_sp_scan(proc, SCAN_SYNCD_CHANS, beg, end, FALSE, TRUE, SCM_BOOL_F, SCM_BOOL_F, S_scan_across_chans, "func", 1, FALSE));
 }
@@ -3076,7 +3085,9 @@ apply func to samples in all sync'd channels in parallel"
 static SCM g_scan_across_all_chans(SCM proc, SCM beg, SCM end) 
 { 
   #define H_scan_across_all_chans "(" S_scan_across_all_chans " func &optional (start 0) end)\n\
-apply func to samples in all channels in parallel"
+apply func to samples in all channels in parallel.\
+if func returns non-#f, the scan stops, and the value is returned to the caller with the sample number. \n\
+  (scan-across-chans (lambda (data chans) (> (vector-ref data 0) .1)))"
 
   return(g_sp_scan(proc, SCAN_ALL_CHANS, beg, end, FALSE, TRUE, SCM_BOOL_F, SCM_BOOL_F, S_scan_across_all_chans, "func", 1, FALSE));
 }
@@ -3084,7 +3095,9 @@ apply func to samples in all channels in parallel"
 static SCM g_scan_across_sound_chans(SCM proc, SCM beg, SCM end, SCM snd) 
 { 
   #define H_scan_across_sound_chans "(" S_scan_across_sound_chans " func &optional (start 0) end snd)\n\
-apply func to samples in sound snd's channels in parallel"
+apply func to samples in sound snd's channels in parallel.\
+if func returns non-#f, the scan stops, and the value is returned to the caller with the sample number. \n\
+  (scan-across-sound-chans (lambda (data chans) (> (vector-ref data 0) .1)))"
 
   SND_ASSERT_SND(S_scan_across_sound_chans, snd, 4); 
   return(g_sp_scan(proc, SCAN_SOUND_CHANS, beg, end, FALSE, TRUE, snd, SCM_BOOL_F, S_scan_across_sound_chans, "func", 1, FALSE));
@@ -3092,8 +3105,9 @@ apply func to samples in sound snd's channels in parallel"
 
 static SCM g_map_chan(SCM proc, SCM beg, SCM end, SCM org, SCM snd, SCM chn) 
 { 
-  #define H_map_chan "(" S_map_chan "func &optional (start 0) end edname snd chn)\n\
-apply func to samples in current channel, edname is the edit history name for this editing operation"
+  #define H_map_chan "(" S_map_chan " func &optional (start 0) end edname snd chn)\n\
+apply func to samples in current channel, edname is the edit history name for this editing operation.\n\
+  (map-chan abs)"
 
   char *caller;
   if (STRING_P(org)) 
@@ -3105,8 +3119,9 @@ apply func to samples in current channel, edname is the edit history name for th
 
 static SCM g_map_chans(SCM proc, SCM beg, SCM end, SCM org) 
 { 
-  #define H_map_chans "(" S_map_chans "func &optional (start 0) end edname)\n\
-apply func to currently sync'd channels, edname is the edit history name for this editing operation"
+  #define H_map_chans "(" S_map_chans " func &optional (start 0) end edname)\n\
+apply func to currently sync'd channels, edname is the edit history name for this editing operation.\n\
+  (map-chans abs)"
 
   char *caller;
   if (STRING_P(org)) 
@@ -3117,8 +3132,9 @@ apply func to currently sync'd channels, edname is the edit history name for thi
 
 static SCM g_map_all_chans(SCM proc, SCM beg, SCM end, SCM org) 
 { 
-  #define H_map_all_chans "(" S_map_all_chans "func &optional (start 0) end edname)\n\
-apply func to all channels, edname is the edit history name for this editing operation"
+  #define H_map_all_chans "(" S_map_all_chans " func &optional (start 0) end edname)\n\
+apply func to all channels, edname is the edit history name for this editing operation.\n\
+  (map-all-chans abs)"
 
   char *caller;
   if (STRING_P(org)) 
@@ -3129,8 +3145,9 @@ apply func to all channels, edname is the edit history name for this editing ope
 
 static SCM g_map_sound_chans(SCM proc, SCM beg, SCM end, SCM org, SCM snd) 
 {
-  #define H_map_sound_chans "(" S_map_sound_chans "func &optional (start 0) end edname snd)\n\
-apply func to sound snd's channels, edname is the edit history name for this editing operation"
+  #define H_map_sound_chans "(" S_map_sound_chans " func &optional (start 0) end edname snd)\n\
+apply func to sound snd's channels, edname is the edit history name for this editing operation.\n\
+  (map-sound-chans abs)"
 
   char *caller;
   if (STRING_P(org)) 
@@ -3142,8 +3159,12 @@ apply func to sound snd's channels, edname is the edit history name for this edi
 
 static SCM g_map_across_chans(SCM proc, SCM beg, SCM end, SCM org) 
 {
-  #define H_map_across_chans "(" S_map_across_chans "func &optional (start 0) end edname)\n\
-apply func to currently sync'd channels in parallel, edname is the edit history name for this editing operation"
+  #define H_map_across_chans "(" S_map_across_chans " func &optional (start 0) end edname)\n\
+apply func to currently sync'd channels in parallel, edname is the edit history name for this editing operation.\n\
+  (map-across-chans \n\
+    (lambda (data chans)\n\
+      (vector-set! data 0 (* 2.0 (vector-ref data 0)))\n\
+       data))"
 
   char *caller;
   if (STRING_P(org)) 
@@ -3154,8 +3175,12 @@ apply func to currently sync'd channels in parallel, edname is the edit history 
 
 static SCM g_map_across_all_chans(SCM proc, SCM beg, SCM end, SCM org) 
 {
-  #define H_map_across_all_chans "(" S_map_across_all_chans "func &optional (start 0) end edname)\n\
-apply func to all channels in parallel, edname is the edit history name for this editing operation"
+  #define H_map_across_all_chans "(" S_map_across_all_chans " func &optional (start 0) end edname)\n\
+apply func to all channels in parallel, edname is the edit history name for this editing operation.\n\
+  (map-across-all-chans \n\
+    (lambda (data chans)\n\
+      (vector-set! data 0 (* 2.0 (vector-ref data 0)))\n\
+       data))"
 
   char *caller;
   if (STRING_P(org)) 
@@ -3166,8 +3191,12 @@ apply func to all channels in parallel, edname is the edit history name for this
 
 static SCM g_map_across_sound_chans(SCM proc, SCM beg, SCM end, SCM org, SCM snd) 
 {
-  #define H_map_across_sound_chans "(" S_map_across_sound_chans "func &optional (start 0) end edname snd)\n\
-apply func to sound snd's channels in parallel, edname is the edit history name for this editing operation"
+  #define H_map_across_sound_chans "(" S_map_across_sound_chans " func &optional (start 0) end edname snd)\n\
+apply func to sound snd's channels in parallel, edname is the edit history name for this editing operation.\n\
+  (map-across-all-chans \n\
+    (lambda (data chans)\n\
+      (vector-set! data 0 (* 2.0 (vector-ref data 0)))\n\
+       data))"
 
   char *caller;
   if (STRING_P(org)) 

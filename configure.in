@@ -455,6 +455,14 @@ if test $GUILE_CONFIG_works = yes; then
     AC_CHECK_LIB(guile, scm_c_make_vector,[AC_DEFINE(HAVE_SCM_C_MAKE_VECTOR)])
     LIBS="$OLD_LIBS"
 
+    pos_char="no"
+    AC_MSG_CHECKING([for char *pos arg to scm_num2long])
+    AC_EGREP_HEADER([extern long scm_num2long.+char.+char],
+                    libguile/numbers.h,
+                    [AC_DEFINE(HAVE_SCM_NUM2LONG_WITH_CHAR_ARG2)
+                     pos_char="yes"])
+    AC_MSG_RESULT($pos_char)
+
     if test "`guile -c '(display (string<=? (version) "1.3.4"))'`" = "#t"; then
       echo found old out-of-date Guile library
     fi
@@ -576,7 +584,7 @@ dnl     it was "" to cancel -lXpm without the needed -L<dir> for the same case
     *-*-solaris*) 
         AC_DEFINE(SOLARIS)
 	AC_DEFINE(SUN)
-	LIBS="-lm"
+	LIBS="-lm -ldl"
 	audio_system=Sun
         ;;
     *-*-hpux*) 

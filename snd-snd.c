@@ -1491,11 +1491,15 @@ static SCM sp_iwrite(SCM snd_n, SCM val, int fld, char *caller)
   ss = sp->state;
   switch (fld)
     {
-    case SP_SYNC:           
-      syncb(sp, TO_C_INT_OR_ELSE(val, 1));
+    case SP_SYNC:  
+      if (NUMBER_P(val))
+	syncb(sp, TO_C_INT_OR_ELSE(val, 1));
+      else syncb(sp, TO_C_BOOLEAN(val));
       break;
-    case SP_UNITE:          
-      combineb(sp, TO_C_INT_OR_ELSE(val, 1));
+    case SP_UNITE:      
+      if (NUMBER_P(val))    
+	combineb(sp, TO_C_INT_OR_ELSE(val, 1));
+      else combineb(sp, TO_C_BOOLEAN(val));
       break;
     case SP_READ_ONLY:
       sp->read_only = TO_C_BOOLEAN_OR_T(val); 

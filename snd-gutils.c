@@ -153,14 +153,14 @@ int number_height(axis_context *ax)
 {
   gint lb, rb, asc, des, wid;
   gdk_text_extents(AXIS_NUMBERS_FONT(ax->ss), "1", 1, &lb, &rb, &wid, &asc, &des);
-  return(asc+des);
+  return(asc + des);
 }
 
 int label_height(axis_context *ax)
 {
   gint lb, rb, asc, des, wid;
   gdk_text_extents(AXIS_LABEL_FONT(ax->ss), "1", 1, &lb, &rb, &wid, &asc, &des);
-  return(asc+des);
+  return(asc + des);
 }
 
 void clear_window(axis_context *ax)

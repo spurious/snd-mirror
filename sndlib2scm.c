@@ -601,7 +601,9 @@ header-type is a sndlib type indicator such as mus-aiff, sndlib currently only w
   SCM_ASSERT(INTEGER_OR_BOOLEAN_P(data_format), data_format, SCM_ARG4, S_mus_sound_open_output);
   SCM_ASSERT(INTEGER_OR_BOOLEAN_P(header_type), header_type, SCM_ARG5, S_mus_sound_open_output);
   SCM_ASSERT((STRING_P(comment) || (NOT_BOUND_P(comment))), comment, SCM_ARG6, S_mus_sound_open_output);
-  df = TO_C_INT_OR_ELSE(data_format, MUS_OUT_FORMAT);
+  if (INTEGER_P(data_format))
+    df = TO_C_INT(data_format);
+  else df = MUS_OUT_FORMAT;
   if (MUS_DATA_FORMAT_OK(df))
     {
       ht = TO_C_INT_OR_ELSE(header_type, 0);
