@@ -348,7 +348,7 @@ static void make_region_readable(region *r)
       cp->edits[0] = initial_ed_list(0, r->frames - 1);
       cp->edit_size = 1;
       cp->sound_size = 1;
-      cp->hookable = false;
+      cp->hookable = WITHOUT_HOOK;
       ss->catch_message = NULL;
       hdr = make_file_info(r->filename);
       if (hdr)

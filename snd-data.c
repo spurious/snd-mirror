@@ -103,7 +103,7 @@ chan_info *make_chan_info(chan_info *cip, int chan, snd_info *sound)
   cp->sonogram_data = NULL;
   cp->lisp_info = NULL;
   cp->amp_control = NULL;
-  cp->hookable = true;
+  cp->hookable = WITH_HOOK;
   cp->gzy = 1.0;
   cp->gsy = 1.0;
   cp->cx = 0;

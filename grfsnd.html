@@ -7,7 +7,7 @@
         EM.typing {color:maroon; font-style: normal}
         EM.listener {color:darkblue; font-style: normal}
         EM.tab {font-style: normal; font-size: small; font-family: fixed}
-	EM.def {font-weight: bold; font-style: normal}
+	EM.emdef {font-weight: bold; font-style: normal}
 	H1 {text-align: center}
 	UL {list-style-type: none}
 
@@ -15,6 +15,7 @@
 	A:hover {text-decoration:underline}
 	A.quiet {color:black; text-decoration:none}
 	A.quiet:hover {text-decoration:underline}
+	A.def {font-weight: bold; font-style: normal; text-decoration:none; text-color:black}
 -->
 </style>
 </head>
@@ -165,14 +166,14 @@ it looks like 7x13 on my machine.
 </p>
 
 <p>
-The <A NAME="xautoresize">autoResize resource</a> determines how Snd acts when files
+The <A class=def NAME="xautoresize">autoResize resource</a> determines how Snd acts when files
 are added to or removed from its overall display.  The default (1)
 causes Snd to expand or contract the main window's size to accommodate
 the sounds; many people find this distracting.  If <i>autoResize</i> is 0, the outer window size remains the
 same, and the sounds try to fit as best they can (to some extent the window manager controls this stuff).  See also
 the variable <a href="extsnd.html#autoresize">auto-resize</a>.
 If <i>overwriteCheck</i> is 1, Snd asks before overwriting existing files.
-The <A NAME="horizontalpanes">horizontalPanes resource</a>
+The <A class=def NAME="horizontalpanes">horizontalPanes resource</a>
 is equivalent to the -h flag; if 1, sounds are layed out
 horizontally rather than vertically;  if 2, you get a notebook
 widget holding the sounds.
@@ -814,7 +815,7 @@ load <i>len</i> samples of <i>filename</i> into <i>vct</i> starting at frame <i>
 <tr><td><a href="clm.html#fir-filter">fir-filter</a></td><td>(gen input)</td><td>FIR filter</td></tr>
 <tr><td><a href="clm.html#fir-filter?">fir-filter?</a></td><td>(gen)</td><td>#t if gen is fir filter</td></tr>
 <tr><td><a href="clm.html#formant">formant</a></td><td>(gen input)</td><td>formant generator</td></tr>
-<tr><td><a name="formantbank">formant-bank</a></td><td>(scls gens inval)</td><td></td></tr>
+<tr><td><a class=def name="formantbank">formant-bank</a></td><td>(scls gens inval)</td><td></td></tr>
 <tr><td><a href="clm.html#formant?">formant?</a></td><td>(gen)</td><td>#t if gen is formant generator</td></tr>
 <tr><td><a href="clm.html#frame*">frame*</a></td><td>(fr1 fr2 <i>outfr</i>)</td><td>element-wise multiply</td></tr>
 <tr><td><a href="clm.html#frame+">frame+</a></td><td>(fr1 fr2 <i>outfr</i>)</td><td>element-wise add</td></tr>
@@ -837,7 +838,7 @@ In Guile <b>frame?</b> is part of the debugger; it is renamed <b>%frame?</b> her
 <tr><td><a href="clm.html#iir-filter">iir-filter</a></td><td>(gen input)</td><td>IIR filter</td></tr>
 <tr><td><a href="clm.html#iir-filter?">iir-filter?</a></td><td>(gen)</td><td>#t if gen is iir-filter</td></tr>
 <tr><td><a href="clm.html#in-any">in-any</a></td><td>(loc <i>chan stream</i>)</td><td>return sample in stream at loc and chan</td></tr>
-<tr><td><a name="inhz">in-hz</a></td><td>(freq)</td><td>translate freq to radians/sample</td></tr>
+<tr><td><a class=def name="inhz">in-hz</a></td><td>(freq)</td><td>translate freq to radians/sample</td></tr>
 <tr><td><a href="clm.html#ina">ina</a></td><td>(loc <i>stream</i>)</td><td>return sample in stream at loc, chan 0</td></tr>
 <tr><td><a href="clm.html#inb">inb</a></td><td>(loc <i>stream</i>)</td><td>return sample in stream at loc, chan 1</td></tr>
 <tr><td><a href="clm.html#linear-&gt;db">linear-&gt;db</a></td><td>(val)</td><td>translate linear val to dB</td></tr>
@@ -903,7 +904,7 @@ In Guile <b>frame?</b> is part of the debugger; it is renamed <b>%frame?</b> her
 <tr><td><a href="clm.html#mus-a0">mus-a0</a></td><td>(gen)</td><td>a0 field (simple filters)</td></tr>
 <tr><td><a href="clm.html#mus-a1">mus-a1</a></td><td>(gen)</td><td>a1 field (simple filters)</td></tr>
 <tr><td><a href="clm.html#mus-a2">mus-a2</a></td><td>(gen)</td><td>a2 field (simple filters)</td></tr>
-<tr><td><a name="musarrayprintlength">mus-array-print-length</a></td><td>()</td><td>how many array (vct) elements to print in mus_describe</td></tr>
+<tr><td><a class=def name="musarrayprintlength">mus-array-print-length</a></td><td>()</td><td>how many array (vct) elements to print in mus_describe</td></tr>
 <tr><td><a href="clm.html#mus-b1">mus-b1</a></td><td>(gen)</td><td>b1 field (simple filters)</td></tr>
 <tr><td><a href="clm.html#mus-b2">mus-b2</a></td><td>(gen)</td><td>b2 field (simple filters)</td></tr>
 <tr><td><a href="clm.html#musbank">mus-bank</a></td><td>(gens amps <i>args1 args2</i>)</td><td></td></tr>
@@ -913,7 +914,7 @@ In Guile <b>frame?</b> is part of the debugger; it is renamed <b>%frame?</b> her
 <tr><td><a href="clm.html#mus-data">mus-data</a></td><td>(gen)</td><td>data array of gen</td></tr>
 <tr><td><a href="clm.html#mus-feedback">mus-feedback</a></td><td>(gen)</td><td>feedback term of gen (simple filters)</td></tr>
 <tr><td><a href="clm.html#mus-feedforward">mus-feedforward</a></td><td>(gen)</td><td>feedforward term of gen (<a class=quiet href="clm.html#all-pass">all-pass</a>)</td></tr>
-<tr><td><a name="musfilebuffersize">mus-file-buffer-size</a></td><td>()</td><td>size of input/ouput buffers (default 8192)</td></tr>
+<tr><td><a class=def name="musfilebuffersize">mus-file-buffer-size</a></td><td>()</td><td>size of input/ouput buffers (default 8192)</td></tr>
 <tr><td><a href="clm.html#mus-file-name">mus-file-name</a></td><td>(gen)</td><td>name of file assoicated with gen</td></tr>
 <tr><td><a href="clm.html#mus-formant-radius">mus-formant-radius</a></td><td>(gen)</td><td>formant radius</td></tr>
 <tr><td><a href="clm.html#mus-frequency">mus-frequency</a></td><td>(gen)</td><td>frequency of gen (Hz)</td></tr>
@@ -922,7 +923,7 @@ In Guile <b>frame?</b> is part of the debugger; it is renamed <b>%frame?</b> her
 <tr><td><a href="clm.html#mus-input?">mus-input?</a></td><td>(gen)</td><td>#t if gen is input source</td></tr>
 <tr><td><a href="clm.html#mus-length">mus-length</a></td><td>(gen)</td><td>length of gen</td></tr>
 <tr><td><a href="clm.html#mus-location">mus-location</a></td><td>(gen)</td><td>location (read point) of gen</td></tr>
-<tr><td><a name="musmix">mus-mix</a></td><td colspan=2>(outfile infile <i>(outloc 0) frames (inloc 0) mixer envs</i>)</td></tr>
+<tr><td><a class=def name="musmix">mus-mix</a></td><td colspan=2>(outfile infile <i>(outloc 0) frames (inloc 0) mixer envs</i>)</td></tr>
 <tr><td></td><td colspan=2><br>
 mix <i>infile</i> into <i>outfile</i> starting at <i>outloc</i> in <i>outfile</i> and <i>inloc</i> in <i>infile</i>
 mixing <i>frames</i> frames of <i>infile</i>.  <i>frames</i> defaults to the length of <i>infile</i>. If <i>mixer</i>,
@@ -939,7 +940,7 @@ it in conjunction with <i>mixer</i>to scale/envelope all the various ins and out
 <tr><td><a href="clm.html#mus-run">mus-run</a></td><td>(gen <i>arg1 arg2</i>)</td><td>apply gen to args</td></tr>
 <tr><td><a href="clm.html#mus-scaler">mus-scaler</a></td><td>(gen)</td><td>scaler of gen</td></tr>
 <tr><td><a href="clm.html#mus-set-rand-seed">mus-rand-seed</a></td><td>(val)</td><td>random number generator seed (settable via set!)</td></tr>
-<tr><td><a name="mussrate">mus-srate</a></td><td>()</td><td>current sampling rate</td></tr>
+<tr><td><a class=def name="mussrate">mus-srate</a></td><td>()</td><td>current sampling rate</td></tr>
 <tr><td><a href="clm.html#mus-xcoeffs">mus-xcoeffs</a></td><td>(gen)</td><td>feedforward (FIR) coeffs of filter</td></tr>
 <tr><td><a href="clm.html#mus-ycoeffs">mus-ycoeffs</a></td><td>(gen)</td><td>feedback (IIR) coeefs of filter</td></tr>
 <tr><td><a href="clm.html#notch">notch</a></td><td>(gen input <i>pm</i>)</td><td>notch filter</td></tr>
@@ -1133,7 +1134,7 @@ Here are a few more examples, taken from <a href="sndscm.html#exampdoc">examp.sc
 ;;; both src and granulate take a function argument to get input whenever it is needed.
 ;;; in this case, src calls granulate which reads the currently selected file.
 
-(define <A NAME="expsrc">expsrc</a>
+(define <A class=def NAME="expsrc">expsrc</a>
   (lambda (rate)
     (let* ((gr (<a class=quiet href="clm.html#make-granulate">make-granulate</a> :expansion rate))
 	   (sr (<a class=quiet href="clm.html#make-src">make-src</a> :srate rate))
@@ -1822,20 +1823,20 @@ any of the .rb files.
 <table width="100%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="sndandladspa">Snd and LADSPA</a></h3></td></tr></table>
 
 <pre>
-  <em class=def><a name="initladspa">init-ladspa</a></em>
-  <em class=def><a name="listladspa">list-ladspa</a></em>
-  <em class=def><a name="analyseladspa">analyse-ladspa</a></em> library plugin
-  <em class=def><a name="ladspadescriptor">ladspa-descriptor</a></em> library plugin
-  <em class=def><a name="applyladspa">apply-ladspa</a></em> reader data duration origin
+  <a class=def name="initladspa">init-ladspa</a>
+  <a class=def name="listladspa">list-ladspa</a>
+  <a class=def name="analyseladspa">analyse-ladspa</a> library plugin
+  <a class=def name="ladspadescriptor">ladspa-descriptor</a> library plugin
+  <a class=def name="applyladspa">apply-ladspa</a> reader data duration origin
 
-  <em class=def>ladspa-instantiate</em> descriptor srate
-  <em class=def>ladspa-activate</em> descriptor handle
-  <em class=def>ladspa-deactivate</em> descriptor handle
-  <em class=def>ladspa-cleanup</em> descriptor handle
-  <em class=def>ladspa-connect-port</em> descriptor handle port vct
-  <em class=def>ladspa-run</em> descriptor handle count
-  <em class=def>ladspa-run-adding</em> descriptor handle count
-  <em class=def>ladspa-set-run-adding-gain</em> descriptor handle gain
+  <em class=emdef>ladspa-instantiate</em> descriptor srate
+  <em class=emdef>ladspa-activate</em> descriptor handle
+  <em class=emdef>ladspa-deactivate</em> descriptor handle
+  <em class=emdef>ladspa-cleanup</em> descriptor handle
+  <em class=emdef>ladspa-connect-port</em> descriptor handle port vct
+  <em class=emdef>ladspa-run</em> descriptor handle count
+  <em class=emdef>ladspa-run-adding</em> descriptor handle count
+  <em class=emdef>ladspa-set-run-adding-gain</em> descriptor handle gain
 </pre>
 
 <p>Richard Furse has provided a module to support LADSPA plugins in Snd.

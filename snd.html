@@ -4,7 +4,6 @@
 <style type="text/css">
 <!-- 
 	EM.red {color:red; font-style:normal}
-	EM.def {font-weight: bold; font-style: normal}
 	H1 {text-align: center}
 	UL {list-style-type: none}
 
@@ -12,6 +11,7 @@
 	A:hover {text-decoration:underline}
 	A.quiet {color:black; text-decoration:none}
 	A.quiet:hover {text-decoration:underline}
+	A.def {font-weight: bold; font-style: normal; text-decoration:none; text-color:black}
 -->
 </style>
 <!-- 	P {text-align: justify}  -->
@@ -465,11 +465,11 @@ its arguments for file names, and opens any it finds.</p>
   snd oboe.snd fyow.snd
 </pre>
 <p>If there are no arguments, Snd comes up as a bare menu bar.
-If a name is preceded by <A NAME="minusp">"-p"</a> or "-preload", it is treated as a directory
+If a name is preceded by <A class=def NAME="minusp">"-p"</a> or "-preload", it is treated as a directory
 name and all sound files found in that directory are preloaded
 into the <a href="#prevfiles">previous files</a> list.  To
 load arbitrary Snd customizations (your own code, or a <a href="#savedstate">saved state</a> file),
-precede the file name with <A NAME="minusl">"-l"</a> or "-load" (or use the load function). </p>
+precede the file name with <A class=def NAME="minusl">"-l"</a> or "-load" (or use the load function). </p>
 <pre>
   snd oboe.snd -l examp.scm
 </pre>
@@ -506,7 +506,7 @@ snd*fontList:           9x15
 
 <A NAME="openfile"></a>
 <p>A file can be opened from the File menu via Open
-or View.  <A NAME="viewfile">View</a> opens the file read-only, whereas Open
+or View.  <A class=def NAME="viewfile">View</a> opens the file read-only, whereas Open
 <!-- I(open file read-only):A(viewfile) -->
 allows it to be changed.  The equivalent keyboard
 command is C-x C-f.  
@@ -604,7 +604,7 @@ the frequency domain (FFT) display.
 There is a third display settable by user-provided
 functions; if both the 'w' and 'f' buttons are
 off and there is no active user-display function,
-you get an empty display.  <A NAME="panecontrol">For</a> each sound there is
+you get an empty display.  <A NAME="panecontrol"></a>For each sound there is
 a control panel containing the file name, in parentheses if
 the file is actually a link, with an
 asterisk if there are unsaved edits, a 'minibuffer'
@@ -633,18 +633,18 @@ applies to the currently selected sound.
 
 <A NAME="savefile"></a><p>To save the current edited state of a file, use the
 Save option (to overwrite the old version of the
-file), or <A NAME="savefileas">Save as</a> (to write to a new file, leaving
+file), or <A class=def NAME="savefileas">Save as</a> (to write to a new file, leaving
 the old file unchanged).  The equivalent keyboard
 command is C-x C-s (save).  Other related keyboard
 commands are C-x w (save selection as file), and
-<A NAME="cxcw">C-x C-w</a> (extract and save the current channel as a file).
+<A class=def NAME="cxcw">C-x C-w</a> (extract and save the current channel as a file).
 Normally, if the new file already exists, and it is
 not currently being edited in Snd, it is silently
 overwritten.  If you try to overwrite a file, and
 that file has active edits in a different Snd window, you'll be asked
 for confirmation.
 If you want Snd to ask before overwriting
-a file in any case, set the resource <A NAME="overwrite">overwriteCheck</a> to 1,
+a file in any case, set the resource <A class=def NAME="overwrite">overwriteCheck</a> to 1,
 or include the expression (set! (<a href="extsnd.html#askbeforeoverwrite">ask-before-overwrite</a>) #t) in your Snd initialization file.
         <!-- I(overwrite check):L(ask-before-overwrite)(overwrite) -->
 If you edit a write-protected file and try to save the edits, Snd will
@@ -732,8 +732,8 @@ has a 'normal' amount of space, use the Equalize Panes option.
 </p>
         <!-- I(dots or lines):A(viewdots) --><!-- I(y=0 line):A(viewy0) -->
 
-<p>The <A NAME="colorbrowser">Color</a> and 
-<A NAME="orientationbrowser">Orientation</a>
+<p>The <A class=def NAME="colorbrowser">Color</a> and 
+<A class=def NAME="orientationbrowser">Orientation</a>
 options activate windows that set various aspects of the sonogram, spectrogram,
 and wavogram displays.  There are fifteen or so colormaps available along with
 ways to invert the maps, and scale (darken) them differently according to screen or
@@ -741,7 +741,7 @@ printer characteristics.
 </p>
         <!-- I(color):A(colorbrowser) --><!-- I(orientation):A(colorbrowser) -->
 
-<p>The <A NAME="viewinfo">Popup menu's Info</a> dialog can be left in view and updated with M-v i
+<p>The <A class=def NAME="viewinfo">Popup menu's Info</a> dialog can be left in view and updated with M-v i
 to reflect the currently active sound.  The same information is displayed in the
 minibuffer when you click the file name.</p>
 
@@ -749,7 +749,7 @@ minibuffer when you click the file name.</p>
 <img src="files.png" alt="picture of file browser" align=left hspace=20>
 <p>The file browser window shown here provides two lists, one of
 the currently active files in Snd, and
-the other of <A NAME="prevfiles">previously active files</a>.  The currently selected
+the other of <A NAME="prevfiles"></a>previously active files.  The currently selected
 sound is highlighted.
 The
 play button plays the file.
@@ -772,7 +772,7 @@ about each file as the mouse passes over it.
 </p>
 <br clear=left>
 
-<p>The <A NAME="errorhistory">Error History</a> displays whatever errors have been
+<p>The <A NAME="errorhistory"></a>Error History displays whatever errors have been
 posted during the current run of Snd.  If some error gets erased too quickly from the
 'minibuffer', you can find it in this dialog.</p>
         <!-- I(file lists):A(prevfiles) --><!-- I(play file):M(Popup: Play) -->
@@ -819,9 +819,9 @@ launched by this menu item has six sections: on the upper left
 is a list of available transform types; next on the right is a
 list of fft sizes; next is a panel of buttons that sets various
 display-oriented choices; the lower left panel sets the current
-wavelet, when relevant; <A NAME="fftwindow">next</a> is the fft data window choice; and
+wavelet, when relevant; <A NAME="fftwindow"></a>next is the fft data window choice; and
 next to it is a graph of the current fft window with the spectrum of that window
-in blue; <A NAME="Xfftbeta">when</a> the window
+in blue; <A NAME="Xfftbeta"></a>when the window
 has an associated parameter (sometimes known as "alpha" or "beta"),
 the slider beneath the window list is highlighted and can be used
 to choose the desired member of that family of windows.
@@ -865,10 +865,10 @@ about 20 wavelet choices, and <A NAME="autocorrelation">autocorrelation</a>.</p>
 	<!-- I(autocorrelation):A(autocorrelation) --><!-- I(autocorrelation):M(Options: Transform)(viewfft) -->
 
 <A NAME="fftstyle"></a><p>The top three buttons in the transform dialog choose between a normal
-fft, a sonogram, or a spectrogram.  The <A NAME="showpeaks">peaks</a>
+fft, a sonogram, or a spectrogram.  The <A NAME="showpeaks"></a>peaks
 button affects whether peak info is displayed alongside the graph
-of the spectrum.  The <A NAME="fftindb">dB</a> button selects between
-a linear and logarithmic Y (magnitude) axis.  The <A NAME="logfreq">log freq</a>
+of the spectrum.  The <A NAME="fftindb"></a>dB button selects between
+a linear and logarithmic Y (magnitude) axis.  The <A NAME="logfreq"></a>log freq
 button makes a similar choice along the frequency axis.
 </p>
 
@@ -900,7 +900,7 @@ spectrogram variables to their default values.
 <br><br>
 
 <p>A somewhat frivolous feature, known here as the
-<A NAME="wavogram">"wavogram"</a>, mimics the spectrogram in the time domain.
+<A NAME="wavogram"></a>"wavogram", mimics the spectrogram in the time domain.
 The same rotation commands apply to this display,
 with the additional variable <a href="extsnd.html#wavohop">wavo-hop</a> which sets the
 density of the traces.  To get this display <code>(set! (<a href="extsnd.html#wavo">time-graph-type</a>) graph-as-wavogram)</code>.  It is
@@ -993,7 +993,7 @@ or the <a href="extsnd.html#selectedgraphcolor">selected-graph-color</a>:</p>
   (set! (<a class=quiet href="extsnd.html#selecteddatacolor">selected-data-color</a>) blue)
 </pre>
 <p>The selected channel receives keyboard commands.  You can
-also move between windows with <A NAME="cxo">C-x o</a>.</p>
+also move between windows with <A NAME="cxo"></a>C-x o.</p>
         <!-- I(select sound):K(C-x o)(cxo) -->
 
 <h4>Moving the Cursor</h4>
@@ -1007,16 +1007,16 @@ To move the cursor from the keyboard, use:</p>
   C-&lt;    move cursor to sample 0
   C-&gt;    move cursor to last sample
 
-  <A NAME="ca">C-a</a>    move cursor to window start
-  <A NAME="ce">C-e</a>    move cursor to window end
+  <A NAME="ca"></a>C-a    move cursor to window start
+  <A NAME="ce"></a>C-e    move cursor to window end
   C-b    move cursor back one sample
   C-f    move cursor ahead one sample
 
   C-n    move cursor ahead one 'line'
   C-p    move cursor back one 'line'
-  <A NAME="cv">C-v</a>    move cursor to mid-window
+  <A NAME="cv"></a>C-v    move cursor to mid-window
 
-  <A NAME="ci">C-i</a>    display cursor info
+  <A NAME="ci"></a>C-i    display cursor info
   C-j    go to mark
   C-x j  go to named mark
 </pre>
@@ -1055,14 +1055,14 @@ much more precise control of the window bounds and placement:</p>
 <pre>
   C-l      position window so cursor is in the middle
   C-x b    position window so cursor is on left margin
-  <A NAME="cxf">C-x f</a>    position window so cursor is on right margin
+  <A NAME="cxf"></a>C-x f    position window so cursor is on right margin
   [Down]   zoom out, amount depends on shift, control, and meta
   [Up]     zoom in
   [Left]   move window left
   [Right]  move window right
-  <A NAME="cxl">C-x l</a>    position selection in mid-view
+  <A NAME="cxl"></a>C-x l    position selection in mid-view
   C-x v    position window over current selection
-  <A NAME="cxcb">C-x C-b</a>  set x window bounds (preceded by number of leftmost sample)
+  <A NAME="cxcb"></a>C-x C-b  set x window bounds (preceded by number of leftmost sample)
   C-x C-p  set window size (preceded by size as numeric argument)
 </pre>
 <p>As in most other cases, the sample numbers (or sizes) can be floats;
@@ -1107,13 +1107,13 @@ See the <a href="extsnd.html#sndmarks">marks</a> chapter
 for a further discussion of synced marks.
 The following keyboard commands relate to marks:</p>
 <pre>
-  <A NAME="cm">C-m</a>       place (or remove if argument negative) mark at cursor
+  <A NAME="cm"></a>C-m       place (or remove if argument negative) mark at cursor
   C-M       place syncd marks at all currently syncd chan cursors
   C-x /     place named mark at cursor
-  <A NAME="cxcm">C-x C-m</a>   add named mark
+  <A NAME="cxcm"></a>C-x C-m   add named mark
 
-  <A NAME="cj">C-j</a>       go to mark
-  <A NAME="cxj">C-x j</a>     go to named mark
+  <A NAME="cj"></a>C-j       go to mark
+  <A NAME="cxj"></a>C-x j     go to named mark
 </pre>
 <p>The distance from the cursor to a mark can be used as a numeric
 argument for other commands by following C-u with C-m.  Any
@@ -1142,9 +1142,9 @@ will not affect the region data.
 You can disable the region creation by setting the variable
 <a href="extsnd.html#selectioncreatesregion">selection-creates-region</a>
 to #f (its default is #t which can slow down editing of very large sounds).
-<A NAME="mousedefsect">Regions</a> can be defined by <a href="extsnd.html#sndmakeregion">make-region</a>, by dragging the mouse
+<A NAME="mousedefsect"></a>Regions can be defined by <a href="extsnd.html#sndmakeregion">make-region</a>, by dragging the mouse
 through a portion of the data, or via 
-the <A NAME="selectall">Select All</a> menu option.
+the <A NAME="selectall"></a>Select All menu option.
 If the mouse drags off
 the end of the graph, the x axis moves, in a sense dragging
 the data along to try to keep up with the mouse; the further
@@ -1190,11 +1190,11 @@ you made.
   C-y         paste in current selection at cursor
   C-[space]   start keyboard-based selection definition
   C-x a       apply amplitude envelope to selection
-  <A NAME="cxc">C-x c</a>       define selection from cursor to nth mark
-  <A NAME="cxi">C-x i</a>       insert selection
+  <A NAME="cxc"></a>C-x c       define selection from cursor to nth mark
+  <A NAME="cxi"></a>C-x i       insert selection
   C-x p       play selection or region (numeric arg selects region)
-  <A NAME="cxq">C-x q</a>       mix in selection
-  <A NAME="cxw">C-x w</a>       save selection as file 
+  <A NAME="cxq"></a>C-x q       mix in selection
+  <A NAME="cxw"></a>C-x w       save selection as file 
 
   C-x l       position selection in mid-view
   C-x v       position window over current selection
@@ -1271,11 +1271,11 @@ See <a href="extsnd.html#editlists">Edit Lists</a> for more details.
 They can also
 be invoked from the keyboard:</p>
 <pre>
-  <A NAME="cxk">C-x k</a>     close currently selected file
+  <A NAME="cxk"></a>C-x k     close currently selected file
   C-x w     save selection as file 
-  <A NAME="cxcd">C-x C-d</a>   print
-  <A NAME="cxcf">C-x C-f</a>   open file 
-  <A NAME="cxcs">C-x C-s</a>   save file
+  <A NAME="cxcd"></a>C-x C-d   print
+  <A NAME="cxcf"></a>C-x C-f   open file 
+  <A NAME="cxcs"></a>C-x C-s   save file
   C-x C-w   save currently selected channel as file
 </pre>
 <p>The Print command produces a PostScript
@@ -1294,17 +1294,17 @@ associated keyboard commands are:</p>
 <pre>
   C-d      delete sample at cursor
   C-h      delete previous sample
-  <A NAME="ck">C-k</a>      delete a 'line' -- 128 samples
-  <A NAME="cw">C-w</a>      delete current selected portion
+  <A NAME="ck"></a>C-k      delete a 'line' -- 128 samples
+  <A NAME="cw"></a>C-w      delete current selected portion
 
-  <A NAME="co">C-o</a>      insert a zero sample at cursor
+  <A NAME="co"></a>C-o      insert a zero sample at cursor
   C-x i    insert region at cursor (arg = region number)
-  <A NAME="cxci">C-x C-i</a>  insert file 
+  <A NAME="cxci"></a>C-x C-i  insert file 
 
   C-y      paste in current selection at cursor
 
   C-x q    mix in region (arg = region number)
-  <A NAME="cxcq">C-x C-q</a>  mix in file
+  <A NAME="cxcq"></a>C-x C-q  mix in file
 </pre>
 <p>Insertion takes place just ahead of the cursor; to insert after the
 cursor, define a command something like:</p>
@@ -1381,7 +1381,7 @@ for that many samples. Otherwise, the envelope is
 applied to the entire file.</p>
 <pre>
   C-x a     apply amplitude envelope to selection
-  <A NAME="cxca">C-x C-a</a>   apply amplitude envelope to channel
+  <A NAME="cxca"></a>C-x C-a   apply amplitude envelope to channel
 </pre>
 <p>You can also specify an envelope name to the C-x C-a prompt.
 </p>
@@ -1433,7 +1433,7 @@ commands, much as in Emacs.
 The search commands are:</p>
 <pre>
   C-r   find backwards
-  <A NAME="cs">C-s</a>   find forwards
+  <A NAME="cs"></a>C-s   find forwards
 </pre>
 <p>These searching functions can be closures; the following searches for
 the next positive-going zero crossing, placing the cursor just before it:</p>
@@ -1456,8 +1456,8 @@ See also the functions <a href="extsnd.html#lfind">find</a> and <a href="extsnd.
 
 <p>The simplest changes are:</p>
 <pre>
-  <A NAME="cz">C-z</a>       set current sample to zero
-  <A NAME="cxcz">C-x C-z</a>   smooth data using cosine (<a href="extsnd.html#sndsmooth">smooth-sound</a>)
+  <A NAME="cz"></a>C-z       set current sample to zero
+  <A NAME="cxcz"></a>C-x C-z   smooth data using cosine (<a href="extsnd.html#sndsmooth">smooth-sound</a>)
 </pre>
 
 <p>M-x (set! (<a class=quiet href="extsnd.html#sndsample">sample</a> (<a class=quiet href="extsnd.html#sndcursor">cursor</a>)) .1) sets the sample
@@ -1480,8 +1480,8 @@ are these keyboard commands:</p>
 <pre>
   C-x r     redo last edit
   C-x u     undo last edit
-  <A NAME="cxcr">C-x C-r</a>   redo last edit
-  <A NAME="cxcu">C-x C-u</a>   undo last edit
+  <A NAME="cxcr"></a>C-x C-r   redo last edit
+  <A NAME="cxcu"></a>C-x C-u   undo last edit
   C-_       undo last edit
 </pre>
 <p>Revert is the same as undoing all edits.</p>
@@ -1541,7 +1541,7 @@ My initialization file uses <code>(mus-audio-set-oss-buffers 2 12)</code>.
 <pre>
   C-q    play current channel starting at the cursor
   C-t    stop playing
-  <A NAME="cxp">C-x p</a>  play region (numeric arg selects region)
+  <A NAME="cxp"></a>C-x p  play region (numeric arg selects region)
 </pre>
         <!-- I(play channel):K(C-q, C-t)(cq) --><!-- I(play channel):A(cq) -->
 <p>In a multi-channel file, C-q plays all channels from the current channel's
@@ -1614,7 +1614,7 @@ kinds of controls.
 
 <A NAME="gotomix"></a>
 <p>To move the cursor from one mix to the next, in the same
-manner as C-j moves through marks, use <A NAME="cxcj">C-x C-j</a>.
+manner as C-j moves through marks, use <A NAME="cxcj"></a>C-x C-j.
 </p>
 <p>
 The function <a href="sndscm.html#makesoundbox">make-sound-box</a>
@@ -1693,7 +1693,7 @@ button is not square (a diamond on the SGI), the underlying audio
 hardware can't handle input from that device at the same time as
 it reads other radio button devices.  So, in that case, opening
 the panel via the button also turns off the other incompatible
-device.  The '<A NAME="Xautoload">autoload</a>' button, if set,
+device.  The <A NAME="Xautoload"></a>'autoload' button, if set,
 causes the newly recorded file to be loaded automatically into Snd.</p>
 
 <p>The fifth
@@ -1908,7 +1908,7 @@ M-x (set! (<a class=quiet href="extsnd.html#sndybounds">y-bounds</a>) '(-.01 .01
 
 <h4><A NAME="misccommands">Miscellaneous commands</a></h4>
 
-<p><A NAME="kgc">C-g</a> at any point aborts the current keyboard command
+<p><A NAME="kgc"></a>C-g at any point aborts the current keyboard command
 sequence, as does any mouse click.  C-g can also interrupt most long
 computations (search, eval expression, and the various envelope applications).
 If you notice one that is not interruptible, send me a note -- I probably just
@@ -1917,7 +1917,7 @@ forgot about it.
 <!-- I(interrupt Snd):A(kgc) -->
 <!-- I(interrupt Snd):K(C-g)(kgc) -->
 
-<p><A NAME="kcu">C-u</a> introduces a numeric argument. Besides the integer and
+<p><A NAME="kcu"></a>C-u introduces a numeric argument. Besides the integer and
 float cases mentioned several times above, you can also
 use marks to set the argument.  If the (optional) number
 after C-u is followed by C-m, the resultant number passed
@@ -1929,7 +1929,7 @@ same as C-j.</p>
 by a numeric argument or aborted with C-g.  C-x halts any
 on-going region definition.</p>
 
-<p><A NAME="ktempdir">C-x d</a> prompts for the temporary directory name.  Snd
+<p><A NAME="ktempdir"></a>C-x d prompts for the temporary directory name.  Snd
 saves some editing operations in temporary files, rather
 than in-core buffers.  If the temporary directory has
 been set (in various ways), it is used; otherwise
@@ -1938,7 +1938,7 @@ is not found, or is null, the directory /var/tmp is
 used.</p>
 
 <p>C-x C-c closes the control panel. 
-<A NAME="cxco">C-x C-o</a> opens the
+<A NAME="cxco"></a>C-x C-o opens the
 panel.</p>
 
 <p>To change a key binding, use <a href="extsnd.html#sndbindkey">bind-key</a>.</p>
@@ -1995,7 +1995,7 @@ the cursor and the next mark, so C-u C-m C-z zeros
 all the samples between the cursor and the next mark.</p>
 
 <!-- INDEX builtinkeys:Key bindings -->
-<p>The <A NAME="builtinkeys">predefined</A> commands are (<i>prompt</i> below is an abbreviation for prompt-in-minibuffer, and some of the return values are omitted for simplicity):</p>
+<p>The <A NAME="builtinkeys"></a>predefined commands are (<i>prompt</i> below is an abbreviation for prompt-in-minibuffer, and some of the return values are omitted for simplicity):</p>
 <table border=0 cellpadding=0>
 <tr><td>[Down]</td><td>zoom out</td><td><code><small>;algorithm depends on zoom-focus-style choice</small></code></td></tr>
 <tr><td>[Up]</td><td>zoom in</td><td><code><small>;algorithm depends on zoom-focus-style choice</small></code></td></tr>
@@ -2080,7 +2080,7 @@ all the samples between the cursor and the next mark.</p>
 	  (/ (+ (<a class=quiet href="extsnd.html#selectionposition">selection-position</a>) (<a class=quiet href="extsnd.html#selectionframes">selection-frames</a>)) (<a class=quiet href="extsnd.html#sndsrate">srate</a>))))
 </pre></small></code></td></tr>
 <tr><td>C-x w</td><td>save selection as file</td><td><code><small>(lambda (arg) (prompt "file:" save-region)) ;save-selection if no arg</small></code></td></tr>
-<tr><td>C-x <A NAME="cxz">z</a></td><td>smooth selection</td><td><code><small>smooth-selection</small></code></td></tr>
+<tr><td>C-x <A NAME="cxz"></a>z</td><td>smooth selection</td><td><code><small>smooth-selection</small></code></td></tr>
 <tr><td valign=top>C-x /</td><td valign=top>place named mark</td>
 <td><code><small><pre>
 (lambda (arg) 
@@ -2102,7 +2102,7 @@ all the samples between the cursor and the next mark.</p>
 <tr><td>C-x C-g</td><td>abort command</td><td><code><small>c-g!</small></code></td></tr>
 <tr><td>C-x C-i</td><td>insert file</td><td><code><small>(lambda () (prompt "insert file:" (lambda (val) (<a class=quiet href="extsnd.html#sndinsertfile">insert-sound</a> val (<a class=quiet href="extsnd.html#sndcursor">cursor</a>)))))</small></code></td></tr>
 <tr><td>C-x C-j</td><td>go to mix </td><td></td></tr>
-<tr><td>C-x <A NAME="cxcl">C-l</a></td><td>load scm file</td><td><code><small>(lambda () (prompt "load:" load))</small></code></td></tr>
+<tr><td>C-x <A NAME="cxcl"></a>C-l</td><td>load scm file</td><td><code><small>(lambda () (prompt "load:" load))</small></code></td></tr>
 <tr><td valign=top>C-x C-m</td><td valign=top>add named mark</td>
 <td><code><small><pre>
 (lambda () (prompt "mark:" 
@@ -2227,7 +2227,7 @@ button is set.
 	<!-- I(brighten file):L(brighten-slightly)(brightenslightly) -->	
 </p>
 
-<p>The <A NAME="filtercontrol">filter</a> is an arbitrary (even) order FIR filter
+<p>The <A NAME="filtercontrol"></a>filter is an arbitrary (even) order FIR filter
 specified by giving the frequency response 
 envelope 
 and filter order in the text windows provided.

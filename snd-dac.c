@@ -521,10 +521,9 @@ static void reflect_play_stop (snd_info *sp)
 
 static void free_player(snd_info *sp);
 
-typedef enum {WITHOUT_HOOK, WITH_HOOK} dac_hook_t;
 typedef enum {WITHOUT_TOGGLE, WITH_TOGGLE} dac_toggle_t;
 
-static void stop_playing_with_toggle(dac_info *dp, dac_toggle_t toggle, dac_hook_t with_hook)
+static void stop_playing_with_toggle(dac_info *dp, dac_toggle_t toggle, with_hook_t with_hook)
 {
   snd_info *sp = NULL;
   bool sp_stopping = false;
@@ -600,9 +599,9 @@ static void stop_playing_with_toggle(dac_info *dp, dac_toggle_t toggle, dac_hook
     }
 }
 
-static void stop_playing(dac_info *dp, dac_hook_t with_hook) {stop_playing_with_toggle(dp, WITH_TOGGLE, with_hook);}
+static void stop_playing(dac_info *dp, with_hook_t with_hook) {stop_playing_with_toggle(dp, WITH_TOGGLE, with_hook);}
 
-static void stop_playing_sound_with_toggle(snd_info *sp, dac_toggle_t toggle, dac_hook_t with_hook)
+static void stop_playing_sound_with_toggle(snd_info *sp, dac_toggle_t toggle, with_hook_t with_hook)
 {
   /* this needs to scan all current play_list members and remove any that are referring
    * to sp, even indirectly (as through the current selection)
@@ -638,7 +637,7 @@ void stop_playing_sound(snd_info *sp) {stop_playing_sound_with_toggle(sp, WITH_T
 void stop_playing_sound_without_hook(snd_info *sp) {stop_playing_sound_with_toggle(sp, WITH_TOGGLE, WITHOUT_HOOK);}
 void stop_playing_sound_no_toggle(snd_info *sp) {stop_playing_sound_with_toggle(sp, WITHOUT_TOGGLE, WITH_HOOK);}
 
-static void stop_playing_all_sounds_1(dac_hook_t with_hook)
+static void stop_playing_all_sounds_1(with_hook_t with_hook)
 {
   int i;
   dac_info *dp;
@@ -670,7 +669,7 @@ static void stop_playing_all_sounds_1(dac_hook_t with_hook)
 void stop_playing_all_sounds(void) {stop_playing_all_sounds_1(WITH_HOOK);}
 void stop_playing_all_sounds_without_hook(void) {stop_playing_all_sounds_1(WITHOUT_HOOK);}
 
-static void stop_playing_region_1(int n, dac_hook_t with_hook)
+static void stop_playing_region_1(int n, with_hook_t with_hook)
 {
   int i;
   dac_info *dp;

@@ -49,6 +49,11 @@
 		 (char< (char a 0) (char b 0))))))))
 
 (defun clean-and-downcase-first-char (str caps topic file)
+
+  (let ((def-pos (search " class=def" str)))
+    (when def-pos
+      (setf str (concatenate 'string (subseq str 0 def-pos) (subseq str (+ def-pos 10))))))
+    
   (let* ((line (concatenate 'string "<a href=\"" (or file "") "#" (subseq str 9)))
 	 (ipos (search "<em" line)))
     (when ipos
@@ -60,6 +65,7 @@
 	(let ((hspos (or (search "</h2>" line) (search "</h1>" line) (search "</h3>" line) (search "</h4>" line))))
 	  (setf line (concatenate 'string (subseq line 0 hpos) (subseq line (+ hpos 4) hspos) (subseq line (+ hspos 5))))
 	  (if (not line) (warn "<hn> but no </hn> for ~A" str)))))
+
     (flet ((search-caps (ln)
 	     (when caps
 	       (loop for cap in caps do
@@ -259,7 +265,9 @@
 		       (compos (search "<!-- INDEX" dline))
 		       (xpos (search "<TABLE " dline))
 		       (unxpos (search "</TABLE>" dline))
-		       (pos (and (not compos) (search "<a name=" dline :test #'string=)))
+		       (pos-simple (and (not compos) (search "<a name=" dline :test #'string=)))
+		       (pos-def (and (not compos) (search "<a class=def name=" dline :test #'string=)))
+		       (pos (or pos-simple pos-def))
 		       (tpos (and (not pos) (search "<!-- TOPIC " line))))
 		  (if unxpos (setf xrefing nil))
 		  (if tpos
@@ -292,7 +300,10 @@
 				(setf (aref topics n) topic)
 				(incf n)
 				(setf dline (subseq dline (+ epos 4)))
-				(setf pos (search "<a name=" dline :test #'string=)))))))))
+				(setf pos-simple (search "<a name=" dline :test #'string=))
+				(setf pos-def (search "<a class=def name=" dline :test #'string=))
+				(setf pos (or pos-simple pos-def))
+				)))))))
 		  (if (and xrefing
 			   (or (not (char= (elt dline 0) #\<))
 			       (search "<a href" dline)
@@ -739,9 +750,13 @@
 		
 		;; search for name
 		(let* ((dline line)
-		       (pos (search "<a name=" dline :test #'string-equal)))
+		       (pos-simple (search "<a name=" dline :test #'string-equal))
+		       (pos-def (search "<a class=def name=" dline :test #'string-equal))
+		       (pos (or pos-simple pos-def))
+		       (pos-len (if pos-simple 9 19))
+		       )
 		  (loop while pos do
-		    (setf dline (subseq dline (+ pos 9)))
+		    (setf dline (subseq dline (+ pos pos-len)))
 		    (let ((epos (or (search "</a>" dline)
 				    (search "</A>" dline))))
 					;actually should look for close double quote
@@ -752,7 +767,11 @@
 			  (setf (aref names name) (concatenate 'string file "#" (subseq dline 0 (- epos 1))))
 			  (incf name)
 			  (setf dline (subseq dline epos))
-			  (setf pos (search "<a name=" dline :test #'string-equal)))))))
+			  (setf pos-simple (search "<a name=" dline :test #'string-equal))
+			  (setf pos-def (search "<a class=def name=" dline :test #'string-equal))
+			  (setf pos (or pos-simple pos-def))
+			  (setf pos-len (if pos-simple 9 19))
+			  )))))
 
 		;; search for href
 		(let* ((dline line)

@@ -282,23 +282,23 @@ function drawOutline(ol, prefix) {
     nestCount = (ol.childNodes[i].childNodes) ? ol.childNodes[i].childNodes.length : 0;
     output += "<div>\n";
     if (nestCount > 0) {
-      output += prefix + "<img id='widget" + blockID + "' src='" + collapsedWidget.src;
+      output += "<nobr>" + prefix + "<img id='widget" + blockID + "' src='" + collapsedWidget.src;
       output += "' height=" + widgetHeight + " width=" + widgetWidth + " title='Click to expand/collapse' onClick= " + "'toggle(this," + blockID + ")'>&nbsp;";
       link = (ol.childNodes[i].item.uri) ? ol.childNodes[i].item.uri : "";
       if (link) output += "<a href='" + link + "' target='" + displayTarget + "'>";
-      output += "<span style='position:relative; top:-3px; height:11px'><nobr>" + ol.childNodes[i].item.text + "</nobr></span>";
-      if (link) output += "</a>";
+      output += "<span style='position:relative; top:-3px; height:11px'>" + ol.childNodes[i].item.text + "</span>";
+      if (link) output += "</a></nobr>"; else output += "</nobr>";
       currState += "0";
       output += "<span class='OLBlock' blocknum='" + blockID + "' id='OLBlock" + blockID++ + "'>";
       nestPrefix = prefix + "<img src='" + emptySpace.src + "' height=" + widgetHeight + " width=" + blankWidth + ">";
       output += drawOutline(ol.childNodes[i], nestPrefix) + "</span>";
     } else {
-      output += prefix + "<img src='" + emptySpace.src + "' height=" + widgetHeight + " width=" + blankWidth + ">";
+      output += "<nobr>" + prefix + "<img src='" + emptySpace.src + "' height=" + widgetHeight + " width=" + blankWidth + ">";
       link = (ol.childNodes[i].item.uri) ? ol.childNodes[i].item.uri : "";
       if (link)
         output += "&nbsp;<a href='" + link + "' target='" + displayTarget + "'>";
       else output += "&nbsp;<a>";
-      output += "<span style='position:relative; top:-3px; height:11px'><nobr>" + ol.childNodes[i].item.text + "</nobr></span></a>";
+      output += "<span style='position:relative; top:-3px; height:11px'>" + ol.childNodes[i].item.text + "</span></a></nobr>";
       }
     output += "</div>\n";
     }

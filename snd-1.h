@@ -241,7 +241,7 @@ typedef struct chan_info {
   void *mix_dragging;
   int height, mixes;
   off_t original_cursor;   /* for cursor reset after cursor-moving play */
-  bool hookable;
+  with_hook_t hookable;
   int selection_transform_size;
   bool squelch_update, previous_squelch_update, waiting_to_make_graph, in_as_one_edit;
   /* moved from global to channel-local 4-Aug-00 */
@@ -819,7 +819,7 @@ void single_fft(chan_info *cp, bool dpy);
 Cessate sonogram_in_slices(void *sono);
 char *added_transform_name(int type);
 void clear_transform_edit_ctrs(chan_info *cp);
-void make_fft_graph(chan_info *cp, axis_info *fap, axis_context *ax, bool with_hooks);
+void make_fft_graph(chan_info *cp, axis_info *fap, axis_context *ax, with_hook_t with_hook);
 void g_init_fft(void);
 Float fft_beta_max(mus_fft_window_t win);
 void cp_free_fft_state(chan_info *cp);

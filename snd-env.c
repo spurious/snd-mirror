@@ -1066,8 +1066,10 @@ void enved_show_background_waveform(axis_info *ap, axis_info *gray_ap, bool appl
   active_channel->printing = printing;
   if (show_fft)
     {
-      if (!apply_to_selection)
+      if (!apply_to_selection) /* TODO: fft selection if necessary */
 	{
+	  /* TODO: make this fft happen automatically */
+	  /* TODO: if click fft->flt, erase flt freq respo, else add */
 	  if ((active_channel->fft) &&
 	      (active_channel->transform_size >= CURRENT_SAMPLES(active_channel)))
 	    {
@@ -1078,8 +1080,7 @@ void enved_show_background_waveform(axis_info *ap, axis_info *gray_ap, bool appl
 	      gray_ap->x0 = 0.0;
 	      gray_ap->x1 = SND_SRATE(active_channel->sound) / 2;
 	      init_axis_scales(gray_ap);
-	      make_fft_graph(active_channel, gray_ap, gray_ap->ax, false);
-	      /* last arg makes sure we don't call any hooks in make_fft_graph */
+	      make_fft_graph(active_channel, gray_ap, gray_ap->ax, WITHOUT_HOOK);
 	    }
 	}
     }
@@ -1131,7 +1132,6 @@ void enved_show_background_waveform(axis_info *ap, axis_info *gray_ap, bool appl
 	    draw_both_grf_points(1, gray_ap->ax, pts, GRAPH_LINES);
 	  else draw_grf_points(1, gray_ap->ax, pts, gray_ap, 0.0, GRAPH_LINES);
 	}
-      /* TODO: if flt=fft, bg wave not displayed? -- should this be a spectrum? or set 'wave' insensitive? */
     }
   active_channel->printing = old_printing;
 }

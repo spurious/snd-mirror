@@ -186,6 +186,7 @@ typedef enum {FILE_SAVE_AS, EDIT_SAVE_AS} save_dialog_t;
 typedef enum {NOT_IN_BACKGROUND, IN_BACKGROUND} play_process_t;
 typedef enum {WITHOUT_VIRTUAL_CHANNELS, WITH_VIRTUAL_CHANNELS} virtual_channels_t;
 typedef enum {WITH_FW_BUTTONS, WITH_ARROWS} fw_button_t;
+typedef enum {WITHOUT_HOOK, WITH_HOOK} with_hook_t;
 
 #ifndef POPUP_BUTTON
   #define POPUP_BUTTON 3

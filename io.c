@@ -1072,7 +1072,7 @@ static int checked_write(int tfd, char *buf, int chars)
 #ifndef MACOS
 	    return(mus_error(MUS_WRITE_ERROR,
 			     "mus_write: write error for %s%s%s: only %d of %d bytes written",
-			     fd->name, (errno) ? " " : "", (errno) ? strerror(errno) : "",
+			     fd->name, (errno) ? ": " : "", (errno) ? strerror(errno) : "",
 			     bytes, chars));
 #else
 	    return(mus_error(MUS_WRITE_ERROR,

@@ -12,6 +12,7 @@
 	A:hover {text-decoration:underline}
 	A.quiet {color:black; text-decoration:none}
 	A.quiet:hover {text-decoration:underline}
+	A.def {font-weight: bold; font-style: normal; text-decoration:none; text-color:black}
 -->
 
 </style>
@@ -274,7 +275,7 @@ by that function with channels interleaved.</p>
 port associated with <i>line</i>.  This data is assumed to be in the format
 requested by mus_audio_open_output with channels interleaved.</p>
 
-<p><A NAME="readaudiostate"><i>mus_audio_mixer_read</i></a> and <i>mus_audio_mixer_write</i> are complicated.  They
+<p><A class=def NAME="readaudiostate">mus_audio_mixer_read</a> and <b>mus_audio_mixer_write</b> are complicated.  They
 get and set the audio hardware state.  The audio hardware is treated as a
 set of "systems" (sound cards) each of which has a set of "devices" (dacs, adcs, etc),
 with various "fields" that can be read or set (gain, channels active, etc).

@@ -453,7 +453,7 @@ void add_channel_data_1(chan_info *cp, int srate, off_t frames, channel_graph_t 
   cp->sounds = (snd_data **)CALLOC(cp->sound_size, sizeof(snd_data *));
   cp->samples[0] = frames;
 
-  if ((cp->hookable) && 
+  if ((cp->hookable == WITH_HOOK) && 
       (graphed == WITH_GRAPH) &&    
       /* can also be WITHOUT_GRAPH and WITHOUT_INITIAL_GRAPH_HOOK
        *   the former is called in snd-nogui, and in the make_readable calls in snd-regions and snd-snd
@@ -1065,7 +1065,7 @@ snd_info *make_simple_channel_display(int srate, int initial_length,
     }
   cp = sp->chans[0];
   cp->sound = sp;
-  cp->hookable = false;
+  cp->hookable = WITHOUT_HOOK;
   add_channel_data_1(cp, srate, initial_length, WITH_GRAPH);
   cp->time_graph_style = grf_style;
   cp->dot_size = dot_size(ss);
@@ -1598,7 +1598,7 @@ static void display_peaks(chan_info *cp, axis_info *fap, Float *data, int scaler
   if (peak_amps) FREE(peak_amps);
 }
 
-void make_fft_graph(chan_info *cp, axis_info *fap, axis_context *ax, bool with_hooks)
+void make_fft_graph(chan_info *cp, axis_info *fap, axis_context *ax, with_hook_t with_hook)
 {
   /* axes are already set, data is in the fft_info struct -- don't reset here! */
   /* since the fft size menu callback can occur while we are calculating the next fft, we have to lock the current size until the graph goes out */
@@ -1783,7 +1783,7 @@ void make_fft_graph(chan_info *cp, axis_info *fap, axis_context *ax, bool with_h
 			 hisamp, samples_per_pixel, true, 0.0);
     }
   if (cp->selection_transform_size != 0) display_selection_transform_size(cp, fap);
-  if (with_hooks) after_fft(cp, scale);
+  if (with_hook == WITH_HOOK) after_fft(cp, scale);
 }
 
 static int display_transform_peaks(chan_info *ucp, char *filename)
@@ -2031,7 +2031,7 @@ static void make_sonogram(chan_info *cp)
       if (cp->printing) ps_reset_color();
       FREE(hfdata);
       FREE(hidata);
-      if (cp->hookable) after_fft(cp, 1.0 / scl);
+      if (cp->hookable == WITH_HOOK) after_fft(cp, 1.0 / scl);
     }
 }
 
@@ -2508,7 +2508,7 @@ static bool make_spectrogram(chan_info *cp)
 	    }
 	  if (cp->printing) ps_reset_color();
 	}
-      if (cp->hookable) after_fft(cp, 1.0 / scl);
+      if (cp->hookable == WITH_HOOK) after_fft(cp, 1.0 / scl);
       if (old_with_gl) set_with_gl(true);
     }
   return(false);
@@ -2916,7 +2916,7 @@ static void display_channel_data_with_size (chan_info *cp,
   lisp_grf *up = NULL;
   XEN res = XEN_FALSE;
   sp = cp->sound;
-  if ((cp->hookable) && 
+  if ((cp->hookable == WITH_HOOK) && 
       (!(ss->graph_hook_active)) &&
       (XEN_HOOKED(graph_hook)))
     {
@@ -3123,7 +3123,7 @@ static void display_channel_data_with_size (chan_info *cp,
 	  ap->losamp = (off_t)(ap->x0 * (double)SND_SRATE(sp));
 	  ap->hisamp = (off_t)(ap->x1 * (double)SND_SRATE(sp));
 	}
-      if ((cp->hookable) &&
+      if ((cp->hookable == WITH_HOOK) &&
 	  (!(ss->lisp_graph_hook_active)) &&
 	  (XEN_HOOKED(lisp_graph_hook)))
 	{
@@ -3152,7 +3152,7 @@ static void display_channel_data_with_size (chan_info *cp,
   
   if ((!just_lisp) && (!just_fft))
     {
-      if ((with_time) && (cp->hookable)) /* hookable if not region graph */
+      if ((with_time) && (cp->hookable == WITH_HOOK)) /* hookable if not region graph */
 	{
 	  if ((cp->chan == 0) || (sp->channel_style != CHANNELS_SUPERIMPOSED)) 
 	    {
@@ -3164,7 +3164,7 @@ static void display_channel_data_with_size (chan_info *cp,
 	}
       if ((sp->channel_style != CHANNELS_SUPERIMPOSED) && (height > 10))
 	display_channel_id(cp, height + offset, sp->nchans);
-      if ((cp->hookable) &&
+      if ((cp->hookable == WITH_HOOK) &&
 	  (XEN_HOOKED(after_graph_hook)))
 	run_hook(after_graph_hook,
 		 XEN_LIST_2(C_TO_SMALL_XEN_INT((cp->sound)->index),
