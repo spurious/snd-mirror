@@ -159,7 +159,7 @@ static void loadLADSPALibrary(void * pvPluginHandle,
 	psOldRepository = g_psLADSPARepository;
 	lNewCapacity = (g_lLADSPARepositoryCapacity
 			+ LADSPA_REPOSITORY_CAPACITY_STEP);
-	g_psLADSPARepository = (LADSPAPluginInfo **)MALLOC(sizeof(LADSPAPluginInfo *) * lNewCapacity);
+	g_psLADSPARepository = (LADSPAPluginInfo **)MALLOC(lNewCapacity * sizeof(LADSPAPluginInfo *));
 	memcpy(g_psLADSPARepository,
 	       psOldRepository,
 	       sizeof(LADSPAPluginInfo *) * g_lLADSPARepositoryCount);

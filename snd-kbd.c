@@ -1211,9 +1211,7 @@ void keyboard_command (chan_info *cp, int keysym, int state)
 		}
 	      break;
 	    case snd_K_Y: case snd_K_y: 
-	      if (got_count)
-		paste_region(count, cp, "C-y"); 
-	      else paste_region(stack_position_to_id(0), cp, "C-y");
+	      paste_region(stack_position_to_id(0), cp, "C-y");
 	      break;
 	    case snd_K_Z: case snd_K_z: 
 	      cp->cursor_on = TRUE; 

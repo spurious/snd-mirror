@@ -155,7 +155,7 @@ Locus grf_y(Float val, axis_info *ap)
 
 static Locus tick_grf_x(double val, axis_info *ap, int style, int srate)
 {
-  int res;
+  int res = 0;
   switch (style)
     {
     case X_AXIS_IN_SECONDS: 
@@ -172,7 +172,7 @@ static Locus tick_grf_x(double val, axis_info *ap, int style, int srate)
     case X_AXIS_AS_PERCENTAGE: 
       res = (int)(ap->x_axis_x0 + (val - ap->x0 / ap->xmax) * ap->x_scale * ap->xmax); 
       break;
-    default: 
+    case X_AXIS_IN_LENGTH:
       res = (int)(ap->x_base + val * ap->x_scale);
       break;
     }
@@ -500,7 +500,7 @@ void make_axes_1(axis_info *ap, int x_style, int srate, int axes, int printing, 
 	case X_AXIS_AS_PERCENTAGE: 
 	  tdx = describe_ticks((tick_descriptor *)(ap->x_ticks), ap->x0 / ap->xmax, ap->x1 / ap->xmax, num_ticks); 
 	  break;
-	default: 
+	case X_AXIS_IN_LENGTH: 
 	  tdx = describe_ticks((tick_descriptor *)(ap->x_ticks), ap->x0, ap->x1, num_ticks); break;
 	}
       ap->x_ticks = tdx;

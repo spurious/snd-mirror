@@ -3468,5 +3468,3 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
 #endif
 
 }
-
-

@@ -31,7 +31,7 @@
 #define BACKGROUND_QUIT FALSE
 #define BACKGROUND_CONTINUE TRUE
 #define BACKGROUND_REMOVE(func) gtk_idle_remove(func)
-#define BACKGROUND_ADD(ss, func, data) gtk_idle_add(func, (gpointer)data)
+#define BACKGROUND_ADD(ss, func, data) add_work_proc(ss, func, (gpointer)data)
 
 #define widget_t GtkWidget*
 #define XEN_WRAP_WIDGET(Value)   ((Value) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkWidget_"), C_TO_XEN_ULONG((unsigned long)Value)) : XEN_FALSE)

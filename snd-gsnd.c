@@ -644,7 +644,7 @@ void toggle_direction_arrow(snd_info *sp, int state)
   int dir = 1;
   if (state) dir = -1;
   sp->speed_control_direction = dir;
-  draw_srate_arrow(sp);
+  if (!(IS_PLAYER(sp))) draw_srate_arrow(sp);
 }
 
 

@@ -409,6 +409,8 @@ void snd_doit(snd_state *ss, int argc, char **argv)
                (define " S_new_widget_hook " (make-hook 1))\
                (define " S_drop_hook " (make-hook 1))\
                (define " S_menu_hook " (make-hook 2))\
+               (define " S_color_hook " (make-hook 2))\
+               (define " S_orientation_hook " (make-hook 2))\
                (define " S_property_changed_hook " (make-hook 1))");
 
   XEN_EVAL_C_STRING("(define " S_enved_active_env " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
@@ -480,6 +482,8 @@ void snd_doit(snd_state *ss, int argc, char **argv)
   XEN_EVAL_C_STRING("$new_widget_hook = false");
   XEN_EVAL_C_STRING("$drop_hook = false");
   XEN_EVAL_C_STRING("$menu_hook = false");
+  XEN_EVAL_C_STRING("$color_hook = false");
+  XEN_EVAL_C_STRING("$orientation_hook = false");
   XEN_EVAL_C_STRING("$property_changed_hook = false");
 
   XEN_EVAL_C_STRING("Copy_context = 0");

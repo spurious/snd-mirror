@@ -757,3 +757,15 @@ void sg_make_resizable(GtkWidget *w)
     }
 }
 
+Cessator add_work_proc(snd_state *ss, GtkFunction func, gpointer data)
+{
+  /* during auto-testing I need to force the background procs to run to completion */
+  if (with_background_processes(ss))
+    return(gtk_idle_add(func, data));
+  else
+    {
+      while (((*func)(data)) == BACKGROUND_CONTINUE);
+      return(0);
+    }
+}
+

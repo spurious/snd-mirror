@@ -474,6 +474,9 @@ void start_amp_env(chan_info *cp)
 {
   chan_context *cgx;
   snd_state *ss;
+#if DEBUGGING
+  if (cp == NULL) abort();
+#endif
   cgx = cp->cgx;
   if (cgx)
     {
@@ -2487,14 +2490,6 @@ static void make_wavogram(chan_info *cp, snd_info *sp, snd_state *ss)
 #else
       GL_SWAP_BUFFERS(cp);
       gdk_gl_drawable_wait_gl(gtk_widget_get_gl_drawable(channel_graph(cp)));
-#endif
-#if DEBUGGING
-      {
-	GLenum errcode;
-	errcode = glGetError();
-	if (errcode != GL_NO_ERROR)
-	  fprintf(stderr, "wavo GL: %s\n", gluErrorString(errcode));
-      }
 #endif
       /* (set! (time-graph-type) graph-time-as-wavogram) */
       for (i = 0; i < lines; i++) 
@@ -6767,6 +6762,7 @@ void g_init_chn(void)
   #define H_x_axis_in_samples    "The value for " S_x_axis_style " that displays the x axis using sample numbers"
   #define H_x_axis_in_beats      "The value for " S_x_axis_style " that displays the x axis using beats (also beats-per-minute)"
   #define H_x_axis_as_percentage "The value for " S_x_axis_style " that displays the x axis using percentages"
+  /* what about X_AXIS_IN_LENGTH? */
 
   XEN_DEFINE_CONSTANT(S_x_axis_in_seconds,     X_AXIS_IN_SECONDS,    H_x_axis_in_seconds);
   XEN_DEFINE_CONSTANT(S_x_axis_in_samples,     X_AXIS_IN_SAMPLES,    H_x_axis_in_samples);

@@ -388,6 +388,7 @@ GtkWidget *sg_make_list(const char *title, GtkWidget *parent, int paned, gpointe
 void sg_text_delete(GtkWidget *w, int start, int end);
 void sg_make_resizable(GtkWidget *w);
 
+Cessator add_work_proc(snd_state *ss, GtkFunction func, gpointer data);
 
 
 /* -------- snd-gsnd.c -------- */

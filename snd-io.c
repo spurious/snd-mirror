@@ -473,12 +473,7 @@ snd_data *free_snd_data(snd_data *sd)
 	   *   might someday find a use for itself...
 	   */
 	  if (sd->temporary == ALREADY_DELETED)
-	    {
-#if DEBUGGING
-	      fprintf(stderr,"attempt to re-delete snd_data?");
-#endif
-	      return(NULL);
-	    }
+	    return(NULL);
 	  if (sd->temporary == MULTICHANNEL_DELETION)
 	    forget_temp(sd->filename, sd->chan);
 	  if ((sd->type == SND_DATA_BUFFER) && 

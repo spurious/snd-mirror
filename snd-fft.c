@@ -223,8 +223,8 @@ static void autocorrelation(Float *data, int n)
   rl = (Float *)MALLOC(n * sizeof(Float));
   memcpy((void *)rl, (void *)data, n * sizeof(Float));
   /* for (i = 0; i < n; i++) rl[i] = data[i]; */
-#if HAVE_FFTW
   fscl = 1.0 / (Float)n;
+#if HAVE_FFTW
   mus_fftw(rl, n, 1);
   rl[0] *= rl[0];
   rl[n2] *= rl[n2];
@@ -235,7 +235,6 @@ static void autocorrelation(Float *data, int n)
     }
   mus_fftw(rl, n, -1);
 #else
-  fscl = 2.0 / (Float)n;
   im = (Float *)CALLOC(n, sizeof(Float));
   mus_fft(rl, im, n, 1);
   rl[0] *= rl[0];

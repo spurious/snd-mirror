@@ -1991,7 +1991,7 @@ all the samples between the cursor and the next mark.</p>
 <tr><td>C-v</td><td>move cursor to mid-window</td><td><code><small>(lambda () (set! (cursor) (* 0.5 (+ (left-sample) (right-sample))))</small></code></td></tr>
 <tr><td>C-w</td><td>delete current selection</td><td><code><small>delete-selection</small></code></td></tr>
 <tr><td>C-x</td><td>start extended command</td><td></td></tr>
-<tr><td>C-y</td><td>paste in region</td><td><code><small>(lambda (arg) (insert-region (cursor) arg))</small></code></td></tr>
+<tr><td>C-y</td><td>paste in selection</td><td><code><small>(lambda (arg) (insert-selection (cursor)))</small></code></td></tr>
 <tr><td>C-z</td><td>set current sample to 0.0</td><td><code><small>(lambda (arg) (set! (samples (cursor) arg) (make-vct arg)))</small></code></td></tr>
 <tr><td>C-_</td><td>undo last edit</td><td><code><small>(lambda (arg) (undo arg))</small></code></td></tr>
 <tr><td>C-[Space]</td><td colspan=2>start region definition (arg&lt;0 =&gt; cancel and deselect)</td></tr>

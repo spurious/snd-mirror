@@ -140,6 +140,7 @@ static char *x_axis_style_name(int choice)
     {
     case X_AXIS_IN_SAMPLES:    return(TO_VAR_NAME(S_x_axis_in_samples));    break;
     case X_AXIS_AS_PERCENTAGE: return(TO_VAR_NAME(S_x_axis_as_percentage)); break;
+    case X_AXIS_IN_BEATS:      return(TO_VAR_NAME(S_x_axis_in_beats));      break;
     default:                   return(TO_VAR_NAME(S_x_axis_in_seconds));    break;
     }
 }
