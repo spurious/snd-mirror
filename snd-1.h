@@ -33,9 +33,6 @@ typedef struct {
   int copy;
   int chan;
   int len;
-#if DEBUGGING
-  void *owner;
-#endif
   int just_zeros;
 } snd_data;
 

@@ -5,7 +5,6 @@
  *         but would be much faster if we can wait until the amp-env is computed
  * TODO  mark-moved-hook? sample-color?
  * TODO  should snd-out soft-port (examp.scm) be built-in?
- * TODO  insert-sound seems out-of-place -- shouldn't it follow sync and provide beg as arg (not cursor)?
  */
 
 #if HAVE_GUILE
@@ -2224,40 +2223,56 @@ static SCM g_insert_samples_with_origin(SCM samp, SCM samps, SCM origin, SCM vec
   RTNINT(len);
 }
 
-static SCM g_insert_sound(SCM file, SCM file_chn, SCM snd_n, SCM chn_n)
+static SCM g_insert_sound(SCM file, SCM ubeg, SCM file_chn, SCM snd_n, SCM chn_n)
 {
-  #define H_insert_sound "(" S_insert_sound " file &optional (file-chan 0) snd chn) inserts channel 'file-chan'\n\
-   of 'file' into snd's channel chn at the cursor position"
+  #define H_insert_sound "(" S_insert_sound " file &optional beg file-chan snd chn) inserts channel 'file-chan'\n\
+   of 'file' (or all chans file-chan not given) into snd's channel chn at beg or the cursor position"
 
   chan_info *cp;
   char *filename = NULL;
   int nc,len,fchn,beg=0;
   SCM_ASSERT(gh_string_p(file),file,SCM_ARG1,S_insert_sound);
-  ERRB2(file_chn,S_insert_sound);
-  ERRCP(S_insert_sound,snd_n,chn_n,3);
+  ERRB2(ubeg,S_insert_sound);
+  ERRB3(file_chn,S_insert_sound);
+  ERRCP(S_insert_sound,snd_n,chn_n,4);
   cp = get_cp(snd_n,chn_n,S_insert_sound);
   filename = full_filename(file);
   nc = mus_sound_chans(filename);
-  if (nc != -1)
+  if (nc == -1)
     {
-      len = mus_sound_samples(filename)/nc;
-      fchn = g_scm2intdef(file_chn,0);
+      if (filename) FREE(filename);
+      return(scm_throw(NO_SUCH_FILE,SCM_LIST2(gh_str02scm(S_insert_sound),file)));
+    }
+  len = mus_sound_samples(filename)/nc;
+  if (gh_number_p(file_chn))
+    {
+      fchn = g_scm2int(file_chn);
       if (fchn < mus_sound_chans(filename))
 	{
-	  if (cp->cursor >= 0) beg = cp->cursor;
+	  if (gh_number_p(ubeg))
+	    beg = g_scm2int(ubeg);
+	  else beg = cp->cursor;
 	  file_insert_samples(beg,len,filename,cp,fchn,DONT_DELETE_ME,S_insert_sound);
 	  update_graph(cp,NULL);
 	  if (filename) FREE(filename);
 	  RTNINT(len);
 	}
+      else 
+	{
+	  if (filename) FREE(filename);
+	  scm_throw(NO_SUCH_CHANNEL,SCM_LIST3(gh_str02scm(S_insert_sound),file,file_chn));
+	}
     }
-  else 
+  else
     {
+      /* insert all chans of file into chans syncd to snd chn */
+      /* TODO finish insert-sound */
+
+      fprintf(stderr," unimplemented insert-sound option");
+
       if (filename) FREE(filename);
-      return(scm_throw(NO_SUCH_FILE,SCM_LIST2(gh_str02scm(S_insert_sound),file)));
     }
-  if (filename) FREE(filename);
-  return(SCM_BOOL_F);
+  return(SCM_BOOL_F); /* not reached */
 }
 
 Float string2Float(char *str) 
@@ -3489,7 +3504,7 @@ void g_initialize_gh(snd_state *ss)
   DEFINE_PROC(gh_new_procedure(S_insert_samples,SCM_FNC g_insert_samples,3,2,0),H_insert_samples);
   DEFINE_PROC(gh_new_procedure(S_max_sounds,SCM_FNC g_max_sounds,0,0,0),H_max_sounds);
   DEFINE_PROC(gh_new_procedure(S_sounds,SCM_FNC g_sounds,0,0,0),H_sounds);
-  DEFINE_PROC(gh_new_procedure(S_insert_sound,SCM_FNC g_insert_sound,1,3,0),H_insert_sound);
+  DEFINE_PROC(gh_new_procedure(S_insert_sound,SCM_FNC g_insert_sound,1,4,0),H_insert_sound);
   DEFINE_PROC(gh_new_procedure(S_yes_or_no_p,SCM_FNC g_yes_or_no_p,1,0,0),H_yes_or_no_p);
   DEFINE_PROC(gh_new_procedure(S_scale_selection_to,SCM_FNC g_scale_selection_to,0,1,0),H_scale_selection_to);
   DEFINE_PROC(gh_new_procedure(S_scale_selection_by,SCM_FNC g_scale_selection_by,0,1,0),H_scale_selection_by);

@@ -1,0 +1,46 @@
+A list of some things-to-do in Snd (these are some projects that strike
+me as straightforward -- they don't require intimate knowlege of Snd innards).
+
+
+esd support: configure.in has the code sawfish uses to look for esd,
+  and its src/play-sample.c is an example of using it; audio.c needs
+  a similar section under HAVE_ESD.
+
+w98 sound input (adc) support; this is almost written (audio.c); it mostly
+  needs testing.  A larger project would be to tie the "mixer" into 
+  audio.c.
+
+BeOS audio support (disabled currently).
+
+Soundfont stereo sample support (the mono case is in headers.c,
+  but I don't know how stereo works in these files).
+
+Libool-ize sndlib.  Parallel support in Snd's configuration process.
+
+Snd name completion tied into the Emacs-Snd subjob connection.
+
+Snd's help and apropos merged with Guile's.
+
+Dolph-chebyshev window.  (Also some expert needs to bless the cepstrum).
+
+GL spectrum display (the communication with Snd is in glfft.c).
+
+Sawfish connection: it should be possible to send commands to sawfish,
+  (via sawfish-client?).
+
+gtk-html support (and the XmHTML stuff is not very recent).
+
+XmPrint support.
+
+A more direct connection to gmeteor (perhaps using the control-lanel filter
+  text widget).
+
+A graphic-EQ effect (effects.scm) -- this could use guile-gtk and the
+  CLM formant generator.
+
+A pitch tracker.
+
+Noise reduction.
+
+dB display in VU meters (in the record dialog).
+

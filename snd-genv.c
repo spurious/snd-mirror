@@ -94,7 +94,7 @@ void alert_enved_amp_env(snd_info *sp)
 {
   snd_state *ss;
   ss = sp->state;
-  if ((enved_dialog) && (active_channel) && (enved_waving(ss)) && (GTK_WIDGET_VISIBLE(enved_dialog)))
+  if ((enved_dialog) && (active_channel) && (enved_waving(ss)))
     {
       if (active_channel->sound == sp) env_redisplay(sp->state);
     }
@@ -184,23 +184,21 @@ static void apply_enved(snd_state *ss)
 void env_redisplay(snd_state *ss)
 {
   char *name = NULL;
-  gdk_window_clear(drawer->window);
-  if (showing_all_envs) 
-    view_envs(ss,env_window_width,env_window_height);
-  else 
+  if (enved_dialog_is_active())
     {
-      name = gtk_entry_get_text(GTK_ENTRY(textL));
-      if (!name) name = "noname";
-      display_env(ss,active_env,name,gc,0,0,env_window_width,env_window_height,1);
-      if (enved_waving(ss))
+      gdk_window_clear(drawer->window);
+      if (showing_all_envs) 
+	view_envs(ss,env_window_width,env_window_height);
+      else 
 	{
-	  if ((enved_target(ss) == SPECTRUM_ENV) && (active_env))
+	  name = gtk_entry_get_text(GTK_ENTRY(textL));
+	  if (!name) name = "noname";
+	  display_env(ss,active_env,name,gc,0,0,env_window_width,env_window_height,1);
+	  if (enved_waving(ss))
 	    {
-	      display_frequency_response(ss,active_env,axis_cp->axis,gray_ap->ax,filter_env_order(ss),enved_dBing(ss));
-	    }
-	  else
-	    {
-	      enved_show_background_waveform(ss,axis_cp,gray_ap,apply_to_mix,apply_to_selection);
+	      if ((enved_target(ss) == SPECTRUM_ENV) && (active_env))
+		display_frequency_response(ss,active_env,axis_cp->axis,gray_ap->ax,filter_env_order(ss),enved_dBing(ss));
+	      else enved_show_background_waveform(ss,axis_cp,gray_ap,apply_to_mix,apply_to_selection);
 	    }
 	}
     }
@@ -1087,11 +1085,14 @@ void set_filter_env_order(snd_state *ss, int order)
       if (order&1) 
 	in_set_filter_env_order(ss,order+1);
       else in_set_filter_env_order(ss,order);
-      if (enved_dialog_is_active())
+      if (enved_dialog)
 	{
 	  sprintf(str,"%d",filter_env_order(ss));
 	  gtk_entry_set_text(GTK_ENTRY(orderL),str);
-	  if ((enved_target(ss) == SPECTRUM_ENV) && (enved_waving(ss)) && (!showing_all_envs)) env_redisplay(ss);
+	  if ((enved_target(ss) == SPECTRUM_ENV) && 
+	      (enved_waving(ss)) && 
+	      (!showing_all_envs)) 
+	    env_redisplay(ss);
 	}
     }
 }
@@ -1099,7 +1100,7 @@ void set_filter_env_order(snd_state *ss, int order)
 void enved_reflect_selection(int on)
 {
   snd_state *ss;
-  if (enved_dialog_is_active())
+  if (enved_dialog)
     {
       ss = get_global_state();
       set_sensitive(selectionB,on);
@@ -1108,7 +1109,10 @@ void enved_reflect_selection(int on)
 	  apply_to_selection = 0;
 	  set_background(selectionB,(ss->sgx)->highlight_color);
 	}
-      if ((enved_target(ss) != SPECTRUM_ENV) && (enved_waving(ss)) && (!showing_all_envs)) env_redisplay(ss);
+      if ((enved_target(ss) != SPECTRUM_ENV) && 
+	  (enved_waving(ss)) && 
+	  (!showing_all_envs)) 
+	env_redisplay(ss);
     }
 }
 
@@ -1120,13 +1124,13 @@ void color_enved_waveform(GdkColor *pix)
   if (enved_dialog)
     {
       gdk_gc_set_foreground(ggc,pix);
-      if ((enved_waving(ss)) && (enved_dialog_is_active())) env_redisplay(ss);
+      if ((enved_waving(ss)) && (enved_dialog)) env_redisplay(ss);
     }
 }
 
 void reflect_mix_in_enved(void)
 {
-  if (enved_dialog_is_active())
+  if (enved_dialog)
     set_sensitive(mixB,TRUE);
 }
 

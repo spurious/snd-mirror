@@ -2826,16 +2826,16 @@ Float *mus_partials2polynomial(int npartials, Float *partials, int kind)
   T0 = (int *)CALLOC(npartials+1,sizeof(int));
   if (T0 == NULL) {mus_error(MUS_MEMORY_ALLOCATION_FAILED,"can't get %d bytes for T0 in mus_partials2polynomial!",bytes); return(NULL);}
   T1 = (int *)CALLOC(npartials+1,sizeof(int));
-  if (T1 == NULL) {mus_error(MUS_MEMORY_ALLOCATION_FAILED,"can't get %d bytes for T1 in mus_partials2polynomial!",bytes); FREE(T0); return(NULL);}
+  if (T1 == NULL) {FREE(T0); mus_error(MUS_MEMORY_ALLOCATION_FAILED,"can't get %d bytes for T1 in mus_partials2polynomial!",bytes); return(NULL);}
   Tn = (int *)CALLOC(npartials+1,sizeof(int));
-  if (Tn == NULL) {mus_error(MUS_MEMORY_ALLOCATION_FAILED,"can't get %d bytes for Tn in mus_partials2polynomial!",bytes); FREE(T0); FREE(T1); return(NULL);}
+  if (Tn == NULL) {FREE(T0); FREE(T1); mus_error(MUS_MEMORY_ALLOCATION_FAILED,"can't get %d bytes for Tn in mus_partials2polynomial!",bytes); return(NULL);}
   Cc1 = (Float *)CALLOC(npartials+1,sizeof(Float));
   if (Cc1 == NULL) 
     {
-      mus_error(MUS_MEMORY_ALLOCATION_FAILED,"can't get %d bytes for Cc1 in mus_partials2polynomial!",(int)(npartials * sizeof(Float)));
       FREE(T0); 
       FREE(T1); 
       FREE(Tn); 
+      mus_error(MUS_MEMORY_ALLOCATION_FAILED,"can't get %d bytes for Cc1 in mus_partials2polynomial!",(int)(npartials * sizeof(Float)));
       return(NULL);
     }
   T0[0] = kind;

@@ -1080,6 +1080,7 @@ static SCM g_make_region (SCM beg, SCM end, SCM snd_n, SCM chn_n)
   chan_info *cp;
   sync_info *si;
   int ends[1];
+  int ibeg;
   if (SCM_UNBNDP(beg))
     make_region_from_selection();
   else
@@ -1087,8 +1088,11 @@ static SCM g_make_region (SCM beg, SCM end, SCM snd_n, SCM chn_n)
       SCM_ASSERT(SCM_NFALSEP(scm_real_p(beg)),beg,SCM_ARG1,S_make_region);
       SCM_ASSERT(SCM_NFALSEP(scm_real_p(end)),end,SCM_ARG2,S_make_region);
       cp = get_cp(snd_n,chn_n,S_make_region);
-      si = make_simple_sync(cp,gh_scm2int(beg));
-      ends[0] = gh_scm2int(end);
+      ibeg = g_scm2intdef(beg,0);
+      ends[0] = g_scm2intdef(end,0);
+      if (current_ed_samples(cp)-1 < ends[0]) ends[0] = current_ed_samples(cp)-1;
+      if (ends[0] < ibeg) return(scm_throw(IMPOSSIBLE_BOUNDS,SCM_LIST5(gh_str02scm(S_make_region),beg,end,snd_n,chn_n)));
+      si = make_simple_sync(cp,ibeg);
       define_region(si,ends);
       reactivate_selection(si->cps[0],si->begs[0],ends[0]); /* ??? */
       si = free_sync_info(si);

@@ -247,6 +247,7 @@ static int next_selection_chan(chan_info *cp, void *sidata)
 sync_info *selection_sync(void)
 {
   sync_info *si;
+  if (!(selection_is_active)) return(NULL);
   si = (sync_info *)CALLOC(1,sizeof(sync_info));
   si->chans = selection_chans();
   si->cps = (chan_info **)CALLOC(si->chans,sizeof(chan_info *));
@@ -430,7 +431,7 @@ void display_selection(chan_info *cp)
 
 void make_region_from_selection(void)
 {
-  int *ends;
+  int *ends=NULL;
   int i,happy = 0;
   sync_info *si;
   si = selection_sync();
@@ -448,6 +449,7 @@ void make_region_from_selection(void)
       if (selection_len() > 10000000) report_in_minibuffer(si->cps[0]->sound," ");
     }
   si = free_sync_info(si);
+  if (ends) FREE(ends);
 }
 
 void select_all(chan_info *cp)
@@ -535,7 +537,6 @@ int save_selection(snd_state *ss, char *ofile, int type, int format, int srate, 
       if (MUS_HEADER_TYPE_OK(type))
 	{
 	  si = selection_sync();
-	  sfs = (snd_fd **)CALLOC(si->chans,sizeof(snd_fd *));
 	  comlen = snd_strlen(comment);
 	  dur = selection_len();
 	  if ((snd_write_header(ss,ofile,type,srate,si->chans,28,si->chans*dur,format,comment,comlen,NULL)) == -1) 
@@ -550,6 +551,7 @@ int save_selection(snd_state *ss, char *ofile, int type, int format, int srate, 
 	      return(MUS_CANT_OPEN_TEMP_FILE);
 	    }
 	  ends = (int *)CALLOC(si->chans,sizeof(int));
+	  sfs = (snd_fd **)CALLOC(si->chans,sizeof(snd_fd *));
 	  for (i=0;i<si->chans;i++) 
 	    {
 	      ends[i] = selection_end(si->cps[i]);
@@ -583,6 +585,7 @@ int save_selection(snd_state *ss, char *ofile, int type, int format, int srate, 
 	      free_snd_fd(sfs[i]);
 	      FREE(data[i]);
 	    }
+	  FREE(sfs);
 	  FREE(data);
 	  si = free_sync_info(si);
 	  FREE(ends);
@@ -691,7 +694,10 @@ static SCM g_set_selection_position(SCM pos, SCM snd, SCM chn)
 	  if (cp) si = sync_to_chan(cp);
 	}
       if (si)
-	for (i=0;i<si->chans;i++) cp_set_selection_beg(si->cps[i],beg);
+	{
+	  for (i=0;i<si->chans;i++) cp_set_selection_beg(si->cps[i],beg);
+	  si = free_sync_info(si);
+	}
     }
   else 
     {
@@ -737,7 +743,10 @@ static SCM g_set_selection_length(SCM samps, SCM snd, SCM chn)
 	  if (cp) si = sync_to_chan(cp);
 	}
       if (si)
-	for (i=0;i<si->chans;i++) cp_set_selection_len(si->cps[i],len);
+	{
+	  for (i=0;i<si->chans;i++) cp_set_selection_len(si->cps[i],len);
+	  si = free_sync_info(si);
+	}
     }
   else 
     {

@@ -1281,7 +1281,8 @@ static int fill_dac_buffers(dac_state *dacp, int write_ok)
       if (global_reverb) 
 	{
 	  for (i=0;i<frames;i++)
-	    reverb(global_reverb,revin[i],dac_buffers,i,revchans);
+	    reverb(global_reverb,revin[i],dac_buffers,i,
+		   (dac_buffer_chans < revchans) ? dac_buffer_chans : revchans);
 	  if (play_list_members == 0)
 	    {
 	      revdecay += frames;

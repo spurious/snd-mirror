@@ -1,6 +1,8 @@
 snd change log
 
   6-Nov:     various cosmetic changes for the new g++ (Redhat 7.0).
+             insert-sound arguments changed (to match mix-sound more closely).
+             added TODO.Snd.
   2-Nov:     insert-selection, mix-selection, delete-selection.
   1-Nov:     filter-env-in-hz switch.
   31-Oct:    syncing -> sync. Set! extended to frames, maxamp, x|y-zoom|position-slider.

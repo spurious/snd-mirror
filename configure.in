@@ -613,3 +613,24 @@ AC_OUTPUT(makefile)
 dnl if no motif, search for gtk (could use locate)
 dnl need to be able to set both HAVE_ALSA and HAVE_OSS?
 dnl support for sndlib.so needs to decide whether clm2scm/clm are available
+
+
+# --- here's how sawfish looks for esd:
+# AC_MSG_CHECKING([for enlightened sound daemon])
+# AC_ARG_WITH(esd,
+#  [  --with-esd		  Use the Enlightened Sound Daemon
+#   --without-esd], [], [with_esd=yes])
+# if test "$with_esd" = "yes"; then
+#   ESD_VERSION="`esd-config --version`"
+#   if test $? -eq 0; then
+#     ESD_LIBS="`esd-config --libs`"
+#     ESD_CFLAGS="`esd-config --cflags`"
+#     AC_MSG_RESULT([$ESD_VERSION])
+#     AC_SUBST(ESD_LIBS)
+#     AC_SUBST(ESD_CFLAGS)
+#     AC_DEFINE(HAVE_ESD)
+#   else
+#     AC_MSG_RESULT([no])
+#   fi
+# fi
+

@@ -1613,9 +1613,10 @@ sets its value to val.
 
   <b><a name="sndheadertype">header-type</a></b>       (<em class=targ>snd</em>)         <i>snd</i>'s header type (e.g. mus-aiff).
 
-  <b><a name="sndinsertfile">insert-sound</a></b>      (file <i>in_chan snd chn</i>)
-                                  insert channel <i>in_chan</i> of <i>file</i> at the cursor in <i>snd</i>'s channel <i>chn</i> 
-                                  [<em class=error>no-such-file</em>].
+  <b><a name="sndinsertfile">insert-sound</a></b>      (file <i>beg in_chan snd chn</i>)
+                                  insert channel <i>in_chan</i> of <i>file</i> at sample <i>beg</i> in <i>snd</i>'s channel <i>chn</i>.
+                                  beg defaults to the cursor position; if in_chan is not given, all 
+                                  channels are inserted. [<em class=error>no-such-file</em>].
 
   <b><a name="sndinsertsample">insert-sample</a></b>     (samp value <i>snd chn</i>)
                                   insert sample <i>value</i> at sample <i>samp</i> in <i>snd</i>'s channel <i>chn</i> 

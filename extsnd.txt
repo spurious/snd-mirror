@@ -1488,9 +1488,10 @@ value to val.
 
   header-type       (snd)         snd's header type (e.g. mus-aiff).
 
-  insert-sound      (file in_chan snd chn)
-                                  insert channel in_chan of file at the cursor in snd's channel chn
-                                  [no-such-file].
+  insert-sound      (file beg in_chan snd chn)
+                                  insert channel in_chan of file at sample beg in snd's channel chn.
+                                  beg defaults to the cursor position; if in_chan is not given, all
+                                  channels are inserted. [no-such-file].
 
   insert-sample     (samp value snd chn)
                                   insert sample value at sample samp in snd's channel chn

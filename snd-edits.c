@@ -2,6 +2,7 @@
 
 /* TODO   undo-hook is not very useful until we can make channel-specific GUI indications
  * TODO   add more general SCM func mechanism? or add a way to extend the pre-parsed cases
+ * TODO   zero file states memory leak?
  *
  * the latter is under the WITH_PARSE_TREES switch.  ed_list has 2 extra fields:
  *      MUS_SAMPLE_TYPE (*func)(struct chan__info *cp, int pos, struct snd__fd *sf,void *env);
@@ -65,17 +66,17 @@
 #define UNWRAP_SAMPLE_TO_FLOAT(X,SF) ((X) * (SF->scaler))
 
 /* try to make this code easier to read... */
-#define FRAGMENT_GLOBAL_POSITION(EDLIST,FRAGMENT_NUM)  EDLIST->fragments[FRAGMENT_NUM * ED_SIZE + ED_OUT]
-#define FRAGMENT_LOCAL_POSITION(EDLIST,FRAGMENT_NUM)   EDLIST->fragments[FRAGMENT_NUM * ED_SIZE + ED_BEG]
-#define FRAGMENT_LOCAL_END(EDLIST,FRAGMENT_NUM)        EDLIST->fragments[FRAGMENT_NUM * ED_SIZE + ED_END]
-#define FRAGMENT_SCALER(EDLIST,FRAGMENT_NUM)           EDLIST->fragments[FRAGMENT_NUM * ED_SIZE + ED_SCL]
-#define FRAGMENT_SOUND(EDLIST,FRAGMENT_NUM)            EDLIST->fragments[FRAGMENT_NUM * ED_SIZE + ED_SND]
+#define FRAGMENT_GLOBAL_POSITION(EDLIST,FRAGMENT_NUM)  EDLIST->fragments[(FRAGMENT_NUM) * ED_SIZE + ED_OUT]
+#define FRAGMENT_LOCAL_POSITION(EDLIST,FRAGMENT_NUM)   EDLIST->fragments[(FRAGMENT_NUM) * ED_SIZE + ED_BEG]
+#define FRAGMENT_LOCAL_END(EDLIST,FRAGMENT_NUM)        EDLIST->fragments[(FRAGMENT_NUM) * ED_SIZE + ED_END]
+#define FRAGMENT_SCALER(EDLIST,FRAGMENT_NUM)           EDLIST->fragments[(FRAGMENT_NUM) * ED_SIZE + ED_SCL]
+#define FRAGMENT_SOUND(EDLIST,FRAGMENT_NUM)            EDLIST->fragments[(FRAGMENT_NUM) * ED_SIZE + ED_SND]
 
-#define FRAGMENT_GLOBAL_POSITION_OFFSET(EDLIST,OFFSET) EDLIST->fragments[OFFSET + ED_OUT]
-#define FRAGMENT_LOCAL_POSITION_OFFSET(EDLIST,OFFSET)  EDLIST->fragments[OFFSET + ED_BEG]
-#define FRAGMENT_LOCAL_END_OFFSET(EDLIST,OFFSET)       EDLIST->fragments[OFFSET + ED_END]
-#define FRAGMENT_SCALER_OFFSET(EDLIST,OFFSET)          EDLIST->fragments[OFFSET + ED_SCL]
-#define FRAGMENT_SOUND_OFFSET(EDLIST,OFFSET)           EDLIST->fragments[OFFSET + ED_SND]
+#define FRAGMENT_GLOBAL_POSITION_OFFSET(EDLIST,OFFSET) EDLIST->fragments[(OFFSET) + ED_OUT]
+#define FRAGMENT_LOCAL_POSITION_OFFSET(EDLIST,OFFSET)  EDLIST->fragments[(OFFSET) + ED_BEG]
+#define FRAGMENT_LOCAL_END_OFFSET(EDLIST,OFFSET)       EDLIST->fragments[(OFFSET) + ED_END]
+#define FRAGMENT_SCALER_OFFSET(EDLIST,OFFSET)          EDLIST->fragments[(OFFSET) + ED_SCL]
+#define FRAGMENT_SOUND_OFFSET(EDLIST,OFFSET)           EDLIST->fragments[(OFFSET) + ED_SND]
 
 #define EDIT_LIST_END_MARK -2
 #define EDIT_ALLOC_SIZE 128
@@ -562,13 +563,34 @@ static int find_split_loc(int samp, ed_list *current_state)
 
 static ed_list *selected_ed_list(int beg, int end, ed_list *current_state)
 {
-  int bk,ek,new_size,i,k,j,oldk,diff;
+  int bk,ek,new_size,i,k,j,oldk,diff,len;
   ed_list *new_ed;
+#if DEBUGGING
+  int ubeg,uend;
+  ubeg=beg; uend=end;
+#endif
+
+  /* this refers to selected data, so beg and end must be within the current data bounds! */
+  if (beg < 0) beg = 0;
+  if (end < 0) end = 0;
+  len = FRAGMENT_GLOBAL_POSITION(current_state,current_state->size-1);
+  if (beg >= len) beg = len-1;
+  if (end >= len) end = len-1;
+#if DEBUGGING
+  if ((ubeg != beg) || (uend != end))
+    {
+      fprintf(stderr,"selected list: %d to %d -> %d to %d (%d: ",ubeg,uend,beg,end,len);
+      for (i=0;i<current_state->size;i++) fprintf(stderr,"%d ",FRAGMENT_GLOBAL_POSITION(current_state,i));
+      fprintf(stderr,"\n");
+    }
+#endif
+
   bk = find_split_loc(beg,current_state);
   if (FRAGMENT_GLOBAL_POSITION(current_state,bk) > beg) bk--;
   ek = find_split_loc(end,current_state) - 1;
-  if (ek < 0) ek = 0;
   new_size = current_state->size;
+  /* if (ek < 0) ek = new_size-1; */
+  if (ek < 0) ek = 0;
   if (FRAGMENT_GLOBAL_POSITION(current_state,bk) != beg) new_size++;
   if (FRAGMENT_GLOBAL_POSITION(current_state,(ek+1)) != end+1) new_size++;
   new_ed = make_ed_list(new_size);
@@ -610,6 +632,13 @@ static ed_list *selected_ed_list(int beg, int end, ed_list *current_state)
       for (i=0;i<ED_SIZE;i++)
 	new_ed->fragments[k*ED_SIZE + i] = current_state->fragments[oldk*ED_SIZE + i];
     }
+#if DEBUGGING
+  if (FRAGMENT_SOUND(new_ed,(new_ed->size - 1)) != EDIT_LIST_END_MARK)
+    {
+      fprintf(stderr,"oops");
+      abort();
+    }
+#endif
   return(new_ed);
 }
 
@@ -734,10 +763,6 @@ snd_data *make_snd_data_file(char *name, int *io, MUS_SAMPLE_TYPE *data, file_in
   sf->copy = FALSE;
   sf->chan = temp_chan;
   sf->len = (hdr->samples)*(mus_data_format_to_bytes_per_sample(hdr->format)) + hdr->data_location;
-#if DEBUGGING
-  sf->owner = NULL; 
-  /* this owner field is obsolete */
-#endif
   sf->just_zeros = 0;
   return(sf);
 }
@@ -758,9 +783,6 @@ static snd_data *make_snd_data_zero_file(int size, int *io, MUS_SAMPLE_TYPE *dat
   sf->copy = FALSE;
   sf->chan = 0;
   sf->len = size;
-#if DEBUGGING
-  sf->owner = NULL; 
-#endif
   sf->just_zeros = 1;
   return(sf);
 }
@@ -802,9 +824,6 @@ snd_data *copy_snd_data(snd_data *sd, chan_info *cp, int bufsize)
   sf->open = FD_OPEN;
   sf->inuse = FALSE;
   sf->copy = TRUE;
-#if DEBUGGING
-  sf->owner = NULL;
-#endif
   sf->just_zeros = 0;
   return(sf);
 }
@@ -825,9 +844,6 @@ snd_data *make_snd_data_buffer(MUS_SAMPLE_TYPE *data, int len, int ctr)
   sf->copy = FALSE;
   sf->inuse = FALSE;
   sf->len = len*4;
-#if DEBUGGING
-  sf->owner = NULL;
-#endif
   sf->just_zeros = 0;
   return(sf);
 }
@@ -858,9 +874,6 @@ snd_data *free_snd_data(snd_data *sf)
 	  sf->filename = NULL;
 	}
       sf->temporary = ALREADY_DELETED;
-#if DEBUGGING
-      sf->owner = NULL;
-#endif
       FREE(sf);
     }
   return(NULL);
@@ -1758,9 +1771,6 @@ snd_fd *free_snd_fd(snd_fd *sf)
       if (sd)
 	{
 	  sd->inuse = FALSE;
-#if DEBUGGING
-	  if ((sd->copy) && (sd->owner != (void *)sf)) {fprintf(stderr,"weird case "); abort();}
-#endif
 	  if (sd->copy) free_snd_data(sd);
 	}
       FREE(sf);
@@ -1774,7 +1784,6 @@ snd_fd *free_snd_fd(snd_fd *sf)
   int current_location(snd_fd *sf) {return(sf->cb[ED_OUT] - sf->cb[ED_BEG] + sf->beg + (((int)(sf->view_buffered_data) - (int)(sf->first))>>2));}
 #endif
 
-
 snd_fd *init_sample_read_any (int samp, chan_info *cp, int direction, int edit_position)
 {
   snd_fd *sf;
@@ -1783,6 +1792,9 @@ snd_fd *init_sample_read_any (int samp, chan_info *cp, int direction, int edit_p
   int len,i,k,ind0,ind1,indx,curlen;
   int *cb;
   snd_data *first_snd = NULL;
+  if ((edit_position < 0) || (edit_position > cp->edit_size)) return(NULL);
+  ed = (ed_list *)(cp->edits[edit_position]);
+  if (!ed) return(NULL);
   sf = (snd_fd *)CALLOC(1,sizeof(snd_fd));
   sf->initial_samp = samp;
   sf->direction = 0;
@@ -1795,9 +1807,6 @@ snd_fd *init_sample_read_any (int samp, chan_info *cp, int direction, int edit_p
 	snd_error("%s no longer exists!",sp->shortname);
       else snd_warning("%s has changed since we last read it!",sp->shortname);
     }
-  if ((edit_position < 0) || (edit_position > cp->edit_size)) return(NULL);
-  ed = (ed_list *)(cp->edits[edit_position]);
-  if (!ed) return(NULL);
   curlen = cp->samples[edit_position];
   sf->current_state = ed;
   if ((curlen <= 0) ||    /* no samples, not ed->len (delete->len = #deleted samps) */
@@ -1820,6 +1829,9 @@ snd_fd *init_sample_read_any (int samp, chan_info *cp, int direction, int edit_p
       cb = (int *)(ed->fragments+k);
       if ((cb[ED_OUT] > samp) || (cb[ED_SND] == EDIT_LIST_END_MARK))
 	{
+#if DEBUGGING
+	  if (k == 0) {fprintf(stderr,"bad tree at 0: out %d, samp: %d",cb[ED_OUT],samp); abort();}
+#endif
 	  sf->cb = (int *)(ed->fragments+k-ED_SIZE);
 	  sf->cbi = i-1;
 	  ind0 = sf->cb[ED_BEG];
@@ -1840,12 +1852,7 @@ snd_fd *init_sample_read_any (int samp, chan_info *cp, int direction, int edit_p
 	       * the current reader is done.
 	       */
 	      if (first_snd->inuse) 
-		{
-		  first_snd = copy_snd_data(first_snd,cp,MIX_FILE_BUFFER_SIZE);
-#if DEBUGGING
-		  first_snd->owner = (void *)sf;
-#endif
-		}
+		first_snd = copy_snd_data(first_snd,cp,MIX_FILE_BUFFER_SIZE);
 	      first_snd->inuse = TRUE;
 	      sf->current_sound = first_snd;
 	      if (direction == READ_FORWARD)
@@ -1863,6 +1870,7 @@ snd_fd *init_sample_read_any (int samp, chan_info *cp, int direction, int edit_p
 	  return(sf);
 	}
     }
+  if (sf) FREE(sf);
   return(NULL);
 }
 
@@ -1882,9 +1890,6 @@ static MUS_SAMPLE_TYPE previous_sound (snd_fd *sf)
 	  prev_snd = sf->current_sound; 
 	  prev_snd->inuse = FALSE; 
 	  sf->current_sound = NULL;
-#if DEBUGGING
-	  if ((prev_snd->owner != (void *)sf) && (prev_snd->copy)) {fprintf(stderr,"weird prev case"); abort();}
-#endif
 	  if (prev_snd->copy) free_snd_data(prev_snd);
 	}
       if (sf->cbi == 0) return(MUS_SAMPLE_0); /* can't back up any further */
@@ -1899,12 +1904,7 @@ static MUS_SAMPLE_TYPE previous_sound (snd_fd *sf)
       if (prev_snd->type == SND_DATA_FILE)
 	{
 	  if (prev_snd->inuse) 
-	    {
-	      prev_snd = copy_snd_data(prev_snd,sf->cp,MIX_FILE_BUFFER_SIZE);
-#if DEBUGGING
-	      prev_snd->owner = (void *)sf;
-#endif
-	    }
+	    prev_snd = copy_snd_data(prev_snd,sf->cp,MIX_FILE_BUFFER_SIZE);
 	  prev_snd->inuse = TRUE;
 	  sf->current_sound = prev_snd;
 	  file_buffers_back(ind0,ind1,ind1,sf,prev_snd);
@@ -1939,9 +1939,6 @@ static MUS_SAMPLE_TYPE next_sound (snd_fd *sf)
 	  nxt_snd = sf->current_sound; 
 	  nxt_snd->inuse = FALSE; 
 	  sf->current_sound = NULL;
-#if DEBUGGING
-	  if ((nxt_snd->owner != (void *)sf) && (nxt_snd->copy)) {fprintf(stderr,"weird next case"); abort();}
-#endif
 	  if (nxt_snd->copy) free_snd_data(nxt_snd);
 	}
       if (sf->last == (MUS_SAMPLE_TYPE *)0) return(MUS_SAMPLE_0);
@@ -1965,13 +1962,8 @@ static MUS_SAMPLE_TYPE next_sound (snd_fd *sf)
       nxt_snd = sf->sounds[sf->cb[ED_SND]];
       if (nxt_snd->type == SND_DATA_FILE)
 	{
-	  if (nxt_snd->inuse) 
-	    {
-	      nxt_snd = copy_snd_data(nxt_snd,sf->cp,MIX_FILE_BUFFER_SIZE);
-#if DEBUGGING
-	      nxt_snd->owner = (void *)sf;
-#endif
-	    }
+	  if (nxt_snd->inuse)
+	    nxt_snd = copy_snd_data(nxt_snd,sf->cp,MIX_FILE_BUFFER_SIZE);
 	  nxt_snd->inuse = TRUE;
 	  sf->current_sound = nxt_snd;
 	  file_buffers_forward(ind0,ind1,ind0,sf,nxt_snd);

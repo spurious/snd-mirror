@@ -3608,6 +3608,7 @@ void scale_to(snd_state *ss, snd_info *sp, chan_info *cp, Float *ur_scalers, int
   if ((!selection) && (cp == NULL)) return;
   if (selection) 
     {
+      if (!(selection_is_active())) return;
       si = selection_sync();
       sp = si->cps[0]->sound;
     }
@@ -3622,21 +3623,27 @@ void scale_to(snd_state *ss, snd_info *sp, chan_info *cp, Float *ur_scalers, int
   /* now find maxamps (special if len==1) and fixup the scalers */
   if (len == 1)
     {
-      maxamp = 0.0;
-      for (i=0;i<chans;i++)
+      if (scalers[0] != 0.0)
 	{
-	  ncp = si->cps[i];
-	  if (selection)
-	    val = get_selection_maxamp(ncp);
-	  else val = get_maxamp(ncp->sound,ncp);
-	  if (val > maxamp) maxamp = val;
+	  maxamp = 0.0;
+	  for (i=0;i<chans;i++)
+	    {
+	      ncp = si->cps[i];
+	      if (selection)
+		val = get_selection_maxamp(ncp);
+	      else val = get_maxamp(ncp->sound,ncp);
+	      if (val > maxamp) maxamp = val;
+	    }
+	  if ((data_clipped(ss) == 0) && 
+	      (scalers[0] == 1.0) && 
+	      (datum_size < 4)) 
+	    scalers[0] = 32767.0/32768.0;
+	  /* 1.0 = -1.0 in these cases, so we'll get a click  -- added 13-Dec-99 */
+	  if (maxamp != 0.0)
+	    val = scalers[0]/maxamp;
+	  else val = 0.0;
 	}
-      if ((data_clipped(ss) == 0) && 
-	  (scalers[0] == 1.0) && 
-	  (datum_size < 4)) 
-	scalers[0] = 32767.0/32768.0;
-      /* 1.0 = -1.0 in these cases, so we'll get a click  -- added 13-Dec-99 */
-      val = scalers[0]/maxamp;
+      else val = 0.0;
       for (i=0;i<chans;i++) scalers[i] = val;
     }
   else
@@ -3644,14 +3651,21 @@ void scale_to(snd_state *ss, snd_info *sp, chan_info *cp, Float *ur_scalers, int
       for (i=0;i<chans;i++)
 	{
 	  ncp = si->cps[i];
-	  if (selection)
-	    val = get_selection_maxamp(ncp);
-	  else val = get_maxamp(ncp->sound,ncp);
-	  if ((data_clipped(ss) == 0) && 
-	      (scalers[i] == 1.0) && 
-	      (datum_size < 4)) 
-	    scalers[i] = 32767.0/32768.0;
-	  scalers[i] /= val;
+	  if (scalers[i] != 0.0)
+	    {
+	      if (selection)
+		val = get_selection_maxamp(ncp);
+	      else val = get_maxamp(ncp->sound,ncp);
+	      if (val != 0.0)
+		{
+		  if ((data_clipped(ss) == 0) && 
+		      (scalers[i] == 1.0) && 
+		      (datum_size < 4)) 
+		    scalers[i] = 32767.0/32768.0;
+		  scalers[i] /= val;
+		}
+	      else scalers[i] = 0.0;
+	    }
 	}
     }
   for (i=0;i<si->chans;i++)

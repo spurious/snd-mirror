@@ -5,6 +5,7 @@
  * TODO  check for Mac OS changes
  * TODO  re-implement BeOS support
  * TODO  when reading device_field, put default input device first, or mark somehow 
+ * TODO  add esd support (configure.in has the setup code)
  *
  * ALSA errors should be updated to new form
  */
@@ -9757,4 +9758,12 @@ void reset_audio_c (void)
   reset_db();
 #endif
 }
+#endif
+
+
+#if 0
+#ifdef HAVE_ESD
+#include <esd.h>
+#endif
+
 #endif

@@ -3551,7 +3551,11 @@ static SCM g_mix(SCM file, SCM chn_samp_n, SCM file_chn, SCM snd_n, SCM chn_n, S
   if (SCM_UNBNDP(chn_samp_n))
     {
       id = mix_complete_file(any_selected_sound(ss),name,S_mix,with_mixer);
-      if (id == -1) return(scm_throw(NO_SUCH_FILE,SCM_LIST3(gh_str02scm(S_mix),file,gh_str02scm(strerror(errno)))));
+      if (id == -1) 
+	{
+	  if (name) FREE(name);
+	  return(scm_throw(NO_SUCH_FILE,SCM_LIST3(gh_str02scm(S_mix),file,gh_str02scm(strerror(errno)))));
+	}
     }
   else
     {
@@ -3566,7 +3570,11 @@ static SCM g_mix(SCM file, SCM chn_samp_n, SCM file_chn, SCM snd_n, SCM chn_n, S
 				with_mixer);
 	  if (md) id = md->id;
 	}
-      else return(scm_throw(NO_SUCH_FILE,SCM_LIST2(gh_str02scm(S_mix),file)));
+      else 
+	{
+	  if (name) FREE(name);
+	  return(scm_throw(NO_SUCH_FILE,SCM_LIST2(gh_str02scm(S_mix),file)));
+	}
     }
   if (name) FREE(name);
   RTNINT(id);
@@ -3657,9 +3665,11 @@ static SCM g_next_mix_sample(SCM obj)
 static SCM g_free_mix_sample_reader(SCM obj)
 {
   #define H_free_mix_sample_reader "(" S_free_mix_sample_reader " reader) frees mix sample reader 'reader'"
+  mix_fd *mf;
   SCM_ASSERT(mf_p(obj),obj,SCM_ARG1,S_free_mix_sample_reader);
+  mf = get_mf(obj);
   GH_SET_VALUE_OF(obj,(SCM)NULL);
-  free_mix_fd(get_mf(obj));
+  free_mix_fd(mf);
   return(scm_return_first(SCM_BOOL_F,obj));
 }
 
@@ -3768,9 +3778,11 @@ static SCM g_next_track_sample(SCM obj)
 static SCM g_free_track_sample_reader(SCM obj)
 {
   #define H_free_track_sample_reader "(" S_free_track_sample_reader " reader) frees the track sample reader 'reader'"
+  track_fd *tf = NULL;
   SCM_ASSERT(tf_p(obj),obj,SCM_ARG1,S_free_track_sample_reader);
+  tf = get_tf(obj);
   GH_SET_VALUE_OF(obj,(SCM)NULL);
-  free_track_fd(get_tf(obj));
+  free_track_fd(tf);
   return(scm_return_first(SCM_BOOL_F,obj));
 }
 

@@ -257,6 +257,7 @@ void news_help(snd_state *ss)
 	    "Recent changes include:\n\
 \n\
 6-Nov:   various cosmetic changes for the new g++ (Redhat 7.0).\n\
+         insert-sound arguments changed.\n\
 2-Nov:   insert-selection, mix-selection, delete-selection.\n\
 1-Nov:   filter-env-in-hz switch.\n\
 31-Oct:  syncing -> sync. Set! extended to frames, maxamp, x|y-zoom|position-slider.\n\
@@ -1190,7 +1191,7 @@ all refer to the same thing.\n\
   " S_hide_listener "     ()\n\
   " S_id_region "         (id)\n\
   " S_in "                (ms code)\n\
-  " S_insert_sound "      (file in_chan snd chn)\n\
+  " S_insert_sound "      (file beg in_chan snd chn)\n\
   " S_insert_region "     (beg reg snd chn)\n\
   " S_insert_sample "     (samp value snd chn)\n\
   " S_insert_samples "    (samp data snd chn)\n\

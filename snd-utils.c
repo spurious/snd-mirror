@@ -358,8 +358,36 @@ char *kmg (int num)
 
 #define MEM_SIZE 65536
 
+#if 0
+/* from glibc/debug/backtrace-tst.c -- doesn't decode local (Snd) function names) */
+/*    we need some way to search the symbol table given an address (gdb symtab.c?) */
+#include <execinfo.h>
+#include <inttypes.h>
+void show_stack(void);
+void show_stack(void)
+{
+  void *ba[20];
+  int n = backtrace (ba, sizeof (ba) / sizeof (ba[0]));
+  if (n != 0)
+    {
+      char **names = backtrace_symbols (ba, n);
+      if (names != NULL)
+	{
+	  int i;
+	  printf ("called from %s\n", names[0]);
+	  for (i = 1; i < n; ++i)
+	    printf ("            %s\n", names[i]);
+	  free (names);
+	}
+    }
+}
+#endif
+
 static char *encloser = NULL;
-void set_encloser(char *name) {encloser = name;} /* for exposing call chains */
+void set_encloser(char *name) 
+{
+  encloser = name;
+} /* for exposing call chains */
 
 static int pointers[MEM_SIZE],sizes[MEM_SIZE],locations[MEM_SIZE];
 static char **functions,**files;
@@ -587,6 +615,10 @@ void mem_report(void)
 	  sums[ptr] = 0;
 	}
     }
+
+  for (i=0;i<512;i++)
+    if (mus_file_fd_name(i))
+      fprintf(Fp,"[%d]: %s\n",i,mus_file_fd_name(i));
   fclose(Fp);
 }
 
