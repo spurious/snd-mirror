@@ -37,9 +37,6 @@ A data file mechanism for the phase vocoder (i.e. save/reuse analysis pass).
 A "sox-script" -- use Snd script as sox replacement.
 A sndinfo script?
 
-A Gtk module paralleling the Motif version in xm.c. (I intend to write this
-once gtk2 comes out).
-
 See the end of snd-motif.scm for other user-interface extension projects.
 
 Finish the glfft tie-in to openGL or figure out how to deal with it

@@ -324,7 +324,7 @@ static XEN g_current_font(XEN snd, XEN chn, XEN ax_id)
 static XEN g_load_font(XEN font)
 {
   #define H_load_font "(" S_load_font " <name>) -> font-id"
-  GdkFont *fs = NULL;
+  SG_FONT *fs = NULL;
   XEN_ASSERT_TYPE(XEN_STRING_P(font), font, XEN_ONLY_ARG, S_load_font, "a string");
   fs = SG_FONT_LOAD(XEN_TO_C_STRING(font));
   if (fs) return(XEN_WRAP_C_POINTER(fs));
@@ -338,8 +338,8 @@ static XEN g_set_current_font(XEN id, XEN snd, XEN chn, XEN ax_id)
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ax_id), ax_id, XEN_ARG_4, "set-" S_current_font, "an integer");
   ax = TO_C_AXIS_CONTEXT(snd, chn, ax_id, "set-" S_current_font);
   XEN_ASSERT_TYPE(XEN_WRAPPED_C_POINTER_P(id), id, XEN_ARG_1, "set-" S_current_font, "a wrapped object");
-  gdk_gc_set_font(ax->gc, (GdkFont *)XEN_UNWRAP_C_POINTER(id));
-  ax->current_font = (GdkFont *)XEN_UNWRAP_C_POINTER(id);
+  gdk_gc_set_font(ax->gc, (SG_FONT *)XEN_UNWRAP_C_POINTER(id));
+  ax->current_font = (SG_FONT *)XEN_UNWRAP_C_POINTER(id);
   return(id);
 }
 
@@ -432,11 +432,6 @@ in the drawing mode graphic-style."
 
   return(XEN_FALSE);
 }
-
-#define XEN_WIDGET_P(Value) (XEN_LIST_P(Value) &&\
-                            (XEN_LIST_LENGTH(Value) >= 2) &&\
-                            (XEN_SYMBOL_P(XEN_CAR(Value))) &&\
-                            (strcmp("Widget", XEN_SYMBOL_TO_C_STRING(XEN_CAR(Value))) == 0))
 
 static XEN g_main_widgets(void)
 {

@@ -268,6 +268,8 @@ void news_help(snd_state *ss)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+11-Feb:  snd 5.7.\n\
+         xg.c (gtk2 bindings).\n\
 30-Jan:  removed stats dialog, snd-xstats.c, snd-gstats.c, show-usage-stats, update-usage-stats.\n\
 28-Jan:  Alpha bugfix thanks to Stefan Schwandter.\n\
 23-Jan:  color-samples (draw.scm).\n\

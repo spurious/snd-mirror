@@ -13,9 +13,13 @@ XM_O_FILES = snd-xutils.o snd-xerror.o snd-xhelp.o snd-xfind.o snd-xmenu.o snd-x
 
 G_O_FILES = snd-gutils.o snd-gerror.o snd-ghelp.o snd-gfind.o snd-gmenu.o snd-gdraw.o snd-glistener.o snd-gchn.o snd-gsnd.o snd-gregion.o snd-gdrop.o snd-gmain.o snd-gmix.o snd-grec.o snd-genv.o snd-gxutils.o snd-gxbitmaps.o snd-gxcolormaps.o snd-gfft.o snd-gprint.o snd-gfile.o snd-gxen.o
 
+XG_O_FILES = snd-gutils.o snd-gerror.o snd-ghelp.o snd-gfind.o snd-gmenu.o snd-gdraw.o snd-glistener.o snd-gchn.o snd-gsnd.o snd-gregion.o snd-gdrop.o snd-gmain.o snd-gmix.o snd-grec.o snd-genv.o snd-gxutils.o snd-gxbitmaps.o snd-gxcolormaps.o snd-gfft.o snd-gprint.o snd-gfile.o snd-gxen.o xg.o
+
 NO_GUI_O_FILES = snd-nogui.o
 GM_FILES = xm.o
 GM_SO_FILE = xm.so
+GG_FILES = xg.o
+GG_SO_FILE = xg.so
 
 prefix = /usr/local
 exec_prefix = ${prefix}

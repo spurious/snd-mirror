@@ -296,6 +296,7 @@
   #define XEN_LIST_6(a, b, c, d, e, f)    scm_list_n(a, b, c, d, e, f, XEN_UNDEFINED)
   #define XEN_LIST_7(a, b, c, d, e, f, g) scm_list_n(a, b, c, d, e, f, g, XEN_UNDEFINED)
   #define XEN_LIST_8(a, b, c, d, e, f, g, h) scm_list_n(a, b, c, d, e, f, g, h, XEN_UNDEFINED)
+  #define XEN_LIST_9(a, b, c, d, e, f, g, h, i) scm_list_n(a, b, c, d, e, f, g, h, i, XEN_UNDEFINED)
 #else
   #define XEN_LIST_1(a)                   SCM_LIST1(a)
   #define XEN_LIST_2(a, b)                SCM_LIST2(a, b)
@@ -305,6 +306,7 @@
   #define XEN_LIST_6(a, b, c, d, e, f)    SCM_LIST6(a, b, c, d, e, f)
   #define XEN_LIST_7(a, b, c, d, e, f, g) SCM_LIST7(a, b, c, d, e, f, g)
   #define XEN_LIST_8(a, b, c, d, e, f, g, h) SCM_LIST8(a, b, c, d, e, f, g, h)
+  #define XEN_LIST_9(a, b, c, d, e, f, g, h, i) SCM_LIST9(a, b, c, d, e, f, g, h, i)
 #endif
 #define XEN_APPEND(a, b)                  scm_append(XEN_LIST_2(a, b))
 
@@ -582,6 +584,7 @@ void xen_guile_define_procedure_with_reversed_setter(char *get_name, XEN (*get_f
 #define XEN_LIST_6(a, b, c, d, e, f)    rb_ary_new3(6, a, b, c, d, e, f)
 #define XEN_LIST_7(a, b, c, d, e, f, g) rb_ary_new3(7, a, b, c, d, e, f, g)
 #define XEN_LIST_8(a, b, c, d, e, f, g, h) rb_ary_new3(8, a, b, c, d, e, f, g, h)
+#define XEN_LIST_9(a, b, c, d, e, f, g, h, i) rb_ary_new3(9, a, b, c, d, e, f, g, h, i)
 #define XEN_CAR(a)                      rb_ary_entry(a, 0)
 #define XEN_CADR(a)                     rb_ary_entry(a, 1)
 #define XEN_CADDR(a)                    rb_ary_entry(a, 2)
@@ -798,6 +801,7 @@ XEN xen_rb_copy_list(XEN val); /* Ruby arrays (lists) are passed by reference */
 #define XEN_LIST_6(a, b, c, d, e, f) 0
 #define XEN_LIST_7(a, b, c, d, e, f, g) 0
 #define XEN_LIST_8(a, b, c, d, e, f, g, h) 0
+#define XEN_LIST_9(a, b, c, d, e, f, g, h, i) 0
 #define XEN_CAR(a) 0
 #define XEN_CADR(a) 0
 #define XEN_CADDR(a) 0

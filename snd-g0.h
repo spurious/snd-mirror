@@ -42,6 +42,16 @@
 #define GUI_POINTER gpointer
 #define GUI_WIDGET GtkWidget*
 #define GUI_PIXEL GdkColor*
+#define XEN_WRAP_WIDGET(Value)       XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkWidget_"),    C_TO_XEN_ULONG((unsigned long)Value))
+#define XEN_WRAP_WINDOW(Value)       XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GdkWindow_"),    C_TO_XEN_ULONG((unsigned long)Value))
+#define XEN_WRAP_GC(Value)           XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GdkGC_"),        C_TO_XEN_ULONG((unsigned long)Value))
+#define XEN_WRAP_PIXEL(Value)        XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GdkColor_"),     C_TO_XEN_ULONG((unsigned long)Value))
+#define XEN_UNWRAP_WIDGET(Value)     XEN_TO_C_ULONG(XEN_CADR(Value))
+#define XEN_UNWRAP_WINDOW(Value)     XEN_TO_C_ULONG(XEN_CADR(Value))
+#define XEN_UNWRAP_GC(Value)         XEN_TO_C_ULONG(XEN_CADR(Value))
+#define XEN_UNWRAP_PIXEL(Value)      XEN_TO_C_ULONG(XEN_CADR(Value))
+#define XEN_WIDGET_P(Value) (XEN_LIST_P(Value) && (XEN_LIST_LENGTH(Value) >= 2) && (XEN_SYMBOL_P(XEN_CAR(Value))) &&\
+                            (strcmp("GtkWidget_", XEN_SYMBOL_TO_C_STRING(XEN_CAR(Value))) == 0))
 
 #if DEBUGGING
   #define ASSERT_WIDGET_TYPE(Cond, Wid) if (!(Cond)) fprintf(stderr,"%s:[%s %d] widget arg is wrong type", __FUNCTION__, __FILE__, __LINE__)
@@ -53,10 +63,16 @@
 #define Locus gint16
 #define Latus guint16
 
+#if HAVE_GTK2
+  #define SG_FONT PangoFontDescription
+#else
+  #define SG_FONT GdkFont
+#endif
+
 typedef struct {
   GdkGC *gc;
   GdkDrawable *wn;
-  GdkFont *current_font;
+  SG_FONT *current_font;
   void *ss;
 } axis_context;
 
@@ -96,13 +112,13 @@ typedef struct {
   GtkWidget *listener_pane;
   GdkWindow *mainwindow;
 
-  GdkFont *button_fnt;
-  GdkFont *bold_button_fnt; 
-  GdkFont *listener_fnt;
-  GdkFont *axis_label_fnt;
-  GdkFont *axis_numbers_fnt;
-  GdkFont *help_text_fnt;
-  GdkFont *tiny_fnt;
+  SG_FONT *button_fnt;
+  SG_FONT *bold_button_fnt; 
+  SG_FONT *listener_fnt;
+  SG_FONT *axis_label_fnt;
+  SG_FONT *axis_numbers_fnt;
+  SG_FONT *help_text_fnt;
+  SG_FONT *tiny_fnt;
 
   GdkColor *white, *black, *red, *yellow, *green, *light_blue, *lighter_blue;
   GdkColor *data_color, *selected_data_color, *mark_color, *graph_color, *selected_graph_color, *listener_color, *listener_text_color, *cursor_color;
@@ -137,7 +153,7 @@ typedef struct {
   GdkBitmap *off_label_mask;
   GdkBitmap *on_label_mask;
   GdkBitmap *clip_label_mask;
-  GdkFont *label_font;
+  SG_FONT *label_font;
   Float size;
 } vu_label;
 
@@ -361,15 +377,14 @@ typedef struct {
      ditto               selection_bounds
        gtk_text_buffer_get_iter_at_mark converts to iter, gtk_text_iter_get_offset -> offset
   */
+#if 0
+  /* TODO: macros for lists pixmaps fonts */
   #define SG_TEXT_SET_POINT(Widget, Point) sg_set_cursor(Widget, Point)
   #define SG_TEXT_GET_POINT(Widget) 0
   #define SG_TEXT_UNSELECT(Widget)
   #define SG_TEXT_SELECT(Widget, Start, End)
   #define SG_TEXT_INSERT(Widget, Font, ForeColor, BackColor, Text, Length) sg_text_insert(Widget, Text)
   #define SG_TEXT_BACKWARD_DELETE(Widget, Number)
-
-#if 0
-  /* TODO: macros for lists pixmaps fonts */
   #define SG_LIST_SELECT_ROW(Widget, Row)
   #define SG_LIST_MOVETO(Widget, Row)
   #define SG_LIST_CLEAR(Widget)
@@ -381,8 +396,16 @@ typedef struct {
   #define SG_PIXMAP_SET(Holder, Map, Mask)
   /* now holder is a widget and we set its pixmap -- how to tell this? */
   #define SG_FONT_LOAD(Font) NULL
+  #define SG_SET_FONT(Gc, Font)
+  #define SG_TEXT_WIDTH(Txt, Font) 0
 #else
   /* use deprecated forms for testing */
+  #define SG_TEXT_SET_POINT(Widget, Point)   gtk_text_set_point(GTK_TEXT(Widget), Point); gtk_editable_set_position(GTK_EDITABLE(Widget), Point)
+  #define SG_TEXT_GET_POINT(Widget)          gtk_editable_get_position(GTK_EDITABLE(Widget))
+  #define SG_TEXT_UNSELECT(Widget)           gtk_editable_select_region(GTK_EDITABLE(Widget), 0, 0)
+  #define SG_TEXT_SELECT(Widget, Start, End) gtk_editable_select_region(GTK_EDITABLE(Widget), Start, End)
+  #define SG_TEXT_INSERT(Widget, Font, FG, BG, Text, Length) gtk_text_insert(GTK_TEXT(Widget), gdk_font_from_description(Font), FG, BG, Text, Length)
+  #define SG_TEXT_BACKWARD_DELETE(Wid, Num)  gtk_text_backward_delete(GTK_TEXT(Wid), Num)
   #define SG_LIST_SELECT_ROW(Widget, Row)    gtk_clist_select_row(GTK_CLIST(Widget), Row, 0)
   #define SG_LIST_MOVETO(Widget, Row)        gtk_clist_moveto(GTK_CLIST(Widget), Row, 0, 0.5, 0.5);
   #define SG_LIST_CLEAR(Widget)              gtk_clist_clear(GTK_CLIST(Widget))
@@ -391,7 +414,9 @@ typedef struct {
   #define SG_LIST_SET_TEXT(Widget, Row, Str) gtk_clist_set_text(GTK_CLIST(Widget), Row, 0, Str)
   #define SG_PIXMAP_NEW(Map, Mask)           gtk_pixmap_new(Map, Mask)
   #define SG_PIXMAP_SET(Holder, Map, Mask)   gtk_pixmap_set(GTK_PIXMAP(Holder), Map, Mask)
-  #define SG_FONT_LOAD(Font)                 gdk_font_load(Font)
+  #define SG_FONT_LOAD(Font)                 pango_font_description_from_string(Font)
+  #define SG_SET_FONT(Gc, Font)              gdk_gc_set_font(Gc, gdk_font_from_description(Font))
+  #define SG_TEXT_WIDTH(Txt, Font)           gdk_text_width(gdk_font_from_description(Font), (gchar *)Txt, (gint)strlen(Txt))
 #endif
 
 #else
@@ -424,6 +449,8 @@ typedef struct {
   #define SG_PIXMAP_NEW(Map, Mask)           gtk_pixmap_new(Map, Mask)
   #define SG_PIXMAP_SET(Holder, Map, Mask)   gtk_pixmap_set(GTK_PIXMAP(Holder), Map, Mask)
   #define SG_FONT_LOAD(Font)                 gdk_font_load(Font)
+  #define SG_SET_FONT(Gc, Font)              gdk_gc_set_font(Gc, Font)
+  #define SG_TEXT_WIDTH(Txt, Font)           gdk_text_width(Font, (gchar *)Txt, (gint)strlen(Txt))
 
 #endif
 

@@ -2,7 +2,7 @@
 
 int set_help_text_font(snd_state *ss, char *font)
 {
-  GdkFont *fs = NULL;
+  SG_FONT *fs = NULL;
   state_context *sgx;
   if (ss->using_schemes) return(FALSE);
   sgx = ss->sgx;
@@ -19,7 +19,7 @@ int set_help_text_font(snd_state *ss, char *font)
 
 int set_tiny_font(snd_state *ss, char *font)
 {
-  GdkFont *fs = NULL;
+  SG_FONT *fs = NULL;
   state_context *sgx;
   if (ss->using_schemes) return(FALSE);
   sgx = ss->sgx;
@@ -36,7 +36,7 @@ int set_tiny_font(snd_state *ss, char *font)
 
 int set_listener_font(snd_state *ss, char *font)
 {
-  GdkFont *fs = NULL;
+  SG_FONT *fs = NULL;
   if (ss->using_schemes) return(FALSE);
   fs = SG_FONT_LOAD(font);
   if (fs)
@@ -51,7 +51,7 @@ int set_listener_font(snd_state *ss, char *font)
 
 int set_button_font(snd_state *ss, char *font)
 {
-  GdkFont *fs = NULL;
+  SG_FONT *fs = NULL;
   if (ss->using_schemes) return(FALSE);
   fs = SG_FONT_LOAD(font);
   if (fs)
@@ -66,7 +66,7 @@ int set_button_font(snd_state *ss, char *font)
 
 int set_bold_button_font(snd_state *ss, char *font)
 {
-  GdkFont *fs = NULL;
+  SG_FONT *fs = NULL;
   if (ss->using_schemes) return(FALSE);
   fs = SG_FONT_LOAD(font);
   if (fs)
@@ -81,7 +81,7 @@ int set_bold_button_font(snd_state *ss, char *font)
 
 int set_axis_label_font(snd_state *ss, char *font)
 {
-  GdkFont *fs = NULL;
+  SG_FONT *fs = NULL;
   if (ss->using_schemes) return(FALSE);
   fs = SG_FONT_LOAD(font);
   if (fs)
@@ -96,7 +96,7 @@ int set_axis_label_font(snd_state *ss, char *font)
 
 int set_axis_numbers_font(snd_state *ss, char *font)
 {
-  GdkFont *fs = NULL;
+  SG_FONT *fs = NULL;
   if (ss->using_schemes) return(FALSE);
   fs = SG_FONT_LOAD(font);
   if (fs)
@@ -112,33 +112,33 @@ int set_axis_numbers_font(snd_state *ss, char *font)
 
 void activate_numbers_font(axis_context *ax)
 {
-  gdk_gc_set_font(ax->gc, AXIS_NUMBERS_FONT(ax->ss));
+  SG_SET_FONT(ax->gc, AXIS_NUMBERS_FONT(ax->ss));
   ax->current_font = AXIS_NUMBERS_FONT(ax->ss);
 }
    
 void activate_button_font(axis_context *ax, snd_state *ss)
 {
-  gdk_gc_set_font(ax->gc, (ss->sgx)->button_fnt);
+  SG_SET_FONT(ax->gc, (ss->sgx)->button_fnt);
   ax->current_font = (ss->sgx)->button_fnt;
 }
 
 void activate_label_font(axis_context *ax)
 {
-  gdk_gc_set_font(ax->gc, AXIS_LABEL_FONT(ax->ss));
+  SG_SET_FONT(ax->gc, AXIS_LABEL_FONT(ax->ss));
   ax->current_font = AXIS_LABEL_FONT(ax->ss);
 }
 
 int label_width(axis_context *ax, char *txt)
 {
   if (txt)
-    return(gdk_text_width(AXIS_LABEL_FONT(ax->ss), (gchar *)txt, (gint)strlen(txt)));
+    return(SG_TEXT_WIDTH(txt, AXIS_LABEL_FONT(ax->ss)));
   else return(0);
 }
 
 int mark_name_width(snd_state *ss, char *txt)
 {
   if (txt)
-    return(gdk_text_width((ss->sgx)->button_fnt, (gchar *)txt, (gint)strlen(txt)));
+    return(SG_TEXT_WIDTH(txt, (ss->sgx)->button_fnt));
   return(0);
 }
 
@@ -146,21 +146,29 @@ int mark_name_width(snd_state *ss, char *txt)
 int number_width(axis_context *ax, char *num)
 {
   if (num)
-    return(gdk_text_width(AXIS_NUMBERS_FONT(ax->ss), (gchar *)num, (gint)strlen(num)));
+    return(SG_TEXT_WIDTH(num, AXIS_NUMBERS_FONT(ax->ss)));
   return(0);
 }
 
 int number_height(axis_context *ax)
 {
   gint lb, rb, asc, des, wid;
+#if HAVE_GTK2
+  gdk_text_extents(gdk_font_from_description(AXIS_NUMBERS_FONT(ax->ss)), "1", 1, &lb, &rb, &wid, &asc, &des);
+#else
   gdk_text_extents(AXIS_NUMBERS_FONT(ax->ss), "1", 1, &lb, &rb, &wid, &asc, &des);
+#endif
   return(asc + des);
 }
 
 int label_height(axis_context *ax)
 {
   gint lb, rb, asc, des, wid;
+#if HAVE_GTK2
+  gdk_text_extents(gdk_font_from_description(AXIS_LABEL_FONT(ax->ss)), "1", 1, &lb, &rb, &wid, &asc, &des);
+#else
   gdk_text_extents(AXIS_LABEL_FONT(ax->ss), "1", 1, &lb, &rb, &wid, &asc, &des);
+#endif
   return(asc + des);
 }
 
@@ -298,7 +306,11 @@ void set_button_label_bold(GtkWidget *button, const char *str)
   ss = get_global_state();
   if (ss->using_schemes) return;
   style = gtk_style_copy(gtk_widget_get_style(button));
+#if HAVE_GTK2
+  /* style->font_desc = (ss->sgx)->bold_button_fnt; */
+#else
   style->font = (ss->sgx)->bold_button_fnt;
+#endif
   gtk_widget_set_style(button, style);
   gtk_label_set_text(GTK_LABEL(GTK_BIN(button)->child), str);
 }

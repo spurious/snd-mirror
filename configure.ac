@@ -92,7 +92,7 @@ AC_ARG_WITH(html,
 	[  --with-html		  include the XmHTML or mozilla browser library],
   	if test "$with_html" = yes ; then
 	    AC_DEFINE(HAVE_HTML)
-            XMHTML_LIB="-lXmHTML"
+            XMHTML_LIB="-lXmHTML -ljpeg -lpng"
             GTKHTML_LIB="-Xlinker -rpath -Xlinker /usr/lib/mozilla -L/usr/lib/mozilla -lgtkembedmoz"
             GTKHTML_FLAGS="-I/usr/include/mozilla"
 dnl which we actually use is decided later
@@ -189,6 +189,8 @@ AC_ARG_WITH(ruby,
               AC_SUBST(GUILE_CFLAGS)
             else 
               AC_MSG_WARN([can't find Ruby!])
+  	      AC_DEFINE(HAVE_RUBY,0)
+              AC_DEFINE(HAVE_EXTENSION_LANGUAGE,0)
             fi
 	fi)
 
@@ -322,7 +324,7 @@ LIBS=""
 AC_HEADER_DIRENT
 AC_HEADER_STDC
 AC_CHECK_HEADERS(fcntl.h limits.h unistd.h string.h sys/soundcard.h soundcard.h machine/soundcard.h gsl/gsl_version.h)
-AC_CHECK_HEADERS(libc.h sys/vfs.h sys/statfs.h sys/mount.h fpu_control.h setjmp.h sched.h pwd.h ladspa.h locale.h sys/fpu.h dlfcn.h sys/param.h)
+AC_CHECK_HEADERS(libc.h sys/vfs.h sys/statfs.h sys/mount.h setjmp.h sched.h pwd.h ladspa.h locale.h sys/fpu.h dlfcn.h sys/param.h)
 AC_CHECK_HEADER(/usr/local/lib/oss/include/sys/soundcard.h,[AC_DEFINE(USR_LOCAL_LIB_OSS)])
 AC_CHECK_HEADER(/usr/lib/oss/include/sys/soundcard.h,[AC_DEFINE(USR_LIB_OSS)])
 AC_CHECK_HEADER(/opt/oss/include/sys/soundcard.h,[AC_DEFINE(OPT_OSS)])
@@ -496,59 +498,41 @@ else
 
   if test "$with_gtk" = yes ; then
 
-# new gtk 2.0 macro (aclocal.m4 from gtk+-1.3.11/m4macros/gtk-2.0.m4)
-#   AM_PATH_GTK_2_0(1.3.0,
-#      with_gtk=yes
-#      ],
-#      [
-
-    AM_PATH_GTK(1.2.6,
+# first look for gtk2
+    AM_PATH_GTK_2_0(1.3.13,
       [
-      case `gtk-config --version` in
-	1.2.6 | 1.2.7)
-	    echo "***** WARNING..."
-	    echo "GTK versions 1.2.6 and 1.2.7 will work, but there is a serious"
-	    echo "bug in the vpaned widgets which was fixed in 1.2.8.  Consider"
-	    echo "upgrading to at least 1.2.8, or compiling with Motif."
-	    ;;
-      esac
-      GX_FILES="G_O_FILES"
-      GX_HEADERS="SND_G_HEADERS"
-      AC_SUBST(GTK_LIBS)
-      AC_SUBST(GTK_CFLAGS)
-      AC_DEFINE(USE_GTK)
-      AC_SUBST(GTKHTML_LIB)
-      AC_SUBST(GTKHTML_FLAGS)
-      with_gtk=yes
-      XLIBS=""
-      XFLAGS=""
-      XMHTML_LIB=""
-      AC_SUBST(XLIBS)
-      AC_SUBST(XFLAGS)
+	AC_DEFINE(HAVE_GTK2)
+	AC_DEFINE(HAVE_GTK_MENU_SET_ACCEL_PATH)
+	with_gtk=yes
       ],
       [
-      AC_MSG_WARN([trouble with gtk -- will try to make Snd without any GUI])
-      with_gtk=no
+	AM_PATH_GTK(1.2.8,
+      	[
+	  with_gtk=yes
+	],
+        [
+      	  AC_MSG_WARN([trouble with gtk -- will try to make Snd without any GUI])
+      	  with_gtk=no
+      	])
       ])
-
-# ]) gtk 2.0
-#  if test "$with_gtk" = yes;
-#      GX_FILES="G_O_FILES"
-#      GX_HEADERS="SND_G_HEADERS"
-#      AC_SUBST(GTK_LIBS)
-#      AC_SUBST(GTK_CFLAGS)
-#      AC_DEFINE(USE_GTK)
-#      AC_SUBST(GTKHTML_LIB)
-#      AC_SUBST(GTKHTML_FLAGS)
-#      with_gtk=yes
-#      XLIBS=""
-#      XFLAGS=""
-#      XMHTML_LIB=""
-#      AC_SUBST(XLIBS)
-#      AC_SUBST(XFLAGS)
-#  fi
-
-
+    if test "$with_gtk" = yes ; then
+     	GX_FILES="G_O_FILES"
+      	GX_HEADERS="SND_G_HEADERS"
+      	AC_SUBST(GTK_LIBS)
+      	AC_SUBST(GTK_CFLAGS)
+      	AC_DEFINE(USE_GTK)
+      	AC_SUBST(GTKHTML_LIB)
+      	AC_SUBST(GTKHTML_FLAGS)
+	XLIBS=""
+      	XFLAGS=""
+      	XMHTML_LIB=""
+      	AC_SUBST(XLIBS)
+      	AC_SUBST(XFLAGS)
+      	if test "$with_static_xm" = yes ; then
+          GX_FILES="XG_O_FILES"
+          AC_DEFINE(HAVE_STATIC_XM)
+      	fi
+     fi
   fi
 
   if test "$with_gtk" != yes && test "$with_motif" != yes ; then

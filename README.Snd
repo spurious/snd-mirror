@@ -37,6 +37,7 @@ The configure program has several Snd-related arguments:
    --with-ruby           try to use Ruby as the extension language
      --with-ruby-prefix  set location of Ruby
    --with-static-xm      include the xm module (rather than loading it dynamically)
+			   this option affects xm.c for Motif, xg.c for Gtk
    --with-temp-dir       directory to use for temp files
    --with-save-dir       directory to use for saved-state files
 
@@ -106,8 +107,8 @@ Guile (on the HAVE_RUBY or --with-ruby switches).
 There are precompiled binaries available at the ccrma-ftp site
 mentioned above: linux-snd (or linux-snd.gz) for Linux
 on a PC; sun-snd for the Sun; also RPM (Redhat package management)
-files that contain the Linux/PC version, (snd-5-6.i386.rpm), the
-sources (snd-5-6.src.rpm), and the LinuxPPC version (snd-5-6.ppc.rpm).
+files that contain the Linux/PC version, (snd-5-7.i386.rpm), the
+sources (snd-5-7.src.rpm), and the LinuxPPC version (snd-5-7.ppc.rpm).
 These RPM files have been superseded by Fernando Lopez-Lezcano's
 set available at http://www-ccrma.stanford.edu/software/snd/.
 The pre-built images require Guile 1.4; if you are running 1.3.4,
@@ -202,9 +203,6 @@ In Linux, if you get the error "No such file or directory" when you
 try to execute linux-snd, the problem is probably that you're running
 a libc5-based Linux; linux-snd is built with glibc (the newer libc).
 
-If Snd dies with a complaint about __setfpucw, you need to recompile
-Snd (that portion of glibc changed between versions 1 and 2, or
-something like that).
 
 
 ---- Compiling: ----
@@ -281,9 +279,7 @@ src/images.c line 3955 comment out this block:
 		}
 	}
 #endif
-then rebuild libXmHTML.a, and if necessary add -lpng and -ljpeg to the
-library list in the makefile.  I'm not sure how to automate the latter
-since (I think) XmHTML can be built without jpeg or png support, etc.
+then rebuild libXmHTML.a.
 
 
 ---- GSL: ----
@@ -446,13 +442,19 @@ is the new version, not Lesstif's.  If you use mwm, you need
 to get it back as well, which means removing the directory that
 Lesstif put in its place.  The error you'll get will be
 some complaint about undefined xmNotebook class.  This is a major
-bug in Redhat 7.2.
+bug in Redhat 7.2.  Whenever I install 7.2, I immediately:
+
+  rpm -e lesstif-devel
+  rpm -e ddd
+  rpm -e lesstif
+  rpm -i openmotif-<whatever the number is>
+  rpm -i openmotif-devel-<whatever the number is>
 
 
 
 So to sum up:  
   GSL 0.8 or later
-  Gtk+ 1.2.8 or 1.2.10
+  Gtk+ 1.2.8 or 1.2.10, (a port to 1.3.13 or later is underway)
   any Motif but not Lesstif
   ALSA 0.9beta8 or later (or any version of OSS)
   Guile 1.3.4 or later but Snd's Scheme files need 1.5.0 or later

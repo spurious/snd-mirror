@@ -48,12 +48,6 @@
  *                 the sonogram colormaps will involve 512 colors, rather than 64.
  *                 (In Snd-5 this switch defaults to 1).
  *
- *   HAVE_FPU_CONTROL_H
- *                 In Linux, we sometimes get NaNs which we would rather just set
- *                 to 0.0; if you don't want this to happen, or don't have the
- *                 file fpu_control.h or the function __setfpucw, define this
- *                 flag to be 0
- *
  *   SND_AS_WIDGET This causes the entire Snd editor to become a module loadable
  *                 into some other program as a kind of enormous widget (see saw.c).
  *
@@ -159,7 +153,7 @@
 
 #include "snd-strings.h"
 
-#define SND_VERSION "6-Feb-02"
+#define SND_VERSION "11-Feb-02"
 #define SND_RPM_VERSION "5.7"
 #define SND_MAJOR_VERSION 5
 #define SND_MINOR_VERSION 7

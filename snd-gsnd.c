@@ -246,7 +246,11 @@ void make_minibuffer_label(snd_info *sp, char *str)
   ss = sp->state;
   button = MINIBUFFER_LABEL(sp);
   style = gtk_style_copy(gtk_widget_get_style(button));
+#if HAVE_GTK2
+  /* style->font_desc = (ss->sgx)->button_fnt; */
+#else
   style->font = (ss->sgx)->button_fnt;
+#endif
   gtk_widget_set_style(button, style);
   gtk_label_set_text(GTK_LABEL(button), str);
   /* gtk_widget_queue_draw(button); */

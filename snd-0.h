@@ -220,17 +220,6 @@ enum {TIME_AXIS_INFO, TRANSFORM_AXIS_INFO, LISP_AXIS_INFO};
 
 enum {COLOR_POSITION, COLOR_ZOOM};
 
-#define XEN_WRAP_WIDGET(Value)       XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("Widget"),       C_TO_XEN_ULONG((unsigned long)Value))
-#define XEN_WRAP_WINDOW(Value)       XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("Window"),       C_TO_XEN_ULONG((unsigned long)Value))
-#define XEN_WRAP_GC(Value)           XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GC"),           C_TO_XEN_ULONG((unsigned long)Value))
-#define XEN_WRAP_APPCONTEXT(Value)   XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("XtAppContext"), C_TO_XEN_ULONG((unsigned long)Value))
-#define XEN_WRAP_PIXEL(Value)        XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("Pixel"),        C_TO_XEN_ULONG((unsigned long)Value))
-#define XEN_UNWRAP_WIDGET(Value)     XEN_TO_C_ULONG(XEN_CADR(Value))
-#define XEN_UNWRAP_WINDOW(Value)     XEN_TO_C_ULONG(XEN_CADR(Value))
-#define XEN_UNWRAP_GC(Value)         XEN_TO_C_ULONG(XEN_CADR(Value))
-#define XEN_UNWRAP_PIXEL(Value)      XEN_TO_C_ULONG(XEN_CADR(Value))
-#define XEN_UNWRAP_APPCONTEXT(Value) XEN_TO_C_ULONG(XEN_CADR(Value))
-
 #define DEFAULT_MIN_DB -60.0
 #define DEFAULT_HANKEL_JN 0.0
 

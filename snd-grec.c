@@ -90,7 +90,7 @@ static int device_buttons_size = 0;
 #endif
 static int mixer_gains_posted[MAX_SOUNDCARDS];
 static int tone_controls_posted[MAX_SOUNDCARDS];
-static GdkFont *small_font;
+static SG_FONT *small_font;
 
 static vu_label **vu_labels = NULL;
 static int vu_labels_size = 0;
@@ -104,7 +104,11 @@ static void set_label_font(GtkWidget *w)
 {
   GtkStyle *style;
   style = gtk_style_copy(gtk_widget_get_style(w));
+#if HAVE_GTK2
+  /* style->font_desc = small_font; */
+#else
   style->font = small_font;
+#endif
   gtk_widget_set_style(w, style);
 }
 

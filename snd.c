@@ -10,10 +10,6 @@
  * SOMEDAY: set up configure to handle libsndlib correctly
  */
 
-#if HAVE_FPU_CONTROL_H
-  #include <fpu_control.h>
-#endif
-
 static snd_state *ss;
 
 static XEN mus_error_hook;
@@ -88,9 +84,6 @@ static void snd_gsl_error(const char *reason, const char *file, int line, int gs
 #endif
 {
   int i;
-#if (HAVE_GSL) || (HAVE_FPU_CONTROL_H)
-  int need_ieee_setup = 1;
-#endif
 #if HAVE_LLONGS
   FILE *md;
 #endif
@@ -99,30 +92,19 @@ static void snd_gsl_error(const char *reason, const char *file, int line, int gs
   union fpc_csr f; f.fc_word = get_fpc_csr(); f.fc_struct.flush = 1; set_fpc_csr(f.fc_word);
 #endif
 
-  /* if HAVE_GSL and the environment variable GSL_IEEE_MODE exists, use it */
 #if HAVE_GSL
+  /* if HAVE_GSL and the environment variable GSL_IEEE_MODE exists, use it */
   /* GSL_IEEE_MODE=double-precision,mask-underflow,mask-denormalized */
   if (getenv("GSL_IEEE_MODE")) 
-    {
-      need_ieee_setup = 0;
-      gsl_ieee_env_setup();
-    }
+    gsl_ieee_env_setup();
   gsl_set_error_handler(snd_gsl_error);
 #endif
 
-#if HAVE_FPU_CONTROL_H
-  #if __GLIBC_MINOR__ < 1
-    /* in linux there's <fpu_control.h> with __setfpucw which Clisp calls as __setfpucw(_FPU_IEEE); */
-    /* this appears to be useful in getting rid of idiotic NaN's */
-  if (need_ieee_setup) {__setfpucw(_FPU_IEEE);}
-  #else
-    #ifdef _FPU_IEEE
-      /* 22 in low bits = mask denormalized + mask underflow, both are on in _FPU_IEEE, so this looks right */
-      if (need_ieee_setup) {int __fpu_ieee = _FPU_IEEE; _FPU_SETCW(__fpu_ieee);}
-      /* this bugfix thanks to Paul Barton-Davis and Stefan Schwandter */
-    #endif
-  #endif
-#endif
+  /* I think the old Linux problem with underflows has been fixed -- the default is now the
+   *   same as _FPU_IEEE (_FPU_IEEE == _FPU_DEFAULT as of July-2000) so the original 
+   *   (not very portable) fpu_control.h code is no longer needed:
+   *   int __fpu_ieee = _FPU_IEEE; _FPU_SETCW(__fpu_ieee);
+   */
 
   mus_sound_initialize(); /* has to precede version check (mus_audio_moniker needs to be setup in Alsa/Oss) */
 

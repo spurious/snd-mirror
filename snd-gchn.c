@@ -788,7 +788,7 @@ void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, in
   /* cax->wn has to wait until update_graph */
 }
 
-static void set_graph_font(chan_info *cp, GdkFont *fnt)
+static void set_graph_font(chan_info *cp, SG_FONT *fnt)
 {
   cp->cgx->ax->current_font = fnt;
   gdk_gc_set_font(copy_GC(cp), fnt);

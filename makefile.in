@@ -55,6 +55,9 @@ snd: $(SNDLIB_HEADERS) $(SND_HEADERS) $(GX_HEADERS) $(SNDLIB_O_FILES) $(O_FILES)
 xm: 	$(GM_FILES) xen.h
 	$(SO_LD) $(GM_FILES) -o $(GM_SO_FILE) $(LDSO_FLAGS) $(XM_LIBS) $(MOTIF_LIBS) $(LIBS)
 
+xg: 	$(GG_FILES) xen.h
+	$(SO_LD) $(GG_FILES) -o $(GG_SO_FILE) $(LDSO_FLAGS) $(GTK_LIBS) $(LIBS)
+
 widget: snd_widget.o
 
 snd_widget.o: $(SNDLIB_HEADERS) $(SND_HEADERS) $(GX_HEADERS) $(SNDLIB_O_FILES) $(O_FILES) $(GX_FILES)

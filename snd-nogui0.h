@@ -19,6 +19,15 @@
 #define GUI_POINTER void *
 #define GUI_WIDGET int
 #define GUI_PIXEL int
+#define XEN_WRAP_WIDGET(Value) 0
+#define XEN_WRAP_WINDOW(Value) 0
+#define XEN_WRAP_GC(Value) 0
+#define XEN_WRAP_PIXEL(Value) 0
+#define XEN_UNWRAP_WIDGET(Value) 0
+#define XEN_UNWRAP_WINDOW(Value) 0
+#define XEN_UNWRAP_GC(Value) 0
+#define XEN_UNWRAP_PIXEL(Value) 0
+#define XEN_WIDGET_P(Value) 0
 
 #define BUTTON_1 0
 #define BUTTON_2 1
