@@ -490,7 +490,7 @@ The actual values of the optimization switch are:
 </table><br></td></tr>
 <tr><td></td><td colspan=2><small>Currently, the optimizer is able to speed up Scheme code by factors between
 8 and 20; see snd-run.c for what is implemented, what the major limitations are, and so on.
-If you set the optimization-hook to print out whatever it's argument is, you can
+If you set the optimization-hook to print out whatever its argument is, you can
 find out what the optimizer found confusing.  
 One dangerous assumption involved in local variables (optimization = 5) is that
 such a variable might be a continuation set within the run-optimized code, but then
@@ -2056,7 +2056,7 @@ the index is displayed in front of the sound's name).
 In the argument lists
 below, <i>snd</i> as an argument refers to the sound's index, and defaults to the currently
 selected sound.  Similarly, <i>chn</i> is the channel number, starting from 0, and defaults
-to the currently selected channel.  So if there's only one sound active (say it's index is 0), and it has only
+to the currently selected channel.  So if there's only one sound active (say its index is 0), and it has only
 one channel, (cursor) (cursor 0), and (cursor 0 0) all refer to the same
 thing.  If you want to refer to the currently selected sound, either use #f
 as the sound index or <a href="#selectedsound">selected-sound</a>.
@@ -3783,7 +3783,7 @@ See popup.scm for an example.
 <tr><td></td><td>
 <table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (define (brksnd dur base)
-  "(brksnd dur base) divides the current sound into dur-sized pieces, \
+  "(brksnd dur base) divides the current sound into dur-sized pieces, 
 saving them in files named 'base'.n: (brksnd 1.0 \"sec\")"
   (let ((hop (inexact-&gt;exact (* (<a class=quiet href="#srate">srate</a>) dur)))
 	(len (<a class=quiet href="#frames">frames</a>))
@@ -3795,6 +3795,23 @@ saving them in files named 'base'.n: (brksnd 1.0 \"sec\")"
       (<a class=quiet href="sndscm.html#exmakeselection">make-selection</a> i (+ i hop)) ; in extensions.scm
       (<em class=red>save-selection</em> (string-append base "." (number-&gt;string j))))
     (set! (<a class=quiet href="#sync">sync</a>) old-sync)))
+</pre></td></tr></table>
+</td></tr>
+
+<tr><td></td><td>
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
+(define* (<a name="extractchannels">extract-channels</a> #:rest chans)
+  ;; extract a list of channels from the current sound and save as test.snd: (extract-channels 0 2)
+  (let ((snd (or (<a class=quiet href="#selectedsound">selected-sound</a>) (car (<a class=quiet href="#sounds">sounds</a>)))))
+    (if (<a class=quiet href="#soundp">sound?</a> snd)
+	(begin
+	  (for-each
+	   (lambda (chan)
+	     (set! (<a class=quiet href="#selectionmember">selection-member?</a> snd chan) #t)
+	     (set! (<a class=quiet href="#selectionposition">selection-position</a> snd chan) 0)
+	     (set! (<a class=quiet href="#selectionframes">selection-frames</a> snd chan) (<a class=quiet href="#frames">frames</a> snd chan)))
+	   chans)
+	  (<em class=red>save-selection</em> "test.snd")))))
 </pre></td></tr></table>
 </td></tr>
 
@@ -6333,7 +6350,8 @@ save <i>snd</i>; same as File menu's Save option. <a href="#savehook">save-hook<
 <small><blockquote>
 save all sounds: <code>(for-each save-sound (sounds))</code>.<br>
 save a sound under a different name: <a href="#savesoundas">save-sound-as</a><br>
-extract one channel of a sound: <a href="#extractchannel">extract-channel</a><br>
+extract one channel from a sound: <a href="#extractchannel">extract-channel</a><br>
+extract a set of channels from a sound: <a href="#extractchannels">extract-channels</a><br>
 save a sound in a different format or header: <a href="#savesoundas">save-sound-as</a><br>
 backup edits automatically: <a href="sndscm.html#exautosave">autosave</a><br>
 check first for unsaved edits: <a href="sndscm.html#exunsavededits">check-for-unsaved-edits</a><br>
@@ -6485,7 +6503,7 @@ normalizes the samples in the given channel between beg and beg + num to norm.  
 </td></tr>
 <tr><td></td><td>
 (see scale-by) -- <a href="snd.html#scaling">normalize</a> <i>snd</i> to <i>scalers</i> (following sync as in scale-by).
-<code>(scale-to 0.5)</code> scales the current channel so that it's maxamp is 0.5.
+<code>(scale-to 0.5)</code> scales the current channel so that its maxamp is 0.5.
 If all the samples are 0.0, scale-to returns #f and does not perform any edit.
 </td></tr>
 <tr><td colspan=2></td></tr>

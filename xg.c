@@ -21,7 +21,7 @@
  *
  * added funcs:
  *    (xm-version) -> date string.
- *    (c-array->list arr len) derefs each member of arr, returning lisp list
+ *    (c-array->list arr len) derefs each member of arr, returning lisp list, len=#f: null terminated array
  *    (list->c-array lst ctype) packages each member of list as c-type "type" returning (wrapped) c array
  *    (GdkColor #:optional pixel red green blue) -> GdkColor struct
  *    (GdkCursor #:optional type ref_count) -> GdkCursor struct
@@ -26311,185 +26311,209 @@ static void define_functions(void)
 static XEN c_array_to_xen_list(XEN val, XEN clen)
 {
   XEN result = XEN_EMPTY_LIST;
-  int i, len;
+  int i, len = -1;
   char *ctype;
-  len = XEN_TO_C_INT(clen);
+  if (XEN_INTEGER_P(clen))
+    len = XEN_TO_C_INT(clen);
   if (!(XEN_LIST_P(val))) return(XEN_FALSE); /* type:location cons */
   ctype = XEN_SYMBOL_TO_C_STRING(XEN_CAR(val));
   if (strcmp(ctype, "gint_") == 0)
     {
       gint* arr; arr = (gint*)XEN_TO_C_ULONG(XEN_CADR(val)); 
+      if (len == -1) {for (i = 0; arr[i]; i++); len = i;}
       for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_gint(arr[i]), result);
     }
   if (strcmp(ctype, "gboolean_") == 0)
     {
       gboolean* arr; arr = (gboolean*)XEN_TO_C_ULONG(XEN_CADR(val)); 
+      if (len == -1) {for (i = 0; arr[i]; i++); len = i;}
       for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_gboolean(arr[i]), result);
     }
   if (strcmp(ctype, "GType_") == 0)
     {
       GType* arr; arr = (GType*)XEN_TO_C_ULONG(XEN_CADR(val)); 
+      if (len == -1) {for (i = 0; arr[i]; i++); len = i;}
       for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_GType(arr[i]), result);
     }
   if (strcmp(ctype, "guint_") == 0)
     {
       guint* arr; arr = (guint*)XEN_TO_C_ULONG(XEN_CADR(val)); 
+      if (len == -1) {for (i = 0; arr[i]; i++); len = i;}
       for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_guint(arr[i]), result);
     }
   if (strcmp(ctype, "GQuark_") == 0)
     {
       GQuark* arr; arr = (GQuark*)XEN_TO_C_ULONG(XEN_CADR(val)); 
+      if (len == -1) {for (i = 0; arr[i]; i++); len = i;}
       for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_GQuark(arr[i]), result);
     }
   if (strcmp(ctype, "GdkDragProtocol_") == 0)
     {
       GdkDragProtocol* arr; arr = (GdkDragProtocol*)XEN_TO_C_ULONG(XEN_CADR(val)); 
+      if (len == -1) {for (i = 0; arr[i]; i++); len = i;}
       for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_GdkDragProtocol(arr[i]), result);
     }
   if (strcmp(ctype, "GdkModifierType_") == 0)
     {
       GdkModifierType* arr; arr = (GdkModifierType*)XEN_TO_C_ULONG(XEN_CADR(val)); 
+      if (len == -1) {for (i = 0; arr[i]; i++); len = i;}
       for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_GdkModifierType(arr[i]), result);
     }
   if (strcmp(ctype, "gint8_") == 0)
     {
       gint8* arr; arr = (gint8*)XEN_TO_C_ULONG(XEN_CADR(val)); 
+      if (len == -1) {for (i = 0; arr[i]; i++); len = i;}
       for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_gint8(arr[i]), result);
     }
   if (strcmp(ctype, "gchar__") == 0)
     {
       gchar** arr; arr = (gchar**)XEN_TO_C_ULONG(XEN_CADR(val)); 
+      if (len == -1) {for (i = 0; arr[i]; i++); len = i;}
       for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_gchar_(arr[i]), result);
     }
   if (strcmp(ctype, "gdouble_") == 0)
     {
       gdouble* arr; arr = (gdouble*)XEN_TO_C_ULONG(XEN_CADR(val)); 
+      if (len == -1) {for (i = 0; arr[i]; i++); len = i;}
       for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_gdouble(arr[i]), result);
     }
   if (strcmp(ctype, "guchar_") == 0)
     {
       guchar* arr; arr = (guchar*)XEN_TO_C_ULONG(XEN_CADR(val)); 
+      if (len == -1) {for (i = 0; arr[i]; i++); len = i;}
       for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_guchar(arr[i]), result);
     }
   if (strcmp(ctype, "guint32_") == 0)
     {
       guint32* arr; arr = (guint32*)XEN_TO_C_ULONG(XEN_CADR(val)); 
+      if (len == -1) {for (i = 0; arr[i]; i++); len = i;}
       for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_guint32(arr[i]), result);
     }
   if (strcmp(ctype, "GdkVisualType_") == 0)
     {
       GdkVisualType* arr; arr = (GdkVisualType*)XEN_TO_C_ULONG(XEN_CADR(val)); 
+      if (len == -1) {for (i = 0; arr[i]; i++); len = i;}
       for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_GdkVisualType(arr[i]), result);
     }
   if (strcmp(ctype, "GdkWMDecoration_") == 0)
     {
       GdkWMDecoration* arr; arr = (GdkWMDecoration*)XEN_TO_C_ULONG(XEN_CADR(val)); 
+      if (len == -1) {for (i = 0; arr[i]; i++); len = i;}
       for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_GdkWMDecoration(arr[i]), result);
     }
   if (strcmp(ctype, "char__") == 0)
     {
       char** arr; arr = (char**)XEN_TO_C_ULONG(XEN_CADR(val)); 
+      if (len == -1) {for (i = 0; arr[i]; i++); len = i;}
       for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_char_(arr[i]), result);
     }
   if (strcmp(ctype, "guint8_") == 0)
     {
       guint8* arr; arr = (guint8*)XEN_TO_C_ULONG(XEN_CADR(val)); 
+      if (len == -1) {for (i = 0; arr[i]; i++); len = i;}
       for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_guint8(arr[i]), result);
     }
   if (strcmp(ctype, "GtkPackType_") == 0)
     {
       GtkPackType* arr; arr = (GtkPackType*)XEN_TO_C_ULONG(XEN_CADR(val)); 
+      if (len == -1) {for (i = 0; arr[i]; i++); len = i;}
       for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_GtkPackType(arr[i]), result);
     }
   if (strcmp(ctype, "gfloat_") == 0)
     {
       gfloat* arr; arr = (gfloat*)XEN_TO_C_ULONG(XEN_CADR(val)); 
+      if (len == -1) {for (i = 0; arr[i]; i++); len = i;}
       for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_gfloat(arr[i]), result);
     }
   if (strcmp(ctype, "GtkIconSize_") == 0)
     {
       GtkIconSize* arr; arr = (GtkIconSize*)XEN_TO_C_ULONG(XEN_CADR(val)); 
+      if (len == -1) {for (i = 0; arr[i]; i++); len = i;}
       for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_GtkIconSize(arr[i]), result);
     }
   if (strcmp(ctype, "guint16_") == 0)
     {
       guint16* arr; arr = (guint16*)XEN_TO_C_ULONG(XEN_CADR(val)); 
+      if (len == -1) {for (i = 0; arr[i]; i++); len = i;}
       for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_guint16(arr[i]), result);
     }
   if (strcmp(ctype, "GtkStateType_") == 0)
     {
       GtkStateType* arr; arr = (GtkStateType*)XEN_TO_C_ULONG(XEN_CADR(val)); 
+      if (len == -1) {for (i = 0; arr[i]; i++); len = i;}
       for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_GtkStateType(arr[i]), result);
     }
   if (strcmp(ctype, "GtkPathPriorityType_") == 0)
     {
       GtkPathPriorityType* arr; arr = (GtkPathPriorityType*)XEN_TO_C_ULONG(XEN_CADR(val)); 
+      if (len == -1) {for (i = 0; arr[i]; i++); len = i;}
       for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_GtkPathPriorityType(arr[i]), result);
     }
   if (strcmp(ctype, "GtkSortType_") == 0)
     {
       GtkSortType* arr; arr = (GtkSortType*)XEN_TO_C_ULONG(XEN_CADR(val)); 
+      if (len == -1) {for (i = 0; arr[i]; i++); len = i;}
       for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_GtkSortType(arr[i]), result);
     }
   if (strcmp(ctype, "gunichar_") == 0)
     {
       gunichar* arr; arr = (gunichar*)XEN_TO_C_ULONG(XEN_CADR(val)); 
+      if (len == -1) {for (i = 0; arr[i]; i++); len = i;}
       for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_gunichar(arr[i]), result);
     }
   if (strcmp(ctype, "int_") == 0)
     {
       int* arr; arr = (int*)XEN_TO_C_ULONG(XEN_CADR(val)); 
+      if (len == -1) {for (i = 0; arr[i]; i++); len = i;}
       for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_int(arr[i]), result);
     }
   if (strcmp(ctype, "GdkPixmap__") == 0)
     {
       GdkPixmap** arr; arr = (GdkPixmap**)XEN_TO_C_ULONG(XEN_CADR(val)); 
+      if (len == -1) {for (i = 0; arr[i]; i++); len = i;}
       for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_GdkPixmap_(arr[i]), result);
     }
   if (strcmp(ctype, "GdkGC__") == 0)
     {
       GdkGC** arr; arr = (GdkGC**)XEN_TO_C_ULONG(XEN_CADR(val)); 
+      if (len == -1) {for (i = 0; arr[i]; i++); len = i;}
       for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_GdkGC_(arr[i]), result);
     }
   if (strcmp(ctype, "GtkWidget__") == 0)
     {
       GtkWidget** arr; arr = (GtkWidget**)XEN_TO_C_ULONG(XEN_CADR(val)); 
+      if (len == -1) {for (i = 0; arr[i]; i++); len = i;}
       for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_GtkWidget_(arr[i]), result);
     }
   if (strcmp(ctype, "PangoFontDescription__") == 0)
     {
       PangoFontDescription** arr; arr = (PangoFontDescription**)XEN_TO_C_ULONG(XEN_CADR(val)); 
+      if (len == -1) {for (i = 0; arr[i]; i++); len = i;}
       for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_PangoFontDescription_(arr[i]), result);
     }
   if (strcmp(ctype, "PangoAttrList__") == 0)
     {
       PangoAttrList** arr; arr = (PangoAttrList**)XEN_TO_C_ULONG(XEN_CADR(val)); 
+      if (len == -1) {for (i = 0; arr[i]; i++); len = i;}
       for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_PangoAttrList_(arr[i]), result);
     }
   if (strcmp(ctype, "GtkTreeModel__") == 0)
     {
       GtkTreeModel** arr; arr = (GtkTreeModel**)XEN_TO_C_ULONG(XEN_CADR(val)); 
+      if (len == -1) {for (i = 0; arr[i]; i++); len = i;}
       for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_GtkTreeModel_(arr[i]), result);
-    }
-  if (strcmp(ctype, "char__") == 0)
-    {
-      char** arr; arr = (char**)XEN_TO_C_ULONG(XEN_CADR(val)); 
-      for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_char_(arr[i]), result);
     }
   if (strcmp(ctype, "gchar___") == 0)
     {
       gchar*** arr; arr = (gchar***)XEN_TO_C_ULONG(XEN_CADR(val)); 
+      if (len == -1) {for (i = 0; arr[i]; i++); len = i;}
       for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_gchar__(arr[i]), result);
     }
   if (strcmp(ctype, "GdkBitmap__") == 0)
     {
       GdkBitmap** arr; arr = (GdkBitmap**)XEN_TO_C_ULONG(XEN_CADR(val)); 
+      if (len == -1) {for (i = 0; arr[i]; i++); len = i;}
       for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_GdkBitmap_(arr[i]), result);
-    }
-  if (strcmp(ctype, "gchar__") == 0)
-    {
-      gchar** arr; arr = (gchar**)XEN_TO_C_ULONG(XEN_CADR(val)); 
-      for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_gchar_(arr[i]), result);
     }
   if (strcmp(ctype, "GList_") == 0)
     { /* tagging these pointers is currently up to the caller */
@@ -26693,12 +26717,6 @@ static XEN xen_list_to_c_array(XEN val, XEN type)
       for (i = 0; i < len; i++, val = XEN_CDR(val)) arr[i] = XEN_TO_C_GtkTreeModel_(XEN_CAR(val));
       return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("GtkTreeModel__"), C_TO_XEN_ULONG((unsigned long)arr), make_xm_obj(arr)));
     }
-  if (strcmp(ctype, "char**") == 0)
-    {
-      char** arr; arr = (char**)CALLOC(len, sizeof(char*));
-      for (i = 0; i < len; i++, val = XEN_CDR(val)) arr[i] = XEN_TO_C_char_(XEN_CAR(val));
-      return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("char__"), C_TO_XEN_ULONG((unsigned long)arr), make_xm_obj(arr)));
-    }
   if (strcmp(ctype, "gchar***") == 0)
     {
       gchar*** arr; arr = (gchar***)CALLOC(len, sizeof(gchar**));
@@ -26710,12 +26728,6 @@ static XEN xen_list_to_c_array(XEN val, XEN type)
       GdkBitmap** arr; arr = (GdkBitmap**)CALLOC(len, sizeof(GdkBitmap*));
       for (i = 0; i < len; i++, val = XEN_CDR(val)) arr[i] = XEN_TO_C_GdkBitmap_(XEN_CAR(val));
       return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("GdkBitmap__"), C_TO_XEN_ULONG((unsigned long)arr), make_xm_obj(arr)));
-    }
-  if (strcmp(ctype, "gchar**") == 0)
-    {
-      gchar** arr; arr = (gchar**)CALLOC(len, sizeof(gchar*));
-      for (i = 0; i < len; i++, val = XEN_CDR(val)) arr[i] = XEN_TO_C_gchar_(XEN_CAR(val));
-      return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("gchar__"), C_TO_XEN_ULONG((unsigned long)arr), make_xm_obj(arr)));
     }
   return(XEN_FALSE);
 }
@@ -33064,10 +33076,10 @@ static bool xg_already_inited = false;
       define_strings();
       XEN_YES_WE_HAVE("xg");
 #if HAVE_GUILE
-      XEN_EVAL_C_STRING("(define xm-version \"30-Mar-04\")");
+      XEN_EVAL_C_STRING("(define xm-version \"31-Mar-04\")");
 #endif
 #if HAVE_RUBY
-      rb_define_global_const("Xm_Version", C_TO_XEN_STRING("30-Mar-04"));
+      rb_define_global_const("Xm_Version", C_TO_XEN_STRING("31-Mar-04"));
 #endif
       xg_already_inited = true;
 #if WITH_GTK_AND_X11

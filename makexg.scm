@@ -1215,7 +1215,7 @@
 (hey " *~%")
 (hey " * added funcs:~%")
 (hey " *    (xm-version) -> date string.~%")
-(hey " *    (c-array->list arr len) derefs each member of arr, returning lisp list~%")
+(hey " *    (c-array->list arr len) derefs each member of arr, returning lisp list, len=#f: null terminated array~%")
 (hey " *    (list->c-array lst ctype) packages each member of list as c-type \"type\" returning (wrapped) c array~%")
 
 (for-each
@@ -2310,6 +2310,7 @@
   (hey "  if (strcmp(ctype, ~S) == 0)~%" (no-stars type))
   (hey "    {~%")
   (hey "      ~A arr; arr = (~A)XEN_TO_C_ULONG(XEN_CADR(val)); ~%" type type)
+  (hey "      if (len == -1) {for (i = 0; arr[i]; i++); len = i;}~%")
   (hey "      for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_~A(arr[i]), result);~%" (no-stars (deref-type (list type))))
   (hey "    }~%"))
 
@@ -2325,18 +2326,21 @@
 (hey "static XEN c_array_to_xen_list(XEN val, XEN clen)~%")
 (hey "{~%")
 (hey "  XEN result = XEN_EMPTY_LIST;~%")
-(hey "  int i, len;~%")
+(hey "  int i, len = -1;~%")
 (hey "  char *ctype;~%")
-(hey "  len = XEN_TO_C_INT(clen);~%")
+(hey "  if (XEN_INTEGER_P(clen))~%")
+(hey "    len = XEN_TO_C_INT(clen);~%")
 (hey "  if (!(XEN_LIST_P(val))) return(XEN_FALSE); /* type:location cons */~%")
 (hey "  ctype = XEN_SYMBOL_TO_C_STRING(XEN_CAR(val));~%")
 (for-each array->list listable-types)
 (for-each
  (lambda (type)
    (if (and (derefable type)
+	    (not (member type listable-types))
 	    (member (deref-type (list type)) types))
        (array->list type)))
  types)
+
 ;;; gotta handle GList* by hand
 (hey "  if (strcmp(ctype, \"GList_\") == 0)~%")
 (hey "    { /* tagging these pointers is currently up to the caller */~%")
@@ -2358,6 +2362,7 @@
 (for-each
  (lambda (type)
    (if (and (derefable type)
+	    (not (member type listable-types))
 	    (member (deref-type (list type)) types))
        (list->array type)))
  types)

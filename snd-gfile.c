@@ -1363,7 +1363,6 @@ static void start_view_files_dialog(bool managed)
   if (!view_files_dialog)
     {
       vf_selected_file = -1;
-
       view_files_dialog = snd_gtk_dialog_new();
       g_signal_connect_closure_by_id(GTK_OBJECT(view_files_dialog),
 				     g_signal_lookup("delete_event", G_OBJECT_TYPE(GTK_OBJECT(view_files_dialog))),
@@ -1471,10 +1470,10 @@ static void start_view_files_dialog(bool managed)
       vf_prevlst = wwl->list;
       FREE(wwl); 
       wwl = NULL;
-      make_curfiles_list();
-      make_prevfiles_list();
       set_dialog_widget(VIEW_FILES_DIALOG, view_files_dialog);
     }
+  make_curfiles_list();
+  make_prevfiles_list();
   if (managed) gtk_widget_show(view_files_dialog);
   highlight_selected_sound();
 }

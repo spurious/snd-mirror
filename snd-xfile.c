@@ -1724,6 +1724,7 @@ static void start_view_files_dialog(bool managed)
    * The previous files list requires that we keep such a list as we go along, on the
    * off-chance this browser will be fired up.  (Such files may be subsequently moved or deleted).
    */
+  bool new_dialog = false;
   int n;
   Arg args[20];
   ww_info *wwl;
@@ -1732,6 +1733,7 @@ static void start_view_files_dialog(bool managed)
   Widget mainform, curform, prevform, updateB, sep;
   if (!view_files_dialog)
     {
+      new_dialog = true;
       vf_selected_file = -1;
       xdismiss = XmStringCreate(_("Dismiss"), XmFONTLIST_DEFAULT_TAG);
       xhelp = XmStringCreate(_("Help"), XmFONTLIST_DEFAULT_TAG);
@@ -1815,7 +1817,6 @@ static void start_view_files_dialog(bool managed)
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
       prevform = XtCreateManagedWidget("prevform", xmFormWidgetClass, mainform, args, n);
 
-
       /* current files section: save play current files | files */
       wwl = make_title_row(curform, _("play"), _("current files"),
 			   PAD_TITLE_ON_RIGHT, WITHOUT_SORT_BUTTON, WITHOUT_PANED_WINDOW);
@@ -1859,13 +1860,16 @@ static void start_view_files_dialog(bool managed)
 	  r->parent = PREVIOUS_FILE_VIEWER;
 	}
       set_dialog_widget(VIEW_FILES_DIALOG, view_files_dialog);
-      make_curfiles_list();
-      make_prevfiles_list();
-      if (managed) XtManageChild(view_files_dialog);
     }
-  else 
+  make_curfiles_list();
+  make_prevfiles_list();
+  if (managed)
     {
-      if (managed)
+      if (new_dialog)
+	{
+	  XtManageChild(view_files_dialog);
+	}
+      else 
 	{
 	  if (!XtIsManaged(view_files_dialog)) 
 	    XtManageChild(view_files_dialog);
