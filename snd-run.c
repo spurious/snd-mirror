@@ -6243,7 +6243,7 @@ static xen_value *amplitude_modulate_1(ptree *prog, xen_value **args, int num_ar
 
 
 #define SND_STR_OP(CName) \
-static void CName ## _f(int *args, int *ints, Float *dbls) {INT_RESULT = CName(STRING_ARG_1);} \
+static void CName ## _f(int *args, int *ints, Float *dbls) {INT_RESULT = (int)CName(STRING_ARG_1);} \
 static char *descr_ ## CName ## _f(int *args, int *ints, Float *dbls)  \
 { \
   return(mus_format( INT_PT " = " #CName "(" STR_PT ")", args[0], INT_RESULT, args[1], STRING_ARG_1)); \

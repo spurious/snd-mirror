@@ -5236,8 +5236,7 @@ int mus_header_change_type(const char *filename, int new_type, int new_format)
   int err = MUS_NO_ERROR;
   /* open temp, write header, copy data, replace original with temp */
   char *new_file, *comment = NULL;
-  int ofd, ifd, len = 0;
-  long nbytes;
+  int ofd, ifd, len = 0, nbytes;
   off_t loc;
   char *buf = NULL;
   err = mus_header_read(filename);

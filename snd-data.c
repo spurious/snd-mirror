@@ -544,7 +544,6 @@ int find_free_sound_slot (snd_state *ss, int desired_chans)
       if (sp == NULL) return(i);
       if (sp->inuse == 0) return(i);
     }
-  /* need to REALLOC sounds to make space */
   j = ss->max_sounds;
   ss->max_sounds += 4;
   ss->sounds = (snd_info **)REALLOC(ss->sounds, ss->max_sounds * sizeof(snd_info *));
@@ -662,7 +661,6 @@ void select_channel(snd_info *sp, int chan)
       (ncp->cgx)->selected = 1;
       if ((ss->sgx)->data_color != (ss->sgx)->selected_data_color) 
 	update_graph(ncp, NULL);
-      /* else draw_graph_border(ncp); */
       goto_graph(ncp);
     }
 }

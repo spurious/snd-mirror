@@ -928,6 +928,7 @@ int mus_sound_maxamp_exists(const char *ifile)
   return(val);
 }
 
+/* TODO: maxamp samples ("times") should be off_t not mus_sample_t */
 off_t mus_sound_maxamp(const char *ifile, mus_sample_t *vals)
 {
   int ifd, ichans, chn, j;

@@ -164,6 +164,7 @@ typedef struct {
   int ctr;
   int size;
 } mark_info;
+/* TODO: use mark_info to handle cp->marks lists */
 
 typedef struct {
   Float *data;
@@ -250,7 +251,7 @@ typedef struct chan__info {
   XEN properties;
   int selection_visible, active;
   Locus old_x0, old_x1;
-  Float *amp_control; /* an experiment */
+  Float *amp_control; /* local amp controls in snd-dac; should it be extended to other controls? */
   int last_search_result;
 } chan_info;
 

@@ -1127,6 +1127,8 @@ static void sound_restore_chan_info(snd_info *nsp, snd_info *osp)
     }
 }
 
+static XEN update_hook;
+
 static snd_info *snd_update_1(snd_state *ss, snd_info *sp, char *ur_filename)
 {
   /* we can't be real smart here because the channel number may have changed and so on */
@@ -1137,6 +1139,25 @@ static snd_info *snd_update_1(snd_state *ss, snd_info *sp, char *ur_filename)
   mark_info **ms;
   snd_info *saved_sp;
   void *saved_controls;
+  XEN update_hook_result = XEN_FALSE;
+
+  if (XEN_HOOKED(update_hook))
+    {
+      /* #t => return without updating (not recommended!!), proc of 1 arg will be evaluated after update is complete */
+      update_hook_result = g_c_run_or_hook(update_hook, 
+					   XEN_LIST_1(C_TO_XEN_INT(sp->index)),
+					   S_update_hook);
+      if (XEN_TRUE_P(update_hook_result)) return(sp);
+      if (XEN_PROCEDURE_P(update_hook_result))
+	{
+	  if ((XEN_REQUIRED_ARGS(update_hook_result)) == 1)
+	    snd_protect(update_hook_result);
+	  else XEN_ERROR(BAD_ARITY,
+			 XEN_LIST_2(C_TO_XEN_STRING(S_update_hook),
+				    update_hook_result));
+	}
+    }
+
   filename = copy_string(ur_filename);
   read_only = sp->read_only;
   sa = make_axes_data(sp);
@@ -1171,6 +1192,15 @@ static snd_info *snd_update_1(snd_state *ss, snd_info *sp, char *ur_filename)
       for (i = 0; i < nsp->nchans; i++) 
 	update_graph(nsp->chans[i], NULL);
     }
+
+  if (XEN_PROCEDURE_P(update_hook_result))
+    {
+      XEN_CALL_1(update_hook_result,
+		 (nsp) ? C_TO_XEN_INT(nsp->index) : XEN_FALSE,
+		 "procedure returned by update hook");
+      snd_unprotect(update_hook_result);
+    }
+
   if (ms)
     {
       for (i = 0; i < sp_chans; i++)
@@ -2576,6 +2606,16 @@ The list (passed to subsequent hook functions as 'current-choice') is interprete
 be omitted (location defaults to 0, and length defaults to the file length in bytes)."
 
   XEN_DEFINE_HOOK(open_raw_sound_hook, S_open_raw_sound_hook, 2, H_open_raw_sound_hook);    /* args = filename current-result */
+
+  #define H_update_hook S_update_hook " (snd) is called just before update-sound is called. \
+The update process can  be triggered by a variety of situations, not just by update-sound. \
+The hook is passed the sound's index.  If it returns #t, the update is cancelled (this is not \
+recommended!); if it returns a procedure of one argument, that procedure is called upon \
+completion of the update operation; its argument is the (possibly different) sound index. \
+Snd tries to maintain the index across the update, but if you change the number of channels \
+the newly updated sound may have a different index."
+
+  XEN_DEFINE_HOOK(update_hook,         S_update_hook,         1, H_update_hook);            /* arg = sound index */
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_previous_files_sort_procedure, g_previous_files_sort_procedure_w, H_previous_files_sort_procedure,
                                    "set-" S_previous_files_sort_procedure, g_set_previous_files_sort_procedure_w,  0, 0, 1, 0);

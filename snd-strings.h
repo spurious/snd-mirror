@@ -854,6 +854,7 @@
 #define S_unbind_key                    "unbind-key"  
 #define S_undo                          "undo"
 #define S_undo_hook                     "undo-hook"
+#define S_update_hook                   "update-hook"
 #define S_update_lisp_graph             "update-lisp-graph"
 #define S_update_sound                  "update-sound"
 #define S_update_time_graph             "update-time-graph"

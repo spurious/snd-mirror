@@ -590,6 +590,7 @@ static void ripple_out(ed_fragment **list, int beg, off_t num, int len)
   for (i = beg; i < len; i++) list[i]->out += num;
 }
 
+#if 0
 static void copy_ed_fragment(ed_fragment *new_ed, ed_fragment *old_ed)
 {
   new_ed->out = old_ed->out;
@@ -601,6 +602,9 @@ static void copy_ed_fragment(ed_fragment *new_ed, ed_fragment *old_ed)
   new_ed->snd = old_ed->snd;
   new_ed->typ = old_ed->typ;
 }
+#else
+#define copy_ed_fragment(New_Ed, Old_Ed) memcpy((void *)(New_Ed), (void *)(Old_Ed), sizeof(ed_fragment))
+#endif
 
 static void copy_ed_blocks(ed_fragment **new_list, ed_fragment **old_list, int new_beg, int old_beg, int num_lists)
 {

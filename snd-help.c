@@ -204,6 +204,7 @@ void news_help(snd_state *ss)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+15-May:  update-hook.\n\
 13-May:  snd 5.10.\n\
 9-May:   sound-loop-info bugfix (thanks to Dave Phillips).\n\
 6-May:   support for files larger than 2^31 bytes.\n\
@@ -211,9 +212,6 @@ void news_help(snd_state *ss)
 30-Apr:  vct-map\n\
 29-Apr:  snd5.scm, singer.scm, fade.scm.\n\
 15-Apr:  snd 5.9.\n\
-12-Apr:  optimization variable, --with-run configure switch, snd-run.c.\n\
-9-Apr:   ramp-channel.\n\
-8-Apr:   virtualized envelopes.\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*: \n'", features, "\n\n",
@@ -1068,6 +1066,7 @@ user-interface manipulations.\n\
   " S_stop_playing_hook " (snd)\n\
   " S_stop_playing_region_hook " (reg)\n\
   " S_undo_hook " ()\n\
+  " S_update_hook " (snd)\n\
 \n\
 ";
 

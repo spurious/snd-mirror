@@ -5197,10 +5197,6 @@ static void fill_locsig(Float *arr, int chans, Float degree, Float scaler, int t
       right = left + 1;
       if (right == chans) right = 0;
       frac = pos - left;
-#if DEBUGGING
-      if ((left < 0) || (left >= chans)) abort();
-      if ((right < 0) || (right >= chans)) abort();
-#endif
       if (type == MUS_LINEAR)
 	{
 	  arr[left] = scaler * (1.0 - frac);

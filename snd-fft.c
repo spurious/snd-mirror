@@ -1438,7 +1438,7 @@ static int apply_fft_window(fft_state *fs)
       (fs->datalen > 0))
     {
       ind0 = fs->databeg;
-      if (cp->transform_graph_type == GRAPH_TRANSFORM_ONCE) data_len = fs->datalen;
+      if (cp->transform_graph_type == GRAPH_TRANSFORM_ONCE) data_len = (int)(fs->datalen);
     }
   else 
     {

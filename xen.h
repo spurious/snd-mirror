@@ -612,6 +612,7 @@ void xen_guile_define_procedure_with_reversed_setter(char *get_name, XEN (*get_f
 #define XEN_ULONG_P(Arg1)                XEN_INTEGER_P(Arg1)
 #define XEN_EXACT_P(Arg1)                XEN_INTEGER_P(Arg1)
 #define XEN_OFF_T_P(Arg)                 XEN_INTEGER_P(Arg)
+/* TODO: off_t in Ruby? (BDIGIT_DBL in bignum.c, but not exported) */
 
 #define XEN_LIST_P(Arg)                  (TYPE(Arg) == T_ARRAY)
 #define XEN_LIST_P_WITH_LENGTH(Arg, Len) ((XEN_LIST_P(Arg)) ? (Len = RARRAY(Arg)->len) : 0)

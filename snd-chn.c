@@ -2541,10 +2541,13 @@ static void display_channel_data_with_size (chan_info *cp, snd_info *sp, snd_sta
 	    }
 	  if ((cp->hookable) &&
 	      (XEN_HOOKED(lisp_graph_hook)))
-	    pixel_list = g_c_run_progn_hook(lisp_graph_hook,
-					    XEN_LIST_2(C_TO_SMALL_XEN_INT((cp->sound)->index),
-						       C_TO_SMALL_XEN_INT(cp->chan)),
-					    S_lisp_graph_hook);
+	    {
+	      pixel_list = g_c_run_progn_hook(lisp_graph_hook,
+					      XEN_LIST_2(C_TO_SMALL_XEN_INT((cp->sound)->index),
+							 C_TO_SMALL_XEN_INT(cp->chan)),
+					      S_lisp_graph_hook);
+	      if (!(XEN_FALSE_P(pixel_list))) snd_protect(pixel_list);
+	    }
 	  if (up != (lisp_grf *)(cp->lisp_info))
 	    up = (lisp_grf *)(cp->lisp_info);
 	  if (uap != up->axis)
@@ -2556,6 +2559,7 @@ static void display_channel_data_with_size (chan_info *cp, snd_info *sp, snd_sta
 	  if (XEN_PROCEDURE_P(pixel_list))
 	    XEN_CALL_0(pixel_list, "lisp-graph");
 	  else make_lisp_graph(cp, sp, ss, pixel_list);
+	  if (!(XEN_FALSE_P(pixel_list))) snd_unprotect(pixel_list);
 	}
 
       if (!just_lisp)

@@ -1,6 +1,8 @@
 #include "snd.h"
 #include "vct.h"
 
+/* SOMEDAY: use clm envs not local env */
+
 Float un_dB(snd_state *ss, Float py)
 {
   /* used only by envelope editor (snd-xenv etc) */
@@ -12,6 +14,7 @@ static Float dB(snd_state *ss, Float py)
   return((py <= ss->lin_dB) ? ss->min_dB : (20.0 * (log10(py))));
 }
 
+/* mus_free(e) */
 env *free_env(env *e)
 {
   if (e)
@@ -22,6 +25,7 @@ env *free_env(env *e)
   return(NULL);
 }
 
+/* mus_copy(e) ideally */
 env *copy_env(env *e)
 {
   env *ne;
@@ -37,6 +41,7 @@ env *copy_env(env *e)
   return(NULL);
 }
 
+/* mus_describe(e) */
 char *env_to_string(env *e)
 {
   int i, j;
@@ -79,7 +84,7 @@ char *env_to_string(env *e)
   return(news);
 }
 
-
+/* mus_make_envelope? */
 env *make_envelope(Float *env_buffer, int len)
 {
   env *e;
@@ -342,6 +347,7 @@ void display_filter_graph(snd_state *ss, snd_info *sp, axis_context *ax, int wid
 		  lx0 = lx1;
 		  ly0 = ly1;
 		  lx1 = grf_x(curx, ap);
+		  /* TODO: this is silly -- do the env interp direct! */
 		  val = list_interp(curx, e->data, e->pts);
 		  ly1 = grf_y(dB(ss, val), ap);
 		  draw_line(ax, lx0, ly0, lx1, ly1);
