@@ -1,7 +1,5 @@
 /* sound.c */
 
-/* TODO: make this thread-safe by wrapping locks around the header/data base references */
-
 #if defined(HAVE_CONFIG_H)
   #include "config.h"
 #endif

@@ -40,6 +40,14 @@ snd_info *snd_new_file(snd_state *ss, char *newname, int header_type, int data_f
 
 /* ---------------- amp envs ---------------- */
 
+typedef struct {
+  int slice; 
+  int samples;  
+  env_info *ep; 
+  snd_fd *sf;
+  int m, amp_buffer_size;
+} env_state;
+
 #define MULTIPLIER 100
 
 env_info *free_env_info(env_info *ep)
@@ -91,7 +99,7 @@ void free_env_state(chan_info *cp)
     }
 }
 
-env_state *make_env_state(chan_info *cp, int samples)
+static env_state *make_env_state(chan_info *cp, int samples)
 {
   int val, pos, i, j, start, start_bin, end, end_bin, old_end_bin, old_samples, happy = 0;
   env_info *ep, *old_ep = NULL;
@@ -192,13 +200,18 @@ env_state *make_env_state(chan_info *cp, int samples)
   return(es);
 }
 
+void start_env_state(chan_info *cp)
+{
+  cp->cgx->amp_env_state = make_env_state(cp, current_ed_samples(cp));
+}
+
 #ifndef AMP_ENV_SUBSAMPLE
   #define AMP_ENV_SUBSAMPLE 100
   /* sets how may samples we actually check per bin in huge sound files -- 10 looked ok too */
   /* the lower this number, the faster the amp-envs are calculated, but the higher chance of missing something */
 #endif
 
-int tick_amp_env(chan_info *cp, env_state *es)
+static int tick_amp_env(chan_info *cp, env_state *es)
 {
   env_info *ep;
   int i, n, sb, lm;
@@ -586,6 +599,7 @@ void amp_env_scale_selection_by(chan_info *cp, Float scl, int beg, int num, int 
 
 env_info *amp_env_section(chan_info *cp, int beg, int num, int edpos)
 {
+  /* used in snd-region.c to create the region amp env */
   env_info *old_ep, *new_ep = NULL;
   MUS_SAMPLE_TYPE fmax = MUS_SAMPLE_0, fmin = MUS_SAMPLE_0;
   int i, j, cursamp, start, end;
@@ -602,7 +616,7 @@ env_info *amp_env_section(chan_info *cp, int beg, int num, int edpos)
     {
       if (cursamp > start)
 	{
-	  /* if segment is entirely in scaled section, just scale it */
+	  /* if segment is entirely in region, just scale it */
 	  if ((cursamp >= beg) && ((cursamp + new_ep->samps_per_bin) <= end))
 	    {
 	      new_ep->data_max[j] = old_ep->data_max[i];
@@ -620,7 +634,7 @@ env_info *amp_env_section(chan_info *cp, int beg, int num, int edpos)
 	      ymax = MUS_SAMPLE_0;
 	      for (n = 0; n < new_ep->samps_per_bin; n++)
 		{
-		  val = next_sample(sf); /* not scaled again! (sample reader sees scaled version) */
+		  val = next_sample(sf);
 		  if (ymin > val) ymin = val; else if (ymax < val) ymax = val;
 		}
 	      new_ep->data_max[j] = ymax;
@@ -677,6 +691,22 @@ env_info *amp_env_copy(chan_info *cp, int reversed, int edpos)
     }
   return(new_ep);
 }
+
+env_info *make_mix_input_amp_env(chan_info *cp)
+{
+  env_state *es;
+  if (current_ed_samples(cp) > AMP_ENV_CUTOFF)
+    {
+      es = make_env_state(cp, current_ed_samples(cp)); /* sets cp->amp_envs[pos] */
+      while (!(tick_amp_env(cp, es)));
+      if (es->sf) es->sf = free_snd_fd(es->sf);
+      FREE(es);
+      return(cp->amp_envs[cp->edit_ctr]);
+    }
+  return(NULL);
+}
+
+
 
 
 /* -------- control panel speed -------- */

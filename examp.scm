@@ -907,6 +907,9 @@
       (lambda (x) 
 	(comb cmb x)))))
 
+;;; or much faster:
+;;; (clm-channel (make-comb .8 32))
+
 ;;; by using filters at harmonically related sizes, we can get chords:
 
 (define comb-chord
@@ -958,7 +961,7 @@
 ; (map-chan (formant-filter .99 2400))
 
 ;;; in cases this simple (involving just a straight call on a single filtering generator),
-;;;   it is much faster to use filter-sound:
+;;;   it is much faster to use filter-sound or clm-channel:
 ;;;   (filter-sound (make-formant .99 2400))
 
 ;;; to impose several formants, just add them in parallel:

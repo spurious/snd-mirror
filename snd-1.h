@@ -375,14 +375,6 @@ typedef struct {
   int sample;
 } src_state;
 
-typedef struct {
-  int slice; 
-  int samples;  
-  env_info *ep; 
-  snd_fd *sf;
-  int m, amp_buffer_size;
-} env_state;
-
 
 
 /* -------- snd-io.c -------- */
@@ -1034,8 +1026,8 @@ void g_init_axis(void);
 env_info *free_amp_env(chan_info *cp, int pos);
 void free_env_state(chan_info *cp);
 env_info *free_env_info(env_info *ep);
-env_state *make_env_state(chan_info *cp, int samples);
-int tick_amp_env(chan_info *cp, env_state *es);
+void start_env_state(chan_info *cp);
+env_info *make_mix_input_amp_env(chan_info *cp);
 BACKGROUND_TYPE get_amp_env(GUI_POINTER ptr);
 int amp_env_maxamp_ok(chan_info *cp, int edpos);
 Float amp_env_maxamp(chan_info *cp, int edpos);
@@ -1147,6 +1139,7 @@ void g_init_file(void);
 /* -------- snd-utils -------- */
 
 int snd_round(double x);
+int snd_ipow2(int n);
 char *copy_string(const char *str);
 int snd_strlen(char *str);
 char *filename_without_home_directory(char *name);

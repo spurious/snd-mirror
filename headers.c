@@ -1289,7 +1289,6 @@ static int write_aif_header (int chan, int wsrate, int wchans, int siz, int form
       mus_bint_to_char((unsigned char *)(hdrbuf + 14), 20);
       mus_bint_to_char((unsigned char *)(hdrbuf + 18), 0x3c00007f); /* base-note = middle C, detune = 0, lownote = 0, highnote = 0x7f */
       mus_bint_to_char((unsigned char *)(hdrbuf + 22), 0x017f0000); /* lowvelocity = 1, highvelocity = 0x7f, gain = 0 */
-                                                                    /* TODO: should all these synth-style fields be settable? */
       mus_bint_to_char((unsigned char *)(hdrbuf + 26), 0);          /* no loops */
       mus_bint_to_char((unsigned char *)(hdrbuf + 30), 0); 
       mus_bint_to_char((unsigned char *)(hdrbuf + 34), 0);

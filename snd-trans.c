@@ -413,8 +413,8 @@ static int read_mus10(char *oldname, char *newname, char *hdr)
   /* PDP-10 floating point format was sign in bit 0 , excess 128 exponent in 1-8, fraction in 9-35 */
   if (srateH & 0400000) sign = -1; else sign = 1;
   exponent = ((srateH & 0377000) >> 9) - 128;
-  fraction = (float)(((srateH & 0777) << 18) | srateL) / pow(2.0, 27);
-  fsrate = sign * pow(2.0, exponent) * fraction;
+  fraction = (float)(((srateH & 0777) << 18) | srateL) / snd_ipow2(27);
+  fsrate = sign * snd_ipow2(exponent) * fraction;
   if (fsrate > 6400.0) 
     mus_bint_to_char((unsigned char *)(hdr + 16), (int)fsrate);  
   else

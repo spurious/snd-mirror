@@ -2206,4 +2206,4 @@ Reverb-feedback sets the scaler on the feedback.\n\
 ;;;   will probably want to disable close here, or use replace?
 ;;; TODO: mix-panning via enved
 ;;; TODO: spatial envelope dialog
-
+;;; TODO: spectral edit dialog

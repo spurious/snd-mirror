@@ -8,6 +8,18 @@ int snd_round(double x) /* needs to be double here (not Float) for x axis calcs 
   return(i);
 }
 
+#define POW2_SIZE 31
+static int pow2s[POW2_SIZE] = {1, 2, 4, 8, 16, 32, 64, 128, 256, 
+			       512, 1024, 2048, 4096, 8192, 16384, 32768, 65536, 
+			       131072, 262144, 524288, 1048576, 2097152, 4194304, 8388608, 16777216, 
+			       33554432, 67108864, 134217728, 268435456, 536870912, 1073741824};
+int snd_ipow2(int n)
+{
+  if (n < POW2_SIZE)
+    return(pow2s[n]);
+  return((int)pow(2.0, n));
+}
+
 char *copy_string(const char *str)
 {
 #if DEBUG_MEMORY || (!HAVE_STRDUP)

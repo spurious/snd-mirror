@@ -1149,7 +1149,7 @@ static int make_fft_window(fft_state *fs)
       wp = (fft_window_state *)(fs->wp);
       if (fs->pad_zero == 0)
 	toploc = fs->size;
-      else toploc = (int)(pow(2.0, floor(log(fs->size / (1 + fs->pad_zero)) / log(2.0))));
+      else toploc = snd_ipow2((int)floor(log(fs->size / (1 + fs->pad_zero)) / log(2.0)));
       return(make_fft_window_1(wp->window, toploc, wp->type, wp->beta));
       break;
     case HANKEL: 
@@ -1424,7 +1424,7 @@ static int apply_fft_window(fft_state *fs)
   if (cp->transform_type == FOURIER) pad = fs->pad_zero;
   if (pad == 0)
     data_len = fs->size;
-  else data_len = (int)(pow(2.0, floor(log(fs->size / (1 + pad)) / log(2.0))));
+  else data_len = snd_ipow2((int)floor(log(fs->size / (1 + pad)) / log(2.0)));
   if ((show_selection_transform(ss)) && 
       (selection_is_active_in_channel(cp)) && 
       (fs->datalen > 0))
@@ -1773,7 +1773,7 @@ void *make_fft_state(chan_info *cp, int simple)
       dlen = selection_len();
       /* these need to be handled at the same time, and not re-examined until the next call */
       /* if we're sweeping the mouse defining the selection, by the time we get to apply_fft_window, selection_len() can change */
-      fftsize = (int)pow(2.0, (int)(ceil(log((Float)(dlen * (1 + cp->zero_pad))) / log(2.0))));
+      fftsize = snd_ipow2((int)(ceil(log((Float)(dlen * (1 + cp->zero_pad))) / log(2.0))));
       if (fftsize < 2) fftsize = 2;
       cp->selection_transform_size = fftsize;
     }
@@ -1781,7 +1781,7 @@ void *make_fft_state(chan_info *cp, int simple)
     {
       if ((cp->zero_pad == 0) && (POWER_OF_2_P(cp->transform_size)))
 	fftsize = cp->transform_size;
-      else fftsize = (int)pow(2.0, (int)((log((Float)(cp->transform_size * (1 + cp->zero_pad))) / log(2.0)) + .001));
+      else fftsize = snd_ipow2((int)((log((Float)(cp->transform_size * (1 + cp->zero_pad))) / log(2.0)) + .001));
       cp->selection_transform_size = 0;
     }
 
@@ -2042,7 +2042,7 @@ static int set_up_sonogram(sonogram_state *sg)
       si = (sono_info *)CALLOC(1, sizeof(sono_info));
       cp->sonogram_data = si;
       si->total_bins = sg->spectrum_size;
-      si->total_slices = (int)(pow(2.0, (int)ceil(log(sg->outlim) / log(2.0))));
+      si->total_slices = snd_ipow2((int)ceil(log(sg->outlim) / log(2.0)));
       si->begs = (int *)CALLOC(si->total_slices, sizeof(int));
       si->data = (Float **)CALLOC(si->total_slices, sizeof(Float *));
       for (i = 0; i < si->total_slices; i++) si->data[i] = (Float *)CALLOC(si->total_bins, sizeof(Float));
@@ -2057,7 +2057,7 @@ static int set_up_sonogram(sonogram_state *sg)
 	      FREE(si->data[i]); 
 	      si->data[i] = NULL;
 	    }
-	tempsize = (int)(pow(2.0, (int)ceil(log(sg->outlim) / log(2.0))));
+	tempsize = snd_ipow2((int)ceil(log(sg->outlim) / log(2.0)));
 	if (si->total_slices < tempsize) 
 	  {
 	    FREE(si->data);

@@ -435,7 +435,7 @@ void start_amp_env(chan_info *cp)
     {
       ss = cp->state;
       if (cgx->amp_env_in_progress) stop_amp_env(cp);
-      cgx->amp_env_state = make_env_state(cp, current_ed_samples(cp));
+      start_env_state(cp);
       cgx->amp_env_in_progress = BACKGROUND_ADD(ss, get_amp_env, (GUI_POINTER)cp);
       reflect_amp_env_in_progress(cp->sound);
     }
@@ -4948,7 +4948,7 @@ static XEN g_set_transform_size(XEN val, XEN snd, XEN chn)
       ss = get_global_state();
       if (POWER_OF_2_P(len))
 	set_transform_size(ss, len);
-      else set_transform_size(ss, (int)pow(2.0, (int)(log(len + 1) / log(2.0))));
+      else set_transform_size(ss, snd_ipow2((int)(log(len + 1) / log(2.0))));
       return(C_TO_XEN_INT(transform_size(ss)));
     }
 }

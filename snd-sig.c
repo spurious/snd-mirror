@@ -269,7 +269,7 @@ static char *convolve_with_or_error(char *filename, Float amp, chan_info *cp, XE
 		      if (filesize > 0)
 			{
 			  ipow = (int)(ceil(log(filtersize + filesize) / log(2.0))) + 1;
-			  fftsize = (int)(pow(2.0, ipow));
+			  fftsize = snd_ipow2(ipow);
 			  ok = 1;
 			  c_convolve(ofile, amp, scfd,
 				     mus_sound_data_location(saved_chan_file),
@@ -1114,7 +1114,7 @@ void fht(int powerOfFour, Float *array)
     }
   for (L = 2; L <= powerOfFour; L++)  
     {
-      d1 = (int)(pow(2.0 , L + L - 3.0));
+      d1 = snd_ipow2(L + L - 3);
       d2 = d1 + d1;
       d3 = d2 + d2;
       n_over_d3 = n / 2 / d3;
@@ -1216,7 +1216,7 @@ static char *clm_channel(chan_info *cp, mus_any *gen, int beg, int dur, XEN edp,
 		      __FILE__, __LINE__, __FUNCTION__));
   edpos = to_c_edit_position(cp, edp, caller, arg_pos);
   sf = init_sample_read_any(beg, cp, READ_FORWARD, edpos);
-  if (sf == NULL) return(mus_format("can't read %s[%d] channel data!", sp->short_filename, cp->chan));
+  if (sf == NULL) return(mus_format("%s: can't read %s[%d] channel data!", caller, sp->short_filename, cp->chan));
   if ((dur + overlap) > MAX_BUFFER_SIZE)
     {
       temp_file = 1; 
@@ -1224,7 +1224,7 @@ static char *clm_channel(chan_info *cp, mus_any *gen, int beg, int dur, XEN edp,
       hdr = make_temp_header(ofile, SND_SRATE(sp), 1, dur + overlap, caller);
       ofd = open_temp_file(ofile, 1, hdr, ss);
       if (ofd == -1)
-	return(mus_format("can't open reverse-sound temp file %s: %s\n", ofile, strerror(errno)));
+	return(mus_format("can't open %s temp file %s: %s\n", caller, ofile, strerror(errno)));
       datumb = mus_data_format_to_bytes_per_sample(hdr->format);
     }
   else temp_file = 0;
@@ -1580,7 +1580,7 @@ static char *reverse_channel(chan_info *cp, snd_fd *sf, int beg, int dur, XEN ed
       hdr = make_temp_header(ofile, SND_SRATE(sp), 1, dur, caller);
       ofd = open_temp_file(ofile, 1, hdr, ss);
       if (ofd == -1)
-	return(mus_format("can't open reverse-sound temp file %s: %s\n", ofile, strerror(errno)));
+	return(mus_format("can't open %s temp file %s: %s\n", caller, ofile, strerror(errno)));
       datumb = mus_data_format_to_bytes_per_sample(hdr->format);
     }
   else temp_file = 0;
@@ -2135,8 +2135,8 @@ static XEN g_map_chan_1(XEN proc, XEN s_beg, XEN s_end, XEN org, XEN snd, XEN ch
       for (kp = 0; kp < num; kp++)
 	{
 	  res = XEN_CALL_1(proc, 
-		      C_TO_XEN_DOUBLE((double)next_sample_to_float(sf)),
-		      caller);
+			   C_TO_XEN_DOUBLE((double)next_sample_to_float(sf)),
+			   caller);
 	  if (XEN_NUMBER_P(res))                         /* one number -> replace current sample */
 	    mus_outa(j++, XEN_TO_C_DOUBLE(res), (mus_output *)outgen);
 	  else
@@ -2833,7 +2833,7 @@ static XEN g_fft_1(XEN reals, XEN imag, XEN sign, int use_fft)
   else
     {
       ipow = (int)(log(n + 1) / log(2.0));
-      n2 = (int)pow(2.0, (Float)ipow);
+      n2 = snd_ipow2(ipow);
     }
   if ((!v1) || (n != n2))
     {

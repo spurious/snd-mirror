@@ -377,21 +377,6 @@ typedef struct {
   Float samps_per_bin;
 } mix_fd;
 
-static env_info *make_mix_input_amp_env(chan_info *cp)
-{
-  env_state *es;
-  if (current_ed_samples(cp) > AMP_ENV_CUTOFF)
-    {
-      es = make_env_state(cp, current_ed_samples(cp)); /* sets cp->amp_envs[pos] */
-      while (!(tick_amp_env(cp, es)));
-      if (es->sf) es->sf = free_snd_fd(es->sf);
-      FREE(es);
-      return(cp->amp_envs[cp->edit_ctr]);
-    }
-  return(NULL);
-}
-
-
 static snd_info *make_mix_readable(mix_info *md)
 {
   chan_info *cp;

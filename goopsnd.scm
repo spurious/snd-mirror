@@ -66,5 +66,3 @@
 ;;; (define f0 (make fcmb :length 12 :feedback 0.7))
 ;;; (fcomb f0 1.0)
 
-
-;;; TODO: goopsify clm2xen.c
