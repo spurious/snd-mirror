@@ -8157,7 +8157,7 @@ static char *descr_sample_to_frame_2(int *args, ptree *pt)
   return(mus_format( CLM_PT " = sample->frame(" CLM_PT ", " FLT_PT ")", 
 		     args[0], DESC_CLM_RESULT, args[1], DESC_CLM_ARG_1, args[2], FLOAT_ARG_2));
 }
-static void sample_to_frame_2(int *args, ptree *pt) {CLM_RESULT = mus_sample_to_frame(CLM_ARG_1, FLOAT_ARG_2, NULL);}
+static void sample_to_frame_2(int *args, ptree *pt) {CLM_RESULT = mus_sample_to_frame(CLM_ARG_1, FLOAT_ARG_2, CLM_RESULT);}
 static char *descr_sample_to_frame_3(int *args, ptree *pt) 
 {
   return(mus_format( CLM_PT " = sample->frame(" CLM_PT ", " FLT_PT ", " CLM_PT ")", 

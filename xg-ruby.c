@@ -2766,8 +2766,6 @@ XEN_NARGIFY_1(gxg_pango_script_iter_free_w, gxg_pango_script_iter_free)
 
 #if HAVE_GTK_FILE_CHOOSER_BUTTON_NEW
 XEN_NARGIFY_0(gxg_gtk_file_chooser_button_get_type_w, gxg_gtk_file_chooser_button_get_type)
-XEN_NARGIFY_1(gxg_gtk_file_chooser_button_new_w, gxg_gtk_file_chooser_button_new)
-XEN_NARGIFY_2(gxg_gtk_file_chooser_button_new_with_backend_w, gxg_gtk_file_chooser_button_new_with_backend)
 XEN_NARGIFY_1(gxg_gtk_file_chooser_button_new_with_dialog_w, gxg_gtk_file_chooser_button_new_with_dialog)
 XEN_NARGIFY_1(gxg_gtk_file_chooser_button_get_title_w, gxg_gtk_file_chooser_button_get_title)
 XEN_NARGIFY_2(gxg_gtk_file_chooser_button_set_title_w, gxg_gtk_file_chooser_button_set_title)
@@ -2871,6 +2869,32 @@ XEN_NARGIFY_2(gxg_pango_renderer_get_color_w, gxg_pango_renderer_get_color)
 XEN_NARGIFY_2(gxg_pango_renderer_set_matrix_w, gxg_pango_renderer_set_matrix)
 XEN_NARGIFY_4(gxg_g_log_set_handler_w, gxg_g_log_set_handler)
 XEN_NARGIFY_2(gxg_g_log_remove_handler_w, gxg_g_log_remove_handler)
+#endif
+
+#if HAVE_GTK_TEXT_LAYOUT_GET_ITER_AT_POSITION
+XEN_NARGIFY_2(gxg_gtk_cell_renderer_stop_editing_w, gxg_gtk_cell_renderer_stop_editing)
+XEN_NARGIFY_2(gxg_gtk_file_chooser_button_new_w, gxg_gtk_file_chooser_button_new)
+XEN_NARGIFY_3(gxg_gtk_file_chooser_button_new_with_backend_w, gxg_gtk_file_chooser_button_new_with_backend)
+XEN_NARGIFY_2(gxg_gtk_icon_view_set_columns_w, gxg_gtk_icon_view_set_columns)
+XEN_NARGIFY_1(gxg_gtk_icon_view_get_columns_w, gxg_gtk_icon_view_get_columns)
+XEN_NARGIFY_2(gxg_gtk_icon_view_set_item_width_w, gxg_gtk_icon_view_set_item_width)
+XEN_NARGIFY_1(gxg_gtk_icon_view_get_item_width_w, gxg_gtk_icon_view_get_item_width)
+XEN_NARGIFY_2(gxg_gtk_icon_view_set_spacing_w, gxg_gtk_icon_view_set_spacing)
+XEN_NARGIFY_1(gxg_gtk_icon_view_get_spacing_w, gxg_gtk_icon_view_get_spacing)
+XEN_NARGIFY_2(gxg_gtk_icon_view_set_row_spacing_w, gxg_gtk_icon_view_set_row_spacing)
+XEN_NARGIFY_1(gxg_gtk_icon_view_get_row_spacing_w, gxg_gtk_icon_view_get_row_spacing)
+XEN_NARGIFY_2(gxg_gtk_icon_view_set_column_spacing_w, gxg_gtk_icon_view_set_column_spacing)
+XEN_NARGIFY_1(gxg_gtk_icon_view_get_column_spacing_w, gxg_gtk_icon_view_get_column_spacing)
+XEN_NARGIFY_2(gxg_gtk_icon_view_set_margin_w, gxg_gtk_icon_view_set_margin)
+XEN_NARGIFY_1(gxg_gtk_icon_view_get_margin_w, gxg_gtk_icon_view_get_margin)
+XEN_NARGIFY_2(gxg_gtk_label_set_max_width_chars_w, gxg_gtk_label_set_max_width_chars)
+XEN_NARGIFY_1(gxg_gtk_label_get_max_width_chars_w, gxg_gtk_label_get_max_width_chars)
+XEN_NARGIFY_3(gxg_gtk_list_store_insert_with_values_w, gxg_gtk_list_store_insert_with_values)
+XEN_NARGIFY_6(gxg_gtk_list_store_insert_with_valuesv_w, gxg_gtk_list_store_insert_with_valuesv)
+XEN_NARGIFY_5(gxg_gtk_text_view_get_iter_at_position_w, gxg_gtk_text_view_get_iter_at_position)
+XEN_NARGIFY_1(gxg_pango_attr_size_new_absolute_w, gxg_pango_attr_size_new_absolute)
+XEN_NARGIFY_2(gxg_pango_font_description_set_absolute_size_w, gxg_pango_font_description_set_absolute_size)
+XEN_NARGIFY_1(gxg_pango_layout_get_font_description_w, gxg_pango_layout_get_font_description)
 #endif
 
 XEN_NARGIFY_1(gxg_GPOINTER_w, gxg_GPOINTER)
@@ -6287,8 +6311,6 @@ static void define_functions(void)
 
 #if HAVE_GTK_FILE_CHOOSER_BUTTON_NEW
   XG_DEFINE_PROCEDURE(gtk_file_chooser_button_get_type, gxg_gtk_file_chooser_button_get_type_w, 0, 0, 0, H_gtk_file_chooser_button_get_type);
-  XG_DEFINE_PROCEDURE(gtk_file_chooser_button_new, gxg_gtk_file_chooser_button_new_w, 1, 0, 0, H_gtk_file_chooser_button_new);
-  XG_DEFINE_PROCEDURE(gtk_file_chooser_button_new_with_backend, gxg_gtk_file_chooser_button_new_with_backend_w, 2, 0, 0, H_gtk_file_chooser_button_new_with_backend);
   XG_DEFINE_PROCEDURE(gtk_file_chooser_button_new_with_dialog, gxg_gtk_file_chooser_button_new_with_dialog_w, 1, 0, 0, H_gtk_file_chooser_button_new_with_dialog);
   XG_DEFINE_PROCEDURE(gtk_file_chooser_button_get_title, gxg_gtk_file_chooser_button_get_title_w, 1, 0, 0, H_gtk_file_chooser_button_get_title);
   XG_DEFINE_PROCEDURE(gtk_file_chooser_button_set_title, gxg_gtk_file_chooser_button_set_title_w, 2, 0, 0, H_gtk_file_chooser_button_set_title);
@@ -6392,6 +6414,32 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(pango_renderer_set_matrix, gxg_pango_renderer_set_matrix_w, 2, 0, 0, H_pango_renderer_set_matrix);
   XG_DEFINE_PROCEDURE(g_log_set_handler, gxg_g_log_set_handler_w, 4, 0, 0, H_g_log_set_handler);
   XG_DEFINE_PROCEDURE(g_log_remove_handler, gxg_g_log_remove_handler_w, 2, 0, 0, H_g_log_remove_handler);
+#endif
+
+#if HAVE_GTK_TEXT_LAYOUT_GET_ITER_AT_POSITION
+  XG_DEFINE_PROCEDURE(gtk_cell_renderer_stop_editing, gxg_gtk_cell_renderer_stop_editing_w, 2, 0, 0, H_gtk_cell_renderer_stop_editing);
+  XG_DEFINE_PROCEDURE(gtk_file_chooser_button_new, gxg_gtk_file_chooser_button_new_w, 2, 0, 0, H_gtk_file_chooser_button_new);
+  XG_DEFINE_PROCEDURE(gtk_file_chooser_button_new_with_backend, gxg_gtk_file_chooser_button_new_with_backend_w, 3, 0, 0, H_gtk_file_chooser_button_new_with_backend);
+  XG_DEFINE_PROCEDURE(gtk_icon_view_set_columns, gxg_gtk_icon_view_set_columns_w, 2, 0, 0, H_gtk_icon_view_set_columns);
+  XG_DEFINE_PROCEDURE(gtk_icon_view_get_columns, gxg_gtk_icon_view_get_columns_w, 1, 0, 0, H_gtk_icon_view_get_columns);
+  XG_DEFINE_PROCEDURE(gtk_icon_view_set_item_width, gxg_gtk_icon_view_set_item_width_w, 2, 0, 0, H_gtk_icon_view_set_item_width);
+  XG_DEFINE_PROCEDURE(gtk_icon_view_get_item_width, gxg_gtk_icon_view_get_item_width_w, 1, 0, 0, H_gtk_icon_view_get_item_width);
+  XG_DEFINE_PROCEDURE(gtk_icon_view_set_spacing, gxg_gtk_icon_view_set_spacing_w, 2, 0, 0, H_gtk_icon_view_set_spacing);
+  XG_DEFINE_PROCEDURE(gtk_icon_view_get_spacing, gxg_gtk_icon_view_get_spacing_w, 1, 0, 0, H_gtk_icon_view_get_spacing);
+  XG_DEFINE_PROCEDURE(gtk_icon_view_set_row_spacing, gxg_gtk_icon_view_set_row_spacing_w, 2, 0, 0, H_gtk_icon_view_set_row_spacing);
+  XG_DEFINE_PROCEDURE(gtk_icon_view_get_row_spacing, gxg_gtk_icon_view_get_row_spacing_w, 1, 0, 0, H_gtk_icon_view_get_row_spacing);
+  XG_DEFINE_PROCEDURE(gtk_icon_view_set_column_spacing, gxg_gtk_icon_view_set_column_spacing_w, 2, 0, 0, H_gtk_icon_view_set_column_spacing);
+  XG_DEFINE_PROCEDURE(gtk_icon_view_get_column_spacing, gxg_gtk_icon_view_get_column_spacing_w, 1, 0, 0, H_gtk_icon_view_get_column_spacing);
+  XG_DEFINE_PROCEDURE(gtk_icon_view_set_margin, gxg_gtk_icon_view_set_margin_w, 2, 0, 0, H_gtk_icon_view_set_margin);
+  XG_DEFINE_PROCEDURE(gtk_icon_view_get_margin, gxg_gtk_icon_view_get_margin_w, 1, 0, 0, H_gtk_icon_view_get_margin);
+  XG_DEFINE_PROCEDURE(gtk_label_set_max_width_chars, gxg_gtk_label_set_max_width_chars_w, 2, 0, 0, H_gtk_label_set_max_width_chars);
+  XG_DEFINE_PROCEDURE(gtk_label_get_max_width_chars, gxg_gtk_label_get_max_width_chars_w, 1, 0, 0, H_gtk_label_get_max_width_chars);
+  XG_DEFINE_PROCEDURE(gtk_list_store_insert_with_values, gxg_gtk_list_store_insert_with_values_w, 3, 0, 0, H_gtk_list_store_insert_with_values);
+  XG_DEFINE_PROCEDURE(gtk_list_store_insert_with_valuesv, gxg_gtk_list_store_insert_with_valuesv_w, 6, 0, 0, H_gtk_list_store_insert_with_valuesv);
+  XG_DEFINE_PROCEDURE(gtk_text_view_get_iter_at_position, gxg_gtk_text_view_get_iter_at_position_w, 5, 0, 0, H_gtk_text_view_get_iter_at_position);
+  XG_DEFINE_PROCEDURE(pango_attr_size_new_absolute, gxg_pango_attr_size_new_absolute_w, 1, 0, 0, H_pango_attr_size_new_absolute);
+  XG_DEFINE_PROCEDURE(pango_font_description_set_absolute_size, gxg_pango_font_description_set_absolute_size_w, 2, 0, 0, H_pango_font_description_set_absolute_size);
+  XG_DEFINE_PROCEDURE(pango_layout_get_font_description, gxg_pango_layout_get_font_description_w, 1, 0, 0, H_pango_layout_get_font_description);
 #endif
 
   XG_DEFINE_PROCEDURE(GPOINTER, gxg_GPOINTER_w, 1, 0, 0, NULL);
