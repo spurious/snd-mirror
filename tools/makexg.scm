@@ -110,6 +110,8 @@
 (define check-types-254 '())
 (define ulongs-254 '())
 (define ints-254 '())
+(define funcs-255 '())
+(define types-255 '())
 
 (define all-types '())
 (define all-check-types '())
@@ -143,6 +145,7 @@
 	"GtkViewport*" "PangoAnalysis*" "PangoAttrList**" "PangoFontDescription**" "PangoFontMap*" "PangoRectangle*"
 	"gchar***" "gfloat*" "gint8*" "gsize" "gssize" "guint16*" "guint8*" "gunichar*" "GtkFileChooserButton*"
 	"GtkCellView*" "GValue*" "GtkAboutDialog*" "PangoAttrFilterFunc" "PangoScript*" "GtkMenuToolButton*"
+	"GtkClipboardImageReceivedFunc"
 	))
 
 (define no-xen-p 
@@ -364,8 +367,10 @@
 							  (set! types-252 (cons type types-252))
 							  (if (eq? extra '254)
 							      (set! types-254 (cons type types-254))
-							      (if (not (member type types))
-								  (set! types (cons type types)))))))))))))
+							      (if (eq? extra '255)
+								  (set! types-255 (cons type types-255))
+								  (if (not (member type types))
+								      (set! types (cons type types))))))))))))))
 			(set! type #f))
 		      (if (> i (1+ sp))
 			  (set! type (substring args (1+ sp) i))))
@@ -460,7 +465,7 @@
 			(list 'GtkClipboardTargetsReceivedFunc
 			      "void"
 			      "clip_targets_received"
-			      (parse-args "GtkClipboard* clipboard GdkAtom *atoms gint n_atoms  lambda_data func_data" 'callback)
+			      (parse-args "GtkClipboard* clipboard GdkAtom* atoms gint n_atoms lambda_data func_data" 'callback)
 			      'temporary)
 ;			(list 'GtkMenuDetachFunc
 ;			      "void"
@@ -548,6 +553,14 @@
 			     'permanent)
 		       ))
 
+(define callbacks-255 (list
+			(list 'GtkClipboardImageReceivedFunc
+			      "void"
+			      "clip_image_received"
+			      (parse-args "GtkClipboard* clipboard GdkPixbuf* pixbuf lambda_data func_data" 'callback-255)
+			      'permanent)
+			))
+
 (define (callback-name func) (car func))
 (define (callback-type func) (cadr func))
 (define (callback-func func) (caddr func))
@@ -562,6 +575,7 @@
   (or (find-callback-1 test callbacks)
       (find-callback-1 test callbacks-23)
       (find-callback-1 test callbacks-250)
+      (find-callback-1 test callbacks-255)
       ))
 
 (define direct-types 
@@ -916,7 +930,7 @@
 	    (set! funcs-236 (cons (list name type strs args) funcs-236))
 	    (set! names (cons (cons name (func-type strs)) names)))))))
 
-(define* (CFNC-250 data)
+(define* (CFNC-250 data #:optional spec)
   (let ((name (cadr-str data))
 	(args (caddr-str data)))
     (if (assoc name names)
@@ -927,7 +941,9 @@
 		(set! all-types (cons type all-types))
 		(set! types-250 (cons type types-250))))
 	  (let ((strs (parse-args args '250)))
-	    (set! funcs-250 (cons (list name type strs args) funcs-250))
+	    (if spec
+		(set! funcs-250 (cons (list name type strs args spec) funcs-250))	    
+		(set! funcs-250 (cons (list name type strs args) funcs-250)))
 	    (set! names (cons (cons name (func-type strs)) names)))))))
 
 (define* (CFNC-251 data #:optional spec)
@@ -976,6 +992,22 @@
 	    (if spec
 		(set! funcs-254 (cons (list name type strs args spec) funcs-254))
 		(set! funcs-254 (cons (list name type strs args) funcs-254)))
+	    (set! names (cons (cons name (func-type strs)) names)))))))
+
+(define* (CFNC-255 data #:optional spec)
+  (let ((name (cadr-str data))
+	(args (caddr-str data)))
+    (if (assoc name names)
+	(no-way "CFNC-255: ~A~%" (list name data))
+	(let ((type (car-str data)))
+	  (if (not (member type all-types)) 
+	      (begin
+		(set! all-types (cons type all-types))
+		(set! types-255 (cons type types-255))))
+	  (let ((strs (parse-args args '255)))
+	    (if spec
+		(set! funcs-255 (cons (list name type strs args spec) funcs-255))
+		(set! funcs-255 (cons (list name type strs args) funcs-255)))
 	    (set! names (cons (cons name (func-type strs)) names)))))))
 
 (define* (CFNC-22 data)
@@ -1431,6 +1463,11 @@
   (thunk)
   (dpy "#endif~%~%"))
 
+(define (with-255 dpy thunk)
+  (dpy "#if HAVE_GTK_LABEL_GET_SINGLE_LINE_MODE~%")
+  (thunk)
+  (dpy "#endif~%~%"))
+
 
 
 ;;; ---------------------------------------- write output files ----------------------------------------
@@ -1451,6 +1488,7 @@
 (hey " *     HAVE_GTK_LABEL_SET_ELLIPSIZE for gtk+-2.5.1~%")
 (hey " *     HAVE_GTK_FILE_CHOOSER_BUTTON_NEW for gtk+-2.5.2~%")
 (hey " *     HAVE_GTK_MENU_TOOL_BUTTON_NEW for gtk+-2.5.3 and 2.5.4~%")
+(hey " *     HAVE_GTK_LABEL_GET_SINGLE_LINE_MODE for gtk+-2.5.5~%")
 (hey " *~%")
 (hey " * reference args initial values are usually ignored, resultant values are returned in a list.~%")
 (hey " * null ptrs are passed and returned as #f, trailing \"user_data\" callback function arguments are optional (default: #f).~%")
@@ -1485,6 +1523,7 @@
 (hey " *     win32-specific functions~%")
 (hey " *~%")
 (hey " * HISTORY:~%")
+(hey " *     15-Nov:    gtk 2.5.5 changes.~%")
 (hey " *     29-Oct:    gtk 2.5.4 changes.~%")
 (hey " *     27-Aug:    gtk 2.5.2 changes. removed the PANGO_ENGINE and PANGO_BACKEND stuff.~%")
 (hey " *     5-Aug:     gtk 2.5.1 changes.~%")
@@ -1648,6 +1687,7 @@
 (for-each callback-p callbacks)
 (with-23 hey (lambda () (for-each callback-p callbacks-23)))
 (with-250 hey (lambda () (for-each callback-p callbacks-250)))
+(with-255 hey (lambda () (for-each callback-p callbacks-255)))
 
 (hey "#define XEN_lambda_P(Arg) XEN_PROCEDURE_P(Arg)~%")
 (hey "#define XEN_GCallback_P(Arg) XEN_PROCEDURE_P(Arg) && ((XEN_REQUIRED_ARGS_OK(Arg, 2)) || (XEN_REQUIRED_ARGS_OK(Arg, 3)))~%")
@@ -1660,6 +1700,7 @@
 (for-each xen-callback callbacks)
 (with-23 hey (lambda () (for-each xen-callback callbacks-23)))
 (with-250 hey (lambda () (for-each xen-callback callbacks-250)))
+(with-255 hey (lambda () (for-each xen-callback callbacks-255)))
 
 (hey "#define XEN_TO_C_GCallback(Arg) ((XEN_REQUIRED_ARGS_OK(Arg, 3)) ? (GCallback)gxg_func3 : (GCallback)gxg_func2)~%")
 (hey "#define XEN_TO_C_lambda_data(Arg) (gpointer)gxg_ptr~%")
@@ -1743,6 +1784,12 @@
     (with-254 hey
 	     (lambda ()
 	       (for-each type-it (reverse types-254))
+	       )))
+
+(if (not (null? types-255))
+    (with-255 hey
+	     (lambda ()
+	       (for-each type-it (reverse types-255))
 	       )))
 
 (hey "#define XLS(a, b) XEN_TO_C_gchar_(XEN_LIST_REF(a, b))~%")
@@ -1933,7 +1980,8 @@
 	     (hey "}~%")))))))
     (for-each xc callbacks)
     (with-23 hey (lambda () (for-each xc callbacks-23)))
-    (with-250 hey (lambda () (for-each xc callbacks-250)))))
+    (with-250 hey (lambda () (for-each xc callbacks-250)))
+    (with-255 hey (lambda () (for-each xc callbacks-255)))))
 
 (hey "~%static gboolean gxg_func3(GtkWidget *w, GdkEventAny *ev, gpointer data)~%")
 (hey "{~%")
@@ -2135,7 +2183,9 @@
 		     (if (= refargs 0)
 			 (if (eq? spec 'free)
 			     (hey-on "  {~%   ~A result;~%   XEN rtn;~%   result = " return-type)
-			     (hey-on "  return(C_TO_XEN_~A(" (no-stars return-type)))
+			     (if (eq? spec 'const-return)
+				 (hey "    return(C_TO_XEN_~A((~A)" (no-stars return-type) return-type)
+				 (hey-on "  return(C_TO_XEN_~A(" (no-stars return-type))))
 			 (hey-on "    result = C_TO_XEN_~A(" (no-stars return-type)))
 		     (hey-on "  ")))))
        ;; pass args
@@ -2227,10 +2277,11 @@
 			    (let ((argname (cadr arg))
 				  (argtype (car arg)))
 			      (if previous-arg (hey-ok ", "))
-			      (if (and ;(not previous-arg)
-				   (or (string=? argtype "char**")
-				       (string=? argtype "gchar*"))
-				   (eq? spec 'const))
+			      (if (and (eq? spec 'const)
+				       (or (string=? argtype "char**")
+					   (string=? argtype "gchar**")
+					   (string=? argtype "gchar*")
+					   (string=? argtype "char*")))
 				  (hey "(const ~A)" argtype))
 			      (set! previous-arg #t)
 			      (if (ref-arg? arg)
@@ -2365,6 +2416,7 @@
 (if (not (null? funcs-251)) (with-251 hey (lambda () (for-each handle-func (reverse funcs-251)))))
 (if (not (null? funcs-252)) (with-252 hey (lambda () (for-each handle-func (reverse funcs-252)))))
 (if (not (null? funcs-254)) (with-254 hey (lambda () (for-each handle-func (reverse funcs-254)))))
+(if (not (null? funcs-255)) (with-255 hey (lambda () (for-each handle-func (reverse funcs-255)))))
 
 (define cast-it
  (lambda (cast)
@@ -2475,6 +2527,7 @@
 (if (not (null? funcs-251)) (with-251 say (lambda () (for-each argify-func (reverse funcs-251)))))
 (if (not (null? funcs-252)) (with-252 say (lambda () (for-each argify-func (reverse funcs-252)))))
 (if (not (null? funcs-254)) (with-254 say (lambda () (for-each argify-func (reverse funcs-254)))))
+(if (not (null? funcs-255)) (with-255 say (lambda () (for-each argify-func (reverse funcs-255)))))
 
 (define (ruby-cast func) (say "XEN_NARGIFY_1(gxg_~A_w, gxg_~A)~%" (no-arg (car func)) (no-arg (car func)))) 
 (for-each ruby-cast (reverse casts))
@@ -2617,6 +2670,7 @@
 (if (not (null? funcs-251)) (with-251 say-hey (lambda () (for-each defun (reverse funcs-251)))))
 (if (not (null? funcs-252)) (with-252 say-hey (lambda () (for-each defun (reverse funcs-252)))))
 (if (not (null? funcs-254)) (with-254 say-hey (lambda () (for-each defun (reverse funcs-254)))))
+(if (not (null? funcs-255)) (with-255 say-hey (lambda () (for-each defun (reverse funcs-255)))))
 
 (define (cast-out func)
   (hey "  XG_DEFINE_PROCEDURE(~A, gxg_~A, 1, 0, 0, NULL);~%" (no-arg (car func)) (no-arg (car func)))

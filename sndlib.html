@@ -215,8 +215,6 @@ file indicated by <i>fd</i> to the desired frame.
 error occurs, they return -1. </p>
 <pre>
   int mus_audio_initialize(void)
-  void mus_audio_save(void)
-  void mus_audio_restore(void)
   void mus_audio_describe(void)
   char *mus_audio_report(void)
   int mus_audio_open_output(int dev, int srate, int chans, int format, int size)
@@ -231,10 +229,6 @@ error occurs, they return -1. </p>
 </pre>
 
 <p><i>mus_audio_initialize</i> takes care of any necessary initialization.</p>
-
-<p><i>mus_audio_save</i> saves the current audio hardware state.</p>
-
-<p><i>mus_audio_restore</i> restores the audio hardware to the last saved state.</p>
 
 <p><i>mus_audio_describe</i> prints to stdout a description of the
 current state of the audio hardware.  <i>mus_audio_report</i>

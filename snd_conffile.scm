@@ -586,7 +586,6 @@
     (set! isplaying #t)
     (set! startplaypos pos)
     (set! playtype 'selection)
-    (c-display pos (get-selection-end))
     (play pos #f #f #f (get-selection-end) #f das-callback))
 
   (define-method* (stop #:optional pos)
@@ -1715,6 +1714,9 @@ Does not work.
       (add-hook! close-hook c-close-buffer)
       ;;(bind-key (char->integer #\b) 0 (lambda (x) (switch-to-buf)))
       (add-hook! close-hook xb-close)
+      (add-hook! after-open-hook
+		 (lambda (snd)
+		   (set! (selection-member? #t) #f)))
       (add-hook! after-open-hook xb-open)))
 
 

@@ -23,6 +23,35 @@
 #define S_recorder_srate        "recorder-srate"
 #define S_recorder_trigger      "recorder-trigger"
 
+#define DEFAULT_RECORDER_FILE NULL
+#define DEFAULT_RECORDER_AUTOLOAD false
+#define DEFAULT_RECORDER_TRIGGER 0.0
+#define DEFAULT_RECORDER_MAX_DURATION 1000000.0
+#define DEFAULT_RECORDER_OUT_FORMAT MUS_COMPATIBLE_FORMAT
+
+#define MAX_MIXER_GAINS 128
+#define AUDVAL_SIZE 64
+
+#ifdef SUN
+  #define DEFAULT_RECORDER_BUFFER_SIZE 4096
+  #if MUS_LITTLE_ENDIAN
+    #define DEFAULT_RECORDER_IN_FORMAT MUS_LSHORT
+    #define DEFAULT_RECORDER_SRATE 22050
+  #else
+    #define DEFAULT_RECORDER_IN_FORMAT MUS_MULAW
+    #define DEFAULT_RECORDER_SRATE 8000
+  #endif
+#else
+  #define DEFAULT_RECORDER_IN_FORMAT MUS_COMPATIBLE_FORMAT
+  #if MAC_OSX
+    #define DEFAULT_RECORDER_BUFFER_SIZE 1024
+    #define DEFAULT_RECORDER_SRATE 44100
+  #else
+    #define DEFAULT_RECORDER_BUFFER_SIZE 4096
+    #define DEFAULT_RECORDER_SRATE 22050
+  #endif
+#endif
+
 static Cessator recorder_reader;
 
 font_t *get_vu_font(Float size)
@@ -327,6 +356,8 @@ int recorder_check_device(int system, int device, int *mixer_gains_posted, int *
 static recorder_info *rp = NULL;
 static int monitor_data_format;
 static char *monitor_buf = NULL;
+static Float *mixer_gains = NULL;                /* audio gain values (widgets are per pane) */
+static int in_device;
 
 static void init_recorder(void)
 {
@@ -344,7 +375,7 @@ static void init_recorder(void)
   rp->trigger = DEFAULT_RECORDER_TRIGGER;
   rp->max_duration = DEFAULT_RECORDER_MAX_DURATION;
   if (DEFAULT_RECORDER_FILE != (char *)NULL) rp->output_file = copy_string(DEFAULT_RECORDER_FILE); else rp->output_file = NULL;
-  rp->in_device = MUS_AUDIO_DEFAULT;
+  in_device = MUS_AUDIO_DEFAULT;
   rp->triggering = false;
   rp->triggered = true;
   rp->hd_audio_out_chans = 2;
@@ -360,7 +391,7 @@ static void init_recorder(void)
   rp->output_file_descriptor = -1;
 
   rp->out_amps = (Float *)CALLOC(MAX_OUT_CHANS, sizeof(Float));
-  rp->mixer_gains = (Float *)CALLOC(MAX_MIXER_GAINS, sizeof(Float));
+  mixer_gains = (Float *)CALLOC(MAX_MIXER_GAINS, sizeof(Float));
   rp->in_amps = (Float **)CALLOC(MAX_IN_CHANS, sizeof(Float *));
   for (i = 0; i < MAX_IN_CHANS; i++) rp->in_amps[i] = (Float *)CALLOC(MAX_OUT_CHANS, sizeof(Float));
   rp->chan_in_active = (bool *)CALLOC(MAX_IN_CHANS, sizeof(bool));
@@ -423,7 +454,7 @@ void save_recorder_state(FILE *fd)
     fprintf(fd, "(set! (%s) %s)\n", 
 	    S_recorder_in_format, 
 	    mus_data_format_to_constant_name(rp->in_format));
-  if (rp->in_device != MUS_AUDIO_DEFAULT) fprintf(fd, "(set! (%s) %d)\n", S_recorder_in_device, rp->in_device);
+  if (in_device != MUS_AUDIO_DEFAULT) fprintf(fd, "(set! (%s) %d)\n", S_recorder_in_device, in_device);
   if (rp->srate != DEFAULT_RECORDER_SRATE) fprintf(fd, "(set! (%s) %d)\n", S_recorder_srate, rp->srate);
   if (rp->output_file != NULL) fprintf(fd, "(set! (%s) \"%s\")\n", S_recorder_file, rp->output_file);
   if (fneq(rp->trigger, DEFAULT_RECORDER_TRIGGER)) fprintf(fd, "(set! (%s) %.4f)\n", S_recorder_trigger, rp->trigger);
@@ -445,7 +476,7 @@ void save_recorder_state(FILE *fd)
     fprintf(fd, "set_%s %s\n", 
 	    TO_PROC_NAME(S_recorder_in_format),
 	    mus_data_format_to_constant_name(rp->in_format));
-  if (rp->in_device != MUS_AUDIO_DEFAULT) fprintf(fd, "set_%s %d\n", TO_PROC_NAME(S_recorder_in_device), rp->in_device);
+  if (in_device != MUS_AUDIO_DEFAULT) fprintf(fd, "set_%s %d\n", TO_PROC_NAME(S_recorder_in_device), in_device);
   if (rp->srate != DEFAULT_RECORDER_SRATE) fprintf(fd, "set_%s %d\n", TO_PROC_NAME(S_recorder_srate), rp->srate);
   if (rp->output_file != NULL) fprintf(fd, "set_%s \"%s\"\n", TO_PROC_NAME(S_recorder_file), rp->output_file);
   if (fneq(rp->trigger, DEFAULT_RECORDER_TRIGGER)) fprintf(fd, "set_%s %.4f\n", TO_PROC_NAME(S_recorder_trigger), rp->trigger);
@@ -492,7 +523,7 @@ Float mixer_gain(int system, int device, int chan, int gain, int field)
   if (gain > rp->num_mixer_gains) 
     snd_error(_("gain (slider) number too high: %d > %d"),
 	      gain, rp->num_mixer_gains);
-  else rp->mixer_gains[gain] = g[0];
+  else mixer_gains[gain] = g[0];
   return(g[0]);
 }
 
@@ -510,7 +541,7 @@ void set_mixer_gain(int system, int device, int chan, int gain, int field, Float
   if (gain > rp->num_mixer_gains) 
     snd_error(_("gain (slider) number too high: %d > %d"),
 	      gain, rp->num_mixer_gains);
-  else rp->mixer_gains[gain] = amp;
+  else mixer_gains[gain] = amp;
 }
 
 
@@ -560,6 +591,7 @@ static mus_sample_t output_vu_maxes[MAX_OUT_CHANS];      /* VU label values on o
 static int input_srates[MAX_SOUNDCARDS];
 static int input_formats[MAX_SOUNDCARDS];
 static int input_buffer_sizes[MAX_SOUNDCARDS];
+static int duration_label_update_frames;                 /* frames between updates of the duration label */
 
 void set_record_size (int new_size)
 {
@@ -601,7 +633,7 @@ void set_record_size (int new_size)
 #if (!SUN)
 static void get_input_channels(int i)
 {
-  rp->input_channels[i] = device_channels(MUS_AUDIO_PACK_SYSTEM(i) | rp->in_device);
+  rp->input_channels[i] = device_channels(MUS_AUDIO_PACK_SYSTEM(i) | in_device);
   if (rp->input_channels[i] == 0)
     {
       rp->input_channels[i] = device_channels(MUS_AUDIO_PACK_SYSTEM(i) | MUS_AUDIO_DEFAULT);
@@ -629,7 +661,7 @@ static void get_input_devices(void)
   int i;
   for (i = 0; i < rp->systems; i++)
     {
-      rp->input_ports[i] = mus_audio_open_input(MUS_AUDIO_PACK_SYSTEM(i) | rp->in_device,
+      rp->input_ports[i] = mus_audio_open_input(MUS_AUDIO_PACK_SYSTEM(i) | in_device,
 						rp->srate,
 						rp->input_channels[i],
 						rp->in_format,
@@ -950,7 +982,7 @@ void fire_up_recorder(void)
       rp->input_channel_active[1] = false;
     #endif
   #else
-    err = mus_audio_mixer_read(MUS_AUDIO_PACK_SYSTEM(0) | rp->in_device, MUS_AUDIO_SRATE, 0, val);
+    err = mus_audio_mixer_read(MUS_AUDIO_PACK_SYSTEM(0) | in_device, MUS_AUDIO_SRATE, 0, val);
     if (err == MUS_NO_ERROR) 
       {
 	new_srate = (int)val[0];
@@ -1270,10 +1302,10 @@ static Cessate read_adc(void)
     {
       mus_file_write(rp->output_file_descriptor, 0, out_frame - 1, ochns, output_bufs);
       rp->total_output_frames += out_frame;
-      if (rp->total_output_frames > rp->duration_label_update_frames)
+      if (rp->total_output_frames > duration_label_update_frames)
 	{
 	  reflect_recorder_duration((Float)((double)(rp->total_output_frames) / (Float)sr));
-	  rp->duration_label_update_frames += (sr / 4);
+	  duration_label_update_frames += (sr / 4);
 	}
     }
   return(((rp->total_output_frames / sr) >= rp->max_duration) ? BACKGROUND_QUIT : BACKGROUND_CONTINUE);
@@ -1393,10 +1425,10 @@ static Cessate read_adc(void)
     {
       mus_file_write(rp->output_file_descriptor, 0, out_frame - 1, ochns, output_bufs);
       rp->total_output_frames += out_frame;
-      if (rp->total_output_frames > rp->duration_label_update_frames)
+      if (rp->total_output_frames > duration_label_update_frames)
 	{
 	  reflect_recorder_duration((Float)((double)(rp->total_output_frames) / (Float)sr));
-	  rp->duration_label_update_frames += (sr / 4);
+	  duration_label_update_frames += (sr / 4);
 	}
     }
   return(((rp->total_output_frames / sr) >= rp->max_duration) ? BACKGROUND_QUIT : BACKGROUND_CONTINUE);
@@ -1440,7 +1472,7 @@ bool recorder_start_output_file(const char *comment)
   mus_file_set_data_clipped(rp->output_file_descriptor, data_clipped(ss));
   lseek(rp->output_file_descriptor, oloc, SEEK_SET);
   rp->total_output_frames = 0;
-  rp->duration_label_update_frames = rp->srate / 4;
+  duration_label_update_frames = rp->srate / 4;
   if (!output_bufs)
     output_bufs = (mus_sample_t **)CALLOC(MAX_OUT_CHANS, sizeof(mus_sample_t *));
   for (i = 0; i < rp->out_chans; i++) 
@@ -1602,15 +1634,15 @@ static XEN g_set_recorder_in_format(XEN val)
 static XEN g_recorder_in_device(void) 
 {
   init_recorder(); 
-  return(C_TO_XEN_INT(rp->in_device));
+  return(C_TO_XEN_INT(in_device));
 }
 static XEN g_set_recorder_in_device(XEN val) 
 {
   #define H_recorder_in_device "(" S_recorder_in_device "): default recorder input device (" S_mus_audio_line_in " or " S_mus_audio_microphone " usually)"
   XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, S_setB S_recorder_in_device, "an integer"); 
   init_recorder(); 
-  rp->in_device = XEN_TO_C_INT(val);
-  return(C_TO_XEN_INT(rp->in_device));
+  in_device = XEN_TO_C_INT(val);
+  return(C_TO_XEN_INT(in_device));
 }
 
 static XEN g_recorder_out_chans(void) 
@@ -1739,7 +1771,7 @@ static XEN g_recorder_gain (XEN num)
   init_recorder(); 
   g = XEN_TO_C_INT(num);
   if ((g >= 0) && (g < MAX_MIXER_GAINS))
-    return(C_TO_XEN_DOUBLE(rp->mixer_gains[g]));
+    return(C_TO_XEN_DOUBLE(mixer_gains[g]));
   return(C_TO_XEN_DOUBLE(0.0));
 }
 
@@ -1783,8 +1815,8 @@ static XEN g_set_recorder_gain (XEN num, XEN amp)
       gain = XEN_TO_C_DOUBLE(amp);
       if ((gain >= 0.0) && (gain <= 1.0))
 	{
-	  rp->mixer_gains[ind] = gain;
-	  reflect_recorder_mixer_gain(ind, rp->mixer_gains[ind]);
+	  mixer_gains[ind] = gain;
+	  reflect_recorder_mixer_gain(ind, mixer_gains[ind]);
 	}
     }
   return(amp);

@@ -2827,6 +2827,19 @@ XEN_NARGIFY_1(gxg_gtk_selection_data_get_uris_w, gxg_gtk_selection_data_get_uris
 XEN_NARGIFY_4(gxg_gtk_text_buffer_backspace_w, gxg_gtk_text_buffer_backspace)
 #endif
 
+#if HAVE_GTK_LABEL_GET_SINGLE_LINE_MODE
+XEN_NARGIFY_2(gxg_gtk_clipboard_set_image_w, gxg_gtk_clipboard_set_image)
+XEN_ARGIFY_3(gxg_gtk_clipboard_request_image_w, gxg_gtk_clipboard_request_image)
+XEN_NARGIFY_1(gxg_gtk_clipboard_wait_for_image_w, gxg_gtk_clipboard_wait_for_image)
+XEN_NARGIFY_1(gxg_gtk_clipboard_wait_is_image_available_w, gxg_gtk_clipboard_wait_is_image_available)
+XEN_NARGIFY_1(gxg_gtk_file_filter_add_pixbuf_formats_w, gxg_gtk_file_filter_add_pixbuf_formats)
+XEN_NARGIFY_2(gxg_gtk_label_set_single_line_mode_w, gxg_gtk_label_set_single_line_mode)
+XEN_NARGIFY_1(gxg_gtk_label_get_single_line_mode_w, gxg_gtk_label_get_single_line_mode)
+XEN_NARGIFY_2(gxg_gtk_progress_bar_set_ellipsize_w, gxg_gtk_progress_bar_set_ellipsize)
+XEN_NARGIFY_1(gxg_gtk_progress_bar_get_ellipsize_w, gxg_gtk_progress_bar_get_ellipsize)
+XEN_NARGIFY_2(gxg_gtk_selection_data_targets_include_image_w, gxg_gtk_selection_data_targets_include_image)
+#endif
+
 XEN_NARGIFY_1(gxg_GDK_COLORMAP_w, gxg_GDK_COLORMAP)
 XEN_NARGIFY_1(gxg_GDK_DRAG_CONTEXT_w, gxg_GDK_DRAG_CONTEXT)
 XEN_NARGIFY_1(gxg_GDK_DRAWABLE_w, gxg_GDK_DRAWABLE)
@@ -6290,6 +6303,19 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_selection_data_set_uris, gxg_gtk_selection_data_set_uris_w, 2, 0, 0, H_gtk_selection_data_set_uris);
   XG_DEFINE_PROCEDURE(gtk_selection_data_get_uris, gxg_gtk_selection_data_get_uris_w, 1, 0, 0, H_gtk_selection_data_get_uris);
   XG_DEFINE_PROCEDURE(gtk_text_buffer_backspace, gxg_gtk_text_buffer_backspace_w, 4, 0, 0, H_gtk_text_buffer_backspace);
+#endif
+
+#if HAVE_GTK_LABEL_GET_SINGLE_LINE_MODE
+  XG_DEFINE_PROCEDURE(gtk_clipboard_set_image, gxg_gtk_clipboard_set_image_w, 2, 0, 0, H_gtk_clipboard_set_image);
+  XG_DEFINE_PROCEDURE(gtk_clipboard_request_image, gxg_gtk_clipboard_request_image_w, 2, 1, 0, H_gtk_clipboard_request_image);
+  XG_DEFINE_PROCEDURE(gtk_clipboard_wait_for_image, gxg_gtk_clipboard_wait_for_image_w, 1, 0, 0, H_gtk_clipboard_wait_for_image);
+  XG_DEFINE_PROCEDURE(gtk_clipboard_wait_is_image_available, gxg_gtk_clipboard_wait_is_image_available_w, 1, 0, 0, H_gtk_clipboard_wait_is_image_available);
+  XG_DEFINE_PROCEDURE(gtk_file_filter_add_pixbuf_formats, gxg_gtk_file_filter_add_pixbuf_formats_w, 1, 0, 0, H_gtk_file_filter_add_pixbuf_formats);
+  XG_DEFINE_PROCEDURE(gtk_label_set_single_line_mode, gxg_gtk_label_set_single_line_mode_w, 2, 0, 0, H_gtk_label_set_single_line_mode);
+  XG_DEFINE_PROCEDURE(gtk_label_get_single_line_mode, gxg_gtk_label_get_single_line_mode_w, 1, 0, 0, H_gtk_label_get_single_line_mode);
+  XG_DEFINE_PROCEDURE(gtk_progress_bar_set_ellipsize, gxg_gtk_progress_bar_set_ellipsize_w, 2, 0, 0, H_gtk_progress_bar_set_ellipsize);
+  XG_DEFINE_PROCEDURE(gtk_progress_bar_get_ellipsize, gxg_gtk_progress_bar_get_ellipsize_w, 1, 0, 0, H_gtk_progress_bar_get_ellipsize);
+  XG_DEFINE_PROCEDURE(gtk_selection_data_targets_include_image, gxg_gtk_selection_data_targets_include_image_w, 2, 0, 0, H_gtk_selection_data_targets_include_image);
 #endif
 
   XG_DEFINE_PROCEDURE(GDK_COLORMAP, gxg_GDK_COLORMAP_w, 1, 0, 0, NULL);

@@ -2520,17 +2520,27 @@ static XEN g_dlopen(XEN name)
   char *cname;
   XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ONLY_ARG, "dlopen", "a string (filename)");
   cname = XEN_TO_C_STRING(name);
-  handle = dlopen(cname, RTLD_LAZY);
-  if (handle == NULL)
+  if (cname)
     {
-      char *longname;
-      longname = mus_expand_filename(cname);
-      handle = dlopen(longname, RTLD_LAZY);
-      FREE(longname);
+      handle = dlopen(cname, RTLD_LAZY);
       if (handle == NULL)
-	return(C_TO_XEN_STRING(dlerror()));
+	{
+	  char *longname;
+	  longname = mus_expand_filename(cname);
+	  handle = dlopen(longname, RTLD_LAZY);
+	  FREE(longname);
+	  if (handle == NULL)
+	    {
+	      char *err;
+	      err = dlerror();
+	      if ((err) && (*err))
+		return(C_TO_XEN_STRING(err));
+	      return(XEN_FALSE);
+	    }
+	}
+      return(XEN_WRAP_C_POINTER(handle));
     }
-  return(XEN_WRAP_C_POINTER(handle));
+  return(XEN_FALSE);
 }
 
 static XEN g_dlclose(XEN handle)

@@ -4,6 +4,11 @@
 #include "snd.h"
 #include "snd-rec.h"
 
+#define SMALL_FONT "Monospace 10"
+#define SMALLER_FONT "Monospace 8"
+#define SMALL_FONT_CUTOFF .85
+#define SMALLER_FONT_CUTOFF .7
+
 typedef struct {
   GdkPixmap *off_label;
   GdkPixmap *on_label;
@@ -1854,8 +1859,6 @@ static void record_button_callback(GtkWidget *w, gpointer context)
 
 static void initialize_recorder(recorder_info *rp);
 static GtkWidget *rec_panes, *file_info_pane;
-
-#define AUDVAL_SIZE 64
 
 static gint recorder_delete(GtkWidget *w, GdkEvent *event, gpointer context)
 {

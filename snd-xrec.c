@@ -9,6 +9,11 @@
   #include <X11/xpm.h>
 #endif
 
+#define SMALL_FONT "6x10"
+#define SMALLER_FONT "5x7"
+#define SMALL_FONT_CUTOFF .85
+#define SMALLER_FONT_CUTOFF .7
+
 typedef struct {
   Pixmap off_label;
   Pixmap on_label;

@@ -25,13 +25,10 @@
 
 ;;; -------- selection -> new file
 
-(define selctr 0)
-
 (define (selection->new)
   "(selection-<new) saves the selection in a new file, then opens that file"
   (if (selection?)
-      (let ((new-file-name (format #f "sel-~D.snd" selctr)))
-	(set! selctr (+ selctr 1))
+      (let ((new-file-name (snd-tempnam)))
 	(save-selection new-file-name)
 	(open-sound new-file-name))
       #f))
@@ -44,8 +41,7 @@
 (define (cut-selection->new)
   "(cut-selection->new) saves the selection, deletes it, then opens the saved file"
   (if (selection?)
-      (let ((new-file-name (format #f "sel-~D.snd" selctr)))
-	(set! selctr (+ selctr 1))
+      (let ((new-file-name (snd-tempnam)))
 	(save-selection new-file-name)
 	(delete-selection)
 	(open-sound new-file-name))
